@@ -625,5 +625,5 @@ static const struct IODevice io_kc85_4[] =
 
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-COMP( 19??, kc85_4,   0,     kc85_4,  kc85_4,        0,                "VEB Mikroelektronik", "KC 85/4")
+COMPX( 19??, kc85_4,   0,     kc85_4,  kc85_4,        0,                "VEB Mikroelektronik", "KC 85/4", GAME_NOT_WORKING)
 

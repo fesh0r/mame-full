@@ -740,10 +740,6 @@ static void c128_common_driver_init (void)
 	cbm_drive_attach_fs (0);
 	cbm_drive_attach_fs (1);
 
-#ifdef VC1541
-	vc1541_driver_init ();
-#endif
-
 	sid6581_0_init (c64_paddle_read);
 	c64_cia0.todin50hz = c64_pal;
 	cia6526_config (0, &c64_cia0);
@@ -759,6 +755,7 @@ void c128_driver_init (void)
 	vic2_set_rastering(0);
 	vdc8563_init(c128_vdcram, 0);
 	vdc8563_set_rastering(1);
+	raster1.display_state=c64_state;
 	raster2.display_state=c128_state;
 }
 
@@ -771,6 +768,7 @@ void c128pal_driver_init (void)
 	vic2_set_rastering(1);
 	vdc8563_init(c128_vdcram, 0);
 	vdc8563_set_rastering(0);
+	raster1.display_state=c64_state;
 	raster2.display_state=c128_state;
 }
 
@@ -782,6 +780,7 @@ void c128pal2_driver_init (void)
 	vic2_set_rastering(0);
 	vdc8563_init(c128_vdcram, 0);
 	vdc8563_set_rastering(1);
+	raster1.display_state=c64_state;
 	raster2.display_state=c128_state;
 }
 
@@ -844,21 +843,22 @@ void c128_state(PRASTER *this)
 	y = Machine->gamedrv->drv->visible_area.max_y + 1 - Machine->uifont->height;
 	
 #if VERBOSE_DBG
-#if 0
+# if 0
 	cia6526_status (text, sizeof (text));
 	praster_draw_text (this, text, &y);
 
-#if 1
+#  if 1
 	snprintf (text, size, "c128 vic:%.5x m6510:%d exrom:%d game:%d",
 			  c128_vicaddr - c64_memory, c64_port6510 & 7,
 			  c64_exrom, c64_game);
-#else
+#  else
 	snprintf (text, size, "size:%.4x %s %s %.6x %s %.6x %.6x",
 			  MMU_SIZE, MMU_BOTTOM?"bottom":"", MMU_TOP?"top":"",MMU_RAM_ADDR, MMU_IO_ON?"io":"",
 			  MMU_PAGE0, MMU_PAGE1);
-#endif
+#  endif
 	praster_draw_text (this, text, &y);
-#endif
+# endif
+
 	vdc8563_status(text, sizeof(text));
 	praster_draw_text (this, text, &y);
 #endif
@@ -866,7 +866,7 @@ void c128_state(PRASTER *this)
 	vc20_tape_status (text, sizeof (text));
 	praster_draw_text (this, text, &y);
 #ifdef VC1541
-	vc1541_drive_status (this, sizeof (text));
+	vc1541_drive_status (text, sizeof (text));
 #else
 	cbm_drive_0_status (text, sizeof (text));
 #endif

@@ -81,7 +81,7 @@ quickloader
 
 some unsolved problems
  memory check by c16 kernel will not recognize more memory without restart of mess
- cpu clock switching/changing (overclocking should it be)
+ cpu clock switching/changing (overclocking should it be)
 
 Keys
 ----
@@ -420,34 +420,135 @@ static struct MemoryWriteAddress plus4_writemem[] =
 	PORT_DIPSETTING(0x20, DEF_STR( On ) )\
 	PORT_DIPNAME   ( 0x10, 0x00, " Tape Sound")\
 	PORT_DIPSETTING(  0, DEF_STR( Off ) )\
-	PORT_DIPSETTING(0x10, DEF_STR( On ) )\
-	PORT_DIPNAME ( 0x0c, 0x04, "Device 8")\
-	PORT_DIPSETTING(  0, "None" )\
-	PORT_DIPSETTING(  4, "IEEE488 Port 0/C1551 Floppy Drive" )\
-	PORT_DIPSETTING(  8, "Serial Bus/VC1541 Floppy Drive" )\
-	PORT_DIPNAME ( 0x03, 0x01, "Device 9")\
-	PORT_DIPSETTING(  0, "None" )\
-	PORT_DIPSETTING(  1, "IEEE488 Port 1/C1551 Floppy Drive" )\
-	PORT_DIPSETTING(  2, "Serial Bus/VC1541 Floppy Drive" )\
-	PORT_START
+	PORT_DIPSETTING(0x10, DEF_STR( On ) )
 
 INPUT_PORTS_START (c16)
-	 DIPS_BOTH
-     PORT_DIPNAME (3, 3, "Memory")
-	 PORT_DIPSETTING (0, "16 KByte")
-	 PORT_DIPSETTING (2, "32 KByte")
-	 PORT_DIPSETTING (3, "64 KByte")
+	DIPS_BOTH
+	PORT_START
+	PORT_BIT (0xc0, 0x0, IPT_UNUSED)		   /* no real floppy */
+	PORT_DIPNAME ( 0x38, 8, "Device 8")\
+	PORT_DIPSETTING(  0, "None" )\
+	PORT_DIPSETTING( 8, "C1551 Floppy Drive Simulation" )\
+	PORT_DIPSETTING( 0x18, "Serial Bus/VC1541 Floppy Drive Simulation" )\
+	PORT_DIPNAME ( 0x07, 0x01, "Device 9")\
+	PORT_DIPSETTING(  0, "None" )\
+	PORT_DIPSETTING(  1, "C1551 Floppy Drive Simulation" )\
+	PORT_DIPSETTING(  3, "Serial Bus/VC1541 Floppy Drive Simulation" )\
+	PORT_START
+	PORT_BIT (0x10, 0x0, IPT_UNUSED)		   /* pal */
+	PORT_BIT (0xc, 0x0, IPT_UNUSED)		   /* c16 */
+	PORT_DIPNAME (3, 3, "Memory")
+	PORT_DIPSETTING (0, "16 KByte")
+	PORT_DIPSETTING (2, "32 KByte")
+	PORT_DIPSETTING (3, "64 KByte")
 INPUT_PORTS_END
 
-INPUT_PORTS_START (plus4)
-	 DIPS_BOTH
-     PORT_BIT (0x3, 0x3, IPT_UNUSED)		   /* 64K Memory */
+INPUT_PORTS_START (c16c)
+	DIPS_BOTH
+	PORT_START
+	PORT_BIT (0xc0, 0x40, IPT_UNUSED)		   /* c1551 floppy */
+	PORT_BIT (0x38, 0x10, IPT_UNUSED)
+	PORT_BIT (0x7, 0x0, IPT_UNUSED)
+	PORT_START
+	PORT_BIT (0x10, 0x0, IPT_UNUSED)		   /* pal */
+	PORT_BIT (0xc, 0x0, IPT_UNUSED)		   /* c16 */
+	PORT_DIPNAME (3, 3, "Memory")
+	PORT_DIPSETTING (0, "16 KByte")
+	PORT_DIPSETTING (2, "32 KByte")
+	PORT_DIPSETTING (3, "64 KByte")
 INPUT_PORTS_END
+
+#ifdef PET_TEST_CODE
+INPUT_PORTS_START (c16v)
+	DIPS_BOTH
+	PORT_START
+	PORT_BIT (0xc0, 0x80, IPT_UNUSED)		   /* vc1541 floppy */
+	PORT_DIPNAME ( 0x38, 0x10, "Device 8")\
+	PORT_DIPSETTING(  0, "None" )\
+	PORT_DIPSETTING(  8, "C1551 Floppy Drive Simulation" )\
+	PORT_DIPSETTING(  0x18, "Serial Bus/VC1541 Floppy Drive Simulation" )\
+	PORT_DIPSETTING(  0x20, "VC1541 Floppy Drive" )\
+	PORT_DIPNAME ( 0x07, 0x01, "Device 9")\
+	PORT_DIPSETTING(  0, "None" )\
+	PORT_DIPSETTING(  1, "C1551 Floppy Drive Simulation" )\
+	PORT_DIPSETTING(  3, "Serial Bus/VC1541 Floppy Drive Simulation" )\
+	PORT_START
+	PORT_BIT (0x10, 0x0, IPT_UNUSED)		   /* pal */
+	PORT_BIT (0xc, 0x0, IPT_UNUSED)		   /* c16 */
+	PORT_DIPNAME (3, 3, "Memory")
+	PORT_DIPSETTING (0, "16 KByte")
+	PORT_DIPSETTING (2, "32 KByte")
+	PORT_DIPSETTING (3, "64 KByte")
+INPUT_PORTS_END
+#endif
+
+INPUT_PORTS_START (plus4)
+	DIPS_BOTH
+	PORT_START
+	PORT_BIT (0xc0, 0x00, IPT_UNUSED)		   /* no real floppy */
+	PORT_DIPNAME ( 0x38, 0x8, "Device 8")\
+	PORT_DIPSETTING(  0, "None" )\
+	PORT_DIPSETTING(  8, "C1551 Floppy Drive Simulation" )\
+	PORT_DIPSETTING(  0x18, "Serial Bus/VC1541 Floppy Drive Simulation" )\
+	PORT_DIPNAME ( 0x07, 0x01, "Device 9")\
+	PORT_DIPSETTING(  0, "None" )\
+	PORT_DIPSETTING(  1, "C1551 Floppy Drive Simulation" )\
+	PORT_DIPSETTING(  3, "Serial Bus/VC1541 Floppy Drive Simulation" )\
+	PORT_START
+	PORT_BIT (0x10, 0x10, IPT_UNUSED)		   /* ntsc */
+	PORT_BIT (0xc, 0x4, IPT_UNUSED)		   /* plus4 */
+	PORT_BIT (0x3, 0x3, IPT_UNUSED)		   /* 64K Memory */
+INPUT_PORTS_END
+
+INPUT_PORTS_START (plus4c)
+	DIPS_BOTH
+	PORT_START
+	PORT_BIT (0xc0, 0x40, IPT_UNUSED)		   /* c1551 floppy */
+	PORT_BIT (0x38, 0x10, IPT_UNUSED)
+	PORT_BIT (0x7, 0x0, IPT_UNUSED)
+	PORT_START
+	PORT_BIT (0x10, 0x10, IPT_UNUSED)		   /* ntsc */
+	PORT_BIT (0xc, 0x4, IPT_UNUSED)		   /* plus4 */
+	PORT_BIT (0x3, 0x3, IPT_UNUSED)		   /* 64K Memory */
+INPUT_PORTS_END
+
+#ifdef PET_TEST_CODE
+INPUT_PORTS_START (plus4v)
+	DIPS_BOTH
+	PORT_START
+	PORT_BIT (0xc0, 0x80, IPT_UNUSED)		   /* vc1541 floppy */
+	PORT_DIPNAME ( 0x38, 0x10, "Device 8")\
+	PORT_DIPSETTING(  0, "None" )\
+	PORT_DIPSETTING(  8, "C1551 Floppy Drive Simulation" )\
+	PORT_DIPSETTING(  0x18, "Serial Bus/VC1541 Floppy Drive Simulation" )\
+	PORT_DIPSETTING(  0x20, "VC1541 Floppy Drive" )\
+	PORT_DIPNAME ( 0x07, 0x01, "Device 9")\
+	PORT_DIPSETTING(  0, "None" )\
+	PORT_DIPSETTING(  1, "C1551 Floppy Drive Simulation" )\
+	PORT_DIPSETTING(  3, "Serial Bus/VC1541 Floppy Drive Simulation" )\
+	PORT_START
+	PORT_BIT (0x10, 0x10, IPT_UNUSED)		   /* ntsc */
+	PORT_BIT (0xc, 0x4, IPT_UNUSED)		   /* plus4 */
+	PORT_BIT (0x3, 0x3, IPT_UNUSED)		   /* 64K Memory */
+INPUT_PORTS_END
+#endif
 
 #if 0
 INPUT_PORTS_START (c364)
-	 DIPS_BOTH
-     PORT_BIT (0x3, 0x3, IPT_UNUSED)		   /* 64K Memory */
+	DIPS_BOTH
+	PORT_START
+	PORT_BIT (0xc0, 0x00, IPT_UNUSED)		   /* no real floppy */
+	PORT_DIPNAME ( 0x38, 0x10, "Device 8")\
+	PORT_DIPSETTING(  0, "None" )\
+	PORT_DIPSETTING(  8, "C1551 Floppy Drive Simulation" )\
+	PORT_DIPSETTING(  0x18, "Serial Bus/VC1541 Floppy Drive Simulation" )\
+	PORT_DIPNAME ( 0x03, 0x01, "Device 9")\
+	PORT_DIPSETTING(  0, "None" )\
+	PORT_DIPSETTING(  1, "C1551 Floppy Drive Simulation" )\
+	PORT_DIPSETTING(  3, "Serial Bus/VC1541 Floppy Drive Simulation" )\
+	PORT_START
+	PORT_BIT (0xc, 0x8, IPT_UNUSED)		   /* 364 */
+	PORT_BIT (0x3, 0x3, IPT_UNUSED)		   /* 64K Memory */
 	 /* numeric block
         hardware wired to other keys?
         @ + - =
@@ -469,23 +570,20 @@ static void c16_init_palette (unsigned char *sys_palette, unsigned short *sys_co
 /* cbm version in kernel at 0xff80 (offset 0x3f80)
    0x80 means pal version */
 
-     /* 318006-01 */
-	 ROM_LOAD ("basic.80", 0x10000, 0x4000, 0x74eaae87)
+     /* basic */
+	 ROM_LOAD ("318006.01", 0x10000, 0x4000, 0x74eaae87)
 
-	 /* 318004-05 pal */
-	 ROM_LOAD("kernel5p.c0",    0x14000, 0x4000, 0x71c07bd4)
-	 /* 318004-03 pal */
-	 ROM_LOAD ("kernel3p.c0", 0x14000, 0x4000, 0x77bab934)
+	 /* kernal pal */
+	 ROM_LOAD("318004.05",    0x14000, 0x4000, 0x71c07bd4)
+	 ROM_LOAD ("318004.03", 0x14000, 0x4000, 0x77bab934)
 
-	 /* 318005-05 */
-	 ROM_LOAD ("kernel5.c0", 0x14000, 0x4000, 0x70295038)
-	 /* 318005-04 */
-	 ROM_LOAD ("kernel4.c0", 0x14000, 0x4000, 0x799a633d)
+	 /* kernal ntsc */
+	 ROM_LOAD ("318005.05", 0x14000, 0x4000, 0x70295038)
+	 ROM_LOAD ("318005.04", 0x14000, 0x4000, 0x799a633d)
 
-	 /* 317053-01 */
-	 ROM_LOAD ("3plus1lo.rom", 0x18000, 0x4000, 0x4fd1d8cb)
-	 /* 317054-01 */
-	 ROM_LOAD ("3plus1hi.rom", 0x1c000, 0x4000, 0x109de2fc)
+	 /* 3plus1 program */
+	 ROM_LOAD ("317053.01", 0x18000, 0x4000, 0x4fd1d8cb)
+	 ROM_LOAD ("317054.01", 0x1c000, 0x4000, 0x109de2fc)
 
 	 /* same as 109de2fc, but saved from running machine, so
 		io area different ! */
@@ -496,35 +594,62 @@ static void c16_init_palette (unsigned char *sys_palette, unsigned short *sys_co
 
 ROM_START (c16)
 	 ROM_REGION (0x40000, REGION_CPU1)
-	 ROM_LOAD ("basic.80", 0x10000, 0x4000, 0x74eaae87)
-	 ROM_LOAD("kernel5p.c0",    0x14000, 0x4000, 0x71c07bd4)
-#ifdef VC1541
-	 VC1541_ROM (REGION_CPU2)
-#endif
+	 ROM_LOAD ("318006.01", 0x10000, 0x4000, 0x74eaae87)
+	 ROM_LOAD("318004.05",    0x14000, 0x4000, 0x71c07bd4)
 ROM_END
+
+ROM_START (c16c)
+	 ROM_REGION (0x40000, REGION_CPU1)
+	 ROM_LOAD ("318006.01", 0x10000, 0x4000, 0x74eaae87)
+	 ROM_LOAD("318004.05",    0x14000, 0x4000, 0x71c07bd4)
+	 C1551_ROM (REGION_CPU2)
+ROM_END
+
+#ifdef PET_TEST_CODE
+ROM_START (c16v)
+	 ROM_REGION (0x40000, REGION_CPU1)
+	 ROM_LOAD ("318006.01", 0x10000, 0x4000, 0x74eaae87)
+	 ROM_LOAD("318004.05",    0x14000, 0x4000, 0x71c07bd4)
+	 VC1541_ROM (REGION_CPU2)
+ROM_END
+#endif
 
 ROM_START (plus4)
 	 ROM_REGION (0x40000, REGION_CPU1)
-	 ROM_LOAD ("basic.80", 0x10000, 0x4000, 0x74eaae87)
-	 ROM_LOAD ("kernel5.c0", 0x14000, 0x4000, 0x70295038)
-	 ROM_LOAD ("3plus1lo.rom", 0x18000, 0x4000, 0x4fd1d8cb)
-	 ROM_LOAD ("3plus1hi.rom", 0x1c000, 0x4000, 0x109de2fc)
-#ifdef VC1541
-	 VC1541_ROM (REGION_CPU2)
-#endif
+	 ROM_LOAD ("318006.01", 0x10000, 0x4000, 0x74eaae87)
+	 ROM_LOAD ("318005.05", 0x14000, 0x4000, 0x70295038)
+	 ROM_LOAD ("317053.01", 0x18000, 0x4000, 0x4fd1d8cb)
+	 ROM_LOAD ("317054.01", 0x1c000, 0x4000, 0x109de2fc)
 ROM_END
+
+ROM_START (plus4c)
+	 ROM_REGION (0x40000, REGION_CPU1)
+	 ROM_LOAD ("318006.01", 0x10000, 0x4000, 0x74eaae87)
+	 ROM_LOAD ("318005.05", 0x14000, 0x4000, 0x70295038)
+	 ROM_LOAD ("317053.01", 0x18000, 0x4000, 0x4fd1d8cb)
+	 ROM_LOAD ("317054.01", 0x1c000, 0x4000, 0x109de2fc)
+	 C1551_ROM (REGION_CPU2)
+ROM_END
+
+#ifdef PET_TEST_CODE
+ROM_START (plus4v)
+	 ROM_REGION (0x40000, REGION_CPU1)
+	 ROM_LOAD ("318006.01", 0x10000, 0x4000, 0x74eaae87)
+	 ROM_LOAD ("318005.05", 0x14000, 0x4000, 0x70295038)
+	 ROM_LOAD ("317053.01", 0x18000, 0x4000, 0x4fd1d8cb)
+	 ROM_LOAD ("317054.01", 0x1c000, 0x4000, 0x109de2fc)
+	 VC1541_ROM (REGION_CPU2)
+ROM_END
+#endif
 
 ROM_START (c364)
 	 ROM_REGION (0x40000, REGION_CPU1)
-	 ROM_LOAD ("basic.80", 0x10000, 0x4000, 0x74eaae87)
+	 ROM_LOAD ("318006.01", 0x10000, 0x4000, 0x74eaae87)
 	 ROM_LOAD ("kern364p.bin", 0x14000, 0x4000, 0x84fd4f7a)
-	 ROM_LOAD ("3plus1lo.rom", 0x18000, 0x4000, 0x4fd1d8cb)
-	 ROM_LOAD ("3plus1hi.rom", 0x1c000, 0x4000, 0x109de2fc)
+	 ROM_LOAD ("317053.01", 0x18000, 0x4000, 0x4fd1d8cb)
+	 ROM_LOAD ("317054.01", 0x1c000, 0x4000, 0x109de2fc)
 	 /* at address 0x20000 not so good */
 	 ROM_LOAD ("spk3cc4.bin", 0x28000, 0x4000, 0x5227c2ee)
-#ifdef VC1541
-	 VC1541_ROM (REGION_CPU2)
-#endif
 ROM_END
 
 static struct MachineDriver machine_driver_c16 =
@@ -539,11 +664,8 @@ static struct MachineDriver machine_driver_c16 =
 			c16_frame_interrupt, 1,
 			ted7360_raster_interrupt, TED7360_HRETRACERATE,
 		},
-#ifdef VC1541
-		VC1541_CPU (REGION_CPU2)
-#endif
 	},
-	TED7360PAL_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,		/* frames per second, vblank duration */
+	TED7360PAL_VRETRACERATE, 0,		/* frames per second, vblank duration */
 	0,
 	c16_init_machine,
 	c16_shutdown_machine,
@@ -569,6 +691,98 @@ static struct MachineDriver machine_driver_c16 =
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
+
+static struct MachineDriver machine_driver_c16c =
+{
+  /* basic machine hardware */
+	{
+		{
+			CPU_M6510,				   /* MOS7501 has no nmi line */
+			1400000,				   /*TED7360PAL_CLOCK/2, */
+			c16_readmem, c16_writemem,
+			0, 0,
+			c16_frame_interrupt, 1,
+			ted7360_raster_interrupt, TED7360_HRETRACERATE,
+		},
+		C1551_CPU
+	},
+	TED7360PAL_VRETRACERATE, 0,		/* frames per second, vblank duration */
+#ifdef CPU_SYNC
+	1,
+#else
+	100,
+#endif
+	c16_init_machine,
+	c16_shutdown_machine,
+
+  /* video hardware */
+	336,							   /* screen width */
+	216,							   /* screen height */
+	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
+	0,								   /* graphics decode info */
+	sizeof (ted7360_palette) / sizeof (ted7360_palette[0]) / 3,
+	0,
+	c16_init_palette,				   /* convert color prom */
+	VIDEO_TYPE_RASTER,
+	0,
+	ted7360_vh_start,
+	ted7360_vh_stop,
+	ted7360_vh_screenrefresh,
+
+  /* sound hardware */
+	0, 0, 0, 0,
+	{
+		{SOUND_CUSTOM, &ted7360_sound_interface},
+		{SOUND_DAC, &vc20tape_sound_interface}
+	}
+};
+
+#ifdef PET_TEST_CODE
+static struct MachineDriver machine_driver_c16v =
+{
+  /* basic machine hardware */
+	{
+		{
+			CPU_M6510,				   /* MOS7501 has no nmi line */
+			1400000,				   /*TED7360PAL_CLOCK/2, */
+			c16_readmem, c16_writemem,
+			0, 0,
+			c16_frame_interrupt, 1,
+			ted7360_raster_interrupt, TED7360_HRETRACERATE,
+		},
+		VC1541_CPU
+	},
+	TED7360PAL_VRETRACERATE, 0,		/* frames per second, vblank duration */
+#ifdef CPU_SYNC
+	1,
+#else
+	3000,
+#endif
+	c16_init_machine,
+	c16_shutdown_machine,
+
+  /* video hardware */
+	336,							   /* screen width */
+	216,							   /* screen height */
+	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
+	0,								   /* graphics decode info */
+	sizeof (ted7360_palette) / sizeof (ted7360_palette[0]) / 3,
+	0,
+	c16_init_palette,				   /* convert color prom */
+	VIDEO_TYPE_RASTER,
+	0,
+	ted7360_vh_start,
+	ted7360_vh_stop,
+	ted7360_vh_screenrefresh,
+
+  /* sound hardware */
+	0, 0, 0, 0,
+	{
+		{SOUND_CUSTOM, &ted7360_sound_interface},
+		{SOUND_DAC, &vc20tape_sound_interface}
+	}
+};
+#endif
 
 static struct MachineDriver machine_driver_plus4 =
 {
@@ -582,12 +796,8 @@ static struct MachineDriver machine_driver_plus4 =
 			c16_frame_interrupt, 1,
 			ted7360_raster_interrupt, TED7360_HRETRACERATE,
 		},
-#ifdef VC1541
-		VC1541_CPU (REGION_CPU2)
-#endif
 	},
-	TED7360NTSC_VRETRACERATE,
-	DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
+	TED7360NTSC_VRETRACERATE,0, /* frames per second, vblank duration */
 	0,
 	c16_init_machine,
 	c16_shutdown_machine,
@@ -614,6 +824,100 @@ static struct MachineDriver machine_driver_plus4 =
 	}
 };
 
+static struct MachineDriver machine_driver_plus4c =
+{
+  /* basic machine hardware */
+	{
+		{
+			CPU_M6510,				   /* MOS 7501 */
+			1200000,				   /*TED7360NTSC_CLOCK/2, */
+			plus4_readmem, plus4_writemem,
+			0, 0,
+			c16_frame_interrupt, 1,
+			ted7360_raster_interrupt, TED7360_HRETRACERATE,
+		},
+		C1551_CPU
+	},
+	TED7360NTSC_VRETRACERATE,
+	DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
+#ifdef CPU_SYNC
+	1,
+#else
+	1000,
+#endif
+	c16_init_machine,
+	c16_shutdown_machine,
+
+  /* video hardware */
+	336,							   /* screen width */
+	216,							   /* screen height */
+	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
+	0,								   /* graphics decode info */
+	sizeof (ted7360_palette) / sizeof (ted7360_palette[0]) / 3,
+	0,
+	c16_init_palette,				   /* convert color prom */
+	VIDEO_TYPE_RASTER,
+	0,
+	ted7360_vh_start,
+	ted7360_vh_stop,
+	ted7360_vh_screenrefresh,
+
+  /* sound hardware */
+	0, 0, 0, 0,
+	{
+		{SOUND_CUSTOM, &ted7360_sound_interface},
+		{SOUND_DAC, &vc20tape_sound_interface}
+	}
+};
+
+#ifdef PET_TEST_CODE
+static struct MachineDriver machine_driver_plus4v =
+{
+  /* basic machine hardware */
+	{
+		{
+			CPU_M6510,				   /* MOS 7501 */
+			1200000,				   /*TED7360NTSC_CLOCK/2, */
+			plus4_readmem, plus4_writemem,
+			0, 0,
+			c16_frame_interrupt, 1,
+			ted7360_raster_interrupt, TED7360_HRETRACERATE,
+		},
+		VC1541_CPU
+	},
+	TED7360NTSC_VRETRACERATE,
+	DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
+#ifdef CPU_SYNC
+	1,
+#else
+	3000,
+#endif
+	c16_init_machine,
+	c16_shutdown_machine,
+
+  /* video hardware */
+	336,							   /* screen width */
+	216,							   /* screen height */
+	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
+	0,								   /* graphics decode info */
+	sizeof (ted7360_palette) / sizeof (ted7360_palette[0]) / 3,
+	0,
+	c16_init_palette,				   /* convert color prom */
+	VIDEO_TYPE_RASTER,
+	0,
+	ted7360_vh_start,
+	ted7360_vh_stop,
+	ted7360_vh_screenrefresh,
+
+  /* sound hardware */
+	0, 0, 0, 0,
+	{
+		{SOUND_CUSTOM, &ted7360_sound_interface},
+		{SOUND_DAC, &vc20tape_sound_interface}
+	}
+};
+#endif
+
 static struct MachineDriver machine_driver_c364 =
 {
   /* basic machine hardware */
@@ -626,9 +930,6 @@ static struct MachineDriver machine_driver_c364 =
 			c16_frame_interrupt, 1,
 			ted7360_raster_interrupt, TED7360_HRETRACERATE,
 		},
-#ifdef VC1541
-		VC1541_CPU (REGION_CPU2)
-#endif
 	},
 	TED7360NTSC_VRETRACERATE,
 	DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
@@ -664,7 +965,7 @@ static const struct IODevice io_c16[] =
 	{
 		IO_CARTSLOT,				   /* type */
 		2,							   /* normal 1 *//* count */
-		NULL,						   /* file extensions */
+		"bin\0rom\0",				   /* file extensions */
 		NULL,						   /* private */
 		c16_rom_id,					   /* id */
 		c16_rom_init,				   /* init */
@@ -684,15 +985,86 @@ static const struct IODevice io_c16[] =
 	{IO_END}
 };
 
-#define io_plus4 io_c16
-#define io_c364 io_c16
+static const struct IODevice io_c16c[] =
+{
+	IODEVICE_CBM_QUICK,
+	{
+		IO_CARTSLOT,				   /* type */
+		2,							   /* normal 1 *//* count */
+		"bin\0rom\0",				   /* file extensions */
+		NULL,						   /* private */
+		c16_rom_id,					   /* id */
+		c16_rom_init,				   /* init */
+		NULL,						   /* exit */
+		NULL,						   /* info */
+		NULL,						   /* open */
+		NULL,						   /* close */
+		NULL,						   /* status */
+		NULL,						   /* seek */
+		NULL,						   /* input */
+		NULL,						   /* output */
+		NULL,						   /* input_chunk */
+		NULL						   /* output_chunk */
+	},
+	IODEVICE_VC20TAPE,
+	IODEVICE_C1551,
+	{IO_END}
+};
 
-#define init_c16 c16_driver_init
-#define init_plus4 plus4_driver_init
-#define init_c364 plus4_driver_init
+#ifdef PET_TEST_CODE
+static const struct IODevice io_c16v[] =
+{
+	IODEVICE_CBM_QUICK,
+	{
+		IO_CARTSLOT,				   /* type */
+		2,							   /* normal 1 *//* count */
+		"bin\0rom\0",				   /* file extensions */
+		NULL,						   /* private */
+		c16_rom_id,					   /* id */
+		c16_rom_init,				   /* init */
+		NULL,						   /* exit */
+		NULL,						   /* info */
+		NULL,						   /* open */
+		NULL,						   /* close */
+		NULL,						   /* status */
+		NULL,						   /* seek */
+		NULL,						   /* input */
+		NULL,						   /* output */
+		NULL,						   /* input_chunk */
+		NULL						   /* output_chunk */
+	},
+	IODEVICE_VC20TAPE,
+	IODEVICE_VC1541,
+	{IO_END}
+};
+#endif
 
-/*	   YEAR  NAME	PARENT	MACHINE INPUT	INIT	COMPANY 						   FULLNAME */
-COMPX (1984, c16,	0,		c16,	c16,	c16,	"Commodore Business Machines Co.", "Commodore C16/C116/C232/C264 (PAL)",    GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
-COMPX (1984, plus4, c16,	plus4,	plus4,	plus4,	"Commodore Business Machines Co.", "Commodore +4 (NTSC)",                   GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
-COMPX (198?, c364,	c16,	c364,	plus4,	plus4,	"Commodore Business Machines Co.", "Commodore 364 (Prototype)",             GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
+#define io_plus4		io_c16
+#define io_plus4c		io_c16c
+#define io_plus4v		io_c16v
+#define io_c364			io_c16
 
+#define init_c16		c16_driver_init
+#define init_c16c		c16_driver_init
+#define init_c16v		c16_driver_init
+#define init_plus4		c16_driver_init
+#define init_plus4c		c16_driver_init
+#define init_plus4v		c16_driver_init
+#define init_c364		c16_driver_init
+
+/*		YEAR	NAME	PARENT	MACHINE	INPUT	INIT	COMPANY									FULLNAME */
+#ifdef PET_TEST_CODE
+COMP (	1984,	c16,	0,		c16,	c16,	c16,	"Commodore Business Machines Co.",		"Commodore C16/C116/C232/C264 (PAL)")
+COMP (	1984,	c16c,	c16,   	c16c,	c16c,	c16,	"Commodore Business Machines Co.",		"Commodore C16/C116/C232/C264 (PAL), C1551")
+COMP (	1984,	c16v,	c16,	c16v,	c16v,	c16,	"Commodore Business Machines Co.",		"Commodore C16/C116/C232/C264 (PAL), VC1541")
+COMP (	1984,	plus4,	c16,	plus4,	plus4,	plus4,	"Commodore Business Machines Co.",		"Commodore +4 (NTSC)")
+COMP (	1984,	plus4c,	c16,	plus4c,	plus4c,	plus4,	"Commodore Business Machines Co.",		"Commodore +4 (NTSC), C1551")
+COMP (	1984,	plus4v,	c16,	plus4v,	plus4v,	plus4,	"Commodore Business Machines Co.",		"Commodore +4 (NTSC), VC1541")
+COMP (	198?,	c364,	c16,	c364,	plus4,	plus4,	"Commodore Business Machines Co.",		"Commodore 364 (Prototype)")
+#else
+COMPX (	1984,	c16,	0,		c16,	c16,	c16,	"Commodore Business Machines Co.",		"Commodore C16/C116/C232/C264 (PAL)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
+COMPX (	1984,	c16c,	c16,   	c16c,	c16c,	c16,	"Commodore Business Machines Co.",		"Commodore C16/C116/C232/C264 (PAL), C1551", GAME_NOT_WORKING | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
+COMPX (	1984,	plus4,	c16,	plus4,	plus4,	plus4,	"Commodore Business Machines Co.",		"Commodore +4 (NTSC)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
+COMPX (	1984,	plus4c,	c16,	plus4c,	plus4c,	plus4,	"Commodore Business Machines Co.",		"Commodore +4 (NTSC), C1551", GAME_NOT_WORKING | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
+COMPX (	198?,	c364,	c16,	c364,	plus4,	plus4,	"Commodore Business Machines Co.",		"Commodore 364 (Prototype)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
+#endif

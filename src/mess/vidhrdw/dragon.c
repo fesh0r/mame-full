@@ -1,7 +1,10 @@
 /* Video hardware for CoCo/Dragon family
  *
- * TODO
- *		Implement missing CoCo 3 GIME registers (denoted with '!')
+ * TODO:
+ *		- Implement "burst phase invert" (it switches the artifact colors)
+ *		- Figure out what Bit 3 of $FF98 is and implement it
+ *		- Support palette rotation at HBLANK time, and maybe get a SockMaster
+ *		  demo working...
  */
 
 #include "machine/6821pia.h"
@@ -12,6 +15,8 @@ static int coco3_hires;
 static int coco3_gimevhreg[8];
 static int coco3_borderred, coco3_bordergreen, coco3_borderblue;
 static int sam_videomode;
+static int coco3_somethingdirty;
+static int coco3_blinkstatus;
 static struct GfxElement *coco3font;
 
 #define MAX_HIRES_VRAM	57600
@@ -139,7 +144,7 @@ struct GfxElement *build_coco3_font(void)
 
 	mem = memory_region(REGION_CPU1);
 
-	/* The font info for the CoCo 3 hi res text modes happens to be 
+	/* The font info for the CoCo 3 hi res text modes happens to be
 	 * same as the font info used for the HPRINT command, which is in
 	 * the CoCo 3 ROM, so we get it from there
 	 */
@@ -233,7 +238,7 @@ static void coco3_compute_color(int color, int *red, int *green, int *blue)
 		/* CMP colors
 		 *
 		 * These colors are of the format IICCCC, where II is the intensity and
-		 * CCCC is the base color.  There is some weirdness because intensity 
+		 * CCCC is the base color.  There is some weirdness because intensity
 		 * is often different for each base color.  Thus a table is used here
 		 * to map to RGB colors
 		 *
@@ -242,7 +247,7 @@ static void coco3_compute_color(int color, int *red, int *green, int *blue)
 		 * that mapped RGB to CMP, then I compared it with the palette that the
 		 * CoCo III uses on startup for CMP. Where they conflicted, the CoCo III
 		 * startup palette took precedence. Where neither of them helped, I guessed
-		 * 
+		 *
 		 * The fault of this table is that some colors directly map to each other.
 		 * I do not like this, so if anyone can come up with a better formula, I'm
 		 * all ears.
@@ -316,7 +321,7 @@ static void coco3_compute_color(int color, int *red, int *green, int *blue)
 		color = cmp2rgb[color & 63];
 	}
 
-	/* RGB colors 
+	/* RGB colors
 	 *
 	 * These colors are of the format RGBRGB, where the first 3 bits
 	 * are more significant than the last three bits
@@ -324,6 +329,14 @@ static void coco3_compute_color(int color, int *red, int *green, int *blue)
 	*red = (((color >> 4) & 2) | ((color >> 2) & 1)) * 0x55;
 	*green = (((color >> 3) & 2) | ((color >> 1) & 1)) * 0x55;
 	*blue = (((color >> 2) & 2) | ((color >> 0) & 1)) * 0x55;
+
+	if (!input_port_11_r(0) && (coco3_gimevhreg[0] & 0x10)) {
+		/* We are on a composite monitor/TV and the monochrome phase invert
+		 * flag is on in the GIME.  This means we have to average out all
+		 * colors
+		 */
+		*red = *green = *blue = (*red + *green + *blue) / 3;
+	}
 }
 
 static void coco3_vh_palette_change_color(int color, int data)
@@ -331,6 +344,13 @@ static void coco3_vh_palette_change_color(int color, int data)
 	int red, green, blue;
 	coco3_compute_color(data, &red, &green, &blue);
 	palette_change_color(color, red, green, blue);
+}
+
+static void coco3_vh_palette_recompute(void)
+{
+	int i;
+	for (i = 0; i < 16; i++)
+		coco3_vh_palette_change_color(i, paletteram[i]);
 }
 
 static int coco3_vh_setborder(struct osd_bitmap *bitmap, int red, int green, int blue, int screenx, int screeny)
@@ -374,6 +394,12 @@ static int coco3_vh_setborder(struct osd_bitmap *bitmap, int red, int green, int
 	return full_refresh;
 }
 
+void coco3_vh_blink(void)
+{
+	coco3_blinkstatus = !coco3_blinkstatus;
+	coco3_somethingdirty = 1;
+}
+
 void coco3_palette_w(int offset, int data)
 {
 	paletteram[offset] = data;
@@ -413,6 +439,8 @@ static void coco3_artifact_blue(int *artifactcolors)
 
 void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
+	extern void coco3_vbord(void);
+
 	UINT8 *RAM = memory_region(REGION_CPU1);
 	static int coco3_metapalette[] = {
 		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
@@ -441,12 +469,13 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	}
 
 	/* clear vblank */
-	pia_0_cb1_w (0, 0);
+	coco3_vbord();
 
 	if (coco3_hires) {
-		static int blink_status, blink_timer;
+		static int last_blink;
+		int blink_switch=0;
 		int vidbase, bytesperrow, linesperrow, rows = 0, x, y, basex = 0, basey, wf = 0;
-		int use_attr, charsperrow = 0, blink_switch = 0, underlined = 0;
+		int use_attr, charsperrow = 0, underlined = 0;
 		int visualbytesperrow, c, emupixelsperbyte;
 		int borderred, bordergreen, borderblue;
 		UINT8 *vram, *db;
@@ -487,6 +516,7 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			memset(dirtybuffer, 1, MAX_HIRES_VRAM);
 			m6847_full_refresh = 0;
 	        osd_mark_dirty(0, (225 - rows) / 2, 639, (225 - rows) / 2 + rows-1, 0);
+			coco3_somethingdirty = 1;
 		}
 
 		use_mark_dirty = 1;
@@ -494,43 +524,11 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 		switch(coco3_gimevhreg[0] & 0x80) {
 		case 0x00:	/* Text */
-			rows /= 8;
 			use_attr = coco3_gimevhreg[1] & 1;
-			switch(coco3_gimevhreg[1] & 0x14) {
-			case 0x14:
-				charsperrow = 80;
-				basex = 0;
-				wf = 1;
-				break;
-			case 0x10:
-				charsperrow = 64;
-				basex = 64;
-				wf = 1;
-				break;
-			case 0x04:
-				charsperrow = 40;
-				basex = 0;
-				wf = 2;
-				break;
-			case 0x00:
-				charsperrow = 32;
-				basex = 64;
-				wf = 2;
-				break;
-			}
-
-			if (!bytesperrow)
-				bytesperrow = charsperrow * (use_attr + 1);
-
 			if (use_attr) {
 				/* Resolve blink */
-				/* TODO: This needs to be adjusted to a true timer; not a counter */
-				blink_switch = (++blink_timer > 3);
-
-				if (blink_switch) {
-					blink_timer = 0;
-					blink_status = !blink_status;
-				}
+				blink_switch = coco3_blinkstatus == last_blink;
+				last_blink = coco3_blinkstatus;
 			}
 			else {
 				/* Set colortable to be default */
@@ -539,48 +537,77 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				underlined = 0;
 			}
 
-			for (y = 0; y < rows; y++) {
-				i = y * bytesperrow;
-				vram = &RAM[(vidbase + i) & 0x7FFFF];
-				db = dirtybuffer + i;
-
-				for (x = 0; x < charsperrow; x++) {
-					if (db[0] || (use_attr && (db[1] || (blink_switch && (vram[1] & 0x80))))) {
-						b = *vram & 0x7f;
-
-						if (use_attr) {
-							coco3font->colortable[0] = Machine->pens[vram[1] & 7];
-							coco3font->colortable[1] = Machine->pens[8 + ((vram[1] >> 3) & 7)];
-
-							/* Are we blinking? */
-							if (blink_status && (vram[1] & 0x80)) {
-								b = 0;
-								underlined = 0;
-							}
-							else {
-								/* Are we underlined? */
-								underlined = vram[1] & 0x40;
-							}
-						}
-
-						drawgfx_wf(bitmap, coco3font, b, x*8*wf+basex, y*8+basey, 0, TRANSPARENCY_NONE, 0, wf);
-						if (underlined)
-							drawgfx_wf(bitmap, coco3font, 128, x*8*wf+basex, y*8+basey, 0, TRANSPARENCY_PEN, 0, wf);
-						if (use_mark_dirty)
-							osd_mark_dirty(x*8*wf+basex, y*8+basey, (x+1)*8*wf-1+basex, y*8+7+basey, 0);
-
-						db[0] = 0;
-						if (use_attr)
-							db[1] = 0;
-					}
-					vram++;
-					db++;
-					vram += use_attr;
-					db += use_attr;
-
-					if (vram > &RAM[0x80000])
-						vram -= 0x80000;
+			if (coco3_somethingdirty) {
+				rows /= 8;
+				switch(coco3_gimevhreg[1] & 0x14) {
+				case 0x14:
+					charsperrow = 80;
+					basex = 0;
+					wf = 1;
+					break;
+				case 0x10:
+					charsperrow = 64;
+					basex = 64;
+					wf = 1;
+					break;
+				case 0x04:
+					charsperrow = 40;
+					basex = 0;
+					wf = 2;
+					break;
+				case 0x00:
+					charsperrow = 32;
+					basex = 64;
+					wf = 2;
+					break;
 				}
+				if (!bytesperrow)
+					bytesperrow = charsperrow * (use_attr + 1);
+
+				for (y = 0; y < rows; y++) {
+					i = y * bytesperrow;
+					vram = &RAM[(vidbase + i) & 0x7FFFF];
+					db = dirtybuffer + i;
+
+					for (x = 0; x < charsperrow; x++) {
+						if (db[0] || (use_attr && (db[1] || (blink_switch && (vram[1] & 0x80))))) {
+							b = *vram & 0x7f;
+
+							if (use_attr) {
+								coco3font->colortable[0] = Machine->pens[vram[1] & 7];
+								coco3font->colortable[1] = Machine->pens[8 + ((vram[1] >> 3) & 7)];
+
+								/* Are we blinking? */
+								if (coco3_blinkstatus && (vram[1] & 0x80)) {
+									b = 0x20;
+									underlined = 0;
+								}
+								else {
+									/* Are we underlined? */
+									underlined = vram[1] & 0x40;
+								}
+							}
+
+							drawgfx_wf(bitmap, coco3font, b, x*8*wf+basex, y*8+basey, 0, TRANSPARENCY_NONE, 0, wf);
+							if (underlined)
+								drawgfx_wf(bitmap, coco3font, 128, x*8*wf+basex, y*8+basey, 0, TRANSPARENCY_PEN, 0, wf);
+							if (use_mark_dirty)
+								osd_mark_dirty(x*8*wf+basex, y*8+basey, (x+1)*8*wf-1+basex, y*8+7+basey, 0);
+
+							db[0] = 0;
+							if (use_attr)
+								db[1] = 0;
+						}
+						vram++;
+						db++;
+						vram += use_attr;
+						db += use_attr;
+
+						if (vram > &RAM[0x80000])
+							vram -= 0x80000;
+					}
+				}
+				coco3_somethingdirty = 0;
 			}
 			break;
 
@@ -700,13 +727,15 @@ static void coco3_ram_w(int offset, int data, int block)
 	unsigned int vidbasediff;
 
 	offset = coco3_mmu_translate(block, offset);
-	
+
 	if (RAM[offset] != data) {
 		if (coco3_hires) {
 			vidbase = (coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8);
 			vidbasediff = (unsigned int) (offset - vidbase) & 0x7ffff;
-			if (vidbasediff < MAX_HIRES_VRAM)
+			if (vidbasediff < MAX_HIRES_VRAM) {
 				dirtybuffer[vidbasediff] = 1;
+				coco3_somethingdirty = 1;
+			}
 		}
 		else {
 			if (offset >= 0x70000)
@@ -757,20 +786,30 @@ int coco3_gimevh_r(int offset)
 
 void coco3_gimevh_w(int offset, int data)
 {
+	int xorval;
+
 	/* Features marked with '!' are not yet implemented */
+
+	xorval = coco3_gimevhreg[offset] ^ data;
 	coco3_gimevhreg[offset] = data;
+
 	switch(offset) {
 	case 0:
 		/*	$FF98 Video Mode Register
 		 *		  Bit 7 BP 0 = Text modes, 1 = Graphics modes
 		 *		  Bit 6 Unused
 		 *		! Bit 5 BPI Burst Phase Invert (Color Set)
-		 *		! Bit 4 MOCH 1 = Monochrome on Composite
+		 *		  Bit 4 MOCH 1 = Monochrome on Composite
 		 *		! Bit 3 H50 1 = 50 Hz power, 0 = 60 Hz power
 		 *		  Bits 0-2 LPR Lines per row
 		 */
-		coco3_borderred = -1;	/* force border to redraw */
-		m6847_full_refresh = 1;
+		if (xorval & 0xA7) {
+			coco3_borderred = -1;	/* force border to redraw */
+			m6847_full_refresh = 1;
+		}
+		if (xorval & 0x10) {
+			coco3_vh_palette_recompute();
+		}
 		break;
 
 	case 1:

@@ -1,1 +1,1 @@
-sample files will be stored here (not used in MESS).
+Place samples directories here

@@ -29,7 +29,7 @@ e378e459 = A Boy and His Blob - Trouble on Blobolonia (E) | 1989 | Absolute Ente
 20a9e4a2 = A Boy and His Blob - Trouble on Blobolonia (U) | 1989 | Absolute Entertainment
 2a83ddc5 = A Nightmare On Elm Street (U) | 1989 | LJN
 58fe5467 = A Ressha De Ikou (J) | ???? | Pony Canyon
-bff8b627 = Aa! Yakyuu Jinsei Itchokusen (J) | 1992 | Sammy
+bff8b627 = Aa Yakyuu Jinsei Itchokusen (J) | 1992 | Sammy
 dc87f63d = Abadox (U) | 1989 | Milton Bradley
 920dd63f = Aces - Iron Eagle 3 (J)
 ee309168 = Action 52 (U)
@@ -160,7 +160,7 @@ c3244352 = Bugs Bunny Fun House (Prototype) (U)
 d56740c2 = Burger Time (J)
 
 1c6f3036 = California Games (U) | 1988 | Milton Bradley
-856114c8 = Castlevania (U, PRG1) | 1987 | Konami
+856114c8 = Castlevania (Rev 1) (U) | 1987 | Konami
 a9c2c503 = Castlevania 2: Simon's Quest (U) | 1988 | Konami
 7cc9c669 = Castlevania 3: Dracula's Curse (U) | 19?? | Konami | NOT PLAYABLE
 1826e6d2 = Caveman Games (U) | 1990 | Data East
@@ -196,7 +196,7 @@ e36d5991 = Galaga (U)
 87ed54aa = Ghosts n' Goblins (U)
 3e8dec2f = Golf (JU)
 d1fb1533 = Gremlins 2: The New Batch (U) | 1990 | Sunsoft
-6d3396e3 = Gumshoe (U; Europe) |  |  | LIGHT GUN GAME/NOT PLAYABLE 
+aab00873 = Gumshoe (UE) |  |  | LIGHT GUN GAME/NOT PLAYABLE 
 526ad690 = Gyruss (U)
 
 56dbfd1f = Hatris (U)
@@ -220,7 +220,7 @@ e9bad787 = Karateka (J)
 05b05500 = Kid Icarus (UE)
 32b45889 = Kung Fu (U)
 
-d7ae93df = The Legend of Zelda (U, PRG0)
+d7ae93df = The Legend of Zelda (Rev 0) (U)
 71d868c4 = Little Nemo: The Dream Master (U) |  |  | NOT PLAYABLE/LOCKS UP
 
 68309d06 = Maniac Mansion (U)
@@ -239,7 +239,7 @@ a2c89cb9 = Metroid (U)
 faf48d27 = Monopoly (U)
 bd0e29b3 = Ms. Pac-Man (U)
 
-7d111919 = Nangoku Shirei: Spy Vs. Spy 2 (J)
+7d111919 = Nangoku Shirei!! Spy Vs. Spy 2 (J)
 9316bf4b = NES Open Tournament Golf (U)
 4de7236f = Ninja Kid (U)
 
@@ -265,11 +265,12 @@ bdd176af = Sky Kid (U)
 c4c896d8 = Spy Vs. Spy (J)
 1ccba824 = Star Wars (U) |  |  | NOT PLAYABLE 
 721be58a = Superman (U) | 1988 | Kemco | GRAPHIC GLITCHES 
-2e1b6b3c = Super Mario Bros. (PRG1,CHR0) (JU) | 1985 | Nintendo
-8aa4ace0 = Super Mario Bros. 2 (PRG0,CHR0) (U) | 1988 | Nintendo
+3337ec46 = Super Mario Bros. (Rev 0) (JU) | 1985 | Nintendo
+2e1b6b3c = Super Mario Bros. (Rev 1) (JU) | 1985 | Nintendo
+8aa4ace0 = Super Mario Bros. 2 (Rev 0) (U) | 1988 | Nintendo
 3bc2e2df = Super Mario Bros. 3 (E) | 1988 | Nintendo | NOT PLAYABLE
-85a79d9c = Super Mario Bros. 3 (PRG0, CHR0) (U) | 1988 | Nintendo | May Lock Up/ Graphic Glitches
-0b742b33 = Super Mario Bros. 3 (PRG1, CHR0) (U) | 1988 | Nintendo | May Lock Up/Graphic Glitches
+85a79d9c = Super Mario Bros. 3 (Rev 0) (U) | 1988 | Nintendo | May Lock Up/ Graphic Glitches
+0b742b33 = Super Mario Bros. 3 (Rev 1) (U) | 1988 | Nintendo | May Lock Up/Graphic Glitches
 
 83213ca0 = Teenage Mutant Ninja Turtles (U)
 470b031b = Teenage Mutant Ninja Turtles 2 (U) | 1990 | Ultra Games/Konami

@@ -688,6 +688,6 @@ static const struct IODevice io_ep128[] = {
 ***************************************************************************/
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
-COMP( 1985, ep128,	  0,		ep128,	  ep128,	0,		  "Intelligent Software", "Enterprise 128K" )
+COMPX( 1985, ep128,	  0,		ep128,	  ep128,	0,		  "Intelligent Software", "Enterprise 128K", GAME_NO_SOUND )
 
 

@@ -3,9 +3,10 @@
 #include "driver.h"
 #include "mess/machine/riot.h"
 #include "sound/tiaintf.h"
+#include "cpuintrf.h"
 
 /* for detailed logging */
-#define TIA_VERBOSE 1
+#define TIA_VERBOSE 0
 #define RIOT_VERBOSE 0
 
 /* TIA *Write* Addresses (6 bit) */
@@ -16,10 +17,36 @@
 #define	RSYNC	0x03    /* Reset Horizontal Sync Counter        */
 #define	NUSIZ0	0x04    /* Number-Size player/missle 0	        */
 #define	NUSIZ1	0x05    /* Number-Size player/missle 1		    */
+
+
 #define	COLUP0	0x06    /* Color-Luminance Player 0			    */
 #define	COLUP1	0x07    /* Color-Luminance Player 1				*/
 #define	COLUPF	0x08    /* Color-Luminance Playfield			*/
 #define	COLUBK	0x09    /* Color-Luminance BackGround			*/
+/*
+COLUP0, COLUP1, COLUPF, COLUBK:
+These addresses write data into the player, playfield
+and background color-luminance registers:
+
+COLOR           D7  D6  D5  D4 | D3  D2  D1  LUM
+grey/gold       0   0   0   0  | 0   0   0   black
+                0   0   0   1  | 0   0   1   dark grey
+orange/brt org  0   0   1   0  | 0   1   0
+                0   0   1   1  | 0   1   1   grey
+pink/purple     0   1   0   0  | 1   0   0
+                0   1   0   1  | 1   0   1
+purp/blue/blue  0   1   1   0  | 1   1   0   light grey
+                0   1   1   1  | 1   1   1   white
+blue/lt blue    1   0   0   0
+                1   0   0   1
+torq/grn blue   1   0   1   0
+                1   0   1   1
+grn/yel grn     1   1   0   0
+                1   1   0   1
+org.grn/lt org  1   1   1   0
+                1   1   1   1
+*/
+
 #define	CTRLPF	0x0A    /* Control Playfield, Ball, Collisions	*/
 #define	REFP0	0x0B    /* Reflection Player 0					*/
 #define	REFP1	0x0C    /* Reflection Player 1					*/
@@ -38,11 +65,15 @@
 #define	AUDF1	0x18    /* Audio Frequency 1					*/
 #define	AUDV0	0x19    /* Audio Volume 0						*/
 #define	AUDV1	0x1A    /* Audio Volume 1						*/
+
+/* The next 5 registers are flash registers */
 #define	GRP0	0x1B    /* Graphics Register Player 0			*/
 #define	GRP1	0x1C    /* Graphics Register Player 0			*/
 #define	ENAM0	0x1D    /* Graphics Enable Missle 0				*/
 #define	ENAM1	0x1E    /* Graphics Enable Missle 1				*/
 #define	ENABL	0x1F    /* Graphics Enable Ball					*/
+
+
 #define HMP0	0x20    /* Horizontal Motion Player 0			*/
 #define	HMP1	0x21    /* Horizontal Motion Player 0			*/
 #define	HMM0	0x22    /* Horizontal Motion Missle 0			*/
@@ -75,6 +106,7 @@
 #define	INPT5	0x0D    /* Read Input (Trigger) 1				*/
 
 
+int a2600_scanline_interrupt(void);
 
 static int a2600_riot_a_r(int chip);
 static int a2600_riot_b_r(int chip);
@@ -92,14 +124,35 @@ static struct RIOTinterface a2600_riot = {
 	{ NULL }				/* interrupt callback */
 };
 
+/* keep a record of the colors here */
+struct color_registers {
+	int P0; /* player 0   */
+	int M0;	/* missile 0  */
+	int P1;	/* player 1   */
+	int M1;	/* missile 1  */
+	int PF;	/* playfield  */
+	int BL;	/* ball       */
+	int BK;	/* background */
+} colreg;
+
+
+/* keep a record of the playfield registers here */
+struct playfield_registers {
+	int B0; /* 8 bits, only left 4 bits used */
+	int B1; /* 8 bits  */
+	int B2;	/* 8 bits  */
+} pfreg;
+
+int scanline_registers[80]; /* array to hold info on who gets displayed */
+
+static int msize0;
+static int msize1;
 
 /* bitmap */
 struct osd_bitmap *stella_bitmap;
 
 /* local */
 static unsigned char *a2600_cartridge_rom;
-
-static int stella_scanline;
 
 static int a2600_riot_a_r(int chip)
 {
@@ -124,6 +177,12 @@ static void a2600_riot_b_w(int chip, int data)
 }
 
 
+
+/***************************************************************************
+
+  TIA Reads.
+
+***************************************************************************/
 
 int a2600_TIA_r(int offset)
 {
@@ -181,9 +240,17 @@ int a2600_TIA_r(int offset)
 }
 
 
+
+/***************************************************************************
+
+  TIA Writes.
+
+***************************************************************************/
+
 void a2600_TIA_w(int offset, int data)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
+
 
 	switch (offset)
 	{
@@ -191,17 +258,23 @@ void a2600_TIA_w(int offset, int data)
 		case VSYNC:
 			if ( !(data & 0x00) )
 			{
+
 				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - VSYNC Stop\n");
+				{
+                    fprintf(errorlog,"TIA_w - VSYNC Stop\n");
+				}
+
 			}
 			else if (data & 0x02)
 			{
+
 				if (errorlog && TIA_VERBOSE)
 					fprintf(errorlog,"TIA_w - VSYNC Start\n");
+
 			}
 			else /* not allowed */
 			{
-				if (errorlog && TIA_VERBOSE)
+				if (errorlog)
 					fprintf(errorlog,"TIA_w - VSYNC Write Error! offset $%02x & data $%02x\n", offset, data);
 			}
             break;
@@ -220,7 +293,7 @@ void a2600_TIA_w(int offset, int data)
 			}
 			else
 			{
-				if (errorlog && TIA_VERBOSE)
+				if (errorlog)
 					fprintf(errorlog,"TIA_w - VBLANK Write Error! offset $%02x & data $%02x\n", offset, data);
 			}
 		    break;
@@ -231,6 +304,7 @@ void a2600_TIA_w(int offset, int data)
 			{
 				if (errorlog && TIA_VERBOSE)
 					fprintf(errorlog,"TIA_w - WSYNC \n");
+				//cpu_spinuntil_int (); /* wait til end of scanline */
 			}
 			else
 			{
@@ -257,203 +331,221 @@ void a2600_TIA_w(int offset, int data)
 
 
 		case NUSIZ0:     	/* offset 0x04 */
-			if ( !(data >>4 & 0x00) ) /* check D5 and D4 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ0 = 1 clock \n");
-			}
-			else if ( data >>4 & 0x01 ) /* check D5 and D4*/
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ0 = 2 clocks \n");
-			}
-			else if ( data >>4 & 0x02 ) /* check D5 and D4 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ0 = 4 clocks \n");
-			}
-			else if ( data >>4 & 0x03 ) /* check D5 and D4 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ0 = 8 clocks \n");
-			}
-			if ( !(data <<4 & 0x00) ) /* check D2, D1, D0 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ0 = One Copy \n");
-			}
-			else if ( data <<4 & 0x01 ) /* check D2, D1, D0 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ0 = Two Copies, Close \n");
-			}
-			else if ( data <<4 & 0x02 ) /* check D2, D1, D0 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ0 = Two Copies, Med \n");
-			}
-			else if ( data <<4 & 0x03 ) /* check D2, D1, D0 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ0 = Three Copies, Close \n");
-			}
-			else if ( data <<4 & 0x04 ) /* check D2, D1, D0 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ0 = Two Copies, Wide \n");
-			}
-			else if ( data <<4 & 0x05 ) /* check D2, D1, D0 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ0 = Double Sized Player \n");
-			}
-			else if ( data <<4 & 0x06 ) /* check D2, D1, D0 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ0 = Three Copies Medium \n");
-			}
-			else if ( data <<4 & 0x07 ) /* check D2, D1, D0 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ0 = Quad Sized Player \n");
-			}
-			else
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - Write Error, NUSIZ0 offset $%02x & data $%02x\n", offset, data);
-			}
+			msize0 = 2^(data>>4);
+			if (errorlog)
+				fprintf(errorlog,"TIA_w - NUSIZ0, Missile Size = %d clocks at horzpos %d\n",msize0, cpu_gethorzbeampos());
+			/* must implement player size checking! */
+
             break;
 
 
 		case NUSIZ1:     	/* offset 0x05 */
-			if ( !(data >>4 & 0x00) ) /* check D5 and D4 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ1 = 1 clock \n");
-			}
-			else if ( data >>4 & 0x01 ) /* check D5 and D4*/
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ1 = 2 clocks \n");
-			}
-			else if ( data >>4 & 0x02 ) /* check D5 and D4 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ1 = 4 clocks \n");
-			}
-			else if ( data >>4 & 0x03 ) /* check D5 and D4 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ1 = 8 clocks \n");
-			}
-			if ( !(data <<4 & 0x00) ) /* check D2, D1, D0 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ1 = One Copy \n");
-			}
-			else if ( data <<4 & 0x01 ) /* check D2, D1, D0 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ1 = Two Copies, Close \n");
-			}
-			else if ( data <<4 & 0x02 ) /* check D2, D1, D0 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ1 = Two Copies, Med \n");
-			}
-			else if ( data <<4 & 0x03 ) /* check D2, D1, D0 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ1 = Three Copies, Close \n");
-			}
-			else if ( data <<4 & 0x04 ) /* check D2, D1, D0 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ1 = Two Copies, Wide \n");
-			}
-			else if ( data <<4 & 0x05 ) /* check D2, D1, D0 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ1 = Double Sized Player \n");
-			}
-			else if ( data <<4 & 0x06 ) /* check D2, D1, D0 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ1 = Three Copies Medium \n");
-			}
-			else if ( data <<4 & 0x07 ) /* check D2, D1, D0 */
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - NUSIZ1 = Quad Sized Player \n");
-			}
-			else
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - Write Error, NUSIZ1 offset $%02x & data $%02x\n", offset, data);
-			}
+			msize1 = 2^(data>>4);
+			if (errorlog)
+				fprintf(errorlog,"TIA_w - NUSIZ1, Missile Size = %d clocks at horzpos %d\n",msize1, cpu_gethorzbeampos());
+			/* must implement player size checking! */
+
             break;
 
 
 		case COLUP0:     	/* offset 0x06 */
 
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - COLUP0 Write offset $%02x & data $%02x\n", offset, data);
-
+			colreg.P0 = data>>4;
+			colreg.M0 = colreg.P0; /* missile same color */
+   			if (errorlog && TIA_VERBOSE)
+				fprintf(errorlog,"TIA_w - COLUP0 Write color is $%02x\n", colreg.P0);
             break;
 
 		case COLUP1:     	/* offset 0x07 */
 
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - COLUP1 Write offset $%02x & data $%02x\n", offset, data);
-
+			colreg.P1 = data>>4;
+			colreg.M1 = colreg.P1; /* missile same color */
+   			if (errorlog && TIA_VERBOSE)
+				fprintf(errorlog,"TIA_w - COLUP1 Write color is $%02x\n", colreg.P1);
             break;
-
-
 
 		case COLUPF:     	/* offset 0x08 */
 
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - COLUPF Write offset $%02x & data $%02x\n", offset, data);
-
+			colreg.PF = data>>4;
+			colreg.BL = data>>4;  /* ball is same as playfield */
+   			if (errorlog && TIA_VERBOSE)
+				fprintf(errorlog,"TIA_w - COLUPF Write color is $%02x\n", colreg.PF);
             break;
-
 
 		case COLUBK:     	/* offset 0x09 */
 
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - COLUBK Write offset $%02x & data $%02x\n", offset, data);
-
+			colreg.BK = data>>4;
+   			if (errorlog && TIA_VERBOSE)
+				fprintf(errorlog,"TIA_w - COLUBK Write color is $%02x\n", colreg.BK);
             break;
 
 
 		case CTRLPF:     	/* offset 0x0A */
 
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - CTRLPF Write offset $%02x & data $%02x\n", offset, data);
-
-            break;
-
-
-
-		case REFP0:     	/* offset 0x0B */
 
 				if (errorlog && TIA_VERBOSE)
 					fprintf(errorlog,"TIA_w - CTRLPF Write offset $%02x & data $%02x\n", offset, data);
 
             break;
 
-		case 0x15: /* audio control */
-		case 0x16: /* audio control */
-		case 0x17: /* audio frequency */
-		case 0x18: /* audio frequency */
-		case 0x19: /* audio volume 0 */
-		case 0x1A: /* audio volume 1 */
+
+
+		case REFP0:
+			if ( !(data & 0x00) )
+			{
+                if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - REFP0 No reflect \n");
+			}
+			else if ( data & 0x08)
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - REFP0 Reflect \n");
+			}
+			else
+			{
+            	if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - Write Error, REFP0 offset $%02x & data $%02x\n", offset, data);
+			}
+            break;
+
+
+		case REFP1:
+			if ( !(data & 0x00) )
+			{
+                if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - REFP1 No reflect \n");
+			}
+			else if ( data & 0x08)
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - REFP1 Reflect \n");
+			}
+			else
+			{
+            	if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - Write Error, REFP1 offset $%02x & data $%02x\n", offset, data);
+			}
+            break;
+
+
+
+
+
+
+		case PF0:	    /* 0x0D Playfield Register Byte 0 */
+			pfreg.B0 = data;
+			if (errorlog)
+				fprintf(errorlog,"TIA_w - PF0 register is $%02x \n", pfreg.B0);
+			break;
+
+        case PF1:		/* 0x0E Playfield Register Byte 1 */
+			pfreg.B1 = data;
+			if (errorlog)
+				fprintf(errorlog,"TIA_w - PF1 register is $%02x \n", pfreg.B1);
+			break;
+
+		case PF2: 		/* 0x0F Playfield Register Byte 2 */
+			pfreg.B2 = data;
+			if (errorlog)
+				fprintf(errorlog,"TIA_w - PF2 register is $%02x \n", pfreg.B2);
+			break;
+
+
+/* These next 5 Registers are Strobe registers            */
+/* They will need to update the screen as soon as written */
+
+		case RESP0: 	/* 0x10 Reset Player 0 */
+			break;
+
+		case RESP1: 	/* 0x11 Reset Player 1 */
+			break;
+
+		case RESM0:		/* 0x12 Reset Missle 0 */
+			break;
+
+		case RESM1: 	/* 0x13 Reset Missle 1 */
+			break;
+
+		case RESBL: 	/* 0x14 Reset Ball */
+			break;
+
+
+
+
+
+
+
+		case AUDC0: /* audio control */
+		case AUDC1: /* audio control */
+		case AUDF0: /* audio frequency */
+		case AUDF1: /* audio frequency */
+		case AUDV0: /* audio volume 0 */
+		case AUDV1: /* audio volume 1 */
 
 			tia_w(offset,data);
-			ROM[offset] = data;
+			//ROM[offset] = data;
 			break;
+
+
+		case GRP0:		/* 0x1B Graphics Register Player 0 */
+			break;
+
+		case GRP1:		/* 0x1C Graphics Register Player 0 */
+			break;
+
+		case ENAM0: 	/* 0x1D Graphics Enable Missle 0 */
+			break;
+
+		case ENAM1:		/* 0x1E Graphics Enable Missle 1 */
+			break;
+
+		case ENABL: 	/* 0x1F Graphics Enable Ball */
+			break;
+
+		case HMP0:		/* 0x20	Horizontal Motion Player 0 */
+			break;
+
+		case HMP1: 		/* 0x21 Horizontal Motion Player 0 */
+			break;
+
+		case HMM0:		/* 0x22 Horizontal Motion Missle 0 */
+			break;
+
+		case HMM1: 		/* 0x23 Horizontal Motion Missle 1 */
+			break;
+
+		case HMBL: 		/* 0x24 Horizontal Motion Ball */
+			break;
+
+		case VDELP0:	/* 0x25 Vertical Delay Player 0 */
+			break;
+
+		case VDELP1: 	/* 0x26 Vertical Delay Player 1 */
+			break;
+
+		case VDELBL: 	/* 0x27 Vertical Delay Ball	*/
+			break;
+
+		case RESMP0:	/* 0x28 Reset Missle 0 to Player 0 */
+			break;
+
+		case RESMP1:	/* 0x29 Reset Missle 1 to Player 1 */
+			break;
+
+		case HMOVE: 	/* 0x2A Apply Horizontal Motion	*/
+			break;
+
+		case HMCLR: 	/* 0x2B Clear Horizontal Move Registers */
+			break;
+
+		case CXCLR:		/* 0x2C Clear Collision Latches	*/
+			break;
+
+
+
+
 		default:
-			if (errorlog && TIA_VERBOSE)
+			if (errorlog)
 				fprintf(errorlog,"TIA_w - UNKNOWN - offset %02x & data %02x\n", offset, data);
 		/* all others */
 		ROM[offset] = data;
@@ -462,11 +554,11 @@ void a2600_TIA_w(int offset, int data)
 
 void a2600_init_machine(void)
 {
+
+
 	/* start RIOT interface */
 	riot_init(&a2600_riot);
 
-	/* set the scanline to 0 */
-	stella_scanline=0;
 }
 
 
@@ -510,7 +602,7 @@ int a2600_load_rom (int id)
 
     if (cartfile!=NULL)
     {
-        osd_fread (cartfile, a2600_cartridge_rom, 2048); /* testing COmbat for now */
+        osd_fread (cartfile, a2600_cartridge_rom, 2048); /* testing Combat for now */
         osd_fclose (cartfile);
 		/* copy to mirrorred memory regions */
 		memcpy(&ROM[0x1800], &ROM[0x1000], 0x0800);
@@ -530,13 +622,8 @@ int a2600_load_rom (int id)
 
 
 
-/* Video functions for the a2600 */
+/* Video functions for the a2600         */
 /* Since all software drivern, have here */
-
-//#include "vidhrdw/generic.h"
-
-
-
 
 
 /***************************************************************************
@@ -557,6 +644,44 @@ void a2600_vh_stop(void)
 }
 
 
+/* when called, update the bitmap. */
+int a2600_scanline_interrupt(void)
+{
+	int regpos, pixpos;
+	int xs = Machine->drv->visible_area.min_x;//68;
+	int ys = Machine->drv->visible_area.max_y;//228;
+	int currentline =  cpu_getscanline();
+	int backcolor;
+
+	/* plot the playfield and background for now               */
+	/* each register value is 4 color clocks                   */
+	/* to pick the color, need to bit check the playfield regs */
+
+	/* set color to background */
+	backcolor=colreg.BK;
+
+	/* check PF register 0 (left 4 bits only) */
+
+	//pfreg.P0
+
+
+
+
+	/* now we have color, plot for 4 color cycles */
+	for (regpos=xs;regpos<ys;regpos=regpos+=4)
+	{
+		for (pixpos = regpos;pixpos<regpos+4;pixpos++)
+			plot_pixel (stella_bitmap, pixpos, currentline, Machine->pens[backcolor]);
+	}
+
+
+
+
+
+	return 0;
+}
+
+
 /***************************************************************************
 
   Refresh the video screen
@@ -565,7 +690,11 @@ void a2600_vh_stop(void)
 /* This routine is called at the start of vblank to refresh the screen */
 void a2600_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
+	if (errorlog)
+		fprintf(errorlog,"SCREEN UPDATE CALLED\n");
+
     copybitmap(bitmap,stella_bitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
 }
 
 

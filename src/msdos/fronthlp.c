@@ -374,14 +374,15 @@ int frontend_help (int argc, char **argv)
 		if (!stricmp(argv[i],"-listromsize")) list = LIST_LISTROMSIZE;
 		if (!stricmp(argv[i],"-listcpu")) list = LIST_LISTCPU;
 
-#ifdef MAME_DEBUG /* do not put this into a public release! */
+#ifndef MAME_DEBUG /* do not put this into a public release! */
 		if (!stricmp(argv[i],"-lmr")) list = LIST_LMR;
 #endif
 		if (!stricmp(argv[i],"-wrongorientation")) list = LIST_WRONGORIENTATION;
 		if (!stricmp(argv[i],"-wrongfps")) list = LIST_WRONGFPS;
 		if (!stricmp(argv[i],"-noclones")) listclones = 0;
 		#ifdef MESS
-				if (!stricmp(argv[i],"-listextensions")) list = LIST_MESSINFO;
+				if (!stricmp(argv[i],"-listdevices"))  list = LIST_MESSINFO;
+				if (!stricmp(argv[i],"-listtext")) list = LIST_MESSINFO;
 		#endif
 
 
@@ -436,11 +437,12 @@ int frontend_help (int argc, char **argv)
 			{
 				/* list all mess info options here */
 				if (
-					!stricmp(argv[i],"-listextensions")
+					!stricmp(argv[i],"-listdevices") |
+					!stricmp(argv[i],"-listtext")
 				   )
 			 	{
 					/* send the gamename and arg to mess.c */
-					list_mess_info(gamename, argv[i]);
+					list_mess_info(gamename, argv[i], listclones);
 				}
 			}
 			return 0;

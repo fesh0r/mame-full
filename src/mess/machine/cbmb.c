@@ -136,10 +136,10 @@ static void cbmb_irq (int level)
 
 struct cia6526_interface cbmb_cia =
 {
-	0,//c64_cia0_port_a_r,
-	0,//c64_cia0_port_b_r,
-	0,//c64_cia0_port_a_w,
-	0,//c64_cia0_port_b_w,
+	0,/*c64_cia0_port_a_r, */
+	0,/*c64_cia0_port_b_r, */
+	0,/*c64_cia0_port_a_w, */
+	0,/*c64_cia0_port_b_w, */
 	0,								   /*c64_cia0_pc_w */
 	0,								   /*c64_cia0_sp_r */
 	0,								   /*c64_cia0_sp_w */
@@ -237,20 +237,18 @@ void cbmb_shutdown_machine (void)
 void cbmb_frame_interrupt (int param)
 {
 	static int level=0;
-#if 0
 	static int quickload = 0;
-#endif
 	int value;
 
 	tpi6525_0_irq0_level(level);
 	level=!level;
 	if (level) return ;
 
-#if 0
-	if (!quickload && QUICKLOAD)
-		cbm_quick_open (0, cbmb_memory);
+	if (!quickload && QUICKLOAD) {
+		if (cbm500) cbm500_quick_open(0, 0, cbmb_memory);
+		else cbmb_quick_open (0, 0, cbmb_memory);
+	}
 	quickload = QUICKLOAD;
-#endif
 
 	value = 0;
 	if (KEY_STOP)

@@ -577,7 +577,7 @@ static struct MachineDriver machine_driver_laser310 =
 ROM_START( laser110 )
 	ROM_REGION(0x10000,REGION_CPU1)
 	ROM_LOAD("vtechv20.lo",  0x0000, 0x2000, 0xcc854fe9)
-	ROM_LOAD("vtectv20.hi",  0x2000, 0x2000, 0x7060f91a)
+	ROM_LOAD("vtechv20.hi",  0x2000, 0x2000, 0x7060f91a)
 
 	ROM_REGION(0x0d00,REGION_GFX1)
 	ROM_LOAD("vtech1.chr",   0x0000, 0x0c00, 0xead006a1)
@@ -587,7 +587,7 @@ ROM_END
 ROM_START( laser210 )
 	ROM_REGION(0x10000,REGION_CPU1)
 	ROM_LOAD("vtechv20.lo",  0x0000, 0x2000, 0xcc854fe9)
-	ROM_LOAD("vtectv20.hi",  0x2000, 0x2000, 0x7060f91a)
+	ROM_LOAD("vtechv20.hi",  0x2000, 0x2000, 0x7060f91a)
 
 	ROM_REGION(0x0d00,REGION_GFX1)
 	ROM_LOAD("vtech1.chr",   0x0000, 0x0c00, 0xead006a1)

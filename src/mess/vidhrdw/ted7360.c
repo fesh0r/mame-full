@@ -1354,11 +1354,13 @@ int ted7360_raster_interrupt (void)
 
 		vc20_tape_status (text, sizeof (text));
 		ted7360_draw_text (ted7360_bitmap, text, &y);
-#ifdef VC1541
-		vc1541_drive_status (text, sizeof (text));
-#else
+
+		if (REAL_C1551) {
+			vc1541_drive_status (text, sizeof (text));
+			ted7360_draw_text (ted7360_bitmap, text, &y);
+		}
+
 		cbm_drive_0_status (text, sizeof (text));
-#endif
 		ted7360_draw_text (ted7360_bitmap, text, &y);
 
 		cbm_drive_1_status (text, sizeof (text));

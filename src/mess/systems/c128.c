@@ -740,24 +740,25 @@ static void c128_init_palette (unsigned char *sys_palette, unsigned short *sys_c
 #endif
 
 ROM_START (c128)
-	 ROM_REGION (0x132800, REGION_CPU1)
-#if 1
-	 ROM_LOAD ("318018.04", 0x100000, 0x4000, 0x9f9c355b)
-	 ROM_LOAD ("318019.04", 0x104000, 0x4000, 0x6e2c91a7)
-	 ROM_LOAD ("251913.01", 0x108000, 0x4000, 0x0010ec31)
-	 ROM_LOAD ("318020.05", 0x10c000, 0x4000, 0xba456b8e)
-	 ROM_LOAD ("390059.01", 0x120000, 0x2000, 0x6aaaafe6)
-#else
-	 /* 128d  */
-	 ROM_LOAD ("252343.03", 0x100000, 0x8000, 0xbc07ed87)
-	 ROM_LOAD ("252343.04", 0x108000, 0x8000, 0xcc6bdb69)
-	 ROM_LOAD ("390059.01", 0x120000, 0x2000, 0x6aaaafe6)
-#endif
-	 ROM_REGION (0x10000, REGION_CPU2)
-#ifdef VC1541
-	 VC1541_ROM (REGION_CPU3)
-#endif
+	ROM_REGION (0x132800, REGION_CPU1)
+	ROM_LOAD ("318018.04", 0x100000, 0x4000, 0x9f9c355b)
+	ROM_LOAD ("318019.04", 0x104000, 0x4000, 0x6e2c91a7)
+	ROM_LOAD ("251913.01", 0x108000, 0x4000, 0x0010ec31)
+	ROM_LOAD ("318020.05", 0x10c000, 0x4000, 0xba456b8e)
+	ROM_LOAD ("390059.01", 0x120000, 0x2000, 0x6aaaafe6)
+	ROM_REGION (0x10000, REGION_CPU2)
 ROM_END
+
+#ifdef PET_TEST_CODE
+ROM_START (c128d)
+	ROM_REGION (0x132800, REGION_CPU1)
+	ROM_LOAD ("252343.03", 0x100000, 0x8000, 0xbc07ed87)
+	ROM_LOAD ("252343.04", 0x108000, 0x8000, 0xcc6bdb69)
+	ROM_LOAD ("390059.01", 0x120000, 0x2000, 0x6aaaafe6)
+	ROM_REGION (0x10000, REGION_CPU2)
+	C1571_ROM(REGION_CPU3)
+ROM_END
+#endif
 
 ROM_START (c128ger)
 	 /* c128d german */
@@ -766,9 +767,6 @@ ROM_START (c128ger)
 	 ROM_LOAD ("318077.01", 0x108000, 0x8000, 0xeb6e2c8f)
 	 ROM_LOAD ("315079.01", 0x120000, 0x2000, 0xfe5a2db1)
 	 ROM_REGION (0x10000, REGION_CPU2)
-#ifdef VC1541
-	 VC1541_ROM (REGION_CPU3)
-#endif
 ROM_END
 
 ROM_START (c128fra)
@@ -785,9 +783,6 @@ ROM_START (c128fra)
 #endif
 	 ROM_LOAD ("325167.01", 0x120000, 0x2000, 0xbad36b88)
 	 ROM_REGION (0x10000, REGION_CPU2)
-#ifdef VC1541
-	 VC1541_ROM (REGION_CPU3)
-#endif
 ROM_END
 
 static struct MachineDriver machine_driver_c128 =
@@ -810,9 +805,6 @@ static struct MachineDriver machine_driver_c128 =
 			c64_frame_interrupt, 1,
 			c128_raster_irq, VIC2_HRETRACERATE,
 		},
-#ifdef VC1541
-		VC1541_CPU,
-#endif
 	},
 	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	0,
@@ -842,6 +834,58 @@ static struct MachineDriver machine_driver_c128 =
 	}
 };
 
+#ifdef PET_TEST_CODE
+static struct MachineDriver machine_driver_c128d =
+{
+  /* basic machine hardware */
+	{
+		{
+			CPU_Z80 | CPU_16BIT_PORT,
+			VIC6567_CLOCK,
+			c128_z80_readmem, c128_z80_writemem,
+			c128_z80_readio, c128_z80_writeio,
+			c64_frame_interrupt, 1,
+			c128_raster_irq, VIC2_HRETRACERATE,
+		},
+		{
+			CPU_M6510,				   /* m8502 */
+			VIC6567_CLOCK,
+			c128_readmem, c128_writemem,
+			0, 0,
+			c64_frame_interrupt, 1,
+			c128_raster_irq, VIC2_HRETRACERATE,
+		},
+		C1571_CPU
+	},
+	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	0,
+	c128_init_machine,
+	c128_shutdown_machine,
+
+	/* video hardware */
+	656,							   /* screen width */
+	216,							   /* screen height */
+	{0, 656 - 1, 0, 216 - 1},		   /* visible_area */
+	0,								   /* graphics decode info */
+	(sizeof (vic2_palette) +sizeof(vdc8563_palette))
+	 / sizeof (vic2_palette[0]) / 3,
+	0,
+	c128_init_palette,				   /* convert color prom */
+	VIDEO_TYPE_RASTER,
+	0,
+	c128_vh_start,
+	c128_vh_stop,
+	c128_vh_screenrefresh,
+
+	/* sound hardware */
+	0, 0, 0, 0,
+	{
+		/*    { SOUND_CUSTOM, &sid6581_sound_interface }, */
+		{SOUND_DAC, &vc20tape_sound_interface}
+	}
+};
+#endif
+
 static struct MachineDriver machine_driver_c128pal =
 {
   /* basic machine hardware */
@@ -862,9 +906,6 @@ static struct MachineDriver machine_driver_c128pal =
 			c64_frame_interrupt, 1,
 			c128_raster_irq, VIC2_HRETRACERATE,
 		},
-#ifdef VC1541
-		VC1541_CPU,
-#endif
 	},
 	VIC6569_VRETRACERATE,
 	DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
@@ -915,9 +956,6 @@ static struct MachineDriver machine_driver_c128pal2 =
 			c64_frame_interrupt, 1,
 			c128_raster_irq, VIC2_HRETRACERATE,
 		},
-#ifdef VC1541
-		VC1541_CPU,
-#endif
 	},
 	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	0,
@@ -952,10 +990,22 @@ static const struct IODevice io_c128[] =
 	IODEVICE_CBM_QUICK,
 #if 0
 	IODEVICE_ROM_SOCKET,
-	IODEVICE_CBM_ROM(c64_rom_id),
-#endif
+	IODEVICE_CBM_ROM("crt\080\0", c64_rom_id),
 	IODEVICE_VC20TAPE,
+#endif
 	IODEVICE_CBM_DRIVE,
+	{IO_END}
+};
+
+static const struct IODevice io_c128d[] =
+{
+	IODEVICE_CBM_QUICK,
+#if 0
+	IODEVICE_ROM_SOCKET,
+	IODEVICE_CBM_ROM(c64_rom_id),
+	IODEVICE_VC20TAPE,
+#endif
+	IODEVICE_C1571,
 	{IO_END}
 };
 
@@ -967,11 +1017,12 @@ static const struct IODevice io_c128[] =
 
 #ifdef PET_TEST_CODE
 /*	  YEAR	NAME		PARENT	MACHINE 	INPUT		INIT		COMPANY   FULLNAME */
-COMP (1985, c128,		0,		c128,		c128,		c128,		"Commodore Business Machines Co.","Commodore C128 (NTSC) 656x216")
+COMP (1985, c128,		0,		c128,		c128,		c128,		"Commodore Business Machines Co.","Commodore C128 NTSC 656x216")
+COMP (1985, c128d,		0,		c128d,		c128,		c128,		"Commodore Business Machines Co.","Commodore C128D NTSC 656x216")
 COMP (1985, c128ger,	c128,	c128pal,	c128ger,	c128pal,	"Commodore Business Machines Co.","Commodore C128 German (PAL) 336x216")
 COMP (1985, c128fra,	c128,	c128pal2,	c128,		c128pal2,	"Commodore Business Machines Co.","Commodore C128 French (PAL) 656x432")
 #else
-COMPX (1985, c128,		0,		c128,		c128,		c128,		"Commodore Business Machines Co.","Commodore C128 (NTSC) 656x216",      GAME_NO_SOUND)
+COMPX (1985, c128,		0,		c128,		c128,		c128,		"Commodore Business Machines Co.","Commodore C128 NTSC 656x216",      GAME_NO_SOUND)
 COMPX (1985, c128ger,	c128,	c128pal,	c128ger,	c128pal,	"Commodore Business Machines Co.","Commodore C128 German (PAL) 336x216",GAME_NO_SOUND)
 /* someone to add french keyboard inputports !? */
 COMPX (1985, c128fra,	c128,	c128pal2,	c128,		c128pal2,	"Commodore Business Machines Co.","Commodore C128 French (PAL) 656x432",GAME_NO_SOUND)

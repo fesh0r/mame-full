@@ -811,10 +811,10 @@ static const struct IODevice io_zx81[] =
 
 ***************************************************************************/
 /*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY				FULLNAME */
-COMP (1980,   zx80,    0,		 zx80,	   zx80,	 zx,	   "Sinclair Research", "ZX-80")
-COMP (1981,   aszmic,  zx80,	 zx80,	   zx80,	 zx,	   "Sinclair Research", "ZX.Aszmic")
-COMP (1981,   zx81,    0,		 zx81,	   zx81,	 zx,	   "Sinclair Research", "ZX-81")
-COMP (1981,   ts1000,  zx81,	 ts1000,   zx81,	 zx,	   "Timex Sinclair",    "TS1000")
-COMP (198?,   pc8300,  zx81,	 pc8300,   zx81,	 zx,	   "Your Computer",     "PC8300")
-COMPX(198?,   pow3000, zx81,	 pow3000,  pow3000,  zx,	   "Creon Enterprises", "Power 3000", GAME_NOT_WORKING)
+COMPX (1980,   zx80,    0,		 zx80,	   zx80,	 zx,	   "Sinclair Research", "ZX-80", GAME_NOT_WORKING)
+COMPX (1981,   aszmic,  zx80,	 zx80,	   zx80,	 zx,	   "Sinclair Research", "ZX.Aszmic", GAME_NOT_WORKING)
+COMPX (1981,   zx81,    0,		 zx81,	   zx81,	 zx,	   "Sinclair Research", "ZX-81", GAME_NOT_WORKING)
+COMPX (1981,   ts1000,  zx81,	 ts1000,   zx81,	 zx,	   "Timex Sinclair",    "TS1000", GAME_NOT_WORKING)
+COMPX (198?,   pc8300,  zx81,	 pc8300,   zx81,	 zx,	   "Your Computer",     "PC8300", GAME_NOT_WORKING)
+COMPX (198?,   pow3000, zx81,	 pow3000,  pow3000,  zx,	   "Creon Enterprises", "Power 3000", GAME_NOT_WORKING)
 

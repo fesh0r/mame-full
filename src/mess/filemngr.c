@@ -1,6 +1,6 @@
 #include "driver.h"
 #include <signal.h>
-#include <unistd.h>
+//#include <unistd.h>
 
 /* used to tell updatescreen(void) to clear the bitmap */
 extern int need_to_clear_bitmap;
@@ -23,6 +23,7 @@ static void start_enter_string(char *string_buffer, int max_string_size, int fil
 	enter_string_size = max_string_size;
 	enter_filename_mode = filename_mode;
 }
+
 
 /* code, lower case (w/o shift), upper case (with shift), control */
 static int code_to_char_table[] =
@@ -190,7 +191,7 @@ char current_filespecification[32] = "*.*";
 const char fs_directory[] = "[DIR]";
 const char fs_device[] = "[DRIVE]";
 const char fs_file[] = "[FILE]";
-//const char fs_archive[] = "[ARCHIVE]";
+/*const char fs_archive[] = "[ARCHIVE]"; */
 
 static const char **fs_item;
 static const char **fs_subitem;
@@ -209,6 +210,10 @@ enum {
 	FILESELECT_FILE
 } FILESELECT_ENTRY_TYPE;
 
+
+
+
+/*
 char *fs_dupe(const char *src, int len)
 {
         char *dst;
@@ -218,6 +223,34 @@ char *fs_dupe(const char *src, int len)
 		strcpy(dst, src);
 	return dst;
 }
+*/
+
+char *fs_dupe(const char *src, int len)
+{
+	char *dst;
+ 	int display_length;
+ 	int display_width;
+
+ 	display_width = (Machine->uiwidth / Machine->uifontwidth);
+ 	display_length = len;
+
+    if (display_length>display_width)
+		display_length = display_width;
+
+    /* malloc space for string + NULL char + extra char.*/
+    dst = malloc(len+2);
+    if (dst)
+    {
+        strcpy(dst, src);
+        /* copy old char to end of string */
+        dst[len+1]=dst[display_length];
+        /* put in NULL to cut string. */
+        dst[len+1]='\0';
+    }
+    return dst;
+
+}
+
 
 void fs_free(void)
 {
@@ -594,7 +627,7 @@ int fileselect(int selected)
 					break;
 
 				case FILESELECT_DIRECTORY:
-                                      //  fs_chdir(fs_item[sel]);
+                                      /*  fs_chdir(fs_item[sel]); */
                                         osd_change_directory(fs_item[sel]);
                                         fs_free();
 
@@ -602,7 +635,7 @@ int fileselect(int selected)
 					break;
 
 				case FILESELECT_DEVICE:
-                                     //   fs_chdir("/");
+                                     /*   fs_chdir("/"); */
 					osd_change_device(fs_item[sel]);
 					fs_free();
 					need_to_clear_bitmap = 1;
@@ -648,6 +681,31 @@ int filemanager(int selected)
 
 	sel = selected - 1;
 
+
+	total = 0;
+	for (type = 0; type < IO_COUNT; type++)
+	{
+		for (id = 0; id < device_count(type); id++)
+		{
+			name = device_typename_id(type, id);
+
+			if (name)
+			{
+				menu_item[total] = name;
+
+				name = device_filename(type, id);
+				menu_subitem[total] = (name) ? name : "---";
+
+				flag[total] = 0;
+				types[total] = type;
+				ids[total] = id;
+
+				total++;
+			}
+		}
+	}
+
+
 	/* if the fileselect() mode is active */
 	if (sel & (2 << SEL_BITS))
 	{
@@ -673,29 +731,6 @@ int filemanager(int selected)
                 /* change menu item to show this filename */
                 menu_subitem[sel & SEL_MASK] = entered_filename;
 
-	}
-
-	total = 0;
-	for (type = 0; type < IO_COUNT; type++)
-	{
-		for (id = 0; id < device_count(type); id++)
-		{
-			name = device_typename_id(type, id);
-
-			if (name)
-			{
-				menu_item[total] = name;
-
-				name = device_filename(type, id);
-				menu_subitem[total] = (name) ? name : "---";
-
-				flag[total] = 0;
-				types[total] = type;
-				ids[total] = id;
-
-				total++;
-			}
-		}
 	}
 
 	menu_item[total] = "Return to Main Menu";

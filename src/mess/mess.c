@@ -11,9 +11,10 @@ extern struct GameOptions options;
 
 /* CRC database file for this driver, supplied by the OS specific code */
 extern const char *crcfile;
+extern const char *pcrcfile;
 
 /* used to tell updatescreen() to clear the bitmap */
-extern int need_to_clear_bitmap;    
+extern int need_to_clear_bitmap;
 
 struct image_info {
 	char *name;
@@ -36,7 +37,20 @@ static const char *typename[IO_COUNT] = {
 	"Cassette  ",
 	"Printer   ",
 	"Serial    ",
-	"Snapshot  "
+	"Snapshot  ",
+	"Quickload "
+};
+
+static const char *brieftypename[IO_COUNT] = {
+	"NONE",
+	"Cart",
+	"Flop",
+	"Hard",
+	"Cass",
+	"Prin",
+	"Serl",
+	"Snap",
+	"Quik"
 };
 
 static char *mess_alpha = "";
@@ -105,6 +119,8 @@ int DECL_SPEC mess_printf(char *fmt, ...)
 
 	return length;
 }
+
+static int read_crc_config (const char *, struct image_info *, const char*);
 
 void *image_fopen(int type, int id, int filetype, int read_or_write)
 {
@@ -204,29 +220,44 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
         }
 		free_image_info(img);
 
-		config = config_open(crcfile);
-		if( config )
-		{
-			static char line[1024];
-			char crc[9+1];
+		if (read_crc_config (crcfile, img, sysname) && Machine->gamedrv->clone_of->name)
+			read_crc_config (pcrcfile, img, Machine->gamedrv->clone_of->name);
 
-			sprintf(crc, "%08x", img->crc);
-			config_load_string(config,sysname,0,crc,line,sizeof(line));
-			if( line[0] )
-			{
-				if( errorlog ) fprintf(errorlog, "found CRC %s= %s\n", crc, line);
-                img->longname = dupe(stripspace(strtok(line, "|")));
-				img->manufacturer = dupe(stripspace(strtok(NULL, "|")));
-				img->year = dupe(stripspace(strtok(NULL, "|")));
-				img->playable = dupe(stripspace(strtok(NULL, "|")));
-				img->extrainfo = dupe(stripspace(strtok(NULL, "|")));
-			}
-			config_close(config);
-		}
+		config = config_open(crcfile);
     }
 
     return file;
 }
+
+
+static int read_crc_config (const char *file, struct image_info *img, const char* sysname)
+{
+	int retval;
+    void *config = config_open (file);
+
+    retval = 1;
+	if( config )
+	{
+		char line[1024];
+		char crc[9+1];
+
+		sprintf(crc, "%08x", img->crc);
+		config_load_string(config,sysname,0,crc,line,sizeof(line));
+		if( line[0] )
+		{
+			if( errorlog ) fprintf(errorlog, "found CRC %s= %s\n", crc, line);
+			img->longname = dupe(stripspace(strtok(line, "|")));
+			img->manufacturer = dupe(stripspace(strtok(NULL, "|")));
+			img->year = dupe(stripspace(strtok(NULL, "|")));
+			img->playable = dupe(stripspace(strtok(NULL, "|")));
+			img->extrainfo = dupe(stripspace(strtok(NULL, "|")));
+			retval = 0;
+		}
+		config_close(config);
+	}
+	return retval;
+}
+
 
 /*
  * Return a name for the device type (to be used for UI functions)
@@ -235,6 +266,20 @@ const char *device_typename(int type)
 {
 	if (type < IO_COUNT)
 		return typename[type];
+	return "UNKNOWN";
+}
+
+const char *briefdevice_typename(int type)
+{
+	if (type < IO_COUNT)
+		return brieftypename[type];
+	return "UNKNOWN";
+}
+
+const char *device_brieftypename(int type)
+{
+	if (type < IO_COUNT)
+		return brieftypename[type];
 	return "UNKNOWN";
 }
 
@@ -823,11 +868,16 @@ void showmessinfo(void)
 		build_version, mess_alpha);
 	showmessdisclaimer();
 	mess_printf(
-		"Usage:  MESS machine [image] [options]\n\n"
-		"        MESS -list      for a brief list of supported systems\n"
-		"        MESS -listfull  for a full list of supported systems\n"
-		"See mess.txt for a complete list of options.\n");
+		"Usage:  MESS <system> <device> <image> <options>\n\n"
+		"        MESS -list        for a brief list of supported systems\n"
+		"        MESS -listfull    for a full list of supported systems\n"
+		"        MESS -listdevices for a full list of supported devices\n"
+		"See mess.txt for help, readme.txt for options.\n");
 
 }
+
+
+
+
 
 

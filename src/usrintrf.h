@@ -17,12 +17,13 @@ struct DisplayText
 	int y;
 };
 
+#define SEL_BITS    12
+#define SEL_MASK	((1<<SEL_BITS)-1)
+
 #define DT_COLOR_WHITE 0
 #define DT_COLOR_YELLOW 1
 #define DT_COLOR_RED 2
 
-#define SEL_BITS    12
-#define SEL_MASK	((1<<SEL_BITS)-1)
 
 struct GfxElement *builduifont(void);
 void pick_uifont_colors(void);

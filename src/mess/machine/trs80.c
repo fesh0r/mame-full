@@ -28,9 +28,9 @@ static int trs80_load_cas = 0;
 #define IRQ_FDC         0x40
 static	UINT8			irq_status = 0;
 
-#define MAX_LUMPS       192     // crude storage units - don't now much about it
-#define MAX_GRANULES    8       // lumps consisted of granules.. aha
-#define MAX_SECTORS     5       // and granules of sectors
+#define MAX_LUMPS       192     /* crude storage units - don't now much about it */
+#define MAX_GRANULES    8       /* lumps consisted of granules.. aha */
+#define MAX_SECTORS     5       /* and granules of sectors */
 
 /* this indicates whether the floppy images geometry shall be calculated */
 static UINT8 first_fdc_access = 1;
@@ -218,13 +218,13 @@ void trs80_floppy_exit(int id)
 
 void trs80_init_machine(void)
 {
-	if( floppy_name[0][0] )
+	if( floppy_name[0] )
 		wd179x_init(1);
 	else
 		wd179x_init(0);
 
     first_fdc_access = 1;
-	if( tape_name[0] )
+	if( tape_name )
 	{
 		trs80_load_cas = 1;
 		cpu_setOPbaseoverride(0, opbaseoverride);
@@ -645,7 +645,7 @@ int result = irq_status;
 
 void trs80_irq_mask_w(int offset, int data)
 {
-//	irq_mask = data;
+/*	irq_mask = data; */
 }
 
 void trs80_motor_w(int offset, int data)

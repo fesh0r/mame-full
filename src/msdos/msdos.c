@@ -22,6 +22,9 @@
 extern char *crcdir;
 static char crcfilename[256] = "";
 const char *crcfile = crcfilename;
+extern char *pcrcdir;
+static char pcrcfilename[256] = "";
+const char *pcrcfile = pcrcfilename;
 #endif
 
 
@@ -338,6 +341,10 @@ int main (int argc, char **argv)
 	#ifdef MESS
 	/* Build the CRC database filename */
 	sprintf(crcfilename, "%s/%s.crc", crcdir, drivers[game_index]->name);
+	if (drivers[game_index]->clone_of->name)
+		sprintf (pcrcfilename, "%s/%s.crc", crcdir, drivers[game_index]->clone_of->name);
+	else
+		pcrcfilename[0] = 0;
     #endif
 
     /* go for it */

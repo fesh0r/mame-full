@@ -1,5 +1,12 @@
 /***************************************************************************
 
+	commodore vic20 home computer
+	Peter Trauner
+	(peter.trauner@jk.uni-linz.ac.at)
+
+    documentation
+     Marko.Makela@HUT.FI (vic6560)
+     www.funet.fi
 
 ***************************************************************************/
 #include <ctype.h>
@@ -253,6 +260,9 @@ static void vc20_memory_init(void)
 
 static void vc20_common_driver_init (void)
 {
+#ifdef VC1541
+	VC1541_CONFIG vc1541= { 1, 8 };
+#endif
 	vc20_memory_init();
 
 	vc20_tape_open (via_1_ca1_w);
@@ -263,7 +273,7 @@ static void vc20_common_driver_init (void)
 	cbm_drive_attach_fs (1);
 
 #ifdef VC1541
-	vc1541_driver_init ();
+	vc1541_config (0, 0, &vc1541);
 #endif
 	via_config (0, &via0);
 	via_config (1, &via1);
@@ -343,7 +353,7 @@ void vc20_init_machine (void)
 
 	cbm_serial_reset_write (0);
 #ifdef VC1541
-	vc1541_machine_init ();
+	vc1541_reset ();
 #endif
 	cbm_drive_0_config (SERIAL8ON ? SERIAL : 0);
 	cbm_drive_1_config (SERIAL9ON ? SERIAL : 0);

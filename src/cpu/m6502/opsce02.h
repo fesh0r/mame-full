@@ -4,6 +4,7 @@
  *	 Addressing mode and opcode macros for 65ce02 CPU
  *
  *	 Copyright (c) 2000 Peter Trauner, all rights reserved.
+ *   documentation preliminary databook
  *	 documentation by michael steil mist@c64.org
  *	 available at ftp://ftp.funet.fi/pub/cbm/c65
  *
@@ -24,11 +25,17 @@
 #define m6502 m65ce02
 #define m6502_ICount m65ce02_ICount
 
+/* stack disable extended (word) mode */
+#define F_E 0x20
+
 /* some shortcuts for improved readability */
 #define Z	m65ce02.z
 #define B	m65ce02.zp.b.h
+#define SW m6502.sp.w.l
 #define SPL m6502.sp.b.l
 #define SPH m6502.sp.b.h
+
+#define PEEK_OP() cpu_readop(PCW)
 
 #define RDMEM_WORD(addr, pair) \
    pair.b.l=cpu_readmem16(addr); \
@@ -62,14 +69,18 @@
  *	EA = zero page indexed stack, indirect + Y (post indexed)
  *	subtract 1 cycle if page boundary is crossed
  ***************************************************************/
-/* i think its based on on stack high byte instead of of bank register */
+/* i think its based on stack high byte instead of of bank register */
 #define EA_ZP_INSP_INY											\
 {																\
 	PAIR pair={{0}};											\
 	pair.b.l = SPL+RDOPARG();									\
 	pair.b.h = SPH; 											\
 	EAL = RDMEM(pair.d);										\
-	pair.b.l++; 												\
+    if (P&F_E) { \
+		pair.b.l++; 												\
+	} else { \
+		pair.w.l++; 												\
+	} \
 	EAH = RDMEM(pair.d);										\
 	if (EAL + Y > 0xff) 										\
 		m6502_ICount--; 										\
@@ -88,6 +99,18 @@
 
 #define RD_ZPG_WORD EA_ZPG; RDMEM_WORD(EAD, tmp)
 #define WR_ZPG_WORD EA_ZPG; WRMEM_WORD(EAD, tmp)
+
+/***************************************************************
+ * push a register onto the stack
+ ***************************************************************/
+#undef PUSH
+#define PUSH(Rg) WRMEM(SPD, Rg); if (P&F_E) { S--; } else { SW--; }
+
+/***************************************************************
+ * pull a register from the stack
+ ***************************************************************/
+#undef PULL
+#define PULL(Rg) if (P&F_E) { S++; } else { SW++; } Rg = RDMEM(SPD)
 
 /* the order in which the args are pushed is correct! */
 #define PUSH_WORD(pair) PUSH(pair.b.l);PUSH(pair.b.h)
@@ -113,20 +136,16 @@
 	}
 
 /* 65ce02 ********************************************************
- *	cle clear emu flag
+ *	cle clear disable extended stack flag
  ***************************************************************/
-/* who knows */
 #define CLE 													\
-if (errorlog)													\
- fprintf(errorlog,"m65ce02 at pc:%.4x unknown op cle\n",m65ce02.pc.w.l-1);
+		P|=F_E
 
 /* 65ce02 ********************************************************
- *	see set emu flag
+ *	see set disable extended stack flag
  ***************************************************************/
-/* who knows */
 #define SEE 													\
-if (errorlog)													\
- fprintf(errorlog,"m65ce02 at pc:%.4x unknown op see\n",m65ce02.pc.w.l-1);
+		P&=~F_E
 
 /* 65ce02 ********************************************************
  *	map
@@ -144,7 +163,9 @@ if (errorlog)													\
 /* 65ce02 ********************************************************
  *	rts imm
  ***************************************************************/
-/* who knows */
+/* who knows 
+   freeing local variables of procedure
+   or freeing parameters of procedure call (more likely) */
 #define RTS_IMM 												\
  RD_IMM;														\
 if (errorlog)													\
@@ -176,21 +197,17 @@ if (errorlog)													\
 	SET_NZ(tmp)
 
 /* 65ce02 ********************************************************
- *	ASW arithmetic (signed) shift right word
+ *	ASW arithmetic shift left word
  *	[c] <- [15]..[6][5][4][3][2][1][0]
  ***************************************************************/
 /* not sure about how 16 bit memory modifying is executed */
-/* or arithmetic shift left word!?*/
 #define ASW 													\
 	tmp.w.l = tmp.w.l << 1; 									\
 	P = (P & ~F_C) | (tmp.b.h2 & F_C);							\
-	SET_NZ_WORD(tmp);											\
-if (errorlog)													\
-	fprintf(errorlog,"m65ce02 at pc:%.4x not sure asw %.2x\n",  \
-		m65ce02.pc.w.l-2, ZPL);
+	SET_NZ_WORD(tmp);											
 
 /* 65ce02 ********************************************************
- *	ROW arithmetic (signed) shift right word
+ *	ROW rotate left word
  *	[c] <- [15]..[6][5][4][3][2][1][0] <- C
  ***************************************************************/
 /* not sure about how 16 bit memory modifying is executed */
@@ -199,9 +216,6 @@ if (errorlog)													\
 	tmp.w.l |= (P & F_C);										\
 	P = (P & ~F_C) | (tmp.w.l & F_C);							\
 	SET_NZ_WORD(tmp);											\
-if (errorlog)													\
-	fprintf(errorlog,"m65ce02 at pc:%.4x not sure row %.2x\n",  \
-		m65ce02.pc.w.l-2,ZPL);
 
 /* 65ce02 ********************************************************
  *	CPZ Compare index Z
@@ -235,9 +249,8 @@ if (errorlog)													\
 	SET_NZ(Z)
 
 /* 65ce02 ********************************************************
- *	DEC Decrement memory word
+ *	INW Increment memory word
  ***************************************************************/
-/* not sure about this */
 #define INW 													\
 	tmp.w.l = ++tmp.w.l;										\
 	SET_NZ_WORD(tmp)
@@ -378,3 +391,30 @@ if (errorlog)													\
 	PCH = RDMEM(EAD);											\
 	change_pc16(PCD)
 
+/* 65ce02 ********************************************************
+ *	PLP Pull processor status (flags)
+ ***************************************************************/
+#undef PLP
+#define PLP 													\
+	if ( P & F_I ) {											\
+		PULL(P);												\
+		if ((m6502.irq_state != CLEAR_LINE) && !(P & F_I)) {	\
+			LOG((errorlog, "M65ce02#%d PLP sets after_cli\n",cpu_getactivecpu())); \
+			m6502.after_cli = 1;								\
+		}														\
+	} else {													\
+		PULL(P);												\
+	}
+
+/* 65ce02 ********************************************************
+ * TXS	Transfer index X to stack LSB
+ * no flags changed (sic!)
+ * txs tys not interruptable
+ ***************************************************************/
+#undef TXS
+#define TXS 													\
+		S = X; \
+		if (PEEK_OP()==0x2b /*TYS*/ ) { \
+				UINT8 op=RDOP(); \
+				(*m65ce02.insn[op])(); \
+		}

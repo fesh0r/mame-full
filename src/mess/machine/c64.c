@@ -239,7 +239,7 @@ static void c64_cia1_interrupt (int level)
 	if (level != old_level)
 	{
 		DBG_LOG (1, "mos6510", (errorlog, "nmi %s\n", level ? "start" : "end"));
-		//      cpu_set_nmi_line(0, level);
+		/*      cpu_set_nmi_line(0, level); */
 		old_level = level;
 	}
 }
@@ -582,6 +582,8 @@ int c64_paddle_read (int which)
 		if (JOYSTICK_2_BUTTON2) pot4=0x00;
 	}
 	if (MOUSE2) {
+		if (which) pot4=MOUSE2_Y;
+		else pot3=MOUSE2_X;
 	}
 	if (PADDLES12) {
 		if (which) pot2=PADDLE2_VALUE;
@@ -591,6 +593,8 @@ int c64_paddle_read (int which)
 		if (JOYSTICK_1_BUTTON2) pot1=0x00;
 	}
 	if (MOUSE1) {
+		if (which) pot2=MOUSE1_Y;
+		else pot1=MOUSE1_X;
 	}
 	if (JOYSTICK_SWAP) {
 		temp=pot1;pot1=pot2;pot2=pot1;
@@ -661,10 +665,6 @@ static void c64_common_driver_init (void)
 
 		cbm_drive_attach_fs (0);
 		cbm_drive_attach_fs (1);
-
-#ifdef VC1541
-		vc1541_driver_init ();
-#endif
 	}
 
 	sid6581_0_init (c64_paddle_read);
@@ -720,9 +720,11 @@ void c64gs_driver_init (void)
 
 void sx64_driver_init (void)
 {
+	VC1541_CONFIG vc1541= { 1, 8 };
 	c64_tape_on = 0;
 	c64_pal = 1;
 	c64_common_driver_init ();
+	vc1541_config (0, 0, &vc1541);
 }
 
 void c64_driver_shutdown (void)
@@ -738,7 +740,7 @@ void c64_driver_shutdown (void)
 void c64_common_init_machine (void)
 {
 #ifdef VC1541
-	vc1541_machine_init ();
+	vc1541_reset ();
 #endif
 	if (c64_cia1_on)
 	{
@@ -969,8 +971,12 @@ int c64_frame_interrupt (void)
 		nmilevel = KEY_RESTORE;
 	}
 
-	if (!quickload && QUICKLOAD)
-		cbm_quick_open (0, 0, c64_memory);
+	if (!quickload && QUICKLOAD) {
+		if (c65) {
+			cbm_c65_quick_open (0, 0, c64_memory);
+		} else 
+			cbm_quick_open (0, 0, c64_memory);
+	}
 	quickload = QUICKLOAD;
 
 	if (c128) {
@@ -1201,9 +1207,9 @@ int c64_frame_interrupt (void)
 		if (PADDLE1_BUTTON)
 			value &= ~4;
 	} else if (MOUSE1) {
-		if (JOYSTICK_1_BUTTON)
+		if (MOUSE1_BUTTON1)
 			value &= ~0x10;
-		if (JOYSTICK_1_BUTTON2)
+		if (MOUSE1_BUTTON2)
 			value &= ~1;
 	}
 	c64_keyline[8] = value;
@@ -1226,9 +1232,9 @@ int c64_frame_interrupt (void)
 		if (PADDLE3_BUTTON)
 			value2 &= ~4;
 	} else if (MOUSE2) {
-		if (JOYSTICK_2_BUTTON)
+		if (MOUSE2_BUTTON1)
 			value2 &= ~0x10;
-		if (JOYSTICK_2_BUTTON2)
+		if (MOUSE2_BUTTON2)
 			value2 &= ~1;
 	}
 	c64_keyline[9] = value2;
@@ -1297,24 +1303,24 @@ int c64_frame_interrupt (void)
 		if (C65_KEY_ESCAPE)
 			value &= ~0x80;
 		if (C65_KEY_F13)
-			value &= ~0x40; //?
+			value &= ~0x40; /*? */
 		if (C65_KEY_F11)
-			value &= ~0x20; //?
+			value &= ~0x20; /*? */
 		if (C65_KEY_F9)
-			value &= ~0x10; //?
+			value &= ~0x10; /*? */
 		if (C65_KEY_HELP)
 			value &= ~8;
-		if (C65_KEY_ALT) //? non blocking
+		if (C65_KEY_ALT) /*? non blocking */
 			value &= ~4;
 		if (C65_KEY_TAB)
 			value &= ~2;
-		if (C65_KEY_NOSCRL) //?
+		if (C65_KEY_NOSCRL) /*? */
 			value &= ~1;
 		c65_keyline[0] = value;
 		value = 0xff;
-		if (C65_KEY_DIN) value &= ~0x80; //?
-		//if (KEY_5) value &= ~0x8; // left
-		//if (KEY_6) value &= ~0x4; // down
+		if (C65_KEY_DIN) value &= ~0x80; /*? */
+		/*if (KEY_5) value &= ~0x8; // left */
+		/*if (KEY_6) value &= ~0x4; // down */
 		c65_keyline[1] = value;
 	}
 
@@ -1342,11 +1348,12 @@ void c64_state(PRASTER *this)
 	cia6526_status (text, sizeof (text));
 	praster_draw_text (this, text, &y);
 
-	snprintf (text, size, "c64 vic:%.4x m6510:%d exrom:%d game:%d",
+	snprintf (text, sizeof(text), "c64 vic:%.4x m6510:%d exrom:%d game:%d",
 			  c64_vicaddr - c64_memory, c64_port6510 & 7,
 			  c64_exrom, c64_game);
 	praster_draw_text (this, text, &y);
 #endif
+
 	vdc8563_status(text, sizeof(text));
 	praster_draw_text (this, text, &y);
 #endif

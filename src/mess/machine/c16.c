@@ -1,5 +1,10 @@
 /***************************************************************************
 
+	commodore c16 home computer
+
+	peter.trauner@jk.uni-linz.ac.at
+    documentation
+ 	 www.funet.fi
 
 ***************************************************************************/
 #include <ctype.h>
@@ -8,6 +13,7 @@
 
 #define VERBOSE_DBG 0
 #include "cbm.h"
+#include "tpi6525.h"
 #include "c1551.h"
 #include "vc1541.h"
 #include "vc20tape.h"
@@ -35,40 +41,10 @@ static const char *romnames[2] =
  * 6 dav output edge data on port a available
  * 7 ack input edge ready for next datum
  */
-typedef struct
-{
-	void (*write_data) (int data);
-	int (*read_data) (void);
-	void (*write_handshake) (int data);
-	int (*read_handshake) (void);
-	int (*read_status) (void);
-	UINT8 ddra, ddrb, ddrc;
-	UINT8 dataa, datab, datac;
-}
-TIA6523;
-
-static TIA6523 tia6523a =
-{
-	c1551_0_write_data,
-	c1551_0_read_data,
-	c1551_0_write_handshake,
-	c1551_0_read_handshake,
-	c1551_0_read_status,
-	0
-}, tia6523b =
-{
-	c1551_1_write_data,
-	c1551_1_read_data,
-	c1551_1_write_handshake,
-	c1551_1_read_handshake,
-	c1551_1_read_status,
-	0
-};
 
 static UINT8 port6529, port7501, ddr7501;
 
 static int lowrom = 0, highrom = 0;
-static int c16;
 
 UINT8 *c16_memory;
 static UINT8 *c16_memory_10000;
@@ -148,112 +124,6 @@ int c16_m7501_port_r (int offset)
 	{
 		return ddr7501;
 	}
-}
-
-static void tia6523_port_w (TIA6523 * tia6523, int offset, int data)
-{
-	offset &= 0x7;
-	switch (offset)
-	{
-	case 0:
-		/*    DBG_LOG(1,"iec8",(errorlog,"write port a %.2x\n",data)); */
-		tia6523->write_data ((data & tia6523->ddra) | (tia6523->ddra ^ 0xff));
-		tia6523->dataa = data;
-		break;
-	case 1:
-		DBG_LOG (1, "iec8", (errorlog, "write port b %.2x\n", data));
-		tia6523->datab = data;
-		break;
-	case 2:
-		/*    DBG_LOG(1,"iec8",(errorlog,"write handshake out %d\n",data&0x40?1:0)); */
-		tia6523->write_handshake ((data & tia6523->ddrc & 0x40) ? 1 : 0);
-		tia6523->datac = data;
-		break;
-	case 3:
-/*    DBG_LOG(1,"iec8",(errorlog,"write ddr a %.2x\n",data)); */
-		tia6523->ddra = data;
-		tia6523->write_data (tia6523->dataa & data);
-		break;
-	case 4:
-		DBG_LOG (1, "iec8", (errorlog, "write ddr b %.2x\n", data));
-		tia6523->ddrb = data;
-		break;
-	case 5:
-		DBG_LOG (1, "iec8", (errorlog, "write ddr c %.2x\n", data));
-		tia6523->ddrc = data;
-		tia6523->write_handshake ((tia6523->datac & data & 0x40) ? 1 : 0);
-		break;
-	default:
-		DBG_LOG (3, "iec8", (errorlog, "port write %.2x %.2x\n", offset, data));
-	}
-}
-
-static int tia6523_port_r (TIA6523 * tia6523, int offset)
-{
-	int data = 0;
-
-	offset &= 7;
-	switch (offset)
-	{
-	case 0:
-		data = (tia6523->read_data () & ~tia6523->ddra)
-			| (tia6523->ddra & tia6523->dataa);
-		DBG_LOG (1, "iec8", (errorlog, "read port a %.2x\n", data));
-		break;
-	case 1:
-		data = (tia6523->read_status () & ~tia6523->ddrb)
-			| (tia6523->ddrb & tia6523->datab);
-/*    DBG_LOG(1,"iec8",(errorlog,"read status %.2x\n",data)); */
-		break;
-	case 2:
-		data = ((tia6523->read_handshake ()? 0x80 : 0) & ~tia6523->ddrc)
-			| (tia6523->ddrc & tia6523->datac);
-/*    DBG_LOG(1,"iec8",(errorlog,"read handshake in  %d\n",data&0x80?1:0)); */
-		break;
-	case 3:
-		data = tia6523->ddra;
-		break;
-	case 4:
-		data = tia6523->ddrb;
-		break;
-	case 5:
-		data = tia6523->ddrc;
-		break;
-	}
-	return data;
-}
-
-
-void c16_iec9_port_w (int offset, int data)
-{
-	offset &= 7;
-	tia6523_port_w (&tia6523b, offset, data);
-	DBG_LOG (3, "iec9", (errorlog, "port write %.2x %.2x\n", offset, data));
-}
-
-int c16_iec9_port_r (int offset)
-{
-	int data = 0;
-
-	offset &= 7;
-	data = tia6523_port_r (&tia6523b, offset);
-	DBG_LOG (3, "iec9", (errorlog, "port read %.2x %.2x\n", offset, data));
-	return data;
-}
-
-void c16_iec8_port_w (int offset, int data)
-{
-	tia6523_port_w (&tia6523a, offset & 7, data);
-	DBG_LOG (3, "iec8", (errorlog, "port write %.2x %.2x\n", offset, data));
-}
-
-int c16_iec8_port_r (int offset)
-{
-	int data = 0;
-
-	data = tia6523_port_r (&tia6523a, offset & 7);
-	DBG_LOG (3, "iec8", (errorlog, "port read %.2x %.2x\n", offset, data));
-	return data;
 }
 
 static void c16_bankswitch (void)
@@ -564,20 +434,13 @@ static int ted7360_dma_read_rom (int offset)
 			return c16_memory_28000[offset & 0x7fff];
 		}
 	}
-	if (c16)
+	switch (DIPMEMORY)
 	{
-		switch (DIPMEMORY)
-		{
-		case MEMORY16K:
-			return c16_memory[offset & 0x3fff];
-		case MEMORY32K:
-			return c16_memory[offset & 0x7fff];
-		case MEMORY64K:
-			return c16_memory[offset];
-		}
-	}
-	else
-	{
+	case MEMORY16K:
+		return c16_memory[offset & 0x3fff];
+	case MEMORY32K:
+		return c16_memory[offset & 0x7fff];
+	case MEMORY64K:
 		return c16_memory[offset];
 	}
 	exit (0);
@@ -597,8 +460,30 @@ void c16_interrupt (int level)
 
 static void c16_common_driver_init (void)
 {
+	C1551_CONFIG config= { 1 };
+
 	c16_select_roms (0, 0);
 	c16_switch_to_rom (0, 0);
+
+	if (REAL_C1551) {
+		tpi6525[2].a.read=c1551x_0_read_data;
+		tpi6525[2].a.output=c1551x_0_write_data;
+		tpi6525[2].b.read=c1551x_0_read_status;
+		tpi6525[2].c.read=c1551x_0_read_handshake;
+		tpi6525[2].c.output=c1551x_0_write_handshake;
+	} else {
+		tpi6525[2].a.read=c1551_0_read_data;
+		tpi6525[2].a.output=c1551_0_write_data;
+		tpi6525[2].b.read=c1551_0_read_status;
+		tpi6525[2].c.read=c1551_0_read_handshake;
+		tpi6525[2].c.output=c1551_0_write_handshake;
+	}
+
+	tpi6525[3].a.read=c1551_1_read_data;
+	tpi6525[3].a.output=c1551_1_write_data;
+	tpi6525[3].b.read=c1551_1_read_status;
+	tpi6525[3].c.read=c1551_1_read_handshake;
+	tpi6525[3].c.output=c1551_1_write_handshake;
 
 	c16_memory_10000 = c16_memory + 0x10000;
 	c16_memory_14000 = c16_memory + 0x14000;
@@ -619,24 +504,14 @@ static void c16_common_driver_init (void)
 	cbm_drive_attach_fs (0);
 	cbm_drive_attach_fs (1);
 
-#ifdef VC1541
-	vc1541_driver_init ();
-#endif
+	if (REAL_C1551)
+		c1551_config (0, 0, &config);
 }
 
 void c16_driver_init (void)
 {
-	c16 = 1;
 	c16_common_driver_init ();
-	ted7360_init (1);
-	ted7360_set_dma (ted7360_dma_read, ted7360_dma_read_rom);
-}
-
-void plus4_driver_init (void)
-{
-	c16 = 0;
-	c16_common_driver_init ();
-	ted7360_init (0);
+	ted7360_init (C16_PAL);
 	ted7360_set_dma (ted7360_dma_read, ted7360_dma_read_rom);
 }
 
@@ -650,11 +525,14 @@ void c16_init_machine (void)
 {
 	int i;
 
+	tpi6525_2_reset();
+	tpi6525_3_reset();
+
 #if 0
 	c16_switch_to_rom (0, 0);
 	c16_select_roms (0, 0);
 #endif
-	if (c16)
+	if (TYPE_C16)
 	{
 		cpu_setbank (1, (DIPMEMORY == MEMORY16K) ? c16_memory : c16_memory + 0x4000);
 		switch (DIPMEMORY)
@@ -704,20 +582,20 @@ void c16_init_machine (void)
 	{
 		ted7360_set_dma (ted7360_dma_read, ted7360_dma_read_rom);
 	}
-	if (IEC8ON)
+	if (IEC8ON||REAL_C1551)
 	{
-		install_mem_write_handler (0, 0xfee0, 0xfeff, c16_iec8_port_w);
-		install_mem_read_handler (0, 0xfee0, 0xfeff, c16_iec8_port_r);
+		install_mem_write_handler (0, 0xfee0, 0xfeff, tpi6525_2_port_w);
+		install_mem_read_handler (0, 0xfee0, 0xfeff, tpi6525_2_port_r);
 	}
-	else
+	else 
 	{
 		install_mem_write_handler (0, 0xfee0, 0xfeff, MWA_NOP);
 		install_mem_read_handler (0, 0xfee0, 0xfeff, MRA_NOP);
 	}
 	if (IEC9ON)
 	{
-		install_mem_write_handler (0, 0xfec0, 0xfedf, c16_iec9_port_w);
-		install_mem_read_handler (0, 0xfec0, 0xfedf, c16_iec9_port_r);
+		install_mem_write_handler (0, 0xfec0, 0xfedf, tpi6525_3_port_w);
+		install_mem_read_handler (0, 0xfec0, 0xfedf, tpi6525_3_port_r);
 	}
 	else
 	{
@@ -740,10 +618,9 @@ void c16_init_machine (void)
 		i = 0;
 	cbm_drive_1_config (i);
 
+	if (REAL_C1551)
+		c1551_reset ();
 
-#ifdef VC1541
-	vc1541_machine_init ();
-#endif
 	cbm_serial_reset_write (0);
 
 	for (i = 0; (romnames[i] != 0) && (i < sizeof (romnames) / sizeof (romnames[0]));

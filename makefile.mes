@@ -79,6 +79,7 @@ CPUS+=M6809@
 #CPUS+=KONAMI@
 CPUS+=M68000@
 #CPUS+=M68010@
+#CPUS+=M68EC020@
 #CPUS+=M68020@
 #CPUS+=T11@
 #CPUS+=S2650@
@@ -99,7 +100,7 @@ CPUS+=PDP1@
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@
-#SOUNDS+=SAMPLES@
+SOUNDS+=SAMPLES@
 SOUNDS+=DAC@
 SOUNDS+=AY8910@
 #SOUNDS+=YM2203@
@@ -122,6 +123,7 @@ SOUNDS+=TIA@
 SOUNDS+=NES@
 SOUNDS+=ASTROCADE@
 #SOUNDS+=NAMCO@
+#SOUNDS+=TMS36XX@
 SOUNDS+=TMS5220@
 #SOUNDS+=VLM5030@
 #SOUNDS+=ADPCM@
@@ -429,6 +431,20 @@ endif
 DBGOBJS += obj/cpu/m68000/d68k.o
 endif
 
+CPU=$(strip $(findstring M68EC020@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M68EC020=1
+ifdef X86_ASM_68K
+CPUOBJS += obj/cpu/m68000/asmintf.o obj/cpu/m68000/68kem.oa
+ASMDEFS += -DA68KEM
+else
+CPUOBJS += obj/cpu/m68000/m68kops.og obj/cpu/m68000/m68kopac.og \
+           obj/cpu/m68000/m68kopdm.og obj/cpu/m68000/m68kopnz.og \
+           obj/cpu/m68000/m68kcpu.o obj/cpu/m68000/m68kmame.o
+endif
+DBGOBJS += obj/cpu/m68000/d68k.o
+endif
+
 CPU=$(strip $(findstring M68020@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_M68020=1
@@ -694,6 +710,12 @@ SOUNDDEFS += -DHAS_NAMCO=1
 SOUNDOBJS += obj/sound/namco.o
 endif
 
+SOUND=$(strip $(findstring TMS36XX@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_TMS36XX=1
+SOUNDOBJS += obj/sound/tms36xx.o
+endif
+
 SOUND=$(strip $(findstring TMS5220@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_TMS5220=1
@@ -863,7 +885,7 @@ COREOBJS = obj/version.o obj/mess/system.o obj/mame.o obj/mess/mess.o \
          obj/machine/8255ppi.o \
          obj/vidhrdw/generic.o obj/vidhrdw/vector.o \
          obj/vidhrdw/avgdvg.o obj/machine/mathbox.o \
-         obj/machine/ticket.o \
+         obj/machine/ticket.o obj/machine/eeprom.o \
          obj/mamedbg.o obj/window.o \
          obj/profiler.o \
          $(sort $(DBGOBJS)) \
@@ -936,7 +958,10 @@ $(EMULATOR_EXE):  $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS)
 	$(CC) $(CDEFS) $(CFLAGS) $(TINYFLAGS) -DMESS -c src/version.c -o obj/version.o
 	$(LD) $(LDFLAGS) $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS) -o $@
 ifndef DEBUG
+	$(EMULATOR_EXE) -listtext > mess.txt
+	$(EMULATOR_EXE) -listdevices >> mess.txt
 	upx $(EMULATOR_EXE)
+
 endif
 
 romcmp.exe: obj/romcmp.o obj/unzip.o
@@ -1245,7 +1270,6 @@ obj/motorola.a: \
 		obj/mess/machine/mekd2.o    \
                 obj/mess/systems/mekd2.o
 
-
 # dependencies
 obj/cpu/z80/z80.o: z80.c z80.h z80daa.h
 obj/cpu/z8000/z8000.o: z8000.c z8000.h z8000cpu.h z8000dab.h z8000ops.c z8000tbl.c
@@ -1255,8 +1279,9 @@ obj/cpu/i8039/i8039.o: i8039.c i8039.h
 obj/cpu/i8085/i8085.o: i8085.c i8085.h i8085cpu.h i8085daa.h
 obj/cpu/i86/i86.o: i86.c i86.h i86intrf.h ea.h host.h instr.h modrm.h
 obj/cpu/nec/nec.o: nec.c nec.h necintrf.h necea.h nechost.h necinstr.h necmodrm.h
-obj/cpu/m6502/m6502.o: m6502.c m6502.h ops02.h t6502.c t65c02.c t65sc02.c t6510.c tn2a03.c
-obj/cpu/m65ce02/m65ce02.o: m65ce02.c m65ce02.h opsce02.h t6ce502.c
+obj/cpu/m6502/m6502.o: m6502.c m6502.h ops02.h t6502.c t65c02.c t65sc02.c t6510.c
+obj/cpu/m6502/m65ce02.o: m65ce02.c m65ce02.h opsce02.h t65ce02.c
+obj/cpu/m6502/m6509.o: m6509.c m6509.h ops09.h t6509.c
 obj/cpu/m6800/m6800.o: m6800.c m6800.h 6800ops.c 6800tbl.c
 obj/cpu/m6805/m6805.o: m6805.c m6805.h 6805ops.c
 obj/cpu/m6809/m6809.o: m6809.c m6809.h 6809ops.c 6809tbl.c
@@ -1353,6 +1378,7 @@ cleantiny:
 	del obj\cheat.o
 	del obj\vidhrdw\konamiic.o
 	del obj\msdos\input.o
+
 
 
 messdir:

@@ -269,5 +269,5 @@ static const struct IODevice io_pce[] = {
 ***************************************************************************/
 
 /*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY	 FULLNAME */
-CONSX( 1987, pce,	   0,		 pce,	   pce, 	 0,		   "Nippon Electronic Company", "PC-Engine", GAME_NOT_WORKING )
+CONSX( 1987, pce,	   0,		 pce,	   pce, 	 0,		   "Nippon Electronic Company", "PC-Engine", GAME_NOT_WORKING | GAME_NO_SOUND )
 

@@ -113,38 +113,39 @@ int cbm_drive_attach_fs (int id)
 	return 0;
 }
 
-static int d64_open (CBM_Drive * drive)
+static int d64_open (int id)
 {
 	FILE *in;
 	int size;
 
-	memset (&(drive->d.d64), 0, sizeof (drive->d.d64));
+	memset (&(cbm_drive[id].d.d64), 0, sizeof (cbm_drive[id].d.d64));
 
-	if (!(in = image_fopen (IO_FLOPPY, drive->drive, OSD_FILETYPE_IMAGE_R, 0)))
+	cbm_drive[id].d.d64.imagename= device_filename(IO_FLOPPY, id);
+	if (!(in = image_fopen (IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		if (errorlog)
-			fprintf (errorlog, " image %s not found\n", device_filename(IO_FLOPPY,drive->drive));
+			fprintf (errorlog, " image %s not found\n", device_filename(IO_FLOPPY,id));
 		return 1;
 	}
 	size = osd_fsize (in);
-	if (!(drive->d.d64.image = malloc (size)))
+	if (!(cbm_drive[id].d.d64.image = malloc (size)))
 	{
 		osd_fclose (in);
 		return 1;
 	}
-	if (size != osd_fread (in, drive->d.d64.image, size))
+	if (size != osd_fread (in, cbm_drive[id].d.d64.image, size))
 	{
-		free (drive->d.d64.image);
+		free (cbm_drive[id].d.d64.image);
 		osd_fclose (in);
 		return 1;
 	}
 	osd_fclose (in);
 
 	if (errorlog)
-		fprintf (errorlog, "floppy image %s loaded\n", device_filename(IO_FLOPPY,drive->drive));
+		fprintf (errorlog, "floppy image %s loaded\n", 
+				 cbm_drive[id].d.d64.imagename);
 
-	drive->drive = D64_IMAGE;
-	drive->d.d64.imagename = device_filename(IO_FLOPPY,drive->drive);
+	cbm_drive[id].drive = D64_IMAGE;
 	return 0;
 }
 
@@ -160,7 +161,7 @@ int cbm_drive_attach_image (int id)
 
 	}
 #endif
-	return d64_open (cbm_drive + id);
+	return d64_open (id);
 }
 
 
@@ -402,14 +403,14 @@ static void cbm_drive_status (CBM_Drive * c1551, char *text, int size)
 		switch (c1551->state)
 		{
 		case OPEN:
-			snprintf (text, size, "Disk File %s open", c1551->d.fs.filename);
+			snprintf (text, size, "Romdir File %s open", c1551->d.fs.filename);
 			break;
 		case READING:
-			snprintf (text, size, "Disk File %s loading %d",
+			snprintf (text, size, "Romdir File %s loading %d",
 					  c1551->d.fs.filename, c1551->size - c1551->pos - 1);
 			break;
 		case WRITING:
-			snprintf (text, size, "Disk File %s saving %d",
+			snprintf (text, size, "Romdir File %s saving %d",
 					  c1551->d.fs.filename, c1551->pos);
 			break;
 		}
@@ -419,18 +420,18 @@ static void cbm_drive_status (CBM_Drive * c1551, char *text, int size)
 		switch (c1551->state)
 		{
 		case OPEN:
-			snprintf (text, size, "Disk (%s) File %s open",
+			snprintf (text, size, "Image %s File %s open",
 					  c1551->d.d64.imagename,
 					  c1551->d.d64.filename);
 			break;
 		case READING:
-			snprintf (text, size, "Disk (%s) File %s loading %d",
+			snprintf (text, size, "Image %s File %s loading %d",
 					  c1551->d.d64.imagename,
 					  c1551->d.d64.filename,
 					  c1551->size - c1551->pos - 1);
 			break;
 		case WRITING:
-			snprintf (text, size, "Disk (%s) File %s saving %d",
+			snprintf (text, size, "Image %s File %s saving %d",
 					  c1551->d.d64.imagename,
 					  c1551->d.d64.filename, c1551->pos);
 			break;

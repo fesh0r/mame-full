@@ -25,7 +25,7 @@ struct RIOT {
 	UINT8	ddrb;		/* Data direction register B; 1 bits = output */
 	UINT8	irqen;		/* IRQ enabled ? */
 	UINT8	state;		/* current timer state (bit 7) */
-	double	clock;		/* baseclock/1(,8,64,1024) */
+	long double	clock;		/* baseclock/1(,8,64,1024) */
 	void	*timer; 	/* timer callback */
     double  baseclock;  /* copied from interface */
 	int (*port_a_r)(int chip);
@@ -82,6 +82,7 @@ int riot_r(int chip, int offset)
 		LOG((errorlog, "riot(%d) DDRB  read : $%02x\n", chip, data));
 		break;
 	case 0x4: case 0xc: /* Timer count read (not supported?) */
+		LOG((errorlog, "riot(%d) TIMR  read : $%02x%s\n", chip, data, (char*)((offset & 8) ? " (IRQ)":"    ")));
 		data = (int)(256 * timer_timeleft(riot[chip].timer) / TIME_IN_HZ(riot[chip].clock));
 		riot[chip].irqen = (offset & 8) ? 1 : 0;
 		LOG((errorlog, "riot(%d) TIMR  read : $%02x%s\n", chip, data, (char*)((offset & 8) ? " (IRQ)":"    ")));

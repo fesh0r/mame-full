@@ -52,6 +52,8 @@ UINT8 *c65_graphics;
    seldom copy (overlapping) from 0x402002 to 0x402008
    (making place for new line in basic area)
    for whats this bit 0x400000, or is this really the address?
+   maybe means add counter to address for access,
+   so allowing up or down copies, and reordering copies
 */
 static void c65_dma_port_w(int offset, int value)
 {
@@ -348,7 +350,7 @@ void c65_bankswitch (void)
 			cpu_setbank (3, c64_memory + 0x6000); /* dont care */
 			cpu_setbank (4, c65_dos);
 			cpu_setbank (5, c65_dos + 0x2000);
-			//cpu_setbank (6, c65_interface);
+			/*cpu_setbank (6, c65_interface); */
 			cpu_setbankhandler_r (7, c65_read_io);
 			c65_write_io = 1;
 			cpu_setbank (8, c65_kernal);
@@ -362,7 +364,7 @@ void c65_bankswitch (void)
 				cpu_setbank (3, c65_monitor);
 				cpu_setbank (4, c64_memory + 0x8000); /* dont care */
 				cpu_setbank (5, c64_basic); /* dont care*/
-				//cpu_setbank (6, c65_interface);
+				/*cpu_setbank (6, c65_interface); */
 				cpu_setbankhandler_r (7, c65_read_io);
 				c65_write_io = 1;
 				cpu_setbank (8, c65_kernal);
@@ -373,7 +375,7 @@ void c65_bankswitch (void)
 				cpu_setbank (3, c65_basic + 0x4000);
 				cpu_setbank (4, c65_graphics);
 				cpu_setbank (5, c65_graphics+0x2000);
-				//cpu_setbank (6, c65_interface);
+				/*cpu_setbank (6, c65_interface); */
 				cpu_setbankhandler_r (7, c65_read_io);
 				c65_write_io = 1;
 				cpu_setbank (8, c65_kernal);
@@ -550,10 +552,6 @@ static void c65_common_driver_init (void)
 	cbm_drive_attach_fs (0);
 	cbm_drive_attach_fs (1);
 
-#ifdef VC1541
-	vc1541_driver_init (1);
-#endif
-
 	sid6581_0_init (c64_paddle_read);
 	sid6581_1_init (NULL);
 	c64_cia0.todin50hz = c64_cia1.todin50hz = c64_pal;
@@ -583,9 +581,7 @@ void c65_driver_shutdown (void)
 void c65_init_machine (void)
 {
 	memset(c64_memory+0x40000, 0xff, 0xc0000);
-#ifdef VC1541
-	vc1541_machine_init ();
-#endif
+
 	cbm_serial_reset_write (0);
 	cbm_drive_0_config (SERIAL8ON ? SERIAL : 0);
 	cbm_drive_1_config (SERIAL9ON ? SERIAL : 0);

@@ -40,9 +40,9 @@
  * ended with illegal track and sector numbers
  */
 
-#define MAX_TRACKS 35
+#define D64_MAX_TRACKS 35
 
-int sectors_per_track[] =
+int d64_sectors_per_track[] =
 {
 	21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
 	19, 19, 19, 19, 19, 19, 19,
@@ -50,22 +50,22 @@ int sectors_per_track[] =
 	17, 17, 17, 17, 17
 };
 
-static int offset[MAX_TRACKS];		   /* offset of begin of track in d64 file */
+static int d64_offset[D64_MAX_TRACKS];		   /* offset of begin of track in d64 file */
 
 /* must be called before other functions */
 void cbm_drive_open_helper (void)
 {
 	int i;
 
-	offset[0] = 0;
+	d64_offset[0] = 0;
 	for (i = 1; i <= 35; i++)
-		offset[i] = offset[i - 1] + sectors_per_track[i - 1] * 256;
+		d64_offset[i] = d64_offset[i - 1] + d64_sectors_per_track[i - 1] * 256;
 }
 
 /* calculates offset to beginning of d64 file for sector beginning */
-static int tracksector2offset (int track, int sector)
+int d64_tracksector2offset (int track, int sector)
 {
-	return offset[track - 1] + sector * 256;
+	return d64_offset[track - 1] + sector * 256;
 }
 
 static int cbm_compareNames (unsigned char *left, unsigned char *right)
@@ -94,13 +94,13 @@ static int d64_find (CBM_Drive * drive, unsigned char *name)
 {
 	int pos, track, sector, i;
 
-	pos = tracksector2offset (18, 0);
+	pos = d64_tracksector2offset (18, 0);
 	track = drive->d.d64.image[pos];
 	sector = drive->d.d64.image[pos + 1];
 
 	while ((track >= 1) && (track <= 35))
 	{
-		pos = tracksector2offset (track, sector);
+		pos = d64_tracksector2offset (track, sector);
 		for (i = 2; i < 256; i += 32)
 		{
 			if (drive->d.d64.image[pos + i] & 0x80)
@@ -127,14 +127,14 @@ static void d64_readprg (CBM_Drive * c1551, int pos)
 
 	c1551->d.d64.filename[i] = 0;
 
-	pos = tracksector2offset (c1551->d.d64.image[pos + 1], c1551->d.d64.image[pos + 2]);
+	pos = d64_tracksector2offset (c1551->d.d64.image[pos + 1], c1551->d.d64.image[pos + 2]);
 
 	i = pos;
 	c1551->size = 0;
 	while (c1551->d.d64.image[i] != 0)
 	{
 		c1551->size += 254;
-		i = tracksector2offset (c1551->d.d64.image[i], c1551->d.d64.image[i + 1]);
+		i = d64_tracksector2offset (c1551->d.d64.image[i], c1551->d.d64.image[i + 1]);
 	}
 	c1551->size += c1551->d.d64.image[i + 1];
 
@@ -153,7 +153,7 @@ static void d64_readprg (CBM_Drive * c1551, int pos)
 		if (i + 254 < c1551->size)
 		{							   /* not last sector */
 			memcpy (c1551->buffer + i, c1551->d.d64.image + pos + 2, 254);
-			pos = tracksector2offset (c1551->d.d64.image[pos + 0],
+			pos = d64_tracksector2offset (c1551->d.d64.image[pos + 0],
 									  c1551->d.d64.image[pos + 1]);
 			DBG_LOG (3, "d64 readprg", (errorlog, "track: %d sector: %d\n",
 										c1551->d.d64.image[pos],
@@ -174,7 +174,7 @@ static void d64_read_sector (CBM_Drive * c1551, int track, int sector)
 	snprintf (c1551->d.d64.filename, sizeof (c1551->d.d64.filename),
 			  "track %d sector %d", track, sector);
 
-	pos = tracksector2offset (track, sector);
+	pos = d64_tracksector2offset (track, sector);
 
 	c1551->buffer = malloc (256);
 
@@ -194,7 +194,7 @@ static void d64_read_directory (CBM_Drive * c1551)
 	c1551->buffer = malloc (8 * 18 * 25);
 	c1551->size = 0;
 
-	pos = tracksector2offset (18, 0);
+	pos = d64_tracksector2offset (18, 0);
 	track = c1551->d.d64.image[pos];
 	sector = c1551->d.d64.image[pos + 1];
 
@@ -225,7 +225,7 @@ static void d64_read_directory (CBM_Drive * c1551)
 
 	while ((track >= 1) && (track <= 35))
 	{
-		pos = tracksector2offset (track, sector);
+		pos = d64_tracksector2offset (track, sector);
 		for (i = 2; i < 256; i += 32)
 		{
 			if (c1551->d.d64.image[pos + i] & 0x80)

@@ -82,7 +82,7 @@ expansion modules c64 (adapter needed)
  no other expansion modules
 no userport
  no rs232/v.24 interface
-quickloader
+preliminary quickloader
 
 Keys
 ----
@@ -444,17 +444,11 @@ static void c65_init_palette (unsigned char *sys_palette, unsigned short *sys_co
 ROM_START (c65)
 	 ROM_REGION (0x100000, REGION_CPU1)
 	 ROM_LOAD ("910828.bin", 0x20000, 0x20000, 0x3ee40b06)
-#ifdef VC1541
-	 VC1541_ROM (REGION_CPU2)
-#endif
 ROM_END
 
 ROM_START (c65ger)
 	 ROM_REGION (0x100000, REGION_CPU1)
 	 ROM_LOAD ("910429.bin", 0x20000, 0x20000, 0xb025805c)
-#ifdef VC1541
-	 VC1541_ROM (REGION_CPU2)
-#endif
 ROM_END
 
 static struct MachineDriver machine_driver_c65 =
@@ -470,9 +464,6 @@ static struct MachineDriver machine_driver_c65 =
 			vic2_raster_irq, VIC2_HRETRACERATE,
 			(void*)c65_map
 		},
-#ifdef VC1541
-		VC1541_CPU
-#endif
 	},
 	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	0,
@@ -518,9 +509,6 @@ static struct MachineDriver machine_driver_c65pal =
 			vic2_raster_irq, VIC2_HRETRACERATE,
 			(void*)c65_map
 		},
-#ifdef VC1541
-		VC1541_CPU
-#endif
 	},
 	VIC6569_VRETRACERATE,
 	DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
@@ -556,8 +544,8 @@ static struct MachineDriver machine_driver_c65pal =
 
 static const struct IODevice io_c65[] =
 {
-#ifdef PET_TEST_CODE
-	IODEVICE_CBM_QUICK,
+	IODEVICE_CBM_C65_QUICK,
+#if 0
 	IODEVICE_CBM_ROM(c64_rom_id),
 	IODEVICE_CBM_DRIVE,
 #endif
@@ -571,9 +559,9 @@ static const struct IODevice io_c65[] =
 
 /*    	YEAR	NAME    PARENT	MACHINE	INPUT	INIT 	COMPANY   							FULLNAME */
 #ifdef PET_TEST_CODE
-COMP (	199?,	c65,	0,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"Commodore C65 Prototype (C64DX) (NTSC)")
-COMP (	199?,	c65ger,	c65,	c65pal,	c65ger,	c65,	"Commodore Business Machines Co.",	"Commodore C65 Prototype German (C64DX) (PAL)")
+COMP (	199?,	c65,	0,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"Commodore C65/C64DX (Prototype) NTSC")
+COMP (	199?,	c65ger,	c65,	c65pal,	c65ger,	c65,	"Commodore Business Machines Co.",	"Commodore C65/C64DX (Prototype) German (PAL)")
 #else
-COMPX (	199?, 	c65,	0,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"Commodore C65 Prototype (C64DX) (NTSC)", 		GAME_NOT_WORKING | GAME_NO_SOUND)
-COMPX (	199?, 	c65ger,	c65,	c65pal,	c65ger,	c65,	"Commodore Business Machines Co.",	"Commodore C65 Prototype German (C64DX) (PAL)",	GAME_NOT_WORKING | GAME_NO_SOUND)
+COMPX (	199?, 	c65,	0,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"Commodore C65/C64DX (Prototype) NTSC", 		GAME_NOT_WORKING | GAME_NO_SOUND)
+COMPX (	199?, 	c65ger,	c65,	c65pal,	c65ger,	c65,	"Commodore Business Machines Co.",	"Commodore C65/C64DX (Prototype) German (PAL)",	GAME_NOT_WORKING | GAME_NO_SOUND)
 #endif

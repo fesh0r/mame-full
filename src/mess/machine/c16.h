@@ -103,12 +103,25 @@
 
 #define DATASSETTE (input_port_7_r(0)&0x20)
 #define DATASSETTE_TONE (input_port_7_r(0)&0x10)
-#define IEC8ON ((input_port_7_r(0)&0xc)==4)
-#define IEC9ON ((input_port_7_r(0)&3)==1)
-#define SERIAL8ON ((input_port_7_r(0)&0xc)==8)
-#define SERIAL9ON ((input_port_7_r(0)&3)==2)
 
-#define DIPMEMORY (input_port_8_r(0)&3)
+#define NO_REAL_FLOPPY ((input_port_8_r(0)&0xc0)==0)
+#define REAL_C1551 ((input_port_8_r(0)&0xc0)==0x40)
+#define REAL_VC1541 ((input_port_8_r(0)&0xc0)==0x80)
+
+#define IEC8ON ((input_port_8_r(0)&0x38)==8)
+#define IEC8ON ((input_port_8_r(0)&0x38)==8)
+#define IEC9ON ((input_port_8_r(0)&7)==1)
+
+#define SERIAL8ON ((input_port_8_r(0)&0x38)==0x18)
+#define SERIAL9ON ((input_port_8_r(0)&7)==3)
+
+#define C16_PAL ((input_port_9_r(0)&0x10)==0)
+
+#define TYPE_C16 ((input_port_9_r(0)&0xc)==0)
+#define TYPE_PLUS4 ((input_port_9_r(0)&0xc)==4)
+#define TYPE_364 ((input_port_9_r(0)&0xc)==8)
+
+#define DIPMEMORY (input_port_9_r(0)&3)
 #define MEMORY16K (0)
 #define MEMORY32K (2)
 #define MEMORY64K (3)
@@ -148,7 +161,6 @@ extern int c16_read_keyboard (int databus);
 extern void c16_interrupt (int);
 
 extern void c16_driver_init (void);
-extern void plus4_driver_init (void);
 extern void c16_driver_shutdown (void);
 extern void c16_init_machine (void);
 extern void c16_shutdown_machine (void);

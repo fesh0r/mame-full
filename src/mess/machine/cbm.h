@@ -67,34 +67,17 @@ typedef int bool;
 
 void cbm_quick_exit (int id);
 int cbm_quick_init (int id);
-int cbm_quick_open (int id, int mode, void *arg);
-int cbm_pet_quick_open (int id, int mode, void *arg);
 /* pet with basic 1 */
 int cbm_pet1_quick_open (int id, int mode, void *arg);
-
-#define IODEVICE_CBM_PET_QUICK \
-{\
-   IO_HARDDISK,          /* type */\
-   1,                                      /* count */\
-   "p00\0prg\0",            /*file extensions */\
-   NULL,               /* private */\
-   NULL,               /* id */\
-   cbm_quick_init,     /* init */\
-   cbm_quick_exit,     /* exit */\
-   NULL,               /* info */\
-   cbm_pet_quick_open,     /* open */\
-   NULL,               /* close */\
-   NULL,               /* status */\
-   NULL,               /* seek */\
-   NULL,               /* input */\
-   NULL,               /* output */\
-   NULL,               /* input_chunk */\
-   NULL                /* output_chunk */\
-}
+int cbm_pet_quick_open (int id, int mode, void *arg);
+int cbm_quick_open (int id, int mode, void *arg);
+int cbmb_quick_open (int id, int mode, void *arg);
+int cbm500_quick_open (int id, int mode, void *arg);
+int cbm_c65_quick_open (int id, int mode, void *arg);
 
 #define IODEVICE_CBM_PET1_QUICK \
 {\
-   IO_HARDDISK,          /* type */\
+   IO_QUICKLOAD,          /* type */\
    1,                                      /* count */\
    "p00\0prg\0",            /*file extensions */\
    NULL,               /* private */\
@@ -112,9 +95,29 @@ int cbm_pet1_quick_open (int id, int mode, void *arg);
    NULL                /* output_chunk */\
 }
 
+#define IODEVICE_CBM_PET_QUICK \
+{\
+   IO_QUICKLOAD,          /* type */\
+   1,                                      /* count */\
+   "p00\0prg\0",            /*file extensions */\
+   NULL,               /* private */\
+   NULL,               /* id */\
+   cbm_quick_init,     /* init */\
+   cbm_quick_exit,     /* exit */\
+   NULL,               /* info */\
+   cbm_pet_quick_open,     /* open */\
+   NULL,               /* close */\
+   NULL,               /* status */\
+   NULL,               /* seek */\
+   NULL,               /* input */\
+   NULL,               /* output */\
+   NULL,               /* input_chunk */\
+   NULL                /* output_chunk */\
+}
+
 #define IODEVICE_CBM_QUICK \
 {\
-   IO_HARDDISK,          /* type */\
+   IO_QUICKLOAD,          /* type */\
    1,                                      /* count */\
    "p00\0prg\0",            /*file extensions */\
    NULL,               /* private */\
@@ -123,6 +126,66 @@ int cbm_pet1_quick_open (int id, int mode, void *arg);
    cbm_quick_exit,     /* exit */\
    NULL,               /* info */\
    cbm_quick_open,     /* open */\
+   NULL,               /* close */\
+   NULL,               /* status */\
+   NULL,               /* seek */\
+   NULL,               /* input */\
+   NULL,               /* output */\
+   NULL,               /* input_chunk */\
+   NULL                /* output_chunk */\
+}
+
+#define IODEVICE_CBMB_QUICK \
+{\
+   IO_QUICKLOAD,          /* type */\
+   1,                                      /* count */\
+   "p00\0prg\0",            /*file extensions */\
+   NULL,               /* private */\
+   NULL,               /* id */\
+   cbm_quick_init,     /* init */\
+   cbm_quick_exit,     /* exit */\
+   NULL,               /* info */\
+   cbmb_quick_open,     /* open */\
+   NULL,               /* close */\
+   NULL,               /* status */\
+   NULL,               /* seek */\
+   NULL,               /* input */\
+   NULL,               /* output */\
+   NULL,               /* input_chunk */\
+   NULL                /* output_chunk */\
+}
+
+#define IODEVICE_CBM500_QUICK \
+{\
+   IO_QUICKLOAD,          /* type */\
+   1,                                      /* count */\
+   "p00\0prg\0",            /*file extensions */\
+   NULL,               /* private */\
+   NULL,               /* id */\
+   cbm_quick_init,     /* init */\
+   cbm_quick_exit,     /* exit */\
+   NULL,               /* info */\
+   cbm500_quick_open,     /* open */\
+   NULL,               /* close */\
+   NULL,               /* status */\
+   NULL,               /* seek */\
+   NULL,               /* input */\
+   NULL,               /* output */\
+   NULL,               /* input_chunk */\
+   NULL                /* output_chunk */\
+}
+
+#define IODEVICE_CBM_C65_QUICK \
+{\
+   IO_QUICKLOAD,          /* type */\
+   1,                                      /* count */\
+   "p00\0prg\0",            /*file extensions */\
+   NULL,               /* private */\
+   NULL,               /* id */\
+   cbm_quick_init,     /* init */\
+   cbm_quick_exit,     /* exit */\
+   NULL,               /* info */\
+   cbm_c65_quick_open,     /* open */\
    NULL,               /* close */\
    NULL,               /* status */\
    NULL,               /* seek */\
@@ -147,11 +210,11 @@ typedef struct {
 
 extern CBM_ROM cbm_rom[0x20];
 
-#define IODEVICE_CBM_ROM(idfunc) \
+#define IODEVICE_CBM_ROM(extensions, idfunc) \
 {\
    IO_CARTSLOT,        /* type */\
    2,                  /* in reality 1 *//* count */\
-   "crt\0",            /*file extensions */\
+   extensions,            /*file extensions */\
    NULL,               /* private */\
    idfunc,             /* id */\
    cbm_rom_init,       /* init */\

@@ -56,6 +56,8 @@ static int sid6581_port_r (SID6581 *this, int offset)
 		if (this->paddle_read != NULL)
 			return this->paddle_read (1);
 		return 0;
+	case 0x1b:case 0x1c: /* noise channel readback? */
+		return rand();
 	default:
 		return this->reg[offset];
 	}

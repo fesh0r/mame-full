@@ -488,9 +488,6 @@ ROM_START (c64)
 	 ROM_LOAD ("basic.a0", 0x10000, 0x2000, 0xf833d117)
 	 ROM_LOAD ("kernel3.e0", 0x12000, 0x2000, 0xdbe3e7c7)
 	 ROM_LOAD ("char.do", 0x14000, 0x1000, 0xec4272ee)
-#ifdef VC1541
-	 VC1541_ROM (REGION_CPU2)
-#endif
 ROM_END
 
 ROM_START (c64pal)
@@ -498,9 +495,6 @@ ROM_START (c64pal)
 	 ROM_LOAD ("basic.a0", 0x10000, 0x2000, 0xf833d117)
 	 ROM_LOAD ("kernel3.e0", 0x12000, 0x2000, 0xdbe3e7c7)
 	 ROM_LOAD ("char.do", 0x14000, 0x1000, 0xec4272ee)
-#ifdef VC1541
-	 VC1541_ROM (REGION_CPU2)
-#endif
 ROM_END
 
 ROM_START (sx64)
@@ -508,9 +502,7 @@ ROM_START (sx64)
 	 ROM_LOAD ("basic.a0", 0x10000, 0x2000, 0xf833d117)
 	 ROM_LOAD( "sx64.e0",     0x12000, 0x2000, 0x2c5965d4 )   
 	 ROM_LOAD ("char.do", 0x14000, 0x1000, 0xec4272ee)
-#ifdef VC1541
 	 VC1541_ROM (REGION_CPU2)
-#endif
 ROM_END
 
 ROM_START (pet64)
@@ -518,9 +510,6 @@ ROM_START (pet64)
 	 ROM_LOAD ("basic.a0", 0x10000, 0x2000, 0xf833d117)
 	 ROM_LOAD( "4064.e0",     0x12000, 0x2000, 0x789c8cc5 )   
 	 ROM_LOAD ("char.do", 0x14000, 0x1000, 0xec4272ee)
-#ifdef VC1541
-	 VC1541_ROM (REGION_CPU2)
-#endif
 ROM_END
 
 #if 0
@@ -597,9 +586,6 @@ static struct MachineDriver machine_driver_c64 =
 			c64_frame_interrupt, 1,
 			vic2_raster_irq, VIC2_HRETRACERATE,
 		},
-#ifdef VC1541
-		VC1541_CPU (REGION_CPU2)
-#endif
 	},
 	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	0,
@@ -640,9 +626,6 @@ static struct MachineDriver machine_driver_pet64 =
 			c64_frame_interrupt, 1,
 			vic2_raster_irq, VIC2_HRETRACERATE,
 		},
-#ifdef VC1541
-		VC1541_CPU (REGION_CPU2)
-#endif
 	},
 	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	0,
@@ -683,9 +666,6 @@ static struct MachineDriver machine_driver_c64pal =
 			c64_frame_interrupt, 1,
 			vic2_raster_irq, VIC2_HRETRACERATE,
 		},
-#ifdef VC1541
-		VC1541_CPU (REGION_CPU2)
-#endif
 	},
 	VIC6569_VRETRACERATE,
 	DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
@@ -715,7 +695,7 @@ static struct MachineDriver machine_driver_c64pal =
 	}
 };
 
-static struct MachineDriver machine_driver_c64_notape =
+static struct MachineDriver machine_driver_c64gs =
 {
   /* basic machine hardware */
 	{
@@ -727,9 +707,6 @@ static struct MachineDriver machine_driver_c64_notape =
 			c64_frame_interrupt, 1,
 			vic2_raster_irq, VIC2_HRETRACERATE,
 		},
-#ifdef VC1541
-		VC1541_CPU (REGION_CPU2)
-#endif
 	},
 	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	0,
@@ -758,7 +735,7 @@ static struct MachineDriver machine_driver_c64_notape =
 	}
 };
 
-static struct MachineDriver machine_driver_c64pal_notape =
+static struct MachineDriver machine_driver_sx64 =
 {
   /* basic machine hardware */
 	{
@@ -770,9 +747,7 @@ static struct MachineDriver machine_driver_c64pal_notape =
 			c64_frame_interrupt, 1,
 			vic2_raster_irq, VIC2_HRETRACERATE,
 		},
-#ifdef VC1541
-		VC1541_CPU (REGION_CPU2)
-#endif
+		VC1541_CPU
 	},
 	VIC6569_VRETRACERATE,
 	DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
@@ -845,8 +820,10 @@ static struct MachineDriver machine_driver_ultimax =
 static const struct IODevice io_c64[] =
 {
 	IODEVICE_CBM_QUICK,
-	IODEVICE_CBM_ROM(c64_rom_id),
+	IODEVICE_CBM_ROM("crt\080\0", c64_rom_id),
+#ifdef PET_TEST_CODE
 	IODEVICE_VC20TAPE,
+#endif
 	IODEVICE_CBM_DRIVE,
 	{IO_END}
 };
@@ -854,22 +831,24 @@ static const struct IODevice io_c64[] =
 static const struct IODevice io_sx64[] =
 {
 	IODEVICE_CBM_QUICK,
-	IODEVICE_CBM_ROM(c64_rom_id),
-	IODEVICE_CBM_DRIVE,
+	IODEVICE_CBM_ROM("crt\080\0", c64_rom_id),
+	IODEVICE_VC1541,
 	{IO_END}
 };
 
 static const struct IODevice io_ultimax[] =
 {
 	IODEVICE_CBM_QUICK,
-	IODEVICE_CBM_ROM(c64_rom_id),
+	IODEVICE_CBM_ROM("crt\0e0\0f0\0", c64_rom_id),
+#ifdef PET_TEST_CODE
 	IODEVICE_VC20TAPE,
+#endif
 	{IO_END}
 };
 
 static const struct IODevice io_c64gs[] =
 {
-	IODEVICE_CBM_ROM(c64_rom_id),
+	IODEVICE_CBM_ROM("crt\080\0", c64_rom_id),
 	{IO_END}
 };
 
@@ -892,14 +871,14 @@ COMP (1982, max,		0,		ultimax,		ultimax,ultimax,"Commodore Business Machines Co.
 COMP (1982, c64,        0,      c64,            c64,    c64,    "Commodore Business Machines Co.", "Commodore C64 (NTSC)")
 COMP (1982, cbm4064,	c64,	pet64,			c64,	c64,	"Commodore Business Machines Co.", "Commodore CBM4064/Pet64/Educator64 (NTSC)")
 COMP (1982, c64pal, 	c64,	c64pal, 		c64,	c64pal, "Commodore Business Machines Co.", "Commodore C64/VC64/VIC64 (PAL)")
-COMP (1983, sx64,		c64,	c64pal_notape,	sx64,	sx64,	"Commodore Business Machines Co.", "Commodore SX64/VIP64 (PAL)")
-CONS (1987, c64gs,		c64,	c64_notape, 	c64gs,	c64gs,	"Commodore Business Machines Co.", "Commodore C64GS (NTSC)")
+COMP (1983, sx64,		c64,	sx64,			sx64,	sx64,	"Commodore Business Machines Co.", "Commodore SX64/VIP64 (PAL)")
+CONS (1987, c64gs,		c64,	c64gs,			c64gs,	c64gs,	"Commodore Business Machines Co.", "Commodore C64GS (NTSC)")
 #else
 /*	  YEAR	NAME		PARENT	MACHINE 		INPUT	INIT	COMPANY 						   FULLNAME */
 COMPX(1982, max,		0,		ultimax,		ultimax,ultimax,"Commodore Business Machines Co.", "Commodore Max (VIC10/Ultimax/Vickie)",      GAME_NO_SOUND)
 COMPX(1982, c64,		0,		c64,			c64,	c64,	"Commodore Business Machines Co.", "Commodore C64 (NTSC)",                      GAME_NO_SOUND)
 COMPX(1982, cbm4064,	c64,	pet64,			c64,	c64,	"Commodore Business Machines Co.", "Commodore CBM4064/Pet64/Educator64 (NTSC)", GAME_NO_SOUND)
 COMPX(1982, c64pal, 	c64,	c64pal, 		c64,	c64pal, "Commodore Business Machines Co.", "Commodore C64/VC64/VIC64 (PAL)",            GAME_NO_SOUND)
-COMPX(1983, sx64,		c64,	c64pal_notape,	sx64,	sx64,	"Commodore Business Machines Co.", "Commodore SX64/VIP64 (PAL)",                GAME_NO_SOUND)
-CONSX(1987, c64gs,		c64,	c64_notape, 	c64gs,	c64gs,	"Commodore Business Machines Co.", "Commodore C64GS (NTSC)",                    GAME_NO_SOUND)
+COMPX(1983, sx64,		c64,	sx64,			sx64,	sx64,	"Commodore Business Machines Co.", "Commodore SX64/VIP64 (PAL)",                GAME_NOT_WORKING|GAME_NO_SOUND)
+CONSX(1987, c64gs,		c64,	c64gs,			c64gs,	c64gs,	"Commodore Business Machines Co.", "Commodore C64GS (NTSC)",                    GAME_NO_SOUND)
 #endif

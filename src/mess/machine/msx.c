@@ -61,7 +61,8 @@ int msx_load_rom (int id)
 	"konami4 without SCC", "ASCII/8kB", "ASCII//16kB",
 	"Konami Game Master 2", "ASCII/8kB with 8kB SRAM",
         "ASCII/16kB with 2kB SRAM", "R-Type", "Konami Majutsushi",
-	"Panasonic FM-PAC" };
+	"Panasonic FM-PAC", "ASCII/16kB (bogus; use type 5)",
+	"Konami Synthesizer" };
 
     /* try to load it */
     F = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
@@ -76,7 +77,6 @@ int msx_load_rom (int id)
     }
     /* get mapper type */
     pext = (char *)device_extrainfo (IO_CARTSLOT, id);
-    fprintf (errorlog, "Cart %d extra info: %s\n", id, pext);
     if (!pext || (1 != sscanf (pext, "%d", &type) ) )
     {
 	if (errorlog) fprintf (errorlog,
@@ -91,10 +91,12 @@ int msx_load_rom (int id)
 		"Cart #%d Invalid extra info\n", id);
 	    type = -1;
 	}
+	else if (errorlog)
+	    fprintf (errorlog, "Cart %d extra info: %s\n", id, pext);
     }
 
     /* mapper type 0 always needs 64kB */
-	if (!type || type == -1)
+    if (!type || type == -1)
     {
 	size_aligned = 0x10000;
 	if (size > 0x10000) size = 0x10000;
@@ -144,7 +146,7 @@ int msx_load_rom (int id)
         id, size, msx1.cart[id].bank_mask, mapper_types[type]);
     /* set filename for sram (memcard) */
     msx1.cart[id].sramfile = malloc (strlen (device_filename
-	(IO_CARTSLOT, id)));
+	(IO_CARTSLOT, id)) + 1);
     if (!msx1.cart[id].sramfile)
     {
 	if (errorlog) fprintf (errorlog, "malloc () failed\n");
@@ -342,6 +344,7 @@ int msx_load_rom (int id)
 	msx1.cart[id].banks[3] = (0x16000/0x2000);
 	msx1.cart[id].mem = pmem;
 	break;
+    case 5: /* ASCII 16kb */
     case 12: /* Gall Force */
 	msx1.cart[id].banks[0] = 0;
 	msx1.cart[id].banks[1] = 1;
@@ -420,42 +423,42 @@ static void msx_vdp_interrupt(int i) {
 }
 
 void msx_ch_reset(void) {
-    int i;
-
-    /* reset memory */
-    ppi8255_0_w (0, 0);
-    ppi8255_0_w (2, 0xff);
-    /* reset leds */
-    for (i=0;i<3;i++) osd_led_w (i, 0);
-}
-
-void init_msx (void) {
+    TMS9928A_reset ();
+    SCCResetChip (0);
     /* set interrupt stuff */
-    TMS9928A_int_callback(msx_vdp_interrupt);
     cpu_irq_line_vector_w(0,0,0xff);
-
     /* setup PPI */
     ppi8255_init (&msx_ppi8255_interface);
 
     /* initialize mem regions */
-    msx1.empty = (UINT8*)malloc (0x4000);
-    msx1.ram = (UINT8*)malloc (0x10000);
-    if (!msx1.ram || !msx1.empty)
+    if (!msx1.empty || !msx1.ram)
     {
-	if (errorlog) fprintf (errorlog, "malloc () in init_msx () failed!\n");
-	return;
-    }
+        msx1.empty = (UINT8*)malloc (0x4000);
+        msx1.ram = (UINT8*)malloc (0x10000);
+        if (!msx1.ram || !msx1.empty)
+        {
+            if (errorlog)
+		fprintf (errorlog, "malloc () in init_msx () failed!\n");
+ 	    return;
+        }
 
-    memset (msx1.empty, 0xff, 0x4000);
-    memset (msx1.ram, 0, 0x10000);
+        memset (msx1.empty, 0xff, 0x4000);
+        memset (msx1.ram, 0, 0x10000);
+    }
     msx1.run = 1;
 
     return;
 }
 
+void init_msx (void)
+{
+    /* this function is called at a very early stage, and not after a reset. */
+    TMS9928A_int_callback(msx_vdp_interrupt);
+}
+
 void msx_ch_stop (void) {
-    free (msx1.empty);
-    free (msx1.ram);
+    free (msx1.empty); msx1.empty = NULL;
+    free (msx1.ram); msx1.ram = NULL;
     msx1.run = 0;
 }
 
@@ -685,7 +688,6 @@ static void msx_cart_write (int cart, int offset, int data)
     switch (msx1.cart[cart].type)
     {
     case 0:
-	if (errorlog) fprintf (errorlog, "Synth: %04x = %02x\n", offset, data);
 	break;
     case 1: /* MSX-DOS 2 cartridge */
         if (offset == 0x2000)
@@ -738,6 +740,7 @@ static void msx_cart_write (int cart, int offset, int data)
 	        cpu_setbank (3+(offset/0x800),msx1.cart[cart].mem + n * 0x2000);
 	}
 	break;
+    case 12: /* Gall Force */
     case 5: /* ASCII 16kB */
 	if ( (offset & 0x6800) == 0x2000)
 	{
@@ -804,7 +807,6 @@ static void msx_cart_write (int cart, int offset, int data)
 		    (msx1.cart[cart].bank_mask+1)*0x2000] = data;
 	}
 	break;
-    case 12: /* Gall Force */
     case 8: /* ASCII 16kB */
 	if ( (offset & 0x6800) == 0x2000)
 	{

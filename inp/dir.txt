@@ -1,1 +1,1 @@
-inp files will be stored here.
+Game recordings will be placed here

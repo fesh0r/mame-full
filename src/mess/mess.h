@@ -161,6 +161,7 @@ enum {
 	IO_PRINTER,
 	IO_SERIAL,
 	IO_SNAPSHOT,
+	IO_QUICKLOAD,
 	IO_COUNT
 };
 
@@ -194,6 +195,7 @@ extern void exit_devices(void);
 
 extern int device_count(int type);
 extern const char *device_typename(int type);
+extern const char *briefdevice_typename(int type);
 extern const char *device_typename_id(int type, int id);
 extern const char *device_filename(int type, int id);
 extern unsigned int device_length(int type, int id);

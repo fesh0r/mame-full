@@ -17,7 +17,7 @@ vc20  commodore vc20  (pal version)
 ------------------------------------
 
 vic20 ntsc-version
- when screen is two wide right or low,
+ when screen is two wide right or low, 
   or screen doesn't fitt in visible area
   or gameplay is too fast
  try the pal version
@@ -109,16 +109,16 @@ use LOAD"",1,1 for loading programs to their special address
 
 several programs rely on more features
 (loading other file types, writing, ...)
-
-Discs
------
-only file load from drive 8 and 9 implemented
+ 
+Discs 
+----- 
+only file load from drive 8 and 9 implemented 
  loads file from rom directory (*.prg,*.p00)(must NOT be specified on commandline)
  or file from d64 image (here also directory command LOAD"$",8 supported)
-LOAD"filename",8
-or LOAD"filename",8,1 (for loading machine language programs at their address)
-for loading
-type RUN or the appropriate SYS call to start them
+LOAD"filename",8 
+or LOAD"filename",8,1 (for loading machine language programs at their address) 
+for loading 
+type RUN or the appropriate SYS call to start them 
 
 several programs rely on more features
 (loading other file types, writing, ...)
@@ -223,17 +223,17 @@ static struct MemoryWriteAddress vc20_writemem[] =
 	PORT_BIT( 0x03, IP_ACTIVE_LOW,	IPT_UNUSED )\
 	PORT_START \
 	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2, \
-		   "Paddle 2 Button", KEYCODE_DEL, 0)\
+		   "Paddle 2 Button", KEYCODE_DEL, JOYCODE_NONE)\
 	PORT_BIT ( 0x60, IP_ACTIVE_LOW, IPT_UNUSED )\
 	PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1, \
-		   "Paddle 1 Button", KEYCODE_INSERT, 0)\
+		   "Paddle 1 Button", KEYCODE_INSERT, JOYCODE_NONE)\
 	PORT_BIT ( 0x0f, IP_ACTIVE_LOW, IPT_UNUSED )\
 	PORT_START \
 	PORT_ANALOGX(0xff,128,IPT_PADDLE|IPF_REVERSE,\
-		     30,20,0,255,KEYCODE_HOME,KEYCODE_PGUP,0,0)\
+		     30,20,0,255,KEYCODE_HOME,KEYCODE_PGUP,JOYCODE_NONE,JOYCODE_NONE)\
 	PORT_START \
 	PORT_ANALOGX(0xff,128,IPT_PADDLE|IPF_PLAYER2|IPF_REVERSE,\
-		     30,20,0,255,KEYCODE_END,KEYCODE_PGDN,0,0)\
+		     30,20,0,255,KEYCODE_END,KEYCODE_PGDN,JOYCODE_NONE,JOYCODE_NONE)\
 	PORT_START \
 	DIPS_HELPER( 0x80, "DEL INST",          KEYCODE_BACKSPACE)\
 	DIPS_HELPER( 0x40, "Pound",             KEYCODE_MINUS)\
@@ -324,19 +324,19 @@ static struct MemoryWriteAddress vc20_writemem[] =
 	PORT_DIPSETTING(	3, "16k" )\
 	PORT_DIPSETTING(	4, "32k" )\
 	PORT_DIPSETTING(	5, "Custom" )\
-	PORT_DIPNAME   ( 0x08, 0, " Ram at 0x0400 till 0x0fff")\
+	PORT_DIPNAME   ( 0x08, 0, " Ram at 0x0400")\
 	PORT_DIPSETTING( 0x00, DEF_STR( No ) )\
 	PORT_DIPSETTING( 0x08, DEF_STR( Yes ) )\
-	PORT_DIPNAME   ( 0x10, 0, " Ram at 0x2000 till 0x3fff")\
+	PORT_DIPNAME   ( 0x10, 0, " Ram at 0x2000")\
 	PORT_DIPSETTING( 0x00, DEF_STR( No ) )\
 	PORT_DIPSETTING( 0x10, DEF_STR( Yes ) )\
-	PORT_DIPNAME   ( 0x20, 0, " Ram at 0x4000 till 0x5fff")\
+	PORT_DIPNAME   ( 0x20, 0, " Ram at 0x4000")\
 	PORT_DIPSETTING( 0x00, DEF_STR( No ) )\
 	PORT_DIPSETTING( 0x20, DEF_STR( Yes ) )\
-	PORT_DIPNAME   ( 0x40, 0, " Ram at 0x6000 till 0x7fff")\
+	PORT_DIPNAME   ( 0x40, 0, " Ram at 0x6000")\
 	PORT_DIPSETTING( 0x00, DEF_STR( No ) )\
 	PORT_DIPSETTING( 0x40, DEF_STR( Yes ) )\
-	PORT_DIPNAME   ( 0x80, 0, " Ram at 0xa000 till 0xbfff")\
+	PORT_DIPNAME   ( 0x80, 0, " Ram at 0xa000")\
 	PORT_DIPSETTING( 0x00, DEF_STR( No ) )\
 	PORT_DIPSETTING( 0x80, DEF_STR( Yes ) )\
 	PORT_START \
@@ -368,31 +368,30 @@ static struct MemoryWriteAddress vc20_writemem[] =
 	PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2, "Lightpen Signal", KEYCODE_LALT, 0)
 
 INPUT_PORTS_START (vic20)
-	 DIPS_BOTH
-     PORT_START							   /* in 16 lightpen X */
-     PORT_ANALOGX (0xff, 0, IPT_PADDLE | IPF_PLAYER3,
-				   30, 2, 0, (VIC6560_MAME_XSIZE - 1),
-				   KEYCODE_LEFT, KEYCODE_RIGHT,
-				   JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
-	 PORT_START							   /* in 17 lightpen Y */
-     PORT_ANALOGX (0xff, 0, IPT_PADDLE | IPF_PLAYER4,
-				   30, 2, 0, (VIC6560_MAME_YSIZE - 1),
-				   KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN)
-
+		DIPS_BOTH
+		PORT_START							   /* in 16 lightpen X */
+		PORT_ANALOGX (0xff, 0, IPT_PADDLE | IPF_PLAYER3,
+					  30, 2, 0, (VIC6560_MAME_XSIZE - 1),
+					  KEYCODE_LEFT, KEYCODE_RIGHT,
+					  JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
+		PORT_START							   /* in 17 lightpen Y */
+		PORT_ANALOGX (0xff, 0, IPT_PADDLE | IPF_PLAYER4,
+					  30, 2, 0, (VIC6560_MAME_YSIZE - 1),
+					  KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN)
 INPUT_PORTS_END
 
 INPUT_PORTS_START (vc20)
-	 DIPS_BOTH
-     PORT_START							   /* in 16 lightpen X */
-     PORT_ANALOGX (0xff, 0, IPT_PADDLE | IPF_PLAYER3,
-				   30, 2, 0, (VIC6561_MAME_XSIZE - 1),
-				   KEYCODE_LEFT, KEYCODE_RIGHT,
-				   JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
-	 PORT_START							   /* in 17 lightpen Y */
-     PORT_ANALOGX (0x1ff, 0, IPT_PADDLE | IPF_PLAYER4,
-				   30, 2, 0, (VIC6561_MAME_YSIZE - 1),
-				   KEYCODE_UP, KEYCODE_DOWN,
-				   JOYCODE_1_UP, JOYCODE_1_DOWN)
+		DIPS_BOTH
+		PORT_START							   /* in 16 lightpen X */
+		PORT_ANALOGX (0xff, 0, IPT_PADDLE | IPF_PLAYER3,
+					  30, 2, 0, (VIC6561_MAME_XSIZE - 1),
+					  KEYCODE_LEFT, KEYCODE_RIGHT,
+					  JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
+		PORT_START							   /* in 17 lightpen Y */
+		PORT_ANALOGX (0x1ff, 0, IPT_PADDLE | IPF_PLAYER4,
+					  30, 2, 0, (VIC6561_MAME_YSIZE - 1),
+					  KEYCODE_UP, KEYCODE_DOWN,
+					  JOYCODE_1_UP, JOYCODE_1_DOWN)
 INPUT_PORTS_END
 
 
@@ -406,43 +405,67 @@ static void vc20_init_palette (unsigned char *sys_palette,
 }
 
 #if 0
-     /* 901460-03 */
-	 ROM_LOAD ("chargen.80", 0x8000, 0x1000, 0x83e032a6)
-	 /* 901486-01 */
-	 ROM_LOAD ("basic.80", 0xc000, 0x2000, 0xdb4c43c1)
-	 /* 901486-06 ntsc */
-	 ROM_LOAD ("kernal6.c0", 0xe000, 0x2000, 0xe5e7c174)
-	 /* 901486-07 pal */
-	 ROM_LOAD ("kernal7p.c0", 0xe000, 0x2000, 0x4be07cb4)
+	/* chargen */
+	ROM_LOAD ("901460.03", 0x8000, 0x1000, 0x83e032a6)
+	/* basic */ 
+	ROM_LOAD ("901486.01", 0xc000, 0x2000, 0xdb4c43c1)
+	/* kernel ntsc */
+	ROM_LOAD ("901486.06", 0xe000, 0x2000, 0xe5e7c174)
+	/* kernel pal */
+	ROM_LOAD ("901486.07", 0xe000, 0x2000, 0x4be07cb4)
 
-	 /* patched pal system for swedish/finish keyboard and chars */
-	 ROM_LOAD ("char.80", 0x8000, 0x1000, 0xd808551d)
-	 ROM_LOAD ("kernal7p.c0", 0xe000, 0x2000, 0xb2a60662)
+	/* patched pal system for swedish/finish keyboard and chars */
+	ROM_LOAD ("char.80", 0x8000, 0x1000, 0xd808551d)
+	ROM_LOAD ("kernal7p.c0", 0xe000, 0x2000, 0xb2a60662)	 
+	ROM_LOAD ("325329-04.bin", 0xb000, 0x800, 0xd37b6335)	 
 #endif
 
 ROM_START (vic20)
-	 ROM_REGION (0x10000, REGION_CPU1)
-	 ROM_LOAD ("chargen.80", 0x8000, 0x1000, 0x83e032a6)
-	 ROM_LOAD ("basic.c0", 0xc000, 0x2000, 0xdb4c43c1)
-	 ROM_LOAD ("kernal6.e0", 0xe000, 0x2000, 0xe5e7c174)
-#ifdef VC1541
-	 VC1540_ROM (REGION_CPU2)
-#endif
+	ROM_REGION (0x10000, REGION_CPU1)
+	ROM_LOAD ("901460.03", 0x8000, 0x1000, 0x83e032a6)
+	ROM_LOAD ("901486.01", 0xc000, 0x2000, 0xdb4c43c1)
+	ROM_LOAD ("901486.06", 0xe000, 0x2000, 0xe5e7c174)
 ROM_END
 
-ROM_START (vc20)
-	 ROM_REGION (0x10000, REGION_CPU1)
-	 ROM_LOAD ("chargen.80", 0x8000, 0x1000, 0x83e032a6)
-	 ROM_LOAD ("basic.c0", 0xc000, 0x2000, 0xdb4c43c1)
-	 ROM_LOAD ("kernal7p.e0", 0xe000, 0x2000, 0x4be07cb4)
-#ifdef VC1541
-	 VC1540_ROM (REGION_CPU2)
-#endif
+#ifdef PET_TEST_CODE
+ROM_START (vic20v)
+	ROM_REGION (0x10000, REGION_CPU1)
+	ROM_LOAD ("901460.03", 0x8000, 0x1000, 0x83e032a6)
+	ROM_LOAD ("901486.01", 0xc000, 0x2000, 0xdb4c43c1)
+	ROM_LOAD ("901486.06", 0xe000, 0x2000, 0xe5e7c174)
+	VC1540_ROM (REGION_CPU2)
 ROM_END
+
+ROM_START (vic20i)
+	ROM_REGION (0x10000, REGION_CPU1)
+	ROM_LOAD ("901460.03", 0x8000, 0x1000, 0x83e032a6)
+	ROM_LOAD ("325329.04", 0xb000, 0x800, 0xd37b6335)	 
+	ROM_LOAD ("901486.01", 0xc000, 0x2000, 0xdb4c43c1)
+	ROM_LOAD ("901486.06", 0xe000, 0x2000, 0xe5e7c174)
+	C2031_ROM (REGION_CPU2)
+ROM_END
+#endif
+
+ROM_START (vc20)
+	ROM_REGION (0x10000, REGION_CPU1)
+	ROM_LOAD ("901460.03", 0x8000, 0x1000, 0x83e032a6)
+	ROM_LOAD ("901486.01", 0xc000, 0x2000, 0xdb4c43c1)
+	ROM_LOAD ("901486.07", 0xe000, 0x2000, 0x4be07cb4)
+ROM_END
+
+#ifdef PET_TEST_CODE
+ROM_START (vc20v)
+	ROM_REGION (0x10000, REGION_CPU1)
+	ROM_LOAD ("901460.03", 0x8000, 0x1000, 0x83e032a6)
+	ROM_LOAD ("901486.01", 0xc000, 0x2000, 0xdb4c43c1)
+	ROM_LOAD ("901486.07", 0xe000, 0x2000, 0x4be07cb4)
+	VC1541_ROM (REGION_CPU2)
+ROM_END
+#endif
 
 static struct MachineDriver machine_driver_vic20 =
 {
-  /* basic machine hardware */
+	/* basic machine hardware */
 	{
 		{
 			CPU_M6502,
@@ -452,16 +475,13 @@ static struct MachineDriver machine_driver_vic20 =
 			vc20_frame_interrupt, 1,
 			vic656x_raster_interrupt, VIC656X_HRETRACERATE,
 		},
-#ifdef VC1541
-		VC1540_CPU,
-#endif
 	},
 	VIC6560_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,
+	0,
 	vc20_init_machine,
 	vc20_shutdown_machine,
 
-  /* video hardware */
+	/* video hardware */
 	(VIC6560_XSIZE + 7) & ~7,		   /* screen width */
 	VIC6560_YSIZE,					   /* screen height */
 	{VIC6560_MAME_XPOS, VIC6560_MAME_XPOS + VIC6560_MAME_XSIZE - 1,
@@ -476,7 +496,7 @@ static struct MachineDriver machine_driver_vic20 =
 	vic6560_vh_stop,
 	vic6560_vh_screenrefresh,
 
-  /* sound hardware */
+	/* sound hardware */
 	0, 0, 0, 0,
 	{
 		{SOUND_CUSTOM, &vic6560_sound_interface},
@@ -484,9 +504,103 @@ static struct MachineDriver machine_driver_vic20 =
 	}
 };
 
+#ifdef PET_TEST_CODE
+static struct MachineDriver machine_driver_vic20v =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			VIC6560_CLOCK,
+			vc20_readmem, vc20_writemem,
+			0, 0,
+			vc20_frame_interrupt, 1,
+			vic656x_raster_interrupt, VIC656X_HRETRACERATE,
+		},
+		VC1540_CPU,
+	},
+	VIC6560_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+#ifdef CPU_SYNC
+	1,
+#else
+	3000,
+#endif
+	vc20_init_machine,
+	vc20_shutdown_machine,
+
+	/* video hardware */
+	(VIC6560_XSIZE + 7) & ~7,		   /* screen width */
+	VIC6560_YSIZE,					   /* screen height */
+	{VIC6560_MAME_XPOS, VIC6560_MAME_XPOS + VIC6560_MAME_XSIZE - 1,
+	 VIC6560_MAME_YPOS, VIC6560_MAME_YPOS + VIC6560_MAME_YSIZE - 1},
+	0,								   /* graphics decode info */
+	sizeof (vic6560_palette) / sizeof (vic6560_palette[0]) / 3,
+	0,
+	vc20_init_palette,				   /* convert color prom */
+	VIDEO_TYPE_RASTER,
+	0,
+	vic6560_vh_start,
+	vic6560_vh_stop,
+	vic6560_vh_screenrefresh,
+
+	/* sound hardware */
+	0, 0, 0, 0,
+	{
+		{SOUND_CUSTOM, &vic6560_sound_interface},
+		{SOUND_DAC, &vc20tape_sound_interface}
+	}
+};
+
+static struct MachineDriver machine_driver_vic20i =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			VIC6560_CLOCK,
+			vc20_readmem, vc20_writemem,
+			0, 0,
+			vc20_frame_interrupt, 1,
+			vic656x_raster_interrupt, VIC656X_HRETRACERATE,
+		},
+		C2031_CPU,
+	},
+	VIC6560_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+#ifdef CPU_SYNC
+	1,
+#else
+	3000,
+#endif
+	vc20_init_machine,
+	vc20_shutdown_machine,
+
+	/* video hardware */
+	(VIC6560_XSIZE + 7) & ~7,		   /* screen width */
+	VIC6560_YSIZE,					   /* screen height */
+	{VIC6560_MAME_XPOS, VIC6560_MAME_XPOS + VIC6560_MAME_XSIZE - 1,
+	 VIC6560_MAME_YPOS, VIC6560_MAME_YPOS + VIC6560_MAME_YSIZE - 1},
+	0,								   /* graphics decode info */
+	sizeof (vic6560_palette) / sizeof (vic6560_palette[0]) / 3,
+	0,
+	vc20_init_palette,				   /* convert color prom */
+	VIDEO_TYPE_RASTER,
+	0,
+	vic6560_vh_start,
+	vic6560_vh_stop,
+	vic6560_vh_screenrefresh,
+
+	/* sound hardware */
+	0, 0, 0, 0,
+	{
+		{SOUND_CUSTOM, &vic6560_sound_interface},
+		{SOUND_DAC, &vc20tape_sound_interface}
+	}
+};
+#endif
+
 static struct MachineDriver machine_driver_vc20 =
 {
-  /* basic machine hardware */
+	/* basic machine hardware */
 	{
 		{
 			CPU_M6502,
@@ -496,16 +610,13 @@ static struct MachineDriver machine_driver_vc20 =
 			vc20_frame_interrupt, 1,
 			vic656x_raster_interrupt, VIC656X_HRETRACERATE,
 		},
-#ifdef VC1541
-		VC1540_CPU,
-#endif
 	},
 	VIC6561_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,
+	0,
 	vc20_init_machine,
 	vc20_shutdown_machine,
 
-  /* video hardware */
+	/* video hardware */
 	(VIC6561_XSIZE + 7) & ~7,		   /* screen width */
 	VIC6561_YSIZE,					   /* screen height */
 	{VIC6561_MAME_XPOS, VIC6561_MAME_XPOS + VIC6561_MAME_XSIZE - 1,
@@ -520,7 +631,7 @@ static struct MachineDriver machine_driver_vc20 =
 	vic6560_vh_stop,
 	vic6560_vh_screenrefresh,
 
-  /* sound hardware */
+	/* sound hardware */
 	0, 0, 0, 0,
 	{
 		{SOUND_CUSTOM, &vic6560_sound_interface},
@@ -528,13 +639,61 @@ static struct MachineDriver machine_driver_vc20 =
 	}
 };
 
+#ifdef PET_TEST_CODE
+static struct MachineDriver machine_driver_vc20v =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			VIC6561_CLOCK,
+			vc20_readmem, vc20_writemem,
+			0, 0,
+			vc20_frame_interrupt, 1,
+			vic656x_raster_interrupt, VIC656X_HRETRACERATE,
+		},
+		VC1541_CPU,
+	},
+	VIC6561_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+#ifdef CPU_SYNC
+	1,
+#else
+	3000,
+#endif
+	vc20_init_machine,
+	vc20_shutdown_machine,
+
+	/* video hardware */
+	(VIC6561_XSIZE + 7) & ~7,		   /* screen width */
+	VIC6561_YSIZE,					   /* screen height */
+	{VIC6561_MAME_XPOS, VIC6561_MAME_XPOS + VIC6561_MAME_XSIZE - 1,
+	 VIC6561_MAME_YPOS, VIC6561_MAME_YPOS + VIC6561_MAME_YSIZE - 1},	/* visible_area */
+	0,								   /* graphics decode info */
+	sizeof (vic6560_palette) / sizeof (vic6560_palette[0]) / 3,
+	0,
+	vc20_init_palette,				   /* convert color prom */
+	VIDEO_TYPE_RASTER,
+	0,
+	vic6560_vh_start,
+	vic6560_vh_stop,
+	vic6560_vh_screenrefresh,
+
+	/* sound hardware */
+	0, 0, 0, 0,
+	{
+		{SOUND_CUSTOM, &vic6560_sound_interface},
+		{SOUND_DAC, &vc20tape_sound_interface}
+	}
+};
+#endif
+
 static const struct IODevice io_vc20[] =
 {
 	IODEVICE_CBM_QUICK,
 	{
 		IO_CARTSLOT,				   /* type */
 		2,							   /* normal 1 *//* count */
-		NULL,						   /* file extensions */
+		"a0\00020\00040\00060\0rom\0bin\0",/* file extensions */
 		NULL,						   /* private */
 		vc20_rom_id,				   /* id */
 		vc20_rom_load,				   /* init */
@@ -544,8 +703,7 @@ static const struct IODevice io_vc20[] =
 		NULL,						   /* close */
 		NULL,						   /* status */
 		NULL,						   /* seek */
-		NULL,				/* tell */
-        NULL,                          /* input */
+		NULL,						   /* input */
 		NULL,						   /* output */
 		NULL,						   /* input_chunk */
 		NULL						   /* output_chunk */
@@ -555,15 +713,72 @@ static const struct IODevice io_vc20[] =
 	{IO_END}
 };
 
-#define init_vc20   vc20_driver_init
-#define init_vic20  vic20_driver_init
-#define io_vic20    io_vc20
+static const struct IODevice io_vc20v[] =
+{
+	IODEVICE_CBM_QUICK,
+	{
+		IO_CARTSLOT,				   /* type */
+		2,							   /* normal 1 *//* count */
+		"a0\00020\00040\00060\0rom\0bin\0",/* file extensions */
+		NULL,						   /* private */
+		vc20_rom_id,				   /* id */
+		vc20_rom_load,				   /* init */
+		NULL,						   /* exit */
+		NULL,						   /* info */
+		NULL,						   /* open */
+		NULL,						   /* close */
+		NULL,						   /* status */
+		NULL,						   /* seek */
+		NULL,						   /* input */
+		NULL,						   /* output */
+		NULL,						   /* input_chunk */
+		NULL						   /* output_chunk */
+	},
+	IODEVICE_VC20TAPE,
+	IODEVICE_VC1541,
+	{IO_END}
+};
+
+static const struct IODevice io_vc20i[] =
+{
+	IODEVICE_CBM_QUICK,
+	{
+		IO_CARTSLOT,				   /* type */
+		2,							   /* normal 1 *//* count */
+		"a0\00020\00040\00060\0rom\0bin\0",/* file extensions */
+		NULL,						   /* private */
+		vc20_rom_id,				   /* id */
+		vc20_rom_load,				   /* init */
+		NULL,						   /* exit */
+		NULL,						   /* info */
+		NULL,						   /* open */
+		NULL,						   /* close */
+		NULL,						   /* status */
+		NULL,						   /* seek */
+		NULL,						   /* input */
+		NULL,						   /* output */
+		NULL,						   /* input_chunk */
+		NULL						   /* output_chunk */
+	},
+	IODEVICE_VC20TAPE,
+	IODEVICE_C2031,
+	{IO_END}
+};
+ 
+#define init_vc20		vc20_driver_init
+#define init_vic20		vic20_driver_init
+#define io_vic20		io_vc20
+#define io_vic20v		io_vc20v
+#define io_vic20i		io_vc20i
 
 #ifdef PET_TEST_CODE
-/*	   YEAR  NAME	 PARENT  MACHINE INPUT	 INIT	 COMPANY							 FULLNAME */
-COMP (1981, vic20,	0,		vic20,	vic20,	vic20,	"Commodore Business Machines Co.",  "Commodore VIC20 (NTSC)")
-COMP (1981, vc20,	vic20,	vc20,	vc20,	vc20,	"Commodore Business Machines Co.",  "Commodore VC20 (PAL)")
+/*		YEAR	NAME	PARENT	MACHINE	INPUT	INIT	COMPANY								FULLNAME */
+COMP (	1981,	vic20,	0,		vic20,	vic20,	vic20,	"Commodore Business Machines Co.",	"Commodore VIC20 (NTSC)")
+COMP (	1981,	vic20v,	vic20,	vic20v,	vic20,	vic20,	"Commodore Business Machines Co.",	"Commodore VIC20 (NTSC), VC1540")
+COMP (	1981,	vic20i,	vic20,	vic20i,	vic20,	vic20,	"Commodore Business Machines Co.",	"Commodore VIC20 (NTSC), IEEE488, 2031")
+COMP (	1981,	vc20,	vic20,	vc20,	vc20,	vc20,	"Commodore Business Machines Co.",	"Commodore VC20 (PAL)")
+COMP (	1981,	vc20v,	vic20,	vc20v,	vic20,	vc20,	"Commodore Business Machines Co.",	"Commodore VC20 (PAL), VC1541")
 #else
-COMPX(1981, vic20,	0,		vic20,	vic20,	vic20,	"Commodore Business Machines Co.", "Commodore VIC20 (NTSC)",GAME_IMPERFECT_SOUND)
-COMPX(1981, vc20,	vic20,	vc20,	vc20,	vc20,	"Commodore Business Machines Co.", "Commodore VC20 (PAL)",  GAME_IMPERFECT_SOUND)
+COMPX (	1981,	vic20,	0,		vic20,	vic20,	vic20,	"Commodore Business Machines Co.",	"Commodore VIC20 (NTSC)",	GAME_IMPERFECT_SOUND)
+COMPX (	1981,	vc20,	vic20,	vc20,	vc20,	vc20,	"Commodore Business Machines Co.", 	"Commodore VC20 (PAL)",		GAME_IMPERFECT_SOUND)
 #endif

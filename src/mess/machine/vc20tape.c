@@ -85,6 +85,7 @@ prg;
 /* these are values for zip files */
 struct
 {
+	const char *imagename;
 	int state;
 	ZIP *zip;
 	struct zipent *zipentry;
@@ -457,6 +458,7 @@ static void vc20_prg_open (const char *name)
 	for (; i < 16; i++)
 		prg.name[i] = ' ';
 
+	prg.imagename=name;
 	prg.stateblock = 0;
 	prg.stateheader = 0;
 	prg.statebyte = 0;
@@ -1051,6 +1053,7 @@ static void vc20_zip_open (const char *name)
 
 	tape.type = TAPE_ZIP;
 	tape.on = 1;
+	zip.imagename=name;
 	zip.state = 2;
 	prg.stateblock = 0;
 	prg.stateheader = 0;
@@ -1335,7 +1338,7 @@ void vc20_tape_status (char *text, int size)
 			snprintf (text, size, "Tape saving");
 			break;
 		case 3:
-			snprintf (text, size, "Tape (%s) loading %d", prg.imagename, prg.pos);
+			snprintf (text, size, "Tape (%s) File %s loading %d", zip.imagename, zip.zipentry->name, prg.pos);
 			break;
 		}
 		break;

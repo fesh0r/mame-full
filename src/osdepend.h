@@ -10,12 +10,6 @@
 #define CLIB_DECL
 #endif
 
-/* TODO: this should be removed and put into a unix-specific header */
-/** suggested by  Scott Trent */
-#ifdef aix
-#include <sys/time.h>
-#endif
-
 #ifdef __LP64__
 #define FPTR long   /* 64bit: sizeof(void *) is sizeof(long)  */
 #else
@@ -154,7 +148,7 @@ int osd_is_key_pressed(int keycode);
   wait for the user to press a key and return its code. This function is not
   required to do anything, it is here so we can avoid bogging down multitasking
   systems while using the debugger. If you don't want to or can't support this
-  function you can just return KEYCODE_NONE.
+  function you can just return OSD_KEY_NONE.
 */
 int osd_wait_keypress(void);
 
@@ -327,5 +321,5 @@ int osd_dir_get_entry(void *dir, char *name, int namelength, int *is_dir);
 void osd_dir_close(void *dir);
 #endif
 
-#endif
 
+#endif

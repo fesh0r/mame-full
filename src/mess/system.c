@@ -157,14 +157,18 @@ const struct GameDriver *drivers[] =
 
       /* COMMODORE */
       DRIVER( c16 )         /* Commodore 16                                   */
-      DRIVER( plus4 )       /* Commodore +4                                   */
+      DRIVER( c16c )        /* Commodore 16  c1551                            */
+  TESTDRIVER( c16v )        /* Commodore 16  vc1541                           */
+      DRIVER( plus4 )       /* Commodore +4  c1551                            */
+      DRIVER( plus4c )      /* Commodore +4  vc1541                           */
+  TESTDRIVER( plus4v )      /* Commodore +4                                   */
 	  DRIVER( c364 )		/* Commodore 364 - Prototype					  */
 
       DRIVER( c64 )         /* Commodore 64 - NTSC                            */
       DRIVER( c64pal )      /* Commodore 64 - PAL                             */
       DRIVER( c64gs )       /* Commodore 64 - NTSC                            */
 	  DRIVER( cbm4064 ) 	/* Commodore CBM4064							  */
-	  DRIVER( sx64 )		/* Commodore SX 64 - PAL						  */
+  TESTDRIVER( sx64 )		/* Commodore SX 64 - PAL						  */
       DRIVER( max )         /* Ulitimax                                       */
       DRIVER( c65 ) 		/* Commodore 65 - NTSC							  */
       DRIVER( c65ger )		/* Commodore 65 - PAL (german)					  */
@@ -281,6 +285,7 @@ const struct GameDriver *drivers[] =
       DRIVER( msx )         /* MSX                                            */
       DRIVER( msxj )        /* MSX Jap                                        */
       DRIVER( msxkr )       /* MSX Korean                                     */
+      DRIVER( msxuk )       /* MSX UK                                         */
 
       /* Nascom */
 	  DRIVER( nascom1 ) 	/* Nascom 1 									  */

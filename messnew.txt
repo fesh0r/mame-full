@@ -1,3 +1,66 @@
+0.36 Release Candidate 2
+
+Note: .inp record/playback does still not work currently.
+Note: DOS image loading at the command line has changed.  see below
+
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+MSX1 UK [Sean Young]
+C16 (c1551)   [Peter Trauner]
+Plus4 (c1551) [Peter Trauner]
+
+
+System Driver Changes:
+----------------------
+- COCO/Dragon - Implemented several obscure video modes (CoCo 3), fixes a bug in 
+  flashing on hires text (CoCo 3), implemented the CoCo 3 timer, added several new 
+  additional key mappings so things like backspace work [Nate Woods]
+
+- CBM family bugfixes, C64/C128 Mouse support, VIC20 Dipswitches fixes
+  [Peter Trauner]
+
+-Msx system driver bug fixes.  [Sean Young]  Also, for the latest news regarding 
+ this excellent system driver, check out his MSX1 WIP page at:
+ http://www.msxnet.org/mess/
+
+
+
+Other Changes:
+--------------
+
+- [DOS] Images specified at the command line must now be accompanied by the device they 
+  are to be attached to, and will not be loaded unless the device is specified *and* 
+  supported by that system.  Eg, to attach a cartridge for the NES, you must specify: 
+  MESS nes -cart galaga.nes
+  This may affect the usage of frontends, however it brings the MESS command line 
+  into sync with the well accepted MAME convention.  See mess.txt for options and 
+  usage.
+
+- The core is based on MAME 0.36RC2. This incorporates all 
+  features of the update to this core.  [MAME team] 
+
+- Image CRC's for clones can now be retreived from the parent named CRC file [Sean Young]
+
+- IO_QUICKLOAD for CBM system drivers.  [Peter Trauner]
+
+- M65CE02 changes [Peter Trauner]
+
+- File Manager now much more user friendly [Kev Thacker, Juergen Buchmueller]
+
+- Note that -listextensions has been renamed to -listdevices. Use this to obtain 
+  valid device names for use at the command line to attach images to the system.
+
+- Extensive CRC updates.
+  [Sean Young, Chris Henry, Gerardo Jorrin, Peter Trauner, Cowering]
+  SysInfo.dat documentation update 
+  [Thierry Schimbi, Chris Henry, Kev Thacker, Raphael Nabet]
+  Please send all CRC/sysinfo file contributions to Chris Henry. 
+  (battlepriest@hotmail.com).
+
+
+-----------------------------------------
+
 0.36 Release Candidate 1
 
 Note: .inp record/playback does still not work currently.

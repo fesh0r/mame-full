@@ -828,22 +828,22 @@ static const struct IODevice io_pet2[] =
 #define rom_cbm80swe rom_pet80swe
 
 #ifdef PET_TEST_CODE
-COMP (1977, 	pet, 		0, 		pet, 	pet, 	pet1, 	"Commodore Business Machines Co.",	"Commodore PET2000/CBM2000 Series (Basic 1)")
-COMP (198 ?, 	cbm30, 		pet, 	pet, 	pet, 	pet, 	"Commodore Business Machines Co.",	"Commodore CBM3000 Series (Basic 2)")
-COMP (198 ?, 	cbm30b, 	pet, 	pet, 	petb, 	pet, 	"Commodore Business Machines Co.",	"Commodore CBM3000 Series (Basic 2) (business keyboard)")
+COMP (1977, 	pet, 		0, 		pet, 	pet, 	pet1, 	"Commodore Business Machines Co.",	"Commodore PET2001/CBM2000 Series (Basic 1)")
+COMP (1979, 	cbm30, 		pet, 	pet, 	pet, 	pet, 	"Commodore Business Machines Co.",	"Commodore CBM3000 Series (Basic 2)")
+COMP (1979, 	cbm30b, 	pet, 	pet, 	petb, 	pet, 	"Commodore Business Machines Co.",	"Commodore CBM3000 Series (Basic 2) (business keyboard)")
 COMP (198 ?, 	cbm40, 		pet, 	pet40, 	pet, 	pet40, 	"Commodore Business Machines Co.",	"Commodore CBM4000 FAT Series (CRTC 50Hz)")
 COMP (198 ?, 	cbm40b, 	pet, 	pet, 	petb, 	pet, 	"Commodore Business Machines Co.",	"Commodore CBM4000 THIN Series (business keyboard)")
-COMP (198 ?, 	cbm80, 		pet, 	pet80,	petb, 	pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 60Hz")
+COMP (1980, 	cbm80, 		pet, 	pet80,	petb, 	pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 60Hz")
 COMP (198 ?, 	cbm80ger, 	pet, 	pet80,	petb, 	pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 German (50Hz)")
 COMP (198 ?, 	cbm80swe, 	pet, 	pet80,	petb, 	pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 Swedish (50Hz)")
 #else
 /*     YEAR 	NAME		PARENT	MACHINE	INPUT	INIT 	COMPANY   							FULLNAME */
-COMPX (1977,	pet, 		0,		pet, 	pet, 	pet1, 	"Commodore Business Machines Co.",	"Commodore PET2000/CBM2000 Series (Basic 1)", 				GAME_NO_SOUND)
-COMPX (198 ?,	cbm30, 		pet,	pet, 	pet, 	pet, 	"Commodore Business Machines Co.",	"Commodore CBM3000 Series (Basic 2)", 						GAME_NO_SOUND)
-COMPX (198 ?,	cbm30b, 	pet,	pet, 	petb, 	pet,	"Commodore Business Machines Co.",	"Commodore CBM3000 Series (Basic 2) (business keyboard)",	GAME_NO_SOUND)
+COMPX (1977,	pet, 		0,		pet, 	pet, 	pet1, 	"Commodore Business Machines Co.",	"Commodore PET2001/CBM2000 Series (Basic 1)", 				GAME_NO_SOUND)
+COMPX (1979,	cbm30, 		pet,	pet, 	pet, 	pet, 	"Commodore Business Machines Co.",	"Commodore CBM3000 Series (Basic 2)", 						GAME_NO_SOUND)
+COMPX (1979,	cbm30b, 	pet,	pet, 	petb, 	pet,	"Commodore Business Machines Co.",	"Commodore CBM3000 Series (Basic 2) (business keyboard)",	GAME_NO_SOUND)
 COMPX (198 ?,	cbm40, 		pet,	pet40, 	pet, 	pet40, 	"Commodore Business Machines Co.",	"Commodore CBM4000 FAT Series (CRTC 50Hz)", 				GAME_NO_SOUND)
 COMPX (198 ?,	cbm40b, 	pet,	pet, 	petb, 	pet, 	"Commodore Business Machines Co.",	"Commodore CBM4000 THIN Series (business keyboard)",		GAME_NO_SOUND)
-COMPX (198 ?,	cbm80, 		pet,	pet80, 	petb, 	pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 60Hz", 									GAME_NO_SOUND)
-COMPX (198 ?,	cbm80ger,	pet,	pet80, 	petb, 	pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 German (50Hz)", 							GAME_NO_SOUND)
-COMPX (198 ?,	cbm80swe,	pet,	pet80, 	petb, 	pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 Swedish (50Hz)", 						GAME_NO_SOUND)
+COMPX (1980,	cbm80, 		pet,	pet80, 	petb, 	pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 60Hz", 									GAME_NO_SOUND)
+COMPX (198?,	cbm80ger,	pet,	pet80, 	petb, 	pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 German (50Hz)", 							GAME_NO_SOUND)
+COMPX (198?,	cbm80swe,	pet,	pet80, 	petb, 	pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 Swedish (50Hz)", 						GAME_NO_SOUND)
 #endif

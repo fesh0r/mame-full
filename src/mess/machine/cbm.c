@@ -38,7 +38,7 @@ int cbm_quick_init (int id)
 	FILE *fp;
 	int read;
 	char *cp;
-	const char *name=device_filename(IO_HARDDISK, id);
+	const char *name=device_filename(IO_QUICKLOAD, id);
 
 	memset (&quick, 0, sizeof (quick));
 
@@ -46,7 +46,7 @@ int cbm_quick_init (int id)
 
 	quick.name = name;
 
-	fp = image_fopen (IO_HARDDISK, id, OSD_FILETYPE_IMAGE_R, 0);
+	fp = image_fopen (IO_QUICKLOAD, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
 		return INIT_FAILED;
 
@@ -149,6 +149,64 @@ int cbm_pet1_quick_open (int id, int mode, void *arg)
 
 	return 0;
 }
+
+int cbmb_quick_open (int id, int mode, void *arg)
+{
+	int addr;
+	UINT8 *memory = arg;
+
+	if (quick.data == NULL)
+		return 1;
+	addr = quick.addr + quick.length;
+
+	memcpy (memory + quick.addr+0x10000, quick.data, quick.length);
+	memory[0xf0046] = addr & 0xff;
+	memory[0xf0047] = addr >> 8;
+	if (errorlog)
+		fprintf (errorlog, "quick loading %s at %.4x size:%.4x\n",
+				 quick.name, quick.addr, quick.length);
+
+	return 0;
+}
+
+int cbm500_quick_open (int id, int mode, void *arg)
+{
+	int addr;
+	UINT8 *memory = arg;
+
+	if (quick.data == NULL)
+		return 1;
+	addr = quick.addr + quick.length;
+
+	memcpy (memory + quick.addr, quick.data, quick.length);
+	memory[0xf0046] = addr & 0xff;
+	memory[0xf0047] = addr >> 8;
+	if (errorlog)
+		fprintf (errorlog, "quick loading %s at %.4x size:%.4x\n",
+				 quick.name, quick.addr, quick.length);
+
+	return 0;
+}
+
+int cbm_c65_quick_open (int id, int mode, void *arg)
+{
+	int addr;
+	UINT8 *memory = arg;
+
+	if (quick.data == NULL)
+		return 1;
+	addr = quick.addr + quick.length;
+
+	memcpy (memory + quick.addr, quick.data, quick.length);
+	memory[0x5a] = addr & 0xff;
+	memory[0x5b] = addr >> 8;
+	if (errorlog)
+		fprintf (errorlog, "quick loading %s at %.4x size:%.4x\n",
+				 quick.name, quick.addr, quick.length);
+
+	return 0;
+}
+
 
 CBM_ROM cbm_rom[0x20]= { {0} };
 

@@ -8,9 +8,10 @@ MESS misc info
 2.  DEBUG = 1 (optional)
 3.  NEOFREE = 1
 4.  uncomment all the required CPU cores (use all is ok) see below
-5.  COREOBJS first 2 lines are:
+5.  COREOBJS first 3 lines are:
 COREOBJS = obj/version.o obj/mess/system.o obj/mame.o obj/mess/mess.o \
-	 obj/mess/config.o obj/mess/filemngr.o obj/mess/tapectrl.o \
+         obj/mess/config.o obj/mess/filemngr.o obj/mess/tapectrl.o \
+         obj/mess/machine/6522via.o  obj/mess/machine/nec765.o   \
 6.  DRVLIBS replace with MESS ones
 7.  MSDOSOBJS += obj/mess/msdos.o obj/msdos/nec765.o
 8.  version....  after $(TINYFLAGS) -DMESS
@@ -18,10 +19,19 @@ COREOBJS = obj/version.o obj/mess/system.o obj/mame.o obj/mess/mess.o \
 10. add dat2html definition after romcmp.exe:
         dat2html.exe: obj/mess/dat2html.o 
 	$(LD) $(LDFLAGS) $^ -lz -o $@
-11. replace archive definitions
-12. add MAKE MESSDIR to the bottom of MAKETREE
-13. add messdir:
-14. add del dat2html.exe to make clean
+11. replace MAME's ifndef DEBUG section to:
+    ifndef DEBUG
+	$(EMULATOR_EXE) -listtext > mess.txt
+	$(EMULATOR_EXE) -listdevices >> mess.txt
+	upx $(EMULATOR_EXE)
+
+    endif
+
+12. replace archive definitions
+13. add MAKE MESSDIR to the bottom of MAKETREE
+14. add messdir:
+15. add del dat2html.exe to make clean
+
 
 # uncomment the following lines to include a CPU core
 CPUS+=Z80@
@@ -30,6 +40,7 @@ CPUS+=M6502@
 CPUS+=M65C02@
 CPUS+=M65SC02@
 CPUS+=M65CE02@
+CPUS+=M6509@
 CPUS+=M6510@
 CPUS+=N2A03@
 CPUS+=H6280@
@@ -68,7 +79,7 @@ SOUNDS+=QSOUND@
 SOUNDS+=SPEAKER@
 SOUNDS+=WAVE@
 
-remove debug and 2600, update mess.txt list and dir_list ;-)
+ensure you remove debug, 2600, and update dir_list ;-)
 
 
 

@@ -121,6 +121,7 @@ no ieee488 support
 no internal userport support
 no internal slot1/slot2 support
 no internal cpu/dram slot support
+preliminary quickloader
 
 state 600/700
 -------------
@@ -223,19 +224,19 @@ static struct MemoryReadAddress cbmb_readmem[] =
 	{0xf0002, 0xf07ff, MRA_RAM },
 #if 0
 	{0xf0800, 0xf1fff, MRA_ROM },
-	{0xf2000, 0xf3fff, MRA_ROM }, // cartridges or ram
+	{0xf2000, 0xf3fff, MRA_ROM }, /* cartridges or ram */
 	{0xf4000, 0xf5fff, MRA_ROM },
 	{0xf6000, 0xf7fff, MRA_ROM },
 #endif
 	{0xf8000, 0xfbfff, MRA_ROM },
-	//	{0xfc000, 0xfcfff, MRA_ROM },
+	/*	{0xfc000, 0xfcfff, MRA_ROM }, */
 	{0xfd000, 0xfd7ff, MRA_ROM },
 	{0xfd800, 0xfd8ff, crtc6845_port_r },
-	// disk units
+	/* disk units */
 	{0xfda00, 0xfdaff, sid6581_0_port_r },
-	// db00 coprocessor
+	/* db00 coprocessor */
 	{0xfdc00, 0xfdcff, cia6526_0_port_r },
-	// dd00 acia
+	/* dd00 acia */
 	{0xfde00, 0xfdeff, tpi6525_0_port_r},
 	{0xfdf00, 0xfdfff, tpi6525_1_port_r},
 	{0xfe000, 0xfffff, MRA_ROM },
@@ -255,13 +256,13 @@ static struct MemoryWriteAddress cbmb_writemem[] =
 	{0x20002, 0x2ffff, MWA_RAM },
 	{0x30000, 0x30000, m6509_write_00000 },
 	{0x30001, 0x30001, m6509_write_00001 },
-	{0x30002, 0x3ffff, MWA_NOP },
+	{0x30002, 0x3ffff, MWA_RAM },
 	{0x40000, 0x40000, m6509_write_00000 },
 	{0x40001, 0x40001, m6509_write_00001 },
 	{0x40002, 0x4ffff, MWA_RAM },
 	{0x50000, 0x50000, m6509_write_00000 },
 	{0x50001, 0x50001, m6509_write_00001 },
-	{0x50002, 0x5ffff, MWA_RAM },
+	{0x50002, 0x5ffff, MWA_NOP },
 	{0x60000, 0x60000, m6509_write_00000 },
 	{0x60001, 0x60001, m6509_write_00001 },
 	{0x60002, 0x6ffff, MWA_RAM },
@@ -293,18 +294,18 @@ static struct MemoryWriteAddress cbmb_writemem[] =
 	{0xf0001, 0xf0001, m6509_write_00001 },
 	{0xf0002, 0xf07ff, MWA_RAM },
 #if 0
-	{0xf2000, 0xf3fff, MWA_ROM }, // cartridges
+	{0xf2000, 0xf3fff, MWA_ROM }, /* cartridges */
 	{0xf4000, 0xf5fff, MWA_ROM },
 	{0xf6000, 0xf7fff, MWA_ROM },
 #endif
 	{0xf8000, 0xfbfff, MWA_ROM, &cbmb_basic },
-	{0xfd000, 0xfd7ff, crtc6845_videoram_w, &cbmb_videoram }, // VIDEORAM
+	{0xfd000, 0xfd7ff, crtc6845_videoram_w, &cbmb_videoram }, /* VIDEORAM */
 	{0xfd800, 0xfd8ff, crtc6845_port_w },
-	// disk units
+	/* disk units */
 	{0xfda00, 0xfdaff, sid6581_0_port_w},
-	// db00 coprocessor
+	/* db00 coprocessor */
 	{0xfdc00, 0xfdcff, cia6526_0_port_w},
-	// dd00 acia
+	/* dd00 acia */
 	{0xfde00, 0xfdeff, tpi6525_0_port_w},
 	{0xfdf00, 0xfdfff, tpi6525_1_port_w},
 	{0xfe000, 0xfffff, MWA_ROM, &cbmb_kernal },
@@ -364,20 +365,20 @@ static struct MemoryReadAddress cbm500_readmem[] =
 	{0xf0002, 0xf07ff, MRA_RAM },
 #if 0
 	{0xf0800, 0xf1fff, MRA_ROM },
-	{0xf2000, 0xf3fff, MRA_ROM }, // cartridges or ram
+	{0xf2000, 0xf3fff, MRA_ROM }, /* cartridges or ram */
 	{0xf4000, 0xf5fff, MRA_ROM },
 	{0xf6000, 0xf7fff, MRA_ROM },
 #endif
 	{0xf8000, 0xfbfff, MRA_ROM },
-	//	{0xfc000, 0xfcfff, MRA_ROM },
-	{0xfd000, 0xfd3ff, MRA_RAM }, // videoram
-	{0xfd400, 0xfd7ff, MRA_RAM }, // colorram
+	/*	{0xfc000, 0xfcfff, MRA_ROM }, */
+	{0xfd000, 0xfd3ff, MRA_RAM }, /* videoram */
+	{0xfd400, 0xfd7ff, MRA_RAM }, /* colorram */
 	{0xfd800, 0xfd8ff, vic2_port_r },
-	// disk units
+	/* disk units */
 	{0xfda00, 0xfdaff, sid6581_0_port_r },
-	// db00 coprocessor
+	/* db00 coprocessor */
 	{0xfdc00, 0xfdcff, cia6526_0_port_r },
-	// dd00 acia
+	/* dd00 acia */
 	{0xfde00, 0xfdeff, tpi6525_0_port_r},
 	{0xfdf00, 0xfdfff, tpi6525_1_port_r},
 	{0xfe000, 0xfffff, MRA_ROM },
@@ -435,7 +436,7 @@ static struct MemoryWriteAddress cbm500_writemem[] =
 	{0xf0001, 0xf0001, m6509_write_00001 },
 	{0xf0002, 0xf07ff, MWA_RAM },
 #if 0
-	{0xf2000, 0xf3fff, MWA_ROM }, // cartridges
+	{0xf2000, 0xf3fff, MWA_ROM }, /* cartridges */
 	{0xf4000, 0xf5fff, MWA_ROM },
 	{0xf6000, 0xf7fff, MWA_ROM },
 #endif
@@ -443,11 +444,11 @@ static struct MemoryWriteAddress cbm500_writemem[] =
 	{0xfd000, 0xfd3ff, MWA_RAM, &cbmb_videoram },
 	{0xfd400, 0xfd7ff, cbmb_colorram_w, &cbmb_colorram },
 	{0xfd800, 0xfd8ff, vic2_port_w },
-	// disk units
+	/* disk units */
 	{0xfda00, 0xfdaff, sid6581_0_port_w},
-	// db00 coprocessor
+	/* db00 coprocessor */
 	{0xfdc00, 0xfdcff, cia6526_0_port_w},
-	// dd00 acia
+	/* dd00 acia */
 	{0xfde00, 0xfdeff, tpi6525_0_port_w},
 	{0xfdf00, 0xfdfff, tpi6525_1_port_w},
 	{0xfe000, 0xfffff, MWA_ROM, &cbmb_kernal },
@@ -567,8 +568,8 @@ INPUT_PORTS_START (cbm600)
 	 DIPS_HELPER( 0x0040, "GRAPH NORM", KEYCODE_PGUP)
 	 CBMB_KEYBOARD2
      PORT_START
-#ifdef PET_TEST_CODE
 	 DIPS_HELPER( 0x8000, "Quickload", KEYCODE_F8)
+#ifdef PET_TEST_CODE
 	 PORT_DIPNAME   ( 0x4000, 0x4000, "Tape Drive/Device 1")
 	 PORT_DIPSETTING(  0, DEF_STR( Off ) )
 	 PORT_DIPSETTING(0x4000, DEF_STR( On ) )
@@ -589,8 +590,8 @@ INPUT_PORTS_START (cbm600pal)
 	 DIPS_HELPER( 0x0040, "ASCII DIN", KEYCODE_PGUP)
 	 CBMB_KEYBOARD2
      PORT_START
-#ifdef PET_TEST_CODE
 	 DIPS_HELPER( 0x8000, "Quickload", KEYCODE_F8)
+#ifdef PET_TEST_CODE
 	 PORT_DIPNAME   ( 0x4000, 0x4000, "Tape Drive/Device 1")
 	 PORT_DIPSETTING(  0, DEF_STR( Off ) )
 	 PORT_DIPSETTING(0x4000, DEF_STR( On ) )
@@ -611,8 +612,8 @@ INPUT_PORTS_START (cbm700)
 	DIPS_HELPER( 0x0040, "GRAPH NORM", KEYCODE_PGUP)
 	CBMB_KEYBOARD2
     PORT_START
-#ifdef PET_TEST_CODE
     DIPS_HELPER( 0x8000, "Quickload", KEYCODE_F8)
+#ifdef PET_TEST_CODE
 	PORT_DIPNAME   ( 0x4000, 0x4000, "Tape Drive/Device 1")
 	PORT_DIPSETTING(  0, DEF_STR( Off ) )
 	PORT_DIPSETTING(0x4000, DEF_STR( On ) )
@@ -633,8 +634,8 @@ INPUT_PORTS_START (cbm500)
 	DIPS_HELPER( 0x0040, "GRAPH NORM", KEYCODE_PGUP)
 	CBMB_KEYBOARD2
     PORT_START
-#ifdef PET_TEST_CODE
     DIPS_HELPER( 0x8000, "Quickload", KEYCODE_F8)
+#ifdef PET_TEST_CODE
 	PORT_DIPNAME   ( 0x4000, 0x4000, "Tape Drive/Device 1")
 	PORT_DIPSETTING(  0, DEF_STR( Off ) )
 	PORT_DIPSETTING(0x4000, DEF_STR( On ) )
@@ -647,7 +648,7 @@ INPUT_PORTS_START (cbm500)
 #endif
 	PORT_BIT (0x200, 0x000, IPT_UNUSED) /* not used */
 	PORT_BIT (0x100, 0x000, IPT_UNUSED) /* not used */
-	//C64_DIPS
+	/*C64_DIPS */
 INPUT_PORTS_END
 
 unsigned char cbm700_palette[] =
@@ -1001,10 +1002,15 @@ static struct MachineDriver machine_driver_cbm500 =
 
 static const struct IODevice io_cbmb[] =
 {
-#if 0
-	IODEVICE_CBM_QUICK,
+	IODEVICE_CBMB_QUICK,
 	/* monitor OR tape routine in kernal */
-#endif
+	{IO_END}
+};
+
+static const struct IODevice io_cbm500[] =
+{
+	IODEVICE_CBM500_QUICK,
+	/* monitor OR tape routine in kernal */
 	{IO_END}
 };
 
@@ -1017,7 +1023,6 @@ static const struct IODevice io_cbmb[] =
 #define io_cbm720 io_cbmb
 #define io_cbm610 io_cbmb
 #define io_cbm620 io_cbmb
-#define io_cbm500 io_cbmb
 
 #if 0
 #define rom_cbm730 rom_cbmb256hp
