@@ -684,6 +684,7 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int openf
 			ZIP *z;
 			struct zipent *ent;
 			int file_exists;
+			const char *first_entry_name;
 
 			if (renamed_image)
 			{
@@ -737,8 +738,14 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int openf
 						continue;
 					}
 
+					first_entry_name = ent->name;
+
+					/* if the first entry name has a './' in the front of it, remove all occurances */
+					while((first_entry_name[0] == '.') && (first_entry_name[1] == '/'))
+						first_entry_name += 2;
+
 					strcat(name, "/");
-					strcat(name, ent->name);
+					strcat(name, first_entry_name);
 					closezip(z);
 
 					renamed_image = strdup(name);
