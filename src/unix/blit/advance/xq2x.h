@@ -180,10 +180,20 @@ BLIT_BEGIN(XQ2X_NAME(blit))
       switch(sysdep_display_params.heightscale)
       {
         case 2:
-          BLIT_LOOP2X(XQ2X_NAME(blit_xq2x_line_2x2), 2);
+          if (sysdep_display_properties.mode_info[
+              sysdep_display_params.video_mode] & SYSDEP_DISPLAY_DIRECT_FB) {
+            BLIT_LOOP2X_DFB(XQ2X_NAME(blit_xq2x_line_2x2), 2)
+          } else {
+            BLIT_LOOP2X(XQ2X_NAME(blit_xq2x_line_2x2), 2)
+          }
           break;
         case 3:
-          BLIT_LOOP2X(XQ2X_NAME(blit_xq2x_line_2x3), 3);
+          if (sysdep_display_properties.mode_info[
+              sysdep_display_params.video_mode] & SYSDEP_DISPLAY_DIRECT_FB) {
+            BLIT_LOOP2X_DFB(XQ2X_NAME(blit_xq2x_line_2x3), 3)
+          } else {
+            BLIT_LOOP2X(XQ2X_NAME(blit_xq2x_line_2x3), 3)
+          }
           break;
       }
       break;
@@ -191,10 +201,20 @@ BLIT_BEGIN(XQ2X_NAME(blit))
       switch(sysdep_display_params.heightscale)
       {
         case 2:
-          BLIT_LOOP2X(XQ2X_NAME(blit_xq2x_line_3x2), 2);
+          if (sysdep_display_properties.mode_info[
+              sysdep_display_params.video_mode] & SYSDEP_DISPLAY_DIRECT_FB) {
+            BLIT_LOOP2X_DFB(XQ2X_NAME(blit_xq2x_line_3x2), 2)
+          } else {
+            BLIT_LOOP2X(XQ2X_NAME(blit_xq2x_line_3x2), 2)
+          }
           break;
         case 3:
-          BLIT_LOOP2X(XQ2X_NAME(blit_xq2x_line_3x3), 3);
+          if (sysdep_display_properties.mode_info[
+              sysdep_display_params.video_mode] & SYSDEP_DISPLAY_DIRECT_FB) {
+            BLIT_LOOP2X_DFB(XQ2X_NAME(blit_xq2x_line_3x3), 3)
+          } else {
+            BLIT_LOOP2X(XQ2X_NAME(blit_xq2x_line_3x3), 3)
+          }
           break;
       }
       break;

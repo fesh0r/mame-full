@@ -180,6 +180,56 @@ void FUNC_NAME(NAME)(struct mame_bitmap *bitmap, \
     } \
   }
   
+#ifdef BLIT_LINE_FUNC
+#define BLIT_LOOP2X_DFB BLIT_LOOP2X
+#else
+#define BLIT_LOOP2X_DFB(RENDER_LINE, Y) \
+  if (sysdep_display_params.orientation) \
+  { \
+    char *tmp; \
+    int i, blit_width = vis_in_dest_out->max_x - vis_in_dest_out->min_x; \
+    /* preload the first lines for 2x effects */ \
+    rotate_func(rotate_dbbuf1, bitmap, dirty_area->min_y-1, dirty_area); \
+    rotate_func(rotate_dbbuf2, bitmap, dirty_area->min_y, dirty_area); \
+    \
+    for (y = dirty_area->min_y; y < dirty_area->max_y; y++) { \
+      /* shift lines up */ \
+      tmp = rotate_dbbuf0; \
+      rotate_dbbuf0=rotate_dbbuf1; \
+      rotate_dbbuf1=rotate_dbbuf2; \
+      rotate_dbbuf2=tmp; \
+      rotate_func(rotate_dbbuf2, bitmap, y+1, dirty_area); \
+      FUNC_NAME(RENDER_LINE)((SRC_PIXEL *)rotate_dbbuf0, \
+        (SRC_PIXEL *)rotate_dbbuf1, (SRC_PIXEL *)rotate_dbbuf2, \
+        (SRC_PIXEL *)rotate_dbbuf1 + (dirty_area->max_x-dirty_area->min_x), \
+        (RENDER_PIXEL *)effect_dbbuf, blit_width, palette->lookup); \
+      for (i=0; i<Y; i++) \
+      { \
+        memcpy(line_dest, effect_dbbuf + i * blit_width * DEST_PIXEL_SIZE, \
+          blit_width * DEST_PIXEL_SIZE); \
+        line_dest+=DEST_WIDTH; \
+      } \
+    } \
+  } else { \
+    int i, blit_width = vis_in_dest_out->max_x - vis_in_dest_out->min_x; \
+    \
+    for (y = dirty_area->min_y; y < dirty_area->max_y; y++) { \
+      FUNC_NAME(RENDER_LINE)( \
+        (SRC_PIXEL *)(bitmap->line[y-1]) + dirty_area->min_x, \
+        (SRC_PIXEL *)(bitmap->line[y  ]) + dirty_area->min_x, \
+        (SRC_PIXEL *)(bitmap->line[y+1]) + dirty_area->min_x, \
+        (SRC_PIXEL *)(bitmap->line[y  ]) + dirty_area->max_x, \
+        (RENDER_PIXEL *)effect_dbbuf, blit_width, palette->lookup); \
+      for (i=0; i<Y; i++) \
+      { \
+        memcpy(line_dest, effect_dbbuf + i * blit_width * DEST_PIXEL_SIZE, \
+          blit_width * DEST_PIXEL_SIZE); \
+        line_dest+=DEST_WIDTH; \
+      } \
+    } \
+  }
+#endif
+  
 #define BLIT_LOOP_YARBSIZE_NORMAL(RENDER_LINE) \
   if (sysdep_display_params.orientation) { \
     for (y = dirty_area->min_y; y < dirty_area->max_y; y++) { \
