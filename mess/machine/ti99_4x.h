@@ -39,7 +39,8 @@ enum
 enum
 {
 	offset_fdc_dsr = 0x0000,
-	region_dsr_len = 0x2000
+	offset_evpc_dsr= 0x2000,
+	region_dsr_len = 0x12000
 };
 
 /* enum for RAM config */
@@ -79,6 +80,7 @@ enum
 
 void init_ti99_4(void);
 void init_ti99_4a(void);
+void init_ti99_4ev(void);
 void init_ti99_4p(void);
 
 void ti99_init_machine(void);
@@ -94,7 +96,9 @@ void ti99_rom_cleanup(int id);
 
 int ti99_4_vh_start(void);
 int ti99_4a_vh_start(void);
+int ti99_4ev_vh_start(void);
 int ti99_vblank_interrupt(void);
+int ti99_4ev_vblank_interrupt(void);
 
 READ16_HANDLER ( ti99_rw_null8bits );
 WRITE16_HANDLER ( ti99_ww_null8bits );
@@ -105,6 +109,8 @@ WRITE16_HANDLER ( ti99_ww_cartmem );
 WRITE16_HANDLER( ti99_ww_wsnd );
 READ16_HANDLER ( ti99_rw_rvdp );
 WRITE16_HANDLER ( ti99_ww_wvdp );
+READ16_HANDLER ( ti99_rw_rv38 );
+WRITE16_HANDLER ( ti99_ww_wv38 );
 READ16_HANDLER ( ti99_rw_rgpl );
 WRITE16_HANDLER( ti99_ww_wgpl );
 

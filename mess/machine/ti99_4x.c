@@ -70,6 +70,7 @@ New (020327):
 #include "includes/wd179x.h"
 #include "tms9901.h"
 #include "vidhrdw/tms9928a.h"
+#include "vidhrdw/v9938.h"
 #include "sndhrdw/spchroms.h"
 #include "includes/basicdsk.h"
 #include <math.h>
@@ -104,7 +105,7 @@ static void ti99_sAMSxram_init(void);
 static void ti99_4p_mapper_init(void);
 static void ti99_myarcxram_init(void);
 static void ti99_fdc_init(void);
-
+static void ti99_evpc_init(void);
 
 /*
 	pointers to RAM areas
@@ -130,6 +131,8 @@ static xRAM_kind_t xRAM_kind;
 static char has_speech;
 /* TRUE if floppy disk controller present */
 static char has_fdc;
+/* TRUE if evpc card present */
+static char has_evpc;
 
 
 /* tms9901 setup */
@@ -308,16 +311,25 @@ extern int tms9900_ICount;
 void init_ti99_4(void)
 {
 	ti99_model = model_99_4;
+	has_evpc = FALSE;
 }
 
 void init_ti99_4a(void)
 {
 	ti99_model = model_99_4a;
+	has_evpc = FALSE;
+}
+
+void init_ti99_4ev(void)
+{
+	ti99_model = model_99_4a;
+	has_evpc = TRUE;
 }
 
 void init_ti99_4p(void)
 {
 	ti99_model = model_99_4p;
+	has_evpc = TRUE;
 }
 
 int ti99_floppy_init(int id)
@@ -528,7 +540,11 @@ void ti99_init_machine(void)
 	/* set up callback for the TMS9901 to be notified of changes to the
 	 * TMS9928A INT* line (connected to the TMS9901 INT2* line)
 	 */
-	TMS9928A_int_callback(tms9901_set_int2);
+	if (! has_evpc)
+		TMS9928A_int_callback(tms9901_set_int2);
+
+	if (has_evpc)
+		v9938_reset();
 
 	/* clear keyboard interface state (probably overkill, but can't harm) */
 	KeyCol = 0;
@@ -594,6 +610,11 @@ void ti99_init_machine(void)
 	{
 		ti99_fdc_init();
 	}
+
+	if (has_evpc)
+	{
+		ti99_evpc_init();
+	}
 }
 
 void ti99_stop_machine(void)
@@ -619,6 +640,11 @@ int ti99_4a_vh_start(void)
 	return TMS9928A_start(TMS99x8A, 0x4000);	/* tms9918a/28a/29a with 16 kb of video RAM */
 }
 
+int ti99_4ev_vh_start(void)
+{
+	return v9938_init(MODEL_V9938, 0x20000, tms9901_set_int2);	/* v38 with 128 kb of video RAM */
+}
+
 /*
 	VBL interrupt  (mmm... actually, it happens when the beam enters the lower border, so it is not
 	a genuine VBI, but who cares ?)
@@ -630,6 +656,12 @@ int ti99_vblank_interrupt(void)
 	return ignore_interrupt();
 }
 
+int ti99_4ev_vblank_interrupt(void)
+{
+	v9938_interrupt();
+
+	return ignore_interrupt();
+}
 
 
 /*===========================================================================*/
@@ -722,7 +754,7 @@ WRITE16_HANDLER ( ti99_ww_wsnd )
 }
 
 /*
-	TMS9918A VDP read
+	TMS9918(A)/9928(A)/9929(A) VDP read
 */
 READ16_HANDLER ( ti99_rw_rvdp )
 {
@@ -739,7 +771,7 @@ READ16_HANDLER ( ti99_rw_rvdp )
 }
 
 /*
-	TMS9918A vdp write
+	TMS9918(A)/9928(A)/9929(A) vdp write
 */
 WRITE16_HANDLER ( ti99_ww_wvdp )
 {
@@ -752,6 +784,40 @@ WRITE16_HANDLER ( ti99_ww_wvdp )
 	else
 	{	/* write VDP data */
 		TMS9928A_vram_w(0, (data >> 8) & 0xff);
+	}
+}
+
+/*
+	V38 VDP read
+*/
+READ16_HANDLER ( ti99_rw_rv38 )
+{
+	tms9900_ICount -= 4;
+
+	if (offset & 1)
+	{	/* read VDP status */
+		return ((int) v9938_status_r(0)) << 8;
+	}
+	else
+	{	/* read VDP RAM */
+		return ((int) v9938_vram_r(0)) << 8;
+	}
+}
+
+/*
+	V38 vdp write
+*/
+WRITE16_HANDLER ( ti99_ww_wv38 )
+{
+	tms9900_ICount -= 4;
+
+	if (offset & 1)
+	{	/* write VDP adress */
+		v9938_command_w(0, (data >> 8) & 0xff);
+	}
+	else
+	{	/* write VDP data */
+		v9938_vram_w(0, (data >> 8) & 0xff);
 	}
 }
 
@@ -1871,7 +1937,7 @@ static WRITE16_HANDLER ( ti99_ww_sAMSxramhigh )
 
 /*===========================================================================*/
 /*
-	TI99/4p Super AMS clone support.  "99% compatible" with Super AMS, but uses a 16-bit bus.
+	TI99/4p Super AMS clone support.  Compatible with Super AMS, but uses a 16-bit bus.
 
 	Up to 1Mb of SRAM.  Straightforward mapper, works with 4kb chunks.
 */
@@ -2432,5 +2498,251 @@ static WRITE_HANDLER(fdc_mem_w)
 	case 0x1FFE:					/* Data register */
 		wd179x_data_w(offset, data);
 		break;
+	}
+}
+
+
+/*===========================================================================*/
+/*
+	Thierry Nouspikel's IDE card emulation
+*/
+
+/* prototypes */
+static int ide_cru_r(int offset);
+static void ide_cru_w(int offset, int data);
+static READ_HANDLER(ide_mem_r);
+static WRITE_HANDLER(ide_mem_w);
+
+/* pointer to the IDE SRAM area */
+static UINT8 *ti99_ide_SRAM;
+
+static const expansion_port_t ide_handlers =
+{
+	ide_cru_r,
+	ide_cru_w,
+	ide_mem_r,
+	ide_mem_w
+};
+
+
+/*
+	Reset ide card, set up handlers
+*/
+static void ti99_ide_init(void)
+{
+	/*ti99_ide_SRAM = memory_region(region_dsr) + offset_ide_sram;*/
+
+	/*ti99_set_expansion_card_handlers(0x1100, & ide_handlers);*/
+}
+
+/*
+	Read ide CRU interface
+*/
+static int ide_cru_r(int offset)
+{
+	int reply;
+
+	switch (offset)
+	{
+	default:
+		reply = 0;
+		break;
+	}
+
+	return reply;
+}
+
+/*
+	Write ide CRU interface
+*/
+static void ide_cru_w(int offset, int data)
+{
+	switch (offset)
+	{
+	case 0:
+		break;
+
+	case 1:
+		break;
+
+	case 2:
+		break;
+
+	case 3:
+		break;
+
+	case 4:
+		break;
+
+	case 5:
+		break;
+
+	case 6:
+		break;
+
+	case 7:
+		break;
+	}
+}
+
+
+/*
+	read a byte in ide DSR space
+*/
+static READ_HANDLER(ide_mem_r)
+{
+	switch (offset)
+	{
+	default:
+		return 0;
+	}
+}
+
+/*
+	write a byte in ide DSR space
+*/
+static WRITE_HANDLER(ide_mem_w)
+{
+	switch (offset)
+	{
+	}
+}
+
+/*===========================================================================*/
+/*
+	SNUG's EVPC emulation
+*/
+
+/* prototypes */
+static int evpc_cru_r(int offset);
+static void evpc_cru_w(int offset, int data);
+static READ_HANDLER(evpc_mem_r);
+static WRITE_HANDLER(evpc_mem_w);
+
+/* pointer to the evpc DSR area */
+static UINT8 *ti99_evpc_DSR;
+
+/* pointer to the evpc novram area */
+/*static UINT8 *ti99_evpc_novram;*/
+
+static int RAMEN;
+
+static int evpc_dsr_page;
+
+static const expansion_port_t evpc_handlers =
+{
+	evpc_cru_r,
+	evpc_cru_w,
+	evpc_mem_r,
+	evpc_mem_w
+};
+
+
+/*
+	Reset evpc card, set up handlers
+*/
+static void ti99_evpc_init(void)
+{
+	ti99_evpc_DSR = memory_region(region_dsr) + offset_evpc_dsr;
+
+	RAMEN = 0;
+	evpc_dsr_page = 0;
+
+	ti99_set_expansion_card_handlers(0x1400, & evpc_handlers);
+}
+
+/*
+	Read evpc CRU interface
+*/
+static int evpc_cru_r(int offset)
+{
+	return 0;	/* dip-switch value */
+}
+
+/*
+	Write evpc CRU interface
+*/
+static void evpc_cru_w(int offset, int data)
+{
+	switch (offset)
+	{
+	case 0:
+		break;
+
+	case 1:
+		if (data)
+			evpc_dsr_page |= 1;
+		else
+			evpc_dsr_page &= ~1;
+		break;
+
+	case 2:
+		break;
+
+	case 3:
+		RAMEN = data;
+		break;
+
+	case 4:
+		if (data)
+			evpc_dsr_page |= 4;
+		else
+			evpc_dsr_page &= ~4;
+		break;
+
+	case 5:
+		if (data)
+			evpc_dsr_page |= 2;
+		else
+			evpc_dsr_page &= ~2;
+		break;
+
+	case 6:
+		break;
+
+	case 7:
+		break;
+	}
+}
+
+
+/*
+	read a byte in evpc DSR space
+*/
+static READ_HANDLER(evpc_mem_r)
+{
+	if (offset < 0x1f00)
+	{
+		return ti99_evpc_DSR[offset+evpc_dsr_page*0x2000];
+	}
+	else if (offset < 0x1ff0)
+	{
+		if (RAMEN)
+		{	/* NOVRAM */
+			return 0;
+		}
+		else
+		{
+			return ti99_evpc_DSR[offset+evpc_dsr_page*0x2000];
+		}
+	}
+	else
+	{	/* PALETTE */
+		logerror("palette read, offset=%d\n", offset-0x1ff0);
+		return 0;
+	}
+}
+
+/*
+	write a byte in evpc DSR space
+*/
+static WRITE_HANDLER(evpc_mem_w)
+{
+	if ((offset >= 0x1f00) && (offset < 0x1ff0) && RAMEN)
+	{	/* NOVRAM */
+	}
+	else if (offset >= 0x1ff0)
+	{	/* PALETTE */
+		logerror("palette write, offset=%d\n, data=%d", offset-0x1ff0, data);
 	}
 }
