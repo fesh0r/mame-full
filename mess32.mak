@@ -279,7 +279,8 @@ SNDOBJS = \
 		 $(OBJ)/sound/saa1099.o \
          $(OBJ)/sound/wave.o \
          $(OBJ)/sound/speaker.o \
-		 $(OBJ)/sound/beep.o
+		 $(OBJ)/sound/beep.o \
+		 $(OBJ)/sound/nesintf.o
 
 COREOBJS = \
          $(OBJ)/version.o $(OBJ)/mame.o \
@@ -511,9 +512,10 @@ DRV_OBJS = \
           $(OBJ)/mess/vidhrdw/enterp.o   \
           $(OBJ)/mess/machine/enterp.o   \
           $(OBJ)/mess/systems/enterp.o	\
-          $(OBJ)/mess/sndhrdw/scc.o      \
-          $(OBJ)/mess/machine/msx.o      \
-          $(OBJ)/mess/systems/msx.o	\
+	  $(OBJ)/mess/sndhrdw/scc.o	 	 \
+	  $(OBJ)/mess/machine/msx.o	 	 \
+	  $(OBJ)/mess/formats/fmsx_cas.o \
+	  $(OBJ)/mess/systems/msx.o	\
           $(OBJ)/mess/vidhrdw/kim1.o     \
           $(OBJ)/mess/machine/kim1.o     \
           $(OBJ)/mess/systems/kim1.o	\

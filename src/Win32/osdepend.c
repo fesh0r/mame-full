@@ -553,7 +553,7 @@ void osd_pause(int paused)
 		osd_set_brightness(orig_brt);
     }
 
-    MAME32App.m_pDisplay->update_display(Machine->scrbitmap, Machine->debug_bitmap);
+    MAME32App.m_pDisplay->Refresh();
 }
 
 /***************************************************************************

@@ -59,3 +59,7 @@ int osd_fdc_get_status(int unit)
 	return 0;
 }
 
+void osd_fdc_read_id(int unit, int side, unsigned char *pBuffer)
+{
+}
+

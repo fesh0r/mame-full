@@ -366,12 +366,12 @@ static void Display_update_display(struct osd_bitmap *game_bitmap, struct osd_bi
         MAME32App.m_pDisplay->update_display(game_bitmap, debug_bitmap);
 
         if (need_to_clear_bitmap)
-            osd_clearbitmap(Machine->scrbitmap);
+            osd_clearbitmap(game_bitmap);
 
         ClearDirty();
 
         if (need_to_clear_bitmap)
-            osd_clearbitmap(Machine->scrbitmap);
+            osd_clearbitmap(game_bitmap);
 
         if (This.m_bThrottled
         &&  This.m_bAutoFrameskip
@@ -536,7 +536,7 @@ void Display_WriteBitmap(struct osd_bitmap* tBitmap, PALETTEENTRY* pPalEntries)
     pFile = osd_fopen(sFileName, "", OSD_FILETYPE_SCREENSHOT, TRUE);
     if (pFile != NULL)
     {
-		save_screen_snapshot_as(pFile, Machine->scrbitmap);
+		save_screen_snapshot_as(pFile, tBitmap);
         osd_fclose(pFile);
     }
 }

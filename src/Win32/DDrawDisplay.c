@@ -56,6 +56,7 @@ struct tPixelInfo
 
 struct tDisplay_private
 {
+    struct osd_bitmap*  m_pBitmap;
     tRect               m_GameRect;         /* possibly doubled and clipped */
     UINT                m_nDisplayLines;    /* # of visible lines of bitmap */
     UINT                m_nDisplayColumns;  /* # of visible columns of bitmap */
@@ -213,6 +214,7 @@ static int DDraw_init(options_type *options)
 {
     OSDDisplay.init(options);
 
+    This.m_pBitmap           = NULL;
     This.m_GameRect.m_Top    = 0;
     This.m_GameRect.m_Left   = 0;
     This.m_GameRect.m_Width  = 0;
@@ -1002,7 +1004,7 @@ static void DDraw_mark_dirty(int x1, int y1, int x2, int y2, int ui)
 }
 
 /*
-    Update the display using Machine->scrbitmap.
+    Update the display.
 */
 static void DDraw_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap)
 {
@@ -1011,6 +1013,8 @@ static void DDraw_update_display(struct osd_bitmap *game_bitmap, struct osd_bitm
     if (This.m_pDDSBack    == NULL
     ||  This.m_pDDSPrimary == NULL)
         return;
+
+    This.m_pBitmap = game_bitmap;
 
     if (This.m_triple_buffer)
         ClearSurface(This.m_pDDSBack);
@@ -1182,6 +1186,8 @@ static void DrawSurface(IDirectDrawSurface* pddSurface)
     if (pddSurface == NULL)
         return;
 
+    assert(This.m_pBitmap != NULL);
+
     ddSurfaceDesc.dwSize = sizeof(ddSurfaceDesc);
 
     while (1)
@@ -1237,7 +1243,7 @@ static void DrawSurface(IDirectDrawSurface* pddSurface)
     }
 
     if (This.m_bAviRun) /* add avi frame */
-        AviAddBitmap(Machine->scrbitmap, This.m_pPalEntries);
+        AviAddBitmap(This.m_pBitmap, This.m_pPalEntries);
     
     if (This.m_nAviShowMessage > 0)
     {
@@ -1246,12 +1252,12 @@ static void DrawSurface(IDirectDrawSurface* pddSurface)
         This.m_nAviShowMessage--;
                
         sprintf(buf, "AVI Capture %s", (This.m_bAviRun) ? "ON" : "OFF");
-        ui_text(Machine->scrbitmap, buf, Machine->uiwidth - strlen(buf) * Machine->uifontwidth, 0);        
+        ui_text(This.m_pBitmap, buf, Machine->uiwidth - strlen(buf) * Machine->uifontwidth, 0);        
     }
 
     assert(This.Render != NULL);
 
-    This.Render(Machine->scrbitmap,
+    This.Render(This.m_pBitmap,
                 This.m_nSkipLines,
                 This.m_nSkipColumns,
                 This.m_nDisplayLines,
@@ -1881,9 +1887,8 @@ static BOOL DDraw_OnMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, L
 
 static BOOL OnSetCursor(HWND hWnd, HWND hWndCursor, UINT codeHitTest, UINT msg)
 {
-    /* Remove the cursor only after display is setup. */
-    if (Machine->scrbitmap != NULL)
-        SetCursor(NULL);
+    SetCursor(NULL);
+ 
     return TRUE;
 }
 
@@ -1891,7 +1896,7 @@ static void DDraw_Refresh()
 {
     This.m_bUpdateBackground = TRUE;
 
-    DDraw_update_display(Machine->scrbitmap, Machine->debug_bitmap);
+    DDraw_update_display(This.m_pBitmap, Machine->debug_bitmap);
 }
 
 static int DDraw_GetBlackPen(void)
@@ -1906,12 +1911,12 @@ static void DDraw_UpdateFPS(BOOL bShow, int nSpeed, int nFPS, int nMachineFPS, i
     if (bShow)
     {
         sprintf(buf, "fskp%2d%4d%%%4d/%d fps", nFrameskip, nSpeed, nFPS, nMachineFPS);
-        ui_text(Machine->scrbitmap, buf, Machine->uiwidth - strlen(buf) * Machine->uifontwidth, 0);
+        ui_text(This.m_pBitmap, buf, Machine->uiwidth - strlen(buf) * Machine->uifontwidth, 0);
 
         if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
         {
             sprintf(buf, " %d vector updates", nVecUPS);
-            ui_text(Machine->scrbitmap, buf,
+            ui_text(This.m_pBitmap, buf,
                     Machine->uiwidth - strlen(buf) * Machine->uifontwidth,
                     Machine->uifontheight);
         }
