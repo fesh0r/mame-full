@@ -375,12 +375,12 @@ WRITE_HANDLER(tc8521_w)
 
                 case 0x0f:
                 {
-                        if (data & 0x08)
+                        if ((data & 0x08)==0)
                         {
                            logerror("1hz enable\n");
                         }
 
-                        if (data & 0x04)
+                        if ((data & 0x04)==0)
                         {
                            logerror("16hz enable\n");
                         }
