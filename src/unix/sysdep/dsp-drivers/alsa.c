@@ -59,6 +59,9 @@
 
 #ifdef SYSDEP_DSP_ALSA
 
+/* Eventually we should use the 1.0 API. */
+#define ALSA_PCM_OLD_HW_PARAMS_API 1
+
 #include <sys/ioctl.h>       /* System and I/O control */
 #include <alsa/asoundlib.h>  /* ALSA sound library header */
 #include "sysdep/sysdep_dsp.h"
