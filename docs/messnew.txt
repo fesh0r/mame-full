@@ -34,7 +34,8 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- [Windows GUI] Minor bug fixes regarding software listing and CRC
+  calculations with respect to clone and compatible drivers. [Nate Woods]
 
 
 

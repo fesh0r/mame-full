@@ -88,9 +88,18 @@ DRIVER_INIT( a7800_pal )
 
 MACHINE_INIT( a7800 )
 {
+	UINT8 *memory;
+
 	a7800_ctrl_lock = 0;
 	a7800_ctrl_reg = 0;
 	maria_flag = 0;
+	
+	/* set banks to default states */
+	memory = memory_region(REGION_CPU1);
+	cpu_setbank( 1, memory + 0x4000 );
+	cpu_setbank( 2, memory + 0x8000 );
+	cpu_setbank( 3, memory + 0xA000 );
+	cpu_setbank( 4, memory + 0xC000 );
 
 	/* pokey cartridge */
 	if (a7800_cart_type & 0x01)
@@ -170,12 +179,6 @@ DEVICE_LOAD( a7800_cart )
 	memory = memory_region(REGION_CPU1);
 	a7800_bios_bkup = NULL;
 	a7800_cart_bkup = NULL;
-
-	/* set banks to default states */
-	cpu_setbank( 1, memory + 0x4000 );
-	cpu_setbank( 2, memory + 0x8000 );
-	cpu_setbank( 3, memory + 0xA000 );
-	cpu_setbank( 4, memory + 0xC000 );
 
 	/* Allocate memory for BIOS bank switching */
 	a7800_bios_bkup = (UINT8*) image_malloc(image, 0x4000);

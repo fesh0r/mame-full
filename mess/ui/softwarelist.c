@@ -538,6 +538,7 @@ static void InternalFillSoftwareList(struct SmartListView *pSoftwareListView, in
     char *s;
 	const char *path;
     char buffer[2000];
+	const struct GameDriver *drv;
 
 	s_nGame = nGame;
 
@@ -545,9 +546,14 @@ static void InternalFillSoftwareList(struct SmartListView *pSoftwareListView, in
 #if HAS_CRC
 	if (mess_crc_file)
 		crcfile_close(mess_crc_file);
-	mess_crc_file = crcfile_open(drivers[nGame]->name, drivers[nGame]->name, FILETYPE_CRC);
-	if (mess_crc_file)
-		strcpy(mess_crc_category, drivers[nGame]->name);
+
+	mess_crc_file = NULL;
+	for (drv = drivers[nGame]; !mess_crc_file && drv; drv = mess_next_compatible_driver(drv))
+	{
+		mess_crc_file = crcfile_open(drv->name, drv->name, FILETYPE_CRC);
+		if (mess_crc_file)
+			strcpy(mess_crc_category, drv->name);
+	}
 #endif
 
     /* This fixes any changes the file manager may have introduced */
