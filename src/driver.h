@@ -19,6 +19,10 @@
 #include "tilemap.h"
 #include "profiler.h"
 
+#ifdef MESS
+#include "messdrv.h"
+#endif
+
 #ifdef MAME_NET
 #include "network.h"
 #endif /* MAME_NET */
@@ -185,6 +189,7 @@ struct GameDriver
 	const struct RomModule *rom;
 #ifdef MESS
 	const struct IODevice *dev;
+	const struct ComputerConfigEntry *compcfg;
 #endif
 
 	UINT32 flags;	/* orientation and other flags; see defines below */

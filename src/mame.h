@@ -8,11 +8,6 @@
 #include <stdlib.h>
 #include "palette.h"
 
-#ifdef MESS
-#include "mess.h"
-#include <stdarg.h>
-#endif
-
 extern char build_version[];
 
 #define MAX_GFX_ELEMENTS 32
@@ -114,6 +109,7 @@ struct GameOptions {
 	char savegame;
 
 	#ifdef MESS
+	UINT32 ram;
 	struct ImageFile image_files[MAX_IMAGES];
 	int image_count;
 	int (DECL_SPEC *mess_printf_output)(char *fmt, va_list arg);
@@ -140,5 +136,9 @@ void update_video_and_audio(void);
 /* osd_fopen() must use this to know if high score files can be used */
 int mame_highscore_enabled(void);
 void set_led_status(int num,int on);
+
+#ifdef MESS
+#include "mess.h"
+#endif /* MESS */
 
 #endif
