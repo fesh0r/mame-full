@@ -248,6 +248,12 @@ ifdef CRLF
 MY_CFLAGS += -DCRLF=$(CRLF)
 endif
 
+# The SDL target automatically includes the SDL joystick and audio drivers.
+ifeq ($(DISPLAY_METHOD),SDL)
+JOY_SDL = 1
+SOUND_SDL = 1
+endif
+
 ##############################################################################
 # Object listings
 ##############################################################################
