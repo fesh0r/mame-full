@@ -1611,14 +1611,15 @@ ROM_START( pc200 )
     ROM_LOAD16_BYTE("pc20v2.0", 0xfc001, 0x2000, CRC(41302eb8)) // v2
     ROM_LOAD16_BYTE("pc20v2.1", 0xfc000, 0x2000, CRC(71b84616)) // v2
 	// also mapped to f0000, f4000, f8000
-	ROM_REGION(0x02100,REGION_GFX1, 0)
-    ROM_LOAD("40109.bin",     0x00000, 0x02000, CRC(ecf9ebe8))
+	ROM_REGION(0x08100,REGION_GFX1, 0)
+    ROM_LOAD("40109.bin",     0x00000, 0x08000, CRC(a8b67639))
 ROM_END
 
 ROM_START( pc20 )
 //    ROM_REGION(0x100000,REGION_CPU1, 0)
     ROM_REGION16_LE(0x100000,REGION_CPU1, 0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, CRC(8e9e2bd4))
+
 	// special bios at 0xe0000 !?
 	// This is probably referring to a check for the Amstrad RP5-2 diagnostic
 	// card, which can be plugged into an Amstrad XT for troubleshooting purposes.
@@ -1626,8 +1627,8 @@ ROM_START( pc20 )
     ROM_LOAD16_BYTE("pc20v2.0", 0xfc001, 0x2000, CRC(41302eb8)) // v2
     ROM_LOAD16_BYTE("pc20v2.1", 0xfc000, 0x2000, CRC(71b84616)) // v2
 	// also mapped to f0000, f4000, f8000
-	ROM_REGION(0x02100,REGION_GFX1, 0)
-    ROM_LOAD("40109.bin",     0x00000, 0x02000, CRC(ecf9ebe8))
+	ROM_REGION(0x08100,REGION_GFX1, 0)
+    ROM_LOAD("40109.bin",     0x00000, 0x08000, CRC(a8b67639))
 ROM_END
 
 ROM_START( pc1512 )
@@ -1638,6 +1639,16 @@ ROM_START( pc1512 )
     ROM_LOAD16_BYTE("40043.v1", 0xfc000, 0x2000, CRC(f72f1582)) // v1
 	ROM_REGION(0x02100,REGION_GFX1, 0)
     ROM_LOAD("40045.bin",     0x00000, 0x02000, CRC(dd5e030f))
+ROM_END
+
+ROM_START( pc1512v2 )
+//    ROM_REGION(0x100000,REGION_CPU1, 0)
+    ROM_REGION16_LE(0x100000,REGION_CPU1, 0)
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, CRC(8e9e2bd4))
+    ROM_LOAD16_BYTE("40044.v2", 0xfc001, 0x2000, CRC(d2d4d2de)) // v2
+    ROM_LOAD16_BYTE("40043.v2", 0xfc000, 0x2000, CRC(1aec54fa)) // v2
+	ROM_REGION(0x02100,REGION_GFX1, 0)
+    ROM_LOAD("40078.bin",     0x00000, 0x02000, CRC(ae9c0d04))
 ROM_END
 
 ROM_START( pc1640 )
@@ -1679,7 +1690,8 @@ COMP(  1987,	t1000sx,	ibmpc,	0,		t1000sx,    tandy1t,	t1000hx,	ibmpc,   "Tandy R
 COMP(  1986,	ibmxt,		ibmpc,	0,		xtcga,      xtcga,		pccga,		ibmpc,   "International Business Machines",  "IBM PC/XT (CGA)" )
 COMP(  1988,	pc200,		ibmpc,	0,		pc200,		pc200,		pc200,		ibmpc,   "Sinclair Research",  "PC200 Professional Series")
 COMPX( 1988,	pc20,		ibmpc,	0,		pc200,		pc200,		pc200,		ibmpc,   "Amstrad plc",  "Amstrad PC20", GAME_ALIAS)
-COMP(  1986,	pc1512,		ibmpc,	0,		pc1512,     pc1512,		pc1512,		ibmpc,   "Amstrad plc",  "Amstrad PC1512")
+COMP(  1986,	pc1512,		ibmpc,	0,		pc1512,     pc1512,		pc1512,		ibmpc,   "Amstrad plc",  "Amstrad PC1512 (version 1)")
+COMP(  198?,	pc1512v2,	ibmpc,	0,		pc1512,     pc1512,		pc1512,		ibmpc,   "Amstrad plc",  "Amstrad PC1512 (version 2)")
 COMPX( 1987,	pc1640,		ibmpc,	0,		pc1640,     pc1640,		pc1640,		ibmpc,   "Amstrad plc",  "Amstrad PC1640 / PC6400 (US)", GAME_NOT_WORKING )
 // ppc640 portable pc1512?, nec processor?
 // pc2086 pc1512 with vga??

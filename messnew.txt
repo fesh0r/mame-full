@@ -2,11 +2,12 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
+- Amstrad PC1512 v2 [John Elliott]
 - Apple ][, Apple ][+ [Stefano Priore]
+- Bally Astrocade (white case) [Ian Knowles]
 - GameBoy Pocket [Anthony Kruize]
 - Myarc Geneve 9640 [Raphael Nabet]
 - PC AT and PC AT VGA [Nate Woods]
-- Bally Astrocade (white case) [Ian Knowles]
 
 System Driver Changes:
 ---------------------- 

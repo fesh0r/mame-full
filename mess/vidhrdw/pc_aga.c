@@ -43,6 +43,24 @@ struct GfxLayout europc_mda_charlayout =
 	8*16
 };
 
+struct GfxLayout pc200_mda_charlayout =
+{
+	9,32,					/* 9 x 32 characters (9 x 15 is the default, but..) */
+	256,					/* 256 characters */
+	1,                      /* 1 bits per pixel */
+	{ 0 },                  /* no bitplanes; 1 bit per pixel */
+	/* x offsets */
+	{ 0,1,2,3,4,5,6,7,7 },	/* pixel 7 repeated only for char code 176 to 223 */
+	/* y offsets */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+	  16384+0*8, 16384+1*8, 16384+2*8, 16384+3*8,
+	  16384+4*8, 16384+5*8, 16384+6*8, 16384+7*8,
+	  0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+	  16384+0*8, 16384+1*8, 16384+2*8, 16384+3*8,
+	  16384+4*8, 16384+5*8, 16384+6*8, 16384+7*8 },
+	8*16 					/* every char takes 8 bytes (upper half) */
+};
+
 struct GfxDecodeInfo europc_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &europc_cga_charlayout,	   0, 256 },   /* single width */
@@ -58,7 +76,7 @@ struct GfxDecodeInfo aga_gfxdecodeinfo[] =
 	{ 1, 0x0800, &CGA_charlayout,			   0, 256 },   /* single width */
 	{ 1, 0x2000, &CGA_gfxlayout_1bpp,	   256*2,  16 },   /* 640x400x1 gfx */
 	{ 1, 0x2000, &CGA_gfxlayout_2bpp, 256*2+16*2,   2 },   /* 320x200x4 gfx */
-	{ 1, 0x1000, &pc_mda_charlayout,			   256*2+16*2+2*4, 256 },   /* single width */
+	{ 1, 0x1000, &pc200_mda_charlayout,			   256*2+16*2+2*4, 256 },   /* single width */
 	{ 1, 0x2000, &pc_mda_gfxlayout_1bpp, 256*2+16*2+2*4+2*256,	 1 },	/* 640x400x1 gfx */
 	{ 1, 0x0000, &CGA_charlayout,			   0, 256 },   /* thin cga charset */
     { -1 } /* end of array */

@@ -384,7 +384,8 @@ TESTDRIVER( t1000sx )	/* 1987 Tandy 1000SX (similiar to PCJr)				*/
 	DRIVER( ibmxt )		/* 1986	IBM XT										*/
 	DRIVER( pc200 )     /* 1988 Sinclair PC200								*/
 	DRIVER( pc20 )      /* 1988 Amstrad PC20								*/
-	DRIVER( pc1512 )	/* 1986 Amstrad PC1512 (CGA compatible)				*/
+	DRIVER( pc1512 )	/* 1986 Amstrad PC1512 v1 (CGA compatible)			*/
+	DRIVER( pc1512v2 )	/* 1986 Amstrad PC1512 v2 (CGA compatible)			*/
 	DRIVER( pc1640 )	/* 1987 Amstrad PC1640 (EGA compatible)				*/
 
 	DRIVER( xtvga ) 	/* 198? PC-XT (VGA, MF2 Keyboard)					*/
