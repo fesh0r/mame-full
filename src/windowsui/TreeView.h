@@ -43,6 +43,63 @@
 
 #endif /* defined(__GNUC__) */
 
+/***************************************************************************
+    Folder And Filter Definitions
+ ***************************************************************************/
+
+typedef struct
+{
+	const char *m_lpTitle;                               /* Folder Title */
+	UINT        m_nFolderId;                             /* ID */
+	UINT        m_nIconId;                               /* Icon index into the ImageList */
+	DWORD       m_dwUnset;                               /* Excluded filters */
+	DWORD       m_dwSet;                                 /* Implied filters */
+	void        (*m_pfnCreateFolders)(int parent_index); /* Constructor for special folders */
+	BOOL        (*m_pfnQuery)(int nDriver);              /* Query function */
+	BOOL        m_bExpectedResult;                       /* Expected query result */
+} FOLDERDATA, *LPFOLDERDATA;
+
+/* these must be in the same sequence as IDI_FOLDER_OPEN ... IDI_SOURCE in resource.h */
+enum
+{
+	ICON_FOLDER_OPEN = 0,
+	ICON_FOLDER,
+	ICON_FOLDER_AVAILABLE,
+	ICON_FOLDER_MANUFACTURER,
+	ICON_FOLDER_UNAVAILABLE,
+	ICON_FOLDER_YEAR,
+	ICON_FOLDER_SOURCE,
+	ICON_MANUFACTURER,
+	ICON_WORKING,
+	ICON_NONWORKING,
+	ICON_YEAR,
+	ICON_STEREO,
+	ICON_CPU,
+	ICON_HARDDISK,
+	ICON_SOURCE,
+};
+
+typedef struct
+{
+	DWORD m_dwFilterType;				/* Filter value */
+	DWORD m_dwCtrlID;					/* Control ID that represents it */
+	BOOL (*m_pfnQuery)(int nDriver);	/* Query function */
+	BOOL m_bExpectedResult;				/* Expected query result */
+} FILTER_ITEM, *LPFILTER_ITEM;
+
+/***************************************************************************
+    Functions to build builtin folder lists
+ ***************************************************************************/
+
+void CreateManufacturerFolders(int parent_index);
+void CreateYearFolders(int parent_index);
+void CreateSourceFolders(int parent_index);
+void CreateCPUFolders(int parent_index);
+void CreateSoundFolders(int parent_index);
+
+/***************************************************************************/
+
+
 /* TreeView structures */
 enum FolderIds
 {
@@ -87,9 +144,6 @@ typedef enum
 	F_COMPUTER      = 0x00000200,
 	F_CONSOLE       = 0x00000400,
 	F_MODIFIED      = 0x00000800,
-	F_NUM_FILTERS   = 11,
-#else
-	F_NUM_FILTERS   = 8,
 #endif
 	F_MASK          = 0x00000FFF,
 	F_CUSTOM        = 0x01000000  /* for current .ini custom folders */
@@ -128,7 +182,7 @@ extern void AddGame(LPTREEFOLDER lpFolder, UINT nGame);
 extern void RemoveGame(LPTREEFOLDER lpFolder, UINT nGame);
 extern int  FindGame(LPTREEFOLDER lpFolder, int nGame);
 
-extern void InitTree(void);
+extern void InitTree(LPFOLDERDATA lpFolderData, LPFILTER_ITEM lpFilterList);
 extern void ResetWhichGamesInFolders(void);
 
 extern BOOL GameFiltered(int nGame, DWORD dwFlags);

@@ -1540,8 +1540,10 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	WNDCLASS	wndclass;
 	RECT		rect;
-	//HANDLE      image;
 	int i;
+	extern FOLDERDATA g_folderData[];
+	extern FILTER_ITEM g_filterList[];
+
 #ifdef MESS
 	HWND hwndSoftware;
 #endif /* MESS */
@@ -1761,7 +1763,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	LoadBackgroundBitmap();
 
 	dprintf("about to init tree");
-	InitTree();
+	InitTree(g_folderData, g_filterList);
 	dprintf("did init tree");
 
 	/* Initialize listview columns */
@@ -2867,7 +2869,7 @@ static BOOL MamePickerNotify(NMHDR *nm)
 
 				case COLUMN_SAMPLES:
 					/* Samples */
-					if (GameUsesSamples(nItem))
+					if (DriverUsesSamples(nItem))
 					{
 						pDispInfo->item.pszText = (char *)TriStateToText(GetHasSamples(nItem));
 					}
@@ -2901,7 +2903,7 @@ static BOOL MamePickerNotify(NMHDR *nm)
                 }
 				case COLUMN_TRACKBALL:
 					/* Trackball */
-					if (GameUsesTrackball(nItem))
+					if (DriverUsesTrackball(nItem))
 						pDispInfo->item.pszText = (char *)"Yes";
 					else
 						pDispInfo->item.pszText = (char *)"No";
@@ -4254,11 +4256,11 @@ static int BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem)
 
 	case COLUMN_SAMPLES:
 		nTemp1 = -1;
-		if (GameUsesSamples(index1))
+		if (DriverUsesSamples(index1))
 			nTemp1 = GetHasSamples(index1);
 
 		nTemp2 = -1;
-		if (GameUsesSamples(index2))
+		if (DriverUsesSamples(index2))
 			nTemp2 = GetHasSamples(index2);
 
 		if (nTemp1 == nTemp2)

@@ -37,6 +37,8 @@ BOOL DriverIsHarddisk(int driver_index);
 BOOL DriverIsStereo(int driver_index);
 BOOL DriverIsVector(int driver_index);
 BOOL DriverUsesSamples(int driver_index);
+BOOL DriverUsesTrackball(int driver_index);
+BOOL DriverUsesLightGun(int driver_index);
 
 void FlushFileCaches(void);
 

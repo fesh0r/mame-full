@@ -347,6 +347,68 @@ BOOL DriverUsesSamples(int driver_index)
 	return FALSE;
 }
 
+BOOL DriverUsesTrackball(int driver_index)
+{
+    const struct InputPortTiny *input_ports;
+
+	if (drivers[driver_index]->input_ports == NULL)
+        return FALSE;
+
+    input_ports = drivers[driver_index]->input_ports;
+
+	while (1)
+    {
+        UINT32 type;
+
+        type = input_ports->type;
+
+        if (type == IPT_END)
+            break;
+
+        type &= ~IPF_MASK;
+        
+        if (type == IPT_DIAL || type == IPT_PADDLE || 
+			type == IPT_TRACKBALL_X || type == IPT_TRACKBALL_Y ||
+            type == IPT_AD_STICK_X || type == IPT_AD_STICK_Y)
+        {
+            return TRUE;
+        }
+        
+        input_ports++;
+    }
+
+    return FALSE;
+}
+
+BOOL DriverUsesLightGun(int driver_index)
+{
+    const struct InputPortTiny *input_ports;
+
+	if (drivers[driver_index]->input_ports == NULL)
+        return FALSE;
+
+    input_ports = drivers[driver_index]->input_ports;
+
+	while (1)
+    {
+        UINT32 type;
+
+        type = input_ports->type;
+
+        if (type == IPT_END)
+			break;
+
+		type &= ~IPF_MASK;
+        
+		if (type == IPT_LIGHTGUN_X || type == IPT_LIGHTGUN_Y)
+            return TRUE;
+        
+        input_ports++;
+    }
+
+    return FALSE;
+}
+
 void FlushFileCaches(void)
 {
 	unzip_cache_clear();

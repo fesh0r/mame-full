@@ -43,11 +43,6 @@
 #include "Options.h"
 #include "help.h"
 
-#ifdef MESS
-#include "windowsui/MessResource.h"
-#include "windowsui/ms32util.h"
-#endif
-
 #ifdef _MSC_VER
 #if _MSC_VER > 1200
 #define HAS_DUMMYUNIONNAME
@@ -61,26 +56,6 @@
 /***************************************************************************
     public structures
  ***************************************************************************/
-
-/* these must be in the same sequence as IDI_FOLDER_OPEN ... IDI_SOURCE in resource.h */
-enum
-{
-	ICON_FOLDER_OPEN = 0,
-	ICON_FOLDER,
-	ICON_FOLDER_AVAILABLE,
-	ICON_FOLDER_MANUFACTURER,
-	ICON_FOLDER_UNAVAILABLE,
-	ICON_FOLDER_YEAR,
-	ICON_FOLDER_SOURCE,
-	ICON_MANUFACTURER,
-	ICON_WORKING,
-	ICON_NONWORKING,
-	ICON_YEAR,
-	ICON_STEREO,
-	ICON_CPU,
-	ICON_HARDDISK,
-	ICON_SOURCE,
-};
 
 #define ICON_MAX ICON_SOURCE
 
@@ -105,83 +80,6 @@ static char treeIconNames[][15] =
     "source",
 };
 
-
-typedef struct
-{
-	const char *m_lpTitle;					/* Folder Title */
-	UINT        m_nFolderId;				/* ID */
-	UINT        m_nIconId;					/* Icon index into the ImageList */
-	BOOL        (*m_pfnQuery)(int nDriver);	/* Query function */
-	BOOL        m_bExpectedResult;			/* Expected query result */
-} FOLDERDATA, *LPFOLDERDATA;
-
-static BOOL AlwaysTrue(int driver_index)
-{
-	return TRUE;
-}
-
-static FOLDERDATA folderData[] =
-{
-#ifdef MESS
-	{"All Systems",     FOLDER_ALLGAMES,    ICON_FOLDER,				AlwaysTrue,			TRUE },
-#else
-	{"All Games",       FOLDER_ALLGAMES,    ICON_FOLDER,				AlwaysTrue,			TRUE },
-#endif
-	{"Available",       FOLDER_AVAILABLE,   ICON_FOLDER_AVAILABLE,      GetHasRoms,			TRUE },
-#ifdef SHOW_UNAVAILABLE_FOLDER
-	{"Unavailable",     FOLDER_UNAVAILABLE, ICON_FOLDER_UNAVAILABLE,	GetHasRoms,			FALSE },
-#endif
-#ifdef MESS
-	{"Console",         FOLDER_CONSOLE,     ICON_FOLDER,				DriverIsComputer,	FALSE },
-	{"Computer",        FOLDER_COMPUTER,    ICON_FOLDER,				DriverIsComputer,	TRUE },
-	{"Modified/Hacked", FOLDER_MODIFIED,    ICON_FOLDER,				DriverIsModified,	TRUE },
-#endif
-	{"Manufacturer",    FOLDER_MANUFACTURER,ICON_FOLDER_MANUFACTURER},
-	{"Year",            FOLDER_YEAR,        ICON_FOLDER_YEAR},
-	{"Source",          FOLDER_SOURCE,      ICON_FOLDER_SOURCE},
-	{"CPU",             FOLDER_CPU,         ICON_FOLDER},
-	{"SND",             FOLDER_SND,         ICON_FOLDER},
-	{"Working",         FOLDER_WORKING,     ICON_WORKING,				DriverIsBroken,		FALSE },
-	{"Non-Working",     FOLDER_NONWORKING,  ICON_NONWORKING,			DriverIsBroken,		TRUE },
-	{"Originals",       FOLDER_ORIGINAL,    ICON_FOLDER,				DriverIsClone,		FALSE },
-	{"Clones",          FOLDER_CLONES,      ICON_FOLDER,				DriverIsClone,		TRUE },
-	{"Raster",          FOLDER_RASTER,      ICON_FOLDER,				DriverIsVector,		FALSE },
-	{"Vector",          FOLDER_VECTOR,      ICON_FOLDER,				DriverIsVector,		TRUE },
-	{"Trackball",       FOLDER_TRACKBALL,   ICON_FOLDER,				GameUsesTrackball,	TRUE },
-	{"Stereo",          FOLDER_STEREO,      ICON_STEREO,				DriverIsStereo,		TRUE },
-#ifndef MESS
-	{"Hard Disk",       FOLDER_HARDDISK,    ICON_HARDDISK,			DriverIsHarddisk,	TRUE }
-#endif
-};
-
-#define NUM_FOLDERS (sizeof(folderData) / sizeof(FOLDERDATA))
-
-typedef struct
-{
-	DWORD m_dwFilterType;				/* Filter value */
-	DWORD m_dwCtrlID;					/* Control ID that represents it */
-	BOOL (*m_pfnQuery)(int nDriver);	/* Query function */
-	BOOL m_bExpectedResult;				/* Expected query result */
-} FILTER_ITEM, *LPFILTER_ITEM;
-
-/* list of filter/control Id pairs */
-static FILTER_ITEM filterList[F_NUM_FILTERS] =
-{
-#ifdef MESS
-	{ F_COMPUTER,     IDC_FILTER_COMPUTER,    DriverIsComputer, TRUE },
-	{ F_CONSOLE,      IDC_FILTER_CONSOLE,     DriverIsComputer, FALSE },
-	{ F_MODIFIED,     IDC_FILTER_MODIFIED,    DriverIsModified, TRUE },
-#endif
-	{ F_CLONES,       IDC_FILTER_CLONES,      DriverIsClone, TRUE },
-	{ F_NONWORKING,   IDC_FILTER_NONWORKING,  DriverIsBroken, TRUE },
-	{ F_UNAVAILABLE,  IDC_FILTER_UNAVAILABLE, GetHasRoms, FALSE },
-	{ F_RASTER,       IDC_FILTER_RASTER,      DriverIsVector, FALSE },
-	{ F_VECTOR,       IDC_FILTER_VECTOR,      DriverIsVector, TRUE },
-	{ F_ORIGINALS,    IDC_FILTER_ORIGINALS,   DriverIsClone, FALSE },
-	{ F_WORKING,      IDC_FILTER_WORKING,     DriverIsBroken, FALSE },
-	{ F_AVAILABLE,    IDC_FILTER_AVAILABLE,   GetHasRoms, TRUE }
-};
-
 /***************************************************************************
     private variables
  ***************************************************************************/
@@ -202,6 +100,9 @@ static LPEXFOLDERDATA ExtraFolderData[MAX_EXTRA_FOLDERS];
 static int            numExtraFolders = 0;
 static int            numExtraIcons = 0;
 static char           *ExtraFolderIcons[MAX_EXTRA_FOLDERS];
+
+static LPFOLDERDATA  g_lpFolderData;
+static LPFILTER_ITEM g_lpFilterList;	
 
 /***************************************************************************
     private function prototypes
@@ -275,8 +176,11 @@ void ResetFilters(void)
 	}
 }
 
-void InitTree()
+void InitTree(LPFOLDERDATA lpFolderData, LPFILTER_ITEM lpFilterList)
 {
+	g_lpFolderData = lpFolderData;
+	g_lpFilterList = lpFilterList;
+
 	InitFolders();
 
 	CreateTreeIcons();
@@ -359,18 +263,23 @@ void ResetWhichGamesInFolders(void)
 		LPTREEFOLDER lpFolder = treeFolders[i];
 
 		// setup the games in our built-in folders
-		for (k = 0; k < sizeof(folderData) / sizeof(folderData[0]); k++)
+		for (k = 0; g_lpFolderData[k].m_lpTitle; k++)
 		{
-			if (lpFolder->m_nFolderId == folderData[k].m_nFolderId)
+			if (lpFolder->m_nFolderId == g_lpFolderData[k].m_nFolderId)
 			{
-				if (folderData[k].m_pfnQuery)
+				if (g_lpFolderData[k].m_pfnQuery || g_lpFolderData[k].m_bExpectedResult)
 				{
 					SetAllBits(lpFolder->m_lpGameBits, FALSE);
 					for (jj = 0; jj < nGames; jj++)
 					{
-						b = folderData[k].m_pfnQuery(jj);
-						if (!folderData[k].m_bExpectedResult)
+						// invoke the query function
+						b = g_lpFolderData[k].m_pfnQuery ? g_lpFolderData[k].m_pfnQuery(jj) : TRUE;
+
+						// if we expect FALSE, flip the result
+						if (!g_lpFolderData[k].m_bExpectedResult)
 							b = !b;
+
+						// if we like what we hear, add the game
 						if (b)
 							AddGame(lpFolder, jj);
 					}
@@ -403,11 +312,11 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
 	&&	!(drivers[nGame]->clone_of->flags & NOT_A_DRIVER))
 		return TRUE;
 
-	for (i = 0; i < sizeof(filterList) / sizeof(filterList[0]); i++)
+	for (i = 0; g_lpFilterList[i].m_dwFilterType; i++)
 	{
-		if (dwMask & filterList[i].m_dwFilterType)
+		if (dwMask & g_lpFilterList[i].m_dwFilterType)
 		{
-			if (filterList[i].m_pfnQuery(nGame) == filterList[i].m_bExpectedResult)
+			if (g_lpFilterList[i].m_pfnQuery(nGame) == g_lpFilterList[i].m_bExpectedResult)
 				return TRUE;
 		}
 	}
@@ -737,36 +646,28 @@ void CreateYearFolders(int parent_index)
 void CreateAllChildFolders(void)
 {
 	int num_top_level_folders = numFolders;
-
-	int i;
+	int i, j;
 
 	for (i = 0; i < num_top_level_folders; i++)
 	{
 		LPTREEFOLDER lpFolder = treeFolders[i];
+		LPFOLDERDATA lpFolderData = NULL;
 
-		switch( lpFolder->m_nFolderId )
+		for (j = 0; g_lpFolderData[j].m_lpTitle; j++)
 		{
-        case FOLDER_YEAR:
-			CreateYearFolders(i);
-			break;
+			if (g_lpFolderData[j].m_nFolderId == lpFolder->m_nFolderId)
+			{
+				lpFolderData = &g_lpFolderData[j];
+				break;
+			}
+		}
 
-		case FOLDER_CPU:
-			CreateCPUFolders(i);
-			break;
-			
-		case FOLDER_SND:
-			CreateSoundFolders(i);
-			break;
-
-		case FOLDER_MANUFACTURER:
-			CreateManufacturerFolders(i);
-			break;
-
-		case FOLDER_SOURCE:
-			CreateSourceFolders(i);
-			break;
-
-		default:
+		if (lpFolderData && lpFolderData->m_pfnCreateFolders)
+		{
+			lpFolderData->m_pfnCreateFolders(i);
+		}
+		else
+		{
 			if (lpFolder->m_dwFlags & F_CUSTOM)
             {
 				// load the extra folder files, which also adds children
@@ -776,8 +677,6 @@ void CreateAllChildFolders(void)
 				}
                 break;
             }
-			break;
-			
 		}
 	}
 }
@@ -1099,9 +998,9 @@ BOOL InitFolders(void)
 		}
 	}
 	// built-in top level folders
-	for (i = 0; i < NUM_FOLDERS; i++)
+	for (i = 0; g_lpFolderData[i].m_lpTitle; i++)
 	{
-		fData = &folderData[i];
+		fData = &g_lpFolderData[i];
 		/* get the saved folder flags */
 		dwFolderFlags = GetFolderFlags(fData->m_lpTitle);
 		/* create the folder */
@@ -1372,35 +1271,6 @@ static LRESULT CALLBACK TreeWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
     private structures
  ***************************************************************************/
 
-typedef struct
-{
-	DWORD m_dwFolderID;     /* Folder ID */
-	DWORD m_dwUnset;        /* Excluded filters */
-	DWORD m_dwSet;          /* Implied filters */
-} FILTER_RECORD, * LPFILTER_RECORD;
-
-/* List of folders with implied and excluded filters */
-static FILTER_RECORD filterRecord[NUM_FOLDERS] =
-{
-	{FOLDER_ALLGAMES,    0,             0               },
-	{FOLDER_AVAILABLE,   F_AVAILABLE,   0               },
-#ifdef MESS
-	{FOLDER_CONSOLE,     F_CONSOLE,     F_COMPUTER      },
-	{FOLDER_COMPUTER,    F_COMPUTER,    F_CONSOLE       },
-#endif
-	{FOLDER_MANUFACTURER,0,             0               },
-	{FOLDER_YEAR,        0,             0               },
-	{FOLDER_WORKING,     F_WORKING,     F_NONWORKING    },
-	{FOLDER_NONWORKING,  F_NONWORKING,  F_WORKING       },
-	{FOLDER_CUSTOM,      0,             0               },
-	{FOLDER_ORIGINAL,    F_ORIGINALS,   F_CLONES        },
-	{FOLDER_CLONES,      F_CLONES,      F_ORIGINALS     },
-	{FOLDER_RASTER,      F_RASTER,      F_VECTOR        },
-	{FOLDER_VECTOR,      F_VECTOR,      F_RASTER        },
-	{FOLDER_TRACKBALL,   0,             0               },
-	{FOLDER_STEREO,      0,             0               }
-};
-
 #define NUM_EXCLUSIONS  9
 
 /* Pairs of filters that exclude each other */
@@ -1416,10 +1286,10 @@ DWORD filterExclusion[NUM_EXCLUSIONS] =
     private functions prototypes
  ***************************************************************************/
 
-static void             DisableFilters(HWND hWnd, LPFILTER_RECORD lpFilterRecord, LPFILTER_ITEM lpFilterItem, DWORD dwFlags);
-static DWORD            ValidateFilters(LPFILTER_RECORD lpFilterRecord, DWORD dwFlags);
-static void             EnableFilters(HWND hWnd, DWORD dwCtrlID);
-static LPFILTER_RECORD  FindFilter(DWORD folderID);
+static void          DisableFilters(HWND hWnd, LPFOLDERDATA lpFilterRecord, LPFILTER_ITEM lpFilterItem, DWORD dwFlags);
+static DWORD         ValidateFilters(LPFOLDERDATA lpFilterRecord, DWORD dwFlags);
+static void          EnableFilters(HWND hWnd, DWORD dwCtrlID);
+static LPFOLDERDATA  FindFilter(DWORD folderID);
 
 /***************************************************************************
     public functions
@@ -1428,7 +1298,7 @@ static LPFILTER_RECORD  FindFilter(DWORD folderID);
 INT_PTR CALLBACK FilterDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	static DWORD			dwFilters;
-	static LPFILTER_RECORD	lpFilterRecord;
+	static LPFOLDERDATA		lpFilterRecord;
 	int 					i;
 
 	switch (Msg)
@@ -1455,9 +1325,9 @@ INT_PTR CALLBACK FilterDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPa
 			lpFilterRecord = FindFilter(lpCurrentFolder->m_nFolderId);
 
 			/* initialize and disable appropriate controls */
-			for (i = 0; i < F_NUM_FILTERS; i++)
+			for (i = 0; g_lpFilterList[i].m_dwFilterType; i++)
 			{
-				DisableFilters(hDlg, lpFilterRecord, &filterList[i], dwFilters);
+				DisableFilters(hDlg, lpFilterRecord, &g_lpFilterList[i], dwFilters);
 			}
 		}
 		SetFocus(GetDlgItem(hDlg, IDC_FILTER_EDIT));
@@ -1485,10 +1355,10 @@ INT_PTR CALLBACK FilterDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPa
 				Edit_GetText(GetDlgItem(hDlg, IDC_FILTER_EDIT), g_FilterText, FILTERTEXT_LEN);
 
 				/* see which buttons are checked */
-				for (i = 0; i < F_NUM_FILTERS; i++)
+				for (i = 0; g_lpFilterList[i].m_dwFilterType; i++)
 				{
-					if (Button_GetCheck(GetDlgItem(hDlg, filterList[i].m_dwCtrlID)))
-						dwFilters |= filterList[i].m_dwFilterType;
+					if (Button_GetCheck(GetDlgItem(hDlg, g_lpFilterList[i].m_dwCtrlID)))
+						dwFilters |= g_lpFilterList[i].m_dwFilterType;
 				}
 
 				/* Mask out invalid filters */
@@ -1525,7 +1395,7 @@ INT_PTR CALLBACK FilterDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPa
  ***************************************************************************/
 
 /* Initialize controls */
-static void DisableFilters(HWND hWnd, LPFILTER_RECORD lpFilterRecord, LPFILTER_ITEM lpFilterItem, DWORD dwFlags)
+static void DisableFilters(HWND hWnd, LPFOLDERDATA lpFilterRecord, LPFILTER_ITEM lpFilterItem, DWORD dwFlags)
 {
 	HWND  hWndCtrl = GetDlgItem(hWnd, lpFilterItem->m_dwCtrlID);
 	DWORD dwFilterType = lpFilterItem->m_dwFilterType;
@@ -1535,7 +1405,7 @@ static void DisableFilters(HWND hWnd, LPFILTER_RECORD lpFilterRecord, LPFILTER_I
 		Button_SetCheck(hWndCtrl, MF_CHECKED);
 
 	/* No special rules for this folder? */
-	if (lpFilterRecord == (LPFILTER_RECORD)0)
+	if (!lpFilterRecord)
 		return;
 
 	/* If this is an excluded filter */
@@ -1554,17 +1424,17 @@ static void DisableFilters(HWND hWnd, LPFILTER_RECORD lpFilterRecord, LPFILTER_I
 	}
 }
 
-/* find a FILTER_RECORD by folderID */
-static LPFILTER_RECORD FindFilter(DWORD folderID)
+/* find a FOLDERDATA by folderID */
+static LPFOLDERDATA FindFilter(DWORD folderID)
 {
 	int i;
 
-	for (i = 0; i < NUM_FOLDERS; i++)
+	for (i = 0; g_lpFolderData[i].m_lpTitle; i++)
 	{
-		if (filterRecord[i].m_dwFolderID == folderID)
-			return &filterRecord[i];
+		if (g_lpFolderData[i].m_nFolderId == folderID)
+			return &g_lpFolderData[i];
 	}
-	return (LPFILTER_RECORD)0;
+	return (LPFOLDERDATA) 0;
 }
 
 /* Handle disabling mutually exclusive controls */
@@ -1598,11 +1468,11 @@ static void EnableFilters(HWND hWnd, DWORD dwCtrlID)
 }
 
 /* Validate filter setting, mask out inappropriate filters for this folder */
-static DWORD ValidateFilters(LPFILTER_RECORD lpFilterRecord, DWORD dwFlags)
+static DWORD ValidateFilters(LPFOLDERDATA lpFilterRecord, DWORD dwFlags)
 {
 	DWORD dwFilters;
 
-	if (lpFilterRecord != (LPFILTER_RECORD)0)
+	if (lpFilterRecord != (LPFOLDERDATA)0)
 	{
 		/* Mask out implied and excluded filters */
 		dwFilters = lpFilterRecord->m_dwSet | lpFilterRecord->m_dwUnset;

@@ -35,6 +35,7 @@ OSOBJS += \
 	$(OBJ)/windowsui/DataMap.o \
 	$(OBJ)/windowsui/dxdecode.o \
 	$(OBJ)/windowsui/help.o \
+	$(OBJ)/mess/windowsui/layoutms.o \
 	$(OBJ)/mess/windowsui/mess32ui.o \
 	$(OBJ)/mess/windowsui/ms32util.o \
 	$(OBJ)/mess/windowsui/MessOptions.o \

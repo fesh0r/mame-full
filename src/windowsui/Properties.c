@@ -1345,14 +1345,16 @@ static void SetPropEnabledControls(HWND hWnd)
 	EnableWindow(GetDlgItem(hWnd, IDC_A2D),				joystick_attached);
 
 	/* Trackball / Mouse options */
-	if (nIndex == -1 || GameUsesTrackball(nIndex))
-	{
-		Button_Enable(GetDlgItem(hWnd, IDC_USE_MOUSE), TRUE);
-	}
+	if (nIndex == -1 || DriverUsesTrackball(nIndex) || DriverUsesLightGun(nIndex))
+		Button_Enable(GetDlgItem(hWnd,IDC_USE_MOUSE),TRUE);
 	else
-	{
-		Button_Enable(GetDlgItem(hWnd, IDC_USE_MOUSE), FALSE);
-	}
+		Button_Enable(GetDlgItem(hWnd,IDC_USE_MOUSE),FALSE);
+
+	if (nIndex == -1 || DriverUsesLightGun(nIndex))
+		Button_Enable(GetDlgItem(hWnd,IDC_LIGHTGUN),TRUE);
+	else
+		Button_Enable(GetDlgItem(hWnd,IDC_LIGHTGUN),FALSE);
+
 
 	/* Sound options */
 	hCtrl = GetDlgItem(hWnd, IDC_USE_SOUND);
