@@ -12,80 +12,19 @@ enum {
 	Z80GB_IRQ_STATE
 };
 
-extern void z80gb_init(void);
-
-/*** Reset Z80 registers: *********************************/
-/*** This function can be used to reset the register    ***/
-/*** file before starting execution with Z80(). It sets ***/
-/*** the registers to their initial values.             ***/
-/**********************************************************/
-extern void z80gb_reset (void *param);
-
-/*** Shutdown CPU core:   *********************************/
-/*** Could be used to free dynamically allocated memory ***/
-/**********************************************************/
-extern void z80gb_exit (void);
-
-/**********************************************************/
-/*** Execute z80gb code for cycles cycles, return nr of ***/
-/*** cycles actually executed.                          ***/
-/**********************************************************/
-extern int z80gb_execute(int cycles);
-
-/*** Burn CPU cycles: *************************************/
-/*** called whenever the MAME core want's to bur cycles ***/
-/**********************************************************/
-extern void z80gb_burn(int cycles);
-
-/****************************************************************************/
-/* Set all registers to given values                                        */
-/****************************************************************************/
-extern void z80gb_set_context (void *src);
-
-/****************************************************************************/
-/* Get all registers in given buffer, return size of the context structure	*/
-/****************************************************************************/
-extern unsigned z80gb_get_context (void *dst);
-
 /****************************************************************************/
 /* Return register contents 												*/
 /****************************************************************************/
 extern unsigned z80gb_get_reg (int regnum);
 
-/****************************************************************************/
-/* Set register contents													*/
-/****************************************************************************/
-extern void z80gb_set_reg (int regnum, unsigned val);
-
-/****************************************************************************/
-/* MAME interrupt interfacing												*/
-/****************************************************************************/
-extern void z80gb_set_nmi_line(int state);
-extern void z80gb_set_irq_line(int irqline, int state);
-extern void z80gb_set_irq_callback(int (*irq_callback)(int));
-
-/****************************************************************************/
-/* State saving/loading 													*/
-/****************************************************************************/
-extern void z80gb_state_save(void *file);
-extern void z80gb_state_load(void *file);
-
-/****************************************************************************/
-/* Information                                                              */
-/****************************************************************************/
-extern const char *z80gb_info(void *context, int regnum);
-
-/****************************************************************************/
-/* Disassembler 															*/
-/****************************************************************************/
-extern unsigned z80gb_dasm(char *buffer, unsigned pc);
+extern void z80gb_get_info(UINT32 state, union cpuinfo *info);
 
 /****************************************************************************/
 /* Memory functions                                                         */
 /****************************************************************************/
 
-#define mem_ReadByte(A)    ((UINT8)cpu_readmem16(A))
-#define mem_WriteByte(A,V) (cpu_writemem16(A,V))
+#define mem_ReadByte(A)    ((UINT8)program_read_byte_8(A))
+#define mem_WriteByte(A,V) (program_write_byte_8(A,V))
 
 INLINE UINT16 mem_ReadWord (UINT32 address)
 {

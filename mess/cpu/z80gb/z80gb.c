@@ -136,12 +136,17 @@ static int CyclesCB[256] =
 	 8, 8, 8, 8, 8, 8,16, 8, 8, 8, 8, 8, 8, 8,16, 8
 };
 
+static void z80gb_init(void)
+{
+	return;
+}
+
 /*** Reset Z80 registers: *********************************/
 /*** This function can be used to reset the register    ***/
 /*** file before starting execution with z80gb_execute()***/
 /*** It sets the registers to their initial values.     ***/
 /**********************************************************/
-void z80gb_reset (void *param)
+static void z80gb_reset (void *param)
 {
 	if( param != NULL )
 		Regs.w.AF = *((INT16 *)param);
@@ -158,7 +163,7 @@ void z80gb_reset (void *param)
 	CheckInterrupts = 0;
 }
 
-void z80gb_exit(void)
+static void z80gb_exit(void)
 {
 }
 
@@ -217,7 +222,7 @@ INLINE void z80gb_ProcessInterrupts (void)
 /*** Execute z80gb code for cycles cycles, return nr of ***/
 /*** cycles actually executed.                          ***/
 /**********************************************************/
-int z80gb_execute (int cycles)
+static int z80gb_execute (int cycles)
 {
 	UINT8 x;
 
@@ -251,7 +256,7 @@ int z80gb_execute (int cycles)
 	return cycles - z80gb_ICount;
 }
 
-void z80gb_burn(int cycles)
+static void z80gb_burn(int cycles)
 {
     if( cycles > 0 )
     {
@@ -264,21 +269,20 @@ void z80gb_burn(int cycles)
 /****************************************************************************/
 /* Set all registers to given values                                        */
 /****************************************************************************/
-void z80gb_set_context (void *src)
+static void z80gb_set_context (void *src)
 {
 	if( src )
 		Regs = *(z80gb_regs *)src;
-	change_pc16(Regs.w.PC);
+	change_pc(Regs.w.PC);
 }
 
 /****************************************************************************/
 /* Get all registers in given buffer                                        */
 /****************************************************************************/
-unsigned z80gb_get_context (void *dst)
+static void z80gb_get_context (void *dst)
 {
 	if( dst )
 		*(z80gb_regs *)dst = Regs;
-	return sizeof(z80gb_regs);
 }
 
 /****************************************************************************
@@ -303,11 +307,11 @@ unsigned z80gb_get_reg (int regnum)
 /****************************************************************************
  * Set a specific register
  ****************************************************************************/
-void z80gb_set_reg (int regnum, unsigned val)
+static void z80gb_set_reg (int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-	case REG_PC: Regs.w.PC = val; change_pc16(Regs.w.PC); break;
+	case REG_PC: Regs.w.PC = val; change_pc(Regs.w.PC); break;
 	case Z80GB_PC: Regs.w.PC = val; break;
 	case REG_SP: Regs.w.SP = val; break;
 	case Z80GB_SP: Regs.w.SP = val; break;
@@ -318,11 +322,7 @@ void z80gb_set_reg (int regnum, unsigned val)
     }
 }
 
-void z80gb_set_nmi_line(int state)
-{
-}
-
-void z80gb_set_irq_line (int irqline, int state)
+static void z80gb_set_irq_line (int irqline, int state)
 {
 	/*logerror("setting irq line 0x%02x state 0x%08x\n", irqline, state);*/
 	//if( Regs.w.irq_state == state )
@@ -348,18 +348,13 @@ void z80gb_set_irq_line (int irqline, int state)
      }
 }
 
-void z80gb_set_irq_callback(int (*irq_callback)(int))
-{
-	Regs.w.irq_callback = irq_callback;
-}
-
-void z80gb_clear_pending_interrupts (void)
+/*static void z80gb_clear_pending_interrupts (void)
 {
 	IFLAGS = 0;
 	CheckInterrupts = 0;
-}
+}*/
 
-const char *z80gb_info(void *context, int regnum)
+static const char *z80gb_info(void *context, int regnum)
 {
 	static char buffer[8][47+1];
 	static int which = 0;
@@ -372,36 +367,11 @@ const char *z80gb_info(void *context, int regnum)
 
     switch( regnum )
 	{
-		case CPU_INFO_REG+Z80GB_PC: sprintf(buffer[which], "PC:%04X", r->w.PC); break;
-		case CPU_INFO_REG+Z80GB_SP: sprintf(buffer[which], "SP:%04X", r->w.SP); break;
-		case CPU_INFO_REG+Z80GB_AF: sprintf(buffer[which], "AF:%04X", r->w.AF); break;
-		case CPU_INFO_REG+Z80GB_BC: sprintf(buffer[which], "BC:%04X", r->w.BC); break;
-		case CPU_INFO_REG+Z80GB_DE: sprintf(buffer[which], "DE:%04X", r->w.DE); break;
-		case CPU_INFO_REG+Z80GB_HL: sprintf(buffer[which], "HL:%04X", r->w.HL); break;
-		case CPU_INFO_REG+Z80GB_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->w.irq_state); break;
-        case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->b.F & 0x80 ? 'Z':'.',
-				r->b.F & 0x40 ? 'N':'.',
-				r->b.F & 0x20 ? 'H':'.',
-				r->b.F & 0x10 ? 'C':'.',
-				r->b.F & 0x08 ? '3':'.',
-				r->b.F & 0x04 ? '2':'.',
-				r->b.F & 0x02 ? '1':'.',
-				r->b.F & 0x01 ? '0':'.');
-			break;
-		case CPU_INFO_NAME: return "Z80GB";
-		case CPU_INFO_FAMILY: return "Nintendo Z80";
-		case CPU_INFO_VERSION: return "1.0";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (C) 2000 by The MESS Team.";
-		case CPU_INFO_REG_LAYOUT: return (const char *)z80gb_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char *)z80gb_win_layout;
 	}
 	return buffer[which];
 }
 
-unsigned z80gb_dasm( char *buffer, unsigned pc )
+static unsigned z80gb_dasm( char *buffer, unsigned pc )
 {
 #ifdef MAME_DEBUG
 	return DasmZ80GB( buffer, pc );
@@ -411,6 +381,115 @@ unsigned z80gb_dasm( char *buffer, unsigned pc )
 #endif
 }
 
+static void z80gb_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+	/* --- the following bits of info are set as 64-bit signed integers --- */
+	case CPUINFO_INT_IRQ_STATE + 0:
+	case CPUINFO_INT_IRQ_STATE + 1:
+	case CPUINFO_INT_IRQ_STATE + 2:
+	case CPUINFO_INT_IRQ_STATE + 3:
+	case CPUINFO_INT_IRQ_STATE + 4:				z80gb_set_irq_line(state-CPUINFO_INT_IRQ_STATE, info->i); break;
 
-extern void z80gb_init(void){ return; }
+	case CPUINFO_INT_SP:						Regs.w.SP = info->i;						break;
+	case CPUINFO_INT_PC:						Regs.w.PC = info->i; change_pc(Regs.w.PC); break;
 
+	case CPUINFO_INT_REGISTER + Z80GB_PC:		Regs.w.PC = info->i;						break;
+	case CPUINFO_INT_REGISTER + Z80GB_SP:		Regs.w.SP = info->i;						break;
+	case CPUINFO_INT_REGISTER + Z80GB_AF:		Regs.w.AF = info->i;						break;
+	case CPUINFO_INT_REGISTER + Z80GB_BC:		Regs.w.BC = info->i;						break;
+	case CPUINFO_INT_REGISTER + Z80GB_DE:		Regs.w.DE = info->i;						break;
+	case CPUINFO_INT_REGISTER + Z80GB_HL:		Regs.w.HL = info->i;						break;
+
+	/* --- the following bits of info are set as pointers to data or functions --- */
+	case CPUINFO_PTR_IRQ_CALLBACK:				Regs.w.irq_callback = info->irqcallback;	break;
+	}
+}
+
+void z80gb_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+	/* --- the following bits of info are returned as 64-bit signed integers --- */
+	case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(Regs);					break;
+	case CPUINFO_INT_IRQ_LINES:						info->i = 5;							break;
+	case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0xff;							break;
+	case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+	case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+	case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+	case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
+	case CPUINFO_INT_MIN_CYCLES:					info->i = 1;	/* right? */			break;
+	case CPUINFO_INT_MAX_CYCLES:					info->i = 16;	/* right? */			break;
+
+	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
+	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 8;					break;
+	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 16;					break;
+	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+	case CPUINFO_INT_SP:							info->i = Regs.w.SP;					break;
+	case CPUINFO_INT_PC:							info->i = Regs.w.PC;					break;
+	case CPUINFO_INT_PREVIOUSPC:					info->i = 0;	/* TODO??? */			break;
+
+	case CPUINFO_INT_IRQ_STATE + 0:
+	case CPUINFO_INT_IRQ_STATE + 1:
+	case CPUINFO_INT_IRQ_STATE + 2:
+	case CPUINFO_INT_IRQ_STATE + 3:
+	case CPUINFO_INT_IRQ_STATE + 4:					info->i = IFLAGS & (1 << (state-CPUINFO_INT_IRQ_STATE)); break;
+
+	case CPUINFO_INT_REGISTER + Z80GB_PC:			info->i = Regs.w.PC;					break;
+	case CPUINFO_INT_REGISTER + Z80GB_SP:			info->i = Regs.w.SP;					break;
+	case CPUINFO_INT_REGISTER + Z80GB_AF:			info->i = Regs.w.AF;					break;
+	case CPUINFO_INT_REGISTER + Z80GB_BC:			info->i = Regs.w.BC;					break;
+	case CPUINFO_INT_REGISTER + Z80GB_DE:			info->i = Regs.w.DE;					break;
+	case CPUINFO_INT_REGISTER + Z80GB_HL:			info->i = Regs.w.HL;					break;
+
+	/* --- the following bits of info are returned as pointers to data or functions --- */
+	case CPUINFO_PTR_SET_INFO:						info->setinfo = z80gb_set_info;			break;
+	case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = z80gb_get_context;	break;
+	case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = z80gb_set_context;	break;
+	case CPUINFO_PTR_INIT:							info->init = z80gb_init;				break;
+	case CPUINFO_PTR_RESET:							info->reset = z80gb_reset;				break;
+	case CPUINFO_PTR_EXIT:							info->exit = z80gb_exit;				break;
+	case CPUINFO_PTR_EXECUTE:						info->execute = z80gb_execute;			break;
+	case CPUINFO_PTR_BURN:							info->burn = z80gb_burn;						break;
+
+	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = z80gb_dasm;			break;
+	case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = Regs.w.irq_callback;break;
+	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &z80gb_ICount;			break;
+	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = z80gb_reg_layout;				break;
+	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = z80gb_win_layout;				break;
+
+	/* --- the following bits of info are returned as NULL-terminated strings --- */
+	case CPUINFO_STR_NAME: 							strcpy(info->s = cpuintrf_temp_str(), "Z80GB"); break;
+	case CPUINFO_STR_CORE_FAMILY: 					strcpy(info->s = cpuintrf_temp_str(), "Nintendo Z80"); break;
+	case CPUINFO_STR_CORE_VERSION: 					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
+	case CPUINFO_STR_CORE_FILE: 					strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+	case CPUINFO_STR_CORE_CREDITS: 					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) 2000 by The MESS Team."); break;
+
+	case CPUINFO_STR_FLAGS:
+		sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+			Regs.b.F & 0x80 ? 'Z':'.',
+			Regs.b.F & 0x40 ? 'N':'.',
+			Regs.b.F & 0x20 ? 'H':'.',
+			Regs.b.F & 0x10 ? 'C':'.',
+			Regs.b.F & 0x08 ? '3':'.',
+			Regs.b.F & 0x04 ? '2':'.',
+			Regs.b.F & 0x02 ? '1':'.',
+			Regs.b.F & 0x01 ? '0':'.');
+		break;
+
+	case CPUINFO_STR_REGISTER + Z80GB_PC: sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", Regs.w.PC); break;
+	case CPUINFO_STR_REGISTER + Z80GB_SP: sprintf(info->s = cpuintrf_temp_str(), "SP:%04X", Regs.w.SP); break;
+	case CPUINFO_STR_REGISTER + Z80GB_AF: sprintf(info->s = cpuintrf_temp_str(), "AF:%04X", Regs.w.AF); break;
+	case CPUINFO_STR_REGISTER + Z80GB_BC: sprintf(info->s = cpuintrf_temp_str(), "BC:%04X", Regs.w.BC); break;
+	case CPUINFO_STR_REGISTER + Z80GB_DE: sprintf(info->s = cpuintrf_temp_str(), "DE:%04X", Regs.w.DE); break;
+	case CPUINFO_STR_REGISTER + Z80GB_HL: sprintf(info->s = cpuintrf_temp_str(), "HL:%04X", Regs.w.HL); break;
+	case CPUINFO_STR_REGISTER + Z80GB_IRQ_STATE: sprintf(info->s = cpuintrf_temp_str(), "IRQ:%X", Regs.w.irq_state); break;
+	}
+}

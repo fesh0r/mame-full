@@ -122,10 +122,10 @@ static void gb_init(void)
 	{
 		case NONE:
 		case TAMA5:	/* Definitely wrong, but don't know how this one works */
-			install_mem_write_handler( 0, 0x0000, 0x1fff, MWA_ROM );
-			install_mem_write_handler( 0, 0x2000, 0x3fff, MWA_ROM );
-			install_mem_write_handler( 0, 0x4000, 0x5fff, MWA_ROM );
-			install_mem_write_handler( 0, 0x6000, 0x7fff, MWA_ROM );
+			install_mem_write_handler( 0, 0x0000, 0x1fff, MWA8_ROM );
+			install_mem_write_handler( 0, 0x2000, 0x3fff, MWA8_ROM );
+			install_mem_write_handler( 0, 0x4000, 0x5fff, MWA8_ROM );
+			install_mem_write_handler( 0, 0x6000, 0x7fff, MWA8_ROM );
 			break;
 		case MBC1:
 			install_mem_write_handler( 0, 0x0000, 0x1fff, gb_ram_enable );	/* We don't emulate RAM enable yet */
@@ -134,10 +134,10 @@ static void gb_init(void)
 			install_mem_write_handler( 0, 0x6000, 0x7fff, gb_mem_mode_select_mbc1 );
 			break;
 		case MBC2:
-			install_mem_write_handler( 0, 0x0000, 0x1fff, MWA_ROM );
+			install_mem_write_handler( 0, 0x0000, 0x1fff, MWA8_ROM );
 			install_mem_write_handler( 0, 0x2000, 0x3fff, gb_rom_bank_select_mbc2 );
-			install_mem_write_handler( 0, 0x4000, 0x5fff, MWA_ROM );
-			install_mem_write_handler( 0, 0x6000, 0x7fff, MWA_ROM );
+			install_mem_write_handler( 0, 0x4000, 0x5fff, MWA8_ROM );
+			install_mem_write_handler( 0, 0x6000, 0x7fff, MWA8_ROM );
 			break;
 		case MBC3:
 		case HUC1:	/* Possibly wrong */
@@ -151,7 +151,7 @@ static void gb_init(void)
 			install_mem_write_handler( 0, 0x0000, 0x1fff, gb_ram_enable );
 			install_mem_write_handler( 0, 0x2000, 0x3fff, gb_rom_bank_select_mbc5 );
 			install_mem_write_handler( 0, 0x4000, 0x5fff, gb_ram_bank_select_mbc5 );
-			install_mem_write_handler( 0, 0x6000, 0x7fff, MWA_ROM );
+			install_mem_write_handler( 0, 0x6000, 0x7fff, MWA8_ROM );
 			break;
 	}
 }
@@ -870,8 +870,8 @@ WRITE_HANDLER ( sgb_io_w )
 
 									for( I = 0; I < 2048; I++ )
 									{
-										col = cpu_readmem16 (0x8800 + (I*2));
-										col |= (UINT16)(cpu_readmem16 (0x8800 + (I*2) + 1)) << 8;
+										col = program_read_byte_8 (0x8800 + (I*2));
+										col |= (UINT16)(program_read_byte_8 (0x8800 + (I*2) + 1)) << 8;
 										sgb_pal_data[I] = col;
 									}
 								}
@@ -915,8 +915,8 @@ WRITE_HANDLER ( sgb_io_w )
 										memcpy( sgb_tile_map, gb_ram + 0x9000, 2048 );
 										for( I = 0; I < 64; I++ )
 										{
-											col = cpu_readmem16 (0x8800 + (I*2));
-											col |= (UINT16)(cpu_readmem16 (0x8800 + (I*2) + 1)) << 8;
+											col = program_read_byte_8 (0x8800 + (I*2));
+											col |= (UINT16)(program_read_byte_8 (0x8800 + (I*2) + 1)) << 8;
 											Machine->remapped_colortable[SGB_BORDER_PAL_OFFSET + I] = col;
 										}
 									}
@@ -925,8 +925,8 @@ WRITE_HANDLER ( sgb_io_w )
 										memcpy( sgb_tile_map, gb_ram + 0x8800, 2048 );
 										for( I = 0; I < 64; I++ )
 										{
-											col = cpu_readmem16 (0x9000 + (I*2));
-											col |= (UINT16)(cpu_readmem16 (0x9000 + (I*2) + 1)) << 8;
+											col = program_read_byte_8 (0x9000 + (I*2));
+											col |= (UINT16)(program_read_byte_8 (0x9000 + (I*2) + 1)) << 8;
 											Machine->remapped_colortable[SGB_BORDER_PAL_OFFSET + I] = col;
 										}
 									}
@@ -1580,7 +1580,7 @@ void gbc_hdma(UINT16 length)
 	dst |= 0x8000;
 	while( length > 0 )
 	{
-		cpu_writemem16( dst++, cpu_readmem16( src++ ) );
+		program_write_byte_8( dst++, program_read_byte_8( src++ ) );
 		length--;
 	}
 	HDMA1 = src >> 8;
@@ -1618,7 +1618,7 @@ WRITE_HANDLER ( gb_video_w )
 			UINT8 *P = gb_ram + 0xFE00;
 			offset = (UINT16) data << 8;
 			for (data = 0; data < 0xA0; data++)
-				*P++ = cpu_readmem16 (offset++);
+				*P++ = program_read_byte_8 (offset++);
 		}
 		return;
 	case 0xFF47:						/* BGP - Background Palette */

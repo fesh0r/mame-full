@@ -45,86 +45,86 @@ static UINT16 dmg_cpu_af_reset = 0x01B0;	/* GameBoy        / Super GameBoy   */
 static UINT16 gbp_cpu_af_reset = 0xFFB0;	/* GameBoy Pocket / Super GameBoy 2 */
 static UINT16 gbc_cpu_af_reset = 0x11B0;	/* GameBoy Color  / GameBoy Advance */
 
-static MEMORY_READ_START (gb_readmem)
-	{ 0x0000, 0x3fff, MRA_ROM },			/* 16k fixed ROM bank */
-	{ 0x4000, 0x7fff, MRA_BANK1 },			/* 16k switched ROM bank */
-	{ 0x8000, 0x9fff, MRA_RAM },			/* 8k VRAM */
-	{ 0xa000, 0xbfff, MRA_BANK2 },			/* 8k switched RAM bank (on cartridge) */
-	{ 0xc000, 0xfe9f, MRA_RAM },			/* 8k low RAM, echo RAM, OAM RAM */
-	{ 0xfea0, 0xfeff, MRA_NOP },			/* unusable */
-	{ 0xff00, 0xff7f, gb_io_r },			/* I/O */
-	{ 0xff80, 0xffff, MRA_RAM },			/* 127 bytes high RAM, interrupt enable io */
-MEMORY_END
+static ADDRESS_MAP_START(gb_readmem_map, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)				/* 16k fixed ROM bank */
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)			/* 16k switched ROM bank */
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_RAM)				/* 8k VRAM */
+	AM_RANGE(0xa000, 0xbfff) AM_READ(MRA8_BANK2)			/* 8k switched RAM bank (on cartridge) */
+	AM_RANGE(0xc000, 0xfe9f) AM_READ(MRA8_RAM)				/* 8k low RAM, echo RAM, OAM RAM */
+	AM_RANGE(0xfea0, 0xfeff) AM_READ(MRA8_NOP)				/* unusable */
+	AM_RANGE(0xff00, 0xff7f) AM_READ(gb_io_r)				/* I/O */
+	AM_RANGE(0xff80, 0xffff) AM_READ(MRA8_RAM)				/* 127 bytes high RAM, interrupt enable io */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START (gb_writemem)
-/*	{ 0x0000, 0x1fff, INSTALL AT RUNTIME },	   RAM enable */
-/*	{ 0x2000, 0x3fff, INSTALL AT RUNTIME },	   ROM bank select */
-/*	{ 0x4000, 0x5fff, INSTALL AT RUNTIME },	   RAM bank select */
-/*	{ 0x6000, 0x7fff, INSTALL AT RUNTIME },	   RAM/ROM mode select */
-	{ 0x8000, 0x9fff, MWA_RAM },			/* 8k VRAM */
-	{ 0xa000, 0xbfff, MWA_BANK2 },			/* 8k switched RAM bank (on cartridge) */
-	{ 0xc000, 0xfe9f, MWA_RAM },			/* 8k low RAM, echo RAM, OAM RAM */
-	{ 0xfea0, 0xfeff, MWA_NOP },			/* Unusable */
-	{ 0xff00, 0xff0f, gb_io_w },			/* General I/O */
-	{ 0xff10, 0xff26, gb_sound_w },			/* Sound controller */
-	{ 0xff27, 0xff2f, MWA_NOP },			/* Unused registers */
-	{ 0xff30, 0xff3f, MWA_RAM },			/* 16 bytes Wave pattern RAM */
-	{ 0xff40, 0xff4b, gb_video_w },			/* Video controller */
-	{ 0xff4c, 0xff7f, MWA_NOP },			/* Unused registers */
-	{ 0xff80, 0xfffe, MWA_RAM },			/* 127 bytes high RAM */
-	{ 0xffff, 0xffff, gb_ie_w },			/* Interrupt enable */
-MEMORY_END
+static ADDRESS_MAP_START(gb_writemem_map, ADDRESS_SPACE_PROGRAM, 8)
+/*	AM_RANGE(0x0000, 0x1fff) AM_WRITE(INSTALL AT RUNTIME)	   RAM enable */
+/*	AM_RANGE(0x2000, 0x3fff) AM_WRITE(INSTALL AT RUNTIME)	   ROM bank select */
+/*	AM_RANGE(0x4000, 0x5fff) AM_WRITE(INSTALL AT RUNTIME)	   RAM bank select */
+/*	AM_RANGE(0x6000, 0x7fff) AM_WRITE(INSTALL AT RUNTIME)	   RAM/ROM mode select */
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_RAM)				/* 8k VRAM */
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(MWA8_BANK2)			/* 8k switched RAM bank (on cartridge) */
+	AM_RANGE(0xc000, 0xfe9f) AM_WRITE(MWA8_RAM)				/* 8k low RAM, echo RAM, OAM RAM */
+	AM_RANGE(0xfea0, 0xfeff) AM_WRITE(MWA8_NOP)				/* Unusable */
+	AM_RANGE(0xff00, 0xff0f) AM_WRITE(gb_io_w)				/* General I/O */
+	AM_RANGE(0xff10, 0xff26) AM_WRITE(gb_sound_w)			/* Sound controller */
+	AM_RANGE(0xff27, 0xff2f) AM_WRITE(MWA8_NOP)				/* Unused registers */
+	AM_RANGE(0xff30, 0xff3f) AM_WRITE(MWA8_RAM)				/* 16 bytes Wave pattern RAM */
+	AM_RANGE(0xff40, 0xff4b) AM_WRITE(gb_video_w)			/* Video controller */
+	AM_RANGE(0xff4c, 0xff7f) AM_WRITE(MWA8_NOP)				/* Unused registers */
+	AM_RANGE(0xff80, 0xfffe) AM_WRITE(MWA8_RAM)				/* 127 bytes high RAM */
+	AM_RANGE(0xffff, 0xffff) AM_WRITE(gb_ie_w)				/* Interrupt enable */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START (sgb_writemem)
-/*	{ 0x0000, 0x1fff, INSTALL AT RUNTIME },	   RAM enable */
-/*	{ 0x2000, 0x3fff, INSTALL AT RUNTIME },	   ROM bank select */
-/*	{ 0x4000, 0x5fff, INSTALL AT RUNTIME },	   RAM bank select */
-/*	{ 0x6000, 0x7fff, INSTALL AT RUNTIME },	   RAM/ROM mode select */
-	{ 0x8000, 0x9fff, MWA_RAM },			/* 8k VRAM */
-	{ 0xa000, 0xbfff, MWA_BANK2 },			/* 8k switched RAM bank (on cartridge) */
-	{ 0xc000, 0xfe9f, MWA_RAM },			/* 8k low RAM, echo RAM, OAM RAM */
-	{ 0xfea0, 0xfeff, MWA_NOP },			/* Unusable */
-	{ 0xff00, 0xff0f, sgb_io_w },			/* General I/O */
-	{ 0xff10, 0xff26, gb_sound_w },			/* Sound controller */
-	{ 0xff27, 0xff2f, MWA_NOP },			/* Unused registers */
-	{ 0xff30, 0xff3f, MWA_RAM },			/* 16 bytes Wave pattern RAM */
-	{ 0xff40, 0xff4b, gb_video_w },			/* Video controller */
-	{ 0xff4c, 0xff7f, MWA_NOP },			/* Unused registers */
-	{ 0xff80, 0xfffe, MWA_RAM },			/* 127 bytes high RAM */
-	{ 0xffff, 0xffff, gb_ie_w },			/* Interrupt enable */
-MEMORY_END
+static ADDRESS_MAP_START(sgb_writemem_map, ADDRESS_SPACE_PROGRAM, 8)
+/*	AM_RANGE(0x0000, 0x1fff) AM_WRITE(INSTALL AT RUNTIME)	   RAM enable */
+/*	AM_RANGE(0x2000, 0x3fff) AM_WRITE(INSTALL AT RUNTIME)	   ROM bank select */
+/*	AM_RANGE(0x4000, 0x5fff) AM_WRITE(INSTALL AT RUNTIME)	   RAM bank select */
+/*	AM_RANGE(0x6000, 0x7fff) AM_WRITE(INSTALL AT RUNTIME)	   RAM/ROM mode select */
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_RAM)				/* 8k VRAM */
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(MWA8_BANK2)			/* 8k switched RAM bank (on cartridge) */
+	AM_RANGE(0xc000, 0xfe9f) AM_WRITE(MWA8_RAM)				/* 8k low RAM, echo RAM, OAM RAM */
+	AM_RANGE(0xfea0, 0xfeff) AM_WRITE(MWA8_NOP)				/* Unusable */
+	AM_RANGE(0xff00, 0xff0f) AM_WRITE(sgb_io_w)				/* General I/O */
+	AM_RANGE(0xff10, 0xff26) AM_WRITE(gb_sound_w)			/* Sound controller */
+	AM_RANGE(0xff27, 0xff2f) AM_WRITE(MWA8_NOP)				/* Unused registers */
+	AM_RANGE(0xff30, 0xff3f) AM_WRITE(MWA8_RAM)				/* 16 bytes Wave pattern RAM */
+	AM_RANGE(0xff40, 0xff4b) AM_WRITE(gb_video_w)			/* Video controller */
+	AM_RANGE(0xff4c, 0xff7f) AM_WRITE(MWA8_NOP)				/* Unused registers */
+	AM_RANGE(0xff80, 0xfffe) AM_WRITE(MWA8_RAM)				/* 127 bytes high RAM */
+	AM_RANGE(0xffff, 0xffff) AM_WRITE(gb_ie_w)				/* Interrupt enable */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START (gbc_readmem)
-	{ 0x0000, 0x3fff, MRA_ROM },			/* 16k fixed ROM bank */
-	{ 0x4000, 0x7fff, MRA_BANK1 },			/* 16k switched ROM bank */
-	{ 0x8000, 0x9fff, MRA_BANK4 },			/* 8k switched VRAM bank */
-	{ 0xa000, 0xbfff, MRA_BANK2 },			/* 8k switched RAM bank (on cartridge) */
-	{ 0xc000, 0xcfff, MRA_RAM },			/* 4k fixed RAM bank */
-	{ 0xd000, 0xdfff, MRA_BANK3 },			/* 4k switched RAM bank */
-	{ 0xe000, 0xfe9f, MRA_RAM },			/* echo RAM, OAM RAM */
-	{ 0xfea0, 0xfeff, MRA_NOP },			/* unusable */
-	{ 0xff00, 0xff7f, gb_io_r },			/* I/O */
-	{ 0xff80, 0xffff, MRA_RAM },			/* 127 bytes high RAM, interrupt enable io */
-MEMORY_END
+static ADDRESS_MAP_START(gbc_readmem_map, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)				/* 16k fixed ROM bank */
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)			/* 16k switched ROM bank */
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_BANK4)			/* 8k switched VRAM bank */
+	AM_RANGE(0xa000, 0xbfff) AM_READ(MRA8_BANK2)			/* 8k switched RAM bank (on cartridge) */
+	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM)				/* 4k fixed RAM bank */
+	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_BANK3)			/* 4k switched RAM bank */
+	AM_RANGE(0xe000, 0xfe9f) AM_READ(MRA8_RAM)				/* echo RAM, OAM RAM */
+	AM_RANGE(0xfea0, 0xfeff) AM_READ(MRA8_NOP)				/* unusable */
+	AM_RANGE(0xff00, 0xff7f) AM_READ(gb_io_r)				/* I/O */
+	AM_RANGE(0xff80, 0xffff) AM_READ(MRA8_RAM)				/* 127 bytes high RAM, interrupt enable io */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START (gbc_writemem)
-/*	{ 0x0000, 0x1fff, INSTALL AT RUNTIME },	   RAM enable */
-/*	{ 0x2000, 0x3fff, INSTALL AT RUNTIME },	   ROM bank select */
-/*	{ 0x4000, 0x5fff, INSTALL AT RUNTIME },	   RAM bank select */
-/*	{ 0x6000, 0x7fff, INSTALL AT RUNTIME },	   RAM/ROM mode select */
-	{ 0x8000, 0x9fff, MWA_BANK4 },			/* 8k switched VRAM bank */
-	{ 0xa000, 0xbfff, MWA_BANK2 },			/* 8k switched RAM bank (on cartridge) */
-	{ 0xc000, 0xcfff, MWA_RAM },			/* 4k fixed RAM bank */
-	{ 0xd000, 0xdfff, MWA_BANK3 },			/* 4k switched RAM bank */
-	{ 0xe000, 0xfeff, MWA_RAM },			/* echo RAM, OAM RAM */
-	{ 0xff00, 0xff0f, gb_io_w },			/* General I/O */
-	{ 0xff10, 0xff26, gb_sound_w },			/* Sound controller */
-	{ 0xff27, 0xff2f, MWA_NOP },			/* Unused registers */
-	{ 0xff30, 0xff3f, MWA_RAM },			/* 16 bytes Wave pattern RAM */
-	{ 0xff40, 0xff7f, gbc_video_w },		/* Video controller */
-	{ 0xff80, 0xfffe, MWA_RAM },			/* 127b high RAM */
-	{ 0xffff, 0xffff, gb_ie_w },			/* Interrupt enable */
-MEMORY_END
+static ADDRESS_MAP_START(gbc_writemem_map, ADDRESS_SPACE_PROGRAM, 8)
+/*	AM_RANGE(0x0000, 0x1fff) AM_WRITE(INSTALL AT RUNTIME)	   RAM enable */
+/*	AM_RANGE(0x2000, 0x3fff) AM_WRITE(INSTALL AT RUNTIME)	   ROM bank select */
+/*	AM_RANGE(0x4000, 0x5fff) AM_WRITE(INSTALL AT RUNTIME)	   RAM bank select */
+/*	AM_RANGE(0x6000, 0x7fff) AM_WRITE(INSTALL AT RUNTIME)	   RAM/ROM mode select */
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_BANK4)			/* 8k switched VRAM bank */
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(MWA8_BANK2)			/* 8k switched RAM bank (on cartridge) */
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM)				/* 4k fixed RAM bank */
+	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_BANK3)			/* 4k switched RAM bank */
+	AM_RANGE(0xe000, 0xfeff) AM_WRITE(MWA8_RAM)				/* echo RAM, OAM RAM */
+	AM_RANGE(0xff00, 0xff0f) AM_WRITE(gb_io_w)				/* General I/O */
+	AM_RANGE(0xff10, 0xff26) AM_WRITE(gb_sound_w)			/* Sound controller */
+	AM_RANGE(0xff27, 0xff2f) AM_WRITE(MWA8_NOP)				/* Unused registers */
+	AM_RANGE(0xff30, 0xff3f) AM_WRITE(MWA8_RAM)				/* 16 bytes Wave pattern RAM */
+	AM_RANGE(0xff40, 0xff7f) AM_WRITE(gbc_video_w)			/* Video controller */
+	AM_RANGE(0xff80, 0xfffe) AM_WRITE(MWA8_RAM)				/* 127b high RAM */
+	AM_RANGE(0xffff, 0xffff) AM_WRITE(gb_ie_w)				/* Interrupt enable */
+ADDRESS_MAP_END
 
 
 static struct GfxDecodeInfo gb_gfxdecodeinfo[] =
@@ -235,7 +235,7 @@ static struct CustomSound_interface gameboy_sound_interface =
 static MACHINE_DRIVER_START( gameboy )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80GB, 4194304)			/* 4.194304 Mhz */
-	MDRV_CPU_MEMORY(gb_readmem, gb_writemem)
+	MDRV_CPU_PROGRAM_MAP(gb_readmem_map, gb_writemem_map)
 	MDRV_CPU_VBLANK_INT(gb_scanline_interrupt, 154 * 3)	/* 1 int each scanline ! */
 	MDRV_CPU_CONFIG(dmg_cpu_af_reset)
 
@@ -265,7 +265,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( supergb )
 	MDRV_IMPORT_FROM(gameboy)
 	MDRV_CPU_REPLACE("main", Z80GB, 4295454)	/* 4.295454 Mhz */
-	MDRV_CPU_MEMORY(gb_readmem, sgb_writemem)
+	MDRV_CPU_PROGRAM_MAP(gb_readmem_map, sgb_writemem_map)
 
 	MDRV_MACHINE_INIT( sgb )
 
@@ -286,7 +286,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( gbcolor )
 	MDRV_IMPORT_FROM(gameboy)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(gbc_readmem, gbc_writemem)
+	MDRV_CPU_PROGRAM_MAP(gbc_readmem_map, gbc_writemem_map)
 	MDRV_CPU_CONFIG(gbc_cpu_af_reset)
 
 	MDRV_MACHINE_INIT(gbc)
