@@ -757,7 +757,7 @@ static void scu_set_imask(void)
     for (irq = 0; irq < 16; irq++)
     {
         if ((scu_regs[0x28] & (1 <<irq)) == 0)
-            logerror(" %s HACK!%s", int_names[irq],scu_irq_levels[0]);
+            logerror(" %s HACK!%d", int_names[irq],scu_irq_levels[0]);
         else
 	  cpu_set_irq_line(0, irq /*scu_irq_levels[irq]*/, CLEAR_LINE);
     }
@@ -1318,24 +1318,22 @@ void reset_vdp2(void)
   memset(vdp2_state.vdp2_regs,0,0x90*2);
 }
 
-void draw_1s8(UINT32 *vram_base,unsigned char *disp_base,UINT32 pitch)
+void draw_1s8(UINT32 *vram_base,unsigned char *display,UINT32 pitch)
 
      /* Draws a 1Hx1V cell in 8bit colour */
 
 {
-  int loop;
-  unsigned char *display;
-
-  display = disp_base;
+  unsigned int loop;
+  UINT32 vrtmp;
 
   for(loop = 0;loop < 16;loop++)
     {
-      *display++ = (vram_base[loop] >> 24) & 0xFF;
-      *display++ = (vram_base[loop] >> 16) & 0xFF;
-      *display++ = (vram_base[loop] >> 8) & 0xFF;
-      *display++ = (vram_base[loop]) & 0xFF;
-      if(loop & 0x1)
-	display += (pitch-8);
+	  vrtmp = vram_base[loop];
+      *display++ = (vrtmp >> 24); //& 0xFF;
+      *display++ = (vrtmp >> 16); //& 0xFF;
+      *display++ = (vrtmp >> 8); //& 0xFF;
+      *display++ = (vrtmp); //& 0xFF;
+      if (loop & 0x1) display += (pitch-8);
     }
 }
 
@@ -1397,6 +1395,7 @@ void draw_nbg3(void)
   unsigned char frame[512*512]; /* Temporary frame display */
   int loopx,loopy;
   UINT32 *pattern;
+  static UINT32 pathi,patlo = 0xffffffff;
 
   regs = vdp2_state.vdp2_regs;
 
@@ -1421,7 +1420,10 @@ void draw_nbg3(void)
 	  UINT32 pat_no;
 
 	  pat_no = *pattern++;
-	  draw_1s8(&mem[(SATURN_VDP2_RAM_BASE/4) + (pat_no*8)],&frame[loopy*4096 + loopx*8],512);
+		if (patlo > pat_no) { patlo = pat_no; printf("new Pattern Low bound: [%d] PlaneA,C=%08x %08x Regs %x %x\n",pat_no,planea_addr,planec_addr,(UINT32)regs[0x4c>>1],(UINT32)regs[0x3c>>1]);}
+		if (pathi < pat_no) { pathi = pat_no; printf("new Pattern  Hi bound: [%d] PlaneA,C=%08x %08x Regs %x %x\n",pat_no,planea_addr,planec_addr,(UINT32)regs[0x4c>>1],(UINT32)regs[0x3c>>1]);}
+
+	  if (pat_no < 4000) {draw_1s8(&mem[(SATURN_VDP2_RAM_BASE/4) + (pat_no*8)],&frame[loopy*4096 + loopx*8],512);}
 	}
     }
   render_plane(frame,3,0);
