@@ -5,7 +5,7 @@
 /* selecting with it's own code. Return 0 if the MESS core should handle	*/
 /* file selection, -1 if the OS code does nothing or 1 if the OS code		*/
 /* changed a file.															*/
-int osd_select_file (int sel, char *filename);
+int osd_select_file(int type, int id, char *filename);
 
 /* returns 1 if input of type IPT_KEYBOARD should be supressed */
 int osd_keyboard_disabled(void);

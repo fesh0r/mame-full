@@ -805,7 +805,7 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 			os_sel = -1;
 		}
 		/* no, let the osd code have a crack at changing files */
-		else os_sel = osd_select_file (sel, entered_filename);
+		else os_sel = osd_select_file(types[sel], ids[sel], entered_filename);
 
 		if (os_sel != 0)
 		{
