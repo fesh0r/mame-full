@@ -1,12 +1,12 @@
 # set this to mame, mess or the destination you want to build
-TARGET = mame
+# TARGET = mame
 # TARGET = mess
 # TARGET = neomame
 # example for a tiny compile
-# TARGET = tiny
+TARGET = tiny
 
 # uncomment next line to include the debugger
-# DEBUG = 1
+DEBUG = 1
 
 # uncomment next line to include the symbols for symify
 # SYMBOLS = 1
@@ -32,6 +32,8 @@ LD = @gcc
 #ASM = @nasm
 ASM = @nasmw
 ASMFLAGS = -f coff
+MD = @mkdir
+RM = @rm -f
 
 ifdef DEBUG
 NAME = $(TARGET)d
@@ -136,7 +138,7 @@ $(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(LIBS) $(DRVLIBS)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(OBJS) $(COREOBJS) $(OSOBJS) $(LIBS) $(DRVLIBS) -o $@
 ifndef DEBUG
-#	upx $(EMULATOR)
+	upx $(EMULATOR)
 endif
 
 romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
@@ -176,7 +178,7 @@ $(OBJ)/cpu/m68000/68kem.o:  $(OBJ)/cpu/m68000/68kem.asm
 
 $(OBJ)/%.a:
 	@echo Archiving $@...
-	@rm -f $@
+	$(RM) $@
 	$(AR) cr $@ $^
 
 makedir:
@@ -186,35 +188,6 @@ maketree:
 	@echo Making MAME object tree in $(OBJ)...
 	@md $(OBJ)
 	@md $(OBJ)\cpu
-	@md $(OBJ)\cpu\z80
-	@md $(OBJ)\cpu\z80gb
-	@md $(OBJ)\cpu\m6502
-	@md $(OBJ)\cpu\h6280
-	@md $(OBJ)\cpu\i86
-	@md $(OBJ)\cpu\nec
-	@md $(OBJ)\cpu\i8039
-	@md $(OBJ)\cpu\cdp1802
-	@md $(OBJ)\cpu\i8085
-	@md $(OBJ)\cpu\m6800
-	@md $(OBJ)\cpu\m6805
-	@md $(OBJ)\cpu\m6809
-	@md $(OBJ)\cpu\hd6309
-	@md $(OBJ)\cpu\konami
-	@md $(OBJ)\cpu\m68000
-	@md $(OBJ)\cpu\s2650
-	@md $(OBJ)\cpu\f8
-	@md $(OBJ)\cpu\t11
-	@md $(OBJ)\cpu\tms34010
-	@md $(OBJ)\cpu\tms9900
-	@md $(OBJ)\cpu\z8000
-	@md $(OBJ)\cpu\tms32010
-	@md $(OBJ)\cpu\ccpu
-	@md $(OBJ)\cpu\adsp2100
-	@md $(OBJ)\cpu\pdp1
-	@md $(OBJ)\cpu\mips
-	@md $(OBJ)\cpu\sc61860
-	@md $(OBJ)\cpu\arm
-	@md $(OBJ)\cpu\g65816
 	@md $(OBJ)\sound
 	@md $(OBJ)\msdos
 	@md $(OBJ)\drivers
@@ -230,10 +203,11 @@ ifdef MESS
 	@md $(OBJ)\mess\sndhrdw
 	@md $(OBJ)\mess\tools
 endif
+	$(MD) $(sort $(OBJDIRS))
 
 clean:
 	@echo Deleting object tree $(OBJ)...
-	@rm -fr $(OBJ)
+	$(RM) -r $(OBJ)
 	@echo Deleting $(EMULATOR)...
-	@rm -f $(EMULATOR)
+	$(RM) $(EMULATOR)
 

@@ -28,10 +28,11 @@ VPATH=src $(wildcard src/cpu/*)
 AR = @ar
 CC = @gcc
 LD = @gcc
-RM = @rm
 #ASM = @nasm
 ASM = @nasmw
 ASMFLAGS = -f coff
+MD = @mkdir
+RM = @rm -f
 
 ifdef DEBUG
 NAME = $(TARGET)d
@@ -110,10 +111,10 @@ ifeq ($(wildcard $(OBJ)),)
 noobj: maketree all
 endif
 
-all:	$(EMULATOR) extra
-
 IMGTOOL_OBJS = $(OBJ)/mess/$(OS)/dirio.o
 INCLUDE_PATH = -Isrc -Isrc/msdos -Imess -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+
+all:    $(EMULATOR) extra
 
 # include the various .mak files
 include src/core.mak
@@ -128,7 +129,7 @@ DBGDEFS =
 DBGOBJS =
 endif
 
-extra:	romcmp$(EXE) $(TOOLS) $(TEXTS)
+extra:  romcmp$(EXE) $(TOOLS) $(TEXTS)
 
 # combine the various definitions to one
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS)
@@ -183,7 +184,7 @@ $(OBJ)/cpu/m68000/68kem.o:  $(OBJ)/cpu/m68000/68kem.asm
 
 $(OBJ)/%.a:
 	@echo Archiving $@...
-	$(RM) -f $@
+	$(RM) $@
 	$(AR) cr $@ $^
 
 makedir:
@@ -193,37 +194,6 @@ maketree:
 	@echo Making MAME object tree in $(OBJ)...
 	@md $(OBJ)
 	@md $(OBJ)\cpu
-	@md $(OBJ)\cpu\z80
-	@md $(OBJ)\cpu\z80gb
-	@md $(OBJ)\cpu\m6502
-	@md $(OBJ)\cpu\h6280
-	@md $(OBJ)\cpu\i86
-	@md $(OBJ)\cpu\nec
-	@md $(OBJ)\cpu\i8039
-	@md $(OBJ)\cpu\cdp1802
-	@md $(OBJ)\cpu\i8085
-	@md $(OBJ)\cpu\m6800
-	@md $(OBJ)\cpu\m6805
-	@md $(OBJ)\cpu\m6809
-	@md $(OBJ)\cpu\hd6309
-	@md $(OBJ)\cpu\konami
-	@md $(OBJ)\cpu\m68000
-	@md $(OBJ)\cpu\s2650
-	@md $(OBJ)\cpu\f8
-	@md $(OBJ)\cpu\cp1600
-	@md $(OBJ)\cpu\t11
-	@md $(OBJ)\cpu\tms34010
-	@md $(OBJ)\cpu\tms9900
-	@md $(OBJ)\cpu\z8000
-	@md $(OBJ)\cpu\tms32010
-	@md $(OBJ)\cpu\ccpu
-	@md $(OBJ)\cpu\adsp2100
-	@md $(OBJ)\cpu\pdp1
-	@md $(OBJ)\cpu\mips
-	@md $(OBJ)\cpu\sc61860
-	@md $(OBJ)\cpu\arm
-	@md $(OBJ)\cpu\g65816
-	@md $(OBJ)\cpu\spc700
 	@md $(OBJ)\sound
 	@md $(OBJ)\msdos
 	@md $(OBJ)\drivers
@@ -241,10 +211,11 @@ ifdef MESS
 	@md $(OBJ)\mess\formats
 	@md $(OBJ)\mess\msdos
 endif
+	$(MD) $(sort $(OBJDIRS))
 
 clean:
 	@echo Deleting object tree $(OBJ)...
-	$(RM) -fr $(OBJ)
+	$(RM) -r $(OBJ)
 	@echo Deleting $(EMULATOR)...
-	$(RM) -f $(EMULATOR)
+	$(RM) $(EMULATOR)
 
