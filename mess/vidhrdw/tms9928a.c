@@ -24,13 +24,18 @@
 ** - now uses plot_pixel (..), so -ror works properly
 ** - fixed bug in tms.patternmask
 **
+** 3 nov 2000, Raphael Nabet:
+** - fixed a nasty bug in _TMS9928A_sprites. A transparent sprite caused sprites at lower levels
+** not to be displayed, which is wrong.
+** 
+**
 ** Todo:
 ** - The screen image is rendered in `one go'. Modifications during
 **   screen build up are not shown.
 ** - Correctly emulate 4,8,16 kb VRAM if needed.
 ** - uses plot_pixel (...) in TMS_sprites (...), which is rended in
 **   in a back buffer created with malloc (). Hmm..
-** - Colours are incorrect.
+** - Colours are incorrect. [fixed by R Nabet ?]
 */
 
 #include "driver.h"
@@ -813,10 +818,14 @@ static void _TMS9928A_sprites (struct osd_bitmap *bmp) {
                             if (tms.dBackMem[yy*256+xx]) {
                                 tms.StatusReg |= 0x20;
                             } else {
-                                tms.dBackMem[yy*256+xx] = 0xff;
-                                if (c && bmp) plot_pixel (bmp, xx, yy,
-				    Machine->pens[c]);
+                                tms.dBackMem[yy*256+xx] = 0x01;
                             }
+                            if (c && ! (tms.dBackMem[yy*256+xx] & 0x02))
+                            {
+                            	tms.dBackMem[yy*256+xx] |= 0x02;
+                            	if (bmp)
+									plot_pixel (bmp, xx, yy, Machine->pens[c]);
+							}
                         }
                     }
                     line *= 2;
@@ -848,19 +857,27 @@ static void _TMS9928A_sprites (struct osd_bitmap *bmp) {
                                     if (tms.dBackMem[yy*256+xx]) {
                                         tms.StatusReg |= 0x20;
                                     } else {
-                                        tms.dBackMem[yy*256+xx] = 0xff;
-                                        if (c && bmp) plot_pixel (bmp, xx, yy,
-                                            Machine->pens[c]);
+                                        tms.dBackMem[yy*256+xx] = 0x01;
                                     }
+		                            if (c && ! (tms.dBackMem[yy*256+xx] & 0x02))
+        		                    {
+                		            	tms.dBackMem[yy*256+xx] |= 0x02;
+                                        if (bmp)
+                                        	plot_pixel (bmp, xx, yy, Machine->pens[c]);
+                		            }
                                 }
                                 if (((xx+1) >=0) && ((xx+1) < 256)) {
                                     if (tms.dBackMem[yy*256+xx+1]) {
                                         tms.StatusReg |= 0x20;
                                     } else {
-                                        tms.dBackMem[yy*256+xx+1] = 0xff;
-                                        if (c && bmp) plot_pixel (bmp, xx+1, yy,
-                                            Machine->pens[c]);
+                                        tms.dBackMem[yy*256+xx+1] = 0x01;
                                     }
+		                            if (c && ! (tms.dBackMem[yy*256+xx+1] & 0x02))
+        		                    {
+                		            	tms.dBackMem[yy*256+xx+1] |= 0x02;
+                                        if (bmp)
+                                        	plot_pixel (bmp, xx+1, yy, Machine->pens[c]);
+									}
                                 }
                             }
                             line *= 2;
