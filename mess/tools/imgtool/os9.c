@@ -209,7 +209,7 @@ static UINT32 os9_lookup_lsn(imgtool_image *img,
 
 	i = 0;
 	while(lsn >= file_info->sector_map[i].count)
-		lsn -= file_info->sector_map[i].count;
+		lsn -= file_info->sector_map[i++].count;
 
 	lsn = file_info->sector_map[i].lsn + lsn;
 	*index %= disk_info->sector_size;

@@ -134,4 +134,76 @@
 	<checkdirectory path="/"/>
 </imgtooltest>
 
+<imgtooltest name="coco_os9_005">
+	<!-- Testing many files in a subdirectory -->
+	<createimage driver="coco_jvc_os9"/>
+	<createdirectory path="FOO"/>
+
+	<putfile name="/FOO/1.TXT"/>
+	<putfile name="/FOO/2.TXT"/>
+	<putfile name="/FOO/3.TXT"/>
+	<putfile name="/FOO/4.TXT"/>
+	<putfile name="/FOO/5.TXT"/>
+	<putfile name="/FOO/6.TXT"/>
+	<putfile name="/FOO/7.TXT"/>
+	<putfile name="/FOO/8.TXT"/>
+	<putfile name="/FOO/9.TXT"/>
+	<checkdirectory path="/FOO">
+		<entry name="1.TXT"/>
+		<entry name="2.TXT"/>
+		<entry name="3.TXT"/>
+		<entry name="4.TXT"/>
+		<entry name="5.TXT"/>
+		<entry name="6.TXT"/>
+		<entry name="7.TXT"/>
+		<entry name="8.TXT"/>
+		<entry name="9.TXT"/>
+	</checkdirectory>
+</imgtooltest>
+
+<imgtooltest name="coco_os9_006">
+	<!-- Testing many more files in a subdirectory -->
+	<createimage driver="coco_jvc_os9"/>
+	<createdirectory path="FOO"/>
+
+	<putfile name="/FOO/1.TXT"/>
+	<createdirectory path="/FOO/A"/>
+	<putfile name="/FOO/2.TXT"/>
+	<createdirectory path="/FOO/B"/>
+	<putfile name="/FOO/3.TXT"/>
+	<createdirectory path="/FOO/C"/>
+	<putfile name="/FOO/4.TXT"/>
+	<createdirectory path="/FOO/D"/>
+	<putfile name="/FOO/5.TXT"/>
+	<createdirectory path="/FOO/E"/>
+	<putfile name="/FOO/6.TXT"/>
+	<createdirectory path="/FOO/F"/>
+	<putfile name="/FOO/7.TXT"/>
+	<createdirectory path="/FOO/G"/>
+	<putfile name="/FOO/8.TXT"/>
+	<createdirectory path="/FOO/H"/>
+	<putfile name="/FOO/9.TXT"/>
+	<createdirectory path="/FOO/I"/>
+	<checkdirectory path="/FOO">
+		<entry name="1.TXT"/>
+		<entry name="A"/>
+		<entry name="2.TXT"/>
+		<entry name="B"/>
+		<entry name="3.TXT"/>
+		<entry name="C"/>
+		<entry name="4.TXT"/>
+		<entry name="D"/>
+		<entry name="5.TXT"/>
+		<entry name="E"/>
+		<entry name="6.TXT"/>
+		<entry name="F"/>
+		<entry name="7.TXT"/>
+		<entry name="G"/>
+		<entry name="8.TXT"/>
+		<entry name="H"/>
+		<entry name="9.TXT"/>
+		<entry name="I"/>
+	</checkdirectory>
+</imgtooltest>
+
 </tests>

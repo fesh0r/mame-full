@@ -71,6 +71,9 @@
 	- ! # $ % & ( ) - @ ^ _ ` { } ~ 
 	- Characters 128-255 (though the code page is indeterminate)
 
+  For more information:
+	http://en.wikipedia.org/wiki/File_Allocation_Table
+
 ****************************************************************************/
 
 #include <time.h>
@@ -82,6 +85,7 @@
 #include "unicode.h"
 
 #define FAT_DIRENT_SIZE	32
+#define LOG(x)
 
 struct fat_diskinfo
 {
@@ -632,7 +636,11 @@ static UINT32 fat_get_fat_entry(imgtool_image *image, const UINT8 *fat_table, UI
 	
 	/* normalize special clusters */
 	if (last_entry >= (0xFFFFFFF0 & bit_mask))
+	{
 		last_entry |= 0xFFFFFFF0;
+		if (last_entry >= 0xFFFFFFF8)
+			last_entry = 0xFFFFFFFF;
+	}
 	return last_entry;
 }
 
@@ -654,13 +662,36 @@ static void fat_set_fat_entry(imgtool_image *image, UINT8 *fat_table, UINT32 fat
 			* disk_info->sectors_per_fat) + (bit_index / 8), sizeof(entry));
 
 		entry = LITTLE_ENDIANIZE_INT64(entry);
-		entry &= ~((UINT64) 0xFFFFFFFF >> (32 - disk_info->fat_bits)) << (bit_index % 8);
+		entry &= (~((UINT64) 0xFFFFFFFF >> (32 - disk_info->fat_bits)) << (bit_index % 8)) | ((1 << (bit_index % 8)) - 1);
 		entry |= ((UINT64) value) << (bit_index % 8);
 		entry = LITTLE_ENDIANIZE_INT64(entry);
 
 		memcpy(fat_table + (i * disk_info->sector_size
 			* disk_info->sectors_per_fat) + (bit_index / 8), &entry, sizeof(entry));
 	}
+}
+
+
+
+static void fat_debug_integrity_check(imgtool_image *image, const UINT8 *fat_table, const struct fat_file *file)
+{
+#ifdef MAME_DEBUG
+	/* debug function to test the integrity of a file */
+	UINT32 cluster;
+	const struct fat_diskinfo *disk_info;
+
+	disk_info = (const struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
+	cluster = file->first_cluster ? file->first_cluster : 0xFFFFFFFF;
+
+	if (!file->root)
+	{
+		while(cluster != 0xFFFFFFFF)
+		{
+			assert((cluster >= 2) && (cluster < disk_info->total_clusters));
+			cluster = fat_get_fat_entry(image, fat_table, cluster);
+		}
+	}
+#endif
 }
 
 
@@ -693,9 +724,6 @@ static imgtoolerr_t fat_seek_file(imgtool_image *image, struct fat_file *file, U
 			file->eof = 0;
 		}
 
-		if (file->eof)
-			pos = file->index;
-
 		/* skip ahead clusters */
 		while((file->cluster_index + disk_info->cluster_size) <= pos)
 		{
@@ -712,7 +740,7 @@ static imgtoolerr_t fat_seek_file(imgtool_image *image, struct fat_file *file, U
 			file->cluster_index += disk_info->cluster_size;
 
 			/* are we at the end of the file? */
-			if (new_cluster == (0xFFFFFFFF >> (32 - disk_info->fat_bits)))
+			if (new_cluster == 0xFFFFFFFF)
 			{
 				pos = file->cluster_index;
 				file->eof = 1;
@@ -871,6 +899,8 @@ static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *fil
 
 	disk_info = (const struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
 
+	LOG(("fat_set_file_size(): file->first_cluster=%d new_size=0x%08x\n", file->first_cluster, new_size));
+
 	/* special case */
 	if (new_size == 0xFFFFFFFF)
 	{
@@ -987,6 +1017,8 @@ static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *fil
 			file->filesize = new_size;
 		file->cluster = file->first_cluster;
 		file->index = 0;
+		file->cluster_index = 0;
+		file->eof = (new_cluster_count == 0);
 	}
 
 	/* special case; clear out stale bytes on non-root directories */
@@ -1021,6 +1053,9 @@ static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *fil
 	err = fat_seek_file(image, file, new_pos);
 	if (err)
 		goto done;
+
+	if (fat_table)
+		fat_debug_integrity_check(image, fat_table, file);
 
 done:
 	if (fat_table)
