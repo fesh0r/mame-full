@@ -1,5 +1,5 @@
 /*
-	TI99 disk controller emulation.
+	TI-99/4 and /4a disk controller emulation.
 
 	Known disk controllers:
 	* TI original SD disk controller.  First sold as a side port module
@@ -10,13 +10,16 @@
 	* CorComp FDC.  Specs unknown, but it supports DD.  (Not emulated)
 	* SNUG BwG.  A nice DD disk controller.  Supports 18 sectors per track.
 	* Myarc HFDC.  Extremely elaborate, supports DD (an HD upgrade may have
-	  existed) and MFM harddisks.  (Emulation is preliminary)
+	  existed) and MFM harddisks.  (Preliminary emulation)
 
-	An alternative was installing an hexbus controller and attaching the floppy
-	disk to the hexbus.  The TI99/2 and 99/5 supported the hexbus interface
-	only.
+	An alternative was installing the hexbus controller (which was just a
+	prototype, and is not emulated) and connecting a hexbus floppy disk
+	controller.  The integrated hexbus port was the only supported way to
+	attach a floppy drive to a TI-99/2 or a TI-99/5.  The integrated hexbus
+	port was the recommended way to attach a floppy drive to the TI-99/8,
+	but I think this computer supported the TI-99/4(a) disk controllers, too.
 
-	Raphael Nabet, 2002-2003.
+	Raphael Nabet, 1999-2003.
 */
 
 #include "devices/basicdsk.h"
@@ -415,7 +418,7 @@ static WRITE_HANDLER(fdc_mem_w)
 	Advantages:
 	* this card supports Double Density.
 	* as this card includes its own RAM, it does not need to allocate a portion
-	of VDP RAM to store I/O buffers.
+	  of VDP RAM to store I/O buffers.
 	* this card includes a MM58274C RTC.
 
 	Reference:
@@ -711,6 +714,7 @@ static WRITE_HANDLER(bwg_mem_w)
 	Advantages: same as BwG, plus:
 	* high density support (only on upgraded cards, I think)
 	* hard disk support (only prehistoric mfm hard disks are supported, though)
+	* DMA support (I think the DMA controller can only access the on-board RAM)
 
 	This card includes a MM58274C RTC and a 9234 HFDC with its various support
 	chips.  I have failed to find information about the 9234 or its cousin the
@@ -781,9 +785,16 @@ static int hfdc_cru_r(int offset)
 	switch (offset)
 	{
 	case 0:
-		/* CRU bits: beware, logic levels of DIP-switches are inverted  */
+		/* CRU bits */
 		if (cru_sel)
-			reply = 0x01;
+			/* DIP switches.  Logic levels are inverted (on->0, off->1).  CRU
+			bit order is the reverse of DIP-switch order, too (dip 1 -> bit 7,
+			dip 8 -> bit 0).  Return value examples:
+				ff -> 4 slow 40-track DD drives
+				55 -> 4 fast 40-track DD drives
+				aa -> 4 80-track DD drives
+				00 -> 4 80-track HD drives */
+			reply = 0x55;	
 		else
 		{
 			reply = 0;
@@ -835,18 +846,18 @@ static void hfdc_cru_w(int offset, int data)
 	case 3:
 		/* rom page select 0 + cru sel */
 		if (data)
-			hfdc_rom_offset |= 0x1000;	/* 0x2000??? */
+			hfdc_rom_offset |= 0x2000;
 		else
-			hfdc_rom_offset &= ~0x1000;	/* 0x2000??? */
+			hfdc_rom_offset &= ~0x2000;
 		cru_sel = data;
 		break;
 
 	case 4:
 		/* rom page select 1 + density */
 		if (data)
-			hfdc_rom_offset |= 0x2000;	/* 0x1000??? */
+			hfdc_rom_offset |= 0x1000;
 		else
-			hfdc_rom_offset &= ~0x2000;	/* 0x1000??? */
+			hfdc_rom_offset &= ~0x1000;
 		break;
 
 	case 9:
@@ -893,6 +904,9 @@ static READ_HANDLER(hfdc_mem_r)
 	else if (offset < 0x0fe0)
 	{
 		/* disk controller */
+		/* >4fd0: data read?? */
+		/* >4fd4: controller status? */
+		logerror("hfdc9234 read %d\n", offset);
 	}
 	else if (offset < 0x1000)
 	{
@@ -903,12 +917,12 @@ static READ_HANDLER(hfdc_mem_r)
 	else if (offset < 0x1400)
 	{
 		/* ram page >10 */
-		reply = hfdc_ram[0x4000+(offset-0x1000)];
+		reply = hfdc_ram[/*0x4000+*/(offset-0x1000)];
 	}
 	else
 	{
 		/* ram with mapper */
-		reply = hfdc_ram[hfdc_ram_offset[(offset-0x1000) >> 10]+((offset-0x1000) & 0x3ff)];
+		reply = hfdc_ram[hfdc_ram_offset[(offset-0x1400) >> 10]+((offset-0x1000) & 0x3ff)];
 	}
 	return reply;
 }
@@ -929,6 +943,9 @@ static WRITE_HANDLER(hfdc_mem_w)
 	else if (offset < 0x0fe0)
 	{
 		/* disk controller */
+		/* >4fd4: data write? */
+		/* >4fd6: command write? */
+		logerror("hfdc9234 write %d %d\n", offset, data);
 	}
 	else if (offset < 0x1000)
 	{
@@ -939,12 +956,12 @@ static WRITE_HANDLER(hfdc_mem_w)
 	else if (offset < 0x1400)
 	{
 		/* ram page >10 */
-		hfdc_ram[0x4000+(offset-0x1000)] = data;
+		hfdc_ram[/*0x4000+*/(offset-0x1000)] = data;
 	}
 	else
 	{
 		/* ram with mapper */
-		hfdc_ram[hfdc_ram_offset[(offset-0x1000) >> 10]+((offset-0x1000) & 0x3ff)] = data;
+		hfdc_ram[hfdc_ram_offset[(offset-0x1400) >> 10]+((offset-0x1000) & 0x3ff)] = data;
 	}
 }
 
