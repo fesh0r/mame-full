@@ -77,7 +77,7 @@ static struct rc_option opts[] = {
      "All following images/roms are seen as hard disks" }, 
    { "cassette",	"cass",			rc_set_int,	&iodevice_type,
      NULL,		IO_CASSETTE,		0,		NULL,
-     "All following images/roms are seen as casettes" }, 
+     "All following images/roms are seen as cassettes" }, 
    { "printer",		"prin",			rc_set_int,	&iodevice_type,
      NULL,		IO_PRINTER,		0,		NULL,
      "All following images/roms are seen as printers" }, 
