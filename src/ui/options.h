@@ -16,6 +16,10 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
+#ifdef MESS
+#include "device.h"
+#endif
+
 enum 
 {
 	COLUMN_GAMES = 0,
@@ -186,7 +190,7 @@ typedef struct
 	BOOL   use_new_ui;
 	UINT32 ram_size;
 	char   *extra_software_paths;
-	char   *printer;
+	char   *software[IO_COUNT];
 #endif
 } options_type;
 
@@ -217,9 +221,6 @@ typedef struct
     BOOL     broadcast;
     BOOL     random_bg;
     char     *default_game;
-#ifdef MESS
-	char     *default_software;
-#endif
 	int      column_width[COLUMN_MAX];
 	int      column_order[COLUMN_MAX];
 	int      column_shown[COLUMN_MAX];

@@ -1778,10 +1778,6 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 		break;
 	}
 
-#ifdef MESS
-	MessGetPickerDefaults();
-#endif
-
 	return TRUE;
 }
 
@@ -2020,7 +2016,6 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 
 #ifdef MESS
 			/* Set the default software in the pane */
-			MessSetPickerDefaults();
 			SmartListView_Free(s_pSoftwareListView);
 			s_pSoftwareListView = NULL;
 #endif /* MESS */

@@ -63,8 +63,6 @@ static int *mess_icon_index;
 static void InitMessPicker(void);
 static void MyFillSoftwareList(int nGame);
 static void MessUpdateSoftwareList(void);
-static void MessGetPickerDefaults(void);
-static void MessSetPickerDefaults(void);
 static void MessOpenOtherSoftware(int iDevice);
 static void MessCreateDevice(int iDevice);
 static BOOL CreateMessIcons(void);
@@ -221,9 +219,14 @@ static void MyFillSoftwareList(int nGame)
 	const struct GameDriver *drv;
 	const char *software_dirs;
 	const char *extra_path;
+/*	const char *selected_software_const;
+	char *this_software;
+	char *selected_software;
+	char *s; */
 	char *paths;
 	int software_dirs_length;
 	int path_count;
+/*	int devtype; */
 	LPCSTR *pathsv;
 
 	if (nGame == s_nCurrentGame)
@@ -258,6 +261,38 @@ static void MyFillSoftwareList(int nGame)
 	}
 
 	FillSoftwareList(s_pSoftwareListView, nGame, path_count, pathsv, extra_path);
+/*
+	if (s_pSoftwareListView)
+	{
+		for (devtype = 0; devtype < IO_COUNT; devtype++)
+		{
+			if (devtype == IO_PRINTER)
+				continue;
+			selected_software_const = GetSelectedSoftware(nGame, devtype);
+			if (selected_software_const && selected_software_const[0])
+			{
+				selected_software = alloca(strlen(selected_software_const) + 1);
+				strcpy(selected_software, selected_software_const);
+
+				this_software = selected_software;
+				while(this_software && *this_software)
+				{
+					s = strchr(this_software, ',');
+					if (s)
+						*(s++) = '\0';
+					else
+						s = NULL;
+
+					i = MessLookupByFilename(this_software);
+					if (i >= 0)
+						SmartListView_SelectItem(s_pSoftwareListView, i, this_software == selected_software);
+
+					this_software = s;
+				}
+			}
+		}
+	}
+*/
 }
 
 static void MessUpdateSoftwareList(void)
@@ -265,7 +300,7 @@ static void MessUpdateSoftwareList(void)
 	MyFillSoftwareList(GetSelectedPickItem());
 }
 
-static void MessSetPickerDefaults(void)
+/*static void MessSetPickerDefaults(void)
 {
     int i;
     size_t nDefaultSize = 0;
@@ -290,7 +325,7 @@ static void MessSetPickerDefaults(void)
     }
 
     SetDefaultSoftware(default_software);
-}
+}*/
 
 static void InitMessPicker(void)
 {
@@ -316,7 +351,7 @@ static void InitMessPicker(void)
 	SetWindowLong(s_pSoftwareListView->hwndListView, GWL_WNDPROC, (LONG)ListViewWndProc);
 }
 
-static void MessGetPickerDefaults(void)
+/*static void MessGetPickerDefaults(void)
 {
 	const char *default_software_const;
 	char *default_software;
@@ -347,7 +382,7 @@ static void MessGetPickerDefaults(void)
 			this_software = s;
 		}
 	}
-}
+}*/
 
 static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const struct GameDriver *gamedrv)
 {
@@ -361,8 +396,6 @@ static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const str
 
 	if ((pOpts->ram_size != 0) && ram_is_valid_option(gamedrv, pOpts->ram_size))
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -ramsize %d", pOpts->ram_size);
-	if (pOpts->printer[0])
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -prin \"%s\"", pOpts->printer);
 
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%snewui", pOpts->use_new_ui ? "" : "no");
 }

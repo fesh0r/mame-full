@@ -429,6 +429,7 @@ static BOOL Printer_ComponentProc(enum component_msg msg, HWND hWnd, const struc
 	HWND hPrinterText, hPrinterCaption, hPrinterBrowse;
 	options_type *o = params->o;
 	char buf[MAX_PATH];
+	const char *s;
 	int i;
 
 	hPrinterText = GetDlgItem(hWnd, IDC_PRINTER_EDITTEXT);
@@ -463,10 +464,11 @@ static BOOL Printer_ComponentProc(enum component_msg msg, HWND hWnd, const struc
 
 	case CMSG_PROPTOOPTIONS:
 		GetWindowText(hPrinterText, buf, sizeof(buf) / sizeof(buf[0]));
-		if (strcmp(o->printer, buf))
+		s = o->software[IO_PRINTER] ? o->software[IO_PRINTER] : "";
+		if (strcmp(s, buf))
 		{
-			FreeIfAllocated(&o->printer);
-			o->printer = strdup(buf);
+			FreeIfAllocated(&o->software[IO_PRINTER]);
+			o->software[IO_PRINTER] = buf[0] ? strdup(buf) : NULL;
 			MarkChanged(hWnd);
 		}
 		break;
