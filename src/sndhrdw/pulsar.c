@@ -6,8 +6,8 @@
  * juergen buchmueller <pullmoll@t-online.de>, aug 2000
  *
  * TODO:
- * fix bugs (some frequencies are off compared to the samples)
- * add heart-beat sound (a difficult to understand part in the schematics)
+ * - fix bugs
+ * - some frequencies are off compared to the samples
  *
  ****************************************************************************/
 #include "driver.h"
