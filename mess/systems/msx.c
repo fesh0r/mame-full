@@ -839,7 +839,7 @@ ROM_END
 SYSTEM_CONFIG_START(msx)
 	CONFIG_DEVICE_CASSETTE(1, "cas\0", msx_cassette_init)
 	CONFIG_DEVICE_PRINTER(1)
-	CONFIG_DEVICE_CARTSLOT_OPT(MSX_MAX_CARTS, "rom\0", NULL, NULL, msx_cart_load, msx_cart_unload, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(MSX_MAX_CARTS, "mx1\0rom\0", NULL, NULL, msx_cart_load, msx_cart_unload, NULL, NULL)
 	CONFIG_DEVICE_FLOPPY_BASICDSK(2, "dsk\0", msx_floppy_init)
 SYSTEM_CONFIG_END
 

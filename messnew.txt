@@ -12,6 +12,8 @@ System Driver Changes:
 - [COCO] Scaled the joystick port to 64 quanta rather than 256 (bug #340).
   [tim lindner]
 - [MAC] Improved mouse emulation when moving diagonally. [Raphael Nabet]
+- [A2600/A5200/COCO/INTV/MSX/SNES/VECTREX] Added support for new GoodTools
+  file extensions (bug #350). [Nate Woods]
 
 Source Changes:
 ---------------

@@ -42,7 +42,7 @@ Priority:  Todo:                                                  Done:
 
 /* Initial value of the AF register */
 static UINT16 dmg_cpu_af_reset = 0x01B0;	/* GameBoy        / Super GameBoy   */
-static UINT16 gbp_cpu_af_reset = 0xFFB0;	/* GameBoy Pocket / Super GameBoy 2 */
+/*static UINT16 gbp_cpu_af_reset = 0xFFB0;	 * GameBoy Pocket / Super GameBoy 2 */
 static UINT16 gbc_cpu_af_reset = 0x11B0;	/* GameBoy Color  / GameBoy Advance */
 
 static MEMORY_READ_START (gb_readmem)

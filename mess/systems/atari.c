@@ -969,7 +969,7 @@ SYSTEM_CONFIG_START(a800)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(a5200)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "rom\0bin\0", NULL, NULL, a5200_rom_load, a5200_rom_unload, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "rom\0bin\0a52\0", NULL, NULL, a5200_rom_load, a5200_rom_unload, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************
