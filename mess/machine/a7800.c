@@ -302,7 +302,7 @@ WRITE_HANDLER( a7800_cart_w ) {
 
     if (offset < 0x4000) {
         if (a7800_cart_type & 0x04) {
-            ROM[0x8000 + offset] = data;
+            ROM[0x4000 + offset] = data;
         }
         else if (a7800_cart_type & 0x01) {
             pokey1_w(offset,data);
