@@ -25,7 +25,7 @@
 ** nes_apu.c
 **
 ** NES APU emulation
-** $Id: nes_apu.c,v 1.9 2000/09/12 19:01:07 hjb Exp $
+** $Id: nes_apu.c,v 1.10 2000/09/12 20:39:47 hjb Exp $
 */
 
 #include <string.h>
@@ -457,7 +457,7 @@ static INT32 apu_noise(void)
 			else
                 total -= output;
         }
-	   num_times++;
+		num_times++;
 	}
 
 	apu.noise.output_vol = total / num_times;
@@ -623,114 +623,131 @@ void apu_write(UINT32 address, UINT8 value)
 	case APU_WRA0:
 	case APU_WRB0:
         chan = (address & 4) ? 1 : 0;
-		log_printf("APU #%d WR%c0 $%02x\n", apu.cpunum, 'A'+chan, value);
+		log_printf("APU #%d WR%c0 $%02x (PC=$%04x)\n", apu.cpunum, 'A'+chan, value, cpu_get_pc());
         apu.rectangle[chan].regs[0] = value;
 		apu.rectangle[chan].volume = value & 0x0F;
 		apu.rectangle[chan].env_delay = apu.sample_rate / 240;
 		apu.rectangle[chan].holdnote = (value & 0x20) ? TRUE : FALSE;
 		apu.rectangle[chan].fixed_envelope = (value & 0x10) ? TRUE : FALSE;
 		apu.rectangle[chan].duty_flip = duty_flip[value >> 6];
-		log_printf("   volume      %d\n", apu.rectangle[chan].volume);
-		log_printf("   env_delay   %d\n", apu.rectangle[chan].env_delay);
-		log_printf("   holdnote    %d\n", apu.rectangle[chan].holdnote);
-		log_printf("   fixed_env   %d\n", apu.rectangle[chan].fixed_envelope);
-		log_printf("   duty_flip   %d\n", apu.rectangle[chan].duty_flip);
+		log_printf("   volume         %d\n", apu.rectangle[chan].volume);
+		log_printf("   env_delay      %d\n", apu.rectangle[chan].env_delay);
+		log_printf("   holdnote       %d\n", apu.rectangle[chan].holdnote);
+		log_printf("   fixed_env      %d\n", apu.rectangle[chan].fixed_envelope);
+		log_printf("   duty_flip      %d\n", apu.rectangle[chan].duty_flip);
         break;
 
 	case APU_WRA1:
 	case APU_WRB1:
 		chan = (address & 4) ? 1 : 0;
-		log_printf("APU #%d WR%c1 $%02x\n", apu.cpunum, 'A'+chan, value);
+		log_printf("APU #%d WR%c1 $%02x (PC=$%04x)\n", apu.cpunum, 'A'+chan, value, cpu_get_pc());
         apu.rectangle[chan].regs[1] = value;
 		apu.rectangle[chan].sweep_shifts = value & 7;
 		apu.rectangle[chan].sweep_on = (value & 0x80) ? TRUE : FALSE;
 		apu.rectangle[chan].sweep_delay = apu.sample_rate * (((value >> 4) & 7) + 1) / 120;
 		apu.rectangle[chan].sweep_inc = (value & 0x08) ? TRUE : FALSE;
-		log_printf("   sweep_shift %d\n", apu.rectangle[chan].sweep_shifts);
-		log_printf("   sweep_on    %d\n", apu.rectangle[chan].sweep_on);
-		log_printf("   sweep_delay %d\n", apu.rectangle[chan].sweep_delay);
-		log_printf("   sweep_inc   %d\n", apu.rectangle[chan].sweep_inc);
+		log_printf("   sweep_shift    %d\n", apu.rectangle[chan].sweep_shifts);
+		log_printf("   sweep_on       %d\n", apu.rectangle[chan].sweep_on);
+		log_printf("   sweep_delay    %d\n", apu.rectangle[chan].sweep_delay);
+		log_printf("   sweep_inc      %d\n", apu.rectangle[chan].sweep_inc);
         break;
 
 	case APU_WRA2:
 	case APU_WRB2:
 		chan = (address & 4) ? 1 : 0;
-		log_printf("APU #%d WR%c2 $%02x\n", apu.cpunum, 'A'+chan, value);
+		log_printf("APU #%d WR%c2 $%02x (PC=$%04x)\n", apu.cpunum, 'A'+chan, value, cpu_get_pc());
         apu.rectangle[chan].regs[2] = value;
 		apu.rectangle[chan].divisor = 256 * (apu.rectangle[chan].regs[3] & 7) + value + 1;
 		apu.rectangle[chan].freq = apu_baseclock / apu.rectangle[chan].divisor;
-		log_printf("   divisor     %d\n", apu.rectangle[chan].divisor);
-		log_printf("   freq        %f\n", apu.rectangle[chan].freq);
+		log_printf("   divisor        %d\n", apu.rectangle[chan].divisor);
+		log_printf("   freq           %f\n", apu.rectangle[chan].freq);
         break;
 
 	case APU_WRA3:
 	case APU_WRB3:
 		chan = (address & 4) ? 1 : 0;
-		log_printf("APU #%d WR%c3 $%02x\n", apu.cpunum, 'A'+chan, value);
+		log_printf("APU #%d WR%c3 $%02x (PC=$%04x)\n", apu.cpunum, 'A'+chan, value, cpu_get_pc());
         apu.rectangle[chan].regs[3] = value;
 		apu.rectangle[chan].divisor = 256 * (value & 7) + apu.rectangle[chan].regs[2] + 1;
 		apu.rectangle[chan].freq = apu_baseclock / apu.rectangle[chan].divisor;
 		apu.rectangle[chan].vbl_length = apu.sample_rate * apu.refresh_rate / vbl_length[value >> 3];
 		apu.rectangle[chan].env_vol = 0;	/* reset envelope */
+		apu.rectangle[chan].env_phase = 0;	/* reset envelope accu */
 		apu.rectangle[chan].adder = 0;
-		log_printf("   divisor     %d\n", apu.rectangle[chan].divisor);
-		log_printf("   freq        %f\n", apu.rectangle[chan].freq);
-		log_printf("   vbl_length  %d\n", apu.rectangle[chan].vbl_length);
+		log_printf("   divisor        %d\n", apu.rectangle[chan].divisor);
+		log_printf("   freq           %f\n", apu.rectangle[chan].freq);
+		log_printf("   vbl_length     %d\n", apu.rectangle[chan].vbl_length);
         break;
 
 	/* triangle */
 	case APU_WRC0:
-		log_printf("APU #%d WRC0 $%02x\n", apu.cpunum, value);
+		log_printf("APU #%d WRC0 $%02x (PC=$%04x)\n", apu.cpunum, value, cpu_get_pc());
         apu.triangle.regs[0] = value;
 		apu.triangle.linear_length = apu.sample_rate * ((value & 0x7f) + 1) / 128 / 4;
 		apu.triangle.holdnote = (value & 0x80) ? TRUE : FALSE;
-		break;
+		log_printf("   linear_length  %d\n", apu.triangle.linear_length);
+		log_printf("   holdnote       %d\n", apu.triangle.holdnote);
+        break;
 
 	case APU_WRC2:
-		log_printf("APU #%d WRC2 $%02x\n", apu.cpunum, value);
+		log_printf("APU #%d WRC2 $%02x (PC=$%04x)\n", apu.cpunum, value, cpu_get_pc());
         apu.triangle.regs[1] = value;
 		apu.triangle.divisor = 256 * (apu.triangle.regs[2] & 7) + value + 1;
 		apu.triangle.freq = apu_baseclock / apu.triangle.divisor;
-		break;
+		log_printf("   divisor        %d\n", apu.triangle.divisor);
+		log_printf("   freq           %f\n", apu.triangle.freq);
+        break;
 
 	case APU_WRC3:
-		log_printf("APU #%d WRC3 $%02x\n", apu.cpunum, value);
+		log_printf("APU #%d WRC3 $%02x (PC=$%04x)\n", apu.cpunum, value, cpu_get_pc());
         apu.triangle.regs[2] = value;
 		apu.triangle.divisor = 256 * (value & 7) + apu.triangle.regs[1] + 1;
 		apu.triangle.freq = apu_baseclock / apu.triangle.divisor;
 		apu.triangle.vbl_length = apu.sample_rate * apu.refresh_rate / vbl_length[value >> 3];
-		break;
+		log_printf("   divisor        %d\n", apu.triangle.divisor);
+        log_printf("   freq           %f\n", apu.triangle.freq);
+		log_printf("   vbl_length     %d\n", apu.triangle.vbl_length);
+        break;
 
 	/* noise */
 	case APU_WRD0:
-		log_printf("APU #%d WRD0 $%02x\n", apu.cpunum, value);
+		log_printf("APU #%d WRD0 $%02x (PC=$%04x)\n", apu.cpunum, value, cpu_get_pc());
         apu.noise.regs[0] = value;
 		apu.noise.volume = value & 0x0F;
 		apu.noise.env_delay = apu.sample_rate / 240;
-		apu.noise.holdnote = (value & 0x20) ? TRUE : FALSE;
 		apu.noise.fixed_envelope = (value & 0x10) ? TRUE : FALSE;
-		break;
+        apu.noise.holdnote = (value & 0x20) ? TRUE : FALSE;
+		log_printf("   volume         %d\n", apu.noise.volume);
+		log_printf("   env_delay      %d\n", apu.noise.env_delay);
+		log_printf("   holdnote       %d\n", apu.noise.holdnote);
+		log_printf("   fixed_env      %d\n", apu.noise.fixed_envelope);
+        break;
 
 	case APU_WRD2:
-		log_printf("APU #%d WRD2 $%02x\n", apu.cpunum, value);
+		log_printf("APU #%d WRD2 $%02x (PC=$%04x)\n", apu.cpunum, value, cpu_get_pc());
         apu.noise.regs[1] = value;
 		apu.noise.divisor = noise_divisor[value & 0x0F];
 		apu.noise.freq =  apu_baseclock / apu.noise.divisor;
 		if ((value & 0x80) && FALSE == apu.noise.short_sample)
 			apu.noise.cur_pos %= APU_NOISE_93;
 		apu.noise.short_sample = (value & 0x80) ? TRUE : FALSE;
-		break;
+		log_printf("   divisor        %d\n", apu.noise.divisor);
+		log_printf("   freq           %f\n", apu.noise.freq);
+		log_printf("   short_sample   %f\n", apu.noise.short_sample);
+        break;
 
 	case APU_WRD3:
-		log_printf("APU #%d WRD3 $%02x\n", apu.cpunum, value);
+		log_printf("APU #%d WRD3 $%02x (PC=$%04x)\n", apu.cpunum, value, cpu_get_pc());
         apu.noise.regs[2] = value;
 		apu.noise.vbl_length = apu.sample_rate * apu.refresh_rate / vbl_length[value >> 3];
-		apu.noise.env_vol = 0x0F; /* reset envelope */
-		break;
+		apu.noise.env_vol = 0;		/* reset envelope */
+		apu.noise.env_phase = 0;	/* reset envelope accu */
+        log_printf("   vbl_length     %d\n", apu.noise.vbl_length);
+        break;
 
 	/* DMC */
 	case APU_WRE0:
-		log_printf("APU #%d WRE0 $%02x\n", apu.cpunum, value);
+		log_printf("APU #%d WRE0 $%02x (PC=$%04x)\n", apu.cpunum, value, cpu_get_pc());
         apu.dmc.regs[0] = value;
 
 		apu.dmc.divisor = dmc_clocks[value & 0x0F];
@@ -747,7 +764,7 @@ void apu_write(UINT32 address, UINT8 value)
 		break;
 
 	case APU_WRE1: /* 7-bit DAC */
-		log_printf("APU #%d WRE1 $%02x\n", apu.cpunum, value);
+		log_printf("APU #%d WRE1 $%02x (PC=$%04x)\n", apu.cpunum, value, cpu_get_pc());
         /* add the _delta_ between written value and
 		** current output level of the volume reg
 		*/
@@ -757,19 +774,19 @@ void apu_write(UINT32 address, UINT8 value)
 		break;
 
 	case APU_WRE2:
-		log_printf("APU #%d WRE2 $%02x\n", apu.cpunum, value);
+		log_printf("APU #%d WRE2 $%02x (PC=$%04x)\n", apu.cpunum, value, cpu_get_pc());
         apu.dmc.regs[2] = value & 0xff;
 		apu.dmc.cached_addr = 0xC000 + 64 * (value & 0xff);
 		break;
 
 	case APU_WRE3:
-		log_printf("APU #%d WRE3 $%02x\n", apu.cpunum, value);
+		log_printf("APU #%d WRE3 $%02x (PC=$%04x)\n", apu.cpunum, value, cpu_get_pc());
         apu.dmc.regs[3] = value;
 		apu.dmc.cached_dmalength = 8 * ((16 * value) + 1);
 		break;
 
 	case APU_SMASK:
-		log_printf("APU #%d SMASK $%02x\n", apu.cpunum, value);
+		log_printf("APU #%d SMASK $%02x (PC=$%04x)\n", apu.cpunum, value, cpu_get_pc());
         apu.enable_reg = value;
 
 		for (chan = 0; chan < 2; chan++)
@@ -852,8 +869,8 @@ UINT8 apu_read(UINT32 address)
 		break;
 
 	default:
-		value = (address >> 8); /* heavy capacitance on data bus */
-		break;
+        value = (address >> 8); /* heavy capacitance on data bus */
+        break;
 	}
 
 	return value;
@@ -1042,6 +1059,9 @@ void apu_setext(apu_t *src_apu, apuext_t *ext)
 
 /*
 ** $Log: nes_apu.c,v $
+** Revision 1.10  2000/09/12 20:39:47  hjb
+** Reset env_phase with env_val when the registers are written to.
+**
 ** Revision 1.9  2000/09/12 19:01:07  hjb
 ** Some more bugfixes - enabled the low-pass filter again.
 **
