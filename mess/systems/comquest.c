@@ -207,30 +207,23 @@ static struct GfxDecodeInfo comquest_gfxdecodeinfo[] = {
     { -1 } /* end of array */
 };
 
-static int comquest_frame_int(void)
+static unsigned char comquest_palette[] =
 {
-	return 0;
-}
-
-static unsigned char comquest_palette[2][3] =
-{
-	{ 0, 0, 0 },
-	{ 255,255,255 }
+	0, 0, 0,
+	255,255,255
 };
 
 static unsigned short comquest_colortable[1][2] = {
 	{ 0, 1 },
 };
 
-static void comquest_init_colors (unsigned char *sys_palette,
-							  unsigned short *sys_colortable,
-							  const unsigned char *color_prom)
+static PALETTE_INIT( comquest )
 {
-	memcpy (sys_palette, comquest_palette, sizeof (comquest_palette));
-	memcpy(sys_colortable, comquest_colortable,sizeof(comquest_colortable));
+	palette_set_colors(0, comquest_palette, sizeof(comquest_palette) / 3);
+	memcpy(colortable, comquest_colortable,sizeof(comquest_colortable));
 }
 
-static void comquest_machine_init(void)
+static MACHINE_INIT( comquest )
 {
 //	UINT8 *mem=memory_region(REGION_USER1);
 //	cpu_setbank(1,mem+0x00000);
@@ -238,71 +231,60 @@ static void comquest_machine_init(void)
 
 UINT32 amask= 0xffff;
 
-static struct MachineDriver machine_driver_comquest =
-{
+
+static MACHINE_DRIVER_START( comquest )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6805,
-//			CPU_HD63705, // instruction set looks like m6805/m6808
-//			CPU_M68705, // instruction set looks like m6805/m6808
+	MDRV_CPU_ADD(M6805, 4000000)		/* 4000000? */
+	/*MDRV_CPU_ADD(HD63705, 4000000)	instruction set looks like m6805/m6808 */
+	/*MDRV_CPU_ADD(M68705, 4000000)	instruction set looks like m6805/m6808 */
+
 /*
-  8 bit bus, integrated io, serial io?,
+	8 bit bus, integrated io, serial io?,
 
-  starts at address zero?
+	starts at address zero?
 
-  not saturn, although very similar hardware compared to hp48g (build into big plastic case)
-  not sc61860, 62015?
-  not cdp1802
-  not tms9900?
-  not z80
-  not 6502, mitsubishi 740
-  not i86
-  not 6809
-  not 68008?
-  not tms32010
-  not t11
-  not arm
-  not 8039
-  not tms370
-  not lh5801
-  not fujitsu mb89150
-  not epson e0c88
+	not saturn, although very similar hardware compared to hp48g (build into big plastic case)
+	not sc61860, 62015?
+	not cdp1802
+	not tms9900?
+	not z80
+	not 6502, mitsubishi 740
+	not i86
+	not 6809
+	not 68008?
+	not tms32010
+	not t11
+	not arm
+	not 8039
+	not tms370
+	not lh5801
+	not fujitsu mb89150
+	not epson e0c88
 */
-			4000000, //?
-			comquest_readmem,comquest_writemem,0,0,
-			comquest_frame_int, 1,
-			0,0,
-			&amask
-        }
-	},
-	/* frames per second, VBL duration */
-	60, DEFAULT_60HZ_VBLANK_DURATION, // lcd!
-	1,				/* single CPU */
-	comquest_machine_init,
-	0,//pc1401_machine_stop,
 
-	// 160 x 102
-	64*4, 128, { 0, 64*4 - 1, 0, 128 - 1},
-	comquest_gfxdecodeinfo,			   /* graphics decode info */
-	// 16 out of 4096
-	sizeof (comquest_palette) / sizeof (comquest_palette[0]) ,
-	sizeof (comquest_colortable) / sizeof(comquest_colortable[0][0]),
-	comquest_init_colors,		/* convert color prom */
+	MDRV_CPU_MEMORY(comquest_readmem,comquest_writemem)
+	MDRV_CPU_CONFIG( amask )
+	MDRV_FRAMES_PER_SECOND(LCD_FRAMES_PER_SECOND)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	VIDEO_TYPE_RASTER,	/* video flags */
-	0,						/* obsolete */
-    comquest_vh_start,
-	comquest_vh_stop,
-	comquest_vh_screenrefresh,
+	MDRV_MACHINE_INIT( comquest )
+
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*4, 128)	/* 160 x 102 */
+	MDRV_VISIBLE_AREA(0, 64*4-1, 0, 128-1)
+	MDRV_GFXDECODE( comquest_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH( sizeof(comquest_palette) / 3)
+	MDRV_COLORTABLE_LENGTH( sizeof(comquest_colortable) / sizeof(comquest_colortable[0][0]) )
+	MDRV_PALETTE_INIT( comquest )
+
+	MDRV_VIDEO_START( comquest )
+	MDRV_VIDEO_UPDATE( comquest )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		// unknown ?
-		{ 0 }
-    }
-};
+	/* unknown ? */
+MACHINE_DRIVER_END
 
 ROM_START(comquest)
 //	ROM_REGION(0x10000,REGION_CPU1,0)
@@ -363,7 +345,7 @@ static const struct IODevice io_comquest[] = {
     { IO_END }
 };
 
-void init_comquest(void)
+DRIVER_INIT( comquest )
 {
 //	int i;
 //	UINT8 *gfx=memory_region(REGION_GFX1);
@@ -372,14 +354,3 @@ void init_comquest(void)
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR	COMPANY   FULLNAME */
 CONS( 19??, comquest, 0, 		comquest, comquest, comquest, "Data Concepts",  "Comquest Plus German")
-
-#ifdef RUNTIME_LOADER
-extern void comquest_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"comquest")==0) drivers[i]=&driver_comquest;
-	}
-}
-#endif
-

@@ -7,6 +7,8 @@
 #include "device.h"
 #include "driver.h"
 
+#define LCD_FRAMES_PER_SECOND	30
+
 #define ARRAY_LENGTH(x) (sizeof(x)/sizeof(x[0]))
 
 /* MESS_DEBUG is a debug switch (for developers only) for

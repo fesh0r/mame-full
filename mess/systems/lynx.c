@@ -191,7 +191,7 @@ static MACHINE_DRIVER_START( lynx )
 	MDRV_CPU_ADD(M65SC02, 4000000)        /* vti core, integrated in vlsi, stz, but not bbr bbs */
 	MDRV_CPU_MEMORY(lynx_readmem,lynx_writemem)
 	MDRV_CPU_VBLANK_INT(lynx_frame_int, 1)
-	MDRV_FRAMES_PER_SECOND(30)	/* lcd!, varies */
+	MDRV_FRAMES_PER_SECOND(LCD_FRAMES_PER_SECOND)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 

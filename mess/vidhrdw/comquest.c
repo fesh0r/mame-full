@@ -11,17 +11,13 @@ static struct {
 	int count;
 } comquest_video={ { {0} } };
 
-int comquest_vh_start(void)
+VIDEO_START( comquest )
 {
 	(void) comquest_video;
     return 0;
 }
 
-void comquest_vh_stop(void)
-{
-}
-
-void comquest_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( comquest )
 {
 	int x, y, j;
 

@@ -317,7 +317,7 @@ static void blitter_proc( int param ) {
 			temp_ptr3 = ptr[3];
 
 			if ( custom_regs.BLTCON0 & 0x0200 )
-				custom_regs.BLTxDAT[2] = READ_WORD( &RAM[ptr[2]] );
+				custom_regs.BLTxDAT[2] = *((data16_t *) &RAM[ptr[2]] );
 
 			dataA = ( custom_regs.BLTxDAT[0] >> start );
 
@@ -391,7 +391,7 @@ static void blitter_proc( int param ) {
 			blt_total |= dst_data;
 
 			if ( custom_regs.BLTCON0 & 0x0100 )
-				WRITE_WORD( &RAM[temp_ptr3], dst_data );
+				*((data16_t *) &RAM[temp_ptr3]) = dst_data;
 
 			dataB = ( dataB << 1 ) | ( dataB >> 15 );
 		}
@@ -452,13 +452,13 @@ static void blitter_proc( int param ) {
 
 					/* get new data */
 					if ( ptr[0] != -1 )
-						new_data[0] = READ_WORD( &RAM[ptr[0]] );
+						new_data[0] = *((data16_t *) &RAM[ptr[0]] );
 
 					if ( ptr[1] != -1 )
-						new_data[1] = READ_WORD( &RAM[ptr[1]] );
+						new_data[1] = *((data16_t *) &RAM[ptr[1]] );
 
 					if ( ptr[2] != -1 )
-						new_data[2] = READ_WORD( &RAM[ptr[2]] );
+						new_data[2] = *((data16_t *) &RAM[ptr[2]] );
 
 					for ( i = 0; i < 8; i++ ) {
 						if ( custom_regs.BLTCON0 & ( 1 << i ) ) {
@@ -476,7 +476,7 @@ static void blitter_proc( int param ) {
 							dst_data = blitter_fill( dst_data, custom_regs.BLTCON1 & 0x18, &fc );
 
 						if ( ptr[3] != -1 ) {
-							WRITE_WORD( &RAM[ptr[3]], dst_data );
+							*((data16_t *) &RAM[ptr[3]]) = dst_data;
 							ptr[3] -= 2;
 						}
 
@@ -490,7 +490,7 @@ static void blitter_proc( int param ) {
 							ptr[2] -= 2;
 					} else {
 						if ( ptr[3] != -1 ) {
-							WRITE_WORD( &RAM[ptr[3]], dst_data );
+							*((data16_t *) &RAM[ptr[3]]) = dst_data;
 							ptr[3] += 2;
 						}
 
@@ -625,6 +625,7 @@ typedef struct {
 	unsigned char mfm[544*2*11];
 	int	cached;
 	void *rev_timer;
+	int rev_timer_started;
 	int pos;
 } fdc_def;
 
@@ -636,6 +637,8 @@ static int fdc_side = 1;
 static int fdc_step = 1;
 static int fdc_rdy = 1;
 
+static void fdc_rev_proc( int drive );
+
 int amiga_fdc_init( int id ) {
 
 	fdc_status[id].motor_on = 0;
@@ -643,7 +646,8 @@ int amiga_fdc_init( int id ) {
 	fdc_status[id].dir = 0;
 	fdc_status[id].wprot = 1;
 	fdc_status[id].cyl = 0;
-	fdc_status[id].rev_timer = 0;
+	fdc_status[id].rev_timer = timer_alloc(fdc_rev_proc);
+	fdc_status[id].rev_timer_started = 0;
 	fdc_status[id].cached = -1;
 	fdc_status[id].pos = 0;
 
@@ -672,7 +676,7 @@ static int fdc_get_curpos( int drive ) {
 	int bytes;
 	int pos;
 
-	if ( fdc_status[drive].rev_timer == 0 ) {
+	if ( fdc_status[drive].rev_timer_started == 0 ) {
 		logerror("Rev timer not started on drive %d, cant get position!\n", drive );
 		return 0;
 	}
@@ -746,7 +750,7 @@ static void fdc_dma_proc( int drive ) {
 
 			cur_pos %= ( 544 * 2 * 11 );
 
-			WRITE_WORD( RAM, dat );
+			*((data16_t *) RAM) = dat;
 
 			RAM += 2;
 		}
@@ -947,13 +951,14 @@ static void fdc_rev_proc( int drive ) {
 	time = ( custom_regs.ADKCON & 0x100 ) ? 2 : 4;
 	time *= ( 544 * 2 * 11 );
 	time *= 8;
-	fdc_status[drive].rev_timer = timer_set( TIME_IN_USEC( time ) , drive, fdc_rev_proc );
+	timer_adjust(fdc_status[drive].rev_timer, TIME_IN_USEC( time ), drive, 0);
+	fdc_status[drive].rev_timer_started = 1;
 }
 
 static void start_rev_timer( int drive ) {
 	int time;
 
-	if ( fdc_status[drive].rev_timer ) {
+	if ( fdc_status[drive].rev_timer_started ) {
 		logerror("Revolution timer started twice?!\n" );
 		return;
 	}
@@ -962,17 +967,18 @@ static void start_rev_timer( int drive ) {
 	time *= ( 544 * 2 * 11 );
 	time *= 8;
 
-	fdc_status[drive].rev_timer = timer_set( TIME_IN_USEC( time ) , drive, fdc_rev_proc );
+	timer_adjust(fdc_status[drive].rev_timer, TIME_IN_USEC( time ), drive, 0);
+	fdc_status[drive].rev_timer_started = 1;
 }
 
 static void stop_rev_timer( int drive ) {
-	if ( fdc_status[drive].rev_timer == 0 ) {
+	if ( fdc_status[drive].rev_timer_started == 0 ) {
 		logerror("Revolution timer never started?!\n" );
 		return;
 	}
 
-	timer_remove( fdc_status[drive].rev_timer );
-	fdc_status[drive].rev_timer = 0;
+	timer_reset( fdc_status[drive].rev_timer, TIME_NEVER );
+	fdc_status[drive].rev_timer_started = 0;
 }
 
 static void fdc_setup_leds( int drive ) {
@@ -1079,7 +1085,8 @@ static int fdc_status_r( void ) {
 
 /* required prototype */
 static void cia_fire_timer( int cia, int timer );
-static void *cia_hblank_timer = 0;
+static void *cia_hblank_timer;
+static int cia_hblank_timer_set;
 
 typedef struct {
 	unsigned char 	ddra;
@@ -1108,6 +1115,8 @@ typedef struct {
 	/* MESS timers */
 	void			*timerA;
 	void			*timerB;
+	int				timerA_started;
+	int				timerB_started;
 } cia_8520_def;
 
 static cia_8520_def cia_8520[2];
@@ -1117,9 +1126,9 @@ static void cia_timer_proc( int param ) {
 	int timer = param & 1;
 
 	if ( timer == 0 )
-		cia_8520[cia].timerA = 0;
+		cia_8520[cia].timerA_started = 0;
 	else
-		cia_8520[cia].timerB = 0;
+		cia_8520[cia].timerB_started = 0;
 
 	if ( timer == 0 ) {
 		if ( cia_8520[cia].timerA_mode & 0x08 ) { /* One shot */
@@ -1178,7 +1187,7 @@ static int cia_get_count( int cia, int timer ) {
 	/* 715909 Hz for NTSC, 709379 for PAL */
 
 	if ( timer == 0 ) {
-		if ( cia_8520[cia].timerA )
+		if ( cia_8520[cia].timerA_started )
 			time = cia_8520[cia].timerA_count - ( int )( timer_timeelapsed( cia_8520[cia].timerA ) / TIME_IN_HZ( 715909 ) );
 		else
 			time = cia_8520[cia].timerA_count;
@@ -1195,13 +1204,11 @@ static int cia_get_count( int cia, int timer ) {
 static void cia_stop_timer( int cia, int timer ) {
 
 	if ( timer == 0 ) {
-		if ( cia_8520[cia].timerA )
-			timer_remove( cia_8520[cia].timerA );
-		cia_8520[cia].timerA = 0;
+		timer_reset( cia_8520[cia].timerA, TIME_NEVER );
+		cia_8520[cia].timerA_started = 0;
 	} else {
-		if ( cia_8520[cia].timerB )
-			timer_remove( cia_8520[cia].timerB );
-		cia_8520[cia].timerB = 0;
+		timer_reset( cia_8520[cia].timerB, TIME_NEVER );
+		cia_8520[cia].timerB_started = 0;
 	}
 }
 
@@ -1210,11 +1217,11 @@ static void cia_fire_timer( int cia, int timer ) {
 	/* 715909 Hz for NTSC, 709379 for PAL */
 
 	if ( timer == 0 ) {
-		if ( cia_8520[cia].timerA == 0 )
-			cia_8520[cia].timerA = timer_set( ( double )cia_8520[cia].timerA_count * TIME_IN_HZ( 715909 ), ( cia << 8 ) | timer, cia_timer_proc );
+		if ( cia_8520[cia].timerA_started == 0 )
+			timer_adjust(cia_8520[cia].timerA, ( double )cia_8520[cia].timerA_count * TIME_IN_HZ( 715909 ), ( cia << 8 ) | timer, 0 );
 	} else {
-		if ( cia_8520[cia].timerB == 0 )
-			cia_8520[cia].timerB = timer_set( ( double )cia_8520[cia].timerB_count * TIME_IN_HZ( 715909 ), ( cia << 8 ) | timer, cia_timer_proc );
+		if ( cia_8520[cia].timerB_started == 0 )
+			timer_adjust(cia_8520[cia].timerB, ( double )cia_8520[cia].timerB_count * TIME_IN_HZ( 715909 ), ( cia << 8 ) | timer, 0 );
 	}
 }
 
@@ -1247,7 +1254,7 @@ static void cia_hblank_update( int param ) {
 		}
 	}
 
-	cia_hblank_timer = timer_set( cpu_getscanlineperiod(), 0, cia_hblank_update );
+	timer_adjust( cia_hblank_timer, cpu_getscanlineperiod(), 0, 0 );
 }
 
 /* Issue a index pulse when a disk revolution completes */
@@ -1298,6 +1305,9 @@ static void cia_1_portB_w( int data ) {
 static void cia_init( void ) {
 	int i;
 
+	cia_hblank_timer = timer_alloc( cia_hblank_update );
+	cia_hblank_timer_set = 0;
+
 	/* Initialize port handlers */
 	cia_8520[0].portA_read = cia_0_portA_r;
 	cia_8520[0].portB_read = cia_0_portB_r;
@@ -1329,12 +1339,10 @@ static void cia_init( void ) {
 		cia_8520[i].alarm = 0;
 		cia_8520[i].icr = 0;
 		cia_8520[i].ics = 0;
-		if ( cia_8520[i].timerA )
-			timer_remove( cia_8520[i].timerA );
-		cia_8520[i].timerA = 0;
-		if ( cia_8520[i].timerB )
-			timer_remove( cia_8520[i].timerA );
-		cia_8520[i].timerB = 0;
+		cia_8520[i].timerA = timer_alloc( cia_timer_proc );
+		cia_8520[i].timerB = timer_alloc( cia_timer_proc );
+		cia_8520[i].timerA_started = 0;
+		cia_8520[i].timerB_started = 0;
 	}
 }
 
@@ -2025,16 +2033,18 @@ WRITE16_HANDLER ( amiga_custom_w ) {
 
 ***************************************************************************/
 
-int amiga_vblank_irq( void ) {
+INTERRUPT_GEN( amiga_vblank_irq )
+{
 	/* Update TOD on CIA A */
 	cia_vblank_update();
 
-	if ( cia_hblank_timer == 0 )
-		cia_hblank_timer = timer_set( cpu_getscanlineperiod(), 0, cia_hblank_update );
+	if ( cia_hblank_timer_set == 0 )
+	{
+		timer_adjust( cia_hblank_timer, cpu_getscanlineperiod(), 0, 0 );
+		cia_hblank_timer_set = 1;
+	}
 
 	amiga_custom_w( 0x009c>>1, 0x8020, 0);
-
-	return ignore_interrupt();
 }
 
 /***************************************************************************
@@ -2043,8 +2053,8 @@ int amiga_vblank_irq( void ) {
 
 ***************************************************************************/
 
-void amiga_init_machine( void ) {
-
+MACHINE_INIT( amiga )
+{
 	/* Initialize the CIA's */
 	cia_init();
 

@@ -131,8 +131,8 @@ INLINE int copper_update( int x_pos, int y_pos, int *end_x ) {
 			copper.pc += 4;
 		}
 
-		inst = READ_WORD( &(update_regs.RAM[copper.pc]) );
-		param = READ_WORD( &(update_regs.RAM[copper.pc + 2]) );
+		inst = *((data16_t *) ( &(update_regs.RAM[copper.pc]) ));
+		param = *((data16_t *) ( &(update_regs.RAM[copper.pc + 2]) ));
 
 		if ( !( inst & 1 ) ) { /* MOVE instruction */
 			int min = 0x80 - ( custom_regs.COPCON << 5 );
@@ -266,9 +266,9 @@ void amiga_reload_sprite_info( int spritenum ) {
 
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	
-	amiga_sprite_set_pos( spritenum, READ_WORD( &RAM[custom_regs.SPRxPT[spritenum]] ) );
+	amiga_sprite_set_pos( spritenum, *((data16_t *) &RAM[custom_regs.SPRxPT[spritenum]] ) );
 
-	amiga_sprite_set_ctrl( spritenum, READ_WORD( &RAM[custom_regs.SPRxPT[spritenum] + 2] ) );
+	amiga_sprite_set_ctrl( spritenum, *((data16_t *) &RAM[custom_regs.SPRxPT[spritenum] + 2] ) );
 
 	custom_regs.SPRxPT[spritenum] += 4;
 }
@@ -296,10 +296,10 @@ INLINE void amiga_render_sprite( int num, int x, int y, unsigned short *dst ) {
 			unsigned short word[4];
 			int color, i;
 
-			word[0] = READ_WORD( &update_regs.RAM[custom_regs.SPRxPT[num]] );
-			word[1] = READ_WORD( &update_regs.RAM[custom_regs.SPRxPT[num]+2] );
-			word[2] = READ_WORD( &update_regs.RAM[custom_regs.SPRxPT[num+1]] );
-			word[3] = READ_WORD( &update_regs.RAM[custom_regs.SPRxPT[num+2]+2] );
+			word[0] = *((data16_t *) &update_regs.RAM[custom_regs.SPRxPT[num]] );
+			word[1] = *((data16_t *) &update_regs.RAM[custom_regs.SPRxPT[num]+2] );
+			word[2] = *((data16_t *) &update_regs.RAM[custom_regs.SPRxPT[num+1]] );
+			word[3] = *((data16_t *) &update_regs.RAM[custom_regs.SPRxPT[num+2]+2] );
 
 			color = 0;
 
@@ -312,8 +312,8 @@ INLINE void amiga_render_sprite( int num, int x, int y, unsigned short *dst ) {
 			unsigned short word[2];
 			int color, i;
 
-			word[0] = READ_WORD( &update_regs.RAM[custom_regs.SPRxPT[num]] );
-			word[1] = READ_WORD( &update_regs.RAM[custom_regs.SPRxPT[num]+2] );
+			word[0] = *((data16_t *) &update_regs.RAM[custom_regs.SPRxPT[num]] );
+			word[1] = *((data16_t *) &update_regs.RAM[custom_regs.SPRxPT[num]+2] );
 
 			color = 0;
 
@@ -427,7 +427,7 @@ static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, in
 			} \
 			/* fetch the new word from the bitplane pointers, and update them */ \
 			for ( i = 0; i < planes; i++ ) { \
-				custom_regs.BPLxDAT[i] = READ_WORD( &(update_regs.RAM[custom_regs.BPLPTR[i]]) ); \
+				custom_regs.BPLxDAT[i] = *((data16_t *) &(update_regs.RAM[custom_regs.BPLPTR[i]]) ); \
 				custom_regs.BPLPTR[i] += 2; \
 			} \
 			update_regs.current_bit = 15; \
@@ -467,7 +467,7 @@ static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, in
 			} \
 			/* fetch the new word from the bitplane pointers, and update them */ \
 			for ( i = 0; i < planes; i++ ) { \
-				custom_regs.BPLxDAT[i] = READ_WORD( &(update_regs.RAM[custom_regs.BPLPTR[i]]) ); \
+				custom_regs.BPLxDAT[i] = *((data16_t *) &(update_regs.RAM[custom_regs.BPLPTR[i]]) ); \
 				custom_regs.BPLPTR[i] += 2; \
 			} \
 			update_regs.current_bit = 15; \
@@ -684,7 +684,8 @@ INLINE int get_mode( void ) {
 	return ret;
 }
 
-void amiga_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh ) {
+VIDEO_UPDATE( amiga )
+{
 	int planes = 0, sw = Machine->drv->screen_width;
 	int min_x = Machine->visible_area.min_x;
 	int y, x, start_x, end_x, line_done;
@@ -764,7 +765,8 @@ void amiga_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh ) {
 	}
 }
 
-void amiga_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom) {
+PALETTE_INIT( amiga )
+{
 	int i;
 
 	for ( i = 0; i < 0x1000; i++ ) {
@@ -778,15 +780,13 @@ void amiga_init_palette(unsigned char *palette, unsigned short *colortable,const
 		g = ( g << 4 ) | ( g );
 		b = ( b << 4 ) | ( b );
 
-		*palette++ = r;
-		*palette++ = g;
-		*palette++ = b;
-
+		palette_set_color(i, r, g, b);
 		colortable[i] = i;
 	}
 }
 
-int amiga_vh_start( void ) {
+VIDEO_START( amiga )
+{
 	/* init cached data */
 	update_regs.old_COLOR0 = -1;
 	update_regs.old_DIWSTRT = -1;
@@ -794,7 +794,7 @@ int amiga_vh_start( void ) {
 	update_regs.old_DDFSTRT = -1;
 	update_regs.RAM = memory_region(REGION_CPU1);
 	
-	update_regs.sprite_in_scanline = malloc( Machine->drv->screen_height * sizeof( int ) );
+	update_regs.sprite_in_scanline = auto_malloc( Machine->drv->screen_height * sizeof( int ) );
 	if ( update_regs.sprite_in_scanline == 0 )
 		return 1;
 
@@ -803,6 +803,3 @@ int amiga_vh_start( void ) {
 	return 0;
 }
 
-void amiga_vh_stop( void ) {
-	free( update_regs.sprite_in_scanline );
-}

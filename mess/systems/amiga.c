@@ -74,39 +74,31 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
     { -1 } /* end of array */
 };
 
-static struct MachineDriver machine_driver_ntsc =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_M68000,
-            7159090,            /* 7.15909 Mhz (NTSC) */
-            readmem,writemem,0,0,
-            amiga_vblank_irq,1,
-        }
-    },
-    60, DEFAULT_REAL_60HZ_VBLANK_DURATION,      /* frames per second, vblank duration */
-    1,
-    amiga_init_machine,
-    0,
+
+static MACHINE_DRIVER_START( ntsc )
+	/* basic machine hardware */
+	MDRV_CPU_ADD( M68000, 7159090)        /* 7.15909 Mhz (NTSC) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(amiga_vblank_irq,1)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
+
+	MDRV_MACHINE_INIT( amiga )
 
     /* video hardware */
-    456, 262, /* screen width, screen height ( 312 for PAL ) */
-    { 120, 456 - 1, 32, 262 - 1 },          /* visible_area */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(456, 262)
+	MDRV_VISIBLE_AREA(120, 456-1, 32, 262-1)
+	MDRV_GFXDECODE( gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(4096)
+	MDRV_COLORTABLE_LENGTH(4096)
+	MDRV_PALETTE_INIT( amiga )
 
-    gfxdecodeinfo,                  /* graphics decode info */
-    4096, 4096,                     /* number of colors, colortable size */
-    amiga_init_palette,             /* convert color prom */
+	MDRV_VIDEO_START( amiga )
+	MDRV_VIDEO_UPDATE( amiga )
+MACHINE_DRIVER_END
 
-    VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-    0,
-    amiga_vh_start,
-    amiga_vh_stop,
-    amiga_vh_screenrefresh,
-
-    /* sound hardware */
-    0,0,0,0
-};
 
 /***************************************************************************
 
