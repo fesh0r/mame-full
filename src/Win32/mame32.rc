@@ -65,18 +65,22 @@ BEGIN
         MENUITEM "Play and Record A&VI...",     ID_FILE_PLAY_RECORD_AVI
 #ifdef MESS
         MENUITEM "Play &network system...",     ID_FILE_NETPLAY
-#else
+#else /* !MESS */
         MENUITEM "Play &network game...",       ID_FILE_NETPLAY
-#endif
+#endif /* MESS */
         MENUITEM SEPARATOR
 #ifdef MESS
         MENUITEM "&Select Random System",       ID_CONTEXT_SELECT_RANDOM
         MENUITEM SEPARATOR
 		MENUITEM "Op&en Other Software...",     ID_MESS_OPEN_SOFTWARE
 		MENUITEM "&Create Image...",			ID_MESS_CREATE_SOFTWARE
-#else
-        MENUITEM "&Select Random Game",         ID_CONTEXT_SELECT_RANDOM
+#ifdef MAME_DEBUG
+        MENUITEM SEPARATOR
+		MENUITEM "Run Tests",					ID_MESS_RUN_TESTS
 #endif
+#else /* !MESS */
+        MENUITEM "&Select Random Game",         ID_CONTEXT_SELECT_RANDOM
+#endif /* MESS */
         MENUITEM SEPARATOR
         MENUITEM "A&dd to 'Favorites'",         ID_CONTEXT_ADD_FAVORITE
         MENUITEM "R&emove from 'Favorites'",    ID_CONTEXT_DEL_FAVORITE

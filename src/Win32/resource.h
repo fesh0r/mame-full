@@ -307,6 +307,7 @@
 #define IDI_WIN_HARD                    2105
 #define ID_MESS_OPEN_SOFTWARE           2200
 #define ID_MESS_CREATE_SOFTWARE         2201
+#define ID_MESS_RUN_TESTS				2299
 #define IDD_PROP_SOFTWARE               2202
 #define IDD_FILEMGR                     2203
 #endif

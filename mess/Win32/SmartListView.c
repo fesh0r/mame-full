@@ -4,6 +4,7 @@
 #include "ColumnEdit.h"
 
 static void SmartListView_InternalResetColumnDisplay(struct SmartListView *pListView, BOOL bFirstTime);
+static int SmartListView_InsertItem(struct SmartListView *pListView, int nItem);
 
 /* Add ... to Items in ListView if needed */
 static LPCTSTR MakeShortString(HDC hDC, LPCTSTR lpszLong, int nColumnLen, int nOffset)
@@ -332,7 +333,6 @@ static void SmartListView_HandleContextMenu(struct SmartListView *pListView, POI
 			SmartListView_SetSorting(pListView, nLogicalColumn, TRUE);
 			break;
 		case ID_CUSTOMIZE_FIELDS:
-			/* NYI */
 			if (RunColumnDialog(pListView))
 				SmartListView_ResetColumnDisplay(pListView);
 			break;
@@ -710,6 +710,39 @@ BOOL SmartListView_HandleEvent(struct SmartListView *pListView, UINT message, UI
 
 /* ------------------------------------------------------------------------ */
 
+void SmartListView_SaveColumnSettings(struct SmartListView *pListView)
+{
+	int nColumnMax, i;
+	int *shown;
+	int *order;
+	int *widths;
+	int *tmpOrder;
+
+	shown = (int *) _alloca(pListView->pClass->nNumColumns * sizeof(*shown));
+	order = (int *) _alloca(pListView->pClass->nNumColumns * sizeof(*order));
+	widths = (int *) _alloca(pListView->pClass->nNumColumns * sizeof(*widths));
+	tmpOrder = (int *) _alloca(pListView->pClass->nNumColumns * sizeof(*tmpOrder));
+
+	pListView->pClass->pfnGetColumnInfo(pListView, shown, order, widths);
+	nColumnMax = GetNumColumns(pListView);
+
+	if (pListView->bOldControl) {
+		for (i = 0; i < nColumnMax; i++)
+			widths[pListView->piRealColumns[i]] = ListView_GetColumnWidth(pListView->hwndListView, i);
+	}
+	else {
+		/* Get the Column Order and save it */
+		ListView_GetColumnOrderArray(pListView->hwndListView, nColumnMax, tmpOrder);
+
+		for (i = 0; i < nColumnMax; i++) {
+			widths[pListView->piRealColumns[i]] = ListView_GetColumnWidth(pListView->hwndListView, i);
+			order[i] = pListView->piRealColumns[tmpOrder[i]];
+		}
+	}
+
+	pListView->pClass->pfnSetColumnInfo(pListView, NULL, order, widths);
+}
+
 static void SmartListView_InternalResetColumnDisplay(struct SmartListView *pListView, BOOL bFirstTime)
 {
 	LV_COLUMN lvc;
@@ -773,9 +806,8 @@ void SmartListView_ResetColumnDisplay(struct SmartListView *pListView)
 	SmartListView_InternalResetColumnDisplay(pListView, FALSE);
 }
 
-void SmartListView_InsertItem(struct SmartListView *pListView, int nItem)
+static int SmartListView_InsertItem(struct SmartListView *pListView, int nItem)
 {
-	/* TODO: How does this work with mapped rows? */
 	LV_ITEM lvi;
 	lvi.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM; 
 	lvi.stateMask = 0;
@@ -784,7 +816,27 @@ void SmartListView_InsertItem(struct SmartListView *pListView, int nItem)
 	lvi.lParam = nItem;
 	lvi.pszText  = LPSTR_TEXTCALLBACK;
 	lvi.iImage   = I_IMAGECALLBACK;
-	ListView_InsertItem(pListView->hwndListView, &lvi);
+	return ListView_InsertItem(pListView->hwndListView, &lvi);
+}
+
+BOOL SmartListView_AppendItem(struct SmartListView *pListView)
+{
+	int nNewIndex;
+	struct RowMapping *newRowMapping;
+
+	newRowMapping = realloc(pListView->rowMapping, sizeof(struct RowMapping) * (pListView->nNumRows + 1));
+	if (!newRowMapping)
+		return FALSE;
+	pListView->rowMapping = newRowMapping;
+
+	nNewIndex = SmartListView_InsertItem(pListView, pListView->nNumRows);
+	if (nNewIndex < 0)
+		return FALSE;
+
+	newRowMapping[pListView->nNumRows].nVisualToLogical = pListView->nNumRows;
+	newRowMapping[pListView->nNumRows].nLogicalToVisual = pListView->nNumRows;
+	pListView->nNumRows++;
+	return TRUE;
 }
 
 BOOL SmartListView_SetTotalItems(struct SmartListView *pListView, int nItemCount)
@@ -969,7 +1021,7 @@ int Compare_TextCaseInsensitive(struct SmartListView *pListView, int nRow1, int 
 BOOL SmartListView_CanIdle(struct SmartListView *pListView)
 {
 	if (pListView->pClass->pfnCanIdle)
-		return pListView->pClass->pfnCanIdle(pListView);
+		return pListView->pClass->pfnCanIdle(pListView) ? TRUE : FALSE;
 	return FALSE;
 }
 
@@ -979,10 +1031,15 @@ void SmartListView_Idle(struct SmartListView *pListView)
 		pListView->pClass->pfnIdle(pListView);
 }
 
-void SmartListView_IdleUntilMsg(struct SmartListView *pListView)
+/* Returns TRUE if done */
+BOOL SmartListView_IdleUntilMsg(struct SmartListView *pListView)
 {
 	MSG msg;
-	while(SmartListView_CanIdle(pListView) && !PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
+	BOOL bCanIdle;
+
+	while(((bCanIdle = SmartListView_CanIdle(pListView)) == TRUE) && !PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
 		SmartListView_Idle(pListView);
+
+	return !bCanIdle;
 }
 

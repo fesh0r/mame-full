@@ -84,7 +84,11 @@ static int          File_feof(void* file);
 static int          File_ftell(void* file);
 
 static void SetPaths(tDirPaths* pDirPath, const char *path);
+#ifdef MESS
+int checksum_file(const char* file, unsigned char **p, unsigned int *size, unsigned int *crc);
+#else
 static int checksum_file(const char* file, unsigned char **p, unsigned int *size, unsigned int *crc);
+#endif
 
 /***************************************************************************
  External function prototypes
@@ -1359,7 +1363,11 @@ static void SetPaths(tDirPaths* pDirPath, const char *path)
     }
 }
 
+#ifdef MESS
+int checksum_file(const char* file, unsigned char **p, unsigned int *size, unsigned int *crc)
+#else
 static int checksum_file(const char* file, unsigned char **p, unsigned int *size, unsigned int *crc)
+#endif
 {
     int length;
     unsigned char *data;

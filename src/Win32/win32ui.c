@@ -590,8 +590,14 @@ int WINAPI WinMain(HINSTANCE    hInstance,
         }
 
 #ifdef MESS
-		if (!idle_work)
-			SmartListView_IdleUntilMsg(s_pSoftwareListView);
+		if (!idle_work) {
+			BOOL bDoneIdling;
+			bDoneIdling = SmartListView_IdleUntilMsg(s_pSoftwareListView);
+#ifdef MAME_DEBUG
+			if (bDoneIdling)
+				MessTestsDoneIdle();
+#endif /* MAME_DEBUG */
+		}
 #endif /* MESS */
 
         /* phase2: pump messages while available */
@@ -1602,6 +1608,10 @@ static long WINAPI MameWindowProc(HWND hWnd,UINT message,UINT wParam,LONG lParam
             SetColumnWidths(widths);
             SetColumnOrder(order);
 
+#ifdef MESS
+			SmartListView_SaveColumnSettings(s_pSoftwareListView);
+#endif /* MESS */
+
 			for (i = 0; i < SPLITTER_MAX; i++)
 				SetSplitterPos(i, nSplitterOffset[i]);
 
@@ -1619,7 +1629,9 @@ static long WINAPI MameWindowProc(HWND hWnd,UINT message,UINT wParam,LONG lParam
 #ifdef MESS
 			/* Set the default software in the pane */
 			MessSetPickerDefaults();
-#endif
+			SmartListView_Free(s_pSoftwareListView);
+			s_pSoftwareListView = NULL;
+#endif /* MESS */
 
             /* hide window to prevent orphan empty rectangles on the taskbar */
             ShowWindow(hWnd,SW_HIDE);
@@ -3360,7 +3372,13 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 	case ID_MESS_CREATE_SOFTWARE:
 		MessCreateDevice(IO_END);
 		break;
-#endif
+
+#ifdef MAME_DEBUG
+	case ID_MESS_RUN_TESTS:
+		MessTestsBegin();
+		break;
+#endif /* MAME_DEBUG */
+#endif /* MESS */
     }
 
     SetFocus(hwndList);

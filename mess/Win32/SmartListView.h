@@ -66,16 +66,17 @@ BOOL SmartListView_IsEvent(struct SmartListView *pListView, UINT message, UINT w
 BOOL SmartListView_HandleEvent(struct SmartListView *pListView, UINT message, UINT wParam, LONG lParam);
 void SmartListView_ResetColumnDisplay(struct SmartListView *pListView);
 BOOL SmartListView_SetTotalItems(struct SmartListView *pListView, int nItemCount);
-void SmartListView_InsertItem(struct SmartListView *pListView, int nItem);
+BOOL SmartListView_AppendItem(struct SmartListView *pListView);
 void SmartListView_SelectItem(struct SmartListView *pListView, int nItem, BOOL bFocus);
 void SmartListView_RedrawItem(struct SmartListView *pListView, int nItem);
 void SmartListView_Update(struct SmartListView *pListView, int nItem);
 BOOL SmartListView_CanIdle(struct SmartListView *pListView);
 void SmartListView_Idle(struct SmartListView *pListView);
-void SmartListView_IdleUntilMsg(struct SmartListView *pListView);
+BOOL SmartListView_IdleUntilMsg(struct SmartListView *pListView);
 void SmartListView_GetSorting(struct SmartListView *pListView, int *nColumn, BOOL *bReverse);
 void SmartListView_SetSorting(struct SmartListView *pListView, int nColumn, BOOL bReverse);
 void SmartListView_ToggleSorting(struct SmartListView *pListView, int nColumn);
 void SmartListView_GetRealColumnOrder(struct SmartListView *pListView, int *pnOrder);
+void SmartListView_SaveColumnSettings(struct SmartListView *pListView);
 
 int Compare_TextCaseInsensitive(struct SmartListView *pListView, int nRow1, int nRow2, int nColumn);

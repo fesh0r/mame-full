@@ -7,6 +7,9 @@ Whats new:
 - Added a new MESS32-specific file manager. [Nate Woods]
 - Fixed a bug in "other directory software" selected through a file dialog.
   [Nate Woods]
+- Added the ability for the software view to lookup information from the .crc
+  files and display them in different columns, as well as the ability to move
+  columns in the software view similar to the system view.  [Nate Woods]
 
 ----------
 0.37 BETA 13

@@ -174,7 +174,7 @@ endif
 
 RCDEFS = $(MAME_NET) $(MAME_MMX) -DNDEBUG $(MAME_VERSION)
 
-RCFLAGS = -l 0x409 -I./Win32
+RCFLAGS = -l 0x409 -I./Win32 $(MAME_DEBUG)
 
 ifeq "$(TARGET)" "mess"
 RCFLAGS += -DMESS -Imess/Win32 -Isrc/Win32

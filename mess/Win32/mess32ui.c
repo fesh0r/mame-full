@@ -86,11 +86,16 @@ static struct SmartListViewClass s_softwareListClass =
 	mess_column_names
 };
 
-
+enum RealizeLevel {
+	REALIZE_IMMEDIATE,	/* Calculate the file type when the extension is known */
+	REALIZE_ZIPS,		/* Open up ZIPs, and calculate their extensions and CRCs */
+	REALIZE_ALL			/* Open up all files, and calculate their CRCs */
+};
 
 static struct SmartListView *s_pSoftwareListView;
 static BOOL mess_idle_work;
-static UINT nIdleImageNum;
+static UINT s_nIdleImageNum;
+static enum RealizeLevel s_eRealizeLevel;
 static int nTheCurrentGame;
 static int *mess_icon_index;
 
@@ -108,6 +113,11 @@ static void MessSetPickerDefaults(void);
 static void MessOpenOtherSoftware(int iDevice);
 static void MessCreateDevice(int iDevice);
 static BOOL CreateMessIcons(void);
+
+#ifdef MAME_DEBUG
+static void MessTestsBegin(void);
+static void MessTestsDoneIdle(void);
+#endif /* MAME_DEBUG */
 
 #define MAME32HELP "mess32.hlp"
 
@@ -444,23 +454,38 @@ static BOOL ImageData_SetCrcLine(ImageData *img, UINT32 crc, const char *crcline
 	return TRUE;
 }
 
-static void ImageData_Realize(ImageData *img, BOOL bActive, mess_image_type *imagetypes)
+static BOOL ImageData_Realize(ImageData *img, enum RealizeLevel eRealize, mess_image_type *imagetypes)
 {
-	UINT32 crc32;
+	/* from src/Win32/file.c */
+	int checksum_file(const char* file, unsigned char **p, unsigned int *size, unsigned int *crc);
+
+	UINT32 crc32 = 0;
 	char crcstr[9];
 	char line[1024];
+	unsigned int dummy;
+	BOOL bLearnedSomething = FALSE;
 
+	/* Calculate image type */
 	if (img->type == IO_ALIAS) {
-		img->type = MessDiscoverImageType(img->fullname, imagetypes, bActive, &crc32);
-		if (mess_crc_file && crc32) {
-			sprintf(crcstr, "%08x", crc32);
-			config_load_string(mess_crc_file, mess_crc_category, 0, crcstr, line, sizeof(line));
-			ImageData_SetCrcLine(img, crc32, line);
-		}
+		img->type = MessDiscoverImageType(img->fullname, imagetypes, eRealize > REALIZE_IMMEDIATE, &crc32);
+		if (img->type != IO_ALIAS)
+			bLearnedSomething = TRUE;
 	}
+
+	if ((eRealize >= REALIZE_ALL) && !crc32 && !img->crc) {
+		checksum_file(img->fullname, NULL, &dummy, &crc32);
+		bLearnedSomething = TRUE;
+	}
+
+	if (mess_crc_file && crc32 && !img->crc) {
+		sprintf(crcstr, "%08x", crc32);
+		config_load_string(mess_crc_file, mess_crc_category, 0, crcstr, line, sizeof(line));
+		ImageData_SetCrcLine(img, crc32, line);
+	}
+	return bLearnedSomething;
 }
 
-static BOOL AppendNewImage(const char *fullname, BOOL bReadZip, ImageData ***listend, mess_image_type *imagetypes)
+static BOOL AppendNewImage(const char *fullname, enum RealizeLevel eRealize, ImageData ***listend, mess_image_type *imagetypes)
 {
     ImageData *newimg;
 
@@ -468,7 +493,7 @@ static BOOL AppendNewImage(const char *fullname, BOOL bReadZip, ImageData ***lis
     if (!newimg)
         return FALSE;
 
-	ImageData_Realize(newimg, bReadZip, imagetypes);
+	ImageData_Realize(newimg, eRealize, imagetypes);
 
 	if (ImageData_IsBad(newimg)) {
 		/* Unknown type of software */
@@ -500,7 +525,7 @@ static void AddImagesFromDirectory(const char *dir, BOOL bRecurse, char *buffer,
         while(osd_dir_get_entry(d, buffer + pathlen, buffersz - pathlen, &is_dir)) {
             if (!is_dir) {
                 /* Not a directory */
-                if (AppendNewImage(buffer, FALSE, listend, imagetypes))
+                if (AppendNewImage(buffer, REALIZE_IMMEDIATE, listend, imagetypes))
                     mess_images_count++;
             }
             else if (bRecurse && strcmp(buffer + pathlen, ".") && strcmp(buffer + pathlen, "..")) {
@@ -621,7 +646,8 @@ static void FillSoftwareList(int nGame)
 	}
 
     mess_idle_work = TRUE;
-    nIdleImageNum = 0;
+    s_nIdleImageNum = 0;
+	s_eRealizeLevel = REALIZE_ZIPS;
 }
 
 static void MessUpdateSoftwareList(void)
@@ -807,32 +833,22 @@ static BOOL CommonFileImageDialog(char *last_directory, common_file_dialog_proc 
     return success;
 }
 
-static void MessSetupDevice(common_file_dialog_proc cfd, int iDevice)
+static void MessIntroduceItem(const char *filename, mess_image_type *imagetypes)
 {
-    char filename[MAX_PATH];
-    LPTREEFOLDER lpOldFolder = GetCurrentFolder();
-    LPTREEFOLDER lpNewFolder = GetFolder(00);
-    DWORD        dwOldFilters = 0;
-    int          nOldPick = GetSelectedPickItem();
-
-    HMENU           hMenu = GetMenu(hMain);
-    mess_image_type imagetypes[64];
     ImageData       **pLastImageNext;
     ImageData       **pOldLastImageNext;
     ImageData       **pNewIndex;
     int i;
 
-    SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, iDevice);
-
-    if (!CommonFileImageDialog(last_directory, cfd, filename, imagetypes))
-        return;
+	assert(filename);
+	assert(imagetypes);
 
     pLastImageNext = &mess_images;
     while(*pLastImageNext)
         pLastImageNext = &(*pLastImageNext)->next;
     pOldLastImageNext = pLastImageNext;
 
-    if (!AppendNewImage(filename, TRUE, &pLastImageNext, imagetypes))
+    if (!AppendNewImage(filename, REALIZE_ALL, &pLastImageNext, imagetypes))
         goto unknownsoftware;
 
     pNewIndex = (ImageData **) realloc(mess_images_index, (mess_images_count+1) * sizeof(ImageData *));
@@ -842,7 +858,8 @@ static void MessSetupDevice(common_file_dialog_proc cfd, int iDevice)
     pNewIndex[i] = (*pOldLastImageNext);
     mess_images_index = pNewIndex;
 
-	SmartListView_InsertItem(s_pSoftwareListView, i);
+	if (!SmartListView_AppendItem(s_pSoftwareListView))
+		goto outofmemory;
 	SmartListView_SelectItem(s_pSoftwareListView, i, TRUE);
     return;
 
@@ -853,6 +870,17 @@ unknownsoftware:
 outofmemory:
     MessageBoxA(NULL, "Out of memory", MAME32NAME, MB_OK);
     return;
+}
+
+static void MessSetupDevice(common_file_dialog_proc cfd, int iDevice)
+{
+    char filename[MAX_PATH];
+    mess_image_type imagetypes[64];
+
+    SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, iDevice);
+
+    if (CommonFileImageDialog(last_directory, cfd, filename, imagetypes))
+        MessIntroduceItem(filename, imagetypes);
 }
 
 static void MessOpenOtherSoftware(int iDevice)
@@ -919,6 +947,7 @@ static LPCSTR SoftwareListClass_GetText(struct SmartListView *pListView, int nRo
 {
 	ImageData *imgd;
 	LPCSTR s = NULL;
+	static char crcstr[32];
 
 	imgd = mess_images_index[nRow];
     switch (nColumn) {
@@ -940,6 +969,14 @@ static LPCSTR SoftwareListClass_GetText(struct SmartListView *pListView, int nRo
 
 	case MESS_COLUMN_PLAYABLE:
 		s = imgd->playable;
+		break;
+
+	case MESS_COLUMN_CRC:
+		if (imgd->crc)
+			_snprintf(crcstr, sizeof(crcstr) / sizeof(crcstr[0]), "%08x", imgd->crc);
+		else
+			crcstr[0] = '\0';
+		s = crcstr;
 		break;
 	}
 	return s;
@@ -1007,22 +1044,34 @@ static void SoftwareListClass_Idle(struct SmartListView *pListView)
     ImageData *pImageData;
     int i;
 
-    if (nIdleImageNum == 0)
+    if (s_nIdleImageNum == 0)
         SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_END);
 
-    for (i = 0; (i < 10) && (nIdleImageNum < mess_images_count); i++) {
-        pImageData = mess_images_index[nIdleImageNum];
+    for (i = 0; (i < 10) && (s_nIdleImageNum < mess_images_count); i++) {
+        pImageData = mess_images_index[s_nIdleImageNum];
 
-        if (pImageData->type == IO_ALIAS) {
-			ImageData_Realize(pImageData, TRUE, imagetypes);
-            SmartListView_RedrawItem(pListView, nIdleImageNum);
-        }
-        nIdleImageNum++;
+        if (ImageData_Realize(pImageData, s_eRealizeLevel, imagetypes))
+            SmartListView_RedrawItem(pListView, s_nIdleImageNum);
+        s_nIdleImageNum++;
     }
 
-    if (nIdleImageNum >= mess_images_count) {
-        mess_idle_work = FALSE;
-        nIdleImageNum = 0;
+    if (s_nIdleImageNum >= mess_images_count) {
+        s_nIdleImageNum = 0;
+
+		switch(s_eRealizeLevel) {
+		case REALIZE_ZIPS:
+			s_eRealizeLevel = REALIZE_ALL;
+			break;
+
+		case REALIZE_ALL:
+			s_eRealizeLevel = REALIZE_ZIPS;
+			mess_idle_work = FALSE;
+			break;
+
+		default:
+			assert(0);
+			break;
+		}
     }
 }
 
@@ -1223,5 +1272,104 @@ int osd_select_file(int sel, char *filename)
 	return result;
 }
 
+/* ------------------------------------------------------------------------ *
+ * Mess32 Diagnostics                                                       *
+ * ------------------------------------------------------------------------ */
 
+#ifdef MAME_DEBUG
 
+static int s_nOriginalPick;
+static BOOL s_bRunningTests = FALSE;
+
+static void MessTestsColumns(void)
+{
+	int i, j;
+	int oldshown[MESS_COLUMN_MAX];
+	int shown[MESS_COLUMN_MAX];
+
+	GetMessColumnShown(oldshown);
+
+	shown[0] = 1;
+	for (i = 0; i < (1<<(MESS_COLUMN_MAX-1)); i++) {
+		for (j = 1; j < MESS_COLUMN_MAX; j++)
+			shown[j] = (i & (1<<(j-1))) ? 1 : 0;
+
+		SetMessColumnShown(shown);
+		SmartListView_ResetColumnDisplay(s_pSoftwareListView);
+	}
+
+	SetMessColumnShown(oldshown);
+	SmartListView_ResetColumnDisplay(s_pSoftwareListView);
+}
+
+static void MessTestsBegin(void)
+{
+	int nOriginalPick;
+
+	nOriginalPick = GetSelectedPick();
+
+	/* If we are running already, keep our old defaults */
+	if (!s_bRunningTests) {
+		s_bRunningTests = TRUE;
+		s_nOriginalPick = nOriginalPick;
+	}
+
+	MessTestsColumns();
+
+	if (nOriginalPick == 0)
+		SetSelectedPick(1);
+	SetSelectedPick(0);
+}
+
+static void MessTestsCompleted(void)
+{
+	/* We are done */
+	SetSelectedPick(s_nOriginalPick);
+	s_bRunningTests = FALSE;
+	MessageBoxA(hPicker, "Tests successfully completed!", MAME32NAME, MB_OK);
+}
+
+static void MessTestsFlex(void)
+{
+	/* We get called here when we are done idling */
+	int i;
+	int nItem;
+	int nItemsToAdd = 5;		/* Arbitrary constant */
+	int nItemsToAddSkip = 10;	/* Arbitrary constant */
+	ImageData *img;
+	mess_image_type imagetypes[64];
+
+	SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_END);
+
+	/* Try appending an item to the list */
+	for (i = 0; i < nItemsToAdd; i++) {
+		nItem = i * nItemsToAddSkip;
+		if ((nItem < mess_images_count) && (mess_images_index[nItem]->type != IO_COUNT)) {
+			MessIntroduceItem(mess_images_index[nItem]->fullname, imagetypes);
+		}
+	}
+
+	/* Assert that we have resolved all the types */
+	for (i = 0; i < mess_images_count; i++) {
+		img = mess_images_index[i];
+		assert(img->type != IO_ALIAS);
+	}
+}
+
+static void MessTestsDoneIdle(void)
+{
+	int nNewGame;
+
+	if (s_bRunningTests) {
+		nNewGame = GetSelectedPick() + 1;
+		if (nNewGame >= game_count) {
+			MessTestsCompleted();
+		}
+		else {
+			MessTestsFlex();
+			SetSelectedPick(nNewGame);
+		}
+	}
+}
+
+#endif /* MAME_DEBUG */
