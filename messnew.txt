@@ -3,6 +3,8 @@
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - Dragon 64 [Nate Woods]
+- PK-01 Lviv (preliminary) [Krzysztof Strzecha]
+- PK-01 Lviv rev. 2 (preliminary) [Krzysztof Strzecha]
 
 System Driver Changes:
 ----------------------
@@ -25,7 +27,8 @@ System Driver Changes:
   Fixed problem with interrupt vector set to 0xffff (much more 128k games works
   now). Corrected frames per second value for 48k and 128k Sincalir machines.
   Remaped some Spectrum+ keys. Added support to load .SP snapshots. Added .BLK
-  tape images support. [Krzysztof Strzecha]
+  tape images support. #FF port emulation added (Arkanoid works now but is still
+  not playable due to wrong timings). [Krzysztof Strzecha]
 
 - [COCO] Converted CoCo drivers to use configurable RAM sizes, and the CoCo 3
   driver now supports the 2 MB upgrade (if I knew the specs, it would be very
