@@ -2,18 +2,20 @@
 
 <imgtooltest name="prodos_525_do">
 	<createimage driver="apple2_do_prodos_525"/>
-<!--	<checkdirectory/> -->
+	<checkdirectory/>
 </imgtooltest>
 
 <imgtooltest name="prodos_525_po">
 	<createimage driver="apple2_po_prodos_525"/>
-<!--	<checkdirectory/> -->
+	<checkdirectory/>
 </imgtooltest>
 
+<!--
 <imgtooltest name="prodos_525_nib">
 	<createimage driver="apple2_nib_prodos_525"/>
-<!--	<checkdirectory/> -->
+	<checkdirectory/>
 </imgtooltest>
+-->
 
 <!--
 <imgtooltest name="prodos_35_raw">
