@@ -55,13 +55,13 @@ static void dai_bootstrap_callback (int param)
 
 static UINT8 dai_keyboard_handler (UINT8 scan)
 {
-	UINT8 data = 0xff;
+	UINT8 data = 0x00;
 	int i;
 
 	for (i = 0; i < 7; i++)
 	{
 		if (scan & (1 << i))
-			data &= readinputport(i);
+			data |= readinputport(i);
 	}
 	return data;
 }
@@ -133,14 +133,17 @@ MACHINE_INIT( dai )
 
 READ_HANDLER( dai_io_discrete_devices_r )
 {
-	data8_t data;
+	data8_t data = 0x00;
+
 	switch(offset & 0x000f) {
 	case 0x00:
-		data = readinputport(14) | 0x08;
+		data = readinputport(7);
+		data |= 0x08;
+		logerror ("Discrete devices read 0xfd00: %02x\n", data);
 		break;
 
 	default:
-		data = 0;
+		data = 0xff;
 		break;
 	}
 	return data;
@@ -194,3 +197,19 @@ WRITE_HANDLER( dai_io_discrete_devices_w )
 	}
 }
 
+
+
+/***************************************************************************
+
+	AMD 9911 mathematical coprocesor
+
+***************************************************************************/
+
+READ_HANDLER( amd9511_r )
+{
+	return 0xff;
+}
+
+WRITE_HANDLER( amd9511_w )
+{
+}
