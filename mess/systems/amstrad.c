@@ -40,6 +40,10 @@
 #include "eventlst.h"
 #endif
 
+/* the hardware allows selection of 256 ROMs. Rom 0 is usually BASIC and Rom 7 is AMSDOS */
+/* With the CPC hardware, if a expansion ROM is not connected, BASIC rom will be selected instead */
+static unsigned char *Amstrad_ROM_Table[256];
+
 
 /*-------------------------------------------*/
 /* MULTIFACE */
@@ -491,22 +495,9 @@ void AmstradCPC_GA_Write(int Data)
 	Amstrad_RethinkMemory();
 }
 
-/* very simplified version of setting upper rom - since
-we are not going to have additional roms, this is the best
-way */
 void AmstradCPC_SetUpperRom(int Data)
 {
-	/* low byte of port holds the rom index */
-	if ((Data & 0x0ff) == 7)
-	{
-		/* select dos rom */
-		Amstrad_UpperRom = &memory_region(REGION_CPU1)[0x018000];
-	}
-	else
-	{
-		/* select basic rom */
-		Amstrad_UpperRom = &memory_region(REGION_CPU1)[0x014000];
-	}
+	Amstrad_UpperRom = Amstrad_ROM_Table[Data & 0x0ff];
 
 	Amstrad_RethinkMemory();
 }
@@ -2353,7 +2344,15 @@ void amstrad_shutdown_machine(void)
 
 void amstrad_init_machine(void)
 {
+	int i;
 	unsigned char machine_name_and_refresh_rate;
+
+	for (i=0; i<256; i++)
+	{
+		Amstrad_ROM_Table[i] = &memory_region(REGION_CPU1)[0x014000];
+	}
+	
+	Amstrad_ROM_Table[7] = &memory_region(REGION_CPU1)[0x018000];
 
 	amstrad_common_init();
 
@@ -2383,6 +2382,13 @@ void amstrad_init_machine(void)
 
 void kccomp_init_machine(void)
 {
+	int i;
+
+	for (i=0; i<256; i++)
+	{
+		Amstrad_ROM_Table[i] = &memory_region(REGION_CPU1)[0x014000];
+	}
+
 	amstrad_common_init();
 
 	amstrad_setup_machine();
