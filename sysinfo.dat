@@ -4364,7 +4364,6 @@ to the printer port.
 
 c. PCMCIA RAM CARD
 
-
 The NC100 supports a PCMCIA Ram card up to 1mb in size. 
 
 The emulator supports all ram card operations: reading, writing, formatting
