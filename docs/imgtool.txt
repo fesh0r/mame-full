@@ -257,8 +257,8 @@ TI99 floppy disk images (v9t9/pc99fm/pc99mfm/ti99_old)
 ------------------------------------------------------
 
 These modules enable you to create and catalog ti99 images, to delete
-individual files, and to get and put files in TIFILE format.  Note that you
-cannot create images in pc99 format.
+individual files and directories, and to get and put files in TIFILE format.
+Note that you cannot create images in pc99 format.
 
 The v9t9 module supports the v9t9 disk images that is used by MESS, the pc99fm
 module supports FM-encoded pc99 images, and the pc99mfm supports MFM-encoded
@@ -307,8 +307,8 @@ Parameters for create:
     all) TI99 programs won't overwrite the disk.
 --density=[0|1|2|3]: you should probably leave this parameter to 0 to select
     the correct value automatically.  If you really want to know, 1 means
-    40-track single density (FM), 2 means 40-track double density (MFM), and 3
-    means either 80-track double density or high density (MFM).
+    single density (FM), 2 means double density (MFM), and 3 means high density
+    (MFM).
 
 Supported geometries for create:
 
@@ -345,6 +345,18 @@ imgtool get v9t9 test.dsk FILE1
 Extract file FILE1 located in subdirectory SUBDIR1 on image test.dsk:
 imgtool get v9t9 test.dsk SUBDIR1.FILE1
 
+Write file FILE1 on image test.dsk:
+imgtool put v9t9 test.dsk FILE1
+(Note that file FILE1 must not exist before the command is run.  Use the delete
+command if you need to an existing file.)
+
+Delete file FILE1 located in subdirectory SUBDIR1 on image test.dsk:
+imgtool delete v9t9 test.dsk SUBDIR1.FILE1
+
+Delete subdirectory SUBDIR1 on image test.dsk:
+imgtool delete v9t9 test.dsk SUBDIR1
+(Subdirectory SUBDIR1 must be empty.)
+
 Create a SSSD image compatible with all controllers:
 imgtool create v9t9 test.dsk --sides=1 --tracks=40 --sectors=9
 
@@ -364,8 +376,9 @@ imgtool create v9t9 test.dsk --sides=2 --tracks=80 --sectors=36
 TI99 hard disk images (ti99hd)
 ------------------------------
 
-This module can catalog ti99 hard disk images, and get files in TIFILE format.
-Only images in HFDC format are supported for now.
+This module can catalog ti99 hard disk images, delete individual files and
+directories, and get and put files in TIFILE format.  Only images in HFDC
+format are supported for now (no SCSI format).
 
 
 TI990 disk images (ti990hd)
