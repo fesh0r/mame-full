@@ -135,8 +135,8 @@ V9938_MODE_FUNC (mode_text2)
 	
     fg = Machine->pens[pal_ind16[vdp.contReg[7] >> 4]];	
     bg = Machine->pens[pal_ind16[vdp.contReg[7] & 15]];	
-    fg0 = Machine->pens[pal_ind16[vdp.contReg[14] >> 4]];	
-    bg0 = Machine->pens[pal_ind16[vdp.contReg[14] & 15]];
+    fg0 = Machine->pens[pal_ind16[vdp.contReg[12] >> 4]];	
+    bg0 = Machine->pens[pal_ind16[vdp.contReg[12] & 15]];
 	
 	name = (line/8)*80;	
 	
@@ -153,7 +153,7 @@ V9938_MODE_FUNC (mode_text2)
 		if (vdp.blink)	
 			{	
 			pattern = colourtbl[(name/8)&colourmask];	
-			if (pattern & (1 << (name & 7) ) )	
+			if (pattern & (0x80 >> (name & 7) ) )	
 				{	
 				pattern = patterntbl[(charcode * 8) + 	
 					((line + vdp.contReg[23]) & 7)];
@@ -369,7 +369,7 @@ V9938_MODE_FUNC (mode_graphic4)
 
 	linemask = ((vdp.contReg[2] & 0x1f) << 3) | 7;
 
-	line2 = ((line & linemask) + vdp.contReg[23]) & 255;
+	line2 = ((line + vdp.contReg[23]) & linemask) & 255;
 
 	nametbl = vdp.vram + ((vdp.contReg[2] & 0x40) << 10) + line2 * 128;
 	if ( (vdp.contReg[2] & 0x20) && (V9938_SECOND_FIELD) )
@@ -417,7 +417,7 @@ V9938_MODE_FUNC (mode_graphic5)
 	
 	linemask = ((vdp.contReg[2] & 0x1f) << 3) | 7;
 
-	line2 = ((line & linemask) + vdp.contReg[23]) & 255;
+	line2 = ((line + vdp.contReg[23]) & linemask) & 255;
 
 	nametbl = vdp.vram + ((vdp.contReg[2] & 0x40) << 10) + line2 * 128;
 	if ( (vdp.contReg[2] & 0x20) && (V9938_SECOND_FIELD) )
@@ -473,7 +473,7 @@ V9938_MODE_FUNC (mode_graphic6)
 	
     linemask = ((vdp.contReg[2] & 0x1f) << 3) | 7;
 
-    line2 = ((line & linemask) + vdp.contReg[23]) & 255;
+	line2 = ((line + vdp.contReg[23]) & linemask) & 255;
 
     nametbl = line2 << 8 ;
    	if ( (vdp.contReg[2] & 0x20) && (V9938_SECOND_FIELD) )
@@ -538,7 +538,7 @@ V9938_MODE_FUNC (mode_graphic7)
 
    	linemask = ((vdp.contReg[2] & 0x1f) << 3) | 7;
 
-   	line2 = ((line & linemask) + vdp.contReg[23]) & 255;
+	line2 = ((line + vdp.contReg[23]) & linemask) & 255;
 
 	nametbl = line2 << 8;
    	if ( (vdp.contReg[2] & 0x20) && (V9938_SECOND_FIELD) )
