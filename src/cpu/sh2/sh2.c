@@ -32,7 +32,10 @@
 #include "mamedbg.h"
 #include "sh2.h"
 
-#define VERBOSE 0
+/* speed up delay loops, bail out of tight loops */
+#define BUSY_LOOP_HACKS 	1
+
+#define VERBOSE 1
 
 #if VERBOSE
 #define LOG(x)	logerror x
@@ -181,7 +184,7 @@ static void sh2_exception(char *message, int irqline)
 	int vector;
 
 	vector = (*sh2.irq_callback)(irqline) * 4;
-	LOG(("SH-2 #%d take irq #%d (vector %x) after %s\n", cpu_getactivecpu(), irqline, vector, message));
+	LOG(("SH-2 #%d take irq #%d (VBR+vector %x) after [%s]\n", cpu_getactivecpu(), irqline, sh2.vbr + vector, message));
 	sh2.r[15] -= 4;
 	WL( sh2.r[15], sh2.sr );		/* push SR onto stack */
 	sh2.r[15] -= 4;
@@ -211,7 +214,7 @@ static void sh2_exception(char *message, int irqline)
 	case 12: if (sh2.pending_irq & (1 << 12)) sh2_exception(m,12);	\
 	case 13: if (sh2.pending_irq & (1 << 13)) sh2_exception(m,13);	\
 	case 14: if (sh2.pending_irq & (1 << 14)) sh2_exception(m,14);	\
-	case 15: if (sh2.pending_irq & (1 << 15)) sh2_exception(m,15);	\
+			 if (sh2.pending_irq & (1 << 15)) sh2_exception(m,15);	\
 	}																\
 
 
@@ -378,6 +381,17 @@ INLINE void BRA(data_t d)
 {
 	INT32 disp = ((INT32)d << 20) >> 20;
 
+#if BUSY_LOOP_HACKS
+	if (disp == -2)
+	{
+		UINT32 next_opcode = RW(sh2.ppc & AM);
+		/* BRA	$
+		 * NOP
+		 */
+		if (next_opcode == 0x0009)
+			sh2_icount %= 3;	/* cycles for BRA $ and NOP taken (3) */
+	}
+#endif
 	sh2.pc = sh2.ea = sh2.pc + disp * 2 + 2;
 	change_pc27bew(sh2.pc & AM);
 	sh2.delay = sh2.ppc;
@@ -769,6 +783,22 @@ INLINE void DT(data_t n)
 		sh2.sr |= T;
 	else
 		sh2.sr &= ~T;
+#if BUSY_LOOP_HACKS
+	{
+		UINT32 next_opcode = RW(sh2.ppc & AM);
+		/* DT	Rn
+		 * BF	$-2
+		 */
+		if (next_opcode == 0x8bfd)
+		{
+			while (sh2.r[n] > 1 && sh2_icount > 4)
+			{
+				sh2.r[n]--;
+				sh2_icount -= 4;	/* cycles for DT (1) and BF taken (3) */
+			}
+		}
+	}
+#endif
 }
 
 /*	EXTS.B	Rm,Rn */
@@ -810,6 +840,7 @@ INLINE void JSR(data_t m)
 	sh2.pc = sh2.ea = sh2.r[m];
 	change_pc27bew(sh2.pc & AM);
 	sh2.delay = sh2.pr;
+	sh2.pr += 2;
 	sh2_icount--;
 }
 
@@ -1134,37 +1165,43 @@ INLINE void MOVLP(data_t m, data_t n)
 /*	MOV.B	Rm,@(R0,Rn) */
 INLINE void MOVBS0(data_t m, data_t n)
 {
-	WB( sh2.r[n] + sh2.r[0], sh2.r[m] & 0x000000ff );
+	sh2.ea = sh2.r[n] + sh2.r[0];
+	WB( sh2.ea, sh2.r[m] & 0x000000ff );
 }
 
 /*	MOV.W	Rm,@(R0,Rn) */
 INLINE void MOVWS0(data_t m, data_t n)
 {
-	WW( sh2.r[n] + sh2.r[0], sh2.r[m] & 0x0000ffff );
+	sh2.ea = sh2.r[n] + sh2.r[0];
+	WW( sh2.ea, sh2.r[m] & 0x0000ffff );
 }
 
 /*	MOV.L	Rm,@(R0,Rn) */
 INLINE void MOVLS0(data_t m, data_t n)
 {
-	WL( sh2.r[n] + sh2.r[0], sh2.r[m] );
+	sh2.ea = sh2.r[n] + sh2.r[0];
+	WL( sh2.ea, sh2.r[m] );
 }
 
 /*	MOV.B	@(R0,Rm),Rn */
 INLINE void MOVBL0(data_t m, data_t n)
 {
-	sh2.r[n] = (UINT32)(INT32)(INT16)(INT8) RB( sh2.r[m] + sh2.r[0] );
+	sh2.ea = sh2.r[m] + sh2.r[0];
+	sh2.r[n] = (UINT32)(INT32)(INT16)(INT8) RB( sh2.ea );
 }
 
 /*	MOV.W	@(R0,Rm),Rn */
 INLINE void MOVWL0(data_t m, data_t n)
 {
-	sh2.r[n] = (UINT32)(INT32)(INT16) RW( sh2.r[m] + sh2.r[0] );
+	sh2.ea = sh2.r[m] + sh2.r[0];
+	sh2.r[n] = (UINT32)(INT32)(INT16) RW( sh2.ea );
 }
 
 /*	MOV.L	@(R0,Rm),Rn */
 INLINE void MOVLL0(data_t m, data_t n)
 {
-	sh2.r[n] = RL( sh2.r[m] + sh2.r[0] );
+	sh2.ea = sh2.r[m] + sh2.r[0];
+	sh2.r[n] = RL( sh2.ea );
 }
 
 /*	MOV 	#imm,Rn */

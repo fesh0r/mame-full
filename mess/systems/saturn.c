@@ -22,10 +22,10 @@
  *	04000000-04ffffff CS1 R
  *	05000000-057fffff CS2 R
  *	05800000-058fffff CD R
- *  05900000-059fffff Work RAM (System bus)
+ *	05900000-059fffff Work RAM (System bus)
  *	05a00000-05a7ffff SOUND RAM
  *	05b00000-05b00ee3 DSP R
- *  05c00000-05c7ffff VDP1 VRAM
+ *	05c00000-05c7ffff VDP1 VRAM
  *	05c80000-05cbffff Frame buffers
  *	05d00000-05d00017 VDP1 registers
  *	05e00000-05e7ffff VDP2 VRAM
@@ -56,7 +56,7 @@ static UINT8 *mem;
 static int video_w = 0;
 static struct osd_bitmap *saturn_bitmap[2];
 
-#define SATURN_ROM_BASE         0x00000000
+#define SATURN_ROM_BASE 		0x00000000
 #define SATURN_ROM_SIZE 		0x00080000
 #define SATURN_WORKL_RAM_BASE	0x00080000
 #define SATURN_WORKL_RAM_SIZE	0x00100000
@@ -77,7 +77,7 @@ static struct osd_bitmap *saturn_bitmap[2];
 #define SATURN_BACK_RAM_BASE	0x00481000
 #define SATURN_BACK_RAM_SIZE	0x00010000
 
-READ_HANDLER( saturn_rom_r )    /* ROM */
+READ_HANDLER( saturn_rom_r )	/* ROM */
 {
 	return mem[offset & (SATURN_ROM_SIZE-1)];
 }
@@ -89,7 +89,7 @@ WRITE_HANDLER( saturn_rom_w )	/* ROM */
 
 READ_HANDLER( saturn_workl_ram_r )
 {
-    offs_t ea = SATURN_WORKL_RAM_BASE + (offset & (SATURN_WORKL_RAM_SIZE-1));
+	offs_t ea = SATURN_WORKL_RAM_BASE + (offset & (SATURN_WORKL_RAM_SIZE-1));
 	return READ_WORD(&mem[ea]);
 }
 
@@ -104,7 +104,7 @@ WRITE_HANDLER( saturn_workl_ram_w )
 READ_HANDLER( saturn_workh_ram_r )
 {
 	offs_t ea = SATURN_WORKH_RAM_BASE + (offset & (SATURN_WORKH_RAM_SIZE-1));
-    return READ_WORD(&mem[ea]);
+	return READ_WORD(&mem[ea]);
 }
 
 WRITE_HANDLER( saturn_workh_ram_w )
@@ -118,7 +118,7 @@ WRITE_HANDLER( saturn_workh_ram_w )
 READ_HANDLER( saturn_sound_ram_r )
 {
 	offs_t ea = SATURN_SOUND_RAM_BASE + (offset & (SATURN_SOUND_RAM_SIZE-1));
-    return READ_WORD(&mem[ea]);
+	return READ_WORD(&mem[ea]);
 }
 
 WRITE_HANDLER( saturn_sound_ram_w )
@@ -132,7 +132,7 @@ WRITE_HANDLER( saturn_sound_ram_w )
 READ_HANDLER( saturn_vdp1_ram_r )
 {
 	offs_t ea = SATURN_VDP1_RAM_BASE + (offset & (SATURN_VDP1_RAM_SIZE-1));
-    return READ_WORD(&mem[ea]);
+	return READ_WORD(&mem[ea]);
 }
 
 WRITE_HANDLER( saturn_vdp1_ram_w )
@@ -140,13 +140,13 @@ WRITE_HANDLER( saturn_vdp1_ram_w )
 	offs_t ea = SATURN_VDP1_RAM_BASE + (offset & (SATURN_VDP1_RAM_SIZE-1));
 	data_t oldword = READ_WORD(&mem[ea]);
 	data_t newword = COMBINE_WORD(oldword, data);
-    WRITE_WORD(&mem[ea], newword);
+	WRITE_WORD(&mem[ea], newword);
 }
 
 READ_HANDLER( saturn_vdp2_ram_r )
 {
 	offs_t ea = SATURN_VDP2_RAM_BASE + (offset & (SATURN_VDP2_RAM_SIZE-1));
-    return READ_WORD(&mem[ea]);
+	return READ_WORD(&mem[ea]);
 }
 
 WRITE_HANDLER( saturn_vdp2_ram_w )
@@ -160,7 +160,7 @@ WRITE_HANDLER( saturn_vdp2_ram_w )
 READ_HANDLER( saturn_fb1_ram_r )
 {
 	offs_t ea = SATURN_FB1_RAM_BASE + (offset & (SATURN_FB1_RAM_SIZE-1));
-    return READ_WORD(&mem[ea]);
+	return READ_WORD(&mem[ea]);
 }
 
 WRITE_HANDLER( saturn_fb1_ram_w )
@@ -174,7 +174,7 @@ WRITE_HANDLER( saturn_fb1_ram_w )
 READ_HANDLER( saturn_fb2_ram_r )
 {
 	offs_t ea = SATURN_FB2_RAM_BASE + (offset & (SATURN_FB2_RAM_SIZE-1));
-    return READ_WORD(&mem[ea]);
+	return READ_WORD(&mem[ea]);
 }
 
 WRITE_HANDLER( saturn_fb2_ram_w )
@@ -188,7 +188,7 @@ WRITE_HANDLER( saturn_fb2_ram_w )
 READ_HANDLER( saturn_color_ram_r )
 {
 	offs_t ea = SATURN_COLOR_RAM_BASE + (offset & (SATURN_COLOR_RAM_SIZE-1));
-    return READ_WORD(&mem[ea]);
+	return READ_WORD(&mem[ea]);
 }
 
 WRITE_HANDLER( saturn_color_ram_w )
@@ -202,7 +202,7 @@ WRITE_HANDLER( saturn_color_ram_w )
 READ_HANDLER( saturn_back_ram_r )
 {
 	offs_t ea = SATURN_BACK_RAM_BASE + (offset & (SATURN_BACK_RAM_SIZE-1));
-    return READ_WORD(&mem[ea]);
+	return READ_WORD(&mem[ea]);
 }
 
 WRITE_HANDLER( saturn_back_ram_w )
@@ -213,14 +213,14 @@ WRITE_HANDLER( saturn_back_ram_w )
 	WRITE_WORD(&mem[ea], newword);
 }
 
-READ_HANDLER( saturn_smpc_r )   /* SMPC */
+READ_HANDLER( saturn_smpc_r )	/* SMPC */
 {
 	data_t data = 0x0000;
 	logerror("saturn_smpc_r   %07x -> %04x\n", offset, data);
 	return data;
 }
 
-WRITE_HANDLER( saturn_smpc_w )  /* SMPC */
+WRITE_HANDLER( saturn_smpc_w )	/* SMPC */
 {
 	if ((data & 0xffff0000) == 0xffff0000)
 		logerror("saturn_smpc_w   %07x <- %04x\n", offset, data & 0x0000ffff);
@@ -231,7 +231,7 @@ WRITE_HANDLER( saturn_smpc_w )  /* SMPC */
 		logerror("saturn_smpc_w   %07x <- %02xxx\n", offset, (data & 0x0000ff00) >> 8);
 }
 
-READ_HANDLER( saturn_cs0_r )    /* CS0 */
+READ_HANDLER( saturn_cs0_r )	/* CS0 */
 {
 	data_t data = 0x0000;
 	logerror("saturn_cs0_r    %07x -> %04x\n", offset, data);
@@ -249,9 +249,9 @@ WRITE_HANDLER( saturn_cs0_w )	/* CS0 */
 		logerror("saturn_cs0_w    %07x <- %02xxx\n", offset, (data & 0x0000ff00) >> 8);
 }
 
-READ_HANDLER( saturn_cs1_r )    /* CS1 */
+READ_HANDLER( saturn_cs1_r )	/* CS1 */
 {
-    data_t data = 0x0000;
+	data_t data = 0x0000;
 	logerror("saturn_cs1_r    %07x -> %04x\n", offset, data);
 	return data;
 }
@@ -267,9 +267,9 @@ WRITE_HANDLER( saturn_cs1_w )	/* CS1 */
 		logerror("saturn_cs1_w    %07x <- %02xxx\n", offset, (data & 0x0000ff00) >> 8);
 }
 
-READ_HANDLER( saturn_cs2_r )    /* CS2 */
+READ_HANDLER( saturn_cs2_r )	/* CS2 */
 {
-    data_t data = 0x0000;
+	data_t data = 0x0000;
 	logerror("saturn_cs2_r    %07x -> %04x\n", offset, data);
 	return data;
 }
@@ -286,316 +286,298 @@ WRITE_HANDLER( saturn_cs2_w )	/* CS2 */
 }
 
 /********************************************************
- *  SCU
+ *	SCU
  ********************************************************/
-
-#define INT_VBLIN	0
-#define INT_VBLOUT	1
-#define INT_HBLIN	2
-#define INT_TIMER0	3
-#define INT_TIMER1	4
-#define INT_DSP 	5
-#define INT_SOUND	6
-#define INT_SMPC	7
-#define INT_PAD 	8
-#define INT_DMA2	9
-#define INT_DMA1	10
-#define INT_DMA0	11
-#define INT_DMAILL	12
-#define INT_SPRITE	13
-#define INT_ABUS	16
 
 struct dma_s
 {
-    PAIR radr;
-    PAIR wadr;
-    PAIR bytes;
-    PAIR add;
-    PAIR enable;
-    PAIR mode;
+	PAIR radr;
+	PAIR wadr;
+	PAIR bytes;
+	PAIR add;
+	PAIR enable;
+	PAIR mode;
 };
 
 struct scu_s
 {
-    struct dma_s dma[3];
+	struct dma_s dma[3];
 
-    PAIR pctrl;
+	PAIR pctrl;
 
-    PAIR imask;
-    PAIR istat;
-    PAIR aiack;
+	PAIR imask;
+	PAIR istat;
+	PAIR aiack;
 
-    PAIR dsp_pc;
+	PAIR dsp_pc;
 
-    PAIR t0cmp;
-    PAIR t1data;
-    PAIR t1mode;
+	PAIR t0cmp;
+	PAIR t1data;
+	PAIR t1mode;
 };
 
 struct scu_s scu;
 
 static const char *irq_names[16] =
 {
-    "vblin",    "vblout",   "hblin",    "timer0",
-    "timer1",   "dsp",      "sound",    "smpc",
-    "pad",      "dma2",     "dma1",     "dma0",
-    "dmaill",   "sprite",   "bit14",    "abus"
+	"vblin",    "vblout",   "hblin",    "timer0",
+	"timer1",   "dsp",      "sound",    "smpc",
+	"pad",      "dma2",     "dma1",     "dma0",
+	"dmaill",   "sprite",   "bit14",    "abus"
 };
 
-static void set_imask(void)
+static int scu_irq_levels[32] =
 {
-    logerror("saturn_scu_w    interrupt mask change.  Allowed:");
-    if ((scu.imask.d & 0xbfff) == 0xbfff)
-        logerror(" <none>");
-    else
-    {
-        int i;
+	15, 14, 13, 12, 11, 10,  9,  8,
+	 8,  6,  6,  5,  3,  2,  0,  0,
+	 7,  7,  7,  7,  4,  4,  4,  4,
+	 1,  1,  1,  1,  1,  1,  1,  1
+};
 
-        for (i = 0; i < 16; i++)
-            if (!((1 << i) & scu.imask.d))
-                logerror(" %s", irq_names[i]);
-    }
-    logerror("\n");
-    /* ### irqs */
+static void scu_set_imask(void)
+{
+	int irq;
+
+	LOG(("saturn_scu_w    interrupt mask change:"));
+	for (irq = 0; irq < 16; irq++)
+	{
+		if ((scu.imask.d & (1 <<irq)) == 0)
+			LOG((" %s", irq_names[irq]));
+		else
+			cpu_set_irq_line(0, scu_irq_levels[irq], CLEAR_LINE);
+	}
+	if ((scu.imask.d & 0xbfff) == 0xbfff)
+		logerror(" <none>");
+	LOG(("\n"));
+	/* ### irqs */
 }
 
-static void do_irq(int irq)
-{
-    static int levels[32] =
-    {
-        15, 14, 13, 12, 11, 10,  9,  8,
-         8,  6,  6,  5,  3,  2,  0,  0,
-         7,  7,  7,  7,  4,  4,  4,  4,
-         1,  1,  1,  1,  1,  1,  1,  1
-    };
-	cpu_irq_line_vector_w(0, levels[irq], 0x40 + irq);
-    cpu_set_irq_line(0, levels[irq], HOLD_LINE);
-}
 
 void scu_pulse_interrupt(int irq)
 {
-    if (irq >= INT_ABUS)
-    {
+	if (irq >= SH2_INT_ABUS)
+	{
 		LOG(("saturn_scu_w    pulsed abus irq\n"));
-    }
-    else
-    {
-		LOG(("saturn_scu_w    pulsed irq %d", irq));
+	}
+	else
+	{
+		LOG(("saturn_scu_w    IRQ #%d", irq));
 		if ((scu.imask.d & (1 << irq)) == 0)
-        {
-			LOG((" - do_irq"));
-            do_irq(irq);
-        }
-        else
-        {
+		{
+			LOG((" - pulsed"));
+			cpu_irq_line_vector_w(0, scu_irq_levels[irq], 0x40 + irq);
+			cpu_set_irq_line(0, scu_irq_levels[irq], HOLD_LINE);
+		}
+		else
+		{
 			LOG((" - masked"));
-        }
+		}
 		LOG(("\n"));
-    }
+	}
 }
 
 static void dma_run(int dma)
 {
-    if (scu.dma[dma].mode.d & 0x1000000)
-    {
-        logerror("saturn_scu_w    DMA %d indirect mode activated\n", dma);
-    }
-    else
-    {
-        static int itab[8] = {0, 2, 4, 8, 16, 32, 64, 128};
-        UINT32 radr = scu.dma[dma].radr.d & 0x1fffffff;
-        UINT32 wadr = scu.dma[dma].wadr.d & 0x1fffffff;
-        UINT32 bytes = scu.dma[dma].bytes.d;
-        int addr = scu.dma[dma].add.d & 0x100 ? 4 : 0;
-        int addw = itab[scu.dma[dma].add.d & 7];
-        int bbw = (wadr >= 0x5a00000) && (wadr < 0x5fe0000);
+	if (scu.dma[dma].mode.d & 0x1000000)
+	{
+		logerror("saturn_scu_w    DMA %d indirect mode activated\n", dma);
+	}
+	else
+	{
+		static int itab[8] = {0, 2, 4, 8, 16, 32, 64, 128};
+		UINT32 radr = scu.dma[dma].radr.d & 0x1fffffff;
+		UINT32 wadr = scu.dma[dma].wadr.d & 0x1fffffff;
+		UINT32 bytes = scu.dma[dma].bytes.d;
+		int addr = scu.dma[dma].add.d & 0x100 ? 4 : 0;
+		int addw = itab[scu.dma[dma].add.d & 7];
+		int bbw = (wadr >= 0x5a00000) && (wadr < 0x5fe0000);
 
-        if (bbw && addr == 4 && addw == 2)
-        {
-            while (bytes > 0)
-            {
-                cpu_writemem27bew(wadr, cpu_readmem27bew(radr));
-                wadr++;
-                radr++;
-                bytes--;
-            }
-        }
-        else
-        {
-            logerror("SCU: DMA %d direct mode activated\n", dma);
-            logerror("       read  = %08x\n", radr);
-            logerror("       write = %08x\n", wadr);
-            logerror("       bytes = %08x\n", bytes);
-            logerror("       add   = %d, %d\n", addr, addw);
-            logerror("       bbw   = %d\n", bbw);
-        }
-    }
-    scu_pulse_interrupt(INT_DMA0 - dma);
+		if (bbw && addr == 4 && addw == 2)
+		{
+			while (bytes > 0)
+			{
+				cpu_writemem27bew(wadr, cpu_readmem27bew(radr));
+				wadr++;
+				radr++;
+				bytes--;
+			}
+		}
+		else
+		{
+			logerror("SCU: DMA %d direct mode activated\n", dma);
+			logerror("       read  = %08x\n", radr);
+			logerror("       write = %08x\n", wadr);
+			logerror("       bytes = %08x\n", bytes);
+			logerror("       add   = %d, %d\n", addr, addw);
+			logerror("       bbw   = %d\n", bbw);
+		}
+	}
+	scu_pulse_interrupt(SH2_INT_DMA0 - dma);
 }
 
 static void dma_enable(int dma)
 {
-    if (((scu.dma[dma].mode.d & 7) == 7) && ((scu.dma[dma].enable.d & 0x101) == 0x101))
-        dma_run(dma);
+	if (((scu.dma[dma].mode.d & 7) == 7) && ((scu.dma[dma].enable.d & 0x101) == 0x101))
+		dma_run(dma);
 }
 
 static void dma_mode(int dma)
 {
-    if ((scu.dma[dma].enable.d & 7) != 7)
-        logerror("saturn_scu_w    DMA %d in mode %d\n", dma, scu.dma[dma].enable.d & 7);
+	if ((scu.dma[dma].enable.d & 7) != 7)
+		logerror("saturn_scu_w    DMA %d in mode %d\n", dma, scu.dma[dma].enable.d & 7);
 }
 
 static void dsp_run(int step)
 {
-    logerror("saturn_scu_w    DSP %s\n", step ? "stepped" : "started");
+	logerror("saturn_scu_w    DSP %s\n", step ? "stepped" : "started");
 }
 
 static const char *scu_reg_names[] =
 {
-    "dma0radr", "dma0wadr",  "dma0count", "dma0inc",  "dma0start", "dma0ctrl",  "-", "-",
-    "dma1radr", "dma1wadr",  "dma1count", "dma1inc",  "dma1start", "dma1ctrl",  "-", "-",
-    "dma2radr", "dma2wadr",  "dma2count", "dma2inc",  "dma2start", "dma2ctrl",  "-", "-",
-    "dmafstop", "-",         "-",         "-",        "dmastat",   "-",         "-", "-",
-    "dsppctrl", "dsppdata",  "dspdctrl",  "dspddata", "timer0cmp", "timer1set", "timer1mode",  "-",
-    "irqmask",  "irqstat",   "abusiack",  "-",        "abusset0",  "abusset1",  "abusrefresh", "-",
-    "-",        "scuramsel", "scuvers",   "-"
+	"dma0radr", "dma0wadr",  "dma0count", "dma0inc",  "dma0start", "dma0ctrl",  "-", "-",
+	"dma1radr", "dma1wadr",  "dma1count", "dma1inc",  "dma1start", "dma1ctrl",  "-", "-",
+	"dma2radr", "dma2wadr",  "dma2count", "dma2inc",  "dma2start", "dma2ctrl",  "-", "-",
+	"dmafstop", "-",         "-",         "-",        "dmastat",   "-",         "-", "-",
+	"dsppctrl", "dsppdata",  "dspdctrl",  "dspddata", "timer0cmp", "timer1set", "timer1mode",  "-",
+	"irqmask",  "irqstat",   "abusiack",  "-",        "abusset0",  "abusset1",  "abusrefresh", "-",
+	"-",        "scuramsel", "scuvers",   "-"
 };
 
 #define SCU_REG_NAME(adr) scu_reg_names[(adr)>>2]
 
-READ_HANDLER( saturn_scu_r )    /* SCU, DMA/DSP */
+READ_HANDLER( saturn_scu_r )	/* SCU, DMA/DSP */
 {
-    data_t data = 0x0000;
-    logerror("saturn_scu_r    %07x -> %04x\n", offset, data);
-    return data;
+	data_t data = 0x0000;
+	logerror("saturn_scu_r    %07x -> %04x\n", offset, data);
+	return data;
 }
 
-WRITE_HANDLER( saturn_scu_w )   /* SCU, DMA/DSP */
+WRITE_HANDLER( saturn_scu_w )	/* SCU, DMA/DSP */
 {
-    data_t oldword = READ_WORD((UINT8 *)&scu + offset);
-    data_t newword = COMBINE_WORD(oldword, data);
+	data_t oldword = READ_WORD((UINT8 *)&scu + offset);
+	data_t newword = COMBINE_WORD(oldword, data);
 
-    switch (offset & 0x1fffe)
-    {
-    case 0x00: scu.dma[0].radr.w.h = newword; break;
-    case 0x02: scu.dma[0].radr.w.l = newword; break;
+	switch (offset & 0x1fffe)
+	{
+	case 0x00: scu.dma[0].radr.w.h = newword; break;
+	case 0x02: scu.dma[0].radr.w.l = newword; break;
 
-    case 0x04: scu.dma[0].wadr.w.h = newword; break;
-    case 0x06: scu.dma[0].wadr.w.l = newword; break;
+	case 0x04: scu.dma[0].wadr.w.h = newword; break;
+	case 0x06: scu.dma[0].wadr.w.l = newword; break;
 
-    case 0x08: scu.dma[0].bytes.w.h = newword; break;
-    case 0x0a: scu.dma[0].bytes.w.l = newword; break;
+	case 0x08: scu.dma[0].bytes.w.h = newword; break;
+	case 0x0a: scu.dma[0].bytes.w.l = newword; break;
 
-    case 0x0c: scu.dma[0].add.w.h = newword; break;
-    case 0x0e: scu.dma[0].add.w.l = newword; break;
+	case 0x0c: scu.dma[0].add.w.h = newword; break;
+	case 0x0e: scu.dma[0].add.w.l = newword; break;
 
-    case 0x10: scu.dma[0].enable.w.h = newword; break;
-    case 0x12: scu.dma[0].enable.w.l = newword; dma_enable(0); break;
+	case 0x10: scu.dma[0].enable.w.h = newword; break;
+	case 0x12: scu.dma[0].enable.w.l = newword; dma_enable(0); break;
 
-    case 0x14: scu.dma[0].mode.w.h = newword; break;
-    case 0x16: scu.dma[0].mode.w.l = newword; dma_mode(0); break;
+	case 0x14: scu.dma[0].mode.w.h = newword; break;
+	case 0x16: scu.dma[0].mode.w.l = newword; dma_mode(0); break;
 
-    case 0x20: scu.dma[1].radr.w.h = newword; break;
-    case 0x22: scu.dma[1].radr.w.l = newword; break;
+	case 0x20: scu.dma[1].radr.w.h = newword; break;
+	case 0x22: scu.dma[1].radr.w.l = newword; break;
 
-    case 0x24: scu.dma[1].wadr.w.h = newword; break;
-    case 0x26: scu.dma[1].wadr.w.l = newword; break;
+	case 0x24: scu.dma[1].wadr.w.h = newword; break;
+	case 0x26: scu.dma[1].wadr.w.l = newword; break;
 
-    case 0x28: scu.dma[1].bytes.w.h = newword; break;
-    case 0x2a: scu.dma[1].bytes.w.l = newword; break;
+	case 0x28: scu.dma[1].bytes.w.h = newword; break;
+	case 0x2a: scu.dma[1].bytes.w.l = newword; break;
 
-    case 0x2c: scu.dma[1].add.w.h = newword; break;
-    case 0x2e: scu.dma[1].add.w.l = newword; break;
+	case 0x2c: scu.dma[1].add.w.h = newword; break;
+	case 0x2e: scu.dma[1].add.w.l = newword; break;
 
-    case 0x30: scu.dma[1].enable.w.h = newword; break;
-    case 0x32: scu.dma[1].enable.w.l = newword; dma_enable(1); break;
+	case 0x30: scu.dma[1].enable.w.h = newword; break;
+	case 0x32: scu.dma[1].enable.w.l = newword; dma_enable(1); break;
 
-    case 0x34: scu.dma[1].mode.w.h = newword; break;
-    case 0x36: scu.dma[1].mode.w.l = newword; dma_mode(1); break;
+	case 0x34: scu.dma[1].mode.w.h = newword; break;
+	case 0x36: scu.dma[1].mode.w.l = newword; dma_mode(1); break;
 
-    case 0x40: scu.dma[2].radr.w.h = newword; break;
-    case 0x42: scu.dma[2].radr.w.l = newword; break;
+	case 0x40: scu.dma[2].radr.w.h = newword; break;
+	case 0x42: scu.dma[2].radr.w.l = newword; break;
 
-    case 0x44: scu.dma[2].wadr.w.h = newword; break;
-    case 0x46: scu.dma[2].wadr.w.h = newword; break;
+	case 0x44: scu.dma[2].wadr.w.h = newword; break;
+	case 0x46: scu.dma[2].wadr.w.h = newword; break;
 
-    case 0x48: scu.dma[2].bytes.w.h = newword; break;
-    case 0x4a: scu.dma[2].bytes.w.l = newword; break;
+	case 0x48: scu.dma[2].bytes.w.h = newword; break;
+	case 0x4a: scu.dma[2].bytes.w.l = newword; break;
 
-    case 0x4c: scu.dma[2].add.w.h = newword; break;
-    case 0x4e: scu.dma[2].add.w.l = newword; break;
+	case 0x4c: scu.dma[2].add.w.h = newword; break;
+	case 0x4e: scu.dma[2].add.w.l = newword; break;
 
-    case 0x50: scu.dma[2].enable.w.h = newword; break;
-    case 0x52: scu.dma[2].enable.w.l = newword; dma_enable(2); break;
+	case 0x50: scu.dma[2].enable.w.h = newword; break;
+	case 0x52: scu.dma[2].enable.w.l = newword; dma_enable(2); break;
 
-    case 0x54: scu.dma[2].mode.w.h = newword; break;
-    case 0x56: scu.dma[2].mode.w.l = newword; dma_mode(2); break;
+	case 0x54: scu.dma[2].mode.w.h = newword; break;
+	case 0x56: scu.dma[2].mode.w.l = newword; dma_mode(2); break;
 
-    case 0x60: break;
-    case 0x62:
-        if (newword & 1)
-            logerror("saturn_scu_w    DMA forced stop\n");
-        break;
+	case 0x60: break;
+	case 0x62:
+		if (newword & 1)
+			logerror("saturn_scu_w    DMA forced stop\n");
+		break;
 
-    case 0x80: scu.pctrl.w.h = newword; break;
-    case 0x82: scu.pctrl.w.l = newword;
-        logerror("saturn_scu_w    pctrl %08x\n", scu.pctrl.d);
-        if (scu.pctrl.d & 0x100)
-        {
-            scu.dsp_pc.d = scu.pctrl.d & 255;
-            logerror("saturn_scu_w    DSP PC=%x\n", scu.dsp_pc);
-        }
-        if (scu.pctrl.d & 0x10000)
-            dsp_run(0);
-        else
-        if (scu.pctrl.d & 0x20000)
-            dsp_run(1);
-        break;
+	case 0x80: scu.pctrl.w.h = newword; break;
+	case 0x82: scu.pctrl.w.l = newword;
+		logerror("saturn_scu_w    pctrl %08x\n", scu.pctrl.d);
+		if (scu.pctrl.d & 0x100)
+		{
+			scu.dsp_pc.d = scu.pctrl.d & 255;
+			logerror("saturn_scu_w    DSP PC=%x\n", scu.dsp_pc);
+		}
+		if (scu.pctrl.d & 0x10000)
+			dsp_run(0);
+		else
+		if (scu.pctrl.d & 0x20000)
+			dsp_run(1);
+		break;
 
-    case 0x90: scu.t0cmp.w.h = newword; break;
-    case 0x92: scu.t0cmp.w.l = newword;
-        if (scu.t0cmp.d < 720)
-            logerror("saturn_scu_w    timer 0 activated on pixel %d\n", scu.t0cmp.d);
-        break;
+	case 0x90: scu.t0cmp.w.h = newword; break;
+	case 0x92: scu.t0cmp.w.l = newword;
+		if (scu.t0cmp.d < 720)
+			logerror("saturn_scu_w    timer 0 activated on pixel %d\n", scu.t0cmp.d);
+		break;
 
-    case 0x94: scu.t1data.w.h = newword; break;
-    case 0x96: scu.t1data.w.l = newword; break;
+	case 0x94: scu.t1data.w.h = newword; break;
+	case 0x96: scu.t1data.w.l = newword; break;
 
-    case 0x98: scu.t1mode.w.h = newword; break;
-    case 0x99: scu.t1mode.b.l = newword;
-        if (scu.t1mode.d & 1)
-            logerror("saturn_scu_w    timer 1 activated\n");
-        break;
+	case 0x98: scu.t1mode.w.h = newword; break;
+	case 0x99: scu.t1mode.b.l = newword;
+		if (scu.t1mode.d & 1)
+			logerror("saturn_scu_w    timer 1 activated\n");
+		break;
 
-    case 0xa0: scu.imask.w.h = newword; break;
-    case 0xa2: scu.imask.w.l = newword; set_imask(); break;
+	case 0xa0: scu.imask.w.h = newword; break;
+	case 0xa2: scu.imask.w.l = newword; scu_set_imask(); break;
 
-    case 0xa4: scu.istat.w.h &= ~newword; break;
-    case 0xa6: scu.istat.w.l &= ~newword; break;
+	case 0xa4: scu.istat.w.h &= ~newword; break;
+	case 0xa6: scu.istat.w.l &= ~newword; break;
 
-    case 0xa8: scu.aiack.w.h = newword; break;
-    case 0xaa: scu.aiack.w.l = newword; break;
+	case 0xa8: scu.aiack.w.h = newword; break;
+	case 0xaa: scu.aiack.w.l = newword; break;
 
-    case 0xb0:
-        break;
-    case 0xb4:
-        break;
-    case 0xb8:
-        break;
+	case 0xb0:
+		break;
+	case 0xb4:
+		break;
+	case 0xb8:
+		break;
 
-    case 0xc4:
-        break;
+	case 0xc4:
+		break;
 
-    default:
-        if ((data & 0xffff0000) == 0xffff0000)
-            logerror("saturn_scu_w    %07x <- %04x (%s, PC=%08x)\n", offset, data & 0x0000ffff, SCU_REG_NAME(offset & 0x1ffff), cpu_get_reg(SH2_PC));
-        else
-        if ((data & 0xffff0000) == 0xff000000)
-            logerror("saturn_scu_w    %07x <- xx%02x (%s, PC=%08x)\n", offset, data & 0x000000ff, SCU_REG_NAME(offset & 0x1ffff), cpu_get_reg(SH2_PC));
-        else
-            logerror("saturn_scu_w    %07x <- %02xxx (%s, PC=%08x)\n", offset, (data & 0x0000ff00) >> 8, SCU_REG_NAME(offset & 0x1ffff), cpu_get_reg(SH2_PC));
-        break;
-    }
+	default:
+		if ((data & 0xffff0000) == 0xffff0000)
+			logerror("saturn_scu_w    %07x <- %04x (%s, PC=%08x)\n", offset, data & 0x0000ffff, SCU_REG_NAME(offset & 0x1ffff), cpu_get_reg(SH2_PC));
+		else
+		if ((data & 0xffff0000) == 0xff000000)
+			logerror("saturn_scu_w    %07x <- xx%02x (%s, PC=%08x)\n", offset, data & 0x000000ff, SCU_REG_NAME(offset & 0x1ffff), cpu_get_reg(SH2_PC));
+		else
+			logerror("saturn_scu_w    %07x <- %02xxx (%s, PC=%08x)\n", offset, (data & 0x0000ff00) >> 8, SCU_REG_NAME(offset & 0x1ffff), cpu_get_reg(SH2_PC));
+		break;
+	}
 }
 
 /********************************************************
@@ -810,32 +792,32 @@ READ_HANDLER( saturn_cd_r )    /* CD */
 {
 	data_t data = 0x0000;
 
-    /*  static int tick = 0; */
+	/*	static int tick = 0; */
 	switch(offset & 0xfffff)
-    {
-    case 0x90008:
+	{
+	case 0x90008:
 		data = cdblock.hirq;
 		logerror("saturn_cd_r     hirq %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC));
 		break;
-    case 0x90018:
+	case 0x90018:
 		data = cdblock.cr1;
-		logerror("saturn_cd_r     cr1  %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC));
+		/* LOG(("saturn_cd_r     cr1  %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC))); */
 		break;
-    case 0x9001c:
+	case 0x9001c:
 		data = cdblock.cr2;
-		logerror("saturn_cd_r     cr2  %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC));
+		/* LOG(("saturn_cd_r     cr2  %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC))); */
 		break;
-    case 0x90020:
+	case 0x90020:
 		data = cdblock.cr3;
-		logerror("saturn_cd_r     cr3  %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC));
-        break;
-    case 0x90024:
-		data = cdblock.cr4;
-		logerror("saturn_cd_r     cr4  %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC));
+		/* LOG(("saturn_cd_r     cr3  %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC))); */
 		break;
-    default:
-		logerror("saturn_cd_r     %04x %04x (PC=%08x)\n", offset, data, cpu_get_reg(SH2_PC));
-    }
+	case 0x90024:
+		data = cdblock.cr4;
+		/* LOG(("saturn_cd_r     cr4  %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC))); */
+		break;
+	default:
+		LOG(("saturn_cd_r     %04x %04x (PC=%08x)\n", offset, data, cpu_get_reg(SH2_PC)));
+	}
 	return data;
 }
 
@@ -843,23 +825,23 @@ WRITE_HANDLER( saturn_cd_w )   /* CD */
 {
 	switch(offset & 0xfffff)
 	{
-    case 0x90008:
+	case 0x90008:
 		hirq_w(data);
-        break;
-    case 0x90018:
+		break;
+	case 0x90018:
 		cdblock.cr1 = data;
-        break;
-    case 0x9001c:
+		break;
+	case 0x9001c:
 		cdblock.cr2 = data;
-        break;
-    case 0x90020:
+		break;
+	case 0x90020:
 		cdblock.cr3 = data;
-        break;
-    case 0x90024:
+		break;
+	case 0x90024:
 		cdblock.cr4 = data;
-        do_command();
-        break;
-    default:
+		do_command();
+		break;
+	default:
 		if ((data & 0xffff0000) == 0xffff0000)
 			logerror("saturn_cd_w     %07x <- %04x (PC=%08x)\n", offset, data & 0x0000ffff, cpu_get_reg(SH2_PC));
 		else
@@ -873,7 +855,7 @@ WRITE_HANDLER( saturn_cd_w )   /* CD */
 /********************************************************
  *	FRT master
  ********************************************************/
-READ_HANDLER( saturn_minit_r )  /* MINIT */
+READ_HANDLER( saturn_minit_r )	/* MINIT */
 {
 	data_t data = 0x0000;
 	logerror("saturn_minit_r  %07x -> %04x\n", offset, data);
@@ -889,16 +871,16 @@ WRITE_HANDLER( saturn_minit_w )  /* MINIT */
 		logerror("saturn_minit_w  %07x <- xx%02x\n", offset, data & 0x000000ff);
 	else
 		logerror("saturn_minit_w  %07x <- %02xxx\n", offset, (data & 0x0000ff00) >> 8);
-    cpu_set_irq_line(0, 1, HOLD_LINE);
+	cpu_set_irq_line(0, 1, HOLD_LINE);
 }
 
 /********************************************************
  *	FRT slave
  ********************************************************/
-READ_HANDLER( saturn_sinit_r )  /* SINIT */
+READ_HANDLER( saturn_sinit_r )	/* SINIT */
 {
 	data_t data = 0x0000;
-    logerror("saturn_sinit_r  %07x -> %04x\n", offset, data);
+	logerror("saturn_sinit_r  %07x -> %04x\n", offset, data);
 	return data;
 }
 
@@ -911,7 +893,7 @@ WRITE_HANDLER( saturn_sinit_w )  /* SINIT */
 		logerror("saturn_sinit_w  %07x <- xx%02x\n", offset, data & 0x000000ff);
 	else
 		logerror("saturn_sinit_w  %07x <- %02xxx\n", offset, (data & 0x0000ff00) >> 8);
-    cpu_set_irq_line(1, 1, HOLD_LINE);
+	cpu_set_irq_line(1, 1, HOLD_LINE);
 }
 
 /********************************************************
@@ -938,13 +920,26 @@ WRITE_HANDLER( saturn_dsp_w )  /* DSP */
 /********************************************************
  *	VDP1
  ********************************************************/
-struct vdp1_s {
-	UINT16 tv_mode;
-	UINT16 fb_mode;
-	UINT16 trigger;
-	UINT16 ew_data;
-	UINT16 ew_ul;
-	UINT16 ew_lr;
+enum
+{
+	VDP1_TVMR,
+	VDP1_FBCR,
+	VDP1_PTMR,
+	VDP1_EWDR,
+	VDP1_EWLR,
+	VDP1_EWRR,
+	VDP1_ENDR,
+	VDP1_EDSR,
+	VDP1_LOPR,
+	VDP1_COPR,
+	VDP1_MODR,
+	VDP1_X16,
+	VDP1_REGS
+};
+
+struct vdp1_s
+{
+	UINT16 reg[VDP1_REGS];
 
 	int line_bytes, line_count, line_pixels, pix_size;
 	int ew_offset, ew_lines, ew_words, ew_jump;
@@ -957,8 +952,11 @@ struct vdp1_s vdp1;
 
 const char* vdp1_reg_names[] =
 {
-	"tvmr", "fbcr", "ptmr", "ewdr", "ewlr", "ewrr", "endr", "-", "edsr", "lopr", "copr", "modr"
+	"tvmr", "fbcr", "ptmr", "ewdr", "ewlr", "ewrr", "endr", "-",
+	"edsr", "lopr", "copr", "modr", "-"
 };
+
+#define VDP1_REG_NAME(adr) (((adr) < VDP1_REGS*2) ? vdp1_reg_names[(adr)>>1] : "n/a")
 
 static void flip_fbs(void)
 {
@@ -976,12 +974,12 @@ static void flip_fbs(void)
 
 static void vdp1_calc_erase(void)
 {
-	int x1 = (vdp1.ew_ul >> 9) & 0x3f;
-	int y1 = vdp1.ew_ul & 0x1ff;
-	int x2 = (vdp1.ew_lr >> 9) & 0x7f;
-	int y2 = vdp1.ew_lr & 0x1ff;
+	int x1 = (vdp1.reg[VDP1_EWLR] >> 9) & 0x3f;
+	int y1 = vdp1.reg[VDP1_EWLR] & 0x1ff;
+	int x2 = (vdp1.reg[VDP1_EWRR] >> 9) & 0x7f;
+	int y2 = vdp1.reg[VDP1_EWRR] & 0x1ff;
 
-	switch (vdp1.tv_mode & 7)
+	switch (vdp1.reg[VDP1_TVMR] & 7)
 	{
 	case 0:
 		vdp1.line_bytes = 1024;
@@ -1024,7 +1022,7 @@ static void vdp1_calc_erase(void)
 static void vdp1_erase_write(void)
 {
 	int i, j;
-	UINT16 data = vdp1.ew_data;
+	UINT16 data = vdp1.reg[VDP1_EWDR];
 	UINT16 *buf = (UINT16 *)(vdp1.show_fb + vdp1.ew_offset);
 	int words = vdp1.ew_words;
 	int lines = vdp1.ew_lines;
@@ -1074,10 +1072,11 @@ static void sprite_rgb_replace_es_xy(UINT16 * src, INT16 sx, INT16 sy, INT16 x, 
 
 static void draw_commands(void)
 {
-    UINT8 *cmd = &mem[SATURN_VDP1_RAM_BASE];
+	UINT8 *vdp = &mem[SATURN_VDP1_RAM_BASE];
+	UINT16 cmd;
 	UINT32 offs = 0;
-/*	UINT32 link = 0; */
 	UINT32 back = 0;
+	UINT32 link = 0;
 	UINT16 scx = 0, scy = 0;
 	UINT16 lx = 0, ly = 0;
 
@@ -1085,34 +1084,48 @@ static void draw_commands(void)
 
 	for (;;)
 	{
-		if (cmd[offs+0] & 0x80)
+#if VERBOSE
+		{
+			int i;
+
+			LOG(("%06x:", offs));
+			for (i = 0; i < 0x20; i++)
+				LOG((" %02x", vdp[offs+i]));
+			LOG(("\n"));
+		}
+#endif
+
+		cmd = READ_WORD(&vdp[offs+0]);
+
+		if (cmd & 0x8000)
 			break;
 
-		if (!(cmd[offs+0] & 0x40))
+		if (!(cmd & 0x4000))
 		{
-			switch (cmd[offs+1] & 15)
+			switch (cmd & 15)
 			{
 			case 0:
 				{
-					UINT16 coff = 256 * cmd[offs+8] + cmd[offs+9];
+					UINT16 color = READ_WORD(&vdp[offs+4]);
+					UINT16 coff = READ_WORD(&vdp[offs+8]);
 					void *cadr = &mem[SATURN_VDP1_RAM_BASE + coff * 8];
-					INT16 sx = cmd[offs+10] << 3;
-					INT16 sy = cmd[offs+11];
-					INT16 x = (256 * cmd[offs+12] + cmd[offs+13]) + lx;
-					INT16 y = (256 * cmd[offs+14] + cmd[offs+15]) + ly;
+					INT16 sx = vdp[offs+10] << 3;
+					INT16 sy = vdp[offs+11];
+					INT16 x = READ_WORD(&vdp[offs+12]) + lx;
+					INT16 y = READ_WORD(&vdp[offs+14]) + ly;
 
-					switch ((cmd[offs+5] >> 3) & 7)
+					switch ((color >> 3) & 7)
 					{					/* Color mode */
 					case 5:
-						switch (cmd[offs+5] & 7)
+						switch (color & 7)
 						{				/* Color calculation */
 						case 0:
-							switch (cmd[offs+5] & 0xc0)
+							switch (color & 0xc0)
 							{
 							case 0:
-								switch (cmd[offs+1] & 0x30)
+								switch (cmd & 0x0030)
 								{
-								case 0:
+								case 0x00:
 									sprite_rgb_replace_es_xy(cadr, sx, sy, x, y);
 									break;
 								default:
@@ -1133,15 +1146,15 @@ static void draw_commands(void)
 					break;
 				  bail0:
 					LOG(("VDP1: sprite draw, ih=%d, iv=%d, x=%d, y=%d, sx=%d, sy=%d, adr=%08x\n",
-						(cmd[offs+1] & 0x10) != 0, (cmd[offs+1] & 0x20) != 0, x, y, sx, sy, coff));
-					LOG(("       clip=%d, uce=%d, ecd=%d, spd=%d, cmode=%d, ccalc=%d, mon=%d\n",
-						   (cmd[offs+4] & 2) != 0,
-						   (cmd[offs+4] & 1) != 0,
-						   (cmd[offs+5] & 0x80) != 0,
-						   (cmd[offs+5] & 0x40) != 0,
-						   (cmd[offs+5] >> 3) & 7,
-						   cmd[offs+5] & 7,
-						   (cmd[offs+4] & 0x80) != 0));
+						(cmd & 0x10) != 0, (cmd & 0x20) != 0, x, y, sx, sy, coff));
+					LOG(("      clip=%d, uce=%d, ecd=%d, spd=%d, cmode=%d, ccalc=%d, mon=%d\n",
+						   (READ_WORD(&vdp[offs+4]) & 0x0200) != 0,
+						   (READ_WORD(&vdp[offs+4]) & 0x0100) != 0,
+						   (READ_WORD(&vdp[offs+4]) & 0x0080) != 0,
+						   (READ_WORD(&vdp[offs+4]) & 0x0040) != 0,
+						   (READ_WORD(&vdp[offs+4]) >> 3) & 7,
+						   READ_WORD(&vdp[offs+4]) & 7,
+						   (READ_WORD(&vdp[offs+4]) & 0x8000) != 0));
 					break;
 				}
 			case 1:
@@ -1149,38 +1162,30 @@ static void draw_commands(void)
 				break;
 			case 2:
 				{
-					UINT32 coff = (256 * cmd[offs+8] + cmd[offs+9]) * 8;
+					UINT32 coff = READ_WORD(&vdp[offs+8]) * 8;
 					void *cadr = &mem[SATURN_VDP1_RAM_BASE + coff];
-					INT16 x1 = (256 * cmd[offs+12] + cmd[offs+13]) + lx;
-					INT16 y1 = (256 * cmd[offs+14] + cmd[offs+15]) + ly;
-					INT16 x2 = (256 * cmd[offs+16] + cmd[offs+17]) + lx;
-					INT16 y2 = (256 * cmd[offs+18] + cmd[offs+19]) + ly;
-					INT16 x3 = (256 * cmd[offs+20] + cmd[offs+21]) + lx;
-					INT16 y3 = (256 * cmd[offs+22] + cmd[offs+23]) + ly;
-					INT16 x4 = (256 * cmd[offs+24] + cmd[offs+25]) + lx;
-					INT16 y4 = (256 * cmd[offs+26] + cmd[offs+27]) + ly;
-                    (void)cadr;
+					INT16 x1 = READ_WORD(&vdp[offs+12]) + lx;
+					INT16 y1 = READ_WORD(&vdp[offs+14]) + ly;
+					INT16 x2 = READ_WORD(&vdp[offs+16]) + lx;
+					INT16 y2 = READ_WORD(&vdp[offs+18]) + ly;
+					INT16 x3 = READ_WORD(&vdp[offs+20]) + lx;
+					INT16 y3 = READ_WORD(&vdp[offs+22]) + ly;
+					INT16 x4 = READ_WORD(&vdp[offs+24]) + lx;
+					INT16 y4 = READ_WORD(&vdp[offs+26]) + ly;
+					(void)cadr;
 					LOG(("VDP1: distorted sprite draw\n"));
-					LOG(("      (%d, %d)-(%d, %d)-(%d, %d)-(%d, %d)\n", x1, y1, x2, y2, x3, y3, x4, y4));
-#if VERBOSE
-					{
-						int i;
-
-						for (i = 0; i < 0x20; i++)
-							logerror(" %02x", cmd[i]);
-						logerror("\n");
-					}
-#endif
-					LOG(("VDP1: distorded sprite draw, ih=%d, iv=%d, adr=%08x\n", (cmd[offs+1] & 0x10) != 0, (cmd[offs+1] & 0x20) != 0,
-						   0x5c00000 | (cmd[0x08] << 11 | cmd[0x09] << 3)));
+					LOG(("      (%d, %d)-(%d, %d)-(%d, %d)-(%d, %d)\n",
+						x1, y1, x2, y2, x3, y3, x4, y4));
+					LOG(("VDP1: distorded sprite draw, ih=%d, iv=%d, adr=%08x\n",
+						(cmd & 0x10) != 0, (cmd & 0x20) != 0, 0x5c00000 | coff));
 					LOG(("       clip=%d, uce=%d, ecd=%d, spd=%d, cmode=%d, ccalc=%d, mon=%d\n",
-						   (cmd[offs+4] & 2) != 0,
-						   (cmd[offs+4] & 1) != 0,
-						   (cmd[offs+5] & 0x80) != 0,
-						   (cmd[offs+5] & 0x40) != 0,
-						   (cmd[offs+5] >> 3) & 7,
-						   cmd[offs+5] & 7,
-						   (cmd[offs+4] & 0x80) != 0));
+						   (READ_WORD(&vdp[offs+4]) & 0x0200) != 0,
+						   (READ_WORD(&vdp[offs+4]) & 0x0100) != 0,
+						   (READ_WORD(&vdp[offs+4]) & 0x0080) != 0,
+						   (READ_WORD(&vdp[offs+4]) & 0x0040) != 0,
+						   (READ_WORD(&vdp[offs+4]) >> 3) & 7,
+						   READ_WORD(&vdp[offs+4]) & 7,
+						   (READ_WORD(&vdp[offs+4]) & 0x8000) != 0));
 					break;
 				}
 			case 4:
@@ -1196,129 +1201,131 @@ static void draw_commands(void)
 				LOG(("VDP1: user clipping\n"));
 				break;
 			case 9:
-				scx = 256 * cmd[offs+20] + cmd[offs+21];
-				scy = 256 * cmd[offs+22] + cmd[offs+23];
+				scx = READ_WORD(&vdp[offs+20]);
+				scy = READ_WORD(&vdp[offs+22]);
 				LOG(("VDP1: scx=%d, scy=%d\n", scx, scy));
-                break;
+				break;
 			case 10:
-				lx = 256 * cmd[offs+12] + cmd[offs+13];
-				ly = 256 * cmd[offs+14] + cmd[offs+15];
+				lx = READ_WORD(&vdp[offs+12]);
+				ly = READ_WORD(&vdp[offs+14]);
 				LOG(("VDP1: lx=%d, ly=%d\n", lx, ly));
-                break;
+				break;
 			default:
-				LOG(("VDP1: Unknown command %d\n", cmd[offs+1] & 15));
+				LOG(("VDP1: Unknown command %d\n", cmd & 15));
 				break;
 			}
 		}
 
-		switch (cmd[offs+0] & 0x30)
+		switch (cmd & 0x3000)
 		{
-		case 0x00:
+		case 0x0000:
 			offs += 0x20;
 			LOG(("VDP1: offs = next (%x)\n", offs));
 			if (offs >= SATURN_VDP1_RAM_SIZE)
 			{
+				LOG(("VDP1: bailing out (SIZE)\n"));
 				return;
 			}
-            break;
-		case 0x10:
-			offs = (256 * cmd[offs+2] + cmd[offs+3]) * 8;
+			break;
+		case 0x1000:
+			offs = READ_WORD(&vdp[offs+2]) * 8;
 			LOG(("VDP1: offs = link %x\n", offs));
-            break;
-        case 0x20:
-            back = offs + 0x20;
-			offs = (256 * cmd[offs+2] + cmd[offs+3]) * 8;
+			break;
+		case 0x2000:
+			back = offs + 0x20;
+			link = READ_WORD(&vdp[offs+2]) * 8;
 			LOG(("VDP1: offs = link %x, back = %x\n", offs, back));
-            break;
+			if (link < back)
+			{
+				LOG(("VDP1: bailing out (LOOP)\n"));
+				return;
+			}
+			break;
 		default:
 			offs = back;
 			LOG(("VDP1: offs = back (%x)\n", offs));
-            break;
+			break;
 		}
 	}
 }
 
 void vdp1_vblout_draw(void)
 {
-	int mode = vdp1.fb_mode & 3;
+	int mode = vdp1.reg[VDP1_FBCR] & 3;
 
-	if ((vdp1.tv_mode & 4) || vdp1.erase_next || (mode == 0))
+	if ((vdp1.reg[VDP1_TVMR] & 4) || vdp1.erase_next || (mode == 0))
 		vdp1_erase_write();
 
-    if ((mode == 0) || ((mode == 3) && vdp1.trig))
+	if ((mode == 0) || ((mode == 3) && vdp1.trig))
 	{
 		flip_fbs();
-		if ((vdp1.trigger & 3) == 2)
+		if ((vdp1.reg[VDP1_PTMR] & 3) == 2)
 			draw_commands();
 	}
 
 	vdp1.erase_next = (mode == 2) && vdp1.trig ? 1 : 0;
 	vdp1.trig = 0;
-	vdp1.tv_mode &= ~4;
+	vdp1.reg[VDP1_TVMR] &= ~4;
 }
 
-#define VDP1_REG_NAME(adr) vdp1_reg_names[(adr)>>1]
-
-READ_HANDLER( saturn_vdp1_r )   /* VDP1 registers */
+READ_HANDLER( saturn_vdp1_r )	/* VDP1 registers */
 {
 	data_t data = 0x0000;
 	logerror("saturn_vdp1_r   %07x -> %04x\n", offset, data);
-    return data;
+	return data;
 }
 
 WRITE_HANDLER( saturn_vdp1_w )	/* VDP1 registers */
 {
-	switch(offset & 0x1ffff)
+	data_t oldword = vdp1.reg[offset >> 1];
+	data_t newword = COMBINE_WORD(oldword, data);
+	vdp1.reg[offset >> 1] = newword;
+
+	if ((data & 0xffff0000) == 0xffff0000)
+		LOG(("saturn_vdp1_w   %07x <- %04x (%s, PC=%08x)\n", offset, data & 0x0000ffff, VDP1_REG_NAME(offset&0x1ffff), cpu_get_reg(SH2_PC)));
+	else
+	if ((data & 0xffff0000) == 0xff000000)
+		LOG(("saturn_vdp1_w   %07x <- xx%02x (%s, PC=%08x)\n", offset, data & 0x000000ff, VDP1_REG_NAME(offset&0x1ffff), cpu_get_reg(SH2_PC)));
+	else
+		LOG(("saturn_vdp1_w   %07x <- %02xxx (%s, PC=%08x)\n", offset, (data & 0x0000ff00) >> 8, VDP1_REG_NAME(offset&0x1ffff), cpu_get_reg(SH2_PC)));
+
+	switch((offset & 0x1ffff) >> 1)
 	{
-	case 0x00:
-		vdp1.tv_mode = data;
-		logerror("saturn_vdp1_w   screen mode hdtv=%d, rotation=%d, depth=%d\n", (data&4)!=0, (data&2)!=0, (data&1) ? 8 : 16);
+	case VDP1_TVMR:
+		logerror("saturn_vdp1_w   screen mode hdtv=%d, rotation=%d, depth=%d\n", (newword&4)!=0, (newword&2)!=0, (newword&1) ? 8 : 16);
 		vdp1_calc_erase();
 		break;
-	case 0x02:
-		vdp1.fb_mode = data;
+	case VDP1_FBCR:
 		vdp1.trig = 1;
-		if(data & 12)
-			logerror("saturn_vdp1_w   screen mode 2 die=%d, dil=%d\n", (data&8)!=0, (data&4)!=0);
+		if (newword & 12)
+			logerror("saturn_vdp1_w   screen mode 2 die=%d, dil=%d\n", (newword&8)!=0, (newword&4)!=0);
 		break;
-	case 0x04:
-		vdp1.trigger = data;
-		if((data & 3)==1)
+	case VDP1_PTMR:
+		if ((newword & 3)==1)
 			draw_commands();
 		break;
-	case 0x06:
-		vdp1.ew_data = data;
+	case VDP1_EWDR:
 		break;
-	case 0x08:
-		vdp1.ew_ul = data;
+	case VDP1_EWLR:
 		vdp1_calc_erase();
 		break;
-	case 0x0a:
-		vdp1.ew_lr = data;
+	case VDP1_EWRR:
 		vdp1_calc_erase();
 		break;
-	case 0x0c:
+	case VDP1_ENDR:
 		logerror("saturn_vdp1_w   forced drawing termination\n");
 		break;
-	default:
-		if ((data & 0xffff0000) == 0xffff0000)
-			logerror("saturn_vdp1_w   %07x <- %04x\n", offset, data & 0x0000ffff);
-		else
-		if ((data & 0xffff0000) == 0xff000000)
-			logerror("saturn_vdp1_w   %07x <- xx%02x\n", offset, data & 0x000000ff);
-		else
-			logerror("saturn_vdp1_w   %07x <- %02xxx\n", offset, (data & 0x0000ff00) >> 8);
-    }
+	}
 }
 
 static void vdp1_init(void)
 {
-	vdp1.tv_mode = 0;
-	vdp1.fb_mode = 0;
-	vdp1.trigger = 0;
-	vdp1.ew_data = 0;
-	vdp1.ew_ul = 0;
-	vdp1.ew_lr = 0;
+	vdp1.reg[VDP1_TVMR] = 0;
+	vdp1.reg[VDP1_FBCR] = 0;
+	vdp1.reg[VDP1_PTMR] = 0;
+	vdp1.reg[VDP1_EWDR] = 0;
+	vdp1.reg[VDP1_EWLR] = 0;
+	vdp1.reg[VDP1_EWRR] = 0;
 
 	vdp1.trig = 0;
 	vdp1.erase_next = 0;
@@ -1396,19 +1403,19 @@ static void draw_normal_cell_scroll_plane(
 	UINT8 basepri)
 {
 #if VERBOSE
-	printf("VDP2: draw cell scroll:\n");
-	printf("        cbpp    = %d\n", cbpp);
-	printf("        cpsize  = %d\n", cpsize != 0);
-	printf("        patctrl = %x\n", patctrl);
-	printf("        psize   = %d\n", psize);
-	printf("        mapoff  = %d\n", mapoff);
-	printf("        planeab = %x\n", planeab);
-	printf("        planecd = %x\n", planecd);
-	printf("        scrollx = %d\n", scrollx);
-	printf("        scrolly = %d\n", scrolly);
-	printf("        coloff  = %d\n", coloff);
-	printf("        transp  = %d\n", transp == 0);
-	printf("        pri     = %x\n", basepri);
+	LOG(("VDP2: draw cell scroll:\n"));
+	LOG(("  cbpp    = %d\n", cbpp));
+	LOG(("  cpsize  = %d\n", cpsize != 0));
+	LOG(("  patctrl = %x\n", patctrl));
+	LOG(("  psize   = %d\n", psize));
+	LOG(("  mapoff  = %d\n", mapoff));
+	LOG(("  planeab = %x\n", planeab));
+	LOG(("  planecd = %x\n", planecd));
+	LOG(("  scrollx = %d\n", scrollx));
+	LOG(("  scrolly = %d\n", scrolly));
+	LOG(("  coloff  = %d\n", coloff));
+	LOG(("  transp  = %d\n", transp == 0));
+	LOG(("  pri     = %x\n", basepri));
 #endif
 
 	{
@@ -1452,13 +1459,13 @@ static void vdp2_vblout_draw(struct osd_bitmap * bitmap)
 		case 0x0000:
 			break;
 		case 0x1000:
-			printf("VDP2: color mode 2048x16\n");
+			LOG(("VDP2: color mode 2048x16\n"));
 			break;
 		case 0x2000:
-			printf("VDP2: color mode 1024x32\n");
+			LOG(("VDP2: color mode 1024x32\n"));
 			break;
 		}
-		printf("VDP2: enabled %cN0%c %cN1%c %cN2%c %cN3%c %cR0%c %cR1o\n",
+		LOG(("VDP2: enabled %cN0%c %cN1%c %cN2%c %cN3%c %cR0%c %cR1o\n",
 			   vdp2.reg[0x10] & 1 ? '+' : '-',
 			   vdp2.reg[0x10] & 0x100 ? 'o' : 't',
 			   vdp2.reg[0x10] & 2 ? '+' : '-',
@@ -1469,8 +1476,8 @@ static void vdp2_vblout_draw(struct osd_bitmap * bitmap)
 			   vdp2.reg[0x10] & 0x800 ? 'o' : 't',
 			   vdp2.reg[0x10] & 16 ? '+' : '-',
 			   vdp2.reg[0x10] & 0x1000 ? 'o' : 't',
-			   vdp2.reg[0x10] & 32 ? '+' : '-');
-		printf("VDP2: colors N0/R1=%dx%dx%d%c, N1=%dx%dx%d%c, N2=%d%c, N3=%d%c, R0=512x%dx%d%c\n",
+			   vdp2.reg[0x10] & 32 ? '+' : '-'));
+		LOG(("VDP2: colors N0/R1=%dx%dx%d%c, N1=%dx%dx%d%c, N2=%d%c, N3=%d%c, R0=512x%dx%d%c\n",
 
 			   rx[(vdp2.reg[0x14] >> 3) & 1],
 			   ry[(vdp2.reg[0x14] >> 2) & 1],
@@ -1490,9 +1497,9 @@ static void vdp2_vblout_draw(struct osd_bitmap * bitmap)
 
 			   ry[(vdp2.reg[0x15] >> 9) & 1],
 			   nc[(vdp2.reg[0x14] >> 12) & 7],
-			   vdp2.reg[0x15] & 0x200 ? 'b' : vdp2.reg[0x15] & 0x100 ? 'C' : 'c');
-		printf("VDP2: sprite plane mode=%c\n",
-			   vdp2.reg[0x70] & 0x20 ? 'r' : 'p');
+			   vdp2.reg[0x15] & 0x200 ? 'b' : vdp2.reg[0x15] & 0x100 ? 'C' : 'c'));
+		LOG(("VDP2: sprite plane mode=%c\n",
+			   vdp2.reg[0x70] & 0x20 ? 'r' : 'p'));
 
 #endif
 
@@ -1566,7 +1573,7 @@ static void vdp2_vblout_draw(struct osd_bitmap * bitmap)
 
 	}
 	else
-		printf("VDP2: interlaced screen\n");
+		LOG(("VDP2: interlaced screen\n"));
 
 	/* Sprite plane */
 #if 0
@@ -1605,7 +1612,7 @@ static void vdp2_vblout_draw(struct osd_bitmap * bitmap)
 		for (y = 0; y < SATURN_SCR_HEIGHT / 2; y++)
 		{
 			UINT32 *rbuf = (UINT32 *)&bitmap->line[y];
-            int offset1 = offset;
+			int offset1 = offset;
 			int spr_offset1 = spr_offset;
 
 			for (x = 0; x < SATURN_SCR_WIDTH / 2; x++)
@@ -1644,7 +1651,8 @@ void *vbl_in;
 
 void f_vbl_in(int param)
 {
-	scu_pulse_interrupt(INT_VBLIN);
+	LOG(("VDP2: VBL_IN\n"));
+	scu_pulse_interrupt(SH2_INT_VBLIN);
 }
 
 void f_vbl_out(int param)
@@ -1653,6 +1661,7 @@ void f_vbl_out(int param)
 	struct osd_bitmap *bitmap = saturn_bitmap[video_w];
 	static int blank = 0;
 
+	LOG(("VDP2: VBL_OUT\n"));
 	if (count++ == 10)
 	{
 		vdp1_vblout_draw();
@@ -1677,7 +1686,7 @@ void f_vbl_out(int param)
 	vdp2.scr_clock += NTSC_FRAME;
 	vbl_out = timer_set(TIME_IN_CYCLES(NTSC_FRAME,0), 0, f_vbl_out);
 	vbl_in = timer_set(TIME_IN_CYCLES(vdp2.vbl_in_clock,0), 0, f_vbl_in);;
-	scu_pulse_interrupt(INT_VBLOUT);
+	scu_pulse_interrupt(SH2_INT_VBLOUT);
 }
 
 static void vdp2_calc_res(void)
@@ -1693,12 +1702,12 @@ static void vdp2_calc_res(void)
 	vdp2.hbl_in_clock = ((vdp2.resx < 600 ? 2 * vdp2.resx : vdp2.resx) * NTSC_LPERIOD) / NTSC_HRES;
 	vdp2.vbl_in_clock = (vdp2.resy - 1) * NTSC_LPERIOD + vdp2.hbl_in_clock;
 
-	printf("VDP2: Graphic mode %dx%d%s, hin=%d, vin=%d\n",
+	LOG(("VDP2: Graphic mode %dx%d%s, hin=%d, vin=%d\n",
 		   vdp2.resx,
 		   vdp2.resy,
 		   vdp2.interlace ? " (interlaced)" : "",
 		   vdp2.hbl_in_clock,
-		   vdp2.vbl_in_clock);
+		   vdp2.vbl_in_clock));
 }
 
 static const char *vdp2_reg_names[] =
@@ -1723,7 +1732,7 @@ static const char *vdp2_reg_names[] =
 	"clofen", "clofsl", "coar",   "coag",   "coab",   "cobr",   "cobg",   "cobb"
 };
 
-#define VDP2_REG_NAME(adr) ((adr < 144) ? vdp2_reg_names[(adr)>>1] : "n/a")
+#define VDP2_REG_NAME(adr) (((adr) < 2*144) ? vdp2_reg_names[(adr)>>1] : "n/a")
 
 
 void vdp2_init(void)
@@ -1751,134 +1760,136 @@ void vdp2_init(void)
 	}
 }
 
-READ_HANDLER( saturn_vdp2_r )   /* VDP2 registers */
+READ_HANDLER( saturn_vdp2_r )	/* VDP2 registers */
 {
 	data_t data = 0x0000;
 	switch (offset & 0x3ffff)
-    {
-    case 0x04:
-        // ### tvstat, some fields to add.
+	{
+	case 0x04:
+		// ### tvstat, some fields to add.
 		data = vdp2.pal | 2;
-        break;
-    }
-	logerror("saturn_vdp2_r   %07x -> %04x (%s, PC=%08x)\n", offset, data, VDP2_REG_NAME(offset), cpu_get_reg(SH2_PC));
-    return data;
+		break;
+	}
+	LOG(("saturn_vdp2_r   %07x -> %04x (%s, PC=%08x)\n", offset, data, VDP2_REG_NAME(offset), cpu_get_reg(SH2_PC)));
+	return data;
 }
 
 WRITE_HANDLER( saturn_vdp2_w )	/* VDP2 registers */
 {
-	data_t oldword = READ_WORD(&vdp2.reg[offset >> 1]);
-    data_t newword = COMBINE_WORD(oldword, data);
+	data_t oldword = vdp2.reg[offset >> 1];
+	data_t newword = COMBINE_WORD(oldword, data);
 	vdp2.reg[offset >> 1] = newword;
 
-    if ((data & 0xffff0000) == 0xffff0000)
-		logerror("saturn_vdp2_w   %07x <- %04x (%s, PC=%08x)\n", offset, data & 0x0000ffff, VDP2_REG_NAME(offset), cpu_get_reg(SH2_PC));
-    else
-    if ((data & 0xffff0000) == 0xff000000)
-		logerror("saturn_vdp2_w   %07x <- xx%02x (%s, PC=%08x)\n", offset, data & 0x000000ff, VDP2_REG_NAME(offset), cpu_get_reg(SH2_PC));
-    else
-		logerror("saturn_vdp2_w   %07x <- %02xxx (%s, PC=%08x)\n", offset, (data & 0x0000ff00) >> 8, VDP2_REG_NAME(offset), cpu_get_reg(SH2_PC));
-    switch (offset & 0x3ffff)
-    {
-    case 0x000:
+#if VERBOSE
+	if ((data & 0xffff0000) == 0xffff0000)
+		LOG(("saturn_vdp2_w   %07x <- %04x (%s, PC=%08x)\n", offset, data & 0x0000ffff, VDP2_REG_NAME(offset), cpu_get_reg(SH2_PC)));
+	else
+	if ((data & 0xffff0000) == 0xff000000)
+		LOG(("saturn_vdp2_w   %07x <- xx%02x (%s, PC=%08x)\n", offset, data & 0x000000ff, VDP2_REG_NAME(offset), cpu_get_reg(SH2_PC)));
+	else
+		LOG(("saturn_vdp2_w   %07x <- %02xxx (%s, PC=%08x)\n", offset, (data & 0x0000ff00) >> 8, VDP2_REG_NAME(offset), cpu_get_reg(SH2_PC)));
+#endif
+	switch (offset & 0x3ffff)
+	{
+	case 0x000:
 		if (newword & 0x8000)
-            printf("VDP2: TV screen enabled\n");
-        else
-            printf("VDP2: TV screen disabled\n");
+			LOG(("VDP2: TV screen enabled\n"));
+		else
+			LOG(("VDP2: TV screen disabled\n"));
 		vdp2_calc_res();
-        break;
-    }
+		break;
+	}
 }
 
 
 void saturn_init_machine(void)
 {
-    int i;
-    UINT8 *mem2;
+	int i;
+	UINT8 *mem2;
 
-    mem = memory_region(REGION_CPU1);
-    mem2 = memory_region(REGION_CPU2);
-    for (i = 0; i < SATURN_ROM_SIZE; i += 2)
-    {
-        UINT8 tmp = mem[i];
-        mem[i] = mem2[i] = mem[i+1];
-        mem[i+1] = mem2[i+1] = tmp;
-    }
+	mem = memory_region(REGION_CPU1);
+	mem2 = memory_region(REGION_CPU2);
+	for (i = 0; i < SATURN_ROM_SIZE; i += 2)
+	{
+		UINT8 tmp = mem[i];
+		mem[i] = mem2[i] = mem[i+1];
+		mem[i+1] = mem2[i+1] = tmp;
+	}
 
-    cpu_setbank(1, &mem[SATURN_WORKL_RAM_BASE]);
-    cpu_setbank(2, &mem[SATURN_WORKH_RAM_BASE]);
-    cpu_setbank(3, &mem[SATURN_SOUND_RAM_BASE]);
-    cpu_setbank(4, &mem[SATURN_VDP1_RAM_BASE]);
-    cpu_setbank(5, &mem[SATURN_VDP2_RAM_BASE]);
-    cpu_setbank(6, &mem[SATURN_FB1_RAM_BASE]);
-    cpu_setbank(7, &mem[SATURN_FB2_RAM_BASE]);
-    cpu_setbank(8, &mem[SATURN_COLOR_RAM_BASE]);
-    cpu_setbank(9, &mem[SATURN_BACK_RAM_BASE]);
+	cpu_setbank(1, &mem[SATURN_WORKL_RAM_BASE]);
+	cpu_setbank(2, &mem[SATURN_WORKH_RAM_BASE]);
+	cpu_setbank(3, &mem[SATURN_SOUND_RAM_BASE]);
+	cpu_setbank(4, &mem[SATURN_VDP1_RAM_BASE]);
+	cpu_setbank(5, &mem[SATURN_VDP2_RAM_BASE]);
+	cpu_setbank(6, &mem[SATURN_FB1_RAM_BASE]);
+	cpu_setbank(7, &mem[SATURN_FB2_RAM_BASE]);
+	cpu_setbank(8, &mem[SATURN_COLOR_RAM_BASE]);
+	cpu_setbank(9, &mem[SATURN_BACK_RAM_BASE]);
 
-    for (i = 0; i < 2; i++)
-    {
-        install_mem_read_handler (i, 0x00000000, 0x0007ffff, MRA_ROM );
-        install_mem_write_handler(i, 0x00000000, 0x0007ffff, MWA_ROM );
+	for (i = 0; i < 2; i++)
+	{
+		install_mem_read_handler (i, 0x00000000, 0x0007ffff, MRA_ROM );
+		install_mem_write_handler(i, 0x00000000, 0x0007ffff, MWA_ROM );
 
-        install_mem_read_handler (i, 0x00100000, 0x0100007f, saturn_smpc_r );
-        install_mem_write_handler(i, 0x00100000, 0x0100007f, saturn_smpc_w );
+		install_mem_read_handler (i, 0x00100000, 0x0100007f, saturn_smpc_r );
+		install_mem_write_handler(i, 0x00100000, 0x0100007f, saturn_smpc_w );
 
-        install_mem_read_handler (i, 0x00180000, 0x0018ffff, saturn_back_ram_r );
-        install_mem_write_handler(i, 0x00180000, 0x0018ffff, saturn_back_ram_w );
+		install_mem_read_handler (i, 0x00180000, 0x0018ffff, saturn_back_ram_r );
+		install_mem_write_handler(i, 0x00180000, 0x0018ffff, saturn_back_ram_w );
 
-        install_mem_read_handler (i, 0x00200000, 0x002fffff, saturn_workl_ram_r );
-        install_mem_write_handler(i, 0x00200000, 0x002fffff, saturn_workl_ram_w );
+		install_mem_read_handler (i, 0x00200000, 0x002fffff, saturn_workl_ram_r );
+		install_mem_write_handler(i, 0x00200000, 0x002fffff, saturn_workl_ram_w );
 
-        install_mem_read_handler (i, 0x01000000, 0x01000003, saturn_minit_r );
-        install_mem_write_handler(i, 0x01000000, 0x01000003, saturn_minit_w );
+		install_mem_read_handler (i, 0x01000000, 0x01000003, saturn_minit_r );
+		install_mem_write_handler(i, 0x01000000, 0x01000003, saturn_minit_w );
 
-        install_mem_read_handler (i, 0x01800000, 0x01800003, saturn_sinit_r );
-        install_mem_write_handler(i, 0x01800000, 0x01800003, saturn_sinit_w );
+		install_mem_read_handler (i, 0x01800000, 0x01800003, saturn_sinit_r );
+		install_mem_write_handler(i, 0x01800000, 0x01800003, saturn_sinit_w );
 
-        install_mem_read_handler (i, 0x02000000, 0x03ffffff, saturn_cs0_r );
-        install_mem_write_handler(i, 0x02000000, 0x03ffffff, saturn_cs0_w );
+		install_mem_read_handler (i, 0x02000000, 0x03ffffff, saturn_cs0_r );
+		install_mem_write_handler(i, 0x02000000, 0x03ffffff, saturn_cs0_w );
 
-        install_mem_read_handler (i, 0x04000000, 0x04ffffff, saturn_cs1_r );
-        install_mem_write_handler(i, 0x04000000, 0x04ffffff, saturn_cs1_w );
+		install_mem_read_handler (i, 0x04000000, 0x04ffffff, saturn_cs1_r );
+		install_mem_write_handler(i, 0x04000000, 0x04ffffff, saturn_cs1_w );
 
-        install_mem_read_handler (i, 0x05000000, 0x057fffff, saturn_cs2_r );
-        install_mem_write_handler(i, 0x05000000, 0x057fffff, saturn_cs2_w );
+		install_mem_read_handler (i, 0x05000000, 0x057fffff, saturn_cs2_r );
+		install_mem_write_handler(i, 0x05000000, 0x057fffff, saturn_cs2_w );
 
-        install_mem_read_handler (i, 0x05800000, 0x058fffff, saturn_cd_r );
-        install_mem_write_handler(i, 0x05800000, 0x058fffff, saturn_cd_w );
+		install_mem_read_handler (i, 0x05800000, 0x058fffff, saturn_cd_r );
+		install_mem_write_handler(i, 0x05800000, 0x058fffff, saturn_cd_w );
 
-        install_mem_read_handler (i, 0x05a00000, 0x05a7ffff, saturn_sound_ram_r );
-        install_mem_write_handler(i, 0x05a00000, 0x05a7ffff, saturn_sound_ram_w );
-        install_mem_read_handler (i, 0x05a80000, 0x05afffff, MRA_NOP );
-        install_mem_write_handler(i, 0x05a80000, 0x05afffff, MWA_NOP );
+		install_mem_read_handler (i, 0x05a00000, 0x05a7ffff, saturn_sound_ram_r );
+		install_mem_write_handler(i, 0x05a00000, 0x05a7ffff, saturn_sound_ram_w );
+		install_mem_read_handler (i, 0x05a80000, 0x05afffff, MRA_NOP );
+		install_mem_write_handler(i, 0x05a80000, 0x05afffff, MWA_NOP );
 
-        install_mem_read_handler (i, 0x05b00000, 0x05b00ee3, saturn_dsp_r );
-        install_mem_write_handler(i, 0x05b00000, 0x05b00ee3, saturn_dsp_w );
+		install_mem_read_handler (i, 0x05b00000, 0x05b00ee3, saturn_dsp_r );
+		install_mem_write_handler(i, 0x05b00000, 0x05b00ee3, saturn_dsp_w );
 
-        install_mem_read_handler (i, 0x05c00000, 0x05c7ffff, saturn_vdp1_ram_r );
-        install_mem_write_handler(i, 0x05c00000, 0x05c7ffff, saturn_vdp1_ram_w );
+		install_mem_read_handler (i, 0x05c00000, 0x05c7ffff, saturn_vdp1_ram_r );
+		install_mem_write_handler(i, 0x05c00000, 0x05c7ffff, saturn_vdp1_ram_w );
 
-        install_mem_read_handler (i, 0x05c80000, 0x05cbffff, saturn_fb1_ram_r );
-        install_mem_write_handler(i, 0x05c80000, 0x05cbffff, saturn_fb1_ram_w );
+		install_mem_read_handler (i, 0x05c80000, 0x05cbffff, saturn_fb1_ram_r );
+		install_mem_write_handler(i, 0x05c80000, 0x05cbffff, saturn_fb1_ram_w );
 
-        install_mem_read_handler (i, 0x05d00000, 0x05d00017, saturn_vdp1_r );
-        install_mem_write_handler(i, 0x05d00000, 0x05d00017, saturn_vdp1_w );
+		install_mem_read_handler (i, 0x05d00000, 0x05d00017, saturn_vdp1_r );
+		install_mem_write_handler(i, 0x05d00000, 0x05d00017, saturn_vdp1_w );
 
-        install_mem_read_handler (i, 0x05e00000, 0x05e7ffff, saturn_vdp2_ram_r );
-        install_mem_write_handler(i, 0x05e00000, 0x05e7ffff, saturn_vdp2_ram_w );
+		install_mem_read_handler (i, 0x05e00000, 0x05e7ffff, saturn_vdp2_ram_r );
+		install_mem_write_handler(i, 0x05e00000, 0x05e7ffff, saturn_vdp2_ram_w );
 
-        install_mem_read_handler (i, 0x05f00000, 0x05f00fff, saturn_color_ram_r );
-        install_mem_write_handler(i, 0x05f00000, 0x05f00fff, saturn_color_ram_w );
+		install_mem_read_handler (i, 0x05f00000, 0x05f00fff, saturn_color_ram_r );
+		install_mem_write_handler(i, 0x05f00000, 0x05f00fff, saturn_color_ram_w );
 
-        install_mem_read_handler (i, 0x05f80000, 0x05f8011f, saturn_vdp2_r );
-        install_mem_write_handler(i, 0x05f80000, 0x05f8011f, saturn_vdp2_w );
+		install_mem_read_handler (i, 0x05f80000, 0x05f8011f, saturn_vdp2_r );
+		install_mem_write_handler(i, 0x05f80000, 0x05f8011f, saturn_vdp2_w );
 
-        install_mem_read_handler (i, 0x05fe0000, 0x05fe00cf, saturn_scu_r );
-        install_mem_write_handler(i, 0x05fe0000, 0x05fe00cf, saturn_scu_w );
+		install_mem_read_handler (i, 0x05fe0000, 0x05fe00cf, saturn_scu_r );
+		install_mem_write_handler(i, 0x05fe0000, 0x05fe00cf, saturn_scu_w );
 
-        install_mem_read_handler (i, 0x06000000, 0x060fffff, saturn_workh_ram_r );
-        install_mem_write_handler(i, 0x06000000, 0x060fffff, saturn_workh_ram_w );
-    }
+		install_mem_read_handler (i, 0x06000000, 0x060fffff, saturn_workh_ram_r );
+		install_mem_write_handler(i, 0x06000000, 0x060fffff, saturn_workh_ram_w );
+	}
 }
 
 void init_saturn(void)
@@ -1894,10 +1905,10 @@ int saturn_vh_start(void)
 	saturn_bitmap[0] = osd_alloc_bitmap(SATURN_SCR_WIDTH, SATURN_SCR_HEIGHT, 16);
 	saturn_bitmap[1] = osd_alloc_bitmap(SATURN_SCR_WIDTH, SATURN_SCR_HEIGHT, 16);
 
-    if (!saturn_bitmap[0] || !saturn_bitmap[1])
+	if (!saturn_bitmap[0] || !saturn_bitmap[1])
 		return 1;
 
-    return 0;
+	return 0;
 }
 
 void saturn_vh_stop(void)
@@ -1917,12 +1928,12 @@ void saturn_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 static struct MemoryReadAddress readmem[] =
 {
-    {-1}
+	{-1}
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-    {-1}
+	{-1}
 };
 
 INPUT_PORTS_START( saturn )
@@ -1962,13 +1973,13 @@ static struct MachineDriver machine_driver_saturn =
 			readmem,writemem,0,0,
 			ignore_interrupt, 1
 		},
-        {
-            CPU_SH2,
-            28000000,   /* 28 MHz */
+		{
+			CPU_SH2,
+			28000000,	/* 28 MHz */
 			readmem,writemem,0,0,
-            ignore_interrupt, 1
+			ignore_interrupt, 1
 		}
-    },
+	},
 	/* frames per second, VBL duration */
 	60, DEFAULT_60HZ_VBLANK_DURATION,
 	1,						/* dual CPU */
@@ -1999,7 +2010,7 @@ ROM_START(saturn)
 ROM_END
 
 static const struct IODevice io_saturn[] = {
-    { IO_END }
+	{ IO_END }
 };
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
