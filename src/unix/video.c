@@ -236,15 +236,14 @@ static int video_verify_vectorres(struct rc_option *option, const char *arg,
    return 0;
 }
 
-int osd_create_display(int width, int height, int depth,
-   float fps, int attributes, int orientation, UINT32 *rgb_components)
+int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_components)
 {
    int r, g, b;
    struct mame_display dummy_display;
 
-   bitmap_depth = (depth != 15) ? depth : 16;
+   bitmap_depth = (params->depth != 15) ? params->depth : 16;
 
-   rgb_direct = (depth == 15) || (depth == 32);
+   rgb_direct = (params->depth == 15) || (params->depth == 32);
 
    current_palette = normal_palette = NULL;
    debug_visual.min_x = 0;
@@ -253,25 +252,25 @@ int osd_create_display(int width, int height, int depth,
    debug_visual.max_y = options.debug_height - 1;
 
    /* Can we do dirty? */
-   if ( (attributes & VIDEO_SUPPORTS_DIRTY) == 0 )
+   if ( (params->video_attributes & VIDEO_SUPPORTS_DIRTY) == 0 )
    {
       use_dirty = FALSE;
    }
    
    if (use_auto_double)
    {
-      if ( (attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK) ==
+      if ( (params->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK) ==
          VIDEO_PIXEL_ASPECT_RATIO_1_2)
       {
-         if (orientation & ORIENTATION_SWAP_XY)
+         if (params->orientation & ORIENTATION_SWAP_XY)
             normal_widthscale  *= 2;
          else
             normal_heightscale *= 2;
       }
-      if ( (attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK) ==
+      if ( (params->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK) ==
          VIDEO_PIXEL_ASPECT_RATIO_2_1)
       {
-         if (orientation & ORIENTATION_SWAP_XY)
+         if (params->orientation & ORIENTATION_SWAP_XY)
             normal_heightscale *= 2;
          else
             normal_widthscale  *= 2;
@@ -280,12 +279,12 @@ int osd_create_display(int width, int height, int depth,
   
    if (osd_dirty_init() != OSD_OK) return -1;
 
-   visual_width     = width;
-   visual_height    = height;
+   visual_width     = params->width;
+   visual_height    = params->height;
    widthscale       = normal_widthscale;
    heightscale      = normal_heightscale;
    use_aspect_ratio = normal_use_aspect_ratio;
-   video_fps        = fps;
+   video_fps        = params->fps;
    
    if (sysdep_create_display(bitmap_depth) != OSD_OK)
       return -1;
@@ -839,4 +838,30 @@ void osd_pause(int paused)
       brightness_paused_adjust = 1.0;
 
    osd_set_brightness(brightness);
+}
+
+const char *osd_get_fps_text(const struct performance_info *performance)
+{
+	static char buffer[1024];
+	char *dest = buffer;
+	
+	// display the FPS, frameskip, percent, fps and target fps
+	dest += sprintf(dest, "%s%2d%4d%%%4d/%d fps", 
+			autoframeskip ? "auto" : "fskp", frameskip, 
+			(int)(performance->game_speed_percent + 0.5), 
+			(int)(performance->frames_per_second + 0.5),
+			(int)(Machine->drv->frames_per_second + 0.5));
+
+	/* for vector games, add the number of vector updates */
+	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
+	{
+		dest += sprintf(dest, "\n %d vector updates", performance->vector_updates_last_second);
+	}
+	else if (performance->partial_updates_this_frame > 1)
+	{
+		dest += sprintf(dest, "\n %d partial updates", performance->partial_updates_this_frame);
+	}
+	
+	/* return a pointer to the static buffer */
+	return buffer;
 }

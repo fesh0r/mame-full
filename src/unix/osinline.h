@@ -4,7 +4,7 @@
 /* for uclock() */
 #include "sysdep/misc.h"
 
-#define osd_cycles() uclock()
+/* #define osd_cycles() uclock() */
 
 #if defined svgalib || defined x11 || defined ggi || defined openstep || defined SDL
 extern unsigned char *dirty_lines;
