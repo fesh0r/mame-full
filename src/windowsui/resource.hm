@@ -48,6 +48,7 @@
 #define HIDC_NOROTATE                   0x809a04e3    // IDD_PROP_DISPLAY
 #define HIDC_OVERLAYS                   0x809e040e    // IDD_PROP_MISC
 #define HIDC_PROP_RESET                 0x809c0486    // IDD_PROP_ADVANCED
+#define HIDC_RANDOM_BG                  0x80ad0491    // IDD_START_OPTIONS
 #define HIDC_REFRESH                    0x809c04ec    // IDD_PROP_ADVANCED
 #define HIDC_RESDEPTH                   0x809c04e8    // IDD_PROP_ADVANCED
 #define HIDC_RESET_DEFAULT              0x80aa04a2    // IDD_RESET
@@ -63,6 +64,7 @@
 #define HIDC_START_GAME_CHECK           0x80ad04b9    // IDD_START_OPTIONS
 #define HIDC_START_VERSION_WARN         0x80ad04ba    // IDD_START_OPTIONS
 #define HIDC_STEADYKEY                  0x809d04f3    // IDD_PROP_INPUT
+#define HIDC_LIGHTGUN	                0x809d04f3    // IDD_PROP_INPUT
 #define HIDC_SWITCHBPP                  0x809c04de    // IDD_PROP_ADVANCED
 #define HIDC_SWITCHRES                  0x809c04dd    // IDD_PROP_ADVANCED
 #define HIDC_SYNCREFRESH                0x809c04e2    // IDD_PROP_ADVANCED
