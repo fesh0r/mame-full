@@ -8963,6 +8963,30 @@ $info=ti990_4
 $bio
 Texas Instruments Model 990/4 Minicomputer System (1976)
 
+Known Issues:
+
+The controller panel is not emulated yet.
+
+
+Usage:
+
+This driver emulates a TI990/4 CPU with 32kbytes of RAM, a FD800 disk
+controller at CRU base >0040 (>0080), and a 733 ASR at CRU base >0000.
+
+This in enough to run various floppy-based programs that have been dumped by
+Dave Pitts.  Please refer to <http://www.cozx.com/~dpitts/ti990.html> if you
+are interested in getting a copy of these programs or seeing another ti990
+emulator.
+
+
+History and Trivia:
+
+The TI990/4 board was released in 1976.  It is built around a tms9900.  While
+not as powerful as the high-end 990/10 and 990/12 boards, it was a lot cheaper.
+It was used as a terminal concentrator in large TI990 systems, and also as the
+base of various development systems.
+
+See the entry for TI990/10 for a short rundown of the TI990 series.
 
 $end
 
