@@ -687,6 +687,10 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 			HDC hdc = BeginPaint(wnd, &pstruct);
 			if (win_video_window)
 				draw_video_contents(hdc, NULL, NULL, NULL, 1);
+#if WINDOW_HAS_MENU
+			if (GetMenu(win_video_window))
+				DrawMenuBar(win_video_window);
+#endif
 			EndPaint(wnd, &pstruct);
 			break;
 		}

@@ -10,6 +10,9 @@
 #include "vidhrdw/generic.h"
 #include "includes/z88.h"
 
+static int frame_number = 0;
+static int flash_invert = 0;
+
 /***************************************************************************
   Start the video hardware emulation.
 ***************************************************************************/
@@ -17,14 +20,15 @@
 /* two colours */
 static unsigned short z88_colour_table[Z88_NUM_COLOURS] =
 {
-	0, 1
+	0, 1, 2
 };
 
 /* black/white */
 static unsigned char z88_palette[Z88_NUM_COLOURS * 3] =
 {
 	0x000, 0x000, 0x000,
-	0x0ff, 0x0ff, 0x0ff
+	0x0ff, 0x0ff, 0x0ff,
+	0x080, 0x080, 0x080
 };
 
 
@@ -40,13 +44,9 @@ extern struct blink_hw blink;
 
 /* temp - change to gfxelement structure */
 
-static void z88_vh_render_8x8(struct mame_bitmap *bitmap, int x, int y, unsigned char *pData)
+static void z88_vh_render_8x8(struct mame_bitmap *bitmap, int x, int y, int pen0, int pen1, unsigned char *pData)
 {
         int h,b;
-        int pen0, pen1;
-
-        pen0 = Machine->pens[0];
-        pen1 = Machine->pens[1];
 
         for (h=0; h<8; h++)
         {
@@ -73,13 +73,9 @@ static void z88_vh_render_8x8(struct mame_bitmap *bitmap, int x, int y, unsigned
         }
 }
 
-static void z88_vh_render_6x8(struct mame_bitmap *bitmap, int x, int y, unsigned char *pData)
+static void z88_vh_render_6x8(struct mame_bitmap *bitmap, int x, int y, int pen0, int pen1, unsigned char *pData)
 {
 	int h,b;
-	int pen0, pen1;
-
-	pen0 = Machine->pens[0];
-	pen1 = Machine->pens[1];
 
 	for (h=0; h<8; h++)
 	{
@@ -87,7 +83,6 @@ static void z88_vh_render_6x8(struct mame_bitmap *bitmap, int x, int y, unsigned
 
 		data = pData[h];
 		data = data<<2;
-		plot_pixel(bitmap,x,y+h, 0);
 
 		for (b=0; b<6; b++)
 		{
@@ -103,10 +98,10 @@ static void z88_vh_render_6x8(struct mame_bitmap *bitmap, int x, int y, unsigned
 
 			plot_pixel(bitmap, x+1+b, y+h, pen);
 			data = data<<1;
-
 		}
 
-		plot_pixel(bitmap,x+7,y+h, 0);
+		plot_pixel(bitmap,x,y+h, pen0);
+		plot_pixel(bitmap,x+7,y+h, pen0);
 	}
 }
 
@@ -145,6 +140,19 @@ static unsigned  char *z88_convert_address(unsigned long offset)
         }
 }
 
+
+VIDEO_EOF( z88 )
+{
+	frame_number++;
+	if (frame_number >= 50)
+	{
+		frame_number = 0;
+		flash_invert = !flash_invert;
+	}
+}
+
+
+
 /***************************************************************************
   Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this fuz88tion,
@@ -155,6 +163,7 @@ VIDEO_UPDATE( z88 )
     int x,y;
     unsigned char *ptr = z88_convert_address(blink.sbf);
 	unsigned char *stored_ptr = ptr;
+    int pen0, pen1;
 
 	for (y=0; y<(Z88_SCREEN_HEIGHT>>3); y++)
 	{
@@ -170,15 +179,45 @@ VIDEO_UPDATE( z88 )
 			byte1 = ptr[1];
 			ptr+=2;
 
-			/* hi-res? */
-			if (byte1 & Z88_SCR_HW_HRS)
-			{
+			/* inverted graphics? */
 				if (byte1 & Z88_SCR_HW_REV)
 				{
+				pen1 = Machine->pens[0];
 				
+				if (byte1 & Z88_SCR_HW_GRY)
+				{
+					pen0 = Machine->pens[2];
+				}
+				else
+				{
+					pen0 = Machine->pens[1];
+				}
 				}
 				else
                 {       
+				pen0 = Machine->pens[0];
+				if (byte1 & Z88_SCR_HW_GRY)
+				{
+					pen1 = Machine->pens[2];
+				}
+				else
+				{
+					pen1 = Machine->pens[1];
+				}
+			}
+
+//			if (byte1 & Z88_SCR_HW_FLS)
+//			{
+//				if (flash_invert)
+//				{
+//					pen1 = pen0;
+//				}
+//			}
+
+
+			/* hi-res? */
+			if (byte1 & Z88_SCR_HW_HRS)
+			{
 					int ch_index;
 					unsigned char *pCharGfx;
 
@@ -197,8 +236,7 @@ VIDEO_UPDATE( z88 )
 
 					pCharGfx += (ch_index<<3);
 
-					z88_vh_render_8x8(bitmap, (x<<3),(y<<3), pCharGfx);
-				}
+				z88_vh_render_8x8(bitmap, (x<<3),(y<<3), pen0, pen1, pCharGfx);
 			}
 			else
 			{
@@ -222,17 +260,16 @@ VIDEO_UPDATE( z88 )
 
 				pCharGfx += (ch_index<<3);
 
-				z88_vh_render_6x8(bitmap, (x<<3),(y<<3), pCharGfx);
-
+				z88_vh_render_6x8(bitmap, (x<<3),(y<<3), pen0,pen1,pCharGfx);
 
 				/* underline? */
 				if (byte1 & Z88_SCR_HW_UND)
 				{
-					z88_vh_render_line(bitmap, (x<<3), (y<<3), 1);
+					z88_vh_render_line(bitmap, (x<<3), (y<<3), pen1);
 				}
-
-			
 			}
+
+
 
 		}
 

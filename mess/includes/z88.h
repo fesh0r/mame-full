@@ -1,12 +1,13 @@
 #include "driver.h"
 
-#define Z88_NUM_COLOURS 2
+#define Z88_NUM_COLOURS 3
 
 #define Z88_SCREEN_WIDTH        856
 #define Z88_SCREEN_HEIGHT       64
 
 extern PALETTE_INIT( z88 );
 extern VIDEO_UPDATE( z88 );
+extern VIDEO_EOF( z88 );
 
 #define Z88_AWAKE	0
 #define Z88_SNOOZE	1

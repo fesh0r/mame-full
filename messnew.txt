@@ -18,6 +18,8 @@ System Driver Changes:
 - [COCO3] Fixed a bug that caused a few display glitches when switching between
   40 column and 80 column mode. (bug #271) [Nate Woods]
 
+- [Z88] Video updates. [Kev Thacker]
+
 Source Changes:
 ---------------
 - Updated all drivers device declarations to new system and removed old dev
