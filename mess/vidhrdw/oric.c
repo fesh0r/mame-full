@@ -207,9 +207,9 @@ static void oric_vh_update_attribute(int c)
 static void oric_vh_render_6pixels(struct osd_bitmap *bitmap,int x,int y, int fg, int bg,int data, int invert_flag)
 {
 	int i;
-	int fg_pen;
-	int bg_pen;
-				
+	int pens[2];
+	int px;
+	
 	/* invert? */
 	if (invert_flag)
 	{
@@ -217,24 +217,17 @@ static void oric_vh_render_6pixels(struct osd_bitmap *bitmap,int x,int y, int fg
 		bg ^=0x07;
 	}
 
-	fg_pen = Machine->pens[fg];
-	bg_pen = Machine->pens[bg];
+	pens[1] = Machine->pens[fg];
+	pens[0] = Machine->pens[bg];
 	
+	px = x;
 	for (i=0; i<6; i++)
 	{
 		int col;
 
-		if ((data & (1<<5))!=0)
-		{
-			col = fg_pen;
-		}
-		else
-		{
-			col = bg_pen;
-		}
-
-		plot_pixel(bitmap,x+i, y, col);
-
+		col = pens[(data>>5) & 0x01];
+		plot_pixel(bitmap,px, y, col);
+		px++;
 		data = data<<1;
 	}
 }

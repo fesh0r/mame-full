@@ -53,6 +53,11 @@ void exidy_init_palette(unsigned char *sys_palette, unsigned short *sys_colortab
 void exidy_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int x,y;
+	int pens[2];
+
+	pens[0] = Machine->pens[0];
+	pens[1] = Machine->pens[1];
+
 	for (y=0; y<EXIDY_SCREEN_HEIGHT>>3; y++)
 	{
 		for (x=0; x<EXIDY_SCREEN_WIDTH>>3; x++)
@@ -70,20 +75,23 @@ void exidy_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			for (cheight=0; cheight<8; cheight++)
 			{
 				int byte;
+				int px,py;
 
 				/* read byte of graphics data from z80 memory */
 				/* either prom or ram */
 				byte = cpu_readmem16(char_addr+cheight);
 
+				px = (x<<3);
+				py = (y<<3)+cheight;
 				for (cwidth=0; cwidth<8; cwidth++)
 				{
 					int pen;
 
 					pen = (byte>>7) & 0x001;
-					pen = Machine->pens[pen];
+					pen = pens[pen];
 
-					plot_pixel(bitmap,(x<<3)+cwidth, (y<<3)+cheight, pen);
-
+					plot_pixel(bitmap,px, py,pen);
+					px++;
 					byte = byte<<1;
 				}
 			}

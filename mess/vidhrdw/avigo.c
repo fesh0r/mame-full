@@ -206,6 +206,8 @@ void avigo_init_palette(unsigned char *sys_palette, unsigned short *sys_colortab
 	}
 
 }
+extern		unsigned int avigo_ad_x;
+extern unsigned int avigo_ad_y;
 
 
 
@@ -219,12 +221,12 @@ void avigo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
     int y;
     int b;
     int x;
-    int pen0, pen1;
+    int pens[2];
 	struct rectangle r;
 
 	/* draw avigo display */
-    pen0 = Machine->pens[0];
-    pen1 = Machine->pens[1];
+    pens[0] = Machine->pens[0];
+    pens[1] = Machine->pens[1];
 
     for (y=0; y<AVIGO_SCREEN_HEIGHT; y++)
     {
@@ -233,26 +235,22 @@ void avigo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
         unsigned char *line_ptr = avigo_video_memory +  (y*(AVIGO_SCREEN_WIDTH>>3));
 		
         x = 0;
-        for (by=0; by<AVIGO_SCREEN_WIDTH>>3; by++)
+        for (by=AVIGO_SCREEN_WIDTH>>3; by>=0; by--)
         {
+			int px;
             unsigned char byte;
 
             byte = line_ptr[0];
 
-            for (b=0; b<8; b++)
+			px = x;
+            for (b=7; b>=0; b--)
             {
-                if (byte & 0x080)
-                {
-					plot_pixel(bitmap,x+b, y, pen1);
-				}
-                else
-                {
-                    plot_pixel(bitmap,x+b, y, pen0);
-                }
-                byte = byte<<1;
+				plot_pixel(bitmap, px, y, pens[(byte>>7) & 0x01]);
+                px++;
+				byte = byte<<1;
             }
 
-            x = x + 8;
+            x = px;
                             
             line_ptr = line_ptr+1;
         }
@@ -266,5 +264,27 @@ void avigo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	/* draw stylus marker */
 	drawgfx (bitmap, stylus_pointer, 0, 0, 0, 0,
 			 stylus_x, stylus_y, &r, TRANSPARENCY_PEN, 0);
+
+	{
+
+		char	avigo_text[256];
+		sprintf(avigo_text,"X: %03x Y: %03x",avigo_ad_x, avigo_ad_y);
+		ui_text(bitmap, avigo_text, 0, 200);
+
+	}
+	{
+		int xb,yb,zb,ab,bb;
+		char	avigo_text[256];
+		xb =cpu_readmem16(0x0c1cf) & 0x0ff;
+		yb = cpu_readmem16(0x0c1d0) & 0x0ff;
+		zb =cpu_readmem16(0x0c1d1) & 0x0ff;
+		ab = cpu_readmem16(0x0c1d2) & 0x0ff;
+		bb =cpu_readmem16(0x0c1d3) & 0x0ff;
+
+
+		sprintf(avigo_text,"Xb: %02x Yb: %02x zb: %02x ab:%02x bb:%02x",xb, yb,zb,ab,bb);
+		ui_text(bitmap, avigo_text, 0, 216+16);
+
+	}
 }
 
