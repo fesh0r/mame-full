@@ -598,6 +598,7 @@ $(OBJ)/svision.a:  \
 
 $(OBJ)/lynx.a:     \
 	  $(OBJ)/mess/systems/lynx.o     \
+	  $(OBJ)/mess/sndhrdw/lynx.o     \
 	  $(OBJ)/mess/machine/lynx.o
 
 $(OBJ)/mk1.a:      \
