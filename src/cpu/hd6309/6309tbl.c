@@ -438,6 +438,7 @@ INLINE void stu_ex( void );
 INLINE void sts_ex( void );
 INLINE void pref10( void );
 INLINE void pref11( void );
+INLINE void emu_dbg( void );
 
 static UINT8 flags8i[256]=	 /* increment */
 {
@@ -490,18 +491,18 @@ static UINT8 index_cycle_em[256] = {        /* Index Loopup cycle counts, emulat
 /* 0x6X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
 /* 0x7X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
 /* 0x8X */      2,    3,    2,    3,    0,    1,    1,    1,    1,    4,    1,    4,    1,    5,    4,    0,
-/* 0x9X */      3,    6,    5,    6,    3,    4,    4,    4,    4,    7,    4,    7,    4,    8,    7,    5,
+/* 0x9X */      3,    6,   20,    6,    3,    4,    4,    4,    4,    7,    4,    7,    4,    8,    7,    5,
 /* 0xAX */      2,    3,    2,    3,    0,    1,    1,    1,    1,    4,    1,    4,    1,    5,    4,    5,
-/* 0xBX */      5,    6,    5,    6,    3,    4,    4,    4,    4,    7,    4,    7,    4,    8,    7,    8,
+/* 0xBX */      5,    6,   20,    6,    3,    4,    4,    4,    4,    7,    4,    7,    4,    8,    7,   20,
 /* 0xCX */      2,    3,    2,    3,    0,    1,    1,    1,    1,    4,    1,    4,    1,    5,    4,    3,
-/* 0xDX */      4,    6,    5,    6,    3,    4,    4,    4,    4,    7,    4,    7,    4,    8,    7,    8,
+/* 0xDX */      4,    6,   20,    6,    3,    4,    4,    4,    4,    7,    4,    7,    4,    8,    7,   20,
 /* 0xEX */      2,    3,    2,    3,    0,    1,    1,    1,    1,    4,    1,    4,    1,    5,    4,    3,
-/* 0xFX */      4,    6,    5,    6,    3,    4,    4,    4,    4,    7,    4,    7,    4,    8,    7,    8
+/* 0xFX */      4,    6,   20,    6,    3,    4,    4,    4,    4,    7,    4,    7,    4,    8,    7,   20
 };
 
 static UINT8 index_cycle_na[256] = {         /* Index Loopup cycle counts,
 native 6309 */
-/*	     X0, X1, X2, X3, X4, X5, X6, X7, X8, X9, XA, XB, XC, XD, XE, XF */
+/*	        X0, X1, X2, X3, X4, X5, X6, X7, X8, X9, XA, XB, XC, XD, XE, XF */
 
 /* 0x0X */   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
 /* 0x1X */   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
@@ -512,13 +513,13 @@ native 6309 */
 /* 0x6X */   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
 /* 0x7X */   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
 /* 0x8X */   1,  2,  1,  2,  0,  1,  1,  1,  1,  3,  1,  2,  1,  3,  1,  0,
-/* 0x9X */   3,  5,  4,  5,  3,  4,  4,  4,  4,  7,  4,  5,  4,  6,  4,  5,
+/* 0x9X */   3,  5, 19,  5,  3,  4,  4,  4,  4,  7,  4,  5,  4,  6,  4,  5,
 /* 0xAX */   1,  2,  1,  2,  0,  1,  1,  1,  1,  3,  1,  2,  1,  3,  1,  2,
-/* 0xBX */   5,  5,  4,  5,  3,  4,  4,  4,  4,  7,  4,  5,  4,  6,  4,  5,
+/* 0xBX */   5,  5, 19,  5,  3,  4,  4,  4,  4,  7,  4,  5,  4,  6,  4, 19,
 /* 0xCX */   1,  2,  1,  2,  0,  1,  1,  1,  1,  3,  1,  2,  1,  3,  1,  1,
-/* 0xDX */   4,  5,  4,  5,  3,  4,  4,  4,  4,  7,  4,  5,  4,  6,  4,  5,
+/* 0xDX */   4,  5, 19,  5,  3,  4,  4,  4,  4,  7,  4,  5,  4,  6,  4, 19,
 /* 0xEX */   1,  2,  1,  2,  0,  1,  1,  1,  1,  3,  1,  2,  1,  3,  1,  1,
-/* 0xFX */   4,  5,  4,  5,  3,  4,  4,  4,  4,  7,  4,  5,  4,  6,  4,  5
+/* 0xFX */   4,  5, 19,  5,  3,  4,  4,  4,  4,  7,  4,  5,  4,  6,  4, 19
 };
 
 #define IIP0	19			/* Illegal instruction cycle count page 0 */
@@ -807,7 +808,7 @@ static void (*hd6309_page11[0x100])(void) = {
 			IIError, IIError, IIError, addf_ix, IIError, IIError, IIError, IIError,
 
 /* 0xFX */  subf_ex, cmpf_ex, IIError, IIError, IIError, IIError, ldf_ex,  stf_ex,
-			IIError, IIError, IIError, addf_ex, IIError, IIError, IIError, IIError
+			IIError, IIError, IIError, addf_ex, emu_dbg, IIError, IIError, IIError
 
 };
 
