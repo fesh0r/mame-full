@@ -248,10 +248,18 @@ int imgwave_forward(IMAGE *img)
 		}
 
 		for (i = extra->blockheadersize-1; i >= 0; i--) {
-			newcarry = buffer[i] & 0x80;
-			buffer[i] <<= 1;
-			if (carry)
-				buffer[i] |= 1;
+			if (0) {
+				newcarry = buffer[i] & 0x80;
+				buffer[i] <<= 1;
+				if (carry)
+					buffer[i] |= 1;
+			}
+			else {
+				newcarry = buffer[i] & 0x01;
+				buffer[i] >>= 1;
+				if (carry)
+					buffer[i] |= 0x80;
+			}
 			carry = newcarry;
 		}
 	}
@@ -273,13 +281,20 @@ int imgwave_read(IMAGE *img, UINT8 *buf, int bufsize)
 			err = imgwave_readbit(img, &bit);
 			if (err)
 				return err;
-			b <<= 1;
-			if (bit)
-				b |= 1;
+			if (0) {
+				b <<= 1;
+				if (bit)
+					b |= 1;
+			}
+			else {
+				b >>= 1;
+				if (bit)
+					b |= 0x80;
+			}
 		}
 		*(buf++) = b;
 	}
-	return IMGTOOLERR_UNIMPLEMENTED;
+	return 0;
 }
 
 int imgwave_beginenum(IMAGE *img, IMAGEENUM **outenum)
@@ -313,6 +328,7 @@ int imgwave_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	if (err)
 		return err;
 
+	wenum->pos = wenum->wimg->curpos;
 	return 0;
 }
 

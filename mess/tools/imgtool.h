@@ -594,10 +594,4 @@ int imgwave_seek(IMAGE *img, int pos);
 int imgwave_forward(IMAGE *img);
 int imgwave_read(IMAGE *img, UINT8 *buf, int bufsize);
 
-
-/*
-void imgwave_getpos(IMAGE *img, int *pos);
-int imgwave_setpos(IMAGE *img, int pos);
-*/
-
 #endif /* IMGTOOL_H */

@@ -104,6 +104,8 @@ static void reporterror(int err, struct command *c, const char *format, const ch
 		src = "imgtool";
 		break;
 	}
+	fflush(stdout);
+	fflush(stderr);
 	fprintf(stderr, "%s: %s\n", src, err_name);
 }
 

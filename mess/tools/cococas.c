@@ -4,8 +4,6 @@
 #include "osdepend.h"
 #include "imgtool.h"
 
-/* static int cococas_init(STREAM *f, IMAGE **outimg); */
-/* static void cococas_exit(IMAGE *img); */
 static int cococas_nextfile(IMAGE *img, imgtool_dirent *ent);
 static int cococas_readfile(IMAGE *img, const char *fname, STREAM *destf);
 static int cococas_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *options);
@@ -86,9 +84,11 @@ static int cococas_nextfile(IMAGE *img, imgtool_dirent *ent)
 	memcpy(fname, blk.data, 8);
 	rtrim(fname);
 
+	if (strlen(fname) >= ent->fname_len)
+		return IMGTOOLERR_BUFFERTOOSMALL;
+	strcpy(ent->fname, fname);
 
-
-	return IMGTOOLERR_UNIMPLEMENTED;
+	return 0;
 }
 
 static int cococas_readfile(IMAGE *img, const char *fname, STREAM *destf)
