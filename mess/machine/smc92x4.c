@@ -344,6 +344,10 @@ INLINE UINT8 get_disk_status(int which, select_mode_t select_mode, int disk_unit
 	case sm_floppy_fast:
 		reply = floppy_get_disk_status(which, disk_unit);
 		break;
+
+	default:
+		reply = 0;
+		break;
 	}
 
 	return reply;

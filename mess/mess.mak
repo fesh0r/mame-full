@@ -437,6 +437,7 @@ $(OBJ)/ti99.a:	   \
 	  $(OBJ)/mess/machine/99_dsk.o   \
 	  $(OBJ)/mess/machine/99_ide.o   \
 	  $(OBJ)/mess/machine/smc92x4.o  \
+	  $(OBJ)/mess/machine/rtc65271.o \
 #	  $(OBJ)/mess/systems/ti99_2.o	 \
 #	  $(OBJ)/mess/systems/ti990_4.o  \
 

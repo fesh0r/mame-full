@@ -870,6 +870,10 @@ static int hfdc_select_callback(int which, select_mode_t select_mode, int select
 			break;
 		}
 		break;
+
+	default:
+		disk_unit = -1;
+		break;
 	}
 
 	return disk_unit;
