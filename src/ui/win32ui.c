@@ -1815,16 +1815,22 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 
 	srand((unsigned)time(NULL));
 
+	begin_resource_tracking();
+
 	game_count = 0;
 	while (drivers[game_count] != 0)
 		game_count++;
 
 	/* custom per-game icons */
-	icon_index = malloc(sizeof(int) * game_count);
+	icon_index = auto_malloc(sizeof(int) * game_count);
+	if (!icon_index)
+		return FALSE;
 	ZeroMemory(icon_index,sizeof(int) * game_count);
 
 	/* sorted list of drivers by name */
-	sorted_drivers = (driver_data_type *)malloc(sizeof(driver_data_type) * game_count);
+	sorted_drivers = (driver_data_type *) auto_malloc(sizeof(driver_data_type) * game_count);
+	if (!sorted_drivers)
+		return FALSE;
     for (i=0;i<game_count;i++)
     {
         sorted_drivers[i].name = drivers[i]->name;
@@ -2192,12 +2198,6 @@ static void Win32UI_exit()
 
 	DestroyAcceleratorTable(hAccel);
 
-	if (icon_index != NULL)
-	{
-		free(icon_index);
-		icon_index = NULL;
-	}
-
 #ifdef MESS
 	if (mess_icon_index != NULL)
 	{
@@ -2223,6 +2223,8 @@ static void Win32UI_exit()
 	OptionsExit();
 
 	HelpExit();
+
+	end_resource_tracking();
 }
 
 static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lParam)
@@ -7402,6 +7404,7 @@ void ButtonUpListViewDrag(POINTS p)
 	{
 	   LVHITTESTINFO lvhtti;
 	   LPTREEFOLDER folder;
+	   RECT rcList;
 
 	   /* the user dragged a game onto something other than the treeview */
 	   /* try to remove if we're in a custom folder */
@@ -7410,7 +7413,9 @@ void ButtonUpListViewDrag(POINTS p)
 
 	   MapWindowPoints(hTreeView,hwndList,&pt,1);
 	   lvhtti.pt = pt;
-	   if (ListView_HitTest(hwndList,&lvhtti) >= 0)
+	   GetWindowRect(hwndList, &rcList);
+	   ClientToScreen(hwndList, &pt);
+	   if( PtInRect(&rcList, pt) != 0 )
 		   return;
 
 	   folder = GetCurrentFolder();
