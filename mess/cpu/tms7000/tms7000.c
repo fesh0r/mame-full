@@ -33,7 +33,7 @@
 #endif
 
 /* public globals */
-int tms7000_icount;
+int tms7000_ICount;
 int	tms7000_MC;
 
 void tms7000_set_mc_line( int value )
@@ -349,7 +349,7 @@ int tms7000_execute(int cycles)
 {
 	int op;
 	
-	tms7000_icount = cycles;
+	tms7000_ICount = cycles;
 
 	do
 	{
@@ -358,8 +358,8 @@ int tms7000_execute(int cycles)
 		pPC++;
 
 		opfn[op]();
-	} while( tms7000_icount > 0 );
+	} while( tms7000_ICount > 0 );
 	
-	return cycles - tms7000_icount;
+	return cycles - tms7000_ICount;
 
 }

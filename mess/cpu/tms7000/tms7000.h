@@ -27,7 +27,7 @@ enum { TMS7000_PC=1, TMS7000_SP, TMS7000_ST };
 
 enum { TMS7000_VCC, TMS7000_VSS };
 
-extern int tms7000_icount;
+extern int tms7000_ICount;
 
 /* PUBLIC FUNCTIONS */
 extern unsigned tms7000_get_context(void *dst);
