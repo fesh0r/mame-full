@@ -14,6 +14,8 @@ System Driver Changes:
 - [MAC] Improved mouse emulation when moving diagonally. [Raphael Nabet]
 - [A2600/A5200/COCO/INTV/MSX/SNES/VECTREX] Added support for new GoodTools
   file extensions (bug #350). [Nate Woods]
+- [TI99] Added support for new disk geometries (9 sec/trk DSSD, 16 sec/trk SSDD,
+  16 sec/trk DSDD) [Raphael Nabet]
 
 Source Changes:
 ---------------
@@ -55,7 +57,7 @@ System Driver Changes:
 
 Source Changes:
 ---------------
-- The core is based on MAME 0.66.  This incorporates all features of the 
+- The core is based on MAME 0.66.  This incorporates all features of the
   update to this core.  [MAME team]
 
 - Major change to device handling; all devices now have separate init/exit
