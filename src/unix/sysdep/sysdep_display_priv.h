@@ -33,7 +33,7 @@ void sysdep_display_orient_bounds(struct rectangle *bounds, int width, int heigh
 void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *vis_in_dest_out, struct rectangle *dirty_area, int x_align);
 
 /* from the sysdep display driver */
-int  sysdep_display_driver_open(void);
+int  sysdep_display_driver_open(int reopen);
 void sysdep_display_driver_close(void);
 int  sysdep_display_driver_resize(void);
 int  sysdep_display_driver_update_keyboard(void);

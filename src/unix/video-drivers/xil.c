@@ -49,53 +49,54 @@ int xil_init( void )
 /* This name doesn't really cover this function, since it also sets up mouse
    and keyboard. This is done over here, since on most display targets the
    mouse and keyboard can't be setup before the display has. */
-int xil_open_display(void)
+int xil_open_display(int reopen)
 {
         XilMemoryStorage storage_info;
         pthread_t thread_id;
 
-        /* set the aspect_ratio, do this here since
-           this can change yarbsize */
-        mode_set_aspect_ratio((double)screen->width/screen->height);
+        if (!reopen)
+        {
+          /* set the aspect_ratio, do this here since
+             this can change yarbsize */
+          mode_set_aspect_ratio((double)screen->width/screen->height);
 
-	/* create a window */
-	if (x11_create_resizable_window(&window_width, &window_height))
-          return 1;
-        
-	/* create and setup the images */
-        window_image = xil_create_from_window( state, display, window );
-        if( use_mt_xil ) {
-          printf( "initializing scaling thread\n" );
-          pthread_mutex_init( &img_mutex, NULL );
-          paintflag = 0;
-          pthread_create( &thread_id, NULL, redraw_thread, NULL );
+          /* create a window */
+          if (x11_create_resizable_window(&window_width, &window_height))
+            return 1;
+          
+          /* create and setup the images */
+          window_image = xil_create_from_window( state, display, window );
+          if( use_mt_xil ) {
+            printf( "initializing scaling thread\n" );
+            pthread_mutex_init( &img_mutex, NULL );
+            paintflag = 0;
+            pthread_create( &thread_id, NULL, redraw_thread, NULL );
+          }
+
+          /* setup the sysdep_display_properties struct */
+          sysdep_display_properties.palette_info.fourcc_format = 0;
+          sysdep_display_properties.palette_info.red_mask      = 0x0000F800;
+          sysdep_display_properties.palette_info.green_mask    = 0x000007E0;
+          sysdep_display_properties.palette_info.blue_mask     = 0x0000001F;
+          sysdep_display_properties.palette_info.depth         = 16;
+          sysdep_display_properties.palette_info.bpp           = 16;
+          sysdep_display_properties.vector_renderer            = NULL;
+
+          /* init the input code */
+          xinput_open(sysdep_display_params.fullscreen, 0);
         }
+
         xil_resize_display();
-
-	/* setup the sysdep_display_properties struct */
-	sysdep_display_properties.palette_info.fourcc_format = 0;
-	sysdep_display_properties.palette_info.red_mask      = 0x0000F800;
-	sysdep_display_properties.palette_info.green_mask    = 0x000007E0;
-	sysdep_display_properties.palette_info.blue_mask     = 0x0000001F;
-        sysdep_display_properties.palette_info.depth         = 16;
-        sysdep_display_properties.palette_info.bpp           = 16;
-	sysdep_display_properties.vector_renderer            = NULL;
-	
-	if (x11_init_palette_info(xvisual) != 0)
-		return 1;
-	
-	/* get a blit function, XIL uses 16 bit visuals and does any conversion it self */
+        
+        /* get a blit function, XIL uses 16 bit visuals and does any conversion it self */
         xil_update_display_func = sysdep_display_get_blitfunc();
-	if (x11_window_update_display_func == NULL)
-	{
-		fprintf(stderr, "Error: bitmap depth %d isnot supported on XIL displays\n", sysdep_display_params.depth);
-		return 1;
-	}
+        if (x11_window_update_display_func == NULL)
+        {
+                fprintf(stderr, "Error: bitmap depth %d isnot supported on XIL displays\n", sysdep_display_params.depth);
+                return 1;
+        }
 
-        /* init the input code */
-	xinput_open(sysdep_display_params.fullscreen, 0);
-
-	return 0;
+        return 0;
 }
 
 /*
@@ -134,33 +135,33 @@ void xil_close_display (void)
 
 int xil_resize_display(void)
 {
-         if (draw_image)
-         {
-           xil_destroy(draw_image);
-           draw_image = NULL;
-         }
-         if (back_image)
-         {
-           xil_destroy(back_image);
-           back_image = NULL;
-         }
+        if (draw_image)
+        {
+          xil_destroy(draw_image);
+          draw_image = NULL;
+        }
+        if (back_image)
+        {
+          xil_destroy(back_image);
+          back_image = NULL;
+        }
         
         /* xil does normal scaling for us */
         if (sysdep_display_params.effect == 0)
         {
-		draw_image_width  = sysdep_display_params.width;
-		draw_image_height = sysdep_display_params.height;
-		sysdep_display_params.widthscale  = 1;
-		sysdep_display_params.heightscale = 1;
+                draw_image_width  = sysdep_display_params.width;
+                draw_image_height = sysdep_display_params.height;
+                sysdep_display_params.widthscale  = 1;
+                sysdep_display_params.heightscale = 1;
                 sysdep_display_params.yarbsize    = 0;
         }
         else
         {
-		draw_image_width  = sysdep_display_params.width *
-		  sysdep_display_params.widthscale;
+                draw_image_width  = sysdep_display_params.width *
+                  sysdep_display_params.widthscale;
                 /* effects don't do yarbsize */
-		draw_image_height = sysdep_display_params.height *
-		  sysdep_display_params.heightscale;
+                draw_image_height = sysdep_display_params.height *
+                  sysdep_display_params.heightscale;
         }
 
         draw_image   = xil_create( state, draw_image_width, draw_image_height,
@@ -217,8 +218,8 @@ void xil_update_display(struct mame_bitmap *bitmap,
   }
   else {
     xil_scale( draw_image, window_image, "nearest",
-	     window_width / (float)draw_image_width,
-	     window_height / (float)draw_image_height );
+             window_width / (float)draw_image_width,
+             window_height / (float)draw_image_height );
   }
 
   xil_export( draw_image );
@@ -240,8 +241,8 @@ static void *redraw_thread( void *arg )
       pthread_cond_wait( &img_cond, &img_mutex );
     }
     xil_scale( back_image, window_image, "nearest",
-	     window_width / (float)draw_image_width,
-	     window_height / (float)draw_image_height );
+             window_width / (float)draw_image_width,
+             window_height / (float)draw_image_height );
     paintflag = 0;
     pthread_mutex_unlock( &img_mutex );
     pthread_cond_signal( &img_cond );

@@ -234,7 +234,7 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo)
 /* This name doesn't really cover this function, since it also sets up mouse
    and keyboard. This is done over here, since on most display targets the
    mouse and keyboard can't be setup before the display has. */
-int xf86_dga2_open_display(void)
+int xf86_dga2_open_display(int reopen)
 {
 	int i;
 	/* only have todo the fork's the first time we go DGA, otherwise people
@@ -243,6 +243,9 @@ int xf86_dga2_open_display(void)
 	static int first_time  = 1;
 	xf86_dga_first_click   = 0;
 	
+        if (reopen)
+          return xf86_dga2_resize_display();
+
 	window  = RootWindow(display,xf86ctx.screen);
 	
 	if (first_time)
@@ -315,9 +318,6 @@ int xf86_dga2_resize_display(void)
           mode_set_aspect_ratio((double)xf86ctx.device->mode.viewportWidth/
                   xf86ctx.device->mode.viewportHeight);
 
-          if(xf86_dga_setup_graphics(xf86ctx.device->mode))
-              return 1;
-          
           /* setup the viewport */
           XDGASetViewport(display,xf86ctx.screen,0,0,0);
           while(XDGAGetViewportStatus(display, xf86ctx.screen))
@@ -332,6 +332,9 @@ int xf86_dga2_resize_display(void)
           sysdep_display_properties.palette_info.bpp   = xf86ctx.device->mode.bitsPerPixel;
 	  sysdep_display_properties.vector_renderer    = NULL;
 	}
+
+        if(xf86_dga_setup_graphics(xf86ctx.device->mode))
+          return 1;
 
 	/* clear the screen */
 	memset(xf86ctx.device->data, 0,

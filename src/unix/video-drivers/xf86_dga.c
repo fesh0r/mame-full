@@ -15,7 +15,7 @@
 #include "sysdep/sysdep_display_priv.h"
 #include "x11.h"
 
-static int  (*p_xf86_dga_open_display)(void);
+static int  (*p_xf86_dga_open_display)(int reopen);
 static void (*p_xf86_dga_close_display)(void);
 static int  (*p_xf86_dga_resize_display)(void);
 static void (*p_xf86_dga_update_display)(struct mame_bitmap *,
@@ -69,9 +69,9 @@ int xf86_dga_init(void)
 	return 1;
 }
 
-int  xf86_dga_open_display(void)
+int  xf86_dga_open_display(int reopen)
 {
-	return (*p_xf86_dga_open_display)();
+	return (*p_xf86_dga_open_display)(reopen);
 }
 
 void xf86_dga_close_display(void)

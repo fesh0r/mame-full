@@ -57,7 +57,7 @@ struct rc_option sysdep_display_opts[] = {
 
 struct x_func_struct {
 	int  (*init)(void);
-	int  (*open_display)(void);
+	int  (*open_display)(int reopen);
 	void (*close_display)(void);
 	int  (*resize_display)(void);
 	void (*update_display)(struct mame_bitmap *bitmap,
@@ -78,7 +78,7 @@ typedef struct {
 
 
 static struct x_func_struct x_func[] = {
-{ x11_init,
+{ x11_window_init,
   x11_window_open_display,
   x11_window_close_display,
   x11_window_resize_display,
@@ -243,7 +243,7 @@ void sysdep_display_exit(void)
 /* This name doesn't really cover this function, since it also sets up mouse
    and keyboard. This is done over here, since on most display targets the
    mouse and keyboard can't be setup before the display has. */
-int sysdep_display_driver_open(void)
+int sysdep_display_driver_open(int reopen)
 {
         int mode = ((sysdep_display_params.video_mode == X11_WINDOW) &&
           sysdep_display_params.fullscreen)? X11_DGA:
@@ -255,7 +255,7 @@ int sysdep_display_driver_open(void)
 		return 1;
         }
 
-	return (*x_func[mode].open_display)();
+	return x_func[mode].open_display(reopen);
 }
 
 void sysdep_display_driver_close(void)

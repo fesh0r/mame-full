@@ -343,7 +343,7 @@ void sysdep_display_set_keybleds(int new_leds)
 	}
 }
 
-int sysdep_display_update_keyboard(void)
+int sysdep_display_driver_update_keyboard(void)
 {
 	keyboard_update();
 	if (keyboard_dirty)

@@ -98,51 +98,26 @@ int xgl_init(void)
 /* This name doesn't really cover this function, since it also sets up mouse
    and keyboard. This is done over here, since on most display targets the
    mouse and keyboard can't be setup before the display has. */
-int xgl_open_display(void)
+int xgl_open_display(int reopen)
 {
-  XEvent event;
-  unsigned long winmask;
-  char *glxfx;
-  VisualGC vgc;
-  int ownwin = 1;
-  int force_grab;
-  XVisualInfo *myvisual;
-  
-  mode_set_aspect_ratio((double)screen->width/screen->height);
+  if(!reopen)
+  {
+    XEvent event;
+    unsigned long winmask;
+    char *glxfx;
+    VisualGC vgc;
+    int ownwin = 1;
+    int force_grab;
+    XVisualInfo *myvisual;
+    
+    mode_set_aspect_ratio((double)screen->width/screen->height);
 
-  fprintf(stderr, xgl_version_str);
-  
-  /* Determine window size, type, etc. If using 3Dfx */
-  if((glxfx=getenv("MESA_GLX_FX")) && (glxfx[0]=='f'))
-  {
-    winmask     = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
-    if(custom_window_width)
+    fprintf(stderr, xgl_version_str);
+    
+    /* Determine window size, type, etc. If using 3Dfx */
+    if((glxfx=getenv("MESA_GLX_FX")) && (glxfx[0]=='f'))
     {
-      window_width  = custom_window_width;
-      window_height = custom_window_height;
-    }
-    else
-    {
-      window_width  = 640;
-      window_height = 480;
-    }
-    window_type = 0; /* non resizable */
-    force_grab  = 2; /* grab mouse and keyb */
-  }
-  else if(sysdep_display_params.fullscreen)
-  {
-    winmask       = CWBorderPixel | CWBackPixel | CWEventMask |
-                    CWColormap | CWDontPropagate | CWCursor;
-    window_width  = screen->width;
-    window_height = screen->height;
-    window_type   = 3; /* fullscreen */
-    force_grab    = 1; /* grab mouse */
-  }
-  else
-  {
-    winmask       = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
-    if(cabview)
-    {
+      winmask     = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
       if(custom_window_width)
       {
         window_width  = custom_window_width;
@@ -153,85 +128,117 @@ int xgl_open_display(void)
         window_width  = 640;
         window_height = 480;
       }
-      window_type = 2; /* resizable window */
+      window_type = 0; /* non resizable */
+      force_grab  = 2; /* grab mouse and keyb */
+    }
+    else if(sysdep_display_params.fullscreen)
+    {
+      winmask       = CWBorderPixel | CWBackPixel | CWEventMask |
+                      CWColormap | CWDontPropagate | CWCursor;
+      window_width  = screen->width;
+      window_height = screen->height;
+      window_type   = 3; /* fullscreen */
+      force_grab    = 1; /* grab mouse */
     }
     else
     {
-      if(custom_window_width)
-        mode_clip_aspect(custom_window_width, custom_window_height,
-          &window_width, &window_height);
+      winmask       = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
+      if(cabview)
+      {
+        if(custom_window_width)
+        {
+          window_width  = custom_window_width;
+          window_height = custom_window_height;
+        }
+        else
+        {
+          window_width  = 640;
+          window_height = 480;
+        }
+        window_type = 2; /* resizable window */
+      }
       else
       {
-        window_width     = sysdep_display_params.max_width * 
-          sysdep_display_params.widthscale;
-        window_height    = sysdep_display_params.yarbsize?
-          sysdep_display_params.yarbsize:
-          sysdep_display_params.max_height * sysdep_display_params.heightscale;
-        mode_stretch_aspect(window_width, window_height, &window_width, &window_height);
+        if(custom_window_width)
+          mode_clip_aspect(custom_window_width, custom_window_height,
+            &window_width, &window_height);
+        else
+        {
+          window_width     = sysdep_display_params.max_width * 
+            sysdep_display_params.widthscale;
+          window_height    = sysdep_display_params.yarbsize?
+            sysdep_display_params.yarbsize:
+            sysdep_display_params.max_height * sysdep_display_params.heightscale;
+          mode_stretch_aspect(window_width, window_height, &window_width, &window_height);
+        }
+        window_type = 1; /* resizable, keep aspect */
       }
-      window_type = 1; /* resizable, keep aspect */
+      force_grab    = 0; /* no grab */
     }
-    force_grab    = 0; /* no grab */
-  }
 
-  window_attr.background_pixel=0;
-  window_attr.border_pixel=WhitePixelOfScreen(screen);
-  window_attr.bit_gravity=ForgetGravity;
-  window_attr.win_gravity=NorthWestGravity;
-  window_attr.backing_store=NotUseful;
-  window_attr.override_redirect=False;
-  window_attr.save_under=False;
-  window_attr.event_mask=0; 
-  window_attr.do_not_propagate_mask=0;
-  window_attr.colormap=0; /* done later, within findVisualGlX .. */
-  window_attr.cursor=None;
+    window_attr.background_pixel=0;
+    window_attr.border_pixel=WhitePixelOfScreen(screen);
+    window_attr.bit_gravity=ForgetGravity;
+    window_attr.win_gravity=NorthWestGravity;
+    window_attr.backing_store=NotUseful;
+    window_attr.override_redirect=False;
+    window_attr.save_under=False;
+    window_attr.event_mask=0; 
+    window_attr.do_not_propagate_mask=0;
+    window_attr.colormap=0; /* done later, within findVisualGlX .. */
+    window_attr.cursor=None;
 
-  if (root_window_id)
-    window = root_window_id;
-  else
-    window = DefaultRootWindow(display);
+    if (root_window_id)
+      window = root_window_id;
+    else
+      window = DefaultRootWindow(display);
+      
+    vgc = findVisualGlX( display, window,
+                         &window, window_width, window_height, &glCaps, 
+  		       &ownwin, &window_attr, winmask,
+  		       NULL, 0, NULL, 
+  #ifndef NDEBUG
+  		       1);
+  #else
+  		       0);
+  #endif
+
+    if(vgc.success==0)
+    {
+  	fprintf(stderr,"OSD ERROR: failed to obtain visual.\n");
+  	return 1; 
+    }
+
+    myvisual =vgc.visual;
+    glContext=vgc.gc;
+
+    if (!window) {
+  	fprintf(stderr,"OSD ERROR: failed in XCreateWindow().\n");
+  	return 1; 
+    }
     
-  vgc = findVisualGlX( display, window,
-                       &window, window_width, window_height, &glCaps, 
-		       &ownwin, &window_attr, winmask,
-		       NULL, 0, NULL, 
-#ifndef NDEBUG
-		       1);
-#else
-		       0);
-#endif
-
-  if(vgc.success==0)
+    if(!glContext) {
+  	fprintf(stderr,"OSD ERROR: failed to create OpenGL context.\n");
+  	return 1; 
+    }
+    
+    setGLCapabilities ( display, myvisual, &glCaps);
+    
+    /* set the hints */
+    x11_set_window_hints(window_width, window_height, window_type);
+  	
+    /* Map and expose the window. */
+    XSelectInput(display, window, ExposureMask);
+    XMapRaised(display,window);
+    XClearWindow(display,window);
+    XWindowEvent(display,window,ExposureMask,&event);
+    
+    xinput_open(force_grab, 0);
+  }
+  else
   {
-	fprintf(stderr,"OSD ERROR: failed to obtain visual.\n");
-	return 1; 
+    gl_close_display();
   }
-
-  myvisual =vgc.visual;
-  glContext=vgc.gc;
-
-  if (!window) {
-	fprintf(stderr,"OSD ERROR: failed in XCreateWindow().\n");
-	return 1; 
-  }
-  
-  if(!glContext) {
-	fprintf(stderr,"OSD ERROR: failed to create OpenGL context.\n");
-	return 1; 
-  }
-  
-  setGLCapabilities ( display, myvisual, &glCaps);
-  
-  /* set the hints */
-  x11_set_window_hints(window_width, window_height, window_type);
-	
-  /* Map and expose the window. */
-  XSelectInput(display, window, ExposureMask);
-  XMapRaised(display,window);
-  XClearWindow(display,window);
-  XWindowEvent(display,window,ExposureMask,&event);
-  
-  xinput_open(force_grab, 0);
 
   return gl_open_display();
 }

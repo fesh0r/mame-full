@@ -41,20 +41,26 @@ void xfx_exit(void)
 /* This name doesn't really cover this function, since it also sets up mouse
    and keyboard. This is done over here, since on most display targets the
    mouse and keyboard can't be setup before the display has. */
-int xfx_open_display(void)
+int xfx_open_display(int reopen)
 {
-  if (x11_create_window(&fxwidth, &fxheight, 0))
-    return 1;
-    
-  window_width  = fxwidth;
-  window_height = fxheight;
-    
-  xinput_open(2, 0);
+  if (!reopen)
+  {
+    if (x11_create_window(&fxwidth, &fxheight, 0))
+      return 1;
+      
+    window_width  = fxwidth;
+    window_height = fxheight;
+      
+    xinput_open(2, 0);
+  }
+  else
+    CloseVScreen();
   
   if (InitVScreen() != 0)
     return 1;
 
-  VScreenCatchSignals();
+  if(!reopen)
+    VScreenCatchSignals();
   
   return 0;
 }

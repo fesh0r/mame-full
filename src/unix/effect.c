@@ -436,16 +436,20 @@ int sysdep_display_effect_open(void)
     case FOURCC_YV12:
       i = 4;
       break;
-    default:
-      if ( (sysdep_display_properties.palette_info.red_mask   == (0x1F << 10)) &&
+    case 0:
+      if ( (sysdep_display_properties.palette_info.bpp == 16) &&
+           (sysdep_display_properties.palette_info.red_mask   == (0x1F << 10)) &&
            (sysdep_display_properties.palette_info.green_mask == (0x1F <<  5)) &&
            (sysdep_display_properties.palette_info.blue_mask  == (0x1F      )))
         i = 0;
-      if ( (sysdep_display_properties.palette_info.red_mask   == (0x1F << 11)) &&
+      if ( (sysdep_display_properties.palette_info.bpp == 16) &&
+           (sysdep_display_properties.palette_info.red_mask   == (0x1F << 11)) &&
            (sysdep_display_properties.palette_info.green_mask == (0x3F <<  5)) &&
            (sysdep_display_properties.palette_info.blue_mask  == (0x1F      )))
         i = 1;
-      if ( (sysdep_display_properties.palette_info.red_mask   == (0xFF << 16)) &&
+      if ( ( (sysdep_display_properties.palette_info.bpp == 24) ||
+             (sysdep_display_properties.palette_info.bpp == 32) ) &&
+           (sysdep_display_properties.palette_info.red_mask   == (0xFF << 16)) &&
            (sysdep_display_properties.palette_info.green_mask == (0xFF <<  8)) &&
            (sysdep_display_properties.palette_info.blue_mask  == (0xFF      )))
         i = 2;
@@ -502,6 +506,7 @@ int sysdep_display_effect_open(void)
   switch(sysdep_display_params.effect)
   {
     case SYSDEP_DISPLAY_EFFECT_NONE:
+    case SYSDEP_DISPLAY_EFFECT_FAKESCAN:
       i = 0;
       break;
     case SYSDEP_DISPLAY_EFFECT_SCAN2:
@@ -519,9 +524,6 @@ int sysdep_display_effect_open(void)
       break;
     case SYSDEP_DISPLAY_EFFECT_6TAP2X:
       if (effect_6tap_render_func) i = 0;
-      break;
-    case SYSDEP_DISPLAY_EFFECT_FAKESCAN:
-      i = 0;
       break;
   }
   if (i == -1)

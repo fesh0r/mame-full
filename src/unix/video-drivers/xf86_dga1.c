@@ -209,10 +209,13 @@ static int xf86_dga_setup_graphics(XF86VidModeModeInfo *modeinfo)
 /* This name doesn't really cover this function, since it also sets up mouse
    and keyboard. This is done over here, since on most display targets the
    mouse and keyboard can't be setup before the display has. */
-int xf86_dga1_open_display(void)
+int xf86_dga1_open_display(int reopen)
 {
 	int i, count;
 	XPixmapFormatValues *pixmaps;
+
+        if (reopen)
+          return xf86_dga1_resize_display();
 
 	window  = RootWindow(display,xf86ctx.screen);
 

@@ -86,8 +86,8 @@ int x11_create_window(unsigned int *width, unsigned int *height, int type);
 void x11_set_window_hints(unsigned int width, unsigned int height, int type);
 
 /* Normal x11_window functions */
-int  x11_init(void);
-int  x11_window_open_display(void);
+int  x11_window_init(void);
+int  x11_window_open_display(int reopen);
 void x11_window_close_display(void);
 int  x11_window_resize_display(void);
 void x11_window_update_display(struct mame_bitmap *bitmap,
@@ -100,7 +100,7 @@ int  x11_test_mit_shm (Display * display, XErrorEvent * error);
 /* XV functions */
 #ifdef USE_XV
 int  xv_init(void);
-int  xv_open_display(void);
+int  xv_open_display(int reopen);
 void xv_close_display(void);
 int  xv_resize_display(void);
 void xv_update_display(struct mame_bitmap *bitmap,
@@ -111,7 +111,7 @@ void xv_update_display(struct mame_bitmap *bitmap,
 /* OpenGL functions */
 #ifdef USE_OPENGL
 int  xgl_init(void);
-int  xgl_open_display(void);
+int  xgl_open_display(int reopen);
 void xgl_close_display(void);
 int  xgl_resize_display(void);
 void xgl_update_display(struct mame_bitmap *bitmap,
@@ -123,7 +123,7 @@ void xgl_update_display(struct mame_bitmap *bitmap,
 #ifdef USE_GLIDE
 int  xfx_init(void);
 void xfx_exit(void);
-int  xfx_open_display(void);
+int  xfx_open_display(int reopen);
 void xfx_close_display(void);
 int  xfx_resize_display(void);
 void xfx_update_display(struct mame_bitmap *bitmap,
@@ -134,7 +134,7 @@ void xfx_update_display(struct mame_bitmap *bitmap,
 /* XIL functions */
 #ifdef USE_XIL
 int  xil_init(void);
-int  xil_open_display(void);
+int  xil_open_display(int reopen);
 void xil_close_display(void);
 int  xil_resize_display(void);
 void xil_update_display(struct mame_bitmap *bitmap,
@@ -145,7 +145,7 @@ void xil_update_display(struct mame_bitmap *bitmap,
 /* Xf86_dga functions */
 #ifdef USE_DGA
 int  xf86_dga_init(void);
-int  xf86_dga_open_display(void);
+int  xf86_dga_open_display(int reopen);
 void xf86_dga_close_display(void);
 int  xf86_dga_resize_display(void);
 void xf86_dga_update_display(struct mame_bitmap *bitmap,
@@ -153,7 +153,7 @@ void xf86_dga_update_display(struct mame_bitmap *bitmap,
 	  struct sysdep_palette_struct *palette,
 	  unsigned int flags, const char **status_msg);
 int  xf86_dga1_init(void);
-int  xf86_dga1_open_display(void);
+int  xf86_dga1_open_display(int reopen);
 void xf86_dga1_close_display(void);
 int  xf86_dga1_resize_display(void);
 void xf86_dga1_update_display(struct mame_bitmap *bitmap,
@@ -161,7 +161,7 @@ void xf86_dga1_update_display(struct mame_bitmap *bitmap,
 	  struct sysdep_palette_struct *palette,
 	  unsigned int flags, const char **status_msg);
 int  xf86_dga2_init(void);
-int  xf86_dga2_open_display(void);
+int  xf86_dga2_open_display(int reopen);
 void xf86_dga2_close_display(void);
 int  xf86_dga2_resize_display(void);
 void xf86_dga2_update_display(struct mame_bitmap *bitmap,

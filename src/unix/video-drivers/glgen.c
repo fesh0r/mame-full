@@ -335,8 +335,10 @@ int gl_open_display (void)
   fprintf(stderr, "GLINFO: GLU Driver Information:\n");
   fprintf(stderr, "\tversion %s\n",
         disp__gluGetString(GLU_VERSION));
-  
-  cab_loaded = LoadCabinet (cabname);
+
+  /* load cabinet, do this only once! */
+  if (!cab_loaded)  
+    cab_loaded = LoadCabinet (cabname);
   if (cabview && !cab_loaded)
   {
     fprintf(stderr, "GLERROR: Unable to load cabinet %s\n", cabname);
@@ -1656,7 +1658,7 @@ void gl_update_display(struct mame_bitmap *bitmap,
     else
       *status_msg = "bilinear filtering off";
   }
-  if (flags & SYSDEP_DISPLAY_HOTKEY_OPTION1)
+  if (cab_loaded && (flags & SYSDEP_DISPLAY_HOTKEY_OPTION1))
   {
     gl_set_cabview (1-cabview);
     if(cabview)

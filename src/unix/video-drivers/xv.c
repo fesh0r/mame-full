@@ -54,6 +54,8 @@ struct rc_option xv_opts[] = {
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 
+static void xv_destroy_image(void);
+
 static int FindXvPort(long format)
 {
 	int i,j,p,ret,num_formats;
@@ -209,112 +211,128 @@ int xv_init(void)
 /* This name doesn't really cover this function, since it also sets up mouse
    and keyboard. This is done over here, since on most display targets the
    mouse and keyboard can't be setup before the display has. */
-int xv_open_display(void)
+int xv_open_display(int reopen)
 {
 	XGCValues xgcv;
         XvAttribute *attr;
 	unsigned int height, width;
-        int i, count;
 
         /* set the aspect_ratio, do this here since
            this can change yarbsize */
         mode_set_aspect_ratio((double)screen->width/screen->height);
 
-	/* create a window */
-	if (x11_create_resizable_window(&window_width, &window_height))
-          return 1;
+        width      = sysdep_display_params.max_width *
+          sysdep_display_params.widthscale;
+        height     = sysdep_display_params.max_height*
+          sysdep_display_params.heightscale;
 
-        /* Xv does normal scaling for us */
-        if(sysdep_display_params.effect==0)
+        switch(sysdep_display_params.effect)
         {
-            width  = sysdep_display_params.max_width;
+          case SYSDEP_DISPLAY_EFFECT_NONE:     /* Xv does normal scaling for us */
             height = sysdep_display_params.max_height;
-            sysdep_display_params.widthscale  = 1;
             sysdep_display_params.heightscale = 1;
             sysdep_display_params.yarbsize    = 0;
+          case SYSDEP_DISPLAY_EFFECT_FAKESCAN: /* Xv does width scaling for us */
+            width  = sysdep_display_params.max_width;
+            sysdep_display_params.widthscale  = 1;
+        }
+
+	if (!reopen)
+	{
+          int i, count;
+
+	  /* Initial settings of the sysdep_display_properties struct,
+             the FindXvXXX fucntions will fill in the palette part */
+	  sysdep_display_properties.vector_renderer = NULL;
+
+	  /* create a window */
+	  if (x11_create_resizable_window(&window_width, &window_height))
+            return 1;
+          
+          fprintf (stderr, "MIT-SHM & XV Extensions Available. trying to use... ");
+          /* find a suitable format */
+          switch(hwscale_force_yuv)
+          {
+            case 0: /* try normal RGB */
+              if(FindRGBXvFormat())
+                break;
+              fprintf(stderr,"\nCan't find a suitable RGB format - trying YUY2 instead... ");
+            case 1: /* force YUY2 */
+              if(FindXvPort(FOURCC_YUY2))
+              {
+                /* Xv does normal scaling for us */
+                if (hwscale_perfect_yuv)
+                {
+                  switch(sysdep_display_params.effect)
+                  {
+                    case SYSDEP_DISPLAY_EFFECT_NONE:     /* Xv does normal scaling for us */
+                    case SYSDEP_DISPLAY_EFFECT_FAKESCAN: /* Xv does width scaling for us */
+                      width  = 2 * sysdep_display_params.max_width;
+                      sysdep_display_params.widthscale = 2;
+                  }
+                }
+                break;
+              }
+              fprintf(stderr,"\nYUY2 not available - trying YV12... ");
+            case 2: /* forced YV12 */
+            case 3:
+              if(FindXvPort(FOURCC_YV12))
+              {
+                /* YV12 always does normal scaling, no effects! */
+                if (sysdep_display_params.effect)
+                {
+                  fprintf(stderr, "\nWarning: YV12 doesn't do effects... ");
+                  sysdep_display_params.effect = 0;
+                }
+                /* setup the image size and scaling params for YV12:
+                   -align width and x-coordinates to 8, I don't know
+                    why, this is needed, but it is.
+                   -align height and y-coodinates to 2.
+                   Note these alignment demands are always met for
+                   perfect blit. */
+                if (hwscale_perfect_yuv)
+                {
+                  width  = 2*sysdep_display_params.max_width;
+                  height = 2*sysdep_display_params.max_height;
+                  sysdep_display_params.widthscale  = 2;
+                  sysdep_display_params.heightscale = 2;
+                }
+                else
+                {
+                  width  = (sysdep_display_params.max_width+7)&~7;
+                  height = (sysdep_display_params.max_height+1)&~1;
+                  sysdep_display_params.widthscale  = 1;
+                  sysdep_display_params.heightscale = 1;
+                }
+                break;
+              }
+              fprintf(stderr,"\nError: Couldn't initialise Xv port - ");
+              fprintf(stderr,"\n  Either all ports are in use, or the video card");
+              fprintf(stderr,"\n  doesn't provide a suitable format.\n");
+              return 1;
+          }
+
+          attr = XvQueryPortAttributes(display, xv_port, &count);
+          for (i = 0; i < count; i++)
+          if (!strcmp(attr[i].name, "XV_AUTOPAINT_COLORKEY"))
+          {
+            Atom atom = XInternAtom(display, "XV_AUTOPAINT_COLORKEY", False);
+            XvSetPortAttribute(display, xv_port, atom, 1);
+            break;
+          }
+
+          /* create gc */
+          gc = XCreateGC (display, window, 0, &xgcv);
+
+	  /* open xinput */
+	  xinput_open(sysdep_display_params.fullscreen, 0);
         }
         else
         {
-          width      = sysdep_display_params.max_width *
-            sysdep_display_params.widthscale;
-          /* effects don't do yarbsize */
-          height     = sysdep_display_params.max_height*
-            sysdep_display_params.heightscale;
+          xv_destroy_image();
+          fprintf (stderr, "MIT-SHM & XV Extensions Available. trying to use... ");
         }
-
-	/* create gc */
-	gc = XCreateGC (display, window, 0, &xgcv);
-
-	/* Initial settings of the sysdep_display_properties struct,
-           the FindXvXXX fucntions will fill in the palette part */
-	sysdep_display_properties.vector_renderer = NULL;
-
-        fprintf (stderr, "MIT-SHM & XV Extensions Available. trying to use... ");
-        /* find a suitable format */
-        switch(hwscale_force_yuv)
-        {
-          case 0: /* try normal RGB */
-            if(FindRGBXvFormat())
-              break;
-            fprintf(stderr,"\nCan't find a suitable RGB format - trying YUY2 instead... ");
-          case 1: /* force YUY2 */
-            if(FindXvPort(FOURCC_YUY2))
-            {
-              /* Xv does normal scaling for us */
-              if (!sysdep_display_params.effect && hwscale_perfect_yuv)
-              {
-                width = 2*sysdep_display_params.max_width;
-                sysdep_display_params.widthscale = 2;
-              }
-              break;
-            }
-            fprintf(stderr,"\nYUY2 not available - trying YV12... ");
-          case 2: /* forced YV12 */
-          case 3:
-            if(FindXvPort(FOURCC_YV12))
-            {
-              /* YV12 always does normal scaling, no effects! */
-              if (sysdep_display_params.effect)
-                fprintf(stderr, "\nWarning: YV12 doesn't do effects... ");
-              /* sysdep_display_properties.mode[X11_XV] &=
-                ~SYSDEP_DISPLAY_EFFECTS; */
-              /* setup the image size and scaling params for YV12:
-                 -align width and x-coordinates to 8, I don't know
-                  why, this is needed, but it is.
-                 -align height and y-coodinates to 2.
-                 Note these alignment demands are always met for
-                 perfect blit. */
-              if (hwscale_perfect_yuv)
-              {
-                width  = 2*sysdep_display_params.max_width;
-                height = 2*sysdep_display_params.max_height;
-                sysdep_display_params.widthscale  = 2;
-                sysdep_display_params.heightscale = 2;
-              }
-              else
-              {
-                width  = (sysdep_display_params.max_width+7)&~7;
-                height = (sysdep_display_params.max_height+1)&~1;
-                sysdep_display_params.widthscale  = 1;
-                sysdep_display_params.heightscale = 1;
-              }
-              break;
-            }
-            fprintf(stderr,"\nError: Couldn't initialise Xv port - ");
-            fprintf(stderr,"\n  Either all ports are in use, or the video card");
-            fprintf(stderr,"\n  doesn't provide a suitable format.\n");
-            return 1;
-        }
-
-        attr = XvQueryPortAttributes(display, xv_port, &count);
-        for (i = 0; i < count; i++)
-        if (!strcmp(attr[i].name, "XV_AUTOPAINT_COLORKEY"))
-            {
-                        Atom atom = XInternAtom(display, "XV_AUTOPAINT_COLORKEY", False);
-                        XvSetPortAttribute(display, xv_port, atom, 1);
-                        break;
-            }
-        
+          
         /* Create an XV MITSHM image. */
         x11_mit_shm_error = 0;
         XSetErrorHandler (x11_test_mit_shm);
@@ -422,10 +440,10 @@ int xv_open_display(void)
           {
                   hwscale_yv12_rotate_buf0=malloc(
                     ((sysdep_display_params.depth+7)/8)*
-                    sysdep_display_params.width);
+                    sysdep_display_params.max_width);
                   hwscale_yv12_rotate_buf1=malloc(
                     ((sysdep_display_params.depth+7)/8)*
-                    sysdep_display_params.width);
+                    sysdep_display_params.max_width);
                   if (!hwscale_yv12_rotate_buf0 ||
                       !hwscale_yv12_rotate_buf1)
                   {
@@ -462,8 +480,6 @@ int xv_open_display(void)
 		return 1;
 	}
 
-	xinput_open(sysdep_display_params.fullscreen, 0);
-
 	return 0;
 }
 
@@ -482,9 +498,23 @@ void xv_close_display (void)
    /* now just free everything else */
    if (window)
    {
+      XFreeGC(display, gc);
       XDestroyWindow (display, window);
       window = 0;
    }
+   if(xv_port>-1)
+   {
+      XvUngrabPort(display,xv_port,CurrentTime);
+      xv_port=-1;
+   }
+   
+   xv_destroy_image();
+   
+   XSync (display, True); /* send all events to sync; discard events */
+}
+
+static void xv_destroy_image(void)
+{
    if (mit_shm_attached)
    {
       XShmDetach (display, &shm_info);
@@ -494,11 +524,6 @@ void xv_close_display (void)
    {
       shmdt (shm_info.shmaddr);
       shm_info.shmaddr = NULL;
-   }
-   if(xv_port>-1)
-   {
-      XvUngrabPort(display,xv_port,CurrentTime);
-      xv_port=-1;
    }
    if(xvimage)
    {
@@ -515,8 +540,6 @@ void xv_close_display (void)
       free (hwscale_yv12_rotate_buf1);
       hwscale_yv12_rotate_buf1 = NULL;
    }
-
-   XSync (display, True); /* send all events to sync; discard events */
 }
 
 int xv_resize_display(void)
