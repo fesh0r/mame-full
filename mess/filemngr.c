@@ -486,7 +486,7 @@ static int fileselect(struct mame_bitmap *bitmap, int selected, const char *defa
 		if (default_selection)
 		{
 			char *dirname;
-			dirname = osd_mess_dirname((char *) default_selection);
+			dirname = osd_dirname((char *) default_selection);
 			osd_change_directory(dirname);
 			free(dirname);
 		}

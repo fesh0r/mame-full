@@ -64,7 +64,7 @@ const char *osd_get_cwd(void);
 	void osd_device_eject(int type, int id);
 */
 
-char *osd_mess_dirname(const char *filename);
+char *osd_dirname(const char *filename);
 char *osd_basename(char *filename);
 
 #endif /* OSD_MESS_H */

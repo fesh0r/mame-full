@@ -262,7 +262,7 @@ static void loadsave(int type)
 	int result = 0;
 
 	if (filename[0])
-		dir = osd_mess_dirname(filename);
+		dir = osd_dirname(filename);
 	else
 	{
 		sprintf(filename, "machinestate.sta");

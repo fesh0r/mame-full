@@ -92,7 +92,7 @@ struct rc_option fileio_opts[] =
 	{ "rompath", "rp", rc_string, &pathlist[FILETYPE_ROM].rawpath, "roms", 0, 0, NULL, "path to romsets" },
 #else
 	{ "biospath", "bp", rc_string, &pathlist[FILETYPE_ROM].rawpath, "bios", 0, 0, NULL, "path to BIOS sets" },
-	{ "sofwarepath", "swp", rc_string, &pathlist[FILETYPE_IMAGE].rawpath, "software", 0, 0, NULL, "path to software" },
+	{ "softwarepath", "swp", rc_string, &pathlist[FILETYPE_IMAGE].rawpath, "software", 0, 0, NULL, "path to software" },
 	{ "CRC_directory", "crc", rc_string, &pathlist[FILETYPE_CRC].rawpath, "crc", 0, 0, NULL, "path to CRC files" },
 #endif
 	{ "samplepath", "sp", rc_string, &pathlist[FILETYPE_SAMPLE].rawpath, "samples", 0, 0, NULL, "path to samplesets" },

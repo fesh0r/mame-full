@@ -85,6 +85,11 @@ static int video_flipx = 0;
 static int video_ror = 0;
 static int video_rol = 0;
 
+#ifdef MESS
+#define osd_basename		win_basename
+#define osd_dirname			win_dirname
+#define osd_strip_extension	win_strip_extension
+#endif
 
 static char *osd_basename(char *filename);
 static char *osd_dirname(char *filename);

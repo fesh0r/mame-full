@@ -198,7 +198,7 @@ void	flash_finish(int index1)
 		flash[index1].base = NULL;
 }
 
-void	flash_store(int index1, char *flash_name)
+void	flash_store(int index1, const char *flash_name)
 {
 	void *file;
 
@@ -217,7 +217,7 @@ void	flash_store(int index1, char *flash_name)
 
 
 
-void	flash_restore(int index1, char *flash_name)
+void	flash_restore(int index1, const char *flash_name)
 {
 	void *file;
 

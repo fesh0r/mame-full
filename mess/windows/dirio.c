@@ -279,10 +279,10 @@ const char *osd_get_cwd(void)
 }
 
 //============================================================
-//	osd_mess_dirname
+//	osd_dirname
 //============================================================
 
-char *osd_mess_dirname(const char *filename)
+char *osd_dirname(const char *filename)
 {
 	char *dirname;
 	char *c;

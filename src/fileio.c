@@ -67,7 +67,15 @@ struct _mame_file
 	PROTOTYPES
 ***************************************************************************/
 
-extern unsigned int crc32(unsigned int crc, const UINT8 *buf, unsigned int len);
+#ifndef ZEXPORT
+#ifdef _MSC_VER
+#define ZEXPORT __stdcall
+#else
+#define ZEXPORT
+#endif
+#endif
+
+extern unsigned int ZEXPORT crc32(unsigned int crc, const UINT8 *buf, unsigned int len);
 
 static mame_file *generic_fopen(int pathtype, const char *gamename, const char *filename, UINT32 crc, UINT32 flags);
 static const char *get_extension_for_filetype(int filetype);
