@@ -33,15 +33,12 @@ ChangeLog:
  15 bpp direct RGB games not go through the lookup table for a small speedup
 -modifed 15 bpp direct RGB support to use memcpy for a small speedup
 
-
-Todo:
--use FX HW palette (take a look at fxgen.c from 0.37b7.1 for example code)
-
 *****************************************************************/
 
 #if defined xfx || defined svgafx
 #include <stdio.h>
 #include <math.h>
+#include <signal.h>
 #include "driver.h"
 #include "usrintrf.h"
 #include "fxcompat.h"
@@ -99,6 +96,10 @@ static int texdestheight;
 static int firsttexdestwidth;
 static int firsttexdestheight;
 static int vecgame=0;
+static struct sigaction orig_sigaction[32];
+static struct sigaction vscreen_sa;  
+static int signals_to_catch[] = { SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT,
+   SIGFPE, SIGKILL, SIGSEGV, SIGPIPE, SIGTERM, SIGBUS, -1 };
 
 struct rc_option fx_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -446,11 +447,17 @@ static int SetResolution(struct rc_option *option, const char *arg,
   return -1;
 }
 
+static void VScreenSignalHandler(int signo)
+{
+  grEnablePassThru();
+  orig_sigaction[signo].sa_handler(signo);
+}
 
 /* Set up the virtual screen */
 
 int InitVScreen(void)
 {
+  int i;
   grGlideGetVersion(version);
 
   if(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
@@ -459,6 +466,14 @@ int InitVScreen(void)
   fprintf(stderr_file, "info: using Glide version %s\n", version);
   
   grSstSelect(0);
+
+  /* catch fatal signals and cleanly close Glide before exiting */
+  memset(&vscreen_sa, 0, sizeof(vscreen_sa));
+  vscreen_sa.sa_handler = VScreenSignalHandler;
+  for (i=0; signals_to_catch[i] != -1; i++)
+  {
+     sigaction(signals_to_catch[i], &vscreen_sa, &(orig_sigaction[signals_to_catch[i]]));
+  }
 
   if(!grSstWinOpen(0,Gr_resolution,GR_REFRESH_60Hz,GR_COLORFORMAT_ABGR,
      GR_ORIGIN_LOWER_LEFT,2,1))
@@ -483,14 +498,11 @@ int InitVScreen(void)
   switch(video_real_depth) {
     case 15:
     case 16:
-      display_palette_info.depth = 16;
       display_palette_info.red_mask   = 0x7C00;
       display_palette_info.green_mask = 0x03E0;
       display_palette_info.blue_mask  = 0x001F;
       break;
-    case 24:
     case 32:
-      display_palette_info.depth = 32;
       display_palette_info.red_mask   = 0xFF0000;
       display_palette_info.green_mask = 0x00FF00;
       display_palette_info.blue_mask  = 0x0000FF;

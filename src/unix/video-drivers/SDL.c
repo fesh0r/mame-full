@@ -350,10 +350,7 @@ int sysdep_create_display(int depth)
    
     /* fill the display_palette_info struct */
     memset(&display_palette_info, 0, sizeof(struct sysdep_palette_info));
-    display_palette_info.depth = Vid_depth;
-    if (Vid_depth == 8)
-         display_palette_info.writable_colors = 256;
-    else if (Vid_depth == 16) {
+    if (Vid_depth == 16) {
       display_palette_info.red_mask = 0xF800;
       display_palette_info.green_mask = 0x07E0;
       display_palette_info.blue_mask   = 0x001F;

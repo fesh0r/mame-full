@@ -344,10 +344,6 @@ int sysdep_create_display(int depth)
 
 	/* fill the display_palette_info struct */
 	memset(&display_palette_info, 0, sizeof(struct sysdep_palette_info));
-	display_palette_info.depth = depth;
-	if (depth == 8)
-		display_palette_info.writable_colors = 256;
-	else
 		if (video_modeinfo.colors == 32768)
 		{
 			display_palette_info.red_mask   = 0x001F;
@@ -362,7 +358,7 @@ int sysdep_create_display(int depth)
 		}
 
 
-	effect_init2(depth, display_palette_info.depth, scaled_visual_width);
+	effect_init2(depth, depth, scaled_visual_width);
 
 	/* init input */
 #ifdef __CPU_i386

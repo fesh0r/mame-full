@@ -514,8 +514,6 @@ int ph_window_alloc_palette (int writable_colors)
          return -1;
       }
    }
-   
-   display_palette_info.writable_colors = writable_colors;
 #endif
    return 0;
 }

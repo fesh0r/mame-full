@@ -742,7 +742,6 @@ int InitVScreen (int vw, int vh)
 		    display_palette_info.red_mask   = 0x00007C00;
 		    display_palette_info.green_mask = 0x000003E0;
 		    display_palette_info.blue_mask  = 0x0000001F;
-		    display_palette_info.depth      = 16;
 		    gl_bitmap_format = GL_BGRA;
 		    /*                                   A R G B */
 		    gl_bitmap_type   = GL_UNSIGNED_SHORT_1_5_5_5_REV;
@@ -752,7 +751,6 @@ int InitVScreen (int vw, int vh)
 		    display_palette_info.red_mask   = 0x0000F800;
 		    display_palette_info.green_mask = 0x000007C0;
 		    display_palette_info.blue_mask  = 0x0000003E;
-		    display_palette_info.depth      = 16;
 		    gl_bitmap_format = GL_RGBA;
 		    /*                                   R G B A */
 		    gl_bitmap_type   = GL_UNSIGNED_SHORT_5_5_5_1;
@@ -765,7 +763,6 @@ int InitVScreen (int vw, int vh)
 		  display_palette_info.blue_mask   = 0x00FF0000;
 		  display_palette_info.green_mask  = 0x0000FF00;
 		  display_palette_info.red_mask    = 0x000000FF;
-		  display_palette_info.depth 	   = 32;
 		  gl_bitmap_format = GL_BGRA;
 			/*  gl_bitmap_format = GL_RGBA; */
 		  /*                                 A B G R */
@@ -773,9 +770,8 @@ int InitVScreen (int vw, int vh)
 		  break;
   }
 
-  printf("GLINFO: Offering colors=%d, depth=%d, rgb 0x%X, 0x%X, 0x%X (true color mode)\n",
-		display_palette_info.writable_colors,
-		display_palette_info.depth, 
+  printf("GLINFO: depth=%d, rgb 0x%X, 0x%X, 0x%X (true color mode)\n",
+		video_real_depth, 
 		display_palette_info.red_mask, display_palette_info.green_mask, 
 		display_palette_info.blue_mask);
 

@@ -424,12 +424,8 @@ static int set_video_mode(int depth)
     
     /* fill the display_palette_info */
     memset(&display_palette_info, 0, sizeof(struct sysdep_palette_info));
-    display_palette_info.depth = GT_SIZE(mode.graphtype);
     switch (GT_SIZE(mode.graphtype))
     {
-       case 8:
-          display_palette_info.writable_colors = 256;
-          break;
        case 15:
           display_palette_info.red_mask   = 0x001F;
           display_palette_info.green_mask = 0x03E0;
@@ -480,7 +476,7 @@ int sysdep_create_display(int depth)
     fprintf(stderr_file,"16bit game: %s\n",(bitmap->depth == 16) ? "yes" : "no");
 #endif
 
-   effect_init2(depth, display_palette_info.depth, video_width);
+   effect_init2(depth, GT_SIZE(mode.graphtype), video_width);
 
     return OSD_OK;
 }

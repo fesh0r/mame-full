@@ -172,7 +172,6 @@ int ph_init_palette_info(void)
 			break;
 		return -1;	
 	}
-	display_palette_info.depth=depth;
 #endif
    return OSD_OK;
 }

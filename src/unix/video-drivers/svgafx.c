@@ -68,15 +68,17 @@ static void acquire_function(void)
    mouse and keyboard can't be setup before the display has. */
 int sysdep_create_display(int depth)
 {
-  if (InitVScreen() != OSD_OK)
-     return OSD_NOT_OK;
-     
   /* with newer svgalib's the console switch signals are only active if a
      graphics mode is set, so we set one which each card should support */
   vga_setmode(G320x200x16);
   
   /* init input */
   if(svga_input_open(release_function, acquire_function))
+     return OSD_NOT_OK;
+
+  /* call this one last since it needs to catch some signals
+     which are also catched by svgalib */
+  if (InitVScreen() != OSD_OK)
      return OSD_NOT_OK;
    
   return OSD_OK;
