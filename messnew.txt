@@ -19,8 +19,8 @@ Source Changes:
 
 - Added new videomap code that makes it easy to support arbitrary video modes
   in a fast, efficient manner.  This takes the place of the old
-  rasterbits/rastertrack code; converted m6847 and CoCo 3 video hardware to
-  use videomap. [Nate Woods]
+  rasterbits/rastertrack code; converted m6847, CoCo 3, and Mac video hardware
+  to use videomap. [Nate Woods]
 
 - Fixed a bug in the wave code that could cause a crash if a cassette image is
   unloaded. [Nate Woods]

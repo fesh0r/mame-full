@@ -405,6 +405,7 @@ static UINT16 coco3_get_border_color_callback(void)
 
 static struct videomap_interface coco3_videomap_interface =
 {
+	VIDEOMAP_FLAGS_MEMORY8,
 	coco3_frame_callback,
 	coco3_line_callback,
 	coco3_get_border_color_callback
