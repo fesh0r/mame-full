@@ -37,16 +37,13 @@ Priority:  Todo:                                                  Done:
 ***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "machine/gb.h"
 #include "includes/gb.h"
 #include "devices/cartslot.h"
 
-/* Initial value of the AF register:
- *   GameBoy        / Super GameBoy   - 0x01B0
- *   GameBoy Pocket / Super GameBoy 2 - 0xFFB0
- *   GameBoy Color  / GameBoy Advance - 0x11B0
- */
-static UINT16 gbc_cpu_af_reset = 0x11B0;
+/* Initial value of the AF register */
+static UINT16 dmg_cpu_af_reset = 0x01B0;	/* GameBoy        / Super GameBoy   */
+static UINT16 gbp_cpu_af_reset = 0xFFB0;	/* GameBoy Pocket / Super GameBoy 2 */
+static UINT16 gbc_cpu_af_reset = 0x11B0;	/* GameBoy Color  / GameBoy Advance */
 
 static MEMORY_READ_START (gb_readmem)
 	{ 0x0000, 0x3fff, MRA_ROM },			/* 16k fixed ROM bank */
@@ -55,36 +52,46 @@ static MEMORY_READ_START (gb_readmem)
 	{ 0xa000, 0xbfff, MRA_BANK2 },			/* 8k switched RAM bank (on cartridge) */
 	{ 0xc000, 0xfe9f, MRA_RAM },			/* 8k low RAM, echo RAM, OAM RAM */
 	{ 0xfea0, 0xfeff, MRA_NOP },			/* unusable */
-	{ 0xff00, 0xff7f, gb_r_io },			/* gb io */
+	{ 0xff00, 0xff7f, gb_io_r },			/* I/O */
 	{ 0xff80, 0xffff, MRA_RAM },			/* 127 bytes high RAM, interrupt enable io */
 MEMORY_END
 
 static MEMORY_WRITE_START (gb_writemem)
-	{ 0x0000, 0x1fff, MWA_ROM },			/* 8k ROM (should really be RAM enable) */
-	{ 0x2000, 0x3fff, gb_rom_bank_select },	/* ROM bank select */
-	{ 0x4000, 0x5fff, gb_ram_bank_select },	/* RAM bank select */
-	{ 0x6000, 0x7fff, gb_mem_mode_select },	/* RAM/ROM mode select */
+/*	{ 0x0000, 0x1fff, INSTALL AT RUNTIME },	   RAM enable */
+/*	{ 0x2000, 0x3fff, INSTALL AT RUNTIME },	   ROM bank select */
+/*	{ 0x4000, 0x5fff, INSTALL AT RUNTIME },	   RAM bank select */
+/*	{ 0x6000, 0x7fff, INSTALL AT RUNTIME },	   RAM/ROM mode select */
 	{ 0x8000, 0x9fff, MWA_RAM },			/* 8k VRAM */
 	{ 0xa000, 0xbfff, MWA_BANK2 },			/* 8k switched RAM bank (on cartridge) */
 	{ 0xc000, 0xfe9f, MWA_RAM },			/* 8k low RAM, echo RAM, OAM RAM */
-	{ 0xfea0, 0xfeff, MWA_NOP },			/* unusable */
-	{ 0xff00, 0xff7f, gb_w_io },			/* gb io */
+	{ 0xfea0, 0xfeff, MWA_NOP },			/* Unusable */
+	{ 0xff00, 0xff0f, gb_io_w },			/* General I/O */
+	{ 0xff10, 0xff26, gb_sound_w },			/* Sound controller */
+	{ 0xff27, 0xff2f, MWA_NOP },			/* Unused registers */
+	{ 0xff30, 0xff3f, MWA_RAM },			/* 16 bytes Wave pattern RAM */
+	{ 0xff40, 0xff4b, gb_video_w },			/* Video controller */
+	{ 0xff4c, 0xff7f, MWA_NOP },			/* Unused registers */
 	{ 0xff80, 0xfffe, MWA_RAM },			/* 127 bytes high RAM */
-	{ 0xffff, 0xffff, gb_w_ie },			/* gb io (interrupt enable) */
+	{ 0xffff, 0xffff, gb_ie_w },			/* Interrupt enable */
 MEMORY_END
 
 static MEMORY_WRITE_START (sgb_writemem)
-	{ 0x0000, 0x1fff, MWA_ROM },			/* 8k ROM (should really be RAM enable */
-	{ 0x2000, 0x3fff, gb_rom_bank_select },	/* ROM bank select */
-	{ 0x4000, 0x5fff, gb_ram_bank_select },	/* RAM bank select */
-	{ 0x6000, 0x7fff, gb_mem_mode_select },	/* RAM/ROM mode select */
+/*	{ 0x0000, 0x1fff, INSTALL AT RUNTIME },	   RAM enable */
+/*	{ 0x2000, 0x3fff, INSTALL AT RUNTIME },	   ROM bank select */
+/*	{ 0x4000, 0x5fff, INSTALL AT RUNTIME },	   RAM bank select */
+/*	{ 0x6000, 0x7fff, INSTALL AT RUNTIME },	   RAM/ROM mode select */
 	{ 0x8000, 0x9fff, MWA_RAM },			/* 8k VRAM */
 	{ 0xa000, 0xbfff, MWA_BANK2 },			/* 8k switched RAM bank (on cartridge) */
 	{ 0xc000, 0xfe9f, MWA_RAM },			/* 8k low RAM, echo RAM, OAM RAM */
-	{ 0xfea0, 0xfeff, MWA_NOP },			/* unusable */
-	{ 0xff00, 0xff7f, sgb_w_io },			/* sgb io */
-	{ 0xff80, 0xfffe, MWA_RAM },			/* 127b high RAM */
-	{ 0xffff, 0xffff, gb_w_ie },			/* gb io (interrupt enable) */
+	{ 0xfea0, 0xfeff, MWA_NOP },			/* Unusable */
+	{ 0xff00, 0xff0f, sgb_io_w },			/* General I/O */
+	{ 0xff10, 0xff26, gb_sound_w },			/* Sound controller */
+	{ 0xff27, 0xff2f, MWA_NOP },			/* Unused registers */
+	{ 0xff30, 0xff3f, MWA_RAM },			/* 16 bytes Wave pattern RAM */
+	{ 0xff40, 0xff4b, gb_video_w },			/* Video controller */
+	{ 0xff4c, 0xff7f, MWA_NOP },			/* Unused registers */
+	{ 0xff80, 0xfffe, MWA_RAM },			/* 127 bytes high RAM */
+	{ 0xffff, 0xffff, gb_ie_w },			/* Interrupt enable */
 MEMORY_END
 
 static MEMORY_READ_START (gbc_readmem)
@@ -96,28 +103,31 @@ static MEMORY_READ_START (gbc_readmem)
 	{ 0xd000, 0xdfff, MRA_BANK3 },			/* 4k switched RAM bank */
 	{ 0xe000, 0xfe9f, MRA_RAM },			/* echo RAM, OAM RAM */
 	{ 0xfea0, 0xfeff, MRA_NOP },			/* unusable */
-	{ 0xff00, 0xff7f, gb_r_io },			/* gb io */
+	{ 0xff00, 0xff7f, gb_io_r },			/* I/O */
 	{ 0xff80, 0xffff, MRA_RAM },			/* 127 bytes high RAM, interrupt enable io */
 MEMORY_END
 
 static MEMORY_WRITE_START (gbc_writemem)
-	{ 0x0000, 0x1fff, MWA_ROM },			/* 8k ROM (should really be RAM enable */
-	{ 0x2000, 0x3fff, gb_rom_bank_select },	/* ROM bank select */
-	{ 0x4000, 0x5fff, gb_ram_bank_select },	/* RAM bank select */
-	{ 0x6000, 0x7fff, gb_mem_mode_select },	/* RAM/ROM mode select */
+/*	{ 0x0000, 0x1fff, INSTALL AT RUNTIME },	   RAM enable */
+/*	{ 0x2000, 0x3fff, INSTALL AT RUNTIME },	   ROM bank select */
+/*	{ 0x4000, 0x5fff, INSTALL AT RUNTIME },	   RAM bank select */
+/*	{ 0x6000, 0x7fff, INSTALL AT RUNTIME },	   RAM/ROM mode select */
 	{ 0x8000, 0x9fff, MWA_BANK4 },			/* 8k switched VRAM bank */
 	{ 0xa000, 0xbfff, MWA_BANK2 },			/* 8k switched RAM bank (on cartridge) */
 	{ 0xc000, 0xcfff, MWA_RAM },			/* 4k fixed RAM bank */
 	{ 0xd000, 0xdfff, MWA_BANK3 },			/* 4k switched RAM bank */
 	{ 0xe000, 0xfeff, MWA_RAM },			/* echo RAM, OAM RAM */
-//{ 0xe000, 0xfeff, MWA_RAM/*, &videoram, &videoram_size*/ }, /* video & sprite ram */
-	{ 0xff00, 0xff7f, gbc_w_io },			/* gbc io */
+	{ 0xff00, 0xff0f, gb_io_w },			/* General I/O */
+	{ 0xff10, 0xff26, gb_sound_w },			/* Sound controller */
+	{ 0xff27, 0xff2f, MWA_NOP },			/* Unused registers */
+	{ 0xff30, 0xff3f, MWA_RAM },			/* 16 bytes Wave pattern RAM */
+	{ 0xff40, 0xff7f, gbc_video_w },		/* Video controller */
 	{ 0xff80, 0xfffe, MWA_RAM },			/* 127b high RAM */
-	{ 0xffff, 0xffff, gb_w_ie },			/* gb io (interrupt enable) */
+	{ 0xffff, 0xffff, gb_ie_w },			/* Interrupt enable */
 MEMORY_END
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static struct GfxDecodeInfo gb_gfxdecodeinfo[] =
 {
 	{ -1 } /* end of array */
 };
@@ -152,24 +162,24 @@ static unsigned char palette[] =
 /* Initialise the palette */
 static PALETTE_INIT( gb )
 {
-	int i;
-	for (i = 0; i < (sizeof(palette) / 3); i++)
+	int ii;
+	for( ii = 0; ii < 4; ii++)
 	{
-		palette_set_color(i, palette[i*3+0], palette[i*3+1], palette[i*3+2]);
-		colortable[i] = i;
+		palette_set_color(ii, palette[ii*3+0], palette[ii*3+1], palette[ii*3+2]);
+		colortable[ii] = ii;
 	}
 }
 
 static PALETTE_INIT( sgb )
 {
-	int i, r, g, b;
+	int ii, r, g, b;
 
-	for( i = 0; i < 32768; i++ )
+	for( ii = 0; ii < 32768; ii++ )
 	{
-		r = (i & 0x1F) << 3;
-		g = ((i >> 5) & 0x1F) << 3;
-		b = ((i >> 10) & 0x1F) << 3;
-		palette_set_color( i, r, g, b );
+		r = (ii & 0x1F) << 3;
+		g = ((ii >> 5) & 0x1F) << 3;
+		b = ((ii >> 10) & 0x1F) << 3;
+		palette_set_color( ii, r, g, b );
 	}
 
 	/* Some default colours for non-SGB games */
@@ -178,28 +188,28 @@ static PALETTE_INIT( sgb )
 	colortable[2] = 10570;
 	colortable[3] = 0;
 	/* The rest of the colortable can be black */
-	for( i = 4; i < 8*16; i++ )
-		colortable[i] = 0;
+	for( ii = 4; ii < 8*16; ii++ )
+		colortable[ii] = 0;
 }
 
 static PALETTE_INIT( gbc )
 {
-	int i, r, g, b;
+	int ii, r, g, b;
 
-	for( i = 0; i < 32768; i++ )
+	for( ii = 0; ii < 32768; ii++ )
 	{
-		r = (i & 0x1F) << 3;
-		g = ((i >> 5) & 0x1F) << 3;
-		b = ((i >> 10) & 0x1F) << 3;
-		palette_set_color( i, r, g, b );
+		r = (ii & 0x1F) << 3;
+		g = ((ii >> 5) & 0x1F) << 3;
+		b = ((ii >> 10) & 0x1F) << 3;
+		palette_set_color( ii, r, g, b );
 	}
 
 	/* Background is initialised as white */
-	for( i = 0; i < 8*4; i++ )
-		colortable[i] = 32767;
+	for( ii = 0; ii < 8*4; ii++ )
+		colortable[ii] = 32767;
 	/* Sprites are supposed to be uninitialized, but we'll make them black */
-	for( i = 8*4; i < 16*4; i++ )
-		colortable[i] = 0;
+	for( ii = 8*4; ii < 16*4; ii++ )
+		colortable[ii] = 0;
 }
 
 static struct CustomSound_interface gameboy_sound_interface =
@@ -211,8 +221,9 @@ static MACHINE_DRIVER_START( gameboy )
 	MDRV_CPU_ADD_TAG("main", Z80GB, 4194304)			/* 4.194304 Mhz */
 	MDRV_CPU_MEMORY(gb_readmem, gb_writemem)
 	MDRV_CPU_VBLANK_INT(gb_scanline_interrupt, 154 * 3)	/* 1 int each scanline ! */
+	MDRV_CPU_CONFIG(dmg_cpu_af_reset)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(DMG_FRAMES_PER_SECOND)
 	MDRV_VBLANK_DURATION(0)
 	MDRV_INTERLEAVE(1)
 
@@ -225,9 +236,9 @@ static MACHINE_DRIVER_START( gameboy )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(20*8, 18*8)
 	MDRV_VISIBLE_AREA(0*8, 20*8-1, 0*8, 18*8-1)
-	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(palette) / sizeof(palette[0]) / 3)
-	MDRV_COLORTABLE_LENGTH(sizeof(palette) / sizeof(palette[0]) / 3)
+	MDRV_GFXDECODE(gb_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4)
+	MDRV_COLORTABLE_LENGTH(4)
 	MDRV_PALETTE_INIT(gb)
 
 	/* sound hardware */
