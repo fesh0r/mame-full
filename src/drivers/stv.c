@@ -109,6 +109,7 @@ int stv_vblank;
 /*SMPC stuff*/
 static UINT8 SCSP_reset;
 static void system_reset(void);
+static data8_t en_68k;
 /*SCU stuff*/
 static int 	  timer_0;				/* Counter for Timer 0 irq*/
 /*Maybe add these in a struct...*/
@@ -135,24 +136,6 @@ static void dma_direct_lv2(void);   /*DMA level 2 direct transfer function*/
 static void dma_indirect_lv0(void); /*DMA level 0 indirect transfer function*/
 static void dma_indirect_lv1(void); /*DMA level 1 indirect transfer function*/
 static void dma_indirect_lv2(void); /*DMA level 2 indirect transfer function*/
-/* SCSP stuff*/
-static UINT32 scsp_dmea;
-static UINT16 scsp_drga;
-#define		  scsp_dgate			scsp_regs[0x416/2] & 0x4000
-#define		  scsp_ddir				scsp_regs[0x416/2] & 0x2000
-#define       scsp_dexe 			scsp_regs[0x416/2] & 0x1000
-static UINT16 scsp_dtlg;
-static void dma_scsp(void); 		/*SCSP DMA transfer function*/
-
-/*Auto level irq calculation macros*/
-#define e_irq_0				((scsp_regs[0x424/2] & 0x01)>>0)|(((scsp_regs[0x426/2] & 0x01)>>0)<<1)|(((scsp_regs[0x428/2] & 0x01)>>0)<<2)
-#define e_irq_1				((scsp_regs[0x424/2] & 0x02)>>1)|(((scsp_regs[0x426/2] & 0x02)>>1)<<1)|(((scsp_regs[0x428/2] & 0x02)>>1)<<2)
-#define e_irq_2				((scsp_regs[0x424/2] & 0x04)>>2)|(((scsp_regs[0x426/2] & 0x04)>>2)<<1)|(((scsp_regs[0x428/2] & 0x04)>>2)<<2)
-#define midi_in_irq			((scsp_regs[0x424/2] & 0x08)>>3)|(((scsp_regs[0x426/2] & 0x08)>>3)<<1)|(((scsp_regs[0x428/2] & 0x08)>>3)<<2)
-#define dma_transfer_end	((scsp_regs[0x424/2] & 0x10)>>4)|(((scsp_regs[0x426/2] & 0x10)>>4)<<1)|(((scsp_regs[0x428/2] & 0x10)>>4)<<2)
-#define scsp_software_irq	((scsp_regs[0x424/2] & 0x20)>>5)|(((scsp_regs[0x426/2] & 0x20)>>5)<<1)|(((scsp_regs[0x428/2] & 0x20)>>5)<<2)
-#define timera_irq			((scsp_regs[0x424/2] & 0x40)>>6)|(((scsp_regs[0x426/2] & 0x40)>>6)<<1)|(((scsp_regs[0x428/2] & 0x40)>>6)<<2)
-#define midi_out_irq		((scsp_regs[0x424/2] & 0x80)>>7)|(((scsp_regs[0x426/2] & 0x80)>>7)<<1)|(((scsp_regs[0x428/2] & 0x80)>>7)<<2)
 
 /**************************************************************************************/
 
@@ -365,11 +348,13 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 			logerror("SMPC: M68k on\n");
 			cpu_set_reset_line(2, PULSE_LINE);
 			cpu_set_halt_line(2, CLEAR_LINE);
+			en_68k = 1;
 		}
 		else
 		{
 			logerror("SMPC: M68k off\n");
 			cpu_set_halt_line(2, ASSERT_LINE);
+			en_68k = 0;
 		}
 		PDR2 = (data & 0x60);
 	}
@@ -694,7 +679,6 @@ READ32_HANDLER ( stv_io_r32 )
 		return ioga[offset];
 	}
 }
-
 WRITE32_HANDLER ( stv_io_w32 )
 {
 	//logerror("(PC=%08X): I/O w %08X = %08X & %08X\n", activecpu_get_pc(), offset*4, data, mem_mask);
@@ -1191,10 +1175,17 @@ static void dma_indirect_lv0()
 		for (; scu_size_0 > 0; scu_size_0-=scu_dst_add_0)
 		{
 			if(scu_dst_add_0 == 2)
-				cpu_writemem16bew_word(scu_dst_0,cpu_readmem16bew_word(scu_src_0));
+				cpu_writemem32bedw_word(scu_dst_0,cpu_readmem32bedw_word(scu_src_0));
 			else
-				cpu_writemem32bedw_dword(scu_dst_0,cpu_readmem32bedw_dword(scu_src_0));
-
+			{
+				/* some games, eg columns97 are a bit weird, I'm not sure this is correct
+				  they start a dma on a 2 byte boundary in 4 byte add mode, using the dword reads we
+				  can't access 2 byte boundaries, and the end of the sprite list never gets marked,
+				  the length of the transfer is also set to a 2 byte boundary, maybe the add values
+				  should be different, I don't know */
+				cpu_writemem32bedw_word(scu_dst_0,cpu_readmem32bedw_word(scu_src_0));
+				cpu_writemem32bedw_word(scu_dst_0+2,cpu_readmem32bedw_word(scu_src_0+2));
+			}
 			scu_dst_0+=scu_dst_add_0;
 			scu_src_0+=scu_src_add_0;
 		}
@@ -1241,13 +1232,22 @@ static void dma_indirect_lv1()
 		scu_dst_1 &=0x07ffffff;
 		scu_size_1 &=0xffff;
 
+
 		for (; scu_size_1 > 0; scu_size_1-=scu_dst_add_1)
 		{
-			if(scu_dst_add_1 == 2)
-				cpu_writemem16bew_word(scu_dst_1,cpu_readmem16bew_word(scu_src_1));
-			else
-				cpu_writemem32bedw_dword(scu_dst_1,cpu_readmem32bedw_dword(scu_src_1));
 
+			if(scu_dst_add_1 == 2)
+				cpu_writemem32bedw_word(scu_dst_1,cpu_readmem32bedw_word(scu_src_1));
+			else
+			{
+				/* some games, eg columns97 are a bit weird, I'm not sure this is correct
+				  they start a dma on a 2 byte boundary in 4 byte add mode, using the dword reads we
+				  can't access 2 byte boundaries, and the end of the sprite list never gets marked,
+				  the length of the transfer is also set to a 2 byte boundary, maybe the add values
+				  should be different, I don't know */
+				cpu_writemem32bedw_word(scu_dst_1,cpu_readmem32bedw_word(scu_src_1));
+				cpu_writemem32bedw_word(scu_dst_1+2,cpu_readmem32bedw_word(scu_src_1+2));
+			}
 			scu_dst_1+=scu_dst_add_1;
 			scu_src_1+=scu_src_add_1;
 		}
@@ -1297,9 +1297,17 @@ static void dma_indirect_lv2()
 		for (; scu_size_2 > 0; scu_size_2-=scu_dst_add_2)
 		{
 			if(scu_dst_add_2 == 2)
-				cpu_writemem16bew_word(scu_dst_2,cpu_readmem16bew_word(scu_src_2));
+				cpu_writemem32bedw_word(scu_dst_2,cpu_readmem32bedw_word(scu_src_2));
 			else
-				cpu_writemem32bedw_dword(scu_dst_2,cpu_readmem32bedw_dword(scu_src_2));
+			{
+				/* some games, eg columns97 are a bit weird, I'm not sure this is correct
+				  they start a dma on a 2 byte boundary in 4 byte add mode, using the dword reads we
+				  can't access 2 byte boundaries, and the end of the sprite list never gets marked,
+				  the length of the transfer is also set to a 2 byte boundary, maybe the add values
+				  should be different, I don't know */
+				cpu_writemem32bedw_word(scu_dst_2,cpu_readmem32bedw_word(scu_src_2));
+				cpu_writemem32bedw_word(scu_dst_2+2,cpu_readmem32bedw_word(scu_src_2+2));
+			}
 
 			scu_dst_2+=scu_dst_add_2;
 			scu_src_2+=scu_src_add_2;
@@ -1334,195 +1342,21 @@ READ32_HANDLER( stv_sh2_soundram_r )
 {
 	data8_t *SNDRAM = memory_region(REGION_CPU3);
 
-	if ((activecpu_get_pc()==0x6014298) && (offset*4 == 0x07ac))
-	{
-		logerror("hanagumi hang skip! 6014298\n");
-		return 0x01010101;
-	}
-
-	if ((activecpu_get_pc()==0x60142fe) && (offset*4 == 0x07ac))
-	{
-		logerror("hanagumi hang skip! 60142fe\n");
-		return 0x01010101;
-	}
-
 	return  (SNDRAM[offset*4+1]<<24) | (SNDRAM[offset*4+0]<<16) | (SNDRAM[offset*4+3]<<8) | (SNDRAM[offset*4+2]<<0);
 
 }
 
 static READ32_HANDLER( stv_scsp_regs_r32 )
 {
-	return scsp_regs[offset*2+1]<<16 | scsp_regs[offset*2+0]<<0;
+	offset <<= 1;
+	return (SCSP_0_r(offset+1, 0xffff) | (SCSP_0_r(offset, 0xffff)<<16));
 }
 
 static WRITE32_HANDLER( stv_scsp_regs_w32 )
 {
-	if (!(mem_mask & 0xffff0000)) scsp_regs[offset*2+1] = (data & 0xffff0000)>>16;
-	if (!(mem_mask & 0x0000ffff)) scsp_regs[offset*2+0] = (data & 0x0000ffff)>>0;
-}
-
-static READ16_HANDLER( stv_scsp_regs_r16 )
-{
-	return scsp_regs[offset];
-}
-
-static WRITE16_HANDLER( stv_scsp_regs_w16 )
-{
-	COMBINE_DATA(&scsp_regs[offset]);
-
-	/*SCSP Common Control Register*/
-	if(offset*2 >= 0x400 && offset*2 <= 0x42f)
-		switch(offset*2)
-		{
-			case 0x412:
-			/*DMEA [15:1]*/
-			/*Sound memory address*/
-			scsp_dmea = (((scsp_regs[0x414/2] & 0xf000)>>12)*0x10000) | (scsp_regs[0x412/2] & 0xfffe);
-			break;
-			case 0x414:
-			/*DMEA [19:16]*/
-			scsp_dmea = (((scsp_regs[0x414/2] & 0xf000)>>12)*0x10000) | (scsp_regs[0x412/2] & 0xfffe);
-			/*DRGA [11:1]*/
-			/*Register memory address*/
-			scsp_drga = scsp_regs[0x414/2] & 0x0ffe;
-			break;
-			case 0x416:
-			/*DGATE[14]*/
-			/*DDIR[13]*/
-			/*if 0 sound_mem -> reg*/
-			/*if 1 sound_mem <- reg*/
-			/*DEXE[12]*/
-			/*starting bit*/
-			/*DTLG[11:1]*/
-			/*size of transfer*/
-			scsp_dtlg = scsp_regs[0x416/2] & 0x0ffe;
-			if(scsp_dexe)
-			{
-				dma_scsp();
-				scsp_regs[0x416/2]^=0x1000;//disable starting bit
-			}
-			break;
-			case 0x418: /*Timer A*/	break;
-			case 0x41a: /*Timer B*/ break;
-			case 0x41c: /*Timer C*/ break;
-			case 0x41e:
-			/*Allow Sound CPU irq*/
-/*
-offsets
-0x8000
-0x4000
-0x2000
-0x1000
-0x0800
-0x0400 - Sample irq
-0x0200 - MIDI-OUT
-0x0100 - Timer C
-0x0080 - Timer B
-0x0040 - Timer A
-0x0020 - CPU Software Irq
-0x0010 - DMA Transfer End
-0x0008 - MIDI-IN
-0x0004 - External irq 2
-0x0002 - External irq 1
-0x0001 - External irq 0
-*/
-			break;
-			case 0x420:
-			/*Request Sound CPU irq*/
-			if(scsp_regs[0x420/2] & 0x20) { cpu_set_irq_line(2,scsp_software_irq,ASSERT_LINE); }
-			break;
-			case 0x422:
-			/*Reset Sound CPU irq*/
-			if(scsp_regs[0x422/2] & 0x20) { cpu_set_irq_line(2,scsp_software_irq,CLEAR_LINE); }
-
-			/*Refresh irq mask register*/
-			scsp_regs[0x41e/2] = scsp_regs[0x422/2];
-			break;
-/*
-----------------------
-|SCILV2|SCILV1|SCILV0|
-| bit2 | bit1 | bit0 |
-----------------------
-15
-14
-13
-12
-11
-10
-09
-08
-07 - Timer B & C,MIDI-OUT
-06 - Timer A
-05 - CPU Software Irq
-04 - DMA Transfer End
-03 - MIDI-IN
-02 - External irq 2
-01 - External irq 1
-00 - External irq 0
-*/
-			case 0x424:
-			/*Sound CPU interrupt level bit0*/
-			break;
-			case 0x426:
-			/*Sound CPU interrupt level bit1*/
-			break;
-			case 0x428:
-			/*Sound CPU interrupt level bit2*/
-			break;
-			case 0x42a: /*Allow Main CPU irq*/   break;
-			case 0x42c: /*Request Main CPU irq*/ break;
-			case 0x42e: /*Reset Main CPU irq*/   break;
-			default: logerror("SCSP Common Control Register set %04x at %04x\n",data,offset*2);
-		}
-}
-
-static void dma_scsp()
-{
-	static UINT16 tmp_dma[2];
-
-	logerror("SCSP: DMA transfer START\n"
-			 "DMEA: %04x DRGA: %04x DTLG: %04x\n"
-			 "DGATE: %d  DDIR: %d\n",scsp_dmea,scsp_drga,scsp_dtlg,scsp_dgate ? 1 : 0,scsp_ddir ? 1 : 0);
-
-	/* Copy the dma values in a temp storage for resuming later *
-	 * (DMA *can't* overwrite his parameters).                  */
-	if(!(scsp_ddir))
-	{
-		tmp_dma[0] = scsp_regs[0x412/2];
-		tmp_dma[1] = scsp_regs[0x414/2];
-		tmp_dma[2] = scsp_regs[0x416/2];
-	}
-
-	if(scsp_ddir)
-	{
-		for(;scsp_dtlg > 0;scsp_dtlg-=2)
-		{
-			cpu_writemem24bedw_word(scsp_dmea, cpu_readmem24bedw_word(0x100000|scsp_drga));
-			scsp_dmea+=2;
-			scsp_drga+=2;
-		}
-	}
-	else
-	{
-		for(;scsp_dtlg > 0;scsp_dtlg-=2)
-		{
-			cpu_writemem24bedw_word(0x100000|scsp_drga,cpu_readmem24bedw_word(scsp_dmea));
-			scsp_dmea+=2;
-			scsp_drga+=2;
-		}
-	}
-
-	/*Resume the values*/
-	if(!(scsp_ddir))
-	{
-	 	scsp_regs[0x412/2] = tmp_dma[0];
-		scsp_regs[0x414/2] = tmp_dma[1];
-		scsp_regs[0x416/2] = tmp_dma[2];
-	}
-
-	/*Job done,request a dma end irq*/
-	if(scsp_regs[0x41e/2] & 0x10)
-	cpu_set_irq_line(2,dma_transfer_end,HOLD_LINE);
+	offset <<= 1;
+	SCSP_0_w(offset, data>>16, mem_mask >> 16);
+	SCSP_0_w(offset+1, data, mem_mask);
 }
 
 /* communication,SLAVE CPU acquires data from the MASTER CPU and triggers an irq.  *
@@ -1576,6 +1410,8 @@ static MEMORY_READ32_START( stv_master_readmem )
 	{ 0x02000000, 0x04ffffff, MRA32_BANK1 }, // cartridge
 //	{ 0x02200000, 0x04ffffff, read_cart }, // cartridge
 //	{ 0x05000000, 0x058fffff, MRA32_RAM },
+
+	{ 0x05890000, 0x058900ff, MRA32_NOP },	// CD registers
 
 	/* Sound */
 	{ 0x05a00000, 0x05afffff, stv_sh2_soundram_r },
@@ -1689,12 +1525,12 @@ MEMORY_END
 
 static MEMORY_READ16_START( sound_readmem )
 	{ 0x000000, 0x0fffff, MRA16_BANK2 },
-	{ 0x100000, 0x100fff, stv_scsp_regs_r16 },
+	{ 0x100000, 0x100fff, SCSP_0_r },
 MEMORY_END
 
 static MEMORY_WRITE16_START( sound_writemem )
 	{ 0x000000, 0x0fffff, MWA16_BANK2 },	/*actually SDRAM*/
-	{ 0x100000, 0x100fff, stv_scsp_regs_w16 },
+	{ 0x100000, 0x100fff, SCSP_0_w },
 MEMORY_END
 
 #define STV_PLAYER_INPUTS(_n_, _b1_, _b2_, _b3_, _b4_) \
@@ -2010,6 +1846,7 @@ static MACHINE_INIT( stv )
 	cpu_set_halt_line(2, ASSERT_LINE);
 
 	timer_0 = 0;
+	en_68k = 0;
 }
 
 static struct GfxLayout tiles8x8x4_layout =
@@ -2089,6 +1926,35 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 struct sh2_config sh2_conf_master = { 0 };
 struct sh2_config sh2_conf_slave  = { 1 };
 
+static int scsp_last_line = 0;
+
+static void scsp_irq(int irq)
+{
+	// don't bother the 68k if it's off
+	if (!en_68k)
+	{
+		return;
+	}
+
+	if (irq)
+	{
+		scsp_last_line = irq;
+		cpu_set_irq_line(2, irq, ASSERT_LINE);
+	}
+	else
+	{
+		cpu_set_irq_line(2, scsp_last_line, CLEAR_LINE);
+	}
+}
+
+static struct SCSPinterface scsp_interface =
+{
+	1,
+	{ REGION_CPU3, },
+	{ YM3012_VOL(100, MIXER_PAN_LEFT, 100, MIXER_PAN_RIGHT) },
+	{ scsp_irq, },
+};
+
 static MACHINE_DRIVER_START( stv )
 
 	/* basic machine hardware */
@@ -2113,7 +1979,7 @@ static MACHINE_DRIVER_START( stv )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT )
-	MDRV_SCREEN_SIZE(1024, 512)
+	MDRV_SCREEN_SIZE(1024, 1024)
 	MDRV_VISIBLE_AREA(0*8, 703, 0*8, 479) // we need to use a resolution as high as the max size it can change to
 	MDRV_PALETTE_LENGTH(2048)
 	MDRV_GFXDECODE(gfxdecodeinfo)
@@ -2121,6 +1987,8 @@ static MACHINE_DRIVER_START( stv )
 	MDRV_VIDEO_START(stv_vdp2)
 	MDRV_VIDEO_UPDATE(stv_vdp2)
 
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(SCSP, scsp_interface)
 MACHINE_DRIVER_END
 
 #define ROM_LOAD16_WORD_SWAP_BIOS(bios,name,offset,length,hash) \
@@ -2333,9 +2201,12 @@ ROM_END
 ROM_START( fhboxers )
 	STV_BIOS
 
-	/* maybe there is some banking on this one, or the roms are in the wrong places */
 	ROM_REGION32_BE( 0x2400000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "fr18541a.13",               0x0000000, 0x0100000, CRC(8c61a17c) SHA1(a8aef27b53482923a506f7daa4b7a38653b4d8a4) ) // ic13 bad?! (header is read from here, not ic7 even if both are populated on this board)
+	ROM_RELOAD ( 0x0100000, 0x0100000 )
+	ROM_RELOAD ( 0x0200000, 0x0100000 )
+	ROM_RELOAD ( 0x0300000, 0x0100000 )
+
 	ROM_LOAD16_WORD_SWAP( "mpr18538.7",    0x0200000, 0x0200000, CRC(7b5230c5) SHA1(70cebc3281580b43adf42c37318e12159c28a13d) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr18533.2",    0x0400000, 0x0400000, CRC(7181fe51) SHA1(646f95e1a5b64d721e961352cee6fd5adfd031ec) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr18534.3",    0x0800000, 0x0400000, CRC(c87ef125) SHA1(c9ced130faf6dd9e626074b6519615654d8beb19) ) // good
@@ -2353,6 +2224,10 @@ ROM_START( findlove )
 
 	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "epr20424.13",               0x0000000, 0x0100000, CRC(4e61fa46) SHA1(e34624d98cbdf2dd04d997167d3c4decd2f208f7) ) // ic13 bad?! (header is read from here, not ic7 even if both are populated on this board)
+	ROM_RELOAD ( 0x0100000, 0x0100000 )
+	ROM_RELOAD ( 0x0200000, 0x0100000 )
+	ROM_RELOAD ( 0x0300000, 0x0100000 )
+
 	ROM_LOAD16_WORD_SWAP( "mpr20431.7",    0x0200000, 0x0200000, CRC(ea656ced) SHA1(b2d6286081bd46a89d1284a2757b87d0bca1bbde) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20426.2",    0x0400000, 0x0400000, CRC(897d1747) SHA1(f3fb2c4ef8bc2c1658907e822f2ee2b88582afdd) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20427.3",    0x0800000, 0x0400000, CRC(a488a694) SHA1(80ec81f32e4b5712a607208b2a45cfdf6d5e1849) ) // good
@@ -2562,6 +2437,21 @@ ROM_START( sandor )
 	ROM_LOAD16_WORD_SWAP( "mpr18638.11",  0x2800000, 0x0400000, CRC(caab531b) SHA1(a77bdcc27d183896c0ed576eeebcc1785d93669e) ) // good
 ROM_END
 
+ROM_START( thunt )
+	STV_BIOS
+
+	ROM_REGION32_BE( 0x2c00000, REGION_USER1, 0 ) /* SH2 code */
+	/* I suspect this should be one rom */
+	ROM_LOAD16_BYTE( "th-ic7_2.stv",    0x0200000, 0x0080000, CRC(c4e993de) SHA1(7aa433bc2623cb19a09d4ef4c8233a2d29901020) )
+	ROM_LOAD16_BYTE( "th-ic7_1.stv",    0x0200001, 0x0080000, CRC(1355cc18) SHA1(a9b731228a807b2b01f933fe0f7dcdbadaf89b7e) )
+
+	// missing, putting sando-r roms here gives some good gfx but a lot wrong
+	ROM_LOAD16_WORD_SWAP( "thunt.2",   0x0400000, 0x0400000, NO_DUMP )
+	ROM_LOAD16_WORD_SWAP( "thunt.3",   0x0800000, 0x0400000, NO_DUMP )
+	ROM_LOAD16_WORD_SWAP( "thunt.4",   0x0c00000, 0x0400000, NO_DUMP )
+	ROM_LOAD16_WORD_SWAP( "thunt.5",   0x1000000, 0x0400000, NO_DUMP )
+ROM_END
+
 ROM_START( sassisu )
 	STV_BIOS
 
@@ -2759,7 +2649,11 @@ ROM_START( mausuke )
 
 	ROM_REGION32_BE( 0x2000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD(             "ic13.bin",      0x0000000, 0x0100000, CRC(b456f4cd) )
+	/* mirroring is essential on this one */
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
+	ROM_RELOAD ( 0x0200000, 0x0100000 )
+	ROM_RELOAD ( 0x0300000, 0x0100000 )
+
 	ROM_LOAD16_WORD_SWAP( "mcj-00.2",      0x0400000, 0x0200000, CRC(4eeacd6f) )// good
 	ROM_LOAD16_WORD_SWAP( "mcj-01.3",      0x0800000, 0x0200000, CRC(365a494b) )// good
 	ROM_LOAD16_WORD_SWAP( "mcj-02.4",      0x0c00000, 0x0200000, CRC(8b8e4931) )// good
@@ -2809,108 +2703,103 @@ ROM_START( batmanfr )
 ROM_END
 
 /* Hack the boot vectors .. not right but allows several IC13 games (which fail the checksums before hacking) to boot */
-
-DRIVER_INIT(col97)
+DRIVER_INIT( ic13 )
 {
-		data32_t *rom = (data32_t *)memory_region(REGION_USER1);
-//		rom[0xf10/4] = 0x22001000;
-		rom[0xf20/4] = 0x22001000;
-//		rom[0xf30/4] = 0x22001000;
-		init_stv();
+	/* this is WRONG but works for some games */
+	data32_t *rom = (data32_t *)memory_region(REGION_USER1);
+	rom[0xf10/4] = (rom[0xf10/4] & 0xff000000)|((rom[0xf10/4]/2)&0x00ffffff);
+	rom[0xf20/4] = (rom[0xf20/4] & 0xff000000)|((rom[0xf20/4]/2)&0x00ffffff);
+	rom[0xf30/4] = (rom[0xf30/4] & 0xff000000)|((rom[0xf30/4]/2)&0x00ffffff);
+
+	init_stv();
 }
 
-DRIVER_INIT(puyosun)
+
+static READ32_HANDLER( bakubaku_speedup_r )
 {
-		data32_t *rom = (data32_t *)memory_region(REGION_USER1);
-	//	rom[0xf10/4] = 0x22002000;
-		rom[0xf20/4] = 0x22002000;
-	//.	rom[0xf30/4] = 0x22002000;
-		init_stv();
+	if (activecpu_get_pc()==0x06036dc8) cpu_spinuntil_int(); // title logos
+
+	return stv_workram_h[0x0833f0/4];
 }
 
-DRIVER_INIT(winterht)
+static READ32_HANDLER( bakubaku_speedup2_r )
 {
-		data32_t *rom = (data32_t *)memory_region(REGION_USER1);
-//		rom[0xf10/4] = 0x22004000;
-		rom[0xf20/4] = 0x22004000;
-//		rom[0xf30/4] = 0x22004000;
-		init_stv();
+	if (activecpu_get_pc()==0x06033762) 	cpu_set_halt_line(1,ASSERT_LINE);
+
+	return stv_workram_h[0x0033762/4];
 }
 
-DRIVER_INIT( suikoenb )
+static READ32_HANDLER( bakubaku_hangskip_r )
 {
-		data32_t *rom = (data32_t *)memory_region(REGION_USER1);
-//		rom[0xf10/4] = 0x22004000;
-		rom[0xf20/4] = 0x22010000;
-//		rom[0xf30/4] = 0x22004000;
-		init_stv();
+	if (activecpu_get_pc()==0x060335e4) stv_workram_h[0x0335e6/4] = 0x32300909;
+
+	return stv_workram_h[0x033660/4];
 }
 
-DRIVER_INIT( zpw )
+DRIVER_INIT(bakubaku)
 {
-		data32_t *rom = (data32_t *)memory_region(REGION_USER1);
-//		rom[0xf10/4] = 0x22004000;
-		rom[0xf20/4] = 0x22001020;
-//		rom[0xf30/4] = 0x22004000;
-		init_stv();
+   	install_mem_read32_handler(0, 0x60833f0, 0x60833f3, bakubaku_speedup_r ); // idle loop of main cpu
+   	install_mem_read32_handler(1, 0x60fdfe8, 0x60fdfeb, bakubaku_speedup2_r ); // turn off slave sh2, is it needed after boot ??
+   	install_mem_read32_handler(0, 0x6033660, 0x6033663, bakubaku_hangskip_r ); // it waits for a ram address to chamge what should change it?
+
+	init_ic13();
 }
 
 /* Playable */
 GAMEBX( 1998, hanagumi,  stvbios, stvbios, stv, stv,  hanagumi,  ROT0, "Sega", "Hanagumi Taisen Columns - Sakura Wars", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1996, bakubaku,  stvbios, stvbios, stv, stv,  bakubaku,  ROT0, "Sega", 	   "Baku Baku Animal", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1997, shienryu,  stvbios, stvbios, stv, stv,  shienryu,  ROT270, "Warashi",  "Shienryu", GAME_IMPERFECT_GRAPHICS ) /* missing bomb effects, zooming, rotation */
 
-/* Almost */
-GAMEBX( 1997, shienryu,  stvbios, stvbios, stv, stv,  shienryu,  ROT270, "Warashi",  "Shienryu", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS ) /* black sprites, missing bomb effects, missing bitmap mode */
-
-/* Doing Something.. but not much enough yet */
+/* Doing Something.. but not enough yet */
 GAMEBX( 1996, prikura,   stvbios, stvbios, stv, stv,  prikura,   ROT0, "Atlus",    "Prikura Daisakusen", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, shanhigw,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sunsoft / Activision", "Shanghai - The Great Wall / Shanghai Triple Threat", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Atlus",    "Power Instinct 3 - Groove On Fight", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, colmns97,  stvbios, stvbios, stv, stv,  col97,     ROT0, "Sega", 	   "Columns 97", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, colmns97,  stvbios, stvbios, stv, stv,  ic13,     ROT0, "Sega", 	   "Columns 97", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1997, cotton2,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",  "Cotton 2", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, cottonbm,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",  "Cotton Boomerang", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1999, danchih,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Altron (distributed by Tecmo)", "Danchi de Hanafuda", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, ejihon,    stvbios, stvbios, stv, stv,  col97,     ROT0, "Sega", 	   "Ejihon Tantei Jimusyo", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, ejihon,    stvbios, stvbios, stv, stv,  ic13,     ROT0, "Sega", 	   "Ejihon Tantei Jimusyo", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",  "Guardian Force", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, elandore,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sai-Mate", "Fighting Dragon Legend Elan Doree", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stv,  col97,     ROT0, "Athena",   "Pro Mahjong Kiwame S", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, mausuke,   stvbios, stvbios, stv, stv,  winterht,  ROT0, "Data East","Mausuke no Ojama the World", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stv,  ic13,     ROT0, "Athena",   "Pro Mahjong Kiwame S", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, mausuke,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Data East","Mausuke no Ojama the World", GAME_NOT_WORKING )
 GAMEBX( 1998, myfairld,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Micronet", "Virtual Mahjong 2 - My Fair Lady", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Tsukuda Original",	"Othello Shiyouyo", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, puyosun,   stvbios, stvbios, stv, stv,  puyosun,   ROT0, "Compile",  "Puyo Puyo Sun", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, puyosun,   stvbios, stvbios, stv, stv,  ic13,   ROT0, "Compile",  "Puyo Puyo Sun", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, rsgun,     stvbios, stvbios, stv, stv,  stv,       ROT0, "Treasure", "Radiant Silvergun", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, sassisu,   stvbios, stvbios, stv, stv,  col97,     ROT0, "Sega", 	   "Taisen Tanto-R 'Sasshissu!'", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, suikoenb,  stvbios, stvbios, stv, stv,  suikoenb,  ROT0, "Data East","Suikoenbu", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, vfkids,    stvbios, stvbios, stv, stv,  winterht,  ROT0, "Sega", 	   "Virtua Fighter Kids", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, vfremix,   stvbios, stvbios, stv, stv,  col97,     ROT0, "Sega", 	   "Virtua Fighter Remix", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, winterht,  stvbios, stvbios, stv, stv,  winterht,  ROT0, "Sega", 	   "Winter Heat", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, sassisu,   stvbios, stvbios, stv, stv,  ic13,     ROT0, "Sega", 	   "Taisen Tanto-R 'Sasshissu!'", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, suikoenb,  stvbios, stvbios, stv, stv,  ic13,  ROT0, "Data East","Suikoenbu", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, vfkids,    stvbios, stvbios, stv, stv,  ic13,  ROT0, "Sega", 	   "Virtua Fighter Kids", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, vfremix,   stvbios, stvbios, stv, stv,  ic13,     ROT0, "Sega", 	   "Virtua Fighter Remix", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1997, winterht,  stvbios, stvbios, stv, stv,  ic13,  ROT0, "Sega", 	   "Winter Heat", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, fhboxers,  stvbios, stvbios, stv, stv,  ic13,       ROT0, "Sega", 	   "Funky Head Boxers", GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* not working */
 
 //GBX   YEAR, NAME,      PARENT,  BIOS,    MACH,INP,  INIT,MONITOR
 GAMEBX( 1996, stvbios,   0,       stvbios, stv, stv,  stv,       ROT0, "Sega",    "ST-V Bios", NOT_A_DRIVER )
 
-GAMEBX( 1998, astrass,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Sunsoft",  "Astra SuperStars", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, bakubaku,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Baku Baku Animal", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, batmanfr,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Acclaim",  "Batman Forever", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, decathlt,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Decathlete", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, diehard,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Die Hard Arcade (US)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Dynamite Deka (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1999, ffreveng,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Capcom",   "Final Fight Revenge", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, fhboxers,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Funky Head Boxers", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, findlove,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Daiki",	   "Find Love", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, finlarch,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Final Arch (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1994, gaxeduel,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Golden Axe - The Duel", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, introdon,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sunsoft / Success", "Karaoke Quiz Intro Don Don!", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, maruchan,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Maru-Chan de Goo!", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, pblbeach,  stvbios, stvbios, stv, stv,  stv,       ROT0, "T&E Soft", "Pebble Beach - The Great Shot", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, sandor,    stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Sando-R", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, seabass,   stvbios, stvbios, stv, stv,  stv,       ROT0, "A Wave inc. (Able license)", "Sea Bass Fishing", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, sleague,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Super Major League (US)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, sokyugrt,  stvbios, stvbios, stv, stv,  col97,     ROT0, "Raizing",  "Soukyugurentai / Terra Diver", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, sss,       stvbios, stvbios, stv, stv,  stv,       ROT0, "Victor / Cave / Capcom", "Steep Slope Sliders", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, twcup98,   stvbios, stvbios, stv, stv,  winterht,  ROT0, "Tecmo",    "Tecmo World Cup '98", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, astrass,   stvbios, stvbios, stv, stv,  ic13,       ROT0, "Sunsoft",  "Astra SuperStars", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, batmanfr,  stvbios, stvbios, stv, stv,  ic13,       ROT0, "Acclaim",  "Batman Forever", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, decathlt,  stvbios, stvbios, stv, stv,  ic13,       ROT0, "Sega", 	   "Decathlete", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, diehard,   stvbios, stvbios, stv, stv,  ic13,       ROT0, "Sega", 	   "Die Hard Arcade (US)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  ic13,       ROT0, "Sega", 	   "Dynamite Deka (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1999, ffreveng,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Capcom",   "Final Fight Revenge", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, findlove,  stvbios, stvbios, stv, stv,  ic13,       ROT0, "Daiki",	   "Find Love", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, finlarch,  stvbios, stvbios, stv, stv,  ic13,       ROT0, "Sega", 	   "Final Arch (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1994, gaxeduel,  stvbios, stvbios, stv, stv,  ic13,       ROT0, "Sega", 	   "Golden Axe - The Duel", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, introdon,  stvbios, stvbios, stv, stv,  ic13,       ROT0, "Sunsoft / Success", "Karaoke Quiz Intro Don Don!", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1997, maruchan,  stvbios, stvbios, stv, stv,  ic13,       ROT0, "Sega", 	   "Maru-Chan de Goo!", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, pblbeach,  stvbios, stvbios, stv, stv,  ic13,       ROT0, "T&E Soft", "Pebble Beach - The Great Shot", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, sandor,    stvbios, stvbios, stv, stv,  ic13,       ROT0, "Sega", 	   "Sando-R", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, thunt,     sandor,  stvbios, stv, stv,  ic13,       ROT0, "Sega", 	   "Treasure Hunt", GAME_NO_SOUND | GAME_NOT_WORKING ) // this one actually does something if you use the sandor gfx
+GAMEBX( 1998, seabass,   stvbios, stvbios, stv, stv,  ic13,       ROT0, "A Wave inc. (Able license)", "Sea Bass Fishing", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, sleague,   stvbios, stvbios, stv, stv,  ic13,       ROT0, "Sega", 	   "Super Major League (US)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, sokyugrt,  stvbios, stvbios, stv, stv,  ic13,     ROT0, "Raizing",  "Soukyugurentai / Terra Diver", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, sss,       stvbios, stvbios, stv, stv,  ic13,       ROT0, "Victor / Cave / Capcom", "Steep Slope Sliders", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, twcup98,   stvbios, stvbios, stv, stv,  ic13,  ROT0, "Tecmo",    "Tecmo World Cup '98", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1997, vmahjong,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Micronet", "Virtual Mahjong", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, znpwfv,    stvbios, stvbios, stv, stv,  zpw,       ROT0, "Sega", 	   "Zen Nippon Pro-Wrestling Featuring Virtua", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1997, znpwfv,    stvbios, stvbios, stv, stv,  ic13,       ROT0, "Sega", 	   "Zen Nippon Pro-Wrestling Featuring Virtua", GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* there are probably a bunch of other games (some fishing games with cd-rom,Print Club 2 etc.) */
 
