@@ -48,6 +48,7 @@ without danger */
 
 #ifdef MAME_DEBUG
 unsigned DasmAPEXC(char *buffer, unsigned pc);
-#define apexc_readop(address)	apexc_readmem(address)
 #endif
+
+#define apexc_readop(address)	apexc_readmem(address)
 
