@@ -729,9 +729,10 @@ READ_HANDLER (BBC_6845_r)
  * resfresh the BBC video screen
  ************************************************************************/
 
-void bbc_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( bbc )
 {
 	long c=0; // this is used to time out the screen redraw, in the case that the 6845 is in some way out state.
+	int full_refresh = 1;
 
 	BBC_bitmap=bitmap;
 
@@ -800,7 +801,7 @@ void bbcbp_setvideoshadow(int vdusel)
  * Initialize the BBC video emulation
  ************************************************************************/
 
-int bbc_vh_starta(void)
+VIDEO_START( bbca )
 {
 	set_pixel_lookup();
 	set_video_memory_lookups(16);
@@ -810,11 +811,9 @@ int bbc_vh_starta(void)
 	vidmem_RAM=vidmem;
 	draw_function=*BBC_draw_hi_res;
 	return 0;
-
 }
 
-
-int bbc_vh_startb(void)
+VIDEO_START( bbcb )
 {
 	set_pixel_lookup();
 	set_video_memory_lookups(32);
@@ -824,11 +823,9 @@ int bbc_vh_startb(void)
 	vidmem_RAM=vidmem;
 	draw_function=*BBC_draw_hi_res;
 	return 0;
-
 }
 
-
-int bbc_vh_startbp(void)
+VIDEO_START( bbcbp )
 {
 	/* need to set up the lookups to work with the BBC B plus memory */
 	set_pixel_lookup();
@@ -839,15 +836,4 @@ int bbc_vh_startbp(void)
 	vidmem_RAM=vidmem;
 	draw_function=*BBC_draw_hi_res;
 	return 0;
-
-}
-
-/************************************************************************
- * bbc_vh_stop
- * Shutdown the BBC video emulation
- ************************************************************************/
-
-void bbc_vh_stop(void)
-{
-
 }

@@ -40,11 +40,6 @@ MACHINE_INIT( mbee )
     wd179x_init(WD_TYPE_179X,mbee_fdc_callback);
 }
 
-MACHINE_STOP( mbee )
-{
-	wd179x_exit();
-}
-
 /* PIO B data bits
  * 0	cassette data (input)
  * 1	cassette data (output)

@@ -1504,7 +1504,6 @@ void einstein_shutdown_machine(void)
 	}
 	
 	centronics_exit(0);
-	wd179x_exit();
 	msm8251_stop();
 }
 

@@ -262,17 +262,6 @@ void atom_init_machine(void)
 
 }
 
-void atom_stop_machine(void)
-{
-	if (atom_timer)
-		timer_remove(atom_timer);
-
-	i8271_stop();
-
-	/* cassette motor control */
-	device_status(IO_CASSETTE, 0, 0);
-}
-
 
 
 /* load image */

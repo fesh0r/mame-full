@@ -151,7 +151,8 @@ DRVLIBS = \
 	$(OBJ)/vtech.a	  \
 	$(OBJ)/jupiter.a  \
 	$(OBJ)/trs80.a	  \
-#	$(OBJ)/arcadia.a  \
+	$(OBJ)/arcadia.a  \
+	$(OBJ)/acorn.a    \
 #	$(OBJ)/coleco.a   \
 #	$(OBJ)/bally.a	  \
 #	$(OBJ)/rca.a	  \
@@ -171,7 +172,6 @@ DRVLIBS = \
 #	$(OBJ)/lviv.a   \
 #	$(OBJ)/teamconc.a \
 #	$(OBJ)/exidy.a    \
-#	$(OBJ)/acorn.a    \
 #	$(OBJ)/amstrad.a  \
 #	$(OBJ)/lynx.a     \
 #	$(OBJ)/amiga.a    \
@@ -564,12 +564,12 @@ $(OBJ)/acorn.a:    \
 	  $(OBJ)/mess/vidhrdw/bbc.o	 \
 	  $(OBJ)/mess/machine/bbc.o	 \
 	  $(OBJ)/mess/systems/bbc.o	 \
-	  $(OBJ)/mess/systems/a310.o	 \
-	  $(OBJ)/mess/systems/z88.o	 \
-	  $(OBJ)/mess/vidhrdw/z88.o \
-	  $(OBJ)/mess/vidhrdw/atom.o	 \
-	  $(OBJ)/mess/systems/atom.o	 \
-	  $(OBJ)/mess/machine/atom.o	 \
+#	  $(OBJ)/mess/systems/a310.o	 \
+#	  $(OBJ)/mess/systems/z88.o	 \
+#	  $(OBJ)/mess/vidhrdw/z88.o \
+#	  $(OBJ)/mess/vidhrdw/atom.o	 \
+#	  $(OBJ)/mess/systems/atom.o	 \
+#	  $(OBJ)/mess/machine/atom.o	 \
 
 $(OBJ)/samcoupe.a: \
 	  $(OBJ)/mess/machine/coupe.o	 \

@@ -205,80 +205,59 @@ static struct GfxDecodeInfo arcadia_gfxdecodeinfo[] = {
     { -1 } /* end of array */
 };
 
-static int arcadia_frame_int(void)
+static unsigned char arcadia_palette[] =
 {
-	return 0;
-}
-
-static unsigned char arcadia_palette[8][3] =
-{
-    { 255, 255, 255 }, // white
-    { 255, 255, 0 }, // yellow
-    { 0, 255, 255 }, // cyan
-    { 0, 255, 0 }, // green
-    { 255, 0, 255 }, // magenta
-    { 255, 0, 0 }, // red
-    { 0, 0, 255, }, // blue
-    { 0, 0, 0 } // black
+	255, 255, 255,	// white
+	255, 255, 0,	// yellow
+	0, 255, 255,	// cyan
+	0, 255, 0,		// green
+	255, 0, 255,	// magenta
+	255, 0, 0,		// red
+	0, 0, 255,		// blue
+	0, 0, 0			// black
 };
 
 static unsigned short arcadia_colortable[1][2] = {
 	{ 0, 1 },
 };
 
-static void arcadia_init_colors (unsigned char *sys_palette,
-				 unsigned short *sys_colortable,
-				 const unsigned char *color_prom)
+static PALETTE_INIT( arcadia )
 {
-    memcpy (sys_palette, arcadia_palette, sizeof (arcadia_palette));
-    memcpy(sys_colortable, arcadia_colortable,sizeof(arcadia_colortable));
+	palette_set_colors(0, arcadia_palette, sizeof (arcadia_palette)/3);
+    memcpy(colortable, arcadia_colortable,sizeof(arcadia_colortable));
 }
 
-static void arcadia_machine_init(void)
-{
-}
-
-static struct MachineDriver machine_driver_arcadia =
-{
+static MACHINE_DRIVER_START( arcadia )
 	/* basic machine hardware */
-	{
-		{
-			CPU_S2650,
-			3580000/3,
-			arcadia_readmem,arcadia_writemem,
-			arcadia_readport,arcadia_writeport,
-			arcadia_frame_int, 1,
-			arcadia_video_line,262*60,
-			NULL
-		}
-	},
-	/* frames per second, VBL duration */
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,				/* single CPU */
-	arcadia_machine_init,
-	0,//pc1401_machine_stop,
-#if arcadia_DEBUG
-	128+2*XPOS+40, 262, { 0, 2*XPOS+128-1+40, 0, 262-1},
-#else
-	128+2*XPOS, 262, { 0, 2*XPOS+128-1, 0, 262-1},
-#endif
-	arcadia_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (arcadia_palette) / sizeof (arcadia_palette[0]) ,
-	sizeof (arcadia_colortable) / sizeof(arcadia_colortable[0][0]),
-	arcadia_init_colors,		/* convert color prom */
+	MDRV_CPU_ADD_TAG("main", S2650, 3580000/3)        /* 1.796 Mhz */
+	MDRV_CPU_MEMORY(arcadia_readmem,arcadia_writemem)
+	MDRV_CPU_PORTS(arcadia_readport,arcadia_writeport)
+	MDRV_CPU_PERIODIC_INT(arcadia_video_line, 262*60)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	VIDEO_TYPE_RASTER,	/* video flags */
-	0,						/* obsolete */
-	arcadia_vh_start,
-	arcadia_vh_stop,
-	arcadia_vh_screenrefresh,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+#if arcadia_DEBUG
+	MDRV_SCREEN_SIZE(128+2*XPOS+40, 262)
+	MDRV_VISIBLE_AREA(0, 2*XPOS+128-1+40, 0, 262-1)
+#else
+	MDRV_SCREEN_SIZE(128+2*XPOS, 262)
+	MDRV_VISIBLE_AREA(0, 2*XPOS+128-1, 0, 262-1)
+#endif
+	MDRV_GFXDECODE( arcadia_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(sizeof (arcadia_palette) / sizeof (arcadia_palette[0]))
+	MDRV_COLORTABLE_LENGTH(sizeof (arcadia_colortable) / sizeof(arcadia_colortable[0][0]))
+	MDRV_PALETTE_INIT( arcadia )
+
+	MDRV_VIDEO_START( arcadia )
+	MDRV_VIDEO_UPDATE( arcadia )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-	    {SOUND_CUSTOM, &arcadia_sound_interface},
-	}
-};
+	MDRV_SOUND_ADD(CUSTOM, arcadia_sound_interface)
+MACHINE_DRIVER_END
+
 
 ROM_START(arcadia)
 	ROM_REGION(0x8000,REGION_CPU1, 0)

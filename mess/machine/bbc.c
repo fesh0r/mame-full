@@ -368,7 +368,7 @@ static int via_system_porta;
 
 static int column=0;
 
-int bbcb_keyscan(void)
+INTERRUPT_GEN( bbcb_keyscan )
 {
   	/* only do auto scan if keyboard is not enabled */
 	if (b3_keyboard==1)
@@ -396,7 +396,6 @@ int bbcb_keyscan(void)
 			via_0_ca2_w(0,0);
 		}
 	}
-	return 0;
 }
 
 static int bbc_keyboard(int data)
@@ -1125,8 +1124,7 @@ int bbcb_load_rom(int id)
    Machine Initialisation functions
 ***************************************/
 
-
-void init_machine_bbca(void)
+MACHINE_INIT( bbca )
 {
 	cpu_setbank(1,memory_region(REGION_CPU1));         /* bank 1 repeat of the 16K ram from 4000 to 7fff */
 	cpu_setbank(2,memory_region(REGION_USER1)+0x10000); /* bank 2 points at the OS rom  from c000 to ffff */
@@ -1138,10 +1136,9 @@ void init_machine_bbca(void)
 	via_reset();
 
 	bbcb_IC32_initialise();
-
 }
 
-void init_machine_bbcb(void)
+MACHINE_INIT( bbcb )
 {
 	cpu_setbank(2,memory_region(REGION_USER1)+0x40000);/* bank 2 points at the OS rom  from c000 to ffff */
 	cpu_setbank(3,memory_region(REGION_USER1));        /* bank 3 is the paged ROMs     from 8000 to bfff */
@@ -1160,18 +1157,9 @@ void init_machine_bbcb(void)
 
 	i8271_init(&bbc_i8271_interface);
 	i8271_reset();
-
-
 }
 
-
-void stop_machine_bbcb(void)
-{
-    i8271_stop();
-}
-
-
-void init_machine_bbcb1770(void)
+MACHINE_INIT( bbcb1770 )
 {
 	cpu_setbank(2,memory_region(REGION_USER1)+0x40000);  /* bank 2 points at the OS rom  from c000 to ffff */
 	cpu_setbank(3,memory_region(REGION_USER1));          /* bank 3 is the paged ROMs     from 8000 to bfff */
@@ -1193,15 +1181,7 @@ void init_machine_bbcb1770(void)
     wd179x_reset();
 }
 
-
-void stop_machine_bbcb1770(void)
-{
-	wd179x_exit();
-}
-
-
-
-void init_machine_bbcbp(void)
+MACHINE_INIT( bbcbp )
 {
 	memory_set_bankhandler_r(1, 0, memorybp1_r);
 
@@ -1228,14 +1208,7 @@ void init_machine_bbcbp(void)
     wd179x_reset();
 }
 
-void stop_machine_bbcbp(void)
-{
-	wd179x_exit();
-}
-
-
-
-void init_machine_bbcb6502(void)
+MACHINE_INIT( bbcb6502 )
 {
 	cpu_setbank(2,memory_region(REGION_USER1)+0x40000);  /* bank 2 points at the OS rom  from c000 to ffff */
 	cpu_setbank(3,memory_region(REGION_USER1));          /* bank 3 is the paged ROMs     from 8000 to bfff */
@@ -1260,10 +1233,5 @@ void init_machine_bbcb6502(void)
 
 	startbank=1;
 	cpu_setbank(5,memory_region(REGION_CPU2)+0x10000);
-}
-
-void stop_machine_bbcb6502(void)
-{
-	wd179x_exit();
 }
 

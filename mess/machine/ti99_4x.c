@@ -623,10 +623,6 @@ void machine_init_ti99(void)
 
 void machine_stop_ti99(void)
 {
-	if (has_fdc)
-	{
-		wd179x_exit();
-	}
 	tms9901_cleanup();
 }
 

@@ -122,8 +122,6 @@ typedef struct {
 
 extern void wd179x_init(int,void (*callback)(int));
 
-extern void wd179x_exit(void);
-
 /* the following are not strictly part of the wd179x hardware/emulation
 but will be put here for now until the flopdrv code has been finalised more */
 

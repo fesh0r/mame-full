@@ -6,11 +6,11 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-- [ATARI/APPLE2] Converted a few malloc() calls over to use auto_malloc()
-  [Nate Woods]
-  
 - [COCO] The virtual printer should now be responsive to bitbanger output of
   any arbitrary baud. [Nate Woods]
+
+- [COCO] Fixed a OKI M6242B clock emulation problem and a problem with Disto
+  Real Time Clock emulation. [tim lindner]
 
 - [SPECPL3E] Updated BIOS to the 1.11 version romset
   (http://www.z88forever.org.uk/zxplus3e/) [Stefano Priore]
@@ -19,6 +19,9 @@ Source Changes:
 ---------------
 - The core is based on MAME 0.60.  This incorporates all features of the 
   update to this core.  [MAME team] 
+
+- Converted numerous drivers to use the auto_malloc() and auto_bitmap_alloc()
+  calls. [Nate Woods]
 
 - Added new videomap code that makes it easy to support arbitrary video modes
   in a fast, efficient manner.  This takes the place of the old
@@ -48,6 +51,3 @@ Source Changes:
   2) In the file selector you can edit the file specification and you can use
      SHIFT+UP/DOWN as PgUp/PgDown and
      CTRL+UP/DOWN as Home/End. [Stefano Priore]
-
-- Fixed bug #218. Also, fixed a problem with Disto Real Time Clock under the coco
-  emulation. [tim lindner]

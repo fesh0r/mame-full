@@ -135,7 +135,7 @@ const struct GameDriver *drivers[] =
 	/* NEC */
 ////	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993   */
 
-////	DRIVER( arcadia ) /* Emerson Arcadia 2001                           */
+	DRIVER( arcadia ) /* Emerson Arcadia 2001                           */
 	/* schmid tvg 2000 */
 	/* eduscho tele fever */
 	/* hanimex fever 1 (hmg 2650) */
@@ -179,12 +179,12 @@ const struct GameDriver *drivers[] =
     /* ACORN */
 ////	DRIVER( atom )      /* 1979 Acorn Atom                                */
 ////	DRIVER( atomeb )    /* 1979 Acorn Atom                                */
-////	DRIVER( bbca )      /* 1981 BBC Micro Model A                         */
-////	DRIVER( bbcb )      /* 1981 BBC Micro Model B                         */
-////	DRIVER( bbcb1770 )  /* 1981 BBC Micro Model B with WD 1770 disc       */
-////	DRIVER( bbcbp )     /* 198? BBC Micro Model B+ 64K                    */
-////	DRIVER( bbcbp128 )  /* 198? BBC Micro Model B+ 128K                   */
-//TESTDRIVER( bbcb6502 )  /* 198? BBC B WD1770 with a 6502 second processor */
+	DRIVER( bbca )      /* 1981 BBC Micro Model A                         */
+	DRIVER( bbcb )      /* 1981 BBC Micro Model B                         */
+	DRIVER( bbcb1770 )  /* 1981 BBC Micro Model B with WD 1770 disc       */
+	DRIVER( bbcbp )     /* 198? BBC Micro Model B+ 64K                    */
+	DRIVER( bbcbp128 )  /* 198? BBC Micro Model B+ 128K                   */
+TESTDRIVER( bbcb6502 )  /* 198? BBC B WD1770 with a 6502 second processor */
 /*//	DRIVER( electron )*//* 198? Acorn Electron							  */
 
 //TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310                      */

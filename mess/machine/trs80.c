@@ -373,7 +373,6 @@ MACHINE_INIT( trs80 )
 
 MACHINE_STOP( trs80 )
 {
-	wd179x_exit();
 	tape_put_close();
 }
 

@@ -38,8 +38,6 @@ void enterprise_init_machine(void)
 
 void enterprise_shutdown_machine(void)
 {
-	wd179x_exit();
-
 	if (Enterprise_RAM != NULL)
 		free(Enterprise_RAM);
 

@@ -30,6 +30,9 @@ static void i8271_do_read_id(void);
 static void i8271_set_irq_state(int);
 static void i8271_set_dma_drq(void);
 
+static void	i8271_data_timer_callback(int code);
+static void	i8271_timed_command_complete_callback(int code);
+
 static char temp_buffer[16384];
 
 // uncomment to give verbose debug information
@@ -45,7 +48,7 @@ static I8271 i8271;
 #define FDC_LOG_COMMAND(x)
 #endif
 
-void	i8271_init(i8271_interface *iface)
+void i8271_init(i8271_interface *iface)
 {
 	memset(&i8271, 0, sizeof(I8271));
 
@@ -53,7 +56,8 @@ void	i8271_init(i8271_interface *iface)
 	{
 		memcpy(&i8271.fdc_interface, iface, sizeof(i8271_interface));
 	}
-	i8271.timer = NULL;
+	i8271.data_timer = timer_alloc(i8271_data_timer_callback);
+	i8271.command_complete_timer = timer_alloc(i8271_timed_command_complete_callback);
 	i8271.drive = 0;
 	i8271.pExecutionPhaseData = temp_buffer;
 
@@ -126,8 +130,8 @@ static void	i8271_data_timer_callback(int code)
 	/* ok, trigger data request now */
 	i8271_data_request();
 
-	/* stop it, but don't allow it to be free'd */
-	timer_reset(i8271.timer, TIME_NEVER); 
+	/* stop it */
+	timer_reset(i8271.data_timer, TIME_NEVER); 
 }
 
 /* setup a timed data request - data request will be triggered in a few usecs time */
@@ -138,15 +142,9 @@ static void i8271_timed_data_request(void)
 	/* 64 for single density */
 	usecs = 64;
 
-	/* remove old timer if it exists */
-	if (i8271.timer!=NULL)
-	{
-		timer_remove(i8271.timer);
-		i8271.timer = NULL;
-	}
-
-	/* set new timer */
-	i8271.timer = timer_set(TIME_IN_USEC(usecs), 0, i8271_data_timer_callback);
+	/* set timers */
+	timer_reset(i8271.command_complete_timer, TIME_NEVER);
+	timer_adjust(i8271.data_timer, TIME_IN_USEC(usecs), 0, 0);
 }
 
 
@@ -155,7 +153,7 @@ static void	i8271_timed_command_complete_callback(int code)
 	i8271_command_complete(1,1);
 
 	/* stop it, but don't allow it to be free'd */
-	timer_reset(i8271.timer, TIME_NEVER); 
+	timer_reset(i8271.command_complete_timer, TIME_NEVER); 
 }
 
 /* setup a irq to occur 128us later - in reality this would be much later, because the int would
@@ -168,27 +166,12 @@ static void i8271_timed_command_complete(void)
 	/* 64 for single density - 2 crc bytes later*/
 	usecs = 64*2;
 
-	/* remove old timer if it exists */
-	if (i8271.timer!=NULL)
-	{
-		timer_remove(i8271.timer);
-		i8271.timer = NULL;
-	}
-
-	/* set new timer */
-	i8271.timer = timer_set(TIME_IN_USEC(usecs), 0, i8271_timed_command_complete_callback);
+	/* set timers */
+	timer_reset(i8271.data_timer, TIME_NEVER);
+	timer_adjust(i8271.command_complete_timer, TIME_IN_USEC(usecs), 0, 0);
 }
 
-void	i8271_stop(void)
-{
-	if (i8271.timer)
-	{
-		timer_remove(i8271.timer);
-		i8271.timer = NULL;
-	}
-}
-
-void	i8271_reset()
+void i8271_reset()
 {
 	i8271.StatusRegister = 0;	//I8271_STATUS_INT_REQUEST | I8271_STATUS_NON_DMA_REQUEST;
 	i8271.Mode = 0x0c0; /* bits 0, 1 are initialized to zero */
@@ -196,11 +179,8 @@ void	i8271_reset()
 	i8271.ParameterCount = 0;
 
 	/* if timer is active remove */
-	if (i8271.timer)
-	{
-		timer_remove(i8271.timer);
-		i8271.timer = NULL;
-	}
+	timer_reset(i8271.command_complete_timer, TIME_NEVER);
+	timer_reset(i8271.data_timer, TIME_NEVER);
 
 	/* clear irq */
 	i8271_set_irq_state(0);

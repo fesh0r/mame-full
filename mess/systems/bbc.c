@@ -376,7 +376,7 @@ static WRITE_HANDLER ( tube_port_a_w )
 
 			if (r1hp_m && (r3nmi==0)) {
 				r3nmi=1;
-				cpu_set_irq_line(1, M6502_INT_NMI, r3nmi);
+				cpu_set_irq_line(1, IRQ_LINE_NMI, r3nmi);
 			}
 		} else {
 			logerror("Port A write to R3DATA on full buffer %02X\n",data);
@@ -387,7 +387,7 @@ static WRITE_HANDLER ( tube_port_a_w )
 
 			if (r1hp_m && (r3nmi==0)) {
 				r3nmi=1;
-				cpu_set_irq_line(1, M6502_INT_NMI, r3nmi);
+				cpu_set_irq_line(1, IRQ_LINE_NMI, r3nmi);
 			}
 		}
 		break;
@@ -557,7 +557,7 @@ static READ_HANDLER ( tube_port_b_r )
 			if (r3nmi==1)
 			{
 				r3nmi=0;
-				cpu_set_irq_line(1, M6502_INT_NMI, r3nmi);
+				cpu_set_irq_line(1, IRQ_LINE_NMI, r3nmi);
 			}
 		} else {
 			logerror("Port B read from R3DATA on empty buffer\n");
@@ -565,7 +565,7 @@ static READ_HANDLER ( tube_port_b_r )
 			if (r3nmi==1)
 			{
 				r3nmi=0;
-				cpu_set_irq_line(1, M6502_INT_NMI, r3nmi);
+				cpu_set_irq_line(1, IRQ_LINE_NMI, r3nmi);
 			}
 		}
 		break;
@@ -699,7 +699,6 @@ unsigned short bbc_colour_table[8]=
 
 unsigned char	bbc_palette[8*3]=
 {
-
 	0x0ff,0x0ff,0x0ff,
 	0x000,0x0ff,0x0ff,
 	0x0ff,0x000,0x0ff,
@@ -710,10 +709,10 @@ unsigned char	bbc_palette[8*3]=
 	0x000,0x000,0x000
 };
 
-static void init_palette_bbc(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( bbc )
 {
-	memcpy(sys_palette,bbc_palette,sizeof(bbc_palette));
-	memcpy(sys_colortable,bbc_colour_table,sizeof(bbc_colour_table));
+	palette_set_colors(0, bbc_palette, sizeof(bbc_palette) / 3);
+	memcpy(colortable,bbc_colour_table,sizeof(bbc_colour_table));
 }
 
 INPUT_PORTS_START(bbca)
@@ -1060,12 +1059,11 @@ ROM_END
 
 
 
-static int bbcb_vsync(void)
+static INTERRUPT_GEN( bbcb_vsync )
 {
 	via_0_ca1_w(0,1);
 	via_0_ca1_w(0,0);
 	bbc_frameclock();
-	return 0;
 }
 
 
@@ -1076,279 +1074,81 @@ static struct SN76496interface sn76496_interface =
 	{ 100 }
 };
 
-static struct MachineDriver machine_driver_bbca =
-{
+
+static MACHINE_DRIVER_START( bbca )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			2000000,		/* 2.00Mhz */
-			readmem_bbca,
-			writemem_bbca,
-			0,
-			0,
+	MDRV_CPU_ADD_TAG("main", M6502, 2000000)        /* 2.00Mhz */
+	MDRV_CPU_MEMORY(readmem_bbca,writemem_bbca)
+	MDRV_CPU_VBLANK_INT(bbcb_vsync, 1)				/* screen refresh interrupts */
+	MDRV_CPU_PERIODIC_INT(bbcb_keyscan, 1000)		/* scan keyboard */
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(128)
+	MDRV_INTERLEAVE(1)
 
-			bbcb_vsync, 	1,				/* screen refresh interrupts */
-			bbcb_keyscan, 1000				/* scan keyboard */
-		}
-	},
-	50, 128,
-	1,
-	init_machine_bbca, /* init_machine */
-	0, /* stop_machine */
-
+	MDRV_MACHINE_INIT( bbca )
+	
 	/* video hardware */
-	800,300, {0,800-1,0,300-1},
-	0,
-	16, /*total colours*/
-	16, /*colour_table_length*/
-	init_palette_bbc, /*init palette */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(800,300)
+	MDRV_VISIBLE_AREA(0,800-1,0,300-1)
+	MDRV_PALETTE_LENGTH(16)
+	MDRV_COLORTABLE_LENGTH(16)
+	MDRV_PALETTE_INIT(bbc)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	bbc_vh_starta,
-	bbc_vh_stop,
-	bbc_vh_screenrefresh,
+	MDRV_VIDEO_START(bbca)
+	MDRV_VIDEO_UPDATE(bbc)
+
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 
-static struct MachineDriver machine_driver_bbcb =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			2000000,		/* 2.00Mhz */
-			readmem_bbcb,
-			writemem_bbcb,
-			0,
-			0,
-
-			bbcb_vsync, 	1,				/* screen refresh interrupts */
-			bbcb_keyscan, 1000				/* scan keyboard */
-		}
-	},
-	50, 128,
-	1,
-	init_machine_bbcb, /* init_machine */
-	stop_machine_bbcb, /* stop_machine */
-
-	/* video hardware */
-	800,300, {0,800-1,0,300-1},
-	0,
-	16, /*total colours*/
-	16, /*colour_table_length*/
-	init_palette_bbc, /*init palette */
-
-	VIDEO_TYPE_RASTER,
-	0,
-	bbc_vh_startb,
-	bbc_vh_stop,
-	bbc_vh_screenrefresh,
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+static MACHINE_DRIVER_START( bbcb )
+	MDRV_IMPORT_FROM( bbca )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( readmem_bbcb,writemem_bbcb )
+	MDRV_MACHINE_INIT( bbcb )
+	MDRV_VIDEO_START( bbcb )
+MACHINE_DRIVER_END
 
 
-static struct MachineDriver machine_driver_bbcb1770 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			2000000,		/* 2.00Mhz */
-			readmem_bbcb1770,
-			writemem_bbcb1770,
-			0,
-			0,
-
-			bbcb_vsync, 	1,				/* screen refresh interrupts */
-			bbcb_keyscan, 1000				/* scan keyboard */
-		}
-	},
-	50, 128,
-	1,
-	init_machine_bbcb1770, /* init_machine */
-	stop_machine_bbcb1770, /* stop_machine */
-
-	/* video hardware */
-	800,300, {0,800-1,0,300-1},
-	0,
-	16, /*total colours*/
-	16, /*colour_table_length*/
-	init_palette_bbc, /*init palette */
-
-	VIDEO_TYPE_RASTER,
-	0,
-	bbc_vh_startb,
-	bbc_vh_stop,
-	bbc_vh_screenrefresh,
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+static MACHINE_DRIVER_START( bbcb1770 )
+	MDRV_IMPORT_FROM( bbca )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( readmem_bbcb1770,writemem_bbcb1770 )
+	MDRV_MACHINE_INIT( bbcb1770 )
+	MDRV_VIDEO_START( bbcb )
+MACHINE_DRIVER_END
 
 
-static struct MachineDriver machine_driver_bbcbp =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			2000000,		/* 2.00Mhz */
-			readmem_bbcbp,
-			writemem_bbcbp,
-			0,
-			0,
-
-			bbcb_vsync, 	1,				/* screen refresh interrupts */
-			bbcb_keyscan, 1000				/* scan keyboard */
-		}
-	},
-	50, 128,
-	1,
-	init_machine_bbcbp, /* init_machine */
-	stop_machine_bbcbp, /* stop_machine */
-
-	/* video hardware */
-	800,300, {0,800-1,0,300-1},
-	0,
-	16, /*total colours*/
-	16, /*colour_table_length*/
-	init_palette_bbc, /*init palette */
-
-	VIDEO_TYPE_RASTER,
-	0,
-	bbc_vh_startbp,
-	bbc_vh_stop,
-	bbc_vh_screenrefresh,
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+static MACHINE_DRIVER_START( bbcbp )
+	MDRV_IMPORT_FROM( bbca )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( readmem_bbcbp,writemem_bbcbp )
+	MDRV_MACHINE_INIT( bbcbp )
+	MDRV_VIDEO_START( bbcbp )
+MACHINE_DRIVER_END
 
 
-static struct MachineDriver machine_driver_bbcbp128 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			2000000,		/* 2.00Mhz */
-			readmem_bbcbp128,
-			writemem_bbcbp128,
-			0,
-			0,
-
-			bbcb_vsync, 	1,				/* screen refresh interrupts */
-			bbcb_keyscan, 1000				/* scan keyboard */
-		}
-	},
-	50, 128,
-	1,
-	init_machine_bbcbp, /* init_machine */
-	stop_machine_bbcbp, /* stop_machine */
-
-	/* video hardware */
-	800,300, {0,800-1,0,300-1},
-	0,
-	16, /*total colours*/
-	16, /*colour_table_length*/
-	init_palette_bbc, /*init palette */
-
-	VIDEO_TYPE_RASTER,
-	0,
-	bbc_vh_startbp,
-	bbc_vh_stop,
-	bbc_vh_screenrefresh,
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+static MACHINE_DRIVER_START( bbcbp128 )
+	MDRV_IMPORT_FROM( bbca )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( readmem_bbcbp128,writemem_bbcbp128 )
+	MDRV_MACHINE_INIT( bbcbp )
+	MDRV_VIDEO_START( bbcbp )
+MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( bbcb6502 )
+	MDRV_IMPORT_FROM( bbca )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( readmem_bbcbtube,writemem_bbcbtube )
+	MDRV_MACHINE_INIT( bbcb6502 )
+	MDRV_VIDEO_START( bbcb )
 
-static struct MachineDriver machine_driver_bbcb6502 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			2000000,		/* 2.00Mhz */
-			readmem_bbcbtube,
-			writemem_bbcbtube,
-			0,
-			0,
-
-			bbcb_vsync, 	1,				/* screen refresh interrupts */
-			bbcb_keyscan, 1000				/* scan keyboard */
-		},
-		{
-			CPU_M6502,
-			2000000,		/* 2.00Mhz */
-			readmem_bbc6502,
-			writemem_bbc6502,
-			0,
-			0,
-		}
-
-	},
-	50, 128,
-	1,
-	init_machine_bbcb6502, /* init_machine */
-	stop_machine_bbcb6502, /* stop_machine */
-
-	/* video hardware */
-	800,300, {0,800-1,0,300-1},
-	0,
-	16, /*total colours*/
-	16, /*colour_table_length*/
-	init_palette_bbc, /*init palette */
-
-	VIDEO_TYPE_RASTER,
-	0, 	/* screen refresh interrupts */
-	bbc_vh_startb,
-	bbc_vh_stop,
-	bbc_vh_screenrefresh,
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
-
+	MDRV_CPU_ADD_TAG("secondary", M6502, 2000000)        /* 2.00Mhz */
+	MDRV_CPU_MEMORY(readmem_bbc6502,writemem_bbc6502)
+MACHINE_DRIVER_END
 
 static const struct IODevice io_bbca[] = {
 	{

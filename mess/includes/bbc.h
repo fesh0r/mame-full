@@ -8,7 +8,7 @@
 
 ******************************************************************************/
 
-int bbcb_keyscan(void);
+extern INTERRUPT_GEN( bbcb_keyscan );
 extern int startbank;
 
 WRITE_HANDLER ( page_selecta_w );
@@ -34,20 +34,11 @@ WRITE_HANDLER ( memorybp4_128_w );
 
 int bbcb_load_rom(int id);
 
-void init_machine_bbca(void);
-
-void init_machine_bbcb(void);
-void stop_machine_bbcb(void);
-
-void init_machine_bbcb1770(void);
-void stop_machine_bbcb1770(void);
-
-void init_machine_bbcbp(void);
-void stop_machine_bbcbp(void);
-
-void init_machine_bbcb6502(void);
-void stop_machine_bbcb6502(void);
-
+extern MACHINE_INIT( bbca );
+extern MACHINE_INIT( bbcb );
+extern MACHINE_INIT( bbcb1770 );
+extern MACHINE_INIT( bbcbp );
+extern MACHINE_INIT( bbcb6502 );
 
 int bbc_floppy_init(int);
 
@@ -61,14 +52,10 @@ READ_HANDLER( bbc_i8271_read );
 WRITE_HANDLER( bbc_i8271_write );
 
 
-
-int bbc_vh_starta(void);
-int bbc_vh_startb(void);
-int bbc_vh_startbp(void);
-
-void bbc_vh_stop(void);
-void bbc_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
+extern VIDEO_START( bbca );
+extern VIDEO_START( bbcb );
+extern VIDEO_START( bbcbp );
+extern VIDEO_UPDATE( bbc );
 void bbc_frameclock(void);
 
 WRITE_HANDLER ( videoULA_w );

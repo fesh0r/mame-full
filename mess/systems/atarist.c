@@ -1994,7 +1994,6 @@ static void atarist_init_machine(void)
 
 static void atarist_stop_machine(void)
 {
-	wd179x_exit();
 }
 
 

@@ -484,7 +484,7 @@ WRITE_HANDLER(dragon_floppy_w)
 const struct cartridge_slot cartridge_fdc_coco =
 {
 	coco_fdc_init,
-	wd179x_exit,
+	NULL,
 	coco_floppy_r,
 	coco_floppy_w,
 	NULL
@@ -493,7 +493,7 @@ const struct cartridge_slot cartridge_fdc_coco =
 const struct cartridge_slot cartridge_fdc_dragon =
 {
 	dragon_fdc_init,
-	wd179x_exit,
+	NULL,
 	dragon_floppy_r,
 	dragon_floppy_w,
 	NULL

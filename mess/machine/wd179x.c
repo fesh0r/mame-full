@@ -382,11 +382,6 @@ static void read_track(WD179X * w)
 	w->busy_count = 0;
 }
 
-/* currently a empty function - to be completed! */
-void	wd179x_exit(void)
-{
-}
-
 #if 0
 void wd179x_stop_drive(void)
 {

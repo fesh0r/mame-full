@@ -427,10 +427,6 @@ void svi318_ch_stop (void)
 	{
 	int i,j;
 
-#ifdef SVI_DISK
-	wd179x_exit ();
-#endif
-
 	if (svi.empty_bank) free (svi.empty_bank);
 	if (svi.banks[1][0]) free (svi.banks[1][0]);
     for (i=2;i<4;i++)

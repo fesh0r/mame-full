@@ -1,6 +1,5 @@
 /* from mess/machine/mbee.c */
 extern MACHINE_INIT( mbee );
-extern MACHINE_STOP( mbee );
 
 extern void mbee_interrupt(void);
 extern int mbee_cassette_init(int id);

@@ -403,8 +403,6 @@ void apf_imagination_init_machine(void)
 void apf_imagination_stop_machine(void)
 {
 	apf_common_exit();
-
-	wd179x_exit();
 }
 
 void apf_m1000_init_machine(void)

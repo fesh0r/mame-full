@@ -84,7 +84,8 @@ typedef struct I8271
 	int data_direction;
 	i8271_interface	fdc_interface;
 
-	void	*timer;
+	void *data_timer;
+	void *command_complete_timer;
 } I8271;
 
 /* commands accepted */
@@ -148,8 +149,6 @@ typedef struct I8271
 void i8271_init(i8271_interface *);
 /* reset */
 void i8271_reset(void);
-/* stop emulation and free data */
-void i8271_stop(void);
 
 READ_HANDLER(i8271_r);
 WRITE_HANDLER(i8271_w);

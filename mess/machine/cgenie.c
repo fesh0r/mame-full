@@ -337,7 +337,6 @@ void cgenie_init_machine(void)
 
 void cgenie_stop_machine(void)
 {
-	wd179x_exit();
 	tape_put_close();
 }
 

@@ -162,7 +162,6 @@ void coupe_init_machine_512(void)
 
 void coupe_shutdown_machine(void)
 {
-	wd179x_exit();
 }
 
 /*************************************

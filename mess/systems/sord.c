@@ -722,8 +722,6 @@ void sord_m5_shutdown_machine(void)
 //	}
 
 	centronics_exit(0);
-
-/*	wd179x_exit(); */
 }
 
 INPUT_PORTS_START(sord_m5)
