@@ -256,8 +256,8 @@ OBJDIRS += \
         $(OBJ)/mess/tools\imgtool \
         $(OBJ)/mess/tools\mkhdimg \
         $(OBJ)/mess/tools\messroms \
+        $(OBJ)/mess/tools\mkimage \
         $(OBJ)/mess/formats \
-        $(OBJ)/mess/messroms \
         $(OBJ)/mess/Win32
 endif
 
