@@ -472,6 +472,7 @@ void br_dir( void )
 	
 	IMMWORD( p );
 	pPC = p.d;
+	CHANGE_PC;
 	tms7000_ICount -= 10;
 }
 
@@ -493,6 +494,7 @@ void br_inx( void )
 	
 	IMMWORD( p );
 	pPC = p.d + RDB;
+	CHANGE_PC;
 	tms7000_ICount -= 12;
 }
 
@@ -520,6 +522,7 @@ void btjo_imp( void )
 		pPC++;
 		tms7000_ICount -= 7;
 	}
+	CHANGE_PC;
 }
 
 void btjo_r2a( void );
@@ -547,6 +550,7 @@ void btjo_r2a( void )
 		pPC++;
 		tms7000_ICount -= 7;
 	}
+	CHANGE_PC;
 }
 
 void btjo_r2b( void );
@@ -574,6 +578,7 @@ void btjo_r2b( void )
 		pPC++;
 		tms7000_ICount -= 10;
 	}
+	CHANGE_PC;
 }
 
 void btjo_r2r( void );
@@ -602,6 +607,7 @@ void btjo_r2r( void )
 		pPC++;
 		tms7000_ICount -= 12;
 	}
+	CHANGE_PC;
 }
 
 void btjo_i2a( void );
@@ -629,6 +635,7 @@ void btjo_i2a( void )
 		pPC++;
 		tms7000_ICount -= 9;
 	}
+	CHANGE_PC;
 }
 
 void btjo_i2b( void );
@@ -656,6 +663,7 @@ void btjo_i2b( void )
 		pPC++;
 		tms7000_ICount -= 9;
 	}
+	CHANGE_PC;
 }
 
 void btjo_i2r( void );
@@ -684,6 +692,7 @@ void btjo_i2r( void )
 		pPC++;
 		tms7000_ICount -= 11;
 	}
+	CHANGE_PC;
 }
 
 void btjop_a( void );
@@ -712,6 +721,7 @@ void btjop_a( void )
 		pPC++;
 		tms7000_ICount -= 11;
 	}
+	CHANGE_PC;
 }
 	
 void btjop_b( void );
@@ -740,6 +750,7 @@ void btjop_b( void )
 		pPC++;
 		tms7000_ICount -= 10;
 	}
+	CHANGE_PC;
 }
 	
 void btjop_im( void );
@@ -769,6 +780,7 @@ void btjop_im( void )
 		pPC++;
 		tms7000_ICount -= 12;
 	}
+	CHANGE_PC;
 }
 	
 void btjz_imp( void );
@@ -795,6 +807,7 @@ void btjz_imp( void )
 		pPC++;
 		tms7000_ICount -= 7;
 	}
+	CHANGE_PC;
 }
 
 void btjz_r2a( void );
@@ -822,6 +835,7 @@ void btjz_r2a( void )
 		pPC++;
 		tms7000_ICount -= 7;
 	}
+	CHANGE_PC;
 }
 
 void btjz_r2b( void );
@@ -849,6 +863,7 @@ void btjz_r2b( void )
 		pPC++;
 		tms7000_ICount -= 10;
 	}
+	CHANGE_PC;
 }
 
 void btjz_r2r( void );
@@ -877,6 +892,7 @@ void btjz_r2r( void )
 		pPC++;
 		tms7000_ICount -= 12;
 	}
+	CHANGE_PC;
 }
 
 void btjz_i2a( void );
@@ -904,6 +920,7 @@ void btjz_i2a( void )
 		pPC++;
 		tms7000_ICount -= 9;
 	}
+	CHANGE_PC;
 }
 
 void btjz_i2b( void );
@@ -931,6 +948,7 @@ void btjz_i2b( void )
 		pPC++;
 		tms7000_ICount -= 9;
 	}
+	CHANGE_PC;
 }
 
 void btjz_i2r( void );
@@ -959,6 +977,7 @@ void btjz_i2r( void )
 		pPC++;
 		tms7000_ICount -= 11;
 	}
+	CHANGE_PC;
 }
 
 void btjzp_a( void );
@@ -987,6 +1006,7 @@ void btjzp_a( void )
 		pPC++;
 		tms7000_ICount -= 11;
 	}
+	CHANGE_PC;
 }
 	
 void btjzp_b( void );
@@ -1015,6 +1035,7 @@ void btjzp_b( void )
 		pPC++;
 		tms7000_ICount -= 10;
 	}
+	CHANGE_PC;
 }
 	
 void btjzp_im( void );
@@ -1044,6 +1065,7 @@ void btjzp_im( void )
 		pPC++;
 		tms7000_ICount -= 12;
 	}
+	CHANGE_PC;
 }
 	
 void call_dir( void );
@@ -1054,6 +1076,7 @@ void call_dir( void )
 	IMMWORD( tPC );
 	PUSHWORD( PC );
 	pPC = tPC.d;
+	CHANGE_PC;
 	
 	tms7000_ICount -= 14;
 }
@@ -1078,6 +1101,7 @@ void call_inx( void )
 	IMMWORD( tPC );
 	PUSHWORD( PC );
 	pPC = tPC.d + RDB;
+	CHANGE_PC;
 	tms7000_ICount -= 16;
 }
 
@@ -1612,6 +1636,7 @@ void djnz_a( void )
 		pPC++;
 		tms7000_ICount -= 2;
 	}
+	CHANGE_PC;
 }
 
 void djnz_b( void );
@@ -1640,6 +1665,7 @@ void djnz_b( void )
 		pPC++;
 		tms7000_ICount -= 2;
 	}
+	CHANGE_PC;
 }
 
 void djnz_r( void );
@@ -1671,6 +1697,7 @@ void djnz_r( void )
 		pPC++;
 		tms7000_ICount -= 3;
 	}
+	CHANGE_PC;
 }
 
 void dsb_b2a( void );
@@ -1843,7 +1870,8 @@ void eint( void )
 void idle( void );
 void idle( void )
 {
-	/* Not implemented */
+	tms7000.idle_state = 1;
+	cpu_yielduntil_int();
 	tms7000_ICount -= 6;
 }
 
@@ -1966,6 +1994,7 @@ void jc( void )
 		pPC++;
 		tms7000_ICount -= 5;
 	}
+	CHANGE_PC;
 }
 		
 void jeq( void );
@@ -1984,6 +2013,7 @@ void jeq( void )
 		pPC++;
 		tms7000_ICount -= 5;
 	}
+	CHANGE_PC;
 }
 
 void jl( void );
@@ -2002,6 +2032,7 @@ void jl( void )
 		pPC += s;
 		tms7000_ICount -= 7;
 	}
+	CHANGE_PC;
 }
 		
 void jmp( void );
@@ -2011,6 +2042,8 @@ void jmp( void )
 	
 	SIMMBYTE( s );
 	pPC += s;
+	CHANGE_PC;
+	
 	tms7000_ICount -= 7;
 }
 
@@ -2030,6 +2063,8 @@ void jn( void )
 		pPC += s;
 		tms7000_ICount -= 7;
 	}
+	CHANGE_PC;
+	
 }
 
 void jne( void );
@@ -2048,6 +2083,7 @@ void jne( void )
 		pPC += s;
 		tms7000_ICount -= 7;
 	}
+	CHANGE_PC;
 }
 
 void jp( void );
@@ -2066,6 +2102,7 @@ void jp( void )
 		pPC += s;
 		tms7000_ICount -= 7;
 	}
+	CHANGE_PC;
 }
 
 void jpz( void );
@@ -2084,6 +2121,7 @@ void jpz( void )
 		pPC += s;
 		tms7000_ICount -= 7;
 	}
+	CHANGE_PC;
 }
 
 void lda_dir( void );
@@ -3528,6 +3566,7 @@ void trap_0( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xfffe);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3536,6 +3575,7 @@ void trap_1( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xfffc);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3544,6 +3584,7 @@ void trap_2( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xfffa);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3552,6 +3593,7 @@ void trap_3( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xfff8);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3560,6 +3602,7 @@ void trap_4( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xfff6);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3568,6 +3611,7 @@ void trap_5( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xfff4);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3576,6 +3620,7 @@ void trap_6( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xfff2);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3584,6 +3629,7 @@ void trap_7( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xfff0);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3592,6 +3638,7 @@ void trap_8( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xffee);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3600,6 +3647,7 @@ void trap_9( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xffec);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3608,6 +3656,7 @@ void trap_10( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xffea);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3616,6 +3665,7 @@ void trap_11( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xffe8);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3624,6 +3674,7 @@ void trap_12( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xffe6);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3632,6 +3683,7 @@ void trap_13( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xffe4);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3640,6 +3692,7 @@ void trap_14( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xffe2);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3648,6 +3701,7 @@ void trap_15( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xffe0);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3656,6 +3710,7 @@ void trap_16( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xffde);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3664,6 +3719,7 @@ void trap_17( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xffdc);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3672,6 +3728,7 @@ void trap_18( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xffda);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3680,6 +3737,7 @@ void trap_19( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xffd8);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3688,6 +3746,7 @@ void trap_20( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xffd6);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3696,6 +3755,7 @@ void trap_21( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xffd4);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3704,6 +3764,7 @@ void trap_22( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xffd2);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 	
@@ -3712,6 +3773,7 @@ void trap_23( void )
 {
 	PUSHWORD( PC );
 	pPC = RM16(0xffd0);
+	CHANGE_PC;
 	tms7000_ICount -= 14;
 }
 

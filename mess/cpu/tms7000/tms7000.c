@@ -32,7 +32,16 @@
 #define LOG(x)
 #endif
 
-/* public globals */
+/* Private prototypes */
+
+WRITE_HANDLER( tms7000_ports_w );
+READ_HANDLER( tms7000_ports_r );
+UINT16	bcd_add( UINT16 a, UINT16 b );
+UINT16 bcd_tencomp( UINT16 a );
+UINT16 bcd_sub( UINT16 a, UINT16 b);
+
+/* Public globals */
+
 int tms7000_ICount;
 int	tms7000_MC;
 
@@ -53,6 +62,8 @@ static UINT8 tms7000_win_layout[] = {
 	27,14,53, 8,	/* memory #2 window (right, lower middle) */
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
+
+void tms7000_check_IRQ_lines( void );
 
 #define RM(Addr) ((unsigned)cpu_readmem16(Addr))
 #define SRM(Addr) ((signed)cpu_readmem16(Addr))
@@ -88,40 +99,8 @@ void WRF16( UINT32 mAddr, PAIR p )
 	WM( mAddr, p.b.l );
 }
 
-UINT16	bcd_add( UINT16 a, UINT16 b );
-UINT16	bcd_add( UINT16 a, UINT16 b )
-{
-	UINT16	t1,t2,t3,t4,t5,t6;
-	
-	/* Sure it is a lot of code, but it works! */
-	t1 = a + 0x0666;
-	t2 = t1 + b;
-	t3 = t1 ^ b;
-	t4 = t2 ^ t3;
-	t5 = ~t4 & 0x1110;
-	t6 = (t5 >> 2) | (t5 >> 3);
-	return t2-t6;
-}
-
-UINT16 bcd_tencomp( UINT16 a );
-UINT16 bcd_tencomp( UINT16 a )
-{
-	UINT16	t1,t2,t3,t4,t5,t6;
-	
-	t1 = 0xffff - a;
-	t2 = -a;
-	t3 = t1 ^ 0x0001;
-	t4 = t2 ^ t3;
-	t5 = ~t4 & 0x1110;
-	t6 = (t5 >> 2)|(t5>>3);
-	return t2-t6;
-}
-
-UINT16 bcd_sub( UINT16 a, UINT16 b);
-UINT16 bcd_sub( UINT16 a, UINT16 b)
-{
-	return bcd_tencomp(b) - bcd_tencomp(a);
-}
+#define RPF(x)		tms7000_pf_r(x)
+#define WPF(x,y)	tms7000_pf_w(x,y)
 
 #define IMMBYTE(b)	b = ((unsigned)cpu_readop_arg(pPC)); pPC++
 #define SIMMBYTE(b)	b = ((signed)cpu_readop_arg(pPC)); pPC++
@@ -134,9 +113,13 @@ UINT16 bcd_sub( UINT16 a, UINT16 b)
 
 typedef struct
 {
-	PAIR		pc; 		/* Program counter */
-	UINT8		sp;			/* Stack Pointer */
-	UINT8		sr;			/* Status Register */
+	PAIR		pc; 			/* Program counter */
+	UINT8		sp;				/* Stack Pointer */
+	UINT8		sr;				/* Status Register */
+	UINT8		irq_state[3];	/* State of the three IRQs */
+	UINT8		pf[0x100];		/* Perpherial file */
+	int 		(*irq_callback)(int irqline);
+	UINT8		idle_state;
 } tms7000_Regs;
 
 static tms7000_Regs tms7000;
@@ -172,6 +155,8 @@ static tms7000_Regs tms7000;
 #define SETZ		pSR |= SR_Z
 #define SETN		pSR |= SR_N
 
+#define CHANGE_PC change_pc16(pPC)
+
 /****************************************************************************
  * Get all registers in given buffer
  ****************************************************************************/
@@ -191,48 +176,16 @@ void tms7000_set_context(void *src)
 		tms7000 = *(tms7000_Regs*)src;
 }
 
-/****************************************************************************
- * Return program counter
- ****************************************************************************/
-unsigned tms7000_get_pc(void)
-{
-	return pPC;
-}
-
-
-/****************************************************************************
- * Set program counter
- ****************************************************************************/
-void tms7000_set_pc(unsigned val)
-{
-	pPC = val;
-}
-
-
-/****************************************************************************
- * Return stack pointer
- ****************************************************************************/
-unsigned tms7000_get_sp(void)
-{
-	return pSP;
-}
-
-
-/****************************************************************************
- * Set stack pointer
- ****************************************************************************/
-void tms7000_set_sp(unsigned val)
-{
-	pSP = val;
-}
-
 unsigned tms7000_get_reg(int regnum)
 {
 	switch( regnum )
 	{
+		case REG_PC:
 		case TMS7000_PC: return pPC;
+		case REG_SP:
 		case TMS7000_SP: return pSP;
 		case TMS7000_ST: return pSR;
+		case REG_PREVIOUSPC: return 0;
 	}
 	return 0;
 }
@@ -241,7 +194,9 @@ void tms7000_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
+		case REG_PC:
 		case TMS7000_PC: pPC = val; break;
+		case REG_SP:
 		case TMS7000_SP: pSP = val; break;
 		case TMS7000_ST: pSR = val; break;
 	}
@@ -253,16 +208,22 @@ void tms7000_init(void)
 	state_save_register_UINT16("tms7000", cpu, "PC", &pPC, 1);
 	state_save_register_UINT8("tms7000", cpu, "SP", &pSP, 1);
 	state_save_register_UINT8("tms7000", cpu, "SR", &pSR, 1);
+	memset(tms7000.pf, 0, 0x100);
 }
 
 void tms7000_reset(void *param)
 {
+	tms7000.idle_state = 0;
+	tms7000.irq_state[ TMS7000_IRQ1_LINE ] = CLEAR_LINE;
+	tms7000.irq_state[ TMS7000_IRQ2_LINE ] = CLEAR_LINE;
+	tms7000.irq_state[ TMS7000_IRQ3_LINE ] = CLEAR_LINE;
 	
 	pSP = 0x01;
 	pSR = 0x00;
 	WRA( tms7000.pc.b.h );
 	WRB( tms7000.pc.b.l );
 	pPC = RM16(0xfffe);
+	CHANGE_PC;
 }
 
 void tms7000_exit(void)
@@ -321,25 +282,78 @@ unsigned tms7000_dasm(char *buffer, unsigned pc)
 #endif
 }
 
-void tms7000_set_nmi_line(int state)
-{
-}
-
 void tms7000_set_irq_line(int irqline, int state)
 {
+	tms7000.irq_state[ irqline ] = state;
+
+	LOG(("TMS7000#%d set_irq_line %d, %d\n", cpu_getactivecpu(), irqline, state));
+
+	if (state == CLEAR_LINE)
+	{
+		tms7000.pf[0] &= ~(0x02 << (irqline * 2));	/* Clear INTx flag in iocntl0 */
+		return;
+	}
+
+	tms7000.pf[0] |= (0x02 << (irqline * 2));	/* Set iocntl0 flag */
+
+	tms7000_check_IRQ_lines();
 }
 
 void tms7000_set_irq_callback(int (*callback)(int irqline))
 {
+	tms7000.irq_callback = callback;
 }
 
-WRITE_HANDLER( tms7000_internal_w )
+void tms7000_check_IRQ_lines( void )
 {
-}
-
-READ_HANDLER( tms7000_internal_r )
-{
-	return 0xff;
+	UINT16	newPC;
+	int		tms7000_state;
+	
+	if( pSR & SR_I ) /* Check Global Interrupt bit: Status register, bit 4 */
+	{
+		if( tms7000.irq_state[ TMS7000_IRQ1_LINE ] == ASSERT_LINE )
+		{
+			if( tms7000.pf[0] & 0x01 ) /* INT1 Enable bit */
+			{
+				newPC = RM16(0xfffc);
+				tms7000_state = TMS7000_IRQ1_LINE;
+			}
+		}
+		else if( tms7000.irq_state[ TMS7000_IRQ2_LINE ] == ASSERT_LINE )
+		{
+			if( tms7000.pf[0] & 0x04 ) /* INT2 Enable bit */
+			{
+				newPC = RM16(0xfffa);
+				tms7000_state = TMS7000_IRQ2_LINE;
+			}
+		}
+		else if( tms7000.irq_state[ TMS7000_IRQ3_LINE ] == ASSERT_LINE )
+		{
+			if( tms7000.pf[0] & 0x10 ) /* INT3 Enable bit */
+			{
+				newPC = RM16(0xfff8);
+				tms7000_state = TMS7000_IRQ3_LINE;
+			}
+		}
+		else
+			return; /* Short circuit if there is no interrupt */
+		
+		PUSHBYTE( pSR );	/* Push Status register */
+		PUSHWORD( PC );		/* Push Program Counter */
+		pSR = 0;			/* Clear Status register */
+		pPC = newPC;		/* Load PC with interrupt vector */
+		CHANGE_PC;
+		
+		if( tms7000.idle_state != 0 )
+			tms7000_ICount -= 19;		/* 19 cycles used */
+		else
+		{
+			tms7000_ICount -= 17;		/* 17 if idled */
+			tms7000.idle_state = 0;
+		}
+		
+		(void)(*tms7000.irq_callback)(tms7000_state);
+	}
 }
 
 #include "tms70op.c"
@@ -363,3 +377,174 @@ int tms7000_execute(int cycles)
 	return cycles - tms7000_ICount;
 
 }
+
+#pragma mark -
+#pragma mark ¥ Port Handling
+
+PORT_READ_START (tms7000_readport)
+	{ 0x00, 0x03,	tms7000_ports_r },		/* Ports A, B, C, and D */
+PORT_END
+
+PORT_WRITE_START (tms7000_writeport)
+	{ 0x00, 0x03,	tms7000_ports_w },		/* Ports A, B, C, and D */
+PORT_END
+
+WRITE_HANDLER( tms7000_ports_w )
+{
+	switch( offset )
+	{
+		case 0x00:		/* Port A */
+			tms7000.pf[0x04] = data & ~(0x00);	/* Input only */
+			break;
+			
+		case 0x01:		/* Port B */
+			tms7000.pf[0x06] = data & ~(0xff);	/* Output only */
+			break;
+			
+		case 0x02:		/* Port C */
+			tms7000.pf[0x08] = data & ~(tms7000.pf[0x09]);
+			break;
+			
+		case 0x03:		/* Port D */
+			tms7000.pf[0x0a] = data & ~(tms7000.pf[0x0b]);;
+			break;
+		
+		default:
+			logerror( "tms7000_ports_w: Writing non existing port: %d\n", offset );
+			break;
+	}
+}
+
+READ_HANDLER( tms7000_ports_r )
+{
+	data8_t result;
+
+	switch( offset )
+	{
+		case 0x00:		/* Port A */
+			result = tms7000.pf[0x04] & 0x00;	/* Input only */
+			break;
+			
+		case 0x01:		/* Port B */
+			result = tms7000.pf[0x06] & 0xff;	/* Output only */
+			break;
+			
+		case 0x02:		/* Port C */
+			result = tms7000.pf[0x08] & tms7000.pf[0x09];
+			break;
+			
+		case 0x03:		/* Port D */
+			result = tms7000.pf[0x0a] & tms7000.pf[0x0a];
+			break;
+		
+		default:
+			logerror( "tms7000_ports_r: Reading non existing port: %d\n", offset );
+			break;
+	}
+	
+	return result;
+}
+
+#pragma mark -
+#pragma mark ¥ Perpherial File Handling
+
+WRITE_HANDLER( tms7000_pf_w )	/* Perpherial file write */
+{
+	data8_t	temp1, temp2, temp3, temp4;
+	
+	switch( offset )
+	{
+		case 0x00:	/* IOCNT0, Input/Ouput control */
+			/* Lots to implement here */
+			
+			temp1 = data & 0x2a;				/* Record which bits to clear */
+			temp2 = tms7000.pf[0x03] & 0x2a;	/* Get copy of current bits */
+			temp3 = (~temp1) & temp2;			/* Clear the requested bits */
+			temp4 = temp3 | (data & (~0x2a) );	/* OR in the remaining data */
+			
+			tms7000.pf[0x03] = temp4;
+			break;
+		
+		case 0x02:	/* T1DATA, timer 1 data */
+			/* Lots to implement here */
+			tms7000.pf[0x02] = data;
+			break;
+
+		case 0x03:	/* T1CTL, timer 1 control */
+			/* Lots to implement here */
+			tms7000.pf[0x03] = data;
+			break;
+
+		default:
+			/* Just stuff the other registers */
+			tms7000.pf[ offset ] = data;
+			break;
+	}
+}
+
+READ_HANDLER( tms7000_pf_r )	/* Perpherial file read */
+{
+	data8_t result;
+	
+	switch( offset )
+	{
+//		case 0x00:	/* IOCNT0, Input/Ouput control */
+//			/* Lots to implement here */
+//			result = tms7000.pf[0x00];
+//			break;
+		
+		case 0x02:	/* T1DATA, timer 1 data */
+			/* Lots to implement here */
+			result = tms7000.pf[0x02];
+			break;
+
+		case 0x03:	/* T1CTL, timer 1 control */
+			/* Lots to implement here */
+			result = tms7000.pf[0x03];
+			break;
+
+		default:
+			/* Just stuff the other registers */
+			result = tms7000.pf[ offset ];
+			break;
+	}
+
+	return result;
+}
+
+#pragma mark -
+#pragma mark ¥ BCD arthrimetic handling
+
+
+UINT16 bcd_add( UINT16 a, UINT16 b )
+{
+	UINT16	t1,t2,t3,t4,t5,t6;
+	
+	/* Sure it is a lot of code, but it works! */
+	t1 = a + 0x0666;
+	t2 = t1 + b;
+	t3 = t1 ^ b;
+	t4 = t2 ^ t3;
+	t5 = ~t4 & 0x1110;
+	t6 = (t5 >> 2) | (t5 >> 3);
+	return t2-t6;
+}
+
+UINT16 bcd_tencomp( UINT16 a )
+{
+	UINT16	t1,t2,t3,t4,t5,t6;
+	
+	t1 = 0xffff - a;
+	t2 = -a;
+	t3 = t1 ^ 0x0001;
+	t4 = t2 ^ t3;
+	t5 = ~t4 & 0x1110;
+	t6 = (t5 >> 2)|(t5>>3);
+	return t2-t6;
+}
+
+UINT16 bcd_sub( UINT16 a, UINT16 b)
+{
+	return bcd_tencomp(b) - bcd_tencomp(a);
+}
+
