@@ -1709,6 +1709,62 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=intv
+$bio
+Mattel Intellivision (intv)
+
+
+Usage/Known Issues:
+
+This driver is almost complete.  Still TBD are:
+- collision detection
+- 16-way controller mapping
+- default mapping of the right player controller.  
+- Only .ROM format cartridges (Intellicart) are supported in this release.
+
+  
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=intvkbd
+$bio
+Mattel Intellivision + Keyboard Component (intvkbd)
+
+
+Usage/Known Issues:
+
+This driver is almost complete.  The tape drive is not yet supported.
+The keyboard component has two cartridge slots - one to replace the occupied intv cart slot, 
+and one for new keyboard carts (BASIC).   If you want to use the BASIC cart at startup, you
+must specify it as the second cart, even if the first cart slot is unused. 
+(ex. -cart dummy -cart basic.bin)  Some tapes require the BASIC cartridge.
+Also, there is currently no mapping to the normal intellivision hand controllers yet, when 
+using the keyboard component.
+
+  
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=intvsrs
+$bio
+Mattel Intellivision - Sears version (intvsrs)
+
+
+Usage/Known Issues:
+
+This is the Sears version of the Mattel Intellivision.  Please see the base (intv) system 
+info for current status of this driver.
+
+  
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=kaypro
 $bio
 Kaypro IIx (kaypro)
