@@ -15,7 +15,7 @@ WAVEMODULE(
 	cococas,
 	"Tandy CoCo Cassette",
 	"wav",
-	1200, 1800, 2400,		/* 0=1200 Hz, 1=2400 Hz, threshold=1800 Hz */
+	1200, 1600, 2400,		/* 0=1200 Hz, 1=2400 Hz, threshold=1600 Hz */
 	WAVEIMAGE_LSB_FIRST,
 	blockheader, sizeof(blockheader) / sizeof(blockheader[0]),
 	cococas_nextfile,				/* enumerate next */
@@ -52,23 +52,28 @@ static int readblock(IMAGE *img, casblock *blk)
 	UINT8 sum = 0;
 	UINT8 actualsum;
 
+	/* Move forward until we hit header */
 	err = imgwave_forward(img);
 	if (err)
 		return err;
 
+	/* Read in the block type and length */
 	err = imgwave_read(img, &blk->type, 2);
 	if (err)
 		return err;
 	sum += blk->type;
 	sum += blk->length;
 
+	/* Read in the block data */
 	err = imgwave_read(img, blk->data, blk->length);
 	if (err)
 		return err;
 
+	/* Calculate checksum */
 	for (i = 0; i < blk->length; i++)
 		sum += blk->data[i];
 
+	/* Read the checksum */
 	err = imgwave_read(img, &actualsum, 1);
 	if (err)
 		return err;

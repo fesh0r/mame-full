@@ -14,6 +14,11 @@ System Driver Changes:
 may not work because the implementation of how this works in the Sam Coupe
 hardware is not complete yet [Kev Thacker]
 
+- [COCO] Updated CoCo and CoCo 3 drivers with new romsets to match the actual
+chips in the system.  coco.rom split into bas12.rom, extbas11.rom and
+disk11.rom, and coco3.rom now must be of length 32768.  This requires a dump
+from an EPROM reader.  Fixed a bug in cassette writing.  [Nate Woods]
+
 Other Changes:
 --------------
 - The core is based on MAME 0.37b7. This incorporates all 
@@ -42,7 +47,6 @@ DOS box mode for this to work correct. [Kev Thacker]
   http://mess.emuverse.com
   Please send all CRC/sysinfo file contributions to Chris Henry. 
   (battlepriest@hotmail.com).
-
 
 
 ------------------------

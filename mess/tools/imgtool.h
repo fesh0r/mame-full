@@ -527,7 +527,8 @@ int img_goodname_byname(const char *modulename, const char *fname, const char *b
  */
 
 enum {
-	WAVEIMAGE_LSB_FIRST
+	WAVEIMAGE_LSB_FIRST = 0,
+	WAVEIMAGE_MSB_FIRST = 1
 };
 
 struct WaveExtra

@@ -255,13 +255,15 @@ int imgwave_forward(IMAGE *img)
 		}
 
 		for (i = extra->blockheadersize-1; i >= 0; i--) {
-			if (0) {
+			if (extra->waveflags & WAVEIMAGE_MSB_FIRST) {
+				/* Most significant bit first */
 				newcarry = buffer[i] & 0x80;
 				buffer[i] <<= 1;
 				if (carry)
 					buffer[i] |= 1;
 			}
 			else {
+				/* Least significant bit first */
 				newcarry = buffer[i] & 0x01;
 				buffer[i] >>= 1;
 				if (carry)
@@ -288,12 +290,14 @@ int imgwave_read(IMAGE *img, UINT8 *buf, int bufsize)
 			err = imgwave_readbit(img, &bit);
 			if (err)
 				return err;
-			if (0) {
+			if (extra->waveflags & WAVEIMAGE_MSB_FIRST) {
+				/* Most significant bit first */
 				b <<= 1;
 				if (bit)
 					b |= 1;
 			}
 			else {
+				/* Least significant bit first */
 				b >>= 1;
 				if (bit)
 					b |= 0x80;
