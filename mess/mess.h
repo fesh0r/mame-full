@@ -311,8 +311,8 @@ struct GameDriver driver_##NAME = 	\
 };
 
 #define COMP(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME)	\
-extern const struct GameDriver driver_##PARENT;   \
-const struct GameDriver driver_##NAME = 	\
+extern struct GameDriver driver_##PARENT;   \
+struct GameDriver driver_##NAME = 	\
 {											\
 	__FILE__,								\
 	&driver_##PARENT,						\
@@ -329,8 +329,8 @@ const struct GameDriver driver_##NAME = 	\
 };
 
 #define COMPX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME,FLAGS)	\
-extern const struct GameDriver driver_##PARENT;   \
-const struct GameDriver driver_##NAME = 	\
+extern struct GameDriver driver_##PARENT;   \
+struct GameDriver driver_##NAME = 	\
 {											\
 	__FILE__,								\
 	&driver_##PARENT,						\
