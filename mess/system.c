@@ -144,7 +144,7 @@ TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
 /*	DRIVER( intv )*/	/* Mattel Intellivision - 1979 AKA INTV 		  */
 
 	/* CAPCOM */
-//!!	DRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)			  */
+	DRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)			  */
 
 /****************COMPUTERS****************************************************/
 
@@ -264,9 +264,9 @@ TESTDRIVER( plus4v )	/* Commodore +4 								  */
 #endif
 
 #ifndef MESS_EXCLUDE_AMSTRAD
-//!!	DRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984			  */
-//!!	DRIVER( cpc664 )	/* Amstrad (Schneider in Germany) 1985			  */
-//!!	DRIVER( cpc6128 )	/* Amstrad (Schneider in Germany) 1985			  */
+	DRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984			  */
+	DRIVER( cpc664 )	/* Amstrad (Schneider in Germany) 1985			  */
+	DRIVER( cpc6128 )	/* Amstrad (Schneider in Germany) 1985			  */
 /*	DRIVER( cpc464p )*/ /* Amstrad CPC464  Plus - 1987					  */
 /*	DRIVER( cpc6128p )*//* Amstrad CPC6128 Plus - 1987					  */
 
@@ -287,8 +287,8 @@ TESTDRIVER( avigo ) 	/*												  */
 #endif
 #ifndef MESS_EXCLUDE_AMSTRAD
 	/* VEB MIKROELEKTRONIK */
-//!!	DRIVER( kccomp )	/* KC compact									  */
-//!!	DRIVER( kc85_4 )	/* KC 85/4										  */
+	DRIVER( kccomp )	/* KC compact									  */
+	DRIVER( kc85_4 )	/* KC 85/4										  */
 #endif
 
 	/* CANTAB */
@@ -340,9 +340,9 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 //!!	DRIVER( laser700 )	/* 1984? Laser 700								  */
 
 	/* TANGERINE */
-//!!	DRIVER( microtan )	/* 1979 Microtan 65 							  */
-//!!	DRIVER( oric1 ) 	/* 1983 Oric 1									  */
-//!!	DRIVER( orica ) 	/* 1984 Oric Atmos								  */
+	DRIVER( microtan )	/* 1979 Microtan 65 							  */
+	DRIVER( oric1 ) 	/* 1983 Oric 1									  */
+	DRIVER( orica ) 	/* 1984 Oric Atmos								  */
 
 	/* TEXAS INSTRUMENTS */
 TESTDRIVER( ti990_4 )	/* 197? TI 990/4								*/
@@ -426,7 +426,7 @@ TESTDRIVER( atvga ) 	/*												  */
 
 	/* ACORN */
 #ifndef MESS_EXCLUDE_ACORN
-//!!	DRIVER( atom )		/* 1979 Acorn Atom								  */
+	DRIVER( atom )		/* 1979 Acorn Atom								  */
 	DRIVER( bbca )		/* 1981 BBC Micro								  */
 	DRIVER( bbcb )		/* 1981 BBC Micro								  */
 TESTDRIVER( a310 )		/* 1988 Acorn Archimedes 310					  */

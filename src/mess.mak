@@ -436,7 +436,7 @@ $(OBJ)/amstrad.a:  \
 	  $(OBJ)/mess/machine/28f008sa.o \
 	  $(OBJ)/mess/machine/msm8251.o  \
 	  $(OBJ)/mess/vidhrdw/pcw16.o    \
-#	  $(OBJ)/mess/systems/amstrad.o  \
+	  $(OBJ)/mess/systems/amstrad.o  \
 
 $(OBJ)/nec.a:	   \
 	  $(OBJ)/mess/vidhrdw/vdc.o	 \
@@ -462,7 +462,7 @@ $(OBJ)/kim1.a :    \
 	  $(OBJ)/mess/systems/kim1.o
 
 $(OBJ)/tangerin.a :\
-#	  $(OBJ)/mess/machine/mfmdisk.o  \
+	  $(OBJ)/mess/machine/mfmdisk.o  \
 	  $(OBJ)/mess/vidhrdw/microtan.o \
 	  $(OBJ)/mess/machine/microtan.o \
 	  $(OBJ)/mess/systems/microtan.o \
@@ -520,7 +520,8 @@ $(OBJ)/lisa.a:	   \
 	  $(OBJ)/mess/systems/lisa.o
 
 $(OBJ)/acorn.a:    \
-#	  $(OBJ)/mess/machine/atom.o	 \
+	  $(OBJ)/mess/vidhrdw/m6847.o	 \
+	  $(OBJ)/mess/machine/atom.o	 \
 	  $(OBJ)/mess/vidhrdw/atom.o	 \
 	  $(OBJ)/mess/systems/atom.o	 \
 	  $(OBJ)/mess/systems/a310.o	 \

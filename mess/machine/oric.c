@@ -6,9 +6,9 @@
   - (add previous author here)
   - Kev Thacker
 
-  Thankyou to Fabrice Frances for his ORIC documentation which helped with this driver 
+  Thankyou to Fabrice Frances for his ORIC documentation which helped with this driver
   http://oric.ifrance.com/oric/
-  
+
 */
 
 #include <stdio.h>
@@ -60,7 +60,7 @@ loading tape image to update MESS GUI settings for current image
 	rewrote code to use 6522 via.
 
   TODO:
-  - Microdisc interface: ROMDIS and Eprom select 
+  - Microdisc interface: ROMDIS and Eprom select
   - Jasmin: overlay ram access, ROMDIS, fdc reset
 
 */
@@ -81,7 +81,7 @@ static void oric_keyboard_sense_refresh(void)
 	/* The following assumes that if a 0 is written, it can be used to detect if any key
 	has been pressed.. */
 	/* for each bit that is 0, it combines it's pressed state with the pressed state so far */
-	
+
 	int i;
 	unsigned char key_bit = 0;
 
@@ -130,7 +130,7 @@ WRITE_HANDLER (oric_psg_porta_write)
 static char oric_psg_control;
 
 /* this port is also used to read printer data */
-int oric_via_in_a_func(int offset)
+READ_HANDLER ( oric_via_in_a_func )
 {
 	logerror("port a read\r\n");
 
@@ -146,12 +146,12 @@ int oric_via_in_a_func(int offset)
 		/* return high-impedance */
 		return 0x0ff;
 	}
-	
+
 	/* return printer data?? */
 	return 0x0ff;
 }
- 
-int oric_via_in_b_func(int offset)
+
+READ_HANDLER ( oric_via_in_b_func )
 {
 	int data;
 
@@ -187,12 +187,12 @@ static void oric_psg_connection_refresh(void)
 			default:
 				break;
 		}
-	
+
 		return;
 	}
 }
 
-void oric_via_out_a_func(int offset, int data)
+WRITE_HANDLER ( oric_via_out_a_func )
 {
 	oric_via_port_a_data = data;
 
@@ -202,25 +202,25 @@ void oric_via_out_a_func(int offset, int data)
 /*
 PB0..PB2
  keyboard lines-demultiplexer
- 
+
 PB3
  keyboard sense line
- 
+
 PB4
  printer strobe line
- 
+
 PB5
  (not connected)
- 
+
 PB6
  tape connector motor control
- 
+
 PB7
  tape connector output
 
  */
 
-int oric_via_in_cb1_func(int offset)
+READ_HANDLER ( oric_via_in_cb1_func )
 {
 	int data;
 
@@ -234,7 +234,7 @@ int oric_via_in_cb1_func(int offset)
 
 
 
-void oric_via_out_b_func(int offset, int data)
+WRITE_HANDLER ( oric_via_out_b_func )
 {
 	oric_keyboard_line = data & 0x07;
 
@@ -248,21 +248,21 @@ void oric_via_out_b_func(int offset, int data)
 	oric_keyboard_sense_refresh();
 }
 
-int oric_via_in_ca2_func(int offset)
+READ_HANDLER ( oric_via_in_ca2_func )
 {
 	return oric_psg_control & 1;
 }
 
-int oric_via_in_cb2_func(int offset)
+READ_HANDLER ( oric_via_in_cb2_func )
 {
 	return (oric_psg_control>>1) & 1;
 }
 
-void oric_via_out_ca2_func(int offset, int val)
+WRITE_HANDLER ( oric_via_out_ca2_func )
 {
 	oric_psg_control &=~1;
 
-	if (val)
+	if (data)
 	{
 		oric_psg_control |=1;
 	}
@@ -270,11 +270,11 @@ void oric_via_out_ca2_func(int offset, int val)
 	oric_psg_connection_refresh();
 }
 
-void oric_via_out_cb2_func(int offset, int val)
+WRITE_HANDLER ( oric_via_out_cb2_func )
 {
 	oric_psg_control &=~2;
 
-	if (val)
+	if (data)
 	{
 		oric_psg_control |=2;
 	}
@@ -298,40 +298,40 @@ void	oric_via_irq_func(int state)
 /*
 VIA Lines
  Oric usage
- 
+
 PA0..PA7
  PSG data bus, printer data lines
- 
+
 CA1
  printer acknowledge line
- 
+
 CA2
  PSG BC1 line
- 
+
 PB0..PB2
  keyboard lines-demultiplexer
- 
+
 PB3
  keyboard sense line
- 
+
 PB4
  printer strobe line
- 
+
 PB5
  (not connected)
- 
+
 PB6
  tape connector motor control
- 
+
 PB7
  tape connector output
- 
+
 CB1
  tape connector input
- 
+
 CB2
  PSG BDIR line
- 
+
 */
 
 struct via6522_interface oric_6522_interface=
@@ -356,7 +356,7 @@ struct via6522_interface oric_6522_interface=
 
 /* if defined, enable microdisc floppy disc interface */
 /* if not defined, enable Jasmin floppy disc interface */
-#define MICRODISC_FLOPPY_DISC_INTERFACE	
+#define MICRODISC_FLOPPY_DISC_INTERFACE
 
 
 /* following are used for tape and need cleaning up */
@@ -469,7 +469,7 @@ int oric_floppy_init(int id)
 	if (result==INIT_OK)
 	{
 		oric_floppy_type[id] = ORIC_FLOPPY_MFM_DISK;
-	
+
 		return INIT_OK;
 	}
 
@@ -614,7 +614,7 @@ void	oric_set_mem_0x0c000(void)
 		cpu_setbankhandler_w(6, MWA_NOP);
 		cpu_setbankhandler_r(1, MRA_BANK1);
 		cpu_setbankhandler_r(2, MRA_BANK2);
-	
+
 		if ((port_3fa_w & (1<<0))==0)
 		{
 /*			logerror("Select disk rom\n"); */
@@ -622,7 +622,7 @@ void	oric_set_mem_0x0c000(void)
 			rom_ptr = memory_region(REGION_CPU1) + 0x014000;
 			cpu_setbank(2, rom_ptr);
 			cpu_setbank(1, rom_ptr);
-	
+
 		}
 		else
 		{
@@ -815,7 +815,7 @@ WRITE_HANDLER ( oric_IO_w )
 	if ((offset & 0xff) == 0xfa)
 	{
 		unsigned char *RAM;
-	
+
 		RAM = memory_region(REGION_CPU1);
 
 		if (data == 0x69)
@@ -902,11 +902,11 @@ WRITE_HANDLER ( oric_IO_w )
 			}
 
 			wd179x_set_density(density);
-	
+
 			oric_set_mem_0x0c000();
 			oric_refresh_wd179x_ints();
 		}
-		break;		
+		break;
 #else
 		/* Jasmin floppy disc interface */
 		case 0x0f4:
@@ -951,7 +951,7 @@ WRITE_HANDLER ( oric_IO_w )
 		case 0x0ff:
 			wd179x_set_drive(offset & 0x03);
 			break;
-#endif		
+#endif
 
 	}
 }

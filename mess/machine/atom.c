@@ -45,7 +45,7 @@ static void atom_8271_interrupt_callback(int state)
 	the nmi will be triggered, but when the state changes because the int
 	is cleared this will not cause another nmi */
 	/* I'll emulate it like this to be sure */
-	
+
 	if (state!=previous_i8271_int_state)
 	{
 		if (state)
@@ -75,8 +75,8 @@ void atom_init_machine(void)
 	i8271_init(&atom_8271_interface);
 }
 
-void atom_stop_machine(void) 
-{ 
+void atom_stop_machine(void)
+{
 	i8271_stop();
 }
 
@@ -157,13 +157,13 @@ int atom_floppy_init(int id)
 }
 
 
-READ_HANDLER ( atom_8255_porta_r )
+int atom_8255_porta_r (int offset)
 {
 	/* logerror("8255: Read port a\n"); */
 	return (atom_8255.atom_8255_porta);
 }
 
-READ_HANDLER ( atom_8255_portb_r )
+int atom_8255_portb_r (int offset)
 {
 	/* ilogerror("8255: Read port b: %02X %02X\n",
 			readinputport ((atom_8255.atom_8255_porta & 0x0f) + 1),
@@ -172,7 +172,7 @@ READ_HANDLER ( atom_8255_portb_r )
 											(readinputport (11) & 0xc0));
 }
 
-READ_HANDLER ( atom_8255_portc_r )
+int atom_8255_portc_r (int offset )
 {
 
 /* | */
@@ -209,7 +209,7 @@ static int atom_mode_trans[] =
 	M6847_MODE_G4R
 };
 
-WRITE_HANDLER ( atom_8255_porta_w )
+void atom_8255_porta_w (int offset, int data)
 {
 	if ((data & 0xf0) != (atom_8255.atom_8255_porta & 0xf0))
 	{
@@ -226,13 +226,13 @@ WRITE_HANDLER ( atom_8255_porta_w )
 	logerror("8255: Write port a, %02x\n", data);
 }
 
-WRITE_HANDLER ( atom_8255_portb_w )
+void atom_8255_portb_w (int offset, int data)
 {
 	atom_8255.atom_8255_portb = data;
 	logerror("8255: Write port b, %02x\n", data);
 }
 
-WRITE_HANDLER ( atom_8255_portc_w )
+void atom_8255_portc_w (int offset, int data)
 {
 	atom_8255.atom_8255_portc = data;
 	speaker_level_w(0, (data & 0x04) >> 2);

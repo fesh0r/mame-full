@@ -156,7 +156,7 @@ static void update_psg(void)
 
 
 /* ppi port a read */
-READ_HANDLER(amstrad_ppi_porta_r)
+int amstrad_ppi_porta_r( int chip)
 {
 	update_psg();
 
@@ -173,7 +173,7 @@ READ_HANDLER(amstrad_ppi_porta_r)
 In MESS I have used the dipswitch feature.
  Bit 0 = VSYNC from CRTC */
 
-READ_HANDLER(amstrad_ppi_portb_r)
+int amstrad_ppi_portb_r (int chip)
 {
 	int cassette_data;
 
@@ -189,7 +189,7 @@ READ_HANDLER(amstrad_ppi_portb_r)
 		return ((ppi_port_inputs[1] & 0x07e) | amstrad_vsync | cassette_data);
 }
 
-WRITE_HANDLER(amstrad_ppi_porta_w)
+void amstrad_ppi_porta_w (int chip, int data)
 {
 		ppi_port_outputs[0] = data;
 
@@ -206,7 +206,7 @@ WRITE_HANDLER(amstrad_ppi_porta_w)
 /* previous value */
 static int previous_ppi_portc_w;
 
-WRITE_HANDLER(amstrad_ppi_portc_w)
+void amstrad_ppi_portc_w (int chip, int data)
 {
 		int changed_data;
 
