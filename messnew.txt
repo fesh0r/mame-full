@@ -11,6 +11,12 @@ System Driver Changes:
 - [COCO] Fixed some bugs related to handling of degenerate JVC files (where the
   file size is less than 161280 bytes) (bug #281) [Nate Woods]
 
+- [SNES] Fixed a GDMA bug that was causing graphics corruption. Added support
+  for FastROMs. Improved object and background layering priorities. Colour
+  addition/subtraction is greatly improved. Added vertical mosaic effect. Fixed
+  Mode 7 rotation and draw outside screen area. Added support for the back
+  colour constant. [Anthony Kruize]
+
 Source Changes:
 ---------------
 - The core is based on MAME 0.62.  This incorporates all features of the 
