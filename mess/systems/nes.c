@@ -416,7 +416,7 @@ static const struct IODevice io_famicom[] = {
     {
         IO_FLOPPY,          /* type */
         1,                  /* count */
-        "dsk\0",            /* file extensions */
+        "dsk\0fds\0",       /* file extensions */
         IO_RESET_NONE,      /* reset if file changed */
         NULL,               /* id */
         nes_load_disk,      /* init */
