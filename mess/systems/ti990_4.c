@@ -87,7 +87,7 @@ F : flag
 
 */
 
-static READ_HANDLER ( ti990_4_panel_read )
+static READ16_HANDLER ( ti990_4_panel_read )
 {
 	if (offset == 1)
 		return 0x08;
@@ -95,7 +95,7 @@ static READ_HANDLER ( ti990_4_panel_read )
 	return 0;
 }
 
-static WRITE_HANDLER ( ti990_4_panel_write )
+static WRITE16_HANDLER ( ti990_4_panel_write )
 {
 }
 
@@ -161,15 +161,15 @@ MEMORY_END
   CRU map
 */
 
-static PORT_WRITE_START ( ti990_4_writeport )
+static PORT_WRITE16_START ( ti990_4_writeport )
 
-	{ 0xff0, 0xfff, ti990_4_panel_write },
+	{ 0xff0 << 1, 0xfff << 1, ti990_4_panel_write },
 
 PORT_END
 
-static PORT_READ_START ( ti990_4_readport )
+static PORT_READ16_START ( ti990_4_readport )
 
-	{ 0x1fe, 0x1ff, ti990_4_panel_read },
+	{ 0x1fe << 1, 0x1ff << 1, ti990_4_panel_read },
 
 PORT_END
 
