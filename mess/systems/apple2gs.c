@@ -79,7 +79,10 @@ MACHINE_DRIVER_EXTERN( apple2e );
 INPUT_PORTS_EXTERN( apple2 );
 
 INPUT_PORTS_START( apple2gs )
-	PORT_INCLUDE( apple2 )
+	PORT_INCLUDE( apple2_common )
+	PORT_INCLUDE( apple2_keypad )
+	PORT_INCLUDE( apple2_special )
+	PORT_INCLUDE( apple2_joystick )
 
 	PORT_START_TAG("adb_mouse_x")
 	PORT_BIT( 0x7f, 0x00, IPT_MOUSE_X) PORT_SENSITIVITY(100) PORT_KEYDELTA(0) PORT_MINMAX(0,0) 
