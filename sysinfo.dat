@@ -1741,6 +1741,46 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=coco3
+$bio
+Tandy Color Computer 3
+
+First off, also read the history for the Color Computer and Color Computer 2 drivers. Much
+of the information there also applies to this driver.
+
+Besides fully emulating the Color omputer 3 this driver also contains some extras. It contains
+two diferent real time clocks. Currently they can be set under the 'DIP switches". The two
+types are Disto and Cloud-9.
+
+Disto Real Time Clock:
+	Chip:      OKI m6242B
+	Addressed: $FF50 and $FF51
+
+Cloud-9 Real Time Clock:
+    Chip:      Dallas Semiconductor's Phantom Time Chip DS1315
+    Addressed: $FF79, $FF78, $FF7C
+
+This driver also contains an implementation of Jeff Vavasours' Virtual Hard Disk. See his
+Color Computer 3 emulator for information regarding it.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=coco3h
+$bio
+Tandy Color Computer 3 (Hitachi)
+
+First off, also read the history for the Color Computer, Color Computer 2 and Color Computer 3
+drivers. Much of the information there also applies to this driver.
+
+This driver is exactly like the coco3 drivers except the MPU has been replaced by a Hitachi
+6309. This chip has extra features not documented by Hitachi.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=coleco
 $bio
 Coleco Industries ColecoVision
