@@ -11,7 +11,7 @@
 */
 
 #include "driver.h"
-#include "machine/tc8521.h"
+#include "includes/tc8521.h"
 
 /* Registers:
 
@@ -76,11 +76,33 @@ static void tc8521_timer_callback(int dummy)
         /* timer enable? */
         if ((rtc.registers[0x0d] & (1<<3))!=0)
         {
+                /* 16hz enabled? */
+                if ((rtc.registers[0x0f] & (1<<2))!=0)
+                {
+                        /* yes, so call callback */
+                        if (rtc.interface.interrupt_16hz_callback!=NULL)
+                        {
+                                rtc.interface.interrupt_16hz_callback(1);
+                        }
+                }
+
                 rtc.sixteen_hz_counter++;
         
                 if (rtc.sixteen_hz_counter == 16)
                 {
                    rtc.sixteen_hz_counter = 0;
+
+
+                   /* 1hz enabled? */
+                   if ((rtc.registers[0x0f] & (1<<3))!=0)
+                   {
+                        /* yes, so execute callback  */
+
+                        if (rtc.interface.interrupt_1hz_callback!=NULL)
+                        {
+                                rtc.interface.interrupt_1hz_callback(1);
+                        }
+                   }
 
                    /* seconds; units */
                    rtc.registers[0]++;
@@ -135,13 +157,19 @@ static void tc8521_timer_callback(int dummy)
 
 
 
-void tc8521_init(void)
+void tc8521_init(struct tc8521_interface *intf)
 {
         rtc.tc8521_timer = timer_pulse(TIME_IN_HZ(16), 0, tc8521_timer_callback);
         rtc.sixteen_hz_counter = 0;
         rtc.hz_counter = 0;
         /* disable timer */
         rtc.registers[0x0d] &= ~ (1<<3);
+
+        memset(&rtc.interface, 0, sizeof(struct tc8521_interface));
+        if (intf)
+        {
+            memcpy(&rtc.interface, intf, sizeof(struct tc8521_interface));
+        }
 
 }
 
