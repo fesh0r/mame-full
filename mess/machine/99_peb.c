@@ -96,8 +96,8 @@
 
 	Note that I use 8-bit RAM handlers.  Obviously, using 16-bit handlers would
 	be equivalent and quite faster, but we need to interface the extension
-	cards not only to the ti-99/4(a), but to the geneve emulator and to a
-	future 99/8 emulator as well.
+	cards not only to the ti-99/4(a), but to the geneve emulator and to the
+	WIP 99/8 emulator as well.
 */
 
 #include "driver.h"
@@ -126,8 +126,8 @@ typedef struct ti99_4p_exp_card_handlers_t
 		} width_8bit;
 		struct
 		{
-			read16_handler mem_read;	/* card mem read handler (8 bits) */
-			write16_handler mem_write;	/* card mem write handler (8 bits) */
+			read16_handler mem_read;	/* card mem read handler (16 bits) */
+			write16_handler mem_write;	/* card mem write handler (16 bits) */
 		} width_16bit;
 	} w;
 } ti99_4p_exp_card_handlers_t;
