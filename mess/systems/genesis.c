@@ -386,8 +386,8 @@ static const struct IODevice io_genesis[] = {
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"smd\0bin\0md\0",       /* file extensions */
-		NULL,				/* private */
-		genesis_id_rom, 	/* id */
+		IO_RESET_ALL,		/* reset if file changed */
+        genesis_id_rom,     /* id */
 		genesis_load_rom,	/* init */
 		NULL,				/* exit */
 		NULL,				/* info */

@@ -231,8 +231,8 @@ static const struct IODevice io_pdp1[] = {
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"bin\0",			/* file extensions */
-		NULL,               /* private */
-		pdp1_id_rom,		/* id */
+		IO_RESET_ALL,		/* reset if file changed */
+        pdp1_id_rom,        /* id */
 		pdp1_load_rom,		/* init */
 		NULL,				/* exit */
 		NULL,				/* info */

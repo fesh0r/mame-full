@@ -1603,7 +1603,7 @@ static const struct IODevice io_pcw16[] =
 		IO_FLOPPY,			/* type */
 		2,					/* count */
 		"dsk\0",            /* file extensions */
-        NULL,               /* private */
+		IO_RESET_NONE,		/* reset if file changed */
         NULL,               /* id */
 		pc_floppy_init, 	/* init */
 		pc_floppy_exit, 	/* exit */

@@ -710,8 +710,8 @@ static const struct IODevice io_laser[] = {
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"rom\0",            /* file extensions */
-        NULL,               /* private */
-		laser_rom_id,		/* id */
+		IO_RESET_ALL,		/* reset if file changed */
+        laser_rom_id,       /* id */
 		laser_rom_init, 	/* init */
 		laser_rom_exit, 	/* exit */
         NULL,               /* info */
@@ -730,8 +730,8 @@ static const struct IODevice io_laser[] = {
 		IO_FLOPPY,			/* type */
 		2,					/* count */
 		"dsk\0",            /* file extensions */
-        NULL,               /* private */
-		laser_floppy_id,	/* id */
+		IO_RESET_NONE,		/* reset if file changed */
+        laser_floppy_id,    /* id */
 		laser_floppy_init,	/* init */
 		laser_floppy_exit,	/* exit */
         NULL,               /* info */

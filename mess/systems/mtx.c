@@ -949,8 +949,8 @@ static const struct IODevice io_mtx512[] = {
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"bin\0",			/* file extensions */
-		NULL,               /* private */
-		NULL,				/* id */
+		IO_RESET_ALL,		/* reset if file changed */
+        NULL,               /* id */
 		NULL,				/* init */
 		NULL,				/* exit */
 		NULL,				/* info */

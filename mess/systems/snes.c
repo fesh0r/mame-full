@@ -1053,8 +1053,8 @@ static const struct IODevice io_snes[] =
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"smc\0",            /* file extensions */
-		NULL,               /* private */
-	   	snes_id_rom, 		/* id */
+		IO_RESET_ALL,		/* reset if file changed */
+        snes_id_rom,        /* id */
 		snes_load_rom,		/* init */
 		snes_exit_rom,		/* exit */
 		NULL,				/* info */

@@ -199,11 +199,17 @@ enum {
 	IO_COUNT
 };
 
+enum {
+	IO_RESET_NONE,		/* changing the device file doesn't reset anything */
+	IO_RESET_CPU,		/* only reset the CPU */
+	IO_RESET_ALL		/* restart the driver including audio/video */
+};
+
 struct IODevice {
 	int type;
 	int count;
 	const char *file_extensions;
-	void *_private;
+	int reset_depth;
 	int (*id)(int id);
 	int (*init)(int id);
 	void (*exit)(int id);

@@ -1129,8 +1129,8 @@ static const struct IODevice io_a400[] = {
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"rom\0bin\0",       /* file extensions */
-		NULL,				/* private */
-		a800_id_rom,		/* id */
+		IO_RESET_ALL,		/* reset if file changed */
+        a800_id_rom,        /* id */
 		a800_rom_init,		/* init */
 		a800_rom_exit,		/* exit */
 		NULL,				/* info */
@@ -1148,8 +1148,8 @@ static const struct IODevice io_a400[] = {
 		IO_FLOPPY,			/* type */
 		4,					/* count */
 		"atr\0dsk\0xfd\0",  /* file extensions */
-		NULL,				/* private */
-		NULL,				/* id */
+		IO_RESET_NONE,		/* reset if file changed */
+        NULL,               /* id */
 		a800_floppy_init,	/* init */
 		a800_floppy_exit,	/* exit */
 		NULL,				/* info */
@@ -1172,8 +1172,8 @@ static const struct IODevice io_a800[] = {
 		IO_CARTSLOT,		/* type */
 		2,					/* count */
 		"rom\0bin\0",       /* file extensions */
-		NULL,				/* private */
-		a800_id_rom,		/* id */
+		IO_RESET_ALL,		/* reset if file changed */
+        a800_id_rom,        /* id */
 		a800_rom_init,		/* init */
         a800_rom_exit,      /* exit */
         NULL,               /* info */
@@ -1191,8 +1191,8 @@ static const struct IODevice io_a800[] = {
 		IO_FLOPPY,			/* type */
 		4,					/* count */
 		"atr\0dsk\0xfd\0",  /* file extensions */
-		NULL,				/* private */
-		NULL,				/* id */
+		IO_RESET_NONE,		/* reset if file changed */
+        NULL,               /* id */
 		a800_floppy_init,	/* init */
 		a800_floppy_exit,	/* exit */
 		NULL,				/* info */
@@ -1216,8 +1216,8 @@ static const struct IODevice io_a5200[] = {
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"rom\0bin\0",       /* file extensions */
-		NULL,				/* private */
-		a5200_id_rom,		/* id */
+		IO_RESET_ALL,		/* reset if file changed */
+        a5200_id_rom,       /* id */
 		a5200_rom_init, 	/* init */
 		a5200_rom_exit, 	/* exit */
 		NULL,				/* info */

@@ -2580,7 +2580,7 @@ static const struct IODevice io_pc[] = {
 		IO_FLOPPY,			/* type */
 		2,					/* count */
 		"dsk\0",            /* file extensions */
-        NULL,               /* private */
+		IO_RESET_NONE,		/* reset if file changed */
         NULL,               /* id */
 		pc_floppy_init, 	/* init */
 		pc_floppy_exit, 	/* exit */
@@ -2599,7 +2599,7 @@ static const struct IODevice io_pc[] = {
 		IO_HARDDISK,		/* type */
 		4,					/* count */
 		"img\0",            /* file extensions */
-        NULL,               /* private */
+		IO_RESET_ALL,		/* reset if file changed */
         NULL,               /* id */
 		pc_harddisk_init,	/* init */
 		pc_harddisk_exit,	/* exit */

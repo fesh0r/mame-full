@@ -777,7 +777,7 @@ static const struct IODevice io_nc100[] =
                 IO_CARTSLOT,           /* type */
                 1,                     /* count */
                 "crd\0card\0",               /* file extensions */
-                NULL,                   /* private */
+				IO_RESET_NONE,			/* reset if file changed */
                 nc_pcmcia_card_id,   /* id */
                 nc_pcmcia_card_load, /* load */
                 nc_pcmcia_card_exit, /* exit */

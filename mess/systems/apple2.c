@@ -495,7 +495,7 @@ static const struct IODevice io_apple2[] =
 		IO_FLOPPY,			/* type */
 		2,					/* count */
 		"dsk\0",            /* file extensions */
-        NULL,               /* private */
+		IO_RESET_NONE,		/* reset if file changed */
         NULL,               /* id */
 		apple2_floppy_init, /* init */
 		NULL,				/* exit */

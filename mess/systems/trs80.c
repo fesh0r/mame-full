@@ -531,8 +531,8 @@ static const struct IODevice io_trs80l1[] = {
 		IO_CASSETTE,		/* type */
 		1,					/* count */
 		"cas\0",            /* file extensions */
-		NULL,				/* private */
-		trs80_cas_id,		/* id */
+		IO_RESET_NONE,		/* reset if file changed */
+        trs80_cas_id,       /* id */
 		trs80_cas_init, 	/* init */
 		trs80_cas_exit, 	/* exit */
 		NULL,				/* info */
@@ -550,8 +550,8 @@ static const struct IODevice io_trs80l1[] = {
 		IO_QUICKLOAD,		/* type */
 		1,					/* count */
 		"cmd\0",            /* file extensions */
-		NULL,				/* private */
-		trs80_cmd_id,		/* id */
+		IO_RESET_ALL,		/* reset if file changed */
+        trs80_cmd_id,       /* id */
 		trs80_cmd_init, 	/* init */
 		trs80_cmd_exit, 	/* exit */
 		NULL,				/* info */
@@ -574,8 +574,8 @@ static const struct IODevice io_trs80[] = {
 		IO_CASSETTE,		/* type */
 		1,					/* count */
 		"cas\0",            /* file extensions */
-		NULL,				/* private */
-		trs80_cas_id,		/* id */
+		IO_RESET_NONE,		/* reset if file changed */
+        trs80_cas_id,       /* id */
 		trs80_cas_init, 	/* init */
 		trs80_cas_exit, 	/* exit */
 		NULL,				/* info */
@@ -593,8 +593,8 @@ static const struct IODevice io_trs80[] = {
 		IO_QUICKLOAD,		/* type */
 		1,					/* count */
 		"cmd\0",            /* file extensions */
-		NULL,				/* private */
-		trs80_cmd_id,		/* id */
+		IO_RESET_ALL,		/* reset if file changed */
+        trs80_cmd_id,       /* id */
 		trs80_cmd_init, 	/* init */
 		trs80_cmd_exit, 	/* exit */
 		NULL,				/* info */
@@ -612,8 +612,8 @@ static const struct IODevice io_trs80[] = {
 		IO_FLOPPY,			/* type */
 		4,					/* count */
 		"dsk\0",            /* file extensions */
-		NULL,				/* private */
-		NULL,				/* id */
+		IO_RESET_NONE,		/* reset if file changed */
+        NULL,               /* id */
 		trs80_floppy_init,	/* init */
 		trs80_floppy_exit,	/* exit */
 		NULL,				/* info */

@@ -220,8 +220,8 @@ static const struct IODevice io_pce[] = {
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"pce\0",            /* file extensions */
-		NULL,               /* private */
-		pce_id_rom, 		/* id */
+		IO_RESET_ALL,		/* reset if file changed */
+        pce_id_rom,         /* id */
 		pce_load_rom,		/* init */
 		NULL,				/* exit */
 		NULL,				/* info */

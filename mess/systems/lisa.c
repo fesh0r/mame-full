@@ -242,8 +242,8 @@ static const struct IODevice io_lisa2[] = {
 		IO_FLOPPY,			/* type */
 		2,					/* count */
 		"img\0",			/* file extensions */
-		NULL,				/* private */
-		NULL,				/* id */
+		IO_RESET_NONE,		/* reset if file changed */
+        NULL,               /* id */
 		lisa_floppy_init,	/* init */
 		lisa_floppy_exit,	/* exit */
 		NULL,				/* info */

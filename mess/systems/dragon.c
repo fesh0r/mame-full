@@ -685,7 +685,7 @@ ROM_END
 		IO_FLOPPY,\
 		4,\
 		"dsk\0",\
-        NULL,\
+		IO_RESET_NONE,\
         NULL,\
 		coco_floppy_init,\
 		coco_floppy_exit,\
@@ -705,8 +705,8 @@ ROM_END
 		IO_SNAPSHOT,\
 		1,\
 		"pak\0",\
+		IO_RESET_ALL,\
         NULL,\
-		NULL,\
 		loadproc,\
 		NULL,\
         NULL,\

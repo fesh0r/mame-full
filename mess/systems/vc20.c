@@ -863,8 +863,8 @@ static const struct IODevice io_vc20i[] =
 		IO_CARTSLOT,				   /* type */
 		2,							   /* normal 1 *//* count */
 		"a0\00020\00040\00060\0rom\0bin\0",/* file extensions */
-		NULL,						   /* private */
-		vc20_rom_id,				   /* id */
+		IO_RESET_ALL,				   /* reset if file changed */
+        vc20_rom_id,                   /* id */
 		vc20_rom_load,				   /* init */
 		NULL,						   /* exit */
 		NULL,						   /* info */

@@ -286,8 +286,8 @@ static const struct IODevice io_gamegear[] = {
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"gg\0",             /* file extensions */
-		NULL,				/* private */
-		gamegear_id_rom,	/* id */
+		IO_RESET_ALL,		/* reset if file changed */
+        gamegear_id_rom,    /* id */
 		sms_load_rom,		/* init */
 		NULL,				/* exit */
 		NULL,				/* info */

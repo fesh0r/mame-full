@@ -11,89 +11,89 @@
  TIA *Write* Addresses (6 bit)
 
 
-	VSYNC	0x00     Vertical Sync Set-Clear
-	VBLANK	0x01     Vertical Blank Set-Clear
-	WSYNC	0x02     Wait for Horizontal Blank
-	RSYNC	0x03     Reset Horizontal Sync Counter
-	NUSIZ0	0x04     Number-Size player/missle 0
-	NUSIZ1	0x05     Number-Size player/missle 1
-	COLUP0	0x06     Color-Luminance Player 0
-	COLUP1	0x07     Color-Luminance Player 1
-	COLUPF	0x08     Color-Luminance Playfield
-	COLUBK	0x09     Color-Luminance BackGround
-	CTRLPF	0x0A     Control Playfield, Ball, Collisions
-	REFP0	0x0B     Reflection Player 0
-	REFP1	0x0C     Reflection Player 1
-	PF0	    0x0D     Playfield Register Byte 0
-	PF1	    0x0E     Playfield Register Byte 1
-	PF2	    0x0F     Playfield Register Byte 2
-	RESP0	0x10     Reset Player 0
-	RESP1	0x11     Reset Player 1
-	RESM0	0x12     Reset Missle 0
-	RESM1	0x13     Reset Missle 1
-	RESBL	0x14     Reset Ball
+	VSYNC	0x00	 Vertical Sync Set-Clear
+	VBLANK	0x01	 Vertical Blank Set-Clear
+	WSYNC	0x02	 Wait for Horizontal Blank
+	RSYNC	0x03	 Reset Horizontal Sync Counter
+	NUSIZ0	0x04	 Number-Size player/missle 0
+	NUSIZ1	0x05	 Number-Size player/missle 1
+	COLUP0	0x06	 Color-Luminance Player 0
+	COLUP1	0x07	 Color-Luminance Player 1
+	COLUPF	0x08	 Color-Luminance Playfield
+	COLUBK	0x09	 Color-Luminance BackGround
+	CTRLPF	0x0A	 Control Playfield, Ball, Collisions
+	REFP0	0x0B	 Reflection Player 0
+	REFP1	0x0C	 Reflection Player 1
+	PF0 	0x0D	 Playfield Register Byte 0
+	PF1 	0x0E	 Playfield Register Byte 1
+	PF2 	0x0F	 Playfield Register Byte 2
+	RESP0	0x10	 Reset Player 0
+	RESP1	0x11	 Reset Player 1
+	RESM0	0x12	 Reset Missle 0
+	RESM1	0x13	 Reset Missle 1
+	RESBL	0x14	 Reset Ball
 
-	AUDC0	0x15    Audio Control 0
-	AUDC1	0x16    Audio Control 1
-	AUDF0	0x17    Audio Frequency 0
-	AUDF1	0x18    Audio Frequency 1
-	AUDV0	0x19    Audio Volume 0
-	AUDV1	0x1A    Audio Volume 1
-	GRP0	0x1B    Graphics Register Player 0
-	GRP1	0x1C    Graphics Register Player 0
-	ENAM0	0x1D    Graphics Enable Missle 0
-	ENAM1	0x1E    Graphics Enable Missle 1
-	ENABL	0x1F    Graphics Enable Ball
-	HMP0	0x20    Horizontal Motion Player 0
-	HMP1	0x21    Horizontal Motion Player 0
-	HMM0	0x22    Horizontal Motion Missle 0
-	HMM1	0x23    Horizontal Motion Missle 1
-	HMBL	0x24    Horizontal Motion Ball
-	VDELP0	0x25    Vertical Delay Player 0
-	VDELP1	0x26    Vertical Delay Player 1
-	VDELBL	0x27    Vertical Delay Ball
-	RESMP0	0x28    Reset Missle 0 to Player 0
-	RESMP1	0x29    Reset Missle 1 to Player 1
-	HMOVE	0x2A    Apply Horizontal Motion
-	HMCLR	0x2B    Clear Horizontal Move Registers
-	CXCLR	0x2C    Clear Collision Latches
+	AUDC0	0x15	Audio Control 0
+	AUDC1	0x16	Audio Control 1
+	AUDF0	0x17	Audio Frequency 0
+	AUDF1	0x18	Audio Frequency 1
+	AUDV0	0x19	Audio Volume 0
+	AUDV1	0x1A	Audio Volume 1
+	GRP0	0x1B	Graphics Register Player 0
+	GRP1	0x1C	Graphics Register Player 0
+	ENAM0	0x1D	Graphics Enable Missle 0
+	ENAM1	0x1E	Graphics Enable Missle 1
+	ENABL	0x1F	Graphics Enable Ball
+	HMP0	0x20	Horizontal Motion Player 0
+	HMP1	0x21	Horizontal Motion Player 0
+	HMM0	0x22	Horizontal Motion Missle 0
+	HMM1	0x23	Horizontal Motion Missle 1
+	HMBL	0x24	Horizontal Motion Ball
+	VDELP0	0x25	Vertical Delay Player 0
+	VDELP1	0x26	Vertical Delay Player 1
+	VDELBL	0x27	Vertical Delay Ball
+	RESMP0	0x28	Reset Missle 0 to Player 0
+	RESMP1	0x29	Reset Missle 1 to Player 1
+	HMOVE	0x2A	Apply Horizontal Motion
+	HMCLR	0x2B	Clear Horizontal Move Registers
+	CXCLR	0x2C	Clear Collision Latches
 
 
  TIA *Read* Addresses
-                                  bit 6  bit 7
+								  bit 6  bit 7
 	CXM0P	0x0    Read Collision M0-P1  M0-P0
-	CXM1P	0x1                   M1-P0  M1-P1
-	CXP0FB	0x2                   P0-PF  P0-BL
-	CXP1FB	0x3                   P1-PF  P1-BL
-	CXM0FB	0x4                   M0-PF  M0-BL
-	CXM1FB	0x5                   M1-PF  M1-BL
-	CXBLPF	0x6                   BL-PF  -----
-	CXPPMM	0x7                   P0-P1  M0-M1
-	INPT0	0x8     Read Pot Port 0
-	INPT1	0x9     Read Pot Port 1
-	INPT2	0xA     Read Pot Port 2
-	INPT3	0xB     Read Pot Port 3
-	INPT4	0xC     Read Input (Trigger) 0
-	INPT5	0xD     Read Input (Trigger) 1
+	CXM1P	0x1 				  M1-P0  M1-P1
+	CXP0FB	0x2 				  P0-PF  P0-BL
+	CXP1FB	0x3 				  P1-PF  P1-BL
+	CXM0FB	0x4 				  M0-PF  M0-BL
+	CXM1FB	0x5 				  M1-PF  M1-BL
+	CXBLPF	0x6 				  BL-PF  -----
+	CXPPMM	0x7 				  P0-P1  M0-M1
+	INPT0	0x8 	Read Pot Port 0
+	INPT1	0x9 	Read Pot Port 1
+	INPT2	0xA 	Read Pot Port 2
+	INPT3	0xB 	Read Pot Port 3
+	INPT4	0xC 	Read Input (Trigger) 0
+	INPT5	0xD 	Read Input (Trigger) 1
 
 
  RIOT Addresses
 
-	RAM	    0x80 - 0xff           RAM 0x0180-0x01FF
+	RAM 	0x80 - 0xff 		  RAM 0x0180-0x01FF
 
-	SWCHA	0x280   Port A data rwegister (joysticks)
-	SWACNT	0x281   Port A data direction register (DDR)
-	SWCHB	0x282   Port B data (Console Switches)
-	SWBCNT	0x283   Port B DDR
-	INTIM	0x284   Timer Output
+	SWCHA	0x280	Port A data rwegister (joysticks)
+	SWACNT	0x281	Port A data direction register (DDR)
+	SWCHB	0x282	Port B data (Console Switches)
+	SWBCNT	0x283	Port B DDR
+	INTIM	0x284	Timer Output
 
-	TIM1T	0x294   set 1 clock interval
-	TIM8T	0x295   set 8 clock interval
-	TIM64T	0x296   set 64 clock interval
-	T1024T	0x297   set 1024 clock interval
-                      these are also at 0x380-0x397
+	TIM1T	0x294	set 1 clock interval
+	TIM8T	0x295	set 8 clock interval
+	TIM64T	0x296	set 64 clock interval
+	T1024T	0x297	set 1024 clock interval
+					  these are also at 0x380-0x397
 
-	ROM	0xF000	 To FFFF,0x1000-1FFF
+	ROM 0xF000	 To FFFF,0x1000-1FFF
 
 ***************************************************************************/
 
@@ -132,11 +132,11 @@ static struct MemoryReadAddress readmem[] =
 
 	{ 0x0000, 0x003F, a2600_TIA_r },
 	{ 0x0040, 0x007F, a2600_TIA_r },
-	{ 0x0080, 0x00FF, MRA_RAM     },
+	{ 0x0080, 0x00FF, MRA_RAM	  },
 
 	{ 0x0100, 0x013F, a2600_TIA_r },
 	{ 0x0140, 0x017F, a2600_TIA_r },
-	{ 0x0180, 0x01FF, MRA_RAM     },
+	{ 0x0180, 0x01FF, MRA_RAM	  },
 
 	{ 0x0200, 0x023F, a2600_TIA_r },
 	{ 0x0240, 0x027F, a2600_TIA_r },
@@ -149,14 +149,14 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0280, 0x0297, a2600_riot_r },	/* RIOT reads for a2600 */
 
 
-	{ 0x1000, 0x17FF, MRA_ROM     },
+	{ 0x1000, 0x17FF, MRA_ROM	  },
 	{ 0x1800, 0x1FDF, MRA_ROM	  },
 	{ 0x1FE0, 0x1FFF, a2600_bs_r  },	/* for bankswitching */
-	{ 0xF000, 0xF7FF, MRA_ROM     },
-	{ 0xF800, 0xFFDF, MRA_ROM     },
+	{ 0xF000, 0xF7FF, MRA_ROM	  },
+	{ 0xF800, 0xFFDF, MRA_ROM	  },
 	{ 0xFFE0, 0xFFF9, a2600_bs_r  },
 	{ 0xFFFA, 0xFFFF, MRA_ROM	  },
-    { -1 }  /* end of table */
+	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
@@ -184,7 +184,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1800, 0x1FFF, MWA_ROM  },	/* ROM mirror for 2k images */
 	{ 0xF000, 0xF7FF, MWA_ROM  },
 	{ 0xF800, 0xFFFF, MWA_ROM  },	/* ROM mirror for 2k images */
-    { -1 }  /* end of table */
+	{ -1 }	/* end of table */
 };
 
 
@@ -204,7 +204,7 @@ INPUT_PORTS_START( a2600 )
 	PORT_START /* SWACNT 0x281 RIOT */
 	PORT_BIT ( 0x00, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
-    PORT_START /* SWCHB 0x282 RIOT */
+	PORT_START /* SWCHB 0x282 RIOT */
 	PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN, "Reset", KEYCODE_R, IP_JOY_DEFAULT)
 	PORT_BITX( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN, "Start", KEYCODE_S, IP_JOY_DEFAULT)
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_UNUSED)
@@ -799,7 +799,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct GfxLayout pixel4_width_1 =
 {
 	4, 1,								/* 4 x 1 pixels (PF0) */
-	16,									/* 16 codes */
+	16, 								/* 16 codes */
 	1,									/* 1 bits per pixel */
 	{0},								/* no bitplanes; 1 bit per pixel */
 	/* x offsets */
@@ -812,7 +812,7 @@ static struct GfxLayout pixel4_width_1 =
 static struct GfxLayout pixel4_width_2 =
 {
 	2 * 4, 1,							/* 2*4 x 1 pixels (PF0) */
-	16,									/* 16 codes */
+	16, 								/* 16 codes */
 	1,									/* 1 bits per pixel */
 	{0},								/* no bitplanes; 1 bit per pixel */
 	/* x offsets */
@@ -881,8 +881,8 @@ static struct MachineDriver machine_driver_a2600 =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,
 	20000,
-	a2600_init_machine,					/* init_machine */
-	a2600_stop_machine,					/* stop_machine */
+	a2600_init_machine, 				/* init_machine */
+	a2600_stop_machine, 				/* stop_machine */
 
 	/* video hardware */
 	228, 300,
@@ -930,10 +930,10 @@ static const struct IODevice io_a2600[] =
 	{
 		IO_CARTSLOT,					/* type */
 		1,								/* count */
-		"bin\0",						/* file extensions */
-		NULL,							/* private */
+		"bin\0",                        /* file extensions */
+		IO_RESET_ALL,					/* reset if file changed */
 		a2600_id_rom,					/* id */
-		a2600_load_rom,					/* init */
+		a2600_load_rom, 				/* init */
 		NULL,							/* exit */
 		NULL,							/* info */
 		NULL,							/* open */
@@ -949,5 +949,6 @@ static const struct IODevice io_a2600[] =
 	{IO_END}
 };
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
+/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
 CONSX(19??, a2600,	  0,		a2600,	  a2600,	a2600,	  "Atari",  "Atari 2600", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_WRONG_COLORS)
+

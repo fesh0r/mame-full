@@ -409,8 +409,8 @@ static const struct IODevice io_mbee[] = {
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"rom\0",            /* file extensions */
-		NULL,				/* private */
-		mbee_rom_id,		/* id */
+		IO_RESET_ALL,		/* reset if file changed */
+        mbee_rom_id,        /* id */
 		mbee_rom_load,		/* init */
 		NULL,				/* exit */
 		NULL,				/* info */
@@ -429,8 +429,8 @@ static const struct IODevice io_mbee[] = {
 		IO_FLOPPY,			/* type */
 		4,					/* count */
 		"dsk\0",            /* file extensions */
-		NULL,				/* private */
-		NULL,				/* id */
+		IO_RESET_NONE,		/* reset if file changed */
+        NULL,               /* id */
 		mbee_floppy_init,	/* init */
 		NULL,				/* exit */
 		NULL,				/* info */

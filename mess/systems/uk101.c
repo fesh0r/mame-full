@@ -310,8 +310,8 @@ static	const	struct	IODevice	io_uk101[] =
 		IO_CASSETTE,			/* type */
 		1,						/* count */
 		"bas\0",				/* file extn */
-		NULL,					/* private */
-		NULL,					/* id */
+		IO_RESET_NONE,			/* reset if file changed */
+        NULL,                   /* id */
 		uk101_init_cassette,	/* init */
 		uk101_exit_cassette,	/* exit */
 		NULL,					/* info */
@@ -334,8 +334,8 @@ static	const	struct	IODevice io_superbrd[] =
 		IO_CASSETTE,			/* type */
 		1,						/* count */
 		"bas\0",				/* file extn */
-		NULL,					/* private */
-		NULL,					/* id */
+		IO_RESET_NONE,			/* reset if file changed */
+        NULL,                   /* id */
 		uk101_init_cassette,	/* init */
 		uk101_exit_cassette,	/* exit */
 		NULL,					/* info */

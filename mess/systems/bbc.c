@@ -464,17 +464,17 @@ static const struct IODevice io_bbca[] = {
 	{
    		IO_CASSETTE,        /* type */
    		1,                  /* count */
-   		"wav\0",    /* File extensions */
-   		NULL,               /* private */
-   		NULL,               /* id */
-   		NULL,	/* init */
-   		NULL,	/* exit */
+		"wav\0",            /* File extensions */
+		IO_RESET_ALL,		/* reset if file changed */
+        NULL,               /* id */
+		NULL,				/* init */
+		NULL,				/* exit */
    		NULL,               /* info */
    		NULL,               /* open */
    		NULL,               /* close */
    		NULL,               /* status */
    		NULL,               /* seek */
-   		NULL,			   /* tell */
+		NULL,				/* tell */
    		NULL,               /* input */
    		NULL,               /* output */
    		NULL,               /* input_chunk */
@@ -488,8 +488,8 @@ static const struct IODevice io_bbcb[] = {
    		IO_CASSETTE,        /* type */
    		1,                  /* count */
    		"wav\0",    		/* File extensions */
-   		NULL,               /* private */
-   		NULL,               /* id */
+		IO_RESET_ALL,		/* reset if file changed */
+        NULL,               /* id */
    		NULL,				/* init */
    		NULL,				/* exit */
    		NULL,               /* info */
@@ -506,8 +506,8 @@ static const struct IODevice io_bbcb[] = {
 		IO_FLOPPY,			/* type */
 		4,					/* count */
 		"ssd\0",            /* file extensions */
-		NULL,               /* private */
-		NULL,				/* id */
+		IO_RESET_NONE,		/* reset if file changed */
+        NULL,               /* id */
 		bbc_floppy_init,	/* init */
 		bbc_floppy_exit,	/* exit */
 		NULL,				/* info */

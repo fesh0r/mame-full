@@ -128,7 +128,7 @@ static const struct IODevice io_amiga[] = {
 		IO_FLOPPY,			/* type */
 		4,					/* count */
 		"adf\0",            /* file extensions */
-		NULL,				/* private */
+		IO_RESET_NONE,		/* reset if file changed */
 		NULL,				/* id */
 		amiga_fdc_init, 	/* init */
 		NULL,				/* exit */

@@ -1,4 +1,3 @@
-
 /******************************************************************
  *  Fairchild Channel F driver
  *
@@ -385,7 +384,7 @@ static const struct IODevice io_channelf[] = {
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"bin\0",            /* file extensions */
-		NULL,               /* private */
+		IO_RESET_CPU,		/* reset if file changed */
 		channelf_id_rom,	/* id */
 		channelf_load_rom,	/* init */
 		NULL,				/* exit */

@@ -115,7 +115,7 @@ static const struct IODevice io_advision[] = {
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"bin\0",            /* file extensions */
-		NULL,				/* private */
+		IO_RESET_ALL,		/* reset if file changed */
 		advision_id_rom,	/* id */
 		advision_load_rom, 	/* init */
 		NULL,				/* exit */

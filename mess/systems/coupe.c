@@ -635,8 +635,8 @@ static const struct IODevice io_coupe[] =
 		IO_FLOPPY,			/* type */
 		2,					/* count */
 		"dsk\0",            /* file extensions */		// Only .DSK (raw dump images) are supported at present
-		NULL,				/* private */
-		NULL,				/* id */
+		IO_RESET_NONE,		/* reset if file changed */
+        NULL,               /* id */
 		coupe_fdc_init, 	/* init */
 		NULL,				/* exit */
 		NULL,				/* info */

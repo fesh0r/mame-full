@@ -581,7 +581,7 @@ static const struct IODevice io_msx[] = {
     IO_CARTSLOT,                /* type */
     MSX_MAX_CARTS,              /* count */
     "rom\0",                    /* file extensions */
-    NULL,                       /* private */
+	IO_RESET_ALL,				/* reset if file changed */
     msx_id_rom,                 /* id */
     msx_load_rom,               /* init */
     msx_exit_rom,               /* exit */

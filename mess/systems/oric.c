@@ -228,8 +228,8 @@ static const struct IODevice io_oric1[] = {
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"tap\0",            /* file extensions */
-        NULL,               /* private */
-		NULL,				/* id */
+		IO_RESET_NONE,		/* reset if file changed */
+        NULL,               /* id */
 		oric_load_rom,		/* init */
 		NULL,				/* exit */
         NULL,               /* info */
@@ -251,8 +251,8 @@ static const struct IODevice io_orica[] = {
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"tap\0",            /* file extensions */
-        NULL,               /* private */
-		NULL,				/* id */
+		IO_RESET_NONE,		/* reset if file changed */
+        NULL,               /* id */
 		oric_load_rom,		/* init */
 		NULL,				/* exit */
         NULL,               /* info */

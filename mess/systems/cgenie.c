@@ -541,7 +541,7 @@ static const struct IODevice io_cgenie[] = {
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"rom\0",            /* file extensions */
-        NULL,               /* private */
+		IO_RESET_CPU,		/* reset if file changed */
 		cgenie_rom_id,		/* id */
 		cgenie_rom_load,	/* init */
 		NULL,				/* exit */
@@ -560,7 +560,7 @@ static const struct IODevice io_cgenie[] = {
 		IO_CASSETTE,		/* type */
 		1,					/* count */
 		"cas\0cmd\0",       /* file extensions */
-        NULL,               /* private */
+		IO_RESET_CPU,		/* reset if file changed */
         NULL,               /* id */
 		cgenie_cassette_init,/* init */
 		NULL,				/* exit */
@@ -579,7 +579,7 @@ static const struct IODevice io_cgenie[] = {
 		IO_FLOPPY,			/* type */
 		4,					/* count */
 		"dsk\0",            /* file extensions */
-        NULL,               /* private */
+		IO_RESET_NONE,		/* reset if file changed */
         NULL,               /* id */
 		cgenie_floppy_init, /* init */
 		NULL,				/* exit */

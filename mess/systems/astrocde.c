@@ -239,8 +239,8 @@ static const struct IODevice io_astrocde[] = {
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"bin\0",            /* file extensions */
-		NULL,               /* private */
-		astrocade_id_rom,	/* id */
+		IO_RESET_CPU,		/* reset if file changed */
+        astrocade_id_rom,   /* id */
 		astrocade_load_rom, /* init */
 		NULL,				/* exit */
 		NULL,				/* info */

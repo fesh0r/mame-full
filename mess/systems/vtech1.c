@@ -617,7 +617,7 @@ static const struct IODevice io_laser[] = {
         IO_SNAPSHOT,            /* type */
         1,                      /* count */
         "vz\0",                 /* file extensions */
-        NULL,                   /* private */
+		IO_RESET_ALL,			/* reset if file changed */
         vtech1_snapshot_id,     /* id */
         vtech1_snapshot_init,   /* init */
         vtech1_snapshot_exit,   /* exit */
@@ -636,8 +636,8 @@ static const struct IODevice io_laser[] = {
 		IO_FLOPPY,				/* type */
 		2,						/* count */
 		"dsk\0",                /* file extensions */
-		NULL,					/* private */
-		vtech1_floppy_id,		/* id */
+		IO_RESET_NONE,			/* reset if file changed */
+        vtech1_floppy_id,       /* id */
 		vtech1_floppy_init, 	/* init */
 		vtech1_floppy_exit, 	/* exit */
 		NULL,					/* info */

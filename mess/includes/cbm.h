@@ -87,10 +87,10 @@ int cbm_c65_quick_open (int id, int mode, void *arg);
 
 #define IODEVICE_CBM_PET1_QUICK \
 {\
-   IO_QUICKLOAD,          /* type */\
-   1,                                      /* count */\
-   "p00\0prg\0",            /*file extensions */\
-   NULL,               /* private */\
+   IO_QUICKLOAD,	   /* type */\
+   1,				   /* count */\
+   "p00\0prg\0",       /*file extensions */\
+   IO_RESET_CPU,	   /* reset if file changed */\
    NULL,               /* id */\
    cbm_quick_init,     /* init */\
    cbm_quick_exit,     /* exit */\
@@ -110,7 +110,7 @@ int cbm_c65_quick_open (int id, int mode, void *arg);
    IO_QUICKLOAD,          /* type */\
    1,                                      /* count */\
    "p00\0prg\0",            /*file extensions */\
-   NULL,               /* private */\
+   IO_RESET_CPU,	   /* reset if file changed */\
    NULL,               /* id */\
    cbm_quick_init,     /* init */\
    cbm_quick_exit,     /* exit */\
@@ -130,7 +130,7 @@ int cbm_c65_quick_open (int id, int mode, void *arg);
    IO_QUICKLOAD,          /* type */\
    1,                                      /* count */\
    "p00\0prg\0",            /*file extensions */\
-   NULL,               /* private */\
+   IO_RESET_CPU,	   /* reset if file changed */\
    NULL,               /* id */\
    cbm_quick_init,     /* init */\
    cbm_quick_exit,     /* exit */\
@@ -150,7 +150,7 @@ int cbm_c65_quick_open (int id, int mode, void *arg);
    IO_QUICKLOAD,          /* type */\
    1,                                      /* count */\
    "p00\0prg\0",            /*file extensions */\
-   NULL,               /* private */\
+   IO_RESET_CPU,	   /* reset if file changed */\
    NULL,               /* id */\
    cbm_quick_init,     /* init */\
    cbm_quick_exit,     /* exit */\
@@ -170,7 +170,7 @@ int cbm_c65_quick_open (int id, int mode, void *arg);
    IO_QUICKLOAD,          /* type */\
    1,                                      /* count */\
    "p00\0prg\0",            /*file extensions */\
-   NULL,               /* private */\
+   IO_RESET_CPU,	   /* reset if file changed */\
    NULL,               /* id */\
    cbm_quick_init,     /* init */\
    cbm_quick_exit,     /* exit */\
@@ -190,7 +190,7 @@ int cbm_c65_quick_open (int id, int mode, void *arg);
    IO_QUICKLOAD,          /* type */\
    1,                                      /* count */\
    "p00\0prg\0",            /*file extensions */\
-   NULL,               /* private */\
+   IO_RESET_CPU,	   /* reset if file changed */\
    NULL,               /* id */\
    cbm_quick_init,     /* init */\
    cbm_quick_exit,     /* exit */\
@@ -225,7 +225,7 @@ extern CBM_ROM cbm_rom[0x20];
    IO_CARTSLOT,        /* type */\
    2,                  /* in reality 1 *//* count */\
    extensions,            /*file extensions */\
-   NULL,               /* private */\
+   IO_RESET_ALL,	   /* reset if file changed */\
    idfunc,             /* id */\
    cbm_rom_init,       /* init */\
    cbm_rom_exit,       /* exit */\

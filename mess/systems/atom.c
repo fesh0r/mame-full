@@ -256,8 +256,8 @@ static const struct IODevice io_atom[] =
 		IO_CARTSLOT,
 		1,						/* count */
 		"atm\0",				/* file extn */
-		NULL,					/* private */
-		NULL,					/* id */
+		IO_RESET_ALL,			/* reset if file changed */
+        NULL,                   /* id */
 		atom_init_atm,			/* init */
 		NULL,					/* exit */
 		NULL,					/* info */

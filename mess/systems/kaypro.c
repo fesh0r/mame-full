@@ -298,8 +298,8 @@ static const struct IODevice io_kaypro[] = {
 		IO_FLOPPY,			/* type */
 		4,					/* count */
 		"dsk\0",            /* file extensions */
-		NULL,				/* private */
-		NULL,				/* id */
+		IO_RESET_NONE,		/* reset if file changed */
+        NULL,               /* id */
 		kaypro_floppy_init, /* init */
 		NULL,				/* exit */
 		NULL,				/* info */

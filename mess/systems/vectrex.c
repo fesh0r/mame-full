@@ -170,8 +170,8 @@ static const struct IODevice io_vectrex[] = {
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"bin\0gam\0",       /* file extensions */
-		NULL,				/* private */
-		vectrex_id_rom, 	/* id */
+		IO_RESET_ALL,		/* reset if file changed */
+        vectrex_id_rom,     /* id */
 		vectrex_load_rom,	/* init */
 		NULL,				/* exit */
 		NULL,				/* info */
