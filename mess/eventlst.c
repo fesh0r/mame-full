@@ -26,8 +26,9 @@ Number_of_CPU_Cycles_In_A_Frame/Minimum_Number_Of_Cycles_Per_Instruction */
 void EventList_Initialise(int NumEntries)
 {
 	pEventListBuffer = auto_malloc(sizeof(EVENT_LIST_ITEM)*NumEntries);
-	TotalEvents = 0;
+	TotalEvents = NumEntries;
 	CyclesPerFrame = 0;
+	EventList_Reset();
 }
 
 /* reset the change list */
