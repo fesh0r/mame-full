@@ -33,11 +33,11 @@ EXTERN int		use_private_cmap;
 EXTERN int		use_xil;
 EXTERN int		use_mt_xil;
 #endif
-#ifdef USE_XV
-EXTERN int		use_xv;
-EXTERN long		xv_redmask;
-EXTERN long		xv_greenmask;
-EXTERN long		xv_bluemask;
+#ifdef USE_HWSCALE
+EXTERN int		use_hwscale;
+EXTERN long		hwscale_redmask;
+EXTERN long		hwscale_greenmask;
+EXTERN long		hwscale_bluemask;
 #endif
 extern struct rc_option xf86_dga_opts[];
 extern struct rc_option x11_window_opts[];
