@@ -859,8 +859,8 @@ void logerror(const char *text, ...)
 		va_start(arg, text);
 		vfprintf(errorlog, text, arg);
 		va_end(arg);
+		fflush(errorlog);
 	}
-	fflush(errorlog);
 }
 
 #ifdef MESS
