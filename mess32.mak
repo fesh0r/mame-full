@@ -882,7 +882,7 @@ clean:
 	del $(OBJ)\mess\formats\*.o
 	del $(OBJ)\mess\sndhrdw\*.o
 	del $(OBJ)\mess\tools\*.o
-	del $(OBJ)\Win32\tools\*.o
+	del $(OBJ)\mess\Win32\*.o
 !ifdef HELPFILE
 	del mame32.hlp
 	del mame32.cnt
