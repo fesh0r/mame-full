@@ -23,13 +23,6 @@ extern "C" {
 #define COMBINE_WORD(w,d)	  (((w) & ((d) >> 16)) | ((d) & 0xffff))
 #define COMBINE_WORD_MEM(a,d) (WRITE_WORD((a), (READ_WORD(a) & ((d) >> 16)) | (d)))
 
-/* depriciated. to be removed. Lee Ward 6-10-00 */
-
-/*#define MemoryReadAddress	Memory_ReadAddress
-#define MemoryWriteAddress	Memory_WriteAddress
-#define IOReadPort	IO_ReadPort
-#define IOWritePort	IO_WritePort*/
-
 /***************************************************************************
 
 Note that the memory hooks are not passed the actual memory address where
