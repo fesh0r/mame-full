@@ -21,6 +21,11 @@ System Driver Changes:
   wrap at the bottom of the screen. Fixed clearing of HDMA channels. Fixed
   background colours in mode 0. [Jimmy Li, Anthony Kruize]
 
+- [TI99] Several behind-the-scenes changes to support ti-99/8 emulation (which
+is not 100% working and disabled in MESS builds but implemented in source
+code).  Hopefully, there will be no change in functionality in the various
+ti-99/4(a) drivers.
+
 User Interface Changes:
 -----------------------
 - Added separate configuration menu, to be used for configuration items that
@@ -32,7 +37,7 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
-(none)
+- [TI99] Added preliminay support for HD images. [Raphael Nabet]
 
 Source Changes:
 ---------------
