@@ -577,6 +577,11 @@ static void sio_clock( int n_port )
 			m_p_n_sio_status[ n_port ] |= SIO_STATUS_TX_RDY;
 		}
 
+		if( n_port == 0 )
+		{
+			m_p_n_sio_rx[ n_port ] |= PSX_SIO_IN_DATA;
+		}
+
 		if( m_p_n_sio_tx_bits[ n_port ] != 0 )
 		{
 			m_p_n_sio_tx[ n_port ] = ( m_p_n_sio_tx[ n_port ] & ~PSX_SIO_OUT_DATA ) | ( ( m_p_n_sio_tx_shift[ n_port ] & 1 ) * PSX_SIO_OUT_DATA );
@@ -590,10 +595,6 @@ static void sio_clock( int n_port )
 					m_p_f_sio_handler[ n_port ]( m_p_n_sio_tx[ n_port ] | PSX_SIO_OUT_CLOCK );
 				}
 				m_p_f_sio_handler[ n_port ]( m_p_n_sio_tx[ n_port ] );
-			}
-			else
-			{
-				m_p_n_sio_rx[ n_port ] = PSX_SIO_IN_DATA;
 			}
 
 			if( m_p_n_sio_tx_bits[ n_port ] == 0 &&
@@ -625,17 +626,6 @@ static void sio_clock( int n_port )
 				}
 			}
 		}
-
-		if( ( m_p_n_sio_rx[ n_port ] & PSX_SIO_IN_DSR ) != 0 &&
-			( m_p_n_sio_rx_prev[ n_port ] & PSX_SIO_IN_DSR ) == 0 )
-		{
-			if( ( m_p_n_sio_control[ n_port ] & SIO_CONTROL_DSR_IENA ) != 0 )
-			{
-				sio_interrupt( n_port );
-			}
-		}
-
-		m_p_n_sio_rx_prev[ n_port ] = m_p_n_sio_rx[ n_port ];
 	}
 
 	sio_timer( n_port );
@@ -643,8 +633,23 @@ static void sio_clock( int n_port )
 
 void psx_sio_input( int n_port, int n_mask, int n_data )
 {
-	verboselog( 1, "psx_sio_dsr( %d, %02x, %02x )\n", n_port, n_mask, n_data );
+	verboselog( 1, "psx_sio_input( %d, %02x, %02x )\n", n_port, n_mask, n_data );
 	m_p_n_sio_rx[ n_port ] = ( m_p_n_sio_rx[ n_port ] & ~n_mask ) | ( n_data & n_mask );
+
+	if( ( m_p_n_sio_rx[ n_port ] & PSX_SIO_IN_DSR ) != 0 )
+	{
+		m_p_n_sio_status[ n_port ] |= SIO_STATUS_DSR;
+		if( ( m_p_n_sio_rx_prev[ n_port ] & PSX_SIO_IN_DSR ) == 0 &&
+			( m_p_n_sio_control[ n_port ] & SIO_CONTROL_DSR_IENA ) != 0 )
+		{
+			sio_interrupt( n_port );
+		}
+	}
+	else
+	{
+		m_p_n_sio_status[ n_port ] &= ~SIO_STATUS_DSR;
+	}
+	m_p_n_sio_rx_prev[ n_port ] = m_p_n_sio_rx[ n_port ];
 }
 
 WRITE32_HANDLER( psx_sio_w )
@@ -656,7 +661,7 @@ WRITE32_HANDLER( psx_sio_w )
 	switch( offset % 4 )
 	{
 	case 0:
-		verboselog( 2, "psx_sio_w %d data %02x (%08x)\n", n_port, data, mem_mask );
+		verboselog( 1, "psx_sio_w %d data %02x (%08x)\n", n_port, data, mem_mask );
 		m_p_n_sio_tx_data[ n_port ] = data;
 		m_p_n_sio_status[ n_port ] &= ~( SIO_STATUS_TX_RDY );
 		m_p_n_sio_status[ n_port ] &= ~( SIO_STATUS_TX_EMPTY );
