@@ -143,11 +143,11 @@ WRITE_HANDLER ( gg_psg_w )
 /****************************************************************************/
 static int sms_verify_cart (char * magic)
 {
-	const char *sysname;
+	//const char *sysname;
 	int retval;
 
-	sysname = Machine->gamedrv->name;
-	printf ("Driver is %s\n",sysname);
+	//sysname = Machine->gamedrv->name;
+	//printf ("Driver is %s\n",sysname);
 
 
 	retval = IMAGE_VERIFY_FAIL;
@@ -155,6 +155,7 @@ static int sms_verify_cart (char * magic)
 	/* Verify the file is a valid image - check $7ff0 for "TMR SEGA" */
 	if (!strncmp(&magic[0x7ff0],"TMR SEGA",8))
 	{
+		/* Technically, it should be this, but remove for now until verified:
 		if (!strcmp(sysname, "gamegear"))
 		{
 			if ((unsigned char)magic[0x7ffd] < 0x50)
@@ -165,12 +166,16 @@ static int sms_verify_cart (char * magic)
 			if ((unsigned char)magic[0x7ffd] >= 0x50)
 				retval = IMAGE_VERIFY_PASS;
 		}
+		*/
+		retval = IMAGE_VERIFY_PASS;
 	}
+
 	/* Check at $81f0 also */
 	if (!retval)
 	{
 		if (!strncmp(&magic[0x81f0],"TMR SEGA",8))
 		{
+			/* Technically, it should be this, but remove for now until verified:
 			if (!strcmp(sysname, "gamegear"))
 			{
 				if ((unsigned char)magic[0x81fd] < 0x50)
@@ -181,6 +186,8 @@ static int sms_verify_cart (char * magic)
 				if ((unsigned char)magic[0x81fd] >= 0x50)
 					retval = IMAGE_VERIFY_PASS;
 			}
+			*/
+			retval = IMAGE_VERIFY_PASS;
 		}
 	}
 
