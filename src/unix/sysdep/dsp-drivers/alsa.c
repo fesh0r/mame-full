@@ -37,6 +37,14 @@
  *     - update of the 0.9 API stuff.
  *       added -list-alsa-pcm option.
  *       improved write error handling.
+ *   v 0.7 Sat, 08 Sep 2001    Syouzou Sugitani <shy@debian.or.jp>
+ *     - update of the 0.9 API stuff.
+ *       added -alsa-buffer option.
+ *       use SND_PCM_FORMAT_S16 instead of SND_PCM_FORMAT_S16_{LE,BE}.
+ *   v 0.8 Thu, 13 Sep 2001    Syouzou Sugitani <shy@debian.or.jp>
+ *     - update of the 0.9 API stuff.
+ *       changed the -alsapcm(-pcm) to -alsa-pcm(-apcm).
+ *       changed the default value of the -alsa-pcm.
  *
  */
 

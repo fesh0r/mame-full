@@ -51,6 +51,7 @@ static struct {
 static char *pcm_name = NULL;
 static snd_pcm_stream_t stream = SND_PCM_STREAM_PLAYBACK;
 static size_t bits_per_sample, bits_per_frame;
+static unsigned int buffer_time;
 
 struct rc_option alsa_dsp_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
@@ -63,9 +64,12 @@ struct rc_option alsa_dsp_opts[] = {
 	{ "list-alsa-pcm", NULL,	rc_use_function_no_arg, NULL,
 	  NULL,    0,      0,    alsa_pcm_list,
 	  "List available pcm devices" },
-	{ "alsapcm",    "pcm",    rc_string,    &pcm_name,
-	  "plug:0,0",    0,    0,    NULL,
+	{ "alsa-pcm",    "apcm",  rc_string,    &pcm_name,
+	  "default",     0,    0,    NULL,
 	  "Specify the PCM by name" },
+	{ "alsa-buffer", "abuf",  rc_int,       &buffer_time,
+	  "250000",      0,    0,    NULL,
+	  "Set the buffer size [micro sec] (default: 250000)" },
 	{ NULL,    NULL,     rc_end,   NULL,
 	  NULL,    0,      0,    NULL,
 	  NULL }
@@ -155,13 +159,10 @@ static void *alsa_dsp_create(const void *flags)
 
 	open_mode |= SND_PCM_NONBLOCK;
 
-#ifdef LSB_FIRST
 	pcm_params.format = (dsp->hw_info.type & SYSDEP_DSP_16BIT) ?
-		SND_PCM_FORMAT_S16_LE : SND_PCM_FORMAT_U8;
-#else
-	pcm_params.format = (dsp->hw_info.type & SYSDEP_DSP_16BIT) ?
-		SND_PCM_FORMAT_S16_BE : SND_PCM_FORMAT_U8;
-#endif
+		SND_PCM_FORMAT_S16 /* Signed 16 bit CPU endian */ :
+		SND_PCM_FORMAT_U8;
+
 	/* rate >= 2000 && rate <= 128000 */
 	pcm_params.rate = dsp->hw_info.samplerate;
 	pcm_params.channels = (dsp->hw_info.type & SYSDEP_DSP_STEREO) ? 2 : 1;
@@ -492,7 +493,7 @@ static int alsa_dsp_set_params(struct alsa_dsp_priv_data *priv)
 		return 0;
 	}
 
-	snd_pcm_hw_params_set_buffer_time_near(priv->pcm_handle, hw_params, 250000, 0);
+	snd_pcm_hw_params_set_buffer_time_near(priv->pcm_handle, hw_params, buffer_time, 0);
 	snd_pcm_hw_params_set_period_size_near(priv->pcm_handle, hw_params, 1, 0);
 
 	err = snd_pcm_hw_params(priv->pcm_handle, hw_params);
