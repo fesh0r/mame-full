@@ -290,12 +290,15 @@ void vc4000_sprite_update(struct osd_bitmap *bitmap, UINT8 *collision, SPRITE *T
 	    break;
 	}
 #ifdef DEBUG
-	for (int i=0;i<10;i++) 
+	{
+	int i;
+	for (i=0;i<10;i++) 
 	    drawgfx(bitmap, Machine->gfx[0], This->data->bitmap[i],0,
 		    0,0,240,_y+i,
 		    0, TRANSPARENCY_PEN,0);
 	sprintf(message, "%d %d %.2x %.2x", vc4000_video.line, This-vc4000_video.sprites, This->data->x1, This->data->y1);
 	ui_text(Machine->scrbitmap, message, 170, _y);_y+=10;
+	}
 #endif
 
 	This->state++;
@@ -329,13 +332,16 @@ void vc4000_sprite_update(struct osd_bitmap *bitmap, UINT8 *collision, SPRITE *T
 	    break;
 	}
 #ifdef DEBUG
-	for (int i=0;i<10;i++) 
+	{
+	int i;
+	for (i=0;i<10;i++) 
 	    drawgfx(bitmap, Machine->gfx[0], This->data->bitmap[i],0,
 		    0,0,240,_y+i,
 		    0, TRANSPARENCY_PEN,0);
 	sprintf(message, ":%d %d %.2x %.2x", vc4000_video.line, This-vc4000_video.sprites, This->data->x2, This->data->y2);
 	ui_text(Machine->scrbitmap, message, 170, _y);
 	_y+=10;
+	}
 #endif
 	This->state++;
     case 13: case 14: case 15: case 16: case 17: case 18: case 19:case 20:case 21:case 22:
