@@ -215,10 +215,8 @@ static int wave_read(int id)
 				/* read ceil(wave_file->bitsPerSample/8) bits */
 				for (bit=0; bit<bitsPerSample; bit+=8)
 				{
-					/*ch = getc(wave_file->handle);
+					ch = osd_fgetc(w->file);
 					if (ch == EOF)
-						return read_error;*/
-					if (! osd_fread(w->file, &ch, 1))
 						return WAVE_ERR;
 
 					sample_buf |= ((/*uintmax_t*/unsigned long) (ch /*& 0xff*/)) << bit;
@@ -841,7 +839,7 @@ void wave_close(int id)
 #endif
 
     if( w->mode )
-	{	/* if image is writable , we do write it to disk */
+	{	/* if image is writable, we do write it to disk */
 		wave_output(id,0);
 		wave_write(id);
 		w->mode = 0;
