@@ -190,12 +190,11 @@ DEVICE_LOAD( ti99_floppy )
 				floppy[id].sides = 2;
 				floppy[id].tracksperside = 80;
 				floppy[id].secspertrack = 18;
-				floppy[id].density = 3;
+				floppy[id].density = 2;
 				done = TRUE;
 			}
 			break;
 
-#if 0
 		case 2*80*36*256:	/* 1.44Mbytes: DSHD (Myarc only) */
 			//if (use_80_track_drives)
 			{
@@ -206,7 +205,6 @@ DEVICE_LOAD( ti99_floppy )
 				done = TRUE;
 			}
 			break;
-#endif
 
 		default:
 			logerror("%s:%d: unrecognized disk image geometry\n", __FILE__, __LINE__);
@@ -216,7 +214,7 @@ DEVICE_LOAD( ti99_floppy )
 
 	if (done && (device_load_basicdsk_floppy(image, file) == INIT_PASS))
 	{
-		basicdsk_set_geometry(image, floppy[id].tracksperside, floppy[id].sides, floppy[id].secspertrack, 256, 0, 0, use_80_track_drives && (floppy[id].density < 3));
+		basicdsk_set_geometry(image, floppy[id].tracksperside, floppy[id].sides, floppy[id].secspertrack, 256, 0, 0, use_80_track_drives && (floppy[id].tracksperside <= 40));
 		basicdsk_set_calcoffset(image, ti99_calcoffset);
 
 		return INIT_PASS;
@@ -234,7 +232,7 @@ static void ti99_floppy_reset_geometries(void)
 	{
 		image = image_from_devtype_and_index(IO_FLOPPY, id);
 		if (image_exists(image))
-			basicdsk_set_geometry(image, floppy[id].tracksperside, floppy[id].sides, floppy[id].secspertrack, 256, 0, 0, use_80_track_drives && (floppy[id].density < 3));
+			basicdsk_set_geometry(image, floppy[id].tracksperside, floppy[id].sides, floppy[id].secspertrack, 256, 0, 0, use_80_track_drives && (floppy[id].tracksperside <= 40));
 	}
 }
 
