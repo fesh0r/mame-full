@@ -693,6 +693,7 @@ $(OBJ)/other.a: \
 COREOBJS += $(OBJ)/driver.o
 
 # generated text files
+ifneq ($(OS),win32)
 TEXTS += gamelist.txt
 
 gamelist.txt: $(EMULATOR)
@@ -700,5 +701,5 @@ gamelist.txt: $(EMULATOR)
 	@$(EMULATOR) -gamelistheader -noclones > gamelist.txt
 	@$(EMULATOR) -gamelist -noclones | sort >> gamelist.txt
 	@$(EMULATOR) -gamelistfooter >> gamelist.txt
-
+endif
 
