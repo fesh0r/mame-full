@@ -33,6 +33,12 @@ extern void lynx_runtime_loader_init(void);
 # endif
 #endif
 
+void lynx_audio_debug(struct osd_bitmap *bitmap);
+void lynx_audio_write(int offset, UINT8 data);
+UINT8 lynx_audio_read(int offset);
+extern int lynx_custom_start (const struct MachineSound *driver);
+extern void lynx_custom_stop (void);
+extern void lynx_custom_update (void);
 #endif
 
 #ifdef INCLUDE_LYNX_LINE_FUNCTION

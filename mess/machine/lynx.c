@@ -424,7 +424,7 @@ static void lynx_blitter(void)
 				blitter.color[i*2+1]=blitter.mem[blitter.cmd+o+i]&0xf;
 			}
 		}
-#if 1
+#if 0
 		logerror("%04x %.2x %.2x %.2x x:%.4x y:%.4x",
 				 blitter.cmd,
 				 blitter.mem[blitter.cmd],blitter.mem[blitter.cmd+1],blitter.mem[blitter.cmd+2],
@@ -537,7 +537,7 @@ READ_HANDLER(suzy_read)
 WRITE_HANDLER(suzy_write)
 {
 	suzy.data[offset]=data;
-	logerror("suzy write %.2x %.2x\n",offset,data);
+//	logerror("suzy write %.2x %.2x\n",offset,data);
 	switch(offset) {
 	case 0x55: lynx_multiply();break;
 	case 0x63: lynx_divide();break;
@@ -718,30 +718,6 @@ static void lynx_timer_write(LYNX_TIMER *This, int offset, UINT8 data)
 	}
 }
 
-typedef struct {
-	int nr;
-	UINT8 data[8];
-} LYNX_AUDIO;
-static LYNX_AUDIO lynx_audio[4]= { 
-	{ 0 },
-	{ 1 },
-	{ 2 },
-	{ 3 } 
-};
-
-static UINT8 lynx_audio_read(LYNX_AUDIO *This, int offset)
-{
-	UINT8 data=This->data[offset];
-	logerror("audio %d read %d %.2x\n", This->nr, offset, data);
-	return data;
-}
-
-static void lynx_audio_write(LYNX_AUDIO *This, int offset, UINT8 data)
-{
-	This->data[offset]=data;
-	logerror("audio %d write %d %.2x\n", This->nr, offset, data);
-}
-
 READ_HANDLER(mikey_read)
 {
 	UINT8 data=0;
@@ -759,11 +735,12 @@ READ_HANDLER(mikey_read)
 //		break;
 	case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
 	case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
-	case 0x30: case 0x31: case 0x32: case 0x33:	case 0x34: case 0x35: case 0x36: case 0x37:
+	case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
 	case 0x38: case 0x39: case 0x3a: case 0x3b: case 0x3c: case 0x3d: case 0x3e: case 0x3f:
-		data=lynx_audio_read(lynx_audio+(offset&0x1f)/8, offset&7);
+	case 0x40: case 0x41: case 0x42: case 0x43: case 0x44: case 0x50:
+		data=lynx_audio_read(offset);
 		return data;
-		break;
+//		break;
 	case 0x81:
 		data=mikey.data[offset];
 		mikey.data[offset]&=~0x10; // timer 4 autoquit!?
@@ -778,7 +755,7 @@ READ_HANDLER(mikey_read)
 	default:
 		data=mikey.data[offset];
 	}
-	logerror("mikey read %.2x %.2x\n",offset,data);
+//	logerror("mikey read %.2x %.2x\n",offset,data);
 	return data;
 }
 
@@ -799,9 +776,10 @@ WRITE_HANDLER(mikey_write)
 //		break;
 	case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
 	case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
-	case 0x30: case 0x31: case 0x32: case 0x33:	case 0x34: case 0x35: case 0x36: case 0x37:
+	case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
 	case 0x38: case 0x39: case 0x3a: case 0x3b: case 0x3c: case 0x3d: case 0x3e: case 0x3f:
-		lynx_audio_write(lynx_audio+(offset&0x1f)/8, offset&7, data);
+	case 0x40: case 0x41: case 0x42: case 0x43: case 0x44: case 0x50:
+		lynx_audio_write(offset, data);
 		return;
 //break;		
 	case 0x80:
@@ -832,7 +810,7 @@ WRITE_HANDLER(mikey_write)
 		return;
 //		break;
 	}
-	logerror("mikey write %.2x %.2x\n",offset,data);
+//	logerror("mikey write %.2x %.2x\n",offset,data);
 }
 
 WRITE_HANDLER( lynx_memory_config )

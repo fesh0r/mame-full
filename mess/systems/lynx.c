@@ -128,6 +128,7 @@ void lynx_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 		height=h;
 		osd_set_visible_area(0,width-1,0, height-1);
 	}
+	lynx_audio_debug(bitmap);
 }
 
 static void lynx_init_colors (unsigned char *sys_palette,
@@ -137,6 +138,13 @@ static void lynx_init_colors (unsigned char *sys_palette,
 	memcpy (sys_palette, lynx_palette, sizeof (lynx_palette));
 //	memcpy(sys_colortable,lynx_colortable,sizeof(lynx_colortable));
 }
+
+struct CustomSound_interface lynx_sound_interface =
+{
+	lynx_custom_start,
+	lynx_custom_stop,
+	lynx_custom_update
+};
 
 static struct MachineDriver machine_driver_lynx =
 {
@@ -173,7 +181,7 @@ static struct MachineDriver machine_driver_lynx =
 	/* sound hardware */
 	0,0,0,0,
 	{
-		// unknown ?
+		{SOUND_CUSTOM, &lynx_sound_interface},
 		{ 0 }
     }
 };
@@ -350,9 +358,9 @@ void init_lynx(void)
 #define io_lynx2 io_lynx
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR	COMPANY   FULLNAME */
-CONSX( 1989, lynx,	  0, 		lynx,  lynx, 	lynx,	  "Atari",  "Lynx", GAME_NOT_WORKING)
-CONSX( 1989, lynxa,	  lynx, 	lynx,  lynx, 	lynx,	  "Atari",  "Lynx (alternate rom save!)", GAME_NOT_WORKING)
-CONSX( 1990, lynx2,	  lynx, 	lynx,  lynx, 	lynx,	  "Atari",  "Lynx II", GAME_NOT_WORKING)
+CONSX( 1989, lynx,	  0, 		lynx,  lynx, 	lynx,	  "Atari",  "Lynx", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+CONSX( 1989, lynxa,	  lynx, 	lynx,  lynx, 	lynx,	  "Atari",  "Lynx (alternate rom save!)", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+CONSX( 1990, lynx2,	  lynx, 	lynx,  lynx, 	lynx,	  "Atari",  "Lynx II", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
 
 #ifdef RUNTIME_LOADER
 extern void lynx_runtime_loader_init(void)
