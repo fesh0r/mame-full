@@ -242,6 +242,8 @@ endif
 ifndef MESS_EXCLUDE_CBM
 DRVLIBS += \
 	$(OBJ)/kim1.a \
+	$(OBJ)/sym1.a \
+	$(OBJ)/aim65.a \
 	$(OBJ)/cbm.a $(OBJ)/cbmshare.a \
 #	$(OBJ)/amiga.a \
 
@@ -357,6 +359,7 @@ $(OBJ)/cbm.a: \
 	  $(OBJ)/mess/systems/vc20.o	 \
 	  $(OBJ)/mess/vidhrdw/ted7360.o  \
 	  $(OBJ)/mess/sndhrdw/ted7360.o  \
+	  $(OBJ)/mess/sndhrdw/t6721.o \
 	  $(OBJ)/mess/machine/c16.o	 \
 	  $(OBJ)/mess/systems/c16.o	 \
 	  $(OBJ)/mess/systems/cbmb.o	 \
@@ -529,6 +532,16 @@ $(OBJ)/kim1.a :    \
 	  $(OBJ)/mess/machine/kim1.o	 \
 	  $(OBJ)/mess/systems/kim1.o
 
+$(OBJ)/sym1.a :    \
+	  $(OBJ)/mess/vidhrdw/sym1.o	 \
+	  $(OBJ)/mess/machine/sym1.o	 \
+	  $(OBJ)/mess/systems/sym1.o
+
+$(OBJ)/aim65.a :    \
+	  $(OBJ)/mess/vidhrdw/aim65.o	 \
+	  $(OBJ)/mess/machine/aim65.o	 \
+	  $(OBJ)/mess/systems/aim65.o
+
 $(OBJ)/tangerin.a :\
 	  $(OBJ)/mess/machine/mfmdisk.o  \
 	  $(OBJ)/mess/vidhrdw/microtan.o \
@@ -656,7 +669,7 @@ COREOBJS += \
 		$(OBJ)/mess/vidhrdw/tms9928a.o \
 		$(OBJ)/mess/machine/28f008sa.o \
 		$(OBJ)/mess/machine/rriot.o	 \
-		$(OBJ)/mess/machine/riot.o	 \
+		$(OBJ)/mess/machine/riot6532.o	 \
 		$(OBJ)/mess/machine/pit8253.o  \
 		$(OBJ)/mess/machine/mc146818.o \
 		$(OBJ)/mess/machine/uart8250.o \
