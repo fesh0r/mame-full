@@ -329,6 +329,10 @@ const struct GameDriver *drivers[] =
 	DRIVER( pow3000 )		/* Creon Enterprises - Power 3000			  */
 
 	DRIVER( spectrum )	/* Sinclair ZX Spectrum 48k 				  */
+	DRIVER( specbusy )	/*                                                */
+	DRIVER( specgrot )	/*                                                */
+	DRIVER( specimc )		/*                                                */
+	DRIVER( speclec )		/*                                                */
 	DRIVER( inves )		/*                                                */
 	DRIVER( tk90x )		/*                                                */
 	DRIVER( tk95 )		/*                                                */
