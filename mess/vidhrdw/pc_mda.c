@@ -66,25 +66,32 @@ struct GfxDecodeInfo pc_mda_gfxdecodeinfo[] =
 
 /* to be done:
    only 2 digital color lines to mda/hercules monitor
-   (maximal 4 colors) */
+   (maximal 4 colors) 
+   PC200 uses different attributes from IBM.
+*/
 unsigned short mda_colortable[] = {
-     0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 0, 0,10,10,10,10,10,10,10,10,10,10,10,10, 0,10,
-     2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
-     2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
-     2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
-     2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
-     2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
-     2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
-     2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 2,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,10,
-/* flashing is done by dirtying the videoram buffer positions with attr bit #7 set */
-     0, 0,10, 2,10, 2,10, 2,10, 2,10, 2,10, 2, 0,10, 0, 0,10,10,10,10,10,10,10,10,10,10,10,10, 0,10,
-    10, 0,10, 2,10, 2,10, 2,10, 2,10, 2,10, 2,10,10,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
-    10, 0,10, 2,10, 2,10, 2,10, 2,10, 2,10, 2,10,10,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
-    10, 0,10, 2,10, 2,10, 2,10, 2,10, 2,10, 2,10,10,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
-    10, 0,10, 2,10, 2,10, 2,10, 2,10, 2,10, 2,10,10,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
-    10, 0,10, 2,10, 2,10, 2,10, 2,10, 2,10, 2,10,10,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
-    10, 0,10, 2,10, 2,10, 2,10, 2,10, 2,10, 2,10,10,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
-    10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,10,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,10,
+     0, 0, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 0, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,
+     0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,
+     0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,
+     0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,
+     0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,
+     0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,
+     0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,
+     2, 0, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 2, 0, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,
+/* nb: This---------------------------------------------^ should refer to a "dim" colour which
+ * we don't do yet */
+
+/* flashing is done by dirtying the videoram buffer positions with attr bit #7 set 
+ * These attributes are used for the flashing characters when they're visible. Note that 0x80 does
+ * not display the same way as 0x00; same for 0x88.*/
+     0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,
+     0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,
+     0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,
+     0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,
+     0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,
+     0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,
+     0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,
+     2, 0, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 2, 0, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,
 /* the two colors for HGC graphics */
      0, 10
 };
@@ -106,7 +113,7 @@ static struct {
 
 	UINT8 mode_control, configuration_switch; //hercules
 
-	struct GfxElement *gfx_char;
+	struct GfxElement *gfx_char[4];
 	struct GfxElement *gfx_graphic;
 } mda = { 0 };
 
@@ -156,11 +163,15 @@ void pc_mda_cursor(struct crtc6845_cursor *cursor)
 
 static struct crtc6845_config config= { 14318180 /*?*/, pc_mda_cursor };
 
-static void pc_mda_init_video_internal(int gfx_char, int gfx_graphic)
+static void pc_mda_init_video_internal(int gfx_char, int gfx_char_mask, int gfx_graphic)
 {
 	int i, y;
 
-	mda.gfx_char = Machine->gfx[gfx_char];
+	/* Support up to 4 fonts for PC200 */
+	for (i = 0; i < 4; i++) 
+	{
+		mda.gfx_char[i] = Machine->gfx[gfx_char + (i & gfx_char_mask)];
+	}
 	mda.gfx_graphic = Machine->gfx[gfx_graphic];
 
 	/* remove pixel column 9 for character codes 0 - 191 and 224 - 255 */
@@ -176,12 +187,14 @@ static void pc_mda_init_video_internal(int gfx_char, int gfx_graphic)
 
 void pc_mda_init_video(void)
 {
-	pc_mda_init_video_internal(0, 1);
+	pc_mda_init_video_internal(0, 0, 1);
+	videoram_size = 0x4000;
 }
 
 void pc_mda_europc_init(void)
 {
-	pc_mda_init_video_internal(3, 4);
+	pc_mda_init_video_internal(6, 3, 10);
+	videoram_size = 0x4000;
 }
 
 VIDEO_START( pc_mda )
@@ -285,6 +298,7 @@ static void mda_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 	int char_width;
 	struct rectangle r;
 	struct crtc6845_cursor cursor;
+	UINT8 attr;
 
 	char_width = Machine->scrbitmap->width / 80;
 
@@ -297,10 +311,14 @@ static void mda_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 			 sx++, offs=(offs+2)&0x3fff, r.min_x += char_width, r.max_x += char_width) {
 			if (!dirtybuffer || dirtybuffer[offs] || dirtybuffer[offs+1]) {
 				
-				drawgfx(bitmap, mda.gfx_char, videoram[offs], videoram[offs+1], 
+				attr = videoram[offs+1];	
+				drawgfx(bitmap, mda.gfx_char[CGA_FONT], videoram[offs], attr,
 						0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
+				/* Underlining */ 
+				if ((attr & 7) == 1) 
+					plot_box(bitmap, r.min_x, r.min_y + 12, char_width, 
+						1, Machine->pens[2 + (attr & 8)]);
 
-//				if ((cursor.on)&&(offs==cursor.pos*2)) {
 				if (cursor.on&&(mda.pc_framecnt&32)&&(offs==cursor.pos*2)) {
 					int k=height-cursor.top;
 					struct rectangle rect2=r;
@@ -350,17 +368,17 @@ static void mda_text_blink(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 			if (!dirtybuffer || dirtybuffer[offs] || dirtybuffer[offs+1]) {
 				
 				int attr = videoram[offs+1];
-				
 				if (attr & 0x80)	/* blinking ? */
 				{
-					if (mda.pc_blink)
-						attr = (attr & 0x70) | ((attr & 0x70) >> 4);
-					else
-						attr = attr & 0x7f;
+					if (mda.pc_blink) attr = 0;
 				}
 
-				drawgfx(bitmap, mda.gfx_char, videoram[offs], attr, 
+				drawgfx(bitmap, mda.gfx_char[CGA_FONT], videoram[offs], attr,
 						0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
+				/* Underlining */ 
+				if ((attr & 7) == 1) 
+					plot_box(bitmap, r.min_x, r.min_y + 12, char_width, 
+						1, Machine->pens[2 + (attr & 8)]);
 
 //				if ((cursor.on)&&(offs==cursor.pos*2)) {
 				if (cursor.on&&(mda.pc_framecnt&32)&&(offs==cursor.pos*2)) {

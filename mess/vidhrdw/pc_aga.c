@@ -79,21 +79,34 @@ struct GfxLayout pc200_cga_charlayout =
 struct GfxDecodeInfo europc_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &europc_cga_charlayout,	   0, 256 },   /* single width */
-	{ 1, 0x2000, &CGA_gfxlayout_1bpp,	   256*2,  16 },   /* 640x400x1 gfx */
-	{ 1, 0x2000, &CGA_gfxlayout_2bpp, 256*2+16*2,   2 },   /* 320x200x4 gfx */
-	{ 1, 0x1000, &europc_mda_charlayout,	   256*2+16*2+2*4, 256 },   /* single width */
-	{ 1, 0x2000, &pc_mda_gfxlayout_1bpp,256*2+16*2+2*4+256*2,	 1 },	/* 640x400x1 gfx */
+	{ 1, 0x0000, &europc_cga_charlayout,	                0, 256 },   /* single width */
+	{ 1, 0x0000, &europc_cga_charlayout,	                0, 256 },   /* single width */
+	{ 1, 0x0000, &europc_cga_charlayout,	                0, 256 },   /* single width */
+	{ 1, 0x8000, &CGA_gfxlayout_1bpp,                   256*2,  16 },   /* 640x400x1 gfx */
+	{ 1, 0x8000, &CGA_gfxlayout_2bpp,              256*2+16*2,   2 },   /* 320x200x4 gfx */
+	{ 1, 0x1000, &europc_mda_charlayout,      256*2+16*2+96*4, 256 },   /* single width */
+	{ 1, 0x1000, &europc_mda_charlayout,      256*2+16*2+96*4, 256 },   /* single width */
+	{ 1, 0x1000, &europc_mda_charlayout,      256*2+16*2+96*4, 256 },   /* single width */
+	{ 1, 0x1000, &europc_mda_charlayout,      256*2+16*2+96*4, 256 },   /* single width */
+	{ 1, 0x8000, &pc_mda_gfxlayout_1bpp,256*2+16*2+2*4+256*2,	 1 },	/* 640x400x1 gfx */
     { -1 } /* end of array */
 };
 
 struct GfxDecodeInfo aga_gfxdecodeinfo[] =
 {
+/* The four CGA fonts */
 	{ 1, 0x1000, &pc200_cga_charlayout,		   0, 256 },   /* single width */
-	{ 1, 0x2000, &CGA_gfxlayout_1bpp,	   256*2,  16 },   /* 640x400x1 gfx */
-	{ 1, 0x2000, &CGA_gfxlayout_2bpp, 256*2+16*2,   2 },   /* 320x200x4 gfx */
-	{ 1, 0x0000, &pc200_mda_charlayout,			   256*2+16*2+2*4, 256 },   /* single width */
-	{ 1, 0x2000, &pc_mda_gfxlayout_1bpp, 256*2+16*2+2*4+2*256,	 1 },	/* 640x400x1 gfx */
-	{ 1, 0x0000, &CGA_charlayout,			   0, 256 },   /* thin cga charset */
+	{ 1, 0x3000, &pc200_cga_charlayout,                     0, 256 },   /* single width */
+	{ 1, 0x5000, &pc200_cga_charlayout,                     0, 256 },   /* single width */
+	{ 1, 0x7000, &pc200_cga_charlayout,                     0, 256 },   /* single width */
+	{ 1, 0x8000, &CGA_gfxlayout_1bpp,                   256*2,  16 },   /* 640x400x1 gfx */
+	{ 1, 0x8000, &CGA_gfxlayout_2bpp,              256*2+16*2,   2 },   /* 320x200x4 gfx */
+/* The four MDA fonts */
+	{ 1, 0x0000, &pc200_mda_charlayout,       256*2+16*2+96*4, 256 },   /* single width */
+	{ 1, 0x2000, &pc200_mda_charlayout,       256*2+16*2+96*4, 256 },   /* single width */
+	{ 1, 0x4000, &pc200_mda_charlayout,       256*2+16*2+96*4, 256 },   /* single width */
+	{ 1, 0x6000, &pc200_mda_charlayout,       256*2+16*2+96*4, 256 },   /* single width */
+	{ 1, 0x8000, &pc_mda_gfxlayout_1bpp, 256*2+16*2+2*4+2*256,   1 },   /* 640x400x1 gfx */
     { -1 } /* end of array */
 };
 
@@ -158,7 +171,7 @@ static struct crtc6845_config config= { 14318180 /*?*/, pc_aga_cursor };
 VIDEO_START( pc_aga )
 {
 	pc_mda_europc_init();
-	if (!pc_video_start(&config, pc_aga_choosevideomode, 0))
+	if (!pc_video_start(&config, pc_aga_choosevideomode, videoram_size))
 		return 1;
 	pc_aga_set_mode(AGA_COLOR);
 	return 0;

@@ -2440,6 +2440,16 @@ READ_HANDLER( input_port_16_r ) { return readinputport(16); }
 READ_HANDLER( input_port_17_r ) { return readinputport(17); }
 READ_HANDLER( input_port_18_r ) { return readinputport(18); }
 READ_HANDLER( input_port_19_r ) { return readinputport(19); }
+READ_HANDLER( input_port_20_r ) { return readinputport(20); }
+READ_HANDLER( input_port_21_r ) { return readinputport(21); }
+READ_HANDLER( input_port_22_r ) { return readinputport(22); }
+READ_HANDLER( input_port_23_r ) { return readinputport(23); }
+READ_HANDLER( input_port_24_r ) { return readinputport(24); }
+READ_HANDLER( input_port_25_r ) { return readinputport(25); }
+READ_HANDLER( input_port_26_r ) { return readinputport(26); }
+READ_HANDLER( input_port_27_r ) { return readinputport(27); }
+READ_HANDLER( input_port_28_r ) { return readinputport(28); }
+READ_HANDLER( input_port_29_r ) { return readinputport(29); }
 
 READ16_HANDLER( input_port_0_word_r ) { return readinputport(0); }
 READ16_HANDLER( input_port_1_word_r ) { return readinputport(1); }
@@ -2461,6 +2471,16 @@ READ16_HANDLER( input_port_16_word_r ) { return readinputport(16); }
 READ16_HANDLER( input_port_17_word_r ) { return readinputport(17); }
 READ16_HANDLER( input_port_18_word_r ) { return readinputport(18); }
 READ16_HANDLER( input_port_19_word_r ) { return readinputport(19); }
+READ16_HANDLER( input_port_20_word_r ) { return readinputport(20); }
+READ16_HANDLER( input_port_21_word_r ) { return readinputport(21); }
+READ16_HANDLER( input_port_22_word_r ) { return readinputport(22); }
+READ16_HANDLER( input_port_23_word_r ) { return readinputport(23); }
+READ16_HANDLER( input_port_24_word_r ) { return readinputport(24); }
+READ16_HANDLER( input_port_25_word_r ) { return readinputport(25); }
+READ16_HANDLER( input_port_26_word_r ) { return readinputport(26); }
+READ16_HANDLER( input_port_27_word_r ) { return readinputport(27); }
+READ16_HANDLER( input_port_28_word_r ) { return readinputport(28); }
+READ16_HANDLER( input_port_29_word_r ) { return readinputport(29); }
 
 #ifdef MAME_NET
 void set_default_player_controls(int player)

@@ -635,7 +635,8 @@ void init_pc_common(void)
 
 void pc_mda_init(void)
 {
-	UINT8 *gfx = &memory_region(REGION_GFX1)[0x1000];
+	/* Get this out of the way of possibly big character ROMs */
+	UINT8 *gfx = &memory_region(REGION_GFX1)[0x8000];
 	int i;
     /* just a plain bit pattern for graphics data generation */
     for (i = 0; i < 256; i++)
@@ -652,14 +653,17 @@ void pc_mda_init(void)
 
 void pc_cga_init(void)
 {
-	UINT8 *gfx = &memory_region(REGION_GFX1)[0x1000];
+	/* Get this out of the way of possibly big character ROMs */
+	UINT8 *gfx = &memory_region(REGION_GFX1)[0x8000];
 	int i;
     /* just a plain bit pattern for graphics data generation */
     for (i = 0; i < 256; i++)
 		gfx[i] = i;
 
-	install_mem_read_handler(0, 0xb8000, 0xbbfff, MRA_RAM );
-	install_mem_write_handler(0, 0xb8000, 0xbbfff, pc_video_videoram_w );
+	/* Changed video RAM size to full 32k, for cards which support the
+	 * Plantronics chipset */
+	install_mem_read_handler(0, 0xb8000, 0xbffff, MRA_RAM );
+	install_mem_write_handler(0, 0xb8000, 0xbffff, pc_video_videoram_w );
 	videoram = memory_region(REGION_CPU1)+0xb8000;
 	videoram_size = 0x4000;
 

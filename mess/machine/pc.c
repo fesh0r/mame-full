@@ -81,7 +81,7 @@ void init_pcmda(void)
 
 void init_europc(void)
 {
-	UINT8 *gfx = &memory_region(REGION_GFX1)[0x2000];
+	UINT8 *gfx = &memory_region(REGION_GFX1)[0x8000];
 	UINT8 *rom = &memory_region(REGION_CPU1)[0];
 	int i;
 
@@ -126,7 +126,7 @@ void init_t1000hx(void)
 
 void init_pc200(void)
 {
-	UINT8 *gfx = &memory_region(REGION_GFX1)[0x2000];
+	UINT8 *gfx = &memory_region(REGION_GFX1)[0x8000];
 	int i;
 
 //	pc_init_setup(pc_setup_pc1512);
@@ -156,7 +156,7 @@ void init_pc200(void)
 
 void init_pc1512(void)
 {
-	UINT8 *gfx = &memory_region(REGION_GFX1)[0x1000];
+	UINT8 *gfx = &memory_region(REGION_GFX1)[0x8000];
 	int i;
 
 	pc_init_setup(pc_setup_pc1512);

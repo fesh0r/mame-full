@@ -39,6 +39,19 @@ void pc_sh_speaker_change_clock(double pc_clock);
 extern WRITE_HANDLER ( pc_JOY_w );
 extern READ_HANDLER ( pc_JOY_r );
 
+#define PC_NO_JOYSTICK \
+	PORT_START      /* IN15 */\
+        PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )\
+	PORT_START      /* IN16 */\
+        PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )\
+	PORT_START      /* IN17 */\
+        PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )\
+	PORT_START      /* IN18 */\
+        PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )\
+	PORT_START      /* IN19 */\
+        PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
+
+
 #define PC_JOYSTICK \
 	PORT_START	/* IN15 */\
 	PORT_BIT ( 0xf, 0xf,	 IPT_UNUSED ) \

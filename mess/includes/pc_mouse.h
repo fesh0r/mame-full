@@ -36,6 +36,15 @@ void	pc_mouse_initialise(void);
 	PORT_START /* IN14 mouse Y */ \
 	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_Y,100,0,0,0xfff,KEYCODE_UP,KEYCODE_DOWN,JOYCODE_1_UP,JOYCODE_1_DOWN) \
 
+#define PC_NO_MOUSE \
+        PORT_START      /* IN12 */\
+        PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )\
+        PORT_START      /* IN13 */\
+        PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )\
+        PORT_START      /* IN14 */\
+        PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
+
+
 #ifdef __cplusplus
 }
 #endif

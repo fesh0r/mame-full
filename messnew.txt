@@ -9,6 +9,8 @@ System Driver Changes:
 - [NES] Updated NES so that it uses the ppu2c03b support within MAME (which
   was actually originally based on the MESS NES driver code). [Brad Oliver,
   Nate Woods]
+  
+- [PC] Made fonts, monitor types and CGA chipsets configurable. [John Elliot] 
 
 - [SNES] Name select is only for sprites using tiles over 255. Fixed sprite
   wrap at the bottom of the screen. Fixed clearing of HDMA channels.

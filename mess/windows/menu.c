@@ -116,7 +116,7 @@ static int is_paused;
 
 static void customize_input(const char *title, int player, int category)
 {
-	void *dlg;
+	dialog_box *dlg;
 	struct InputPort *in;
 
 	player *= IPF_PLAYER2;
