@@ -27,7 +27,7 @@ static struct floppy_drive *get_drive(mess_image *img)
 	return image_lookuptag(img, FLOPDRVTAG);
 }
 
-static void	floppy_drive_index_callback(int id);
+static void	floppy_drive_index_callback(int image_ptr);
 
 /* this is called on device init */
 int floppy_drive_init(mess_image *img, const floppy_interface *iface)
@@ -62,9 +62,9 @@ int floppy_drive_init(mess_image *img, const floppy_interface *iface)
 
 /* this callback is executed every 300 times a second to emulate the index
 pulse. What is the length of the index pulse?? */
-static void	floppy_drive_index_callback(int id)
+static void	floppy_drive_index_callback(int image_ptr)
 {
-	mess_image *img = image_from_devtype_and_index(IO_FLOPPY, id);
+	mess_image *img = (mess_image *) image_ptr;
 	struct floppy_drive *pDrive = get_drive(img);
 
 	if (pDrive->index_pulse_callback)
@@ -202,7 +202,7 @@ void floppy_drive_set_motor_state(mess_image *img, int state)
 					/* on->off */
 					newpulse = 0;
 				}
-				timer_adjust(pDrive->index_timer, 0, image_index_in_device(img), newpulse);
+				timer_adjust(pDrive->index_timer, 0, (int) img, newpulse);
 			}
 		}
 	}

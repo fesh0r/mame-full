@@ -42,6 +42,7 @@ extern UINT32 a2;
 void apple2_init_common(void);
 DRIVER_INIT( apple2 );
 MACHINE_INIT( apple2 );
+data8_t apple2_getfloatingbusvalue(void);
 
 void apple2_interrupt(void);
 
@@ -102,8 +103,9 @@ DEVICE_LOAD ( apple2_floppy );
 READ8_HANDLER ( apple2_c0xx_slot6_r );
 WRITE8_HANDLER ( apple2_c0xx_slot6_w );
 WRITE8_HANDLER ( apple2_slot6_w );
-data8_t apple2_getfloatingbusvalue(void);
-
+UINT8 apple2_slot6_readbyte(mess_image *image);
+void apple2_slot6_writebyte(mess_image *image, UINT8 byte);
+void apple2_slot6_set_lines(mess_image *image, UINT8 new_state);
 
 /* vidhrdw/apple2.c */
 VIDEO_START( apple2 );

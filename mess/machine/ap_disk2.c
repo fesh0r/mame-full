@@ -151,6 +151,26 @@ static UINT8 process_byte(mess_image *img, struct apple2_drive *disk, int write_
 	return read_value;
 }
 
+
+
+UINT8 apple2_slot6_readbyte(mess_image *image)
+{
+	struct apple2_drive *cur_disk;
+	cur_disk = &apple2_drives[image_index_in_device(image)];
+	return process_byte(image, cur_disk, -1);
+}
+
+
+
+void apple2_slot6_writebyte(mess_image *image, UINT8 byte)
+{
+	struct apple2_drive *cur_disk;
+	cur_disk = &apple2_drives[image_index_in_device(image)];
+	process_byte(image, cur_disk, byte);
+}
+
+
+
 static void seek_disk(mess_image *img, struct apple2_drive *disk, signed int step)
 {
 	int track;
@@ -181,6 +201,49 @@ static void seek_disk(mess_image *img, struct apple2_drive *disk, signed int ste
 
 
 
+void apple2_slot6_set_lines(mess_image *cur_image, UINT8 new_state)
+{
+	int image_index;
+	struct apple2_drive *cur_disk;
+	unsigned int phase;
+	UINT8 old_state;
+
+	image_index = image_index_in_device(cur_image);
+	cur_disk = &apple2_drives[image_index];
+
+	old_state = cur_disk->state;
+	cur_disk->state = new_state;
+
+	if (new_state > old_state)
+	{
+		phase = 0;
+		switch(old_state ^ new_state)
+		{
+			case 1:	phase = 0; break;
+			case 2:	phase = 1; break;
+			case 4:	phase = 2; break;
+			case 8:	phase = 3; break;
+		}
+
+		phase -= floppy_drive_get_current_track(cur_image) * 2;
+		if (cur_disk->state & TWEEN_TRACKS)
+			phase--;
+		phase %= 4;
+
+		switch(phase)
+		{
+			case 1:
+				seek_disk(cur_image, cur_disk, +1);
+				break;
+			case 3:
+				seek_disk(cur_image, cur_disk, -1);
+				break;
+		}
+	}
+}
+
+
+
 /***************************************************************************
   apple2_c0xx_slot6_r
 ***************************************************************************/
@@ -191,6 +254,7 @@ READ8_HANDLER ( apple2_c0xx_slot6_r )
 	mess_image *cur_image;
 	unsigned int phase;
 	data8_t result = 0x00;
+	UINT8 new_state;
 
 	profiler_mark(PROFILER_SLOT6);
 
@@ -210,27 +274,15 @@ READ8_HANDLER ( apple2_c0xx_slot6_r )
 		if ((offset & 1) == 0)
 		{
 			/* phase OFF */
-			cur_disk->state &= ~(1 << phase);
+			new_state = cur_disk->state & ~(1 << phase);
 		}
 		else
 		{
 			/* phase ON */
-			cur_disk->state |= (1 << phase);
-
-			phase -= floppy_drive_get_current_track(cur_image) * 2;
-			if (cur_disk->state & TWEEN_TRACKS)
-				phase--;
-			phase %= 4;
-
-			switch(phase) {
-			case 1:
-				seek_disk(cur_image, cur_disk, +1);
-				break;
-			case 3:
-				seek_disk(cur_image, cur_disk, -1);
-				break;
-			}
+			new_state = cur_disk->state | (1 << phase);
 		}
+
+		apple2_slot6_set_lines(cur_image, new_state);
 		break;
 
 	case 0x08:		/* MOTOROFF */
