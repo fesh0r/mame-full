@@ -168,7 +168,7 @@ struct rc_option video_opts[] = {
    { "brightness",	"brt",			rc_float,	&options.brightness,
      "1.0",		0.5,			2.0,		NULL,
      "Set the brightness correction (0.5 - 2.0)" },
-   { "pause_brightness","pb",			rc_float,	&options.pause_bright,
+   { "pause_brightness","pbrt",			rc_float,	&options.pause_bright,
      "0.65",		0.5,			2.0,		NULL,
      "Additional pause brightness" },
    { "gamma",		"gc",			rc_float,	&options.gamma,
