@@ -12,8 +12,8 @@
 #include "driver.h"
 #include "memory.h"
 #include "cpu/z80/z80.h"
-#include "cpm_bios.h"
 #include "machine/wd179x.h"
+#include "cpm_bios.h"
 
 #define VERBOSE 		1
 #define VERBOSE_FDD 	1
@@ -314,7 +314,7 @@ static int fdd_write_sector(void)
  *	initialize bios functions at addresses BIOS_00 .. BIOS_11
  *	and the central bios execute function at BIOS_EXEC
  *****************************************************************************/
-void cpm_jumptable(void)
+static void cpm_jumptable(void)
 {
 	UINT8 * RAM = memory_region(REGION_CPU1);
 	int i;
@@ -566,7 +566,7 @@ void cpm_exit(void)
  * cpm_conout_chr
  * send a character to the console
  *****************************************************************************/
-void cpm_conout_chr(int data)
+static void cpm_conout_chr(int data)
 {
 	cpu_writeport(BIOS_CONOUT, data);
 }
@@ -575,7 +575,7 @@ void cpm_conout_chr(int data)
  * cpm_conout_str
  * send a zero terminated string to the console
  *****************************************************************************/
-void cpm_conout_str(char *src)
+static void cpm_conout_str(char *src)
 {
 	while (*src)
 		cpm_conout_chr(*src++);
@@ -654,7 +654,7 @@ int cpm_disk_select_format(int d, const char *id)
  * the track 'bdos_trk[curdisk]' and sector 'bdos_sec[curdisk]' are used
  * to calculate the offset.
  *****************************************************************************/
-void cpm_disk_image_seek(void)
+static void cpm_disk_image_seek(void)
 {
 	dsk_fmt *f = &formats[fmt[curdisk]];
 	int offs, o, r, s, h;
@@ -727,7 +727,7 @@ void cpm_disk_image_seek(void)
  * select a disk drive and return it's DPH (disk parameter header)
  * offset in Z80s memory range.
  *****************************************************************************/
-int cpm_disk_select(int d)
+static int cpm_disk_select(int d)
 {
 	int return_dph = 0;
 

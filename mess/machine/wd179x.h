@@ -9,10 +9,23 @@
 #define WD179X_DRQ_CLR  2
 #define WD179X_DRQ_SET  3
 
+#if 0
+
 #define DEN_FM_LO		0		/* this is used by TRS-80 (but not working) */
 #define DEN_FM_HI		1
 #define DEN_MFM_LO		2		/* and this one is the one that works */
 #define DEN_MFM_HI		3		/* There were no HD disks back then ;) */
+
+#else
+
+typedef enum {
+    DEN_FM_LO = 0,
+    DEN_FM_HI,
+    DEN_MFM_LO,
+    DEN_MFM_HI
+} DENSITY;
+
+#endif
 
 #define REAL_FDD		((void*)-1)
 

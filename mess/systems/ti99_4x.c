@@ -383,7 +383,7 @@ static void tms5220_ready_callback(int state)
 
 static struct TMS5220interface tms5220interface =
 {
-	640000L,		/* 640kHz -> 8kHz output */
+	680000L,		/* 640kHz -> 8kHz output */
 	50,				/* Volume.  I don't know the best value. */
 	NULL/*,*/			/* no IRQ callback */
 #if 0

@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+#include "machine/wd179x.h"
 #include "machine/cpm_bios.h"
 
 extern int kaypro_floppy_init(int id);

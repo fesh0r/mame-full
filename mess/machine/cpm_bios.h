@@ -87,12 +87,16 @@
 #define BIOS_EXEC	0xfff8	/* code here is: D3 00 C9 */
 #define BIOS_END	0xffff
 
+#if 0
+
 typedef enum {
     DEN_FM_LO = 0,
     DEN_FM_HI,
     DEN_MFM_LO,
     DEN_MFM_HI
 } DENSITY;
+
+#endif
 
 typedef enum {
     ORD_SIDES = 0,
