@@ -10,7 +10,7 @@
 
 	TMS9995@12MHz (including 256 bytes of on-chip 16-bit RAM and a timer),
 	V9938, TMS9919, TMS9901, MM58274 RTC, 512 kbytes of 1-wait-state CPU RAM
-	(expandable to almost 2 Mbytes), 32 kbytes of 0-wait-state CPU RAM
+	(expandable to 1 or 1.5 Mbyte?), 32 kbytes of 0-wait-state CPU RAM
 	(expandable to 64 kbytes), 128 kbytes of VRAM.
 
 
@@ -27,8 +27,9 @@
 	>80->b7: PE-bus space using spare address lines??? (i.e. AMA-AMC != 7)
 	>b8->bf: PE-bus space (most useful pages are >ba: DSR space and >bc: speech
 	  synthesizer page)
-	>ec->ef: 32kbytes of 0-wait-state RAM (>e8->ef if 64kbytes)
-	>f8->f9: boot ROM
+	>e8->ef: 64kbytes of 0-wait-state RAM (with 32kbytes of SRAM installed,
+	  only even pages (>e8, >ea, >ec and >ee) are available)
+	>f0->f1: boot ROM
 
 	Unpaged locations (99/4a mode):
 	>8000->8007: memory page registers (>8000 for page 0, >8001 for page 1,
@@ -36,7 +37,9 @@
 	>8008->801f: ???
 	>8400->9fff: sound, VDP, speech, and GROM registers (according to one
 	  source, the GROM and sound registers are only available if page >3
-	  is mapped in at location >c000 (register 6))
+	  is mapped in at location >c000 (register 6).  I am not sure the Speech
+	  registers are implemented, though I guess they are.)
+	Note that >8020->83ff IS paged.
 
 	Unpaged locations (native mode):
 	>f100: VDP data port (read/write)
@@ -355,7 +358,7 @@ static MACHINE_DRIVER_START(geneve_60hz)
 	/*MDRV_CPU_CONFIG(0)*/
 	MDRV_CPU_MEMORY(readmem, writemem)
 	MDRV_CPU_PORTS(readcru, writecru)
-	MDRV_CPU_VBLANK_INT(geneve_hblank_interrupt, 263)	/* 262.5 in 60Hz, 312.5 in 50Hz */
+	MDRV_CPU_VBLANK_INT(geneve_hblank_interrupt, 262)	/* 262.5 in 60Hz, 312.5 in 50Hz */
 	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
 
 	MDRV_FRAMES_PER_SECOND(60)	/* or 50Hz */
