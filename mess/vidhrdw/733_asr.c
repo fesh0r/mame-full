@@ -620,7 +620,7 @@ void asr733_keyboard(int unit)
 {
 	typedef enum
 	{
-		/* states for western keyboards and katakana/arabic keyboards in romaji/latin mode */
+		/* key modifier states */
 		unshifted = 0, shift, control,
 		/* special value to stop repeat if the modifier state changes */
 		special_debounce = -1
