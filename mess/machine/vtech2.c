@@ -355,6 +355,9 @@ int laser_rom_init(int id)
 	int size = 0;
     void *file;
 
+	if (device_filename(IO_CARTSLOT,id) == NULL)
+		return INIT_PASS;
+
 	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
     if( file )
     {
@@ -371,8 +374,8 @@ int laser_rom_init(int id)
 			laser_bank_mask |= 0x8000;
     }
     if( size > 0 )
-        return 0;
-    return 1;
+        return INIT_PASS;
+    return INIT_FAIL;
 }
 
 void laser_rom_exit(int id)
@@ -381,47 +384,6 @@ void laser_rom_exit(int id)
 	/* wipe out the memory contents to be 100% sure */
 	memset(&mem[0x30000], 0xff, 0x10000);
 }
-
-#ifdef VERIFY_IMAGE
-int laser_cassette_id(int id)
-{
-	UINT8 buff[256];
-    void *file;
-
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
-    if( file )
-    {
-		int i;
-
-        osd_fread(file, buff, sizeof(buff));
-
-        for( i = 0; i < 128; i++ )
-			if( buff[i] != 0x80 )
-				return 1;
-		for( i = 128; i < 128+5; i++ )
-			if( buff[i] != 0xfe )
-				return 1;
-		for( i = 128+5+1; i < 128+5+1+17; i++ )
-		{
-			if( buff[i] == 0x00 )
-				break;
-		}
-		if( i == 128+5+1+17 )
-			return 1;
-        if( buff[128+5] == 0xf0 )
-        {
-			logerror("vtech2_cassette_id: BASIC magic $%02X '%s' found\n", buff[128+5], buff+128+5+1);
-            return 0;
-        }
-		if( buff[128+5] == 0xf1 )
-        {
-			logerror("vtech2_cassette_id: MCODE magic $%02X '%s' found\n", buff[128+5], buff+128+5+1);
-            return 0;
-        }
-    }
-    return 1;
-}
-#endif
 
 #define LO	-20000
 #define HI	+20000
@@ -522,9 +484,44 @@ static int fill_wave(INT16 *buffer, int length, UINT8 *code)
     return BYTESAMPLES;
 }
 
+/*
+int laser_cassette_verify (UINT8 buff[])
+{
+	int i;
+
+	for( i = 0; i < 128; i++ )
+		if( buff[i] != 0x80 )
+			return INIT_FAIL;
+	for( i = 128; i < 128+5; i++ )
+		if( buff[i] != 0xfe )
+			return INIT_FAIL;
+	for( i = 128+5+1; i < 128+5+1+17; i++ )
+	{
+		if( buff[i] == 0x00 )
+			break;
+	}
+	if( i == 128+5+1+17 )
+		return 1;
+	if( buff[128+5] == 0xf0 )
+	{
+		logerror("vtech2_cassette_id: BASIC magic $%02X '%s' found\n", buff[128+5], buff+128+5+1);
+		return INIT_PASS;
+	}
+	if( buff[128+5] == 0xf1 )
+	{
+		logerror("vtech2_cassette_id: MCODE magic $%02X '%s' found\n", buff[128+5], buff+128+5+1);
+		return INIT_PASS;
+	}
+	return INIT_FAIL;
+}
+*/
+
 int laser_cassette_init(int id)
 {
 	void *file;
+	if (device_filename(IO_CASSETTE,id) == NULL)
+		return INIT_PASS;
+
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 	if( file )
 	{
@@ -563,11 +560,18 @@ void laser_cassette_exit(int id)
 	cassette_image = NULL;
 }
 
-#ifdef VERIFY_IMAGE
-int laser_floppy_id(int id)
+int laser_floppy_init(int id)
 {
 	void *file;
 	UINT8 buff[32];
+
+	if (device_filename(IO_FLOPPY,id) == NULL)
+	{
+		flop_specified[id] = 0;
+		return INIT_PASS;
+	}
+	else
+		flop_specified[id] = 1;
 
 	file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
     if( file )
@@ -575,15 +579,13 @@ int laser_floppy_id(int id)
         osd_fread(file, buff, sizeof(buff));
 		osd_fclose(file);
 		if( memcmp(buff, "\x80\x80\x80\x80\x80\x80\x00\xfe\0xe7\0x18\0xc3\x00\x00\x00\x80\x80", 16) == 0 )
-			return 1;
+			return INIT_PASS;
 	}
-	return 0;
-}
-#endif
+	else
+	{
+		return INIT_FAIL;
+	}
 
-int laser_floppy_init(int id)
-{
-	flop_specified[id] = device_filename(IO_FLOPPY,id) != NULL;
 	return INIT_PASS;
 }
 
