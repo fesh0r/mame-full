@@ -875,8 +875,16 @@ WRITE_HANDLER( snes_w_io )
 			if( (data & 0x2) != (snes_ram[CGWSEL] & 0x2) )
 				printf( "Add/Sub Layer: %s\n", ((data & 0x2) >> 1) ? "Subscreen" : "Fixed colour" );
 #endif
-		case CGADSUB:	/* Addition/Subtraction designation for each screen */
 			break;
+		case CGADSUB:	/* Addition/Subtraction designation for each screen */
+			{
+				UINT8 sub = (data & 0x80) >> 7;
+				snes_ppu.layer[0].blend = (data & 0x1) << sub;
+				snes_ppu.layer[1].blend = ((data & 0x2) >> 1) << sub;
+				snes_ppu.layer[2].blend = ((data & 0x4) >> 2) << sub;
+				snes_ppu.layer[3].blend = ((data & 0x8) >> 3) << sub;
+				snes_ppu.layer[4].blend = ((data & 0x10) >> 4) << sub;
+			} break;
 		case COLDATA:	/* Fixed colour data for fixed colour addition/subtraction */
 			{
 				/* Store it in the extra space we made in the CGRAM
@@ -1041,13 +1049,13 @@ WRITE_HANDLER( snes_w_io )
  * If it fails at least 3 checks then we'll assume it's not valid */
 static int snes_validate_infoblock( UINT8 *infoblock, UINT16 offset )
 {
-	INT8 valid = 3;
+	INT8 valid = 5;
 
 	/* Check the CRC and inverse CRC */
 	if( ((infoblock[offset + 0x1c] + (infoblock[offset + 0x1d] << 8)) |
 		(infoblock[offset + 0x1e] + (infoblock[offset + 0x1f] << 8))) != 0xffff )
 	{
-		valid--;
+		valid -= 3;
 	}
 	/* Check the ROM Size */
 	if( infoblock[offset + 0x17] > 13 )

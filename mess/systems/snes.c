@@ -19,7 +19,7 @@
     - Emulate extra chips - superfx, dsp2, sa-1 etc.
     - Add sound emulation. Currently the SPC700 is emulated, but that's it.
     - Add horizontal mosaic, hi-res. interlaced etc to video emulation.
-    - Add support for fullgraphic mode.
+    - Add support for fullgraphic mode(partially done).
     - Fix support for Mode 7. (In Progress)
     - Handle interleaved roms (maybe even multi-part roms, but how?)
     - Add support for running at 3.58Mhz at the appropriate time.
@@ -149,15 +149,19 @@ INPUT_PORTS_START( snes )
 	PORT_DIPSETTING(   0xc, "8bpl"  )
 
 	PORT_START	/* IN 10 : debug switches */
-	PORT_BIT_NAME( 0x1, IP_ACTIVE_HIGH, IPT_BUTTON7  | IPF_PLAYER2, "BG 1 toggle" )
-	PORT_BIT_NAME( 0x2, IP_ACTIVE_HIGH, IPT_BUTTON8  | IPF_PLAYER2, "BG 2 toggle" )
-	PORT_BIT_NAME( 0x4, IP_ACTIVE_HIGH, IPT_BUTTON9  | IPF_PLAYER2, "BG 3 toggle" )
-	PORT_BIT_NAME( 0x8, IP_ACTIVE_HIGH, IPT_BUTTON10 | IPF_PLAYER2, "BG 4 toggle" )
-	PORT_BIT_NAME( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER3, "Object toggle" )
+	PORT_BIT_NAME( 0x1, IP_ACTIVE_HIGH, IPT_BUTTON7  | IPF_PLAYER2,  "Toggle BG 1" )
+	PORT_BIT_NAME( 0x2, IP_ACTIVE_HIGH, IPT_BUTTON8  | IPF_PLAYER2,  "Toggle BG 2" )
+	PORT_BIT_NAME( 0x4, IP_ACTIVE_HIGH, IPT_BUTTON9  | IPF_PLAYER2,  "Toggle BG 3" )
+	PORT_BIT_NAME( 0x8, IP_ACTIVE_HIGH, IPT_BUTTON10 | IPF_PLAYER2,  "Toggle BG 4" )
+	PORT_BIT_NAME( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER3,  "Toggle Objects" )
+	PORT_BIT_NAME( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON8 | IPF_PLAYER3,  "Toggle Main/Sub" )
+	PORT_BIT_NAME( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON9 | IPF_PLAYER3,  "Toggle Back col" )
+	PORT_BIT_NAME( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON10 | IPF_PLAYER3, "Toggle Windows" )
 
 	PORT_START	/* IN 11 : debug input */
 	PORT_BIT_NAME( 0x1, IP_ACTIVE_HIGH, IPT_BUTTON9,  "Pal prev" )
 	PORT_BIT_NAME( 0x2, IP_ACTIVE_HIGH, IPT_BUTTON10, "Pal next" )
+	PORT_BIT_NAME( 0x4, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER4, "Toggle Transparency" )
 #endif
 INPUT_PORTS_END
 
@@ -204,6 +208,7 @@ static MACHINE_DRIVER_START( snes )
 	MDRV_MACHINE_INIT( snes )
 	MDRV_MACHINE_STOP( snes )
 
+	/* video hardware */
 	MDRV_VIDEO_START( generic_bitmapped )
 	MDRV_VIDEO_UPDATE( snes )
 
@@ -215,6 +220,7 @@ static MACHINE_DRIVER_START( snes )
 	MDRV_COLORTABLE_LENGTH(257)
 	MDRV_PALETTE_INIT( snes )
 
+	/* sound hardware */
 	MDRV_SOUND_ADD(CUSTOM, snes_sound_interface)
 MACHINE_DRIVER_END
 

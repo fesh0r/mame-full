@@ -19,7 +19,8 @@ System Driver Changes:
 - [COCO] PIA properly resets. [Nate Woods]
 
 - [SNES] Improved 16x16 background tile mode. Fixed another GDMA bug. Various
-  mode 7 fixes. Fixed background priorities in modes 2 to 7. [Anthony Kruize]
+  mode 7 fixes. Fixed background priorities in modes 2 to 7. Added support for
+  direct select to mode 7. [Anthony Kruize]
 
 - [TI99] Added support for Thierry Nouspickel's IDE card prototype. Added
   preliminary (i.e. buggy and incomplete) support for the HFDC disk controller
