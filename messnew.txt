@@ -1,77 +1,13 @@
-0.68
+0.68.1
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-- Amstrad PC1512 v2 [John Elliott]
-- Apple ][, Apple ][+ [Stefano Priore]
-- Bally Computer System [Ian Knowles]
-- GameBoy Pocket [Anthony Kruize]
-- Myarc Geneve 9640 [Raphael Nabet]
-- PC AT and PC AT VGA [Nate Woods]
+(none)
 
 System Driver Changes:
 ---------------------- 
-- [A2600] Complete driver rewrite, including emulation of the 6532 RIOT (RAM, 
-  INPUT, OUTPUT, TIMER) chip, cycle count correction in the t6502 core (fixes 
-  games like Space Invaders) and a new tia core.  [Stefan Jokisch]
-
-- [APPLE2] Enhanced models now have the M65C02 processor specified; apple2c
-  now boots.  Removed *.vid files from the BIOS set in favor of the proper
-  character ROMs (suffixed with *.chr).  80-character text mode fixed (bug
-  #311).  Implemented double hires mode (bug #303) and support for the
-  alternate character set.  [Nate Woods]
-
-- [APPLE2] Now uses the Robert Munafo palette. [Steve Nickolas]
-
-- [AQUARIUS] The palette now corresponds to the one described in the User's
-  Manual. [Stefano Priore]
-
-- [COCO] PIA properly resets. [Nate Woods]
-
-- [PC] Fixed bugs in CGA and MDA rendering (bugs #339 and #374).  Also speeded
-  up EGA/VGA rendering and marked 'xtvga' as working. [Nate Woods]
-
-- [SNES] Improved 16x16 background tile mode. Fixed another GDMA bug. Various
-  mode 7 fixes. Fixed background priorities in modes 2 to 7. Added support for
-  direct select to mode 7. Removed support for horizontal interrupts as it was
-  totally broken. 16bit by 8bit multiply is now signed. [Anthony Kruize]
-
-- [SUPERGB/GBCOLOR] No longer marked as clones of the GameBoy. [Anthony
-  Kruize]
-
-- [TI99] Added support for Thierry Nouspickel's IDE card prototype. Added
-  incomplete but working support for the HFDC disk controller card and 80-
-  track drives. Added support for a fourth floppy drive with non-TI floppy
-  controllers. Fixed Super AMS memory card emulation. [Raphael Nabet]
-
+(none)
 
 Source Changes:
 ---------------
-- The core is based on MAME 0.68.  This incorporates all features of the
-  update to this core.  [MAME team]
-
-- Drivers now have a 'compatible_with' field, that specify drivers that have
-  compatible software but are not mere clones.  [Nate Woods]
-
-- Devices are now referenced by a mess_image pointer, rather than a type/id
-  pair. [Nate Woods]
-  
-- Enhanced MESS's natural keyboard facility, so that drivers can specify
-  handlers to bypass keypress simulation.  [Nate Woods]
-
-- Changed device load and unload so that all devices are loaded before machine
-  init, but not necessarily driver init, in response to a bug (bug #366).
-  [Nate Woods]
-
-- [Windows] Default directories for the file dialogs can now be specified on
-  a device type basis at the command line (e.g. -floppydisk_dir).  This
-  option will get written out when launched from the GUI, so that per system
-  directories can be recorded (bug #345). [Nate Woods]
-
-- [Windows GUI] Fixed a bug whereby extra software paths with spaces in them
-  would not be properly persisted (bug #369). [Nate Woods]
-
-- [Imgtool] Enabled support for ti99 disk formats with more than 1600 sectors.
-  Added support for v9t9 and pc99 disk image formats (note that these image
-  formats are supported by imgtool, but not by the ti99 driver).
-  [Raphael Nabet]
+(none)
