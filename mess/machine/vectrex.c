@@ -47,7 +47,6 @@ static double imager_wheel_time = 0;
  *********************************************************************/
 int vectrex_load_rom (int id)
 {
-	static int first = 1;
 	const char *name;
 	FILE *cartfile = 0;
 
@@ -78,9 +77,7 @@ int vectrex_load_rom (int id)
 			vectrex_imager_angles = minestorm_3d_angles;
 	}
 
-	if (first)
-		first = 0;
-	else
+	if (Machine->scrbitmap)
 		vectrex_set_palette ();
 
 	return INIT_OK;
