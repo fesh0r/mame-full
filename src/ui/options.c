@@ -324,10 +324,8 @@ static REG_OPTION regGameOpts[] =
 	{ "d3deffect",              RO_ENCODE,  &gOpts.d3d_effect,                      "auto", FALSE, D3DEffectEncodeString,   D3DEffectDecodeString },
 	{ "d3dprescale",            RO_ENCODE,  &gOpts.d3d_prescale,                    "auto", FALSE, D3DPrescaleEncodeString, D3DPrescaleDecodeString },
 	{ "d3deffectrotate",        RO_BOOL,    &gOpts.d3d_rotate_effects,              "1" },
-	{ "#*d3dscan_enable",       RO_BOOL,    &gOpts.d3d_scanlines_enable,            "0" },
-	{ "#*d3dscan",              RO_INT,     &gOpts.d3d_scanlines,                   "50" },
-	{ "#*d3dfeedback_enable",   RO_BOOL,    &gOpts.d3d_feedback_enable,             "0" },
-	{ "#*d3dfeedback",          RO_INT,     &gOpts.d3d_feedback,                    "50" },
+	{ "d3dscan",                RO_INT,     &gOpts.d3d_scanlines,                   "100" },
+	{ "d3dfeedback",            RO_INT,     &gOpts.d3d_feedback,                    "100" },
 
 	{ "mouse",                  RO_BOOL,    &gOpts.use_mouse,                       "0" },
 	{ "joystick",               RO_BOOL,    &gOpts.use_joystick,                    "0" },

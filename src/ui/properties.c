@@ -169,7 +169,10 @@ static int  g_nBrightnessIndex = 0;
 static int  g_nEffectIndex     = 0;
 static int  g_nLedmodeIndex     = 0;
 static int  g_nA2DIndex		   = 0;
-
+static int g_d3d_scanlines = 0;
+static int g_d3d_scanlines_enable = 0;
+static int g_d3d_feedback = 0;
+static int g_d3d_feedback_enable = 0;
 static HICON g_hIcon = NULL;
 
 /* Property sheets */
@@ -2009,6 +2012,30 @@ static void AssignA2D(HWND hWnd)
 	pGameOpts->f_a2d = g_nA2DIndex / 20.0;
 }
 
+static void AssignD3DScanlines(HWND hWnd)
+{
+	if (g_d3d_scanlines_enable)
+	{
+		pGameOpts->d3d_scanlines = g_d3d_scanlines;
+	}
+	else
+	{
+		pGameOpts->d3d_scanlines = 100;
+	}
+}
+
+static void AssignD3DFeedback(HWND hWnd)
+{
+	if (g_d3d_feedback_enable)
+	{
+		pGameOpts->d3d_feedback = g_d3d_feedback;
+	}
+	else
+	{
+		pGameOpts->d3d_feedback = 100;
+	}
+}
+
 static void AssignRotate(HWND hWnd)
 {
 	pGameOpts->ror = 0;
@@ -2088,6 +2115,31 @@ static void ResetDataMap(void)
 	g_nFlickerIndex			= (int)(pGameOpts->f_flicker);
 	g_nIntensityIndex		= (int)((pGameOpts->f_intensity      - 0.5) * 20.0 + 0.001);
 	g_nA2DIndex				= (int)(pGameOpts->f_a2d                    * 20.0 + 0.001);
+	g_d3d_scanlines         = pGameOpts->d3d_scanlines;
+	g_d3d_scanlines_enable = TRUE;
+	if (g_d3d_scanlines < 0)
+	{
+		g_d3d_scanlines_enable = FALSE;
+		g_d3d_scanlines = 50;
+	}
+	if (g_d3d_scanlines > 99)
+	{
+		g_d3d_scanlines_enable = FALSE;
+		g_d3d_scanlines = 50;
+	}
+
+	g_d3d_feedback         = pGameOpts->d3d_feedback;
+	g_d3d_feedback_enable = TRUE;
+	if (g_d3d_feedback < 0)
+	{
+		g_d3d_feedback_enable = FALSE;
+		g_d3d_feedback = 50;
+	}
+	if (g_d3d_feedback > 99)
+	{
+		g_d3d_feedback_enable = FALSE;
+		g_d3d_feedback = 50;
+	}
 
 	// if no controller type was specified or it was standard
 	if (pGameOpts->ctrlr == NULL || stricmp(pGameOpts->ctrlr,"Standard") == 0)
@@ -2177,12 +2229,12 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_D3D_EFFECT,    DM_INT,  CT_COMBOBOX, &pGameOpts->d3d_effect,    DM_INT, &pGameOpts->d3d_effect, 0, 0, 0);
 	DataMapAdd(IDC_D3D_PRESCALE,  DM_INT,  CT_COMBOBOX, &pGameOpts->d3d_prescale,  DM_INT, &pGameOpts->d3d_prescale,  0, 0, 0);
 	DataMapAdd(IDC_D3D_ROTATE_EFFECTS,DM_BOOL,CT_BUTTON,&pGameOpts->d3d_rotate_effects,DM_BOOL,&pGameOpts->d3d_rotate_effects, 0, 0, 0);
-	DataMapAdd(IDC_D3D_SCANLINES_ENABLE,DM_BOOL, CT_BUTTON, &pGameOpts->d3d_scanlines_enable, DM_BOOL, &pGameOpts->d3d_scanlines_enable, 0, 0, 0);
-	DataMapAdd(IDC_D3D_SCANLINES, DM_INT,  CT_SLIDER,   &pGameOpts->d3d_scanlines, DM_INT, &pGameOpts->d3d_scanlines, 0, 0, 0);
-	DataMapAdd(IDC_D3D_SCANLINES_DISP, DM_NONE,  CT_NONE,   NULL, DM_INT, &pGameOpts->d3d_scanlines, 0, 0, 0);
-	DataMapAdd(IDC_D3D_FEEDBACK_ENABLE,DM_BOOL, CT_BUTTON, &pGameOpts->d3d_feedback_enable, DM_BOOL, &pGameOpts->d3d_feedback_enable, 0, 0, 0);
-	DataMapAdd(IDC_D3D_FEEDBACK,  DM_INT,  CT_SLIDER,   &pGameOpts->d3d_feedback,  DM_INT, &pGameOpts->d3d_feedback, 0, 0, 0);
-	DataMapAdd(IDC_D3D_FEEDBACK_DISP,  DM_NONE,  CT_NONE,   NULL,  DM_INT, &pGameOpts->d3d_feedback, 0, 0, 0);
+	DataMapAdd(IDC_D3D_SCANLINES_ENABLE,DM_BOOL, CT_BUTTON, &g_d3d_scanlines_enable, DM_BOOL, &pGameOpts->d3d_scanlines, 0, 0, 0);
+	DataMapAdd(IDC_D3D_SCANLINES, DM_INT,  CT_SLIDER,   &g_d3d_scanlines,          DM_INT, &pGameOpts->d3d_scanlines, 0, 0, AssignD3DScanlines);
+	DataMapAdd(IDC_D3D_SCANLINES_DISP, DM_NONE,  CT_NONE,   NULL, DM_INT, &g_d3d_scanlines, 0, 0, 0);
+	DataMapAdd(IDC_D3D_FEEDBACK_ENABLE,DM_BOOL, CT_BUTTON, &g_d3d_feedback_enable, DM_BOOL, &pGameOpts->d3d_feedback, 0, 0, 0);
+	DataMapAdd(IDC_D3D_FEEDBACK,  DM_INT,  CT_SLIDER,   &g_d3d_feedback,           DM_INT, &pGameOpts->d3d_feedback, 0, 0, AssignD3DFeedback);
+	DataMapAdd(IDC_D3D_FEEDBACK_DISP,  DM_NONE,  CT_NONE,   NULL,  DM_INT, &g_d3d_scanlines, 0, 0, 0);
 
 	/* input */
 	DataMapAdd(IDC_DEFAULT_INPUT, DM_INT,  CT_COMBOBOX, &g_nInputIndex,            DM_STRING, &pGameOpts->ctrlr, 0, 0, AssignInput);
@@ -2541,10 +2593,10 @@ static void InitializeMisc(HWND hDlg)
 				(LPARAM)MAKELONG(1, 5)); // [1, 5]
 	SendDlgItemMessage(hDlg, IDC_D3D_SCANLINES, TBM_SETRANGE,
 				(WPARAM)FALSE,
-				(LPARAM)MAKELONG(0, 100)); // [0, 100]
+				(LPARAM)MAKELONG(0, 99)); // [0, 99]
 	SendDlgItemMessage(hDlg, IDC_D3D_FEEDBACK, TBM_SETRANGE,
 				(WPARAM)FALSE,
-				(LPARAM)MAKELONG(0, 100)); // [0, 100]
+				(LPARAM)MAKELONG(0, 99)); // [0, 99]
 	SendDlgItemMessage(hDlg, IDC_ZOOM, TBM_SETRANGE,
 				(WPARAM)FALSE,
 				(LPARAM)MAKELONG(1, 8)); // [1, 8]
@@ -2606,7 +2658,8 @@ static void OptOnHScroll(HWND hwnd, HWND hwndCtl, UINT code, int pos)
 		AudioLatencySelectionChange(hwnd);
 	}
 	else
-	if (hwndCtl == GetDlgItem(hwnd, IDC_D3D_SCANLINES))
+	if (hwndCtl == GetDlgItem(hwnd, IDC_D3D_SCANLINES) ||
+		hwndCtl == GetDlgItem(hwnd, IDC_D3D_SCANLINES_ENABLE))
 	{
 		D3DScanlinesSelectionChange(hwnd);
 	}
@@ -2846,10 +2899,9 @@ static void D3DScanlinesSelectionChange(HWND hwnd)
 	// Get the current value of the control
 	value = SendDlgItemMessage(hwnd,IDC_D3D_SCANLINES, TBM_GETPOS, 0, 0);
 
-	/* Set the static display to the new value */
+	// Set the static display to the new value
 	snprintf(buffer,sizeof(buffer),"%i",value);
 	Static_SetText(GetDlgItem(hwnd,IDC_D3D_SCANLINES_DISP),buffer);
-
 }
 
 static void D3DFeedbackSelectionChange(HWND hwnd)

@@ -25,6 +25,7 @@ enum messtest_phase
 	STATE_ROOT,
 	STATE_TEST,
 	STATE_COMMAND,
+	STATE_SUBCOMMAND,
 	STATE_ABORTED
 };
 
@@ -297,6 +298,14 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 			goto unknowntag;
 		state->phase = STATE_COMMAND;
 		break;
+
+	case STATE_COMMAND:
+		/* allow one subcommand */
+		state->phase = STATE_SUBCOMMAND;
+		break;
+
+	case STATE_SUBCOMMAND:
+		goto unknowntag;
 	}
 
 	return;
@@ -357,6 +366,10 @@ static void end_handler(void *data, const XML_Char *name)
 		if (!append_command(state))
 			goto outofmemory;
 		state->phase = STATE_TEST;
+		break;
+
+	case STATE_SUBCOMMAND:
+		state->phase = STATE_COMMAND;
 		break;
 	}
 	return;
@@ -555,7 +568,7 @@ static int external_entity_handler(XML_Parser parser,
 	char buf[256];
 	char charbuf[UTF8_CHAR_MAX + 1];
 	static const char *mamekey_prefix = "mamekey_";
-	unicode_char_t c;
+	input_code_t c;
 
 	buf[0] = '\0';
 
@@ -575,14 +588,18 @@ static int external_entity_handler(XML_Parser parser,
 		c = 0;
 
 		/* this is interim until we can come up with a real solution */
-		if (!strcmp(context, "esc"))
-			c = UCHAR_MAMEKEY(ESC);
-		else if (!strcmp(context, "up"))
-			c = UCHAR_MAMEKEY(UP);
+		snprintf(buf, sizeof(buf) / sizeof(buf[0]), "KEYCODE_%s", context);
+		for (i = 0; buf[i]; i++)
+			buf[i] = toupper(buf[i]);
 
-		if (c)
+		code_init();
+		c = token_to_code(buf);
+		code_close();
+
+		if (c != CODE_NONE)
 		{
-			i = utf8_from_uchar(charbuf, sizeof(charbuf) / sizeof(charbuf[0]), c);
+			i = utf8_from_uchar(charbuf, sizeof(charbuf) / sizeof(charbuf[0]),
+				UCHAR_MAMEKEY_BEGIN + c);
 			if (i < 0)
 				goto done;
 			charbuf[i] = 0;

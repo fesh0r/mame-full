@@ -36,7 +36,6 @@ int win_write_config;
 //	LOCAL VARIABLES
 //============================================================
 
-static memory_pool devfilenames_pool;
 static char *dev_opts[IO_COUNT];
 static char *dev_dirs[IO_COUNT];
 static char *ramsize_opt;
@@ -118,7 +117,6 @@ int write_config(const char* filename, const struct GameDriver *gamedrv)
 done:
 	if (f)
 		mame_fclose(f);
-	pool_exit(&devfilenames_pool);
 	return retval;
 }
 
@@ -148,7 +146,6 @@ void osd_begin_final_unloading(void)
 	size_t len;
 
 	memset(dev_opts, 0, sizeof(dev_opts));
-	pool_init(&devfilenames_pool);
 
 	for (devtype = 0; devtype < IO_COUNT; devtype++)
 	{
@@ -177,7 +174,7 @@ void osd_begin_final_unloading(void)
 				blocksize++;
 			}
 
-			s = pool_malloc(&devfilenames_pool, blocksize);
+			s = malloc(blocksize);
 			if (!s)
 				return;
 			*s = '\0';
@@ -218,6 +215,7 @@ static int add_device(struct rc_option *option, const char *arg, int priority)
 	char *myarg;
 	const char *s;
 	int result;
+
 
 	id = device_typeid(option->name);
 	if (id < 0)

@@ -23,11 +23,7 @@
   Nov/Dec 1998 - Mike Haaland
 
 ***************************************************************************/
-#ifdef MESS
-#define MULTISESSION 0
-#else
 #define MULTISESSION 1
-#endif
 
 #ifdef _MSC_VER
 #ifndef NONAMELESSUNION
@@ -874,10 +870,8 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sd3deffectrotate",pOpts->d3d_rotate_effects ? "" : "no");
 
-		if (pOpts->d3d_scanlines_enable)
-			sprintf(&pCmdLine[strlen(pCmdLine)], " -d3dscan %i",pOpts->d3d_scanlines);
-		if (pOpts->d3d_feedback_enable)
-			sprintf(&pCmdLine[strlen(pCmdLine)], " -d3dfeedback %i",pOpts->d3d_feedback);
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -d3dscan %i",pOpts->d3d_scanlines);
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -d3dfeedback %i",pOpts->d3d_feedback);
 	}
 	/* input */
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%smouse",                   pOpts->use_mouse       ? "" : "no");
@@ -1012,6 +1006,7 @@ static int RunMAME(int nGameIndex)
 	char *argv[100];
 	char pModule[_MAX_PATH];
 	char game_name[500];
+	extern int DECL_SPEC main_(int, char**);
 		
 	ShowWindow(hMain, SW_HIDE);
 
@@ -1021,7 +1016,6 @@ static int RunMAME(int nGameIndex)
 	argv[1] = game_name;
 	argc = 2;
 
-	extern int DECL_SPEC main_(int, char**);
 	main_(argc, argv);
 
 	// recover windows cursor and our main window
@@ -2114,7 +2108,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	if (mame_validitychecks())
 	{
 		MessageBox(hMain, MAMENAME " has failed its validity checks.  The GUI will "
-			"still work, but wll emulations will fail to execute", MAMENAME, MB_OK);
+			"still work, but emulations will fail to execute", MAMENAME, MB_OK);
 	}
 #endif // MAME_DEBUG
 
@@ -2433,6 +2427,30 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 		}
 		break;
 
+	case WM_MEASUREITEM :
+	{
+		LPMEASUREITEMSTRUCT lpmis = (LPMEASUREITEMSTRUCT) lParam;
+
+		// tell the list view that each row (item) should be just taller than our font
+
+		//DefWindowProc(hWnd, message, wParam, lParam);
+		//dprintf("default row height calculation gives %u\n",lpmis->itemHeight);
+
+		TEXTMETRIC tm;
+		HDC hDC = GetDC(NULL);
+		HFONT hFontOld = (HFONT)SelectObject(hDC,hFont);
+
+		GetTextMetrics(hDC,&tm);
+		
+		lpmis->itemHeight = tm.tmHeight + tm.tmExternalLeading + 1;
+		if (lpmis->itemHeight < 17)
+			lpmis->itemHeight = 17;
+		//dprintf("we would do %u\n",tm.tmHeight + tm.tmExternalLeading + 1);
+		SelectObject(hDC,hFontOld);
+		ReleaseDC(NULL,hDC);
+
+		return TRUE;
+	}
 	default:
 
 		break;
@@ -2928,7 +2946,7 @@ static void CopyToolTipText(LPTOOLTIPTEXT lpttt)
 	else if ( iButton <= 2 )
 	{
 		//Statusbar
-	    SendMessage(lpttt->hdr.hwndFrom, TTM_SETMAXTIPWIDTH, 0, 140);
+		SendMessage(lpttt->hdr.hwndFrom, TTM_SETMAXTIPWIDTH, 0, 200);
 		if( iButton != 1)
 			SendMessage(hStatusBar, SB_GETTEXT, (WPARAM)iButton, (LPARAM)(LPSTR) &String );
 		else
@@ -3051,7 +3069,6 @@ static void UpdateStatusBar()
 
 static void UpdateHistory(void)
 {
-	LOGFONT font;
 	HDC hDC;
 	RECT rect;
 	TEXTMETRIC     tm ;
@@ -3074,7 +3091,6 @@ static void UpdateHistory(void)
 	{
 		Edit_GetRect(GetDlgItem(hMain, IDC_HISTORY),&rect);
 		nLines = Edit_GetLineCount(GetDlgItem(hMain, IDC_HISTORY) );
-		GetListFont( &font);
 		hDC = GetDC(GetDlgItem(hMain, IDC_HISTORY));
 		GetTextMetrics (hDC, &tm);
 		nLineHeight = tm.tmHeight - tm.tmInternalLeading;
