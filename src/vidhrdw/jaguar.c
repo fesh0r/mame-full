@@ -482,6 +482,12 @@ static UINT8 *get_jaguar_memory(UINT32 offset)
 		return (UINT8 *)jaguar_gpu_ram + offset - 0xf03000;
 	else if (offset >= 0xf1b000 && offset < 0xf1d000)
 		return (UINT8 *)jaguar_dsp_ram + offset - 0xf1b000;
+#ifdef MESS
+	else if (offset >= 0x800000 && (offset < (0x800000 + jaguar_cart_size)))
+		return (UINT8 *)jaguar_cart_base + offset - 0x800000;
+	else if (offset >= 0xf0b000 && offset < 0xf0c000)
+		return (UINT8 *)jaguar_gpu_ram + offset - 0xf0b000;
+#endif
 
 	logerror("get_jaguar_memory(%X)\n", offset);
 	return NULL;

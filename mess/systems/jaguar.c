@@ -60,6 +60,9 @@ data32_t *jaguar_dsp_ram;
 data32_t *jaguar_wave_rom;
 UINT8 cojag_is_r3000 = FALSE;
 
+data32_t *jaguar_cart_base;
+size_t jaguar_cart_size;
+
 
 
 /*************************************
@@ -68,15 +71,12 @@ UINT8 cojag_is_r3000 = FALSE;
  *
  *************************************/
 
+static data32_t joystick_data;
 static data32_t misc_control_data;
 static UINT8 eeprom_enable;
 
-static data32_t *cart_base;
-static size_t cart_size;
-
 static data32_t *rom_base;
 static size_t rom_size;
-
 
 
 static int jaguar_irq_callback(int level)
@@ -98,6 +98,7 @@ static MACHINE_INIT( jaguar )
 
 	memset(jaguar_shared_ram, 0, 0x400000);
 	memcpy(jaguar_shared_ram, rom_base, 0x10);
+	rom_base[0x53c / 4] = 0x67000002;
 
 	/* set up main CPU RAM/ROM banks */
 	cpu_setbank(3, jaguar_gpu_ram);
@@ -109,7 +110,7 @@ static MACHINE_INIT( jaguar )
 	cpu_setbank(12, jaguar_gpu_ram);
 	cpu_setbank(13, jaguar_dsp_ram);
 	cpu_setbank(14, jaguar_shared_ram);
-	cpu_setbank(15, cart_base);
+	cpu_setbank(15, jaguar_cart_base);
 	cpu_setbank(16, rom_base);
 
 	/* clear any spinuntil stuff */
@@ -122,6 +123,8 @@ static MACHINE_INIT( jaguar )
 
 	/* init the sound system */
 	cojag_sound_reset();
+
+	joystick_data = 0xffffffff;
 }
 
 
@@ -220,6 +223,11 @@ static WRITE32_HANDLER( dspctrl_w )
 
 static READ32_HANDLER( joystick_r )
 {
+	data16_t joystick_result = 0xffff;
+	data16_t joybuts_result = 0xffff;
+	data32_t result;
+	int i;
+
 	/*
 	 *   16        12        8         4         0
 	 *   +---------+---------+---------^---------+
@@ -233,7 +241,20 @@ static READ32_HANDLER( joystick_r )
 	 *   See the description of the column addressing to map the bits 
 	 *   to the buttons.
 	 */
-	return 0;
+
+	for (i = 0; i < 8; i++)
+	{
+		if ((joystick_data & (0x10000 << i)) == 0)
+		{
+			joystick_result &= readinputport(i);
+			joybuts_result &= readinputport(i+8);
+		}
+	}
+
+	result = joystick_result;
+	result <<= 16;
+	result |= joybuts_result;
+	return result;
 }
 
 static WRITE32_HANDLER( joystick_w )
@@ -284,6 +305,7 @@ static WRITE32_HANDLER( joystick_w )
 	 *      Set this bit to read from the joysticks, clear it to write
 	 *      to them.
 	 */
+	COMBINE_DATA(&joystick_data);
 }
 
 
@@ -430,16 +452,16 @@ MEMORY_END
 static MEMORY_WRITE32_START( jaguar_writemem )
 	{ 0x000000, 0x1fffff, MWA32_RAM, &jaguar_shared_ram },
 	{ 0x200000, 0x3fffff, MWA32_BANK4 },		/* mirror */
-	{ 0x800000, 0xdfffff, MWA32_ROM, &cart_base, &cart_size },
+	{ 0x800000, 0xdfffff, MWA32_ROM, &jaguar_cart_base, &jaguar_cart_size },
 	{ 0xe00000, 0xe1ffff, MWA32_ROM, &rom_base, &rom_size },
 	{ 0xf00000, 0xf003ff, jaguar_tom_regs32_w },
 	{ 0xf00400, 0xf007ff, MWA32_RAM, &jaguar_gpu_clut },
-	{ 0xf01400, 0xf01403, joystick_w },
 	{ 0xf02100, 0xf021ff, gpuctrl_w },
 	{ 0xf02200, 0xf022ff, jaguar_blitter_w },
 	{ 0xf03000, 0xf03fff, MWA32_RAM, &jaguar_gpu_ram },
 	{ 0xf0b000, 0xf0bfff, MWA32_BANK3 },
 	{ 0xf10000, 0xf103ff, jaguar_jerry_regs32_w },
+	{ 0xf14000, 0xf14003, joystick_w },
 //	{ 0xf17800, 0xf17803, latch_w },	// GPI04
 	{ 0xf1a100, 0xf1a13f, dspctrl_w },
 	{ 0xf1a140, 0xf1a17f, jaguar_serial_w },
@@ -523,6 +545,80 @@ MEMORY_END
  *************************************/
 
 INPUT_PORTS_START( jaguar )
+    PORT_START  /* [0] */
+    PORT_BITX( 0x0800, IP_ACTIVE_LOW, IPF_PLAYER1 | IPT_JOYSTICK_RIGHT, "Right", KEYCODE_RIGHT, JOYCODE_1_RIGHT )
+    PORT_BITX( 0x0400, IP_ACTIVE_LOW, IPF_PLAYER1 | IPT_JOYSTICK_LEFT,  "Left",  KEYCODE_LEFT,  JOYCODE_1_LEFT )
+    PORT_BITX( 0x0200, IP_ACTIVE_LOW, IPF_PLAYER1 | IPT_JOYSTICK_DOWN,  "Down",  KEYCODE_DOWN,  JOYCODE_1_DOWN )
+    PORT_BITX( 0x0100, IP_ACTIVE_LOW, IPF_PLAYER1 | IPT_JOYSTICK_UP,    "Up",    KEYCODE_UP,    JOYCODE_1_UP )
+	PORT_BIT ( 0xf0ff, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_START  /* [1] */
+	PORT_BITX( 0x0800, IP_ACTIVE_LOW, IPF_PLAYER1, "*", KEYCODE_K, CODE_NONE )
+	PORT_BITX( 0x0400, IP_ACTIVE_LOW, IPF_PLAYER1, "7", KEYCODE_7, CODE_NONE )
+	PORT_BITX( 0x0200, IP_ACTIVE_LOW, IPF_PLAYER1, "4", KEYCODE_4, CODE_NONE )
+	PORT_BITX( 0x0100, IP_ACTIVE_LOW, IPF_PLAYER1, "1", KEYCODE_1, CODE_NONE )
+	PORT_BIT ( 0xf0ff, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_START  /* [2] */
+	PORT_BITX( 0x0800, IP_ACTIVE_LOW, IPF_PLAYER1, "2", KEYCODE_2, CODE_NONE )
+	PORT_BITX( 0x0400, IP_ACTIVE_LOW, IPF_PLAYER1, "5", KEYCODE_5, CODE_NONE )
+	PORT_BITX( 0x0200, IP_ACTIVE_LOW, IPF_PLAYER1, "8", KEYCODE_8, CODE_NONE )
+	PORT_BITX( 0x0100, IP_ACTIVE_LOW, IPF_PLAYER1, "0", KEYCODE_0, CODE_NONE )
+	PORT_BIT ( 0xf0ff, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_START  /* [3] */
+	PORT_BITX( 0x0800, IP_ACTIVE_LOW, IPF_PLAYER1, "3", KEYCODE_3, CODE_NONE )
+	PORT_BITX( 0x0400, IP_ACTIVE_LOW, IPF_PLAYER1, "6", KEYCODE_6, CODE_NONE )
+	PORT_BITX( 0x0200, IP_ACTIVE_LOW, IPF_PLAYER1, "9", KEYCODE_9, CODE_NONE )
+	PORT_BITX( 0x0100, IP_ACTIVE_LOW, IPF_PLAYER1, "#", KEYCODE_L, CODE_NONE )
+	PORT_BIT ( 0xf0ff, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_START  /* [4] */
+	PORT_BITX( 0x8000, IP_ACTIVE_LOW, IPF_PLAYER2, "3", CODE_NONE, CODE_NONE )
+	PORT_BITX( 0x4000, IP_ACTIVE_LOW, IPF_PLAYER2, "6", CODE_NONE, CODE_NONE )
+	PORT_BITX( 0x2000, IP_ACTIVE_LOW, IPF_PLAYER2, "9", CODE_NONE, CODE_NONE )
+	PORT_BITX( 0x1000, IP_ACTIVE_LOW, IPF_PLAYER2, "#", CODE_NONE, CODE_NONE )
+	PORT_BIT ( 0x0fff, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_START  /* [5] */
+	PORT_BITX( 0x8000, IP_ACTIVE_LOW, IPF_PLAYER2, "2", CODE_NONE, CODE_NONE )
+	PORT_BITX( 0x4000, IP_ACTIVE_LOW, IPF_PLAYER2, "5", CODE_NONE, CODE_NONE )
+	PORT_BITX( 0x2000, IP_ACTIVE_LOW, IPF_PLAYER2, "8", CODE_NONE, CODE_NONE )
+	PORT_BITX( 0x1000, IP_ACTIVE_LOW, IPF_PLAYER2, "0", CODE_NONE, CODE_NONE )
+	PORT_BIT ( 0x0fff, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_START  /* [6] */
+	PORT_BITX( 0x8000, IP_ACTIVE_LOW, IPF_PLAYER2, "*", CODE_NONE, CODE_NONE )
+	PORT_BITX( 0x4000, IP_ACTIVE_LOW, IPF_PLAYER2, "7", CODE_NONE, CODE_NONE )
+	PORT_BITX( 0x2000, IP_ACTIVE_LOW, IPF_PLAYER2, "4", CODE_NONE, CODE_NONE )
+	PORT_BITX( 0x1000, IP_ACTIVE_LOW, IPF_PLAYER2, "1", CODE_NONE, CODE_NONE )
+	PORT_BIT ( 0x0fff, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_START  /* [7] */
+    PORT_BITX( 0x8000, IP_ACTIVE_LOW, IPF_PLAYER2 | IPT_JOYSTICK_RIGHT, "Right", KEYCODE_6_PAD, JOYCODE_2_RIGHT )
+    PORT_BITX( 0x4000, IP_ACTIVE_LOW, IPF_PLAYER2 | IPT_JOYSTICK_LEFT,  "Left",  KEYCODE_4_PAD, JOYCODE_2_LEFT )
+    PORT_BITX( 0x2000, IP_ACTIVE_LOW, IPF_PLAYER2 | IPT_JOYSTICK_DOWN,  "Down",  KEYCODE_2_PAD, JOYCODE_2_DOWN )
+    PORT_BITX( 0x1000, IP_ACTIVE_LOW, IPF_PLAYER2 | IPT_JOYSTICK_UP,    "Up",    KEYCODE_8_PAD, JOYCODE_2_UP )
+	PORT_BIT ( 0x0fff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START  /* [8] */
+	PORT_BITX( 0x0001, IP_ACTIVE_LOW, IPF_PLAYER1 | IPT_BUTTON5, "Pause",	KEYCODE_P,			JOYCODE_1_BUTTON5 )
+	PORT_BITX( 0x0002, IP_ACTIVE_LOW, IPF_PLAYER1 | IPT_BUTTON1, "A",		KEYCODE_A,			JOYCODE_1_BUTTON1 )
+	PORT_BIT ( 0xfffc, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START  /* [9] */
+	PORT_BITX( 0x0002, IP_ACTIVE_LOW, IPF_PLAYER1 | IPT_BUTTON2, "B",		KEYCODE_S,			JOYCODE_1_BUTTON2 )
+	PORT_BIT ( 0xfffd, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START  /* [10] */
+	PORT_BITX( 0x0002, IP_ACTIVE_LOW, IPF_PLAYER1 | IPT_BUTTON3, "C",		KEYCODE_X,			JOYCODE_1_BUTTON3 )
+	PORT_BIT ( 0xfffd, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START  /* [11] */
+	PORT_BITX( 0x0002, IP_ACTIVE_LOW, IPF_PLAYER1 | IPT_BUTTON4, "Option",	KEYCODE_O,			JOYCODE_1_BUTTON4 )
+	PORT_BIT ( 0xfffd, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START  /* [12] */
+	PORT_BITX( 0x0002, IP_ACTIVE_LOW, IPF_PLAYER2 | IPT_BUTTON4, "Option",	KEYCODE_PLUS_PAD,	JOYCODE_2_BUTTON4 )
+	PORT_BIT ( 0xfffd, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START  /* [13] */
+	PORT_BITX( 0x0002, IP_ACTIVE_LOW, IPF_PLAYER2 | IPT_BUTTON3, "C",		KEYCODE_MINUS_PAD,	JOYCODE_2_BUTTON3 )
+	PORT_BIT ( 0xfffd, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START  /* [14] */
+	PORT_BITX( 0x0002, IP_ACTIVE_LOW, IPF_PLAYER2 | IPT_BUTTON2, "B",		KEYCODE_ASTERISK,	JOYCODE_2_BUTTON2 )
+	PORT_BIT ( 0xfffd, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START  /* [15] */
+	PORT_BITX( 0x0001, IP_ACTIVE_LOW, IPF_PLAYER2 | IPT_BUTTON5, "Pause",	KEYCODE_ENTER_PAD,	JOYCODE_2_BUTTON5 )
+	PORT_BITX( 0x0002, IP_ACTIVE_LOW, IPF_PLAYER2 | IPT_BUTTON1, "A",		KEYCODE_SLASH_PAD,	JOYCODE_2_BUTTON1 )
+	PORT_BIT ( 0xfffc, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -652,4 +748,4 @@ SYSTEM_CONFIG_END
  *************************************/
 
 /*    YEAR	NAME      PARENT    COMPAT	MACHINE   INPUT     INIT      CONFIG	COMPANY		FULLNAME */
-CONSX(1993,	jaguar,   0,        0,		jaguar,   jaguar,   jaguar,   jaguar,	"Atari",	"Atari Jaguar", GAME_NOT_WORKING)
+CONSX(1993,	jaguar,   0,        0,		jaguar,   jaguar,   jaguar,   jaguar,	"Atari",	"Atari Jaguar", GAME_UNEMULATED_PROTECTION)
