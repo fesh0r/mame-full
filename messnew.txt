@@ -99,7 +99,9 @@ System Driver Changes:
 
 - [NES] Now uses battery_save() and battery_load() to save and load battery
   backed NVRAM. [Nate Woods]
-  
+
+- [GENESIS] Fixed broken input in some games(Bug #139). [Anthony Kruize]
+
 Source Changes:
 ---------------
 - The core is based on MAME 0.56.  This incorporates all features of the 
