@@ -689,6 +689,18 @@ void exit_devices(void)
 
 	/* KT: clean up */
 	floppy_drives_exit();
+
+#ifdef MAME_DEBUG
+	for( type = 0; type < IO_COUNT; type++ )
+	{
+		if (count[type])
+			mess_printf("OOPS!!!  Not all images free!\n");
+		else
+			mess_printf("All Images removed from devices!\n");
+
+	}
+#endif
+
 }
 
 /*
