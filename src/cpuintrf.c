@@ -117,6 +117,9 @@
 #if (HAS_PSXCPU)
 #include "cpu/mips/mips.h"
 #endif
+#if (HAS_SH2)
+#include "cpu/sh2/sh2.h"
+#endif
 #if (HAS_SC61860)
 #include "cpu/sc61860/sc61860.h"
 #endif
@@ -597,6 +600,9 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_PSXCPU)
 	CPU0(PSX,	   mips,	 8, -1,1.00,MIPS_INT_NONE,	   MIPS_INT_NONE,  MIPS_INT_NONE,  32lew, 0,32,LE,4, 4,32LEW),
+#endif
+#if (HAS_SH2)
+	CPU4(SH2,	   sh2, 	 1,  0,1.00,SH2_INT_NONE,	   SH2_INT_NONE,   -1,			   27bew, 0,27,BE,1, 2,27BEW),
 #endif
 #if (HAS_SC61860)
 	#define sc61860_ICount sc61860_icount
