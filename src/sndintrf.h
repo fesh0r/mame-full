@@ -139,16 +139,16 @@ struct MachineSound
 
 #ifdef MESS
 #if (HAS_BEEP)
-#include "mess/sound/beep.h"
+#include "sound/beep.h"
 #endif
 #if (HAS_SPEAKER)
-#include "mess/sound/speaker.h"
+#include "sound/speaker.h"
 #endif
 #if (HAS_TIA)
-#include "mess/sound/tiaintf.h"
+#include "sound/tiaintf.h"
 #endif
 #if (HAS_WAVE)
-#include "mess/sound/wave.h"
+#include "sound/wave.h"
 #endif
 #endif
 
