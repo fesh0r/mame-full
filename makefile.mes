@@ -130,10 +130,10 @@ all:	maketree $(EMULATOR) extra
 
 # include the various .mak files
 include src/core.mak
-include src/$(TARGET).mak
+include mess/$(TARGET).mak
 include src/rules.mak
 include src/$(MAMEOS)/$(MAMEOS).mak
-include src/rules_ms.mak
+include mess/rules_ms.mak
 
 ifdef DEBUG
 DBGDEFS = -DMAME_DEBUG

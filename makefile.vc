@@ -268,10 +268,10 @@ all: maketree $(EMULATOR) $(GUIEMULATOR) extra
 
 # include the various .mak files
 include src/core.mak
-include src/$(TARGET).mak
+include mess/$(TARGET).mak
 include src/rules.mak
 ifdef MESS
-include src/rules_ms.mak
+include mess/rules_ms.mak
 else
 endif
 include src/$(MAMEOS)/$(MAMEOS).mak
