@@ -230,8 +230,7 @@ extern int device_input_chunk(int type, int id, void *dst, int chunks);
 extern void device_output_chunk(int type, int id, void *src, int chunks);
 
 /* This is the dummy GameDriver with flag NOT_A_DRIVER set
- * It allows us to use an empty PARENT field in the macros.
- */
+   It allows us to use an empty PARENT field in the macros. */
 extern struct GameDriver driver_0;
 
 /******************************************************************************
