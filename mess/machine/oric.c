@@ -16,6 +16,7 @@
    - fix more disc drive/wd179x problems so more software will run
 */
 
+
 #include <stdio.h>
 #include "driver.h"
 #include "includes/oric.h"
@@ -27,6 +28,9 @@
 #include "includes/centroni.h"
 #include "printer.h"
 #include "formats/orictap.h"
+
+
+
 
 /* timer used to refresh via cb input, which will trigger ints on pulses
 from tape */
@@ -53,7 +57,8 @@ enum
 {
 	ORIC_FLOPPY_INTERFACE_NONE = 0,
 	ORIC_FLOPPY_INTERFACE_MICRODISC = 1,
-	ORIC_FLOPPY_INTERFACE_JASMIN = 2
+	ORIC_FLOPPY_INTERFACE_JASMIN = 2,
+	ORIC_FLOPPY_INTERFACE_APPLE2 = 3
 };
 
 /* called when ints are changed - cleared/set */
@@ -490,6 +495,57 @@ struct via6522_interface oric_6522_interface=
 	NULL
 };
 
+/******************************************************************************************/
+/* APPLE 2 INTERFACE */
+/* Apple2 disk interface:
+
+oric via accessed through 0x0300-0x030f,
+apple2 disc drive accessed through 0x0310-0x031f,
+disk interface rom accessed through 0x0320-0x03ff
+
+call &320 to start, or use "Boby" ROM (automatically detects disc interface)
+
+disk interface rom is a boot-rom and loads DOS from disc in the drive.
+*/
+
+extern READ_HANDLER ( apple2_c0xx_slot6_r );
+extern WRITE_HANDLER ( apple2_c0xx_slot6_w );
+extern void apple2_slot6_init(void);
+extern void apple2_slot6_stop(void);
+
+static READ_HANDLER(apple2_interface_r)
+{
+	//logerror("apple 2 interface r: %04x\n",offset);
+
+	return apple2_c0xx_slot6_r(offset & 0x0f);
+}
+
+static WRITE_HANDLER(apple2_interface_w)
+{
+	//logerror("apple 2 interface w: %04x %02x\n",offset,data);
+
+	apple2_c0xx_slot6_w(offset & 0x0f, data);
+}
+
+static void oric_install_apple2_interface(void)
+{
+	install_mem_read_handler(0, 0x0300, 0x030f, oric_IO_r);
+	install_mem_read_handler(0, 0x0310, 0x031f, apple2_interface_r);
+	install_mem_read_handler(0, 0x0320, 0x03ff, MRA_BANK4);
+	
+	install_mem_write_handler(0, 0x0300, 0x030f, oric_IO_w);
+	install_mem_write_handler(0, 0x0310, 0x031f, apple2_interface_w);
+	cpu_setbank(4, 	memory_region(REGION_CPU1) + 0x014000 + 0x020);
+
+}
+
+static void oric_uninstall_apple2_interface(void)
+{
+
+
+}
+
+
 /* JASMIN INTERFACE */
 
 
@@ -628,23 +684,23 @@ static void oric_jasmin_wd179x_callback(int State)
 	}
 }
 
-READ_HANDLER (oric_jasmin_r)
+static READ_HANDLER (oric_jasmin_r)
 {
 	unsigned char data = 0x0ff;
 
-	switch (offset & 0x0ff)
+	switch (offset & 0x0f)
 	{
 		/* jasmin floppy disc interface */
-		case 0x0f4:
+		case 0x04:
 			data = wd179x_status_r(0);
 			break;
-		case 0x0f5:
+		case 0x05:
 			data =wd179x_track_r(0);
 			break;
-		case 0x0f6:
+		case 0x06:
 			data = wd179x_sector_r(0);
 			break;
-		case 0x0f7:
+		case 0x07:
 			data = wd179x_data_r(0);
 			break;
 		default:
@@ -657,47 +713,47 @@ READ_HANDLER (oric_jasmin_r)
 	return data;
 }
 
-WRITE_HANDLER(oric_jasmin_w)
+static WRITE_HANDLER(oric_jasmin_w)
 {
-	switch (offset & 0x0ff)
+	switch (offset & 0x0f)
 	{
 		/* microdisc floppy disc interface */
-		case 0x0f4:
+		case 0x04:
 			logerror("cycles: %d\n",cpu_getcurrentcycles());
 			wd179x_command_w(0,data);
 			break;
-		case 0x0f5:
+		case 0x05:
 			wd179x_track_w(0,data);
 			break;
-		case 0x0f6:
+		case 0x06:
 			wd179x_sector_w(0,data);
 			break;
-		case 0x0f7:
+		case 0x07:
 			wd179x_data_w(0,data);
 			break;
 		/* bit 0 = side */
-		case 0x0f8:
+		case 0x08:
 			wd179x_set_side(data & 0x01);
 			break;
 		/* any write will cause wd179x to reset */
-		case 0x0f9:
+		case 0x09:
 			wd179x_reset();
 			break;
-		case 0x0fa:
+		case 0x0a:
 			logerror("jasmin overlay ram w: %02x PC: %04x\n",data,cpu_get_pc());
 			port_3fa_w = data;
 			oric_jasmin_set_mem_0x0c000();
 			break;
-		case 0x0fb:
+		case 0x0b:
 			logerror("jasmin romdis w: %02x PC: %04x\n",data,cpu_get_pc());
 			port_3fb_w = data;
 			oric_jasmin_set_mem_0x0c000();
 			break;
 		/* bit 0,1 of addr is the drive */
-		case 0x0fc:
-		case 0x0fd:
-		case 0x0fe:
-		case 0x0ff:
+		case 0x0c:
+		case 0x0d:
+		case 0x0e:
+		case 0x0f:
 			wd179x_set_drive(offset & 0x03);
 			break;
 
@@ -707,6 +763,19 @@ WRITE_HANDLER(oric_jasmin_w)
 	}
 }
 
+
+static void oric_install_jasmin_interface(void)
+{
+	/* romdis */
+	port_3fb_w = 1;
+	oric_jasmin_set_mem_0x0c000();
+
+	install_mem_read_handler(0,0x0300, 0x03ef, oric_IO_r);
+	install_mem_read_handler(0,0x03f0, 0x03ff, oric_jasmin_r);
+
+	install_mem_write_handler(0,0x0300, 0x03ef, oric_IO_w);
+	install_mem_write_handler(0,0x03f0, 0x03ff, oric_jasmin_w);
+}
 
 /*********************************/
 /* MICRODISC INTERFACE variables */
@@ -859,12 +928,125 @@ void	oric_microdisc_set_mem_0x0c000(void)
 
 
 
+static READ_HANDLER (oric_microdisc_r)
+{
+	unsigned char data = 0x0ff;
+
+	switch (offset & 0x0ff)
+	{
+		/* microdisc floppy disc interface */
+		case 0x00:
+			data = wd179x_status_r(0);
+			break;
+		case 0x01:
+			data =wd179x_track_r(0);
+			break;
+		case 0x02:
+			data = wd179x_sector_r(0);
+			break;
+		case 0x03:
+			data = wd179x_data_r(0);
+			break;
+		case 0x04:
+			data = port_314_r | 0x07f;
+/*			logerror("port_314_r: %02x\n",data); */
+			break;
+		case 0x08:
+			data = port_318_r | 0x07f;
+/*			logerror("port_318_r: %02x\n",data); */
+			break;
+
+		default:
+			data = via_0_r(offset & 0x0f);
+			break;
+
+	}
+
+	return data;
+}
+
+static WRITE_HANDLER(oric_microdisc_w)
+{
+	switch (offset & 0x0ff)
+	{
+		/* microdisc floppy disc interface */
+		case 0x00:
+			wd179x_command_w(0,data);
+			break;
+		case 0x01:
+			wd179x_track_w(0,data);
+			break;
+		case 0x02:
+			wd179x_sector_w(0,data);
+			break;
+		case 0x03:
+			wd179x_data_w(0,data);
+			break;
+		case 0x04:
+		{
+			DENSITY density;
+
+			port_314_w = data;
+
+			logerror("port_314_w: %02x\n",data); 
+
+			/* bit 6,5: drive */
+			/* bit 4: side */
+			/* bit 3: double density enable */
+			/* bit 0: enable FDC IRQ to trigger IRQ on CPU */
+			wd179x_set_drive((data>>5) & 0x03);
+			wd179x_set_side((data>>4) & 0x01);
+			if (data & (1<<3))
+			{
+				density = DEN_MFM_LO;
+			}
+			else
+			{
+				density = DEN_FM_HI;
+			}
+
+			wd179x_set_density(density);
+
+			oric_microdisc_set_mem_0x0c000();
+			oric_microdisc_refresh_wd179x_ints();
+		}
+		break;
+
+		default:
+			via_0_w(offset & 0x0f, data);
+			break;
+	}
+}
+
+static void oric_install_microdisc_interface(void)
+{
+	install_mem_read_handler(0,0x0300, 0x030f, oric_IO_r);
+	install_mem_read_handler(0,0x0310, 0x031f, oric_microdisc_r);
+	install_mem_read_handler(0,0x0320, 0x03ff, oric_IO_r);
+
+	install_mem_write_handler(0,0x0300, 0x030f, oric_IO_w);
+	install_mem_write_handler(0,0x0310, 0x031f, oric_microdisc_w);
+	install_mem_write_handler(0,0x0320, 0x03ff, oric_IO_w);
+
+	/* disable os rom, enable microdisc rom */
+	/* 0x0c000-0x0dfff will be ram, 0x0e000-0x0ffff will be microdisc rom */
+	port_314_w = 0x0ff^((1<<7) | (1<<1));
+
+	oric_microdisc_set_mem_0x0c000();
+}
+
+
+
+/*********************************************************/
+
+
 static void oric_wd179x_callback(int State)
 {
 	switch (readinputport(9) &  0x03)
 	{
 		default:
 		case ORIC_FLOPPY_INTERFACE_NONE:
+		case ORIC_FLOPPY_INTERFACE_APPLE2:
 			return;
 		case ORIC_FLOPPY_INTERFACE_MICRODISC:
 			oric_microdisc_wd179x_callback(State);
@@ -975,6 +1157,8 @@ void oric_init_machine (void)
 	switch (readinputport(9) & 0x03)
 	{
 		default:
+
+		case ORIC_FLOPPY_INTERFACE_APPLE2:
 		case ORIC_FLOPPY_INTERFACE_NONE:
 		{
 			/* setup memory when there is no disc interface */
@@ -994,30 +1178,35 @@ void oric_init_machine (void)
 			cpu_setbank(5, rom_ptr);			
 			cpu_setbank(6, rom_ptr+0x02000);			
 			cpu_setbank(7, rom_ptr+0x03800);			
+
+			install_mem_read_handler(0,0x0300, 0x03ff, oric_IO_r);
+
+			install_mem_write_handler(0,0x0300, 0x03ff, oric_IO_w);
+			
+			if ((readinputport(9) & 0x03)==ORIC_FLOPPY_INTERFACE_APPLE2)
+			{
+				oric_install_apple2_interface();
+			}
 		}
 		break;
 		
 		case ORIC_FLOPPY_INTERFACE_MICRODISC:
 		{
-			/* disable os rom, enable microdisc rom */
-			/* 0x0c000-0x0dfff will be ram, 0x0e000-0x0ffff will be microdisc rom */
-			port_314_w = 0x0ff^((1<<7) | (1<<1));
-		
-			oric_microdisc_set_mem_0x0c000();
+			oric_install_microdisc_interface();
 		}
 		break;
 
 		case ORIC_FLOPPY_INTERFACE_JASMIN:
 		{
-			/* romdis */
-			port_3fb_w = 1;
-			oric_jasmin_set_mem_0x0c000();
+			oric_install_jasmin_interface();
 		}
 		break;
 	}
 
 
 	wd179x_init(oric_wd179x_callback);
+	
+	apple2_slot6_init();
 
 }
 
@@ -1033,101 +1222,14 @@ void oric_shutdown_machine (void)
 		timer_remove(oric_tape_timer);
 		oric_tape_timer = NULL;
 	}
-}
 
-READ_HANDLER (oric_microdisc_r)
-{
-	unsigned char data = 0x0ff;
-
-	switch (offset & 0x0ff)
-	{
-		/* microdisc floppy disc interface */
-		case 0x010:
-			data = wd179x_status_r(0);
-			break;
-		case 0x011:
-			data =wd179x_track_r(0);
-			break;
-		case 0x012:
-			data = wd179x_sector_r(0);
-			break;
-		case 0x013:
-			data = wd179x_data_r(0);
-			break;
-		case 0x014:
-			data = port_314_r | 0x07f;
-/*			logerror("port_314_r: %02x\n",data); */
-			break;
-		case 0x018:
-			data = port_318_r | 0x07f;
-/*			logerror("port_318_r: %02x\n",data); */
-			break;
-
-		default:
-			data = via_0_r(offset & 0x0f);
-			break;
-
-	}
-
-	return data;
-}
-
-WRITE_HANDLER(oric_microdisc_w)
-{
-	switch (offset & 0x0ff)
-	{
-		/* microdisc floppy disc interface */
-		case 0x010:
-			wd179x_command_w(0,data);
-			break;
-		case 0x011:
-			wd179x_track_w(0,data);
-			break;
-		case 0x012:
-			wd179x_sector_w(0,data);
-			break;
-		case 0x013:
-			wd179x_data_w(0,data);
-			break;
-		case 0x014:
-		{
-			DENSITY density;
-
-			port_314_w = data;
-
-			logerror("port_314_w: %02x\n",data); 
-
-			/* bit 6,5: drive */
-			/* bit 4: side */
-			/* bit 3: double density enable */
-			/* bit 0: enable FDC IRQ to trigger IRQ on CPU */
-			wd179x_set_drive((data>>5) & 0x03);
-			wd179x_set_side((data>>4) & 0x01);
-			if (data & (1<<3))
-			{
-				density = DEN_MFM_LO;
-			}
-			else
-			{
-				density = DEN_FM_HI;
-			}
-
-			wd179x_set_density(density);
-
-			oric_microdisc_set_mem_0x0c000();
-			oric_microdisc_refresh_wd179x_ints();
-		}
-		break;
-
-		default:
-			via_0_w(offset & 0x0f, data);
-			break;
-	}
+	apple2_slot6_stop();
 }
 
 
 READ_HANDLER ( oric_IO_r )
 {
+#if 0
 	switch (readinputport(9) & 0x03)
 	{
 		default:
@@ -1152,7 +1254,7 @@ READ_HANDLER ( oric_IO_r )
 		}
 		break;
 	}
-
+#endif
 	//logerror("via 0 r: %04x\n",offset);
 
 	/* it is repeated */
@@ -1161,6 +1263,7 @@ READ_HANDLER ( oric_IO_r )
 
 WRITE_HANDLER ( oric_IO_w )
 {
+#if 0
 	switch (readinputport(9) & 0x03)
 	{
 		default:
@@ -1188,7 +1291,7 @@ WRITE_HANDLER ( oric_IO_w )
 		}
 		break;
 	}
-
+#endif
 	//logerror("via 0 w: %04x %02x\n",offset,data);
 
 	via_0_w(offset & 0x0f,data);
@@ -1616,7 +1719,7 @@ WRITE_HANDLER(telestrat_IO_w)
 
 	if ((offset>=0x010) && (offset<=0x01b))
 	{
-		oric_microdisc_w(offset, data);
+		oric_microdisc_w(offset & 0x0f, data);
 		return;
 	}
 
@@ -1644,7 +1747,7 @@ READ_HANDLER(telestrat_IO_r)
 
 	if ((offset>=0x010) && (offset<=0x01b))
 	{
-		return oric_microdisc_r(offset);
+		return oric_microdisc_r(offset & 0x0f);
 	}
 
 	if ((offset>=0x01c) && (offset<=0x01f))
@@ -1655,6 +1758,4 @@ READ_HANDLER(telestrat_IO_r)
 	logerror("null read %04x\n",offset);
 	return 0x0ff;
 }
-
-
 
