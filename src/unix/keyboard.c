@@ -10,6 +10,7 @@
 #include "xmame.h"
 #include "driver.h"
 #include "keyboard.h"
+#include "devices.h"
 #include "sysdep/fifo.h"
  
 #if defined svgalib || defined svgafx
@@ -134,8 +135,6 @@ struct kbd_fifo_struct;
 static struct kbd_fifo_struct *kbd_fifo = NULL;
 static char key[KEY_MAX];
 
-static int use_hotrod;
-
 /* private methods */
 FIFO(INLINE, kbd, struct keyboard_event)
 
@@ -188,74 +187,98 @@ extern struct GameDriver driver_neogeo;
 
 void osd_customize_inputport_defaults(struct ipd *defaults)
 {
-	if (use_hotrod)
+	static InputSeq no_alt_tab_seq = SEQ_DEF_5(KEYCODE_TAB, CODE_NOT, KEYCODE_LALT, CODE_NOT, KEYCODE_RALT);
+
+	/* loop over all the defaults */
+	while (defaults->type != IPT_END)
 	{
-		while (defaults->type != IPT_END)
+		/* in all cases, disable the config menu if the ALT key is down */
+		if (defaults->type == IPT_UI_CONFIGURE)
+			seq_copy(&defaults->seq, &no_alt_tab_seq);
+
+		/* if we're mapping the hotrod, handle that */
+		if (hotrod || hotrodse)
 		{
 			int j;
-			for(j=0;j<SEQ_MAX;++j)
+
+			/* map up/down/left/right to the numpad */
+			for (j = 0; j < SEQ_MAX; j++)
 			{
 				if (defaults->seq[j] == KEYCODE_UP) defaults->seq[j] = KEYCODE_8_PAD;
 				if (defaults->seq[j] == KEYCODE_DOWN) defaults->seq[j] = KEYCODE_2_PAD;
 				if (defaults->seq[j] == KEYCODE_LEFT) defaults->seq[j] = KEYCODE_4_PAD;
 				if (defaults->seq[j] == KEYCODE_RIGHT) defaults->seq[j] = KEYCODE_6_PAD;
 			}
+
+			/* UI select is button 1 */
 			if (defaults->type == IPT_UI_SELECT) seq_set_1(&defaults->seq, KEYCODE_LCONTROL);
+
+			/* map to the old start/coinage */
 			if (defaults->type == IPT_START1) seq_set_1(&defaults->seq, KEYCODE_1);
 			if (defaults->type == IPT_START2) seq_set_1(&defaults->seq, KEYCODE_2);
 			if (defaults->type == IPT_COIN1)  seq_set_1(&defaults->seq, KEYCODE_3);
 			if (defaults->type == IPT_COIN2)  seq_set_1(&defaults->seq, KEYCODE_4);
-			if (defaults->type == (IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_R);
-			if (defaults->type == (IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_F);
-			if (defaults->type == (IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_D);
-			if (defaults->type == (IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_G);
-			if (defaults->type == (IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_8_PAD);
-			if (defaults->type == (IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_2_PAD);
-			if (defaults->type == (IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_4_PAD);
-			if (defaults->type == (IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_6_PAD);
-			if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_LCONTROL);
-			if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_LALT);
-			if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_SPACE);
-			if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_LSHIFT);
-			if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_Z);
-			if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_X);
-			if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_A);
-			if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_S);
-			if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_Q);
-			if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_W);
-			if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_E);
-			if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_OPENBRACE);
+
+			/* map left/right joysticks to the player1/2 joysticks */
+			if (defaults->type == (IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_R);
+			if (defaults->type == (IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_F);
+			if (defaults->type == (IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_D);
+			if (defaults->type == (IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_G);
+			if (defaults->type == (IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_8_PAD);
+			if (defaults->type == (IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_2_PAD);
+			if (defaults->type == (IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_4_PAD);
+			if (defaults->type == (IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_6_PAD);
+
+			/* make sure the buttons are mapped like the hotrod expects */
+			if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_LCONTROL, CODE_OR, JOYCODE_1_BUTTON1);
+			if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_LALT, CODE_OR, JOYCODE_1_BUTTON2);
+			if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_SPACE, CODE_OR, JOYCODE_1_BUTTON3);
+			if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_LSHIFT, CODE_OR, JOYCODE_1_BUTTON4);
+			if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_Z, CODE_OR, JOYCODE_1_BUTTON5);
+			if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_X, CODE_OR, JOYCODE_1_BUTTON6);
+			if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER2)) seq_set_3(&defaults->seq, KEYCODE_A, CODE_OR, JOYCODE_2_BUTTON1);
+			if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER2)) seq_set_3(&defaults->seq, KEYCODE_S, CODE_OR, JOYCODE_2_BUTTON2);
+			if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER2)) seq_set_3(&defaults->seq, KEYCODE_Q, CODE_OR, JOYCODE_2_BUTTON3);
+			if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER2)) seq_set_3(&defaults->seq, KEYCODE_W, CODE_OR, JOYCODE_2_BUTTON4);
+			if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER2)) seq_set_3(&defaults->seq, KEYCODE_E, CODE_OR, JOYCODE_2_BUTTON5);
+			if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER2)) seq_set_3(&defaults->seq, KEYCODE_OPENBRACE, CODE_OR, JOYCODE_2_BUTTON6);
 
 #ifndef MESS
 #ifndef TINY_COMPILE
 #ifndef CPSMAME
-			if (use_hotrod == 2 &&
-					(Machine->gamedrv->clone_of == &driver_neogeo ||
-					(Machine->gamedrv->clone_of && Machine->gamedrv->clone_of->clone_of == &driver_neogeo)))
 			{
-				if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_C);
-				if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_LSHIFT);
-				if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_Z);
-				if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_X);
-				if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_NONE);
-				if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_NONE);
-				if (defaults->type == (IPT_BUTTON7 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_NONE);
-				if (defaults->type == (IPT_BUTTON8 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_NONE);
-				if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_CLOSEBRACE);
-				if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_W);
-				if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_E);
-				if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_OPENBRACE);
-				if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_NONE);
-				if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_NONE);
-				if (defaults->type == (IPT_BUTTON7 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_NONE);
-				if (defaults->type == (IPT_BUTTON8 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_NONE);
+				extern struct GameDriver driver_neogeo;
+
+				/* if hotrodse is specified, and this is a neogeo game, work some more magic I don't understand */
+				if (hotrodse &&
+						(Machine->gamedrv->clone_of == &driver_neogeo ||
+						(Machine->gamedrv->clone_of && Machine->gamedrv->clone_of->clone_of == &driver_neogeo)))
+				{
+					if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_C, CODE_OR, JOYCODE_1_BUTTON1);
+					if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_LSHIFT, CODE_OR, JOYCODE_1_BUTTON2);
+					if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_Z, CODE_OR, JOYCODE_1_BUTTON3);
+					if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_X, CODE_OR, JOYCODE_1_BUTTON4);
+					if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_NONE);
+					if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_NONE);
+					if (defaults->type == (IPT_BUTTON7 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_NONE);
+					if (defaults->type == (IPT_BUTTON8 | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_NONE);
+					if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER2)) seq_set_3(&defaults->seq, KEYCODE_CLOSEBRACE, CODE_OR, JOYCODE_2_BUTTON1);
+					if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER2)) seq_set_3(&defaults->seq, KEYCODE_W, CODE_OR, JOYCODE_2_BUTTON2);
+					if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER2)) seq_set_3(&defaults->seq, KEYCODE_E, CODE_OR, JOYCODE_2_BUTTON3);
+					if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER2)) seq_set_3(&defaults->seq, KEYCODE_OPENBRACE, CODE_OR, JOYCODE_2_BUTTON4);
+					if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_NONE);
+					if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_NONE);
+					if (defaults->type == (IPT_BUTTON7 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_NONE);
+					if (defaults->type == (IPT_BUTTON8 | IPF_PLAYER2)) seq_set_1(&defaults->seq, KEYCODE_NONE);
+				}
 			}
 #endif
 #endif
 #endif
-
-			defaults++;
 		}
+
+		/* find the next one */
+		defaults++;
 	}
 }
 

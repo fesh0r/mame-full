@@ -108,7 +108,8 @@ EXTERN struct joydata_struct joy_data[JOY];
 EXTERN struct mousedata_struct mouse_data[MOUSE];
 EXTERN void (*joy_poll_func) (void);
 EXTERN int joytype;
-EXTERN int use_hotrod;
+EXTERN int hotrod;
+EXTERN int hotrodse;
 EXTERN int is_usb_ps_gamepad;
 
 extern struct rc_option joy_i386_opts[];
