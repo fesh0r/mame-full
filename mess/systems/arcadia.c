@@ -1,9 +1,10 @@
 /******************************************************************************
- Peter.Trauner@jk.uni-linz.ac.at May 2001
+ PeT mess@utanet.at May 2001
 
  Paul Robson's Emulator at www.classicgaming.com/studio2 made it possible
 ******************************************************************************/
 
+#include <assert.h>
 #include "driver.h"
 #include "cpu/s2650/s2650.h"
 
@@ -216,6 +217,7 @@ static int arcadia_load_rom(int id)
 		return 0;
 	}
 	
+	memset(rom, 0, 0x8000);
 	if (!(cartfile = (FILE*)image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		logerror("%s not found\n",device_filename(IO_CARTSLOT,id));
@@ -230,11 +232,35 @@ static int arcadia_load_rom(int id)
 	}
 	osd_fclose(cartfile);
 	if (size>0x1000) memmove(rom+0x2000, rom+0x1000, size-0x1000);
+#if 1
 	// golf cartridge support
 	// 4kbyte at 0x0000
 	// 2kbyte at 0x4000
 	if (size<=0x2000) memcpy (rom+0x3000, rom+0x2000, 0x1000);
 	if (size<=0x3000) memcpy (rom+0x4000, rom+0x2000, 0x2000);
+#else
+	/* this is a testpatch for the golf cartridge
+	   so it could be burned in a arcadia 2001 cartridge
+	   activate it and use debugger to save patched version */
+	// not enough yet (some pointers stored as data?)
+	struct { UINT16 address; UINT8 old; UINT8 neu; }
+	patch[]= {
+	    { 0x0077,0x40,0x20 },
+	    { 0x011e,0x40,0x20 },
+	    { 0x0348,0x40,0x20 },
+	    { 0x03be,0x40,0x20 },
+	    { 0x04ce,0x40,0x20 },
+	    { 0x04da,0x40,0x20 },
+	    { 0x0617,0x40,0x20 },
+	    { 0x0efb,0x40,0x20 },
+	    { 0x0f00,0x40,0x20 },
+	    { 0x0f12,0x40,0x20 }
+	};
+	for (int i=0; i<ARRAY_LENGTH(patch); i++) {
+	    assert(rom[patch[i].address]==patch[i].old);
+	    rom[patch[i].address]=patch[i].neu;
+	}
+#endif
 	return 0;
 }
 
@@ -267,6 +293,37 @@ void init_arcadia(void)
 	int i;
 	UINT8 *gfx=memory_region(REGION_GFX1);
 	for (i=0; i<256; i++) gfx[i]=i;
+#if 0
+	// this is here to allow developement of some simple testroutines
+	// for a real console
+	{
+	    UINT8 *rom=memory_region(REGION_CPU1);
+	    /* this is a simple routine to display all rom characters
+	       on the display for a snapshot */
+	    UINT8 prog[]={ // address 0 of course
+		0x20, // eorz, 0
+		0x1b, 0x01, // bctr,a $0004
+		0x17, // retc a
+		0x76, 0x20, // ppsu ii
+		0x04, 0x00, // lodi,0 0
+		0xcc, 0x78, 0x00, // stra,0 $1800,r0
+		0x84, 0x01, // addi,0 1
+		0xe4, 0x40, // comi,0 64
+		0x98, 0x77, // bcfr,0 -9
+		0x04, 0x07, // lodi,0 7
+		0xcc, 0x19, 0xf9, // stra,0 $19f9
+		0x1b, 0x7e // bctr,a -2
+	    };
+#if 0
+	    FILE *f;
+	    f=fopen("chartest.bin","wb");
+	    fwrite(prog, ARRAY_LENGTH(prog), sizeof(prog[0]), f);
+	    fclose(f);
+#endif
+	    for (i=0; i<ARRAY_LENGTH(prog); i++) rom[i]=prog[i];
+	    
+	}
+#endif
 }
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
