@@ -2727,7 +2727,7 @@ static void h0400(UINT16 opcode)
 
 #if HAS_MAPPING
 	/* Used by the memory mapper on ti990/10 with mapping option, ti990/12, and the TIM99610
-	mapper chip to be associated with tms99000.
+	mapper chip to be associated with tms99000. */
 	/* These opcode allow access to another page without the need of switching a page someplace. */
 	case 14:  /* LDS */
 		/* LDS --- Long Distance Source */
