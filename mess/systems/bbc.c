@@ -43,13 +43,13 @@ SHEILA
 /* for the model A just address the 4 on board ROM sockets */
 static WRITE_HANDLER ( page_selecta_w )
 {
-	cpu_setbank(3,memory_region(REGION_CPU2)+((data&0x03)<<14));
+	cpu_setbank(3,memory_region(REGION_USER1)+((data&0x03)<<14));
 }
 
 /* for the model B address all 16 of the ROM sockets */
 static WRITE_HANDLER ( page_selectb_w )
 {
-	cpu_setbank(3,memory_region(REGION_CPU2)+((data&0x0f)<<14));
+	cpu_setbank(3,memory_region(REGION_USER1)+((data&0x0f)<<14));
 }
 
 
@@ -104,11 +104,11 @@ static WRITE_HANDLER ( page_selectbp_w )
 			cpu_setbank(3,memory_region(REGION_CPU1)+0x8000);
 		} else {
 			/* if paged rom then set the rom to be read from 8000 to afff */
-			cpu_setbank(3,memory_region(REGION_CPU2)+(rombankselect<<14));
+			cpu_setbank(3,memory_region(REGION_USER1)+(rombankselect<<14));
 		};
 
 		/* set the rom to be read from b000 to bfff */
-		cpu_setbank(4,memory_region(REGION_CPU2)+(rombankselect<<14)+0x03000);
+		cpu_setbank(4,memory_region(REGION_USER1)+(rombankselect<<14)+0x03000);
 	}
 	else
 	{
@@ -231,7 +231,7 @@ static WRITE_HANDLER ( memorybp3_128_w )
 	{
 		if (bbc_b_plus_sideways_ram_banks[rombankselect])
 		{
-			memory_region(REGION_CPU2)[offset+(rombankselect<<14)]=data;
+			memory_region(REGION_USER1)[offset+(rombankselect<<14)]=data;
 		}
 	}
 }
@@ -240,7 +240,7 @@ static WRITE_HANDLER ( memorybp4_128_w )
 {
 	if (bbc_b_plus_sideways_ram_banks[rombankselect])
 	{
-		memory_region(REGION_CPU2)[offset+(rombankselect<<14)+0x3000]=data;
+		memory_region(REGION_USER1)[offset+(rombankselect<<14)+0x3000]=data;
 	}
 }
 
@@ -652,7 +652,7 @@ INPUT_PORTS_END
 ROM_START(bbca)
 	ROM_REGION(0x04000,REGION_CPU1,0) /* RAM */
 
-	ROM_REGION(0x14000,REGION_CPU2,0) /* ROM */
+	ROM_REGION(0x14000,REGION_USER1,0) /* ROM */
 	ROM_LOAD("os12.rom",    0x10000,  0x4000, 0x3c14fc70)
 
 						  /* rom page 0  00000 */
@@ -671,7 +671,7 @@ ROM_END
 ROM_START(bbcb)
 	ROM_REGION(0x08000,REGION_CPU1,0) /* RAM */
 
-	ROM_REGION(0x44000,REGION_CPU2,0) /* ROM */
+	ROM_REGION(0x44000,REGION_USER1,0) /* ROM */
 	ROM_LOAD("os12.rom", 0x40000,0x4000, 0x3c14fc70)
 
 #ifdef MAME_DEBUG
@@ -713,7 +713,7 @@ ROM_END
 ROM_START(bbcb1770)
 	ROM_REGION(0x08000,REGION_CPU1,0) /* RAM */
 
-	ROM_REGION(0x44000,REGION_CPU2,0) /* ROM */
+	ROM_REGION(0x44000,REGION_USER1,0) /* ROM */
 	ROM_LOAD("os12.rom", 0x40000,0x4000, 0x3c14fc70)
 
 #ifdef MAME_DEBUG
@@ -745,7 +745,7 @@ ROM_END
 ROM_START(bbcbp)
 	ROM_REGION(0x10000,REGION_CPU1,0) /* ROM MEMORY */
 
-	ROM_REGION(0x44000,REGION_CPU2,0) /* ROM */
+	ROM_REGION(0x44000,REGION_USER1,0) /* ROM */
 	ROM_LOAD("bpos2.rom",   0x3c000, 0x4000, 0x9f356396 )  /* basic rom */
 	ROM_CONTINUE(           0x40000, 0x4000)  /* OS */
 
@@ -775,7 +775,7 @@ ROM_END
 ROM_START(bbcbp128)
 	ROM_REGION(0x10000,REGION_CPU1,0) /* ROM MEMORY */
 
-	ROM_REGION(0x44000,REGION_CPU2,0) /* ROM */
+	ROM_REGION(0x44000,REGION_USER1,0) /* ROM */
 	ROM_LOAD("bpos2.rom",   0x3c000, 0x4000, 0x9f356396 )  /* basic rom */
 	ROM_CONTINUE(           0x40000, 0x4000)  /* OS */
 
@@ -834,7 +834,7 @@ static struct MachineDriver machine_driver_bbca =
 			bbcb_keyscan, 1000				/* scan keyboard */
 		}
 	},
-	50, DEFAULT_60HZ_VBLANK_DURATION,
+	50, 128,
 	1,
 	init_machine_bbca, /* init_machine */
 	0, /* stop_machine */
@@ -878,7 +878,7 @@ static struct MachineDriver machine_driver_bbcb =
 			bbcb_keyscan, 1000				/* scan keyboard */
 		}
 	},
-	50, DEFAULT_60HZ_VBLANK_DURATION,
+	50, 128,
 	1,
 	init_machine_bbcb, /* init_machine */
 	stop_machine_bbcb, /* stop_machine */
@@ -922,7 +922,7 @@ static struct MachineDriver machine_driver_bbcb1770 =
 			bbcb_keyscan, 1000				/* scan keyboard */
 		}
 	},
-	50, DEFAULT_60HZ_VBLANK_DURATION,
+	50, 128,
 	1,
 	init_machine_bbcb1770, /* init_machine */
 	stop_machine_bbcb1770, /* stop_machine */
@@ -966,7 +966,7 @@ static struct MachineDriver machine_driver_bbcbp =
 			bbcb_keyscan, 1000				/* scan keyboard */
 		}
 	},
-	50, DEFAULT_60HZ_VBLANK_DURATION,
+	50, 128,
 	1,
 	init_machine_bbcbp, /* init_machine */
 	stop_machine_bbcbp, /* stop_machine */
@@ -1010,7 +1010,7 @@ static struct MachineDriver machine_driver_bbcbp128 =
 			bbcb_keyscan, 1000				/* scan keyboard */
 		}
 	},
-	50, DEFAULT_60HZ_VBLANK_DURATION,
+	50, 128,
 	1,
 	init_machine_bbcbp, /* init_machine */
 	stop_machine_bbcbp, /* stop_machine */
