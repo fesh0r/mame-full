@@ -19,7 +19,7 @@ static int not_found  = 0;
 enum {
    /* standard list commands */
    LIST_LIST = 1, LIST_FULL, LIST_GAMES, LIST_DETAILS, LIST_GAMELIST,
-   LIST_SOURCEFILE, LIST_COLORS, LIST_EXTENSIONS, LIST_ROMSIZE, LIST_ROMS,
+   LIST_SOURCEFILE, LIST_COLORS, LIST_DEVICES, LIST_ROMSIZE, LIST_ROMS,
    LIST_CRC, LIST_SAMPLES, LIST_SAMDIR, VERIFY_ROMS, VERIFY_ROMSETS,
    VERIFY_SAMPLES, VERIFY_SAMPLESETS,
    /* internal verification list commands (developers only) */
@@ -59,8 +59,8 @@ struct rc_option frontend_list_opts[] = {
      NULL,		LIST_COLORS,		0,		NULL,
      "Like -list, with the number of colors used" },
 #ifdef MESS
-   { "listextensions",	NULL,			rc_set_int,	&list,
-     NULL,		LIST_EXTENSIONS,	0,		NULL,
+   { "listdevices",	"ldev",			rc_set_int,	&list,
+     NULL,		LIST_DEVICES,		0,		NULL,
      "Like -list, with devices and image file extensions supported" },
 #endif
    { "listromsize",	"lrs",			rc_set_int,	&list,
@@ -516,7 +516,7 @@ int frontend_list(char *gamename)
                      drivers[i]->drv->total_colors);
                   break;
 #ifdef MESS
-               case LIST_EXTENSIONS: /* list extensions */
+               case LIST_DEVICES: /* list devices */
                    if(drivers[i]->dev && (drivers[i]->dev->type != IO_END))
                    {
                       const struct IODevice *dev = drivers[i]->dev;
