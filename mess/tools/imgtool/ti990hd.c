@@ -1238,7 +1238,7 @@ static imgtoolerr_t ti990_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent 
 {
 	ti990_iterator *iter = (ti990_iterator*) enumeration;
 	int flag;
-	int reply;
+	int reply = 0;
 
 
 	ent->corrupt = 0;
