@@ -1,3 +1,152 @@
+0.61.1
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- Amstrad family (fixed and reenabled) [Raphael Nabet]
+
+System Driver Changes:
+----------------------
+- [COCO1] Update CRC for bas10.rom. Previous dump was bad. I would like to send
+  a pecial "Thank you" to Sellam Ismail (http://www.vintage.org) for finding a
+  Color Computer that contained Color BASIC 1.0. [tim lindner]
+
+- [COCO1/2/3] Moved disk handling code over to new FormatDriver system;
+  allowing transparent disk image handling for JVC, VDK, and DMK file formats.
+  [Nate Woods]
+
+- [COCO] Fixed a recent stupid bug in m6847 timing that had an effect on
+  certain timing situations (bug #249) [Nate Woods]
+
+- [COCO3] Fixed a palette timing bug that affected mid-frame video rendering.
+  (bug #253) [Nate Woods]
+  
+- [COCO3] Fixed a bug where hi-res text characters with the high bit set were
+  rendered as garbage. [Nate Woods]
+
+- [COCO3] Fixed a bug where $FF9D and associated registers were being updated
+  before vblank, when they should have been updated after. (bug #252) [Nate
+  Woods]
+  
+- [COCO1/2/3] Made sure that SAM (and GIME on the CoCo 3) registers are
+  properly reset after a crash. [Nate Woods]
+
+- [DRAGON32/64] Made artifacting disabled by default, as this is how PAL systems
+  would normally be.  [Nate Woods]
+
+- [DRAGON64] Fixed a bug that prevented the system to run (the dragon64 driver
+  was using the coco memory map) [Nate Woods]
+
+- [DRAGON64] Adjusted the memory mapping scheme, enabling the DragonDOS
+  cartridge and 64k mode to coexist.  Thanks to Simon Hardy for tracking down a
+  better algorithm. [Nate Woods]
+
+- [A5200] Fixed a regression in 0.61 that prevented the keypad from working.
+  (bug #246) [Nate Woods]
+
+- [A7800] Suffixed the name of the a7800 driver with NTSC and marked the PAL
+  version as a clone of the NTSC version. [Nate Woods]
+
+- [GBCOLOR] Implemented background priority. This fixes objects appearing over
+  the background when they shouldn't be. [Anthony Kruize]
+
+- [TI99/4A] Added support for BwG clock and floppy controller [Raphael Nabet]
+
+- [SNES] Memory map is more accurate, adding support for HiRom carts. Fixed
+  DMA transfers. Fixed missing tiles. Added preliminary mode 7 support. Added
+  subscreens, including colour addition/subtraction. Fixed vertical flip for
+  large objects. Improved vertical/horizontal latches. Improved ROM loading
+  with better header and ROM type detection. Improved the SPCSkipper so a lot
+  more games actually run now. [Anthony Kruize]
+
+Source Changes:
+---------------
+- The MESS core will not automatically open software images in a clone system
+  drivers directory anymore, under the belief that this functionality belongs
+  in the OSD code. [Nate Woods]
+
+- All MESS drivers need a SYSTEM_CONFIG (formerly COMPUTER_CONFIG) parameter
+  specified.  Also changed the implementation of the SYSTEM_CONFIG_* macros to
+  provide a more flexible system for representing the data.
+
+  Added the ability for devices to be declared within the SYSTEM_CONFIG block.
+  Consider the older way of declaring devices deprecated.
+
+  Added new functions for iterating through devices, in order to better
+  abstract the internal representation of devices:
+  
+	device_first()
+	device_next()
+	device_find()
+		
+  Also renamed GameDriver dev field to dev_ in order to break any source
+  dependencies on the dev field. [Nate Woods]
+
+- Added new memory pool code that implements memory pools that can be freed in
+  one step. [Nate Woods]
+
+- Overhaul of code that maintained the list of loaded images; moved to
+  mess/image.[c|h], and changed the prefix of them from device_ to image_ (as
+  opposed to the device_* calls that are used to access the IODevice
+  structure).  Also, implemented these new calls for drivers to use:
+  
+	image_malloc()    (similar to auto_malloc(), but for the lifetime of devices)
+	image_strdup()    (uses image_malloc() to allocate strings)
+	image_exists()    (tests for the existance of a loaded image)
+	image_filetype()  (accessor for file extension)
+
+  For the most part, there is no longer any reason for MESS drivers to use
+  malloc() and free(), so calls to these should be eliminated over time. [Nate
+  Woods]
+  
+- Removed IO_RESET_ALL, as it was broken and an ugly hack to begin with (bug
+  #239) [Nate Woods]
+
+- In the opening display software info box, if the filename and the goodname
+  (as determined by CRC) match up, the goodname will not be displayed in
+  order to reduce screen clutter. [Nate Woods]
+  
+- Removed all calls to device_close(IO_CASSETTE) in system drivers, instead
+  provided a cassette_exit() function that drivers can specify, removing this
+  responsibility from system drivers. [Nate Woods]
+
+- Implemented preliminary paste functionality; it attempts to decode the
+  driver's input tables and attempts to create a mapping between ASCII and
+  input signals.  This process is far from perfect at this time.  In the
+  future, it will be possible for drivers to customize the way that paste works
+  for a more perfect translation.  [Nate Woods]
+
+- Added new PORT_KEYx macros that should be used in place of PORT_BITX when
+  mapping keyboards.  These macros also specify unicode values for the input
+  codes for natural keyboard support.  [Nate Woods]
+
+- Added a new osd_keyboard_disabled() call.  If this returns non-zero, then
+  the core will supress input of type IPT_KEYBOARD.  This is useful if a front
+  end wants to implement a natural keyboard.  [Nate Woods]
+
+- Added a new osd_parallelize() call, for basic SMP acceleration.  [Nate Woods]
+
+- Renamed osd_dir.h to osd_mess.h, to further reflect that it is more than just
+  directory calls.  [Nate Woods]
+
+- [Win32] New -threads parameter, to specify the maximum amount of threads used
+  for osd_parallelize(); defaults to the number of processors in the system.
+  [Nate Woods]
+
+- [Win32 GUI] Printers are now treated separately from the other devices; you
+  do not specify printer ouput like you do disk images.  Printer output now
+  gets specified in the configuration tab of the system properties.  The added
+  benefit is that the same output file can be used repeatedly. [Nate Woods]
+
+- [Imgtool] Imgtool floppy drivers can now be "templated"; a driver for a
+  particular file system format can point at a structure that lists allowable
+  disk image formats.  This allows for the addition of new disk image format
+  drivers without touching the imgtool drivers. [Nate Woods]
+  
+- [Imgtool] Fixed a bug in the FormatDriver handling that caused some file puts
+  to not be properly written.  [Nate Woods]
+
+- [Imgtool] Added Color Computer DMK disk image support. [tim lindner]
+
 0.61
 
 New System Drivers Supported (in no particular order):

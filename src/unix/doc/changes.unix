@@ -37,7 +37,7 @@ Release 0.61.1 (in progress)
 	  Also added support for the -frames_to_run/-ftr switch.
 	- Added Xv hardware scaling support!  To enable, uncomment the line 
 	  reading "X11_XV = 1" in the makefile and use the -xvext/-xv switches 
-	  (and possibly the -yuv switches).  (Alastair Robinson)
+	  (and possibly the -yuv switch).  (Alastair Robinson)
 	- An X11 build can now grab the keyboard to bypass window managers.  
 	  Use -grabkeyboard/-gkb to activate and/or the ALT + PGUP keypress to
 	  toggle it on/off.  (Gerd Sussner)
@@ -47,6 +47,15 @@ Release 0.61.1 (in progress)
 	- Fixed a problem in the DGA2 driver that could lead to scrambled 
 	  colors with an i830MG video card in 24bpp mode.  (Eric Brunet, 
 	  Shyouzou Sugitani)
+	- The SDL target's -listmodes switch now operates before attempting to 
+	  load a game.  (Shadow Walker)
+	- If xmame is iconified in IRIX, it will automatically pause ("boss 
+	  hanging around mode").  (Andrea Suatoni)
+	- Added a switch to force yv12 mode in the Xv driver; made improvements
+	  to the yv12 code.  (Eric Brunet)
+	- Xmame should now build "out of the box" for FreeBSD.  Note that for 
+	  the SDL target, you may have to set the SDL_CONFIG flag in the 
+	  makefile.  (Stijn Hoop)
 
 Release 0.561.1 (xmess)
 	- Everything from MESS 0.561.
@@ -587,7 +596,6 @@ Release 0.37b4.1
 	  Tony Hoyle <tmh@magenta-logic.com>
 	- Added support for mess snapshots (-snapshot) thanks to:
 	  "Wojciech Walaszkowski" <walaszkowskiw@prokom.pl>
-	- Added -hiscorefile parameter to specify the location of highscore.dat
 	- Added -hiscorefile switch to specify the location of highscore.dat
 	  Thanks to: TKMAME <tkmame@retrogames.com>
 	- Added a blurb to readme.unix about needing hiscore.dat to get

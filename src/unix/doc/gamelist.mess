@@ -1,4 +1,4 @@
-This is the complete list of games supported by xmess 0.61 (Sep 11 2002).
+This is the complete list of games supported by xmess 0.61.1 (Oct 20 2002).
 
 This list is generated automatically and is not 100% accurate (particularly in
 the Screen Flip column). Please let us know of any errors so we can correct
@@ -56,9 +56,14 @@ Internal Name
 | APF Imagination Machine          |   No  |  Yes  |  Yes  |  Yes  | apfimag  |
 | APF M-1000                       |   No  |  Yes  |  Yes  |  Yes  | apfm1000 |
 | Adventurevision                  |  Yes  |  Yes  |   No  |  Yes  | advision |
+| Amstrad 464plus                  |  Yes  |  Yes  |  Yes  |  Yes  | cpc464p  |
+| Amstrad 6128plus                 |  Yes  |  Yes  |  Yes  |  Yes  | cpc6128p |
 | Amstrad PC1512                   |  Yes  |  Yes  |  Yes  |  Yes  | pc1512   |
 | Amstrad PC1640 / PC6400 (US)     | No(1) |  Yes  |  Yes  |  Yes  | pc1640   |
 | Amstrad PC20                     |  Yes  |  Yes  |  Yes  |  Yes  | pc20     |
+| Amstrad/Schneider CPC464         |  Yes  |  Yes  |  Yes  |  Yes  | cpc464   |
+| Amstrad/Schneider CPC6128        |  Yes  |  Yes  |  Yes  |  Yes  | cpc6128  |
+| Amstrad/Schneider CPC664         |  Yes  |  Yes  |  Yes  |  Yes  | cpc664   |
 | Apple //c                        |  Yes  |  Yes  |  Yes  |  Yes  | apple2c  |
 | Apple //c (3.5 ROM)              |  Yes  |  Yes  |  Yes  |  Yes  | apple2c0 |
 | Apple //c Plus                   |  Yes  |  Yes  |  Yes  |  Yes  | apple2cp |
@@ -72,7 +77,7 @@ Internal Name
 | Atari 400 (NTSC)                 |  Yes  |  Yes  |  Yes  |  Yes  | a400     |
 | Atari 400 (PAL)                  |  Yes  |  Yes  |  Yes  |  Yes  | a400pal  |
 | Atari 5200                       |  Yes  |  Yes  |  Yes  |  Yes  | a5200    |
-| Atari 7800                       |  Yes  |  Yes  |  Yes  |  Yes  | a7800    |
+| Atari 7800 NTSC                  |  Yes  |  Yes  |  Yes  |  Yes  | a7800    |
 | Atari 7800 PAL                   |  Yes  |  Yes  |  Yes  |  Yes  | a7800p   |
 | Atari 800 (NTSC)                 |  Yes  |  Yes  |  Yes  |  Yes  | a800     |
 | Atari 800 (PAL)                  |  Yes  |  Yes  |  Yes  |  Yes  | a800pal  |
@@ -164,6 +169,7 @@ Internal Name
 | Jupiter Ace                      |  Yes  |  Yes  |  Yes  |  Yes  | jupiter  |
 | KC 85/3                          |   No  |  Yes  |  Yes  |  Yes  | kc85_3   |
 | KC 85/4                          |   No  |  Yes  |  Yes  |  Yes  | kc85_4   |
+| KC Compact                       |  Yes  |  Yes  |  Yes  |  Yes  | kccomp   |
 | KIM-1                            |  Yes  |  Yes  |  Yes  |  Yes  | kim1     |
 | Kaypro 2x                        |  Yes  |  Yes  |  Yes  |  Yes  | kaypro   |
 | LNW-80                           | No(1) |  Yes  |  Yes  |  Yes  | lnw80    |
@@ -330,4 +336,4 @@ Internal Name
 (2) Needs samples provided separately
 
 
-Total Supported: 272
+Total Supported: 278
