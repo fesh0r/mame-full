@@ -2837,6 +2837,7 @@ TESTDRIVER( bounty )
 	/* Gaelco games */
 	DRIVER( bigkarnk )	/* (c) 1991 Gaelco */
 	DRIVER( splash )	/* (c) 1992 Gaelco */
+	DRIVER( maniacsq )	/* (c) 1996 Gaelco */
 	DRIVER( biomtoy )	/* (c) 1995 Gaelco */
 
 /*
@@ -2927,7 +2928,7 @@ TESTDRIVER( macross )	/* (c) 1992 NMK + Big West */
 	DRIVER( bigtwin )	/* (c) 1995 Playmark */
 	DRIVER( wbeachvl )	/* (c) 1995 Playmark */
 
-    DRIVER( spacefb )   /* (c) [1980?] Nintendo */
+	DRIVER( spacefb )	/* (c) [1980?] Nintendo */
 	DRIVER( spacefbg )	/* 834-0031 (c) 1980 Gremlin */
 	DRIVER( spacefbb )	/* bootleg */
 	DRIVER( spacebrd )	/* bootleg */
