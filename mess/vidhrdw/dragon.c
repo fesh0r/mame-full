@@ -38,7 +38,6 @@
 #include "driver.h"
 #include "machine/6821pia.h"
 #include "vidhrdw/m6847.h"
-#include "cpu/m6809/m6809.h"
 #include "vidhrdw/generic.h"
 #include "includes/dragon.h"
 
@@ -869,7 +868,7 @@ WRITE_HANDLER(coco3_gimevh_w)
 	int xorval;
 
 #if LOG_GIME
-	logerror("CoCo3 GIME: $%04x <== $%02x pc=$%04x\n", offset + 0xff98, data, m6809_get_pc());
+	logerror("CoCo3 GIME: $%04x <== $%02x pc=$%04x\n", offset + 0xff98, data, cpu_get_pc());
 #endif
 	/* Features marked with '!' are not yet implemented */
 

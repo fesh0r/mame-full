@@ -1218,7 +1218,7 @@ WRITE_HANDLER(coco3_gime_w)
 	coco3_gimereg[offset] = data;
 
 #if LOG_GIME
-	logerror("CoCo3 GIME: $%04x <== $%02x pc=$%04x\n", offset + 0xff90, data, m6809_get_pc());
+	logerror("CoCo3 GIME: $%04x <== $%02x pc=$%04x\n", offset + 0xff90, data, cpu_get_pc());
 #endif
 
 	/* Features marked with '!' are not yet implemented */
@@ -1668,7 +1668,7 @@ static void coco_fdc_callback(int event)
 	 */
 	switch(event) {
 	case WD179X_IRQ_CLR:
-		m6809_set_nmi_line(CLEAR_LINE);
+		cpu_set_irq_line(0, M6809_INT_NMI, CLEAR_LINE);
 		break;
 	case WD179X_IRQ_SET:
 		raise_nmi = 1;
@@ -1781,7 +1781,7 @@ static void dc_floppy_w(int offset, int data, int hardware)
 	case 6:
 	case 7:
 		if (raise_nmi) {
-			m6809_set_nmi_line(ASSERT_LINE);
+			cpu_set_irq_line(0, M6809_INT_NMI, ASSERT_LINE);
 			raise_nmi = 0;
 		}
 		set_dskreg(data, hardware);
