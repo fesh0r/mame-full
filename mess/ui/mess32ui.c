@@ -1,3 +1,4 @@
+#define WIN32_LEAN_AND_MEAN
 #include <assert.h>
 #include <string.h>
 #include <windows.h>
@@ -19,6 +20,7 @@
 #include "messwin.h"
 #include "rc.h"
 #include "utils.h"
+#include "ui_text.h"
 
 #ifdef _MSC_VER
 #define alloca _alloca
@@ -60,10 +62,6 @@ static BOOL MessCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify);
 #ifdef MAME_DEBUG
 static void MessTestsBegin(void);
 #endif /* MAME_DEBUG */
-
-#ifdef bool
-#undef bool
-#endif
 
 static int s_nCurrentGame;
 static char s_szSelectedItem[256];
@@ -261,6 +259,8 @@ static void MyFillSoftwareList(int nGame, BOOL bForce)
 
 	FillSoftwareList(GetDlgItem(hMain, IDC_SWLIST), nGame, path_count, pathsv, extra_path,
 		MessHashErrorProc);
+
+	Picker_Sort(GetDlgItem(hMain, IDC_SWLIST));
 }
 
 
