@@ -13,7 +13,16 @@
 * converting between Hertz and GB frequency registers:
 * (Sounds will have a 2.4% higher frequency on Super GB.)
 *       gb = 2048 - (131072 / Hz)
-*       Hz  = 131072 / (2048 - gb)
+*       Hz = 131072 / (2048 - gb)
+*
+* Changes:
+*
+*	10/2/2002		AK - Preliminary sound code.
+*	13/2/2002		AK - Added a hack for mode 4, other fixes.
+*	23/2/2002		AK - Use lookup tables, added sweep to mode 1. Re-wrote
+*						 the square wave generation.
+*	13/3/2002		AK - Added mode 3, better lookup tables, other adjustments.
+*	15/3/2002		AK - Mode 4 can now change frequencies.
 *
 ***************************************************************************************/
 
@@ -49,15 +58,18 @@
 static int channel = 1;
 static int rate;
 
-/* Table of wave duties.
-   Represents wave duties of 12.5%, 25%, 50% and 75% */
+/* Represents wave duties of 12.5%, 25%, 50% and 75% */
 static float wave_duty_table[4] = { 8, 4, 2, 1.33 };
+
 static INT32 env_length_table[8];
 static INT32 swp_time_table[8];
 static UINT32 period_table[2048];
 static UINT32 period_mode3_table[2048];
+static UINT32 period_mode4_table[8][16];
 static UINT32 length_table[64];
 static UINT32 length_mode3_table[256];
+/*static UINT32 poly7_mode4_table[256];
+static UINT32 poly15_mode4_table[1024];*/
 
 struct SOUND1
 {
@@ -117,17 +129,16 @@ struct SOUND4
 	UINT8 on;
 	UINT8 channel;
 	INT32 length;
-	INT32 frequency;
+	UINT32 period;
+	INT32 pos;
 	INT32 count;
-	INT16 signal;
+	INT8 signal;
 	INT8 mode;
 	INT32 env_value;
 	INT8 env_direction;
 	INT32 env_length;
 	INT32 env_count;
-	INT32 ply_frequency;
 	INT32 ply_step;
-	INT32 ply_ratio;
 };
 
 struct SOUNDC
@@ -189,9 +200,12 @@ void gameboy_3_init(void)
 
 void gameboy_4_init(void)
 {
+	if( !snd_4.on )
+		snd_4.pos = 0;
 	snd_4.on = 1;
 	snd_4.count = 0;
 	snd_4.env_count = 0;
+	snd_4.signal = rand();
 	gb_ram[NR52] |= 0x8;
 }
 
@@ -200,13 +214,16 @@ void gameboy_update(int param, INT16 **buffer, int length);
 void gameboy_sound_w(int offset, int data)
 {
 	/* change in registers so update first */
-	stream_update(channel,0);
+	stream_update(channel, 0);
 
 	/* Only register NR52 is accessible if the sound controller is disabled */
 	if( !snd_control.on && offset != NR52 )
 	{
 		return;
 	}
+
+	/* Store the value */
+	gb_ram[offset] = data;
 
 	switch( offset )
 	{
@@ -290,7 +307,8 @@ void gameboy_sound_w(int offset, int data)
 		snd_4.env_length = env_length_table[data & 0x7];
 		break;
 	case NR43: /* Polynomial Counter/Frequency */
-		/* TODO: NEED TO SET POLYNOMIAL STUFF HERE */
+		snd_4.period = period_mode4_table[data & 0x7][(data & 0xF0) >> 4];
+		snd_4.ply_step = (data & 0x8) >> 3;
 		break;
 	case NR44: /* Counter/Consecutive / Initialize (R/W)  */
 		snd_4.mode = (data & 0x40) >> 6;
@@ -504,9 +522,24 @@ void gameboy_update(int param, INT16 **buffer, int length)
 		/* Mode 4 - Noise with Envelope */
 		if( snd_4.on )
 		{
-			/* Below is a hack, a big hack, but it will do until we figure out
-			   a proper polynomial white noise generator. */
-			sample = rand() & snd_4.env_value;
+			/* A proper polynomial white noise generator is needed here */
+			sample = snd_4.signal & snd_4.env_value;
+			snd_4.pos++;
+			if( snd_4.pos == (snd_4.period >> 17) )
+			{
+				snd_4.signal = rand();
+				/* *cough* hack *cough* */
+				if( snd_4.ply_step )
+					snd_4.signal >>= 4;
+			}
+			else if( snd_4.pos > (snd_4.period >> 16) )
+			{
+				snd_4.pos = 0;
+				snd_4.signal = rand();
+				/* *cough* hack *cough* */
+				if( snd_4.ply_step )
+					snd_4.signal >>= 4;
+			}
 
 			if( snd_4.length && snd_4.mode )
 			{
@@ -556,7 +589,7 @@ void gameboy_update(int param, INT16 **buffer, int length)
 
 int gameboy_sh_start(const struct MachineSound* driver)
 {
-	int n;
+	int I,J;
 	const char *names[2] = { "Gameboy left", "Gameboy right" };
 	const int volume[2] = { MIXER( 50, MIXER_PAN_LEFT ), MIXER( 50, MIXER_PAN_RIGHT ) };
 
@@ -570,31 +603,50 @@ int gameboy_sh_start(const struct MachineSound* driver)
 	rate = Machine->sample_rate;
 
 	/* Calculate the envelope and sweep tables */
-	for( n = 0; n < 8; n++ )
+	for( I = 0; I < 8; I++ )
 	{
-		env_length_table[n] = (n * ((1 << 16) / 64) * rate) >> 16;
-		swp_time_table[n] = (((n << 16) / 128) * rate) >> 15;
+		env_length_table[I] = (I * ((1 << 16) / 64) * rate) >> 16;
+		swp_time_table[I] = (((I << 16) / 128) * rate) >> 15;
 	}
 
 	/* Calculate the period tables */
-	for( n = 0; n < 2048; n++ )
+	for( I = 0; I < 2048; I++ )
 	{
-		period_table[n] = ((1 << 16) / (131072 / (2048 - n))) * rate;
-		period_mode3_table[n] = ((1 << 16) / (65536 / (2048 - n))) * rate;
+		period_table[I] = ((1 << 16) / (131072 / (2048 - I))) * rate;
+		period_mode3_table[I] = ((1 << 16) / (65536 / (2048 - I))) * rate;
+	}
+	/* ... and for mode 4 */
+	for( I = 0; I < 8; I++ )
+	{
+		for( J = 0; J < 16; J++ )
+		{
+			period_mode4_table[I][J] = ((1 << 16) / (524288 / ((I == 0)?1:I) / pow(2.0, (double)(J + 1)))) * rate;
+		}
 	}
 
 	/* Calculate the length table */
-	for( n = 0; n < 64; n++ )
+	for( I = 0; I < 64; I++ )
 	{
-		length_table[n] = ((64 - n) * ((1 << 16)/256) * rate) >> 16;
+		length_table[I] = ((64 - I) * ((1 << 16)/256) * rate) >> 16;
 	}
 
 	/* Calculate the length table for mode 3 */
-	for( n = 0; n < 64; n++ )
+	for( I = 0; I < 64; I++ )
 	{
-		length_mode3_table[n] = ((256 - n) * ((1 << 16)/2) * rate) >> 16;
+		length_mode3_table[I] = ((256 - I) * ((1 << 16)/2) * rate) >> 16;
 /*		length_mode3_table[n] = ((256 - n) * ((1 << 16)/256) * rate) >> 16; */
 	}
+
+	/* Calculate poly 7 random noise for mode 4 */
+/*	for( I = 0; I < 256; I++ )
+	{
+		poly7_mode4_table[I] = rand();
+	}*/
+	/* Calculate poly 15 random noise for mode 4 */
+/*	for( I = 0; I < 1024; I++ )
+	{
+		poly15_mode4_table[I] = rand();
+	}*/
 
 	return 0;
 }
