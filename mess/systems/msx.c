@@ -705,7 +705,7 @@ static struct MachineDriver machine_driver_msx =
     /* basic machine hardware */
     {
         {
-            CPU_Z80,
+            CPU_Z80_MSX,
             3579545,    /* 3.579545 Mhz */
             readmem,writemem,readport,writeport,
             msx_interrupt,1
@@ -759,7 +759,7 @@ static struct MachineDriver machine_driver_msx_pal =
     /* basic machine hardware */
     {
         {
-            CPU_Z80,
+            CPU_Z80_MSX,
             3579545,    /* 3.579545 Mhz */
             readmem,writemem,readport,writeport,
             msx_interrupt,1
@@ -813,7 +813,7 @@ static struct MachineDriver machine_driver_msx2 =
     /* basic machine hardware */
     {
         {
-            CPU_Z80,
+            CPU_Z80_MSX,
             3579545,    /* 3.579545 Mhz */
             readmem,writemem,readport2,writeport2,
             msx2_interrupt,262
