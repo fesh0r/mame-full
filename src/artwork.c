@@ -1457,17 +1457,22 @@ int artwork_get_size_info(const char *file_name, struct artwork_size_info *a)
 		return 0;
 	}
 
-	if (!png_read_info(fp, &p))
+#if 0
+    if (!png_read_info(fp, &p))
 	{
 		osd_fclose (fp);
 		return 0;
 	}
-	osd_fclose (fp);
+    osd_fclose (fp);
 
 	a->width = p.width;
 	a->height = p.height;
 	a->screen = p.screen;
 
 	return 1;
+#else
+	osd_fclose (fp);
+	return 0;
+#endif
 }
 
