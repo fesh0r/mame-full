@@ -11,6 +11,12 @@ Release 0.77.2
 	  enabled for non-SDL targets.  The SDL target still enables the plugin
 	  without requiring JOY_SDL to be set.
 	- The ALSA module now builds against ALSA 1.0.  Fixes Bugzilla bug 501.
+	- Changed the abbreviation of "-pause_brightness" to "-pbrt" to prevent
+	  a conflict with "-playback".
+	- The SDL target now handles the "-modenumber" option correctly.  
+	  (Thomas Jarosch)
+	- Added double buffering, enabled via "-doublebuf", to the SDL target.  
+	  (Thomas Jarosch)
 
 Release 0.77.1, 18 November 2003
 	- Everything from MAME 0.77 and MESS 0.77.

@@ -54,6 +54,7 @@ static SDL_Surface* Offscreen_surface;
 static int hardware=1;
 static int mode_number=-1;
 static int start_fullscreen=0;
+static int doublebuf=0;
 SDL_Color *Colors=NULL;
 static int cursor_state; /* previous mouse cursor state */
 
@@ -80,6 +81,9 @@ struct rc_option display_opts[] = {
    { "fullscreen",   NULL,    rc_bool,       &start_fullscreen,
       "0",           0,       0,             NULL,
       "Start fullscreen" },
+   { "doublebuf",   NULL,    rc_bool,       &doublebuf,
+      "0",           0,       0,             NULL,
+      "Use double buffering to reduce flicker/tearing" },
    { "listmodes",    NULL,    rc_use_function_no_arg,       NULL,
       NULL,           0,       0,             list_sdl_modes,
       "List all posible fullscreen modes" },
@@ -209,7 +213,10 @@ int sysdep_create_display(int depth)
 
       /* mode_number is a command line option */
       if( mode_number != -1) {
-         if( mode_number >vid_modes_i)
+         /* count all video modes */
+         for (i=0;vid_modes[i];i++);	 
+
+         if( mode_number >= i)
             fprintf(stderr, "SDL: The mode number is invalid... ignoring\n");
          else
             vid_modes_i = mode_number;
@@ -272,6 +279,9 @@ int sysdep_create_display(int depth)
    vid_mode_flag = SDL_HWSURFACE;
    if (start_fullscreen) {
       vid_mode_flag |= SDL_FULLSCREEN;
+   }
+   if (doublebuf) {
+      vid_mode_flag |= SDL_DOUBLEBUF;
    }
 
    if(! (Surface = SDL_SetVideoMode(Vid_width, Vid_height,Vid_depth, vid_mode_flag))) {
@@ -455,7 +465,9 @@ void sysdep_update_display(struct mame_bitmap *bitmap)
    if(SDL_BlitSurface (Offscreen_surface, &srect, Surface, &drect)<0) 
       fprintf (stderr,"SDL: Warn: Unsuccessful blitting\n");
 
-   if(hardware==0)
+   if (doublebuf == 1)
+      SDL_Flip(Surface);
+   else if(hardware==0)
       SDL_UpdateRects(Surface,1, &drect);
 }
 #else /* DIRECT_HERMES */
@@ -513,7 +525,7 @@ void sysdep_update_display(struct mame_bitmap *bitmap)
    case 1:
       /* Algorithm:
           search through dirty & find max maximal polygon, which 
-          we can get to clipping (don't know if 8x8 is enought)
+          we can get to clipping (don't know if 8x8 is enough)
       */
       /*osd_dirty_merge();*/
       
