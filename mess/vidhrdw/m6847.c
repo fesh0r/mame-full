@@ -28,7 +28,7 @@
 #endif /* MAME_DEBUG */
 
 static void m6847_rastertrack_newscreen(struct rastertrack_vvars *vvars, struct rastertrack_hvars *hvars);
-static void m6847_rastertrack_endcontent(void);
+//static void m6847_rastertrack_endcontent(void);
 static void m6847_rastertrack_getvideomode(struct rastertrack_hvars *hvars);
 
 struct m6847_state {
@@ -391,8 +391,8 @@ int m6847_vh_interrupt(void)
  *		@ CLK(0) + DHS_F			- falling edge (high to low)
  *		@ CLK(16.5) + DHS_R			- rising edge (low to high)
  *		@ CLK(227.5) + DHS_F		- falling edge (high to low)
- *		...	
- *   
+ *		...
+ *
  * FS:	Total Period 262*227.5 clock cycles
  *		@ CLK(0) + DFS_F			- falling edge (high to low)
  *      @ CLK(32*227.5) + DFS_R		- rising edge (low to high)
