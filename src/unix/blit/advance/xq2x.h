@@ -75,17 +75,13 @@
 /* Configuration defines and includes */
 #define XQ2X_GETPIXEL(p) GETPIXEL(p)
 #define HQ2X_YUVLOOKUP(p) effect_rgb2yuv[p]
-#ifdef HQ2X
-#  include "hq2x_defs.h"
-#else
-#  include "lq2x_defs.h"
-#endif
+#include "xq2x_defs.h"
 
 /* Pixel glue define, so that we can use the advancemame lookup
    tables unmodified. */
 #define P(a, b) dst##b[a]
 
-INLINE void XQ2X_FUNC_NAME(blit_line_2x2) ( SRC_PIXEL *src0,
+INLINE void XQ2X_FUNC_NAME(blit_xq2x_line_2x2) ( SRC_PIXEL *src0,
   SRC_PIXEL *src1, SRC_PIXEL *src2, SRC_PIXEL *end1,
   RENDER_PIXEL *dst, int dest_width, unsigned int *lookup)
 {
@@ -93,7 +89,7 @@ INLINE void XQ2X_FUNC_NAME(blit_line_2x2) ( SRC_PIXEL *src0,
   RENDER_PIXEL *dst1 = dst + dest_width;
 
   XQ2X_LINE_LOOP_BEGIN
-    switch (mask) {
+    switch (XQ2X_FUNC_NAME(xq2x_make_mask)(c)) {
       #ifdef HQ2X
       #  include "hq2x.dat"
       #else
@@ -105,7 +101,7 @@ INLINE void XQ2X_FUNC_NAME(blit_line_2x2) ( SRC_PIXEL *src0,
   XQ2X_LINE_LOOP_END
 }
 
-INLINE void XQ2X_FUNC_NAME(blit_line_2x3) ( SRC_PIXEL *src0,
+INLINE void XQ2X_FUNC_NAME(blit_xq2x_line_2x3) ( SRC_PIXEL *src0,
   SRC_PIXEL *src1, SRC_PIXEL *src2, SRC_PIXEL *end1,
   RENDER_PIXEL *dst, int dest_width, unsigned int *lookup)
 {
@@ -114,7 +110,7 @@ INLINE void XQ2X_FUNC_NAME(blit_line_2x3) ( SRC_PIXEL *src0,
   RENDER_PIXEL *dst2 = dst + 2*dest_width;
   
   XQ2X_LINE_LOOP_BEGIN
-    switch (mask) {
+    switch (XQ2X_FUNC_NAME(xq2x_make_mask)(c)) {
       #ifdef HQ2X
       #  include "hq2x3.dat"
       #else
@@ -130,7 +126,7 @@ INLINE void XQ2X_FUNC_NAME(blit_line_2x3) ( SRC_PIXEL *src0,
 #undef P
 #define P(a, b) dst##a[b]
 
-INLINE void XQ2X_FUNC_NAME(blit_line_3x2) ( SRC_PIXEL *src0,
+INLINE void XQ2X_FUNC_NAME(blit_xq2x_line_3x2) ( SRC_PIXEL *src0,
   SRC_PIXEL *src1, SRC_PIXEL *src2, SRC_PIXEL *end1,
   RENDER_PIXEL *dst, int dest_width, unsigned int *lookup)
 {
@@ -138,7 +134,7 @@ INLINE void XQ2X_FUNC_NAME(blit_line_3x2) ( SRC_PIXEL *src0,
   RENDER_PIXEL *dst1 = dst + dest_width;
 
   XQ2X_LINE_LOOP_BEGIN_SWAP_XY
-    switch (mask) {
+    switch (XQ2X_FUNC_NAME(xq2x_make_mask)(c)) {
       #ifdef HQ2X
       #  include "hq2x3.dat"
       #else
@@ -153,7 +149,7 @@ INLINE void XQ2X_FUNC_NAME(blit_line_3x2) ( SRC_PIXEL *src0,
 #undef P
 #define P(a, b) dst##b[a]
 
-INLINE void XQ2X_FUNC_NAME(blit_line_3x3) ( SRC_PIXEL *src0,
+INLINE void XQ2X_FUNC_NAME(blit_xq2x_line_3x3) ( SRC_PIXEL *src0,
   SRC_PIXEL *src1, SRC_PIXEL *src2, SRC_PIXEL *end1,
   RENDER_PIXEL *dst, int dest_width, unsigned int *lookup)
 {
@@ -162,7 +158,7 @@ INLINE void XQ2X_FUNC_NAME(blit_line_3x3) ( SRC_PIXEL *src0,
   RENDER_PIXEL *dst2 = dst + 2*dest_width;
 
   XQ2X_LINE_LOOP_BEGIN
-    switch (mask) {
+    switch (XQ2X_FUNC_NAME(xq2x_make_mask)(c)) {
       #ifdef HQ2X
       #  include "hq3x.dat"
       #else
@@ -184,10 +180,10 @@ BLIT_BEGIN(XQ2X_NAME(blit))
       switch(sysdep_display_params.heightscale)
       {
         case 2:
-          BLIT_LOOP2X(XQ2X_NAME(blit_line_2x2), 2);
+          BLIT_LOOP2X(XQ2X_NAME(blit_xq2x_line_2x2), 2);
           break;
         case 3:
-          BLIT_LOOP2X(XQ2X_NAME(blit_line_2x3), 3);
+          BLIT_LOOP2X(XQ2X_NAME(blit_xq2x_line_2x3), 3);
           break;
       }
       break;
@@ -195,10 +191,10 @@ BLIT_BEGIN(XQ2X_NAME(blit))
       switch(sysdep_display_params.heightscale)
       {
         case 2:
-          BLIT_LOOP2X(XQ2X_NAME(blit_line_3x2), 2);
+          BLIT_LOOP2X(XQ2X_NAME(blit_xq2x_line_3x2), 2);
           break;
         case 3:
-          BLIT_LOOP2X(XQ2X_NAME(blit_line_3x3), 3);
+          BLIT_LOOP2X(XQ2X_NAME(blit_xq2x_line_3x3), 3);
           break;
       }
       break;

@@ -25,4 +25,6 @@
 #define XQ2X_TR_V  0x070000
 #endif
 
+#define XQ2X_UVMASK (XQ2X_UMASK|XQ2X_VMASK)
+
 #endif
