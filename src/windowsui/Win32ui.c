@@ -4252,10 +4252,10 @@ static int BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem)
 		break;
     }
 	case COLUMN_TRACKBALL:
-		if (GameUsesTrackball(index1) == GameUsesTrackball(index2))
+		if (DriverUsesTrackball(index1) == DriverUsesTrackball(index2))
 			return BasicCompareFunc(index1, index2, COLUMN_GAMES);
 
-		value = GameUsesTrackball(index1) - GameUsesTrackball(index2);
+		value = DriverUsesTrackball(index1) - DriverUsesTrackball(index2);
 		break;
 
 	case COLUMN_PLAYED:
