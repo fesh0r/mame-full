@@ -634,7 +634,7 @@ static int cmd_test(struct command *c, int argc, char *argv[])
 	if (err)
 		goto error;
 
-	fprintf(stdout, "...Test succeeded!\n", argv[0]);
+	fprintf(stdout, "...Test succeeded %s!\n", argv[0]);
 	return 0;
 
 error:

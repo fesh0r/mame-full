@@ -5,7 +5,7 @@
 #ifdef MAME_DEBUG
 
 static const char *testimage = "test.img";
-static const char *testfile = "test.txt";
+/* static const char *testfile = "test.txt"; */
 
 /* ----------------------------------------------------------------------- */
 
