@@ -25,7 +25,7 @@ Q-Sound hardware
 */
 WRITE_HANDLER( cps2_qsound_sharedram_w )
 {
-	qsound_sharedram_w(offset, data);
+	qsound_sharedram1_w(offset, data);
 }
 
 
