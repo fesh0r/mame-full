@@ -40,7 +40,21 @@ void galaxy_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 
 	int offs;
 	struct rectangle black_area = {0,0,0,16*13};
+	static int fast_mode = FALSE;
 	
+
+	if (!galaxy_interrupts_enabled)
+	{
+		black_area.min_x = 0;
+		black_area.max_x = 32*8-1;
+		black_area.min_y = 0;
+		black_area.max_y = 16*13-1;
+		fillbitmap(bitmap, Machine->pens[0], &black_area);
+		fast_mode = TRUE;
+		return;
+	}
+
+
 	if (horizontal_pos!=cpu_readmem16(0x2ba8))
 	{
 		full_refresh=1;
@@ -65,6 +79,12 @@ void galaxy_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	if( full_refresh )
 		memset(dirtybuffer, 1, videoram_size);
 
+	if( fast_mode )
+	{
+		memset(dirtybuffer, 1, videoram_size);
+		fast_mode = FALSE;
+	}
+
 	for( offs = 0; offs < videoram_size; offs++ )
     	{
         	if( dirtybuffer[offs]  )
@@ -85,4 +105,6 @@ void galaxy_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 		        dirtybuffer[offs] = 0;
 		}
     	}
+
+	galaxy_interrupts_enabled = FALSE;
 }

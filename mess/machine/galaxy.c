@@ -22,6 +22,16 @@ static int galaxy_data_type = galaxy_NONE;
 static void galaxy_setup_gal(UINT8*, unsigned long);
 static OPBASE_HANDLER(galaxy_opbaseoverride);
 
+int galaxy_interrupts_enabled = TRUE;
+
+
+int galaxy_irq_callback (int cpu)
+{
+	galaxy_interrupts_enabled = TRUE;
+	return 1;
+}
+
+
 void galaxy_init_machine(void)
 {
 
@@ -31,6 +41,8 @@ void galaxy_init_machine(void)
 		logerror("data: %08X. type: %d.\n", galaxy_data,galaxy_data_type);
 		memory_set_opbase_handler(0, galaxy_opbaseoverride);
 	}
+	cpu_set_irq_callback(0, galaxy_irq_callback);
+	
 }
 
 void galaxy_stop_machine(void)
@@ -44,14 +56,14 @@ void galaxy_stop_machine(void)
 	}
 }
 
-READ_HANDLER( kbd_r )
+READ_HANDLER( galaxy_kbd_r )
 {
 	int port = offset/8;
 	int bit = offset%8;
 	return readinputport(port)&0x01<<bit ? 0xfe : 0xff;
 }
 
-WRITE_HANDLER( kbd_w )
+WRITE_HANDLER( galaxy_kbd_w )
 {
 }
 

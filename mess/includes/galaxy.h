@@ -6,8 +6,9 @@ extern void galaxy_exit_snap (int id);
 extern int galaxy_load_snap (int id);
 extern int galaxy_init_wav(int);
 extern void galaxy_exit_wav(int);
-extern READ_HANDLER( kbd_r );
-extern WRITE_HANDLER( kbd_w );
+extern READ_HANDLER( galaxy_kbd_r );
+extern WRITE_HANDLER( galaxy_kbd_w );
+extern int galaxy_interrupts_enabled;
 
 /* vidhrdw/galaxy.c */
 

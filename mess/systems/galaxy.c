@@ -7,6 +7,7 @@ emulator by Miodrag Jevremovic.
 There is the need to find more information about this system, without it the 
 progress in developing driver is nearly impossible.
 
+09/01/2001 Fast mode implemented (many thanks to Kevin Thacker)
 07/01/2001 Keyboard corrected (still some kays unknown)
            Horizontal screen positioning in video subsystem added
 05/01/2001 Keyboard implemented (some keys unknown)
@@ -14,7 +15,6 @@ progress in developing driver is nearly impossible.
 01/01/2001 Preliminary driver
 
 To do:
--Fast mode
 -Video subsystem features
 -Correct palette
 -Tape support
@@ -62,7 +62,7 @@ PORT_END
 MEMORY_READ_START( galaxy_readmem )
 	{0x0000, 0x0fff, MRA_ROM},
 	{0x1000, 0x1fff, MRA_ROM},
-	{0x2000, 0x2035, kbd_r},
+	{0x2000, 0x2035, galaxy_kbd_r},
 	{0x2036, 0x27ff, MRA_RAM},
 	{0x2800, 0x29ff, videoram_r},
 	{0x2a00, 0x3fff, MRA_RAM},
@@ -72,7 +72,7 @@ MEMORY_END
 MEMORY_WRITE_START( galaxy_writemem )
 	{0x0000, 0x0fff, MWA_ROM},
 	{0x1000, 0x1fff, MWA_ROM},
-	{0x2000, 0x2035, kbd_w},
+	{0x2000, 0x2035, galaxy_kbd_w},
 	{0x2036, 0x27ff, MWA_RAM},
 	{0x2800, 0x29ff, videoram_w, &videoram, &videoram_size},
 	{0x2a00, 0x3fff, MWA_RAM},
@@ -88,7 +88,8 @@ struct GfxLayout galaxy_charlayout =
 	1,		/* 1 bits per pixel */
 	{0},	/* no bitplanes; 1 bit per pixel */
 	{7, 6, 5, 4, 3, 2, 1, 0},
-	{0*128*8, 1*128*8, 2*128*8, 3*128*8, 4*128*8, 5*128*8, 6*128*8, 7*128*8,
+	{0*128*8, 1*128*8,  2*128*8,  3*128*8,
+	 4*128*8, 5*128*8,  6*128*8,  7*128*8,
 	 8*128*8, 9*128*8, 10*8*128, 11*128*8, 12*128*8},
 	8 	/* each character takes 1 consecutive bytes */
 };
@@ -197,19 +198,20 @@ static	struct MachineDriver machine_driver_galaxy =
 			interrupt, 1,
 		},
 	},
-	50, 2500,			   /* frames per second, vblank duration */
+	50,					/* frames per second */
+	DEFAULT_60HZ_VBLANK_DURATION,		/* vblank duration */
 	1,
 	galaxy_init_machine,
 	galaxy_stop_machine,
 
 	/* video hardware */
-	32 * 8,					   /* screen width */
-	16 * 13,				   /* screen height */
-	{0, 32 * 8 - 1, 0, 16 * 13 - 1},	   /* visible_area */
-	galaxy_gfxdecodeinfo,			   /* graphics decode info */
+	32 * 8,					/* screen width */
+	16 * 13,				/* screen height */
+	{0, 32 * 8 - 1, 0, 16 * 13 - 1},	/* visible_area */
+	galaxy_gfxdecodeinfo,			/* graphics decode info */
 	sizeof (galaxy_palette) / 3,
-	sizeof (galaxy_colortable),	   /* colors used for the characters */
-	galaxy_init_palette,			   /* initialise palette */
+	sizeof (galaxy_colortable),		/* colors used for the characters */
+	galaxy_init_palette,			/* initialise palette */
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -257,5 +259,5 @@ static const struct IODevice io_galaxy[] = {
     { IO_END }
 };
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-COMP( 1983, galaxy,  0,		   galaxy,  galaxy,	0,		  "",  "Galaksija" )
+/*    YEAR    NAME  PARENT  MACHINE   INPUT  INIT  COMPANY     FULLNAME */
+COMP( 1983, galaxy,      0,  galaxy, galaxy,    0,      "", "Galaksija" )
