@@ -28,7 +28,7 @@ CPUS+=I88@
 #CPUS+=I188@
 CPUS+=I286@
 CPUS+=V20@
-#CPUS+=V30@
+CPUS+=V30@
 #CPUS+=V33@
 #CPUS+=V60@
 #CPUS+=V70@
@@ -236,6 +236,7 @@ DRVLIBS = \
 	$(OBJ)/sony.a     \
 	$(OBJ)/concept.a  \
 	$(OBJ)/dai.a      \
+	$(OBJ)/bandai.a   \
 
 
 $(OBJ)/neocd.a:		\
@@ -763,6 +764,12 @@ $(OBJ)/dai.a:     \
 $(OBJ)/concept.a:  \
 	$(OBJ)/mess/systems/concept.o   \
 	$(OBJ)/mess/machine/concept.o
+
+$(OBJ)/bandai.a:     \
+	$(OBJ)/mess/systems/wswan.o   \
+	$(OBJ)/mess/machine/wswan.o   \
+	$(OBJ)/mess/vidhrdw/wswan.o   \
+	$(OBJ)/mess/sndhrdw/wswan.o
 
 # MESS specific core $(OBJ)s
 COREOBJS += \

@@ -192,6 +192,11 @@ TESTDRIVER( vcg )		/* Palladium Video-Computer-Game					*/
 	/* INTERON */
 TESTDRIVER( vc4000 )	/* Interton vc4000									*/
 
+	/* BANDAI */
+TESTDRIVER( wswan )		/* Bandai WonderSwan Handheld						*/
+TESTDRIVER( wscolor )	/* Bandai WonderSwan Color Handheld					*/
+
+
 /****************COMPUTERS***************************************************/
     /* ACORN */
 	DRIVER( atom )      /* 1979 Acorn Atom									*/
