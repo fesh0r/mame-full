@@ -18,7 +18,7 @@ extern I8271_STATE_t I8271_STATE;
 typedef struct i8271_interface
 {
 	void (*interrupt)(int state);
-	void (*dma_request)(int state, int read);
+	void (*dma_request)(int state, int read_);
 } i8271_interface;
 
 typedef struct I8271

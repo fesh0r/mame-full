@@ -233,22 +233,16 @@ WRITE_HANDLER(kc85_disc_hw_terminal_count_w)
 static void kc85_fdc_interrupt(int state)
 {
 	kc85_disc_hw_input_gate &=~(1<<6);
-
 	if (state)
-	{
 		kc85_disc_hw_input_gate |=(1<<6);
-	}
 }
 
 /* callback for /DRQ output from FDC */
-static void kc85_fdc_dma_drq(int state, int read)
+static void kc85_fdc_dma_drq(int state, int read_)
 {
 	kc85_disc_hw_input_gate &=~(1<<7);
-
 	if (state)
-	{
 		kc85_disc_hw_input_gate |=(1<<7);
-	}
 }
 
 static struct nec765_interface kc_fdc_interface=

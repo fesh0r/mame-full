@@ -30,7 +30,5 @@ extern int device_tell(int type, int id);
 extern int device_status(int type, int id, int newstatus);
 extern int device_input(int type, int id);
 extern void device_output(int type, int id, int data);
-extern int device_input_chunk(int type, int id, void *dst, int chunks);
-extern void device_output_chunk(int type, int id, void *src, int chunks);
 
 #endif

@@ -384,6 +384,7 @@ TESTDRIVER( bondwell )	/* 1985	Bondwell (CGA)								*/
 	/* pc junior */
 TESTDRIVER( ibmpcjr )	/*      IBM PC Jr									*/
 	DRIVER( t1000hx )	/* 1987 Tandy 1000HX (similiar to PCJr)				*/
+	DRIVER( t1000sx )	/* 1987 Tandy 1000SX (similiar to PCJr)				*/
 
 	/* xt */
 	DRIVER( ibmxt )		/* 1986	IBM XT										*/

@@ -1,3 +1,11 @@
+/***********************************************************
+
+  utils.h
+
+  Nifty utility code
+
+***********************************************************/
+
 #ifndef UTILS_H
 #define UTILS_H
 
@@ -11,7 +19,33 @@
 
 #include "osdutils.h"
 
-char *stripspace(const char *src);
+/* -----------------------------------------------------------------------
+ * GCC related optimizations
+ * ----------------------------------------------------------------------- */
+
+#ifdef __GNUC__
+#define FUNCATTR_MALLOC		__attribute__ ((malloc))
+
+#if (__GNUC__ > 2) || (__GNUC__ == 2 && __GNUC_MINOR__ >= 96)
+#define FUNCATTR_PURE		__attribute__ ((pure))
+#endif
+
+#if (__GNUC__ > 2) || (__GNUC__ == 2 && __GNUC_MINOR__ >= 5)
+#define FUNCATTR_CONST		__attribute__ ((const))
+#endif
+#endif /* __GNUC__ */
+
+#ifndef FUNCATTR_MALLOC
+#define FUNCATTR_MALLOC
+#endif
+
+#ifndef FUNCATTR_PURE
+#define FUNCATTR_PURE
+#endif
+
+#ifndef FUNCATTR_CONST
+#define FUNCATTR_CONST
+#endif
 
 /* -----------------------------------------------------------------------
  * strncpyz
@@ -83,5 +117,7 @@ void *memset16 (void *dest, int value, size_t size);
 #ifndef PATH_SEPARATOR
 #define PATH_SEPARATOR	'/'
 #endif
+
+char *stripspace(const char *src);
 
 #endif /* UTILS_H */

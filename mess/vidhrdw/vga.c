@@ -472,25 +472,30 @@ static WRITE_HANDLER(vga_vga_w)
 static void vga_cpu_interface(void)
 {
 	static int sequencer, gc;
-	mem_read_handler read;
-	mem_write_handler write;
+	mem_read_handler read_handler;
+	mem_write_handler write_handler;
 
 	if ((gc==vga.gc.data[6])&&(sequencer==vga.sequencer.data[4])) return;
 
 	gc=vga.gc.data[6];
 	sequencer=vga.sequencer.data[4];
 
-	if (vga.sequencer.data[4]&8) {
-		read=vga_vga_r;
-		write=vga_vga_w;
+	if (vga.sequencer.data[4]&8)
+	{
+		read_handler = vga_vga_r;
+		write_handler = vga_vga_w;
 		DBG_LOG(1,"vga memory",("vga\n"));
-	} else if (vga.sequencer.data[4]&4) {
-		read=vga_ega_r;
-		write=vga_ega_w;
+	}
+	else if (vga.sequencer.data[4] & 4)
+	{
+		read_handler = vga_ega_r;
+		write_handler = vga_ega_w;
 		DBG_LOG(1,"vga memory",("ega\n"));
-	} else {
-		read=vga_text_r;
-		write=vga_text_w;
+	}
+	else
+	{
+		read_handler = vga_text_r;
+		write_handler = vga_text_w;
 		DBG_LOG(1,"vga memory",("text\n"));
 	}
 	switch (vga.gc.data[6]&0xc) {
@@ -507,30 +512,30 @@ static void vga_cpu_interface(void)
 		DBG_LOG(1,"vga memory",("a0000-bffff\n"));
 		break;
 	case 4:
-		memory_set_bankhandler_r(1, 0, read);
+		memory_set_bankhandler_r(1, 0, read_handler);
 		memory_set_bankhandler_r(2, 0, MRA_NOP);
 		memory_set_bankhandler_r(3, 0, MRA_NOP);
-		memory_set_bankhandler_w(1, 0, write);
+		memory_set_bankhandler_w(1, 0, write_handler);
 		memory_set_bankhandler_w(2, 0, MWA_NOP);
 		memory_set_bankhandler_w(3, 0, MWA_NOP);
 		DBG_LOG(1,"vga memory",("a0000-affff\n"));
 		break;
 	case 8:
 		memory_set_bankhandler_r(1, 0, MRA_NOP);
-		memory_set_bankhandler_r(2, 0, read );
+		memory_set_bankhandler_r(2, 0, read_handler);
 		memory_set_bankhandler_r(3, 0, MRA_NOP);
 		memory_set_bankhandler_w(1, 0, MWA_NOP);
-		memory_set_bankhandler_w(2, 0, write );
+		memory_set_bankhandler_w(2, 0, write_handler);
 		memory_set_bankhandler_w(3, 0, MWA_NOP);
 		DBG_LOG(1,"vga memory",("b0000-b7fff\n"));
 		break;
 	case 0xc:
 		memory_set_bankhandler_r(1, 0, MRA_NOP);
 		memory_set_bankhandler_r(2, 0, MRA_NOP);
-		memory_set_bankhandler_r(3, 0, read);
+		memory_set_bankhandler_r(3, 0, read_handler);
 		memory_set_bankhandler_w(1, 0, MWA_NOP);
 		memory_set_bankhandler_w(2, 0, MWA_NOP);
-		memory_set_bankhandler_w(3, 0, write);
+		memory_set_bankhandler_w(3, 0, write_handler);
 		DBG_LOG(1,"vga memory",("b8000-bffff\n"));
 		break;
 	}

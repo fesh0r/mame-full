@@ -142,7 +142,7 @@ static void execute_read(void)
 	mame_file *f = pc_hdc_file[idx];
 	UINT8 data[512], *src = data;
 	int size = sector_cnt[idx] * 512;
-	int read = 0, first = 1;
+	int read_ = 0, first = 1;
 	int no_dma = dma8237->mask & (0x10 << HDC_DMA);
 
 	display[idx]|=1;
@@ -153,7 +153,7 @@ static void execute_read(void)
 			HDC_LOG(1,"hdc_PIO_read",("C:%02d H:%d S:%02d N:%d $%08x, $%04x\n", cylinder[idx], head[idx], sector[idx], sector_cnt[idx], offset_[idx], size));
 			do
 			{
-				if( read == 0 )
+				if( read_ == 0 )
 				{
 					mame_fseek(f, offset_[idx], SEEK_SET);
 					if( !first )
@@ -161,16 +161,16 @@ static void execute_read(void)
 						HDC_LOG(2,"hdc_PIO_read next",("C:%02d H:%d S:%02d N:%d $%08x, $%04x\n",
 							cylinder[idx], head[idx], sector[idx], sector_cnt[idx], offset_[idx], size));
 					}
-					read = mame_fread(f, data, 512);
-                    size -= 512;
-					offset_[idx] += read;
+					read_ = mame_fread(f, data, 512);
+					size -= 512;
+					offset_[idx] += read_;
 					src = data;
 					first = 0;
 					sector[idx]++;
 				}
 				/* copy data into the result buffer */
 				buffer[data_cnt++] = *src++;
-				if( --read == 0 )
+				if( --read_ == 0 )
 				{
 					/* end of cylinder ? */
 					if( sector[idx] >= spt[idx] )
@@ -183,7 +183,7 @@ static void execute_read(void)
 						}
 					}
 				}
-			} while (read || size);
+			} while (read_ || size);
 		}
 		else
 		{
@@ -193,7 +193,7 @@ static void execute_read(void)
 #endif
 			do
 			{
-				if (read == 0)
+				if (read_ == 0)
 				{
 					mame_fseek(f, offset_[idx], SEEK_SET);
 					if (!first)
@@ -202,9 +202,9 @@ static void execute_read(void)
 							cylinder[idx], head[idx], sector[idx], sector_cnt[idx], offset_[idx],
 							pc_DMA_page[HDC_DMA] + pc_DMA_address[HDC_DMA], pc_DMA_count[HDC_DMA]+1));
 					}
-					read = mame_fread(f, data, 512);
-                    size -= 512;
-					offset_[idx] += read;
+					read_ = mame_fread(f, data, 512);
+					size -= 512;
+					offset_[idx] += read_;
 					src = data;
 					first = 0;
 					sector[idx]++;
@@ -222,7 +222,7 @@ static void execute_read(void)
 					src++;
 				dma8237->chan[HDC_DMA].address += dma8237->chan[HDC_DMA].direction;
 #endif
-				if( --read == 0 )
+				if( --read_ == 0 )
 				{
 					/* end of cylinder ? */
 					if (sector[idx] >= spt[idx])
@@ -251,7 +251,7 @@ static void execute_write(void)
 	mame_file *f = pc_hdc_file[idx];
 	UINT8 data[512], *dst = data;
 	int size = sector_cnt[idx] * 512;
-	int write = 512, first = 1;
+	int write_ = 512, first = 1;
 	int no_dma = dma8237->mask & (0x10 << HDC_DMA);
 
 	display[idx]|=2;
@@ -264,15 +264,17 @@ static void execute_write(void)
 			{
 				/* copy data into the result buffer */
 				*dst++ = buffer[data_cnt++];
-				if( --write == 0 )
+				if( --write_ == 0 )
 				{
 					mame_fseek(f, offset_[idx], SEEK_SET);
-					write = mame_fwrite(f, data, 512);
-                    offset_[idx] += write;
-					size -= write;
-					if (size <= 0) write = 0;
+					write_ = mame_fwrite(f, data, 512);
+					offset_[idx] += write_;
+					size -= write_;
+					if (size <= 0)
+						write_ = 0;
 					dst = data;
-                    /* end of cylinder ? */
+
+					/* end of cylinder ? */
 					if( ++sector[idx] >= spt[idx] )
 					{
 						sector[idx] = 0;
@@ -283,7 +285,7 @@ static void execute_write(void)
                         }
                     }
 				}
-			} while (write || size);
+			} while (write_ || size);
 		}
 		else
 		{
@@ -303,12 +305,12 @@ static void execute_write(void)
 				};
 				dma8237->chan[HDC_DMA].address += dma8237->chan[HDC_DMA].direction;
 #endif
-				if( --write == 0 )
+				if( --write_ == 0 )
 				{
 					mame_fseek(f, offset_[idx], SEEK_SET);
-					write = mame_fwrite(f, data, 512);
-                    size -= 512;
-					offset_[idx] += write;
+					write_ = mame_fwrite(f, data, 512);
+					size -= 512;
+					offset_[idx] += write_;
                     /* end of cylinder ? */
 					if( ++sector[idx] >= spt[idx] )
 					{

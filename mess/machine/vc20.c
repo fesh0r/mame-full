@@ -643,7 +643,7 @@ int vc20_rom_load (int id, mame_file *fp, int open_mode)
 {
 	UINT8 *mem = memory_region (REGION_CPU1);
 	//mame_file *fp;
-	int size, read;
+	int size, read_;
 	const char *cp;
 	int addr = 0;
 
@@ -705,8 +705,8 @@ int vc20_rom_load (int id, mame_file *fp, int open_mode)
 	}
 
 	logerror("loading rom %s at %.4x size:%.4x\n",image_filename(IO_CARTSLOT,id), addr, size);
-	read = mame_fread (fp, mem + addr, size);
-	if (read != size)
+	read_ = mame_fread (fp, mem + addr, size);
+	if (read_ != size)
 		return 1;
 	return 0;
 }

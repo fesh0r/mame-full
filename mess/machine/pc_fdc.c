@@ -53,7 +53,7 @@ static void pc_fdc_interrupt(int state)
 	}
 }
 
-void	pc_fdc_dma_drq(int state, int read)
+void pc_fdc_dma_drq(int state, int read_)
 {
 	if (state)
 	{
@@ -70,7 +70,7 @@ void	pc_fdc_dma_drq(int state, int read)
 
 			logerror("DMA Bytes To Transfer: %d\r\n", dma8237->chan[FDC_DMA].count+1);
 
-			if (read)
+			if (read_)
 			{
 				dma8237->status |= 0x010<<FDC_DMA;
 

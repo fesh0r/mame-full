@@ -339,7 +339,7 @@ static int c1551_fs_command (CBM_Drive * c1551, unsigned char *name)
 {
 	mame_file *fp;
 	int type=0;
-	int read;
+	int read_;
 	int i;
 	char n[32];
 
@@ -390,10 +390,10 @@ static int c1551_fs_command (CBM_Drive * c1551, unsigned char *name)
 				exit(1);
 			}
 
-			read = mame_fread (fp, c1551->buffer, 26);
+			read_ = mame_fread (fp, c1551->buffer, 26);
 			strncpy (c1551->d.fs.filename, (char *) c1551->buffer + 8, 16);
 			c1551->size -= 26;
-			read = mame_fread (fp, c1551->buffer, c1551->size);
+			read_ = mame_fread (fp, c1551->buffer, c1551->size);
 		}
 		else
 		{
@@ -405,7 +405,7 @@ static int c1551_fs_command (CBM_Drive * c1551, unsigned char *name)
 				exit(1);
 			}
 
-			read = mame_fread (fp, c1551->buffer, c1551->size);
+			read_ = mame_fread (fp, c1551->buffer, c1551->size);
 			mame_fclose (fp);
 			logerror("loading file %s\n", name);
 			strcpy (c1551->d.fs.filename, (char *) name);

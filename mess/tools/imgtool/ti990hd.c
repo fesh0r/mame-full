@@ -1317,20 +1317,25 @@ static int ti990_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 			case 1:
 				fmt = "BS ";
 				break;
-			case 2:
-			case 3:
+			default:
 				fmt = "???";
 				break;
 			}
 
 			switch ((flag >> fdr_flg_fu_shift) & 3)
 			{
-			case 0:
+			case 1:
+				type = "DIR";
+				break;
+			case 2:
+				type = "PRO";
+				break;
+			case 3:
+				type = "IMG";
+				break;
+			default:
 				switch ((flag >> fdr_flg_ft_shift) & 3)
 				{
-				case 0:
-					type = "???";
-					break;
 				case 1:
 					type = "SEQ";
 					break;
@@ -1340,16 +1345,10 @@ static int ti990_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 				case 3:
 					type = "KIF";
 					break;
+				default:
+					type = "???";
+					break;
 				}
-				break;
-			case 1:
-				type = "DIR";
-				break;
-			case 2:
-				type = "PRO";
-				break;
-			case 3:
-				type = "IMG";
 				break;
 			}
 			snprintf(ent->attr, ent->attr_len,

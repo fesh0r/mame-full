@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.9 2002/12/12 18:07:03 npwoods Exp $
+  $Id: pc8801.c,v 1.10 2003/03/03 14:05:14 npwoods Exp $
 
 ***************************************************************************/
 
@@ -759,7 +759,9 @@ static void pc8801_fdc_interrupt(int state)
 }
 
 /* callback for /DRQ output from FDC */
-static void pc8801_fdc_dma_drq(int state, int read){}
+static void pc8801_fdc_dma_drq(int state, int read_)
+{
+}
 
 static struct nec765_interface pc8801_fdc_interface=
 {

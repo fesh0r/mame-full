@@ -41,10 +41,12 @@
 /***************************************************************************
 	Internal variables
  ***************************************************************************/
+#ifndef PATH_SEPARATOR
 #ifdef _MSC_VER
 #define PATH_SEPARATOR '\\'
 #else
 #define PATH_SEPARATOR '/'
+#endif
 #endif
 
 

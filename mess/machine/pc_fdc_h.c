@@ -111,17 +111,17 @@ void	pc_fdc_dack_w(int data)
 	}
 }
 
-void	pc_fdc_hw_dma_drq(int state, int read)
+void	pc_fdc_hw_dma_drq(int state, int read_)
 {
 	fdc.dma_state = state;
-	fdc.dma_read = read;
+	fdc.dma_read = read_;
 
 	/* if dma is not enabled, drqs are masked */
 	if ((fdc.digital_output_register & PC_FDC_FLAGS_DOR_DMA_ENABLED)==0)
 		return;
 
 	if (fdc.fdc_interface.pc_fdc_dma_drq!=NULL)
-		fdc.fdc_interface.pc_fdc_dma_drq(state, read);
+		fdc.fdc_interface.pc_fdc_dma_drq(state, read_);
 }
 
 /* read status register */

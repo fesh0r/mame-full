@@ -1607,27 +1607,34 @@ ROM_START( ibmpcjr )
 ROM_END
 
 ROM_START( t1000hx )
-    ROM_REGION(0x100000,REGION_CPU1, 0)
-    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-    // partlist says it has 1 128kbyte rom
-    ROM_LOAD("t1000hx.e0", 0xe0000, 0x10000, 0x61dbf242)
-    ROM_LOAD("tandy1t.rom", 0xf0000, 0x10000, 0xd37a1d5f)
-//	ROM_REGION(0x01100,REGION_GFX1, 0)
+	ROM_REGION(0x100000,REGION_CPU1, 0)
+	ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
+	// partlist says it has 1 128kbyte rom
+	ROM_LOAD("t1000hx.e0", 0xe0000, 0x10000, 0x61dbf242)
+	ROM_LOAD("tandy1t.rom", 0xf0000, 0x10000, 0xd37a1d5f)
 	ROM_REGION(0x02000,REGION_GFX1, 0)
-    // expects 8x9 charset!
-//    ROM_LOAD("", 0x00000, 0x01000, 0x0 )
-    ROM_LOAD("50146", 0x00000, 0x02000, BADCRC(0x1305dcf5)) //taken from europc, 9th blank
+	// expects 8x9 charset!
+	ROM_LOAD("50146", 0x00000, 0x02000, BADCRC(0x1305dcf5)) //taken from europc, 9th blank
+ROM_END
+
+ROM_START( t1000sx )
+	ROM_REGION(0x100000,REGION_CPU1, 0)
+	ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
+	// partlist says it has 1 128kbyte rom
+	ROM_LOAD("t1000hx.e0", 0xe0000, 0x10000, 0x61dbf242)
+	ROM_LOAD("tandy1t1.020", 0xf0000, 0x10000, 0x0e016ecf)
+	ROM_REGION(0x02000,REGION_GFX1, 0)
+	// expects 8x9 charset!
+	ROM_LOAD("50146", 0x00000, 0x02000, BADCRC(0x1305dcf5)) //taken from europc, 9th blank
 ROM_END
 
 ROM_START( ibmxt )
-//    ROM_REGION(0x100000,REGION_CPU1, 0)
-    ROM_REGION16_LE(0x100000,REGION_CPU1, 0)
-//    ROM_LOAD("xthdd.rom",  0xc8000, 0x02000, 0xa96317da) //this was inside
-    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-    ROM_LOAD16_BYTE("xt050986.0", 0xf0000, 0x8000, 0x83727c42) 
-    ROM_LOAD16_BYTE("xt050986.1", 0xf0001, 0x8000, 0x2a629953)
+	ROM_REGION16_LE(0x100000,REGION_CPU1, 0)
+	ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
+	ROM_LOAD16_BYTE("xt050986.0", 0xf0000, 0x8000, 0x83727c42) 
+	ROM_LOAD16_BYTE("xt050986.1", 0xf0001, 0x8000, 0x2a629953)
 	ROM_REGION(0x01100,REGION_GFX1, 0)
-    ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
+	ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
 ROM_END
 
 ROM_START( xtvga )
@@ -1702,6 +1709,7 @@ COMP( 1988,		europc,		ibmpc,	europc,     europc,		europc,     ibmpc,   "Schneide
 // pcjr (better graphics, better sound)
 COMPX( 1983,	ibmpcjr,	ibmpc,	t1000hx,    tandy1t,	t1000hx,    ibmpc,   "International Business Machines",  "IBM PC Jr", GAME_NOT_WORKING|GAME_IMPERFECT_COLORS )
 COMP( 1987,		t1000hx,	ibmpc,	t1000hx,    tandy1t,	t1000hx,	ibmpc,   "Tandy Radio Shack",  "Tandy 1000HX")
+COMP( 1987,		t1000sx,	ibmpc,	t1000hx,    tandy1t,	t1000hx,	ibmpc,   "Tandy Radio Shack",  "Tandy 1000SX")
 
 // xt class (pc but 8086)
 COMP( 1986,		ibmxt,		ibmpc,	xtcga,      xtcga,		pccga,		ibmpc,   "International Business Machines",  "IBM PC/XT (CGA)" )

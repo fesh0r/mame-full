@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include "fileio.h"
+#include "utils.h"
 
 extern int images_is_running;
 
@@ -12,8 +13,8 @@ extern void image_unload_all(void);
 
 extern mame_file *image_fp(int type, int id);
 
-extern void *image_malloc(int type, int id, size_t size);
-extern char *image_strdup(int type, int id, const char *src);
+extern void *image_malloc(int type, int id, size_t size) FUNCATTR_MALLOC;
+extern char *image_strdup(int type, int id, const char *src) FUNCATTR_MALLOC;
 extern void *image_realloc(int type, int id, void *ptr, size_t size);
 
 /* needs to be phased out */

@@ -1073,7 +1073,7 @@ WRITE_HANDLER ( bbc_wd1770_write )
 int bbcb_load_rom(int id, mame_file *fp, int open_mode)
 {
 	UINT8 *mem = memory_region (REGION_USER1);
-	int size, read;
+	int size, read_;
 	int addr = 0;
 
 	if (fp == NULL)
@@ -1089,19 +1089,19 @@ int bbcb_load_rom(int id, mame_file *fp, int open_mode)
 
 	switch (size) {
 	case 0x2000:
-		read = mame_fread (fp, mem + addr, size);
-		read = mame_fread (fp, mem + addr + 0x2000, size);
+		read_ = mame_fread (fp, mem + addr, size);
+		read_ = mame_fread (fp, mem + addr + 0x2000, size);
 		break;
 	case 0x4000:
-		read = mame_fread (fp, mem + addr, size);
+		read_ = mame_fread (fp, mem + addr, size);
 		break;
 	default:
-		read=0;
+		read_ = 0;
 		logerror("bad rom file size of %.4x\n",size);
 		break;
 	}
 
-	if (read != size)
+	if (read_ != size)
 		return 1;
 	return 0;
 }

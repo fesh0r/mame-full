@@ -13,7 +13,7 @@ static void *create_buffer(size_t len)
 {
 	char *buf;
 	size_t testlen, i;
-	static char *teststring = "All your base are belong to us";
+	static const char *teststring = "All your base are belong to us";
 
 	testlen = strlen(teststring);
 	buf = malloc(len);
