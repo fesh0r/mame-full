@@ -63,7 +63,7 @@ imgtoolerr_t img_identify(imgtool_library *library, const char *fname,
 		{
 			image = NULL;
 			err = img_open(module, fname, OSD_FOPEN_READ, &image);
-			if (err && (ERRORSOURCE(err) != IMGTOOLERR_SRC_IMAGEFILE))
+			if (err && (ERRORCODE(err) != IMGTOOLERR_CORRUPTIMAGE))
 				return err;
 
 			if (image)

@@ -182,91 +182,116 @@ static imgtoolerr_t append_dirent(HWND window, const imgtool_dirent *entry)
 
 
 
-static imgtoolerr_t refresh_image(HWND window, BOOL full_setup)
+static imgtoolerr_t refresh_image(HWND window)
 {
 	imgtoolerr_t err;
 	imgtool_imageenum *imageenum = NULL;
 	char buf[256];
 	imgtool_dirent entry;
 	struct wimgtool_info *info;
-	LVCOLUMN col;
-	const struct OptionGuide *guide;
-	const struct ImageModule *module;
 
 	info = get_wimgtool_info(window);
 
-	if (full_setup)
-	{
-		module = info->image ? img_module(info->image) : NULL;
-		if (info->filename)
-		{
-			SetWindowText(window, U2T(info->filename));
-			snprintf(buf, sizeof(buf) / sizeof(buf[0]),
-				"%s: %s", osd_basename((char *) info->filename), module->description);
-			SetWindowText(info->statusbar, U2T(buf));
-		}
-		else
-		{
-			SetWindowText(window, TEXT(""));
-			SetWindowText(info->statusbar, TEXT(""));
-		}
-		DragAcceptFiles(window, info->filename != NULL);
-
-		// create module specific listview columns
-		guide = module ? module->writefile_optguide : NULL;
-		if (guide)
-		{
-			col.mask = LVCF_TEXT | LVCF_WIDTH;
-			col.cx = 100;
-
-			while(guide->option_type != OPTIONTYPE_END)
-			{
-				switch(guide->option_type)
-				{
-					case OPTIONTYPE_INT:
-					case OPTIONTYPE_STRING:
-					case OPTIONTYPE_ENUM_BEGIN:
-						col.pszText = (LPTSTR) U2T(guide->display_name);
-						if (ListView_InsertColumn(info->listview, 1, &col) < 0)
-							return -1;
-						break;
-
-					default:
-						break;
-				}
-				guide++;
-			}
-		}
-	}
-
 	ListView_DeleteAllItems(info->listview);
 
-	err = img_beginenum(info->image, &imageenum);
-	if (err)
-		goto done;
-
-	memset(&entry, 0, sizeof(entry));
-	entry.filename = buf;
-	entry.filename_len = sizeof(buf) / sizeof(buf[0]);
-	do
+	if (info->image)
 	{
-		err = img_nextenum(imageenum, &entry);
+		err = img_beginenum(info->image, &imageenum);
 		if (err)
 			goto done;
 
-		if (entry.filename[0])
+		memset(&entry, 0, sizeof(entry));
+		entry.filename = buf;
+		entry.filename_len = sizeof(buf) / sizeof(buf[0]);
+		do
 		{
-			err = append_dirent(window, &entry);
+			err = img_nextenum(imageenum, &entry);
 			if (err)
 				goto done;
+
+			if (entry.filename[0])
+			{
+				err = append_dirent(window, &entry);
+				if (err)
+					goto done;
+			}
 		}
+		while(!entry.eof);
 	}
-	while(!entry.eof);
 
 done:
 	if (imageenum)
 		img_closeenum(imageenum);
 	return err;
+}
+
+
+
+static imgtoolerr_t full_refresh_image(HWND window)
+{
+	struct wimgtool_info *info;
+	LVCOLUMN col;
+	const struct OptionGuide *guide;
+	const struct ImageModule *module;
+	int column_index = 0;
+	char buf[256];
+
+	info = get_wimgtool_info(window);
+
+	module = info->image ? img_module(info->image) : NULL;
+	if (info->filename)
+	{
+		SetWindowText(window, U2T(info->filename));
+		snprintf(buf, sizeof(buf) / sizeof(buf[0]),
+			"%s: %s", osd_basename((char *) info->filename), module->description);
+		SetWindowText(info->statusbar, U2T(buf));
+	}
+	else
+	{
+		snprintf(buf, sizeof(buf) / sizeof(buf[0]),
+			"%s %s", product_text, build_version);
+		SetWindowText(window, U2T(buf));
+		SetWindowText(info->statusbar, TEXT(""));
+	}
+	DragAcceptFiles(window, info->filename != NULL);
+
+	// create the listview columns
+	col.mask = LVCF_TEXT | LVCF_WIDTH;
+	col.cx = 100;
+	col.pszText = (LPTSTR) TEXT("Filename");
+	if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
+		return IMGTOOLERR_OUTOFMEMORY;
+	col.pszText = (LPTSTR) TEXT("Size");
+	if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
+		return IMGTOOLERR_OUTOFMEMORY;
+
+	// create module specific listview columns
+	guide = module ? module->writefile_optguide : NULL;
+	if (guide)
+	{
+		while(guide->option_type != OPTIONTYPE_END)
+		{
+			switch(guide->option_type)
+			{
+				case OPTIONTYPE_INT:
+				case OPTIONTYPE_STRING:
+				case OPTIONTYPE_ENUM_BEGIN:
+					col.pszText = (LPTSTR) U2T(guide->display_name);
+					if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
+						return -1;
+					break;
+
+				default:
+					break;
+			}
+			guide++;
+		}
+	}
+
+	// delete extraneous columns
+	while(ListView_DeleteColumn(info->listview, column_index))
+		;
+	return refresh_image(window);
 }
 
 
@@ -384,7 +409,7 @@ static imgtoolerr_t open_image(HWND window, const struct ImageModule *module,
 	info->image = image;
 
 	// refresh the window
-	refresh_image(window, TRUE);
+	full_refresh_image(window);
 	
 done:
 	return err;
@@ -443,6 +468,7 @@ static void menu_open(HWND window)
 	err = setup_openfilename_struct(&ofn, &pool, window, TRUE);
 	if (err)
 		goto done;
+	ofn.Flags |= OFN_FILEMUSTEXIST;
 	if (!GetOpenFileName(&ofn))
 		goto done;
 
@@ -495,7 +521,7 @@ static void menu_insert(HWND window)
 	if (err)
 		goto done;
 
-	err = refresh_image(window, FALSE);
+	err = refresh_image(window);
 	if (err)
 		goto done;
 
@@ -564,7 +590,7 @@ static void menu_delete(HWND window)
 	if (err)
 		goto done;
 
-	err = refresh_image(window, FALSE);
+	err = refresh_image(window);
 	if (err)
 		goto done;
 
@@ -589,7 +615,6 @@ static void set_listview_style(HWND window, DWORD style)
 
 static LRESULT wimgtool_create(HWND window, CREATESTRUCT *pcs)
 {
-	LVCOLUMN col;
 	struct wimgtool_info *info;
 
 	info = malloc(sizeof(*info));
@@ -599,8 +624,6 @@ static LRESULT wimgtool_create(HWND window, CREATESTRUCT *pcs)
 	pile_init(&info->iconlist_extensions);
 
 	SetWindowLongPtr(window, GWLP_USERDATA, (LONG_PTR) info);
-
-	SetWindowText(window, product_text);
 
 	// create the list view
 	info->listview = CreateWindow(WC_LISTVIEW, NULL,
@@ -615,16 +638,6 @@ static LRESULT wimgtool_create(HWND window, CREATESTRUCT *pcs)
 	if (!info->statusbar)
 		return -1;
 
-	// create the listview columns
-	col.mask = LVCF_TEXT | LVCF_WIDTH;
-	col.pszText = (LPTSTR) TEXT("Filename");
-	col.cx = 100;
-	if (ListView_InsertColumn(info->listview, 0, &col) < 0)
-		return -1;
-	col.pszText = (LPTSTR) TEXT("Size");
-	if (ListView_InsertColumn(info->listview, 1, &col) < 0)
-		return -1;
-
 	// create imagelists
 	info->iconlist_normal = ImageList_Create(32, 32, ILC_COLOR, 0, 0);
 	info->iconlist_small = ImageList_Create(16, 16, ILC_COLOR, 0, 0);
@@ -633,6 +646,7 @@ static LRESULT wimgtool_create(HWND window, CREATESTRUCT *pcs)
 	ListView_SetImageList(info->listview, info->iconlist_normal, LVSIL_NORMAL);
 	ListView_SetImageList(info->listview, info->iconlist_small, LVSIL_SMALL);
 
+	full_refresh_image(window);
 	return 0;
 }
 
@@ -658,7 +672,7 @@ static void drop_files(HWND window, HDROP drop)
 	}
 
 done:
-	refresh_image(window, FALSE);
+	refresh_image(window);
 	if (err)
 		report_error(window, err);
 }
