@@ -24,19 +24,27 @@ int odyssey2_load_rom (int id)
 {
     FILE *cartfile;
 
+	logerror("ODYSSEY2 - Load_rom()\n");
 	if(device_filename(IO_CARTSLOT,id) == NULL)
 	{
-		printf("%s requires Cartridge!\n", Machine->gamedrv->name);
+		logerror("%s requires Cartridge!\n", Machine->gamedrv->name);
 		return INIT_FAILED;
     }
 
     ROM = memory_region(REGION_CPU1);
     cartfile = NULL;
+    logerror("ODYSSEY2 - Loading Image\n");
 	if (!(cartfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		logerror("ODYSSEY2 - Unable to locate cartridge: %s\n",device_filename(IO_CARTSLOT,id) );
 		return 1;
 	}
+	else
+	{
+		logerror("ODYSSEY2 - Found cartridge\n");
+
+	}
+	logerror("ODYSSEY2 - Done\n");
 	osd_fread (cartfile, &ROM[0x0400], 2048);	 /* non banked carts */
     osd_fclose (cartfile);
 

@@ -84,7 +84,7 @@ static struct MachineDriver machine_driver_odyssey2 =
 
 ROM_START (odyssey2)
 	ROM_REGION(0x10000,REGION_CPU1,0)    /* 64 k Internal RAM */
-	ROM_LOAD ("o2bios.rom", 0x0000, 0x400, 0x8016a315)
+	ROM_LOAD ("o2bios.rom", 0x0000, 0x0400, 0x8016a315)
 ROM_END
 
 static const struct IODevice io_odyssey2[] = {
