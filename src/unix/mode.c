@@ -50,8 +50,8 @@ struct rc_option mode_opts[] = {
 
 struct mode
 {
-   int width;
-   int height;
+   unsigned int width;
+   unsigned int height;
    int depth;
 };
 
@@ -71,7 +71,7 @@ static int mode_disable(struct rc_option *option, const char *s, int priority)
       return 0;
    }
    disabled_modes[disabled_modes_count].depth = 0;
-   if (sscanf(s, "%dx%dx%d",
+   if (sscanf(s, "%ux%ux%d",
        &disabled_modes[disabled_modes_count].width,
        &disabled_modes[disabled_modes_count].height,
        &disabled_modes[disabled_modes_count].depth) < 2)
@@ -98,7 +98,7 @@ static int mode_disable(struct rc_option *option, const char *s, int priority)
 
 static int mode_force(struct rc_option *option, const char *s, int priority)
 {
-   if (sscanf(s, "%dx%dx%d",
+   if (sscanf(s, "%ux%ux%d",
        &forced_mode.width,
        &forced_mode.height,
        &forced_mode.depth) != 3)
@@ -136,7 +136,7 @@ void mode_set_aspect_ratio(double _display_resolution_aspect_ratio)
       (display_resolution_aspect_ratio/display_aspect_ratio));
 }
 
-static int mode_disabled(int width, int height, int depth)
+static int mode_disabled(unsigned int width, unsigned int height, int depth)
 {
    int i;
 
@@ -156,86 +156,93 @@ static int mode_disabled(int width, int height, int depth)
    and 100 for the perfect mode +10 for a mode with a well matched depth&bpp
    and +20 for a mode with the perfect depth&bpp
    (=120 for the really perfect mode). */
-int mode_match(int width, int height, int depth, int bpp, int dfb)
+int mode_match(unsigned int width, unsigned int height, int depth, int bpp, int dfb)
 {
   int score, viswidth, visheight;
   double perfect_width, perfect_height, perfect_aspect = 0.0;
   static int first_time = 1;
   double aspect = (double)width/height;
 
-  /* convert depth to a pseudodepth which differentiates 24bpp packed/sparse */  
+  /* convert depth to a pseudodepth which differentiates 24bpp packed/sparse */
   if (depth == 24)
     depth = bpp;
-
-  /* is this mode disabled? */
-  if(mode_disabled(width, height, depth))
-     return 0;
   
-  /* if using direct framebuffer access, make sure the width is properly
-     aligned */
-  if(dfb && (width & 3))
-     return 0;
-
-  /* get the width and height after scaling */
-  viswidth = sysdep_display_params.width * sysdep_display_params.widthscale;
-  if(!use_aspect_ratio || !perfect_aspect || sysdep_display_params.effect)
+  /* width and height 0 means any resolution is possible (window), in this
+     case we just take 100 as a base score and only check the depth & bpp. */
+  if(width && height)
   {
-    visheight = sysdep_display_params.yarbsize? sysdep_display_params.yarbsize:
-      sysdep_display_params.height*sysdep_display_params.heightscale;
-  }
-  else
-  {
-    visheight = viswidth / (sysdep_display_params.aspect_ratio *
-      (aspect/display_aspect_ratio));
-  }
-  
-  /* does the game fit at all ? */
-  if(width  < (dfb?
-      ((sysdep_display_params.width+3)&~3)*sysdep_display_params.widthscale:
-      viswidth) ||
-     height < visheight)
-    return 0;
+    /* is this mode disabled? */
+    if(mode_disabled(width, height, depth))
+       return 0;
     
-  /* is this mode forced? */
-  if ((width  == forced_mode.width) &&
-      (height == forced_mode.height) &&
-      (depth  == forced_mode.depth))
-    return 200;
-   
-  if (use_aspect_ratio && (sysdep_display_params.aspect_ratio != 0.0))
-  {
-    /* first of all calculate the pixel aspect_ratio the game has */
-    double pixel_aspect_ratio = viswidth / 
-      (visheight * sysdep_display_params.aspect_ratio);
+    /* if using direct framebuffer access, make sure the width is properly
+       aligned */
+    if(dfb && (width & 3))
+       return 0;
 
-    perfect_width  = display_aspect_ratio * pixel_aspect_ratio * visheight;
-    perfect_height = visheight;
-         
-    if (perfect_width < viswidth)
+    /* get the width and height after scaling */
+    viswidth = sysdep_display_params.width * sysdep_display_params.widthscale;
+    if(!use_aspect_ratio || !perfect_aspect || sysdep_display_params.effect)
     {
-      perfect_height *= viswidth / perfect_width;
-      perfect_width   = viswidth;
+      visheight = sysdep_display_params.yarbsize? sysdep_display_params.yarbsize:
+        sysdep_display_params.height*sysdep_display_params.heightscale;
+    }
+    else
+    {
+      visheight = viswidth / (sysdep_display_params.aspect_ratio *
+        (aspect/display_aspect_ratio));
+    }
+    
+    /* does the game fit at all ? */
+    if(width  < (dfb?
+        ((sysdep_display_params.width+3)&~3)*sysdep_display_params.widthscale:
+        viswidth) ||
+       height < visheight)
+      return 0;
+      
+    /* is this mode forced? */
+    if ((width  == forced_mode.width) &&
+        (height == forced_mode.height) &&
+        (depth  == forced_mode.depth))
+      return 200;
+     
+    if (use_aspect_ratio && (sysdep_display_params.aspect_ratio != 0.0))
+    {
+      /* first of all calculate the pixel aspect_ratio the game has */
+      double pixel_aspect_ratio = viswidth / 
+        (visheight * sysdep_display_params.aspect_ratio);
+
+      perfect_width  = display_aspect_ratio * pixel_aspect_ratio * visheight;
+      perfect_height = visheight;
+           
+      if (perfect_width < viswidth)
+      {
+        perfect_height *= viswidth / perfect_width;
+        perfect_width   = viswidth;
+      }
+
+      if (first_time)
+      {
+        fprintf(stderr, "OSD: Info: Ideal mode for this game = %.0fx%.0f\n",
+           perfect_width, perfect_height);
+        first_time = 0;
+      }
+      perfect_aspect = perfect_width/perfect_height;
+    }
+    else
+    {
+      perfect_width  = viswidth;
+      perfect_height = visheight;
+      perfect_aspect = aspect;
     }
 
-    if (first_time)
-    {
-      fprintf(stderr, "OSD: Info: Ideal mode for this game = %.0fx%.0f\n",
-         perfect_width, perfect_height);
-      first_time = 0;
-    }
-    perfect_aspect = perfect_width/perfect_height;
+    score = 100 *
+      (perfect_width  / (fabs(width -perfect_width )+perfect_width )) *
+      (perfect_height / (fabs(height-perfect_height)+perfect_height)) *
+      (perfect_aspect / (fabs(aspect-perfect_aspect)+perfect_aspect));
   }
   else
-  {
-    perfect_width  = viswidth;
-    perfect_height = visheight;
-    perfect_aspect = aspect;
-  }
-
-  score = 100 *
-    (perfect_width  / (fabs(width -perfect_width )+perfect_width )) *
-    (perfect_height / (fabs(height-perfect_height)+perfect_height)) *
-    (perfect_aspect / (fabs(aspect-perfect_aspect)+perfect_aspect));
+    score = 100;
   
   switch (sysdep_display_params.depth)
   {

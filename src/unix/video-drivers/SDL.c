@@ -52,8 +52,6 @@ blit_func update_function;
 
 static int sdl_mapkey(struct rc_option *option, const char *arg, int priority);
 
-static int list_sdl_modes(struct rc_option *option, const char *arg, int priority);
-
 struct rc_option sysdep_display_opts[] = {
     /* name, shortname, type, dest, deflt, min, max, func, help */
    { NULL, NULL, rc_link, aspect_opts, NULL, 0, 0, NULL, NULL },
@@ -63,9 +61,6 @@ struct rc_option sysdep_display_opts[] = {
    { "doublebuf",   NULL,    rc_bool,       &doublebuf,
       "0",           0,       0,             NULL,
       "Use double buffering to reduce flicker/tearing" },
-   { "listmodes",    NULL,    rc_use_function_no_arg,       NULL,
-      NULL,           0,       0,             list_sdl_modes,
-      "List all posible fullscreen modes" },
    { "sdlmapkey",	"sdlmk",	rc_use_function,	NULL,
      NULL,		0,			0,		sdl_mapkey,
      "Set a specific key mapping, see xmamerc.dist" },
@@ -93,15 +88,20 @@ void sysdep_close(void)
 
 int sysdep_display_driver_open(int reopen)
 {
-   SDL_Rect** vid_modes;
-   const SDL_VideoInfo* video_info;
-   int vid_modes_i;
-   int vid_mode_flag; /* Flag to set the video mode */
-
-   video_info = SDL_GetVideoInfo();
+  SDL_Rect** vid_modes;
+  const SDL_VideoInfo* video_info;
+  int i,j;
+  int scaled_height = sysdep_display_params.yarbsize?
+          sysdep_display_params.yarbsize:
+          sysdep_display_params.height*sysdep_display_params.heightscale;
+  int scaled_width  = sysdep_display_params.width *
+          sysdep_display_params.widthscale;
+  int depth, score, best_score = 0;
+  int best_width, best_height;
+  static int firsttime = 1;
 
 #ifdef SDL_DEBUG
-   fprintf (stderr,"SDL: Info: HW blits %d\n"
+  fprintf (stderr,"SDL: Info: HW blits %d\n"
       "SDL: Info: SW blits %d\n"
       "SDL: Info: Vid mem %d\n"
       "SDL: Info: Best supported depth %d\n",
@@ -110,220 +110,196 @@ int sysdep_display_driver_open(int reopen)
       video_info->video_mem,
       video_info->vfmt->BitsPerPixel);
 #endif
-
-   Vid_depth = video_info->vfmt->BitsPerPixel;
-
-   vid_modes = SDL_ListModes(NULL,SDL_FULLSCREEN);
-   vid_modes_i = 0;
-
-   hardware = video_info->hw_available;
-
-   if ( (! vid_modes) || ((long)vid_modes == -1)) {
-#ifdef SDL_DEBUG
-      fprintf (stderr, "SDL: Info: Possible all video modes available\n");
-#endif
-      Vid_height = visual_height*heightscale;
-      Vid_width = visual_width*widthscale;
-   } else {
-      int best_vid_mode; /* Best video mode found */
-      int best_width,best_height;
-      int i;
-
-#ifdef SDL_DEBUG
-      fprintf (stderr, "SDL: visual w:%d visual h:%d\n", visual_width, visual_height);
-#endif
-      best_vid_mode = 0;
-      best_width = vid_modes[best_vid_mode]->w;
-      best_height = vid_modes[best_vid_mode]->h;
-      for (i=0;vid_modes[i];++i)
-      {
-         int cur_width, cur_height;
-
-         cur_width = vid_modes[i]->w;
-         cur_height = vid_modes[i]->h;
-
-#ifdef SDL_DEBUG
-         fprintf (stderr, "SDL: Info: Found mode %d x %d\n", cur_width, cur_height);
-#endif /* SDL_DEBUG */
-
-	 /* Do we have the perfect mode? */
-         if ((cur_width == visual_width*widthscale) && (cur_height == visual_height*heightscale)) {
-            best_vid_mode = i;
-            best_width = cur_width;
-            best_height = cur_height;
-            break;
-         }
-
-         /* If width and height too small, skip to next mode */
-         if ((cur_width < visual_width*widthscale) || (cur_height < visual_height*heightscale)) {
-            continue;
-         }
-
-         /* If width or height smaller than current best, keep it */
-         if ((cur_width < best_width) || (cur_height < best_height)) {
-            best_vid_mode = i;
-            best_width = cur_width;
-            best_height = cur_height;
-         }
-      }
-
-#ifdef SDL_DEBUG
-      fprintf (stderr, "SDL: Info: Best mode found : %d x %d\n",
-         vid_modes[best_vid_mode]->w,
-         vid_modes[best_vid_mode]->h);
-#endif /* SDL_DEBUG */
-
-      vid_modes_i = best_vid_mode;
-
-      /* mode_number is a command line option */
-      if( mode_number != -1) {
-         fprintf (stderr, "SDL: -modenumber is deprecated. Use -vidmode_w and -vidmode_h\n");
-         SDL_Quit();
-         exit (1);
-      }
-
-      /* Users wants a specific video mode? */
-      if (vidmode_w != -1 && vidmode_h != -1) {
-         char mode_found = 0;
-         for (i=0;vid_modes[i];++i) {
-            if (vid_modes[i]->w == vidmode_w && vid_modes[i]->h == vidmode_h) {
-		vid_modes_i = i;
-		mode_found = 1;
-		break;
-	    }
- 	 }
-	
-	 if (!mode_found) {
-            fprintf (stderr, "SDL: Sorry, mode %dx%d not found.\n", vidmode_w, vidmode_h);
-            SDL_Quit();
-            exit (1);
-	 }
-      } else if (vidmode_w != -1 || vidmode_h != -1) {
-         fprintf (stderr, "SDL: You have to specify -vidmode_w and -vidmode_h\n");
-         SDL_Quit();
-         exit (1);
-      }
-
-      if( vid_modes_i<0 ) {
-         fprintf(stderr, "SDL: None of the modes match :-(\n");
-         Vid_height = visual_height*heightscale;
-         Vid_width = visual_width*widthscale;
-      } else {
-         if(*(vid_modes+vid_modes_i)==NULL) 
-            vid_modes_i--;
-
-         Vid_width = (*(vid_modes + vid_modes_i))->w;
-         Vid_height = (*(vid_modes + vid_modes_i))->h;
-      }
-   }
-
-   if( depth == 16 )
-   {
-      switch( Vid_depth ) {
-      case 32:
-         update_function = &sdl_update_16_to_32bpp;
-         break;
-      case 24:
-         update_function = &sdl_update_16_to_24bpp;
-         break;
-      case 16:
-         update_function = &sdl_update_16_to_16bpp;
-         break;
-      default:
-         fprintf (stderr, "SDL: Unsupported Vid_depth=%d in depth=%d\n", Vid_depth,depth);
-         SDL_Quit();
-         exit (1);
-         break;
-      }
-   }
-   else if (depth == 32)
-   {
-      if (Vid_depth == 32)
-      {
-         update_function = &sdl_update_rgb_direct_32bpp; 
-      }
-      else
-      {
-         fprintf (stderr, "SDL: Unsupported Vid_depth=%d in depth=%d\n",
-            Vid_depth, depth);
-         SDL_Quit();
-         exit (1);
-      }
-   }
-   else
-   {
-      fprintf (stderr, "SDL: Unsupported depth=%d\n", depth);
-      SDL_Quit();
-      exit (1);
-   }
-
-
-   /* Set video mode according to flags */
-   vid_mode_flag = SDL_HWSURFACE;
-   if (start_fullscreen) {
-      vid_mode_flag |= SDL_FULLSCREEN;
-   }
-   if (doublebuf) {
-      vid_mode_flag |= SDL_DOUBLEBUF;
-   }
-
-   if(! (Surface = SDL_SetVideoMode(Vid_width, Vid_height,Vid_depth, vid_mode_flag))) {
-      fprintf (stderr, "SDL: Error: Setting video mode failed\n");
-      SDL_Quit();
-      exit (1);
-   } else {
-      fprintf (stderr, "SDL: Info: Video mode set as %d x %d, depth %d\n", Vid_width, Vid_height, Vid_depth);
-   }
-
-#ifndef DIRECT_HERMES
-   Offscreen_surface = SDL_CreateRGBSurface(SDL_SWSURFACE,Vid_width,Vid_height,Vid_depth,0,0,0,0); 
-   if(Offscreen_surface==NULL) {
-      SDL_Quit();
-      exit (1);
-   }
-#else /* DIRECT_HERMES */
-   /* No offscreen surface when using hermes directly */
-   H_ConverterHandle = Hermes_ConverterInstance(0);
-   H_src_format = Hermes_FormatNew (8,0,0,0,0,HERMES_INDEXED);
-   /* TODO: More general destination choosing - uptil
-       now only 16 bit */
-   H_dst_format = Hermes_FormatNew (16,Surface->format->Rmask,Surface->format->Gmask,Surface->format->Bmask,0,0);
-   /*  H_dst_format = Hermes_FormatNew (16,5,5,5,0,0); */
-   if ( ! (Hermes_ConverterRequest(H_ConverterHandle,H_src_format , H_dst_format)) ) {
-      fprintf (stderr, "Hermes: Info: Converter request failed\n");
-      exit (1);
-   }
-#endif /* DIRECT_HERMES */
-
-
-   /* Creating event mask */
-   SDL_EventState(SDL_KEYUP, SDL_ENABLE);
-   SDL_EventState(SDL_KEYDOWN, SDL_ENABLE);
-   SDL_EnableUNICODE(1);
    
-    /* fill the display_palette_info struct */
-    memset(&display_palette_info, 0, sizeof(struct sysdep_palette_info));
-    if (Vid_depth == 16) {
-      display_palette_info.red_mask = 0xF800;
-      display_palette_info.green_mask = 0x07E0;
-      display_palette_info.blue_mask   = 0x001F;
+  for (i=0; i<5; i++)
+  {
+    /* We can't ask SDL which pixel formats are available, so we
+       try all well known formats + the format preferred by the SDL
+       videodriver, also trying the preferred format will ensure that
+       we try atleast one available format, so that we will always find
+       some modes.
+       
+       The preferred format is tried last, so that if
+       a just as good well known format is found this will be used instead of
+       the preffered format. This is done because the effectcode only supports
+       well know formats, so if we can choise we want a well known format. */
+    switch (i)
+    {
+      case 0:
+        /* rgb 555 */
+        pixel_format.palette = NULL;
+        pixel_format.BitsPerPixel = 15;
+        pixel_format.BytesPerPixel = 2;
+        pixel_format.Rmask  = 0x01F << 10;
+        pixel_format.Gmask  = 0x01F << 5;
+        pixel_format.Bmask  = 0x01F << 0;
+        pixel_format.Rshift = 10;
+        pixel_format.Gshift = 5;
+        pixel_format.Bshift = 0;
+        pixel_format.Rloss  = 3;
+        pixel_format.Gloss  = 3;
+        pixel_format.Bloss  = 3;
+        pixel_format.colorkey = 0;
+        pixel_format.alpha  = 255;
+        depth = 15;
+        break;
+      case 1:
+        /* rgb 565 */
+        pixel_format.palette = NULL;
+        pixel_format.BitsPerPixel = 16;
+        pixel_format.BytesPerPixel = 2;
+        pixel_format.Rmask  = 0x01F << 11;
+        pixel_format.Gmask  = 0x02F << 5;
+        pixel_format.Bmask  = 0x01F << 0;
+        pixel_format.Rshift = 11;
+        pixel_format.Gshift = 5;
+        pixel_format.Bshift = 0;
+        pixel_format.Rloss  = 3;
+        pixel_format.Gloss  = 2;
+        pixel_format.Bloss  = 3;
+        pixel_format.colorkey = 0;
+        pixel_format.alpha  = 255;
+        depth = 16;
+        break;
+      case 2:
+        /* rgb 888 packed*/
+        pixel_format.palette = NULL;
+        pixel_format.BitsPerPixel = 24;
+        pixel_format.BytesPerPixel = 3;
+        pixel_format.Rmask  = 0x0FF << 16;
+        pixel_format.Gmask  = 0x0FF << 8;
+        pixel_format.Bmask  = 0x0FF << 0;
+        pixel_format.Rshift = 16;
+        pixel_format.Gshift = 8;
+        pixel_format.Bshift = 0;
+        pixel_format.Rloss  = 0;
+        pixel_format.Gloss  = 0;
+        pixel_format.Bloss  = 0;
+        pixel_format.colorkey = 0;
+        pixel_format.alpha  = 255;
+        depth = 24;
+        break;
+      case 3:
+        /* rgb 888 sparse */
+        pixel_format.palette = NULL;
+        pixel_format.BitsPerPixel = 32;
+        pixel_format.BytesPerPixel = 4;
+        pixel_format.Rmask  = 0x0FF << 16;
+        pixel_format.Gmask  = 0x0FF << 8;
+        pixel_format.Bmask  = 0x0FF << 0;
+        pixel_format.Rshift = 16;
+        pixel_format.Gshift = 8;
+        pixel_format.Bshift = 0;
+        pixel_format.Rloss  = 0;
+        pixel_format.Gloss  = 0;
+        pixel_format.Bloss  = 0;
+        pixel_format.colorkey = 0;
+        pixel_format.alpha  = 255;
+        depth = 24;
+        break;
+      case 4:
+        video_info = SDL_GetVideoInfo();
+        pixel_format = *(video_info->vfmt);
+        if (pixel_format.palette || (pixel_format.BitsPerPixel <= 8))
+          continue;
+        depth = pixel_format.Rshift+pixel_format.Gshift+pixel_format.Bshift;
+        break;
     }
-    else {
-      display_palette_info.red_mask   = 0x00FF0000;
-      display_palette_info.green_mask = 0x0000FF00;
-      display_palette_info.blue_mask  = 0x000000FF;
-    };
+    if (sysdep_display_params.fullscreen)
+      vid_modes = SDL_ListModes(NULL, SDL_HWSURFACE|SDL_FULLSCREEN);
+    else
+      vid_modes = SDL_ListModes(&pixel_format, SDL_HWSURFACE);
 
-   /* Hide mouse cursor and save its previous status */
-   cursor_state = SDL_ShowCursor(0);
+    if(vid_modes == (SDL_Rect **)-1)
+    {
+      /* All resolutions available */
+      score = mode_match(0, 0, depth, pixel_format.BytesPerPixel*8, 0);
+      if (score > best_score)
+      {
+        base_score  = score;
+        best_bpp    = pixel_format.BitsPerPixel;
+        best_width  = scaled_width;
+        best_height = scaled_height;
+      }
+    }
+    else if (vid_modes)
+    {
+      for(j=0;vid_modes[j];j++)
+      {
+        /* assume dfb when there is a list of modes to choise from */
+        score = mode_match(vid_modes[j]->w, vid_modes[j]->h, depth,
+          pixel_format.BytesPerPixel*8, 1);
+        if (score > best_score)
+        {
+          base_score  = score;
+          best_bpp    = pixel_format.BitsPerPixel;
+          best_width  = vid_modes[j]->w;
+          best_height = vid_modes[j]->h;
+        }
+        if (firsttime)
+          fprintf(stderr, "SDL found mode:%dx%dx%d\n", vid_modes[j]->w,
+            vid_modes[j]->h, pixel_format.BitsPerPixel);
+      }
+    }
+  }
+  firsttime = 0;
+  
+  if (best_score == 0)
+  {
+    fprintf(stderr, "SDL Error: could not find a suitable mode\n");
+    return 1;
+  }
+  
+/* todo: fill palette info, get a blit func */  
 
-   /* Set window title */
-   SDL_WM_SetCaption(title, NULL);
+  /* Set video mode according to flags */
+  i = SDL_HWSURFACE;
+  if (sysdep_display_params.fullscreen)
+    i |= SDL_FULLSCREEN;
+  if (doublebuf)
+    i |= SDL_DOUBLEBUF;
 
-   if (effect_open())
-      exit (1);
+  if(! (Surface = SDL_SetVideoMode(best_width, best_height, best_depth, i)))
+  {
+    fprintf (stderr, "SDL: Error: Setting video mode failed\n");
+    return 1;
+  }
 
-   return 0;
+  Offscreen_surface = SDL_CreateRGBSurface(SDL_SWSURFACE,Vid_width,Vid_height,Vid_depth,0,0,0,0); 
+  if(Offscreen_surface==NULL) {
+     SDL_Quit();
+     exit (1);
+  }
+
+
+  /* Creating event mask */
+  SDL_EventState(SDL_KEYUP, SDL_ENABLE);
+  SDL_EventState(SDL_KEYDOWN, SDL_ENABLE);
+  SDL_EnableUNICODE(1);
+  
+   /* fill the display_palette_info struct */
+   memset(&display_palette_info, 0, sizeof(struct sysdep_palette_info));
+   if (Vid_depth == 16) {
+     display_palette_info.red_mask = 0xF800;
+     display_palette_info.green_mask = 0x07E0;
+     display_palette_info.blue_mask   = 0x001F;
+   }
+   else {
+     display_palette_info.red_mask   = 0x00FF0000;
+     display_palette_info.green_mask = 0x0000FF00;
+     display_palette_info.blue_mask  = 0x000000FF;
+   };
+
+  /* Hide mouse cursor and save its previous status */
+  cursor_state = SDL_ShowCursor(0);
+
+  /* Set window title */
+  SDL_WM_SetCaption(title, NULL);
+
+  if (effect_open())
+     exit (1);
+
+  return 0;
 }
 
 /*
@@ -373,59 +349,6 @@ void sdl_update_16_to_16bpp (struct mame_bitmap *bitmap)
 #undef DEST_PIXEL
 }
 
-void sdl_update_16_to_24bpp (struct mame_bitmap *bitmap)
-{
-#define SRC_PIXEL  unsigned short
-#define DEST_PIXEL unsigned int
-#define PACK_BITS
-#define DEST Offscreen_surface->pixels
-#define DEST_WIDTH Vid_width
-   if(current_palette->lookup)
-   {
-#define INDIRECT current_palette->lookup
-#include "blit.h"
-#undef INDIRECT
-   }
-   else
-   {
-#include "blit.h"
-   }
-#undef DEST_WIDTH
-#undef DEST
-#undef PACK_BITS
-#undef DEST_PIXEL
-#undef SRC_PIXEL
-}
-
-void sdl_update_16_to_32bpp (struct mame_bitmap *bitmap)
-{
-#define INDIRECT current_palette->lookup
-#define SRC_PIXEL unsigned short
-#define DEST_PIXEL unsigned int
-#define DEST Offscreen_surface->pixels
-#define DEST_WIDTH Vid_width
-#include "blit.h"
-#undef DEST_WIDTH
-#undef DEST
-#undef DEST_PIXEL
-#undef SRC_PIXEL
-#undef INDIRECT
-}
-
-void sdl_update_rgb_direct_32bpp(struct mame_bitmap *bitmap)
-{
-#define SRC_PIXEL unsigned int
-#define DEST_PIXEL unsigned int
-#define DEST Offscreen_surface->pixels
-#define DEST_WIDTH Vid_width
-#include "blit.h"
-#undef DEST_WIDTH
-#undef DEST
-#undef DEST_PIXEL
-#undef SRC_PIXEL
-}
-
-#ifndef DIRECT_HERMES
 void sysdep_update_display(struct mame_bitmap *bitmap)
 {
    SDL_Rect srect = { 0,0,0,0 };
@@ -451,159 +374,6 @@ void sysdep_update_display(struct mame_bitmap *bitmap)
    else if(hardware==0)
       SDL_UpdateRects(Surface,1, &drect);
 }
-#else /* DIRECT_HERMES */
-void sysdep_update_display(struct mame_bitmap *bitmap)
-{
-   int i,j,x,y,w,h;
-   int locked =0 ;
-   static int first_run = 1;
-   int line_amount;
-
-#ifdef SDL_DEBUG
-   static int update_count = 0;
-   static char* bak_bitmap;
-   int corrected = 0;
-   int debug = 0;
-#endif /* SDL_DEBUG */
-
-   if (H_Palette_modified) {
-      Hermes_PaletteInvalidateCache(H_PaletteHandle);
-      Hermes_ConverterPalette(H_ConverterHandle,H_PaletteHandle,0);
-      H_Palette_modified = 0;
-   }
-   
-#ifdef PANANOIC 
-      memset(Offscreen_surface->pixels,'\0' ,Vid_height * Vid_width);
-#endif 
-
-   switch   (use_dirty) {
-      long line_min;
-      long line_max;
-      long col_min;
-      long col_amount;
-
-      
-#ifdef SDL_DEBUG
-      int my_off;
-#endif       
-   case 0:
-      /* Not using dirty */
-      if (SDL_MUSTLOCK(Surface))
-         SDL_LockSurface(Surface);
-      
-      Hermes_ConverterCopy (H_ConverterHandle, 
-               bitmap->line[0] ,
-               0, 0 , 
-               Vid_width,Vid_height, bitmap->line[1] - bitmap->line[0],
-               Surface->pixels, 
-               0,0,
-               Vid_width, Vid_height, Vid_width <<1 );
-      
-      SDL_UnlockSurface(Surface);
-      SDL_UpdateRect(Surface,0,0,Vid_width,Vid_height);
-      break;
-
-   case 1:
-      /* Algorithm:
-          search through dirty & find max maximal polygon, which 
-          we can get to clipping (don't know if 8x8 is enough)
-      */
-      /*osd_dirty_merge();*/
-      
-   case 2:
-      h = (bitmap->height+7) >> 3; /* Divide by 8, up rounding */
-      w = (bitmap->width +7) >> 3; /* Divide by 8, up rounding */
-      
-#ifdef PARANOIC
-      /* Rechecking dirty correctness ...*/
-      if ( (! first_run) && debug) {
-         for (y=0;y<h;y++ ) {
-            for (i=0;i<8;i++) {
-               int line_off = ((y<<3) + i);
-               for (x=0;x<w;x++) {
-                  for (j=0;j<8;j++) {
-                     int col_off = ((x<<3) + j);
-                     if ( *(bak_bitmap + (line_off * (bitmap->line[1]- bitmap->line[0])) + col_off ) != *(*(bitmap->line + line_off) + col_off)) {
-                        if (! dirty_blocks[y][x] ) {
-                           printf ("Warn!!! Block should be dirty %d, %d, %d - correcting \n",y,x,i);
-                           dirty_blocks[y][x] = 1;
-                           dirty_lines[y]=1;
-                           corrected = 1;
-                        }
-                     } 
-                  }
-               }
-            }
-         }
-      } else {
-         bak_bitmap = (void*)malloc(w<<3 * h<<3);
-      }
-      
-      if (! corrected) {
-         printf ("dirty ok\n");
-      }
-      
-      first_run = 0;
-      for (i = 0;i< bitmap->height;i++)
-         memcpy(bak_bitmap + (bitmap->line[1] - bitmap->line[0])*i,*(bitmap->line+i),w<<3);
-      
-#endif /* PARANOIC */
-
-      /* #define dirty_lines old_dirty_lines     */
-      /* #define dirty_blocks old_dirty_blocks */
-      
-      for (y=0;y<h;y++) {
-         if (dirty_lines[y]) {
-            line_min = y<<3;
-            line_max = line_min + 8;
-            /* old_dirty_lines[y]=1; */
-            for (x=0;x<w;x++) {
-               if (dirty_blocks[y][x]) {
-                  col_min = x<<3;
-                  col_amount = 0;
-                  do { 
-                     col_amount++; 
-                     dirty_blocks[y][x] = 0;
-                     x++; 
-                  } while (dirty_blocks[y][x]); 
-
-                  dirty_blocks[y][x] = 0;
-                  col_amount <<= 3;
-
-                  line_amount = line_max - line_min;
-                  /* Trying to use direct hermes library for fast blitting */
-                  if (SDL_MUSTLOCK(Surface))
-                     SDL_LockSurface(Surface);
-               
-                  Hermes_ConverterCopy (H_ConverterHandle, 
-                     bitmap->line[0] ,
-                     col_min, line_min , 
-                     col_amount,line_amount, bitmap->line[1] - bitmap->line[0],
-                     Surface->pixels, 
-                     col_min, line_min, 
-                     col_amount ,line_amount, Vid_width <<1 );
-               
-                  SDL_UnlockSurface(Surface);
-                  SDL_UpdateRect(Surface,col_min,line_min,col_amount,line_amount);
-               }
-            }
-            dirty_lines[y] = 0;
-         }
-      }
-      
-      /* Vector game .... */
-      break;
-      return ;
-   }
-   
-   /* TODO - It's the real evil - better to use would be original 
-       hermes routines */
-
-#ifdef SDL_DEBUG
-   update_count++;
-#endif
-}
-#endif /* DIRECT_HERMES */
 
 /* shut up the display */
 void sysdep_display_close(void)
@@ -702,32 +472,4 @@ void sysdep_update_keyboard()
     joy_evaluate_moves ();
       }
    }
-}
-
-int list_sdl_modes(struct rc_option *option, const char *arg, int priority)
-{
-   SDL_Rect** vid_modes;
-   int vid_modes_i;
-
-   vid_modes = SDL_ListModes(NULL,SDL_FULLSCREEN);
-   vid_modes_i = 0;
-
-   if ( (! vid_modes) || ((long)vid_modes == -1)) {
-      printf("This option only works in a full-screen mode (eg: linux's framebuffer)\n");
-      return - 1;
-   }
-
-   printf("Modes available:\n");
-
-   while( *(vid_modes+vid_modes_i) ) {
-      printf("\t%d) Mode %d x %d\n",
-         vid_modes_i,
-         (*(vid_modes+vid_modes_i))->w,
-         (*(vid_modes+vid_modes_i))->h
-         );
-   
-      vid_modes_i++;
-   }
-
-   return -1;
 }
