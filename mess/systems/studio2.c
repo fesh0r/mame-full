@@ -268,7 +268,6 @@ void init_studio2(void)
 	beep_set_frequency(0, 300);
 }
 
-extern const struct GameDriver driver_studio2;
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR	COMPANY   FULLNAME */
 // rca cosmac elf development board (2 7segment leds, some switches/keys)
 // rca cosmac vip ditto
