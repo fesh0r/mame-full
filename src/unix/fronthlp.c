@@ -14,6 +14,7 @@ static int frontend_list_clones(char *gamename);
 static int frontend_list_cpu(void);
 static int frontend_list_gamelistheader(void);
 static int frontend_list_hash(int type);
+static void namecopy(char *name_ref, const char *desc, int buf_size);
 
 static int list       = 0;
 static int listclones = 1;
@@ -51,7 +52,7 @@ struct rc_option frontend_list_opts[] = {
 	{ "listfull", "lf", rc_set_int, &list, NULL, LIST_FULL, 0, NULL, "Like -list, with full description" },
 	{ "listgames", "lg", rc_set_int, &list, NULL, LIST_GAMES, 0, NULL, "Like -list, with manufacturer and year" },
 	{ "listdetails", "ld", rc_set_int, &list, NULL, LIST_DETAILS, 0, NULL, "Like -list, with detailed info" },
-	{ "listgamelist", "lgl", rc_set_int, &list, NULL, LIST_GAMELIST, 0, NULL, "Like -list, with specialy formatted extra info for generating gamelist.mame" },
+	{ "listgamelist", "lgl", rc_set_int, &list, NULL, LIST_GAMELIST, 0, NULL, "Like -list, with specially formatted extra info for generating gamelist.mame" },
 	{ "listsourcefile", "lsf", rc_set_int, &list, NULL, LIST_SOURCEFILE, 0, NULL, "Like -list, with driver sourcefile" },
 	{ "listcolors", "lcol", rc_set_int, &list, NULL, LIST_COLORS, 0, NULL, "Like -list, with the number of colors used" },
 #ifdef MESS
@@ -94,9 +95,16 @@ struct rc_option frontend_list_opts[] = {
 
 int CLIB_DECL compare_names(const void *elem1, const void *elem2)
 {
+	int cmp;
 	struct GameDriver *drv1 = *(struct GameDriver **)elem1;
 	struct GameDriver *drv2 = *(struct GameDriver **)elem2;
-	return strcmp(drv1->description, drv2->description);
+	char name1[200], name2[200];
+	namecopy(name1, drv1->description, 200);
+	namecopy(name2, drv2->description, 200);
+	cmp = strcasecmp(name1, name2);
+	if (cmp == 0)
+		cmp = strcasecmp(drv1->description, drv2->description);
+	return cmp;
 }
 
 int CLIB_DECL compare_driver_names(const void *elem1, const void *elem2)
@@ -154,6 +162,26 @@ int strwildcmp(const char *sp1, const char *sp2)
 	}
 
 	return strcasecmp(s1, s2);
+}
+
+static void namecopy(char *name_ref, const char *desc, int buf_size)
+{
+	char name[200];
+
+	strncpy(name, desc, 199);
+	name[199] = 0;
+
+	/* remove details in parenthesis */
+	if (strstr(name, " ("))
+		*strstr(name, " (") = 0;
+
+	/* Move leading "The" to the end */
+	if (strncmp(name, "The ", 4) == 0)
+		snprintf(name_ref, buf_size, "%s, The", name + 4);
+	else if (strncmp(name, "Le ", 3) == 0)
+		snprintf(name_ref, buf_size, "%s, Le", name + 3);
+	else
+		snprintf(name_ref, buf_size, "%s", name);
 }
 
 static int myprintf(char *fmt, ...)
@@ -231,31 +259,20 @@ static int frontend_uses_roms(int driver)
 
 char *get_description(int driver)
 {
-	char *p;
-	char copy[BUF_SIZE];
 	static char description[BUF_SIZE];
 
-	strncpy(copy, drivers[driver]->description, BUF_SIZE);
-
-	/* Remove the additonal description if any */
-	if ((p = strstr(copy, " (")))
-		*p = 0;
-
-	/* Move leading "The" to the end */
-	if (strncmp(copy, "The ", 4) == 0)
-		snprintf(description, BUF_SIZE, "%s, The", copy+4);
-	else if (strncmp(copy, "Le ", 3) == 0)
-		snprintf(description, BUF_SIZE, "%s, Le", copy+3);
-	else
-		strncpy(description, copy, BUF_SIZE);
+	namecopy(description, drivers[driver]->description, BUF_SIZE);
 
 	/* Print the additional description only if we are listing clones */
-	if (listclones && p)
+	if (listclones)
 	{
+		char *pdest;
+		int result;
 		int len = strlen(description);
-
-		*p = ' ';
-		snprintf(description + len, BUF_SIZE - len, p);
+		pdest = strchr(drivers[driver]->description, '(');
+		result = pdest - drivers[driver]->description;
+		if (pdest && result > 0 )
+			snprintf(description + len, BUF_SIZE - len, " %s", strchr(drivers[driver]->description, '('));
 	}
 
 	return description;
@@ -341,9 +358,9 @@ int frontend_list(char *gamename)
 
 		/* qsort as appropriate */
 		if (sortby == 1)
-			qsort(drivers, count, sizeof(drivers[0]), compare_names);
+			qsort((void *)drivers, count, sizeof(drivers[0]), compare_names);
 		else if (sortby == 2)
-			qsort(drivers, count, sizeof(drivers[0]), compare_driver_names);
+			qsort((void *)drivers, count, sizeof(drivers[0]), compare_driver_names);
 	}
 
 	/* listcommands which require special handling */
