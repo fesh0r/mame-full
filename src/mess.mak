@@ -169,8 +169,9 @@ DRVLIBS = \
 		$(OBJ)/rca.a	    \
 		$(OBJ)/fairch.a   \
 		$(OBJ)/magnavox.a \
+		$(OBJ)/quelle.a \
 		$(OBJ)/teamconc.a \
-		#$(OBJ)/motorola.a \
+		$(OBJ)/motorola.a \
 
 ifndef MESS_EXCLUDE_ACORN
 DRVLIBS += $(OBJ)/acorn.a    
@@ -235,7 +236,6 @@ $(OBJ)/atari.a:    \
 	  $(OBJ)/mess/vidhrdw/a7800.o	 \
 	  $(OBJ)/mess/machine/a7800.o	 \
 	  $(OBJ)/mess/systems/a7800.o	 \
-	  $(OBJ)/mess/machine/riot.o	 \
 	  $(OBJ)/mess/machine/a2600.o	 \
 	  $(OBJ)/mess/systems/a2600.o
 
@@ -344,7 +344,6 @@ $(OBJ)/sinclair.a: \
 	  $(OBJ)/mess/systems/zx.o
 
 $(OBJ)/apple1.a:   \
-	  $(OBJ)/machine/6821pia.o	 \
 	  $(OBJ)/mess/vidhrdw/apple1.o	 \
 	  $(OBJ)/mess/machine/apple1.o	 \
 	  $(OBJ)/mess/systems/apple1.o
@@ -378,11 +377,11 @@ $(OBJ)/fairch.a: \
 	  $(OBJ)/mess/sndhrdw/channelf.o
 
 $(OBJ)/ti99.a:	   \
-	  $(OBJ)/mess/machine/tms9901.o  \
-	  $(OBJ)/mess/machine/ti99_4x.o  \
-	  $(OBJ)/mess/systems/ti99_4x.o  \
-	 #$(OBJ)/mess/systems/ti99_2.o	 \
-	 #$(OBJ)/mess/systems/ti990_4.o  \
+		$(OBJ)/mess/machine/tms9901.o  \
+		$(OBJ)/mess/machine/ti99_4x.o  \
+		$(OBJ)/mess/systems/ti99_4x.o  \
+		$(OBJ)/mess/systems/ti99_2.o	 \
+		$(OBJ)/mess/systems/ti990_4.o  \
 
 
 $(OBJ)/bally.a:    \
@@ -534,9 +533,14 @@ $(OBJ)/sharp.a:    \
 	  $(OBJ)/mess/machine/mz700.o	 \
 	  $(OBJ)/mess/vidhrdw/mz700.o	 \
 	  $(OBJ)/mess/systems/mz700.o	 \
-	  $(OBJ)/mess/machine/pocketc.o  \
 	  $(OBJ)/mess/vidhrdw/pocketc.o  \
-	  $(OBJ)/mess/systems/pocketc.o
+	  $(OBJ)/mess/systems/pocketc.o  \
+	  $(OBJ)/mess/vidhrdw/pc1401.o  \
+	  $(OBJ)/mess/machine/pc1401.o  \
+	  $(OBJ)/mess/vidhrdw/pc1350.o  \
+	  $(OBJ)/mess/machine/pc1350.o  \
+	  $(OBJ)/mess/vidhrdw/pc1251.o  \
+	  $(OBJ)/mess/machine/pc1251.o
 
 $(OBJ)/aquarius.a: \
 	  $(OBJ)/mess/machine/aquarius.o \
@@ -551,6 +555,12 @@ $(OBJ)/magnavox.a: \
 $(OBJ)/teamconc.a: \
 	$(OBJ)/mess/vidhrdw/comquest.o \
 	$(OBJ)/mess/systems/comquest.o
+
+$(OBJ)/quelle.a: \
+	$(OBJ)/mess/vidhrdw/mk1.o \
+	$(OBJ)/mess/systems/mk1.o \
+	$(OBJ)/mess/vidhrdw/mk2.o \
+	$(OBJ)/mess/systems/mk2.o
 
 $(OBJ)/motorola.a: \
 	  $(OBJ)/mess/vidhrdw/mekd2.o	 \
@@ -568,6 +578,8 @@ COREOBJS += \
 		$(OBJ)/mess/tapectrl.o         \
 		$(OBJ)/mess/utils.o \
 		$(OBJ)/mess/machine/6522via.o \
+		$(OBJ)/mess/machine/rriot.o	 \
+		$(OBJ)/mess/machine/riot.o	 \
 		$(OBJ)/mess/machine/pit8253.o  \
 		$(OBJ)/mess/machine/mc146818.o \
 		$(OBJ)/mess/machine/uart8250.o \
@@ -582,7 +594,8 @@ COREOBJS += \
 		$(OBJ)/mess/machine/dsk.o \
 		$(OBJ)/mess/machine/nec765.o
 
-#8255 already in mame core
+#8255ppi, 6821pia  already in mame core
+#	  $(OBJ)/machine/6821pia.o	 \
 
 # additional tools
 TOOLS +=  dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE) 
@@ -616,10 +629,11 @@ imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/d64.o     \
 	  $(OBJ)/mess/tools/fat.o     \
 	  $(OBJ)/mess/tools/pchd.o    \
+	  $(OBJ)/mess/tools/rom16.o     \
 	  $(OBJ)/mess/tools/zip.o     \
 	  $(OBJ)/mess/tools/fs.o
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) -o $@
 
 
 #transdsk$(EXE):       \
