@@ -58,12 +58,14 @@ static int vtech1_fdc_latch = 0;
 
 void init_vtech1(void)
 {
+#ifdef OLD_VIDEO
 	int i;
     UINT8 *gfx = memory_region(REGION_GFX1);
 
 	/* create 256 bit patterns */
     for( i = 0; i < 256; i++ )
         gfx[0x0c00+i] = i;
+#endif
 }
 
 static void common_init_machine(void)
