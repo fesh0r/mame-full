@@ -100,7 +100,7 @@ static INT8 randbit;
 /* Static function prototypes */
 static void process_command(void);
 static int extract_bits(int count);
-static int parse_frame(int first_frame);
+static int parse_frame(int the_first_frame);
 static void check_buffer_low(void);
 static void set_interrupt_state(int state);
 
@@ -729,12 +729,12 @@ static int extract_bits(int count)
 
 ***********************************************************************************************/
 
-static int parse_frame(int first_frame)
+static int parse_frame(int the_first_frame)
 {
 	int bits = 0;	/* number of bits in FIFO (speak external only) */
 	int indx, i, rep_flag;
 
-	if (! first_frame)
+	if (! the_first_frame)
 	{
     /* remember previous frame */
     old_energy = new_energy;
@@ -750,7 +750,7 @@ static int parse_frame(int first_frame)
         new_k[i] = 0;
 
     /* if the previous frame was a stop frame, don't do anything */
-	if ((! first_frame) && (old_energy == (energytable[15] >> 6)))
+	if ((! the_first_frame) && (old_energy == (energytable[15] >> 6)))
 		/*return 1;*/
 	{
 		buffer_empty = 1;
@@ -863,7 +863,7 @@ done:
 			logerror("Parsed a frame successfully in ROM\n");
 	}
 
-	if (first_frame)
+	if (the_first_frame)
 	{
 		/* if this is the first frame, no previous frame to take as a starting point */
 		old_energy = new_energy;
@@ -882,7 +882,7 @@ ranout:
 
     /* this is an error condition; mark the buffer empty and turn off speaking */
     buffer_empty = 1;
-	talk_status = speak_external = tms5220_speaking = first_frame = last_frame = 0;
+	talk_status = speak_external = tms5220_speaking = the_first_frame = last_frame = 0;
     fifo_count = fifo_head = fifo_tail = 0;
 
 	RDB_flag = FALSE;
