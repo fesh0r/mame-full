@@ -3,6 +3,15 @@
 
 #include "osd_cpu.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifdef RUNTIME_LOADER
+    extern void s2650_runtime_loader_init(void);
+#endif
+
+
 enum {
 	S2650_PC=1, S2650_PS, S2650_R0, S2650_R1, S2650_R2, S2650_R3,
 	S2650_R1A, S2650_R2A, S2650_R3A,
@@ -22,7 +31,9 @@ enum {
 #define S2650_EXT_PORT	0xff
 
 /* Fake Sense Line */
+// return 0x80 for sense pin set
 #define S2650_SENSE_PORT 0x102
+
 
 extern int s2650_ICount;
 
@@ -48,11 +59,18 @@ extern unsigned s2650_dasm(char *buffer, unsigned pc);
 
 extern void s2650_set_flag(int state);
 extern int s2650_get_flag(void);
+
+// use this XOR the ports
 extern void s2650_set_sense(int state);
 extern int s2650_get_sense(void);
 
 #ifdef  MAME_DEBUG
 extern int Dasm2650(char *buff, int PC);
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif
