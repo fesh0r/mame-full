@@ -691,7 +691,7 @@ INPUT_PORTS_START( europc )
 	PC_JOYSTICK
 INPUT_PORTS_END
 
-INPUT_PORTS_START( xtcga )
+INPUT_PORTS_START( bondwell )
 	PORT_START /* IN0 */
 	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
 	PORT_BIT ( 0x08, 0x08,	 IPT_VBLANK )
@@ -770,6 +770,85 @@ INPUT_PORTS_START( xtcga )
 	PC_JOYSTICK
 INPUT_PORTS_END
 
+INPUT_PORTS_START( xtcga )
+	PORT_START /* IN0 */
+	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
+	PORT_BIT ( 0x08, 0x08,	 IPT_VBLANK )
+	PORT_BIT ( 0x07, 0x07,	 IPT_UNUSED )
+
+    PORT_START /* IN1 */
+	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Number of floppy drives", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, "1" )
+	PORT_DIPSETTING(	0x40, "2" )
+	PORT_DIPSETTING(	0x80, "3" )
+	PORT_DIPSETTING(	0xc0, "4" )
+	PORT_BITX( 0x30, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Graphics adapter", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, "EGA/VGA" )
+	PORT_DIPSETTING(	0x10, "Color 40x25" )
+	PORT_DIPSETTING(	0x20, "Color 80x25" )
+	PORT_DIPSETTING(	0x30, "Monochrome" )
+	PORT_BITX( 0x0c, 0x0c, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM banks", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, "1 - 16  64 256K" )
+	PORT_DIPSETTING(	0x04, "2 - 32 128 512K" )
+	PORT_DIPSETTING(	0x08, "3 - 48 192 576K" )
+	PORT_DIPSETTING(	0x0c, "4 - 64 256 640K" )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
+	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy installed", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Yes ) )
+	PORT_START /* IN2 */
+	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
+	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
+	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( Yes ) )
+	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Yes ) )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
+	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT2: enable", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
+	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
+
+    PORT_START /* IN3 */
+	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x80, "COM1" )
+	PORT_DIPSETTING(	0x40, "COM2" )
+	PORT_DIPSETTING(	0x20, "COM3" )
+	PORT_DIPSETTING(	0x10, "COM4" )
+    PORT_DIPSETTING(    0x00, "none" )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
+	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", CODE_NONE, CODE_NONE )
+    PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
+	PORT_BITX( 0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Turbo Switch", CODE_DEFAULT, CODE_NONE )
+	PORT_DIPSETTING(	0x00, "Off(4.77 MHz)" )
+	PORT_DIPSETTING(	0x02, "On(12 MHz)" )
+	PORT_BIT( 0x01, 0x01,	IPT_UNUSED )
+
+	PC_KEYBOARD
+
+	INPUT_MICROSOFT_MOUSE
+
+	PC_JOYSTICK
+INPUT_PORTS_END
+
 INPUT_PORTS_START( tandy1t )
 	PORT_START /* IN0 */
 	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
@@ -812,6 +891,83 @@ INPUT_PORTS_START( tandy1t )
 	PORT_BIT( 0x01, 0x01,	IPT_UNUSED )
 
 	TANDY1000_KEYB
+
+	INPUT_MICROSOFT_MOUSE
+
+	PC_JOYSTICK
+INPUT_PORTS_END
+
+INPUT_PORTS_START( pc200 )
+	PORT_START /* IN0 */
+	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
+	PORT_BIT ( 0x08, 0x08,	 IPT_VBLANK )
+	PORT_BIT ( 0x07, 0x07,	 IPT_UNUSED )
+
+    PORT_START /* IN1 */
+	PORT_BITX( 0x07, 0x07, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Name/Language", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, "English/less checks" )
+	PORT_DIPSETTING(	0x01, "Italian/Italiano" ) //prego attendere
+	PORT_DIPSETTING(	0x02, "V.g. vänta" ) 
+	PORT_DIPSETTING(	0x03, "Vent et cjeblik" ) // seldom c
+	PORT_DIPSETTING(	0x04, "Spanish/Español" ) //Por favor tilde n
+	PORT_DIPSETTING(	0x05, "French/Francais" ) //patientez cedilla c
+	PORT_DIPSETTING(	0x06, "German/Deutsch" ) // bitte warten
+	PORT_DIPSETTING(	0x07, "English" ) // please wait
+	PORT_BITX( 0x08, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "37a 0x40", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, "0x00" )
+	PORT_DIPSETTING(	0x08, "0x08" )
+	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "37a 0x80", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, "0x00" )
+	PORT_DIPSETTING(	0x10, "0x10" )
+	PORT_BITX( 0x30, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Integrated Graphics Adapter", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, "CGA 1" )
+	PORT_DIPSETTING(	0x10, "CGA 2" )
+	PORT_DIPSETTING(	0x20, "external" )
+	PORT_DIPSETTING(	0x30, "MDA" )
+	PORT_BITX( 0xc0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Startup Mode", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, "external Color 80 Columns" )
+	PORT_DIPSETTING(	0x40, "Color 40 Columns" )
+	PORT_DIPSETTING(	0x80, "Color 80 Columns" )
+	PORT_DIPSETTING(	0xc0, "Mono" )
+	PORT_START /* IN2 */
+PORT_BIT ( 0x80, 0x80,	 IPT_UNUSED ) // com 1 on motherboard
+	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
+	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( Yes ) )
+	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Yes ) )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
+PORT_BIT ( 0x04, 0x04,	 IPT_UNUSED ) // lpt 1 on motherboard
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
+	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
+
+    PORT_START /* IN3 */
+	PORT_BITX( 0xf0, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x80, "COM1" )
+	PORT_DIPSETTING(	0x40, "COM2" )
+	PORT_DIPSETTING(	0x20, "COM3" )
+	PORT_DIPSETTING(	0x10, "COM4" )
+    PORT_DIPSETTING(    0x00, "none" )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", CODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
+	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", CODE_NONE, CODE_NONE )
+    PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
+	PORT_BIT( 0x02, 0x02,	IPT_UNUSED ) /* no turbo switch */
+	PORT_BIT( 0x01, 0x01,	IPT_UNUSED )
+
+	AT_KEYBOARD
 
 	INPUT_MICROSOFT_MOUSE
 
@@ -1497,18 +1653,16 @@ static struct GfxDecodeInfo europc_gfxdecodeinfo[] =
     { -1 } /* end of array */
 };
 
-#if 0
 static struct GfxDecodeInfo aga_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &CGA_charlayout,			   0, 256 },   /* single width */
+	{ 1, 0x0800, &CGA_charlayout,			   0, 256 },   /* single width */
 	{ 1, 0x2000, &CGA_gfxlayout_1bpp,	   256*2,  16 },   /* 640x400x1 gfx */
 	{ 1, 0x2000, &CGA_gfxlayout_2bpp, 256*2+16*2,   2 },   /* 320x200x4 gfx */
-	{ 1, 0x0800, &CGA_charlayout,			   0, 256 },   /* second characterset */
-	{ 1, 0x1000, &MDA_charlayout,			   256*2+16*2+2*4, 256 },   /* single width */
+	{ 1, 0x1000, &pc_mda_charlayout,			   256*2+16*2+2*4, 256 },   /* single width */
 	{ 1, 0x2000, &pc_mda_gfxlayout_1bpp, 256*2+16*2+2*4+2*256,	 1 },	/* 640x400x1 gfx */
+	{ 1, 0x0000, &CGA_charlayout,			   0, 256 },   /* thin cga charset */
     { -1 } /* end of array */
 };
-#endif
 
 static struct GfxDecodeInfo vga_gfxdecodeinfo[] =
 {
@@ -1758,6 +1912,51 @@ static struct MachineDriver machine_driver_xtcga =
 		{ SOUND_SAA1099, &cms_interface },
 #endif
 	}
+};
+
+static struct MachineDriver machine_driver_pc200 =
+{
+    /* basic machine hardware */
+    {
+        {
+            CPU_I86,
+			8000000,
+			pc1640_readmem,pc1640_writemem,
+			pc1640_readport,pc1640_writeport,
+			pc_aga_frame_interrupt,4,
+			0,0,
+			&i86_address_mask
+        },
+    },
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	0,
+	pc_aga_init_machine,
+	0,
+
+    80*9,                                       /* screen width */
+	25*14, 									/* screen height (pixels doubled) */
+	{ 0,80*9-1, 0,25*14-1},					/* visible_area */
+	aga_gfxdecodeinfo,							/* graphics decode info */
+	sizeof(cga_palette) / sizeof(cga_palette[0]),
+	(sizeof(cga_colortable)+sizeof(mda_colortable) )/sizeof(cga_colortable[0]),
+	aga_init_palette,							/* init palette */
+
+#ifdef RESIZING_WORKING
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+#else
+	VIDEO_TYPE_RASTER,
+#endif
+	0,
+	pc_aga_vh_start,
+	pc_aga_vh_stop,
+	pc200_vh_screenrefresh,
+
+    /* sound hardware */
+	0,0,0,0,
+	{
+		{ SOUND_CUSTOM, &pc_sound_interface },
+	},
+	mc146818_nvram_handler
 };
 
 static struct MachineDriver machine_driver_pc1512 =
@@ -2322,6 +2521,18 @@ ROM_START( xtvga )
     ROM_LOAD("pcxt.rom",    0xfe000, 0x02000, 0x031aafad)
 ROM_END
 
+ROM_START( pc200 )
+//    ROM_REGION(0x100000,REGION_CPU1, 0)
+    ROM_REGION16_LE(0x100000,REGION_CPU1, 0)
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
+	// special bios at 0xe0000 !?
+    ROM_LOAD16_BYTE("pc20v2.0", 0xfc001, 0x2000, 0x41302eb8) // v2
+    ROM_LOAD16_BYTE("pc20v2.1", 0xfc000, 0x2000, 0x71b84616) // v2
+	// also mapped to f0000, f4000, f8000
+	ROM_REGION(0x02100,REGION_GFX1, 0)
+    ROM_LOAD("aga.chr",     0x00000, 0x02000, 0xaca81498) //taken from aga
+ROM_END
+
 ROM_START( pc1512 )
 //    ROM_REGION(0x100000,REGION_CPU1, 0)
     ROM_REGION16_LE(0x100000,REGION_CPU1, 0)
@@ -2335,8 +2546,7 @@ ROM_END
 ROM_START( pc1640 )
 //    ROM_REGION(0x100000,REGION_CPU1, 0)
     ROM_REGION16_LE(0x100000,REGION_CPU1, 0)
-	// this bios seams to be made for the amstrad pc
-    ROM_LOAD("40100", 0xc0000, 0x8000, 0xd2d1f1ae)
+    ROM_LOAD("40100", 0xc0000, 0x8000, 0xd2d1f1ae) // this bios seams to be made for the amstrad pc
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
     ROM_LOAD16_BYTE("40043.v3", 0xfc001, 0x2000, 0xe40a1513) // v3
     ROM_LOAD16_BYTE("40044.v3", 0xfc000, 0x2000, 0xf1c074f3)
@@ -2460,6 +2670,7 @@ static const struct IODevice io_ibmpc[] = {
 
 #define io_ibmxt io_ibmpc
 #define io_xtvga io_ibmpc
+#define io_pc200 io_ibmpc
 #define io_pc1512 io_ibmpc
 #define io_pc1640 io_ibmpc
 
@@ -2475,36 +2686,37 @@ static const struct IODevice io_ibmpc[] = {
 
 ***************************************************************************/
 
-/*	   YEAR		NAME		PARENT	 MACHINE   INPUT	 INIT	   COMPANY	 FULLNAME */
-COMP ( 1982,	ibmpc,		0,		 pccga,    pccga,	 pccga,	   "International Business Machines",  "IBM PC 10/27/82" )
-COMP ( 1982,	ibmpca,		ibmpc,	 pccga,    pccga,	 pccga,	   "International Business Machines",  "IBM PC 08/16/82" )
-COMP ( 1987,	pc,			ibmpc,	 pccga,    pccga,	 pccga,	   "",  "PC (CGA)" )
-COMPX ( 1985,	bondwell,	ibmpc,	 pccga,	   pccga,	 bondwell, "Bondwell Holding",  "BW230 (PRO28 Series)", GAME_NOT_WORKING )
-COMP( 1988,	europc,		ibmpc,	 europc,   europc,	 europc,   "Schneider Rdf. AG",  "EURO PC")
+/*	   YEAR		NAME		PARENT	MACHINE     INPUT	    INIT	    COMPANY	 FULLNAME */
+COMP ( 1982,	ibmpc,		0,		pccga,      pccga,	    pccga,	    "International Business Machines",  "IBM PC 10/27/82" )
+COMP ( 1982,	ibmpca,		ibmpc,	pccga,      pccga,	    pccga,	    "International Business Machines",  "IBM PC 08/16/82" )
+COMP ( 1987,	pc,			ibmpc,	pccga,      pccga,		pccga,	    "",  "PC (CGA)" )
+COMPX ( 1985,	bondwell,	ibmpc,	pccga,		bondwell,   bondwell,	"Bondwell Holding",  "BW230 (PRO28 Series)", GAME_NOT_WORKING )
+COMP( 1988,		europc,		ibmpc,	europc,     europc,		europc,     "Schneider Rdf. AG",  "EURO PC")
 
 // pcjr (better graphics, better sound)
-COMPX( 1983,	ibmpcjr,	ibmpc,	 t1000hx,  tandy1t,  t1000hx,  "International Business Machines",  "IBM PC Jr", GAME_NOT_WORKING|GAME_IMPERFECT_COLORS )
-COMP( 1987,	t1000hx,	ibmpc,	 t1000hx,  tandy1t,  t1000hx,  "Tandy Radio Shack",  "Tandy 1000HX")
+COMPX( 1983,	ibmpcjr,	ibmpc,	t1000hx,    tandy1t,	t1000hx,    "International Business Machines",  "IBM PC Jr", GAME_NOT_WORKING|GAME_IMPERFECT_COLORS )
+COMP( 1987,		t1000hx,	ibmpc,	t1000hx,    tandy1t,	t1000hx,	"Tandy Radio Shack",  "Tandy 1000HX")
 
 // xt class (pc but 8086)
-COMP( 1986,	ibmxt,    ibmpc,	 xtcga,    xtcga,	 pccga,	   "International Business Machines",  "IBM PC/XT (CGA, MF2 Keyboard)" )
-COMP ( 1986,	pc1512,   ibmpc,	 pc1512,   pc1512,	 pc1512,   "Amstrad plc",  "Amstrad PC1512")
-COMPX ( 1987,	pc1640,   ibmpc,	 pc1640,   pc1640,	 pc1640,   "Amstrad plc",  "Amstrad PC1640 / PC6400 (US)", GAME_NOT_WORKING )
+COMP( 1986,		ibmxt,		ibmpc,	xtcga,      xtcga,		pccga,		"International Business Machines",  "IBM PC/XT (CGA)" )
+COMP ( 1988,	pc200,		ibmpc,	pc200,		pc200,		pc200,		"Sinclair",  "PC200 Professional Series")
+COMP ( 1986,	pc1512,		ibmpc,	pc1512,     pc1512,		pc1512,		"Amstrad plc",  "Amstrad PC1512")
+COMPX ( 1987,	pc1640,		ibmpc,	pc1640,     pc1640,		pc1640,		"Amstrad plc",  "Amstrad PC1640 / PC6400 (US)", GAME_NOT_WORKING )
 // ppc640 portable pc1512?, nec processor?
 // pc2086 pc1512 with vga??
 
 // at class (many differences to xt)
-COMPX ( 1985,	ibmat,    0,		 atcga,    atcga,	 atcga,	   "International Business Machines",  "IBM PC/AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
-COMPX ( 1987,	at,			ibmat,	 atcga,    atcga,	 atcga,	   "",  "PC/AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
-COMPX ( 1989,	neat,		ibmat,	 atcga,    atcga,	 atcga,	   "",  "NEAT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMPX ( 1985,	ibmat,		0,		atcga,		atcga,		atcga,	   "International Business Machines",  "IBM PC/AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMPX ( 1987,	at,			ibmat,	atcga,      atcga,		atcga,	   "",  "PC/AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMPX ( 1989,	neat,		ibmat,	atcga,      atcga,		atcga,	   "",  "NEAT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 #ifdef HAS_I386
-COMPX ( 1988,	at386,		ibmat,	 at386,    atcga,	 at386,	   "MITAC INC",  "PC/AT 386(CGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMPX ( 1988,	at386,		ibmat,	at386,      atcga,		at386,	   "MITAC INC",  "PC/AT 386(CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 #endif
 
 // these drivers will be discarded soon
-COMP ( 1987,	pcmda,		ibmpc,	 pcmda,    pcmda,	 pcmda,	   "",  "PC (MDA)" )
-COMPX ( 1987,	xtvga,		ibmpc,	 xtvga,    xtvga,	 pc_vga,   "",  "PC/XT (VGA, MF2 Keyboard)", GAME_NOT_WORKING )
-COMPX ( 1987,	atvga,		ibmat,	 atvga,    atvga,	 at_vga,   "",  "PC/AT (VGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMP ( 1987,	pcmda,		ibmpc,	pcmda,      pcmda,		pcmda,	   "",  "PC (MDA)" )
+COMPX ( 1987,	xtvga,		ibmpc,	xtvga,      xtvga,		pc_vga,    "",  "PC/XT (VGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMPX ( 1987,	atvga,		ibmat,	atvga,      atvga,		at_vga,    "",  "PC/AT (VGA, MF2 Keyboard)", GAME_NOT_WORKING )
 
 #ifdef RUNTIME_LOADER
 extern void pc_runtime_loader_init(void)
@@ -2520,11 +2732,13 @@ extern void pc_runtime_loader_init(void)
 		if ( strcmp(drivers[i]->name,"ibmpcjr")==0) drivers[i]=&driver_ibmpcjr;
 		if ( strcmp(drivers[i]->name,"t1000hx")==0) drivers[i]=&driver_t1000hx;
 		if ( strcmp(drivers[i]->name,"ibmxt")==0) drivers[i]=&driver_ibmxt;
+		if ( strcmp(drivers[i]->name,"pc200")==0) drivers[i]=&driver_pc200;
 		if ( strcmp(drivers[i]->name,"pc1512")==0) drivers[i]=&driver_pc1512;
 		if ( strcmp(drivers[i]->name,"pc1640")==0) drivers[i]=&driver_pc1640;
 		if ( strcmp(drivers[i]->name,"xtvga")==0) drivers[i]=&driver_xtvga;
 		if ( strcmp(drivers[i]->name,"ibmat")==0) drivers[i]=&driver_ibmat;
 		if ( strcmp(drivers[i]->name,"at")==0) drivers[i]=&driver_at;
+
 		if ( strcmp(drivers[i]->name,"atvga")==0) drivers[i]=&driver_atvga;
 		if ( strcmp(drivers[i]->name,"neat")==0) drivers[i]=&driver_neat;
 		if ( strcmp(drivers[i]->name,"at386")==0) drivers[i]=&driver_at386;

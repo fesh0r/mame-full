@@ -7,6 +7,29 @@
 #include "includes/pclpt.h"
 #include "includes/vga.h"
 
+/* pc20 (v2)
+   fc078
+   fc102 color/mono selection
+   fc166
+   fc1b4
+   fd841 (output something)
+   ff17c (output something, read monitor type inputs)
+   fc212
+   fc26c
+   fc2df
+   fc3fe
+   fc0f4
+   fc432
+   fc49f
+   fc514
+   fc566
+   fc5db
+   fc622 in 3de
+
+port 0379 read
+port 03de write/read
+ */
+
 /* pc1512 (v1)
    fc1b5
    fc1f1
@@ -169,6 +192,15 @@ READ_HANDLER( pc1640_port60_r )
 	}
 	return data;
 }
+
+READ_HANDLER( pc200_port378_r )
+{
+	int data=pc_parallelport1_r(offset);
+	if (offset==1) data=(data&~7)|(input_port_1_r(0)&7);
+	if (offset==2) data=(data&~0xe0)|(input_port_1_r(0)&0xe0);
+	return data;
+}
+
 
 READ_HANDLER( pc1640_port378_r )
 {

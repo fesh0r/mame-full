@@ -732,7 +732,7 @@ void init_europc(void)
 
 	/*
 	  fix century rom bios bug !
-	  if year >79 month (and not CENTURY) is loaded with 0x20
+	  if year <79 month (and not CENTURY) is loaded with 0x20
 	*/
 	if (rom[0xff93e]==0xb6){ // mov dh,
 		UINT8 a;
@@ -746,19 +746,42 @@ void init_europc(void)
 	dma8237_config(dma8237,&dma);
 	dma8237_reset(dma8237);
 
-#if 0
-	install_mem_read_handler(0, 0xb8000, 0xbbfff, MRA_RAM );
-	install_mem_write_handler(0, 0xb8000, 0xbbfff, pc_cga_videoram_w );
-	videoram=memory_region(REGION_CPU1)+0xb8000; videoram_size=0x4000;
-
-	install_port_read_handler(0, 0x3d0, 0x3df, pc_CGA_r );
-	install_port_write_handler(0, 0x3d0, 0x3df, pc_CGA_w );
-#endif
-
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
 	europc_rtc_init();
 	pc_aga_set_mode(AGA_COLOR);
 //	europc_rtc_set_time();
+}
+
+void init_pc200(void)
+{
+	UINT8 *gfx = &memory_region(REGION_GFX1)[0x2000];
+	int i;
+
+//	pc_init_setup(pc1512);
+    /* just a plain bit pattern for graphics data generation */
+    for (i = 0; i < 256; i++)
+		gfx[i] = i;
+
+	install_mem_read_handler(0, 0xb0000, 0xbffff, pc200_videoram_r );
+	install_mem_write_handler(0, 0xb0000, 0xbffff, pc200_videoram_w );
+	videoram_size=0x10000;
+	videoram=memory_region(REGION_CPU1)+0xb0000;
+
+	// 0x3dd, 0x3d8, 0x3d4, 0x3de are also in mda mode present!?
+	install_port_read_handler(0, 0x3d0, 0x3df, pc200_cga_r );
+	install_port_write_handler(0, 0x3d0, 0x3df, pc200_cga_w );
+
+	install_port_read_handler(0, 0x3b0, 0x3bf, pc_MDA_r );
+	install_port_write_handler(0, 0x3b0, 0x3bf, pc_MDA_w );
+
+	install_port_read_handler(0, 0x278, 0x27b, pc200_port378_r );
+
+	init_pc_common();
+	dma8237_config(dma8237,&dma);
+	dma8237_reset(dma8237);
+	pc_aga_set_mode(AGA_COLOR);
+	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC); //?
+	mc146818_init(MC146818_IGNORE_CENTURY); //?
 }
 
 void init_pc1512(void)
@@ -778,6 +801,7 @@ void init_pc1512(void)
 	install_port_write_handler(0, 0x3d0, 0x3df, pc1512_w );
 
 	install_port_read_handler(0, 0x278, 0x27b, pc_parallelport2_r );
+
 
 	init_pc_common();
 	dma8237_config(dma8237,&dma);

@@ -17,6 +17,7 @@ extern void init_pccga(void);
 extern void init_pcmda(void);
 void init_europc(void);
 void init_bondwell(void);
+extern void init_pc200(void);
 extern void init_pc1512(void);
 extern void init_pc1640(void);
 extern void init_pc_vga(void);

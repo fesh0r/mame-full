@@ -8,9 +8,13 @@ WRITE_HANDLER( pc1640_mouse_x_w );
 WRITE_HANDLER( pc1640_mouse_y_w );
 
 READ_HANDLER( pc1640_port3d0_r );
+READ_HANDLER( pc200_port378_r );
 READ_HANDLER( pc1640_port378_r );
 READ_HANDLER( pc1640_port4278_r );
 READ_HANDLER( pc1640_port278_r );
+
+#define PC200_MODE (input_port_1_r(0)&0x30)
+#define PC200_MDA 0x30
 
 #define AMSTRAD_HELPER(bit, text, key1, key2) \
 	PORT_BITX( bit, 0x0000, IPT_KEYBOARD, text, key1, key2 )
