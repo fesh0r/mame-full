@@ -13,6 +13,7 @@ static struct {
 
 int comquest_vh_start(void)
 {
+	(void) comquest_video;
     return 0;
 }
 
