@@ -332,6 +332,8 @@ static struct {
 	{ 0xe8235dd4, 0x20000, "C65 910523" },
 	{ 0xb025805c, 0x20000, "C65 910429 German" },
 	{ 0xc5d8d32e, 0x20000, "C65 910111" },
+	{ 0x0670b3b6, 0x2000, "UNUSEABLE PART C65 c64 basic" },
+	{ 0xc85f9781, 0x2000, "UNUSEABLE PART C65 c64 kernel" },
 
 /* commodore b series *********************************************************************/
 	{ 0x9d0366f9, 0x2000, "901243-02b CBMB basic 128kb f8000" },
@@ -369,7 +371,8 @@ static struct {
 	{ 0xdce782fa , 0x2000, "901227.01 C64 kernel r1" },
 	{ 0xa5c687b3 , 0x2000, "901227.02 C64 kernel r2" },
 	{ 0xdbe3e7c7 , 0x2000, "901227.03 C64 kernel r3" },
-	{ 0xf10c2c25 , 0x2000, "901227-03? C64 swedish kernel" },
+	{ 0x8f294c51 , 0x2000, "??? C64 C64 swedish kernel r2" },
+	{ 0xf10c2c25 , 0x2000, "901227-03? C64 swedish kernel r3?" },
 	{ 0x789c8cc5 , 0x2000, "901246.01 C64 pet64 kernel" },
 	{ 0x2c5965d4 , 0x4000, "251104.04 C64 SX64 kernel" },
 	{ 0x7858d3d7 , 0x4000, "251104.04? C64 SX64 swedish kernel" },
@@ -386,6 +389,7 @@ static struct {
 	{ 0x8438e77b , 0x2000, "??? C64 kernel speeddos plus" },
 	{ 0x10aee0ae , 0x2000, "??? C64 kernel speeddos plus +" },
 	{ 0xe801dadc , 0x2000, "??? C64 kernel 80 column" },
+	{ 0xe6c763a2 , 0x2000, "??? C64 kernel cockrotv turbo v1.0?" },
 	{ 0x0010ec31 , 0x4000, "251913-01 C64 cost reduced (901225-01 + 901227-03)" },
 	{ 0xb0a9c2da , 0x4000, "390852.01 C64GS a000,c000" },
 	{ 0xec4272ee , 0x1000, "901225.01 C64 8x8 character set d000" },
@@ -900,9 +904,22 @@ static struct {
 
 	{ 0xa0b059f9 , 0x119000, "BAD Dump PalmOs" },
 
-	{ 0xd4f1390b , 0x40000, "HP48S E" },
+	{ 0xa87696c7 , 0x40000, "HP48S a" },
+	{ 0x034f6ce4 , 0x40000, "HP48S b" },
+	{ 0xa9a0279d , 0x40000, "HP48S c" },
+	{ 0x6e71244e , 0x40000, "HP48S d" },
+	{ 0x704ffa08 , 0x40000, "HP48S e" },
+	{ 0xd4f1390b , 0x40000, "SAVE HP48S e (diffs only in hardware window)" },
 	{ 0x5619ccaf , 0x40000, "BAD DUMP HP48S E" },
+	{ 0x1a6378ef , 0x40000, "HP48S j" },
+	{ 0xbdd5d2ee , 0x80000, "HP48G k" },
+	{ 0x70958e6b , 0x80000, "HP48G l" },
+	{ 0xe21a09e4 , 0x80000, "HP48G m" },
+	{ 0x27f90428 , 0x80000, "HP48G p" },
+	{ 0x00ee1a62 , 0x80000, "HP48G r" },
 	{ 0xd6bb68c5 , 0x80000, "BAD DUMP HP48G R" },
+
+	{ 0x3f2d9469 , 0x400000, "HP39G (1 nibble stored in byte)" },
 
 	{ 0xa2a56502 , 0x400, "6530-003 KIM1 1800" },
 	{ 0x2b08e923 , 0x400, "6530-002 KIM1 1c00" },
