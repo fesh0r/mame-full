@@ -118,14 +118,14 @@ BEGIN
     END
     POPUP "&Help"
     BEGIN
-#ifdef MESS
-        MENUITEM "&Mess Release Notes",         ID_HELP_RELEASE
-        MENUITEM "&New Mess Features",          ID_HELP_WHATS_NEW
-#else
         MENUITEM "&Help Contents\tF1",          ID_HELP_CONTENTS
         MENUITEM "&What's New",                 ID_HELP_WHATS_NEW32
         MENUITEM "&Quickstart Guide",           ID_HELP_QUICKSTART
         MENUITEM SEPARATOR
+#ifdef MESS
+        MENUITEM "&Mess Release Notes",         ID_HELP_RELEASE
+        MENUITEM "&New Mess Features",          ID_HELP_WHATS_NEW
+#else
         MENUITEM "&Mame Release Notes",         ID_HELP_RELEASE
         MENUITEM "&New Mame Features",          ID_HELP_WHATS_NEW
         MENUITEM "&Cheats in Mame?",            ID_HELP_CHEATS

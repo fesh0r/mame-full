@@ -54,6 +54,8 @@ static void MessRetrievePickerDefaults(void);
 static void MessOpenOtherSoftware(void);
 static BOOL CreateMessIcons(void);
 
+#define MAME32HELP "mess32.hlp"
+
 #include "win32ui.c"
 
 /* Taken from src/mess/msdos.c */

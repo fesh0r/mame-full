@@ -26,7 +26,7 @@ USE_FASTCALL = 1
 # NOMIDAS =
 
 # uncomment to build Helpfiles
-# HELPFILE = Mame32.hlp
+HELPFILE = Mess32.hlp
 
 # uncomment to build romcmp.exe utility
 TOOLS = mkhdimg.exe imgtool.exe dat2html.exe
@@ -636,8 +636,9 @@ $(EXENAME): $(COREOBJS) $(WIN32_OBJS) $(OBJS) $(RES)
 <<
 
 !ifdef HELPFILE
-$(HELPFILE): src\Win32\Hlp\Mame32.cnt src\Win32\Hlp\Mame32.hlp
-	@Makehelp.bat
+$(HELPFILE): mess\Win32\Hlp\Mess32.cnt mess\Win32\Hlp\Mess32.hlp
+	copy mess\Win32\Hlp\Mess32.cnt
+	copy mess\Win32\Hlp\Mess32.hlp
 !endif
 
 romcmp: $(OBJ)/romcmp.o $(OBJ)/unzip.o $(OBJ)/Win32/dirent.o

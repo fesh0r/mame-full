@@ -198,6 +198,10 @@ static void             UpdateHistory(int gameNum);
 static INT_PTR CALLBACK LoadErrorDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 static char *           GetRomList(int iGame);
 
+#ifndef MAME32HELP
+#define MAME32HELP "mame32.hlp"
+#endif
+
 /***************************************************************************
     External variables
  ***************************************************************************/
@@ -1458,7 +1462,7 @@ static void Win32UI_exit()
 
     File.exit();
 
-    WinHelp(hMain, "mame32.hlp", HELP_QUIT, 0);
+    WinHelp(hMain, MAME32HELP, HELP_QUIT, 0);
 }
 
 static long WINAPI MameWindowProc(HWND hWnd,UINT message,UINT wParam,LONG lParam)
@@ -3234,13 +3238,13 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
         return TRUE;
 
     case ID_HELP_CONTENTS:
-        WinHelp(hMain, "mame32.hlp", HELP_FINDER, 0);
+        WinHelp(hMain, MAME32HELP, HELP_FINDER, 0);
         break;
     case ID_HELP_WHATS_NEW32:
-        WinHelp(hMain, "mame32.hlp", HELP_CONTEXT, 100);
+        WinHelp(hMain, MAME32HELP, HELP_CONTEXT, 100);
         break;
     case ID_HELP_QUICKSTART:
-        WinHelp(hMain, "mame32.hlp", HELP_CONTEXT, 101);        
+        WinHelp(hMain, MAME32HELP, HELP_CONTEXT, 101);        
         break;
 
 #ifdef MESS
@@ -4541,14 +4545,14 @@ static INT_PTR CALLBACK MameHelpDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wPara
             HelpPrintln("Copyright (C) 1997-2000  by Nicola Salmoria and the MAME team.");
             HelpPrintln("");
             HelpPrintln("MAME32 version created and maintained by Michael Soderstrom and Christopher Kirmse.");
-            HelpPrintln("Please read the readme32.txt or mame32.hlp for more information.  Report ONLY Windows "
+            HelpPrintln("Please read the readme32.txt or " MAME32HELP " for more information.  Report ONLY Windows "
               "specific bugs at http://pluto.beseen.com/boardroom/q/18365, AFTER reading the readme32.txt.");
             HelpPrintln("");
             HelpPrintln("Usage:");
             HelpPrintln("");
             HelpPrintln("MAME32 [game] [options]");
             HelpPrintln("");
-            HelpPrintln("See the readme32.txt or mame32.hlp file for options");
+            HelpPrintln("See the readme32.txt or " MAME32HELP " file for options");
 
             return TRUE;
 
@@ -4864,11 +4868,11 @@ static INT_PTR CALLBACK LanguageDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, L
         }
 
     case WM_HELP:
-        WinHelp(((LPHELPINFO)lParam)->hItemHandle, "mame32.hlp", HELP_WM_HELP, (DWORD)dwHelpIDs);
+        WinHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32HELP, HELP_WM_HELP, (DWORD)dwHelpIDs);
         break;
 
     case WM_CONTEXTMENU: 
-        WinHelp((HWND)wParam, "mame32.hlp", HELP_CONTEXTMENU, (DWORD)dwHelpIDs);
+        WinHelp((HWND)wParam, MAME32HELP, HELP_CONTEXTMENU, (DWORD)dwHelpIDs);
         break; 
 
     case WM_COMMAND:
