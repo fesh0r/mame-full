@@ -217,8 +217,8 @@ int c64_cia0_port_a_r (int offset)
 	value &=t;
     }
 
-    if (JOYSTICK_SWAP) value = c64_keyline[8];
-    else value = c64_keyline[9];
+    if (JOYSTICK_SWAP) value &= c64_keyline[8];
+    else value &= c64_keyline[9];
 
     return value;
 }
