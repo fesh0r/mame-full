@@ -140,7 +140,7 @@ static void apple2_setvar(UINT32 val, UINT32 mask)
 		cpu_setbank(7,  &mess_ram[(a2 & othermask) ? 0x10400 : 0x00400]);
 
 		othermask = ((a2 & (VAR_80STORE|VAR_HIRES)) == (VAR_80STORE|VAR_HIRES)) ? VAR_PAGE2 : VAR_RAMWRT;
-		cpu_setbank(9,  &mess_ram[(a2 & VAR_RAMRD) ? 0x12000 : 0x02000]);
+		cpu_setbank(9,  &mess_ram[(a2 & othermask) ? 0x12000 : 0x02000]);
 	}
 
 	if (mask & (VAR_80STORE|VAR_PAGE2|VAR_HIRES|VAR_RAMWRT))
