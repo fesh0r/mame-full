@@ -18,6 +18,7 @@
 /* machine/nes.c */
 int nes_load_rom (int id);
 int nes_load_disk (int id);
+extern UINT32 nes_partialcrc(const unsigned char *,unsigned int);
 int nes_id_rom (int id);
 void nes_exit_disk(int id);
 
@@ -442,10 +443,11 @@ static const struct IODevice io_famicom[] = {
 		NULL,               /* status */
 		NULL,               /* seek */
 		NULL,				/* tell */
-        NULL,               /* input */
+		NULL,               /* input */
 		NULL,               /* output */
 		NULL,               /* input_chunk */
-		NULL                /* output_chunk */
+		NULL,               /* output_chunk */
+		nes_partialcrc	    /* partialcrc */
 	},
     {
 		IO_FLOPPY,			/* type */
@@ -484,10 +486,11 @@ static const struct IODevice io_nes[] = {
 		NULL,               /* status */
 		NULL,               /* seek */
 		NULL,				/* tell */
-        NULL,               /* input */
+		NULL,               /* input */
 		NULL,               /* output */
 		NULL,               /* input_chunk */
-		NULL                /* output_chunk */
+		NULL,                /* output_chunk */
+		nes_partialcrc      /* partialcrc */
 	},
 	{ IO_END }
 };
@@ -510,7 +513,8 @@ static const struct IODevice io_nespal[] = {
         NULL,               /* input */
 		NULL,               /* output */
 		NULL,               /* input_chunk */
-		NULL                /* output_chunk */
+		NULL,                /* output_chunk */
+		nes_partialcrc      /* partialcrc */
 	},
 	{ IO_END }
 };

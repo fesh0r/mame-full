@@ -1260,6 +1260,17 @@ bad:
 	return 1;
 }
 
+extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
+
+UINT32 nes_partialcrc(const unsigned char *buf,unsigned int size)
+{
+UINT32 crc;
+if (size < 17) return 0;
+crc = (UINT32) crc32(0L,&buf[16],size-16);
+logerror("NES Partial CRC: %08lx %d\n",crc,size);
+return crc;
+}
+
 int nes_id_rom (int id)
 {
     FILE *romfile;
