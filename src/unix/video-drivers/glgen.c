@@ -314,8 +314,7 @@ int gl_open_display (void)
   int x, y;
   struct TexSquare *tsq;
   GLenum err;
-  GLdouble vx_gscr_p4b, vy_gscr_p4b, vz_gscr_p4b; 
-  GLdouble t1, texwpervw, texhpervh;
+  GLdouble vx_gscr_p4b, vy_gscr_p4b, vz_gscr_p4b, t1;
   GLint format=0;
   GLint tidxsize=0;
   int format_ok=0;
@@ -583,6 +582,7 @@ int gl_open_display (void)
   switch(sysdep_display_params.depth)
   {
 	case 15:
+	case 16:
 		    /* ARGB1555 */
 		    sysdep_display_properties.palette_info.red_mask   = 0x00007C00;
 		    sysdep_display_properties.palette_info.green_mask = 0x000003E0;
@@ -590,15 +590,6 @@ int gl_open_display (void)
 		    gl_bitmap_format = GL_BGRA;
 		    /*                                   A R G B */
 		    gl_bitmap_type   = GL_UNSIGNED_SHORT_1_5_5_5_REV;
-		    break;
-	case 16:
-		    /* RGB565 */
-		    sysdep_display_properties.palette_info.red_mask   = 0x0000F800;
-		    sysdep_display_properties.palette_info.green_mask = 0x000007C0;
-		    sysdep_display_properties.palette_info.blue_mask  = 0x0000003F;
-		    gl_bitmap_format = GL_RGB;
-		    /*                                   R G B */
-		    gl_bitmap_type   = GL_UNSIGNED_SHORT_5_6_5;
 		    break;
 	case 32:
 		  /* ARGB8888 */
@@ -611,12 +602,12 @@ int gl_open_display (void)
 		  break;
   }
   sysdep_display_properties.vector_renderer = glvec_renderer;
+  sysdep_display_properties.hwscale = 1;
 
   /* determine the texture size to use */
   if(force_text_width_height>0)
   {
-    text_height=force_text_width_height;
-    text_width=force_text_width_height;
+    text_height = text_width = force_text_width_height;
     fprintf (stderr, "GLINFO: force_text_width_height := %d x %d\n",
              text_height, text_width);
   }
@@ -624,14 +615,14 @@ int gl_open_display (void)
   {
     text_width  = sysdep_display_params.orig_width;
     text_height = sysdep_display_params.orig_height;
-  }
-  
-  /* round text_width and height up to a power of 2 */
-  for(x=1;x<text_width;x*=2) {}
-  text_width=x;
 
-  for(y=1;y<text_height;y*=2) {}
-  text_height=y;
+    /* round text_width and height up to a power of 2 */
+    for(x=1;x<text_width;x*=2) {}
+    text_width=x;
+
+    for(y=1;y<text_height;y*=2) {}
+    text_height=y;
+  }
 
   /* Test the max texture size */
   while(!format_ok && text_width>=64 && text_height>=64)
@@ -657,11 +648,8 @@ int gl_open_display (void)
     switch(sysdep_display_params.depth)
     {
       case 15:
-        if(format == GL_RGB || format == GL_RGB5)
-          format_ok = 1;
-        break;
       case 16:
-        if(format == GL_RGB)
+        if(format == GL_RGB || format == GL_RGB5)
           format_ok = 1;
         break;
       case 32:
@@ -709,59 +697,13 @@ int gl_open_display (void)
     return 1;
   }
 
-  /**
-   * texwpervw, texhpervh:
-   * 	how much the texture covers the visual,
-   * 	for both components (width/height) (percent).
-   */
-  texwpervw = (GLdouble) text_width / (GLdouble) sysdep_display_params.orig_width;
-  if (texwpervw > 1.0)
-    texwpervw = 1.0;
-
-  texhpervh = (GLdouble) text_height / (GLdouble) sysdep_display_params.orig_height;
-  if (texhpervh > 1.0)
-    texhpervh = 1.0;
-
-  /* create (but don't "fill") the textures */
+  /* create the textures */
   for (y = 0; y < texnumy; y++)
   {
     for (x = 0; x < texnumx; x++)
     {
       tsq = texgrid + y * texnumx + x;
   
-      if (x == texnumx - 1 && sysdep_display_params.orig_width % text_width)
-	tsq->xcov =
-	  (GLdouble) (sysdep_display_params.orig_width % text_width) / (GLdouble) text_width;
-      else
-	tsq->xcov = 1.0;
-
-      if (y == texnumy - 1 && sysdep_display_params.orig_height % text_height)
-	tsq->ycov =
-	  (GLdouble) (sysdep_display_params.orig_height % text_height) / (GLdouble) text_height;
-      else
-	tsq->ycov = 1.0;
-
-      CalcFlatTexPoint (x, y, texwpervw, texhpervh, &(tsq->fx1), &(tsq->fy1));
-      CalcFlatTexPoint (x + 1, y, texwpervw, texhpervh, &(tsq->fx2), &(tsq->fy2));
-      CalcFlatTexPoint (x + 1, y + 1, texwpervw, texhpervh, &(tsq->fx3), &(tsq->fy3));
-      CalcFlatTexPoint (x, y + 1, texwpervw, texhpervh, &(tsq->fx4), &(tsq->fy4));
-
-      CalcCabPointbyViewpoint( x*(GLdouble)text_width,
-      		    y*(GLdouble)text_height,
-                   &(tsq->x1), &(tsq->y1), &(tsq->z1));
-
-      CalcCabPointbyViewpoint( x*(GLdouble)text_width  + tsq->xcov*(GLdouble)text_width,
-      		    y*(GLdouble)text_height,
-                   &(tsq->x2), &(tsq->y2), &(tsq->z2));
-
-      CalcCabPointbyViewpoint( x*(GLdouble)text_width  + tsq->xcov*(GLdouble)text_width,
-      		    y*(GLdouble)text_height + tsq->ycov*(GLdouble)text_height,
-                   &(tsq->x3), &(tsq->y3), &(tsq->z3));
-
-      CalcCabPointbyViewpoint( x*(GLdouble)text_width,
-      		    y*(GLdouble)text_height + tsq->ycov*(GLdouble)text_height,
-                   &(tsq->x4), &(tsq->y4), &(tsq->z4));
-
       tsq->texobj=0;
       disp__glGenTextures (1, &(tsq->texobj));
       RETURN_IF_GL_ERROR ();
@@ -872,11 +814,35 @@ static void InitTextures (struct mame_bitmap *bitmap, struct rectangle *vis_area
   struct TexSquare *tsq=0;
   int line_len;
   int bytes_per_pixel = (sysdep_display_params.depth + 7) / 8;
+  GLdouble texwpervw, texhpervh;
+  int vis_width  = (vis_area->max_x + 1) - vis_area->min_x;
+  int vis_height = (vis_area->max_y + 1) - vis_area->min_y;
+
+  texnumx = vis_width / text_width;
+  if ((vis_width % text_width) > 0)
+    texnumx++;
+
+  texnumy = vis_height / text_height;
+  if ((vis_height % text_height) > 0)
+    texnumy++;
+
+  /**
+   * texwpervw, texhpervh:
+   * 	how much the texture covers the visual,
+   * 	for both components (width/height) (percent).
+   */
+  texwpervw = (GLdouble) text_width / (GLdouble)vis_width;
+  if (texwpervw > 1.0)
+    texwpervw = 1.0;
+
+  texhpervh = (GLdouble) text_height / (GLdouble)vis_height;
+  if (texhpervh > 1.0)
+    texhpervh = 1.0;
 
   if(sysdep_display_params.depth == 16) 
   {
     line_1   = (unsigned char *)colorBlittedMemory;
-    line_len = sysdep_display_params.orig_width;
+    line_len = vis_width;
   }
   else
   {
@@ -896,26 +862,60 @@ static void InitTextures (struct mame_bitmap *bitmap, struct rectangle *vis_area
     {
       tsq = texgrid + y * texnumx + x;
 
+      /* calculate the coordinates */
+      if (x == texnumx - 1 && vis_width % text_width)
+	tsq->xcov =
+	  (GLdouble) (vis_width % text_width) / (GLdouble) text_width;
+      else
+	tsq->xcov = 1.0;
+
+      if (y == texnumy - 1 && vis_height % text_height)
+	tsq->ycov =
+	  (GLdouble) (vis_height % text_height) / (GLdouble) text_height;
+      else
+	tsq->ycov = 1.0;
+
+      CalcFlatTexPoint (x, y, texwpervw, texhpervh, &(tsq->fx1), &(tsq->fy1));
+      CalcFlatTexPoint (x + 1, y, texwpervw, texhpervh, &(tsq->fx2), &(tsq->fy2));
+      CalcFlatTexPoint (x + 1, y + 1, texwpervw, texhpervh, &(tsq->fx3), &(tsq->fy3));
+      CalcFlatTexPoint (x, y + 1, texwpervw, texhpervh, &(tsq->fx4), &(tsq->fy4));
+
+      CalcCabPointbyViewpoint( x*(GLdouble)text_width,
+      		    y*(GLdouble)text_height,
+                   &(tsq->x1), &(tsq->y1), &(tsq->z1));
+
+      CalcCabPointbyViewpoint( x*(GLdouble)text_width  + tsq->xcov*(GLdouble)text_width,
+      		    y*(GLdouble)text_height,
+                   &(tsq->x2), &(tsq->y2), &(tsq->z2));
+
+      CalcCabPointbyViewpoint( x*(GLdouble)text_width  + tsq->xcov*(GLdouble)text_width,
+      		    y*(GLdouble)text_height + tsq->ycov*(GLdouble)text_height,
+                   &(tsq->x3), &(tsq->y3), &(tsq->z3));
+
+      CalcCabPointbyViewpoint( x*(GLdouble)text_width,
+      		    y*(GLdouble)text_height + tsq->ycov*(GLdouble)text_height,
+                   &(tsq->x4), &(tsq->y4), &(tsq->z4));
+
       /* calculate the pixel store data, to use the machine-bitmap for our texture */
       tsq->texture = line_1 +
         ( (y * text_height * line_len) + (x * text_width)) * bytes_per_pixel;
-    }	/* for all texnumx */
-  }  /* for all texnumy */
+    }	/* for texnumx */
+  }  /* for texnumy */
 
   if (sysdep_display_params.vec_src_bounds)
   {
     if(sysdep_display_params.vec_dest_bounds)
     {
       vecx = (GLdouble)sysdep_display_params.vec_dest_bounds->min_x/
-        sysdep_display_params.orig_width;
+        vis_width;
       vecy = (GLdouble)sysdep_display_params.vec_dest_bounds->min_y/
-        sysdep_display_params.orig_height;
-      vecscalex = (65536.0 * sysdep_display_params.orig_width *
+        vis_height;
+      vecscalex = (65536.0 * vis_width *
         (sysdep_display_params.vec_src_bounds->max_x-
          sysdep_display_params.vec_src_bounds->min_x)) /
         ((sysdep_display_params.vec_dest_bounds->max_x + 1) -
          sysdep_display_params.vec_dest_bounds->min_x);
-      vecscaley = (65536.0 * sysdep_display_params.orig_height *
+      vecscaley = (65536.0 * vis_height *
         (sysdep_display_params.vec_src_bounds->max_y-
          sysdep_display_params.vec_src_bounds->min_y)) /
         ((sysdep_display_params.vec_dest_bounds->max_y + 1) -

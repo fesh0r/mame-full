@@ -50,7 +50,7 @@ static int rc_requires_arg[] = {0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0 };
 /* private methods */
 static int rc_verify(struct rc_option *option, float value)
 {
-   if(option->min == option->max)
+   if((option->min == 0.0) && (option->max == 0.0))
       return 0;
       
    if( (value < option->min) || (value > option->max) )
@@ -529,13 +529,16 @@ int rc_verify_power_of_2(struct rc_option *option, const char *arg,
    
    value = *(int *)option->dest;
    
-   for(i=0; i<(sizeof(int)*8); i++)
-      if(((int)0x01 << i) == value)
-         break;
-   if(i == (sizeof(int)*8))
+   if (value)
    {
-      fprintf(stderr, "error invalid value for %s: %s\n", option->name, arg);
-      return -1;
+      for(i=0; i<(sizeof(int)*8); i++)
+         if(((int)0x01 << i) == value)
+            break;
+      if(i == (sizeof(int)*8))
+      {
+         fprintf(stderr, "error invalid value for %s: %s\n", option->name, arg);
+         return -1;
+      }
    }
    
    option->priority = priority;

@@ -90,9 +90,6 @@ ifdef X11_DGA
 CFLAGS.x11 += -DUSE_DGA
 LIBS.x11   += -lXxf86dga -lXxf86vm
 INST.x11    = doinstallsuid
-ifdef TDFX_DGA_WORKAROUND
-CFLAGS.x11 += -DTDFX_DGA_WORKAROUND 
-endif
 endif
 ifdef X11_GLIDE
 ifdef GLIDE2

@@ -568,26 +568,29 @@ static void change_display_settings(struct sysdep_display_open_params *new_param
 
 static void update_visible_area(struct mame_display *display)
 {
-	int old_width  = normal_params.width;
-	int old_height = normal_params.height;
-	
+	int width  = (display->game_visible_area.max_x + 1) -
+	   display->game_visible_area.min_x;
+	int height = (display->game_visible_area.max_y + 1) -
+	   display->game_visible_area.min_y;
+
 	set_ui_visarea(display->game_visible_area.min_x,
 			display->game_visible_area.min_y,
 			display->game_visible_area.max_x,
 			display->game_visible_area.max_y);
 			
-	if (sysdep_display_properties.hwscale)
+	if (sysdep_display_properties.hwscale &&
+	    (width  <= normal_params.width) &&
+	    (height <= normal_params.height))
 	  return;
 	
-	normal_params.width  = (display->game_visible_area.max_x + 1) -
-	   display->game_visible_area.min_x;
-	normal_params.height = (display->game_visible_area.max_y + 1) -
-	   display->game_visible_area.min_y;
-
-	if (((normal_params.width  != old_width) ||
-	     (normal_params.height != old_height)) &&
-	    !debugger_has_focus)
-		change_display_settings(&normal_params, 1);
+	if ((normal_params.width  != width) ||
+	    (normal_params.height != height))
+	{
+	  normal_params.width  = width;
+	  normal_params.height = height;
+	  if(!debugger_has_focus)
+	    change_display_settings(&normal_params, 1);
+	}
 }
 
 static void update_palette(struct mame_display *display, int force_dirty)

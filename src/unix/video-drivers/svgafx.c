@@ -17,38 +17,11 @@
 #include "svgainput.h"
 #include "sysdep/sysdep_display_priv.h"
 
-unsigned int custom_window_width;
-unsigned int custom_window_height;
-unsigned int window_width;
-unsigned int window_height;
-
-static int svgafx_set_resolution(struct rc_option *option, const char *arg,
-   int priority);
-
-struct rc_option sysdep_display_opts[] =
-{
-   /* name, shortname, type, dest, deflt, min, max, func, help */
-   { "FX (Glide) Related", NULL,		rc_seperator,	NULL,
-     NULL,		0,			0,		NULL,
-     NULL },
-   { "resolution",	"res",			rc_use_function, NULL,
-     "640x480",		0,			0,		svgafx_set_resolution,
-     "Specify the resolution/ windowsize to use in the form of XRESxYRES" },
-   { NULL,		NULL,			rc_end,		NULL,
-     NULL,		0,			0,		NULL,
-     NULL }
+struct rc_option sysdep_display_opts[] = {
+	/* name, shortname, type, dest, deflt, min, max, func, help */
+	{ NULL, NULL, rc_link, fx_opts, NULL, 0, 0, NULL, NULL },
+	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
-
-static int svgafx_set_resolution(struct rc_option *option, const char *arg,
-   int priority)
-{
-   if (sscanf(arg, "%ux%u", &custom_window_width, &custom_window_height) != 2)
-      return 1;
-   if (InitParams())
-      return 1;
-   option->priority = priority;
-   return 0;
-}
 
 int sysdep_display_init(void)
 {

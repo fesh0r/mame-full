@@ -54,6 +54,7 @@ typedef struct
 #define grDisablePassThru() grEnable(GR_PASSTHRU)
 #define grEnableAA()        grEnable(GR_AA_ORDERED)
 #define grDisableAA()       grDisable(GR_AA_ORDERED)
+#define grSstCloseWin(C)    grSstWinClose(C)
 
 #define GR_LOD_256 GR_LOD_LOG2_256
 #define GR_ASPECT_1x1 GR_ASPECT_LOG2_1x1
@@ -72,6 +73,14 @@ typedef struct
    strcpy(version, v);							\
 }
 
+#define grGlideGetNumBoards(num_boards_pt)                              \
+{                                                                       \
+   FxI32 num_sst;                                                       \
+   if(grGet(GR_NUM_BOARDS, sizeof(FxI32), &num_sst) == sizeof(FxI32))   \
+     *(num_boards_pt) = num_sst;                                        \
+   else                                                                 \
+     *(num_boards_pt) = 0;                                              \
+}
 #else
 /* Glide version 2 */
 
@@ -80,6 +89,16 @@ typedef struct
 #define grDisablePassThru() grSstControl(GR_CONTROL_ACTIVATE)
 #define grEnableAA()
 #define grDisableAA()
+#define grSstCloseWin(C)    grSstWinClose()
+
+#define GrContext_t FxBool
+
+#define grGlideGetNumBoards(num_boards_pt)                              \
+{                                                                       \
+   GrHwConfiguration hwconfig;                                          \
+   grSstQueryHardware(&hwconfig);                                       \
+   *(num_boards_pt) = hwconfig.num_sst;                                 \
+}
 
 #endif
 

@@ -13,6 +13,7 @@
 *****************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <signal.h>
 #include <fcntl.h>
@@ -23,9 +24,6 @@
 #include "fxcompat.h"
 #include "sysdep/sysdep_display_priv.h"
 #include "fxgen.h"
-
-/* defined in svgafx.c or x11.c */
-extern int window_width, window_height, custom_window_width, custom_window_height;
 
 /* from fxvec.c */
 int fxvec_renderer(point *pt, int num_points);
@@ -48,6 +46,8 @@ int vecvscrntlx;
 int vecvscrntly;
 int vecvscrnwidth;
 int vecvscrnheight;
+unsigned int fxwidth;
+unsigned int fxheight;
 
 static char version[80];
 static GrTexInfo texinfo;
@@ -74,7 +74,22 @@ static void UpdateTexture(struct mame_bitmap *bitmap,
 	  struct rectangle *dirty_area,  struct rectangle *vis_area,
 	  struct sysdep_palette_struct *palette);
 static void DrawFlatBitmap(void);
+static int fxgen_set_resolution(struct rc_option *option, const char *arg,
+   int priority);
 
+struct rc_option fx_opts[] =
+{
+   /* name, shortname, type, dest, deflt, min, max, func, help */
+   { "FX (Glide) Related", NULL,		rc_seperator,	NULL,
+     NULL,		0,			0,		NULL,
+     NULL },
+   { "fxresolution",	"fxres",		rc_use_function, NULL,
+     "640x480",		0,			0,		fxgen_set_resolution,
+     "Specify the resolution/windowsize to use in the form of XRESxYRES" },
+   { NULL,		NULL,			rc_end,		NULL,
+     NULL,		0,			0,		NULL,
+     NULL }
+};
 
 static void CalcPoint(GrVertex *vert,int x,int y)
 {
@@ -107,6 +122,13 @@ int InitGlide(void)
     close(fd);
   putenv("FX_GLIDE_NO_SPLASH=");
   grGlideInit();
+  grGlideGetNumBoards(&fd);
+  if (fd == 0)
+    return 1;
+  
+  /* setup the vertexlayout (for glide3, noop on glide2) */
+  grSetupVertexLayout();
+
   return 0;
 }
 
@@ -394,40 +416,38 @@ static ResToRes resTable[] = {
 			
 static long resTableSize = sizeof( resTable ) / sizeof( ResToRes );
 
-int InitParams(void)
+static int fxgen_set_resolution(struct rc_option *option, const char *arg,
+   int priority)
 {
   int i;
+
+  if (sscanf(arg, "%ux%u", &fxwidth, &fxheight) != 2)
+    return 1;
   
-  if(custom_window_width)
+  for( i = 0; i < resTableSize; i++ )
   {
+    if(fxwidth==resTable[i].width && fxheight==resTable[i].height)
+    {
+      Gr_resolution = resTable[i].res;
+      break;
+    }
+  }
+  if(i == resTableSize)
+  {
+    fprintf(stderr,
+        "error: unknown resolution: \"%dx%d\".\n"
+        "   Valid resolutions are:\n", fxwidth, fxheight);
     for( i = 0; i < resTableSize; i++ )
     {
-      if(custom_window_width==resTable[i].width && custom_window_height==resTable[i].height)
-      {
-         Gr_resolution = resTable[i].res;
-         break;
-      }
+       fprintf(stderr, "   \"%dx%d\"", resTable[i].width,
+          resTable[i].height);
+       if (i && (i % 5) == 0)
+          fprintf(stderr, "\n");
     }
-    if(i == resTableSize)
-    {
-      fprintf(stderr,
-          "error: unknown resolution: \"%dx%d\".\n"
-          "   Valid resolutions are:\n", window_width, window_height);
-      for( i = 0; i < resTableSize; i++ )
-      {
-         fprintf(stderr, "   \"%dx%d\"", resTable[i].width,
-            resTable[i].height);
-         if (i && (i % 5) == 0)
-            fprintf(stderr, "\n");
-      }
-      return 1;
-    } 
-  }
-  else
-    Gr_resolution = GR_RESOLUTION_640x480;
+    return 1;
+  } 
 
-  window_width  = resTable[Gr_resolution].width;
-  window_height = resTable[Gr_resolution].height;
+  option->priority = priority;
 
   return 0;
 }
@@ -438,7 +458,7 @@ int InitVScreen(void)
   grGlideGetVersion(version);
   fprintf(stderr, "info: using Glide version %s\n", version);
 
-  mode_set_aspect_ratio((double)window_width/window_height);
+  mode_set_aspect_ratio((double)fxwidth/fxheight);
   
   grSstSelect(0);
   if(!(context = grSstWinOpen(0,Gr_resolution,GR_REFRESH_60Hz,GR_COLORFORMAT_ABGR,
@@ -448,18 +468,15 @@ int InitVScreen(void)
      return 1;
   }
   fprintf(stderr,
-     "info: screen resolution set to %dx%d\n", window_width, window_height);
-
-  /* setup the vertexlayout (for glide3, noop on glide2) */
-  grSetupVertexLayout();
+     "info: screen resolution set to %dx%d\n", fxwidth, fxheight);
 
   /* clear the buffer */
   grBufferClear(0,0,0);
   
   /* calculate the vscreen boundaries */
-  mode_clip_aspect(window_width, window_height, &vscrnwidth, &vscrnheight);
-  vscrntlx=(window_width -vscrnwidth )/2;
-  vscrntly=(window_height-vscrnheight)/2;
+  mode_clip_aspect(fxwidth, fxheight, &vscrnwidth, &vscrnheight);
+  vscrntlx=(fxwidth -vscrnwidth )/2;
+  vscrntly=(fxheight-vscrnheight)/2;
   if(sysdep_display_params.vec_dest_bounds)
   {
     struct rectangle vec_bounds = *(sysdep_display_params.vec_dest_bounds);
@@ -527,7 +544,7 @@ void CloseVScreen(void)
 
   if (context)
   {
-    grSstWinClose(context);
+    grSstCloseWin(context);
     context = 0;
   }
 }

@@ -394,7 +394,8 @@ int x11_window_open_display(void)
                           sysdep_display_params.widthscale = 1;
                         }
                         image_height = sysdep_display_params.height;
-                        sysdep_display_params.yarbsize = sysdep_display_params.height;
+                        sysdep_display_params.yarbsize    = sysdep_display_params.height;
+                        sysdep_display_params.heightscale = 1;
                     }
 #ifdef USE_XIL
                     use_xil = 0;
@@ -492,9 +493,6 @@ int x11_window_open_display(void)
                                         if (sysdep_display_params.effect)
                                           fprintf(stderr, "\nWarning: YV12 doesn't do effects... ");
                                         /* setup the image size and scaling params for YV12:
-                                           -always make yarbsize the normal height, since
-                                            although perfect blitting does 2x heightscaling,
-                                            the YV12 blit code wants unscaled Y-dest_bounds
                                            -align image_width and x-coordinates to 8, I don't know why,
                                             this is needed, but it is.
                                            -align height and y-coodinates to 2 when not using perfect
@@ -503,16 +501,18 @@ int x11_window_open_display(void)
                                         {
                                           image_width  = 2*sysdep_display_params.aligned_width;
                                           image_height = 2*sysdep_display_params.height;
-                                          sysdep_display_params.widthscale = 2;
-                                          sysdep_display_params.yarbsize   = 2*sysdep_display_params.height;
+                                          sysdep_display_params.widthscale  = 2;
+                                          sysdep_display_params.yarbsize    = 2*sysdep_display_params.height;
+                                          sysdep_display_params.heightscale = 2;
                                         }
                                         else 
                                         {
                                           image_width  = (sysdep_display_params.width+7)&~7;
                                           image_height = (sysdep_display_params.height+1)&~1;
-                                          sysdep_display_params.widthscale = 1;
-                                          sysdep_display_params.yarbsize   = sysdep_display_params.height;
-                                          sysdep_display_params.x_align    = 7;
+                                          sysdep_display_params.widthscale  = 1;
+                                          sysdep_display_params.yarbsize    = sysdep_display_params.height;
+                                          sysdep_display_params.heightscale = 1;
+                                          sysdep_display_params.x_align     = 7;
                                         }
                                 }
                         }
@@ -959,6 +959,12 @@ void x11_window_update_display(struct mame_bitmap *bitmap,
   struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned int flags)
 {
+#ifdef USE_XV
+   struct rectangle vis_area = *vis_in_dest_out;
+
+   sysdep_display_orient_bounds(&vis_area, bitmap->width, bitmap->height);
+#endif
+
    x11_window_update_display_func(bitmap, vis_in_dest_out, dirty_area,
      palette, scaled_buffer_ptr, image_width);
    
@@ -995,8 +1001,10 @@ void x11_window_update_display(struct mame_bitmap *bitmap,
               ph = window_height;
             }
             XvShmPutImage (display, xv_port, window, gc, xvimage, 0, 0,
-              sysdep_display_params.width*sysdep_display_params.widthscale,
-              sysdep_display_params.yarbsize,
+              ((vis_area.max_x+1)-vis_area.min_x) *
+               sysdep_display_params.widthscale,
+              ((vis_area.max_y+1)-vis_area.min_y) *
+               sysdep_display_params.heightscale,
               (window_width-pw)/2, (window_height-ph)/2, pw, ph, True);
          }
 #endif

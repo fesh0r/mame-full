@@ -39,11 +39,11 @@ void xfx_exit(void)
    mouse and keyboard can't be setup before the display has. */
 int xfx_open_display(void)
 {
-  if(InitParams())
+  if (x11_create_window(&fxwidth, &fxheight, 0))
     return 1;
-  
-  if (x11_create_window(&window_width, &window_height, 0))
-    return 1;
+    
+  window_width  = fxwidth;
+  window_height = fxheight;
     
   xinput_open(2, 0);
   

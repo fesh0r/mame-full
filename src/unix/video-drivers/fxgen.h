@@ -14,4 +14,7 @@ void xfx_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, unsigned int flags);
 
+extern unsigned int fxwidth;
+extern unsigned int fxheight;
+
 #endif

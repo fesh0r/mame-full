@@ -37,6 +37,9 @@ struct rc_option sysdep_display_opts[] = {
 #ifdef USE_OPENGL
 	{ NULL, NULL, rc_link, xgl_opts, NULL, 0, 0, NULL, NULL },
 #endif
+#ifdef USE_GLIDE
+	{ NULL, NULL, rc_link, fx_opts, NULL, 0, 0, NULL, NULL },
+#endif
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 
@@ -266,8 +269,8 @@ int sysdep_display_update(struct mame_bitmap *bitmap,
 		return 1;
 	}
 	
-	/* when exposed (and for the first frame) force a full update */
-	if(x11_exposed)
+	/* do we need todo a full update? */
+	if(x11_exposed || (flags&SYSDEP_DISPLAY_VIS_AREA_CHANGED))
 	{
 	 	*dirty_area = *vis_area;
 	 	x11_exposed = 0;

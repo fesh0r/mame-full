@@ -40,6 +40,9 @@ extern struct rc_option xf86_dga2_opts[];
 #ifdef USE_OPENGL
 extern struct rc_option	xgl_opts[];
 #endif
+#ifdef USE_GLIDE
+extern struct rc_option	fx_opts[];
+#endif
 #ifdef X11_JOYSTICK
 EXTERN int devicebuttonpress;
 EXTERN int devicebuttonrelease;

@@ -55,7 +55,7 @@ struct rc_option xgl_opts[] = {
      "1",		0,			0,		NULL,
      "Enable/disable double buffering (default: true)" },
    { "gltexture_size",	NULL,			rc_int,		&force_text_width_height,
-     "0",		0,			0,		NULL,
+     "0",		0,			2048,		rc_verify_power_of_2,
      "Force the max width and height of one texture segment (default: autosize)" },
    { "glbilinear",	"glbilin",		rc_bool,	&bilinear,
      "1",		0,			0,		NULL,

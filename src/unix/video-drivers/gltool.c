@@ -27,6 +27,8 @@
 #ifdef _X11_
 	#include <string.h>
 	#include "glxtool.h"
+
+	#define GLXLIB_NAME "libglut.so"
 #endif
 
 #ifdef _WIN32_

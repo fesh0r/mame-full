@@ -23,6 +23,8 @@
 #ifdef USE_DGA
 #ifdef X_XDGASetMode
 
+#define TDFX_DGA_WORKAROUND
+
 static struct
 {
 	int screen;
