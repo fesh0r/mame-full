@@ -175,7 +175,7 @@ endif
 MY_CFLAGS = $(CFLAGS) $(IL) $(CFLAGS.$(MY_CPU)) \
 	-D__ARCH_$(ARCH) -D__CPU_$(MY_CPU) -D$(DISPLAY_METHOD) \
 	-Dstricmp=strcasecmp -Dstrnicmp=strncasecmp \
-	-DPI=M_PI -DUNIX -DSIGNED_SAMPLES \
+	-DPI=M_PI -DUNIX -DSIGNED_SAMPLES -DCLIB_DECL= \
 	$(COREDEFS) $(SOUNDDEFS) $(CPUDEFS) $(ASMDEFS) \
 	$(INCLUDES) $(INCLUDE_PATH)
 
