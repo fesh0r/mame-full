@@ -103,7 +103,6 @@
 #include "sound/tiaintf.h"
 #include "machine/6821pia.h"
 #include "sound/hc55516.h"
-//#include "includes/riot6532.h"
 
 #include "includes/a2600.h"
 
@@ -121,13 +120,9 @@ static MEMORY_READ_START( readmem )
     { 0x0200, 0x023F, a2600_TIA_r },
     { 0x0240, 0x027F, a2600_TIA_r },
 
-    { 0x0280, 0x0297, a2600_riot_r },   /* RIOT reads for a2600 */
-
-
     { 0x0300, 0x033F, a2600_TIA_r },
     { 0x0340, 0x037F, a2600_TIA_r },
     { 0x0280, 0x0297, a2600_riot_r },   /* RIOT reads for a2600 */
-
 
     { 0x1000, 0x17FF, MRA_ROM     },
     { 0x1800, 0x1FDF, MRA_ROM     },
@@ -152,11 +147,8 @@ static MEMORY_WRITE_START( writemem )
 
     { 0x0280, 0x0297, a2600_riot_w },   /* RIOT writes for a2600 */
 
-
     { 0x0300, 0x033F, a2600_TIA_w },
     { 0x0340, 0x037F, a2600_TIA_w },
-
-    { 0x0280, 0x0297, a2600_riot_w },   /* RIOT writes for a2600 */
 
     { 0x1000, 0x17FF, MWA_ROM  },
     { 0x1800, 0x1FFF, MWA_ROM  },   /* ROM mirror for 2k images */
@@ -189,10 +181,6 @@ INPUT_PORTS_START( a2600 )
 
 INPUT_PORTS_END
 
-
-
-/* these are *so* wrong for now */
-/* Not anymore they're not :) */
 
 static unsigned char palette[] =
 {
@@ -766,74 +754,6 @@ static void a2600_init_palette(unsigned char *sys_palette, unsigned short *sys_c
     memcpy(sys_colortable, colortable, sizeof (colortable));
 }
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-MEMORY_END                                  /* end of array */
-
-
-#ifdef GFX_DECODE
-static struct GfxLayout pixel4_width_1 =
-{
-    4, 1,                               /* 4 x 1 pixels (PF0) */
-    16,                                 /* 16 codes */
-    1,                                  /* 1 bits per pixel */
-    {0},                                /* no bitplanes; 1 bit per pixel */
-    /* x offsets */
-    {0, 1, 2, 3},
-    /* y offsets */
-    {0},
-    8 * 1                               /* every code takes 1 byte */
-};
-
-static struct GfxLayout pixel4_width_2 =
-{
-    2 * 4, 1,                           /* 2*4 x 1 pixels (PF0) */
-    16,                                 /* 16 codes */
-    1,                                  /* 1 bits per pixel */
-    {0},                                /* no bitplanes; 1 bit per pixel */
-    /* x offsets */
-    {0, 0, 1, 1, 2, 2, 3, 3},
-    /* y offsets */
-    {0},
-    8 * 1                               /* every code takes 1 byte */
-};
-
-static struct GfxLayout pixel8_width_1 =
-{
-    8, 1,                               /* 8 x 1 pixels (PF0) */
-    256,                                /* 256 codes */
-    1,                                  /* 1 bits per pixel */
-    {0},                                /* no bitplanes; 1 bit per pixel */
-    /* x offsets */
-    {7, 6, 5, 4, 3, 2, 1, 0},
-    /* y offsets */
-    {0},
-    8 * 1                               /* every code takes 1 byte */
-};
-
-static struct GfxLayout pixel8_width_2 =
-{
-    2 * 8, 1,                           /* 2*8 x 1 pixels (PF0) */
-    256,                                /* 256 codes */
-    1,                                  /* 1 bits per pixel */
-    {0},                                /* no bitplanes; 1 bit per pixel */
-    /* x offsets */
-    {7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0},
-    /* y offsets */
-    {0},
-    8 * 1                               /* every code takes 1 byte */
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-    {REGION_GFX1, 0x0000, &pixel4_width_1, 0, 16},
-    {REGION_GFX1, 0x0000, &pixel8_width_1, 0, 16},
-    {REGION_GFX1, 0x0000, &pixel4_width_2, 0, 16},
-    {REGION_GFX1, 0x0000, &pixel8_width_2, 0, 16},
-MEMORY_END                                  /* end of array */
-
-#endif
-
 static struct TIAinterface tia_interface =
 {
     31400,
@@ -855,14 +775,14 @@ static struct MachineDriver machine_driver_a2600 =
         }
     },
     60, DEFAULT_60HZ_VBLANK_DURATION,
-    20000,
+    1,
     a2600_init_machine,                 /* init_machine */
     a2600_stop_machine,                 /* stop_machine */
 
     /* video hardware */
     228, 300,
     {68, 227, 40, 299},
-    gfxdecodeinfo,
+    0,
     sizeof (palette) / sizeof (palette[0]) / 3,
     sizeof (colortable) / sizeof (colortable[0]),
     a2600_init_palette,
@@ -925,7 +845,7 @@ static const struct IODevice io_a2600[] =
 };
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-CONSX(19??, a2600,    0,        a2600,    a2600,    a2600,    "Atari",  "Atari 2600", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_WRONG_COLORS)
+CONSX(19??, a2600,    0,        a2600,    a2600,    a2600,    "Atari",  "Atari 2600", GAME_NOT_WORKING)
 
 #ifdef RUNTIME_LOADER
 extern void vcs_runtime_loader_init(void)
