@@ -363,7 +363,7 @@ static void reset_tms9901_timer(void)
 
 	bit 16-31 : current status of the P0-P15 pins (quits timer mode, too...)
 */
-READ_HANDLER ( tms9901_CRU_read )
+READ16_HANDLER ( tms9901_CRU_read )
 {
 	int answer;
 
@@ -454,7 +454,7 @@ READ_HANDLER ( tms9901_CRU_read )
 
 	bit 16-31 : set output state of P0-P15 (and set them as output pin) (quits timer mode, too...)
 */
-WRITE_HANDLER ( tms9901_CRU_write )
+WRITE16_HANDLER ( tms9901_CRU_write )
 {
 	data &= 1;	/* clear extra bits */
 	offset &= 0x01F;

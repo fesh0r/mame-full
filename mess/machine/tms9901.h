@@ -31,6 +31,6 @@ void tms9901_cleanup(void);
 
 void tms9901_set_single_int(int pin_number, int state);
 
-READ_HANDLER ( tms9901_CRU_read );
-WRITE_HANDLER ( tms9901_CRU_write );
+READ16_HANDLER ( tms9901_CRU_read );
+WRITE16_HANDLER ( tms9901_CRU_write );
 
