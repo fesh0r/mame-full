@@ -1,3 +1,26 @@
+0.37b9 
+---------
+Several drivers may be broken due to the MAME memory handling changes.
+And as a result, the Amiga has been temporarily removed.
+---------
+
+Note: .inp record/playback does still not work currently.
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- 
+
+System Driver Changes:
+----------------------
+
+
+Other Changes:
+--------------
+
+- The core is based on MAME 0.37b9. This incorporates all 
+  features of the update to this core.  [MAME team] 
+
+-------------------------------------------------------------------------------
 0.37b8 
 ---------
 Several drivers may be broken due to the MAME memory handling changes.
@@ -15,7 +38,8 @@ System Driver Changes:
 
 - [ATOM] Finished floppy disc emulation. To use it you require a rom using
   the original 8271 memory locations (0x0a00-0x0a04). Linked in 6522via,
-  more programs should work with it. [Kev Thacker, Kees van Oss]
+  more programs should work with it. Added printer support. 
+  [Kev Thacker, Kees van Oss]
 
 - [BBC] Added a new BBC clone (BBCB1770) to use the WD1770 disc controller.
   Much improved SAA5050 teletext support (mode 7), There is still a
