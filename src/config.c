@@ -626,6 +626,7 @@ int config_write_coin_and_ticket_counters(config_file *cfg, const unsigned int *
 	for (i = 0; i < COIN_COUNTERS; i ++)
 		writeint(cfg->file, coins[i]);
 	writeint(cfg->file, dispensed_tickets);
+	cfg->position = POSITION_AFTER_COINS;
 	return CONFIG_ERROR_SUCCESS;
 }
 
