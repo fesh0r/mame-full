@@ -62,8 +62,8 @@ static PALETTE_INIT( ega );
 static PALETTE_INIT( vga );
 static VIDEO_START( ega );
 static VIDEO_START( vga );
-static pc_video_update_proc pc_vga_choosevideomode(int *width, int *height);
-static pc_video_update_proc pc_ega_choosevideomode(int *width, int *height);
+static pc_video_update_proc pc_vga_choosevideomode(int *width, int *height, struct crtc6845 *crtc);
+static pc_video_update_proc pc_ega_choosevideomode(int *width, int *height, struct crtc6845 *crtc);
 
 /***************************************************************************
 
@@ -1168,7 +1168,7 @@ static void vga_vh_vga(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 	}
 }
 
-static pc_video_update_proc pc_ega_choosevideomode(int *width, int *height)
+static pc_video_update_proc pc_ega_choosevideomode(int *width, int *height, struct crtc6845 *crtc)
 {
 	pc_video_update_proc proc = NULL;
 	int i;
@@ -1194,7 +1194,7 @@ static pc_video_update_proc pc_ega_choosevideomode(int *width, int *height)
 	return proc;
 }
 
-static pc_video_update_proc pc_vga_choosevideomode(int *width, int *height)
+static pc_video_update_proc pc_vga_choosevideomode(int *width, int *height, struct crtc6845 *crtc)
 {
 	pc_video_update_proc proc = NULL;
 	int i;

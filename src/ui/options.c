@@ -547,7 +547,7 @@ BOOL OptionsInit()
 	settings.show_screenshot = TRUE;
 	settings.show_tabctrl    = TRUE;
 	settings.show_tab_flags = (1 << TAB_SCREENSHOT) | (1 << TAB_FLYER)
-		| (1 << TAB_CABINET) | (1 << TAB_MARQUEE) | (1 << TAB_TITLE);
+		| (1 << TAB_CABINET) | (1 << TAB_MARQUEE) | (1 << TAB_TITLE) | (1 << TAB_CONTROL_PANEL);
 	settings.game_check      = TRUE;
 	settings.use_joygui      = FALSE;
 	settings.broadcast       = FALSE;
@@ -2615,7 +2615,7 @@ static void ParseKeyValueStrings(char *buffer,char **key,char **value)
 	if (**value == '\"')
 		(*value)++;
 
-	if (**key == '\0' || **value == '\0')
+	if (**key == '\0')
 	{
 		*key = NULL;
 		*value = NULL;

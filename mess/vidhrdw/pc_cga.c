@@ -222,18 +222,15 @@ PALETTE_INIT( pc_cga )
 	memcpy(colortable,cga_colortable,sizeof(cga_colortable));
 }
 
-typedef enum { TYPE_CGA, TYPE_PC1512 } TYPE;
-
-static struct { 
-	TYPE type;
-
+static struct
+{ 
 	UINT8 mode_control,  // wo 0x3d8
 		color_select, //wo 0x3d9
 		status; //ro 0x3da
 	
 	int pc_blink;
 	int pc_framecnt;
-} cga= { TYPE_CGA };
+} cga;
 
 void pc_cga_cursor(struct crtc6845_cursor *cursor)
 {
@@ -642,13 +639,13 @@ extern void pc_cga_timer(void)
 /***************************************************************************
   Choose the appropriate video mode
 ***************************************************************************/
-pc_video_update_proc pc_cga_choosevideomode(int *width, int *height)
+pc_video_update_proc pc_cga_choosevideomode(int *width, int *height, struct crtc6845 *crtc)
 {
 	pc_video_update_proc proc = NULL;
-	pc_video_update_proc *procarray;
+	const pc_video_update_proc *procarray;
 	UINT8 mode;
 
-	pc_video_update_proc videoprocs_cga[] =
+	static const pc_video_update_proc videoprocs_cga[] =
 	{
 		/* 0x08 - 0x0f */
 		cga_text_inten,		cga_text_inten,		cga_gfx_2bpp,		cga_gfx_2bpp,
@@ -667,7 +664,7 @@ pc_video_update_proc pc_cga_choosevideomode(int *width, int *height)
 		cga_gfx_1bpp,		cga_gfx_1bpp,		cga_gfx_1bpp,		cga_gfx_1bpp
 	};
 
-	pc_video_update_proc videoprocs_pc1512[] =
+	static const pc_video_update_proc videoprocs_pc1512[] =
 	{
 		/* 0x08 - 0x0f */
 		cga_text_inten,		cga_text_inten,		cga_gfx_2bpp,		cga_gfx_2bpp,
@@ -686,11 +683,17 @@ pc_video_update_proc pc_cga_choosevideomode(int *width, int *height)
 		pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp
 	};
 
+	static const pc_video_update_proc *videoprocs[] =
+	{
+		videoprocs_cga,		/* M6845_PERSONALITY_GENUINE */
+		videoprocs_pc1512	/* M6845_PERSONALITY_PC1512 */
+	};
+
 	if (cga.mode_control & 0x08)
 	{
 		mode = (cga.mode_control & 0x07) | ((cga.mode_control & 0x30) / 2);
 
-		procarray = (cga.type == TYPE_PC1512) ? videoprocs_pc1512 : videoprocs_cga;
+		procarray = videoprocs[crtc6845_get_personality(crtc)];
 		proc = procarray[mode];
 
 		*width *= (proc == cga_gfx_1bpp) ? 16 : 8;
@@ -743,14 +746,12 @@ WRITE_HANDLER ( pc1512_videoram_w )
 
 VIDEO_START( pc1512 )
 {
-	cga.type = TYPE_PC1512;	
-	
 	videoram = (UINT8*) auto_malloc(0x10000);
-	if (videoram==0)
+	if (videoram == 0)
 		return 1;
 
 	videoram_size = 0x4000; //! used in cga this way, size of plain memory in 1 bank
-	cpu_setbank(1,videoram+videoram_offset[0]);
+	cpu_setbank(1,videoram + videoram_offset[0]);
 	pc1512.write = 0xf;
 	pc1512.read = 0;
 	return video_start_pc_cga();

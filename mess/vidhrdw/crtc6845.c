@@ -1,8 +1,12 @@
 /***************************************************************************
 
-  motorola cathode ray tube controller 6845
+	Motorola 6845 CRT controller and emulation
 
-  copyright peter.trauner@jk.uni-linz.ac.at
+	This code emulates the functionality of the 6845 chip, and also
+	supports the functionality of chips related to the 6845
+
+	Peter Trauner
+	Nathan Woods
 
 ***************************************************************************/
 
@@ -14,6 +18,12 @@
 #include "mscommon.h"
 #include "includes/crtc6845.h"
 
+/***************************************************************************
+
+	Constants & macros
+
+***************************************************************************/
+
 #define VERBOSE 0
 
 #if VERBOSE
@@ -23,19 +33,68 @@
 #define DBG_LOG(N,M,A)
 #endif
 
+/***************************************************************************
+
+	Type definitions
+
+***************************************************************************/
+
 struct crtc6845
 {
 	struct crtc6845_config config;
 	UINT8 reg[18];
-	UINT8 index;
-	int lightpen_pos;
+	UINT8 index_;
 	double cursor_time;
 	int cursor_on;
 };
 
+struct reg_mask
+{
+	UINT8 store_mask;
+	UINT8 read_mask;
+};
+
 struct crtc6845 *crtc6845;
 
-struct crtc6845 *crtc6845_init(struct crtc6845_config *config)
+/***************************************************************************
+
+	Local variables
+
+***************************************************************************/
+
+/*-------------------------------------------------
+	crtc6845_reg_mask - an array specifying how
+	much of any given register "registers", per
+	m6845 personality
+-------------------------------------------------*/
+
+static const struct reg_mask crtc6845_reg_mask[2][18] =
+{
+	{
+		/* M6845_PERSONALITY_GENUINE */
+		{ 0xff, 0x00 },	{ 0xff, 0x00 },	{ 0xff, 0x00 },	{ 0xff, 0x00 },
+		{ 0x7f, 0x00 },	{ 0x1f, 0x00 },	{ 0x7f, 0x00 },	{ 0x7f, 0x00 },
+		{ 0x3f, 0x00 },	{ 0x1f, 0x00 },	{ 0x7f, 0x00 },	{ 0x1f, 0x00 },
+		{ 0x3f, 0x3f },	{ 0xff, 0xff },	{ 0x3f, 0x3f },	{ 0xff, 0xff },
+		{ 0xff, 0x3f },	{ 0xff, 0xff }
+	},
+	{
+		/* M6845_PERSONALITY_PC1512 */
+		{ 0x00, 0x00 },	{ 0x00, 0x00 },	{ 0x00, 0x00 },	{ 0x00, 0x00 },
+		{ 0x00, 0x00 },	{ 0x00, 0x00 },	{ 0x00, 0x00 },	{ 0x00, 0x00 },
+		{ 0x00, 0x00 },	{ 0x1f, 0x00 },	{ 0x7f, 0x00 },	{ 0x1f, 0x00 },
+		{ 0x3f, 0x3f },	{ 0xff, 0xff },	{ 0x3f, 0x3f },	{ 0xff, 0xff },
+		{ 0xff, 0x3f },	{ 0xff, 0xff }
+	}
+};
+
+/***************************************************************************
+
+	Functions
+
+***************************************************************************/
+
+struct crtc6845 *crtc6845_init(const struct crtc6845_config *config)
 {
 	struct crtc6845 *crtc;
 
@@ -50,30 +109,7 @@ struct crtc6845 *crtc6845_init(struct crtc6845_config *config)
 	return crtc;
 }
 
-static const struct { 
-	int stored, 
-		read;
-} reg_mask[]= { 
-	{ 0xff, 0 },
-	{ 0xff, 0 },
-	{ 0xff, 0 },
-	{ 0xff, 0 },
-	{ 0x7f, 0 },
-	{ 0x1f, 0 },
-	{ 0x7f, 0 },
-	{ 0x7f, 0 },
-	{  0x3f, 0 },
-	{  0x1f, 0 },
-	{  0x7f, 0 },
-	{  0x1f, 0 },
-	{  0x3f, 0x3f },
-	{  0xff, 0xff },
-	{  0x3f, 0x3f },
-	{  0xff, 0xff },
-	{  -1, 0x3f },
-	{  -1, 0xff },
-};
-#define REG(x) (crtc->reg[x]&reg_mask[x].stored)
+#define REG(x) (crtc->reg[x])
 
 static int crtc6845_clocks_in_frame(struct crtc6845 *crtc)
 {
@@ -141,104 +177,95 @@ int crtc6845_get_start(struct crtc6845 *crtc)
 	return CRTC6845_VIDEO_START;
 }
 
+int crtc6845_get_personality(struct crtc6845 *crtc)
+{
+	return crtc->config.personality;
+}
+
 void crtc6845_get_cursor(struct crtc6845 *crtc, struct crtc6845_cursor *cursor)
 {
-	cursor->pos = CRTC6845_CURSOR_POS;
-
 	switch (CRTC6845_CURSOR_MODE) {
-	default:
-		cursor->on=1;
-		break;
-
 	case CRTC6845_CURSOR_OFF:
 		cursor->on = 0;
 		break;
 
 	case CRTC6845_CURSOR_16FRAMES:
 	case CRTC6845_CURSOR_32FRAMES:
-		cursor->on=crtc->cursor_on;
+		cursor->on = crtc->cursor_on;
+		break;
+
+	default:
+		cursor->on = 1;
 		break;
 	}
+
+	cursor->pos = CRTC6845_CURSOR_POS;
 	cursor->top = CRTC6845_CURSOR_TOP;
 	cursor->bottom = CRTC6845_CURSOR_BOTTOM;
+}
+
+data8_t crtc6845_port_r(struct crtc6845 *crtc, int offset)
+{
+	data8_t val = 0xff;
+	int index_;
+
+	if (offset & 1)
+	{
+		index_ = crtc->index_ & 0x1f;
+		if (index_ < (sizeof(crtc->reg) / sizeof(crtc->reg[0])))
+			val = crtc->reg[index_] & crtc6845_reg_mask[crtc->config.personality][index_].read_mask;
+	}
+	else
+	{
+		val = crtc->index_;
+	}
+	return val;
 }
 
 void crtc6845_port_w(struct crtc6845 *crtc, int offset, data8_t data)
 {
 	struct crtc6845_cursor cursor;
+	int index_;
+
 	if (offset & 1)
 	{
-		if ((crtc->index & 0x1f) < 18)
+		/* write to a 6845 register, if supported */
+		index_ = crtc->index_ & 0x1f;
+		if (index_ < (sizeof(crtc->reg) / sizeof(crtc->reg[0])))
 		{
-			switch (crtc->index & 0x1f) {
+			crtc->reg[crtc->index_] = data & crtc6845_reg_mask[crtc->config.personality][index_].store_mask;
+
+			/* are there special consequences to writing to this register */
+			switch (index_) {
 			case 0xa:
 			case 0xb:
 			case 0xe:
 			case 0xf:
 				crtc6845_get_cursor(crtc, &cursor);
-				crtc->reg[crtc->index]=data;
-
 				if (crtc->config.cursor_changed)
 					crtc->config.cursor_changed(&cursor);
 				break;
 
 			default:
 				schedule_full_refresh();
-				crtc->reg[crtc->index]=data;
 				break;
 			}
-			DBG_LOG (2, "crtc_port_w", ("%.2x:%.2x\n", crtc->index, data));
-		}
-		else
-		{ 
-			DBG_LOG (1, "crtc6845_port_w", ("%.2x:%.2x\n", crtc->index, data));
 		}
 	}
 	else
 	{
-		crtc->index = data;
+		/* change the index_ register */
+		crtc->index_ = data;
 	}
-}
-
-data8_t crtc6845_port_r(struct crtc6845 *crtc, int offset)
-{
-	int val;
-
-	val = 0xff;
-	if (offset & 1)
-	{
-		if ((crtc->index & 0x1f) < 18)
-		{
-			switch (crtc->index & 0x1f) {
-			case 0x10:
-				val = crtc->lightpen_pos >> 8;
-				break;
-
-			case 0x11:
-				val = crtc->lightpen_pos & 0xff;
-				break;
-
-			default:
-				val = crtc->reg[crtc->index & 0x1f] & reg_mask[crtc->index & 0x1f].read;
-				break;
-			}
-		}
-		DBG_LOG (1, "crtc6845_port_r", ("%.2x:%.2x\n", crtc->index, val));
-	}
-	else
-	{
-		val = crtc->index;
-	}
-	return val;
-}
-
-WRITE_HANDLER ( crtc6845_0_port_w )
-{
-	crtc6845_port_w(crtc6845, offset, data);
 }
 
 READ_HANDLER ( crtc6845_0_port_r )
 {
 	return crtc6845_port_r(crtc6845, offset);
+}
+
+WRITE_HANDLER ( crtc6845_0_port_w )
+{
+	crtc6845_port_w(crtc6845, offset, data);
 }
 

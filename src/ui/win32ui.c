@@ -1197,11 +1197,6 @@ void UpdateScreenShot(void)
 
 	ResizeTreeAndListViews(FALSE);
 
-	// not sure why this is needed, but it is necessary in large icon mode
-	// and breaks the other modes, so we're careful.
-	if (current_view_id == ID_VIEW_LARGE_ICON)
-		ListView_Arrange(hwndList,LVA_ALIGNTOP);		
-
 	FreeScreenShot();
 
 	if (have_selection)
@@ -1858,7 +1853,6 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 		break;
 	case VIEW_SMALL_ICONS :
 		SetView(ID_VIEW_SMALL_ICON,LVS_SMALLICON);
-		ResetListView();
 		break;
 	case VIEW_INLIST :
 		SetView(ID_VIEW_LIST_MENU,LVS_LIST);
@@ -2253,6 +2247,7 @@ static void SortListView(void)
 {
 	LV_FINDINFO lvfi;
 
+	dprintf("in sort list view");
 	ListView_SortItems(hwndList, ListCompareFunc, GetSortColumn());
 
 	ResetHeaderSortIcon();
@@ -3075,12 +3070,12 @@ static BOOL TreeViewNotify(LPNMHDR nm)
 
 		if (folder->m_dwFlags & F_CUSTOM)
 		{
-			/* user can edit custom folder names */
+			// user can edit custom folder names
 			g_in_treeview_edit = TRUE;
-			return 0;
+			return FALSE;
 		}
-		/* user can't edit built in folder names */
-		return 1;
+		// user can't edit built in folder names
+		return TRUE;
 	}
 	case TVN_ENDLABELEDIT :
 	{
@@ -3385,25 +3380,10 @@ static void SetView(int menu_id, int listview_style)
 		(GetWindowLong(GetDlgItem(hMain, IDC_LIST2),GWL_STYLE) & ~LVS_TYPEMASK) | listview_style);
 #endif
 
-	switch (menu_id)
-	{
-	case ID_VIEW_SMALL_ICON:
-		/*RS I don't know why, but to get consistent behaviour in small Icon view
-		     we have to set the LVS_ICON style first, and call ListView_Arrange*/
-		SetWindowLong(hwndList, GWL_STYLE,
-					  (GetWindowLong(hwndList, GWL_STYLE) & ~LVS_TYPEMASK) | LVS_ICON );
-		ListView_Arrange(hwndList, LVA_ALIGNTOP);
-		SetWindowLong(hwndList, GWL_STYLE,
-					  (GetWindowLong(hwndList, GWL_STYLE) & ~LVS_TYPEMASK) | listview_style );
-		break;
-	default:
-		SetWindowLong(hwndList, GWL_STYLE,
-					  (GetWindowLong(hwndList, GWL_STYLE) & ~LVS_TYPEMASK) | listview_style );
-		ListView_Arrange(hwndList,LVA_ALIGNTOP);
+	SetWindowLong(hwndList, GWL_STYLE,
+				  (GetWindowLong(hwndList, GWL_STYLE) & ~LVS_TYPEMASK) | listview_style );
 
-	}
-	if (current_view_id == ID_VIEW_GROUPED || menu_id == ID_VIEW_GROUPED ||
-		menu_id == ID_VIEW_LARGE_ICON)
+	if (current_view_id == ID_VIEW_GROUPED || menu_id == ID_VIEW_GROUPED)
 	{
 		// this changes the sort order, so redo everything
 		force_reset = TRUE;
@@ -3685,8 +3665,6 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		CheckMenuItem(GetMenu(hMain), ID_VIEW_FOLDERS, (bShowTree) ? MF_CHECKED : MF_UNCHECKED);
 		ToolBar_CheckButton(hToolBar, ID_VIEW_FOLDERS, (bShowTree) ? MF_CHECKED : MF_UNCHECKED);
 		UpdateScreenShot();
-		if (current_view_id == ID_VIEW_LARGE_ICON)
-			ListView_Arrange(hwndList,LVA_ALIGNTOP);
 		break;
 
 	case ID_VIEW_TOOLBARS:
@@ -3866,8 +3844,6 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 
 	case ID_VIEW_PICTURE_AREA :
 		ToggleScreenShot();
-		if (current_view_id == ID_VIEW_LARGE_ICON)
-			ListView_Arrange(hwndList,LVA_ALIGNTOP);
 		break;
 
 	case ID_UPDATE_GAMELIST:
@@ -4475,6 +4451,18 @@ static int BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem)
 	const char *name2 = NULL;
 	int   nTemp1, nTemp2;
 
+#ifdef DEBUG
+	if (strcmp(drivers[index1]->name,"1941") == 0 && strcmp(drivers[index2]->name,"1942") == 0)
+	{
+		dprintf("comparing 1941, 1942");
+	}
+
+	if (strcmp(drivers[index1]->name,"1942") == 0 && strcmp(drivers[index2]->name,"1941") == 0)
+	{
+		dprintf("comparing 1942, 1941");
+	}
+#endif
+
 	switch (sort_subitem)
 	{
 	case COLUMN_GAMES:
@@ -4588,6 +4576,12 @@ static int BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem)
 
 	if (GetSortReverse())
 		value = -value;
+
+#ifdef DEBUG
+	if ((strcmp(drivers[index1]->name,"1941") == 0 && strcmp(drivers[index2]->name,"1942") == 0) ||
+		(strcmp(drivers[index1]->name,"1942") == 0 && strcmp(drivers[index2]->name,"1941") == 0))
+		dprintf("result: %i",value);
+#endif
 
 	return value;
 }
@@ -6777,7 +6771,7 @@ void SwitchFullScreenMode(void)
 }
 
 /*
-  Checks to se if the mouse has been moved since this func
+  Checks to see if the mouse has been moved since this func
   was first called (which is at startup). The reason for 
   storing the startup coordinates of the mouse is that when
   a window is created it generates WM_MOUSEOVER events, even

@@ -6,7 +6,7 @@
 #include "includes/pc_video.h"
 #include "vidhrdw/generic.h"
 
-static pc_video_update_proc pc_aga_choosevideomode(int *width, int *height);
+static pc_video_update_proc pc_aga_choosevideomode(int *width, int *height, struct crtc6845 *crtc);
 
 
 struct GfxLayout europc_cga_charlayout =
@@ -167,16 +167,16 @@ VIDEO_START( pc_aga )
 /***************************************************************************
   Choose the appropriate video mode
 ***************************************************************************/
-static pc_video_update_proc pc_aga_choosevideomode(int *width, int *height)
+static pc_video_update_proc pc_aga_choosevideomode(int *width, int *height, struct crtc6845 *crtc)
 {
 	pc_video_update_proc proc = NULL;
 
 	switch (aga.mode) {
 	case AGA_COLOR:
-		proc =  pc_cga_choosevideomode(width, height);
+		proc =  pc_cga_choosevideomode(width, height, crtc);
 		break;
 	case AGA_MONO:
-		proc =  pc_mda_choosevideomode(width, height);
+		proc =  pc_mda_choosevideomode(width, height, crtc);
 		break;
 	case AGA_OFF:
 		break;

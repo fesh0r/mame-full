@@ -90,7 +90,7 @@ BEGIN
         MENUITEM "&Toolbar\tAlt+T",             ID_VIEW_TOOLBARS
         MENUITEM "&Status bar\tAlt+S",          ID_VIEW_STATUS
         MENUITEM "Fold&er List\tAlt+D",         ID_VIEW_FOLDERS
-        MENUITEM "P&icture Area\tAlt+I",        ID_VIEW_PICTURE_AREA
+        MENUITEM "&Picture Area\tAlt+P",        ID_VIEW_PICTURE_AREA
         MENUITEM "Screenshot Ta&b\tAlt+B",      ID_VIEW_PAGETAB
         MENUITEM SEPARATOR
         MENUITEM "&Fullscreen\tF11",            ID_VIEW_FULLSCREEN
@@ -300,7 +300,7 @@ BEGIN
             VALUE "CompanyName", "MAME Team\0"
             VALUE "FileDescription", "Multiple Arcade Machine Emulator for Win32\0"
 #endif
-            VALUE "FileVersion", "0, 70, 0, 0\0"
+            VALUE "FileVersion", "0, 71, 0, 0\0"
             VALUE "InternalName", "MAME32\0"
             VALUE "LegalCopyright", "Copyright 1997-2003 Nicola Salmoria and the MAME team\0"
             VALUE "LegalTrademarks", "\0"
@@ -311,7 +311,7 @@ BEGIN
             VALUE "OriginalFilename", "MAME32.exe\0"
             VALUE "ProductName", "MAME32\0"
 #endif
-            VALUE "ProductVersion", "0, 70, 0, 0\0"
+            VALUE "ProductVersion", "0, 71, 0, 0\0"
         END
     END
     BLOCK "VarFileInfo"

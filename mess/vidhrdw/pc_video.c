@@ -1,12 +1,12 @@
 #include "includes/pc_video.h"
 #include "vidhrdw/generic.h"
 
-static pc_video_update_proc (*pc_choosevideomode)(int *width, int *height);
+static pc_video_update_proc (*pc_choosevideomode)(int *width, int *height, struct crtc6845 *crtc);
 static struct crtc6845 *pc_crtc;
 static int pc_anythingdirty;
 
-struct crtc6845 *pc_video_start(struct crtc6845_config *config,
-	pc_video_update_proc (*choosevideomode)(int *width, int *height),
+struct crtc6845 *pc_video_start(const struct crtc6845_config *config,
+	pc_video_update_proc (*choosevideomode)(int *width, int *height, struct crtc6845 *crtc),
 	size_t vramsize)
 {
 	pc_choosevideomode = choosevideomode;
@@ -42,7 +42,7 @@ VIDEO_UPDATE( pc_video )
 		h = crtc6845_get_char_height(pc_crtc) * crtc6845_get_char_lines(pc_crtc);
 	}
 
-	video_update = pc_choosevideomode(&w, &h);
+	video_update = pc_choosevideomode(&w, &h, pc_crtc);
 
 	if (video_update)
 	{

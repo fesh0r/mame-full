@@ -32,7 +32,7 @@
 
 static PALETTE_INIT( pcjr );
 static VIDEO_START( pc_t1t );
-static pc_video_update_proc pc_t1t_choosevideomode(int *width, int *height);
+static pc_video_update_proc pc_t1t_choosevideomode(int *width, int *height, struct crtc6845 *crtc);
 
 /***************************************************************************
 
@@ -830,7 +830,7 @@ static void t1t_gfx_4bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
   Choose the appropriate video mode
 ***************************************************************************/
 
-static pc_video_update_proc pc_t1t_choosevideomode(int *width, int *height)
+static pc_video_update_proc pc_t1t_choosevideomode(int *width, int *height, struct crtc6845 *crtc)
 {
 	int xfactor = 8;
 	int yfactor = 1;
