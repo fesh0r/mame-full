@@ -21,14 +21,6 @@ enum
 	BLIT_MUST_BLEND = 1
 };
 
-enum
-{
-	PIXELMODE_SOLO,
-	PIXELMODE_BEGIN,
-	PIXELMODE_MIDDLE,
-	PIXELMODE_END
-};
-
 struct blitter_params
 {
 	struct drccore *blitter;
@@ -51,7 +43,7 @@ void emit_header(struct blitter_params *params);
 void emit_footer(struct blitter_params *params);
 void emit_increment_sourcebits(struct blitter_params *params, INT32 adjustment);
 void emit_increment_destbits(struct blitter_params *params, INT32 adjustment);
-void emit_copy_pixel(struct blitter_params *params, int pixel_mode, int divisor);
+int emit_copy_pixels(struct blitter_params *params, const int *pixel_spans, int max_spans, INT32 dest_xpitch);
 void emit_begin_loop(struct blitter_params *params);
 void emit_finish_loop(struct blitter_params *params, void *loop_begin);
 

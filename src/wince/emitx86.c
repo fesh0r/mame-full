@@ -85,67 +85,77 @@ void emit_increment_destbits(struct blitter_params *params, INT32 adjustment)
 	_add_r32_imm(REG_EDX, adjustment);
 }
 
-void emit_copy_pixel(struct blitter_params *params, int pixel_mode, int divisor)
+int emit_copy_pixels(struct blitter_params *params, const int *pixel_spans, int max_spans, int dest_xpitch)
 {
 	struct drccore *drc = params->blitter;
-	if (params->source_palette)
+	int i, j;
+	int source_index = 0;
+
+	for (i = 0; i < max_spans; i++)
 	{
-		// mov	eax, 0
-		_mov_r32_imm(REG_EAX, 0);
+		for (j = 0; j < pixel_spans[i]; j++)
+		{
+			if (params->source_palette)
+			{
+				// mov	eax, 0
+				_mov_r32_imm(REG_EAX, 0);
 
-		// mov	eax, word ptr [ecx]
-		_mov_r16_m16bd(REG_EAX, REG_ECX, 0);
+				// mov	eax, word ptr [ecx+source_index*2]
+				_mov_r16_m16bd(REG_EAX, REG_ECX, source_index*2);
 
-		// mov	eax, dword ptr [ebx+eax*4]
-		_mov_r32_m32bisd(REG_EAX, REG_EBX, REG_EAX, 4, 0);
+				// mov	eax, dword ptr [ebx+eax*4]
+				_mov_r32_m32bisd(REG_EAX, REG_EBX, REG_EAX, 4, 0);
+			}
+			else
+			{
+				// mov	eax, dword ptr [ecx+source_index*2]
+				_mov_r32_m32bd(REG_EAX, REG_ECX, source_index*2);
+			}
+
+			switch(pixel_spans[i]) {
+			case 1:
+				break;
+
+			case 2:
+			case 4:
+			case 8:
+			case 16:
+				// and	eax, mask
+				_and_r32_imm(REG_EAX, calc_blend_mask(params, pixel_spans[i]));
+
+				// shr	eax, (log2 pixel_total)
+				_shr_r32_imm(REG_EAX, intlog2(pixel_spans[i]));
+				break;
+
+			default:
+				assert(0);
+				break;
+			}
+
+			if (j+1 == pixel_spans[i])
+			{
+				if (pixel_spans[i] > 1)
+				{
+					//	add	eax, ebp
+					_add_r32_r32(REG_EAX, REG_EBP);
+				}
+				// mov	word ptr [edx+(dest_xpitch*i)], ax
+				_mov_m16bd_r16(REG_EDX, dest_xpitch*i, REG_AX);
+			}
+			else if (j == 0)
+			{
+				// mov	ebp, eax
+				_mov_r32_r32(REG_EBP, REG_EAX);
+			}
+			else
+			{
+				// add	ebp, eax
+				_add_r32_r32(REG_EBP, REG_EAX);
+			}
+			source_index++;
+		}
 	}
-	else
-	{
-		// mov	eax, dword ptr [ecx]
-		_mov_r32_m32bd(REG_EAX, REG_ECX, 0);
-	}
-
-	switch(divisor) {
-	case 1:
-		break;
-
-	case 2:
-	case 4:
-	case 8:
-	case 16:
-		// and	eax, mask
-		_and_r32_imm(REG_EAX, calc_blend_mask(params, divisor));
-
-		// shr	eax, (log2 pixel_total)
-		_shr_r32_imm(REG_EAX, intlog2(divisor));
-		break;
-
-	default:
-		assert(0);
-		break;
-	}
-
-	switch(pixel_mode) {
-	case PIXELMODE_END:
-		//	add	eax, ebp
-		_add_r32_r32(REG_EAX, REG_EBP);
-		// fallthrough
-
-	case PIXELMODE_SOLO:
-		// mov	word ptr [edx], ax
-		_mov_m16bd_r16(REG_EDX, 0, REG_AX);
-		break;
-
-	case PIXELMODE_BEGIN:
-		// mov	ebp, eax
-		_mov_r32_r32(REG_EBP, REG_EAX);
-		break;
-
-	case PIXELMODE_MIDDLE:
-		// add	ebp, eax
-		_add_r32_r32(REG_EBP, REG_EAX);
-		break;
-	}
+	return max_spans;
 }
 
 void emit_begin_loop(struct blitter_params *params)

@@ -151,15 +151,6 @@ int play_game(int game_index, struct ui_options *opts)
 	/* remember the initial LED states */
 	original_leds = osd_get_leds();
 
-	#ifdef MESS
-	/* Build the CRC database filename */
-/*	sprintf(crcfilename, "%s/%s.crc", crcdir, drivers[game_index]->name);
-	if (drivers[game_index]->clone_of->name)
-		sprintf (pcrcfilename, "%s/%s.crc", crcdir, drivers[game_index]->clone_of->name);
-	else
-		pcrcfilename[0] = 0;
-  */  #endif
-
 	err = run_game(game_index);
 
 	/* restore the original LED state */

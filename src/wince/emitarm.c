@@ -10,10 +10,9 @@
 //		R2		palette index
 //		R3		blend register
 //		R4		dest height
-//		R5		scratch half word
+//		R5		scratch
 //		R6		scratch
-//		R7		scratch
-//		R8		blend mask
+//		R7-R12	multiscratch
 //============================================================
 
 #include "emitblit.h"
@@ -29,9 +28,12 @@ enum
 	RPAL	= 2,
 	RBLEND	= 3,
 	RROWS	= 4,
-	RSCH	= 5,
-	RSC2	= 6,
-	RSC3	= 7,
+	RSC2	= 5,
+	RSC3	= 6,
+
+	RMSCB	= 7,
+	RMSCE	= 12,
+
 	RSP		= 13,
 	RLINK	= 14,
 	RPC		= 15
@@ -247,30 +249,25 @@ void emit_header(struct blitter_params *params)
 {
 	struct drccore *drc = params->blitter;
 
-	// stmfd	sp!,	{r4, r5, r6, r7, r8}
-	OP(AL | 0x09200000 | (0x10000 * RSP) | 0x01f0);
+	// stmfd	sp!,	{r4-r12}
+	_stmfd_wb(COND_AL, RSP, 0x1ff0);
 	
 	// mov		r4, dest_height
 	emit_regi(params, MOV, RROWS, 0, params->dest_height);
-	
-	// mov		r5, #0
-	emit_regi(params, MOV, RSCH, 0, 0);
 
 	if (params->source_palette)
 	{
 		// mov	r2, palette
 		emit_regi(params, MOV, RPAL, 0, (INT32) params->source_palette);
 	}
-
-
 }
 
 void emit_footer(struct blitter_params *params)
 {
 	struct drccore *drc = params->blitter;
 
-	// ldmfd	sp!, {r8, r7, r6, r5, r4}
-	OP(AL | 0x08b00000 | (0x10000 * RSP) | 0x01f0);
+	// ldmfd	sp!, {r12-r4}
+	_ldmfd_wb(COND_AL, RSP, 0x1ff0);
 
 	// mov		pc, r14
 	emit_regreg(params, MOV, RPC, 0, RLINK);
@@ -286,63 +283,110 @@ void emit_increment_destbits(struct blitter_params *params, INT32 adjustment)
 	emit_regi(params, ADD, RDEST, RDEST, adjustment);
 }
 
-void emit_copy_pixel(struct blitter_params *params, int pixel_mode, int divisor)
+int emit_copy_pixels(struct blitter_params *params, const int *pixel_spans, int max_spans, int dest_xpitch)
 {
-	struct drccore *drc = params->blitter;
-
-	// ldrh	r5, [r1]
-	_ldrh_r16_m16bd(AL, RSCH, RSRC, 0);
-
-	if (params->source_palette)
+	struct calculated_blend_mask
 	{
-		// mov	r6, r5, LSL #2
-		emit_regreg_shift(params, MOV, RSC2, 0, RSCH, LSL, 2);
+		int pixel_span;
+		int reg;
+	};
 
-		// ldrh	r5, [r6 + r2]
-		_ldrh_r16_m16id(AL, RSCH, RSC2, RPAL);
+	struct drccore *drc = params->blitter;
+	struct calculated_blend_mask blend_masks[2];
+	int blend_mask_count = 0;
+	int source_index = 0;
+	int next_reg = RMSCB;
+	int i, j, k;
+
+	for (i = 0; i < max_spans; i++)
+	{
+		switch(pixel_spans[i]) {
+		case 2:
+		case 4:
+		case 8:
+		case 16:
+			for (j = 0; j < blend_mask_count; j++)
+			{
+				if (blend_masks[j].pixel_span == pixel_spans[i])
+					break;
+			}
+			if (j == blend_mask_count)
+			{
+				// mov	r#, calc_blend_mask
+				emit_regi(params, MOV, next_reg, next_reg, calc_blend_mask(params, pixel_spans[i]));
+				blend_masks[blend_mask_count].pixel_span = pixel_spans[i];
+				blend_masks[blend_mask_count].reg = next_reg++;
+				blend_mask_count++;
+			}
+			break;
+		};
+		if (blend_mask_count == (sizeof(blend_masks) / sizeof(blend_masks[0])))
+			break;
 	}
 
-	switch(divisor) {
-	case 1:
-		break;
+	i = 0;
+	while(
+		(i < max_spans) &&
+		isvalid_disp(source_index + pixel_spans[i]*2) &&
+		isvalid_disp(i * dest_xpitch))
+	{
+		for (j = 0; j < pixel_spans[i]; j++)
+		{
+			_ldrh_r16_m16bd(AL, next_reg+0, RSRC, source_index);
 
-	case 2:
-	case 4:
-	case 8:
-	case 16:
-		// and	r5, r5, calc_blend_mask
-		emit_regi(params, AND, RSCH, RSCH, calc_blend_mask(params, divisor));
+			if (params->source_palette)
+			{
+				emit_regreg_shift(params, MOV, next_reg+1, 0, next_reg+0, LSL, 2);
+				_ldrh_r16_m16id(AL, next_reg+0, next_reg+1, RPAL);
+			}
 
-		// mov	r5, r5, lsr #(log2 pixel_total)
-		emit_regreg_shift(params, MOV, RSCH, 0, RSCH, LSR, intlog2(divisor));
-		break;
+			switch(pixel_spans[i]) {
+			case 1:
+				break;
 
-	default:
-		assert(0);
-		break;
+			case 2:
+			case 4:
+			case 8:
+			case 16:
+				for (k = 0; k < blend_mask_count; k++)
+				{
+					if (blend_masks[k].pixel_span == pixel_spans[i])
+					{
+						emit_regreg(params, AND, next_reg+0, next_reg+0, blend_masks[k].reg);
+						break;
+					}
+				}
+				if (k == blend_mask_count)
+					emit_regi(params, AND, next_reg+0, next_reg+0, calc_blend_mask(params, pixel_spans[i]));
+
+				emit_regreg_shift(params, MOV, next_reg+0, 0, next_reg+0, LSR, intlog2(pixel_spans[i]));
+				break;
+
+			default:
+				assert(0);
+				break;
+			}
+
+			if (j+1 == pixel_spans[i])
+			{
+				if (pixel_spans[i] > 1)
+					emit_regreg(params, ADD, next_reg+0, next_reg+0, RBLEND);
+			}
+			else if (j == 0)
+			{
+				emit_regreg(params, MOV, RBLEND, 0, next_reg+0);
+			}
+			else
+			{
+				emit_regreg(params, ADD, RBLEND, RBLEND, next_reg+0);
+			}
+			source_index += 2;
+		}
+
+		_strh_m16bd_r16(AL, RDEST, i * dest_xpitch, next_reg+0);
+		i++;
 	}
-
-	switch(pixel_mode) {
-	case PIXELMODE_END:
-		// add	r5, r5, r3
-		emit_regreg(params, ADD, RSCH, RSCH, RBLEND);
-		// fallthrough
-
-	case PIXELMODE_SOLO:
-		// strh	r5, [r1]
-		OP(AL | 0x00400000 | (RDEST << 16) | (RSCH << 12) | 0x000000b0);
-		break;
-
-	case PIXELMODE_BEGIN:
-		// mov	r3,	r5
-		emit_regreg(params, MOV, RBLEND, 0, RSCH);
-		break;
-
-	case PIXELMODE_MIDDLE:
-		// add	r3, r3, r5
-		emit_regreg(params, ADD, RBLEND, RBLEND, RSCH);
-		break;
-	}
+	return i;
 }
 
 void emit_begin_loop(struct blitter_params *params)

@@ -54,3 +54,26 @@ void drc_exit(struct drccore *drc)
 	/* and the drc itself */
 	free(drc);
 }
+
+/*------------------------------------------------------------------
+	build_immediate_operand
+------------------------------------------------------------------*/
+
+UINT32 build_immediate_operand(UINT32 *op)
+{
+	UINT64 extended_op;
+	UINT32 shift, mask, result;
+
+	extended_op = *op;
+	extended_op |= extended_op << 32;
+
+	shift = 0;
+	while(!((extended_op << (shift * 2)) & 0x000000ff00000000) && (shift < 15))
+		shift++;
+
+	mask = (UINT32) (0xffffff00ffffff00 >> (shift * 2));
+	result = (((UINT32) extended_op >> (shift * 2)) & 0xff) | (shift << 8);
+
+	*op &= mask;
+	return result;
+}

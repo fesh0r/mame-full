@@ -97,11 +97,11 @@ static struct drccore *generate_blitter(int orientation)
 	INT32 source_base_adjustment = 0;
 	INT32 shown_width, shown_height;
 	INT32 i, j;
-	INT32 source_linepos, source_lineposnext, pixels_to_blit;
+	INT32 source_linepos, source_lineposnext;
 	void *blit_begin;
 	void *loop_begin;
+	int *pixel_spans;
 	int flags;
-	int pixel_mode;
 
 	// modify dest based on orientation
 	if (orientation & ORIENTATION_FLIP_X)
@@ -191,30 +191,35 @@ static struct drccore *generate_blitter(int orientation)
 	emit_begin_loop(&params);
 
 	source_linepos = 0;
+	pixel_spans = (int *) alloca(shown_width * sizeof(int));
 	for(i = 0; i < shown_width; i++)
 	{
 		source_lineposnext = (INT32) (((float) (i+1)) * current_source_width / shown_width);
-		pixels_to_blit = source_lineposnext - source_linepos;
+		pixel_spans[i] = source_lineposnext - source_linepos;
 		source_linepos = source_lineposnext;
-		assert(pixels_to_blit > 0);
-
-		for(j = 0; j < pixels_to_blit; j++)
-		{
-			if (j == 0)
-				pixel_mode = (pixels_to_blit == 1) ? PIXELMODE_SOLO : PIXELMODE_BEGIN;
-			else 
-				pixel_mode = (j == pixels_to_blit-1) ? PIXELMODE_END : PIXELMODE_MIDDLE;
-
-			emit_copy_pixel(&params, pixel_mode, pixels_to_blit);
-			if ((j+1 < pixels_to_blit) || (i+1 < shown_width))
-				emit_increment_sourcebits(&params, 2);
-		}
-		if (i+1 < shown_width)
-			emit_increment_destbits(&params, dest_xpitch);
+		assert(pixel_spans[i] > 0);
 	}
 
-	emit_increment_sourcebits(&params, current_source_pitch - (current_source_width-1)*2);
-	emit_increment_destbits(&params, dest_ypitch - (shown_width-1)*dest_xpitch);
+	i = 0;
+	while(i < shown_width)
+	{
+		int pixel_count;
+		int sourcebits_increment;
+
+		pixel_count = emit_copy_pixels(&params, pixel_spans + i, shown_width - i, dest_xpitch);
+
+		sourcebits_increment = 0;
+		for (j = 0; j < pixel_count; j++)
+			sourcebits_increment += pixel_spans[i + j] * 2;
+
+		emit_increment_sourcebits(&params, sourcebits_increment);
+		emit_increment_destbits(&params, dest_xpitch * pixel_count);
+		
+		i += pixel_count;
+	}
+
+	emit_increment_sourcebits(&params, current_source_pitch - current_source_width*2);
+	emit_increment_destbits(&params, dest_ypitch - shown_width*dest_xpitch);
 
 	emit_finish_loop(&params, loop_begin);
 	emit_footer(&params);

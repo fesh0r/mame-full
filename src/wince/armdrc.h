@@ -94,6 +94,12 @@ struct drcconfig
 
 
 /*###################################################################################################
+**	UTILITY
+**#################################################################################################*/
+
+UINT32 build_immediate_operand(UINT32 *op);
+
+/*###################################################################################################
 **	LOW-LEVEL OPCODE EMITTERS
 **#################################################################################################*/
 
@@ -114,11 +120,48 @@ struct drcconfig
 **	MOVE EMITTERS
 **#################################################################################################*/
 
+#define isvalid_disp(disp)		(((disp) <= 255) && ((disp) >= -255))
+
+#define _loadstore_common_bd(op, cond, dreg, base, disp) \
+	do {														\
+		UINT32 op_ = (op) | 0x01400090;							\
+		INT32 disp_ = (disp);									\
+		assert(isvalid_disp(disp_));							\
+		if ((disp) >= 0)										\
+			op_ |= 0x00800000;									\
+		else													\
+			disp_ = -disp_;										\
+		op_ |= (disp_ & 15) | ((disp_ & 0xf0) << 4);			\
+		OP3((cond), (dreg), (base), 0, op_);					\
+	} while(0)
+
 #define _ldrh_r16_m16bd(cond, dreg, base, disp)	\
-	OP3((cond), (dreg), (base), (disp), 0x005000b0)
+	_loadstore_common_bd(0x00100020, (cond), (dreg), (base), (disp))
+
+#define _ldrsh_r16_m16bd(cond, dreg, base, disp)	\
+	_loadstore_common_bd(0x00100060, (cond), (dreg), (base), (disp))
+
+#define _ldrsb_r16_m16bd(cond, dreg, base, disp)	\
+	_loadstore_common_bd(0x00100040, (cond), (dreg), (base), (disp))
+
+#define _strh_m16bd_r16(cond, base, disp, sreg)	\
+	_loadstore_common_bd(0x00000020, (cond), (sreg), (base), (disp))
+
+
+
+
 
 #define _ldrh_r16_m16id(cond, dreg, base, index) \
 	OP3((cond), (dreg), (base), (index), 0x019000b0)
+
+#define _strh_m16id_r16(cond, base, index, sreg) \
+	OP3((cond), (sreg), (base), (index), 0x018000b0)
+
+#define _ldmfd_wb(cond, dreg, regmask) \
+	OP((cond) | ((dreg) * 0x10000) | (regmask) | 0x08b00000)
+
+#define _stmfd_wb(cond, dreg, regmask) \
+	OP((cond) | ((dreg) * 0x10000) | (regmask) | 0x09200000)
 
 /*###################################################################################################
 **	BRANCH EMITTERS
