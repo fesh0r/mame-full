@@ -162,7 +162,16 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 	img->created = 0;
 	img->writeable = 0;
 	file = NULL;
-	dev->getdispositions(dev, image_index_in_device(img), &readable, &writeable, &creatable);
+	if (dev->getdispositions)
+	{
+		dev->getdispositions(dev, image_index_in_device(img), &readable, &writeable, &creatable);
+	}
+	else
+	{
+		readable = dev->readable;
+		writeable = dev->writeable;
+		creatable = dev->creatable;
+	}
 
 	/* is this a ZIP file? */
 	s = strrchr(img->name, '.');
