@@ -24,6 +24,7 @@ merged Street Fighter Zero for MESS
 
 READ16_HANDLER( qsound_sharedram1_r );
 WRITE16_HANDLER( qsound_sharedram1_w );
+READ16_HANDLER( qsound_rom_r );
 
 static READ16_HANDLER( cps1_input2_r )
 {
@@ -268,6 +269,7 @@ static MEMORY_READ16_START( cps1_readmem )
 	{ 0x8001fc, 0x8001fd, cps1_input2_r }, /* Input ports (SF Rev E) */
 	{ 0x800100, 0x8001ff, cps1_output_r },   /* Output ports */
 	{ 0x900000, 0x92ffff, MRA16_RAM },	/* SF2CE executes code from here */
+	{ 0xf00000, 0xf0ffff, qsound_rom_r },		/* Slammasters protection */
 	{ 0xf18000, 0xf19fff, qsound_sharedram1_r },	/* Q RAM */
 	{ 0xf1c000, 0xf1c001, cps1_input2_r },   /* Player 3 controls (later games) */
 	{ 0xf1c002, 0xf1c003, cps1_input3_r },   /* Player 4 controls (later games - muscle bombers) */
@@ -466,6 +468,18 @@ WRITE16_HANDLER( qsound_sharedram1_w )
 {
 	if (ACCESSING_LSB)
 		qsound_sharedram1[offset] = data;
+}
+
+READ16_HANDLER( qsound_rom_r )
+{
+	unsigned char *rom = memory_region(REGION_USER1);
+
+	if (rom) return rom[offset] | 0xff00;
+	else
+	{
+		usrintf_showmessage("%06x: read sound ROM byte %04x",cpu_get_pc(),offset);
+		return 0;
+	}
 }
 
 struct GfxDecodeInfo cps1_gfxdecodeinfo[] =
