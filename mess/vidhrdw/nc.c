@@ -33,8 +33,8 @@ static unsigned short nc_colour_table[NC_NUM_COLOURS] =
 /* black/white */
 static unsigned char nc_palette[NC_NUM_COLOURS * 3] =
 {
-	0x000, 0x000, 0x000,
-	0x0ff, 0x0ff, 0x0ff
+    0x0ff, 0x0ff, 0x0ff,
+    0x000, 0x000, 0x000
 };
 
 
