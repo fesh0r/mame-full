@@ -26,7 +26,7 @@
 #include "osd_cpu.h"
 
 enum {
-	F8_PC0=1, F8_PC1, F8_W, F8_A, F8_IS,
+	F8_PC0=1, F8_PC1, F8_DC0, F8_DC1, F8_W, F8_A, F8_IS,
 	F8_J, F8_HU, F8_HL, F8_KU, F8_KL, F8_QU, F8_QL
 };
 

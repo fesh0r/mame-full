@@ -88,7 +88,7 @@ static UINT8 timer_shifter[256];
 
 /* Layout of the registers in the debugger */
 static UINT8 f8_reg_layout[] = {
-	F8_PC0, F8_PC1, F8_W, F8_A, F8_IS, -1,
+	F8_PC0, F8_PC1, F8_DC0, F8_DC1, F8_W, F8_A, F8_IS, -1,
 	F8_J, F8_HU, F8_HL, F8_KU, F8_KL, F8_QU, F8_QL, 0
 };
 
@@ -2006,7 +2006,9 @@ unsigned f8_get_reg(int regnum)
 	{
 	case F8_PC0: return f8.pc0;
 	case F8_PC1: return f8.pc1;
-	case F8_W:	 return f8.w;
+	case F8_DC0: return f8.dc0;
+	case F8_DC1: return f8.dc1;
+    case F8_W:   return f8.w;
 	case F8_A:	 return f8.a;
 	case F8_IS:  return f8.is;
 	case F8_J:	 return f8.r[ 9];
@@ -2024,11 +2026,13 @@ void f8_set_reg (int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-	case F8_PC0: f8.pc0 = val;
-	case F8_PC1: f8.pc1 = val;
-	case F8_W:	 f8.w = val;
-	case F8_A:	 f8.a = val;
-	case F8_IS:  f8.is = val & 0x3f;
+	case F8_PC0: f8.pc0 = val; break;
+	case F8_PC1: f8.pc1 = val; break;
+	case F8_DC0: f8.dc0 = val; break;
+	case F8_DC1: f8.dc1 = val; break;
+	case F8_W:	 f8.w = val; break;
+	case F8_A:	 f8.a = val; break;
+	case F8_IS:  f8.is = val & 0x3f; break;
 	case F8_J:	 f8.r[ 9] = val; break;
 	case F8_HU:  f8.r[10] = val; break;
 	case F8_HL:  f8.r[11] = val; break;
@@ -2079,7 +2083,9 @@ const char *f8_info(void *context, int regnum)
 	{
 		case CPU_INFO_REG+F8_PC0:sprintf(buffer[which], "PC0:%04X", r->pc0); break;
 		case CPU_INFO_REG+F8_PC1:sprintf(buffer[which], "PC1:%04X", r->pc1); break;
-		case CPU_INFO_REG+F8_W:  sprintf(buffer[which], "W  :%02X", r->w); break;
+		case CPU_INFO_REG+F8_DC0:sprintf(buffer[which], "DC0:%04X", r->dc0); break;
+		case CPU_INFO_REG+F8_DC1:sprintf(buffer[which], "DC1:%04X", r->dc1); break;
+        case CPU_INFO_REG+F8_W:  sprintf(buffer[which], "W  :%02X", r->w); break;
 		case CPU_INFO_REG+F8_A:  sprintf(buffer[which], "A  :%02X", r->a); break;
 		case CPU_INFO_REG+F8_IS: sprintf(buffer[which], "IS :%02X", r->is); break;
 		case CPU_INFO_REG+F8_J:  sprintf(buffer[which], "J  :%02X", r->r[9]); break;
