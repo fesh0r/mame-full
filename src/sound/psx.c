@@ -303,8 +303,6 @@ int PSX_sh_start( const struct MachineSound *msound )
 	state_save_register_UINT16( "psx", 0, "m_n_mainvolumeright", &m_n_mainvolumeright, 1 );
 	state_save_register_UINT16( "psx", 0, "m_n_reverberationdepthleft", &m_n_reverberationdepthleft, 1 );
 	state_save_register_UINT16( "psx", 0, "m_n_reverberationdepthright", &m_n_reverberationdepthright, 1 );
-	state_save_register_UINT16( "psx", 0, "m_n_reverberationdepthleft", &m_n_reverberationdepthleft, 1 );
-	state_save_register_UINT16( "psx", 0, "m_n_reverberationdepthright", &m_n_reverberationdepthright, 1 );
 	state_save_register_UINT32( "psx", 0, "m_n_voiceon", &m_n_voiceon, 1 );
 	state_save_register_UINT32( "psx", 0, "m_n_voiceoff", &m_n_voiceoff, 1 );
 	state_save_register_UINT32( "psx", 0, "m_n_modulationmode", &m_n_modulationmode, 1 );
