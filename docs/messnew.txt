@@ -17,7 +17,10 @@ System Driver Changes:
 - [APPLE2] Fixed a bug in high RAM emulation and vblank emulation; a number
   of old MECC games now work.  Also enabled nibble disk images with the
   extension .DSK  [Nate Woods]
- 
+
+- [CBM] Raised the delay at which quickloads load, so that quickloads can be
+  loaded at startup.  (bug #420, bug #525) [Nate Woods]
+
 - [IBMAT] Fixed a regression that prevented AT 286 drivers from loading [Nate
   Woods]
   
