@@ -95,6 +95,13 @@ char *image_strdup(int type, int id, const char *src)
 	return pool_strdup(&img->mempool, src);
 }
 
+void image_freeptr(int type, int id, void *ptr)
+{
+	struct image_info *img;
+	img = get_image(type, id);
+	pool_freeptr(&img->mempool, ptr);
+}
+
 static void image_free_resources(struct image_info *img)
 {
 	if (img->fp)
@@ -347,6 +354,7 @@ mame_file *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 				if (!file)
 					return NULL;
 
+				image_freeptr(type, id, img->name);
 				img->name = newname;
 			}
 		}

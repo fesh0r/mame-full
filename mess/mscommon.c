@@ -296,6 +296,21 @@ char *pool_strdup(memory_pool *pool, const char *src)
 	return dst;
 }
 
+void pool_freeptr(memory_pool *pool, void *ptr)
+{
+	struct pool_memory_header *block;
+
+	block = ((struct pool_memory_header *) ptr) - 1;
+
+	if (block->next)
+		block->next->prev = block->prev;
+	if (block->prev)
+		*(block->prev) = block->next;
+
+	free(block);
+}
+
+
 /***************************************************************************
 
 	Binary coded decimal

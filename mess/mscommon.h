@@ -74,6 +74,7 @@ void pool_exit(memory_pool *pool);
 void *pool_malloc(memory_pool *pool, size_t size);
 void *pool_realloc(memory_pool *pool, void *ptr, size_t size);
 char *pool_strdup(memory_pool *pool, const char *src);
+void pool_freeptr(memory_pool *pool, void *ptr);
 
 /***************************************************************************
 

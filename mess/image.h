@@ -20,6 +20,7 @@ mame_file *image_fp(int type, int id);
 void *image_malloc(int type, int id, size_t size) FUNCATTR_MALLOC;
 char *image_strdup(int type, int id, const char *src) FUNCATTR_MALLOC;
 void *image_realloc(int type, int id, void *ptr, size_t size);
+void image_freeptr(int type, int id, void *ptr);
 
 /* needs to be phased out */
 mame_file *image_fopen_custom(int type, int id, int filetype, int read_or_write);
