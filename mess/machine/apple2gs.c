@@ -146,7 +146,6 @@ static INT8 apple2gs_mouse_dy;
 static mess_image *apple2gs_cur_slot6_image;
 
 
-
 /* -----------------------------------------------------------------------
  * Apple IIgs clock
  * ----------------------------------------------------------------------- */
@@ -774,7 +773,8 @@ INTERRUPT_GEN( apple2gs_interrupt )
 	int scanline;
 	int current_frame;
 	static int last_scanline = -1;
-
+	static int scanint_this_frame = 0;
+	
 	/* TODO: This handler should be called every scanline; that crappyness on
 	 * the VBL handler is a consequence of not doing so */
 	scanline = cpu_getscanline();
@@ -800,6 +800,8 @@ INTERRUPT_GEN( apple2gs_interrupt )
 		}
 		else if ((scanline >= 192) && (last_scanline < 192))
 		{
+			scanint_this_frame = 0;
+
 			/* VBL interrupt */
 			if ((apple2gs_inten & 0x08) && !(apple2gs_intflag & 0x08))
 			{
@@ -813,8 +815,12 @@ INTERRUPT_GEN( apple2gs_interrupt )
 	/* scanline interrupt */
 	if ((apple2gs_vgcint & 0x02) && !(apple2gs_vgcint & 0x20))
 	{
-		apple2gs_vgcint |= 0xa0;
-		apple2gs_add_irq(IRQ_VGC_SCANLINE);
+		if (!scanint_this_frame)
+		{
+			scanint_this_frame = 1;
+			apple2gs_vgcint |= 0xa0;
+			apple2gs_add_irq(IRQ_VGC_SCANLINE);
+		}
 	}
 
 	/* check the mouse status */

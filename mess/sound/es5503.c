@@ -84,6 +84,7 @@ static int    resshifts[8] = { 9, 10, 11, 12, 13, 14, 15, 16 };
 static void halt_osc(ES5503Chip *chip, int onum, int type)
 {
 	ES5503Osc *pOsc = &chip->oscillators[onum];
+	ES5503Osc *pPartner = &chip->oscillators[onum^1];
 	int mode = (pOsc->control>>1) & 3;
 
 //	printf("halt_osc %d, control %02x, mode = %d, type = %d\n", onum, pOsc->control, mode, type);
@@ -94,7 +95,13 @@ static void halt_osc(ES5503Chip *chip, int onum, int type)
 		pOsc->control |= 1;
 	}
 
-	// (do swap logic etc here)
+	// if swap mode, start the partner
+	if (mode == 3)
+	{
+//		printf("swap mode, starting partner\n");
+		pPartner->control &= ~1;	// clear the halt bit
+		pPartner->accumulator = 0;	// make sure it's at the beginning
+	}
 
 	// IRQ enabled for this voice?
 	if (pOsc->control & 0x08)
@@ -124,6 +131,8 @@ static void es5503_pcm_update(void *param, stream_sample_t **inputs, stream_samp
 	{
 		ES5503Osc *pOsc = &chip->oscillators[osc];
 
+		mixp = &mix[0];
+
 		if (!(pOsc->control & 1))
 		{
 			UINT32 wtptr = pOsc->wavetblpointer & wavemasks[pOsc->wavetblsize];
@@ -136,20 +145,15 @@ static void es5503_pcm_update(void *param, stream_sample_t **inputs, stream_samp
 			int resshift = resshifts[pOsc->resolution] - pOsc->wavetblsize;
 			UINT32 resmask = accmasks[pOsc->resolution];
 
-			mixp = &mix[0];
-
 //			printf("Acc: %08x => %08x\n", acc, (acc>>resshift) & resmask);
 
 //			printf("Ch [%02d]: wtptr: %04x (wtsize %d, ptr %x)\n", osc, wtptr, pOsc->wavetblsize, pOsc->wavetblpointer);
 
 			for (snum = 0; snum < length; snum++)
 			{
-				// for each update:
-				// accumulator += frequency
+				ramptr = (acc >> resshift) & resmask;
 
 				acc += freq;
-
-				ramptr = (acc >> resshift) & resmask;
 
 //				printf("[%02d] Acc: %08x  Frq: %04x  RAMptr: %08x WTsize: %04x (wtsize %d res %d)\n", osc, acc, freq, ramptr, wtsize, pOsc->wavetblsize, pOsc->resolution);
 				
@@ -168,14 +172,17 @@ static void es5503_pcm_update(void *param, stream_sample_t **inputs, stream_samp
 
 				if (chip->docram[ramptr + wtptr] == 0x00)
 				{
+//					printf("osc %d hit zero @ %x (mode %d pmode %d)\n", osc, ramptr + wtptr, (pOsc->control>>1)&3, (chip->oscillators[osc^1].control>>1)&3);
 					halt_osc(chip, osc, 1);
 					acc = 0;
 				}
-
-				if (ramptr >= wtsize)
+				else
 				{
-					halt_osc(chip, osc, 0);
-					acc = 0;
+					if (ramptr >= wtsize)
+					{
+						halt_osc(chip, osc, 0);
+						acc = 0;
+					}
 				}
 
 				// if oscillator halted, we've got no more samples to generate
@@ -195,8 +202,8 @@ static void es5503_pcm_update(void *param, stream_sample_t **inputs, stream_samp
 	mixp = &mix[0];
 	for (i = 0; i < length; i++)
 	{
-		outputs[0][i] = (*mixp++)>>3;
-		outputs[1][i] = (*mixp++)>>3;
+		outputs[0][i] = (*mixp++)>>1;
+		outputs[1][i] = (*mixp++)>>1;
 	}
 }
 
