@@ -317,23 +317,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
     { 1, 0x0c00, &gfxlayout, 2*10, 2 },
 MEMORY_END   /* end of array */
 
-static unsigned char palette[] =
-{
-      0,  0,  0,    /* black (block graphics) */
-      0,224,  0,    /* green */
-    208,255,  0,    /* yellow (greenish) */
-      0,  0,255,    /* blue */
-    255,  0,  0,    /* red */
-    224,224,144,    /* buff */
-      0,255,160,    /* cyan (greenish) */
-    255,  0,255,    /* magenta */
-    240,112,  0,    /* orange */
-      0, 64,  0,    /* dark green (alphanumeric characters) */
-      0,224, 24,    /* bright green (alphanumeric characters) */
-     64, 16,  0,    /* dark orange (alphanumeric characters) */
-    255,196, 24,    /* bright orange (alphanumeric characters) */
-};
-
 static unsigned short colortable[] =
 {
 /* block graphics in text mode */
@@ -352,29 +335,24 @@ static unsigned short colortable[] =
     1,2,3,4,    /* green, yellow, blue, red */
     5,6,8,7     /* buff, cyan, orange, magenta */
 };
-#else
-
-static unsigned char palette[] = {
-	0x00,0x00,0x00, /* BLACK */
-	0x00,224,0x00, /* GREEN */
-	208,0xff,0x00, /* YELLOW */
-	0x00,0x00,0xff, /* BLUE */
-	0xff,0x00,0x00, /* RED */
-	224,224,144, /* BUFF */
-	0x00,255,160, /* CYAN */
-	0xff,0x00,0xff, /* MAGENTA */
-	240,112,0x00, /* ORANGE */
-	0x00,0x80,0x00, /* ARTIFACT GREEN/RED */
-	0x00,0x80,0x00, /* ARTIFACT GREEN/BLUE */
-	0xff,0x80,0x00, /* ARTIFACT BUFF/RED */
-	0x00,0x80,0xff, /* ARTIFACT BUFF/BLUE */
-	0x00,0x40,0x00,	/* ALPHANUMERIC DARK GREEN */
-	0x00,0xff,0x00,	/* ALPHANUMERIC BRIGHT GREEN */
-	0x40,0x10,0x00,	/* ALPHANUMERIC DARK ORANGE */
-	0xff,0xc4,0x18,	/* ALPHANUMERIC BRIGHT ORANGE */
-};
-
 #endif
+
+static unsigned char palette[] =
+{
+      0,  0,  0,    /* black (block graphics) */
+      0,224,  0,    /* green */
+    208,255,  0,    /* yellow (greenish) */
+      0,  0,255,    /* blue */
+    255,  0,  0,    /* red */
+    224,224,144,    /* buff */
+      0,255,160,    /* cyan (greenish) */
+    255,  0,255,    /* magenta */
+    240,112,  0,    /* orange */
+      0, 64,  0,    /* dark green (alphanumeric characters) */
+      0,224, 24,    /* bright green (alphanumeric characters) */
+     64, 16,  0,    /* dark orange (alphanumeric characters) */
+    255,196, 24,    /* bright orange (alphanumeric characters) */
+};
 
 /* Initialise the palette */
 static void init_palette_monochrome(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
