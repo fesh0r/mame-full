@@ -100,8 +100,8 @@ static void vectrex_screen_update_backup (int param)
 void vectrex_vh_update (struct osd_bitmap *bitmap, int full_refresh)
 {
 	vectrex_full_refresh = full_refresh;
-	palette_recalc();
 
+	palette_recalc();
 	vectrex_configuration();
 	copybitmap(bitmap, tmpbitmap,0,0,0,0,0,TRANSPARENCY_NONE,0);
 }
@@ -293,6 +293,9 @@ void vectrex_set_palette (void)
 	while (--i >= 0)
 		palette_change_color(i, palette[i*3], palette[i*3+1], palette[i*3+2]);
 
+	palette_recalc();
+	artwork_remap(); /* this should be done in the core */
+
 	free (palette);
 	return;
 }
@@ -305,9 +308,6 @@ int vectrex_start (void)
 	int width, height;
 
 	vectrex_set_palette ();
-
-	if (vector_vh_start())
-		return 1;
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
@@ -345,7 +345,8 @@ int vectrex_start (void)
 	via_reset();
 	z_factor =  translucency? 1.5: 2;
 
-	artwork_remap(); /* this should be done in the core */
+	if (vector_vh_start())
+		return 1;
 
 	return 0;
 }
