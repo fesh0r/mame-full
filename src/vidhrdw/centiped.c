@@ -17,7 +17,8 @@ static struct rectangle spritevisiblearea =
 	0*8, 30*8-1
 };
 
-
+static UINT8 sprite_tile_width;
+static UINT8 sprite_tile_height;
 
 /***************************************************************************
 
@@ -73,6 +74,10 @@ static int powerup_counter;
 void centiped_init_machine(void)
 {
 	powerup_counter = 10;
+	
+	// Get the dimentions of a sprite in tiles
+	sprite_tile_width = Machine->drv->gfxdecodeinfo[1].gfxlayout->width;
+	sprite_tile_height = Machine->drv->gfxdecodeinfo[1].gfxlayout->height;
 }
 
 int centiped_interrupt(void)
@@ -142,7 +147,7 @@ void centiped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int spritenum,color;
 		int flipx;
 		int x, y;
-		int sx, sy;
+		int tile_x_pos, tile_y_pos;
 
 
 		spritenum = spriteram[offs] & 0x3f;
@@ -178,21 +183,28 @@ void centiped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				x,y,
 				&spritevisiblearea,TRANSPARENCY_PEN,0);
 
-		/* mark tiles underneath as dirty */
-		sx = x >> 3;
-		sy = y >> 3;
+		/* mark tiles underneath each sprite as dirty */
+		/* These tiles will then be redrawn on the next frame to erase the sprite if needed. */
+		
+		/* First, convert the sprite position to tile coordinates */
+		tile_x_pos = x / 8;
+		tile_y_pos = y / 8;
 
 		{
-			int max_x = 1;
-			int max_y = 2;
+			/* These two determine the total number of tiles the sprite covers */
+			int total_tile_width = sprite_tile_width / 8;
+			int total_tile_height = sprite_tile_height / 8;
 			int x2, y2;
 
-			if (x & 0x07) max_x ++;
-			if (y & 0x0f) max_y ++;
+			/* If the sprite isn't aligned perfectly, it covers an extra tile */
+			if (x & (sprite_tile_width - 1)) total_tile_width ++;
+			if (y & (sprite_tile_height - 1)) total_tile_height ++;
 
-			for (y2 = sy; y2 < sy + max_y; y2 ++)
+			/* Mark the dirtybuffer for each tile the sprite covers */
+			/* The 0, 0, 30, 32 constants are the bitmap size, in tiles */
+			for (y2 = tile_y_pos; y2 < tile_y_pos + total_tile_height; y2 ++)
 			{
-				for (x2 = sx; x2 < sx + max_x; x2 ++)
+				for (x2 = tile_x_pos; x2 < tile_x_pos + total_tile_width; x2 ++)
 				{
 					if ((x2 < 32) && (y2 < 30) && (x2 >= 0) && (y2 >= 0))
 						dirtybuffer[x2 + 32*y2] = 1;
