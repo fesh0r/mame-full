@@ -54,7 +54,7 @@ LIBS.SDL	= -ldl -lSDL -lpthread -D_REENTRANT
 LIBS.photon2	= -L/usr/lib -lph -lphrender
 
 CFLAGS.x11      = $(X11INC) $(JOY_X11_CFLAGS)
-CFLAGS.xgl      = $(X11INC) $(JOY_X11_CFLAGS) $(GLDRIVER)
+CFLAGS.xgl      = $(X11INC) $(JOY_X11_CFLAGS)
 CFLAGS.xfx      = $(X11INC) $(JOY_X11_CFLAGS) -I/usr/include/glide
 CFLAGS.svgafx   = -I/usr/include/glide
 CFLAGS.SDL      = -D_REENTRANT
