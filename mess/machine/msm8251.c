@@ -345,7 +345,6 @@ WRITE_HANDLER(msm8251_control_w)
 						{
 							/* 2 */
 							logerror("stop bit: 2 bits\n");
-
 						}
 						break;
 					}
@@ -354,7 +353,17 @@ WRITE_HANDLER(msm8251_control_w)
 
 				uart.data_form.word_length = ((data>>2) & 0x03)+5;
 				uart.data_form.parity = SERIAL_PARITY_NONE;
-				uart.data_form.stop_bit_count = 1;
+				switch ((data>>6) & 0x03)
+				{				
+					case 0:
+					case 1:
+						uart.data_form.stop_bit_count =  1;
+						break;
+					case 2:
+					case 3:
+						uart.data_form.stop_bit_count =  2;
+						break;
+				}
 				receive_register_setup(&uart.receive_reg, &uart.data_form);
 			
 
