@@ -106,9 +106,11 @@
 #include "driver.h"
 #include "ui_text.h"
 
+#ifndef MESS
 #ifndef NEOFREE
 #ifndef TINY_COMPILE
 extern struct GameDriver driver_neogeo;
+#endif
 #endif
 #endif
 
@@ -1857,11 +1859,17 @@ INT32 PerformSearch (struct osd_bitmap *bitmap, INT32 selected)
 }
 
 
-/*****************
+/******************************************
  * Start a cheat search
  * If the method 1 is selected, ask the user a number
+
+#define MAX_LOADEDCHEATS	200
+#define CHEAT_FILENAME_MAXLEN	255
+
+
  * In all cases, backup the ram.
  *
+
  * Ask the user to select one of the following:
  *	1 - Lives or other number (byte) (exact)        ask a start value, ask new value
  *	2 - Timers (byte) (+ or - X)                    nothing at start,  ask +-X
@@ -2515,9 +2523,6 @@ static INT32 ConfigureWatch (struct osd_bitmap *bitmap, INT32 selected, UINT8 wa
 
 	if (sel == -1 || sel == -2)
 	{
-		textedit_active = 0;
-		/* flush the text buffer */
-		osd_readkey_unicode (1);
 		/* tell updatescreen() to clean after us */
 		need_to_clear_bitmap = 1;
 	}
@@ -2766,6 +2771,10 @@ INT32 cheat_menu(struct osd_bitmap *bitmap, INT32 selected)
 		{
 			submenu_choice = 0;
 			sel = -1;
+		}
+		else if (sel == Menu_RestoreSearch)
+		{
+			RestoreSearch ();
 		}
 		else if (sel == Menu_RestoreSearch)
 		{

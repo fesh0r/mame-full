@@ -340,7 +340,7 @@ $(OBJ)/cpu/m68000/m68kops.o $(OBJ)/cpu/m68000/m68kopac.o \
 $(OBJ)/cpu/m68000/m68kopdm.o $(OBJ)/cpu/m68000/m68kopnz.o
 CPUOBJS += $(M68000_GENERATED_OBJS) $(OBJ)/cpu/m68000/m68kcpu.o $(OBJ)/cpu/m68000/m68kmame.o
 endif
-DBGOBJS += $(OBJ)/cpu/m68000/d68k.o
+DBGOBJS += $(OBJ)/cpu/m68000/m68kdasm.o
 endif
 
 CPU=$(strip $(findstring M68010@,$(CPUS)))
@@ -356,7 +356,7 @@ $(OBJ)/cpu/m68000/m68kops.o $(OBJ)/cpu/m68000/m68kopac.o \
 $(OBJ)/cpu/m68000/m68kopdm.o $(OBJ)/cpu/m68000/m68kopnz.o
 CPUOBJS += $(M68000_GENERATED_OBJS) $(OBJ)/cpu/m68000/m68kcpu.o $(OBJ)/cpu/m68000/m68kmame.o
 endif
-DBGOBJS += $(OBJ)/cpu/m68000/d68k.o
+DBGOBJS += $(OBJ)/cpu/m68000/m68kdasm.o
 endif
 
 CPU=$(strip $(findstring M68EC020@,$(CPUS)))
@@ -372,7 +372,7 @@ $(OBJ)/cpu/m68000/m68kops.o $(OBJ)/cpu/m68000/m68kopac.o \
 $(OBJ)/cpu/m68000/m68kopdm.o $(OBJ)/cpu/m68000/m68kopnz.o
 CPUOBJS += $(M68000_GENERATED_OBJS) $(OBJ)/cpu/m68000/m68kcpu.o $(OBJ)/cpu/m68000/m68kmame.o
 endif
-DBGOBJS += $(OBJ)/cpu/m68000/d68k.o
+DBGOBJS += $(OBJ)/cpu/m68000/m68kdasm.o
 endif
 
 CPU=$(strip $(findstring M68020@,$(CPUS)))
@@ -388,7 +388,7 @@ $(OBJ)/cpu/m68000/m68kops.o $(OBJ)/cpu/m68000/m68kopac.o \
 $(OBJ)/cpu/m68000/m68kopdm.o $(OBJ)/cpu/m68000/m68kopnz.o
 CPUOBJS += $(M68000_GENERATED_OBJS) $(OBJ)/cpu/m68000/m68kcpu.o $(OBJ)/cpu/m68000/m68kmame.o
 endif
-DBGOBJS += $(OBJ)/cpu/m68000/d68k.o
+DBGOBJS += $(OBJ)/cpu/m68000/m68kdasm.o
 endif
 
 CPU=$(strip $(findstring T11@,$(CPUS)))
@@ -516,7 +516,7 @@ ifneq ($(CPU),)
 CPUDEFS += -DHAS_ADSP2105=1
 CPUOBJS += $(OBJ)/cpu/adsp2100/adsp2100.o
 DBGOBJS += $(OBJ)/cpu/adsp2100/2100dasm.o
-$(OBJ)/cpu/adsp2105/adsp2100.o: adsp2100.c adsp2100.h 2100ops.c
+$(OBJ)/cpu/adsp2100/adsp2100.o: adsp2100.c adsp2100.h 2100ops.c
 endif
 
 CPU=$(strip $(findstring PDP1@,$(CPUS)))
@@ -642,16 +642,16 @@ SOUNDDEFS += -DHAS_YM3526=1
 SOUNDOBJS += $(OBJ)/sound/3812intf.o $(OBJ)/sound/fmopl.o
 endif
 
+SOUND=$(strip $(findstring YMZ280B@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_YMZ280B=1
+SOUNDOBJS += $(OBJ)/sound/ymz280b.o
+endif
+
 SOUND=$(strip $(findstring Y8950@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_Y8950=1
 SOUNDOBJS += $(OBJ)/sound/3812intf.o $(OBJ)/sound/fmopl.o $(OBJ)/sound/ymdeltat.o
-endif
-
-SOUND=$(strip $(findstring YMZ280B@,$(SOUNDS)))
-ifneq ($(SOUND),)
-SOUNDDEFS += -DHAS_YMZ280B=1
-SOUNDOBJS += $(OBJ)/sound/2203intf.o $(OBJ)/sound/ymz280b.o
 endif
 
 SOUND=$(strip $(findstring SN76477@,$(SOUNDS)))
@@ -675,7 +675,7 @@ endif
 SOUND=$(strip $(findstring TIA@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_TIA=1
-SOUNDOBJS += $(OBJ)/sound/tiaintf.o $(OBJ)/sound/tiasound.o
+SOUNDOBJS += $(OBJ)/sound/tiasound.o $(OBJ)/sound/tiaintf.o
 endif
 
 SOUND=$(strip $(findstring NES@,$(SOUNDS)))
@@ -809,11 +809,4 @@ ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_WAVE=1
 SOUNDOBJS += $(OBJ)/sound/wave.o
 endif
-
-SOUND=$(strip $(findstring SAA1099@,$(SOUNDS)))
-ifneq ($(SOUND),)
-SOUNDDEFS += -DHAS_SAA1099=1
-SOUNDOBJS += $(OBJ)/sound/saa1099.o
-endif
-
 

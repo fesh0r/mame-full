@@ -14,10 +14,23 @@
     a common case, you may need to revert to memcpy to work around this.
     See machine/tnzs.c for an example.
 
+  Caveats:
+
+  * The install_mem/port_*_handler functions are only intended to be
+    called at driver init time. Do not call them after this time.
+
+  * If your driver executes an opcode which crosses a bank-switched
+    boundary, it will pull the wrong data out of memory. Although not
+    a common case, you may need to revert to memcpy to work around this.
+    See machine/tnzs.c for an example.
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "osd_cpu.h"
+
+
+#define VERBOSE 0
 
 #define MEM_DUMP
 

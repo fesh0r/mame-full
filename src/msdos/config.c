@@ -72,6 +72,8 @@ extern char *artworkdir, *screenshotdir, *alternate_name;
 
 extern char *cheatdir;
 
+extern char *cheatdir;
+
 #ifdef MESS
 /* path to the CRC database files */
 char *crcdir;
