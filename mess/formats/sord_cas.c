@@ -6,9 +6,9 @@
 
 **************************************************************************/
 
+#include <string.h>
 #include "sord_cas.h"
 
-#if 0
 #define CAS_SAMPLERATE     22050   // output samplerate
 #define CAS_SAMPLELEN      14      // length in Hz of one short sample
 #define CAS_SILENCE        1       // silence in seconds
@@ -17,15 +17,7 @@
 
 static const UINT8 CasHeader[6] = { 'S', 'O', 'R', 'D', 'M', '5'};
 
-int sord_cas_to_wav_size( UINT8 *casdata, int caslen)
-{
-	int wavlen, err;
-	
-	err = sord_cas_to_wav( casdata, caslen, NULL, &wavlen);
-	return ((err==CASSETTE_ERROR_SUCCESS)?wavlen:-1);
-}
-
-casserr_t sord_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
+static casserr_t sord_cas_to_wav (const UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 {
 	int cas_pos, samples_size, samples_pos, size;
 	INT16 *samples, *nsamples;
@@ -152,19 +144,68 @@ casserr_t sord_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wav
 	//
 	return 0;
 }
-#endif
 
-/*struct CassetteFormat sordm5_cas_format =
+static int sord_cas_to_wav_size(const UINT8 *casdata, int caslen)
 {
-	"tap\0",
-	oric_tap_identify,
-	oric_tap_load,
+	int wavlen, err;
+	
+	err = sord_cas_to_wav( casdata, caslen, NULL, &wavlen);
+	return ((err==CASSETTE_ERROR_SUCCESS)?wavlen:-1);
+}
+
+
+
+static int sord_cas_fill_wave(INT16 *buffer, int length, UINT8 *bytes)
+{
+	INT16 *wavdata;
+	int wavlen;
+
+	if (sord_cas_to_wav(bytes, length, &wavdata, &wavlen))
+		return -1;
+
+	memcpy(buffer, wavdata, wavlen * 2);
+	free(wavdata);
+	return 0;
+}
+
+
+static struct CassetteLegacyWaveFiller sordm5_legacy_fill_wave =
+{
+	sord_cas_fill_wave,						/* fill_wave */
+	-1,										/* chunk_size */
+	0,										/* chunk_samples */
+	sord_cas_to_wav_size,					/* chunk_sample_calc */
+	22050,									/* sample_frequency */
+	0,										/* header_samples */
+	0										/* trailer_samples */
+};
+
+
+
+static casserr_t sordm5_tap_identify(cassette_image *cassette, struct CassetteOptions *opts)
+{
+	return cassette_legacy_identify(cassette, opts, &sordm5_legacy_fill_wave);
+}
+
+
+
+static casserr_t sordm5_tap_load(cassette_image *cassette)
+{
+	return cassette_legacy_construct(cassette, &sordm5_legacy_fill_wave);
+}
+
+
+
+struct CassetteFormat sordm5_cas_format =
+{
+	"cas\0",
+	sordm5_tap_identify,
+	sordm5_tap_load,
 	NULL
-};*/
+};
 
 
 
 CASSETTE_FORMATLIST_START(sordm5_cassette_formats)
-	/* TODO - Readd support for Sord Cassette files files */
-	/*	CASSETTE_FORMAT(sordm5_cas_format) */
+	CASSETTE_FORMAT(sordm5_cas_format)
 CASSETTE_FORMATLIST_END

@@ -1,6 +1,17 @@
+#include <string.h>
 #include "mz_cas.h"
 
-#if 0
+#ifndef VERBOSE
+#define VERBOSE 0
+#endif
+
+#if VERBOSE
+#define LOG(N,M,A)	\
+	if(VERBOSE>=N){ if( M )logerror("%11.6f: %-24s",timer_get_time(), (const char*)M ); logerror A; }
+#else
+#define LOG(N,M,A)
+#endif
+
 #define LO  -32768
 #define HI	+32767
 
@@ -286,19 +297,45 @@ static int fill_wave(INT16 *buffer, int length, UINT8 *code)
 		2 * 2 * BYTE_SAMPLES)
 
 
-#endif
 
-/*struct CassetteFormat mz700_cas_format =
+
+static struct CassetteLegacyWaveFiller mz700_legacy_fill_wave =
+{
+	fill_wave,					/* fill_wave */
+	1,							/* chunk_size */
+	2 * BYTE_SAMPLES,			/* chunk_samples */
+	NULL,						/* chunk_sample_calc */
+	5120,						/* sample_frequency */
+	MZ700_WAVESAMPLES_HEADER,	/* header_samples */
+	1							/* trailer_samples */
+};
+
+
+
+static casserr_t mz700_cas_identify(cassette_image *cassette, struct CassetteOptions *opts)
+{
+	return cassette_legacy_identify(cassette, opts, &mz700_legacy_fill_wave);
+}
+
+
+
+static casserr_t mz700_cas_load(cassette_image *cassette)
+{
+	return cassette_legacy_construct(cassette, &mz700_legacy_fill_wave);
+}
+
+
+
+struct CassetteFormat mz700_cas_format =
 {
 	"m12\0",
 	mz700_cas_identify,
 	mz700_cas_load,
 	NULL
-};*/
+};
 
 
 
 CASSETTE_FORMATLIST_START(mz700_cassette_formats)
-	/* TODO - Readd support for MZ700 Cassette files files */
-	/*	CASSETTE_FORMAT(mz700_cas_format) */
+	CASSETTE_FORMAT(mz700_cas_format)
 CASSETTE_FORMATLIST_END

@@ -88,6 +88,7 @@ struct CassetteFormat
 	casserr_t (*save)(cassette_image *cassette, const struct CassetteInfo *info);
 };
 
+/* used for the core modulation code */
 struct CassetteModulation
 {
 	int flags;
@@ -99,9 +100,22 @@ struct CassetteModulation
 	double one_frequency_high;
 };
 
+/* code to adapt existing legacy fill_wave functions */
+struct CassetteLegacyWaveFiller
+{
+	int (*fill_wave)(INT16 *, int, UINT8 *);
+	int chunk_size;
+	int chunk_samples;
+	int (*chunk_sample_calc)(const UINT8 *bytes, int length);
+	UINT32 sample_frequency;
+	int header_samples;
+	int trailer_samples;
+};
+
 /* builtin formats */
 extern struct CassetteFormat wavfile_format;
 
+/* macros for specifying format lists */
 #define CASSETTE_FORMATLIST_EXTERN(name)	\
 	extern const struct CassetteFormat *name[]
 
@@ -162,9 +176,6 @@ casserr_t cassette_write_samples(cassette_image *cassette, int channels, double 
 /* modulation support */
 casserr_t cassette_modulation_identify(cassette_image *cassette, const struct CassetteModulation *modulation,
 	struct CassetteOptions *opts);
-casserr_t cassette_get_modulated_data(cassette_image *cassette, int channel, double time_index,
-	void *data, size_t data_length, const struct CassetteModulation *modulation,
-	double *time_displacement);
 casserr_t cassette_put_modulated_data(cassette_image *cassette, int channel, double time_index,
 	const void *data, size_t data_length, const struct CassetteModulation *modulation,
 	double *time_displacement);
@@ -174,5 +185,13 @@ casserr_t cassette_put_modulated_filler(cassette_image *cassette, int channel, d
 casserr_t cassette_read_modulated_data(cassette_image *cassette, int channel, double time_index,
 	UINT64 offset, UINT64 length, const struct CassetteModulation *modulation,
 	double *time_displacement);
+
+/* legacy code support */
+#define CODE_HEADER 	((UINT8*)-1)
+#define CODE_TRAILER	((UINT8*)-2)
+casserr_t cassette_legacy_identify(cassette_image *cassette, struct CassetteOptions *opts,
+	const struct CassetteLegacyWaveFiller *legacy_args);
+casserr_t cassette_legacy_construct(cassette_image *cassette,
+	const struct CassetteLegacyWaveFiller *legacy_args);
 
 #endif /* CASSIMG_H */

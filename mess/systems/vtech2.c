@@ -561,7 +561,7 @@ ROM_END
 ***************************************************************************/
 
 SYSTEM_CONFIG_START(laser)
-	CONFIG_DEVICE_CASSETTE(1, vt_cassette_formats)
+	CONFIG_DEVICE_CASSETTE(1, vtech2_cassette_formats)
 	CONFIG_DEVICE_CARTSLOT_OPT(1, "rom\0", NULL, NULL, device_load_laser_cart, device_unload_laser_cart, NULL, NULL)
 	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, device_load_laser_floppy, NULL, NULL)
 SYSTEM_CONFIG_END

@@ -1,9 +1,19 @@
 #include "oric_tap.h"
+#include "osdepend.h"
 
 /* this code based heavily on tap2wav by Fabrice Frances */
-#if 0
-
 #define ORIC_SYNC_BYTE	0x016
+
+/* frequency of wave */
+/* tapes use 1200hz and 2400hz samples */
+#define ORIC_WAV_FREQUENCY	4800
+
+/* 13 bits define a byte on the cassette */
+/* 1 start bit, 8 data bits, 1 parity bit and 3 stop bits */
+#define ORIC_BYTE_TO_BITS_ON_CASSETTE 13
+
+#define ORIC_WAVESAMPLES_HEADER  3000
+#define ORIC_WAVESAMPLES_TRAILER 1000
 
 enum
 {
@@ -210,12 +220,12 @@ static int oric_data_length;
 static int oric_tap_size;
 
 /* length is length of .tap file! */
-int oric_cassette_calculate_size_in_samples(int length, UINT8 *bytes)
+static int oric_cassette_calculate_size_in_samples(const UINT8 *bytes, int length)
 {
 	unsigned char header[9];
 	int count;
 
-	UINT8 *data_ptr;
+	const UINT8 *data_ptr;
 	int i;
 	UINT8 data;
 
@@ -337,7 +347,7 @@ int oric_cassette_calculate_size_in_samples(int length, UINT8 *bytes)
 }
 
 /* length is length of sample buffer to fill! */
-int oric_cassette_fill_wave(INT16 *buffer, int length, UINT8 *bytes)
+static int oric_cassette_fill_wave(INT16 *buffer, int length, UINT8 *bytes)
 {
 	unsigned char header[9];
 	UINT8 *data_ptr;
@@ -477,19 +487,45 @@ int oric_cassette_fill_wave(INT16 *buffer, int length, UINT8 *bytes)
 	return p - buffer;
 }
 
-#endif
 
-/*struct CassetteFormat oric_tap_format =
+
+static struct CassetteLegacyWaveFiller oric_legacy_fill_wave =
+{
+	oric_cassette_fill_wave,					/* fill_wave */
+	-1,											/* chunk_size */
+	0,											/* chunk_samples */
+	oric_cassette_calculate_size_in_samples,	/* chunk_sample_calc */
+	ORIC_WAV_FREQUENCY,							/* sample_frequency */
+	ORIC_WAVESAMPLES_HEADER,					/* header_samples */
+	ORIC_WAVESAMPLES_TRAILER					/* trailer_samples */
+};
+
+
+
+static casserr_t oric_tap_identify(cassette_image *cassette, struct CassetteOptions *opts)
+{
+	return cassette_legacy_identify(cassette, opts, &oric_legacy_fill_wave);
+}
+
+
+
+static casserr_t oric_tap_load(cassette_image *cassette)
+{
+	return cassette_legacy_construct(cassette, &oric_legacy_fill_wave);
+}
+
+
+
+struct CassetteFormat oric_tap_format =
 {
 	"tap\0",
 	oric_tap_identify,
 	oric_tap_load,
 	NULL
-};*/
+};
 
 
 
 CASSETTE_FORMATLIST_START(oric_cassette_formats)
-	/* TODO - Readd support for Oric TAP files */
-	/*	CASSETTE_FORMAT(oric_tap_format) */
+	CASSETTE_FORMAT(oric_tap_format)
 CASSETTE_FORMATLIST_END

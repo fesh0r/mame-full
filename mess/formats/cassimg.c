@@ -521,7 +521,7 @@ casserr_t cassette_put_samples(cassette_image *cassette, int channel,
 			dest_value = extrapolate8(*((INT8 *) source_ptr));
 			break;
 		case 2:
-			dest_value = extrapolate16(*((INT16 *) source_ptr));
+			dest_value = extrapolate16(*((INT8 *) source_ptr));
 			break;
 		case 4:
 			dest_value = *((INT32 *) source_ptr);
@@ -774,4 +774,151 @@ casserr_t cassette_read_modulated_data(cassette_image *cassette, int channel, do
 	return CASSETTE_ERROR_SUCCESS;
 }
 
+
+
+/*********************************************************************
+	waveform accesses to/from the raw image
+*********************************************************************/
+
+casserr_t cassette_legacy_identify(cassette_image *cassette, struct CassetteOptions *opts,
+	const struct CassetteLegacyWaveFiller *legacy_args)
+{
+	opts->channels = 1;
+	opts->bits_per_sample = 16;
+	opts->sample_frequency = legacy_args->sample_frequency;
+	return CASSETTE_ERROR_SUCCESS;
+}
+
+
+
+casserr_t cassette_legacy_construct(cassette_image *cassette,
+	const struct CassetteLegacyWaveFiller *legacy_args)
+{
+	casserr_t err;
+	int length;
+	int sample_count;
+	void *bytes = NULL;
+	void *chunk = NULL;
+	INT16 *samples = NULL;
+	int pos = 0;
+	UINT64 offset = 0;
+	UINT64 size;
+	struct CassetteLegacyWaveFiller args;
+
+	/* sanity check the args */
+	assert(legacy_args->header_samples >= 0);
+	assert(legacy_args->trailer_samples >= 0);
+	assert(legacy_args->fill_wave);
+
+	size = cassette_image_size(cassette);
+
+	/* normalize the args */
+	args = *legacy_args;
+	if (args.chunk_size == 0)
+		args.chunk_size = 1;
+	else if (args.chunk_size < 0)
+		args.chunk_size = cassette_image_size(cassette);
+	if (args.sample_frequency == 0)
+		args.sample_frequency = 11025;
+
+	/* allocate a buffer for the binary data */
+	chunk = malloc(args.chunk_size);
+	if (!chunk)
+	{
+		err = CASSETTE_ERROR_OUTOFMEMORY;
+		goto done;
+	}
+
+	/* determine number of samples */
+	if (args.chunk_sample_calc)
+	{
+		if (size > 0x7FFFFFFF)
+		{
+			err = CASSETTE_ERROR_OUTOFMEMORY;
+			goto done;
+		}
+
+		bytes = malloc(size);
+		if (!bytes)
+		{
+			err = CASSETTE_ERROR_OUTOFMEMORY;
+			goto done;
+		}
+		cassette_image_read(cassette, bytes, 0, size);
+		sample_count = args.chunk_sample_calc(bytes, (int) size);
+	}
+	else
+	{
+		sample_count = ((size + args.chunk_size - 1) / args.chunk_size)
+			* args.chunk_samples;
+	}
+	sample_count += args.header_samples + args.trailer_samples;
+
+	/* allocate a buffer for the completed samples */
+	samples = malloc(sample_count * sizeof(*samples));
+	if (!samples)
+	{
+		err = CASSETTE_ERROR_OUTOFMEMORY;
+		goto done;
+	}
+
+	/* if there has to be a header */
+	if (args.header_samples > 0)
+	{
+		length = args.fill_wave(samples + pos, sample_count - pos, CODE_HEADER);
+		if (length < 0)
+		{
+			err = CASSETTE_ERROR_INVALIDIMAGE;
+			goto done;
+		}
+		pos += length;
+	}
+
+	/* convert the file data to samples */
+	while((pos < sample_count) && (offset < size))
+	{
+		cassette_image_read(cassette, chunk, offset, args.chunk_size);
+		offset += args.chunk_size;
+
+		length = args.fill_wave(samples + pos, sample_count - pos, chunk);
+		if (length < 0)
+		{
+			err = CASSETTE_ERROR_INVALIDIMAGE;
+			goto done;
+		}
+		pos += length;
+		if (length == 0)
+			break;
+	}
+
+	/* if there has to be a trailer */
+	if (args.trailer_samples > 0)
+	{
+		length = args.fill_wave(samples + pos, sample_count - pos, CODE_TRAILER);
+		if (length < 0)
+		{
+			err = CASSETTE_ERROR_INVALIDIMAGE;
+			goto done;
+		}
+		pos += length;
+	}
+
+	/* specify the wave */
+	err = cassette_put_samples(cassette, 0, 0.0, ((double) pos) / args.sample_frequency,
+		pos, 2, samples, CASSETTE_WAVEFORM_16BIT);
+	if (err)
+		goto done;
+
+	/* success! */
+	err = CASSETTE_ERROR_SUCCESS;
+
+done:
+	if (samples)
+		free(samples);
+	if (chunk)
+		free(chunk);
+	if (bytes)
+		free(bytes);
+	return err;
+}
 
