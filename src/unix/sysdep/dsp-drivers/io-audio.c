@@ -50,6 +50,8 @@ based on the OSS source code...
 #include "sysdep/sysdep_dsp.h"
 #include "sysdep/sysdep_dsp_priv.h"
 #include "sysdep/plugin_manager.h"
+//#include "xmame.h"
+//#include "sound.h"
 
 #define TRUE 1
 #define FALSE 0
@@ -121,13 +123,13 @@ static void *alsa_dsp_create(const void *flags)
 	int err;
 	int bytespersample;
 
-	fprintf(stderr,"dsp_create called\n");
+	fprintf(stderr,"info: dsp_create called\n");
    
 	/* allocate the dsp struct */
 	if (!(dsp = calloc(1, sizeof(struct sysdep_dsp_struct))))
 	{
 		fprintf(stderr,
-			"error malloc failed for struct sysdep_dsp_struct\n");
+			"error: malloc failed for struct sysdep_dsp_struct\n");
 		return NULL;
 	}
    
@@ -135,7 +137,7 @@ static void *alsa_dsp_create(const void *flags)
 	if(!(priv = calloc(1, sizeof(struct alsa_dsp_priv_data))))
 	{
 		fprintf(stderr,
-			"error malloc failed for struct dsp_priv_data\n");
+			"error: malloc failed for struct dsp_priv_data\n");
 		alsa_dsp_destroy(dsp);
 		return NULL;
 	}
@@ -160,17 +162,17 @@ static void *alsa_dsp_create(const void *flags)
  		if((err = snd_pcm_open_preferred(&(priv->audio_dev.m_AudioHandle), &priv->audio_dev.m_Acard,
                                        &priv->audio_dev.m_Adevice, SND_PCM_OPEN_PLAYBACK)) < 0)
     	{
-			fprintf(stderr,"snd_pcm_open_preferred failed: %s \n", snd_strerror(err));
+			fprintf(stderr,"info: snd_pcm_open_preferred failed: %s \n", snd_strerror(err));
     	            alsa_dsp_destroy(dsp);
 			return NULL;
     	}
 	}
 	else
 	{
-		fprintf(stderr,"audio is using primary device\n");
+		fprintf(stderr,"info: audio is using primary device\n");
 		if((err = snd_pcm_open(&(priv->audio_dev.m_AudioHandle), 0, 0, SND_PCM_OPEN_PLAYBACK)) < 0)
 		{
-			fprintf(stderr,"snd_pcm_open failed: %s \n", snd_strerror(err));
+			fprintf(stderr,"info: snd_pcm_open failed: %s \n", snd_strerror(err));
 			alsa_dsp_destroy(dsp);
 			return NULL;
 		}
@@ -180,7 +182,7 @@ static void *alsa_dsp_create(const void *flags)
 	priv->audio_dev.m_Achaninfo.channel = SND_PCM_CHANNEL_PLAYBACK;
 	if ((err = snd_pcm_plugin_info (priv->audio_dev.m_AudioHandle, &(priv->audio_dev.m_Achaninfo))) < 0)
 	{
-		fprintf (stderr, "snd_pcm_plugin_info failed: %s\n", snd_strerror (err));
+		fprintf (stderr, "info: snd_pcm_plugin_info failed: %s\n", snd_strerror (err));
 		alsa_dsp_destroy(dsp);
 		return NULL;
 	}
@@ -188,7 +190,7 @@ static void *alsa_dsp_create(const void *flags)
 	//needed to enable the count status parameter, mmap plugin disables this
 	if((err = snd_plugin_set_disable(priv->audio_dev.m_AudioHandle, PLUGIN_DISABLE_MMAP)) < 0)
 	{
-		fprintf (stderr, "snd_plugin_set_disable failed: %s\n", snd_strerror (err));
+		fprintf (stderr, "info: snd_plugin_set_disable failed: %s\n", snd_strerror (err));
 		alsa_dsp_destroy(dsp);
 		return NULL;
 	}
@@ -231,21 +233,21 @@ static void *alsa_dsp_create(const void *flags)
 
 	if ((err = snd_pcm_plugin_params (priv->audio_dev.m_AudioHandle, &(priv->audio_dev.m_Aparams))) < 0)
 	{
-		fprintf (stderr, "snd_pcm_plugin_params failed: %s\n", snd_strerror (err));
+		fprintf (stderr, "info: snd_pcm_plugin_params failed: %s\n", snd_strerror (err));
 		alsa_dsp_destroy(dsp);
 		return NULL;
 	}
 
 	if ((err = snd_pcm_plugin_prepare (priv->audio_dev.m_AudioHandle, SND_PCM_CHANNEL_PLAYBACK)) < 0)
 	{
-		fprintf (stderr, "snd_pcm_plugin_prepare failed: %s\n", snd_strerror (err));
+		fprintf (stderr, "warning: snd_pcm_plugin_prepare failed: %s\n", snd_strerror (err));
 	}
 
 	memset (&(priv->audio_dev.m_Asetup), 0, sizeof (priv->audio_dev.m_Asetup));
 	priv->audio_dev.m_Asetup.channel = SND_PCM_CHANNEL_PLAYBACK;
 	if ((err = snd_pcm_plugin_setup (priv->audio_dev.m_AudioHandle, &(priv->audio_dev.m_Asetup))) < 0)
 	{
-		fprintf (stderr, "snd_pcm_plugin_setup failed: %s\n", snd_strerror (err));
+		fprintf (stderr, "warning: snd_pcm_plugin_setup failed: %s\n", snd_strerror (err));
 		alsa_dsp_destroy(dsp);
 		return NULL;
 	}
@@ -254,38 +256,40 @@ static void *alsa_dsp_create(const void *flags)
 	priv->audio_dev.m_Astatus.channel = SND_PCM_CHANNEL_PLAYBACK;
 	if ((err = snd_pcm_plugin_status (priv->audio_dev.m_AudioHandle, &(priv->audio_dev.m_Astatus))) < 0)
 	{
-		fprintf (stderr, "snd_pcm_plugin_status failed: %s\n", snd_strerror (err));
+		fprintf (stderr, "warning: snd_pcm_plugin_status failed: %s\n", snd_strerror (err));
         }
 	dsp->hw_info.bufsize = priv->audio_dev.m_Asetup.buf.stream.queue_size  
 	             		/ alsa_dsp_bytes_per_sample[dsp->hw_info.type];
 	if ((err=snd_pcm_nonblock_mode(priv->audio_dev.m_AudioHandle, 1))<0)
 	{
-		fprintf(stderr, "Error with non block mode: %s\n", snd_strerror (err));
+		fprintf(stderr, "error: error with non block mode: %s\n", snd_strerror (err));
 	}
 
 	return dsp;
 }
 
+/* BUG: Core dumps if -nosound isn't present when using a soundless setup... */
 static void alsa_dsp_destroy(struct sysdep_dsp_struct *dsp)
 {
 	struct alsa_dsp_priv_data *priv = dsp->_priv;
 	int err;
-
-	fprintf (stderr,"dsp_destroy called\n");
-
+	
+	fprintf (stderr,"info: dsp_destroy called\n");
+	
 	if(priv)
 	{
 		if ((err = snd_pcm_plugin_flush(priv->audio_dev.m_AudioHandle,SND_PCM_CHANNEL_PLAYBACK)) < 0)
-			fprintf (stderr, "snd_pcm_plugin_playback_drain failed: %s\n", snd_strerror (err));
+			fprintf (stderr, "warning: snd_pcm_plugin_playback_drain failed: %s\n", snd_strerror (err));
 
 	        err =  snd_pcm_close(priv->audio_dev.m_AudioHandle);
 	        if (err != 0)
-			printf("snd_pcm_close failed: %s\n",snd_strerror(err));
+			printf("info: snd_pcm_close failed: %s\n",snd_strerror(err));
 
 		priv->audio_dev.m_AudioHandle = NULL;
 		free(priv);
 	}
 	free(dsp);
+	
 }
    
 static int alsa_dsp_get_freespace(struct sysdep_dsp_struct *dsp)

@@ -9,8 +9,10 @@
  * Copyright (C) 2000-2001, The PhMAME Developement Team.
 */
 
-#include <Ph.h>
-#include <Pt.h>
+/* BUG: Certain keys (eg: F1-F12), dont work... */
+/* BUG: Certain games that can utilize the mouse (eg: chiller)
+core dump instantly... FIXED! */
+
 #include "xmame.h"
 #include "devices.h"
 #include "photon2.h"
@@ -259,22 +261,20 @@ void sysdep_mouse_poll (void)
 //		fprintf(stderr,"grabbing mouse\n");
 		PtGetAbsPosition(P_mainWindow,&windowpos.x, &windowpos.y);
 		PhMoveCursorAbs(ig, windowpos.x+(visual_width/2), windowpos.y+(visual_height/2));
-		mouse_data[0].deltas[0] = buf.pos.x - (windowpos.x+(visual_width/2));
-		mouse_data[0].deltas[1] = buf.pos.y - (windowpos.y+(visual_height/2));
-
-	}
-	else
-	{
-		if (update_mouse==FALSE)
-		{
-			mouse_data[0].deltas[0]=0;
-			mouse_data[0].deltas[0]=0;
+			mouse_data[0].deltas[0] = buf.pos.x - visual_width/2;
+			mouse_data[0].deltas[1] = buf.pos.y - visual_height/2;
 		}
-		update_mouse=FALSE;
+		else
+		{
+			mouse_data[0].deltas[0] = buf.pos.x - current_mouse[0];
+			mouse_data[0].deltas[1] = buf.pos.y - current_mouse[1];
+			current_mouse[0] = buf.pos.x;
+			current_mouse[1] = buf.pos.y;
 	}
 #endif
 }
 
 void sysdep_set_leds(int leds)
 {
+
 }

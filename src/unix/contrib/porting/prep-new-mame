@@ -35,15 +35,21 @@ ln -s src/unix/doc .
 ln -s src/unix/install-sh .
 
 # Move the MAME text files to the doc directory.
-mv readme.txt doc/readme.mame
+mv mame.txt doc/readme.mame
 mv whatsnew.txt doc/changes.mame
+mv gamelist.txt doc/gamelist.mame
+mv msdos.txt doc
+mv windows.txt doc
 
 # Rename the MAME makefile and fix its line endings.
 mv makefile makefile.mame
 d2u makefile.mame
 
-# Copy over makefile.unix from the old xmame directory.
+# Copy makefile.unix from the old xmame directory.
 cp $1/makefile.unix .
+
+# Copy README from the old xmame directory.
+cp $1/README .
 
 # Clean up the files left over from d2u and fix-comments.
 rm `find . -name "*~" -print`

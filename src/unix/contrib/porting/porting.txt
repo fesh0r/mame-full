@@ -39,8 +39,8 @@ Porting MAME
   create symlinks to some of the directories in there; rename/move doc files;
   fix the line endings of source, text, and makefiles; and fix the comments in
   source files.
-- Run diff -uBbr <old-xmame>/src/msdos <new-xmame>/src/msdos > dos-changes 
-- Look in the dos-changes file to see if anything on the OSD side has
+- Run diff -uBbr <old-xmame>/src/windows <new-xmame>/src/windows > win-changes 
+- Look in the win-changes file to see if anything on the OSD side has
   changed--things like different return/call value, new functions altogether,
   different prototypes, etc.
 - Make the necessary changes to <new-xmame>/src/unix/*

@@ -92,6 +92,12 @@ static const struct plugin_struct *sysdep_dsp_plugins[] = {
 #ifdef SYSDEP_DSP_ALSA
    &sysdep_dsp_alsa,
 #endif
+#ifdef SYSDEP_DSP_ARTS_TEIRA
+   &sysdep_dsp_arts,
+#endif
+#ifdef SYSDEP_DSP_ARTS_SMOTEK
+   &sysdep_dsp_arts,
+#endif
    NULL
 };
 

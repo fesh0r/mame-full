@@ -67,6 +67,7 @@ void osd_dir_close(void *dir)
   free(my_dir);
 }
 
+#ifndef __QNXNTO__
 static int fnmatch(const char *f1, const char *f2)
 {
 	while (*f1 && *f2)
@@ -112,6 +113,7 @@ static int fnmatch(const char *f1, const char *f2)
 		return 0;
     return 1;
 }
+#endif
 
 int osd_dir_get_entry(void *dir, char *name, int namelength, int *is_dir)
 {
@@ -139,7 +141,11 @@ int osd_dir_get_entry(void *dir, char *name, int namelength, int *is_dir)
       {
          *is_dir = 1;
       }
+#ifndef __QNXNTO__
       else if (!fnmatch(my_dir->filemask, d->d_name))
+#else
+      else if (!fnmatch(my_dir->filemask, d->d_name,0))   
+#endif
          continue;
       
       strncpy(name, d->d_name, namelength-1);
