@@ -10,6 +10,7 @@
 
 /***************************************************************************/
 
+static const UINT8 *a2_videoram;
 static UINT32 a2_videomask;
 static UINT32 old_a2;
 static struct tilemap *text_tilemap;
@@ -89,7 +90,7 @@ static void apple2_generaltext_gettileinfo(int gfxset, int videobase, int memory
 	int current_bgcolor = bgcolor;
 	int i;
 	
-	character = mess_ram[videobase + memory_offset];
+	character = a2_videoram[videobase + memory_offset];
 
 	if (effective_a2() & VAR_ALTCHARSET)
 	{
@@ -183,7 +184,7 @@ static void apple2_lores_gettileinfo(int memory_offset)
 	tile_info.pen_usage = 0;
 	tile_info.flags = 0;
 
-	ch = mess_ram[lores_videobase + memory_offset];
+	ch = a2_videoram[lores_videobase + memory_offset];
 	pal_data[0] = (ch >> 0) & 0x0f;
 	pal_data[1] = (ch >> 4) & 0x0f;
 }
@@ -206,7 +207,7 @@ static UINT32 apple2_hires_getmemoryoffset(UINT32 col, UINT32 row, UINT32 num_co
 struct drawtask_params
 {
 	struct mame_bitmap *bitmap;
-	UINT8 *vram;
+	const UINT8 *vram;
 	int beginrow;
 	int rowcount;
 	int columns;
@@ -216,7 +217,7 @@ static void apple2_hires_draw_task(void *param, int task_num, int task_count)
 {
 	struct drawtask_params *dtparams;
 	struct mame_bitmap *bitmap;
-	UINT8 *vram;
+	const UINT8 *vram;
 	int beginrow;
 	int endrow;
 	int row, col, b;
@@ -305,7 +306,7 @@ static void apple2_hires_draw(struct mame_bitmap *bitmap, const struct rectangle
 	if (endrow < beginrow)
 		return;
 
-	dtparams.vram = mess_ram + (page ? 0x4000 : 0x2000);
+	dtparams.vram = a2_videoram + (page ? 0x4000 : 0x2000);
 	dtparams.bitmap = bitmap;
 	dtparams.beginrow = beginrow;
 	dtparams.rowcount = (endrow + 1) - beginrow;
@@ -314,11 +315,13 @@ static void apple2_hires_draw(struct mame_bitmap *bitmap, const struct rectangle
 	osd_parallelize(apple2_hires_draw_task, &dtparams, dtparams.rowcount);
 }
 
+
+
 /***************************************************************************
   video core
 ***************************************************************************/
 
-static int internal_apple2_video_start(UINT32 ignored_softswitches, int hires_modulo)
+int apple2_video_start(const UINT8 *vram, size_t vram_size, UINT32 ignored_softswitches, int hires_modulo)
 {
 	int i, j;
 	UINT16 c;
@@ -343,6 +346,7 @@ static int internal_apple2_video_start(UINT32 ignored_softswitches, int hires_mo
 	flash = 0;
 	apple2_font = memory_region(REGION_GFX1);
 	alt_charset_value = memory_region_length(REGION_GFX1) / 16;
+	a2_videoram = vram;
 
 	text_tilemap = tilemap_create(
 		apple2_text_gettileinfo,
@@ -421,19 +425,19 @@ static int internal_apple2_video_start(UINT32 ignored_softswitches, int hires_mo
 
 VIDEO_START( apple2 )
 {
-	return internal_apple2_video_start(VAR_80COL | VAR_ALTCHARSET | VAR_DHIRES, 4);
+	return apple2_video_start(mess_ram, mess_ram_size, VAR_80COL | VAR_ALTCHARSET | VAR_DHIRES, 4);
 }
 
 
 VIDEO_START( apple2p )
 {
-	return internal_apple2_video_start(VAR_80COL | VAR_ALTCHARSET | VAR_DHIRES, 8);
+	return apple2_video_start(mess_ram, mess_ram_size, VAR_80COL | VAR_ALTCHARSET | VAR_DHIRES, 8);
 }
 
 
 VIDEO_START( apple2e )
 {
-	return internal_apple2_video_start(0, 8);
+	return apple2_video_start(mess_ram, mess_ram_size, 0, 8);
 }
 
 

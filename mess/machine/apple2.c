@@ -51,6 +51,11 @@ static double joystick_y1_time;
 static double joystick_x2_time;
 static double joystick_y2_time;
 
+static WRITE8_HANDLER ( apple2_mainram0400_w );
+static WRITE8_HANDLER ( apple2_mainram2000_w );
+static WRITE8_HANDLER ( apple2_auxram0400_w );
+static WRITE8_HANDLER ( apple2_auxram2000_w );
+
 
 
 /* -----------------------------------------------------------------------
@@ -799,28 +804,28 @@ void apple2_interrupt(void)
 	apple2_auxram2000_w
 ***************************************************************************/
 
-WRITE8_HANDLER ( apple2_mainram0400_w )
+static WRITE8_HANDLER ( apple2_mainram0400_w )
 {
 	offset += 0x400;
 	mess_ram[offset] = data;
 	apple2_video_touch(offset);
 }
 
-WRITE8_HANDLER ( apple2_mainram2000_w )
+static WRITE8_HANDLER ( apple2_mainram2000_w )
 {
 	offset += 0x2000;
 	mess_ram[offset] = data;
 	apple2_video_touch(offset);
 }
 
-WRITE8_HANDLER ( apple2_auxram0400_w )
+static WRITE8_HANDLER ( apple2_auxram0400_w )
 {
 	offset += 0x10400;
 	mess_ram[offset] = data;
 	apple2_video_touch(offset);
 }
 
-WRITE8_HANDLER ( apple2_auxram2000_w )
+static WRITE8_HANDLER ( apple2_auxram2000_w )
 {
 	offset += 0x12000;
 	mess_ram[offset] = data;
