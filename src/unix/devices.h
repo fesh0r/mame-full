@@ -78,7 +78,7 @@
 #define MOUSE_GET_BUTTON(code) \
  ((code - JOY_LIST_LEN) % MOUSE_LIST_TOTAL_ENTRIES)
 
-enum { JOY_NONE, JOY_I386, JOY_PAD, JOY_X11, JOY_I386NEW, JOY_USB };
+enum { JOY_NONE, JOY_I386, JOY_PAD, JOY_X11, JOY_I386NEW, JOY_USB, JOY_SDL };
 
 /*** variables ***/
 
@@ -132,5 +132,6 @@ void joy_i386_init(void);
 void joy_pad_init(void);
 void joy_x11_init(void);
 void joy_usb_init(void);
+void joy_SDL_init(void);
 #undef EXTERN
 #endif

@@ -28,8 +28,15 @@ struct rc_option input_opts[] = {
       NULL,		0,			0,		NULL,
       NULL },
    { "joytype",		"jt",			rc_int,		&joytype,
-      "0",      	0,			5,		NULL,
-      "Select type of joystick support to use:\n0 No joystick\n1 i386 style joystick driver (if compiled in)\n2 Fm Town Pad support (if compiled in)\n3 X11 input extension joystick (if compiled in)\n4 new i386 linux 1.x.x joystick driver(if compiled in)\n5 NetBSD USB joystick driver (if compiled in)" },
+      "0",      	0,			7,		NULL,
+      "Select type of joystick support to use:\n"
+	      "0 No joystick\n"
+	      "1 i386 style joystick driver (if compiled in)\n"
+	      "2 Fm Town Pad support (if compiled in)\n"
+	      "3 X11 input extension joystick (if compiled in)\n"
+	      "4 new i386 linux 1.x.x joystick driver(if compiled in)\n"
+	      "5 NetBSD USB joystick driver (if compiled in)\n"
+	      "6 SDL joystick driver" },
    { "analogstick",	"as",			rc_bool,	&analogstick,
      "0",		0,			0,		NULL,
      "Use Joystick as analog for analog controls" },
@@ -219,6 +226,11 @@ int osd_input_initpost (void)
          joy_usb_init();
          break;
 #endif
+#ifdef SDL
+      case JOY_SDL:
+	 joy_SDL_init();
+	 break;
+#endif
       default:
          fprintf (stderr_file, "OSD: Warning: unknown joytype: %d, or joytype not compiled in.\n"
             "   Disabling joystick support.\n", joytype);
@@ -337,7 +349,7 @@ int osd_is_joy_pressed (int joycode)
 
 void joy_evaluate_moves (void)
 {
-   int i, j, treshold;
+   int i, j, threshold;
 
    if( is_usb_ps_gamepad )
     {
@@ -363,11 +375,11 @@ void joy_evaluate_moves (void)
 	     else if (joy_data[i].axis[j].val < joy_data[i].axis[j].min)
 	       joy_data[i].axis[j].min = joy_data[i].axis[j].val;
 	     
-	     treshold = (joy_data[i].axis[j].max - joy_data[i].axis[j].center) >> 1;
+	     threshold = (joy_data[i].axis[j].max - joy_data[i].axis[j].center) >> 1;
 	     
-	     if (joy_data[i].axis[j].val < (joy_data[i].axis[j].center - treshold))
+	     if (joy_data[i].axis[j].val < (joy_data[i].axis[j].center - threshold))
 	       joy_data[i].axis[j].dirs[0] = TRUE;
-	     else if (joy_data[i].axis[j].val > (joy_data[i].axis[j].center + treshold))
+	     else if (joy_data[i].axis[j].val > (joy_data[i].axis[j].center + threshold))
 	       joy_data[i].axis[j].dirs[1] = TRUE;
 	   }
        }
