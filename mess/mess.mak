@@ -815,17 +815,12 @@ $(OBJ)/telmac.a:					\
 	$(OBJ)/mess/systems/telmac.o	\
 	$(OBJ)/mess/vidhrdw/cdp186x.o	\
 
-ifdef BUILD_EXPAT
-EXPATOBJS = $(OBJ)/libexpat.a
-else
-EXPATOBJS = -lexpat
-endif
-
 
 
 # MESS specific core $(OBJ)s
 COREOBJS +=							\
-	$(EXPATOBJS)					\
+	$(EXPAT)						\
+	$(ZLIB)							\
 	$(OBJ)/cheat.o					\
 	$(OBJ)/vidhrdw/tms9928a.o		\
 	$(OBJ)/mess/mess.o				\
@@ -905,10 +900,10 @@ MESSDOCS_OBJS =								\
 	$(OBJ)/mess/tools/messdocs/messdocs.o	\
 	$(OBJ)/mess/utils.o						\
 	$(OBJ)/mess/pool.o						\
-	$(EXPATOBJS)							\
+	$(EXPAT)								\
 
 MESSTEST_OBJS =								\
-	$(EXPATOBJS)							\
+	$(EXPAT)								\
 	$(OBJ)/mess/tools/messtest/main.o		\
 	$(OBJ)/mess/tools/messtest/messtest.o	\
 	$(OBJ)/mess/tools/messtest/testexec.o	\

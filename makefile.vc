@@ -131,7 +131,7 @@ DEFS = \
 	-DLSB_FIRST=1 \
 	-DXML_STATIC \
 	$(MAME_VERSION) \
-	-DCRLF=3
+	-DCRLF=3 \
 
 ifndef DEBUG
 DEFS += -DNDEBUG
@@ -161,10 +161,6 @@ INCLUDES += \
 
 ifdef DX_INCPATH
 INCLUDES += -I$(DX_INCPATH)
-endif
-
-ifdef ZLIB_INCPATH
-INCLUDES += -I$(subst \,\\,$(ZLIB_INCPATH)) 
 endif
 
 #
@@ -212,14 +208,9 @@ LIBS = \
 		dsound.lib \
 		ddraw.lib \
 		htmlhelp.lib \
-        zlib.lib
 
 ifdef DX_LIBPATH
 LDFLAGS += -LIBPATH:$(subst \,\\,$(DX_LIBPATH))
-endif
-
-ifdef ZLIB_LIBPATH
-LDFLAGS += -LIBPATH:$(subst \,\\,$(ZLIB_LIBPATH))
 endif
 
 ifdef GX_PATH
@@ -238,7 +229,7 @@ ifdef BUILD_ZLIB
 OBJDIRS += $(OBJ)/zlib
 ZLIB = $(OBJ)/libz.a
 else
-LIBS += -lz
+LIBS += zlib.lib
 ZLIB =
 endif
 
@@ -373,7 +364,7 @@ romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
 
 chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ zlib.lib -out:$@
+	$(LD) $(LDFLAGS) $^ $(ZLIB) -out:$@
 
 xml2info$(EXE): src/xml2info/xml2info.c $(OBJ)/libexpat.a
 	@echo Compiling $@...
@@ -389,7 +380,7 @@ messdocs$(EXE): $(MESSDOCS_OBJS) $(OBJ)/mess/windows/dirutils.o $(OBJ)/mess/ui/d
 
 imgtool$(EXE): $(IMGTOOL_OBJS) $(PLATFORM_TOOL_OBJS) $(OBJ)/mess/ui/dirent.o
 	@echo Compiling $@...
-	$(LD) $(LDFLAGS) $^ zlib.lib -out:$@
+	$(LD) $(LDFLAGS) $^ $(ZLIB) -out:$@
 
 messtest$(EXE):	$(OBJS) $(COREOBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 		$(OBJ)/windows/asmtile.o				\
@@ -405,7 +396,7 @@ messtest$(EXE):	$(OBJS) $(COREOBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 		$(OBJ)/mess/ui/dirent.o					\
 		$(OBJ)/mess/snprintf.o
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $^ zlib.lib winmm.lib user32.lib -out:$@
+	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $^ $(ZLIB) winmm.lib user32.lib -out:$@
 
 # secondary libraries
 $(OBJ)/libexpat.a: $(OBJ)/expat/xmlparse.o $(OBJ)/expat/xmlrole.o $(OBJ)/expat/xmltok.o
