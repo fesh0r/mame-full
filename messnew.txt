@@ -13,8 +13,8 @@ System Driver Changes:
 - [PC] Made fonts, monitor types and CGA chipsets configurable. [John Elliot] 
 
 - [SNES] Name select is only for sprites using tiles over 255. Fixed sprite
-  wrap at the bottom of the screen. Fixed clearing of HDMA channels.
-  [Jimmy Li, Anthony Kruize]
+  wrap at the bottom of the screen. Fixed clearing of HDMA channels. Fixed
+  background colours in mode 0. [Jimmy Li, Anthony Kruize]
 
 User Interface Changes:
 -----------------------

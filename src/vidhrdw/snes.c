@@ -538,6 +538,12 @@ static void snes_update_line_2( UINT8 screen, UINT8 layer, UINT16 curline, UINT8
 		tile = (snes_vram[tilemap + ii + 1] & 0x3) << 8;
 		tile |= snes_vram[tilemap + ii];
 
+		/* Mode 0 palettes are layer specific */
+		if( snes_ppu.mode == 0 )
+		{
+			pal += (layer << 5);
+		}
+
 		tile_line = line;
 		if( vflip )
 		{
