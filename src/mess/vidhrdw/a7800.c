@@ -53,7 +53,7 @@ int a7800_vh_start(void)
 {
     int i;
 
-    if ((maria_bitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+    if ((maria_bitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
     for(i=0; i<8; i++) {
@@ -501,7 +501,7 @@ int a7800_interrupt(void)
 void a7800_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
     maria_scanline=0;
-    copybitmap(bitmap,maria_bitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+    copybitmap(bitmap,maria_bitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
 

@@ -7,6 +7,7 @@
 Changes:
 
 28/05/2000 DJR - Initial implementation.
+08/06/2000 DJR - Now only uses events with the correct ID value.
 
 ***************************************************************************/
 
@@ -43,14 +44,16 @@ void draw_border(struct osd_bitmap *bitmap,
         int ScreenCycles,               /* Cycles taken to draw screen data part of each scan line */
         int RightBorderCycles,          /* Cycles taken to draw right border of each scan line */
         int HorizontalRetraceCycles,    /* Cycles taken to return to LHS of CRT after each scan line */
-        int VRetraceTime)               /* Cycles taken before start of first border line */
+        int VRetraceTime,               /* Cycles taken before start of first border line */
+        int EventID)                    /* Event ID of border messages */
 {
         EVENT_LIST_ITEM *pItem;
         int TotalScreenHeight = TopBorderLines+ScreenLines+BottomBorderLines;
         int TotalScreenWidth = LeftBorderPixels+ScreenPixels+RightBorderPixels;
         int DisplayCyclesPerLine = LeftBorderCycles+ScreenCycles+RightBorderCycles;
         int CyclesPerLine = DisplayCyclesPerLine+HorizontalRetraceCycles;
-        int CyclesSoFar = 0, NumItems, CurrItem = 0;
+        int CyclesSoFar = 0;
+        int NumItems, CurrItem = 0, NextItem;
         int Count, ScrX, NextScrX, ScrY;
         struct rectangle r;
 
@@ -65,15 +68,22 @@ void draw_border(struct osd_bitmap *bitmap,
         for (Count = 0; Count < NumItems; Count++)
                 logerror ("Event no %05d, ID = %04x, data = %04x, time = %ld\n", Count, pItem[Count].Event_ID, pItem[Count].Event_Data, pItem[Count].Event_Time);
 
+        /* Find the first and second events with the correct ID */
+        while ((CurrItem < NumItems) && (pItem[CurrItem].Event_ID != EventID))
+                CurrItem++;
+        NextItem = CurrItem + 1;
+        while ((NextItem < NumItems) && (pItem[NextItem].Event_ID != EventID))
+                NextItem++;
 
-        if (NumItems == 1)
-                CurrBorderColor = pItem->Event_Data;
+        /* Single border colour */
+        if ((CurrItem < NumItems) && (NextItem >= NumItems))
+                CurrBorderColor = pItem[CurrItem].Event_Data;
 
-        if ((NumItems < 2) && (CurrBorderColor==LastDisplayedBorderColor))
+        if ((NextItem >= NumItems) && (CurrBorderColor==LastDisplayedBorderColor))
         {
                 /* Do nothing if border colour has not changed */
         }
-        else if (NumItems < 2)
+        else if (NextItem >= NumItems)
         {
                 /* Single border colour - this is not strictly correct as the
                    colour change may have occurred midway through the frame
@@ -101,9 +111,9 @@ void draw_border(struct osd_bitmap *bitmap,
                 r.min_y = TopBorderLines+ScreenLines;
                 r.max_y = TotalScreenHeight-1;
                 fillbitmap(bitmap, Machine->pens[CurrBorderColor], &r);
-                LastDisplayedBorderColor = CurrBorderColor;
 
-                logerror ("Setting border colour to %d\n", CurrBorderColor);
+                logerror ("Setting border colour to %d (Last = %d)\n", CurrBorderColor, LastDisplayedBorderColor);
+                LastDisplayedBorderColor = CurrBorderColor;
         }
         else
         {
@@ -113,7 +123,9 @@ void draw_border(struct osd_bitmap *bitmap,
                 while ((CurrItem < NumItems) && (pItem[CurrItem].Event_Time <= VRetraceTime))
                 {
                         CurrBorderColor = pItem[CurrItem].Event_Data;
-                        CurrItem++;
+                        do {
+                                CurrItem++;
+                        } while ((CurrItem < NumItems) && (pItem[CurrItem].Event_ID != EventID));
                 }
 
                 /* Draw top border */
@@ -135,7 +147,10 @@ void draw_border(struct osd_bitmap *bitmap,
                                 r.max_x = ScrX-1;
                                 fillbitmap(bitmap, Machine->pens[CurrBorderColor], &r);
                                 CurrBorderColor = pItem[CurrItem].Event_Data;
-                                CurrItem++;
+                                do {
+                                        CurrItem++;
+                                } while ((CurrItem < NumItems) && (pItem[CurrItem].Event_ID != EventID));
+
                                 while ((CurrItem < NumItems) && (pItem[CurrItem].Event_Time < (CyclesSoFar+DisplayCyclesPerLine)))
                                 {
                                         NextScrX = (int)(pItem[CurrItem].Event_Time - CyclesSoFar) * (float)TotalScreenWidth / (float)DisplayCyclesPerLine;
@@ -144,7 +159,9 @@ void draw_border(struct osd_bitmap *bitmap,
                                         fillbitmap(bitmap, Machine->pens[CurrBorderColor], &r);
                                         ScrX = NextScrX;
                                         CurrBorderColor = pItem[CurrItem].Event_Data;
-                                        CurrItem++;
+                                        do {
+                                                CurrItem++;
+                                        } while ((CurrItem < NumItems) && (pItem[CurrItem].Event_ID != EventID));
                                 }
                                 r.min_x = ScrX;
                                 r.max_x = TotalScreenWidth-1;
@@ -156,7 +173,9 @@ void draw_border(struct osd_bitmap *bitmap,
                         while ((CurrItem < NumItems) && (pItem[CurrItem].Event_Time <= CyclesSoFar))
                         {
                                 CurrBorderColor = pItem[CurrItem].Event_Data;
-                                CurrItem++;
+                                do {
+                                        CurrItem++;
+                                } while ((CurrItem < NumItems) && (pItem[CurrItem].Event_ID != EventID));
                         }
                 }
 
@@ -180,7 +199,10 @@ void draw_border(struct osd_bitmap *bitmap,
                                 r.max_x = ScrX-1;
                                 fillbitmap(bitmap, Machine->pens[CurrBorderColor], &r);
                                 CurrBorderColor = pItem[CurrItem].Event_Data;
-                                CurrItem++;
+                                do {
+                                        CurrItem++;
+                                } while ((CurrItem < NumItems) && (pItem[CurrItem].Event_ID != EventID));
+
                                 while ((CurrItem < NumItems) && (pItem[CurrItem].Event_Time < (CyclesSoFar+LeftBorderCycles)))
                                 {
                                         NextScrX = (int)(pItem[CurrItem].Event_Time - CyclesSoFar) * (float)LeftBorderPixels / (float)LeftBorderCycles;
@@ -189,7 +211,9 @@ void draw_border(struct osd_bitmap *bitmap,
                                         fillbitmap(bitmap, Machine->pens[CurrBorderColor], &r);
                                         ScrX = NextScrX;
                                         CurrBorderColor = pItem[CurrItem].Event_Data;
-                                        CurrItem++;
+                                        do {
+                                                CurrItem++;
+                                        } while ((CurrItem < NumItems) && (pItem[CurrItem].Event_ID != EventID));
                                 }
                                 r.min_x = ScrX;
                                 r.max_x = LeftBorderPixels-1;
@@ -200,7 +224,9 @@ void draw_border(struct osd_bitmap *bitmap,
                         while ((CurrItem < NumItems) && (pItem[CurrItem].Event_Time <= (CyclesSoFar+LeftBorderCycles+ScreenCycles)))
                         {
                                 CurrBorderColor = pItem[CurrItem].Event_Data;
-                                CurrItem++;
+                                do {
+                                        CurrItem++;
+                                } while ((CurrItem < NumItems) && (pItem[CurrItem].Event_ID != EventID));
                         }
 
                         /* Draw right hand border */
@@ -218,7 +244,10 @@ void draw_border(struct osd_bitmap *bitmap,
                                 r.max_x = ScrX-1;
                                 fillbitmap(bitmap, Machine->pens[CurrBorderColor], &r);
                                 CurrBorderColor = pItem[CurrItem].Event_Data;
-                                CurrItem++;
+                                do {
+                                        CurrItem++;
+                                } while ((CurrItem < NumItems) && (pItem[CurrItem].Event_ID != EventID));
+
                                 while ((CurrItem < NumItems) && (pItem[CurrItem].Event_Time < (CyclesSoFar+DisplayCyclesPerLine)))
                                 {
                                         NextScrX = LeftBorderPixels + ScreenPixels + (int)(pItem[CurrItem].Event_Time - CyclesSoFar) * (float)RightBorderPixels / (float)RightBorderCycles;
@@ -227,7 +256,9 @@ void draw_border(struct osd_bitmap *bitmap,
                                         fillbitmap(bitmap, Machine->pens[CurrBorderColor], &r);
                                         ScrX = NextScrX;
                                         CurrBorderColor = pItem[CurrItem].Event_Data;
-                                        CurrItem++;
+                                        do {
+                                                CurrItem++;
+                                        } while ((CurrItem < NumItems) && (pItem[CurrItem].Event_ID != EventID));
                                 }
                                 r.min_x = ScrX;
                                 r.max_x = TotalScreenWidth-1;
@@ -239,7 +270,9 @@ void draw_border(struct osd_bitmap *bitmap,
                         while ((CurrItem < NumItems) && (pItem[CurrItem].Event_Time <= CyclesSoFar))
                         {
                                 CurrBorderColor = pItem[CurrItem].Event_Data;
-                                CurrItem++;
+                                do {
+                                        CurrItem++;
+                                } while ((CurrItem < NumItems) && (pItem[CurrItem].Event_ID != EventID));
                         }
                 }
 
@@ -261,7 +294,10 @@ void draw_border(struct osd_bitmap *bitmap,
                                 r.max_x = ScrX-1;
                                 fillbitmap(bitmap, Machine->pens[CurrBorderColor], &r);
                                 CurrBorderColor = pItem[CurrItem].Event_Data;
-                                CurrItem++;
+                                do {
+                                        CurrItem++;
+                                } while ((CurrItem < NumItems) && (pItem[CurrItem].Event_ID != EventID));
+
                                 while ((CurrItem < NumItems) && (pItem[CurrItem].Event_Time < (CyclesSoFar+DisplayCyclesPerLine)))
                                 {
                                         NextScrX = (int)(pItem[CurrItem].Event_Time - CyclesSoFar) * (float)TotalScreenWidth / (float)DisplayCyclesPerLine;
@@ -270,7 +306,9 @@ void draw_border(struct osd_bitmap *bitmap,
                                         fillbitmap(bitmap, Machine->pens[CurrBorderColor], &r);
                                         ScrX = NextScrX;
                                         CurrBorderColor = pItem[CurrItem].Event_Data;
-                                        CurrItem++;
+                                        do {
+                                                CurrItem++;
+                                        } while ((CurrItem < NumItems) && (pItem[CurrItem].Event_ID != EventID));
                                 }
                                 r.min_x = ScrX;
                                 r.max_x = TotalScreenWidth-1;
@@ -282,18 +320,27 @@ void draw_border(struct osd_bitmap *bitmap,
                         while ((CurrItem < NumItems) && (pItem[CurrItem].Event_Time <= CyclesSoFar))
                         {
                                 CurrBorderColor = pItem[CurrItem].Event_Data;
-                                CurrItem++;
+                                do {
+                                        CurrItem++;
+                                } while ((CurrItem < NumItems) && (pItem[CurrItem].Event_ID != EventID));
                         }
                 }
 
                 /* Process colour changes after last displayed line */
-                CurrBorderColor = pItem[NumItems-1].Event_Data;
+                while (CurrItem < NumItems)
+                {
+                        if (pItem[CurrItem].Event_ID == EventID)
+                                CurrBorderColor = pItem[CurrItem].Event_Data;
+                        CurrItem++;
+                }
 
                 /* Set value to ensure redraw on next frame */
                 LastDisplayedBorderColor = -1;
 
-                logerror ("Multi coloured border drawn\n", CurrBorderColor);
+                logerror ("Multi coloured border drawn (last colour = %d)\n", CurrBorderColor);
         }
+
+        /* Assume all other routines have processed their data from the list */
         EventList_Reset();
         EventList_SetOffsetStartTime ( cpu_getcurrentcycles() );
 }

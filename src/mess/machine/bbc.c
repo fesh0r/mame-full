@@ -127,8 +127,12 @@ B7 - Operates the SHIFT lock LED (Pin 16 keyboard connector)
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "mess/machine/6522via.h"
+#include "mess/machine/wd179x.h"
 #include "mess/machine/bbc.h"
 #include "mess/vidhrdw/bbc.h"
+#include "i8271.h"
+
+const char *bbc_floppy_name[4] = {NULL,NULL,NULL,NULL};
 
 
 static int b0_sound;
@@ -193,8 +197,8 @@ static int bbc_keyboard(int data)
 		};
 
 		/* temp development fix to force start up into screen mode 0 */
-		if ((row==0) && ((column==7) || (column==8) || (column==9)))
-			{ bit=1; };
+		//if ((row==0) && ((column==7) || (column==8) || (column==9)))
+		//	{ bit=1; };
 
 		/* Normal keyboard result */
 		if ((res&(1<<row))==0)
@@ -440,13 +444,6 @@ bbcb_system_via= {
   bbc_via0_irq,
 };
 
-/*
-static int bbcb_via1_read_portb(int offset)
-{
-  return 0xff;
-}
-*/
-
 
 static struct via6522_interface
 bbcb_user_via= {
@@ -463,9 +460,56 @@ bbcb_user_via= {
   bbc_via1_irq,//via1_irq
 };
 
-void init_machine_bbc(void)
+
+static UINT8 first_fdc_access = 1;
+static UINT8 motor_drive = 0;
+static short motor_count = 0;
+static UINT8 head[4]={0,};
+
+
+static const char *floppy_name[4]={0,};
+
+
+void	bbc_i8271_interrupt(int state)
+{
+	cpu_set_nmi_line(0, state);
+}
+
+
+static i8271_interface bbc_i8271_interface=
+{
+	//bbc_i8271_interrupt,
+	NULL
+};
+
+
+void bbc_fdc_callback(int event)
+{
+	if (event==WD179X_IRQ_SET)
+		cpu_set_irq_line(0,M6502_INT_NMI,1);
+	//if (event==WD179X_IRQ_CLEAR)
+		//cpu_set_irq_line(0,M6502_INT_NMI,0);
+}
+
+void init_machine_bbca(void)
 {
 	cpu_setbankhandler_r(1, MRA_BANK1);
+	cpu_setbankhandler_r(2, MRA_BANK2);
+
+	cpu_setbank(1,memory_region(REGION_CPU1));
+
+	via_config(0, &bbcb_system_via);
+	via_set_clock(0,1000000);
+
+	via_reset();
+	bbcb_IC32_initialise();
+
+}
+
+void init_machine_bbcb(void)
+{
+	cpu_setbankhandler_r(1, MRA_BANK1);
+	cpu_setbankhandler_r(2, MRA_BANK2);
 
 	via_config(0, &bbcb_system_via);
 	via_set_clock(0,1000000);
@@ -475,6 +519,159 @@ void init_machine_bbc(void)
 
 	via_reset();
 	bbcb_IC32_initialise();
-	//via_1_w(2,255);
 
+	if( floppy_name[0] )
+		wd179x_init(1);
+	else
+		wd179x_init(0);
+	first_fdc_access=1;
+
+	i8271_init(&bbc_i8271_interface);
+	i8271_reset();
+}
+
+
+void stop_machine_bbcb(void)
+{
+	wd179x_stop_drive();
+}
+
+
+/* load floppy */
+int bbc_floppy_init(int id)
+{
+	/* load disk image */
+    floppy_name[id]=device_filename(IO_FLOPPY,id);
+    return 0;
+}
+
+
+void bbc_floppy_exit(int id)
+{
+	wd179x_stop_drive();
+	floppy_name[id]=NULL;
+	first_fdc_access=1;
+}
+
+void check_disc_status(void)
+{
+	if (motor_count && !--motor_count)
+		wd179x_stop_drive();
+}
+
+void bbc_wd179x_status_w(int offset,int data)
+{
+	UINT8 drive = 255;
+	void *file0;
+
+	drive = 0;
+	head[drive]=0;
+	if (!floppy_name[drive])
+		return;
+
+	motor_drive=drive;
+	motor_count=5*60;
+
+	file0=wd179x_select_drive(drive,head[drive],bbc_fdc_callback,floppy_name[drive]);
+
+	if (!file0)
+		return;
+
+	first_fdc_access=0;
+
+	if (file0 == REAL_FDD)
+		return;
+
+	wd179x_set_geometry(drive,80,1,10,256,0,2,0);
+
+	wd179x_select_drive(drive,head[drive],bbc_fdc_callback,floppy_name[drive]);
+}
+
+READ_HANDLER ( bbc_wd1770_read)
+{
+	int retval=0xff;
+	logerror("wd177x read: $%02X\n", offset);
+	switch (offset)
+	{
+	case 4:
+		retval=wd179x_status_r(offset);
+		break;
+	case 5:
+		retval=wd179x_track_r(offset);
+		break;
+	case 6:
+		retval=wd179x_sector_r(offset);
+		break;
+	case 7:
+		retval=wd179x_data_r(offset);
+		break;
+	default:
+		break;
+	}
+
+	return retval;
+}
+
+WRITE_HANDLER ( bbc_wd1770_write )
+{
+	logerror("wd177x write: $%02X  $%02X\n", offset,data);
+	switch (offset)
+	{
+	case 0:
+		bbc_wd179x_status_w(offset, data);
+		break;
+	case 4:
+		wd179x_command_w(offset, data);
+		break;
+	case 5:
+		wd179x_track_w(offset, data);
+		break;
+	case 6:
+		wd179x_sector_w(offset, data);
+		break;
+	case 7:
+		wd179x_data_w(offset, data);
+		break;
+	default:
+		break;
+	}
+}
+
+
+READ_HANDLER(bbc_i8271_read)
+{
+	switch (offset)
+	{
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+			/* 8271 registers */
+			return i8271_r(offset);
+		case 4:
+			return i8271_data_r(offset);
+		default:
+			break;
+	}
+
+	return 0x0ff;
+}
+
+WRITE_HANDLER(bbc_i8271_write)
+{
+	switch (offset)
+	{
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+			/* 8271 registers */
+			i8271_w(offset, data);
+			return;
+		case 4:
+			i8271_data_w(offset, data);
+			return;
+		default:
+			break;
+	}
 }

@@ -29,17 +29,11 @@ void pet_init (UINT8 *memory)
 		gfx[0x400+i] = gfx[i]^0xff;
 		gfx[0xc00+i] = gfx[0x800+i]^0xff;
 	}
-	
+
 	praster_2_init();
 
 	raster2.memory.ram=memory;
 	raster2.text.fontsize.y=8;
-	raster2.display.size.x=Machine->drv->visible_area.max_x
-		-Machine->drv->visible_area.min_x+1;
-	raster2.display.size.y=Machine->drv->visible_area.max_y
-		-Machine->drv->visible_area.min_y+1;
-	raster2.display.pos.x=Machine->drv->visible_area.min_x;
-	raster2.display.pos.y=Machine->drv->visible_area.min_y;
 	raster2.raytube.screenpos.x=raster2.raytube.screenpos.y=0;
 	raster2.mode=PRASTER_GFXTEXT;
 

@@ -40,26 +40,30 @@ static int rsdos_diskimage_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 static void rsdos_diskimage_closeenum(IMAGEENUM *enumeration);
 static size_t rsdos_diskimage_freespace(IMAGE *img);
 static int rsdos_diskimage_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int rsdos_diskimage_writefile(IMAGE *img, const char *fname, STREAM *sourcef);
+static int rsdos_diskimage_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *options);
 static int rsdos_diskimage_deletefile(IMAGE *img, const char *fname);
 static int rsdos_diskimage_create(STREAM *f, const geometry_options *options);
 
-IMAGEMODULE(rsdos,
-	"Tandy CoCo RS-DOS disk images",	/* human readable name */
-	"dsk",								/* file extension */
-	NULL,								/* crcfile */
-	NULL,								/* crc system name */
-	NULL,								/* geometry ranges */
-	rsdos_diskimage_init,				/* init function */
-	rsdos_diskimage_exit,				/* exit function */
-	rsdos_diskimage_beginenum,			/* begin enumeration */
-	rsdos_diskimage_nextenum,			/* enumerate next */
-	rsdos_diskimage_closeenum,			/* close enumeration */
-	rsdos_diskimage_freespace,			/* free space on image */
-	rsdos_diskimage_readfile,			/* read file */
-	rsdos_diskimage_writefile,			/* write file */
-	rsdos_diskimage_deletefile,			/* delete file */
-	rsdos_diskimage_create				/* create image */
+IMAGEMODULE(
+	rsdos,
+	"Tandy CoCo RS-DOS disk image",			/* human readable name */
+	"dsk",									/* file extension */
+	IMAGE_USES_FTYPE | IMAGE_USES_FASCII,	/* flags */
+	NULL,									/* crcfile */
+	NULL,									/* crc system name */
+	NULL,									/* geometry ranges */
+	rsdos_diskimage_init,					/* init function */
+	rsdos_diskimage_exit,					/* exit function */
+	NULL,									/* info function */
+	rsdos_diskimage_beginenum,				/* begin enumeration */
+	rsdos_diskimage_nextenum,				/* enumerate next */
+	rsdos_diskimage_closeenum,				/* close enumeration */
+	rsdos_diskimage_freespace,				/* free space on image */
+	rsdos_diskimage_readfile,				/* read file */
+	rsdos_diskimage_writefile,				/* write file */
+	rsdos_diskimage_deletefile,				/* delete file */
+	rsdos_diskimage_create,					/* create image */
+	NULL									/* extract function */
 )
 
 static void rtrim(char *buf)
@@ -321,6 +325,9 @@ eof:
 		if (strlen(fname) >= ent->fname_len)
 			return IMGTOOLERR_BUFFERTOOSMALL;
 		strcpy(ent->fname, fname);
+
+		if (ent->attr_len)
+			sprintf(ent->attr, "%d %c", (int) rsent.ftype, (char) (rsent.asciiflag + 'B'));
 	}
 	return 0;
 }
@@ -358,7 +365,7 @@ static int rsdos_diskimage_readfile(IMAGE *img, const char *fname, STREAM *destf
 	return 0;
 }
 
-static int rsdos_diskimage_writefile(IMAGE *img, const char *fname, STREAM *sourcef)
+static int rsdos_diskimage_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *options)
 {
 	int err;
 	rsdos_diskimage *rsimg = (rsdos_diskimage *) img;

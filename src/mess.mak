@@ -36,6 +36,7 @@ CPUS+=M68000@
 CPUS+=TMS9900@
 CPUS+=TMS9995@
 CPUS+=PDP1@
+CPUS+=SC61860@
 
 # SOUND cores used in MESS
 SOUNDS+=CUSTOM@
@@ -95,6 +96,8 @@ DRVLIBS = $(OBJ)/advision.a \
           $(OBJ)/samcoupe.a \
           $(OBJ)/gce.a      \
           $(OBJ)/kim1.a     \
+          $(OBJ)/sharp.a    \
+          $(OBJ)/lisa.a     \
           #$(OBJ)/motorola.a \
 
 
@@ -154,7 +157,6 @@ $(OBJ)/cbm.a:      \
           $(OBJ)/mess/machine/cbmb.o     \
           $(OBJ)/mess/vidhrdw/vic6560.o  \
           $(OBJ)/mess/sndhrdw/vic6560.o  \
-          $(OBJ)/mess/machine/6522via.o  \
           $(OBJ)/mess/machine/vc20.o     \
           $(OBJ)/mess/machine/vc20tape.o \
           $(OBJ)/mess/machine/vc1541.o   \
@@ -278,6 +280,7 @@ $(OBJ)/p2000.a:    \
           $(OBJ)/mess/vidhrdw/p2000m.o    \
           $(OBJ)/mess/systems/p2000t.o    \
           $(OBJ)/mess/machine/p2000t.o    \
+          $(OBJ)/mess/machine/mc6850.o    \
           $(OBJ)/mess/vidhrdw/uk101.o     \
           $(OBJ)/mess/machine/uk101.o     \
           $(OBJ)/mess/systems/uk101.o
@@ -353,6 +356,8 @@ $(OBJ)/nascom1.a:  \
           $(OBJ)/mess/systems/nascom1.o
 
 $(OBJ)/bbc.a:      \
+          $(OBJ)/mess/machine/i8271.o    \
+          $(OBJ)/mess/vidhrdw/m6845.o    \
           $(OBJ)/mess/vidhrdw/bbc.o      \
           $(OBJ)/mess/machine/bbc.o      \
           $(OBJ)/mess/systems/bbc.o
@@ -365,6 +370,10 @@ $(OBJ)/cpschngr.a: \
 $(OBJ)/mtx.a:      \
           $(OBJ)/mess/systems/mtx.o
 
+$(OBJ)/lisa.a:     \
+          $(OBJ)/mess/machine/lisa.o     \
+          $(OBJ)/mess/systems/lisa.o
+
 $(OBJ)/acorn.a:    \
           $(OBJ)/mess/machine/atom.o     \
           $(OBJ)/mess/vidhrdw/atom.o     \
@@ -374,6 +383,11 @@ $(OBJ)/samcoupe.a: \
           $(OBJ)/mess/machine/coupe.o    \
           $(OBJ)/mess/vidhrdw/coupe.o    \
           $(OBJ)/mess/systems/coupe.o
+
+$(OBJ)/sharp.a:    \
+          $(OBJ)/mess/machine/pocketc.o  \
+          $(OBJ)/mess/vidhrdw/pocketc.o  \
+          $(OBJ)/mess/systems/pocketc.o
 
 $(OBJ)/motorola.a: \
           $(OBJ)/mess/vidhrdw/mekd2.o    \
@@ -392,28 +406,29 @@ COREOBJS +=        \
           $(OBJ)/mess/machine/6522via.o  \
           $(OBJ)/mess/machine/nec765.o   \
           $(OBJ)/mess/machine/dsk.o      \
-          $(OBJ)/mess/machine/wd179x.o
-
+          $(OBJ)/mess/machine/wd179x.o   \
 
 # additional tools
 TOOLS += dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE)
 
-dat2html.exe: $(OBJ)/mess/tools/dat2html.o
+dat2html$(EXE): $(OBJ)/mess/tools/dat2html.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ -lz -o $@
 
-mkhdimg.exe:  $(OBJ)/mess/tools/mkhdimg.o
+mkhdimg$(EXE):  $(OBJ)/mess/tools/mkhdimg.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ -lz -o $@
 
-imgtool.exe:       \
+imgtool$(EXE):       \
           $(OBJ)/mess/tools/stubs.o   \
-          $(OBJ)/mess/config.o                \
-          $(OBJ)/unzip.o                      \
+          $(OBJ)/mess/config.o        \
+          $(OBJ)/unzip.o              \
           $(OBJ)/mess/tools/main.o    \
           $(OBJ)/mess/tools/imgtool.o \
           $(OBJ)/mess/tools/rsdos.o   \
           $(OBJ)/mess/tools/stream.o  \
+          $(OBJ)/mess/tools/crt.o     \
+          $(OBJ)/mess/tools/t64.o     \
           $(OBJ)/mess/tools/pchd.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ -lz -o $@

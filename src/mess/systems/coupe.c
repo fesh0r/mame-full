@@ -73,7 +73,7 @@ int coupe_line_interrupt(void)
 		}
 	}
 
-	if ((CURLINE-1)<192)				// scan line on screen so draw last scan line (may need to alter this slightly!!)
+	if (CURLINE && (CURLINE-1) < 192)               // scan line on screen so draw last scan line (may need to alter this slightly!!)
 	{
 		switch ((VMPR & 0x60)>>5)
 		{

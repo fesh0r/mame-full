@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include "osdepend.h"
 #include "mess/mess.h"
 
 #if !defined(MAX)
@@ -35,24 +36,24 @@ enum {
  *
  * Note - drivers should not use these modifiers
  */
-enum {
-	IMGTOOLERR_SRC_MODULE			= 0x1000,
-	IMGTOOLERR_SRC_FUNCTIONALITY	= 0x2000,
-	IMGTOOLERR_SRC_IMAGEFILE		= 0x3000,
-	IMGTOOLERR_SRC_FILEONIMAGE		= 0x4000,
-	IMGTOOLERR_SRC_NATIVEFILE		= 0x5000,
-	IMGTOOLERR_SRC_PARAM_CYLINDERS	= 0x6000,
-	IMGTOOLERR_SRC_PARAM_HEADS		= 0x7000,
+#define IMGTOOLERR_SRC_MODULE			0x1000
+#define	IMGTOOLERR_SRC_FUNCTIONALITY	0x2000
+#define	IMGTOOLERR_SRC_IMAGEFILE		0x3000
+#define	IMGTOOLERR_SRC_FILEONIMAGE		0x4000
+#define	IMGTOOLERR_SRC_NATIVEFILE		0x5000
+#define	IMGTOOLERR_SRC_PARAM_CYLINDERS	0x6000
+#define	IMGTOOLERR_SRC_PARAM_HEADS		0x7000
 
-	IMGTOOLERR_SRC_MASK				= 0xffff
-};
+#define	IMGTOOLERR_SRC_MASK				0xf000
 
 #define ERRORSOURCE(err)	((err) & IMGTOOLERR_SRC_MASK)
 
 typedef struct {
 	char *fname;
 	size_t fname_len;
-	size_t filesize;
+	char *attr;
+	int attr_len;
+	int filesize;
 	int eof;
 	int corrupt;
 } imgtool_dirent;
@@ -67,6 +68,7 @@ enum {
 typedef struct {
 	int imgtype;
 	int write_protect;
+	const char *name; // needed for clear
 	union {
 		FILE *f;
 		struct {
@@ -83,6 +85,11 @@ size_t stream_read(STREAM *f, void *buf, size_t sz);
 size_t stream_write(STREAM *f, const void *buf, size_t sz);
 size_t stream_size(STREAM *f);
 int stream_seek(STREAM *f, size_t pos, int where);
+/* works currently only for IMG_FILE
+   clears FILE on harddisk! */
+void stream_clear(STREAM *f);
+/* truncate with ansi c library not easy to implement */
+//void stream_truncate(STREAM *f, size_t newsize);
 
 /* Transfers sz bytes from source to dest */
 size_t stream_transfer(STREAM *dest, STREAM *source, size_t sz);
@@ -105,18 +112,54 @@ typedef struct {
 	const struct ImageModule *module;
 } IMAGEENUM;
 
+/* Flags for ImageModule */
 enum {
-	IMAGE_USES_CYLINDERS	= 0x01,
-	IMAGE_USES_HEADS		= 0x02
+	IMAGE_USES_LABEL			= 0x001,
+
+	/* harddisk */
+	IMAGE_USES_CYLINDERS		= 0x002,
+	IMAGE_USES_HEADS			= 0x004,
+
+	/* c64 tape */
+	IMAGE_USES_ENTRIES			= 0x008,
+
+	/* c64 cartridge */
+	IMAGE_USES_HARDWARE_TYPE	= 0x010,
+	IMAGE_USES_GAME_LINE		= 0x020,
+	IMAGE_USES_EXROM_LINE		= 0x040,
+
+	/* rsdos */
+	IMAGE_USES_FTYPE			= 0x080,
+	IMAGE_USES_FASCII			= 0x100,
+	/* c64 cartridge */
+	IMAGE_USES_FADDR			= 0x200,
+	IMAGE_USES_FBANK			= 0x400
 };
 
 typedef struct {
+	/* pc harddisks */
 	int cylinders;
 	int heads;
+	/* c64 cartridges */
+	int hardware_type;
+	int game_line;
+	int exrom_line;
+	/* c64 tape */
+	int entries;
+
+	char *label;
 } geometry_options;
 
 typedef struct {
-	int flags;
+	/* rsdos */
+	int ftype;
+	int fascii;
+	/* c64 cartridges */
+	int faddr;
+	int fbank;
+} file_options;
+
+typedef struct {
 	geometry_options minimum;
 	geometry_options maximum;
 } geometry_ranges;
@@ -125,35 +168,40 @@ struct ImageModule {
 	const char *name;
 	const char *humanname;
 	const char *fileextension;
+	int flags;
 	const char *crcfile;
 	const char *crcsysname;
 	const geometry_ranges *ranges;
 	int (*init)(STREAM *f, IMAGE **outimg);
 	void (*exit)(IMAGE *img);
+	void (*info)(IMAGE *img, char *string, const int len);
 	int (*beginenum)(IMAGE *img, IMAGEENUM **outenum);
 	int (*nextenum)(IMAGEENUM *enumeration, imgtool_dirent *ent);
 	void (*closeenum)(IMAGEENUM *enumeration);
 	size_t (*freespace)(IMAGE *img);
 	int (*readfile)(IMAGE *img, const char *fname, STREAM *destf);
-	int (*writefile)(IMAGE *img, const char *fname, STREAM *sourcef);
+	int (*writefile)(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *options);
 	int (*deletefile)(IMAGE *img, const char *fname);
 	int (*create)(STREAM *f, const geometry_options *options);
+	int (*extract)(IMAGE *img, STREAM *f);
 };
 
 /* ----------------------------------------------------------------------- */
 
 /* Use IMAGEMODULE for (potentially) full featured images */
-#define IMAGEMODULE(name,humanname,ext,crcfile,crcsysname,ranges,init,exit,beginenum,nextenum,closeenum,freespace,readfile,writefile,deletefile,create)	\
+#define IMAGEMODULE(name,humanname,ext,flags,crcfile,crcsysname,ranges,init,exit,info,beginenum,nextenum,closeenum,freespace,readfile,writefile,deletefile,create,extract)	\
 struct ImageModule imgmod_##name = \
 {					\
 	#name,			\
 	(humanname),	\
 	(ext),			\
+	(flags),		\
 	(crcfile),		\
 	(crcsysname),	\
 	(ranges),		\
 	(init),			\
 	(exit),			\
+	(info),			\
 	(beginenum),	\
 	(nextenum),		\
 	(closeenum),	\
@@ -161,7 +209,8 @@ struct ImageModule imgmod_##name = \
 	(readfile),		\
 	(writefile),	\
 	(deletefile),	\
-	(create)		\
+	(create),		\
+	(extract)		\
 };
 
 /* Use CARTMODULE for cartriges (where the only relevant option is CRC checking */
@@ -171,8 +220,11 @@ struct ImageModule imgmod_##name = \
 	#name,			\
 	(humanname),	\
 	(ext),			\
+	0,				\
 	(#name ".crc"),	\
 	#name,			\
+	NULL,			\
+	NULL,			\
 	NULL,			\
 	NULL,			\
 	NULL,			\
@@ -197,14 +249,16 @@ const char *imageerror(int err);
 int img_open(const struct ImageModule *module, const char *fname, int read_or_write, IMAGE **outimg);
 int img_open_byname(const char *modulename, const char *fname, int read_or_write, IMAGE **outimg);
 void img_close(IMAGE *img);
+int img_extract(IMAGE *img, const char *fname);
+int img_info(IMAGE *img, char *string, const int len);
 int img_beginenum(IMAGE *img, IMAGEENUM **outenum);
 int img_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 void img_closeenum(IMAGEENUM *enumeration);
-int img_freespace(IMAGE *img, size_t *sz);
+int img_freespace(IMAGE *img, int *sz);
 int img_readfile(IMAGE *img, const char *fname, STREAM *destf);
-int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef);
+int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *options);
 int img_getfile(IMAGE *img, const char *fname, const char *dest);
-int img_putfile(IMAGE *img, const char *fname, const char *source);
+int img_putfile(IMAGE *img, const char *fname, const char *source, const file_options *options);
 int img_deletefile(IMAGE *img, const char *fname);
 
 /* These calls are for creating new images */

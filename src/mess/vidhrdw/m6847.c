@@ -3,9 +3,6 @@
  * Nate Woods
  *
  * Originally based on src/mess/vihrdw/dragon.c by Mathis Rosenhauer
- *
- * TODO
- *		make vram_mask do something - we barf if someone tries to have video ram wrap around RAM
  */
 
 #include "m6847.h"
@@ -18,7 +15,6 @@ static int video_vmode;
 static int video_rowheight;
 static m6847_vblank_proc vblankproc;
 static int artifact_dipswitch;
-static UINT8 *base_videoram;
 
 /* The CoCo 3 Video Hardware shares these variables, which is why they are not static */
 int m6847_full_refresh;
@@ -281,8 +277,12 @@ int m6847_vh_start(void)
 
 void m6847_set_vram(void *ram, int rammask)
 {
-	base_videoram = ram;
-	videoram = base_videoram + video_offset;
+	videoram = ram;
+	vram_mask = rammask;
+}
+
+void m6847_set_vram_mask(int rammask)
+{
 	vram_mask = rammask;
 }
 
@@ -300,75 +300,154 @@ void m6847_set_artifact_dipswitch(int sw)
  * The big one - updating the display
  * -------------------------------------------------- */
 
+#define PLOT_PIXEL(x, y, c) \
+	{ \
+		int xx, yy, cc; \
+		xx = (x); yy = (y); cc = (c); \
+		if (use_plotpixel) \
+			plot_pixel(bitmap, xx, yy, cc); \
+		else \
+			bitmap->line[yy][xx] = cc; \
+	}
+
+#define MARK_DIRTY(x1, y1, x2, y2) \
+	{ if (!use_plotpixel) \
+		osd_mark_dirty((x1), (y1), (x2), (y2), 0); }
+
+
+#define MARK_DIRTY_PIX(x, y, w, h) \
+	{ if (!use_plotpixel) { \
+		int xx, yy; \
+		xx = (x); yy = (y); \
+		osd_mark_dirty(xx, yy, xx+(w)-1, yy+(h)-1, 0); \
+	} }
+
 /*
  * Note that 'sizex' is in bytes, and 'sizey' is in pixels
  */
-static void blitgraphics2(struct osd_bitmap *bitmap, UINT8 *vidram, UINT8 *db, const int *metapalette,
-	int sizex, int sizey, int basex, int basey, int scalex, int scaley)
+void blitgraphics2(struct osd_bitmap *bitmap, UINT8 *vrambase, int vrampos,
+	int vramsize, UINT8 *db, const int *metapalette, int sizex, int sizey,
+	int basex, int basey, int scalex, int scaley, int additionalrowbytes)
 {
 	int x, y;
 	int px, py;
 	int fg, bg;
 	int p, b;
+	int use_plotpixel;
+	UINT8 *vidram;
 
-	bg = Machine->pens[metapalette[0]];
-	fg = Machine->pens[metapalette[1]];
+	if (metapalette) {
+		bg = Machine->pens[metapalette[0]];
+		fg = Machine->pens[metapalette[1]];
+	}
+	else {
+		bg = Machine->pens[0];
+		fg = Machine->pens[1];
+	}
+
+	vidram = vrambase + vrampos;
+	use_plotpixel = Machine->orientation || (Machine->color_depth != 8);
+
+	if (!db)
+		MARK_DIRTY(basex, basey, basex + scalex*sizex*8, basey + scaley*sizey);
 
 	for (y = 0; y < sizey; y++) {
 		for (x = 0; x < sizex; x++) {
-			if (*db) {
+			if (!db || *db) {
 				for (b = 0; b < 8; b++) {
 					p = ((*vidram) & (1<<(7-b))) ? fg : bg;
 
 					for (py = 0; py < scaley; py++) {
 						for (px = 0; px < scalex; px++) {
-							plot_pixel(bitmap, (x * 8 + b) * scalex + px + basex, y * scaley + py + basey, p);
+							PLOT_PIXEL((x * 8 + b) * scalex + px + basex, y * scaley + py + basey, p);
 						}
 					}
 				}
-				*db = 0;
+				if (db) {
+					MARK_DIRTY_PIX(x*8*scalex+basex, y*scaley+basey, scalex*8, scaley);
+					*(db++) = 0;
+				}
 			}
-			db++;
+			else {
+				db++;
+			}
 			vidram++;
 		}
+		vidram += additionalrowbytes;
+		if (db)
+			db += additionalrowbytes;
+
+		/* Check to see if the video RAM has wrapped around */
+		if (vidram > vrambase + vramsize)
+			vidram -= vramsize;
 	}
 }
 
-static void blitgraphics4(struct osd_bitmap *bitmap, UINT8 *vidram, UINT8 *db, const int *metapalette,
-	int sizex, int sizey, int basex, int basey, int scalex, int scaley)
+void blitgraphics4(struct osd_bitmap *bitmap, UINT8 *vrambase, int vrampos,
+	int vramsize, UINT8 *db, const int *metapalette, int sizex, int sizey,
+	int basex, int basey, int scalex, int scaley, int additionalrowbytes)
 {
 	int x, y;
 	int px, py;
 	int c[4];
 	int p, b;
+	int use_plotpixel;
+	UINT8 *vidram;
 
-	c[0] = Machine->pens[metapalette[0]];
-	c[1] = Machine->pens[metapalette[1]];
-	c[2] = Machine->pens[metapalette[2]];
-	c[3] = Machine->pens[metapalette[3]];
+	if (metapalette) {
+		c[0] = Machine->pens[metapalette[0]];
+		c[1] = Machine->pens[metapalette[1]];
+		c[2] = Machine->pens[metapalette[2]];
+		c[3] = Machine->pens[metapalette[3]];
+	}
+	else {
+		c[0] = Machine->pens[0];
+		c[1] = Machine->pens[1];
+		c[2] = Machine->pens[2];
+		c[3] = Machine->pens[3];
+	}
+
+	vidram = vrambase + vrampos;
+	use_plotpixel = Machine->orientation || (Machine->color_depth != 8);
+
+	if (!db)
+		MARK_DIRTY(basex, basey, basex + scalex*sizex*4, basey + scaley*sizey);
 
 	for (y = 0; y < sizey; y++) {
 		for (x = 0; x < sizex; x++) {
-			if (*db) {
+			if (!db || *db) {
 				for (b = 0; b < 4; b++) {
 					p = c[(((*vidram) >> (6-(2*b)))) & 3];
 
 					for (py = 0; py < scaley; py++) {
 						for (px = 0; px < scalex; px++) {
-							plot_pixel(bitmap, (x * 4 + b) * scalex + px + basex, y * scaley + py + basey, p);
+							PLOT_PIXEL((x * 4 + b) * scalex + px + basex, y * scaley + py + basey, p);
 						}
 					}
 				}
-				*db = 0;
+				if (db) {
+					MARK_DIRTY_PIX(x*4*scalex+basex, y*scaley+basey, scalex*4, scaley);
+					*(db++) = 0;
+				}
 			}
-			db++;
+			else {
+				db++;
+			}
 			vidram++;
 		}
+		vidram += additionalrowbytes;
+		if (db)
+			db += additionalrowbytes;
+
+		/* Check to see if the video RAM has wrapped around */
+		if (vidram > vrambase + vramsize)
+			vidram -= vramsize;
 	}
 }
 
-static void blitgraphics4artifact(struct osd_bitmap *bitmap, UINT8 *vidram, UINT8 *db, const int *metapalette,
-	int sizex, int sizey, int basex, int basey, int scalex, int scaley)
+static void blitgraphics4artifact(struct osd_bitmap *bitmap, UINT8 *vrambase,
+	int vrampos, int vramsize, UINT8 *db, const int *metapalette, int sizex,
+	int sizey, int basex, int basey, int scalex, int scaley)
 {
 	/* Arifacting isn't truely the same resolution as PMODE 3
 	 * it has a bias to the higher resolution.  We need to
@@ -413,17 +492,19 @@ static void blitgraphics4artifact(struct osd_bitmap *bitmap, UINT8 *vidram, UINT
 	int lastp, nextp;
 	int c1, c2;
 	int nextdirty;
-	int xp, yp;
+	int use_plotpixel;
+	UINT8 *vidram;
 
 	c[0] = Machine->pens[metapalette[0]];
 	c[1] = Machine->pens[metapalette[1]];
 	c[2] = Machine->pens[metapalette[2]];
 	c[3] = Machine->pens[metapalette[3]];
 
-	yp = basey;
+	vidram = vrambase + vrampos;
+	use_plotpixel = Machine->orientation || (Machine->color_depth != 8);
+
 	for (y = 0; y < sizey; y++) {
 		nextdirty = 0;
-		xp = basex;
 		for (x = 0; x < sizex; x++) {
 			if (db[0] || ((x < (sizex-1)) && db[1]) || nextdirty) {
 				nextp = (vidram[0] >> 6) & 3;
@@ -452,27 +533,75 @@ static void blitgraphics4artifact(struct osd_bitmap *bitmap, UINT8 *vidram, UINT
 
 					for (py = 0; py < scaley; py++) {
 						for (px = 0; px < scalex; px++) {
-							plot_pixel(bitmap, xp + (scalex * 0) + px, yp + py, c1);
-							plot_pixel(bitmap, xp + (scalex * 1) + px, yp + py, c2);
+							PLOT_PIXEL((x * 8 + b * 2 + 0) * scalex + px + basex, y * scaley + py + basey, c1);
+							PLOT_PIXEL((x * 8 + b * 2 + 1) * scalex + px + basex, y * scaley + py + basey, c2);
 						}
 					}
 
 					lastp = p;
-					xp += scalex * 2;
 				}
+				MARK_DIRTY_PIX(x*8*scalex+basex, y*scaley+basey, scalex*8, scaley);
 				
 				if (*db) {
 					nextdirty = 1;
 					*db = 0;
 				}
 			}
-			else {
-				xp += (scalex * 8);
-			}
 			db++;
 			vidram++;
 		}
-		yp += scaley;
+
+		/* Check to see if the video RAM has wrapped around */
+		if (vidram > vrambase + vramsize)
+			vidram -= vramsize;
+	}
+}
+
+void blitgraphics16(struct osd_bitmap *bitmap, UINT8 *vrambase,
+	int vrampos, int vramsize, UINT8 *db, int sizex, int sizey, int basex,
+	int basey, int scalex, int scaley, int additionalrowbytes)
+{
+	int x, y;
+	int px, py;
+	int p1, p2;
+	UINT8 *vidram;
+	int use_plotpixel;
+
+	vidram = vrambase + vrampos;
+	use_plotpixel = Machine->orientation || (Machine->color_depth != 8);
+
+	if (!db)
+		MARK_DIRTY(basex, basey, basex + scalex*sizex*2, basey + scaley*sizey);
+
+	for (y = 0; y < sizey; y++) {
+		for (x = 0; x < sizex; x++) {
+			if (!db || *db) {
+				p1 = Machine->pens[(*vidram >> 4) & 0x0f];
+				p2 = Machine->pens[(*vidram >> 0) & 0x0f];
+
+				for (py = 0; py < scaley; py++) {
+					for (px = 0; px < scalex; px++) {
+						PLOT_PIXEL((x * 2 + 0) * scalex + px + basex, y * scaley + py + basey, p1);
+						PLOT_PIXEL((x * 2 + 1) * scalex + px + basex, y * scaley + py + basey, p2);
+					}
+				}
+				if (db) {
+					MARK_DIRTY_PIX(x*2*scalex+basex, y*scaley+basey, scalex*2, scaley);
+					*(db++) = 0;
+				}
+			}
+			else {
+				db++;
+			}
+			vidram++;
+		}
+		vidram += additionalrowbytes;
+		if (db)
+			db += additionalrowbytes;
+
+		/* Check to see if the video RAM has wrapped around */
+		if (vidram > vrambase + vramsize)
+			vidram -= vramsize;
 	}
 }
 
@@ -487,7 +616,8 @@ static void blitgraphics4artifact(struct osd_bitmap *bitmap, UINT8 *vidram, UINT
  *     bit 1    1=b/w graphics, 0=color graphics
  *     bit 0	color set
  */
-void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, const int *metapalette, UINT8 *vidram,
+void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, const int *metapalette,
+	UINT8 *vrambase, int vrampos, int vramsize,
 	int has_lowercase, int basex, int basey, int wf, artifactproc artifact)
 {
 	int x, y, fg, bg, x2, y2;
@@ -511,8 +641,8 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, const int *metap
 			/* Resolution modes */
 
 			rowbytes = ((video_gmode & 0x1e) == M6847_MODE_G4R) ? 32 : 16;
-			blitgraphics2(bitmap, vidram, db, &metapalette[video_gmode & 0x1 ? 10 : 8],
-				rowbytes, 192 / video_rowheight, basex, basey, (32 / rowbytes) * wf, video_rowheight);
+			blitgraphics2(bitmap, vrambase, vrampos, vramsize, db, &metapalette[video_gmode & 0x1 ? 10 : 8],
+				rowbytes, 192 / video_rowheight, basex, basey, (32 / rowbytes) * wf, video_rowheight, 0);
 		}
 		else
 		{
@@ -527,18 +657,22 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, const int *metap
 				artifactpalette[3] = metapalette[video_gmode & 0x1 ? 11: 9];
 				artifact(artifactpalette);
 
-				blitgraphics4artifact(bitmap, vidram, db, artifactpalette,
+				blitgraphics4artifact(bitmap, vrambase, vrampos, vramsize, db, artifactpalette,
 					rowbytes, 192 / video_rowheight, basex, basey, 32 / rowbytes * wf, video_rowheight);
 			}
 			else {
 				/* If not, calculate offset normally */
-				blitgraphics4(bitmap, vidram, db, &metapalette[video_gmode & 0x1 ? 4: 0],
-					rowbytes, 192 / video_rowheight, basex, basey, 64 / rowbytes * wf, video_rowheight);
+				blitgraphics4(bitmap, vrambase, vrampos, vramsize, db, &metapalette[video_gmode & 0x1 ? 4: 0],
+					rowbytes, 192 / video_rowheight, basex, basey, 64 / rowbytes * wf, video_rowheight, 0);
 			}
 		}
 	}
 	else
 	{
+		UINT8 *vidram;
+
+		vidram = vrambase + vrampos;
+
 		for (y = 0; y < (192 / video_rowheight); y++) {
 			for (x = 0; x < 32; x++) {
 				if (*db) {
@@ -600,6 +734,10 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, const int *metap
 				db++;
 			}
 		}
+
+		/* Check to see if the video RAM has wrapped around */
+		if (vidram > vrambase + vramsize)
+			vidram -= vramsize;
 	}
 }
 
@@ -632,6 +770,57 @@ static void m6847_artifact_blue(int *artifactcolors)
 	}
 }
 
+void internal_m6847_drawborder(struct osd_bitmap *bitmap, int screenx, int screeny, int pen)
+{
+	int left, right, top, bottom;
+	int borderpen;
+	struct rectangle r;
+
+	borderpen = Machine->pens[pen];
+
+	left = (bitmap->width - screenx) / 2;
+	right = left + screenx;
+	top = (bitmap->height - screeny) / 2;
+	bottom = top + screeny;
+
+	r.min_x = 0;
+	r.min_y = 0;
+	r.max_x = bitmap->width - 1;
+	r.max_y = top-1;
+	fillbitmap(bitmap, borderpen, &r);
+	r.min_y = bottom;
+	r.max_y = bitmap->height - 1;
+	fillbitmap(bitmap, borderpen, &r);
+	r.min_y = top;
+	r.max_x = left-1;
+	r.max_y = bottom-1;
+	fillbitmap(bitmap, borderpen, &r);
+	r.min_x = right;
+	r.max_x = bitmap->width - 1;
+	fillbitmap(bitmap, borderpen, &r);
+}
+
+static void m6847_drawborder(struct osd_bitmap *bitmap, int screenx, int screeny)
+{
+	int pen = 0;
+
+	switch(m6847_get_bordercolor()) {
+	case M6847_BORDERCOLOR_BLACK:
+		pen = 0;
+		break;
+	case M6847_BORDERCOLOR_GREEN:
+		pen = 1;
+		break;
+	case M6847_BORDERCOLOR_WHITE:
+		pen = 5;
+		break;
+	case M6847_BORDERCOLOR_ORANGE:
+		pen = 8;
+		break;
+	}
+	internal_m6847_drawborder(bitmap, screenx, screeny, pen);
+}
+
 void m6847_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 {
 	static int m6847_metapalette[] = {
@@ -651,7 +840,14 @@ void m6847_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 		vblankproc();
 
 	artifact_value = (artifact_dipswitch == -1) ? 0 : readinputport(artifact_dipswitch);
-	internal_m6847_vh_screenrefresh(bitmap, m6847_metapalette, videoram, FALSE, 0, 0, 1, artifacts[artifact_value & 3]);
+
+	if (full_refresh || m6847_full_refresh)
+		m6847_drawborder(bitmap, 256, 192);
+
+	internal_m6847_vh_screenrefresh(bitmap, m6847_metapalette, videoram,
+		video_offset, vram_mask + 1, FALSE,
+		(bitmap->width - 256) / 2, (bitmap->height - 192) / 2,
+		1, artifacts[artifact_value & 3]);
 }
 
 /* --------------------------------------------------
@@ -694,7 +890,6 @@ void m6847_set_video_offset(int offset)
 	offset &= vram_mask;
 	if (offset != video_offset) {
 		video_offset = offset;
-		videoram = base_videoram + offset;
 		m6847_full_refresh = 1;
 	}
 }

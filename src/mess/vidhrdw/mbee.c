@@ -243,8 +243,8 @@ int m6545_status_r(int offs)
 {
 	int data = 0, y = cpu_getscanline();
 
-	if( y < Machine->drv->visible_area.min_y ||
-		y > Machine->drv->visible_area.max_y )
+	if( y < Machine->visible_area.min_y ||
+		y > Machine->visible_area.max_y )
 		data |= 0x20;	/* vertical blanking */
 	if( crt.lpen_strobe )
 		data |= 0x40;	/* lpen register full */
@@ -534,7 +534,7 @@ void mbee_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
     if( full_refresh )
 	{
 		memset(dirtybuffer, 1, videoram_size);
-        fillbitmap(bitmap, Machine->pens[0], &Machine->drv->visible_area);
+        fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
 	}
 
 	for( offs = 0x000; offs < 0x380; offs += 0x10 )
@@ -553,7 +553,7 @@ void mbee_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			code = videoram[offs];
 			color = colorram[offs];
 			drawgfx( bitmap,Machine->gfx[0],code,color,0,0,sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+				&Machine->visible_area,TRANSPARENCY_NONE,0);
 			dirtybuffer[offs] = 0;
 			if( offs == cursor && (crt.cursor_top & 0x60) != 0x20 )
 			{

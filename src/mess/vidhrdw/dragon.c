@@ -1,11 +1,39 @@
 /* Video hardware for CoCo/Dragon family
  *
+ * See src/mess/machine/dragon.c for references
+ *
  * TODO:
  *		- Implement "burst phase invert" (it switches the artifact colors)
  *		- Figure out what Bit 3 of $FF98 is and implement it
- *		- Support palette rotation at HBLANK time, and maybe get a SockMaster
- *		  demo working...
+ *		- Support mid-frame video register modification, and maybe get a
+ *		  SockMaster demo working...
  *		- Learn more about the "mystery" CoCo 3 video modes
+ *		- Support the VSC register
+ *
+ * My future plan to support mid-frame video register modification is to keep
+ * a queue that shows the status of the video registers in relation between
+ * different scanlines.  Thus if no modifications are made, there is only a
+ * one entry queue, and perfomance is minimally affected.  The big innacuracy
+ * is that it doesn't save the status of memory, but JK informs me that this
+ * will have a minimal effect on software though.
+ *
+ * Also, JK informed me of what GIME registers would need to be saved in the
+ * queue.  I quote his email to me:
+ *
+ *		Here are the things that get changed mid-frame:
+ *			-palette registers ($ffb0-$ffbf)
+ *			-horizontal resolution (switches between 256 and 320 pixels, $ff99)
+ *			-horizontal scroll position (bits 0-6 $ff9f)
+ *			-horizontal virtual screen (bit 7 $ff9f)
+ *			-pixel height (bits 0-2 $ff98)
+ *			-border color ($ff9a)
+ *		On the positive side, you don't have to worry about registers
+ *		$ff9d/ff9e being changed mid-frame.  Even if they are changed
+ *		mid-frame, they have no effect on the displayed image.  The video
+ *		address only gets latched at the top of the frame.
+ *
+ * Also, take note that the CoCo family have 262 scan lines.  In these drivers
+ * we only display 240 of them.
  */
 #include "driver.h"
 #include "machine/6821pia.h"
@@ -25,9 +53,20 @@ static struct GfxElement *coco3font;
 
 /* Backdoors into mess/vidhrdw/m6847.c */
 typedef void (*artifactproc)(int *artifactcolors);
+void internal_m6847_drawborder(struct osd_bitmap *bitmap, int screenx, int screeny, int pen);
 int internal_m6847_vh_start(int maxvram);
-void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, const int *metapalette, UINT8 *vram,
+void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, const int *metapalette,
+	UINT8 *vrambase, int vrampos, int vramsize,
 	int has_lowercase, int basex, int basey, int wf, artifactproc artifact);
+void blitgraphics2(struct osd_bitmap *bitmap, UINT8 *vrambase, int vrampos,
+	int vramsize, UINT8 *db, const int *metapalette, int sizex, int sizey,
+	int basex, int basey, int scalex, int scaley, int additionalrowbytes);
+void blitgraphics4(struct osd_bitmap *bitmap, UINT8 *vrambase, int vrampos,
+	int vramsize, UINT8 *db, const int *metapalette, int sizex, int sizey,
+	int basex, int basey, int scalex, int scaley, int additionalrowbytes);
+void blitgraphics16(struct osd_bitmap *bitmap, UINT8 *vrambase,
+	int vrampos, int vramsize, UINT8 *db, int sizex, int sizey, int basex,
+	int basey, int scalex, int scaley, int additionalrowbytes);
 extern int m6847_full_refresh;
 
 #define LOG_PALETTE	0
@@ -64,21 +103,6 @@ void coco_ram_w (int offset, int data)
 		m6847_touch_vram(offset);
 		*mem = data;
 	}
-}
-
-/* The CoCo 1/2 and Dragon kept the gmode and vmode separate, and the CoCo
- * 3 tied them together.  In the process, the CoCo 3 dropped support for the
- * semigraphics modes
- */
-
-void d_pia1_pb_w(int offset, int data)
-{
-	m6847_set_gmode(data >> 3);
-}
-
-void coco3_pia1_pb_w(int offset, int data)
-{
-	m6847_set_mode(data >> 3);
 }
 
 void dragon_sam_display_offset(int offset, int data)
@@ -361,32 +385,7 @@ static void coco3_vh_palette_recompute(void)
 
 static void coco3_vh_drawborder(struct osd_bitmap *bitmap, int screenx, int screeny)
 {
-	int left, right, top, bottom;
-	int borderpen;
-	struct rectangle r;
-
-	borderpen = Machine->pens[16];
-
-	left = (640 - screenx) / 2;
-	right = left + screenx;
-	top = (225 - screeny) / 2;
-	bottom = top + screeny;
-
-	r.min_x = 0;
-	r.min_y = 0;
-	r.max_x = 639;
-	r.max_y = top-1;
-	fillbitmap(bitmap, borderpen, &r);
-	r.min_y = bottom;
-	r.max_y = 224;
-	fillbitmap(bitmap, borderpen, &r);
-	r.min_y = top;
-	r.max_x = left-1;
-	r.max_y = bottom-1;
-	fillbitmap(bitmap, borderpen, &r);
-	r.min_x = right;
-	r.max_x = 639;
-	fillbitmap(bitmap, borderpen, &r);
+	internal_m6847_drawborder(bitmap, screenx, screeny, 16);
 }
 
 static int coco3_vh_setborder(int red, int green, int blue)
@@ -471,6 +470,33 @@ static int coco3_calculate_rows(void)
 	return rows;
 }
 
+static int coco3_hires_linesperrow(void)
+{
+	/* TODO - This variable is only used in graphics mode.  This should probably
+	 * be used in text mode as well.
+	 *
+	 * There are several conflicting sources of information on what this should
+	 * return.  For example, Kevin Darling's reference implies this should be:
+	 *
+	 *		static int hires_linesperrow[] = {
+	 *			1, 2, 3, 8, 9, 10, 12, 12
+	 *		};
+	 *
+	 * For this I am going to go by Sock Master's GIME reference.  He has
+	 * programmed far closer to the GIME chip then probably anyone.  In
+	 * addition, running the Gate Crasher demo seems to validate his findings.
+	 */
+
+	static int hires_linesperrow[] = {
+		1, 1, 2, 8, 9, 10, 11
+	};
+
+	int indexx;
+	indexx = coco3_gimevhreg[0] & 7;
+
+	return (indexx == 7) ? coco3_calculate_rows() : hires_linesperrow[indexx];
+}
+
 #if LOG_VIDEO
 static void log_video(void)
 {
@@ -504,7 +530,7 @@ static void log_video(void)
 			logerror("CoCo3 HiRes Video: ??? colors\n");
 			return;
 		}
-		rows = coco3_calculate_rows();
+		rows = coco3_calculate_rows() / coco3_hires_linesperrow();
 		logerror(" @ %dx%d\n", cols, rows);
 
 		vidbase = (coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8);
@@ -515,14 +541,15 @@ static void log_video(void)
 }
 #endif
 
+/*
+ * All models of the CoCo has 262 scan lines.  However, we pretend that it has
+ * 240 so that the emulation fits on a 640x480 screen
+ */
 void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
 	static int coco3_metapalette[] = {
 		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
-	};
-	static int hires_linesperrow[] = {
-		1, 2, 3, 8, 9, 10, 12, 12
 	};
 	static artifactproc artifacts[] = {
 		NULL,
@@ -553,11 +580,10 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		int blink_switch=0;
 		int vidbase, bytesperrow, linesperrow, rows = 0, x, y, basex = 0, basey, wf = 0;
 		int use_attr, charsperrow = 0, underlined = 0;
-		int visualbytesperrow, c, emupixelsperbyte;
+		int visualbytesperrow, emupixelsperbyte;
 		int borderred, bordergreen, borderblue;
 		UINT8 *vram, *db;
 		UINT8 b;
-		unsigned char *p;
 
 		vidbase = (coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8);
 		if (coco3_gimevhreg[7] & 0x80) {
@@ -569,20 +595,18 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		}
 
 		rows = coco3_calculate_rows();
-		basey = (225 - rows) / 2;
+		linesperrow = coco3_hires_linesperrow();
+
+		basey = (bitmap->height - rows) / 2;
 
 		/* check border */
 		coco3_compute_color(coco3_gimevhreg[2] & 0x3f, &borderred, &bordergreen, &borderblue);
 		full_refresh += coco3_vh_setborder(borderred, bordergreen, borderblue);
 
-		if (full_refresh)
-			coco3_vh_drawborder(bitmap, coco3_gimevhreg[1] & 0x04 ? 640 : 512, rows);
-
 		/* check palette recalc */
 		if (palette_recalc() || full_refresh || m6847_full_refresh) {
-			memset(dirtybuffer, 1, MAX_HIRES_VRAM);
 			m6847_full_refresh = 0;
-	        osd_mark_dirty(0, (225 - rows) / 2, 639, (225 - rows) / 2 + rows-1, 0);
+			full_refresh = 1;
 			coco3_somethingdirty = 1;
 
 #if LOG_VIDEO
@@ -590,11 +614,17 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 #endif
 		}
 
+		/* Draw border if appropriate */
+		if (full_refresh)
+			coco3_vh_drawborder(bitmap, coco3_gimevhreg[1] & 0x04 ? 640 : 512, rows * linesperrow);
+
 		use_mark_dirty = 1;
-		linesperrow = hires_linesperrow[coco3_gimevhreg[0] & 7];
 
 		switch(coco3_gimevhreg[0] & 0x80) {
 		case 0x00:	/* Text */
+			if (full_refresh)
+				memset(dirtybuffer, 1, MAX_HIRES_VRAM);
+
 			use_attr = coco3_gimevhreg[1] & 1;
 			if (use_attr) {
 				/* Resolve blink */
@@ -613,22 +643,22 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				switch(coco3_gimevhreg[1] & 0x14) {
 				case 0x14:
 					charsperrow = 80;
-					basex = 0;
+					basex = (bitmap->width - 640) / 2;
 					wf = 1;
 					break;
 				case 0x10:
 					charsperrow = 64;
-					basex = 64;
+					basex = (bitmap->width - 512) / 2;
 					wf = 1;
 					break;
 				case 0x04:
 					charsperrow = 40;
-					basex = 0;
+					basex = (bitmap->width - 640) / 2;
 					wf = 2;
 					break;
 				case 0x00:
 					charsperrow = 32;
-					basex = 64;
+					basex = (bitmap->width - 512) / 2;
 					wf = 2;
 					break;
 				}
@@ -697,6 +727,8 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			case 3:
 				/* Sixteen colors */
 				wf = 256 / visualbytesperrow;
+
+				/* BUG - 'case 3' should actually show just a blank screen */
 				break;
 			}
 
@@ -704,79 +736,49 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 			if (coco3_gimevhreg[1] & 0x04) {
 				visualbytesperrow |= (visualbytesperrow / 4);
-				basex = 0;
+				basex = (bitmap->width - 640) / 2;
 			}
 			else {
-				basex = 64;
+				basex = (bitmap->width - 512) / 2;
 			}
 
 			if (!bytesperrow)
 				bytesperrow = visualbytesperrow;
 
-			for (y = 0; y < rows; y++) {
-				i = y * bytesperrow;
-				vram = &RAM[(vidbase + i) & 0x7FFFF];
-				db = dirtybuffer + i;
-				p = &bitmap->line[y + basey][basex];
-
-				for (x = 0; x < visualbytesperrow; x++) {
-					if (*db) {
-						switch(coco3_gimevhreg[1] & 3) {
-						case 0:
-							/* Two colors */
-							for (i = 0; i < 8; i++) {
-								c = Machine->pens[(*vram & (1<<(7-i))) ? 1 : 0];
-								switch(wf) {
-								case 4:	*(p++) = c;	*(p++) = c;
-								case 2:	*(p++) = c;
-								case 1:	*(p++) = c;	break;
-								}
-							}
-							if (use_mark_dirty)
-								osd_mark_dirty (x*8*wf+basex, y+basey, (x+1)*8*wf-1+basex, y+basey, 0);
-							break;
-						case 1:
-							/* Four colors */
-							for (i = 0; i < 4; i++) {
-								c = Machine->pens[(*vram & (3<<(6-i*2))) >> (6-i*2)];
-								switch(wf) {
-								case 4:	*(p++) = c;	*(p++) = c;
-								case 2:	*(p++) = c;
-								case 1:	*(p++) = c;	break;
-								}
-							}
-							if (use_mark_dirty)
-								osd_mark_dirty (x*4*wf+basex, y+basey, (x+1)*4+wf-1+basex, y+basey, 0);
-							break;
-						case 2:
-						case 3:
-							/* Sixteen colors */
-							c = Machine->pens[(*vram>>4) & 0x0F];
-							switch(wf) {
-							case 4:	*(p++) = c;	*(p++) = c;
-							case 2:	*(p++) = c; *(p++) = c;	break;
-							}
-							c = Machine->pens[(*vram>>0) & 0x0F];
-							switch(wf) {
-							case 4:	*(p++) = c;	*(p++) = c;
-							case 2:	*(p++) = c; *(p++) = c;	break;
-							}
-							if (use_mark_dirty)
-								osd_mark_dirty (x*2*wf+basex, y+basey, (x+1)*2*wf-1+basex, y+basey, 0);
-							break;
-						}
-						*db = 0;
-					}
-					else {
-						p += emupixelsperbyte;
-					}
-					vram++;
-					db++;
-
-					if (vram > &RAM[0x80000])
-						vram -= 0x80000;
-				}
+			/*
+			 * TODO - We should support the case where there is a rounding
+			 * error when rows is divided by linesperrow
+			 */
+			switch(coco3_gimevhreg[1] & 3) {
+			case 0:
+				/* Two colors */
+				blitgraphics2(bitmap, RAM, vidbase, 0x80000,
+					full_refresh ? NULL : dirtybuffer, NULL,
+					visualbytesperrow, rows / linesperrow, basex, basey,
+					wf, linesperrow, bytesperrow - visualbytesperrow);
+				break;
+			case 1:
+				/* Four colors */
+				blitgraphics4(bitmap, RAM, vidbase, 0x80000,
+					full_refresh ? NULL : dirtybuffer, NULL,
+					visualbytesperrow, rows / linesperrow, basex, basey,
+					wf, linesperrow, bytesperrow - visualbytesperrow);
+				break;
+			case 2:
+				/* Sixteen colors */
+				blitgraphics16(bitmap, RAM, vidbase, 0x80000,
+					full_refresh ? NULL : dirtybuffer,
+					visualbytesperrow, rows / linesperrow, basex, basey, wf, linesperrow,
+					bytesperrow - visualbytesperrow);
+				break;
+			case 3:
+				/* Blank screen */
+				/* TODO - Draw a blank screen! */
+				break;
 			}
+
+			if (full_refresh)
+				memset(dirtybuffer, 0, ((rows + linesperrow - 1) / linesperrow) * bytesperrow);
 			break;
 		}
 	}
@@ -788,7 +790,10 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			m6847_full_refresh = 1;
 		if (m6847_full_refresh)
 			coco3_vh_drawborder(bitmap, 512, 192);
-		internal_m6847_vh_screenrefresh(bitmap, coco3_metapalette, &RAM[0x70000 + m6847_get_video_offset()], TRUE, 64, 16, 2, artifacts[readinputport(12) & 3]);
+		internal_m6847_vh_screenrefresh(bitmap, coco3_metapalette,
+			&RAM[0x70000], m6847_get_video_offset(), 0x10000,
+			TRUE, (bitmap->width - 512) / 2, (bitmap->height - 192) / 2, 2,
+			artifacts[readinputport(12) & 3]);
 	}
 }
 
@@ -811,6 +816,9 @@ static void coco3_ram_w(int offset, int data, int block)
 			}
 		}
 		else {
+			/* This code assumes that all lo-res video is always mapped from
+			 * $70000-$7FFFF.  This needs to be verified
+			 */
 			if (offset >= 0x70000)
 				m6847_touch_vram(offset - 0x70000);
 		}
@@ -883,7 +891,7 @@ void coco3_gimevh_w(int offset, int data)
 		 *		! Bit 3 H50 1 = 50 Hz power, 0 = 60 Hz power
 		 *		  Bits 0-2 LPR Lines per row
 		 */
-		if (xorval & 0xA7) {
+		if (xorval & 0xB7) {
 			coco3_borderred = -1;	/* force border to redraw */
 			m6847_full_refresh = 1;
 #if LOG_GIME
@@ -924,6 +932,9 @@ void coco3_gimevh_w(int offset, int data)
 	case 5:
 	case 6:
 		/*	$FF9D,$FF9E Vertical Offset Registers
+		 *
+		 *	According to JK, if an odd value is placed in $FF9E on the 1986
+		 *	GIME, the GIME crashes
 		 */
 		m6847_full_refresh = 1;
 #if LOG_GIME

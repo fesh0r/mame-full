@@ -101,7 +101,7 @@ int SMSVDP_start (int vdp_type)
     memset(cache, 0, 0x20000);
 
     /* Make temp bitmap for rendering */
-    tmpbitmap = osd_create_bitmap(256, 224);
+    tmpbitmap = bitmap_alloc(256, 224);
     if(!tmpbitmap) return (1);
 
     return (0);
@@ -438,7 +438,7 @@ void sms_vdp_refresh(struct osd_bitmap *bitmap, int full_refresh)
 {
     sms_update_palette();
 	palette_recalc();
-    copybitmap (bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+    copybitmap (bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 }
 
 

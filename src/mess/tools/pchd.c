@@ -6,24 +6,27 @@
 
 static int pchd_create(STREAM *f, const geometry_options *options);
 
-static geometry_ranges pchd_geometry = { IMAGE_USES_CYLINDERS | IMAGE_USES_HEADS, {1,1}, {1024,16} };
+static geometry_ranges pchd_geometry = { {1,1}, {1024,16} };
 
 IMAGEMODULE(pchd,
-	"PC Hard Drive images",		/* human readable name */
-	"img",						/* file extension */
-	NULL,						/* crcfile */
-	NULL,						/* crc system name */
-	&pchd_geometry,				/* geometry ranges */
-	NULL,						/* init function */
-	NULL,						/* exit function */
-	NULL,						/* begin enumeration */
-	NULL,						/* enumerate next */
-	NULL,						/* close enumeration */
-	NULL,						/* free space on image */
-	NULL,						/* read file */
-	NULL,						/* write file */
-	NULL,						/* delete file */
-	pchd_create					/* create image */
+	"PC Hard Drive image",						/* human readable name */
+	"img",										/* file extension */
+	IMAGE_USES_CYLINDERS | IMAGE_USES_HEADS,	/* flags */
+	NULL,										/* crcfile */
+	NULL,										/* crc system name */
+	&pchd_geometry,								/* geometry ranges */
+	NULL,										/* init function */
+	NULL,										/* exit function */
+	NULL,										/* info function */
+	NULL,										/* begin enumeration */
+	NULL,										/* enumerate next */
+	NULL,										/* close enumeration */
+	NULL,										/* free space on image */
+	NULL,										/* read file */
+	NULL,										/* write file */
+	NULL,										/* delete file */
+	pchd_create,								/* create image */
+	NULL										/* extract function */
 )
 
 #define SECTORS     17

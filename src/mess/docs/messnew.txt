@@ -1,3 +1,112 @@
+0.37b4
+
+Note: .inp record/playback does still not work currently.
+
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+Mac 512ke [Raphael Nabet]
+BBC a&b (rename BBC) [Gordon Jefferyes, Kev Thacker]
+Sharp Pocket Computer (prelim) [Peter Trauner]
+Lisa2 [Raphael Nabet]
+heaps of c65 variants [Peter Trauner]
+XTVGA, ATCGA (prelim) [Peter Trauner]
+
+
+System Driver Changes:
+----------------------
+- MACPLUS: Keyboard support added.  Variable memory configurations used now (a variable 
+  named ram_size which can be initializzed to any value), and added variable ROM size, too.  
+  Updated iwm.c to support Apple Diskcopy format : this will allow to exchange data with 
+  real-world macintosh, and to use images from Mac sites.
+  Fixed the RTC, and added a feature which initializes the Macintosh clock with the current 
+  date and time.  Fixed some cosmetic sound core issues. [Raphael Nabet]
+
+- SPECTRUM: Added support for .SCR (Screendump) files. Note that to ensure that the
+  image is not immediately overwritten by the ROM initialisation routine the
+  loading routine adds a short machine code press any key routine.  The Border engine 
+  code now only uses those events with the correct ID
+  instead of all events.  The specpls4 has been is now declared as GAME_COMPUTER_MODIFIED 
+  .SCR files are now quickload files and are loaded by pressing F8.  The 128K machines are 
+  now defined as GAME_NOT_WORKING because of the crashes when running 128K files.
+  [David (aka Peter) Robertson]
+
+- CoCo3: Now supports LPR field on INIT1 GIME register when in graphics modes, 
+  fixed a bug that prevented video updates in hires 4-color modes. 
+  Fixed high speed timer to have the correct speed.  Subtle tweaks to interrupt handling.  
+  Special thanks to John Kowalski for info. [Nate Woods]
+
+- CoCo/Dragon: Now supports memory size SAM register, removed 2nd fire button from 
+  joysticks (only CoCo 3 has this). Video display now draws border. [Nate Woods]
+
+- CoCo/CoCo3/Dragon: Optimized screen refresh routines accross the entire family.  
+  Routing cassette audio to the speaker (AUDIO ON command in basic) now supported.  
+  Documented more references about the CoCo hardware, as well as added docs for hardware 
+  enhancements not supported yet. Interrupt timings now relative to clock cycles for more 
+  exact timing.  Also, much more documentation. [Nate Woods]
+
+- UK101/Superboard: Tidy up palette code, Caps lock implemented properly, Memory config. 
+  4K, 8K and 40K. Added MC6850 ACIA. Cleaned up keyboard port_bits, Tape load.
+  Hand crafted a superboard II graphics rom. Source YC July 82.  Swapped monitors roms, 
+  wrong way around. Superboard video is 64 by 16 Max. UK101 video is 32 by 25 Max.
+  To load tape images from Basic, type "LOAD", wait for the program to load, press space, 
+  then RUN, LIST, etc. Some images should be loaded from the monitor, asteroids, 
+  asteroids+ and scramble. When in the monitor, press L and wait for the program to load 
+  and run. [Paul Daniels]
+
+- NASCOM: Tidy up palette code. Nascom1 tape load. Memory config. 1Kb, 16Kb, 32Kb, 40Kb at 
+  1000.  Test all known software. .cas done. .bin done. .nas done. Cleaned up keyboard 
+  port_bits. [Paul Daniels]
+
+- Apple1: Cleaned up code. Tidied up colour palette. Added memory configs. [Paul Daniels]
+
+- Jupiter ace: Tidied up colour palette. Added memory configs. [Paul Daniels]
+
+- BBC: The Hi-Res video modes have been improved with  full 6845 CRTC emulation, and 
+  preliminary Teletext support has now been added. [Gordon Jefferyes]
+
+- CBM: added c128 resolution switching, added c65 resolution switching, interlace support
+  renamed c65 system to c65e, changed c64gs to pal. [Peter Trauner]
+
+- PC: added vga resolution switching [Peter Trauner]
+
+
+
+Other Changes:
+--------------
+
+- The core is based on MAME 0.37b4. This incorporates all 
+  features of the update to this core.  [MAME team] 
+
+- TOOLS: Created an "osdtools.h" file that implements cross platform defininitions for 
+  the tools (dat2html, imgtool, etc) [Nate Woods]
+  added a info function (info is showed before the file listing in the dir command), added 
+  extract command to allow conversion between file formats with create and extract 
+  functions, added stream_clear to clear files (fopen(...,"w+")), added some parameters to 
+  the create and put commands, c64crt c64 cartridge file support, more for professional 
+  use (c64 cartridge dumper) and t64 c64 tape format support. [Peter Trauner]
+
+- Implemented a new palette in tms9928a, computed from TI datasheet.  [Raphael Nabet]
+
+- Cassette/wave code: Adds the ability to mute the cassette audio output.  This is done 
+  by setting bit 1 of the device status.  [Nate Woods]
+
+- SC61860 CPU core [Peter Trauner]
+
+- Fixed CLR bug in m6809 core [Nate Woods]
+
+- Using the C 68k core. Macplus now works.
+
+- Extensive CRC updates.
+  [Chris Henry, Stefano Priore, Cowering]
+  SysInfo.dat documentation update 
+  [Chris Henry]
+  Please send all CRC/sysinfo file contributions to Chris Henry. 
+  (battlepriest@hotmail.com).
+
+
+
+---------------------
 0.37b3
 
 Note: .inp record/playback does still not work currently.

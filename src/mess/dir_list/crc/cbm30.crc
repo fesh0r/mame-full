@@ -1,0 +1,34 @@
+# Commodore CBM30 image CRC List
+# Compiled by Stefano "JoJo" Priore 
+# Note: This list is provided as a record of known dumps for this system.  
+#       These checksums have not been validated and cannot be assumed correct.  
+#       They are provided here as a database to help the emulation of this system.  
+# Send corrections/submissions to: battlepriest@hotmail.com
+
+
+[CBM30]
+# These programs have been proved to work
+73995C95 = BASIC Erweiterung 1 (SYS47100).b0
+1C278618 = BASIC Expand (SYS40960).a0
+D8BACE2A = BASIC Programmer's Toolkit (SYS45056).b0 | 1979 | Palo Alto ICs
+54406DDD = Disk Append (SYS826).prg
+F112702A = NewTIM S (SYS36864).90
+278D91E6 = Steinchenspiel.prg
+AD4BB7EB = Wordpro 3 Plus (Epson MX-80/FX-80).prg | | Professional Software
+8E3A9C62 = Wordpro 3 Plus (Microscan 15VC).prg | | Professional Software
+
+# These programs haven't been tested, because their starting address
+# is unknown, or they could be just (hypothesis to be proved) part
+# of a "BASIC prg+EPROM" combo
+
+B9B768C7 = Spellmaster.90 | 1982 |
+9BF3C9F8 = Visicalc.90
+D185AEB1 = Wordcraft.90
+8FB42B4D = Wordpro 4 Plus.a0 | | Professional Software
+
+# This is a BASIC program which is loaded at the wrong memory address
+# Can anyone get it to run?
+# If anybody succeeds, please could he test it on "pet" driver and eventually
+# move this entry to pet.crc?
+
+9CA60571 = msvweigh.prg

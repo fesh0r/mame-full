@@ -686,7 +686,7 @@ INLINE int get_mode( void ) {
 
 void amiga_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ) {
 	int planes = 0, sw = Machine->drv->screen_width;
-	int min_x = Machine->drv->visible_area.min_x;
+	int min_x = Machine->visible_area.min_x;
 	int y, x, start_x, end_x, line_done;
 	unsigned short *dst;
 

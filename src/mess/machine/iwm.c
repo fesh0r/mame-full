@@ -42,6 +42,7 @@ enum {
 
 typedef struct {
 	void *fd;
+	enum { bare, apple_diskcopy } image_format;
 	unsigned int disk_switched : 1;
 	unsigned int wp : 1;
 	unsigned int motor : 1;
@@ -336,7 +337,7 @@ static int iwm_readdata(void)
 					(int) f->track, (int) len, (int) imgpos);
 			#endif
 
-			if (osd_fseek(f->fd, imgpos, SEEK_SET)) {
+			if (osd_fseek(f->fd, (f->image_format == apple_diskcopy) ? imgpos + 84 : imgpos, SEEK_SET)) {
 				#if LOG_IWM
 					logerror("iwm_readdata(): osd_fseek() failed!\n");
 				#endif
@@ -807,6 +808,7 @@ int iwm_floppy_init(int id, int allowablesizes)
 {
 	const char *name;
 	floppy *f;
+	long image_len=0;
 
 	f = &iwm_floppy[id];
 
@@ -824,7 +826,65 @@ int iwm_floppy_init(int id, int allowablesizes)
 		f->wp = 1;
 	}
 
-	switch(osd_fsize(f->fd)) {
+	/* R. Nabet : added support for the diskcopy format to allow exchanges with real-world macs */
+	{
+		struct
+		{
+			UINT8 diskName[64];
+			UINT32 dataSize;
+			UINT32 tagSize;
+			UINT32 dataChecksum;
+			UINT32 tagChecksum;
+			UINT8 diskFormat;	/* 0 = 400K, 1 = 800K, 2 = 720K, 3 = 1440K  (other values reserved) */
+			UINT8 formatByte;	/* $12 = 400K, $22 = >400K Macintosh (DiskCopy uses this value for
+								   all Apple II disks not 800K in size, and even for some of those),
+								   $24 = 800K Apple II disk */
+			UINT16 private;		/* always $0100 (otherwise, the file may be in a different format. */
+		} header;
+
+		f->image_format = bare;	/* default */
+
+		/* read image header */
+		if (osd_fread(f->fd, & header, sizeof(header)) == sizeof(header))
+		{
+
+#ifdef LSB_FIRST
+			header.dataSize = ((header.dataSize << 24) & 0xff000000)
+								| ((header.dataSize << 8) & 0x00ff0000)
+								| ((header.dataSize >> 8) & 0x0000ff00)
+								| ((header.dataSize >> 24) & 0x000000ff);
+			header.tagSize = ((header.tagSize << 24) & 0xff000000)
+								| ((header.tagSize << 8) & 0x00ff0000)
+								| ((header.tagSize >> 8) & 0x0000ff00)
+								| ((header.tagSize >> 24) & 0x000000ff);
+			header.dataChecksum = ((header.dataChecksum << 24) & 0xff000000)
+								| ((header.dataChecksum << 8) & 0x00ff0000)
+								| ((header.dataChecksum >> 8) & 0x0000ff00)
+								| ((header.dataChecksum >> 24) & 0x000000ff);
+			header.tagChecksum = ((header.tagChecksum << 24) & 0xff000000)
+								| ((header.tagChecksum << 8) & 0x00ff0000)
+								| ((header.tagChecksum >> 8) & 0x0000ff00)
+								| ((header.tagChecksum >> 24) & 0x000000ff);
+			header.private = ((header.private << 8) & 0xff00)
+								| ((header.private >> 8) & 0x00ff);
+#endif
+			/* various checks : */
+			if ((header.diskName[0] <= 63) && (osd_fsize(f->fd) == (header.dataSize + header.tagSize + 84))
+					&& (header.private == 0x0100))
+			{
+				f->image_format = apple_diskcopy;
+				image_len = header.dataSize;
+			}
+		}
+	}
+
+	if (f->image_format == bare)
+	{
+		image_len = osd_fsize(f->fd);
+	}
+
+
+	switch(image_len) {
 	case 80*10*512*1:
 		/* Single sided (400k) */
 		if ((allowablesizes & IWM_FLOPPY_ALLOW400K) == 0)

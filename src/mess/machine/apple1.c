@@ -22,7 +22,7 @@ void apple1_pia0_dspout(UINT32, UINT32);
 void apple1_vh_dsp_w(int);
 void apple1_vh_dsp_clr(void);
 
-struct pia6821_interface pia0 =
+struct pia6821_interface apple1_pia0 =
 {
 	apple1_pia0_kbdin,				   /* returns key input */
 	apple1_pia0_dsprdy,				   /* Bit 7 low when display ready */
@@ -61,34 +61,41 @@ static int apple1_kbd_data;
 
 void apple1_init_machine(void)
 {
-
 	logerror("apple1_init\r\n");
 
+	if (readinputport(4) & 0x01)
+	{
+		install_mem_write_handler (0, 0x2000, 0xcfff, MWA_RAM);
+		install_mem_read_handler (0, 0x2000, 0xcfff, MRA_RAM);
+	}
+	else
+	{
+		install_mem_write_handler (0, 0x2000, 0xcfff, MWA_NOP);
+		install_mem_read_handler (0, 0x2000, 0xcfff, MRA_NOP);
+	}
+	pia_config(0, PIA_8BIT | PIA_AUTOSENSE, &apple1_pia0);
 }
 
 void apple1_stop_machine(void)
 {
-
 }
 
 int apple1_interrupt(void)
 {
-
 	int loop;
 
 /* Check for keypresses */
 
 	apple1_kbd_data = 0;
-	if (readinputport(3) & 0x0020)
+	if (readinputport(3) & 0x0020)	/* Reset */
 	{
-		for (loop = 0; loop < 0x1fff; loop++)
-			cpu_writemem16(loop, 0);
+		for (loop = 0; loop < 0xcfff; loop++) cpu_writemem16(loop, 0);
 		apple1_vh_dsp_clr();
 		pia_reset();
 		m6502_reset(NULL);
 		m6502_set_pc(0xff00);
 	}
-	else if (readinputport(3) & 0x0040)
+	else if (readinputport(3) & 0x0040)	/* clear screen */
 	{
 		apple1_vh_dsp_clr();
 	}
@@ -98,7 +105,7 @@ int apple1_interrupt(void)
 		{
 			if (readinputport(loop / 16) & (1 << (loop & 15)))
 			{
-				if (readinputport(3) & 0x0018)
+				if (readinputport(3) & 0x0018)	/* shift keys */
 				{
 					apple1_kbd_data = apple1_kbd_conv[loop + 51];
 				}
@@ -107,65 +114,34 @@ int apple1_interrupt(void)
 					apple1_kbd_data = apple1_kbd_conv[loop];
 				}
 				loop = 51;
-				//logerror("key: %c\r\n", apple1_kbd_data);
 			}
 		}
 	}
 
 	return (0);
-
-}
-
-void init_apple1(void)
-{
-
-	pia_config(0, PIA_8BIT | PIA_AUTOSENSE, &pia0);
-
 }
 
 /* || */
 
 READ_HANDLER( apple1_pia0_kbdin )
 {
-
 	return (apple1_kbd_data | 0x80);
-
 }
 
 READ_HANDLER( apple1_pia0_dsprdy )
 {
-
 	return (0x00);					   /* Screen always ready */
-
 }
 
 READ_HANDLER( apple1_pia0_kbdrdy )
 {
-
-	if (apple1_kbd_data)
-		return (1);
+	if (apple1_kbd_data) return (1);	/* Key available */
 
 	return (0x00);
-
 }
 
 void apple1_pia0_dspout(UINT32 offset, UINT32 val)
 {
-
 	apple1_vh_dsp_w(val);
-
 }
 
-int apple1_rom_load(void)
-{
-
-	return (0);
-
-}
-
-int apple1_rom_id(int id)
-{
-
-	return (1);
-
-}

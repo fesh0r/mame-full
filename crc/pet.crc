@@ -1,28 +1,48 @@
 # Commodore PET series image CRC List
-# Compiled by Peter Trauner
+# Compiled by Stefano "JoJo" Priore and Peter Trauner
 # Note: This list is provided as a record of known dumps for this system.  
 #       These checksums have not been validated and cannot be assumed correct.  
 #       They are provided here as a database to help the emulation of this system.  
 # Send corrections/submissions to: battlepriest@hotmail.com
 
 [pet]
-#pet series testlog
-# programs
-4beaba9c   17und4.prg
-954bf1a9   fluglandung.prg
-7fd98d6d   Miner! (.prg) | 1980 | Ron Longfellow | 
-########   microchess.prg basic1? hanging
 
-# programs better in standard/graphic system
-079af1e5   schlange.prg ( pad 2, pad 4, pad 6, pad 8)
+# These programs have been tested and work
 
-# programs basic >= 2, better in standard/graphic system
-1b58ee72   sternenfalle.prg (pad 1, pad 2)
-7cbfb531   bomber.prg
-6e307504   starwars.prg
-ae18b292   invader.prg hanging (a, pad 4, pad 6)
+4BEABA9C = 17 Und 4.prg
+79EF2618 = 3-D Irrgartengenerator.prg
+4EBCCD65 = 3-D Tic-Tac-Toe.prg
+1CD63912 = 4-Gewinnt.prg
+7CBFB531 = Bomberangriff.prg
+069D7E20 = Crash.prg
+2AB2474B = Destruct.prg
+13782695 = Diktator.prg
+069F8C8D = Dungeon.prg | 1979 | Brian Sawyer
+2E61376C = Fire!.prg | 1980 | Brian Sawyer
+954BF1A9 = Flugzeuglandung.prg
+F4BD75FF = Gnad'dir Gott.prg | | Wilhelm J. Pentzel
+16AB25C1 = Hit The Target.prg
+DFCC03D4 = Hockenheimrennen.prg
+4C3F11E5 = Kurvendiskussion.prg | | | Full of bugs!
+49B495E5 = Microchess 2.0.prg | 1978 | Micro-ware Ltd | Bad Dump: 259 bytes scrap, missing load address!
+7FD98D6D = Miner!.prg | 1980 | Ron Longfellow
+4F488957 = Nightmare Park.prg
+CF5DD7BC = Ouranos!.prg | 1980 | Kathy Higby
+5BCEDBF5 = Pac-Man.prg | | André Fachat
+B9D7AF36 = PET IEEE.prg
+1A2FC765 = Roboterjagd.prg
+079AF1E5 = Schlange.prg ||| (pad 2, pad 4, pad 6, pad 8)
+A53B0B5D = Space Invader.prg
+AE18B292 = Space Invaders.prg ||| (a, pad 4, pad 6)
+B7F6C737 = Space War.prg | 1981 | Chris Mills
+2CB94CC2 = Spukhaus.prg | 1983 | Martin Vitek, André Fachat & Chris Mills
+6E307504 = Star Wars.prg | 1979 | Astar
+1B58EE72 = Sternenfalle.prg ||| (pad 1, pad 2)
+D9E0390F = Verfolg.prg
+DBDD0850 = Vokabeln.prg
+557B5F62 = Zombie.prg
 
-## bad dumps
-# recognized by vice
-# 259 bytes scrap, missing load address!
-49b495e5   microchess.prg
+# These programs show odd behaviour
+
+23B2FC19 = Destruct (corrupted?).prg | | | Hangs after playground has been drawn
+D462318B = Flash Attack.prg | 1980 | Timothy Stryker, Kenneth Wasserman | Gets corrupted after RUN

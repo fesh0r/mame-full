@@ -231,7 +231,7 @@ int cbm_rom_init(int id)
 	int i;
 	int size, j, read;
 	char *cp;
-	unsigned int addr, adr = 0;
+	unsigned int adr = 0;
 	const char *name=device_filename(IO_CARTSLOT,id);
 	const struct IODevice *dev;
 
@@ -361,7 +361,6 @@ int cbm_rom_init(int id)
 			cbm_rom[i].size=size;
 			read = osd_fread (fp, cbm_rom[i].chip, size);
 
-			addr += size;
 			osd_fclose (fp);
 			if (read != size)
 				return INIT_FAILED;

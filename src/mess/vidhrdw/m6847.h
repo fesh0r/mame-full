@@ -21,6 +21,8 @@ void m6847_set_vblank_proc(m6847_vblank_proc proc);
 void m6847_set_vram(void *ram, int rammask);
 void m6847_set_artifact_dipswitch(int dipswitch);
 
+void m6847_set_vram_mask(int rammask);
+
 enum {
 	/* Color sets can be OR'ed in to the other modes below */
 	M6847_MODE_COLORSET_0		= 0x00,

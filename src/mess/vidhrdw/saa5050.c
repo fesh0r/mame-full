@@ -151,14 +151,14 @@ for (sy = 0; sy < 24; sy++) {
 	  								(saa5050_state.saa5050_backcol << 3);
 	  if (saa5050_state.saa5050_flags & SAA5050_DBLHI) {
 		drawgfx (bitmap, Machine->gfx[1], code, colour, 0, 0,
-		  sx * 6, sy * 10, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+		  sx * 6, sy * 10, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 		drawgfx (bitmap, Machine->gfx[2], code, colour, 0, 0,
-		  sx * 6, (sy + 1) * 10, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+		  sx * 6, (sy + 1) * 10, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 	  } else {
 		drawgfx (bitmap, Machine->gfx[0], code, colour, 0, 0,
-		  sx * 6, sy * 10, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+		  sx * 6, sy * 10, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 	  }
-	  
+
 	  dirtybuffer[sy * 80 + sx] = 0;
 	/* } */
   }

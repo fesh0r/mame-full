@@ -125,7 +125,7 @@ void gb_refresh_scanline (void)
 	/* if background or screen disabled clear line */
 	if ((LCDCONT & 0x81) != 0x81)
 	{
-		struct rectangle r = Machine->drv->visible_area;
+		struct rectangle r = Machine->visible_area;
 		r.min_y = r.max_y = yindex;
 		fillbitmap(bitmap, Machine->pens[0], &r);
 	}
@@ -176,7 +176,7 @@ void gb_refresh_scanline (void)
 
 	while (l < 2)
 	{
-		/* 
+		/*
 		 * BG display on
 		 */
 		UINT8 *map, xidx, bit, i;

@@ -23,25 +23,7 @@ T1	Mirror sync pulse
 #include "driver.h"
 #include "cpu/i8039/i8039.h"
 #include "vidhrdw/generic.h"
-
-/* vidhrdw/advision.c */
-extern int advision_vh_start(void);
-extern void advision_vh_stop(void);
-extern void advision_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-extern void advision_vh_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom);
-
-/* machine/advision.c */
-extern void advision_init_machine(void);
-extern int advision_id_rom (int id);
-extern int advision_load_rom (int id);
-extern READ_HANDLER ( advision_MAINRAM_r);
-extern WRITE_HANDLER( advision_MAINRAM_w );
-extern WRITE_HANDLER( advision_putp1 );
-extern WRITE_HANDLER( advision_putp2 );
-extern READ_HANDLER ( advision_getp1 );
-extern READ_HANDLER ( advision_getp2 );
-extern READ_HANDLER ( advision_gett0 );
-extern READ_HANDLER ( advision_gett1 );
+#include "mess/includes/advision.h"
 
 static struct MemoryReadAddress readmem[] =
 {

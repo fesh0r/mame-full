@@ -298,14 +298,14 @@ int vectrex_start (void)
 		height = Machine->scrbitmap->height;
 	}
 
-	if (!(tmpbitmap = osd_create_bitmap(width,height)))
+	if (!(tmpbitmap = bitmap_alloc(width,height)))
 		return 1;
 
-	x_center=((Machine->drv->visible_area.max_x
-		  -Machine->drv->visible_area.min_x) / 2) << VEC_SHIFT;
-	y_center=((Machine->drv->visible_area.max_y
-		  -Machine->drv->visible_area.min_y) / 2 - 10) << VEC_SHIFT;
-	x_max = Machine->drv->visible_area.max_x << VEC_SHIFT;
+	x_center=((Machine->visible_area.max_x
+		  -Machine->visible_area.min_x) / 2) << VEC_SHIFT;
+	y_center=((Machine->visible_area.max_y
+		  -Machine->visible_area.min_y) / 2 - 10) << VEC_SHIFT;
+	x_max = Machine->visible_area.max_x << VEC_SHIFT;
 
 	vector_set_shift (VEC_SHIFT);
 
@@ -549,11 +549,11 @@ int raaspec_start (void)
 	if (vector_vh_start())
 		return 1;
 
-	x_center=((Machine->drv->visible_area.max_x
-		  -Machine->drv->visible_area.min_x)/2) << VEC_SHIFT;
-	y_center=((Machine->drv->visible_area.max_y
-		  -Machine->drv->visible_area.min_y)/2-10) << VEC_SHIFT;
-	x_max = Machine->drv->visible_area.max_x << VEC_SHIFT;
+	x_center=((Machine->visible_area.max_x
+		  -Machine->visible_area.min_x)/2) << VEC_SHIFT;
+	y_center=((Machine->visible_area.max_y
+		  -Machine->visible_area.min_y)/2-10) << VEC_SHIFT;
+	x_max = Machine->visible_area.max_x << VEC_SHIFT;
 
 	vector_set_shift (VEC_SHIFT);
 
@@ -572,7 +572,7 @@ int raaspec_start (void)
 		height = Machine->scrbitmap->height;
 	}
 
-	if (!(tmpbitmap = osd_create_bitmap(width,height)))
+	if (!(tmpbitmap = bitmap_alloc(width,height)))
 		return 1;
 
 	if (led && buttons)

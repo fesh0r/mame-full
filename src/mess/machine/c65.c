@@ -27,13 +27,13 @@ static int c65_charset_select=0;
 
 static int c64mode=0;
 
-//UINT8 *c65_basic;
-//UINT8 *c65_kernal;
+/*UINT8 *c65_basic; */
+/*UINT8 *c65_kernal; */
 UINT8 *c65_chargen;
-//UINT8 *c65_dos;
-//UINT8 *c65_monitor;
+/*UINT8 *c65_dos; */
+/*UINT8 *c65_monitor; */
 UINT8 *c65_interface;
-//UINT8 *c65_graphics;
+/*UINT8 *c65_graphics; */
 
 /* processor has only 1 mega address space !? */
 /* and system 8 megabyte */
@@ -117,9 +117,9 @@ static void c65_dma_port_w(int offset, int value)
 		pair.b.h=dma.data[1];
 		pair.b.l=dma.data[0]=value;
 		cmd=c65_read_mem(pair.d++);
-		len.w.h=0; 
+		len.w.h=0;
 		len.b.l=c65_read_mem(pair.d++);
-		len.b.h=c65_read_mem(pair.d++); 
+		len.b.h=c65_read_mem(pair.d++);
 		src.b.h3=0;
 		fill=src.b.l=c65_read_mem(pair.d++);
 		src.b.h=c65_read_mem(pair.d++);
@@ -135,7 +135,7 @@ static void c65_dma_port_w(int offset, int value)
 			if (dump)
 				DBG_LOG(1,"dma copy job",
 						("len:%.4x src:%.6x dst:%.6x sub:%.2x modrm:%.2x\n",
-						 len.w.l, src.d, dst.d, c65_read_mem(pair.d), 
+						 len.w.l, src.d, dst.d, c65_read_mem(pair.d),
 						 c65_read_mem(pair.d+1) ) );
 			if ( (dma.version==1)
 				 &&( (src.d&0x400000)||(dst.d&0x400000)) ) {
@@ -161,7 +161,7 @@ static void c65_dma_port_w(int offset, int value)
 		case 3:
 			DBG_LOG(3,"dma fill job",
 					("len:%.4x value:%.2x dst:%.6x sub:%.2x modrm:%.2x\n",
-					 len.w.l, fill, dst.d, c65_read_mem(pair.d), 
+					 len.w.l, fill, dst.d, c65_read_mem(pair.d),
 					 c65_read_mem(pair.d+1)));
 				for (i=0; i<len.w.l; i++)
 					c65_write_mem(dst.d++,fill);
@@ -169,7 +169,7 @@ static void c65_dma_port_w(int offset, int value)
 		case 0x30:
 			DBG_LOG(1,"dma copy down",
 					("len:%.4x src:%.6x dst:%.6x sub:%.2x modrm:%.2x\n",
-					 len.w.l, src.d, dst.d, c65_read_mem(pair.d), 
+					 len.w.l, src.d, dst.d, c65_read_mem(pair.d),
 					 c65_read_mem(pair.d+1) ) );
 			for (i=0; i<len.w.l; i++)
 				c65_write_mem(dst.d--,c65_read_mem(src.d--));
@@ -177,7 +177,7 @@ static void c65_dma_port_w(int offset, int value)
 		default:
 			DBG_LOG(1,"dma job",
 					("cmd:%.2x len:%.4x src:%.6x dst:%.6x sub:%.2x modrm:%.2x\n",
-					 cmd,len.w.l, src.d, dst.d, c65_read_mem(pair.d), 
+					 cmd,len.w.l, src.d, dst.d, c65_read_mem(pair.d),
 					 c65_read_mem(pair.d+1)));
 		}
 		break;
@@ -230,7 +230,7 @@ static int c65_6511_port_r(int offset)
   bit 2 set
   bit 3 set
   bit 4 set
-  
+
 
  reg 0 read
   bit 0
@@ -238,7 +238,7 @@ static int c65_6511_port_r(int offset)
   bit 2
   0..2 ->$1d4
 
- reg 1 write 
+ reg 1 write
   $01 written
   $18 written
   $46 written
@@ -246,7 +246,7 @@ static int c65_6511_port_r(int offset)
   $a1 written
   $01 written, dec
   $10 written
- 
+
  reg 2 read/write?(lsr)
   bit 2
   bit 4
@@ -255,8 +255,8 @@ static int c65_6511_port_r(int offset)
   bit 7 busy flag?
 
  reg 3 read/write?(rcr)
-  bit 1 
-  bit 3 
+  bit 1
+  bit 3
   bit 7 busy flag?
 
  reg 4
@@ -271,16 +271,16 @@ static int c65_6511_port_r(int offset)
   sector ??
   1 written
   read -> $1d3
-  cmp #$b bcc 
+  cmp #$b bcc
 
- 
- reg 6 
+
+ reg 6
   head ??
   0 written
   read -> $1d1
-  cmp #2 bcc 
+  cmp #2 bcc
 
- reg 7 read 
+ reg 7 read
   #4e written
   12 times 0, a1 a1 a1 fe  written
 
@@ -293,12 +293,12 @@ static int c65_6511_port_r(int offset)
 
 might use the set overflow input
 
-$21a6c 9a6c format 
+$21a6c 9a6c format
 $21c97 9c97 write operation
 $21ca0 9ca0 get byte?
 $21cab 9cab read reg 7
 $21caf 9caf write reg 7
-$21cb3 
+$21cb3
 */
 static struct {
 	UINT8 data[0x0f];
@@ -309,7 +309,7 @@ static void c65_fdc_w(int offset, int data)
 {
 	DBG_LOG (1, "fdc write", ("%.5x %.2x %.2x\n", cpu_get_pc(), offset, data));
 	switch (offset&0xf) {
-	case 2: case 3: // read only
+	case 2: case 3: /* read only */
 		break;
 	case 4:
 		c65_fdc.data[offset&0xf]=data;
@@ -326,7 +326,7 @@ static void c65_fdc_w(int offset, int data)
 	default:
 		c65_fdc.data[offset&0xf]=data;
 		break;
-	}	
+	}
 }
 
 static int c65_fdc_r(int offset)
@@ -335,7 +335,7 @@ static int c65_fdc_r(int offset)
 	switch (offset&0xf) {
 #if 0
 	case 0:
-	//int data=0x1; // !=0 no drive
+	/*int data=0x1; // !=0 no drive */
 		break;
 #endif
 	case 2:
@@ -361,7 +361,7 @@ static int c65_fdc_r(int offset)
 	return data;
 }
 
-/* version 1 ramcheck 
+/* version 1 ramcheck
    write 0:0
    read write read write 80000,90000,f0000
    write 0:8
@@ -468,7 +468,7 @@ static READ_HANDLER ( c65_read_io )
 		}
 		break;
 	case 0x100:case 0x200: case 0x300:
-	// read only !?
+	/* read only !? */
 		DBG_LOG (1, "io read", ("%.3x\n", offset));
 		break;
 	case 0x400:
@@ -513,7 +513,7 @@ d02f:
 static int c65_io_on=0, c65_io_dc00_on=0;
 
 /* bit 1 external sync enable (genlock)
-   bit 2 palette enable 
+   bit 2 palette enable
    bit 6 vic3 c65 character set */
 static void c65_bankswitch_interface(int value)
 {
@@ -538,7 +538,7 @@ static void c65_bankswitch_interface(int value)
 	if (value&0x10) { cpu_setbank (2, c64_basic); }
 	else { cpu_setbank (2, c64_memory + 0xa000); }
 #endif
-	if ((old^value)&0x20) { // bankswitching faulty when doing actual page
+	if ((old^value)&0x20) { /* bankswitching faulty when doing actual page */
 		if (value&0x20) { cpu_setbank (3, c65_interface); }
 		else { cpu_setbank (3, c64_memory + 0xc000); }
 	}
@@ -555,11 +555,11 @@ void c65_bankswitch (void)
 {
 	static int old = -1;
 	int data, loram, hiram, charen;
-	
+
 	data = ((c64_port6510 & c64_ddr6510) | (c64_ddr6510 ^ 0xff)) & 7;
 	if (data == old)
 		return;
-	
+
 	DBG_LOG (1, "bankswitch", ("%d\n", data & 7));
 	loram = (data & 1) ? 1 : 0;
 	hiram = (data & 2) ? 1 : 0;
@@ -574,7 +574,7 @@ void c65_bankswitch (void)
 	{
 		cpu_setbank (1, c64_memory + 0x8000);
 	}
-	
+
 	if ((!c64_game && c64_exrom && hiram)
 		|| (!c64_exrom))
 	{
@@ -628,7 +628,7 @@ void c65_bankswitch (void)
 			cpu_setbank (8, c64_memory + 0xdc00);
 		}
 	}
-	
+
 	if (!c64_game && c64_exrom)
 	{
 		cpu_setbank (10, c64_romh);
@@ -690,7 +690,7 @@ static void c65_common_driver_init (void)
 {
 	c65=1;
 	c64_tape_on=0;
-	//memset(c64_memory+0x40000, 0, 0x800000-0x40000);
+	/*memset(c64_memory+0x40000, 0, 0x800000-0x40000); */
 	cbm_drive_open ();
 
 	cbm_drive_attach_fs (0);
@@ -709,6 +709,13 @@ static void c65_common_driver_init (void)
 void c65_driver_init (void)
 {
 	dma.version=2;
+	c65_common_driver_init ();
+
+}
+
+void c65_driver_alpha1_init (void)
+{
+	dma.version=1;
 	c65_common_driver_init ();
 }
 
@@ -759,7 +766,7 @@ void c65_state (PRASTER *this)
 	int y;
 	char text[70];
 
-	y = Machine->gamedrv->drv->visible_area.max_y + 1
+	y = Machine->visible_area.max_y + 1
 		- Machine->uifont->height;
 
 #if VERBOSE_DBG
@@ -771,7 +778,7 @@ void c65_state (PRASTER *this)
 #endif
 	cbm_drive_0_status (text, sizeof (text));
 	praster_draw_text (this, text, &y);
-	
+
 	cbm_drive_1_status (text, sizeof (text));
 	praster_draw_text (this, text, &y);
 }

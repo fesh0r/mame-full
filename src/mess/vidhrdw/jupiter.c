@@ -66,8 +66,8 @@ void jupiter_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 			sy = (offs / 32) * 8;
 			sx = (offs % 32) * 8;
 
-			drawgfx(bitmap, Machine->gfx[0], code & 0x7f, (code & 0x80) ? 0 : 1, 0,0, sx,sy,
-				&Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+			drawgfx(bitmap, Machine->gfx[0], code & 0x7f, (code & 0x80) ? 1 : 0, 0,0, sx,sy,
+				&Machine->visible_area, TRANSPARENCY_NONE, 0);
 
             dirtybuffer[offs] = 0;
 		}

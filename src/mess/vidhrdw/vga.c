@@ -367,7 +367,7 @@ static READ_HANDLER(vga_crtc_r)
 		break;
 	case 0xa:
 		vga.attribute.state=0;
-		data=0;//4;
+		data=0;/*4; */
 		if (vga.monitor.retrace) data|=9;
 		/* ega diagnostic readback enough for oak bios */
 		switch (vga.attribute.data[0x12]&0x30) {
@@ -387,7 +387,7 @@ static READ_HANDLER(vga_crtc_r)
 			break;
 		}
 
-		//DBG_LOG(1,"vga crtc 0x3[bd]a",("%.2x %.2x\n",offset,data));
+		/*DBG_LOG(1,"vga crtc 0x3[bd]a",("%.2x %.2x\n",offset,data)); */
 		break;
 	case 0xf:
 		/* oak test */
@@ -423,7 +423,7 @@ READ_HANDLER( vga_port_03b0_r )
 	int data=0xff;
 	if (CRTC_PORT_ADDR==0x3b0)
 		data=vga_crtc_r(offset);
-	//DBG_LOG(1,"vga 0x3b0 read",("%.2x %.2x\n", offset, data));
+	/*DBG_LOG(1,"vga 0x3b0 read",("%.2x %.2x\n", offset, data)); */
 	return data;
 }
 
@@ -544,20 +544,20 @@ READ_HANDLER(vga_port_03d0_r)
 	int data=0xff;
 	if (CRTC_PORT_ADDR==0x3d0)
 		data=vga_crtc_r(offset);
-	//DBG_LOG(1,"vga 0x3d0 read",("%.2x %.2x\n", offset, data));
+	/*DBG_LOG(1,"vga 0x3d0 read",("%.2x %.2x\n", offset, data)); */
 	return data;
 }
 
 WRITE_HANDLER( vga_port_03b0_w )
 {
-	//DBG_LOG(1,"vga 0x3b0 write",("%.2x %.2x\n", offset, data));
+	/*DBG_LOG(1,"vga 0x3b0 write",("%.2x %.2x\n", offset, data)); */
 	if (CRTC_PORT_ADDR!=0x3b0) return;
 	vga_crtc_w(offset, data);
 }
 
 WRITE_HANDLER(vga_port_03c0_w)
 {
-	//DBG_LOG(1,"03c0 write",("%.2x %.2x\n",offset,data));
+	/*DBG_LOG(1,"03c0 write",("%.2x %.2x\n",offset,data)); */
 	switch (offset) {
 	case 0:
 		if (vga.attribute.state==0) {
@@ -656,7 +656,7 @@ WRITE_HANDLER(vga_port_03c0_w)
 
 WRITE_HANDLER(vga_port_03d0_w)
 {
-	//DBG_LOG(1,"vga 0x3d0 write",("%.2x %.2x\n", offset, data));
+	/*DBG_LOG(1,"vga 0x3d0 write",("%.2x %.2x\n", offset, data)); */
 	if (CRTC_PORT_ADDR==0x3d0)
 		vga_crtc_w(offset,data);
 }
@@ -671,7 +671,7 @@ void vga_reset(void)
 	vga.memory=memory;
 	vga.read_dipswitch=read_dipswitch;
 	vga.log=0;
-	vga.gc.data[6]=0xc; // prevent xtbios excepting vga ram as system ram
+	vga.gc.data[6]=0xc; /* prevent xtbios excepting vga ram as system ram */
 	vga_cpu_interface();
 }
 
@@ -735,7 +735,7 @@ void vga_vh_text(struct osd_bitmap *bitmap, int full_refresh)
 						Machine->scrbitmap->line[line+h][column*width+w]=vga.pens[attr>>4];
 					}
 				}
-				if (w<width) { // 9 column
+				if (w<width) { /* 9 column */
 					if (TEXT_COPY_9COLUMN(ch)&&(bits&1)) {
 						Machine->scrbitmap->line[line+h][column*width+w]=vga.pens[attr&0xf];
 					} else {
@@ -826,6 +826,8 @@ void ega_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 void vga_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
+	static int columns=720, raws=480;
+	int new_columns, new_raws;
 	int i;
 	if (CRTC_ON) {
 		if (vga.dac.dirty) {
@@ -860,12 +862,26 @@ void vga_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			}
 		}
 #endif
-		if (!GRAPHIC_MODE)
+		if (!GRAPHIC_MODE) {
 			vga_vh_text(bitmap, full_refresh);
-		else if (vga.gc.data[5]&0x40)
+			new_raws=TEXT_LINES;
+			new_columns=TEXT_COLUMNS*CHAR_WIDTH;
+		} else if (vga.gc.data[5]&0x40) {
 			vga_vh_vga(bitmap, full_refresh);
-		else
+			new_raws=LINES;
+			new_columns=VGA_COLUMNS*8;
+		} else {
 			vga_vh_ega(bitmap, full_refresh);
+			new_raws=LINES;
+			new_columns=EGA_COLUMNS*8;
+		}
+		if ((new_columns!=columns)||(new_raws!=raws)) {
+			raws=new_raws;
+			columns=new_columns;
+			if ((columns>100)&&(raws>100))
+				osd_set_visible_area(0,columns-1,0, raws-1);
+			else logerror("video %d %d\n",columns, raws);
+		}
 	}
 	vga.monitor.retrace=!vga.monitor.retrace;
 }

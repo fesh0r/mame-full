@@ -55,7 +55,7 @@ void zx_ula_bkgnd(int color)
 			else
 			{
 				r.min_x = old_x;
-				r.max_x = Machine->drv->visible_area.max_x;
+				r.max_x = Machine->visible_area.max_x;
 				r.min_y = r.max_y = y;
 				fillbitmap(bitmap, Machine->pens[color], &r);
 				old_x = 0;
@@ -87,7 +87,7 @@ void zx_ula_nmi(int param)
 	 * An NMI is issued on the ZX81 every 64us for the blanked
 	 * scanlines at the top and bottom of the display.
 	 */
-	struct rectangle r = Machine->drv->visible_area;
+	struct rectangle r = Machine->visible_area;
 
 	r.min_y = r.max_y = cpu_getscanline();
 	fillbitmap(Machine->scrbitmap, Machine->pens[1], &r);
@@ -156,7 +156,7 @@ int zx_ula_r(int offs, int region)
 				data ^= 0xff;
 			offs++;
 		}
-		drawgfx(bitmap, Machine->gfx[0], data, 0, 0, 0, x, y, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+		drawgfx(bitmap, Machine->gfx[0], data, 0, 0, 0, x, y, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 	}
 	if (!halted)
 		logerror(" %02x", rom[offs & 0x7fff]);
@@ -174,11 +174,11 @@ void zx_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	}
 
 	if (full_refresh)
-		fillbitmap(bitmap, Machine->pens[1], &Machine->drv->visible_area);
+		fillbitmap(bitmap, Machine->pens[1], &Machine->visible_area);
 
 	if (zx_frame_time > 0)
 	{
-		ui_text(bitmap, zx_frame_message, 2, Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y - 9);
+		ui_text(bitmap, zx_frame_message, 2, Machine->visible_area.max_y - Machine->visible_area.min_y - 9);
 		zx_frame_time--;
 	}
 }

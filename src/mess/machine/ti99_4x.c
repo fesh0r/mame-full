@@ -45,6 +45,8 @@ New (0004) :
 New (0005) :
 	* fixed problems caused by the former patch
 	* fixed some tape bugs.  The CS1 unit now works occasionally
+New (000531) :
+	* various small bugfixes
 */
 
 #include "driver.h"
@@ -587,7 +589,7 @@ WRITE_HANDLER ( ti99_ww_cartmem )
 */
 READ_HANDLER ( ti99_rw_scratchpad )
 {
-	return READ_WORD(&ti99_scratch_RAM[0x8300 | offset]);
+	return READ_WORD(ti99_scratch_RAM + (offset & 0xff));
 }
 
 /*
@@ -595,8 +597,8 @@ READ_HANDLER ( ti99_rw_scratchpad )
 */
 WRITE_HANDLER ( ti99_ww_scratchpad )
 {
-	WRITE_WORD(ti99_scratch_RAM + offset,
-				data | (READ_WORD(ti99_scratch_RAM + offset) & (data >> 16)));
+	WRITE_WORD(ti99_scratch_RAM + (offset & 0xff),
+				data | (READ_WORD(ti99_scratch_RAM + (offset & 0xff)) & (data >> 16)));
 }
 
 /*----------------------------------------------------------------
@@ -701,7 +703,7 @@ static int gpl_addr = 0;
 */
 READ_HANDLER ( ti99_rw_rgpl )
 {
-	tms9900_ICount -= 4;
+	tms9900_ICount -= 4;				/* much more, actually */
 
 /*int page = (offset & 0x3C) >> 2; *//* GROM/GRAM can be paged */
 
@@ -730,7 +732,7 @@ READ_HANDLER ( ti99_rw_rgpl )
 */
 WRITE_HANDLER ( ti99_ww_wgpl )
 {
-	tms9900_ICount -= 4;
+	tms9900_ICount -= 4;				/* much more, actually */
 
 	data = (data >> 8) & 0xff;
 
@@ -1157,4 +1159,5 @@ WRITE_HANDLER ( ti99_DSKside )
 
 	wd179x_select_drive(DSKnum, DSKside, ti99_fdc_callback, floppy_name[DSKnum]);
 }
+
 

@@ -12,7 +12,7 @@ TARGET = mess
 # SYMBOLS = 1
 
 # uncomment next line to use Assembler 68k engine
-X86_ASM_68K = 1
+# X86_ASM_68K = 1
 
 # set this the operating system you're building for
 # (actually you'll probably need your own main makefile anyways)
@@ -203,6 +203,7 @@ maketree:
 	@md $(OBJ)\cpu\adsp2100
 	@md $(OBJ)\cpu\pdp1
 	@md $(OBJ)\cpu\mips
+	@md $(OBJ)\cpu\sc61860
 	@md $(OBJ)\sound
 	@md $(OBJ)\msdos
 	@md $(OBJ)\drivers

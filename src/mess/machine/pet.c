@@ -35,8 +35,8 @@ UINT8 *pet_videoram;
    port a
     7 sense input (low for diagnostics)
     6 ieee eoi in
-    5 cassette 2 switch in 
-    4 cassette 1 switch in 
+    5 cassette 2 switch in
+    4 cassette 1 switch in
     3..0 keyboard line select
 
   ca1 cassette 1 read
@@ -182,7 +182,7 @@ static void pet_address_line_11(int offset, int level)
    ca1 userport
    ca2 character rom address line 11
    pa user port
-   
+
    pb0 ieee ndac in
    pb1 ieee nrfd out
    pb2 ieee atn out
@@ -280,7 +280,7 @@ extern READ_HANDLER(cbm8096_io_r)
         bit 5    1=screen peek through
         bit 6    1=I/O peek through
         bit 7    1=enable expansion memory
-    
+
 */
 WRITE_HANDLER(cbm8096_w)
 {
@@ -388,7 +388,7 @@ extern WRITE_HANDLER(superpet_w)
 	switch (offset) {
 	case 6:case 7:
 		spet.rom=data&1;
-		
+
 		break;
 	case 4:case 5:
 		spet.bank=data&0xf;
@@ -397,7 +397,7 @@ extern WRITE_HANDLER(superpet_w)
 		break;
 	case 0:case 1:case 2:case 3:
 		/* 3: 1 pull down diagnostic pin on the userport
-		   1: 1 if jumpered programable ram r/w 
+		   1: 1 if jumpered programable ram r/w
 		   0: 0 if jumpered programable m6809, 1 m6502 selected */
 		break;
 	}
@@ -418,10 +418,10 @@ static void pet_common_driver_init (void)
 	pia_config(1,PIA_8BIT,&pet_pia1);
 
 	cbm_drive_open ();
-	
+
 	cbm_drive_attach_fs (0);
 	cbm_drive_attach_fs (1);
-	
+
 	cbm_ieee_open();
 }
 
@@ -522,9 +522,9 @@ void pet_init_machine (void)
 		}
 		cbm8096_w(0,0);
 	}
-	
+
 	cbm_drive_0_config (IEEE8ON ? IEEE : 0, 8);
-	cbm_drive_1_config (IEEE9ON ? IEEE : 0, 9);	
+	cbm_drive_1_config (IEEE9ON ? IEEE : 0, 9);
 
 	pet_rom_load();
 }
@@ -544,7 +544,7 @@ int pet_rom_id (int id)
 	FILE *romfile;
 	char *cp;
 	const char *name=device_filename(IO_CARTSLOT,id);
-	
+
 	logerror("c64_rom_id %s\n", name);
 	retval = 0;
 	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
@@ -552,7 +552,7 @@ int pet_rom_id (int id)
 		logerror("rom %s not found\n", name);
 		return 0;
 	}
-	
+
 	osd_fseek (romfile, 3, SEEK_SET);
 	osd_fread (romfile, buffer, sizeof (magic));
 	osd_fclose (romfile);
@@ -882,7 +882,7 @@ void pet_state(PRASTER *this)
 	int y;
 	char text[70];
 
-	y = Machine->gamedrv->drv->visible_area.max_y + 1 - Machine->uifont->height;
+	y = Machine->visible_area.max_y + 1 - Machine->uifont->height;
 
 #if 0
 	snprintf(text, sizeof(text),
@@ -902,7 +902,7 @@ void pet_state(PRASTER *this)
 
 	cbm_drive_0_status (text, sizeof (text));
 	praster_draw_text (this, text, &y);
-	
+
 	cbm_drive_1_status (text, sizeof (text));
 	praster_draw_text (this, text, &y);
 }

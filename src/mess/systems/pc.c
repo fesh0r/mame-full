@@ -1240,7 +1240,7 @@ INPUT_PORTS_START( xtvga )
 	PORT_START	/* IN15 */
 	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 1", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( Yes ) )	
+	PORT_DIPSETTING(	0x01, DEF_STR( Yes ) )
 	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 2", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
@@ -2042,7 +2042,7 @@ static struct MachineDriver machine_driver_atvga =
 
 #if 0
 	//pcjr roms?
-	// basic c1.20 
+	// basic c1.20
     ROM_LOAD("basic.rom", 0xf6000, 0x8000, 0x0c19c1a8)
 	// ???
     ROM_LOAD("bios.rom", 0x??000, 0x2000, 0x98463f95)
@@ -2280,8 +2280,8 @@ COMPX( 1987, t1000hx,  pc,		 t1000hx,  tandy1t,  t1000hx,  "Tandy Radio Shack", 
 // please leave these as testdriver
 COMP ( 1983, xtcga,    pc,		 xtcga,    xtcga,	 pc,	   "International Business Machines",  "IBM PC-eXtended Technology CGA, MF2 Keyboard" )
 COMP ( 1983, xtega,    pc,		 xtega,    xtvga,	 pc_vga,   "International Business Machines",  "IBM PC-XT VGA, Enhanced Graphics Adapter Monitor, MF2 Keyboard" )
-COMP ( 1983, xtvga,    pc,		 xtvga,    xtvga,	 pc_vga,   "International Business Machines",  "IBM PC-XT Video Graphics Adapter, MF2 Keyboard" )
-COMP ( 1984, atcga,    pc,		 atcga,    atcga,	 at,	   "International Business Machines",  "IBM PC-Advanced Technology CGA, MF2 Keyboard" )
+COMPX ( 1983, xtvga,    pc,		 xtvga,    xtvga,	 pc_vga,   "International Business Machines",  "IBM PC-XT Video Graphics Adapter, MF2 Keyboard", GAME_NOT_WORKING )
+COMPX ( 1984, atcga,    pc,		 atcga,    atcga,	 at,	   "International Business Machines",  "IBM PC-Advanced Technology CGA, MF2 Keyboard", GAME_NOT_WORKING )
 COMP ( 1984, atvga,    pc,		 atvga,    atcga,	 at_vga,   "International Business Machines",  "IBM PC-AT VGA, MF2 Keyboard" )
 
 

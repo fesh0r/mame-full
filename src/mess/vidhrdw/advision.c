@@ -11,12 +11,10 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "mess/includes/advision.h"
 
 static UINT8 advision_led_latch[8];
 static UINT8 *advision_display;
-extern int advision_framestart;
-extern int advision_videoenable;
-extern int advision_videobank;
 
 int advision_vh_hpos;
 

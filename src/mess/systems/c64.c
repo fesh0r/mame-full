@@ -446,8 +446,8 @@ static struct MemoryWriteAddress c64_writemem[] =
 				 KEYCODE_4_PAD)
 
 INPUT_PORTS_START (ultimax)
-     C64_DIPS
-    PORT_START
+	 C64_DIPS
+	PORT_START
 	DIPS_HELPER( 0x8000, "Quickload", KEYCODE_F8)
 	PORT_DIPNAME   ( 0x4000, 0x4000, "Tape Drive/Device 1")
 	PORT_DIPSETTING(  0, DEF_STR( Off ) )
@@ -455,9 +455,9 @@ INPUT_PORTS_START (ultimax)
 	PORT_DIPNAME   ( 0x2000, 0x00, " Tape Sound")
 	PORT_DIPSETTING(  0, DEF_STR( Off ) )
 	PORT_DIPSETTING(0x2000, DEF_STR( On ) )
-	DIPS_HELPER( 0x1000, "Tape Drive Play",       KEYCODE_F5)\
-	DIPS_HELPER( 0x0800, "Tape Drive Record",     KEYCODE_F6)\
-	DIPS_HELPER( 0x0400, "Tape Drive Stop",       KEYCODE_F7)\
+	DIPS_HELPER( 0x1000, "Tape Drive Play",       KEYCODE_F5)
+	DIPS_HELPER( 0x0800, "Tape Drive Record",     KEYCODE_F6)
+	DIPS_HELPER( 0x0400, "Tape Drive Stop",       KEYCODE_F7)
 	PORT_DIPNAME   ( 0x80, 0x00, "Sid Chip Type")
 	PORT_DIPSETTING(  0, "MOS6581" )
 	PORT_DIPSETTING(0x80, "MOS8580" )
@@ -588,9 +588,8 @@ INPUT_PORTS_START (sx64)
      C64_KEYBOARD
 INPUT_PORTS_END
 
-#ifdef PET_TEST_CODE
 INPUT_PORTS_START (vip64)
-     C64_DIPS
+	 C64_DIPS
 	 PORT_START
 	 DIPS_HELPER( 0x8000, "Quickload", KEYCODE_F8)
 	 PORT_BIT (0x7f00, 0x0, IPT_UNUSED) /* no tape */
@@ -612,9 +611,8 @@ INPUT_PORTS_START (vip64)
 	 PORT_DIPNAME (0x01, 0x01, "Serial Bus/Device 9")
 	 PORT_DIPSETTING (0, "None")
 	 PORT_DIPSETTING (1, "VC1541 Floppy Drive")
-     VIC64S_KEYBOARD
+	 VIC64S_KEYBOARD
 INPUT_PORTS_END
-#endif
 
 static void c64_init_palette (unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
 {
@@ -669,7 +667,6 @@ ROM_START (sx64)
 	VC1541_ROM (REGION_CPU2)
 ROM_END
 
-#ifdef PET_TEST_CODE
 ROM_START (vip64)
 	ROM_REGION (0x19400, REGION_CPU1)
 	ROM_LOAD ("901226.01", 0x10000, 0x2000, 0xf833d117)
@@ -677,7 +674,6 @@ ROM_START (vip64)
 	ROM_LOAD ("charswe.bin", 0x14000, 0x1000, 0xbee9b3fd)
 	VC1541_ROM (REGION_CPU2)
 ROM_END
-#endif
 
 ROM_START (pet64)
 	ROM_REGION (0x19400, REGION_CPU1)
@@ -710,7 +706,7 @@ ROM_END
 	 ROM_LOAD( "frodo.e0",    0x12000, 0x2000, 0x6ec94629 )   
 
      /* commodore versions */
-     /* 901227-01 */
+	 /* 901227-01 */
 	 ROM_LOAD( "901227.01",  0x12000, 0x2000, 0xdce782fa )   
      /* 901227-02 */
 	 ROM_LOAD( "901227.02", 0x12000, 0x2000, 0xa5c687b3 )
@@ -743,7 +739,7 @@ ROM_END
 	 /* exos v3 */
 	 ROM_LOAD( "exosv3.e0",   0x12000, 0x2000, 0x4e54d020 )   
      /* 2 bytes different */
-	 ROM_LOAD( "exosv3.e0",   0x12000, 0x2000, 0x26f3339e )   
+	 ROM_LOAD( "exosv3.e0",   0x12000, 0x2000, 0x26f3339e )
 
 	 /* jiffydos v6.01 by cmd */
 	 ROM_LOAD( "jiffy.e0",    0x12000, 0x2000, 0x2f79984c )   
@@ -888,14 +884,14 @@ static struct MachineDriver machine_driver_c64gs =
 	{
 		{
 			CPU_M6510,
-			VIC6567_CLOCK,
+			VIC6569_CLOCK,
 			c64_readmem, c64_writemem,
 			0, 0,
 			c64_frame_interrupt, 1,
 			vic2_raster_irq, VIC2_HRETRACERATE,
 		},
 	},
-	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	VIC6569_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	0,
 	c64_init_machine,
 	c64_shutdown_machine,
@@ -974,7 +970,7 @@ static struct MachineDriver machine_driver_ultimax =
 	{
 		{
 			CPU_M6510,
-			VIC6567_CLOCK,
+			1000000, //!
 			ultimax_readmem, ultimax_writemem,
 			0, 0,
 			c64_frame_interrupt, 1,
@@ -1060,21 +1056,19 @@ static const struct IODevice io_c64gs[] =
 
 #ifdef PET_TEST_CODE
 /*	  YEAR	NAME		PARENT	MACHINE 		INPUT	INIT	COMPANY 						   FULLNAME */
-COMP (1982, max,		0,		ultimax,		ultimax,ultimax,"Commodore Business Machines Co.", "Commodore Max (Ultimax/VC10)")
-COMP (1982, c64,        0,      c64,            c64,    c64,    "Commodore Business Machines Co.", "Commodore C64 (NTSC)")
-COMP (1982, cbm4064,	c64,	pet64,			c64,	c64,	"Commodore Business Machines Co.", "Commodore CBM4064/PET64/Educator64 (NTSC)")
-COMP (1982, c64pal, 	c64,	c64pal, 		c64,	c64pal, "Commodore Business Machines Co.", "Commodore C64/VC64/VIC64 (PAL)")
-COMP (1982, vic64s, 	c64,	c64pal, 		vic64s,	c64pal, "Commodore Business Machines Co.", "Commodore Video Interface Chip 64 Swedish (PAL)")
-COMP (1983, sx64,		c64,	sx64,			sx64,	sx64,	"Commodore Business Machines Co.", "Commodore SX64 (PAL)")
-COMP (1983, vip64,		c64,	sx64,			vip64,	sx64,	"Commodore Business Machines Co.", "Commodore VIP64 (SX64 PAL), Swedish Expansion Kit")
-CONS (1987, c64gs,		c64,	c64gs,			c64gs,	c64gs,	"Commodore Business Machines Co.", "Commodore C64 Games Systems (NTSC)")
-#else
+#endif
 /*	  YEAR	NAME		PARENT	MACHINE 		INPUT	INIT	COMPANY 						   FULLNAME */
 COMPX(1982, max,		0,		ultimax,		ultimax,ultimax,"Commodore Business Machines Co.", "Commodore Max (Ultimax/VC10)",      GAME_IMPERFECT_SOUND)
 COMPX(1982, c64,		0,		c64,			c64,	c64,	"Commodore Business Machines Co.", "Commodore C64 (NTSC)",                      GAME_IMPERFECT_SOUND)
 COMPX(1982, cbm4064,	c64,	pet64,			c64,	c64,	"Commodore Business Machines Co.", "Commodore CBM4064/PET64/Educator64 (NTSC)", GAME_IMPERFECT_SOUND)
 COMPX(1982, c64pal, 	c64,	c64pal, 		c64,	c64pal, "Commodore Business Machines Co.", "Commodore C64/VC64/VIC64 (PAL)",            GAME_IMPERFECT_SOUND)
 COMPX(1982, vic64s, 	c64,	c64pal, 		vic64s,	c64pal, "Commodore Business Machines Co.", "Commodore Video Interface Chip 64 Swedish (PAL)",           GAME_IMPERFECT_SOUND)
+CONSX(1987, c64gs,		c64,	c64gs,			c64gs,	c64gs,	"Commodore Business Machines Co.", "Commodore C64 Games Systems (PAL)",                    GAME_IMPERFECT_SOUND)
+// please leave the following as testdriver,
+// or better don't include them in system.c
 COMPX(1983, sx64,		c64,	sx64,			sx64,	sx64,	"Commodore Business Machines Co.", "Commodore SX64 (PAL)",                      GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
-CONSX(1987, c64gs,		c64,	c64gs,			c64gs,	c64gs,	"Commodore Business Machines Co.", "Commodore C64 Games Systems (NTSC)",                    GAME_IMPERFECT_SOUND)
-#endif
+COMPX(1983, vip64,		c64,	sx64,			vip64,	sx64,	"Commodore Business Machines Co.", "Commodore VIP64 (SX64 PAL), Swedish Expansion Kit", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+//c64 II (cbm named it still c64)
+//c64c (bios in 1 chip)
+//c64g late 8500/8580 based c64, sold at aldi/germany
+//c64cgs late c64, sold in ireland, gs bios?, but with keyboard

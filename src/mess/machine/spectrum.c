@@ -19,6 +19,7 @@
   DJR 03/5/00 - Fixed bug of not decoding last byte of .Z80 blocks.
   DJR 08/5/00 - Fixed TS2068 .TAP loading.
   DJR 19/5/00 - .TAP files are now classified as cassette files.
+  DJR 02/6/00 - Added support for .SCR files (screendumps).
 
 ***************************************************************************/
 
@@ -61,6 +62,14 @@ typedef enum
 
 static SPECTRUM_SNAPSHOT_TYPE spectrum_snapshot_type = SPECTRUM_SNAPSHOT_NONE;
 
+static struct
+{
+	const char *name;
+	unsigned short addr;
+	UINT8 *data;
+	int length;
+}
+quick;
 
 void spectrum_init_machine(void)
 {
@@ -924,7 +933,7 @@ int spectrum_cassette_init(int id)
         const char *filename;
 
         filename = device_filename(IO_CASSETTE, id);
-        if (!stricmp (filename+strlen(filename)-4,".tap"))
+        if ((filename!=NULL) && !stricmp (filename+strlen(filename)-4,".tap"))
 	{
 		int datasize;
 		unsigned char *data;
@@ -1004,4 +1013,56 @@ void spectrum_cassette_exit(int id)
 void spectrum_nmi_generate(int param)
 {
 	cpu_cause_interrupt(0, Z80_NMI_INT);
+}
+
+int spec_quick_init (int id)
+{
+	FILE *fp;
+	int read;
+	const char *name=device_filename(IO_QUICKLOAD, id);
+
+	memset (&quick, 0, sizeof (quick));
+
+	if (name==NULL) return INIT_OK;
+
+	quick.name = name;
+
+	fp = image_fopen (IO_QUICKLOAD, id, OSD_FILETYPE_IMAGE_R, 0);
+	if (!fp)
+		return INIT_FAILED;
+
+	quick.length = osd_fsize (fp);
+        quick.addr = 0x4000;
+
+	if ((quick.data = malloc (quick.length)) == NULL)
+	{
+		osd_fclose (fp);
+		return INIT_FAILED;
+	}
+	read = osd_fread (fp, quick.data, quick.length);
+	osd_fclose (fp);
+	return read != quick.length;
+}
+
+void spec_quick_exit (int id)
+{
+	if (quick.data != NULL)
+		free (quick.data);
+}
+
+int spec_quick_open (int id, int mode, void *arg)
+{
+        int i;
+
+	if (quick.data == NULL)
+		return 1;
+
+        for (i = 0; i < quick.length; i++)
+	{
+                cpu_writemem16(i + quick.addr, quick.data[i]);
+	}
+	logerror("quick loading %s at %.4x size:%.4x\n",
+				 quick.name, quick.addr, quick.length);
+
+	return 0;
 }

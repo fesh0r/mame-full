@@ -53,8 +53,8 @@ typedef struct _PRASTER {
 	struct {
 		int no_rastering; /* save time, and do not write to bitmap */
 		struct osd_bitmap *bitmap; /* output for rastered image */
-		struct { int x, y; } pos; /* left upper position to be rendered in  */
-		struct { int x, y; } size; /* size to be rendered */
+//		struct { int x, y; } pos; /* left upper position to be rendered in  */
+//		struct { int x, y; } size; /* size to be rendered */
 		UINT16 *pens;
 	} display;
 

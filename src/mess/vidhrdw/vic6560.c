@@ -548,8 +548,8 @@ static void vic6560_drawlines (int first, int last)
 
 static void vic6560_draw_text (struct osd_bitmap *bitmap, char *text, int *y)
 {
-	int x, x0, y1v, width = (Machine->gamedrv->drv->visible_area.max_x -
-							 Machine->gamedrv->drv->visible_area.min_x) / Machine->uifont->width;
+	int x, x0, y1v, width = (Machine->visible_area.max_x -
+							 Machine->visible_area.min_x) / Machine->uifont->width;
 
 	if (text[0] != 0)
 	{
@@ -559,8 +559,8 @@ static void vic6560_draw_text (struct osd_bitmap *bitmap, char *text, int *y)
 		x = 0;
 		while (text[x])
 		{
-			for (x0 = Machine->gamedrv->drv->visible_area.min_x;
-				 text[x] && (x0 < Machine->gamedrv->drv->visible_area.max_x -
+			for (x0 = Machine->visible_area.min_x;
+				 text[x] && (x0 < Machine->visible_area.max_x -
 							 Machine->uifont->width);
 				 x++, x0 += Machine->uifont->width)
 			{
@@ -593,7 +593,7 @@ int vic656x_raster_interrupt (void)
 			r.min_y = LIGHTPEN_Y_VALUE - 1 + VIC656X_MAME_YPOS;
 			r.max_y = r.min_y + 8 - 1;
 
-			if (DOCLIP (&r, &Machine->drv->visible_area))
+			if (DOCLIP (&r, &Machine->visible_area))
 			{
 				osd_mark_dirty (r.min_x, r.min_y, r.max_x, r.max_y, 0);
 #ifndef GFX
@@ -606,7 +606,7 @@ int vic656x_raster_interrupt (void)
 #endif
 			}
 		}
-		y = Machine->gamedrv->drv->visible_area.max_y + 1 - Machine->uifont->height;
+		y = Machine->visible_area.max_y + 1 - Machine->uifont->height;
 
 		vc20_tape_status (text, sizeof (text));
 		vic6560_draw_text (vic6560_bitmap, text, &y);

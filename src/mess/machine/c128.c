@@ -775,18 +775,6 @@ void c128pal_driver_init (void)
 	raster2.display_state=c128_state;
 }
 
-void c128pal2_driver_init (void)
-{
-	c128_common_driver_init ();
-	vic6567_init (1, c64_pal,
-				  c128_dma_read, c128_dma_read_color, c64_vic_interrupt);
-	vic2_set_rastering(0);
-	vdc8563_init(c128_vdcram, 0);
-	vdc8563_set_rastering(1);
-	raster1.display_state=c64_state;
-	raster2.display_state=c128_state;
-}
-
 void c128_driver_shutdown (void)
 {
 	cbm_drive_close ();
@@ -846,7 +834,7 @@ void c128_state(PRASTER *this)
 	int y;
 	char text[70];
 
-	y = Machine->gamedrv->drv->visible_area.max_y + 1 - Machine->uifont->height;
+	y = Machine->visible_area.max_y + 1 - Machine->uifont->height;
 
 #if VERBOSE_DBG
 # if 0

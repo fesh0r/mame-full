@@ -612,7 +612,7 @@ int a2600_load_rom (int id)
 
 ***************************************************************************/
 int a2600_vh_start(void)
-{	if ((stella_bitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+{	if ((stella_bitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
     return 0;
 }
@@ -628,8 +628,8 @@ void a2600_vh_stop(void)
 int a2600_scanline_interrupt(void)
 {
 	int regpos, pixpos;
-	int xs = Machine->drv->visible_area.min_x;//68;
-	int ys = Machine->drv->visible_area.max_y;//228;
+	int xs = Machine->visible_area.min_x;//68;
+	int ys = Machine->visible_area.max_y;//228;
 	int currentline =  cpu_getscanline();
 	int backcolor;
 
@@ -675,7 +675,7 @@ int a2600_scanline_interrupt(void)
 /* This routine is called at the start of vblank to refresh the screen */
 void a2600_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-    copybitmap(bitmap,stella_bitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+    copybitmap(bitmap,stella_bitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 }
 

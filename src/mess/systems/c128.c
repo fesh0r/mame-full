@@ -616,51 +616,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START (c128ger)
 	 C64_DIPS
-#if 1
-	 PORT_START
-	 DIPS_HELPER( 0x8000, "Quickload", KEYCODE_SLASH_PAD)
-	 PORT_DIPNAME   ( 0x4000, 0x4000, "Tape Drive/Device 1")
-	 PORT_DIPSETTING(  0, DEF_STR( Off ) )
-	 PORT_DIPSETTING(0x4000, DEF_STR( On ) )
-	 PORT_DIPNAME   ( 0x2000, 0x00, " Tape Sound")
-	 PORT_DIPSETTING(  0, DEF_STR( Off ) )
-	 PORT_DIPSETTING(0x2000, DEF_STR( On ) )
-	 DIPS_HELPER( 0x1000, "Tape Drive Play",       CODE_DEFAULT)
-	 DIPS_HELPER( 0x0800, "Tape Drive Record",     CODE_DEFAULT)
-	 DIPS_HELPER( 0x0400, "Tape Drive Stop",       CODE_DEFAULT)
-	 PORT_DIPNAME   ( 0x300, 0x00, "Main Memory/MMU Version")
-	 PORT_DIPSETTING(  0, "128 KByte" )
-	 PORT_DIPSETTING(0x100, "256 KByte" )
-	 PORT_DIPSETTING(0x200, "1024 KByte" )
-	PORT_DIPNAME   ( 0x80, 0x80, "Sid Chip Type")\
-	PORT_DIPSETTING(  0, "MOS6581" )\
-	PORT_DIPSETTING(0x80, "MOS8580" )\
-	 PORT_DIPNAME   ( 0x40, 0x40, "VDC Memory (RGBI)")\
-	 PORT_DIPSETTING(  0, "16 KByte" )\
-	 PORT_DIPSETTING(  0x40, "64 KByte" )\
-	 PORT_BITX (0x20, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,\
-				"DIN,TV/RGBI Monitor (switch)",\
-				KEYCODE_ENTER_PAD, IP_JOY_NONE)\
-	 PORT_DIPSETTING(  0, "DIN,TV" )\
-	 PORT_DIPSETTING(  0x20, "RGBI" )\
-	 PORT_DIPNAME (0x1c, 0x00, "Cartridge Type")
-	 PORT_DIPSETTING (0, "Automatic")
-	 PORT_DIPSETTING (4, "Ultimax (GAME)")
-	 PORT_DIPSETTING (8, "C64 (EXROM)")
-#ifdef PET_TEST_CODE
-	 PORT_DIPSETTING (0x10, "C64 CBM Supergames")
-	 PORT_DIPSETTING (0x14, "C64 Ocean Robocop2")
-	 PORT_DIPSETTING (0x1c, "C128")
-#endif
-	 PORT_DIPNAME (0x02, 0x02, "Serial Bus/Device 8")
-	 PORT_DIPSETTING (0, "None")
-	 PORT_DIPSETTING (2, "VC1541 Floppy Drive")
-	 PORT_DIPNAME (0x01, 0x01, "Serial Bus/Device 9")
-	 PORT_DIPSETTING (0, "None")
-	 PORT_DIPSETTING (1, "VC1541 Floppy Drive")
-#else
 	 C128_DIPS
-#endif
 	 PORT_START
 	 DIPS_HELPER (0x8000, "(64)_                    < >", KEYCODE_TILDE)
 	 DIPS_HELPER (0x4000, "(64)1 !  BLK   ORNG", KEYCODE_1)
@@ -772,51 +728,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START (c128fra)
 	 C64_DIPS
-#if 1
-	 PORT_START
-	 DIPS_HELPER( 0x8000, "Quickload", KEYCODE_SLASH_PAD)
-	 PORT_DIPNAME   ( 0x4000, 0x4000, "Tape Drive/Device 1")
-	 PORT_DIPSETTING(  0, DEF_STR( Off ) )
-	 PORT_DIPSETTING(0x4000, DEF_STR( On ) )
-	 PORT_DIPNAME   ( 0x2000, 0x00, " Tape Sound")
-	 PORT_DIPSETTING(  0, DEF_STR( Off ) )
-	 PORT_DIPSETTING(0x2000, DEF_STR( On ) )
-	 DIPS_HELPER( 0x1000, "Tape Drive Play",       CODE_DEFAULT)
-	 DIPS_HELPER( 0x0800, "Tape Drive Record",     CODE_DEFAULT)
-	 DIPS_HELPER( 0x0400, "Tape Drive Stop",       CODE_DEFAULT)
-	 PORT_DIPNAME   ( 0x300, 0x00, "Main Memory/MMU Version")
-	 PORT_DIPSETTING(  0, "128 KByte" )
-	 PORT_DIPSETTING(0x100, "256 KByte" )
-	 PORT_DIPSETTING(0x200, "1024 KByte" )
-	PORT_DIPNAME   ( 0x80, 0x80, "Sid Chip Type")\
-	PORT_DIPSETTING(  0, "MOS6581" )\
-	PORT_DIPSETTING(0x80, "MOS8580" )\
-	 PORT_DIPNAME   ( 0x40, 0x40, "VDC Memory (RGBI)")\
-	 PORT_DIPSETTING(  0, "16 KByte" )\
-	 PORT_DIPSETTING(  0x40, "64 KByte" )\
-	 PORT_BITX (0x20, 0x20, IPT_DIPSWITCH_NAME|IPF_TOGGLE,\
-				"DIN,TV/RGBI Monitor (switch)",\
-				KEYCODE_ENTER_PAD, IP_JOY_NONE)\
-	 PORT_DIPSETTING(  0, "DIN,TV" )\
-	 PORT_DIPSETTING(  0x20, "RGBI" )\
-	 PORT_DIPNAME (0x1c, 0x00, "Cartridge Type")
-	 PORT_DIPSETTING (0, "Automatic")
-	 PORT_DIPSETTING (4, "Ultimax (GAME)")
-	 PORT_DIPSETTING (8, "C64 (EXROM)")
-#ifdef PET_TEST_CODE
-	 PORT_DIPSETTING (0x10, "C64 CBM Supergames")
-	 PORT_DIPSETTING (0x14, "C64 Ocean Robocop2")
-	 PORT_DIPSETTING (0x1c, "C128")
-#endif
-	 PORT_DIPNAME (0x02, 0x02, "Serial Bus/Device 8")
-	 PORT_DIPSETTING (0, "None")
-	 PORT_DIPSETTING (2, "VC1541 Floppy Drive")
-	 PORT_DIPNAME (0x01, 0x01, "Serial Bus/Device 9")
-	 PORT_DIPSETTING (0, "None")
-	 PORT_DIPSETTING (1, "VC1541 Floppy Drive")
-#else
 	 C128_DIPS
-#endif
 	 PORT_START
 	 DIPS_HELPER (0x8000, "(64)_                    < >", KEYCODE_TILDE)
 	 DIPS_HELPER (0x4000, "(64)1 !  BLK   ORNG      & 1", KEYCODE_1)
@@ -928,51 +840,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START (c128ita)
 	 C64_DIPS
-#if 1
-	 PORT_START
-	 DIPS_HELPER( 0x8000, "Quickload", KEYCODE_SLASH_PAD)
-	 PORT_DIPNAME   ( 0x4000, 0x4000, "Tape Drive/Device 1")
-	 PORT_DIPSETTING(  0, DEF_STR( Off ) )
-	 PORT_DIPSETTING(0x4000, DEF_STR( On ) )
-	 PORT_DIPNAME   ( 0x2000, 0x00, " Tape Sound")
-	 PORT_DIPSETTING(  0, DEF_STR( Off ) )
-	 PORT_DIPSETTING(0x2000, DEF_STR( On ) )
-	 DIPS_HELPER( 0x1000, "Tape Drive Play",       CODE_DEFAULT)
-	 DIPS_HELPER( 0x0800, "Tape Drive Record",     CODE_DEFAULT)
-	 DIPS_HELPER( 0x0400, "Tape Drive Stop",       CODE_DEFAULT)
-	 PORT_DIPNAME   ( 0x300, 0x00, "Main Memory/MMU Version")
-	 PORT_DIPSETTING(  0, "128 KByte" )
-	 PORT_DIPSETTING(0x100, "256 KByte" )
-	 PORT_DIPSETTING(0x200, "1024 KByte" )
-	PORT_DIPNAME   ( 0x80, 0x80, "Sid Chip Type")\
-	PORT_DIPSETTING(  0, "MOS6581" )\
-	PORT_DIPSETTING(0x80, "MOS8580" )\
-	 PORT_DIPNAME   ( 0x40, 0x40, "VDC Memory (RGBI)")\
-	 PORT_DIPSETTING(  0, "16 KByte" )\
-	 PORT_DIPSETTING(  0x40, "64 KByte" )\
-	 PORT_BITX (0x20, 0x20, IPT_DIPSWITCH_NAME|IPF_TOGGLE,\
-				"DIN,TV/RGBI Monitor (switch)",\
-				KEYCODE_ENTER_PAD, IP_JOY_NONE)\
-	 PORT_DIPSETTING(  0, "DIN,TV" )\
-	 PORT_DIPSETTING(  0x20, "RGBI" )\
-	 PORT_DIPNAME (0x1c, 0x00, "Cartridge Type")
-	 PORT_DIPSETTING (0, "Automatic")
-	 PORT_DIPSETTING (4, "Ultimax (GAME)")
-	 PORT_DIPSETTING (8, "C64 (EXROM)")
-#ifdef PET_TEST_CODE
-	 PORT_DIPSETTING (0x10, "C64 CBM Supergames")
-	 PORT_DIPSETTING (0x14, "C64 Ocean Robocop2")
-	 PORT_DIPSETTING (0x1c, "C128")
-#endif
-	 PORT_DIPNAME (0x02, 0x02, "Serial Bus/Device 8")
-	 PORT_DIPSETTING (0, "None")
-	 PORT_DIPSETTING (2, "VC1541 Floppy Drive")
-	 PORT_DIPNAME (0x01, 0x01, "Serial Bus/Device 9")
-	 PORT_DIPSETTING (0, "None")
-	 PORT_DIPSETTING (1, "VC1541 Floppy Drive")
-#else
 	 C128_DIPS
-#endif
 	 PORT_START
 	 DIPS_HELPER (0x8000, "(64)_                    < >", KEYCODE_TILDE)
 	 DIPS_HELPER (0x4000, "(64)1 !  BLK   ORNG      Pound 1", KEYCODE_1)
@@ -1176,7 +1044,6 @@ ROM_START (c128)
 	ROM_REGION (0x10000, REGION_CPU2)
 ROM_END
 
-#ifdef PET_TEST_CODE
 ROM_START (c128d)
 	ROM_REGION (0x132800, REGION_CPU1)
 	ROM_LOAD ("318022.02", 0x100000, 0x8000, 0xaf1ae1e8)
@@ -1185,7 +1052,6 @@ ROM_START (c128d)
 	ROM_REGION (0x10000, REGION_CPU2)
 	C1571_ROM(REGION_CPU3)
 ROM_END
-#endif
 
 ROM_START (c128ger)
 	 /* c128d german */
@@ -1223,7 +1089,6 @@ ROM_START (c128ita)
 	ROM_REGION (0x10000, REGION_CPU2)
 ROM_END
 
-#ifdef PET_TEST_CODE
 ROM_START (c128swe)
 	ROM_REGION (0x132800, REGION_CPU1)
 	ROM_LOAD ("318022.02", 0x100000, 0x8000, 0xaf1ae1e8)
@@ -1239,11 +1104,10 @@ ROM_START (c128nor)
 	ROM_LOAD ("318019.04", 0x104000, 0x4000, 0x6e2c91a7)
 	ROM_LOAD ("251913.01", 0x108000, 0x4000, 0x0010ec31)
 	ROM_LOAD ("nor.bin", 0x10c000, 0x4000, 0xa5406848)
-    /* standard c64, vic20 based norwegian */
+	/* standard c64, vic20 based norwegian */
 	ROM_LOAD ("char.nor", 0x120000, 0x2000, 0xba95c625)
 	ROM_REGION (0x10000, REGION_CPU2)
 ROM_END
-#endif
 
 static struct MachineDriver machine_driver_c128 =
 {
@@ -1294,7 +1158,6 @@ static struct MachineDriver machine_driver_c128 =
 	}
 };
 
-#ifdef PET_TEST_CODE
 static struct MachineDriver machine_driver_c128d =
 {
   /* basic machine hardware */
@@ -1344,7 +1207,6 @@ static struct MachineDriver machine_driver_c128d =
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
-#endif
 
 static struct MachineDriver machine_driver_c128pal =
 {
@@ -1374,55 +1236,6 @@ static struct MachineDriver machine_driver_c128pal =
 	c128_shutdown_machine,
 
 	/* video hardware */
-	336,							   /* screen width */
-	216,							   /* screen height */
-	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
-	0,								   /* graphics decode info */
-	(sizeof (vic2_palette) +sizeof(vdc8563_palette))
-	 / sizeof (vic2_palette[0]) / 3,
-	0,
-	c128_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	c128_vh_start,
-	c128_vh_stop,
-	c128_vh_screenrefresh,
-
-	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ SOUND_CUSTOM, &sid6581_sound_interface },
-		{SOUND_DAC, &vc20tape_sound_interface}
-	}
-};
-
-static struct MachineDriver machine_driver_c128pal2 =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_Z80 | CPU_16BIT_PORT,
-			VIC6569_CLOCK,
-			c128_z80_readmem, c128_z80_writemem,
-			c128_z80_readio, c128_z80_writeio,
-			c64_frame_interrupt, 1,
-			c128_raster_irq, VIC2_HRETRACERATE,
-		},
-		{
-			CPU_M8502,
-			VIC6569_CLOCK,
-			c128_readmem, c128_writemem,
-			0, 0,
-			c64_frame_interrupt, 1,
-			c128_raster_irq, VIC2_HRETRACERATE,
-		},
-	},
-	VIC6569_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
-	c128_init_machine,
-	c128_shutdown_machine,
-
-	/* video hardware */
 	656,							   /* screen width */
 	216,							   /* screen height */
 	{0, 656 - 1, 0, 216 - 1},		   /* visible_area */
@@ -1431,7 +1244,7 @@ static struct MachineDriver machine_driver_c128pal2 =
 	 / sizeof (vic2_palette[0]) / 3,
 	0,
 	c128_init_palette,				   /* convert color prom */
-	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER,
 	0,
 	c128_vh_start,
 	c128_vh_stop,
@@ -1471,26 +1284,19 @@ static const struct IODevice io_c128d[] =
 
 #define init_c128 c128_driver_init
 #define init_c128pal c128pal_driver_init
-#define init_c128pal2 c128pal2_driver_init
 #define io_c128ger io_c128
 #define io_c128fra io_c128
 #define io_c128ita io_c128
 #define io_c128swe io_c128
 #define io_c128nor io_c128
 
-#ifdef PET_TEST_CODE
 /*	  YEAR	NAME		PARENT	MACHINE 	INPUT		INIT		COMPANY   FULLNAME */
-COMP (1985, c128,		0,		c128,		c128,		c128,		"Commodore Business Machines Co.","Commodore C128 NTSC 656x216")
-COMP (1985, c128d,		0,		c128d,		c128,		c128,		"Commodore Business Machines Co.","Commodore C128D NTSC 656x216")
-COMP (1985, c128ger,	c128,	c128pal,	c128ger,	c128pal,	"Commodore Business Machines Co.","Commodore C128 German (PAL) 336x216")
-COMP (1985, c128fra,	c128,	c128pal2,	c128fra,	c128pal2,	"Commodore Business Machines Co.","Commodore C128 French (PAL) 656x432")
-COMP (1985, c128ita,	c128,	c128pal2,	c128ita,	c128pal2,	"Commodore Business Machines Co.","Commodore C128 Italian (PAL) 656x432")
-COMP (1985, c128swe,	c128,	c128pal2,	c128ita,	c128pal2,	"Commodore Business Machines Co.","Commodore C128 Swedish (PAL) 656x432")
-COMP (1985, c128nor,	c128,	c128pal2,	c128ita,	c128pal2,	"Commodore Business Machines Co.","Commodore C128 Norwegian (PAL) 656x432")
-#else
-COMPX (1985, c128,		0,		c128,		c128,		c128,		"Commodore Business Machines Co.","Commodore C128 NTSC 656x216",      GAME_IMPERFECT_SOUND)
-COMPX (1985, c128ger,	c128,	c128pal,	c128ger,	c128pal,	"Commodore Business Machines Co.","Commodore C128 German (PAL) 336x216",GAME_IMPERFECT_SOUND)
-COMPX (1985, c128fra,	c128,	c128pal2,	c128fra,	c128pal2,	"Commodore Business Machines Co.","Commodore C128 French (PAL) 656x432",GAME_IMPERFECT_SOUND)
-COMPX (1985, c128ita,	c128,	c128pal2,	c128ita,	c128pal2,	"Commodore Business Machines Co.","Commodore C128 Italian (PAL) 656x432",GAME_IMPERFECT_SOUND)
+COMPX (1985, c128,		0,		c128,		c128,		c128,		"Commodore Business Machines Co.","Commodore C128 NTSC",      GAME_IMPERFECT_SOUND)
+COMPX (1985, c128ger,	c128,	c128pal,	c128ger,	c128pal,	"Commodore Business Machines Co.","Commodore C128 German (PAL)",GAME_IMPERFECT_SOUND)
+COMPX (1985, c128fra,	c128,	c128pal,	c128fra,	c128pal,	"Commodore Business Machines Co.","Commodore C128 French (PAL)",GAME_IMPERFECT_SOUND)
+COMPX (1985, c128ita,	c128,	c128pal,	c128ita,	c128pal,	"Commodore Business Machines Co.","Commodore C128 Italian (PAL)",GAME_IMPERFECT_SOUND)
 /* other countries spanish, belgium, finnish, swedish, norwegian */
-#endif
+// please leave the following as testdriver
+COMP (1985, c128swe,	c128,	c128pal,	c128ita,	c128pal,	"Commodore Business Machines Co.","Commodore C128 Swedish (PAL)")
+COMP (1985, c128nor,	c128,	c128pal,	c128ita,	c128pal,	"Commodore Business Machines Co.","Commodore C128 Norwegian (PAL)")
+COMP (1985, c128d,		0,		c128d,		c128,		c128,		"Commodore Business Machines Co.","Commodore C128D NTSC")

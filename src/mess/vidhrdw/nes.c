@@ -61,7 +61,7 @@ int nes_vh_start(void)
 		return 1;
 
 	/* We use an offscreen bitmap that's 4 times as large as the visible one */
-	if ((tmpbitmap = osd_new_bitmap(2 * Machine->drv->screen_width, 2 * Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
+	if ((tmpbitmap = osd_alloc_bitmap(2 * Machine->drv->screen_width, 2 * Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
 	{
 		free (videoram);
 		osd_free_bitmap (tmpbitmap);
@@ -314,7 +314,7 @@ static void render_sprites (int scanline)
                                 y2,
                                 x,
                                 scanline,
-                                &Machine->drv->visible_area,
+                                &Machine->visible_area,
                                 TRANSPARENCY_THROUGH,
                                 PPU_background_color);
 			else
@@ -326,7 +326,7 @@ static void render_sprites (int scanline)
                                 y2,
                                 x,
                                 scanline,
-                                &Machine->drv->visible_area,
+                                &Machine->visible_area,
                                 TRANSPARENCY_PEN,
                                 0);
 		}
@@ -538,17 +538,17 @@ void nes_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	if (PPU_Scroll_Y)
 		scrolly = (Machine->drv->screen_height - PPU_Scroll_Y) & 0xff;
 	else scrolly = 0;
-	copyscrollbitmap (bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copyscrollbitmap (bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 #if 0
 	/* 2 */
 	scrollx += Machine->drv->screen_width;
-	copyscrollbitmap (bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copyscrollbitmap (bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	/* 4 */
 	scrolly += Machine->drv->screen_height;
-	copyscrollbitmap (bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copyscrollbitmap (bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	/* 3 */
 	scrollx = (Machine->drv->screen_width - PPU_Scroll_X);
-	copyscrollbitmap (bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copyscrollbitmap (bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 #endif
 
 	/* copy the character mapped graphics */
@@ -600,14 +600,14 @@ void nes_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 					(spriteram[i+2] & 0x03) + 4,
 					spriteram[i+2] & 0x40,spriteram[i+2] & 0x80,
 					spriteram[i+3],y,
-					&Machine->drv->visible_area,TRANSPARENCY_THROUGH, PPU_background_color);
+					&Machine->visible_area,TRANSPARENCY_THROUGH, PPU_background_color);
 			else
 				drawgfx (bitmap, Machine->gfx[bank],
 					index1,
 					(spriteram[i+2] & 0x03) + 4,
 					spriteram[i+2] & 0x40,spriteram[i+2] & 0x80,
 					spriteram[i+3],y,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN, 0);
+					&Machine->visible_area,TRANSPARENCY_PEN, 0);
 		}
 	}
 }

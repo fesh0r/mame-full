@@ -12,7 +12,9 @@
 #include "cpu/z80/z80.h"
 
 int jupiter_load_ace(int id);
+void jupiter_exit_ace(int id);
 int jupiter_load_tap(int id);
+void jupiter_exit_tap(int id);
 
 #define	JUPITER_NONE	0
 #define	JUPITER_ACE	1
@@ -34,9 +36,10 @@ jupiter_tape;
 static UINT8 *jupiter_data = NULL;
 static int jupiter_data_type = JUPITER_NONE;
 
-OPBASE_HANDLER( jupiter_opbaseoverride)
-{
+/* only gets called at the start of a cpu time slice */
 
+OPBASE_HANDLER( jupiter_opbaseoverride )
+{
 	int loop;
 	unsigned short tmpword;
 
@@ -47,9 +50,9 @@ OPBASE_HANDLER( jupiter_opbaseoverride)
 		{
 			for (loop = 0; loop < 0x6000; loop++)
 				cpu_writemem16(loop + 0x2000, jupiter_data[loop]);
+			jupiter_exit_ace(0);
 		}
-		else
-		if (jupiter_data_type == JUPITER_TAP)
+		else if (jupiter_data_type == JUPITER_TAP)
 		{
 
 			for (loop = 0; loop < jupiter_tape.dat_len; loop++)
@@ -77,32 +80,63 @@ OPBASE_HANDLER( jupiter_opbaseoverride)
 				cpu_writemem16(0x3c57, 0x49);
 				cpu_writemem16(0x3c58, 0x3c);
 			}
+			jupiter_exit_tap(0);
 		}
 	}
-
 	return (-1);
-
 }
+
+static	int	jupiter_ramsize = 2;
 
 void jupiter_init_machine(void)
 {
 
 	logerror("jupiter_init\r\n");
+	logerror("data: %08X\n", jupiter_data);
 
+	if (readinputport(8) != jupiter_ramsize)
+	{
+		jupiter_ramsize = readinputport(8);
+		switch (jupiter_ramsize)
+		{
+			case 03:
+			case 02:
+				install_mem_write_handler(0, 0x8800, 0xffff, MWA_RAM);
+				install_mem_read_handler(0, 0x8800, 0xffff, MRA_RAM);
+				install_mem_write_handler(0, 0x4800, 0x87ff, MWA_RAM);
+				install_mem_read_handler(0, 0x4800, 0x87ff, MRA_RAM);
+				break;
+			case 01:
+				install_mem_write_handler(0, 0x8800, 0xffff, MWA_NOP);
+				install_mem_read_handler(0, 0x8800, 0xffff, MRA_NOP);
+				install_mem_write_handler(0, 0x4800, 0x87ff, MWA_RAM);
+				install_mem_read_handler(0, 0x4800, 0x87ff, MRA_RAM);
+				break;
+			case 00:
+				install_mem_write_handler(0, 0x8800, 0xffff, MWA_NOP);
+				install_mem_read_handler(0, 0x8800, 0xffff, MRA_NOP);
+				install_mem_write_handler(0, 0x4800, 0x87ff, MWA_NOP);
+				install_mem_read_handler(0, 0x4800, 0x87ff, MRA_NOP);
+				break;
+		}
+
+	}
 	if (jupiter_data)
 	{
+		logerror("data: %08X. type: %d.\n", jupiter_data,
+											jupiter_data_type);
 		cpu_setOPbaseoverride(0, jupiter_opbaseoverride);
 	}
-
 }
 
 void jupiter_stop_machine(void)
 {
-
+	logerror("jupiter_stop_machine\n");
 	if (jupiter_data)
 	{
 		free(jupiter_data);
 		jupiter_data = NULL;
+		jupiter_data_type = JUPITER_NONE;
 	}
 
 }
@@ -116,12 +150,29 @@ void jupiter_stop_machine(void)
    <byt>		: <byt>
 */
 
+void	jupiter_exit_ace(int id)
+{
+	logerror("jupiter_exit_ace\n");
+	/*
+	if (jupiter_data)
+	{
+		free(jupiter_data);
+		jupiter_data = NULL;
+		jupiter_data_type = JUPITER_NONE;
+	}
+	*/
+}
+
 int jupiter_load_ace(int id)
 {
 
 	void *file;
 	unsigned char jupiter_repeat, jupiter_byte, loop;
 	int done, jupiter_index;
+
+	if (jupiter_data_type != JUPITER_NONE)
+		return (0);
+	jupiter_exit_ace(id);
 
 	done = 0;
 	jupiter_index = 0;
@@ -165,20 +216,27 @@ int jupiter_load_ace(int id)
 	}
 	if (!done)
 	{
+		jupiter_exit_ace(id);
 		logerror("file not loaded\r\n");
-		if (jupiter_data)
-		{
-			free(jupiter_data);
-			jupiter_data = NULL;
-		}
 		return (1);
 	}
 
 	logerror("Decoded %d bytes.\r\n", jupiter_index);
 	jupiter_data_type = JUPITER_ACE;
 
+	logerror("data: %08X\n", jupiter_data);
 	return (0);
+}
 
+void	jupiter_exit_tap(int id)
+{
+	logerror("jupiter_exit_tap\n");
+	if (jupiter_data)
+	{
+		free(jupiter_data);
+		jupiter_data = NULL;
+		jupiter_data_type = JUPITER_NONE;
+	}
 }
 
 int jupiter_load_tap(int id)
@@ -189,6 +247,9 @@ int jupiter_load_tap(int id)
 	int loop;
 	UINT16 hdr_len;
 
+	if (jupiter_data_type != JUPITER_NONE)
+		return (0);
+	jupiter_exit_tap(id);
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, 0);
 	if (file)
 	{
@@ -236,6 +297,7 @@ int jupiter_load_tap(int id)
 
 	if (!jupiter_data)
 	{
+		jupiter_exit_tap(id);
 		logerror("file not loaded\r\n");
 		return (1);
 	}
@@ -243,3 +305,4 @@ int jupiter_load_tap(int id)
 	return (0);
 
 }
+

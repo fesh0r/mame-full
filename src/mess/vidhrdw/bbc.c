@@ -11,66 +11,574 @@
 #include "driver.h"
 #include "mess/machine/bbc.h"
 #include "mess/vidhrdw/bbc.h"
+#include "mess/vidhrdw/m6845.h"
+#include "mess/vidhrdw/ttchar.h"
 
 /************************************************************************
- * reg_refresh flag is used in optimising the screen redrawing
- * it is set whenever a 6845 or VideoULA register is change.
+ * video_refresh flag is used in optimising the screen redrawing
+ * it is set whenever a 6845 or VideoULA registers are change.
  * This will then cause a full screen refresh.
+ * The vidmem array is used to optimise the screen redrawing
+ * whenever a memory location is written to the same location is set in the vidmem array
+ * if none of the video registers have been changed and a full redraw is not needed
+ * the video display emulation will only redraw the video memory location that have been changed.
  ************************************************************************/
 
+static int video_refresh;
 unsigned char vidmem[0x8000];
 
-static int reg_refresh=0xff;
+/************************************************************************
+ * video memory lookup arrays.
+ * this is a set of quick lookup arrays that stores the logic for the following:
+ * the array to be used is selected by the output from bits 4 and 5 (C0 and C1) on IC32 74LS259
+ * which is controlled by the system VIA.
+ * C0 and C1 along with MA12 output from the 6845 drive 4 NAND gates in ICs 27,36 and 40
+ * the outputs from these NAND gates (B1 to B4) along with MA8 to MA11 from the 6845 (A1 to B4) are added together
+ * in IC39 74LS283 4 bit adder to form (S1 to S4) the logic is used to loop the screen memory for hardware scrolling.
+ * when MA13 from the 6845 is low the latches IC8 and IC9 are enabled
+ * they control the memory addressing for the Hi-Res modes.
+ * when MA13 from the 6845 is high the latches IC10 and IC11 are enabled
+ * they control the memory addressing for the Teletext mode.
+ * IC 8 or IC10 drives the row select in the memory (the lower 7 bits in the memory address) and
+ * IC 9 or IC11 drives the column select in the memory (the next 7 bits in the memory address) this
+ * gives control of the bottom 14 bits of the memory, in a 32K model B 15 bits are needed to access
+ * all the RAM, so S4 for the adder drives the CAS0 and CAS1 to access the top bit, in a 16K model A
+ * the output of S4 is linked out to a 0v supply by link S25 to just access the 16K memory area.
+ ************************************************************************/
+
+static unsigned int video_ram_lookup0[0x4000];
+static unsigned int video_ram_lookup1[0x4000];
+static unsigned int video_ram_lookup2[0x4000];
+static unsigned int video_ram_lookup3[0x4000];
+
+static unsigned int *video_ram_lookup;
+
+void set_video_memory_lookups(int ramsize)
+{
+
+	int ma; // output from IC2 6845 MA address
+
+	int c0,c1; // output from IC32 74LS259 bits 4 and 5
+	int ma12; // bit 12 of 6845 MA address
+
+	int b1,b2,b3,b4; // 4 bit input B on IC39 74LS283 (4 bit adder)
+	int a,b,s;
+
+	unsigned int m;
+
+	for(c1=0;c1<2;c1++)
+	{
+		for(c0=0;c0<2;c0++)
+		{
+			if ((c0==0) && (c1==0)) video_ram_lookup=video_ram_lookup0;
+			if ((c0==1) && (c1==0)) video_ram_lookup=video_ram_lookup1;
+			if ((c0==0) && (c1==1)) video_ram_lookup=video_ram_lookup2;
+			if ((c0==1) && (c1==1)) video_ram_lookup=video_ram_lookup3;
+
+			for(ma=0;ma<0x4000;ma++)
+			{
+
+
+				/* the 4 bit input port b on IC39 are produced by 4 NAND gates.
+				these NAND gates take their
+				inputs from c0 and c1 (from IC32) and ma12 (from the 6845) */
+
+				/* get bit m12 from the 6845 */
+				ma12=(ma>>12)&1;
+
+				/* 3 input NAND part of IC 36 */
+				b1=(~(c1&c0&ma12))&1;
+				/* 2 input NAND part of IC40 (b3 is calculated before b2 and b4 because b3 feed back into b2 and b4) */
+				b3=(~(c0&ma12))&1;
+				/* 3 input NAND part of IC 36 */
+				b2=(~(c1&b3&ma12))&1;
+				/* 2 input NAND part of IC 27 */
+				b4=(~(b3&ma12))&1;
+
+				/* inputs port a to IC39 are MA8 to MA11 from the 6845 */
+				a=(ma>>8)&0xf;
+				/* inputs port b to IC39 are taken from the NAND gates b1 to b4 */
+				b=(b1<<0)|(b2<<1)|(b3<<2)|(b4<<3);
+
+				/* IC39 performs the 4 bit add with the carry input set high */
+				s=(a+b+1)&0xf;
+
+				/* if MA13 (TTXVDU) is low then IC8 and IC9 are used to calculate
+				   the memory location required for the hi res video.
+				   if MA13 is hight then IC10 and IC11 are used to calculate the memory location for the teletext chip
+				   Note: the RA0,RA1,RA2 inputs to IC8 in high res modes will need to be added else where */
+				if (((ma>>13)&1)==0)
+				{
+					m=((ma&0xff)<<3)|(s<<11);
+				} else {
+					m=((ma&0x3ff)|0x3c00)|((s&0x8)<<11);
+				};
+				if (ramsize==16)
+				{
+					video_ram_lookup[ma]=m & 0x3fff;
+				} else {
+					video_ram_lookup[ma]=m;
+				}
+
+			};
+		};
+	};
+}
+
+
+/* called from 6522 system via */
+void setscreenstart(int c0,int c1)
+{
+	if ((c0==0) && (c1==0)) video_ram_lookup=video_ram_lookup0;
+	if ((c0==1) && (c1==0)) video_ram_lookup=video_ram_lookup1;
+	if ((c0==0) && (c1==1)) video_ram_lookup=video_ram_lookup2;
+	if ((c0==1) && (c1==1)) video_ram_lookup=video_ram_lookup3;
+
+	// emulation refresh optimisation
+	video_refresh=1;
+}
+
+
+
+/************************************************************************
+ * VideoULA
+ ************************************************************************/
+
+static int videoULA_Reg;
+static int videoULA_pallet0[16];// flashing colours A no cursor
+static int videoULA_pallet1[16];// flashing colours B no cursor
+static int videoULA_pallet2[16];// flashing colours A cursor on
+static int videoULA_pallet3[16];// flashing colours B cursor on
+static int VideoULA_border_colour;// normally black but can go white when the cursor is out of the normal area
+
+static int *videoULA_pallet_lookup;// holds the pallet now being used.
+
+static int VideoULA_DE=0;          // internal videoULA Display Enabled set by 6845 DE and the scanlines<8
+static int VideoULA_CR=0;		   // internal videoULA Cursor Enabled set by 6845 CR and then cleared after a number clock cycles
+static int VideoULA_CR_counter=0;  // number of clock cycles left before the CR is disabled
+
+
+static int videoULA_master_cursor_size;
+static int videoULA_width_of_cursor;
+static int videoULA_6845_clock_rate;
+static int videoULA_characters_per_line;
+static int videoULA_teletext_normal_select;
+static int videoULA_flash_colour_select;
+
+static unsigned int width_of_cursor_set[4]={ 1,0,2,4 };
+static unsigned int pixels_per_byte_set[8]={ 2,4,8,16,1,2,4,8 };
+static unsigned int pixels_per_clock_set[4]={ 8,4,2,1 };
+
+static int emulation_pixels_per_character;
+static int pixels_per_byte;
+static int pixels_per_clock;
+
+void videoULA_select_pallet(void)
+{
+	if ((!videoULA_flash_colour_select==0) && (!VideoULA_CR)) videoULA_pallet_lookup=videoULA_pallet0;
+	if (( videoULA_flash_colour_select==0) && (!VideoULA_CR)) videoULA_pallet_lookup=videoULA_pallet1;
+	if ((!videoULA_flash_colour_select==0) && ( VideoULA_CR)) videoULA_pallet_lookup=videoULA_pallet2;
+	if (( videoULA_flash_colour_select==0) && ( VideoULA_CR)) videoULA_pallet_lookup=videoULA_pallet3;
+	VideoULA_border_colour=VideoULA_CR?Machine->pens[0]:Machine->pens[7];
+}
+
+
+// this is the pixel position of the start of a scanline
+// -96 sets the screen display to the middle of emulated screen.
+static int x_screen_offset=-96;
+
+static int y_screen_offset=0;
+
+WRITE_HANDLER ( videoULA_w )
+{
+
+	int tpal,tcol;
+
+	switch (offset&0x01)
+	{
+	// Set the control register in the Video ULA
+	case 0:
+		videoULA_Reg=data;
+		videoULA_master_cursor_size=    (videoULA_Reg>>7)&0x01;
+		videoULA_width_of_cursor=       (videoULA_Reg>>5)&0x03;
+		videoULA_6845_clock_rate=       (videoULA_Reg>>4)&0x01;
+		videoULA_characters_per_line=   (videoULA_Reg>>2)&0x03;
+		videoULA_teletext_normal_select=(videoULA_Reg>>1)&0x01;
+		videoULA_flash_colour_select=    videoULA_Reg    &0x01;
+		videoULA_select_pallet();
+
+		if (videoULA_teletext_normal_select)
+		{
+			emulation_pixels_per_character=18;
+			x_screen_offset=-154;
+			y_screen_offset=0;
+		} else {
+			// this is the number of pixels per 6845 character on the emulated screen display
+			emulation_pixels_per_character=videoULA_6845_clock_rate?8:16;
+
+			// this is the number of pixels per videoULA clock tick
+			pixels_per_byte=pixels_per_byte_set[videoULA_characters_per_line|(videoULA_6845_clock_rate<<2)];
+			pixels_per_clock=pixels_per_clock_set[videoULA_characters_per_line];
+			x_screen_offset=-96;
+			y_screen_offset=0;
+		}
+
+		break;
+	// Set a pallet register in the Video ULA
+	case 1:
+		tpal=(data>>4)&0x0f;
+		tcol=data&0x0f;
+		videoULA_pallet0[tpal]=Machine->pens[tcol];
+		videoULA_pallet1[tpal]=tcol>7?Machine->pens[tcol^7]:Machine->pens[tcol];
+
+		videoULA_pallet2[tpal]=Machine->pens[tcol^7];
+		videoULA_pallet3[tpal]=tcol>7?Machine->pens[tcol^7^7]:Machine->pens[tcol^7];
+		break;
+	};
+
+
+	// emulation refresh optimisation
+	video_refresh=1;
+}
+
+READ_HANDLER ( videoULA_r )
+{
+	//logerror("video ULA read register %02x\n",offset);
+	return 0;
+}
+
+
+
+/* this is a quick lookup array that puts bits 0,2,4,6 into bits 0,1,2,3
+   this is used by the pallette lookup in the video ULA */
+static unsigned char pixel_bits[256];
+
+void set_pixel_lookup(void)
+{
+	int i;
+	for (i=0; i<256; i++)
+	{
+		pixel_bits[i] = (((i>>7)&1)<<3) | (((i>>5)&1)<<2) | (((i>>3)&1)<<1) | (((i>>1)&1)<<0);
+	}
+}
+
+
+
+static int BBC_HSync=0;
+static int BBC_VSync=0;
+static int BBC_Character_Row=0;
+static int BBC_DE=0;
+
+
+static unsigned char *BBC_Video_RAM;
+static unsigned char *BBC_display;
+static struct osd_bitmap *BBC_bitmap;
+
+static int x_screen_pos;
+static int y_screen_pos;
+
+static void (*draw_function)(void);
+
+void BBC_draw_hi_res_enabled(void)
+{
+	int meml;
+	unsigned char i=0;
+	int sc1,sc2;
+	int c=0;
+	int pixel_temp=0;
+
+	// read the memory location for the next screen location.
+	// the logic for the memory location address is very complicated so it
+	// is stored in a number of look up arrays (and is calculated once at the start of the emulator).
+	meml=video_ram_lookup[crtc6845_memory_address_r(0)]|(BBC_Character_Row&0x7);
+	if (vidmem[meml] || video_refresh )
+	{
+		vidmem[meml]=0;
+		i=BBC_Video_RAM[meml];
+
+		for(sc1=0;sc1<pixels_per_byte;sc1++)
+		{
+			pixel_temp=videoULA_pallet_lookup[pixel_bits[i]];
+			i=(i<<1)|1;
+			for(sc2=0;sc2<pixels_per_clock;sc2++)
+				BBC_display[c++]=pixel_temp;
+		}
+	}
+
+}
+
+void BBC_draw_teletext_enabled(void)
+{
+	int meml;
+	unsigned char i=0;
+	int sc1;
+	int t1;
+	int c=0;
+	int pixel_temp=0;
+
+	meml=video_ram_lookup[crtc6845_memory_address_r(0)-1];
+	i=BBC_Video_RAM[meml]&0x7f;
+	if (i<0x20) {i=0x20;}
+	i=i-0x20;
+
+	for(sc1=0;sc1<6;sc1++)
+	{
+		t1=teletext_characters[(60*i)+sc1+(6*(BBC_Character_Row/2))]?7:0;
+		pixel_temp=Machine->pens[7-t1];
+		BBC_display[c++]=pixel_temp;
+		BBC_display[c++]=pixel_temp;
+		BBC_display[c++]=pixel_temp;
+	}
+}
+
+void BBC_draw_screen_disabled(void)
+{
+	int sc1;
+	if (video_refresh)
+	{
+		// if the display is not enable, just draw a blank area.
+		for(sc1=0;sc1<emulation_pixels_per_character;sc1++)
+		{
+			BBC_display[sc1]=VideoULA_border_colour;
+		}
+	}
+}
+
+// Select the Function to draw the screen area
+void BBC_Set_VideoULA_DE(void)
+{
+	if (videoULA_teletext_normal_select)
+	{
+		if (BBC_DE)
+		{
+			draw_function=*BBC_draw_teletext_enabled;
+		} else {
+			draw_function=*BBC_draw_screen_disabled;
+		}
+	} else {
+		// This line is taking DEN and RA3 from the 6845 and making DISEN for the VideoULA
+		// as done by IC41 74LS02
+		VideoULA_DE=(BBC_DE) && (!(BBC_Character_Row&8));
+		if (VideoULA_DE)
+		{
+			draw_function=*BBC_draw_hi_res_enabled;
+		} else {
+			draw_function=*BBC_draw_screen_disabled;
+		}
+	}
+}
+
+
+/************************************************************************
+ * BBC 6845 Outputs to Video ULA
+ ************************************************************************/
+
+// called when the 6845 changes the character row
+void BBC_Set_Character_Row(int offset, int data)
+{
+	BBC_Character_Row=data;
+	BBC_Set_VideoULA_DE();
+}
+
+// called when the 6845 changes the HSync
+void BBC_Set_HSync(int offset, int data)
+{
+	BBC_HSync=data;
+	if(!BBC_HSync)
+	{
+		y_screen_pos+=1;
+		x_screen_pos=x_screen_offset;
+		BBC_display=(BBC_bitmap->line[y_screen_pos])+x_screen_pos;
+	}
+}
+
+// called when the 6845 changes the VSync
+void BBC_Set_VSync(int offset, int data)
+{
+	BBC_VSync=data;
+	if (!BBC_VSync)
+	{
+		y_screen_pos=y_screen_offset;
+		BBC_display=(BBC_bitmap->line[y_screen_pos])+x_screen_pos;
+	};
+}
+
+// called when the 6845 changes the Display Enabled
+void BBC_Set_DE(int offset, int data)
+{
+	BBC_DE=data;
+	BBC_Set_VideoULA_DE();
+}
+
+// called when the 6845 changes the Cursor Enabled
+void BBC_Set_CR(int offset, int data)
+{
+	if (data) {
+		VideoULA_CR_counter=width_of_cursor_set[videoULA_width_of_cursor];
+		VideoULA_CR=1;
+		// turn on the video refresh for the cursor area
+		video_refresh=video_refresh|4;
+		// set the pallet to the cursor pallet
+		videoULA_select_pallet();
+	};
+}
+
+// If the cursor is on there is a counter in the VideoULA to control the length of the Cursor
+void BBC_Clock_CR(void)
+{
+	VideoULA_CR_counter-=1;
+	if (VideoULA_CR_counter<=0) {
+		VideoULA_CR=0;
+		video_refresh=video_refresh&0xfb;
+		videoULA_select_pallet();
+	}
+}
+
+
+static struct crtc6845_interface
+BBC6845= {
+	0,// Memory Address register
+	BBC_Set_Character_Row,// Row Address register
+	BBC_Set_HSync,// Horizontal status
+	BBC_Set_VSync,// Vertical status
+	BBC_Set_DE,// Display Enabled status
+	BBC_Set_CR,// Cursor status
+};
+
+
+WRITE_HANDLER ( BBC_6845_w )
+{
+	switch (offset&1)
+	{
+		case 0:
+			crtc6845_address_w(0,data);
+			break;
+		case 1:
+			crtc6845_register_w(0,data);
+			break;
+	}
+
+	// emulation refresh optimisation
+	video_refresh=1;
+}
+
+READ_HANDLER (BBC_6845_r)
+{
+	int retval=0;
+
+	switch (offset&1)
+	{
+		case 0:
+			break;
+		case 1:
+			retval=crtc6845_register_r(0);
+			break;
+	}
+	return retval;
+}
+
+
+/************************************************************************
+ * bbc_vh_screenrefresh
+ * resfresh the BBC video screen
+ ************************************************************************/
+
+void bbc_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
+	long c=0; // this is used to time out the screen redraw, in the case that the 6845 is in some way out state.
+
+
+
+	BBC_bitmap=bitmap;
+	c=0;
+
+	// video_refresh is set if any of the 6845 or Video ULA registers are changed
+	// this then forces a full screen redraw
+
+	if (full_refresh)
+	{
+		video_refresh=video_refresh|2;
+	}
+
+	// loop until the end of the Vertical Sync pulse
+	while((BBC_VSync)&&(c<50000))
+	{
+		// Clock the 6845
+		crtc6845_clock();
+		c++;
+	};
+
+
+	// loop until the Vertical Sync pulse goes high
+	// or until a timeout (this catches the 6845 with silly register values that would not give a VSYNC signal)
+	while((!BBC_VSync)&&(c<50000))
+	{
+		while ((BBC_HSync)&&(c<50000))
+		{
+			crtc6845_clock();
+			c++;
+		}
+		// Do all the clever split mode changes in here before the next while loop
+
+
+		while ((!BBC_HSync)&&(c<50000))
+		{
+			// check that we are on the emulated screen area.
+			if ((x_screen_pos>=0) && (x_screen_pos<800) && (y_screen_pos>=0) && (y_screen_pos<300))
+			{
+				// if the video ULA DE 'Display Enabled' input is high then draw the pixels else blank the screen
+				(draw_function)();
+
+			}
+
+			// Move the CRT Beam on one 6845 character distance
+			x_screen_pos=x_screen_pos+emulation_pixels_per_character;
+			BBC_display=BBC_display+emulation_pixels_per_character;
+
+			// and check the cursor
+			if (VideoULA_CR) BBC_Clock_CR();
+
+			// Clock the 6845
+			crtc6845_clock();
+			c++;
+		}
+	}
+
+	// redraw the screen so reset video_refresh
+	video_refresh=0;
+
+}
+
 
 /************************************************************************
  * bbc_vh_start
  * Initialize the BBC video emulation
  ************************************************************************/
 
-static unsigned char pixel0[256];
-static unsigned char pixel1[256];
-static unsigned char pixel2[256];
-static unsigned char pixel3[256];
-static unsigned char pixel4[256];
-static unsigned char pixel5[256];
-static unsigned char pixel6[256];
-static unsigned char pixel7[256];
-
-
-int bbc_vh_start(void)
+int bbc_vh_starta(void)
 {
-	int i;
+	set_pixel_lookup();
+	set_video_memory_lookups(16);
+	crtc6845_config(&BBC6845);
 
-	for (i=0; i<256; i++)
-	{
-		pixel0[i] = (((i>>7)&1)<<3) | (((i>>5)&1)<<2) | (((i>>3)&1)<<1) | (((i>>1)&1)<<0);
-		pixel1[i] = (((i>>6)&1)<<3) | (((i>>4)&1)<<2) | (((i>>2)&1)<<1) | (((i>>0)&1)<<0);
-		pixel2[i] = (((i>>5)&1)<<3) | (((i>>3)&1)<<2) | (((i>>1)&1)<<1) | ((       1)<<0);
-		pixel3[i] = (((i>>4)&1)<<3) | (((i>>2)&1)<<2) | (((i>>0)&1)<<1) | ((       1)<<0);
-		pixel4[i] = (((i>>3)&1)<<3) | (((i>>1)&1)<<2) | ((       1)<<1) | ((       1)<<0);
-		pixel5[i] = (((i>>2)&1)<<3) | (((i>>0)&1)<<2) | ((       1)<<1) | ((       1)<<0);
-		pixel6[i] = (((i>>1)&1)<<3) | ((       1)<<2) | ((       1)<<1) | ((       1)<<0);
-		pixel7[i] = (((i>>0)&1)<<3) | ((       1)<<2) | ((       1)<<1) | ((       1)<<0);
-
-	}
-
+	BBC_Video_RAM= memory_region(REGION_CPU1);
+	draw_function=*BBC_draw_screen_disabled;
 	return 0;
 
 }
 
 
-
-/************************************************************************
- * bbc_vh_init
- * Initialize the BBC video emulation
- ************************************************************************/
-
-int bbc_vh_init(void)
+int bbc_vh_startb(void)
 {
+	set_pixel_lookup();
+	set_video_memory_lookups(32);
+	crtc6845_config(&BBC6845);
 
-    return 0;
+	BBC_Video_RAM= memory_region(REGION_CPU1);
+	draw_function=*BBC_draw_screen_disabled;
+	return 0;
+
 }
-
 
 /************************************************************************
  * bbc_vh_stop
@@ -82,432 +590,3 @@ void bbc_vh_stop(void)
 
 }
 
-
-/************************************************************************
- * crct6845
- ************************************************************************/
-
-static unsigned int crct6845reg[17];
-static unsigned int crct6845reg_mask[16]={ 0xff,0xff,0xff,0xff,0x7f,0x1f,0x7f,0x7f,0xff,0x1f,0x7f,0x1f,0x3f,0xff,0x3f,0xff };
-static unsigned int crct6845reg_no;
-
-WRITE_HANDLER ( crtc6845_w )
-{
-	logerror("crct6845 write register %d = %d\n",offset,data);
-	switch (offset&0x01)
-	{
-	case 0:
-		crct6845reg_no=(data & 0x1f);
-		break;
-	case 1:
-	    if ((crct6845reg_no<16) && (crct6845reg[crct6845reg_no]!=(data & crct6845reg_mask[crct6845reg_no])))
-	    {
-			crct6845reg[crct6845reg_no]=(data & crct6845reg_mask[crct6845reg_no]);
-			reg_refresh|=1;
-		};
-		break;
-	};
-}
-
-READ_HANDLER ( crtc6845_r )
-{
-	int result=0;
-	switch (offset&0x01)
-	{
-	case 0:
-		break;
-	case 1:
-		switch (crct6845reg_no)
-		{
-			case 14:
-			case 15:
-				result=crct6845reg[crct6845reg_no];
-				break;
-		};
-		break;
-	};
-	return result;
-}
-
-
-/************************************************************************
- * VideoULA
- * Palette register
- ************************************************************************/
-
-static int VideoULAReg;
-static int VideoULAPallet[16];
-
-WRITE_HANDLER ( videoULA_w )
-{
-
-	switch (offset&0x01)
-	{
-		case 0:
-			if (VideoULAReg!=data)
-			{
-				VideoULAReg=data;
-				reg_refresh|=2;
-			};
-			break;
-		case 1:
-			if (VideoULAPallet[data>>4]!=(data&0x0f))
-			{
-				VideoULAPallet[data>>4]=data&0x0f;
-				reg_refresh|=2;
-			};
-			break;
-	};
-}
-
-READ_HANDLER ( videoULA_r )
-{
-	//logerror("video ULA read register %02x\n",offset);
-	return 0;
-}
-
-
-/************************************************************************
- * Hardware scroll settings
- * called from 6522 system via
- ************************************************************************/
-
-static unsigned int hardware_screenstart;
-static unsigned int hardware_screenstart_lookup[4]=
-{
-	0x4000,
-	0x6000,
-	0x3000,
-	0x5800
-};
-
-void setscreenstart(int b4,int b5)
-{
-		hardware_screenstart=hardware_screenstart_lookup[b4+(b5<<1)];
-		reg_refresh=1;
-
-}
-
-
-/************************************************************************
- * bbc_vh_screenrefresh
- * resfresh the BBC video screen
- ************************************************************************/
-
-/* total number of 6845 characters in a full scanline minus one */
-#define horizontal_total 0
-/* total number of 6845 characters that are displayed on the screen in a scanline */
-#define horizontal_displayed 1
-/* position in the scan line of the sync pulse measured in 6845 characters */
-#define horizontal_sync_position 2
-/* with of the sync pulse measured in 6845 characters */
-#define sync_width 3
-/* total number of character lines in a full screen minus one */
-#define vertical_total 4
-/* number of extra scan lines to be added to get the full number of required scan lines */
-#define vertical_total_adjust 5
-/* total number of character lines that are displayed on the screen */
-#define vertical_displayed 6
-/* position of the vertical synce pulse measured in character lines */
-#define vertical_sync_position 7
-
-#define interlace_and_delay_register 8
-/* total number of scan lines per character minus one */
-#define scan_lines_per_character 9
-
-/* The cursor start register
-	7 bit register
-bit 7 is not used
-bit 6 enables or disables the blink feature
-bit 5 0=16 times the refresh rate, 1=32 times the refresh rate
-bits 0 to 4 set the cursor start line */
-#define cursor_start_register 10
-/* The cursor end register
-    5 bit register
-bits 0 to 4 set the cursor end line */
-#define cursor_end_register 11
-#define screen_start_address_high 12
-#define screen_start_address_low 13
-#define cursor_position_high 14
-#define cursor_position_low 15
-
-#define y_screen_offset 14
-
-static int vertical_scan_lines;
-static int vertical_sync_postion_in_scan_lines;
-static int vertical_scan_lines_displayed;
-static int video_memory_start;
-
-static int mode_type;
-static int clock_speed;
-static int emulation_screen_width;
-static int emulation_pixels_per_character;
-static int x_screen_offset;
-
-static int pallet1[16];
-static int lookupx[100];
-static int lookupxf[100];
-static int lookupy[300];
-static int lookupyf[300];
-
-void bbc_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
-{
-
-unsigned char *display;
-unsigned char *RAM = memory_region(REGION_CPU1);
-
-int x_screen_pos;
-int y_screen_pos;
-int y_line_pos;
-
-
-int video_memory_line;
-int video_memory;
-
-int pixel_temp;
-
-int ploop;
-unsigned char i;
-
-
-if (full_refresh)
-{
-	reg_refresh|=8;
-};
-
-/* only do this bit if the video ULA registers have been updated */
-if (reg_refresh&2)
-{
-	mode_type=(VideoULAReg>>2)&0x07;
-	clock_speed=(VideoULAReg>>4)&1;
-	emulation_screen_width=clock_speed?100:50;
-	emulation_pixels_per_character=clock_speed?8:16;
-	x_screen_offset=clock_speed?20:10;
-
-	for(ploop=0;ploop<=15;ploop++)
-	{
-
-		if ((VideoULAReg&1) && (VideoULAPallet[ploop]>7))
-			pallet1[ploop]=Machine->pens[(VideoULAPallet[ploop]&7)^7];
-		else
-			pallet1[ploop]=Machine->pens[VideoULAPallet[ploop]&7];
-	}
-};
-
-
-/* only do this bit if the 6845 registers have been updated */
-if (reg_refresh&1)
-{
-	vertical_scan_lines=(crct6845reg[vertical_total]+1)*(crct6845reg[scan_lines_per_character]+1)+crct6845reg[vertical_total_adjust];
-	vertical_sync_postion_in_scan_lines=crct6845reg[vertical_sync_position]*(crct6845reg[scan_lines_per_character]+1);
-	vertical_scan_lines_displayed=crct6845reg[vertical_displayed]*(crct6845reg[scan_lines_per_character]+1);
-
-	video_memory_start=((crct6845reg[screen_start_address_high]<<11)+(crct6845reg[screen_start_address_low]<<3));
-
-	for(y_screen_pos=0;y_screen_pos<300;y_screen_pos++)
-	{
-		y_line_pos=(vertical_sync_postion_in_scan_lines+y_screen_pos+y_screen_offset)%vertical_scan_lines;
-		lookupyf[y_screen_pos]=((y_line_pos>=0) && (y_line_pos<vertical_scan_lines_displayed) && ((y_line_pos%(crct6845reg[scan_lines_per_character]+1))<8));
-		if (lookupyf[y_screen_pos])
-			lookupy[y_screen_pos]=video_memory_start+(y_line_pos%(crct6845reg[scan_lines_per_character]+1))+((y_line_pos/(crct6845reg[scan_lines_per_character]+1))*(crct6845reg[horizontal_displayed]*8));
-	};
-	for(x_screen_pos=0;x_screen_pos<100;x_screen_pos++)
-	{
-		lookupx[x_screen_pos]=(crct6845reg[horizontal_sync_position]+x_screen_pos+x_screen_offset)%(crct6845reg[horizontal_total]+1);
-		lookupxf[x_screen_pos]=((lookupx[x_screen_pos]>=0) && (lookupx[x_screen_pos]<crct6845reg[horizontal_displayed]));
-		lookupx[x_screen_pos]<<=3;
-	};
-};
-
-for(y_screen_pos=0;y_screen_pos<300;y_screen_pos++)
-{
-
-	display=bitmap->line[y_screen_pos];
-	if (lookupyf[y_screen_pos])
-	{
-
-		video_memory_line=lookupy[y_screen_pos];
-		for(x_screen_pos=0;x_screen_pos<emulation_screen_width;x_screen_pos++)
-		{
-			if (lookupxf[x_screen_pos])
-			{
-				if ((video_memory=(video_memory_line+lookupx[x_screen_pos]))>=0x8000)
-					video_memory=((video_memory &0x7fff)+hardware_screenstart)&0x7fff;
-
-				if ((reg_refresh) || (vidmem[video_memory]))
-				{
-					vidmem[video_memory]=0;
-					i=RAM[video_memory];
-					switch (mode_type) {
-					case 0:  //Mode 8
-						display[0]=(pixel_temp=pallet1[pixel0[i]]);
-						display[1]=pixel_temp;
-						display[2]=pixel_temp;
-						display[3]=pixel_temp;
-						display[4]=pixel_temp;
-						display[5]=pixel_temp;
-						display[6]=pixel_temp;
-						display[7]=pixel_temp;
-						display[8]=(pixel_temp=pallet1[pixel1[i]]);
-						display[9]=pixel_temp;
-						display[10]=pixel_temp;
-						display[11]=pixel_temp;
-						display[12]=pixel_temp;
-						display[13]=pixel_temp;
-						display[14]=pixel_temp;
-						display[15]=pixel_temp;
-						break;
-					case 1:  //Mode 5
-						display[0]=(pixel_temp=pallet1[pixel0[i]]);
-						display[1]=pixel_temp;
-						display[2]=pixel_temp;
-						display[3]=pixel_temp;
-						display[4]=(pixel_temp=pallet1[pixel1[i]]);
-						display[5]=pixel_temp;
-						display[6]=pixel_temp;
-						display[7]=pixel_temp;
-						display[8]=(pixel_temp=pallet1[pixel2[i]]);
-						display[9]=pixel_temp;
-						display[10]=pixel_temp;
-						display[11]=pixel_temp;
-						display[12]=(pixel_temp=pallet1[pixel3[i]]);
-						display[13]=pixel_temp;
-						display[14]=pixel_temp;
-						display[15]=pixel_temp;
-						break;
-					case 2:  //Mode 4,6
-						display[0]=(pixel_temp=pallet1[pixel0[i]]);
-						display[1]=pixel_temp;
-						display[2]=(pixel_temp=pallet1[pixel1[i]]);
-						display[3]=pixel_temp;
-						display[4]=(pixel_temp=pallet1[pixel2[i]]);
-						display[5]=pixel_temp;
-						display[6]=(pixel_temp=pallet1[pixel3[i]]);
-						display[7]=pixel_temp;
-						display[8]=(pixel_temp=pallet1[pixel4[i]]);
-						display[9]=pixel_temp;
-						display[10]=(pixel_temp=pallet1[pixel5[i]]);
-						display[11]=pixel_temp;
-						display[12]=(pixel_temp=pallet1[pixel6[i]]);
-						display[13]=pixel_temp;
-						display[14]=(pixel_temp=pallet1[pixel7[i]]);
-						display[15]=pixel_temp;
-						break;
-					case 3:	 //Not a valid mode
-						display[0]=pallet1[pixel0[i]];
-						display[1]=pallet1[pixel1[i]];
-						display[2]=pallet1[pixel2[i]];
-						display[3]=pallet1[pixel3[i]];
-						display[4]=pallet1[pixel4[i]];
-						display[5]=pallet1[pixel5[i]];
-						display[6]=pallet1[pixel6[i]];
-						display[7]=pallet1[pixel7[i]];
-						display[8]=pallet1[15];
-						display[9]=pallet1[15];
-						display[10]=pallet1[15];
-						display[11]=pallet1[15];
-						display[12]=pallet1[15];
-						display[13]=pallet1[15];
-						display[14]=pallet1[15];
-						display[15]=pallet1[15];
-						break;
-					case 4:  //Not a valid mode
-						display[0]=(pixel_temp=pallet1[pixel0[i]]);
-						display[1]=pixel_temp;
-						display[2]=pixel_temp;
-						display[3]=pixel_temp;
-						display[4]=pixel_temp;
-						display[5]=pixel_temp;
-						display[6]=pixel_temp;
-						display[7]=pixel_temp;
-						break;
-					case 5:  //Mode 2
-						display[0]=(pixel_temp=pallet1[pixel0[i]]);
-						display[1]=pixel_temp;
-						display[2]=pixel_temp;
-						display[3]=pixel_temp;
-						display[4]=(pixel_temp=pallet1[pixel1[i]]);
-						display[5]=pixel_temp;
-						display[6]=pixel_temp;
-						display[7]=pixel_temp;
-						break;
-					case 6:  //Mode 1
-						display[0]=(pixel_temp=pallet1[pixel0[i]]);
-						display[1]=pixel_temp;
-						display[2]=(pixel_temp=pallet1[pixel1[i]]);
-						display[3]=pixel_temp;
-						display[4]=(pixel_temp=pallet1[pixel2[i]]);
-						display[5]=pixel_temp;
-						display[6]=(pixel_temp=pallet1[pixel3[i]]);
-						display[7]=pixel_temp;
-						break;
-					case 7:  //Mode 0,3
-						display[0]=pallet1[pixel0[i]];
-						display[1]=pallet1[pixel1[i]];
-						display[2]=pallet1[pixel2[i]];
-						display[3]=pallet1[pixel3[i]];
-						display[4]=pallet1[pixel4[i]];
-						display[5]=pallet1[pixel5[i]];
-						display[6]=pallet1[pixel6[i]];
-						display[7]=pallet1[pixel7[i]];
-						break;
-					};
-				};
-			} else {
-				if (reg_refresh&9)
-				{
-					pixel_temp=Machine->pens[8];
-					display[0]=pixel_temp;
-					display[1]=pixel_temp;
-					display[2]=pixel_temp;
-					display[3]=pixel_temp;
-					display[4]=pixel_temp;
-					display[5]=pixel_temp;
-					display[6]=pixel_temp;
-					display[7]=pixel_temp;
-					if (emulation_pixels_per_character==16) {
-						display[8]=pixel_temp;
-						display[9]=pixel_temp;
-						display[10]=pixel_temp;
-						display[11]=pixel_temp;
-						display[12]=pixel_temp;
-						display[13]=pixel_temp;
-						display[14]=pixel_temp;
-						display[15]=pixel_temp;
-					};
-				};
-			};
-			display+=emulation_pixels_per_character;
-		};
-	} else {
-		if (reg_refresh&9)
-		{
-			pixel_temp=Machine->pens[8];
-			for(x_screen_pos=0;x_screen_pos<50;x_screen_pos++)
-			{
-				display[0]=pixel_temp;
-				display[1]=pixel_temp;
-				display[2]=pixel_temp;
-				display[3]=pixel_temp;
-				display[4]=pixel_temp;
-				display[5]=pixel_temp;
-				display[6]=pixel_temp;
-				display[7]=pixel_temp;
-				display[8]=pixel_temp;
-				display[9]=pixel_temp;
-				display[10]=pixel_temp;
-				display[11]=pixel_temp;
-				display[12]=pixel_temp;
-				display[13]=pixel_temp;
-				display[14]=pixel_temp;
-				display[15]=pixel_temp;
-				display+=16;
-			};
-		};
-	};
-};
-
-reg_refresh=0;
-
-
-}

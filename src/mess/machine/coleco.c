@@ -11,6 +11,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "mess/vidhrdw/tms9928a.h"
+#include "mess/includes/coleco.h"
 
 /* local */
 unsigned char *coleco_ram;
@@ -88,17 +89,17 @@ int coleco_load_rom (int id)
 }
 
 
-int coleco_ram_r(int offset)
+READ_HANDLER ( coleco_ram_r )
 {
     return coleco_ram[offset];
 }
 
-void coleco_ram_w(int offset, int data)
+WRITE_HANDLER ( coleco_ram_w )
 {
     coleco_ram[offset]=data;
 }
 
-int coleco_paddle_r(int offset)
+READ_HANDLER ( coleco_paddle_r )
 {
 	/* Player 1 */
 	if ((offset & 0x02)==0)
@@ -194,19 +195,19 @@ int coleco_paddle_r(int offset)
 	return 0x00;
 }
 
-void coleco_paddle_toggle_1_w(int offset, int data)
+WRITE_HANDLER ( coleco_paddle_toggle_1_w )
 {
 	JoyMode=0;
     return;
 }
 
-void coleco_paddle_toggle_2_w(int offset, int data)
+WRITE_HANDLER ( coleco_paddle_toggle_2_w )
 {
 	JoyMode=1;
     return;
 }
 
-int coleco_VDP_r(int offset)
+READ_HANDLER ( coleco_VDP_r )
 {
 	if (offset & 0x01)
 		return TMS9928A_register_r();
@@ -214,7 +215,7 @@ int coleco_VDP_r(int offset)
 		return TMS9928A_vram_r();
 }
 
-void coleco_VDP_w(int offset, int data)
+WRITE_HANDLER ( coleco_VDP_w )
 {
 	if (offset & 0x01)
 		TMS9928A_register_w(data);

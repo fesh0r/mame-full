@@ -68,9 +68,9 @@ void p2000m_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 				if (code < 32) code = 32;
 			}
 
-			drawgfx (bitmap, Machine->gfx[0], code, 
+			drawgfx (bitmap, Machine->gfx[0], code,
 				videoram[offs + 2048] & 0x08 ? 0 : 1, 0, 0, sx, sy,
-				&Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+				&Machine->visible_area, TRANSPARENCY_NONE, 0);
 			if (videoram[offs] & 0x80)
 			{
 				for (loop = 0; loop < 6; loop++)

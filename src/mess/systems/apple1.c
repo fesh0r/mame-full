@@ -32,15 +32,11 @@ Hardware:	PIA6820 DSP for keyboard and screen interface
 extern	void	apple1_init_machine (void);
 extern	void	apple1_stop_machine (void);
 
-extern	int		apple1_rom_load (void);
-extern	int		apple1_rom_id (const char *name, const char *gamename);
-
 extern	int		apple1_vh_start (void);
 extern	void	apple1_vh_stop (void);
 extern	void	apple1_vh_screenrefresh (struct osd_bitmap *bitmap,
 							int full_refresh);
 extern	int		apple1_interrupt (void);
-extern	void	init_apple1 (void);
 
 /* functions */
 
@@ -51,7 +47,8 @@ extern	void	init_apple1 (void);
 static struct MemoryReadAddress apple1_readmem[] =
 {
 	{0x0000, 0x1fff, MRA_RAM},
-	{0x2000, 0xd00f, MRA_NOP},
+	{0x2000, 0xcfff, MRA_NOP},
+	{0xd000, 0xd00f, MRA_NOP},
 	{0xd010, 0xd013, pia_0_r},
 	{0xd014, 0xfeff, MRA_NOP},
 	{0xff00, 0xffff, MRA_ROM},
@@ -61,7 +58,8 @@ static struct MemoryReadAddress apple1_readmem[] =
 static struct MemoryWriteAddress apple1_writemem[] =
 {
 	{0x0000, 0x1fff, MWA_RAM},
-	{0x2000, 0xd00f, MWA_NOP},
+	{0x2000, 0xcfff, MWA_NOP},
+	{0xd000, 0xd00f, MWA_NOP},
 	{0xd010, 0xd013, pia_0_w},
 	{0xd014, 0xfeff, MWA_NOP},
 	{0xff00, 0xffff, MWA_ROM},
@@ -83,19 +81,18 @@ struct GfxLayout apple1_charlayout =
 
 static struct	GfxDecodeInfo apple1_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &apple1_charlayout, 0, 2},
+	{ REGION_GFX1, 0x0000, &apple1_charlayout, 0, 1},
 	{ -1 }
 };
 
-static unsigned char apple1_palette[2 * 3] =
+static unsigned char apple1_palette[] =
 {
-	0x00, 0x00, 0x00,
-	0x00, 0xff, 0x00
+	0x00, 0x00, 0x00,	/* Black */
+	0x00, 0xff, 0x00	/* Green */
 };
 
-static unsigned short apple1_colortable[2 * 2] =
+static unsigned short apple1_colortable[] =
 {
-	1, 0,
 	0, 1
 };
 
@@ -110,7 +107,7 @@ static void apple1_init_palette (unsigned char *sys_palette,
 /* keyboard input */
 
 INPUT_PORTS_START( apple1 )
-	PORT_START	/* first sixteen keys */
+	PORT_START	/* 0: first sixteen keys */
 	PORT_BITX( 0x0001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "0", KEYCODE_0, IP_JOY_NONE )
 	PORT_BITX( 0x0002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "1", KEYCODE_1, IP_JOY_NONE )
 	PORT_BITX( 0x0004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "2", KEYCODE_2, IP_JOY_NONE )
@@ -127,7 +124,7 @@ INPUT_PORTS_START( apple1 )
 	PORT_BITX( 0x2000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "]", KEYCODE_CLOSEBRACE, IP_JOY_NONE )
 	PORT_BITX( 0x4000, IP_ACTIVE_HIGH, IPT_KEYBOARD, ";", KEYCODE_COLON, IP_JOY_NONE )
 	PORT_BITX( 0x8000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "'", KEYCODE_QUOTE, IP_JOY_NONE )
-	PORT_START	/* second sixteen keys */
+	PORT_START	/* 1: second sixteen keys */
 	PORT_BITX( 0x0001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "#", KEYCODE_TILDE, IP_JOY_NONE )
 	PORT_BITX( 0x0002, IP_ACTIVE_HIGH, IPT_KEYBOARD, ",", KEYCODE_COMMA, IP_JOY_NONE )
 	PORT_BITX( 0x0004, IP_ACTIVE_HIGH, IPT_KEYBOARD, ".", KEYCODE_STOP, IP_JOY_NONE )
@@ -144,7 +141,7 @@ INPUT_PORTS_START( apple1 )
 	PORT_BITX( 0x2000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "I", KEYCODE_I, IP_JOY_NONE )
 	PORT_BITX( 0x4000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "J", KEYCODE_J, IP_JOY_NONE )
 	PORT_BITX( 0x8000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "K", KEYCODE_K, IP_JOY_NONE )
-	PORT_START	/* third sixteen keys */
+	PORT_START	/* 2: third sixteen keys */
 	PORT_BITX( 0x0001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "L", KEYCODE_L, IP_JOY_NONE )
 	PORT_BITX( 0x0002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "M", KEYCODE_M, IP_JOY_NONE )
 	PORT_BITX( 0x0004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "N", KEYCODE_N, IP_JOY_NONE )
@@ -161,7 +158,7 @@ INPUT_PORTS_START( apple1 )
 	PORT_BITX( 0x2000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Y", KEYCODE_Y, IP_JOY_NONE )
 	PORT_BITX( 0x4000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Z", KEYCODE_Z, IP_JOY_NONE )
 	PORT_BITX( 0x8000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Enter", KEYCODE_ENTER, IP_JOY_NONE )
-	PORT_START	/* fourth sixteen keys */
+	PORT_START	/* 3: fourth sixteen keys */
 	PORT_BITX( 0x0001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Backspace", KEYCODE_BACKSPACE, IP_JOY_NONE )
 	PORT_BITX( 0x0002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Space", KEYCODE_SPACE, IP_JOY_NONE )
 	PORT_BITX( 0x0004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Escape", KEYCODE_ESC, IP_JOY_NONE )
@@ -169,6 +166,10 @@ INPUT_PORTS_START( apple1 )
 	PORT_BITX( 0x0010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Shift", KEYCODE_RSHIFT, IP_JOY_NONE )
 	PORT_BITX( 0x0020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Reset", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BITX( 0x0040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Clear", KEYCODE_F2, IP_JOY_NONE )
+	PORT_START	/* 4: Machine config */
+	PORT_DIPNAME( 0x01, 0, "RAM Size")
+	PORT_DIPSETTING(0, "8Kb")
+	PORT_DIPSETTING(1, "52Kb")
 INPUT_PORTS_END
 
 /* sound output */
@@ -186,7 +187,7 @@ static struct MachineDriver machine_driver_apple1 =
 			apple1_interrupt, 1,
 		},
 	},
-	50, 2500,
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
 	apple1_init_machine,
 	apple1_stop_machine,
@@ -194,7 +195,8 @@ static struct MachineDriver machine_driver_apple1 =
 	24 * 8,
 	{ 0, 40 * 6 - 1, 0, 24 * 8 - 1 },
 	apple1_gfxdecodeinfo,
-	2, 4,
+	sizeof (apple1_palette) / 3,
+	sizeof (apple1_colortable),
 	apple1_init_palette,
 	VIDEO_TYPE_RASTER,
 	0,
@@ -216,4 +218,4 @@ static	const	struct	IODevice io_apple1[] = {
 };
 
 /*    YEAR	NAME	PARENT	MACHINE	INPUT	INIT	COMPANY				FULLNAME */
-COMP( 1976,	apple1,	0,		apple1,	apple1,	apple1,	"Apple Computer",	"Apple 1 8k" )
+COMP( 1976,	apple1,	0,		apple1,	apple1,	0,		"Apple Computer",	"Apple 1 8k" )

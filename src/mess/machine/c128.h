@@ -94,7 +94,6 @@ WRITE_HANDLER(c128_write_ff05);
 
 extern void c128_driver_init (void);
 extern void c128pal_driver_init (void);
-extern void c128pal2_driver_init (void);
 extern void c128_driver_shutdown (void);
 extern void c128_init_machine (void);
 extern void c128_shutdown_machine (void);

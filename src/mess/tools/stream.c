@@ -4,7 +4,6 @@
 #include "unzip.h"
 #include "osdepend.h"
 #include "imgtool.h"
-//#include "zlib/zlib.h"
 
 static size_t fsize(FILE *f)
 {
@@ -67,6 +66,7 @@ STREAM *stream_open(const char *fname, int read_or_write)
 		if (!imgfile->u.f)
 			goto error;
 	}
+	imgfile->name=fname;
 	return (STREAM *) imgfile;
 
 error:
@@ -239,5 +239,22 @@ size_t stream_fill(STREAM *f, unsigned char b, size_t sz)
 		sz -= MIN(sz, sizeof(buf));
 	}
 	return outsz;
+}
+
+void stream_clear(STREAM *f)
+{
+	/* Need to implement */
+	switch(f->imgtype) {
+	case IMG_MEM: break;
+	case IMG_FILE:
+		if (!f->write_protect) {
+			fclose(f->u.f);
+			f->u.f=fopen(f->name,"wb+");
+			if (f->u.f==NULL) ;
+			fclose(f->u.f);
+			f->u.f=fopen(f->name,"wb");
+		}
+		break;
+	}
 }
 

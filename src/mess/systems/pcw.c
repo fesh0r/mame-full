@@ -1034,7 +1034,8 @@ static struct MachineDriver machine_driver_pcw =
 are banked. */
 ROM_START(pcw)
 	ROM_REGION(0x014000, REGION_CPU1)
-	ROM_LOAD("pcwboot.bin", 0x010000, 490, 0x0)
+	//ROM_LOAD("pcwboot.bin", 0x010000, 490, 0x0)
+	ROM_LOAD("pcwboot.bin", 0x010000, 608, 0x0)
 ROM_END
 
 static const struct IODevice io_pcw[] =

@@ -2,7 +2,7 @@
 
   uk101.c
 
-  Functions to emulate the video hardware of the Jupiter Ace.
+  Functions to emulate the video hardware of the UK101.
 
 ***************************************************************************/
 
@@ -37,13 +37,13 @@ void	uk101_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	if (full_refresh)
 		memset (dirtybuffer, 1, videoram_size);
 
-	for (sx = 0; sx < 64; sx++) {
-		for (sy = 0; sy < 16; sy++) {
-			if (dirtybuffer[sy * 64 + sx]) {
-				drawgfx (bitmap, Machine->gfx[0], videoram[sy * 64 + sx], 1,
-				0, 0, sx * 8, sy * 16, &Machine->drv->visible_area,
+	for (sy = 0; sy < 25; sy++) {
+		for (sx = 0; sx < 32; sx++) {
+			if (dirtybuffer[0x84 + sy * 32 + sx]) {
+				drawgfx (bitmap, Machine->gfx[0], videoram[0x84 + sy * 32 + sx], 1,
+				0, 0, sx * 8, sy * 16, &Machine->visible_area,
 				TRANSPARENCY_NONE, 0);
-				dirtybuffer[sy * 64 + sx] = 0;
+				dirtybuffer[0x84 + sy * 32 + sx] = 0;
 			}
 		}
 	}
@@ -56,13 +56,13 @@ void	superbrd_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	if (full_refresh)
 		memset (dirtybuffer, 1, videoram_size);
 
-	for (sx = 0; sx < 32; sx++) {
-		for (sy = 0; sy < 16; sy++) {
-			if (dirtybuffer[sy * 32 + sx]) {
-				drawgfx (bitmap, Machine->gfx[0], videoram[sy * 32 + sx], 1,
-				0, 0, sx * 8, sy * 16, &Machine->drv->visible_area,
+	for (sy = 0; sy < 16; sy++) {
+		for (sx = 0; sx < 64; sx++) {
+			if (dirtybuffer[sy * 64 + sx]) {
+				drawgfx (bitmap, Machine->gfx[0], videoram[sy * 64 + sx], 1,
+				0, 0, sx * 8, sy * 16, &Machine->visible_area,
 				TRANSPARENCY_NONE, 0);
-				dirtybuffer[sy * 32 + sx] = 0;
+				dirtybuffer[sy * 64 + sx] = 0;
 			}
 		}
 	}

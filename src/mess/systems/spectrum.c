@@ -86,6 +86,9 @@ extern int  load_snap(void);
 extern void spectrum_init_machine(void);
 extern void spectrum_shutdown_machine(void);
 
+extern int  spec_quick_init (int id);
+extern void spec_quick_exit (int id);
+extern int  spec_quick_open (int id, int mode, void *arg);
 
 /*-----------------27/02/00 10:49-------------------
  code for WAV reading writing
@@ -159,6 +162,7 @@ static nec765_interface spectrum_plus3_nec765_interface =
         dsk_get_sectors_per_track,
         dsk_get_id_callback,
         dsk_get_sector_ptr_callback,
+        NULL
 };
 
 
@@ -787,6 +791,8 @@ static void spectrum_plus3_port_1ffd_w(int offset, int data)
         /* D3 - Disk motor on/off */
         /* D4 - parallel port strobe */
 
+        floppy_drive_set_motor_state(data & (1<<3));
+
         spectrum_plus3_port_1ffd_data = data;
 
         /* disable paging? */
@@ -1385,6 +1391,7 @@ INPUT_PORTS_START( spectrum )
 
 
         PORT_START
+        PORT_BITX(0x8000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Quickload", KEYCODE_F8, IP_JOY_NONE)
         PORT_DIPNAME(0x80, 0x00, "Hardware Version")
         PORT_DIPSETTING(0x00, "Issue 2" )
         PORT_DIPSETTING(0x80, "Issue 3" )
@@ -1397,7 +1404,6 @@ INPUT_PORTS_START( spectrum )
         PORT_BIT(0x1f, IP_ACTIVE_LOW, IPT_UNUSED)
 
 INPUT_PORTS_END
-
 
 static unsigned char spectrum_palette[16*3] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0xbf,
@@ -1437,6 +1443,21 @@ static void spectrum_init_palette(unsigned char *sys_palette, unsigned short *sy
 	memcpy(sys_colortable,spectrum_colortable,sizeof(spectrum_colortable));
 }
 
+int spec_interrupt (void)
+{
+	static int quickload = 0;
+
+        if (!quickload && (readinputport(16) & 0x8000))
+        {
+                spec_quick_open (0, 0, NULL);
+                quickload = 1;
+        }
+        else
+                quickload = 0;
+
+        return interrupt ();
+}
+
 static struct Speaker_interface spectrum_speaker_interface=
 {
  1,
@@ -1459,7 +1480,7 @@ static struct MachineDriver machine_driver_spectrum =
 			3500000,        /* 3.5 Mhz */
                         spectrum_readmem,spectrum_writemem,
 			spectrum_readport,spectrum_writeport,
-			interrupt,1,
+                        spec_interrupt,1,
 		},
 	},
 	50, 2500,       /* frames per second, vblank duration */
@@ -1508,7 +1529,7 @@ static struct MachineDriver machine_driver_spectrum_128 =
                         3546900,        /* 3.54690 Mhz */
                         spectrum_128_readmem,spectrum_128_writemem,
                         spectrum_128_readport,spectrum_128_writeport,
-			interrupt,1,
+                        spec_interrupt,1,
 		},
 	},
 	50, 2500,       /* frames per second, vblank duration */
@@ -1562,7 +1583,7 @@ static struct MachineDriver machine_driver_spectrum_plus3 =
                         3546900,        /* 3.54690 Mhz */
                         spectrum_128_readmem,spectrum_128_writemem,
                         spectrum_plus3_readport,spectrum_plus3_writeport,
-			interrupt,1,
+                        spec_interrupt,1,
 		},
 	},
 	50, 2500,       /* frames per second, vblank duration */
@@ -1616,7 +1637,7 @@ static struct MachineDriver machine_driver_ts2068 =
                         3580000,        /* 3.58 Mhz */
                         ts2068_readmem,ts2068_writemem,
                         ts2068_readport,ts2068_writeport,
-			interrupt,1,
+                        spec_interrupt,1,
 		},
 	},
         60, 2500,       /* frames per second, vblank duration */
@@ -1670,7 +1691,7 @@ static struct MachineDriver machine_driver_tc2048 =
 			3500000,        /* 3.5 Mhz */
                         tc2048_readmem,tc2048_writemem,
                         tc2048_readport,tc2048_writeport,
-			interrupt,1,
+                        spec_interrupt,1,
 		},
 	},
 	50, 2500,       /* frames per second, vblank duration */
@@ -1801,6 +1822,26 @@ ROM_START(specp3sp)
         ROM_LOAD("plus3sp3.rom",0x1c000,0x4000, 0xf6d25389)
 ROM_END
 
+#define IODEVICE_SPEC_QUICK \
+{\
+   IO_QUICKLOAD,       /* type */\
+   1,                  /* count */\
+   "scr\0",            /*file extensions */\
+   NULL,               /* private */\
+   NULL,               /* id */\
+   spec_quick_init,    /* init */\
+   spec_quick_exit,    /* exit */\
+   NULL,               /* info */\
+   spec_quick_open,    /* open */\
+   NULL,               /* close */\
+   NULL,               /* status */\
+   NULL,               /* seek */\
+   NULL,               /* input */\
+   NULL,               /* output */\
+   NULL,               /* input_chunk */\
+   NULL                /* output_chunk */\
+}
+
 static const struct IODevice io_spectrum[] = {
 	{
         IO_SNAPSHOT,            /* type */
@@ -1820,6 +1861,7 @@ static const struct IODevice io_spectrum[] = {
         NULL,               /* input_chunk */
         NULL                /* output_chunk */
     },
+        IODEVICE_SPEC_QUICK,
         IO_CASSETTE_WAVE(1,"wav\0tap\0", NULL,spectrum_cassette_init, spectrum_cassette_exit),
         { IO_END }
 };
@@ -1843,6 +1885,7 @@ static const struct IODevice io_specpls3[] = {
         NULL,               /* input_chunk */
         NULL                /* output_chunk */
     },
+        IODEVICE_SPEC_QUICK,
         IO_CASSETTE_WAVE(1,"wav\0tap\0", NULL,spectrum_cassette_init, spectrum_cassette_exit),
 	{
                 IO_FLOPPY,              /* type */
@@ -1878,20 +1921,20 @@ static const struct IODevice io_specpls3[] = {
 #define io_specp2sp io_spectrum
 #define io_specp3sp io_specpls3
 
-/*    YEAR  NAME      PARENT    MACHINE         INPUT     INIT          COMPANY                 FULLNAME */
-COMP( 1982, spectrum, 0,        spectrum,       spectrum, 0,            "Sinclair Research",    "ZX-Spectrum 48k" )
-COMP( 2000, specpls4, spectrum, spectrum,       spectrum, 0,            "Amstrad plc",          "Spectrum +4 (48K)" )
-COMP( 198?, inves,    spectrum, spectrum,       spectrum, 0,            "Investronica",         "Inves Spectrum 48K+" )
-COMP( 198?, tk90x,    spectrum, spectrum,       spectrum, 0,            "Micro Digital",        "TK90x Color Computer" )
-COMP( 198?, tk95,     spectrum, spectrum,       spectrum, 0,            "Micro Digital",        "TK95 Color Computer" )
-COMP( 198?, tc2048,   spectrum, tc2048,         spectrum, 0,            "Timex of Portugal",    "Timex Computer 2048" )
-COMP( 1983, ts2068,   spectrum, ts2068,         spectrum, 0,            "Timex-Sinclair",       "Timex-Sinclair 2068" )
+/*     YEAR  NAME      PARENT    MACHINE         INPUT     INIT          COMPANY                 FULLNAME */
+COMP ( 1982, spectrum, 0,        spectrum,       spectrum, 0,            "Sinclair Research",    "ZX-Spectrum 48k" )
+COMPX( 2000, specpls4, spectrum, spectrum,       spectrum, 0,            "Amstrad plc",          "Spectrum +4 (48K)", GAME_COMPUTER_MODIFIED )
+COMP ( 1986, inves,    spectrum, spectrum,       spectrum, 0,            "Investronica",         "Inves Spectrum 48K+" )
+COMP ( 1985, tk90x,    spectrum, spectrum,       spectrum, 0,            "Micro Digital",        "TK90x Color Computer" )
+COMP ( 1986, tk95,     spectrum, spectrum,       spectrum, 0,            "Micro Digital",        "TK95 Color Computer" )
+COMP ( 198?, tc2048,   spectrum, tc2048,         spectrum, 0,            "Timex of Portugal",    "Timex Computer 2048" )
+COMP ( 1983, ts2068,   spectrum, ts2068,         spectrum, 0,            "Timex-Sinclair",       "Timex-Sinclair 2068" )
 
-COMP( 1986, spec128,  0,        spectrum_128,   spectrum, 0,            "Sinclair Research",    "Spectrum 128K" )
-COMP( 1986, specpls2, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "Spectrum +2" )
-COMP( 1987, specpl2a, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "Spectrum +2a" )
-COMP( 1987, specpls3, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "Spectrum +3" )
+COMPX( 1986, spec128,  0,        spectrum_128,   spectrum, 0,            "Sinclair Research",    "Spectrum 128K" ,GAME_NOT_WORKING)
+COMPX( 1986, specpls2, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "Spectrum +2" ,GAME_NOT_WORKING)
+COMPX( 1987, specpl2a, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "Spectrum +2a" ,GAME_NOT_WORKING)
+COMPX( 1987, specpls3, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "Spectrum +3" ,GAME_NOT_WORKING)
 
-COMP( 1986, specp2fr, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "Spectrum +2 (France)" )
-COMP( 1986, specp2sp, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "Spectrum +2 (Spain)" )
-COMP( 1987, specp3sp, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "Spectrum +3 (Spain)" )
+COMPX( 1986, specp2fr, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "Spectrum +2 (France)" ,GAME_NOT_WORKING)
+COMPX( 1986, specp2sp, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "Spectrum +2 (Spain)" ,GAME_NOT_WORKING)
+COMPX( 1987, specp3sp, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "Spectrum +3 (Spain)" ,GAME_NOT_WORKING)

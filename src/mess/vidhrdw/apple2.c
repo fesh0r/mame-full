@@ -47,19 +47,19 @@ int apple2_vh_start(void)
 
 	for (i=0; i<2; i++)
 	{
-		if ((apple2_text[i] = osd_create_bitmap(280*2,192*2)) == 0)
+		if ((apple2_text[i] = bitmap_alloc(280*2,192*2)) == 0)
 		{
 			apple2_vh_stop();
 			return 1;
 		}
 
-		if ((apple2_lores[i] = osd_create_bitmap(280*2,192*2)) == 0)
+		if ((apple2_lores[i] = bitmap_alloc(280*2,192*2)) == 0)
 		{
 			apple2_vh_stop();
 			return 1;
 		}
 
-		if ((apple2_hires[i] = osd_create_bitmap(280*2,192*2)) == 0)
+		if ((apple2_hires[i] = bitmap_alloc(280*2,192*2)) == 0)
 		{
 			apple2_vh_stop();
 			return 1;
@@ -394,7 +394,7 @@ void apple2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	if (a2.TEXT)
 	{
 		apple2_text_draw(page);
-		copybitmap(bitmap,apple2_text[page],0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,apple2_text[page],0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 	else if ((a2.HIRES) && (a2.MIXED))
 	{
@@ -408,7 +408,7 @@ void apple2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	else if (a2.HIRES)
 	{
 		apple2_hires_draw(page);
-		copybitmap(bitmap,apple2_hires[page],0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,apple2_hires[page],0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 	else if (a2.MIXED)
 	{
@@ -422,7 +422,7 @@ void apple2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	else
 	{
 		apple2_lores_draw(page);
-		copybitmap(bitmap,apple2_lores[page],0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,apple2_lores[page],0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 	return;

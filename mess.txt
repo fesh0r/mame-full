@@ -5,7 +5,7 @@
                     Official Page at: http://mess.emuverse.com
                    ==========================================
 
-This document is generated for MESS 0.37 BETA 3 (Jun  1 2000)
+This document is generated for MESS 0.37 BETA 4 (Jun 23 2000)
 
 Please note that many people helped with this project, either directly or by
 releasing source code which was used to write the drivers. We are not trying to
@@ -53,7 +53,7 @@ we are perfectly capable of finding it ourselves, thank you.
 
 Complete Emulated System List
 =============================
-Here is the list of systems supported by MESS 0.37 BETA 3 (Jun  1 2000)
+Here is the list of systems supported by MESS 0.37 BETA 4 (Jun 23 2000)
 
 The meanings of the columns are as follows:
 Working - "No" means that the emulation has shortcomings that cause the system
@@ -102,7 +102,9 @@ dat2html.exe.
 | Apple //e                               |  Yes  |  Yes  |  Yes  | apple2e  |
 | Apple //e (enhanced)                    |  Yes  |  Yes  |  Yes  | apple2ee |
 | Apple //e (Platinum)                    |  Yes  |  Yes  |  Yes  | apple2ep |
-| Macintosh Plus                          |   No  |  Yes  |  Yes  | macplus  |
+| Macintosh Plus                          |  Yes  |  Yes  |  Yes  | macplus  |
+| Macintosh 512ke                         |  Yes  |  Yes  |  Yes  | mac512ke |
+| Lisa2                                   |   No  |  Yes  |  Yes  | lisa2    |
 | Atari 400 (NTSC)                        |  Yes  |  Yes  |  Yes  | a400     |
 | Atari 400 (PAL)                         |  Yes  |  Yes  |  Yes  | a400pal  |
 | Atari 800 (NTSC)                        |  Yes  |  Yes  |  Yes  | a800     |
@@ -115,16 +117,20 @@ dat2html.exe.
 | Commodore 364 (Prototype)               |  Yes  | Close |Partial| c364     |
 | Commodore C64 (NTSC)                    |  Yes  |  Yes  |Partial| c64      |
 | Commodore C64/VC64/VIC64 (PAL)          |  Yes  |  Yes  |Partial| c64pal   |
-| Commodore C64 Games Systems (NTSC)      |  Yes  |  Yes  |Partial| c64gs    |
+| Commodore C64 Games Systems (PAL)       |  Yes  |  Yes  |Partial| c64gs    |
 | Commodore CBM4064/PET64/Educator64 (NTSC|  Yes  |  Yes  |Partial| cbm4064  |
 | Commodore Max (Ultimax/VC10)            |  Yes  |  Yes  |Partial| max      |
 | Commodore Video Interface Chip 64 Swedis|  Yes  |  Yes  |Partial| vic64s   |
-| Commodore C65/C64DX (Prototype) NTSC    |   No  |  Yes  |Partial| c65      |
-| Commodore C65/C64DX (Prototype) German (|   No  |  Yes  |Partial| c65ger   |
-| Commodore C128 NTSC 656x216             |  Yes  |  Yes  |Partial| c128     |
-| Commodore C128 German (PAL) 336x216     |  Yes  |  Yes  |Partial| c128ger  |
-| Commodore C128 French (PAL) 656x432     |  Yes  |  Yes  |Partial| c128fra  |
-| Commodore C128 Italian (PAL) 656x432    |  Yes  |  Yes  |Partial| c128ita  |
+| C65/C64DX (Prototype) NTSC 91-10-01 4bcf|   No  |  Yes  |Partial| c65      |
+| C65/C64DX (Prototype) NTSC 91-08-28 c9cd|   No  |  Yes  |Partial| c65e     |
+| C65/C64DX (Prototype) NTSC 91-06-26 888c|   No  |  Yes  |Partial| c65d     |
+| C65/C64DX (Prototype) NTSC 91-05-23 b96b|   No  |  Yes  |Partial| c65c     |
+| C65/C64DX (Prototype) German (PAL) 91-04|   No  |  Yes  |Partial| c65ger   |
+| C65/C64DX (Prototype) NTSC 91-01-11 caff|   No  |  Yes  |Partial| c65a     |
+| Commodore C128 NTSC                     |  Yes  |  Yes  |Partial| c128     |
+| Commodore C128 German (PAL)             |  Yes  |  Yes  |Partial| c128ger  |
+| Commodore C128 French (PAL)             |  Yes  |  Yes  |Partial| c128fra  |
+| Commodore C128 Italian (PAL)            |  Yes  |  Yes  |Partial| c128ita  |
 | Commodore Video Interface Chip 20 (NTSC)|  Yes  |  Yes  |Partial| vic20    |
 | Commodore VIC20 PAL, Swedish Expansion K|  Yes  |  Yes  |Partial| vic20swe |
 | Commodore VolksComputer 20 (PAL)        |  Yes  |  Yes  |Partial| vc20     |
@@ -185,10 +191,12 @@ dat2html.exe.
 | IBM PC-XT MDA                           |  Yes  |  Yes  |  Yes  | pcmda    |
 | IBM PC-XT CGA                           |  Yes  |  Yes  |  Yes  | pccga    |
 | Tandy 1000HX                            |  Yes  | Close |  Yes  | t1000hx  |
+| IBM PC-XT Video Graphics Adapter, MF2 Ke| No(1) |  Yes  |  Yes  | xtvga    |
+| IBM PC-Advanced Technology CGA, MF2 Keyb| No(1) |  Yes  |  Yes  | atcga    |
 | Philips P2000T                          |  Yes  |  Yes  |  Yes  | p2000t   |
 | Philips P2000M                          |  Yes  |  Yes  |  Yes  | p2000m   |
 | Compukit UK101                          |  Yes  |  Yes  |  Yes  | uk101    |
-| Superboard                              |  Yes  |  Yes  |  Yes  | superbrd |
+| Superboard II                           |  Yes  |  Yes  |  Yes  | superbrd |
 | ZX-80                                   |   No  |  Yes  |  Yes  | zx80     |
 | ZX-81                                   |   No  |  Yes  |  Yes  | zx81     |
 | TS1000                                  |   No  |  Yes  |  Yes  | ts1000   |
@@ -202,13 +210,13 @@ dat2html.exe.
 | TK95 Color Computer                     |  Yes  |  Yes  |  Yes  | tk95     |
 | Timex Computer 2048                     |  Yes  |  Yes  |  Yes  | tc2048   |
 | Timex-Sinclair 2068                     |  Yes  |  Yes  |  Yes  | ts2068   |
-| Spectrum 128K                           |  Yes  |  Yes  |  Yes  | spec128  |
-| Spectrum +2                             |  Yes  |  Yes  |  Yes  | specpls2 |
-| Spectrum +2a                            |  Yes  |  Yes  |  Yes  | specpl2a |
-| Spectrum +3                             |  Yes  |  Yes  |  Yes  | specpls3 |
-| Spectrum +2 (France)                    |  Yes  |  Yes  |  Yes  | specp2fr |
-| Spectrum +2 (Spain)                     |  Yes  |  Yes  |  Yes  | specp2sp |
-| Spectrum +3 (Spain)                     |  Yes  |  Yes  |  Yes  | specp3sp |
+| Spectrum 128K                           |   No  |  Yes  |  Yes  | spec128  |
+| Spectrum +2                             |   No  |  Yes  |  Yes  | specpls2 |
+| Spectrum +2a                            |   No  |  Yes  |  Yes  | specpl2a |
+| Spectrum +3                             |   No  |  Yes  |  Yes  | specpls3 |
+| Spectrum +2 (France)                    |   No  |  Yes  |  Yes  | specp2fr |
+| Spectrum +2 (Spain)                     |   No  |  Yes  |  Yes  | specp2sp |
+| Spectrum +3 (Spain)                     |   No  |  Yes  |  Yes  | specp3sp |
 | MSX1                                    |  Yes  |  Yes  |  Yes  | msx      |
 | MSX1 (Japan)                            |  Yes  |  Yes  |  Yes  | msxj     |
 | MSX1 (Korean)                           |  Yes  |  Yes  |  Yes  | msxkr    |
@@ -217,11 +225,13 @@ dat2html.exe.
 | Nascom 2                                |  Yes  |  Yes  |  Yes  | nascom2  |
 | Acorn Atom                              |  Yes  |  Yes  |  Yes  | atom     |
 | Sam Coupe                               |  Yes  |  Yes  |  Yes  | coupe    |
+| Pocket Computer 1401/1402               |   No  |  Yes  |  Yes  | pc1401   |
 | KIM-1                                   |  Yes  |  Yes  |  Yes  | kim1     |
 | PDP1 Spacewar!                          |  Yes  |  Yes  |  Yes  | pdp1     |
 | MTX 512                                 |  Yes  |  Yes  |  Yes  | mtx512   |
 | CPS Changer (Street Fighter ZERO)       |  Yes  |  Yes  |  Yes  | sfzch    |
-| BBC Micro Model B                       |   No  |  Yes  |  Yes  | bbc      |
+| BBC Micro Model A                       |   No  |  Yes  |  Yes  | bbca     |
+| BBC Micro Model B                       |   No  |  Yes  |  Yes  | bbcb     |
 +-----------------------------------------+-------+-------+-------+----------+
 (1) There are variants of the system that work correctly
 (2) Needs samples provided separately
@@ -342,7 +352,9 @@ apple2cp     Floppydisk  (Flop)   .dsk
 apple2e      Floppydisk  (Flop)   .dsk  
 apple2ee     Floppydisk  (Flop)   .dsk  
 apple2ep     Floppydisk  (Flop)   .dsk  
-macplus      Floppydisk  (Flop)   .dsk  
+macplus      Floppydisk  (Flop)   .dsk  .img  
+mac512ke     Floppydisk  (Flop)   .dsk  .img  
+lisa2        Floppydisk  (Flop)   .img  
 a400         Cartridge   (Cart)   .rom  .bin  
              Floppydisk  (Flop)   .atr  .dsk  .xfd  
 a400pal      Cartridge   (Cart)   .rom  .bin  
@@ -390,7 +402,15 @@ vic64s       Quickload   (Quik)   .p00  .prg
              Floppydisk  (Flop)   .d64  
 c65          Quickload   (Quik)   .p00  .prg  
              Floppydisk  (Flop)   .d64  
+c65e         Quickload   (Quik)   .p00  .prg  
+             Floppydisk  (Flop)   .d64  
+c65d         Quickload   (Quik)   .p00  .prg  
+             Floppydisk  (Flop)   .d64  
+c65c         Quickload   (Quik)   .p00  .prg  
+             Floppydisk  (Flop)   .d64  
 c65ger       Quickload   (Quik)   .p00  .prg  
+             Floppydisk  (Flop)   .d64  
+c65a         Quickload   (Quik)   .p00  .prg  
              Floppydisk  (Flop)   .d64  
 c128         Quickload   (Quik)   .p00  .prg  
              Floppydisk  (Flop)   .d64  
@@ -559,10 +579,14 @@ pccga        Floppydisk  (Flop)   .dsk
              Harddisk    (Hard)   .img  
 t1000hx      Floppydisk  (Flop)   .dsk  
              Harddisk    (Hard)   .img  
+xtvga        Floppydisk  (Flop)   .dsk  
+             Harddisk    (Hard)   .img  
+atcga        Floppydisk  (Flop)   .dsk  
+             Harddisk    (Hard)   .img  
 p2000t       UNKNOWN     
 p2000m       UNKNOWN     
-uk101        UNKNOWN     
-superbrd     UNKNOWN     
+uk101        Cassette    (Cass)   .bas  
+superbrd     Cassette    (Cass)   .bas  
 zx80         Cassette    (Cass)   .80   .o    
 zx81         Cassette    (Cass)   .81   .p    
 ts1000       Cassette    (Cass)   .81   .p    
@@ -570,34 +594,48 @@ aszmic       Cassette    (Cass)   .80   .o
 pc8300       Cassette    (Cass)   .81   .p    
 pow3000      Cassette    (Cass)   .81   .p    
 spectrum     Snapshot    (Snap)   .sna  .z80  
+             Quickload   (Quik)   .scr  
              Cassette    (Cass)   .wav  .tap  
 specpls4     Snapshot    (Snap)   .sna  .z80  
+             Quickload   (Quik)   .scr  
              Cassette    (Cass)   .wav  .tap  
 inves        Snapshot    (Snap)   .sna  .z80  
+             Quickload   (Quik)   .scr  
              Cassette    (Cass)   .wav  .tap  
 tk90x        Snapshot    (Snap)   .sna  .z80  
+             Quickload   (Quik)   .scr  
              Cassette    (Cass)   .wav  .tap  
 tk95         Snapshot    (Snap)   .sna  .z80  
+             Quickload   (Quik)   .scr  
              Cassette    (Cass)   .wav  .tap  
 tc2048       Snapshot    (Snap)   .sna  .z80  
+             Quickload   (Quik)   .scr  
              Cassette    (Cass)   .wav  .tap  
 ts2068       Snapshot    (Snap)   .sna  .z80  
+             Quickload   (Quik)   .scr  
              Cassette    (Cass)   .wav  .tap  
 spec128      Snapshot    (Snap)   .sna  .z80  
+             Quickload   (Quik)   .scr  
              Cassette    (Cass)   .wav  .tap  
 specpls2     Snapshot    (Snap)   .sna  .z80  
+             Quickload   (Quik)   .scr  
              Cassette    (Cass)   .wav  .tap  
 specpl2a     Snapshot    (Snap)   .sna  .z80  
+             Quickload   (Quik)   .scr  
              Cassette    (Cass)   .wav  .tap  
              Floppydisk  (Flop)   .dsk  
 specpls3     Snapshot    (Snap)   .sna  .z80  
+             Quickload   (Quik)   .scr  
              Cassette    (Cass)   .wav  .tap  
              Floppydisk  (Flop)   .dsk  
 specp2fr     Snapshot    (Snap)   .sna  .z80  
+             Quickload   (Quik)   .scr  
              Cassette    (Cass)   .wav  .tap  
 specp2sp     Snapshot    (Snap)   .sna  .z80  
+             Quickload   (Quik)   .scr  
              Cassette    (Cass)   .wav  .tap  
 specp3sp     Snapshot    (Snap)   .sna  .z80  
+             Quickload   (Quik)   .scr  
              Cassette    (Cass)   .wav  .tap  
              Floppydisk  (Flop)   .dsk  
 msx          Cartridge   (Cart)   .rom  
@@ -608,12 +646,17 @@ msxkr        Cartridge   (Cart)   .rom
              Cassette    (Cass)   .wav  
 msxuk        Cartridge   (Cart)   .rom  
              Cassette    (Cass)   .wav  
-nascom1      UNKNOWN     
+nascom1      Cassette    (Cass)   .nas  .bin  
+             Cartridge   (Cart)   .nas  .bin  
 nascom2      Cassette    (Cass)   .cas  .nas  .bin  
+             Cartridge   (Cart)   .nas  .bin  
 atom         Cartridge   (Cart)   .atm  
 coupe        Floppydisk  (Flop)   .dsk  
+pc1401       UNKNOWN     
 kim1         Cassette    (Cass)   .kim  
 pdp1         Cartridge   (Cart)   .bin  
 mtx512       Cartridge   (Cart)   .bin  
 sfzch        UNKNOWN     
-bbc          UNKNOWN     
+bbca         Cassette    (Cass)   .wav  
+bbcb         Cassette    (Cass)   .wav  
+             Floppydisk  (Flop)   .ssd  

@@ -38,7 +38,7 @@ void vtech1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	if( vtech1_frame_time > 0 )
     {
-		ui_text(bitmap, vtech1_frame_message, 1, Machine->drv->visible_area.max_y - 9);
+		ui_text(bitmap, vtech1_frame_message, 1, Machine->visible_area.max_y - 9);
         /* if the message timed out, clear it on the next frame */
         if( --vtech1_frame_time == 0 )
 			full_refresh = 1;
@@ -49,13 +49,13 @@ void vtech1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		if( vtech1_latch & 0x08 )
 		{
 			if( vtech1_latch & 0x10 )
-				fillbitmap(Machine->scrbitmap, Machine->pens[5], &Machine->drv->visible_area);
+				fillbitmap(Machine->scrbitmap, Machine->pens[5], &Machine->visible_area);
 			else
-				fillbitmap(Machine->scrbitmap, Machine->pens[1], &Machine->drv->visible_area);
+				fillbitmap(Machine->scrbitmap, Machine->pens[1], &Machine->visible_area);
 		}
         else
 		{
-			fillbitmap(Machine->scrbitmap, Machine->pens[16], &Machine->drv->visible_area);
+			fillbitmap(Machine->scrbitmap, Machine->pens[16], &Machine->visible_area);
 		}
         memset(dirtybuffer, 0xff, videoram_size);
     }
@@ -73,7 +73,7 @@ void vtech1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				sx = 16 + (offs % 32) * 8;
                 code = videoram[offs];
 				drawgfx(bitmap,Machine->gfx[1],code,color,0,0,sx,sy,
-                    &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+                    &Machine->visible_area,TRANSPARENCY_NONE,0);
                 dirtybuffer[offs] = 0;
             }
         }
@@ -94,7 +94,7 @@ void vtech1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
                 else
 					color = (code & 0x80) ? ((code >> 4) & 7) : 8;
 				drawgfx(bitmap,Machine->gfx[0],code,color,0,0,sx,sy,
-                    &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+                    &Machine->visible_area,TRANSPARENCY_NONE,0);
                 dirtybuffer[offs] = 0;
             }
         }

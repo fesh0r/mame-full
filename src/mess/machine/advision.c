@@ -8,10 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
-extern void advision_vh_write(int data);
-extern void advision_vh_update(int data);
-extern int advision_vh_hpos;
+#include "mess/includes/advision.h"
 
 unsigned char *advision_ram;
 int advision_rambank;
@@ -63,7 +60,7 @@ int advision_load_rom (int id)
 
 /****** External RAM ******************************/
 
-int advision_MAINRAM_r(int offset) {
+READ_HANDLER ( advision_MAINRAM_r ) {
     int d;
 
     d = advision_ram[advision_rambank + offset];
@@ -73,13 +70,13 @@ int advision_MAINRAM_r(int offset) {
     return d;
 }
 
-void advision_MAINRAM_w(int offset, int data) {
+WRITE_HANDLER ( advision_MAINRAM_w ) {
     advision_ram[advision_rambank + offset] = data;
 }
 
 /***** 8048 Ports ************************/
 
-void advision_putp1(int offset, int data) {
+WRITE_HANDLER ( advision_putp1 ) {
 
 	  ROM = memory_region(REGION_CPU1);
       if (data & 0x04) {
@@ -91,7 +88,7 @@ void advision_putp1(int offset, int data) {
       advision_rambank = (data & 0x03) << 8;
 }
 
-void advision_putp2(int offset, int data) {
+WRITE_HANDLER ( advision_putp2 ) {
 
       if ((advision_videoenable == 0x00) && (data & 0x10)) {
 		advision_vh_update(advision_vh_hpos);
@@ -105,7 +102,7 @@ void advision_putp2(int offset, int data) {
 	  advision_videobank = (data & 0xE0) >> 5;
 }
 
-int  advision_getp1(int offset) {
+READ_HANDLER ( advision_getp1 ) {
     int d,in;
 
     logerror("P1 READ PC=%x\n",cpu_get_pc());
@@ -120,15 +117,15 @@ int  advision_getp1(int offset) {
     return d;
 }
 
-int  advision_getp2(int offset) {
+READ_HANDLER ( advision_getp2 ) {
     return 0;
 }
 
-int  advision_gett0(int offset) {
+READ_HANDLER ( advision_gett0 ) {
     return 0;
 }
 
-int  advision_gett1(int offset) {
+READ_HANDLER ( advision_gett1 ) {
     if (advision_framestart) {
         advision_framestart = 0;
         return 0;

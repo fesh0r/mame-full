@@ -181,21 +181,21 @@ static struct MemoryWriteAddress c65_writemem[] =
 	{0x0e000, 0x0ffff, MWA_RAM},
 	{0x10000, 0x1f7ff, MWA_RAM},
 	{0x1f800, 0x1ffff, MWA_RAM, &c64_colorram},
-	{0x20000, 0x23fff, MWA_ROM}, // &c65_dos},	/* maps to 0x8000 */
-	{0x24000, 0x28fff, MWA_ROM}, // reserved
+	{0x20000, 0x23fff, MWA_ROM}, /* &c65_dos},	   maps to 0x8000    */
+	{0x24000, 0x28fff, MWA_ROM}, /* reserved */
 	{0x29000, 0x29fff, MWA_ROM, &c65_chargen},
 	{0x2a000, 0x2bfff, MWA_ROM, &c64_basic},
 	{0x2c000, 0x2cfff, MWA_ROM, &c65_interface},
 	{0x2d000, 0x2dfff, MWA_ROM, &c64_chargen},
 	{0x2e000, 0x2ffff, MWA_ROM, &c64_kernal},
-	{0x30000, 0x31fff, MWA_ROM}, //&c65_monitor},	/*monitor maps to 0x6000 */
-	{0x32000, 0x37fff, MWA_ROM}, //&c65_basic},
-	{0x38000, 0x3bfff, MWA_ROM}, //&c65_graphics},
-	{0x3c000, 0x3dfff, MWA_ROM}, // reserved
-	{0x3e000, 0x3ffff, MWA_ROM}, // &c65_kernal},
+	{0x30000, 0x31fff, MWA_ROM}, /*&c65_monitor},	  monitor maps to 0x6000    */
+	{0x32000, 0x37fff, MWA_ROM}, /*&c65_basic}, */
+	{0x38000, 0x3bfff, MWA_ROM}, /*&c65_graphics}, */
+	{0x3c000, 0x3dfff, MWA_ROM}, /* reserved */
+	{0x3e000, 0x3ffff, MWA_ROM}, /* &c65_kernal}, */
 	{0x40000, 0x7ffff, MWA_NOP},
 	{0x80000, 0xfffff, MWA_RAM},
-//	{0x80000, 0xfffff, MWA_BANK16},
+/*	{0x80000, 0xfffff, MWA_BANK16}, */
 	{-1}							   /* end of table */
 };
 
@@ -453,26 +453,47 @@ static void c65_init_palette (unsigned char *sys_palette, unsigned short *sys_co
 
 ROM_START (c65)
 	ROM_REGION (0x800000, REGION_CPU1)
-//	ROM_REGION (0x100000, REGION_CPU1)
+/*	ROM_REGION (0x100000, REGION_CPU1) */
+	ROM_LOAD ("911001.bin", 0x20000, 0x20000, 0x0888b50f)
+ROM_END
+
+ROM_START (c65e)
+	ROM_REGION (0x800000, REGION_CPU1)
+/*	ROM_REGION (0x100000, REGION_CPU1) */
 	ROM_LOAD ("910828.bin", 0x20000, 0x20000, 0x3ee40b06)
+ROM_END
+
+ROM_START (c65d)
+	ROM_REGION (0x800000, REGION_CPU1)
+/*	ROM_REGION (0x100000, REGION_CPU1) */
+	ROM_LOAD ("910626.bin", 0x20000, 0x20000, 0x12527742)
+ROM_END
+
+ROM_START (c65c)
+	ROM_REGION (0x800000, REGION_CPU1)
+/*	ROM_REGION (0x100000, REGION_CPU1) */
+	ROM_LOAD ("910523.bin", 0x20000, 0x20000, 0xe8235dd4)
 ROM_END
 
 ROM_START (c65ger)
 	ROM_REGION (0x800000, REGION_CPU1)
-//	ROM_REGION (0x100000, REGION_CPU1)
+/*	ROM_REGION (0x100000, REGION_CPU1) */
 	ROM_LOAD ("910429.bin", 0x20000, 0x20000, 0xb025805c)
 ROM_END
+
+ROM_START (c65a)
+	ROM_REGION (0x800000, REGION_CPU1)
+/*	ROM_REGION (0x100000, REGION_CPU1) */
+	ROM_LOAD ("910111.bin", 0x20000, 0x20000, 0xc5d8d32e)
+ROM_END
+
 
 static struct MachineDriver machine_driver_c65 =
 {
   /* basic machine hardware */
 	{
 		{
-#if HAS_M4510
 			CPU_M4510,
-#else
-			CPU_M65CE02,
-#endif
 			3500000, /* or VIC6567_CLOCK, */
 			c65_readmem, c65_writemem,
 			0, 0,
@@ -487,17 +508,13 @@ static struct MachineDriver machine_driver_c65 =
 
   /* video hardware */
 	656,							   /* screen width */
-	216,							   /* screen height */
-	{0, 656 - 1, 0, 216 - 1},		   /* visible_area */
+	416,							   /* screen height */
+	{0, 656 - 1, 0, 416 - 1},		   /* visible_area */
 	0,								   /* graphics decode info */
 	sizeof (vic3_palette) / sizeof (vic3_palette[0]) / 3,
 	0,
 	c65_init_palette,				   /* convert color prom */
-#ifdef PET_TEST_CODE
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
-#else
-	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
-#endif
 	0,
 	vic2_vh_start,
 	vic2_vh_stop,
@@ -516,11 +533,7 @@ static struct MachineDriver machine_driver_c65pal =
   /* basic machine hardware */
 	{
 		{
-#if HAS_M4510
 			CPU_M4510,
-#else
-			CPU_M65CE02,
-#endif
 			3500000, /* or VIC6569_CLOCK,*/
 			c65_readmem, c65_writemem,
 			0, 0,
@@ -536,17 +549,13 @@ static struct MachineDriver machine_driver_c65pal =
 
   /* video hardware */
 	656,							   /* screen width */
-	216,							   /* screen height */
-	{0, 656 - 1, 0, 216 - 1},		   /* visible_area */
+	416,							   /* screen height */
+	{0, 656 - 1, 0, 416 - 1},		   /* visible_area */
 	0,								   /* graphics decode info */
 	sizeof (vic3_palette) / sizeof (vic3_palette[0]) / 3,
 	0,
 	c65_init_palette,				   /* convert color prom */
-#ifdef PET_TEST_CODE
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
-#else
-	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
-#endif
 	0,
 	vic2_vh_start,
 	vic2_vh_stop,
@@ -571,15 +580,20 @@ static const struct IODevice io_c65[] =
 };
 
 #define init_c65 c65_driver_init
+#define init_c65_alpha1 c65_driver_init
 #define init_c65pal c65pal_driver_init
 
 #define io_c65ger io_c65
+#define io_c65e io_c65
+#define io_c65d io_c65
+#define io_c65c io_c65
+#define io_c65a io_c65
 
 /*    	YEAR	NAME    PARENT	MACHINE	INPUT	INIT 	COMPANY   							FULLNAME */
-#ifdef PET_TEST_CODE
-COMP (	199?,	c65,	0,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"Commodore C65/C64DX (Prototype) NTSC")
-COMP (	199?,	c65ger,	c65,	c65pal,	c65ger,	c65pal,	"Commodore Business Machines Co.",	"Commodore C65/C64DX (Prototype) German (PAL)")
-#else
-COMPX (	199?, 	c65,	0,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"Commodore C65/C64DX (Prototype) NTSC", 		GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
-COMPX (	199?, 	c65ger,	c65,	c65pal,	c65ger,	c65pal,	"Commodore Business Machines Co.",	"Commodore C65/C64DX (Prototype) German (PAL)",	GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
-#endif
+COMPX (	199?, 	c65,	0,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"C65/C64DX (Prototype) NTSC 91-10-01 4bcf", 		GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
+COMPX (	199?, 	c65e,	c65,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"C65/C64DX (Prototype) NTSC 91-08-28 c9cd", 		GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
+COMPX (	199?, 	c65d,	c65,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"C65/C64DX (Prototype) NTSC 91-06-26 888c", 		GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
+COMPX (	199?, 	c65c,	c65,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"C65/C64DX (Prototype) NTSC 91-05-23 b96b", 		GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
+COMPX (	199?, 	c65ger,	c65,	c65pal,	c65ger,	c65pal,	"Commodore Business Machines Co.",	"C65/C64DX (Prototype) German (PAL) 91-04-29 e96a",	GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
+COMPX (	199?, 	c65a,	c65,		c65,	c65,	c65_alpha1,	"Commodore Business Machines Co.",	"C65/C64DX (Prototype) NTSC 91-01-11 caff", 		GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
+

@@ -209,14 +209,14 @@ int genesis_vh_start (void)
 		return 1;
 	}*/
 
-   	if ((spritelayer = osd_create_bitmap(2500,2500)) == 0)
+   	if ((spritelayer = bitmap_alloc(2500,2500)) == 0)
 	{
 		generic_vh_stop();
    //		osd_free_bitmap(scroll_a);
    //		osd_free_bitmap(scroll_b);
 		return 1;
 	}
-	if ((bitmap2 = osd_create_bitmap(320,224)) == 0)
+	if ((bitmap2 = bitmap_alloc(320,224)) == 0)
 	{
 		generic_vh_stop();
    //		osd_free_bitmap(scroll_a);

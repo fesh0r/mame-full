@@ -89,6 +89,12 @@ READ_HANDLER (spectrum_characterram_r)
 
 WRITE_HANDLER (spectrum_colorram_w)
 {
+        /* Will eventually be used to emulate hi-res colour effects. No point
+           doing it now as contented memory is not emulated so timings will
+           be way off. (eg Zynaps taking 212 cycles not 224 per scanline)
+        */
+/*        EventList_AddItemOffset(offset+0x5800, data, cpu_getcurrentcycles()); */
+
 	spectrum_colorram[offset] = data;
 	charsdirty[offset] = 1;
 }
@@ -276,7 +282,7 @@ void spectrum_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
                 SPEC_TOP_BORDER, SPEC_DISPLAY_YSIZE, SPEC_BOTTOM_BORDER,
                 SPEC_LEFT_BORDER, SPEC_DISPLAY_XSIZE, SPEC_RIGHT_BORDER,
                 SPEC_LEFT_BORDER_CYCLES, SPEC_DISPLAY_XSIZE_CYCLES,
-                SPEC_RIGHT_BORDER_CYCLES, SPEC_RETRACE_CYCLES, 200);
+                SPEC_RIGHT_BORDER_CYCLES, SPEC_RETRACE_CYCLES, 200, 0xfe);
 }
 
 
@@ -343,7 +349,7 @@ void spectrum_128_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
                 SPEC_TOP_BORDER, SPEC_DISPLAY_YSIZE, SPEC_BOTTOM_BORDER,
                 SPEC_LEFT_BORDER, SPEC_DISPLAY_XSIZE, SPEC_RIGHT_BORDER,
                 SPEC_LEFT_BORDER_CYCLES, SPEC_DISPLAY_XSIZE_CYCLES,
-                SPEC_RIGHT_BORDER_CYCLES, SPEC128_RETRACE_CYCLES, 200);
+                SPEC_RIGHT_BORDER_CYCLES, SPEC128_RETRACE_CYCLES, 200, 0xfe);
 }
 
 /*******************************************************************
@@ -529,7 +535,7 @@ void ts2068_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
                 TS2068_TOP_BORDER, SPEC_DISPLAY_YSIZE, TS2068_BOTTOM_BORDER,
                 TS2068_LEFT_BORDER, TS2068_DISPLAY_XSIZE, TS2068_RIGHT_BORDER,
                 SPEC_LEFT_BORDER_CYCLES, SPEC_DISPLAY_XSIZE_CYCLES,
-                SPEC_RIGHT_BORDER_CYCLES, SPEC_RETRACE_CYCLES, 200);
+                SPEC_RIGHT_BORDER_CYCLES, SPEC_RETRACE_CYCLES, 200, 0xfe);
 }
 
 void tc2048_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
@@ -569,5 +575,5 @@ void tc2048_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
                 SPEC_TOP_BORDER, SPEC_DISPLAY_YSIZE, SPEC_BOTTOM_BORDER,
                 TS2068_LEFT_BORDER, TS2068_DISPLAY_XSIZE, TS2068_RIGHT_BORDER,
                 SPEC_LEFT_BORDER_CYCLES, SPEC_DISPLAY_XSIZE_CYCLES,
-                SPEC_RIGHT_BORDER_CYCLES, SPEC_RETRACE_CYCLES, 200);
+                SPEC_RIGHT_BORDER_CYCLES, SPEC_RETRACE_CYCLES, 200, 0xfe);
 }

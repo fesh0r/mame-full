@@ -3,10 +3,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <unistd.h>
+
+#include "osdtools.h"
 
 void replace_lt_gt(char *line)
 {
@@ -60,7 +58,7 @@ void a_href_url(char *line)
 }
 
 
-int main(int ac, char **av)
+int CLIB_DECL main(int ac, char **av)
 {
 	char dat_filename[128] = "sysinfo.dat";
 	char html_filename[128] = "sysinfo.htm";
@@ -100,7 +98,7 @@ int main(int ac, char **av)
 		return 1;
     }
 
-	mkdir(html_directory, 0);
+	osd_mkdir(html_directory);
 
     fprintf(html, "<html>\n");
 	fprintf(html, "<head>\n");

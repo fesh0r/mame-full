@@ -616,7 +616,7 @@ static void msx_ppi_port_c_w (int chip, int data)
         DAC_signed_data_w (0, (data & 0x80 ? 0x7f : 0));
     /* cassette motor on/off */
     if ( (old_val ^ data) & 0x10)
-	device_status (IO_CASSETTE, 0, !(data & 0x10) );
+		device_status (IO_CASSETTE, 0, (data & 0x10) ? 1 : 0);
     /* cassette signal write */
     if ( (old_val ^ data) & 0x20)
         device_output (IO_CASSETTE, 0, (data & 0x20) ? -32768 : 32767);

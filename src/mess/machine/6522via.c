@@ -283,19 +283,30 @@ int via_read(int which, int offset)
 		break;
 
     case VIA_PA:
+		/* update the input */
+		if (PA_LATCH_ENABLE(v->acr) == 0)
+			if (v->intf->in_a_func) v->in_a = v->intf->in_a_func(0);
+
+		/* combine input and output values */
+		val = (v->out_a & v->ddr_a) + (v->in_a & ~v->ddr_a);
+
+		CLR_PA_INT(v);
+
 		/* If CA2 is configured as output and in pulse or handshake mode,
 		   CA2 is set now */
 		if (CA2_AUTO_HS(v->pcr))
 		{
-			/* call the CA2 output function */
 			if (v->out_ca2)
-				if (v->intf->out_ca2_func) v->intf->out_ca2_func(0, 0);
+			{
+				/* set CA2 */
+				v->out_ca2 = 0;
 
-			/* set CA2 */
-			v->out_ca2 = 0;
+				/* call the CA2 output function */
+				if (v->intf->out_ca2_func) v->intf->out_ca2_func(0, 0);
+			}
 		}
 
-		CLR_PA_INT(v);
+		break;
 
     case VIA_PANH:
 		/* update the input */
@@ -447,29 +458,39 @@ void via_write(int which, int offset, int data)
 		   CB2 is set now */
 		if (CB2_AUTO_HS(v->pcr))
 		{
-			/* call the CB2 output function */
 			if (v->out_cb2)
-				if (v->intf->out_cb2_func) v->intf->out_cb2_func(0, 0);
+			{
+				/* set CB2 */
+				v->out_cb2 = 0;
 
-			/* set CB2 */
-			v->out_cb2 = 0;
+				/* call the CB2 output function */
+				if (v->intf->out_cb2_func) v->intf->out_cb2_func(0, 0);
+			}
 		}
 		break;
 
     case VIA_PA:
+		v->out_a = data;
+		if (v->intf->out_a_func && v->ddr_a)
+			v->intf->out_a_func(0, v->out_a & v->ddr_a);
+
+		CLR_PA_INT(v);
+
 		/* If CA2 is configured as output and in pulse or handshake mode,
 		   CA2 is set now */
 		if (CA2_AUTO_HS(v->pcr))
 		{
-			/* call the CA2 output function */
 			if (v->out_ca2)
-				if (v->intf->out_ca2_func) v->intf->out_ca2_func(0, 0);
+			{
+				/* set CA2 */
+				v->out_ca2 = 0;
 
-			/* set CA2 */
-			v->out_ca2 = 0;
+				/* call the CA2 output function */
+				if (v->intf->out_ca2_func) v->intf->out_ca2_func(0, 0);
+			}
 		}
 
-		CLR_PA_INT(v);
+		break;
 
     case VIA_PANH:
 		v->out_a = data;
@@ -556,6 +577,12 @@ void via_write(int which, int offset, int data)
 		v->sr = data;
 		if (v->intf->out_shift_func && SO_O2_CONTROL(v->acr))
 			v->intf->out_shift_func(data);
+		/* kludge for Mac Plus (and 128k, 512k, 512ke) : */
+		if (v->intf->out_shift_func2 && SO_EXT_CONTROL(v->acr))
+		{
+			v->intf->out_shift_func2(data);
+			via_set_int(v, INT_SR);
+		}
 		break;
 
     case VIA_PCR:
@@ -595,6 +622,9 @@ void via_write(int which, int offset, int data)
 			else
 				v->t1 = timer_set (V_CYCLES_TO_TIME(TIMER1_VALUE(v) + IFR_DELAY), which, via_t1_timeout);
 		}
+		/* kludge for Mac Plus (and 128k, 512k, 512ke) : */
+		if (v->intf->si_ready_func && SI_EXT_CONTROL(data))
+			v->intf->si_ready_func();
 		break;
 
     case VIA_IER:
@@ -641,12 +671,14 @@ void via_set_input_ca1(int which, int data)
 			   CA2 is cleared now */
 			if (CA2_AUTO_HS(v->pcr))
 			{
-				/* call the CA2 output function */
 				if (!v->out_ca2)
-					if (v->intf->out_ca2_func) v->intf->out_ca2_func(0, 1);
+				{
+					/* clear CA2 */
+					v->out_ca2 = 1;
 
-				/* clear CA2 */
-				v->out_ca2 = 1;
+					/* call the CA2 output function */
+					if (v->intf->out_ca2_func) v->intf->out_ca2_func(0, 1);
+				}
 			}
 		}
 		v->in_ca1 = data;
@@ -718,12 +750,14 @@ void via_set_input_cb1(int which, int data)
 			   CB2 is cleared now */
 			if (CB2_AUTO_HS(v->pcr))
 			{
-				/* call the CB2 output function */
 				if (!v->out_cb2)
-					if (v->intf->out_cb2_func) v->intf->out_cb2_func(0, 1);
+				{
+					/* clear CB2 */
+					v->out_cb2 = 1;
 
-				/* clear CB2 */
-				v->out_cb2 = 1;
+					/* call the CB2 output function */
+					if (v->intf->out_cb2_func) v->intf->out_cb2_func(0, 1);
+				}
 			}
 		}
 		v->in_cb1 = data;
@@ -755,6 +789,18 @@ void via_set_input_cb2(int which, int data)
 			v->in_cb2 = data;
 		}
     }
+}
+
+/******************* interface to shift data into VIA ***********************/
+
+/* kludge for Mac Plus (and 128k, 512k, 512ke) : */
+
+void via_set_input_si(int which, int data)
+{
+	struct via6522 *v = via + which;
+
+	via_set_int(v, INT_SR);
+	v->sr = data;
 }
 
 /******************* Standard 8-bit CPU interfaces, D0-D7 *******************/

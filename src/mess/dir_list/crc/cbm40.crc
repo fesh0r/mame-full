@@ -1,0 +1,12 @@
+# Commodore PET series image CRC List
+# Compiled by Stefano "JoJo" Priore
+# Note: This list is provided as a record of known dumps for this system.  
+#       These checksums have not been validated and cannot be assumed correct.  
+#       They are provided here as a database to help the emulation of this system.  
+# Send corrections/submissions to: battlepriest@hotmail.com
+
+[cbm40]
+
+# These programs have been tested and work
+3249A34C = Flash Attack for CBM4032.prg | 1980 | Timothy Stryker, Kenneth Wasserman
+

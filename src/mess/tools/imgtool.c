@@ -8,29 +8,30 @@
 
 /* ----------------------------------------------------------------------- */
 
-CARTMODULE(a5200,    "Atari 5200 Cartridges",			"bin")
-CARTMODULE(a7800,    "Atari 7800 Cartridges",			"a78")
-CARTMODULE(advision, "AdventureVision Cartridges",		"bin")
-CARTMODULE(astrocde, "Astrocade Cartridges",			"bin")
-CARTMODULE(c16,      "Commodore 16 Cartridges",			"rom")
-CARTMODULE(c64,      "Commodore 64 Cartridges",			"crt")
-CARTMODULE(coleco,   "ColecoVision Cartridges",			"rom")
-CARTMODULE(gameboy,  "Gameboy Cartridges",				"gb")
-CARTMODULE(gamegear, "GameGear Cartridges",				"gg")
-CARTMODULE(genesis,  "Sega Genesis Cartridges",			"bin")
-CARTMODULE(max,      "Max Cartridges",					"crt")
-CARTMODULE(msx,      "MSX Cartridges",					"rom")
-CARTMODULE(nes,      "NES Cartridges",					"nes")
-CARTMODULE(pdp1,     "PDP-1 Cartridges",				NULL)
-CARTMODULE(plus4,    "Commodore +4 Cartridges",			NULL)
-CARTMODULE(sms,      "Sega Master System Cartridges",	"sms")
-CARTMODULE(ti99_4a,  "TI-99 4A Cartridges",				"bin")
-CARTMODULE(vc20,     "Vc20 Cartridges",					NULL)
-CARTMODULE(vectrex,  "Vectrex Cartridges",				"bin")
-CARTMODULE(vic20,    "Commodore Vic-20 Cartridges",		"a0")
+CARTMODULE(a5200,    "Atari 5200 Cartridge",			"bin")
+CARTMODULE(a7800,    "Atari 7800 Cartridge",			"a78")
+CARTMODULE(advision, "AdventureVision Cartridge",		"bin")
+CARTMODULE(astrocde, "Astrocade Cartridge",				"bin")
+CARTMODULE(c16,      "Commodore 16 Cartridge",			"rom")
+CARTMODULE(coleco,   "ColecoVision Cartridge",			"rom")
+CARTMODULE(gameboy,  "Gameboy Cartridge",				"gb")
+CARTMODULE(gamegear, "GameGear Cartridge",				"gg")
+CARTMODULE(genesis,  "Sega Genesis Cartridge",			"bin")
+CARTMODULE(max,      "Max Cartridge",					"crt")
+CARTMODULE(msx,      "MSX Cartridge",					"rom")
+CARTMODULE(nes,      "NES Cartridge",					"nes")
+CARTMODULE(pdp1,     "PDP-1 Cartridge",					NULL)
+CARTMODULE(plus4,    "Commodore +4 Cartridge",			NULL)
+CARTMODULE(sms,      "Sega Master System Cartridge",	"sms")
+CARTMODULE(ti99_4a,  "TI-99 4A Cartridge",				"bin")
+CARTMODULE(vc20,     "Vc20 Cartridge",					NULL)
+CARTMODULE(vectrex,  "Vectrex Cartridge",				"bin")
+CARTMODULE(vic20,    "Commodore Vic-20 Cartridge",		"a0")
 
 extern struct ImageModule imgmod_rsdos;	/* CoCo RS-DOS disks */
 extern struct ImageModule imgmod_pchd;	/* PC HD images */
+extern struct ImageModule imgmod_t64;	/* c64 tapes */
+extern struct ImageModule imgmod_c64crt;	/* c64 cartridge */
 
 static const struct ImageModule *images[] = {
 	&imgmod_rsdos,
@@ -41,7 +42,8 @@ static const struct ImageModule *images[] = {
 	&imgmod_advision,
 	&imgmod_astrocde,
 	&imgmod_c16,
-	&imgmod_c64,
+	&imgmod_c64crt,
+	&imgmod_t64,
 	&imgmod_coleco,
 	&imgmod_gameboy,
 	&imgmod_gamegear,
@@ -74,24 +76,24 @@ const struct ImageModule **getmodules(size_t *len)
 	return images;
 }
 
+static const char *msgs[] = {
+	"Out of memory",
+	"Unexpected error",
+	"Argument too long",
+	"Read error",
+	"Write error",
+	"Image is read only",
+	"Corrupt image",
+	"File not found",
+	"Unrecognized format",
+	"Not implemented",
+	"Incorrect or missing parameters",
+	"Bad file name",
+	"Out of space on image"
+};
+
 const char *imageerror(int err)
 {
-	static const char *msgs[] = {
-		"Out of memory",
-		"Unexpected error",
-		"Argument too long",
-		"Read error",
-		"Write error",
-		"Image is read only",
-		"Corrupt image",
-		"File not found",
-		"Unrecognized format",
-		"Not implemented",
-		"Incorrect or missing parameters",
-		"Bad file name",
-		"Out of space on image"
-	};
-
 	return msgs[(err & ~IMGTOOLERR_SRC_MASK) - 1];
 }
 
@@ -171,6 +173,13 @@ int img_beginenum(IMAGE *img, IMAGEENUM **outenum)
 int img_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 {
 	int err;
+
+	/* This makes it so that drivers don't have to take care of clearing
+	 * the attributes if they don't apply
+	 */
+	if (ent->attr_len)
+		ent->attr[0] = '\0';
+
 	err = enumeration->module->nextenum(enumeration, ent);
 	if (err)
 		return markerrorsource(err);
@@ -184,7 +193,7 @@ void img_closeenum(IMAGEENUM *enumeration)
 		enumeration->module->closeenum(enumeration);
 }
 
-int img_freespace(IMAGE *img, size_t *sz)
+int img_freespace(IMAGE *img, int *sz)
 {
 	if (!img->module->freespace)
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
@@ -207,14 +216,14 @@ int img_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	return 0;
 }
 
-int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef)
+int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *options)
 {
 	int err;
 
 	if (!img->module->writefile)
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 
-	err = img->module->writefile(img, fname, sourcef);
+	err = img->module->writefile(img, fname, sourcef, options);
 	if (err)
 		return markerrorsource(err);
 
@@ -238,7 +247,24 @@ int img_getfile(IMAGE *img, const char *fname, const char *dest)
 	return err;
 }
 
-int img_putfile(IMAGE *img, const char *fname, const char *source)
+int img_extract(IMAGE *img, const char *fname)
+{
+	int err;
+	STREAM *f;
+
+	if (!img->module->extract)
+		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+
+	f = stream_open(fname, OSD_FOPEN_READ);
+	if (!f)
+		return IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_NATIVEFILE;
+
+	err = img->module->extract(img, f);
+	stream_close(f);
+	return err;
+}
+
+int img_putfile(IMAGE *img, const char *fname, const char *source, const file_options *options)
 {
 	int err;
 	STREAM *f;
@@ -250,7 +276,7 @@ int img_putfile(IMAGE *img, const char *fname, const char *source)
 	if (!f)
 		return IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_NATIVEFILE;
 
-	err = img_writefile(img, fname, f);
+	err = img_writefile(img, fname, f, options);
 	stream_close(f);
 	return err;
 }
@@ -275,7 +301,7 @@ int img_create(const struct ImageModule *module, const char *fname, const geomet
 	STREAM *f;
 	const geometry_ranges *ranges;
 	static const geometry_options emptyopts = { 0, 0 };
-	static const geometry_ranges emptyrange = { 0, {0,0}, {0,0} };
+	static const geometry_ranges emptyrange = { {0,0}, {0,0} };
 
 	if (!module->create)
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
@@ -284,7 +310,7 @@ int img_create(const struct ImageModule *module, const char *fname, const geomet
 		options = &emptyopts;
 	ranges = module->ranges ? module->ranges : &emptyrange;
 
-	if (ranges->flags & IMAGE_USES_CYLINDERS) {
+	if (module->flags & IMAGE_USES_CYLINDERS) {
 		if (!options->cylinders)
 			return IMGTOOLERR_PARAMNEEDED | IMGTOOLERR_SRC_PARAM_CYLINDERS;
 		if (options->cylinders < ranges->minimum.cylinders)
@@ -297,7 +323,7 @@ int img_create(const struct ImageModule *module, const char *fname, const geomet
 			return IMGTOOLERR_PARAMNOTNEEDED | IMGTOOLERR_SRC_PARAM_CYLINDERS;
 	}
 
-	if (ranges->flags & IMAGE_USES_HEADS) {
+	if (module->flags & IMAGE_USES_HEADS) {
 		if (!options->heads)
 			return IMGTOOLERR_PARAMNEEDED | IMGTOOLERR_SRC_PARAM_HEADS;
 		if (options->heads < ranges->minimum.heads)

@@ -5,6 +5,19 @@
   Functions to emulate general aspects of the machine (RAM, ROM, interrupts,
   I/O ports)
 
+  References:
+		There are two main references for the info for this driver
+		- Tandy Color Computer Unravelled Series
+					(http://www.giftmarket.org/unravelled/unravelled.shtml)
+		- Assembly Language Programming For the CoCo 3 by Laurence A. Tepolt
+		- Kevin K. Darlings GIME reference
+					(http://www.cris.com/~Alxevans/gime.txt)
+		- Sock Masters's GIME register reference
+					(http://www.axess.com/twilight/sock/gime.html)
+		- Robert Gault's FAQ
+					(http://home.att.net/~robert.gault/Coco/FAQ/FAQ_main.htm)
+		- Discussions with L. Curtis Boyle (LCB) and John Kowalski (JK)
+
   TODO:
 		- Implement serial/printer
 		- Implement unimplemented SAM registers
@@ -15,14 +28,43 @@
 		  and FIRQ (which one actually runs?  or does both?)
 		- Find out when most interrupts "turn off" (Take note of all of the
 		  places where I raise the interrupt and then turn it off)
+		- Make the wd179x DRQ and IRQ work the way they did in reality.  The
+		  problem is that the wd179x code doesn't implement any timing, and as
+		  such behaves differently then the real thing.
+		- Handle resets correctly
+
+  In the CoCo, all timings should be exactly relative to each other.  This
+  table shows how all clocks are relative to each other (info: JK):
+		- Main CPU Clock				0.89 MHz
+		- Horizontal Sync Interrupt		15.7 kHz/63.5us	(57 clock cycles)
+		- Vertical Sync Interrupt		60 Hz			(14934 clock cycles)
+		- Composite Video Color Carrier	3.58 MHz/279ns	(1/4 clock cycles)
+
+  It is also noting that the CoCo 3 had two sets of VSync interrupts.  To quote
+  John Kowalski:
+
+	One other thing to mention is that the old vertical interrupt and the new
+	vertical interrupt are not the same..  The old one is triggered by the
+	video's vertical sync pulse, but the new one is triggered on the next scan
+	line *after* the last scan line of the active video display.  That is : new
+	vertical interrupt triggers somewheres around scan line 230 of the 262 line
+	screen (if a 200 line graphics mode is used, a bit earlier if a 192 line
+	mode is used and a bit later if a 225 line mode is used).  The old vsync
+	interrupt triggers on scanline zero.
+
+	230 is just an estimate [(262-200)/2+200].  I don't think the active part
+	of the screen is exactly centered within the 262 line total.  I can
+	research that for you if you want an exact number for scanlines before the
+	screen starts and the scanline that the v-interrupt triggers..etc.
 ***************************************************************************/
 
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
 #include "machine/6821pia.h"
 #include "mess/machine/wd179x.h"
+#include "mess/vidhrdw/m6847.h"
 
-UINT8 *coco_rom;
+static UINT8 *coco_rom;
 static int coco3_enable_64k;
 static int coco3_mmu[16];
 static int coco3_gimereg[8];
@@ -33,6 +75,7 @@ static int cart_inserted;
 static UINT8 pia0_pb, sound_mux, tape_motor;
 static UINT8 joystick_axis, joystick;
 static int d_dac;
+static int d_sam_memory_size;
 
 /* from vidhrdw/dragon.c */
 extern WRITE_HANDLER ( coco3_ram_b1_w );
@@ -46,9 +89,8 @@ extern WRITE_HANDLER ( coco3_ram_b8_w );
 extern WRITE_HANDLER ( coco3_ram_b9_w );
 extern void coco3_vh_sethires(int hires);
 
-extern WRITE_HANDLER ( d_pia1_pb_w );
-extern WRITE_HANDLER ( coco3_pia1_pb_w );
-
+static WRITE_HANDLER ( d_pia1_pb_w );
+static WRITE_HANDLER ( coco3_pia1_pb_w );
 static WRITE_HANDLER ( d_pia1_pa_w );
 static READ_HANDLER (  d_pia1_cb1_r );
 static READ_HANDLER (  d_pia0_ca1_r );
@@ -69,11 +111,18 @@ static void coco3_pia1_firq_a(int state);
 static void coco3_pia1_firq_b(int state);
 
 #define LOG_PAK			0
-#define LOG_INT			0
+#define LOG_WAVE		0
+#define LOG_INT_MASKING	0
 #define LOG_INT_TMR		0
+#define LOG_INT_COCO3	0
 #define LOG_GIME		0
 #define LOG_MMU			0
-#define LOG_COCO3_INT	0
+
+#define COCO_CPU_SPEED	(TIME_IN_HZ(894886))
+
+#define COCO_TIMER_HSYNC		(COCO_CPU_SPEED * 57.0)
+#define COCO_TIMER_VSYNC		(COCO_CPU_SPEED * 14934.0)
+#define COCO_TIMER_CMPCARRIER	(COCO_CPU_SPEED * 0.25)
 
 static void coco3_timer_recalculate(int newcounterval, int allowreset);
 
@@ -112,7 +161,11 @@ static struct pia6821_interface coco3_pia_intf[] =
 };
 
 /***************************************************************************
-  dev init
+  PAK files
+
+  PAK files were originally for storing Program PAKs, but the file format has
+  evolved into a snapshot file format, with a file format so convoluted and
+  changing to make it worthy of Microsoft.
 ***************************************************************************/
 static int load_pak_into_region(void *fp, int *pakbase, int *paklen, UINT8 *mem, int segaddr, int seglen)
 {
@@ -197,7 +250,6 @@ static int load_pak_into_region(void *fp, int *pakbase, int *paklen, UINT8 *mem,
  *	pak_trailer12				9
  *	pak_trailer13		11				9
  */
-
 
 #ifdef LSB_FIRST
 #define ENDIANIZE(x) (x)
@@ -782,6 +834,10 @@ int coco3_rom_load(int id)
        | FIRQ  |                ------
        |-<----------- PIA1
   -----
+
+  In an email discussion with JK, he informs me that when GIME interrupts are
+  enabled, this actually does not prevent PIA interrupts.  Apparently JeffV's
+  CoCo 3 emulator did not handle this properly.
 ***************************************************************************/
 
 enum {
@@ -800,7 +856,7 @@ static void d_recalc_irq(void)
 	if ((pia0_irq_a == ASSERT_LINE) || (pia0_irq_b == ASSERT_LINE))
 		cpu_set_irq_line(0, M6809_IRQ_LINE, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, M6809_IRQ_LINE, !ASSERT_LINE);
+		cpu_set_irq_line(0, M6809_IRQ_LINE, CLEAR_LINE);
 }
 
 static void d_recalc_firq(void)
@@ -808,33 +864,23 @@ static void d_recalc_firq(void)
 	if ((pia1_firq_a == ASSERT_LINE) || (pia1_firq_b == ASSERT_LINE))
 		cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, M6809_FIRQ_LINE, !ASSERT_LINE);
+		cpu_set_irq_line(0, M6809_FIRQ_LINE, CLEAR_LINE);
 }
 
 static void coco3_recalc_irq(void)
 {
-	if (coco3_gimereg[0] & 0x20) {
-		if (gime_irq)
-			cpu_set_irq_line(0, M6809_IRQ_LINE, ASSERT_LINE);
-		else
-			cpu_set_irq_line(0, M6809_IRQ_LINE, !ASSERT_LINE);
-	}
-	else {
+	if ((coco3_gimereg[0] & 0x20) && gime_irq)
+		cpu_set_irq_line(0, M6809_IRQ_LINE, ASSERT_LINE);
+	else
 		d_recalc_irq();
-	}
 }
 
 static void coco3_recalc_firq(void)
 {
-	if (coco3_gimereg[0] & 0x10) {
-		if (gime_firq)
-			cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
-		else
-			cpu_set_irq_line(0, M6809_FIRQ_LINE, !ASSERT_LINE);
-	}
-	else {
+	if ((coco3_gimereg[0] & 0x10) && gime_firq)
+		cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
+	else
 		d_recalc_firq();
-	}
 }
 
 static void d_pia0_irq_a(int state)
@@ -887,27 +933,23 @@ static void coco3_pia1_firq_b(int state)
 
 static void coco3_raise_interrupt(int mask, int state)
 {
-	if ((coco3_gimereg[0] & 0x20) && (coco3_gimereg[2] & mask)) {
-		if (state)
+	if (state) {
+		if ((coco3_gimereg[0] & 0x20) && (coco3_gimereg[2] & mask)) {
 			gime_irq |= (coco3_gimereg[2] & mask);
-		else
-			gime_firq &= ~(coco3_gimereg[2] & mask);
+			coco3_recalc_irq();
 
-		coco3_recalc_irq();
-#if LOG_COCO3_INT
-		logerror("CoCo3 Interrupt: Raising IRQ\n");
+#if LOG_INT_COCO3
+			logerror("CoCo3 Interrupt: Raising IRQ\n");
 #endif
-	}
-	if ((coco3_gimereg[0] & 0x10) && (coco3_gimereg[3] & mask)) {
-		if (state)
+		}
+		if ((coco3_gimereg[0] & 0x10) && (coco3_gimereg[3] & mask)) {
 			gime_firq |= (coco3_gimereg[3] & mask);
-		else
-			gime_firq &= ~(coco3_gimereg[3] & mask);
+			coco3_recalc_firq();
 
-		coco3_recalc_firq();
-#if LOG_COCO3_INT
-		logerror("CoCo3 Interrupt: Raising FIRQ\n");
+#if LOG_INT_COCO3
+			logerror("CoCo3 Interrupt: Raising FIRQ\n");
 #endif
+		}
 	}
 }
 
@@ -919,16 +961,6 @@ int dragon_interrupt(void)
 {
 	pia_0_cb1_w (0, 1);
 	return ignore_interrupt();
-}
-
-static WRITE_HANDLER ( d_pia1_pa_w )
-{
-	d_dac = data & 0xfa;
-	if (sound_mux)
-		DAC_data_w(0,d_dac);
-	else
-		device_output(IO_CASSETTE, 0, ((int) d_dac - 0x80) * 0x102);
-
 }
 
 static READ_HANDLER ( d_pia0_ca1_r )
@@ -943,7 +975,54 @@ static READ_HANDLER ( d_pia1_cb1_r )
 
 static WRITE_HANDLER ( d_pia1_cb2_w )
 {
+	int status;
+
+#if LOG_WAVE
+	logerror("CoCo: Turning cassette speaker %s\n", data ? "on" : "off");
+#endif
+
+	status = device_status(IO_CASSETTE, 0, -1);
+	status &= ~2;
+	if (!data)
+		status |= 2;
+	device_status(IO_CASSETTE, 0, status);
+
 	sound_mux = data;
+}
+
+static WRITE_HANDLER ( d_pia1_pa_w )
+{
+	/*
+	 *	This port appears at $FF20
+	 *
+	 *	Bits
+	 *  7-2:	DAC or cassette
+	 *    1:	Serial out
+	 */
+	d_dac = data & 0xfc;
+	if (sound_mux)
+		DAC_data_w(0,d_dac);
+	else
+		device_output(IO_CASSETTE, 0, ((int) d_dac - 0x80) * 0x102);
+
+}
+
+/*
+ * This port appears at $FF23
+ *
+ * The CoCo 1/2 and Dragon kept the gmode and vmode separate, and the CoCo
+ * 3 tied them together.  In the process, the CoCo 3 dropped support for the
+ * semigraphics modes
+ */
+
+static WRITE_HANDLER( d_pia1_pb_w )
+{
+	m6847_set_gmode(data >> 3);
+}
+
+static WRITE_HANDLER( coco3_pia1_pb_w )
+{
+	m6847_set_mode(data >> 3);
 }
 
 static WRITE_HANDLER ( d_pia0_cb2_w )
@@ -953,9 +1032,15 @@ static WRITE_HANDLER ( d_pia0_cb2_w )
 
 static WRITE_HANDLER ( d_pia1_ca2_w )
 {
+	int status;
+
 	if (tape_motor ^ data)
 	{
-		device_status(IO_CASSETTE, 0, data ? 1 : 0);
+		status = device_status(IO_CASSETTE, 0, -1);
+		status &= ~1;
+		if (data)
+			status |= 1;
+		device_status(IO_CASSETTE, 0, status);
 		tape_motor = data;
 	}
 }
@@ -1036,19 +1121,25 @@ void dragon_sam_speedctrl(int offset, int data)
 	 *		$FFD6	(clear)	R0
 	 *
 	 * R1:R0 formed the following states:
-	 *		00	- slow
-	 *		01	- dual speed
-	 *		1x	- fast
+	 *		00	- slow          0.89 MHz
+	 *		01	- dual speed    ???
+	 *		1x	- fast          1.78 MHz
 	 *
 	 * R1 controlled whether the video addressing was speeded up and R0
 	 * did the same for the CPU.  On pre-CoCo 3 machines, setting R1 caused
 	 * the screen to display garbage because the M6847 could not display
 	 * fast enough.
 	 *
-	 * TODO:  Make the overclock more accurate.  I am not sure of the exact
-	 * speedup effects on overall performance.
+	 * TODO:  Make the overclock more accurate.  In dual speed, ROM was a fast
+	 * access but RAM was not.  I don't know how to simulate this.
 	 */
     timer_set_overclock(0, 1+(offset&1));
+}
+
+void coco3_sam_speedctrl(int offset, int data)
+{
+	/* The CoCo 3 only had $FFD8-$FFD9 */
+	dragon_sam_speedctrl(offset + 2, data);
 }
 
 void dragon_sam_page_mode(int offset, int data)
@@ -1059,6 +1150,13 @@ void dragon_sam_page_mode(int offset, int data)
 	 * TODO:  Actually implement this.  Also find out what the CoCo 3 did with
 	 * this (it probably ignored it)
 	 */
+}
+
+static void recalc_vram_size(void)
+{
+	static int vram_masks[] = { 0xfff, 0x3fff, 0xffff, 0xffff };
+
+	m6847_set_vram_mask(vram_masks[d_sam_memory_size % 4]);
 }
 
 void dragon_sam_memory_size(int offset, int data)
@@ -1082,9 +1180,16 @@ void dragon_sam_memory_size(int offset, int data)
 	 * If something less than 64k was set, the low RAM would be smaller and
 	 * mirror the other parts of the RAM
 	 *
-	 * TODO:  Actually implement this.  Also find out what the CoCo 3 did with
-	 * this (it probably ignored it)
+	 * TODO:  Find out what "static RAM" is
+	 * TODO:  This should affect _all_ memory accesses, not just video ram
+	 * TODO:  Verify that the CoCo 3 ignored this
 	 */
+	if (offset & 1)
+		d_sam_memory_size &= ~(1 << (offset / 2));
+	else
+		d_sam_memory_size |= 1 << (offset / 2);
+
+	recalc_vram_size();
 }
 
 /***************************************************************************
@@ -1094,10 +1199,15 @@ void dragon_sam_memory_size(int offset, int data)
   would decrement over and over again until zero was reached, and at that
   point, would flag an interrupt.  At this point, the timer starts back up
   again.
+
+  I am deducing that the timer interrupt line was asserted if the timer was
+  zero and unasserted if the timer was non-zero.  Since we never truly track
+  the timer, we just use timer callback (coco3_timer_callback() asserts the
+  lin)
 ***************************************************************************/
 
 static void *coco3_timer;
-static int coco3_timer_interval;	/* interval: 1=70 nsec, 0=63.5 usec */
+static int coco3_timer_interval;	/* interval: 1=280 nsec, 0=63.5 usec */
 static int coco3_timer_base;
 static int coco3_timer_counter;
 extern void coco3_vh_blink(void);
@@ -1108,6 +1218,25 @@ static void coco3_timer_init(void)
 	coco3_timer_interval = 0;
 }
 
+static void coco3_timer_uncallback(int dummy)
+{
+	/* This "uncallback" is used to unassert the line */
+}
+
+static void coco3_timer_reset(void)
+{
+	/* This resets the timer back to the original value
+	 *
+	 * JK tells me that when the timer resets, it gets reset to a value that
+	 * is 1 (with the 1986 GIME) above or 2 (with the 1987 GIME) above the
+	 * value written into the timer.  coco3_timer_base keeps track of the value
+	 * placed into the variable, so we increment that here
+	 *
+	 * For now, we are emulating the 1986 GIME
+	 */
+	coco3_timer_recalculate(coco3_timer_base ? coco3_timer_base + 1 : coco3_timer_base, 1);
+}
+
 static void coco3_timer_callback(int dummy)
 {
 #if LOG_INT_TMR
@@ -1115,15 +1244,24 @@ static void coco3_timer_callback(int dummy)
 #endif
 	coco3_timer = 0;
 	coco3_raise_interrupt(COCO3_INT_TMR, 1);
+
+	/* HACKHACK - This should not happen until the next timer tick */
 	coco3_raise_interrupt(COCO3_INT_TMR, 0);
-	coco3_timer_recalculate(coco3_timer_base, 1);
+
+	coco3_timer_reset();
 	coco3_vh_blink();
 
 }
 
 static double coco3_timer_interval_time(void)
 {
-	return coco3_timer_interval ? TIME_IN_NSEC(70) : TIME_IN_USEC(63.5);
+	/* Most CoCo 3 docs, including the specs that Tandy released, say that the
+	 * high speed timer is 70ns (half of the speed of the main clock crystal).
+	 * However, it seems that this is in error, and the GIME timer is really a
+	 * 280ns timer (one eighth the speed of the main clock crystal.  Gault's
+	 * FAQ agrees with this
+	 */
+	return coco3_timer_interval ? COCO_TIMER_CMPCARRIER : COCO_TIMER_HSYNC;
 }
 
 /* This function takes the value in coco3_timer_counter, and sets up the timer
@@ -1173,7 +1311,7 @@ static int coco3_timer_r(void)
 static void coco3_timer_w(int data)	/* data = 0..4095 */
 {
 	coco3_timer_base = (data & 4095);
-	coco3_timer_recalculate(coco3_timer_base, 1);
+	coco3_timer_reset();
 }
 
 static void coco3_timer_msb_w(int data)
@@ -1230,7 +1368,7 @@ void dragon64_sam_himemmap(int offset, int data)
 
 /* Coco 3 */
 
-static int coco3_mmu_lookup(int block)
+static int coco3_mmu_lookup(int block, int forceram)
 {
 	int result;
 
@@ -1242,18 +1380,48 @@ static int coco3_mmu_lookup(int block)
 	else {
 		result = block + 56;
 	}
+
+	/* Are we actually in ROM?
+	 *
+	 * In our world, ROM is represented by memory blocks 0x40-0x47
+	 *
+	 * 0x40			Extended Color Basic
+	 * 0x41			Color Basic
+	 * 0x42			Reset Initialization
+	 * 0x43			Super Extended Color Basic
+	 * 0x44-0x47	Cartridge ROM
+	 *
+	 * This is the level where ROM is mapped, according to Tepolt (p21)
+	 */
+	if ((result >= 0x3c) && !coco3_enable_64k && !forceram) {
+		static const int rommap[4][4] = {
+			{ 0x40, 0x41, 0x46, 0x47 },
+			{ 0x40, 0x41, 0x46, 0x47 },
+			{ 0x40, 0x41, 0x42, 0x43 },
+			{ 0x44, 0x45, 0x46, 0x47 }
+		};
+		result = rommap[coco3_gimereg[0] & 3][result - 0x3c];
+	}
+	
 	return result;
 }
 
 int coco3_mmu_translate(int block, int offset)
 {
+	int forceram;
+
+	/* Block 8 is the 0xfe00 block; and it is treated differently */
 	if (block == 8) {
 		if (coco3_gimereg[0] & 8)
 			return 0x7fe00 + offset;
 		block = 7;
 		offset += 0x1e00;
+		forceram = 1;
 	}
-	return (coco3_mmu_lookup(block) * 0x2000) + offset;
+	else {
+		forceram = 0;
+	}
+	return (coco3_mmu_lookup(block, forceram) * 0x2000) + offset;
 }
 
 static void coco3_mmu_update(int lowblock, int hiblock)
@@ -1268,41 +1436,24 @@ static void coco3_mmu_update(int lowblock, int hiblock)
 		coco3_ram_b9_w
 	};
 
-	int hirom_base, lorom_base;
 	int i;
 	UINT8 *p;
 
-	hirom_base = ((coco3_gimereg[0] & 3) == 2) ? 0x0000 : 0x8000;
-	lorom_base = ((coco3_gimereg[0] & 3) != 3) ? 0x0000 : 0x8000;
-
 	for (i = lowblock; i <= hiblock; i++) {
-		if ((i >= 4) && !coco3_enable_64k && (i < 8)) {
-			if (i == 8)
-				p = &coco_rom[hirom_base + 0x7e00];
-			else
-				p = &coco_rom[(i >= 6 ? hirom_base : lorom_base) + ((i-4) * 0x2000)];
-			cpu_setbank(i + 1, p);
-			cpu_setbankhandler_w(i + 1, MWA_ROM);
+		p = &RAM[coco3_mmu_translate(i, 0)];
+		cpu_setbank(i + 1, p);
+		cpu_setbankhandler_w(i + 1, ((p - RAM) >= 0x80000) ? MWA_ROM : handlers[i]);
 #if LOG_MMU
-			logerror("CoCo3 GIME MMU: Logical $%04x ==> ROM\n", (i == 8) ? 0xfe00 : i * 0x2000);
+		logerror("CoCo3 GIME MMU: Logical $%04x ==> Physical $%05x\n",
+			(i == 8) ? 0xfe00 : i * 0x2000,
+			p - RAM);
 #endif
-		}
-		else {
-			p = &RAM[coco3_mmu_translate(i, 0)];
-			cpu_setbank(i + 1, p);
-			cpu_setbankhandler_w(i + 1, handlers[i]);
-#if LOG_MMU
-			logerror("CoCo3 GIME MMU: Logical $%04x ==> Physical $%05x\n",
-				(i == 8) ? 0xfe00 : i * 0x2000,
-				p - RAM);
-#endif
-		}
 	}
 }
 
 int coco3_mmu_r(int offset)
 {
-	return coco3_mmu[offset];
+	return coco3_mmu[offset] & 0x3f;
 }
 
 void coco3_mmu_w(int offset, int data)
@@ -1316,6 +1467,10 @@ void coco3_mmu_w(int offset, int data)
 		coco3_mmu_update(offset, (offset == 7) ? 8 : offset);
 	}
 }
+
+/***************************************************************************
+  GIME Registers (Reference: Super Extended Basic Unravelled)
+***************************************************************************/
 
 int coco3_gime_r(int offset)
 {
@@ -1338,12 +1493,12 @@ int coco3_gime_r(int offset)
 		}
 		break;
 
-	case 4:	/* Timer MSB */
-		result = coco3_timer_r() >> 8;
-		break;
-
-	case 5:	/* Timer LSB */
-		result = coco3_timer_r() & 0xff;
+	case 4:	/* Timer MSB/LSB; these arn't readable */
+	case 5:
+		/* JK tells me that these values are indeterminate; and $7E appears
+		 * to be the value most commonly returned
+		 */
+		result = 0x7e;
 		break;
 
 	default:
@@ -1379,7 +1534,8 @@ void coco3_gime_w(int offset, int data)
 		break;
 
 	case 1:
-		/*	$FF91 Initialization register 1Bit 7 Unused
+		/*	$FF91 Initialization register 1
+		 *		  Bit 7 Unused
 		 *		  Bit 6 Unused
 		 *		  Bit 5 TINS Timer input select; 1 = 70 nsec, 0 = 63.5 usec
 		 *		  Bit 4 Unused
@@ -1400,10 +1556,10 @@ void coco3_gime_w(int offset, int data)
 		 *		  Bit 4 HBORD Horizontal border interrupt
 		 *		  Bit 3 VBORD Vertical border interrupt
 		 *		! Bit 2 EI2 Serial data interrupt
-		 *		! Bit 1 EI1 Keyboard interrupt
+		 *		  Bit 1 EI1 Keyboard interrupt
 		 *		  Bit 0 EI0 Cartridge interrupt
 		 */
-#if LOG_INT
+#if LOG_INT_MASKING
 		logerror("CoCo3 IRQ: Interrupts { %s%s%s%s%s%s} enabled\n",
 			(data & 0x20) ? "TMR " : "",
 			(data & 0x10) ? "HBORD " : "",
@@ -1422,10 +1578,10 @@ void coco3_gime_w(int offset, int data)
 		 *		  Bit 4 HBORD Horizontal border interrupt
 		 *		  Bit 3 VBORD Vertical border interrupt
 		 *		! Bit 2 EI2 Serial border interrupt
-		 *		! Bit 1 EI1 Keyboard interrupt
+		 *		  Bit 1 EI1 Keyboard interrupt
 		 *		  Bit 0 EI0 Cartridge interrupt
 		 */
-#if LOG_INT
+#if LOG_INT_MASKING
 		logerror("CoCo3 FIRQ: Interrupts { %s%s%s%s%s%s} enabled\n",
 			(data & 0x20) ? "TMR " : "",
 			(data & 0x10) ? "HBORD " : "",
@@ -1500,8 +1656,6 @@ static void autocenter_init(int dipport, int dipmask)
 /***************************************************************************
   Cassette support
 ***************************************************************************/
-
-#define LOG_WAVE	1
 
 #define WAVEENTRY_HIGH  32767
 #define WAVEENTRY_LOW   -32768
@@ -1710,11 +1864,12 @@ int coco_cassette_init(int id)
 		wa.fill_wave = coco_cassette_fill_wave;
 		wa.header_samples = WAVESAMPLES_HEADER;
 		wa.trailer_samples = WAVESAMPLES_TRAILER;
+		wa.display = 1;
 		if( device_open(IO_CASSETTE,id,0,&wa) )
 			return INIT_FAILED;
 
-		/* immediately pause the output */
-        device_status(IO_CASSETTE,id,0);
+		/* immediately pause/mute the output */
+        device_status(IO_CASSETTE,id,2);
 		return INIT_OK;
 	}
 
@@ -1729,7 +1884,7 @@ int coco_cassette_init(int id)
             return INIT_FAILED;
 
 		/* immediately pause the output */
-        device_status(IO_CASSETTE,id,0);
+        device_status(IO_CASSETTE,id,2);
 		return INIT_OK;
     }
 
@@ -1750,6 +1905,9 @@ void coco_cassette_exit(int id)
  * called DSKREG that controls the interface with the wd1793.  DSKREG is
  * detailed below:.  But they appear to be
  *
+ * References:
+ *		CoCo:	Disk Basic Unravelled
+ *		Dragon:	Inferences from the PC-Dragon source code
  * ---------------------------------------------------------------------------
  * DSKREG - the control register
  * CoCo ($ff40)                            Dragon ($ff48)
@@ -1768,7 +1926,6 @@ void coco_cassette_exit(int id)
 
 static const char *floppy_name[4];
 static int haltenable;
-//static int old_motor;
 static int dskreg;
 static int raise_nmi;
 
@@ -1806,10 +1963,19 @@ static void coco_fdc_callback(int event)
 	 */
 	switch(event) {
 	case WD179X_IRQ_CLR:
+		m6809_set_nmi_line(CLEAR_LINE);
 		break;
 	case WD179X_IRQ_SET:
-		if (haltenable)
-			raise_nmi = 1;
+		raise_nmi = 1;
+		break;
+	case WD179X_DRQ_CLR:
+		cpu_set_halt_line(0, CLEAR_LINE);
+		break;
+	case WD179X_DRQ_SET:
+		/* I should be able to specify haltenable instead of zero, but several
+		 * programs don't appear to work
+		 */
+		cpu_set_halt_line(0, 0 /*haltenable*/ ? ASSERT_LINE : CLEAR_LINE);
 		break;
 	}
 }
@@ -1817,6 +1983,7 @@ static void coco_fdc_callback(int event)
 static void set_dskreg(int data, int hardware)
 {
 	UINT8 drive = 0;
+	UINT8 head = 0;
 	int motor_mask = 0;
 	int haltenable_mask = 0;
 	int tracks;
@@ -1826,16 +1993,28 @@ static void set_dskreg(int data, int hardware)
 	case HW_COCO:
 		if ((dskreg & 0x1cf) == (data & 0xcf))
 			return;
-		if (data & 0x40)
-			drive = 3;
-		else if (data & 0x04)
+
+		/* An email from John Kowalski informed me that if the last drive is
+		 * selected, and one of the other drive bits is selected, then the
+		 * second side is selected.  If multiple bits are selected in other
+		 * situations, then both drives are selected, and any read signals get
+		 * yucky.
+		 */
+		motor_mask = 0x08;
+		haltenable_mask = 0x80;
+
+		if (data & 0x04)
 			drive = 2;
 		else if (data & 0x02)
 			drive = 1;
-		else
+		else if (data & 0x01)
 			drive = 0;
-		motor_mask = 0x08;
-		haltenable_mask = 0x80;
+		else if (data & 0x40)
+			drive = 3;
+		else
+			motor_mask = 0;
+
+		head = ((data & 0x40) && (drive != 3)) ? 1 : 0;
 		break;
 
 	case HW_DRAGON:
@@ -1851,7 +2030,7 @@ static void set_dskreg(int data, int hardware)
 	dskreg = data;
 
 	if (data & motor_mask) {
-		fd = wd179x_select_drive(drive, 0, coco_fdc_callback, floppy_name[drive]);
+		fd = wd179x_select_drive(drive, head, coco_fdc_callback, floppy_name[drive]);
 		if (fd) {
 			/* For now, assume that real floppies are always 35 tracks */
 			tracks = (fd == REAL_FDD) ? 35 : (osd_fsize(fd) / (18*256));
@@ -1889,9 +2068,15 @@ static void dc_floppy_w(int offset, int data, int hardware)
 {
 	switch(offset & 0x0f) {
 	case 0:
+	case 1:
+	case 2:
+	case 3:
+	case 4:
+	case 5:
+	case 6:
+	case 7:
 		if (raise_nmi) {
-			m6809_set_nmi_line(1);
-			m6809_set_nmi_line(0);
+			m6809_set_nmi_line(ASSERT_LINE);
 			raise_nmi = 0;
 		}
 		set_dskreg(data, hardware);
@@ -1969,10 +2154,10 @@ void coco3_vblank(void)
 
 static void generic_init_machine(struct pia6821_interface *piaintf)
 {
-	pia0_irq_a = !ASSERT_LINE;
-	pia0_irq_b = !ASSERT_LINE;
-	pia1_firq_a = !ASSERT_LINE;
-	pia1_firq_b = !ASSERT_LINE;
+	pia0_irq_a = CLEAR_LINE;
+	pia0_irq_b = CLEAR_LINE;
+	pia1_firq_a = CLEAR_LINE;
+	pia1_firq_b = CLEAR_LINE;
 
 	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[0]);
 	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[1]);
@@ -1989,17 +2174,19 @@ static void generic_init_machine(struct pia6821_interface *piaintf)
 
 void dragon32_init_machine(void)
 {
+	d_sam_memory_size = 0;
 	generic_init_machine(dragon_pia_intf);
 
 	coco_rom = memory_region(REGION_CPU1) + 0x8000;
 
 	if (cart_inserted)
 		cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
-	timer_pulse(TIME_IN_USEC(63.5), 0, dragon_hblank);
+	timer_pulse(COCO_TIMER_HSYNC, 0, dragon_hblank);
 }
 
 void coco_init_machine(void)
 {
+	d_sam_memory_size = 0;
 	generic_init_machine(dragon_pia_intf);
 
 	coco_rom = memory_region(REGION_CPU1) + 0x10000;
@@ -2007,7 +2194,7 @@ void coco_init_machine(void)
 	if (cart_inserted)
 		cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 	dragon64_sam_himemmap(0, 0);
-	timer_pulse(TIME_IN_USEC(63.5), 0, dragon_hblank);
+	timer_pulse(COCO_TIMER_HSYNC, 0, dragon_hblank);
 }
 
 
@@ -2021,6 +2208,8 @@ void dragon64_init_machine(void)
 void coco3_init_machine(void)
 {
 	int i;
+
+	/* Tepolt verifies that the GIME registers are all cleared on initialization */
 
 	coco3_enable_64k = 0;
 	gime_irq = 0;
@@ -2042,10 +2231,63 @@ void coco3_init_machine(void)
 
 	/* The choise of 50hz is arbitrary */
 	timer_pulse(TIME_IN_HZ(50), 0, coco3_poll_keyboard);
-	timer_pulse(TIME_IN_USEC(63.5), 0, coco3_hblank);
+
+	timer_pulse(COCO_TIMER_HSYNC, 0, coco3_hblank);
 }
 
 void dragon_stop_machine(void)
 {
 }
+
+/***************************************************************************
+  Other hardware
+****************************************************************************
+
+  This section discusses hardware/accessories/enhancements to the CoCo (mainly
+  CoCo 3) that exist but are not emulated yet.
+
+  HI-RES JOYSTICK - A joystick that shared the joystick and serial ports that
+  provided higher accuracy.  Programs like CoCo Max used it.
+
+  IDE - There is an IDE ehancement for the CoCo 3.  Here are some docs on the
+  interface (info courtesy: LCB):
+
+		The IDE interface (which is jumpered to be at either at $ff5x or $ff7x
+		is mapped thusly:
+
+		$FFx0 - 1st 8 bits of 16 bit IDE DATA register
+		$FFx1 - Error (read) / Features (write) register
+		$FFx2 - Sector count register
+		$FFx3 - Sector # register
+		$FFx4 - Low byte of cylinder #
+		$FFx5 - Hi byte of cylinder #
+		$FFx6 - Device/head register
+		$FFx7 - Status (read) / Command (write) register
+		$FFx8 - Latch containing the 2nd 8 bits of the 16 bit IDE DATA reg.
+
+		All of these directly map to the IDE standard equivalents. No drivers
+		use	the IRQ's... they all use Polled I/O.
+
+  ORCH-90 STEREO SOUND PACK - This is simply 2 8 bit DACs, with the left and
+  right channels at $ff7a & $ff7b respectively (info courtesy: LCB).
+
+  6309 PROCESSOR UPGRADE - The Motorola 6809 is ripped out and a Hitachi 6309
+  is put in its place.  Note that there are many undocumented 6309 opcodes, and
+  software that uses the 6309 uses these undocumented features.
+
+  TWO MEGABYTE UPGRADE - CoCo's could be upgraded to have two megabytes of RAM.
+  This worked by doing the following things (info courtesy: LCB):
+
+		1,  All MMU registers are extended to 8 bits.  Note that even if they
+			store eight bits of data, on reading they are only 6 bits.
+		2.	The low two bits of $FF9B now extend the video start register.  It
+			is worth noting that these two bits are write-only, and if the
+			video is at the end of a 512k bank, it wraps around inside the
+			current 512k bank.
+
+  EIGHT MEGABYTE UPGRADE - This upgrade extends $FF9B so that video and the MMU
+  support 8 MB of memory.  I am not sure about the details.
+
+***************************************************************************/
+
 

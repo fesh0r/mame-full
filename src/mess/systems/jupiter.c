@@ -10,7 +10,9 @@ Jupiter Ace memory map
 		2800-2bff unused
 		2c00-2fff RAM (char set)
 		3000-3bff unused
-		3c00-ffff RAM (user area)
+		3c00-47ff RAM (standard)
+		4800-87ff RAM (16K expansion)
+		8800-ffff RAM (Expansion)
 
 Interrupts:
 
@@ -36,7 +38,9 @@ extern void jupiter_init_machine (void);
 extern void jupiter_stop_machine (void);
 
 extern int jupiter_load_ace(int id);
+extern void jupiter_exit_ace(int id);
 extern int jupiter_load_tap(int id);
+extern void jupiter_exit_tap(int id);
 
 extern int jupiter_vh_start (void);
 extern void jupiter_vh_stop (void);
@@ -126,7 +130,9 @@ static struct MemoryReadAddress jupiter_readmem[] =
 	{0x2800, 0x2bff, MRA_NOP},
 	{0x2c00, 0x2fff, MRA_RAM},	/* char RAM */
 	{0x3000, 0x3bff, MRA_NOP},
-	{0x3c00, 0xffff, MRA_RAM},
+	{0x3c00, 0x47ff, MRA_RAM},
+	{0x4800, 0x87ff, MRA_RAM},
+	{0x8800, 0xffff, MRA_RAM},
 	{-1}
 };
 
@@ -140,7 +146,9 @@ static struct MemoryWriteAddress jupiter_writemem[] =
 	{0x2800, 0x2bff, MWA_NOP},
 	{0x2c00, 0x2fff, jupiter_vh_charram_w, &jupiter_charram, &jupiter_charram_size},
 	{0x3000, 0x3bff, MWA_NOP},
-	{0x3c00, 0xffff, MWA_RAM},
+	{0x3c00, 0x47ff, MWA_RAM},
+	{0x4800, 0x87ff, MWA_RAM},
+	{0x8800, 0xffff, MWA_RAM},
 	{-1}
 };
 
@@ -159,20 +167,20 @@ struct GfxLayout jupiter_charlayout =
 
 static struct GfxDecodeInfo jupiter_gfxdecodeinfo[] =
 {
-	{0, 0x2c00, &jupiter_charlayout, 0, 2},
+	{REGION_CPU1, 0x2c00, &jupiter_charlayout, 0, 2},
 	{-1}							   /* end of array */
 };
 
-static unsigned char jupiter_palette[2 * 3] =
+static unsigned char jupiter_palette[] =
 {
-	0x00, 0x00, 0x00,
-	0xff, 0xff, 0xff,
+	0x00, 0x00, 0x00,	/* Black */
+	0xff, 0xff, 0xff	/* White */
 };
 
-static unsigned short jupiter_colortable[2 * 2] =
+static unsigned short jupiter_colortable[] =
 {
-	1, 0,
 	0, 1,
+	1, 0
 };
 
 static void jupiter_init_palette (unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
@@ -184,61 +192,66 @@ static void jupiter_init_palette (unsigned char *sys_palette, unsigned short *sy
 /* keyboard input */
 
 INPUT_PORTS_START (jupiter)
-	PORT_START							   /* 0xFEFE */
+	PORT_START	/* 0: 0xFEFE */
 	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "SHIFT", KEYCODE_RSHIFT, IP_JOY_NONE)
 	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "SYM SHFT", KEYCODE_LSHIFT, IP_JOY_NONE)
 	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "Z", KEYCODE_Z, IP_JOY_NONE)
 	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "X", KEYCODE_X, IP_JOY_NONE)
 	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "C", KEYCODE_C, IP_JOY_NONE)
 
-	PORT_START							   /* 0xFDFE */
+	PORT_START	/* 1: 0xFDFE */
 	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "A", KEYCODE_A, IP_JOY_NONE)
 	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "S", KEYCODE_S, IP_JOY_NONE)
 	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "D", KEYCODE_D, IP_JOY_NONE)
 	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "F", KEYCODE_F, IP_JOY_NONE)
 	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "G", KEYCODE_G, IP_JOY_NONE)
 
-	PORT_START							   /* 0xFBFE */
+	PORT_START	/* 2: 0xFBFE */
 	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "Q", KEYCODE_Q, IP_JOY_NONE)
 	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "W", KEYCODE_W, IP_JOY_NONE)
 	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "E", KEYCODE_E, IP_JOY_NONE)
 	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "R", KEYCODE_R, IP_JOY_NONE)
 	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "T", KEYCODE_T, IP_JOY_NONE)
 
-	PORT_START							   /* 0xF7FE */
+	PORT_START	/* 3: 0xF7FE */
 	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "1", KEYCODE_1, IP_JOY_NONE)
 	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "2", KEYCODE_2, IP_JOY_NONE)
 	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "3", KEYCODE_3, IP_JOY_NONE)
 	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "4", KEYCODE_4, IP_JOY_NONE)
 	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "5", KEYCODE_5, IP_JOY_NONE)
 
-	PORT_START							   /* 0xEFFE */
+	PORT_START	/* 4: 0xEFFE */
 	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "0", KEYCODE_0, IP_JOY_NONE)
 	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "9", KEYCODE_9, IP_JOY_NONE)
 	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "8", KEYCODE_8, IP_JOY_NONE)
 	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "7", KEYCODE_7, IP_JOY_NONE)
 	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "6", KEYCODE_6, IP_JOY_NONE)
 
-	PORT_START							   /* 0xDFFE */
+	PORT_START	/* 5: 0xDFFE */
 	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "P", KEYCODE_P, IP_JOY_NONE)
 	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "O", KEYCODE_O, IP_JOY_NONE)
 	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "I", KEYCODE_I, IP_JOY_NONE)
 	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "U", KEYCODE_U, IP_JOY_NONE)
 	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "Y", KEYCODE_Y, IP_JOY_NONE)
 
-	PORT_START							   /* 0xBFFE */
+	PORT_START	/* 6: 0xBFFE */
 	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "ENTER", KEYCODE_ENTER, IP_JOY_NONE)
 	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "L", KEYCODE_L, IP_JOY_NONE)
 	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "K", KEYCODE_K, IP_JOY_NONE)
 	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "J", KEYCODE_J, IP_JOY_NONE)
 	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "H", KEYCODE_H, IP_JOY_NONE)
 
-	PORT_START							   /* 0x7FFE */
+	PORT_START	/* 7: 0x7FFE */
 	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "SPACE", KEYCODE_SPACE, IP_JOY_NONE)
 	PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "M", KEYCODE_M, IP_JOY_NONE)
 	PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "N", KEYCODE_N, IP_JOY_NONE)
 	PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "B", KEYCODE_B, IP_JOY_NONE)
 	PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "V", KEYCODE_V, IP_JOY_NONE)
+	PORT_START	/* 8: machine config */
+	PORT_DIPNAME( 0x03, 2, "RAM Size")
+	PORT_DIPSETTING(0, "3Kb")
+	PORT_DIPSETTING(1, "19Kb")
+	PORT_DIPSETTING(2, "49Kb")
 INPUT_PORTS_END
 
 /* Sound output */
@@ -275,7 +288,8 @@ static	struct MachineDriver machine_driver_jupiter =
 	24 * 8,							   /* screen height */
 	{0, 32 * 8 - 1, 0, 24 * 8 - 1},	   /* visible_area */
 	jupiter_gfxdecodeinfo,			   /* graphics decode info */
-	2, 4,							   /* colors used for the characters */
+	sizeof (jupiter_palette) / 3,
+	sizeof (jupiter_colortable),	   /* colors used for the characters */
 	jupiter_init_palette,			   /* initialise palette */
 
 	VIDEO_TYPE_RASTER,
@@ -307,7 +321,7 @@ static const struct IODevice io_jupiter[] = {
         NULL,               /* private */
         NULL,               /* id */
 		jupiter_load_ace,	/* init */
-		NULL,				/* exit */
+		jupiter_exit_ace,	/* exit */
         NULL,               /* info */
         NULL,               /* open */
         NULL,               /* close */
@@ -326,7 +340,7 @@ static const struct IODevice io_jupiter[] = {
         NULL,               /* private */
 		NULL,				/* id */
 		jupiter_load_tap,	/* init */
-		NULL,				/* exit */
+		jupiter_exit_tap,	/* exit */
         NULL,               /* info */
         NULL,               /* open */
         NULL,               /* close */

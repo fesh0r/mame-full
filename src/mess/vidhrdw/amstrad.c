@@ -29,11 +29,11 @@ int amstrad_vh_start(void)
 
 	int i;
 
-	amstrad_bitmap = osd_create_bitmap(Machine->drv->screen_width, Machine->drv->screen_height);
+	amstrad_bitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
 
 	if (amstrad_bitmap==0)
 		return 1;
-	
+
 	for (i=0; i<256; i++)
 	{
 		int pen;
@@ -59,7 +59,7 @@ int amstrad_vh_start(void)
 	return 0;
 }
 
-void    amstrad_vh_stop(void) 
+void    amstrad_vh_stop(void)
 {
 	if (amstrad_bitmap!=NULL)
 		osd_free_bitmap(amstrad_bitmap);
@@ -80,10 +80,10 @@ byte2)
         r.min_y = amstrad_render_y;
         r.max_y = amstrad_render_y;
 
-        // depending on the mode! 
+        // depending on the mode!
 	switch (AmstradCPC_GA_RomConfiguration & 0x03)
 	{
-                // mode 0 - low resolution - 16 colours 
+                // mode 0 - low resolution - 16 colours
 		case 0:
 		{
 			//int i;
@@ -150,7 +150,7 @@ byte2)
 		}
 		break;
 
-                // mode 1 - medium resolution - 4 colours 
+                // mode 1 - medium resolution - 4 colours
 		case 1:
 		{
                         int i;
@@ -235,7 +235,7 @@ void amstrad_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
         {
             amstrad_update_scanline();
         }
-    copybitmap(bitmap,amstrad_bitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+    copybitmap(bitmap,amstrad_bitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 }
 
@@ -325,7 +325,7 @@ void    amstrad_calculate_top_and_bottom_margins(void)
 
                 lines_over = vsync_end - vtot;
 
-                
+
                 lc1 = vsync_end - v
 		/* no left border is visible */
 		left_margin = 0;
@@ -338,7 +338,7 @@ void    amstrad_calculate_top_and_bottom_margins(void)
 	}
                      #endif
 
-        
+
 
 void amstrad_render_graphics(struct osd_bitmap *bitmap)        //unsigned char *bm)
 {
@@ -357,19 +357,19 @@ void amstrad_render_graphics(struct osd_bitmap *bitmap)        //unsigned char *
         for (i=0; i<graphics_clocks; i++)
         {
 				// calc mem addr to fetch data from
-				//based on ma, and ra 
+				//based on ma, and ra
 				Addr = (((ma>>(4+8)) & 0x03)<<14) |
 					((r & 0x07)<<11) |
 					((ma & 0x03ff)<<1);
 
-                // get data from memory 
+                // get data from memory
                 byte0 = Amstrad_Memory[Addr];
                 byte1 = Amstrad_Memory[Addr+1];
 
                 // decode byte 0 and 1 depending on mode
                 amstrad_vh_decodebyte(bitmap, byte0,byte1);
 
-				// update ma 
+				// update ma
 				ma++;
 
 
@@ -427,7 +427,7 @@ void amstrad_render_scanline(void)
 
                         amstrad_render_x = x;
 
-                        amstrad_render_graphics(amstrad_bitmap);        
+                        amstrad_render_graphics(amstrad_bitmap);
 
                         x+=(graphics_clocks<<4);
                 }
@@ -486,7 +486,7 @@ void amstrad_update_scanline(void)
 
 	l = 8;
 
-	// initial ma 
+	// initial ma
 	ma = ((scr_addr_hi & 0x0ff)<<8) | (scr_addr_lo & 0x0ff);
 
 	for (v=0; v<vdisp; v++)
@@ -495,25 +495,25 @@ void amstrad_update_scanline(void)
 
 		for (r=0; r<(maxras+1); r++)
 		{
-			// reload ma from ma_store 
+			// reload ma from ma_store
 			ma = ma_store;
 
-			// setup render ptr for this line 
+			// setup render ptr for this line
 			bm = bitmap->line[l];
 
-			// render visible part of display 
+			// render visible part of display
 			for (h=0; h<hdisp; h++)
 			{
 				unsigned char byte0, byte1;
 				unsigned long Addr;
 
 				// calc mem addr to fetch data from
-				//based on ma, and ra 
+				//based on ma, and ra
 				Addr = (((ma>>(4+8)) & 0x03)<<14) |
 					((r & 0x07)<<11) |
 					((ma & 0x03ff)<<1);
 
-				// get data from memory 
+				// get data from memory
 				byte0 = Amstrad_Memory[Addr];
 				byte1 = Amstrad_Memory[Addr+1];
 
@@ -521,7 +521,7 @@ void amstrad_update_scanline(void)
 				amstrad_vh_decodebyte(byte0,byte1, bm);
 				bm+=16;
 
-				// update ma 
+				// update ma
 				ma++;
 			}
 

@@ -1,0 +1,18 @@
+# Commodore CBM610 image CRC List
+# Compiled by Stefano "JoJo" Priore and Peter Trauner
+# Note: This list is provided as a record of known dumps for this system.  
+#       These checksums have not been validated and cannot be assumed correct.  
+#       They are provided here as a database to help the emulation of this system.  
+# Send corrections/submissions to: battlepriest@hotmail.com
+
+[cbm610]
+# These programs have been proved to work
+
+B3B6173A = DEC VT-52 Term Emulator (SYS16384).40 | | | ESC-? to enable
+43B08D1F = Monitor 2.0 (SYS16384).40 | | | Type HELP to list commands
+AC622A2B = ProfiText.20
+
+# This program doesn't start (it should run with SYS4096, but I'm not sure)
+# The problem could also be emu-related
+
+1C0FD916 = SFD1001 Disk Copy.10

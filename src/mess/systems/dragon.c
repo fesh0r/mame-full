@@ -29,6 +29,7 @@ extern WRITE_HANDLER ( coco3_mmu_w );
 extern READ_HANDLER ( coco3_gime_r );
 extern WRITE_HANDLER ( coco3_gime_w );
 extern WRITE_HANDLER ( dragon_sam_speedctrl );
+extern WRITE_HANDLER ( coco3_sam_speedctrl );
 extern WRITE_HANDLER ( dragon_sam_page_mode );
 extern WRITE_HANDLER ( dragon_sam_memory_size );
 extern READ_HANDLER ( coco3_floppy_r);
@@ -133,6 +134,9 @@ static struct MemoryReadAddress coco3_readmem[] =
  *
  * Also, there might be other SAM registers that are ignored in the CoCo 3;
  * I am not sure which ones are...
+ *
+ * Tepolt implies that $FFD4-$FFD7 and $FFDA-$FFDD are ignored on the CoCo 3,
+ * which would make sense, but I'm not sure.
  */
 static struct MemoryWriteAddress coco3_writemem[] =
 {
@@ -155,7 +159,8 @@ static struct MemoryWriteAddress coco3_writemem[] =
 	{ 0xffc0, 0xffc5, MWA_NOP },
 	{ 0xffc6, 0xffd3, dragon_sam_display_offset },
 	{ 0xffd4, 0xffd5, dragon_sam_page_mode },
-	{ 0xffd6, 0xffd9, dragon_sam_speedctrl },
+	{ 0xffd6, 0xffd7, MWA_NOP },
+	{ 0xffd8, 0xffd9, coco3_sam_speedctrl },
 	{ 0xffda, 0xffdd, dragon_sam_memory_size },
 	{ 0xffde, 0xffdf, coco3_sam_himemmap },
 	{ -1 }	/* end of table */
@@ -254,10 +259,8 @@ INPUT_PORTS_START( dragon32 )
 	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y | IPF_PLAYER2, 100, 10, 0x0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_2_UP, JOYCODE_2_DOWN)
 
 	PORT_START /* 11 */
-	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1, "Right Button 1", KEYCODE_RALT, IP_JOY_DEFAULT)
-	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2, "Left Button 1", KEYCODE_LALT, IP_JOY_DEFAULT)
-	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1, "Right Button 2", KEYCODE_RCONTROL, IP_JOY_DEFAULT)
-	PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2, "Left Button 2", KEYCODE_LCONTROL, IP_JOY_DEFAULT)
+	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1, "Right Button", KEYCODE_RALT, IP_JOY_DEFAULT)
+	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2, "Left Button", KEYCODE_LALT, IP_JOY_DEFAULT)
 
 	PORT_START /* 12 */
 	PORT_DIPNAME( 0x03, 0x01, "Artifacting" )
@@ -362,10 +365,8 @@ INPUT_PORTS_START( coco )
 	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y | IPF_PLAYER2, 100, 10, 0x0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_2_UP, JOYCODE_2_DOWN)
 
 	PORT_START /* 11 */
-	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1, "Right Button 1", KEYCODE_RALT, IP_JOY_DEFAULT)
-	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2, "Left Button 1", KEYCODE_LALT, IP_JOY_DEFAULT)
-	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1, "Right Button 2", KEYCODE_RCONTROL, IP_JOY_DEFAULT)
-	PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2, "Left Button 2", KEYCODE_LCONTROL, IP_JOY_DEFAULT)
+	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1, "Right Button", KEYCODE_RALT, IP_JOY_DEFAULT)
+	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2, "Left Button", KEYCODE_LALT, IP_JOY_DEFAULT)
 
 	PORT_START /* 12 */
 	PORT_DIPNAME( 0x03, 0x01, "Artifacting" )
@@ -475,8 +476,8 @@ INPUT_PORTS_START( coco3 )
 
 	PORT_START /* 11 */
 	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1, "Right Button 1", KEYCODE_RALT, IP_JOY_DEFAULT)
-	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2, "Left Button 1", KEYCODE_LALT, IP_JOY_DEFAULT)
 	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1, "Right Button 2", KEYCODE_RCONTROL, IP_JOY_DEFAULT)
+	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2, "Left Button 1", KEYCODE_LALT, IP_JOY_DEFAULT)
 	PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2, "Left Button 2", KEYCODE_LCONTROL, IP_JOY_DEFAULT)
 
 	PORT_START /* 12 */
@@ -498,6 +499,11 @@ static struct DACinterface d_dac_interface =
 	{ 100 }
 };
 
+static struct Wave_interface d_wave_interface = {
+	1,			/* number of waves */
+	{ 25 }		/* mixing levels */
+};
+
 static struct MachineDriver machine_driver_dragon32 =
 {
 	/* basic machine hardware */
@@ -517,10 +523,10 @@ static struct MachineDriver machine_driver_dragon32 =
 	dragon_stop_machine,
 
 	/* video hardware */
-	32*8,										/* screen width */
-	16*12,									/* screen height (pixels doubled) */
-	{ 0, 32*8-1, 0, 16*12-1},					/* visible_area */
-	0,							/* graphics decode info */
+	320,					/* screen width */
+	240,					/* screen height (pixels doubled) */
+	{ 0, 319, 0, 239 },		/* visible_area */
+	0,						/* graphics decode info */
 	M6847_TOTAL_COLORS,
 	0,
 	m6847_vh_init_palette,						/* initialise palette */
@@ -537,7 +543,11 @@ static struct MachineDriver machine_driver_dragon32 =
 		{
 			SOUND_DAC,
 			&d_dac_interface
-		}
+		},
+        {
+			SOUND_WAVE,
+            &d_wave_interface
+        }
 	}
 };
 
@@ -560,10 +570,10 @@ static struct MachineDriver machine_driver_coco =
 	dragon_stop_machine,
 
 	/* video hardware */
-	32*8,										/* screen width */
-	16*12,									/* screen height (pixels doubled) */
-	{ 0, 32*8-1, 0, 16*12-1},					/* visible_area */
-	0,							/* graphics decode info */
+	320,					/* screen width */
+	240,					/* screen height (pixels doubled) */
+	{ 0, 319, 0, 239 },		/* visible_area */
+	0,						/* graphics decode info */
 	M6847_TOTAL_COLORS,
 	0,
 	m6847_vh_init_palette,						/* initialise palette */
@@ -580,7 +590,11 @@ static struct MachineDriver machine_driver_coco =
 		{
 			SOUND_DAC,
 			&d_dac_interface
-		}
+		},
+        {
+			SOUND_WAVE,
+            &d_wave_interface
+        }
 	}
 };
 
@@ -603,10 +617,10 @@ static struct MachineDriver machine_driver_coco3 =
 	dragon_stop_machine,
 
 	/* video hardware */
-	640, /*32*8,*/										/* screen width */
-	225, /*16*12,*/									/* screen height (pixels doubled) */
-	{ 0, 639, /*32*8-1*/ 0, 224 /*16*12-1*/},					/* visible_area */
-	0,							/* graphics decode info */
+	640,					/* screen width */
+	240,					/* screen height (pixels doubled) */
+	{ 0, 639, 0, 239 },		/* visible_area */
+	0,						/* graphics decode info */
 	19,	/* 16 colors + border color + 2 artifact colors */
 	0,
 	NULL,								/* initialise palette */
@@ -623,7 +637,11 @@ static struct MachineDriver machine_driver_coco3 =
 		{
 			SOUND_DAC,
 			&d_dac_interface
-		}
+		},
+        {
+			SOUND_WAVE,
+            &d_wave_interface
+        }
 	}
 };
 
@@ -631,6 +649,8 @@ static struct MachineDriver machine_driver_coco3 =
 
   Game driver(s)
 
+  Note - These should probably be split up into different ROM files to more
+  correctly match the chip layout in the repsective machines.
 ***************************************************************************/
 
 ROM_START(dragon32)

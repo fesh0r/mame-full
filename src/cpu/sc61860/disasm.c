@@ -188,7 +188,7 @@ unsigned sc61860_dasm(char *dst, unsigned oldpc)
 				break;
 			case Ptc:
 				t=PEEK_OP(pc++);
-				adr=(PEEK_OP(pc++)<<8)|PEEK_OP(pc++);
+				adr=(PEEK_OP(pc)<<8)|PEEK_OP(pc+1);pc+=2;
 				sprintf(dst,"%-6s%.2x,%.4x",table[oper].mnemonic,t, adr);
 				break;
 			case Etc:

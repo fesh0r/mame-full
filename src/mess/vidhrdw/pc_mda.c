@@ -372,7 +372,7 @@ int pc_hgc_config_r(void)
 
 INLINE int DOCLIP(struct rectangle *r1)
 {
-    const struct rectangle *r2 = &Machine->drv->visible_area;
+    const struct rectangle *r2 = &Machine->visible_area;
     if (r1->min_x > r2->max_x) return 0;
     if (r1->max_x < r2->min_x) return 0;
     if (r1->min_y > r2->max_y) return 0;
@@ -676,7 +676,7 @@ void pc_mda_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	if( full_refresh )
 	{
 		memset(dirtybuffer, 1, videoram_size);
-		fillbitmap(bitmap, Machine->pens[0], &Machine->drv->visible_area);
+		fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
 		video_active = 0;
     }
 
@@ -689,7 +689,7 @@ void pc_mda_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
         default:
 			if (video_active && --video_active == 0)
-				fillbitmap(bitmap, Machine->pens[0], &Machine->drv->visible_area);
+				fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
     }
 }
 

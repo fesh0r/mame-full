@@ -1,25 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include <direct.h>
 #include <stdlib.h>
 #include <time.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
-
-#ifdef WIN32
-#define osd_mkdir(dir)	mkdir(dir)
-#define PATH_SEPARATOR	"\\"
-#else
-#include <unistd.h>
-#define osd_mkdir(dir)	mkdir(dir, 0)
-#define PATH_SEPARATOR	"/"
-#endif
-
-#include "osdepend.h"
 #include "imgtool.h"
-
+#include "osdtools.h"
 
 struct command {
 	const char *name;
@@ -127,11 +112,12 @@ static void reporterror(int err, struct command *c, const char *format, const ch
 static int cmd_dir(struct command *c, int argc, char *argv[])
 {
 	int err, total_count, total_size, freespace_err;
-	size_t freespace;
+	int freespace;
 	IMAGE *img;
 	IMAGEENUM *imgenum;
 	imgtool_dirent ent;
 	char buf[128];
+	char attrbuf[50];
 
 	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_READ, &img);
 	if (err)
@@ -143,17 +129,25 @@ static int cmd_dir(struct command *c, int argc, char *argv[])
 		goto error;
 	}
 
-	ent.eof = 0;
+	memset(&ent, 0, sizeof(ent));
 	ent.fname = buf;
 	ent.fname_len = sizeof(buf);
+	ent.attr = attrbuf;
+	ent.attr_len = sizeof(attrbuf);
+
 	total_count = 0;
 	total_size = 0;
 
 	fprintf(stdout, "Contents of %s:\n", argv[1]);
-	fprintf(stdout, "------------------------  ------\n");
+	if (img->module->info) {
+		char string[500];
+		img->module->info(img, string, sizeof(string));
+		fprintf(stdout,"%s\n",string);
+	}
+	fprintf(stdout, "------------------------  ------ ---------------\n");
 
 	while (((err = img_nextenum(imgenum, &ent)) == 0) && !ent.eof) {
-		fprintf(stdout, "%-20s\t%8ld\n", ent.fname, ent.filesize);
+		fprintf(stdout, "%-20s\t%8d %15s\n", ent.fname, ent.filesize, ent.attr);
 		total_count++;
 		total_size += ent.filesize;
 	}
@@ -166,10 +160,10 @@ static int cmd_dir(struct command *c, int argc, char *argv[])
 	if (err)
 		goto error;
 
-	fprintf(stdout, "------------------------  ------\n");
-    fprintf(stdout, "%8i File(s)        %8i bytes\n", total_count, total_size);
+	fprintf(stdout, "------------------------  ------ ---------------\n");
+	fprintf(stdout, "%8i File(s)        %8i bytes\n", total_count, total_size);
 	if (!freespace_err)
-		fprintf(stdout, "                        %8ld bytes free\n", freespace);
+		fprintf(stdout, "                        %8d bytes free\n", freespace);
 	return 0;
 
 error:
@@ -202,13 +196,72 @@ static int cmd_put(struct command *c, int argc, char *argv[])
 {
 	int err;
 	IMAGE *img;
+	char *destfile;
+	file_options opts;
+	int *optionvals[4];
+	static const char *options[] = { "ftype", "ascii", "addr", "bank" };
+
+	memset(&opts, 0, sizeof(opts));
+	optionvals[0] = &opts.ftype;
+	optionvals[1] = &opts.fascii;
+	optionvals[2] = &opts.faddr;
+	optionvals[3] = &opts.fbank;
+
+	destfile = (argc >= 3) && (argv[2][0] != '-') ? argv[2] : NULL;
+
+	if (parse_options(argc - (destfile ? 3 : 2), argv + (destfile ? 3 : 2), options, optionvals))
+		return -1;
 
 	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_RW, &img);
 	if (err)
 		goto error;
 
-	err = img_putfile(img, argv[2], (argc == 4) ? argv[3] : NULL);
+
+	err = img_putfile(img, argv[2], destfile, &opts);
 	img_close(img);
+	if (err)
+		goto error;
+
+	return 0;
+
+error:
+	reporterror(err, c, argv[0], argv[1], argv[2], argv[3], NULL);
+	return -1;
+}
+
+static int cmd_getall(struct command *c, int argc, char *argv[])
+{
+	int err;
+	IMAGE *img;
+	IMAGEENUM *imgenum;
+	imgtool_dirent ent;
+	char buf[128];
+
+	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_READ, &img);
+	if (err)
+		goto error;
+
+	err = img_beginenum(img, &imgenum);
+	if (err) {
+		img_close(img);
+		goto error;
+	}
+
+	memset(&ent, 0, sizeof(ent));
+	ent.fname = buf;
+	ent.fname_len = sizeof(buf);
+
+	while (((err = img_nextenum(imgenum, &ent)) == 0) && !ent.eof) {
+		fprintf(stdout, "Retrieving %s (%i bytes)\n", ent.fname, ent.filesize);
+
+		err = img_getfile(img, ent.fname, NULL);
+		if (err)
+			break;
+	}
+
+	img_closeenum(imgenum);
+	img_close(img);
+
 	if (err)
 		goto error;
 
@@ -329,17 +382,33 @@ static int cmd_create(struct command *c, int argc, char *argv[])
 {
 	int err;
 	geometry_options opts;
-	int *optionvals[2];
-	static const char *options[] = { "cylinders", "heads" };
+	int *optionvals[6];
+	static const char *options[] = { 
+		"cylinders", "heads" ,
+		"htype", "exrom", "game",
+		"entries"
+	};
 
 	memset(&opts, 0, sizeof(opts));
 	optionvals[0] = &opts.cylinders;
 	optionvals[1] = &opts.heads;
+	optionvals[2] = &opts.hardware_type;
+	optionvals[3] = &opts.exrom_line;
+	optionvals[4] = &opts.game_line;
+	optionvals[5] = &opts.entries;
 
-	if (parse_options(argc - 2, argv + 2, options, optionvals))
-		return -1;
+	if ((argv[2]==0)||(memcmp(argv[2],"--",2)==0)) {
+		opts.label=NULL;
+		if (parse_options(argc - 2, argv + 2, options, optionvals) )
+			return -1;
+		err = img_create_byname(argv[0], argv[1], &opts);
+	} else {
+		opts.label=argv[2];	
+		if (parse_options(argc - 3, argv + 3, options, optionvals) )
+			return -1;
+		err = img_create_byname(argv[0], argv[1], &opts);
+	}
 
-	err = img_create_byname(argv[0], argv[1], &opts);
 	if (err)
 		goto error;
 
@@ -347,6 +416,28 @@ static int cmd_create(struct command *c, int argc, char *argv[])
 
 error:
 	reporterror(err, c, argv[0], argv[1], NULL, NULL, &opts);
+	return -1;
+}
+
+static int cmd_extract(struct command *c, int argc, char *argv[])
+{
+	int err;
+	IMAGE *img;
+
+	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_READ, &img);
+	if (err)
+		goto error;
+
+	err = img_extract(img, argv[2]);
+	img_close(img);
+
+	if (err)
+		goto error;
+
+	return 0;
+
+error:
+	reporterror(err, c, argv[0], argv[1], NULL, NULL, NULL);
 	return -1;
 }
 
@@ -369,10 +460,15 @@ static int cmd_listformats(struct command *c, int argc, char *argv[])
 /* ----------------------------------------------------------------------- */
 
 static struct command cmds[] = {
-	{ "create", "<format> <imagename> [--heads=HEADS] [--cylinders=CYLINDERS]", cmd_create, 2, 4, 0},
+	{ "create", "<format> <imagename> [<internalname>] "
+	  "[--heads=HEADS] [--cylinders=CYLINDERS] "
+	  "[--htype=HARDWARETYPE] [--exrom=LEVEL] [--game=LEVEL]", 
+	  cmd_create, 2, 8, 0},
+	{ "extract", "<format> <imagename> <filename>", cmd_extract, 3, 3, 0 },
 	{ "dir", "<format> <imagename>...", cmd_dir, 2, 2, 1 },
 	{ "get", "<format> <imagename> <filename> [newname]", cmd_get, 3, 4, 0 },
-	{ "put", "<format> <imagename> <filename> [newname]", cmd_put, 3, 4, 0 },
+	{ "put", "<format> <imagename> <filename> [newname] [--ftype=FILETYPE] [--ascii=0|1] [--addr=ADDR] [--bank=BANK]", cmd_put, 3, 8, 0 },
+	{ "getall", "<format> <imagename>", cmd_getall, 2, 2, 0 },
 	{ "del", "<format> <imagename> <filename>...", cmd_del, 3, 3, 1 },
 	{ "info", "<format> <imagename>...", cmd_info, 2, 2, 1 },
 	{ "good", "<format> <imagename>...", cmd_good, 2, 2, 1 },
@@ -426,6 +522,7 @@ int CLIB_DECL main(int argc, char *argv[])
 	fprintf(stderr, "\nExample usage:\n");
 	fprintf(stderr, "\t%s dir rsdos myimageinazip.zip\n", argv[0]);
 	fprintf(stderr, "\t%s get rsdos myimage.dsk myfile.bin mynewfile.txt\n", argv[0]);
+	fprintf(stderr, "\t%s getall rsdos myimage.dsk\n", argv[0]);
 	fprintf(stderr, "\t%s info myimage.dsk\n", argv[0]);
 	fprintf(stderr, "\t%s good nes mynescart.zip\n", argv[0]);
 	return 0;

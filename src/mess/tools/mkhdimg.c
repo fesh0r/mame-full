@@ -16,6 +16,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "osdtools.h"
+
 #define SECTORS     17
 #define MAGIC       0xaa55
 #define ECC 		11
@@ -25,7 +27,8 @@
 #define SECLEN		512
 static void acerr(void); /* command line argument error */
 static void serr(void); /* size error */
-int main(int ac, char **av) /* ac == Argument Count? av == Argument Variable? */
+
+int CLIB_DECL main(int ac, char **av) /* ac == Argument Count? av == Argument Variable? */
 {
 FILE *img;
 unsigned char buffer[SECLEN];

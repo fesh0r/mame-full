@@ -25,7 +25,7 @@ int pce_vh_start(void)
     if(!vdc.vram) return 1;
 
     /* create display bitmap */
-    vdc.bmp = osd_create_bitmap(360, 256);
+    vdc.bmp = bitmap_alloc(360, 256);
     if(!vdc.bmp) return 1;
 
     return 0;

@@ -123,7 +123,9 @@ const struct GameDriver *drivers[] =
 	  DRIVER( apple2ee )	/* Apple //e Enhanced							  */
 	  DRIVER( apple2ep )	/* Apple //e Platinum							  */
       DRIVER( macplus )	    /* Apple MacIntosh Plus      					  */
-
+      DRIVER( mac512ke )
+      DRIVER( lisa2 )
+  TESTDRIVER( mac2 )
 				/*
 				CPU Model             Month               Year
 				-------------         -----               ----
@@ -171,12 +173,19 @@ const struct GameDriver *drivers[] =
   TESTDRIVER( sx64 )		/* Commodore SX 64 - PAL						  */
       DRIVER( max )         /* Ulitimax                                       */
       DRIVER( vic64s )      /*                                                */
+
       DRIVER( c65 ) 		/* Commodore 65 - NTSC							  */
-      DRIVER( c65ger )		/* Commodore 65 - PAL (german)					  */
+      DRIVER( c65e )
+      DRIVER( c65d )
+      DRIVER( c65c )
+      DRIVER( c65ger )
+      DRIVER( c65a )
+
 	  DRIVER( c128 )		/* Commodore 128 - NTSC 						  */
 	  DRIVER( c128ger ) 	/* Commodore 128 - PAL (german) 				  */
 	  DRIVER( c128fra ) 	/* Commodore 128 - PAL (french) 				  */
 	  DRIVER( c128ita ) 	/* Commodore 128 - PAL (italian) 				  */
+
       DRIVER( vic20 )       /* Commodore Vic-20 NTSC                          */
       DRIVER( vic20swe )    /*                                                */
       DRIVER( vc20 )        /* Commodore Vic-20 PAL                           */
@@ -275,8 +284,8 @@ const struct GameDriver *drivers[] =
 
   TESTDRIVER( xtcga )       /*                                                */
   TESTDRIVER( xtega )       /*                                                */
-  TESTDRIVER( xtvga )       /*                                                */
-  TESTDRIVER( atcga )       /*                                                */
+      DRIVER( xtvga )       /*                                                */
+      DRIVER( atcga )       /*                                                */
   TESTDRIVER( atvga )       /*                                                */
 
 
@@ -330,6 +339,10 @@ const struct GameDriver *drivers[] =
       /* SAM COUPE */
 	  DRIVER( coupe ) 	    /*                      						  */
 
+      /* Sharp */
+      DRIVER( pc1401 ) 	    /* Pocket Computer         						  */
+
+
 
   TESTDRIVER( mekd2 ) 	    /* Motorola 									  */
 
@@ -344,8 +357,8 @@ const struct GameDriver *drivers[] =
       DRIVER( sfzch )       /* CPS Changer (Street Fighter ZERO)              */
 
 
-      DRIVER( bbc  )        /* BBC Micro                                      */
-
+      DRIVER( bbca  )       /* BBC Micro                                      */
+      DRIVER( bbcb  )       /* BBC Micro                                      */
 
 
     //DRIVER( arcadia )     /* Arcadia 2001                                   */

@@ -522,7 +522,7 @@ void ted7360_init (int pal)
 	chargenaddr = bitmapaddr = videoaddr = 0;
 }
 
-void ted7360_set_dma (mem_read_handler dma_read, 
+void ted7360_set_dma (mem_read_handler dma_read,
 					  mem_read_handler dma_read_rom)
 {
 	vic_dma_read = dma_read;
@@ -1315,8 +1315,8 @@ static void ted7360_drawlines (int first, int last)
 
 static void ted7360_draw_text (struct osd_bitmap *bitmap, char *text, int *y)
 {
-	int x, x0, y1t, width = (Machine->gamedrv->drv->visible_area.max_x -
-							 Machine->gamedrv->drv->visible_area.min_x) / Machine->uifont->width;
+	int x, x0, y1t, width = (Machine->visible_area.max_x -
+							 Machine->visible_area.min_x) / Machine->uifont->width;
 
 	if (text[0] != 0)
 	{
@@ -1326,8 +1326,8 @@ static void ted7360_draw_text (struct osd_bitmap *bitmap, char *text, int *y)
 		x = 0;
 		while (text[x])
 		{
-			for (x0 = Machine->gamedrv->drv->visible_area.min_x;
-				 text[x] && (x0 < Machine->gamedrv->drv->visible_area.max_x -
+			for (x0 = Machine->visible_area.min_x;
+				 text[x] && (x0 < Machine->visible_area.max_x -
 							 Machine->uifont->width);
 				 x++, x0 += Machine->uifont->width)
 			{
@@ -1352,7 +1352,7 @@ int ted7360_raster_interrupt (void)
 		ted7360_drawlines (lastline, TED7360_LINES);
 		lastline = 0;
 
-		y = Machine->gamedrv->drv->visible_area.max_y + 1 - Machine->uifont->height;
+		y = Machine->visible_area.max_y + 1 - Machine->uifont->height;
 
 		vc20_tape_status (text, sizeof (text));
 		ted7360_draw_text (ted7360_bitmap, text, &y);

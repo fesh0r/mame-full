@@ -35,7 +35,7 @@ if (full_refresh) memset (dirtybuffer, 1, videoram_size);
 for (sx = 0; sx < 48; sx++) {
   if (dirtybuffer[sx + 0x03ca]) {
 	drawgfx (bitmap, Machine->gfx[0], videoram[0x03ca + sx],
-				  1, 0, 0, sx * 8, 0, &Machine->drv->visible_area,
+				  1, 0, 0, sx * 8, 0, &Machine->visible_area,
 				  TRANSPARENCY_NONE, 0);
     dirtybuffer[0x03ca + sx] = 0;
   }
@@ -45,7 +45,7 @@ for (sy = 0; sy < 15; sy++) {
   for (sx = 0; sx < 48; sx++) {
     if (dirtybuffer[0x000a + (sy * 64) + sx]) {
 	  drawgfx (bitmap, Machine->gfx[0], videoram[0x000a + (sy * 64) + sx],
-				  1, 0, 0, sx * 8, (sy + 1) * 10, &Machine->drv->visible_area,
+				  1, 0, 0, sx * 8, (sy + 1) * 10, &Machine->visible_area,
 				  TRANSPARENCY_NONE, 0);
 	  dirtybuffer[0x000a + (sy * 64) + sx] = 0;
 	}
@@ -65,7 +65,7 @@ if (full_refresh) memset (dirtybuffer, 1, videoram_size);
 for (sx = 0; sx < 48; sx++) {
   if (dirtybuffer[sx + 0x03ca]) {
 	drawgfx (bitmap, Machine->gfx[0], videoram[0x03ca + sx],
-				  1, 0, 0, sx * 8, 0, &Machine->drv->visible_area,
+				  1, 0, 0, sx * 8, 0, &Machine->visible_area,
 				  TRANSPARENCY_NONE, 0);
     dirtybuffer[0x03ca + sx] = 0;
   }
@@ -75,7 +75,7 @@ for (sy = 0; sy < 15; sy++) {
   for (sx = 0; sx < 48; sx++) {
     if (dirtybuffer[0x000a + (sy * 64) + sx]) {
 	  drawgfx (bitmap, Machine->gfx[0], videoram[0x000a + (sy * 64) + sx],
-				  1, 0, 0, sx * 8, (sy + 1) * 14, &Machine->drv->visible_area,
+				  1, 0, 0, sx * 8, (sy + 1) * 14, &Machine->visible_area,
 				  TRANSPARENCY_NONE, 0);
 	  dirtybuffer[0x000a + (sy * 64) + sx] = 0;
 	}

@@ -15,6 +15,7 @@ int tapecontrol(struct osd_bitmap *bitmap, int selected)
     int sel;
     int total;
     int arrowize;
+	int status;
 
     total = 0;
     sel = selected - 1;
@@ -34,7 +35,7 @@ int tapecontrol(struct osd_bitmap *bitmap, int selected)
 		sprintf(timepos, "%3d%%", t0*100/t1);
 	else
 		sprintf(timepos, "%3d%%", 0);
-	menu_item[total] = device_status(IO_CASSETTE,id,-1) ? "playing" : "stopped";
+	menu_item[total] = (device_status(IO_CASSETTE,id,-1) & 1) ? "playing" : "stopped";
 	menu_subitem[total] = timepos;
     flag[total] = 0;
 	total++;
@@ -124,22 +125,19 @@ int tapecontrol(struct osd_bitmap *bitmap, int selected)
             sel = -1;
         else
         {
+			status = device_status(IO_CASSETTE,id,-1);
 			switch (sel)
 			{
 			case 0:
                 id = ++id % device_count(IO_CASSETTE);
 				break;
 			case 2:
-				if (device_status(IO_CASSETTE,id,-1))
-					device_status(IO_CASSETTE,id,0);
-				else
-				{
+				if ((status & 1) == 0)
 					device_seek(IO_CASSETTE,id,0,SEEK_SET);
-					device_status(IO_CASSETTE,id,0);
-				}
+				device_status(IO_CASSETTE,id,status & ~1);
 				break;
 			case 3:
-				device_status(IO_CASSETTE,id,1);
+				device_status(IO_CASSETTE,id,status | 1);
                 break;
 			case 4:
 				device_seek(IO_CASSETTE,id,-11025,SEEK_CUR);
