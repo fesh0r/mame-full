@@ -2,6 +2,7 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
+- Frankin ACE 100 [Cowering]
 - Luxor Datorer ABC 80 family [Curt Coder]
 - Sinclair QL family [Curt Coder]
 
