@@ -2070,6 +2070,14 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 		SetTimer(hMain, SCREENSHOT_TIMER, GetCycleScreenshot()*1000, NULL); //scale to Seconds
 	}
 
+#ifdef MAME_DEBUG
+	if (mame_validitychecks())
+	{
+		MessageBox(hMain, MAMENAME " has failed its validity checks.  The GUI will "
+			"still work, but wll emulations will fail to execute", MAMENAME, MB_OK);
+	}
+#endif // MAME_DEBUG
+
 	return TRUE;
 }
 

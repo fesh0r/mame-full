@@ -816,7 +816,7 @@ int load_input_port_settings(void)
 	if (options.controller != NULL)
 	{
 		loaded = config_load_controller(options.controller, inputport_list);
-		if (!loaded)
+		if (!loaded && strcmp(options.controller, "Standard"))
 			osd_die("Could not load controller file %s.cfg\n", options.controller);
 	}
 
