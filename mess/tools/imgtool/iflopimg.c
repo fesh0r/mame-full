@@ -15,6 +15,7 @@ struct ImgtoolFloppyExtra
 {
 	const struct FloppyFormat *format;
 	imgtoolerr_t (*create)(imgtool_image *image, option_resolution *opts);
+	imgtoolerr_t (*open)(imgtool_image *img);
 };
 
 
@@ -117,18 +118,25 @@ static imgtoolerr_t imgtool_floppy_open_internal(imgtool_image *image, imgtool_s
 	floperr_t ferr;
 	imgtoolerr_t err;
 	struct imgtool_floppy_image *fimg;
-	const struct FloppyFormat *format;
+	const struct ImgtoolFloppyExtra *extra;
 
-	format = get_extra(img_module(image))->format;
+	extra = get_extra(img_module(image));
 	fimg = (struct imgtool_floppy_image *) img_extrabytes(image);
 
 	/* open up the floppy */
 	ferr = floppy_open(f, noclose ? &imgtool_noclose_ioprocs : &imgtool_ioprocs,
-		NULL, format, FLOPPY_FLAGS_READWRITE, &fimg->floppy);
+		NULL, extra->format, FLOPPY_FLAGS_READWRITE, &fimg->floppy);
 	if (ferr)
 	{
 		err = imgtool_floppy_error(ferr);
 		return err;
+	}
+
+	if (extra->open)
+	{
+		err = extra->open(image);
+		if (err)
+			return err;
 	}
 
 	return IMGTOOLERR_SUCCESS;
@@ -231,6 +239,7 @@ imgtoolerr_t imgtool_floppy_createmodule(imgtool_library *library, const char *f
 			populate(library, &floppy_callbacks);
 
 			extra->create					= floppy_callbacks.create;
+			extra->open						= floppy_callbacks.open;
 			module->eoln					= floppy_callbacks.eoln;
 			module->path_separator			= floppy_callbacks.path_separator;
 			module->prefer_ucase			= floppy_callbacks.prefer_ucase;
@@ -313,4 +322,15 @@ imgtoolerr_t imgtool_floppy_write_sector_from_stream(imgtool_image *img, int hea
 {
 	return imgtool_floppy_transfer_sector_tofrom_stream(img, head, track, sector, offset, length, f, 0);
 }
+
+
+
+void *imgtool_floppy_extrabytes(imgtool_image *img)
+{
+	struct imgtool_floppy_image *fimg;
+	fimg = (struct imgtool_floppy_image *) img_extrabytes(img);
+	return fimg + 1;
+}
+
+
 

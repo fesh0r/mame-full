@@ -299,7 +299,7 @@ static int os9_interpret_dirent(void *entry, char **filename, UINT32 *lsn, int *
 
 
 
-static imgtoolerr_t os9_lookup_path(imgtool_image *img, const struct os9_diskinfo *disk_info,
+static imgtoolerr_t os9_lookup_path(imgtool_image *img,
 	const char *path, UINT32 *lsn, struct os9_fileinfo *file_info)
 {
 	imgtoolerr_t err;
@@ -307,7 +307,9 @@ static imgtoolerr_t os9_lookup_path(imgtool_image *img, const struct os9_diskinf
 	UINT32 index, entry_index, entry_lsn, current_lsn;
 	UINT8 entry[32];
 	char *filename;
+	const struct os9_diskinfo *disk_info;
 
+	disk_info = (const struct os9_diskinfo *) imgtool_floppy_extrabytes(img);
 	current_lsn = disk_info->root_dir_lsn;
 
 	while(*path)
@@ -351,6 +353,15 @@ static imgtoolerr_t os9_lookup_path(imgtool_image *img, const struct os9_diskinf
 			return err;
 	}
 	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t os9_diskimage_open(imgtool_image *image)
+{
+	struct os9_diskinfo *info;
+	info = (struct os9_diskinfo *) imgtool_floppy_extrabytes(image);
+	return os9_decode_disk_header(image, info);
 }
 
 
@@ -469,6 +480,10 @@ static imgtoolerr_t os9_diskimage_create(imgtool_image *img, option_resolution *
 	if (err)
 		goto done;
 
+	err = os9_diskimage_open(img);
+	if (err)
+		goto done;
+
 done:
 	if (header)
 		free(header);
@@ -490,7 +505,7 @@ static imgtoolerr_t os9_diskimage_beginenum(imgtool_imageenum *enumeration, cons
 	if (err)
 		goto done;
 
-	err = os9_lookup_path(image, &os9enum->disk_info, path, NULL, &os9enum->dir_info);
+	err = os9_lookup_path(image, path, NULL, &os9enum->dir_info);
 	if (err)
 		goto done;
 
@@ -596,7 +611,7 @@ static imgtoolerr_t os9_diskimage_readfile(imgtool_image *img, const char *filen
 	if (err)
 		return err;
 
-	err = os9_lookup_path(img, &disk_info, filename, NULL, &file_info);
+	err = os9_lookup_path(img, filename, NULL, &file_info);
 	if (err)
 		return err;
 	if (file_info.directory)
@@ -624,10 +639,12 @@ static imgtoolerr_t os9_diskimage_readfile(imgtool_image *img, const char *filen
 static imgtoolerr_t coco_os9_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
 {
 	module->initial_path_separator	= 1;
-	module->imageenum_extra_bytes	= sizeof(struct os9_direnum);
+	module->image_extra_bytes		+= sizeof(struct os9_diskinfo);
+	module->imageenum_extra_bytes	+= sizeof(struct os9_direnum);
 	module->eoln					= EOLN_CR;
 	module->path_separator			= '/';
 	module->create					= os9_diskimage_create;
+	module->open					= os9_diskimage_open;
 	module->begin_enum				= os9_diskimage_beginenum;
 	module->next_enum				= os9_diskimage_nextenum;
 	module->read_file				= os9_diskimage_readfile;

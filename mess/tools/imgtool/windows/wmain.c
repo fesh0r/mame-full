@@ -6,6 +6,7 @@
 
 #include <windows.h>
 #include <commctrl.h>
+#include <tchar.h>
 
 #include "wimgtool.h"
 #include "wimgres.h"
@@ -23,6 +24,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance,
 	int rc = -1;
 	imgtoolerr_t err;
 	HACCEL accel = NULL;
+	TCHAR *s;
 	
 	// Initialize Windows classes
 	InitCommonControls();
@@ -41,7 +43,16 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance,
 		goto done;
 
 	if (command_line && command_line[0])
+	{
+		s = (TCHAR *) alloca((_tcslen(command_line) + 1) * sizeof(TCHAR));
+		_tcscpy(s, command_line);
+		if ((s[0] == '\"') && (s[_tcslen(s)-1] == '\"'))
+		{
+			s[_tcslen(s)-1] = '\0';
+			command_line = s + 1;
+		}
 		wimgtool_open_image(window, NULL, command_line, OSD_FOPEN_RW);
+	}
 
 #ifdef MAME_DEBUG
 	if (imgtool_validitychecks())

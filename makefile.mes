@@ -146,12 +146,6 @@ endif
 CFLAGS = -std=gnu99 -Dalloca=__builtin_alloca -Imess -Imess/$(MAMEOS) \
 	-Isrc -Isrc/includes -Isrc/expat -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 -Isrc/xml2info
 
-ifdef DEBUG
-CFLAGS += -DMAME_VALIDITYCHECKS=1
-else
-CFLAGS += -DMAME_VALIDITYCHECKS=0
-endif
-
 ifdef SYMBOLS
 CFLAGS += -O0 -Werror -Wall -Wno-unused -g
 else

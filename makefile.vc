@@ -173,9 +173,9 @@ CFLAGS = -nologo -MT $(INCLUDES) -DDECL_SPEC=__cdecl \
 	-Dsnprintf=_snprintf -Dvsnprintf=_vsnprintf
 
 ifdef DEBUG
-CFLAGS += -Zi -Od -DMAME_VALIDITYCHECKS=1
+CFLAGS += -Zi -Od
 else
-CFLAGS += -Ox -G5 -Ob2 -DMAME_VALIDITYCHECKS=0
+CFLAGS += -Ox -G5 -Ob2
 endif
 
 #####################################################################

@@ -27,6 +27,7 @@ struct ImgtoolFloppyCallbacks
 	unsigned int initial_path_separator : 1;
 
 	imgtoolerr_t	(*create)		(imgtool_image *img, option_resolution *opts);
+	imgtoolerr_t	(*open)			(imgtool_image *img);
 	imgtoolerr_t	(*begin_enum)	(imgtool_imageenum *enumeration, const char *path);
 	imgtoolerr_t	(*next_enum)	(imgtool_imageenum *enumeration, imgtool_dirent *ent);
 	void			(*close_enum)	(imgtool_imageenum *enumeration);
@@ -58,6 +59,7 @@ imgtoolerr_t imgtool_floppy_createmodule(imgtool_library *library, const char *f
 	const char *description, const struct FloppyFormat *format,
 	imgtoolerr_t (*populate)(imgtool_library *library, struct ImgtoolFloppyCallbacks *module));
 
+void *imgtool_floppy_extrabytes(imgtool_image *img);
 
 #define FLOPPYMODULE(name, description, format, populate)			\
 	imgtoolerr_t name##_createmodule(imgtool_library *library)		\
