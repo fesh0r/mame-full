@@ -1,14 +1,34 @@
 #define WIN32_LEAN_AND_MEAN
 
 static int default_mess_column_width[] = { 186, 100, 68, 84, 84, 68 };
-static int default_mess_column_shown[] = {   1,   1,  1,  1,  1,  1 };
+static int default_mess_column_shown[] = {   1,   0,  0,  0,  0,  0 };
 static int default_mess_column_order[] = {   0,   1,  2,  3,  4,  5 };
+
+static void MessColumnEncodeString(void* data, char *str);
+static void MessColumnDecodeString(const char* str, void* data);
+static void MessColumnDecodeWidths(const char* str, void* data);
 
 #include "options.c"
 
+static void MessColumnEncodeString(void* data, char *str)
+{
+	ColumnEncodeStringWithCount(data, str, MESS_COLUMN_MAX);
+}
+
+static void MessColumnDecodeString(const char* str, void* data)
+{
+	ColumnDecodeStringWithCount(str, data, MESS_COLUMN_MAX);
+}
+
+static void MessColumnDecodeWidths(const char* str, void* data)
+{
+    if (settings.view == VIEW_REPORT)
+        MessColumnDecodeString(str, data);
+}
+
 void SetDefaultSoftware(const char *name)
 {
-    if (settings.default_software != NULL)
+   if (settings.default_software != NULL)
     {
         free(settings.default_software);
         settings.default_software = NULL;
@@ -19,6 +39,9 @@ void SetDefaultSoftware(const char *name)
 
 const char *GetDefaultSoftware(void)
 {
+	assert((sizeof(default_mess_column_width) / sizeof(default_mess_column_width[0])) == MESS_COLUMN_MAX);
+	assert((sizeof(default_mess_column_shown) / sizeof(default_mess_column_shown[0])) == MESS_COLUMN_MAX);
+	assert((sizeof(default_mess_column_order) / sizeof(default_mess_column_order[0])) == MESS_COLUMN_MAX);
     return settings.default_software ? settings.default_software : "";
 }
 

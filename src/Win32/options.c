@@ -201,9 +201,9 @@ REG_OPTIONS regSettings[] = {
     {"ColumnOrder",     RO_ENCODE,  &settings.column_order,     ColumnEncodeString,     ColumnDecodeString},
     {"ColumnShown",     RO_ENCODE,  &settings.column_shown,     ColumnEncodeString,     ColumnDecodeString},
 #ifdef MESS
-    {"MessColumnWidths",    RO_ENCODE,  &settings.mess_column_width,     ColumnEncodeString,     ColumnDecodeWidths},
-    {"MessColumnOrder",     RO_ENCODE,  &settings.mess_column_order,     ColumnEncodeString,     ColumnDecodeString},
-    {"MessColumnShown",     RO_ENCODE,  &settings.mess_column_shown,     ColumnEncodeString,     ColumnDecodeString},
+    {"MessColumnWidths",RO_ENCODE,  &settings.mess_column_width,MessColumnEncodeString, MessColumnDecodeWidths},
+    {"MessColumnOrder", RO_ENCODE,  &settings.mess_column_order,MessColumnEncodeString, MessColumnDecodeString},
+    {"MessColumnShown", RO_ENCODE,  &settings.mess_column_shown,MessColumnEncodeString, MessColumnDecodeString},
 #endif
 #ifdef MAME_NET
     {"Net_Protocol",    RO_PSTRING, &netOpts.net_transport,     0, 0},
@@ -1114,7 +1114,7 @@ int GetPlayCount(int num_game)
     Internal functions
  ***************************************************************************/
 
-static void ColumnEncodeString(void* data, char *str)
+static void ColumnEncodeStringWithCount(void* data, char *str, int count)
 {
     int* value = (int*)data;
     int  i;
@@ -1124,14 +1124,14 @@ static void ColumnEncodeString(void* data, char *str)
     
     strcpy(str, tmpStr);
 
-    for (i = 1; i < COLUMN_MAX; i++)
+    for (i = 1; i < count; i++)
     {
         sprintf(tmpStr, ",%d", value[i]);
         strcat(str, tmpStr);
     }
 }
 
-static void ColumnDecodeString(const char* str, void* data)
+static void ColumnDecodeStringWithCount(const char* str, void* data, int count)
 {
     int* value = (int*)data;
     int  i;
@@ -1144,7 +1144,7 @@ static void ColumnDecodeString(const char* str, void* data)
     strcpy(tmpStr, str);
     p = tmpStr;
     
-    for (i = 0; p && i < COLUMN_MAX; i++)
+    for (i = 0; p && i < count; i++)
     {
         s = p;
         
@@ -1155,6 +1155,16 @@ static void ColumnDecodeString(const char* str, void* data)
         }
         value[i] = atoi(s);
     }
+}
+
+static void ColumnEncodeString(void* data, char *str)
+{
+	ColumnEncodeStringWithCount(data, str, COLUMN_MAX);
+}
+
+static void ColumnDecodeString(const char* str, void* data)
+{
+	ColumnDecodeStringWithCount(str, data, COLUMN_MAX);
 }
 
 static void ColumnDecodeWidths(const char* str, void* data)
