@@ -193,7 +193,7 @@ typedef struct ti990_ace
 } ti990_ace;
 
 /*
-	fdr record
+	FDR record
 */
 typedef struct ti990_fdr
 {
@@ -233,6 +233,72 @@ typedef struct ti990_fdr
 	UINT8		fil[2];			/* not used */
 } ti990_fdr;
 
+/*
+	ADR record: variant of FDR for Aliases
+
+	The fields marked here with *** are in the ADR template to maintain
+	compatability with the FDR template.
+*/
+typedef struct ti990_adr
+{
+	UINT16BE	hkc;			/* hask key count */
+	UINT16BE	hkv;			/* hask key value */
+	char		fnm[8];			/* file name */
+	char		psw[4];			/* "password" (whatever it means) */
+	UINT16BE	flg;			/* flags (same as fdr.flg) */
+	UINT16BE	fill00;			/* *** physical record size */
+	UINT16BE	fill01;			/* *** logical record size */
+	UINT16BE	fill02;			/* *** primary allocation size */
+	UINT16BE	fill03;			/* *** primary allocation address */
+	UINT16BE	fill04;			/* *** secondary allocation size */
+	UINT16BE	fill05;			/* *** secondary allocation address */
+	UINT16BE	rna;			/* record number of next ADR */
+	UINT16BE	raf;			/* record # of actual FDR */
+} ti990_adr;
+
+/*
+	CDR record: variant of FDR for Channel
+
+	The CDR is the permanent record of a channel.  It is carried as an alias
+	of the program file in which the channel owner task resides.
+*/
+typedef struct ti990_cdr
+{
+	UINT16BE	hkc;			/* hask key count */
+	UINT16BE	hkv;			/* hask key value */
+	char		fnm[8];			/* file name */
+	UINT16BE	fill00;			/* reserved */
+	UINT16BE	fill01;			/* reserved */
+	UINT16BE	fdf;			/* flags (same as fdr.flg) */
+	UINT8		flg;			/* channel flzgs */
+	UINT8		iid;			/* owner task installed ID */
+	UINT8		typ;			/* default resource type */
+	UINT8		tf;				/* resource type flags */
+	UINT16BE	mxl;			/* maximum message length */
+	UINT8		fill04[6];		/* reserved (and, no, I don't know where fill02 and fill03 have gone) */
+	UINT16BE	rna;			/* record number of next CDR or ADR */
+	UINT16BE	raf;			/* record # of actual FDR */
+	UINT8		fill05[110];	/* reserved */
+	char		uid[8];			/* user ID of channel creator */
+	UINT16BE	psa;			/* public security attribute */
+	UINT8		scg[94];		/* "SDT with 9 control groups" (whatever it means - and, no, 94 is not dividable by 9) */
+	UINT8		fill06[8];		/* reserved */
+} ti990_cdr;
+
+/*
+	Based on contents of the flags field, catalog entries may be either an FDR,
+	an ADR or a CDR.
+
+	They may be a KDR, too, but confusion is impossible because the KDR FILL00
+	fiald starts at offset 4, and therefore if we try to interpret a KDR as an
+	FDR (or ADR, CDR), we will find fnm[0] and assume the FDR is empty.
+*/
+typedef union directory_entry
+{
+	ti990_fdr fdr;
+	ti990_adr adr;
+	ti990_cdr cdr;
+} directory_entry;
 
 #if 0
 
@@ -292,11 +358,6 @@ typedef struct ti990_image
 	STREAM *file_handle;		/* imgtool file handle */
 	ti990_geometry geometry;	/* geometry */
 	ti990_sc0 sec0;				/* cached copy of sector 0 */
-#if 0
-	catalog_entry catalog[128];	/* catalog (fdr sector ids from sector 1, and file names from fdrs) */
-	int data_offset;	/* fdr records are preferentially allocated in sectors 2 to data_offset (34)
-						whereas data records are preferentially allocated in sectors starting at data_offset. */
-#endif
 } ti990_image;
 
 /*
@@ -308,10 +369,10 @@ typedef struct ti990_iterator
 {
 	IMAGEENUM base;
 	ti990_image *image;
-	int level;
-	int nrc[MAX_DIR_LEVEL];
+	int level;							/* current recursion level */
+	int nrc[MAX_DIR_LEVEL];				/* length of disk catalogs in records */
 	int index[MAX_DIR_LEVEL];			/* current index in the disk catalog */
-	ti990_fdr fdr[MAX_DIR_LEVEL];
+	directory_entry xdr[MAX_DIR_LEVEL];	/* fdr records */
 } ti990_iterator;
 
 
@@ -364,12 +425,12 @@ IMAGEMODULE(
 	ti990_image_nextenum,			/* enumerate next */
 	ti990_image_closeenum,			/* close enumeration */
 	ti990_image_freespace,			/* free space on image */
-	ti990_image_readfile,			/* read file */
-	ti990_image_writefile,			/* write file */
-	ti990_image_deletefile,			/* delete file */
-	ti990_image_create,				/* create image */
-	ti990_read_sector,
-	ti990_write_sector,
+	/*ti990_image_readfile*/NULL,			/* read file */
+	/*ti990_image_writefile*/NULL,			/* write file */
+	/*ti990_image_deletefile*/NULL,			/* delete file */
+	/*ti990_image_create*/NULL,				/* create image */
+	/*ti990_read_sector*/NULL,
+	/*ti990_write_sector*/NULL,
 	NULL,							/* file options */
 	/*ti990_createopts*/NULL				/* create options */
 )
@@ -579,28 +640,6 @@ static int write_sector_logical(STREAM *file_handle, int secnum, const ti99_geom
 	log_address_to_phys_address(secnum, geometry, &address);
 
 	return write_sector_physical(file_handle, &address, geometry, src);
-}
-
-/*
-	read sector 0 with no geometry information (used when opening image)
-
-	file_handle: imgtool file handle
-	dest: pointer to 256-byte destination buffer
-*/
-static int read_sector0_no_geometry(STREAM *file_handle, ti99_sc0 *dest)
-{
-	int reply;
-
-	/* seek to sector */
-	reply = stream_seek(file_handle, 0, SEEK_SET);
-	if (reply)
-		return 1;
-	/* read it */
-	reply = stream_read(file_handle, dest, 256);
-	if (reply != 256)
-		return 1;
-
-	return 0;
 }
 
 /*
@@ -1122,6 +1161,7 @@ static int ti990_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 static int ti990_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 {
 	ti990_iterator *iter = (ti990_iterator*) enumeration;
+	int flag;
 	int reply;
 
 
@@ -1130,12 +1170,12 @@ static int ti990_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 
 	while ((iter->level >= 0)
 			&& (! (reply = read_sector_logical_len(iter->image->file_handle,
-													iter->level ? get_UINT16BE(iter->fdr[iter->level-1].paa) * get_UINT16BE(iter->image->sec0.spa) + (iter->index[iter->level]+1)
+													iter->level ? get_UINT16BE(iter->xdr[iter->level-1].fdr.paa) * get_UINT16BE(iter->image->sec0.spa) + (iter->index[iter->level]+1)
 																: get_UINT16BE(iter->image->sec0.vda) * get_UINT16BE(iter->image->sec0.spa) + (iter->index[iter->level]+1),
-													& iter->image->geometry, &iter->fdr[iter->level],
-													iter->level ? get_UINT16BE(iter->fdr[iter->level-1].prs)
+													& iter->image->geometry, &iter->xdr[iter->level],
+													iter->level ? get_UINT16BE(iter->xdr[iter->level-1].fdr.prs)
 																: get_UINT16BE(iter->image->sec0.vpl))))
-			&& (iter->fdr[iter->level].fnm[0] == 0))
+			&& (iter->xdr[iter->level].fdr.fnm[0] == 0))
 	{
 		iter->index[iter->level]++;
 		while (iter->index[iter->level] >= iter->nrc[iter->level])
@@ -1162,31 +1202,36 @@ static int ti990_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 				ent->fname[0] = '\0';
 				for (i=0; i<iter->level; i++)
 				{
-					fname_to_str(buf, iter->fdr[i].fnm, 9);
+					fname_to_str(buf, iter->xdr[i].fdr.fnm, 9);
 					strncat(ent->fname, buf, ent->fname_len);
 					strncat(ent->fname, ".", ent->fname_len);
 				}
-				fname_to_str(buf, iter->fdr[iter->level].fnm, 9);
+				fname_to_str(buf, iter->xdr[iter->level].fdr.fnm, 9);
 				strncat(ent->fname, buf, ent->fname_len);
 			}
 		}
 #endif
 
 		/* parse flags */
-		if (get_UINT16BE(iter->fdr[iter->level].flg) & fdr_flg_cdr)
+		flag = get_UINT16BE(iter->xdr[iter->level].fdr.flg);
+		if (flag & fdr_flg_cdr)
 		{
 			snprintf(ent->attr, ent->attr_len, "CDR");
+
+			ent->filesize = 0;
 		}
-		else if (get_UINT16BE(iter->fdr[iter->level].flg) & fdr_flg_ali)
+		else if (flag & fdr_flg_ali)
 		{
 			snprintf(ent->attr, ent->attr_len, "ALIAS");
+
+			ent->filesize = 0;
 		}
 		else
 		{
-			switch ((get_UINT16BE(iter->fdr[iter->level].flg) >> fdr_flg_fu_shift) & 3)
+			switch ((flag >> fdr_flg_fu_shift) & 3)
 			{
 			case 0:
-				switch ((get_UINT16BE(iter->fdr[iter->level].flg) >> fdr_flg_ft_shift) & 3)
+				switch ((flag >> fdr_flg_ft_shift) & 3)
 				{
 				case 0:
 					snprintf(ent->attr, ent->attr_len, "???");
@@ -1212,31 +1257,41 @@ static int ti990_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 				snprintf(ent->attr, ent->attr_len, "IMG");
 				break;
 			}
-		}
-		/* len in sectors */
-		ent->filesize = get_UINT32BE(iter->fdr[iter->level].bkm);
 
+			/* len in blocks */
+			ent->filesize = get_UINT32BE(iter->xdr[iter->level].fdr.bkm);
+			if ((((flag >> fdr_flg_ft_shift) & 3) == 3) || get_UINT16BE(iter->xdr[iter->level].fdr.ofm))
+				ent->filesize++;
+
+			/* convert to ADUs */
+			if (iter->xdr[iter->level].fdr.apb > 1)
+				/* more than one ADU per block */
+				ent->filesize *= iter->xdr[iter->level].fdr.apb;
+			else if (iter->xdr[iter->level].fdr.bpa > 1)
+				/* more than one block per ADU */
+				ent->filesize = (ent->filesize + iter->xdr[iter->level].fdr.bpa - 1) / iter->xdr[iter->level].fdr.bpa;
+		}
 		iter->index[iter->level]++;
 
 		/* recurse subdirectory if applicable */
-		if ((((get_UINT16BE(iter->fdr[iter->level].flg) >> fdr_flg_fu_shift) & 3) == 1)
+		if ((((flag >> fdr_flg_fu_shift) & 3) == 1)
 			&& (iter->level < MAX_DIR_LEVEL)
-			&& ! ((iter->level == 0) && ! memcmp(iter->fdr[iter->level].fnm, "VCATALOG", 8)))
+			&& ! ((iter->level == 0) && ! memcmp(iter->xdr[iter->level].fdr.fnm, "VCATALOG", 8)))
 		{
 			ti990_dor dor;
 
-			if (get_UINT16BE(iter->fdr[iter->level].saa) != 0)
+			if (get_UINT16BE(iter->xdr[iter->level].fdr.saa) != 0)
 				printf("ninou");
 
 			read_sector_logical_len(iter->image->file_handle,
-									get_UINT16BE(iter->fdr[iter->level].paa) * get_UINT16BE(iter->image->sec0.spa),
+									get_UINT16BE(iter->xdr[iter->level].fdr.paa) * get_UINT16BE(iter->image->sec0.spa),
 									& iter->image->geometry, &dor, sizeof(dor));
 
 			iter->level++;
 			iter->nrc[iter->level] = get_UINT16BE(dor.nrc)/*get_UINT32BE(iter->fdr[iter->level-1].eom)-1*/;
 			iter->index[iter->level] = 0;
-			if (get_UINT16BE(dor.nrc) != (get_UINT32BE(iter->fdr[iter->level-1].eom)-1))
-				printf("hiha");
+			/*if (get_UINT16BE(dor.nrc) != (get_UINT32BE(iter->xdr[iter->level-1].fdr.eom)-1))
+				printf("hiha");*/
 		}
 
 		/* go to upper level if applicable */
@@ -1261,21 +1316,34 @@ static void ti990_image_closeenum(IMAGEENUM *enumeration)
 static size_t ti990_image_freespace(IMAGE *img)
 {
 	ti990_image *image = (ti990_image*) img;
-#if 0
-	int totsecs = image->sec0.totsecsMSB << 8 | image->sec0.totsecsLSB;
-	int sec;
-	size_t blocksfree = 0;
+	int totadus = get_UINT16BE(image->sec0.tna);
+	int adu, record, sub_adu;
+	char buf[256];
+	size_t freeadus = 0;
 
-	blocksfree = 0;
-	for (sec=2; sec<totsecs; sec++)
+	if ((totadus+2031)/2032 != image->sec0.tbm)
+		/*return IMGTOOLERR_CORRUPTIMAGE;*/
+		return 0;
+
+	adu = 0;
+	record = 0;
+	sub_adu = 0;
+	while (adu<totadus)
 	{
-		if (! (image->sec0.abm[sec >> 3] & (1 << (sec & 7))))
-			blocksfree++;
+		read_sector_logical_len(image->file_handle, image->sec0.sbm + record, &image->geometry, buf, sizeof(buf));
+
+		while ((adu < totadus) && (sub_adu < 2032))
+		{
+			if (! (buf[(sub_adu >> 3) + 2] & (1 << (sub_adu & 7))))
+				freeadus++;
+			sub_adu++;
+			adu++;
+		}
+		sub_adu = 0;
+		record++;
 	}
 
-	return blocksfree;
-#endif
-	return 0;
+	return freeadus;
 }
 
 /*
@@ -1362,7 +1430,7 @@ static int ti990_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 }
 
 /*
-	Add a file to a ti99_image.  The file must be in tifile format.
+	Add a file to a ti990_image.  The file must be in tifile format.
 */
 static int ti990_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *in_options)
 {
@@ -1471,7 +1539,7 @@ static int ti990_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
 }
 
 /*
-	Delete a file from a ti99_image.
+	Delete a file from a ti990_image.
 */
 static int ti990_image_deletefile(IMAGE *img, const char *fname)
 {
@@ -1638,7 +1706,7 @@ static int ti990_image_create(const struct ImageModule *mod, STREAM *f, const Re
 }
 
 /*
-	Read one sector from a ti99_image.
+	Read one sector from a ti990_image.
 */
 static int ti990_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length)
 {
@@ -1648,7 +1716,7 @@ static int ti990_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, 
 }
 
 /*
-	Write one sector to a ti99_image.
+	Write one sector to a ti990_image.
 */
 static int ti990_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length)
 {
