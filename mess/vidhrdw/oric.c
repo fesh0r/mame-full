@@ -2,8 +2,6 @@
 
   vidhrdw/oric.c
 
-  do all the real wacky stuff to render an Oric Text / Hires screen
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -28,6 +26,18 @@ struct oric_vh_state
 	int mode;
 	/* text attributes */
 	int text_attributes;
+
+	/* current memory address to fetch char data */
+	unsigned char *text_char_data;
+	unsigned char *hires_char_data;
+
+	unsigned char last_text_attribute;
+
+	/* It is set to 0 on the first line that has
+	double height attribute set, and alternates between 0 and 1 each line
+	which has double attribute set after */
+
+	int dbl_line;
 	
 	/* if (1<<3), display graphics, if 0, hide graphics */
 	int flash_state;
@@ -113,6 +123,41 @@ static void oric_vh_update_attribute(int c)
 
 		case 1:
 		{
+			/* This is a bit of a hack. In Fabrice's documents it says that
+			double height is reset for each scan-line, but we need to know if the
+			previous char line was double height so we can display the bottom half
+			of the character.
+
+			The attribute is stored on the last char and last line of the line,
+			if this has changed, then dbl_line will be reset to 0, otherwise dbl_line
+			will keep toggling as long as double height remains on and will work properly */
+
+			/* if double height toggle the dbl line counter */
+			if (attribute & (1<<1))
+			{
+				vh_state.dbl_line^=1;
+			}
+
+			/* changed from last time it was latched? */
+			if (((vh_state.last_text_attribute^attribute) & (1<<1))!=0)
+			{
+				/* reset dbl line count */
+				vh_state.dbl_line = 0;
+			}
+
+			/* alternate char set? */
+			if ((vh_state.text_attributes & (1<<0))==0)
+			{
+				/* no */
+				vh_state.text_char_data = memory_region(REGION_CPU1) + 0x0b400;
+				vh_state.hires_char_data = memory_region(REGION_CPU1) + 0x09800;
+			}
+			else
+			{
+				vh_state.text_char_data = memory_region(REGION_CPU1) + 0x0b400 + (128*8);
+				vh_state.hires_char_data = memory_region(REGION_CPU1) + 0x09800 + (128*8);
+			}
+
 			vh_state.text_attributes = attribute & 0x07;
 			/* text attributes */
 			oric_vh_update_flash();
@@ -141,12 +186,22 @@ static void oric_vh_update_attribute(int c)
 
 
 /* render 6-pixels using foreground and background colours specified */
-static void oric_vh_render_6pixels(struct osd_bitmap *bitmap,int x,int y, int fg, int bg,int data)
+static void oric_vh_render_6pixels(struct osd_bitmap *bitmap,int x,int y, int fg, int bg,int data, int invert_flag)
 {
 	int i;
-	int fg_pen = Machine->pens[fg];
-	int bg_pen = Machine->pens[bg];
+	int fg_pen;
+	int bg_pen;
+				
+	/* invert? */
+	if (invert_flag)
+	{
+		fg ^=0x07;
+		bg ^=0x07;
+	}
 
+	fg_pen = Machine->pens[fg];
+	bg_pen = Machine->pens[bg];
+	
 	for (i=0; i<6; i++)
 	{
 		int col;
@@ -174,128 +229,123 @@ static void oric_vh_render_6pixels(struct osd_bitmap *bitmap,int x,int y, int fg
 ***************************************************************************/
 void oric_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
+	unsigned char *RAM;
+	int char_line;
+	int byte_offset;
+	int y;
+	int old_read_addr;
+	int read_addr;
 
-/**** TODO ... HIRES ... how do the hires attr's set HIRES mode?? ****/
-/**** TODO ... HIRES MODE LINES,  render cell from HIRES BITMAP MEM AREA ****/
-//		unsigned char *text_ram;
-  //      unsigned char *hires_ram;
-        unsigned char *char_ram;
-        unsigned char *achar_ram;
-        unsigned char *hchar_ram;
-        unsigned char *hachar_ram;
-        unsigned char *tchar_ram;
-        unsigned char *tachar_ram;
-        unsigned char *RAM = memory_region(REGION_CPU1);
-    //    text_ram    = &RAM[0xBB80] ;
-      //  hires_ram   = &RAM[0xA000] ;
-        char_ram    = &RAM[0xB400] ;
-        achar_ram   = &RAM[0xB800] ;
-        hchar_ram   = &RAM[0x9800] ;
-        hachar_ram  = &RAM[0x9c00] ;
-        tchar_ram   = &RAM[0xB400] ;
-        tachar_ram  = &RAM[0xB800] ;
+	RAM = memory_region(REGION_CPU1);
 
-	
+	if (vh_state.mode & (1<<3))
+	{
+		read_addr = 0x0a000;
+	}
+	else
+	{
+		read_addr = 0x0bb80;
+	}
 
+	y = 0;
+	char_line = 0;
+	old_read_addr = read_addr;
+
+	for (y = 0; y < 224; y++)
+	{
+		int x = 0;
+		/* foreground colour 7 */
+		oric_vh_update_attribute(7);
+		/* background colour 0 */
+		oric_vh_update_attribute((1<<3));
+		/* no flash,text */
+		oric_vh_update_attribute((1<<4));
+		/* mode */
+		oric_vh_update_attribute((1<<3)|(1<<4));
+		
+		for (byte_offset=0; byte_offset<40; byte_offset++)
 		{
-			int char_line;
-			int byte_offset;
-			int y;
-			int old_read_addr;
-			int read_addr;
+			int c;
 
-			if (vh_state.mode & (1<<3))
+			c = RAM[read_addr];
+			read_addr++;
+
+			/* if bits 6 and 5 are zero, the byte contains a serial attribute */
+			if ((c & ((1<<6) | (1<<5)))==0)
 			{
-				read_addr = 0x0a000;
+				oric_vh_update_attribute(c);
+
+				/* display background colour when attribute has been found */
+				oric_vh_render_6pixels(bitmap,x,y,vh_state.active_foreground_colour, vh_state.active_background_colour, 0,(c & 0x080));
+
 			}
 			else
 			{
-				read_addr = 0x0bb80;
+				/* hires? */
+				if (vh_state.mode & (1<<3))
+				{
+					int pixel_data = c & 0x03f;
+
+					oric_vh_render_6pixels(bitmap,x,y,vh_state.active_foreground_colour, vh_state.active_background_colour, pixel_data,(c & 0x080));
+				}
+				else
+				{
+					int char_index;
+					int char_data;
+					int ch_line;
+
+					char_index = (c & 0x07f);
+
+					ch_line = char_line;
+
+					/* is double height set? */
+					if (vh_state.text_attributes & (1<<1))
+					{ 
+						/* fetch different line */
+						ch_line = (ch_line>>1) + (vh_state.dbl_line<<2);
+					}
+					
+					char_data = vh_state.text_char_data[(char_index<<3) | ch_line] & 0x03f;
+
+					oric_vh_render_6pixels(bitmap,x,y,
+						vh_state.active_foreground_colour, 
+						vh_state.active_background_colour, char_data, (c & 0x080));
+				}
+
 			}
-
-			y = 0;
-			char_line = 0;
-			old_read_addr = read_addr;
-			for (y = 0; y < 224; y++)
-			{
-				int x = 0;
-
-				/* foreground colour 7 */
-				oric_vh_update_attribute(7);
-				/* background colour 0 */
-				oric_vh_update_attribute((1<<3));
-				/* no flash,text */
-				oric_vh_update_attribute((1<<4));
-				/* mode */
-				oric_vh_update_attribute((1<<3)|(1<<4));
-
-				for (byte_offset=0; byte_offset<40; byte_offset++)
-				{
-					int c;
-
-					c = RAM[read_addr];
-					read_addr++;
-
-					/* if bits 6 and 5 are zero, the byte contains a serial attribute */
-					if ((c & ((1<<6) | (1<<5)))==0)
-					{
-						oric_vh_update_attribute(c);
-												
-
-						/* display background colour when attribute has been found */
-						oric_vh_render_6pixels(bitmap,x,y,vh_state.active_foreground_colour, vh_state.active_background_colour, 0);
-					}
-					else
-					{
-						/* hires? */
-						if (vh_state.mode & (1<<3))
-						{
-							int pixel_data = c & 0x03f;
-
-							oric_vh_render_6pixels(bitmap,x,y,vh_state.active_foreground_colour, vh_state.active_background_colour, pixel_data);
-						}
-						else
-						{
-							int char_index;
-							int char_data;
-
-							char_index = (c & 0x07f);
-							char_data = char_ram[(char_index<<3) | char_line] & 0x03f;
-
-							oric_vh_render_6pixels(bitmap,x,y,
-								vh_state.active_foreground_colour, 
-								vh_state.active_background_colour, char_data);
-						}
-
-					}
-
-
-					x=x+6;	
-				}
-				
-				/* if in text mode and char line is not equal to 7, then reset read addr */
-				if (((vh_state.mode & (1<<3))==0) && (char_line!=7))
-				{
-					/* no! */
-
-					read_addr = old_read_addr;
-				}
-
-				if (y==200)
-				{
-					read_addr = 0x0bf68;
-				}
-
-				char_line++;
-				char_line = char_line & 7;
 			
-				if (char_line==0)
-				{
-					old_read_addr = read_addr;
-				}
-
+			x=x+6;	
+		}
+		
+		/* char mode? */
+		if ((vh_state.mode & (1<<3))==0)
+		{
+			/* if in text mode and char line is not equal to 7, then reset read addr */
+			if (char_line!=7)
+			{
+				read_addr = old_read_addr;
 			}
-        }
+			else
+			{
+				/* push current text attribute at end of this line */
+				vh_state.last_text_attribute = vh_state.text_attributes;
+			}
+		}
+
+		if (y==200)
+		{
+			read_addr = 0x0bf68;
+		}
+
+		char_line++;
+		char_line = char_line & 7;
+	
+		if (char_line==0)
+		{
+			old_read_addr = read_addr;
+		}
+
+	}
 }
 
 
