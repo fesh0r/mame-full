@@ -754,46 +754,46 @@ static void execute_command(void)
 
 	switch (/*((hdc.w[1] & w1_extended_command) >> 11) |*/ ((hdc.w[1] & w1_command) >> 8))
 	{
-	case 0b000:
+	case 0x00: //0b000:
 		/* store registers */
 		logerror("store registers\n");
 		store_registers();
 		break;
-	case 0b001:
+	case 0x01: //0b001:
 		/* write format */
 		logerror("write format\n");
 		write_format();
 		break;
-	case 0b010:
+	case 0x02: //0b010:
 		/* read data */
 		logerror("read data\n");
 		read_data();
 		break;
-	case 0b011:
+	case 0x03: //0b011:
 		/* write data */
 		logerror("write data\n");
 		write_data();
 		break;
-	case 0b100:
+	case 0x04: //0b100:
 		/* unformatted read */
 		logerror("unformatted read\n");
 		unformatted_read();
 		break;
-	case 0b101:
+	case 0x05: //0b101:
 		/* unformatted write */
 		logerror("unformatted write\n");
 		/* ... */
 		hdc.w[7] |= w7_idle | w7_error | w7_abnormal_completion;
 		update_interrupt();
 		break;
-	case 0b110:
+	case 0x06: //0b110:
 		/* seek */
 		logerror("seek\n");
 		/* This command can (almost) safely be ignored */
 		hdc.w[7] |= w7_idle | w7_complete;
 		update_interrupt();
 		break;
-	case 0b111:
+	case 0x07: //0b111:
 		/* restore */
 		logerror("restore\n");
 		restore();
