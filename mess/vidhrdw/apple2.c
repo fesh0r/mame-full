@@ -17,6 +17,7 @@ static struct tilemap *lores_tilemap;
 static int text_videobase;
 static int dbltext_videobase;
 static int lores_videobase;
+static int flash;
 static UINT16 *hires_artifact_map;
 static UINT16 *dhires_artifact_map;
 static UINT8 *lores_tiledata;
@@ -37,6 +38,8 @@ static UINT8 *lores_tiledata;
 #define YELLOW	13
 #define AQUA	14
 #define	WHITE	15
+
+#define FLASH_PERIOD	TIME_IN_SEC(0.5)
 
 #define PROFILER_VIDEOTOUCH PROFILER_USER3
 
@@ -70,22 +73,31 @@ static void apple2_draw_tilemap(struct mame_bitmap *bitmap, const struct rectang
   text
 ***************************************************************************/
 
+static UINT8 apple2_text_char(int videobase, int memory_offset)
+{
+	UINT8 b;
+	b = mess_ram[videobase + memory_offset];
+	if (flash && (b >= 0x40) && (b <= 0x7f))
+		b ^= 0x80;
+	return b;
+}
+
 static void apple2_text_gettileinfo(int memory_offset)
 {
 	SET_TILE_INFO(
-		0,											/* gfx */
-		mess_ram[text_videobase + memory_offset],	/* character */
-		WHITE,										/* color */
-		0);											/* flags */
+		0,													/* gfx */
+		apple2_text_char(text_videobase, memory_offset),	/* character */
+		WHITE,												/* color */
+		0);												/* flags */
 }
 
 static void apple2_dbltext_gettileinfo(int memory_offset)
 {
 	SET_TILE_INFO(
-		1,											/* gfx */
-		mess_ram[dbltext_videobase + memory_offset],/* character */
-		WHITE,										/* color */
-		0);											/* flags */
+		1,													/* gfx */
+		apple2_text_char(dbltext_videobase, memory_offset),	/* character */
+		WHITE,												/* color */
+		0);													/* flags */
 }
 
 static UINT32 apple2_text_getmemoryoffset(UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows)
@@ -354,7 +366,16 @@ VIDEO_START( apple2 )
 VIDEO_UPDATE( apple2 )
 {
 	int page;
+	int new_flash;
 	UINT32 new_a2;
+
+	new_flash = ((int) (timer_get_time() / FLASH_PERIOD)) & 1;
+	if (flash != new_flash)
+	{
+		flash = new_flash;
+		tilemap_mark_all_tiles_dirty(text_tilemap);
+		tilemap_mark_all_tiles_dirty(dbltext_tilemap);
+	}
 
 	/* read out relevant softswitch variables; to see what has changed */
 	new_a2 = a2;
