@@ -15,6 +15,9 @@ New System Drivers Supported (in no particular order):
 - IBM PC [Peter Trauner]
 - TRS80 alt [Juergen Buchmueller]
 - Sharp Mz700, Mz700J [Juergen Buchmueller] 
+- Enterprise 128 (with EXOS 2.1) [Stefano Priore]
+- Some ZX Spectrum ROM mods, Spectrum 128 (Spain) [Stefano Priore]
+- Sharp PC1402, PC1350 [Peter Trauner]
 
 System Driver Changes:
 ----------------------
@@ -130,6 +133,8 @@ System Driver Changes:
   code into a new src/mess/formats directory [Nate Woods]
 
 - PDP/1: Fixed a null pointer access if no image is loaded. [Nate Woods]
+
+- PC1401/1402/1350: Artwork support added [Peter Trauner]
 
 Other Changes:
 --------------
