@@ -221,16 +221,12 @@ void *image_fopen_new(int type, int id, int *effective_mode)
 	{	/* look for open_mode */
 		const struct IODevice *dev;
 
-		requested_mode = OSD_FOPEN_DUMMY;
+		dev = device_find(Machine->gamedrv, type);
 
-		for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
-		{
-			if (dev->type == type)
-			{
-				requested_mode = dev->open_mode;
-				break;
-			}
-		}
+		if (dev)
+			requested_mode = dev->open_mode;
+		else
+			requested_mode = OSD_FOPEN_DUMMY;
 	}
 
 	switch (requested_mode)
@@ -238,7 +234,7 @@ void *image_fopen_new(int type, int id, int *effective_mode)
 	case OSD_FOPEN_DUMMY:
 	default:
 		/* unsupported modes */
-		printf(/*stderr,*/ "Internal Error in file \""__FILE__"\", line %d\n", __LINE__);
+		printf("Internal Error in file \""__FILE__"\", line %d\n", __LINE__);
 		fref = NULL;
 		effective_mode_local = OSD_FOPEN_DUMMY;
 		break;
@@ -299,6 +295,26 @@ void *image_fopen_new(int type, int id, int *effective_mode)
 		*effective_mode = effective_mode_local;
 
 	return fref;
+}
+
+
+int image_is_slot_empty(int type, int id)
+{
+	struct image_info *img = &images[type][id];
+
+	if( type >= IO_COUNT )
+	{
+		logerror("image_is_slot_empty: type out of range (%d)\n", type);
+		return NULL;
+	}
+
+	if( id >= count[type] )
+	{
+		logerror("image_is_slot_empty: id out of range (%d)\n", id);
+		return NULL;
+	}
+
+	return ((img->name == NULL) || (img->name[0] == '\0'));
 }
 
 

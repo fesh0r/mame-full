@@ -126,6 +126,7 @@ enum
 };
 
 #define is_effective_mode_writable(mode) ((mode) != OSD_FOPEN_READ)
+#define is_effective_mode_create(mode) ((mode) == OSD_FOPEN_RW_CREATE)
 
 /* hack: placeholder used until I determine what the open_mode value should be for an image */
 #define OSD_FOPEN_DUMMY -1
@@ -136,6 +137,9 @@ void *image_fopen(int type, int id, int filetype, int read_or_write);
 /* new wrapper: always use OSD_FILETYPE_IMAGE as the filetype, and take
 the read_or_write parameters from IODevice */
 void *image_fopen_new(int type, int id, int *effective_mode);
+
+/* wrapper: return true if the filename is NULL (i.e. no file is defined) */
+int image_is_slot_empty(int type, int id);
 
 
 #ifdef MAX_KEYS
