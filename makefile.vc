@@ -393,6 +393,8 @@ wimgtool$(EXE): \
 		$(OBJ)/mess/tools/imgtool/stubs.o				\
 		$(OBJ)/mess/tools/imgtool/windows/wmain.o		\
 		$(OBJ)/mess/tools/imgtool/windows/wimgtool.o	\
+		$(OBJ)/mess/tools/imgtool/windows/assoc.o		\
+		$(OBJ)/mess/tools/imgtool/windows/assocdlg.o	\
 		$(OBJ)/mess/tools/imgtool/windows/wimgtool.res
 	@echo Compiling $@...
 	$(LD) $(LDFLAGS) $(LIBS) $(WINDOWS_PROGRAM) $^ $(ZLIB) -out:$@

@@ -21,6 +21,8 @@ const TCHAR wimgtool_producttext[] = TEXT("MESS Image Tool");
 
 static const TCHAR owner_prop[] = TEXT("wimgtool_owned");
 
+extern void win_association_dialog(HWND parent, imgtool_library *library);
+
 struct wimgtool_info
 {
 	HWND listview;
@@ -193,6 +195,8 @@ static imgtoolerr_t append_dirent(HWND window, const imgtool_dirent *entry)
 
 	if (entry->attr)
 		ListView_SetItemText(info->listview, new_index, 2, U2T(entry->attr));
+	if (entry->corrupt)
+		ListView_SetItemText(info->listview, new_index, 3, (LPTSTR) TEXT("Corrupt"));
 	return 0;
 }
 
@@ -302,6 +306,10 @@ static imgtoolerr_t full_refresh_image(HWND window)
 		return IMGTOOLERR_OUTOFMEMORY;
 	col.cx = 60;
 	col.pszText = (LPTSTR) TEXT("Attributes");
+	if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
+		return IMGTOOLERR_OUTOFMEMORY;
+	col.cx = 60;
+	col.pszText = (LPTSTR) TEXT("Notes");
 	if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
 		return IMGTOOLERR_OUTOFMEMORY;
 
@@ -1131,6 +1139,9 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 					set_listview_style(window, LVS_REPORT);
 					break;
 
+				case ID_VIEW_ASSOCIATIONS:
+					win_association_dialog(window, library);
+					break;
 			}
 			break;
 

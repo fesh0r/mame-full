@@ -15,15 +15,16 @@
 #define ID_VIEW_ICONS                   111
 #define ID_VIEW_LIST                    112
 #define ID_VIEW_DETAILS                 113
-#define IDI_IMGTOOL                     114
-#define IDI_DOC                         115
+#define ID_VIEW_ASSOCIATIONS            114
+#define IDI_IMGTOOL                     115
+#define IDI_DOC                         116
 #define IDC_MORE                        1000
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        116
+#define _APS_NEXT_RESOURCE_VALUE        117
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1001
 #define _APS_NEXT_SYMED_VALUE           101
