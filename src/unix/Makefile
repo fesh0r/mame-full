@@ -100,7 +100,7 @@ CFLAGS.generic    =
 #CFLAGS.aix        = -DSYSDEP_DSP_AIX -I/usr/include/UMS -I/usr/lpp/som/include
 
 #all cflags
-MY_CFLAGS = $(CFLAGS) $(CFLAGS.$(ARCH)) -I. -I.. -I../../mess
+MY_CFLAGS = $(CFLAGS) $(CFLAGS.$(ARCH)) -I. -I.. -I../.. -I../../mess
 
 
 ##############################################################################
