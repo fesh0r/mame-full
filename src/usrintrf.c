@@ -503,6 +503,8 @@ void displaytext(struct osd_bitmap *bitmap,const struct DisplayText *dt)
 				drawgfx(bitmap,Machine->uifont,*c,dt->color,0,0,x+Machine->uixmin,y+Machine->uiymin,0,TRANSPARENCY_NONE,0);
 				x += Machine->uifontwidth;
 			}
+			else
+				break;
 
 			c++;
 		}

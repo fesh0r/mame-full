@@ -323,7 +323,7 @@ void fs_generate_filelist(void)
 		/* this will not work if roms is not a sub-dir of mess, and
 		   will also not work if we are not in the mess dir */
 		/* go to initial roms directory */
-		osd_change_directory("roms");
+		osd_change_directory("software");
 		osd_change_directory(Machine->gamedrv->name);
 		fs_init_done = 1;
 	}

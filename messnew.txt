@@ -2,11 +2,7 @@
 
 Known Issues:
 -------------
-- .inp record/playback does still not work currently.
-
-- alias handling temporarily removed.
-
-- Built-in File Manager broken - do not use for Image loading
+- Recording/Playback is not supported.
 
      
 New System Drivers Supported (in no particular order):
@@ -167,6 +163,9 @@ Source:
   support to the F8 CPU core. [PeT]
 
 - Fixed the DIV1 instruction Q bit generation for the SH2 CPU. [James Forshaw]
+
+- alias handling removed and wont be back.
+
 
 -------------------------------------------------------------------------------  
 0.37b14

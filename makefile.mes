@@ -181,6 +181,10 @@ $(OBJ)/$(MAMEOS)/%.o: src/$(MAMEOS)/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
 
+$(OBJ)/mess/windows/%.o: mess/windows/%.c
+	@echo Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
+
 $(OBJ)/%.o: src/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c $< -o $@

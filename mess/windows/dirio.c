@@ -1,184 +1,258 @@
-#include <ctype.h>
-#include <string.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <dos.h>
-#include <unistd.h>
-#include <stdlib.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+//#include <shellapi.h>
+//#include <windowsx.h>
+//#include <stdio.h>
+//#include <io.h>
+//#include <fcntl.h>
+//#include <commctrl.h>
+//#include <commdlg.h>
+//#include <string.h>
+//#include <sys/stat.h>
+//#include <wingdi.h>
+//#include <tchar.h>
+//#include <assert.h>
+//#include <string.h>
+//#include <stdlib.h>
 
-/**********************************************************/
-/* Functions called from MSDOS.C by MAME for running MESS */
-/**********************************************************/
-static char startup_dir[260]; /* Max Windows Path? */
+#include "driver.h"
+#include "mess.h"
+#include "unzip.h"
+#include "osdepend.h"
+#include "utils.h"
 
+/* ************************************************************************ */
+/* Directories                                                              */
+/* ************************************************************************ */
 
-/* Go back to the startup dir on exit */
-void return_to_startup_dir(void)
+typedef struct {
+	HANDLE hDir;
+	WIN32_FIND_DATAA finddata;
+	BOOL bDone;
+} OSD_WIN32_FIND_DATA;
+
+static char szCurrentDirectory[MAX_PATH];
+char crcfilename[MAX_PATH] = "";
+char pcrcfilename[MAX_PATH] = "";
+const char *thecrcfile = crcfilename;
+const char *thepcrcfile = pcrcfilename;
+
+static void checkinit_curdir(void)
 {
-    chdir(startup_dir);
+	const char *p;
+
+	if (szCurrentDirectory[0] == '\0') {
+		GetCurrentDirectoryA(sizeof(szCurrentDirectory) / sizeof(szCurrentDirectory[0]), szCurrentDirectory);
+		/* Make sure there is a trailing backslash */
+		p = strrchr(szCurrentDirectory, '\\');
+		if (!p || p[1])
+			strncatz(szCurrentDirectory, "\\", sizeof(szCurrentDirectory) / sizeof(szCurrentDirectory[0]));
+	}
 }
 
-
-/*****************************************************************************
- * device, directory and file functions
- *****************************************************************************/
-
-static int num_devices = 0;
-static char dos_devices[32*2];
-static char dos_device[2];
-static char dos_filemask[260];
-
-static int fnmatch(const char *f1, const char *f2)
+void resetdir(void)
 {
-	while (*f1 && *f2)
-	{
-		if (*f1 == '*')
-		{
-			/* asterisk is not the last character? */
-			if (f1[1])
-			{
-				/* skip until first occurance of the character after the asterisk */
-                while (*f2 && toupper(f1[1]) != toupper(*f2))
-					f2++;
-				/* skip repetitions of the character after the asterisk */
-				while (*f2 && toupper(f1[1]) == toupper(f2[1]))
-					f2++;
-			}
-			else
-			{
-				/* skip until end of string */
-                while (*f2)
-					f2++;
-			}
-        }
-		else
-		if (*f1 == '?')
-		{
-			/* skip one character */
-            f2++;
+	szCurrentDirectory[0] = '\0';
+}
+
+/* This function takes in a pathname, and resolves it according to our
+ * current directory
+ */
+const char *resolve_path(const char *path, char *buf, size_t buflen)
+{
+	char *s;
+
+	checkinit_curdir();
+
+	/* A bogus resolve? */
+	if (!path || !path[0] || ((path[0] == '.') && (!path[1])))
+		return szCurrentDirectory;
+
+	/* Absolute pathname? */
+	if ((path[0] == '\\') || (path[1] == ':')) {
+		if ((path[1] == ':') || (path[1] == '\\')) {
+			/* Absolute pathname with drive letter or UNC pathname */
+			buf[0] = '\0';
 		}
-		else
-		{
-			/* mismatch? */
-            if (toupper(*f1) != toupper(*f2))
-				return 0;
-            /* skip one character */
-			f2++;
+		else {
+			/* Absolute pathname without drive letter */
+			buf[0] = szCurrentDirectory[0];
+			buf[1] = szCurrentDirectory[1];
+			buf[2] = '\0';
 		}
-		/* skip mask */
-        f1++;
+		strncatz(buf, path, buflen);
+		return buf;
 	}
-	/* no match if anything is left */
-	if (*f1 || *f2)
-		return 0;
-    return 1;
+
+	strncpyz(buf, szCurrentDirectory, buflen);
+
+	while(path && (path[0] == '.')) {
+		/* Assume that if it is not a ., then it is a .. */
+		if (path[1] != '\\') {
+			/* Up one directory */
+			s = strrchr(buf, '\\');
+			if (s && !s[1]) {
+				/* A backslash at the very end doesn't count */
+				*s = '\0';
+				s = strrchr(buf, '\\');
+			}
+
+			if (s)
+				*s = '\0';
+			else
+				strncatz(buf, "\\..", buflen);
+		}
+		path = strchr(path, '\\');
+		if (path)
+			path++;
+	}
+
+	if (path && *path) {
+		strncatz(buf, path, buflen);
+	}
+	return buf;
 }
 
 int osd_num_devices(void)
 {
-	return 0;
+	char szBuffer[128];
+	char *p;
+	int i;
+
+	GetLogicalDriveStringsA(sizeof(szBuffer) / sizeof(szBuffer[0]), szBuffer);
+
+	i = 0;
+	for (p = szBuffer; *p; p += (strlen(p) + 1))
+		i++;
+	return i;
 }
 
 const char *osd_get_device_name(int idx)
 {
-	if (idx < num_devices)
-        return &dos_devices[idx*2];
-    return "";
+	static char szBuffer[128];
+	const char *p;
+
+	GetLogicalDriveStringsA(sizeof(szBuffer) / sizeof(szBuffer[0]), szBuffer);
+
+	p = szBuffer;
+	while(idx--)
+		p += strlen(p) + 1;
+
+	return p;
 }
 
-void osd_change_device(const char *device)
+void *osd_dir_open(const char *dirname, const char *filemask)
 {
-        char chdir_device[4];
+	char buf[MAX_PATH];
+	OSD_WIN32_FIND_DATA *pfd = NULL;
+	char *tmpbuf = NULL;
+	char *s;
 
-	dos_device[0] = device[0];
-	dos_device[1] = '\0';
+	dirname = resolve_path(dirname, buf, sizeof(buf) / sizeof(buf[0]));
+	if (!dirname)
+		goto error;
 
-        chdir_device[0] = device[0];
-        chdir_device[1] = ':';
-        chdir_device[2] = '/';
-        chdir_device[3] = '\0';
+	pfd = malloc(sizeof(OSD_WIN32_FIND_DATA));
+	if (!pfd)
+		goto error;
+	memset(pfd, 0, sizeof(*pfd));
 
+	tmpbuf = malloc(strlen(dirname) + strlen(filemask) + 2);
+	if (!tmpbuf)
+		goto error;
+	strcpy(tmpbuf, dirname);
+	s = tmpbuf + strlen(tmpbuf);
+	s[0] = '\\';
+	strcpy(s + 1, filemask);
 
-        chdir(chdir_device);
+	pfd->hDir = FindFirstFileA(tmpbuf, &pfd->finddata);
+	if (pfd->hDir == INVALID_HANDLE_VALUE)
+		goto error;
 
-}
+	free(tmpbuf);
+	return (void *) pfd;
 
-void osd_change_directory(const char *directory)
-{
-		if (!startup_dir[0])
-		{
-			getcwd(startup_dir,sizeof(startup_dir));
-			atexit(return_to_startup_dir);
-		}
-
-        chdir(directory);
-
-}
-
-static char dos_cwd[260];
-
-const char *osd_get_cwd(void)
-{
-        getcwd(dos_cwd, 260);
-
-        return dos_cwd;
-}
-
-void *osd_dir_open(const char *mess_dirname, const char *filemask)
-{
-	DIR *dir;
-
-	strcpy(dos_filemask, filemask);
-
-    dir = opendir(".");
-
-    return dir;
+error:
+	if (pfd)
+		free(pfd);
+	if (tmpbuf)
+		free(tmpbuf);
+	return NULL;
 }
 
 int osd_dir_get_entry(void *dir, char *name, int namelength, int *is_dir)
 {
-	int len;
-    struct dirent *d;
+	int result;
+	OSD_WIN32_FIND_DATA *pfd = (OSD_WIN32_FIND_DATA *) dir;
 
-    name[0] = '\0';
-	*is_dir = 0;
-
-    if (!dir)
-		return 0;
-
-    d = readdir(dir);
-	while (d)
-	{
-		struct stat st;
-
-		strncpy(name, d->d_name, namelength-1);
-		name[namelength-1]='\0';
-
-		len = strlen(name);
-
-		if( stat(d->d_name, &st) == 0 )
-			*is_dir = S_ISDIR(st.st_mode);
-
-		if (*is_dir)
-			return len;
-		else
-		if (fnmatch(dos_filemask, d->d_name))
-			return len;
-		else
-		{
-			/* no match, zap the name and type again */
-			name[0] = '\0';
-			*is_dir = 0;
-        }
-		d = readdir(dir);
+	if (pfd->bDone) {
+		if (name && namelength)
+			*name = '\0';
+		result = 0;
 	}
-	return 0;
+	else {
+		if (name)
+			strncpyz(name, pfd->finddata.cFileName, namelength);
+		result = strlen(pfd->finddata.cFileName);
+
+		if (is_dir)
+			*is_dir = (pfd->finddata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? 1 : 0;
+
+		pfd->bDone = FindNextFileA(pfd->hDir, &pfd->finddata) == 0;
+	}
+	return result;
 }
 
 void osd_dir_close(void *dir)
 {
-	if (dir)
-		closedir(dir);
+	OSD_WIN32_FIND_DATA *pfd = (OSD_WIN32_FIND_DATA *) dir;
+
+	FindClose(pfd->hDir);
+	free(pfd);
+}
+
+static BOOL dir_exists(const char *s)
+{
+	void *dp;
+	int rc = 0;
+
+	dp = osd_dir_open(s, "*.*");
+	if (dp) {
+		rc = osd_dir_get_entry(dp, NULL, 0, NULL);
+		osd_dir_close(dp);
+	}
+	return rc > 0;
+}
+
+void osd_change_directory(const char *dir)
+{
+	char buf[MAX_PATH];
+	const char *s;
+
+	s = resolve_path(dir, buf, sizeof(buf) / sizeof(buf[0]));
+	if (s && (s != szCurrentDirectory)) {
+		/* If there is no trailing backslash, add one */
+		if ((s == buf) && (buf[strlen(buf)-1] != '\\'))
+			strncatz(buf, "\\", sizeof(buf) / sizeof(buf[0]));
+
+		if (dir_exists(s))
+			strncpyz(szCurrentDirectory, s, sizeof(szCurrentDirectory) / sizeof(szCurrentDirectory[0]));
+	}
+}
+
+void osd_change_device(const char *device)
+{
+	char szBuffer[3];
+	szBuffer[0] = device[0];
+	szBuffer[1] = ':';
+	szBuffer[2] = '\0';
+	osd_change_directory(szBuffer);
+}
+
+const char *osd_get_cwd(void)
+{
+	checkinit_curdir();
+	return szCurrentDirectory;
 }
 
 int osd_select_file(int sel, char *filename)
