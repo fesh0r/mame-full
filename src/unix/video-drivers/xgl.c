@@ -204,6 +204,7 @@ int sysdep_create_display(int depth)
   {
     if(gl_res == NULL)
       gl_res = strdup("640x480");
+    antialias = 0;
   }
 
   if(gl_res!=NULL)

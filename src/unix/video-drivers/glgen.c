@@ -982,7 +982,7 @@ void InitTextures (struct mame_bitmap *bitmap)
   if(video_real_depth == 16) 
   {
     colorBlittedMemory = malloc( visual_width * visual_height * bytes_per_pixel);
-    line_1   = (unsigned char *)(colorBlittedMemory + visual.min_x);
+    line_1   = (unsigned char *)colorBlittedMemory;
     line_len = visual_width;
   }
   else
