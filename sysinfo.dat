@@ -3857,18 +3857,64 @@ $bio
 DEC PDP-1
 
 
-Currently supports two images: Spacewar! and Munching Squares.  LISP almost works, but not quite.
+Currently supports three images: Spacewar!, Munching Squares and LISP. Since interactive
+typewriter output is not emulated, LISP cannot be used interactively. No other images are
+known at the time of writing: I know there was an editor (Expensive Typewriter),
+an assembler/linker (MACRO), a debugger (DDT), and even a multi-user multi-tasking operating
+system (MIT PDP-1 Timesharing System), but I have no idea where a copy of these programs could be
+found.
+
+
+This driver emulates a complete pdp-1 system, including:
+
+* operator control panel
+
+* perforated tape reader and punch
+
+* typewriter for keyboard input and printer output
+
+* optional type 30 precision CRT display
+
+* optional type 15 memory expansion control, with 64kwords of RAM (16 type 12 memory modules)
+
+* optional type 10 automatic multiply and divide
+
+
+The only standard feature which is still missing is the sequence break (i.e. interrupt) system.
 
 
 Usage Notes:
 
 
-PDP-1 currently supports a perforated tape reader (punchtape unit #1) and a puncher (punchtape
-unit #2).
+PDP-1 currently supports a perforated tape reader (punchtape unit #1), a perforated tape punch
+(punchtape unit #2), and a typewriter (printer unit #1).
+
 
 The simplest way to load and run software is to insert a read-in mode tape (.rim files) in
-the perforated tape reader and press the read-in switch once (mapped to the Return kay on
-the main keyboard).
+the perforated tape reader and press the read-in switch once (press simulteanously the Control
+Panel key (Left Control) and the Read In key (main keypad Return)).
+
+
+Three dip switches (RAM size, Hardware multiply and Hardware divide) enable or disable computer
+extensions. These switches are only read at reset. Therefore, if you edit them, you must reset
+the machine for the changes to be taken into account.
+
+The "RAM size" switch install and remove type 15 memory expansion control: it is disabled
+when set on 4kw, enabled with 15-bit addresses when set on 32kw, and enabled with 16-bit addresses
+when set on 64kw. All known programs work well whether memory expansion control is
+installed or not. Only LISP can make use the extra RAM.
+
+The "Hardware multiply" and "Hardware divide" switches enable or disable automatic
+multiply/divide extension. When they are enabled, two pdp-1 machine instructions are replaced
+by two other, incompatible, instructions. Therefore, programs which uses the former variant of
+these instructions require automatic multiply/divide to be disabled, whereas programs which use
+the latter require it to be enabled. In practice, Spacewar! requires automatic multiply and
+divide to be DISABLED (i.e. both switches OFF), whereas LISP requires automatic multiply and
+divide to be ENABLED (i.e. both switches ON).
+
+
+For information on pdp-1 operation, you may have a look at:
+<http://www.dbit.com/~greeng3/pdp1/pdp1.html>.
 
 
 History and Trivia :
@@ -3883,19 +3929,19 @@ In 1960, they started selling the pdp-1. This was a very interesting computer fo
 
 First of all it was cheap and fast for its time: about 100,000 dollars, and a theorical maximum
 of 0.1 MIPS. It included 4 kWords of RAM, expandable to 64 kWord (as word size is 18 bits,
-it makes from 9 to 144 kBytes, which is HUGE for this time): this is an important detail, since,
+this makes from 9 to 144 kBytes, which is HUGE for this time): this is an important detail, since,
 at this time, cheap computers (e.g. IBM 650) often had no RAM, and used a magnetic drum instead,
 which implied extremely long memory access times.
 
 
 What made it even more interesting was that it was designed to be operated interactively.
-It featured an on-line typewriter (i.e. keyboard and printer), and a CRT (which was a little-used
-device at this time). You could even buy an optional light-pen (this device was the closest
-equivalent to today's mouse). Along with its simplicity, this made the pdp-1 quite user-friendly
-for its time.
+It featured an on-line typewriter (i.e. keyboard and printer), and a CRT (which was seldom used
+as a computer device at this time). You could even buy an optional light-pen (this device was
+the closest equivalent to today's mouse). Along with its simplicity, this made the pdp-1 quite
+user-friendly for its time.
 
 
-The pdp-1 may be regarded as one of the first personal computers, too, since one person was quite
+The pdp-1 may be regarded as one of the first personal computers, since one person was quite
 enough to run and operate it (although, needless to say, its price was not the kind of price
 you would expect from a personal computer today).
 
@@ -3903,6 +3949,13 @@ you would expect from a personal computer today).
 The pdp-1 attracted the attention of various hackers in MIT. This resulted into the creation
 of Spacewar!, which was the first computer-based videogame, but this is another story.
 
+
+The pdp-1 was a reasonably successful machine: 49 units were sold, which was not as bad as it
+sounds for this time. DEC intended to sell variants of pdp-1 with a bigger word size
+(pdp-3 with 36-bit words, and possibly other variants (pdp-2???) with 24-bit or 30-bit words),
+but it eventually did not. However, it later relaced pdp-1 with other models, including the first
+minicomputer (the pdp-8 in 1965), and, by the early 1970's, it had become a major computer
+manufacturer, second only to IBM.
 
 $end
 
