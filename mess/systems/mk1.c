@@ -32,59 +32,73 @@ speaker?
 
  */
 
+#ifdef MAME_DEBUG
+#define VERBOSE	1
+#else
+#define VERBOSE 0
+#endif
+
 static UINT8 mk1_f8[2];
 
 READ_HANDLER(mk1_f8_r)
 {
-    UINT8 data=mk1_f8[offset];
-//    logerror ("f8 %.6f r %x %x\n", timer_get_time(), offset, data);
-    if (offset==0) {
-	if (data&1) data|=readinputport(1);
-	if (data&2) data|=readinputport(2);
-	if (data&4) data|=readinputport(3);
-	if (data&8) data|=readinputport(4);
-	if (data&0x10) {
-	    if (readinputport(1)&0x10) data|=1;
-	    if (readinputport(2)&0x10) data|=2;
-	    if (readinputport(3)&0x10) data|=4;
-	    if (readinputport(4)&0x10) data|=8;
-	}
-	if (data&0x20) {
-	    if (readinputport(1)&0x20) data|=1;
-	    if (readinputport(2)&0x20) data|=2;
-	    if (readinputport(3)&0x20) data|=4;
-	    if (readinputport(4)&0x20) data|=8;
-	}
-	if (data&0x40) {
-	    if (readinputport(1)&0x40) data|=1;
-	    if (readinputport(2)&0x40) data|=2;
-	    if (readinputport(3)&0x40) data|=4;
-	    if (readinputport(4)&0x40) data|=8;
-	}
-	if (data&0x80) {
-	    if (readinputport(1)&0x80) data|=1;
-	    if (readinputport(2)&0x80) data|=2;
-	    if (readinputport(3)&0x80) data|=4;
-	    if (readinputport(4)&0x80) data|=8;
-	}
-    } else {
-    }
+    UINT8 data = mk1_f8[offset];
 
+#if VERBOSE
+	logerror ("f8 %.6f r %x %x\n", timer_get_time(), offset, data);
+#endif
+
+    if (offset==0)
+	{
+		if (data&1) data|=readinputport(1);
+		if (data&2) data|=readinputport(2);
+		if (data&4) data|=readinputport(3);
+		if (data&8) data|=readinputport(4);
+		if (data&0x10)
+		{
+			if (readinputport(1)&0x10) data|=1;
+			if (readinputport(2)&0x10) data|=2;
+			if (readinputport(3)&0x10) data|=4;
+			if (readinputport(4)&0x10) data|=8;
+		}
+		if (data&0x20)
+		{
+			if (readinputport(1)&0x20) data|=1;
+			if (readinputport(2)&0x20) data|=2;
+			if (readinputport(3)&0x20) data|=4;
+			if (readinputport(4)&0x20) data|=8;
+		}
+		if (data&0x40)
+		{
+			if (readinputport(1)&0x40) data|=1;
+			if (readinputport(2)&0x40) data|=2;
+			if (readinputport(3)&0x40) data|=4;
+			if (readinputport(4)&0x40) data|=8;
+		}
+		if (data&0x80)
+		{
+			if (readinputport(1)&0x80) data|=1;
+			if (readinputport(2)&0x80) data|=2;
+			if (readinputport(3)&0x80) data|=4;
+			if (readinputport(4)&0x80) data|=8;
+		}
+    }
     return data;
 }
 
 WRITE_HANDLER(mk1_f8_w)
 {
-/* 0 is high and allows also input */
-    mk1_f8[offset]=data;
-//    logerror("f8 %.6f w %x %x\n", timer_get_time(), offset, data);
-    if (offset==0) {	
-    } else {
-    }
-    if (!(mk1_f8[1]&1)) mk1_led[0]=mk1_f8[0];
-    if (!(mk1_f8[1]&2)) mk1_led[1]=mk1_f8[0];
-    if (!(mk1_f8[1]&4)) mk1_led[2]=mk1_f8[0];
-    if (!(mk1_f8[1]&8)) mk1_led[3]=mk1_f8[0];
+	/* 0 is high and allows also input */
+	mk1_f8[offset]=data;
+
+#if VERBOSE
+	logerror("f8 %.6f w %x %x\n", timer_get_time(), offset, data);
+#endif
+
+	if (!(mk1_f8[1]&1)) mk1_led[0]=mk1_f8[0];
+	if (!(mk1_f8[1]&2)) mk1_led[1]=mk1_f8[0];
+	if (!(mk1_f8[1]&4)) mk1_led[2]=mk1_f8[0];
+	if (!(mk1_f8[1]&8)) mk1_led[3]=mk1_f8[0];
 }
 
 static MEMORY_READ_START( mk1_readmem )
@@ -142,52 +156,33 @@ INPUT_PORTS_START( mk1 )
 	DIPS_HELPER( 0x10, "Black 8    ep", KEYCODE_8, CODE_NONE)
 INPUT_PORTS_END
 
-static int mk1_frame_int(void)
-{
-	return ignore_interrupt();
-}
-
-static void mk1_machine_init(void)
+static MACHINE_INIT( mk1 )
 {
     f3853_reset();
 }
 
-static struct MachineDriver machine_driver_mk1 =
-{
+static MACHINE_DRIVER_START( mk1 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_F8, //MK3850
-			1000000,
-			mk1_readmem,mk1_writemem,
-			mk1_readport,mk1_writeport,
-			mk1_frame_int, 1,
-        }
-	},
-	/* frames per second, VBL duration */
-	30, DEFAULT_60HZ_VBLANK_DURATION, // led!
-	1,				/* single CPU */
-	mk1_machine_init,
-	0,//pc1401_machine_stop,
+	MDRV_CPU_ADD(F8, 1000000)        /* MK3850 */
+	MDRV_CPU_MEMORY(mk1_readmem,mk1_writemem)
+	MDRV_CPU_PORTS(mk1_readport,mk1_writeport)
+	MDRV_FRAMES_PER_SECOND(30)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	626, 323, { 0, 626 - 1, 0, 323 - 1},
-	0,			   /* graphics decode info */
-	sizeof (mk1_palette) / sizeof (mk1_palette[0]) + 32768,
-	sizeof (mk1_colortable) / sizeof(mk1_colortable[0][0]),
-	mk1_init_colors,		/* convert color prom */
+	MDRV_MACHINE_INIT( mk1 )
 
-	VIDEO_TYPE_RASTER,	/* video flags */
-	0,						/* obsolete */
-    mk1_vh_start,
-	mk1_vh_stop,
-	mk1_vh_screenrefresh,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(626, 323)
+	MDRV_VISIBLE_AREA(0, 626-1, 0, 323-1)
+	MDRV_PALETTE_LENGTH(242 + 32768)
+	MDRV_COLORTABLE_LENGTH(2)
+	MDRV_PALETTE_INIT( mk1 )
 
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{ 0 }
-    }
-};
+	MDRV_VIDEO_START( mk1 )
+	MDRV_VIDEO_UPDATE( mk1 )
+MACHINE_DRIVER_END
 
 ROM_START(mk1)
 	ROM_REGION(0x10000,REGION_CPU1,0)
@@ -200,10 +195,14 @@ static void mk1_interrupt(UINT16 addr, bool level)
     cpu_set_irq_line(0, F8_INT_INTR, level);
 }
 
-void init_mk1(void)
+DRIVER_INIT( mk1 )
 {
     F3853_CONFIG config;
-    config.frequency=machine_driver_mk1.cpu[0].cpu_clock;
+	struct InternalMachineDriver drv;
+
+	construct_mk1(&drv);
+
+    config.frequency = drv.cpu[0].cpu_clock;
     config.interrupt_request=mk1_interrupt;
 
     f3853_init(&config);
@@ -214,15 +213,6 @@ static const struct IODevice io_mk1[] = {
 };
 
 // seams to be developed by mostek (MK)
-/*    YEAR  NAME    PARENT  MACHINE INPUT   INIT      COMPANY   FULLNAME */
-CONSX( 1979,	mk1,	0, 		mk1,	mk1,	mk1,	"Computer Electronic",  "Chess Champion MK I", GAME_NOT_WORKING)
+/*     YEAR   NAME  PARENT  MACHINE INPUT   INIT    COMPANY                 FULLNAME */
+CONSX( 1979,  mk1,  0, 		mk1,	mk1,	mk1,	"Computer Electronic",  "Chess Champion MK I", GAME_NOT_WORKING)
 
-#ifdef RUNTIME_LOADER
-extern void mk1_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"mk1")==0) drivers[i]=&driver_mk1;
-	}
-}
-#endif

@@ -9,26 +9,24 @@
 
 #include "includes/mk1.h"
 
-unsigned char mk1_palette[242][3] =
+static unsigned char mk1_palette[] =
 {
-	{ 0x20,0x02,0x05 },
-	{ 0xc0, 0, 0 },
+	0x20, 0x02, 0x05,
+	0xc0, 0x00, 0x00
 };
 
-unsigned short mk1_colortable[1][2] = {
-	{ 0, 1 },
+static unsigned short mk1_colortable[] =
+{
+	0, 1
 };
 
-void mk1_init_colors (unsigned char *sys_palette,
-						  unsigned short *sys_colortable,
-						  const unsigned char *color_prom)
+PALETTE_INIT( mk1 )
 {
-	memcpy (sys_palette, mk1_palette, sizeof (mk1_palette));
-	memcpy(sys_colortable,mk1_colortable,sizeof(mk1_colortable));
+	palette_set_colors(0, mk1_palette, sizeof(mk1_palette) / 3);
+	memcpy(colortable, mk1_colortable, sizeof(mk1_colortable));
 }
 
-
-int mk1_vh_start(void)
+VIDEO_START( mk1 )
 {
 	// artwork seams to need this
     videoram_size = 6 * 2 + 24;
@@ -36,18 +34,7 @@ int mk1_vh_start(void)
 	if (!videoram)
         return 1;
 
-	{
-		char backdrop_name[200];
-	    /* try to load a backdrop for the machine */
-		sprintf(backdrop_name, "%s.png", Machine->gamedrv->name);
-		backdrop_load(backdrop_name, 2);
-	}
-
 	return video_start_generic();
-}
-
-void mk1_vh_stop(void)
-{
 }
 
 UINT8 mk1_led[4]= {0};
@@ -104,7 +91,7 @@ static struct {
 	{216,79}
 };
 
-void mk1_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( mk1 )
 {
 	int i;
 

@@ -751,7 +751,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 /*//	DRIVER( maniac )*/	/* Maniac										  */
 
 	/* Computer Electronic */
-//	DRIVER( mk1 )		/* Chess Champion MK I							  */
+	DRIVER( mk1 )		/* Chess Champion MK I							  */
 	/* Quelle International */
 //	DRIVER( mk2 )		/* Chess Champion MK II							  */
 	/* NOVAG Industries Ltd. */

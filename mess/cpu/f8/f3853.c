@@ -43,27 +43,33 @@ static struct {
 
 static void f3853_set_interrupt_request_line(void)
 {
-    if (!f3853.config.interrupt_request) return;
-    if (f3853.external_enable&&!f3853.priority_line)
-	f3853.config.interrupt_request(INTERRUPT_VECTOR(true), true);
-    else if (f3853.timer_enable&&!f3853.priority_line&&f3853.request_flipflop)
-	f3853.config.interrupt_request(INTERRUPT_VECTOR(false), true);
-    else
-	f3853.config.interrupt_request(0, false);
+    if (!f3853.config.interrupt_request)
+		return;
+
+	if (f3853.external_enable&&!f3853.priority_line)
+		f3853.config.interrupt_request(INTERRUPT_VECTOR(true), true);
+	else if (f3853.timer_enable&&!f3853.priority_line&&f3853.request_flipflop)
+		f3853.config.interrupt_request(INTERRUPT_VECTOR(false), true);
+	else
+		f3853.config.interrupt_request(0, false);
 }
 
 static void f3853_timer_callback(int param);
 
 static void f3853_timer_start(UINT8 value)
 {
-    f3853.timer=timer_set(f3853_value_to_cycle[value]*31/(double)f3853.config.frequency,0,f3853_timer_callback);
+	timer_reset(f3853.timer, 
+		(value != 0xff) ?
+			f3853_value_to_cycle[value]*31/(double)f3853.config.frequency :
+			TIME_NEVER);
 }
 
 static void f3853_timer_callback(int param)
 {
-    if (f3853.timer_enable) {
-	f3853.request_flipflop=true;
-	f3853_set_interrupt_request_line();
+    if (f3853.timer_enable)
+	{
+		f3853.request_flipflop = true;
+		f3853_set_interrupt_request_line();
     }
     f3853_timer_start(0xfe);
 }
@@ -71,21 +77,23 @@ static void f3853_timer_callback(int param)
 
 void f3853_init(F3853_CONFIG *config)
 {
-    UINT8 reg=0xfe;
-    int i;
+	UINT8 reg=0xfe;
+	int i;
 
-    for (i=254/*known to get 0xfe after 255 cycles*/; i>=0; i--) {
-	bool o7=reg&0x80?true:false, o5=reg&0x20?true:false,
-	    o4=reg&0x10?true:false, o3=reg&8?true:false;
-	f3853_value_to_cycle[reg]=i;
-	reg<<=1;
-	if (!((o7!=o5)!=(o4!=o3))) reg|=1;
-    }
+	for (i=254/*known to get 0xfe after 255 cycles*/; i>=0; i--)
+	{
+		bool o7=reg&0x80?true:false, o5=reg&0x20?true:false,
+			o4=reg&0x10?true:false, o3=reg&8?true:false;
+		f3853_value_to_cycle[reg]=i;
+		reg<<=1;
+		if (!((o7!=o5)!=(o4!=o3))) reg|=1;
+	}
 
-    f3853.config=*config;
+	f3853.config=*config;
 
-    f3853.priority_line=false;
-    f3853.external_interrupt_line=true;
+	f3853.priority_line=false;
+	f3853.external_interrupt_line=true;
+	f3853.timer = timer_alloc(f3853_timer_callback);
 }
 
 void f3853_reset(void)
@@ -112,40 +120,36 @@ READ_HANDLER(f3853_r)
     UINT8 data=0;
     switch (offset) {
     case 0:
-	data=f3853.high;
-	break;
+		data=f3853.high;
+		break;
     case 1:
-	data=f3853.low;
-	break;
+		data=f3853.low;
+		break;
     case 2: // interrupt control; not readable
     case 3: // timer; not readable
-	break;
+		break;
     }
     return data;
 }
 
 WRITE_HANDLER(f3853_w)
 {
-    switch (offset) {
-    case 0:
-	f3853.high=data;
-	break;
-    case 1:
-	f3853.low=data;
-	break;
-    case 2: //interrupt control
-	f3853.external_enable = ((data&3)==1);
-	f3853.timer_enable = ((data&3)==3);
-	f3853_set_interrupt_request_line();
-	break;
-    case 3: //timer
-	f3853.request_flipflop=false;
-	f3853_set_interrupt_request_line();
-	if (f3853.timer!=0) timer_remove(f3853.timer);
-	f3853.timer=0;
-	if (data!=0xff) {
-	    f3853_timer_start(data);
+	switch (offset) {
+	case 0:
+		f3853.high=data;
+		break;
+	case 1:
+		f3853.low=data;
+		break;
+	case 2: //interrupt control
+		f3853.external_enable = ((data&3)==1);
+		f3853.timer_enable = ((data&3)==3);
+		f3853_set_interrupt_request_line();
+		break;
+	case 3: //timer
+		f3853.request_flipflop=false;
+		f3853_set_interrupt_request_line();
+		f3853_timer_start(data);
+		break;
 	}
-	break;
-    }
 }
