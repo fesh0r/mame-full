@@ -377,7 +377,10 @@ static void MessWriteMountedSoftware(int nGame)
 	}
 
 	if (dirty)
+	{
+		SetGameUsesDefaults(nGame, FALSE);
 		SaveGameOptions(nGame);
+	}
 }
 
 /*static void MessSetPickerDefaults(void)

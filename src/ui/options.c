@@ -1825,7 +1825,6 @@ static BOOL LoadGameVariableOrFolderFilter(char *key,const char *value)
 		fake_option.m_iType = RO_STRING;
 		fake_option.m_vpData = &game_variables[driver_index].extra_software_paths;
 		LoadOption(&fake_option, value);
-		SetGameUsesDefaults(driver_index, FALSE);
 		return TRUE;
 	}
 #endif

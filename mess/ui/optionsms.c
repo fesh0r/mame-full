@@ -102,27 +102,30 @@ void SetCrcDir(const char *crcdir)
         settings.crcdir = strdup(crcdir);
 }
 
-BOOL GetUseNewUI(int num_game)
+BOOL GetUseNewUI(int driver_index)
 {
-    assert(0 <= num_game && num_game < num_games);
-
-    return game_options[num_game].use_new_ui;
+    assert(0 <= driver_index && driver_index < driver_index);
+    return GetGameOptions(driver_index)->use_new_ui;
 }
 
 void SetSelectedSoftware(int driver_index, int devtype, const char *software)
 {
 	char *newsoftware;
+	options_type *o;
+
 	newsoftware = strdup(software ? software : "");
 	if (!newsoftware)
 		return;
-	FreeIfAllocated(&game_options[driver_index].software[devtype]);
-	game_options[driver_index].software[devtype] = newsoftware;
+
+	o = GetGameOptions(driver_index);
+	FreeIfAllocated(&o->software[devtype]);
+	o->software[devtype] = newsoftware;
 }
 
 const char *GetSelectedSoftware(int driver_index, int devtype)
 {
 	const char *software;
-	software = game_options[driver_index].software[devtype];
+	software = GetGameOptions(driver_index)->software[devtype];
 	return software ? software : "";
 }
 
