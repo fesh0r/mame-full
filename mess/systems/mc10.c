@@ -3,8 +3,8 @@
 #include "vidhrdw/m6847.h"
 #include "includes/mc10.h"
 #include "cassette.h"
+#include "dragon.h"		/* for coco_cassette_init() */
 
-extern int coco_cassette_init(int id);
 
 static MEMORY_READ_START( mc10_readmem )
 	{ 0x0000, 0x001f, m6803_internal_registers_r },
