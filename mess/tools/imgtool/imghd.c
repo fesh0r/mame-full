@@ -7,7 +7,8 @@
 	Raphael Nabet 2003
 */
 
-#include "imgtool.h"
+/*#include "imgtool.h"*/
+#include "imgtoolx.h"
 
 #include "harddisk.h"
 #include "imghd.h"
@@ -150,6 +151,86 @@ static UINT32 imgtool_hard_disk_write(void *file, UINT64 offset, UINT32 count, c
 }
 
 /*
+	imghd_create()
+
+	Create a MAME HD image
+*/
+static int imghd_create(STREAM *stream, const struct hard_disk_header *header)
+{
+	char encoded_image_ref[encoded_image_ref_max_len];
+	struct hard_disk_interface interface_save;
+	int reply;
+
+	if (stream_isreadonly(stream))
+		return IMGTOOLERR_WRITEERROR;
+
+	encode_image_ref(stream, encoded_image_ref);
+
+	hard_disk_save_interface(&interface_save);
+	hard_disk_set_interface(&imgtool_hard_disk_interface);
+	reply = hard_disk_create(encoded_image_ref, header);
+	hard_disk_set_interface(&interface_save);
+
+	return reply ? IMGTOOLERR_UNEXPECTED : 0;
+}
+
+int imghd_create_base_v1_v2(STREAM *stream, UINT32 version, UINT32 blocksize, UINT32 cylinders, UINT32 heads, UINT32 sectors, UINT32 seclen)
+{
+	struct hard_disk_header header;
+	int errorcode;
+	char *buf;
+	void *disk;
+	UINT32 tot_sectors;
+	UINT32 i;
+
+
+	if ((version != 1) && (version != 2))
+		return IMGTOOLERR_PARAMCORRUPT;
+
+	if ((version == 1) && (seclen != 512))
+		return IMGTOOLERR_PARAMCORRUPT;
+
+	if ((blocksize == 0)|| (blocksize >= 2048))
+		return IMGTOOLERR_PARAMCORRUPT;
+
+	memset(&header, 0, sizeof(header));
+	header.version = version;
+	header.flags = HDFLAGS_IS_WRITEABLE;
+	header.compression = HDCOMPRESSION_NONE;
+	header.blocksize = blocksize;
+	header.cylinders = cylinders;
+	header.heads = heads;
+	header.sectors = sectors;
+	header.seclen = seclen;
+
+	errorcode = imghd_create(stream, &header);
+	if (errorcode)
+		return errorcode;
+
+	/* fill with 0s */
+	buf = malloc(seclen);
+	if (!buf)
+		return IMGTOOLERR_OUTOFMEMORY;
+	memset(buf, 0, seclen);
+
+	disk = imghd_open(stream);
+	if (!disk)
+		return IMGTOOLERR_UNEXPECTED;
+
+	tot_sectors = cylinders*heads*sectors;
+
+	for (i=0; i<tot_sectors; i++)
+		if (imghd_write(disk, i, 1, buf) != 1)
+			break;
+
+	imghd_close(stream);
+	if (i < tot_sectors)
+		return IMGTOOLERR_WRITEERROR;
+
+	return 0;
+}
+
+/*
 	imghd_open()
 
 	Open stream as a MAME HD image
@@ -222,7 +303,7 @@ UINT32 imghd_write(void *disk, UINT32 lbasector, UINT32 numsectors, const void *
 }
 
 /*
-	hard_disk_get_header()
+	imghd_get_header()
 
 	Return pointer to the header of MAME HD image
 */
@@ -264,3 +345,120 @@ const struct hard_disk_header *imghd_get_header(void *disk)
 
 	return image_is_writable(image) && (hard_disk_get_header(hd->hard_disk_handle)->flags & HDFLAGS_IS_WRITEABLE);
 }*/
+
+
+#if 0
+#pragma mark -
+#pragma mark IMGTOOL MODULE IMPLEMENTATION
+#endif
+
+static int mess_hd_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);
+
+enum
+{
+	mess_hd_createopts_version   = 'A',
+	mess_hd_createopts_blocksize = 'B',
+	mess_hd_createopts_cylinders = 'C',
+	mess_hd_createopts_heads     = 'D',
+	mess_hd_createopts_sectors   = 'E',
+	mess_hd_createopts_seclen    = 'F'
+};
+
+OPTION_GUIDE_START( mess_hd_create_optionguide )
+	OPTION_INT(mess_hd_createopts_version, "version", "Image format version (v1 only supports seclen = 512)" )
+	OPTION_INT(mess_hd_createopts_blocksize, "blocksize", "Sectors per block" )
+	OPTION_INT(mess_hd_createopts_cylinders, "cylinders", "Number of cylinders on hard disk" )
+	OPTION_INT(mess_hd_createopts_heads, "heads",	"Number of heads on hard disk" )
+	OPTION_INT(mess_hd_createopts_sectors, "sectors", "Number of sectors on hard disk" )
+	OPTION_INT(mess_hd_createopts_seclen, "seclen", "Number of bytes per sectors" )
+OPTION_GUIDE_END
+
+#define mess_hd_create_optionspecs "A1-[2];B[1]-2048;C1-65536;D1-64;E1-4096;F1-[512]-65536"
+
+
+#if 0
+static struct OptionTemplate mess_hd_createopts[] =
+{
+	{ "version",	"Image format version (v1 only supports seclen = 512)",	IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	2,	"2"},
+	{ "blocksize",	"Sectors per block",	IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	2048,	"1"},
+	{ "cylinders",	"Number of cylinders on hard disk",	IMGOPTION_FLAG_TYPE_INTEGER,	1,	65536,	NULL},
+	{ "heads",		"Number of heads on hard disk",	IMGOPTION_FLAG_TYPE_INTEGER,	1,	64,	NULL},
+	{ "sectors",	"Number of sectors on hard disk",	IMGOPTION_FLAG_TYPE_INTEGER,	1,	4096,	NULL},
+	{ "seclen",		"Number of bytes per sectors",	IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	65536,	"512"},
+	{ NULL, NULL, 0, 0, 0, 0 }
+};
+
+enum
+{
+	mess_hd_createopts_version = 0,
+	mess_hd_createopts_blocksize = 1,
+	mess_hd_createopts_cylinders = 2,
+	mess_hd_createopts_heads = 3,
+	mess_hd_createopts_sectors = 4,
+	mess_hd_createopts_seclen = 5
+};
+
+
+IMAGEMODULE(
+	mess_hd,
+	"MESS hard disk image",			/* human readable name */
+	"hd",							/* file extension */
+	NULL,							/* crcfile */
+	NULL,							/* crc system name */
+	0,								/* eoln */
+	0,								/* flags */
+	NULL,							/* init function */
+	NULL,							/* exit function */
+	NULL,							/* info function */
+	NULL,							/* begin enumeration */
+	NULL,							/* enumerate next */
+	NULL,							/* close enumeration */
+	NULL,							/* free space on image */
+	NULL,							/* read file */
+	NULL,							/* write file */
+	NULL,							/* delete file */
+	mess_hd_image_create,			/* create image */
+	NULL,							/* read sector */
+	NULL,							/* write sector */
+	NULL,							/* file options */
+	mess_hd_createopts				/* create options */
+)
+#endif
+
+imgtoolerr_t mess_hd_createmodule(imgtool_library *library)
+{
+	imgtoolerr_t err;
+	struct ImageModule *module;
+
+	err = imgtool_library_createmodule(library, "mess_hd", &module);
+	if (err)
+		return err;
+
+	module->description				= "MESS hard disk image";
+	module->extensions				= "hd\0";
+
+	module->create					= mess_hd_image_create;
+
+	module->createimage_optguide	= mess_hd_create_optionguide;
+	module->createimage_optspec		= mess_hd_create_optionspecs;
+
+	return IMGTOOLERR_SUCCESS;
+}
+
+static int mess_hd_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions)
+{
+	UINT32  version, blocksize, cylinders, heads, sectors, seclen;
+
+
+	(void) mod;
+
+	/* read options */
+	version = option_resolution_lookup_int(createoptions, mess_hd_createopts_version);
+	blocksize = option_resolution_lookup_int(createoptions, mess_hd_createopts_blocksize);
+	cylinders = option_resolution_lookup_int(createoptions, mess_hd_createopts_cylinders);
+	heads = option_resolution_lookup_int(createoptions, mess_hd_createopts_heads);
+	sectors = option_resolution_lookup_int(createoptions, mess_hd_createopts_sectors);
+	seclen = option_resolution_lookup_int(createoptions, mess_hd_createopts_seclen);
+
+	return imghd_create_base_v1_v2(f, version, blocksize, cylinders, heads, sectors, seclen);
+}
