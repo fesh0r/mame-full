@@ -83,24 +83,24 @@ fe4a1 call ff979 tape!!! test
  *		parallel input output
  *
  *************************************************************************/
-static int pc_ppi_porta_r(int chip );
-static int pc_ppi_portb_r(int chip );
-static int pc_ppi_portc_r(int chip);
-static void pc_ppi_porta_w(int chip, int data );
-static void pc_ppi_portb_w( int chip, int data );
-static void pc_ppi_portc_w(int chip, int data );
+static READ_HANDLER  ( pc_ppi_porta_r );
+static READ_HANDLER  ( pc_ppi_portb_r );
+static READ_HANDLER  ( pc_ppi_portc_r );
+static WRITE_HANDLER ( pc_ppi_porta_w );
+static WRITE_HANDLER ( pc_ppi_portb_w );
+static WRITE_HANDLER ( pc_ppi_portc_w );
 
 /* PC-XT has a 8255 which is connected to keyboard and other
 status information */
 ppi8255_interface pc_ppi8255_interface =
 {
 	1,
-	pc_ppi_porta_r,
-	pc_ppi_portb_r,
-	pc_ppi_portc_r,
-	pc_ppi_porta_w,
-	pc_ppi_portb_w,
-	pc_ppi_portc_w
+	{pc_ppi_porta_r},
+	{pc_ppi_portb_r},
+	{pc_ppi_portc_r},
+	{pc_ppi_porta_w},
+	{pc_ppi_portb_w},
+	{pc_ppi_portc_w}
 };
 
 static struct {
@@ -108,7 +108,7 @@ static struct {
 	int speaker;
 } pc_ppi={ 0 };
 
-int pc_ppi_porta_r(int chip )
+READ_HANDLER (pc_ppi_porta_r)
 {
 	int data;
 
@@ -118,7 +118,7 @@ int pc_ppi_porta_r(int chip )
     return data;
 }
 
-int pc_ppi_portb_r(int chip )
+READ_HANDLER (pc_ppi_portb_r )
 {
 	int data;
 
@@ -127,7 +127,7 @@ int pc_ppi_portb_r(int chip )
 	return data;
 }
 
-int pc_ppi_portc_r( int chip )
+READ_HANDLER ( pc_ppi_portc_r )
 {
 	int data=0xff;
 
@@ -151,13 +151,13 @@ int pc_ppi_portc_r( int chip )
 	return data;
 }
 
-void pc_ppi_porta_w(int chip, int data )
+WRITE_HANDLER ( pc_ppi_porta_w )
 {
 	/* KB controller port A */
 	PIO_LOG(1,"PIO_A_w",("$%02x\n", data));
 }
 
-void pc_ppi_portb_w(int chip, int data )
+WRITE_HANDLER ( pc_ppi_portb_w )
 {
 	/* KB controller port B */
 	PIO_LOG(1,"PIO_B_w",("$%02x\n", data));
@@ -166,7 +166,7 @@ void pc_ppi_portb_w(int chip, int data )
 	pc_keyb_set_clock(data&0x40);
 }
 
-void pc_ppi_portc_w(int chip, int data )
+WRITE_HANDLER ( pc_ppi_portc_w )
 {
 	/* KB controller port C */
 	PIO_LOG(1,"PIO_C_w",("$%02x\n", data));
@@ -265,7 +265,7 @@ READ_HANDLER ( pc_EXP_r )
 	UINT16 a;
 
 	switch (offset) {
-	case 6: 
+	case 6:
 		data = pc_expansion.reg[offset];
 		a=(pc_expansion.reg[5]<<8)|pc_expansion.reg[6];
 		a<<=1;
