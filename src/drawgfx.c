@@ -81,7 +81,7 @@ INLINE void write_dword(void *address, UINT32 data)
 
 INLINE int readbit(const UINT8 *src,int bitnum)
 {
-	return (src[bitnum / 8] >> (7 - bitnum % 8)) & 1;
+	return src[bitnum / 8] & (0x80 >> (bitnum % 8));
 }
 
 
@@ -89,50 +89,73 @@ void decodechar(struct GfxElement *gfx,int num,const UINT8 *src,const struct Gfx
 {
 	int plane,x,y;
 	UINT8 *dp;
-	int offs;
+	int baseoffs;
+	const UINT32 *xoffset,*yoffset;
 
 
-	offs = num * gl->charincrement;
-	dp = gfx->gfxdata + num * gfx->char_modulo;
-	for (y = 0;y < gfx->height;y++)
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
-		int yoffs;
+		xoffset = gl->yoffset;
+		yoffset = gl->xoffset;
+	}
+	else
+	{
+		xoffset = gl->xoffset;
+		yoffset = gl->yoffset;
+	}
 
-		yoffs = y;
+	dp = gfx->gfxdata + num * gfx->char_modulo;
+	memset(dp,0,gfx->height * gfx->line_modulo);
+
+	baseoffs = num * gl->charincrement;
+
+	for (plane = 0;plane < gl->planes;plane++)
+	{
+		int shiftedbit = 1 << (gl->planes-1-plane);
+		int offs = baseoffs + gl->planeoffset[plane];
+
+		dp = gfx->gfxdata + num * gfx->char_modulo + (gfx->height-1) * gfx->line_modulo;
+
+
 #ifdef PREROTATE_GFX
-		if (Machine->orientation & ORIENTATION_FLIP_Y)
-			yoffs = gfx->height-1 - yoffs;
-#endif
-
-		for (x = 0;x < gfx->width;x++)
+		y = gfx->height;
+		while (--y >= 0)
 		{
-			int xoffs;
+			int yoffs;
 
-			xoffs = x;
-#ifdef PREROTATE_GFX
-			if (Machine->orientation & ORIENTATION_FLIP_X)
-				xoffs = gfx->width-1 - xoffs;
-#endif
+			yoffs = y;
+			if (Machine->orientation & ORIENTATION_FLIP_Y)
+				yoffs = gfx->height-1 - yoffs;
 
-			dp[x] = 0;
-			if (Machine->orientation & ORIENTATION_SWAP_XY)
+			x = gfx->width;
+			while (--x >= 0)
 			{
-				for (plane = 0;plane < gl->planes;plane++)
-				{
-					if (readbit(src,offs + gl->planeoffset[plane] + gl->yoffset[xoffs] + gl->xoffset[yoffs]))
-						dp[x] |= (1 << (gl->planes-1-plane));
-				}
+				int xoffs;
+
+				xoffs = x;
+				if (Machine->orientation & ORIENTATION_FLIP_X)
+					xoffs = gfx->width-1 - xoffs;
+
+				if (readbit(src,offs + xoffset[xoffs] + yoffset[yoffs]))
+					dp[x] |= shiftedbit;
 			}
-			else
-			{
-				for (plane = 0;plane < gl->planes;plane++)
-				{
-					if (readbit(src,offs + gl->planeoffset[plane] + gl->yoffset[yoffs] + gl->xoffset[xoffs]))
-						dp[x] |= (1 << (gl->planes-1-plane));
-				}
-			}
+			dp -= gfx->line_modulo;
 		}
-		dp += gfx->line_modulo;
+#else
+		y = gfx->height;
+		while (--y >= 0)
+		{
+			int offs2 = offs + yoffset[y];
+
+			x = gfx->width;
+			while (--x >= 0)
+			{
+				if (readbit(src,offs2 + xoffset[x]))
+					dp[x] |= shiftedbit;
+			}
+			dp -= gfx->line_modulo;
+		}
+#endif
 	}
 
 
@@ -1042,7 +1065,8 @@ void fillbitmap(struct osd_bitmap *dest,int pen,const struct rectangle *clip)
 	if (clip && ey > clip->max_y) ey = clip->max_y;
 	if (sy > ey) return;
 
-	osd_mark_dirty (sx,sy,ex,ey,0);	/* ASG 971011 */
+	if (Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY)
+		osd_mark_dirty (sx,sy,ex,ey,0);	/* ASG 971011 */
 
 	/* ASG 980211 */
 	if (dest->depth == 16)
@@ -4043,7 +4067,8 @@ DECLARE(drawgfx_core,(
 	if (clip && ey > clip->max_y) ey = clip->max_y;
 	if (sy > ey) return;
 
-	osd_mark_dirty (sx,sy,ex,ey,0);	/* ASG 971011 */
+	if (Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY)
+		osd_mark_dirty (sx,sy,ex,ey,0);	/* ASG 971011 */
 
 	{
 		UINT8 *sd = gfx->gfxdata + code * gfx->char_modulo;		/* source data */
