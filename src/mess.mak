@@ -646,7 +646,7 @@ $(OBJ)/intv.a:     \
 
 # MESS specific core $(OBJ)s
 COREOBJS += \
-	$(OBJ)/src/cheat.o	       \
+	$(OBJ)/cheat.o  	       \
 	$(OBJ)/mess/mess.o	       \
 	$(OBJ)/mess/system.o	       \
 	$(OBJ)/mess/config.o	       \
