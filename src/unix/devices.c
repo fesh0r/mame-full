@@ -379,7 +379,7 @@ void osd_joystick_start_calibration (void)
 {
 }
 
-char *osd_joystick_calibrate_next (void)
+const char *osd_joystick_calibrate_next (void)
 {
    return NULL;
 }

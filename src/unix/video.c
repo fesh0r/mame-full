@@ -467,9 +467,9 @@ void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y)
    set_ui_visarea (normal_visual.min_x, normal_visual.min_y, normal_visual.max_x, normal_visual.max_y);
 }
 
-int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
-   unsigned short *pens, int modifiable, const unsigned char *debugger_palette,
-   unsigned short *debugger_pens)
+int osd_allocate_colors(unsigned int totalcolors, const UINT8 *palette,
+   UINT32 *pens, int modifiable, const UINT8 *debugger_palette,
+   UINT32 *debugger_pens)
 {
    int i;
    int writable_colors = 0;
