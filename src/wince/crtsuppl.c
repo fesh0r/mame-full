@@ -29,7 +29,7 @@ int _kbhit(void)
 
 void mkdir(const char *dir)
 {
-	CreateDirectory(A2T(dir));
+	CreateDirectory(A2T(dir), NULL);
 }
 
 // --------------------------------------------------------------------------
