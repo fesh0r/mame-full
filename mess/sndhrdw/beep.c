@@ -9,7 +9,7 @@
 	Sound handler
 ****************************************************************************/
 #include "driver.h"
-#include "includes/beep.h"
+#include "sound/beep.h"
 
 
 static int beep_stream;
