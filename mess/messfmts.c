@@ -79,10 +79,16 @@ static void bdf_get_id_callback(int drive, chrn_id *id, int id_index, int side)
 
 static void bdf_read_sector_data_into_buffer(int drive, int side, int index1, char *ptr, int length)
 {
+	struct mess_bdf *messbdf;
+	messbdf = get_messbdf(drive);
+	bdf_read_sector(messbdf->bdf, messbdf->track, side, index1, 0, ptr, length);
 }
 
 static void bdf_write_sector_data_from_buffer(int drive, int side, int index1, char *ptr, int length,int ddam)
 {
+	struct mess_bdf *messbdf;
+	messbdf = get_messbdf(drive);
+	bdf_write_sector(messbdf->bdf, messbdf->track, side, index1, 0, ptr, length);
 }
 
 /* ----------------------------------------------------------------------- */
