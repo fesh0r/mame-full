@@ -606,7 +606,7 @@ static int sony_get_track(void)
 		for (i = 0; i < (sizeof(blk3) / sizeof(blk3[0])); i++)
 			sony_filltrack(f, blk3[i]);
 
-		#if LOG_sony_EXTRA
+		#if LOG_SONY_EXTRA
 			logerror("sony_get_track(): sector=%i csum[0..3]={0x%02x,0x%02x,0x%02x,0x%02x}\n",
 				(int) sector, (int) csum[0], (int) csum[1], (int) csum[2], (int) csum[3]);
 		#endif
@@ -830,7 +830,7 @@ static int sony_put_track(void)
 
 		sector_found[sector] = TRUE;
 
-		#if LOG_sony_EXTRA
+		#if LOG_SONY_EXTRA
 			logerror("sony_put_track(): sector=%i csum[0..3]={0x%02x,0x%02x,0x%02x,0x%02x}\n",
 				(int) sector, (int) csum[0], (int) csum[1], (int) csum[2], (int) csum[3]);
 		#endif

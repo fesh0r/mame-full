@@ -141,7 +141,10 @@ DRVLIBS = \
 	$(OBJ)/at.a       \
 	$(OBJ)/pc.a       \
 	$(OBJ)/pcshare.a  \
-#	$(OBJ)/apple.a    \
+	$(OBJ)/pdp1.a	  \
+	$(OBJ)/apexc.a	  \
+	$(OBJ)/apple.a    \
+#	$(OBJ)/ti99.a     \
 #	$(OBJ)/advision.a \
 #	$(OBJ)/arcadia.a  \
 #	$(OBJ)/coleco.a   \
@@ -152,7 +155,6 @@ DRVLIBS = \
 #	$(OBJ)/svision.a  \
 #	$(OBJ)/intv.a     \
 #	$(OBJ)/vc4000.a   \
-#	$(OBJ)/apexc.a	  \
 #	$(OBJ)/p2000.a	  \
 #	$(OBJ)/ep128.a	  \
 #	$(OBJ)/tangerin.a \
@@ -189,8 +191,6 @@ DRVLIBS = \
 #	$(OBJ)/nec.a	  \
 #	$(OBJ)/gce.a	  \
 #	$(OBJ)/veb.a	  \
-#	$(OBJ)/pdp1.a	  \
-#	$(OBJ)/ti99.a     \
 #	$(OBJ)/mtx.a	  \
 #	$(OBJ)/kim1.a     \
 #	$(OBJ)/mk1.a      \
@@ -355,24 +355,24 @@ $(OBJ)/sinclair.a: \
 	  $(OBJ)/mess/systems/zx.o
 
 $(OBJ)/apple.a:   \
-	  $(OBJ)/mess/vidhrdw/apple1.o	 \
-	  $(OBJ)/mess/machine/apple1.o	 \
-	  $(OBJ)/mess/systems/apple1.o   \
-	  $(OBJ)/mess/machine/ay3600.o	 \
-	  $(OBJ)/mess/machine/ap_disk2.o \
-	  $(OBJ)/mess/vidhrdw/apple2.o	 \
-	  $(OBJ)/mess/machine/apple2.o	 \
-	  $(OBJ)/mess/systems/apple2.o   \
-	  $(OBJ)/mess/sndhrdw/mac.o	 \
-	  $(OBJ)/mess/machine/iwm.o	 \
-	  $(OBJ)/mess/machine/sonydriv.o \
-	  $(OBJ)/mess/vidhrdw/mac.o	 \
-	  $(OBJ)/mess/machine/mac.o	 \
-	  $(OBJ)/mess/systems/mac.o      \
-	  $(OBJ)/mess/machine/iwm.o	 \
-	  $(OBJ)/mess/machine/sonydriv.o \
 	  $(OBJ)/mess/machine/lisa.o	 \
-	  $(OBJ)/mess/systems/lisa.o
+	  $(OBJ)/mess/systems/lisa.o     \
+	  $(OBJ)/mess/machine/iwm.o	 \
+	  $(OBJ)/mess/machine/sonydriv.o \
+#	  $(OBJ)/mess/vidhrdw/apple1.o	 \
+#	  $(OBJ)/mess/machine/apple1.o	 \
+#	  $(OBJ)/mess/systems/apple1.o   \
+#	  $(OBJ)/mess/machine/ay3600.o	 \
+#	  $(OBJ)/mess/machine/ap_disk2.o \
+#	  $(OBJ)/mess/vidhrdw/apple2.o	 \
+#	  $(OBJ)/mess/machine/apple2.o	 \
+#	  $(OBJ)/mess/systems/apple2.o   \
+#	  $(OBJ)/mess/sndhrdw/mac.o	 \
+#	  $(OBJ)/mess/machine/iwm.o	 \
+#	  $(OBJ)/mess/machine/sonydriv.o \
+#	  $(OBJ)/mess/vidhrdw/mac.o	 \
+#	  $(OBJ)/mess/machine/mac.o	 \
+#	  $(OBJ)/mess/systems/mac.o      \
 
 
 $(OBJ)/avigo.a: \
