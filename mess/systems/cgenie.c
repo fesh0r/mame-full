@@ -89,8 +89,7 @@ extern READ_HANDLER ( cgenie_keyboard_r );
 extern int cgenie_videoram_r(int offset);
 extern WRITE_HANDLER ( cgenie_videoram_w );
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START (readmem)
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x7fff, MRA_RAM },
 //	{ 0x8000, 0xbfff, MRA_RAM },	// only if 32K RAM is enabled
@@ -108,11 +107,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xffee, 0xffee, cgenie_sector_r },
 	{ 0xffef, 0xffef, cgenie_data_r },
 	{ 0xfff0, 0xffff, MRA_NOP },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START (writemem)
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x7fff, cgenie_videoram_w, &videoram },
 //	{ 0x8000, 0xbfff, MWA_RAM },	// only if 32K RAM is enabled
@@ -129,28 +126,23 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xffee, 0xffee, cgenie_sector_w },
 	{ 0xffef, 0xffef, cgenie_data_w },
 	{ 0xfff0, 0xffff, MWA_NOP },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START (readport)
 	{ 0xf8, 0xf8, cgenie_sh_control_port_r },
 	{ 0xf9, 0xf9, cgenie_sh_data_port_r },
 	{ 0xfa, 0xfa, cgenie_index_r },
 	{ 0xfb, 0xfb, cgenie_register_r },
 	{ 0xff, 0xff, cgenie_port_ff_r },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START (writeport)
 	{ 0xf8, 0xf8, cgenie_sh_control_port_w },
 	{ 0xf9, 0xf9, cgenie_sh_data_port_w },
 	{ 0xfa, 0xfa, cgenie_index_w },
 	{ 0xfb, 0xfb, cgenie_register_w },
 	{ 0xff, 0xff, cgenie_port_ff_w },
-	{ -1 }
-};
+PORT_END
 
 INPUT_PORTS_START( cgenie )
 	PORT_START /* IN0 */
@@ -601,7 +593,7 @@ static const struct IODevice io_cgenie[] = {
 		IO_FLOPPY,				/* type */
 		4,						/* count */
 		"dsk\0",                /* file extensions */
-		NULL,					/* private */
+		IO_RESET_NONE,			/* reset if changed */
 		basicdsk_floppy_id, 	/* id */
 		cgenie_floppy_init, 	/* init */
 		basicdsk_floppy_exit,	/* exit */
