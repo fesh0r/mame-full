@@ -14,8 +14,11 @@
 /* from src/mess/win32.c */
 char *strncatz(char *dest, const char *source, size_t len);
 char *strncpyz(char *dest, const char *source, size_t len);
-extern char crcfilename[MAX_PATH];
-extern char pcrcfilename[MAX_PATH];
+
+static char crcfilename[MAX_PATH] = "";
+static char pcrcfilename[MAX_PATH] = "";
+const char *crcfile = crcfilename;
+const char *pcrcfile = pcrcfilename;
 
 /* from src/win32/Directories.c */
 const char *GetMessSoftwarePath(int i);

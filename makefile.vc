@@ -76,7 +76,7 @@ endif
 # some structures and thus they can't be linked against each other.
 # cleantiny isn't needed anymore, because the tiny build has its
 # own object directory too.
-OBJ = $(NAME).obj
+OBJ = obj\$(NAME)
 
 EMULATOR = $(NAME)$(EXE)
 

@@ -69,12 +69,12 @@ endif
 # check if this is a MESS build
 ifdef MESS
 OSOBJS += \
+        $(OBJ)/mess/windows/fdc.o \
+        $(OBJ)/mess/windows/dirio.o \
         $(OBJ)/mess/Win32/mess32ui.o \
         $(OBJ)/mess/Win32/MessProperties.o \
         $(OBJ)/mess/Win32/MessOptions.o \
-        $(OBJ)/mess/Win32/fdc.o \
         $(OBJ)/mess/Win32/fileio.o \
-        $(OBJ)/mess/Win32/dirio.o \
         $(OBJ)/mess/Win32/SmartListView.o
 else
 OSOBJS += \

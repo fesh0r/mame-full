@@ -1,20 +1,5 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-//#include <shellapi.h>
-//#include <windowsx.h>
-//#include <stdio.h>
-//#include <io.h>
-//#include <fcntl.h>
-//#include <commctrl.h>
-//#include <commdlg.h>
-//#include <string.h>
-//#include <sys/stat.h>
-//#include <wingdi.h>
-//#include <tchar.h>
-//#include <assert.h>
-//#include <string.h>
-//#include <stdlib.h>
-
 #include "driver.h"
 #include "mess.h"
 #include "unzip.h"
@@ -32,10 +17,6 @@ typedef struct {
 } OSD_WIN32_FIND_DATA;
 
 static char szCurrentDirectory[MAX_PATH];
-char crcfilename[MAX_PATH] = "";
-char pcrcfilename[MAX_PATH] = "";
-const char *thecrcfile = crcfilename;
-const char *thepcrcfile = pcrcfilename;
 
 static void checkinit_curdir(void)
 {
@@ -253,9 +234,4 @@ const char *osd_get_cwd(void)
 {
 	checkinit_curdir();
 	return szCurrentDirectory;
-}
-
-int osd_select_file(int sel, char *filename)
-{
-	return 0;
 }

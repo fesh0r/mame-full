@@ -393,5 +393,9 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 
 }
 
+int osd_select_file(int sel, char *filename)
+{
+	return 0;
+}
 
 
