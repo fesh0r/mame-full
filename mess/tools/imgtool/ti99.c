@@ -1,12 +1,18 @@
 /*
 	Handlers for ti99 disk images
 
-	Disk images are in v9t9/MESS format.  Files are extracted in TIFILES format.
+	We support the following types of image:
+	* floppy disks ("DSK format") in v9t9, pc99 and old mess image format
+	* hard disks ("WIN format") in MAME harddisk format (256-byte sectors only,
+	  i.e. no SCSI)
+	Files are extracted in TIFILES format.  There is a compile-time option to
+	extract text files in flat format, but I need to re-implement it properly
+	(using filters comes to mind).
 
 	Raphael Nabet, 2002-2003
 
 	TODO:
-	- finish and test hd support
+	- finish and test hd support ***finish and test extent FDR extent support***
 */
 
 #include <limits.h>
@@ -20,57 +26,206 @@
 #include "harddisk.h"
 #include "imghd.h"
 
-
 /*
-	DSK disk structure (floppy disk, up to 1600 AUs and 16MBytes per volume):
+	Concepts shared by both disk structures:
+	----------------------------------------
 
-	The disk sector size is normally 256 bytes.  If the size is not 256 bytes,
-	the sectors should be grouped or split into 256-byte physical records.  It
-	is unknown whether any FDR supports sectors of any size other than 256
-	bytes.  It sounds likely that the SCSI DSR does, but I don't know is it
-	supports the TI DSK format.
+	In both formats, the entire disk surface is split into physical records,
+	each 256-byte-long.  For best efficiency, the sector size is usually 256
+	bytes so that one sector is equivalent to a physical record (this is true
+	with floppies and HFDC hard disks).  If the sector size is not 256 bytes
+	(e.g. 512 bytes with SCSI hard disks, possibly 128 bytes on a TI-99
+	simulator running on TI-990), sectors are grouped or split to form 256-byte
+	physical records.  Physical records are numbered from 0, with the first
+	starting on sector 0 track 0.  To avoid confusion with physical records in
+	files, these physical records will be called "absolute physical records",
+	abbreviated as "absolute physrecs" or "absphysrecs".
 
-	The disk is allocated in allocation units (AUs).  Each AU represents one
-	or several 256-byte physical records; for some reason, the number of
-	physical records per AU is always a power of 2.  AUs usually represent one
-	physical record each, but since we cannot have more than 1600 AUs, we need
-	to have several physical records per AU in disks larger than 400kbytes.
-	Note that only one disk controller (Myarc's HFDC) implements AUs that span
-	multiple physical records.
+	Disk space is allocated in units referred to as AUs.  Each AU represents an
+	integral number of 256-byte physical records.  The number of physrecs per
+	AU varies depending on the disk format and size.  AUs are numbered from 0,
+	with the first starting with absolute physrec 0.
+
+	Absolute physrec 0 contains a 256-byte record with volume information,
+	which is called "Volume Information Block", abbreviated as "vib".
+
+	To keep track of which areas on the disk are allocated and which are free,
+	disk managers maintain a bit map of allocated AUs (called "allocation
+	bitmap", abbreviated as "abm").  Each bit in the allocation bitmap
+	represents an AU: if a bit is 0, the AU is free; if a bit is 1, the AU is
+	allocated (or possibly bad if the disk manager can track bad sectors).
+	Where on the disk the abm is located depends on the disk format.
+
+	Files are implemented as a succession 256-byte physical records.  To
+	avoid confusion with absolute physical records, these physical records will
+	be called "file physical records", abbreviated as "file physrecs" or
+	"filephysrecs".
+
+	Programs do normally not access file physical records directly.  They may
+	call high-level file routines that enable to create either fixed-lenght
+	logical records of any size from 1 through 255, or variable-lenght records
+	of any size from 1 through 254: logical records are grouped by file
+	managers into 256-byte physical records.  Some disk managers (HFDC and
+	SCSI) allow programs to create fixed-lenght records larger than 255 bytes,
+	too, but few programs use this possibility.  Additionally, programs may
+	create program files, that do not implement any logical record, and can be
+	seen as a flat byte stream, not unlike files under MSDOS, UNIX and the C
+	standard library.  (Unfortunately, the API for program files is lacks
+	flexibility, and most programs that need to process a flat byte stream
+	will use fixed-size records of 128 bytes.)
+
+		Fixed-length records (reclen < 256) are grouped like this:
+			file physrec 0    file physrec 1
+			_______________   _______________
+			|R0 |R1 |R2 |X|   |R3 |R4 |R5 |X|
+			---------------   ---------------
+			            \_/               \_/
+			           unused            unused
+			      (size < reclen)   (size < reclen)
+
+		Fixed-length records (reclen > 256) are grouped like this:
+			file physrec 0     file physrec 1     file physrec 2      file physrec 3      ...
+			_________________  _________________  _________________   _________________
+			|  R0 (#0-255)  |  | R0 (#256-511) |  |R0 (#512-end)|X|   |  R1 (#0-255)  |   ...
+			-----------------  -----------------  -----------------   -----------------
+			                                                    \_/
+			                                                   unused
+
+		Variable lenght records are grouped like this:
+			           file physrec 0:
+			byte:
+			        ------------------------------
+			      0 |l0 = lenght of record 0 data|
+			        |----------------------------|
+			      1 |                            |
+			        |                            |
+			      : |       record 0 data        |
+			        |                            |
+			     l0 |                            |
+			        |----------------------------|
+			   l0+1 |l1 = lenght of record 1 data|
+			        |----------------------------|
+			   l0+2 |                            |
+			        |                            |
+			      : |       record 1 data        |
+			        |                            |
+			l0+l1+1 |                            |
+			        |----------------------------|
+			      : :                            :
+			      : :                            :
+			        |----------------------------|
+			      n |lm = lenght of record m data|
+			        |----------------------------|
+			    n+1 |                            |
+			        |                            |
+			      : |       record m data        |
+			        |                            |
+			   n+lm |                            |
+			        |----------------------------|
+			 n+lm+1 |>ff: EOR mark               |
+			        |----------------------------|
+			 n+lm+2 |                            |
+			        |                            |
+			      : |           unused           |
+			      : |(we should have size < lm+1)|
+			        |                            |
+			    255 |                            |
+			        ------------------------------
+
+			           file physrec 1:
+			byte:
+			        ------------------------------
+			      0 |lm+1=lenght of record 0 data|
+			        |----------------------------|
+			      1 |                            |
+			        |                            |
+			      : |      record m+1 data       |
+			        |                            |
+			   lm+1 |                            |
+			        |----------------------------|
+			      : :                            :
+			      : :                            :
+
+			I think the EOR mark is not required if all 256 bytes of a physical
+			record are used by logical records.
+
+
+	All files are associated with a "file descriptor record" ("fdr") that holds
+	file information and points to the data physrecs.  The WIN disk structure
+	also supports extent FDRs, in case a file is so fragmented that all the
+	data pointers cannot fit in one FDR; the DSK disk structure does not
+	implement any such feature, and you may be unable to append data to an
+	existing file if it is too fragmented, even though the disk is not full.
+
+
+	DSK disk structure:
+	-------------------
+
+	The DSK disk structure is used for floppy disks, and a few RAMDISKs as
+	well.  It supports 1600 AUs and 16 MBytes at most (the 16 MByte value is a
+	theorical maximum, as I doubt anybody ever created so big a DSK volume).
+
+	The disk sector size is always 256 bytes (the only potential exceptions are
+	the SCSI floppy disk units and the TI-99 simulator on TI-990, but I don't
+	know anything about either).
+
+	For some reason, the number of physrecs per AU is always a power of 2.
+	Originally, AUs always were one physical record each.  However, since the
+	allocation bitmap cannot support more than 1600 AUs, disks larger than
+	400kbytes need to have several physical records per AU.  Note that
+	relatively few disk controllers implement AUs that span multiple physical
+	records (IIRC, these are Myarc's HFDC, SCSI DSR with floppy disk interface,
+	and some upgraded Myarc and Corcomp DD floppy controllers).
+
+	The allocation bitmap is located in the vib.  It is 200-byte-long, and
+	supports 1600 AUs at most.
+
+	Originally, the DSK structure only supported one directory level (i.e. the
+	root directory level).  The FDIR record for the root directory is always
+	located in absolute physrec 1.  However, Myarc extended the DSK structure
+	to support up to 3 subdirectories in the root directory (note that there is
+	no support for more subdirs, or for subdirs located in subdirs).  To do so,
+	they used an unused field of the VIB to hold the 10-char name of each
+	directory and the absolute physrec address of the associated FDIR record.
 
 	Sector 0: Volume Information Block (VIB): see below
 	Sector 1: root File Descriptor Index Record (FDIR): array of 0 through 128
-		words, sector (physical record?) address of the fdr record for each
-		file.  Sorted by ascending file name.  Note that, while we should be
-		prepared to read images images with 128 entries, we should write no
-		more than 127 for compatibility with existing FDRs.
+		words, containing the absolute physrec address of the each fdr in the
+		directory, sorted by ascending file name, terminated with a 0.  Note
+		that, while we should be prepared to read images images with 128
+		entries, we should write no more than 127 for compatibility with some
+		existing disk managers.
 	Remaining AUs are used for fdr and data (and subdirectory fdir in the case
 	of hfdc).  There is one FDIR record per directory; the FDIR points to the
 	FDR for each file in the directory.  The FDR (File Descriptor Record)
 	contains the file information (name, format, lenght, pointers to data
 	sectors/AUs, etc).
-*/
 
-/*
-	WIN disk structure (hard disk, up to 65535 AUs and 256MBytes per volume):
+
+	WIN disk structure:
+	-------------------
+
+	The WIN disk structure is used for hard disks.  It supports 65535 AUs and
+	256 MBytes at most.
 
 	The disk sector size is 256 bytes on HFDC, 512 bytes on SCSI.  512-byte
 	sectors are split into 256-byte physical records.
 
-	The disk is allocated in allocation units (AUs).  Each AU represents one
-	or several sectors.  AUs usually represent one sector each, but since we
-	cannot have more than 65535 AUs, we need to have several physical records
-	per AU in disks larger than 16 (HFDC) or 32 (SCSI) Mbytes.
+	We may have from 1 through 16 physrecs per AUs.  Since we cannot have more
+	than 65535 AUs, we need to have several physical records per AU in disks
+	larger than 16 Mbytes.
 
 	Sector 0: Volume Information Block (VIB): see below
 	Sector 1-n: Volume bitmap
 	Remaining physical records are used for ddr, fdir, fdr and data.  Each
-	directory (except the root directory, which uses the VIB as a DDR) has a
-	DDR, that points to an FDIR.  The FDIR points to the FDR for each file in
+	directory has a DDR (except the root directory, which uses the VIB as a
+	DDR), that points to an FDIR.  The FDIR points to the FDR for each file in
 	the directory, and to the parent DDR as well.  Each file has one FDR (File
 	Descriptor Record) descriptor which provides the file information (name,
 	format, lenght, pointers to data sectors/AUs, etc).  When a file has more
-	than 76 fragments, we create offspring FDRs that hold additional fragments.
+	than 54 fragments, we create offspring FDRs that hold additional fragments
+	(I cannot really figure out why they chose to duplicate the FDR rather than
+	creating a file extension record, though there must be a reason).
 */
 
 /* Since string length is encoded with a byte, the maximum length of a string
@@ -960,7 +1115,15 @@ static int write_absolute_physrec(ti99_lvl1_imgref *l1_img, int physrec, const v
 	ti99_sector_address address;
 
 
-	physrec_to_sector_address(physrec, & l1_img->geometry, & address);
+	if (l1_img->img_format == if_harddisk)
+	{	/* ***KLUDGE*** */
+		address.sector = physrec % l1_img->geometry.secspertrack;
+		physrec /= l1_img->geometry.secspertrack;
+		address.side = physrec % l1_img->geometry.sides;
+		address.cylinder = physrec / l1_img->geometry.sides;
+	}
+	else
+		physrec_to_sector_address(physrec, & l1_img->geometry, & address);
 
 	return write_sector(l1_img, & address, src);
 }
@@ -1054,13 +1217,13 @@ typedef struct ti99_AUformat
 */
 typedef struct dir_entry
 {
-	UINT16 fdir_physrec;	/* sector (physrec?) address of the fdir for this directory */
-	char dirname[10];		/* name of this directory (copied from the VIB) */
+	UINT16 fdir_physrec;	/* physrec address of the fdir for this directory */
+	char dirname[10];		/* name of this directory (copied from the VIB for DSK, DDR for WIN) */
 } dir_entry;
 
 typedef struct file_entry
 {
-	UINT16 fdr_physrec;		/* sector (physrec?) address of the fdr for this file */
+	UINT16 fdr_physrec;		/* physrec address of the fdr for this file */
 	char fname[10];			/* name of this file (copied from fdr) */
 } file_entry;
 
@@ -1092,7 +1255,8 @@ typedef struct ti99_lvl2_imgref_win
 		win_vib_v2
 	} vib_version;
 	win_vib_ddr vib;	/* cached copy of volume information block record in sector 0 */
-	int data_offset;	/* fdr records are preferentially allocated in sectors 2 to data_offset (34)
+	UINT8 abm[8192];	/* allocation bitmap */
+	int data_offset;	/* fdr records are preferentially allocated in sectors n (<=33) to data_offset
 						whereas data records are preferentially allocated in sectors starting at data_offset. */
 } ti99_lvl2_imgref_win;
 
@@ -1180,8 +1344,10 @@ typedef struct win_fdr
 	UINT8 recspersec;		/* logical records per 256-byte record (i.e. sector) */
 								/* ignored for variable length record files and */
 								/* program files */
-	UINT16BE secsused;		/* allocated file length in 256-byte records (i.e. */
-								/* sectors) */
+	UINT16BE secsused_LSW;	/* for root FDR: allocated file length in physrecs */
+								/* records (i.e. sectors)??? */
+							/* for offspring FDRs: this is the index of the */
+								/* first physrec in this FDR?????? */
 	UINT8 eof;				/* EOF offset in last sector for variable length */
 								/* record files and program files (0->256)*/
 	UINT8 reclen;			/* logical record size in bytes ([1,255] 0->256) */
@@ -1189,7 +1355,7 @@ typedef struct win_fdr
 								/* length record files.  Reserved for program */
 								/* files (set to 0).  Set to 0 if reclen >=256 */
 								/* (HFDC only). */
-	UINT16LE fixrecs;		/* file length in logical records */
+	UINT16LE fixrecs_LSW;	/* file length in logical records */
 								/* For variable length record files, number of */
 								/* 256-byte records actually used. */
 	ti99_date_time creation;/* date and time of creation (HFDC and BwG only; */
@@ -1200,7 +1366,7 @@ typedef struct win_fdr
 	char id[2];				/* 'FI' */
 	UINT16BE prev_FDR_AU;	/* previous cluster table extension FDR */
 	UINT16BE next_FDR_AU;	/* next cluster table extension FDR */
-	UINT16BE num_FDR_AU;	/* total numebr of AUs allocated for FDR FDR */
+	UINT16BE num_FDR_AU;	/* total number of data AUs allocated to this FDR */
 	UINT16BE parent_FDIR_AU;/* FDIR the file is listed in */
 	UINT16BE xinfo;			/* extended information */
 								/* bits 0-3: MSN of secsused */
@@ -1266,9 +1432,11 @@ typedef struct ti99_lvl2_fileref_dsk
 typedef struct ti99_lvl2_fileref_win
 {
 	ti99_lvl2_imgref *l2_img;
-	int curfdr_physrec;
-	int cur_cluster_index;
-	int cur_cluster_pos;
+	unsigned secsused;
+	unsigned rootfdr_physrec;
+	unsigned curfdr_physrec;
+	unsigned cur_cluster_index;
+	unsigned cur_cluster_pos;
 	win_fdr curfdr;
 } ti99_lvl2_fileref_win;
 
@@ -1409,7 +1577,7 @@ static int win_read_catalog(ti99_lvl2_imgref *l2_img, int DDR_AU, ti99_catalog *
 		return IMGTOOLERR_READERROR;
 
 	/* sanity checks */
-	if ((ddr_buf.num_files > 128) || (ddr_buf.num_subdirs > 114) || (get_UINT16BE(ddr_buf.fdir_AU) > l2_img->AUformat.totAUs))
+	if ((ddr_buf.num_files > 127) || (ddr_buf.num_subdirs > 114) || (get_UINT16BE(ddr_buf.fdir_AU) > l2_img->AUformat.totAUs))
 		return IMGTOOLERR_CORRUPTIMAGE;
 
 	/* set file count and subdir count */
@@ -1699,15 +1867,27 @@ static int win_find_catalog_entry(ti99_lvl2_imgref *l2_img, const char *fpath, i
 static int alloc_fdr_sector(ti99_lvl2_imgref *l2_img, int *fdr_physrec)
 {
 	int totAUs = l2_img->AUformat.totAUs;
+	UINT8 *abm;
 	int i;
 
 
+	switch (l2_img->type)
+	{
+	case L2I_DSK:
+		abm = l2_img->u.dsk.vib.abm;
+		break;
+
+	case L2I_WIN:
+		abm = l2_img->u.win.abm;
+		break;
+	}
+
 	for (i=0; i<totAUs; i++)
 	{
-		if (! (l2_img->u.dsk.vib.abm[i >> 3] & (1 << (i & 7))))
+		if (! (abm[i >> 3] & (1 << (i & 7))))
 		{
 			*fdr_physrec = i * l2_img->AUformat.physrecsperAU;
-			l2_img->u.dsk.vib.abm[i >> 3] |= 1 << (i & 7);
+			abm[i >> 3] |= 1 << (i & 7);
 
 			return 0;
 		}
@@ -1716,11 +1896,11 @@ static int alloc_fdr_sector(ti99_lvl2_imgref *l2_img, int *fdr_physrec)
 	return IMGTOOLERR_NOSPACE;
 }
 
-INLINE int get_fdr_cluster_baseAU(ti99_lvl2_imgref *l2_img, dsk_fdr *fdr, int cluster_index)
+INLINE int get_dsk_fdr_cluster_baseAU(ti99_lvl2_imgref *l2_img, dsk_fdr *fdr, int cluster_index)
 {
 	int reply;
 
-	/* read base AU/sector for this cluster */
+	/* read base AU/physrec for this cluster */
 	reply = ((fdr->clusters[cluster_index][1] & 0xf) << 8) | fdr->clusters[cluster_index][0];
 	/* convert to AU address */
 	if (l2_img->AUformat.physrecsperAU <= 2)
@@ -1729,31 +1909,31 @@ INLINE int get_fdr_cluster_baseAU(ti99_lvl2_imgref *l2_img, dsk_fdr *fdr, int cl
 	return reply;
 }
 
-INLINE int get_fdr_cluster_basephysrec(ti99_lvl2_imgref *l2_img, dsk_fdr *fdr, int cluster_index)
+INLINE int get_dsk_fdr_cluster_basephysrec(ti99_lvl2_imgref *l2_img, dsk_fdr *fdr, int cluster_index)
 {
 	int reply;
 
 	/* read base AU/sector for this cluster */
 	reply = ((fdr->clusters[cluster_index][1] & 0xf) << 8) | fdr->clusters[cluster_index][0];
-	/* convert to sector address */
+	/* convert to physrec address */
 	if (l2_img->AUformat.physrecsperAU > 2)
 		reply *= l2_img->AUformat.physrecsperAU;
 
 	return reply;
 }
 
-INLINE int get_fdr_cluster_lastphysrec(dsk_fdr *fdr, int cluster_index)
+INLINE int get_dsk_fdr_cluster_lastphysrec(dsk_fdr *fdr, int cluster_index)
 {
 	return (fdr->clusters[cluster_index][2] << 4) | (fdr->clusters[cluster_index][1] >> 4);
 }
 
-INLINE void set_fdr_cluster_lastphysrec(dsk_fdr *fdr, int cluster_index, int data)
+INLINE void set_dsk_fdr_cluster_lastphysrec(dsk_fdr *fdr, int cluster_index, int data)
 {
 	fdr->clusters[cluster_index][1] = (fdr->clusters[cluster_index][1] & 0x0f) | (data << 4);
 	fdr->clusters[cluster_index][2] = data >> 4;
 }
 
-INLINE void set_fdr_cluster(ti99_lvl2_imgref *l2_img, dsk_fdr *fdr, int cluster_index, int baseAU, int last_physrec)
+INLINE void set_dsk_fdr_cluster(ti99_lvl2_imgref *l2_img, dsk_fdr *fdr, int cluster_index, int baseAU, int last_physrec)
 {
 	/* convert AU address to FDR value */
 	if (l2_img->AUformat.physrecsperAU <= 2)
@@ -1763,6 +1943,44 @@ INLINE void set_fdr_cluster(ti99_lvl2_imgref *l2_img, dsk_fdr *fdr, int cluster_
 	fdr->clusters[cluster_index][0] = baseAU;
 	fdr->clusters[cluster_index][1] = ((baseAU >> 8) & 0x0f) | (last_physrec << 4);
 	fdr->clusters[cluster_index][2] = last_physrec >> 4;
+}
+
+INLINE unsigned get_win_fdr_secsused(win_fdr *fdr)
+{
+	return (((unsigned) get_UINT16BE(fdr->xinfo) << 4) & 0xf0000) | get_UINT16BE(fdr->secsused_LSW);
+}
+
+INLINE void set_win_fdr_secsused(win_fdr *fdr, unsigned data)
+{
+	set_UINT16BE(&fdr->xinfo, (get_UINT16BE(fdr->xinfo) & 0x0fff) | ((data >> 4) & 0xf000));
+	set_UINT16BE(&fdr->secsused_LSW, data & 0xffff);
+}
+
+INLINE unsigned get_win_fdr_fixrecs(win_fdr *fdr)
+{
+	return (((unsigned) get_UINT16BE(fdr->xinfo) << 8) & 0xf0000) | get_UINT16LE(fdr->fixrecs_LSW);
+}
+
+INLINE void set_win_fdr_fixrecs(win_fdr *fdr, unsigned data)
+{
+	set_UINT16BE(&fdr->xinfo, (get_UINT16BE(fdr->xinfo) & 0xf0ff) | ((data >> 8) & 0x0f00));
+	set_UINT16LE(&fdr->fixrecs_LSW, data & 0xffff);
+}
+
+INLINE unsigned get_win_fdr_prev_FDR_physrec(ti99_lvl2_imgref *l2_img, win_fdr *fdr)
+{
+	return get_UINT16BE(fdr->prev_FDR_AU) * l2_img->AUformat.physrecsperAU
+					+ ((get_UINT16BE(fdr->xinfo) >> 4) & 0xf);
+}
+
+INLINE unsigned get_win_fdr_next_FDR_physrec(ti99_lvl2_imgref *l2_img, win_fdr *fdr)
+{
+	unsigned next_FDR_AU = get_UINT16BE(fdr->next_FDR_AU);
+
+	return next_FDR_AU
+			? (next_FDR_AU * l2_img->AUformat.physrecsperAU + (get_UINT16BE(fdr->xinfo) & 0xf))
+			: 0;
+
 }
 
 /*
@@ -1810,7 +2028,7 @@ static int dsk_alloc_file_sectors(ti99_lvl2_fileref_dsk *dsk_file, int nb_alloc_
 		for (cluster_index=0; cluster_index<76; cluster_index++)
 		{
 			p_last_sec = last_sec;
-			last_sec = get_fdr_cluster_lastphysrec(&dsk_file->fdr, cluster_index);
+			last_sec = get_dsk_fdr_cluster_lastphysrec(&dsk_file->fdr, cluster_index);
 			if (last_sec >= (secsused-1))
 				break;
 		}
@@ -1842,14 +2060,14 @@ static int dsk_alloc_file_sectors(ti99_lvl2_fileref_dsk *dsk_file, int nb_alloc_
 
 			secsused += cur_block_seclen;
 			set_UINT16BE(& dsk_file->fdr.secsused, secsused);
-			set_fdr_cluster_lastphysrec(&dsk_file->fdr, cluster_index, secsused-1);
+			set_dsk_fdr_cluster_lastphysrec(&dsk_file->fdr, cluster_index, secsused-1);
 			nb_alloc_physrecs -= cur_block_seclen;
 			if (! nb_alloc_physrecs)
 				return 0;	/* done */
 		}
 
 		/* read base AU address for this cluster */
-		cluster_baseAU = get_fdr_cluster_baseAU(dsk_file->l2_img, &dsk_file->fdr, cluster_index);
+		cluster_baseAU = get_dsk_fdr_cluster_baseAU(dsk_file->l2_img, &dsk_file->fdr, cluster_index);
 		/* point past cluster end */
 		cluster_baseAU += (last_sec-p_last_sec/*+file->l2_img->AUformat.physrecsperAU-1*/) / dsk_file->l2_img->AUformat.physrecsperAU;
 		/* count free sectors after last block */
@@ -1865,7 +2083,7 @@ static int dsk_alloc_file_sectors(ti99_lvl2_fileref_dsk *dsk_file, int nb_alloc_
 			set_UINT16BE(& dsk_file->fdr.secsused, secsused);
 			last_sec += cur_block_seclen;
 			nb_alloc_physrecs -= cur_block_seclen;
-			set_fdr_cluster_lastphysrec(&dsk_file->fdr, cluster_index, last_sec);
+			set_dsk_fdr_cluster_lastphysrec(&dsk_file->fdr, cluster_index, last_sec);
 			cluster_AUlen = (cur_block_seclen + dsk_file->l2_img->AUformat.physrecsperAU - 1) / dsk_file->l2_img->AUformat.physrecsperAU;
 			for (i=0; i<cluster_AUlen; i++)
 				dsk_file->l2_img->u.dsk.vib.abm[(i+cluster_baseAU) >> 3] |= 1 << ((i+cluster_baseAU) & 7);
@@ -1918,7 +2136,7 @@ static int dsk_alloc_file_sectors(ti99_lvl2_fileref_dsk *dsk_file, int nb_alloc_
 			secsused += nb_alloc_physrecs;
 			set_UINT16BE(& dsk_file->fdr.secsused, secsused);
 
-			set_fdr_cluster(dsk_file->l2_img, &dsk_file->fdr, cluster_index, first_best_block_baseAU, secsused-1);
+			set_dsk_fdr_cluster(dsk_file->l2_img, &dsk_file->fdr, cluster_index, first_best_block_baseAU, secsused-1);
 			cluster_AUlen = (nb_alloc_physrecs + dsk_file->l2_img->AUformat.physrecsperAU - 1) / dsk_file->l2_img->AUformat.physrecsperAU;
 			for (i=0; i<cluster_AUlen; i++)
 				dsk_file->l2_img->u.dsk.vib.abm[(i+first_best_block_baseAU) >> 3] |= 1 << ((i+first_best_block_baseAU) & 7);
@@ -1930,7 +2148,7 @@ static int dsk_alloc_file_sectors(ti99_lvl2_fileref_dsk *dsk_file, int nb_alloc_
 			secsused += second_best_block_seclen;
 			set_UINT16BE(& dsk_file->fdr.secsused, secsused);
 
-			set_fdr_cluster(dsk_file->l2_img, &dsk_file->fdr, cluster_index, second_best_block_baseAU, secsused-1);
+			set_dsk_fdr_cluster(dsk_file->l2_img, &dsk_file->fdr, cluster_index, second_best_block_baseAU, secsused-1);
 			cluster_AUlen = (second_best_block_seclen + dsk_file->l2_img->AUformat.physrecsperAU - 1) / dsk_file->l2_img->AUformat.physrecsperAU;
 			for (i=0; i<cluster_AUlen; i++)
 				dsk_file->l2_img->u.dsk.vib.abm[(i+second_best_block_baseAU) >> 3] |= 1 << ((i+second_best_block_baseAU) & 7);
@@ -1952,6 +2170,225 @@ static int dsk_alloc_file_sectors(ti99_lvl2_fileref_dsk *dsk_file, int nb_alloc_
 
 	return 0;
 }
+
+/*
+	Extend a file with nb_alloc_physrecs extra physrecs
+
+	dsk_file: file reference
+	nb_alloc_physrecs: number of physical records to allocate
+*/
+#if 0
+static int win_alloc_file_sectors(ti99_lvl2_fileref_win *dsk_file, int nb_alloc_physrecs)
+{
+	int totAUs = dsk_file->l2_img->AUformat.totAUs;
+	int free_sectors;
+	int secsused;
+	int i;
+	int cluster_index;
+	int last_sec, p_last_sec;
+	int cur_block_seclen;
+	int cluster_baseAU, cluster_AUlen;
+	int first_best_block_baseAU = 0, first_best_block_seclen;
+	int second_best_block_baseAU = 0, second_best_block_seclen;
+	int search_start;
+
+	/* compute free space */
+	free_sectors = 0;
+	for (i=0; i<totAUs; i++)
+	{
+		if (! (dsk_file->l2_img->u.dsk.vib.abm[i >> 3] & (1 << (i & 7))))
+			free_sectors += dsk_file->l2_img->AUformat.physrecsperAU;
+	}
+
+	/* check we have enough free space */
+	if (free_sectors < nb_alloc_physrecs)
+		return IMGTOOLERR_NOSPACE;
+
+	/* move to last sibling FDR */
+	/*cluster_lastphysrec = dsk_file->cur_cluster_pos + dsk_file->l2_img->AUformat.physrecsperAU *
+							(get_UINT16BE(dsk_file->curfdr.clusters[dsk_file->cur_cluster_index][1])
+							- get_UINT16BE(dsk_file->curfdr.clusters[dsk_file->cur_cluster_index][0])
+							+ 1);
+	while (physrecnum >= cluster_lastphysrec)
+	{
+		if (dsk_file->cur_cluster_index != 53)
+			dsk_file->cur_cluster_index++;
+		else
+		{
+			if (get_UINT16BE(dsk_file->curfdr.next_FDR_AU) == 0)
+				return IMGTOOLERR_CORRUPTIMAGE;
+			else
+				dsk_file->curfdr_physrec = get_win_fdr_next_FDR_physrec(dsk_file->l2_img, &dsk_file->curfdr);
+			if (read_absolute_physrec(& dsk_file->l2_img->l1_img, dsk_file->curfdr_physrec, &dsk_file->curfdr))
+				return IMGTOOLERR_READERROR;
+			dsk_file->cur_cluster_index = 0;
+		}
+		dsk_file->cur_cluster_pos = cluster_lastphysrec;
+		if (get_UINT16BE(dsk_file->curfdr.clusters[dsk_file->cur_cluster_index][0]) == 0)
+			return IMGTOOLERR_CORRUPTIMAGE;
+		cluster_lastphysrec = dsk_file->cur_cluster_pos + dsk_file->l2_img->AUformat.physrecsperAU *
+								(get_UINT16BE(dsk_file->curfdr.clusters[dsk_file->cur_cluster_index][1])
+								- get_UINT16BE(dsk_file->curfdr.clusters[dsk_file->cur_cluster_index][0])
+								+ 1);
+	}*/
+
+
+	/* current number of data sectors in file */
+	secsused = dsk_file->secsused;
+
+	if (secsused == 0)
+	{	/* cluster array must be empty */
+		cluster_index = 0;
+	}
+	else
+	{	/* try to extend last block */
+		last_sec = -1;
+		for (cluster_index=0; cluster_index<54; cluster_index++)
+		{
+			p_last_sec = last_sec;
+			last_sec = get_dsk_fdr_cluster_lastphysrec(&dsk_file->fdr, cluster_index);
+			if (last_sec >= (secsused-1))
+				break;
+		}
+		if (cluster_index == 54)
+			/* that sucks */
+			return IMGTOOLERR_CORRUPTIMAGE;
+
+		if (last_sec > (secsused-1))
+		{	/* some extra space has already been allocated */
+			cur_block_seclen = last_sec - (secsused-1);
+			if (cur_block_seclen > nb_alloc_physrecs)
+				cur_block_seclen = nb_alloc_physrecs;
+
+			secsused += cur_block_seclen;
+			set_UINT16BE(& dsk_file->fdr.secsused, secsused);
+			nb_alloc_physrecs -= cur_block_seclen;
+			if (! nb_alloc_physrecs)
+				return 0;	/* done */
+		}
+
+		/* round up to next AU boundary */
+		last_sec = last_sec + dsk_file->l2_img->AUformat.physrecsperAU - (last_sec % dsk_file->l2_img->AUformat.physrecsperAU) - 1;
+
+		if (last_sec > (secsused-1))
+		{	/* some extra space has already been allocated */
+			cur_block_seclen = last_sec - (secsused-1);
+			if (cur_block_seclen > nb_alloc_physrecs)
+				cur_block_seclen = nb_alloc_physrecs;
+
+			secsused += cur_block_seclen;
+			set_UINT16BE(& dsk_file->fdr.secsused, secsused);
+			set_dsk_fdr_cluster_lastphysrec(&dsk_file->fdr, cluster_index, secsused-1);
+			nb_alloc_physrecs -= cur_block_seclen;
+			if (! nb_alloc_physrecs)
+				return 0;	/* done */
+		}
+
+		/* read base AU address for this cluster */
+		cluster_baseAU = get_dsk_fdr_cluster_baseAU(dsk_file->l2_img, &dsk_file->fdr, cluster_index);
+		/* point past cluster end */
+		cluster_baseAU += (last_sec-p_last_sec/*+file->l2_img->AUformat.physrecsperAU-1*/) / dsk_file->l2_img->AUformat.physrecsperAU;
+		/* count free sectors after last block */
+		cur_block_seclen = 0;
+		for (i=cluster_baseAU; (! (dsk_file->l2_img->u.dsk.vib.abm[i >> 3] & (1 << (i & 7)))) && (cur_block_seclen < nb_alloc_physrecs) && (i < totAUs); i++)
+			cur_block_seclen += dsk_file->l2_img->AUformat.physrecsperAU;
+		if (cur_block_seclen)
+		{	/* extend last block */
+			if (cur_block_seclen > nb_alloc_physrecs)
+				cur_block_seclen = nb_alloc_physrecs;
+
+			secsused += cur_block_seclen;
+			set_UINT16BE(& dsk_file->fdr.secsused, secsused);
+			last_sec += cur_block_seclen;
+			nb_alloc_physrecs -= cur_block_seclen;
+			set_dsk_fdr_cluster_lastphysrec(&dsk_file->fdr, cluster_index, last_sec);
+			cluster_AUlen = (cur_block_seclen + dsk_file->l2_img->AUformat.physrecsperAU - 1) / dsk_file->l2_img->AUformat.physrecsperAU;
+			for (i=0; i<cluster_AUlen; i++)
+				dsk_file->l2_img->u.dsk.vib.abm[(i+cluster_baseAU) >> 3] |= 1 << ((i+cluster_baseAU) & 7);
+			if (! nb_alloc_physrecs)
+				return 0;	/* done */
+		}
+		cluster_index++;
+		if (cluster_index == 54)
+			/* that sucks */
+			return IMGTOOLERR_NOSPACE;
+	}
+
+	search_start = dsk_file->l2_img->u.dsk.data_offset;	/* initially, search for free space only in data space */
+	while (nb_alloc_physrecs)
+	{
+		/* find smallest data block at least nb_alloc_sectors in lenght, and largest data block less than nb_alloc_sectors in lenght */
+		first_best_block_seclen = INT_MAX;
+		second_best_block_seclen = 0;
+		for (i=search_start; i<totAUs; i++)
+		{
+			if (! (dsk_file->l2_img->u.dsk.vib.abm[i >> 3] & (1 << (i & 7))))
+			{	/* found one free block */
+				/* compute its lenght */
+				cluster_baseAU = i;
+				cur_block_seclen = 0;
+				while ((i<totAUs) && (! (dsk_file->l2_img->u.dsk.vib.abm[i >> 3] & (1 << (i & 7)))))
+				{
+					cur_block_seclen += dsk_file->l2_img->AUformat.physrecsperAU;
+					i++;
+				}
+				/* compare to previous best and second-best blocks */
+				if ((cur_block_seclen < first_best_block_seclen) && (cur_block_seclen >= nb_alloc_physrecs))
+				{
+					first_best_block_baseAU = cluster_baseAU;
+					first_best_block_seclen = cur_block_seclen;
+					if (cur_block_seclen == nb_alloc_physrecs)
+						/* no need to search further */
+						break;
+				}
+				else if ((cur_block_seclen > second_best_block_seclen) && (cur_block_seclen < nb_alloc_physrecs))
+				{
+					second_best_block_baseAU = cluster_baseAU;
+					second_best_block_seclen = cur_block_seclen;
+				}
+			}
+		}
+
+		if (first_best_block_seclen != INT_MAX)
+		{	/* found one contiguous block which can hold it all */
+			secsused += nb_alloc_physrecs;
+			set_UINT16BE(& dsk_file->fdr.secsused, secsused);
+
+			set_dsk_fdr_cluster(dsk_file->l2_img, &dsk_file->fdr, cluster_index, first_best_block_baseAU, secsused-1);
+			cluster_AUlen = (nb_alloc_physrecs + dsk_file->l2_img->AUformat.physrecsperAU - 1) / dsk_file->l2_img->AUformat.physrecsperAU;
+			for (i=0; i<cluster_AUlen; i++)
+				dsk_file->l2_img->u.dsk.vib.abm[(i+first_best_block_baseAU) >> 3] |= 1 << ((i+first_best_block_baseAU) & 7);
+
+			nb_alloc_physrecs = 0;
+		}
+		else if (second_best_block_seclen != 0)
+		{	/* jeez, we need to fragment it.  We use the largest smaller block to limit fragmentation. */
+			secsused += second_best_block_seclen;
+			set_UINT16BE(& dsk_file->fdr.secsused, secsused);
+
+			set_dsk_fdr_cluster(dsk_file->l2_img, &dsk_file->fdr, cluster_index, second_best_block_baseAU, secsused-1);
+			cluster_AUlen = (second_best_block_seclen + dsk_file->l2_img->AUformat.physrecsperAU - 1) / dsk_file->l2_img->AUformat.physrecsperAU;
+			for (i=0; i<cluster_AUlen; i++)
+				dsk_file->l2_img->u.dsk.vib.abm[(i+second_best_block_baseAU) >> 3] |= 1 << ((i+second_best_block_baseAU) & 7);
+
+			nb_alloc_physrecs -= second_best_block_seclen;
+
+			cluster_index++;
+			if (cluster_index == 54)
+				/* that sucks */
+				return IMGTOOLERR_NOSPACE;
+		}
+		else if (search_start != 0)
+		{	/* we did not find any free sector in the data section of the disk */
+			search_start = 0;	/* time to fall back to fdr space */
+		}
+		else
+			return IMGTOOLERR_NOSPACE;	/* This should never happen, as we pre-check that there is enough free space */
+	}
+
+	return 0;
+}
+#endif
 
 /*
 	Allocate a new (empty) file
@@ -2084,11 +2521,13 @@ static int open_file_lvl2_win(ti99_lvl2_imgref *l2_img, const char *fpath, ti99_
 
 	l2_file->type = L2F_WIN;
 	l2_file->u.win.l2_img = l2_img;
-	l2_file->u.win.curfdr_physrec = catalog.files[catalog_index].fdr_physrec * l2_img->AUformat.physrecsperAU;
+	l2_file->u.win.rootfdr_physrec = catalog.files[catalog_index].fdr_physrec * l2_img->AUformat.physrecsperAU;
+	l2_file->u.win.curfdr_physrec = l2_file->u.win.rootfdr_physrec;
 	l2_file->u.win.cur_cluster_index = 0;
 	l2_file->u.win.cur_cluster_pos = 0;
 	if (read_absolute_physrec(& l2_img->l1_img, l2_file->u.win.curfdr_physrec, &l2_file->u.win.curfdr))
 		return IMGTOOLERR_READERROR;
+	l2_file->u.win.secsused = get_win_fdr_secsused(&l2_file->u.win.curfdr);
 
 	return 0;
 }
@@ -2133,7 +2572,7 @@ static int dsk_file_physrec_to_abs_physrec(ti99_lvl2_fileref_dsk *dsk_file, int 
 	{
 		/* read curent file block table entry */
 		cluster_firstphysrec = cluster_lastphysrec+1;
-		cluster_lastphysrec = get_fdr_cluster_lastphysrec(&dsk_file->fdr, cluster_index);
+		cluster_lastphysrec = get_dsk_fdr_cluster_lastphysrec(&dsk_file->fdr, cluster_index);
 		if (cluster_lastphysrec >= physrecnum)
 			break;
 	}
@@ -2141,7 +2580,7 @@ static int dsk_file_physrec_to_abs_physrec(ti99_lvl2_fileref_dsk *dsk_file, int 
 		/* if not found, the file is corrupt */
 		return IMGTOOLERR_CORRUPTIMAGE;
 	/* read base sector address for this cluster */
-	cluster_base_physrec = get_fdr_cluster_basephysrec(dsk_file->l2_img, &dsk_file->fdr, cluster_index);
+	cluster_base_physrec = get_dsk_fdr_cluster_basephysrec(dsk_file->l2_img, &dsk_file->fdr, cluster_index);
 
 	/* return absolute physrec address */
 	* out_physrec = cluster_base_physrec + (physrecnum - cluster_firstphysrec);
@@ -2158,7 +2597,7 @@ static int win_file_physrec_to_abs_physrec(ti99_lvl2_fileref_win *dsk_file, int 
 	int cluster_lastphysrec;
 
 	/* check parameter */
-	if (physrecnum >= ((((unsigned) get_UINT16BE(dsk_file->curfdr.xinfo) << 4) & 0xf0000) | get_UINT16BE(dsk_file->curfdr.secsused)))
+	if (physrecnum >= dsk_file->secsused)
 		return IMGTOOLERR_UNEXPECTED;
 
 	/* search for the cluster in the data chain pointers array */
@@ -2173,8 +2612,7 @@ static int win_file_physrec_to_abs_physrec(ti99_lvl2_fileref_win *dsk_file, int 
 				if (get_UINT16BE(dsk_file->curfdr.prev_FDR_AU) == 0)
 					return IMGTOOLERR_CORRUPTIMAGE;
 				else
-					dsk_file->curfdr_physrec = get_UINT16BE(dsk_file->curfdr.prev_FDR_AU) * dsk_file->l2_img->AUformat.physrecsperAU
-												+ ((get_UINT16BE(dsk_file->curfdr.xinfo) >> 4) & 0xf);
+					dsk_file->curfdr_physrec = get_win_fdr_prev_FDR_physrec(dsk_file->l2_img, &dsk_file->curfdr);
 				if (read_absolute_physrec(& dsk_file->l2_img->l1_img, dsk_file->curfdr_physrec, &dsk_file->curfdr))
 					return IMGTOOLERR_READERROR;
 				dsk_file->cur_cluster_index = 53;
@@ -2200,8 +2638,7 @@ static int win_file_physrec_to_abs_physrec(ti99_lvl2_fileref_win *dsk_file, int 
 				if (get_UINT16BE(dsk_file->curfdr.next_FDR_AU) == 0)
 					return IMGTOOLERR_CORRUPTIMAGE;
 				else
-					dsk_file->curfdr_physrec = get_UINT16BE(dsk_file->curfdr.next_FDR_AU) * dsk_file->l2_img->AUformat.physrecsperAU
-												+ (get_UINT16BE(dsk_file->curfdr.xinfo) & 0xf);
+					dsk_file->curfdr_physrec = get_win_fdr_next_FDR_physrec(dsk_file->l2_img, &dsk_file->curfdr);
 				if (read_absolute_physrec(& dsk_file->l2_img->l1_img, dsk_file->curfdr_physrec, &dsk_file->curfdr))
 					return IMGTOOLERR_READERROR;
 				dsk_file->cur_cluster_index = 0;
@@ -2307,6 +2744,30 @@ static int write_file_physrec(ti99_lvl2_fileref *l2_file, int physrecnum, const 
 	return 0;
 }
 
+/*
+	Write a field in every fdr record associated to a file
+*/
+static int set_win_fdr_field(ti99_lvl2_fileref *l2_file, size_t offset, size_t size, void *data)
+{
+	win_fdr fdr_buf;
+	unsigned fdr_physrec;
+	int errorcode = 0;
+
+	for (fdr_physrec = l2_file->u.win.rootfdr_physrec;
+			fdr_physrec && ((errorcode = (read_absolute_physrec(&l2_file->u.win.l2_img->l1_img, fdr_physrec, &fdr_buf) ? IMGTOOLERR_READERROR : 0)) == 0);
+			fdr_physrec = get_win_fdr_next_FDR_physrec(l2_file->u.win.l2_img, &fdr_buf))
+	{
+		memcpy(((UINT8 *) &fdr_buf) + offset, data, size);
+		if (write_absolute_physrec(&l2_file->u.win.l2_img->l1_img, fdr_physrec, &fdr_buf))
+		{
+			errorcode = IMGTOOLERR_WRITEERROR;
+			break;
+		}
+	}
+
+	return errorcode;
+}
+
 static UINT8 get_file_flags(ti99_lvl2_fileref *l2_file)
 {
 	int reply;
@@ -2398,8 +2859,7 @@ static unsigned get_file_secsused(ti99_lvl2_fileref *l2_file)
 		break;
 
 	case L2F_WIN:
-		reply = (((unsigned) get_UINT16BE(l2_file->u.win.curfdr.xinfo) << 4) & 0xf0000)
-				| get_UINT16BE(l2_file->u.win.curfdr.secsused);
+		reply = l2_file->u.win.secsused;
 		break;
 
 	case L2F_TIFILES:
@@ -2421,9 +2881,8 @@ static int set_file_secsused(ti99_lvl2_fileref *l2_file, unsigned data)
 		break;
 
 	case L2F_WIN:
-		set_UINT16BE(&l2_file->u.win.curfdr.xinfo, (get_UINT16BE(l2_file->u.win.curfdr.xinfo) & 0x0fff)
-													| ((data >> 4) & 0xf000));
-		set_UINT16BE(&l2_file->u.win.curfdr.secsused, data & 0xffff);
+		/*set_win_fdr_secsused(&l2_file->u.win.curfdr, data);*/
+		assert(1);
 		break;
 
 	case L2F_TIFILES:
@@ -2553,8 +3012,7 @@ static unsigned get_file_fixrecs(ti99_lvl2_fileref *l2_file)
 		break;
 
 	case L2F_WIN:
-		reply = (((unsigned) get_UINT16BE(l2_file->u.win.curfdr.xinfo) << 8) & 0xf0000)
-				| get_UINT16LE(l2_file->u.win.curfdr.fixrecs);
+		reply = get_win_fdr_fixrecs(&l2_file->u.win.curfdr);
 		break;
 
 	case L2F_TIFILES:
@@ -2576,9 +3034,7 @@ static int set_file_fixrecs(ti99_lvl2_fileref *l2_file, unsigned data)
 		break;
 
 	case L2F_WIN:
-		set_UINT16BE(&l2_file->u.win.curfdr.xinfo, (get_UINT16BE(l2_file->u.win.curfdr.xinfo) & 0xf0ff)
-													| ((data >> 8) & 0x0f00));
-		set_UINT16LE(&l2_file->u.win.curfdr.fixrecs, data & 0xffff);
+		set_win_fdr_fixrecs(&l2_file->u.win.curfdr, data);
 		break;
 
 	case L2F_TIFILES:
@@ -2903,9 +3359,9 @@ IMAGEMODULE(
 	ti99_image_init_mess,			/* init function */
 	ti99_image_exit,				/* exit function */
 	ti99_image_info,				/* info function */
-	ti99_dsk_image_beginenum,			/* begin enumeration */
-	ti99_dsk_image_nextenum,			/* enumerate next */
-	ti99_dsk_image_closeenum,			/* close enumeration */
+	ti99_dsk_image_beginenum,		/* begin enumeration */
+	ti99_dsk_image_nextenum,		/* enumerate next */
+	ti99_dsk_image_closeenum,		/* close enumeration */
 	ti99_image_freespace,			/* free space on image */
 	ti99_image_readfile,			/* read file */
 	ti99_image_writefile,			/* write file */
@@ -2928,9 +3384,9 @@ IMAGEMODULE(
 	ti99_image_init_v9t9,			/* init function */
 	ti99_image_exit,				/* exit function */
 	ti99_image_info,				/* info function */
-	ti99_dsk_image_beginenum,			/* begin enumeration */
-	ti99_dsk_image_nextenum,			/* enumerate next */
-	ti99_dsk_image_closeenum,			/* close enumeration */
+	ti99_dsk_image_beginenum,		/* begin enumeration */
+	ti99_dsk_image_nextenum,		/* enumerate next */
+	ti99_dsk_image_closeenum,		/* close enumeration */
 	ti99_image_freespace,			/* free space on image */
 	ti99_image_readfile,			/* read file */
 	ti99_image_writefile,			/* write file */
@@ -2953,9 +3409,9 @@ IMAGEMODULE(
 	ti99_image_init_pc99_fm,		/* init function */
 	ti99_image_exit,				/* exit function */
 	ti99_image_info,				/* info function */
-	ti99_dsk_image_beginenum,			/* begin enumeration */
-	ti99_dsk_image_nextenum,			/* enumerate next */
-	ti99_dsk_image_closeenum,			/* close enumeration */
+	ti99_dsk_image_beginenum,		/* begin enumeration */
+	ti99_dsk_image_nextenum,		/* enumerate next */
+	ti99_dsk_image_closeenum,		/* close enumeration */
 	ti99_image_freespace,			/* free space on image */
 	ti99_image_readfile,			/* read file */
 	ti99_image_writefile,			/* write file */
@@ -2978,9 +3434,9 @@ IMAGEMODULE(
 	ti99_image_init_pc99_mfm,		/* init function */
 	ti99_image_exit,				/* exit function */
 	ti99_image_info,				/* info function */
-	ti99_dsk_image_beginenum,			/* begin enumeration */
-	ti99_dsk_image_nextenum,			/* enumerate next */
-	ti99_dsk_image_closeenum,			/* close enumeration */
+	ti99_dsk_image_beginenum,		/* begin enumeration */
+	ti99_dsk_image_nextenum,		/* enumerate next */
+	ti99_dsk_image_closeenum,		/* close enumeration */
 	ti99_image_freespace,			/* free space on image */
 	ti99_image_readfile,			/* read file */
 	ti99_image_writefile,			/* write file */
@@ -3006,11 +3462,11 @@ IMAGEMODULE(
 	ti99_win_image_beginenum,		/* begin enumeration */
 	ti99_win_image_nextenum,		/* enumerate next */
 	ti99_win_image_closeenum,		/* close enumeration */
-	/*ti99_image_freespace*/NULL,	/* free space on image */
+	ti99_image_freespace,			/* free space on image */
 	ti99_image_readfile,			/* read file */
 	/*ti99_image_writefile*/NULL,	/* write file */
 	/*ti99_image_deletefile*/NULL,	/* delete file */
-	/*ti99_image_create_mess*/NULL,	/* create image */
+	/*ti99_image_create_hd*/NULL,	/* create image */
 	/*ti99_read_sector*/NULL,
 	/*ti99_write_sector*/NULL,
 	NULL,							/* file options */
@@ -3161,6 +3617,7 @@ static int ti99_win_image_init(const struct ImageModule *mod, STREAM *f, IMAGE *
 {
 	ti99_lvl2_imgref *image;
 	int reply;
+	int i;
 
 
 	image = malloc(sizeof(ti99_lvl2_imgref));
@@ -3205,6 +3662,14 @@ static int ti99_win_image_init(const struct ImageModule *mod, STREAM *f, IMAGE *
 	case win_vib_v2:
 		image->u.win.data_offset = image->u.win.vib.u.vib_v2.res_AUs * 64;
 		break;
+	}
+
+	/* read allocation bitmap (physrec 1 through n, n<=33) */
+	for (i=0; i < (image->AUformat.totAUs+2047)/2048; i++)
+	{
+		reply = read_absolute_physrec(&image->l1_img, i+1, image->u.win.abm+i*256);
+		if (reply)
+			return reply;
 	}
 
 	return 0;
@@ -3418,7 +3883,7 @@ static int ti99_win_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 {
 	win_iterator *iter = (win_iterator*) enumeration;
 	int fdr_physrec;
-	dsk_fdr fdr;
+	win_fdr fdr;
 	int reply;
 	int i;
 
@@ -3528,7 +3993,7 @@ static int ti99_win_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 							fdr.reclen,
 							(fdr.flags & fdr99_f_wp) ? " R/O" : "");
 			/* len in sectors */
-			ent->filesize = get_UINT16BE(fdr.secsused);
+			ent->filesize = get_win_fdr_secsused(&fdr);
 
 			iter->index[iter->level]++;
 		}
@@ -3552,12 +4017,24 @@ static size_t ti99_image_freespace(IMAGE *img)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
 	size_t freeAUs;
+	UINT8 *abm;
 	int i;
+
+	switch (image->type)
+	{
+	case L2I_DSK:
+		abm = image->u.dsk.vib.abm;
+		break;
+
+	case L2I_WIN:
+		abm = image->u.win.abm;
+		break;
+	}
 
 	freeAUs = 0;
 	for (i=0; i<image->AUformat.totAUs; i++)
 	{
-		if (! (image->u.dsk.vib.abm[i >> 3] & (1 << (i & 7))))
+		if (! (abm[i >> 3] & (1 << (i & 7))))
 			freeAUs++;
 	}
 
@@ -3586,10 +4063,16 @@ static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		return IMGTOOLERR_BADFILENAME;
 
 	/* open file on TI image */
-	if (image->type == L2I_WIN)
-		errorcode = open_file_lvl2_win(image, fname, &src_file);
-	else
+	switch (image->type)
+	{
+	case L2I_DSK:
 		errorcode = open_file_lvl2_dsk(image, fname, &src_file);
+		break;
+
+	case L2I_WIN:
+		errorcode = open_file_lvl2_win(image, fname, &src_file);
+		break;
+	}
 	if (errorcode)
 		return errorcode;
 
@@ -3657,10 +4140,16 @@ static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		return IMGTOOLERR_BADFILENAME;
 
 	/* open file on TI image */
-	if (image->type == L2I_WIN)
+	switch (image->type)
+	{
+	case L2I_DSK:
+		errorcode = open_file_lvl2_dsk(image, fname, &src_file);
+		break;
+
+	case L2I_WIN:
 		errorcode = open_file_lvl2_win(image, fname, &src_file);
-	else
-		errorcode = open_file_lvl2_dsk(image, fname, &src_file.l2_file);
+		break;
+	}
 	if (errorcode)
 		return errorcode;
 
@@ -3869,8 +4358,8 @@ static int ti99_image_deletefile(IMAGE *img, const char *fname)
 			if (cluster_index == 76)
 				return IMGTOOLERR_CORRUPTIMAGE;
 
-			cur_AU = get_fdr_cluster_baseAU(image, & fdr, cluster_index);
-			cluster_lastphysrec = get_fdr_cluster_lastphysrec(& fdr, cluster_index);
+			cur_AU = get_dsk_fdr_cluster_baseAU(image, & fdr, cluster_index);
+			cluster_lastphysrec = get_dsk_fdr_cluster_lastphysrec(& fdr, cluster_index);
 
 			while ((i<secsused) && (i<=cluster_lastphysrec))
 			{
