@@ -56,6 +56,9 @@ System Driver Changes:
   now needed in conjunction with the normal Vectrex .png files to specify the
   artwork layout. [Nate Woods]
 
+- [GENESIS] Changed input ports to be consistent with other drivers.
+  [Anthony Kruize]
+
 Source Changes:
 ---------------
 - The core is based on MAME 0.61.  This incorporates all features of the 
