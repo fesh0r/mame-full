@@ -262,7 +262,7 @@ static const struct IODevice io_snes[] =
 	{
 		IO_CARTSLOT,        /* type */
 		1,                  /* count */
-		"smc,sfc,fig\0",    /* file extensions */
+		"smc\0sfc\0fig\0",    /* file extensions */
 		IO_RESET_CPU,       /* reset if file changed */
 		OSD_FOPEN_READ,		/* open mode */
 		0,
