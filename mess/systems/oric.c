@@ -3,11 +3,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/oric.h"
+#include "includes/basicdsk.h"
 
 static struct MemoryReadAddress oric_readmem[] =
 {
-    /* { 0x0000, 0x04ff, oric_io_r, &oric_ram }, */
-    /* { 0x0000, 0xBFFF, oric_ram_r, &oric_ram }, */
     { 0x0000, 0x02FF, MRA_RAM },
     { 0x0300, 0x03ff, oric_IO_r },
     { 0x0400, 0xBFFF, MRA_RAM },
@@ -17,8 +16,6 @@ static struct MemoryReadAddress oric_readmem[] =
 
 static struct MemoryWriteAddress oric_writemem[] =
 {
-    /* { 0x0000, 0x04ff, oric_IO_w, &oric_ram }, */
-    /* { 0x0000, 0xbFFF, oric_ram_w, &oric_ram }, */
     { 0x0000, 0x02FF, MWA_RAM },
     { 0x0300, 0x03ff, oric_IO_w },
     { 0x0400, 0xbFFF, MWA_RAM },
@@ -150,21 +147,14 @@ static void oric_init_palette(unsigned char *sys_palette, unsigned short *sys_co
 	memcpy(sys_colortable,oric_colortable,sizeof(oric_colortable));
 }
 
-/* read PSG port A */
-static READ_HANDLER ( oric_psg_porta_read )
-{
-	return 0;
-}
-
-
 static struct AY8910interface oric_ay_interface =
 {
 	1,	/* 1 chips */
 	1000000,	/* 1.0 MHz  */
 	{ 25,25},
-	{ oric_psg_porta_read },
 	{ 0 },
 	{ 0 },
+	{ oric_psg_porta_write },
 	{ 0 }
 };
 
@@ -177,7 +167,7 @@ static struct MachineDriver machine_driver_oric =
 			CPU_M6502,
             1000000,
 			oric_readmem,oric_writemem,0,0,
-			oric_interrupt, 10,
+			0, 0,
 			0, 0
 		}
 	},
@@ -243,31 +233,30 @@ static const struct IODevice io_oric1[] = {
         NULL,               /* input_chunk */
         NULL                /* output_chunk */
     },
-    { IO_END }
+	IO_CASSETTE_WAVE(1,"wav\0",NULL,oric_cassette_init,oric_cassette_exit),
+ 	{
+		IO_FLOPPY,				/* type */
+		4,						/* count */
+		"dsk\0",                /* file extensions */
+		IO_RESET_NONE,			/* reset if file changed */
+		basicdsk_floppy_id, 	/* id */
+		oric_floppy_init, /* init */
+		basicdsk_floppy_exit,	/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		floppy_status,			/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
+	},   
+	{ IO_END }
 };
 
-static const struct IODevice io_orica[] = {
-	{
-		IO_CARTSLOT,		/* type */
-		1,					/* count */
-		"tap\0",            /* file extensions */
-		IO_RESET_NONE,		/* reset if file changed */
-        NULL,               /* id */
-		oric_load_rom,		/* init */
-		NULL,				/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-    { IO_END }
-};
+#define io_orica io_oric1
 
 /*    YEAR   NAME      PARENT    MACHINE   INPUT     INIT      COMPANY      FULLNAME */
 COMP( 1983,  oric1,    0,		 oric,	   oric,	 0,		   "Tangerine", "Oric 1" )
