@@ -238,17 +238,14 @@ void Enterprise_Initialise()
 	Dave_reg_w(0x012,0);
 	Dave_reg_w(0x013,0);
 
-		cpu_irq_line_vector_w(0,0,0x0ff);
+	cpu_irq_line_vector_w(0,0,0x0ff);
 
-		floppy_drives_init();
-		wd179x_init(enterp_wd177x_callback);
+	floppy_drives_init();
+	wd179x_init(enterp_wd177x_callback);
 
-		floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
-		floppy_drive_set_flag_state(0, FLOPPY_DRIVE_PRESENT,1);
-
-
+	floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
+	floppy_drive_set_flag_state(0, FLOPPY_DRIVE_PRESENT,1);
 }
-
 
 int enterprise_frame_interrupt(void)
 {
@@ -621,7 +618,7 @@ static struct MachineDriver machine_driver_ep128 =
 	DEFAULT_60HZ_VBLANK_DURATION,				/* vblank duration */
 	1,											/* cpu slices per frame */
 	enterprise_init_machine,					/* init machine */
-	NULL,
+	enterprise_shutdown_machine,
 	/* video hardware */
 	ENTERPRISE_SCREEN_WIDTH,					/* screen width */
 	ENTERPRISE_SCREEN_HEIGHT,					/* screen height */
