@@ -8,10 +8,6 @@
   Driver provided by Paul Leaman
 
 TODO:
-- Trojan contains a third Z80 to drive the game samples. This third
-  Z80 outputs the ADPCM data byte at a time to the sound hardware. Since
-  this will be expensive to do this extra processor is not emulated.
-  Instead, the ADPCM data is lifted directly from the sound ROMS.
 - sectionz does "false contacts" on the coin counters, causing them to
   increment twice per coin.
 
@@ -46,7 +42,7 @@ static WRITE_HANDLER( lwings_bankswitch_w )
 
 
 	/* bit 0 is flip screen */
-	flip_screen_w(0,data & 0x01);
+	flip_screen_w(0,~data & 0x01);
 
 	/* bits 1 and 2 select ROM bank */
 	RAM = memory_region(REGION_CPU1);
@@ -66,40 +62,15 @@ static int lwings_interrupt(void)
 	return 0x00d7; /* RST 10h */
 }
 
-static int avengers_interrupt( void ){ /* hack */
+static int avengers_interrupt( void )
+{ /* hack */
 	static int s;
-#if 0
-	static int n;
-	if (keyboard_pressed_memory(KEYCODE_S)){ /* test code */
-		n++;
-		n&=0x0f;
-		ADPCM_trigger(0, n);
-	}
-#endif
 
 	s=!s;
 	if( s )
 		return interrupt();
 	else
 		return nmi_interrupt();
-}
-
-static WRITE_HANDLER( trojan_sound_cmd_w )
-{
-       soundlatch_w(offset, data);
-       if (data != 0xff && (data & 0x08))
-       {
-	      /*
-	      I assume that Trojan's ADPCM output is directly derived
-	      from the sound code. I can't find an output port that
-	      does this on either the sound board or main board.
-	      */
-	      ADPCM_trigger(0, data & 0x07);
-	}
-
-#if 0
-	logerror("Sound Code=%02x\n", data);
-#endif
 }
 
 static WRITE_HANDLER( avengers_protection_w )
@@ -112,6 +83,14 @@ static READ_HANDLER( avengers_protection_r )
 	static int hack;
 	hack = hack&0xf;
 	return hack++;
+}
+
+static WRITE_HANDLER( msm5205_w )
+{
+	MSM5205_reset_w(offset,(data>>7)&1);
+	MSM5205_data_w(offset,data);
+	MSM5205_vclk_w(offset,1);
+	MSM5205_vclk_w(offset,0);
 }
 
 
@@ -162,7 +141,7 @@ static struct MemoryWriteAddress trojan_writemem[] =
 	{ 0xf804, 0xf804, lwings_bg2_scrollx_w },
 	{ 0xf805, 0xf805, lwings_bg2_image_w },
 	{ 0xf809, 0xf809, avengers_protection_w },
-	{ 0xf80c, 0xf80c, trojan_sound_cmd_w },
+	{ 0xf80c, 0xf80c, soundlatch_w },
 	{ 0xf80d, 0xf80d, watchdog_reset_w },
 	{ 0xf80e, 0xf80e, lwings_bankswitch_w },
 	{ -1 }  /* end of table */
@@ -189,6 +168,35 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xe006, 0xe006, MWA_RAM },    /* Avengers - ADPCM output??? */
 	{ -1 }  /* end of table */
 };
+
+
+static struct MemoryReadAddress adpcm_readmem[] =
+{
+	{ 0x0000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+/* Yes, _no_ ram */
+static struct MemoryWriteAddress adpcm_writemem[] =
+{
+/*	{ 0x0000, 0xffff, MWA_ROM }, avoid cluttering up error.log */
+	{ 0x0000, 0xffff, MWA_NOP },
+	{ -1 }  /* end of table */
+};
+
+static struct IOReadPort adpcm_readport[] =
+{
+	{ 0x00, 0x00, soundlatch_r },
+	{ -1 }
+};
+
+
+static struct IOWritePort adpcm_writeport[] =
+{
+	{ 0x01, 0x01, msm5205_w },
+	{ -1 }
+};
+
 
 
 INPUT_PORTS_START( sectionz )
@@ -661,8 +669,8 @@ static struct GfxDecodeInfo gfxdecodeinfo_trojan[] =
 
 static struct YM2203interface ym2203_interface =
 {
-	2,                      /* 2 chips */
-	1500000,        /* 1.5 MHz (?) */
+	2,			/* 2 chips */
+	1500000,	/* 1.5 MHz (?) */
 	{ YM2203_VOL(10,20), YM2203_VOL(10,20) },
 	{ 0 },
 	{ 0 },
@@ -670,64 +678,15 @@ static struct YM2203interface ym2203_interface =
 	{ 0 }
 };
 
-/*
-ADPCM is driven by Z80 continuously outputting to a port. The following
-table is lifted from the code.
-
-Sample 5 doesn't play properly.
-*/
-
-static struct ADPCMsample trojan_samples[] =
+static struct MSM5205interface msm5205_interface =
 {
-	{ 0x00, 0x00a7, (0x0aa9-0x00a7)*2 },
-	{ 0x01, 0x0aa9, (0x12ab-0x0aa9)*2 },
-	{ 0x02, 0x12ab, (0x17ad-0x12ab)*2 },
-	{ 0x03, 0x17ad, (0x22af-0x17ad)*2 },
-	{ 0x04, 0x22af, (0x2db1-0x22af)*2 },
-	{ 0x05, 0x2db1, (0x310a-0x2db1)*2 },
-	{ 0x06, 0x310a, (0x3cb3-0x310a)*2 }
+	1,					/* 1 chip */
+	384000,				/* 384KHz ? */
+	{ 0 },				/* interrupt function */
+	{ MSM5205_SEX_4B },	/* slave mode */
+	{ 50 }
 };
 
-struct ADPCMsample avengers_samples[] =
-{
-	{ 0x00, 0x00e2, (0x03e4-0x00e2)*2 },
-	{ 0x01, 0x03e4, (0x0ce6-0x03e4)*2 },
-	{ 0x02, 0x0ce6, (0x10e8-0x0ce6)*2 },
-	{ 0x03, 0x10e8, (0x19ea-0x10e8)*2 },
-	{ 0x04, 0x19ea, (0x25ec-0x19ea)*2 },
-	{ 0x05, 0x25ec, (0x38ee -0x25ec)*2 },
-	{ 0x06, 0x38ee, (0x3bf0-0x38ee)*2 },
-	{ 0x07, 0x3bf0, (0x3ef2-0x3bf0)*2 },
-	{ 0x08, 0x3ef2, (0x49f4-0x3ef2)*2 }
-};
-
-static void trojan_adpcm_init(const struct ADPCMinterface *adpcm_intf, struct ADPCMsample *sample_list, int max)
-{
-	memcpy(sample_list,trojan_samples,sizeof(trojan_samples));
-}
-
-static void avengers_adpcm_init(const struct ADPCMinterface *adpcm_intf, struct ADPCMsample *sample_list, int max)
-{
-	memcpy(sample_list,avengers_samples,sizeof(avengers_samples));
-}
-
-static struct ADPCMinterface trojan_adpcm_interface =
-{
-	1,                      /* 1 channel */
-	4000,                   /* 4000Hz playback */
-	REGION_CPU3,            /* memory region */
-	trojan_adpcm_init,		/* init function */
-	{ 30 }
-};
-
-static struct ADPCMinterface avengers_adpcm_interface =
-{
-	1,                      /* 1 channel */
-	4000,                   /* 4000Hz playback */
-	REGION_CPU3,            /* memory region */
-	avengers_adpcm_init,	/* init function */
-	{ 30 }
-};
 
 
 static struct MachineDriver machine_driver_lwings =
@@ -788,6 +747,13 @@ static struct MachineDriver machine_driver_trojan =
 			3000000,        /* 3 MHz (?) */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3579545,	/* ? */
+			adpcm_readmem,adpcm_writemem,adpcm_readport,adpcm_writeport,
+			0,0,
+			interrupt,4000
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
@@ -814,8 +780,8 @@ static struct MachineDriver machine_driver_trojan =
 			&ym2203_interface,
 		},
 		{
-			SOUND_ADPCM,
-			&trojan_adpcm_interface
+			SOUND_MSM5205,
+			&msm5205_interface
 		}
 	}
 };
@@ -835,6 +801,13 @@ static struct MachineDriver machine_driver_avengers =
 			3000000,        /* 3 MHz (?) */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3579545,	/* ? */
+			adpcm_readmem,adpcm_writemem,adpcm_readport,adpcm_writeport,
+			0,0,
+			interrupt,4000
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
@@ -861,8 +834,8 @@ static struct MachineDriver machine_driver_avengers =
 			&ym2203_interface,
 		},
 		{
-			SOUND_ADPCM,
-			&avengers_adpcm_interface
+			SOUND_MSM5205,
+			&msm5205_interface
 		}
 	}
 };
@@ -1268,13 +1241,14 @@ ROM_START( avenger2 )
 ROM_END
 
 
-GAME( 1986, lwings,   0,        lwings,   lwings,   0, ROT270, "Capcom", "Legendary Wings (US set 1)" )
-GAME( 1986, lwings2,  lwings,   lwings,   lwings,   0, ROT270, "Capcom", "Legendary Wings (US set 2)" )
-GAME( 1986, lwingsjp, lwings,   lwings,   lwings,   0, ROT270, "Capcom", "Ales no Tsubasa (Japan)" )
-GAME( 1985, sectionz, 0,        lwings,   sectionz, 0, ROT0,   "Capcom", "Section Z (set 1)" )
-GAME( 1985, sctionza, sectionz, lwings,   sectionz, 0, ROT0,   "Capcom", "Section Z (set 2)" )
-GAME( 1986, trojan,   0,        trojan,   trojanls, 0, ROT0,   "Capcom", "Trojan (US)" )
-GAME( 1986, trojanr,  trojan,   trojan,   trojan,   0, ROT0,   "Capcom (Romstar license)", "Trojan (Romstar)" )
-GAME( 1986, trojanj,  trojan,   trojan,   trojan,   0, ROT0,   "Capcom", "Tatakai no Banka (Japan)" )
-GAMEX(1987, avengers, 0,        avengers, avengers, 0, ROT270, "Capcom", "Avengers (US set 1)", GAME_WRONG_COLORS | GAME_UNEMULATED_PROTECTION )
-GAMEX(1987, avenger2, avengers, avengers, avengers, 0, ROT270, "Capcom", "Avengers (US set 2)", GAME_WRONG_COLORS | GAME_UNEMULATED_PROTECTION )
+
+GAME( 1985, sectionz, 0,        lwings,   sectionz, 0, ROT0,  "Capcom", "Section Z (set 1)" )
+GAME( 1985, sctionza, sectionz, lwings,   sectionz, 0, ROT0,  "Capcom", "Section Z (set 2)" )
+GAME( 1986, lwings,   0,        lwings,   lwings,   0, ROT90, "Capcom", "Legendary Wings (US set 1)" )
+GAME( 1986, lwings2,  lwings,   lwings,   lwings,   0, ROT90, "Capcom", "Legendary Wings (US set 2)" )
+GAME( 1986, lwingsjp, lwings,   lwings,   lwings,   0, ROT90, "Capcom", "Ales no Tsubasa (Japan)" )
+GAME( 1986, trojan,   0,        trojan,   trojanls, 0, ROT0,  "Capcom", "Trojan (US)" )
+GAME( 1986, trojanr,  trojan,   trojan,   trojan,   0, ROT0,  "Capcom (Romstar license)", "Trojan (Romstar)" )
+GAME( 1986, trojanj,  trojan,   trojan,   trojan,   0, ROT0,  "Capcom", "Tatakai no Banka (Japan)" )
+GAMEX(1987, avengers, 0,        avengers, avengers, 0, ROT90, "Capcom", "Avengers (US set 1)", GAME_WRONG_COLORS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION )
+GAMEX(1987, avenger2, avengers, avengers, avengers, 0, ROT90, "Capcom", "Avengers (US set 2)", GAME_WRONG_COLORS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION )

@@ -57,8 +57,9 @@ static void trojan_get_bg1_tile_info(int tile_index)
 	code = lwings_bg1videoram[tile_index];
 	color = lwings_bg1videoram[tile_index + 0x400];
 	SET_TILE_INFO(1, code + ((color & 0xe0) << 3), color & 0x07);
-	tile_info.flags = (color & 0x10) ? TILE_FLIPX : 0;
-	tile_info.priority = (color & 0x08) >> 3;
+	tile_info.flags = TILE_SPLIT((color & 0x08) >> 3);
+	if (color & 0x10)
+		tile_info.flags |= TILE_FLIPX;
 }
 
 static void get_bg2_tile_info(int tile_index)
@@ -101,8 +102,8 @@ int trojan_vh_start(void)
 
 	fg_tilemap->transparent_pen = 3;
 	bg1_tilemap->transparent_pen = 0;
-	bg1_tilemap->transmask[0] = 0xf07f;
-	bg1_tilemap->transmask[1] = 0x0f80;
+	bg1_tilemap->transmask[0] = 0xffff; /* split type 0 is totally transparent in front half */
+	bg1_tilemap->transmask[1] = 0xf07f; /* split type 1 has pens 7-11 opaque in front half */
 
 	trojan_vh_type = 0;
 
@@ -338,11 +339,9 @@ void trojan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 
 	tilemap_draw(bitmap,bg2_tilemap,0);
-	tilemap_draw(bitmap,bg1_tilemap,TILEMAP_BACK | 0);
-	tilemap_draw(bitmap,bg1_tilemap,TILEMAP_BACK | 1);
-	tilemap_draw(bitmap,bg1_tilemap,TILEMAP_FRONT | 0);
+	tilemap_draw(bitmap,bg1_tilemap,TILEMAP_BACK);
 	trojan_draw_sprites(bitmap);
-	tilemap_draw(bitmap,bg1_tilemap,TILEMAP_FRONT | 1);
+	tilemap_draw(bitmap,bg1_tilemap,TILEMAP_FRONT);
 	tilemap_draw(bitmap,fg_tilemap,0);
 }
 
