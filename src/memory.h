@@ -693,6 +693,10 @@ DECLARE_HANDLERS_32BIT_LE(32)
 #define change_pc32ledw(pc)		change_pc_generic(pc, 32, 2, cpu_setopbase32ledw)
 
 
+/* ----- declare pdp1 handler ----- */
+DECLARE_HANDLERS_32BIT_BE(18)
+#define change_pc28bedw(pc)		change_pc_generic(pc, 18, 2, cpu_setopbase18bedw)
+
 
 /***************************************************************************
 
@@ -731,8 +735,6 @@ data16_t cpu_readport16bedw_word         (offs_t offset);
 void     cpu_writeport16bew_word         (offs_t offset, data16_t data);
 data32_t cpu_readport16bew_dword         (offs_t offset);
 void     cpu_writeport16bew_dword        (offs_t offset, data32_t data);
-
-
 
 /***************************************************************************
 
