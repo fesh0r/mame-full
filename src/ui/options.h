@@ -58,10 +58,9 @@ enum
 	VIEW_MAX
 };
 
-/* per-game data we calculate */
 enum
 {
-	UNKNOWN = 2
+	UNKNOWN	= -1
 };
 
 // config helpers types
@@ -241,8 +240,8 @@ typedef struct
 typedef struct
 {
     int play_count;
-    int has_roms;
-    int has_samples;
+    int rom_audit_results;
+    int samples_audit_results;
 
 	BOOL options_loaded; // whether or not we've loaded the game options yet
 	BOOL use_default; // whether or not we should just use default options
@@ -560,11 +559,14 @@ void SetMAMEInfoFileName(const char* path);
 
 void ResetGameOptions(int driver_index);
 
-int GetHasRoms(int driver_index);
-void SetHasRoms(int driver_index, int has_roms);
+int GetRomAuditResults(int driver_index);
+void SetRomAuditResults(int driver_index, int audit_results);
 
+int GetSampleAuditResults(int driver_index);
+void SetSampleAuditResults(int driver_index, int audit_results);
+
+int GetHasRoms(int driver_index);
 int GetHasSamples(int driver_index);
-void SetHasSamples(int driver_index, int has_samples);
 
 void IncrementPlayCount(int driver_index);
 int GetPlayCount(int driver_index);

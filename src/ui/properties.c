@@ -300,24 +300,6 @@ static void CLIB_DECL DetailsPrintf(const char *fmt, ...)
 	// throw it away
 }
 
-/* Checks of all ROMs are available for 'game' and returns result
- * Returns TRUE if all ROMs found, 0 if any ROMs are missing.
- */
-BOOL FindRomSet(int game)
-{
-    int audit = VerifyRomSet(game,(verify_printf_proc)DetailsPrintf);
-	return (audit == CORRECT) || (audit == BEST_AVAILABLE);
-}
-
-/* Checks for all samples in a sample set.
- * Returns TRUE if all samples are found, FALSE if any are missing.
- */
-BOOL FindSampleSet(int game)
-{
-    int audit = VerifySampleSet(game,(verify_printf_proc)DetailsPrintf);
-	return (audit == CORRECT) || (audit == BEST_AVAILABLE);
-}
-
 static PROPSHEETPAGE *CreatePropSheetPages(HINSTANCE hInst, BOOL bOnlyDefault,
 	const struct GameDriver *gamedrv, UINT *pnMaxPropSheets)
 {

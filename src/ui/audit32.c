@@ -102,21 +102,21 @@ void InitGameAudit(int gameIndex)
     Internal functions
  ***************************************************************************/
 
-// Verifies the ROM set while calling SetHasRoms	
-static int Mame32VerifyRomSet(int game)
+// Verifies the ROM set while calling SetRomAuditResults	
+int Mame32VerifyRomSet(int game)
 {
 	int iStatus;
 	iStatus = VerifyRomSet(game, (verify_printf_proc)DetailsPrintf);
-	SetHasRoms(game, (iStatus == CORRECT || iStatus == BEST_AVAILABLE || iStatus == MISSING_OPTIONAL) ? 1 : 0);
+	SetRomAuditResults(game, iStatus);
 	return iStatus;
 }
 
-// Verifies the ROM set while calling SetHasRoms	
-static int Mame32VerifySampleSet(int game)
+// Verifies the Sample set while calling SetSampleAuditResults	
+int Mame32VerifySampleSet(int game)
 {
 	int iStatus;
 	iStatus = VerifySampleSet(game, (verify_printf_proc)DetailsPrintf);
-	SetHasSamples(game, (iStatus == CORRECT || iStatus == BEST_AVAILABLE || iStatus == MISSING_OPTIONAL) ? 1 : 0);
+	SetSampleAuditResults(game, iStatus);
 	return iStatus;
 }
 

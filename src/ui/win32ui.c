@@ -2286,15 +2286,15 @@ static BOOL GameCheck(void)
 		return FALSE;
 	}
 
-	if (GetHasRoms(game_index) == UNKNOWN)
+	if (GetRomAuditResults(game_index) == UNKNOWN)
 	{
-		SetHasRoms(game_index,FindRomSet(game_index));
+		Mame32VerifyRomSet(game_index);
 		changed = TRUE;
 	}
 
-	if (GetHasSamples(game_index) == UNKNOWN)
+	if (GetSampleAuditResults(game_index) == UNKNOWN)
 	{
-		SetHasSamples(game_index, FindSampleSet(game_index));
+		Mame32VerifySampleSet(game_index);
 		changed = TRUE;
 	}
 
@@ -3475,8 +3475,8 @@ static void UpdateGameList()
 
 	for (i = 0; i < game_count; i++)
 	{
-		SetHasRoms(i, UNKNOWN);
-		SetHasSamples(i, UNKNOWN);
+		SetRomAuditResults(i, UNKNOWN);
+		SetSampleAuditResults(i, UNKNOWN);
 	}
 
 	idle_work	 = TRUE;

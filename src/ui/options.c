@@ -37,6 +37,7 @@
 #include "file.h"
 #include "splitters.h"
 #include "dijoystick.h"
+#include "audit.h"
 
 /***************************************************************************
     Internal function prototypes
@@ -375,8 +376,8 @@ typedef struct
 static GAMEVARIABLE_OPTION gamevariable_options[] =
 {
 	{ "play_count",		RO_INT,		offsetof(game_variables_type, play_count),				NULL,				(const void *) 0},
-	{ "have_roms",		RO_BOOL,	offsetof(game_variables_type, has_roms),				NULL,				(const void *) UNKNOWN },
-	{ "have_samples",	RO_BOOL,	offsetof(game_variables_type, has_samples),				DriverUsesSamples,	(const void *) UNKNOWN },
+	{ "rom_audit",		RO_INT,		offsetof(game_variables_type, rom_audit_results),		NULL,				(const void *) UNKNOWN },
+	{ "samples_audit",	RO_INT,		offsetof(game_variables_type, samples_audit_results),	DriverUsesSamples,	(const void *) UNKNOWN },
 #ifdef MESS
 	{ "extra_software",	RO_STRING,	offsetof(game_variables_type, extra_software_paths),	NULL,				(const void *) "" }
 #endif
@@ -832,8 +833,8 @@ BOOL OptionsInit()
 	for (i = 0; i < num_games; i++)
 	{
 		game_variables[i].play_count = 0;
-		game_variables[i].has_roms = UNKNOWN;
-		game_variables[i].has_samples = UNKNOWN;
+		game_variables[i].rom_audit_results = UNKNOWN;
+		game_variables[i].samples_audit_results = UNKNOWN;
 		
 		game_variables[i].options_loaded = FALSE;
 		game_variables[i].use_default = TRUE;
@@ -1215,7 +1216,6 @@ void SetCurrentTab(int val)
 
 int GetCurrentTab(void)
 {
-	dprintf("current tab is %i",settings.current_tab);
 	return settings.current_tab;
 }
 
@@ -1772,32 +1772,67 @@ void ResetAllGameOptions(void)
 	}
 }
 
+int GetRomAuditResults(int driver_index)
+{
+	assert(0 <= driver_index && driver_index < num_games);
+
+	return game_variables[driver_index].rom_audit_results;
+}
+
+void SetRomAuditResults(int driver_index, int audit_results)
+{
+	assert(0 <= driver_index && driver_index < num_games);
+
+	game_variables[driver_index].rom_audit_results = audit_results;
+}
+
+int  GetSampleAuditResults(int driver_index)
+{
+	assert(0 <= driver_index && driver_index < num_games);
+
+	return game_variables[driver_index].samples_audit_results;
+}
+
+void SetSampleAuditResults(int driver_index, int audit_results)
+{
+	assert(0 <= driver_index && driver_index < num_games);
+
+	game_variables[driver_index].samples_audit_results = audit_results;
+}
+
+static int TristateFromAuditResults(int audit_results)
+{
+	int result;
+	switch(audit_results) {
+	case CORRECT:
+	case BEST_AVAILABLE:
+	case MISSING_OPTIONAL:
+		result = 1;
+		break;
+
+	case NOTFOUND:
+	case INCORRECT:
+	case CLONE_NOTFOUND:
+		result = 0;
+		break;
+
+	default:
+		result = 2;
+		break;
+	}
+	return result;
+}
+
+// Deprecated
 int GetHasRoms(int driver_index)
 {
-	assert(0 <= driver_index && driver_index < num_games);
-
-	return game_variables[driver_index].has_roms;
+	return TristateFromAuditResults(GetRomAuditResults(driver_index));
 }
 
-void SetHasRoms(int driver_index, int has_roms)
+// Deprecated
+int GetHasSamples(int driver_index)
 {
-	assert(0 <= driver_index && driver_index < num_games);
-
-	game_variables[driver_index].has_roms = has_roms;
-}
-
-int  GetHasSamples(int driver_index)
-{
-	assert(0 <= driver_index && driver_index < num_games);
-
-	return game_variables[driver_index].has_samples;
-}
-
-void SetHasSamples(int driver_index, int has_samples)
-{
-	assert(0 <= driver_index && driver_index < num_games);
-
-	game_variables[driver_index].has_samples = has_samples;
+	return TristateFromAuditResults(GetSampleAuditResults(driver_index));
 }
 
 void IncrementPlayCount(int driver_index)
