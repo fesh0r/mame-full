@@ -40,13 +40,13 @@
 
 static UINT8 avigo_key_line;
 /* 
-	bit 7:
-	bit 6: pen int 
-	bit 5: 
+	bit 7:						?? high priority. When it occurs, clear this bit.
+	bit 6: pen int				pen or power
+	bit 5:						port 1d,1f
 	bit 4: timer 2 int
-	bit 3: uart int
-	bit 2: keyboard int
-	bit 1: timer 1 int
+	bit 3: uart int				port 35,30
+	bit 2: keyboard int			;; check bit 5 of port 1,
+	bit 1: timer 1 int			(cleared in nmi, and then set again)
 
 */
 static UINT8 avigo_irq;
@@ -80,7 +80,6 @@ static READ_HANDLER(avigo_flash_0x4000_read_handler)
 {
 
         int flash_offset = (avigo_rom_bank_l<<14) | offset;
-        logerror("flash read 1\r\n");
 
         return flash_bank_handler_r(avigo_flash_at_0x4000, flash_offset);
 }
@@ -109,8 +108,6 @@ static READ_HANDLER(avigo_flash_0x8000_read_handler)
 
         int flash_offset = (avigo_ram_bank_l<<14) | offset;
 
-        logerror("flash read 8\r\n");
-
         return flash_bank_handler_r(avigo_flash_at_0x8000, flash_offset);
 }
 
@@ -119,8 +116,6 @@ static WRITE_HANDLER(avigo_flash_0x8000_write_handler)
 {
 
         int flash_offset = (avigo_ram_bank_l<<14) | offset;
-
-        logerror("flash write 8\r\n");
 
         flash_bank_handler_w(avigo_flash_at_0x8000, flash_offset, data);
 }
@@ -183,7 +178,7 @@ static void avigo_refresh_memory(void)
 
         switch (avigo_rom_bank_h)
         {
-          case 0x03:
+		  case 0x03:
           {
               avigo_flash_at_0x4000 = 1;
           }
@@ -271,6 +266,8 @@ static void avigo_refresh_memory(void)
         }
 
 }
+
+
 
 static void avigo_com_interrupt(int irq_num, int state)
 {
@@ -402,10 +399,10 @@ MEMORY_END
 
 
 MEMORY_WRITE_START( writemem_avigo )
-        {0x00000, 0x03fff, MWA_BANK4},
-        {0x04000, 0x07fff, MWA_BANK5},
-        {0x08000, 0x0bfff, MWA_BANK6},
-        {0x0c000, 0x0ffff, MWA_BANK7},
+        {0x00000, 0x03fff, MWA_BANK5},
+        {0x04000, 0x07fff, MWA_BANK6},
+        {0x08000, 0x0bfff, MWA_BANK7},
+        {0x0c000, 0x0ffff, MWA_BANK8},
 MEMORY_END
 
 
@@ -418,8 +415,7 @@ READ_HANDLER(avigo_key_data_read_r)
 {
 	UINT8 data;
 
-	data = 0x0ff;
-        data &= ~(1<<5);
+	data = 0x007;
 
 	if (avigo_key_line & 0x01)
 	{
@@ -437,6 +433,9 @@ READ_HANDLER(avigo_key_data_read_r)
 
 	}
 
+	/* bit 3 must be set, otherwise there is an infinite loop in startup */
+	data |= (1<<3);
+
 	return data;
 }
 
@@ -445,6 +444,7 @@ READ_HANDLER(avigo_key_data_read_r)
 /* bit 0 set for line 0, bit 1 set for line 1, bit 2 set for line 2 */
 WRITE_HANDLER(avigo_set_key_line_w)
 {
+	/* 5, 101, read back 3 */
 	avigo_key_line = data;
 }
 
@@ -531,27 +531,35 @@ WRITE_HANDLER(avigo_ram_bank_h_w)
 
 READ_HANDLER(avigo_ad_control_status_r)
 {
+	logerror("avigo ad control read\n");
+
         return avigo_ad_control_status;
 }
 
 WRITE_HANDLER(avigo_ad_control_status_w)
 {
+	logerror("avigo ad control w %02x\n",data);
+
         avigo_ad_control_status = data | 1;
 }
 
 READ_HANDLER(avigo_ad_data_r)
 {
-        switch (avigo_ad_control_status & 0x0fe)
-        {
-           case 0x020:
-            return 0x0fd;
-           case 0x060:
-            return 0x0fd;
-           default:
-           break;
-        }
+	logerror("avigo ad read\n");
 
-        return 0;
+	return 0x00;	//ff;
+
+//        switch (avigo_ad_control_status & 0x0fe)
+  //      {
+    //       case 0x020:
+      //      return 0x0fd;
+     //      case 0x060:
+     //       return 0x0fd;
+     // /     default:
+     //      break;
+     //   }
+//
+  //      return 0;
 
 
 }
@@ -572,27 +580,53 @@ WRITE_HANDLER(avigo_speaker_w)
 	}
 }
 
+READ_HANDLER(avigo_unmapped_r)
+{
+	logerror("read unmapped port\n",offset);
+	
+	return 0x0ff;
+}
+
+/* port 0x04:
+
+  bit 7: ??? if set, does a write 0x00 to 0x02e */
+
+  /* port 0x029:
+	port 0x02e */
+READ_HANDLER(avigo_04_r)
+{
+	return 0x07f;
+}
+
+
 PORT_READ_START( readport_avigo )
-        {0x001, 0x001, avigo_key_data_read_r},
+	{0x000, 0x000, avigo_unmapped_r},
+    {0x001, 0x001, avigo_key_data_read_r},
+	{0x002, 0x002, avigo_unmapped_r},
 	{0x003, 0x003, avigo_irq_r},
+	{0x004, 0x004, avigo_04_r},
 	{0x005, 0x005, avigo_rom_bank_l_r},
 	{0x006, 0x006, avigo_rom_bank_h_r},
 	{0x007, 0x007, avigo_ram_bank_l_r},
 	{0x008, 0x008, avigo_ram_bank_h_r},
-        {0x009, 0x009, avigo_ad_control_status_r},
+    {0x009, 0x009, avigo_ad_control_status_r},
+	{0x00a, 0x00f, avigo_unmapped_r},
 	{0x010, 0x01f, tc8521_r},
-        {0x02d, 0x02d, avigo_ad_data_r},
+	{0x020, 0x02c, avigo_unmapped_r},
+    {0x02d, 0x02d, avigo_ad_data_r},
+	{0x02e, 0x02f, avigo_unmapped_r},
 	{0x030, 0x037, uart8250_0_r},
+	{0x038, 0x0ff, avigo_unmapped_r},
 PORT_END
 
 PORT_WRITE_START( writeport_avigo )
-        {0x001, 0x001, avigo_set_key_line_w},
-        {0x003, 0x003, avigo_irq_w},
+	{0x001, 0x001, avigo_set_key_line_w},
+	{0x003, 0x003, avigo_irq_w},
 	{0x005, 0x005, avigo_rom_bank_l_w},
 	{0x006, 0x006, avigo_rom_bank_h_w},
 	{0x007, 0x007, avigo_ram_bank_l_w},
 	{0x008, 0x008, avigo_ram_bank_h_w},
-        {0x009, 0x009, avigo_ad_control_status_w},
+    {0x009, 0x009, avigo_ad_control_status_w},
    	{0x010, 0x01f, tc8521_w},
 	{0x028, 0x028, avigo_speaker_w},
 	{0x030, 0x037, uart8250_0_w},
