@@ -677,6 +677,8 @@ logerror("Machine reset\n");
 	{
 		interrupt_enable[i] = 1;
 		interrupt_vector[i] = 0xff;
+        /* Reset any driver hooks into the IRQ acknowledge callbacks */
+        drv_irq_callbacks[i] = NULL;
 	}
 
 	/* do this AFTER the above so init_machine() can use cpu_halt() to hold the */
@@ -695,8 +697,6 @@ logerror("Machine reset\n");
 		/* Set the irq callback for the cpu */
 		SETIRQCALLBACK(i,cpu_irq_callbacks[i]);
 
-        /* Reset any driver hooks into the IRQ acknowledge callbacks */
-        drv_irq_callbacks[i] = NULL;
 
 		/* save the CPU context if necessary */
 		if (cpu[i].save_context) GETCONTEXT (i, cpu[i].context);
