@@ -1162,7 +1162,7 @@ static void execute_instruction(void)
 	case ADD:		/* Add */
 		{
 			/* overflow is set if the 2 operands have the same sign and the final result has another */
-			/* As a side node, the order of -0 detection and overflow checking does not matter,
+			/* As a side note, the order of -0 detection and overflow checking does not matter,
 			because the sum of two positive number cannot give 0777777 (since positive
 			numbers are 0377777 at most, their sum is 0777776 at most).
 			Additionnally, we cannot have carry set and a result equal to 0777777  (since numbers
@@ -1173,7 +1173,7 @@ static void execute_instruction(void)
 					AC = 0;
 			equivalent to:
 				if (AC >= 0777777)
-					AC = (AC + (AC + 1)) & 0777777;
+					AC = (AC + 1) & 0777777;
 			which is a bit more efficient. */
 			int ov2;	/* 1 if the operands have the same sign*/
 
@@ -1617,7 +1617,7 @@ static void execute_instruction(void)
 
 			Note that ioc is supposed to be set at the beggining of the memory cycle after
 			ioh is cleared.
-			However, we cannot set ioc et the beggining of every memory cycle as we
+			However, we cannot set ioc at the beggining of every memory cycle as we
 			did before, because it breaks in the following case:
 			a) IOT instruction enables IO wait
 			b) sequence break in the middle of IO-halt
