@@ -5,6 +5,11 @@
 #define __VIDEO_C_
 #include <math.h>
 #include "xmame.h"
+
+#ifdef xgl
+	#include "video-drivers/glmame.h"
+#endif
+
 #include "driver.h"
 #include "profiler.h"
 #include "input.h"
@@ -20,7 +25,6 @@ static int normal_widthscale = 1, normal_heightscale = 1;
 static char *vector_res = NULL;
 static int use_auto_double = 1;
 static int frameskipper = 0;
-static float gamma_correction = 1.0;
 static int brightness = 100;
 static float brightness_paused_adjust = 1.0;
 static int bitmap_depth;
@@ -29,6 +33,12 @@ static int debugger_has_focus = 0;
 static struct sysdep_palette_struct *debug_palette = NULL;
 static struct my_rectangle normal_visual;
 static struct my_rectangle debug_visual;
+
+float gamma_correction = 1.0;
+
+#ifdef xgl
+	static int bitmap4GLTexture = 0;
+#endif
 
 /* some prototypes */
 static int video_handle_scale(struct rc_option *option, const char *arg,
@@ -183,6 +193,7 @@ static int video_verify_bpp(struct rc_option *option, const char *arg,
 {
    if( (options.color_depth != 0) &&
        (options.color_depth != 8) &&
+       (options.color_depth != 15) &&
        (options.color_depth != 16) )
    {
       options.color_depth = 0;
@@ -217,6 +228,7 @@ static int video_verify_vectorres(struct rc_option *option, const char *arg,
 struct osd_bitmap *osd_alloc_bitmap(int width,int height,int depth)       /* ASG 980209 */
 {
 	struct osd_bitmap *bitmap;
+	int w,h;
 
 	if (depth != 8 && depth != 15 && depth != 16 && depth != 32)
 	{
@@ -227,49 +239,94 @@ struct osd_bitmap *osd_alloc_bitmap(int width,int height,int depth)       /* ASG
 
 	if ((bitmap = malloc(sizeof(struct osd_bitmap))) != 0)
 	{
-		int i,rowlen,rdwidth;
-		unsigned char *bm;
+		unsigned char *bitmap_data=0;
+		int i,rowlen,rdwidth, bytes_per_pixel;
+		int y_rows;
+		int bitmap_size;
 
 		bitmap->depth = depth;
 		bitmap->width = width;
 		bitmap->height = height;
 
 		rdwidth = (width + 7) & ~7;     /* round width to a quadword */
-		rowlen = (rdwidth + 2 * safety) * sizeof(unsigned char);
-		if (depth == 32)
-			rowlen *= 4;
-		else if (depth == 15 || depth == 16)
-			rowlen *= 2;
 
-		if ((bm = malloc((height + 2 * safety) * rowlen)) == 0)
+		bytes_per_pixel=(depth+7)/8;
+
+		rowlen = bytes_per_pixel * (rdwidth + 2 * safety) * sizeof(unsigned char);
+		
+		y_rows = height + 2 * safety;
+
+		bitmap_size = y_rows * rowlen ;
+
+#ifdef xgl
+		if(bitmap4GLTexture) 
+		{
+			int tw_size, th_rows;
+
+			/* JAU: find some n,m for 
+				(w=2**n)>=text_width, (h=2**m)>=text_height */
+			/* we try to use the bitmap for OpenGL 
+			   textures directly .. no copies */
+
+			text_width  = width;
+			text_height = height;
+			w=1; h=1;
+
+			while (w<text_width)
+			{ w*=2; }
+
+			while (h<text_height)
+			{ h*=2; }
+
+			text_width=w;
+			text_height=h;
+
+			/* The rows must not be expanded, just the bitmap
+			   memory - because of read access :-)
+
+			   Question: 
+			     Is the bitmap allocated after osd_create_display
+			     the only, which must be displayed as a texture ?
+			     If not - work must be done ..
+			 */
+			
+			tw_size  = bytes_per_pixel * 
+			           (text_width + 2 * safety) ;
+
+			th_rows = text_height + 2 * safety ;
+			
+			bitmap_size = th_rows * tw_size;
+
+			bitmap4GLTexture = FALSE; /* thats it */
+
+		}
+#endif
+
+		if ((bitmap_data = malloc(bitmap_size)) == 0)
 		{
 			free(bitmap);
 			return 0;
 		}
-
-		/* clear ALL bitmap, including safety area, to avoid garbage on ____right */
-		/* side of screen if width is not a multiple of 4 */
-		memset(bm,0,(height + 2 * safety) * rowlen);
+	
+		/* clear ALL bitmap, including safety area, to avoid garbage on right */
+		/* side of screen is width is not a multiple of 4 */
+		memset(bitmap_data, 0, (height + 2 * safety) * rowlen);
 
 		if ((bitmap->line = malloc((height + 2 * safety) * sizeof(unsigned char *))) == 0)
 		{
-			free(bm);
-			free(bitmap);
-			return 0;
+		    free(bitmap_data);
+		    free(bitmap);
+		    return 0;
 		}
 
-		for (i = 0;i < height + 2 * safety;i++)
+		for (i = 0; i < height + 2 * safety; i++)
 		{
-			if (depth == 32)
-				bitmap->line[i] = &bm[i * rowlen + 4*safety];
-			else if (depth == 15 || depth == 16)
-				bitmap->line[i] = &bm[i * rowlen + 2*safety];
-			else
-				bitmap->line[i] = &bm[i * rowlen + safety];
+		    bitmap->line[i] = &bitmap_data[i * rowlen + safety * bytes_per_pixel];
 		}
+
 		bitmap->line += safety;
 
-		bitmap->_private = bm;
+		bitmap->_private = bitmap_data ;
 	}
 
 	return bitmap;
@@ -327,6 +384,11 @@ int osd_create_display(int width, int height, int depth,
   
 #if !defined xgl
    if (osd_dirty_init()!=OSD_OK) return -1;
+#else
+   /* yes create a OpenGL-Texture compatible bitmap this time ... 
+      the next call to alloc_bitmap uses this information ...
+    */
+   bitmap4GLTexture=1; 
 #endif
 
    visual_width     = width;
@@ -487,6 +549,14 @@ int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
    int i;
    int writable_colors = 0;
    int max_colors = (bitmap_depth == 8)? 256:65536;
+   int direct_mapped_15bpp = 0;
+
+   if ((Machine->drv->video_attributes & VIDEO_RGB_DIRECT) 
+      && bitmap_depth == 16)
+   {
+      direct_mapped_15bpp = 1;
+      totalcolors = 32768;
+   }
 
    /* calculate the size of the normal palette */
    if (totalcolors > max_colors)
@@ -504,7 +574,7 @@ int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
    else
       fprintf(stderr_file, "Game uses %d colors\n", totalcolors);
    
-   if ((bitmap_depth == 8) || modifiable)
+   if ((bitmap_depth == 8) || modifiable || direct_mapped_15bpp)
    {
       writable_colors = totalcolors + 2;
       if (writable_colors > max_colors)
@@ -552,32 +622,80 @@ int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
    if (writable_colors)
    {
       int color_start = (totalcolors < max_colors)? 1:0;
+      int r, g, b;
       
       /* normal palette */
-      for (i=0; i<totalcolors; i++)
+      if ((Machine->drv->video_attributes & VIDEO_RGB_DIRECT) 
+         && bitmap_depth == 16)
       {
-         pens[i] = i+color_start;
-         sysdep_palette_set_pen(normal_palette, i+color_start, palette[i*3],
-            palette[i*3+1], palette[i*3+2]);
-      }
-      if(color_start)
-         sysdep_palette_set_pen(normal_palette, 0, 0, 0, 0);
-      if( writable_colors > (totalcolors+color_start) )
-         sysdep_palette_set_pen(normal_palette, writable_colors - 1, 0xFF, 0xFF,
-            0xFF);
-      Machine->uifont->colortable[0] = 0;
-      Machine->uifont->colortable[1] = writable_colors - 1;
-      Machine->uifont->colortable[2] = writable_colors - 1;
-      Machine->uifont->colortable[3] = 0;
-      
-      /* debug palette */
-      if (debugger_pens)
-      {
-         for (i=0; i<DEBUGGER_TOTAL_COLORS; i++)
+         i = 0;
+
+         for (r = 0;r < 32;r++)
          {
-            debugger_pens[i] = i;
-            sysdep_palette_set_pen(debug_palette, i, debugger_palette[i*3],
-               debugger_palette[i*3+1], debugger_palette[i*3+2]);
+            for (g = 0;g < 32;g++)
+            {
+               for (b = 0;b < 32;b++)
+               {
+                  sysdep_palette_set_pen(normal_palette, i,
+                     (r << 3) | (r >> 2),
+                     (g << 3) | (g >> 2),
+                     (b << 3) | (b >> 2));
+                  i++;
+               }
+            }
+         }
+
+         pens[0] = 0x7c00;
+         pens[1] = 0x03e0;
+         pens[2] = 0x001f;
+
+         Machine->uifont->colortable[0] = 0x0000;
+         Machine->uifont->colortable[1] = 0x7fff;
+         Machine->uifont->colortable[2] = 0x7fff;
+         Machine->uifont->colortable[3] = 0x0000;
+
+         /* debug palette */
+         if (debugger_pens)
+         {
+            for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
+            {
+               r = debugger_palette[3*i+0];
+               g = debugger_palette[3*i+1];
+               b = debugger_palette[3*i+2];
+               debugger_pens[i] = r * pens[0] / 0xff + g * pens[1] / 0xff + b * pens[2] / 0xff;
+               sysdep_palette_set_pen(debug_palette, i, debugger_palette[i*3],
+                  debugger_palette[i*3+1], debugger_palette[i*3+2]);
+            }
+         }
+      }
+      else
+      {
+         for (i=0; i<totalcolors; i++)
+         {
+            pens[i] = i+color_start;
+            sysdep_palette_set_pen(normal_palette, i+color_start, palette[i*3],
+               palette[i*3+1], palette[i*3+2]);
+         }
+
+         Machine->uifont->colortable[0] = 0;
+         Machine->uifont->colortable[1] = writable_colors - 1;
+         Machine->uifont->colortable[2] = writable_colors - 1;
+         Machine->uifont->colortable[3] = 0;
+
+         if(color_start)
+            sysdep_palette_set_pen(normal_palette, 0, 0, 0, 0);
+         if( writable_colors > (totalcolors+color_start) )
+            sysdep_palette_set_pen(normal_palette, writable_colors - 1, 0xFF, 0xFF, 0xFF);
+
+         /* debug palette */
+         if (debugger_pens)
+         {
+            for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
+            {
+               debugger_pens[i] = i;
+               sysdep_palette_set_pen(debug_palette, i, debugger_palette[i*3],
+                  debugger_palette[i*3+1], debugger_palette[i*3+2]);
+            }
          }
       }
    }
@@ -597,7 +715,7 @@ int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
          0xFF, 0xFF, 0xFF);
       Machine->uifont->colortable[3] = sysdep_palette_make_pen(normal_palette,
          0, 0, 0);
-      
+
       /* debug palette */
       if (debugger_pens)
       {
