@@ -6,8 +6,8 @@
 	* hard disks ("WIN format") in MAME harddisk format (256-byte sectors only,
 	  i.e. no SCSI)
 	Files are extracted in TIFILES format.  There is a compile-time option to
-	extract text files in flat format, but I need to re-implement it properly
-	(using filters comes to mind).
+	extract text files in flat format instead, but I need to re-implement it
+	properly (using filters comes to mind).
 
 	Raphael Nabet, 2002-2003
 
@@ -69,9 +69,9 @@
 	of any size from 0 through 254: logical records are grouped by file
 	managers into 256-byte physical records.  Some disk managers (HFDC and
 	SCSI) allow programs to create fixed-lenght records larger than 255 bytes,
-	too, but few programs use this possibility.  Additionally, programs may
-	create program files, that do not implement any logical record, and can be
-	seen as a flat byte stream, not unlike files under MSDOS, UNIX and the C
+	too, but few programs use this possibility.  Additionally, program files
+	can be created: program files do not implement any logical record, and can
+	be seen as a flat byte stream, not unlike files under MSDOS, UNIX and the C
 	standard library.  (Unfortunately, the API for program files lacks
 	flexibility, and most programs that need to process a flat byte stream
 	will use fixed-size records of 128 bytes.)
@@ -461,8 +461,8 @@ static int check_fpath(const char *fpath)
 typedef struct ti99_geometry
 {
 	int secspertrack;
-	int tracksperside;
-	int sides;
+	int cylinders;
+	int heads;
 } ti99_geometry;
 
 /*
@@ -514,8 +514,8 @@ typedef struct dsk_vib
 								/* 16 or 18 (MFM DD), or 36 (MFM HD) */
 	UINT8 id[3];			/* 'DSK' */
 	UINT8 protection;		/* 'P' if disk is protected, ' ' otherwise. */
-	UINT8 tracksperside;	/* tracks per side (usually 40) */
-	UINT8 sides;			/* sides (1 or 2) */
+	UINT8 cylinders;		/* tracks per side (usually 40) */
+	UINT8 heads;			/* sides (1 or 2) */
 	UINT8 density;			/* density: 1 (FM SD), 2 (MFM DD), or 3 (MFM HD) */
 	dsk_subdir subdir[3];	/* descriptor for up to 3 subdirectories (HFDC only) */
 								/* reserved by TI */
@@ -548,10 +548,9 @@ typedef struct ti99_lvl1_imgref
 	STREAM *file_handle;		/* imgtool file handle */
 	void *harddisk_handle;		/* MAME harddisk handle (harddisk format) */
 	ti99_geometry geometry;		/* geometry */
+	unsigned pc99_track_len;		/* unformatted track lenght (pc99 format) */
 	UINT32 *pc99_data_offset_array;	/* offset for each sector (pc99 format) */
 } ti99_lvl1_imgref;
-
-/*static int read_absolute_physrec(ti99_lvl1_imgref *l1_img, unsigned aphysrec, void *dest);*/
 
 /*
 	calculate CRC for data address marks or sector data
@@ -592,255 +591,301 @@ static void calc_crc(UINT16 *crc, UINT8 value)
 	geometry: disk image geometry (second pass)
 	data_offset_array: array of data offset to generate (second pass)
 */
-#define MAX_SECTOR_LEN 2048
+#define MAX_TRACK_LEN 6872
 #define DATA_OFFSET_NONE 0xffffffff
-static int parse_pc99_image(STREAM *file_handle, int fm_format, int pass, dsk_vib *vib, const ti99_geometry *geometry, UINT32 *data_offset_array)
+static int parse_pc99_image(STREAM *file_handle, int fm_format, int pass, dsk_vib *vib, const ti99_geometry *geometry, UINT32 *data_offset_array, unsigned *out_track_len)
 {
-	int bytes_read;
+	int track_len, num_tracks;	/* lenght of a track in bytes, and number of tracks */
+	int phys_track;
+	int expected_cylinder, expected_head;
+	int track_start_pos, track_pos;
 	UINT8 c;
 	UINT8 cylinder, head, sector;
 	int seclen;
 	UINT8 crc1, crc2;
 	UINT16 crc;
-	long save_pos;
 	long data_offset;
-	UINT8 buf[MAX_SECTOR_LEN];
+	UINT8 track_buf[MAX_TRACK_LEN];
 	int i;
 
+	if (fm_format)
+		track_len = 3253;
+	else
+		track_len = 6872;
+
+	if (out_track_len)
+		*out_track_len = track_len;
+
+	if (stream_size(file_handle) % track_len)
+		return IMGTOOLERR_CORRUPTIMAGE;
+
+	num_tracks = stream_size(file_handle) / track_len;
+	if (num_tracks <= 0)
+		return IMGTOOLERR_CORRUPTIMAGE;
+
+	/* we only support 40-track-per-side images */
+	if ((num_tracks != 40) && (num_tracks != 80))
+		return IMGTOOLERR_UNIMPLEMENTED;
 
 	if (pass == 1)
 	{
 		/* initialize offset map */
-		for (cylinder = 0; cylinder < geometry->tracksperside; cylinder++)
-			for (head = 0; head < geometry->sides; head++)
+		for (head = 0; head < geometry->heads; head++)
+			for (cylinder = 0; cylinder < geometry->cylinders; cylinder++)
 				for (sector = 0; sector < geometry->secspertrack; sector++)
-					data_offset_array[(cylinder*geometry->sides + head)*geometry->secspertrack + sector] = DATA_OFFSET_NONE;
+					data_offset_array[(head*geometry->cylinders + cylinder)*geometry->secspertrack + sector] = DATA_OFFSET_NONE;
 	}
 	/* rewind to start of file */
 	stream_seek(file_handle, 0, SEEK_SET);
 
-	bytes_read = stream_read(file_handle, &c, 1);
-	while (bytes_read)
+	/* pass 0 only looks for vib in track 0; pass 1 scans every track */
+	for (phys_track=0; phys_track < ((pass == 1) ? num_tracks : 1); phys_track++)
 	{
-		if (fm_format)
+		if (stream_read(file_handle, track_buf, track_len) != track_len)
+			return IMGTOOLERR_READERROR;
+
+		/* we only support 40-track-per-side images */
+		expected_cylinder = phys_track % 40;
+		expected_head = phys_track / 40;
+
+		track_start_pos = 0;
+
+		while (track_start_pos < track_len)
 		{
-			while ((c != 0xfe) && bytes_read)
-				bytes_read = stream_read(file_handle, &c, 1);
-
-			if (! bytes_read)
-				break;
-
-			save_pos = stream_tell(file_handle);
-
-			crc = 0xffff;
-			calc_crc(& crc, c);
-		}
-		else
-		{
-			while ((c != 0xa1) && bytes_read)
-				bytes_read = stream_read(file_handle, &c, 1);
-
-			if (! bytes_read)
-				break;
-
-			save_pos = stream_tell(file_handle);
-
-			bytes_read = stream_read(file_handle, &c, 1);
-			if (! bytes_read)
-				break;
-
-			if (c != 0xa1)
+			if (fm_format)
 			{
-				stream_seek(file_handle, save_pos, SEEK_SET);
-				bytes_read = stream_read(file_handle, &c, 1);
-				continue;
+				do
+				{
+					c = track_buf[track_start_pos];
+					track_start_pos++;
+				} while ((c != 0xfe) && (track_start_pos < track_len));
+
+				if (c != 0xfe)
+					break;
+
+				track_pos = track_start_pos;
+
+				crc = 0xffff;
+				calc_crc(& crc, c);
+			}
+			else
+			{
+				do
+				{
+					c = track_buf[track_start_pos];
+					track_start_pos++;
+				} while ((c != 0xa1) && (track_start_pos < track_len));
+
+				if (c != 0xa1)
+					break;
+
+				track_pos = track_start_pos;
+
+				c = track_buf[track_pos];
+				track_pos++;
+				if (track_pos == track_len)
+					track_pos = 0;
+
+				if (c != 0xa1)
+					continue;
+
+				c = track_buf[track_pos];
+				track_pos++;
+				if (track_pos == track_len)
+					track_pos = 0;
+
+				if (c != 0xa1)
+					continue;
+
+				crc = 0xffff;
+				calc_crc(& crc, c);
+
+				c = track_buf[track_pos];
+				track_pos++;
+				if (track_pos == track_len)
+					track_pos = 0;
+
+				if (c != 0xfe)
+					continue;
 			}
 
-			bytes_read = stream_read(file_handle, &c, 1);
-			if (! bytes_read)
-				break;
+			c = track_buf[track_pos];
+			track_pos++;
+			if (track_pos == track_len)
+				track_pos = 0;
 
-			if (c != 0xa1)
-			{
-				stream_seek(file_handle, save_pos, SEEK_SET);
-				bytes_read = stream_read(file_handle, &c, 1);
-				continue;
-			}
-
-			crc = 0xffff;
-			calc_crc(& crc, c);
-
-			bytes_read = stream_read(file_handle, &c, 1);
-			if (! bytes_read)
-				break;
-
-			if (c != 0xfe)
-			{
-				stream_seek(file_handle, save_pos, SEEK_SET);
-				bytes_read = stream_read(file_handle, &c, 1);
-				continue;
-			}
-		}
-
-		bytes_read = stream_read(file_handle, &c, 1);
-		if (! bytes_read)
-			break;
-		cylinder = c;
-		calc_crc(& crc, c);
-
-		bytes_read = stream_read(file_handle, &c, 1);
-		if (! bytes_read)
-			break;
-		head = c;
-		calc_crc(& crc, c);
-
-		bytes_read = stream_read(file_handle, &c, 1);
-		if (! bytes_read)
-			break;
-		sector = c;
-		calc_crc(& crc, c);
-
-		bytes_read = stream_read(file_handle, &c, 1);
-		if (! bytes_read)
-			break;
-		seclen = 128 << c;
-		calc_crc(& crc, c);
-
-		bytes_read = stream_read(file_handle, &c, 1);
-		if (! bytes_read)
-			break;
-		crc1 = c;
-		calc_crc(& crc, c);
-
-		bytes_read = stream_read(file_handle, &c, 1);
-		if (! bytes_read)
-			break;
-		crc2 = c;
-		calc_crc(& crc, c);
-
-		/* CRC seems to be completely hosed */
-		/*if (crc)
-			printf("aargh!");*/
-		if ((seclen != 256) || (crc1 != 0xf7) || (crc2 != 0xf7)
-				|| ((pass == 1) && ((cylinder >= geometry->tracksperside)
-									|| (head >= geometry->sides)
-									|| (sector >= geometry->secspertrack))))
-		{
-			stream_seek(file_handle, save_pos, SEEK_SET);
-			bytes_read = stream_read(file_handle, &c, 1);
-			continue;
-		}
-
-		bytes_read = stream_read(file_handle, &c, 1);
-
-		while (bytes_read && (c == (fm_format ? 0xff : 0x4e)))
-			bytes_read = stream_read(file_handle, &c, 1);
-
-		while (bytes_read && (c == 0x00))
-			bytes_read = stream_read(file_handle, &c, 1);
-
-		if (! bytes_read)
-			break;
-
-		if (fm_format)
-		{
-			if (c != 0xfb)
-			{
-				stream_seek(file_handle, save_pos, SEEK_SET);
-				bytes_read = stream_read(file_handle, &c, 1);
-				continue;
-			}
-			crc = 0xffff;
-			calc_crc(& crc, c);
-		}
-		else
-		{
-			if (c != 0xa1)
-			{
-				stream_seek(file_handle, save_pos, SEEK_SET);
-				bytes_read = stream_read(file_handle, &c, 1);
-				continue;
-			}
-
-			bytes_read = stream_read(file_handle, &c, 1);
-			if (! bytes_read)
-				break;
-
-			if (c != 0xa1)
-			{
-				stream_seek(file_handle, save_pos, SEEK_SET);
-				bytes_read = stream_read(file_handle, &c, 1);
-				continue;
-			}
-
-			bytes_read = stream_read(file_handle, &c, 1);
-			if (! bytes_read)
-				break;
-
-			if (c != 0xa1)
-			{
-				stream_seek(file_handle, save_pos, SEEK_SET);
-				bytes_read = stream_read(file_handle, &c, 1);
-				continue;
-			}
-
-			crc = 0xffff;
+			cylinder = c;
 			calc_crc(& crc, c);
 
-			bytes_read = stream_read(file_handle, &c, 1);
-			if (! bytes_read)
+			c = track_buf[track_pos];
+			track_pos++;
+			if (track_pos == track_len)
+				track_pos = 0;
+
+			head = c;
+			calc_crc(& crc, c);
+
+			c = track_buf[track_pos];
+			track_pos++;
+			if (track_pos == track_len)
+				track_pos = 0;
+
+			sector = c;
+			calc_crc(& crc, c);
+
+			c = track_buf[track_pos];
+			track_pos++;
+			if (track_pos == track_len)
+				track_pos = 0;
+
+			seclen = 128 << c;
+			calc_crc(& crc, c);
+
+			c = track_buf[track_pos];
+			track_pos++;
+			if (track_pos == track_len)
+				track_pos = 0;
+
+			crc1 = c;
+			calc_crc(& crc, c);
+
+			c = track_buf[track_pos];
+			track_pos++;
+			if (track_pos == track_len)
+				track_pos = 0;
+
+			crc2 = c;
+			calc_crc(& crc, c);
+
+			/* CRC seems to be completely hosed */
+			/*if (crc)
+				printf("aargh!");*/
+			if ((seclen != 256) || (crc1 != 0xf7) || (crc2 != 0xf7)
+					|| (cylinder != expected_cylinder) || (head != expected_head)
+					|| ((pass == 1) && ((cylinder >= geometry->cylinders)
+										|| (head >= geometry->heads)
+										|| (sector >= geometry->secspertrack))))
+				continue;
+
+			c = track_buf[track_pos];
+			track_pos++;
+			if (track_pos == track_len)
+				track_pos = 0;
+
+			while (c == (fm_format ? 0xff : 0x4e))
+			{
+				c = track_buf[track_pos];
+				track_pos++;
+				if (track_pos == track_len)
+					track_pos = 0;
+			}
+
+			while (c == 0x00)
+			{
+				c = track_buf[track_pos];
+				track_pos++;
+				if (track_pos == track_len)
+					track_pos = 0;
+			}
+
+			if (fm_format)
+			{
+				if (c != 0xfb)
+					continue;
+
+				crc = 0xffff;
+				calc_crc(& crc, c);
+			}
+			else
+			{
+				if (c != 0xa1)
+					continue;
+
+				c = track_buf[track_pos];
+				track_pos++;
+				if (track_pos == track_len)
+					track_pos = 0;
+
+				if (c != 0xa1)
+					continue;
+
+				c = track_buf[track_pos];
+				track_pos++;
+				if (track_pos == track_len)
+					track_pos = 0;
+
+				if (c != 0xa1)
+					continue;
+
+				crc = 0xffff;
+				calc_crc(& crc, c);
+
+				c = track_buf[track_pos];
+				track_pos++;
+				if (track_pos == track_len)
+					track_pos = 0;
+
+				if (c != 0xfb)
+					continue;
+			}
+			data_offset = track_pos;
+			for (i=0; i<seclen; i++)
+			{
+				c = track_buf[track_pos];
+				track_pos++;
+				if (track_pos == track_len)
+					track_pos = 0;
+
+				calc_crc(& crc, c);
+			}
+
+			c = track_buf[track_pos];
+			track_pos++;
+			if (track_pos == track_len)
+				track_pos = 0;
+
+			crc1 = c;
+			calc_crc(& crc, c);
+
+			c = track_buf[track_pos];
+			track_pos++;
+			if (track_pos == track_len)
+				track_pos = 0;
+
+			crc2 = c;
+			calc_crc(& crc, c);
+
+			/* CRC seems to be completely hosed */
+			/*if (crc)
+				printf("aargh!");*/
+			if ((crc1 != 0xf7) || (crc2 != 0xf7))
+				continue;
+
+			switch (pass)
+			{
+			case 0:
+				if ((cylinder == 0) && (head == 0) && (sector == 0))
+				{
+					/* return vib */
+					if ((data_offset + 256) <= track_len)
+						memcpy(vib, track_buf + data_offset, 256);
+					else
+					{
+						memcpy((UINT8 *)vib, track_buf + data_offset, track_len-data_offset);
+						memcpy((UINT8 *)vib + (track_len-data_offset), track_buf, 256-(track_len-data_offset));
+					}
+					return 0;
+				}
 				break;
 
-			if (c != 0xfb)
-			{
-				stream_seek(file_handle, save_pos, SEEK_SET);
-				bytes_read = stream_read(file_handle, &c, 1);
-				continue;
+			case 1:
+				/* set up offset map */
+				if (data_offset_array[(head*geometry->cylinders + cylinder)*geometry->secspertrack + sector] != DATA_OFFSET_NONE)
+					/* error: duplicate sector */
+					return IMGTOOLERR_CORRUPTIMAGE;
+				data_offset_array[(head*geometry->cylinders + cylinder)*geometry->secspertrack + sector] = data_offset;
+				break;
 			}
-		}
-		data_offset = stream_tell(file_handle);
-		if (stream_read(file_handle, buf, seclen) != seclen)
-			break;
-		for (i=0; i<seclen; i++)
-			calc_crc(& crc, buf[i]);
-
-		bytes_read = stream_read(file_handle, &c, 1);
-		if (! bytes_read)
-			break;
-		crc1 = c;
-		calc_crc(& crc, c);
-
-		bytes_read = stream_read(file_handle, &c, 1);
-		if (! bytes_read)
-			break;
-		crc2 = c;
-		calc_crc(& crc, c);
-
-		/* CRC seems to be completely hosed */
-		/*if (crc)
-			printf("aargh!");*/
-		if ((crc1 != 0xf7) || (crc2 != 0xf7))
-		{
-			stream_seek(file_handle, save_pos, SEEK_SET);
-			bytes_read = stream_read(file_handle, &c, 1);
-			continue;
-		}
-
-		switch (pass)
-		{
-		case 0:
-			if ((cylinder == 0) && (head == 0) && (sector == 0))
-			{
-				/* return vib */
-				memcpy(vib, buf, 256);
-				return 0;
-			}
-			break;
-
-		case 1:
-			/* set up offset map */
-			data_offset_array[(cylinder*geometry->sides + head)*geometry->secspertrack + sector] = data_offset;
-			break;
 		}
 	}
 
@@ -850,15 +895,17 @@ static int parse_pc99_image(STREAM *file_handle, int fm_format, int pass, dsk_vi
 	if (pass == 1)
 	{
 		/* check offset map */
-		for (cylinder = 0; cylinder < geometry->tracksperside; cylinder++)
-			for (head = 0; head < geometry->sides; head++)
+		for (head = 0; head < geometry->heads; head++)
+			for (cylinder = 0; cylinder < geometry->cylinders; cylinder++)
 				for (sector = 0; sector < geometry->secspertrack; sector++)
-					if (data_offset_array[(cylinder*geometry->sides + head)*geometry->secspertrack + sector] == DATA_OFFSET_NONE)
+					if (data_offset_array[(head*geometry->cylinders + cylinder)*geometry->secspertrack + sector] == DATA_OFFSET_NONE)
+						/* error: missing sector */
 						return IMGTOOLERR_CORRUPTIMAGE;
 	}
 
 	return 0;
 }
+
 
 /*
 	Read the volume information block (aphysrec 0) assuming no geometry
@@ -889,7 +936,7 @@ static int read_image_vib_no_geometry(STREAM *file_handle, ti99_img_format img_f
 
 	case if_pc99_fm:
 	case if_pc99_mfm:
-		return parse_pc99_image(file_handle, img_format == if_pc99_fm, 0, dest, NULL, NULL);
+		return parse_pc99_image(file_handle, img_format == if_pc99_fm, 0, dest, NULL, NULL, NULL);
 
 	case if_harddisk:
 		/* not implemented, because we don't need it */
@@ -927,8 +974,8 @@ static int open_image_lvl1(STREAM *file_handle, ti99_img_format img_format, ti99
 			return IMGTOOLERR_CORRUPTIMAGE;	/* most likely error */
 
 		info = imghd_get_header(l1_img->harddisk_handle);
-		l1_img->geometry.tracksperside = info->cylinders;
-		l1_img->geometry.sides = info->heads;
+		l1_img->geometry.cylinders = info->cylinders;
+		l1_img->geometry.heads = info->heads;
 		l1_img->geometry.secspertrack = info->sectors;
 		if (info->seclen != 256)
 		{
@@ -957,19 +1004,19 @@ static int open_image_lvl1(STREAM *file_handle, ti99_img_format img_format, ti99
 			/* Some images might be like this, because the original SSSD TI
 			controller always assumes 9. */
 			l1_img->geometry.secspertrack = 9;
-		l1_img->geometry.tracksperside = vib->tracksperside;
-		if (l1_img->geometry.tracksperside == 0)
+		l1_img->geometry.cylinders = vib->cylinders;
+		if (l1_img->geometry.cylinders == 0)
 			/* Some images are like this, because the original SSSD TI
 			controller always assumes 40. */
-			l1_img->geometry.tracksperside = 40;
-		l1_img->geometry.sides = vib->sides;
-		if (l1_img->geometry.sides == 0)
+			l1_img->geometry.cylinders = 40;
+		l1_img->geometry.heads = vib->heads;
+		if (l1_img->geometry.heads == 0)
 			/* Some images are like this, because the original SSSD TI
 			controller always assumes that tracks beyond 40 are on side 2. */
-			l1_img->geometry.sides = totphysrecs / (l1_img->geometry.secspertrack * l1_img->geometry.tracksperside);
+			l1_img->geometry.heads = totphysrecs / (l1_img->geometry.secspertrack * l1_img->geometry.cylinders);
 
 		/* check information */
-		if ((totphysrecs != (l1_img->geometry.secspertrack * l1_img->geometry.tracksperside * l1_img->geometry.sides))
+		if ((totphysrecs != (l1_img->geometry.secspertrack * l1_img->geometry.cylinders * l1_img->geometry.heads))
 				|| (totphysrecs < 2)
 				|| memcmp(vib->id, "DSK", 3) || (! strchr(" P", vib->id[3]))
 				|| (((img_format == if_mess) || (img_format == if_v9t9))
@@ -981,7 +1028,7 @@ static int open_image_lvl1(STREAM *file_handle, ti99_img_format img_format, ti99
 			l1_img->pc99_data_offset_array = malloc(sizeof(*l1_img->pc99_data_offset_array)*totphysrecs);
 			if (! l1_img->pc99_data_offset_array)
 				return IMGTOOLERR_OUTOFMEMORY;
-			reply = parse_pc99_image(file_handle, img_format == if_pc99_fm, 1, NULL, & l1_img->geometry, l1_img->pc99_data_offset_array);
+			reply = parse_pc99_image(file_handle, img_format == if_pc99_fm, 1, NULL, & l1_img->geometry, l1_img->pc99_data_offset_array, &l1_img->pc99_track_len);
 			if (reply)
 			{
 				free(l1_img->pc99_data_offset_array);
@@ -1021,28 +1068,25 @@ INLINE int sector_address_to_image_offset(const ti99_lvl1_imgref *l1_img, const 
 	switch (l1_img->img_format)
 	{
 	case if_mess:
-		/* current MESS format */
-		offset = (((address->cylinder*l1_img->geometry.sides) + address->side)*l1_img->geometry.secspertrack + address->sector)*256;
+		/* old MESS format */
+		offset = (((address->cylinder*l1_img->geometry.heads) + address->side)*l1_img->geometry.secspertrack + address->sector)*256;
 		break;
 
 	case if_v9t9:
 		/* V9T9 format */
 		if (address->side & 1)
 			/* on side 1, tracks are stored in the reverse order */
-			offset = (((address->side*l1_img->geometry.tracksperside) + (l1_img->geometry.tracksperside-1 - address->cylinder))*l1_img->geometry.secspertrack + address->sector)*256;
+			offset = (((address->side*l1_img->geometry.cylinders) + (l1_img->geometry.cylinders-1 - address->cylinder))*l1_img->geometry.secspertrack + address->sector)*256;
 		else
-			offset = (((address->side*l1_img->geometry.tracksperside) + address->cylinder)*l1_img->geometry.secspertrack + address->sector)*256;
+			offset = (((address->side*l1_img->geometry.cylinders) + address->cylinder)*l1_img->geometry.secspertrack + address->sector)*256;
 		break;
 
 	case if_pc99_fm:
 	case if_pc99_mfm:
 		/* pc99 format */
-		offset = l1_img->pc99_data_offset_array[(address->cylinder*l1_img->geometry.sides + address->side)*l1_img->geometry.secspertrack + address->sector];
-		break;
-
 	case if_harddisk:
-		/* not implemented */
-		assert(1);
+		/* harddisk format */
+		assert(1);		/* not implemented */
 		break;
 	}
 
@@ -1059,14 +1103,14 @@ INLINE int sector_address_to_image_offset(const ti99_lvl1_imgref *l1_img, const 
 static int read_sector(ti99_lvl1_imgref *l1_img, const ti99_sector_address *address, void *dest)
 {
 	int reply;
+	UINT32 track_len, track_offset, sector_offset;
 
-	if (l1_img->img_format == if_harddisk)
+	switch (l1_img->img_format)
 	{
-		assert(1);
-		/*return imghd_read(l1_img->harddisk_handle, ((address->cylinder*l1_img->geometry.sides) + address->side)*l1_img->geometry.secspertrack + address->sector, 1, dest) != 1;*/
-	}
-	else
-	{
+	case if_mess:
+		/* old MESS format */
+	case if_v9t9:
+		/* V9T9 format */
 		/* seek to sector */
 		reply = stream_seek(l1_img->file_handle, sector_address_to_image_offset(l1_img, address), SEEK_SET);
 		if (reply)
@@ -1075,6 +1119,55 @@ static int read_sector(ti99_lvl1_imgref *l1_img, const ti99_sector_address *addr
 		reply = stream_read(l1_img->file_handle, dest, 256);
 		if (reply != 256)
 			return 1;
+		break;
+
+	case if_pc99_fm:
+	case if_pc99_mfm:
+		/* pc99 format */
+		track_len = l1_img->pc99_track_len;
+		track_offset = (address->side*l1_img->geometry.cylinders + address->cylinder)*track_len;
+		sector_offset = l1_img->pc99_data_offset_array[(address->side*l1_img->geometry.cylinders + address->cylinder)*l1_img->geometry.secspertrack + address->sector];
+
+		if (sector_offset + 256)
+
+		if ((sector_offset + 256) <= track_len)
+		{
+			/* seek to sector */
+			reply = stream_seek(l1_img->file_handle, track_offset+sector_offset, SEEK_SET);
+			if (reply)
+				return 1;
+			/* read it */
+			reply = stream_read(l1_img->file_handle, dest, 256);
+			if (reply != 256)
+				return 1;
+		}
+		else
+		{
+			/* seek to sector */
+			reply = stream_seek(l1_img->file_handle, track_offset+sector_offset, SEEK_SET);
+			if (reply)
+				return 1;
+			/* read first chunk (until end of track) */
+			reply = stream_read(l1_img->file_handle, (UINT8 *)dest, track_len-sector_offset);
+			if (reply != track_len-sector_offset)
+				return 1;
+
+			/* wrap to start of track */
+			reply = stream_seek(l1_img->file_handle, track_offset, SEEK_SET);
+			if (reply)
+				return 1;
+			/* read remnant of sector */
+			reply = stream_read(l1_img->file_handle, (UINT8 *)dest + (track_len-sector_offset), 256-(track_len-sector_offset));
+			if (reply != 256-(track_len-sector_offset))
+				return 1;
+		}
+		break;
+
+	case if_harddisk:
+		/* not implemented */
+		assert(1);
+		/*return imghd_read(l1_img->harddisk_handle, ((address->cylinder*l1_img->geometry.heads) + address->side)*l1_img->geometry.secspertrack + address->sector, 1, dest) != 1;*/
+		break;
 	}
 
 	return 0;
@@ -1090,14 +1183,14 @@ static int read_sector(ti99_lvl1_imgref *l1_img, const ti99_sector_address *addr
 static int write_sector(ti99_lvl1_imgref *l1_img, const ti99_sector_address *address, const void *src)
 {
 	int reply;
+	UINT32 track_len, track_offset, sector_offset;
 
-	if (l1_img->img_format == if_harddisk)
+	switch (l1_img->img_format)
 	{
-		assert(1);
-		/*return imghd_write(l1_img->harddisk_handle, ((address->cylinder*l1_img->geometry.sides) + address->side)*l1_img->geometry.secspertrack + address->sector, 1, src) != 1;*/
-	}
-	else
-	{
+	case if_mess:
+		/* old MESS format */
+	case if_v9t9:
+		/* V9T9 format */
 		/* seek to sector */
 		reply = stream_seek(l1_img->file_handle, sector_address_to_image_offset(l1_img, address), SEEK_SET);
 		if (reply)
@@ -1106,6 +1199,55 @@ static int write_sector(ti99_lvl1_imgref *l1_img, const ti99_sector_address *add
 		reply = stream_write(l1_img->file_handle, src, 256);
 		if (reply != 256)
 			return 1;
+		break;
+
+	case if_pc99_fm:
+	case if_pc99_mfm:
+		/* pc99 format */
+		track_len = l1_img->pc99_track_len;
+		track_offset = (address->side*l1_img->geometry.cylinders + address->cylinder)*track_len;
+		sector_offset = l1_img->pc99_data_offset_array[(address->side*l1_img->geometry.cylinders + address->cylinder)*l1_img->geometry.secspertrack + address->sector];
+
+		if (sector_offset + 256)
+
+		if ((sector_offset + 256) <= track_len)
+		{
+			/* seek to sector */
+			reply = stream_seek(l1_img->file_handle, track_offset+sector_offset, SEEK_SET);
+			if (reply)
+				return 1;
+			/* write it */
+			reply = stream_write(l1_img->file_handle, src, 256);
+			if (reply != 256)
+				return 1;
+		}
+		else
+		{
+			/* seek to sector */
+			reply = stream_seek(l1_img->file_handle, track_offset+sector_offset, SEEK_SET);
+			if (reply)
+				return 1;
+			/* write first chunk (until end of track) */
+			reply = stream_write(l1_img->file_handle, (UINT8 *)src, track_len-sector_offset);
+			if (reply != track_len-sector_offset)
+				return 1;
+
+			/* wrap to start of track */
+			reply = stream_seek(l1_img->file_handle, track_offset, SEEK_SET);
+			if (reply)
+				return 1;
+			/* write remnant of sector */
+			reply = stream_write(l1_img->file_handle, (UINT8 *)src + (track_len-sector_offset), 256-(track_len-sector_offset));
+			if (reply != 256-(track_len-sector_offset))
+				return 1;
+		}
+		break;
+
+	case if_harddisk:
+		/* not implemented */
+		assert(1);
+		/*return imghd_write(l1_img->harddisk_handle, ((address->cylinder*l1_img->geometry.heads) + address->side)*l1_img->geometry.secspertrack + address->sector, 1, src) != 1;*/
+		break;
 	}
 
 	return 0;
@@ -1114,16 +1256,29 @@ static int write_sector(ti99_lvl1_imgref *l1_img, const ti99_sector_address *add
 /*
 	Convert physical record address to sector address (DSK format)
 */
-static void aphysrec_to_sector_address(int aphysrec, const ti99_geometry *geometry, ti99_sector_address *address)
+static void dsk_aphysrec_to_sector_address(int aphysrec, const ti99_geometry *geometry, ti99_sector_address *address)
 {
 	address->sector = aphysrec % geometry->secspertrack;
 	aphysrec /= geometry->secspertrack;
-	address->cylinder = aphysrec % geometry->tracksperside;
-	address->side = aphysrec / geometry->tracksperside;
+	address->cylinder = aphysrec % geometry->cylinders;
+	address->side = aphysrec / geometry->cylinders;
 	if (address->side & 1)
 		/* on side 1, tracks are stored in the reverse order */
-		address->cylinder = geometry->tracksperside-1 - address->cylinder;
+		address->cylinder = geometry->cylinders-1 - address->cylinder;
 }
+
+/*
+	Convert physical record address to sector address (WIN format for HFDC)
+
+	Note that physical address translation makes sense for HFDC, but not SCSI.
+*/
+/*static void win_aphysrec_to_sector_address(int aphysrec, const ti99_geometry *geometry, ti99_sector_address *address)
+{
+	address.sector = aphysrec % l1_img->geometry.secspertrack;
+	aphysrec /= l1_img->geometry.secspertrack;
+	address.side = aphysrec % l1_img->geometry.heads;
+	address.cylinder = aphysrec / l1_img->geometry.heads;
+}*/
 
 /*
 	Read one 256-byte physical record from a disk image
@@ -1138,16 +1293,16 @@ static int read_absolute_physrec(ti99_lvl1_imgref *l1_img, unsigned aphysrec, vo
 
 
 	if (l1_img->img_format == if_harddisk)
-	{	/* ***KLUDGE*** */
+	{
+		/*win_aphysrec_to_sector_address(aphysrec, & l1_img->geometry, & address);
+
+		return read_sector(l1_img, & address, dest);*/
+
 		return imghd_read(l1_img->harddisk_handle, aphysrec, 1, dest) != 1;
-		/*address.sector = aphysrec % l1_img->geometry.secspertrack;
-		aphysrec /= l1_img->geometry.secspertrack;
-		address.side = aphysrec % l1_img->geometry.sides;
-		address.cylinder = aphysrec / l1_img->geometry.sides;*/
 	}
 	else
 	{
-		aphysrec_to_sector_address(aphysrec, & l1_img->geometry, & address);
+		dsk_aphysrec_to_sector_address(aphysrec, & l1_img->geometry, & address);
 
 		return read_sector(l1_img, & address, dest);
 	}
@@ -1166,16 +1321,16 @@ static int write_absolute_physrec(ti99_lvl1_imgref *l1_img, unsigned aphysrec, c
 
 
 	if (l1_img->img_format == if_harddisk)
-	{	/* ***KLUDGE*** */
+	{
+		/*win_aphysrec_to_sector_address(aphysrec, & l1_img->geometry, & address);
+
+		return write_sector(l1_img, & address, dest);*/
+
 		return imghd_write(l1_img->harddisk_handle, aphysrec, 1, src) != 1;
-		/*address.sector = aphysrec % l1_img->geometry.secspertrack;
-		aphysrec /= l1_img->geometry.secspertrack;
-		address.side = aphysrec % l1_img->geometry.sides;
-		address.cylinder = aphysrec / l1_img->geometry.sides;*/
 	}
 	else
 	{
-		aphysrec_to_sector_address(aphysrec, & l1_img->geometry, & address);
+		dsk_aphysrec_to_sector_address(aphysrec, & l1_img->geometry, & address);
 
 		return write_sector(l1_img, & address, src);
 	}
@@ -5142,13 +5297,13 @@ static int dsk_image_create(const struct ImageModule *mod, STREAM *f, const Reso
 
 	/* read options */
 	volname = in_options[dsk_createopts_volname].s;
-	l1_img.geometry.sides = in_options[dsk_createopts_sides].i;
-	l1_img.geometry.tracksperside = in_options[dsk_createopts_tracks].i;
+	l1_img.geometry.heads = in_options[dsk_createopts_sides].i;
+	l1_img.geometry.cylinders = in_options[dsk_createopts_tracks].i;
 	l1_img.geometry.secspertrack = in_options[dsk_createopts_sectors].i;
 	protected = in_options[dsk_createopts_protection].i;
 	density = in_options[dsk_createopts_density].i;
 
-	totphysrecs = l1_img.geometry.secspertrack * l1_img.geometry.tracksperside * l1_img.geometry.sides;
+	totphysrecs = l1_img.geometry.secspertrack * l1_img.geometry.cylinders * l1_img.geometry.heads;
 	physrecsperAU = (totphysrecs + 1599) / 1600;
 	/* round to next larger power of 2 */
 	for (i = 1; i < physrecsperAU; i <<= 1)
@@ -5195,8 +5350,8 @@ static int dsk_image_create(const struct ImageModule *mod, STREAM *f, const Reso
 	vib.id[1] = 'S';
 	vib.id[2] = 'K';
 	vib.protection = protected ? 'P' : ' ';
-	vib.tracksperside = l1_img.geometry.tracksperside;
-	vib.sides = l1_img.geometry.sides;
+	vib.cylinders = l1_img.geometry.cylinders;
+	vib.heads = l1_img.geometry.heads;
 	vib.density = density;
 	for (i=0; i<3; i++)
 	{
