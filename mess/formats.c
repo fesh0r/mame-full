@@ -59,6 +59,8 @@ int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,
 	UINT32 header_size;
 	formatdriver_ctor formats[2];
 	struct disk_geometry local_geometry;
+	UINT8 track;
+	struct bdf_file dummy_bdf;
 	
 	if (!geometry)
 	{
@@ -101,14 +103,29 @@ int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,
 		header = NULL;
 	}
 
-	bytes_to_write = ((int) drv.bytes_per_sector) * geometry->tracks * geometry->heads * geometry->sectors;
-	memset(buffer, drv.filler_byte, sizeof(buffer));
-
-	while(bytes_to_write > 0)
+	if (drv.format_track)
 	{
-		len = (bytes_to_write > sizeof(buffer)) ? sizeof(buffer) : bytes_to_write;
-		procs->writeproc(file, buffer, len);
-		bytes_to_write -= len;
+		memset(&dummy_bdf, 0, sizeof(dummy_bdf));
+		dummy_bdf.procs = procs;
+		dummy_bdf.file = file;
+		for(track = 0; track < geometry->tracks; track++)
+		{
+			err = drv.format_track(&drv, (void *) &dummy_bdf, geometry, track);
+			if (err)
+				goto error;
+		}
+	}
+	else
+	{
+		bytes_to_write = ((int) drv.bytes_per_sector) * geometry->tracks * geometry->heads * geometry->sectors;
+		memset(buffer, drv.filler_byte, sizeof(buffer));
+
+		while(bytes_to_write > 0)
+		{
+			len = (bytes_to_write > sizeof(buffer)) ? sizeof(buffer) : bytes_to_write;
+			procs->writeproc(file, buffer, len);
+			bytes_to_write -= len;
+		}
 	}
 
 	if (outbdf)
