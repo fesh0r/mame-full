@@ -186,9 +186,11 @@ static const char *error_string(int err)
 static void error(void)
 {
 	printf("usage: chdman -info input.chd\n");
-	printf("   or: chdman -createhd inputhd.raw output.chd [inputoffs [cylinders heads sectors]]\n");
+	printf("   or: chdman -createhd inputhd.raw output.chd [inputoffs [cylinders heads sectors [sectorsize [hunksize]]]]\n");
+	printf("   or: chdman -createblankhd output.chd cylinders heads sectors [sectorsize [hunksize]]\n");
 //	printf("   or: chdman -createcd input.iso output.chd\n");
 //	printf("   or: chdman -createcd input.bin input.cue output.chd\n");
+	printf("   or: chdman -copydata input.chd output.chd\n");
 	printf("   or: chdman -extract input.chd output.raw\n");
 	printf("   or: chdman -verify input.chd\n");
 	printf("   or: chdman -verifyfix input.chd\n");
@@ -505,7 +507,6 @@ static void do_createblankhd(int argc, char *argv[])
 	int err;
 	int hunknum;
 	int totalhunks;
-	UINT64 sourceoffset;
 	UINT8 *cache;
 	clock_t lastupdate;
 
@@ -565,7 +566,7 @@ static void do_createblankhd(int argc, char *argv[])
 		return;
 	}
 
-	/* alloc buffer */
+	/* alloc and zero buffer*/
 	cache = malloc(hunksize);
 	if (! cache)
 	{
@@ -578,7 +579,7 @@ static void do_createblankhd(int argc, char *argv[])
 
 	/* Zero every hunk */
 	totalhunks = (((UINT64)totalsectors * (UINT64)sectorsize) + hunksize - 1) / hunksize;
-	sourceoffset = 0;
+	lastupdate = 0;
 	for (hunknum = 0; hunknum < totalhunks; hunknum++)
 	{
 		clock_t curtime = clock();
@@ -600,9 +601,6 @@ static void do_createblankhd(int argc, char *argv[])
 			remove(outputfile);
 			return;
 		}
-
-		/* prepare for the next sector */
-		sourceoffset += sectorsize;
 	}
 
 	/* free buffer */
@@ -632,8 +630,8 @@ INLINE UINT32 lcd_u32(UINT32 a, UINT32 b)
 
 /*
 	Copy all hunks of data from one CHD file to another.  The hunk sizes do not
-	need to match.  If the source is shorter than the destination, the
-	source data will be padded with 0s.
+	need to match.  If the source is shorter than the destination, the source
+	data will be padded with 0s.
 
 	Example
 		[program] -copydata in.hd out.hd
@@ -694,6 +692,7 @@ static void do_copydata(int argc, char *argv[])
 	/* copy data */
 	cache_data_len = 0;
 	in_hunknum = 0;
+	lastupdate = 0;
 	for (out_hunknum = 0; out_hunknum < out_totalhunks;)
 	{
 		clock_t curtime = clock();
