@@ -78,6 +78,8 @@ void amstrad_vh_execute_crtc_cycles(int crtc_execute_cycles);
 void amstrad_vh_update_colour(int,int);
 void amstrad_vh_update_mode(int);
 
+extern int amstrad_vsync;
+
 /* update interrupt timer */
 void amstrad_interrupt_timer_update(void);
 /* if start of vsync sound, wait to reset interrupt counter 2 hsyncs later */

@@ -196,12 +196,12 @@ TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310						*/
 	DRIVER( z88 )		/*													*/
 
 	/* AMSTRAD */
-TESTDRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984				*/
-TESTDRIVER( cpc664 )	/* Amstrad (Schneider in Germany) 1985				*/
-TESTDRIVER( cpc6128 )	/* Amstrad (Schneider in Germany) 1985				*/
-TESTDRIVER( cpc464p )	/* Amstrad CPC464  Plus - 1987						*/
-TESTDRIVER( cpc6128p )	/* Amstrad CPC6128 Plus - 1987						*/
-TESTDRIVER( kccomp )	/* VEB KC compact									*/
+	DRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984				*/
+	DRIVER( cpc664 )	/* Amstrad (Schneider in Germany) 1985				*/
+	DRIVER( cpc6128 )	/* Amstrad (Schneider in Germany) 1985				*/
+	DRIVER( cpc464p )	/* Amstrad CPC464  Plus - 1987						*/
+	DRIVER( cpc6128p )	/* Amstrad CPC6128 Plus - 1987						*/
+	DRIVER( kccomp )	/* VEB KC compact									*/
 TESTDRIVER( pcw8256 )	/* 198? PCW8256 									*/
 TESTDRIVER( pcw8512 )	/* 198? PCW8512 									*/
 TESTDRIVER( pcw9256 )	/* 198? PCW9256 									*/

@@ -51,10 +51,10 @@ static unsigned char *Amstrad_ROM_Table[256];
 /* MULTIFACE */
 static void multiface_rethink_memory(void);
 static WRITE_HANDLER(multiface_io_write);
-void multiface_init(void);
-void multiface_stop(void);
-int multiface_hardware_enabled(void);
-void multiface_reset(void);
+static void multiface_init(void);
+static void multiface_stop(void);
+static int multiface_hardware_enabled(void);
+static void multiface_reset(void);
 
 /*-------------------------------------------*/
 static void amstrad_clear_top_bit_of_int_counter(void);
@@ -114,7 +114,6 @@ static int ppi_port_outputs[3];
 /* keyboard line 0-9 */
 static int amstrad_keyboard_line;
 /*static int crtc_vsync_output;*/
-extern int amstrad_vsync;
 
 static void update_psg(void)
 {
@@ -517,8 +516,6 @@ void AmstradCPC_GA_Write(int Data)
 		break;
 
 	case 3:
-		return;
-
 		{
 			AmstradCPC_GA_RamConfiguration = Data;
 
@@ -2835,10 +2832,10 @@ SYSTEM_CONFIG_START(cpcplus)
 SYSTEM_CONFIG_END
 
 /*      YEAR  NAME       PARENT  MACHINE    INPUT    INIT    CONFIG,  COMPANY               FULLNAME */
-COMPX( 1984, cpc464,   0,		amstrad,  amstrad,	0,		cpc6128, "Amstrad plc", "Amstrad/Schneider CPC464", GAME_NOT_WORKING)
-COMPX( 1985, cpc664,   cpc464,	amstrad,  amstrad,	0,	    cpc6128, "Amstrad plc", "Amstrad/Schneider CPC664", GAME_NOT_WORKING)
-COMPX( 1985, cpc6128,  cpc464,	amstrad,  amstrad,	0,	    cpc6128, "Amstrad plc", "Amstrad/Schneider CPC6128", GAME_NOT_WORKING)
-COMPX( 1990, cpc464p,  0,		cpcplus,  amstrad,	0,	    cpcplus, "Amstrad plc", "Amstrad 464plus", GAME_NOT_WORKING)
-COMPX( 1990, cpc6128p, 0,		cpcplus,  amstrad,	0,	    cpcplus, "Amstrad plc", "Amstrad 6128plus", GAME_NOT_WORKING)
-COMPX( 1989, kccomp,   cpc464,	kccomp,   kccomp,	0,	    cpc6128, "VEB Mikroelektronik", "KC Compact", GAME_NOT_WORKING)
+COMP( 1984, cpc464,   0,		amstrad,  amstrad,	0,		cpc6128, "Amstrad plc", "Amstrad/Schneider CPC464")
+COMP( 1985, cpc664,   cpc464,	amstrad,  amstrad,	0,	    cpc6128, "Amstrad plc", "Amstrad/Schneider CPC664")
+COMP( 1985, cpc6128,  cpc464,	amstrad,  amstrad,	0,	    cpc6128, "Amstrad plc", "Amstrad/Schneider CPC6128")
+COMP( 1990, cpc464p,  0,		cpcplus,  amstrad,	0,	    cpcplus, "Amstrad plc", "Amstrad 464plus")
+COMP( 1990, cpc6128p, 0,		cpcplus,  amstrad,	0,	    cpcplus, "Amstrad plc", "Amstrad 6128plus")
+COMP( 1989, kccomp,   cpc464,	kccomp,   kccomp,	0,	    cpc6128, "VEB Mikroelektronik", "KC Compact")
 
