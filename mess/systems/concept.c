@@ -224,11 +224,11 @@ ROM_START( concept )
 	ROM_LOAD16_WORD("cc.prm", 0x010000, 0x2000, CRC(b5a87dab))
 #endif
 
-	// only known macsbugs release for the concept, with reset vector and
+	// only known MACSbug release for the concept, with reset vector and
 	// entry point (the reset vector seems to be bogus: is the ROM dump bad,
 	// or were the ROMs originally loaded with buggy code?)
-	ROM_LOAD16_BYTE("macsbgsh", 0x020000, 0x1000, CRC(aa357112))
-	ROM_LOAD16_BYTE("macsbgsl", 0x020001, 0x1000, CRC(b4b59de9))
+	ROM_LOAD16_BYTE("macsbugh", 0x020000, 0x1000, CRC(aa357112))
+	ROM_LOAD16_BYTE("macsbugl", 0x020001, 0x1000, CRC(b4b59de9))
 
 ROM_END
 
