@@ -1147,7 +1147,7 @@ static WRITE_HANDLER ( d_pia1_pa_w )
 	if (joystick_mode() == JOYSTICKMODE_HIRES)
 		coco_hiresjoy_w(d_dac >= 0x80);
 	else
-		cassette_output(cassette_device_image(), ((int) d_dac - 0x80) * 0x1000000);
+		cassette_output(cassette_device_image(), ((int) d_dac - 0x80) / 128.0);
 
 	device_output(bitbanger_image(), (data & 2) >> 1);
 }

@@ -46,7 +46,7 @@ static int cassette_is_motor_on(mess_image *cassette)
 {
 	cassette_state state;
 	state = cassette_get_state(cassette);
-	if ((state & CASSETTE_MASK_UISTATE) != CASSETTE_PLAY)
+	if ((state & CASSETTE_MASK_UISTATE) == CASSETTE_STOPPED)
 		return FALSE;
 	if ((state & CASSETTE_MASK_MOTOR) != CASSETTE_MOTOR_ENABLED)
 		return FALSE;
@@ -74,12 +74,6 @@ static void cassette_update(mess_image *cassette)
 			break;
 
 		case CASSETTE_PLAY:
-			{
-				/* clip position into legal bounds */
-				double lenght = cassette_get_length(cassette);
-				if (new_position > lenght)
-					new_position = lenght;
-			}
 			cassette_get_sample(tag->cassette, 0, new_position, 0.0, &tag->value);
 			break;
 		}
@@ -199,7 +193,6 @@ double cassette_get_length(mess_image *cassette)
 void cassette_seek(mess_image *cassette, double time, int origin)
 {
 	struct mess_cassetteimg *tag;
-	double lenght = cassette_get_length(cassette);
 
 	cassette_update(cassette);
 
@@ -208,7 +201,7 @@ void cassette_seek(mess_image *cassette, double time, int origin)
 		break;
 
 	case SEEK_END:
-		time += lenght;
+		time += cassette_get_length(cassette);
 		break;
 
 	case SEEK_CUR:
@@ -217,11 +210,6 @@ void cassette_seek(mess_image *cassette, double time, int origin)
 	}
 
 	/* clip position into legal bounds */
-	if (time < 0)
-		time = 0;
-	if (time > lenght)
-		time = lenght;
-
 	tag = get_cassimg(cassette);
 	tag->position = time;
 }
@@ -309,9 +297,10 @@ static DEVICE_UNLOAD(cassette)
 */
 static void device_display_cassette(mess_image *image, struct mame_bitmap *bitmap)
 {
-	char buf[32];
+	char buf[65];
 	int x, y, n;
 	double position, length;
+	cassette_state uistate;
 
 	/* abort if we should not be showing the image */
 	if (!image_exists(image))
@@ -322,6 +311,7 @@ static void device_display_cassette(mess_image *image, struct mame_bitmap *bitma
 	/* figure out where we are in the cassette */
 	position = cassette_get_position(image);
 	length = cassette_get_length(image);
+	uistate = cassette_get_state(image) & CASSETTE_MASK_UISTATE;
 
 	/* choose a location on the screen */
 	x = image_index_in_devtype(image) * Machine->uifontwidth * 16 + 1;
@@ -330,14 +320,18 @@ static void device_display_cassette(mess_image *image, struct mame_bitmap *bitma
 	/* choose which frame of the animation we are at */
 	n = ((int) position / ANIMATION_FPS) % ANIMATION_FRAMES;
 
-	snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%c%c %02d:%02d (%04d) [%02d:%02d (%04d)]",
-		n*2+2,n*2+3,
+	/* character pairs 2-3, 4-5, 6-7, 8-9 form little tape cassette images */
+	snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%c%c %c %02d:%02d (%04d) [%02d:%02d (%04d)]",
+		n * 2 + 2,								/* cassette icon left */
+		n * 2 + 3,								/* cassette icon right */
+		(uistate == CASSETTE_PLAY) ? 16 : 14,	/* play or record icon */
 		((int) position / 60),
 		((int) position % 60),
 		(int) position,
 		((int) length / 60),
 		((int) length % 60),
 		(int) length);
+
 	ui_text(bitmap, buf, x, y);
 }
 

@@ -40,7 +40,7 @@ System Driver Changes:
 
 - [PC] Fixed a pit8253 bug (bug #399).  [Ruslan Staritsin]
 
-- [SORD] Added cas support.  [Tim Schuerewegen]
+- [SORD] Added cassette support.  [Tim Schuerewegen]
 
 
 User Interface Changes:
@@ -48,7 +48,10 @@ User Interface Changes:
 - HOME and DEL now have default natural keyboard bindings, to ASCII values
   12 and 8 respectively.  For systems that use a key with those values, like
   the CoCo, this change now enables those keys to be used from the natural
-  keyboard.
+  keyboard.  [Nate Woods]
+
+- When a cassette motor is active, another icon will be displayed indicating
+  whether play or record is set.  [Nate Woods]
   
 
 Imgtool Changes:
