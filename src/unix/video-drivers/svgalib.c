@@ -23,7 +23,7 @@ static int video_mode = -1;
 struct rc_option sysdep_display_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ NULL, NULL, rc_link, aspect_opts, NULL, 0, 0, NULL, NULL },
-	{ "Svgalib Related", NULL, rc_seperator, NULL, NULL, 0,	0, NULL, NULL },
+	{ "SVGAlib Related", NULL, rc_seperator, NULL, NULL, 0,	0, NULL, NULL },
 	{ "linear", NULL, rc_bool, &use_linear, "1", 0, 0, NULL, "Enable/disable use of linear framebuffer (fast)" },
 	{ NULL, NULL, rc_link, mode_opts, NULL, 0, 0, NULL, NULL },
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
@@ -111,7 +111,7 @@ int sysdep_display_driver_open(int reopen)
 		  sysdep_display_properties.max_height = my_modeinfo->height;
 
                 if (firsttime)
-		  fprintf(stderr, "Svgalib: Info: Found videomode %dx%dx%d\n",
+		  fprintf(stderr, "SVGAlib: Info: Found videomode %dx%dx%d\n",
 		    my_modeinfo->width, my_modeinfo->height, (depth==24)?
                     my_modeinfo->bytesperpixel*8:depth);
 	}
@@ -119,7 +119,7 @@ int sysdep_display_driver_open(int reopen)
 
 	if (best_score == 0)
 	{
-		fprintf(stderr, "Svgalib: Couldn't find a suitable mode\n");
+		fprintf(stderr, "SVGAlib: Couldn't find a suitable mode\n");
 		return 1;
 	}
 
@@ -131,7 +131,7 @@ int sysdep_display_driver_open(int reopen)
 	startx = ((video_modeinfo.width  - scaled_width ) / 2) & ~3;
 	starty =  (video_modeinfo.height - scaled_height) / 2;
 
-	fprintf(stderr, "Using videomode %dx%dx%d, starting at %dx%d\n",
+	fprintf(stderr, "Using video mode %dx%dx%d, starting at %dx%d\n",
 			video_modeinfo.width, video_modeinfo.height, video_modeinfo.colors,
 			startx, starty);
 
@@ -166,7 +166,7 @@ int sysdep_display_driver_open(int reopen)
 	blit_func = sysdep_display_get_blitfunc_dfb();
 	if (blit_func == NULL)
 	{
-		fprintf(stderr, "Error: unsupported dept/bpp: %d/%dbpp\n",
+		fprintf(stderr, "Error: unsupported depth/bpp: %d/%dbpp\n",
 		  sysdep_display_properties.palette_info.depth,
 		  sysdep_display_properties.palette_info.bpp);
 		return 1;
@@ -189,7 +189,7 @@ int sysdep_display_driver_open(int reopen)
           video_mem += startx * video_modeinfo.bytesperpixel;
           video_mem += starty * video_modeinfo.linewidth;
           video_update_type=0;
-          fprintf(stderr, "Svgalib: Info: Using a linear framebuffer to speed up\n");
+          fprintf(stderr, "SVGAlib: Info: Using a linear framebuffer to speed up\n");
 	}
 	else /* use gl funcs todo the updating */
 	{
@@ -202,7 +202,7 @@ int sysdep_display_driver_open(int reopen)
 	      video_modeinfo.bytesperpixel);
             if (!doublebuffer_buffer)
             {
-                    fprintf(stderr, "Svgalib: Error: Couldn't allocate doublebuffer buffer\n");
+                    fprintf(stderr, "SVGAlib: Error: Couldn't allocate doublebuffer buffer\n");
                     return 1;
             }
 	    video_update_type=2;

@@ -210,7 +210,7 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo)
 	xf86ctx.update_display_func = sysdep_display_get_blitfunc_dfb();
 	if (xf86ctx.update_display_func == NULL)
 	{
-		fprintf(stderr, "\nError: bitmap depth %d isnot supported on %dbpp displays\n", sysdep_display_params.depth, modeinfo.bitsPerPixel);
+		fprintf(stderr, "\nError: bitmap depth %d is not supported on %dbpp displays\n", sysdep_display_params.depth, modeinfo.bitsPerPixel);
 		return 1;
 	}
 	
