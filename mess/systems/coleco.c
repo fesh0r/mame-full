@@ -191,13 +191,21 @@ ROM_START (coleco)
     ROM_LOAD ("coleco.rom", 0x0000, 0x2000, 0x3aa93ef3)
 ROM_END
 
+ROM_START (colecoa)
+    ROM_REGION(0x10000,REGION_CPU1, 0)
+    ROM_LOAD ("coleco.rom", 0x0000, 0x2000, 0x39bb16fc)
+
+	/* differences to 0x3aa93ef3
+	   modified characters, added a pad 2 related fix */
+ROM_END
+
 //ROM_START (colecofb_rom)
-//  ROM_REGIONX(0x10000,REGION_CPU1)
+//  ROM_REGIONX(0x10000,REGION_CPU1, 0)
 //  ROM_LOAD ("colecofb.rom", 0x0000, 0x2000, 0x640cf85b) /* fast screen */
 //ROM_END
 
 //ROM_START (coleconb_rom)
-//  ROM_REGIONX(0x10000,REGION_CPU1)
+//  ROM_REGIONX(0x10000,REGION_CPU1, 0)
 //  ROM_LOAD ("coleconb.rom", 0x0000, 0x2000, 0x66cda476) /* no screen */
 //ROM_END
 
@@ -224,8 +232,11 @@ static const struct IODevice io_coleco[] = {
     { IO_END }
 };
 
+#define io_colecoa io_coleco
+
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
 CONS( 1982, coleco,   0,        coleco,   coleco,   0,        "Coleco", "Colecovision" )
+CONS( 1982, colecoa,  coleco,   coleco,   coleco,   0,        "Coleco", "Colecovision \"Thick Characters\"" )
 
 #ifdef COLECO_HACKS
 CONS( 1982, colecofb, coleco,   coleco,   coleco,   0,        "Coleco", "Colecovision (Fast BIOS Hack)" )
