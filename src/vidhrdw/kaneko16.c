@@ -43,7 +43,8 @@ Note:	if MAME_DEBUG is defined, pressing:
 #include "vidhrdw/generic.h"
 #include "kaneko16.h"
 
-data16_t kaneko16_disp_enable;
+
+data16_t kaneko16_disp_enable = 1; // default enabled for games not using it
 
 
 struct tilemap *kaneko16_tmap_0, *kaneko16_tmap_1;

@@ -121,6 +121,7 @@ CPUS+=M37710@
 CPUS+=PPC403@
 CPUS+=PPC603@
 CPUS+=SE3208@
+CPUS+=MC68HC11@
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@
@@ -239,6 +240,7 @@ $(OBJ)/nichibut.a: \
 	$(OBJ)/drivers/yamato.o \
 	$(OBJ)/vidhrdw/gomoku.o $(OBJ)/sndhrdw/gomoku.o $(OBJ)/drivers/gomoku.o \
 	$(OBJ)/vidhrdw/wiping.o $(OBJ)/sndhrdw/wiping.o $(OBJ)/drivers/wiping.o \
+	$(OBJ)/drivers/dacholer.o \
 	$(OBJ)/vidhrdw/seicross.o $(OBJ)/drivers/seicross.o \
 	$(OBJ)/vidhrdw/clshroad.o $(OBJ)/drivers/clshroad.o \
 	$(OBJ)/vidhrdw/tubep.o $(OBJ)/drivers/tubep.o \
@@ -992,6 +994,7 @@ $(OBJ)/seta.a: \
 	$(OBJ)/vidhrdw/st0016.o $(OBJ)/drivers/st0016.o \
 	$(OBJ)/drivers/macs.o \
 	$(OBJ)/drivers/srmp6.o \
+	$(OBJ)/drivers/aleck64.o \
 
 $(OBJ)/atlus.a: \
 	$(OBJ)/vidhrdw/powerins.o $(OBJ)/drivers/powerins.o \
@@ -1085,6 +1088,7 @@ $(OBJ)/igs.a: \
 	$(OBJ)/vidhrdw/iqblock.o $(OBJ)/drivers/iqblock.o \
 	$(OBJ)/drivers/chindrag.o \
 	$(OBJ)/drivers/grtwall.o \
+	$(OBJ)/drivers/tarzan.o \
 	$(OBJ)/drivers/lordgun.o \
 	$(OBJ)/vidhrdw/pgm.o $(OBJ)/drivers/pgm.o \
 	$(OBJ)/machine/pgmprot.o $(OBJ)/machine/pgmcrypt.o \
@@ -1240,6 +1244,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/crystal.o $(OBJ)/vidhrdw/vrender0.o $(OBJ)/machine/ds1302.o \
 	$(OBJ)/drivers/vamphalf.o $(OBJ)/drivers/dgpix.o $(OBJ)/drivers/eolith.o \
 	$(OBJ)/drivers/ertictac.o \
+	$(OBJ)/drivers/ssfindo.o \
 
 
 

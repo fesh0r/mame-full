@@ -348,6 +348,8 @@ const struct GameDriver *drivers[] =
 	DRIVER( gomoku )	/* (c) 1981 */
 	DRIVER( wiping )	/* (c) 1982 */
 	DRIVER( rugrats )	/* (c) 1983 */
+	DRIVER( dacholer )	/* (c) 1983 */
+	DRIVER( kickboy )	/* (c) 1983 */
 	DRIVER( friskyt )	/* (c) 1981 */
 	DRIVER( friskyta )	/* (c) 1981 */
 	DRIVER( radrad )	/* (c) 1982 Nichibutsu USA */
@@ -355,6 +357,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( sectrzon )	/* (c) 1984 + Alice */
 	DRIVER( firebatl )	/* (c) 1984 Taito */
 	DRIVER( clshroad )	/* (c) 1986 Woodplace Inc. */
+	DRIVER( clshrdst )	/* (c) 1986 Status Games */
 	DRIVER( tubep )		/* (c) 1984 + Fujitek */
 	DRIVER( rjammer )	/* (c) 1984 + Alice */
 	DRIVER( magmax )	/* (c) 1985 */
@@ -3114,10 +3117,11 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( sonic )		/* (c) 1992 (Japan) */
 	DRIVER( sonicp )	/* (c) 1992 (Japan) */
 	DRIVER( jpark )		/* (c) 1994 */
-	DRIVER( ga2 )		/* (c) 1992 */
-	DRIVER( ga2j )		/* (c) 1992 */
-	DRIVER( spidey )	/* (c) 1991 */
-	DRIVER( spideyj )	/* (c) 1991 (Japan) */
+	DRIVER( ga2 )		/* (c) 1992 (World)*/
+	DRIVER( ga2u )		/* (c) 1992 (US)*/
+	DRIVER( ga2j )		/* (c) 1992 (Japan)*/
+	DRIVER( spidey )	/* (c) 1991 (World)*/
+	DRIVER( spideyu )	/* (c) 1991 (US) */
 	DRIVER( arabfgt )	/* (c) 1991 */
 	DRIVER( arabfgtj )	/* (c) 1991 */
 	DRIVER( arescue )	/* (c) 1992 */
@@ -3857,6 +3861,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( scontra )	/* GX775 (c) 1988 */
 	DRIVER( scontraj )	/* GX775 (c) 1988 (Japan) */
 	DRIVER( thunderx )	/* GX873 (c) 1988 */
+	DRIVER( thnderxa )	/* GX873 (c) 1988 */
 	DRIVER( thnderxj )	/* GX873 (c) 1988 (Japan) */
 	DRIVER( mainevt )	/* GX799 (c) 1988 */
 	DRIVER( mainevto )	/* GX799 (c) 1988 */
@@ -5710,6 +5715,10 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	/* Seta System S12 */
 	DRIVER( srmp6 )		/* (c) 1996 Seta (Japan) */
 
+	/* Seta Aleck64 and similar (N64 based) */
+	DRIVER( 11beat )
+	DRIVER( mtetrisc )
+
 	/* Atlus games */
 	DRIVER( powerins )	/* (c) 1993 Atlus (Japan) */
 	DRIVER( powerina )	/* (c) 1993 Atlus (Japan) */
@@ -5999,6 +6008,7 @@ Other Sun games
 	DRIVER( lordgun )	/* (c) 1994 */
 	DRIVER( vbowl )
 	DRIVER( chmplst2 )	/* (c) 1996 */
+	DRIVER( tarzan )
 
 	/* IGS PGM System Games */
 	DRIVER( orlegend )	/* (c) 1997 */
@@ -6335,7 +6345,7 @@ Other Sun games
 	DRIVER( pntnpuzl )	/* Century? */
 	DRIVER( trucocl )	/* (c) 1991 Caloi Miky SRL */
 	DRIVER( ertictac )	/* (c) 1992 Sisteme */
-
+	DRIVER( ssfindo )	/* (c) 1999 Icarus */
 
 #endif	/* DRIVER_RECURSIVE */
 

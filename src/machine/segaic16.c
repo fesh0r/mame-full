@@ -57,6 +57,7 @@ struct compare_timer_chip
 {
 	UINT16	regs[16];
 	UINT16	counter;
+	UINT8	bit;
 	void	(*sound_w)(data8_t);
 	void	(*timer_ack)(void);
 };
@@ -70,8 +71,8 @@ struct compare_timer_chip
  *************************************/
 
 static struct memory_mapper_chip memory_mapper;
-static struct multiply_chip multiply[2];
-static struct divide_chip divide[2];
+static struct multiply_chip multiply[3];
+static struct divide_chip divide[3];
 static struct compare_timer_chip compare_timer[2];
 
 
@@ -403,8 +404,10 @@ static void multiply_w(int which, offs_t offset, data16_t data, data16_t mem_mas
 
 READ16_HANDLER( segaic16_multiply_0_r )  { return multiply_r(0, offset, mem_mask); }
 READ16_HANDLER( segaic16_multiply_1_r )  { return multiply_r(1, offset, mem_mask); }
+READ16_HANDLER( segaic16_multiply_2_r )  { return multiply_r(2, offset, mem_mask); }
 WRITE16_HANDLER( segaic16_multiply_0_w ) { multiply_w(0, offset, data, mem_mask); }
 WRITE16_HANDLER( segaic16_multiply_1_w ) { multiply_w(1, offset, data, mem_mask); }
+WRITE16_HANDLER( segaic16_multiply_2_w ) { multiply_w(2, offset, data, mem_mask); }
 
 
 
@@ -495,8 +498,10 @@ static void divide_w(int which, offs_t offset, data16_t data, data16_t mem_mask)
 
 READ16_HANDLER( segaic16_divide_0_r )  { return divide_r(0, offset, mem_mask); }
 READ16_HANDLER( segaic16_divide_1_r )  { return divide_r(1, offset, mem_mask); }
+READ16_HANDLER( segaic16_divide_2_r )  { return divide_r(2, offset, mem_mask); }
 WRITE16_HANDLER( segaic16_divide_0_w ) { divide_w(0, offset, data, mem_mask); }
 WRITE16_HANDLER( segaic16_divide_1_w ) { divide_w(1, offset, data, mem_mask); }
+WRITE16_HANDLER( segaic16_divide_2_w ) { divide_w(2, offset, data, mem_mask); }
 
 
 
@@ -558,7 +563,7 @@ static void update_compare(int which, int update_history)
 	}
 
 	if (update_history)
-		compare_timer[which].regs[4] = ((compare_timer[which].regs[4] << 1) & 3) | (compare_timer[which].regs[3] == 0);
+		compare_timer[which].regs[4] |= (compare_timer[which].regs[3] == 0) << compare_timer[which].bit++;
 }
 
 
@@ -599,7 +604,7 @@ static void compare_timer_w(int which, offs_t offset, data16_t data, data16_t me
 		case 0x0:	COMBINE_DATA(&compare_timer[which].regs[0]); update_compare(which, 0); break;
 		case 0x1:	COMBINE_DATA(&compare_timer[which].regs[1]); update_compare(which, 0); break;
 		case 0x2:	COMBINE_DATA(&compare_timer[which].regs[2]); update_compare(which, 1); break;
-		case 0x4:	compare_timer[which].regs[4] = 0; break;
+		case 0x4:	compare_timer[which].regs[4] = 0; compare_timer[which].bit = 0; break;
 		case 0x6:	COMBINE_DATA(&compare_timer[which].regs[2]); update_compare(which, 0); break;
 		case 0x8:	
 		case 0xc:	COMBINE_DATA(&compare_timer[which].regs[8]); break;

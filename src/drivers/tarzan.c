@@ -1,20 +1,16 @@
-/* i'll actually make something out of this when i have time, its the decryption for some old igs game ;-) */
 
+/* Old IGS game called Tarzan, don't know much about it, could be gambling */
+/* CPU might not be z80 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <string.h>
+#include "driver.h"
 
-unsigned short *file1_data;
-int file1_size;
+#if 0
+static unsigned short *file1_data;
+static int file1_size;
 
-unsigned short *result_data;
+static unsigned short *result_data;
 
-int main(int argc, char **argv)
+static int decrypt_tarzan()
 {
   int fd;
   int i;
@@ -70,4 +66,59 @@ int main(int argc, char **argv)
 
   return 0;
 }
+#endif
 
+
+VIDEO_START(tarzan)
+{
+	return 0;
+}
+
+VIDEO_UPDATE(tarzan)
+{
+
+}
+
+static ADDRESS_MAP_START( tarzan_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+ADDRESS_MAP_END
+
+
+INPUT_PORTS_START( tarzan )
+INPUT_PORTS_END
+
+
+static MACHINE_DRIVER_START( tarzan )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,8000000)		 /* ? */
+	MDRV_CPU_PROGRAM_MAP(tarzan_map,0)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-1)
+	MDRV_PALETTE_LENGTH(0x100)
+
+	MDRV_VIDEO_START(tarzan)
+	MDRV_VIDEO_UPDATE(tarzan)
+MACHINE_DRIVER_END
+
+
+
+ROM_START( tarzan )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 )
+	ROM_LOAD( "0228-u16.bin", 0x00000, 0x040000, CRC(e6c552a5) SHA1(f156de9459833474c85a1f5b35917881b390d34c)  )
+
+	ROM_REGION( 0x080000, REGION_USER1, 0 )
+	ROM_LOAD( "0228-u21.bin", 0x00000, 0x080000, CRC(80aaece4) SHA1(07cad92492c5de36c3915867ed4c6544b1a30c07)  )
+
+	ROM_REGION( 0x080000, REGION_USER2, 0 )
+	ROM_LOAD( "0228-u6.bin", 0x00000, 0x080000, CRC(55e94832) SHA1(b15409f4f1264b6d1218d5dc51c5bd1de2e40284)  )
+
+ROM_END
+
+
+GAMEX( 199?, tarzan, 0, tarzan, tarzan, 0, ROT0, "IGS", "Tarzan",GAME_NOT_WORKING|GAME_NO_SOUND )

@@ -32,14 +32,18 @@ WRITE16_HANDLER( segaic16_memory_mapper_lsb_w );
 /* multiply chip */
 READ16_HANDLER( segaic16_multiply_0_r );
 READ16_HANDLER( segaic16_multiply_1_r );
+READ16_HANDLER( segaic16_multiply_2_r );
 WRITE16_HANDLER( segaic16_multiply_0_w );
 WRITE16_HANDLER( segaic16_multiply_1_w );
+WRITE16_HANDLER( segaic16_multiply_2_w );
 
 /* divide chip */
 READ16_HANDLER( segaic16_divide_0_r );
 READ16_HANDLER( segaic16_divide_1_r );
+READ16_HANDLER( segaic16_divide_2_r );
 WRITE16_HANDLER( segaic16_divide_0_w );
 WRITE16_HANDLER( segaic16_divide_1_w );
+WRITE16_HANDLER( segaic16_divide_2_w );
 
 /* compare/timer chip */
 void segaic16_compare_timer_init(int which, void (*sound_write_callback)(data8_t), void (*timer_ack_callback)(void));

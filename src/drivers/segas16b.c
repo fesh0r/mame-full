@@ -7,14 +7,12 @@
 	Known bugs:
 		* hwchamp controls not hooked up
 		* tturfu sound is worse than before
-		* timescn DIPs have not really been verified
 		* atomicp garbage
-		* screen flip not implemented
 		* sdi is unplayable after level 1 (screen / sprites get flipped)
 		  (this occurs on both s16a & s16b versions)
 
-
 	To do for each game:
+		* remove unused inputs
 		* verify memory test
 		* verify inputs
 		* verify DIP switches
@@ -2536,9 +2534,9 @@ static INPUT_PORTS_START( timescn )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_MODIFY("DSW")
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x1e, 0x14, "Bonus" )
 	PORT_DIPSETTING(    0x16, "Replay 1000000/2000000" )
 	PORT_DIPSETTING(    0x14, "Replay 1200000/2500000" )

@@ -17,6 +17,10 @@ typedef struct {
 	UINT32 u,v;
 } VERTEX;
 
+typedef struct {
+	float x,y,z,d;
+} PLANE;
+
 #define RADIAN_TO_DEGREE(x)		((x) * 180.0 / PI)
 #define max(x,y)		(((int)(x) > (int)(y)) ? (x) : (y))
 #define min(x,y)		(((int)(x) < (int)(y)) ? (x) : (y))
@@ -149,7 +153,7 @@ static void draw_tile_4bit(struct mame_bitmap *bitmap, int tx, int ty, int tilen
 			tile0 = *tile >> 4;
 			tile1 = *tile & 0xf;
 			pix0 = pal_lookup[c + tile0];
-			pix1 = pal_lookup[c + tile1];
+			pix1 = pal_lookup[c + tile1];	
 			if((pix0 & 0x8000) == 0)
 			{
 				d[x+0] = pix0;
@@ -191,6 +195,23 @@ static void draw_tile_8bit(struct mame_bitmap *bitmap, int tx, int ty, int tilen
 			++xx;
 		}
 		tile += 8;
+	}
+}
+
+static void draw_texture_sheet(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+{
+	int x,y;
+	for(y = cliprect->min_y; y <= cliprect->max_y; y++)
+	{
+		UINT16 *d = (UINT16*)bitmap->line[y];
+		int index = (y*2)*2048;
+		for(x = cliprect->min_x; x <= cliprect->max_x; x++) {
+			UINT16 pix = texture_ram[0][index];
+			index+=4;
+			if(pix != 0) {
+				d[x] = pix;
+			}
+		}
 	}
 }
 
@@ -253,7 +274,7 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 				++tile_index;
 			}
 		}
-	}
+	} 
 	else				/* 8-bit */
 	{
 		for(y = cliprect->min_y; y <= cliprect->max_y; y+=8)
@@ -303,7 +324,7 @@ VIDEO_UPDATE( model3 )
 	layer_scroll_y[2] = (layer_data[2] & 0x8000) ? (layer_data[2] & 0x1ff) : -(layer_data[2] & 0x1ff);
 	layer_scroll_x[3] = (layer_data[3] & 0x8000) ? (layer_data[3] & 0x1ff) : -(layer_data[3] & 0x1ff);
 	layer_scroll_y[3] = (layer_data[3] & 0x8000) ? (layer_data[3] & 0x1ff) : -(layer_data[3] & 0x1ff);
-
+	
 	//bitmap3d = bitmap;
 	screen_clip = (struct rectangle*)cliprect;
 
@@ -323,7 +344,7 @@ VIDEO_UPDATE( model3 )
 		if( code_pressed(KEYCODE_T) )
 			debug_layer_disable ^= 0x10;
 	}
-
+	
 	fillbitmap(bitmap, 0, cliprect);
 
 	if(!(debug_layer_disable & 0x8)) {
@@ -362,6 +383,8 @@ VIDEO_UPDATE( model3 )
 		draw_crosshair(bitmap, gun2_x, gun2_y, cliprect);
 	}
 
+	//draw_texture_sheet(bitmap, cliprect);
+
 	real3d_display_list = 0;
 }
 
@@ -373,7 +396,7 @@ READ64_HANDLER(model3_char_r)
 }
 
 WRITE64_HANDLER(model3_char_w)
-{
+{	
 	COMBINE_DATA(&m3_char_ram[offset]);
 }
 
@@ -393,6 +416,7 @@ READ64_HANDLER(model3_vid_reg_r)
 	switch(offset)
 	{
 		case 0x00/8:	return vid_reg0;
+		case 0x08/8:	return U64(0xffffffffffffffff);		/* ??? */
 		case 0x20/8:	return (UINT64)model3_layer_enable << 52;
 		case 0x40/8:	return ((UINT64)model3_layer_modulate1 << 32) | (UINT64)model3_layer_modulate2;
 		default:		printf("read reg %02X\n", offset);break;
@@ -407,11 +431,11 @@ WRITE64_HANDLER(model3_vid_reg_w)
 		case 0x00/8:	printf("vid_reg0: %08X%08X\n", (UINT32)(data>>32),(UINT32)(data)); vid_reg0 = data; break;
 		case 0x08/8:	break;		/* ??? */
 		case 0x10/8:	model3_irq_state &= ~(data >> 56); break;		/* VBL IRQ Ack */
-
+		
 		case 0x20/8:	model3_layer_enable = (data >> 52);	break;
 
 		case 0x40/8:	model3_layer_modulate1 = (UINT32)(data >> 32);
-						model3_layer_modulate2 = (UINT32)(data);
+						model3_layer_modulate2 = (UINT32)(data); 
 						break;
 		case 0x60/8:	COMBINE_DATA(&layer_scroll[0]); break;
 		case 0x68/8:	COMBINE_DATA(&layer_scroll[1]); break;
@@ -533,7 +557,7 @@ static void real3d_upload_texture(UINT32 header, UINT32 *data)
 	int ypos	= ((header >> 7) & 0x1f) * 32;
 	int page	= (header >> 20) & 0x1;
 	int bitdepth = (header >> 23) & 0x1;
-
+	
 	switch(header >> 24)
 	{
 		case 0x00:		/* Texture with mipmaps */
@@ -707,7 +731,7 @@ static void matrix_multiply(MATRIX a, MATRIX b, MATRIX *out)
 }
 
 /* matrix stack */
-#define MATRIX_STACK_SIZE	16
+#define MATRIX_STACK_SIZE	256
 
 static int matrix_stack_ptr = 0;
 static MATRIX matrix_stack[MATRIX_STACK_SIZE];
@@ -731,6 +755,8 @@ static void init_matrix_stack(void)
 	matrix_stack[0][3][1] = 0.0f;
 	matrix_stack[0][3][2] = 0.0f;
 	matrix_stack[0][3][3] = 1.0f;
+
+	matrix_stack_ptr = 0;
 }
 
 static void get_top_matrix(MATRIX *out)
@@ -1045,8 +1071,8 @@ static void draw_triangle_color(VERTEX v1, VERTEX v2, VERTEX v3, UINT16 color)
 		return;
 
 	vert[0].x = v1.x;	vert[0].y = v1.y;	vert[0].p[0] = (UINT32)v1.z | viewport_priority;
-	vert[1].x = v2.x;	vert[1].y = v2.y;	vert[1].p[0] = (UINT32)v2.z | viewport_priority;
-	vert[2].x = v3.x;	vert[2].y = v3.y;	vert[2].p[0] = (UINT32)v3.z | viewport_priority;
+	vert[1].x = v2.x;	vert[1].y = v2.y;	vert[1].p[0] = (UINT32)v2.z | viewport_priority;	
+	vert[2].x = v3.x;	vert[2].y = v3.y;	vert[2].p[0] = (UINT32)v3.z | viewport_priority;	
 
 	if(v1.z <= 0 || v2.z <= 0 || v3.z <= 0)
 		return;
@@ -1087,7 +1113,6 @@ static void draw_triangle_color(VERTEX v1, VERTEX v2, VERTEX v3, UINT16 color)
 	}
 }
 
-
 static const int num_bits[16] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
 
 static MATRIX coordinate_system;
@@ -1096,6 +1121,8 @@ static int viewport_region_x = 0;
 static int viewport_region_y = 0;
 static int viewport_region_width = 496;
 static int viewport_region_height = 384;
+
+static PLANE clip_plane[5];
 
 static void draw_model(UINT32 *model)
 {
@@ -1107,6 +1134,7 @@ static void draw_model(UINT32 *model)
 	float fixed_point_fraction;
 	VERTEX vertex[4];
 	VERTEX prev_vertex[4];
+
 	int polynum = 0;
 	MATRIX transform_matrix;
 	int texture_format;
@@ -1128,6 +1156,7 @@ static void draw_model(UINT32 *model)
 		UINT16 color;
 		VECTOR3 normal;
 		VECTOR3 sn;
+		VECTOR p[4];
 
 		for(i=0; i < 7; i++) {
 			header[i] = model[index++];
@@ -1203,8 +1232,6 @@ static void draw_model(UINT32 *model)
 		/* transform vertices */
 		for(i=0; i < num_vertices; i++) {
 			VECTOR vect;
-			VECTOR p;
-			float ooz;
 
 			vect[0] = vertex[i].x;
 			vect[1] = vertex[i].y;
@@ -1212,18 +1239,22 @@ static void draw_model(UINT32 *model)
 			vect[3] = 1.0f;
 
 			/* transform to world-space */
-			matrix_multiply_vector(transform_matrix, vect, &p);
-
+			matrix_multiply_vector(transform_matrix, vect, &p[i]);
+	
 			/* apply coordinate system */
-			p[0] *= coordinate_system[0][1];
-			p[1] *= coordinate_system[1][2];
-			p[2] *= coordinate_system[2][0];
+			p[i][0] *= coordinate_system[0][1];
+			p[i][1] *= coordinate_system[1][2];
+			p[i][2] *= coordinate_system[2][0];
+		}
 
+		/* TODO: clipping */
+
+		for(i=0; i < num_vertices; i++) {
 			/* homogeneous Z-divide, screen-space transformation */
-			ooz = 1.0f / p[2];
-			vertex[i].x = ((p[0] * ooz) * viewport_focal_length) + center_x;
-			vertex[i].y = ((p[1] * ooz) * viewport_focal_length) + center_y;
-			vertex[i].z = (1.0 / p[2]) * 16777216.0f;		/* scale to Z-buffer resolution */
+			float ooz = 1.0f / p[i][2];
+			vertex[i].x = ((p[i][0] * ooz) * viewport_focal_length) + center_x;
+			vertex[i].y = ((p[i][1] * ooz) * viewport_focal_length) + center_y;
+			vertex[i].z = (1.0 / p[i][2]) * 16777216.0f;		/* scale to Z-buffer resolution */
 		}
 
 		/* TODO: setup rest of the surface parameters */
@@ -1264,7 +1295,7 @@ static void draw_model(UINT32 *model)
 					case 7: draw_triangle_tex4444(vertex[0], vertex[2], vertex[3]); break;			/* ARGB4444 */
 				}
 			}
-		}
+		} 
 		else									/* non-textured */
 		{
 			draw_triangle_color(vertex[0], vertex[1], vertex[2], color);
@@ -1320,9 +1351,9 @@ static void traverse_list4(UINT32 address)
 	UINT32 link = list[0];
 
 	if ((link & 0xffffff) > 0x100000)		/* VROM model */
-	{
+	{		
 		draw_model(&vrom[link & 0xffffff]);
-	}
+	} 
 	else {		/* model in polygon ram */
 		/* TODO: polygon ram actually overrides the lowest 4MB of VROM.
 				 by moving the polygon ram there we could get rid of this distinction */
@@ -1341,7 +1372,7 @@ static void traverse_list(UINT32 address)
 	while(!end)
 	{
 		UINT32 address = list[list_ptr++];
-
+		
 		//if (address & 0x02000000 || address == 0) {
 		if(address == 0 || (address >> 24) != 0) {
 			end = 1;
@@ -1408,9 +1439,9 @@ static void traverse_node(UINT32 address)
 					case 0x01:
 					case 0x03:		/* both of these link to models, is there any difference ? */
 						if ((link & 0xffffff) > 0x100000)		/* VROM model */
-						{
+						{		
 							draw_model(&vrom[link & 0xffffff]);
-						}
+						} 
 						else {		/* model in polygon ram */
 							/* TODO: polygon ram actually overrides the lowest 4MB of VROM.
 									 by moving the polygon ram there we could get rid of this distinction */
@@ -1455,10 +1486,9 @@ static void traverse_root_node(UINT32 address)
 	float fov_x, fov_y;
 
 	node = get_memory_pointer(address);
-
+	
 	link_address = node[1];
 	if (link_address == 0) {
-		printf("Warning: Link from node %08X is 0\n", address);
 		return;
 	}
 
@@ -1494,6 +1524,12 @@ static void traverse_root_node(UINT32 address)
 	viewport_top		= RADIAN_TO_DEGREE(asin(*(float*)&node[14]));
 	viewport_bottom		= RADIAN_TO_DEGREE(asin(*(float*)&node[18]));
 
+	clip_plane[0].x = *(float*)&node[13];	clip_plane[0].y = 0.0f;		clip_plane[0].z = *(float*)&node[12];	clip_plane[0].d = 0.0f;
+	clip_plane[1].x = *(float*)&node[17];	clip_plane[1].y = 0.0f;		clip_plane[1].z = *(float*)&node[16];	clip_plane[1].d = 0.0f;
+	clip_plane[2].x = 0.0f;		clip_plane[2].y = *(float*)&node[15];	clip_plane[2].z = *(float*)&node[14];	clip_plane[2].d = 0.0f;
+	clip_plane[3].x = 0.0f;		clip_plane[3].y = *(float*)&node[19];	clip_plane[3].z = *(float*)&node[18];	clip_plane[3].d = 0.0f;
+	clip_plane[4].x = 0.0f;		clip_plane[4].y = 0.0f;		clip_plane[4].z = -1.0f;	clip_plane[4].d = 1.0f;
+
 	fov_x = viewport_left + viewport_right;
 	fov_y = viewport_top + viewport_bottom;
 	viewport_focal_length = (viewport_region_height / 2) / tan( (fov_y * 3.1415926535 / 180.0f) / 2.0f );
@@ -1521,6 +1557,7 @@ static void traverse_root_node(UINT32 address)
 
 static void real3d_traverse_display_list(void)
 {
+	init_matrix_stack();
 	traverse_root_node(0x800000);
 }
 

@@ -1464,6 +1464,17 @@ else
 CPUDEFS += -DHAS_SE3208=0
 endif
 
+CPU=$(strip $(findstring MC68HC11@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/mc68hc11
+CPUDEFS += -DHAS_MC68HC11=1
+CPUOBJS += $(OBJ)/cpu/mc68hc11/mc68hc11.o
+DBGOBJS += $(OBJ)/cpu/mc68hc11/hc11dasm.o
+$(OBJ)/cpu/mc68hc11/mc68hc11.o: mc68hc11.c hc11dasm.c
+else
+CPUDEFS += -DHAS_MC68HC11=0
+endif
+
 
 SOUND=$(strip $(findstring CDDA@,$(SOUNDS)))
 ifneq ($(SOUND),)

@@ -272,6 +272,7 @@ removal of hacks to change region / get info memory card manager
 
 /* values probed by Razoola from the real board */
 #define RASTER_LINES 264
+/* VBLANK should fire on line 248 */
 #define RASTER_COUNTER_START 0x1f0	/* value assumed right after vblank */
 #define RASTER_COUNTER_RELOAD 0x0f8	/* value assumed after 0x1ff */
 #define RASTER_LINE_RELOAD (0x200 - RASTER_COUNTER_START)
@@ -380,12 +381,11 @@ static INTERRUPT_GEN( neogeo_interrupt )
 		/* Animation counter */
 		if (!(irq2control & IRQ2CTRL_AUTOANIM_STOP))
 		{
-			if (fc>neogeo_frame_counter_speed)
+			if (fc++>neogeo_frame_counter_speed)	/* fixed animation speed */
 			{
 				fc=0;
 				neogeo_frame_counter++;
 			}
-			fc++;
 		}
 
 		if (irq2control & IRQ2CTRL_ENABLE)
@@ -468,12 +468,11 @@ static void raster_interrupt(int busy)
 		/* Animation counter */
 		if (!(irq2control & IRQ2CTRL_AUTOANIM_STOP))
 		{
-			if (fc>neogeo_frame_counter_speed)
+			if (fc++>neogeo_frame_counter_speed)	/* fixed animation speed */
 			{
 				fc=0;
 				neogeo_frame_counter++;
 			}
-			fc++;
 		}
 
 		/* return a standard vblank interrupt */
@@ -1281,7 +1280,7 @@ static MACHINE_DRIVER_START( neogeo )
 
 	/* using a framerate of 59 will fix the sync of the kof98 video / sound however
 	   using it would be a kludge as 60 has been measured using the hardware */
-	MDRV_FRAMES_PER_SECOND(60) /* verified */
+	MDRV_FRAMES_PER_SECOND(15625.0 / 264) /* verified with real PCB */
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(neogeo)
@@ -5994,7 +5993,7 @@ DRIVER_INIT( mslug4 )
 	data16_t *rom;
 	int i,j;
 
-	neogeo_fix_bank_type = 1; /* maybe slightly different, USA violent content screen is wrong */
+	neogeo_fix_bank_type = 1; /* USA violent content screen is wrong -- not a bug, confirmed on real hardware! */
 	kof2000_neogeo_gfx_decrypt(0x31);
 	init_neogeo();
 

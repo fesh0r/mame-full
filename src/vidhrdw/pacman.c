@@ -297,7 +297,7 @@ VIDEO_START( pengo )
 
 	xoffsethack = 0;
 
-	tilemap = tilemap_create( pacman_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,36,28 );
+	tilemap = tilemap_create( pacman_get_tile_info, pacman_scan_rows, TILEMAP_OPAQUE, 8, 8, 36, 28 );
 
 	if( !tilemap )
 		return 1;

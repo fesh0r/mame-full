@@ -630,6 +630,35 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, struct mame_bitmap
 		topmax = Machine->drv->screen_height - 1;
 	}
 
+	/* if the tilemap is flipped, we need to flip our sense within each quadrant */
+	if (info->flip)
+	{
+		if (leftmin != -1)
+		{
+			int temp = leftmin;
+			leftmin = Machine->drv->screen_width - 1 - leftmax;
+			leftmax = Machine->drv->screen_width - 1 - temp;
+		}
+		if (rightmin != -1)
+		{	
+			int temp = rightmin; 
+			rightmin = Machine->drv->screen_width - 1 - rightmax;
+			rightmax = Machine->drv->screen_width - 1 - temp;
+		}
+		if (topmin != -1)
+		{
+			int temp = topmin;
+			topmin = Machine->drv->screen_height - 1 - topmax;
+			topmax = Machine->drv->screen_height - 1 - temp;
+		}
+		if (bottommin != -1)
+		{
+			int temp = bottommin;
+			bottommin = Machine->drv->screen_height - 1 - bottommax;
+			bottommax = Machine->drv->screen_height - 1 - temp;
+		}
+	}
+
 	/* draw the upper-left chunk */
 	if (leftmin != -1 && topmin != -1)
 	{
@@ -639,7 +668,7 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, struct mame_bitmap
 		pageclip.max_y = (topmax > cliprect->max_y) ? cliprect->max_y : topmax;
 		if (pageclip.min_x <= pageclip.max_x && pageclip.min_y <= pageclip.max_y)
 		{
-			page = (pages >> (info->flip ? 12 : 0)) & 0xf;
+			page = (pages >> 0) & 0xf;
 			tilemap_set_scrollx(info->tilemaps[page], 0, xscroll);
 			tilemap_set_scrolly(info->tilemaps[page], 0, yscroll);
 			tilemap_draw(bitmap, &pageclip, info->tilemaps[page], flags, priority);
@@ -655,7 +684,7 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, struct mame_bitmap
 		pageclip.max_y = (topmax > cliprect->max_y) ? cliprect->max_y : topmax;
 		if (pageclip.min_x <= pageclip.max_x && pageclip.min_y <= pageclip.max_y)
 		{
-			page = (pages >> (info->flip ? 8 : 4)) & 0xf;
+			page = (pages >> 4) & 0xf;
 			tilemap_set_scrollx(info->tilemaps[page], 0, xscroll);
 			tilemap_set_scrolly(info->tilemaps[page], 0, yscroll);
 			tilemap_draw(bitmap, &pageclip, info->tilemaps[page], flags, priority);
@@ -671,7 +700,7 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, struct mame_bitmap
 		pageclip.max_y = (bottommax > cliprect->max_y) ? cliprect->max_y : bottommax;
 		if (pageclip.min_x <= pageclip.max_x && pageclip.min_y <= pageclip.max_y)
 		{
-			page = (pages >> (info->flip ? 4 : 8)) & 0xf;
+			page = (pages >> 8) & 0xf;
 			tilemap_set_scrollx(info->tilemaps[page], 0, xscroll);
 			tilemap_set_scrolly(info->tilemaps[page], 0, yscroll);
 			tilemap_draw(bitmap, &pageclip, info->tilemaps[page], flags, priority);
@@ -687,7 +716,7 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, struct mame_bitmap
 		pageclip.max_y = (bottommax > cliprect->max_y) ? cliprect->max_y : bottommax;
 		if (pageclip.min_x <= pageclip.max_x && pageclip.min_y <= pageclip.max_y)
 		{
-			page = (pages >> (info->flip ? 0 : 12)) & 0xf;
+			page = (pages >> 12) & 0xf;
 			tilemap_set_scrollx(info->tilemaps[page], 0, xscroll);
 			tilemap_set_scrolly(info->tilemaps[page], 0, yscroll);
 			tilemap_draw(bitmap, &pageclip, info->tilemaps[page], flags, priority);
@@ -722,6 +751,8 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, struct mame_bitmap
  *
  *	Text RAM:
  *		Offset   Bits               Usage
+ *		E8C      -aaa-bbb -ccc-ddd  Background tilemap page select (screen flipped)
+ *		E8E      -aaa-bbb -ccc-ddd  Foreground tilemap page select (screen flipped)
  *		E9C      -aaa-bbb -ccc-ddd  Background tilemap page select
  *		E9E      -aaa-bbb -ccc-ddd  Foreground tilemap page select
  *		F24      -------- vvvvvvvv  Foreground tilemap vertical scroll
@@ -767,7 +798,7 @@ static void segaic16_tilemap_16a_draw_layer(struct tilemap_info *info, struct ma
 	/* page; in order to scroll beyond that they swap pages and reset the scroll value */
 	UINT16 xscroll = textram[0xff8/2 + which] & 0x1ff;
 	UINT16 yscroll = textram[0xf24/2 + which] & 0x0ff;
-	UINT16 pages = textram[0xe9e/2 - which];
+	UINT16 pages = textram[(info->flip ? 0xe8e/2 : 0xe9e/2) - which];
 	int x, y;
 
 	/* pages are swapped along the X direction, and there are only 8 of them */
@@ -783,6 +814,7 @@ static void segaic16_tilemap_16a_draw_layer(struct tilemap_info *info, struct ma
 		/* loop over row chunks */
 		for (y = cliprect->min_y & ~7; y <= cliprect->max_y; y += 8)
 		{
+			int rowscrollindex = (info->flip ? (216 - y) : y) / 8;
 			struct rectangle rowcolclip;
 
 			/* adjust to clip this row only */
@@ -799,8 +831,12 @@ static void segaic16_tilemap_16a_draw_layer(struct tilemap_info *info, struct ma
 				rowcolclip.max_x = (x + 15 > cliprect->max_x) ? cliprect->max_x : x + 15;
 
 				/* get the effective scroll values */
-				effxscroll = textram[0xf80/2 + (y/8) * 2 + which] & 0x1ff;
+				effxscroll = textram[0xf80/2 + rowscrollindex * 2 + which] & 0x1ff;
 				effyscroll = textram[0xf30/2 + (x/16) * 2 + which] & 0x0ff;
+
+				/* adjust the xscroll for flipped screen */
+				if (info->flip)
+					effxscroll += 17;
 
 				/* draw the chunk */
 				effxscroll = (0xc8 - effxscroll + info->xoffs) & 0x3ff;
@@ -826,6 +862,10 @@ static void segaic16_tilemap_16a_draw_layer(struct tilemap_info *info, struct ma
 			/* get the effective scroll values */
 			effyscroll = textram[0xf30/2 + (x/16) * 2 + which] & 0x0ff;
 
+			/* adjust the xscroll for flipped screen */
+			if (info->flip)
+				effxscroll += 17;
+
 			/* draw the chunk */
 			effxscroll = (0xc8 - xscroll + info->xoffs) & 0x3ff;
 			effyscroll = effyscroll & 0x1ff;
@@ -839,6 +879,7 @@ static void segaic16_tilemap_16a_draw_layer(struct tilemap_info *info, struct ma
 		/* loop over row chunks */
 		for (y = cliprect->min_y & ~7; y <= cliprect->max_y; y += 8)
 		{
+			int rowscrollindex = (info->flip ? (216 - y) : y) / 8;
 			struct rectangle rowclip = *cliprect;
 			UINT16 effxscroll, effyscroll;
 
@@ -847,8 +888,12 @@ static void segaic16_tilemap_16a_draw_layer(struct tilemap_info *info, struct ma
 			rowclip.max_y = (y + 7 > cliprect->max_y) ? cliprect->max_y : y + 7;
 
 			/* get the effective scroll values */
-			effxscroll = textram[0xf80/2 + (y/8) * 2 + which] & 0x1ff;
+			effxscroll = textram[0xf80/2 + rowscrollindex * 2 + which] & 0x1ff;
 			effyscroll = yscroll;
+
+			/* adjust the xscroll for flipped screen */
+			if (info->flip)
+				effxscroll += 17;
 
 			/* draw the chunk */
 			effxscroll = (0xc8 - effxscroll + info->xoffs) & 0x3ff;
@@ -858,14 +903,11 @@ static void segaic16_tilemap_16a_draw_layer(struct tilemap_info *info, struct ma
 	}
 	else
 	{
+		/* adjust the xscroll for flipped screen */
+		if (info->flip)
+			xscroll += 17;
 		xscroll = (0xc8 - xscroll + info->xoffs) & 0x3ff;
 		yscroll = yscroll & 0x1ff;
-
-		/* adjust the xscroll for flipped screen -- note that this is not good enough for */
-		/* fantzone, but keeps things aligned in mjleague */
-//		if (screen_flip)
-//			xscroll = (xscroll - 17) & 0x3ff;
-
 		segaic16_draw_virtual_tilemap(info, bitmap, cliprect, pages, xscroll, yscroll, flags, priority);
 	}
 }
@@ -1008,6 +1050,7 @@ static void segaic16_tilemap_16b_draw_layer(struct tilemap_info *info, struct ma
 		/* loop over row chunks */
 		for (y = cliprect->min_y & ~7; y <= cliprect->max_y; y += 8)
 		{
+			int rowscrollindex = (info->flip ? (216 - y) : y) / 8;
 			struct rectangle rowcolclip;
 
 			/* adjust to clip this row only */
@@ -1025,7 +1068,7 @@ static void segaic16_tilemap_16b_draw_layer(struct tilemap_info *info, struct ma
 				rowcolclip.max_x = (x + 15 > cliprect->max_x) ? cliprect->max_x : x + 15;
 
 				/* get the effective scroll values */
-				rowscroll = textram[0xf80/2 + 0x40/2 * which + y/8];
+				rowscroll = textram[0xf80/2 + 0x40/2 * which + rowscrollindex];
 				effxscroll = (xscroll & 0x8000) ? rowscroll : xscroll;
 				effyscroll = textram[0xf16/2 + 0x40/2 * which + (x+8)/16];
 
@@ -1051,6 +1094,7 @@ static void segaic16_tilemap_16b_draw_layer(struct tilemap_info *info, struct ma
 		/* loop over row chunks */
 		for (y = cliprect->min_y & ~7; y <= cliprect->max_y; y += 8)
 		{
+			int rowscrollindex = (info->flip ? (216 - y) : y) / 8;
 			struct rectangle rowclip = *cliprect;
 			UINT16 effxscroll, effyscroll, rowscroll;
 			UINT16 effpages = pages;
@@ -1060,7 +1104,7 @@ static void segaic16_tilemap_16b_draw_layer(struct tilemap_info *info, struct ma
 			rowclip.max_y = (y + 7 > cliprect->max_y) ? cliprect->max_y : y + 7;
 
 			/* get the effective scroll values */
-			rowscroll = textram[0xf80/2 + 0x40/2 * which + y/8];
+			rowscroll = textram[0xf80/2 + 0x40/2 * which + rowscrollindex];
 			effxscroll = (xscroll & 0x8000) ? rowscroll : xscroll;
 			effyscroll = yscroll;
 
@@ -1728,7 +1772,7 @@ static void segaic16_sprites_sharrier_draw(struct sprite_info *info, struct mame
 
 #define system16a_draw_pixel()												\
 	/* only draw if onscreen, not 0 or 15 */								\
-	if (pix != 0 && pix != 15)												\
+	if (x >= cliprect->min_x && x <= cliprect->max_x && pix != 0 && pix != 15) \
 	{																		\
 		/* are we high enough priority to be visible? */					\
 		if (sprpri > pri[x])												\
@@ -1769,7 +1813,7 @@ static void segaic16_sprites_16a_draw(struct sprite_info *info, struct mame_bitm
 		int bank    = info->bank[(data[4] >> 4) & 0x7];
 		int sprpri  = 1 << ((data[4] >> 0) & 0x3);
 		const UINT16 *spritedata;
-		int x, y, pix;
+		int x, y, pix, xdelta = 1;
 
 		/* initialize the end address to the start address */
 		data[7] = addr;
@@ -1782,6 +1826,16 @@ static void segaic16_sprites_16a_draw(struct sprite_info *info, struct mame_bitm
 		if (numbanks)
 			bank %= numbanks;
 		spritedata = spritebase + 0x8000 * bank;
+
+		/* adjust positions for screen flipping */
+		if (info->flip)
+		{
+			int temp = top;
+			top = 224 - bottom;
+			bottom = 224 - temp;
+			xpos = 320 - xpos;
+			xdelta = -1;
+		}
 
 		/* loop from top to bottom */
 		for (y = top; y < bottom; y++)
@@ -1804,15 +1858,15 @@ static void segaic16_sprites_16a_draw(struct sprite_info *info, struct mame_bitm
 				{
 					/* start at the word before because we preincrement below */
 					data[7] = addr - 1;
-					for (x = xpos; x <= cliprect->max_x; )
+					for (x = xpos; ((xpos - x) & 0x1ff) != 1; )
 					{
 						UINT16 pixels = spritedata[++data[7] & 0x7fff];
 
 						/* draw four pixels */
-						pix = (pixels >> 12) & 0xf; if (x >= cliprect->min_x) system16a_draw_pixel(); x++;
-						pix = (pixels >>  8) & 0xf; if (x >= cliprect->min_x) system16a_draw_pixel(); x++;
-						pix = (pixels >>  4) & 0xf; if (x >= cliprect->min_x) system16a_draw_pixel(); x++;
-						pix = (pixels >>  0) & 0xf; if (x >= cliprect->min_x) system16a_draw_pixel(); x++;
+						pix = (pixels >> 12) & 0xf; system16a_draw_pixel(); x += xdelta;
+						pix = (pixels >>  8) & 0xf; system16a_draw_pixel(); x += xdelta;
+						pix = (pixels >>  4) & 0xf; system16a_draw_pixel(); x += xdelta;
+						pix = (pixels >>  0) & 0xf; system16a_draw_pixel(); x += xdelta;
 
 						/* stop if the last pixel in the group was 0xf */
 						if (pix == 15)
@@ -1825,15 +1879,15 @@ static void segaic16_sprites_16a_draw(struct sprite_info *info, struct mame_bitm
 				{
 					/* start at the word after because we predecrement below */
 					data[7] = addr + 1;
-					for (x = xpos; x <= cliprect->max_x; )
+					for (x = xpos; ((xpos - x) & 0x1ff) != 1; )
 					{
 						UINT16 pixels = spritedata[--data[7] & 0x7fff];
 
 						/* draw four pixels */
-						pix = (pixels >>  0) & 0xf; if (x >= cliprect->min_x) system16a_draw_pixel(); x++;
-						pix = (pixels >>  4) & 0xf; if (x >= cliprect->min_x) system16a_draw_pixel(); x++;
-						pix = (pixels >>  8) & 0xf; if (x >= cliprect->min_x) system16a_draw_pixel(); x++;
-						pix = (pixels >> 12) & 0xf; if (x >= cliprect->min_x) system16a_draw_pixel(); x++;
+						pix = (pixels >>  0) & 0xf; system16a_draw_pixel(); x += xdelta;
+						pix = (pixels >>  4) & 0xf; system16a_draw_pixel(); x += xdelta;
+						pix = (pixels >>  8) & 0xf; system16a_draw_pixel(); x += xdelta;
+						pix = (pixels >> 12) & 0xf; system16a_draw_pixel(); x += xdelta;
 
 						/* stop if the last pixel in the group was 0xf */
 						if (pix == 15)
@@ -1873,7 +1927,7 @@ static void segaic16_sprites_16a_draw(struct sprite_info *info, struct mame_bitm
 
 #define system16b_draw_pixel() 												\
 	/* only draw if onscreen, not 0 or 15 */								\
-	if (x >= cliprect->min_x && pix != 0 && pix != 15)						\
+	if (x >= cliprect->min_x && x <= cliprect->max_x && pix != 0 && pix != 15) \
 	{																		\
 		/* are we high enough priority to be visible? */					\
 		if (sprpri > pri[x])												\
@@ -1918,7 +1972,7 @@ static void segaic16_sprites_16b_draw(struct sprite_info *info, struct mame_bitm
 		int vzoom   = (data[5] >> 5) & 0x1f;
 		int hzoom   = data[5] & 0x1f;
 		const UINT16 *spritedata;
-		int x, y, pix;
+		int x, y, pix, xdelta = 1;
 
 		/* initialize the end address to the start address */
 		data[7] = addr;
@@ -1934,6 +1988,16 @@ static void segaic16_sprites_16b_draw(struct sprite_info *info, struct mame_bitm
 
 		/* reset the yzoom counter */
 		data[5] &= 0x03ff;
+
+		/* adjust positions for screen flipping */
+		if (info->flip)
+		{
+			int temp = top;
+			top = 224 - bottom;
+			bottom = 224 - temp;
+			xpos = 320 - xpos;
+			xdelta = -1;
+		}
 
 		/* loop from top to bottom */
 		for (y = top; y < bottom; y++)
@@ -1964,15 +2028,15 @@ static void segaic16_sprites_16b_draw(struct sprite_info *info, struct mame_bitm
 				{
 					/* start at the word before because we preincrement below */
 					data[7] = addr - 1;
-					for (x = xpos; x <= cliprect->max_x; )
+					for (x = xpos; ((xpos - x) & 0x1ff) != 1; )
 					{
 						UINT16 pixels = spritedata[++data[7]];
 
 						/* draw four pixels */
-						pix = (pixels >> 12) & 0xf; xacc = (xacc & 0x3f) + hzoom; if (xacc < 0x40) { system16b_draw_pixel(); x++; }
-						pix = (pixels >>  8) & 0xf; xacc = (xacc & 0x3f) + hzoom; if (xacc < 0x40) { system16b_draw_pixel(); x++; }
-						pix = (pixels >>  4) & 0xf; xacc = (xacc & 0x3f) + hzoom; if (xacc < 0x40) { system16b_draw_pixel(); x++; }
-						pix = (pixels >>  0) & 0xf; xacc = (xacc & 0x3f) + hzoom; if (xacc < 0x40) { system16b_draw_pixel(); x++; }
+						pix = (pixels >> 12) & 0xf; xacc = (xacc & 0x3f) + hzoom; if (xacc < 0x40) { system16b_draw_pixel(); x += xdelta; }
+						pix = (pixels >>  8) & 0xf; xacc = (xacc & 0x3f) + hzoom; if (xacc < 0x40) { system16b_draw_pixel(); x += xdelta; }
+						pix = (pixels >>  4) & 0xf; xacc = (xacc & 0x3f) + hzoom; if (xacc < 0x40) { system16b_draw_pixel(); x += xdelta; }
+						pix = (pixels >>  0) & 0xf; xacc = (xacc & 0x3f) + hzoom; if (xacc < 0x40) { system16b_draw_pixel(); x += xdelta; }
 
 						/* stop if the last pixel in the group was 0xf */
 						if (pix == 15)
@@ -1985,15 +2049,15 @@ static void segaic16_sprites_16b_draw(struct sprite_info *info, struct mame_bitm
 				{
 					/* start at the word after because we predecrement below */
 					data[7] = addr + 1;
-					for (x = xpos; x <= cliprect->max_x; )
+					for (x = xpos; ((xpos - x) & 0x1ff) != 1; )
 					{
 						UINT16 pixels = spritedata[--data[7]];
 
 						/* draw four pixels */
-						pix = (pixels >>  0) & 0xf; xacc = (xacc & 0x3f) + hzoom; if (xacc < 0x40) { system16b_draw_pixel(); x++; }
-						pix = (pixels >>  4) & 0xf; xacc = (xacc & 0x3f) + hzoom; if (xacc < 0x40) { system16b_draw_pixel(); x++; }
-						pix = (pixels >>  8) & 0xf; xacc = (xacc & 0x3f) + hzoom; if (xacc < 0x40) { system16b_draw_pixel(); x++; }
-						pix = (pixels >> 12) & 0xf; xacc = (xacc & 0x3f) + hzoom; if (xacc < 0x40) { system16b_draw_pixel(); x++; }
+						pix = (pixels >>  0) & 0xf; xacc = (xacc & 0x3f) + hzoom; if (xacc < 0x40) { system16b_draw_pixel(); x += xdelta; }
+						pix = (pixels >>  4) & 0xf; xacc = (xacc & 0x3f) + hzoom; if (xacc < 0x40) { system16b_draw_pixel(); x += xdelta; }
+						pix = (pixels >>  8) & 0xf; xacc = (xacc & 0x3f) + hzoom; if (xacc < 0x40) { system16b_draw_pixel(); x += xdelta; }
+						pix = (pixels >> 12) & 0xf; xacc = (xacc & 0x3f) + hzoom; if (xacc < 0x40) { system16b_draw_pixel(); x += xdelta; }
 
 						/* stop if the last pixel in the group was 0xf */
 						if (pix == 15)

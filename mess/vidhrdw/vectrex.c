@@ -214,16 +214,8 @@ VIDEO_START( vectrex )
 {
 	int width, height;
 
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		width = Machine->scrbitmap->height;
-		height = Machine->scrbitmap->width;
-	}
-	else
-	{
-		width = Machine->scrbitmap->width;
-		height = Machine->scrbitmap->height;
-	}
+	width = Machine->scrbitmap->width;
+	height = Machine->scrbitmap->height;
 
 	x_center=((Machine->visible_area.max_x
 		  -Machine->visible_area.min_x) / 2) << VEC_SHIFT;
@@ -429,8 +421,6 @@ WRITE8_HANDLER( raaspec_led_w )
 
 VIDEO_START( raaspec )
 {
-	int width, height;
-
 	if (video_start_vector())
 		return 1;
 
@@ -443,17 +433,6 @@ VIDEO_START( raaspec )
 	via_config(0, &spectrum1_via6522_interface);
 	via_reset();
 	z_factor =  translucency? 1.5:2;
-
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		width = Machine->scrbitmap->height;
-		height = Machine->scrbitmap->width;
-	}
-	else
-	{
-		width = Machine->scrbitmap->width;
-		height = Machine->scrbitmap->height;
-	}
 
 	raaspec_led_w (0, 0xff);
 	return 0;

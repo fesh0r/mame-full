@@ -1,4 +1,4 @@
-static void ppc603_reset(void *param)
+static void ppc602_reset(void *param)
 {
 	ppc_config *config = param;
 	ppc.pc = ppc.npc = 0xfff00100;
@@ -12,7 +12,7 @@ static void ppc603_reset(void *param)
 	ppc.exception_pending = 0;
 }
 
-void ppc603_exception(int exception)
+void ppc602_exception(int exception)
 {
 	switch( exception )
 	{
@@ -33,10 +33,10 @@ void ppc603_exception(int exception)
 				if( msr & MSR_IP )
 					ppc.npc = 0xfff00000 | 0x0500;
 				else
-					ppc.npc = 0x00000000 | 0x0500;
+					ppc.npc = ppc.ibr | 0x0500;
 			}
 			else {
-				ppc.exception_pending |= 1 << 5;
+				ppc.exception_pending = 1 << 5;
 			}
 			break;
 
@@ -57,7 +57,7 @@ void ppc603_exception(int exception)
 				if( msr & MSR_IP )
 					ppc.npc = 0xfff00000 | 0x0900;
 				else
-					ppc.npc = 0x00000000 | 0x0900;
+					ppc.npc = ppc.ibr | 0x0900;
 			}
 			else {
 				ppc.exception_pending |= 1 << 9;
@@ -80,7 +80,7 @@ void ppc603_exception(int exception)
 				if( msr & MSR_IP )
 					ppc.npc = 0xfff00000 | 0x0700;
 				else
-					ppc.npc = 0x00000000 | 0x0700;
+					ppc.npc = ppc.ibr | 0x0700;
 			}
 			break;
 
@@ -100,7 +100,7 @@ void ppc603_exception(int exception)
 				if( msr & MSR_IP )
 					ppc.npc = 0xfff00000 | 0x0c00;
 				else
-					ppc.npc = 0x00000000 | 0x0c00;
+					ppc.npc = ppc.ibr | 0x0c00;
 			}
 			break;
 
@@ -111,14 +111,14 @@ void ppc603_exception(int exception)
 	}
 }
 
-static void ppc603_set_irq_line(int irqline, int state)
+static void ppc602_set_irq_line(int irqline, int state)
 {
 	if( state ) {
-		ppc603_exception(EXCEPTION_IRQ);
+		ppc602_exception(EXCEPTION_IRQ);
 	}
 }
 
-static int ppc603_execute(int cycles)
+static int ppc602_execute(int cycles)
 {
 	UINT32 opcode, dec_old;
 	ppc_icount = cycles;
@@ -149,7 +149,7 @@ static int ppc603_execute(int cycles)
 		
 		DEC -= 1;
 		if(DEC > dec_old) {
-			ppc603_exception(EXCEPTION_DECREMENTER);
+			ppc602_exception(EXCEPTION_DECREMENTER);
 		}
 	}
 	

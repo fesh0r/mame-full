@@ -214,7 +214,7 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/11/06
 
 
 /* prototypes for functions in ../machine/tnzs.c */
-unsigned char *tnzs_objram, *tnzs_workram;
+unsigned char *tnzs_objram, *tnzs_sharedram;
 unsigned char *tnzs_vdcram, *tnzs_scrollram;
 DRIVER_INIT( extrmatn );
 DRIVER_INIT( arknoid2 );
@@ -222,6 +222,7 @@ DRIVER_INIT( drtoppel );
 DRIVER_INIT( chukatai );
 DRIVER_INIT( tnzs );
 DRIVER_INIT( tnzsb );
+DRIVER_INIT( kabukiz );
 DRIVER_INIT( insectx );
 DRIVER_INIT( kageki );
 READ8_HANDLER( arknoid2_sh_f000_r );
@@ -231,10 +232,8 @@ READ8_HANDLER( tnzs_port1_r );
 READ8_HANDLER( tnzs_port2_r );
 WRITE8_HANDLER( tnzs_port2_w );
 READ8_HANDLER( tnzs_mcu_r );
-READ8_HANDLER( tnzs_workram_r );
-READ8_HANDLER( tnzs_workram_sub_r );
-WRITE8_HANDLER( tnzs_workram_w );
-WRITE8_HANDLER( tnzs_workram_sub_w );
+READ8_HANDLER( tnzs_sharedram_r );
+WRITE8_HANDLER( tnzs_sharedram_w );
 WRITE8_HANDLER( tnzs_mcu_w );
 WRITE8_HANDLER( tnzs_bankswitch_w );
 WRITE8_HANDLER( tnzs_bankswitch1_w );
@@ -360,7 +359,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1) /* ROM + RAM */
 	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_workram_r)	/* WORK RAM (shared by the 2 z80's */
+	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_sharedram_r)	/* WORK RAM (shared by the 2 z80's */
 	AM_RANGE(0xf000, 0xf1ff) AM_READ(MRA8_RAM)	/* VDC RAM */
 	AM_RANGE(0xf600, 0xf600) AM_READ(MRA8_NOP)	/* ? */
 	AM_RANGE(0xf800, 0xfbff) AM_READ(MRA8_RAM)	/* not in extrmatn and arknoid2 (PROMs instead) */
@@ -370,7 +369,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_BANK1)	/* ROM + RAM */
 	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_objram)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_workram_w) AM_BASE(&tnzs_workram)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_sharedram_w) AM_BASE(&tnzs_sharedram)
 	AM_RANGE(0xf000, 0xf1ff) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_vdcram)
 	AM_RANGE(0xf200, 0xf3ff) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_scrollram) /* scrolling info */
 	AM_RANGE(0xf400, 0xf400) AM_WRITE(MWA8_NOP)	/* ? */
@@ -389,7 +388,7 @@ static ADDRESS_MAP_START( sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc000, 0xc001) AM_READ(tnzs_mcu_r)	/* plain input ports in insectx (memory handler */
 									/* changed in insectx_init() ) */
 	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_workram_sub_r)
+	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_sharedram_r)
 	AM_RANGE(0xf000, 0xf003) AM_READ(arknoid2_sh_f000_r)	/* paddles in arkanoid2/plumppop. The ports are */
 						/* read but not used by the other games, and are not read at */
 						/* all by insectx. */
@@ -402,7 +401,7 @@ static ADDRESS_MAP_START( sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xb001, 0xb001) AM_WRITE(YM2203_write_port_0_w)
 	AM_RANGE(0xc000, 0xc001) AM_WRITE(tnzs_mcu_w)	/* not present in insectx */
 	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_workram_sub_w)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_sharedram_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( kageki_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -414,7 +413,7 @@ static ADDRESS_MAP_START( kageki_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_3_r)
 	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_4_r)
 	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_workram_sub_r)
+	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_sharedram_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( kageki_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -423,7 +422,7 @@ static ADDRESS_MAP_START( kageki_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xb000, 0xb000) AM_WRITE(YM2203_control_port_0_w)
 	AM_RANGE(0xb001, 0xb001) AM_WRITE(YM2203_write_port_0_w)
 	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_workram_sub_w)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_sharedram_w)
 ADDRESS_MAP_END
 
 /* the bootleg board is different, it has a third CPU (and of course no mcu) */
@@ -443,7 +442,7 @@ static ADDRESS_MAP_START( tnzsb_readmem1, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_3_r)
 	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_4_r)
 	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_workram_sub_r)
+	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_sharedram_r)
 	AM_RANGE(0xf000, 0xf003) AM_READ(MRA8_RAM)
 ADDRESS_MAP_END
 
@@ -452,7 +451,7 @@ static ADDRESS_MAP_START( tnzsb_writemem1, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(tnzs_bankswitch1_w)
 	AM_RANGE(0xb004, 0xb004) AM_WRITE(tnzsb_sound_command_w)
 	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_workram_sub_w)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_sharedram_w)
 	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
 ADDRESS_MAP_END
 
@@ -467,7 +466,7 @@ static ADDRESS_MAP_START( kabukiz_cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_3_r)
 	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_4_r)
 	AM_RANGE(0xd000, 0xdfff) AM_RAM
-	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_workram_sub_r) AM_WRITE(tnzs_workram_sub_w)
+	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_sharedram_r) AM_WRITE(tnzs_sharedram_w)
 	AM_RANGE(0xf800, 0xfbff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
 ADDRESS_MAP_END
 

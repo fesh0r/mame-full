@@ -191,6 +191,10 @@ typedef struct {
 void ppc403_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
+#if (HAS_PPC602)
+void ppc602_get_info(UINT32 state, union cpuinfo *info);
+#endif
+
 #if (HAS_PPC603)
 void ppc603_get_info(UINT32 state, union cpuinfo *info);
 #endif
