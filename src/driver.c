@@ -2381,7 +2381,8 @@ V-V                           TP-027
 	DRIVER( sfexpj )	/* Street Fighter EX Plus (JAPAN 970311) */
 
 	/* Capcom ZN2 */
-	DRIVER( rvschool )	/* Rival Schools (ASIA 971117) */
+	DRIVER( rvschool )	/* Rival Schools (USA 971117) */
+	DRIVER( rvschola )	/* Rival Schools (ASIA 971117) */
 	DRIVER( jgakuen )	/* Justice Gakuen (JAPAN 971117) */
 	DRIVER( sfex2 )		/* Street Fighter EX 2 (JAPAN 980312) */
 	DRIVER( plsmaswd )	/* Plasma Sword (USA 980316) */
@@ -2435,7 +2436,8 @@ V-V                           TP-027
 	DRIVER( mgcldtex )	/* Magical Date EX (JAPAN Ver 2.01J) */
 
 	/* Taito FX1b */
-	DRIVER( raystorm )	/* Ray Storm (Ver 2.05J) */
+	DRIVER( raystorm )	/* Ray Storm (Ver 2.06O) */
+	DRIVER( raystorj )	/* Ray Storm (Ver 2.05J) */
 	DRIVER( ftimpcta )	/* Fighters' Impact A (Ver 2.00J) */
 	DRIVER( gdarius )	/* G-Darius (Ver 2.01J) */
 	DRIVER( gdarius2 )	/* G-Darius Ver.2 (Ver 2.03J) */
@@ -2952,6 +2954,7 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( vr )
 	DRIVER( swa )
 	DRIVER( wingwar )
+	DRIVER( wingwara )
 
 	/* Sega H1 games */
 	DRIVER( coolridr )
@@ -4344,6 +4347,10 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( gensitou )	/* A8003 'GT' (c) 1989 */
 	DRIVER( mechatt )	/* A8002 'MA' (c) 1989 */
 	DRIVER( bbusters )	/* A9003 'BB' (c) 1989 */
+
+	/* Electrocoin on early SNK hardware - gambling game remove once it works */
+	DRIVER( dmndrby )	/* G4001 'DD' (c) 1986 */
+	DRIVER( dmndrbya )  /* G4001 'DD' (c) 1986 */
 
 	/* Alpha Denshi games */
 	DRIVER( shougi )
@@ -5743,6 +5750,7 @@ Other Sun games
 	DRIVER( pitboss )	/* (c) 198? Merit */
 	DRIVER( trvwhiz )	/* (c) 198? Merit */
 	DRIVER( trvwhzii )	/* (c) 198? Merit */
+	DRIVER( suprgolf )	/* (c) 19?? Nasco */
 
 	/* Neo Geo games */
 	/* the four digits number is the game ID stored at address 0x0108 of the program ROM */

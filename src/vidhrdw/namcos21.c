@@ -368,7 +368,7 @@ DrawPolygons( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 			 *
 			 * player shots
 			 */
-			if( !code_pressed(KEYCODE_C) )
+			if ( code_pressed(KEYCODE_C) )
 			size = DrawPolyObject1( bitmap, cliprect, pDSPRAM, NULL );
 			break;
 
@@ -483,7 +483,7 @@ VIDEO_UPDATE( namcos21_default )
 		namco_obj_draw( bitmap, cliprect, pri );
 	}
 
-	DrawPolygons( bitmap, cliprect );
+//	DrawPolygons( bitmap, cliprect );
 
 	/* draw high priority 2d sprites */
 	for( pri=pivot; pri<8; pri++ )

@@ -1755,7 +1755,7 @@ void e132xs_fcmp(void)
 {
 	float val1=u2f(SREG);
 	float val2=u2f(DREG);
-	int unordered=((isunordered(val1,val2))?1:0);
+	int unordered=isnan(val1)||isnan(val2);
 	SET_Z(((val1==val2)?1:0)&(unordered^1));
 	SET_N(((val2<val1)?1:0)|unordered);
 	SET_C(((val2<val1)?1:0)&(unordered^1));
@@ -1772,7 +1772,7 @@ void e132xs_fcmpd(void)
 	v2=COMBINE_U64_U32_U32(DREG,DREGF);
 	val1=u2d(v1);
 	val2=u2d(v2);
-	unordered=((isunordered(val1,val2))?1:0);
+	unordered=isnan(val1)||isnan(val2);
 	SET_Z(((val1==val2)?1:0)&(unordered^1));
 	SET_N(((val2<val1)?1:0)|unordered);
 	SET_C(((val2<val1)?1:0)&(unordered^1));
@@ -1785,7 +1785,7 @@ void e132xs_fcmpu(void)
 {
 	float val1=u2f(SREG);
 	float val2=u2f(DREG);
-	int unordered=((isunordered(val1,val2))?1:0);
+	int unordered=isnan(val1)||isnan(val2);
 	SET_Z(((val1==val2)?1:0)&(unordered^1));
 	SET_N(((val2<val1)?1:0)|unordered);
 	SET_C(((val2<val1)?1:0)&(unordered^1));
@@ -1801,7 +1801,7 @@ void e132xs_fcmpud(void)
 	v2=COMBINE_U64_U32_U32(DREG,DREGF);
 	val1=u2d(v1);
 	val2=u2d(v2);
-	unordered=((isunordered(val1,val2))?1:0);
+	unordered=isnan(val1)||isnan(val2);
 	SET_Z(((val1==val2)?1:0)&(unordered^1));
 	SET_N(((val2<val1)?1:0)|unordered);
 	SET_C(((val2<val1)?1:0)&(unordered^1));

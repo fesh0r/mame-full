@@ -14,7 +14,9 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- [Windows] Fixed a regression that prevented all customize input, analog
+  controls and configuration dialogs from working on Win95/Win98/WinME.
+  [Nate Woods]
 
 
 
@@ -26,7 +28,8 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-(none)
+- The core is based on MAME 0.86u1.  This incorporates all features of the
+  update to this core.  [MAME team]
 
 
 

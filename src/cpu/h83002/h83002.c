@@ -429,7 +429,7 @@ static int h8_execute(int cycles)
 #ifdef MAME_DEBUG
 		CALL_MAME_DEBUG;
 #endif
-		opcode = cpu_readop32(h8.pc);
+		opcode = cpu_readop16(h8.pc);
 		h8.pc += 2;
 
 		switch((opcode>>12) & 0xf)

@@ -289,7 +289,7 @@ $(OBJ)/univers.a: \
 $(OBJ)/nintendo.a: \
 	$(OBJ)/drivers/n8080.o $(OBJ)/vidhrdw/n8080.o $(OBJ)/sndhrdw/n8080.o \
 	$(OBJ)/vidhrdw/dkong.o $(OBJ)/sndhrdw/dkong.o $(OBJ)/drivers/dkong.o \
-	$(OBJ)/machine/strtheat.o \
+	$(OBJ)/machine/strtheat.o $(OBJ)/machine/drakton.o \
 	$(OBJ)/vidhrdw/mario.o $(OBJ)/sndhrdw/mario.o $(OBJ)/drivers/mario.o \
 	$(OBJ)/vidhrdw/popeye.o $(OBJ)/drivers/popeye.o \
 	$(OBJ)/vidhrdw/punchout.o $(OBJ)/drivers/punchout.o \
@@ -751,6 +751,7 @@ $(OBJ)/snk.a: \
 	$(OBJ)/vidhrdw/marvins.o $(OBJ)/drivers/marvins.o \
 	$(OBJ)/vidhrdw/jcross.o $(OBJ)/drivers/jcross.o \
 	$(OBJ)/vidhrdw/mainsnk.o $(OBJ)/drivers/mainsnk.o \
+	$(OBJ)/drivers/dmndrby.o \
 	$(OBJ)/drivers/hal21.o \
 	$(OBJ)/vidhrdw/snk.o $(OBJ)/drivers/snk.o \
 	$(OBJ)/drivers/sgladiat.o \
@@ -1164,6 +1165,7 @@ $(OBJ)/otherz80.a: \
 	$(OBJ)/drivers/tcl.o \
 	$(OBJ)/drivers/onetwo.o \
 	$(OBJ)/drivers/pbchmp95.o \
+	$(OBJ)/drivers/suprgolf.o \
 
 $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/redalert.o $(OBJ)/sndhrdw/redalert.o $(OBJ)/drivers/redalert.o \

@@ -60,7 +60,7 @@ static double compute_resistor_weights(
 /* this should be moved to one of the core files */
 
 #define MAX_NETS 3
-#define MAX_RES_PER_NET 8
+#define MAX_RES_PER_NET 20
 
 static double compute_resistor_weights(
 	int minval, int maxval, double scaler,

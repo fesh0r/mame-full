@@ -1661,7 +1661,7 @@ void win_dialog_runmodal(dialog_box *dialog)
 
 	// show the dialog
 	before_display_dialog();
-	if (GetVersion() & 0x8000)
+	if (GetVersion() & 0x80000000)
 		DialogBoxIndirectParamA(NULL, di->handle, win_video_window, dialog_proc, (LPARAM) di);
 	else
 		DialogBoxIndirectParamW(NULL, di->handle, win_video_window, dialog_proc, (LPARAM) di);

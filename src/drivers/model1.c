@@ -123,7 +123,7 @@ static MACHINE_INIT(model1)
 {
 	cpu_setbank(1, memory_region(REGION_CPU1) + 0x1000000);
 	irq_init();
-	model1_tgp_reset(!strcmp(Machine->gamedrv->name, "swa") || !strcmp(Machine->gamedrv->name, "wingwar"));
+	model1_tgp_reset(!strcmp(Machine->gamedrv->name, "swa") || !strcmp(Machine->gamedrv->name, "wingwar") || !strcmp(Machine->gamedrv->name, "wingwara"));
 }
 
 static READ16_HANDLER( network_ctl_r )
@@ -210,7 +210,7 @@ static READ16_HANDLER( snd_68k_ready_r )
 		cpu_spinuntil_time(TIME_IN_USEC(40));
 		return 0;	// not ready yet, interrupts disabled
 	}
-	
+
 	return 0xff;
 }
 
@@ -222,7 +222,7 @@ static WRITE16_HANDLER( snd_latch_to_68k_w )
 	}
 
 	to_68k = data;
-	
+
 	cpunum_set_input_line(1, 2, HOLD_LINE);
 	// give the 68k time to reply
 	cpu_spinuntil_time(TIME_IN_USEC(40));
@@ -706,6 +706,53 @@ ROM_START( wingwar )
 	ROM_LOAD32_BYTE( "mpr-16740.42", 0x000003, 0x80000, CRC(44b31007) SHA1(4bb265fea25a7bbcbb8ab080fdcf09849b18f1de) )
 ROM_END
 
+ROM_START( wingwara )
+	ROM_REGION( 0x1300000, REGION_CPU1, 0 ) /* v60 code */
+	ROM_LOAD16_BYTE( "epr-16729.14", 0x200000, 0x80000, CRC(7edec2cc) SHA1(3e423a868ca7c8475fbb5bc1a10526e69d94d865) )
+	ROM_LOAD16_BYTE( "epr-16730.15", 0x200001, 0x80000, CRC(bab24dee) SHA1(26c95139c1aa7f34b6a5cce39e5bd1dd2ef0dd49) )
+
+	ROM_LOAD( "epr16953.bin", 0xfc0000, 0x20000, CRC(c821a920) SHA1(7fc9ea5d828aac664514fa6d38f708f1ffd26220) )
+	ROM_RELOAD(          0x000000, 0x20000 )
+	ROM_LOAD( "epr16952.bin", 0xfe0000, 0x20000, CRC(03a3ecc5) SHA1(5c4aa221302b0a0800e1af99a41ab46fe4325184) )
+	ROM_RELOAD(          0x020000, 0x20000 )
+
+	ROM_LOAD16_BYTE( "mpr-16738.6",  0x1000000, 0x80000, CRC(51518ffa) SHA1(e4674ddfed4205957b14e133c6fdf6454872f324) )
+	ROM_LOAD16_BYTE( "mpr-16737.7",  0x1000001, 0x80000, CRC(37b1379c) SHA1(98620c324268e1dd906c077ac8a8cd903b9de1f7) )
+	ROM_LOAD16_BYTE( "mpr-16736.8",  0x1100000, 0x80000, CRC(10b6a025) SHA1(7a4f624ceb7c0b92044a5db8ff55440562ef836b) )
+	ROM_LOAD16_BYTE( "mpr-16735.9",  0x1100001, 0x80000, CRC(c82fd198) SHA1(d9e53ae1e14dfc8e84a14c0026ef0b904863bb1b) )
+	ROM_LOAD16_BYTE( "mpr-16734.10", 0x1200000, 0x80000, CRC(f76371c1) SHA1(0ff082db3877383d0dd977dc60c932b725e3d164) )
+	ROM_LOAD16_BYTE( "mpr-16733.11", 0x1200001, 0x80000, CRC(e105847b) SHA1(8489a6c91fd6d1e9ba81e8eaf36c514da30dccbe) )
+
+	ROM_REGION( 0xc0000, REGION_CPU2, 0 )  /* 68K code */
+	ROM_LOAD16_WORD_SWAP("epr17126.bin",0x000000, 0x20000, CRC(50178e40) SHA1(fb01aecfbe4e90adc997de0d45a63c16ef353b37) )
+	ROM_LOAD16_WORD_SWAP("epr-16752.8", 0x020000, 0x20000, CRC(6541c48f) SHA1(9341eff160e31a8574b9545fafc1c4059323fa0c) )
+	ROM_RELOAD(0x80000, 0x20000)
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD("mpr-16753.32", 0x000000, 0x200000, CRC(324a8333) SHA1(960342e08db637c6f72615d49cffd9fb0889620b) )
+	ROM_LOAD("mpr-16754.33", 0x200000, 0x200000, CRC(144f3cf5) SHA1(d2f8cc9086affbbc5ef2195272200230f724e5d1) )
+
+	ROM_REGION( 0x400000, REGION_SOUND2, 0 ) /* Samples */
+	ROM_LOAD("mpr-16755.4", 0x000000, 0x200000, CRC(4baaf878) SHA1(661d4ea9be6a4952852d0ef94becee7ed42bf4a1) )
+	ROM_LOAD("mpr-16756.5", 0x200000, 0x200000, CRC(d9c40672) SHA1(83e6f1156b30888d3a00103f079dc74f4fca8446) )
+
+	ROM_REGION32_LE( 0x1000000, REGION_USER1, 0 ) /* TGP model roms */
+	ROM_LOAD32_WORD( "mpr-16743.26", 0x000000, 0x200000, CRC(a710d33c) SHA1(1d0184545b34789ed511caaa25d57db3cd9a8e2f) )
+	ROM_LOAD32_WORD( "mpr-16744.27", 0x000002, 0x200000, CRC(de796e1f) SHA1(397efb86a21b178770f29d2464bacf5f893619a0) )
+	ROM_LOAD32_WORD( "mpr-16745.28", 0x400000, 0x200000, CRC(905b689c) SHA1(685dec2a65d5b3a386bda0af1bb5ae7e2b73a01a) )
+	ROM_LOAD32_WORD( "mpr-16746.29", 0x400002, 0x200000, CRC(163b312e) SHA1(6b45007d6a9d17c8a0b46d81ec84ce9bfefb1695) )
+	ROM_LOAD32_WORD( "mpr-16747.30", 0x800000, 0x200000, CRC(7353bb12) SHA1(608c5d561e909b8ba31d53db18e6e199855eaaec) )
+	ROM_LOAD32_WORD( "mpr-16748.31", 0x800002, 0x200000, CRC(8ce98d3a) SHA1(1978776a0e2ea817508e30ba232d5f8d9c158f70) )
+	ROM_LOAD32_WORD( "mpr-16749.32", 0xc00000, 0x200000, CRC(0e36dc1a) SHA1(4939177a6ac51ca57d0acd118ff14af4f4e438bb) )
+	ROM_LOAD32_WORD( "mpr-16750.33", 0xc00002, 0x200000, CRC(e4f0b98d) SHA1(e69de2e5ccea2834fb8326bdd61fc6b517bc60b7) )
+
+	ROM_REGION32_LE( 0x200000, REGION_USER2, 0 ) /* TGP data roms */
+	ROM_LOAD32_BYTE( "mpr-16741.39", 0x000000, 0x80000, CRC(84b2ffd8) SHA1(0eba3855d20b88567c6fa08046e12429664d87cb) )
+	ROM_LOAD32_BYTE( "mpr-16742.40", 0x000001, 0x80000, CRC(e9cc12bb) SHA1(40c83c968be3b11fad193a00e7b760f074450683) )
+	ROM_LOAD32_BYTE( "mpr-16739.41", 0x000002, 0x80000, CRC(6c73e98f) SHA1(7b31e62922ab6d0df97c3ecc52b78e6d086c8635) )
+	ROM_LOAD32_BYTE( "mpr-16740.42", 0x000003, 0x80000, CRC(44b31007) SHA1(4bb265fea25a7bbcbb8ab080fdcf09849b18f1de) )
+ROM_END
+
 static MACHINE_DRIVER_START( model1 )
 	MDRV_CPU_ADD(V60, 16000000/12) // Reality is 16Mhz
 	MDRV_CPU_PROGRAM_MAP(model1_mem, 0)
@@ -756,7 +803,8 @@ static MACHINE_DRIVER_START( model1nosnd )
 	MDRV_VIDEO_EOF(model1)
 MACHINE_DRIVER_END
 
-GAMEX( 1993, vf1,      0, model1, vf1,      0, ROT0, "Sega", "Virtua Fighter 1", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1993, vf1,      0, model1, vf1,      0, ROT0, "Sega", "Virtua Fighter", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1992, vr,       0, model1, vr,       0, ROT0, "Sega", "Virtua Racing", GAME_NOT_WORKING )
 GAMEX( 1993, swa,      0, model1nosnd, swa,      0, ROT0, "Sega", "Star Wars Arcade", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1994, wingwar,  0, model1, wingwar,  0, ROT0, "Sega", "Wing War", GAME_NOT_WORKING )
+GAMEX( 1994, wingwar,  0, model1, wingwar,  0, ROT0, "Sega", "Wing War (US)", GAME_NOT_WORKING )
+GAMEX( 1994, wingwara, wingwar, model1, wingwar,  0, ROT0, "Sega", "Wing War", GAME_NOT_WORKING )

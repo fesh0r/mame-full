@@ -45,7 +45,7 @@ enum
 	M37710_LINE_ZERODIV,
 	M37710_LINE_RESET,
 
-	M37710_LINE_MAX,
+	M37710_LINE_MAX
 };
 
 /* Registers - used by m37710_set_reg() and m37710_get_reg() */
