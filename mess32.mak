@@ -572,8 +572,10 @@ IMGTOOL_OBJS= \
           $(OBJ)/unzip.o              \
           $(OBJ)/mess/tools/main.o    \
           $(OBJ)/mess/tools/imgtool.o \
-          $(OBJ)/mess/tools/rsdos.o   \
+		  $(OBJ)/mess/tools/imgwave.o \
           $(OBJ)/mess/tools/stream.o  \
+          $(OBJ)/mess/tools/rsdos.o   \
+          $(OBJ)/mess/tools/cococas.o \
           $(OBJ)/mess/tools/t64.o     \
           $(OBJ)/mess/tools/lynx.o    \
           $(OBJ)/mess/tools/crt.o     \

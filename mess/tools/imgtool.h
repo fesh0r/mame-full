@@ -197,6 +197,7 @@ struct ImageModule {
 	   if the buffer is too small it will be relocated with realloc */
 	int (*read_sector)(IMAGE *img, int head, int track, int sector, char **buffer, int *size);
 	int (*write_sector)(IMAGE *img, int head, int track, int sector, char *buffer, int size);
+	void *extra;
 };
 
 /* ----------------------------------------------------------------------- */
@@ -213,7 +214,7 @@ struct ImageModule imgmod_##name = \
 	(crcfile),		\
 	(crcsysname),	\
 	(ranges),		\
-	(initbyname),			\
+	(initbyname),	\
 	(init),			\
 	(exit),			\
 	(info),			\
@@ -226,8 +227,9 @@ struct ImageModule imgmod_##name = \
 	(deletefile),	\
 	(create),		\
 	(extract),		\
-	(read_sector),		\
-	(write_sector)		\
+	(read_sector),	\
+	(write_sector),	\
+	NULL			\
 };
 
 /* Use CARTMODULE for cartriges (where the only relevant option is CRC checking */
@@ -240,6 +242,7 @@ struct ImageModule imgmod_##name = \
 	0,				\
 	(#name ".crc"),	\
 	#name,			\
+	NULL,			\
 	NULL,			\
 	NULL,			\
 	NULL,			\
@@ -516,5 +519,85 @@ int img_getinfo_byname(const char *modulename, const char *fname, imageinfo *inf
  */
 int img_goodname(const struct ImageModule *module, const char *fname, const char *base, char **result);
 int img_goodname_byname(const char *modulename, const char *fname, const char *base, char **result);
+
+/* ---------------------------------------------------------------------------
+ * Wave/Cassette calls
+ * ---------------------------------------------------------------------------
+ */
+
+enum {
+	WAVEIMAGE_LSB_FIRST
+};
+
+struct WaveExtra
+{
+	int (*nextfile)(IMAGE *img, imgtool_dirent *ent);
+	int zeropulse;
+	int onepulse;
+	int threshpulse;
+	int waveflags;
+	const UINT8 *blockheader;
+	int blockheadersize;
+
+};
+
+#define WAVEMODULE(name,humanname,ext,zeropulse,onepulse,threshpulse,waveflags,blockheader,blockheadersize,\
+		nextfile,readfile,writefile,deletefile)	\
+static int imgmodinit_##name(STREAM *f, IMAGE **outimg); \
+static struct WaveExtra waveextra_##name = \
+{						\
+	(nextfile),			\
+	(zeropulse),		\
+	(onepulse),			\
+	(threshpulse),		\
+	(waveflags),		\
+	(blockheader),		\
+	(blockheadersize),	\
+}; \
+struct ImageModule imgmod_##name = \
+{						\
+	#name,				\
+	(humanname),		\
+	(ext),				\
+	0,					\
+	NULL,				\
+	NULL,				\
+	NULL,				\
+	NULL,				\
+	imgmodinit_##name,	\
+	imgwave_exit,		\
+	NULL,				\
+	imgwave_beginenum,	\
+	imgwave_nextenum,	\
+	imgwave_closeenum,	\
+	NULL,				\
+	(readfile),			\
+	(writefile),		\
+	(deletefile),		\
+	NULL,				\
+	NULL,				\
+	NULL,				\
+	NULL,				\
+	(void *) &waveextra_##name \
+}; \
+static int imgmodinit_##name(STREAM *f, IMAGE **outimg) \
+{ \
+	return imgwave_init(&imgmod_##name, f, outimg); \
+}
+
+int imgwave_init(struct ImageModule *mod, STREAM *f, IMAGE **outimg);
+void imgwave_exit(IMAGE *img);
+int imgwave_beginenum(IMAGE *img, IMAGEENUM **outenum);
+int imgwave_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
+void imgwave_closeenum(IMAGEENUM *enumeration);
+int imgwave_seek(IMAGE *img, int pos);
+int imgwave_readsample(IMAGE *img, INT16 *sample);
+int imgwave_read(IMAGE *img, UINT8 *buf, int bufsize);
+
+
+/*
+void imgwave_getpos(IMAGE *img, int *pos);
+int imgwave_setpos(IMAGE *img, int pos);
+*/
 
 #endif /* IMGTOOL_H */

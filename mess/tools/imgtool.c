@@ -30,6 +30,7 @@ CARTMODULE(vectrex,  "Vectrex Cartridge",				"bin")
 CARTMODULE(vic20,    "Commodore Vic-20 Cartridge",		"a0")
 
 extern struct ImageModule imgmod_rsdos;	/* CoCo RS-DOS disks */
+extern struct ImageModule imgmod_cococas;	/* CoCo cassettes */
 extern struct ImageModule imgmod_pchd;	/* PC HD images */
 extern struct ImageModule imgmod_msdos;	/* FAT/MSDOS diskett images */
 extern struct ImageModule imgmod_msdoshd;	/* FAT/MSDOS harddisk images */
