@@ -30,7 +30,7 @@ static struct
 	XDGADevice *device;
 	XDGAMode *modes;
 	int mode_count;
-	int vidmode_changed;
+	int current_mode;
 	int aligned_viewport_height;
 	int page;
 	int max_page;
@@ -39,7 +39,7 @@ static struct
 #ifdef TDFX_DGA_WORKAROUND
 	int current_X11_mode;
 #endif
-} xf86ctx = {-1,NULL,-1,0,NULL,NULL,NULL,0,0,0,0,0,2,-1};
+} xf86ctx = {-1,NULL,-1,0,NULL,NULL,NULL,0,-1,0,0,0,2,-1};
 	
 struct rc_option xf86_dga2_opts[] = {
   /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -73,7 +73,7 @@ int xf86_dga2_init(void)
 static int xf86_dga_vidmode_find_best_vidmode(void)
 {
 	int i;
-	int bestmode = 0;
+	int bestmode = -1;
 	int score, best_score = 0;
 
 #ifdef TDFX_DGA_WORKAROUND
@@ -92,7 +92,7 @@ static int xf86_dga_vidmode_find_best_vidmode(void)
 	for(i=0;i<xf86ctx.mode_count;i++)
 	{
 #ifdef TDFX_DGA_WORKAROUND
-		if (!xf86ctx.vidmode_changed &&
+		if ((xf86ctx.current_mode == -1) &&
 			xf86ctx.modes[i].viewportWidth == modeline.hdisplay &&
 			xf86ctx.modes[i].viewportHeight == modeline.vdisplay)
 			xf86ctx.current_X11_mode = xf86ctx.modes[i].num;
@@ -132,6 +132,10 @@ static int xf86_dga_vidmode_find_best_vidmode(void)
 			xf86ctx.modes[i].maxViewportX, xf86ctx.modes[i].maxViewportY);
 		/* viewportFlags */
 #endif
+                /* we only support TrueColor visuals */
+                if(xf86ctx.modes[i].visualClass != TrueColor)
+                        continue;
+                
 		score = mode_match(xf86ctx.modes[i].viewportWidth,
 			xf86ctx.modes[i].viewportHeight,
 			(xf86ctx.modes[i].depth==24)?
@@ -272,53 +276,55 @@ int xf86_dga2_open_display(void)
 
 static int xf86_dga_set_mode(void)
 {
-	int bestmode;
-	Visual dga_xvisual;
+	int bestmode = xf86_dga_vidmode_find_best_vidmode();
 
-	bestmode = xf86_dga_vidmode_find_best_vidmode();
-	if (!bestmode)
+	if (bestmode == -1)
 	{
 		fprintf(stderr,"no suitable mode found\n");
 		return 1;
 	}
-	xf86ctx.device = XDGASetMode(display,xf86ctx.screen,bestmode);
-	if (xf86ctx.device == NULL) {
-		fprintf(stderr,"XDGASetMode failed\n");
-		return 1;
+	if (bestmode != xf86ctx.current_mode)
+	{
+          if(xf86ctx.device)
+                  XFree(xf86ctx.device);
+
+          xf86ctx.device = XDGASetMode(display,xf86ctx.screen,bestmode);
+          if (xf86ctx.device == NULL) {
+                  fprintf(stderr,"XDGASetMode failed\n");
+                  return 1;
+          }
+          xf86ctx.width = xf86ctx.device->mode.bytesPerScanline * 8
+                  / xf86ctx.device->mode.bitsPerPixel;
+          xf86ctx.current_mode = bestmode;
+
+  #if 0 /* DEBUG */
+          fprintf(stderr, "Debug: bitmap_depth =%d   mode.bitsPerPixel = %d"
+                          "   mode.depth = %d\n", bitmap_depth, 
+                          xf86ctx.device->mode.bitsPerPixel, 
+                          xf86ctx.device->mode.depth);
+  #endif
+
+          fprintf(stderr,"XF86DGA2 switched To Mode: %d x %d\n",
+                  xf86ctx.device->mode.viewportWidth,
+                  xf86ctx.device->mode.viewportHeight);
+
+          mode_set_aspect_ratio((double)xf86ctx.device->mode.viewportWidth/
+                  xf86ctx.device->mode.viewportHeight);
+
+          if(xf86_dga_setup_graphics(xf86ctx.device->mode))
+              return 1;
+          
+          /* setup the viewport */
+          XDGASetViewport(display,xf86ctx.screen,0,0,0);
+          while(XDGAGetViewportStatus(display, xf86ctx.screen))
+                  ;
+
+          /* fill the sysdep_display_properties struct */
+          memset(&sysdep_display_properties, 0, sizeof(sysdep_display_properties));
+          sysdep_display_properties.palette_info.red_mask   = xf86ctx.device->mode.redMask;
+          sysdep_display_properties.palette_info.green_mask = xf86ctx.device->mode.greenMask;
+          sysdep_display_properties.palette_info.blue_mask  = xf86ctx.device->mode.blueMask;
 	}
-	xf86ctx.width = xf86ctx.device->mode.bytesPerScanline * 8
-		/ xf86ctx.device->mode.bitsPerPixel;
-	xf86ctx.vidmode_changed = 1;
-
-#if 0 /* DEBUG */
-	fprintf(stderr, "Debug: bitmap_depth =%d   mode.bitsPerPixel = %d"
-			"   mode.depth = %d\n", bitmap_depth, 
-			xf86ctx.device->mode.bitsPerPixel, 
-			xf86ctx.device->mode.depth);
-#endif
-
-	fprintf(stderr,"XF86DGA2 switched To Mode: %d x %d\n",
-		xf86ctx.device->mode.viewportWidth,
-		xf86ctx.device->mode.viewportHeight);
-
-	/* setup the palette_info struct */
-	dga_xvisual.class = xf86ctx.device->mode.visualClass;
-	dga_xvisual.red_mask = xf86ctx.device->mode.redMask;
-	dga_xvisual.green_mask = xf86ctx.device->mode.greenMask;
-	dga_xvisual.blue_mask = xf86ctx.device->mode.blueMask;
-	if (x11_init_palette_info(&dga_xvisual) != 0)
-	    return 1;
-        
-	mode_set_aspect_ratio((double)xf86ctx.device->mode.viewportWidth/
-		xf86ctx.device->mode.viewportHeight);
-
-	if(xf86_dga_setup_graphics(xf86ctx.device->mode))
-	    return 1;
-	
-	/* setup the viewport */
-	XDGASetViewport(display,xf86ctx.screen,0,0,0);
-	while(XDGAGetViewportStatus(display, xf86ctx.screen))
-		;
 
 	/* clear the screen */
 	memset(xf86ctx.device->data, 0,
@@ -330,15 +336,18 @@ static int xf86_dga_set_mode(void)
 
 int  xf86_dga2_resize_display(void)
 {
-	XFree(xf86ctx.device);
-	xf86ctx.device = 0;
+        struct sysdep_display_properties_struct old_properties;
 	if (xf86_dga_set_mode())
 	{
 		fprintf(stderr, "FATAL Error changing videomode, aborting\n");
 		sysdep_display_close();
 		exit(1);
 	}
-	return 1;
+	if(memcmp(&sysdep_display_properties, &old_properties,
+	    sizeof(struct sysdep_display_properties_struct)))
+	  return 1;
+        else
+          return 0;
 }
 
 void xf86_dga2_update_display(struct mame_bitmap *bitmap,
@@ -390,7 +399,7 @@ void xf86_dga2_close_display(void)
 	}
     	effect_close();
 	xinput_close();
-	if(xf86ctx.vidmode_changed)
+	if(xf86ctx.current_mode != -1)
 	{
 		/* HDG: is this really nescesarry ? */
 		XDGASync(display,xf86ctx.screen);
@@ -400,7 +409,7 @@ void xf86_dga2_close_display(void)
 		XDGASetMode(display, xf86ctx.screen, xf86ctx.current_X11_mode);
 #endif
 		XDGASetMode(display, xf86ctx.screen, 0);
-		xf86ctx.vidmode_changed = 0;
+		xf86ctx.current_mode = -1;
 	}
 	XSync(display, True);
 }

@@ -22,6 +22,7 @@
 static int frameskipper = 0;
 static int debugger_has_focus = 0;
 static int led_state = 0;
+static int hotkey_effect_or_scale = 0;
 
 /* options these are initialised through the rc_option struct */
 static float f_beam;
@@ -498,7 +499,7 @@ static void display_settings_changed(void)
 
 static void change_display_settings(struct sysdep_display_open_params *new_params, int force)
 {
-	if (force || memcmp(new_params, &current_params, sizeof(current_params)))
+	if (memcmp(new_params, &current_params, sizeof(current_params)))
 	{
 		sysdep_display_close();
 		/* Close sound, DGA (fork) makes the filehandle open twice,
@@ -648,10 +649,135 @@ void osd_update_video_and_audio(struct mame_display *display)
 {
 	cycles_t curr;
 	unsigned int flags = 0;
-	int normal_params_changed = 0;
 	static int vis_area_changed = 0;
+	static int palette_changed = 0;
 	
-	/*** STEP 1: handle frameskip ***/
+	/*** STEP 1: determine if the debugger or the normal game window
+	     should be shown ***/
+	if (display->changed_flags & DEBUG_FOCUS_CHANGED)
+		change_debugger_focus(display->debug_focus);
+	/* If the user presses the F5 key, toggle the debugger's focus */
+	else if (input_ui_pressed(IPT_UI_TOGGLE_DEBUG) && mame_debug)
+		change_debugger_focus(!debugger_has_focus);
+
+	/*** STEP 2: now handle display_params hotkeys, but only if the normal
+	     display has focus */
+	if (!debugger_has_focus)
+	{
+	    int normal_params_changed = 0;
+	    
+	    if (code_pressed(KEYCODE_LALT) &&
+	        code_pressed(KEYCODE_LCONTROL))
+	    {
+		if (code_pressed_memory(KEYCODE_INSERT))
+			flags |= SYSDEP_DISPLAY_HOTKEY_OPTION1;
+		if (code_pressed_memory(KEYCODE_HOME))
+			flags |= SYSDEP_DISPLAY_HOTKEY_OPTION2;
+		if (code_pressed_memory(KEYCODE_PGUP))
+			flags |= SYSDEP_DISPLAY_HOTKEY_OPTION3;
+		if (code_pressed_memory(KEYCODE_DEL))
+			flags |= SYSDEP_DISPLAY_HOTKEY_OPTION4;
+		if (code_pressed_memory(KEYCODE_END))
+			flags |= SYSDEP_DISPLAY_HOTKEY_OPTION5;
+		if (code_pressed_memory(KEYCODE_PGDN))
+			flags |= SYSDEP_DISPLAY_HOTKEY_OPTION6;
+            }
+            else if (code_pressed(KEYCODE_LALT))
+            {
+		if (code_pressed_memory(KEYCODE_INSERT))
+			flags |= SYSDEP_DISPLAY_HOTKEY_VIDMODE0;
+		if (code_pressed_memory(KEYCODE_HOME))
+			flags |= SYSDEP_DISPLAY_HOTKEY_VIDMODE1;
+		if (code_pressed_memory(KEYCODE_PGUP))
+			flags |= SYSDEP_DISPLAY_HOTKEY_VIDMODE2;
+		if (code_pressed_memory(KEYCODE_DEL))
+			flags |= SYSDEP_DISPLAY_HOTKEY_VIDMODE3;
+		if (code_pressed_memory(KEYCODE_END))
+			flags |= SYSDEP_DISPLAY_HOTKEY_VIDMODE4;
+		if (code_pressed_memory(KEYCODE_PGDN))
+		{
+			normal_params.fullscreen = 1 - normal_params.fullscreen;
+			normal_params_changed = 1;
+		}
+            }
+            else if (code_pressed(KEYCODE_LCONTROL))
+            {
+		if (code_pressed_memory(KEYCODE_INSERT))
+			frameskipper = 0;
+		if (code_pressed_memory(KEYCODE_HOME))
+			frameskipper = 1;
+		if (code_pressed_memory(KEYCODE_DEL))
+			flags |= SYSDEP_DISPLAY_HOTKEY_GRABMOUSE;
+		if (code_pressed_memory(KEYCODE_END))
+			flags |= SYSDEP_DISPLAY_HOTKEY_GRABKEYB;
+		if (code_pressed_memory(KEYCODE_PGUP))
+		{
+		        normal_params.effect++;
+		        if (normal_params.effect > EFFECT_LAST)
+		            normal_params.effect = 0;
+                        normal_params_changed = 1;
+			hotkey_effect_or_scale = 1;
+			ui_show_fps_temp(2.0);
+		}
+		if (code_pressed_memory(KEYCODE_PGDN))
+		{
+		        normal_params.effect--;
+		        if (normal_params.effect < 0)
+		            normal_params.effect = EFFECT_LAST;
+                        normal_params_changed = 1;
+			hotkey_effect_or_scale = 1;
+			ui_show_fps_temp(2.0);
+		}
+            }
+            else if (!normal_params.effect && code_pressed(KEYCODE_LSHIFT))
+            {
+		int widthscale_mod  = 0;
+		int heightscale_mod = 0;
+
+		if (code_pressed_memory(KEYCODE_INSERT))
+			widthscale_mod = 1;
+		if (code_pressed_memory(KEYCODE_DEL))
+			widthscale_mod = -1;
+		if (code_pressed_memory(KEYCODE_HOME))
+			heightscale_mod = 1;
+		if (code_pressed_memory(KEYCODE_END))
+			heightscale_mod = -1;
+		if (code_pressed_memory(KEYCODE_PGUP))
+		{
+			widthscale_mod  = 1;
+			heightscale_mod = 1;
+		}
+		if (code_pressed_memory(KEYCODE_PGDN))
+		{
+			widthscale_mod  = -1;
+			heightscale_mod = -1;
+		}
+		if (widthscale_mod || heightscale_mod)
+		{
+			normal_params.widthscale  += widthscale_mod;
+			normal_params.heightscale += heightscale_mod;
+			normal_params.yarbsize = 0;
+
+			if (normal_params.widthscale > 8)
+				normal_params.widthscale = 8;
+			else if (normal_params.widthscale < 1)
+				normal_params.widthscale = 1;
+
+			if (normal_params.heightscale > 8)
+				normal_params.heightscale = 8;
+			else if (normal_params.heightscale < 1)
+				normal_params.heightscale = 1;
+				
+			normal_params_changed = 1;
+			hotkey_effect_or_scale = 1;
+			ui_show_fps_temp(2.0);
+		}
+            }
+            if (normal_params_changed)
+                    change_display_settings(&normal_params, 0);
+        }
+
+	/*** STEP 3: now the frameskipper is known, handle frameskip ***/
 	if (input_ui_pressed(IPT_UI_FRAMESKIP_INC))
 	{
 		/* if autoframeskip, disable auto and go to 0 */
@@ -716,118 +842,9 @@ void osd_update_video_and_audio(struct mame_display *display)
 		else
 			sleep_idle ^= 1;
 	}
-	if (code_pressed(KEYCODE_LCONTROL))
-	{
-		if (code_pressed_memory(KEYCODE_INSERT))
-			frameskipper = 0;
-		if (code_pressed_memory(KEYCODE_HOME))
-			frameskipper = 1;
-	}
 	skip_next_frame = (*skip_next_frame_functions[frameskipper])();
 	
-	/*** STEP 2: determine if the debugger or the normal game window
-	     should be shown ***/
-	if (display->changed_flags & DEBUG_FOCUS_CHANGED)
-		change_debugger_focus(display->debug_focus);
-	/* If the user presses the F5 key, toggle the debugger's focus */
-	else if (input_ui_pressed(IPT_UI_TOGGLE_DEBUG) && mame_debug)
-		change_debugger_focus(!debugger_has_focus);
-
-	/*** STEP 3: handle visual area changes, do this before handling any
-	     of the display_params hotkeys, because this can *force* changes
-	     to the normal display if focussed ***/
-	if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
-	{
-		set_ui_visarea(display->game_visible_area.min_x,
-				display->game_visible_area.min_y,
-				display->game_visible_area.max_x,
-				display->game_visible_area.max_y);
-
-		normal_params.width  = (display->game_visible_area.max_x + 1) -
-		   display->game_visible_area.min_x;
-		normal_params.height = (display->game_visible_area.max_y + 1) -
-		   display->game_visible_area.min_y;
-
-		vis_area_changed = 1;
-	}
-
-	/*** STEP 4: now handle display_params hotkeys, but only if the normal
-	     display has focus */
-	if (!debugger_has_focus && code_pressed(KEYCODE_LALT))
-	{
-		if (code_pressed_memory(KEYCODE_INSERT))
-			flags |= SYSDEP_DISPLAY_HOTKEY_VIDMODE0;
-		if (code_pressed_memory(KEYCODE_HOME))
-			flags |= SYSDEP_DISPLAY_HOTKEY_VIDMODE1;
-		if (code_pressed_memory(KEYCODE_PGUP))
-			flags |= SYSDEP_DISPLAY_HOTKEY_VIDMODE2;
-		if (code_pressed_memory(KEYCODE_DEL))
-			flags |= SYSDEP_DISPLAY_HOTKEY_VIDMODE3;
-		if (code_pressed_memory(KEYCODE_END))
-			flags |= SYSDEP_DISPLAY_HOTKEY_VIDMODE4;
-		if (code_pressed_memory(KEYCODE_PGDN))
-		{
-			normal_params.fullscreen = 1 - normal_params.fullscreen;
-			normal_params_changed = 1;
-		}
-	}
-	if (!debugger_has_focus && code_pressed(KEYCODE_LCONTROL))
-	{
-		if (code_pressed_memory(KEYCODE_PGUP))
-			flags |= SYSDEP_DISPLAY_HOTKEY_GRABKEYB;
-		if (code_pressed_memory(KEYCODE_PGDN))
-			flags |= SYSDEP_DISPLAY_HOTKEY_GRABMOUSE;
-		if (code_pressed_memory(KEYCODE_DEL))
-			flags |= SYSDEP_DISPLAY_HOTKEY_OPTION1;
-		if (code_pressed_memory(KEYCODE_END))
-			flags |= SYSDEP_DISPLAY_HOTKEY_OPTION2;
-	}
-	if (!debugger_has_focus && !normal_params.effect && 
-	     code_pressed(KEYCODE_LSHIFT))
-	{
-		int widthscale_mod  = 0;
-		int heightscale_mod = 0;
-
-		if (code_pressed_memory(KEYCODE_INSERT))
-			widthscale_mod = 1;
-		if (code_pressed_memory(KEYCODE_DEL))
-			widthscale_mod = -1;
-		if (code_pressed_memory(KEYCODE_HOME))
-			heightscale_mod = 1;
-		if (code_pressed_memory(KEYCODE_END))
-			heightscale_mod = -1;
-		if (code_pressed_memory(KEYCODE_PGUP))
-		{
-			widthscale_mod  = 1;
-			heightscale_mod = 1;
-		}
-		if (code_pressed_memory(KEYCODE_PGDN))
-		{
-			widthscale_mod  = -1;
-			heightscale_mod = -1;
-		}
-		if (widthscale_mod || heightscale_mod)
-		{
-			normal_params.widthscale  += widthscale_mod;
-			normal_params.heightscale += heightscale_mod;
-
-			if (normal_params.widthscale > 8)
-				normal_params.widthscale = 8;
-			else if (normal_params.widthscale < 1)
-				normal_params.widthscale = 1;
-
-			if (normal_params.heightscale > 8)
-				normal_params.heightscale = 8;
-			else if (normal_params.heightscale < 1)
-				normal_params.heightscale = 1;
-				
-			normal_params_changed = 1;
-		}
-	}
-	if (normal_params_changed)
-		change_display_settings(&normal_params, 0);
-
-	/*** STEP 5 update sound,fps and leds ***/
+	/*** STEP 4 update sound,fps,vis_area,palette and leds ***/
 	if (sound_stream)
 	{
 		sound_stream_update(sound_stream);
@@ -842,25 +859,24 @@ void osd_update_video_and_audio(struct mame_display *display)
 		led_state = display->led_state;
 		sysdep_display_set_keybleds(led_state);
 	}
-	
-	/*** STEP 6 update the palette ***/
-	if (!normal_palette)
+	if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
 	{
-		/* the palette had been destroyed because of display changes */
-		normal_palette = sysdep_palette_create(&sysdep_display_properties.palette_info, normal_params.depth);
-		if (!normal_palette)
-		{
-			/* oops this sorta sucks */
-			fprintf(stderr_file, "Argh, creating the palette failed (out of memory?) aborting\n");
-			sysdep_display_close();
-			exit(1);
-		}
-		update_palette(display, 1);
-	}
-	else if ((display->changed_flags & GAME_PALETTE_CHANGED))
-		update_palette(display, 0);
+		set_ui_visarea(display->game_visible_area.min_x,
+				display->game_visible_area.min_y,
+				display->game_visible_area.max_x,
+				display->game_visible_area.max_y);
 
-	/*** STEP 7: update the focussed display ***/
+		normal_params.width  = (display->game_visible_area.max_x + 1) -
+		   display->game_visible_area.min_x;
+		normal_params.height = (display->game_visible_area.max_y + 1) -
+		   display->game_visible_area.min_y;
+
+		vis_area_changed = 1;
+	}
+	if ((display->changed_flags & GAME_PALETTE_CHANGED))
+		palette_changed = 1;
+	
+	/*** STEP 5: update the focussed display ***/
 	if (debugger_has_focus)
 	{
 		if (display->changed_flags & DEBUG_BITMAP_CHANGED)
@@ -906,11 +922,36 @@ void osd_update_video_and_audio(struct mame_display *display)
 		
 		if (vis_area_changed)
 		{
-			sysdep_display_resize(normal_params.width,
-			  normal_params.height);
+			if (sysdep_display_resize(normal_params.width,
+			     normal_params.height) && normal_palette)
+			{
+				sysdep_palette_destroy(normal_palette);
+				normal_palette = NULL;
+			}
 			vis_area_changed = 0;
 		}
 		
+		if (!normal_palette)
+		{
+			/* the palette had been destroyed because of display changes */
+			normal_palette = sysdep_palette_create(&sysdep_display_properties.palette_info, normal_params.depth);
+			if (!normal_palette)
+			{
+				/* oops this sorta sucks */
+				fprintf(stderr_file, "Argh, creating the palette failed (out of memory?) aborting\n");
+				sysdep_display_close();
+				exit(1);
+			}
+			update_palette(display, 1);
+			palette_changed = 0;
+		}
+		
+		if (palette_changed)
+		{
+			update_palette(display, 0);
+			palette_changed = 0;
+		}
+
 		profiler_mark(PROFILER_BLIT);
 		/* udpate and check if the display properties were changed */
 		if(sysdep_display_update(display->game_bitmap,
@@ -1030,6 +1071,22 @@ const char *osd_get_fps_text(const struct performance_info *performance)
 				(int)(performance->frames_per_second + 0.5),
 				(int)(Machine->refresh_rate + 0.5));
 	}
+	
+	/* for hotkey choisen effect or scale add effect or scale */
+	if (hotkey_effect_or_scale)
+	{
+            if(normal_params.effect)
+            {
+                dest += sprintf(dest, "\n effect %d", normal_params.effect);
+            }
+            else if((normal_params.widthscale)  != 1 ||
+                    (normal_params.heightscale) != 1)
+            {
+                dest += sprintf(dest, "\n scale %dx%d",
+                          normal_params.widthscale,
+                          normal_params.heightscale);
+            }
+        }
 
 	/* for vector games, add the number of vector updates */
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)

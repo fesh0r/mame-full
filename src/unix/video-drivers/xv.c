@@ -521,8 +521,7 @@ void xv_close_display (void)
 
 int xv_resize_display(void)
 {
-  /* force a full update the next frame */
-  x11_exposed = 1;
+  /* no op */
   return 0;
 }
 
