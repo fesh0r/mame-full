@@ -31,7 +31,7 @@ static int parse_options(int argc, char *argv[], int minunnamed, int maxunnamed,
 {
 	int i;
 	int optpos = 0;
-	int lastunnamed;
+	int lastunnamed = 0;
 	char *s;
 
 	memset(opts, 0, sizeof(struct NamedOption) * optcount);
@@ -42,7 +42,7 @@ static int parse_options(int argc, char *argv[], int minunnamed, int maxunnamed,
 			/* Unnamed */
 			if (i >= maxunnamed)
 				goto error;	/* Too many unnamed */
-			lastunnamed = i;
+			lastunnamed = i + 1;
 		}
 		else {
 			if (i < minunnamed)
@@ -60,7 +60,7 @@ static int parse_options(int argc, char *argv[], int minunnamed, int maxunnamed,
 			optpos++;
 		}
 	}
-	return 0;
+	return lastunnamed;
 
 error:
 	fprintf(stderr, "%s: Unrecognized option\n", argv[i]);
@@ -232,8 +232,6 @@ static int cmd_put(struct command *c, int argc, char *argv[])
 	char *newfname;
 	int unnamedargs;
 	struct NamedOption nopts[32];
-
-	newfname = (argc >= 4) && (argv[3][0] != '-') ? argv[3] : NULL;
 
 	unnamedargs = parse_options(argc, argv, 3, 4, nopts, sizeof(nopts) / sizeof(nopts[0]));
 	if (unnamedargs < 0)
