@@ -10,59 +10,32 @@
 #include "machine/lisa.h"
 
 
-static MEMORY_READ16_START (lisa_readmem )
+static ADDRESS_MAP_START(lisa_map, ADDRESS_SPACE_PROGRAM, 16)
 
-	{ 0x000000, 0xffffff, lisa_r },		/* no fixed map, we use an MMU */
+	AM_RANGE(0x000000, 0xffffff) AM_READWRITE(lisa_r, lisa_w)	/* no fixed map, we use an MMU */
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START (lisa_writemem)
+static ADDRESS_MAP_START(lisa_fdc_map, ADDRESS_SPACE_PROGRAM, 8)
 
-	{ 0x000000, 0xffffff, lisa_w },		/* no fixed map, we use an MMU */
+	AM_RANGE(0x0000, 0x03ff) AM_READWRITE(MRA8_RAM, MWA8_RAM)			/* RAM (shared with 68000) */
+	AM_RANGE(0x0400, 0x07ff) AM_READWRITE(lisa_fdc_io_r, lisa_fdc_io_w)	/* disk controller (IWM and TTL logic) */
+	AM_RANGE(0x0800, 0x0fff) AM_READWRITE(MRA8_NOP, MWA8_NOP)
+	AM_RANGE(0x1000, 0x1fff) AM_READWRITE(MRA8_ROM, MWA8_ROM)			/* ROM */
+	AM_RANGE(0x2000, 0xffff) AM_READWRITE(lisa_fdc_r, lisa_fdc_w)		/* handler for wrap-around */
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_READ_START (lisa_fdc_readmem)
+static ADDRESS_MAP_START(lisa210_fdc_map, ADDRESS_SPACE_PROGRAM, 8)
 
-	{ 0x0000, 0x03ff, MRA_RAM },		/* RAM (shared with 68000) */
-	{ 0x0400, 0x07ff, lisa_fdc_io_r },	/* disk controller (IWM and TTL logic) */
-	{ 0x0800, 0x0fff, MRA_NOP },
-	{ 0x1000, 0x1fff, MRA_ROM },		/* ROM */
-	{ 0x2000, 0xffff, lisa_fdc_r },		/* handler for wrap-around */
+	AM_RANGE(0x0000, 0x03ff) AM_READWRITE(MRA8_RAM, MWA8_RAM)			/* RAM (shared with 68000) */
+	AM_RANGE(0x0400, 0x07ff) AM_READWRITE(MRA8_NOP, MWA8_NOP)			/* nothing, or RAM wrap-around ??? */
+	AM_RANGE(0x0800, 0x0bff) AM_READWRITE(lisa_fdc_io_r, lisa_fdc_io_w)	/* disk controller (IWM and TTL logic) */
+	AM_RANGE(0x0c00, 0x0fff) AM_READWRITE(MRA8_NOP, MWA8_NOP)			/* nothing, or IO port wrap-around ??? */
+	AM_RANGE(0x1000, 0x1fff) AM_READWRITE(MRA8_ROM, MWA8_ROM)			/* ROM */
+	AM_RANGE(0x2000, 0xffff) AM_READWRITE(lisa_fdc_r, lisa_fdc_w)		/* handler for wrap-around */
 
-MEMORY_END
-
-static MEMORY_WRITE_START (lisa_fdc_writemem)
-
-	{ 0x0000, 0x03ff, MWA_RAM },		/* RAM (shared with 68000) */
-	{ 0x0400, 0x07ff, lisa_fdc_io_w },	/* disk controller (IWM and TTL logic) */
-	{ 0x0800, 0x0fff, MWA_NOP },
-	{ 0x1000, 0x1fff, MWA_ROM },		/* ROM */
-	{ 0x2000, 0xffff, lisa_fdc_w },		/* handler for wrap-around */
-
-MEMORY_END
-
-static MEMORY_READ_START (lisa210_fdc_readmem)
-
-	{ 0x0000, 0x03ff, MRA_RAM },		/* RAM (shared with 68000) */
-	{ 0x0400, 0x07ff, MRA_NOP },		/* nothing, or RAM wrap-around ??? */
-	{ 0x0800, 0x0bff, lisa_fdc_io_r },	/* disk controller (IWM and TTL logic) */
-	{ 0x0c00, 0x0fff, MRA_NOP },		/* nothing, or IO port wrap-around ??? */
-	{ 0x1000, 0x1fff, MRA_ROM },		/* ROM */
-	{ 0x2000, 0xffff, lisa_fdc_r },		/* handler for wrap-around */
-
-MEMORY_END
-
-static MEMORY_WRITE_START (lisa210_fdc_writemem)
-
-	{ 0x0000, 0x03ff, MWA_RAM },		/* RAM (shared with 68000) */
-	{ 0x0400, 0x07ff, MWA_NOP },		/* nothing, or RAM wrap-around ??? */
-	{ 0x0800, 0x0bff, lisa_fdc_io_w },	/* disk controller (IWM and TTL logic) */
-	{ 0x0c00, 0x0fff, MWA_NOP },		/* nothing, or IO port wrap-around ??? */
-	{ 0x1000, 0x1fff, MWA_ROM },		/* ROM */
-	{ 0x2000, 0xffff, lisa_fdc_w },		/* handler for wrap-around */
-
-MEMORY_END
+ADDRESS_MAP_END
 
 /* init with simple, fixed, B/W palette */
 static PALETTE_INIT( lisa )
@@ -84,11 +57,11 @@ static	struct	Speaker_interface lisa_sh_interface =
 static MACHINE_DRIVER_START( lisa )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 5093760)        /* 20.37504 Mhz / 4 */
-	MDRV_CPU_MEMORY(lisa_readmem,lisa_writemem)
+	MDRV_CPU_PROGRAM_MAP(lisa_map, 0)
 	MDRV_CPU_VBLANK_INT(lisa_interrupt,1)
 
 	MDRV_CPU_ADD_TAG("fdc", M6502, 2000000)        /* 16.000 Mhz / 8 in when DIS asserted, 16.000 Mhz / 9 otherwise (?) */
-	MDRV_CPU_MEMORY(lisa_fdc_readmem,lisa_fdc_writemem)
+	MDRV_CPU_PROGRAM_MAP(lisa_fdc_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -115,7 +88,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( lisa210 )
 	MDRV_IMPORT_FROM( lisa )
 	MDRV_CPU_MODIFY( "fdc" )
-	MDRV_CPU_MEMORY( lisa210_fdc_readmem,lisa210_fdc_writemem )
+	MDRV_CPU_PROGRAM_MAP(lisa210_fdc_map, 0)
 MACHINE_DRIVER_END
 
 

@@ -183,7 +183,7 @@ static DEVICE_LOAD(apexc_tape)
 	return INIT_PASS;
 }
 
-static READ32_HANDLER(tape_read)
+static READ_HANDLER(tape_read)
 {
 	UINT8 reply;
 
@@ -193,7 +193,7 @@ static READ32_HANDLER(tape_read)
 		return 0;	/* unit not ready - I don't know what we should do */
 }
 
-static WRITE32_HANDLER(tape_write)
+static WRITE_HANDLER(tape_write)
 {
 	UINT8 data5 = (data & 0x1f);
 
@@ -774,33 +774,19 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static MEMORY_READ32_START(readmem)
-#ifdef SUPPORT_ODD_WORD_SIZES
-	{ 0x0000, 0x03ff, MRA32_RAM },	/* 1024 32-bit words (expandable to 8192) */
-	{ 0x0400, 0x1fff, MRA32_NOP },
+static ADDRESS_MAP_START(apexc_mem_map, ADDRESS_SPACE_PROGRAM, 32)
+#if 0
+	AM_RANGE(0x0000, 0x03ff) AM_READWRITE(MRA32_RAM, MWA32_RAM)	/* 1024 32-bit words (expandable to 8192) */
+	AM_RANGE(0x0400, 0x1fff) AM_READWRITE(MRA32_NOP, MWA32_NOP)
 #else
-	{ 0x0000, 0x0fff, MRA32_RAM },
-	{ 0x1000, 0x7fff, MRA32_NOP },
+	AM_RANGE(0x0000, 0x0fff) AM_READWRITE(MRA32_RAM, MWA32_RAM)
+	AM_RANGE(0x1000, 0x7fff) AM_READWRITE(MRA32_NOP, MWA32_NOP)
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE32_START(writemem)
-#ifdef SUPPORT_ODD_WORD_SIZES
-	{ 0x0000, 0x03ff, MWA32_RAM },	/* 1024 32-bit words (expandable to 8192) */
-	{ 0x0400, 0x1fff, MWA32_NOP },
-#else
-	{ 0x0000, 0x0fff, MWA32_RAM },
-	{ 0x1000, 0x7fff, MWA32_NOP },
-#endif
-MEMORY_END
-
-static PORT_READ32_START(readport)
-	{0, 0, tape_read},
-PORT_END
-
-static PORT_WRITE32_START(writeport)
-	{0, 0, tape_write},
-PORT_END
+static ADDRESS_MAP_START(apexc_io_map, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0, 0) AM_READWRITE(tape_read, tape_write)
+ADDRESS_MAP_END
 
 
 static MACHINE_DRIVER_START(apexc)
@@ -810,8 +796,8 @@ static MACHINE_DRIVER_START(apexc)
 	MDRV_CPU_ADD(APEXC, 2000)
 	/*MDRV_CPU_FLAGS(0)*/
 	/*MDRV_CPU_CONFIG(NULL)*/
-	MDRV_CPU_MEMORY(readmem, writemem)
-	MDRV_CPU_PORTS(readport, writeport)
+	MDRV_CPU_PROGRAM_MAP(apexc_mem_map, 0)
+	MDRV_CPU_IO_MAP(apexc_io_map, 0)
 	/* dummy interrupt: handles the control panel */
 	MDRV_CPU_VBLANK_INT(apexc_interrupt, 1)
 	/*MDRV_CPU_PERIODIC_INT(func, rate)*/

@@ -493,7 +493,7 @@ signed int pdp1_ICount;
 
 	Interrupt routines should not execute most IOT, as the interrupt may interrupt another.
 
-	More details can be found in the handbook and the 
+	More details can be found in the handbook and the maintenance manual.
 */
 /*
 	This function MUST be called every time pdp1.sbm, pdp1.b4, pdp1.irq_state or pdp1.b2 change.
@@ -524,7 +524,7 @@ static void field_interrupt(void)
 		pdp1.sbs_request = 0;
 }
 
-void pdp1_set_irq_line (int irqline, int state)
+static void pdp1_set_irq_line (int irqline, int state)
 {
 	if (irqline == IRQ_LINE_NMI)
 	{
@@ -548,17 +548,13 @@ void pdp1_set_irq_line (int irqline, int state)
 	}
 }
 
-void pdp1_set_irq_callback (int (*callback) (int irqline))
-{
-}
 
-
-void pdp1_init(void)
+static void pdp1_init(void)
 {
 	/* nothing to do */
 }
 
-void pdp1_reset (void *untyped_param)
+static void pdp1_reset (void *untyped_param)
 {
 	pdp1_reset_param_t *param = untyped_param;
 	int i;
@@ -613,121 +609,22 @@ void pdp1_reset (void *untyped_param)
 	pulse_start_clear();
 }
 
-void pdp1_exit (void)
+static void pdp1_exit (void)
 {
 	/* nothing to do */
 }
 
 
-unsigned pdp1_get_context (void *dst)
+static void pdp1_get_context (void *dst)
 {
 	if (dst)
 		*(pdp1_Regs *) dst = pdp1;
-	return sizeof (pdp1_Regs);
 }
 
-void pdp1_set_context (void *src)
+static void pdp1_set_context (void *src)
 {
 	if (src)
 		pdp1 = *(pdp1_Regs *) src;
-}
-
-
-unsigned pdp1_get_reg (int regnum)
-{
-	switch (regnum)
-	{
-	case REG_PC:
-	case PDP1_PC: return PC;
-	case PDP1_IR: return IR;
-	case PDP1_MB: return MB;
-	case PDP1_MA: return MA;
-	case PDP1_AC: return AC;
-	case PDP1_IO: return IO;
-	case PDP1_OV: return OV;
-	case PDP1_PF:  return FLAGS;
-	case PDP1_PF1: return READFLAG(1);
-	case PDP1_PF2: return READFLAG(2);
-	case PDP1_PF3: return READFLAG(3);
-	case PDP1_PF4: return READFLAG(4);
-	case PDP1_PF5: return READFLAG(5);
-	case PDP1_PF6: return READFLAG(6);
-	case PDP1_TA: return pdp1.ta;
-	case PDP1_TW: return pdp1.tw;
-	case PDP1_SS:  return SENSE_SW;
-	case PDP1_SS1: return READSENSE(1);
-	case PDP1_SS2: return READSENSE(2);
-	case PDP1_SS3: return READSENSE(3);
-	case PDP1_SS4: return READSENSE(4);
-	case PDP1_SS5: return READSENSE(5);
-	case PDP1_SS6: return READSENSE(6);
-	case PDP1_SNGL_STEP: return pdp1.sngl_step;
-	case PDP1_SNGL_INST: return pdp1.sngl_inst;
-	case PDP1_EXTEND_SW: return pdp1.extend_sw;
-	case PDP1_RUN: return pdp1.run;
-	case PDP1_CYC: return pdp1.cycle;
-	case PDP1_DEFER: return pdp1.defer;
-	case PDP1_BRK_CTR: return pdp1.brk_ctr;
-	case PDP1_RIM: return pdp1.rim;
-	case PDP1_SBM: return pdp1.sbm;
-	case PDP1_EXD: return EXD;
-	case PDP1_IOC: return pdp1.ioc;
-	case PDP1_IOH: return pdp1.ioh;
-	case PDP1_IOS: return pdp1.ios;
-	case REG_SP:  return 0;
-	}
-	return 0;
-}
-
-void pdp1_set_reg (int regnum, unsigned val)
-{
-	switch (regnum)
-	{
-	case REG_PC:
-	case PDP1_PC: PC = val & EXTENDED_ADDRESS_MASK; break;
-	case PDP1_IR: IR = val & 037; /* weird idea */ break;
-	case PDP1_MB: MB = val & 0777777; break;
-	case PDP1_MA: MA = val & EXTENDED_ADDRESS_MASK; break;
-	case PDP1_AC: AC = val & 0777777; break;
-	case PDP1_IO: IO = val & 0777777; break;
-	case PDP1_OV: OV = val ? 1 : 0; break;
-	case PDP1_PF:  FLAGS = val & 077; break;
-	case PDP1_PF1: WRITEFLAG(1, val ? 1 : 0); break;
-	case PDP1_PF2: WRITEFLAG(2, val ? 1 : 0); break;
-	case PDP1_PF3: WRITEFLAG(3, val ? 1 : 0); break;
-	case PDP1_PF4: WRITEFLAG(4, val ? 1 : 0); break;
-	case PDP1_PF5: WRITEFLAG(5, val ? 1 : 0); break;
-	case PDP1_PF6: WRITEFLAG(6, val ? 1 : 0); break;
-	case PDP1_TA: pdp1.ta = val & 0177777 /*07777 with simpler control panel*/; break;
-	case PDP1_TW: pdp1.tw = val & 0777777; break;
-	case PDP1_SS:  SENSE_SW = val & 077; break;
-	case PDP1_SS1: WRITESENSE(1, val ? 1 : 0); break;
-	case PDP1_SS2: WRITESENSE(2, val ? 1 : 0); break;
-	case PDP1_SS3: WRITESENSE(3, val ? 1 : 0); break;
-	case PDP1_SS4: WRITESENSE(4, val ? 1 : 0); break;
-	case PDP1_SS5: WRITESENSE(5, val ? 1 : 0); break;
-	case PDP1_SS6: WRITESENSE(6, val ? 1 : 0); break;
-	case PDP1_SNGL_STEP: pdp1.sngl_step = val ? 1 : 0; break;
-	case PDP1_SNGL_INST: pdp1.sngl_inst = val ? 1 : 0; break;
-	case PDP1_EXTEND_SW: pdp1.extend_sw = val ? 1 : 0; break;
-	case PDP1_RUN: pdp1.run = val ? 1 : 0; break;
-	#if LOG
-		case PDP1_CYC: logerror("pdp1_set_reg to cycle flip-flop ignored\n");/* no way!*/ break;
-		case PDP1_DEFER: logerror("pdp1_set_reg to defer flip-flop ignored\n");/* no way!*/ break;
-		case PDP1_BRK_CTR: logerror("pdp1_set_reg to break counter ignored\n");/* no way!*/ break;
-	#endif
-	case PDP1_RIM: pdp1.rim = val ? 1 : 0; break;
-	case PDP1_SBM: pdp1.sbm = val ? 1 : 0; break;
-	case PDP1_EXD: EXD = (pdp1.extend_support && val) ? 1 : 0; break;
-	#if LOG
-		case PDP1_IOC: logerror("pdp1_set_reg to ioc flip-flop ignored\n");/* no way!*/ break;
-		case PDP1_IOH: logerror("pdp1_set_reg to ioh flip-flop ignored\n");/* no way!*/ break;
-		case PDP1_IOS: logerror("pdp1_set_reg to ios flip-flop ignored\n");/* no way!*/ break;
-	#endif
-	case REG_SP:  break;
-	case PDP1_START_CLEAR: pulse_start_clear(); break;
-	case PDP1_IO_COMPLETE: pdp1.ios = 1; break;
-	}
 }
 
 
@@ -751,7 +648,7 @@ static const char instruction_kind[32] =
 
 
 /* execute instructions on this CPU until icount expires */
-int pdp1_execute(int cycles)
+static int pdp1_execute(int cycles)
 {
 	pdp1_ICount = cycles;
 
@@ -996,7 +893,8 @@ int pdp1_execute(int cycles)
 	return cycles - pdp1_ICount;
 }
 
-unsigned pdp1_dasm (char *buffer, unsigned pc)
+
+static unsigned pdp1_dasm (char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
 	return dasmpdp1 (buffer, pc);
@@ -1007,86 +905,244 @@ unsigned pdp1_dasm (char *buffer, unsigned pc)
 }
 
 
-/****************************************************************************
- * Return a formatted string for a register
- ****************************************************************************/
-const char *pdp1_info (void *context, int regnum)
+static void pdp1_set_info(UINT32 state, union cpuinfo *info)
 {
-	static char buffer[16][47 + 1];
-	static int which = 0;
-	pdp1_Regs *r = context;
-
-	which = (which + 1) % 16;
-	buffer[which][0] = '\0';
-	if (!context)
-		r = &pdp1;
-
-	switch (regnum)
+	switch (state)
 	{
-	case CPU_INFO_REG + PDP1_PC: sprintf (buffer[which], "PC:0%06o", r->pc); break;
-	case CPU_INFO_REG + PDP1_IR: sprintf (buffer[which], "IR:0%02o", r->ir); break;
-	case CPU_INFO_REG + PDP1_MB: sprintf (buffer[which], "MB:0%06o", r->mb);  break;
-	case CPU_INFO_REG + PDP1_MA: sprintf (buffer[which], "MA:0%06o", r->ma);  break;
-	case CPU_INFO_REG + PDP1_AC: sprintf (buffer[which], "AC:0%06o", r->ac); break;
-	case CPU_INFO_REG + PDP1_IO: sprintf (buffer[which], "IO:0%06o", r->io); break;
-	case CPU_INFO_REG + PDP1_OV: sprintf (buffer[which], "OV:%X", r->ov); break;
-	case CPU_INFO_REG + PDP1_PF:  sprintf (buffer[which], "FLAGS:0%02o", r->pf);  break;
-	case CPU_INFO_REG + PDP1_PF1: sprintf (buffer[which], "FLAG1:%X", (r->pf >> 5) & 1); break;
-	case CPU_INFO_REG + PDP1_PF2: sprintf (buffer[which], "FLAG2:%X", (r->pf >> 4) & 1); break;
-	case CPU_INFO_REG + PDP1_PF3: sprintf (buffer[which], "FLAG3:%X", (r->pf >> 3) & 1); break;
-	case CPU_INFO_REG + PDP1_PF4: sprintf (buffer[which], "FLAG4:%X", (r->pf >> 2) & 1); break;
-	case CPU_INFO_REG + PDP1_PF5: sprintf (buffer[which], "FLAG5:%X", (r->pf >> 1) & 1); break;
-	case CPU_INFO_REG + PDP1_PF6: sprintf (buffer[which], "FLAG6:%X", r->pf & 1); break;
-	case CPU_INFO_REG + PDP1_TA: sprintf (buffer[which], "TA:0%06o", r->ta);  break;
-	case CPU_INFO_REG + PDP1_TW: sprintf (buffer[which], "TW:0%06o", r->tw); break;
-	case CPU_INFO_REG + PDP1_SS:  sprintf (buffer[which], "SS:0%02o", r->ss);  break;
-	case CPU_INFO_REG + PDP1_SS1: sprintf (buffer[which], "SENSE1:%X", (r->ss >> 5) & 1); break;
-	case CPU_INFO_REG + PDP1_SS2: sprintf (buffer[which], "SENSE2:%X", (r->ss >> 4) & 1); break;
-	case CPU_INFO_REG + PDP1_SS3: sprintf (buffer[which], "SENSE3:%X", (r->ss >> 3) & 1); break;
-	case CPU_INFO_REG + PDP1_SS4: sprintf (buffer[which], "SENSE4:%X", (r->ss >> 2) & 1); break;
-	case CPU_INFO_REG + PDP1_SS5: sprintf (buffer[which], "SENSE5:%X", (r->ss >> 1) & 1); break;
-	case CPU_INFO_REG + PDP1_SS6: sprintf (buffer[which], "SENSE6:%X", r->ss & 1); break;
-	case CPU_INFO_REG + PDP1_SNGL_STEP: sprintf (buffer[which], "SNGLSTEP:%X", r->sngl_step); break;
-	case CPU_INFO_REG + PDP1_SNGL_INST: sprintf (buffer[which], "SNGLINST:%X", r->sngl_inst); break;
-	case CPU_INFO_REG + PDP1_EXTEND_SW: sprintf (buffer[which], "EXS:%X", r->extend_sw); break;
-	case CPU_INFO_REG + PDP1_RUN: sprintf (buffer[which], "RUN:%X", r->run); break;
-	case CPU_INFO_REG + PDP1_CYC: sprintf (buffer[which], "CYC:%X", r->cycle); break;
-	case CPU_INFO_REG + PDP1_DEFER: sprintf (buffer[which], "DF:%X", r->defer); break;
-	case CPU_INFO_REG + PDP1_BRK_CTR: sprintf (buffer[which], "BRKCTR:%X", r->brk_ctr); break;
-	case CPU_INFO_REG + PDP1_RIM: sprintf (buffer[which], "RIM:%X", r->rim); break;
-	case CPU_INFO_REG + PDP1_SBM: sprintf (buffer[which], "SBM:%X", r->sbm); break;
-	case CPU_INFO_REG + PDP1_EXD: sprintf (buffer[which], "EXD:%X", r->exd); break;
-	case CPU_INFO_REG + PDP1_IOC: sprintf (buffer[which], "IOC:%X", r->ioc); break;
-	case CPU_INFO_REG + PDP1_IOH: sprintf (buffer[which], "IOH:%X", r->ioh); break;
-	case CPU_INFO_REG + PDP1_IOS: sprintf (buffer[which], "IOS:%X", r->ios); break;
-    case CPU_INFO_FLAGS:
-		sprintf (buffer[which], "%c%c%c%c%c%c-%c%c%c%c%c%c",
-				 (r->pf & 040) ? '1' : '.',
-				 (r->pf & 020) ? '2' : '.',
-				 (r->pf & 010) ? '3' : '.',
-				 (r->pf & 004) ? '4' : '.',
-				 (r->pf & 002) ? '5' : '.',
-				 (r->pf & 001) ? '6' : '.',
-				 (r->ss & 040) ? '1' : '.',
-				 (r->ss & 020) ? '2' : '.',
-				 (r->ss & 010) ? '3' : '.',
-				 (r->ss & 004) ? '4' : '.',
-				 (r->ss & 002) ? '5' : '.',
-				 (r->ss & 001) ? '6' : '.');
-		break;
-	case CPU_INFO_NAME: return "PDP1";
-	case CPU_INFO_FAMILY: return "DEC PDP-1";
-	case CPU_INFO_VERSION: return "2.0";
-	case CPU_INFO_FILE: return __FILE__;
-	case CPU_INFO_CREDITS: return
-			"Brian Silverman (original Java Source)\n"
-			"Vadim Gerasimov (original Java Source)\n"
-			"Chris Salomon (MESS driver)\n"
-			"Raphael Nabet (MESS driver)\n";
-	case CPU_INFO_REG_LAYOUT: return (const char *) pdp1_reg_layout;
-	case CPU_INFO_WIN_LAYOUT: return (const char *) pdp1_win_layout;
+	/* --- the following bits of info are set as 64-bit signed integers --- */
+	case CPUINFO_INT_IRQ_STATE + 0:
+	case CPUINFO_INT_IRQ_STATE + 1:
+	case CPUINFO_INT_IRQ_STATE + 2:
+	case CPUINFO_INT_IRQ_STATE + 3:
+	case CPUINFO_INT_IRQ_STATE + 4:
+	case CPUINFO_INT_IRQ_STATE + 5:
+	case CPUINFO_INT_IRQ_STATE + 6:
+	case CPUINFO_INT_IRQ_STATE + 7:
+	case CPUINFO_INT_IRQ_STATE + 8:
+	case CPUINFO_INT_IRQ_STATE + 9:
+	case CPUINFO_INT_IRQ_STATE + 10:
+	case CPUINFO_INT_IRQ_STATE + 11:
+	case CPUINFO_INT_IRQ_STATE + 12:
+	case CPUINFO_INT_IRQ_STATE + 13:
+	case CPUINFO_INT_IRQ_STATE + 14:
+	case CPUINFO_INT_IRQ_STATE + 15:			pdp1_set_irq_line(state-CPUINFO_INT_IRQ_STATE, info->i); break;
+
+	case CPUINFO_INT_SP:						(void) info->i;	/* no SP */					break;
+	case CPUINFO_INT_PC:
+	case CPUINFO_INT_REGISTER + PDP1_PC:		PC = info->i & EXTENDED_ADDRESS_MASK;		break;
+	case CPUINFO_INT_REGISTER + PDP1_IR:		IR = info->i & 037; /* weird idea */		break;
+	case CPUINFO_INT_REGISTER + PDP1_MB:		MB = info->i & 0777777;						break;
+	case CPUINFO_INT_REGISTER + PDP1_MA:		MA = info->i & EXTENDED_ADDRESS_MASK;		break;
+	case CPUINFO_INT_REGISTER + PDP1_AC:		AC = info->i & 0777777;						break;
+	case CPUINFO_INT_REGISTER + PDP1_IO:		IO = info->i & 0777777;						break;
+	case CPUINFO_INT_REGISTER + PDP1_OV:		OV = info->i ? 1 : 0;						break;
+	case CPUINFO_INT_REGISTER + PDP1_PF:		FLAGS = info->i & 077;						break;
+	case CPUINFO_INT_REGISTER + PDP1_PF1:		WRITEFLAG(1, info->i ? 1 : 0);				break;
+	case CPUINFO_INT_REGISTER + PDP1_PF2:		WRITEFLAG(2, info->i ? 1 : 0);				break;
+	case CPUINFO_INT_REGISTER + PDP1_PF3:		WRITEFLAG(3, info->i ? 1 : 0);				break;
+	case CPUINFO_INT_REGISTER + PDP1_PF4:		WRITEFLAG(4, info->i ? 1 : 0);				break;
+	case CPUINFO_INT_REGISTER + PDP1_PF5:		WRITEFLAG(5, info->i ? 1 : 0);				break;
+	case CPUINFO_INT_REGISTER + PDP1_PF6:		WRITEFLAG(6, info->i ? 1 : 0);				break;
+	case CPUINFO_INT_REGISTER + PDP1_TA:		pdp1.ta = info->i & 0177777 /*07777 with simpler control panel*/; break;
+	case CPUINFO_INT_REGISTER + PDP1_TW:		pdp1.tw = info->i & 0777777;				break;
+	case CPUINFO_INT_REGISTER + PDP1_SS:		SENSE_SW = info->i & 077;					break;
+	case CPUINFO_INT_REGISTER + PDP1_SS1:		WRITESENSE(1, info->i ? 1 : 0);				break;
+	case CPUINFO_INT_REGISTER + PDP1_SS2:		WRITESENSE(2, info->i ? 1 : 0);				break;
+	case CPUINFO_INT_REGISTER + PDP1_SS3:		WRITESENSE(3, info->i ? 1 : 0);				break;
+	case CPUINFO_INT_REGISTER + PDP1_SS4:		WRITESENSE(4, info->i ? 1 : 0);				break;
+	case CPUINFO_INT_REGISTER + PDP1_SS5:		WRITESENSE(5, info->i ? 1 : 0);				break;
+	case CPUINFO_INT_REGISTER + PDP1_SS6:		WRITESENSE(6, info->i ? 1 : 0);				break;
+	case CPUINFO_INT_REGISTER + PDP1_SNGL_STEP:	pdp1.sngl_step = info->i ? 1 : 0;			break;
+	case CPUINFO_INT_REGISTER + PDP1_SNGL_INST:	pdp1.sngl_inst = info->i ? 1 : 0;			break;
+	case CPUINFO_INT_REGISTER + PDP1_EXTEND_SW:	pdp1.extend_sw = info->i ? 1 : 0;			break;
+	case CPUINFO_INT_REGISTER + PDP1_RUN:		pdp1.run = info->i ? 1 : 0;					break;
+#if LOG
+	case CPUINFO_INT_REGISTER + PDP1_CYC:		logerror("pdp1_set_reg to cycle flip-flop ignored\n");/* no way!*/ break;
+	case CPUINFO_INT_REGISTER + PDP1_DEFER:		logerror("pdp1_set_reg to defer flip-flop ignored\n");/* no way!*/ break;
+	case CPUINFO_INT_REGISTER + PDP1_BRK_CTR:	logerror("pdp1_set_reg to break counter ignored\n");/* no way!*/ break;
+#endif
+	case CPUINFO_INT_REGISTER + PDP1_RIM:		pdp1.rim = info->i ? 1 : 0;					break;
+	case CPUINFO_INT_REGISTER + PDP1_SBM:		pdp1.sbm = info->i ? 1 : 0;					break;
+	case CPUINFO_INT_REGISTER + PDP1_EXD:		EXD = (pdp1.extend_support && info->i) ? 1 : 0; break;
+#if LOG
+	case CPUINFO_INT_REGISTER + PDP1_IOC:		logerror("pdp1_set_reg to ioc flip-flop ignored\n");/* no way!*/ break;
+	case CPUINFO_INT_REGISTER + PDP1_IOH:		logerror("pdp1_set_reg to ioh flip-flop ignored\n");/* no way!*/ break;
+	case CPUINFO_INT_REGISTER + PDP1_IOS:		logerror("pdp1_set_reg to ios flip-flop ignored\n");/* no way!*/ break;
+#endif
+	case CPUINFO_INT_REGISTER + PDP1_START_CLEAR:	pulse_start_clear();					break;
+	case CPUINFO_INT_REGISTER + PDP1_IO_COMPLETE:	pdp1.ios = 1;							break;
+
+	/* --- the following bits of info are set as pointers to data or functions --- */
+	case CPUINFO_PTR_IRQ_CALLBACK:				(void) info->irqcallback;					break;
 	}
-	return buffer[which];
+}
+
+
+void pdp1_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+	/* --- the following bits of info are returned as 64-bit signed integers --- */
+	case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(pdp1);					break;
+	case CPUINFO_INT_IRQ_LINES:						info->i = 16;							break;
+	case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+	case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;	/*don't care*/	break;
+	case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+	case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 4;							break;
+	case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
+	case CPUINFO_INT_MIN_CYCLES:					info->i = 1;	/* IIRC */				break;
+	case CPUINFO_INT_MAX_CYCLES:					info->i = 0x7fffffffffffffff;	/* no upper limit */	break;
+
+	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
+	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 18;	/*16+2 ignored bits to make double word address*/	break;
+	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;					break;
+	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+	case CPUINFO_INT_SP:							info->i = 0;	/* no SP */				break;
+	case CPUINFO_INT_PC:							info->i = PC;							break;
+	case CPUINFO_INT_PREVIOUSPC:					info->i = 0;	/* TODO??? */			break;
+
+	case CPUINFO_INT_IRQ_STATE + 0:
+	case CPUINFO_INT_IRQ_STATE + 1:
+	case CPUINFO_INT_IRQ_STATE + 2:
+	case CPUINFO_INT_IRQ_STATE + 3:
+	case CPUINFO_INT_IRQ_STATE + 4:
+	case CPUINFO_INT_IRQ_STATE + 5:
+	case CPUINFO_INT_IRQ_STATE + 6:
+	case CPUINFO_INT_IRQ_STATE + 7:
+	case CPUINFO_INT_IRQ_STATE + 8:
+	case CPUINFO_INT_IRQ_STATE + 9:
+	case CPUINFO_INT_IRQ_STATE + 10:
+	case CPUINFO_INT_IRQ_STATE + 11:
+	case CPUINFO_INT_IRQ_STATE + 12:
+	case CPUINFO_INT_IRQ_STATE + 13:
+	case CPUINFO_INT_IRQ_STATE + 14:
+	case CPUINFO_INT_IRQ_STATE + 15:				info->i = (pdp1.irq_state >> (state-CPUINFO_INT_IRQ_STATE)) & 1;	break;
+
+	case CPUINFO_INT_REGISTER + PDP1_PC:			info->i = PC;							break;
+	case CPUINFO_INT_REGISTER + PDP1_IR:			info->i = IR;							break;
+	case CPUINFO_INT_REGISTER + PDP1_MB:			info->i = MB;							break;
+	case CPUINFO_INT_REGISTER + PDP1_MA:			info->i = MA;							break;
+	case CPUINFO_INT_REGISTER + PDP1_AC:			info->i = AC;							break;
+	case CPUINFO_INT_REGISTER + PDP1_IO:			info->i = IO;							break;
+	case CPUINFO_INT_REGISTER + PDP1_OV:			info->i = OV;							break;
+	case CPUINFO_INT_REGISTER + PDP1_PF:			info->i = FLAGS;						break;
+	case CPUINFO_INT_REGISTER + PDP1_PF1:			info->i = READFLAG(1);					break;
+	case CPUINFO_INT_REGISTER + PDP1_PF2:			info->i = READFLAG(2);					break;
+	case CPUINFO_INT_REGISTER + PDP1_PF3:			info->i = READFLAG(3);					break;
+	case CPUINFO_INT_REGISTER + PDP1_PF4:			info->i = READFLAG(4);					break;
+	case CPUINFO_INT_REGISTER + PDP1_PF5:			info->i = READFLAG(5);					break;
+	case CPUINFO_INT_REGISTER + PDP1_PF6:			info->i = READFLAG(6);					break;
+	case CPUINFO_INT_REGISTER + PDP1_TA:			info->i = pdp1.ta;						break;
+	case CPUINFO_INT_REGISTER + PDP1_TW:			info->i = pdp1.tw;						break;
+	case CPUINFO_INT_REGISTER + PDP1_SS:			info->i = SENSE_SW;						break;
+	case CPUINFO_INT_REGISTER + PDP1_SS1:			info->i = READSENSE(1);					break;
+	case CPUINFO_INT_REGISTER + PDP1_SS2:			info->i = READSENSE(2);					break;
+	case CPUINFO_INT_REGISTER + PDP1_SS3:			info->i = READSENSE(3);					break;
+	case CPUINFO_INT_REGISTER + PDP1_SS4:			info->i = READSENSE(4);					break;
+	case CPUINFO_INT_REGISTER + PDP1_SS5:			info->i = READSENSE(5);					break;
+	case CPUINFO_INT_REGISTER + PDP1_SS6:			info->i = READSENSE(6);					break;
+	case CPUINFO_INT_REGISTER + PDP1_SNGL_STEP:		info->i = pdp1.sngl_step;				break;
+	case CPUINFO_INT_REGISTER + PDP1_SNGL_INST:		info->i = pdp1.sngl_inst;				break;
+	case CPUINFO_INT_REGISTER + PDP1_EXTEND_SW:		info->i = pdp1.extend_sw;				break;
+	case CPUINFO_INT_REGISTER + PDP1_RUN:			info->i = pdp1.run;						break;
+	case CPUINFO_INT_REGISTER + PDP1_CYC:			info->i = pdp1.cycle;					break;
+	case CPUINFO_INT_REGISTER + PDP1_DEFER:			info->i = pdp1.defer;					break;
+	case CPUINFO_INT_REGISTER + PDP1_BRK_CTR:		info->i = pdp1.brk_ctr;					break;
+	case CPUINFO_INT_REGISTER + PDP1_RIM:			info->i = pdp1.rim;						break;
+	case CPUINFO_INT_REGISTER + PDP1_SBM:			info->i = pdp1.sbm;						break;
+	case CPUINFO_INT_REGISTER + PDP1_EXD:			info->i = EXD;							break;
+	case CPUINFO_INT_REGISTER + PDP1_IOC:			info->i = pdp1.ioc;						break;
+	case CPUINFO_INT_REGISTER + PDP1_IOH:			info->i = pdp1.ioh;						break;
+	case CPUINFO_INT_REGISTER + PDP1_IOS:			info->i = pdp1.ios;						break;
+
+	/* --- the following bits of info are returned as pointers to data or functions --- */
+	case CPUINFO_PTR_SET_INFO:						info->setinfo = pdp1_set_info;			break;
+	case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = pdp1_get_context;	break;
+	case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = pdp1_set_context;	break;
+	case CPUINFO_PTR_INIT:							info->init = pdp1_init;					break;
+	case CPUINFO_PTR_RESET:							info->reset = pdp1_reset;				break;
+	case CPUINFO_PTR_EXIT:							info->exit = pdp1_exit;					break;
+	case CPUINFO_PTR_EXECUTE:						info->execute = pdp1_execute;			break;
+	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+
+	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = pdp1_dasm;			break;
+	case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = NULL;				break;
+	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &pdp1_ICount;			break;
+	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = pdp1_reg_layout;				break;
+	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = pdp1_win_layout;				break;
+
+	/* --- the following bits of info are returned as NULL-terminated strings --- */
+	case CPUINFO_STR_NAME: 							strcpy(info->s = cpuintrf_temp_str(), "PDP1");	break;
+	case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "DEC PDP-1");	break;
+	case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "2.0");	break;
+	case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__);	break;
+	case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(),
+															"Brian Silverman (original Java Source)\n"
+															"Vadim Gerasimov (original Java Source)\n"
+															"Chris Salomon (MESS driver)\n"
+															"Raphael Nabet (MESS driver)\n");
+													break;
+
+    case CPUINFO_STR_FLAGS:
+		sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c-%c%c%c%c%c%c",
+				 (FLAGS & 040) ? '1' : '.',
+				 (FLAGS & 020) ? '2' : '.',
+				 (FLAGS & 010) ? '3' : '.',
+				 (FLAGS & 004) ? '4' : '.',
+				 (FLAGS & 002) ? '5' : '.',
+				 (FLAGS & 001) ? '6' : '.',
+				 (SENSE_SW & 040) ? '1' : '.',
+				 (SENSE_SW & 020) ? '2' : '.',
+				 (SENSE_SW & 010) ? '3' : '.',
+				 (SENSE_SW & 004) ? '4' : '.',
+				 (SENSE_SW & 002) ? '5' : '.',
+				 (SENSE_SW & 001) ? '6' : '.');
+		break;
+
+
+	case CPUINFO_STR_REGISTER + PDP1_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:0%06o", PC); break;
+	case CPUINFO_STR_REGISTER + PDP1_IR:			sprintf(info->s = cpuintrf_temp_str(), "IR:0%02o", IR); break;
+	case CPUINFO_STR_REGISTER + PDP1_MB:			sprintf(info->s = cpuintrf_temp_str(), "MB:0%06o", MB); break;
+	case CPUINFO_STR_REGISTER + PDP1_MA:			sprintf(info->s = cpuintrf_temp_str(), "MA:0%06o", MA); break;
+	case CPUINFO_STR_REGISTER + PDP1_AC:			sprintf(info->s = cpuintrf_temp_str(), "AC:0%06o", AC); break;
+	case CPUINFO_STR_REGISTER + PDP1_IO:			sprintf(info->s = cpuintrf_temp_str(), "IO:0%06o", IO); break;
+	case CPUINFO_STR_REGISTER + PDP1_OV:			sprintf(info->s = cpuintrf_temp_str(), "OV:%X", OV); break;
+	case CPUINFO_STR_REGISTER + PDP1_PF:			sprintf(info->s = cpuintrf_temp_str(), "FLAGS:0%02o", FLAGS); break;
+	case CPUINFO_STR_REGISTER + PDP1_PF1:			sprintf(info->s = cpuintrf_temp_str(), "FLAG1:%X", READFLAG(1)); break;
+	case CPUINFO_STR_REGISTER + PDP1_PF2:			sprintf(info->s = cpuintrf_temp_str(), "FLAG2:%X", READFLAG(2)); break;
+	case CPUINFO_STR_REGISTER + PDP1_PF3:			sprintf(info->s = cpuintrf_temp_str(), "FLAG3:%X", READFLAG(3)); break;
+	case CPUINFO_STR_REGISTER + PDP1_PF4:			sprintf(info->s = cpuintrf_temp_str(), "FLAG4:%X", READFLAG(4)); break;
+	case CPUINFO_STR_REGISTER + PDP1_PF5:			sprintf(info->s = cpuintrf_temp_str(), "FLAG5:%X", READFLAG(5)); break;
+	case CPUINFO_STR_REGISTER + PDP1_PF6:			sprintf(info->s = cpuintrf_temp_str(), "FLAG6:%X", READFLAG(6)); break;
+	case CPUINFO_STR_REGISTER + PDP1_TA:			sprintf(info->s = cpuintrf_temp_str(), "TA:0%06o", pdp1.ta); break;
+	case CPUINFO_STR_REGISTER + PDP1_TW:			sprintf(info->s = cpuintrf_temp_str(), "TW:0%06o", pdp1.tw); break;
+	case CPUINFO_STR_REGISTER + PDP1_SS:			sprintf(info->s = cpuintrf_temp_str(), "SS:0%02o", SENSE_SW); break;
+	case CPUINFO_STR_REGISTER + PDP1_SS1:			sprintf(info->s = cpuintrf_temp_str(), "SENSE1:%X", READSENSE(1)); break;
+	case CPUINFO_STR_REGISTER + PDP1_SS2:			sprintf(info->s = cpuintrf_temp_str(), "SENSE2:%X", READSENSE(2)); break;
+	case CPUINFO_STR_REGISTER + PDP1_SS3:			sprintf(info->s = cpuintrf_temp_str(), "SENSE3:%X", READSENSE(3)); break;
+	case CPUINFO_STR_REGISTER + PDP1_SS4:			sprintf(info->s = cpuintrf_temp_str(), "SENSE4:%X", READSENSE(4)); break;
+	case CPUINFO_STR_REGISTER + PDP1_SS5:			sprintf(info->s = cpuintrf_temp_str(), "SENSE5:%X", READSENSE(5)); break;
+	case CPUINFO_STR_REGISTER + PDP1_SS6:			sprintf(info->s = cpuintrf_temp_str(), "SENSE6:%X", READSENSE(6)); break;
+	case CPUINFO_STR_REGISTER + PDP1_SNGL_STEP:		sprintf(info->s = cpuintrf_temp_str(), "SNGLSTEP:%X", pdp1.sngl_step); break;
+	case CPUINFO_STR_REGISTER + PDP1_SNGL_INST:		sprintf(info->s = cpuintrf_temp_str(), "SNGLINST:%X", pdp1.sngl_inst); break;
+	case CPUINFO_STR_REGISTER + PDP1_EXTEND_SW:		sprintf(info->s = cpuintrf_temp_str(), "EXS:%X", pdp1.extend_sw); break;
+	case CPUINFO_STR_REGISTER + PDP1_RUN:			sprintf(info->s = cpuintrf_temp_str(), "RUN:%X", pdp1.run); break;
+	case CPUINFO_STR_REGISTER + PDP1_CYC:			sprintf(info->s = cpuintrf_temp_str(), "CYC:%X", pdp1.cycle); break;
+	case CPUINFO_STR_REGISTER + PDP1_DEFER:			sprintf(info->s = cpuintrf_temp_str(), "DF:%X", pdp1.defer); break;
+	case CPUINFO_STR_REGISTER + PDP1_BRK_CTR:		sprintf(info->s = cpuintrf_temp_str(), "BRKCTR:%X", pdp1.brk_ctr); break;
+	case CPUINFO_STR_REGISTER + PDP1_RIM:			sprintf(info->s = cpuintrf_temp_str(), "RIM:%X", pdp1.rim); break;
+	case CPUINFO_STR_REGISTER + PDP1_SBM:			sprintf(info->s = cpuintrf_temp_str(), "SBM:%X", pdp1.sbm); break;
+	case CPUINFO_STR_REGISTER + PDP1_EXD:			sprintf(info->s = cpuintrf_temp_str(), "EXD:%X", EXD); break;
+	case CPUINFO_STR_REGISTER + PDP1_IOC:			sprintf(info->s = cpuintrf_temp_str(), "IOC:%X", pdp1.ioc); break;
+	case CPUINFO_STR_REGISTER + PDP1_IOH:			sprintf(info->s = cpuintrf_temp_str(), "IOH:%X", pdp1.ioh); break;
+	case CPUINFO_STR_REGISTER + PDP1_IOS:			sprintf(info->s = cpuintrf_temp_str(), "IOS:%X", pdp1.ios); break;
+	}
 }
 
 
@@ -1835,7 +1891,8 @@ static void type_20_sbs_iot(int op2, int nac, int mb, int *io, int ac)
 
 /*
 	Simulate a pulse on start/clear line:
-	reset most registers and flip-flops, and intialize a few emulator state variables.
+	reset most registers and flip-flops, and initialize a few emulator state
+	variables.
 */
 static void pulse_start_clear(void)
 {

@@ -455,12 +455,12 @@ static void word_write(int address, UINT32 data, UINT32 mask)
 
 static int papertape_read(void)
 {
-	return cpu_readport16bedw_dword(0) & 0x1f;
+	return io_read_byte_8(0) & 0x1f;
 }
 
 static void papertape_punch(int data)
 {
-	cpu_writeport16bedw_dword(0, data);
+	io_write_byte_8(0, data);
 }
 
 /*
@@ -775,9 +775,11 @@ special_fetch:
 }
 
 
+static void apexc_init(void)
+{
+}
 
-
-void apexc_reset(void *param)
+static void apexc_reset(void *param)
 {
 	/* mmmh...  I don't know what happens on reset with an actual APEXC. */
 
@@ -790,189 +792,23 @@ void apexc_reset(void *param)
 								which enables easy booting (just press run on the panel) */
 }
 
-void apexc_exit(void)
+static void apexc_exit(void)
 {
 }
 
-unsigned apexc_get_context(void *dst)
+static void apexc_get_context(void *dst)
 {
 	if (dst)
 		* ((apexc_regs*) dst) = apexc;
-	return sizeof(apexc_regs);
 }
 
-void apexc_set_context(void *src)
+static void apexc_set_context(void *src)
 {
 	if (src)
-	{
 		apexc = * ((apexc_regs*)src);
-	}
 }
 
-/* no IRQ line */
-void apexc_set_irq_line(int irqline, int state)
-{
-	(void) irqline;
-	(void) state;
-}
-
-void apexc_set_irq_callback(int (*callback)(int irqline))
-{
-	(void) callback;
-}
-
-unsigned apexc_get_reg(int regnum)
-{
-	switch (regnum)
-	{
-	case APEXC_CR:
-		return apexc.cr;
-	case APEXC_A:
-		return apexc.a;
-	case APEXC_R:
-		return apexc.r;
-	case APEXC_ML:
-		return apexc.ml;
-	case APEXC_WS:
-		return apexc.working_store;
-	case APEXC_STATE:
-		return apexc.running ? TRUE : FALSE;
-	case APEXC_ML_FULL:
-		return effective_address(apexc.ml);
-
-	case REG_PC:
-		/* no PC - return memory location register instead, this should be equivalent unless
-		executed in the midst of an instruction */
-		return effective_address(apexc.ml);
-	case REG_SP:
-		/* no SP */
-		return 0U;
-	}
-	return 0;
-}
-
-void apexc_set_reg(int regnum, unsigned val)
-{
-	switch (regnum)
-	{
-	case APEXC_CR:
-		apexc.cr = val;
-		break;
-	case APEXC_A:
-		apexc.a = val;
-		break;
-	case APEXC_R:
-		apexc.r = val;
-		break;
-	case APEXC_ML:
-		apexc.ml = val & 0x3ff;
-		break;
-	case APEXC_WS:
-		apexc.working_store = val & 0xf;
-		break;
-	case APEXC_STATE:
-		apexc.running = val ? TRUE : FALSE;
-
-	case REG_PC:
-		/* keep address 9 LSBits - 10th bit depends on whether we are accessing the permanent
-		track group or a switchable one */
-		apexc.ml = val & 0x1ff;
-		if (val & 0x1e00)
-		{	/* we are accessing a switchable track group */
-			apexc.ml |= 0x200;	/* set 10th bit */
-
-			if (((val >> 9) & 0xf) != apexc.working_store)
-			{	/* we need to do a store switch */
-				apexc.working_store = ((val >> 9) & 0xf);
-			}
-		}
-	case REG_SP:
-		/* no SP */
-		(void) val;
-	}
-}
-
-const char *apexc_info(void *context, int regnum)
-{
-	static const UINT8 apexc_reg_layout[] =
-	{
-		APEXC_CR, -1,
-		APEXC_A, APEXC_R, -1,
-		APEXC_ML, APEXC_WS, -1,
-		APEXC_STATE, 0
-	};
-
-	/* OK, I have no idea what would be the best layout */
-	static const UINT8 apexc_win_layout[] =
-	{
-		48, 0,32,13,	/* register window (top right) */
-		 0, 0,47,13,	/* disassembler window (top left) */
-		 0,14,47, 8,	/* memory #1 window (left, middle) */
-		48,14,32, 8,	/* memory #2 window (right, middle) */
-		 0,23,80, 1 	/* command line window (bottom rows) */
-	};
-
-	static char buffer[16][47 + 1];
-	static int which = 0;
-	apexc_regs *r = context;
-
-	which = (which + 1) % 16;
-	buffer[which][0] = '\0';
-	if (! context)
-		r = &apexc;
-
-	switch (regnum)
-	{
-	case CPU_INFO_REG + APEXC_CR:
-		sprintf(buffer[which], "CR:%08X", r->cr);
-		break;
-	case CPU_INFO_REG + APEXC_A:
-		sprintf(buffer[which], "A :%08X", r->a);
-		break;
-	case CPU_INFO_REG + APEXC_R:
-		sprintf(buffer[which], "R :%08X", r->r);
-		break;
-	case CPU_INFO_REG + APEXC_ML:
-		sprintf(buffer[which], "ML:%03X", r->ml);
-		break;
-	case CPU_INFO_REG + APEXC_WS:
-		sprintf(buffer[which], "WS:%01X", r->working_store);
-		break;
-	case CPU_INFO_REG + APEXC_STATE:
-		sprintf(buffer[which], "CPU state:%01X", r->running ? TRUE : FALSE);
-		break;
-	case CPU_INFO_FLAGS:
-		sprintf(buffer[which], "%c", (r->running) ? 'R' : 'S');
-		break;
-	case CPU_INFO_NAME:
-		return "APEXC";
-	case CPU_INFO_FAMILY:
-		return "APEC";
-	case CPU_INFO_VERSION:
-		return "1.0";
-	case CPU_INFO_FILE:
-		return __FILE__;
-	case CPU_INFO_CREDITS:
-		return "Raphael Nabet";
-	case CPU_INFO_REG_LAYOUT:
-		return (const char *) apexc_reg_layout;
-	case CPU_INFO_WIN_LAYOUT:
-		return (const char *) apexc_win_layout;
-	}
-	return buffer[which];
-}
-
-unsigned apexc_dasm(char *buffer, unsigned pc)
-{
-#ifdef MAME_DEBUG
-	return DasmAPEXC(buffer,pc);
-#else
-	sprintf(buffer, "$%08X", cpu_readop(pc));
-	return 1;
-#endif
-}
-
-int apexc_execute(int cycles)
+static int apexc_execute(int cycles)
 {
 	apexc_ICount = cycles;
 
@@ -991,5 +827,141 @@ int apexc_execute(int cycles)
 	return cycles - apexc_ICount;
 }
 
+static unsigned apexc_dasm(char *buffer, unsigned pc)
+{
+#ifdef MAME_DEBUG
+	return DasmAPEXC(buffer,pc);
+#else
+	sprintf(buffer, "$%08X", cpu_readop(pc));
+	return 1;
+#endif
+}
 
-void apexc_init(void) { return; }
+static void apexc_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+	/* --- the following bits of info are set as 64-bit signed integers --- */
+	/*case CPUINFO_INT_IRQ_STATE + ...:*/							/* no interrupts */
+
+	case CPUINFO_INT_PC:
+		/* keep address 9 LSBits - 10th bit depends on whether we are accessing the permanent
+		track group or a switchable one */
+		apexc.ml = info->i & 0x1ff;
+		if (info->i & 0x1e00)
+		{	/* we are accessing a switchable track group */
+			apexc.ml |= 0x200;	/* set 10th bit */
+
+			if (((info->i >> 9) & 0xf) != apexc.working_store)
+			{	/* we need to do a store switch */
+				apexc.working_store = ((info->i >> 9) & 0xf);
+			}
+		}
+		break;
+
+	case CPUINFO_INT_SP:						(void) info->i;	/* no SP */					break;
+
+	case CPUINFO_INT_REGISTER + APEXC_CR:		apexc.cr = info->i;							break;
+	case CPUINFO_INT_REGISTER + APEXC_A:		apexc.a = info->i;							break;
+	case CPUINFO_INT_REGISTER + APEXC_R:		apexc.r = info->i;							break;
+	case CPUINFO_INT_REGISTER + APEXC_ML:		apexc.ml = info->i & 0x3ff;					break;
+	case CPUINFO_INT_REGISTER + APEXC_WS:		apexc.working_store = info->i & 0xf;		break;
+	case CPUINFO_INT_REGISTER + APEXC_STATE:	apexc.running = info->i ? TRUE : FALSE;		break;
+
+	/* --- the following bits of info are set as pointers to data or functions --- */
+	case CPUINFO_PTR_IRQ_CALLBACK:				(void) info->irqcallback;					break;
+	}
+}
+
+void apexc_get_info(UINT32 state, union cpuinfo *info)
+{
+	static /*const*/ UINT8 apexc_reg_layout[] =
+	{
+		APEXC_CR, -1,
+		APEXC_A, APEXC_R, -1,
+		APEXC_ML, APEXC_WS, -1,
+		APEXC_STATE, 0
+	};
+
+	/* OK, I have no idea what would be the best layout */
+	static /*const*/ UINT8 apexc_win_layout[] =
+	{
+		48, 0,32,13,	/* register window (top right) */
+		 0, 0,47,13,	/* disassembler window (top left) */
+		 0,14,47, 8,	/* memory #1 window (left, middle) */
+		48,14,32, 8,	/* memory #2 window (right, middle) */
+		 0,23,80, 1 	/* command line window (bottom rows) */
+	};
+
+	switch (state)
+	{
+	case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(apexc);				break;
+	case CPUINFO_INT_IRQ_LINES:						info->i = 0;							break;
+	case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+	case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;	/*don't care*/	break;
+	case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+	case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 4;							break;
+	case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
+	case CPUINFO_INT_MIN_CYCLES:					info->i = 2;	/* IIRC */				break;
+	case CPUINFO_INT_MAX_CYCLES:					info->i = 75;	/* IIRC */				break;
+
+	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
+	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 15;	/*13+2 ignored bits to make double word address*/	break;
+	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = /*5*/8;	/* no I/O bus, but we use address 0 for punchtape I/O */	break;
+	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = /*0*/1;	/*0 is quite enough but the MAME core does not understand*/	break;
+	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+	case CPUINFO_INT_SP:							info->i = 0;	/* no SP */				break;
+	case CPUINFO_INT_PC:
+		/* no PC - return memory location register instead, this should be
+		equivalent unless executed in the midst of an instruction */
+		info->i = effective_address(apexc.ml);
+		break;
+	case CPUINFO_INT_PREVIOUSPC:					info->i = 0;	/* no PC */				break;
+
+	/*case CPUINFO_INT_IRQ_STATE + ...:*/							/* no interrupts */
+
+	case CPUINFO_INT_REGISTER + APEXC_CR:			info->i = apexc.cr;						break;
+	case CPUINFO_INT_REGISTER + APEXC_A:			info->i = apexc.a;						break;
+	case CPUINFO_INT_REGISTER + APEXC_R:			info->i = apexc.r;						break;
+	case CPUINFO_INT_REGISTER + APEXC_ML:			info->i = apexc.ml;						break;
+	case CPUINFO_INT_REGISTER + APEXC_WS:			info->i = apexc.working_store;			break;
+	case CPUINFO_INT_REGISTER + APEXC_STATE:		info->i = apexc.running;				break;
+	case CPUINFO_INT_REGISTER + APEXC_ML_FULL:		info->i = effective_address(apexc.ml);	break;
+
+	case CPUINFO_PTR_SET_INFO:						info->setinfo = apexc_set_info;			break;
+	case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = apexc_get_context;	break;
+	case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = apexc_set_context;	break;
+	case CPUINFO_PTR_INIT:							info->init = apexc_init;				break;
+	case CPUINFO_PTR_RESET:							info->reset = apexc_reset;				break;
+	case CPUINFO_PTR_EXIT:							info->exit = apexc_exit;				break;
+	case CPUINFO_PTR_EXECUTE:						info->execute = apexc_execute;			break;
+	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+
+	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = apexc_dasm;			break;
+	case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = NULL;				break;
+	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &apexc_ICount;			break;
+	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = apexc_reg_layout;				break;
+	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = apexc_win_layout;				break;
+
+	case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "APEXC"); break;
+	case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "APEC"); break;
+	case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
+	case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+	case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Raphael Nabet"); break;
+
+	case CPUINFO_STR_FLAGS:							sprintf(info->s = cpuintrf_temp_str(), "%c", (apexc.running) ? 'R' : 'S'); break;
+
+	case CPUINFO_STR_REGISTER + APEXC_CR:			sprintf(info->s = cpuintrf_temp_str(), "CR:%08X", apexc.cr); break;
+	case CPUINFO_STR_REGISTER + APEXC_A:			sprintf(info->s = cpuintrf_temp_str(), "A :%08X", apexc.a); break;
+	case CPUINFO_STR_REGISTER + APEXC_R:			sprintf(info->s = cpuintrf_temp_str(), "R :%08X", apexc.r); break;
+	case CPUINFO_STR_REGISTER + APEXC_ML:			sprintf(info->s = cpuintrf_temp_str(), "ML:%03X", apexc.ml); break;
+	case CPUINFO_STR_REGISTER + APEXC_WS:			sprintf(info->s = cpuintrf_temp_str(), "WS:%01X", apexc.working_store); break;
+
+	case CPUINFO_STR_REGISTER + APEXC_STATE:		sprintf(info->s = cpuintrf_temp_str(), "CPU state:%01X", apexc.running ? TRUE : FALSE); break;
+	}
+}

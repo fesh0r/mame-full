@@ -889,6 +889,9 @@ static READ_HANDLER(parallel_via_in_b)
 	/* tell there is no hard disk : */
 	val |= 0x1;
 
+	/* keep busy high to work around a bug??? */
+	//val |= 0x2;
+
 	return val;
 }
 
@@ -955,7 +958,10 @@ static OPBASE_HANDLER (lisa_OPbaseoverride)
 			}
 			else
 			{	/* system ROMs */
-				OP_ROM = OP_RAM = lisa_rom_ptr - (address & 0xffc000);
+				opcode_mask = 0xffffff;
+				opcode_base = opcode_arg_base = lisa_rom_ptr - (address & 0xffc000);
+				opcode_memory_min = address & 0xffc000;
+				opcode_memory_max = address & 0xffc000 + 0x003fff;
 				/*logerror("ROM (setup mode)\n");*/
 			}
 
@@ -984,7 +990,10 @@ static OPBASE_HANDLER (lisa_OPbaseoverride)
 				/* out of segment limits : bus error */
 				logerror("illegal opbase address%lX\n", (long) address);
 			}
-			OP_ROM = OP_RAM = lisa_ram_ptr + mapped_address - address;
+			opcode_mask = 0xffffff;
+			opcode_base = opcode_arg_base = lisa_ram_ptr + mapped_address - address;
+			opcode_memory_min = address & 0xffc000;
+			opcode_memory_max = address & 0xffc000 + 0x003fff;
 			/*logerror("RAM\n");*/
 			break;
 
@@ -997,7 +1006,10 @@ static OPBASE_HANDLER (lisa_OPbaseoverride)
 			break;
 
 		case special_IO:
-			OP_ROM = OP_RAM = lisa_rom_ptr + (mapped_address & 0x003fff) - address;
+			opcode_mask = 0xffffff;
+			opcode_base = opcode_arg_base = lisa_rom_ptr + (mapped_address & 0x003fff) - address;
+			opcode_memory_min = address & 0xffc000;
+			opcode_memory_max = address & 0xffc000 + 0x003fff;
 			/*logerror("ROM\n");*/
 			break;
 		}

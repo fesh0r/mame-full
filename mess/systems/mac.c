@@ -1,7 +1,7 @@
 /*
  *	Mac Plus & 512ke emulation
  *
- *	Nate Woods
+ *	Nate Woods, Raphael Nabet
  *
  *
  *		0x000000 - 0x3fffff 	RAM/ROM (switches based on overlay)
@@ -42,72 +42,32 @@
 #include "videomap.h"
 
 
-static MEMORY_READ16_START (mac512ke_readmem)
+static ADDRESS_MAP_START(mac512ke_map, ADDRESS_SPACE_PROGRAM, 16)
 
-/*	{ 0x000000, 0x3fffff, MRA16_BANK1 },*/	/* ram/rom */
-	{ 0x000000, 0x01ffff, /*MRA16_NOP*/MRA16_RAM }, /* ram/rom */
-	{ 0x020000, 0x07ffff, /*MRA16_NOP*/MRA16_RAM }, /* ram/rom */
-	{ 0x080000, 0x3fffff, /*MRA16_NOP*/MRA16_RAM }, /* ram/rom */
-/*	{ 0x400000, 0x5fffff, MRA16_BANK3 },*/ /* rom */
-/* for some reason, the system will not work without the next line */
-	{ 0x400000, 0x41ffff, MRA16_BANK3 }, /* rom */
-	{ 0x420000, 0x5fffff, /*MRA16_NOP*/MRA16_RAM }, /* rom */
-	{ 0x600000, 0x6fffff, /*MRA16_NOP*/MRA16_RAM }, /* ram */
-	{ 0x800000, 0x9fffff, mac_scc_r },
-	{ 0xc00000, 0xdfffff, mac_iwm_r },
-	{ 0xe80000, 0xefffff, mac_via_r },
-	{ 0xfffff0, 0xffffff, mac_autovector_r },
+/*	AM_RANGE(0x000000, 0x3fffff) AM_READWRITE(MRA16_BANK1, MWA16_BANK1)*/	/* ram/rom */
+/*	AM_RANGE(0x400000, 0x5fffff) AM_READWRITE(MRA16_BANK3, MWA16_ROM)*/		/* rom */
+/*	AM_RANGE(0x600000, 0x6fffff) AM_READWRITE(MRA16_BANK2, MWA16_BANK2)*/	/* ram */
+	AM_RANGE(0x800000, 0x9fffff) AM_READ(mac_scc_r)
+	AM_RANGE(0xa00000, 0xbfffff) AM_WRITE(mac_scc_w)
+	AM_RANGE(0xc00000, 0xdfffff) AM_READWRITE(mac_iwm_r, mac_iwm_w)
+	AM_RANGE(0xe80000, 0xefffff) AM_READWRITE(mac_via_r, mac_via_w)
+	AM_RANGE(0xfffff0, 0xffffff) AM_READWRITE(mac_autovector_r, mac_autovector_w)
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START (mac512ke_writemem)
+static ADDRESS_MAP_START(macplus_map, ADDRESS_SPACE_PROGRAM, 16)
 
-/*	{ 0x000000, 0x3fffff, MWA16_BANK1 },*/ /* ram/rom */
-	{ 0x000000, 0x01ffff, /*MWA16_NOP*/MWA16_RAM }, /* ram/rom */
-	{ 0x020000, 0x07ffff, /*MWA16_NOP*/MWA16_RAM }, /* ram/rom */
-	{ 0x080000, 0x3fffff, /*MWA16_NOP*/MWA16_RAM }, /* ram/rom */
-	{ 0x400000, 0x5fffff, MWA16_ROM },	/* rom */
+/*	AM_RANGE(0x000000, 0x3fffff) AM_READWRITE(MRA16_BANK1, MWA16_BANK1)*/	/* ram/rom */
+/*	AM_RANGE(0x400000, 0x4fffff) AM_READWRITE(MRA16_BANK3, MWA16_ROM)*/		/* rom */
+	AM_RANGE(0x580000, 0x5fffff) AM_READWRITE(macplus_scsi_r, macplus_scsi_w)
+/*	AM_RANGE(0x600000, 0x6fffff) AM_READWRITE(MRA16_BANK2, MWA16_BANK2)*/	/* ram */
+	AM_RANGE(0x800000, 0x9fffff) AM_READ(mac_scc_r)
+	AM_RANGE(0xa00000, 0xbfffff) AM_WRITE(mac_scc_w)
+	AM_RANGE(0xc00000, 0xdfffff) AM_READWRITE(mac_iwm_r, mac_iwm_w)
+	AM_RANGE(0xe80000, 0xefffff) AM_READWRITE(mac_via_r, mac_via_w)
+	AM_RANGE(0xfffff0, 0xffffff) AM_READWRITE(mac_autovector_r, mac_autovector_w)
 
-	{ 0x600000, 0x6fffff, /*MWA16_NOP*/MWA16_RAM }, /* ram */
-	{ 0xa00000, 0xbfffff, mac_scc_w },
-	{ 0xc00000, 0xdfffff, mac_iwm_w },
-	{ 0xe80000, 0xefffff, mac_via_w },
-	{ 0xfffff0, 0xffffff, mac_autovector_w },
-
-MEMORY_END
-
-static MEMORY_READ16_START (macplus_readmem)
-
-/*	{ 0x000000, 0x3fffff, MRA16_BANK1 },*/	/* ram/rom */
-	{ 0x400000, 0x41ffff, MRA16_BANK3 }, /* rom */
-	{ 0x420000, 0x43ffff, MRA16_BANK4 }, /* rom - mirror */
-	{ 0x440000, 0x45ffff, MRA16_BANK5 }, /* rom - mirror */
-	{ 0x460000, 0x47ffff, MRA16_BANK6 }, /* rom - mirror */
-	{ 0x480000, 0x49ffff, MRA16_BANK7 }, /* rom - mirror */
-	{ 0x4a0000, 0x4bffff, MRA16_BANK8 }, /* rom - mirror */
-	{ 0x4c0000, 0x4dffff, MRA16_BANK9 }, /* rom - mirror */
-	{ 0x4e0000, 0x4fffff, MRA16_BANK10 }, /* rom - mirror */
-	{ 0x580000, 0x5fffff, macplus_scsi_r },
-/*	{ 0x600000, 0x6fffff, MRA16_BANK2 },*/	/* ram */
-	{ 0x800000, 0x9fffff, mac_scc_r },
-	{ 0xc00000, 0xdfffff, mac_iwm_r },
-	{ 0xe80000, 0xefffff, mac_via_r },
-	{ 0xfffff0, 0xffffff, mac_autovector_r },
-
-MEMORY_END
-
-static MEMORY_WRITE16_START (macplus_writemem)
-
-/*	{ 0x000000, 0x3fffff, MWA16_BANK1 },*/ /* ram/rom */
-	{ 0x400000, 0x4fffff, MWA16_ROM },
-	{ 0x580000, 0x5fffff, macplus_scsi_w },
-/*	{ 0x600000, 0x6fffff, MWA16_BANK2 },*/ /* ram */
-	{ 0xa00000, 0xbfffff, mac_scc_w },
-	{ 0xc00000, 0xdfffff, mac_iwm_w },
-	{ 0xe80000, 0xefffff, mac_via_w },
-	{ 0xfffff0, 0xffffff, mac_autovector_w },
-
-MEMORY_END
+ADDRESS_MAP_END
 
 static PALETTE_INIT( mac )
 {
@@ -125,7 +85,7 @@ static struct CustomSound_interface custom_interface =
 static MACHINE_DRIVER_START( mac512ke )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 7833600)        /* 7.8336 Mhz */
-	MDRV_CPU_MEMORY(mac512ke_readmem,mac512ke_writemem)
+	MDRV_CPU_PROGRAM_MAP(mac512ke_map, 0)
 	MDRV_CPU_VBLANK_INT(mac_interrupt, 370)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -154,23 +114,22 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( macplus )
 	MDRV_IMPORT_FROM( mac512ke )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_MEMORY( macplus_readmem,macplus_writemem )
+	MDRV_CPU_PROGRAM_MAP(macplus_map, 0)
 MACHINE_DRIVER_END
 
 INPUT_PORTS_START( macplus )
-	PORT_START /* 0 */
+	PORT_START /* 0: Mouse - button */
 	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1, "Mouse Button", KEYCODE_NONE, JOYCODE_MOUSE_1_BUTTON1)
-	/* Not yet implemented */
 
-	PORT_START /* Mouse - X AXIS */
+	PORT_START /* 1: Mouse - X AXIS */
 	PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
 
-	PORT_START /* Mouse - Y AXIS */
+	PORT_START /* 2: Mouse - Y AXIS */
 	PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
 
 	/* R Nabet 000531 : pseudo-input ports with keyboard layout */
-	/* we only define US layout for keyboard - international layout is different ! */
-	/* note : 16 bits at most per port ! */
+	/* we only define US layout for keyboard - international layout is different! */
+	/* note : 16 bits at most per port! */
 
 	/* main keyboard pad */
 
@@ -247,7 +206,7 @@ INPUT_PORTS_START( macplus )
 
 	/* keyboard Enter : */
 	PORT_BITX(0x0010, IP_ACTIVE_HIGH, IPT_UNUSED, DEF_STR( Unused ), KEYCODE_NONE, IP_JOY_NONE)
-	/* escape : */
+	/* escape: */
 	PORT_BITX(0x0020, IP_ACTIVE_HIGH, IPT_UNUSED, DEF_STR( Unused ), KEYCODE_NONE, IP_JOY_NONE)
 	/* ??? */
 	PORT_BITX(0x0040, IP_ACTIVE_HIGH, IPT_UNUSED, DEF_STR( Unused ), KEYCODE_NONE, IP_JOY_NONE)
@@ -258,7 +217,7 @@ INPUT_PORTS_START( macplus )
 
 	PORT_BITX(0x0200, IP_ACTIVE_HIGH, IPT_KEYBOARD | IPF_TOGGLE, "Caps Lock", KEYCODE_CAPSLOCK, IP_JOY_NONE)
 	PORT_BITX(0x0400, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Option", KEYCODE_LALT, IP_JOY_NONE)
-	/* Control : */
+	/* Control: */
 	PORT_BITX(0x0800, IP_ACTIVE_HIGH, IPT_UNUSED, DEF_STR( Unused ), KEYCODE_NONE, IP_JOY_NONE)
 	/* keypad pseudo-keycode */
 	PORT_BITX(0x1000, IP_ACTIVE_HIGH, IPT_UNUSED, DEF_STR( Unused ), KEYCODE_NONE, IP_JOY_NONE)

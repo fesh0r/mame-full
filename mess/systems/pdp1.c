@@ -73,13 +73,13 @@ and the java source).
 #define pdp1_read_mem MRA32_RAM
 #define pdp1_write_mem MWA32_RAM
 #endif
-static MEMORY_READ_START18(pdp1_readmem)
-	{ 0x0000, 0xffff, pdp1_read_mem },
-MEMORY_END
-
-static MEMORY_WRITE_START18(pdp1_writemem)
-	{ 0x0000, 0xffff, pdp1_write_mem },
-MEMORY_END
+static ADDRESS_MAP_START(pdp1_map, ADDRESS_SPACE_PROGRAM, 32)
+#if 0
+	AM_RANGE(0x0000, 0xffff) AM_READWRITE(pdp1_read_mem, pdp1_write_mem)
+#else
+	AM_RANGE(0x00000, 0x3ffff) AM_READWRITE(pdp1_read_mem, pdp1_write_mem)
+#endif
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( pdp1 )
@@ -415,7 +415,7 @@ static MACHINE_DRIVER_START(pdp1)
 	MDRV_CPU_ADD(PDP1, 1000000/*the CPU core uses microsecond counts*/)
 	/*MDRV_CPU_FLAGS(0)*/
 	MDRV_CPU_CONFIG(pdp1_reset_param)
-	MDRV_CPU_MEMORY(pdp1_readmem, pdp1_writemem)
+	MDRV_CPU_PROGRAM_MAP(pdp1_map, 0)
 	/*MDRV_CPU_PORTS(readport, writeport)*/
 	/* dummy interrupt: handles input */
 	MDRV_CPU_VBLANK_INT(pdp1_interrupt, 1)

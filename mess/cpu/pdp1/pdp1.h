@@ -19,8 +19,8 @@ enum
 	PDP1_IO_COMPLETE	/* hack, do not use directly, use pdp1_pulse_iot_done instead */
 };
 
-#define pdp1_pulse_start_clear()	pdp1_set_reg(PDP1_START_CLEAR, 0)
-#define pdp1_pulse_iot_done()		pdp1_set_reg(PDP1_IO_COMPLETE, 0)
+#define pdp1_pulse_start_clear()	cpunum_set_reg(0, PDP1_START_CLEAR, 0)
+#define pdp1_pulse_iot_done()		cpunum_set_reg(0, PDP1_IO_COMPLETE, 0)
 
 typedef struct pdp1_reset_param_t
 {
@@ -43,7 +43,7 @@ typedef struct pdp1_reset_param_t
 #define IOT_NO_COMPLETION_PULSE -1
 
 /* PUBLIC FUNCTIONS */
-extern void pdp1_init(void);
+/*extern void pdp1_init(void);
 extern unsigned pdp1_get_context (void *dst);
 extern void pdp1_set_context (void *src);
 extern unsigned pdp1_get_reg (int regnum);
@@ -54,17 +54,13 @@ extern void pdp1_reset(void *param);
 extern void pdp1_exit (void);
 extern int pdp1_execute(int cycles);
 extern const char *pdp1_info(void *context, int regnum);
-extern unsigned pdp1_dasm(char *buffer, unsigned pc);
+extern unsigned pdp1_dasm(char *buffer, unsigned pc);*/
+void pdp1_get_info(UINT32 state, union cpuinfo *info);
 
 extern int pdp1_ICount;
 
-#ifndef SUPPORT_ODD_WORD_SIZES
-#define READ_PDP_18BIT(A) ((signed)cpu_readmem24bedw_dword((A)<<2))
-#define WRITE_PDP_18BIT(A,V) (cpu_writemem24bedw_dword((A)<<2,(V)))
-#else
-#define READ_PDP_18BIT(A) ((signed)cpu_readmem16_18(A))
-#define WRITE_PDP_18BIT(A,V) (cpu_writemem16_18((A),(V)))
-#endif
+#define READ_PDP_18BIT(A) ((signed)program_read_dword_32be((A)<<2))
+#define WRITE_PDP_18BIT(A,V) (program_write_dword_32be((A)<<2,(V)))
 
 #define AND 001
 #define IOR 002

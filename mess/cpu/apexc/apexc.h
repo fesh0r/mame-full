@@ -15,22 +15,11 @@ enum
 
 extern int apexc_ICount;
 
-void apexc_init(void);
-void apexc_reset(void *param);
-void apexc_exit(void);
-unsigned apexc_get_context(void *dst);
-void apexc_set_context(void *src);
-void apexc_set_irq_line(int irqline, int state);
-void apexc_set_irq_callback(int (*callback)(int irqline));
-unsigned apexc_get_reg(int regnum);
-void apexc_set_reg(int regnum, unsigned val);
-const char *apexc_info(void *context, int regnum);
-unsigned apexc_dasm(char *buffer, unsigned pc);
-int apexc_execute(int cycles);
+void apexc_get_info(UINT32 state, union cpuinfo *info);
 
 #ifndef SUPPORT_ODD_WORD_SIZES
-#define apexc_readmem(address)	cpu_readmem24bedw_dword((address)<<2)
-#define apexc_writemem(address, data)	cpu_writemem24bedw_dword((address)<<2, (data))
+#define apexc_readmem(address)	program_read_dword_32be((address)<<2)
+#define apexc_writemem(address, data)	program_write_dword_32be((address)<<2, (data))
 /* eewww ! - Fortunately, there is no memory mapped I/O, so we can simulate masked write
 without danger */
 #define apexc_writemem_masked(address, data, mask)										\
