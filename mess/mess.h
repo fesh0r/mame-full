@@ -261,8 +261,8 @@ extern void device_output_chunk(int type, int id, void *src, int chunks);
 
 /* This is the dummy GameDriver with flag NOT_A_DRIVER set
    It allows us to use an empty PARENT field in the macros. */
- extern const struct GameDriver driver_0;
-/* Flag is used to bail out in mame.c/run_game() and cpuintrf.c/run_cpu()
+
+ /* Flag is used to bail out in mame.c/run_game() and cpuintrf.c/run_cpu()
  * but keep the program going. It will be set eg. if the filename for a
  * device which has IO_RESET_ALL flag set is changed
  */

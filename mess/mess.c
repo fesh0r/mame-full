@@ -150,6 +150,7 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 	extnum = 0;
 	for( ;; )
 	{
+		extern struct GameDriver driver_0;
 		const char *ext;
 		char *p;
 		int l;
@@ -675,7 +676,7 @@ void exit_devices(void)
 			/* shutdown */
 			for( id = 0; id < device_count(dev->type); id++ )
 				(*dev->exit)(id);
-	
+
 		}
 		else
 		{
@@ -695,7 +696,7 @@ void exit_devices(void)
 				floppy_device_common_exit(id);
 			}
 		}
-		
+
 		dev++;
 	}
 	for( type = 0; type < IO_COUNT; type++ )
@@ -784,7 +785,7 @@ int device_filename_change(int type, int id, const char *name)
 		{
 			floppy_device_common_init(id);
 		}
-	
+
 	}
 	return 0;
 }
