@@ -1023,7 +1023,7 @@ static int sony_put_track(void)
 	return 0;
 }
 
-int sony_read_data(void)
+data8_t sony_read_data(void)
 {
 	int result = 0;
 
@@ -1066,7 +1066,7 @@ int sony_read_data(void)
 	return result;
 }
 
-void sony_write_data(int data)
+void sony_write_data(data8_t data)
 {
 	floppy *f;
 
@@ -1471,7 +1471,7 @@ void sony_floppy_unload(mess_image *img)
 	}
 }
 
-void sony_set_lines(int lines)
+void sony_set_lines(data8_t lines)
 {
 	int old_sony_lines = sony_lines;
 

@@ -1,3 +1,14 @@
+/*********************************************************************
+
+	iwm.h
+	
+	Implementation of the IWM (Integrated Woz Machine) chip
+
+	Nate Woods
+	Raphael Nabet
+
+*********************************************************************/
+
 #ifndef IWM_H
 #define IWM_H
 
@@ -5,17 +16,18 @@
 
 typedef struct iwm_interface
 {
-	void (*set_lines)(int lines);
+	void (*set_lines)(data8_t lines);
 	void (*set_enable_lines)(int enable_mask);
 
-	int (*read_data)(void);
-	void (*write_data)(int data);
+	data8_t (*read_data)(void);
+	void (*write_data)(data8_t data);
 	int (*read_status)(void);
 } iwm_interface;
 
 void iwm_init(const iwm_interface *intf);
-int iwm_r(int offset);
-void iwm_w(int offset, int data);
+data8_t iwm_r(offs_t offset);
+void iwm_w(offs_t offset, data8_t data);
+data8_t iwm_get_lines(void);
 
 /* mask for IWM lines */
 enum {
@@ -29,6 +41,5 @@ enum {
 	IWM_Q7		= 0x80	/* private, do not use ! */
 };
 
-int iwm_get_lines(void);
 
 #endif /* IWM_H */

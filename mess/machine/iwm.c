@@ -1,41 +1,38 @@
-/* *************************************************************************
- * IWM (Integrated Woz Machine)
- *
- * Implementation of the IWM chip
- *
- * Nate Woods
- * Raphael Nabet
- *
- * Writing this code would not be possible if it weren't for the work of the
- * XGS and KEGS emulators which also contain IWM emulations
- *
- * This chip was used as the floppy disk controller for early Macs and the
- * Apple IIgs
- *
- * TODO
- * - Implement the unimplemented IWM modes (IWM_MODE_CLOCKSPEED,
- *   IWM_MODE_BITCELLTIME, IWM_MODE_HANDSHAKEPROTOCOLIWM_MODE_LATCHMODE
- * - Support 5 1/4" floppy drives, abstract drive interface
- *
- * CHANGES
- * - Separated the drive emulation from the IWM emulation.  This should enable us
- *  to implement other floppy drive interfaces (cf the weird interpretation
- *  of the enable line by Lisa2).  (R. Nabet 2000/11/18)
- * - Write support added (R. Nabet 2000/11)
- * *************************************************************************/
+/*********************************************************************
 
+	iwm.c
+	
+	Implementation of the IWM (Integrated Woz Machine) chip
+
+	Nate Woods
+	Raphael Nabet
+
+	Writing this code would not be possible if it weren't for the work of the
+	XGS and KEGS emulators which also contain IWM emulations.
+
+	This chip was used as the floppy disk controller for early Macs and the
+	Apple IIgs, and was eventually superceded by the SWIM chp.
+
+	TODO
+	  -	Implement the unimplemented IWM modes (IWM_MODE_CLOCKSPEED,
+		IWM_MODE_BITCELLTIME, IWM_MODE_HANDSHAKEPROTOCOLIWM_MODE_LATCHMODE
+	  - Support 5 1/4" floppy drives, abstract drive interface
+
+	CHANGES
+	  - Separated the drive emulation from the IWM emulation.  This should
+	    enable us to implement other floppy drive interfaces (cf the weird
+		interpretation of the enable line by Lisa2).  (R. Nabet 2000/11/18)
+	  - Write support added (R. Nabet 2000/11)
+
+*********************************************************************/
 
 #include "iwm.h"
 
-#ifdef MAME_DEBUG
-#define LOG_IWM			1
-#define LOG_IWM_EXTRA	0
-#else
 #define LOG_IWM			0
 #define LOG_IWM_EXTRA	0
-#endif
 
-static int iwm_lines;		/* flags from IWM_MOTOR - IWM_Q7 */
+
+static data8_t iwm_lines;		/* flags from IWM_MOTOR - IWM_Q7 */
 
 
 
@@ -71,7 +68,7 @@ enum {
 
 static int iwm_mode;		/* 0-31 */
 
-static void *motor_off_timer;
+static mame_timer *motor_off_timer;
 
 static iwm_interface iwm_intf;
 
@@ -89,6 +86,8 @@ void iwm_init(const iwm_interface *intf)
 	iwm_intf = * intf;
 }
 
+
+
 /* R. Nabet : Next two functions look more like a hack than a real feature of the IWM */
 /* I left them there because I had no idea what they intend to do.
 They never get called when booting the Mac Plus driver. */
@@ -96,6 +95,8 @@ static int iwm_enable2(void)
 {
 	return (iwm_lines & IWM_PH1) && (iwm_lines & IWM_PH3);
 }
+
+
 
 static int iwm_readenable2handshake(void)
 {
@@ -106,6 +107,8 @@ static int iwm_readenable2handshake(void)
 
 	return val ? 0xc0 : 0x80;
 }
+
+
 
 static int iwm_statusreg_r(void)
 {
@@ -120,10 +123,12 @@ static int iwm_statusreg_r(void)
 	int result;
 	int status;
 
-	status = /*iwm_enable2() ? 1 :*/ (*iwm_intf.read_status)();
-	result = (status << 7) | (((iwm_lines & IWM_MOTOR) ? 1 : 0) << 5) | iwm_mode;
+	status = /*iwm_enable2() ? 1 :*/ (iwm_intf.read_status ? iwm_intf.read_status() : 0);
+	result = (status ? 0x80 : 0x00) | (((iwm_lines & IWM_MOTOR) ? 1 : 0) << 5) | iwm_mode;
 	return result;
 }
+
+
 
 static void iwm_modereg_w(int data)
 {
@@ -134,9 +139,11 @@ static void iwm_modereg_w(int data)
 	#endif
 }
 
-static int iwm_read_reg(void)
+
+
+static data8_t iwm_read_reg(void)
 {
-	int result = 0;
+	data8_t result = 0;
 
 	switch(iwm_lines & (IWM_Q6 | IWM_Q7))
 	{
@@ -157,7 +164,7 @@ static int iwm_read_reg(void)
 					logerror("iwm_read_reg(): latch mode off not implemented\n");
 			#endif
 
-			result = (*iwm_intf.read_data)();
+			result = (iwm_intf.read_data ? iwm_intf.read_data() : 0);
 		}
 		break;
 
@@ -174,7 +181,7 @@ static int iwm_read_reg(void)
 	return result;
 }
 
-static void iwm_write_reg(int data)
+static void iwm_write_reg(data8_t data)
 {
 	switch(iwm_lines & (IWM_Q6 | IWM_Q7))
 	{
@@ -195,7 +202,8 @@ static void iwm_write_reg(int data)
 					logerror("iwm_write_reg(): latch mode off not implemented\n");
 			#endif
 
-			(*iwm_intf.write_data)(data);
+			if (iwm_intf.write_data)
+				iwm_intf.write_data(data);
 		}
 		break;
 	}
@@ -205,7 +213,8 @@ static void iwm_turnmotoroff(int dummy)
 {
 	iwm_lines &= ~IWM_MOTOR;
 
-	(*iwm_intf.set_enable_lines)(0);
+	if (iwm_intf.set_enable_lines)
+		iwm_intf.set_enable_lines(0);
 
 	#if LOG_IWM_EXTRA
 		logerror("iwm_turnmotoroff(): Turning motor off\n");
@@ -237,8 +246,8 @@ static void iwm_access(int offset)
 	else
 		iwm_lines &= ~(1 << (offset >> 1));
 
-	if (offset < 0x08)
-		(*iwm_intf.set_lines)(iwm_lines & 0x0f);
+	if ((offset < 0x08) && iwm_intf.set_lines)
+		iwm_intf.set_lines(iwm_lines & 0x0f);
 
 	switch(offset)
 	{
@@ -249,7 +258,8 @@ static void iwm_access(int offset)
 			/* Immediately */
 			iwm_lines &= ~IWM_MOTOR;
 
-			(*iwm_intf.set_enable_lines)(0);
+			if (iwm_intf.set_enable_lines)
+				iwm_intf.set_enable_lines(0);
 
 			#if LOG_IWM_EXTRA
 				logerror("iwm_access(): Turning motor off\n");
@@ -268,7 +278,8 @@ static void iwm_access(int offset)
 
 		timer_enable(motor_off_timer, 0);
 
-		(*iwm_intf.set_enable_lines)((iwm_lines & IWM_DRIVE) ? 2 : 1);
+		if (iwm_intf.set_enable_lines)
+			iwm_intf.set_enable_lines((iwm_lines & IWM_DRIVE) ? 2 : 1);
 
 		#if LOG_IWM_EXTRA
 			logerror("iwm_access(): Turning motor on\n");
@@ -277,19 +288,21 @@ static void iwm_access(int offset)
 
 	case 0x0A:
 		/* turn off IWM_DRIVE */
-		if (iwm_lines & IWM_MOTOR)
-			(*iwm_intf.set_enable_lines)(1);
+		if ((iwm_lines & IWM_MOTOR) && iwm_intf.set_enable_lines)
+			iwm_intf.set_enable_lines(1);
 		break;
 
 	case 0x0B:
 		/* turn on IWM_DRIVE */
-		if (iwm_lines & IWM_MOTOR)
-			(*iwm_intf.set_enable_lines)(2);
+		if ((iwm_lines & IWM_MOTOR) && iwm_intf.set_enable_lines)
+			iwm_intf.set_enable_lines(2);
 		break;
 	}
 }
 
-int iwm_r(int offset)
+
+
+data8_t iwm_r(offs_t offset)
 {
 	offset &= 15;
 
@@ -301,7 +314,9 @@ int iwm_r(int offset)
 	return (offset & 1) ? 0 : iwm_read_reg();
 }
 
-void iwm_w(int offset, int data)
+
+
+void iwm_w(offs_t offset, data8_t data)
 {
 	offset &= 15;
 
@@ -315,7 +330,8 @@ void iwm_w(int offset, int data)
 }
 
 
-int iwm_get_lines(void)
+
+data8_t iwm_get_lines(void)
 {
 	return iwm_lines & 0x0f;
 }

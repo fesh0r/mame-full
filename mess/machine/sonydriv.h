@@ -19,15 +19,15 @@ enum
 int sony_floppy_load(mess_image *img, mame_file *fp, int allowablesizes);
 void sony_floppy_unload(mess_image *img);
 
-void sony_set_lines(int lines);
+void sony_set_lines(data8_t lines);
 void sony_set_enable_lines(int enable_mask);
 void sony_set_sel_line(int sel);
 /*int sony_get_sel_line(void);*/
 
 void sony_set_speed(int speed);
 
-int sony_read_data(void);
-void sony_write_data(int data);
+data8_t sony_read_data(void);
+void sony_write_data(data8_t data);
 int sony_read_status(void);
 
 #endif /* SONYDRIV_H */
