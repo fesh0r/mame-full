@@ -134,6 +134,8 @@ static int dbg_dasm_relative_jumps = 0;
 
 static const char *dbg_info_once = NULL;
 
+static int dbg_show_scanline = 0;
+
 /****************************************************************************
  * Color settings
  ****************************************************************************/
@@ -326,6 +328,7 @@ static void cmd_set_mem_squeezed( void );
 static void cmd_set_element_color( void );
 static void cmd_brk_exec_toggle( void );
 static void cmd_brk_data_toggle( void );
+static void cmd_toggle_scanlines( void );
 
 static void cmd_switch_window( void );
 static void cmd_dasm_up( void );
@@ -848,6 +851,11 @@ static s_command commands[] = {
 	"Save binary to <filename> from address <start> to <end>\n" \
 	"[either OPCODES (from OP_ROM, default) or DATA (from OP_RAM), also 0|1].",
 	cmd_save_to_file },
+{	(1<<EDIT_CMDS),
+	"SCANLINE",     0,          CODE_NONE,
+	"",
+	"Toggles the display of scanlines",
+	cmd_toggle_scanlines },
 {	(1<<EDIT_CMDS),
 	"IGNORE",       0,          CODE_NONE,
 	"<cpunum>",
@@ -2462,6 +2470,12 @@ static void dump_regs( void )
 			}
 		}
 	}
+
+	if (dbg_show_scanline)
+	{
+		win_printf( win, "Scanline: %d Horz: %d\n", cpu_getscanline(), cpu_gethorzbeampos());
+	}
+
 	regs->top = y;
 	y = 0;
 
@@ -4948,6 +4962,15 @@ static void cmd_brk_data_toggle( void )
 }
 
 /**************************************************************************
+ * cmd_toggle_scanlines
+ * Toggles the display of scanlines in the display
+ **************************************************************************/
+static void cmd_toggle_scanlines( void )
+{
+	dbg_show_scanline = !dbg_show_scanline;
+}
+
+/**************************************************************************
  * cmd_run_to_cursor
  * Set temporary break point at cursor line and go
  **************************************************************************/
@@ -5269,6 +5292,7 @@ void mame_debug_init(void)
 	debug_key_pressed = 1;
 
 	first_time = 1;
+	dbg_show_scanline = 0;
 }
 
 /**************************************************************************
