@@ -56,6 +56,7 @@ case 0x6C:
 
 /* BRK */
 case 0x00:
+  if (errorlog) fprintf (errorlog, "BRK executed, pc: %04x\n", R->PC.W);
   R->PC.W++;
   M_PUSH(R->PC.B.h);M_PUSH(R->PC.B.l);
   M_PUSH(R->P|B_FLAG);

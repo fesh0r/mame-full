@@ -4,6 +4,11 @@
 
   Generic functions, mostly ROM and graphics related.
 
+  MESS Changes
+  	. Added drawgfx_line
+	. Changed disclaimer to make sense for MESS
+	. changed "MAME" in strings to "MESS"
+  	
 *********************************************************************/
 
 #include "driver.h"
@@ -70,17 +75,18 @@ static inline void write_dword(int *address, int data)
 #endif
 
 
-
+/* MESS */
 void showdisclaimer(void)   /* MAURY_BEGIN: dichiarazione */
 {
-	printf("MAME is an emulator: it reproduces, more or less faithfully, the behaviour of\n"
-		 "several arcade machines. But hardware is useless without software, so an image\n"
-		 "of the ROMs which run on that hardware is required. Such ROMs, like any other\n"
-		 "commercial software, are copyrighted material and it is therefore illegal to\n"
-		 "use them if you don't own the original arcade machine. Needless to say, ROMs\n"
-		 "are not distributed together with MAME. Distribution of MAME together with ROM\n"
-		 "images is a violation of copyright law and should be promptly reported to the\n"
-		 "authors so that appropriate legal action can be taken.\n\n");
+	printf("MESS is an emulator: it reproduces, more or less faithfully, the behaviour of\n"
+		 "several computer and console systems. But hardware is useless without software\n"
+		 "so an image of the ROMs, cartridges, discs, and cassettes which run on that\n"
+		 "hardware is required. Such images, like any other commercial software, are\n"
+		 "copyrighted material and it is therefore illegal to use them if you don't own\n"
+		 "the original media from which the images are derived. Needless to say, these\n"
+		 "images are not distributed together with MESS. Distribution of MESS together\n"
+		 "with these images is a violation of copyright law and should be promptly\n"
+		 "reported to the authors so that appropriate legal action can be taken.\n\n");
 }                           /* MAURY_END: dichiarazione */
 
 /***************************************************************************
@@ -278,13 +284,13 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 			sum = ((sum & 0xffff) << 16) | (xor & 0xffff);
 			if (expchecksum != sum)
 			{
-				#ifdef macintosh	/* JB 971005 */
-					printf("The checksum of ROM '%-12s' does not match the one MacMAME was tested with.\r"
+				#ifdef macintosh	/* JB 971005 */ /* MESS */
+					printf("The checksum of ROM '%-12s' does not match the one MESS was tested with.\r"
 					"WARNING: the game might not run correctly.\r"
 					"Expected:%08x  Found:%08x\r",name,expchecksum,sum);
 				#else
 				if (checksumwarning == 0)
-					printf("The checksum of some ROMs does not match that of the ones MAME was tested with.\n"
+					printf("The checksum of some ROMs does not match that of the ones MESS was tested with.\n"
 							"WARNING: the game might not run correctly.\n"
 							"Name         Expected  Found\n");
 				checksumwarning++;
@@ -367,7 +373,10 @@ void printromlist(const struct RomModule *romp,const char *basename)
 	}
 }
 
-
+int find_driver (const char *gamename)
+{
+	return 1; /* default to Genesis for now */
+}
 
 /***************************************************************************
 
@@ -420,7 +429,7 @@ struct GameSamples *readsamples(const char **samplenames,const char *basename)
 
 					osd_fseek(f,0,SEEK_SET);
 					osd_fread(f,buf,4);
-					if (memcmp(buf, "MAME", 4) == 0)
+					if (memcmp(buf, "MESS", 4) == 0)		/* MESS */
 					{
 						osd_fread(f,&smplen,4);         /* all datas are LITTLE ENDIAN */
 						osd_fread(f,&smpfrq,4);
@@ -1840,6 +1849,443 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		drawgfx_core8(dest,gfx,code,color,flipx,flipy,sx,sy,clip,transparency,transparent_color,1);
 	else
 		drawgfx_core16(dest,gfx,code,color,flipx,flipy,sx,sy,clip,transparency,transparent_color,1);
+}
+
+/***************************************************************************
+
+  Draw graphic elements in the specified bitmap.
+
+  transparency == TRANSPARENCY_NONE - no transparency.
+  transparency == TRANSPARENCY_PEN - bits whose _original_ value is == transparent_color
+                                     are transparent. This is the most common kind of
+									 transparency.
+  transparency == TRANSPARENCY_COLOR - bits whose _remapped_ value is == Machine->pens[transparent_color]
+                                     are transparent. This is used by e.g. Pac Man.
+  transparency == TRANSPARENCY_THROUGH - if the _destination_ pixel is == Machine->pens[transparent_color],
+                                     the source pixel is drawn over it. This is used by
+									 e.g. Jr. Pac Man to draw the sprites when the background
+									 has priority over them.
+
+***************************************************************************/
+void drawgfx_line(struct osd_bitmap *dest,const struct GfxElement *gfx,
+		unsigned int code,unsigned int color,int flipx,int y,int sx,int sy,
+		const struct rectangle *clip,int transparency,int transparent_color)
+{
+	int ox,ex,start;
+	const unsigned char *sd;
+	unsigned char *bm,*bme;
+	int col;
+	int *sd4;
+	int trans4,col4;
+	struct rectangle myclip;
+
+
+	if (!gfx) return;
+
+#ifdef BIGSCREEN
+	/* kludge to move the visible rectangle of the display into the screen bitmap */
+	if (dest == Machine->scrbitmap && clip)
+	{
+		int corrx,corry;
+
+
+		corrx = Machine->drv->visible_area.min_x;
+		corry = Machine->drv->visible_area.min_y;
+
+		sx -= corrx;
+		sy -= corry;
+		if (clip)
+		{
+			myclip.min_x = clip->min_x - corrx;
+			myclip.max_x = clip->max_x - corrx;
+			myclip.min_y = clip->min_y - corry;
+			myclip.max_y = clip->max_y - corry;
+			clip = &myclip;
+		}
+	}
+#endif
+
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+	{
+		sx = dest->width - gfx->width - sx;
+		if (clip)
+		{
+			int temp;
+
+
+			/* clip and myclip might be the same, so we need a temporary storage */
+			temp = clip->min_x;
+			myclip.min_x = dest->width-1 - clip->max_x;
+			myclip.max_x = dest->width-1 - temp;
+			myclip.min_y = clip->min_y;
+			myclip.max_y = clip->max_y;
+			clip = &myclip;
+		}
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+	{
+		sy = dest->height - gfx->height - sy;
+		if (clip)
+		{
+			int temp;
+
+
+			myclip.min_x = clip->min_x;
+			myclip.max_x = clip->max_x;
+			/* clip and myclip might be the same, so we need a temporary storage */
+			temp = clip->min_y;
+			myclip.min_y = dest->height-1 - clip->max_y;
+			myclip.max_y = dest->height-1 - temp;
+			clip = &myclip;
+		}
+	}
+
+
+	/* check bounds */
+	ox = sx;
+	ex = sx + gfx->width-1;
+	if (sx < 0) sx = 0;
+	if (clip && sx < clip->min_x) sx = clip->min_x;
+	if (ex >= dest->width) ex = dest->width-1;
+	if (clip && ex > clip->max_x) ex = clip->max_x;
+	if (sx > ex) return;
+	if (sy < 0) sy = 0;
+	if (clip && sy < clip->min_y) sy = clip->min_y;
+	if (sy >= dest->height) sy = dest->height-1;
+	if (clip && sy > clip->max_y) sy = clip->max_y;
+
+	osd_mark_dirty (sx,sy,ex,sy,0);
+
+	start = (code % gfx->total_elements) * gfx->height + y;
+
+
+	/* if necessary, remap the transparent color */
+	if (transparency == TRANSPARENCY_COLOR || transparency == TRANSPARENCY_THROUGH)
+		transparent_color = Machine->pens[transparent_color];
+
+
+	if (gfx->colortable)	/* remap colors */
+	{
+		const unsigned short *paldata;	/* ASG 980209 */
+
+		paldata = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)];
+
+		switch (transparency)
+		{
+			case TRANSPARENCY_NONE:
+				if (flipx)	/* X flip */
+				{
+					{
+						bm  = dest->line[sy];
+						bme = bm + ex;
+						sd = gfx->gfxdata->line[start] + gfx->width-1 - (sx-ox);
+						for( bm += sx ; bm <= bme-7 ; bm+=8 )
+						{
+							sd -= 8;
+							bm[0] = paldata[sd[8]];
+							bm[1] = paldata[sd[7]];
+							bm[2] = paldata[sd[6]];
+							bm[3] = paldata[sd[5]];
+							bm[4] = paldata[sd[4]];
+							bm[5] = paldata[sd[3]];
+							bm[6] = paldata[sd[2]];
+							bm[7] = paldata[sd[1]];
+						}
+						for( ; bm <= bme ; bm++ )
+							*bm = paldata[*(sd--)];
+					}
+				}
+				else		/* normal */
+				{
+					{
+						bm  = dest->line[sy];
+						bme = bm + ex;
+						sd = gfx->gfxdata->line[start] + (sx-ox);
+						for( bm += sx ; bm <= bme-7 ; bm+=8 )
+						{
+							bm[0] = paldata[sd[0]];
+							bm[1] = paldata[sd[1]];
+							bm[2] = paldata[sd[2]];
+							bm[3] = paldata[sd[3]];
+							bm[4] = paldata[sd[4]];
+							bm[5] = paldata[sd[5]];
+							bm[6] = paldata[sd[6]];
+							bm[7] = paldata[sd[7]];
+							sd+=8;
+						}
+						for( ; bm <= bme ; bm++ )
+							*bm = paldata[*(sd++)];
+					}
+				}
+				break;
+
+			case TRANSPARENCY_PEN:
+				trans4 = transparent_color * 0x01010101;
+				if (flipx)	/* X flip */
+				{
+					{
+						bm  = dest->line[sy];
+						bme = bm + ex;
+						sd4 = (int *)(gfx->gfxdata->line[start] + gfx->width -4- (sx-ox));
+						for( bm += sx ; bm <= bme-3 ; bm+=4 )
+						{
+							if ((col4=*sd4) != trans4){
+								col = (col4>>24)&0xff;
+								if (col != transparent_color) bm[BL0] = paldata[col];
+								col = (col4>>16)&0xff;
+								if (col != transparent_color) bm[BL1] = paldata[col];
+								col = (col4>>8)&0xff;
+								if (col != transparent_color) bm[BL2] = paldata[col];
+								col = col4&0xff;
+								if (col != transparent_color) bm[BL3] = paldata[col];
+							}
+							sd4--;
+						}
+						sd = (unsigned char *)sd4+3;
+						for( ; bm <= bme ; bm++ )
+						{
+							col = *(sd--);
+							if (col != transparent_color) *bm = paldata[col];
+						}
+					}
+				}
+				else		/* normal */
+				{
+					{
+						bm  = dest->line[sy];
+						bme = bm + ex;
+						sd4 = (int *)(gfx->gfxdata->line[start])+ (sx-ox);
+						for( bm += sx ; bm <= bme-3 ; bm+=4 )
+						{
+							if ((col4=*sd4) != trans4){
+								col = col4&0xff;
+								if (col != transparent_color) bm[BL0] = paldata[col];
+								col = (col4>>8)&0xff;
+								if (col != transparent_color) bm[BL1] = paldata[col];
+								col = (col4>>16)&0xff;
+								if (col != transparent_color) bm[BL2] = paldata[col];
+								col = (col4>>24)&0xff;
+								if (col != transparent_color) bm[BL3] = paldata[col];
+							}
+							sd4++;
+						}
+						sd = (unsigned char *)sd4;
+						for( ; bm <= bme ; bm++ )
+						{
+							col = *(sd++);
+							if (col != transparent_color) *bm = paldata[col];
+						}
+					}
+				}
+				break;
+
+			case TRANSPARENCY_COLOR:
+				if (flipx)	/* X flip */
+				{
+					{
+						bm  = dest->line[sy];
+						bme = bm + ex;
+						sd = gfx->gfxdata->line[start] + gfx->width-1- (sx-ox);
+						for( bm += sx ; bm <= bme ; bm++ )
+						{
+							col = paldata[*(sd--)];
+							if (col != transparent_color) *bm = col;
+						}
+					}
+				}
+				else		/* normal */
+				{
+					{
+						bm  = dest->line[sy];
+						bme = bm + ex;
+						sd = gfx->gfxdata->line[start]+ (sx-ox);
+						for( bm += sx ; bm <= bme ; bm++ )
+						{
+							col = paldata[*(sd++)];
+							if (col != transparent_color) *bm = col;
+						}
+					}
+				}
+				break;
+
+			case TRANSPARENCY_THROUGH:
+				if (flipx)	/* X flip */
+				{
+					{
+						bm  = dest->line[sy];
+						bme = bm + ex;
+						sd = gfx->gfxdata->line[start] + gfx->width-1- (sx-ox);
+						for( bm += sx ; bm <= bme ; bm++ )
+						{
+							if (*bm == transparent_color)
+								*bm = paldata[*sd];
+							sd--;
+						}
+					}
+				}
+				else		/* normal */
+				{
+					{
+						bm  = dest->line[sy];
+						bme = bm + ex;
+						sd = gfx->gfxdata->line[start]+ (sx-ox);
+						for( bm += sx ; bm <= bme ; bm++ )
+						{
+							if (*bm == transparent_color)
+								*bm = paldata[*sd];
+							sd++;
+						}
+					}
+				}
+				break;
+		}
+	}
+	else
+	{
+		switch (transparency)
+		{
+			case TRANSPARENCY_NONE:		/* do a verbatim copy (faster) */
+				if (flipx)	/* X flip */
+				{
+					{
+						bm  = dest->line[sy];
+						bme = bm + ex;
+						sd = gfx->gfxdata->line[start] + gfx->width-1- (sx-ox);
+						for( bm += sx ; bm <= bme-7 ; bm+=8 )
+						{
+							sd-=8;
+							bm[0] = sd[8];
+							bm[1] = sd[7];
+							bm[2] = sd[6];
+							bm[3] = sd[5];
+							bm[4] = sd[4];
+							bm[5] = sd[3];
+							bm[6] = sd[2];
+							bm[7] = sd[1];
+						}
+						for( ; bm <= bme ; bm++ )
+							*bm = *(sd--);
+					}
+				}
+				else		/* normal */
+				{
+					{
+						bm = dest->line[sy] + sx;
+						sd = gfx->gfxdata->line[start]+ (sx-ox);
+						memcpy(bm,sd,ex-sx+1);
+					}
+				}
+				break;
+
+			case TRANSPARENCY_PEN:
+			case TRANSPARENCY_COLOR:
+				trans4 = transparent_color * 0x01010101;
+
+				if (flipx)	/* X flip */
+				{
+					{
+						bm  = dest->line[sy];
+						bme = bm + ex;
+						sd4 = (int *)(gfx->gfxdata->line[start] + gfx->width-4- (sx-ox));
+						for( bm += sx ; bm <= bme-3 ; bm+=4 )
+						{
+							if( (col4=*sd4) != trans4 )
+							{
+								col = (col4>>24)&0xff;
+								if (col != transparent_color) bm[BL0] = col;
+								col = (col4>>16)&0xff;
+								if (col != transparent_color) bm[BL1] = col;
+								col = (col4>>8)&0xff;
+								if (col != transparent_color) bm[BL2] = col;
+								col = col4&0xff;
+								if (col != transparent_color) bm[BL3] = col;
+							}
+							sd4--;
+						}
+						sd = (unsigned char *)sd4+3;
+						for( ; bm <= bme ; bm++ )
+						{
+							col = *(sd--);
+							if (col != transparent_color) *bm = col;
+						}
+					}
+				}
+				else	/* normal */
+				{
+					int xod4;
+
+					{
+						bm = dest->line[sy];
+						bme = bm + ex;
+						sd4 = (int *)(gfx->gfxdata->line[start])+ (sx-ox);
+						bm += sx;
+						while( bm <= bme-3 )
+						{
+							/* bypass loop */
+							while( bm <= bme-3 && *sd4 == trans4 )
+							{ sd4++; bm+=4; }
+							/* drawing loop */
+							while( bm <= bme-3 && (col4=*sd4) != trans4 )
+							{
+								xod4 = col4^trans4;
+								if( (xod4&0x000000ff) && (xod4&0x0000ff00) &&
+								    (xod4&0x00ff0000) && (xod4&0xff000000) )
+								{
+									*(int *)bm = col4;
+								}
+								else
+								{
+									if(xod4&0x000000ff) bm[BL0] = col4;
+									if(xod4&0x0000ff00) bm[BL1] = col4>>8;
+									if(xod4&0x00ff0000) bm[BL2] = col4>>16;
+									if(xod4&0xff000000) bm[BL3] = col4>>24;
+								}
+								sd4++;
+								bm+=4;
+							}
+						}
+						sd = (unsigned char *)sd4;
+						for( ; bm <= bme ; bm++ )
+						{
+							col = *(sd++);
+							if (col != transparent_color) *bm = col;
+						}
+					}
+				}
+				break;
+
+			case TRANSPARENCY_THROUGH:
+				if (flipx)	/* X flip */
+				{
+					{
+						bm = dest->line[sy];
+						bme = bm + ex;
+						sd = gfx->gfxdata->line[start] + gfx->width-1- (sx-ox);
+						for( bm = bm+sx ; bm <= bme ; bm++ )
+						{
+							if (*bm == transparent_color)
+								*bm = *sd;
+							sd--;
+						}
+					}
+				}
+				else		/* normal */
+				{
+					{
+						bm = dest->line[sy];
+						bme = bm + ex;
+						sd = gfx->gfxdata->line[start]+ (sx-ox);
+						for( bm = bm+sx ; bm <= bme ; bm++ )
+						{
+							if (*bm == transparent_color)
+								*bm = *sd;
+							sd++;
+						}
+					}
+				}
+				break;
+		}
+	}
 }
 
 /***************************************************************************

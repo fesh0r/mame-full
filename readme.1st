@@ -1,0 +1,167 @@
+                    M.E.S.S.  -  Multi-Emulator Super System
+                      Copyright (C) 1998  by the MESS team
+					              DOS/Windows
+
+How to Contact Us
+-----------------
+
+The current port maintainer for the DOS/Windows version is Mike Balfour
+(mab22@po.cwru.edu).  However, these responsibilities will be transferred
+shortly. The actual release 0.1 was compiled and thrown together by
+Juergen Buchmueller (pullmoll@t-online.de).
+
+DON'T SEND BINARY ATTACHMENTS WITHOUT ASKING FIRST, *ESPECIALLY* ROM IMAGES.
+
+THESE ARE NOT SUPPORT ADDRESSES. Support questions sent to these addresses
+*will* be ignored. Please understand that this is a *free* project, mostly
+targeted at experienced users. We don't have the resources to provide end user
+support. Basically, if you can't get the emulator to work, you are on your own.
+First of all, read the docs carefully. If you still can't find an answer to
+your question, try checking the beginner's sections that many emulation pages
+have, or ask on the appropriate Usenet newsgroups (e.g. comp.emulators.misc)
+or on the emulation message boards (e.g. http://www.escape.com/~ego/dave/console/).
+
+Also, DO NOT SEND REQUESTS FOR NEW SYSTEMS TO ADD, unless you have some original
+info on the hardware or, even better, have the technical expertise needed to
+help us. Please don't send us information widely available on the Internet -
+we are perfectly capable of finding it ourselves, thank you.
+
+Usage
+-----
+
+MESS [system name] [image names] [options]
+
+for example
+
+MESS nes zelda.nes                    will run Zelda on the Nintendo
+MESS coleco dkong.rom -soundcard 0    will run Donkey Kong on the Colecovision
+                                      without sound
+MESS trs80 boot.dsk arcade1.dsk       will run the TRS80 with two disks loaded
+MESS cgenie games1.dsk                will run the Colour Genie with one disk iamge loaded
+
+
+options:
+-scanlines/-noscanlines (default: -scanlines)
+              if the default mode doesn't work with your monitor/video card
+              (double image/picture squashed vertically), use -noscanlines
+              or -vesa.
+-vesa/-novesa (default: -novesa)
+              Decides wether to use tweaked VGA modes or standard VESA modes.
+              Note that some hires games require VESA modes, -novesa is
+              ignored in this case.
+-ntsc         a 288x224 mode with standard NTSC frequencies. You need some
+              additional hardware (VGA2TV converter) to make use of this.
+-resolution XxY
+              where X and Y are width and height (ex: '-resolution 800x600')
+              MESS goes some lengths to autoselect a good resolution. You can
+              override MESS's choice with this option.
+              You can use -XxY (e.g. -800x600) as a shortcut. Frontend
+              authors are advised to use -resolution XxY, however.
+              If you get an error 'XxY not supported', you probably
+              need Scitech's Display Doctor, which provides the 'de facto'
+              standard VESA implementaion (http://www.scitechsoft.com)
+              Some common resolutions are 320x200, 320x240, 400x300,
+              512x384, 640x400, 640x480, 800x600 and 1024x768.
+-skiplines N  since many games use a screen taller than 240 lines,
+              they won't fit in the screen. The parameter 'N' sets
+              the initial number of lines to skip at the top of
+              the screen. You can adjust the position while the game
+              is running using the PGUP and PGDN keys.
+-skipcolumns N same as above but moves the screen horizontally. This is rarely
+              used since the screen usually fits in the screen. To adjust the
+              position at run time, use SHIFT + PGUP/PGDN.
+-double/-nodouble (default: auto)
+              use nodouble to disable pixel doubling in VESA modes (faster,
+              but smaller picture). Use double to force pixel doubling when
+              the image doesn't fit in the screen (you'll have to use PGUP and
+              PGDN to scroll).
+-depth n      (default: 8)
+              Some games might need 65k color modes to get accurate graphics.
+              You might want to use -depth 16 for that case.
+-vgafreq n    where n can be 0 (default) 1, 2 or 3.
+              use different frequencies for the custom video modes. This
+              could reduce flicker, especially in the 224x288noscanlines
+              mode. WARNING: THE FREQUENCIES USED MIGHT BE WAY OUTSIDE OF
+              YOUR MONITOR RANGE, AND COULD EVEN DAMAGE IT. USE THESE OPTIONS
+              AT YOUR OWN RISK.
+-vsync/-novsync (default: -novsync)
+              syncronize video display with the video beam instead of using
+              the timer. This option can only be used if the selected video
+              mode has an appropriate refresh rate; MESS will otherwise refuse
+              to start, telling you the actual refresh rate of the video mode,
+              and the rate it should have.
+              If you are using a tweaked mode, MESS will try to automatically
+              pick the correct setting for -vgafreq; you can still override it
+              using the -vgafreq option. Note: the 224x288 noscanlines mode
+              doesn't work on most cards. This mode is used by many games,
+              e.g. Pac Man and Galaga. If it doesn't work on your card, either
+              use the scanlines version, or don't use -vsync.
+              If you are using a VESA mode you should use the program which
+              came with your video card to set the appropriate refresh rate.
+              Note that when this option is turned on, speed will NOT
+              downgrade nicely if your system is not fast enough (i.e.:
+              jerkier gameplay).
+-soundcard n  select sound card (if this is not specified, you will be asked
+              interactively)
+-sr n         set the audio sample rate. The default is 22050. Smaller values
+              (e.g. 11025) will cause lower audio quality but faster emulation
+			  speed. Higher values (e.g. 44100) will cause higher audio quality
+			  but slower emulation speed.
+-sb n         set the audio sample bits, either 8 or 16. The default is 8.
+              16 will increase quality with certain games, but decrease speed.
+              This is a software setting, not hardware. The sound card will
+              always be used in 16 bit mode, if possible.
+-joy n/-nojoy (default: -nojoy) allow joystick input, n can be:
+              0 - normal 2 button joystick
+              1 - CH Flightstick Pro
+              2 - Stick/Pad with 4 buttons
+              3 - Stick/Pad with 6 buttons
+              4 - dual joysticks
+              5 - Wingman Extreme (or Wingman Warrior without spinner)
+              Press F7 to calibrate the joystick. Calibration data will be
+              saved in mess.cfg. If you're using different joytypes for
+              different games, you may need to recalibrate your joystick
+              every time. When calibrating two analog joysticks, move
+              both at the same time!
+-fm/-nofm (default: -nofm) use the SoundBlaster OPL chip for music emulation
+              in some games. This is faster, but emulation is less faithful.
+-log          create a log of illegal memory accesses in ERROR.LOG
+-help, -?     display current mess version and copyright notice
+-list         display a list of currently supported games
+-listfull     display a list of game directory names + description
+-listdetails  display a detailed list of drivers and the hardware they use
+-mouse/-nomouse (default: -mouse) enable/disable mouse support
+-frameskip n  skip frames to speed up the emulation. For example, if the game
+              normally runs at 60 fps, "-frameskip 1" will make it run at 30
+              fps, and "-frameskip 2" at 20 fps. Use F11 to check the speed
+              your computer is actually reaching. If the game is too slow,
+              increase the frameskip value. Note that this setting can also
+              affect audio quality (some games sound better, others sound
+              worse).  Maximum value for frameskip is 3.
+-cheat        Cheats like the speedup in Pac Man or the level skip in many
+              other games are disabled by default. Use this switch to turn
+              them on.
+-debug        Activate the integrated debugger. During the emulation, press
+              tilde to enter the debugger.
+-record name   Record joystick input on file INP/name.inp.
+-playback name Playback joystick input from file INP/name.inp.
+-ignorecfg    ignore mess.cfg and start with the default settings
+
+
+The following keys work in all emulators:
+Tab          Enter configuration menu. Press Tab or Esc to get back to the
+             emulation.
+ScrollLock   Pause
+F5           Show the game graphics. Use cursor keys to change set/color,
+             F5 or Esc to return to the emulation.
+F7           Calibrate the joystick
+F8           Change frame skip on the fly (60, 30, 20, or 15)
+F9           Reset the emulation
+F10          Toggle speed throttling
+F11          Toggle speed display
+F12          Save a screen snapshot. The default target directory is PCX, you
+             have to create it yourself, it will not be created by the program
+             if it isn't there.
+numpad +/-   Volume adjust
+left shift + numpad +/- Gamma correction adjust
+ESC          Exit emulator

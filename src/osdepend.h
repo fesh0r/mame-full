@@ -1,6 +1,7 @@
 #ifndef OSDEPEND_H
 #define OSDEPEND_H
 
+#define MESS /* MESS, also added OSD_FILETYPE_ROM_CART */
 
 struct osd_bitmap
 {
@@ -247,12 +248,18 @@ void osd_trak_read(int *deltax,int *deltay);
 /* return a value in the range -128 .. 128 (yes, 128, not 127) */
 int osd_analogjoy_read(int axis);
 
+/* handle events during emulation (menu, volume etc.)
+   return true if the emulation shall exit */
+int osd_handle_event(void);
+
 /* file handling routines */
 #define OSD_FILETYPE_ROM 1
 #define OSD_FILETYPE_SAMPLE 2
 #define OSD_FILETYPE_HIGHSCORE 3
 #define OSD_FILETYPE_CONFIG 4
 #define OSD_FILETYPE_INPUTLOG 5
+#define OSD_FILETYPE_ROM_CART 6
+#define OSD_FILETYPE_IMAGE 7
 
 /* gamename holds the driver name, filename is only used for ROMs and    */
 /* samples. If 'write' is not 0, the file is opened for write. Otherwise */
@@ -274,5 +281,32 @@ void osd_save_config(int frameskip, int samplerate, int samplebits);
 int osd_get_config_samplerate(int def_samplerate);
 int osd_get_config_samplebits(int def_samplebits);
 int osd_get_config_frameskip(int def_frameskip);
+
+/* floppy disc controller direct access */
+
+/* initialize the needed hardware & structures; returns 0 on success */
+int  osd_fdc_init(void);
+/* shut down */
+void osd_fdc_exit(void);
+/* start motors for <unit> number (0 = A:, 1 = B:) and */
+/* set type of drive (0 = 360K, 1 = 720K, 2 = 1.2M, 3 = 1.44M) */
+void osd_fdc_motors(unsigned char unit, unsigned char type);
+/* set single (den == 0) or double (den != 0) density */
+void osd_fdc_density(unsigned char den);
+/* interrupt the current command */
+void osd_fdc_interrupt(void);
+/* recalibrate the current drive and update *track */
+unsigned char osd_fdc_recal(unsigned char * track);
+/* seek to a given track number and update *track */
+unsigned char osd_fdc_seek(unsigned char t, unsigned char *track);
+/* step into a direction (+1/-1) and update *track */
+unsigned char osd_fdc_step(int dir, unsigned char *track);
+/* format a track t, head h, spt sectors per track. sector map at *fmt */
+unsigned char osd_fdc_format(unsigned char t, unsigned char h, unsigned char spt, unsigned char * fmt);
+/* put a sector from memory *buff to track t, head h, sector s */
+/* write deleted data address mark if deleted != 0 */
+unsigned char osd_fdc_put_sector(unsigned char t, unsigned char h, unsigned char s, unsigned char * buff, unsigned char deleted);
+/* read a sector to memory *buff from track t, head h, sector s */
+unsigned char osd_fdc_get_sector(unsigned char t, unsigned char h, unsigned char s, unsigned char * buff);
 
 #endif

@@ -1,6 +1,13 @@
 #ifndef DRIVER_H
 #define DRIVER_H
 
+/*
+	MESS Changes
+		. GameDriver struct modified for ROM loading
+		. Input ports have COIN changed to SELECT
+		. Added IPT_KEYBOARD to reflect a general keyboard setting for computers
+		. Added fields to the GameDriver to support number of peripherals
+*/
 
 #include "common.h"
 #include "palette.h"
@@ -55,7 +62,8 @@ enum { IPT_END=1,IPT_PORT,
 	IPT_PADDLE, IPT_DIAL, IPT_TRACKBALL_X, IPT_TRACKBALL_Y, IPT_AD_STICK_X, IPT_AD_STICK_Y,
 	IPT_ANALOG_END,
 
-	IPT_COIN1, IPT_COIN2, IPT_COIN3, IPT_COIN4,	/* coin slots */
+	IPT_SELECT1, IPT_SELECT2, IPT_SELECT3, IPT_SELECT4,	/* MESS - select buttons */
+	IPT_KEYBOARD,	/* MESS */
 	IPT_START1, IPT_START2, IPT_START3, IPT_START4,	/* start buttons */
 	IPT_SERVICE, IPT_TILT,
 	IPT_DIPSWITCH_NAME, IPT_DIPSWITCH_SETTING,
@@ -235,8 +243,6 @@ struct MachineSound
 #define MAX_SOUND 4	/* MAX_SOUND is the maximum number of sound subsystems */
 					/* which can run at the same time. Currently, 4 is enough. */
 
-
-
 struct MachineDriver
 {
 	/* basic machine hardware */
@@ -329,7 +335,16 @@ struct GameDriver
 	const char *credits;
 	const struct MachineDriver *drv;
 
+#ifndef MESS
 	const struct RomModule *rom;
+#else
+	int (*rom_load)(void); /* used to load the ROM and set up memory regions */
+	int (*rom_id)(const char *name, const char *gamename); /* returns 1 if the ROM will work with this driver */
+	int num_of_rom_slots;
+	int num_of_floppy_drives;
+	int num_of_hard_drives;
+	int num_of_cassette_drives;
+#endif
 	void (*rom_decode)(void);		/* used to decrypt the ROMs after loading them */
 	void (*opcode_decode)(void);	/* used to decrypt the CPU opcodes in the ROMs, */
 									/* if the encryption is different from the above. */
@@ -346,7 +361,7 @@ struct GameDriver
 		/* Otherwise, leave this field null and provide palette and colortable. */
 	const unsigned char *color_prom;
 	const unsigned char *palette;
-	const unsigned char *colortable;
+	const unsigned short *colortable;
 	int orientation;	/* orientation of the monitor; see defines below */
 
 	int (*hiscore_load)(void);	/* will be called every vblank until it */

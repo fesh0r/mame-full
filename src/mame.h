@@ -7,10 +7,13 @@
 #include "osdepend.h"
 #include "common.h"
 
-extern char mameversion[];
+extern char messversion[];
 extern FILE *errorlog;
 
-#define MAX_GFX_ELEMENTS 20
+extern int framecount; /* MESS */
+extern int frameskip; /* MESS */
+
+#define MAX_GFX_ELEMENTS 32 /* MESS */
 #define MAX_MEMORY_REGIONS 10
 
 #define MAX_LAYERS 4	/* MAX_LAYERS is the maximum number of gfx layers */
@@ -62,6 +65,10 @@ struct GameOptions {
 	int rol;
 	int flipx;
 	int flipy;
+	char rom_name[MAX_ROM][32];  /* MESS */
+	char floppy_name[MAX_FLOPPY][32]; /* MESS */
+	char hard_name[MAX_HARD][32]; /* MESS */
+	char cassette_name[MAX_CASSETTE][32]; /* MESS */
 };
 
 extern struct RunningMachine *Machine;

@@ -1,3 +1,6 @@
+/* Modified for MESS!!! */
+/* (Based on the 5/16/98 version of fronthlp.c) */
+
 #include "driver.h"
 #include "strings.h"
 
@@ -8,9 +11,7 @@
 /* for this to work correctly, the shells internal wildcard expansion */
 /* mechanism has to be disabled. Look into msdos.c */
 
-int  VerifyRomSet (int game);
-int  VerifySampleSet (int game);
-void get_rom_sample_path (int argc, char **argv, int game_index);
+void get_rom_path (int argc, char **argv, int game_index);
 
 static const struct GameDriver *gamedrv;
 
@@ -93,20 +94,12 @@ int frontend_help (int argc, char **argv)
 		/* check for front-end utilities */
 		if (!stricmp(argv[i],"-list")) list = 1;
 		if (!stricmp(argv[i],"-listfull")) list = 2;
-		if (!stricmp(argv[i],"-listsamdir")) list = 3;
+        if (!stricmp(argv[i],"-listdetails")) list = 7; /* A detailed MAMELIST.TXT type roms lister */
 
 #ifdef MAME_DEBUG /* do not put this into a public release! */
 		if (!stricmp(argv[i],"-lmr")) list = 6;
 #endif
 
-		/* these options REQUIRES gamename field to work */
-		if (strlen(gamename) > 0)
-		{
-			if (!stricmp(argv[i],"-listroms")) list = 4;
-			if (!stricmp(argv[i],"-listsamples")) list = 5;
-			if (!stricmp(argv[i],"-verifyroms")) verify = 1;
-			if (!stricmp(argv[i],"-verifysamples")) verify = 2;
-		}
 	}
 
 	if ((strlen(gamename)> 0) || list || verify) help = 0;
@@ -120,12 +113,13 @@ int frontend_help (int argc, char **argv)
 
 	if (help)  /* brief help - useful to get current version info */
 	{
-		printf("M.A.M.E. v%s - Multiple Arcade Machine Emulator\n"
-				"Copyright (C) 1997-98 by Nicola Salmoria and the MAME Team\n\n",mameversion);
+		printf("M.E.S.S. v%s - Multiple Emulation Super System\n"
+				"Portions copyright (C) 1997-98 by the MESS Team\n"
+				"(Full copyright listing can be found in readme.txt)\n\n",messversion);
 		showdisclaimer();
-		printf("Usage:  MAME gamename [options]\n\n"
-				"        MAME -list      for a brief list of supported games\n"
-				"        MAME -listfull  for a full list of supported games\n\n"
+		printf("Usage:  MESS machine [image] [options]\n\n"
+				"        MESS -list      for a brief list of supported systems\n"
+				"        MESS -listfull  for a full list of supported systems\n\n"
 				"See readme.txt for a complete list of options.\n");
 
 		return 0;
@@ -134,7 +128,7 @@ int frontend_help (int argc, char **argv)
 	switch (list)  /* front-end utilities ;) */
 	{
 		case 1: /* simple games list */
-			printf("\nMAME currently supports the following games:\n\n");
+			printf("\nMESS currently supports the following systems:\n\n");
 			i = 0; j = 0;
 			while (drivers[i])
 			{
@@ -148,8 +142,8 @@ int frontend_help (int argc, char **argv)
 			}
 			if (j % 7) printf("\n");
 			printf("\n");
-			if (j != i) printf("Total ROM sets displayed: %4d - ", j);
-			printf("Total ROM sets supported: %4d\n", i);
+			if (j != i) printf("Total systems displayed: %4d - ", j);
+			printf("Total systems supported: %4d\n", i);
 			return 0;
 			break;
 		case 2: /* games list with descriptions */
@@ -163,127 +157,112 @@ int frontend_help (int argc, char **argv)
 			}
 			return 0;
 			break;
-		case 3: /* games list with samples directories */
-			printf("Name:     Samples dir:\n");
-			i = 0;
-			while (drivers[i])
-			{
-				if (!strwildcmp(gamename, drivers[i]->name))
-					if (drivers[i]->samplenames != 0 && drivers[i]->samplenames[0] != 0)
-					{
-						printf("%-10s",drivers[i]->name);
-						if (drivers[i]->samplenames[0][0] == '*')
-							printf("%s\n",drivers[i]->samplenames[0]+1);
-						else
-							printf("%s\n",drivers[i]->name);
-					}
-				i++;
-			}
-			return 0;
-			break;
-		case 4: /* game roms list or */
-		case 5: /* game samples list */
-			j = 0;
-			while (drivers[j] && (stricmp(gamename,drivers[j]->name) != 0))
-				j++;
-			if (drivers[j] == 0)
-			{
-				printf("Game \"%s\" not supported!\n",gamename);
-				return 1;
-			}
-			gamedrv = drivers[j];
-			if (list == 4)
-				printromlist(gamedrv->rom,gamename);
-			else
-			{
-				if (gamedrv->samplenames != 0 && gamedrv->samplenames[0] != 0)
-				{
-					i = 0;
-					while (gamedrv->samplenames[i] != 0)
-					{
-						printf("%s\n",gamedrv->samplenames[i]);
-						i++;
-					}
-				}
-			}
-			return 0;
-			break;
 		case 6:
-			for (i = 0; drivers[i]; i++)
-			{
-				get_rom_sample_path (argc, argv, i);
-				if (!osd_faccess (drivers[i]->name, OSD_FILETYPE_ROM))
-						printf ("%s\n", drivers[i]->name);
-			}
 			return 0;
 			break;
-	}
 
-	if (verify)  /* "verify" utilities */
-	{
-		int err = 0;
-		int correct = 0;
-		int incorrect = 0;
-		int res = 0;
-		for (i = 0; drivers[i]; i++)
-		{
-			if (strwildcmp(gamename, drivers[i]->name))
-				continue;
+        case 7: /* A detailed MAMELIST.TXT type roms lister */
 
-			/* set rom and sample path correctly */
-			get_rom_sample_path (argc, argv, i);
+            /* First, we shall print the header */
 
-			/* if using wildcards, ignore games we don't have romsets for. */
-			if (!osd_faccess (drivers[i]->name, OSD_FILETYPE_ROM))
+            printf(" system    cpu 1   cpu 2   cpu 3   sound 1   sound 2   sound 3   name\n");
+            printf("--------   -----   -----   -----   -------   -------   -------   --------------------------\n");
+
+            /* Let's cycle through the drivers */
+
+            i = 0;
+
+            while (drivers[i])
 			{
-				if (stricmp(gamename, drivers[i]->name) != 0) continue;
-			}
+                /* Dummy structs to fetch the information from */
 
-			if (verify == 1)
-			{
-				res = VerifyRomSet (i);
-				if (res)
-					printf ("romset %s ", drivers[i]->name);
-			}
-			if (verify == 2)
-			{
-				/* ignore games that need no samples */
-   				if (drivers[i]->samplenames == 0 ||
-					drivers[i]->samplenames[0] == 0)
-					continue;
+                const struct MachineDriver *x_driver = drivers[i]->drv;
+                const struct MachineCPU *x_cpu = x_driver->cpu;
+                const struct MachineSound *x_sound = x_driver->sound;
 
-				res = VerifySampleSet (i);
-				if (res)
-					printf ("sampleset %s ", drivers[i]->name);
-			}
+                /* First, the rom name */
 
-			if (res == 1)
-				printf ("not found\n");
-			else if (res == 2)
-			{
-				printf ("incorrect\n");
-				incorrect++;
-			}
-			else
-				correct++;
-			if (res)
-				err = res;
-		}
+                printf("%-10s ",drivers[i]->name);
 
-		if (correct+incorrect == 0)
-		{
-			printf("Game \"%s\" not supported!\n",gamename);
-			return 1;
-		}
-		else
-		{
-			printf("%d %s found, %d were OK.\n", correct+incorrect,
-					(verify == 1)? "romsets" : "samplesets", correct);
-			if (incorrect > 0)
-				return 2;
-			else
-				return 0;
-		}
+                /* Then, cpus */
+
+                for(j=0;j<MAX_CPU-1;j++) /* Increase to table to 4, when a game with 4 cpus will appear */
+                {
+                    switch(x_cpu[j].cpu_type & (~CPU_FLAGS_MASK | CPU_AUDIO_CPU))
+                    {
+                        case 0:         printf("        "); break;
+                        case CPU_Z80:   printf("Z80     "); break;
+                        case CPU_M6502: printf("M6502   "); break;
+                        case CPU_I86:   printf("I86     "); break;
+                        case CPU_I8039: printf("I8039   "); break;
+                        case CPU_M6803: printf("M6808   "); break;
+                        case CPU_M6805: printf("M6805   "); break;
+                        case CPU_M6809: printf("M6809   "); break;
+                        case CPU_M68000:printf("M68000  "); break;
+
+                        case CPU_Z80   |CPU_AUDIO_CPU: printf("[Z80]   "); break; /* Brackets mean that the cpu is only needed for sound. In cpu flags, 0x8000 means it */
+                        case CPU_M6502 |CPU_AUDIO_CPU: printf("[M6502] "); break;
+                        case CPU_I86   |CPU_AUDIO_CPU: printf("[I86]   "); break;
+                        case CPU_I8039 |CPU_AUDIO_CPU: printf("[I8039] "); break;
+                        case CPU_M6803 |CPU_AUDIO_CPU: printf("[M6808] "); break;
+                        case CPU_M6805 |CPU_AUDIO_CPU: printf("[M6805] "); break;
+                        case CPU_M6809 |CPU_AUDIO_CPU: printf("[M6809] "); break;
+                        case CPU_M68000|CPU_AUDIO_CPU: printf("[M68000]"); break;
+                    }
+                }
+
+                for(j=0;j<MAX_CPU-1;j++) /* Increase to table to 4, when a game with 4 cpus will appear */
+                {
+
+                    /* Dummy int to hold the number of specific sound chip.
+                       In every multiple-chip interface, number of chips
+                       is defined as the first variable, and it is integer. */
+
+                    int *x_num = x_sound[j].sound_interface;
+
+                    switch(x_sound[j].sound_type)
+                    {
+                        case 0: printf("          "); break; /* These don't have a number of chips, only one possible */
+                        case SOUND_CUSTOM:  printf("Custom    "); break;
+                        case SOUND_SAMPLES: printf("Samples   "); break;
+                        case SOUND_NAMCO:   printf("Namco     "); break;
+                        case SOUND_TMS5220: printf("TMS5520   "); break;
+                        case SOUND_VLM5030: printf("VLM5030   "); break;
+
+                        default:
+
+                                /* Let's print out the number of the chips */
+
+                                printf("%dx",*x_num);
+
+                                /* Then the chip's name */
+
+                                switch(x_sound[j].sound_type)
+                                {
+                                    case SOUND_DAC:     printf("DAC     "); break;
+                                    case SOUND_AY8910:  printf("AY-8910 "); break;
+                                    case SOUND_YM2203:  printf("YM-2203 "); break;
+                                    case SOUND_YM2151:  printf("YM-2151 "); break;
+                                    case SOUND_YM2151_ALT: printf("YM-2151a"); break;
+                                    case SOUND_YM3812:  printf("YM-3812 "); break;
+                                    case SOUND_SN76496: printf("SN76496 "); break;
+                                    case SOUND_POKEY:   printf("Pokey   "); break;
+                                    case SOUND_NES:     printf("NES     "); break;
+                                    case SOUND_ADPCM:   printf("ADPCM   "); break;
+                                    case SOUND_OKIM6295:printf("OKI6295 "); break;
+                                    case SOUND_MSM5205: printf("MSM5205 "); break;
+                                }
+                                break;
+                    }
+                }
+
+                /* Lastly, the name of the game and a \newline */
+
+                printf("%s\n",drivers[i]->description);
+                i++;
+            }
+            return 0;
+            break;
 	}
 
 	/* use a special return value if no frontend function used */

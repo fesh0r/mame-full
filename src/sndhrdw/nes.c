@@ -390,7 +390,7 @@ if (errorlog) fprintf(errorlog,"error: write to NES PSG #%d register #%d\n",n,r)
 		return;
 	}
 
-if (errorlog) fprintf(errorlog,"write %02x to NES PSG #%d register %d\n",v,n,r);
+//if (errorlog) fprintf(errorlog,"write %02x to NES PSG #%d register %d\n",v,n,r);
 
 	PSG->Regs[r] = v;
 

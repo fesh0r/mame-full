@@ -1,3 +1,6 @@
+/* Modified for MESS!!! */
+/* (Built from the 5/13/98 version of video.c) */
+
 #include "driver.h"
 #include <math.h>
 #include <pc.h>
@@ -8,7 +11,6 @@
 #include "TwkUser.c"
 #include <allegro.h>
 #include "vgafreq.h"
-#include "vidhrdw/vector.h"
 
 DECLARE_GFX_DRIVER_LIST(
 	GFX_DRIVER_VGA
@@ -24,7 +26,6 @@ DECLARE_COLOR_DEPTH_LIST(
 #define MAX_GFX_WIDTH 1600
 
 
-void scale_vectorgames(int gfx_width,int gfx_height,int *width,int *height);
 void joy_calibration(void);
 
 static struct osd_bitmap *scrbitmap;
@@ -59,7 +60,6 @@ static int skipcolumnsmax;
 static int skiplinesmin;
 static int skipcolumnsmin;
 
-static int vector_game;
 static int use_dirty;
 
 static Register *reg = 0;       /* for VGA modes */
@@ -167,9 +167,11 @@ struct osd_bitmap *osd_new_bitmap(int width,int height,int depth)       /* ASG 9
 void osd_clearbitmap(struct osd_bitmap *bitmap)
 {
 	int i;
+        extern int scrbitmap_dirty;
 
+        scrbitmap_dirty = 1;
 
-	for (i = 0;i < bitmap->height;i++)
+        for (i = 0;i < bitmap->height;i++)
 	{
 		if (bitmap->depth == 16)
 			memset(bitmap->line[i],0,2*bitmap->width);
@@ -185,6 +187,7 @@ void osd_clearbitmap(struct osd_bitmap *bitmap)
 		/* signal the layer system that the screen needs a complete refresh */
 		layer_mark_full_screen_dirty();
 	}
+
 }
 
 
@@ -253,12 +256,6 @@ static void select_display_mode(void)
 	int width,height;
 
 
-	if (vector_game)
-	{
-		width = Machine->drv->screen_width;
-		height = Machine->drv->screen_height;
-	}
-	else
 	{
 		width = Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1;
 		height = Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1;
@@ -334,13 +331,6 @@ static void select_display_mode(void)
 
 	if ((gfx_mode!=GFX_VGA) && !gfx_width && !gfx_height)
 	{
-		/* vector games use 640x480 as default */
-		if (vector_game)
-		{
-			gfx_width = 640;
-			gfx_height = 480;
-		}
-		else
 		{
 			if (use_double != 0)
 			{
@@ -409,22 +399,6 @@ static void adjust_display (int xmin, int ymin, int xmax, int ymax)
 	{
 		w = Machine->drv->screen_width;
 		h = Machine->drv->screen_height;
-	}
-
-	if (!vector_game)
-	{
-		if (Machine->orientation & ORIENTATION_FLIP_X)
-		{
-			temp = w - xmin - 1;
-			xmin = w - xmax - 1;
-			xmax = temp;
-		}
-		if (Machine->orientation & ORIENTATION_FLIP_Y)
-		{
-			temp = h - ymin - 1;
-			ymin = h - ymax - 1;
-			ymax = temp;
-		}
 	}
 
 	viswidth  = xmax - xmin + 1;
@@ -524,15 +498,8 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 	if (errorlog)
 		fprintf (errorlog, "width %d, height %d\n", width,height);
 
-	/* Look if this is a vector game */
-	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
-		vector_game = 1;
-	else
-		vector_game = 0;
-
-
 	/* Is the game using a dirty system? */
-	if ((Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY) || vector_game)
+	if ((Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY))
 		use_dirty = 1;
 	else
 		use_dirty = 0;
@@ -542,19 +509,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 
 	select_display_mode();
 
-	if (vector_game)
-	{
-		/* for vector games, use_double == 0 means miniaturized. */
-		if (use_double == 0)
-			scale_vectorgames(gfx_width/2,gfx_height/2,&width, &height);
-		else
-			scale_vectorgames(gfx_width,gfx_height,&width, &height);
-		/* vector games are always non-doubling */
-		use_double = 0;
-		/* center display */
-		adjust_display(0, 0, width-1, height-1);
-	}
-	else /* center display based on visible area */
+	/* center display based on visible area */
 	{
 		struct rectangle vis = Machine->drv->visible_area;
 		adjust_display (vis.min_x, vis.min_y, vis.max_x, vis.max_y);
@@ -588,14 +543,6 @@ int osd_set_display(int width,int height, int attributes)
 		return 0;
 	}
 
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp;
-
-		temp = width;
-		width = height;
-		height = temp;
-	}
 	/* Mark the dirty buffers as dirty */
 
 	if (use_dirty)
@@ -1152,6 +1099,8 @@ void clear_screen(void)
 			_movedatal(src_seg,(unsigned long)buf,dest_seg,address,columns4);
 		}
 	}
+
+	osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
 }
 
 static inline void pan_display(void)
@@ -1268,7 +1217,6 @@ void osd_update_display(void)
 	static uclock_t prev[MEMORY];
 	static int memory,speed;
 	extern int frameskip;
-	static int vups,vfcount;
 	int need_to_clear_bitmap = 0;
 
 
@@ -1357,17 +1305,6 @@ void osd_update_display(void)
 
 	prev[memory] = curr;
 
-	vfcount += frameskip+1;
-	if (vfcount >= Machine->drv->frames_per_second)
-	{
-		extern int vector_updates; /* avgdvg_go()'s per Mame frame, should be 1 */
-
-
-		vfcount = 0;
-		vups = vector_updates;
-		vector_updates = 0;
-	}
-
 	if (showfps || showfpstemp) /* MAURY: nuove opzioni */
 	{
 		int trueorientation;
@@ -1385,13 +1322,6 @@ void osd_update_display(void)
 		l = strlen(buf);
 		for (i = 0;i < l;i++)
 			drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,gfx_display_columns+skipcolumns-(l-i)*Machine->uifont->width,skiplines,0,TRANSPARENCY_NONE,0);
-		if (vector_game)
-		{
-			sprintf(buf," %d vector updates",vups);
-			l = strlen(buf);
-			for (i = 0;i < l;i++)
-				drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,gfx_display_columns+skipcolumns-(l-i)*Machine->uifont->width,skiplines+8,0,TRANSPARENCY_NONE,0);
-		}
 
 		Machine->orientation = trueorientation;
 	}

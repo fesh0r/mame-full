@@ -1,3 +1,6 @@
+/* MODIFIED FOR MESS!!! */
+/* (Based on the 5/14/98 version of config.c) */
+
 /*
  * Configuration routines.
  *
@@ -13,9 +16,9 @@
 extern int ignorecfg;
 
 /* from video.c */
-extern int scanlines, use_double, video_sync, antialias, use_synced, ntsc;
+extern int scanlines, use_double, video_sync, use_synced, ntsc;
 extern int vgafreq, color_depth, skiplines, skipcolumns;
-extern int beam, flicker, vesa;
+extern int vesa;
 extern float gamma_correction;
 extern int gfx_mode, gfx_width, gfx_height;
 
@@ -26,14 +29,14 @@ extern int usefm, soundcard;
 extern int joy_type, use_mouse;
 
 /* from fileio.c */
-void decompose_rom_sample_path (char *rompath, char *samplepath);
-extern char *hidir, *cfgdir, *inpdir, *pcxdir, *alternate_name;
+void decompose_rom_path (char *rompath);
+extern char *hidir, *cfgdir, *inpdir, *pcxdir;
 
 
 static int mame_argc;
 static char **mame_argv;
 static int game;
-char *rompath, *samplepath;
+char *rompath;
 
 /*
  * gets some boolean config value.
@@ -135,7 +138,7 @@ static int get_int (char *section, char *option, char *shortcut, int def)
 	return res;
 }
 
-static int get_float (char *section, char *option, char *shortcut, float def)
+static float get_float (char *section, char *option, char *shortcut, float def)
 {
 	int i;
 	float res;
@@ -206,36 +209,22 @@ static char *get_string (char *section, char *option, char *shortcut, char *def)
 	return res;
 }
 
-void get_rom_sample_path (int argc, char **argv, int game_index)
+void get_rom_path (int argc, char **argv, int game_index)
 {
 	int i;
 
-	alternate_name = 0;
 	mame_argc = argc;
 	mame_argv = argv;
 	game = game_index;
 
-	rompath    = get_string ("directory", "rompath",    NULL, ".;ROMS");
-	samplepath = get_string ("directory", "samplepath", NULL, ".;SAMPLES");
-
-	/* handle '-romdir' hack. We should get rid of this BW */
-	alternate_name = 0;
-	for (i = 1; i < argc; i++)
-	{
-		if (stricmp (argv[i], "-romdir") == 0)
-		{
-			i++;
-			if (i < argc) alternate_name = argv[i];
-		}
-	}
+	rompath    = get_string ("directory", "imagepath",    NULL, ".;IMAGES");
 
 	/* decompose paths into components (handled by fileio.c) */
-	decompose_rom_sample_path (rompath, samplepath);
+	decompose_rom_path (rompath);
 }
 
 void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game_index)
 {
-	static float f_beam, f_flicker;
 	static int vesa;
 	static char *resolution;
 	char tmpres[10];
@@ -249,7 +238,6 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	scanlines   = get_bool   ("config", "scanlines",    NULL,  1);
 	use_double  = get_bool   ("config", "double",       NULL, -1);
 	video_sync  = get_bool   ("config", "vsync",        NULL,  0);
-	antialias   = get_bool   ("config", "antialias",    NULL,  1);
 	use_synced  = get_bool   ("config", "syncedtweak",  NULL,  1);
 	vesa        = get_bool   ("config", "vesa",         NULL,  0);
 	ntsc        = get_bool   ("config", "ntsc",         NULL,  0);
@@ -257,16 +245,9 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	color_depth = get_int    ("config", "depth",        NULL, 16);
 	skiplines   = get_int    ("config", "skiplines",    NULL, 0);
 	skipcolumns = get_int    ("config", "skipcolumns",  NULL, 0);
-	f_beam      = get_float  ("config", "beam",         NULL, 1.0);
-	f_flicker   = get_float  ("config", "flicker",      NULL, 0.0);
 	gamma_correction = get_float ("config", "gamma",   NULL, 1.0);
 
 	options->frameskip = get_int  ("config", "frameskip", NULL, 0);
-	options->norotate  = get_bool ("config", "norotate",  NULL, 0);
-	options->ror       = get_bool ("config", "ror",       NULL, 0);
-	options->rol       = get_bool ("config", "rol",       NULL, 0);
-	options->flipx     = get_bool ("config", "flipx",     NULL, 0);
-	options->flipy     = get_bool ("config", "flipy",     NULL, 0);
 
 	/* read sound configuration */
 	soundcard           = get_int  ("config", "soundcard",  NULL, -1);
@@ -292,21 +273,9 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	inpdir     = get_string ("directory", "inp",     NULL, "INP");
 
 	/* this is handled externally cause the audit stuff needs it, too */
-	get_rom_sample_path (argc, argv, game_index);
+	get_rom_path (argc, argv, game_index);
 
 	/* process some parameters */
-	beam = (int)(f_beam * 0x00010000);
-	if (beam < 0x00010000)
-		beam = 0x00010000;
-	if (beam > 0x00100000)
-		beam = 0x00100000;
-
-	flicker = (int)(f_flicker * 2.55);
-	if (flicker < 0)
-		flicker = 0;
-	if (flicker > 255)
-		flicker = 255;
-
 	if (vesa == 1)
 		gfx_mode = GFX_VESA2L;
 //	else

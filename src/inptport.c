@@ -6,13 +6,18 @@
 
 TODO: remove the 1 analog device per port limitation
 
+	MESS Changes
+	. Some of the default keys are changed - COIN changed to START, 1p & 2p start changed
+	. Changed MAMECFGSTRING to MESSCFGSTRING
+	
 ***************************************************************************/
 
 #include "driver.h"
 #include <math.h>
 
 /* header identifying the version of the game.cfg file */
-#define MAMECFGSTRING "MAMECFG\2"
+/* MESS */
+#define MESSCFGSTRING "MESSCFG\2"
 
 extern int nocheat;
 extern void *record;
@@ -136,7 +141,7 @@ void load_input_port_settings(void)
 		/* read header */
 		if (osd_fread(f,buf,8) != 8)
 			goto getout;
-		if (memcmp(buf,MAMECFGSTRING,8) != 0)
+		if (memcmp(buf,MESSCFGSTRING,8) != 0)	/* MESS */
 			goto getout;	/* header invalid */
 
 		/* read array size */
@@ -226,7 +231,7 @@ void save_input_port_settings(void)
 		}
 
 		/* write header */
-		osd_fwrite(f,MAMECFGSTRING,8);
+		osd_fwrite(f,MESSCFGSTRING,8);	/* MESS */
 		/* write array size */
 		writeint(f,total);
 		/* write the original settings as defined in the driver */
@@ -317,13 +322,13 @@ struct ipd inputport_defaults[] =
 	{ IPT_BUTTON2 | IPF_PLAYER4, "4 Button 2",        0,               0 },
 	{ IPT_BUTTON3 | IPF_PLAYER4, "4 Button 3",        0,               0 },
 	{ IPT_BUTTON4 | IPF_PLAYER4, "4 Button 4",        0,               0 },
-	{ IPT_COIN1,               "Coin A",          OSD_KEY_3,       IP_JOY_NONE },
-	{ IPT_COIN2,               "Coin B",          OSD_KEY_4,       IP_JOY_NONE },
-	{ IPT_COIN3,               "Coin C",          OSD_KEY_5,       IP_JOY_NONE },
-	{ IPT_COIN4,               "Coin D",          OSD_KEY_6,       IP_JOY_NONE },
+	{ IPT_SELECT1,               "P1 Select",          OSD_KEY_1,       IP_JOY_NONE },
+	{ IPT_SELECT2,               "P2 Select",          OSD_KEY_2,       IP_JOY_NONE },
+	{ IPT_SELECT3,               "P3 Select",          OSD_KEY_3,       IP_JOY_NONE },
+	{ IPT_SELECT4,               "P4 Select",          OSD_KEY_4,       IP_JOY_NONE },
 	{ IPT_TILT,                "Tilt",            OSD_KEY_T,       IP_JOY_NONE },
-	{ IPT_START1,              "1 Player Start",  OSD_KEY_1,       IP_JOY_NONE },
-	{ IPT_START2,              "2 Players Start", OSD_KEY_2,       IP_JOY_NONE },
+	{ IPT_START1,              "1 Player Start",  OSD_KEY_ENTER,   IP_JOY_NONE },
+	{ IPT_START2,              "2 Players Start", OSD_KEY_6,       IP_JOY_NONE },
 	{ IPT_START3,              "3 Players Start", OSD_KEY_7,       IP_JOY_NONE },
 	{ IPT_START4,              "4 Players Start", OSD_KEY_8,       IP_JOY_NONE },
 	{ IPT_PADDLE,              "Paddle",          IPF_DEC(OSD_KEY_LEFT) | IPF_INC(OSD_KEY_RIGHT) | IPF_DELTA(4), \

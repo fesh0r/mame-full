@@ -5,17 +5,27 @@
   Functions used to handle MAME's crude user interface.
 
 Changes:
-	042898 - LBO
+        042898 - LBO
 	* Changed UI menu to be more dynamic, added option to display stats
+
+MESS Changes:
+        052898 - HJB
+        . defined interface keys for easier remapping
+        . moved F3 (reset) -> F9, F4 (display charset) -> F5
+
+        . mameversion changed to messversion
+	. MAX_KEYS added
 
 *********************************************************************/
 
 #include "driver.h"
 
+#define MAX_KEYS	128
+
 extern int nocheat;
 
 /* Variables for stat menu */
-extern char mameversion[];
+extern char messversion[]; /* MESS */
 extern unsigned int dispensed_tickets;
 extern unsigned int coins[COIN_COUNTERS];
 
@@ -201,7 +211,8 @@ struct GfxElement *builduifont(void)
            0x00,0x04,0x04,0x0C,0x00,0x04,0x04,0x0C,0x00,0x20,0x0C,0x00,0x0E,0x00,0x0C,0x38,
            0x00,0x00,0x00,0x23,0x6E,0x00,0x00,0x00,0x00,0x00,0x04,0x08,0x00,0x11,0x22,0x00,
 	};
-	static struct GfxLayout fontlayout =
+
+        static struct GfxLayout fontlayout =
 	{
 		8,8,	/* 8*8 characters */
 		128,    /* 40 characters */
@@ -211,7 +222,8 @@ struct GfxElement *builduifont(void)
 		{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
 		8*8	/* every char takes 8 consecutive bytes */
 	};
-	struct GfxElement *font;
+
+        struct GfxElement *font;
 	static unsigned short colortable[4*3];	/* ASG 980209 */
 	int trueorientation;
 
@@ -341,7 +353,7 @@ void displaytext(const struct DisplayText *dt,int erase)
 
 void displayset (const struct DisplayText *dt,int total,int s)
 {
-	struct DisplayText ds[80];
+	struct DisplayText ds[MAX_KEYS * 2];
 	int i,ofs;
 
 	if (((3*Machine->uifont->height * (total+1))/2) > (Machine->uiheight-Machine->uifont->height))
@@ -426,7 +438,7 @@ int showcharset(void)
 
 		switch (key)
 		{
-			case OSD_KEY_RIGHT:
+                        case UI_KEY_MENU_RIGHT:
 				if (bank+1 < MAX_GFX_ELEMENTS && Machine->gfx[bank + 1])
 				{
 					bank++;
@@ -434,7 +446,7 @@ int showcharset(void)
 				}
 				break;
 
-			case OSD_KEY_LEFT:
+                        case UI_KEY_MENU_LEFT:
 				if (bank > 0)
 				{
 					bank--;
@@ -442,24 +454,24 @@ int showcharset(void)
 				}
 				break;
 
-			case OSD_KEY_PGDN:
+                        case UI_KEY_MENU_PGDN:
 				if (line < maxline-1) line++;
 				break;
 
-			case OSD_KEY_PGUP:
+                        case UI_KEY_MENU_PGUP:
 				if (line > 0) line--;
 				break;
 
-			case OSD_KEY_UP:
+                        case UI_KEY_MENU_UP:
 				if (color < Machine->drv->gfxdecodeinfo[bank].total_color_codes - 1)
 					color++;
 				break;
 
-			case OSD_KEY_DOWN:
+                        case UI_KEY_MENU_DOWN:
 				if (color > 0) color--;
 				break;
 		}
-	} while (key != OSD_KEY_F4 && key != OSD_KEY_ESC);
+        } while (key != UI_KEY_CHARSET && key != UI_KEY_ESCAPE);
 
 	while (osd_key_pressed(key));	/* wait for key release */
 
@@ -543,17 +555,17 @@ static int setdipswitches(void)
 
 		switch (key)
 		{
-			case OSD_KEY_DOWN:
+                        case UI_KEY_MENU_DOWN:
 				if (s < total - 1) s++;
 				else s = 0;
 				break;
 
-			case OSD_KEY_UP:
+                        case UI_KEY_MENU_UP:
 				if (s > 0) s--;
 				else s = total - 1;
 				break;
 
-			case OSD_KEY_RIGHT:
+                        case UI_KEY_MENU_RIGHT:
 				if (s < total - 1)
 				{
 					in = entry[s] + 1;
@@ -573,7 +585,7 @@ static int setdipswitches(void)
 				}
 				break;
 
-			case OSD_KEY_LEFT:
+                        case UI_KEY_MENU_LEFT:
 				if (s < total - 1)
 				{
 					in = entry[s] + 1;
@@ -593,12 +605,12 @@ static int setdipswitches(void)
 				}
 				break;
 
-			case OSD_KEY_ENTER:
+                        case UI_KEY_MENU_SELECT:
 				if (s == total - 1) done = 1;
 				break;
 
-			case OSD_KEY_ESC:
-			case OSD_KEY_TAB:
+                        case UI_KEY_ESCAPE:
+                        case UI_KEY_MENU:
 				done = 1;
 				break;
 		}
@@ -618,8 +630,8 @@ static int setdipswitches(void)
 
 static int setkeysettings(void)
 {
-	struct DisplayText dt[80];
-	struct InputPort *entry[40];
+	struct DisplayText dt[MAX_KEYS * 2];
+	struct InputPort *entry[MAX_KEYS];
 	int i,s,key,done;
 	struct InputPort *in;
 	int total;
@@ -677,17 +689,17 @@ static int setkeysettings(void)
 
 		switch (key)
 		{
-			case OSD_KEY_DOWN:
+                        case UI_KEY_MENU_DOWN:
 				if (s < total - 1) s++;
 				else s = 0;
 				break;
 
-			case OSD_KEY_UP:
+                        case UI_KEY_MENU_UP:
 				if (s > 0) s--;
 				else s = total - 1;
 				break;
 
-			case OSD_KEY_ENTER:
+                        case UI_KEY_MENU_SELECT:
 				if (s == total - 1) done = 1;
 				else
 				{
@@ -700,16 +712,15 @@ static int setkeysettings(void)
 					newkey = osd_read_key();
 					switch (newkey)
 					{
-						case OSD_KEY_ESC:
-						case OSD_KEY_P:
-						case OSD_KEY_F3:
-						case OSD_KEY_F4:
-						case OSD_KEY_TAB:
-						case OSD_KEY_F8:
-						case OSD_KEY_F9:
-						case OSD_KEY_F10:
-						case OSD_KEY_F11:
-						case OSD_KEY_F12:
+                                                case UI_KEY_ESCAPE:
+                                                case UI_KEY_PAUSE:
+                                                case UI_KEY_RESET:
+                                                case UI_KEY_CHARSET:
+                                                case UI_KEY_MENU:
+                                                case UI_KEY_SKIPFRAMES:
+                                                case UI_KEY_THROTTLE:
+                                                case UI_KEY_VIEW_FRAMES:
+                                                case UI_KEY_SNAPSHOT:
 							entry[s]->keyboard = IP_KEY_DEFAULT;
 							break;
 
@@ -720,8 +731,8 @@ static int setkeysettings(void)
 				}
 				break;
 
-			case OSD_KEY_ESC:
-			case OSD_KEY_TAB:
+                        case UI_KEY_ESCAPE:
+                        case UI_KEY_MENU:
 				done = 1;
 				break;
 		}
@@ -803,17 +814,17 @@ static int setjoysettings(void)
 
 		switch (key)
 		{
-			case OSD_KEY_DOWN:
+                        case UI_KEY_MENU_DOWN:
 				if (s < total - 1) s++;
 				else s = 0;
 				break;
 
-			case OSD_KEY_UP:
+                        case UI_KEY_MENU_UP:
 				if (s > 0) s--;
 				else s = total - 1;
 				break;
 
-			case OSD_KEY_ENTER:
+                        case UI_KEY_MENU_SELECT:
 				if (s == total - 1) done = 1;
 				else
 				{
@@ -827,7 +838,7 @@ static int setjoysettings(void)
 					joypressed = 0;
 					while (!joypressed)
 					{
-						if (osd_key_pressed(OSD_KEY_ESC))
+                                                if (osd_key_pressed(UI_KEY_ESCAPE))
 							joypressed = 1;
 						osd_poll_joystick();
 
@@ -863,8 +874,8 @@ static int setjoysettings(void)
 				}
 				break;
 
-			case OSD_KEY_ESC:
-			case OSD_KEY_TAB:
+                        case UI_KEY_ESCAPE:
+                        case UI_KEY_MENU:
 				done = 1;
 				break;
 		}
@@ -994,17 +1005,17 @@ static int settraksettings(void)
 
 		switch (pkey)
 		{
-			case OSD_KEY_DOWN:
+                        case UI_KEY_MENU_DOWN:
 				if (s < total2 - 1) s++;
 				else s = 0;
 				break;
 
-			case OSD_KEY_UP:
+                        case UI_KEY_MENU_UP:
 				if (s > 0) s--;
 				else s = total2 - 1;
 				break;
 
-			case OSD_KEY_LEFT:
+                        case UI_KEY_MENU_LEFT:
 				if ((s % ENTRIES) == 4)
 				/* keyboard/joystick delta */
 				{
@@ -1042,7 +1053,7 @@ static int settraksettings(void)
 				}
 				break;
 
-			case OSD_KEY_RIGHT:
+                        case UI_KEY_MENU_RIGHT:
 				if ((s % ENTRIES) == 4)
 				/* keyboard/joystick delta */
 				{
@@ -1080,7 +1091,7 @@ static int settraksettings(void)
 				}
 				break;
 
-			case OSD_KEY_ENTER:
+                        case UI_KEY_MENU_SELECT:
 				if (s == total2 - 1) done = 1;
 				else
 				{
@@ -1099,18 +1110,17 @@ static int settraksettings(void)
 							newkey = osd_read_key();
 							switch (newkey)
 							{
-								case OSD_KEY_ESC:
+                                                                case UI_KEY_ESCAPE:
 									newkey = IP_KEY_DEFAULT;
 									break;
-								case OSD_KEY_P:
-								case OSD_KEY_F3:
-								case OSD_KEY_F4:
-								case OSD_KEY_TAB:
-								case OSD_KEY_F8:
-								case OSD_KEY_F9:
-								case OSD_KEY_F10:
-								case OSD_KEY_F11:
-								case OSD_KEY_F12:
+                                                                case UI_KEY_PAUSE:
+                                                                case UI_KEY_RESET:
+                                                                case UI_KEY_CHARSET:
+                                                                case UI_KEY_MENU:
+                                                                case UI_KEY_SKIPFRAMES:
+                                                                case UI_KEY_THROTTLE:
+                                                                case UI_KEY_VIEW_FRAMES:
+                                                                case UI_KEY_SNAPSHOT:
 									newkey = IP_KEY_NONE;
 									break;
 							}
@@ -1143,7 +1153,7 @@ static int settraksettings(void)
 							newjoy = -1;
 							while (!joypressed)
 							{
-								if (osd_key_pressed(OSD_KEY_ESC))
+                                                                if (osd_key_pressed(UI_KEY_ESCAPE))
 									joypressed = 1;
 								osd_poll_joystick();
 
@@ -1196,8 +1206,8 @@ static int settraksettings(void)
 				}
 				break;
 
-			case OSD_KEY_ESC:
-			case OSD_KEY_TAB:
+                        case UI_KEY_ESCAPE:
+                        case UI_KEY_MENU:
 				done = 1;
 				break;
 		}
@@ -1219,8 +1229,8 @@ void mame_stats (void)
 	char temp[10];
 	char buf[1024];
 
-	strcpy (buf, "MAME ver: ");
-	strcat (buf, mameversion);
+	strcpy (buf, "MESS ver: "); // MESS
+	strcat (buf, messversion); // MESS
 	strcat (buf, "\n\n");
 
 	strcat (buf, "Tickets dispensed: ");
@@ -1406,7 +1416,11 @@ int setup_menu (void)
 	int total = 0;
 
 
+#ifdef MESS
+	dt[total].text = "OPTIONS"; ui_menu[total++] = UI_SWITCH;
+#else
 	dt[total].text = "DIP SWITCH SETUP"; ui_menu[total++] = UI_SWITCH;
+#endif
 	dt[total].text = "KEYBOARD SETUP"; ui_menu[total++] = UI_KEY;
 	dt[total].text = "JOYSTICK SETUP"; ui_menu[total++] = UI_JOY;
 
@@ -1465,17 +1479,17 @@ int setup_menu (void)
 
 		switch (key)
 		{
-			case OSD_KEY_DOWN:
+                        case UI_KEY_MENU_DOWN:
 				if (s < total - 1) s++;
 				else s = 0;
 				break;
 
-			case OSD_KEY_UP:
+                        case UI_KEY_MENU_UP:
 				if (s > 0) s--;
 				else s = total - 1;
 				break;
 
-			case OSD_KEY_ENTER:
+                        case UI_KEY_MENU_SELECT:
 				switch (ui_menu[s])
 				{
 					case UI_SWITCH:
@@ -1516,8 +1530,8 @@ int setup_menu (void)
 				}
 				break;
 
-			case OSD_KEY_ESC:
-			case OSD_KEY_TAB:
+                        case UI_KEY_ESCAPE:
+                        case UI_KEY_MENU:
 				done = 1;
 				break;
 		}

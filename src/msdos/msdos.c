@@ -1,3 +1,6 @@
+/* Modified for MESS!!! */
+/* (Built from the 4/25/98 version of msdos.c) */
+
 /***************************************************************************
 
   osdepend.c
@@ -53,9 +56,9 @@ void osd_exit(void)
 
 int main (int argc, char **argv)
 {
-	int res, i, j, game_index;
+	int res, i, j, game_index, num_roms, num_floppies;
 
-	/* these two are not available in mame.cfg */
+	/* these two are not available in mess.cfg */
 	ignorecfg = 0;
 	errorlog = options.errorlog = 0;
 
@@ -68,7 +71,7 @@ int main (int argc, char **argv)
 
 	allegro_init();
 
-	set_config_file ("mame.cfg");
+	set_config_file ("mess.cfg");
 
 	/* Initialize the audio library */
 	if (msdos_init_seal())
@@ -84,7 +87,7 @@ int main (int argc, char **argv)
 	if (res != 1234)
 		exit (res);
 
-	/* take the first commandline argument without "-" as the game name */
+	/* take the first commandline argument without "-" as the system name */
 	for (j = 1; j < argc; j++)
 		if (argv[j][0] != '-') break;
 
@@ -94,11 +97,43 @@ int main (int argc, char **argv)
 
 	if (drivers[i] == 0)
 	{
-		printf("Game \"%s\" not supported\n", argv[j]);
+		printf("System \"%s\" not supported\n", argv[j]);
 		return 1;
 	}
 	else
 		game_index = i;
+
+	/* Take all additional commandline arguments without "-" as image names */
+	/* This is an ugly hack that will hopefully eventually be replaced with
+	   an online version that lets you "hot-swap" images */
+	num_roms = num_floppies = 0;
+	for (i = j+1; i < argc; i++)
+	{
+		if (argv[i][0] != '-')
+		{
+			/* Is it a floppy or a rom? */
+			if ((strstr(argv[i],".dsk")!=NULL) || (strstr(argv[i],".DSK")!=NULL))
+			{
+				if (num_floppies >= MAX_FLOPPY)
+				{
+					printf("Too many floppy names specified!\n");
+					return 1;
+				}
+				strcpy(options.floppy_name[num_floppies++],argv[i]);
+				if (errorlog) fprintf(errorlog,"Using floppy image %s\n",argv[i]);
+			}
+			else
+			{
+				if (num_roms >= MAX_ROM)
+				{
+					printf("Too many image names specified!\n");
+					return 1;
+				}
+				strcpy(options.rom_name[num_roms++],argv[i]);
+				if (errorlog) fprintf(errorlog,"Using image %s\n",argv[i]);
+			}
+		}
+	}
 
 	/* parse generic (os-independent) options */
 	parse_cmdline (argc, argv, &options, game_index);

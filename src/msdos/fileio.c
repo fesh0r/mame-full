@@ -1,3 +1,6 @@
+/* MODIFIED FOR MESS!!! */
+/* (built from the 4/18/98 version of fileio.c) */
+
 #include "driver.h"
 #include <sys/stat.h>
 #include <allegro.h>
@@ -7,16 +10,11 @@
 #define MAXPATHL 256 /* at most 255 character path length */
 
 char buf1[MAXPATHL];
-char buf2[MAXPATHL];
 
 char *rompathv[MAXPATHC];
-char *samplepathv[MAXPATHC];
 int rompathc;
-int samplepathc;
 char *cfgdir, *hidir, *inpdir;
 
-
-char *alternate_name; /* for "-romdir" */
 
 typedef enum
 {
@@ -58,10 +56,9 @@ int path2vector (char *path, char *buf, char **pathv)
 	return i;
 }
 
-void decompose_rom_sample_path (char *rompath, char *samplepath)
+void decompose_rom_path (char *rompath, char *samplepath)
 {
 	rompathc    = path2vector (rompath,    buf1, rompathv);
-	samplepathc = path2vector (samplepath, buf2, samplepathv);
 }
 
 /*
@@ -94,15 +91,10 @@ int osd_faccess(const char *newfilename, int filetype)
 	else
 		index++;
 
-	if (filetype == OSD_FILETYPE_ROM)
+	if ((filetype == OSD_FILETYPE_ROM_CART) || (filetype == OSD_FILETYPE_IMAGE))
 	{
 		pathv = rompathv;
 		pathc = rompathc;
-	}
-	else if (filetype == OSD_FILETYPE_SAMPLE)
-	{
-		pathv = samplepathv;
-		pathc = samplepathc;
 	}
 	else
 		return 0;
@@ -141,39 +133,34 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int write)
 	struct stat stat_buffer;
 	FakeFileHandle *f;
 
+	/* game = driver name, filename = file to load */
+	if (errorlog) fprintf(errorlog,"Loading file '%s' for %s driver...\n",filename,game);
+
 	f = (FakeFileHandle *)malloc(sizeof(FakeFileHandle));
 	if (f == 0) return f;
 	f->type = kPlainFile;
 	f->file = 0;
 
-	gamename = (char *)game;
-
-	/* Support "-romdir" yuck. */
-	if (alternate_name)
-		gamename = alternate_name;
-
+	gamename = (char *)filename;
 
 	switch (filetype)
 	{
-		case OSD_FILETYPE_ROM:
-		case OSD_FILETYPE_SAMPLE:
+		case OSD_FILETYPE_ROM_CART:
+		case OSD_FILETYPE_IMAGE:
 
 			index = osd_faccess (gamename, filetype);
 
 			while (index && !f->file)
 			{
-				if (filetype == OSD_FILETYPE_ROM)
-					dirname = rompathv[index-1];
-				else /* filetype == OSD_FILETYPE_SAMPLE */
-					dirname = samplepathv[index-1];
+				dirname = rompathv[index-1];
 
-				sprintf(name,"%s/%s/%s",dirname,gamename,filename);
-				f->file = fopen(name,write ? "wb" : "rb");
+				sprintf(name,"%s/%s",dirname,gamename);
+				f->file = fopen(name,write ? "r+b" : "rb");
 				if (f->file == 0)
 				{
 					/* try with a .zip extension */
 					sprintf(name,"%s/%s.zip", dirname, gamename);
-					f->file = fopen(name, write ? "wb" : "rb");
+					f->file = fopen(name, write ? "r+b" : "rb");
 					stat(name, &stat_buffer);
 					if ((stat_buffer.st_mode & S_IFDIR))
 					{
@@ -185,10 +172,10 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int write)
 					{
 						if (errorlog)
 							fprintf(errorlog,
-									"using zip file for %s\n", filename);
+									"using zip file for %s\n", gamename);
 						fclose(f->file);
 						f->type = kZippedFile;
-						if (load_zipped_file(name, filename, &f->data, &f->length))
+						if (load_zipped_file(name, gamename, &f->data, &f->length))
 						{
 							f->data = 0;
 							f->file = 0;
@@ -200,14 +187,14 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int write)
 				if (f->file == 0)
 				{
 					/* try with a .zip directory (if ZipMagic is installed) */
-					sprintf(name,"%s/%s.zip/%s",dirname,gamename,filename);
-					f->file = fopen(name,write ? "wb" : "rb");
+					sprintf(name,"%s/%s.zip/%s",dirname,gamename,gamename);
+					f->file = fopen(name,write ? "r+b" : "rb");
 				}
 				if (f->file == 0)
 				{
 					/* try with a .zif directory (if ZipFolders is installed) */
-					sprintf(name,"%s/%s.zif/%s",dirname,gamename,filename);
-					f->file = fopen(name,write ? "wb" : "rb");
+					sprintf(name,"%s/%s.zif/%s",dirname,gamename,gamename);
+					f->file = fopen(name,write ? "r+b" : "rb");
 				}
 
 				/* check next path entry */
