@@ -28,6 +28,8 @@
 #define LOG(x)
 #endif /* MAME_DEBUG */
 
+#define PROFILER_SLOT6	PROFILER_USER1
+
 #define TOTAL_TRACKS		35 /* total number of tracks we support, can be 40 */
 #define NIBBLE_SIZE			374
 
@@ -253,6 +255,9 @@ READ_HANDLER ( apple2_c0xx_slot6_r )
 {
 	int cur_drive;
 	int phase;
+	data8_t result = 0x00;
+
+	profiler_mark(PROFILER_SLOT6);
 
 	cur_drive = a2_drives_num;
 
@@ -316,22 +321,16 @@ READ_HANDLER ( apple2_c0xx_slot6_r )
 			a2_drives[cur_drive].Q6 = SWITCH_OFF;
 			/* TODO: remove following ugly hacked-in code */
 			if (read_state)
-			{
-				return ReadByte(cur_drive);
-			}
+				result = ReadByte(cur_drive);
 			else
-			{
 				WriteByte(cur_drive,disk6byte);
-			}
 			break;
 		/* Q6H - set transistor Q6 high */
 		case 0x0D:
 			a2_drives[cur_drive].Q6 = SWITCH_ON;
 			/* TODO: remove following ugly hacked-in code */
 			if (a2_drives[cur_drive].write_protect)
-			{
-				return 0x80;
-			}
+				result = 0x80;
 			break;
 		/* Q7L - set transistor Q7 low */
 		case 0x0E:
@@ -339,9 +338,7 @@ READ_HANDLER ( apple2_c0xx_slot6_r )
 			/* TODO: remove following ugly hacked-in code */
 			read_state = 1;
 			if (a2_drives[cur_drive].write_protect)
-			{
-				return 0x80;
-			}
+				result = 0x80;
 			break;
 		/* Q7H - set transistor Q7 high */
 		case 0x0F:
@@ -351,7 +348,8 @@ READ_HANDLER ( apple2_c0xx_slot6_r )
 			break;
 	}
 
-	return 0x00;
+	profiler_mark(PROFILER_END);
+	return result;
 }
 
 /***************************************************************************
@@ -359,6 +357,7 @@ READ_HANDLER ( apple2_c0xx_slot6_r )
 ***************************************************************************/
 WRITE_HANDLER (  apple2_c0xx_slot6_w )
 {
+	profiler_mark(PROFILER_SLOT6);
 	switch (offset)
 	{
 		case 0x0D:	/* Store byte for writing */
@@ -371,7 +370,7 @@ WRITE_HANDLER (  apple2_c0xx_slot6_w )
 			break;
 	}
 
-	return;
+	profiler_mark(PROFILER_END);
 }
 
 /***************************************************************************

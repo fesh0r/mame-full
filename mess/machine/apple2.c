@@ -24,6 +24,11 @@
 #define LOG(x)
 #endif /* MAME_DEBUG */
 
+#define PROFILER_C00X	PROFILER_USER2
+#define PROFILER_C01X	PROFILER_USER2
+#define PROFILER_C08X	PROFILER_USER2
+#define PROFILER_A2INT	PROFILER_USER2
+
 UINT8 *apple2_slot_rom;
 UINT8 *apple2_slot1;
 UINT8 *apple2_slot2;
@@ -94,8 +99,11 @@ void apple2_interrupt(void)
 {
 	int irq_freq = 1;
 
+	profiler_mark(PROFILER_A2INT);
+
 	irq_freq --;
-	if (irq_freq < 0) irq_freq = 1;
+	if (irq_freq < 0)
+		irq_freq = 1;
 
 	/* We poll the keyboard periodically to scan the keys.  This is
 	   actually consistent with how the AY-3600 keyboard controller works. */
@@ -106,6 +114,8 @@ void apple2_interrupt(void)
 		cpu_set_reset_line (0,PULSE_LINE);
 	else if (irq_freq)
 		cpu_set_irq_line(0, M6502_IRQ_LINE, PULSE_LINE);
+
+	profiler_mark(PROFILER_END);
 }
 
 /***************************************************************************
@@ -174,8 +184,14 @@ void apple2_slotrom_disable (int offset, int data)
 ***************************************************************************/
 READ_HANDLER ( apple2_c00x_r )
 {
+	data8_t result;
+
 	/* Read the keyboard data and strobe */
-	return AY3600_keydata_strobe_r();
+	profiler_mark(PROFILER_C00X);
+	result = AY3600_keydata_strobe_r();
+	profiler_mark(PROFILER_END);
+
+	return result;
 }
 
 /***************************************************************************
@@ -184,6 +200,8 @@ READ_HANDLER ( apple2_c00x_r )
 WRITE_HANDLER ( apple2_c00x_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
+
+	profiler_mark(PROFILER_C00X);
 
 	switch (offset)
 	{
@@ -272,6 +290,7 @@ WRITE_HANDLER ( apple2_c00x_w )
 	}
 
 	LOG(("a2 softswitch_w: %04x\n", offset + 0xc000));
+	profiler_mark(PROFILER_END);
 }
 
 /***************************************************************************
@@ -279,27 +298,32 @@ WRITE_HANDLER ( apple2_c00x_w )
 ***************************************************************************/
 READ_HANDLER ( apple2_c01x_r )
 {
+	data8_t result = 0;
+
+	profiler_mark(PROFILER_C01X);
+
 	LOG(("a2 softswitch_r: %04x\n", offset + 0xc010));
 	switch (offset)
 	{
-		case 0x00:			return AY3600_anykey_clearstrobe_r();
-		case 0x01:			return a2.LC_RAM2;
-		case 0x02:			return a2.LC_RAM;
-		case 0x03:			return a2.RAMRD;
-		case 0x04:			return a2.RAMWRT;
-		case 0x05:			return a2.INTCXROM;
-		case 0x06:			return a2.ALTZP;
-		case 0x07:			return a2.SLOTC3ROM;
-		case 0x08:			return a2.STORE80;
-		case 0x09:			return input_port_0_r(0);	/* RDVBLBAR */
-		case 0x0A:			return a2.TEXT;
-		case 0x0B:			return a2.MIXED;
-		case 0x0C:			return a2.PAGE2;
-		case 0x0D:			return a2.HIRES;
-		case 0x0E:			return a2.ALTCHARSET;
-		case 0x0F:			return a2.COL80;
+		case 0x00:			result = AY3600_anykey_clearstrobe_r();		break;
+		case 0x01:			result = a2.LC_RAM2;						break;
+		case 0x02:			result = a2.LC_RAM;							break;
+		case 0x03:			result = a2.RAMRD;							break;
+		case 0x04:			result = a2.RAMWRT;							break;
+		case 0x05:			result = a2.INTCXROM;						break;
+		case 0x06:			result = a2.ALTZP;							break;
+		case 0x07:			result = a2.SLOTC3ROM;						break;
+		case 0x08:			result = a2.STORE80;						break;
+		case 0x09:			result = input_port_0_r(0);	/* RDVBLBAR */	break;
+		case 0x0A:			result = a2.TEXT;							break;
+		case 0x0B:			result = a2.MIXED;							break;
+		case 0x0C:			result = a2.PAGE2;							break;
+		case 0x0D:			result = a2.HIRES;							break;
+		case 0x0E:			result = a2.ALTCHARSET;						break;
+		case 0x0F:			result = a2.COL80;							break;
 	}
 
+	profiler_mark(PROFILER_END);
 	return 0;
 }
 
@@ -309,7 +333,9 @@ READ_HANDLER ( apple2_c01x_r )
 WRITE_HANDLER ( apple2_c01x_w )
 {
 	/* Clear the keyboard strobe - ignore the returned results */
+	profiler_mark(PROFILER_C01X);
 	AY3600_anykey_clearstrobe_r();
+	profiler_mark(PROFILER_END);
 }
 
 /***************************************************************************
@@ -441,6 +467,7 @@ READ_HANDLER ( apple2_c08x_r )
 	/* If the aux switch is set, use the aux language card bank as well */
 	int aux_offset = a2.ALTZP ? 0x10000 : 0x0000;
 
+	profiler_mark(PROFILER_C08X);
 	LOG(("language card bankswitch read, offset: $c08%0x\n", offset));
 
 	if ((offset & 0x01)==0x00)
@@ -485,6 +512,7 @@ READ_HANDLER ( apple2_c08x_r )
 			break;
 	}
 
+	profiler_mark(PROFILER_END);
 	return 0;
 }
 

@@ -23,6 +23,8 @@ static UINT16 *artifact_map;
 #define GREEN	12
 #define	WHITE	15
 
+#define PROFILER_VIDEOTOUCH PROFILER_USER3
+
 /***************************************************************************
   helpers
 ***************************************************************************/
@@ -128,7 +130,7 @@ static void apple2_hires_draw_task(void *param, int task_num, int task_count)
 	bitmap = dtparams->bitmap;
 	vram = dtparams->vram;
 	beginrow = dtparams->beginrow + (dtparams->rowcount / task_count) * task_num;
-	endrow = dtparams->beginrow + (dtparams->rowcount / task_count) - 1;
+	endrow = beginrow + (dtparams->rowcount / task_count) - 1;
 
 	vram_row[0] = 0;
 	vram_row[41] = 0;
@@ -271,9 +273,13 @@ VIDEO_UPDATE( apple2 )
 
 void apple2_video_touch(offs_t offset)
 {
+	profiler_mark(PROFILER_VIDEOTOUCH);
+
 	if (offset >= text_videobase)
 		tilemap_mark_tile_dirty(text_tilemap, offset - text_videobase);
 	if (offset >= lores_videobase)
 		tilemap_mark_tile_dirty(lores_tilemap, offset - lores_videobase);
+
+	profiler_mark(PROFILER_END);
 }
 
