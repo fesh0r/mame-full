@@ -826,12 +826,12 @@ VIDEO_UPDATE(videomap)
 		full_refresh = (is_partial_update || (flags & (FLAG_FULL_REFRESH|FLAG_AFTER_FULL_REFRESH))) ? 1 : 0;
 		bmp = tmpbitmap;
 
-		if (!is_partial_update)
-			flags &= ~FLAG_FULL_REFRESH;
-		if (full_refresh)
+		if (flags & FLAG_FULL_REFRESH)
 			flags |= FLAG_AFTER_FULL_REFRESH;
 		else
 			flags &= ~FLAG_AFTER_FULL_REFRESH;
+		if (!is_partial_update)
+			flags &= ~FLAG_FULL_REFRESH;
 	}
 	else
 	{
