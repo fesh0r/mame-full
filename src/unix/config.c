@@ -44,6 +44,8 @@ static char *defaultgamename;
 static const char *mess_opts;
 #endif
 
+static int got_gamename;
+
 static int config_handle_arg(char *arg);
 #ifdef MAME_DEBUG
 static int config_handle_debug_size(struct rc_option *option, const char *arg,
@@ -163,8 +165,6 @@ static int config_printf(const char *fmt, ...)
 
 static int config_handle_arg(char *arg)
 {
-	static int got_gamename = 0;
-
 	if (!got_gamename) /* notice: for MESS game means system */
 	{
 		gamename     = arg;
@@ -321,6 +321,7 @@ int config_init (int argc, char *argv[])
 		return OSD_NOT_OK;
 
 	/* parse the commandline */
+	got_gamename = 0;
 	if (rc_parse_commandline(rc, argc, argv, 2, config_handle_arg))
 		return OSD_NOT_OK;
 
