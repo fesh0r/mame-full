@@ -5,6 +5,8 @@
 	It uses a simple opcode lookup encryption, the painful part is that it's
 	preprogrammed into the cpu and isn't a algorithmic based one.
 
+	Ken-Go							?		?
+
 	Hasamu							Nanao   08J27261A1 011 9102KK700
 	Gunforce						Nanao 	08J27261A  011 9106KK701
 
@@ -15,7 +17,7 @@
 	Lethal Thunder					?		? (Same as Quiz F1)
 
 	Bomberman World/Atomic Punk				?
-	Undercover Cops							? (Same as BMan World)	
+	Undercover Cops							? (Same as BMan World)
 
 	Skins Game						Nanao 	08J27291A7
 	R-Type Leo						Irem 	D800001A1
@@ -56,12 +58,12 @@ unsigned char gussun_decryption_table[256] = {
 //0xa9 (not 0x82 PRE) guess from 237df
 //cd total guess (wrong but 3 bytes)
 
-//double check 0x00/0xa0 AND. 
+//double check 0x00/0xa0 AND.
 //double check 0x8c (0x7d jg)
 //double check 0xfd (0x20 AND) - 9d2 in code
 //double check 0xd1 (0x41 INC cw) used in uccops and dynablaster (LOOKS GOOD)
 
-//AND fd (0x20) 
+//AND fd (0x20)
 //0x37 (91) guess from dynablaster title screen
 unsigned char dynablaster_decryption_table[256] = {
 	0x1f,0x51,0x84,xxxx,0x3d,0x09,0x0d,xxxx, xxxx,0x57,xxxx,xxxx,xxxx,0x32,0x11,xxxx, /* 00 */
@@ -131,7 +133,7 @@ unsigned char shisen2_decryption_table[256] = {
 
 //double check 0x00 0x22 0x28 0x4a 0x34 in these tables
 
-//0x1ceb - 0x76 xx JNC 
+//0x1ceb - 0x76 xx JNC
 //therefore 0x76 cant be AND (0x22) as carry flag is unaffect
 
 unsigned char lethalth_decryption_table[256] = {
@@ -153,7 +155,7 @@ unsigned char lethalth_decryption_table[256] = {
 	xxxx,0x5a,0xf6,0x32,0x46,0x2a,xxxx,xxxx, 0x53,0x4b,0x90,xxxx,0x51,xxxx,xxxx,xxxx, /* F0 */
 };
 
-//double check 22 (boot bomb at 2a000) 
+//double check 22 (boot bomb at 2a000)
 //47a7 (46e0 in boot) - hmm
 
 // 0x00 is NOT 0x20 (no context in bomberman)
@@ -178,7 +180,7 @@ unsigned char bomberman_decryption_table[256] = {
 };
 
 // a2 is NOT 0x22 (AND) as a jnc follows it (and doesnt affect carry)
-// 18b7 - 0x51 0x10 (Not 0x28, 
+// 18b7 - 0x51 0x10 (Not 0x28,
 // 1cc0 - 0x49
 
 
@@ -287,7 +289,7 @@ void irem_cpu_decrypt(int cpu,unsigned char *decryption_table)
 {
 	int A,diff;
 	unsigned char *rom;
-	int t[256];	
+	int t[256];
 #ifdef MAME_DEBUG
     extern char *opmap1[];
 #endif

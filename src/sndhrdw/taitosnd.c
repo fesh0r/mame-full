@@ -1,13 +1,12 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
-#include "taitosnd.h"
 
 
 /**********************************************************************************************
 	Soundboard Status bitfield definition:
 	 bit meaning
 	  0  Set if theres any data pending that the main cpu sent to the slave
-	  1  ??? ( Its not being checked both on Rastan and SSI
+	  1  ??? ( Its not being checked both on Rastan and SSI )
 	  2  Set if theres any data pending that the slave sent to the main cpu
 
 ***********************************************************************************************
@@ -25,96 +24,73 @@
 #define REPORT_DATA_FLOW
 #endif
 
-static int nmi_enabled=0; /* interrupts off */
-
+static int irq_enabled=0; /* interrupts off */
 
 /* status of soundboard ( reports any commands pending ) */
 static unsigned char SlaveContrStat = 0;
 
-static int transmit=0; /* number of bytes to transmit/receive */
+static int transmit=0; /* number of bytes to transmit/receive (SLAVE) */
 static int tr_mode;    /* transmit mode (1 or 2 bytes) */
 static int lasthalf=0; /* in 2 bytes mode this is first nibble (LSB bits 0,1,2,3) received */
 
-static int m_transmit=0; /* as above but for motherboard*/
+static int m_transmit=0; /* as above but for motherboard (MASTER) */
 static int m_tr_mode;    /* as above */
 static int m_lasthalf=0; /* as above */
 
-static int IRQ_req=0; /*no request*/
-static int NMI_req=0; /*no request*/
+static int irq_req=0; /*no request*/
 
 static unsigned char soundcommand;
 static unsigned char soundboarddata;
 
-static int z80_soundcpu = 1; /* we should start with impossible value so drivers are forced to initialise it */
-static int m68k_soundcpu = 10; /* start with impossible value so drivers must initialise it */
-
-void taito_soundsys_setz80_soundcpu( int cpu )
-{
-	if (cpu>2)	// Max 3 cpus on Taito games with this sound system
-	{
-		// do what if impossible cpu is selected?
-	}
-
-	z80_soundcpu = cpu;
-
-logerror("Set CPU#%01x as Z80 sound cpu\n",cpu); 
-}
-
-void taito_soundsys_setm68k_soundcpu( int cpu )
-{
-	if (cpu>1)	// Max 2 68000s on Taito games with this sound system
-	{
-		// do what if impossible cpu is selected?
-	}
-
-	m68k_soundcpu = cpu;
-
-logerror("Set CPU#%01x as 68000 sound cpu\n",cpu);
-}
-
 
 /***********************************************************************/
-/*  looking from sound board point of view ...                         */
+/*  looking from sound board point of view ... (SLAVE)                 */
 /***********************************************************************/
-
-WRITE_HANDLER( taito_soundsys_c000_w )
-/* Meaning of this address is unknown !!! */
-{
-}
-
-WRITE_HANDLER( taito_soundsys_d000_w )
-/* ADPCM chip used in Rastan does not stop playing the sample by itself
-** it must be said to stop instead. This is the address that does it.
-*/
-{
-	if (Machine->samples == 0) return;
-#if 0
-	if (data==0)
-		mixer_stop_sample(channel);
-#endif
-}
 
 void Interrupt_Controller(void)
 {
-	if (IRQ_req) {
-		cpu_cause_interrupt(z80_soundcpu, 0);
-		/* IRQ_req = 0; */
-	}
-
-	if ( NMI_req && nmi_enabled ) {
-		cpu_cause_interrupt(z80_soundcpu, Z80_NMI_INT );
-		NMI_req = 0;
+	if ( irq_req && irq_enabled )
+	{
+		cpu_cause_interrupt( 1, Z80_NMI_INT ); //maybe we should use set_nmi_line here ?
+		irq_req = 0;
 	}
 }
 
-READ_HANDLER( taito_soundsys_a001_r )
-{
 
+WRITE_HANDLER( taitosound_slave_port_w )
+{
+	int pom;
+
+	if (transmit != 0)
+		logerror("taitosnd: Slave mode changed while expecting to transmit! (PC = %04x) \n", cpu_get_pc() );
+
+#ifdef REPORT_SLAVE_MODE_CHANGE
+	logerror("taitosnd: Slave changing its mode to %02x (PC = %04x) \n",data, cpu_get_pc());
+#endif
+
+	pom = (data >> 2 ) & 0x01;
+	transmit = 1 + (1 - pom); /* one or two bytes long transmission */
+	lasthalf = 0;
+	tr_mode = transmit;
+
+	pom = data & 0x03;
+	if (pom == 0x01)
+		irq_enabled = 0; /* off */
+
+	if (pom == 0x02)
+		irq_enabled = 1; /* on */
+
+	if (pom == 0x03)
+		logerror("taitosnd: Int mode = 3! (PC = %04x)\n", cpu_get_pc() );
+}
+
+READ_HANDLER( taitosound_slave_comm_r )
+{
 	static unsigned char pom=0;
 
 	if (transmit == 0)
 	{
-		logerror("Slave unexpected receiving! (PC = %04x)\n", cpu_get_pc() );
+		logerror("taitosnd: Slave unexpected receiving! (PC = %04x)\n", cpu_get_pc() );
 	}
 	else
 	{
@@ -122,7 +98,7 @@ READ_HANDLER( taito_soundsys_a001_r )
 		{
 			pom = SlaveContrStat;
 #ifdef REPORT_SLAVE_MODE_READ_ITSELF
-			logerror("Slave has read status of itself %02x (PC = %04x)\n",pom, cpu_get_pc() );
+			logerror("taitosnd: Slave has read status of itself %02x (PC = %04x)\n",pom, cpu_get_pc() );
 #endif
 		}
 		else
@@ -131,14 +107,14 @@ READ_HANDLER( taito_soundsys_a001_r )
 			{
 				pom = soundcommand & 0x0f;
 #ifdef REPORT_DATA_FLOW
-				logerror("Slave has read pom1=%02x (PC = %04x)\n",pom, cpu_get_pc() );
+				logerror("taitosnd: Slave has read pom1=%02x (PC = %04x)\n",pom, cpu_get_pc() );
 #endif
 			}
 			else
 			{
 				pom = (soundcommand & 0xf0) >> 4;
 #ifdef REPORT_DATA_FLOW
-				logerror("Slave has read pom2=%02x (PC = %04x)\n",pom,cpu_get_pc() );
+				logerror("taitosnd: Slave has read pom2=%02x (PC = %04x)\n",pom,cpu_get_pc() );
 #endif
 				SlaveContrStat &= 0xfe; /* Ready to receive new commands */;
 			}
@@ -151,42 +127,13 @@ READ_HANDLER( taito_soundsys_a001_r )
 	return pom;
 }
 
-WRITE_HANDLER( taito_soundsys_a000_w )
-{
-	int pom;
-
-	if (transmit != 0)
-		logerror("Slave mode changed while expecting to transmit! (PC = %04x) \n", cpu_get_pc() );
-
-#ifdef REPORT_SLAVE_MODE_CHANGE
-	logerror("Slave changing its mode to %02x (PC = %04x) \n",data, cpu_get_pc());
-#endif
-
-	pom = (data >> 2 ) & 0x01;
-	transmit = 1 + (1 - pom); /* one or two bytes long transmission */
-	lasthalf = 0;
-	tr_mode = transmit;
-
-	pom = data & 0x03;
-	if (pom == 0x01)
-		nmi_enabled = 0; /* off */
-
-	if (pom == 0x02)
-	{
-		nmi_enabled = 1; /* on */
-	}
-
-	if (pom == 0x03)
-		logerror("Int mode = 3! (PC = %04x)\n", cpu_get_pc() );
-}
-
-WRITE_HANDLER( taito_soundsys_a001_w )
+WRITE_HANDLER( taitosound_slave_comm_w )
 {
 	data &= 0x0f;
 
 	if (transmit == 0)
 	{
-		logerror("Slave unexpected transmission! (PC = %04x)\n", cpu_get_pc() );
+		logerror("taitosnd: Slave unexpected transmission! (PC = %04x)\n", cpu_get_pc() );
 	}
 	else
 	{
@@ -201,13 +148,13 @@ WRITE_HANDLER( taito_soundsys_a001_w )
 				SlaveContrStat |= 4; /* report data pending on main */
 				cpu_spin(); /* writing should take longer than emulated, so spin */
 #ifdef REPORT_DATA_FLOW
-				logerror("Slave sent double %02x (PC = %04x)\n",lasthalf+(data<<4), cpu_get_pc() );
+				logerror("taitosnd: Slave sent double %02x (PC = %04x)\n",lasthalf+(data<<4), cpu_get_pc() );
 #endif
 			}
 			else
 			{
 #ifdef REPORT_DATA_FLOW
-				logerror("Slave issued control value %02x (PC = %04x)\n",data, cpu_get_pc() );
+				logerror("taitosnd: Slave issued control value %02x (PC = %04x)\n",data, cpu_get_pc() );
 #endif
 			}
 		}
@@ -216,37 +163,17 @@ WRITE_HANDLER( taito_soundsys_a001_w )
 	Interrupt_Controller();
 }
 
-WRITE_HANDLER( taito_soundsys_adpcm_trigger_w )
-{
-	UINT8 *rom = memory_region(REGION_SOUND1);
-	int len = memory_region_length(REGION_SOUND1);
-	int start = data << 8;
-	int end;
 
-	/* look for end of sample */
-	end = (start + 3) & ~3;
-	while (end < len && *((UINT32 *)(&rom[end])) != 0x08080808)
-		end += 4;
-
-	ADPCM_play(0,start,(end-start)*2);
-}
-
-void taito_soundsys_irq_handler (int irq)
-{
-	IRQ_req = irq;
-}
 
 /***********************************************************************/
-/*  now looking from main board point of view                          */
+/*  now looking from main board point of view (MASTER)                 */
 /***********************************************************************/
 
-WRITE_HANDLER( taito_soundsys_sound_port_w )
+WRITE_HANDLER( taitosound_port_w )
 {
-	int pom;
-
 	if ((data&0xff) != 0x01)
 	{
-		pom = (data >> 2 ) & 0x01;
+		int pom = (data >> 2 ) & 0x01;
 		m_transmit = 1 + (1 - pom); /* one or two bytes long transmission */
 		m_lasthalf = 0;
 		m_tr_mode = m_transmit;
@@ -255,22 +182,22 @@ WRITE_HANDLER( taito_soundsys_sound_port_w )
 	{
 		if (m_transmit == 1)
 		{
-			/*logerror("single-doubled (first was=%02x)\n",m_lasthalf);*/
+			/*logerror("taitosnd: single-doubled (first was=%02x)\n",m_lasthalf);*/
 		}
 		else
 		{
-			logerror("taito_soundsys_sound_port_w() - unknown innerworking\n");
+			logerror("taitosnd: taitosound_port_w() - unknown innerworking\n");
 		}
 	}
 }
 
-WRITE_HANDLER( taito_soundsys_sound_comm_w )
+WRITE_HANDLER( taitosound_comm_w )
 {
 	data &= 0x0f;
 
 	if (m_transmit == 0)
 	{
-		logerror("Main unexpected transmission! (PC = %08x)\n", cpu_get_pc() );
+		logerror("taitosnd: Main unexpected transmission! (PC = %08x)\n", cpu_get_pc() );
 	}
 	else
 	{
@@ -285,21 +212,21 @@ WRITE_HANDLER( taito_soundsys_sound_comm_w )
 			{
 				soundcommand = m_lasthalf + (data << 4);
 				SlaveContrStat |= 1; /* report data pending for slave */
-				NMI_req = 1;
+				irq_req = 1;
 #ifdef REPORT_DATA_FLOW
-				logerror("Main sent double %02x (PC = %08x) \n",m_lasthalf+(data<<4), cpu_get_pc() );
+				logerror("taitosnd: Main sent double %02x (PC = %08x) \n",m_lasthalf+(data<<4), cpu_get_pc() );
 #endif
 			}
 			else
 			{
 #ifdef REPORT_DATA_FLOW
-				logerror("Main issued control value %02x (PC = %08x) \n",data, cpu_get_pc() );
+				logerror("taitosnd: Main issued control value %02x (PC = %08x) \n",data, cpu_get_pc() );
 #endif
 				/* this does a hi-lo transition to reset the sound cpu */
 				if (data)
-					cpu_set_reset_line(z80_soundcpu, ASSERT_LINE);
+					cpu_set_reset_line(1,ASSERT_LINE);
 				else
-					cpu_set_reset_line(z80_soundcpu, CLEAR_LINE);
+					cpu_set_reset_line(1,CLEAR_LINE);
 
 				m_transmit++;
 			}
@@ -307,14 +234,14 @@ WRITE_HANDLER( taito_soundsys_sound_comm_w )
 	}
 }
 
-READ_HANDLER( taito_soundsys_sound_comm_r )
+READ_HANDLER( taitosound_comm_r )
 {
 
 	m_transmit--;
 	if (m_tr_mode==2)
 	{
 #ifdef REPORT_DATA_FLOW
-		logerror("Main read double %02x (PC = %08x)\n",soundboarddata, cpu_get_pc() );
+		logerror("taitosnd: Main read double %02x (PC = %08x)\n",soundboarddata, cpu_get_pc() );
 #endif
 		SlaveContrStat &= 0xfb; /* clear pending data for main bit */
 
@@ -327,24 +254,45 @@ READ_HANDLER( taito_soundsys_sound_comm_r )
 	else
 	{
 #ifdef REPORT_MAIN_MODE_READ_SLAVE
-		logerror("Main read status of Slave %02x (PC = %08x)\n",SlaveContrStat, cpu_get_pc() );
+		logerror("taitosnd: Main read status of Slave %02x (PC = %08x)\n",SlaveContrStat, cpu_get_pc() );
 #endif
 		m_transmit++;
 		return SlaveContrStat;
 	}
 }
 
-WRITE_HANDLER( taito_soundsys_sound_w )
+
+
+/* wrapper functions for 16bit handlers */
+
+WRITE16_HANDLER( taitosound_port16_lsb_w )
 {
-	if (offset == 0)
-		taito_soundsys_sound_port_w(0,data & 0xff);
-	else if (offset == 2)
-		taito_soundsys_sound_comm_w(0,data & 0xff);
+	if (ACCESSING_LSB)
+		taitosound_port_w(0,data & 0xff);
+}
+WRITE16_HANDLER( taitosound_comm16_lsb_w )
+{
+	if (ACCESSING_LSB)
+		taitosound_comm_w(0,data & 0xff);
+}
+READ16_HANDLER( taitosound_comm16_lsb_r )
+{
+	return taitosound_comm_r(0);
 }
 
-READ_HANDLER( taito_soundsys_sound_r )
+
+WRITE16_HANDLER( taitosound_port16_msb_w )
 {
-	if (offset == 2)
-		return taito_soundsys_sound_comm_r(0);
-	else return 0;
+	if (ACCESSING_MSB)
+		taitosound_port_w(0,data >> 8);
 }
+WRITE16_HANDLER( taitosound_comm16_msb_w )
+{
+	if (ACCESSING_MSB)
+		taitosound_comm_w(0,data >> 8);
+}
+READ16_HANDLER( taitosound_comm16_msb_r )
+{
+	return taitosound_comm_r(0) << 8;
+}
+

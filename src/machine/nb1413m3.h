@@ -2,7 +2,7 @@
 
 	Machine Hardware for Nichibutsu Mahjong series.
 
-	Driver by Takahiro Nogi 1999/11/05 - 
+	Driver by Takahiro Nogi 1999/11/05 -
 
 ***************************************************************************/
 

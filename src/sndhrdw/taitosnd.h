@@ -1,19 +1,27 @@
-void taito_soundsys_setz80_soundcpu( int cpu );
-void taito_soundsys_setm68k_soundcpu( int cpu );
-
-void taito_soundsys_irq_handler( int irq );
-
-WRITE_HANDLER( taito_soundsys_c000_w );
-WRITE_HANDLER( taito_soundsys_d000_w );
-READ_HANDLER( taito_soundsys_a001_r );
-WRITE_HANDLER( taito_soundsys_a000_w );
-WRITE_HANDLER( taito_soundsys_a001_w );
-WRITE_HANDLER( taito_soundsys_adpcm_trigger_w );
-
-WRITE_HANDLER( taito_soundsys_sound_port_w );
-WRITE_HANDLER( taito_soundsys_sound_comm_w );
-READ_HANDLER( taito_soundsys_sound_comm_r );
-WRITE_HANDLER( taito_soundsys_sound_w );
-READ_HANDLER( taito_soundsys_sound_r );
+#ifndef __TAITOSND_H__
+#define __TAITOSND_H__
 
 
+/* MASTER (16 bit bus) control functions */
+WRITE16_HANDLER( taitosound_port16_lsb_w );
+WRITE16_HANDLER( taitosound_comm16_lsb_w );
+READ16_HANDLER( taitosound_comm16_lsb_r );
+
+WRITE16_HANDLER( taitosound_port16_msb_w );
+WRITE16_HANDLER( taitosound_comm16_msb_w );
+READ16_HANDLER( taitosound_comm16_msb_r );
+
+
+/* MASTER (8bit bus) control functions */
+WRITE_HANDLER( taitosound_port_w );
+WRITE_HANDLER( taitosound_comm_w );
+READ_HANDLER( taitosound_comm_r );
+
+
+/* SLAVE (8bit bus) control functions ONLY */
+WRITE_HANDLER( taitosound_slave_port_w );
+READ_HANDLER( taitosound_slave_comm_r );
+WRITE_HANDLER( taitosound_slave_comm_w );
+
+
+#endif /*__TAITOSND_H__*/

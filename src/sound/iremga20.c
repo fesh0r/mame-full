@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "iremga20.h"
- 
+
 static struct IremGA20_channel_def {
 	unsigned long		rate;
 	unsigned long		size;
@@ -31,7 +31,7 @@ static struct IremGA20_chip_def {
 
 static unsigned long delta;
 
-static void IremGA20_reset( void ) 
+static void IremGA20_reset( void )
 {
 	int i;
 
@@ -58,8 +58,8 @@ INLINE int limit( int val, int max, int min ) {
 
 #define MAXOUT 0x7fff
 #define MINOUT -0x8000
- 
-void IremGA20_update( int param, INT16 **buffer, int length ) 
+
+void IremGA20_update( int param, INT16 **buffer, int length )
 {
 	int i, j, lvol[4], rvol[4], play[4], loop[4];
 	unsigned char *rom=memory_region(IremGA20_chip.intf->region);
@@ -81,7 +81,7 @@ void IremGA20_update( int param, INT16 **buffer, int length )
 
 	for ( j = 0; j < length; j++ ) {
 		dataL = dataR = 0;
-		for ( i = 0; i < 4; i++ ) {	 
+		for ( i = 0; i < 4; i++ ) {
 			if ( play[i] ) {
 				if ((pos[i]>>8) >= end[i]-0x20 ) {
 					play[i] = 0;
@@ -106,7 +106,7 @@ void IremGA20_update( int param, INT16 **buffer, int length )
 	}
 }
 
-int IremGA20_sh_start(const struct MachineSound *msound) 
+int IremGA20_sh_start(const struct MachineSound *msound)
 {
 	const char *names[2];
 	char ch_names[2][40];
@@ -138,7 +138,7 @@ int IremGA20_sh_start(const struct MachineSound *msound)
     return 0;
 }
 
-void IremGA20_sh_stop( void ) 
+void IremGA20_sh_stop( void )
 {
 }
 
@@ -146,7 +146,7 @@ WRITE_HANDLER( IremGA20_w )
 {
 	int channel = offset / 0x10;
 
-	logerror("GA20:  Offset %02x, data %04x\n",offset,data);	
+	logerror("GA20:  Offset %02x, data %04x\n",offset,data);
 
 	if ( Machine->sample_rate != 0 )
 		stream_update( IremGA20_chip.channel, 0 );
