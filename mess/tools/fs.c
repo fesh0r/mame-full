@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "osdepend.h"
+#include "osd_dir.h"
 #include "imgtool.h"
 
 typedef struct {
