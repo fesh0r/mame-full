@@ -292,6 +292,7 @@ COREDEFS += -DMESS_EXCLUDE_TI
 else
 DRVLIBS += \
 	$(OBJ)/ti99.a \
+	$(OBJ)/ti85.a \
 	$(OBJ)/avigo.a
 endif
 
@@ -460,6 +461,11 @@ $(OBJ)/mac.a: \
 $(OBJ)/avigo.a: \
 	  $(OBJ)/mess/systems/avigo.o	 \
 	  $(OBJ)/mess/vidhrdw/avigo.o
+
+$(OBJ)/ti85.a: \
+	  $(OBJ)/mess/systems/ti85.o	 \
+	  $(OBJ)/mess/machine/ti85.o	 \
+	  $(OBJ)/mess/vidhrdw/ti85.o
 
 $(OBJ)/rca.a: \
 	  $(OBJ)/mess/systems/studio2.o  \
