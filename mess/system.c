@@ -89,11 +89,11 @@ const struct GameDriver *drivers[] =
 //      DRIVER( jaguar )	/* Atari Jaguar 					*/
 
 	/* NINTENDO */
-//	DRIVER( nes )		/* Nintendo Entertainment System			*/
-//	DRIVER( nespal )	/* Nintendo Entertainment System			*/
-//	DRIVER( famicom )
-//	DRIVER( gameboy )	/* Nintendo GameBoy Handheld				*/
-//	DRIVER (snes)		/* Nintendo Super Nintendo				*/
+	DRIVER( nes )		/* Nintendo Entertainment System			*/
+	DRIVER( nespal )	/* Nintendo Entertainment System			*/
+	DRIVER( famicom )
+	DRIVER( gameboy )	/* Nintendo GameBoy Handheld				*/
+	DRIVER (snes)		/* Nintendo Super Nintendo				*/
 //      DRIVER (vboy)		/* Nintendo Virtual Boy 				*/
 
 	/* SEGA */

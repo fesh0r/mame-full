@@ -5,6 +5,8 @@
 #include "machine/nes_mmc.h"
 #include "zlib.h"
 
+#define M6502_INT_NONE	0
+
 /* Uncomment this to dump reams of ppu state info to the errorlog */
 //#define LOG_PPU
 
@@ -255,7 +257,7 @@ READ_HANDLER ( nes_IN0_r )
 				retVal |= ((in_0[0] & 0x01) << 4);
 
 				/* Look at the screen and see if the cursor is over a bright pixel */
-				pix = Machine->scrbitmap->line[in_0[2]][in_0[1]];
+				pix = read_pixel(Machine->scrbitmap, in_0[1], in_0[2]);
 				if ((pix == Machine->pens[0x20]) || (pix == Machine->pens[0x30]) ||
 					(pix == Machine->pens[0x33]) || (pix == Machine->pens[0x34]))
 				{
@@ -303,7 +305,7 @@ READ_HANDLER ( nes_IN1_r )
 				retVal |= ((in_1[0] & 0x01) << 4);
 
 				/* Look at the screen and see if the cursor is over a bright pixel */
-				pix = Machine->scrbitmap->line[in_1[2]][in_1[1]];
+				pix = read_pixel(Machine->scrbitmap, in_1[1], in_1[2]);
 				if ((pix == Machine->pens[0x20]) || (pix == Machine->pens[0x30]) ||
 					(pix == Machine->pens[0x33]) || (pix == Machine->pens[0x34]))
 				{

@@ -444,12 +444,12 @@ if (videolog) fprintf (videolog, "%02x ", ppu_page[page][address]);
 		{
 			const UINT32 *paldata;
 			const unsigned char *sd;
-			unsigned char *bm;
+//			unsigned char *bm;
 			int start;
 
 //			paldata = &Machine->gfx[gfx_bank]->colortable[4 * (((color_byte >> color_bits) & 0x03)/* % 8*/)];
 			paldata = &paldata_1[4 * (((color_byte >> color_bits) & 0x03))];
-			bm = Machine->scrbitmap->line[scanline] + start_x;
+//			bm = Machine->scrbitmap->line[scanline] + start_x;
 //			sd = &Machine->gfx[gfx_bank]->gfxdata[start * Machine->gfx[gfx_bank]->width];
 			start = (index2 % total_elements) * 8 + scroll_y_fine;
 			sd = &Machine->gfx[gfx_bank]->gfxdata[start * 8];
@@ -617,7 +617,7 @@ static void render_sprites (int scanline)
 			int drawn = 0;
 			const UINT32 *paldata;
 			const unsigned char *sd;
-			unsigned char *bm;
+//			unsigned char *bm;
 			int start;
 
 			sprite_line = scanline - y;
@@ -634,7 +634,7 @@ if ((i == 0) /*&& (spriteram[i+2] & 0x20)*/)
 
 			paldata = &Machine->gfx[gfx_bank]->colortable[4 * color];
 			start = (index1 % Machine->gfx[gfx_bank]->total_elements) * 8 + sprite_line;
-			bm = Machine->scrbitmap->line[scanline] + x;
+//			bm = Machine->scrbitmap->line[scanline] + x;
 			sd = &Machine->gfx[gfx_bank]->gfxdata[start * Machine->gfx[gfx_bank]->width];
 
 			if (pri)

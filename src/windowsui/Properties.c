@@ -47,6 +47,16 @@
 #include "help.h"
 #include "resource.hm"
 
+#ifdef _MSC_VER
+#if _MSC_VER > 1200
+#define HAS_DUMMYUNIONNAME
+#endif
+#endif
+
+#ifdef __GNUC__
+#define HAS_DUMMYUNIONNAME
+#endif
+
 /***************************************************************
  * Imported function prototypes
  ***************************************************************/
@@ -440,9 +450,15 @@ void InitDefaultPropertyPage(HINSTANCE hInst, HWND hWnd)
 	pshead.hInstance                  = hInst;
 	pshead.pszCaption                 = "Default Game";
 	pshead.nPages                     = maxPropSheets;
+#ifdef HAS_DUMMYUNIONNAME
 	pshead.DUMMYUNIONNAME2.nStartPage = 0;
 	pshead.DUMMYUNIONNAME.pszIcon     = MAKEINTRESOURCE(IDI_MAME32_ICON);
 	pshead.DUMMYUNIONNAME3.ppsp       = pspage;
+#else
+	pshead.nStartPage = 0;
+	pshead.pszIcon     = MAKEINTRESOURCE(IDI_MAME32_ICON);
+	pshead.ppsp       = pspage;
+#endif
 
 	/* Fill out the property page templates */
 	for (i = 0; i < maxPropSheets; i++)
@@ -450,7 +466,11 @@ void InitDefaultPropertyPage(HINSTANCE hInst, HWND hWnd)
 		pspage[i].dwSize                     = sizeof(PROPSHEETPAGE);
 		pspage[i].dwFlags                    = 0;
 		pspage[i].hInstance                  = hInst;
+#ifdef HAS_DUMMYUNIONNAME
 		pspage[i].DUMMYUNIONNAME.pszTemplate = MAKEINTRESOURCE(dwDlgId[i + 2]);
+#else
+		pspage[i].pszTemplate				 = MAKEINTRESOURCE(dwDlgId[i + 2]);
+#endif
 		pspage[i].pfnCallback                = NULL;
 		pspage[i].lParam                     = 0;
 		pspage[i].pfnDlgProc                 = GameOptionsProc;
@@ -501,9 +521,15 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, int start_
 	pshead.hInstance                  = hInst;
 	pshead.pszCaption                 = ModifyThe(drivers[g_nGame]->description);
 	pshead.nPages                     = maxPropSheets;
+#ifdef HAS_DUMMYUNIONNAME
 	pshead.DUMMYUNIONNAME2.nStartPage = start_page;
 	pshead.DUMMYUNIONNAME.pszIcon     = MAKEINTRESOURCE(IDI_MAME32_ICON);
 	pshead.DUMMYUNIONNAME3.ppsp       = pspage;
+#else
+	pshead.nStartPage = start_page;
+	pshead.pszIcon     = MAKEINTRESOURCE(IDI_MAME32_ICON);
+	pshead.ppsp       = pspage;
+#endif
 
 	/* Fill out the property page templates */
 	for (i = 0; i < maxPropSheets; i++)
@@ -511,7 +537,11 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, int start_
 		pspage[i].dwSize                     = sizeof(PROPSHEETPAGE);
 		pspage[i].dwFlags                    = 0;
 		pspage[i].hInstance                  = hInst;
+#ifdef HAS_DUMMYUNIONNAME
 		pspage[i].DUMMYUNIONNAME.pszTemplate = MAKEINTRESOURCE(dwDlgId[i]);
+#else
+		pspage[i].pszTemplate = MAKEINTRESOURCE(dwDlgId[i]);
+#endif
 		pspage[i].pfnCallback                = NULL;
 		pspage[i].lParam                     = 0;
 	}

@@ -35,8 +35,8 @@ static char **samplepathv = NULL;
 static int samplepathc = 0;
 static int samplepath_needs_decomposition = 1;
 
-static const char *rompath;
-static const char *samplepath;
+static const char *rompath = "bios";
+static const char *samplepath = "samples";
 static const char *cfgdir, *nvdir, *hidir, *inpdir, *stadir;
 static const char *memcarddir, *artworkdir, *screenshotdir, *cheatdir;
 /* from datafile.c */
@@ -1699,20 +1699,3 @@ char *osd_strip_extension (char *filename)
 	return newname;
 }
 
-
-/* called while loading ROMs. It is called a last time with name == 0 to signal */
-/* that the ROM loading process is finished. */
-/* return non-zero to abort loading */
-int osd_display_loading_rom_message (const char *name, int current, int total)
-{
-	if( name )
-		fprintf (stdout, "loading %-12s\r", name);
-	else
-		fprintf (stdout, "                    \r");
-	fflush (stdout);
-
-//	if( keyboard_pressed (KEYCODE_LCONTROL) && keyboard_pressed (KEYCODE_C) )
-//		return 1;
-
-	return 0;
-}

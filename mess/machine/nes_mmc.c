@@ -27,6 +27,8 @@
 #include "includes/nes.h"
 #include "nes_mmc.h"
 
+#define M6502_INT_NONE	0
+
 #define LOG_MMC
 #define LOG_FDS
 

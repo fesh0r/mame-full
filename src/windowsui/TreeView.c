@@ -36,6 +36,12 @@
 #include "Options.h"
 #include "help.h"
 
+#ifdef _MSC_VER
+#if _MSC_VER > 1200
+#define HAS_DUMMYUNIONNAME
+#endif
+#endif
+
 #if defined(__GNUC__)
 /* fix warning: cast does not match function type */
 #undef  TreeView_InsertItem
@@ -914,7 +920,7 @@ static void BuildTreeFolders(HWND hWnd)
 			tvi.iImage	= lpFolder->m_nIconId;
 			tvi.iSelectedImage = 0;
 
-#if defined(__GNUC__) /* bug in commctrl.h */
+#ifndef HAS_DUMMYUNIONNAME /* bug in commctrl.h */
 			tvs.item = tvi;
 #else
 			tvs.DUMMYUNIONNAME.item = tvi;
@@ -942,7 +948,7 @@ static void BuildTreeFolders(HWND hWnd)
 					tvi.pszText = tmp->m_lpTitle;
 					tvi.lParam	= (LPARAM)tmp;
 
-#if defined(__GNUC__) /* bug in commctrl.h */
+#ifndef HAS_DUMMYUNIONNAME /* bug in commctrl.h */
 					tvs.item = tvi;
 #else
 					tvs.DUMMYUNIONNAME.item = tvi;

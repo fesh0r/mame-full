@@ -1069,4 +1069,4 @@ static const struct IODevice io_snes[] =
 };
 
 /*    YEAR  NAME      PARENT    MACHINE         INPUT     INIT          COMPANY                           FULLNAME */
-CONSX( 1989, snes,    0,        snes,          snes,    0,            "Nintendo",    "Super Nintendo Entertainment System" ,GAME_NOT_WORKING|GAME_REQUIRES_16BIT|GAME_NO_SOUND)
+CONSX( 1989, snes,    0,        snes,          snes,    0,            "Nintendo",    "Super Nintendo Entertainment System" ,GAME_NOT_WORKING|GAME_NO_SOUND)

@@ -11,6 +11,7 @@ OSOBJS += $(OBJ)/windows/fileio.o
 else
 OSOBJS += $(OBJ)/mess/windows/fileio.o	$(OBJ)/mess/windows/dirio.o \
 	  $(OBJ)/mess/windows/messwin.o $(OBJ)/mess/windows/messopts.o
+CMDOSOBJS = $(OBJ)/mess/windows/fileio2.o
 endif 
       
 # video blitting functions

@@ -277,7 +277,11 @@ void OptionsInit(int total_games)
 	settings.cabinetdir        = strdup("cabinets");
 	settings.marqueedir        = strdup("marquees");
 
+#ifdef MESS
+	settings.romdirs           = strdup("bios");
+#else
 	settings.romdirs           = strdup("roms");
+#endif
 	settings.sampledirs        = strdup("samples");
 	settings.cfgdir            = strdup("cfg");
 	settings.nvramdir          = strdup("nvram");

@@ -217,8 +217,12 @@ void File_UpdatePaths(void)
 
 	File_SetPaths(&RomDirPath,	  GetRomDirs());
 	File_SetPaths(&SampleDirPath, GetSampleDirs());
-	
+
+#ifdef MESS
+	rc_set_option2(fileio_opts, "biospath",			  GetRomDirs(), 		 MAXINT_PTR);
+#else
 	rc_set_option2(fileio_opts, "rompath",			  GetRomDirs(), 		 MAXINT_PTR);
+#endif
 	rc_set_option2(fileio_opts, "samplepath",		  GetSampleDirs(),		 MAXINT_PTR);
 	rc_set_option2(fileio_opts, "cfg_directory",	  GetCfgDir(),			 MAXINT_PTR);
 	rc_set_option2(fileio_opts, "nvram_directory",	  GetNvramDir(),		 MAXINT_PTR);

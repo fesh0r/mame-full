@@ -534,7 +534,11 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 
 	sprintf(pCmdLine, "%s %s", pModule, drivers[nGameIndex]->name);
 
+#ifdef MESS
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -biospath \"%s\"",           GetRomDirs());
+#else
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -rompath \"%s\"",            GetRomDirs());
+#endif
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -samplepath \"%s\"",         GetSampleDirs());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -cfg_directory \"%s\"",      GetCfgDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -nvram_directory \"%s\"",    GetNvramDir());
@@ -705,8 +709,8 @@ int WINAPI WinMain(HINSTANCE    hInstance,
 	if (__argc != 1)
 	{
 		/* Rename main because gcc will use it instead of WinMain even with -mwindows */
-		extern int DECL_SPEC main_(int, char**);
-		exit(main_(__argc, __argv));
+		extern int DECL_SPEC main(int, char**);
+		exit(main(__argc, __argv));
 	}
 
 	if (!Win32UI_init(hInstance, lpCmdLine, nCmdShow))

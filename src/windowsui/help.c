@@ -96,7 +96,7 @@ HWND Help_HtmlHelp(HWND hwndCaller, LPCSTR pszFile, UINT uCommand, DWORD_PTR dwD
 
 static void Help_Load(void)
 {
-#if defined(__GNUC__)
+#if defined(__GNUC__) || (_MSC_VER <= 1200)
 	g_hHelpLib = LoadLibrary("hhctrl.ocx");
 	if (g_hHelpLib)
 	{

@@ -13,6 +13,12 @@
 #ifndef HELP_H
 #define HELP_H
 
+#ifdef _MSC_VER
+#if _MSC_VER <= 1200
+#define DWORD_PTR	DWORD
+#endif
+#endif
+
 #include <htmlhelp.h>
 
 extern int  Help_Init(void);
