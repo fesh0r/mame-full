@@ -39,7 +39,6 @@ of serial ports supported */
 /* the serial streams */
 static struct serial_device	serial_devices[MAX_SERIAL_DEVICES];
 static void	serial_device_baud_rate_callback(int id);
-static void xmodem_update(int id);
 static void xmodem_init(void);
 
 
@@ -83,6 +82,28 @@ static void serial_device_in_callback(int id, unsigned long status)
 	serial_devices[id].connection.input_state = status;
 }
 
+/*********************************************************/
+
+static void serial_protocol_none_sent_char(int id);
+
+static struct serial_protocol_interface serial_protocol_none_interface=
+{
+	NULL,
+	serial_protocol_none_sent_char,
+};
+
+
+static void serial_protocol_xmodem_receive_char(int id, unsigned char ch);
+static void serial_protocol_xmodem_sent_char(int id);
+
+static struct serial_protocol_interface serial_protocol_xmodem_interface=
+{
+	serial_protocol_xmodem_receive_char,
+	serial_protocol_xmodem_sent_char
+};
+
+
+/**********************************************************/
 
 /***** SERIAL DEVICE ******/
 void serial_device_setup(int id, int baud_rate, int num_data_bits, int stop_bit_count, int parity_code)
@@ -111,7 +132,7 @@ void serial_device_setup(int id, int baud_rate, int num_data_bits, int stop_bit_
 	transmit_register_reset(&serial_devices[id].transmit_reg);
 	receive_register_reset(&serial_devices[id].receive_reg);
 	receive_register_setup(&serial_devices[id].receive_reg, &serial_devices[id].data_form);
-
+	memset(&serial_devices[id].protocol_interface, 0, sizeof(struct serial_protocol_interface));
 	/* temp here */
 	xmodem_init();
 }
@@ -143,6 +164,23 @@ void	serial_device_set_protocol(int id,int protocol_id)
 		return;
 
 	serial_devices[id].protocol = protocol_id;
+
+	switch (serial_devices[id].protocol)
+	{
+		default:
+		case SERIAL_PROTOCOL_NONE:
+		{
+			memcpy(&serial_devices[id].protocol_interface,&serial_protocol_none_interface,sizeof(struct serial_protocol_interface));
+
+		}
+		break;
+
+		case SERIAL_PROTOCOL_XMODEM:
+		{
+			memcpy(&serial_devices[id].protocol_interface,&serial_protocol_xmodem_interface,sizeof(struct serial_protocol_interface));
+		}
+		break;
+	}
 }
 
 void	serial_device_set_transmit_state(int id, int state)
@@ -176,7 +214,10 @@ void	serial_device_set_transmit_state(int id, int state)
 
 }
 
-
+static int	data_stream_get_bytes_remaining(struct data_stream *stream)
+{
+	return (stream->DataLength - stream->ByteCount) + ((stream->BitCount+7)>>3);
+}
 
 /* get a bit from input stream */
 static int	data_stream_get_data_bit_from_data_byte(struct data_stream *stream)
@@ -280,7 +321,7 @@ void	receive_register_update_bit(struct serial_receive_register *receive, int bi
 	int previous_bit;
 
 //#ifdef VERBOSE
-//	logerror("receive register receive bit: %1x\n",bit);
+	//logerror("receive register receive bit: %1x\n",bit);
 //#endif
 	previous_bit = receive->register_data & 1;
 
@@ -301,7 +342,7 @@ void	receive_register_update_bit(struct serial_receive_register *receive, int bi
 			/* yes */
 			if (bit==0)
 			{
-	//			logerror("receive register saw start bit\n");
+				//logerror("receive register saw start bit\n");
 
 				/* seen start bit! */
 				/* not waiting for start bit now! */
@@ -318,9 +359,10 @@ void	receive_register_update_bit(struct serial_receive_register *receive, int bi
 		/* received all bits? */
 		if (receive->bit_count_received==receive->bit_count)
 		{
+			receive->bit_count_received = 0;
 			receive->flags &=~RECEIVE_REGISTER_SYNCHRONISED;
 			receive->flags |= RECEIVE_REGISTER_WAITING_FOR_START_BIT;
-	//		logerror("receive register full\n");
+			//logerror("receive register full\n");
 			receive->flags |= RECEIVE_REGISTER_FULL;
 		}
 	}
@@ -328,8 +370,8 @@ void	receive_register_update_bit(struct serial_receive_register *receive, int bi
 
 void	receive_register_reset(struct serial_receive_register *receive_reg)
 {
-	receive_reg->flags &=~RECEIVE_REGISTER_FULL;
 	receive_reg->bit_count_received = 0;
+	receive_reg->flags &=~RECEIVE_REGISTER_FULL;
 	receive_reg->flags &=~RECEIVE_REGISTER_SYNCHRONISED;
 	receive_reg->flags |= RECEIVE_REGISTER_WAITING_FOR_START_BIT;
 }
@@ -497,50 +539,56 @@ void	transmit_register_send_bit(struct serial_transmit_register *transmit_reg, s
 	serial_connection_out(connection);
 }
 
+void serial_protocol_none_sent_char(int id)
+{
+	int i;
+	int bit;
+	unsigned char data_byte;
+
+	/* generate byte to transmit */
+	data_byte = 0;
+	for (i=0; i<serial_devices[id].data_form.word_length; i++)
+	{
+		data_byte = data_byte<<1;
+		bit = data_stream_get_data_bit_from_data_byte(&serial_devices[id].transmit);
+		data_byte = data_byte|bit;
+	}
+	/* setup register */
+	transmit_register_setup(&serial_devices[id].transmit_reg,&serial_devices[id].data_form, data_byte);
+
+	logerror("serial device transmitted char: %02x\n",data_byte);
+}
+
 static void	serial_device_baud_rate_callback(int id)
 {
 	/* receive data into receive register */
 	receive_register_update_bit(&serial_devices[id].receive_reg, get_in_data_bit(serial_devices[id].connection.input_state));
 
-	serial_devices[id].protocol = SERIAL_PROTOCOL_NONE;
-	switch (serial_devices[id].protocol)
+	if (serial_devices[id].receive_reg.flags & RECEIVE_REGISTER_FULL)
 	{
-		case SERIAL_PROTOCOL_NONE:
-		{
+		//logerror("SERIAL DEVICE\n");
+		receive_register_extract(&serial_devices[id].receive_reg, &serial_devices[id].data_form);
 
-			/* is transmit empty? */
-			if (serial_devices[id].transmit_reg.flags & TRANSMIT_REGISTER_EMPTY)
-			{
-				int i;
-				int bit;
-				unsigned char data_byte;
+		logerror("serial device receive char: %02x\n",serial_devices[id].receive_reg.byte_received);
 
-				/* generate byte to transmit */
-				data_byte = 0;
-				for (i=0; i<serial_devices[id].data_form.word_length; i++)
-				{
-					data_byte = data_byte<<1;
-					bit = data_stream_get_data_bit_from_data_byte(&serial_devices[id].transmit);
-					data_byte = data_byte|bit;
-				}
-				/* setup register */
-				transmit_register_setup(&serial_devices[id].transmit_reg,&serial_devices[id].data_form, data_byte);
-			}
+		/* if callback setup, execute it */
+		if (serial_devices[id].protocol_interface.character_received_callback)
+			serial_devices[id].protocol_interface.character_received_callback(id, serial_devices[id].receive_reg.byte_received);
+	}
 
-			/* other side says it is clear to send? */
-			if (serial_devices[id].connection.input_state & SERIAL_STATE_CTS)
-			{
-				/* send bit */
-				transmit_register_send_bit(&serial_devices[id].transmit_reg, &serial_devices[id].connection);
-			}
-		}
-		break;
+	/* is transmit empty? */
+	if (serial_devices[id].transmit_reg.flags & TRANSMIT_REGISTER_EMPTY)
+	{
+		/* char has been sent, execute callback */
+		if (serial_devices[id].protocol_interface.character_sent_callback)
+			serial_devices[id].protocol_interface.character_sent_callback(id);
+	}
 
-		case SERIAL_PROTOCOL_XMODEM:
-		{
-			xmodem_update(id);
-		}
-		break;
+	/* other side says it is clear to send? */
+	if (serial_devices[id].connection.input_state & SERIAL_STATE_CTS)
+	{
+		/* send bit */
+		transmit_register_send_bit(&serial_devices[id].transmit_reg, &serial_devices[id].connection);
 	}
 }
 
@@ -660,6 +708,30 @@ void	serial_device_exit(int id)
 	data_stream_free(&serial_devices[id].receive);
 }
 
+/********************************************************************************************************/
+/***** XMODEM protocol ****/
+
+static void serial_update_crc(unsigned short *crc, unsigned char value)
+{
+	UINT8 l, h;
+
+	l = value ^ (*crc >> 8);
+	*crc = (*crc & 0xff) | (l << 8);
+	l >>= 4;
+	l ^= (*crc >> 8);
+	*crc <<= 8;
+	*crc = (*crc & 0xff00) | l;
+	l = (l << 4) | (l >> 4);
+	h = l;
+	l = (l << 2) | (l >> 6);
+	l &= 0x1f;
+	*crc = *crc ^ (l << 8);
+	l = h & 0xf0;
+	*crc = *crc ^ (l << 8);
+	l = (h << 1) | (h >> 7);
+	l &= 0xe0;
+	*crc = *crc ^ l;
+}
 
 /* XMODEM protocol */
 enum
@@ -671,11 +743,12 @@ enum
 	XMODEM_WAITING_FOR_END_CONFIRM2
 };
 
+
 struct xmodem
 {
 	int state;
 	int packet_id;
-	unsigned char packet[128+4];
+	unsigned char packet[1024];
 	unsigned long offset_in_packet;
 	unsigned long packet_size;
 };
@@ -694,9 +767,21 @@ static void xmodem_setup_packet(int id)
 {
 	int i;
 	int count;
-	int checksum;
+	UINT16 crc;
 
 	count = 0;
+
+
+	/* 
+	packet:
+
+	1 byte			SOH
+	1 byte			packet id
+	1 byte			packet id (stored 1's complemented)
+	128 bytes		data
+	1 byte			CRC-16 upper byte
+	1 byte			CRC-16 lower byte
+	*/
 
 	/* soh */
 	xmodem_transfer.packet[count] = XMODEM_SOH;
@@ -708,15 +793,18 @@ static void xmodem_setup_packet(int id)
 	xmodem_transfer.packet[count] = (xmodem_transfer.packet_id^0x0ff) & 0x0ff;
 	count++;
 
-	checksum = 0;
+	crc = 0;
+
 	for (i=0; i<128; i++)
 	{
 		xmodem_transfer.packet[count] = data_stream_get_byte(&serial_devices[id].transmit);
-		checksum+=xmodem_transfer.packet[count];
+		serial_update_crc(&crc, xmodem_transfer.packet[count]);
 		count++;
 	}
 
-	xmodem_transfer.packet[count] = checksum & 0x0ff;
+	xmodem_transfer.packet[count] = (crc>>8) & 0x0ff;
+	count++;
+	xmodem_transfer.packet[count] = crc & 0x0ff;
 	count++;
 
 	xmodem_transfer.packet_size = count;
@@ -734,100 +822,49 @@ static void xmodem_resend_block(void)
 static void xmodem_set_new_state(int state)
 {
 	xmodem_transfer.state = state;
-	xmodem_update(state);
 }
-	
-/* xmodem send! */
-void	xmodem_update(int id)
+
+static void serial_protocol_xmodem_receive_char(int id, unsigned char ch)
 {
 	switch (xmodem_transfer.state)
 	{
 		case XMODEM_STATE_WAITING_FOR_LINK:
 		{
-			if (serial_devices[id].receive_reg.flags & RECEIVE_REGISTER_FULL)
+			if (ch==XMODEM_CRC_NAK)
 			{
-				receive_register_extract(&serial_devices[id].receive_reg, &serial_devices[id].data_form);
+				logerror("xmodem nak received\n");
 
-				if (serial_devices[id].receive_reg.byte_received==XMODEM_NAK)
-				{
-					logerror("xmodem nak received\n");
-
-					xmodem_setup_packet(id);
-					xmodem_set_new_state(XMODEM_STATE_SENDING_PACKET);
-				}
-			}
-		}
-		break;
-
-		case XMODEM_STATE_SENDING_PACKET:
-		{
-			/* assumes 8-data bits */
-			/* is transmit empty? */
-			if (serial_devices[id].transmit_reg.flags & TRANSMIT_REGISTER_EMPTY)
-			{
-		//		int i;
-		//		int bit;
-				unsigned char data_byte;
-
-				/* generate byte to transmit */
-				data_byte = xmodem_transfer.packet[xmodem_transfer.offset_in_packet];
-				xmodem_transfer.offset_in_packet++;
-				logerror("packet byte: %02x\n",data_byte);
-
-				//	for (i=0; i<serial_devices[id].data_form.word_length; i++)
-			//	{
-			//		data_byte = data_byte<<1;
-			//		bit = data_stream_get_data_bit_from_data_byte(&serial_devices[id].transmit);
-			//		data_byte = data_byte|bit;
-			//	}
-				/* setup register */
-				transmit_register_setup(&serial_devices[id].transmit_reg,&serial_devices[id].data_form, data_byte);
-			}
-
-			/* other side says it is clear to send? */
-			if (serial_devices[id].connection.input_state & SERIAL_STATE_CTS)
-			{
-				/* send bit */
-				transmit_register_send_bit(&serial_devices[id].transmit_reg, &serial_devices[id].connection);
-			}
-
-			if (xmodem_transfer.offset_in_packet==xmodem_transfer.packet_size)
-			{
-				xmodem_set_new_state(XMODEM_STATE_WAITING_FOR_CONFIRM);
+				xmodem_setup_packet(id);
+				xmodem_set_new_state(XMODEM_STATE_SENDING_PACKET);
 			}
 		}
 		break;
 
 		case XMODEM_STATE_WAITING_FOR_CONFIRM:
 		{
-			if (serial_devices[id].receive_reg.flags & RECEIVE_REGISTER_FULL)
+			switch (ch)
 			{
-				receive_register_extract(&serial_devices[id].receive_reg, &serial_devices[id].data_form);
-
-				switch (serial_devices[id].receive_reg.byte_received)
-				{		
-					case XMODEM_ACK:
-					{
-						logerror("block accepted\n");
-						xmodem_transfer.packet_id++;
-						xmodem_setup_packet(id);
-						xmodem_set_new_state(XMODEM_STATE_SENDING_PACKET);
-					}
-					break;
-
-					case XMODEM_NAK:
-					{
-						logerror("resend block\n");
-						xmodem_resend_block();
-					}
-					break;
-
-					default:
-					{
-						logerror("unknown response\n");
-					}
-					break;
+				case XMODEM_ACK:
+				{
+					logerror("block accepted\n");
+					xmodem_transfer.packet_id++;
+					xmodem_setup_packet(id);
+					xmodem_set_new_state(XMODEM_STATE_SENDING_PACKET);
 				}
+				break;
+
+				case XMODEM_NAK:
+				{
+					logerror("resend block\n");
+					xmodem_resend_block();
+				}
+				break;
+
+				default:
+				{
+					logerror("unknown response\n");
+				}
+				break;
 			}
 		}
 		break;
@@ -837,6 +874,38 @@ void	xmodem_update(int id)
 	}
 }
 
+static void serial_protocol_xmodem_sent_char(int id)
+{
+	switch (xmodem_transfer.state)
+	{
+		case XMODEM_STATE_SENDING_PACKET:
+		{
+			unsigned char data_byte;
+			
+			if (xmodem_transfer.offset_in_packet==xmodem_transfer.packet_size)
+			{
+				xmodem_set_new_state(XMODEM_STATE_WAITING_FOR_CONFIRM);
+				return;
+			}
+
+			/* generate byte to transmit */
+			data_byte = xmodem_transfer.packet[xmodem_transfer.offset_in_packet];
+			xmodem_transfer.offset_in_packet++;
+			logerror("packet byte: %02x\n",data_byte);
+
+			/* setup register */
+			transmit_register_setup(&serial_devices[id].transmit_reg,&serial_devices[id].data_form, data_byte);
+
+			logerror("serial device transmitted char: %02x\n",data_byte);
+		}
+		break;
+
+
+
+		default:
+			break;
+	}
+}
 
 /*******************************************************************************/
 /********* SERIAL CONNECTION ***********/

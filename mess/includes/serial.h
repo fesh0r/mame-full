@@ -251,6 +251,15 @@ struct data_stream
 	unsigned long ByteCount;
 };
 
+/* an internal interface used by serial device */
+struct serial_protocol_interface
+{
+	/* callback executed when character has been received */
+	void (*character_received_callback)(int id,unsigned char ch);
+	/* callback executed when character has been transmitted, ready to transmit a new char */
+	void (*character_sent_callback)(int id);
+};
+
 /* a serial device */
 struct serial_device
 {
@@ -278,6 +287,8 @@ struct serial_device
 
 	/* baud rate timer */
 	void	*timer;
+
+	struct serial_protocol_interface protocol_interface;
 };
 
 unsigned long serial_device_get_state(int id);
