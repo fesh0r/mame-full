@@ -809,7 +809,7 @@ TEXTS = mess.txt sysinfo.htm
 
 mess.txt: $(EMULATORCLI)
 	@echo Generating $@...
-	@$(CURPATH)$(EMULATORCLI) -listtext -noclones -sortname > mess.txt
+	@$(CURPATH)$(EMULATORCLI) -listtext -noclones -sortname > docs/mess.txt
 
 sysinfo.htm: dat2html$(EXE)
 	@echo Generating $@...
