@@ -711,7 +711,8 @@ static WRITE8_HANDLER( sound_w )
 			sraider_wierd_value[offset&7] = data;
 			if(offset==0x2f)
 			{
-				for(int i=0;i<8;i++)
+				int i;
+				for(i=0;i<8;i++)
 				{
 					//printf("%02X:",sraider_wierd_value[i]);
 				}
