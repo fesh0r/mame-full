@@ -132,7 +132,12 @@ CORE_OBJDIRS = $(OBJ) \
 	$(OBJ)/mess/tools/cgafont
 
 IMGTOOL_LIBS = -lz
-INCLUDE_PATH = -I. -Isrc -Isrc/includes -Imess -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+
+ifeq ($(TARGET), mess)
+INCLUDE_PATH = -I. -Imess -Isrc -Isrc/includes -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+else
+INCLUDE_PATH = -I. -Isrc -Isrc/includes -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+endif
 
 ##############################################################################
 # "Calculate" the final CFLAGS, unix CONFIG, LIBS and OBJS
