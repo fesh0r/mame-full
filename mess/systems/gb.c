@@ -42,7 +42,7 @@ Priority:  Todo:                                                  Done:
 
 /* Initial value of the AF register */
 static UINT16 dmg_cpu_af_reset = 0x01B0;	/* GameBoy        / Super GameBoy   */
-/*static UINT16 gbp_cpu_af_reset = 0xFFB0;	 * GameBoy Pocket / Super GameBoy 2 */
+static UINT16 gbp_cpu_af_reset = 0xFFB0;	/* GameBoy Pocket / Super GameBoy 2 */
 static UINT16 gbc_cpu_af_reset = 0x11B0;	/* GameBoy Color  / GameBoy Advance */
 
 static MEMORY_READ_START (gb_readmem)
@@ -156,7 +156,13 @@ static unsigned char palette[] =
 	0xFF,0xFB,0x87,		/* Background */
 	0xB1,0xAE,0x4E,		/* Light */
 	0x84,0x80,0x4E,		/* Medium */
-	0x4E,0x4E,0x4E		/* Dark */
+	0x4E,0x4E,0x4E,		/* Dark */
+
+/* Palette for GameBoy Pocket/Light */
+	0xC4,0xCF,0xA1,		/* Background */
+	0x8B,0x95,0x6D,		/* Light      */
+	0x6B,0x73,0x53,		/* Medium     */
+	0x41,0x41,0x41,		/* Dark       */
 };
 
 /* Initialise the palette */
@@ -166,6 +172,16 @@ static PALETTE_INIT( gb )
 	for( ii = 0; ii < 4; ii++)
 	{
 		palette_set_color(ii, palette[ii*3+0], palette[ii*3+1], palette[ii*3+2]);
+		colortable[ii] = ii;
+	}
+}
+
+static PALETTE_INIT( gbp )
+{
+	int ii;
+	for( ii = 0; ii < 4; ii++)
+	{
+		palette_set_color(ii, palette[(ii + 4)*3+0], palette[(ii + 4)*3+1], palette[(ii + 4)*3+2]);
 		colortable[ii] = ii;
 	}
 }
@@ -260,6 +276,13 @@ static MACHINE_DRIVER_START( supergb )
 	MDRV_PALETTE_INIT(sgb)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( gbpocket )
+	MDRV_IMPORT_FROM(gameboy)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_CONFIG(gbp_cpu_af_reset)
+	MDRV_PALETTE_INIT(gbp)
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( gbcolor )
 	MDRV_IMPORT_FROM(gameboy)
 	MDRV_CPU_MODIFY("main")
@@ -292,13 +315,16 @@ ROM_START( supergb )
 	ROM_REGION( 0x2000,  REGION_GFX1, 0 )	/* SGB border */
 ROM_END
 
+ROM_START( gbpocket )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+ROM_END
+
 ROM_START( gbcolor )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 ROM_END
 
-
-/*     YEAR  NAME     PARENT   MACHINE  INPUT    INIT  CONFIG   COMPANY     FULLNAME */
-CONS( 1990, gameboy, 0,       gameboy, gameboy, 0,    gameboy, "Nintendo", "GameBoy"  )
-CONS( 1994, supergb, gameboy, supergb, gameboy, 0,    gameboy, "Nintendo", "Super GameBoy" )
-CONS( 1998, gbcolor, gameboy, gbcolor, gameboy, 0,    gameboy, "Nintendo", "GameBoy Color" )
-
+/*    YEAR  NAME      PARENT   MACHINE   INPUT    INIT  CONFIG   COMPANY     FULLNAME */
+CONS( 1990, gameboy,  0,       gameboy,  gameboy, 0,    gameboy, "Nintendo", "GameBoy"  )
+CONS( 1994, supergb,  0,       supergb,  gameboy, 0,    gameboy, "Nintendo", "Super GameBoy" )
+CONS( 1996, gbpocket, gameboy, gbpocket, gameboy, 0,    gameboy, "Nintendo", "GameBoy Pocket" )
+CONS( 1998, gbcolor,  0,       gbcolor,  gameboy, 0,    gameboy, "Nintendo", "GameBoy Color" )

@@ -99,7 +99,7 @@ const struct GameDriver *test_drivers[] =
 
 /* for pong style games look into docs/pong.txt */
 
-/* ATARI */
+	/* ATARI */
 	DRIVER( a2600 ) 	/* Atari 2600										*/
 	DRIVER( a5200 ) 	/* Atari 5200										*/
 	DRIVER( a7800 ) 	/* Atari 7800 NTSC									*/
@@ -114,6 +114,7 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( famicom )
 	DRIVER( gameboy )	/* Nintendo GameBoy Handheld						*/
 	DRIVER( supergb )	/* Nintendo Super GameBoy SNES Cartridge			*/
+	DRIVER( gbpocket )	/* Nintendo GameBoy Pocket Handheld					*/
 	DRIVER( gbcolor )	/* Nintendo GameBoy Color Handheld					*/
 	DRIVER( snes )		/* Nintendo Super Nintendo NTSC						*/
 	DRIVER( snespal )	/* Nintendo Super Nintendo PAL						*/
