@@ -19,7 +19,7 @@
 #include "includes/dragon.h"
 #include "includes/basicdsk.h"
 #include "includes/6551.h"
-#include "printer.h"
+#include "devices/printer.h"
 #include "devices/messfmts.h"
 #include "formats/coco_dsk.h"
 #include "devices/cassette.h"

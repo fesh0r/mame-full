@@ -1,7 +1,7 @@
 #ifndef BITBNGR_H
 #define BITBNGR_H
 
-#include "printer.h"
+#include "devices/printer.h"
 
 struct bitbanger_config
 {

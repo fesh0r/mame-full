@@ -87,7 +87,7 @@
 #include "includes/msm8251.h"
 #include "includes/dsk.h"
 #include "includes/centroni.h"
-#include "printer.h"
+#include "devices/printer.h"
 #include "image.h"
 
 #define EINSTEIN_SYSTEM_CLOCK 4000000

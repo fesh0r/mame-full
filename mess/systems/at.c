@@ -5,7 +5,7 @@
 #include "sound/3812intf.h"
 #include "machine/8255ppi.h"
 #include "vidhrdw/generic.h"
-#include "printer.h"
+#include "devices/printer.h"
 
 #include "includes/uart8250.h"
 #include "includes/pic8259.h"

@@ -18,7 +18,7 @@
 #include "includes/oric.h"
 #include "includes/flopdrv.h"
 #include "includes/centroni.h"
-#include "printer.h"
+#include "devices/printer.h"
 
 #include "includes/apple2.h"
 

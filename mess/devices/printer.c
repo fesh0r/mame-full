@@ -4,7 +4,7 @@
  */
 
 #include "driver.h"
-#include "printer.h"
+#include "devices/printer.h"
 #include "image.h"
 
 static mame_file *prn_ports[MAX_PRINTER]= { 0 };

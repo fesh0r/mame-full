@@ -24,7 +24,7 @@
 #include "cpu/z80/z80_msx.h"
 #include "vidhrdw/v9938.h"
 #include "formats/fmsx_cas.h"
-#include "printer.h"
+#include "devices/printer.h"
 #include "utils.h"
 #include "image.h"
 

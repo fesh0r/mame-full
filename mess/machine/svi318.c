@@ -19,7 +19,7 @@
 #include "formats/svi_cas.h"
 #include "machine/8255ppi.h"
 #include "vidhrdw/tms9928a.h"
-#include "printer.h"
+#include "devices/printer.h"
 #include "image.h"
 
 static SVI_318 svi;

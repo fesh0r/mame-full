@@ -63,7 +63,7 @@
  ******************************************************************************/
 #include "driver.h"
 #include "../includes/exidy.h"
-#include "printer.h"
+#include "devices/printer.h"
 #include "includes/centroni.h"
 #include "includes/hd6402.h"
 #include "cpu/z80/z80.h"

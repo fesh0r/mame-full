@@ -12,8 +12,13 @@
 #ifdef MESS
 #ifdef _MSC_VER
 #include "ui/dirent.h"
+#ifndef S_ISDIR
 #define S_ISDIR(mode) ((mode) & _S_IFDIR)
 #endif
+#else
+#include <dirent.h>
+#endif
+#else
 #include <dirent.h>
 #endif
 

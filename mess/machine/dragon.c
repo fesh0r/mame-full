@@ -64,7 +64,7 @@
 #include "formats/cococas.h"
 #include "devices/cassette.h"
 #include "devices/bitbngr.h"
-#include "printer.h"
+#include "devices/printer.h"
 #include "image.h"
 
 static UINT8 *coco_rom;

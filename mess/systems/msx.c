@@ -12,7 +12,7 @@
 #include "vidhrdw/v9938.h"
 #include "includes/msx.h"
 #include "includes/basicdsk.h"
-#include "printer.h"
+#include "devices/printer.h"
 
 static MEMORY_READ_START (readmem)
     { 0x0000, 0x1fff, MRA_BANK1 },

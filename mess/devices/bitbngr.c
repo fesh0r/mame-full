@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "mame.h"
 #include "devices/bitbngr.h"
-#include "printer.h"
+#include "devices/printer.h"
 #include "mess.h"
 
 static void bitbanger_overthreshhold(int id);

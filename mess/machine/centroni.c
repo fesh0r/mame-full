@@ -4,7 +4,7 @@
   provides a centronics printer simulation (sends output to IO_PRINTER)
 */
 #include "includes/centroni.h"
-#include "printer.h"
+#include "devices/printer.h"
 
 typedef struct {
 	CENTRONICS_CONFIG *config;

@@ -25,7 +25,7 @@
 #include "includes/basicdsk.h"
 #include "devices/cassette.h"
 #include "includes/centroni.h"
-#include "printer.h"
+#include "devices/printer.h"
 #include "machine/8255ppi.h"
 
 

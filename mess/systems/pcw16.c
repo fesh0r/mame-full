@@ -91,7 +91,7 @@
 // PC-Parallel Port
 #include "includes/pclpt.h"
 #include "includes/centroni.h" // centronics printer handshake simulation
-#include "printer.h" // printer device
+#include "devices/printer.h" // printer device
 // PC-AT keyboard
 #include "includes/pckeybrd.h"
 // change to superio later

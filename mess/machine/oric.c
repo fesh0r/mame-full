@@ -26,7 +26,7 @@
 #include "includes/mfmdisk.h"
 #include "includes/6551.h"
 #include "includes/centroni.h"
-#include "printer.h"
+#include "devices/printer.h"
 #include "formats/orictap.h"
 #include "image.h"
 

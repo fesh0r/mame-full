@@ -21,7 +21,7 @@
 #include "driver.h"
 
 #include "includes/centroni.h"
-#include "printer.h"
+#include "devices/printer.h"
 
 /* for 8255 ppi */
 #include "machine/8255ppi.h"

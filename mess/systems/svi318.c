@@ -11,7 +11,7 @@
 #include "includes/svi318.h"
 #include "includes/wd179x.h"
 #include "includes/svi318dk.h"
-#include "printer.h"
+#include "devices/printer.h"
 
 
 static MEMORY_READ_START (readmem)

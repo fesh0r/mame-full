@@ -66,7 +66,7 @@ Hardware:	PPIA 8255
 #include "includes/basicdsk.h"
 #include "includes/flopdrv.h"
 #include "machine/6522via.h"
-#include "printer.h"
+#include "devices/printer.h"
 #include "includes/centroni.h"
 
 /* functions */
