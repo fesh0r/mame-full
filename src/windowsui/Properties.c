@@ -27,6 +27,7 @@
 #include <commctrl.h>
 #include <commdlg.h>
 #undef NONAMELESSUNION
+#undef bool //hack for the mingw compiler and mess code
 #include <ddraw.h>
 #include <stdio.h>
 #include <string.h>
