@@ -1,7 +1,7 @@
 #include "image.h"
 #include "mess.h"
 #include "devices/flopdrv.h"
-#include "config.h"
+#include "crcfile.h"
 #include "utils.h"
 #include "mscommon.h"
 #include "snprintf.h"
@@ -366,16 +366,16 @@ void *image_lookuptag(mess_image *img, const char *tag)
 static int read_crc_config(const char *sysname, mess_image *img)
 {
 	int rc = 1;
-	config_file *config;
+	crc_file *config;
 	char line[1024];
 	char crc[9+1];
 
-	config = config_open(sysname, sysname, FILETYPE_CRC);
+	config = crcfile_open(sysname, sysname, FILETYPE_CRC);
 	if (!config)
 		goto done;
 
 	snprintf(crc, sizeof(crc) / sizeof(crc[0]), "%08x", img->crc);
-	config_load_string(config, sysname, 0, crc, line, sizeof(line));
+	crcfile_load_string(config, sysname, 0, crc, line, sizeof(line));
 
 	if (!line[0])
 		goto done;
@@ -390,7 +390,7 @@ static int read_crc_config(const char *sysname, mess_image *img)
 
 done:
 	if (config)
-		config_close(config);
+		crcfile_close(config);
 	return rc;
 }
 

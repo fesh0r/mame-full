@@ -771,7 +771,7 @@ COREOBJS += \
 	$(OBJ)/mess/image.o		       \
 	$(OBJ)/mess/system.o	       \
 	$(OBJ)/mess/device.o	       \
-	$(OBJ)/mess/config.o	       \
+	$(OBJ)/mess/crcfile.o	       \
 	$(OBJ)/mess/inputx.o		   \
 	$(OBJ)/mess/artworkx.o		   \
 	$(OBJ)/mess/mesintrf.o	       \
@@ -856,7 +856,7 @@ tools/imgtool$(EXE):	                   \
 	  $(OBJ)/unzip.o	                   \
 	  $(OBJ)/harddisk.o	                   \
 	  $(OBJ)/md5.o	                   \
-	  $(OBJ)/mess/config.o	               \
+	  $(OBJ)/mess/crcfile.o	               \
 	  $(OBJ)/mess/utils.o	               \
 	  $(OBJ)/mess/formats.o                \
 	  $(OBJ)/mess/formats/coco_dsk.o       \

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	config.c - config file save/load functions
+	crcfile.c - crc file save/load functions
 
 ***************************************************************************/
 
@@ -11,7 +11,7 @@
 #include <stdarg.h>
 
 #include "driver.h"
-#include "config.h"
+#include "crcfile.h"
 #include "fileio.h"
 
 
@@ -40,9 +40,9 @@
 ***************************************************************************/
 
 /* A forward linked list of the contents of a section */
-struct config_var
+struct crcfile_var
 {
-	struct config_var *next;
+	struct crcfile_var *next;
 	char *name;
 	unsigned size;
 	unsigned chunk;
@@ -50,13 +50,13 @@ struct config_var
 };
 
 /* our config handling structure */
-struct _config_file
+struct _crc_file
 {
 	mame_file *file;
 	const char *section;
 	int instance;
-	struct config_var *list;
-    struct config_var *end_of_list; // to avoid n*(n/2) runtime complexity when appending
+	struct crcfile_var *list;
+    struct crcfile_var *end_of_list; // to avoid n*(n/2) runtime complexity when appending
 };
 
 /***************************************************************************
@@ -169,13 +169,13 @@ INLINE int findstr(const char *dst, const char *src)
 }
 
 /***************************************************************************
-	config_free_section
+	crcfile_free_section
 ***************************************************************************/
 
 /* free a linked list of state_vars (aka section) */
-static void config_free_section(config_file *cfg)
+static void crcfile_free_section(crc_file *cfg)
 {
-	struct config_var *this, *next;
+	struct crcfile_var *this, *next;
 
 	next = cfg->list;
 	while (next)
@@ -192,80 +192,79 @@ static void config_free_section(config_file *cfg)
 }
 
 /***************************************************************************
-	config_create
+	crcfile_create
 ***************************************************************************/
 
-config_file *config_create(const char *gamename, const char *filename, int filetype)
+crc_file *crcfile_create(const char *gamename, const char *filename, int filetype)
 {
-	config_file *cfg;
+	crc_file *cfg;
 
-    cfg = (struct _config_file *) malloc(sizeof (struct _config_file));
+    cfg = (crc_file *) malloc(sizeof (struct _crc_file));
 	if (!cfg)
 	{
-		LOG(("config_create: memory problem\n"));
+		LOG(("crcfile_create: memory problem\n"));
 		return cfg;
 	}
 
-	memset(cfg, 0, sizeof(struct _config_file));
+	memset(cfg, 0, sizeof(*cfg));
 	cfg->file = mame_fopen(gamename, filename, filetype, OSD_FOPEN_RW_CREATE);
 	if (!cfg->file)
 	{
-		LOG(("config_create: couldn't create file '%s'\n", name));
+		LOG(("crcfile_create: couldn't create file '%s'\n", name));
 		free(cfg);
 		return NULL;
 	}
-	LOG(("config_create: created file '%s'\n", name));
+	LOG(("crcfile_create: created file '%s'\n", name));
     return cfg;
 }
 
 /***************************************************************************
-	config_open
+	crcfile_open
 ***************************************************************************/
 
-config_file *config_open(const char *gamename, const char *filename, int filetype)
+crc_file *crcfile_open(const char *gamename, const char *filename, int filetype)
 {
-	config_file *cfg;
+	crc_file *cfg;
 
-    cfg = (struct _config_file *) malloc(sizeof (struct _config_file));
+    cfg = (struct _crc_file *) malloc(sizeof (struct _crc_file));
 	if (!cfg)
 	{
-		LOG(("config_open: memory problem\n"));
+		LOG(("crcfile_open: memory problem\n"));
 		return cfg;
 	}
 
-	memset(cfg, 0, sizeof(struct _config_file));
+	memset(cfg, 0, sizeof(struct _crc_file));
 	cfg->file = mame_fopen(gamename, filename, filetype, OSD_FOPEN_READ);
 	if (!cfg->file)
 	{
-		LOG(("config_open: couldn't open file '%s'\n", name));
+		LOG(("crcfile_open: couldn't open file '%s'\n", name));
         free(cfg);
 		return NULL;
 	}
 
-	LOG(("config_open: opened file '%s'\n", name));
+	LOG(("crcfile_open: opened file '%s'\n", name));
     return cfg;
 }
 
 /***************************************************************************
-	config_close
+	crcfile_close
 ***************************************************************************/
 
-void config_close(config_file *cfg)
+void crcfile_close(crc_file *cfg)
 {
-	config_free_section(cfg);
+	crcfile_free_section(cfg);
 	mame_fclose(cfg->file);
 	free(cfg);
 }
 
 /***************************************************************************
-	config_printf
+	crcfile_printf
 ***************************************************************************/
 
 /* Output a formatted string to the config file */
-static void CLIB_DECL config_printf(void *config, const char *fmt,...)
+static void CLIB_DECL crcfile_printf(crc_file *cfg, const char *fmt,...)
 {
 	static char buffer[255 + 1];
-	struct _config_file *cfg = (struct _config_file *) config;
 	va_list arg;
 	int length;
 
@@ -275,43 +274,43 @@ static void CLIB_DECL config_printf(void *config, const char *fmt,...)
 
 	if (mame_fwrite(cfg->file, buffer, length) != length)
 	{
-		LOG(("config_printf: Error while saving cfg '%s'\n", buffer));
+		LOG(("crcfile_printf: Error while saving cfg '%s'\n", buffer));
 	}
 }
 
 /***************************************************************************
-	config_save_section
+	crcfile_save_section
 ***************************************************************************/
 
-static void config_save_section(config_file *cfg, const char *section, int instance)
+static void crcfile_save_section(crc_file *cfg, const char *section, int instance)
 {
 	if (!cfg->section ||
 		(cfg->section && findstr(cfg->section, section)) ||
 		cfg->instance != instance)
 	{
 		if (cfg->section)
-			config_printf(cfg, "\n");
+			crcfile_printf(cfg, "\n");
 		cfg->section = section;
 		cfg->instance = instance;
 		if (instance)
-			config_printf(cfg, "[%s.%d]\n", section, instance);
+			crcfile_printf(cfg, "[%s.%d]\n", section, instance);
 		else
-			config_printf(cfg, "[%s]\n", section);
+			crcfile_printf(cfg, "[%s]\n", section);
 	}
 }
 
 /***************************************************************************
-	config_save_string
+	crcfile_save_string
 ***************************************************************************/
 
-void config_save_string(config_file *cfg, const char *section, int instance,
+void crcfile_save_string(crc_file *cfg, const char *section, int instance,
 					   const char *name, const char *src)
 {
 	unsigned size = strlen(src);
 
-    config_save_section(cfg, section, instance);
+    crcfile_save_section(cfg, section, instance);
 
-	config_printf(cfg, "%s=", name);
+	crcfile_printf(cfg, "%s=", name);
 	while (size-- > 0)
 	{
 		switch (*src)
@@ -319,26 +318,26 @@ void config_save_string(config_file *cfg, const char *section, int instance,
             case '\\':
 			case '[':
 			case ']':
-				config_printf(cfg, "\\%c", *src++);
+				crcfile_printf(cfg, "\\%c", *src++);
 				break;
 			default:
 				if (*src < 32 || *src == '\t' || *src == '\\' || *src == '[' || *src == ']' )
-					config_printf(cfg, "\\%o", *src++);
+					crcfile_printf(cfg, "\\%o", *src++);
 				else
-					config_printf(cfg, "%c", *src++);
+					crcfile_printf(cfg, "%c", *src++);
 		}
 	}
-	config_printf(cfg, "\n");
+	crcfile_printf(cfg, "\n");
 }
 
 /***************************************************************************
-	config_save_UINT8
+	crcfile_save_UINT8
 ***************************************************************************/
 
-void config_save_UINT8(config_file *cfg, const char *section, int instance,
+void crcfile_save_UINT8(crc_file *cfg, const char *section, int instance,
 					   const char *name, const UINT8 *val, unsigned size)
 {
-	config_save_section(cfg, section, instance);
+	crcfile_save_section(cfg, section, instance);
 
 	/* If next is to much for a single line use the dump format */
 	if (size > 16)
@@ -348,47 +347,47 @@ void config_save_UINT8(config_file *cfg, const char *section, int instance,
 		while (size-- > 0)
 		{
 			if ((offs & 15) == 0)
-				config_printf(cfg, "%s.%s=", name, ultox(offs, 4));
-			config_printf(cfg, "%s", ultox(*val++, 2));
+				crcfile_printf(cfg, "%s.%s=", name, ultox(offs, 4));
+			crcfile_printf(cfg, "%s", ultox(*val++, 2));
 			if ((++offs & 15) == 0)
-				config_printf(cfg, "\n");
+				crcfile_printf(cfg, "\n");
 			else
-				config_printf(cfg, " ");
+				crcfile_printf(cfg, " ");
 		}
 		if (offs & 15)
-			config_printf(cfg, "\n");
+			crcfile_printf(cfg, "\n");
 	}
 	else
 	{
-		config_printf(cfg, "%s=", name);
+		crcfile_printf(cfg, "%s=", name);
 		while (size-- > 0)
 		{
-			config_printf(cfg, "%s", ultox(*val++, 2));
+			crcfile_printf(cfg, "%s", ultox(*val++, 2));
 			if (size)
-				config_printf(cfg, " ");
+				crcfile_printf(cfg, " ");
 		}
-		config_printf(cfg, "\n");
+		crcfile_printf(cfg, "\n");
 	}
 }
 
 /***************************************************************************
-	config_save_INT8
+	crcfile_save_INT8
 ***************************************************************************/
 
-void config_save_INT8(config_file *config, const char *section, int instance,
+void crcfile_save_INT8(crc_file *config, const char *section, int instance,
 					  const char *name, const INT8 *val, unsigned size)
 {
-	config_save_UINT8(config, section, instance, name, (UINT8 *)val, size);
+	crcfile_save_UINT8(config, section, instance, name, (UINT8 *)val, size);
 }
 
 /***************************************************************************
-	config_save_UINT16
+	crcfile_save_UINT16
 ***************************************************************************/
 
-void config_save_UINT16(config_file *cfg, const char *section, int instance,
+void crcfile_save_UINT16(crc_file *cfg, const char *section, int instance,
 						const char *name, const UINT16 *val, unsigned size)
 {
-	config_save_section(cfg, section, instance);
+	crcfile_save_section(cfg, section, instance);
 
 	/* If next is to much for a single line use the dump format */
 	if (size > 8)
@@ -398,47 +397,47 @@ void config_save_UINT16(config_file *cfg, const char *section, int instance,
 		while (size-- > 0)
 		{
 			if ((offs & 7) == 0)
-				config_printf(cfg, "%s.%s=", name, ultox(offs, 4));
-			config_printf(cfg, "%s", ultox(*val++, 4));
+				crcfile_printf(cfg, "%s.%s=", name, ultox(offs, 4));
+			crcfile_printf(cfg, "%s", ultox(*val++, 4));
 			if ((++offs & 7) == 0)
-				config_printf(cfg, "\n");
+				crcfile_printf(cfg, "\n");
 			else
-				config_printf(cfg, " ");
+				crcfile_printf(cfg, " ");
 		}
 		if (offs & 7)
-			config_printf(cfg, "\n");
+			crcfile_printf(cfg, "\n");
 	}
 	else
 	{
-		config_printf(cfg, "%s=", name);
+		crcfile_printf(cfg, "%s=", name);
 		while (size-- > 0)
 		{
-			config_printf(cfg, "%s", ultox(*val++, 4));
+			crcfile_printf(cfg, "%s", ultox(*val++, 4));
 			if (size)
-				config_printf(cfg, " ");
+				crcfile_printf(cfg, " ");
 		}
-		config_printf(cfg, "\n");
+		crcfile_printf(cfg, "\n");
 	}
 }
 
 /***************************************************************************
-	config_save_INT16
+	crcfile_save_INT16
 ***************************************************************************/
 
-void config_save_INT16(config_file *config, const char *section, int instance,
+void crcfile_save_INT16(crc_file *config, const char *section, int instance,
 					   const char *name, const INT16 *val, unsigned size)
 {
-	config_save_UINT16(config, section, instance, name, (UINT16 *)val, size);
+	crcfile_save_UINT16(config, section, instance, name, (UINT16 *)val, size);
 }
 
 /***************************************************************************
-	config_save_UINT32
+	crcfile_save_UINT32
 ***************************************************************************/
 
-void config_save_UINT32(config_file *cfg, const char *section, int instance,
+void crcfile_save_UINT32(crc_file *cfg, const char *section, int instance,
 						const char *name, const UINT32 *val, unsigned size)
 {
-	config_save_section(cfg, section, instance);
+	crcfile_save_section(cfg, section, instance);
 
 	/* If next is to much for a single line use the dump format */
 	if (size > 4)
@@ -448,45 +447,45 @@ void config_save_UINT32(config_file *cfg, const char *section, int instance,
 		while (size-- > 0)
 		{
 			if ((offs & 3) == 0)
-				config_printf(cfg, "%s.%s=", name, ultox(offs, 4));
-			config_printf(cfg, "%s", ultox(*val++, 8));
+				crcfile_printf(cfg, "%s.%s=", name, ultox(offs, 4));
+			crcfile_printf(cfg, "%s", ultox(*val++, 8));
 			if ((++offs & 3) == 0)
-				config_printf(cfg, "\n");
+				crcfile_printf(cfg, "\n");
 			else
-				config_printf(cfg, " ");
+				crcfile_printf(cfg, " ");
 		}
 		if (offs & 3)
-			config_printf(cfg, "\n");
+			crcfile_printf(cfg, "\n");
 	}
 	else
 	{
-		config_printf(cfg, "%s=", name);
+		crcfile_printf(cfg, "%s=", name);
 		while (size-- > 0)
 		{
-			config_printf(cfg, "%s", ultox(*val++, 8));
+			crcfile_printf(cfg, "%s", ultox(*val++, 8));
 			if (size)
-				config_printf(cfg, " ");
+				crcfile_printf(cfg, " ");
 		}
-		config_printf(cfg, "\n");
+		crcfile_printf(cfg, "\n");
 	}
 }
 
 /***************************************************************************
-	config_save_INT32
+	crcfile_save_INT32
 ***************************************************************************/
 
-void config_save_INT32(config_file *config, const char *section, int instance,
+void crcfile_save_INT32(crc_file *config, const char *section, int instance,
 					   const char *name, const INT32 *val, unsigned size)
 {
-	config_save_UINT32(config, section, instance, name, (UINT32 *)val, size);
+	crcfile_save_UINT32(config, section, instance, name, (UINT32 *)val, size);
 }
 
 /***************************************************************************
-	config_load_section
+	crcfile_load_section
 ***************************************************************************/
 
-/* load a linked list of config_vars (aka section) */
-static void config_load_section(config_file *cfg, const char *section, int instance)
+/* load a linked list of crcfile_vars (aka section) */
+static void crcfile_load_section(crc_file *cfg, const char *section, int instance)
 {
 	/* Make the buffer twice as big as it was while saving
 	 * the config, so we should always catch a [section] */
@@ -500,13 +499,13 @@ static void config_load_section(config_file *cfg, const char *section, int insta
 		return;						   /* fine, we already got it */
 
 	if (!cfg->list)
-		config_free_section(cfg);
+		crcfile_free_section(cfg);
 
 	if (instance)
 		sprintf(searching, "[%s.%d]", section, instance);
 	else
 		sprintf(searching, "[%s]", section);
-	LOG(("config_load_section: searching for '%s'\n", searching));
+	LOG(("crcfile_load_section: searching for '%s'\n", searching));
 
 	for (;;)
 	{
@@ -518,10 +517,10 @@ static void config_load_section(config_file *cfg, const char *section, int insta
 		{
 			cfg->section = section;
 			cfg->instance = instance;
-			/* now read all config_vars until the next section or end of cfg */
+			/* now read all crcfile_vars until the next section or end of cfg */
 			for (;;)
 			{
-				struct config_var *v;
+				struct crcfile_var *v;
 
 				buffer[0] = '\0';
                 mame_fgets(buffer, sizeof (buffer), cfg->file);
@@ -533,7 +532,7 @@ static void config_load_section(config_file *cfg, const char *section, int insta
 					p = strchr(buffer, '\r');
 				if (!p)
 				{
-					LOG(("config_load_section: Line to long in section '%s'\n", searching));
+					LOG(("crcfile_load_section: Line to long in section '%s'\n", searching));
 					return;
 				}
 
@@ -553,15 +552,15 @@ static void config_load_section(config_file *cfg, const char *section, int insta
 					*buffer == ';')
 					continue;
 
-				/* find the config_var data */
+				/* find the crcfile_var data */
 				p = strchr(buffer, '=');
 				if (!p)
 				{
-					LOG(("config_load_section: Line contains no '=' character\n"));
+					LOG(("crcfile_load_section: Line contains no '=' character\n"));
 					return;
 				}
 
-				/* buffer = config_var[.offs], p = data */
+				/* buffer = crcfile_var[.offs], p = data */
 				*p++ = '\0';
 				while (*p && isspace(*p))
 					*p++ = '\0';
@@ -569,7 +568,7 @@ static void config_load_section(config_file *cfg, const char *section, int insta
 				d = strchr(buffer, '.');
 				if (d)
 				{
-					/* buffer = config_var, d = offs, p = data */
+					/* buffer = crcfile_var, d = offs, p = data */
 					*d++ = '\0';
 					offs = xtoul(&d, NULL);
 					if (offs)
@@ -579,7 +578,7 @@ static void config_load_section(config_file *cfg, const char *section, int insta
 							v = v->next;
 						if (!v)
 						{
-							LOG(("config_load_section: Invalid variable continuation found '%s.%04X'\n", buffer, offs));
+							LOG(("crcfile_load_section: Invalid variable continuation found '%s.%04X'\n", buffer, offs));
 							return;
 						}
 					}
@@ -591,36 +590,36 @@ static void config_load_section(config_file *cfg, const char *section, int insta
 						*d = '\0';
 					offs = 0;
 				}
-				LOG(("config_load_section: reading %s.%d=%s\n", buffer, offs, p));
+				LOG(("crcfile_load_section: reading %s.%d=%s\n", buffer, offs, p));
 
                 if (cfg->list)
 				{
-					/* next config_var */
+					/* next crcfile_var */
 
 					/* avoids walking through linear list
 					   nes.crc has over 8000 entrys
 					   for nes 8000*(8000/2)=32000000 operations saved*/
-					v=malloc(sizeof(struct config_var));
+					v=malloc(sizeof(struct crcfile_var));
 					cfg->end_of_list->next=v;
 					cfg->end_of_list=v;
 				}
 				else
 				{
-					/* first config_var */
-					cfg->list = malloc(sizeof (struct config_var));
+					/* first crcfile_var */
+					cfg->list = malloc(sizeof (struct crcfile_var));
 					cfg->end_of_list=cfg->list;
 					v = cfg->list;
 				}
 				if (!v)
 				{
-					LOG(("config_load_section: out of memory while reading '%s'\n", searching));
+					LOG(("crcfile_load_section: out of memory while reading '%s'\n", searching));
 					return;
 				}
-				memset(v, 0, sizeof(struct config_var));
+				memset(v, 0, sizeof(struct crcfile_var));
                 v->name = malloc(strlen(buffer) + 1);
 				if (!v->name)
 				{
-					LOG(("config_load_section: out of memory while reading '%s'\n", searching));
+					LOG(("crcfile_load_section: out of memory while reading '%s'\n", searching));
 					return;
 				}
 				strcpy(v->name, buffer);
@@ -644,7 +643,7 @@ static void config_load_section(config_file *cfg, const char *section, int insta
 						/* check if the (re-)allocation failed */
 						if (!v->data)
 						{
-							LOG(("config_load_section: out of memory while reading '%s'\n", searching));
+							LOG(("crcfile_load_section: out of memory while reading '%s'\n", searching));
 							return;
 						}
 						/* store element */
@@ -678,7 +677,7 @@ static void config_load_section(config_file *cfg, const char *section, int insta
 						/* check if the (re-)allocation failed */
 						if (!v->data)
 						{
-							LOG(("config_load_section: Out of memory while reading '%s'\n", searching));
+							LOG(("crcfile_load_section: Out of memory while reading '%s'\n", searching));
 							return;
 						}
 						*((UINT8 *)v->data + v->size) = data;
@@ -691,15 +690,15 @@ static void config_load_section(config_file *cfg, const char *section, int insta
 }
 
 /***************************************************************************
-	config_load_string
+	crcfile_load_string
 ***************************************************************************/
 
-void config_load_string(config_file *cfg, const char *section, int instance,
+void crcfile_load_string(crc_file *cfg, const char *section, int instance,
 					   const char *name, char *dst, unsigned size)
 {
-	struct config_var *v;
+	struct crcfile_var *v;
 
-	config_load_section(cfg, section, instance);
+	crcfile_load_section(cfg, section, instance);
 
 	v = cfg->list;
 	while (v && findstr(v->name, name))
@@ -711,25 +710,25 @@ void config_load_string(config_file *cfg, const char *section, int instance,
 			size = v->size;
 		memcpy(dst, v->data, size - 1);
 		dst[size-1] = '\0';
-		LOG(("config_load_string: '%s' is '%s'\n", name, dst));
+		LOG(("crcfile_load_string: '%s' is '%s'\n", name, dst));
     }
 	else
 	{
-		LOG(("config_load_string: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
+		LOG(("crcfile_load_string: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
 		memset(dst, 0, size);
 	}
 }
 
 /***************************************************************************
-	config_load_UINT8
+	crcfile_load_UINT8
 ***************************************************************************/
 
-void config_load_UINT8(config_file *cfg, const char *section, int instance,
+void crcfile_load_UINT8(crc_file *cfg, const char *section, int instance,
 					   const char *name, UINT8 *val, unsigned size)
 {
-	struct config_var *v;
+	struct crcfile_var *v;
 
-	config_load_section(cfg, section, instance);
+	crcfile_load_section(cfg, section, instance);
 
 	v = cfg->list;
 	while (v && findstr(v->name, name))
@@ -744,21 +743,21 @@ void config_load_UINT8(config_file *cfg, const char *section, int instance,
 	}
 	else
 	{
-		LOG(("config_load_UINT8: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
+		LOG(("crcfile_load_UINT8: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
 		memset(val, 0, size);
 	}
 }
 
 /***************************************************************************
-	config_load_INT8
+	crcfile_load_INT8
 ***************************************************************************/
 
-void config_load_INT8(config_file *cfg, const char *section, int instance,
+void crcfile_load_INT8(crc_file *cfg, const char *section, int instance,
 					  const char *name, INT8 *val, unsigned size)
 {
-	struct config_var *v;
+	struct crcfile_var *v;
 
-	config_load_section(cfg, section, instance);
+	crcfile_load_section(cfg, section, instance);
 
 	v = cfg->list;
 	while (v && findstr(v->name, name))
@@ -773,21 +772,21 @@ void config_load_INT8(config_file *cfg, const char *section, int instance,
 	}
 	else
 	{
-		LOG(("config_load_INT8: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
+		LOG(("crcfile_load_INT8: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
         memset(val, 0, size);
 	}
 }
 
 /***************************************************************************
-	config_load_UINT16
+	crcfile_load_UINT16
 ***************************************************************************/
 
-void config_load_UINT16(config_file *cfg, const char *section, int instance,
+void crcfile_load_UINT16(crc_file *cfg, const char *section, int instance,
 						const char *name, UINT16 *val, unsigned size)
 {
-	struct config_var *v;
+	struct crcfile_var *v;
 
-	config_load_section(cfg, section, instance);
+	crcfile_load_section(cfg, section, instance);
 
 	v = cfg->list;
 	while (v && findstr(v->name, name))
@@ -802,21 +801,21 @@ void config_load_UINT16(config_file *cfg, const char *section, int instance,
 	}
 	else
 	{
-		LOG(("config_load_UINT16: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
+		LOG(("crcfile_load_UINT16: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
 		memset(val, 0, size * 2);
 	}
 }
 
 /***************************************************************************
-	config_load_INT16
+	crcfile_load_INT16
 ***************************************************************************/
 
-void config_load_INT16(config_file *cfg, const char *section, int instance,
+void crcfile_load_INT16(crc_file *cfg, const char *section, int instance,
 					   const char *name, INT16 *val, unsigned size)
 {
-	struct config_var *v;
+	struct crcfile_var *v;
 
-	config_load_section(cfg, section, instance);
+	crcfile_load_section(cfg, section, instance);
 
 	v = cfg->list;
 	while (v && findstr(v->name, name))
@@ -831,21 +830,21 @@ void config_load_INT16(config_file *cfg, const char *section, int instance,
 	}
 	else
 	{
-		LOG(("config_load_INT16: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
+		LOG(("crcfile_load_INT16: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
         memset(val, 0, size * 2);
 	}
 }
 
 /***************************************************************************
-	config_load_UINT32
+	crcfile_load_UINT32
 ***************************************************************************/
 
-void config_load_UINT32(config_file *cfg, const char *section, int instance,
+void crcfile_load_UINT32(crc_file *cfg, const char *section, int instance,
 						const char *name, UINT32 *val, unsigned size)
 {
-	struct config_var *v;
+	struct crcfile_var *v;
 
-	config_load_section(cfg, section, instance);
+	crcfile_load_section(cfg, section, instance);
 
 	v = cfg->list;
 	while (v && findstr(v->name, name))
@@ -860,21 +859,21 @@ void config_load_UINT32(config_file *cfg, const char *section, int instance,
 	}
 	else
 	{
-		LOG(("config_load_UINT32: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
+		LOG(("crcfile_load_UINT32: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
 		memset(val, 0, size * 4);
 	}
 }
 
 /***************************************************************************
-	config_load_INT32
+	crcfile_load_INT32
 ***************************************************************************/
 
-void config_load_INT32(config_file *cfg, const char *section, int instance,
+void crcfile_load_INT32(crc_file *cfg, const char *section, int instance,
 					   const char *name, INT32 *val, unsigned size)
 {
-	struct config_var *v;
+	struct crcfile_var *v;
 
-	config_load_section(cfg, section, instance);
+	crcfile_load_section(cfg, section, instance);
 
 	v = cfg->list;
 	while (v && findstr(v->name, name))
@@ -889,7 +888,7 @@ void config_load_INT32(config_file *cfg, const char *section, int instance,
 	}
 	else
 	{
-		LOG(("config_load_INT32: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
+		LOG(("crcfile_load_INT32: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
 		memset(val, 0, size * 4);
 	}
 }

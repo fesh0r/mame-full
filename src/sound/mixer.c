@@ -1047,25 +1047,51 @@ int mixer_get_default_mixing_level(int ch)
 
 
 /***************************************************************************
+	mixer_load_config
+***************************************************************************/
+
+void mixer_load_config(const struct mixer_config *config)
+{
+	int i;
+
+	for (i = 0; i < MIXER_MAX_CHANNELS; i++)
+	{
+		config_default_mixing_level[i] = config->default_levels[i];
+		config_mixing_level[i] = config->mixing_levels[i];
+	}
+	is_config_invalid = 0;
+}
+
+
+/***************************************************************************
+	mixer_save_config
+***************************************************************************/
+
+void mixer_save_config(struct mixer_config *config)
+{
+	int i;
+
+	for (i = 0; i < MIXER_MAX_CHANNELS; i++)
+	{
+		config->default_levels[i] = mixer_channel[i].default_mixing_level;
+		config->mixing_levels[i] = mixer_channel[i].mixing_level;
+	}
+}
+
+
+/***************************************************************************
 	mixer_read_config
 ***************************************************************************/
 
 void mixer_read_config(mame_file *f)
 {
-	UINT8 default_levels[MIXER_MAX_CHANNELS];
-	UINT8 mixing_levels[MIXER_MAX_CHANNELS];
-	int i;
+	struct mixer_config config;
 
-	memset(default_levels, 0xff, sizeof(default_levels));
-	memset(mixing_levels, 0xff, sizeof(mixing_levels));
-	mame_fread(f, default_levels, MIXER_MAX_CHANNELS);
-	mame_fread(f, mixing_levels, MIXER_MAX_CHANNELS);
-	for (i = 0; i < MIXER_MAX_CHANNELS; i++)
-	{
-		config_default_mixing_level[i] = default_levels[i];
-		config_mixing_level[i] = mixing_levels[i];
-	}
-	is_config_invalid = 0;
+	memset(config.default_levels, 0xff, sizeof(config.default_levels));
+	memset(config.mixing_levels, 0xff, sizeof(config.mixing_levels));
+	mame_fread(f, config.default_levels, MIXER_MAX_CHANNELS);
+	mame_fread(f, config.mixing_levels, MIXER_MAX_CHANNELS);
+	mixer_load_config(&config);
 }
 
 
@@ -1075,17 +1101,11 @@ void mixer_read_config(mame_file *f)
 
 void mixer_write_config(mame_file *f)
 {
-	UINT8 default_levels[MIXER_MAX_CHANNELS];
-	UINT8 mixing_levels[MIXER_MAX_CHANNELS];
-	int i;
+	struct mixer_config config;
 
-	for (i = 0; i < MIXER_MAX_CHANNELS; i++)
-	{
-		default_levels[i] = mixer_channel[i].default_mixing_level;
-		mixing_levels[i] = mixer_channel[i].mixing_level;
-	}
-	mame_fwrite(f, default_levels, MIXER_MAX_CHANNELS);
-	mame_fwrite(f, mixing_levels, MIXER_MAX_CHANNELS);
+	mixer_save_config(&config);
+	mame_fwrite(f, config.default_levels, MIXER_MAX_CHANNELS);
+	mame_fwrite(f, config.mixing_levels, MIXER_MAX_CHANNELS);
 }
 
 

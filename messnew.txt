@@ -34,5 +34,7 @@ Source Changes:
 - Adds info regarding device extensions to -listinfo and -listxml output.
   [Andrea Mazzoleni]
 
+- Renamed config.? to crcfile.?.  [Nate Woods]
+
 - [Windows] When the new UI is active and MESS is paused, MESS now should not
   waste any excess CPU time.  [Nate Woods]

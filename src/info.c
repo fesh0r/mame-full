@@ -238,6 +238,18 @@ static void print_game_input(int OUTPUT_XML, FILE* out, const struct GameDriver*
 				case IPF_PLAYER4:
 					if (nplayer<4) nplayer = 4;
 					break;
+				case IPF_PLAYER5:
+					if (nplayer<5) nplayer = 5;
+					break;
+				case IPF_PLAYER6:
+					if (nplayer<6) nplayer = 6;
+					break;
+				case IPF_PLAYER7:
+					if (nplayer<7) nplayer = 7;
+					break;
+				case IPF_PLAYER8:
+					if (nplayer<8) nplayer = 8;
+					break;
 			}
 			switch (input->type & ~IPF_MASK)
 			{
@@ -326,6 +338,18 @@ static void print_game_input(int OUTPUT_XML, FILE* out, const struct GameDriver*
 					break;
 				case IPT_COIN4:
 					if (ncoin < 4) ncoin = 4;
+					break;
+				case IPT_COIN5:
+					if (ncoin < 5) ncoin = 5;
+					break;
+				case IPT_COIN6:
+					if (ncoin < 6) ncoin = 6;
+					break;
+				case IPT_COIN7:
+					if (ncoin < 7) ncoin = 7;
+					break;
+				case IPT_COIN8:
+					if (ncoin < 8) ncoin = 8;
 					break;
 				case IPT_SERVICE :
 					service = "yes";

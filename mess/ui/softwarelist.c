@@ -19,7 +19,7 @@
 #include "snprintf.h"
 
 #if HAS_CRC
-#include "config.h"
+#include "crcfile.h"
 #endif /* HAS_CRC */
 
 /* from src/mess/win32.c */
@@ -104,7 +104,7 @@ static enum RealizeLevel s_eRealizeLevel;
 #endif /* HAS_IDLING */
 
 #if HAS_CRC
-static config_file *mess_crc_file;
+static crc_file *mess_crc_file;
 static char mess_crc_category[64];
 #endif /* HAS_CRC */
 
@@ -454,7 +454,7 @@ static BOOL ImageData_Realize(ImageData *img, enum RealizeLevel eRealize, mess_i
 	if (mess_crc_file && crc && !img->crc)
 	{
 		snprintf(crcstr, sizeof(crcstr) / sizeof(crcstr[0]), "%08x", crc);
-		config_load_string(mess_crc_file, mess_crc_category, 0, crcstr, line, sizeof(line));
+		crcfile_load_string(mess_crc_file, mess_crc_category, 0, crcstr, line, sizeof(line));
 		ImageData_SetCrcLine(img, crc, line);
 	}
 #endif
@@ -539,8 +539,8 @@ static void InternalFillSoftwareList(struct SmartListView *pSoftwareListView, in
 	/* Update the CRC file */
 #if HAS_CRC
 	if (mess_crc_file)
-		config_close(mess_crc_file);
-	mess_crc_file = config_open(drivers[nGame]->name, drivers[nGame]->name, FILETYPE_CRC);
+		crcfile_close(mess_crc_file);
+	mess_crc_file = crcfile_open(drivers[nGame]->name, drivers[nGame]->name, FILETYPE_CRC);
 	if (mess_crc_file)
 		strcpy(mess_crc_category, drivers[nGame]->name);
 #endif
