@@ -17,13 +17,14 @@ unsigned char magmax_scroll_x[2];
 unsigned char magmax_scroll_y[2];
 unsigned short magmax_vreg;
 static int flipscreen = 0;
-static UINT32 *prom_tab;
 
+static UINT16 pens_line_tab[256];
+static UINT32 *prom_tab = NULL;
+static struct osd_bitmap * tmpbitmap = NULL;
 
 
 typedef void (*blit_horiz_pixel_line_proc)(struct osd_bitmap *bitmap,int x,int y, int width, UINT16* pens);
-blit_horiz_pixel_line_proc blit_horiz_pixel_line;
-/*extern blit_horiz_pixel_line_proc blit_horiz_pixel_line;*/
+static blit_horiz_pixel_line_proc blit_horiz_pixel_line;
 
 static void bhpl_8_nd(struct osd_bitmap *b,int x,int y,int w, UINT16* pens)
 {
@@ -248,6 +249,15 @@ void magmax_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 }
 
+void magmax_vh_stop(void)
+{
+	free(prom_tab);
+	prom_tab = 0;
+
+	bitmap_free(tmpbitmap);
+	tmpbitmap = 0;
+}
+
 int magmax_vh_start(void)
 {
 	int i,v;
@@ -255,6 +265,13 @@ int magmax_vh_start(void)
 
 	if ((prom_tab = malloc(256 * sizeof(UINT32))) == 0)
 		return 1;
+
+	/* Allocate temporary bitmap */
+ 	if ((tmpbitmap = bitmap_alloc(256,256)) == 0)
+	{
+		magmax_vh_stop ();
+		return 1;
+	}
 
 	for (i=0; i<256; i++)
 	{
@@ -267,11 +284,6 @@ int magmax_vh_start(void)
 	return 0;
 }
 
-void magmax_vh_stop(void)
-{
-	free(prom_tab);
-	prom_tab = 0;
-}
 
 
 void magmax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
@@ -291,14 +303,13 @@ void magmax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 	else
 	{
-		UINT16 pens_line_tab[256];
-
 		UINT32 h,v;
-
 		unsigned char * rom18B = memory_region(REGION_USER1);
-
 		UINT32 scroll_h = READ_WORD(magmax_scroll_x) & 0x3fff;
 		UINT32 scroll_v = READ_WORD(magmax_scroll_y) & 0xff;
+
+		/*clear background-over-sprites bitmap*/
+		fillbitmap(tmpbitmap, 0, &Machine->visible_area);
 
 		for (v = 2*8; v < 30*8; v++) /*only for visible area*/
 		{
@@ -309,82 +320,149 @@ void magmax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			unsigned short *pens = &Machine->pens[2*16 + (map_v_scr_100>>1)];
 
-			for (h = 0; h < 0x80; h++)
+			if (!map_v_scr_100)
 			{
-				UINT32 graph_data;
-				UINT32 graph_color;
-				UINT32 LS273;
-				UINT32 LS283;
-				UINT32 prom_data;
-
-				LS273 = 0x0;
-
-				if (!map_v_scr_100)
+				/* we are drawing surface */
+				for (h = 0; h < 0x80; h++)
 				{
-					int rom18B_addr = (map_v_scr_1fe_6) + h;
-					LS273 = rom18B[ rom18B_addr ] + 0xff01;
+					UINT32 graph_data;
+					UINT32 graph_color;
+					UINT32 LS283;
+					UINT32 prom_data;
+
+					LS283 =	scroll_h + h + rom18B[ map_v_scr_1fe_6 + h ] + 0xff01;
+
+					prom_data = prom_tab[ (LS283 >> 6) & 0xff ];
+
+					rom18D_addr &= 0x20f8;
+					rom18D_addr += (prom_data & 0x1f00) + ((LS283 & 0x38) >>3);
+
+					rom15F_addr &= 0x201c;
+					rom15F_addr += (rom18B[0x4000 + rom18D_addr ]<<5) + ((LS283 & 0x6)>>1);
+					rom15F_addr += (prom_data & 0x4000);
+
+					graph_color = (prom_data & 0x0070);
+
+					graph_data = rom18B[0x8000 + rom15F_addr];
+					if ((LS283 & 1))
+						graph_data >>= 4;
+					graph_data &= 0x0f;
+
+					pens_line_tab[h] = pens[graph_color + graph_data];
+
+					/*priority: background over sprites*/
+					/* not possible on the surface*/
+					//if ((map_v_scr_100) && ((graph_data & 0x0c)==0x0c))
+					//{
+					//	plot_pixel(tmpbitmap,h,v,pens[graph_color + graph_data] );
+					//}
 				}
+				for (h = 0x80; h < 0x100; h++)
+				{
+					UINT32 graph_data;
+					UINT32 graph_color;
+					UINT32 LS283;
+					UINT32 prom_data;
 
-				LS283 =	scroll_h + h + LS273;
+					LS283 =	scroll_h + h + (rom18B[ (map_v_scr_1fe_6) + (h ^ 0xff) ] ^ 0xff);
 
-				prom_data = prom_tab[ (LS283 >> 6) & 0xff ];
+					prom_data = prom_tab[ (LS283 >> 6) & 0xff ];
 
-				rom18D_addr &= 0x20f8;
-				rom18D_addr += (prom_data & 0x1f00) + ((LS283 & 0x38) >>3);
+					rom18D_addr &= 0x20f8;
+					rom18D_addr += (prom_data & 0x1f00) + ((LS283 & 0x38) >>3);
 
-				rom15F_addr &= 0x201c;
-				rom15F_addr += (rom18B[0x4000 + rom18D_addr ]<<5) + ((LS283 & 0x6)>>1);
-				rom15F_addr += (prom_data & 0x4000);
+					rom15F_addr &= 0x201c;
+					rom15F_addr += (rom18B[0x4000 + rom18D_addr ]<<5) + ((LS283 & 0x6)>>1);
+					rom15F_addr += (prom_data & 0x4000);
 
-				graph_color = (prom_data & 0x0070);
+					graph_color = (prom_data & 0x0070);
 
-				graph_data = rom18B[0x8000 + rom15F_addr];
-				if ((LS283 & 1))
-					graph_data >>= 4;
-				graph_data &= 0x0f;
+					graph_data = rom18B[0x8000 + rom15F_addr];
+					if ((LS283 & 1))
+						graph_data >>= 4;
+					graph_data &= 0x0f;
 
-				//plot_pixel(bitmap,h,v,pens[graph_color + graph_data] );
-				pens_line_tab[h] = pens[graph_color + graph_data];
+					pens_line_tab[h] = pens[graph_color + graph_data];
 
+					/*priority: background over sprites*/
+					/* not possible on the surface*/
+					//if ((map_v_scr_100) && ((graph_data & 0x0c)==0x0c))
+					//{
+					//	plot_pixel(tmpbitmap,h,v,pens[graph_color + graph_data] );
+					//}
+				}
 			}
-			for (h = 0x80; h < 0x100; h++)
+			else
 			{
-				UINT32 graph_data;
-				UINT32 graph_color;
-				UINT32 LS273;
-				UINT32 LS283;
-				UINT32 prom_data;
-
-				LS273 = 0x0;
-
-				if (!map_v_scr_100)
+				/* we are drawing underground */
+				for (h = 0; h < 0x80; h++)
 				{
-					int rom18B_addr = (map_v_scr_1fe_6) + (h ^ 0xff);
-					LS273 = rom18B[ rom18B_addr ] ^ 0xff;
+					UINT32 graph_data;
+					UINT32 graph_color;
+					UINT32 LS283;
+					UINT32 prom_data;
+
+					LS283 =	scroll_h + h;
+
+					prom_data = prom_tab[ (LS283 >> 6) & 0xff ];
+
+					rom18D_addr &= 0x20f8;
+					rom18D_addr += (prom_data & 0x1f00) + ((LS283 & 0x38) >>3);
+
+					rom15F_addr &= 0x201c;
+					rom15F_addr += (rom18B[0x4000 + rom18D_addr ]<<5) + ((LS283 & 0x6)>>1);
+					rom15F_addr += (prom_data & 0x4000);
+
+					graph_color = (prom_data & 0x0070);
+
+					graph_data = rom18B[0x8000 + rom15F_addr];
+					if ((LS283 & 1))
+						graph_data >>= 4;
+					graph_data &= 0x0f;
+
+					pens_line_tab[h] = pens[graph_color + graph_data];
+
+					/*priority: background over sprites*/
+					if (/*(map_v_scr_100) &&*/ ((graph_data & 0x0c)==0x0c))
+					{
+						plot_pixel(tmpbitmap,h,v,pens[graph_color + graph_data] );
+					}
 				}
+				for (h = 0x80; h < 0x100; h++)
+				{
+					UINT32 graph_data;
+					UINT32 graph_color;
+					UINT32 LS283;
+					UINT32 prom_data;
 
-				LS283 =	scroll_h + h + LS273;
+					LS283 =	scroll_h + h;
 
-				prom_data = prom_tab[ (LS283 >> 6) & 0xff ];
+					prom_data = prom_tab[ (LS283 >> 6) & 0xff ];
 
-				rom18D_addr &= 0x20f8;
-				rom18D_addr += (prom_data & 0x1f00) + ((LS283 & 0x38) >>3);
+					rom18D_addr &= 0x20f8;
+					rom18D_addr += (prom_data & 0x1f00) + ((LS283 & 0x38) >>3);
 
-				rom15F_addr &= 0x201c;
-				rom15F_addr += (rom18B[0x4000 + rom18D_addr ]<<5) + ((LS283 & 0x6)>>1);
-				rom15F_addr += (prom_data & 0x4000);
+					rom15F_addr &= 0x201c;
+					rom15F_addr += (rom18B[0x4000 + rom18D_addr ]<<5) + ((LS283 & 0x6)>>1);
+					rom15F_addr += (prom_data & 0x4000);
 
-				graph_color = (prom_data & 0x0070);
+					graph_color = (prom_data & 0x0070);
+	
+					graph_data = rom18B[0x8000 + rom15F_addr];
+					if ((LS283 & 1))
+						graph_data >>= 4;
+					graph_data &= 0x0f;
 
-				graph_data = rom18B[0x8000 + rom15F_addr];
-				if ((LS283 & 1))
-					graph_data >>= 4;
-				graph_data &= 0x0f;
+					pens_line_tab[h] = pens[graph_color + graph_data];
 
-				//plot_pixel(bitmap,h,v,pens[graph_color + graph_data] );
-				pens_line_tab[h] = pens[graph_color + graph_data];
-
+					/*priority: background over sprites*/
+					if (/*(map_v_scr_100) &&*/ ((graph_data & 0x0c)==0x0c))
+					{
+						plot_pixel(tmpbitmap,h,v,pens[graph_color + graph_data] );
+					}
+				}
 			}
+
 			if (flipscreen)
 			{
 				int i;
@@ -436,6 +514,11 @@ void magmax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					&Machine->visible_area, TRANSPARENCY_COLOR, 31);
 		}
 	}
+	if (!(magmax_vreg & 0x40))		/* background disable */
+	{
+		copybitmap(bitmap, tmpbitmap, flipscreen,flipscreen,0,0, &Machine->visible_area, TRANSPARENCY_PEN, 0);
+	}
+
 
 	/* draw the foreground characters */
 	for (offs = 32*32-1; offs >= 0; offs -= 1)
