@@ -17,12 +17,13 @@ struct crtc6845_interface
 	void (*out_VS_func)(int offset, int data);
 	void (*out_DE_func)(int offset, int data);
 	void (*out_CR_func)(int offset, int data);
+	void (*out_CRE_func)(int offset, int data);
 };
 
 typedef struct crtc6845_state
 {
 	/* Register Select */
-	int address_register; 
+	int address_register;
 	/* register data */
 	int registers[32];
 	/* vertical and horizontal sync widths */
@@ -48,7 +49,7 @@ typedef struct crtc6845_state
 
 	int HSYNC;
 	int VSYNC;
-	
+
 	int Vertical_Total_Adjust_Active;
 	int Vertical_Total_Adjust_Counter;
 
@@ -62,6 +63,8 @@ typedef struct crtc6845_state
 	int Display_Delayed_Enabled;
 
 	int Cursor_Delayed_Status;
+
+	int Cursor_Flash_Count;
 
 	int Delay_Flags;
 	int Cursor_Start_Delay;
@@ -86,6 +89,8 @@ void crtc6845_register_w(int offset, int data);
 /* clock the 6845 */
 void crtc6845_clock(void);
 
+/* called every frame to advance the cursor count */
+void crtc6845_frameclock(void);
 
 /* functions to read the 6845 outputs */
 int crtc6845_memory_address_r(int offset);

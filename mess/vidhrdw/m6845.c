@@ -21,15 +21,15 @@
 #define Display_Disable_Delay_Flag 8
 
 /* total number of chr -1 */
-#define R0_horizontal_total		crtc.registers[0]          
+#define R0_horizontal_total		crtc.registers[0]
 /* total number of displayed chr */
 #define R1_horizontal_displayed	crtc.registers[1]
 /* position of horizontal Sync pulse */
-#define R2_horizontal_sync_position crtc.registers[2]  
+#define R2_horizontal_sync_position crtc.registers[2]
 /* HSYNC & VSYNC width */
-#define R3_sync_width crtc.registers[3]     
-/* total number of character rows -1 */           
-#define R4_vertical_total crtc.registers[4] 
+#define R3_sync_width crtc.registers[3]
+/* total number of character rows -1 */
+#define R4_vertical_total crtc.registers[4]
 /* *** Not implemented yet ***
 R5 Vertical total adjust
 This 5 bit write only register is programmed with the fraction
@@ -42,9 +42,9 @@ when using mode 3,6 and 7 in which it is set to 2
 */
 #define R5_vertical_total_adjust crtc.registers[5]
 /* total number of displayed chr rows */
-#define R6_vertical_displayed crtc.registers[6]        
+#define R6_vertical_displayed crtc.registers[6]
 /* position of vertical sync pulse */
-#define R7_vertical_sync_position crtc.registers[7] 
+#define R7_vertical_sync_position crtc.registers[7]
 /* *** Part not implemented ***
 R8 interlace settings
 Interlace mode (bits 0,1)
@@ -79,7 +79,7 @@ Bit 6 	Bit 5
 /* *** Not implemented yet *** */
 #define R16_light_pen_address_H crtc.registers[16]
 /* *** Not implemented yet *** */
-#define R17_light_pen_address_L crtc.registers[17]      
+#define R17_light_pen_address_L crtc.registers[17]
 
 
 static crtc6845_state crtc;
@@ -112,6 +112,16 @@ crct6845_calls= {
 	0,// Vertical status
 	0,// Display Enabled status
 	0,// Cursor status
+
+
+	0,// Cursor status allways called
+	// As the BBC video emulation does not redraw all off the screen every time
+	// This function outputs:
+	// B1 set to 1 when at cursor position, set to 0 when past cursor
+	// B0 set to 1 when the cursor is on and 0 when the cursor is off
+	// this function is call at the cursor location even if the cursor is off
+	// this means that the cursor will get clear from the screen
+
 };
 
 /* set up the local copy of the 6845 external procedure calls */
@@ -123,6 +133,7 @@ void crtc6845_config(const struct crtc6845_interface *intf)
 	crct6845_calls.out_VS_func=*intf->out_VS_func;
 	crct6845_calls.out_DE_func=*intf->out_DE_func;
 	crct6845_calls.out_CR_func=*intf->out_CR_func;
+	crct6845_calls.out_CRE_func=*intf->out_CRE_func;
 }
 
 void	crtc6845_start(void)
@@ -187,7 +198,7 @@ void crtc6845_register_w(int offset, int data)
                         R3_sync_width=data;
 
                         crtc.horizontal_sync_width = data & 0x0f;
-               
+
     //                                            crtc6845_recalc_cycles_to_vsync_end();
 				}
                 break;
@@ -302,6 +313,7 @@ void	crtc6845_reset(int which)
 	crtc.Display_Enabled=False;
 	crtc.Display_Delayed_Enabled=False;
 	crtc.Cursor_Delayed_Status=False;
+	crtc.Cursor_Flash_Count=0;
 	crtc.Delay_Flags=0;
 	crtc.Cursor_Start_Delay=0;
 	crtc.Display_Enabled_Delay=0;
@@ -352,16 +364,21 @@ static void crtc6845_restart_frame(void)
 					crtc.Memory_Address_of_next_Character_Row = crtc.Memory_Address;
 }
 
+void crtc6845_frameclock(void)
+{
+	crtc.Cursor_Flash_Count=(crtc.Cursor_Flash_Count+1)%50;
+}
+
 /* clock the 6845 */
 void crtc6845_clock(void)
 {
 	/* KT - I think the compiler might generate shit code when using "%" operator! */
 	/*crtc.Memory_Address=(crtc.Memory_Address+1)%0x4000;*/
 	crtc.Memory_Address=(crtc.Memory_Address+1)&0x03fff;
-	
+
 	/*crtc.Horizontal_Counter=(crtc.Horizontal_Counter+1)%256;*/
 	crtc.Horizontal_Counter=(crtc.Horizontal_Counter+1)&0x0ff;
-	
+
 	if (crtc.Horizontal_Counter_Reset)
 	{
 		/* End of a Horizontal scan line */
@@ -423,7 +440,7 @@ void crtc6845_clock(void)
 	        }
 
 			/* Check for end of All Vertical Character rows */
-			if (crtc.Character_Row_Counter==R4_vertical_total) 
+			if (crtc.Character_Row_Counter==R4_vertical_total)
 			{
 				if (!(crtc.Vertical_Total_Adjust_Active))
 				{
@@ -461,7 +478,7 @@ void crtc6845_clock(void)
                         }
                 }
 
-	
+
 		/* vertical total adjust active? */
 		if (crtc.Vertical_Total_Adjust_Active)
 		{
@@ -478,7 +495,7 @@ void crtc6845_clock(void)
 
 				// KT this caused problems when R7 == 0 and R5 was set!
 				crtc6845_restart_frame();
-			
+
 				/* Check for start of Vertical Sync Pulse */
 				if (crtc.Character_Row_Counter==R7_vertical_sync_position)
 				{
@@ -535,7 +552,7 @@ void crtc6845_clock(void)
                 /* Check for end of Horizontal Sync Pulse */
                 if (crtc.Horizontal_Sync_Width_Counter==crtc.horizontal_sync_width)
                 {
-               
+
                         crtc.Horizontal_Sync_Width_Counter=0;
                         crtc.HSYNC=False;
                         if (crct6845_calls.out_HS_func) (crct6845_calls.out_HS_func)(0,crtc.HSYNC); /* call HS update */
@@ -566,6 +583,7 @@ void crtc6845_clock(void)
 			crtc.Delay_Flags=crtc.Delay_Flags^Cursor_On_Flag;
 			crtc.Cursor_Delayed_Status=False;
 			if (crct6845_calls.out_CR_func) (crct6845_calls.out_CR_func)(0,crtc.Cursor_Delayed_Status); /* call CR update */
+			if (crct6845_calls.out_CRE_func) (crct6845_calls.out_CRE_func)(0,0); /* call CRE update */
 		}
 
 		/* cursor enabled delay */
@@ -578,7 +596,8 @@ void crtc6845_clock(void)
 				{
 					crtc.Delay_Flags=(crtc.Delay_Flags^Cursor_Start_Delay_Flag)|Cursor_On_Flag;
 					crtc.Cursor_Delayed_Status=True;
-					if (crct6845_calls.out_CR_func) (crct6845_calls.out_CR_func)(0,crtc.Cursor_Delayed_Status); /* call CR update */
+					if ((crct6845_calls.out_CR_func)&&(crtc.Cursor_Flash_Count>25)) (crct6845_calls.out_CR_func)(0,crtc.Cursor_Delayed_Status); /* call CR update */
+					if (crct6845_calls.out_CRE_func) (crct6845_calls.out_CRE_func)(0,2|((crtc.Cursor_Flash_Count>25)&1)); /* call CR update */
 				}
 			}
 		}
@@ -654,7 +673,7 @@ int     crtc6845_cycles_to_vsync(void)
 	cycles_to_vsync_start = R7_vertical_sync_position*scans_per_character;
 	cycles_to_vsync_start *= chars_per_line;
 
-	
+
     if (cycles_into_frame<cycles_to_vsync_start)
     {
 		/* not gone past vertical sync yet! */
@@ -733,11 +752,11 @@ static void crtc6845_remove_vsync_clear_timer(void)
 static void crtc6845_set_new_vsync_set_time(int cycles)
 {
 	int crtc_cycles_to_vsync_start;
-	
+
 	/* get cycles to vsync start, or if vsync cannot be reached
 	cycles will be -1 */
 	crtc_cycles_to_vsync_start = cycles;
-	
+
 	crtc6845_remove_vsync_set_timer();
 
         if (crtc_cycles_to_vsync_start!=-1)
@@ -754,7 +773,7 @@ static void crtc6845_set_new_vsync_clear_time(int cycles)
 	crtc6845_remove_vsync_clear_timer();
 
 	/* get number of cycles to end of vsync */
-	crtc_cycles_to_vsync_end = cycles;	
+	crtc_cycles_to_vsync_end = cycles;
 
 	if (crtc_cycles_to_vsync_end!=-1)
 	{
@@ -779,7 +798,7 @@ static void crtc6845_vsync_clear_timer_callback(int dummy)
 	/* this will work as long as the vsync length has not been reprogrammed while the vsync was active! */
 	/* setup time for vsync set timer */
 	crtc6845_set_new_vsync_set_time(crtc6845_cycles_per_frame()-crtc6845_vsync_length_in_cycles());
-	
+
 	/* prevent timer from being free'd and don't let it trigger again */
 	timer_reset(crtc6845_vsync_clear_timer, TIME_NEVER);
 }
