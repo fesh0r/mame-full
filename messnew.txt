@@ -1,3 +1,24 @@
+0.37b14
+
+Several drivers may be broken due to the MAME memory handling changes.
+And as a result, the Amiga has been temporarily removed.
+
+Note: .inp record/playback does still not work currently.
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+...
+
+System Driver Changes:
+----------------------
+- [DRAGON/COCO1-2-3] Fixed ROM loading so that ROMs are properly mirrored.
+  [Nate Woods]
+
+Other Changes:
+--------------
+...
+
+-------------------------------------------------------------------------------  
 0.37b13
 
 Several drivers may be broken due to the MAME memory handling changes.

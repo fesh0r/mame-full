@@ -444,6 +444,7 @@ int coco3_pak_load(int id)
 
 static int generic_rom_load(int id, UINT8 *dest, UINT16 destlength)
 {
+	UINT8 *rombase;
 	UINT16 romsize;
 	void *fp;
 
@@ -459,6 +460,18 @@ static int generic_rom_load(int id, UINT8 *dest, UINT16 destlength)
 
 		cart_inserted = 1;
 		osd_fclose(fp);
+
+		/* Now we need to repeat the mirror the ROM throughout the ROM memory */
+		rombase = dest;
+		dest += romsize;
+		destlength -= romsize;
+		while(destlength > 0) {
+			if (romsize > destlength)
+				romsize = destlength;
+			memcpy(dest, rombase, romsize);
+			dest += romsize;
+			destlength -= romsize;
+		}
 	}
 	return INIT_OK;
 }
@@ -478,7 +491,7 @@ int dragon64_rom_load(int id)
 int coco3_rom_load(int id)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
-	return generic_rom_load(id, &ROM[0x8c000], 0x8000);
+	return generic_rom_load(id, &ROM[0x88000], 0x8000);
 }
 
 /***************************************************************************
