@@ -546,7 +546,7 @@ const struct
 	{ CPU_ADSP2115, adsp2115_get_info },
 #endif
 #if (HAS_PSXCPU)
-	{ CPU_PSXCPU, mips_get_info },
+	{ CPU_PSXCPU, psxcpu_get_info },
 #endif
 #if (HAS_ASAP)
 	{ CPU_ASAP, asap_get_info },
@@ -871,7 +871,7 @@ int cpuintrf_init_cpu(int cpunum, int cputype)
 	if (cpu[cpunum].context == NULL)
 	{
 		/* that's really bad :( */
-		logerror("CPU #%d failed to allocate context buffer (%d bytes)!\n", cpunum, cpu[cpunum].intf.context_size);
+		logerror("CPU #%d failed to allocate context buffer (%d bytes)!\n", cpunum, (int)cpu[cpunum].intf.context_size);
 		return 1;
 	}
 

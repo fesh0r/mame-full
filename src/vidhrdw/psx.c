@@ -24,7 +24,7 @@
 
 #define STOP_ON_ERROR ( 0 )
 
-#define VERBOSE_LEVEL ( 1 )
+#define VERBOSE_LEVEL ( 0 )
 
 INLINE void verboselog( int n_level, const char *s_fmt, ... )
 {
