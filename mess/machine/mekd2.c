@@ -604,27 +604,6 @@ int mekd2_rom_load(int id)
 	return 0;
 }
 
-#ifdef IMAGE_VERIFY
-int mekd2_rom_id(int id)
-{
-	const char magic[] = "MEK6800D2";
-	char buff[9];
-	void *file;
-
-	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_RW, 0);
-	if (file)
-	{
-		osd_fread(file, buff, sizeof (buff));
-		if (memcmp(buff, magic, sizeof (buff)) == 0)
-		{
-			logerror( "mekd2_rom_id: magic '%s' found\n", magic);
-			return 1;
-		}
-	}
-	return 0;
-}
-#endif
-
 int mekd2_interrupt(void)
 {
 	return ignore_interrupt();
