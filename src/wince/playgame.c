@@ -113,8 +113,6 @@ int play_game(int game_index, struct ui_options *opts)
 
 	options.antialias = opts->enable_antialias;
 	options.translucency = opts->enable_translucency;
-	options.rol = opts->rotate_left;
-	options.ror = opts->rotate_right;
 	options.samplerate = opts->enable_sound ? 44100 : 0;
 	options.use_samples = 1;
 	options.use_filter = 1;
@@ -122,9 +120,6 @@ int play_game(int game_index, struct ui_options *opts)
 	options.vector_width = win_gfx_width;
 	options.vector_height = win_gfx_height;
 	options.color_depth = 0;
-	options.norotate = 0;
-	options.flipx = 0;
-	options.flipy = 0;
 	options.beam = 0x00010000;
 	options.use_artwork = 0;
 	options.cheat = 0;

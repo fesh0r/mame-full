@@ -32,6 +32,11 @@ void mkdir(const char *dir)
 	CreateDirectory(A2T(dir), NULL);
 }
 
+const char *getenv(const char *var)
+{
+	return "";
+}
+
 // --------------------------------------------------------------------------
 
 int stat( const char *path, struct stat *buffer )
