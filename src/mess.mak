@@ -614,7 +614,7 @@ imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/zip.o     \
 	  $(OBJ)/mess/tools/fs.o
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(LIBS) $^ -o $@
+	$(LD) $(LDFLAGS) $(LIBS) $^ -lz -o $@
 
 
 #transdsk$(EXE):       \
