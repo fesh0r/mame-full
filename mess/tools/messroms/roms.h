@@ -656,6 +656,7 @@ static struct {
 	{ 0x1305dcf5 , 0x2000, "50146 Europc character sets" },
 	{ 0x0c19c1a8 , 0x8000, "INCOMPLETE IBM PC Junior basic c1.2 f6000 (f0000-f5fff missing)" },
 	{ 0x98463f95 , 0x2000, "INCOMPLETE IBM PC Junior bios fe000 (f0000-f5fff missing)" },
+	{ 0x61dbf242 , 0x10000, "Tandy 1000 HX bios e0000" },
 	{ 0xd37a1d5f , 0x10000, "Tandy 1000 HX bios f0000" },
 	{ 0x83727c42 , 0x8000, "IBM XT bios even f0000" },
 	{ 0x2a629953 , 0x8000, "IBM XT bios odd f0000" },
@@ -666,12 +667,15 @@ static struct {
 	{ 0xd2d1f1ae,  0x8000, "40100 Amstrad PC1640 ega bios c0000" },
 	{ 0xe40a1513 , 0x2000, "40043 Amstrad PC1640 bios odd fc000 (v3)" },
 	{ 0xf1c074f3 , 0x2000, "40044 Amstrad PC1640 bios even fc000 (v3)" },
+	{ 0x664f5360 , 0x80000, "Tandy 1000 RLX" },
 	{ 0x4995be7a , 0x8000, "IBM AT bios even f0000" },
 	{ 0xc32713e4 , 0x8000, "IBM AT bios odd f0000" },
 	{ 0x679296a7 , 0x8000, "AT ami bios even f0000" },
 	{ 0x65ae1f97 , 0x8000, "AT ami bios odd f0000" },
 	{ 0x4c36e61d , 0x8000, "NEAT ami bios even f0000" },
 	{ 0x4e90f294 , 0x8000, "NEAT ami bios odd f0000" },
+	{ 0x1a81237c , 0x8000, "INCOMPLETE Tandy 2500XL" },
+	{ 0x819377af , 0x20000, "INCOMPLETE Tandy 2500XL" },
 	{ 0x3df9732a , 0x10000, "AT386 bios f0000" },
 	{ 0x31214616 , 0x10000, "AT486 bios f0000" },
 	{ 0x8e9e2bd4 , 0x2000, "PC harddisk controller bios c8000" },
@@ -1146,6 +1150,8 @@ static struct {
 	{ 0x24b4076f , 0x160000, "Texas Instruments AVIGO v1.004 (italian)" },
 
 /* Texas Instruments Calculators ***********************************************/
+	{ 0x94ac58e2 , 0x8000 , "Texas Instruments TI-81 v1.8" },
+
 	{ 0xe2f5721c , 0x20000 , "Texas Instruments TI-82 v16.0" },
 	{ 0x0fc956d4 , 0x20000 , "Texas Instruments TI-82 v17.0" },
 	{ 0x6a320f03 , 0x20000 , "Texas Instruments TI-82 v18.0" },
@@ -1312,7 +1318,8 @@ static struct {
 	{ 0xaa727c5d , 0x4000, "STRATOS telmon24" },
 	{ 0xcda92497 , 0x4000, "STRATOS telmon24 fr" },
 
-	{ 0x32f0d1ef , 0x4000, "MODIFIED? Einstein" },
+	{ 0x32f0d1ef , 0x4000, "Scrap Einstein" },
+	{ 0xec134953 , 0x2000, "Einstein" },
 
 	{ 0x5c3b5bb5, 0x800, "BAD DUMP? Galaxy char" },
 	{ 0x365f3e24, 0x1000, "Galaxy" },
