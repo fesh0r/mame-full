@@ -478,3 +478,37 @@ void    floppy_drive_write_sector_data(int drive, int side, int index1, char *pB
 	}
 }
 
+int floppy_drive_get_datarate_in_us(DENSITY density)
+{
+	int usecs;
+	/* 64 for single density */
+	switch (density)
+	{
+		case DEN_FM_LO:
+		{
+			usecs = 128;
+		}
+		break;
+
+		case DEN_FM_HI:
+		{
+			usecs = 64;
+		}
+		break;
+
+		default:
+		case DEN_MFM_LO:
+		{
+			usecs = 32;
+		}
+		break;
+
+		case DEN_MFM_HI:
+		{
+			usecs = 16;
+		}
+		break;
+	}
+
+	return usecs;
+}
