@@ -675,7 +675,7 @@ ROM_START(ti99_4)
 	/* 0x4000 extra RAM for paged cartidges */
 	ROM_REGION(0x14000,REGION_CPU1)
 	ROM_LOAD_WIDE("994rom.bin", 0x0000, 0x2000, 0x00000000) /* system ROMs */
-	ROM_LOAD_WIDE("disk.bin",   0x4000, 0x2000, 0x00000000) /* disk DSR ROM */
+	ROM_LOAD_WIDE("disk.bin",   0x4000, 0x2000, 0x8f7df93f) /* disk DSR ROM */
 
 	/*GPL memory space*/
 	ROM_REGION(0x10000,REGION_USER1)
@@ -683,7 +683,7 @@ ROM_START(ti99_4)
 
 	/*TMS5220 ROM space*/
 	ROM_REGION(0x8000,REGION_SOUND1)
-	ROM_LOAD("spchrom.bin",     0x0000, 0x8000, 0x00000000) /* system speech ROM */
+	ROM_LOAD("spchrom.bin",     0x0000, 0x8000, 0x58b155f7) /* system speech ROM */
 ROM_END
 
 ROM_START(ti99_4e)
@@ -691,7 +691,7 @@ ROM_START(ti99_4e)
 	/* 0x4000 extra RAM for paged cartidges */
 	ROM_REGION(0x14000,REGION_CPU1)
 	ROM_LOAD_WIDE("994rom.bin", 0x0000, 0x2000, 0x00000000) /* system ROMs */
-	ROM_LOAD_WIDE("disk.bin",   0x4000, 0x2000, 0x00000000) /* disk DSR ROM */
+	ROM_LOAD_WIDE("disk.bin",   0x4000, 0x2000, 0x8f7df93f) /* disk DSR ROM */
 
 	/*GPL memory space*/
 	ROM_REGION(0x10000,REGION_USER1)
@@ -699,7 +699,7 @@ ROM_START(ti99_4e)
 
 	/*TMS5220 ROM space*/
 	ROM_REGION(0x8000,REGION_SOUND1)
-	ROM_LOAD("spchrom.bin",     0x0000, 0x8000, 0x00000000) /* system speech ROM */
+	ROM_LOAD("spchrom.bin",     0x0000, 0x8000, 0x58b155f7) /* system speech ROM */
 ROM_END
 
 ROM_START(ti99_4a)
