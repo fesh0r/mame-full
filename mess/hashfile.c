@@ -21,10 +21,11 @@ struct _hash_file
 {
 	mame_file *file;
 	memory_pool pool;
-	unsigned int functions;
+	unsigned int functions[IO_COUNT];
 
 	struct hash_info **preloaded_hashes;
 	int preloaded_hash_count;
+
 	void (*error_proc)(const char *message);
 };
 
@@ -99,6 +100,17 @@ static void unknown_attribute(struct hash_parse_state *state, const char *attrna
 
 
 
+static void unknown_attribute_value(struct hash_parse_state *state,
+	const char *attrname, const char *attrvalue)
+{
+	parse_error(state, "[%d:%d]: Unknown attribute value: %s\n",
+		XML_GetCurrentLineNumber(state->parser),
+		XML_GetCurrentColumnNumber(state->parser),
+		attrvalue);
+}
+
+
+
 static void start_handler(void *data, const char *tagname, const char **attributes)
 {
 	struct hash_parse_state *state = (struct hash_parse_state *) data;
@@ -106,7 +118,9 @@ static void start_handler(void *data, const char *tagname, const char **attribut
 	struct hash_info *hi;
 	char **text_dest;
 	char hash_string[HASH_BUF_SIZE];
-	unsigned int functions;
+	unsigned int functions, all_functions;
+	iodevice_t device;
+	int i;
 
 	switch(state->pos++) {
 	case POS_ROOT:
@@ -122,8 +136,11 @@ static void start_handler(void *data, const char *tagname, const char **attribut
 	case POS_MAIN:
 		if (!strcmp(tagname, "hash"))
 		{
+			// we are now examining a hash tag
 			name = NULL;
 			memset(hash_string, 0, sizeof(hash_string));
+			all_functions = 0;
+			device = IO_COUNT;
 
 			while(attributes[0])
 			{
@@ -148,19 +165,37 @@ static void start_handler(void *data, const char *tagname, const char **attribut
 					/* sha1 attribute */
 					functions = HASH_SHA1;
 				}
+				else if (!strcmp(attributes[0], "type"))
+				{
+					/* type attribute */
+					i = device_typeid(attributes[1]);
+					if (i < 0)
+						unknown_attribute_value(state, attributes[0], attributes[1]);
+					else
+						device = (iodevice_t) i;
+				}
 				else
 				{
+					/* unknown attribute */
 					unknown_attribute(state, attributes[0]);
 				}
 
 				if (functions)
 				{
 					hash_data_insert_printable_checksum(hash_string, functions, attributes[1]);
-					state->hashfile->functions |= functions;
+					all_functions |= functions;
 				}
 
 				attributes += 2;
 			}
+
+			if (device == IO_COUNT)
+			{
+				for (i = 0; i < IO_COUNT; i++)
+					state->hashfile->functions[i] |= all_functions;
+			}
+			else
+				state->hashfile->functions[device] |= all_functions;
 
 			/* do we use this hash? */
 			if (!state->selector_proc || state->selector_proc(state->hashfile, state->param, name, hash_string))
@@ -403,9 +438,11 @@ const struct hash_info *hashfile_lookup(hash_file *hashfile, const char *hash)
 
 
 
-unsigned int hashfile_functions_used(hash_file *hashfile)
+unsigned int hashfile_functions_used(hash_file *hashfile, iodevice_t devtype)
 {
-	return hashfile->functions;
+	assert(devtype >= 0);
+	assert(devtype < IO_COUNT);
+	return hashfile->functions[devtype];
 }
 
 

@@ -40,7 +40,7 @@ const struct hash_info *hashfile_lookup(hash_file *hashfile, const char *hash);
 int hashfile_verify(const char *sysname, void (*error_proc)(const char *message));
 
 /* Returns the functions used in this hash file */
-unsigned int hashfile_functions_used(hash_file *hashfile);
+unsigned int hashfile_functions_used(hash_file *hashfile, iodevice_t devtype);
 
 
 #endif /* HASHFILE_H */

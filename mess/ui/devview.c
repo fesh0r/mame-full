@@ -206,7 +206,7 @@ BOOL DevView_SetDriver(HWND hwndDevView, int nGame)
 
 	// Count total amount of devices
 	nDevCount = 0;
-	for (dev = devices; dev->count < IO_COUNT; dev++)
+	for (dev = devices; dev->type < IO_COUNT; dev++)
 		nDevCount += dev->count;
 
 	if (nDevCount > 0)
@@ -214,7 +214,7 @@ BOOL DevView_SetDriver(HWND hwndDevView, int nGame)
 		// Get the names of all of the devices
 		ppszDevices = (LPTSTR *) alloca(nDevCount * sizeof(*ppszDevices));
 		i = 0;
-		for (dev = devices; dev->count < IO_COUNT; dev++)
+		for (dev = devices; dev->type < IO_COUNT; dev++)
 		{
 			for (id = 0; id < dev->count; id++)
 			{
@@ -250,7 +250,7 @@ BOOL DevView_SetDriver(HWND hwndDevView, int nGame)
 		DevView_GetColumns(hwndDevView, &nStaticPos, &nStaticWidth,
 			&nEditPos, &nEditWidth, &nButtonPos, &nButtonWidth);
 
-		for (dev = devices; dev->count < IO_COUNT; dev++)
+		for (dev = devices; dev->type < IO_COUNT; dev++)
 		{
 			for (id = 0; id < dev->count; id++)
 			{

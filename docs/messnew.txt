@@ -20,6 +20,9 @@ User Interface Changes:
   controls and configuration dialogs from working on Win95/Win98/WinME.
   [Nate Woods]
 
+- [Windows GUI] Fixed a problem in hash calculation in which UnmapViewOfFile()
+  was not properly being called. (bug #584)  [Nate Woods]
+
 
 
 Imgtool Changes:
@@ -36,6 +39,9 @@ Source Changes:
 - Major changes to the IODevice structure; made major changes to how they are
   initialized and iterated.  The new technique should be much more
   maintainable in the long run.  [Nate Woods]
+  
+- Hash tags in hash file now can specify a 'type' attribute that indicates
+  what device type to which any given entry pertains.  [Nate Woods]
 
 
 

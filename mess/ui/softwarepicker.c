@@ -233,7 +233,8 @@ static void ComputeFileHash(struct SoftwarePickerInfo *pPickerInfo,
 {
 	unsigned int nFunctions;
 
-	nFunctions = hashfile_functions_used(pPickerInfo->pHashFile);
+	nFunctions = hashfile_functions_used(pPickerInfo->pHashFile, pFileInfo->pDevice->type);
+
 	if (pFileInfo->pDevice && pFileInfo->pDevice->partialhash)
 	{
 		pFileInfo->pDevice->partialhash(pFileInfo->szHash, pBuffer, nLength, nFunctions);
@@ -294,6 +295,7 @@ static BOOL SoftwarePicker_CalculateHash(HWND hwndPicker, int nIndex)
 				if (pBuffer)
 				{
 					ComputeFileHash(pPickerInfo, pFileInfo, pBuffer, nLength);
+					UnmapViewOfFile(pBuffer);
 					rc = TRUE;
 				}
 				CloseHandle(hFileMapping);
@@ -330,7 +332,7 @@ static void SoftwarePicker_RealizeHash(HWND hwndPicker, int nIndex)
 
 	if (pPickerInfo->pHashFile)
 	{
-        nHashFunctionsUsed = hashfile_functions_used(pPickerInfo->pHashFile);
+        nHashFunctionsUsed = hashfile_functions_used(pPickerInfo->pHashFile, pFileInfo->pDevice->type);
 		nCalculatedHashes = hash_data_used_functions(pFileInfo->szHash);
 	}
 	else
@@ -677,8 +679,12 @@ BOOL SoftwarePicker_Idle(HWND hwndPicker)
 		pFileInfo = pPickerInfo->ppIndex[pPickerInfo->nCurrentPosition];
 		if (!pFileInfo->bHashRealized)
 		{
-			if (!SoftwarePicker_CalculateHash(hwndPicker, pPickerInfo->nCurrentPosition))
-				return FALSE;
+			if (hashfile_functions_used(pPickerInfo->pHashFile, pFileInfo->pDevice->type))
+			{
+				// only calculate the hash if it is appropriate for this device
+				if (!SoftwarePicker_CalculateHash(hwndPicker, pPickerInfo->nCurrentPosition))
+					return FALSE;
+			}
 			SoftwarePicker_RealizeHash(hwndPicker, pPickerInfo->nCurrentPosition);
 
 			// under normal circumstances this will be redundant, but in the unlikely
