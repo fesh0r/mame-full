@@ -482,7 +482,6 @@ static HMENU find_sub_menu(HMENU menu, const char *menutext, int create_sub_menu
 static void set_command_state(HMENU menu_bar, UINT command, UINT state)
 {
 	BOOL result;
-	int err;
 
 #ifdef UNDER_CE
 	result = EnableMenuItem(menu_bar, command, (state & MFS_GRAYED ? MF_GRAYED : MF_ENABLED) | MF_BYCOMMAND);
@@ -497,11 +496,6 @@ static void set_command_state(HMENU menu_bar, UINT command, UINT state)
 	mii.fState = state;
 	result = SetMenuItemInfo(menu_bar, command, FALSE, &mii);
 #endif
-/*	if (!result)
-	{
-		err = GetLastError();
-		assert(FALSE);
-	}*/
 }
 
 //============================================================
