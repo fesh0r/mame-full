@@ -16,6 +16,14 @@
 
 #include "osd_cpu.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifdef RUNTIME_LOADER
+	extern void i8039_runtime_loader_init(void);
+#endif
+
 enum { I8039_PC=1, I8039_SP, I8039_PSW, I8039_A,  I8039_IRQ_STATE,
 	   I8039_R0,   I8039_R1, I8039_R2,  I8039_R3, I8039_R4,
 	   I8039_R5,   I8039_R6, I8039_R7,  I8039_P1, I8039_P2
@@ -153,6 +161,11 @@ extern void i8048_set_irq_line(int irqline, int state);
 extern void i8048_set_irq_callback(int (*callback)(int irqline));
 const char *i8048_info(void *context, int regnum);
 extern unsigned i8048_dasm(char *buffer, unsigned pc);
+
+/* add these in the memory region for better usage of mame debugger */
+READ_HANDLER(i8048_internal_r);
+WRITE_HANDLER(i8048_internal_w);
+
 #endif
 
 /**************************************************************************
@@ -244,6 +257,10 @@ extern unsigned n7751_dasm(char *buffer, unsigned pc);
 
 #ifdef  MAME_DEBUG
 int 	Dasm8039(char *dst, unsigned pc);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif  /* _I8039_H */
