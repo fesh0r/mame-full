@@ -130,52 +130,6 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 {
 }
 
-/*
-int osd_get_path_count(int pathtype)
-{
-	return 0;
-}
-
-int osd_get_path_info(int pathtype, int pathindex, const char *filename)
-{
-	return 0;
-}
-
-osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const char *mode)
-{
-	return NULL;
-}
-
-int osd_fseek(osd_file *file, INT64 offset, int whence)
-{
-	return 0;
-}
-
-UINT64 osd_ftell(osd_file *file)
-{
-	return 0;
-}
-
-int osd_feof(osd_file *file)
-{
-	return 0;
-}
-
-UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
-{
-	return 0;
-}
-
-UINT32 osd_fwrite(osd_file *file, const void *buffer, UINT32 length)
-{
-	return 0;
-}
-
-void osd_fclose(osd_file *file)
-{
-}
-*/
-
 int osd_display_loading_rom_message(const char *name,struct rom_load_data *romdata)
 {
 	return 0;
@@ -203,11 +157,6 @@ int osd_keyboard_disabled(void)
 	return 0;
 }
 
-void osd_parallelize(void (*task)(void *param, int task_num, int task_count), void *param, int max_tasks)
-{
-	task(param, 0, 1);
-}
-
 int osd_is_absolute_path(const char *path)
 {
 	return 0;
@@ -223,50 +172,6 @@ int osd_is_path_separator(char ch)
 	return (ch == '/');
 }
 
-/*
-int osd_create_directory(int pathtype, int pathindex, const char *dirname)
-{
-	return 0;
-}
-*/
-/*
-int osd_num_devices(void)
-{
-	return 0;
-}
-
-const char *osd_get_device_name(int i)
-{
-	return NULL;
-}
-
-void osd_change_device(const char *vol)
-{
-}
-
-void *osd_dir_open(const char *mdirname, const char *filemask)
-{
-	return NULL;
-}
-
-int osd_dir_get_entry(void *dir, char *name, int namelength, int *is_dir)
-{
-	return 0;
-}
-
-void osd_dir_close(void *dir)
-{
-}
-
-void osd_change_directory(const char *path)
-{
-}
-
-const char *osd_get_cwd(void)
-{
-	return NULL;
-}
-*/
 void osd_begin_final_unloading(void)
 {
 }

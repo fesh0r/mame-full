@@ -414,7 +414,7 @@ VIDEO_UPDATE( apple2 )
 		new_a2 &= ~VAR_PAGE2;
 	new_a2 &= VAR_TEXT | VAR_MIXED | VAR_HIRES | VAR_DHIRES | VAR_80COL | VAR_PAGE2 | VAR_ALTCHARSET;
 
-	if (new_a2 != old_a2)
+//	if (new_a2 != old_a2)
 	{
 		old_a2 = new_a2;
 		tilemap_mark_all_tiles_dirty(text_tilemap);

@@ -178,8 +178,8 @@ SOUNDS+=BEEP@
 # Archive definitions
 DRVLIBS = \
 	$(OBJ)/coco.a     \
+	$(OBJ)/apple.a    \
 #	$(OBJ)/nintendo.a \
-#	$(OBJ)/apple.a    \
 #	$(OBJ)/at.a       \
 #	$(OBJ)/pc.a       \
 #	$(OBJ)/pcshare.a  \
@@ -412,24 +412,24 @@ $(OBJ)/sinclair.a: \
 	$(OBJ)/mess/systems/zx.o
 
 $(OBJ)/apple.a:   \
-	$(OBJ)/mess/machine/lisa.o	 \
-	$(OBJ)/mess/systems/lisa.o     \
-	$(OBJ)/mess/machine/iwm.o	     \
-	$(OBJ)/mess/machine/sonydriv.o \
-	$(OBJ)/mess/machine/ap_disk2.o	\
 	$(OBJ)/mess/vidhrdw/apple2.o		\
 	$(OBJ)/mess/machine/apple2.o		\
 	$(OBJ)/mess/systems/apple2.o		\
 	$(OBJ)/mess/formats/ap2_dsk.o		\
-	$(OBJ)/mess/machine/ay3600.o	 \
-	$(OBJ)/mess/sndhrdw/mac.o	     \
-	$(OBJ)/mess/machine/sonydriv.o \
-	$(OBJ)/mess/vidhrdw/mac.o      \
-	$(OBJ)/mess/machine/mac.o	     \
-	$(OBJ)/mess/systems/mac.o      \
-	$(OBJ)/mess/vidhrdw/apple1.o	 \
-	$(OBJ)/mess/machine/apple1.o	 \
-	$(OBJ)/mess/systems/apple1.o   
+	$(OBJ)/mess/machine/ay3600.o		\
+	$(OBJ)/mess/machine/ap_disk2.o		\
+#	$(OBJ)/mess/machine/lisa.o			\
+#	$(OBJ)/mess/systems/lisa.o			\
+#	$(OBJ)/mess/machine/iwm.o			\
+#	$(OBJ)/mess/machine/sonydriv.o		\
+#	$(OBJ)/mess/sndhrdw/mac.o			\
+#	$(OBJ)/mess/machine/sonydriv.o		\
+#	$(OBJ)/mess/vidhrdw/mac.o			\
+#	$(OBJ)/mess/machine/mac.o			\
+#	$(OBJ)/mess/systems/mac.o			\
+#	$(OBJ)/mess/vidhrdw/apple1.o		\
+#	$(OBJ)/mess/machine/apple1.o		\
+#	$(OBJ)/mess/systems/apple1.o
 
 
 $(OBJ)/avigo.a: \

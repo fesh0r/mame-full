@@ -190,67 +190,37 @@ Apple 3.5 and Apple 5.25 drives - up to three devices
 #include "devices/mflopimg.h"
 #include "formats/ap2_dsk.h"
 
-static MEMORY_READ_START( readmem_apple2 )
-	{ 0x0000, 0x01ff, MRA_BANK4 },
-	{ 0x0200, 0x03ff, MRA_BANK5 },
-	{ 0x0400, 0x07ff, MRA_BANK7 },
-	{ 0x0800, 0x1fff, MRA_BANK8 },
-	{ 0x2000, 0x3fff, MRA_BANK9 },
-	{ 0x4000, 0xbfff, MRA_BANK10 },
-	{ 0xc000, 0xc00f, apple2_c00x_r },
-	{ 0xc010, 0xc01f, apple2_c01x_r },
-	{ 0xc020, 0xc02f, apple2_c02x_r },
-	{ 0xc030, 0xc03f, apple2_c03x_r },
-	{ 0xc040, 0xc04f, MRA_NOP },
-	{ 0xc050, 0xc05f, apple2_c05x_r },
-	{ 0xc060, 0xc06f, apple2_c06x_r },
-	{ 0xc070, 0xc07f, apple2_c07x_r },
-	{ 0xc080, 0xc08f, apple2_c08x_r },
-	{ 0xc090, 0xc09f, apple2_c0xx_slot1_r },
-	{ 0xc0a0, 0xc0af, apple2_c0xx_slot2_r },
-	{ 0xc0b0, 0xc0bf, apple2_c0xx_slot3_r },
-	{ 0xc0c0, 0xc0cf, apple2_c0xx_slot4_r },
-	{ 0xc0d0, 0xc0df, apple2_c0xx_slot5_r },
-	{ 0xc0e0, 0xc0ef, apple2_c0xx_slot6_r },
-	{ 0xc0f0, 0xc0ff, apple2_c0xx_slot7_r },
-	{ 0xc400, 0xc4ff, apple2_slot4_r },
-	{ 0xc100, 0xc2ff, MRA_BANK3 },
-	{ 0xc300, 0xc3ff, MRA_BANK11 },
-	{ 0xc400, 0xc7ff, MRA_BANK12 },
-	{ 0xc800, 0xcfff, MRA_BANK6 },
-	{ 0xd000, 0xdfff, MRA_BANK1 },
-	{ 0xe000, 0xffff, MRA_BANK2 },
-MEMORY_END
+static ADDRESS_MAP_START( apple2_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READWRITE(MRA8_A2BANK_0000,		MWA8_A2BANK_0000)
+	AM_RANGE(0x0200, 0x03ff) AM_READWRITE(MRA8_A2BANK_0200,		MWA8_A2BANK_0200)
+	AM_RANGE(0x0400, 0x07ff) AM_READWRITE(MRA8_A2BANK_0400,		MWA8_A2BANK_0400)
+	AM_RANGE(0x0800, 0x1fff) AM_READWRITE(MRA8_A2BANK_0800,		MWA8_A2BANK_0800)
+	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(MRA8_A2BANK_2000,		MWA8_A2BANK_2000)
+	AM_RANGE(0x4000, 0xbfff) AM_READWRITE(MRA8_A2BANK_4000,		MWA8_A2BANK_4000)
+	AM_RANGE(0xc000, 0xc00f) AM_READWRITE(apple2_c00x_r,		apple2_c00x_w)
+	AM_RANGE(0xc010, 0xc01f) AM_READWRITE(apple2_c01x_r,		apple2_c01x_w)
+	AM_RANGE(0xc020, 0xc02f) AM_READWRITE(apple2_c02x_r,		apple2_c02x_w)
+	AM_RANGE(0xc030, 0xc03f) AM_READWRITE(apple2_c03x_r,		apple2_c03x_w)
+	AM_RANGE(0xc040, 0xc04f) AM_NOP
+	AM_RANGE(0xc050, 0xc05f) AM_READWRITE(apple2_c05x_r,		apple2_c05x_w)
+	AM_RANGE(0xc060, 0xc06f) AM_READWRITE(apple2_c06x_r,		MWA8_NOP)
+	AM_RANGE(0xc070, 0xc07f) AM_READWRITE(apple2_c07x_r,		apple2_c07x_w)
+	AM_RANGE(0xc080, 0xc08f) AM_READWRITE(apple2_c08x_r,		apple2_c08x_w)
+	AM_RANGE(0xc090, 0xc09f) AM_READWRITE(apple2_c0xx_slot1_r,	apple2_c0xx_slot1_w)
+	AM_RANGE(0xc0a0, 0xc0af) AM_READWRITE(apple2_c0xx_slot2_r,	apple2_c0xx_slot2_w)
+	AM_RANGE(0xc0b0, 0xc0bf) AM_READWRITE(apple2_c0xx_slot3_r,	apple2_c0xx_slot3_w)
+	AM_RANGE(0xc0c0, 0xc0cf) AM_READWRITE(apple2_c0xx_slot4_r,	apple2_c0xx_slot4_w)
+	AM_RANGE(0xc0d0, 0xc0df) AM_READWRITE(apple2_c0xx_slot5_r,	apple2_c0xx_slot5_w)
+	AM_RANGE(0xc0e0, 0xc0ef) AM_READWRITE(apple2_c0xx_slot6_r,	apple2_c0xx_slot6_w)
+	AM_RANGE(0xc0f0, 0xc0ff) AM_READWRITE(apple2_c0xx_slot7_r,	apple2_c0xx_slot7_w)
+	AM_RANGE(0xc100, 0xc2ff) AM_READWRITE(MRA8_A2BANK_C100,		MWA8_A2BANK_C100)
+	AM_RANGE(0xc300, 0xc3ff) AM_READWRITE(MRA8_A2BANK_C300,		MWA8_A2BANK_C300)
+	AM_RANGE(0xc400, 0xc7ff) AM_READWRITE(MRA8_A2BANK_C400,		MWA8_A2BANK_C400)
+	AM_RANGE(0xc800, 0xcfff) AM_READWRITE(MRA8_A2BANK_C800,		MWA8_A2BANK_C800)
+	AM_RANGE(0xd000, 0xdfff) AM_READWRITE(MRA8_A2BANK_D000,		MWA8_A2BANK_D000)
+	AM_RANGE(0xe000, 0xffff) AM_READWRITE(MRA8_A2BANK_E000,		MWA8_A2BANK_E000)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_apple2 )
-	{ 0x0000, 0x01ff, MWA_BANK4 },
-	{ 0x0200, 0x03ff, MWA_BANK5 },
-	{ 0x0400, 0x07ff, MWA_BANK7 },
-	{ 0x0800, 0x1fff, MWA_BANK8 },
-	{ 0x2000, 0x3fff, MWA_BANK9 },
-	{ 0x4000, 0xbfff, MWA_BANK10 },
-	{ 0xc000, 0xc00f, apple2_c00x_w },
-	{ 0xc010, 0xc01f, apple2_c01x_w },
-	{ 0xc020, 0xc02f, apple2_c02x_w },
-	{ 0xc030, 0xc03f, apple2_c03x_w },
-	{ 0xc040, 0xc04f, MWA_NOP },
-	{ 0xc050, 0xc05f, apple2_c05x_w },
-	{ 0xc060, 0xc06f, MWA_NOP },
-	{ 0xc070, 0xc07f, apple2_c07x_w },
-	{ 0xc080, 0xc08f, apple2_c08x_w },
-	{ 0xc090, 0xc09f, apple2_c0xx_slot1_w },
-	{ 0xc0a0, 0xc0af, apple2_c0xx_slot2_w },
-	{ 0xc0b0, 0xc0bf, apple2_c0xx_slot3_w },
-	{ 0xc0c0, 0xc0cf, apple2_c0xx_slot4_w },
-	{ 0xc0d0, 0xc0df, apple2_c0xx_slot5_w },
-	{ 0xc0e0, 0xc0ef, apple2_c0xx_slot6_w },
-	{ 0xc0f0, 0xc0ff, apple2_c0xx_slot7_w },
-	{ 0xc100, 0xc2ff, MWA_BANK3 },
-	{ 0xc300, 0xc3ff, MWA_BANK11 },
-	{ 0xc400, 0xc7ff, MWA_BANK12 },
-	{ 0xd000, 0xdfff, MWA_BANK1 },
-	{ 0xe000, 0xffff, MWA_BANK2 },
-MEMORY_END
 
 /**************************************************************************
 ***************************************************************************/
@@ -506,7 +476,7 @@ static struct AY8910interface ay8910_interface =
 static MACHINE_DRIVER_START( apple2_common )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 1021800)		/* close to actual CPU frequency of 1.020484 MHz */
-	MDRV_CPU_MEMORY(readmem_apple2, writemem_apple2)
+	MDRV_CPU_PROGRAM_MAP(apple2_map, 0)
 	MDRV_CPU_VBLANK_INT(apple2_interrupt, 192/8)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

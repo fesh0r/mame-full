@@ -253,14 +253,14 @@ const struct GameDriver *test_drivers[] =
  * Apple IIgs ROM 3 	 August 		 1989
  */
 //	DRIVER( apple1 )	/* 1976 Apple 1 									*/
-//	DRIVER( apple2 )	/* 1977 Apple ][ 									*/
-//	DRIVER( apple2p )	/* 1979 Apple ][+ 									*/
-//	DRIVER( apple2c )	/* 1984 Apple //c									*/
-//	DRIVER( apple2c0 )	/* 1986 Apple //c (3.5 ROM) 						*/
-//	DRIVER( apple2cp )	/* 1988 Apple //c+									*/
-//	DRIVER( apple2e )	/* 1983 Apple //e									*/
-//	DRIVER( apple2ee )	/* 1985 Apple //e Enhanced							*/
-//	DRIVER( apple2ep )	/* 1987 Apple //e Platinum							*/
+	DRIVER( apple2 )	/* 1977 Apple ][ 									*/
+	DRIVER( apple2p )	/* 1979 Apple ][+ 									*/
+	DRIVER( apple2c )	/* 1984 Apple //c									*/
+	DRIVER( apple2c0 )	/* 1986 Apple //c (3.5 ROM) 						*/
+	DRIVER( apple2cp )	/* 1988 Apple //c+									*/
+	DRIVER( apple2e )	/* 1983 Apple //e									*/
+	DRIVER( apple2ee )	/* 1985 Apple //e Enhanced							*/
+	DRIVER( apple2ep )	/* 1987 Apple //e Platinum							*/
 /*
  * Lisa 				 January			 1983
  * Lisa 2 				 January			 1984

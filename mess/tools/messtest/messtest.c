@@ -4,7 +4,6 @@
 #include "messtest.h"
 #include "osdepend.h"
 #include "pool.h"
-#include "rc.h"
 
 #if 0
 /* Include the internal copy of the libexpat library */
@@ -19,6 +18,7 @@
 #endif
 
 /* ----------------------------------------------------------------------- */
+
 
 
 enum messtest_phase
@@ -40,6 +40,9 @@ struct messtest_state
 	int command_count;
 
 	struct messtest_command current_command;
+
+	int test_count;
+	int failure_count;
 };
 
 
@@ -105,8 +108,10 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 	const XML_Char *s;
 	const XML_Char *s1;
 	const XML_Char *s2;
+	const XML_Char *s3;
 	const char *attr_name;
 	struct messtest_command cmd;
+	int region;
 
 	switch(state->phase) {
 	case STATE_ROOT:
@@ -172,9 +177,19 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 			if (!s2)
 				s2 = "0";
 
+			s3 = find_attribute(attributes, "region");
+
 			state->current_command.command_type = MESSTEST_COMMAND_VERIFY_MEMORY;
 			parse_offset(s1, &state->current_command.u.verify_args.start);
 			parse_offset(s2, &state->current_command.u.verify_args.end);
+
+			if (s3)
+			{
+				region = memory_region_from_string(s3);
+				if (region == REGION_INVALID)
+					goto invalid_memregion;
+				state->current_command.u.verify_args.mem_region = region;
+			}
 		}
 		else
 			goto unknowntag;
@@ -195,6 +210,10 @@ missing_attribute:
 unknowntag:
 	report_parseerror(state, "Unknown tag '%s'\n", tagname);
 	return;
+
+invalid_memregion:
+	report_parseerror(state, "Invalid memory region '%s'\n", s3);
+	return;
 }
 
 
@@ -212,7 +231,9 @@ static void end_handler(void *data, const XML_Char *name)
 		if (!append_command(state))
 			goto outofmemory;
 
-		run_test(&state->testcase);
+		if (run_test(&state->testcase))
+			state->failure_count++;
+		state->test_count++;
 		state->phase = STATE_ROOT;
 		break;
 
@@ -338,12 +359,13 @@ outofmemory:
 
 
 
-void messtest(const char *script_filename)
+int messtest(const char *script_filename, int *test_count, int *failure_count)
 {
 	struct messtest_state state;
 	char buf[2048];
 	FILE *in;
 	int len, done;
+	int result = -1;
 
 	memset(&state, 0, sizeof(state));
 	state.script_filename = script_filename;
@@ -379,72 +401,18 @@ void messtest(const char *script_filename)
 		{
 			report_parseerror(&state, "%s",
 				XML_ErrorString(XML_GetErrorCode(state.parser)));
-			break;
+			goto done;
 		}
 	}
 	while(!done);
 
-done:
-	XML_ParserFree(state.parser);
-}
-
-
-/* ---------------------------------------------------------------------- */
-
-extern struct rc_option fileio_opts[];
-
-static struct rc_option opts[] =
-{
-	{ NULL, NULL, rc_link, fileio_opts, NULL, 0, 0, NULL, NULL },
-	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
-};
-
-static int tests_ran;
-
-static int handle_arg(char *arg)
-{
-	messtest(arg);
-	tests_ran++;
-	return 0;
-}
-
-int main(int argc, char *argv[])
-{
-	struct rc_struct *rc;
-	int result = -1;
-
-	/* create rc struct */
-	rc = rc_create();
-	if (!rc)
-	{
-		fprintf(stderr, "Out of memory\n");
-		goto done;
-	}
-
-	/* register options */
-	if (rc_register(rc, opts))
-	{
-		fprintf(stderr, "Out of memory\n");
-		goto done;
-	}
-
-	tests_ran = 0;
-
-	/* parse the commandline */
-	if (rc_parse_commandline(rc, argc, argv, 2, handle_arg))
-	{
-		fprintf(stderr, "Error while parsing cmdline\n");
-		goto done;
-	}
-
-	if (tests_ran == 0)
-		fprintf(stderr, "Usage: %s [test1] [test2]...\n", argv[0]);
-
 	result = 0;
 
 done:
-	if (rc)
-		rc_destroy(rc);
+	XML_ParserFree(state.parser);
+	if (test_count)
+		*test_count = state.test_count;
+	if (failure_count)
+		*failure_count = state.failure_count;
 	return result;
 }
-

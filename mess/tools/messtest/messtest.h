@@ -28,6 +28,7 @@ struct messtest_command
 		const char *input_chars;
 		struct
 		{
+			int mem_region;
 			offs_t start;
 			offs_t end;
 			const void *verify_data;
@@ -46,8 +47,10 @@ struct messtest_testcase
 
 
 
+int memory_region_from_string(const char *region_name);
+const char *memory_region_to_string(int region);
+
 enum messtest_result run_test(const struct messtest_testcase *testcase);
-
-
+int messtest(const char *script_filename, int *test_count, int *failure_count);
 
 #endif /* MESSTEST_H */

@@ -335,15 +335,18 @@ romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
 	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $(LIBS) $(DIRENTOBJS) -out:$@ $^
 
 messtest$(EXE):	$(OBJS) $(COREOBJS) $(DRVLIBS) $(DIRENTOBJS) \
+		$(OBJ)/mess/tools/messtest/main.o		\
 		$(OBJ)/mess/tools/messtest/messtest.o	\
 		$(OBJ)/mess/tools/messtest/testexec.o	\
 		$(OBJ)/mess/tools/messtest/tststubs.o	\
+		$(OBJ)/mess/tools/messtest/tstutils.o	\
 		$(OBJ)/windows/asmtile.o				\
 		$(OBJ)/windows/ticker.o					\
 		$(OBJ)/windows/fileio.o					\
 		$(OBJ)/windows/rc.o						\
 		$(OBJ)/windows/misc.o					\
 		$(OBJ)/mess/windows/dirio.o				\
+		$(OBJ)/mess/windows/parallel.o			\
 		$(OBJ)/xml2info/xmlrole.o				\
 		$(OBJ)/xml2info/xmltok.o				\
 		$(OBJ)/xml2info/xmlparse.o				\

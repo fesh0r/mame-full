@@ -1,4 +1,4 @@
-0.78.1
+0.79
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -39,6 +39,9 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
+- The core is based on MAME 0.79.  This incorporates all features of the
+  update to this core.  [MAME team]
+
 - As a consequence of the MAME 0.79 core, which has massive changes
   to the memory system, there is a greater likelyhood of regressions
   in this MESS release (as with MAME.)

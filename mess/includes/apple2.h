@@ -120,4 +120,51 @@ void apple2_video_touch(offs_t offset);
 #define SPECIALKEY_BUTTON2		0x40
 #define SPECIALKEY_RESET		0x80
 
+/* bank constants; just because Apple II banking is so ridiculously complicated */
+#define A2BANK_0000				1
+#define A2BANK_0200_R			2
+#define A2BANK_0200_W			3
+#define A2BANK_0400_R			4
+#define A2BANK_0400_W			5
+#define A2BANK_0800_R			6
+#define A2BANK_0800_W			7
+#define A2BANK_2000_R			8
+#define A2BANK_2000_W			9
+#define A2BANK_4000_R			10
+#define A2BANK_4000_W			11
+#define A2BANK_C100				12
+#define A2BANK_C300				13
+#define A2BANK_C400				14
+#define A2BANK_C800				15
+#define A2BANK_D000_R			16
+#define A2BANK_D000_W			17
+#define A2BANK_E000_R			18
+#define A2BANK_E000_W			19
+
+#define MRA8_A2BANK_0000	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_0000))
+#define MRA8_A2BANK_0200	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_0200_R))
+#define MRA8_A2BANK_0400	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_0400_R))
+#define MRA8_A2BANK_0800	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_0800_R))
+#define MRA8_A2BANK_2000	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_2000_R))
+#define MRA8_A2BANK_4000	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_4000_R))
+#define MRA8_A2BANK_C100	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_C100))
+#define MRA8_A2BANK_C300	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_C300))
+#define MRA8_A2BANK_C400	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_C400))
+#define MRA8_A2BANK_C800	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_C800))
+#define MRA8_A2BANK_D000	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_D000_R))
+#define MRA8_A2BANK_E000	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_E000_R))
+
+#define MWA8_A2BANK_0000	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_0000))
+#define MWA8_A2BANK_0200	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_0200_W))
+#define MWA8_A2BANK_0400	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_0400_W))
+#define MWA8_A2BANK_0800	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_0800_W))
+#define MWA8_A2BANK_2000	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_2000_W))
+#define MWA8_A2BANK_4000	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_4000_W))
+#define MWA8_A2BANK_C100	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_C100))
+#define MWA8_A2BANK_C300	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_C300))
+#define MWA8_A2BANK_C400	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_C400))
+#define MWA8_A2BANK_C800	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_C800))
+#define MWA8_A2BANK_D000	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_D000_W))
+#define MWA8_A2BANK_E000	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_E000_W))
+
 #endif /* APPLE2_H */

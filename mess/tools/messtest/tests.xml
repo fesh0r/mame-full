@@ -1,5 +1,10 @@
 <tests>
 
+<test name="coco_000" driver="coco2b">
+	<wait time="2"/>
+	<memverify start="0x400" end="0x40C">"DISK&#96;EXTENDED"</memverify>
+</test>
+
 <test name="coco_001" driver="coco2b">
 	<wait time="2"/>
 	<input>CLS7&#13;</input>
@@ -8,7 +13,7 @@
 </test>
 
 <test name="coco_002" driver="coco2b">
-	<wait time="2"/>
+	<wait time="20"/>
 	<input>PMODE3:PCLS1&#13;</input>
 	<wait time="1"/>
 	<memverify start="0xE00" end="0x25FF">0x00</memverify>
@@ -23,17 +28,30 @@
 	<memverify start="0xE00" end="0x25FF">0xFF</memverify>
 </test>
 
-<test name="dragon64_001" driver="dragon64">
+<test name="coco3_000" driver="coco3">
+	<wait time="2"/>
+	<memverify start="0x400" end="0x40C">"DISK&#96;EXTENDED"</memverify>
+</test>
+
+<test name="dragon64_000" driver="dragon64">
 	<wait time="2"/>
 	<memverify start="0x400" end="0x408">0x445241474F4E444F53</memverify>
+</test>
+
+<test name="dragon64_001" driver="dragon64">
+	<wait time="2"/>
 	<input>EXEC 48000&#13;</input>
 	<wait time="3"/>
 	<memverify start="0x409" end="0x40E">0x445241474F4E</memverify>
 </test>
-<!--
-<test name="mc10_001" driver="mc10">
+
+<test name="mc10_000" driver="mc10">
 	<wait time="2"/>	
-	<memverify start="0x4000">"MICROCOLOR"</memverify>
+	<memverify region="CPU1" start="0x4000">"MICROCOLOR"</memverify>
 </test>
--->
+
+<test name="apple2e_000" driver="apple2e">
+	<wait time="20"/>
+</test>
+
 </tests>

@@ -262,15 +262,18 @@ xml2info$(EXE): src/xml2info/xml2info.c
 	$(CC) -O1 -o xml2info$(EXE) $<
 
 messtest$(EXE):	$(OBJS) $(COREOBJS) $(DRVLIBS)	\
+		$(OBJ)/mess/tools/messtest/main.o		\
 		$(OBJ)/mess/tools/messtest/messtest.o	\
 		$(OBJ)/mess/tools/messtest/testexec.o	\
 		$(OBJ)/mess/tools/messtest/tststubs.o	\
+		$(OBJ)/mess/tools/messtest/tstutils.o	\
 		$(OBJ)/windows/asmtile.o				\
 		$(OBJ)/windows/ticker.o					\
 		$(OBJ)/windows/fileio.o					\
 		$(OBJ)/windows/rc.o						\
 		$(OBJ)/windows/misc.o					\
 		$(OBJ)/mess/windows/dirio.o				\
+		$(OBJ)/mess/windows/parallel.o			\
 		$(OBJ)/xml2info/xmlrole.o				\
 		$(OBJ)/xml2info/xmltok.o				\
 		$(OBJ)/xml2info/xmlparse.o
@@ -415,3 +418,7 @@ clean68k:
 	$(RM) -r $(OBJ)/cpuintrf.o
 	$(RM) -r $(OBJ)/drivers/cps2.o
 	$(RM) -r $(OBJ)/cpu/m68000	
+
+tests:	messtest.exe
+	messtest.exe mess/tools/messtest/tests.xml
+

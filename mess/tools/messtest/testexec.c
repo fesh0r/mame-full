@@ -143,6 +143,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 	size_t target_data_size;
 	double time_limit;
 	double current_time;
+	int region;
 
 	/* if we have already aborted or completed, our work is done */
 	if ((state == STATE_ABORTED) || (state == STATE_DONE))
@@ -194,8 +195,18 @@ void osd_update_video_and_audio(struct mame_display *display)
 		offset_end = current_command->u.verify_args.end;
 		verify_data = (const UINT8 *) current_command->u.verify_args.verify_data;
 		verify_data_size = current_command->u.verify_args.verify_data_size;
-		target_data = mess_ram;
-		target_data_size = mess_ram_size;
+
+		region = current_command->u.verify_args.mem_region;
+		if (region)
+		{
+			target_data = memory_region(region);
+			target_data_size = memory_region_length(region);
+		}
+		else
+		{
+			target_data = mess_ram;
+			target_data_size = mess_ram_size;
+		}
 
 		/* sanity check the ranges */
 		if (!verify_data || (verify_data_size <= 0))
@@ -218,7 +229,8 @@ void osd_update_video_and_audio(struct mame_display *display)
 		{
 			if (verify_data[i] != target_data[offset])
 			{
-				message(MSG_FAILURE, "Failed verification step (0x%x-0x%x)", offset_start, offset_end);
+				message(MSG_FAILURE, "Failed verification step (REGION_%s; 0x%x-0x%x)",
+					memory_region_to_string(region), offset_start, offset_end);
 				break;
 			}
 			i = (i + 1) % verify_data_size;
