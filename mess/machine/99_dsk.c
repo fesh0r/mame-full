@@ -39,8 +39,8 @@ int ti99_floppy_load(int id, mame_file *fp, int open_mode)
 		UINT8	totsecsMSB;			/* disk length in sectors (big-endian) (usually 360, 720 or 1440) */
 		UINT8	totsecsLSB;
 		UINT8	secspertrack;		/* sectors per track (usually 9 (FM) or 18 (MFM)) */
-		UINT8 id[3];				/* 'DSK' */
-		UINT8 protection;			/* 'P' if disk is protected, ' ' otherwise. */
+		UINT8	id[3];				/* 'DSK' */
+		UINT8	protection;			/* 'P' if disk is protected, ' ' otherwise. */
 		UINT8	tracksperside;		/* tracks per side (usually 40) */
 		UINT8	sides;				/* sides (1 or 2) */
 		UINT8	density;			/* 1 (FM) or 2 (MFM) */
@@ -50,83 +50,137 @@ int ti99_floppy_load(int id, mame_file *fp, int open_mode)
 
 	ti99_vib vib;
 	int totsecs;
+	int tracksperside, sides, secspertrack, density;
 	int done;
 
 
-	if (basicdsk_floppy_load(id, fp, open_mode)==INIT_PASS)
-	{
-		done = FALSE;
+	done = FALSE;
 
-		/* Read sector 0 to identify format */
-		if (fp && (! mame_fseek(fp, 0, SEEK_SET)) && (mame_fread(fp, & vib, sizeof(vib)) == sizeof(vib)))
+	/* Read sector 0 to identify format */
+	if ((! mame_fseek(fp, 0, SEEK_SET)) && (mame_fread(fp, & vib, sizeof(vib)) == sizeof(vib)))
+	{
+		/* If we have read the sector successfully, let us parse it */
+		totsecs = (vib.totsecsMSB << 8) | vib.totsecsLSB;
+		secspertrack = vib.secspertrack;
+		if (secspertrack == 0)
+			/* Some images might be like this, because the original SSSD TI
+			controller always assumes 9. */
+			secspertrack = 9;
+		tracksperside = vib.tracksperside;
+		if (tracksperside == 0)
+			/* Some images are like this, because the original SSSD TI
+			controller always assumes 40. */
+			tracksperside = 40;
+		sides = vib.sides;
+		if (sides == 0)
+			/* Some images are like this, because the original SSSD TI
+			controller always assumes that tracks beyond 40 are on side 2. */
+			sides = totsecs / (secspertrack * tracksperside);
+		density = vib.density;
+		if (density == 0)
+			density = 1;
+		/* check that the format makes sense */
+		if (((secspertrack * tracksperside * sides) == totsecs)
+			&& (density <= 3) && (totsecs >= 2) && (! memcmp(vib.id, "DSK", 3))
+			&& (image_length(IO_FLOPPY, id) == totsecs*256))
 		{
-			/* If we have read the sector successfully, let us parse it */
-			totsecs = (vib.totsecsMSB << 8) | vib.totsecsLSB;
-			if (vib.tracksperside == 0)
-				/* Some images are like this, because the TI controller always assumes 40. */
-				vib.tracksperside = 40;
-			if (vib.sides == 0)
-				/* Some images are like this, because the TI controller always assumes
-				tracks beyond 40 are on side 2. */
-				vib.sides = totsecs / (vib.secspertrack * vib.tracksperside);
-			/* check that the format makes sense */
-			if (((vib.secspertrack * vib.tracksperside * vib.sides) == totsecs)
-				&& (totsecs >= 2) && (totsecs <= 1600) && (! memcmp(vib.id, "DSK", 3))
-				&& (image_length(IO_FLOPPY, id) == totsecs*256))
+			/* validate geometry */
+			done = TRUE;
+		}
+	}
+
+	/* If we have been unable to parse the format, let us guess according to
+	file lenght */
+	if (! done)
+	{
+		switch (image_length(IO_FLOPPY, id))
+		{
+		case 1*40*9*256:	/* 90kbytes: SSSD */
+		case 0:
+		/*default:*/
+			sides = 1;
+			tracksperside = 40;
+			secspertrack = 9;
+			density = 1;
+			done = TRUE;
+			break;
+
+		case 2*40*9*256:	/* 180kbytes: either DSSD or 18-sector-per-track
+							SSDD.  We assume DSSD since DSSD is more common
+							and is supported by the original TI SD disk
+							controller. */
+			sides = 2;
+			tracksperside = 40;
+			secspertrack = 9;
+			density = 1;
+			done = TRUE;
+			break;
+
+		case 1*40*16*256:	/* 160kbytes: 16-sector-per-track SSDD (standard
+							format for TI DD disk controller prototype, and
+							the TI hexbus disk controller???) */
+			sides = 1;
+			tracksperside = 40;
+			secspertrack = 16;
+			density = 2;
+			done = TRUE;
+			break;
+
+		case 2*40*16*256:	/* 320kbytes: 16-sector-per-track DSDD (standard
+							format for TI DD disk controller prototype, and
+							TI hexbus disk controller???) */
+			sides = 2;
+			tracksperside = 40;
+			secspertrack = 16;
+			density = 2;
+			done = TRUE;
+			break;
+
+		case 2*40*18*256:	/* 360kbytes: 18-sector-per-track DSDD (standard
+							format for most third-party DD disk controllers,
+							but reportedly not supported by the original TI
+							DD disk controller) */
+			sides = 2;
+			tracksperside = 40;
+			secspertrack = 18;
+			density = 2;
+			done = TRUE;
+			break;
+
+		case 2*80*18*256:	/* 720kbytes: 18-sector-per-track 80-track DSDD
+							(Myarc only) */
+			if (use_80_track_drives)
 			{
-				/* set geometry */
-				basicdsk_set_geometry(id, vib.tracksperside, vib.sides, vib.secspertrack, 256, 0, 0, use_80_track_drives && (vib.density < 3));
+				sides = 2;
+				tracksperside = 80;
+				secspertrack = 18;
+				density = 3;
 				done = TRUE;
 			}
-		}
+			break;
 
-		/* If we have been unable to parse the format, let us guess according
-		to file lenght */
-		if (! done)
-		{
-			switch (image_length(IO_FLOPPY, id))
+#if 0
+		case 2*80*36*256:	/* 1.44Mbytes: DSHD (Myarc only) */
+			if (use_80_track_drives)
 			{
-			case 1*40*9*256:	/* 90kbytes: SSSD */
-			default:
-				basicdsk_set_geometry(id, 40, 1, 9, 256, 0, 0, use_80_track_drives);
-				break;
-
-			case 2*40*9*256:	/* 180kbytes: either DSSD or 18-sector-per-track
-								SSDD.  We assume DSSD since DSSD is more common
-								and is supported by the original TI SD disk
-								controller. */
-				basicdsk_set_geometry(id, 40, 2, 9, 256, 0, 0, use_80_track_drives);
-				break;
-
-			case 1*40*16*256:	/* 160kbytes: 16-sector-per-track SSDD (standard
-								format for TI DD disk controller prototype, and
-								the TI hexbus disk controller???) */
-				basicdsk_set_geometry(id, 40, 1, 16, 256, 0, 0, use_80_track_drives);
-				break;
-
-			case 2*40*16*256:	/* 320kbytes: 16-sector-per-track DSDD (standard
-								format for TI DD disk controller prototype, and
-								TI hexbus disk controller???) */
-				basicdsk_set_geometry(id, 40, 2, 16, 256, 0, 0, use_80_track_drives);
-				break;
-
-			case 2*40*18*256:	/* 360kbytes: 18-sector-per-track DSDD (standard
-								format for most third-party DD disk controllers,
-								but reportedly not supported by the original TI
-								DD disk controller) */
-				basicdsk_set_geometry(id, 40, 2, 18, 256, 0, 0, use_80_track_drives);
-				break;
-
-			case 2*80*18*256:	/* 720kbytes: 18-sector-per-track 80-track DSDD
-								(Myarc only) */
-				basicdsk_set_geometry(id, 80, 2, 18, 256, 0, 0, /*use_80_track_drives*/FALSE);
-				break;
-
-			case 2*80*36*256:	/* 1.44Mbytes: DSHD (Myarc only) */
-				basicdsk_set_geometry(id, 80, 2, 36, 256, 0, 0, /*use_80_track_drives*/FALSE);
-				break;
+				sides = 2;
+				tracksperside = 80;
+				secspertrack = 36;
+				density = 3;
+				done = TRUE;
 			}
+			break;
+#endif
+
+		default:
+			logerror("%s:%d: unrecognized disk image geometry\n", __FILE__, __LINE__);
+			break;
 		}
+	}
+
+	if (done && (basicdsk_floppy_load(id, fp, open_mode) == INIT_PASS))
+	{
+		basicdsk_set_geometry(id, tracksperside, sides, secspertrack, 256, 0, 0, use_80_track_drives && (density < 3));
 
 		return INIT_PASS;
 	}
@@ -801,9 +855,6 @@ void ti99_hfdc_init(void)
 
 	/* initialize the floppy disk controller */
 	smc92x4_init(0, hfdc_dma_read_callback, hfdc_dma_write_callback, hfdc_int_callback);
-	//wd179x_init(WD_TYPE_179X, fdc_callback);		
-	//wd179x_set_density(DEN_MFM_LO);
-
 
 	mm58274c_init();	/* initialize the RTC */
 
@@ -946,8 +997,6 @@ static READ_HANDLER(hfdc_mem_r)
 	else if (offset < 0x0fe0)
 	{
 		/* disk controller */
-		/* >4fd0: data read?? */
-		/* >4fd4: controller status? */
 		switch (offset)
 		{
 		case 0x0fd0:
@@ -972,7 +1021,7 @@ static READ_HANDLER(hfdc_mem_r)
 	else if (offset < 0x1400)
 	{
 		/* ram page >10 */
-		reply = hfdc_ram[/*0x4000+*/(offset-0x1000)];
+		reply = hfdc_ram[0x2000+(offset-0x1000)];
 	}
 	else
 	{
@@ -998,8 +1047,6 @@ static WRITE_HANDLER(hfdc_mem_w)
 	else if (offset < 0x0fe0)
 	{
 		/* disk controller */
-		/* >4fd2: data write? */
-		/* >4fd6: command write? */
 		switch (offset)
 		{
 		case 0x0fd2:
@@ -1024,7 +1071,7 @@ static WRITE_HANDLER(hfdc_mem_w)
 	else if (offset < 0x1400)
 	{
 		/* ram page >10 */
-		hfdc_ram[/*0x4000+*/(offset-0x1000)] = data;
+		hfdc_ram[0x2000+(offset-0x1000)] = data;
 	}
 	else
 	{
