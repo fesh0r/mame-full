@@ -142,6 +142,10 @@ DBGDEFS =
 DBGOBJS =
 endif
 
+ifdef USE_DRMINGW
+DBGDEFS += -DUSE_DRMINGW
+endif
+
 extra:	romcmp$(EXE) $(TOOLS) $(TEXTS)
 
 # combine the various definitions to one
