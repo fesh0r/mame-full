@@ -38,7 +38,7 @@ void pc10_init_machine( void )
 	RP5H01_enable_w( 0, 1 );
 	
 	/* reset the ppu */
-	ppu2c03b_reset( 0, cpu_getscanlineperiod() * 2 );
+	ppu2c03b_reset( 0, /* cpu_getscanlineperiod() * */ 2 );
 	
 	ppu2c03b_set_mirroring( 0, mirroring );
 }
@@ -102,7 +102,7 @@ WRITE_HANDLER( pc10_GAMESTOP_w )
 WRITE_HANDLER( pc10_PPURES_w )
 {
 	if ( data & 1 )
-		ppu2c03b_reset( 0, cpu_getscanlineperiod() * 2 );
+		ppu2c03b_reset( 0, /* cpu_getscanlineperiod() * */ 2 );
 }
 
 READ_HANDLER( pc10_detectclr_r )
@@ -576,25 +576,18 @@ void init_pcfboard( void )
 
 static int gboard_scanline_counter;
 static int gboard_scanline_latch;
+static int gboard_banks[2];
 
 static void gboard_scanline_cb( int num, int scanline, int vblank, int blanked )
 {
 	if ( !vblank && !blanked )
 	{
-		if ( --gboard_scanline_counter <= 0 )
+		if ( --gboard_scanline_counter == -1 )
 		{
 			gboard_scanline_counter = gboard_scanline_latch;
 			cpu_set_irq_line( 1, 0, PULSE_LINE );
 		}
 	}
-}
-
-static void gboard_irq_cb( void )
-{
-	memcpy( &memory_region( REGION_CPU2 )[0x0a000], &memory_region( REGION_CPU2 )[0x4e000], 0x2000 );
-	
-	cpu_set_nmi_line( 1, PULSE_LINE );
-	pc10_int_detect = 1;
 }
 
 static WRITE_HANDLER( gboard_rom_switch_w )
@@ -610,10 +603,30 @@ static WRITE_HANDLER( gboard_rom_switch_w )
 			
 			if ( last_bank != ( data & 0xc0 ) )
 			{
+				int bank;
+			
 				/* reset the banks */
-				memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[0x4c000], 0x4000 );
-				memcpy( &memory_region( REGION_CPU2 )[0x0c000], &memory_region( REGION_CPU2 )[0x4c000], 0x4000 );
+				if ( gboard_command & 0x40 )
+				{
+					/* high bank */
+					bank = gboard_banks[0] * 0x2000 + 0x10000;
+					
+					memcpy( &memory_region( REGION_CPU2 )[0x0c000], &memory_region( REGION_CPU2 )[bank], 0x2000 );
+					memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[0x4c000], 0x4000 );
+				}
+				else
+				{
+					/* low bank */
+					bank = gboard_banks[0] * 0x2000 + 0x10000;
+					
+					memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[bank], 0x2000 );
+					memcpy( &memory_region( REGION_CPU2 )[0x0c000], &memory_region( REGION_CPU2 )[0x4c000], 0x2000 );
+				}
 				
+				/* mid bank */
+				bank = gboard_banks[1] * 0x2000 + 0x10000;
+				memcpy( &memory_region( REGION_CPU2 )[0x0a000], &memory_region( REGION_CPU2 )[bank], 0x2000 );
+
 				last_bank = data & 0xc0;
 			}
 		break;
@@ -622,6 +635,7 @@ static WRITE_HANDLER( gboard_rom_switch_w )
 			{
 				UINT8 cmd = gboard_command & 0x07;
 				int page = ( gboard_command & 0x80 ) >> 5;
+				int bank;
 				
 				switch( cmd )
 				{
@@ -644,25 +658,28 @@ static WRITE_HANDLER( gboard_rom_switch_w )
 						if ( gboard_command & 0x40 )
 						{
 							/* high bank */
-							int bank = ( data & 0x1f ) * 0x2000 + 0x10000;
+							gboard_banks[0] = data & 0x1f;
+							bank = ( gboard_banks[0] ) * 0x2000 + 0x10000;
 							
 							memcpy( &memory_region( REGION_CPU2 )[0x0c000], &memory_region( REGION_CPU2 )[bank], 0x2000 );
-							memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[0x4c000], 0x2000 );
+							memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[0x4c000], 0x4000 );
 						}
 						else
 						{
 							/* low bank */
-							int bank = ( data & 0x1f ) * 0x2000 + 0x10000;
+							gboard_banks[0] = data & 0x1f;
+							bank = ( gboard_banks[0] ) * 0x2000 + 0x10000;
 							
 							memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[bank], 0x2000 );
-							memcpy( &memory_region( REGION_CPU2 )[0x0c000], &memory_region( REGION_CPU2 )[0x4c000], 0x2000 );
+							memcpy( &memory_region( REGION_CPU2 )[0x0c000], &memory_region( REGION_CPU2 )[0x4c000], 0x4000 );
 						}
 					break;
 
 					case 7: /* program banking */
 						{
 							/* mid bank */
-							int bank = ( data & 0x1f ) * 0x2000 + 0x10000;
+							gboard_banks[1] = data & 0x1f;
+							bank = gboard_banks[1] * 0x2000 + 0x10000;
 							
 							memcpy( &memory_region( REGION_CPU2 )[0x0a000], &memory_region( REGION_CPU2 )[bank], 0x2000 );
 						}
@@ -691,6 +708,7 @@ static WRITE_HANDLER( gboard_rom_switch_w )
 		break;
 		
 		case 0x6000: /* disable irqs */
+			gboard_scanline_counter = gboard_scanline_latch;
 			ppu2c03b_set_scanline_callback( 0, 0 );
 		break;
 		
@@ -713,6 +731,11 @@ void init_pcgboard( void )
 	/* extra ram at $6000-$7fff */
 	install_mem_read_handler( 1, 0x6000, 0x7fff, MRA_RAM );
 	install_mem_write_handler( 1, 0x6000, 0x7fff, MWA_RAM );
+	
+	gboard_banks[0] = 0x1e;
+	gboard_banks[1] = 0x1f;
+	gboard_scanline_counter = 0;
+	gboard_scanline_latch = 0;
 	
 	/* common init */
 	init_playch10();

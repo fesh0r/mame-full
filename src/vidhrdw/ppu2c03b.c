@@ -1,7 +1,7 @@
 /******************************************************************************
 
 	Nintendo 2C03B PPU emulation.
-
+	
 	Written by Ernesto Corvi.
 	This code is heavily based on Brad Oliver's MESS implementation.
 
@@ -93,6 +93,7 @@ typedef struct {
 	int						back_color;				/* background color */
 	UINT8					*ppu_page[4];			/* ppu pages */
 	int						nes_vram[8];			/* keep track of 8 .5k vram pages to speed things up */
+	int						scan_scale;				/* scan scale */
 } ppu2c03b_chip;
 
 /* our local copy of the interface */
@@ -199,7 +200,7 @@ void ppu2c03b_init_palette( unsigned char *palette ) {
 			*palette++ = floor(B+.5);
 		}
 	}
-
+	
 	/* color tables are modified at run-time, and are initialized on 'ppu2c03b_reset' */
 }
 
@@ -223,16 +224,16 @@ static struct GfxLayout ppu_charlayout =
 int ppu2c03b_init( struct ppu2c03b_interface *interface )
 {
 	int i;
-
+	
 	/* keep a local copy of the interface */
 	intf = interface;
 
 	/* safety check */
 	if ( intf->num <= 0 )
 		return -1;
-
+	
 	chips = malloc( intf->num * sizeof( ppu2c03b_chip ) );
-
+	
 	if ( chips == 0 )
 		return -1;
 
@@ -242,14 +243,15 @@ int ppu2c03b_init( struct ppu2c03b_interface *interface )
 		/* initialize the scanline handling portion */
 		chips[i].scanline_timer = 0;
 		chips[i].scanline = 0;
-
+		chips[i].scan_scale = 1;
+	
 		/* allocate a screen bitmap, videoram and spriteram, a dirtychar array and the monochromatic colortable */
 		chips[i].bitmap = bitmap_alloc( VISIBLE_SCREEN_WIDTH, VISIBLE_SCREEN_HEIGHT );
 		chips[i].videoram = malloc( VIDEORAM_SIZE );
 		chips[i].spriteram = malloc( SPRITERAM_SIZE );
 		chips[i].dirtychar = malloc( CHARGEN_NUM_CHARS );
 		chips[i].colortable_mono = malloc( sizeof( default_colortable_mono ) );
-
+		
 		/* see if it failed */
 		if ( !chips[i].bitmap || !chips[i].videoram || !chips[i].spriteram || !chips[i].dirtychar || !chips[i].colortable_mono )
 		{
@@ -257,52 +259,52 @@ int ppu2c03b_init( struct ppu2c03b_interface *interface )
 			ppu2c03b_dispose();
 			return -1;
 		}
-
+		
 		/* clear videoram & spriteram */
 		memset( chips[i].videoram, 0, VIDEORAM_SIZE );
 		memset( chips[i].spriteram, 0, SPRITERAM_SIZE );
 
 		/* set all characters dirty */
 		memset( chips[i].dirtychar, 1, CHARGEN_NUM_CHARS );
-
+		
 		/* initialize the video ROM portion, if available */
 		if ( ( intf->vrom_region[i] != REGION_INVALID ) && ( memory_region( intf->vrom_region[i] ) != 0 ) )
 		{
 			/* mark that we have a videorom */
 			chips[i].has_videorom = 1;
-
+			
 			/* find out how many banks */
 			chips[i].videorom_banks = memory_region_length( intf->vrom_region[i] ) / 0x2000;
-
+			
 			/* tweak the layout accordingly */
 			ppu_charlayout.total = chips[i].videorom_banks * CHARGEN_NUM_CHARS;
 		}
 		else
 		{
 			chips[i].has_videorom = chips[i].videorom_banks = 0;
-
+			
 			/* we need to reset this in case of mame running multisession */
 			ppu_charlayout.total = CHARGEN_NUM_CHARS;
 		}
-
+		
 		/* now create the gfx region */
 		{
 			UINT8 *src = chips[i].has_videorom ? memory_region( intf->vrom_region[i] ) : chips[i].videoram;
 			Machine->gfx[intf->gfx_layout_number[i]] = decodegfx( src, &ppu_charlayout );
-
+			
 			if ( Machine->gfx[intf->gfx_layout_number[i]] == 0 )
 			{
 				/* failed */
 				ppu2c03b_dispose();
 				return -1;
 			}
-
+			
 			if ( Machine->remapped_colortable )
 				Machine->gfx[intf->gfx_layout_number[i]]->colortable = &Machine->remapped_colortable[intf->color_base[i]];
-
+		
 			Machine->gfx[intf->gfx_layout_number[i]]->total_colors = 8;
 		}
-
+		
 		/* setup our videoram handlers based on mirroring */
 		ppu2c03b_set_mirroring( i, intf->mirroring[i] );
 	}
@@ -314,10 +316,10 @@ int ppu2c03b_init( struct ppu2c03b_interface *interface )
 void ppu2c03b_dispose( void )
 {
 	int i;
-
+	
 	/* clean up */
 	if ( chips ) {
-
+		
 		/* iterate through the virtual chips and free storage */
 		for( i = 0; i < intf->num; i++ )
 		{
@@ -325,12 +327,12 @@ void ppu2c03b_dispose( void )
 			if ( chips[i].bitmap )
 				bitmap_free( chips[i].bitmap );
 			chips[i].bitmap = 0;
-
+			
 			/* release the videoram */
 			if ( chips[i].videoram )
 				free( chips[i].videoram );
 			chips[i].videoram = 0;
-
+			
 			/* release the spriteram */
 			if ( chips[i].spriteram )
 				free( chips[i].spriteram );
@@ -340,18 +342,18 @@ void ppu2c03b_dispose( void )
 			if ( chips[i].dirtychar )
 				free( chips[i].dirtychar );
 			chips[i].dirtychar = 0;
-
+			
 			/* release the colortable_mono array */
 			if ( chips[i].colortable_mono )
 				free( chips[i].colortable_mono );
 			chips[i].colortable_mono = 0;
-
+			
 			/* release the timer */
 			if ( chips[i].scanline_timer )
 				timer_remove( chips[i].scanline_timer );
 			chips[i].scanline_timer = 0;
 		}
-
+	
 		/* dispose our chips states */
 		free( chips );
 		chips = 0;
@@ -375,14 +377,14 @@ static void draw_background( const int num, UINT8 *line_priority )
 	UINT8 **ppu_page = chips[num].ppu_page;
 	int	start_x = ( chips[num].x_fine ^ 0x07 ) - 7;
 	int back_pen;
-
+	
 	UINT8 scroll_x_coarse, scroll_y_coarse, scroll_y_fine, color_mask;
 	int x, tile_index, start, i;
 
 	const UINT16 *color_table;
 	const UINT16 *paldata;
 	const UINT8 *sd;
-
+	
 	/* setup the color mask and colortable to use */
 	if ( ppu_regs[PPU_CONTROL1] & PPU_CONTROL1_DISPLAY_MONO )
 	{
@@ -403,12 +405,12 @@ static void draw_background( const int num, UINT8 *line_priority )
 	scroll_x_coarse = refresh_data & 0x1f;
 	scroll_y_coarse = ( refresh_data & 0x3e0 ) >> 5;
 	scroll_y_fine = ( refresh_data & 0x7000 ) >> 12;
-
+	
 	x = scroll_x_coarse;
-
+	
 	/* get the tile index */
 	tile_index = ( ( refresh_data & 0xc00 ) | 0x2000 ) + scroll_y_coarse * 32;
-
+	
 	/* draw the 32 or 33 tiles that make up a line */
 	while ( start_x < VISIBLE_SCREEN_WIDTH )
 	{
@@ -429,7 +431,7 @@ static void draw_background( const int num, UINT8 *line_priority )
 
 		/* figure out which bits in the color table to use */
 		color_bits = ( ( index1 & 0x40 ) >> 4 ) + ( index1 & 0x02 );
-
+		
 		address = index1 & 0x3ff;
 		page2 = ppu_page[page][address];
 		index2 = nes_vram[ ( page2 >> 6 ) | tile_page ] + ( page2 & 0x3f );
@@ -437,7 +439,7 @@ static void draw_background( const int num, UINT8 *line_priority )
 		paldata = &color_table[ 4 * ( ( ( color_byte >> color_bits ) & 0x03 ) ) ];
 		start = ( index2 % total_elements ) * char_modulo + scroll_y_fine * line_modulo;
 		sd = &gfx_data[start];
-
+		
 		/* render the pixel */
 		for( i = 0; i < 8; i++ )
 		{
@@ -454,9 +456,9 @@ static void draw_background( const int num, UINT8 *line_priority )
 				}
 			}
 		}
-
+		
 		start_x += 8;
-
+		
 		/* move to next tile over and toggle the horizontal name table if necessary */
 		x++;
 		if ( x > 31 )
@@ -465,7 +467,7 @@ static void draw_background( const int num, UINT8 *line_priority )
 			tile_index ^= 0x400;
 		}
 	}
-
+	
 	/* if the left 8 pixels for the background are off, blank 'em */
 	if ( !( ppu_regs[PPU_CONTROL1] & PPU_CONTROL1_BACKGROUND_L8 ) )
 	{
@@ -501,23 +503,23 @@ static void draw_sprites( const int num, UINT8 *line_priority )
 	int sprite_line;
 	int drawn;
 	int start;
-
+	
 	const UINT16 *paldata;
 	const UINT8 *sd;
 
 	/* determine if the sprites are 8x8 or 8x16 */
 	size = ( ppu_regs[PPU_CONTROL0] & PPU_CONTROL0_SPRITE_SIZE ) ? 16 : 8;
-
+	
 	for( i = 0; i < SPRITERAM_SIZE; i += 4 ) {
 		y = sprites[i] + 1;
-
+		
 		/* if the sprite isn't visible, skip it */
 		if ( ( y + size <= scanline ) || ( y > scanline ) )
 			continue;
-
+		
 		/* clear our drawn flag */
 		drawn = 0;
-
+		
 		x = sprites[i+3];
 		tile = sprites[i+1];
 		color = ( sprites[i+2] & 0x03 ) + 4;
@@ -536,8 +538,8 @@ static void draw_sprites( const int num, UINT8 *line_priority )
 			page = tile >> 6;
 		} else
 			page = ( tile >> 6 ) | sprite_page;
-
-
+		
+		
 		index1 = chips[num].nes_vram[page] + ( tile & 0x3f );
 
 		/* compute the character's line to draw */
@@ -545,11 +547,11 @@ static void draw_sprites( const int num, UINT8 *line_priority )
 
 		if ( flipy )
 			sprite_line = ( size - 1 ) - sprite_line;
-
+			
 		paldata = &color_table[4 * color];
 		start = ( index1 % total_elements ) * char_modulo + sprite_line * line_modulo;
 		sd = &gfx_data[start];
-
+		
 		if ( pri )
 		{
 			/* draw the low-priority sprites */
@@ -662,7 +664,7 @@ static void draw_sprites( const int num, UINT8 *line_priority )
 				}
 			}
 		}
-
+		
 		if ( drawn )
 		{
 			/* if there are more than 8 sprites on this line, set the flag */
@@ -690,31 +692,31 @@ static void render_scanline( int num )
 	int		*ppu_regs = &chips[num].regs[0];
 	int 	i;
 	int		refresh_data = chips[num].refresh_data;
-
+	
 	/* lets see how long it takes */
 	profiler_mark(PROFILER_USER1+num);
 
 	/* clear the line priority for this scanline */
 	memset( line_priority, 0, VISIBLE_SCREEN_WIDTH );
-
+	
 	/* clear the sprite count for this line */
 	ppu_regs[PPU_STATUS] &= ~PPU_STATUS_8SPRITES;
 
 	/* see if we need to render the background */
 	if ( ppu_regs[PPU_CONTROL1] & PPU_CONTROL1_BACKGROUND )
 		draw_background( num, line_priority );
-
+	
 	/* if sprites are hidden in the leftmost column, fake a priority flag to mask them */
 	if ( !( ppu_regs[PPU_CONTROL1] & PPU_CONTROL1_SPRITES_L8 ) )
 	{
 		for ( i = 0; i < 8; i++ )
 			line_priority[i] |= 0x01;
 	}
-
+	
 	/* if sprites are on, draw them */
 	if ( ppu_regs[PPU_CONTROL1] & PPU_CONTROL1_SPRITES )
 		draw_sprites( num, line_priority );
-
+	
 	/* increment the fine y-scroll */
 	refresh_data += 0x1000;
 
@@ -734,18 +736,18 @@ static void render_scanline( int num )
 			refresh_data |= ( tmp & 0x03e0 );
 		}
     }
-
+    
     chips[num].refresh_data = refresh_data;
-
+    
  	/* done updating, whew */
-	profiler_mark(PROFILER_END);
+	profiler_mark(PROFILER_END);		
 }
 
 static void update_scanline( int num )
 {
 	int scanline = chips[num].scanline;
 	int *ppu_regs = &chips[num].regs[0];
-
+	
 	if ( scanline <= BOTTOM_VISIBLE_SCANLINE ) {
 		/* If background or sprites are enabled, copy the ppu address latch */
 		if ( ppu_regs[PPU_CONTROL1] & ( PPU_CONTROL1_BACKGROUND | PPU_CONTROL1_SPRITES ) )
@@ -755,21 +757,21 @@ static void update_scanline( int num )
 			chips[num].refresh_data |= ( chips[num].refresh_latch & 0x041f );
 		}
 
-#if 0	/* hmm... this only goes if we implement the osd_skip_this_frame functionality */
+#if 0	/* hmm... this only goes if we implement the osd_skip_this_frame functionality */	
 
 		/* check for sprite 0 hit */
 		if ( ( scanline == spriteram[0] + 7 ) && ( ppu_regs[PPU_CONTROL1] & PPU_CONTROL1_SPRITES ) )
 			ppu_regs[PPU_STATUS] |= PPU_STATUS_SPRITE0_HIT;
 
 #endif
-
+		
 		/* Render this scanline if appropriate */
 		if ( ppu_regs[PPU_CONTROL1] & ( PPU_CONTROL1_BACKGROUND | PPU_CONTROL1_SPRITES ) )
 			render_scanline( num );
-
+		
 		return;
 	}
-
+	
 	if ( scanline == BOTTOM_VISIBLE_SCANLINE+1 )
 	{
 		/* We just entered VBLANK */
@@ -792,16 +794,18 @@ static void scanline_callback( int num )
 	int blanked = ( ppu_regs[PPU_CONTROL1] & ( PPU_CONTROL1_BACKGROUND | PPU_CONTROL1_SPRITES ) ) == 0;
 	int vblank = ( ppu_regs[PPU_STATUS] & PPU_STATUS_VBLANK ) ? 1 : 0;
 
+/*	logerror("SCANLINE CALLBACK %d\n",chips[num].scanline); */
+
 	/* if a callback is available, call it */
 	if ( chips[num].scanline_callback_proc )
 		(*chips[num].scanline_callback_proc)( num, chips[num].scanline, vblank, blanked );
-
+	
 	/* update the scanline that just went by */
 	update_scanline( num );
 
 	/* increment our scanline count */
 	chips[num].scanline++;
-
+	
 	/* decode any dirty chars if we're using vram */
 
 	/* first, check the master dirty char flag */
@@ -821,10 +825,10 @@ static void scanline_callback( int num )
 				dirtyarray[i] = 0;
 			}
 		}
-
+		
 		chips[num].chars_are_dirty = 0;
 	}
-
+	
 	/* see if we rolled */
 	if ( chips[num].scanline >= SCANLINES_PER_FRAME )
 	{
@@ -834,10 +838,13 @@ static void scanline_callback( int num )
 		/* if background or sprites are enabled, copy the ppu address latch */
 		if ( !blanked )
 			chips[num].refresh_data = chips[num].refresh_latch;
-
+		
 		/* reset the scanline count */
 		chips[num].scanline = 0;
 	}
+	
+	/* setup our next stop here */
+	chips[num].scanline_timer = timer_set( cpu_getscanlinetime( chips[num].scanline * chips[num].scan_scale ), num, scanline_callback );
 }
 
 /*************************************
@@ -845,7 +852,7 @@ static void scanline_callback( int num )
  *	PPU Reset
  *
  *************************************/
-void ppu2c03b_reset( int num, double scanline_period )
+void ppu2c03b_reset( int num, int scan_scale )
 {
 	int i;
 
@@ -860,16 +867,19 @@ void ppu2c03b_reset( int num, double scanline_period )
 	if ( chips[num].scanline_timer )
 		timer_remove( chips[num].scanline_timer );
 
-	/* allocate the scanline timer */
-	chips[num].scanline_timer = timer_pulse( scanline_period, num, scanline_callback );
-
 	/* reset the scanline count */
 	chips[num].scanline = 0;
+	
+	/* set the scan scale (this is for dual monitor vertical setups) */
+	chips[num].scan_scale = scan_scale;
 
+	/* allocate the scanline timer - start at scanline 0 */
+	chips[num].scanline_timer = timer_set( cpu_getscanlinetime(0), num, scanline_callback );
+	
 	/* reset the callbacks */
 	chips[num].scanline_callback_proc = 0;
 	chips[num].vidaccess_callback_proc = 0;
-
+	
 	for( i = 0; i < PPU_MAX_REG; i++ )
 		chips[num].regs[i] = 0;
 
@@ -886,25 +896,25 @@ void ppu2c03b_reset( int num, double scanline_period )
 	chips[num].sprite_page = 0;
 	chips[num].back_color = 0;
 	chips[num].chars_are_dirty = 1;
-
+		
 	/* initialize the color tables */
 	{
 		int color_base = intf->color_base[num];
-
+		
 		for( i = 0; i < ( sizeof( default_colortable_mono ) / sizeof( UINT16 ) ); i++ )
 		{
 			/* monochromatic table */
 			chips[num].colortable_mono[i] = Machine->pens[default_colortable_mono[i] + color_base];
-
+			
 			/* color table */
 			Machine->gfx[intf->gfx_layout_number[num]]->colortable[i] = Machine->pens[default_colortable_mono[i] + color_base];
 		}
 	}
-
+	
 	/* set the vram bank-switch values to the default */
 	for( i = 0; i < 8; i++ )
 		chips[num].nes_vram[i] = i * 64;
-
+	
 	if ( chips[num].has_videorom )
 		ppu2c03b_set_videorom_bank( num, 0, 8, 0, 512 );
 }
@@ -918,47 +928,49 @@ void ppu2c03b_reset( int num, double scanline_period )
 int ppu2c03b_r( int num, int offset )
 {
 	data_t ret = 0;
-
+	
 	/* check bounds */
 	if ( num >= intf->num )
 	{
-		logerror( "PPU(r): Attempting to access an unmapped chip\n" );
+		logerror( "PPU %d(r): Attempting to access an unmapped chip\n", num );
 		return 0;
 	}
-
+	
 	if ( offset >= PPU_MAX_REG )
 	{
-		logerror( "PPU: Attempting to read past the chip\n" );
-		return 0;
+		logerror( "PPU %d(r): Attempting to read past the chip\n", num );
+		
+		offset &= PPU_MAX_REG - 1;
+/*		return 0; */
 	}
-
+	
 	/* now, see wich register to read */
 	switch( offset )
 	{
 		case PPU_STATUS:
 			ret = chips[num].regs[PPU_STATUS];
-
+			
 			/* this is necessary */
 			chips[num].toggle = 0;
-
+			
 			/* note that we don't clear the vblank flag - this is correct. */
 		break;
-
+		
 		case PPU_SPRITE_DATA:
 			ret = chips[num].spriteram[chips[num].regs[PPU_SPRITE_ADDRESS]];
 		break;
-
+		
 		case PPU_DATA:
 			ret = chips[num].videoram_data_latch;
-
+			
 			if ( ( chips[num].videoram_addr >= 0x2000 ) && ( chips[num].videoram_addr <= 0x3fef ) )
 				chips[num].videoram_data_latch = chips[num].ppu_page[ ( chips[num].videoram_addr & 0xc00) >> 10][ chips[num].videoram_addr & 0x3ff ];
 			else
 				chips[num].videoram_data_latch = chips[num].videoram[ chips[num].videoram_addr & 0x3fff ];
-
+			
 			chips[num].videoram_addr += chips[num].add;
 		break;
-
+			
 		default:
 			/* ignore other register reads */
 		break;
@@ -982,55 +994,57 @@ void ppu2c03b_w( int num, int offset, int data )
 		logerror( "PPU(w): Attempting to access an unmapped chip\n" );
 		return;
 	}
-
+	
 	if ( offset >= PPU_MAX_REG )
 	{
 		logerror( "PPU: Attempting to write past the chip\n" );
-		return;
-	}
 
+		offset &= PPU_MAX_REG - 1;
+/*		return; */
+	}
+	
 	switch( offset )
 	{
 		case PPU_CONTROL0:
 			chips[num].regs[PPU_CONTROL0] = data;
-
+			
 			/* update the name table number on our refresh latches */
 			chips[num].refresh_latch &= ~0x0c00;
 			chips[num].refresh_latch |= ( data & 3 ) << 10;
-
+		
 			/* the char ram bank points either 0x0000 or 0x1000 (page 0 or page 4) */
 			chips[num].tile_page = ( data & PPU_CONTROL0_CHR_SELECT ) >> 2;
 			chips[num].sprite_page = ( data & PPU_CONTROL0_SPR_SELECT ) >> 1;
-
+			
 			chips[num].add = ( data & PPU_CONTROL0_INC ) ? 32 : 1;
 		break;
-
+		
 		case PPU_CONTROL1:
 			/* if color intensity has changed, change all the pens */
 			if ( ( data & 0xe0 ) != ( chips[num].regs[PPU_CONTROL1] & 0xe0 ) )
 			{
 				/* TODO? : maybe add support for COLOR_INTENSITY later? */
 			}
-
+			
 			chips[num].regs[PPU_CONTROL1] = data;
 		break;
-
+		
 		case PPU_SPRITE_ADDRESS:
 			chips[num].regs[PPU_SPRITE_ADDRESS] = data & 0xff;
 		break;
-
+		
 		case PPU_SPRITE_DATA:
 			chips[num].spriteram[chips[num].regs[PPU_SPRITE_ADDRESS]] = data;
 			chips[num].regs[PPU_SPRITE_ADDRESS] = ( chips[num].regs[PPU_SPRITE_ADDRESS] + 1 ) & 0xff;
 		break;
-
+		
 		case PPU_SCROLL:
 			if ( chips[num].toggle )
 			{
 				/* second write */
 				chips[num].refresh_latch &= ~0x03e0;
 				chips[num].refresh_latch |= ( data & 0xf8 ) << 2;
-
+				
 				chips[num].refresh_latch &= ~0x7000;
 				chips[num].refresh_latch |= ( data & 0x07 ) << 12;
 			}
@@ -1039,19 +1053,19 @@ void ppu2c03b_w( int num, int offset, int data )
 				/* first write */
 				chips[num].refresh_latch &= ~0x1f;
 				chips[num].refresh_latch |= (data & 0xf8) >> 3;
-
+				
 				chips[num].x_fine = data & 7;
 			}
-
+			
 			chips[num].toggle ^= 1;
 		break;
-
+		
 		case PPU_ADDRESS:
 			if ( chips[num].toggle )
 			{
 				/* second write */
 				chips[num].videoram_addr = ( chips[num].videoram_addr_latch << 8 ) | ( data & 0xff );
-
+				
 				chips[num].refresh_latch &= ~0x00ff;
 				chips[num].refresh_latch |= data & 0xff;
 				chips[num].refresh_data = chips[num].refresh_latch;
@@ -1060,25 +1074,25 @@ void ppu2c03b_w( int num, int offset, int data )
 			{
 				/* first write */
 				chips[num].videoram_addr_latch = data & 0xff;
-
+				
 				if ( data != 0x3f ) /* TODO: remove this hack! */
 				{
 					chips[num].refresh_latch &= ~0xff00;
 					chips[num].refresh_latch |= ( data & 0x3f ) << 8;
 				}
 			}
-
+			
 			chips[num].toggle ^= 1;
 		break;
-
+		
 		case PPU_DATA:
 			{
 				int tempAddr = chips[num].videoram_addr & 0x3fff;
-
+				
 				/* if there's a callback, call it now */
 				if ( chips[num].vidaccess_callback_proc )
 					data = (*chips[num].vidaccess_callback_proc)( num, tempAddr, data );
-
+				
 				/* see if it's on the chargen portion */
 				if ( tempAddr < 0x2000 )
 				{
@@ -1093,33 +1107,33 @@ void ppu2c03b_w( int num, int offset, int data )
 					{
 						/* store the data */
 						chips[num].videoram[tempAddr] = data;
-
+						
 						/* setup the master dirty switch */
 						chips[num].chars_are_dirty = 1;
-
+						
 						/* mark the char dirty */
 						chips[num].dirtychar[tempAddr >> 4] = 1;
 					}
-
+					
 					/* increment the address */
 					chips[num].videoram_addr += chips[num].add;
-
+					
 					/* and be gone */
 					break;
 				}
-
+				
 				/* the only valid background colors are writes to 0x3f00 and 0x3f10			*/
 				/* and even then, they are mirrors of each other. as usual, some games		*/
 				/* attempt to write values > the number of colors so we must mask the data. */
 				if ( tempAddr >= 0x3f00 )
 				{
 					int color_base = intf->color_base[num];
-
+				
 					/* store the data */
 					chips[num].videoram[tempAddr] = data;
-
+					
 					data &= 0x3f;
-
+					
 					if ( tempAddr & 0x03 )
 					{
 						Machine->gfx[intf->gfx_layout_number[num]]->colortable[ tempAddr & 0x1f ] = Machine->pens[color_base+data];
@@ -1129,7 +1143,7 @@ void ppu2c03b_w( int num, int offset, int data )
 					if ( ( tempAddr & 0x0f ) == 0 )
 					{
 						int i;
-
+						
 						chips[num].back_color = data;
 						for( i = 0; i < 32; i += 4 )
 						{
@@ -1137,30 +1151,30 @@ void ppu2c03b_w( int num, int offset, int data )
 							chips[num].colortable_mono[i] = Machine->pens[color_base+(data & 0xf0)];
 						}
 					}
-
+					
 					/* increment the address */
 					chips[num].videoram_addr += chips[num].add;
-
+					
 					/* and be gone */
 					break;
 				}
-
+				
 				/* everything else */
 				/* writes to $3000-$3eff are mirrors of $2000-$2eff */
 				{
 					int page = ( tempAddr & 0x0c00) >> 10;
 					int address = tempAddr & 0x3ff;
-
+					
 					chips[num].ppu_page[page][address] = data;
-
+					
 					/* increment the address */
 					chips[num].videoram_addr += chips[num].add;
-
+					
 					/* fall through */
 				}
 			}
 		break;
-
+		
 		default:
 			/* ignore other registers writes */
 		break;
@@ -1180,7 +1194,7 @@ void ppu2c03b_spriteram_dma( int num, const UINT8 *source )
 		logerror( "PPU(render): Attempting to access an unmapped chip\n" );
 		return;
 	}
-
+	
 	memcpy( chips[num].spriteram, source, SPRITERAM_SIZE );
 }
 
@@ -1197,6 +1211,8 @@ void ppu2c03b_render( int num, struct osd_bitmap *bitmap, int flipx, int flipy, 
 		logerror( "PPU(render): Attempting to access an unmapped chip\n" );
 		return;
 	}
+	
+/*	logerror("PPU %d:VBLANK HIT (scanline %d)\n",num, chips[num].scanline); */
 
 	copybitmap( bitmap, chips[num].bitmap, flipx, flipy, sx, sy, 0, TRANSPARENCY_NONE, 0 );
 }
@@ -1222,7 +1238,7 @@ void ppu2c03b_set_videorom_bank( int num, int start_page, int num_pages, int ban
 		logerror( "PPU(set vrom bank): Attempting to switch videorom banks and no rom is mapped\n" );
 		return;
 	}
-
+	
 	bank &= ( chips[num].videorom_banks * ( CHARGEN_NUM_CHARS / bank_size ) ) - 1;
 
 	for( i = start_page; i < ( start_page + num_pages ); i++ )
@@ -1250,13 +1266,13 @@ int ppu2c03b_get_pixel( int num, int x, int y )
 		logerror( "PPU(get_pixel): Attempting to access an unmapped chip\n" );
 		return 0;
 	}
-
+	
 	if ( x >= VISIBLE_SCREEN_WIDTH )
 		x = VISIBLE_SCREEN_WIDTH - 1;
-
+	
 	if ( y >= VISIBLE_SCREEN_HEIGHT )
 		y = VISIBLE_SCREEN_HEIGHT - 1;
-
+	
 	return chips[num].bitmap->line[y][x];
 }
 
@@ -1290,7 +1306,7 @@ void ppu2c03b_set_mirroring( int num, int mirroring )
 			chips[num].ppu_page[2] = &(chips[num].videoram[0x2000]);
 			chips[num].ppu_page[3] = &(chips[num].videoram[0x2400]);
 		break;
-
+		
 		case PPU_MIRROR_HORZ:
 			chips[num].ppu_page[0] = &(chips[num].videoram[0x2000]);
 			chips[num].ppu_page[1] = &(chips[num].videoram[0x2000]);
@@ -1304,7 +1320,7 @@ void ppu2c03b_set_mirroring( int num, int mirroring )
 			chips[num].ppu_page[2] = &(chips[num].videoram[0x2400]);
 			chips[num].ppu_page[3] = &(chips[num].videoram[0x2400]);
 		break;
-
+		
 		case PPU_MIRROR_LOW:
 			chips[num].ppu_page[0] = &(chips[num].videoram[0x2000]);
 			chips[num].ppu_page[1] = &(chips[num].videoram[0x2000]);
@@ -1330,7 +1346,7 @@ void ppu2c03b_set_irq_callback( int num, ppu2c03b_irq_cb cb )
 		logerror( "PPU(set_irq_callback): Attempting to access an unmapped chip\n" );
 		return;
 	}
-
+	
 	intf->handler[num] = cb;
 }
 
@@ -1342,7 +1358,7 @@ void ppu2c03b_set_scanline_callback( int num, ppu2c03b_scanline_cb cb )
 		logerror( "PPU(set_scanline_callback): Attempting to access an unmapped chip\n" );
 		return;
 	}
-
+	
 	chips[num].scanline_callback_proc = cb;
 }
 
@@ -1354,7 +1370,7 @@ void ppu2c03b_set_vidaccess_callback( int num, ppu2c03b_vidaccess_cb cb )
 		logerror( "PPU(set_vidaccess_callback): Attempting to access an unmapped chip\n" );
 		return;
 	}
-
+	
 	chips[num].vidaccess_callback_proc = cb;
 }
 
