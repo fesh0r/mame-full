@@ -248,31 +248,28 @@ $end
 $info=aim65
 $bio
 Rockwell AIM-65
----------------
 
-very early computer 
-
-
-Features
---------
-integrated 20 digit (16segment) display 
-full size keyboard
-integrated printer
-connector for tty input/output
-tape interface
+Very early computer 
 
 
-Mess Emulation State
---------------------
-display, keyboard working
-Useable picture of the display with its white frame as artwork would be nice.
-Would suffer from support for intelligent terminals as tty equipment.
-Stopped. For me it is much to cryptic to operate, and therefore not interesting
-for me anymore.
+Features:
+* Integrated 20 digit (16segment) display 
+* Full size keyboard
+* Integrated printer
+* Connector for tty input/output
+* Tape interface
 
 
-Contributors
-------------
+Known Issues:
+
+* Display and keyboard working
+* Usable picture of the display with its white frame as artwork would be nice.
+* Would suffer from support for intelligent terminals as tty equipment.
+* Stopped. For me it is much to cryptic to operate, and therefore not interesting for me anymore.
+
+
+Contributors:
+
 Richard A. Cini: provided help and pictures
 
 $end
@@ -325,7 +322,6 @@ APEXC (All Purpose Electronic X-Ray Computer)
 
 
 Usage Notes:
-
 
 You should specify a cylinder image with code to run in it. Arguably, APEXC does not require such
 an image, since you may enter code in the control panel, but this would be a pain in the ass.
@@ -585,22 +581,22 @@ disc.
 
 Basic disk images with the ".APD" extension are supported.
 
-Emulation state:
-- cassette loading and saving is working
 
-- interrupts are not exact. I don't know enough about them, any info would
-be appreciated.
+Known issues:
 
-- disc interface is working, but there may be some bugs.
+* cassette loading and saving is working
 
-- keyboard is mostly working but some keys may be missing
+* interrupts are not exact. I don't know enough about them, any info would be appreciated.
 
-- keypad is not emulated
+* disc interface is working, but there may be some bugs.
 
-- the M6847 emulation is very advanced *BUT* I don't think I have set it up
-correctly for the APF Imagination, therefore the graphics are wrong.
+* keyboard is mostly working but some keys may be missing
 
-- memory emulation is not complete
+* keypad is not emulated
+
+* the M6847 emulation is very advanced *BUT* I don't think I have set it up correctly for the APF Imagination, therefore the graphics are wrong.
+
+* memory emulation is not complete
 
 $end
 
@@ -614,9 +610,10 @@ APF M-1000
 The APF M-1000 is a console. It has a built in game. The emulation is not exact and the
 built in game does not work.
 
-Emulation state:
-- internal game does not work
-- keypad is not emulated
+Known issues:
+
+* internal game does not work
+* keypad is not emulated
 
 $end
 
@@ -873,11 +870,11 @@ Emulator
 r2001 for DOS by Paul Robson at http://users.aol.com/mk14emu/arcadia.htm
 
 
-Mess emulation state
---------------------
-based on info by Paul Robson, Ward Shrake
-look into crc/arcadia.crc for some issues
-bad analog joystick emulation
+Known issues:
+
+* Based on info by Paul Robson, Ward Shrake
+* Look into crc/arcadia.crc for some issues
+* Bad analog joystick emulation
 
 $end
 

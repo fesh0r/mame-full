@@ -1619,7 +1619,10 @@ void win_set_debugger_focus(int focus)
 static void win_paste(void)
 {
 	HANDLE h;
-	LPTSTR text;
+	LPSTR text;
+	size_t mb_size;
+	size_t w_size;
+	LPWSTR wtext;
 
 	if (!OpenClipboard(NULL))
 		return;
@@ -1630,7 +1633,11 @@ static void win_paste(void)
 		text = GlobalLock(h);
 		if (text)
 		{
-			inputx_post(text);
+			mb_size = GlobalSize(h);
+			w_size = MultiByteToWideChar(CP_ACP, 0, text, mb_size, NULL, 0);
+			wtext = alloca(w_size * sizeof(WCHAR));
+			MultiByteToWideChar(CP_ACP, 0, text, mb_size, wtext, w_size);
+			inputx_postn_utf16(wtext, w_size);
 			GlobalUnlock(h);
 		}
 	}

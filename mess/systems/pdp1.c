@@ -408,7 +408,7 @@ static const struct IODevice io_pdp1[] =
 		2,						/* count */
 		"tap\0rim\0",			/* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_NONE,			/* open mode */
 		NULL,					/* id */
 		pdp1_tape_init,			/* init */
 		pdp1_tape_exit,			/* exit */

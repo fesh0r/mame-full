@@ -323,7 +323,7 @@ int pdp1_tape_init(int id)
 	void **fd = (id==0) ? & tape_reader.fd : & tape_puncher.fd;
 
 	/* open file */
-	*fd = image_fopen(IO_PUNCHTAPE, id, OSD_FILETYPE_IMAGE,
+	*fd = image_fopen_custom(IO_PUNCHTAPE, id, OSD_FILETYPE_IMAGE,
 							(id==0) ? OSD_FOPEN_READ : OSD_FOPEN_WRITE);
 
 	if (id == 0)

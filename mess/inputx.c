@@ -1,6 +1,5 @@
 #include <ctype.h>
 #include <assert.h>
-#include <wctype.h>
 
 #include "inputx.h"
 #include "inptport.h"
@@ -36,7 +35,7 @@ struct KeyBuffer
 	int begin_pos;
 	int end_pos;
 	int status;
-	wchar_t buffer[4096];
+	unicode_char_t buffer[4096];
 };
 
 struct InputMapEntry
@@ -67,7 +66,7 @@ static struct InputMapEntry input_map[] =
 };
 
 #if LOG_INPUTX
-static const char *charstr(wchar_t ch)
+static const char *charstr(unicode_char_t ch)
 {
 	static char buf[3];
 
@@ -85,10 +84,10 @@ static const char *charstr(wchar_t ch)
 }
 #endif
 
-static wchar_t find_code(const char *name, int modifiers)
+static unicode_char_t find_code(const char *name, int modifiers)
 {
 	int i;
-	wchar_t code;
+	unicode_char_t code;
 	int len = strlen(name);
 
 	if (len == 1)
@@ -122,7 +121,7 @@ static void scan_keys(const struct GameDriver *gamedrv, struct InputCode *codes,
 {
 	const struct InputPortTiny *ipt;
 	UINT16 port = (UINT16) -1;
-	wchar_t code;
+	unicode_char_t code;
 
 	assert(keys < NUM_SIMUL_KEYS);
 
@@ -175,7 +174,7 @@ static void build_codes(const struct GameDriver *gamedrv, struct InputCode *code
 	const struct InputPortTiny *ipts[NUM_SIMUL_KEYS];
 	int used_modifiers;
 	int switch_upper;
-	wchar_t c;
+	unicode_char_t c;
 
 	memset(codes, 0, CODE_BUFFER_SIZE);
 
@@ -202,12 +201,13 @@ static void build_codes(const struct GameDriver *gamedrv, struct InputCode *code
 ***************************************************************************/
 
 #ifdef MAME_DEBUG
-void inputx_validitycheck(const struct GameDriver *gamedrv)
+int inputx_validitycheck(const struct GameDriver *gamedrv)
 {
 	char buf[CODE_BUFFER_SIZE];
 	struct InputCode *codes;
 	const struct InputPortTiny *ipt;
 	int port_count, i, j;
+	int error = 0;
 
 	if (gamedrv->flags & GAME_COMPUTER)
 	{
@@ -225,10 +225,15 @@ void inputx_validitycheck(const struct GameDriver *gamedrv)
 		{
 			for (j = 0; j < NUM_SIMUL_KEYS; j++)
 			{
-				assert(codes[i].port[j] < port_count);
+				if (codes[i].port[j] >= port_count)
+				{
+					printf("%s: invalid inputx translation for code %i port %i\n", gamedrv->name, i, j);
+					error = 1;
+				}
 			}
 		}
 	}
+	return error;
 }
 #endif
 
@@ -238,11 +243,11 @@ void inputx_validitycheck(const struct GameDriver *gamedrv)
 
 ***************************************************************************/
 
-static const char *find_alternate(wchar_t ch)
+static const char *find_alternate(unicode_char_t ch)
 {
 	static const struct
 	{
-		wchar_t ch;
+		unicode_char_t ch;
 		const char *str;
 	} map[] =
 	{
@@ -368,13 +373,13 @@ static struct KeyBuffer *get_buffer(void)
 	return (struct KeyBuffer *) (codes + NUM_CODES);
 }
 
-static int can_post_key_directly(wchar_t ch)
+static int can_post_key_directly(unicode_char_t ch)
 {
 	assert(codes);
 	return ((ch < NUM_CODES) && codes[ch].ipt[0] != NULL);
 }
 
-static int can_post_key_alternate(wchar_t ch)
+static int can_post_key_alternate(unicode_char_t ch)
 {
 	const char *s;
 
@@ -391,12 +396,12 @@ static int can_post_key_alternate(wchar_t ch)
 	return 1;
 }
 
-int inputx_can_post_key(wchar_t ch)
+int inputx_can_post_key(unicode_char_t ch)
 {
 	return inputx_can_post() && (can_post_key_directly(ch) || can_post_key_alternate(ch));
 }
 
-static void internal_post_key(wchar_t ch)
+static void internal_post_key(unicode_char_t ch)
 {
 	struct KeyBuffer *keybuf;
 	keybuf = get_buffer();
@@ -404,14 +409,14 @@ static void internal_post_key(wchar_t ch)
 	keybuf->end_pos %= sizeof(keybuf->buffer) / sizeof(keybuf->buffer[0]);
 }
 
-void inputx_wpost(const wchar_t *text)
+void inputx_postn(const unicode_char_t *text, size_t text_len)
 {
 	struct KeyBuffer *keybuf;
 	int last_cr = 0;
-	wchar_t ch;
+	unicode_char_t ch;
 	const char *s;
 
-	if (!text[0] || !inputx_can_post())
+	if ((text_len == 0) || !inputx_can_post())
 		return;
 
 	keybuf = get_buffer();
@@ -423,9 +428,10 @@ void inputx_wpost(const wchar_t *text)
 		keybuf->status |= STATUS_KEYDOWN;
 	}
 
-	while(*text && (keybuf->end_pos+1 != keybuf->begin_pos))
+	while((text_len > 0) && (keybuf->end_pos+1 != keybuf->begin_pos))
 	{
-		ch = *text;
+		ch = *(text++);
+		text_len--;
 
 		/* change all eolns to '\r' */
 		if ((ch != '\n') || !last_cr)
@@ -436,7 +442,7 @@ void inputx_wpost(const wchar_t *text)
 				last_cr = (ch == '\r');
 
 #if LOG_INPUTX
-			logerror("inputx_wpost(): code=%i (%s) port=%i ipt->name='%s'\n", (int) ch, charstr(ch), codes[ch].port[0], codes[ch].ipt[0] ? codes[ch].ipt[0]->name : "<null>");
+			logerror("inputx_postn(): code=%i (%s) port=%i ipt->name='%s'\n", (int) ch, charstr(ch), codes[ch].port[0], codes[ch].ipt[0] ? codes[ch].ipt[0]->name : "<null>");
 #endif
 
 			if (can_post_key_directly(ch))
@@ -455,33 +461,6 @@ void inputx_wpost(const wchar_t *text)
 		{
 			last_cr = 0;
 		}
-		text++;
-	}
-}
-
-void inputx_post(const char *text)
-{
-	wchar_t buffer[128];
-	size_t i;
-	size_t charsz;
-
-	while(*text)
-	{
-		for (i = 0; *text && i < (sizeof(buffer) / sizeof(buffer[0]))-1; i++)
-		{
-			charsz = mbtowc(&buffer[i], text, 1);
-			if (charsz)
-			{
-				text += charsz;
-			}
-			else
-			{
-				buffer[i] = '?';
-				text++;
-			}
-		}
-		buffer[i] = '\0';
-		inputx_wpost(buffer);
 	}
 }
 
@@ -509,7 +488,7 @@ void inputx_update(unsigned short *ports)
 	const struct KeyBuffer *keybuf;
 	const struct InputCode *code;
 	const struct InputPortTiny *ipt;
-	wchar_t ch;
+	unicode_char_t ch;
 	int i;
 	int value;
 
@@ -539,4 +518,81 @@ void inputx_update(unsigned short *ports)
 		}
 	}
 }
+
+/***************************************************************************
+
+	Alternative calls
+
+***************************************************************************/
+
+void inputx_post(const unicode_char_t *text)
+{
+	size_t len = 0;
+	while(text[len])
+		len++;
+	inputx_postn(text, len);
+}
+
+void inputx_postn_utf16(const utf16_char_t *text, size_t text_len)
+{
+	size_t len = 0;
+	unicode_char_t c;
+	utf16_char_t w1, w2;
+	unicode_char_t buf[256];
+
+	while(text_len > 0)
+	{
+		if (len == (sizeof(buf) / sizeof(buf[0])))
+		{
+			inputx_postn(buf, len);
+			len = 0;
+		}
+
+		w1 = *(text++);
+		text_len--;
+
+		if ((w1 >= 0xd800) && (w1 <= 0xdfff))
+		{
+			if (w1 <= 0xDBFF)
+			{
+				w2 = 0;
+				if (text_len > 0)
+				{
+					w2 = *(text++);
+					text_len--;
+				}
+				if ((w2 >= 0xdc00) && (w2 <= 0xdfff))
+				{
+					c = w1 & 0x03ff;
+					c <<= 10;
+					c |= w2 & 0x03ff;
+				}
+				else
+				{
+					c = '?';
+				}
+			}
+			else
+			{
+				c = '?';
+			}
+		}
+		else
+		{
+			c = w1;
+		}
+		buf[len++] = c;
+	}
+	inputx_postn(buf, len);
+}
+
+void inputx_post_utf16(const utf16_char_t *text)
+{
+	size_t len = 0;
+	while(text[len])
+		len++;
+	inputx_postn_utf16(text, len);
+}
+
+
 

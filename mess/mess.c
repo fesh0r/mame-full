@@ -657,7 +657,8 @@ int messvaliditychecks(void)
 		ram_option_count(drivers[i]);
 
 		/* make sure that our input system likes this driver */
-		inputx_validitycheck(drivers[i]);
+		if (inputx_validitycheck(drivers[i]))
+			error = 1;
 	}
 
 	return error;
