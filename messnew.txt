@@ -18,10 +18,11 @@ Amiga [re-enabled]
 
 System Driver Changes:
 ----------------------
-- [COLECO] Changed MEMORY handlers, which allows some of the broken carts to work 
-  (like aqua attack and tutankham).  Small fix to input handling which means Defender 
-  and Centipede now work!  Also, keys now configurable from OSD for both controllers.
-  (As usual, let us know of any breakages).  [Ben]
+- [COLECO] Changed MEMORY handlers which allows more carts to work (like aqua attack 
+  and tutankham).  Small fix to input handling which means Defender and Centipede now 
+  work.  Accurate NMI handling added which fixes remaining carts like Buck Rogers, 
+  DragonFire, Zenji, Bump and Jump, etc.  Also, keys are configurable from the OSD 
+  for both controllers. [Ben, Sean Young]
 
 - [DRAGON/COCO1-2-3] Completely rewritten midframe video mode rendering, which
   now applies not just to the CoCo 3, but to all systems that use the m6847 and
