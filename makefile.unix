@@ -46,6 +46,11 @@ TARGET = mame
 # Special features
 ###########################################################################
 
+# Limit blit code unrolling.  If you find that display-related files such 
+# as x11_window.c take too long to compile or crap out due to using too 
+# much memory, uncomment this.
+# LOW_MEM = 1
+
 # Enable experimental network support.  See 
 # src/unix/doc/multiplayer-readme.txt for more information.
 # XMAME_NET = 1
@@ -193,7 +198,9 @@ ifneq (,$(findstring gcc,$(CC)))
   # CFLAGS += -O3
   # CFLAGS += -Os
 
-  # This option should reduce compilation time and disk activity
+  # This option should reduce compilation time and disk activity, but at 
+  # the expense of using a LOT more memory.  If you have less than 
+  # 256Mb of RAM, you may not want to use this.
   # CFLAGS += -pipe
   
   # Free up the frame pointer register for other uses.  This can make 
@@ -473,6 +480,9 @@ MY_CPU = i386
 # IA64
 # MY_CPU = ia64
 
+# Opteron/Athlon64
+# MY_CPU = amd64
+
 # DEC Alpha
 # MY_CPU = alpha
 
@@ -567,6 +577,12 @@ ARCH  = linux
 # Coin/Start inputs using the libugci library available from
 # http://www.phunnypharm.org/ugci/
 # UGCICOIN = 1
+
+# Enables use of Linux input devices that support ABS (absolute) X/Y axis
+# events as lightguns. This can be tablets, touchpads or lightguns. You
+# must have the input layer and support for your devices (e.g. USB) for
+# this to work.
+# LIGHTGUN_ABS_EVENT = 1
 
 
 ###########################################################################
