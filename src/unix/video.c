@@ -438,7 +438,8 @@ void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y)
 
 
 int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
-   unsigned short *pens, int modifiable)
+   unsigned short *pens, int modifiable, const unsigned char *debugger_palette,
+   unsigned short *debugger_pens)
 {
    int i;
    int color_start = 0;
