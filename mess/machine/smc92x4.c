@@ -299,6 +299,14 @@ int smc92x4_hd_load(mess_image *image, int disk_unit)
 		hd[disk_unit].heads = header->heads;
 		hd[disk_unit].sectors_per_track = header->sectors;
 		hd[disk_unit].bytes_per_sector = header->seclen;
+
+		if ((hd[disk_unit].cylinders > 2048) || (hd[disk_unit].heads > 16)
+				|| (hd[disk_unit].sectors_per_track > 256)
+				|| (hd[disk_unit].bytes_per_sector > 2048))
+		{
+			smc92x4_hd_unload(image, disk_unit);
+			return INIT_FAIL;
+		}
 		if (hd[disk_unit].bytes_per_sector != 256)
 		{
 			smc92x4_hd_unload(image, disk_unit);
@@ -893,7 +901,7 @@ static void do_write(int which, int physical_flag, int mode)
 
 	sector = hfdc[which].regs[hfdc_reg_des_sector];
 	head = hfdc[which].regs[hfdc_reg_des_head] & 0xf;
-	cylinder = ((hfdc[which].regs[hfdc_reg_des_head] << 4) & 0x700)
+	cylinder = (((int) hfdc[which].regs[hfdc_reg_des_head] << 4) & 0x700)
 				| hfdc[which].regs[hfdc_reg_des_cyl];
 
 	if (!get_selected_drive(which, & select_mode, & disk_unit))
