@@ -56,16 +56,6 @@ enum
 	VIEW_MAX
 };
 
-enum
-{
-	SPLITTER_LEFT = 0,
-	SPLITTER_RIGHT,
-#ifdef MESS
-	SPLITTER_FARRIGHT,
-#endif
-	SPLITTER_MAX
-};
-
 /* per-game data we calculate */
 enum
 {
@@ -120,11 +110,6 @@ typedef struct
 typedef struct
 {
 	BOOL   use_default; /* only for non-default options */
-
-	int    play_count;
-	int    has_roms;
-	int    has_samples;
-	BOOL   is_favorite;
 
 	/* video */
 	BOOL   autoframeskip;
@@ -212,6 +197,14 @@ typedef struct
 #endif
 } options_type;
 
+// per-game data we store, not to pass to mame, but for our own use.
+typedef struct
+{
+    int play_count;
+    int has_roms;
+    int has_samples;
+} game_variables_type;
+
 typedef struct
 {
 	INT      folder_id;
@@ -243,7 +236,7 @@ typedef struct
 	BOOL     sort_reverse;
 	AREA     area;
 	UINT     windowstate;
-	int      splitter[SPLITTER_MAX];
+    int      splitter[4];		/* NPW 5-Feb-2003 - I don't like hard coding this, but I don't have a choice */
 	LOGFONT  list_font;
 	COLORREF list_font_color;
     COLORREF list_clone_color;
@@ -286,7 +279,7 @@ void OptionsInit(void);
 void OptionsExit(void);
 
 options_type* GetDefaultOptions(void);
-options_type* GetGameOptions(int num_game);
+options_type * GetGameOptions(int driver_index);
 
 void ResetGUI(void);
 void ResetGameDefaults(void);
@@ -472,20 +465,20 @@ void SetHistoryFileName(const char* path);
 const char* GetMAMEInfoFileName(void);
 void SetMAMEInfoFileName(const char* path);
 
-void ResetGameOptions(int num_game);
+void ResetGameOptions(int driver_index);
 
-int  GetHasRoms(int num_game);
-void SetHasRoms(int num_game, int has_roms);
+int GetHasRoms(int driver_index);
+void SetHasRoms(int driver_index, int has_roms);
 
-int  GetHasSamples(int num_game);
-void SetHasSamples(int num_game, int has_samples);
+int GetHasSamples(int driver_index);
+void SetHasSamples(int driver_index, int has_samples);
 
-void IncrementPlayCount(int num_game);
-int  GetPlayCount(int num_game);
+void IncrementPlayCount(int driver_index);
+int GetPlayCount(int driver_index);
 
 char * GetVersionString(void);
 
-void SaveGameOptions(int game_num);
+void SaveGameOptions(int driver_index);
 void SaveDefaultOptions(void);
 
 #endif

@@ -34,6 +34,7 @@
 #include "m32util.h"
 #include "resource.h"
 #include "file.h"
+#include "splitters.h"
 
 /***************************************************************************
     Internal function prototypes
@@ -43,7 +44,7 @@ static void  SaveOptions(void);
 static void  LoadOptions(void);
 static void  SaveGlobalOptions(BOOL bBackup);
 
-static void  LoadRegGameOptions(HKEY hKey, options_type *o);
+static void  LoadRegGameOptions(HKEY hKey, options_type *o, int driver_index);
 static DWORD GetRegOption(HKEY hKey, const char *name);
 static void  GetRegBoolOption(HKEY hKey, const char *name, BOOL *value);
 static char  *GetRegStringOption(HKEY hKey, const char *name);
@@ -107,14 +108,15 @@ static void  GetRegObj(HKEY hKey, REG_OPTIONS *regOpt);
 
 static settings_type settings;
 
-static options_type gOpts;  /* Used when saving/loading from Registry */
-static options_type global; /* Global 'default' options */
-static options_type *game_options;  /* Array of Game specific options */
+static options_type gOpts;  // Used when saving/loading from Registry
+static options_type global; // Global 'default' options
+static options_type *game_options;  // Array of Game specific options
+static game_variables_type *game_variables;  // Array of game specific extra data
 
 /* Global UI options */
 static REG_OPTIONS regSettings[] =
 {
-	{"DefaultGame",        RO_STRING,  settings.default_game,      0, 0},
+	{"DefaultGame",        RO_STRING,  &settings.default_game,      0, 0},
 #ifdef MESS
 	{"DefaultSoftware", RO_PSTRING, &settings.default_software, 0, 0},
 #endif
@@ -289,7 +291,7 @@ static int default_column_shown[] = {   1,  0,  1,  1,  1,  1,  1,  1,  1,  1,  
 /* Hidden columns need to go at the end of the order array */
 static int default_column_order[] = {   0,  2,  3,  4,  5,  6,  7,  8,  9,  1, 10 };
 
-static const char *view_modes[VIEW_MAX] = { "Large Icons", "Small Icons", "List", "Report", "Details" };
+static const char *view_modes[VIEW_MAX] = { "Large Icons", "Small Icons", "List", "Details", "Grouped" };
 
 static char oldInfoMsg[400] = 
 MAME32NAME " has detected outdated configuration data.\n\n\
@@ -298,11 +300,7 @@ The current version is %s. It is recommended that the\n\
 configuration is set to the new defaults.\n\n\
 Would you like to use the new configuration?";
 
-#ifdef MESS
-#define DEFAULT_GAME "nes"
-#else
-#define DEFAULT_GAME "pacman"
-#endif
+extern const char g_szDefaultGame[];
 
 /***************************************************************************
     External functions  
@@ -314,7 +312,7 @@ void OptionsInit()
 
 	num_games = GetNumGames();
 
-	strcpy(settings.default_game, DEFAULT_GAME);
+	strcpy(settings.default_game, g_szDefaultGame);
 #ifdef MESS
 	settings.default_software = NULL;
 #endif
@@ -427,10 +425,6 @@ void OptionsInit()
 
 	global.use_default = FALSE;
 
-	global.play_count   = 0;
-	global.has_roms     = UNKNOWN;
-	global.has_samples  = UNKNOWN;
-
 	/* video */
 	global.autoframeskip     = TRUE;
 	global.frameskip         = 0;
@@ -513,13 +507,17 @@ void OptionsInit()
 	global.use_new_ui = TRUE;
 #endif
 
-	/* This allocation should be checked */
 	game_options = (options_type *)malloc(num_games * sizeof(options_type));
+	game_variables = (game_variables_type *)malloc(num_games * sizeof(game_variables_type));
 
 	for (i = 0; i < num_games; i++)
 	{
 		game_options[i] = global;
 		game_options[i].use_default = TRUE;
+
+		game_variables[i].play_count = 0;
+		game_variables[i].has_roms = UNKNOWN;
+		game_variables[i].has_samples = UNKNOWN;
 	}
 
 	SaveGlobalOptions(TRUE);
@@ -569,30 +567,16 @@ options_type * GetDefaultOptions(void)
 	return &global;
 }
 
-options_type * GetGameOptions(int num_game)
+options_type * GetGameOptions(int driver_index)
 {
-	int play_count;
-	int has_roms;
-	int has_samples;
+	assert(0 <= driver_index && driver_index < num_games);
 
-	assert(0 <= num_game && num_game < num_games);
-
-	play_count	= game_options[num_game].play_count;
-	has_roms	= game_options[num_game].has_roms;
-	has_samples = game_options[num_game].has_samples;
-
-	if (game_options[num_game].use_default)
+	if (game_options[driver_index].use_default)
 	{
-		game_options[num_game] = global;
-
-		// use defaults, but override with the values we just save
-		game_options[num_game].use_default	= TRUE;
-		game_options[num_game].play_count	= play_count;
-		game_options[num_game].has_roms 	= has_roms;
-		game_options[num_game].has_samples	= has_samples;
-
+		game_options[driver_index] = global;
+		game_options[driver_index].use_default	= TRUE;
 	}
-	return &game_options[num_game];
+	return &game_options[driver_index];
 }
 
 void ResetGUI(void)
@@ -841,13 +825,13 @@ void GetColumnWidths(int width[])
 
 void SetSplitterPos(int splitterId, int pos)
 {
-	if (splitterId < SPLITTER_MAX)
+	if (splitterId < GetSplitterCount())
 		settings.splitter[splitterId] = pos;
 }
 
 int  GetSplitterPos(int splitterId)
 {
-	if (splitterId < SPLITTER_MAX)
+	if (splitterId < GetSplitterCount())
 		return settings.splitter[splitterId];
 
 	return -1; /* Error */
@@ -912,11 +896,7 @@ const char* GetLanguage(void)
 
 void SetLanguage(const char* lang)
 {
-	if (settings.language != NULL)
-	{
-		free(settings.language);
-		settings.language = NULL;
-	}
+	FreeIfAllocated(&settings.language);
 
 	if (lang != NULL)
 		settings.language = strdup(lang);
@@ -929,17 +909,16 @@ const char* GetRomDirs(void)
 
 void SetRomDirs(const char* paths)
 {
-	if (settings.romdirs != NULL)
-	{
-		free(settings.romdirs);
-		settings.romdirs = NULL;
-	}
+	FreeIfAllocated(&settings.romdirs);
 
 	if (paths != NULL)
+	{
 		settings.romdirs = strdup(paths);
 
-	// have our mame core (file code) know about it
-	set_pathlist(FILETYPE_ROM,settings.romdirs);
+		// have our mame core (file code) know about it
+		// this leaks a little, but the win32 file core writes to this string
+		set_pathlist(FILETYPE_ROM,strdup(settings.romdirs));
+	}
 }
 
 const char* GetSampleDirs(void)
@@ -949,14 +928,17 @@ const char* GetSampleDirs(void)
 
 void SetSampleDirs(const char* paths)
 {
-	if (settings.sampledirs != NULL)
-	{
-		free(settings.sampledirs);
-		settings.sampledirs = NULL;
-	}
+	FreeIfAllocated(&settings.sampledirs);
 
 	if (paths != NULL)
+	{
 		settings.sampledirs = strdup(paths);
+		
+		// have our mame core (file code) know about it
+		// this leaks a little, but the win32 file core writes to this string
+		set_pathlist(FILETYPE_SAMPLE,strdup(settings.sampledirs));
+	}
+
 }
 
 const char* GetIniDirs(void)
@@ -966,11 +948,7 @@ const char* GetIniDirs(void)
 
 void SetIniDirs(const char* paths)
 {
-	if (settings.inidirs != NULL)
-	{
-		free(settings.inidirs);
-		settings.inidirs = NULL;
-	}
+	FreeIfAllocated(&settings.inidirs);
 
 	if (paths != NULL)
 		settings.inidirs = strdup(paths);
@@ -983,11 +961,7 @@ const char* GetCtrlrDir(void)
 
 void SetCtrlrDir(const char* path)
 {
-	if (settings.ctrlrdir != NULL)
-	{
-		free(settings.ctrlrdir);
-		settings.ctrlrdir = NULL;
-	}
+	FreeIfAllocated(&settings.ctrlrdir);
 
 	if (path != NULL)
 		settings.ctrlrdir = strdup(path);
@@ -1000,11 +974,7 @@ const char* GetCfgDir(void)
 
 void SetCfgDir(const char* path)
 {
-	if (settings.cfgdir != NULL)
-	{
-		free(settings.cfgdir);
-		settings.cfgdir = NULL;
-	}
+	FreeIfAllocated(&settings.cfgdir);
 
 	if (path != NULL)
 		settings.cfgdir = strdup(path);
@@ -1017,11 +987,7 @@ const char* GetHiDir(void)
 
 void SetHiDir(const char* path)
 {
-	if (settings.hidir != NULL)
-	{
-		free(settings.hidir);
-		settings.hidir = NULL;
-	}
+	FreeIfAllocated(&settings.hidir);
 
 	if (path != NULL)
 		settings.hidir = strdup(path);
@@ -1034,11 +1000,7 @@ const char* GetNvramDir(void)
 
 void SetNvramDir(const char* path)
 {
-	if (settings.nvramdir != NULL)
-	{
-		free(settings.nvramdir);
-		settings.nvramdir = NULL;
-	}
+	FreeIfAllocated(&settings.nvramdir);
 
 	if (path != NULL)
 		settings.nvramdir = strdup(path);
@@ -1051,11 +1013,7 @@ const char* GetInpDir(void)
 
 void SetInpDir(const char* path)
 {
-	if (settings.inpdir != NULL)
-	{
-		free(settings.inpdir);
-		settings.inpdir = NULL;
-	}
+	FreeIfAllocated(&settings.inpdir);
 
 	if (path != NULL)
 		settings.inpdir = strdup(path);
@@ -1068,11 +1026,7 @@ const char* GetImgDir(void)
 
 void SetImgDir(const char* path)
 {
-	if (settings.imgdir != NULL)
-	{
-		free(settings.imgdir);
-		settings.imgdir = NULL;
-	}
+	FreeIfAllocated(&settings.imgdir);
 
 	if (path != NULL)
 		settings.imgdir = strdup(path);
@@ -1085,11 +1039,7 @@ const char* GetStateDir(void)
 
 void SetStateDir(const char* path)
 {
-	if (settings.statedir != NULL)
-	{
-		free(settings.statedir);
-		settings.statedir = NULL;
-	}
+	FreeIfAllocated(&settings.statedir);
 
 	if (path != NULL)
 		settings.statedir = strdup(path);
@@ -1102,11 +1052,7 @@ const char* GetArtDir(void)
 
 void SetArtDir(const char* path)
 {
-	if (settings.artdir != NULL)
-	{
-		free(settings.artdir);
-		settings.artdir = NULL;
-	}
+	FreeIfAllocated(&settings.artdir);
 
 	if (path != NULL)
 		settings.artdir = strdup(path);
@@ -1119,11 +1065,7 @@ const char* GetMemcardDir(void)
 
 void SetMemcardDir(const char* path)
 {
-	if (settings.memcarddir != NULL)
-	{
-		free(settings.memcarddir);
-		settings.memcarddir = NULL;
-	}
+	FreeIfAllocated(&settings.memcarddir);
 
 	if (path != NULL)
 		settings.memcarddir = strdup(path);
@@ -1136,11 +1078,7 @@ const char* GetFlyerDir(void)
 
 void SetFlyerDir(const char* path)
 {
-	if (settings.flyerdir != NULL)
-	{
-		free(settings.flyerdir);
-		settings.flyerdir = NULL;
-	}
+	FreeIfAllocated(&settings.flyerdir);
 
 	if (path != NULL)
 		settings.flyerdir = strdup(path);
@@ -1153,11 +1091,7 @@ const char* GetCabinetDir(void)
 
 void SetCabinetDir(const char* path)
 {
-	if (settings.cabinetdir != NULL)
-	{
-		free(settings.cabinetdir);
-		settings.cabinetdir = NULL;
-	}
+	FreeIfAllocated(&settings.cabinetdir);
 
 	if (path != NULL)
 		settings.cabinetdir = strdup(path);
@@ -1170,11 +1104,7 @@ const char* GetMarqueeDir(void)
 
 void SetMarqueeDir(const char* path)
 {
-	if (settings.marqueedir != NULL)
-	{
-		free(settings.marqueedir);
-		settings.marqueedir = NULL;
-	}
+	FreeIfAllocated(&settings.marqueedir);
 
 	if (path != NULL)
 		settings.marqueedir = strdup(path);
@@ -1187,11 +1117,7 @@ const char* GetTitlesDir(void)
 
 void SetTitlesDir(const char* path)
 {
-	if (settings.titlesdir != NULL)
-	{
-		free(settings.titlesdir);
-		settings.titlesdir = NULL;
-	}
+	FreeIfAllocated(&settings.titlesdir);
 
 	if (path != NULL)
 		settings.titlesdir = strdup(path);
@@ -1204,11 +1130,7 @@ const char* GetDiffDir(void)
 
 void SetDiffDir(const char* path)
 {
-	if (settings.diffdir != NULL)
-	{
-		free(settings.diffdir);
-		settings.diffdir = NULL;
-	}
+	FreeIfAllocated(&settings.diffdir);
 
 	if (path != NULL)
 		settings.diffdir = strdup(path);
@@ -1221,11 +1143,7 @@ const char* GetIconsDir(void)
 
 void SetIconsDir(const char* path)
 {
-	if (settings.iconsdir != NULL)
-	{
-		free(settings.iconsdir);
-		settings.iconsdir = NULL;
-	}
+	FreeIfAllocated(&settings.iconsdir);
 
 	if (path != NULL)
 		settings.iconsdir = strdup(path);
@@ -1297,23 +1215,12 @@ void SetMAMEInfoFileName(const char* path)
 		settings.mameinfo_filename = strdup(path);
 }
 
-void ResetGameOptions(int num_game)
+void ResetGameOptions(int driver_index)
 {
-	int play_count;
-	int has_roms;
-	int has_samples;
+	assert(0 <= driver_index && driver_index < num_games);
 
-	assert(0 <= num_game && num_game < num_games);
-
-	play_count	= game_options[num_game].play_count;
-	has_roms	= game_options[num_game].has_roms;
-	has_samples = game_options[num_game].has_samples;
-
-	game_options[num_game] = global;
-	game_options[num_game].use_default	= TRUE;
-	game_options[num_game].play_count	= play_count;
-	game_options[num_game].has_roms 	= has_roms;
-	game_options[num_game].has_samples	= has_samples;
+	game_options[driver_index] = global;
+	game_options[driver_index].use_default = TRUE;
 }
 
 void ResetGameDefaults(void)
@@ -1329,41 +1236,41 @@ void ResetAllGameOptions(void)
 		ResetGameOptions(i);
 }
 
-int  GetHasRoms(int num_game)
+int GetHasRoms(int driver_index)
 {
-	assert(0 <= num_game && num_game < num_games);
+	assert(0 <= driver_index && driver_index < num_games);
 
-	return game_options[num_game].has_roms;
+	return game_variables[driver_index].has_roms;
 }
 
-void SetHasRoms(int num_game, int has_roms)
+void SetHasRoms(int driver_index, int has_roms)
 {
-	assert(0 <= num_game && num_game < num_games);
+	assert(0 <= driver_index && driver_index < num_games);
 
-	game_options[num_game].has_roms = has_roms;
+	game_variables[driver_index].has_roms = has_roms;
 }
 
-int  GetHasSamples(int num_game)
+int  GetHasSamples(int driver_index)
 {
-	assert(0 <= num_game && num_game < num_games);
+	assert(0 <= driver_index && driver_index < num_games);
 
-	return game_options[num_game].has_samples;
+	return game_variables[driver_index].has_samples;
 }
 
-void SetHasSamples(int num_game, int has_samples)
+void SetHasSamples(int driver_index, int has_samples)
 {
-	assert(0 <= num_game && num_game < num_games);
+	assert(0 <= driver_index && driver_index < num_games);
 
-	game_options[num_game].has_samples = has_samples;
+	game_variables[driver_index].has_samples = has_samples;
 }
 
-void IncrementPlayCount(int num_game)
+void IncrementPlayCount(int driver_index)
 {
-	assert(0 <= num_game && num_game < num_games);
+	assert(0 <= driver_index && driver_index < num_games);
 
-	game_options[num_game].play_count++;
+	game_variables[driver_index].play_count++;
 
-	SavePlayCount(num_game);
+	SavePlayCount(driver_index);
 }
 
 void SetFolderFlags(const char *folderName, DWORD dwFlags)
@@ -1371,11 +1278,11 @@ void SetFolderFlags(const char *folderName, DWORD dwFlags)
 	SaveFolderFlags(folderName, dwFlags);
 }
 
-int GetPlayCount(int num_game)
+int GetPlayCount(int driver_index)
 {
-	assert(0 <= num_game && num_game < num_games);
+	assert(0 <= driver_index && driver_index < num_games);
 
-	return game_options[num_game].play_count;
+	return game_variables[driver_index].play_count;
 }
 
 /***************************************************************************
@@ -1451,7 +1358,7 @@ static void SplitterEncodeString(void* data, char* str)
 	
 	strcpy(str, tmpStr);
 
-	for (i = 1; i < SPLITTER_MAX; i++)
+	for (i = 1; i < GetSplitterCount(); i++)
 	{
 		sprintf(tmpStr, ",%d", value[i]);
 		strcat(str, tmpStr);
@@ -1471,7 +1378,7 @@ static void SplitterDecodeString(const char* str, void* data)
 	strcpy(tmpStr, str);
 	p = tmpStr;
 	
-	for (i = 0; p && i < SPLITTER_MAX; i++)
+	for (i = 0; p && i < GetSplitterCount(); i++)
 	{
 		s = p;
 		
@@ -1667,7 +1574,7 @@ static void LoadOptions(void)
 	{
         /* read game default options */
 
-		LoadRegGameOptions(hKey, &global);
+		LoadRegGameOptions(hKey, &global, -1);
 		RegCloseKey(hKey);
 	}
 
@@ -1680,7 +1587,7 @@ static void LoadOptions(void)
         result = RegOpenKeyEx(HKEY_CURRENT_USER, keyString, 0, KEY_QUERY_VALUE, &hKey);
 		if (result == ERROR_SUCCESS)
 		{
-			LoadRegGameOptions(hKey, &game_options[i]);
+			LoadRegGameOptions(hKey, &game_options[i], i);
 			RegCloseKey(hKey);
 		}
 	}
@@ -1766,7 +1673,7 @@ static void SavePlayCount(int game_index)
                                  &dwDisposition );
 		if (result == ERROR_SUCCESS)
 		{
-			PutRegOption(hSubkey, "PlayCount", game_options[game_index].play_count);
+			PutRegOption(hSubkey, "PlayCount", game_variables[game_index].play_count);
 			RegCloseKey(hSubkey);
 		}
 		RegCloseKey(hKey);
@@ -1848,9 +1755,13 @@ void SaveOptions(void)
 
 		if (result == ERROR_SUCCESS)
 		{
+			PutRegOption(hSubkey,"PlayCount",game_variables[i].play_count);
+			PutRegOption(hSubkey,"ROMS",game_variables[i].has_roms);
+			PutRegOption(hSubkey,"Samples",game_variables[i].has_samples);
+
 			saved = SaveRegGameOptions(hSubkey, &game_options[i]);
 			RegCloseKey(hSubkey);
-			if (saved == FALSE)
+			if (saved == FALSE && game_variables[i].has_roms == UNKNOWN)
 				RegDeleteKey(hKey,drivers[i]->name);
 		}
 	}
@@ -1858,7 +1769,7 @@ void SaveOptions(void)
 }
 
 
-void SaveGameOptions(int game_num)
+void SaveGameOptions(int driver_index)
 {
 	HKEY  hKey, hSubkey;
 	DWORD dwDisposition = 0;
@@ -1872,7 +1783,7 @@ void SaveGameOptions(int game_num)
 							KEY_ALL_ACCESS, NULL, &hKey, &dwDisposition);
 
     strcpy( keyString, KEY_BASE_FMT );
-    strcpy( keyString + KEY_BASE_FMT_CCH, drivers[game_num]->name);
+    strcpy( keyString + KEY_BASE_FMT_CCH, drivers[driver_index]->name);
 
 	result = RegCreateKeyEx(HKEY_CURRENT_USER, keyString,
 							0, (char *)"", REG_OPTION_NON_VOLATILE,
@@ -1880,10 +1791,14 @@ void SaveGameOptions(int game_num)
 
 	if (result == ERROR_SUCCESS)
 	{
-		saved = SaveRegGameOptions(hSubkey, &game_options[game_num]);
+		PutRegOption(hSubkey,"PlayCount",game_variables[driver_index].play_count);
+		PutRegOption(hSubkey,"ROMS",game_variables[driver_index].has_roms);
+		PutRegOption(hSubkey,"Samples",game_variables[driver_index].has_samples);
+
+		saved = SaveRegGameOptions(hSubkey,&game_options[driver_index]);
 		RegCloseKey(hSubkey);
-		if (saved == FALSE)
-			RegDeleteKey(hKey,drivers[game_num]->name);
+		if (saved == FALSE && game_variables[driver_index].has_roms == UNKNOWN)
+			RegDeleteKey(hKey,drivers[driver_index]->name);
 	}
 	RegCloseKey(hKey);
 }
@@ -2006,13 +1921,10 @@ static void SaveGlobalOptions(BOOL bBackup)
 	RegCloseKey(hKey);
 }
 
+// returns whether there's any saved data at all
 static BOOL SaveRegGameOptions(HKEY hKey, options_type *o)
 {
 	int   i;
-
-	PutRegOption(hKey,	   "PlayCount", o->play_count);
-	PutRegOption(hKey,	   "ROMS",		o->has_roms);
-	PutRegOption(hKey,	   "Samples",	o->has_samples);
 
 	if (o->use_default == TRUE)
 	{
@@ -2021,7 +1933,7 @@ static BOOL SaveRegGameOptions(HKEY hKey, options_type *o)
 			RegDeleteValue(hKey, regGameOpts[i].m_cName);
 		}
 
-		return (o->has_roms != UNKNOWN);
+		return FALSE;
 	}
 
 	/* copy passed in options to our struct */
@@ -2035,23 +1947,27 @@ static BOOL SaveRegGameOptions(HKEY hKey, options_type *o)
 	return TRUE;
 }
 
-static void LoadRegGameOptions(HKEY hKey, options_type *o)
+static void LoadRegGameOptions(HKEY hKey, options_type *o, int driver_index)
 {
 	int 	i;
 	DWORD	value;
 	DWORD	size;
 
-	value = GetRegOption(hKey, "PlayCount");
-	if (value != -1)
-		o->play_count = value;
+	if (driver_index >= 0)
+	{
+		value = GetRegOption(hKey, "PlayCount");
+		if (value != -1)
+			game_variables[driver_index].play_count = value;
+		
+		value = GetRegOption(hKey, "ROMS");
+		if (value != -1)
+			game_variables[driver_index].has_roms = value;
+		
+		value = GetRegOption(hKey, "Samples");
+		if (value != -1)
+			game_variables[driver_index].has_samples = value;
+	}
 
-	value = GetRegOption(hKey, "ROMS");
-	if (value != -1)
-		o->has_roms = value;
-
-	value = GetRegOption(hKey, "Samples");
-	if (value != -1)
-		o->has_samples = value;
 
 	/* look for window.  If it's not there, then use default options for this game */
 	if (RegQueryValueEx(hKey, "window", 0, &value, NULL, &size) != ERROR_SUCCESS)

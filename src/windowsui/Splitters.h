@@ -46,8 +46,13 @@ void    AddSplitter(HWND hWnd, HWND hWndLeft, HWND hWndRight,
 void    RecalcSplitters(void);
 void    AdjustSplitter2Rect(HWND hWnd, LPRECT lpRect);
 void    AdjustSplitter1Rect(HWND hWnd, LPRECT lpRect);
-void    InitSplitters(void);
+BOOL    InitSplitters(void);
+void    SplittersExit(void);
+int     GetSplitterCount(void);
 
-extern int nSplitterOffset[];
+extern int *nSplitterOffset;
+
+extern const double g_dSplitterPositions[];
+
 
 #endif /* SPLITTER_H */

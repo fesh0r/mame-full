@@ -95,3 +95,11 @@ DIRECTORYINFO g_directoryInfo[] =
 	{ NULL }
 };
 
+const double g_dSplitterPositions[] =
+{
+	0.25,
+	0.5,
+	-1
+};
+
+const char g_szDefaultGame[] = "pacman";

@@ -90,3 +90,13 @@ DIRECTORYINFO g_directoryInfo[] =
 	{ "Background Images",     GetBgDir,        SetBgDir,        FALSE, 0 },
 	{ NULL }
 };
+
+const double g_dSplitterPositions[] =
+{
+	0.2,
+	0.4,
+	0.6,
+	-1
+};
+
+const char g_szDefaultGame[] = "nes";

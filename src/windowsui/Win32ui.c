@@ -1087,7 +1087,7 @@ void UpdateScreenShot(void)
 
 	if (GetShowScreenShot())
 	{
-		nWidth = nSplitterOffset[SPLITTER_MAX - 1];
+		nWidth = nSplitterOffset[GetSplitterCount() - 1];
 		CheckMenuItem(GetMenu(hMain),ID_VIEW_SCREEN_SHOT, MF_CHECKED);
 		ToolBar_CheckButton(hToolBar, ID_VIEW_SCREEN_SHOT, MF_CHECKED);
 	}
@@ -1620,7 +1620,8 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	assert(hwndSoftware);
 #endif
 
-	InitSplitters();
+	if (!InitSplitters())
+		return FALSE;
 
 	AddSplitter(GetDlgItem(hMain, IDC_SPLITTER), hTreeView, hwndList,
 				AdjustSplitter1Rect);
@@ -1856,6 +1857,8 @@ static void Win32UI_exit()
 	OptionsExit();
 
 	HelpExit();
+
+	SplittersExit();
 }
 
 static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lParam)
@@ -2002,7 +2005,7 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 			SmartListView_SaveColumnSettings(s_pSoftwareListView);
 #endif /* MESS */
 
-			for (i = 0; i < SPLITTER_MAX; i++)
+			for (i = 0; i < GetSplitterCount(); i++)
 				SetSplitterPos(i, nSplitterOffset[i]);
 
 			GetWindowRect(hWnd, &rect);
