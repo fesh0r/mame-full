@@ -21,7 +21,7 @@
 
 #ifdef MESS
 /* MESS32 text files */
-#define HELPTEXT_RELEASE    "Mess.txt"
+#define HELPTEXT_RELEASE    "docs\\Messhelp.txt"
 #define HELPTEXT_WHATS_NEW  "Messnew.txt"
 #else
 /* MAME32 text files */
