@@ -95,7 +95,7 @@
 // for pc serial mouse
 #include "includes/pc_mouse.h"
 // pcw/pcw16 beeper
-#include "includes/beep.h"
+//#include "sound/beep.h"
 
 //#define PCW16_DUMP_RAM
 //#define PCW16_DUMP_CPU_RAM
@@ -1599,14 +1599,14 @@ WRITE_HANDLER(pcw16_system_control_w)
 		/* bleeper on */
 		case 0x0b:
 		{
-			beep_set_state(1);
+                        beep_set_state(0,1);
 		}
 		break;
 
 		/* bleeper off */
 		case 0x0c:
 		{
-			beep_set_state(0);
+                        beep_set_state(0,0);
 		}
 		break;
 
@@ -1896,8 +1896,8 @@ void pcw16_init_machine(void)
 	
 	pcw16_reset();
 
-	beep_set_state(0);
-	beep_set_frequency(3750);
+        beep_set_state(0,0);
+        beep_set_frequency(0,3750);
 }
 
 
@@ -1950,11 +1950,9 @@ INPUT_PORTS_START(pcw16)
 	AT_KEYBOARD
 INPUT_PORTS_END
 
-static struct CustomSound_interface pcw16_custom_interface =
+static struct beep_interface pcw16_beep_interface =
 {
-	beep_sh_start,
-	beep_sh_stop,
-	beep_sh_update
+        1
 };
 
 static struct MachineDriver machine_driver_pcw16 =
@@ -2000,8 +1998,8 @@ static struct MachineDriver machine_driver_pcw16 =
 	0,0,0,0,
 	{
 		{
-			SOUND_CUSTOM,
-			&pcw16_custom_interface
+                        SOUND_BEEP,
+                        &pcw16_beep_interface
 		}
 	},
 };
