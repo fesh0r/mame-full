@@ -1,10 +1,7 @@
 /*
 	TMS9901 Programmable system interface
 
-	Note that this is still WIP : much work is still needed to make a versatile and complete
-	tms9901 emulator
-
-	Raphael Nabet, 2000
+	Raphael Nabet, 2000-2002
 */
 
 #include <math.h>
@@ -28,7 +25,8 @@ Overview :
 
 
 TODO :
-	* complete TMS9901 emulation (e.g. other interrupts pins...)
+	* support reset
+	* support multiple 9901
 
 Pins :
 	Reset
@@ -60,7 +58,7 @@ nota :
 	("SBO n").  However, AFAIK, this has strictly no consequence in the TMS9901, and interrupt
 	routines would work fine without this (except probably TIMER interrupt).  All this is quite
 	weird.  Maybe the interrupt recognition notification is needed on TMS9985, or any other weird
-	variant of TMS9900 (does any TI990/10 owner wants to test this :-) ?).
+	variant of this hardware (how about the TI99 board to be inserted in a TI990/10?).
 */
 
 
@@ -89,9 +87,9 @@ static int pio_output_mirror;
 /*
 	clock registers
 
-	frequency : CPUCLK/64 = 46875Hz for a 3MHz clock
+	frequency : CPUCLK/64 (e.g. 46875Hz for a 3MHz clock)
 
-	(warning : 3MHz on a tms9900 = 12MHz on a tms9995/99xxx)
+	(warning : 3MHz on a tms9900 is equivalent to 12MHz on a tms9995 or tms99000)
 */
 
 /* MESS timer, used to emulate the decrementer register */
@@ -129,6 +127,11 @@ static void (*write_handlers[16])(int offset, int data) =
 	NULL,
 };
 
+/* interrupt callcback to notify driver of changes in intreq and ic0-3 pins */
+static void (*interrupt_callback)(int intreq, int ic);
+
+/* tms9901 clock rate */
+static double clock_rate;
 
 /*
 	prototypes
@@ -167,6 +170,7 @@ static int reverse_9MSBits(int value)
 
 	return value;
 }
+#endif
 
 /*
 	return the number of the first (i.e. least significant) non-zero bit among the 16 first bits
@@ -206,13 +210,12 @@ static int find_first_bit(int value)
 
 	return bit;
 }
-#endif
 
 
 /*
 	initialize the tms9901 core
 */
-void tms9901_init(tms9901reset_param *param)
+void tms9901_init(const tms9901reset_param *param)
 {
 	int i;
 
@@ -223,6 +226,10 @@ void tms9901_init(tms9901reset_param *param)
 
 	for (i=0; i<16; i++)
 		write_handlers[i] = param->write_handlers[i];
+
+	interrupt_callback = param->interrupt_callback;
+
+	clock_rate = param->clock_rate;
 
 	int_state = 0;
 	timer_int_pending = 0;
@@ -272,32 +279,27 @@ static void tms9901_field_interrupts(void)
 
 	if (current_ints)
 	{
-		int level;
-
 		/* find which interrupt tripped us :
 		 * we simply look for the first bit set to 1 in current_ints... */
-		/*level = find_first_bit(current_ints);*/
-
-		/* On TI99, TMS9900 IC0-3 lines are not connected to TMS9901,
-		 * but hard-wired to force level 1 interrupts */
-		level = 1;
+		int level = find_first_bit(current_ints);
 
 		int_pending = TRUE;
 
-		cpu_irq_line_vector_w(0, 0, level);
-		cpu_set_irq_line(0, 0, ASSERT_LINE);	/* interrupt it, baby */
+		if (interrupt_callback)
+			interrupt_callback(1, level);
 	}
 	else
 	{
 		int_pending = FALSE;
 
-		cpu_set_irq_line(0, 0, CLEAR_LINE);
+		if (interrupt_callback)
+			interrupt_callback(0, 0);
 	}
 }
 
 
 /*
-	callback function which is called when the state of INT2* change
+	callback function which is called when the state of INTn* change
 
 	state == 0 : INTn* is inactive (high)
 	state != 0 : INTn* is active (low)
@@ -340,7 +342,7 @@ static void reset_tms9901_timer(void)
 	/* clock interval == 0 -> no timer */
 	if (clockinvl)
 	{
-		tms9901_timer = timer_pulse(clockinvl / 46875.L, 0, decrementer_callback);
+		tms9901_timer = timer_pulse(clockinvl / (clock_rate / 64.), 0, decrementer_callback);
 	}
 }
 
@@ -452,7 +454,7 @@ READ16_HANDLER ( tms9901_CRU_read )
 	 bit 1-14 : write timer period
 	 bit 15 : if written value == 0, soft reset (just resets all I/O pins as input)
 
-	bit 16-31 : set output state of P0-P15 (and set them as output pin) (quits timer mode, too...)
+	bit 16-31 : set output state of P0-P15 (and set them as output pin) (quit timer mode, too...)
 */
 WRITE16_HANDLER ( tms9901_CRU_write )
 {

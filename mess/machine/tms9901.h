@@ -21,12 +21,14 @@
 typedef struct tms9901reset_param
 {
 	int supported_int_mask;	/* a bit for each input pin whose state is always notified to the TMS9901 core */
-	int (*read_handlers[4])(int offset);
-	void (*write_handlers[16])(int offset, int data);
+	int (*read_handlers[4])(int offset);	/* 4*8 bits */
+	void (*write_handlers[16])(int offset, int data);	/* 16 Pn outputs */
+	void (*interrupt_callback)(int intreq, int ic);		/* called when interrupt bus state changes */
+	double clock_rate;
 } tms9901reset_param;
 
 
-void tms9901_init(tms9901reset_param *param);
+void tms9901_init(const tms9901reset_param *param);
 void tms9901_cleanup(void);
 
 void tms9901_set_single_int(int pin_number, int state);
