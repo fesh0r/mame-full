@@ -278,7 +278,7 @@ typedef struct
 
 } settings_type; /* global settings for the UI only */
 
-void OptionsInit(void);
+BOOL OptionsInit(void);
 void OptionsExit(void);
 
 void FreeGameOptions(options_type *o);

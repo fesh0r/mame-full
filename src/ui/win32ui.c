@@ -1556,7 +1556,8 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
     }
 
 	dprintf("about to init options");
-	OptionsInit();
+	if (!OptionsInit())
+		return FALSE;
 	dprintf("options loaded");
 
 	g_mame32_message = RegisterWindowMessage("MAME32");

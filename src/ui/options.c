@@ -375,7 +375,7 @@ extern const char g_szDefaultGame[];
     External functions  
  ***************************************************************************/
 
-void OptionsInit()
+BOOL OptionsInit()
 {
 	int i;
 
@@ -573,9 +573,14 @@ void OptionsInit()
 	game_options = (options_type *)malloc(num_games * sizeof(options_type));
 	game_variables = (game_variables_type *)malloc(num_games * sizeof(game_variables_type));
 
+	if (!game_options || !game_variables)
+		return FALSE;
+
+	memset(game_options, 0, num_games * sizeof(options_type));
+	memset(game_variables, 0, num_games * sizeof(game_variables_type));
+
 	for (i = 0; i < num_games; i++)
 	{
-		ZeroMemory(&game_options[i],sizeof(options_type));
 		game_variables[i].play_count = 0;
 		game_variables[i].has_roms = UNKNOWN;
 		game_variables[i].has_samples = UNKNOWN;
@@ -586,7 +591,9 @@ void OptionsInit()
 
 	size_folder_filters = 1;
 	num_folder_filters = 0;
-	folder_filters = (folder_filter_type *)malloc(size_folder_filters*sizeof(folder_filter_type));
+	folder_filters = (folder_filter_type *) malloc(size_folder_filters * sizeof(folder_filter_type));
+	if (!folder_filters)
+		return FALSE;
 
 	LoadOptionsAndSettings();
 
@@ -597,6 +604,7 @@ void OptionsInit()
 #ifdef MESS
 	set_pathlist(FILETYPE_CRC,strdup(settings.crcdir));
 #endif
+	return TRUE;
 
 }
 
