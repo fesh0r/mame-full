@@ -13,6 +13,9 @@ New System Drivers Supported (in no particular order):
 System Driver Changes:
 ----------------------
 
+- [BBC] Much improved SAA5050 teletext support (mode 7), There is still a
+  problem with the Mode 7 cursor [Gordon Jefferyes]
+
 - [GameBoy] Finally fixed the interrupt problem, which in turn helped alot of carts 
   actually run now. [Lee Ward] 
 
