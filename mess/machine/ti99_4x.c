@@ -71,8 +71,8 @@ TODO:
 
 
 /* prototypes */
-static READ16_HANDLER ( ti99_rw_rspeech );
-static WRITE16_HANDLER ( ti99_ww_wspeech );
+static READ16_HANDLER ( ti99_rspeech_r );
+static WRITE16_HANDLER ( ti99_wspeech_w );
 
 static void tms9901_set_int1(int state);
 static void tms9901_interrupt_callback(int intreq, int ic);
@@ -707,13 +707,8 @@ void machine_init_ti99(void)
 	}
 	else
 	{
-		/* set up 4 mirrors of scratch pad to the same address */
-		UINT16 *sRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_sram);
-
-		cpu_setbank(1, sRAM_ptr);
-		cpu_setbank(2, sRAM_ptr);
-		cpu_setbank(3, sRAM_ptr);
-		cpu_setbank(4, sRAM_ptr);
+		/* set up scratch pad pointer */
+		cpu_setbank(1, memory_region(REGION_CPU1) + offset_sram);
 	}
 
 	if (ti99_model != model_99_4p)
@@ -780,8 +775,8 @@ void machine_init_ti99(void)
 
 		if (ti99_model != model_99_8)
 		{
-			install_mem_read16_handler(0, 0x9000, 0x93ff, ti99_rw_rspeech);
-			install_mem_write16_handler(0, 0x9400, 0x97ff, ti99_ww_wspeech);
+			install_mem_read16_handler(0, 0x9000, 0x93ff, ti99_rspeech_r);
+			install_mem_write16_handler(0, 0x9400, 0x97ff, ti99_wspeech_w);
 
 			tms5220_set_variant(variant_tms0285);
 		}
@@ -937,7 +932,8 @@ void set_hsgpl_crdena(int data)
 */
 
 /*
-	Same as MRA16_NOP, but with an additionnal delay.
+	Same as MRA16_NOP, but with an additionnal delay caused by the 16->8 bit
+	bus multiplexer.
 */
 READ16_HANDLER ( ti99_nop_8_r )
 {
@@ -952,10 +948,17 @@ WRITE16_HANDLER ( ti99_nop_8_w )
 }
 
 /*
-	Cartridge read: usually ROMs located on the 8-bit bus.  Bank switching is
-	common, some cartridges include some RAM.
+	TI-99 cartridge port: attached to the 8-bit bus.
+	
+	Cartridges are usually made of ROM, through a few cartridges include some
+	RAM as well.  Bank switching is common: I know three banking schemes,
+	namely TI, MBX and Supercart.  The TI scheme writes a dummy value in
+	cartridge space, and the write address gives the bank number.  The MBX
+	scheme has a cartridge bank register at 0x6fff.  I think the Supercart
+	scheme has a cartridge bank register in CRU space, but I don't what the
+	register address is, and it is therefore not emulated.
 
-	HSGPL maps here, too.
+	HSGPL maps here, too, in order to emulate cartridge ROM/RAM.
 */
 READ16_HANDLER ( ti99_cart_r )
 {
@@ -971,9 +974,6 @@ READ16_HANDLER ( ti99_cart_r )
 	return current_page_ptr[offset];
 }
 
-/*
-	this handler handles ROM switching in cartridges
-*/
 WRITE16_HANDLER ( ti99_cart_w )
 {
 	tms9900_ICount -= 4;
@@ -997,11 +997,9 @@ WRITE16_HANDLER ( ti99_cart_w )
 		/* handle pager */
 		current_page_ptr = cartridge_pages[offset & 1];
 }
-/*
-	Cartridge read: usually ROMs located on the 8-bit bus.  Bank switching is
-	common, some cartridges include some RAM.
 
-	HSGPL maps here, too.
+/*
+	99/4p cartridge space: mapped either to internal ROM6 or to HSGPL.
 */
 READ16_HANDLER ( ti99_4p_cart_r )
 {
@@ -1017,9 +1015,6 @@ READ16_HANDLER ( ti99_4p_cart_r )
 	return 0;
 }
 
-/*
-	this handler handles ROM switching in cartridges
-*/
 WRITE16_HANDLER ( ti99_4p_cart_w )
 {
 	if (ti99_4p_internal_rom6_enable)
@@ -1157,7 +1152,7 @@ WRITE16_HANDLER ( ti99_wv38_w )
 /*
 	TMS0285 speech chip read
 */
-static READ16_HANDLER ( ti99_rw_rspeech )
+static READ16_HANDLER ( ti99_rspeech_r )
 {
 	tms9900_ICount -= 18+3;		/* this is just a minimum, it can be more */
 
@@ -1183,7 +1178,7 @@ static void speech_kludge_callback(int dummy)
 /*
 	TMS0285 speech chip write
 */
-static WRITE16_HANDLER ( ti99_ww_wspeech )
+static WRITE16_HANDLER ( ti99_wspeech_w )
 {
 	tms9900_ICount -= 54+3;		/* this is just an approx. minimum, it can be much more */
 
@@ -2355,14 +2350,14 @@ static void ti99_CS_output(int offset, int data)
 
 /* prototypes */
 static void ti99_8_internal_dsr_cru_w(int offset, int data);
-static READ_HANDLER(ti99_8_rw_internal_dsr);
+static READ_HANDLER(ti99_8_internal_dsr_r);
 
 
 static const ti99_peb_card_handlers_t ti99_8_internal_dsr_handlers =
 {
 	NULL,
 	ti99_8_internal_dsr_cru_w,
-	ti99_8_rw_internal_dsr,
+	ti99_8_internal_dsr_r,
 	NULL
 };
 
@@ -2392,7 +2387,7 @@ static void ti99_8_internal_dsr_cru_w(int offset, int data)
 }
 
 /* read internal DSR ROM */
-static READ_HANDLER(ti99_8_rw_internal_dsr)
+static READ_HANDLER(ti99_8_internal_dsr_r)
 {
 	return ti99_8_internal_DSR[offset];
 }
@@ -2412,14 +2407,14 @@ static READ_HANDLER(ti99_8_rw_internal_dsr)
 
 /* prototypes */
 static void ti99_4p_internal_dsr_cru_w(int offset, int data);
-static READ16_HANDLER(ti99_4p_rw_internal_dsr);
+static READ16_HANDLER(ti99_4p_internal_dsr_r);
 
 
 static const ti99_peb_16bit_card_handlers_t ti99_4p_internal_dsr_handlers =
 {
 	NULL,
 	ti99_4p_internal_dsr_cru_w,
-	ti99_4p_rw_internal_dsr,
+	ti99_4p_internal_dsr_r,
 	NULL
 };
 
@@ -2470,7 +2465,7 @@ static void ti99_4p_internal_dsr_cru_w(int offset, int data)
 }
 
 /* read internal DSR ROM */
-static READ16_HANDLER(ti99_4p_rw_internal_dsr)
+static READ16_HANDLER(ti99_4p_internal_dsr_r)
 {
 	return ti99_4p_internal_DSR[offset];
 }
@@ -2489,28 +2484,28 @@ static READ16_HANDLER(ti99_4p_rw_internal_dsr)
 	Since the RAM is on the 8-bit bus, there is an additionnal delay.
 */
 
-static READ16_HANDLER ( ti99_rw_TIxramlow );
-static WRITE16_HANDLER ( ti99_ww_TIxramlow );
-static READ16_HANDLER ( ti99_rw_TIxramhigh );
-static WRITE16_HANDLER ( ti99_ww_TIxramhigh );
+static READ16_HANDLER ( ti99_TIxramlow_r );
+static WRITE16_HANDLER ( ti99_TIxramlow_w );
+static READ16_HANDLER ( ti99_TIxramhigh_r );
+static WRITE16_HANDLER ( ti99_TIxramhigh_w );
 
 static void ti99_TIxram_init(void)
 {
-	install_mem_read16_handler(0, 0x2000, 0x3fff, ti99_rw_TIxramlow);
-	install_mem_write16_handler(0, 0x2000, 0x3fff, ti99_ww_TIxramlow);
-	install_mem_read16_handler(0, 0xa000, 0xffff, ti99_rw_TIxramhigh);
-	install_mem_write16_handler(0, 0xa000, 0xffff, ti99_ww_TIxramhigh);
+	install_mem_read16_handler(0, 0x2000, 0x3fff, ti99_TIxramlow_r);
+	install_mem_write16_handler(0, 0x2000, 0x3fff, ti99_TIxramlow_w);
+	install_mem_read16_handler(0, 0xa000, 0xffff, ti99_TIxramhigh_r);
+	install_mem_write16_handler(0, 0xa000, 0xffff, ti99_TIxramhigh_w);
 }
 
 /* low 8 kb: 0x2000-0x3fff */
-static READ16_HANDLER ( ti99_rw_TIxramlow )
+static READ16_HANDLER ( ti99_TIxramlow_r )
 {
 	tms9900_ICount -= 4;
 
 	return xRAM_ptr[offset];
 }
 
-static WRITE16_HANDLER ( ti99_ww_TIxramlow )
+static WRITE16_HANDLER ( ti99_TIxramlow_w )
 {
 	tms9900_ICount -= 4;
 
@@ -2518,14 +2513,14 @@ static WRITE16_HANDLER ( ti99_ww_TIxramlow )
 }
 
 /* high 24 kb: 0xa000-0xffff */
-static READ16_HANDLER ( ti99_rw_TIxramhigh )
+static READ16_HANDLER ( ti99_TIxramhigh_r )
 {
 	tms9900_ICount -= 4;
 
 	return xRAM_ptr[offset+0x1000];
 }
 
-static WRITE16_HANDLER ( ti99_ww_TIxramhigh )
+static WRITE16_HANDLER ( ti99_TIxramhigh_w )
 {
 	tms9900_ICount -= 4;
 
@@ -2546,10 +2541,10 @@ static void sAMS_cru_w(int offset, int data);
 static READ_HANDLER(sAMS_mapper_r);
 static WRITE_HANDLER(sAMS_mapper_w);
 
-static READ16_HANDLER ( ti99_rw_sAMSxramlow );
-static WRITE16_HANDLER ( ti99_ww_sAMSxramlow );
-static READ16_HANDLER ( ti99_rw_sAMSxramhigh );
-static WRITE16_HANDLER ( ti99_ww_sAMSxramhigh );
+static READ16_HANDLER ( ti99_sAMSxramlow_r );
+static WRITE16_HANDLER ( ti99_sAMSxramlow_w );
+static READ16_HANDLER ( ti99_sAMSxramhigh_r );
+static WRITE16_HANDLER ( ti99_sAMSxramhigh_w );
 
 
 static const ti99_peb_card_handlers_t sAMS_expansion_handlers =
@@ -2571,10 +2566,10 @@ static void ti99_sAMSxram_init(void)
 	int i;
 
 
-	install_mem_read16_handler(0, 0x2000, 0x3fff, ti99_rw_sAMSxramlow);
-	install_mem_write16_handler(0, 0x2000, 0x3fff, ti99_ww_sAMSxramlow);
-	install_mem_read16_handler(0, 0xa000, 0xffff, ti99_rw_sAMSxramhigh);
-	install_mem_write16_handler(0, 0xa000, 0xffff, ti99_ww_sAMSxramhigh);
+	install_mem_read16_handler(0, 0x2000, 0x3fff, ti99_sAMSxramlow_r);
+	install_mem_write16_handler(0, 0x2000, 0x3fff, ti99_sAMSxramlow_w);
+	install_mem_read16_handler(0, 0xa000, 0xffff, ti99_sAMSxramhigh_r);
+	install_mem_write16_handler(0, 0xa000, 0xffff, ti99_sAMSxramhigh_w);
 
 	ti99_peb_set_card_handlers(0x1e00, & sAMS_expansion_handlers);
 
@@ -2606,7 +2601,7 @@ static WRITE_HANDLER(sAMS_mapper_w)
 }
 
 /* low 8 kb: 0x2000-0x3fff */
-static READ16_HANDLER ( ti99_rw_sAMSxramlow )
+static READ16_HANDLER ( ti99_sAMSxramlow_r )
 {
 	tms9900_ICount -= 4;
 
@@ -2616,7 +2611,7 @@ static READ16_HANDLER ( ti99_rw_sAMSxramlow )
 		return xRAM_ptr[offset+0x1000];
 }
 
-static WRITE16_HANDLER ( ti99_ww_sAMSxramlow )
+static WRITE16_HANDLER ( ti99_sAMSxramlow_w )
 {
 	tms9900_ICount -= 4;
 
@@ -2627,7 +2622,7 @@ static WRITE16_HANDLER ( ti99_ww_sAMSxramlow )
 }
 
 /* high 24 kb: 0xa000-0xffff */
-static READ16_HANDLER ( ti99_rw_sAMSxramhigh )
+static READ16_HANDLER ( ti99_sAMSxramhigh_r )
 {
 	tms9900_ICount -= 4;
 
@@ -2637,7 +2632,7 @@ static READ16_HANDLER ( ti99_rw_sAMSxramhigh )
 		return xRAM_ptr[offset+0x5000];
 }
 
-static WRITE16_HANDLER ( ti99_ww_sAMSxramhigh )
+static WRITE16_HANDLER ( ti99_sAMSxramhigh_w )
 {
 	tms9900_ICount -= 4;
 
@@ -2658,16 +2653,16 @@ static WRITE16_HANDLER ( ti99_ww_sAMSxramhigh )
 
 /* prototypes */
 static void ti99_4p_mapper_cru_w(int offset, int data);
-static READ16_HANDLER(ti99_4p_rw_mapper);
-static WRITE16_HANDLER(ti99_4p_ww_mapper);
+static READ16_HANDLER(ti99_4p_mapper_r);
+static WRITE16_HANDLER(ti99_4p_mapper_w);
 
 
 static const ti99_peb_16bit_card_handlers_t ti99_4p_mapper_handlers =
 {
 	NULL,
 	ti99_4p_mapper_cru_w,
-	ti99_4p_rw_mapper,
-	ti99_4p_ww_mapper
+	ti99_4p_mapper_r,
+	ti99_4p_mapper_w
 };
 
 
@@ -2765,13 +2760,13 @@ static void ti99_4p_mapper_cru_w(int offset, int data)
 }
 
 /* read a mapper register */
-static READ16_HANDLER(ti99_4p_rw_mapper)
+static READ16_HANDLER(ti99_4p_mapper_r)
 {
 	return (ti99_4p_mapper_lookup[offset & 0xf] >> 3);
 }
 
 /* write a mapper register */
-static WRITE16_HANDLER(ti99_4p_ww_mapper)
+static WRITE16_HANDLER(ti99_4p_mapper_w)
 {
 	int page = offset & 0xf;
 
@@ -2810,10 +2805,10 @@ static WRITE16_HANDLER(ti99_4p_ww_mapper)
 static int myarc_cru_r(int offset);
 static void myarc_cru_w(int offset, int data);
 
-static READ16_HANDLER ( ti99_rw_myarcxramlow );
-static WRITE16_HANDLER ( ti99_ww_myarcxramlow );
-static READ16_HANDLER ( ti99_rw_myarcxramhigh );
-static WRITE16_HANDLER ( ti99_ww_myarcxramhigh );
+static READ16_HANDLER ( ti99_myarcxramlow_r );
+static WRITE16_HANDLER ( ti99_myarcxramlow_w );
+static READ16_HANDLER ( ti99_myarcxramhigh_r );
+static WRITE16_HANDLER ( ti99_myarcxramhigh_w );
 
 
 static const ti99_peb_card_handlers_t myarc_expansion_handlers =
@@ -2832,10 +2827,10 @@ static int myarc_page_offset_mask;
 /* set up myarc handlers, and set initial state */
 static void ti99_myarcxram_init(void)
 {
-	install_mem_read16_handler(0, 0x2000, 0x3fff, ti99_rw_myarcxramlow);
-	install_mem_write16_handler(0, 0x2000, 0x3fff, ti99_ww_myarcxramlow);
-	install_mem_read16_handler(0, 0xa000, 0xffff, ti99_rw_myarcxramhigh);
-	install_mem_write16_handler(0, 0xa000, 0xffff, ti99_ww_myarcxramhigh);
+	install_mem_read16_handler(0, 0x2000, 0x3fff, ti99_myarcxramlow_r);
+	install_mem_write16_handler(0, 0x2000, 0x3fff, ti99_myarcxramlow_w);
+	install_mem_read16_handler(0, 0xa000, 0xffff, ti99_myarcxramhigh_r);
+	install_mem_write16_handler(0, 0xa000, 0xffff, ti99_myarcxramhigh_w);
 
 	switch (xRAM_kind)
 	{
@@ -2898,14 +2893,14 @@ static void myarc_cru_w(int offset, int data)
 }
 
 /* low 8 kb: 0x2000-0x3fff */
-static READ16_HANDLER ( ti99_rw_myarcxramlow )
+static READ16_HANDLER ( ti99_myarcxramlow_r )
 {
 	tms9900_ICount -= 4;
 
 	return xRAM_ptr[myarc_cur_page_offset + offset];
 }
 
-static WRITE16_HANDLER ( ti99_ww_myarcxramlow )
+static WRITE16_HANDLER ( ti99_myarcxramlow_w )
 {
 	tms9900_ICount -= 4;
 
@@ -2913,14 +2908,14 @@ static WRITE16_HANDLER ( ti99_ww_myarcxramlow )
 }
 
 /* high 24 kb: 0xa000-0xffff */
-static READ16_HANDLER ( ti99_rw_myarcxramhigh )
+static READ16_HANDLER ( ti99_myarcxramhigh_r )
 {
 	tms9900_ICount -= 4;
 
 	return xRAM_ptr[myarc_cur_page_offset + offset+0x1000];
 }
 
-static WRITE16_HANDLER ( ti99_ww_myarcxramhigh )
+static WRITE16_HANDLER ( ti99_myarcxramhigh_w )
 {
 	tms9900_ICount -= 4;
 

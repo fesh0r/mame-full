@@ -42,14 +42,11 @@ Historical notes: TI made several last minute design changes.
 
 static ADDRESS_MAP_START(memmap, ADDRESS_SPACE_PROGRAM, 16)
 
-	AM_RANGE(0x0000, 0x1fff) AM_READWRITE(MRA16_ROM, MWA16_ROM)			/*system ROM*/
+	AM_RANGE(0x0000, 0x1fff) AM_ROM										/*system ROM*/
 	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(ti99_nop_8_r, ti99_nop_8_w)	/*lower 8kb of RAM extension - installed dynamically*/
 	AM_RANGE(0x4000, 0x5fff) AM_READWRITE(ti99_4x_peb_r, ti99_4x_peb_w)	/*DSR ROM space*/
 	AM_RANGE(0x6000, 0x7fff) AM_READWRITE(ti99_cart_r, ti99_cart_w)		/*cartridge memory*/
-	AM_RANGE(0x8000, 0x80ff) AM_READWRITE(MRA16_BANK1, MWA16_BANK1)		/*RAM PAD, mirrors 0x8300-0x83ff*/
-	AM_RANGE(0x8100, 0x81ff) AM_READWRITE(MRA16_BANK2, MWA16_BANK2)		/*RAM PAD, mirrors 0x8300-0x83ff*/
-	AM_RANGE(0x8200, 0x82ff) AM_READWRITE(MRA16_BANK3, MWA16_BANK3)		/*RAM PAD, mirrors 0x8300-0x83ff*/
-	AM_RANGE(0x8300, 0x83ff) AM_READWRITE(MRA16_BANK4, MWA16_BANK4)		/*RAM PAD*/
+	AM_RANGE(0x8000, 0x80ff) AM_MIRROR(0x0300) AM_RAMBANK(1)			/*RAM PAD, mirrored 4 times*/
 	AM_RANGE(0x8400, 0x87ff) AM_READWRITE(ti99_nop_8_r, ti99_wsnd_w)	/*soundchip write*/
 	AM_RANGE(0x8800, 0x8bff) AM_READWRITE(ti99_rvdp_r, ti99_nop_8_w)	/*vdp read*/
 	AM_RANGE(0x8C00, 0x8fff) AM_READWRITE(ti99_nop_8_r, ti99_wvdp_w)	/*vdp write*/
@@ -63,14 +60,11 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START(memmap_4ev, ADDRESS_SPACE_PROGRAM, 16)
 
-	AM_RANGE(0x0000, 0x1fff) AM_READWRITE(MRA16_ROM, MWA16_ROM)			/*system ROM*/
+	AM_RANGE(0x0000, 0x1fff) AM_ROM										/*system ROM*/
 	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(ti99_nop_8_r, ti99_nop_8_w)	/*lower 8kb of RAM extension - installed dynamically*/
 	AM_RANGE(0x4000, 0x5fff) AM_READWRITE(ti99_4x_peb_r, ti99_4x_peb_w)	/*DSR ROM space*/
 	AM_RANGE(0x6000, 0x7fff) AM_READWRITE(ti99_cart_r, ti99_cart_w)		/*cartridge memory*/
-	AM_RANGE(0x8000, 0x80ff) AM_READWRITE(MRA16_BANK1, MWA16_BANK1)		/*RAM PAD, mirrors 0x8300-0x83ff*/
-	AM_RANGE(0x8100, 0x81ff) AM_READWRITE(MRA16_BANK2, MWA16_BANK2)		/*RAM PAD, mirrors 0x8300-0x83ff*/
-	AM_RANGE(0x8200, 0x82ff) AM_READWRITE(MRA16_BANK3, MWA16_BANK3)		/*RAM PAD, mirrors 0x8300-0x83ff*/
-	AM_RANGE(0x8300, 0x83ff) AM_READWRITE(MRA16_BANK4, MWA16_BANK4)		/*RAM PAD*/
+	AM_RANGE(0x8000, 0x80ff) AM_MIRROR(0x0300) AM_RAMBANK(1)			/*RAM PAD, mirrored 4 times*/
 	AM_RANGE(0x8400, 0x87ff) AM_READWRITE(ti99_nop_8_r, ti99_wsnd_w)	/*soundchip write*/
 	AM_RANGE(0x8800, 0x8bff) AM_READWRITE(ti99_rv38_r, ti99_nop_8_w)	/*vdp read*/
 	AM_RANGE(0x8C00, 0x8fff) AM_READWRITE(ti99_nop_8_r, ti99_wv38_w)	/*vdp write*/
