@@ -48,16 +48,12 @@ cylinder apexc_cylinder;
 */
 static int apexc_cylinder_init(int id)
 {
+	image_open_mode_t effective_mode;
+
 	/* open file */
-	/* first try read/write mode */
-	apexc_cylinder.fd = image_fopen(IO_CYLINDER, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
-	if (apexc_cylinder.fd)
-		apexc_cylinder.writable = 1;
-	else
-	{	/* else try read-only mode */
-		apexc_cylinder.writable = 0;
-		apexc_cylinder.fd = image_fopen(IO_CYLINDER, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
-	}
+	apexc_cylinder.fd = image_fopen_new(IO_CYLINDER, id, & effective_mode);
+	/* tell whether the image is writable */
+	apexc_cylinder.writable = (apexc_cylinder.fd) && is_effective_mode_writable(effective_mode);
 
 	if (apexc_cylinder.fd)
 	{	/* load RAM contents */
@@ -845,6 +841,7 @@ static const struct IODevice io_apexc[] =
 		1,						/* count */
 		"apc\0",				/* file extensions */
 		IO_RESET_ALL,			/* reset if file changed */
+		OSD_FOPEN_RW_OR_READ,		/* open mode */
 		NULL,					/* id */
 		apexc_cylinder_init,	/* init */
 		apexc_cylinder_exit,	/* exit */
@@ -864,6 +861,7 @@ static const struct IODevice io_apexc[] =
 		2,						/* count */
 		"tap\0",				/* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
+		OSD_FOPEN_DUMMY,		/* open mode */
 		NULL,					/* id */
 		apexc_tape_init,		/* init */
 		apexc_tape_exit,		/* exit */
