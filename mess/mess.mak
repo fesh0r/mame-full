@@ -704,13 +704,14 @@ COREOBJS += \
 	$(OBJ)/mess/tapectrl.o	       \
 	$(OBJ)/mess/printer.o	       \
 	$(OBJ)/mess/cassette.o	       \
-	$(OBJ)/mess/utils.o	       \
-	$(OBJ)/mess/bcd.o	       \
+	$(OBJ)/mess/utils.o            \
+	$(OBJ)/mess/bcd.o              \
 	$(OBJ)/mess/gregoria.o	       \
 	$(OBJ)/mess/led.o              \
-	$(OBJ)/mess/eventlst.o \
+	$(OBJ)/mess/eventlst.o         \
 	$(OBJ)/mess/videomap.o         \
 	$(OBJ)/mess/bitbngr.o          \
+	$(OBJ)/mess/snapquik.o          \
 	$(OBJ)/mess/statetxt.o         \
 	$(OBJ)/mess/formats.o          \
 	$(OBJ)/mess/messfmts.o         \

@@ -102,11 +102,11 @@ struct SystemConfigurationParamBlock
 	CONFIG_DEVICE(IO_CARTSLOT, (count), (file_extensions), IO_RESET_CPU, OSD_FOPEN_READ,	\
 		(init), (exit),	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, (partialcrc), NULL)	\
 
-#define CONFIG_DEVICE_SNAPSHOT(file_extensions,init,exit)									\
+#define CONFIG_DEVICE_SNAPSHOT_LEGACY(file_extensions,init,exit)							\
 	CONFIG_DEVICE(IO_SNAPSHOT, 1, (file_extensions), IO_RESET_CPU, OSD_FOPEN_READ,			\
 		(init), (exit),	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)			\
 
-#define CONFIG_DEVICE_QUICKLOAD(file_extensions,init,exit)									\
+#define CONFIG_DEVICE_QUICKLOAD_LEGACY(file_extensions,init,exit)							\
 	CONFIG_DEVICE(IO_QUICKLOAD, 1, (file_extensions), IO_RESET_CPU, OSD_FOPEN_READ,			\
 		(init), (exit),	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)			\
 

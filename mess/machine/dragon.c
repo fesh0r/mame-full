@@ -358,113 +358,114 @@ static void pak_load_trailer(const pak_decodedtrailer *trailer)
 	sam_setstate(trailer->sam, 0x7fff);
 }
 
-static int trailer_load = 0;
-static pak_decodedtrailer trailer;
-
-static void pak_load_trailer_callback(int param)
+static int generic_pak_load(void *fp, int rambase_index, int rombase_index, int pakbase_index)
 {
-	pak_load_trailer(&trailer);
-}
+	UINT8 *ROM;
+	UINT8 *rambase;
+	UINT8 *rombase;
+	UINT8 *pakbase;
+	int paklength;
+	int pakstart;
+	pak_header header;
+	int trailerlen;
+	UINT8 trailerraw[500];
+	pak_decodedtrailer trailer;
+	int trailer_load = 0;
 
-static int generic_pak_load(int id, void *fp, UINT8 *rambase, UINT8 *rombase, UINT8 *pakbase)
-{
-	if (fp)
+	ROM = memory_region(REGION_CPU1);
+	rambase = &mess_ram[rambase_index];
+	rombase = &ROM[rombase_index];
+	pakbase = &ROM[pakbase_index];
+
+	if (mess_ram_size < 0x10000)
 	{
-		int paklength;
-		int pakstart;
-
-		pak_header header;
-		int trailerlen;
-		UINT8 trailerraw[500];
-
-		if (mess_ram_size < 0x10000) {
 #if LOG_PAK
-			logerror("Cannot load PAK files without at least 64k.\n");
+		logerror("Cannot load PAK files without at least 64k.\n");
 #endif
-			osd_fclose(fp);
-			return 1;
-		}
-
-		if (osd_fread(fp, &header, sizeof(header)) < sizeof(header)) {
-#if LOG_PAK
-			logerror("Could not fully read PAK.\n");
-#endif
-			osd_fclose(fp);
-			return 1;
-		}
-
-		paklength = header.length ? LITTLE_ENDIANIZE_INT16(header.length) : 0x10000;
-		pakstart = LITTLE_ENDIANIZE_INT16(header.start);
-		if (pakstart == 0xc000)
-			cart_inserted = 1;
-
-		if (osd_fseek(fp, paklength, SEEK_CUR)) {
-#if LOG_PAK
-			logerror("Could not fully read PAK.\n");
-#endif
-			osd_fclose(fp);
-			return 1;
-		}
-
-		trailerlen = osd_fread(fp, trailerraw, sizeof(trailerraw));
-		if (trailerlen) {
-			if (pak_decode_trailer(trailerraw, trailerlen, &trailer)) {
-#if LOG_PAK
-				logerror("Invalid or unknown PAK trailer.\n");
-#endif
-				osd_fclose(fp);
-				return 1;
-			}
-
-			trailer_load = 1;
-		}
-
-		if (osd_fseek(fp, sizeof(pak_header), SEEK_SET)) {
-#if LOG_PAK
-			logerror("Unexpected error while reading PAK.\n");
-#endif
-			osd_fclose(fp);
-			return 1;
-		}
-
-		/* Now that we are done reading the trailer; we can cap the length */
-		if (paklength > 0xff00)
-			paklength = 0xff00;
-
-		/* PAK files reflect the fact that JeffV's emulator did not appear to
-		 * differentiate between RAM and ROM memory.  So what we do when a PAK
-		 * loads is to copy the ROM into RAM, load the PAK into RAM, and then
-		 * copy the part of RAM corresponding to PAK ROM to the actual PAK ROM
-		 * area.
-		 *
-		 * It is ugly, but it reflects the way that JeffV's emulator works
-		 */
-
-		memcpy(rambase + 0x8000, rombase, 0x4000);
-		memcpy(rambase + 0xC000, pakbase, 0x3F00);
-
-		/* Get the RAM portion */
-		if (load_pak_into_region(fp, &pakstart, &paklength, rambase, 0x0000, 0xff00)) {
-			osd_fclose(fp);
-			return 1;
-		}
-
-		memcpy(pakbase, rambase + 0xC000, 0x3F00);
-		osd_fclose(fp);
+		return INIT_FAIL;
 	}
+
+	if (osd_fread(fp, &header, sizeof(header)) < sizeof(header))
+	{
+#if LOG_PAK
+		logerror("Could not fully read PAK.\n");
+#endif
+		return INIT_FAIL;
+	}
+
+	paklength = header.length ? LITTLE_ENDIANIZE_INT16(header.length) : 0x10000;
+	pakstart = LITTLE_ENDIANIZE_INT16(header.start);
+	if (pakstart == 0xc000)
+		cart_inserted = 1;
+
+	if (osd_fseek(fp, paklength, SEEK_CUR))
+	{
+#if LOG_PAK
+		logerror("Could not fully read PAK.\n");
+#endif
+		return INIT_FAIL;
+	}
+
+	trailerlen = osd_fread(fp, trailerraw, sizeof(trailerraw));
+	if (trailerlen)
+	{
+		if (pak_decode_trailer(trailerraw, trailerlen, &trailer))
+		{
+#if LOG_PAK
+			logerror("Invalid or unknown PAK trailer.\n");
+#endif
+			return INIT_FAIL;
+		}
+
+		trailer_load = 1;
+	}
+
+	if (osd_fseek(fp, sizeof(pak_header), SEEK_SET))
+	{
+#if LOG_PAK
+		logerror("Unexpected error while reading PAK.\n");
+#endif
+		return INIT_FAIL;
+	}
+
+	/* Now that we are done reading the trailer; we can cap the length */
+	if (paklength > 0xff00)
+		paklength = 0xff00;
+
+	/* PAK files reflect the fact that JeffV's emulator did not appear to
+		* differentiate between RAM and ROM memory.  So what we do when a PAK
+		* loads is to copy the ROM into RAM, load the PAK into RAM, and then
+		* copy the part of RAM corresponding to PAK ROM to the actual PAK ROM
+		* area.
+		*
+		* It is ugly, but it reflects the way that JeffV's emulator works
+		*/
+
+	memcpy(rambase + 0x8000, rombase, 0x4000);
+	memcpy(rambase + 0xC000, pakbase, 0x3F00);
+
+	/* Get the RAM portion */
+	if (load_pak_into_region(fp, &pakstart, &paklength, rambase, 0x0000, 0xff00))
+	{
+		osd_fclose(fp);
+		return INIT_FAIL;
+	}
+
+	memcpy(pakbase, rambase + 0xC000, 0x3F00);
+
+	if (trailer_load)
+		pak_load_trailer(&trailer);
 	return INIT_PASS;
 }
 
-int coco_pak_load(int id, void *fp, int open_mode)
+int coco_pak_load(void *fp)
 {
-	UINT8 *ROM = memory_region(REGION_CPU1);
-	return generic_pak_load(id, fp, mess_ram, &ROM[0], &ROM[0x4000]);
+	return generic_pak_load(fp, 0x0000, 0x0000, 0x4000);
 }
 
-int coco3_pak_load(int id, void *fp, int open_mode)
+int coco3_pak_load(void *fp)
 {
-	UINT8 *ROM = memory_region(REGION_CPU1);
-	return generic_pak_load(id, fp, mess_ram + (0x70000 % mess_ram_size), &ROM[0x0000], &ROM[0xc000]);
+	return generic_pak_load(fp, (0x70000 % mess_ram_size), 0x0000, 0xc000);
 }
 
 /***************************************************************************
@@ -2102,11 +2103,6 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 
 	sam_init(samintf);
 	sam_reset();
-
-	if (trailer_load) {
-		trailer_load = 0;
-		timer_set(0, 0, pak_load_trailer_callback);
-	}
 
 	/* HACK for bankswitching carts */
 	if( is_Orch90() )

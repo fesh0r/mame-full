@@ -418,7 +418,7 @@ ROM_END
 
 SYSTEM_CONFIG_START(vtech1)
 	CONFIG_DEVICE_CASSETTE(1, "cas\0", vtech1_cassette_init)
-	CONFIG_DEVICE_SNAPSHOT(   "vz\0", vtech1_snapshot_init, vtech1_snapshot_exit)
+	CONFIG_DEVICE_SNAPSHOT_LEGACY(   "vz\0", vtech1_snapshot_init, vtech1_snapshot_exit)
 	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0", IO_RESET_NONE, OSD_FOPEN_RW_CREATE_OR_READ, vtech1_floppy_init, vtech1_floppy_exit, NULL)
 SYSTEM_CONFIG_END
 

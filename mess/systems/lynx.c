@@ -372,7 +372,7 @@ static int lynx_quickload(int id, void *cartfile, int open_mode)
 
 SYSTEM_CONFIG_START(lynx)
 	CONFIG_DEVICE_CARTSLOT(1, "lnx\0",	lynx_init_cart, NULL, lynx_partialcrc)
-	CONFIG_DEVICE_QUICKLOAD(  "o\0",	lynx_quickload, NULL)
+	CONFIG_DEVICE_QUICKLOAD_LEGACY(  "o\0",	lynx_quickload, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

@@ -432,7 +432,7 @@ ROM_START(trs80m3)
 ROM_END
 
 SYSTEM_CONFIG_START(trs80)
-	CONFIG_DEVICE_QUICKLOAD			(	"cmd\0", trs80_cmd_init, trs80_cmd_exit)
+	CONFIG_DEVICE_QUICKLOAD_LEGACY			(	"cmd\0", trs80_cmd_init, trs80_cmd_exit)
 	CONFIG_DEVICE_LEGACY(IO_CASSETTE,1,	"cas\0", IO_RESET_NONE, OSD_FOPEN_READ, trs80_cas_init, trs80_cas_exit, NULL)
 SYSTEM_CONFIG_END
 

@@ -173,7 +173,7 @@ void image_unload(int type, int id)
 		floppy_device_common_exit(id);
 
 	image_free_resources(img);
-	img->loaded = FALSE;
+	memset(img, 0, sizeof(*img));
 }
 
 void image_unload_all(void)

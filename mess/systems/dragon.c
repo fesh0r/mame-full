@@ -25,6 +25,7 @@
 #include "formats/coco_dsk.h"
 #include "cassette.h"
 #include "bitbngr.h"
+#include "snapquik.h"
 #include "inputx.h"
 
 #define SHOW_FULL_AREA			0
@@ -739,7 +740,7 @@ SYSTEM_CONFIG_END
 SYSTEM_CONFIG_START( generic_coco12 )
 	CONFIG_IMPORT_FROM		( generic_coco )
 	CONFIG_DEVICE_CARTSLOT	( 1, "rom\0", coco_rom_load, NULL, NULL )
-	CONFIG_DEVICE_SNAPSHOT	(    "pak\0", coco_pak_load, NULL )
+	CONFIG_DEVICE_SNAPSHOT	(    "pak\0", coco_pak_load )
 SYSTEM_CONFIG_END
 
 /* ----------------------------------------------------------------------- */
@@ -761,7 +762,7 @@ SYSTEM_CONFIG_END
 SYSTEM_CONFIG_START(coco3)
 	CONFIG_IMPORT_FROM		( generic_coco )
 	CONFIG_DEVICE_CARTSLOT	( 1, "rom\0", coco3_rom_load, NULL, NULL )
-	CONFIG_DEVICE_SNAPSHOT	(    "pak\0", coco3_pak_load, NULL )
+	CONFIG_DEVICE_SNAPSHOT	(    "pak\0", coco3_pak_load )
 	CONFIG_DEVICE_LEGACY	(IO_VHD, 1, "vhd\0", IO_RESET_NONE, OSD_FOPEN_RW_CREATE, coco_vhd_init, coco_vhd_exit, NULL)
 	CONFIG_RAM				(128 * 1024)
 	CONFIG_RAM_DEFAULT		(512 * 1024)

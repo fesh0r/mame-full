@@ -11,7 +11,10 @@ System Driver Changes:
 Source Changes:
 ---------------
 - The core is based on MAME 0.62.  This incorporates all features of the 
-  update to this core.  [MAME team] 
+  update to this core.  [MAME team]
+
+- Added new snapshot/quickload code, to hide the details about loading
+  snapshots and quickloads from the drivers.  [Nate Woods]
 
 System Driver Changes:
 ----------------------

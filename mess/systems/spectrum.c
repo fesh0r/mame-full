@@ -2449,7 +2449,7 @@ ROM_END
 SYSTEM_CONFIG_START(spectrum_common)
 	CONFIG_DEVICE_CASSETTEX(1, "wav\0tap\0blk\0", spectrum_cassette_init, spectrum_cassette_exit)
 	CONFIG_DEVICE_LEGACYX(IO_QUICKLOAD, 1, "scr\0", IO_RESET_CPU, OSD_FOPEN_READ, spec_quick_init, spec_quick_exit, spec_quick_open, NULL)
-	CONFIG_DEVICE_SNAPSHOT("sna\0z80\0sp\0", spectrum_snap_load, spectrum_snap_exit)
+	CONFIG_DEVICE_SNAPSHOT_LEGACY("sna\0z80\0sp\0", spectrum_snap_load, spectrum_snap_exit)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(spectrum)
