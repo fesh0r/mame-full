@@ -1,5 +1,5 @@
 /*
-	APE(X)C CPU emulation
+	cpu/apexc/apexc.c : APE(X)C CPU emulation
 
 	By Raphael Nabet
 
@@ -18,7 +18,7 @@
 /*
 	Generals specs :
 	* 32-bit data word size (10-bit addresses) : uses fixed-point, 2's complement arithmetic
-	* CPU has one accumulator (A) and one register (R), plus one Control Register (this is
+	* CPU has one accumulator (A) and one register (R), plus a Control Register (this is
 	  what we would call an "instruction register" nowadays).  No Program Counter, each
 	  instruction contains the address of the next instruction (!).
 	* memory is composed of 256 circular magnetic tracks of 32 words : only 32 tracks can
@@ -31,7 +31,7 @@
 	  operation 32 times with 32 successive memory locations.  Note the lack of bitwise
 	  and/or/xor (!) .
 	* 1 kIPS, although memory access times make this figure fairly theorical (drum rotation
-	  time : 16ms, which would allow about 60IPS when no optimization is done)
+	  time : 16ms, which would allow about 60IPS when no optimization is made)
 	* there is no indirect addressing whatever, although dynamic modification of opcodes (!)
 	  allow to simulate it...
 
@@ -56,14 +56,15 @@ field:		X address	X address	Y address	Y address	Function	C6			Vector
 
 	Meaning of fields :
 	X : address of an operand, or immediate, or meaningless, depending on Function
-		(When X is meaningless, it should be a duplicate of Y.  I guess this is because
-		X is ALWAYS loaded into the memory address register, and if track # is different,
-		we add unneeded track switch delays)
+		(When X is meaningless, it should be a duplicate of Y.  Maybe this is because
+		X is unintentionnally loaded into the memory address register, and if track # is
+		different, we add unneeded track switch delays (this theory is either wrong or
+		incomplete, since it cannot be true for B or X))
 	Y : address of the next instruction
 	Function : code for the actual instruction executed
 	C6 : immediate value used by shift, multiply and store operations
-	Vector : repeat operation 32 times (with 32 consecutive locations on the X track given
-		by the revelant field)
+	Vector : repeat operation 32 times (on all 32 consecutive locations of a track,
+		starting with the location given by the X field)
 
 	Function code :
 	#	Mnemonic	C6		Description
@@ -98,8 +99,8 @@ field:		X address	X address	Y address	Y address	Function	C6			Vector
 	24	T(x)(y)				R <- (x)
 
 	26	R   (x)(y)	32+n	record first or last bits of R in (x).  The remaining bits of x
-		 1-n				are unaffected, but the contents of R are filled with 0s or 1s
-							according as the original contents were positive or negative.
+		 1-n				are unaffected, but "the contents of R are filled with 0s or 1s
+							according as the original contents were positive or negative".
 		R    (x)(y)	n-1
 		 n-32
 
@@ -110,12 +111,22 @@ field:		X address	X address	Y address	Y address	Function	C6			Vector
 		 n-32
 
 	30	S(x)(y)				Block Head switch.  This enables the block of heads specified
-							in x to be loaded into the workign store.
+							in x to be loaded into the working store.
 
 	Note : Mnemonics use subscripts (!), which I tried to render the best I could.  Also,
-	">=" is actually one single character.  Last, "1-n" and "n-32" in store mnemonics
-	are the actual sequences "1 *DASH* <number n>" and "<number n> *DASH* 32"
-	(these are NOT formulas with substract signs).
+	  ">=" is actually one single character.  Last, "1-n" and "n-32" in store mnemonics
+	  are the actual sequences "1 *DASH* <number n>" and "<number n> *DASH* 32"
+	  (these are NOT formulas with substract signs).
+
+	Note2 : Short-hand notations : X stands for X  , A for A    , and R for R    .
+	                                             32         1-32             1-32
+
+	Note3 : Vectors instruction are distinguished from ordinary one by placing a subscript v
+	  after the mnemonic.  For instance :
+
+		A (x)(y), + (x)(y)
+		 v         v
+
 */
 
 /*
@@ -128,25 +139,103 @@ field:		X address	X address	Y address	Y address	Function	C6			Vector
 	n last bits of a word, leaving other bits in memory unaffected.
 
 	The LSBits are transferred first, since it allows to perform bit-per-bit add and
-	substract.  Otherwise, the CPU would need an additionnal register store the second
-	operand, and the end result would be probably slower, since the operation could only
+	substract.  Otherwise, the CPU would need an additionnal register to store the second
+	operand, and it would be probably slower, since the operation could only
 	take place after all the data has been transfered.
 
-	Memory operations are synchronous with 2 clocks provided by the memory controller :
-	* word clock : a pulse on each word boundary
-	* bit clock : a pulse when a bit is present on the bus
+	Memory operations are synchronous with 2 clocks found on the memory controller :
+	* word clock : a pulse on each word boundary (3750rpm*32 -> 2kHz)
+	* bit clock : a pulse when a bit is present on the bus (word clock * 32 -> 64kHz)
 
 	CPU operation is synchronous with these clocks, too.  For instance, AU does bit-per-bit
 	addition and substraction with a memory operand, synchronously with bit clock,
-	starting and stopping on word clock boundaries.  Same with a Fetch operation.
+	starting and stopping on word clock boundaries.  Similar thing with a Fetch operation.
 
 	There is a 10-bit memory location (i.e. address) register on the memory controller.
 	It is loaded with the contents of X after when instruction fetch is complete, and
 	with the contents of Y when instruction execution is complete, so that the next fetch
 	can be executed correctly.
 */
+
+/*
+	Instruction timings :
+
+
+	References : Booth p. 14 for the table below
+
+
+	Mnemonic					delay in word clock cycles
+
+	I							32
+
+	P							32
+
+	B							0
+
+	l							1 if n>=32 (i.e. C6>=32)
+	 n							2 if n<32  (i.e. C6<32)
+
+	r							1 if n<=32 (i.e. C6>=32)
+	 n							2 if n>32  (i.e. C6<32)
+
+	X							32
+
+	+c, -c, +, -, T				0
+
+	R    , R    , A   , A		1 (see 1.)
+	  1-n   n-32   1-n   n-32
+
+	track switch				6 (see 2.)
+
+	vector						12 (see 3.)
+
+
+	(S and stop are missing in the table)
+
+
+	Note that you must add the fetch delay (at least 1 cycle), and, when applicable, the
+	operand read/write delay (at least 1 cycle).
+
+
+	Notes :
+
+	1.  The delay is applied after the store is done (from the analysis of the example
+	 in Booth p.52)
+
+	2.  I guess that the memory controller needs 6 cycles to stabilize whenever track
+	  switching occurs, i.e. when X does not refer to the current track, and then when Y
+	  does not refer to the same track as X.  This matches various examples in Booth,
+	  although it appears that this delay is not applied when X is not read (cf cross-track
+	  B in Booth p. 49).
+	    However, and here comes the wacky part, analysis of Booth p. 55 shows that
+	  no additionnal delay is caused by an X instruction having its X operand
+	  on another track.  Maybe, just maybe, this is related to the fact that X does not
+	  need to take the word count into account, any word in track is as good as any (yet,
+	  this leaves the question of why this optimization could not be applied to vector
+	  operations unanswered).
+
+	3.  This is an ambiguous statement.  Analysis of Booth p. 55 shows that
+	  an instance of an Av instruction with its destination on another track takes no more
+	  than 45 cycles, as follow :
+	    * 1 cycle for fetch
+	    * 6-cycle delay (at most) before write starts (-> track switch)
+	    * 32 memory cycles
+	    * 6-cycle dalay (at most) after write completion (-> track switch)
+	  It appears that the delay associated with the vector mode is not distinguishable from
+	  the delay caused by track switch and even the delay associated to the Av instruction.
+	    Is there really a specific delay associated with the vector mode ? To know this, we
+	  would need to see a vector instruction on the same track as its operands, which is
+	  unlikely to be seen (the only reasonnable application I can see is running a '+_v'
+	  to compute the checksum of the current track).
+	    Also, does a similar delay merge happen when running a cross-track store ? Example
+	  in Booth p. 76 (20/4 A (27/27) (21/2)) seems to imply it does, since there is lots of
+	  room on track 21, and if the delay merge did not happen, it should have been easy
+	  to move the instruction ahead one step to speed up loop execution time.
+*/
+
 #include "driver.h"
 #include "mamedbg.h"
+
 #include "apexc.h"
 
 typedef struct
@@ -161,18 +250,14 @@ typedef struct
 
 	int flags;	/* 2 flags : */
 				/* running : flag implied by the existence of the stop instruction */
-				/* tracing : I am not sure whether this flag existed, but it allows a cool
-					feature for the control panel, and it kind of makes sense */
 } apexc_regs;
 
 /* masks for flags */
 enum
 {
 	flag_running_bit = 0,
-	flag_tracing_bit = 1,
 
-	flag_running = 1<<flag_running_bit,
-	flag_tracing = 1<<flag_tracing_bit
+	flag_running = 1<<flag_running_bit
 };
 
 int apexc_ICount;
@@ -182,14 +267,11 @@ static apexc_regs apexc;
 /* decrement ICount by n */
 #define DELAY(n)	{apexc_ICount -= (n); apexc.current_word = (apexc.current_word + (n)) & 0x1f;}
 
-/* set/clear/get running and tracing flags flag */
+/* set/clear/get running flag */
 #define set_running_flag apexc.flags |= flag_running
 #define clear_running_flag apexc.flags &= ~flag_running
 #define get_running_flag (apexc.flags & flag_running)
 
-#define set_tracing_flag apexc.flags |= flag_tracing
-#define clear_tracing_flag apexc.flags &= ~flag_tracing
-#define get_tracing_flag (apexc.flags & flag_tracing)
 
 /*
 	word accessor functions
@@ -198,30 +280,27 @@ static apexc_regs apexc;
 		5 bits (MSBs) : track address within working store
 		5 bits (LSBs) : word position within track
 
-	take a mask : one bit is set for bit to read/write
+	'special' flag : if true, read first word found in track (used by X instruction only)
 
-	take a vector flag : if true, ignore word position
+	'mask' : one bit is set for each bit to write (used by store instructions)
 
-	memory latency delays should be taken into account
+	memory latency delays are taken into account, but not track switching delays
 */
 
 
 /* memory access macros */
 
-/* fortunately, there is no memory mapped I/O, so mask can be ignored for read */
-#define cpu_readmem_masked(address, mask) cpu_readmem18bedw_dword(address << 2)
+#define cpu_readmem(address) cpu_readmem18bedw_dword(address << 2)
 
-/* eewww ! */
+/* eewww ! - Fortunately, there is no memory mapped I/O, so we can simulate masked write
+without danger */
 #define cpu_writemem_masked(address, data, mask)										\
 	cpu_writemem18bedw_dword(address << 2,												\
 								(cpu_readmem18bedw_dword(address << 2) & ~mask) |		\
 									(data & mask))
 
-#define MASK_ALL 0xFFFFFFFFUL	/* mask which can be used for "normal" calls to word_read/word_write */
-
-
-/* compute complete word address (i.e. translate a logical track address (i.e. within
-working store) to an absolute track address) */
+/* compute complete word address (i.e. translate a logical track address (expressed
+in current working store) to an absolute track address) */
 INLINE int effective_address(int address)
 {
 	if (address & 0x200)
@@ -232,28 +311,15 @@ INLINE int effective_address(int address)
 	return address;
 }
 
-/* set memory location (i.e. address) register */
-static void load_ml(int address)
+/* read word */
+static UINT32 word_read(int address, int special)
 {
-	/* switch track if needed */
-	if ((apexc.ml & 0x3E0) != (address & 0x3E0))	/* is old track different from new ? */
-	{
-		DELAY(6);	/* if yes, delay to allow for track switching */
-	}
-
-	apexc.ml = address;	/* save ml */
-}
-
-/* read word (or part of a word) */
-static UINT32 word_read(UINT32 mask, int vector)
-{
-	int address;
 	UINT32 result;
 
 	/* compute absolute track address */
-	address = effective_address(apexc.ml);
+	address = effective_address(address);
 
-	if (vector)
+	if (special)
 	{
 		/* ignore word position in x - use current position instead */
 		address = (address & ~ 0x1f) | apexc.current_word;
@@ -264,22 +330,22 @@ static UINT32 word_read(UINT32 mask, int vector)
 		DELAY(((address /*& 0x1f*/) - apexc.current_word) & 0x1f);
 	}
 
-	/* read 32 bits according to mask */
+	/* read 32 bits */
 #if 0
 	/* note that the APEXC reads LSBits first */
 	result = 0;
 	for (i=0; i<31; i++)
 	{
-		if (mask & (1 << i))
+		/*if (mask & (1 << i))*/
 			result |= bit_read((address << 5) | i) << i;
 	}
 #else
-	result = cpu_readmem_masked(address, mask);
+	result = cpu_readmem(address);
 #endif
 
 	/* remember new head position */
 #if 0	/* this code is actually equivalent to the code below */
-	if (vector)
+	if (special)
 	{
 		apexc.current_word = (apexc.current_word + 1) & 0x1f;
 	}
@@ -293,23 +359,13 @@ static UINT32 word_read(UINT32 mask, int vector)
 }
 
 /* write word (or part of a word, according to mask) */
-static void word_write(UINT32 data, UINT32 mask, int vector)
+static void word_write(int address, UINT32 data, UINT32 mask)
 {
-	int address;
-
 	/* compute absolute track address */
-	address = effective_address(apexc.ml);
+	address = effective_address(address);
 
-	if (vector)
-	{
-		/* ignore word position in x - use current position instead */
-		address = (address & ~ 0x1f) | apexc.current_word;
-	}
-	else
-	{
-		/* wait for requested word to appear under the heads */
-		DELAY(((address /*& 0x1f*/) - apexc.current_word) & 0x1f);
-	}
+	/* wait for requested word to appear under the heads */
+	DELAY(((address /*& 0x1f*/) - apexc.current_word) & 0x1f);
 
 	/* write 32 bits according to mask */
 #if 0
@@ -324,16 +380,7 @@ static void word_write(UINT32 data, UINT32 mask, int vector)
 #endif
 
 	/* remember new head position */
-#if 0	/* this code is actually equivalent to the code below */
-	if (vector)
-	{
-		apexc.current_word = (apexc.current_word + 1) & 0x1f;
-	}
-	else
-#endif
-	{
-		apexc.current_word = ((address /*& 0x1f*/) + 1) & 0x1f;
-	}
+	apexc.current_word = ((address /*& 0x1f*/) + 1) & 0x1f;
 }
 
 /*
@@ -352,14 +399,33 @@ static void papertape_punch(int data)
 	cpu_writeport16bedw(0, data);
 }
 
+/*
+	now for emulation code
+*/
 
+/*
+	set the memory location (i.e. address) register, and compute the associated delay
+*/
+INLINE int load_ml(int address, int vector)
+{
+	int delay;
+
+	/* additionnal delay appears if we switch tracks */
+	if (((apexc.ml & 0x3E0) != (address & 0x3E0)) /*|| vector*/)
+		delay = 6;	/* if tracks are different, delay to allow for track switching */
+	else
+		delay = 0;	/* else, no problem */
+
+	apexc.ml = address;	/* save ml */
+
+	return delay;
+}
 
 /*
 	execute one instruction
 
 	TODO :
-	* implement stop
-	* test
+	* test !!!
 
 	NOTE :
 	* I do not know whether we should fetch instructions at the beginning or the end of the
@@ -370,29 +436,54 @@ static void papertape_punch(int data)
 */
 static void execute(void)
 {
-	int x, y, function, c6, vector;
-	int i = 0;
+	int x, y, function, c6, vector;	/* instruction fields */
+	int i = 0;			/* misc counter */
+	int has_operand;	/* true if instruction is an AU operation with an X operand */
+	static const char has_operand_table[32] =	/* table for has_operand - one entry for each function code */
+	{
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 
+	};
+	int delay1;	/* pre-operand-access delay */
+	int delay2;	/* post-operation delay */
+	int delay3;	/* pre-operand-fetch delay */
 
+	/* first isolate the instruction fields */
 	x = (apexc.cr >> 22) & 0x3FF;
 	y = (apexc.cr >> 12) & 0x3FF;
 	function = (apexc.cr >> 7) & 0x1F;
 	c6 = (apexc.cr >> 1) & 0x3F;
 	vector = apexc.cr & 1;
 
-	/* load ml with X */
-	load_ml(x);
+	function &= 0x1E;	/* this is a mere guess - the LSBit is reserved for future additions */
+
+	/* determinates if we need to read an operand*/
+	has_operand = has_operand_table[function];
+
+	if (has_operand)
+	{
+		/* load ml with X */
+		delay1 = load_ml(x, vector);
+		/* burn pre-operand-access delay if needed */
+		if (delay1)
+		{
+			DELAY(delay1);
+		}
+	}
+
+	delay2 = 0;	/* default */
 
 	do
 	{
-		switch (function & 0x1E)	/* the "& 0x1E" is a mere guess */
+		switch (function)
 		{
 		case 0:
 			/* stop */
 
 			clear_running_flag;
 
-			/* BTW, I don't know whether stop loads y into ml or not (if it does not,
-			we should do a "goto no_fetch") */
+			/* BTW, I don't know whether stop loads y into ml or not, and whether
+			subsequent fetch is done */
 			break;
 
 		case 2:
@@ -400,13 +491,15 @@ static void execute(void)
 			/* I do not know whether the CPU does an OR or whatever, but since docs say that
 			the 5 bits must be cleared initially, an OR kind of makes sense */
 			apexc.r |= papertape_read() << 27;
-			DELAY(32);
+			DELAY(32);	/* no idea whether this should be counted as an absolute delay 
+						or as a term in delay2 */
 			break;
 
 		case 4:
 			/* P */
 			papertape_punch((apexc.r >> 27) & 0x1f);
-			DELAY(32);
+			DELAY(32);	/* no idea whether this should be counted as an absolute delay 
+						or as a term in delay2 */
 			break;
 
 		case 6:
@@ -414,15 +507,22 @@ static void execute(void)
 			/* I have no idea what we should do if the vector bit is set */
 			if (apexc.a & 0x80000000UL)
 			{
-				apexc.cr = word_read(MASK_ALL, vector);	/* should it be 'vector' or '0' */
-				goto no_fetch;
+				/* load ml with X */
+				delay1 = load_ml(x, vector);
+				/* burn pre-fetch delay if needed */
+				if (delay1)
+				{
+					DELAY(delay1);
+				}
+				/* and do fetch at X */
+				goto special_fetch;
 			}
 			/* else, the instruction ends with a normal fetch */
 			break;
 
 		case 8:
 			/* l_n */
-			DELAY((c6 & 0x20) ? 1 : 2);	/* yes, if more than 32 shifts, it takes more time */
+			DELAY((c6 & 0x20) ? 1 : 2);	/* if more than 32 shifts, it takes more time */
 
 			/* Yes, this code is inefficient, but this must be the way the APEXC does it ;-) */
 			while (c6 != 0)
@@ -445,7 +545,7 @@ static void execute(void)
 
 		case 10:
 			/* r_n */
-			DELAY((c6 & 0x20) ? 1 : 2);	/* yes, if more than 32 shifts, it takes more time */
+			DELAY((c6 & 0x20) ? 1 : 2);	/* if more than 32 shifts, it takes more time */
 
 			/* Yes, this code is inefficient, but this must be the way the APEXC does it ;-) */
 			while (c6 != 0)
@@ -471,6 +571,7 @@ static void execute(void)
 			/* X_n(x) */
 
 			/* Yes, this code is inefficient, but this must be the way the APEXC does it ;-) */
+			/* algorithm found in Booth&Booth, p. 45-48 */
 			apexc.a = 0;
 			while (1)
 			{
@@ -478,17 +579,17 @@ static void execute(void)
 
 				/* note we read word at current word position */
 				if (shifted_bit && ! (apexc.r & 1))
-					apexc.a += word_read(MASK_ALL, 1);
+					apexc.a += word_read(x, 1);
 				else if ((! shifted_bit) && (apexc.r & 1))
-					apexc.a -= word_read(MASK_ALL, 1);
+					apexc.a -= word_read(x, 1);
 				else
 					/* Even if we do not read anything, the loop still takes 1 cycle on
 					the memory word clock. */
 					/* Anyway, maybe we still read the data even if we do not use it. */
 					DELAY(1);
 
-				/* exit if c6 reached 32 ("c6 & 0x20 "is simpler to implement and
-				essentially equivalent, so this is the most likely implementation) */
+				/* exit if c6 reached 32 ("c6 & 0x20" is simpler to implement and
+				essentially equivalent, so this is most likely the actual implementation) */
 				if (c6 & 0x20)
 					break;
 
@@ -504,34 +605,34 @@ static void execute(void)
 			}
 
 			//DELAY(32);	/* mmmh... we have already counted 32 wait states */
-			/* actually, if (n < 32) (which is an untypical case), we do have 32 wait
+			/* actually, if (n < 32) (which is an untypical case), we do not have 32 wait
 			states.  Question is : do we really have 32 wait states if (n < 32), or is
 			the timing table incomplete ? */
 			break;
 
 		case 16:
 			/* +c(x) */
-			apexc.a = + word_read(MASK_ALL, vector);
+			apexc.a = + word_read(apexc.ml, 0);
 			break;
 
 		case 18:
 			/* -c(x) */
-			apexc.a = - word_read(MASK_ALL, vector);
+			apexc.a = - word_read(apexc.ml, 0);
 			break;
 
 		case 20:
 			/* +(x) */
-			apexc.a += word_read(MASK_ALL, vector);
+			apexc.a += word_read(apexc.ml, 0);
 			break;
 
 		case 22:
 			/* -(x) */
-			apexc.a -= word_read(MASK_ALL, vector);
+			apexc.a -= word_read(apexc.ml, 0);
 			break;
 
 		case 24:
 			/* T(x) */
-			apexc.r = word_read(MASK_ALL, vector);
+			apexc.r = word_read(apexc.ml, 0);
 			break;
 
 		case 26:
@@ -545,12 +646,12 @@ static void execute(void)
 				else
 					mask = 0xFFFFFFFFUL >> c6;
 
-				word_write(apexc.r, mask, vector);
+				word_write(apexc.ml, apexc.r, mask);
 			}
 
 			apexc.r = (apexc.r & 0x80000000UL) ? 0xFFFFFFFFUL : 0;
 
-			DELAY(1);	/* does this occur before or after store ? */
+			delay2 = 1;
 			break;
 
 		case 28:
@@ -564,10 +665,10 @@ static void execute(void)
 				else
 					mask = 0xFFFFFFFFUL >> c6;
 
-				word_write(apexc.a, mask, vector);
+				word_write(apexc.ml, apexc.a, mask);
 			}
 
-			DELAY(1);	/* does this occur before or after store ? */
+			delay2 = 1;
 			break;
 
 		case 30:
@@ -577,21 +678,30 @@ static void execute(void)
 						than track switch (which is 6) */
 			break;
 		}
-	} while (vector && (++i < 32));	/* iterate 32 times if vector bit is set */
-
-	if (vector)
-		DELAY(12);	/* does this occur before or after instruction execution ? */
+		if (vector)
+			/* increment word position in vector operations */
+			apexc.ml = (apexc.ml & 0x3E0) | ((apexc.ml + 1) & 0x1F);
+	} while (vector && has_operand && (++i < 32));	/* iterate 32 times if vector bit is set */
 
 	/* load ml with Y */
-	load_ml(y);
+	delay3 = load_ml(y, 0);
 
-	/* fetch current instruction into control register */
-	apexc.cr = word_read(MASK_ALL, 0);
+	/* compute max(delay2, delay3) */
+	if (delay2 > delay3)
+		delay3 = delay2;
+
+	/* burn pre-fetch delay if needed */
+	if (delay3)
+	{
+		DELAY(delay3);
+	}
 
 	/* entry point after a successful Branch (which alters the normal instruction sequence,
 	in order not to load ml with Y) */
-no_fetch:
-	;
+special_fetch:
+
+	/* fetch current instruction into control register */
+	apexc.cr = word_read(apexc.ml, 0);
 }
 
 
@@ -604,6 +714,7 @@ void apexc_reset(void *param)
 	apexc.ml = 0;	/* no idea whether this is true or not */
 	apexc.working_store = 1;	/* mere guess */
 	apexc.current_word = 0;		/* well, we do have to start somewhere */
+	apexc.flags = 0;			/* who cares ? */
 }
 
 void apexc_exit(void)
@@ -680,7 +791,7 @@ unsigned apexc_get_reg(int regnum)
 			return apexc.ml;
 		case APEXC_WS:
 			return apexc.working_store;
-		case APEXC_FLAGS:
+		case APEXC_STATE:
 			return apexc.flags;
 	}
 	return 0;
@@ -705,23 +816,23 @@ void apexc_set_reg(int regnum, unsigned val)
 		case APEXC_WS:
 			apexc.working_store = val;
 			break;
-		case APEXC_FLAGS:
+		case APEXC_STATE:
 			apexc.flags = val;
 	}
 }
 
 const char *apexc_info(void *context, int regnum)
 {
-	static UINT8 apexc_reg_layout[] =
+	static const UINT8 apexc_reg_layout[] =
 	{
 		APEXC_CR, -1,
 		APEXC_A, APEXC_R, -1,
 		APEXC_ML, APEXC_WS, -1,
-		APEXC_FLAGS, 0
+		APEXC_STATE, 0
 	};
 
 	/* OK, I have no idea what would be the best layout */
-	static UINT8 apexc_win_layout[] =
+	static const UINT8 apexc_win_layout[] =
 	{
 		48, 0,32,13,	/* register window (top right) */
 		 0, 0,47,13,	/* disassembler window (top left) */
@@ -756,13 +867,11 @@ const char *apexc_info(void *context, int regnum)
 	case CPU_INFO_REG + APEXC_WS:
 		sprintf(buffer[which], "WS:%01X", r->working_store);
 		break;
-	case CPU_INFO_REG + APEXC_FLAGS:
-		sprintf(buffer[which], "flags:%01X", r->flags);
+	case CPU_INFO_REG + APEXC_STATE:
+		sprintf(buffer[which], "CPU state:%01X", r->flags);
 		break;
-    case CPU_INFO_FLAGS:
-    	/* no flags right now */
-		sprintf(buffer[which], "%c%c", (r->flags & flag_tracing) ? 'T' : '.',
-				(r->flags & flag_running) ? 'R' : 'S');
+	case CPU_INFO_FLAGS:
+		sprintf(buffer[which], "%c", (r->flags & flag_running) ? 'R' : 'S');
 		break;
 	case CPU_INFO_NAME:
 		return "APEXC";
@@ -806,9 +915,6 @@ int apexc_execute(int cycles)
 		{
 			DELAY(apexc_ICount);	/* burn cycles once for all */
 		}
-
-		if (get_tracing_flag)
-			clear_running_flag;
 	} while (apexc_ICount > 0);
 
 	return cycles - apexc_ICount;
