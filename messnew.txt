@@ -36,6 +36,15 @@ System Driver Changes:
   tape images support. #FF port emulation added (Arkanoid works now but is still
   not playable due to wrong timings) (Bug #47). [Krzysztof Strzecha]
 
+- [TI99/4A] xtensive rewrite: The code should be more flexible and more readable.
+  * Updated tms9901 code.
+  * Optional floppy controller, speech synthesizer, memory extension can be
+    disabled.
+  * Support for super AMS, foundation, and a myarc look-alike memory extension
+    cards.
+  * Better GROM and speech timings.
+  * Support for multiple extension cards, and multiple GROM ports. [Raphael Nabet]
+
 - [AMSTRAD CPC] Fixed RAM configuration selection, now the original Heroquest 
   will run [Kev Thacker, Richard Wilson]
 
