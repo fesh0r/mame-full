@@ -26,15 +26,23 @@
 #define ID_DEVICES                      122
 #define ID_HELP_ABOUT                   123
 #define ID_HELP_ABOUTSYSTEM             124
+#define IDD_DIALOG1                     125
+#define IDD_TAPEDIALOG                  125
 #define IDR_RUNTIME_MENU                6000
+#define IDC_SLIDER1                     6000
+#define IDC_PLAY                        6001
+#define IDC_STOP                        6002
+#define IDC_PAUSE                       6003
+#define IDC_CAPTION                     6004
+#define IDC_STATUS                      6005
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        125
+#define _APS_NEXT_RESOURCE_VALUE        126
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         6000
+#define _APS_NEXT_CONTROL_VALUE         6006
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
