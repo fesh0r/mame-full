@@ -587,8 +587,10 @@ READ_HANDLER ( geneve_r )
 		/* SRAM */
 		return SRAM_ptr[(page-0xe8)*0x2000 + offset];
 
+#if 0
 	case 0x7a:	/* mirror of 0xba??? */
 		return 0;
+#endif
 	case 0xba:
 		/* DSR space */
 		return geneve_peb_r(offset);
@@ -873,8 +875,10 @@ WRITE_HANDLER ( geneve_w )
 		SRAM_ptr[(page-0xe8)*0x2000 + offset] = data;
 		return;
 
+#if 0
 	case 0x7a:	/* mirror of 0xba??? */
 		return;
+#endif
 	case 0xba:
 		/* DSR space */
 		geneve_peb_w(offset, data);
@@ -988,7 +992,7 @@ static void poll_keyboard(void)
 		0x38,	/* alt gr */
 		/* extra codes are 0x5b for Left Windows, 0x5c for Right Windows, 0x5d
 		for Menu, 0x5e for power, 0x5f for sleep, 0x63 for wake, but I doubt
-		any Genev program wuold take advantage of these. */
+		any Geneve program would take advantage of these. */
 
 		/* extended key that is equivalent to a non-extended key
 		with shift off */
@@ -1318,7 +1322,7 @@ static int R9901_1(int offset)
 {
 	int answer;
 
-	answer = readinputport(input_port_mouse_buttons_geneve) & 4;
+	answer = (readinputport(input_port_mouse_buttons_geneve) & 4) ^ 4;
 
 	return answer;
 }
