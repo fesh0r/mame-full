@@ -174,6 +174,10 @@ typedef struct {
 	geometry_options maximum;
 } geometry_ranges;
 
+#define EOLN_CR		"\x0d"
+#define EOLN_LF		"\x0a"
+#define EOLN_CRLF	"\x0d\x0a"
+
 struct ImageModule {
 	const char *name;
 	const char *humanname;

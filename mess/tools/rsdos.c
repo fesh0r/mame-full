@@ -52,7 +52,7 @@ IMAGEMODULE(
 	NULL,									/* crcfile */
 	NULL,									/* crc system name */
 	NULL,									/* geometry ranges */
-	"\r",									/* eoln */
+	EOLN_CR,									/* eoln */
 	NULL,									/* init by name function */
 	rsdos_diskimage_init,					/* init function */
 	rsdos_diskimage_exit,					/* exit function */

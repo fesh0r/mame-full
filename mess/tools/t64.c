@@ -123,7 +123,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	NULL,								/* geometry ranges */
-	"\r",								/* eoln */
+	EOLN_CR,								/* eoln */
 	NULL,
 	t64_image_init,				/* init function */
 	t64_image_exit,				/* exit function */
