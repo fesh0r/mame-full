@@ -6,7 +6,7 @@ OSOBJS = $(OBJ)/windows/winmain.o $(OBJ)/windows/fileio.o $(OBJ)/windows/config.
 	 $(OBJ)/windows/input.o $(OBJ)/windows/sound.o $(OBJ)/windows/blit.o \
 	 $(OBJ)/windows/snprintf.o $(OBJ)/windows/rc.o $(OBJ)/windows/misc.o \
 	 $(OBJ)/windows/window.o $(OBJ)/windows/asmblit.o \
-	 $(OBJ)/mess/windows/dirio.o $(OBJ)/mess/windows/fdc.o
+	 $(OBJ)/mess/windows/dirio.o $(OBJ)/mess/windows/fdc.o $(OBJ)/mess/windows/messwin.o 
 
 # video blitting functions
 $(OBJ)/windows/asmblit.o: src/windows/asmblit.asm
