@@ -7,61 +7,47 @@
 #include <stdio.h>
 #include <tchar.h>
 #include "hexview.h"
+#include "utils.h"
 
 const TCHAR hexview_class[] = "hexview_class";
 
 
-#ifndef GetWindowLongPtr
-#define GetWindowLongPtr	GetWindowLong
-#endif
 
-#ifndef SetWindowLongPtr
-#define SetWindowLongPtr	SetWindowLong
-#endif
-
-#ifndef GWLP_USERDATA
-#define GWLP_USERDATA	GWL_USERDATA
-#endif
-
-#ifndef LONG_PTR
-#define LONG_PTR LONG
-#endif
-
-#ifndef MAX
-#define MAX(a, b)	((a > b) ? (a) : (b))
-#endif
-
-struct HexViewInfo
+struct hexview_info
 {
 	void *data;
 	size_t data_size;
 	int index_width;
-	int margin;
+	int left_margin;
+	int right_margin;
+	int byte_spacing;
 	HFONT font;
 };
 
 
 
-static struct HexViewInfo *get_hexview_info(HWND hexview)
+static struct hexview_info *get_hexview_info(HWND hexview)
 {
 	LONG_PTR l;
 	l = GetWindowLongPtr(hexview, GWLP_USERDATA);
-	return (struct HexViewInfo *) l;
+	return (struct hexview_info *) l;
 }
 
 
 
 static int hexview_create(HWND hexview, CREATESTRUCT *cs)
 {
-	struct HexViewInfo *info;
+	struct hexview_info *info;
 
-	info = (struct HexViewInfo *) malloc(sizeof(*info));
+	info = (struct hexview_info *) malloc(sizeof(*info));
 	if (!info)
 		return -1;
 	memset(info, '\0', sizeof(*info));
 
 	info->index_width = 4;
-	info->margin = 8;
+	info->left_margin = 8;
+	info->right_margin = 8;
+	info->byte_spacing = 1;
 
 	SetWindowLongPtr(hexview, GWLP_USERDATA, (LONG_PTR) info);
 	return 0;
@@ -71,7 +57,7 @@ static int hexview_create(HWND hexview, CREATESTRUCT *cs)
 
 static void hexview_paint(HWND hexview)
 {
-	struct HexViewInfo *info;
+	struct hexview_info *info;
 	HDC dc;
 	PAINTSTRUCT ps;
 	LONG bytes_per_row;
@@ -87,6 +73,7 @@ static void hexview_paint(HWND hexview)
 
 	if (info->font)
 		SelectObject(dc, info->font);
+	SetBkColor(dc, GetSysColor(COLOR_WINDOW));
 
 	_sntprintf(offset_format, sizeof(offset_format) / sizeof(offset_format[0]),
 		TEXT("%%0%dX"), info->index_width);
@@ -94,8 +81,8 @@ static void hexview_paint(HWND hexview)
 	// figure out how many bytes go in one row
 	GetTextMetrics(dc, &metrics);
 	GetWindowRect(hexview, &r);
-	bytes_per_row = ((r.right - r.left) - (info->margin * 2) - metrics.tmMaxCharWidth * info->index_width)
-		/ (metrics.tmMaxCharWidth * 3);
+	bytes_per_row = ((r.right - r.left) - info->left_margin - info->right_margin - metrics.tmMaxCharWidth * info->index_width)
+		/ (metrics.tmMaxCharWidth * (3 + info->byte_spacing));
 	bytes_per_row = MAX(bytes_per_row, 1);
 
 	// draw the relevant rows
@@ -119,14 +106,14 @@ static void hexview_paint(HWND hexview)
 			{
 				b = ((BYTE *) info->data)[pos];
 
-				r.left = (info->index_width + col * 2) * metrics.tmMaxCharWidth
-					+ info->margin;
+				r.left = (info->index_width + col * (2 + info->byte_spacing)) * metrics.tmMaxCharWidth
+					+ info->left_margin;
 				r.right = r.left + metrics.tmMaxCharWidth * 2;
 				_sntprintf(buf, sizeof(buf) / sizeof(buf[0]), TEXT("%02X"), b);
 				DrawText(dc, buf, -1, &r, DT_LEFT);
 
-				r.left = (info->index_width + bytes_per_row * 2 + col) * metrics.tmMaxCharWidth
-					+ (info->margin * 2);
+				r.left = (info->index_width + bytes_per_row * (2 + info->byte_spacing) + col) * metrics.tmMaxCharWidth
+					+ info->left_margin + info->right_margin;
 				r.right = r.left + metrics.tmMaxCharWidth * 2;
 				buf[0] = ((b >= 0x20) && (b <= 0x7F)) ? (TCHAR) b : '.';
 				DrawText(dc, buf, 1, &r, DT_LEFT);
@@ -134,7 +121,6 @@ static void hexview_paint(HWND hexview)
 		}
 	}
 
-	
 	EndPaint(hexview, &ps);
 }
 
@@ -142,7 +128,7 @@ static void hexview_paint(HWND hexview)
 
 static LRESULT CALLBACK hexview_wndproc(HWND hexview, UINT message, WPARAM wparam, LPARAM lparam)
 {
-	struct HexViewInfo *info;
+	struct hexview_info *info;
 
 	info = get_hexview_info(hexview);
 	
@@ -183,22 +169,25 @@ static LRESULT CALLBACK hexview_wndproc(HWND hexview, UINT message, WPARAM wpara
 
 BOOL hexview_setdata(HWND hexview, const void *data, size_t data_size)
 {
-	struct HexViewInfo *info;
+	struct hexview_info *info;
 	void *data_copy;
 
 	info = get_hexview_info(hexview);
 
-	data_copy = malloc(data_size);
-	if (!data_copy)
-		return FALSE;
-	memcpy(data_copy, data, data_size);
+	if ((data_size != info->data_size) || memcmp(data, info->data, data_size))
+	{
+		data_copy = malloc(data_size);
+		if (!data_copy)
+			return FALSE;
+		memcpy(data_copy, data, data_size);
 
-	if (info->data)
-		free(info->data);
-	info->data = data_copy;
-	info->data_size = data_size;
+		if (info->data)
+			free(info->data);
+		info->data = data_copy;
+		info->data_size = data_size;
 
-	InvalidateRect(hexview, NULL, TRUE);
+		InvalidateRect(hexview, NULL, TRUE);
+	}
 	return TRUE;
 }
 
@@ -211,7 +200,7 @@ BOOL hexview_registerclass()
 	memset(&hexview_wndclass, 0, sizeof(hexview_wndclass));
 	hexview_wndclass.lpfnWndProc = hexview_wndproc;
 	hexview_wndclass.lpszClassName = hexview_class;
-	hexview_wndclass.hbrBackground = GetStockObject(WHITE_BRUSH);
+	hexview_wndclass.hbrBackground = CreateSolidBrush(GetSysColor(COLOR_WINDOW));
 	return RegisterClass(&hexview_wndclass);
 }
 

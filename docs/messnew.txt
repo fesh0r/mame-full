@@ -75,6 +75,8 @@ Imgtool Changes:
   files under certain conditions, and disabled certain functionity when read
   only files are open.  [Nate Woods]
 
+- [Windows Imgtool] Added a new sector viewer feature.  [Nate Woods]
+
 
 
 Source Changes:

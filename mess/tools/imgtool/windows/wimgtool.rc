@@ -66,7 +66,7 @@ BEGIN
         MENUITEM "&Extract...\tCtrl+E",         ID_IMAGE_EXTRACT
         MENUITEM "&New Directory...\tCtrl+Y",   ID_IMAGE_CREATEDIR
         MENUITEM "&Delete\tDel",                ID_IMAGE_DELETE
-//        MENUITEM "&View Sector Data...",        ID_IMAGE_SECTORVIEW
+        MENUITEM "&View Sector Data...\tCtrl+V", ID_IMAGE_SECTORVIEW
     END
     POPUP "&View"
     BEGIN
@@ -102,6 +102,7 @@ BEGIN
     "I",            ID_IMAGE_INSERT,        VIRTKEY, CONTROL, NOINVERT
     "E",            ID_IMAGE_EXTRACT,       VIRTKEY, CONTROL, NOINVERT
     "Y",            ID_IMAGE_CREATEDIR,     VIRTKEY, CONTROL, NOINVERT
+    "V",            ID_IMAGE_SECTORVIEW,    VIRTKEY, CONTROL, NOINVERT
     VK_DELETE,      ID_IMAGE_DELETE,        VIRTKEY, NOINVERT
 END
 
@@ -152,26 +153,25 @@ BEGIN
     EDITTEXT        IDC_EDIT,63,7,116,14,ES_AUTOHSCROLL
 END
 
-IDD_SECTORVIEW DIALOGEX 0, 0, 386, 126
+IDD_SECTORVIEW DIALOGEX 0, 0, 345, 126
 STYLE DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Sector Viewer"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,329,105,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,271,105,50,14
+    DEFPUSHBUTTON   "OK",IDOK,288,105,50,14
     LTEXT           "Track:",IDC_TRACKLABEL,7,108,23,11
     EDITTEXT        IDC_TRACKEDIT,33,106,26,13,ES_AUTOHSCROLL | ES_NUMBER
     LTEXT           "Side:",IDC_HEADLABEL,71,108,17,11
     EDITTEXT        IDC_HEADEDIT,93,106,26,13,ES_AUTOHSCROLL | ES_NUMBER
     LTEXT           "Sector:",IDC_SECTORLABEL,129,108,23,11
     EDITTEXT        IDC_SECTOREDIT,155,106,26,13,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "",IDC_HEXVIEW,"hexview_class",0x0,7,6,372,96,0x200000L
-    CONTROL         "",IDC_TRACKSPIN,"msctls_updown32",UDS_ARROWKEYS,59,106,
-                    9,12
-    CONTROL         "",IDC_HEADSPIN,"msctls_updown32",UDS_ARROWKEYS,119,106,
-                    9,12
-    CONTROL         "",IDC_SECTORSPIN,"msctls_updown32",UDS_ARROWKEYS,181,
-                    106,9,12
+    CONTROL         "",IDC_HEXVIEW,"hexview_class",0x0,7,6,330,96,0x200000L
+    CONTROL         "",IDC_TRACKSPIN,"msctls_updown32",UDS_SETBUDDYINT | 
+                    UDS_ARROWKEYS,59,106,9,12
+    CONTROL         "",IDC_HEADSPIN,"msctls_updown32",UDS_SETBUDDYINT | 
+                    UDS_ARROWKEYS,119,106,9,12
+    CONTROL         "",IDC_SECTORSPIN,"msctls_updown32",UDS_SETBUDDYINT | 
+                    UDS_ARROWKEYS,181,106,9,12
 END
 
 
@@ -218,7 +218,7 @@ BEGIN
     IDD_SECTORVIEW, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 379
+        RIGHTMARGIN, 338
         TOPMARGIN, 7
         BOTTOMMARGIN, 119
     END

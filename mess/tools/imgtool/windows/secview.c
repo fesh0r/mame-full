@@ -37,7 +37,6 @@ static const struct anchor_entry sectorview_anchor[] =
 {
 	{ IDC_HEXVIEW,		ANCHOR_LEFT | ANCHOR_TOP | ANCHOR_RIGHT | ANCHOR_BOTTOM },
 	{ IDOK,				ANCHOR_RIGHT | ANCHOR_BOTTOM },
-	{ IDCANCEL,			ANCHOR_RIGHT | ANCHOR_BOTTOM },
 	{ IDC_TRACKEDIT,	ANCHOR_LEFT | ANCHOR_BOTTOM },
 	{ IDC_TRACKLABEL,	ANCHOR_LEFT | ANCHOR_BOTTOM },
 	{ IDC_TRACKSPIN,	ANCHOR_LEFT | ANCHOR_BOTTOM },
@@ -86,6 +85,9 @@ static void size_dialog(HWND dialog, const struct anchor_entry *anchor_entries,
 	LONG dialog_left, dialog_top;
 	LONG left, top, width, height;
 	UINT8 anchor;
+	HANDLE width_prop, height_prop;
+	static const TCHAR winprop_negwidth[] = TEXT("winprop_negwidth");
+	static const TCHAR winprop_negheight[] = TEXT("winprop_negheight");
 
 	// figure out the dialog client top/left coordinates
 	GetWindowRect(dialog, &dialog_rect);
@@ -110,6 +112,13 @@ static void size_dialog(HWND dialog, const struct anchor_entry *anchor_entries,
 			width = dlgitem_rect.right - dlgitem_rect.left;
 			height = dlgitem_rect.bottom - dlgitem_rect.top;
 
+			width_prop = GetProp(dlgitem, winprop_negwidth);
+			if (width_prop)
+				width = (LONG) width_prop;
+			height_prop = GetProp(dlgitem, winprop_negheight);
+			if (height_prop)
+				height = (LONG) height_prop;
+
 			switch(anchor & (ANCHOR_LEFT | ANCHOR_RIGHT))
 			{
 				case ANCHOR_RIGHT:
@@ -132,47 +141,91 @@ static void size_dialog(HWND dialog, const struct anchor_entry *anchor_entries,
 					break;
 			}
 
+			// Record the width/height properties if they are negative
+			if (width < 0)
+			{
+				SetProp(dlgitem, winprop_negwidth, (HANDLE) width);
+				width = 0;
+			}
+			else if (width_prop)
+				RemoveProp(dlgitem, winprop_negwidth);
+			if (height < 0)
+			{
+				SetProp(dlgitem, winprop_negheight, (HANDLE) height);
+				height = 0;
+			}
+			else if (height_prop)
+				RemoveProp(dlgitem, winprop_negheight);
+
+			// Actually move the window
 			SetWindowPos(dlgitem, 0, left, top, width, height, SWP_NOZORDER);
+			InvalidateRect(dlgitem, NULL, TRUE);
 		}
 	}
 }
 
 
 
+// reads sector data from the disk image into the view
 static imgtoolerr_t read_sector_data(HWND dialog, UINT32 track, UINT32 head, UINT32 sector)
 {
 	imgtoolerr_t err;
 	struct sectorview_info *info;
 	UINT32 length;
 	void *data;
-	TCHAR buf[32];
 
 	info = get_sectorview_info(dialog);
 
 	err = img_getsectorsize(info->image, track, head, sector, &length);
 	if (err)
-		return err;
+		goto done;
 
 	data = alloca(length);
 	err = img_readsector(info->image, track, head, sector, data, length);
 	if (err)
-		return err;
+		goto done;
 
 	if (!hexview_setdata(GetDlgItem(dialog, IDC_HEXVIEW), data, length))
-		return IMGTOOLERR_OUTOFMEMORY;
+	{
+		err = IMGTOOLERR_OUTOFMEMORY;
+		goto done;
+	}
 
 	info->track = track;
 	info->head = head;
 	info->sector = sector;
 
-	_sntprintf(buf, sizeof(buf) / sizeof(buf[0]), TEXT("%u"), (unsigned int) track);
-	SetWindowText(GetDlgItem(dialog, IDC_TRACKEDIT), buf);
-	_snprintf(buf, sizeof(buf) / sizeof(buf[0]), TEXT("%u"), (unsigned int) head);
-	SetWindowText(GetDlgItem(dialog, IDC_HEADEDIT), buf);
-	_snprintf(buf, sizeof(buf) / sizeof(buf[0]), TEXT("%u"), (unsigned int) sector);
-	SetWindowText(GetDlgItem(dialog, IDC_SECTOREDIT), buf);
+done:
+	return err;
+}
 
-	return IMGTOOLERR_SUCCESS;
+
+
+// sets the sector text
+static void set_sector_text(HWND dialog)
+{
+	struct sectorview_info *info;
+	TCHAR buf[32];
+
+	info = get_sectorview_info(dialog);
+
+	if (info->track != ~0)
+		_sntprintf(buf, sizeof(buf) / sizeof(buf[0]), TEXT("%u"), (unsigned int) info->track);
+	else
+		buf[0] = '\0';
+	SetWindowText(GetDlgItem(dialog, IDC_TRACKEDIT), buf);
+
+	if (info->head != ~0)
+		_snprintf(buf, sizeof(buf) / sizeof(buf[0]), TEXT("%u"), (unsigned int) info->head);
+	else
+		buf[0] = '\0';
+	SetWindowText(GetDlgItem(dialog, IDC_HEADEDIT), buf);
+
+	if (info->sector != ~0)
+		_snprintf(buf, sizeof(buf) / sizeof(buf[0]), TEXT("%u"), (unsigned int) info->sector);
+	else
+		buf[0] = '\0';
+	SetWindowText(GetDlgItem(dialog, IDC_SECTOREDIT), buf);
 }
 
 
@@ -180,6 +233,7 @@ static imgtoolerr_t read_sector_data(HWND dialog, UINT32 track, UINT32 head, UIN
 static void change_sector(HWND dialog)
 {
 	struct sectorview_info *info;
+	imgtoolerr_t err;
 	TCHAR buf[32];
 	UINT32 new_track, new_head, new_sector;
 
@@ -193,7 +247,11 @@ static void change_sector(HWND dialog)
 	new_sector = (UINT32) _ttoi(buf);
 
 	if ((info->track != new_track) || (info->head != new_head) || (info->sector != new_sector))
-		read_sector_data(dialog, new_track, new_head, new_sector);
+	{
+		err = read_sector_data(dialog, new_track, new_head, new_sector);
+		if (err)
+			set_sector_text(dialog);
+	}
 }
 
 
@@ -240,6 +298,8 @@ static INT_PTR CALLBACK win_sectorview_dialog_proc(HWND dialog, UINT message,
 			err = read_sector_data(dialog, 0, 0, 0);
 			if (err == IMGTOOLERR_SEEKERROR)
 				err = read_sector_data(dialog, 0, 0, 1);
+			if (!err)
+				set_sector_text(dialog);
 			break;
 
 		case WM_DESTROY:
