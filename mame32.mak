@@ -713,6 +713,8 @@ DRV_OBJS = \
 	$(OBJ)/vidhrdw/mermaid.o $(OBJ)/drivers/mermaid.o \
 	$(OBJ)/vidhrdw/magix.o $(OBJ)/drivers/magix.o \
 	$(OBJ)/drivers/royalmah.o \
+	$(OBJ)/drivers/lastday.o $(OBJ)/vidhrdw/lastday.o \
+
 
 !ifdef TINY_COMPILE
 OBJS = $(TINY_OBJS)
