@@ -1,4 +1,4 @@
-# MESS System Information Data File v37b4.1
+# MESS System Information Data File v37b7 (7th of September, 2000)
 # Maintained by Chris Henry
 # Send corrections/submissions to: battlepriest@hotmail.com
 
@@ -32,12 +32,73 @@
 
 #---------------------------------------------------------------------------------------------#
 
+$info=a2600
+$bio
+Atari 2600 Video Computer System
+
+
+Usage/Known Issues:
+
+This driver is highly preliminary. It will load most 2k, 4k, and 8k Game Program images, but
+will only display graphics for some of them. The games themselves are not currently playable.
+Work is continuing on the driver however. 
+
+
+History and Trivia:
+
+The Atari Video Computer System was released in 1977 at a suggested retail price of $299, which
+dropped quickly as sales soared; about 340,000 systems were sold the first year alone. The
+VCS was designed by Joe Decuir, Steve Mayer and Ron Milner. The Atari VCS was developed under 
+the project codename "Stella". The VCS later became known, both commonly and officially as the 
+Atari 2600 (from the model number CX2600). It is rumoured that the number 2600 was chosen 
+because 2600 cycles was a prominent long distance access tone, and that one of the developers 
+had created devices that would trick pay phones into granting long distance access as a hobby.
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=a400
+$bio
+Atari 400 Home Computer
+
+
+Usage/Known Issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by 
+default. Whilst in full keyboard emulation mode, some key associated functionality may be 
+disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the 
+scroll_lock key.
+
+
+Most disk and cartridge images should work, though some graphic issues may exist. Note that
+the Atari 400 has less memory than the Atari 800, and some disk images may not work as a
+consequence; this is not a bug in the emulation.
+
+
+
+History and Trivia:
+
+The Atari 400 and 800 were the first home computers to use custom coprocessors and the first 
+to use "sprites" and special video interruptions like display lists, features that will be 
+implemented several years after on the Commodore Amiga. It offered high graphic resolution, 
+lots of colors and great sound capabilities, more than other computers could do then! The 
+two models had same characteristics, the 400 is the low-cost version, it has only 16 KB 
+(instead of 48 KB), one cartridge port (two for the 800) and a membrane keyboard (a 
+typewriter style keyboard one for the 800). 
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=a5200
 $bio
 Atari 5200 SuperSystem
 
 
-Known Issues:
+Usage/Known Issues:
 
 Keyboard input is a little difficult, using a joystick or mouse is recommended.
 
@@ -88,7 +149,7 @@ History and Trivia:
 Originally developed in 1984 as the Atari 3600, the Atari 7800 Prosystem was released to the 
 US market in 1986, in an attempt to compete in a revitalised home videogame market. The 7800 
 was actually designed by Gencomp as part of a lawsuit settlement (Gencomp had been sued for 
-releasing a speedup chipset for Atari Coinop Missile Command).
+releasing a speedup chipset for Atari coinop Missile Command).
 
 
 The 7800 was compatible with pre-existing Atari 2600 game program cartridges, without the need 
@@ -271,7 +332,8 @@ default. Whilst in full keyboard emulation mode, some key associated functionali
 disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the 
 scroll_lock key.
 
-Many games and applications appear to be running now.
+As of MESS .37b5, the Apple //c and clones are not working correctly; most noticably the 
+keyboard emulation is not functional. This is being worked on.
 
 
 History and Trivia:
@@ -325,7 +387,9 @@ disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled usi
 scroll_lock key.
 
 
-Many games and applications appear to be running now.
+As of MESS .37b5, the Apple //e and clones are not working correctly; most noticably the 
+keyboard emulation is not functional. This is being worked on.
+
 
 
 History and Trivia:
@@ -342,6 +406,102 @@ The Apple IIe was replaced with the Apple IIe+, which had an enhanced keyboard, 
 $end
 
 #---------------------------------------------------------------------------------------------#
+
+$info=aquarius
+$bio
+Mattel Aquarius
+
+
+Usage Notes:
+
+From within the emulation, there are several BASIC command keyboard shortcuts available by 
+pressing control and another key.
+
+
+CHR$      Ctrl[SPACE]
+
+CLOAD     Ctrl[Z]
+
+COPY      Ctrl[9]
+
+CSAVE     Ctrl[A]
+
+DATA      Ctrl[F]
+
+DIM       Ctrl[E]
+
+FOR       Ctrl[-]
+
+GOSUB     Ctrl[7]
+
+GOTO      Ctrl[5]
+
+IF        Ctrl[3]
+
+INPUT     Ctrl[T]
+
+LEFT$     Ctrl[V]
+
+LIST      Ctrl[2]
+
+MID$      Ctrl[B]
+
+NEXT      Ctrl[=]
+
+ON        Ctrl[6]
+
+PEEK      Ctrl[;]
+
+POINT     Ctrl[L]
+
+POKE      Ctrl[']
+
+PRESET    Ctrl[K]
+
+PSET      Ctrl[J]
+
+READ      Ctrl[D]
+
+REM       Ctrl[W]
+
+RIGHT$    Ctrl[N]
+
+RETURN    Ctrl[8]
+
+RUN       Ctrl[1]
+
+STR$      Ctrl[,]
+
+THEN      Ctrl[4]
+
+VAL       Ctrl[.]
+
+
+To break/stop a program, press Ctrl[C]
+
+To interupt the LISTing of a program, press Ctrl[S]
+
+To repeat the entire last line you typed, press Ctrl[R]
+
+To get the machine to beep, press Ctrl[G]
+
+
+Known Issues:
+
+Image loading is not currently supported.
+
+
+History and Trivia:
+
+The Aquarius was Mattel Electronics' (a division of a huge US toy manufacturer) attempt at
+entering the home computer market. It was a commercial failure, and was frequently found 
+in bargain bins in toy stores for many years following. 
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 
 $info=astrocde
 $bio
@@ -862,6 +1022,82 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=cpc464
+$bio
+Amstrad/Schneider CPC 464
+
+
+Usage:
+
+With a disk image loaded, the emulation starts from the BASIC "Ready" prompt. 
+From here you can enter commands to access the disk image: 
+ 
+
+A directory listing can be obtained with: "CAT"
+
+
+A program can be run with: RUN"filename"
+
+
+The common programs to run are those with a .BIN or .BAS extension and usually the smaller 
+of the files on the disk image.
+
+
+On a few games you can type: RUN"disc or RUN"disk to start the game.
+
+
+If a directory listing cannot be obtained, then the disc might be copy-protected. 
+In this case, try: 
+
+|CPM
+
+
+| is obtained by pressing shift and the @ key together. Since the keyboard is mapped so the 
+keys are in the roughly same place as on a real Amstrad keyboard, then @ can be found 
+around the [,@,],# keys.
+
+The |CPM works by loading and executing the first sector on the first track of the disc.
+
+
+Snapshots, which contain a memory dump, cpu state and hardware state, can be run from a 
+command line interface with the following command: 
+
+mess cpc464 -snap "snapshot name"
+
+
+The snapshot will start automatically.
+
+
+There are a few excellent utilities for creating and maintaining
+disk images for the Amstrad CPC emulators. Here are just a couple - 
+
+CPDRead   http://www.classicgaming.com/caprice/
+CPCfs     ftp://ftp.lip6.fr/pub/amstrad/emu-util/cpcfs085.zip
+
+
+Others can be found in the FAQ at http://www.multimania.com/genesis8/
+
+
+
+Known Issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by 
+default.  Whilst in full keyboard emulation mode, some key associated functionality may be 
+disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the 
+scroll_lock key.   
+
+Runs many disk images and snapshots well.
+
+
+History and Trivia:
+
+The CPC464 was an 8-bit Amstrad computer, produced in 1984, with 64k of ram and a tape 
+recorder built in.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=cpc6128
 $bio
 Amstrad/Schneider CPC 6128
@@ -909,13 +1145,14 @@ The snapshot will start automatically.
 
 
 There are a few excellent utilities for creating and maintaining
-disk images for the Amstrad CPC emulators.
-
-Here are just a couple. Others can be
-found in the FAQ at http://www.multimania.com/genesis8/ :
+disk images for the Amstrad CPC emulators. Here are just a couple - 
 
 CPDRead   http://www.classicgaming.com/caprice/
 CPCfs     ftp://ftp.lip6.fr/pub/amstrad/emu-util/cpcfs085.zip
+
+
+Others can be found in the FAQ at http://www.multimania.com/genesis8/
+
 
 
 Known Issues:
@@ -951,6 +1188,81 @@ in 4 colours (medium res), 160x200 in 16 colours (lo-res).
 
 $end
 
+#---------------------------------------------------------------------------------------------#
+
+$info=cpc664
+$bio
+Amstrad/Schneider CPC 664
+
+
+Usage:
+
+With a disk image loaded, the emulation starts from the BASIC "Ready" prompt. 
+From here you can enter commands to access the disk image: 
+ 
+
+A directory listing can be obtained with: "CAT"
+
+
+A program can be run with: RUN"filename"
+
+
+The common programs to run are those with a .BIN or .BAS extension and usually the smaller 
+of the files on the disk image.
+
+
+On a few games you can type: RUN"disc or RUN"disk to start the game.
+
+
+If a directory listing cannot be obtained, then the disc might be copy-protected. 
+In this case, try: 
+
+|CPM
+
+
+| is obtained by pressing shift and the @ key together. Since the keyboard is mapped so the 
+keys are in the roughly same place as on a real Amstrad keyboard, then @ can be found 
+around the [,@,],# keys.
+
+The |CPM works by loading and executing the first sector on the first track of the disc.
+
+
+Snapshots, which contain a memory dump, cpu state and hardware state, can be run from a 
+command line interface with the following command: 
+
+mess cpc664 -snap "snapshot name"
+
+
+The snapshot will start automatically.
+
+
+There are a few excellent utilities for creating and maintaining
+disk images for the Amstrad CPC emulators. Here are just a couple - 
+
+CPDRead   http://www.classicgaming.com/caprice/
+CPCfs     ftp://ftp.lip6.fr/pub/amstrad/emu-util/cpcfs085.zip
+
+
+Others can be found in the FAQ at http://www.multimania.com/genesis8/
+
+
+
+Known Issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by 
+default.  Whilst in full keyboard emulation mode, some key associated functionality may be 
+disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the 
+scroll_lock key.   
+
+Runs many disk images and snapshots well.
+
+
+History and Trivia:
+
+The CPC664 was an 8-bit Amstrad computer, produced in 1985, with 64k of ram and a 3" disk 
+drive built in.
+
+$end
 
 #---------------------------------------------------------------------------------------------#
 
@@ -1089,6 +1401,28 @@ a little level display located above the keyboard which allows to set the record
 level of the tape recorder to avoid failure when writing onto a tape. 
 
 
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=channelf
+$bio
+Fairchild Channel F
+
+
+Usage:
+
+MAME coin inputs (keys 5, 6, 7, 8) are used to select the game at the G? prompt.
+
+
+
+History and Trivia:
+
+Introduced in August 1976 at a suggested retail price of $170 (US), The Channel F was the 
+first programmable video game system to use replacable cartridges. The controllers, which were
+often described as looking like plungers were attached directly to the system via 8 foot wires.
+The Channel F didn't fair well in the late 1970s market dominated by Atari, and Fairchild switched their efforts to developing the Spark-16 minicomputer.
 
 $end
 
@@ -1297,9 +1631,7 @@ Nintendo GameBoy
 
 Known Issues:
 
-Input is broken in several games.
-
-Sound is not yet supported.
+This driver is preliminary. Input is broken in most games and sound is not yet supported.
 
 
 History and Trivia:
@@ -1376,7 +1708,7 @@ $bio
 Kaypro IIx (kaypro)
 
 
-Known Issues:
+Usage/Known Issues:
 
 Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by 
 default. Whilst in full keyboard emulation mode, some key associated functionality may be 
@@ -1384,8 +1716,9 @@ disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled usi
 scroll_lock key.
 
 
-Problems with the conversion to the MAME core....  Emulation OK....  
+As of 37b4, this driver is once again working. 
 
+  
 
 $end
 
@@ -1393,16 +1726,12 @@ $end
 
 $info=kccomp
 $bio
-KC Compact (kccomp)
+KC Compact
 
 
 Usage:
 
 Image loading is the same as for the Amstrad CPC series.
-
-At this time the driver doesn't support loading from disk images. I don't
-know if a disc interface was designed for this computer.
-However, snapshots will work.
 
 
 Known Issues:
@@ -1523,72 +1852,6 @@ came with a few software titles."
 
 $end
 
-#---------------------------------------------------------------------------------------------#
-
-$info=lisa2
-$bio
-Apple Lisa
-
-
-History and Trivia:
-
-The Lisa project started in the summer of 1979.  At the time, the idea was merely designing
-a powerful business computer, with scheduled release in march 1981.  After its legendary visit
-to the Xerox PARC research center, Steve Jobs realized the GUI was the future of computing.
-So, in March 1980, a GUI was added to the Lisa specs. As a consequence, Lisa borrowed many ideas
-from the Macintosh project, which included a GUI from the beginning.
-
-In spite of huge support from Apple, the project got behind schedule, and Lisa was introduced
-on January, 19th, 1983.
-
-
-The Lisa was an impressive computer for its time. It had TONS of memory (1Mb on Lisa 1),
-a high-resolution graphic display, and it was fairly expandable.  Its OS (weirdly called
-"Lisa 7/7 Office System") featured a complete GUI, and full preemptive multitasking
-with memory protection (something neither Windows 98 nor MacOS offer !).
-Its 68000 CPU was one of the fastest microprocessor in its time.
-
-Unfortunately, Lisa was never too successful. It was quite expensive. Little software was developped
-for it. Also, it was extremely ressource hungry : it was reportedly slow, and its memory
-requirement was the major cause for its high price.
-
-
-In January 1984, Lisa 1 was replaced by Lisa 2, with 3.5'' floppies and several small
-hardware changes. In January 1985, Lisa 2 was replaced by Macintosh XL, which had a modified video
-hardware, and used a variant of the Macintosh system instead of the 7/7 Lisa OS. Mac XL was
-discontinued in May 1985.
-
-
-The significance of Lisa :
-
-Lisa is a milestone in the history of computing. Arguably, the Xerox PARC research center invented
-most GUI concepts (along with Object Oriented programming and Ethernet) 10 years before Lisa was
-introduced. However, although Xerox research was public, and some Xerox Altos were actually sold,
-or given to universities, these experiments remained little known, and raised little interest.
-I guess this was because computing was mostly the field of highly-trained professionnals who did
-not care about ease of use (you know, the same kind of guys who laughed at Macintosh and worshipped
-the early IBM-PCs). So, Lisa made the world aware that GUI could exist, all the more since Apple
-was a major computer maker. Also, Lisa (along with Macintosh, Atari ST and Commodore Amiga)
-introduced GUI to the hobbyists and home computer users, which enabled GUI to live.
-
-$end
-
-#---------------------------------------------------------------------------------------------#
-
-$info=mac512ke
-$bio
-Apple Macintosh 512ke
-
-
-History and Trivia:
-
-The Macintosh 512ke was essentially a Mac512k with the same 128k ROMs and double-sided
-800 KB internal floppy drive as the Mac Plus.
-
-It was sold as a poor man's Macintosh.  Also, Mac512k could be upgraded to a 512ke.
-(It could be upgraded to a Mac Plus, too, but it involved changing the motherbord.)
-
-$end
 
 #---------------------------------------------------------------------------------------------#
 
@@ -1600,17 +1863,14 @@ Apple Macintosh Plus
 History and Trivia:
 
 The Macintosh Plus was the first real improvement of the Macintosh 128 (The Macintosh 512 was 
-only a Mac 128 with 512 KB RAM). It had a lot of new features : the extended ROM held the new 
+only a Mac 128 with 512 KB RAM). It had a lot of new features: the extended ROM held the new 
 version of MAC OS : enhanced graphic libraries, drivers for hard disk and external floppy disk 
-units, SCSI bus and AppleTalk network and the new file system : HFS (Hierarchical File System -
-which actually had with Hard Disk-20 months before).
+units, SCSI bus and AppleTalk network and the new files manager: HFS (Hierarchical File System).
 
 The new floppy disk unit could use double-sided 800 KB disks (compared to only one-sided 400 
 KB for the 128). It has an enhanced keyboard with a numeric pad and last but not least, it 
-had a SCSI 1 (1.5 MB/s) interface. This computer was introduced in early 1986.
-This computer was superseeded in 1987 by the new Macintosh series : the Macintosh SE and the
-Macintosh II ; but it remained in production as a cheaper alternative until the introduction of
-Mac Classic.
+had a SCSI 1 (1.5 MB/s) interface. This computer was replaced in 1988 by the new Macintosh 
+series: the Macintosh SE and the Macintosh II.
 
 
 $end
@@ -1744,7 +2004,7 @@ V-8: 16kB RAM (other source says 32kB RAM)
 V-10: 16kB RAM
 V-20: 64kB RAM
 
-  ------------------------------------------------------------------------
+
 
 Casio (Japan)
 
@@ -1753,7 +2013,7 @@ MX-101: 16kB RAM (other source says 64k)
 PV-7: 32kB RAM
 PV-16: 16kB RAM
 
-  ------------------------------------------------------------------------
+
 
 Daewoo/Yeno (Korea)
 
@@ -1765,32 +2025,32 @@ DPH-?: 64kB RAM, built in software, arabic version
 IQ-1000: 32kB RAM, produced for Korea
 MX64: 64kB RAM
 
-  ------------------------------------------------------------------------
+
 
 Dragon (Spain)
 
 MSX-64: 64kB RAM
 
-  ------------------------------------------------------------------------
+
 
 Dynadata (MSX from Daewoo in Spain)
 
 DPC-200: 64kB RAM
 
-  ------------------------------------------------------------------------
+
 
 Fenner (Italy?)
 
 FPC-500: 64kB RAM
 
-  ------------------------------------------------------------------------
+
 
 Fujitsu (Japan)
 
 MB-H1: ??kB RAM
 FM-X: 16kB RAM
 
-  ------------------------------------------------------------------------
+
 
 General (Japan)
 
@@ -1798,7 +2058,7 @@ PAXON-PC K50: ??kB RAM, separate keyboard, computer and monitor in one box
 PAXON-PC T50: 16kB RAM, RGB connector
 PAXON-PC T55: 32kB RAM, RGB connector
 
-  ------------------------------------------------------------------------
+
 
 Goldstar (Korea)
 
@@ -1806,7 +2066,7 @@ FC-80: ??kB RAM
 FC-100: 16kB RAM
 FC-200: 64kB RAM (with hole for light-pen)
 
-  ------------------------------------------------------------------------
+
 
 Gradiente (Brazil)
 
@@ -1815,7 +2075,7 @@ XP-800 Expert 1.1: 64kB RAM, separate keyboard (with fixed ASCII tables, grey co
 Expert plus: 64kB RAM, separate keyboard (black colour)
 Expert DD plus: 64kB RAM, separate keyboard, 3,5" floppy disk drive (black colour)
 
-  ------------------------------------------------------------------------
+
 
 Hitachi (Japan)
 
@@ -1828,7 +2088,7 @@ MB-H25: ??kB RAM
 MB-H50: 64kB RAM
 MB-H80: 64kB RAM, also built in software (Sketch and Music)
 
-  ------------------------------------------------------------------------
+
 
 JVC/Victor (Japan)
 
@@ -1841,13 +2101,13 @@ HC-7GB: 64kB RAM
 HC-30: 32kB RAM
 HC-60: 32kB RAM
 
-  ------------------------------------------------------------------------
+
 
 Kyocera (Japan)
 
 YC-64: 64kB RAM
 
-  ------------------------------------------------------------------------
+
 
 Mitsubishi (Japan)
 
@@ -1861,7 +2121,7 @@ ML-F8000: 32kB RAM
 ML-FX1: 64kB RAM
 ML-FX2: 64kB RAM, built in software
 
-  ------------------------------------------------------------------------
+
 
 National (Japan)
 
@@ -1874,14 +2134,14 @@ CF-4000: ??kB RAM
 FS-1300: 64kB RAM
 FS-4000: 64kB RAM
 
-  ------------------------------------------------------------------------
+
 
 Olympia (France)
 
 PHC-2: ??kB RAM, same as some Sanyo?
 PHC-28: 32kB RAM, same as Sanyo's PHC-28S
 
-  ------------------------------------------------------------------------
+
 
 Panasonic/Matsushita (Japan)
 
@@ -1890,13 +2150,13 @@ CF-2700: 64kB RAM, same as Sanyo MPC-64
 CF-3000: ??kB RAM
 CF-3300: ??kB RAM
 
-  ------------------------------------------------------------------------
+
 
 Perfect (Daewoo in Kuwait)
 
 Perfect1: 64kb RAM, 1 slot, no reset, built in software
 
-  ------------------------------------------------------------------------
+
 
 Philips (The Netherlands)
 
@@ -1905,7 +2165,7 @@ VG-8010: 32kB RAM
 VG-8020: 64kB RAM, (VG8020 comes in 2 different versions (/00 and /20), new versions use 
 sub-slot for ram)
 
-  ------------------------------------------------------------------------
+
 
 Pioneer (Japan)
 
@@ -1913,19 +2173,19 @@ PX-7 PALCOM: 32kB RAM, built in laser disk interface, superimpose (image & sound
 separate keyboard (UK version in black, JP version in black/silver (lila/blue keys) colour)
 PX-V60: 64kB RAM
 
-  ------------------------------------------------------------------------
+
 
 Radofin (Hong-Kong)
 
 Triton: 64kB RAM
 
-  ------------------------------------------------------------------------
+
 
 Radiola (France)
 
 MX-180: 32kB RAM, Same as Philips VG-8010 with a different color case
 
-  ------------------------------------------------------------------------
+
 
 Sakhr/Universal/Al Alamiah (Kuwait/Yemen)
 
@@ -1940,13 +2200,13 @@ AX-990: 64kB RAM, 50 softwares built in, SEGA-MEGADRIVE board built in
 SX-100: 32kB RAM, 3 slots, RGB connector
 SX-101: ??kB RAM, 3 slots
 
-  ------------------------------------------------------------------------
+
 
 Samsung (Korea)
 
 SPC-800: 64kB RAM
 
-  ------------------------------------------------------------------------
+
 
 Sanyo (Japan)
 
@@ -1969,20 +2229,20 @@ PHC-30N: 64kB RAM
 PHC-33: 32kB RAM
 WAVY-MPC-10: 32KB (other source says 16KB) RAM, built in light pen unit
 
-  ------------------------------------------------------------------------
+
 
 Schneider (Germany)
 
 MC-810: 32kB RAM, (Same as Philips VG-8010 with a different color case)
 
-  ------------------------------------------------------------------------
+
 
 Sharp/Epcom (Brazil)
 
 HB-8000 HotBit: 64kB RAM (white colour)
 HB-8000 HotBit 1.2: 64kB RAM (in black color)
 
-  ------------------------------------------------------------------------
+
 
 Sony (Japan)
 
@@ -2002,7 +2262,7 @@ HB-501: 64kB RAM, built in tape recorder ('BitCorder'), pause button, joystick
 HB-701, 64kB RAM
 HB-701FD: 64kB RAM, floppy disk drive
 
-  ------------------------------------------------------------------------
+
 
 Spectravideo (Hong-Kong/USA)
 
@@ -2010,13 +2270,13 @@ SVI-728: 64kB RAM, numeric keypad
 SVI-738: 64kB RAM, built in 80 columns card (V9938), RS232C interface, 360KB 3,5" floppy 
 disk drive. Also called X'PRESS and also SVI-318 and SVI-328 MSX compatible with an emulator
 
-  ------------------------------------------------------------------------
+
 
 Talent/Telematica (Argentina)
 
 DPC-200: 64kB RAM, Daewoo's MSX model sold under the Talent name
 
-  ------------------------------------------------------------------------
+
 
 Toshiba (Japan)
 
@@ -2038,13 +2298,13 @@ HX-31: ??kB RAM, built in software
 HX-32: ??kB RAM, built in software
 HX-51: ??kB RAM
 
-  ------------------------------------------------------------------------
+
 
 Triton (Hong-Kong)
 
 PC64: 64kB RAM
 
-  ------------------------------------------------------------------------
+
 
 Yamaha (Japan)
 
@@ -2060,7 +2320,7 @@ YIS-303: 16kB RAM
 YIS-503: 32kB RAM
 YIS-503II/64: 64kB RAM, FDD
 
-  ------------------------------------------------------------------------
+
 
 Yashica (Japan)
 
@@ -2153,6 +2413,14 @@ $end
 $info=nes
 $bio
 Nintendo Entertainment System/Famicom
+
+
+Usage:
+Note that the one player hand controller Select is mapped as Coin 1 (default key 5), and 
+Start is mapped as Player 1 Start (default key 1). This makes it convenient to use the driver
+with a "MAME" configured controller.
+
+Famicom Disk System switching is mapped to Player 1 Button 3 (default key [space]).
 
 
 Known Issues:
@@ -2333,6 +2601,124 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=pc1350
+$bio
+Sharp Pocket Computer 1350
+
+
+Trivia:
+
+Features of this model included a BASIC interpreter, an 8-bit sharp CPU, 150x32 pixel 
+display, 8+32K ROM, 4K RAM which was expandable with a RAM cartridge to 12 or 20K.
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=pc1401
+$bio
+Sharp Pocket Computer 1401
+
+
+Usage Notes:
+
+Holding C-CE while reseting, preserves basic programs.
+(simulated when starting mess)
+
+
+error codes found at the inner side of the top:
+( should be the same for several models)
+1 syntax error
+2 calculation error
+3 illegal function argument
+4 too large a line number
+5 next without for
+  return without gosub
+6 memory overflow
+7 print using error
+8 i/o device error
+9 other errors
+
+
+
+History and Trivia:
+
+The PC 1401 was a combination scientific calculator and computer with BASIC interpreter.
+Featured an 8-bit Sharp CPU,  8+32K ROM, 4K RAM, and 16 5x7 character display. The PC 1402 
+has the same features but includes 10K of RAM.
+
+
+Other related models (not currently supported by MESS) include -
+
+
+
+pc1251
+basic computer
+24 5x7 character display
+
+
+
+pc1253
+calculator
+derived from the pc1251, reduced keyboard
+
+
+
+pc1260
+basic computer
+16x2 5x7 character display
+8 bit sharp cpu
+6+32kb rom, 4kb ram
+
+
+
+pc1261
+pc1260 with 10kb ram
+
+
+
+pc1360
+pc1350 with?
+
+
+
+pc1403
+derived from the pc1401
+8+32+32kb rom, 8 kb ram
+24 5x7 character display
+
+
+
+pc1403h
+pc1403 with 32 kb ram
+
+
+
+pc1421
+derived from the pc1401
+
+
+
+pc1430
+prequel to pc1401
+
+
+
+pc1450
+pc1401 with some additional keys
+
+
+
+pc1475
+derived from the pc1450 with some pc1403 features
+24x2 5x7 character display
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=pce
 $bio
 NEC PC Engine/TurboGrafx-16
@@ -2416,9 +2802,11 @@ Other programs have been written for it, including a CP/M "shell" by John Elliot
 "Run External Program" from the "Tasks" menu.
 
 This system contains the "Anne" ASIC custom chip designed by Amstrad. Technical 
-information is still available at Cliff Lawsons website. (web.ukonline.co.uk/cliff.lawson/).
+information is still available and the rescue disc can be downloaded from Cliff Lawsons 
+Amstrad computer support site at: http://web.ukonline.co.uk/cliff.lawson/ (the disc is 
+listed in the files section). Cliff works at Amstrad plc, and has worked on the many 
+projects from the Amstrad CPC to the latest e-mail phone.
 
-In my opinion it's a nice machine.
 
 $end
 
@@ -2441,6 +2829,10 @@ Commodore PET series
 
 
 History and Trivia:
+
+The name PET, besides being a marketing ploy to imply a user-friendly machine, is an acronym 
+for "Personal Electronic Translator".
+
 
 The Commodore PET 2001 was a great success. Three models were made : the PET 2001-8N with 8 KB 
 RAM, PET 2001-16N with 16 KB RAM and the PET 2001-32N. They were conceived by Chuck Peddle who 
@@ -2499,7 +2891,27 @@ pressing 8 several times.
 
 $end
 
+
 #---------------------------------------------------------------------------------------------#
+
+
+$info=spec128
+$bio
+ZX Spectrum 128
+
+Usage Notes:
+
+A HTML version of the Spectrum 128 manual (converted by Damien Burke, with the approval of 
+the copyright holder Amstrad) is available at:
+
+http://www.jetman.dircon.co.uk/speccy/128manua/index.html
+
+
+$end
+
+
+#----
+
 
 $info=spectrum
 $bio
@@ -2807,6 +3219,48 @@ Tenchi O Kurau II (1995)
 
 $end
 
+#---------------------------------------------------------------------------------------------#
+
+$info=snes
+$bio
+Super Nintendo Entertainment System
+
+
+Usage Notes/Known Issues:
+
+This driver is preliminary, most images will not work. Super Mario World (US version) is
+playable.
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+
+$info=studio2
+$bio
+RCA Studio 2
+
+
+2 Keypads: Player 1 left, Player 2 right
+
+Keypads have following Layout
+ 1 2 3
+ 4 5 6
+ 7 8 9
+   0
+
+The console has 5 Built in programs. Without a cartridge inserted, the screen stays black 
+after turning on. Player 1 selects game.
+
+1 Paint? not working now
+2 Not sure what game 2 is; it's not working currently
+3 Bowling, working
+4 Rally, not working now
+5 Math (calculate the sum of the 3 digits, and enter it), working
+
+$end
+
 
 #---------------------------------------------------------------------------------------------#
 
@@ -2949,7 +3403,7 @@ $end
 #Known Issues:
 
 #This TI99/2 driver is preliminary and could not be tested.  (It may work,
-#it may not work.)
+#it may not work.) It is commented out in the source code distribution.
 
 
 #History and Trivia:
@@ -3024,15 +3478,14 @@ floppy disc controller with up to four virtual floppy disc drives contained in i
 
 History and Trivia:
 
-The Tandy TRS-80 model 1 was the first member of one of the most famous computer families. It 
-is one of the first home computers and was launched at the same time as such famous computers 
-as the Mits Altair or the Apple 1. It used a black & white TV set without a tuner as monitor. 
-The earliest models used a poor basic called Basic Level 1 (the basic and the OS fits in the 4 
-KB ROM !) which had no instruction to save the program! It was replaced later with the Basic 
-Level 2 which needs a 12 KB ROM. To offset its poor characteristics, Tandy developed a device 
-called the Expansion Interface which brought a lot of new features: 16, 32 or 48 KB RAM, two 
-tape unit connectors, a printer port, a floppy disk controller, a serial port and a real 
-time clock.
+The Tandy TRS-80 model 1, released in August 1977 at a US retail price of $399 for just the 
+keyboard/computer or $599 including display and cassette storage unit, was the first member 
+of one of the most famous computer families.The earliest models used a poor BASIC interpreter 
+called Basic Level 1 (the interpreter and the OS fit in the 4 KB ROM) which had no instruction 
+to save the program! It was replaced later with the Basic Level 2 which needed a 12 KB ROM. 
+To offset its poor characteristics, Tandy developed a device called the Expansion Interface 
+which brought a lot of new features: 16, 32 or 48 KB RAM, two tape unit connectors, a printer 
+port, a floppy disk controller, a serial port and a real time clock.
 
 
 When it was connected to a floppy disk unit, the TRS 80 used the TRS DOS operating system, it 
@@ -3069,6 +3522,9 @@ Almost every cartridge is playable, except those requiring the light pen. See ve
 a current compatibility list. Overlays are supported in .png format, using the same name as 
 the cartridge image being loaded. Place overlays in the artwork directory. The overlay for
 the built in minestorm game must be named "mine.png" to load when no image is selected.
+
+Current Bug -- The vectrex overlays have not worked in the 37 beta cycle. This is being 
+looked into.
 
 
 History and Trivia:
@@ -3250,7 +3706,7 @@ of peripherals were developed for this computer as well as a lot of software. Wh
 obsolete, Commodore replaced it by the Commodore 16 which had no success.
 
 Note that its name came from the name of its video chip VIC (Video Interface Chip) and 
-its memory size : 5 KB RAM + 15 KB ROM = 20 KB ! 
+its memory size : 5 KB RAM + 15 KB ROM = 20 KB ! The European VC20 stands for VolksComputer.
 
 
 $end

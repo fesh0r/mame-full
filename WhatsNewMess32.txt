@@ -6,6 +6,8 @@ Whats new:
 
 - Fixed a bug that could cause software to be improperly selected if it was
   selected, unselected, and MESS32 restarted. [Nate Woods]
+- Fixed MESS32 so that it looks for sysinfo.dat instead of history.dat [Nate
+  Woods]
 
 ----------
 0.37 BETA 10

@@ -1133,6 +1133,13 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 
     srand((unsigned)time(NULL));
 
+#ifdef MESS
+	{
+		extern char *history_filename;
+		history_filename = "sysinfo.dat";
+	}
+#endif /* MESS */
+
     joygui = NULL;
 
     game_count = 0;
