@@ -516,9 +516,9 @@ SYSTEM_CONFIG_START(mz700)
 	CONFIG_DEVICE_CASSETTE(1, "m12\0", device_load_mz700_cassette)
 SYSTEM_CONFIG_END
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT	CONFIG	COMPANY      FULLNAME */
-COMP( 1982, mz700,	  0,		mz700,	  mz700,	mz700,	mz700,	"Sharp",     "MZ-700" )
-COMP( 1982, mz700j,   mz700,	mz700,	  mz700,	mz700,	mz700,	"Sharp",     "MZ-700 (Japan)" )
-COMP( 1982, mz800,	  mz700,	mz800,	  mz700,	mz800,	mz700,	"Sharp",     "MZ-800" )
+/*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT	CONFIG	COMPANY      FULLNAME */
+COMP( 1982, mz700,	  0,		0,		mz700,	  mz700,	mz700,	mz700,	"Sharp",     "MZ-700" )
+COMP( 1982, mz700j,   mz700,	0,		mz700,	  mz700,	mz700,	mz700,	"Sharp",     "MZ-700 (Japan)" )
+COMP( 1982, mz800,	  mz700,	0,		mz800,	  mz700,	mz800,	mz700,	"Sharp",     "MZ-800" )
 
 

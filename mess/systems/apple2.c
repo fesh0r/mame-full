@@ -543,30 +543,8 @@ static MACHINE_DRIVER_START( apple2 )
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( apple2e )
-	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", M6502, 1021800)		/* close to actual CPU frequency of 1.020484 MHz */
-	MDRV_CPU_MEMORY(readmem_apple2, writemem_apple2)
-	MDRV_CPU_VBLANK_INT(apple2_interrupt, 192/8)
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(1)
-
-	MDRV_MACHINE_INIT( apple2 )
-
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
-	MDRV_SCREEN_SIZE(280*2, 192)
-	MDRV_VISIBLE_AREA(0, (280*2)-1,0,192-1)
+	MDRV_IMPORT_FROM( apple2 )
 	MDRV_GFXDECODE(apple2e_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(apple2_palette)/3)
-	MDRV_COLORTABLE_LENGTH(sizeof(apple2_colortable)/sizeof(unsigned short))
-	MDRV_PALETTE_INIT(apple2)
-
-	MDRV_VIDEO_START(apple2)
-	MDRV_VIDEO_UPDATE(apple2)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, apple2_DAC_interface)
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 MACHINE_DRIVER_END
 
 
@@ -683,13 +661,12 @@ SYSTEM_CONFIG_START(apple2)
 	CONFIG_RAM_DEFAULT			(128 * 1024)
 SYSTEM_CONFIG_END
 
-/*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG	COMPANY            FULLNAME */
-COMP ( 1977, apple2,   0,        apple2,  apple2,   apple2,   apple2,	"Apple Computer", "Apple ][" )
-COMP ( 1979, apple2p,  apple2,   apple2,  apple2,   apple2,   apple2,	"Apple Computer", "Apple ][+" )
-COMP ( 1983, apple2e,  0,        apple2e,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //e" )
-COMP ( 1985, apple2ee, apple2e,  apple2ee, apple2,   apple2,   apple2,	"Apple Computer", "Apple //e (enhanced)" )
-COMP ( 1987, apple2ep, apple2e,  apple2ee, apple2,   apple2,   apple2,	"Apple Computer", "Apple //e (Platinum)" )
-COMP ( 1984, apple2c,  0,        apple2c,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //c" )
-COMPX( 1985, apple2c0, apple2c,  apple2c,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //c (UniDisk 3.5)",	GAME_NOT_WORKING )
-COMPX( 1988, apple2cp, apple2c,  apple2c,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //c Plus",			GAME_NOT_WORKING )
-
+/*     YEAR  NAME      PARENT    COMPAT		MACHINE   INPUT     INIT      CONFIG	COMPANY            FULLNAME */
+COMP ( 1977, apple2,   0,        0,			apple2,   apple2,   apple2,   apple2,	"Apple Computer", "Apple ][" )
+COMP ( 1979, apple2p,  apple2,   0,			apple2,   apple2,   apple2,   apple2,	"Apple Computer", "Apple ][+" )
+COMP ( 1983, apple2e,  0,        apple2,	apple2e,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //e" )
+COMP ( 1985, apple2ee, apple2e,  0,			apple2ee, apple2,   apple2,   apple2,	"Apple Computer", "Apple //e (enhanced)" )
+COMP ( 1987, apple2ep, apple2e,  0,			apple2ee, apple2,   apple2,   apple2,	"Apple Computer", "Apple //e (Platinum)" )
+COMP ( 1984, apple2c,  0,        apple2,	apple2c,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //c" )
+COMPX( 1985, apple2c0, apple2c,  0,			apple2c,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //c (UniDisk 3.5)",	GAME_NOT_WORKING )
+COMPX( 1988, apple2cp, apple2c,  0,			apple2c,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //c Plus",			GAME_NOT_WORKING )

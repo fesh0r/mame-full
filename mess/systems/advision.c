@@ -102,6 +102,6 @@ SYSTEM_CONFIG_END
 
 ***************************************************************************/
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT	CONFIG		COMPANY   FULLNAME */
-CONSX( 1982, advision, 0,		advision, advision,	0,		advision,	"Entex",  "Adventurevision", GAME_NO_SOUND )
+/*    YEAR  NAME		PARENT	COMPAT	MACHINE   INPUT     INIT	CONFIG		COMPANY   FULLNAME */
+CONSX(1982, advision,	0,		0,		advision, advision,	0,		advision,	"Entex",  "Adventurevision", GAME_NO_SOUND )
 

@@ -462,5 +462,5 @@ SYSTEM_CONFIG_START(cgenie)
 	CONFIG_DEVICE_LEGACY			(IO_CASSETTE, 1, "cas\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_NONE, NULL, NULL, device_load_cgenie_cassette, NULL, NULL)
 SYSTEM_CONFIG_END
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  CONFIG     COMPANY	FULLNAME */
-COMP( 1982, cgenie,   0,		cgenie,   cgenie,	cgenie,   cgenie,    "EACA Computers Ltd.",  "Colour Genie EG2000" )
+/*	  YEAR	NAME	  PARENT	COMPAT	MACHINE   INPUT 	INIT	  CONFIG     COMPANY	FULLNAME */
+COMP( 1982, cgenie,   0,		0,		cgenie,   cgenie,	cgenie,   cgenie,    "EACA Computers Ltd.",  "Colour Genie EG2000" )

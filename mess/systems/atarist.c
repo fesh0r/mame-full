@@ -2361,5 +2361,5 @@ http://home.wanadoo.nl/jarod/museum/megaste.htm
 /* 1987 : Mega STf - Seperate keyboard, blitter, 1/2/4 Meg ram options */
 /* 1989 : Mega STe - Seperate keyboard, 16MHz 68000 (switchable to 8MHz), memory cache, VME bus, TOS 2.05 & 2.06 */
 
-/*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT	CONFIG   COMPANY    FULLNAME */
-COMP ( 1985, atarist,  0,        atarist,  atarist,  0,     atarist, "atarist", "atarist" )
+/*     YEAR  NAME      PARENT    COMPAT	MACHINE   INPUT     INIT	CONFIG   COMPANY    FULLNAME */
+COMP ( 1985, atarist,  0,        0,		atarist,  atarist,  0,     atarist, "atarist", "atarist" )

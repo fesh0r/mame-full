@@ -441,10 +441,10 @@ SYSTEM_CONFIG_START(c65)
 	CONFIG_DEVICE_C65QUICK
 SYSTEM_CONFIG_END
 
-/*		YEAR	NAME	PARENT	MACHINE INPUT	INIT		CONFIG  COMPANY 							FULLNAME */
-COMPX ( 1991,	c65,	0,		c65,	c65,	c65,		c65,	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 911001)",        GAME_NOT_WORKING)
-COMPX ( 1991,	c65e,	c65,	c65,	c65,	c65,		c65,	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910828)",        GAME_NOT_WORKING)
-COMPX ( 1991,	c65d,	c65,	c65,	c65,	c65,		c65,	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910626)",        GAME_NOT_WORKING)
-COMPX ( 1991,	c65c,	c65,	c65,	c65,	c65,		c65,	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910523)",        GAME_NOT_WORKING)
-COMPX ( 1991,	c65ger, c65,	c65pal, c65ger, c65pal, 	c65,	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, German PAL, 910429)",  GAME_NOT_WORKING)
-COMPX ( 1991,	c65a,	c65,	c65,	c65,	c65_alpha1, c65,	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910111)",        GAME_NOT_WORKING)
+/*		YEAR	NAME	PARENT	COMPAT	MACHINE INPUT	INIT		CONFIG  COMPANY 							FULLNAME */
+COMPX ( 1991,	c65,	0,		0,		c65,	c65,	c65,		c65,	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 911001)",        GAME_NOT_WORKING)
+COMPX ( 1991,	c65e,	c65,	0,		c65,	c65,	c65,		c65,	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910828)",        GAME_NOT_WORKING)
+COMPX ( 1991,	c65d,	c65,	0,		c65,	c65,	c65,		c65,	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910626)",        GAME_NOT_WORKING)
+COMPX ( 1991,	c65c,	c65,	0,		c65,	c65,	c65,		c65,	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910523)",        GAME_NOT_WORKING)
+COMPX ( 1991,	c65ger, c65,	0,		c65pal, c65ger, c65pal, 	c65,	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, German PAL, 910429)",  GAME_NOT_WORKING)
+COMPX ( 1991,	c65a,	c65,	0,		c65,	c65,	c65_alpha1, c65,	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910111)",        GAME_NOT_WORKING)

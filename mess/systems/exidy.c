@@ -822,5 +822,5 @@ SYSTEM_CONFIG_START(exidy)
 	//CONFIG_DEVICE_CASSETTE		(2,	"",			device_load_exidy_cassette)
 SYSTEM_CONFIG_END
 
-/*	  YEAR	NAME	PARENT	MACHINE	INPUT	INIT	CONFIG	COMPANY        FULLNAME */
-COMPX(1979,	exidy,	0,		exidy,	exidy,	0,		exidy,	"Exidy Inc", "Sorcerer", GAME_NOT_WORKING | GAME_NO_SOUND)
+/*	  YEAR	NAME	PARENT	COMPAT	MACHINE	INPUT	INIT	CONFIG	COMPANY        FULLNAME */
+COMPX(1979,	exidy,	0,		0,		exidy,	exidy,	0,		exidy,	"Exidy Inc", "Sorcerer", GAME_NOT_WORKING | GAME_NO_SOUND)

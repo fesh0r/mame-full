@@ -239,5 +239,5 @@ SYSTEM_CONFIG_START(jupiter)
 	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "tap\0", DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_READ, NULL, NULL, device_load_jupiter_tap, device_unload_jupiter_tap, NULL)
 SYSTEM_CONFIG_END
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */
-COMP( 1981, jupiter,  0,		jupiter,  jupiter,	0,		  jupiter,	"Cantab",  "Jupiter Ace" )
+/*    YEAR  NAME      PARENT    COMPAT	MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */
+COMP( 1981, jupiter,  0,		0,		jupiter,  jupiter,	0,		  jupiter,	"Cantab",  "Jupiter Ace" )

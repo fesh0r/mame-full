@@ -224,14 +224,14 @@ SYSTEM_CONFIG_END
 
 ***************************************************************************/
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT	CONFIG	COMPANY   FULLNAME */
-CONS( 1982, coleco,   0,        coleco,   coleco,   0,		coleco,	"Coleco", "Colecovision" )
-CONS( 1982, colecoa,  coleco,   coleco,   coleco,   0,		coleco,	"Coleco", "Colecovision (Thick Characters)" )
+/*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT	CONFIG	COMPANY   FULLNAME */
+CONS( 1982, coleco,   0,		0,		coleco,   coleco,   0,		coleco,	"Coleco", "Colecovision" )
+CONS( 1982, colecoa,  coleco,	0,		coleco,   coleco,   0,		coleco,	"Coleco", "Colecovision (Thick Characters)" )
 
 #ifdef COLECO_HACKS
-CONSX(1982, colecofb, coleco,   coleco,   coleco,   0,		coleco,	"Coleco", "Colecovision (Fast BIOS Hack)"
+CONSX(1982, colecofb, coleco,	0,		coleco,   coleco,   0,		coleco,	"Coleco", "Colecovision (Fast BIOS Hack)"
 , GAME_COMPUTER_MODIFIED )
-CONSX(1982, coleconb, coleco,   coleco,   coleco,   0,		coleco,	"Coleco", "Colecovision (NO BIOS Hack)"
+CONSX(1982, coleconb, coleco,	0,		coleco,   coleco,   0,		coleco,	"Coleco", "Colecovision (NO BIOS Hack)"
 , GAME_COMPUTER_MODIFIED )
 #endif
 

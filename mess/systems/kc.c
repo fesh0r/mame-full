@@ -461,7 +461,7 @@ SYSTEM_CONFIG_START(kc85d)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	device_load_kc85_floppy)
 SYSTEM_CONFIG_END
 
-/*     YEAR  NAME      PARENT   MACHINE  INPUT     INIT  CONFIG  COMPANY   FULLNAME */
-COMPX( 1987, kc85_3,   0,		kc85_3,  kc85,     0,    kc85,   "VEB Mikroelektronik", "KC 85/3", GAME_NOT_WORKING)
-COMPX( 1989, kc85_4,   kc85_3,  kc85_4,  kc85,     0,    kc85,   "VEB Mikroelektronik", "KC 85/4", GAME_NOT_WORKING)
-COMPX( 1989, kc85_4d,  kc85_3,  kc85_4d, kc85,     0,    kc85,   "VEB Mikroelektronik", "KC 85/4 + Disk Interface Module (D004)", GAME_NOT_WORKING)
+/*     YEAR  NAME      PARENT	COMPAT	MACHINE  INPUT     INIT  CONFIG  COMPANY   FULLNAME */
+COMPX( 1987, kc85_3,   0,		0,		kc85_3,  kc85,     0,    kc85,   "VEB Mikroelektronik", "KC 85/3", GAME_NOT_WORKING)
+COMPX( 1989, kc85_4,   kc85_3,  0,		kc85_4,  kc85,     0,    kc85,   "VEB Mikroelektronik", "KC 85/4", GAME_NOT_WORKING)
+COMPX( 1989, kc85_4d,  kc85_3,  0,		kc85_4d, kc85,     0,    kc85,   "VEB Mikroelektronik", "KC 85/4 + Disk Interface Module (D004)", GAME_NOT_WORKING)

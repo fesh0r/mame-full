@@ -697,19 +697,19 @@ SYSTEM_CONFIG_END
 
 ***************************************************************************/
 
-/*	   YEAR		NAME		PARENT	MACHINE     INPUT	    INIT	    CONFIG   COMPANY	 FULLNAME */
-COMPX ( 1985,	ibmat,		0,		atcga,		atcga,		atcga,	    ibmat,   "International Business Machines",  "IBM PC/AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
-COMPX ( 1988,	i8530286,	ibmat,	ps2m30286,	atvga,		ps2m30286,	ibmat,   "International Business Machines",  "IBM PS2 Model 30 286", GAME_NOT_WORKING )
+/*	   YEAR		NAME		PARENT	COMPAT	MACHINE     INPUT	    INIT	    CONFIG   COMPANY	 FULLNAME */
+COMPX ( 1985,	ibmat,		0,		0,		atcga,		atcga,		atcga,	    ibmat,   "International Business Machines",  "IBM PC/AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMPX ( 1988,	i8530286,	ibmat,	0,		ps2m30286,	atvga,		ps2m30286,	ibmat,   "International Business Machines",  "IBM PS2 Model 30 286", GAME_NOT_WORKING )
 #ifdef MESS_DEBUG
-COMPX ( 1987,	at,			ibmat,	atcga,      atcga,		atcga,	    ibmat,   "",  "PC/AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMPX ( 1987,	at,			ibmat,	0,		atcga,      atcga,		atcga,	    ibmat,   "",  "PC/AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 #else
-COMPX ( 1987,	at,			0,	    atcga,      atcga,		atcga,	    ibmat,   "",  "PC/AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMPX ( 1987,	at,			0,	    0,		atcga,      atcga,		atcga,	    ibmat,   "",  "PC/AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 #endif
-COMPX ( 1989,	neat,		ibmat,	atcga,      atcga,		atcga,	    ibmat,   "",  "NEAT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMPX ( 1989,	neat,		ibmat,	0,		atcga,      atcga,		atcga,	    ibmat,   "",  "NEAT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 #ifdef HAS_I386
-COMPX ( 1988,	at386,		ibmat,	at386,      atcga,		at386,	    ibmat,   "MITAC INC",  "PC/AT 386(CGA, MF2 Keyboard)", GAME_NOT_WORKING )
-COMPX ( 1990,	at486,		ibmat,	at386,      atcga,		at386,	    ibmat,   "",  "PC/AT 486(CGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMPX ( 1988,	at386,		ibmat,	0,		at386,      atcga,		at386,	    ibmat,   "MITAC INC",  "PC/AT 386(CGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMPX ( 1990,	at486,		ibmat,	0,		at386,      atcga,		at386,	    ibmat,   "",  "PC/AT 486(CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 #endif
 
 // these drivers will be discarded soon
-COMPX ( 1987,	atvga,		ibmat,	atvga,      atvga,		at_vga,     ibmat,   "",  "PC/AT (VGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMPX ( 1987,	atvga,		ibmat,	0,		atvga,      atvga,		at_vga,     ibmat,   "",  "PC/AT (VGA, MF2 Keyboard)", GAME_NOT_WORKING )

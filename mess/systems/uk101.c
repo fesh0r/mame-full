@@ -272,7 +272,7 @@ SYSTEM_CONFIG_START(uk101)
 	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "bas\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, device_load_uk101_cassette, device_unload_uk101_cassette, NULL)
 SYSTEM_CONFIG_END
 
-/*    YEAR	NAME		PARENT	MACHINE		INPUT	INIT	CONFIG  COMPANY				FULLNAME */
-COMP( 1979,	uk101,		0,		uk101,		uk101,	0,		uk101,	"Compukit",			"UK101" )
-COMP( 1979, superbrd,	uk101,	superbrd,	uk101,	0,		uk101,	"Ohio Scientific",	"Superboard II" )
+/*    YEAR	NAME		PARENT	COMPAT	MACHINE		INPUT	INIT	CONFIG  COMPANY				FULLNAME */
+COMP( 1979,	uk101,		0,		0,		uk101,		uk101,	0,		uk101,	"Compukit",			"UK101" )
+COMP( 1979, superbrd,	uk101,	0,		superbrd,	uk101,	0,		uk101,	"Ohio Scientific",	"Superboard II" )
 

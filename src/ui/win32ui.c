@@ -548,6 +548,7 @@ struct GameDriver driver_neogeo =
 	0,
 #ifdef MESS
 	0,
+	0,
 #endif
 	NOT_A_DRIVER,
 };

@@ -328,9 +328,9 @@ SYSTEM_CONFIG_START(nascom2)
 	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "cas\0nas\0bin\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, device_load_nascom1_cassette, device_unload_nascom1_cassette, NULL)
 SYSTEM_CONFIG_END
 
-/*	  YEAR	NAME		PARENT		MACHINE		INPUT		INIT	CONFIG		COMPANY		FULLNAME */
-COMP( 1978,	nascom1,	0,			nascom1,	nascom1,	0,		nascom1,	"Nascom Microcomputers",	"Nascom 1 (NasBug T1)" )
-COMP( 1978,	nascom1a,	nascom1,	nascom1,	nascom1,	0,		nascom1,	"Nascom Microcomputers",	"Nascom 1 (NasBug T2)" )
-COMP( 1978,	nascom1b,	nascom1,	nascom1,	nascom1,	0,		nascom1,	"Nascom Microcomputers",	"Nascom 1 (NasBug T4)" )
-COMP( 1979,	nascom2,	nascom1,	nascom2,	nascom1,	0,		nascom2,	"Nascom Microcomputers",	"Nascom 2 (NasSys 1)" )
-COMP( 1979,	nascom2a,	nascom1,	nascom2,	nascom1,	0,		nascom2,	"Nascom Microcomputers",	"Nascom 2 (NasSys 3)" )
+/*	  YEAR	NAME		PARENT		COMPAT	MACHINE		INPUT		INIT	CONFIG		COMPANY		FULLNAME */
+COMP( 1978,	nascom1,	0,			0,		nascom1,	nascom1,	0,		nascom1,	"Nascom Microcomputers",	"Nascom 1 (NasBug T1)" )
+COMP( 1978,	nascom1a,	nascom1,	0,		nascom1,	nascom1,	0,		nascom1,	"Nascom Microcomputers",	"Nascom 1 (NasBug T2)" )
+COMP( 1978,	nascom1b,	nascom1,	0,		nascom1,	nascom1,	0,		nascom1,	"Nascom Microcomputers",	"Nascom 1 (NasBug T4)" )
+COMP( 1979,	nascom2,	nascom1,	0,		nascom2,	nascom1,	0,		nascom2,	"Nascom Microcomputers",	"Nascom 2 (NasSys 1)" )
+COMP( 1979,	nascom2a,	nascom1,	0,		nascom2,	nascom1,	0,		nascom2,	"Nascom Microcomputers",	"Nascom 2 (NasSys 3)" )

@@ -349,6 +349,6 @@ SYSTEM_CONFIG_END
 
 ***************************************************************************/
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	CONFIG		COMPANY	FULLNAME */
-CONS( 1988, genesis,  0,		genesis,  genesis,	0,		genesis,	"Sega",   "Megadrive / Genesis" )
+/*	  YEAR	NAME	  PARENT	COMPAT	MACHINE   INPUT 	INIT	CONFIG		COMPANY	FULLNAME */
+CONS( 1988, genesis,  0,		0,		genesis,  genesis,	0,		genesis,	"Sega",   "Megadrive / Genesis" )
 

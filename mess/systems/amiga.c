@@ -120,6 +120,6 @@ SYSTEM_CONFIG_START(amiga)
 	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 4, "adf\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, amiga_fdc_init, NULL, amiga_fdc_load, NULL, NULL)
 SYSTEM_CONFIG_END
 
-/*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT	CONFIG	COMPANY	FULLNAME */
-COMPX( 1984, amiga,    0,        ntsc,     amiga,    0,		amiga,	"Commodore Business Machines Co.",  "Amiga 500 (NTSC)", GAME_NOT_WORKING )
-COMPX( 1990, cdtv,     0,        ntsc,     amiga,    0,		amiga,	"Commodore Business Machines Co.",  "Amiga CDTV (NTSC)", GAME_NOT_WORKING )
+/*     YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT	CONFIG	COMPANY	FULLNAME */
+COMPX( 1984, amiga,    0,		0,		ntsc,     amiga,    0,		amiga,	"Commodore Business Machines Co.",  "Amiga 500 (NTSC)", GAME_NOT_WORKING )
+COMPX( 1990, cdtv,     0,       0,		ntsc,     amiga,    0,		amiga,	"Commodore Business Machines Co.",  "Amiga CDTV (NTSC)", GAME_NOT_WORKING )

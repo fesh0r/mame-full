@@ -330,12 +330,5 @@ SYSTEM_CONFIG_END
 
 ***************************************************************************/
 
-static DRIVER_INIT( comquest )
-{
-//	int i;
-//	UINT8 *gfx=memory_region(REGION_GFX1);
-//	for (i=0; i<256; i++) gfx[i]=i;
-}
-
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT		CONFIG		MONITOR	COMPANY   FULLNAME */
-CONS( 19??, comquest, 0, 		comquest, comquest, comquest,	comquest,	"Data Concepts",  "Comquest Plus German")
+/*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT	CONFIG		MONITOR	COMPANY   FULLNAME */
+CONS( 19??, comquest, 0, 		0,		comquest, comquest, 0,		comquest,	"Data Concepts",  "Comquest Plus German")

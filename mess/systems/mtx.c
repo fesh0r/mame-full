@@ -886,5 +886,5 @@ SYSTEM_CONFIG_START(mtx512)
 	CONFIG_RAM_DEFAULT(512 * 1024)
 SYSTEM_CONFIG_END
 
-/*    YEAR  NAME      PARENT  MACHINE   INPUT     INIT     CONFIG,  COMPANY          FULLNAME */
-COMP( 1983, mtx512,   0,      mtx512,   mtx512,   0,       mtx512,  "Memotech Ltd.", "MTX 512" )
+/*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT     CONFIG,  COMPANY          FULLNAME */
+COMP( 1983, mtx512,   0,		0,		mtx512,   mtx512,   0,       mtx512,  "Memotech Ltd.", "MTX 512" )

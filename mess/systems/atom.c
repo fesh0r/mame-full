@@ -310,6 +310,6 @@ SYSTEM_CONFIG_START(atom)
 	CONFIG_DEVICE_QUICKLOAD			(	"atm\0",	atom)
 SYSTEM_CONFIG_END
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG   COMPANY   FULLNAME */
-COMP( 1979, atom,     0,        atom,     atom,     0,        atom,    "Acorn",  "Atom" )
-COMP( 1979, atomeb,   atom,     atomeb,   atom,     0,        atom,    "Acorn",  "Atom with Eprom Box" )
+/*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT      CONFIG   COMPANY   FULLNAME */
+COMP( 1979, atom,     0,        0,		atom,     atom,     0,        atom,    "Acorn",  "Atom" )
+COMP( 1979, atomeb,   atom,     0,		atomeb,   atom,     0,        atom,    "Acorn",  "Atom with Eprom Box" )

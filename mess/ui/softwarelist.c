@@ -609,6 +609,15 @@ static void InternalFillSoftwareList(struct SmartListView *pSoftwareListView, in
 #endif /* HAS_IDLING */
 }
 
+static const struct GameDriver *NextCompatibleDriver(const struct GameDriver *drv)
+{
+	if (drv->clone_of && !(drv->clone_of->flags && NOT_A_DRIVER))
+		return drv->clone_of;
+	if (drv->compatible_with && !(drv->compatible_with->flags && NOT_A_DRIVER))
+		return drv->compatible_with;
+	return NULL;
+}
+
 void FillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nBasePaths, LPCSTR *plpBasePaths, LPCSTR lpExtraPath)
 {
 	LPCSTR s;
@@ -617,8 +626,8 @@ void FillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nB
 	int nTotalPaths;
 	int i;
 	int nPath;
-	const char *system_dir;
-	const char *parent_dir;
+	int nChainCount;
+	const struct GameDriver *drv;
 	char buffer[MAX_PATH];
 
 	assert(pSoftwareListView);
@@ -634,29 +643,33 @@ void FillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nB
 		}
 	}
 
-	system_dir = drivers[nGame]->name;
-	parent_dir = (drivers[nGame]->clone_of && !(drivers[nGame]->clone_of->flags & NOT_A_DRIVER)) ? drivers[nGame]->clone_of->name : NULL;
+	nChainCount = 0;
+	drv = drivers[nGame];
+	while(drv)
+	{
+		nChainCount++;
+		drv = NextCompatibleDriver(drv);
+	}
 
-	nTotalPaths = (nBasePaths * (parent_dir ? 2 : 1) + nExtraPaths);
+	nTotalPaths = (nBasePaths * nChainCount + nExtraPaths);
 
 	plpPaths = (LPSTR *) alloca(nTotalPaths * sizeof(LPCSTR));
 	memset(plpPaths, 0, nTotalPaths * sizeof(LPCSTR));
 
 	/* Now fill the paths */
 	nPath = 0;
-	for (i = 0; i < nBasePaths; i++) {
-		/* Add default directory for system */
-		snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), "%s\\%s", plpBasePaths[i], system_dir);
-		plpPaths[nPath] = alloca((strlen(buffer) + 1) * sizeof(buffer[0]));
-		strcpy(plpPaths[nPath], buffer);
-		nPath++;
-
-		/* If there is a parent, add that directory also */
-		if (parent_dir) {
-			snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), "%s\\%s", plpBasePaths[i], parent_dir);
+	for (i = 0; i < nBasePaths; i++)
+	{
+		drv = drivers[nGame];
+		while(drv)
+		{
+			/* Add default directory for system */
+			snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), "%s\\%s", plpBasePaths[i], drv->name);
 			plpPaths[nPath] = alloca((strlen(buffer) + 1) * sizeof(buffer[0]));
 			strcpy(plpPaths[nPath], buffer);
 			nPath++;
+
+			drv = NextCompatibleDriver(drv);
 		}
 	}
 

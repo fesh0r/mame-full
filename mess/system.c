@@ -20,18 +20,19 @@
 /* The "root" driver, defined so we can have &driver_##NAME in macros. */
 struct GameDriver driver_0 =
 {
-  __FILE__,
-  0,
-  "root",
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  NOT_A_DRIVER,
+	__FILE__,
+	0,
+	"root",
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	NOT_A_DRIVER,
 };
 
 #endif

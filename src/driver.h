@@ -419,6 +419,7 @@ struct GameDriver
 	const struct RomModule *rom;
 #ifdef MESS
 	void (*sysconfig_ctor)(struct SystemConfigurationParamBlock *cfg);
+	const struct GameDriver *compatible_with;
 #endif
 
 	UINT32 flags;	/* orientation and other flags; see defines below */

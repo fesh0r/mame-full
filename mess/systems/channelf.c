@@ -226,7 +226,7 @@ SYSTEM_CONFIG_END
 
 ***************************************************************************/
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT		COMPANY		FULLNAME */
-CONS( 1976, channelf, 0,		channelf, channelf, channelf,	channelf,	"Fairchild", "Channel F" )
+/*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT		COMPANY		FULLNAME */
+CONS( 1976, channelf, 0,		0,		channelf, channelf, channelf,	channelf,	"Fairchild", "Channel F" )
 
 

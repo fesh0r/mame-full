@@ -314,5 +314,5 @@ SYSTEM_CONFIG_START(ti990_10)
 	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 4, "tap\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_OR_READ, device_init_ti990_tape, NULL, device_load_ti990_tape, device_unload_ti990_tape, NULL)
 SYSTEM_CONFIG_END
 
-/*	  YEAR	NAME		PARENT	MACHINE		INPUT		INIT		CONFIG		COMPANY					FULLNAME */
-COMP( 1975,	ti990_10,	0,		ti990_10,	ti990_10,	ti990_10,	ti990_10,	"Texas Instruments",	"TI Model 990/10 Minicomputer System" )
+/*	  YEAR	NAME		PARENT	COMPAT	MACHINE		INPUT		INIT		CONFIG		COMPANY					FULLNAME */
+COMP( 1975,	ti990_10,	0,		0,		ti990_10,	ti990_10,	ti990_10,	ti990_10,	"Texas Instruments",	"TI Model 990/10 Minicomputer System" )

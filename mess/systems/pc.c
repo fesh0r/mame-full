@@ -1706,28 +1706,28 @@ SYSTEM_CONFIG_END
 
 ***************************************************************************/
 
-/*	   YEAR		NAME		PARENT	MACHINE     INPUT	    INIT	    CONFIG   COMPANY	 FULLNAME */
-COMP(  1982,	ibmpc,		0,		pccga,      pccga,	    pccga,	    ibmpc,   "International Business Machines",  "IBM PC 10/27/82" )
-COMP(  1982,	ibmpca,		ibmpc,	pccga,      pccga,	    pccga,	    ibmpc,   "International Business Machines",  "IBM PC 08/16/82" )
-COMP(  1987,	pc,			ibmpc,	pccga,      pccga,		pccga,	    ibmpc,   "",  "PC (CGA)" )
-COMPX( 1985,	bondwell,	ibmpc,	pccga,		bondwell,   bondwell,	ibmpc,   "Bondwell Holding",  "BW230 (PRO28 Series)", GAME_NOT_WORKING )
-COMP(  1988,	europc,		ibmpc,	europc,     europc,		europc,     ibmpc,   "Schneider Rdf. AG",  "EURO PC")
+/*	   YEAR		NAME		PARENT	COMPAT	MACHINE     INPUT	    INIT	    CONFIG   COMPANY	 FULLNAME */
+COMP(  1982,	ibmpc,		0,		0,		pccga,      pccga,	    pccga,	    ibmpc,   "International Business Machines",  "IBM PC 10/27/82" )
+COMP(  1982,	ibmpca,		ibmpc,	0,		pccga,      pccga,	    pccga,	    ibmpc,   "International Business Machines",  "IBM PC 08/16/82" )
+COMP(  1987,	pc,			ibmpc,	0,		pccga,      pccga,		pccga,	    ibmpc,   "",  "PC (CGA)" )
+COMPX( 1985,	bondwell,	ibmpc,	0,		pccga,		bondwell,   bondwell,	ibmpc,   "Bondwell Holding",  "BW230 (PRO28 Series)", GAME_NOT_WORKING )
+COMP(  1988,	europc,		ibmpc,	0,		europc,     europc,		europc,     ibmpc,   "Schneider Rdf. AG",  "EURO PC")
 
 // pcjr (better graphics, better sound)
-COMPX( 1983,	ibmpcjr,	ibmpc,	t1000hx,    tandy1t,	t1000hx,    ibmpc,   "International Business Machines",  "IBM PC Jr", GAME_NOT_WORKING|GAME_IMPERFECT_COLORS )
-COMP(  1987,	t1000hx,	ibmpc,	t1000hx,    tandy1t,	t1000hx,	ibmpc,   "Tandy Radio Shack",  "Tandy 1000HX")
-COMP(  1987,	t1000sx,	ibmpc,	t1000sx,    tandy1t,	t1000hx,	ibmpc,   "Tandy Radio Shack",  "Tandy 1000SX")
+COMPX( 1983,	ibmpcjr,	ibmpc,	0,		t1000hx,    tandy1t,	t1000hx,    ibmpc,   "International Business Machines",  "IBM PC Jr", GAME_NOT_WORKING|GAME_IMPERFECT_COLORS )
+COMP(  1987,	t1000hx,	ibmpc,	0,		t1000hx,    tandy1t,	t1000hx,	ibmpc,   "Tandy Radio Shack",  "Tandy 1000HX")
+COMP(  1987,	t1000sx,	ibmpc,	0,		t1000sx,    tandy1t,	t1000hx,	ibmpc,   "Tandy Radio Shack",  "Tandy 1000SX")
 
 // xt class (pc but 8086)
-COMP(  1986,	ibmxt,		ibmpc,	xtcga,      xtcga,		pccga,		ibmpc,   "International Business Machines",  "IBM PC/XT (CGA)" )
-COMP(  1988,	pc200,		ibmpc,	pc200,		pc200,		pc200,		ibmpc,   "Sinclair Research",  "PC200 Professional Series")
-COMPX( 1988,	pc20,		ibmpc,	pc200,		pc200,		pc200,		ibmpc,   "Amstrad plc",  "Amstrad PC20", GAME_ALIAS)
-COMP(  1986,	pc1512,		ibmpc,	pc1512,     pc1512,		pc1512,		ibmpc,   "Amstrad plc",  "Amstrad PC1512")
-COMPX( 1987,	pc1640,		ibmpc,	pc1640,     pc1640,		pc1640,		ibmpc,   "Amstrad plc",  "Amstrad PC1640 / PC6400 (US)", GAME_NOT_WORKING )
+COMP(  1986,	ibmxt,		ibmpc,	0,		xtcga,      xtcga,		pccga,		ibmpc,   "International Business Machines",  "IBM PC/XT (CGA)" )
+COMP(  1988,	pc200,		ibmpc,	0,		pc200,		pc200,		pc200,		ibmpc,   "Sinclair Research",  "PC200 Professional Series")
+COMPX( 1988,	pc20,		ibmpc,	0,		pc200,		pc200,		pc200,		ibmpc,   "Amstrad plc",  "Amstrad PC20", GAME_ALIAS)
+COMP(  1986,	pc1512,		ibmpc,	0,		pc1512,     pc1512,		pc1512,		ibmpc,   "Amstrad plc",  "Amstrad PC1512")
+COMPX( 1987,	pc1640,		ibmpc,	0,		pc1640,     pc1640,		pc1640,		ibmpc,   "Amstrad plc",  "Amstrad PC1640 / PC6400 (US)", GAME_NOT_WORKING )
 // ppc640 portable pc1512?, nec processor?
 // pc2086 pc1512 with vga??
 
 // these drivers will be discarded soon
-COMP ( 1987,	pcmda,		ibmpc,	pcmda,      pcmda,		pcmda,	    ibmpc,   "",  "PC (MDA)" )
-COMPX ( 1987,	xtvga,		ibmpc,	xtvga,      xtvga,		pc_vga,     ibmpc,   "",  "PC/XT (VGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMP ( 1987,	pcmda,		ibmpc,	0,		pcmda,      pcmda,		pcmda,	    ibmpc,   "",  "PC (MDA)" )
+COMPX ( 1987,	xtvga,		ibmpc,	0,		xtvga,      xtvga,		pc_vga,     ibmpc,   "",  "PC/XT (VGA, MF2 Keyboard)", GAME_NOT_WORKING )
 

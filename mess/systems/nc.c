@@ -1797,7 +1797,7 @@ SYSTEM_CONFIG_START(nc200)
 	CONFIG_DEVICE_PC_FLOPPY(1)
 SYSTEM_CONFIG_END
 
-/*    YEAR  NAME       PARENT  MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */
-COMP( 1992, nc100,     0,      nc100,     nc100,    0,       nc100,   "Amstrad plc", "NC100")
-COMP( 1992, nc100a,    nc100,  nc100,     nc100,    0,       nc100,   "Amstrad plc", "NC100 (Version 1.09)")
-COMP( 1993, nc200,     0,      nc200,     nc200,    0,       nc200,   "Amstrad plc", "NC200")
+/*    YEAR  NAME       PARENT  COMPAT	MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */
+COMP( 1992, nc100,     0,      0,		nc100,     nc100,    0,       nc100,   "Amstrad plc", "NC100")
+COMP( 1992, nc100a,    nc100,  0,		nc100,     nc100,    0,       nc100,   "Amstrad plc", "NC100 (Version 1.09)")
+COMP( 1993, nc200,     0,      0,		nc200,     nc200,    0,       nc200,   "Amstrad plc", "NC200")

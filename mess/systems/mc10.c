@@ -164,6 +164,6 @@ SYSTEM_CONFIG_START(mc10)
 	CONFIG_DEVICE_CASSETTE(1, "cas\0", coco_cassette_init)
 SYSTEM_CONFIG_END
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  CONFIG   COMPANY               FULLNAME */
-COMP( 1983, mc10,     0,        mc10,     mc10,     0,        mc10,    "Tandy Radio Shack",  "MC-10" )
+/*	  YEAR	NAME	  PARENT	COMPAT	MACHINE   INPUT 	INIT	  CONFIG   COMPANY               FULLNAME */
+COMP( 1983, mc10,     0,		0,		mc10,     mc10,     0,        mc10,    "Tandy Radio Shack",  "MC-10" )
 

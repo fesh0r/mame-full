@@ -996,18 +996,18 @@ SYSTEM_CONFIG_START(pet4)
 	CONFIG_DEVICE_CBMPETQUICK
 SYSTEM_CONFIG_END
 
-/*	   YEAR 	NAME		PARENT	MACHINE 	INPUT	 INIT	  CONFIG	COMPANY							  FULLNAME */
-COMPX (1977,	pet,		0,		pet,		pet,	 pet1,	  pet,		"Commodore Business Machines Co.",  "PET2001/CBM20xx Series (Basic 1)",            GAME_NO_SOUND)
-COMPX (1979,	cbm30,		pet,	pet,		pet,	 pet,	  pet2,		"Commodore Business Machines Co.",  "Commodore 30xx (Basic 2)",                    GAME_NO_SOUND)
-COMPX (1979,	cbm30b, 	pet,	pet,		petb,	 pet,	  pet2,		"Commodore Business Machines Co.",  "Commodore 30xx (Basic 2) (business keyboard)",GAME_NO_SOUND)
-COMPX (1982,	cbm40,		pet,	pet40,		pet,	 pet40,   pet4,		"Commodore Business Machines Co.",  "Commodore 40xx FAT (CRTC) 60Hz",              GAME_NO_SOUND)
-COMPX (1982,	cbm40pal,	pet,	pet40pal,	pet,	 pet40,   pet4,		"Commodore Business Machines Co.",  "Commodore 40xx FAT (CRTC) 50Hz",              GAME_NO_SOUND)
-COMPX (1979,	cbm40b, 	pet,	pet,		petb,	 pet,	  pet4,		"Commodore Business Machines Co.",  "Commodore 40xx THIN (business keyboard)",     GAME_NO_SOUND)
-COMPX (1981,	cbm80,		pet,	pet80,		cbm8096, cbm80,   pet4,		"Commodore Business Machines Co.",  "Commodore 80xx 60Hz",                         GAME_NO_SOUND)
-COMPX (1981,	cbm80pal,	pet,	pet80pal,	cbm8096, cbm80,   pet4,		"Commodore Business Machines Co.",  "Commodore 80xx 50Hz",                         GAME_NO_SOUND)
-COMPX (1981,	cbm80ger,	pet,	pet80pal,	cbm8096, cbm80,   pet4,		"Commodore Business Machines Co.",  "Commodore 80xx German (50Hz)",                GAME_NO_SOUND)
-COMPX (1981,	cbm80swe,	pet,	pet80pal,	cbm8096, cbm80,   pet4,		"Commodore Business Machines Co.",  "Commodore 80xx Swedish (50Hz)",               GAME_NO_SOUND)
-COMPX (1981,	superpet,	pet,	superpet,	superpet,superpet,pet4,		"Commodore Business Machines Co.",  "Commodore SP9000/MMF9000 (50Hz)",             GAME_NO_SOUND|GAME_NOT_WORKING)
+/*	   YEAR 	NAME		COMPAT	PARENT	MACHINE 	INPUT	 INIT	  CONFIG	COMPANY							  FULLNAME */
+COMPX (1977,	pet,		0,		0,		pet,		pet,	 pet1,	  pet,		"Commodore Business Machines Co.",  "PET2001/CBM20xx Series (Basic 1)",            GAME_NO_SOUND)
+COMPX (1979,	cbm30,		0,		pet,	pet,		pet,	 pet,	  pet2,		"Commodore Business Machines Co.",  "Commodore 30xx (Basic 2)",                    GAME_NO_SOUND)
+COMPX (1979,	cbm30b, 	0,		pet,	pet,		petb,	 pet,	  pet2,		"Commodore Business Machines Co.",  "Commodore 30xx (Basic 2) (business keyboard)",GAME_NO_SOUND)
+COMPX (1982,	cbm40,		0,		pet,	pet40,		pet,	 pet40,   pet4,		"Commodore Business Machines Co.",  "Commodore 40xx FAT (CRTC) 60Hz",              GAME_NO_SOUND)
+COMPX (1982,	cbm40pal,	0,		pet,	pet40pal,	pet,	 pet40,   pet4,		"Commodore Business Machines Co.",  "Commodore 40xx FAT (CRTC) 50Hz",              GAME_NO_SOUND)
+COMPX (1979,	cbm40b, 	0,		pet,	pet,		petb,	 pet,	  pet4,		"Commodore Business Machines Co.",  "Commodore 40xx THIN (business keyboard)",     GAME_NO_SOUND)
+COMPX (1981,	cbm80,		0,		pet,	pet80,		cbm8096, cbm80,   pet4,		"Commodore Business Machines Co.",  "Commodore 80xx 60Hz",                         GAME_NO_SOUND)
+COMPX (1981,	cbm80pal,	0,		pet,	pet80pal,	cbm8096, cbm80,   pet4,		"Commodore Business Machines Co.",  "Commodore 80xx 50Hz",                         GAME_NO_SOUND)
+COMPX (1981,	cbm80ger,	0,		pet,	pet80pal,	cbm8096, cbm80,   pet4,		"Commodore Business Machines Co.",  "Commodore 80xx German (50Hz)",                GAME_NO_SOUND)
+COMPX (1981,	cbm80swe,	0,		pet,	pet80pal,	cbm8096, cbm80,   pet4,		"Commodore Business Machines Co.",  "Commodore 80xx Swedish (50Hz)",               GAME_NO_SOUND)
+COMPX (1981,	superpet,	0,		pet,	superpet,	superpet,superpet,pet4,		"Commodore Business Machines Co.",  "Commodore SP9000/MMF9000 (50Hz)",             GAME_NO_SOUND|GAME_NOT_WORKING)
 
 // please leave the following as testdriver only
-COMP (198?, 	mmf9000,	pet,	superpet,	superpet,superpet,pet4,		"Commodore Business Machines Co.",  "MMF9000 (50Hz) Swedish")
+COMP (198?, 	mmf9000,	0,		pet,	superpet,	superpet,superpet,pet4,		"Commodore Business Machines Co.",  "MMF9000 (50Hz) Swedish")

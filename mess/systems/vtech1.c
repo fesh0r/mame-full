@@ -422,12 +422,12 @@ SYSTEM_CONFIG_START(vtech1)
 	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2,	"dsk\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_CREATE_OR_READ, NULL, NULL, device_load_vtech1_floppy, NULL, NULL)
 SYSTEM_CONFIG_END
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT    CONFIG,	COMPANY   FULLNAME */
-COMP ( 1983, laser110, 0,        laser110, vtech1,  NULL,   vtech1,	"Video Technology", "Laser 110" )
-COMP ( 1983, laser210, 0,        laser210, vtech1,  NULL,   vtech1,	"Video Technology", "Laser 210" )
-COMPX( 1983, laser200, laser210, laser210, vtech1,  NULL,   vtech1,	"Video Technology", "Laser 200", GAME_ALIAS )
-COMPX( 1983, vz200,    laser210, laser210, vtech1,  NULL,   vtech1,	"Video Technology", "Sanyo / Dick Smith VZ200", GAME_ALIAS )
-COMPX( 1983, fellow,   laser210, laser210, vtech1,  NULL,   vtech1,	"Video Technology", "Salora Fellow", GAME_ALIAS )
-COMPX( 1983, tx8000,   laser210, laser210, vtech1,  NULL,   vtech1,	"Video Technology", "Texet TX8000", GAME_ALIAS )
-COMP ( 1983, laser310, 0,        laser310, vtech1,  NULL,   vtech1,	"Video Technology", "Laser 310" )
-COMPX( 1983, vz300,    laser310, laser310, vtech1,  NULL,   vtech1,	"Video Technology", "Sanyo / Dick Smith VZ300", GAME_ALIAS )
+/*     YEAR  NAME      PARENT		COMPAT	MACHINE   INPUT     INIT    CONFIG,	COMPANY   FULLNAME */
+COMP ( 1983, laser110, 0,			0,		laser110, vtech1,  NULL,   vtech1,	"Video Technology", "Laser 110" )
+COMP ( 1983, laser210, 0,			0,		laser210, vtech1,  NULL,   vtech1,	"Video Technology", "Laser 210" )
+COMPX( 1983, laser200, laser210,	0,		laser210, vtech1,  NULL,   vtech1,	"Video Technology", "Laser 200", GAME_ALIAS )
+COMPX( 1983, vz200,    laser210,	0,		laser210, vtech1,  NULL,   vtech1,	"Video Technology", "Sanyo / Dick Smith VZ200", GAME_ALIAS )
+COMPX( 1983, fellow,   laser210,	0,		laser210, vtech1,  NULL,   vtech1,	"Video Technology", "Salora Fellow", GAME_ALIAS )
+COMPX( 1983, tx8000,   laser210,	0,		laser210, vtech1,  NULL,   vtech1,	"Video Technology", "Texet TX8000", GAME_ALIAS )
+COMP ( 1983, laser310, 0,			0,		laser310, vtech1,  NULL,   vtech1,	"Video Technology", "Laser 310" )
+COMPX( 1983, vz300,    laser310,	0,		laser310, vtech1,  NULL,   vtech1,	"Video Technology", "Sanyo / Dick Smith VZ300", GAME_ALIAS )

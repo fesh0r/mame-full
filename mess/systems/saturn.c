@@ -1959,6 +1959,6 @@ ROM_END
 
 ***************************************************************************/
 
-/*    YEAR  NAME	PARENT	MACHINE	INPUT	INIT	CONFIG	COMPANY	FULLNAME */
-CONSX(1994, saturn,	0,		saturn,	saturn,	saturn,	NULL,	"Sega",	"Saturn", GAME_NOT_WORKING)
+/*    YEAR  NAME	PARENT	COMPAT	MACHINE	INPUT	INIT	CONFIG	COMPANY	FULLNAME */
+CONSX(1994, saturn,	0,		0,		saturn,	saturn,	saturn,	NULL,	"Sega",	"Saturn", GAME_NOT_WORKING)
 

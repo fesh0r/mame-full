@@ -381,7 +381,7 @@ SYSTEM_CONFIG_START(svi318)
 #endif
 SYSTEM_CONFIG_END
 
-/*   YEAR	NAME		PARENT	MACHINE	INPUT	INIT	CONFIG	COMPANY FULLNAME */
-COMP(1983,	svi318,		0,		svi318,	svi318,	svi318, svi318,	"Spectravideo", "SVI-318" )
-COMP(1983,	svi328,		svi318,	svi318,	svi328,	svi318, svi318,	"Spectravideo", "SVI-328" )
-COMP(1983,	svi328a,	svi318,	svi318,	svi328,	svi318, svi318,	"Spectravideo", "SVI-328 (BASIC 1.11)" )
+/*   YEAR	NAME		PARENT	COMPAT	MACHINE	INPUT	INIT	CONFIG	COMPANY FULLNAME */
+COMP(1983,	svi318,		0,		0,		svi318,	svi318,	svi318, svi318,	"Spectravideo", "SVI-318" )
+COMP(1983,	svi328,		svi318,	0,		svi318,	svi328,	svi318, svi318,	"Spectravideo", "SVI-328" )
+COMP(1983,	svi328a,	svi318,	0,		svi318,	svi328,	svi318, svi318,	"Spectravideo", "SVI-328 (BASIC 1.11)" )

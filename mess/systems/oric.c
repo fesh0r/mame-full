@@ -550,10 +550,10 @@ SYSTEM_CONFIG_START(prav8)
 SYSTEM_CONFIG_END
 
 
-/*    YEAR   NAME       PARENT  MACHINE     INPUT       INIT    CONFIG    COMPANY         FULLNAME */
-COMP( 1983,  oric1,     0,      oric,       oric,	    0,	    oric1,    "Tangerine",    "Oric 1" )
-COMP( 1984,  orica,     oric1,	oric,	    orica,	    0,	    oric1,    "Tangerine",    "Oric Atmos" )
-COMP( 1985,  prav8d,    oric1,  oric,       prav8d,     0,      prav8,    "Pravetz",      "Pravetz 8D")
-COMPX( 1989, prav8dd,   oric1,  oric,       prav8d,     0,      prav8,    "Pravetz",      "Pravetz 8D (Disk ROM)", GAME_COMPUTER_MODIFIED)
-COMPX( 1992, prav8dda,  oric1,  oric,       prav8d,     0,      prav8,    "Pravetz",      "Pravetz 8D (Disk ROM, RadoSoft)", GAME_COMPUTER_MODIFIED)
-COMPX( 1986, telstrat,  oric1,  telstrat,   telstrat,   0,      oric1,    "Tangerine",    "Oric Telestrat", GAME_NOT_WORKING )
+/*    YEAR   NAME       PARENT	COMPAT	MACHINE     INPUT       INIT    CONFIG    COMPANY         FULLNAME */
+COMP( 1983,  oric1,     0,      0,		oric,       oric,	    0,	    oric1,    "Tangerine",    "Oric 1" )
+COMP( 1984,  orica,     oric1,	0,		oric,	    orica,	    0,	    oric1,    "Tangerine",    "Oric Atmos" )
+COMP( 1985,  prav8d,    oric1,  0,		oric,       prav8d,     0,      prav8,    "Pravetz",      "Pravetz 8D")
+COMPX( 1989, prav8dd,   oric1,  0,		oric,       prav8d,     0,      prav8,    "Pravetz",      "Pravetz 8D (Disk ROM)", GAME_COMPUTER_MODIFIED)
+COMPX( 1992, prav8dda,  oric1,  0,		oric,       prav8d,     0,      prav8,    "Pravetz",      "Pravetz 8D (Disk ROM, RadoSoft)", GAME_COMPUTER_MODIFIED)
+COMPX( 1986, telstrat,  oric1,  0,		telstrat,   telstrat,   0,      oric1,    "Tangerine",    "Oric Telestrat", GAME_NOT_WORKING )

@@ -192,5 +192,5 @@ SYSTEM_CONFIG_START(galaxy)
 SYSTEM_CONFIG_END
 
 
-/*    YEAR	NAME	PARENT	MACHINE	INPUT	INIT	CONFIG	COMPANY	FULLNAME */
-COMPX(1983,	galaxy,	0,	galaxy,	galaxy,	0,      galaxy,	"",	"Galaksija", GAME_NO_SOUND )
+/*    YEAR	NAME	PARENT	COMPAT	MACHINE	INPUT	INIT	CONFIG	COMPANY	FULLNAME */
+COMPX(1983,	galaxy,	0,		0,		galaxy,	galaxy,	0,      galaxy,	"",	"Galaksija", GAME_NO_SOUND )

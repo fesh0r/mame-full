@@ -221,6 +221,6 @@ SYSTEM_CONFIG_END
 
 #define rom_pce NULL
 
-/*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	CONFIG  COMPANY	 FULLNAME */
-CONSX( 1987, pce,	   0,		 pce,	   pce, 	 0,		pce,	"Nippon Electronic Company", "PC Engine/TurboGrafx 16", GAME_NOT_WORKING | GAME_NO_SOUND )
+/*	   YEAR  NAME	   PARENT	COMPAT	MACHINE	INPUT	 INIT	CONFIG  COMPANY	 FULLNAME */
+CONSX( 1987, pce,	   0,		0,		pce,	pce, 	 0,		pce,	"Nippon Electronic Company", "PC Engine/TurboGrafx 16", GAME_NOT_WORKING | GAME_NO_SOUND )
 

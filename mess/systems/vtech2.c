@@ -583,7 +583,7 @@ SYSTEM_CONFIG_START(laser)
 	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, device_load_laser_floppy, NULL, NULL)
 SYSTEM_CONFIG_END
 
-/*	  YEAR	 NAME	   PARENT	 MACHINE   INPUT	 INIT	   CONFIG	COMPANY	 FULLNAME */
-COMP( 1984?, laser350, 0,		 laser350, laser350, laser,    laser,	"Video Technology",  "Laser 350" )
-COMP( 1984?, laser500, laser350, laser500, laser500, laser,    laser,	"Video Technology",  "Laser 500" )
-COMP( 1984?, laser700, laser350, laser700, laser500, laser,    laser,	"Video Technology",  "Laser 700" )
+/*	  YEAR	 NAME	   PARENT	 COMPAT	MACHINE   INPUT	 INIT	   CONFIG	COMPANY	 FULLNAME */
+COMP( 1984?, laser350, 0,		 0,		laser350, laser350, laser,    laser,	"Video Technology",  "Laser 350" )
+COMP( 1984?, laser500, laser350, 0,		laser500, laser500, laser,    laser,	"Video Technology",  "Laser 500" )
+COMP( 1984?, laser700, laser350, 0,		laser700, laser500, laser,    laser,	"Video Technology",  "Laser 700" )

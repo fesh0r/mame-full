@@ -131,8 +131,9 @@ struct SystemConfigurationParamBlock
  * CONS and CONSX are for consoles
  * COMP and COMPX are for computers
  ******************************************************************************/
-#define CONS(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME)	\
+#define CONS(YEAR,NAME,PARENT,COMPAT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME)	\
 extern const struct GameDriver driver_##PARENT; \
+extern const struct GameDriver driver_##COMPAT;   \
 extern const struct GameDriver driver_##NAME;   \
 const struct GameDriver driver_##NAME = 	\
 {											\
@@ -147,11 +148,13 @@ const struct GameDriver driver_##NAME = 	\
 	init_##INIT,							\
 	rom_##NAME,								\
 	construct_sysconfig_##CONFIG,			\
+	&driver_##COMPAT,						\
 	ROT0									\
 };
 
-#define CONSX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME,FLAGS)	\
+#define CONSX(YEAR,NAME,PARENT,COMPAT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME,FLAGS)	\
 extern const struct GameDriver driver_##PARENT;   \
+extern const struct GameDriver driver_##COMPAT;   \
 extern const struct GameDriver driver_##NAME;   \
 const struct GameDriver driver_##NAME = 	\
 {											\
@@ -166,11 +169,13 @@ const struct GameDriver driver_##NAME = 	\
 	init_##INIT,							\
 	rom_##NAME,								\
 	construct_sysconfig_##CONFIG,			\
+	&driver_##COMPAT,						\
 	ROT0|(FLAGS)							\
 };
 
-#define COMP(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME)	\
+#define COMP(YEAR,NAME,PARENT,COMPAT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME)	\
 extern const struct GameDriver driver_##PARENT;   \
+extern const struct GameDriver driver_##COMPAT;   \
 extern const struct GameDriver driver_##NAME;   \
 const struct GameDriver driver_##NAME = 	\
 {											\
@@ -185,11 +190,13 @@ const struct GameDriver driver_##NAME = 	\
 	init_##INIT,							\
 	rom_##NAME,								\
 	construct_sysconfig_##CONFIG,			\
+	&driver_##COMPAT,						\
 	ROT0|GAME_COMPUTER 						\
 };
 
-#define COMPX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME,FLAGS)	\
+#define COMPX(YEAR,NAME,PARENT,COMPAT,MACHINE,INPUT,INIT,CONFIG,COMPANY,FULLNAME,FLAGS)	\
 extern const struct GameDriver driver_##PARENT;   \
+extern const struct GameDriver driver_##COMPAT;   \
 extern const struct GameDriver driver_##NAME;   \
 const struct GameDriver driver_##NAME = 	\
 {											\
@@ -204,6 +211,7 @@ const struct GameDriver driver_##NAME = 	\
 	init_##INIT,							\
 	rom_##NAME,								\
 	construct_sysconfig_##CONFIG,			\
+	&driver_##COMPAT,						\
 	ROT0|GAME_COMPUTER|(FLAGS)	 			\
 };
 

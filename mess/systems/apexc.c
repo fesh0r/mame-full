@@ -842,6 +842,6 @@ SYSTEM_CONFIG_START(apexc)
 	CONFIG_DEVICE_LEGACY(IO_PUNCHTAPE, 2, "tap\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_NONE, NULL, NULL, apexc_tape_load, NULL, NULL)
 SYSTEM_CONFIG_END
 
-/*		   YEAR		NAME		PARENT			MACHINE		INPUT	INIT	CONFIG	COMPANY		FULLNAME */
-/*COMP( c. 1951,	apexc53,	0,				apexc53,	apexc,	apexc,	apexc,	"Booth",	"APEXC (as described in 1953)" )*/
-COMP(      1955,	apexc,		/*apexc53*/0,	apexc,		apexc,	apexc,	apexc,	"Booth",	"APEXC (as described in 1957)" )
+/*		   YEAR		NAME		PARENT			COMPAT	MACHINE		INPUT	INIT	CONFIG	COMPANY		FULLNAME */
+/*COMP( c. 1951,	apexc53,	0,				0,		apexc53,	apexc,	apexc,	apexc,	"Booth",	"APEXC (as described in 1953)" )*/
+COMP(      1955,	apexc,		/*apexc53*/0,	0,		apexc,		apexc,	apexc,	apexc,	"Booth",	"APEXC (as described in 1957)" )

@@ -1546,5 +1546,5 @@ SYSTEM_CONFIG_START(pcw16)
 	CONFIG_DEVICE_PC_FLOPPY(2)
 SYSTEM_CONFIG_END
 
-/*     YEAR  NAME     PARENT    MACHINE    INPUT     INIT   CONFIG,  COMPANY          FULLNAME */
-COMP( 1995, pcw16,	  0,		pcw16,	   pcw16,    0,	    pcw16,   "Amstrad plc",   "PCW16")
+/*     YEAR  NAME     PARENT	COMPAT	MACHINE    INPUT     INIT   CONFIG,  COMPANY          FULLNAME */
+COMP( 1995, pcw16,	  0,		0,		pcw16,	   pcw16,    0,	    pcw16,   "Amstrad plc",   "PCW16")

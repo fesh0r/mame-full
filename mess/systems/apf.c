@@ -789,6 +789,6 @@ SYSTEM_CONFIG_END
 
 ***************************************************************************/
 
-/*    YEAR	NAME		PARENT	MACHINE				INPUT				INIT    CONFIG		COMPANY               FULLNAME */
-COMPX(1977, apfimag,	0,		apf_imagination,	apf_imagination,	0,		apfimag,	"APF Electronics Inc",  "APF Imagination Machine" ,GAME_NOT_WORKING)
-COMPX(1978,	apfm1000,	0,		apf_m1000,			apf_m1000,			0,		NULL,		"APF Electronics Inc",  "APF M-1000" ,GAME_NOT_WORKING)
+/*    YEAR	NAME		PARENT	COMPAT	MACHINE				INPUT				INIT    CONFIG		COMPANY               FULLNAME */
+COMPX(1977, apfimag,	0,		0,		apf_imagination,	apf_imagination,	0,		apfimag,	"APF Electronics Inc",  "APF Imagination Machine" ,GAME_NOT_WORKING)
+COMPX(1978,	apfm1000,	0,		0,		apf_m1000,			apf_m1000,			0,		NULL,		"APF Electronics Inc",  "APF M-1000" ,GAME_NOT_WORKING)

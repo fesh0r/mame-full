@@ -472,5 +472,5 @@ SYSTEM_CONFIG_START(coupe)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "dsk\0", device_load_coupe_floppy)
 SYSTEM_CONFIG_END
 
-/*    YEAR  NAME      PARENT    MACHINE         INPUT     INIT  CONFIG  COMPANY                 		  FULLNAME */
-COMP( 1989, coupe,	  0,		coupe,			coupe,	  0,	coupe,	"Miles Gordon Technology plc",    "Sam Coupe" )
+/*    YEAR  NAME      PARENT	COMPAT	MACHINE         INPUT     INIT  CONFIG  COMPANY                 		  FULLNAME */
+COMP( 1989, coupe,	  0,		0,		coupe,			coupe,	  0,	coupe,	"Miles Gordon Technology plc",    "Sam Coupe" )

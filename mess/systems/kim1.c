@@ -230,5 +230,5 @@ SYSTEM_CONFIG_START(kim1)
 	CONFIG_DEVICE_KIM1_CASSETTE
 SYSTEM_CONFIG_END
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG  COMPANY   FULLNAME */
-COMP( 1975, kim1,	  0, 		kim1,	  kim1, 	kim1,	  kim1,	  "MOS Technologies",  "KIM-1" )
+/*    YEAR  NAME      PARENT    COMPAT	MACHINE   INPUT     INIT      CONFIG  COMPANY   FULLNAME */
+COMP( 1975, kim1,	  0, 		0,		kim1,	  kim1, 	kim1,	  kim1,	  "MOS Technologies",  "KIM-1" )

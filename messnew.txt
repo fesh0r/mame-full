@@ -40,6 +40,9 @@ System Driver Changes:
 
 Source Changes:
 ---------------
+- Drivers now have a 'compatible_with' field, that specify drivers that have
+  compatible software but are not mere clones.  [Nate Woods]
+
 - Devices are now referenced by a mess_image pointer, rather than a type/id
   pair. [Nate Woods]
 

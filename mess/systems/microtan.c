@@ -299,7 +299,7 @@ SYSTEM_CONFIG_START(microtan)
 	CONFIG_DEVICE_QUICKLOAD_DELAY(	"hex\0", microtan_hexfile, 0.5)
 SYSTEM_CONFIG_END
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG    COMPANY      FULLNAME */
-COMP( 1979, microtan, 0,        microtan, microtan, microtan, microtan, "Tangerine", "Microtan 65" )
+/*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT      CONFIG    COMPANY      FULLNAME */
+COMP( 1979, microtan, 0,		0,		microtan, microtan, microtan, microtan, "Tangerine", "Microtan 65" )
 
 

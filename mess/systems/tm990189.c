@@ -203,5 +203,5 @@ SYSTEM_CONFIG_START(tm990_189)
 	/* a tape interface and a rs232 interface... */
 SYSTEM_CONFIG_END
 
-/*	  YEAR	NAME		PARENT	MACHINE		INPUT		INIT		CONFIG		COMPANY					FULLNAME */
-COMP( 1980,	tm990189,	0,		tm990_189,	tm990_189,	tm990_189,	tm990_189,	"Texas Instruments",	"TM990/189 (and 189-1) University Board microcomputer" )
+/*	  YEAR	NAME		PARENT	COMPAT	MACHINE		INPUT		INIT		CONFIG		COMPANY					FULLNAME */
+COMP( 1980,	tm990189,	0,		0,		tm990_189,	tm990_189,	tm990_189,	tm990_189,	"Texas Instruments",	"TM990/189 (and 189-1) University Board microcomputer" )

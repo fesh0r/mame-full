@@ -267,5 +267,5 @@ ROM_START(aquarius)
 	ROM_LOAD("aq2.chr", 0x0000, 0x0800, BADCRC(0x0b3edeed))
 ROM_END
 
-/*		YEAR	NAME		PARENT		MACHINE		INPUT		INIT	CONFIG		COMPANY		FULLNAME */
-COMP(	1983,	aquarius,	0,			aquarius,	aquarius,	0,		NULL,		"Mattel",	"Aquarius" )
+/*		YEAR	NAME		PARENT	COMPAT	MACHINE		INPUT		INIT	CONFIG		COMPANY		FULLNAME */
+COMP(	1983,	aquarius,	0,		0,		aquarius,	aquarius,	0,		NULL,		"Mattel",	"Aquarius" )

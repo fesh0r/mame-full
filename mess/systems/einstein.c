@@ -1741,7 +1741,7 @@ SYSTEM_CONFIG_START(einstein)
 	CONFIG_DEVICE_LEGACY_DSK(4)
 SYSTEM_CONFIG_END
 
-/*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT  CONFIG,   COMPANY   FULLNAME */
-COMP( 1984, einstein,  0,      einstein,  einstein, 0,    einstein, "Tatung", "Tatung Einstein TC-01")
-COMP( 1984, einstei2,  0,      einstei2,  einstein, 0,    einstein, "Tatung", "Tatung Einstein TC-01 + 80 column device")
+/*     YEAR  NAME		PARENT	COMPAT	MACHINE    INPUT     INIT  CONFIG,   COMPANY   FULLNAME */
+COMP( 1984, einstein,	0,      0,		einstein,  einstein, 0,    einstein, "Tatung", "Tatung Einstein TC-01")
+COMP( 1984, einstei2,	0,      0,		einstei2,  einstein, 0,    einstein, "Tatung", "Tatung Einstein TC-01 + 80 column device")
 

@@ -1160,14 +1160,14 @@ SYSTEM_CONFIG_START(bbc6502)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "ssd\0bbc\0img\0",	device_load_bbc_floppy )
 SYSTEM_CONFIG_END
 
-/*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   CONFIG	COMPANY	 FULLNAME */
-COMP ( 1981, bbca,	   0,		 bbca,     bbca,     0,        NULL,	"Acorn","BBC Micro Model A" )
-COMP ( 1981, bbcb,     bbca,	 bbcb,     bbca,     0,	       bbc,		"Acorn","BBC Micro Model B" )
-COMP ( 1981, bbcb1770, bbca, 	 bbcb1770, bbca,     0,	       bbc,		"Acorn","BBC Micro Model B with WD1770 disc controller" )
-COMP ( 1985, bbcbp,    bbca,	 bbcbp,    bbca,     0,        bbc,		"Acorn","BBC Micro Model B+ 64K" )
-COMP ( 1985, bbcbp128, bbca,     bbcbp128, bbca,     0,        bbc,		"Acorn","BBC Micro Model B+ 128k" )
+/*	   YEAR  NAME	   PARENT	 COMPAT	MACHINE   INPUT	 INIT	   CONFIG	COMPANY	 FULLNAME */
+COMP ( 1981, bbca,	   0,		 0,		bbca,     bbca,     0,        NULL,	"Acorn","BBC Micro Model A" )
+COMP ( 1981, bbcb,     bbca,	 0,		bbcb,     bbca,     0,	       bbc,		"Acorn","BBC Micro Model B" )
+COMP ( 1981, bbcb1770, bbca, 	 0,		bbcb1770, bbca,     0,	       bbc,		"Acorn","BBC Micro Model B with WD1770 disc controller" )
+COMP ( 1985, bbcbp,    bbca,	 0,		bbcbp,    bbca,     0,        bbc,		"Acorn","BBC Micro Model B+ 64K" )
+COMP ( 1985, bbcbp128, bbca,     0,		bbcbp128, bbca,     0,        bbc,		"Acorn","BBC Micro Model B+ 128k" )
 /*
-COMP ( 198?, bbcm,     0,        bbcm,     bbcm,     0,        bbc,		"Acorn","BBC Master" )
+COMP ( 198?, bbcm,     0,        0,		bbcm,     bbcm,     0,        bbc,		"Acorn","BBC Master" )
 */
 
 
@@ -1178,5 +1178,5 @@ COMP ( 198?, bbcm,     0,        bbcm,     bbcm,     0,        bbc,		"Acorn","BB
 // The code for this second processor upgrade is more or less complete here now.
 // It just needs a TUBE driver made to connect it to the BBC
 
-COMP (198?,bbcb6502,    bbca,     bbcb6502, bbca,    0,        bbc6502,	"Acorn","BBC Micro Model B with a 6502 Second Processor")
+COMP (198?,bbcb6502,    bbca,     0,		bbcb6502, bbca,    0,        bbc6502,	"Acorn","BBC Micro Model B with a 6502 Second Processor")
 

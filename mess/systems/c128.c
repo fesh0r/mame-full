@@ -1396,15 +1396,15 @@ SYSTEM_CONFIG_START(c128d)
 	CONFIG_DEVICE_C1571
 SYSTEM_CONFIG_END
 
-/*	  YEAR	NAME		PARENT	MACHINE 	INPUT		INIT		CONFIG  COMPANY   FULLNAME */
-COMP (1985, c128,		0,		c128,		c128,		c128,		c128,	"Commodore Business Machines Co.","Commodore 128 NTSC")
-COMP (1985, c128ger,	c128,	c128pal,	c128ger,	c128pal,	c128,	"Commodore Business Machines Co.","Commodore 128 German (PAL)")
-COMP (1985, c128fra,	c128,	c128pal,	c128fra,	c128pal,	c128,	"Commodore Business Machines Co.","Commodore 128 French (PAL)")
-COMP (1985, c128ita,	c128,	c128pal,	c128ita,	c128pal,	c128,	"Commodore Business Machines Co.","Commodore 128 Italian (PAL)")
-COMP (1985, c128swe,	c128,	c128pal,	c128swe,	c128pal,	c128,	"Commodore Business Machines Co.","Commodore 128 Swedish (PAL)")
+/*	  YEAR	NAME		PARENT	COMPAT	MACHINE 	INPUT		INIT		CONFIG  COMPANY   FULLNAME */
+COMP (1985, c128,		0,		0,		c128,		c128,		c128,		c128,	"Commodore Business Machines Co.","Commodore 128 NTSC")
+COMP (1985, c128ger,	c128,	0,		c128pal,	c128ger,	c128pal,	c128,	"Commodore Business Machines Co.","Commodore 128 German (PAL)")
+COMP (1985, c128fra,	c128,	0,		c128pal,	c128fra,	c128pal,	c128,	"Commodore Business Machines Co.","Commodore 128 French (PAL)")
+COMP (1985, c128ita,	c128,	0,		c128pal,	c128ita,	c128pal,	c128,	"Commodore Business Machines Co.","Commodore 128 Italian (PAL)")
+COMP (1985, c128swe,	c128,	0,		c128pal,	c128swe,	c128pal,	c128,	"Commodore Business Machines Co.","Commodore 128 Swedish (PAL)")
 /* other countries spanish, belgium, norwegian */
 /* please leave the following as testdriver */
-COMPX (1985, c128nor,	c128,	c128pal,	c128ita,	c128pal,	c128,	"Commodore Business Machines Co.","Commodore 128 Norwegian (PAL)", GAME_NOT_WORKING)
-COMPX (1985, c128d,		c128,	c128d,		c128,		c128,		c128d,	"Commodore Business Machines Co.","Commodore 128D NTSC", GAME_NOT_WORKING)
-//COMPX(1985,c128dita,	c128,	c128d,		c128,		c128,		c128d,	"Commodore Business Machines Co.","Commodore 128D Italian (PAL)", GAME_NOT_WORKING)
-COMPX (1985, c128dita,	c128,	c128pal,	c128ita,	c128pal,	c128d,	"Commodore Business Machines Co.","Commodore 128D Italian (PAL)", GAME_NOT_WORKING)
+COMPX (1985, c128nor,	c128,	0,		c128pal,	c128ita,	c128pal,	c128,	"Commodore Business Machines Co.","Commodore 128 Norwegian (PAL)", GAME_NOT_WORKING)
+COMPX (1985, c128d,		c128,	0,		c128d,		c128,		c128,		c128d,	"Commodore Business Machines Co.","Commodore 128D NTSC", GAME_NOT_WORKING)
+//COMPX(1985,c128dita,	c128,	0,		c128d,		c128,		c128,		c128d,	"Commodore Business Machines Co.","Commodore 128D Italian (PAL)", GAME_NOT_WORKING)
+COMPX (1985, c128dita,	c128,	0,		c128pal,	c128ita,	c128pal,	c128d,	"Commodore Business Machines Co.","Commodore 128D Italian (PAL)", GAME_NOT_WORKING)

@@ -323,8 +323,8 @@ ROM_START( gbcolor )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 ROM_END
 
-/*    YEAR  NAME      PARENT   MACHINE   INPUT    INIT  CONFIG   COMPANY     FULLNAME */
-CONS( 1990, gameboy,  0,       gameboy,  gameboy, 0,    gameboy, "Nintendo", "GameBoy"  )
-CONS( 1994, supergb,  0,       supergb,  gameboy, 0,    gameboy, "Nintendo", "Super GameBoy" )
-CONS( 1996, gbpocket, gameboy, gbpocket, gameboy, 0,    gameboy, "Nintendo", "GameBoy Pocket" )
-CONS( 1998, gbcolor,  0,       gbcolor,  gameboy, 0,    gameboy, "Nintendo", "GameBoy Color" )
+/*    YEAR  NAME      PARENT   COMPAT	MACHINE   INPUT    INIT  CONFIG   COMPANY     FULLNAME */
+CONS( 1990, gameboy,  0,       0,		gameboy,  gameboy, 0,    gameboy, "Nintendo", "GameBoy"  )
+CONS( 1994, supergb,  0,       gameboy,	supergb,  gameboy, 0,    gameboy, "Nintendo", "Super GameBoy" )
+CONS( 1996, gbpocket, gameboy, 0,		gbpocket, gameboy, 0,    gameboy, "Nintendo", "GameBoy Pocket" )
+CONS( 1998, gbcolor,  0,       gameboy,	gbcolor,  gameboy, 0,    gameboy, "Nintendo", "GameBoy Color" )

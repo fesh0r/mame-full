@@ -466,6 +466,6 @@ SYSTEM_CONFIG_START(geneve)
 	CONFIG_DEVICE_LEGACY			(IO_SERIAL,		1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	ti99_4_rs232_load,	ti99_4_rs232_unload,	NULL)*/
 SYSTEM_CONFIG_END
 
-/*	  YEAR	NAME	  PARENT   MACHINE		 INPUT	  INIT		CONFIG	COMPANY		FULLNAME */
-COMP( 1987?,geneve,   0,	   geneve_60hz,  geneve,  geneve,	geneve,	"Myarc",	"Geneve 9640" )
-COMP( 199??,genmod,   geneve,  geneve_60hz,  geneve,  genmod,	geneve,	"Myarc",	"Geneve 9640 (with Genmod modification)" )
+/*	  YEAR	NAME	  PARENT	COMPAT	MACHINE		 INPUT	  INIT		CONFIG	COMPANY		FULLNAME */
+COMP( 1987?,geneve,   0,		0,		geneve_60hz,  geneve,  geneve,	geneve,	"Myarc",	"Geneve 9640" )
+COMP( 199??,genmod,   geneve,	0,		geneve_60hz,  geneve,  genmod,	geneve,	"Myarc",	"Geneve 9640 (with Genmod modification)" )

@@ -479,5 +479,5 @@ SYSTEM_CONFIG_END
 
 ***************************************************************************/
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	CONFIG	COMPANY	FULLNAME */
-COMP( 1961, pdp1,	  0, 		pdp1,	  pdp1, 	pdp1,	pdp1,	"Digital Equipment Corporation",  "PDP-1" )
+/*	  YEAR	NAME	  PARENT	COMPAT	MACHINE   INPUT 	INIT	CONFIG	COMPANY	FULLNAME */
+COMP( 1961, pdp1,	  0, 		0,		pdp1,	  pdp1, 	pdp1,	pdp1,	"Digital Equipment Corporation",  "PDP-1" )

@@ -373,9 +373,9 @@ SYSTEM_CONFIG_START(mbee)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	basicdsk_floppy_load)
 SYSTEM_CONFIG_END
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */
-COMP( 1982, mbee,     0,        mbee,     mbee,     0,        mbee,		"Applied Technology",  "Microbee 32 IC" )
-COMP( 1982, mbeepc,   mbee,     mbee,     mbee,     0,        mbee,		"Applied Technology",  "Microbee 32 PC" )
-COMP( 1985?,mbeepc85, mbee,     mbee,     mbee,     0,        mbee,		"Applied Technology",  "Microbee 32 PC85" )
-COMP( 1983, mbee56,   mbee,     mbee56 ,  mbee,     0,        mbee,		"Applied Technology",  "Microbee 56" )
+/*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */
+COMP( 1982, mbee,     0,		0,		mbee,     mbee,     0,        mbee,		"Applied Technology",  "Microbee 32 IC" )
+COMP( 1982, mbeepc,   mbee,		0,		mbee,     mbee,     0,        mbee,		"Applied Technology",  "Microbee 32 PC" )
+COMP( 1985?,mbeepc85, mbee,		0,		mbee,     mbee,     0,        mbee,		"Applied Technology",  "Microbee 32 PC85" )
+COMP( 1983, mbee56,   mbee,		0,		mbee56,   mbee,     0,        mbee,		"Applied Technology",  "Microbee 56" )
 

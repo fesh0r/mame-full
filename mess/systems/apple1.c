@@ -212,5 +212,5 @@ SYSTEM_CONFIG_START(apple1)
 	CONFIG_DEVICE_SNAPSHOT("snp\0", apple1)
 SYSTEM_CONFIG_END
 
-/*    YEAR	NAME	PARENT	MACHINE		INPUT		INIT	CONFIG	COMPANY				FULLNAME */
-COMP( 1976,	apple1,	0,		apple1,		apple1,		0,		apple1,	"Apple Computer",	"Apple I" )
+/*    YEAR	NAME	PARENT	COMPAT	MACHINE		INPUT		INIT	CONFIG	COMPANY				FULLNAME */
+COMP( 1976,	apple1,	0,		0,		apple1,		apple1,		0,		apple1,	"Apple Computer",	"Apple I" )

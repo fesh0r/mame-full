@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.17 2003/03/10 01:12:40 npwoods Exp $
+  $Id: pc8801.c,v 1.18 2003/05/13 16:13:07 npwoods Exp $
 
 ***************************************************************************/
 
@@ -645,6 +645,6 @@ SYSTEM_CONFIG_START(pc88)
 SYSTEM_CONFIG_END
 
 
-/*	  YEAR	NAME	  PARENT		MACHINE   INPUT		INIT	CONFIG	COMPANY	FULLNAME */
-COMPX( 1985, pc88srl, 0,			pc88srl,  pc88sr,	0,		pc88,	"Nippon Electronic Company",  "PC-8801 MKIISR (Lores display, VSYNC 15KHz)", 0 )
-COMPX( 1985, pc88srh, pc88srl,		pc88srh,  pc88sr,	0,		pc88,	"Nippon Electronic Company",  "PC-8801 MKIISR (Hires display, VSYNC 24KHz)", 0 )
+/*	  YEAR	NAME	  PARENT	COMPAT	MACHINE   INPUT		INIT	CONFIG	COMPANY	FULLNAME */
+COMPX( 1985, pc88srl, 0,		0,		pc88srl,  pc88sr,	0,		pc88,	"Nippon Electronic Company",  "PC-8801 MKIISR (Lores display, VSYNC 15KHz)", 0 )
+COMPX( 1985, pc88srh, pc88srl,	0,		pc88srh,  pc88sr,	0,		pc88,	"Nippon Electronic Company",  "PC-8801 MKIISR (Hires display, VSYNC 24KHz)", 0 )

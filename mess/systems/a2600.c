@@ -28,7 +28,6 @@ static UINT8* r6532_ram;
 
 
 
-//static int a2600_cart_load(int id, mame_file *file, int open_mode)
 DEVICE_LOAD( a2600_cart )
 {
 	UINT8* ROM = memory_region(REGION_CPU1);
@@ -238,4 +237,5 @@ SYSTEM_CONFIG_START(a2600)
 SYSTEM_CONFIG_END
 
 
-CONS( 1977, a2600, 0, a2600, a2600, NULL, a2600, "Atari", "Atari 2600" )
+/*    YEAR	NAME	PARENT	COMPAT	MACHINE	INPUT	INIT	CONFIG	COMPANY		FULLNAME */
+CONS( 1977,	a2600,	0,		0,		a2600,	a2600,	NULL,	a2600,	"Atari",	"Atari 2600" )

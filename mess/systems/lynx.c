@@ -378,7 +378,7 @@ static DRIVER_INIT( lynx )
 		gfx[i]=i;
 }
 
-/*    YEAR  NAME      PARENT    MACHINE	INPUT	INIT	CONFIG	MONITOR	COMPANY   FULLNAME */
-CONSX( 1989, lynx,	  0, 		lynx,	lynx,	lynx,	lynx,	"Atari",  "Lynx", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
-CONSX( 1989, lynxa,	  lynx, 	lynx,	lynx,	lynx,	lynx,	"Atari",  "Lynx (alternate rom save!)", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
-CONSX( 1991, lynx2,	  lynx, 	lynx2,	lynx,	lynx,	lynx,	"Atari",  "Lynx II", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+/*    YEAR  NAME      PARENT    COMPAT	MACHINE	INPUT	INIT	CONFIG	MONITOR	COMPANY   FULLNAME */
+CONSX( 1989, lynx,	  0, 		0,		lynx,	lynx,	lynx,	lynx,	"Atari",  "Lynx", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+CONSX( 1989, lynxa,	  lynx, 	0,		lynx,	lynx,	lynx,	lynx,	"Atari",  "Lynx (alternate rom save!)", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+CONSX( 1991, lynx2,	  lynx, 	0,		lynx2,	lynx,	lynx,	lynx,	"Atari",  "Lynx II", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)

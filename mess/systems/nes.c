@@ -390,8 +390,8 @@ SYSTEM_CONFIG_END
 
 ***************************************************************************/
 
-/*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */
-CONS( 1983, famicom,   0,        nes,      famicom,  nes,      famicom,	"Nintendo", "Famicom" )
-CONS( 1985, nes,       0,        nes,      nes,      nes,      nes,		"Nintendo", "Nintendo Entertainment System (NTSC)" )
-CONS( 1987, nespal,    nes,      nespal,   nes,      nespal,   nes,		"Nintendo", "Nintendo Entertainment System (PAL)" )
+/*     YEAR  NAME      PARENT    COMPAT	MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */
+CONS( 1983, famicom,   0,        0,		nes,      famicom,  nes,      famicom,	"Nintendo", "Famicom" )
+CONS( 1985, nes,       0,        0,		nes,      nes,      nes,      nes,		"Nintendo", "Nintendo Entertainment System (NTSC)" )
+CONS( 1987, nespal,    nes,      0,		nespal,   nes,      nespal,   nes,		"Nintendo", "Nintendo Entertainment System (PAL)" )
 
