@@ -40,6 +40,7 @@
 #include "vidhrdw/m6847.h"
 #include "cpu/m6809/m6809.h"
 #include "vidhrdw/generic.h"
+#include "includes/dragon.h"
 
 static int coco3_hires;
 static int coco3_gimevhreg[8];
@@ -50,23 +51,6 @@ static int coco3_blinkstatus;
 static struct GfxElement *coco3font;
 
 #define MAX_HIRES_VRAM	57600
-
-/* Backdoors into mess/vidhrdw/m6847.c */
-typedef void (*artifactproc)(int *artifactcolors);
-void internal_m6847_drawborder(struct osd_bitmap *bitmap, int screenx, int screeny, int pen);
-int internal_m6847_vh_start(int maxvram);
-void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh,
-	const int *metapalette, UINT8 *vrambase, int vrampos, int vramsize,
-	int has_lowercase, int basex, int basey, int wf, artifactproc artifact);
-void blitgraphics2(struct osd_bitmap *bitmap, UINT8 *vrambase, int vrampos,
-	int vramsize, UINT8 *db, const int *metapalette, int sizex, int sizey,
-	int basex, int basey, int scalex, int scaley, int additionalrowbytes);
-void blitgraphics4(struct osd_bitmap *bitmap, UINT8 *vrambase, int vrampos,
-	int vramsize, UINT8 *db, const int *metapalette, int sizex, int sizey,
-	int basex, int basey, int scalex, int scaley, int additionalrowbytes);
-void blitgraphics16(struct osd_bitmap *bitmap, UINT8 *vrambase,
-	int vrampos, int vramsize, UINT8 *db, int sizex, int sizey, int basex,
-	int basey, int scalex, int scaley, int additionalrowbytes);
 
 #define LOG_PALETTE	0
 #define LOG_GIME	0
@@ -94,7 +78,7 @@ int dragon_vh_start(void)
 	return 0;
 }
 
-void coco_ram_w (int offset, int data)
+WRITE_HANDLER(coco_ram_w)
 {
 	UINT8 *mem = memory_region(REGION_CPU1) + offset;
 
@@ -104,7 +88,7 @@ void coco_ram_w (int offset, int data)
 	}
 }
 
-void dragon_sam_display_offset(int offset, int data)
+WRITE_HANDLER(dragon_sam_display_offset)
 {
 	UINT16 d_offset = m6847_get_video_offset();
 
@@ -116,7 +100,7 @@ void dragon_sam_display_offset(int offset, int data)
 	m6847_set_video_offset(d_offset);
 }
 
-void dragon_sam_vdg_mode(int offset, int data)
+WRITE_HANDLER(dragon_sam_vdg_mode)
 {
 	/* SAM Video modes:
 	 *
@@ -408,7 +392,7 @@ void coco3_vh_blink(void)
 	coco3_somethingdirty = 1;
 }
 
-void coco3_palette_w(int offset, int data)
+WRITE_HANDLER(coco3_palette_w)
 {
 	paletteram[offset] = data;
 	coco3_vh_palette_change_color(offset, data);
@@ -496,6 +480,12 @@ static int coco3_hires_linesperrow(void)
 	return (indexx == 7) ? coco3_calculate_rows() : hires_linesperrow[indexx];
 }
 
+static int coco3_hires_vidbase(void)
+{
+	return (((coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8)) | ((coco3_gimevhreg[7] & 0x7f)));
+
+}
+
 #if LOG_VIDEO
 static void log_video(void)
 {
@@ -532,7 +522,7 @@ static void log_video(void)
 		rows = coco3_calculate_rows() / coco3_hires_linesperrow();
 		logerror(" @ %dx%d\n", cols, rows);
 
-		vidbase = (coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8);
+		vidbase = coco3_hires_vidbase();
 		bytesperrow = (coco3_gimevhreg[7] & 0x80) ? 256 : visualbytesperrow;
 		logerror("CoCo3 HiRes Video: Occupies memory %05x-%05x\n", vidbase, (vidbase + (rows * bytesperrow) - 1) & 0x7ffff);
 		break;
@@ -558,7 +548,6 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	static int old_cmprgb;
 	int cmprgb, i;
 	int use_mark_dirty;
-	extern void coco3_vblank(void);
 
 	/* Did the user change between CMP and RGB? */
 	cmprgb = readinputport(12) & 0x08;
@@ -584,13 +573,13 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		UINT8 *vram, *db;
 		UINT8 b;
 
-		vidbase = (coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8);
+		vidbase = coco3_hires_vidbase();
 		if (coco3_gimevhreg[7] & 0x80) {
-			vidbase += coco3_gimevhreg[7] & 0x7f;
 			bytesperrow = 256;
 		}
 		else {
 			bytesperrow = 0;
+
 		}
 
 		rows = coco3_calculate_rows();
@@ -798,7 +787,6 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 static void coco3_ram_w(int offset, int data, int block)
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
-	extern int coco3_mmu_translate(int _block, int _offset);
 	int vidbase;
 	unsigned int vidbasediff;
 
@@ -825,49 +813,49 @@ static void coco3_ram_w(int offset, int data, int block)
 	}
 }
 
-void coco3_ram_b1_w (int offset, int data)
+WRITE_HANDLER(coco3_ram_b1_w)
 {
 	coco3_ram_w(offset, data, 0);
 }
-void coco3_ram_b2_w (int offset, int data)
+WRITE_HANDLER(coco3_ram_b2_w)
 {
 	coco3_ram_w(offset, data, 1);
 }
-void coco3_ram_b3_w (int offset, int data)
+WRITE_HANDLER(coco3_ram_b3_w)
 {
 	coco3_ram_w(offset, data, 2);
 }
-void coco3_ram_b4_w (int offset, int data)
+WRITE_HANDLER(coco3_ram_b4_w)
 {
 	coco3_ram_w(offset, data, 3);
 }
-void coco3_ram_b5_w (int offset, int data)
+WRITE_HANDLER(coco3_ram_b5_w)
 {
 	coco3_ram_w(offset, data, 4);
 }
-void coco3_ram_b6_w (int offset, int data)
+WRITE_HANDLER(coco3_ram_b6_w)
 {
 	coco3_ram_w(offset, data, 5);
 }
-void coco3_ram_b7_w (int offset, int data)
+WRITE_HANDLER(coco3_ram_b7_w)
 {
 	coco3_ram_w(offset, data, 6);
 }
-void coco3_ram_b8_w (int offset, int data)
+WRITE_HANDLER(coco3_ram_b8_w)
 {
 	coco3_ram_w(offset, data, 7);
 }
-void coco3_ram_b9_w (int offset, int data)
+WRITE_HANDLER(coco3_ram_b9_w)
 {
 	coco3_ram_w(offset, data, 8);
 }
 
-int coco3_gimevh_r(int offset)
+READ_HANDLER(coco3_gimevh_r)
 {
 	return coco3_gimevhreg[offset];
 }
 
-void coco3_gimevh_w(int offset, int data)
+WRITE_HANDLER(coco3_gimevh_w)
 {
 	int xorval;
 
@@ -908,8 +896,10 @@ void coco3_gimevh_w(int offset, int data)
 		 *		  Bits 2-4 HRES Horizontal Resolution
 		 *		  Bits 0-1 CRES Color Resolution
 		 */
-		coco3_borderred = -1;	/* force border to redraw */
-		schedule_full_refresh();
+		if (xorval) {
+			coco3_borderred = -1;	/* force border to redraw */
+			schedule_full_refresh();
+		}
 		break;
 
 	case 2:
@@ -924,28 +914,28 @@ void coco3_gimevh_w(int offset, int data)
 		 *		  Bits 4-7 Reserved
 		 *		! Bits 0-3 VSC Vertical Scroll bits
 		 */
-		schedule_full_refresh();
+		if (xorval)
+			schedule_full_refresh();
 		break;
 
 	case 5:
 	case 6:
+	case 7:
 		/*	$FF9D,$FF9E Vertical Offset Registers
+		 *
+		 *	$FF9F Horizontal Offset Register
+		 *		  Bit 7 HVEN Horizontal Virtual Enable
+		 *		  Bits 0-6 X0-X6 Horizontal Offset Address
 		 *
 		 *	According to JK, if an odd value is placed in $FF9E on the 1986
 		 *	GIME, the GIME crashes
 		 */
-		schedule_full_refresh();
+		if (xorval) {
+			schedule_full_refresh();
 #if LOG_GIME
-		logerror("CoCo3 GIME: HiRes Video at $%05x\n", (coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8));
+			logerror("CoCo3 GIME: HiRes Video at $%05x\n", coco3_hires_vidbase());
 #endif
-		break;
-
-	case 7:
-		/*	$FF9F Horizontal Offset Register
-		 *		  Bit 7 HVEN Horizontal Virtual Enable
-		 *		  Bits 0-6 X0-X6 Horizontal Offset Address
-		 */
-		schedule_full_refresh();
+		}
 		break;
 	}
 }

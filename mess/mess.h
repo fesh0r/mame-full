@@ -9,6 +9,23 @@
 #define FALSE 0
 #endif
 
+/* Endian macros */
+#define FLIPENDIAN_INT16(x)	((((x) >> 8) | ((x) << 8)) & 0xffff)
+#define FLIPENDIAN_INT32(x)	((((x) << 24) | (((UINT32) (x)) >> 24) | \
+                       (( (x) & 0x0000ff00) << 8) | (( (x) & 0x00ff0000) >> 8)))
+
+#ifdef LSB_FIRST
+#define BIG_ENDIANIZE_INT16(x)		(FLIPENDIAN_INT16(x))
+#define BIG_ENDIANIZE_INT32(x)		(FLIPENDIAN_INT32(x))
+#define LITTLE_ENDIANIZE_INT16(x)	(x)
+#define LITTLE_ENDIANIZE_INT32(x)	(x)
+#else
+#define BIG_ENDIANIZE_INT16(x)		(x)
+#define BIG_ENDIANIZE_INT32(x)		(x)
+#define LITTLE_ENDIANIZE_INT16(x)	(FLIPENDIAN_INT16(x))
+#define LITTLE_ENDIANIZE_INT32(x)	(FLIPENDIAN_INT32(x))
+#endif /* LSB_FIRST */
+
 /* Win32 defines this for vararg functions */
 #ifndef DECL_SPEC
 #define DECL_SPEC

@@ -120,6 +120,9 @@ System Driver Changes:
 
 - ZX: Fixed ZX80 palette: it's black on white, and not viceversa. [Stefano Priore]
 
+- CoCo/Dragon: Fixed a bug the CoCo 3 horizontal scroll so Crystal City is partially 
+  playable now, converted the CoCo/Dragon driver to use an include file, moved PAK loading 
+  code into a new src/mess/formats directory [Nate Woods]
 
 
 Other Changes:
@@ -133,6 +136,12 @@ Other Changes:
 
 - Optional ROM support. It can be used in MESS for BIOS ROMs for peripherals for which 
   you'd like to provide a valid crc32 without requiring the ROM. [Brad Oliver]
+
+- Imgtool: Added a CRC command to imgtool so output image information in .crc format 
+  basename()'s the command name when printing error info, Fixed a typo in the usage 
+  examples, added a very rough imgtool.txt to document imgtool [Nate Woods]
+
+- Added new endian macros [Nate Woods]
 
 - CRC and sysinfo updates will now be appearing at the official MESS homepage:
   http://mess.emuverse.com

@@ -220,6 +220,7 @@ maketree:
 ifdef MESS
 	@echo Making MESS object tree in $(OBJ)\mess...
 	@md $(OBJ)\mess
+	@md $(OBJ)\mess\formats
 	@md $(OBJ)\mess\systems
 	@md $(OBJ)\mess\machine
 	@md $(OBJ)\mess\vidhrdw

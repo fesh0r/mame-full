@@ -19,7 +19,7 @@ static void writeusage(FILE *f, int write_word_usage, struct command *c, char *a
 {
 	fprintf(f, "%s %s %s %s\n",
 		(write_word_usage ? "Usage:" : "      "),
-		argv[0],
+		basename(argv[0]),
 		c->name,
 		c->usage ? c->usage : "");
 }
@@ -311,9 +311,35 @@ static int cmd_info(struct command *c, int argc, char *argv[])
 		fprintf(stdout, "Year:         %d\n", info.year);
 	if (info.playable)
 		fprintf(stdout, "Playable:     %s\n", info.playable);
-	fprintf(stdout, "CRC:          %8x\n", (int)info.crc);
+	fprintf(stdout, "CRC:          %08x\n", (int)info.crc);
 	if (info.extrainfo)
 		fprintf(stdout, "Extra Info:   %s\n", info.extrainfo);
+	return 0;
+
+error:
+	reporterror(err, c, argv[0], argv[1], NULL, NULL, NULL);
+	return -1;
+}
+
+static int cmd_crc(struct command *c, int argc, char *argv[])
+{
+	int err;
+	imageinfo info;
+	char yearbuf[8];
+
+	err = img_getinfo_byname(argv[0], argv[1], &info);
+	if (err)
+		goto error;
+
+	if (info.year)
+		sprintf(yearbuf, "%d", info.year);
+
+	fprintf(stdout, "%08x = %s | %s | %s | %s\n",
+		(int) info.crc,
+		info.longname ? info.longname : "",
+		info.year ? yearbuf : "",
+		info.manufacturer ? info.manufacturer : "",
+		info.playable ? info.playable : "");
 	return 0;
 
 error:
@@ -471,6 +497,7 @@ static struct command cmds[] = {
 	{ "getall", "<format> <imagename>", cmd_getall, 2, 2, 0 },
 	{ "del", "<format> <imagename> <filename>...", cmd_del, 3, 3, 1 },
 	{ "info", "<format> <imagename>...", cmd_info, 2, 2, 1 },
+	{ "crc", "<format> <imagename>...", cmd_crc, 2, 2, 1 },
 	{ "good", "<format> <imagename>...", cmd_good, 2, 2, 1 },
 	{ "listformats", NULL, cmd_listformats, 0, 0, 0 }
 };
@@ -520,11 +547,11 @@ int CLIB_DECL main(int argc, char *argv[])
 	fprintf(stderr, "<imagename> is the image filename; can specify a ZIP file for image name\n");
 
 	fprintf(stderr, "\nExample usage:\n");
-	fprintf(stderr, "\t%s dir rsdos myimageinazip.zip\n", argv[0]);
-	fprintf(stderr, "\t%s get rsdos myimage.dsk myfile.bin mynewfile.txt\n", argv[0]);
-	fprintf(stderr, "\t%s getall rsdos myimage.dsk\n", argv[0]);
-	fprintf(stderr, "\t%s info myimage.dsk\n", argv[0]);
-	fprintf(stderr, "\t%s good nes mynescart.zip\n", argv[0]);
+	fprintf(stderr, "\t%s dir rsdos myimageinazip.zip\n", basename(argv[0]));
+	fprintf(stderr, "\t%s get rsdos myimage.dsk myfile.bin mynewfile.txt\n", basename(argv[0]));
+	fprintf(stderr, "\t%s getall rsdos myimage.dsk\n", basename(argv[0]));
+	fprintf(stderr, "\t%s info nes myimage.dsk\n", basename(argv[0]));
+	fprintf(stderr, "\t%s good nes mynescart.zip\n", basename(argv[0]));
 	return 0;
 
 cmderror:
