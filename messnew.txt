@@ -9,6 +9,7 @@ New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - Atari Lynx (preliminary) [PeT]
 - KC85/3 (preliminary) [Kev Thacker]
+- MSX2 and MSX2 Japanese (preliminary) [Sean Young]
 
 System Driver Changes:
 ----------------------
