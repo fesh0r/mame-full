@@ -44,6 +44,9 @@ Imgtool Changes:
 
 - [FAT] CHD files are now supported.  [Nate Woods]
 
+- [FAT] "Tildized" short file names are not generated when file names are
+  short enough.  [Nate Woods]
+
 - [Windows Imgtool] Fixed a bug that prevented read only files from opening.
   (bug #624)  [Nate Woods]
 

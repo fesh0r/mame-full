@@ -1606,6 +1606,13 @@ static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file,
 
 
 
+typedef enum
+{
+	SFN_SUFFICIENT,	/* name fully representable in short file name */
+	SFN_DERIVATIVE,	/* name not fully representable in short file name, but no need to tildize */
+	SFN_MANGLED		/* name not representable in short file name; must tildize */
+} sfn_disposition_t;
+
 static imgtoolerr_t fat_construct_dirent(const char *filename, creation_policy_t create,
 	UINT8 **entry, size_t *entry_len)
 {
@@ -1618,10 +1625,11 @@ static imgtoolerr_t fat_construct_dirent(const char *filename, creation_policy_t
 	unicode_char_t ch;
 	char last_short_char = ' ';
 	char short_char = '\0';
+	char cannonical_short_char;
 	utf16_char_t buf[UTF16_CHAR_MAX];
 	int i, len;
 	int sfn_pos = 0;
-	int sfn_sufficient = 1;
+	sfn_disposition_t sfn_disposition = SFN_SUFFICIENT;
 	int sfn_in_extension = 0;
 
 	/* sanity check */
@@ -1663,15 +1671,23 @@ static imgtoolerr_t fat_construct_dirent(const char *filename, creation_policy_t
 			short_char = (char) ch;
 		else
 			short_char = '\0';	/* illegal SFN char */
-		if (!short_char || (short_char != fat_cannonicalize_sfn_char((char) ch)))
-			sfn_sufficient = 0;
+		cannonical_short_char = fat_cannonicalize_sfn_char((char) ch);
+		if (!short_char || (short_char != cannonical_short_char))
+		{
+			if (toupper(short_char) == toupper(cannonical_short_char))
+				sfn_disposition = MAX(sfn_disposition, SFN_DERIVATIVE);
+			else
+				sfn_disposition = SFN_MANGLED;
+		}
 
 		/* append the short filename char */
 		if (short_char == '.')
 		{
 			/* multiple extensions or trailing spaces? */
-			if (sfn_in_extension || (last_short_char == ' '))
-				sfn_sufficient = 0;
+			if (sfn_in_extension)
+				sfn_disposition = SFN_MANGLED;
+			else if (last_short_char == ' ')
+				sfn_disposition = MAX(sfn_disposition, SFN_DERIVATIVE);
 
 			sfn_in_extension = 1;
 			sfn_pos = 8;
@@ -1682,7 +1698,7 @@ static imgtoolerr_t fat_construct_dirent(const char *filename, creation_policy_t
 		else if (sfn_pos == (sfn_in_extension ? 11 : 8))
 		{
 			/* ran out of characters for short filename */
-			sfn_sufficient = 0;
+			sfn_disposition = SFN_MANGLED;
 		}
 		else if (short_char != '\0')
 		{
@@ -1745,9 +1761,9 @@ static imgtoolerr_t fat_construct_dirent(const char *filename, creation_policy_t
 
 	/* trailing spaces? */
 	if (short_char == ' ')
-		sfn_sufficient = 0;
+		sfn_disposition = MAX(sfn_disposition, SFN_DERIVATIVE);
 
-	if (sfn_sufficient)
+	if (sfn_disposition == SFN_SUFFICIENT)
 	{
 		/* the short filename suffices; remove the LFN stuff */
 		memcpy(created_entry, created_entry + created_entry_len - FAT_DIRENT_SIZE, FAT_DIRENT_SIZE);
@@ -1766,11 +1782,15 @@ static imgtoolerr_t fat_construct_dirent(const char *filename, creation_policy_t
 		/* need to do finishing touches on the LFN */
 		created_entry[0] |= 0x40;
 
-		i = 6;
-		while((i > 0) && isspace(created_entry[created_entry_len - FAT_DIRENT_SIZE + i - 1]))
-			i--;
-		created_entry[created_entry_len - FAT_DIRENT_SIZE + i + 0] = '~';
-		created_entry[created_entry_len - FAT_DIRENT_SIZE + i + 1] = '1';
+		/* if necessary, mangle the name */
+		if (sfn_disposition == SFN_MANGLED)
+		{
+			i = 6;
+			while((i > 0) && isspace(created_entry[created_entry_len - FAT_DIRENT_SIZE + i - 1]))
+				i--;
+			created_entry[created_entry_len - FAT_DIRENT_SIZE + i + 0] = '~';
+			created_entry[created_entry_len - FAT_DIRENT_SIZE + i + 1] = '1';
+		}
 		fat_calc_dirent_lfnchecksum(created_entry, created_entry_len);
 	}
 
