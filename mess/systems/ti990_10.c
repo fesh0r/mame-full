@@ -123,7 +123,7 @@ static void clear_load(int dummy)
 	cpu_set_nmi_line(0, CLEAR_LINE);
 }
 
-static void ti990_10_init_machine(void)
+static void machine_init_ti990_10(void)
 {
 	cpu_set_nmi_line(0, ASSERT_LINE);
 	timer_set(TIME_IN_MSEC(100), 0, clear_load);
@@ -134,19 +134,17 @@ static void ti990_10_init_machine(void)
 	ti990_hdc_init(set_int13);
 }
 
-static void ti990_10_stop_machine(void)
+static void machine_stop_ti990_10(void)
 {
 
 }
 
-static int ti990_10_line_interrupt(void)
+static void ti990_10_line_interrupt(void)
 {
 	vdt911_keyboard(0);
 
 	if (ckon_state)
 		set_int_line(5, 1);
-
-	return ignore_interrupt();
 }
 
 /*static void idle_callback(int state)
@@ -238,7 +236,7 @@ static WRITE16_HANDLER ( ti990_10_panel_write )
 */
 
 
-static int ti990_10_vh_start(void)
+static int video_start_ti990_10(void)
 {
 	const vdt911_init_params_t params =
 	{
@@ -250,14 +248,14 @@ static int ti990_10_vh_start(void)
 	return vdt911_init_term(0, & params);
 }
 
-static void ti990_10_vh_stop(void)
+static void video_stop_ti990_10(void)
 {
 	/* ... */
 }
 
-static void ti990_10_vh_refresh(struct mame_bitmap *bitmap, int full_refresh)
+static void video_update_ti990_10(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
-	vdt911_refresh(bitmap, full_refresh, 0, 0, 0);
+	vdt911_refresh(bitmap, 0, 0, 0);
 }
 
 /*
@@ -329,49 +327,48 @@ static struct beep_interface vdt_911_beep_interface =
 	{ 50 }
 };
 
-static struct MachineDriver machine_driver_ti990_10 =
-{
+
+static MACHINE_DRIVER_START(ti990_10)
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_TI990_10,
-			4000000,	/* unknown */
-			ti990_10_readmem, ti990_10_writemem, ti990_10_readport, ti990_10_writeport,
-			NULL, 0,		/* no VBLANK interrupt for now */
-			ti990_10_line_interrupt, 120/*or 100 in Europe*/,
-			&reset_params
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	1,
-	ti990_10_init_machine,
-	ti990_10_stop_machine,
+	/* TI990/10 CPU @ 4.0(???) MHz */
+	MDRV_CPU_ADD(TI990_10, 4000000)
+	/*MDRV_CPU_FLAGS(0)*/
+	MDRV_CPU_CONFIG(reset_params)
+	MDRV_CPU_MEMORY(ti990_10_readmem, ti990_10_writemem)
+	MDRV_CPU_PORTS(ti990_10_readport, ti990_10_writeport)
+	/*MDRV_CPU_VBLANK_INT(NULL, 0)*/
+	MDRV_CPU_PERIODIC_INT(ti990_10_line_interrupt, 120/*or 100 in Europe*/)
 
-	/* video hardware - single 911 vdt display */
-	560,						/* screen width */
-	280,						/* screen height pixel */
-	{ 0, 560-1, 0, /*250*/280-1},		/* visible_area (pixel aspect ratio is approx. 2:3) */
-	vdt911_gfxdecodeinfo,		/* graphics decode info */
-	vdt911_palette_size,		/* palette is 3*total_colors bytes long */
-	vdt911_colortable_size,		/* length in shorts of the color lookup table */
-	vdt911_init_palette,		/* palette init */
+	/* video hardware - we emulate a single 911 vdt display */
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	/*MDRV_INTERLEAVE(interleave)*/
 
-	VIDEO_TYPE_RASTER,
-	0,
-	ti990_10_vh_start,
-	ti990_10_vh_stop,
-	ti990_10_vh_refresh,
+	MDRV_MACHINE_INIT( ti990_10 )
+	MDRV_MACHINE_STOP( ti990_10 )
+	/*MDRV_NVRAM_HANDLER( NULL )*/
 
-	/* sound hardware */
-	0,
-	0,0,0,
-	{ /* 911 VDT has a beep tone generator */
-		{
-			SOUND_BEEP,
-			&vdt_911_beep_interface
-        }
-	}
-};
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	/*MDRV_ASPECT_RATIO(num, den)*/
+	MDRV_SCREEN_SIZE(560, 280)
+	MDRV_VISIBLE_AREA(0, 560-1, 0, /*250*/280-1)
+
+	MDRV_GFXDECODE(vdt911_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(vdt911_palette_size)
+	MDRV_COLORTABLE_LENGTH(vdt911_colortable_size)
+
+	MDRV_PALETTE_INIT(vdt911)
+	MDRV_VIDEO_START(ti990_10)
+	MDRV_VIDEO_STOP(ti990_10)
+	/*MDRV_VIDEO_EOF(name)*/
+	MDRV_VIDEO_UPDATE(ti990_10)
+
+	MDRV_SOUND_ATTRIBUTES(0)
+	/* 911 VDT has a beep tone generator */
+	MDRV_SOUND_ADD(BEEP, vdt_911_beep_interface)
+
+MACHINE_DRIVER_END
 
 
 /*
