@@ -97,7 +97,8 @@ struct DEBUGOPTS
 static struct DEBUGOPTS debug_options  = {5, {0,0,0,0}, 0};
 #endif
 
-UINT8  ppu_obj_size[2];					/* Object sizes */
+UINT8 ppu_obj_size[2];				/* Object sizes */
+UINT8 ppu_update_palette = 0;		/* Palette needs updating */
 
 /* Lookup tables */
 static const UINT8  table_bgd_pty[4][2] = { {7,10}, {6,9}, {1,4}, {0,3} };
@@ -922,6 +923,27 @@ static void snes_update_backplane(void)
 	}
 }
 
+void snes_update_palette(void)
+{
+	UINT8 r, g, b, fade;
+	UINT16 ii;
+	UINT32 col;
+
+	/* Reset the flag */
+	ppu_update_palette = 0;
+
+	/* Modify the palette to fade out the colours */
+	fade = (snes_ram[INIDISP] & 0xf) + 1;
+	for( ii = 0; ii <= 256; ii++ )
+	{
+		col = Machine->pens[snes_cgram[ii] & 0x7fff];
+		r = ((col & 0x1f) * fade) >> 4;
+		g = (((col & 0x3e0) >> 5) * fade) >> 4;
+		b = (((col & 0x7c00) >> 10) * fade) >> 4;
+		Machine->remapped_colortable[ii] = ((r & 0x1f) | ((g & 0x1f) << 5) | ((b & 0x1f) << 10));
+	}
+}
+
 #ifdef MAME_DEBUG
 /*********************************************
  * snes_dbg_draw_maps()
@@ -1240,6 +1262,10 @@ void snes_refresh_scanline( UINT16 curline )
 			if( snes_ram[CGADSUB] & 0x10 )
 				layers[4].blend = SNES_BLEND_ADD;
 		}
+
+		/* Update the palette if necessary */
+		if( ppu_update_palette )
+			snes_update_palette();
 
 		/* Clear zbuffers */
 		memset( scanlines[MAINSCREEN].zbuf, 0, SNES_SCR_WIDTH );
