@@ -1680,6 +1680,19 @@ static WRITE8_HANDLER( apple2gs_01Cxxx_w) { apple2gs_xxCxxx_w(offset | 0x01C000,
 static WRITE8_HANDLER( apple2gs_E0Cxxx_w) { apple2gs_xxCxxx_w(offset | 0xE0C000, data); }
 static WRITE8_HANDLER( apple2gs_E1Cxxx_w) { apple2gs_xxCxxx_w(offset | 0xE1C000, data); }
 
+static WRITE8_HANDLER( apple2gs_Exxxxx_w )
+{
+	apple2gs_slowmem[offset] = data;
+	apple2_video_touch(offset);
+}
+
+static WRITE8_HANDLER( apple2gs_E004xx_w ) { apple2gs_Exxxxx_w(offset + 0x00400, data); }
+static WRITE8_HANDLER( apple2gs_E02xxx_w ) { apple2gs_Exxxxx_w(offset + 0x02000, data); }
+static WRITE8_HANDLER( apple2gs_E104xx_w ) { apple2gs_Exxxxx_w(offset + 0x10400, data); }
+static WRITE8_HANDLER( apple2gs_E12xxx_w ) { apple2gs_Exxxxx_w(offset + 0x12000, data); }
+
+
+
 static void apple2gs_setup_memory(void)
 {
 	offs_t begin, end;
@@ -1697,6 +1710,10 @@ static void apple2gs_setup_memory(void)
 	/* install hi memory */
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe00000, 0xe1ffff, 0, 0, MRA8_BANK2);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe00000, 0xe1ffff, 0, 0, MWA8_BANK2);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe00400, 0xe007ff, 0, 0, apple2gs_E004xx_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe02000, 0xe03fff, 0, 0, apple2gs_E02xxx_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe10400, 0xe107ff, 0, 0, apple2gs_E104xx_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe12000, 0xe13fff, 0, 0, apple2gs_E12xxx_w);
 	cpu_setbank(2, apple2gs_slowmem);
 
 	/* install alternate ROM bank */
