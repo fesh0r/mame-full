@@ -6,6 +6,8 @@
 
 	- Scan commands
 	- Check the commands work properly using a BBC disc copier program 
+    - check if 0 is specified as number of sectors, how many sectors
+    is actually transfered
 */
 
 #include "includes/i8271.h"
@@ -27,7 +29,7 @@ static void i8271_do_read_id(void);
 static char temp_buffer[16384];
 
 // uncomment to give verbose debug information
-//#define VERBOSE
+#define VERBOSE
 
 static I8271 i8271;
 
@@ -54,6 +56,8 @@ void	i8271_init(i8271_interface *iface)
 	i8271.timer = NULL;
 	i8271.drive = 0;
 	i8271.pExecutionPhaseData = temp_buffer;
+
+    i8271_reset();
 }
 
 	
@@ -64,6 +68,8 @@ static void i8271_seek_to_track(int track)
 		/* seek to track 0 */
 		unsigned char StepCount = 0x0ff;
 
+        logerror("step\r\n");
+
 		while (
 			/* track 0 not set */
 			(!floppy_drive_get_flag_state(i8271.drive,FLOPPY_DRIVE_HEAD_AT_TRACK_0)) &&
@@ -71,6 +77,7 @@ static void i8271_seek_to_track(int track)
 			(StepCount!=0)
 			)
 		{
+            logerror("step\r\n");
 			StepCount--;
 			floppy_drive_seek(i8271.drive, -1);
 		}
@@ -84,6 +91,9 @@ static void i8271_seek_to_track(int track)
 			/* Completion code: track 0 not found */
 			i8271.ResultRegister |= (2<<3) | 2<<1;
 		}
+
+		/* step out - towards track 0 */
+		i8271.drive_control_output &=~(1<<2);
 	}
 	else
 	{
@@ -92,7 +102,17 @@ static void i8271_seek_to_track(int track)
 
 		/* calculate number of tracks to seek */
 		SignedTracks = track - i8271.CurrentTrack[i8271.drive];
+
+		/* step towards 0 */
+		i8271.drive_control_output &= ~(1<<2);
 		
+		if (SignedTracks>0)
+		{
+			/* step away from 0 */
+			i8271.drive_control_output |= (1<<2);
+		}
+
+
 		/* seek to track 0 */
 		floppy_drive_seek(i8271.drive, SignedTracks);
 
@@ -195,9 +215,8 @@ static int i8271_read_bad_track(int surface, int track)
 
 static void i8271_get_drive(void)
 {
-	floppy_drive_set_motor_state(i8271.drive, 0);
-	floppy_drive_set_ready_state(i8271.drive, 1, 0);
-
+	/* 01 = drive 0 side 0 */
+	/* 10 = drive 1 side 1 */
 	if (i8271.CommandRegister & (1<<6))
 	{
 		i8271.drive = 0;
@@ -208,8 +227,6 @@ static void i8271_get_drive(void)
 		i8271.drive = 1;
 	}
 
-	floppy_drive_set_motor_state(i8271.drive, 1);
-	floppy_drive_set_ready_state(i8271.drive, 1, 1);
 }
 
 static void i8271_setup_result(int data)
@@ -351,6 +368,10 @@ static void i8271_command_complete(void)
 	i8271.StatusRegister &= ~(I8271_STATUS_COMMAND_BUSY | I8271_STATUS_NON_DMA_REQUEST);
 	/* set int, and result register full */
 	i8271.StatusRegister |= I8271_STATUS_INT_REQUEST | I8271_STATUS_RESULT_FULL;
+
+    /* correct?? */
+    i8271.drive_control_output &=~1;
+
 	/* trigger an int */
 	i8271_set_irq_state(1);
 }
@@ -658,11 +679,16 @@ static void i8271_command_execute(void)
 
 				case I8271_SPECIAL_REGISTER_DRIVE_CONTROL_OUTPUT_PORT:
 				{
+					FDC_LOG_COMMAND("Read Drive Control Output port\r\n");
+
+					i8271_get_drive();
 
 					/* assumption: select bits reflect the select bits from the previous
 					command. i.e. read drive status */
 					data = (i8271.drive_control_output & ~0x0c0)
 						| ((i8271.drive)<<6);
+
+
 				}
 				break;
 
@@ -676,6 +702,9 @@ static void i8271_command_execute(void)
 					/* bit 2: rdy 0 */
 					/* bit 1: track 0 */
 					/* bit 0: cnt/opi */
+
+					FDC_LOG_COMMAND("Read Drive Control Input port\r\n");
+
 
 					i8271.drive_control_input = (1<<6) | (1<<2);
 
@@ -802,10 +831,11 @@ static void i8271_command_execute(void)
 
 				case I8271_SPECIAL_REGISTER_DRIVE_CONTROL_OUTPUT_PORT:
 				{
-					/* get drive selected */
-					i8271.drive = (i8271.CommandParameters[1]>>6) & 0x03;
+//					/* get drive selected */
+//					i8271.drive = (i8271.CommandParameters[1]>>6) & 0x03;
 
-					i8271.drive_control_output = i8271.CommandParameters[1];
+					FDC_LOG_COMMAND("Write Drive Control Output port\r\n");
+
 
 #ifdef VERBOSE
 					if (i8271.CommandParameters[1] & 0x01)
@@ -833,11 +863,39 @@ static void i8271_command_execute(void)
 						logerror("Write Fault Reset\r\n");
 					}
 
-					if (i8271.CommandParameters[1] & 0x040)
-					{
-						logerror("Select %02x\r\n", (i8271.CommandParameters[1] & 0x0c0)>>6);
-					}
+					logerror("Select %02x\r\n", (i8271.CommandParameters[1] & 0x0c0)>>6);
 #endif
+					/* get drive */
+					i8271_get_drive();
+
+					/* load head - on mini-sized drives this turns on the disc motor,
+					on standard-sized drives this loads the head and turns the motor on */
+					floppy_drive_set_motor_state(i8271.drive, i8271.CommandParameters[1] & 0x08);
+					floppy_drive_set_ready_state(i8271.drive, 1, 1);
+
+					/* step pin changed? if so perform a step in the direction indicated */
+					if (((i8271.drive_control_output^i8271.CommandParameters[1]) & (1<<1))!=0)
+					{
+						/* step pin changed state? */
+
+						if ((i8271.CommandParameters[1] & (1<<1))!=0)
+						{
+							signed int signed_tracks;
+
+							if ((i8271.CommandParameters[1] & (1<<2))!=0)
+							{
+								signed_tracks = 1;
+							}
+							else
+							{
+								signed_tracks = -1;
+							}
+
+							floppy_drive_seek(i8271.drive, signed_tracks);
+						}
+					}
+
+					i8271.drive_control_output = i8271.CommandParameters[1];
 
 
 				}
@@ -845,7 +903,10 @@ static void i8271_command_execute(void)
 
 				case I8271_SPECIAL_REGISTER_DRIVE_CONTROL_INPUT_PORT:
 				{
-//					i8271.drive_control_input = i8271.CommandParameters[1];
+
+					FDC_LOG_COMMAND("Write Drive Control Input port\r\n");
+
+					//					i8271.drive_control_input = i8271.CommandParameters[1];
 				}
 				break;
 
@@ -993,6 +1054,8 @@ static void i8271_command_execute(void)
 
 			i8271_get_drive();
 
+            i8271.drive_control_output &=~1;
+            
 			if (!floppy_drive_get_flag_state(i8271.drive, FLOPPY_DRIVE_READY))
 			{
 				/* Completion type: operation intervention probably required for recovery */
@@ -1011,6 +1074,8 @@ static void i8271_command_execute(void)
 				}
 				else
 				{
+                    i8271.drive_control_output |=1;
+
 					i8271_seek_to_track(i8271.CommandParameters[0]);
 
 					i8271_do_write();
@@ -1036,6 +1101,8 @@ static void i8271_command_execute(void)
 #endif
 			i8271_get_drive();
 
+            i8271.drive_control_output &=~1;
+
 			if (!floppy_drive_get_flag_state(i8271.drive, FLOPPY_DRIVE_READY))
 			{
 				/* Completion type: operation intervention probably required for recovery */
@@ -1054,6 +1121,9 @@ static void i8271_command_execute(void)
 				}
 				else
 				{
+
+                    i8271.drive_control_output |=1;
+
 					i8271_seek_to_track(i8271.CommandParameters[0]);
 
 					i8271_do_write();
@@ -1227,7 +1297,17 @@ WRITE_HANDLER(i8271_w)
 #ifdef VERBOSE
 			logerror("I8271 W Reset Register: %02x\r\n", data);
 #endif
+			if (((data ^ i8271.ResetRegister) & 0x01)!=0)
+			{
+				if ((data & 0x01)==0)
+				{	
+					i8271_reset();
+				}
+			}
+			
 			i8271.ResetRegister = data;
+
+		
 		}
 		break;
 
