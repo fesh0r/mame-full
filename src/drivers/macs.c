@@ -121,7 +121,7 @@ static WRITE8_HANDLER(st0016_rom_bank_w)
 
 READ8_HANDLER(st0016_dma_r);
 
-static READ8_HANDLER(random_r)
+static READ8_HANDLER(macs_random_r)
 {
 	//printf("[%x] %x\n",offset,activecpu_get_previouspc());
 	return 0;//xff;
@@ -144,7 +144,7 @@ static WRITE8_HANDLER(rambank2_w)
 
 //2d4 !!!
 
-static READ8_HANDLER(rand_r)
+static READ8_HANDLER(macs_rand_r)
 {
 	//printf("[%x] %x\n",offset,activecpu_get_previouspc());
 	return rand();
@@ -152,17 +152,17 @@ static READ8_HANDLER(rand_r)
 
 static ADDRESS_MAP_START( st0016_io, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0xbf) AM_READ(st0016_vregs_r) AM_WRITE(st0016_vregs_w) /* video/crt regs ? */
-	AM_RANGE(0xc0, 0xc0) AM_READ(random_r) AM_WRITE(rambank2_w) //AM_WRITENOP
-	AM_RANGE(0xc1, 0xc1)	AM_READ(random_r) AM_WRITENOP
+	AM_RANGE(0xc0, 0xc0) AM_READ(macs_random_r) AM_WRITE(rambank2_w) //AM_WRITENOP
+	AM_RANGE(0xc1, 0xc1)	AM_READ(macs_random_r) AM_WRITENOP
 	AM_RANGE(0xc2, 0xc2) AM_READ(input_port_0_r) AM_WRITENOP //switch a ds1
 	AM_RANGE(0xc3, 0xc3)	AM_READ(input_port_0_r) AM_WRITENOP //switch a ds 2
 	AM_RANGE(0xc4, 0xc4) AM_READ(input_port_0_r) AM_WRITENOP//a ds 3
 	AM_RANGE(0xc5, 0xc5) AM_READ(input_port_0_r) AM_WRITENOP//a ds 4
 	AM_RANGE(0xc6, 0xc6) AM_READ(input_port_1_r) AM_WRITENOP
-	AM_RANGE(0xc7, 0xc7) AM_READ(random_r) AM_WRITENOP
+	AM_RANGE(0xc7, 0xc7) AM_READ(macs_random_r) AM_WRITENOP
 
 
-	//AM_RANGE(0xc0, 0xc7) AM_READ(random_r) AM_WRITENOP
+	//AM_RANGE(0xc0, 0xc7) AM_READ(macs_random_r) AM_WRITENOP
 
 	AM_RANGE(0xe0, 0xe0) AM_WRITENOP /* renju = $40, neratte = 0 */
 	AM_RANGE(0xe1, 0xe1) AM_WRITE(st0016_rom_bank_w)
@@ -171,7 +171,7 @@ static ADDRESS_MAP_START( st0016_io, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xe5, 0xe5) AM_WRITE(st0016_palette_bank_w)
 	AM_RANGE(0xe6, 0xe6) AM_WRITE(rambank_w) /* banking ? ram bank ? shared rambank ? */
 	AM_RANGE(0xe7, 0xe7) AM_WRITENOP /* watchdog */
-	AM_RANGE(0xf0, 0xf0) AM_READ(rand_r)//AM_READ(st0016_dma_r)
+	AM_RANGE(0xf0, 0xf0) AM_READ(macs_rand_r)//AM_READ(st0016_dma_r)
 ADDRESS_MAP_END
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =

@@ -834,7 +834,7 @@ ADDRESS_MAP_END
 
 
 
-static READ8_HANDLER(rand_r)
+static READ8_HANDLER(shanghai_rand_r)
 {
 	return rand();
 }
@@ -849,7 +849,7 @@ static ADDRESS_MAP_START( kothello_mem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x00000, 0x07fff) AM_RAM
 	AM_RANGE(0x08010, 0x08011) AM_READ(kothello_HD63484_status_r) AM_WRITE(HD63484_address_w)
 	AM_RANGE(0x08012, 0x08013) AM_READ(HD63484_data_r) AM_WRITE(HD63484_data_w)
-	AM_RANGE(0x09010, 0x0901f) AM_READ(rand_r)AM_WRITENOP // unknown, sub cpu communication ?
+	AM_RANGE(0x09010, 0x0901f) AM_READ(shanghai_rand_r)AM_WRITENOP // unknown, sub cpu communication ?
 	AM_RANGE(0x0a000, 0x0a1ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_w) AM_BASE(&paletteram)
 	AM_RANGE(0x0b010, 0x0b01f) AM_READ(seibu_main_v30_r) AM_WRITE(seibu_main_v30_w)
 	AM_RANGE(0x80000, 0xfffff) AM_ROM
