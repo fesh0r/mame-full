@@ -85,7 +85,6 @@ Horace and the Spiders cartridge doesn't run properly.
 128K emulation is not perfect - the 128K machines crash and hang while
 running quite a lot of games.
 Disk errors occur on some +3 games.
-TS2068 sound emulation not working.
 
 The TK90X and TK95 roms output 0 to port #df on start up.
 The purpose of this port is unknown (probably display mode as TS2068) and
