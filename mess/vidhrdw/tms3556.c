@@ -130,26 +130,11 @@ WRITE8_HANDLER(tms3556_reg_w)
 	switch (vdp.reg_access_phase)
 	{
 	case 0:
-		if (data == 0xfe)
-		{	/* this value is sent by some exeltel ROM routine, no idea what it
-			means */
-			/* ... */
-			vdp.reg_ptr = -1;
-			vdp.reg_access_phase = 1;
-		}
-		else
-		{
-			vdp.reg_ptr = data & 0x0f;
-			vdp.reg_access_phase = 1;
-		}
+		vdp.reg_ptr = data & 0x0f;
+		vdp.reg_access_phase = 1;
 		break;
 	case 1:
-		if (vdp.reg_ptr == -1)
-		{
-			/* ??? */
-			vdp.reg_access_phase = 0;
-		}
-		else if (vdp.reg_ptr < 8)
+		if (vdp.reg_ptr < 8)
 		{
 			vdp.controlRegs[vdp.reg_ptr] = data;
 			vdp.reg_access_phase = 0;
@@ -166,6 +151,9 @@ WRITE8_HANDLER(tms3556_reg_w)
 			vdp.addressRegs[vdp.reg_ptr-8] ++;
 		else
 			vdp.addressRegs[vdp.reg_ptr-8] += 2;
+		vdp.reg_access_phase = 3;
+		break;
+	case 3:
 		vdp.reg_access_phase = 0;
 		break;
 	}
