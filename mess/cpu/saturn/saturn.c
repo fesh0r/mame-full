@@ -209,32 +209,13 @@ void saturn_set_context (void *src)
 	}
 }
 
-unsigned saturn_get_pc (void)
-{
-	return saturn.pc;
-}
-
-void saturn_set_pc (unsigned val)
-{
-	saturn.pc = val;
-	change_pc20(saturn.pc);
-}
-
-unsigned saturn_get_sp (void)
-{
-	return saturn.stackpointer;
-}
-
-void saturn_set_sp (unsigned val)
-{
-	saturn.stackpointer=val;
-}
-
 unsigned saturn_get_reg (int regnum)
 {
 	switch( regnum )
 	{
+	case REG_PC:
 	case SATURN_PC: return saturn.pc;
+	case REG_SP: return saturn.stackpointer;
 	case SATURN_D0: return saturn.d[0];
 	case SATURN_D1: return saturn.d[1];
 #if 0
@@ -282,7 +263,9 @@ void saturn_set_reg (int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-	case SATURN_PC: saturn.pc=val;break;
+	case REG_PC:
+	case SATURN_PC: saturn.pc=val;change_pc20(saturn.pc);break;
+	case REG_SP: saturn.stackpointer=val;break;
 	case SATURN_D0: saturn.d[0]=val;break;
 	case SATURN_D1: saturn.d[1]=val;break;
 #if 0

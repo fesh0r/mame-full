@@ -96,12 +96,12 @@ typedef struct
     UINT8 ram[0x60]; // internal special ram
     UINT8 p, q, r; //7 bits only?
 
-    UINT8 c;        // port c, used for HLT.    
+    UINT8 c;        // port c, used for HLT.
     UINT8 d, h;
     UINT16 oldpc, pc, dp;
-    
+
     bool carry, zero;
-    
+
     struct { bool t2ms, t512ms; int count;} timer;
 }   SC61860_Regs;
 
@@ -170,35 +170,16 @@ void sc61860_set_context (void *src)
 	}
 }
 
-unsigned sc61860_get_pc (void)
-{
-	return sc61860.pc;
-}
-
-void sc61860_set_pc (unsigned val)
-{
-	sc61860.pc = val;
-	change_pc16(sc61860.pc);
-}
-
-unsigned sc61860_get_sp (void)
-{
-	return sc61860.r;
-}
-
-void sc61860_set_sp (unsigned val)
-{
-	sc61860.r=val;
-}
-
 unsigned sc61860_get_reg (int regnum)
 {
 	switch( regnum )
 	{
+	case REG_PC:
 	case SC61860_PC: return sc61860.pc;
 	case SC61860_DP: return sc61860.dp;
 	case SC61860_P: return sc61860.p;
 	case SC61860_Q: return sc61860.q;
+	case REG_SP:
 	case SC61860_R: return sc61860.r;
 	case SC61860_CARRY: return sc61860.carry;
 	case SC61860_ZERO: return sc61860.zero;
@@ -222,10 +203,12 @@ void sc61860_set_reg (int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-	case SC61860_PC: sc61860.pc=val;break;
+	case REG_PC:
+	case SC61860_PC: sc61860.pc=val;change_pc16(sc61860.pc);break;
 	case SC61860_DP: sc61860.dp=val;break;
 	case SC61860_P: sc61860.p=val&0x7f;break;
 	case SC61860_Q: sc61860.q=val&0x7f;break;
+	case REG_SP:
 	case SC61860_R: sc61860.r=val&0x7f;break;
 	case SC61860_CARRY: sc61860.carry=val;break;
 	case SC61860_ZERO: sc61860.zero=val;break;
@@ -276,7 +259,7 @@ int sc61860_execute(int cycles)
 		 sc61860_icount-=4;
 		 }
 		 else if(sc61860.c & 8) {}
-		 
+
 		 else sc61860_instruction();*/
 
 	} while (sc61860_icount > 0);

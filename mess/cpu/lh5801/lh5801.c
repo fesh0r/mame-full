@@ -103,7 +103,7 @@ typedef struct
 	bool bf, dp, pu, pv;
 
 	UINT16 oldpc;
-	
+
 	bool irq_state;
 
 	bool idle;
@@ -171,40 +171,20 @@ void lh5801_set_context (void *src)
 	}
 }
 
-unsigned lh5801_get_pc (void)
-{
-	return P;
-}
-
-void lh5801_set_pc (unsigned val)
-{
-	P = val;
-	change_pc17(P);
-}
-
-unsigned lh5801_get_sp (void)
-{
-	return S;
-}
-
-void lh5801_set_sp (unsigned val)
-{
-	S = val;
-	
-}
-
 unsigned lh5801_get_reg (int regnum)
 {
 	switch( regnum )
 	{
+	case REG_PC:
 	case LH5801_P: return P;
+	case REG_SP:
 	case LH5801_S: return S;
 	case LH5801_U: return U;
 	case LH5801_X: return X;
 	case LH5801_Y: return Y;
 	case LH5801_T: return lh5801.t;
 	case LH5801_TM: return lh5801.tm;
-	case LH5801_IN: 
+	case LH5801_IN:
 		if (lh5801.config&&lh5801.config->in) return lh5801.config->in();
 		return 0;
 	case LH5801_BF: return lh5801.bf;
@@ -230,7 +210,9 @@ void lh5801_set_reg (int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-	case LH5801_P: P=val;break;
+	case REG_PC:
+	case LH5801_P: P=val;change_pc17(P);break;
+	case REG_SP:
 	case LH5801_S: S=val;break;
 	case LH5801_U: U=val;break;
 	case LH5801_X: X=val;break;
@@ -271,16 +253,16 @@ int lh5801_execute(int cycles)
 
 	change_pc17(P);
 
-	if (lh5801.idle) { 
+	if (lh5801.idle) {
 		lh5801_icount=0;
 	} else {
 		do
 		{
 			lh5801.oldpc = P;
-			
+
 			CALL_MAME_DEBUG;
 			lh5801_instruction();
-			
+
 		} while (lh5801_icount > 0);
 	}
 
@@ -298,7 +280,7 @@ void lh5801_set_irq_line(int irqline, int state)
 	if (cdp1802.ie) {
 		cdp1802.ie=0;
 		cdp1802.t=(cdp1802.x<<4)|cdp1802.p;
-		cdp1802.p=1; 
+		cdp1802.p=1;
 		cdp1802.x=2;
 		change_pc17(P);
 	}
@@ -366,14 +348,14 @@ const char *lh5801_info(void *context, int regnum)
 	case CPU_INFO_REG+LH5801_PU: sprintf(buffer[which],"PU:%x",r->pu);break;
 	case CPU_INFO_REG+LH5801_BF: sprintf(buffer[which],"BF:%x",r->bf);break;
 	case CPU_INFO_REG+LH5801_DP: sprintf(buffer[which],"DP:%x",r->dp);break;
-	case CPU_INFO_FLAGS: sprintf(buffer[which], "%s%s%s%s%s%s%s%s", 
-								 r->t&0x80?"1":"0", 
-								 r->t&0x40?"1":"0", 
+	case CPU_INFO_FLAGS: sprintf(buffer[which], "%s%s%s%s%s%s%s%s",
+								 r->t&0x80?"1":"0",
+								 r->t&0x40?"1":"0",
 								 r->t&0x20?"1":"0",
-								 r->t&0x10?"H":".", 
-								 r->t&8?"V":".", 
-								 r->t&4?"Z":".", 
-								 r->t&2?"I":".", 
+								 r->t&0x10?"H":".",
+								 r->t&8?"V":".",
+								 r->t&4?"Z":".",
+								 r->t&2?"I":".",
 								 r->t&1?"C":".");
 							 break;
 	case CPU_INFO_NAME: return "LH5801";
