@@ -205,7 +205,7 @@ static int internal_test(const struct ImageModule *module)
 	int err, i;
 	const struct OptionTemplate *createopts;
 	char *s;
-	int freespace, freespace2, filesize, pos;
+	int freespace, freespace2, filesize;
 	void *testbuf;
 	struct NamedOption nopts[32];
 	char buf[2048];
