@@ -49,8 +49,8 @@ TARGET = mame
 # much memory, uncomment this.
 # LOW_MEM = 1
 
-# Enable experimental network support.  See src/unix/doc/multiplayer-readme.txt
-# for more information.
+# Enable experimental network support.  See 
+# src/unix/doc/multiplayer-readme.txt for more information.
 # XMAME_NET = 1
 
 # Enable rapid-fire support.
@@ -249,7 +249,7 @@ ifneq (,$(findstring gcc,$(CC)))
   # executable that (in theory) should be optimized for a PentiumPro 
   # system, but it will still run on a 386.
 
-  # Valid x86 options that work with any version of GCC.
+  # x86 options that work with any version of GCC:
   # CFLAGS += -march=i386
   # CFLAGS += -march=i486
   # CFLAGS += -march=i586
@@ -257,7 +257,7 @@ ifneq (,$(findstring gcc,$(CC)))
   # CFLAGS += -march=pentium
   # CFLAGS += -march=pentiumpro
 
-  # Valid x86 options that work only with newer versions of GCC.
+  # x86 options that work only with newer versions of GCC:
   # CFLAGS += -march=pentium-mmx
   # CFLAGS += -march=pentium3
   # CFLAGS += -march=pentium4
@@ -269,6 +269,18 @@ ifneq (,$(findstring gcc,$(CC)))
   # CFLAGS += -march=athlon-xp
   # CFLAGS += -march=athlon-mp
   # CFLAGS += -march=athlon-4
+
+  # x86 SIMD options that work only with newer versions of GCC:
+  # CFLAGS += -mfpmath=sse
+  # CFLAGS += -mfpmath=sse,387
+  #
+  # CFLAGS += -mmmx
+  # CFLAGS += -msse
+  # CFLAGS += -msse2
+  # CFLAGS += -m3dnow
+  #
+  # A good value for PIII/Athlon XP(MP) and above:
+  # CFLAGS += -mfpmath=sse -msse 
 
 else
 ifeq ($(CC),icc)
