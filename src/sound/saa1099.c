@@ -4,10 +4,6 @@
 
 	This driver emulates a few of the SAA1099 functions
 
-	Not implemented:
-		* Noise Generators
-		* Envelope Generators
-
 	SAA1099 register layout:
 	========================
 
@@ -179,29 +175,30 @@ static void saa1099_envelope(int chip, int ch)
 	struct SAA1099 *saa = &saa1099[chip];
 	if (saa->env_enable[ch])
 	{
-		int step, mode;
+		int step, mode, mask;
         mode = saa->env_mode[ch];
 		/* step from 0..63 and then loop in steps 32..63 */
 		step = saa->env_step[ch] =
 			((saa->env_step[ch] + 1) & 0x3f) | (saa->env_step[ch] & 0x20);
 
+		mask = 15;
         if (saa->env_bits[ch])
-			step &= ~1; 	/* 3 bit resolution, mask LSB */
+			mask &= ~1; 	/* 3 bit resolution, mask LSB */
 
         saa->channels[ch*3+0].envelope[ LEFT] =
 		saa->channels[ch*3+1].envelope[ LEFT] =
-		saa->channels[ch*3+2].envelope[ LEFT] = envelope[mode][step];
+		saa->channels[ch*3+2].envelope[ LEFT] = envelope[mode][step] & mask;
 		if (saa->env_reverse_right[ch] & 0x01)
 		{
 			saa->channels[ch*3+0].envelope[RIGHT] =
 			saa->channels[ch*3+1].envelope[RIGHT] =
-			saa->channels[ch*3+2].envelope[RIGHT] = 15 - envelope[mode][step];
+			saa->channels[ch*3+2].envelope[RIGHT] = (15 - envelope[mode][step]) & mask;
 		}
 		else
 		{
 			saa->channels[ch*3+0].envelope[RIGHT] =
 			saa->channels[ch*3+1].envelope[RIGHT] =
-			saa->channels[ch*3+2].envelope[RIGHT] = envelope[mode][step];
+			saa->channels[ch*3+2].envelope[RIGHT] = envelope[mode][step] & mask;
         }
 	}
 	else
@@ -231,7 +228,6 @@ static void saa1099_update(int chip, INT16 **buffer, int length)
         return;
 	}
 
-
     for (ch = 0; ch < 2; ch++)
     {
 		switch (saa->noise_params[ch])
@@ -251,12 +247,12 @@ static void saa1099_update(int chip, INT16 **buffer, int length)
 		/* for each channel */
 		for (ch = 0; ch < 6; ch++)
 		{
-			if (saa->channels[ch].freq == 0.0)
-				saa->channels[ch].freq = (double)((2 * 15625) << saa->channels[ch].octave) /
-					(511.0 - (double)saa->channels[ch].frequency);
+            if (saa->channels[ch].freq == 0.0)
+                saa->channels[ch].freq = (double)((2 * 15625) << saa->channels[ch].octave) /
+                    (511.0 - (double)saa->channels[ch].frequency);
 
-			/* check the actual position in the square wave */
-			saa->channels[ch].counter -= saa->channels[ch].freq;
+            /* check the actual position in the square wave */
+            saa->channels[ch].counter -= saa->channels[ch].freq;
 			while (saa->channels[ch].counter < 0)
 			{
 				/* calculate new frequency now after the half wave is updated */
@@ -382,6 +378,7 @@ static void saa1099_write_port_w( int chip, int offset, int data )
 {
 	struct SAA1099 *saa = &saa1099[chip];
 	int reg = saa->selected_reg;
+	int ch;
 
 	/* first update the stream to this point in time */
 	stream_update(saa->stream, 0);
@@ -390,31 +387,20 @@ static void saa1099_write_port_w( int chip, int offset, int data )
 	{
 	/* channel i amplitude */
 	case 0x00:	case 0x01:	case 0x02:	case 0x03:	case 0x04:	case 0x05:
-		saa->channels[reg & 0x07].amplitude[LEFT] = amplitude_lookup[data & 0x0f];
-		saa->channels[reg & 0x07].amplitude[RIGHT] = amplitude_lookup[(data >> 4) & 0x0f];
+		ch = reg & 7;
+		saa->channels[ch].amplitude[LEFT] = amplitude_lookup[data & 0x0f];
+		saa->channels[ch].amplitude[RIGHT] = amplitude_lookup[(data >> 4) & 0x0f];
 		break;
 	/* channel i frequency */
 	case 0x08:	case 0x09:	case 0x0a:	case 0x0b:	case 0x0c:	case 0x0d:
-		reg -= 0x08;
-		if (saa->channels[reg & 0x07].frequency != (data & 0xff))
-		{
-			saa->channels[reg & 0x07].frequency = data & 0xff;
-			saa->channels[reg & 0x07].counter = 0.0;
-		}
+		ch = reg & 7;
+		saa->channels[ch].frequency = data & 0xff;
 		break;
 	/* channel i octave */
 	case 0x10:	case 0x11:	case 0x12:
-		reg -= 0x10;
-		if (saa->channels[(reg << 1) + 0].octave != (data & 0x07))
-		{
-			saa->channels[(reg << 1) + 0].octave = data & 0x07;
-			saa->channels[(reg << 1) + 0].counter = 0.0;
-		}
-		if (saa->channels[(reg << 1) + 1].octave != ((data >> 4) & 0x07))
-		{
-			saa->channels[(reg << 1) + 1].octave = (data >> 4) & 0x07;
-			saa->channels[(reg << 1) + 1].counter = 0.0;
-		}
+		ch = (reg - 0x10) << 1;
+		saa->channels[ch + 0].octave = data & 0x07;
+		saa->channels[ch + 1].octave = (data >> 4) & 0x07;
 		break;
 	/* channel i frequency enable */
 	case 0x14:
@@ -441,14 +427,14 @@ static void saa1099_write_port_w( int chip, int offset, int data )
 		break;
 	/* envelope generators parameters */
 	case 0x18:	case 0x19:
-		reg -= 0x18;
-		saa->env_reverse_right[reg] = data & 0x01;
-		saa->env_mode[reg] = (data >> 1) & 0x07;
-		saa->env_bits[reg] = data & 0x10;
-		saa->env_clock[reg] = data & 0x20;
-		saa->env_enable[reg] = data & 0x80;
+		ch = reg - 0x18;
+		saa->env_reverse_right[ch] = data & 0x01;
+		saa->env_mode[ch] = (data >> 1) & 0x07;
+		saa->env_bits[ch] = data & 0x10;
+		saa->env_clock[ch] = data & 0x20;
+		saa->env_enable[ch] = data & 0x80;
 		/* reset the envelope */
-		saa->env_step[reg] = 0;
+		saa->env_step[ch] = 0;
 		break;
 	/* channels enable & reset generators */
 	case 0x1c:
@@ -462,8 +448,7 @@ static void saa1099_write_port_w( int chip, int offset, int data )
 			logerror("%04x: (SAA1099 #%d) -reg 0x1c- Chip reset\n",cpu_get_pc(), chip);
 			for (i = 0; i < 6; i++)
 			{
-				saa->channels[i].freq = 0.0;
-				saa->channels[i].level = 0;
+                saa->channels[i].level = 0;
 				saa->channels[i].counter = 0.0;
 			}
 		}

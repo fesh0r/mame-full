@@ -578,4 +578,4 @@ static const struct IODevice io_coupe[] =
 
 /*    YEAR  NAME      PARENT    MACHINE         INPUT     INIT          COMPANY                 		  FULLNAME */
 COMP( 1989, coupe,	  0,		coupe256,		coupe,	  0,			"Miles Gordon Technology plc",    "Sam Coupe 256K RAM" )
-COMP( 1989, coupe512, 0,		coupe512,		coupe,	  0,			"Miles Gordon Technology plc",    "Sam Coupe 512K RAM" )
+COMP( 1989, coupe512, coupe,	coupe512,		coupe,	  0,			"Miles Gordon Technology plc",    "Sam Coupe 512K RAM" )
