@@ -28,6 +28,22 @@
 #include "sc61860.h"
 #include "sc.h"
 
+/*
+  new:
+  clra 0x23
+  nopt 0x33
+  nopt 0x68
+  nopt 0x6a
+  rz n 0x72, 0x73, 0x76, 0x77
+  tsma 0xc6
+  nopw 0xcd
+  nopw 0xd3
+  sz n 0xd7
+  nopw 0xda
+
+!  writ 211 nopw?
+*/
+
 /* explanations for the sharp mnemonics
    d data: external memory
    m memory: internal memory (address in p register)
@@ -101,17 +117,17 @@ static const struct { char *mnemonic; Adr adr; } table[]={
 	{ "INCI",	Imp	}, { "DECI",	Imp }, { "INCA",	Imp	}, { "DECA",	Imp },
 	{ "ADM",	Imp	}, { "SBM",		Imp }, { "ANMA",	Imp	}, { "ORMA",	Imp },
 	{ "INCK",	Imp	}, { "DECK",	Imp }, { "INCV",	Imp	}, { "DECV",	Imp },
-	{ "INA",	Imp	}, { "NOPW",	Imp }, { "WAIT",	Imm	}, { 0,			Ill },
+	{ "INA",	Imp	}, { "NOPW",	Imp }, { "WAIT",	Imm	}, { "IPXL"/*CDN, lxn*/,			Imp },
 
 	{ "INCP",	Imp	}, { "DECP",	Imp }, { "STD",		Imp	}, { "MVDM",	Imp },
-	{ 0,		Ill	}, { "MVMD",	Imp }, { 0,			Ill	}, { "LDD",		Imp },
+	{ "READM",/*mvmp*/	Imp	}, { "MVMD",	Imp }, { "READ"/*ldpc*/,	Imp	}, { "LDD",		Imp },
 	{ "SWP",	Imp	}, { "LDM",		Imp }, { "SL",		Imp	}, { "POP",		Imp },
 	{ 0,		Ill	}, { "OUTA",	Imp }, { 0,			Ill	}, { "OUTF",	Imp },
 
 	{ "ANIM",	Imm	}, { "ORIM",	Imm }, { "TSIM",	Imm	}, { "CPIM",	Imm },
 	{ "ANIA",	Imm	}, { "ORIA",	Imm }, { "TSIA",	Imm	}, { "CPIA",	Imm },
 	{ 0,		Ill	}, { "ETC",		Etc }, { 0,			Ill	}, { "TEST",	Imm },
-	{ 0,		Ill	}, { 0,			Ill }, { 0,			Ill	}, { 0,			Ill },
+	{ 0,		Ill	}, { 0,			Ill }, { 0,			Ill	}, { "IPXH"/*CDN,lxp*/,	Imp },
 
 	{ "ADIM",	Imm	}, { "SBIM",	Imm }, { 0,			Ill	}, { 0,			Ill },
 	{ "ADIA",	Imm	}, { "SBIA",	Imm }, { 0,			Ill	}, { 0,			Ill },
