@@ -1,7 +1,7 @@
 0.37b8 
 ---------
 Several drivers may be broken due to the MAME memory handling changes.
-As a result, Genesis and Amiga have been temporarily removed.
+And as a result, the Amiga has been temporarily removed.
 ---------
 
 Note: .inp record/playback does still not work currently.
@@ -12,6 +12,9 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+
+- [GameBoy] Finally fixed the interrupt problem, which in turn helped alot of carts 
+  actually run now. [Lee Ward] 
 
 - [ORIC] Rewrote to use 6522via code in MESS core. Previously it had it's own 
   implementation which was not complete. Added floppy disc emulation (emulates a 
