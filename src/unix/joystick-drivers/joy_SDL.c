@@ -1,8 +1,6 @@
 #include "xmame.h"
 #include "devices.h"
 
-// static char *joy_dev = NULL; /* name of joystick device prefix */
-
 struct rc_option joy_SDL_opts[] = {
    { NULL,		NULL,			rc_end,		NULL,
      NULL,		0,			0,		NULL,
