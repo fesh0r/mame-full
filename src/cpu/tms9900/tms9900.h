@@ -250,6 +250,11 @@ typedef struct tms9995reset_param
 	int auto_wait_state;
 
 	void (*idle_callback)(int state);
+
+	/* on the tms9995-mp9537, internal RAM and decrementer register are
+		disabled.  This chip is used by the ti99/8 so that internal RAM does
+		not prevent the mapper from working correctly. */
+	int is_mp9537;	
 } tms9995reset_param;
 
 /* accessor for the first 252 bytes of internal RAM */

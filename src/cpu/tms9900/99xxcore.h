@@ -522,6 +522,9 @@ typedef struct
 	/* chip config, which can be set on reset */
 	int memory_wait_states_byte;
 	int memory_wait_states_word;
+
+	/* mask option (off on normal tms9995) */
+	int is_mp9537;
 #endif
 
 	/* Some instructions (i.e. XOP, BLWP, and MID) disable interrupt recognition until another
@@ -964,7 +967,7 @@ WRITE_HANDLER(tms9995_internal2_w)
 
 	static int readword(int addr)
 	{
-		if (addr < 0xf000)
+		if ((addr < 0xf000) || (I.is_mp9537))
 		{
 			int reply;
 			TMS99XX_ICOUNT -= I.memory_wait_states_word;
@@ -1000,7 +1003,7 @@ WRITE_HANDLER(tms9995_internal2_w)
 
 	static void writeword(int addr, int data)
 	{
-		if (addr < 0xf000)
+		if ((addr < 0xf000) || (I.is_mp9537))
 		{
 			TMS99XX_ICOUNT -= I.memory_wait_states_word;
 			cpu_writemem16(addr, data >> 8);
@@ -1030,7 +1033,7 @@ WRITE_HANDLER(tms9995_internal2_w)
 
 	static int readbyte(int addr)
 	{
-		if (addr < 0xf000)
+		if ((addr < 0xf000) || (I.is_mp9537))
 		{
 			TMS99XX_ICOUNT -= I.memory_wait_states_byte;
 			return cpu_readmem16(addr);
@@ -1069,7 +1072,7 @@ WRITE_HANDLER(tms9995_internal2_w)
 
 	static void writebyte(int addr, int data)
 	{
-		if (addr < 0xf000)
+		if ((addr < 0xf000) || (I.is_mp9537))
 		{
 			TMS99XX_ICOUNT -= I.memory_wait_states_byte;
 			cpu_writemem16(addr, data);
@@ -1313,11 +1316,13 @@ void TMS99XX_RESET(void *p)
 		{	/* if no param, the default is currently "wait state added" */
 			I.memory_wait_states_byte = 4;
 			I.memory_wait_states_word = 12;
+			I.is_mp9537 = 0;
 		}
 		else
 		{
 			I.memory_wait_states_byte = (param->auto_wait_state) ? 4 : 0;
 			I.memory_wait_states_word = (param->auto_wait_state) ? 12 : 4;
+			I.is_mp9537 = param->is_mp9537;
 		}
 
 		I.MID_flag = 0;
