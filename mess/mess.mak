@@ -898,26 +898,6 @@ COREOBJS +=							\
 TOOLS = dat2html$(EXE) messtest$(EXE) chdman$(EXE) messdocs$(EXE) imgtool$(EXE)
 
 
-DAT2HTML_OBJS =								\
-	$(OBJ)/mess/tools/dat2html/dat2html.o	\
-	$(OBJ)/mess/tools/imgtool/stubs.o		\
-	$(OBJ)/mess/utils.o
-
-MESSDOCS_OBJS =								\
-	$(OBJ)/mess/tools/messdocs/messdocs.o	\
-	$(OBJ)/mess/utils.o						\
-	$(OBJ)/mess/pool.o						\
-	$(EXPAT)								\
-
-MESSTEST_OBJS =								\
-	$(EXPAT)								\
-	$(OBJ)/mess/pile.o						\
-	$(OBJ)/mess/tools/messtest/main.o		\
-	$(OBJ)/mess/tools/messtest/messtest.o	\
-	$(OBJ)/mess/tools/messtest/testexec.o	\
-	$(OBJ)/mess/tools/messtest/tststubs.o	\
-	$(OBJ)/mess/tools/messtest/tstutils.o	\
-
 IMGTOOL_LIB_OBJS =							\
 	$(OBJ)/unzip.o							\
 	$(OBJ)/chd.o							\
@@ -935,24 +915,23 @@ IMGTOOL_LIB_OBJS =							\
 	$(OBJ)/mess/formats/coco_dsk.o			\
 	$(OBJ)/mess/formats/coco_cas.o			\
 	$(OBJ)/mess/formats/wavfile.o			\
-	$(OBJ)/mess/tools/imgtool/stubs.o		\
-	$(OBJ)/mess/tools/imgtool/stream.o   \
-	$(OBJ)/mess/tools/imgtool/library.o  \
-	$(OBJ)/mess/tools/imgtool/modules.o  \
-	$(OBJ)/mess/tools/imgtool/iflopimg.o \
-	$(OBJ)/mess/tools/imgtool/filter.o   \
-	$(OBJ)/mess/tools/imgtool/filteoln.o \
-	$(OBJ)/mess/tools/imgtool/filtbas.o  \
-	$(OBJ)/mess/tools/imgtool/imgtool.o  \
-	$(OBJ)/mess/tools/imgtool/imgfile.o  \
-	$(OBJ)/mess/tools/imgtool/imgterrs.o \
-	$(OBJ)/mess/tools/imgtool/rsdos.o    \
-	$(OBJ)/mess/tools/imgtool/imgtest.o  \
-	$(OBJ)/mess/tools/imgtool/imghd.o    \
-	$(OBJ)/mess/tools/imgtool/mac.o      \
-	$(OBJ)/mess/tools/imgtool/ti99.o     \
-	$(OBJ)/mess/tools/imgtool/ti990hd.o  \
-	$(OBJ)/mess/tools/imgtool/concept.o  \
+	$(OBJ)/mess/tools/imgtool/stream.o		\
+	$(OBJ)/mess/tools/imgtool/library.o		\
+	$(OBJ)/mess/tools/imgtool/modules.o		\
+	$(OBJ)/mess/tools/imgtool/iflopimg.o	\
+	$(OBJ)/mess/tools/imgtool/filter.o		\
+	$(OBJ)/mess/tools/imgtool/filteoln.o	\
+	$(OBJ)/mess/tools/imgtool/filtbas.o		\
+	$(OBJ)/mess/tools/imgtool/imgtool.o		\
+	$(OBJ)/mess/tools/imgtool/imgfile.o		\
+	$(OBJ)/mess/tools/imgtool/imgterrs.o	\
+	$(OBJ)/mess/tools/imgtool/rsdos.o		\
+	$(OBJ)/mess/tools/imgtool/imgtest.o		\
+	$(OBJ)/mess/tools/imgtool/imghd.o		\
+	$(OBJ)/mess/tools/imgtool/mac.o			\
+	$(OBJ)/mess/tools/imgtool/ti99.o		\
+	$(OBJ)/mess/tools/imgtool/ti990hd.o		\
+	$(OBJ)/mess/tools/imgtool/concept.o		\
 #	  $(OBJ)/mess/tools/imgtool/tstsuite.o \
 #	  $(OBJ)/mess/formats/fmsx_cas.o       \
 #	  $(OBJ)/mess/formats/svi_cas.o        \
@@ -975,9 +954,34 @@ IMGTOOL_LIB_OBJS =							\
 #	  $(OBJ)/mess/tools/imgtool/nccard.o   \
 #	  $(OBJ)/mess/tools/imgtool/ti85.o     \
 
-IMGTOOL_OBJS =							\
-	$(IMGTOOL_LIB_OBJS)					\
-	$(OBJ)/mess/tools/imgtool/main.o     \
+IMGTOOL_OBJS =								\
+	$(IMGTOOL_LIB_OBJS)						\
+	$(OBJ)/mess/tools/imgtool/stubs.o		\
+	$(OBJ)/mess/tools/imgtool/main.o		\
+
+DAT2HTML_OBJS =								\
+	$(OBJ)/mess/tools/dat2html/dat2html.o	\
+	$(OBJ)/mess/tools/imgtool/stubs.o		\
+	$(OBJ)/mess/utils.o
+
+MESSDOCS_OBJS =								\
+	$(OBJ)/mess/tools/messdocs/messdocs.o	\
+	$(OBJ)/mess/utils.o						\
+	$(OBJ)/mess/pool.o						\
+	$(EXPAT)								\
+
+MESSTEST_OBJS =								\
+	$(EXPAT)								\
+	$(IMGTOOL_LIB_OBJS)						\
+	$(OBJ)/mess/pile.o						\
+	$(OBJ)/mess/tools/messtest/main.o		\
+	$(OBJ)/mess/tools/messtest/core.o		\
+	$(OBJ)/mess/tools/messtest/testmess.o	\
+	$(OBJ)/mess/tools/messtest/testimgt.o	\
+	$(OBJ)/mess/tools/messtest/tststubs.o	\
+	$(OBJ)/mess/tools/messtest/tstutils.o	\
+
+
 
 # text files
 TEXTS = sysinfo.htm

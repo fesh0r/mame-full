@@ -8,7 +8,7 @@
 
 #include <time.h>
 
-#include "messtest.h"
+#include "core.h"
 #include "hashfile.h"
 
 #ifdef WIN32

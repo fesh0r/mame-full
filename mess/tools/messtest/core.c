@@ -1,6 +1,6 @@
 /*********************************************************************
 
-	messtest.c
+	core.c
 
 	MESS testing code
 
@@ -8,14 +8,15 @@
 
 #include <stdio.h>
 #include <ctype.h>
+#include <expat.h>
 
-#include "messtest.h"
+#include "core.h"
+#include "testmess.h"
+#include "testimgt.h"
 #include "osdepend.h"
 #include "pool.h"
 #include "pile.h"
 #include "inputx.h"
-
-#include "expat/expat.h"
 
 /* ----------------------------------------------------------------------- */
 
@@ -32,7 +33,7 @@ struct messtest_state
 	XML_Parser parser;
 	memory_pool pool;
 
-	struct messtest_tagdispatch *dispatch[32];
+	const struct messtest_tagdispatch *dispatch[32];
 	int dispatch_pos;
 	unsigned int aborted : 1;
 
@@ -48,17 +49,19 @@ struct messtest_state
 
 
 
-const XML_Char *find_attribute(const XML_Char **attributes, const XML_Char *seek_attribute)
+void error_report(struct messtest_state *state, const char *message)
 {
-	int i;
-	for (i = 0; attributes[i] && strcmp(attributes[i], seek_attribute); i += 2)
-		;
-	return attributes[i] ? attributes[i+1] : NULL;
+	fprintf(stderr, "%s:(%i:%i): %s\n",
+		state->script_filename,
+		XML_GetCurrentLineNumber(state->parser),
+		XML_GetCurrentColumnNumber(state->parser),
+		message);
+	state->aborted = 1;
 }
 
 
 
-static void report_parseerror(struct messtest_state *state, const char *fmt, ...)
+void error_reportf(struct messtest_state *state, const char *fmt, ...)
 {
 	char buf[1024];
 	va_list va;
@@ -67,79 +70,57 @@ static void report_parseerror(struct messtest_state *state, const char *fmt, ...
 	vsnprintf(buf, sizeof(buf) / sizeof(buf[0]), fmt, va);
 	va_end(va);
 
-	fprintf(stderr, "%s:(%i:%i): %s\n",
-		state->script_filename,
-		XML_GetCurrentLineNumber(state->parser),
-		XML_GetCurrentColumnNumber(state->parser),
-		buf);
-	state->aborted = 1;
-}
-
-
-
-void parse_offset(const char *s, offs_t *result)
-{
-	if ((s[0] == '0') && (tolower(s[1]) == 'x'))
-		sscanf(&s[2], "%x", result);
-	else
-		*result = atoi(s);
-}
-
-
-
-mame_time parse_time(const char *s)
-{
-	double d = atof(s);
-	return double_to_mame_time(d);
+	error_report(state, buf);
 }
 
 
 
 void error_missingattribute(struct messtest_state *state, const char *attribute)
 {
-	report_parseerror(state, "Missing attribute '%s'\n", attribute);
+	error_reportf(state, "Missing attribute '%s'\n", attribute);
 }
 
 
 
 void error_outofmemory(struct messtest_state *state)
 {
-	report_parseerror(state, "Out of memory\n");
+	error_reportf(state, "Out of memory\n");
 }
 
 
 
 void error_invalidmemregion(struct messtest_state *state, const char *s)
 {
-	report_parseerror(state, "Invalid memory region '%s'\n", s);
+	error_reportf(state, "Invalid memory region '%s'\n", s);
 }
 
 
 
 void error_baddevicetype(struct messtest_state *state, const char *s)
 {
-	report_parseerror(state, "Bad device type '%s'\n", s);
+	error_reportf(state, "Bad device type '%s'\n", s);
 }
 
 
 
 static struct messtest_tagdispatch root_dispatch[] =
 {
-	{ "tests",	DATA_NONE, NULL, NULL, root_dispatch },
-	{ "test",	DATA_NONE, test_start_handler, test_end_handler, test_dispatch },
+	{ "tests",			DATA_NONE, NULL, NULL, root_dispatch },
+	{ "test",			DATA_NONE, testmess_start_handler, testmess_end_handler, testmess_dispatch },
+	{ "imgtooltest",	DATA_NONE, testimgtool_start_handler, testimgtool_end_handler, testimgtool_dispatch },
 	{ NULL }
 };
 
 
 
-static struct messtest_tagdispatch initial_dispatch = { NULL, DATA_NONE, NULL, NULL, root_dispatch };
+static const struct messtest_tagdispatch initial_dispatch = { NULL, DATA_NONE, NULL, NULL, root_dispatch };
 
 
 
 static void start_handler(void *data, const XML_Char *tagname, const XML_Char **attributes)
 {
 	struct messtest_state *state = (struct messtest_state *) data;
-	struct messtest_tagdispatch *dispatch;
+	const struct messtest_tagdispatch *dispatch;
 
 	/* try to find the tag */
 	dispatch = state->dispatch[state->dispatch_pos]->subdispatch;
@@ -153,7 +134,7 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 		}
 		if (!dispatch->tag)
 		{
-			report_parseerror(state, "Unknown tag '%s'\n", tagname);
+			error_reportf(state, "Unknown tag '%s'\n", tagname);
 			return;
 		}
 
@@ -171,7 +152,7 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 static void end_handler(void *data, const XML_Char *name)
 {
 	struct messtest_state *state = (struct messtest_state *) data;
-	struct messtest_tagdispatch *dispatch;
+	const struct messtest_tagdispatch *dispatch;
 	void *ptr;
 	size_t size;
 
@@ -431,7 +412,7 @@ int messtest(const char *script_filename, int flags, int *test_count, int *failu
 		
 		if (XML_Parse(state.parser, buf, len, done) == XML_STATUS_ERROR)
 		{
-			report_parseerror(&state, "%s",
+			error_reportf(&state, "%s",
 				XML_ErrorString(XML_GetErrorCode(state.parser)));
 			goto done;
 		}

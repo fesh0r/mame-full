@@ -1,8 +1,16 @@
+/*********************************************************************
+
+	testmess.c
+
+	MESS testing code
+
+*********************************************************************/
+
 #include <time.h>
 #include <ctype.h>
 
+#include "testmess.h"
 #include "inputx.h"
-#include "messtest.h"
 #include "pile.h"
 #include "pool.h"
 
@@ -733,7 +741,7 @@ static void command_end_handler(struct messtest_state *state, const void *buffer
 
 
 
-static void wait_handler(struct messtest_state *state, const XML_Char **attributes)
+static void wait_handler(struct messtest_state *state, const char **attributes)
 {
 	const char *s;
 
@@ -751,7 +759,7 @@ static void wait_handler(struct messtest_state *state, const XML_Char **attribut
 
 
 
-static void input_handler(struct messtest_state *state, const XML_Char **attributes)
+static void input_handler(struct messtest_state *state, const char **attributes)
 {
 	/* <input> - inputs natural keyboard data into a system */
 	const char *s;
@@ -766,7 +774,7 @@ static void input_handler(struct messtest_state *state, const XML_Char **attribu
 
 
 
-static void rawinput_handler(struct messtest_state *state, const XML_Char **attributes)
+static void rawinput_handler(struct messtest_state *state, const char **attributes)
 {
 	/* <rawinput> - inputs raw data into a system */
 	memset(&new_command, 0, sizeof(new_command));
@@ -796,7 +804,7 @@ static void input_end_handler(struct messtest_state *state, const void *ptr, siz
 
 
 
-static void switch_handler(struct messtest_state *state, const XML_Char **attributes)
+static void switch_handler(struct messtest_state *state, const char **attributes)
 {
 	const char *s1;
 	const char *s2;
@@ -827,7 +835,7 @@ static void switch_handler(struct messtest_state *state, const XML_Char **attrib
 
 
 
-static void screenshot_handler(struct messtest_state *state, const XML_Char **attributes)
+static void screenshot_handler(struct messtest_state *state, const char **attributes)
 {
 	/* <screenshot> - dumps a screenshot */
 	memset(&new_command, 0, sizeof(new_command));
@@ -836,7 +844,7 @@ static void screenshot_handler(struct messtest_state *state, const XML_Char **at
 
 
 
-static void image_handler(struct messtest_state *state, const XML_Char **attributes, enum messtest_command_type command)
+static void image_handler(struct messtest_state *state, const char **attributes, enum messtest_command_type command)
 {
 	const char *s;
 	const char *s1;
@@ -881,7 +889,7 @@ static void image_handler(struct messtest_state *state, const XML_Char **attribu
 
 
 
-static void imagecreate_handler(struct messtest_state *state, const XML_Char **attributes)
+static void imagecreate_handler(struct messtest_state *state, const char **attributes)
 {
 	/* <imagecreate> - creates an image */
 	image_handler(state, attributes, MESSTEST_COMMAND_IMAGE_CREATE);
@@ -889,7 +897,7 @@ static void imagecreate_handler(struct messtest_state *state, const XML_Char **a
 
 
 
-static void imageload_handler(struct messtest_state *state, const XML_Char **attributes)
+static void imageload_handler(struct messtest_state *state, const char **attributes)
 {
 	/* <imageload> - loads an image */
 	image_handler(state, attributes, MESSTEST_COMMAND_IMAGE_LOAD);
@@ -897,7 +905,7 @@ static void imageload_handler(struct messtest_state *state, const XML_Char **att
 
 
 
-static void memverify_handler(struct messtest_state *state, const XML_Char **attributes)
+static void memverify_handler(struct messtest_state *state, const char **attributes)
 {
 	const char *s1;
 	const char *s2;
@@ -920,8 +928,8 @@ static void memverify_handler(struct messtest_state *state, const XML_Char **att
 
 	memset(&new_command, 0, sizeof(new_command));
 	new_command.command_type = MESSTEST_COMMAND_VERIFY_MEMORY;
-	parse_offset(s1, &new_command.u.verify_args.start);
-	parse_offset(s2, &new_command.u.verify_args.end);
+	new_command.u.verify_args.start = parse_offset(s1);
+	new_command.u.verify_args.end = parse_offset(s2);
 
 	if (s3)
 	{
@@ -947,7 +955,7 @@ static void memverify_end_handler(struct messtest_state *state, const void *buff
 
 
 
-void test_start_handler(struct messtest_state *state, const XML_Char **attributes)
+void testmess_start_handler(struct messtest_state *state, const char **attributes)
 {
 	const char *s;
 
@@ -996,7 +1004,7 @@ void test_start_handler(struct messtest_state *state, const XML_Char **attribute
 
 
 
-void test_end_handler(struct messtest_state *state, const void *buffer, size_t size)
+void testmess_end_handler(struct messtest_state *state, const void *buffer, size_t size)
 {
 	int result;
 
@@ -1017,7 +1025,7 @@ void test_end_handler(struct messtest_state *state, const void *buffer, size_t s
 
 
 
-struct messtest_tagdispatch test_dispatch[] =
+const struct messtest_tagdispatch testmess_dispatch[] =
 {
 	{ "wait",			DATA_NONE,		wait_handler,			command_end_handler },
 	{ "input",			DATA_TEXT,		input_handler,			input_end_handler },

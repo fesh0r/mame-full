@@ -1,4 +1,12 @@
-#include "messtest.h"
+/*********************************************************************
+
+	tstutils.c
+
+	Utility code for testing
+
+*********************************************************************/
+
+#include "core.h"
 
 static const struct
 {
@@ -63,4 +71,36 @@ const char *memory_region_to_string(int region)
 		;
 	return region_map[i].name;
 }
+
+
+
+const char *find_attribute(const char **attributes, const char *seek_attribute)
+{
+	int i;
+	for (i = 0; attributes[i] && strcmp(attributes[i], seek_attribute); i += 2)
+		;
+	return attributes[i] ? attributes[i+1] : NULL;
+}
+
+
+
+mame_time parse_time(const char *s)
+{
+	double d = atof(s);
+	return double_to_mame_time(d);
+}
+
+
+
+offs_t parse_offset(const char *s)
+{
+	offs_t result = 0;
+	if ((s[0] == '0') && (tolower(s[1]) == 'x'))
+		sscanf(&s[2], "%x", &result);
+	else
+		result = atoi(s);
+	return result;
+}
+
+
 

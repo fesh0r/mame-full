@@ -303,11 +303,52 @@ done:
 
 
 
+static imgtoolerr_t open_image(HWND window, const struct ImageModule *module,
+	const char *filename, int read_or_write)
+{
+	imgtoolerr_t err;
+	IMAGE *image;
+	struct wimgtool_info *info;
+	char buf[256];
+
+	info = get_wimgtool_info(window);
+
+	if (!module)
+	{
+		err = img_identify(library, filename, &module, 1);
+		if (err)
+			goto done;
+	}
+	
+	err = img_open(module, filename, read_or_write, &image);
+	if (err)
+		goto done;
+
+	if (info->image)
+		img_close(info->image);
+	info->image = image;
+
+	// refresh the window
+	SetWindowText(window, filename);
+	refresh_image(window);
+	snprintf(buf, sizeof(buf) / sizeof(buf[0]),
+		"%s: %s", osd_basename((char *) filename), module->description);
+	SetWindowText(info->statusbar, A2T(buf));
+	DragAcceptFiles(window, TRUE);
+	
+done:
+	return err;
+}
+
+
+
 static void menu_new(HWND window)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	memory_pool pool;
 	OPENFILENAME ofn;
+	const struct ImageModule *module;
+	const char *filename;
 
 	pool_init(&pool);
 
@@ -317,7 +358,17 @@ static void menu_new(HWND window)
 	if (!GetSaveFileName(&ofn))
 		goto done;
 
-	nyi(window);
+	filename = T2A(ofn.lpstrFile);
+
+	module = imgtool_library_index(library, ofn.nFilterIndex - 1);
+	
+	err = img_create(module, filename, NULL);
+	if (err)
+		goto done;
+
+	err = open_image(window, module, filename, OSD_FOPEN_RW);
+	if (err)
+		goto done;
 
 done:
 	if (err)
@@ -334,9 +385,7 @@ static void menu_open(HWND window)
 	OPENFILENAME ofn;
 	const struct ImageModule *module = NULL;
 	const char *filename;
-	IMAGE *image;
 	struct wimgtool_info *info;
-	char buf[256];
 
 	info = get_wimgtool_info(window);
 	pool_init(&pool);
@@ -349,32 +398,15 @@ static void menu_open(HWND window)
 
 	filename = T2A(ofn.lpstrFile);
 
-	if (ofn.nFilterIndex <= 1)
-	{
-		err = img_identify(library, filename, &module, 1);
-		if (err)
-			goto done;
-	}
-	else
+	if (ofn.nFilterIndex > 2)
 	{
 		module = imgtool_library_index(library, ofn.nFilterIndex - 2);
 	}
-	err = img_open(module, filename, (ofn.Flags & OFN_READONLY)
-		? OSD_FOPEN_READ : OSD_FOPEN_RW, &image);
+
+	err = open_image(window, module, filename, (ofn.Flags & OFN_READONLY)
+		? OSD_FOPEN_READ : OSD_FOPEN_RW);
 	if (err)
 		goto done;
-
-	if (info->image)
-		img_close(info->image);
-	info->image = image;
-
-	// refresh the window
-	SetWindowText(window, ofn.lpstrFile);
-	refresh_image(window);
-	snprintf(buf, sizeof(buf) / sizeof(buf[0]),
-		"%s: %s", osd_basename((char *) filename), module->description);
-	SetWindowText(info->statusbar, buf);
-	DragAcceptFiles(window, TRUE);
 
 done:
 	if (err)
