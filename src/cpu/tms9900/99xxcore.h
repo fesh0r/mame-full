@@ -2617,8 +2617,10 @@ static void load_map_file(UINT16 src_addr, int src_map_file, int dst_file)
 				write_inhibit = 1;
 			}
 			I.mapper_address_latch = src_addr;
+			map_index = -1;
 		}
-		I.mapper_address_latch = I.map_files[src_map_file].bias[map_index]+src_addr;
+		if (map_index != -1)
+			I.mapper_address_latch = I.map_files[src_map_file].bias[map_index]+src_addr;
 	}
 
 
