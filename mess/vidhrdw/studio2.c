@@ -69,15 +69,18 @@ void studio2_video_dma(int cycles)
 // while dma_activ is high Register0 is corrected for doublescanning
 // after is it waiting for it going high again
 			studio2_video.dma_activ=1; 
-			studio2_video.count+=100*COLUMNS;
+			studio2_video.count+=COLUMNS;
 			studio2_video.state++;
+			if (++studio2_video.line>=256) studio2_video.state=1;
 		}
 		break;
 	case 12:
 		studio2_video.count-=cycles;
 		if (studio2_video.count<0) {
+			studio2_video.dma_activ=0; 
 			studio2_video.count+=COLUMNS;
-			studio2_video.state=1;
+			studio2_video.state=11;
+			if (++studio2_video.line>=256) studio2_video.state=1;
 		}
 		break;
 	}
