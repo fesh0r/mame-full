@@ -95,7 +95,7 @@ typedef struct tifile_header
 	UINT8 reclen;			/* bytes per record ([1,255] 0->256) */
 	UINT8 fixrecs_MSB;		/* file length in records (big-endian) */
 	UINT8 fixrecs_LSB;
-	UINT8 res[128-14];		/* reserved */
+	UINT8 res[128-16];		/* reserved */
 } tifile_header;
 
 
