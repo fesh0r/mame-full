@@ -33,7 +33,7 @@
 
 /* Amount of memory to allocate while reading variable size arrays
  * Tradeoff between calling realloc() all the time and wasting memory */
-#define CHUNK_SIZE	512
+#define CHUNK_SIZE	4096
 
 /***************************************************************************
 	TYPE DEFINITIONS

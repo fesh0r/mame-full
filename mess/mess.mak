@@ -278,7 +278,8 @@ $(OBJ)/gce.a:	                     \
 
 $(OBJ)/nintendo.a:                   \
 	  $(OBJ)/mess/machine/nes_mmc.o  \
-	  $(OBJ)/mess/vidhrdw/nes.o	     \
+	  $(OBJ)/vidhrdw/ppu2c03b.o		 \
+	  $(OBJ)/mess/vidhrdw/nes.o      \
 	  $(OBJ)/mess/machine/nes.o	     \
 	  $(OBJ)/mess/systems/nes.o	     \
 	  $(OBJ)/mess/sndhrdw/gb.o       \

@@ -6,7 +6,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [NES] Updated NES so that it uses the ppu2c03b support within MAME (which
+  was actually originally based on the MESS NES driver code). [Nate Woods]
 
 User Interface Changes:
 -----------------------
@@ -18,4 +19,6 @@ Imgtool Changes:
 
 Source Changes:
 ---------------
-(none)
+- Fixed a bug that would cause a hang when parsing certain invalid filenames
+  (for example, D:\FOO\D:\FOO\BAR.ZIP). [Nate Woods]
+

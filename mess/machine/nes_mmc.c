@@ -21,7 +21,7 @@
 #include <string.h>
 
 #include "cpu/m6502/m6502.h"
-#include "vidhrdw/generic.h"
+#include "vidhrdw/ppu2c03b.h"
 #include "osdepend.h"
 #include "driver.h"
 #include "includes/nes.h"
@@ -248,70 +248,48 @@ static void prg32 (int bank)
 
 static void chr8 (int bank)
 {
-	int i;
-
 	bank &= (nes.chr_chunks - 1);
-	for (i = 0; i < 8; i ++)
-		nes_vram[i] = bank * 512 + 64*i;
+	ppu2c03b_set_videorom_bank(0, 0, 8, bank, 512);
 }
 
 static void chr4_0 (int bank)
 {
-	int i;
-
 	bank &= ((nes.chr_chunks << 1) - 1);
-	for (i = 0; i < 4; i ++)
-		nes_vram[i] = bank * 256 + 64*i;
+	ppu2c03b_set_videorom_bank(0, 0, 4, bank, 256);
 }
 
 static void chr4_4 (int bank)
 {
-	int i;
-
 	bank &= ((nes.chr_chunks << 1) - 1);
-	for (i = 4; i < 8; i ++)
-		nes_vram[i] = bank * 256 + 64*(i-4);
+	ppu2c03b_set_videorom_bank(0, 4, 4, bank, 256);
 }
 
 static void chr2_0 (int bank)
 {
-	int i;
-
 	bank &= ((nes.chr_chunks << 2) - 1);
-	for (i = 0; i < 2; i ++)
-		nes_vram[i] = bank * 128 + 64*i;
+	ppu2c03b_set_videorom_bank(0, 0, 2, bank, 128);
 }
 
 static void chr2_2 (int bank)
 {
-	int i;
-
 	bank &= ((nes.chr_chunks << 2) - 1);
-	for (i = 2; i < 4; i ++)
-		nes_vram[i] = bank * 128 + 64*(i-2);
+	ppu2c03b_set_videorom_bank(0, 2, 2, bank, 128);
 }
 
 static void chr2_4 (int bank)
 {
-	int i;
-
 	bank &= ((nes.chr_chunks << 2) - 1);
-	for (i = 4; i < 6; i ++)
-		nes_vram[i] = bank * 128 + 64*(i-4);
+	ppu2c03b_set_videorom_bank(0, 4, 2, bank, 128);
 }
 
 static void chr2_6 (int bank)
 {
-	int i;
-
 	bank &= ((nes.chr_chunks << 2) - 1);
-	for (i = 6; i < 8; i ++)
-		nes_vram[i] = bank * 128 + 64*(i-6);
+	ppu2c03b_set_videorom_bank(0, 6, 2, bank, 128);
 }
 
 static WRITE_HANDLER( mapper1_w )
 {
-	int i;
 	int reg;
 
 	/* Find which register we are dealing with */
@@ -353,10 +331,10 @@ static WRITE_HANDLER( mapper1_w )
 
 				switch (MMC1_reg & 0x03)
 				{
-					case 0: ppu_mirror_low (); break;
-					case 1: ppu_mirror_high (); break;
-					case 2: ppu_mirror_v (); break;
-					case 3: ppu_mirror_h (); break;
+					case 0: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
+					case 1: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
+					case 2: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
+					case 3: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
 				}
 
 				MMC1_SizeVrom_4k = (MMC1_reg & 0x10);
@@ -435,9 +413,7 @@ static WRITE_HANDLER( mapper1_w )
 					if (!MMC1_SizeVrom_4k)
 					{
 						int bank = MMC1_reg & ((nes.chr_chunks << 1) - 1);
-
-						for (i = 0; i < 8; i ++)
-							nes_vram[i] = bank * 256 + 64*i;
+						ppu2c03b_set_videorom_bank(0, 0, 8, bank, 256);
 #ifdef LOG_MMC
 						logerror("MMC1 8k VROM switch: %02x\n", MMC1_reg);
 #endif
@@ -445,9 +421,7 @@ static WRITE_HANDLER( mapper1_w )
 					else
 					{
 						int bank = MMC1_reg & ((nes.chr_chunks << 1) - 1);
-
-						for (i = 0; i < 4; i ++)
-							nes_vram[i] = bank * 256 + 64*i;
+						ppu2c03b_set_videorom_bank(0, 0, 4, bank, 256);
 #ifdef LOG_MMC
 						logerror("MMC1 4k VROM switch (low): %02x\n", MMC1_reg);
 #endif
@@ -478,11 +452,9 @@ static WRITE_HANDLER( mapper1_w )
 				if (MMC1_SizeVrom_4k)
 				{
 					int bank = MMC1_reg & ((nes.chr_chunks << 1) - 1);
-
-					for (i = 4; i < 8; i ++)
-						nes_vram[i] = bank * 256 + 64*(i-4);
+					ppu2c03b_set_videorom_bank(0, 4, 4, bank, 256);
 #ifdef LOG_MMC
-						logerror("MMC1 4k VROM switch (high): %02x\n", MMC1_reg);
+					logerror("MMC1 4k VROM switch (high): %02x\n", MMC1_reg);
 #endif
 				}
 				break;
@@ -597,15 +569,12 @@ static void mapper4_set_prg (void)
 static void mapper4_set_chr (void)
 {
 	UINT8 chr_page = (MMC3_cmd & 0x80) >> 5;
-
-	nes_vram [chr_page] = MMC3_chr[0];
-	nes_vram [chr_page+1] = nes_vram [chr_page] + 64;
-	nes_vram [chr_page ^ 2] = MMC3_chr[1];
-	nes_vram [(chr_page ^ 2)+1] = nes_vram [chr_page ^ 2] + 64;
-	nes_vram [chr_page ^ 4] = MMC3_chr[2];
-	nes_vram [chr_page ^ 5] = MMC3_chr[3];
-	nes_vram [chr_page ^ 6] = MMC3_chr[4];
-	nes_vram [chr_page ^ 7] = MMC3_chr[5];
+	ppu2c03b_set_videorom_bank(0, chr_page ^ 0, 2, MMC3_chr[0], 1);
+	ppu2c03b_set_videorom_bank(0, chr_page ^ 2, 2, MMC3_chr[1], 1);
+	ppu2c03b_set_videorom_bank(0, chr_page ^ 4, 1, MMC3_chr[2], 1);
+	ppu2c03b_set_videorom_bank(0, chr_page ^ 5, 1, MMC3_chr[3], 1);
+	ppu2c03b_set_videorom_bank(0, chr_page ^ 6, 1, MMC3_chr[4], 1);
+	ppu2c03b_set_videorom_bank(0, chr_page ^ 7, 1, MMC3_chr[5], 1);
 }
 
 static int mapper4_irq (int scanline)
@@ -679,13 +648,13 @@ static WRITE_HANDLER( mapper4_w )
 		}
 		case 0x2000: /* $a000 */
 			if (data & 0x40)
-				ppu_mirror_high();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH);
 			else
 			{
 				if (data & 0x01)
-					ppu_mirror_h();
+					ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
 				else
-					ppu_mirror_v();
+					ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
 			}
 			break;
 
@@ -786,8 +755,8 @@ static WRITE_HANDLER( mapper118_w )
 #endif
 			switch (data & 0x02)
 			{
-				case 0x00: ppu_mirror_low (); break;
-				case 0x01: ppu_mirror_low(); break;
+				case 0x00: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
+				case 0x01: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
 			}
 			break;
 
@@ -1087,7 +1056,7 @@ static WRITE_HANDLER( mapper5_l_w )
 					/* 1k switch */
 					vrom_bank[0] = data;
 //					mapper5_sync_vrom(0);
-					nes_vram[0] = vrom_bank[0] * 64;
+					ppu2c03b_set_videorom_bank(0, 0, 1, vrom_bank[0], 64);
 //					nes_vram_sprite[0] = vrom_bank[0] * 64;
 //					vrom_next[0] = 4;
 //					vrom_page_a = 1;
@@ -1107,7 +1076,7 @@ static WRITE_HANDLER( mapper5_l_w )
 					/* 1k switch */
 					vrom_bank[1] = data;
 //					mapper5_sync_vrom(0);
-					nes_vram[1] = vrom_bank[1] * 64;
+					ppu2c03b_set_videorom_bank(0, 1, 1, vrom_bank[1], 64);
 //					nes_vram_sprite[1] = vrom_bank[0] * 64;
 //					vrom_next[1] = 5;
 //					vrom_page_a = 1;
@@ -1123,7 +1092,7 @@ static WRITE_HANDLER( mapper5_l_w )
 					/* 1k switch */
 					vrom_bank[2] = data;
 //					mapper5_sync_vrom(0);
-					nes_vram[2] = vrom_bank[2] * 64;
+					ppu2c03b_set_videorom_bank(0, 2, 1, vrom_bank[2], 64);
 //					nes_vram_sprite[2] = vrom_bank[0] * 64;
 //					vrom_next[2] = 6;
 //					vrom_page_a = 1;
@@ -1146,7 +1115,7 @@ static WRITE_HANDLER( mapper5_l_w )
 					/* 1k switch */
 					vrom_bank[3] = data;
 //					mapper5_sync_vrom(0);
-					nes_vram[3] = vrom_bank[3] * 64;
+					ppu2c03b_set_videorom_bank(0, 3, 1, vrom_bank[3], 64);
 //					nes_vram_sprite[3] = vrom_bank[0] * 64;
 //					vrom_next[3] = 7;
 //					vrom_page_a = 1;
@@ -1162,7 +1131,7 @@ static WRITE_HANDLER( mapper5_l_w )
 					/* 1k switch */
 					vrom_bank[4] = data;
 //					mapper5_sync_vrom(0);
-					nes_vram[4] = vrom_bank[4] * 64;
+					ppu2c03b_set_videorom_bank(0, 4, 1, vrom_bank[4], 64);
 //					nes_vram_sprite[4] = vrom_bank[0] * 64;
 //					vrom_next[0] = 0;
 //					vrom_page_a = 0;
@@ -1182,7 +1151,7 @@ static WRITE_HANDLER( mapper5_l_w )
 					/* 1k switch */
 					vrom_bank[5] = data;
 //					mapper5_sync_vrom(0);
-					nes_vram[5] = vrom_bank[5] * 64;
+					ppu2c03b_set_videorom_bank(0, 5, 1, vrom_bank[5], 64);
 //					nes_vram_sprite[5] = vrom_bank[0] * 64;
 //					vrom_next[1] = 1;
 //					vrom_page_a = 0;
@@ -1198,7 +1167,7 @@ static WRITE_HANDLER( mapper5_l_w )
 					/* 1k switch */
 					vrom_bank[6] = data;
 //					mapper5_sync_vrom(0);
-					nes_vram[6] = vrom_bank[6] * 64;
+					ppu2c03b_set_videorom_bank(0, 6, 1, vrom_bank[6], 64);
 //					nes_vram_sprite[6] = vrom_bank[0] * 64;
 //					vrom_next[2] = 2;
 //					vrom_page_a = 0;
@@ -1226,7 +1195,7 @@ static WRITE_HANDLER( mapper5_l_w )
 					/* 1k switch */
 					vrom_bank[7] = data;
 //					mapper5_sync_vrom(0);
-					nes_vram[7] = vrom_bank[7] * 64;
+					ppu2c03b_set_videorom_bank(0, 7, 1, vrom_bank[7], 64);
 //					nes_vram_sprite[7] = vrom_bank[0] * 64;
 //					vrom_next[3] = 3;
 //					vrom_page_a = 0;
@@ -1244,7 +1213,7 @@ static WRITE_HANDLER( mapper5_l_w )
 //					nes_vram[vrom_next[0]] = data * 64;
 //					nes_vram[0 + (vrom_page_a*4)] = data * 64;
 //					nes_vram[0] = data * 64;
-					nes_vram[4] = data * 64;
+					ppu2c03b_set_videorom_bank(0, 4, 1, data, 64);
 //					mapper5_sync_vrom(1);
 					if (!vrom_page_b)
 					{
@@ -1269,7 +1238,7 @@ static WRITE_HANDLER( mapper5_l_w )
 //					nes_vram[vrom_next[1]] = data * 64;
 //					nes_vram[1 + (vrom_page_a*4)] = data * 64;
 //					nes_vram[1] = data * 64;
-					nes_vram[5] = data * 64;
+					ppu2c03b_set_videorom_bank(0, 5, 1, data, 64);
 //					mapper5_sync_vrom(1);
 					if (!vrom_page_b)
 					{
@@ -1289,7 +1258,7 @@ static WRITE_HANDLER( mapper5_l_w )
 //					nes_vram[vrom_next[2]] = data * 64;
 //					nes_vram[2 + (vrom_page_a*4)] = data * 64;
 //					nes_vram[2] = data * 64;
-					nes_vram[6] = data * 64;
+					ppu2c03b_set_videorom_bank(0, 6, 1, data, 64);
 //					mapper5_sync_vrom(1);
 					if (!vrom_page_b)
 					{
@@ -1323,7 +1292,7 @@ static WRITE_HANDLER( mapper5_l_w )
 //					nes_vram[vrom_next[3]] = data * 64;
 //					nes_vram[3 + (vrom_page_a*4)] = data * 64;
 //					nes_vram[3] = data * 64;
-					nes_vram[7] = data * 64;
+					ppu2c03b_set_videorom_bank(0, 7, 1, data, 64);
 //					mapper5_sync_vrom(1);
 					if (!vrom_page_b)
 					{
@@ -1364,9 +1333,9 @@ static WRITE_HANDLER( mapper5_w )
 static WRITE_HANDLER( mapper7_w )
 {
 	if (data & 0x10)
-		ppu_mirror_high ();
+		ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH);
 	else
-		ppu_mirror_low ();
+		ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW);
 
 	prg32 (data);
 }
@@ -1429,9 +1398,9 @@ static WRITE_HANDLER( mapper9_w )
 			break;
 		case 0x7000:
 			if (data)
-				ppu_mirror_h ();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
-				ppu_mirror_v ();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
 			break;
 		default:
 			logerror("MMC2 uncaught w: %04x:%02x\n", offset, data);
@@ -1502,9 +1471,9 @@ static WRITE_HANDLER( mapper10_w )
 			break;
 		case 0x7000:
 			if (data)
-				ppu_mirror_h ();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
-				ppu_mirror_v ();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
 			break;
 		default:
 			logerror("MMC4 uncaught w: %04x:%02x\n", offset, data);
@@ -1533,9 +1502,9 @@ static WRITE_HANDLER( mapper15_w )
 	{
 		case 0x0000:
 			if (data & 0x40)
-				ppu_mirror_h ();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
-				ppu_mirror_v ();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
 			cpu_setbank (1, &nes.rom[bank + base]);
 			cpu_setbank (2, &nes.rom[bank + (base ^ 0x2000)]);
 			cpu_setbank (3, &nes.rom[bank + (base ^ 0x4000)]);
@@ -1556,9 +1525,9 @@ static WRITE_HANDLER( mapper15_w )
 
 		case 0x0003:
 			if (data & 0x40)
-				ppu_mirror_h ();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
-				ppu_mirror_v ();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
 			cpu_setbank (3, &nes.rom[bank + base]);
 			cpu_setbank (4, &nes.rom[bank + (base ^ 0x2000)]);
         	break;
@@ -1592,19 +1561,26 @@ static WRITE_HANDLER( mapper16_w )
 	{
 		case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
 			/* Switch 1k VROM at $0000 - $1fff */
-			nes_vram [offset & 0x0f] = data * 64;
+			ppu2c03b_set_videorom_bank(0, offset & 0x0f, 1, data, 64);
 			break;
 		case 8:
 			/* Switch 16k bank at $8000 */
 			prg16_89ab (data);
 			break;
 		case 9:
-			switch (data & 0x03)
-			{
-				case 0: ppu_mirror_h (); break;
-				case 1: ppu_mirror_v (); break;
-				case 2: ppu_mirror_low (); break;
-				case 3: ppu_mirror_high (); break;
+			switch (data & 0x03) {
+			case 0:
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+				break;
+			case 1:
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+				break;
+			case 2:
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW);
+				break;
+			case 3:
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH);
+				break;
 			}
 			break;
 		case 0x0a:
@@ -1631,16 +1607,16 @@ static WRITE_HANDLER( mapper17_l_w )
 		/* $42fe - mirroring */
 		case 0x1fe:
 			if (data & 0x10)
-				ppu_mirror_low ();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW);
 			else
-				ppu_mirror_high ();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH);
 			break;
 		/* $42ff - mirroring */
 		case 0x1ff:
 			if (data & 0x10)
-				ppu_mirror_h ();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
-				ppu_mirror_v ();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
 			break;
 		/* $4501 - $4503 */
 //		case 0x401:
@@ -1667,7 +1643,7 @@ static WRITE_HANDLER( mapper17_l_w )
 		case 0x416:
 		case 0x417:
 			data &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[offset & 0x07] = data * 64;
+			ppu2c03b_set_videorom_bank(0, offset & 0x07, 1, data, 64);
 			break;
 		default:
 			logerror("** uncaught mapper 17 write, offset: %04x, data: %02x\n", offset, data);
@@ -1773,97 +1749,97 @@ static WRITE_HANDLER( mapper18_w )
 			/* Switch 1k vrom at $0000 - low 4 bits */
 			vrom_bank[0] = (vrom_bank[0] & 0xf0) | (data & 0x0f);
 			vrom_bank[0] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[0] = vrom_bank[0] * 64;
+			ppu2c03b_set_videorom_bank(0, 0, 1, vrom_bank[0], 64);
 			break;
 		case 0x2001:
 			/* Switch 1k vrom at $0000 - high 4 bits */
 			vrom_bank[0] = (vrom_bank[0] & 0x0f) | (data << 4);
 			vrom_bank[0] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[0] = vrom_bank[0] * 64;
+			ppu2c03b_set_videorom_bank(0, 0, 1, vrom_bank[0], 64);
 			break;
 		case 0x2002:
 			/* Switch 1k vrom at $0400 - low 4 bits */
 			vrom_bank[1] = (vrom_bank[1] & 0xf0) | (data & 0x0f);
 			vrom_bank[1] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[1] = vrom_bank[1] * 64;
+			ppu2c03b_set_videorom_bank(0, 1, 1, vrom_bank[1], 64);
 			break;
 		case 0x2003:
 			/* Switch 1k vrom at $0400 - high 4 bits */
 			vrom_bank[1] = (vrom_bank[1] & 0x0f) | (data << 4);
 			vrom_bank[1] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[1] = vrom_bank[1] * 64;
+			ppu2c03b_set_videorom_bank(0, 1, 1, vrom_bank[1], 64);
 			break;
 		case 0x3000:
 			/* Switch 1k vrom at $0800 - low 4 bits */
 			vrom_bank[2] = (vrom_bank[2] & 0xf0) | (data & 0x0f);
 			vrom_bank[2] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[2] = vrom_bank[2] * 64;
+			ppu2c03b_set_videorom_bank(0, 2, 1, vrom_bank[2], 64);
 			break;
 		case 0x3001:
 			/* Switch 1k vrom at $0800 - high 4 bits */
 			vrom_bank[2] = (vrom_bank[2] & 0x0f) | (data << 4);
 			vrom_bank[2] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[2] = vrom_bank[2] * 64;
+			ppu2c03b_set_videorom_bank(0, 2, 1, vrom_bank[2], 64);
 			break;
 		case 0x3002:
 			/* Switch 1k vrom at $0c00 - low 4 bits */
 			vrom_bank[3] = (vrom_bank[3] & 0xf0) | (data & 0x0f);
 			vrom_bank[3] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[3] = vrom_bank[3] * 64;
+			ppu2c03b_set_videorom_bank(0, 3, 1, vrom_bank[3], 64);
 			break;
 		case 0x3003:
 			/* Switch 1k vrom at $0c00 - high 4 bits */
 			vrom_bank[3] = (vrom_bank[3] & 0x0f) | (data << 4);
 			vrom_bank[3] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[3] = vrom_bank[3] * 64;
+			ppu2c03b_set_videorom_bank(0, 3, 1, vrom_bank[3], 64);
 			break;
 		case 0x4000:
 			/* Switch 1k vrom at $1000 - low 4 bits */
 			vrom_bank[4] = (vrom_bank[4] & 0xf0) | (data & 0x0f);
 			vrom_bank[4] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[4] = vrom_bank[4] * 64;
+			ppu2c03b_set_videorom_bank(0, 4, 1, vrom_bank[4], 64);
 			break;
 		case 0x4001:
 			/* Switch 1k vrom at $1000 - high 4 bits */
 			vrom_bank[4] = (vrom_bank[4] & 0x0f) | (data << 4);
 			vrom_bank[4] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[4] = vrom_bank[4] * 64;
+			ppu2c03b_set_videorom_bank(0, 4, 1, vrom_bank[4], 64);
 			break;
 		case 0x4002:
 			/* Switch 1k vrom at $1400 - low 4 bits */
 			vrom_bank[5] = (vrom_bank[5] & 0xf0) | (data & 0x0f);
 			vrom_bank[5] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[5] = vrom_bank[5] * 64;
+			ppu2c03b_set_videorom_bank(0, 5, 1, vrom_bank[5], 64);
 			break;
 		case 0x4003:
 			/* Switch 1k vrom at $1400 - high 4 bits */
 			vrom_bank[5] = (vrom_bank[5] & 0x0f) | (data << 4);
 			vrom_bank[5] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[5] = vrom_bank[5] * 64;
+			ppu2c03b_set_videorom_bank(0, 5, 1, vrom_bank[5], 64);
 			break;
 		case 0x5000:
 			/* Switch 1k vrom at $1800 - low 4 bits */
 			vrom_bank[6] = (vrom_bank[6] & 0xf0) | (data & 0x0f);
 			vrom_bank[6] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[6] = vrom_bank[6] * 64;
+			ppu2c03b_set_videorom_bank(0, 6, 1, vrom_bank[6], 64);
 			break;
 		case 0x5001:
 			/* Switch 1k vrom at $1800 - high 4 bits */
 			vrom_bank[6] = (vrom_bank[6] & 0x0f) | (data << 4);
 			vrom_bank[6] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[6] = vrom_bank[6] * 64;
+			ppu2c03b_set_videorom_bank(0, 6, 1, vrom_bank[6], 64);
 			break;
 		case 0x5002:
 			/* Switch 1k vrom at $1c00 - low 4 bits */
 			vrom_bank[7] = (vrom_bank[7] & 0xf0) | (data & 0x0f);
 			vrom_bank[7] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[7] = vrom_bank[7] * 64;
+			ppu2c03b_set_videorom_bank(0, 7, 1, vrom_bank[7], 64);
 			break;
 		case 0x5003:
 			/* Switch 1k vrom at $1c00 - high 4 bits */
 			vrom_bank[7] = (vrom_bank[7] & 0x0f) | (data << 4);
 			vrom_bank[7] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[7] = vrom_bank[7] * 64;
+			ppu2c03b_set_videorom_bank(0, 7, 1, vrom_bank[7], 64);
 			break;
 
 /* LBO - these are unverified */
@@ -1904,10 +1880,10 @@ static WRITE_HANDLER( mapper18_w )
 		case 0x7002: /* Misc */
 			switch (data & 0x03)
 			{
-				case 0: ppu_mirror_low (); break;
-				case 1: ppu_mirror_high (); break;
-				case 2: ppu_mirror_v (); break;
-				case 3: ppu_mirror_h (); break;
+				case 0: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
+				case 1: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
+				case 2: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
+				case 3: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
 			}
 			break;
 
@@ -1957,37 +1933,17 @@ static WRITE_HANDLER( mapper19_w )
 	switch (offset & 0x7800)
 	{
 		case 0x0000:
-			/* Switch 1k VROM at $0000 */
-			nes_vram [0] = data * 64;
-			break;
 		case 0x0800:
-			/* Switch 1k VROM at $0400 */
-			nes_vram [1] = data * 64;
-			break;
 		case 0x1000:
-			/* Switch 1k VROM at $0800 */
-			nes_vram [2] = data * 64;
-			break;
 		case 0x1800:
-			/* Switch 1k VROM at $0c00 */
-			nes_vram [3] = data * 64;
-			break;
 		case 0x2000:
-			/* Switch 1k VROM at $1000 */
-			nes_vram [4] = data * 64;
-			break;
 		case 0x2800:
-			/* Switch 1k VROM at $1400 */
-			nes_vram [5] = data * 64;
-			break;
 		case 0x3000:
-			/* Switch 1k VROM at $1800 */
-			nes_vram [6] = data * 64;
-			break;
 		case 0x3800:
-			/* Switch 1k VROM at $1c00 */
-			nes_vram [7] = data * 64;
+			/* Switch 1k VROM at $0000-$1c00 */
+			ppu2c03b_set_videorom_bank(0, offset / 0x800, 1, data, 64);
 			break;
+
 		case 0x6000:
 			/* Switch 8k bank at $8000 */
 			data &= prg_mask;
@@ -2106,9 +2062,9 @@ WRITE_HANDLER ( fds_w )
 			if (data & 0x02) nes_fds.head_position = 0;
 			nes_fds.read_mode = data & 0x04;
 			if (data & 0x08)
-				ppu_mirror_h ();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
-				ppu_mirror_v ();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
 			if ((!(data & 0x40)) && (nes_fds.write_reg & 0x40))
 				nes_fds.head_position -= 2; // ???
 			IRQ_enable_latch = data & 0x80;
@@ -2152,10 +2108,10 @@ static WRITE_HANDLER( konami_vrc2a_w )
 			case 0x1000:
 				switch (data & 0x03)
 				{
-					case 0x00: ppu_mirror_v (); break;
-					case 0x01: ppu_mirror_h (); break;
-					case 0x02: ppu_mirror_low (); break;
-					case 0x03: ppu_mirror_high (); break;
+					case 0x00: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
+					case 0x01: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
+					case 0x02: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
+					case 0x03: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
 				}
 				break;
 
@@ -2174,52 +2130,20 @@ static WRITE_HANDLER( konami_vrc2a_w )
 	switch (offset & 0x7000)
 	{
 		case 0x3000:
-			/* Switch 1k vrom at $0000 */
-			vrom_bank[0] = data >> 1;
-			vrom_bank[0] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[0] = vrom_bank[0] * 64;
-			break;
 		case 0x3001:
-			/* Switch 1k vrom at $0400 */
-			vrom_bank[1] = data >> 1;
-			vrom_bank[1] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[1] = vrom_bank[1] * 64;
-			break;
 		case 0x4000:
-			/* Switch 1k vrom at $0800 */
-			vrom_bank[2] = data >> 1;
-			vrom_bank[2] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[2] = vrom_bank[2] * 64;
-			break;
 		case 0x4001:
-			/* Switch 1k vrom at $0c00 */
-			vrom_bank[3] = data >> 1;
-			vrom_bank[3] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[3] = vrom_bank[3] * 64;
-			break;
 		case 0x5000:
-			/* Switch 1k vrom at $1000 */
-			vrom_bank[4] = data >> 1;
-			vrom_bank[4] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[4] = vrom_bank[4] * 64;
-			break;
 		case 0x5001:
-			/* Switch 1k vrom at $1400 */
-			vrom_bank[5] = data >> 1;
-			vrom_bank[5] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[5] = vrom_bank[5] * 64;
-			break;
 		case 0x6000:
-			/* Switch 1k vrom at $1800 */
-			vrom_bank[6] = data >> 1;
-			vrom_bank[6] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[6] = vrom_bank[6] * 64;
-			break;
 		case 0x6001:
-			/* Switch 1k vrom at $1c00 */
-			vrom_bank[7] = data >> 1;
-			vrom_bank[7] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[7] = vrom_bank[7] * 64;
+			/* switch 1k vrom at $0000-$1c00 */
+			{
+				int bank = (offset & 0x7000) / 0x0800 + (offset & 0x0001);
+				vrom_bank[bank] = data >> 1;
+				vrom_bank[bank] &= ((nes.chr_chunks << 3) - 1);
+				ppu2c03b_set_videorom_bank(0, bank, 1, vrom_bank[bank], 64);
+			}
 			break;
 
 		case 0x7000:
@@ -2258,10 +2182,10 @@ static WRITE_HANDLER( konami_vrc2b_w )
 			case 0x1000:
 				switch (data & 0x03)
 				{
-					case 0x00: ppu_mirror_v (); break;
-					case 0x01: ppu_mirror_h (); break;
-					case 0x02: ppu_mirror_low (); break;
-					case 0x03: ppu_mirror_high (); break;
+					case 0x00: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
+					case 0x01: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
+					case 0x02: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
+					case 0x03: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
 				}
 				break;
 
@@ -2288,97 +2212,97 @@ static WRITE_HANDLER( konami_vrc2b_w )
 			/* Switch 1k vrom at $0000 - low 4 bits */
 			vrom_bank[0] = (vrom_bank[0] & 0xf0) | (data & 0x0f);
 			vrom_bank[0] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[0] = vrom_bank[0] * 64;
+			ppu2c03b_set_videorom_bank(0, 0, 1, vrom_bank[0], 64);
 			break;
 		case 0x3001:
 			/* Switch 1k vrom at $0000 - high 4 bits */
 			vrom_bank[0] = (vrom_bank[0] & 0x0f) | (data << 4);
 			vrom_bank[0] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[0] = vrom_bank[0] * 64;
+			ppu2c03b_set_videorom_bank(0, 0, 1, vrom_bank[0], 64);
 			break;
 		case 0x3002:
 			/* Switch 1k vrom at $0400 - low 4 bits */
 			vrom_bank[1] = (vrom_bank[1] & 0xf0) | (data & 0x0f);
 			vrom_bank[1] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[1] = vrom_bank[1] * 64;
+			ppu2c03b_set_videorom_bank(0, 1, 1, vrom_bank[1], 64);
 			break;
 		case 0x3003:
 			/* Switch 1k vrom at $0400 - high 4 bits */
 			vrom_bank[1] = (vrom_bank[1] & 0x0f) | (data << 4);
 			vrom_bank[1] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[1] = vrom_bank[1] * 64;
+			ppu2c03b_set_videorom_bank(0, 1, 1, vrom_bank[1], 64);
 			break;
 		case 0x4000:
 			/* Switch 1k vrom at $0800 - low 4 bits */
 			vrom_bank[2] = (vrom_bank[2] & 0xf0) | (data & 0x0f);
 			vrom_bank[2] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[2] = vrom_bank[2] * 64;
+			ppu2c03b_set_videorom_bank(0, 2, 1, vrom_bank[2], 64);
 			break;
 		case 0x4001:
 			/* Switch 1k vrom at $0800 - high 4 bits */
 			vrom_bank[2] = (vrom_bank[2] & 0x0f) | (data << 4);
 			vrom_bank[2] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[2] = vrom_bank[2] * 64;
+			ppu2c03b_set_videorom_bank(0, 2, 1, vrom_bank[2], 64);
 			break;
 		case 0x4002:
 			/* Switch 1k vrom at $0c00 - low 4 bits */
 			vrom_bank[3] = (vrom_bank[3] & 0xf0) | (data & 0x0f);
 			vrom_bank[3] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[3] = vrom_bank[3] * 64;
+			ppu2c03b_set_videorom_bank(0, 3, 1, vrom_bank[3], 64);
 			break;
 		case 0x4003:
 			/* Switch 1k vrom at $0c00 - high 4 bits */
 			vrom_bank[3] = (vrom_bank[3] & 0x0f) | (data << 4);
 			vrom_bank[3] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[3] = vrom_bank[3] * 64;
+			ppu2c03b_set_videorom_bank(0, 3, 1, vrom_bank[3], 64);
 			break;
 		case 0x5000:
 			/* Switch 1k vrom at $1000 - low 4 bits */
 			vrom_bank[4] = (vrom_bank[4] & 0xf0) | (data & 0x0f);
 			vrom_bank[4] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[4] = vrom_bank[4] * 64;
+			ppu2c03b_set_videorom_bank(0, 4, 1, vrom_bank[4], 64);
 			break;
 		case 0x5001:
 			/* Switch 1k vrom at $1000 - high 4 bits */
 			vrom_bank[4] = (vrom_bank[4] & 0x0f) | (data << 4);
 			vrom_bank[4] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[4] = vrom_bank[4] * 64;
+			ppu2c03b_set_videorom_bank(0, 4, 1, vrom_bank[4], 64);
 			break;
 		case 0x5002:
 			/* Switch 1k vrom at $1400 - low 4 bits */
 			vrom_bank[5] = (vrom_bank[5] & 0xf0) | (data & 0x0f);
 			vrom_bank[5] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[5] = vrom_bank[5] * 64;
+			ppu2c03b_set_videorom_bank(0, 5, 1, vrom_bank[5], 64);
 			break;
 		case 0x5003:
 			/* Switch 1k vrom at $1400 - high 4 bits */
 			vrom_bank[5] = (vrom_bank[5] & 0x0f) | (data << 4);
 			vrom_bank[5] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[5] = vrom_bank[5] * 64;
+			ppu2c03b_set_videorom_bank(0, 5, 1, vrom_bank[5], 64);
 			break;
 		case 0x6000:
 			/* Switch 1k vrom at $1800 - low 4 bits */
 			vrom_bank[6] = (vrom_bank[6] & 0xf0) | (data & 0x0f);
 			vrom_bank[6] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[6] = vrom_bank[6] * 64;
+			ppu2c03b_set_videorom_bank(0, 6, 1, vrom_bank[6], 64);
 			break;
 		case 0x6001:
 			/* Switch 1k vrom at $1800 - high 4 bits */
 			vrom_bank[6] = (vrom_bank[6] & 0x0f) | (data << 4);
 			vrom_bank[6] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[6] = vrom_bank[6] * 64;
+			ppu2c03b_set_videorom_bank(0, 6, 1, vrom_bank[6], 64);
 			break;
 		case 0x6002:
 			/* Switch 1k vrom at $1c00 - low 4 bits */
 			vrom_bank[7] = (vrom_bank[7] & 0xf0) | (data & 0x0f);
 			vrom_bank[7] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[7] = vrom_bank[7] * 64;
+			ppu2c03b_set_videorom_bank(0, 7, 1, vrom_bank[7], 64);
 			break;
 		case 0x6003:
 			/* Switch 1k vrom at $1c00 - high 4 bits */
 			vrom_bank[7] = (vrom_bank[7] & 0x0f) | (data << 4);
 			vrom_bank[7] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[7] = vrom_bank[7] * 64;
+			ppu2c03b_set_videorom_bank(0, 7, 1, vrom_bank[7], 64);
 			break;
 		case 0x7000:
 			IRQ_count_latch = data;
@@ -2410,10 +2334,10 @@ static WRITE_HANDLER( konami_vrc4_w )
 		case 0x1000:
 			switch (data & 0x03)
 			{
-				case 0x00: ppu_mirror_v (); break;
-				case 0x01: ppu_mirror_h (); break;
-				case 0x02: ppu_mirror_low (); break;
-				case 0x03: ppu_mirror_high (); break;
+				case 0x00: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
+				case 0x01: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
+				case 0x02: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
+				case 0x03: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
 			}
 			break;
 
@@ -2428,105 +2352,105 @@ static WRITE_HANDLER( konami_vrc4_w )
 			/* Switch 1k vrom at $0000 - low 4 bits */
 			vrom_bank[0] = (vrom_bank[0] & 0xf0) | (data & 0x0f);
 			vrom_bank[0] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[0] = vrom_bank[0] * 64;
+			ppu2c03b_set_videorom_bank(0, 0, 1, vrom_bank[0], 64);
 			break;
 		case 0x3002:
 			/* Switch 1k vrom at $0000 - high 4 bits */
 			vrom_bank[0] = (vrom_bank[0] & 0x0f) | (data << 4);
 			vrom_bank[0] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[0] = vrom_bank[0] * 64;
+			ppu2c03b_set_videorom_bank(0, 0, 1, vrom_bank[0], 64);
 			break;
 		case 0x3001:
 		case 0x3004:
 			/* Switch 1k vrom at $0400 - low 4 bits */
 			vrom_bank[1] = (vrom_bank[1] & 0xf0) | (data & 0x0f);
 			vrom_bank[1] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[1] = vrom_bank[1] * 64;
+			ppu2c03b_set_videorom_bank(0, 1, 1, vrom_bank[1], 64);
 			break;
 		case 0x3003:
 		case 0x3006:
 			/* Switch 1k vrom at $0400 - high 4 bits */
 			vrom_bank[1] = (vrom_bank[1] & 0x0f) | (data << 4);
 			vrom_bank[1] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[1] = vrom_bank[1] * 64;
+			ppu2c03b_set_videorom_bank(0, 1, 1, vrom_bank[1], 64);
 			break;
 		case 0x4000:
 			/* Switch 1k vrom at $0800 - low 4 bits */
 			vrom_bank[2] = (vrom_bank[2] & 0xf0) | (data & 0x0f);
 			vrom_bank[2] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[2] = vrom_bank[2] * 64;
+			ppu2c03b_set_videorom_bank(0, 2, 1, vrom_bank[2], 64);
 			break;
 		case 0x4002:
 			/* Switch 1k vrom at $0800 - high 4 bits */
 			vrom_bank[2] = (vrom_bank[2] & 0x0f) | (data << 4);
 			vrom_bank[2] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[2] = vrom_bank[2] * 64;
+			ppu2c03b_set_videorom_bank(0, 2, 1, vrom_bank[2], 64);
 			break;
 		case 0x4001:
 		case 0x4004:
 			/* Switch 1k vrom at $0c00 - low 4 bits */
 			vrom_bank[3] = (vrom_bank[3] & 0xf0) | (data & 0x0f);
 			vrom_bank[3] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[3] = vrom_bank[3] * 64;
+			ppu2c03b_set_videorom_bank(0, 3, 1, vrom_bank[3], 64);
 			break;
 		case 0x4003:
 		case 0x4006:
 			/* Switch 1k vrom at $0c00 - high 4 bits */
 			vrom_bank[3] = (vrom_bank[3] & 0x0f) | (data << 4);
 			vrom_bank[3] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[3] = vrom_bank[3] * 64;
+			ppu2c03b_set_videorom_bank(0, 3, 1, vrom_bank[3], 64);
 			break;
 		case 0x5000:
 			/* Switch 1k vrom at $1000 - low 4 bits */
 			vrom_bank[4] = (vrom_bank[4] & 0xf0) | (data & 0x0f);
 			vrom_bank[4] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[4] = vrom_bank[4] * 64;
+			ppu2c03b_set_videorom_bank(0, 4, 1, vrom_bank[4], 64);
 			break;
 		case 0x5002:
 			/* Switch 1k vrom at $1000 - high 4 bits */
 			vrom_bank[4] = (vrom_bank[4] & 0x0f) | (data << 4);
 			vrom_bank[4] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[4] = vrom_bank[4] * 64;
+			ppu2c03b_set_videorom_bank(0, 4, 1, vrom_bank[4], 64);
 			break;
 		case 0x5001:
 		case 0x5004:
 			/* Switch 1k vrom at $1400 - low 4 bits */
 			vrom_bank[5] = (vrom_bank[5] & 0xf0) | (data & 0x0f);
 			vrom_bank[5] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[5] = vrom_bank[5] * 64;
+			ppu2c03b_set_videorom_bank(0, 5, 1, vrom_bank[5], 64);
 			break;
 		case 0x5003:
 		case 0x5006:
 			/* Switch 1k vrom at $1400 - high 4 bits */
 			vrom_bank[5] = (vrom_bank[5] & 0x0f) | (data << 4);
 			vrom_bank[5] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[5] = vrom_bank[5] * 64;
+			ppu2c03b_set_videorom_bank(0, 5, 1, vrom_bank[5], 64);
 			break;
 		case 0x6000:
 			/* Switch 1k vrom at $1800 - low 4 bits */
 			vrom_bank[6] = (vrom_bank[6] & 0xf0) | (data & 0x0f);
 			vrom_bank[6] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[6] = vrom_bank[6] * 64;
+			ppu2c03b_set_videorom_bank(0, 6, 1, vrom_bank[6], 64);
 			break;
 		case 0x6002:
 			/* Switch 1k vrom at $1800 - high 4 bits */
 			vrom_bank[6] = (vrom_bank[6] & 0x0f) | (data << 4);
 			vrom_bank[6] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[6] = vrom_bank[6] * 64;
+			ppu2c03b_set_videorom_bank(0, 6, 1, vrom_bank[6], 64);
 			break;
 		case 0x6001:
 		case 0x6004:
 			/* Switch 1k vrom at $1c00 - low 4 bits */
 			vrom_bank[7] = (vrom_bank[7] & 0xf0) | (data & 0x0f);
 			vrom_bank[7] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[7] = vrom_bank[7] * 64;
+			ppu2c03b_set_videorom_bank(0, 7, 1, vrom_bank[7], 64);
 			break;
 		case 0x6003:
 		case 0x6006:
 			/* Switch 1k vrom at $1c00 - high 4 bits */
 			vrom_bank[7] = (vrom_bank[7] & 0x0f) | (data << 4);
 			vrom_bank[7] &= ((nes.chr_chunks << 3) - 1);
-			nes_vram[7] = vrom_bank[7] * 64;
+			ppu2c03b_set_videorom_bank(0, 7, 1, vrom_bank[7], 64);
 			break;
 		case 0x7000:
 			/* Set low 4 bits of latch */
@@ -2581,10 +2505,10 @@ static WRITE_HANDLER( konami_vrc6a_w )
 		case 0x3003:
 			switch (data & 0x0c)
 			{
-				case 0x00: ppu_mirror_v (); break;
-				case 0x04: ppu_mirror_h (); break;
-				case 0x08: ppu_mirror_low (); break;
-				case 0x0c: ppu_mirror_high (); break;
+				case 0x00: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
+				case 0x04: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
+				case 0x08: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
+				case 0x0c: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
 			}
 			break;
 		case 0x4000: case 0x4001: case 0x4002: case 0x4003:
@@ -2592,37 +2516,21 @@ static WRITE_HANDLER( konami_vrc6a_w )
 			prg8_cd (data);
 			break;
 		case 0x5000:
-			/* Switch 1k VROM at $0000 */
-			nes_vram [0] = data * 64;
-			break;
 		case 0x5001:
-			/* Switch 1k VROM at $0400 */
-			nes_vram [1] = data * 64;
-			break;
 		case 0x5002:
-			/* Switch 1k VROM at $0800 */
-			nes_vram [2] = data * 64;
-			break;
 		case 0x5003:
-			/* Switch 1k VROM at $0c00 */
-			nes_vram [3] = data * 64;
+			/* switch 1k VROM at $0000-$0c00 */
+			ppu2c03b_set_videorom_bank(0, (offset & 3) + 0, 1, data, 64);
 			break;
+
 		case 0x6000:
-			/* Switch 1k VROM at $1000 */
-			nes_vram [4] = data * 64;
-			break;
 		case 0x6001:
-			/* Switch 1k VROM at $1400 */
-			nes_vram [5] = data * 64;
-			break;
 		case 0x6002:
-			/* Switch 1k VROM at $1800 */
-			nes_vram [6] = data * 64;
-			break;
 		case 0x6003:
-			/* Switch 1k VROM at $1c00 */
-			nes_vram [7] = data * 64;
+			/* switch 1k VROM at $1000-$1c00 */
+			ppu2c03b_set_videorom_bank(0, (offset & 3) + 4, 1, data, 64);
 			break;
+
 		case 0x7000:
 			IRQ_count_latch = data;
 			break;
@@ -2660,10 +2568,10 @@ static WRITE_HANDLER( konami_vrc6b_w )
 		case 0x3003:
 			switch (data & 0x0c)
 			{
-				case 0x00: ppu_mirror_v (); break;
-				case 0x04: ppu_mirror_h (); break;
-				case 0x08: ppu_mirror_low (); break;
-				case 0x0c: ppu_mirror_high (); break;
+				case 0x00: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
+				case 0x04: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
+				case 0x08: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
+				case 0x0c: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
 			}
 			break;
 		case 0x4000: case 0x4001: case 0x4002: case 0x4003:
@@ -2672,35 +2580,35 @@ static WRITE_HANDLER( konami_vrc6b_w )
 			break;
 		case 0x5000:
 			/* Switch 1k VROM at $0000 */
-			nes_vram [0] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 0, 1, data, 64);
 			break;
 		case 0x5002:
 			/* Switch 1k VROM at $0400 */
-			nes_vram [1] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 1, 1, data, 64);
 			break;
 		case 0x5001:
 			/* Switch 1k VROM at $0800 */
-			nes_vram [2] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 2, 1, data, 64);
 			break;
 		case 0x5003:
 			/* Switch 1k VROM at $0c00 */
-			nes_vram [3] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 3, 1, data, 64);
 			break;
 		case 0x6000:
 			/* Switch 1k VROM at $1000 */
-			nes_vram [4] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 4, 1, data, 64);
 			break;
 		case 0x6002:
 			/* Switch 1k VROM at $1400 */
-			nes_vram [5] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 5, 1, data, 64);
 			break;
 		case 0x6001:
 			/* Switch 1k VROM at $1800 */
-			nes_vram [6] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 6, 1, data, 64);
 			break;
 		case 0x6003:
 			/* Switch 1k VROM at $1c00 */
-			nes_vram [7] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 7, 1, data, 64);
 			break;
 		case 0x7000:
 			IRQ_count_latch = data;
@@ -2738,9 +2646,9 @@ static WRITE_HANDLER( mapper32_w )
 		case 0x1000:
 			bankSel = data & 0x02;
 			if (data & 0x01)
-				ppu_mirror_h ();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
-				ppu_mirror_v ();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
 			break;
 		case 0x2000:
 			/* Switch 8k bank at $A000 */
@@ -2748,7 +2656,7 @@ static WRITE_HANDLER( mapper32_w )
 			break;
 		case 0x3000:
 			/* Switch 1k VROM at $1000 */
-			nes_vram[offset & 0x07] = data * 64;
+			ppu2c03b_set_videorom_bank(0, offset & 0x07, 1, data, 64);
 			break;
 		default:
 			logerror("Uncaught mapper 32 write, addr: %04x value: %02x\n", offset + 0x8000, data);
@@ -2775,29 +2683,27 @@ static WRITE_HANDLER( mapper33_w )
 			break;
 		case 0x0002:
 			/* Switch 2k VROM at $0000 */
-			nes_vram [0] = data * 128;
-			nes_vram [1] = nes_vram [0] + 64;
+			ppu2c03b_set_videorom_bank(0, 0, 2, data, 128);
 			break;
 		case 0x0003:
 			/* Switch 2k VROM at $0800 */
-			nes_vram [2] = data * 128;
-			nes_vram [3] = nes_vram [2] + 64;
+			ppu2c03b_set_videorom_bank(0, 2, 2, data, 128);
 			break;
 		case 0x2000:
 			/* Switch 1k VROM at $1000 */
-			nes_vram [4] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 4, 1, data, 64);
 			break;
 		case 0x2001:
 			/* Switch 1k VROM at $1400 */
-			nes_vram [5] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 5, 1, data, 64);
 			break;
 		case 0x2002:
 			/* Switch 1k VROM at $1800 */
-			nes_vram [6] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 6, 1, data, 64);
 			break;
 		case 0x2003:
 			/* Switch 1k VROM at $1c00 */
-			nes_vram [7] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 7, 1, data, 64);
 			break;
 		default:
 			logerror("Uncaught mapper 33 write, addr: %04x value: %02x\n", offset + 0x8000, data);
@@ -2878,9 +2784,9 @@ static WRITE_HANDLER( mapper41_m_w )
 	logerror("mapper41_m_w, offset: %04x, data: %02x\n", offset, data);
 #endif
 	if (offset & 0x20)
-		ppu_mirror_h();
+		ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
 	else
-		ppu_mirror_v();
+		ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
 
 	mapper41_reg2 = offset & 0x04;
 	mapper41_chr &= ~0x0c;
@@ -2930,7 +2836,8 @@ static WRITE_HANDLER( mapper64_w )
 
 			if (data & 0x10)
 			{
-				nes_vram[1] = nes_vram[3] = 0;
+				ppu2c03b_set_videorom_bank(0, 1, 1, 0, 64);
+				ppu2c03b_set_videorom_bank(0, 3, 1, 0, 64);
 			}
 
 			page = chr >> 10;
@@ -2955,29 +2862,27 @@ static WRITE_HANDLER( mapper64_w )
 			switch (cmd)
 			{
 				case 0:
-					nes_vram [page] = data * 64;
-					nes_vram [page+1] = nes_vram [page] + 64;
+					ppu2c03b_set_videorom_bank(0, page, 2, data, 64);
 					break;
 
 				case 1:
-					nes_vram [page ^ 2] = data * 64;
-					nes_vram [(page ^ 2)+1] = nes_vram [page ^ 2] + 64;
+					ppu2c03b_set_videorom_bank(0, page ^ 2, 2, data, 64);
 					break;
 
 				case 2:
-					nes_vram [page ^ 4] = data * 64;
+					ppu2c03b_set_videorom_bank(0, page ^ 4, 2, data, 64);
 					break;
 
 				case 3:
-					nes_vram [page ^ 5] = data * 64;
+					ppu2c03b_set_videorom_bank(0, page ^ 5, 2, data, 64);
 					break;
 
 				case 4:
-					nes_vram [page ^ 6] = data * 64;
+					ppu2c03b_set_videorom_bank(0, page ^ 6, 2, data, 64);
 					break;
 
 				case 5:
-					nes_vram [page ^ 7] = data * 64;
+					ppu2c03b_set_videorom_bank(0, page ^ 7, 2, data, 64);
 					break;
 
 				case 6:
@@ -3009,11 +2914,11 @@ static WRITE_HANDLER( mapper64_w )
 					break;
 				case 8:
 					/* Switch 1k VROM at $0400 */
-					nes_vram [1] = data * 64;
+					ppu2c03b_set_videorom_bank(0, 1, 1, data, 64);
 					break;
 				case 9:
 					/* Switch 1k VROM at $0C00 */
-					nes_vram [3] = data * 64;
+					ppu2c03b_set_videorom_bank(0, 3, 1, data, 64);
 					break;
 				case 15:
 					data &= prg_mask;
@@ -3034,13 +2939,13 @@ static WRITE_HANDLER( mapper64_w )
 		case 0x2000:
 			/* Not sure if the one-screen mirroring applies to this mapper */
 			if (data & 0x40)
-				ppu_mirror_high();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH);
 			else
 			{
 				if (data & 0x01)
-					ppu_mirror_h();
+					ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
 				else
-					ppu_mirror_v();
+					ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
 			}
 			break;
 		case 0x4000: /* $c000 - IRQ scanline counter */
@@ -3099,9 +3004,9 @@ static WRITE_HANDLER( mapper65_w )
 			break;
 		case 0x1001:
 			if (data & 0x80)
-				ppu_mirror_h();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
-				ppu_mirror_v();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
 			break;
 		case 0x1005:
 			IRQ_count = data << 1;
@@ -3120,37 +3025,17 @@ static WRITE_HANDLER( mapper65_w )
 			break;
 
 		case 0x3000:
-			/* Switch 1k VROM at $0000 */
-			nes_vram [0] = data * 64;
-			break;
 		case 0x3001:
-			/* Switch 1k VROM at $0400 */
-			nes_vram [1] = data * 64;
-			break;
 		case 0x3002:
-			/* Switch 1k VROM at $0800 */
-			nes_vram [2] = data * 64;
-			break;
 		case 0x3003:
-			/* Switch 1k VROM at $0c00 */
-			nes_vram [3] = data * 64;
-			break;
 		case 0x3004:
-			/* Switch 1k VROM at $1000 */
-			nes_vram [4] = data * 64;
-			break;
 		case 0x3005:
-			/* Switch 1k VROM at $1400 */
-			nes_vram [5] = data * 64;
-			break;
 		case 0x3006:
-			/* Switch 1k VROM at $1800 */
-			nes_vram [6] = data * 64;
-			break;
 		case 0x3007:
-			/* Switch 1k VROM at $1c00 */
-			nes_vram [7] = data * 64;
+			/* Switch 1k VROM at $0000-$1c00 */
+			ppu2c03b_set_videorom_bank(0, offset & 7, 1, data, 64);
 			break;
+
 		case 0x4000:
 			/* Switch 8k bank at $c000 */
 			data &= prg_mask;
@@ -3250,10 +3135,10 @@ static void mapper68_mirror (int m68_mirror, int m0, int m1)
 
 	switch (m68_mirror)
 	{
-		case 0x00: ppu_mirror_h (); break;
-		case 0x01: ppu_mirror_v (); break;
-		case 0x02: ppu_mirror_low (); break;
-		case 0x03: ppu_mirror_high (); break;
+		case 0x00: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
+		case 0x01: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
+		case 0x02: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
+		case 0x03: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
 		case 0x10:
 			ppu_mirror_custom_vrom (0, (m0 << 10) + M68_OFFSET);
 			ppu_mirror_custom_vrom (1, (m1 << 10) + M68_OFFSET);
@@ -3342,7 +3227,7 @@ static WRITE_HANDLER( mapper69_w )
 			switch (cmd)
 			{
 				case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
-					nes_vram [cmd] = data * 64;
+					ppu2c03b_set_videorom_bank(0, cmd, 1, data, 64);
 					break;
 
 				/* TODO: deal with bankswitching/write-protecting the mid-mapper area */
@@ -3369,10 +3254,10 @@ static WRITE_HANDLER( mapper69_w )
 				case 12:
 					switch (data & 0x03)
 					{
-						case 0x00: ppu_mirror_v (); break;
-						case 0x01: ppu_mirror_h (); break;
-						case 0x02: ppu_mirror_low (); break;
-						case 0x03: ppu_mirror_high (); break;
+						case 0x00: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
+						case 0x01: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
+						case 0x02: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
+						case 0x03: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
 					}
 					break;
 				case 13:
@@ -3405,11 +3290,11 @@ static WRITE_HANDLER( mapper70_w )
 
 #if 1
 	if (data & 0x80)
-//		ppu_mirror_h();
-		ppu_mirror_high();
+//		ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+		ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH);
 	else
-//		ppu_mirror_v();
-		ppu_mirror_low();
+//		ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+		ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW);
 #endif
 }
 
@@ -3480,9 +3365,9 @@ static WRITE_HANDLER( mapper75_w )
 			break;
 		case 0x1000: /* TODO: verify */
 			if (data & 0x01)
-				ppu_mirror_h();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
 			else
-				ppu_mirror_v();
+				ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
 			/* vrom banking as well? */
 			break;
 		case 0x2000:
@@ -3590,19 +3475,19 @@ static WRITE_HANDLER( mapper80_m_w )
 			break;
 		case 0x1ef2:
 			/* Switch 1k VROM at $1000 */
-			nes_vram [4] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 4, 1, data, 64);
 			break;
 		case 0x1ef3:
 			/* Switch 1k VROM at $1400 */
-			nes_vram [5] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 5, 1, data, 64);
 			break;
 		case 0x1ef4:
 			/* Switch 1k VROM at $1800 */
-			nes_vram [6] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 6, 1, data, 64);
 			break;
 		case 0x1ef5:
 			/* Switch 1k VROM at $1c00 */
-			nes_vram [7] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 7, 1, data, 64);
 			break;
 		case 0x1efa: case 0x1efb:
 			/* Switch 8k ROM at $8000 */
@@ -3648,19 +3533,19 @@ static WRITE_HANDLER( mapper82_m_w )
 			break;
 		case 0x1ef2:
 			/* Switch 1k VROM at $1000 */
-			nes_vram [4 ^ vrom_switch] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 4 ^ vrom_switch, 1, data, 64);
 			break;
 		case 0x1ef3:
 			/* Switch 1k VROM at $1400 */
-			nes_vram [5 ^ vrom_switch] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 5 ^ vrom_switch, 1, data, 64);
 			break;
 		case 0x1ef4:
 			/* Switch 1k VROM at $1800 */
-			nes_vram [6 ^ vrom_switch] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 6 ^ vrom_switch, 1, data, 64);
 			break;
 		case 0x1ef5:
 			/* Switch 1k VROM at $1c00 */
-			nes_vram [7 ^ vrom_switch] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 7 ^ vrom_switch, 1, data, 64);
 			break;
 		case 0x1ef6:
 			vrom_switch = !((data & 0x02) << 1);
@@ -3708,44 +3593,44 @@ static WRITE_HANDLER( konami_vrc7_w )
 
 		case 0x2000:
 			/* Switch 1k VROM at $0000 */
-			nes_vram [0] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 0, 1, data, 64);
 			break;
 		case 0x2008: case 0x2010: case 0x2018:
 			/* Switch 1k VROM at $0400 */
-			nes_vram [1] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 1, 1, data, 64);
 			break;
 		case 0x3000:
 			/* Switch 1k VROM at $0800 */
-			nes_vram [2] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 2, 1, data, 64);
 			break;
 		case 0x3008: case 0x3010: case 0x3018:
 			/* Switch 1k VROM at $0c00 */
-			nes_vram [3] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 3, 1, data, 64);
 			break;
 		case 0x4000:
 			/* Switch 1k VROM at $1000 */
-			nes_vram [4] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 4, 1, data, 64);
 			break;
 		case 0x4008: case 0x4010: case 0x4018:
 			/* Switch 1k VROM at $1400 */
-			nes_vram [5] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 5, 1, data, 64);
 			break;
 		case 0x5000:
 			/* Switch 1k VROM at $1800 */
-			nes_vram [6] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 6, 1, data, 64);
 			break;
 		case 0x5008: case 0x5010: case 0x5018:
 			/* Switch 1k VROM at $1c00 */
-			nes_vram [7] = data * 64;
+			ppu2c03b_set_videorom_bank(0, 7, 1, data, 64);
 			break;
 
 		case 0x6000:
 			switch (data & 0x03)
 			{
-				case 0x00: ppu_mirror_v (); break;
-				case 0x01: ppu_mirror_h (); break;
-				case 0x02: ppu_mirror_low (); break;
-				case 0x03: ppu_mirror_high (); break;
+				case 0x00: ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT); break;
+				case 0x01: ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ); break;
+				case 0x02: ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW); break;
+				case 0x03: ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH); break;
 			}
 			break;
 		case 0x6008: case 0x6010: case 0x6018:
@@ -3911,9 +3796,9 @@ static WRITE_HANDLER( mapper225_w )
 		prg32 (bank);
 
 	if (offset & 0x2000)
-		ppu_mirror_h();
+		ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
 	else
-		ppu_mirror_v();
+		ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
 }
 
 static WRITE_HANDLER( mapper226_w )
@@ -3939,9 +3824,9 @@ static WRITE_HANDLER( mapper226_w )
 	hi_bank = reg0 & 0x01;
 	size_16 = reg0 & 0x20;
 	if (reg0 & 0x40)
-		ppu_mirror_h();
+		ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
 	else
-		ppu_mirror_v();
+		ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
 
 	bank = ((reg0 & 0x1e) >> 1) | ((reg1 & 0x01) << 4);
 
@@ -3992,9 +3877,9 @@ static WRITE_HANDLER( mapper227_w )
 	}
 
 	if (offset & 0x02)
-		ppu_mirror_h();
+		ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
 	else
-		ppu_mirror_v();
+		ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
 }
 
 static WRITE_HANDLER( mapper228_w )
@@ -4043,9 +3928,9 @@ static WRITE_HANDLER( mapper228_w )
 	}
 
 	if (offset & 0x2000)
-		ppu_mirror_h();
+		ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
 	else
-		ppu_mirror_v();
+		ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
 
 	/* Now handle vrom banking */
 	chr = (data & 0x03) + ((offset & 0x0f) << 2);
@@ -4059,9 +3944,9 @@ static WRITE_HANDLER( mapper229_w )
 #endif
 
 	if (offset & 0x20)
-		ppu_mirror_h();
+		ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
 	else
-		ppu_mirror_v();
+		ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
 
 	if ((offset & 0x1e) == 0)
 	{
@@ -4102,11 +3987,9 @@ static WRITE_HANDLER( mapper231_w )
 int mapper_reset (int mapperNum)
 {
 	int err = 0;
-	int i;
 
 	/* Set the vram bank-switch values to the default */
-	for (i = 0; i < 8; i ++)
-		nes_vram[i] = i * 64;
+	ppu2c03b_set_videorom_bank(0, 0, 8, 0, 64);
 
 	mapper_warning = 0;
 	/* 8k mask */
@@ -4191,7 +4074,7 @@ int mapper_reset (int mapperNum)
 			break;
 		case 7:
 			/* Bankswitches 32k at a time */
-			ppu_mirror_low ();
+			ppu2c03b_set_mirroring(0, PPU_MIRROR_LOW);
 			prg16_89ab (0);
 			prg16_cdef (nes.prg_chunks-1);
 			break;
@@ -4332,7 +4215,7 @@ int mapper_reset (int mapperNum)
 			prg16_cdef (nes.prg_chunks-1);
 			break;
 		case 91:
-			ppu_mirror_v();
+			ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
 //			cpu_setbank (1, &nes.rom[0x10000]);
 //			cpu_setbank (2, &nes.rom[0x12000]);
 			prg16_89ab (nes.prg_chunks-1);
@@ -4371,8 +4254,8 @@ int mapper_reset (int mapperNum)
 			break;
 	}
 
-	if (nes.chr_chunks)
-		memcpy (videoram, nes.vrom, 0x2000);
+//	if (nes.chr_chunks)
+//		memcpy (videoram, nes.vrom, 0x2000);
 
 	return err;
 }

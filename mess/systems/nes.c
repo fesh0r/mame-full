@@ -12,6 +12,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "vidhrdw/ppu2c03b.h"
 #include "includes/nes.h"
 #include "cpu/m6502/m6502.h"
 #include "devices/cartslot.h"
@@ -19,20 +20,19 @@
 unsigned char *battery_ram;
 unsigned char *main_ram;
 
-READ_HANDLER ( nes_mirrorram_r )
+static READ_HANDLER ( nes_mirrorram_r )
 {
     return main_ram[offset & 0x7ff];
 }
 
-WRITE_HANDLER ( nes_mirrorram_w )
+static WRITE_HANDLER ( nes_mirrorram_w )
 {
     main_ram[offset & 0x7ff] = data;
 }
 
-READ_HANDLER ( nes_bogus_r )
+static READ_HANDLER ( nes_bogus_r )
 {
     static int val = 0xff;
-
     val ^= 0xff;
     return val;
 }
@@ -40,10 +40,10 @@ READ_HANDLER ( nes_bogus_r )
 MEMORY_READ_START( readmem_nes )
     { 0x0000, 0x07ff, MRA_RAM },                /* RAM */
     { 0x0800, 0x1fff, nes_mirrorram_r },        /* mirrors of RAM */
-    { 0x2000, 0x3fff, nes_ppu_r },              /* PPU registers */
+    { 0x2000, 0x3fff, ppu2c03b_0_r },           /* PPU registers */
+    { 0x4015, 0x4015, nes_bogus_r },            /* ?? sound status ?? */
     { 0x4016, 0x4016, nes_IN0_r },              /* IN0 - input port 1 */
     { 0x4017, 0x4017, nes_IN1_r },              /* IN1 - input port 2 */
-    { 0x4015, 0x4015, nes_bogus_r },            /* ?? sound status ?? */
     { 0x4100, 0x5fff, nes_low_mapper_r },       /* Perform unholy acts on the machine */
 //  { 0x6000, 0x7fff, MRA_BANK5 },              /* RAM (also trainer ROM) */
 //  { 0x8000, 0x9fff, MRA_BANK1 },              /* 4 16k NES_ROM banks */
@@ -55,7 +55,7 @@ MEMORY_END
 MEMORY_WRITE_START( writemem_nes )
     { 0x0000, 0x07ff, MWA_RAM, &main_ram },
     { 0x0800, 0x1fff, nes_mirrorram_w },        /* mirrors of RAM */
-    { 0x2000, 0x3fff, nes_ppu_w },              /* PPU registers */
+    { 0x2000, 0x3fff, ppu2c03b_0_w },           /* PPU registers */
     { 0x4000, 0x4015, NESPSG_0_w },
     { 0x4016, 0x4016, nes_IN0_w },              /* IN0 - input port 1 */
     { 0x4017, 0x4017, nes_IN1_w },              /* IN1 - input port 2 */
@@ -222,18 +222,6 @@ INPUT_PORTS_START( famicom )
 
 INPUT_PORTS_END
 
-/* !! Warning: the charlayout is changed by nes_init_cart !! */
-struct GfxLayout nes_charlayout =
-{
-    8,8,    /* 8*8 characters */
-    512,    /* 512 characters - changed at runtime */
-    2,  /* 2 bits per pixel */
-    { 8*8, 0 }, /* the two bitplanes are separated */
-    { 0, 1, 2, 3, 4, 5, 6, 7 },
-    { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-    16*8    /* every char takes 16 consecutive bytes */
-};
-
 /* This layout is not changed at runtime */
 struct GfxLayout nes_vram_charlayout =
 {
@@ -249,10 +237,16 @@ struct GfxLayout nes_vram_charlayout =
 
 static struct GfxDecodeInfo nes_gfxdecodeinfo[] =
 {
-    { REGION_GFX1, 0x0000, &nes_charlayout,        0, 8 },
-    { REGION_GFX2, 0x0000, &nes_vram_charlayout,   0, 8 },
+//    { REGION_GFX1, 0x0000, &nes_charlayout,        0, 8 },
+//    { REGION_GFX2, 0x0000, &nes_vram_charlayout,   0, 8 },
 MEMORY_END   /* end of array */
 
+
+static WRITE_HANDLER(nes_vh_sprite_dma_w)
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+	ppu2c03b_spriteram_dma(0, &RAM[data * 0x100]);
+}
 
 static struct NESinterface nes_interface =
 {
@@ -305,7 +299,6 @@ static MACHINE_DRIVER_START( nes )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", N2A03, N2A03_DEFAULTCLOCK)        /* 0,894886 Mhz */
 	MDRV_CPU_MEMORY(readmem_nes,writemem_nes)
-	MDRV_CPU_VBLANK_INT(nes_interrupt, NTSC_SCANLINES_PER_FRAME)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(114*(NTSC_SCANLINES_PER_FRAME-BOTTOM_VISIBLE_SCANLINE))
 
@@ -313,66 +306,30 @@ static MACHINE_DRIVER_START( nes )
 	MDRV_MACHINE_STOP( nes )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-#ifdef BIG_SCREEN
-	MDRV_SCREEN_SIZE(32*8*2, 30*8*2)
-	MDRV_VISIBLE_AREA(0*8, 32*8*2-1, 0*8, 30*8*2-1)
-#else
 	MDRV_SCREEN_SIZE(32*8, 30*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
-#endif
 	MDRV_PALETTE_INIT(nes)
 	MDRV_VIDEO_START(nes)
-	MDRV_VIDEO_STOP(nes)
 	MDRV_VIDEO_UPDATE(nes)
 
 	MDRV_GFXDECODE(nes_gfxdecodeinfo)
 
-#ifdef COLOR_INTENSITY
 	MDRV_PALETTE_LENGTH(4*16*8)
-#else
-	MDRV_PALETTE_LENGTH(4*16)
-#endif
 	MDRV_COLORTABLE_LENGTH(4*8)
 
     /* sound hardware */
-	MDRV_SOUND_ADD(NES, nes_interface)
+	MDRV_SOUND_ADD_TAG("nessound", NES, nes_interface)
 MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( nespal)
+static MACHINE_DRIVER_START( nespal )
+	MDRV_IMPORT_FROM( nes )
+
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", N2A03, 26601712/15)        /* 0,894886 Mhz */
-	MDRV_CPU_MEMORY(readmem_nes,writemem_nes)
-	MDRV_CPU_VBLANK_INT(nes_interrupt, PAL_SCANLINES_PER_FRAME)
+	MDRV_CPU_REPLACE("main", N2A03, 26601712/15)        /* 0,894886 Mhz */
 	MDRV_FRAMES_PER_SECOND(50)
-	MDRV_VBLANK_DURATION(114*(PAL_SCANLINES_PER_FRAME-BOTTOM_VISIBLE_SCANLINE))
-
-	MDRV_MACHINE_INIT( nes )
-	MDRV_MACHINE_STOP( nes )
-
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-#ifdef BIG_SCREEN
-	MDRV_SCREEN_SIZE(32*8*2, 30*8*2)
-	MDRV_VISIBLE_AREA(0*8, 32*8*2-1, 0*8, 30*8*2-1)
-#else
-	MDRV_SCREEN_SIZE(32*8, 30*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
-#endif
-	MDRV_PALETTE_INIT(nes)
-	MDRV_VIDEO_START(nes)
-	MDRV_VIDEO_STOP(nes)
-	MDRV_VIDEO_UPDATE(nes)
-
-	MDRV_GFXDECODE(nes_gfxdecodeinfo)
-
-#ifdef COLOR_INTENSITY
-	MDRV_PALETTE_LENGTH(4*16*8)
-#else
-	MDRV_PALETTE_LENGTH(4*16)
-#endif
-	MDRV_COLORTABLE_LENGTH(4*8)
 
     /* sound hardware */
-	MDRV_SOUND_ADD(NES, nespal_interface)
+	MDRV_SOUND_REPLACE("nessound", NES, nespal_interface)
 MACHINE_DRIVER_END
 
 SYSTEM_CONFIG_START(nes)
