@@ -460,7 +460,7 @@ TESTDRIVER( suzuk8h2 )
 	DRIVER( tinklpit )	/* (c) 1993 Namco */
 	DRIVER( fa )		/* c) 1992 ROT90_ */
 
-    /* Universal games */
+	/* Universal games */
 	DRIVER( cosmicg )	/* 7907 (c) 1979 */
 	DRIVER( cosmica )	/* 7910 (c) [1979] */
 	DRIVER( cosmica2 )	/* 7910 (c) 1979 */
@@ -1760,11 +1760,26 @@ TESTDRIVER( kopunch )	/* 834-0103 (c) 1981 Sega */
 	DRIVER( tetrisa )	/* (c) 1988 (protected) */
 	DRIVER( wb3a )		/* (c) 1988 Sega / Westone (protected) */
 
+	DRIVER( bloxeed )	/* (c) 1989 Sega / Elorg */
+	DRIVER( columns )	/* (c) 1990 Sega */
+	DRIVER( columns2 )	/* (c) 1990 Sega */
+	DRIVER( borench )	/* (c) 1990 Sega */
+TESTDRIVER( tfrceac )	/* (c) 1990 Sega / Technosoft */
+TESTDRIVER( tfrceacj )	/* (c) 1990 Sega / Technosoft */
+TESTDRIVER( tfrceacb )	/* (c) 1990 Sega / Technosoft */
+TESTDRIVER( tantr ) 	/* (c) 1992 Sega */
+TESTDRIVER( tantrbl )	/* (c) 1992 Sega */
+	DRIVER( puyopuyo )	/* (c) 1992 Sega / Compile */
+	DRIVER( puyopuya )	/* (c) 1992 Sega / Compile */
+TESTDRIVER( ichident )	/* (c) 1992 Sega */
+TESTDRIVER( stkclmns )	/* (c) 1994 Sega */
+TESTDRIVER( puyopuy2 )	/* (c) 1994 Sega */
+	DRIVER( potopoto )	/* (c) 1994 Sega */
+	DRIVER( zunkyou )	/* (c) 1994 Sega */
 TESTDRIVER( aceattac )	/* (protected) */
 TESTDRIVER( aburner )	/* */
 TESTDRIVER( aburner2 )	/* */
 TESTDRIVER( afighter )	/* (protected) */
-TESTDRIVER( bloxeed )	/* (protected) */
 TESTDRIVER( cltchitr )	/* (protected) */
 TESTDRIVER( cotton )	/* (protected) */
 TESTDRIVER( cottona )	/* (protected) */
