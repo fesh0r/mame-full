@@ -5092,15 +5092,16 @@ Oric Atmos
 The emulation supports Microdisc and Jasmin floppy disc controller emulation, this
 can be chosen using a Dipswitch. 
 
-Oric Atmos
 
 Known issues:
+
 - The disc controller emulation is not exact and some programs may fail to load.
 - The cassette emulation is not exact and some programs may fail to load
 - Screen display should be accurate, but there might be some small bugs.
 - Tape programs are found but not loaded.
 - there are bugs in the Microdisc and Jasmin floppy disc controller emulation so some
 programs will not boot.
+
 
 History and Trivia:
 
@@ -5109,6 +5110,7 @@ main difference with the Oric 1 was it's enhanced RAM (48 KB instead of 16 KB), 
 and the debugged ROM (the ORIC 1 had several bugs). Several peripherals were available: 
 3" floppy disk drive, a small 4 colour plotter, a speech synthesizer and a Digital/Analogue 
 converter. An external interface was needed to use joysticks. 
+
 
 $end
 
