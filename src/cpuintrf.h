@@ -183,9 +183,6 @@ enum
 #if (HAS_F8)
 	CPU_F8,
 #endif
-#if (HAS_CP1600)
-	CPU_CP1600,
-#endif
 #if (HAS_TMS34010)
 	CPU_TMS34010,
 #endif
@@ -256,6 +253,9 @@ enum
 #endif
 #if (HAS_ARM)
 	CPU_ARM,
+#endif
+#if (HAS_CP1600)
+	CPU_CP1600,
 #endif
 #if (HAS_G65816)
 	CPU_G65816,

@@ -583,17 +583,6 @@ else
 CPUDEFS += -DHAS_F8=0
 endif
 
-CPU=$(strip $(findstring CP1600@,$(CPUS)))
-ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/cp1600
-CPUDEFS += -DHAS_CP1600=1
-CPUOBJS += $(OBJ)/cpu/cp1600/cp1600.o
-DBGOBJS += $(OBJ)/cpu/cp1600/1600dasm.o
-$(OBJ)/cpu/cp1600/cp1600.o: cp1600.c cp1600.h
-else
-CPUDEFS += -DHAS_CP1600=0
-endif
-
 CPU=$(strip $(findstring TMS34010@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/tms34010

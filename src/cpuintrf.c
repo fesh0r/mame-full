@@ -93,9 +93,6 @@
 #if (HAS_F8)
 #include "cpu/f8/f8.h"
 #endif
-#if (HAS_CP1600)
-#include "cpu/cp1600/cp1600.h"
-#endif
 #if (HAS_TMS34010 || HAS_TMS34020)
 #include "cpu/tms34010/tms34010.h"
 #endif
@@ -141,6 +138,9 @@
 #endif
 #if (HAS_ARM)
 #include "mess/cpu/arm/arm.h"
+#endif
+#if (HAS_CP1600)
+#include "mess/cpu/cp1600/cp1600.h"
 #endif
 #if (HAS_G65816)
 #include "mess/cpu/g65816/g65816.h"
@@ -581,10 +581,6 @@ struct cpu_interface cpuintf[] =
 #define f8_ICount f8_icount
 	CPU4(F8,	   f8,		 1,  0,1.00,F8_INT_NONE,	   F8_INT_INTR,    -1,			   8, 16,	  0,16,LE,1, 3	),
 #endif
-#if (HAS_CP1600)
-#define cp1600_ICount cp1600_icount
-	CPU0(CP1600,   cp1600,	 0,  0,1.00,CP1600_INT_NONE,   -1,			   -1,			   8, 16,	  0,16,LE,1, 3	),
-#endif
 #if (HAS_TMS34010)
 	CPU2(TMS34010, tms34010, 2,  0,1.00,TMS34010_INT_NONE, TMS34010_INT1,  -1,			   16,29lew,  3,29,LE,2,10	),
 #endif
@@ -659,6 +655,10 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_ARM)
 	CPU0(ARM,	   arm, 	 2,  0,1.00,ARM_INT_NONE,	   ARM_FIRQ,	   ARM_IRQ, 	   32,26ledw, 0,26,LE,4, 4	),
+#endif
+#if (HAS_CP1600)
+#define cp1600_ICount cp1600_icount
+	CPU0(CP1600,   cp1600,	 0,  0,1.00,CP1600_INT_NONE,   -1,			   -1,			   8, 16,	  0,16,LE,1, 3	),
 #endif
 #if (HAS_G65816)
 	CPU0(G65816,  g65816,	 1,  0,1.00,G65816_INT_NONE,   G65816_INT_IRQ, G65816_INT_NMI, 8, 24,	  0,24,BE,1, 3	),
