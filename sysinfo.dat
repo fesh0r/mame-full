@@ -8566,6 +8566,75 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=ti99_8
+$bio
+Texas Instruments TI-99/8 Computer
+
+
+Known Issues:
+
+Requires full keyboard emulation.  At startup, full keyboard emulation mode is
+enabled by default.  Whilst in full keyboard emulation mode, some key
+associated functionality may be disabled (like the ESC key for EXIT).
+The keyboard emulation mode is toggled using the scroll_lock key.
+
+There is no known dump of TI-99/8 ROMs.  I have reassembled the source code of
+the TI-99/8 ROMs, which has enabled me to reconstruct the core of the operating
+system.  Unfortunately, several optional but important parts of the system
+(HexBus, P-System, Speech ROMs, and named subroutines in BASIC) are missing.
+
+Speech that sounds fine on a /4(a) with the optional speech synthesizer may
+sound garbled on a /8 with its integrated speech synthesizer.  This is because
+the /4a and the /8 do not use the same speech chip (TMS0285 vs. TMS5200C).  On
+an actual /8, this only affects programs that use custom speech; under
+emulation, this currently affects programs that use pre-defined speech as well,
+because the /8 speech ROMs have not been dumped and we resort to using the
+incompatible /4(a) speech ROMs instead.
+
+Mapper-level Read protect, Write protect and Execute protect are not
+emulated.  Hard reset and P-code GROMs are not emulated either.
+
+
+Usage:
+
+The TI99/8 looks a lot like the /4(a).  Press any key to begin, then press A
+for the built-in BASIC interpreter, B to set speed, C, D, etc, for any
+inserted cartridge.  Set speed does not apply to the built-in BASIC
+interpreter, which will always at full speed.  The default speed is "B TI-99/4A
+speed": you must run set speed to select any other speed.
+
+Though the level of compatibility with the /4a is high, you may not access
+extensions provided by an inserted cartridge from /8 BASIC, whether they are
+packaged as a CALL or as a DSR.  
+
+
+
+History and Trivia:
+
+When TI released the TI-99/4 in 1979, they announced that a bigger, more
+professional version of this machine would follow: the TI-99/7.  After several
+delays, the TI-99/7 project was abandoned, and in 1981 TI started a similar
+project with upgraded specs: the TI-99/8 (code-named Armadillo).
+
+The project was nearing completion, with a prototype series in production, when
+TI terminated the TI-99 series in October 1983.  As a consequence, the TI-99/8
+was never released, although several prototypes ended in private hands.
+
+The TI-99/8 is similar to, yet different from, the TI-99/4(a).  Mostly, it
+looks like a super TI-99/4(a): it has a faster CPU, a better keyboard, and
+several features that were optional on the /4(a) (speech synthesizer, HexBus
+controller and UCSD P-system).  However, it includes several features that have
+no equivalent on the /4a: its memory mapper enables it to address 64kBytes of
+RAM simultaneously, to support more than 15MBytes of RAM, and to implement
+partial memory protection; also, its ROMs are a lot improved compared to the
+/4(a) ROMs: they support machine language programs much better, they implement
+several extra system calls for graphics, and they support I/O buffer in CPU
+RAM.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=ti990_10
 $bio
 Texas Instruments Model 990/10 Minicomputer System
