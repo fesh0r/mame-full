@@ -46,8 +46,6 @@ VIDEO_UPDATE( pc_video )
 
 	if (video_update)
 	{
-		video_update(tmpbitmap ? tmpbitmap : bitmap, pc_crtc);
-
 		if ((width != w) || (height != h)) 
 		{
 			width = w;
@@ -63,7 +61,10 @@ VIDEO_UPDATE( pc_video )
 				set_visible_area(0,width-1,0, height-1);
 			else
 				logerror("video %d %d\n",width, height);
+			fillbitmap(bitmap, 0, cliprect);
 		}
+
+		video_update(tmpbitmap ? tmpbitmap : bitmap, pc_crtc);
 
 		if (tmpbitmap)
 		{

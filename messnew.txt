@@ -6,9 +6,15 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-- [IBMPC] Fixed a bug in keyboard handling that caused a 'stuck key' keyboard
+- [PC] Fixed a bug in keyboard handling that caused a 'stuck key' keyboard
   error to be displayed (bug #427). [Colin Howell, Nate Woods]
-- Added support for CGA 160x100 mode (bugs #100 and #225).  [Nate Woods]
+
+- [PC] Added support for CGA 160x100 mode (bugs #100 and #225).  [Nate Woods]
+
+- [PC] Fixed a bug that would occasionally cause garbage to be displayed on
+  the screen after a screen resolution change (bug #100).  [Nate Woods]
+
+- [TRS80] Fixed a crash on startup. [Nate Woods]
 
 User Interface Changes:
 -----------------------

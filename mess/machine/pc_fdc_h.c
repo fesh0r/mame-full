@@ -109,7 +109,7 @@ void	pc_fdc_dack_w(int data)
 	}
 }
 
-void	pc_fdc_hw_dma_drq(int state, int read_)
+void pc_fdc_hw_dma_drq(int state, int read_)
 {
 	fdc.dma_state = state;
 	fdc.dma_read = read_;
@@ -118,17 +118,11 @@ void	pc_fdc_hw_dma_drq(int state, int read_)
 	if ((fdc.digital_output_register & PC_FDC_FLAGS_DOR_DMA_ENABLED)==0)
 		return;
 
-	if (fdc.fdc_interface.pc_fdc_dma_drq!=NULL)
+	if (fdc.fdc_interface.pc_fdc_dma_drq)
 		fdc.fdc_interface.pc_fdc_dma_drq(state, read_);
 }
 
-/* read status register */
-static READ_HANDLER(pc_fdc_status_r)
-{
-	return nec765_status_r(0);
-}
-
-static WRITE_HANDLER(pc_fdc_data_rate_w)
+static void pc_fdc_data_rate_w(data8_t data)
 {
 	if ((data & 0x080)!=0)
 	{
@@ -146,23 +140,7 @@ static WRITE_HANDLER(pc_fdc_data_rate_w)
 	fdc.data_rate_register = data;
 }
 
-static READ_HANDLER(pc_fdc_data_r)
-{
-	return nec765_data_r(offset);
-}
-
-
-static WRITE_HANDLER(pc_fdc_data_w)
-{
-	nec765_data_w(0, data);
-}
-
-static READ_HANDLER(pc_fdc_dir_r)
-{
-	return fdc.digital_input_register;
-}
-
-static WRITE_HANDLER(pc_fdc_dor_w)
+static void pc_fdc_dor_w(data8_t data)
 {
 	int selected_drive;
 	int floppy_count;
@@ -243,42 +221,55 @@ static WRITE_HANDLER(pc_fdc_dor_w)
 	}
 }
 
-static READ_HANDLER(pc_fdc_dor_r)
-{
-	return fdc.digital_output_register;
-}
-
 WRITE_HANDLER ( pc_fdc_w )
 {
-//	logerror("fdc write %.2x %.2x\n",offset,data);
-	switch( offset )
-	{
-		case 0: /* n/a */				   break;
-		case 1: /* n/a */				   break;
-		case 2: pc_fdc_dor_w(offset,data); 	   break;
-		case 3: /* tape drive select? */   break;
-		case 4: pc_fdc_data_rate_w(offset,data);  break;
-		case 5: pc_fdc_data_w(offset,data);    break;
-		case 6: /* fdc reserved */		   break;
-		case 7: /* n/a */ break;
+	switch(offset) {
+	case 0:	/* n/a */
+	case 1:	/* n/a */
+		break;
+	case 2:
+		pc_fdc_dor_w(data);
+		break;
+	case 3:
+		/* tape drive select? */
+		break;
+	case 4:
+		pc_fdc_data_rate_w(data);
+		break;
+	case 5:
+		nec765_data_w(0, data);
+		break;
+	case 6: /* fdc reserved */
+	case 7: /* n/a */
+		break;
 	}
 }
 
 READ_HANDLER ( pc_fdc_r )
 {
-	int data = 0xff;
-	switch( offset )
-	{
-		case 0: data = 0; /* n/a */				   break;	/* status register a */
-		case 1: data = 0;/* n/a */				   break;	/* status register b */
-		case 2: data = pc_fdc_dor_r(offset);				   break;
-		case 3: /* tape drive select? */   break;
-		case 4: data = pc_fdc_status_r(offset);  break;
-		case 5: data = pc_fdc_data_r(offset);    break;
-		case 6: /* FDC reserved */		   break;
-		case 7: data = pc_fdc_dir_r(offset);	   break;
+	data8_t data = 0xff;
+
+	switch(offset) {
+	case 0: /* status register a */
+	case 1: /* status register b */
+		data = 0x00;
+	case 2:
+		data = fdc.digital_output_register;
+		break;
+	case 3: /* tape drive select? */
+		break;
+	case 4:
+		data = nec765_status_r(0);
+		break;
+	case 5:
+		data = nec765_data_r(offset);
+		break;
+	case 6: /* FDC reserved */
+		break;
+	case 7:
+		data = fdc.digital_input_register;
+		break;
     }
-//	logerror("fdc read %.2x %.2x\n",offset,data);
 	return data;
 }
 

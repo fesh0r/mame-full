@@ -37,7 +37,7 @@ static void dsk_seek_callback(mess_image *img, int physical_track);
 static void dsk_get_id_callback(mess_image *img, struct chrn_id *id, int id_index, int side);
 static int dsk_get_sectors_per_track(mess_image *img, int side);
 
-static void dsk_write_sector_data_from_buffer(mess_image *img, int sector_index, int side, char *ptr, int length, int ddam);
+static void dsk_write_sector_data_from_buffer(mess_image *img, int sector_index, int side, const char *ptr, int length, int ddam);
 static void dsk_read_sector_data_into_buffer(mess_image *img, int sector_index, int side, char *ptr, int length);
 
 static floppy_interface dsk_floppy_interface =
@@ -513,7 +513,7 @@ static char * dsk_get_sector_ptr_callback(mess_image *img, int sector_index, int
 	return (char *)(data + track_offset + sector_offset);
 }
 
-static void dsk_write_sector_data_from_buffer(mess_image *img, int side, int index1, char *ptr, int length, int ddam)
+static void dsk_write_sector_data_from_buffer(mess_image *img, int side, int index1, const char *ptr, int length, int ddam)
 {
 	char * pSectorData;
 

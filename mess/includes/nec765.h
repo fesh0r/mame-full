@@ -23,7 +23,7 @@ void nec765_init(nec765_interface *, int version);
 /* set nec765 terminal count input state */
 void nec765_set_tc_state(int);
 /* set nec765 ready input*/
-void	nec765_set_ready_state(int);
+void nec765_set_ready_state(int);
 
 void nec765_set_ready_int(void);
 
@@ -39,9 +39,9 @@ READ_HANDLER(nec765_status_r);
 /* supported versions */
 typedef enum
 {
-	NEC765A=0,
-	NEC765B=1,
-	SMC37C78=2
+	NEC765A = 0,
+	NEC765B = 1,
+	SMC37C78 = 2
 } NEC765_VERSION;
 
 /* dma acknowledge with write */
@@ -50,10 +50,10 @@ WRITE_HANDLER(nec765_dack_w);
 READ_HANDLER(nec765_dack_r);
 
 /* reset nec765 */
-void	nec765_reset(int);
+void nec765_reset(int);
 
 /* reset pin of nec765 */
-void	nec765_set_reset_state(int);
+void nec765_set_reset_state(int);
 
 /*********************/
 /* STATUS REGISTER 1 */

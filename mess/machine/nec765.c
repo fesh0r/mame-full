@@ -289,15 +289,16 @@ static void nec765_seek_complete(void)
 
 static void nec765_seek_timer_callback(int param)
 {
-		/* seek complete */
-		nec765_seek_complete();
+	/* seek complete */
+	nec765_seek_complete();
 
-		timer_reset(fdc.seek_timer, TIME_NEVER);
+	timer_reset(fdc.seek_timer, TIME_NEVER);
 }
+
 static void nec765_timer_callback(int param)
 {
 	/* type 0 = data transfer mode in execution phase */
-	if (fdc.timer_type==0)
+	if (fdc.timer_type == 0)
 	{
 		/* set data request */
 		nec765_set_data_request();
@@ -306,7 +307,7 @@ static void nec765_timer_callback(int param)
 		
 		if (!(fdc.nec765_flags & NEC765_DMA_MODE))
 		{
-			// for pcw
+			/* for pcw */
 			timer_reset(fdc.timer, TIME_IN_USEC(27));
 		}
 		else
@@ -314,41 +315,27 @@ static void nec765_timer_callback(int param)
 			nec765_timer_callback(fdc.timer_type);
 		}
 	}
-	else
-	if (fdc.timer_type==2)
+	else if (fdc.timer_type==2)
 	{
 		/* result phase begin */
 
 		/* generate a int for specific commands */
-		switch (fdc.command)
-		{
-			/* read a track */
-			case 2:
-			/* write data */
-			case 5:
-			/* read data */
-			case 6:
-			/* write deleted data */
-			case 9:
-			/* read id */
-			case 10:
-			/* read deleted data */
-			case 12:
-			/* format at track */
-			case 13:
-			/* scan equal */
-			case 17:
-			/* scan low or equal */
-			case 19:
-			/* scan high or equal */
-			case 29:
-			{
-				nec765_set_int(1);
-			}
+		switch (fdc.command) {
+		case 2:		/* read a track */
+		case 5:		/* write data */
+		case 6:		/* read data */
+		case 9:		/* write deleted data */
+		case 10:	/* read id */			
+		case 12:	/* read deleted data */			
+		case 13:	/* format at track */
+		case 17:	/* scan equal */
+		case 19:	/* scan low or equal */
+		case 29:	/* scan high or equal */
+			nec765_set_int(1);
 			break;
 
-			default:
-				break;
+		default:
+			break;
 		}
 
 		nec765_set_data_request();
@@ -519,7 +506,7 @@ static void nec765_seek_setup(int is_recalibrate)
 
 
 
-static void     nec765_setup_execution_phase_read(char *ptr, int size)
+static void nec765_setup_execution_phase_read(char *ptr, int size)
 {
 	fdc.FDC_main |= 0x040;                     /* FDC->CPU */
 
@@ -531,7 +518,7 @@ static void     nec765_setup_execution_phase_read(char *ptr, int size)
 	nec765_setup_timed_data_request(1);
 }
 
-static void     nec765_setup_execution_phase_write(char *ptr, int size)
+static void nec765_setup_execution_phase_write(char *ptr, int size)
 {
 	fdc.FDC_main &= ~0x040;                     /* FDC->CPU */
 
@@ -545,7 +532,7 @@ static void     nec765_setup_execution_phase_write(char *ptr, int size)
 }
 
 
-static void     nec765_setup_result_phase(int byte_count)
+static void nec765_setup_result_phase(int byte_count)
 {
 	fdc.FDC_main |= 0x040;                     /* FDC->CPU */
 	fdc.FDC_main &= ~0x020;                    /* not execution phase */
@@ -582,7 +569,7 @@ void	nec765_set_int(int state)
 }
 
 /* set dma request output */
-void	nec765_set_dma_drq(int state)
+void nec765_set_dma_drq(int state)
 {
 	fdc.nec765_flags &= ~NEC765_DMA_DRQ;
 
@@ -667,7 +654,7 @@ void nec765_init(nec765_interface *iface, int version)
 
 
 /* terminal count input */
-void	nec765_set_tc_state(int state)
+void nec765_set_tc_state(int state)
 {
 	int old_state;
 
@@ -1340,7 +1327,7 @@ static int nec765_read_data_stop(void)
 	return FALSE;
 }
 
-static void     nec765_continue_command(void)
+static void nec765_continue_command(void)
 {
 	if ((fdc.nec765_phase == NEC765_EXECUTION_PHASE_READ) ||
 		(fdc.nec765_phase == NEC765_EXECUTION_PHASE_WRITE))
@@ -1688,7 +1675,7 @@ READ_HANDLER(nec765_data_r)
 //	data = fdc.nec765_data_reg;
 
 
-	if ((fdc.FDC_main & 0x0c0)==0x0c0)
+	if ((fdc.FDC_main & 0x0c0) == 0x0c0)
 	{
 		if (
 			(fdc.nec765_phase == NEC765_EXECUTION_PHASE_READ) ||

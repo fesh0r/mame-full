@@ -13,7 +13,7 @@ static void d88image_seek_callback(mess_image *img,int);
 static int d88image_get_sectors_per_track(mess_image *img,int);
 static void d88image_get_id_callback(mess_image *img, chrn_id *, int, int);
 static void d88image_read_sector_data_into_buffer(mess_image *img, int side, int index1, char *ptr, int length);
-static void d88image_write_sector_data_from_buffer(mess_image *img, int side, int index1, char *ptr, int length,int ddam);
+static void d88image_write_sector_data_from_buffer(mess_image *img, int side, int index1, const char *ptr, int length,int ddam);
 
 static floppy_interface d88image_floppy_interface=
 {
@@ -199,7 +199,7 @@ static void d88image_seek_callback(mess_image *img, int physical_track)
 	w->track = physical_track;
 }
 
-static void d88image_write_sector_data_from_buffer(mess_image *img, int side, int index1, char *ptr, int length, int ddam)
+static void d88image_write_sector_data_from_buffer(mess_image *img, int side, int index1, const char *ptr, int length, int ddam)
 {
 	d88image *w = get_d88image(img);
 	d88sect *s = &(w->sects[w->track*2+side][index1]);

@@ -136,7 +136,12 @@ static void wd179x_set_busy(WD179X *w, double milliseconds)
 
 static void wd179x_restore(WD179X *w)
 {
-	UINT8 step_counter = 255;
+	UINT8 step_counter;
+	
+	if (current_drive >= device_count(IO_FLOPPY))
+		return;
+
+	step_counter = 255;
 		
 #if 0
 	w->status |= STA_1_BUSY;

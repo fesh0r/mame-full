@@ -65,11 +65,11 @@ typedef struct floppy_interface
 	void (*get_id_callback)(mess_image *img, chrn_id *, int id_index, int physical_side);
 
 	/* read sector data into buffer, length = number of bytes to read */
-	void	(*read_sector_data_into_buffer)(mess_image *img, int side,int data_id,char *, int length);
+	void (*read_sector_data_into_buffer)(mess_image *img, int side,int data_id,char *, int length);
 	/* write sector data from buffer, length = number of bytes to read  */
-	void	(*write_sector_data_from_buffer)(mess_image *img, int side,int data_id, char *, int length, int ddam);
+	void (*write_sector_data_from_buffer)(mess_image *img, int side,int data_id, const char *, int length, int ddam);
 	/* Read track in buffer, length = number of bytes to read */
-	void	(*read_track_data_info_buffer)(mess_image *img, int side, char *ptr, int *length );
+	void (*read_track_data_info_buffer)(mess_image *img, int side, char *ptr, int *length );
 	/* format */
 	void (*format_sector)(mess_image *img, int side, int sector_index,int c, int h, int r, int n, int filler);
 } floppy_interface;

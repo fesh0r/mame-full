@@ -15,7 +15,7 @@ static void mfm_disk_seek_callback(mess_image *image, int);
 static int mfm_disk_get_sectors_per_track(mess_image *image, int);
 static void mfm_disk_get_id_callback(mess_image *image, chrn_id *, int, int);
 static void mfm_disk_read_sector_data_into_buffer(mess_image *image, int side, int index1, char *ptr, int length);
-static void mfm_disk_write_sector_data_from_buffer(mess_image *image, int side, int index1, char *ptr, int length,int ddam);
+static void mfm_disk_write_sector_data_from_buffer(mess_image *image, int side, int index1, const char *ptr, int length,int ddam);
 
 static floppy_interface mfm_disk_floppy_interface=
 {
@@ -399,7 +399,7 @@ static void mfm_disk_seek_callback(mess_image *image, int physical_track)
 
 /* reading and writing are not clever, they need to be so that the data is correctly written back
 to the image */
-static void mfm_disk_write_sector_data_from_buffer(mess_image *image, int side, int index1, char *ptr, int length, int ddam)
+static void mfm_disk_write_sector_data_from_buffer(mess_image *image, int side, int index1, const char *ptr, int length, int ddam)
 {
 	struct mfm_disk_info *mfm_disk = get_disk(image);
 	unsigned char *pSectorPtr;
