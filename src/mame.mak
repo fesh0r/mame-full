@@ -715,7 +715,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/royalmah.o \
 	$(OBJ)/drivers/mazinger.o \
 
-COREOBJS += $(OBJ)/driver.o
+COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o 
 
 # generated text files
 TEXTS += gamelist.txt

@@ -121,7 +121,7 @@ OBJDIRS += $(OBJ)/mess $(OBJ)/mess/systems $(OBJ)/mess/machine \
 all:	maketree $(EMULATOR) extra
 
 # include the various .mak files
-include src/coremess.mak
+include src/core.mak
 include src/$(TARGET).mak
 include src/rules.mak
 include src/$(OS)/$(OS).mak
