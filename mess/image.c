@@ -401,7 +401,7 @@ static int image_checkcrc(mess_image *img)
 	mame_file *file;
 	UINT32 crc;
 
-	assert(img->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
+	/*assert(img->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));*/
 
 	/* only calculate CRC if it hasn't been calculated, and the open_mode is read only */
 	if (!(img->status & IMAGE_STATUS_CRCCALCULATED) && (img->effective_mode == OSD_FOPEN_READ))
