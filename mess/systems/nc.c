@@ -1524,12 +1524,12 @@ static struct MachineDriver machine_driver_nc200 =
 
 ROM_START(nc100)
         ROM_REGION(((64*1024)+(256*1024)), REGION_CPU1,0)
-        ROM_LOAD("nc100.rom", 0x010000, 0x040000, 0x0849884f9)
+        ROM_LOAD("nc100.rom", 0x010000, 0x040000, 0x0a699eca3)
 ROM_END
 
 ROM_START(nc100a)
         ROM_REGION(((64*1024)+(256*1024)), REGION_CPU1,0)
-        ROM_LOAD("nc100a.rom", 0x010000, 0x040000, 0x0a699eca3)
+        ROM_LOAD("nc100a.rom", 0x010000, 0x040000, 0x0849884f9)
 ROM_END
 
 ROM_START(nc200)
@@ -1648,7 +1648,7 @@ static const struct IODevice io_nc200[] =
 
 #define io_nc100a io_nc100
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY   FULLNAME */
-COMP( 1992, nc100,   0,                nc100,  nc100,      0,       "Amstrad plc", "NC100 Rom version v1.09")
-COMP( 1992, nc100a,  nc100,                nc100, nc100,      0,   "Amstrad plc","NC100 Rom version v1.00")
-COMP( 1993, nc200,   0,                nc200, nc200,      0,   "Amstrad plc", "NC200")
+/*	  YEAR	NAME	 PARENT	MACHINE INPUT 	INIT COMPANY        FULLNAME */
+COMP( 1992, nc100,   0,     nc100,  nc100,  0,   "Amstrad plc", "NC100")
+COMP( 1992, nc100a,  nc100, nc100,  nc100,  0,   "Amstrad plc", "NC100 (Version 1.09)")
+COMP( 1993, nc200,   0,     nc200,  nc200,  0,   "Amstrad plc", "NC200")
