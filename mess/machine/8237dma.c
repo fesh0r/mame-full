@@ -229,6 +229,7 @@ static void dma8237_verify(int which)
 static data8_t dma8237_read(int which, offs_t offset)
 {
 	data8_t data = 0xFF;
+	UINT8 mode;
 
 	dma8237_verify(which);
 	offset &= 0x0F;
@@ -241,6 +242,16 @@ static data8_t dma8237_read(int which, offs_t offset)
 		/* DMA address register */
 		data = dma[which].chan[offset / 2].address >> (dma[which].msb ? 8 : 0);
 		dma[which].msb ^= 1;
+
+		/* hack simulating refresh activity for 'ibmxt' BIOS; I do not know
+		 * why this is needed; but in any case, the ibmxt driver does not load
+		 * if this code is not present */
+		mode = dma[which].chan[0].mode;
+		if ((DMA_MODE_OPERATION(mode) == 2) && (offset == 0))
+		{
+			dma[which].chan[0].address++;
+			dma[which].chan[0].count--;
+		}
 		break;
 
 	case 1:
