@@ -335,11 +335,11 @@ void* osd_fopen2(const char *gamename, const char *filename, int filetype, int o
 
 		for (i = 0; i < FORMAT_MAX; i++)
 		{
-			char imagename[32];
+			char imagename[1024];
 
 			/* then zip file. */
 			f->type = kZippedFile;
-			sprintf(imagename, "%s.%s", gamename, pic_format[i]);
+			snprintf(imagename, sizeof(imagename) / sizeof(imagename[0]), "%s.%s", gamename, pic_format[i]);
 
 			if (use_flyers)
 			{

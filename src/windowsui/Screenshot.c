@@ -448,10 +448,12 @@ BOOL LoadScreenShot(int nGame, int nType)
 	BOOL loaded = FALSE;
 
 	/* No need to reload the same one again */
+#ifndef MESS
 	if (nGame == nLastGame && m_hDIB != 0 && use_flyer == nType)
 	{
 		return TRUE;
 	}
+#endif
 
 	/* Delete the last ones */
 	FreeScreenShot();
