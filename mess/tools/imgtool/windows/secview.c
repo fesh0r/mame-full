@@ -346,6 +346,13 @@ static INT_PTR CALLBACK win_sectorview_dialog_proc(HWND dialog, UINT message,
 			info->old_width = dialog_rect.right - dialog_rect.left;
 			info->old_height = dialog_rect.bottom - dialog_rect.top;
 			break;
+
+		case WM_MOUSEWHEEL:
+			if (HIWORD(wparam) & 0x8000)
+				SendMessage(GetDlgItem(dialog, IDC_HEXVIEW), WM_VSCROLL, SB_LINEDOWN, 0);
+			else
+				SendMessage(GetDlgItem(dialog, IDC_HEXVIEW), WM_VSCROLL, SB_LINEUP, 0);
+			break;
 	}
 
 	return rc;

@@ -41,11 +41,22 @@ static void calc_hexview_bytesperrow(HWND hexview, const TEXTMETRIC *metrics,
 {
 	RECT r;
 	struct hexview_info *info;
+	LONG width;
+	SCROLLINFO si;
 
 	info = get_hexview_info(hexview);
 	GetWindowRect(hexview, &r);
+	width = r.right - r.left;
 
-	*bytes_per_row = ((r.right - r.left) - info->left_margin - info->right_margin - metrics->tmMaxCharWidth * info->index_width)
+	// compensate for scroll bar
+	memset(&si, 0, sizeof(si));
+	si.cbSize = sizeof(si);
+	si.fMask = SIF_POS | SIF_RANGE | SIF_PAGE;
+	GetScrollInfo(hexview, SB_VERT, &si);
+	if (si.nPos + si.nPage < si.nMax)
+		width -= GetSystemMetrics(SM_CXHSCROLL);
+
+	*bytes_per_row = (width - info->left_margin - info->right_margin - metrics->tmMaxCharWidth * info->index_width)
 		/ (metrics->tmMaxCharWidth * (3 + info->byte_spacing));
 	*bytes_per_row = MAX(*bytes_per_row, 1);
 }
@@ -58,12 +69,13 @@ static void hexview_paint(HWND hexview)
 	HDC dc;
 	PAINTSTRUCT ps;
 	LONG bytes_per_row;
-	LONG begin_row, end_row, row, col, pos;
+	LONG begin_row, end_row, row, col, pos, scroll_y;
 	TEXTMETRIC metrics;
 	TCHAR buf[32];
 	TCHAR offset_format[8];
 	RECT r;
 	BYTE b;
+	SCROLLINFO si;
 
 	info = get_hexview_info(hexview);
 	dc = BeginPaint(hexview, &ps);
@@ -79,14 +91,21 @@ static void hexview_paint(HWND hexview)
 	GetTextMetrics(dc, &metrics);
 	calc_hexview_bytesperrow(hexview, &metrics, &bytes_per_row);
 
+	// compensate for scrolling
+	memset(&si, 0, sizeof(si));
+	si.cbSize = sizeof(si);
+	si.fMask = SIF_POS;
+	GetScrollInfo(hexview, SB_VERT, &si);
+	scroll_y = si.nPos;
+
 	// draw the relevant rows
-	begin_row = ps.rcPaint.top / metrics.tmHeight;
-	end_row = (ps.rcPaint.bottom - 1) / metrics.tmHeight;
+	begin_row = (ps.rcPaint.top + scroll_y) / metrics.tmHeight;
+	end_row = (ps.rcPaint.bottom + scroll_y - 1) / metrics.tmHeight;
 	for (row = begin_row; row <= end_row; row++)
 	{
 		_sntprintf(buf, sizeof(buf) / sizeof(buf[0]), offset_format, row * bytes_per_row);
 
-		r.top = row * metrics.tmHeight;
+		r.top = row * metrics.tmHeight - scroll_y;
 		r.left = 0;
 		r.bottom = r.top + metrics.tmHeight;
 		r.right = r.left + metrics.tmMaxCharWidth * info->index_width;
@@ -125,7 +144,7 @@ static void calc_scrollbar(HWND hexview)
 	struct hexview_info *info;
 	HDC dc;
 	RECT r;
-	LONG bytes_per_row, absolute_rows, page_rows, scroll_rows;
+	LONG bytes_per_row, absolute_rows, page_rows;
 	TEXTMETRIC metrics;
 	SCROLLINFO si;
 
@@ -140,15 +159,14 @@ static void calc_scrollbar(HWND hexview)
 
 	absolute_rows = (info->data_size + bytes_per_row - 1) / bytes_per_row;
 	page_rows = (r.bottom - r.top) / metrics.tmHeight;
-	scroll_rows = MAX(absolute_rows - page_rows, 0);
 
 	memset(&si, 0, sizeof(si));
 	si.cbSize = sizeof(si);
 	si.fMask = SIF_PAGE | SIF_RANGE;
 	si.nMin = 0;
-	si.nMax = scroll_rows;
-	si.nPage = page_rows;
-	//SetScrollInfo(hexview, SB_VERT, &si, FALSE);
+	si.nMax = absolute_rows * metrics.tmHeight;
+	si.nPage = page_rows * metrics.tmHeight;
+	SetScrollInfo(hexview, SB_VERT, &si, FALSE);
 
 	ReleaseDC(hexview, dc);
 }
