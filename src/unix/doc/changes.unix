@@ -18,6 +18,12 @@ Release 0.79.1
 	- The debugger window should no longer be blank for 32bpp games.
 	- Fixed a bug in fix-comments.c that was causing it to mangle 
 	  src/drivers/vendetta.c.
+	- When XINPUT is defined in the makefile but no XInput devices are 
+	  configured, the mouse is treated as a trackball.  (Gerd Sussner)
+	- Added SYSCONFDIR to the makefile to specify a path for systemwide 
+	  configuration files.  (Nicos Panayides)
+	- Hacked support for .chd files into the mame-cd script in the contrib 
+	  tools directory.  Also fixed a few small bugs.
 
 Release 0.78.1, 13 January 2004
 	- Everything from MAME 0.78 and MESS 0.78.
