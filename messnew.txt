@@ -6,16 +6,13 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-- [GAMEBOY] Sound Emulation - Mode 1 is 99%, sweep code needs more work, 
-  Mode 2 is 100%, no Mode 3. and Mode 4 sounds good.  Added NVRAM support 
-  for MBC2 MBC3 and MBC5 carts.  A lot more games work now, including the 
-  pokemon series (except pokemon pinball) and Zelda DX, and most GBC games 
-  now show a "this game only works on GBC" screen.  MBC3 still needs the 
-  RTC emulated and MBC5 doesn't handle high memory addressing yet.  Added 
-  support for battery backed ram, so Zelda can be played now :), and sprites 
-  no longer have inverted colours in some games (like zelda, warioland etc).
-  Several bugzilla fixes.   [Anthony Kruize]
-  
+- [GAMEBOY] Added sound emulation(Bug #75).  Added support for MBC2, MBC3 and
+  MBC5 carts. Most GBC games now show a "this game only works on GBC" screen.
+  MBC3 still needs the RTC emulated. Added support for battery backed ram.
+  (Bug #133) Sprites no longer have inverted colours in some games(Bug #26).
+  Fixed window layer positioning(Bug #39). Changed the palette to closer
+  resemble the LCD screen(Bug #87). [Anthony Kruize]
+
 - [CGENIE] Floppy initialisation fixed for when no floppy attached 
   (Bug #95) [Ben Bruscella]
 
