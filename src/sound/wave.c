@@ -269,11 +269,15 @@ static int wave_write(int id)
 	if( !w->file )
         return WAVE_ERR;
 
+/*  -- this caused the entire sample to be wiped if sound is disabled,
+       or sometimes a bit of the end cut off if sound was enabled (but
+       not everything was replayed (Sean Young)
 	while( w->play_pos < w->samples )
     {
 		*((INT16 *)w->data + w->play_pos) = 0;
 		w->play_pos++;
 	}
+*/
 
     filesize =
 		4 + 	/* 'RIFF' */
@@ -621,6 +625,7 @@ int wave_open(int id, int mode, void *args)
 			memset(w, 0, sizeof(struct wave_file));
 			return WAVE_ERR;
 		}
+		memset (w->data, 0, w->length);
 		return INIT_OK;
     }
 	else
