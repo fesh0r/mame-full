@@ -524,6 +524,7 @@ DRV_OBJS = \
           $(OBJ)/mess/systems/enterp.o	\
 	  $(OBJ)/mess/sndhrdw/scc.o	 	 \
 	  $(OBJ)/mess/machine/msx.o	 	 \
+	  $(OBJ)/mess/machine/msx_dsk.o	 	 \
 	  $(OBJ)/mess/formats/fmsx_cas.o \
 	  $(OBJ)/mess/systems/msx.o	\
           $(OBJ)/mess/vidhrdw/kim1.o     \

@@ -8,23 +8,13 @@
 #include <fcntl.h>
 #include <string.h>
 
+#include "mess/utils.h"
+
 #ifdef WIN32
 
 #include <direct.h>
 #define osd_mkdir(dir)	mkdir(dir)
 #define PATH_SEPARATOR	"\\"
-
-inline const char *basename(const char *name)
-{
-	const char *s = name;
-	const char *result = name;
-
-	for (s = name; *s; s++) {
-		if ((*s == '\\') || (*s == '/'))
-			result = s + 1;
-	}
-	return result;
-}
 
 #else
 

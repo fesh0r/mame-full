@@ -40,5 +40,26 @@ int strcmpi(const char *dst, const char *src);
 int strncmpi(const char *dst, const char *src, size_t n);
 #endif /* strcmpi */
 
+/* -----------------------------------------------------------------------
+ * basename
+ *
+ * Like the GNU C version of basename
+ *
+ * What is the best way to do this???
+ * ----------------------------------------------------------------------- */
+
+#ifdef WIN32
+inline const char *basename(const char *name)
+{
+	const char *s = name;
+	const char *result = name;
+
+	for (s = name; *s; s++) {
+		if ((*s == '\\') || (*s == '/'))
+			result = s + 1;
+	}
+	return result;
+}
+#endif
 
 #endif /* UTILS_H */

@@ -21,6 +21,7 @@
 #include "sndhrdw/scc.h"
 #include "formats/fmsx_cas.h"
 #include "printer.h"
+#include "mess/utils.h"
 
 MSX msx1;
 static void msx_set_all_mem_banks (void);
@@ -790,13 +791,15 @@ WRITE_HANDLER (msx_dsk_w)
 			device_seek (IO_FLOPPY, drive, sect, 0);
 			if (write)
 				{
-				ret = device_output_chunk (IO_FLOPPY, drive, 
+				/*ret =*/ device_output_chunk (IO_FLOPPY, drive, 
 					msx1.ram + trans, sects);
+				ret = 0;
 				}
 			else
 				{
-				ret = device_input_chunk (IO_FLOPPY, drive, 
+				/*ret =*/ device_input_chunk (IO_FLOPPY, drive, 
 					msx1.ram + trans, sects);
+				ret = 0;
 				}
 
 			switch (ret & MSX_DSK_ERR_MASK)
