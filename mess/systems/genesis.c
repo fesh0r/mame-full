@@ -195,13 +195,14 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START(sound_map, ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x1fff) AM_READWRITE(MRA8_BANK1, MWA8_BANK1)
-	AM_RANGE(0x4000, 0x4000) AM_READWRITE(YM2612_status_port_0_A_r, YM2612_control_port_0_A_w)
-	AM_RANGE(0x4001, 0x4001) AM_READWRITE(YM2612_read_port_0_r, YM2612_data_port_0_A_w)
-	AM_RANGE(0x4002, 0x4002) AM_READWRITE(YM2612_status_port_0_B_r, YM2612_control_port_0_B_w)
-	AM_RANGE(0x4003, 0x4003) AM_WRITE(YM2612_data_port_0_B_w) /*YM2612_3_r*/
-	AM_RANGE(0x7f11, 0x7f11) AM_READWRITE(genesis_vdp_76489_r, SN76496_0_w)
-	AM_RANGE(0x8000, 0xffff) AM_READWRITE(genesis_s_68000_ram_r, genesis_s_68000_ram_w)
+	AM_RANGE(0x0000, 0x1fff) AM_READWRITE(MRA8_BANK1,				MWA8_BANK1)
+	AM_RANGE(0x4000, 0x4000) AM_READWRITE(YM2612_status_port_0_A_r,	YM2612_control_port_0_A_w)
+	AM_RANGE(0x4001, 0x4001) AM_READWRITE(YM2612_read_port_0_r,		YM2612_data_port_0_A_w)
+	AM_RANGE(0x4002, 0x4002) AM_READWRITE(YM2612_status_port_0_B_r,	YM2612_control_port_0_B_w)
+	AM_RANGE(0x4003, 0x4003) AM_WRITE(								YM2612_data_port_0_B_w) /*YM2612_3_r*/
+	AM_RANGE(0x6000, 0x6000) AM_WRITE(								genesis_ramlatch_w)
+	AM_RANGE(0x7f11, 0x7f11) AM_READWRITE(genesis_vdp_76489_r,		SN76496_0_w)
+	AM_RANGE(0x8000, 0xffff) AM_READWRITE(genesis_s_68000_ram_r,	genesis_s_68000_ram_w)
 ADDRESS_MAP_END
 
 
