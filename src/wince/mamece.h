@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <windows.h>
+#include <aygshell.h>
 
 // --------------------------------------------------------------------------
 
@@ -55,29 +56,11 @@ struct ui_options
 void setup_paths();
 int play_game(int game_index, struct ui_options *opts);
 
-
-// --------------------------------------------------------------------------
-// I don't understand why this is necessary when building for x86em, but for
-// some reason we have to redeclare the calls with WINAPI defined
-
-#define SHCreateMenuBar         dummy_SHCreateMenuBar   
-#define SHInitDialog            dummy_SHInitDialog   
-#define SHHandleWMSettingChange	dummy_SHHandleWMSettingChange
-#define SHFullScreen		dummy_SHFullScreen
-#include <aygshell.h>
-#undef SHCreateMenuBar   
-#undef SHInitDialog 
-#undef SHHandleWMSettingChange
-#undef SHFullScreen
-
-WINSHELLAPI BOOL WINAPI SHCreateMenuBar(SHMENUBARINFO *pmbi);   
-BOOL WINAPI SHInitDialog(PSHINITDLGINFO pshidi); 
-WINSHELLAPI BOOL WINAPI SHHandleWMSettingChange(HWND hwnd, WPARAM wParam, LPARAM lParam, SHACTIVATEINFO* psai);
-WINSHELLAPI BOOL WINAPI SHFullScreen(HWND hwndRequester, DWORD dwState );
-
-
 // --------------------------------------------------------------------------
 // GAPI stuff
+//
+// Because the morons who wrote GAPI did not understand that not everybody
+// uses C++
 
 struct gx_keylist
 {
@@ -91,9 +74,24 @@ struct gx_keylist
 	short vkStart;
 };
 
-void gx_get_default_keys(struct gx_keylist *keylist);
+struct gx_display_properties
+{
+	DWORD cxWidth;
+	DWORD cyHeight;
+	long cbxPitch;
+	long cbyPitch;
+	long cBPP;
+	DWORD ffFormat;
+};
+
 int gx_open_input(void);
 int gx_close_input(void);
+int gx_open_display(HWND hWnd);
+int gx_close_display(void);
+void *gx_begin_draw(void);
+int gx_end_draw(void);
+void gx_get_default_keys(struct gx_keylist *keylist);
+void gx_get_display_properties(struct gx_display_properties *properties);
 
 #ifdef __cplusplus
 };

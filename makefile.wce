@@ -231,6 +231,10 @@ CFLAGS += -Gr
 endif
 endif
 
+ifeq "$(OS)" "wince"
+CFLAGS += -Gz
+endif
+
 ifdef DEBUG
 CFLAGS += -Zi -Od
 else
@@ -257,11 +261,8 @@ LIBS = \
 	coredll.lib \
 	corelibc.lib \
 	aygshell.lib \
-	uuid.lib
-	
-ifneq "$(WCEPLAT)" "x86em"
-LIBS += gx.lib
-endif
+	uuid.lib \
+	gx.lib
 
 ifdef MAME_NET
 LIBS += wsock32.lib

@@ -2,10 +2,6 @@
 #include <gx.h>
 #include "mamece.h"
 
-#ifndef X86
-#define HAS_GAPI 1
-#endif /* X86 */
-
 const short cKeyUp      = VK_UP;
 const short cKeyDown    = VK_DOWN;
 const short cKeyLeft    = VK_LEFT;
@@ -17,25 +13,16 @@ const short cKeyStart   = 'C';
 
 int gx_open_input(void)
 {
-#if HAS_GAPI
-	if (GXOpenInput() == 0)
-		return 0;
-#endif
-	return 1;
+	return GXOpenInput();
 }
 
 int gx_close_input(void)
 {
-#if HAS_GAPI
-	if (GXCloseInput() == 0)
-		return 0;
-#endif
-	return 1;
+	return GXCloseInput();
 }
 
 void gx_get_default_keys(struct gx_keylist *keylist)
 {
-#if HAS_GAPI
 	GXKeyList keys;
 	keys = GXGetDefaultKeys(GX_NORMALKEYS);
 	keylist->vkUp = keys.vkUp;
@@ -46,29 +33,39 @@ void gx_get_default_keys(struct gx_keylist *keylist)
 	keylist->vkB = keys.vkB;
 	keylist->vkC = keys.vkC;
 	keylist->vkStart = keys.vkStart;
-#else
-	int nOptions = GX_NORMALKEYS;
+}
 
-	switch(nOptions) {
-	case GX_LANDSCAPEKEYS:
-		keylist->vkUp    = cKeyLeft;
-		keylist->vkDown  = cKeyRight;
-		keylist->vkLeft  = cKeyDown;
-		keylist->vkRight = cKeyUp;
-		break;
+int gx_open_display(HWND hWnd)
+{
+	return GXOpenDisplay(hWnd, GX_FULLSCREEN);
+}
 
-	case GX_NORMALKEYS:
-		keylist->vkUp    = cKeyUp;
-		keylist->vkDown  = cKeyDown;
-		keylist->vkLeft  = cKeyLeft;
-		keylist->vkRight = cKeyRight;
-		break;
-	}
+int gx_close_display(void)
+{
+	return GXCloseDisplay();
+}
 
-	keylist->vkA = cKeyA;
-	keylist->vkB = cKeyB;
-	keylist->vkC = cKeyC;
-	keylist->vkStart = cKeyStart;
-#endif
+void *gx_begin_draw(void)
+{
+	return GXBeginDraw();
+}
+
+int gx_end_draw(void)
+{
+	return GXEndDraw();
+}
+
+void gx_get_display_properties(struct gx_display_properties *properties)
+{
+	GXDisplayProperties gxproperties;
+	
+	gxproperties = GXGetDisplayProperties();
+
+	properties->cxWidth = gxproperties.cxWidth;
+	properties->cyHeight = gxproperties.cyHeight;
+	properties->cbxPitch = gxproperties.cbxPitch;
+	properties->cbyPitch = gxproperties.cbyPitch;
+	properties->cBPP = gxproperties.cBPP;
+	properties->ffFormat = gxproperties.ffFormat;
 }
 

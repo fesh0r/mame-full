@@ -180,10 +180,11 @@ int osd_init(void)
 void osd_exit(void)
 {
 	extern void win32_shutdown_input(void);
-	win32_shutdown_input();
-	osd_set_leds(0);
+	extern void win32_shutdown_window(void);
 
-	UnregisterClass(TEXT("MAME"), NULL);
+	win32_shutdown_input();
+	win32_shutdown_window();
+	osd_set_leds(0);
 }
 
 

@@ -36,6 +36,7 @@
 #endif
 
 #ifdef _MSC_VER
+#define strnicmp _strnicmp
 #define __extension__
 #else
 #define __int64	long long

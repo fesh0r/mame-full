@@ -502,10 +502,21 @@ int win32_init_window(void)
 	// update system menu
 	update_system_menu();
 
+#ifdef UNDER_CE
+	gx_open_display(video_window);
+#endif
+
 	return 0;
 }
 
+void win32_shutdown_window(void)
+{
+	UnregisterClass(TEXT("MAME"), NULL);
 
+#ifdef UNDER_CE
+	gx_close_display();
+#endif
+}
 
 //============================================================
 //	create_window
@@ -1547,6 +1558,20 @@ static UINT32 *prepare_palette(struct blit_params *params)
 #ifdef UNDER_CE
 static void dib_draw_window(HDC dc, struct osd_bitmap *bitmap, int update)
 {
+	/*
+	UINT8 *pvBits;
+	struct gx_display_properties props;
+	int y;
+
+	pvBits = (UINT8 *) gx_begin_draw();
+
+	gx_get_display_properties(&props);
+
+	for (y = 0; y < bitmap->height; y++) {
+		memcpy(pvBits + props.cbyPitch * y, bitmap->line[y], bitmap->width);
+	}
+	gx_end_draw();
+*/
 	HBITMAP hBitmap;
 	HDC hDcBitmap;
 	UINT8 *pvBits;
@@ -2812,9 +2837,13 @@ static int create_debug_window(void)
 {
 #ifdef MAME_DEBUG
 	RECT bounds, work_bounds;
-	char title[256];
+	TCHAR title[256];
 
+#ifdef UNICODE
+	wsprintf(title, TEXT("Debug: %S [%S]"), Machine->gamedrv->description, Machine->gamedrv->name);
+#else
 	sprintf(title, "Debug: %s [%s]", Machine->gamedrv->description, Machine->gamedrv->name);
+#endif
 
 	// get the adjusted bounds
 	bounds.top = bounds.left = 0;
@@ -2826,7 +2855,7 @@ static int create_debug_window(void)
 	SystemParametersInfo(SPI_GETWORKAREA, 0, &work_bounds, 0);
 
 	// create the window
-	debug_window = CreateWindowEx(DEBUG_WINDOW_STYLE_EX, "MAMEDebug", title, DEBUG_WINDOW_STYLE,
+	debug_window = CreateWindowEx(DEBUG_WINDOW_STYLE_EX, TEXT("MAMEDebug"), title, DEBUG_WINDOW_STYLE,
 			work_bounds.right - (bounds.right - bounds.left),
 			work_bounds.bottom - (bounds.bottom - bounds.top),
 			bounds.right - bounds.left, bounds.bottom - bounds.top,
