@@ -1,6 +1,6 @@
 # MESS System Information Data File
 # Maintained by Hobie Troxell &  Chris Henry
-#
+
 # Send corrections/submissions to: 
 #   Hobie Troxell <ht1848@yahoo.com> 
 #   Chris Henry <battlepriest@hotmail.com>
@@ -30,8 +30,9 @@
 # fixed as time and knowledge permit. Please be patient. If you have information that may
 # help the MESS team resolve these issues go to www.mess.org.
 
+# MESS Emulation State: This section highlights the overall status of the MESS driver. Some system
+# drivers are TESTDRIVERS.
 
-# MESS Emulation State: This section highlights the overall status of the MESS driver.
 
 #---------------------------------------------------------------------------------------------#
 
@@ -300,26 +301,31 @@ Very early computer
 
 Features:
 
-* Integrated 20 digit (16segment) display
+Integrated 20 digit (16segment) display
  
-* Full size keyboard
+Full size keyboard
 
-* Integrated printer
+Integrated printer
 
-* Connector for tty input/output
+Connector for tty input/output
 
-* Tape interface
+Tape interface
 
 
 Known Issues:
 
-* Display and keyboard working
+Display and keyboard working
 
-* Usable picture of the display with its white frame as artwork would be nice.
+Usable picture of the display with its white frame as artwork would be nice.
 
-* Would suffer from support for intelligent terminals as tty equipment.
+Would suffer from support for intelligent terminals as tty equipment.
 
-* Stopped. For me it is much to cryptic to operate, and therefore not interesting for me anymore.
+Stopped. For me it is much to cryptic to operate, and therefore not interesting for me anymore.
+
+
+MESS Emulation State:
+
+This system is a TESTDRIVER.
 
 
 Contributors:
@@ -364,7 +370,9 @@ with its successor, the Amiga 2000) had a PAL display, the enhanced video modes
 (HAM & EHB) and was built in Germany.
 
 
+MESS Emulation State:
 
+This system is a TESTDRIVER.
 
 $end
 
@@ -2846,7 +2854,7 @@ chip8 interpreter
 
 Notes:
 
-seams to be very related to rca cosmac vip.
+seams to be very related to RCA Cosmac VIP.
 
 emulator source available
 
@@ -2916,15 +2924,17 @@ Very early computer
 
 Features:
 
-operation without built-in ROMs, you can enter your program directly with
+Operation without built-in ROMs, you can enter your program directly with
 help of the CPU integrated dma.
+
 2 segment digits
-tape connector
+
+Tape connector
 
 
 Notes:
 
-much like rca cosmac vip without video chip
+much like RCA Cosmac VIP without video chip
 
 Info for building an elf/elf2 is at http://incolor.inetnebr.com/bill_r/computer_simulators.htm
 
@@ -3104,6 +3114,7 @@ connector with support for rs232 and centronics
 2 3V CR2032 lithium as power supply
 
 1 3V CR2012 lithium as RAM power supply
+
 
 MESS Emulation State:
 
@@ -6792,22 +6803,18 @@ Joro Dramchev, Ventzislav Alexandrov and Todor Arnaudov for Pravetz information,
 $end
 #---------------------------------------------------------------------------------------------#
 
-#$info=psx
-#$bio
-#Sony Playstation
-#
-#
-#Features:
-#
-#
-#MESS Emulation State:
-#
-#
-#History and Trivia:
-#
-#
-#$end
-#
+$info=psx
+$bio
+Sony Playstation
+
+
+MESS Emulation State:
+
+Driver is currently a TESTDRIVER.
+
+
+$end
+
 #---------------------------------------------------------------------------------------------#
 
 $info=raaspec
@@ -6884,7 +6891,7 @@ CDROM: Max 2x speed - custom interface controlled by Hitachi SH1 processor. (512
 
 MESS Emulation State:
 
-See source code for more information.
+See source code for more information. Driver is currently a TESTDRIVER.
 
 Bios starts requesting pad data so maybe we are now in the time set area ????
 Need to emulate pad system, add more interrupts and get some grafix working so we can see exactly 
@@ -7824,6 +7831,7 @@ Oric Telestrat
 
 This system is a update to the Atmos.
 
+
 Known Issues:
 
 Disc emulation is not correct so it fails to boot! 
@@ -7863,10 +7871,15 @@ Place for 4 micro batteries
 Peripherals:
 
 Texas Instruments PC-324 thermo? printer
+
 (how to dump the C70016 integrated ROM? (tms7000 family))
+
 24 characters per line
+
 hexbus port
+
 place for 4 mignon batteries
+
 port for power supply
 
 $end
@@ -8134,6 +8147,7 @@ Notes:
    emulator written by Rusty Wagner.
 
 3. NVRAM is saved properly only when calculator is turned off during MESS exiting.
+
 4. To receive data from TI press "R" immediately after TI starts to send data.
 
 5. To send data to calculator start receiving on TI and choose file from
@@ -8166,9 +8180,9 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
-#$info=ti99_2
-#$bio
-#Texas Instruments TI-99/2 BASIC Computer
+$info=ti99_2
+$bio
+Texas Instruments TI-99/2 BASIC Computer
 
 
 #Known Issues:
@@ -8871,8 +8885,7 @@ Palladium Video - Computer - Game
 
 Console
 
-emerson arcadia clone with different cartridge connector/pinout
-and 4 additional keys per controller
+Emerson Arcadia clone with different cartridge connector/pinout and 4 additional keys per controller
 
 look into messroms for cartridge pinout
 
@@ -9130,12 +9143,99 @@ MESS Emulation State:
 
 display, keyboard working
 Stopped. For me it is much too cryptic to operate and therefore not interesting.
-( I did it because it is the same hardware as in the studio2)
+(I did it because it is the same hardware as in the studio2)
 
 
 $end
 
 #---------------------------------------------------------------------------------------------#
+
+$info=wswan
+$bio
+Bandai WonderSwan (1999)
+
+In March of 1999, Bandai released a portable gaming console in Japan that was designed to compete with
+the Neo Geo Pocket and Game Boy Color. The machine was met with rave reviews and has 
+gained a major share of the handheld market. The WS was available in ten case colors, playable both 
+vertically and horizontally, and features a fairly large library of games.
+
+In December of 2000, Bandai followed up its WonderSwan with the WonderSwan Color. 
+Designed to continue the fight against Nintendo's Game Boy empire, the WSC is equipped
+with a color display and improved specifications. The WonderSwan Color is backwards compatible 
+with the WonderSwan's black and white library, as well as having games of its own. Remakes of the older Final
+Fantasy games and many other RPGs make the WonderSwan Color a popular system in Japan.
+
+
+WonderSwan Features:
+
+CPU : 16-bit processor at 3.072 MHz 
+
+Screen (dot matrix section): FSTN reflective LCD, 224 x 144 pixels (2.49-inch)
+
+Display performance : Max. 512 characters, max. 128 sprites (32 on one horizontal line),
+	 two screens (overlay possible), screen windows and sprite windows.
+
+Graphics : 8-shade monochrome in the dot matrix section and six icons at the static section.
+
+Audio: 4-channel digital stereo sound. Built-in speaker or optional headphones with stereo adapter.
+
+Size : 74.3mm x 121mm x 24.3 mm (H)
+ 
+Weight : 93g (without battery) 110g (with battery)
+
+Power : 1 AA battery or rechargeable pack, ~40 hours playtime
+
+Connecting Ports : Link Port, Stereo Jack & cartridge port
+
+Cartridge Capacity: ROM and/or RAM - maximum 128Meg (like Beat Mania)
+
+Features: Can be played holding the unit vertically or horizontally.
+            Built-in EEPROM and 1Kbit RAM for backing up game data.
+            Several levels of energy-saving control.
+
+
+WonderSwan color Features:
+
+CPU: 16 bit processor at 3.072 Mhz
+
+RAM: 512k
+
+Display: LCD screen reflection type FSTN (2.8 inch size)
+
+Color: 41 colors at once of a 4096 color palette or 57 colors in extended mode.
+
+Audio: Digital sound source 4ch (2 for voices and 2 for Hyper voice)
+
+Communication: 9600bps/38.4kbps (for the Wonder Gate)
+
+Size: 74.3mm X 128mm X 24.3mm (with AA battery)
+      74.3mm X 128mm X 17.5mm (with rechargeable pack)
+
+Weight: about 95 grams (without the battery)
+
+Buttons: 13 (X 1-4, Y 1-4, Start, A, B, Volume & Power)
+
+Power: 1 AA battery or echargable pack, ~20 hours of playtime
+
+Other Features: Fully compatible with Wonder Swan Cartridges.
+
+  
+Cartrige Size: 42mm X 67mm X 6mm
+
+Cartrige Weight: About 12 grams
+
+Cartrige Capacity: ROM or FLASHROM max 512Mbit(LUXSOR2), RAM max 512Mbit(LUXSOR2)
+
+
+
+MESS Emulation State:
+
+Very Preliminary Driver. Driver is currently a TESTDRIVER.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 
 $info=z88
 $bio
