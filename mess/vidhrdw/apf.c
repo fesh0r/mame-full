@@ -12,9 +12,8 @@ static void apf_charproc(UINT8 c)
 {
 	/* this seems to be the same so far, as it gives the same result as vapf */
 	m6847_inv_w(0,		(c & 0x040));
-	m6847_as_w(0,		(c & 0x080));
+	m6847_as_w(0,		(c & 0x080));	
 }
-
 
 #define APF_DUMP_RAM
 
