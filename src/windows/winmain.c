@@ -18,6 +18,10 @@
 #include "driver.h"
 #include "window.h"
 
+#ifdef MESS
+#include "messwin.h"
+#endif
+
 // from config.c
 int parse_config_and_cmdline(int argc, char **argv);
 extern int errorlog;
@@ -95,6 +99,10 @@ int main(int argc, char **argv)
 	// set the vector width based on the specified width
 	options.vector_width = gfx_width;
 	options.vector_height = gfx_height;
+
+	#ifdef MESS
+	load_image(argc, argv, 0, game_index);
+	#endif
 
 	// have we decided on a game?
 	if (game_index != -1)

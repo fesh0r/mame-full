@@ -554,12 +554,6 @@ int parse_config_and_cmdline (int argc, char **argv)
 		if (parse_config (NULL, drivers[game_index]))
 			exit(1);
 
-	#ifdef MESS
-	/* This function has been added to MESS.C as load_image() */
-	/* FIXME: broken, sorry */
-	load_image(argc, argv, 0, game_index);
-	#endif
-
 	/* handle record which is not available in mame.cfg */
 	if (recordname)
 	{
