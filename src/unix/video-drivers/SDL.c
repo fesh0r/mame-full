@@ -38,6 +38,7 @@
 #include "xmame.h"
 #include "devices.h"
 #include "keyboard.h"
+#include "driver.h"
 #include "SDL-keytable.h"
 #ifdef DIRECT_HERMES 
 #include <Hermes/Hermes.h>
@@ -98,6 +99,7 @@ void sdl_update_8_to_32bpp(struct osd_bitmap *bitmap);
 void sdl_update_16_to_16bpp(struct osd_bitmap *bitmap);
 void sdl_update_16_to_24bpp(struct osd_bitmap *bitmap);
 void sdl_update_16_to_32bpp(struct osd_bitmap *bitmap);
+void sdl_update_rgb_direct_32bpp(struct osd_bitmap *bitmap);
 
 int sysdep_init(void)
 {
@@ -262,6 +264,20 @@ int sysdep_create_display(int depth)
          SDL_Quit();
          exit (OSD_NOT_OK);
          break;
+      }
+   }
+   else if (depth == 32)
+   {
+      if (Vid_depth == 32 && Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
+      {
+         update_function = &sdl_update_rgb_direct_32bpp; 
+      }
+      else
+      {
+         fprintf (stderr, "SDL: Unsupported Vid_depth=%d in depth=%d\n",
+            Vid_depth, depth);
+         SDL_Quit();
+         exit (OSD_NOT_OK);
       }
    }
    else
@@ -494,6 +510,19 @@ void sdl_update_16_to_32bpp (struct osd_bitmap *bitmap)
 #undef DEST_PIXEL
 #undef SRC_PIXEL
 #undef INDIRECT
+}
+
+void sdl_update_rgb_direct_32bpp(struct osd_bitmap *bitmap)
+{
+#define SRC_PIXEL unsigned int
+#define DEST_PIXEL unsigned int
+#define DEST Offscreen_surface->pixels
+#define DEST_WIDTH Vid_width
+#include "blit.h"
+#undef DEST_WIDTH
+#undef DEST
+#undef DEST_PIXEL
+#undef SRC_PIXEL
 }
 
 #ifndef DIRECT_HERMES
