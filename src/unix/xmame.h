@@ -37,6 +37,7 @@
 #include <sys/stat.h>
 #include "osdepend.h"
 #include "mame.h"
+#include "common.h"
 #include "sysdep/sysdep_palette.h"
 #include "sysdep/rc.h"
 #include "sysdep/sound_stream.h"
@@ -127,7 +128,7 @@ void sysdep_display_close(void);
 int  sysdep_display_alloc_palette(int writable_colors);
 int  sysdep_display_set_pen(int pen, unsigned char red, unsigned char green, unsigned char blue);
 int  sysdep_display_16bpp_capable(void);
-void sysdep_update_display(struct osd_bitmap *bitmap);
+void sysdep_update_display(struct mame_bitmap *bitmap);
 int  sysdep_set_video_mode(void);
 void sysdep_set_text_mode(void);
 void sysdep_set_leds(int leds);
@@ -157,8 +158,8 @@ int mode_disabled(int width, int height, int depth);
 int mode_match(int width, int height);
 
 /* frameskip functions */
-int dos_skip_next_frame(int show_fps_counter, struct osd_bitmap *bitmap);
-int barath_skip_next_frame(int show_fps_counter, struct osd_bitmap *bitmap);
+int dos_skip_next_frame(int show_fps_counter, struct mame_bitmap *bitmap);
+int barath_skip_next_frame(int show_fps_counter, struct mame_bitmap *bitmap);
 
 /* miscelaneous */
 int config_init (int argc, char *argv[]);
