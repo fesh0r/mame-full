@@ -183,7 +183,7 @@ TESTDRIVER( vc4000 )		/* interton vc4000 */
 
 TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310                      */
 
-TESTDRIVER( z88 )		/*												  */
+	DRIVER( z88 )		/*												  */
 
 	DRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984			  */
 	DRIVER( cpc664 )	/* Amstrad (Schneider in Germany) 1985			  */
@@ -572,13 +572,15 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 	/* CANTAB */
 	DRIVER( jupiter )	/* Jupiter Ace									  */
 
-        /* SORD */
+	/* SORD */
 	DRIVER( sordm5 )
 
-        /* APF Electronics Inc. */
+	/* APF Electronics Inc. */
+	DRIVER( apfm1000 )
+	DRIVER( apfimag )
 
-TESTDRIVER( apfm1000 )
-TESTDRIVER( apfimag )
+	/* Tatung */
+TESTDRIVER( einstein )
 
 	/* INTELLIGENT SOFTWARE */
 	DRIVER( ep128 ) 	/* Enterprise 128 k 							  */
