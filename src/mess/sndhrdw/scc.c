@@ -170,8 +170,8 @@ int SCC_sh_start (const struct MachineSound *msound) {
     //const struct CustomSound_interface *intf = msound->sound_interface;
 
     for (chip=0;chip<1;chip++) {
-	if (SCCInit (msound,chip,3579545, 20,
-		Machine->sample_rate, Machine->sample_bits) )
+	//if (SCCInit (msound,chip,3579545, 20, Machine->sample_rate, Machine->sample_bits) )
+	if (SCCInit (msound,chip,3579545, 20, Machine->sample_rate, 16) )
 		return 1;
 	}
     return 0;

@@ -128,10 +128,8 @@ void kim1_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
         int sy = 408;
         int sx = Machine->drv->screen_width - 212 + x * 30 + ((x >= 4) ? 6 : 0);
 
-        drawgfx (bitmap, Machine->gfx[0],
-                 videoram[2 * x + 0], videoram[2 * x + 1],
-                 0, 0, sx, sy, &Machine->drv->visible_area, TRANSPARENCY_PEN, 0);
-        osd_mark_dirty (sx, sy, sx + 15, sy + 31, 1);
+		drawgfx (bitmap, Machine->gfx[0], videoram[2 * x + 0], videoram[2 * x + 1],
+			0, 0, sx, sy, &Machine->drv->visible_area, TRANSPARENCY_PEN, 0);
     }
 
     for (y = 0; y < 6; y++)
@@ -155,11 +153,8 @@ void kim1_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
             color = (readinputport (code / 7) & (0x40 >> (code % 7))) ? 0 : 1;
 
             videoram[6 * 2 + code] = color;
-            drawgfx (bitmap, Machine->gfx[1],
-                     layout[y][x], color,
-                     0, 0, sx, sy, &Machine->drv->visible_area,
-                     TRANSPARENCY_NONE, 0);
-            osd_mark_dirty (sx, sy, sx + 23, sy + 17, 1);
+			drawgfx (bitmap, Machine->gfx[1], layout[y][x], color,
+				0, 0, sx, sy, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
         }
     }
 

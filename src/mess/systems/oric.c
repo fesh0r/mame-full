@@ -232,12 +232,12 @@ static struct MachineDriver machine_driver_oric =
 
 
 ROM_START(oric1)
-	ROM_REGIONX(0x10000,REGION_CPU1)
+	ROM_REGION(0x10000,REGION_CPU1)
 	ROM_LOAD ("oric1.rom", 0xc000, 0x4000, 0xf18710b4)
 ROM_END
 
 ROM_START(orica)
-	ROM_REGIONX(0x10000,REGION_CPU1)
+	ROM_REGION(0x10000,REGION_CPU1)
 	ROM_LOAD ("orica.rom", 0xc000, 0x4000, 0xc3a92bef)
 ROM_END
 
@@ -287,5 +287,5 @@ static const struct IODevice io_orica[] = {
 
 /*    YEAR   NAME      PARENT    MACHINE   INPUT     INIT      COMPANY      FULLNAME */
 COMP( 1983,  oric1,    0,		 oric,	   oric,	 0,		   "Tangerine", "Oric 1" )
-COMP( 1984?, orica,    0,		 oric,	   oric,	 0,		   "Tangerine", "Oric Atmos" )
+COMP( 1984,  orica,    0,		 oric,	   oric,	 0,		   "Tangerine", "Oric Atmos" )
 

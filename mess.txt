@@ -73,9 +73,12 @@ Here are the currently supported systems (mess -listfull):
 
 System:   Description:
 ---------------------------------------------
+a400      "Atari 400 (NTSC)"
+a400pal   "Atari 400 (PAL)"
 a5200     "Atari 5200"
 a7800     "Atari 7800"
-a800      "Atari 800"
+a800      "Atari 800 (NTSC)"
+a800pal   "Atari 800 (PAL)"
 advision  "Adventurevision"
 amiga     "Amiga (NTSC)"
 apple1    "Apple 1 8k"
@@ -87,8 +90,10 @@ apple2ee  "Apple IIe (enhanced)"
 apple2ep  "Apple IIe (Platinum)"
 astrocde  "Bally Arcade/Astrocade"
 aszmic    "ZX.Aszmic"
-c16       "Commodore C16 (PAL)"
+c16       "Commodore C16/C116/C232/C264 (PAL)"
+c364      "Commodore 364 (Prototype)"
 c64       "Commodore C64 (NTSC)"
+c64gs     "Commodore C64GS (NTSC)"
 c64pal    "Commodore C64 (PAL)"
 cgenie    "Colour Genie EG2000"
 coco      "Color Computer"
@@ -121,7 +126,7 @@ mbee      "Microbee 32K"
 mbee56k   "Microbee 56K (CP/M)"
 msx       "MSX1"
 nascom1   "Nascom 1"
-nes       "Nintendo Entertainment System/Famicon"
+nes       "Nintendo Entertainment System/Famicom"
 oric1     "Oric 1"
 orica     "Oric Atmos"
 pc8300    "PC8300"
@@ -133,10 +138,15 @@ plus4     "Commodore +4 (NTSC)"
 pow3000   "Power 3000"
 raaspec   "RA+A Spectrum I+"
 sms       "Sega Master System"
+specpls3  "Spectrum +3"
 spectrum  "ZX-Spectrum 48k"
+sx64      "Commodore SX64 (PAL)"
+sys80     "System-80"
 tandy1t   "Tandy 1000TX"
-ti99_4    "TI99/4 Home Computer"
-ti99_4a   "TI99/4A Home Computer"
+ti99_4    "TI99/4 Home Computer (60 Hz)"
+ti99_4a   "TI99/4A Home Computer (60 Hz)"
+ti99_4ae  "TI99/4A Home Computer (50 Hz)"
+ti99_4e   "TI99/4 Home Computer (50 Hz)"
 trs80     "TRS-80 Model I (Level II Basic)"
 ts1000    "TS1000"
 tx8000    "Texet TX8000"
@@ -211,6 +221,14 @@ A NOTE ABOUT FILES:
         harddisk:	img
         floppy:		d64, dsk, adf, atr, xfd, vzd
         roms:		everything else
+
+
+MESS specific switches:
+-----------------------
+-listextensions: obtain information about each driver in terms of 
+                 DEVICE supported, and common file extensions for each 
+                 of these devices. 
+
 
 
 System Information:

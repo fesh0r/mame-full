@@ -1,3 +1,4 @@
+
 /******************************************************************************
  * Enterprise 128k driver
  *
@@ -19,10 +20,11 @@
 #include "mess/sndhrdw/dave.h"
 #include "mess/machine/enterp.h"
 #include "mess/vidhrdw/enterp.h"
-//#include "vidhrdw/nick.h"
 #include "mess/vidhrdw/epnick.h"
 #include "mess/machine/wd179x.h"
 #include "cpuintrf.h"
+
+extern const char *ep128_floppy_name[4];
 
 /* there are 64us per line, although in reality
    about 50 are visible. */
@@ -54,36 +56,8 @@
 /* base of all ram allocated - 128k */
 unsigned char *Enterprise_RAM;
 
-/* current ram pages for 16k page 0..3 */
-//static unsigned char *Enterprise_CPU_ReadPages[4];
-//static unsigned char *Enterprise_CPU_WritePages[4];
-
-//static unsigned char KeyboardState_Previous[16]={0x0ff};
-
 
 void Nick_reg_w(int RegIndex, int Data);
-
-/*
-static int Enterprise_KeyboardInterrupt(void)
-{
-	int int_state = 0;
-	int i;
-
-	for (i=0; i<10; i++)
-	{
-		unsigned char Data = readinputport(i);
-
-		if (Data != KeyboardState_Previous[i])
-		{
-			int_state = 1;
-		}
-
-		KeyboardState_Previous[i] = Data;
-	}
-
-	return int_state;
-}
-*/
 
 
 /* The Page index for each 16k page is programmed into
@@ -100,11 +74,6 @@ static int Enterprise_KeyboardLine = 0;
 /* set read/write pointers for CPU page */
 void	Enterprise_SetMemoryPage(int CPU_Page, int EP_Page)
 {
-	//Enterprise_CPU_ReadPages[CPU_Page] =
-	//Enterprise_Pages_Read[EP_Page & 0x0ff];
-	//Enterprise_CPU_WritePages[CPU_Page] =
-	//Enterprise_Pages_Write[EP_Page & 0x0ff];
-
 	cpu_setbank((CPU_Page+1), Enterprise_Pages_Read[EP_Page & 0x0ff]);
 	cpu_setbank((CPU_Page+5), Enterprise_Pages_Write[EP_Page & 0x0ff]);
 }
@@ -166,6 +135,24 @@ static void enterprise_dave_reg_read(int RegIndex)
 				readinputport(Enterprise_KeyboardLine));
 		}
 		break;
+
+        case 0x016:
+        {
+                int ExternalJoystickInputs;
+                int ExternalJoystickPortInput = readinputport(10);
+
+                if (Enterprise_KeyboardLine<=4)
+                {
+                        ExternalJoystickInputs = ExternalJoystickPortInput>>(4-Enterprise_KeyboardLine);
+                }
+                else
+                {
+                        ExternalJoystickInputs = 1;
+                }
+
+                Dave_setreg(0x016, (0x0fe | (ExternalJoystickInputs & 0x01)));
+        }
+        break;
 
 	default:
 		break;
@@ -253,6 +240,8 @@ void Enterprise_Initialise()
 	Dave_reg_w(0x012,0);
 	Dave_reg_w(0x013,0);
 
+        cpu_irq_line_vector_w(0,0,0x0ff);
+
 	wd179x_init(1);
 }
 
@@ -314,10 +303,6 @@ static struct MemoryReadAddress readmem_enterprise[] =
 	{ 0x04000, 0x07fff, MRA_BANK2 },
 	{ 0x08000, 0x0bfff, MRA_BANK3 },
 	{ 0x0c000, 0x0ffff, MRA_BANK4 },
-// HJB: the Z80 can't read memory beyond 64K
-//  { 0x10000, 0x17fff, MRA_ROM }, /* exos */
-//	{ 0x18000, 0x1bfff, MRA_ROM }, /* basic */
-//	{ 0x1c000, 0x23fff, MRA_ROM }, /* exdos */
 	{ -1 }	/* end of table */
 };
 
@@ -343,22 +328,22 @@ static struct MemoryWriteAddress writemem_enterprise[] =
 
 int EXDOS_GetDriveSelection(int data)
 {
-	 if (data & 0x01)
+     if (data & 0x01)
      {
         return 0;
      }
 
-	 if (data & 0x02)
+     if (data & 0x02)
      {
         return 1;
      }
 
-	 if (data & 0x04)
+     if (data & 0x04)
      {
         return 2;
      }
 
-	 if (data & 0x08)
+     if (data & 0x08)
      {
         return 3;
      }
@@ -400,9 +385,11 @@ static void exdos_card_w(int offset, int data)
 
 	int drive = EXDOS_GetDriveSelection(data);
 
-	wd179x_select_drive(drive, head, wd177x_callback,"fd0.dsk");
-        wd179x_set_geometry(drive, 80, 2,9,256, 0,0 );
-
+        if (ep128_floppy_name[drive]!=NULL)
+        {
+                wd179x_select_drive(drive, head, wd177x_callback,ep128_floppy_name[drive]);
+                wd179x_set_geometry(drive, 80, 2,9,512, 10,3, 1);
+        }
 }
 
 /* bit 0 - ??
@@ -418,7 +405,6 @@ static void exdos_card_w(int offset, int data)
 
 static int exdos_card_r(int offset)
 {
-	if(errorlog) fprintf(errorlog,"EXDOS CARD R\r\n");
 	return EXDOS_CARD_R;
 }
 
@@ -543,11 +529,11 @@ INPUT_PORTS_START( ep128 )
      /* keyboard line 7 */
      PORT_START
      PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "STOP", KEYCODE_END, IP_JOY_NONE)
-     PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "DOWN", KEYCODE_DOWN, IPT_JOYSTICK_DOWN)
-     PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "RIGHT", KEYCODE_RIGHT, IPT_JOYSTICK_RIGHT)
-     PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "UP", KEYCODE_UP, IPT_JOYSTICK_UP)
+     PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "DOWN", KEYCODE_DOWN, JOYCODE_1_DOWN)
+     PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "RIGHT", KEYCODE_RIGHT, JOYCODE_1_RIGHT)
+     PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "UP", KEYCODE_UP, JOYCODE_1_UP)
      PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "HOLD", KEYCODE_HOME, IP_JOY_NONE)
-     PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "LEFT", KEYCODE_LEFT, IPT_JOYSTICK_LEFT)
+     PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "LEFT", KEYCODE_LEFT, JOYCODE_1_LEFT)
      PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "RETURN", KEYCODE_ENTER, IP_JOY_NONE)
      PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "ALT", KEYCODE_LALT, IP_JOY_NONE)
 
@@ -574,6 +560,15 @@ INPUT_PORTS_START( ep128 )
      PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "[", KEYCODE_OPENBRACE, IP_JOY_NONE)
      PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "n/c", IP_KEY_NONE, IP_JOY_NONE)
      PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "n/c", IP_KEY_NONE, IP_JOY_NONE)
+
+     /* external joystick 1 */
+     PORT_START
+     PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "EXTERNAL JOYSTICK 1 RIGHT", KEYCODE_RIGHT, JOYCODE_1_RIGHT)
+     PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "EXTERNAL JOYSTICK 1 LEFT", KEYCODE_LEFT, JOYCODE_1_LEFT)
+     PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "EXTERNAL JOYSTICK 1 DOWN", KEYCODE_DOWN, JOYCODE_1_DOWN)
+     PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "EXTERNAL JOYSTICK 1 UP", KEYCODE_UP, JOYCODE_1_UP)
+     PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "EXTERNAL JOYSTICK 1 FIRE", KEYCODE_SPACE, JOYCODE_1_BUTTON1)
+
 
 INPUT_PORTS_END
 
@@ -657,7 +652,7 @@ static struct MachineDriver machine_driver_ep128 =
 
 ROM_START( ep128 )
         /* 128k ram + 32k rom (OS) + 16k rom (BASIC) + 32k rom (EXDOS) */
-        ROM_REGIONX(0x24000,REGION_CPU1)
+        ROM_REGION(0x24000,REGION_CPU1)
         ROM_LOAD("exos.rom",0x10000,0x8000,  0xd421795f)
         ROM_LOAD("exbas.rom",0x18000,0x4000, 0x683cf455)
         ROM_LOAD("exdos.rom",0x1c000,0x8000, 0xd1d7e157)
@@ -667,7 +662,7 @@ static const struct IODevice io_ep128[] = {
 	{
 		IO_FLOPPY,			/* type */
 		4,					/* count */
-		NULL,				/* file extensions */
+                "dsk\0",                           /* file extensions */
 		NULL,               /* private */
 		NULL,				/* id */
 		enterprise_floppy_init,/* init */

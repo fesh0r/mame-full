@@ -1,5 +1,5 @@
 /***************************************************************************
-
+  
   WD179X.c
 
   Functions to emulate a WD179x floppy disc controller
@@ -79,6 +79,7 @@ int i;
 		wd[i]->heads = 1;
 		wd[i]->density = DEN_MFM_LO;
 		wd[i]->offset = 0;
+                wd[i]->first_sector_id = 0;
 		wd[i]->sec_per_track = 18;
 		wd[i]->sector_length = 256;
 		wd[i]->head = 0;
@@ -134,7 +135,7 @@ WD179X *w = wd[drive];
 		}
 
         /* do we have an image name ? */
-        if (!strlen(name))
+        if ((name) && (!strlen(name)))
 		{
 			w->status = STA_1_NOT_READY;
 			return 0;
@@ -260,10 +261,15 @@ UINT8 head;
 	w->tracks = 0;
 	w->heads = 0;
 	w->sec_per_track = 0;
+        w->first_sector_id = 0x0ff;
 	for (p = w->secmap; p->track != 0xff; p++)
 	{
 		if (p->track > w->tracks)
 			w->tracks = p->track;
+
+                if (p->sector < w->first_sector_id)
+                        w->first_sector_id = p->sector;
+
 		if (p->sector > w->sec_per_track)
 			w->sec_per_track = p->sector;
 		head = (p->status >> 4) & 1;
@@ -282,7 +288,7 @@ UINT8 head;
 #endif
 }
 
-void wd179x_set_geometry(UINT8 drive, UINT8 tracks, UINT8 heads, UINT8 sec_per_track, UINT16 sector_length, UINT16 dir_sector, UINT16 dir_length)
+void wd179x_set_geometry(UINT8 drive, UINT8 tracks, UINT8 heads, UINT8 sec_per_track, UINT16 sector_length, UINT16 dir_sector, UINT16 dir_length, UINT8 first_sector_id)
 {
 WD179X *w = wd[drive];
 
@@ -309,6 +315,7 @@ WD179X *w = wd[drive];
 	w->density = DEN_MFM_LO;	// !!!!!! for now !!!!!!
     w->tracks = tracks;
 	w->heads = heads;
+        w->first_sector_id = first_sector_id;
 	w->sec_per_track = sec_per_track;
 	w->sector_length = sector_length;
 	w->dir_sector = dir_sector;
@@ -316,10 +323,36 @@ WD179X *w = wd[drive];
 
 	w->image_size = w->tracks * w->heads * w->sec_per_track * w->sector_length;
 
-	if (w->image_file == REAL_FDD)
-		osd_fdc_density(w->unit, w->density, w->tracks, w->sec_per_track, w->sec_per_track, 1);
-}
+        /* calculate greatest power of 2 */
+        if (w->image_file == REAL_FDD)
+        {
+                unsigned long N = 0;
+                unsigned long ShiftCount = 0;
 
+                if (N==0)
+                {
+                        N = (w->sector_length);      
+        
+                        while ((N & 0x080000000)==0)
+                        {
+                                N = N<<1;
+                                ShiftCount++;
+                        }
+
+                        /* get left-shift required to shift 1 to this
+                        power of 2 */
+
+                        /* N = 0 for 128, N = 1 for 256, N = 2 for 512 ... */
+                        N = (31 - ShiftCount)-7;
+                 }
+                 else
+                 {
+                       N = 1;
+                 }
+
+                    osd_fdc_density(w->unit, w->density, w->tracks, w->sec_per_track, w->sec_per_track, N);
+        }
+}
 /* seek to track/head/sector relative position in image file */
 static int seek(WD179X * w, UINT8 t, UINT8 h, UINT8 s)
 {
@@ -379,10 +412,10 @@ UINT8 head;
 		return STA_1_SEEK_ERR;
 	}
 
-    if (s >= w->sec_per_track)
+    if (s >= (w->first_sector_id + w->sec_per_track))
 	{
 		if (errorlog)
-			fprintf(errorlog, "WD179X sector %d >= %d\n", w->sector, w->sec_per_track);
+                        fprintf(errorlog, "WD179X sector %d >= %d\n", w->sector, w->sec_per_track+w->first_sector_id);
 		return STA_2_REC_N_FND;
 	}
 
@@ -390,7 +423,7 @@ UINT8 head;
 	offset *= w->heads;
 	offset += h;
 	offset *= w->sec_per_track;
-	offset += s;
+        offset += (s-w->first_sector_id);
 	offset *= w->sector_length;
 
 #if VERBOSE
@@ -419,7 +452,7 @@ UINT8 head;
 /* return STA_2_REC_TYPE depending on relative sector */
 static int deleted_dam(WD179X * w)
 {
-unsigned rel_sector = (w->track * w->heads + w->head) * w->sec_per_track + w->sector;
+unsigned rel_sector = (w->track * w->heads + w->head) * w->sec_per_track + (w->sector-w->first_sector_id);
 SECMAP *p;
 UINT8 head;
 
@@ -488,7 +521,7 @@ UINT16 crc = 0xffff;
 	w->buffer[4] = crc & 255;
 	w->buffer[5] = crc / 256;
 	if (++w->sector_dam == w->sec_per_track)
-		w->sector_dam = 0;
+                w->sector_dam = w->first_sector_id;
 	w->status_drq = STA_2_DRQ;
 	if (w->callback)
 		(*w->callback) (WD179X_DRQ_SET);

@@ -17,9 +17,18 @@ int sms_load_rom(int id, char *rom_name)
     FILE *fp;
 	int size;
 
+	if(rom_name==NULL){
+		printf("Cartridge Name Required!\n");
+		return INIT_FAILED;
+	}
+
 	if(strlen(rom_name) == 0) return 1;
 	fp = osd_fopen(Machine->gamedrv->name, rom_name, OSD_FILETYPE_IMAGE_R, 0);
-    if(!fp) return 1;
+    if(!fp)
+    {
+		printf("Cartridge Name Required!\n");
+		return INIT_FAILED;
+	}
 	if( new_memory_region(REGION_CPU1,0x10000) )
 		return 1;
 	ROM = memory_region(REGION_CPU1);

@@ -1,8 +1,6 @@
 #ifndef ATARI_H
 #define ATARI_H
 
-#define NEW_POKEY	1
-
 typedef struct {
 	int  serout_count;
 	int  serout_offs;
@@ -15,8 +13,8 @@ typedef struct {
 	UINT8 serin_buff[512];
 	UINT8 serin_chksum;
 	int  serin_delay;
-}   POKEY;
-extern POKEY pokey;
+}	ATARI_FDC;
+extern ATARI_FDC atari_fdc;
 
 typedef struct {
 	struct {
@@ -35,33 +33,37 @@ typedef struct {
 		UINT8 pamsk; 	/* pia port A mask */
 		UINT8 pbmsk; 	/* pia port B mask */
 	}	h;	/* helper variables */
-}	PIA;
-extern	PIA 	pia;
+}	ATARI_PIA;
+extern ATARI_PIA atari_pia;
 
+extern void a400_init_machine(void);
 extern void a800_init_machine(void);
-extern int	a800_floppy_init(int id, const char *rom_name);
-extern int  a800_load_rom(int id, const char *rom_name);
-extern int	a800_id_rom(const char *name, const char *gamename);
+
+extern int a800_floppy_init(int id, const char *rom_name);
+extern void a800_floppy_exit(int id);
+
+extern int a800_load_rom(int id, const char *rom_name);
+extern int a800_id_rom(const char *name, const char *gamename);
 
 extern void a800xl_init_machine(void);
-extern int	a800xl_load_rom(int id, const char *rom_name);
-extern int	a800xl_id_rom(const char *name, const char *gamename);
+extern int a800xl_load_rom(int id, const char *rom_name);
+extern int a800xl_id_rom(const char *name, const char *gamename);
 
 extern void a5200_init_machine(void);
-extern int	a5200_load_rom(int id, const char *rom_name);
-extern int	a5200_id_rom(const char *name, const char *gamename);
+extern int a5200_load_rom(int id, const char *rom_name);
+extern int a5200_id_rom(const char *name, const char *gamename);
 
 extern void a800_close_floppy(void);
 
-extern int  MRA_GTIA(int offset);
-extern int	MRA_PIA(int offset);
-extern int	MRA_ANTIC(int offset);
+extern int MRA_GTIA(int offset);
+extern int MRA_PIA(int offset);
+extern int MRA_ANTIC(int offset);
 
 extern void MWA_GTIA(int offset, int data);
 extern void MWA_PIA(int offset, int data);
 extern void MWA_ANTIC(int offset, int data);
 
-extern int	atari_serin_r(int offset);
+extern int atari_serin_r(int offset);
 extern void atari_serout_w(int offset, int data);
 extern void atari_interrupt_cb(int mask);
 

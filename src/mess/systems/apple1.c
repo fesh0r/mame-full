@@ -205,9 +205,9 @@ static struct MachineDriver machine_driver_apple1 =
 };
 
 ROM_START(apple1)
-	ROM_REGIONX(0x10000, REGION_CPU1)
+	ROM_REGION(0x10000, REGION_CPU1)
 	ROM_LOAD("apple1.rom", 0xff00, 0x0100, 0xa30b6af5)
-	ROM_REGIONX(0x0400, REGION_GFX1)
+	ROM_REGION(0x0400, REGION_GFX1)
 	ROM_LOAD("apple1.chr", 0x0000, 0x0400, 0xbe70bb85)
 ROM_END
 

@@ -429,37 +429,37 @@ static struct GfxLayout gfxlayout_4bpp =
 {
 	2*4,1,					/* 2 times 4x1 pixels */
 	256,					/* 256 codes */
-	5,						/* 4 bit per pixel */
+	4,						/* 4 bit per pixel */
 	{ 0,1,2,3 },			/* four bitplanes */
 	/* x offsets */
 	{ 4,4,4,4, 0,0,0,0 },
 	/* y offsets */
 	{ 0 },
-	8						/* one byte per code */
+	2*4 					/* one byte per code */
 };
 
 static struct GfxLayout gfxlayout_4bpp_dh =
 {
 	2*4,2,					/* 2 times 4x2 pixels */
 	256,					/* 256 codes */
-	5,						/* 4 bit per pixel */
+	4,						/* 4 bit per pixel */
 	{ 0,1,2,3 },			/* four bitplanes */
 	/* x offsets */
 	{ 4,4,4,4, 0,0,0,0 },
 	/* y offsets */
 	{ 0,0 },
-	8						/* one byte per code */
+	2*4 					/* one byte per code */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout_80,		0, 256 },
-	{ REGION_GFX1, 0, &charlayout_40,		0, 256 },
-	{ REGION_GFX2, 0, &gfxlayout_1bpp,		0, 256 },
-	{ REGION_GFX2, 0, &gfxlayout_1bpp_dw,	0, 256 },
-	{ REGION_GFX2, 0, &gfxlayout_1bpp_qw,	0, 256 },
-	{ REGION_GFX2, 0, &gfxlayout_4bpp,	 256*2,  1 },
-	{ REGION_GFX2, 0, &gfxlayout_4bpp_dh,256*2,  1 },
+	{ REGION_GFX1, 0, &charlayout_80,		  0, 256 },
+	{ REGION_GFX1, 0, &charlayout_40,		  0, 256 },
+	{ REGION_GFX2, 0, &gfxlayout_1bpp,		  0, 256 },
+	{ REGION_GFX2, 0, &gfxlayout_1bpp_dw,	  0, 256 },
+	{ REGION_GFX2, 0, &gfxlayout_1bpp_qw,	  0, 256 },
+	{ REGION_GFX2, 0, &gfxlayout_4bpp,	  2*256,   1 },
+	{ REGION_GFX2, 0, &gfxlayout_4bpp_dh, 2*256,   1 },
 	{ -1 } /* end of array */
 };
 
@@ -473,8 +473,8 @@ static unsigned char palette[] =
     127,  0,  0,    /* red */
     127,  0,127,    /* magenta */
     127,127,  0,    /* yellow */
+	160,160,160,	/* bright grey */
     127,127,127,    /* dark grey */
-    160,160,160,    /* grey */
       0,  0,255,    /* bright blue */
       0,255,  0,    /* bright green */
       0,255,255,    /* bright cyan */
@@ -629,30 +629,30 @@ static struct MachineDriver machine_driver_laser700 =
 };
 
 ROM_START(laser350)
-	ROM_REGIONX(0x40000,REGION_CPU1)
+	ROM_REGION(0x40000,REGION_CPU1)
 	ROM_LOAD("laserv3.rom", 0x00000, 0x08000, 0x9bed01f7)
-	ROM_REGIONX(0x00800,REGION_GFX1)
+	ROM_REGION(0x00800,REGION_GFX1)
 	ROM_LOAD("laser.fnt",   0x00000, 0x00800, 0xed6bfb2a)
-	ROM_REGIONX(0x00100,REGION_GFX2)
+	ROM_REGION(0x00100,REGION_GFX2)
     /* initialized in init_laser */
 ROM_END
 
 
 ROM_START(laser500)
-	ROM_REGIONX(0x40000,REGION_CPU1)
+	ROM_REGION(0x40000,REGION_CPU1)
 	ROM_LOAD("laserv3.rom", 0x00000, 0x08000, 0x9bed01f7)
-	ROM_REGIONX(0x00800,REGION_GFX1)
+	ROM_REGION(0x00800,REGION_GFX1)
 	ROM_LOAD("laser.fnt",   0x00000, 0x00800, 0xed6bfb2a)
-	ROM_REGIONX(0x00100,REGION_GFX2)
+	ROM_REGION(0x00100,REGION_GFX2)
 	/* initialized in init_laser */
 ROM_END
 
 ROM_START(laser700)
-	ROM_REGIONX(0x40000,REGION_CPU1)
+	ROM_REGION(0x40000,REGION_CPU1)
 	ROM_LOAD("laserv3.rom", 0x00000, 0x08000, 0x9bed01f7)
-	ROM_REGIONX(0x00800,REGION_GFX1)
+	ROM_REGION(0x00800,REGION_GFX1)
 	ROM_LOAD("laser.fnt",   0x00000, 0x00800, 0xed6bfb2a)
-	ROM_REGIONX(0x00100,REGION_GFX2)
+	ROM_REGION(0x00100,REGION_GFX2)
 	/* initialized in init_laser */
 ROM_END
 

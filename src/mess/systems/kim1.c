@@ -254,12 +254,12 @@ static struct MachineDriver machine_driver_kim1 =
 };
 
 ROM_START(kim1)
-	ROM_REGIONX(0x10000,REGION_CPU1)
+	ROM_REGION(0x10000,REGION_CPU1)
 		ROM_LOAD("6530-003.bin",    0x1800, 0x0400, 0xa2a56502)
 		ROM_LOAD("6530-002.bin",    0x1c00, 0x0400, 0x2b08e923)
-	ROM_REGIONX(128 * 24 * 3,REGION_GFX1)
+	ROM_REGION(128 * 24 * 3,REGION_GFX1)
 		/* space filled with 7segement graphics by kim1_init_driver */
-	ROM_REGIONX( 24 * 18 * 3 * 2,REGION_GFX2)
+	ROM_REGION( 24 * 18 * 3 * 2,REGION_GFX2)
 		/* space filled with key icons by kim1_init_driver */
 ROM_END
 

@@ -71,10 +71,6 @@ void apple2_slot6_init(void)
 	disk6byte     = 0;
 	read_state    = 1;
 
-	/* Allocate memory for the nibbilized images */
-//	apple2_floppy_init(0, floppy_name[0]);
-//	apple2_floppy_init(1, floppy_name[1]);
-
 	return;
 }
 
@@ -84,7 +80,7 @@ void apple2_slot6_stop (void)
 	free (a2_drives[1].data);
 }
 
-void apple2_floppy_init(int id, const char *name)
+int apple2_floppy_init(int id, const char *name)
 {
 	void *f;
 	int t, s;
@@ -92,7 +88,10 @@ void apple2_floppy_init(int id, const char *name)
 	int volume;
 	int i;
 
-	a2_drives[id].data = malloc (NIBBLE_SIZE*16*TOTAL_TRACKS);
+	if (name == NULL)
+		return INIT_OK;
+
+    a2_drives[id].data = malloc (NIBBLE_SIZE*16*TOTAL_TRACKS);
 	/* Default everything to sync byte 0xFF */
 	memset(a2_drives[id].data, 0xff, NIBBLE_SIZE*16*TOTAL_TRACKS);
 
@@ -108,7 +107,7 @@ void apple2_floppy_init(int id, const char *name)
 	if (f==NULL)
 	{
 		if (errorlog) fprintf(errorlog,"Couldn't open image.\n");
-		return;
+		return INIT_FAILED;
 	}
 
 	for (t = 0; t < TOTAL_TRACKS; t ++)
@@ -116,7 +115,7 @@ void apple2_floppy_init(int id, const char *name)
 		if (osd_fseek(f,256*16*t,SEEK_CUR)!=0)
 		{
 			if (errorlog) fprintf(errorlog,"Couldn't find track %d.\n", t);
-			return;
+			return INIT_FAILED;
 		}
 
 		for (s = 0; s < 16; s ++)
@@ -131,13 +130,13 @@ void apple2_floppy_init(int id, const char *name)
 			if (osd_fseek(f,sec_pos,SEEK_SET)!=0)
 			{
 				if (errorlog) fprintf(errorlog,"Couldn't find sector %d.\n", s);
-				return;
+				return INIT_FAILED;
 			}
 
 			if (osd_fread(f,data,256)<256)
 			{
 				if (errorlog) fprintf(errorlog,"Couldn't read track %d sector %d (pos: %d).\n", t, s, sec_pos);
-				return;
+				return INIT_FAILED;
 			}
 
 
@@ -211,6 +210,8 @@ void apple2_floppy_init(int id, const char *name)
 		fclose (dump);
 	}
 #endif
+
+	return INIT_OK;
 }
 
 /* For now, make disks read-only!!! */

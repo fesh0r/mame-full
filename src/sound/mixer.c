@@ -397,6 +397,17 @@ int mixer_get_mixing_level(int ch)
 
 
 /***************************************************************************
+	mixer_get_default_mixing_level
+***************************************************************************/
+
+int mixer_get_default_mixing_level(int ch)
+{
+	struct mixer_channel_data *channel = &mixer_channel[ch];
+	return channel->default_mixing_level;
+}
+
+
+/***************************************************************************
 	mixer_read_config
 ***************************************************************************/
 

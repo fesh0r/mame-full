@@ -120,7 +120,6 @@ static UINT8 translate_videoram[2][256] = {
 				sy = (offs / 64) * FH;
 				drawgfx(bitmap, Machine->gfx[1], translate_videoram[translate][videoram[offs]],
 					color,0,0, sx,sy, &Machine->drv->visible_area, TRANSPARENCY_NONE,0);
-				osd_mark_dirty(sx,sy,sx+FW*2-1,sy+FH-1,1);
 			}
 		}
 	}
@@ -140,7 +139,6 @@ static UINT8 translate_videoram[2][256] = {
 				sy = (offs / 64) * FH;
 				drawgfx(bitmap, Machine->gfx[0], translate_videoram[translate][videoram[offs]],
 					color,0,0, sx,sy, &Machine->drv->visible_area, TRANSPARENCY_NONE,0);
-                osd_mark_dirty(sx,sy,sx+FW-1,sy+FH-1,1);
             }
 		}
 	}

@@ -23,7 +23,7 @@ typedef enum
 } NEC765_PHASE;
 
 // uncomment the following line for verbose information
-//#define VERBOSE
+#define VERBOSE
 
 unsigned char    FDC_main;
 NEC765_PHASE    nec765_phase;
@@ -288,6 +288,20 @@ static void     nec765_setup_command(void)
                 nec765_idle();
                 break;
 
+            case 0x04:  /* sense drive status */
+                /* get drive */
+                nec765_drive = nec765_command_bytes[1] & 0x03;
+                /* get side */
+                nec765_side = (nec765_command_bytes[1]>>2) & 0x01;
+
+                nec765_status[3] = nec765_drive | (nec765_side<<2);
+                nec765_status[3] |= 0x040;
+
+                nec765_result_bytes[0] = nec765_status[3];
+
+                nec765_setup_result_phase();
+                break;
+                
             case 0x07:          /* recalibrate */
                 nec765_drive = nec765_command_bytes[1] & 0x03;
 

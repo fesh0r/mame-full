@@ -1,4 +1,5 @@
 # Texas Instruments TI-99/4A Command Module CRC List
+# Compiled by Chris Henry and Stefano "JoJo" Priore
 # Note: This list is provided as a record of known dumps for this system.  
 #       These checksums have not been validated and cannot be assumed correct.  
 #       They are provided here as a database to help the emulation of this system.  
@@ -10,10 +11,8 @@
 # loadable as a single image under MESS. This list only contains modules that can be 
 # loaded as a single image (i.e. requiring no C or D images, and/or no data disk).
 
-# Thanks to JoJo for many submissions to this list. :-)
 
-
-[ti99]
+[ti99_4a]
 872738d4 = Addition and Subtraction I
 bae92e8f = Addition and Subtraction II
 9e2f66e3 = Milliken Addition Sequence

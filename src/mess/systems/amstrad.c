@@ -873,13 +873,13 @@ static struct AY8910interface amstrad_ay_interface =
 \
         /* keyboard line 6 */ \
         PORT_START \
-        PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "6", KEYCODE_6, IPT_JOYSTICK_UP) \
-        PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "5", KEYCODE_5, IPT_JOYSTICK_DOWN) \
-        PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "R", KEYCODE_R, IPT_JOYSTICK_LEFT) \
-        PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "T", KEYCODE_T, IPT_JOYSTICK_RIGHT) \
-        PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "G", KEYCODE_G, IPT_BUTTON1) \
-        PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "F", KEYCODE_F, IPT_BUTTON2) \
-        PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "B", KEYCODE_B, IPT_BUTTON3) \
+        PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "6/JOYSTICK 1 UP", KEYCODE_6, IPT_JOYSTICK_UP) \
+        PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "5/JOYSTICK 1 DOWN", KEYCODE_5, IPT_JOYSTICK_DOWN) \
+        PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "R/JOYSTICK 1 LEFT", KEYCODE_R, IPT_JOYSTICK_LEFT) \
+        PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "T/JOYSTICK 1 RIGHT", KEYCODE_T, IPT_JOYSTICK_RIGHT) \
+        PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "G/JOYSTICK 1 FIRE 1", KEYCODE_G, IPT_BUTTON1) \
+        PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "F/JOYSTICK 1 FIRE 2", KEYCODE_F, IPT_BUTTON2) \
+        PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "B/JOYSTICK 1 FIRE 3", KEYCODE_B, IPT_BUTTON3) \
         PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "V", KEYCODE_V, IP_JOY_NONE) \
 \
         /* keyboard line 7 */ \
@@ -906,13 +906,13 @@ static struct AY8910interface amstrad_ay_interface =
 \
         /* keyboard line 9 */ \
         PORT_START \
-        PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "", IP_KEY_NONE, IPT_JOYSTICK_UP) \
-        PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "", IP_KEY_NONE, IPT_JOYSTICK_DOWN) \
-        PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "", IP_KEY_NONE, IPT_JOYSTICK_LEFT) \
-        PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "", IP_KEY_NONE, IPT_JOYSTICK_RIGHT) \
-        PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "", IP_KEY_NONE, IPT_BUTTON1) \
-        PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "", IP_KEY_NONE, IPT_BUTTON2) \
-        PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "", IP_KEY_NONE, IPT_BUTTON3) \
+        PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 UP", IP_KEY_NONE, IPT_JOYSTICK_UP) \
+        PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 DOWN", IP_KEY_NONE, IPT_JOYSTICK_DOWN) \
+        PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 LEFT", IP_KEY_NONE, IPT_JOYSTICK_LEFT) \
+        PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 RIGHT", IP_KEY_NONE, IPT_JOYSTICK_RIGHT) \
+        PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 FIRE 1", IP_KEY_NONE, IPT_BUTTON1) \
+        PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 FIRE 2", IP_KEY_NONE, IPT_BUTTON2) \
+        PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 FIRE 3", IP_KEY_NONE, IPT_BUTTON3) \
         PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "DEL", KEYCODE_BACKSPACE, IP_JOY_NONE) \
 
 
@@ -927,14 +927,14 @@ INPUT_PORTS_START(amstrad)
 
 	PORT_START
 	PORT_BITX(0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Machine Name (bit 0)", IP_KEY_NONE, IP_JOY_NONE)
-	PORT_DIPSETTING(0, DEF_STR( Off ))
-	PORT_DIPSETTING(0x02, DEF_STR( On ))
+	PORT_DIPSETTING(0, DEF_STR( Off) )
+	PORT_DIPSETTING(0x02, DEF_STR( On) )
 	PORT_BITX(0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Machine Name (bit 1)", IP_KEY_NONE, IP_JOY_NONE)
-	PORT_DIPSETTING(0, DEF_STR( Off ))
-	PORT_DIPSETTING(0x04, DEF_STR( On ))
+	PORT_DIPSETTING(0, DEF_STR( Off) )
+	PORT_DIPSETTING(0x04, DEF_STR( On) )
 	PORT_BITX(0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Machine Name (bit 2)", IP_KEY_NONE, IP_JOY_NONE)
-	PORT_DIPSETTING(0, DEF_STR( Off ))
-	PORT_DIPSETTING(0x08, DEF_STR( On ))
+	PORT_DIPSETTING(0, DEF_STR( Off) )
+	PORT_DIPSETTING(0x08, DEF_STR( On) )
 	PORT_BITX(0x010, 0x010, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "TV Refresh Rate", IP_KEY_NONE, IP_JOY_NONE)
 	PORT_DIPSETTING(0x00, "60hz")
 	PORT_DIPSETTING(0x010, "50hz")
@@ -1072,45 +1072,45 @@ static struct MachineDriver machine_driver_kccomp =
 are banked. */
 ROM_START(cpc6128)
 	/* this defines the total memory size - 64k ram, 16k OS, 16k BASIC, 16k DOS */
-	ROM_REGIONX(0x01c000, REGION_CPU1)
+	ROM_REGION(0x01c000, REGION_CPU1)
 	/* load the os to offset 0x01000 from memory base */
 	ROM_LOAD("cpc6128.rom", 0x10000, 0x8000, 0x9e827fe1)
 	ROM_LOAD("cpcados.rom", 0x18000, 0x4000, 0x1fe22ecd)
 
 	/* fake region - required by graphics decode structure */
-	/*ROM_REGIONX(0x0100,REGION_GFX1) */
+	/*ROM_REGION(0x0100,REGION_GFX1) */
 ROM_END
 
 ROM_START(cpc464)
 	/* this defines the total memory size - 64k ram, 16k OS, 16k BASIC, 16k DOS */
-	ROM_REGIONX(0x01c000, REGION_CPU1)
+	ROM_REGION(0x01c000, REGION_CPU1)
 	/* load the os to offset 0x01000 from memory base */
-        ROM_LOAD("cpc464.rom", 0x10000, 0x8000, 0x0)
+        ROM_LOAD("cpc464.rom", 0x10000, 0x8000, 0x040852f25)
 	ROM_LOAD("cpcados.rom", 0x18000, 0x4000, 0x1fe22ecd)
 
 	/* fake region - required by graphics decode structure */
-	/*ROM_REGIONX(0x0100,REGION_GFX1) */
+	/*ROM_REGION(0x0100,REGION_GFX1) */
 ROM_END
 
 ROM_START(cpc664)
 	/* this defines the total memory size - 64k ram, 16k OS, 16k BASIC, 16k DOS */
-	ROM_REGIONX(0x01c000, REGION_CPU1)
+	ROM_REGION(0x01c000, REGION_CPU1)
 	/* load the os to offset 0x01000 from memory base */
-        ROM_LOAD("cpc664.rom", 0x10000, 0x8000, 0x0)
+        ROM_LOAD("cpc664.rom", 0x10000, 0x8000, 0x09AB5A036)
 	ROM_LOAD("cpcados.rom", 0x18000, 0x4000, 0x1fe22ecd)
 
 	/* fake region - required by graphics decode structure */
-	/*ROM_REGIONX(0x0100,REGION_GFX1) */
+	/*ROM_REGION(0x0100,REGION_GFX1) */
 ROM_END
 
 
 ROM_START(kccomp)
-	ROM_REGIONX(0x01c000, REGION_CPU1)
+	ROM_REGION(0x01c000, REGION_CPU1)
 	ROM_LOAD("kccos.rom", 0x10000, 0x04000, 0x7f9ab3f7)
 	ROM_LOAD("kccbas.rom", 0x14000, 0x04000, 0xca6af63d)
 
 	/* fake region - required by graphics decode structure */
-	/*ROM_REGIONX(0x0c00, REGION_GFX1) */
+	/*ROM_REGION(0x0c00, REGION_GFX1) */
 ROM_END
 
 static const struct IODevice io_cpc6128[] =
@@ -1120,9 +1120,9 @@ static const struct IODevice io_cpc6128[] =
 		1,							/* count */
 		"sna\0",					/* file extensions */
 		NULL,						/* private */
-                amstrad_snapshot_id,                         /* id */
-                amstrad_snapshot_load,                       /* init */
-                amstrad_snapshot_exit,                                           /* exit */
+		amstrad_snapshot_id,		/* id */
+		amstrad_snapshot_load,		/* init */
+		amstrad_snapshot_exit,		/* exit */
 		NULL,						/* info */
 		NULL,						/* open */
 		NULL,						/* close */
@@ -1138,9 +1138,9 @@ static const struct IODevice io_cpc6128[] =
 		2,							/* count */
 		"dsk\0",					/* file extensions */
 		NULL,						/* private */
-                amstrad_floppy_id,                                           /* id */
-                amstrad_floppy_load,                               /* init */
-                amstrad_floppy_exit,                                           /* exit */
+		amstrad_floppy_id,			/* id */
+		amstrad_floppy_load,		/* init */
+		amstrad_floppy_exit,		/* exit */
 		NULL,						/* info */
 		NULL,						/* open */
 		NULL,						/* close */
@@ -1158,9 +1158,9 @@ static const struct IODevice io_cpc6128[] =
 #define io_cpc464 io_cpc6128
 #define io_cpc664 io_cpc6128
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-COMP( 1984, cpc464,  0,                amstrad,  amstrad,      0,                "Amstrad plc", "Amstrad/Schneider CPC464")
-COMP( 1985, cpc664,  0,                amstrad,  amstrad,      0,                "Amstrad plc", "Amstrad/Schneider CPC664")
-COMP( 1985, cpc6128,  0,		amstrad,  amstrad,	0,		  "Amstrad plc", "Amstrad/Schneider CPC6128")
-COMP( 19??, kccomp,   cpc6128,  kccomp,  kccomp,      0,                "VEB Mikroelektronik", "KC Compact")
+/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY   FULLNAME */
+COMP( 1984, cpc464,   0,		amstrad,  amstrad,	0,	 "Amstrad plc", "Amstrad/Schneider CPC464")
+COMP( 1985, cpc664,   0,		amstrad,  amstrad,	0,	 "Amstrad plc", "Amstrad/Schneider CPC664")
+COMP( 1985, cpc6128,  0,		amstrad,  amstrad,	0,	 "Amstrad plc", "Amstrad/Schneider CPC6128")
+COMP( 19??, kccomp,   cpc6128,	kccomp,   kccomp,	0,	 "VEB Mikroelektronik", "KC Compact")
 

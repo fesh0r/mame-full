@@ -1,3 +1,4 @@
+
 #ifndef __VC20_H_
 #define __VC20_H_
 
@@ -18,8 +19,8 @@
 #define PADDLES (readinputport(14)&0x40)
 #define LIGHTPEN (readinputport(14)&0x20)
 #define LIGHTPEN_POINTER (LIGHTPEN&&(readinputport(14)&0x10))
-#define LIGHTPEN_X_VALUE (readinputport(16)&~1) /* effectiv resolution */
-#define LIGHTPEN_Y_VALUE (readinputport(17)&~1) /* effectiv resolution */
+#define LIGHTPEN_X_VALUE (readinputport(16)&~1)		/* effectiv resolution */
+#define LIGHTPEN_Y_VALUE (readinputport(17)&~1)		/* effectiv resolution */
 #define LIGHTPEN_BUTTON (LIGHTPEN&&(readinputport(15)&0x80))
 
 #define DATASSETTE (readinputport(14)&0x8)
@@ -74,25 +75,26 @@
 extern UINT8 *vc20_memory;
 extern UINT8 *vc20_memory_9400;
 
-extern void vc20_write_9400(int offset, int data);
+extern void vc20_write_9400 (int offset, int data);
 
 /* split for more performance */
 /* VIC reads bits 8 till 11 */
-extern int vic6560_dma_read_color(int offset);
+extern int vic6560_dma_read_color (int offset);
+
 /* VIC reads bits 0 till 7 */
-extern int vic6560_dma_read(int offset);
+extern int vic6560_dma_read (int offset);
 
-extern int  vc20_rom_init(int id, const char*name);
-extern int  vc20_rom_load(int id, const char*name);
-extern int  vc20_rom_id(const char *name, const char *gamename);
+extern int vc20_rom_init (int id, const char *name);
+extern int vc20_rom_load (int id, const char *name);
+extern int vc20_rom_id (const char *name, const char *gamename);
 
-extern void vc20_driver_init(void);
-extern void vic20_driver_init(void);
-extern void vc20_driver_shutdown(void);
+extern void vc20_driver_init (void);
+extern void vic20_driver_init (void);
+extern void vc20_driver_shutdown (void);
 
-extern void vc20_init_machine(void);
-extern void vc20_shutdown_machine(void);
+extern void vc20_init_machine (void);
+extern void vc20_shutdown_machine (void);
 
-extern int  vc20_frame_interrupt(void);
+extern int vc20_frame_interrupt (void);
 
 #endif

@@ -1,9 +1,9 @@
 /*****************************************************************************
  *
  *	 z80.c
- *	 Portable Z80 emulator V2.5
+ *	 Portable Z80 emulator V2.6
  *
- *   Copyright (C) 1998,1999 Juergen Buchmueller, all rights reserved.
+ *	 Copyright (C) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
  *
  *	 - This source code is released as freeware for non-commercial purposes.
  *	 - You are free to use and redistribute this code in modified or
@@ -17,7 +17,12 @@
  *     terms of its usage and license at any time, including retroactively
  *   - This entire notice must remain in the source code.
  *
- *	 Changes in 2.5:
+ *	 Changes in 2.6:
+ *	  - BUSY_LOOP_HACKS needed to call change_pc16() earlier, before
+ *		checking the opcodes at the new address, because otherwise they
+ *		might access the old (wrong or even NULL) banked memory region.
+ *		Thanks to Sean Young for finding this nasty bug.
+ *   Changes in 2.5:
  *	  - Burning cycles always adjusts the ICount by a multiple of 4.
  *	  - In REPEAT_AT_ONCE cases the R register wasn't incremented twice
  *		per repetition as it should have been. Those repeated opcodes
@@ -734,7 +739,8 @@ INLINE UINT32 ARG16(void)
 #define JP {													\
 	unsigned oldpc = _PCD-1;									\
 	_PCD = ARG16(); 											\
-	/* speed up busy loop */									\
+	change_pc16(_PCD);											\
+    /* speed up busy loop */                                    \
 	if( _PCD == oldpc ) 										\
 	{															\
 		if( !after_EI ) 										\
@@ -760,7 +766,6 @@ INLINE UINT32 ARG16(void)
 				BURNODD( z80_ICount-10, 2, 10+10 ); 			\
 		}														\
 	}															\
-	change_pc16(_PCD);											\
 }
 #else
 #define JP {													\
@@ -792,7 +797,8 @@ INLINE UINT32 ARG16(void)
 	unsigned oldpc = _PCD-1;									\
 	INT8 arg = (INT8)ARG(); /* ARG() also increments _PC */ 	\
 	_PC += arg; 			/* so don't do _PC += ARG() */      \
-	/* speed up busy loop */									\
+	change_pc16(_PCD);											\
+    /* speed up busy loop */                                    \
 	if( _PCD == oldpc ) 										\
 	{															\
 		if( !after_EI ) 										\
@@ -818,7 +824,6 @@ INLINE UINT32 ARG16(void)
 				BURNODD( z80_ICount-12, 2, 10+12 ); 			\
 		}														\
     }                                                           \
-    change_pc16(_PCD);                                          \
 }
 
 /***************************************************************

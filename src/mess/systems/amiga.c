@@ -105,7 +105,7 @@ static struct MachineDriver machine_driver_ntsc =
 ***************************************************************************/
 
 ROM_START( amiga )
-	ROM_REGIONX(0x1000000,REGION_CPU1) /* for ram, etc */
+	ROM_REGION(0x1000000,REGION_CPU1) /* for ram, etc */
 	//ROM_LOAD( "kick13.rom",  0xf80000, 0x80000, 0xfa180000 )
 	ROM_LOAD_WIDE( "kick13.rom",  0xf80000, 0x80000, 0xf6290043)
 

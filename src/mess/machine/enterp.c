@@ -16,7 +16,7 @@ extern unsigned char *Enterprise_RAM;
 
 void Enterprise_SetupPalette(void);
 
-//static const char *floppy_name[4];
+const char *ep128_floppy_name[4] = {NULL,NULL,NULL,NULL};
 
 void enterprise_init_machine(void)
 {
@@ -44,7 +44,7 @@ void enterprise_shutdown_machine(void)
 
 int enterprise_floppy_init(int id, const char *name)
 {
-    //floppy_name[id] = name;
+    ep128_floppy_name[id] = name;
 
     return 0;
 }

@@ -24,12 +24,11 @@ endif
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
-TINY_NAME = driver_msx
-TINY_OBJS = obj/mess/sndhrdw/scc.o      \
-            obj/mess/vidhrdw/msx.o      \
-            obj/mess/machine/msx.o      \
-            obj/mess/systems/msx.o      
-
+TINY_NAME = driver_coleco
+TINY_OBJS =     obj/mess/vidhrdw/tms9928a.o \
+                obj/mess/machine/coleco.o   \
+                obj/mess/vidhrdw/coleco.o   \
+                obj/mess/systems/coleco.o
 
 # uncomment one of the two next lines to not compile the NeoGeo games or to
 # compile only the NeoGeo games
@@ -56,6 +55,8 @@ CPUS+=Z80GB@
 #CPUS+=8085A@
 CPUS+=M6502@
 CPUS+=M65C02@
+CPUS+=M65SC02@
+CPUS+=M65CE02@
 CPUS+=M6510@
 CPUS+=N2A03@
 CPUS+=H6280@
@@ -222,6 +223,20 @@ CPU=$(strip $(findstring M65C02@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_M65C02=1
 CPUOBJS += obj/cpu/m6502/m6502.o
+DBGOBJS += obj/cpu/m6502/6502dasm.o
+endif
+
+CPU=$(strip $(findstring M65SC02@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M65SC02=1
+CPUOBJS += obj/cpu/m6502/m6502.o
+DBGOBJS += obj/cpu/m6502/6502dasm.o
+endif
+
+CPU=$(strip $(findstring M65CE02@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M65CE02=1
+CPUOBJS += obj/cpu/m6502/m65ce02.o
 DBGOBJS += obj/cpu/m6502/6502dasm.o
 endif
 
@@ -848,7 +863,6 @@ DRVLIBS = obj/coleco.a   \
           obj/cbm.a      \
           obj/dragon.a   \
           obj/kaypro.a   \
-          obj/dragon.a   \
           obj/trs80.a    \
           obj/cgenie.a   \
           obj/pdp1.a     \
@@ -873,10 +887,10 @@ DRVLIBS = obj/coleco.a   \
 
 NEOLIBS = obj/neogeo.a \
 
-MSDOSOBJS = obj/msdos/msdos.o obj/msdos/video.o obj/msdos/blit.o obj/msdos/vector.o \
-         obj/msdos/sound.o obj/msdos/input.o obj/msdos/fileio.o obj/msdos/config.o \
-         obj/msdos/fronthlp.o \
-         obj/msdos/gen15khz.o obj/msdos/ati15khz.o \
+MSDOSOBJS = obj/msdos/msdos.o obj/msdos/video.o obj/msdos/blit.o obj/msdos/asmblit.o \
+         obj/msdos/vector.o obj/msdos/gen15khz.o obj/msdos/ati15khz.o \
+         obj/msdos/sound.o obj/msdos/input.o obj/msdos/fileio.o \
+         obj/msdos/config.o obj/msdos/fronthlp.o \
 
 MSDOSOBJS += obj/mess/msdos.o obj/msdos/nec765.o 
 
@@ -935,18 +949,22 @@ obj/cpu/m68000/68kem.asm:  src/cpu/m68000/make68k.c
 obj/cpu/m68000/68kem.oa:  obj/cpu/m68000/68kem.asm
 	$(ASM) -o $@ $(ASMFLAGS) $(subst -D,-d,$(ASMDEFS)) $<
 
+# video blitting functions
+obj/msdos/asmblit.o: src/msdos/asmblit.asm
+	$(ASM) -o $@ $(ASMFLAGS) $(subst -D,-d,$(ASMDEFS)) $<
+
 obj/cpu/z80/z80.asm:  src/cpu/z80/makez80.c
 	$(CC) $(CDEFS) $(CFLAGS) -DDOS -o obj/cpu/z80/makez80.exe $<
 	obj/cpu/z80/makez80 $(Z80DEF) $(CDEFS) $(CFLAGS) $@
 
 obj/%.a:
-	 $(AR) cr $@ $^
+	$(AR) cr $@ $^
 
 obj/coleco.a:   \
                 obj/mess/vidhrdw/tms9928a.o \
                 obj/mess/machine/coleco.o   \
                 obj/mess/vidhrdw/coleco.o   \
-                obj/mess/systems/coleco.o   
+                obj/mess/systems/coleco.o
 
 obj/sega.a:     \
                 obj/mess/vidhrdw/smsvdp.o   \
@@ -994,25 +1012,30 @@ obj/cbm.a:      \
 		obj/mess/sndhrdw/vic6560.o  \
 		obj/mess/machine/6522via.o  \
 		obj/mess/machine/vc20.o     \
-                obj/mess/machine/vc20tape.o \
-                obj/mess/machine/vc1541.o   \
-                obj/mess/systems/vc20.o     \
-                obj/mess/vidhrdw/ted7360.o  \
+		obj/mess/machine/vc20tape.o \
+		obj/mess/machine/vc1541.o   \
+		obj/mess/systems/vc20.o     \
+		obj/mess/vidhrdw/ted7360.o  \
 		obj/mess/sndhrdw/ted7360.o  \
 		obj/mess/machine/c1551.o    \
 		obj/mess/machine/c16.o      \
 		obj/mess/systems/c16.o	    \
-                obj/mess/machine/cbm.o      \
-                obj/mess/machine/cbmdrive.o \
+		obj/mess/machine/cbm.o      \
+		obj/mess/machine/cbmdrive.o \
 		obj/mess/systems/c64.o      \
 		obj/mess/machine/cia6526.o  \
 		obj/mess/machine/c64.o      \
 		obj/mess/vidhrdw/vic6567.o  \
-		obj/mess/sndhrdw/sid6581.o  
-
+		obj/mess/sndhrdw/sid6581.o  \
+		obj/mess/systems/c65.o      \
+		obj/mess/machine/c65.o      \
+		obj/mess/systems/c128.o     \
+		obj/mess/vidhrdw/vdc8563.o  \
+		obj/mess/machine/c128.o     \
 
 
 obj/dragon.a:   \
+                obj/mess/machine/cocodisk.o \
                 obj/mess/vidhrdw/dragon.o   \
                 obj/mess/machine/dragon.o   \
                 obj/mess/systems/dragon.o   
@@ -1142,7 +1165,6 @@ obj/vtech.a :   \
 
 
 obj/jupiter.a : \
-                obj/mess/sndhrdw/buzzer.o   \
                 obj/mess/vidhrdw/jupiter.o  \
                 obj/mess/machine/jupiter.o  \
                 obj/mess/systems/jupiter.o  
@@ -1165,7 +1187,6 @@ obj/nascom1.a: \
 		obj/mess/machine/nascom1.o  \
                 obj/mess/systems/nascom1.o
 
-
 # dependencies
 obj/cpu/z80/z80.o: z80.c z80.h z80daa.h
 obj/cpu/z8000/z8000.o: z8000.c z8000.h z8000cpu.h z8000dab.h z8000ops.c z8000tbl.c
@@ -1175,7 +1196,8 @@ obj/cpu/i8039/i8039.o: i8039.c i8039.h
 obj/cpu/i8085/i8085.o: i8085.c i8085.h i8085cpu.h i8085daa.h
 obj/cpu/i86/i86.o: i86.c i86.h i86intrf.h ea.h host.h instr.h modrm.h
 obj/cpu/nec/nec.o: nec.c nec.h necintrf.h necea.h nechost.h necinstr.h necmodrm.h
-obj/cpu/m6502/m6502.o: m6502.c m6502.h m6502ops.h tbl6502.c tbl65c02.c tbl6510.c
+obj/cpu/m6502/m6502.o: m6502.c m6502.h ops02.h t6502.c t65c02.c t65sc02.c t6510.c tn2a03.c
+obj/cpu/m65ce02/m65ce02.o: m65ce02.c m65ce02.h opsce02.h t6ce502.c
 obj/cpu/m6800/m6800.o: m6800.c m6800.h 6800ops.c 6800tbl.c
 obj/cpu/m6805/m6805.o: m6805.c m6805.h 6805ops.c
 obj/cpu/m6809/m6809.o: m6809.c m6809.h 6809ops.c 6809tbl.c
@@ -1283,5 +1305,6 @@ messdir:
 	md obj\mess\systems
 	md obj\mess\vidhrdw
 	md obj\mess\sndhrdw
+
 
 

@@ -29,7 +29,7 @@ Ports:
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#include "mess/sndhrdw/buzzer.h"
+/* #include "mess/sndhrdw/buzzer.h" */
 
 /* prototypes */
 
@@ -46,9 +46,7 @@ extern void jupiter_vh_charram_w (int offset, int data);
 extern unsigned char *jupiter_charram;
 extern int jupiter_charram_size;
 
-extern int buzzer_sh_start (const struct MachineSound *driver);
-extern void buzzer_sh_stop (void);
-extern int buzzer_sh_state;
+extern int jupiter_sh_state;
 
 /* functions */
 
@@ -91,7 +89,7 @@ int jupiter_port_7ffe_r (int offset)
 
 {
 
-buzzer_sh_state = 0;
+jupiter_sh_state = 0;
 return (readinputport (7));
 
 }
@@ -100,7 +98,7 @@ void jupiter_port_fe_w (int offset, int data)
 
 {
 
-buzzer_sh_state = 1;
+jupiter_sh_state = 1;
 
 }
 
@@ -254,10 +252,9 @@ INPUT_PORTS_END
 
 /* Sound output */
 
-static	struct	CustomSound_interface jupiter_sh_interface = {
-	buzzer_sh_start,
-	buzzer_sh_stop,
-	0
+static	struct	DACinterface jupiter_sh_interface = {
+	1,
+	{ 100 }
 };
 
 /* machine definition */
@@ -296,12 +293,12 @@ static	struct MachineDriver machine_driver_jupiter =
 	/* sound hardware */
 	0, 0, 0, 0,
 	{
-		{ SOUND_CUSTOM, &jupiter_sh_interface },
+		{ SOUND_DAC, &jupiter_sh_interface },
 	}
 };
 
 ROM_START (jupiter)
-ROM_REGIONX (0x10000, REGION_CPU1)
+ROM_REGION (0x10000, REGION_CPU1)
 ROM_LOAD ("jupiter.rom", 0x0000, 0x2000, 0xe5b1f5f6)
 ROM_END
 

@@ -533,10 +533,8 @@ void mbee_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			sx = (off_x + (offs % crt.horizontal_displayed)) * 8;
 			code = videoram[offs];
 			color = colorram[offs];
-			drawgfx(
-				bitmap,Machine->gfx[0],code,color,0,0,sx,sy,
+			drawgfx( bitmap,Machine->gfx[0],code,color,0,0,sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-			osd_mark_dirty(sx,sy,sx+7,sy+crt.scan_lines,0);
 			dirtybuffer[offs] = 0;
 			if( offs == cursor && (crt.cursor_top & 0x60) != 0x20 )
 			{

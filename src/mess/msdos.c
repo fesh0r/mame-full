@@ -169,34 +169,52 @@ void list_mess_info(char *gamename, char *arg)
 	/* -listextensions */
 	if (!stricmp(arg,"-listextensions"))
 	{
+
 		i = 0; j = 0;
 
-        printf("\nSYSTEM    IMAGE FILE EXTENSIONS SUPPORTED\n");
-		printf("--------  -------------------------------\n");
+		printf("\nSYSTEM    DEVICE       IMAGE FILE EXTENSIONS SUPPORTED\n");
+		printf(  "--------  ----------   -------------------------------\n");
+
 		while (drivers[i])
 		{
+			const struct IODevice *dev = drivers[i]->dev;
 
-			if ((drivers[i]->clone_of == 0 ||
-			    (drivers[i]->clone_of->flags & NOT_A_DRIVER)) &&
-			     !strwildcmp(gamename, drivers[i]->name))
+			if (!strwildcmp(gamename, drivers[i]->name))
 			{
-                printf("%-10s",drivers[i]->name);
+				int devcount=1;
+				printf("%-10s",drivers[i]->name);
 
-                {
-					const char *src = drivers[i]->dev->file_extensions;
-                    while (*src)
+				/* if IODevice not used, print UNKNOWN */
+				if (dev->type == IO_END)
+					printf("%-12s\n","UNKNOWN");
+
+				/* else cycle through Devices */
+				while (dev->type != IO_END)
+				{
+					const char *src = dev->file_extensions;
+
+					if (devcount == 1)
+						printf("%-12s",device_typename(dev->type));
+					else
+						printf("%-10s%-12s","    ",device_typename(dev->type));
+					devcount++;
+
+					while (*src && src!=NULL)
 					{
+
 						printf(".%-5s",src);
 						src += strlen(src) + 1;
-
 					}
+					dev++; /* next IODevice struct */
+					printf("\n");
 				}
-                printf("\n");
+
+
 			}
 			i++;
+
 		}
+
 	}
-
-
 
 }

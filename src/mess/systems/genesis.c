@@ -376,14 +376,14 @@ static struct MachineDriver machine_driver_genesis =
 
 
 ROM_START(genesis)
-	ROM_REGIONX(0x405000,REGION_CPU1)
+	ROM_REGION(0x405000,REGION_CPU1)
 ROM_END
 
 static const struct IODevice io_genesis[] = {
 	{
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
-		"smd\0bin\0",       /* file extensions */
+		"smd\0bin\0md\0",       /* file extensions */
 		NULL,				/* private */
 		genesis_id_rom, 	/* id */
 		genesis_load_rom,	/* init */

@@ -11,6 +11,9 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 
+int		jupiter_sh_state;
+void	jupiter_sh_update (int);
+
 int jupiter_load_ace(int id, const char *name);
 int jupiter_load_tap(int id, const char *name);
 
@@ -90,6 +93,8 @@ void jupiter_init_machine(void)
 	if (errorlog)
 		fprintf(errorlog, "jupiter_init\r\n");
 
+	timer_pulse (1.0 / Machine->sample_rate, 0, jupiter_sh_update);
+
 	if (jupiter_data)
 	{
 		cpu_setOPbaseoverride(0, jupiter_opbaseoverride);
@@ -105,6 +110,15 @@ void jupiter_stop_machine(void)
 		free(jupiter_data);
 		jupiter_data = NULL;
 	}
+
+}
+
+void	jupiter_sh_update (int param)
+
+{
+
+if (errorlog) fprintf (errorlog, "jupiter_sh_state: %d.\n", jupiter_sh_state);
+DAC_data_w (0, jupiter_sh_state * 127);
 
 }
 

@@ -11,7 +11,7 @@
 #include "mess/machine/atari.h"
 #include "mess/vidhrdw/atari.h"
 
-ANTIC	antic;
+ANTIC antic;
 
 /**************************************************************
  *
@@ -83,8 +83,8 @@ int MRA_ANTIC(int offset)
 			data = antic.r.antic09;
 			break;
 		case 10: /* WSYNC read */
-            timer_holdcpu_trigger(0,TRIGGER_HSYNC);
-            antic.w.wsync = 1;
+			timer_holdcpu_trigger(0,TRIGGER_HSYNC);
+			antic.w.wsync = 1;
 			data = antic.r.antic0a;
 			break;
         case 11: /* vert counter (scanline / 2) */
@@ -101,7 +101,6 @@ int MRA_ANTIC(int offset)
 			break;
         case 15: /* NMI status */
 			data = antic.r.nmist;
-//			antic.r.nmist = 0x1f;
 			break;
     }
 	return data;
@@ -166,7 +165,7 @@ void MWA_ANTIC(int offset, int data)
             break;
 		case 10: /* WSYNC write */
 			timer_holdcpu_trigger(0,TRIGGER_HSYNC);
-            antic.w.wsync = 1;
+			antic.w.wsync = 1;
             break;
         case 11:
 			antic.w.antic0b = data;

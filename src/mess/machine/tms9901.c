@@ -1,10 +1,10 @@
 /*
-  TMS9901 Programmable system interface
+	TMS9901 Programmable system interface
 
-  Note that this is still WIP : much work is still needed to make a versatile and complete
-  tms9901 emulator
+	Note that this is still WIP : much work is still needed to make a versatile and complete
+	tms9901 emulator
 
-  Raphael Nabet, 2000
+	Raphael Nabet, 2000
 */
 
 #include <math.h>
@@ -12,57 +12,65 @@
 
 #include "tms9901.h"
 
-/*================================================================
-  TMS9901 emulation.
-
-  TMS9901 handles interrupts, provides several I/O pins, and a timer (a.k.a. clock : it is
-  merely a register which decrements regularily and can generate an interrupt when it reaches
-  0).
-
-  It communicates with the TMS9900 with a CRU interface, and with the rest of the world with
-  a number of parallel I/O pins.
-
-  TODO :
-  * complete TMS9901 emulation (e.g. other interrupts pins, pin mirroring...)
-  * make emulation more general (most TMS9900-based systems used a TMS9901, so it could be
-    interesting for other drivers)
-  * support for tape input, possibly improved tape output.
-
-  KNOWN PROBLEMS :
-  * in a real TI99/4A, TMS9901 is mirrored in the whole first half of CRU address space
-    (i.e. CRU bit 0 = CRU bit 32 = bit 64 = ... = bit 504 ).  This will be emulated later...
-  * a read or write to bits 16-31 causes TMS9901 to quit timer mode.  The problem is :
-    on a TI99/4A, any memory access causes a dummy CRU read.  Therefore, TMS9901 can quit
-    timer mode even thought the program did not explicitely ask... and THIS is impossible
-    to emulate efficiently (we'd have to check each memory operation).
-================================================================*/
-
 /*
-  TMS9901 interrupt handling on a TI99/4x.
+	TMS9901 emulation.
 
-  Three interrupts are used by the system (INT1, INT2, and timer), out of 15/16 possible
-  interrupt.  Keyboard pins can be used as interrupt pins, too, but this is not emulated
-  (it's a trick, anyway, and I don't know of any program which uses it).
+Overview :
+	TMS9901 is a support chip for TMS9900.  It handles interrupts, provides several I/O pins, and
+	a timer (a.k.a. clock : it is merely a register which decrements regularily and can generate
+	an interrupt when it reaches 0).
+	
+	It communicates with the TMS9900 with the CRU bus, and with the rest of the world with
+	a number of parallel I/O pins.
 
-  When an interrupt line is set (and the corresponding bit in the interrupt mask is set),
-  a level 1 interrupt is requested from the TMS9900.  This interrupt request lasts as long as
-  the interrupt pin and the revelant bit in the interrupt mask are set.
+	I/O and timer functions should work with any other 990/99xx/99xxx CPU.  Since interrupt bus is
+	different on each CPU, I guess interrupt handling was only used on tms9900-based systems.
 
-  TIMER interrupts are kind of an exception, since they are not associated with an external
-  interrupt pin, and I guess it takes a write to the 9901 CRU bit 3 ("SBO 3") to clear
-  the pending interrupt (or am I wrong once again ?).
+
+TODO :
+	* complete TMS9901 emulation (e.g. other interrupts pins...)
+
+Pins :
+	Reset
+	INT1-INT7 : used as interrupt/input pins.
+	P0-P7 : used as input/output pins.
+	INT8/P15-INT15/P8 : used as both interrupt/input or input/output pins.  Note you can
+	simulteanously use a pin as output and interrupt.  (Mostly obvious - but it imply you cannot
+	raise an interrupt with a write, which is not SO obvious.)
+
+Interrupt handling :
+	After each clock cycle, TMS9901 reads the state of INT1*-INT15* (except pins which are set as
+	output pins).  If the clock is enabled, it replaces INT3* with an internal timer int pending
+	register.  Then it inverts the value and performs a bit-wise AND with the interrupt mask.  
+
+	If some bits are set, TMS9901 set the INTREQ* pin and present the number of the first bit set
+	on the IC0-IC3 pins.  If the tms9900 is connected to these pins, the result is that asserting
+	an INTn* on tms9901 causes a level-n interrupt request on the tms9900, provided the interrupt
+	pin is enabled in tms9901 and no higher priority pin is set.
+
+	This interrupt request lasts as long as the interrupt pin and the revelant bit in the interrupt
+	mask are set (level-triggered interrupts).
+
+	TIMER interrupts are kind of an exception, since they are not associated with an external
+	interrupt pin.  I think the request is set by the decrementer reaching 0, and is cleared by a
+	write to the 9901 int3 enable bit ("SBO 3") (or am I wrong once again ?).
 
 nota :
-  All interrupt routines notify (by software) the TMS9901 of interrupt recognition ("SBO n").
-  However, AFAIK, this has strictly no consequence in the TMS9901, and interrupt routines
-  would work fine without this, (except probably TIMER interrupt).  All this is quite weird.
-  Maybe the interrupt recognition notification is needed on TMS9985, or any other weird
-  variant of TMS9900 (does any TI990/10 owner wants to test this :-) ?).
+	On TI99/4a, interrupt routines notify (by software) the TMS9901 of interrupt recognition
+	("SBO n").  However, AFAIK, this has strictly no consequence in the TMS9901, and interrupt
+	routines would work fine without this (except probably TIMER interrupt).  All this is quite
+	weird.  Maybe the interrupt recognition notification is needed on TMS9985, or any other weird
+	variant of TMS9900 (does any TI990/10 owner wants to test this :-) ?).
+*/
+
+
+/*
+	Interrupt variables
 */
 
 /* mask :  bit #n is set if pin #n is supported as an interrupt pin,
 i.e. the driver sends a notification every time the pin state changes */
-static int supported_int_mask = TMS9901_INT1 | TMS9901_INT2;
+static int supported_int_mask;
 
 static int int_state;				/* state of the int1-int15 lines */
 static int timer_int_pending = 0;	/* timer int pending (overrides int3 pin if timer enabled) */
@@ -78,13 +86,81 @@ static int pio_output;
 static int pio_direction_mirror;
 static int pio_output_mirror;
 
+/*
+	clock registers
+
+	frequency : CPUCLK/64 = 46875Hz for a 3MHz clock
+
+	(warning : 3MHz on a tms9900 = 12MHz on a tms9995/99xxx)
+*/
+
+/* MESS timer, used to emulate the decrementer register */
+static void *tms9901_timer = NULL;
+
+/* clock interval, loaded in decrementer when it reaches 0.  0 means decrementer off */
+static int clockinvl = 0;
+
+/* when we go to timer mode, the decrementer is copied there to allow to read it reliably */
+static int latchedtimer;
+
+/* set to true when clockinvl has been written to, which means the decrementer must be reloaded
+when we quit timer mode (??) */
+static int clockinvlchanged;
+
+/*
+	TMS9901 current mode
+
+	0 = I/O mode (allow interrupts ???),
+	1 = Timer mode (we're programming the clock).
+*/
+static int mode9901 = 0;
+
+/*
+	driver-dependent read and write handlers
+*/
+
+static int (*read_handlers[4])(int offset) =
+{	/* defaults to all NULL */
+	NULL,
+};
+
+static void (*write_handlers[16])(int offset, int data) =
+{	/* defaults to all NULL */
+	NULL,
+};
+
+
+/*
+	prototypes
+*/
+
+static void tms9901_field_interrupts(void);
+static void reset_tms9901_timer(void);
+
+
+
+/*
+	utilities
+*/
+
+
 #if 0
 /*
-  reverse the bit order of a 9-bit operand
+	Reverse the bit order of bits 15-7 (i.e. 9 MSB in a 16-bit word) of an operand.
+	Other bits are masked out.
+
+Why :
+
+	Since not enough pins were available, pins P7-P15 are the same as INT15*-INT7*, i.e.
+	the same pins can be used both as input/interrupt pins and as normal I/O pins.
+
+	The problem is bit order is reversed, i.e. P7 = INT15*, P8 = INT14*,... P15 = INT7*.
+	Since the order is determined by the conventions used by the CRU read routines,
+	we MUST somehow reverse the bit order.
 */
-static int reverse_9bits(int value)
+static int reverse_9MSBits(int value)
 {
-	value = ((value << 15) & 0x8000) | ((value >> 1) & 0x0FF);
+	value = ((value << 1) & 0xFF00) | ((value >> 15) & 0x0001);
 	value = ((value << 4) & 0xF0F0) | ((value >> 4) & 0x0F0F);
 	value = ((value << 2) & 0xCCCC) | ((value >> 2) & 0x3333);
 	value = ((value << 1) & 0xAAAA) | ((value >> 1) & 0x5555);
@@ -93,7 +169,7 @@ static int reverse_9bits(int value)
 }
 
 /*
-  return the number of the first non-zero bit among the 16 first bits
+	return the number of the first (i.e. least significant) non-zero bit among the 16 first bits
 */
 static int find_first_bit(int value)
 {
@@ -132,38 +208,22 @@ static int find_first_bit(int value)
 }
 #endif
 
-/*
-  clock registers
-
-  frequency : CPUCLK/64 = 46875Hz
-*/
-
-/* MESS timer, used to emulate the decrementer register */
-static void *tms9901_timer = NULL;
-
-/* clock interval, loaded in decrementer when it reaches 0.  0 means decrementer off */
-static int clockinvl = 0;
-
-/* when we go to timer mode, the decrementer is copied there to allow to read it reliably */
-static int latchedtimer;
-
-/* set to true when clockinvl has been written to, which means the decrementer must be reloaded
-when we quit timer mode (??) */
-static int clockinvlchanged;
 
 /*
-  TMS9901 mode bit.
-
-  0 = I/O mode (allow interrupts ???),
-  1 = Timer mode (we're programming the clock).
+	initialize the tms9901 core
 */
-static int mode9901 = 0;
-
-static void tms9901_field_interrupts(void);
-static void reset_tms9901_timer(void);
-
-void tms9901_init(void)
+void tms9901_init(tms9901reset_param *param)
 {
+	int i;
+
+	supported_int_mask = param->supported_int_mask;
+
+	for (i=0; i<4; i++)
+		read_handlers[i] = param->read_handlers[i];
+
+	for (i=0; i<16; i++)
+		write_handlers[i] = param->write_handlers[i];
+
 	int_state = 0;
 	timer_int_pending = 0;
 	enabled_ints = 0;
@@ -190,7 +250,7 @@ void tms9901_cleanup(void)
 }
 
 /*
-  should be called after any change to int_state or enabled_ints.
+	should be called after any change to int_state or enabled_ints.
 */
 static void tms9901_field_interrupts(void)
 {
@@ -207,6 +267,7 @@ static void tms9901_field_interrupts(void)
 			current_ints &= ~ TMS9901_INT3;
 	}
 
+	/* mask out all int pins currently set as output */
 	current_ints &= enabled_ints & (~ pio_direction_mirror);
 
 	if (current_ints)
@@ -234,24 +295,29 @@ static void tms9901_field_interrupts(void)
 	}
 }
 
-/*
-  callback function which is called when the state of INT2* change
 
-  state == 0 : INT2* is inactive (high)
-  state != 0 : INT2* is active (low)
+/*
+	callback function which is called when the state of INT2* change
+
+	state == 0 : INTn* is inactive (high)
+	state != 0 : INTn* is active (low)
+
+	0<=pin_number<=15
 */
-void tms9901_set_int2(int state)
+void tms9901_set_single_int(int pin_number, int state)
 {
 	if (state)
-		int_state |= TMS9901_INT2;		/* enable INT2* state interrupt requested */
+		int_state |= 1 << pin_number;		/* raise INTn* pin state mirror */
 	else
-		int_state &= ~ TMS9901_INT2;
+		int_state &= ~ (1 << pin_number);
 
+	/* we do not need to always call this function - time for an optimization */
 	tms9901_field_interrupts();
 }
 
+
 /*
-  this call-back is called by MESS timer system when the decrementer reaches 0.
+	this call-back is called by MESS timer system when the decrementer reaches 0.
 */
 static void decrementer_callback(int ignored)
 {
@@ -261,7 +327,7 @@ static void decrementer_callback(int ignored)
 }
 
 /*
-  load the content of clockinvl into the decrementer
+	load the content of clockinvl into the decrementer
 */
 static void reset_tms9901_timer(void)
 {
@@ -274,45 +340,32 @@ static void reset_tms9901_timer(void)
 	/* clock interval == 0 -> no timer */
 	if (clockinvl)
 	{
-		tms9901_timer = timer_pulse(clockinvl / 46875., 0, decrementer_callback);
+		tms9901_timer = timer_pulse(clockinvl / 46875.L, 0, decrementer_callback);
 	}
 }
 
 
 
 /*----------------------------------------------------------------
-  TMS9901 CRU interface.
+	TMS9901 CRU interface.
 ----------------------------------------------------------------*/
 
 /*
-  Read a 8 bit chunk from tms9901.
+	Read a 8 bit chunk from tms9901.
 
-  signification :
-  bit 0 : mode9901
-  if (mode9901 == 0)
-   bit 1-15 : current status of the INT1*-INT15* pins
-  else
-   bit 1-14 : current timer value
-   bit 15 : value of the INTREQ* (interrupt request to TMS9900) pin.
+	signification :
+	bit 0 : mode9901
+	if (mode9901 == 0)
+	 bit 1-15 : current status of the INT1*-INT15* pins
+	else
+	 bit 1-14 : current timer value
+	 bit 15 : value of the INTREQ* (interrupt request to TMS9900) pin.
 
-  bit 16-31 : current status of the P0-P15 pins
+	bit 16-31 : current status of the P0-P15 pins (quits timer mode, too...)
 */
-static int ti99_R9901_0(int offset);
-static int ti99_R9901_1(int offset);
-static int ti99_R9901_3(int offset);
-
-static int (*read_handlers[4])(int offset) =
-{
-	ti99_R9901_0,
-	ti99_R9901_1,
-	NULL,
-	ti99_R9901_3
-};
-
-
 int tms9901_CRU_read(int offset)
 {
-	int answer=0xFF;
+	int answer;
 
 	offset &= 0x003;
 
@@ -368,7 +421,7 @@ int tms9901_CRU_read(int offset)
 		answer |= (pio_output & pio_direction) & 0xFF;
 
 		break;
-	case 3:
+	default:
 		if (mode9901)
 		{	/* exit timer mode */
 			mode9901 = 0;
@@ -388,37 +441,19 @@ int tms9901_CRU_read(int offset)
 	return answer;
 }
 
+/*
+	Read 1 bit to tms9901.
 
+	signification :
+	bit 0 : write mode9901
+	if (mode9901 == 0)
+	 bit 1-15 : write interrupt mask register
+	else
+	 bit 1-14 : write timer period
+	 bit 15 : if written value == 0, soft reset (just resets all I/O pins as input)
 
-static void ti99_KeyC2(int offset, int data);
-static void ti99_KeyC1(int offset, int data);
-static void ti99_KeyC0(int offset, int data);
-static void ti99_AlphaW(int offset, int data);
-static void ti99_CS1_motor(int offset, int data);
-static void ti99_CS2_motor(int offset, int data);
-static void ti99_audio_gate(int offset, int data);
-static void ti99_CS_output(int offset, int data);
-
-static void (*write_handlers[16])(int offset, int data) =
-{
-	NULL,
-	NULL,
-	ti99_KeyC2,
-	ti99_KeyC1,
-	ti99_KeyC0,
-	ti99_AlphaW,
-	ti99_CS1_motor,
-	ti99_CS2_motor,
-	ti99_audio_gate,
-	ti99_CS_output,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
-};
-
+	bit 16-31 : set output state of P0-P15 (and set them as output pin) (quits timer mode, too...)
+*/
 void tms9901_CRU_write(int offset, int data)
 {
 	data &= 1;	/* clear extra bits */
@@ -461,10 +496,10 @@ void tms9901_CRU_write(int offset, int data)
 	case 0x0D:
 	case 0x0E:
 		/*
-		  write one bit to 9901 (bits 1-14)
+			write one bit to 9901 (bits 1-14)
 
-		  mode9901==0 ?  Disable/Enable an interrupt
-		              :  Bit in clock interval
+			mode9901==0 ?  Disable/Enable an interrupt
+			            :  Bit in clock interval
 		*/
 		/* offset is the index of the modified bit of register (-> interrupt number -1) */
 		if (mode9901)
@@ -475,6 +510,7 @@ void tms9901_CRU_write(int offset, int data)
 				clockinvl |= mask;			/* set bit */
 			else
 				clockinvl &= ~ mask;		/* unset bit */
+
 			clockinvlchanged = TRUE;
 		}
 		else
@@ -568,226 +604,4 @@ void tms9901_CRU_write(int offset, int data)
 		break;
 	}
 }
-
-/*
-	TI99 functions
-*/
-
-/*
-  TI99 uses :
-  INT1 : external interrupt (used by RS232 controller, for instance)
-  INT2 : VDP interrupt
-  timer interrupt (overrides INT3)
-*/
-
-/* keyboard interface */
-static int KeyCol = 0;
-static int AlphaLockLine = 0;
-
-/*
-  Read pins INT3*-INT7* of TI99's 9901.
-
-  signification :
-   (bit 1 : INT1 status)
-   (bit 2 : INT2 status)
-   bit 3-7 : keyboard status bits 0 to 4
-*/
-static int ti99_R9901_0(int offset)
-{
-	int answer;
-
-	answer = (readinputport(KeyCol) << 3) & 0xF8;
-
-	if (! AlphaLockLine)
-		answer &= ~ (input_port_8_r(0) << 3);
-
-	return (answer);
-}
-
-/*
-  Read pins INT8*-INT15* of TI99's 9901.
-
-  signification :
-   bit 0-2 : keyboard status bits 5 to 7
-   bit 3-7 : weird, not emulated
-*/
-static int ti99_R9901_1(int offset)
-{
-	return (readinputport(KeyCol) >> 5) & 0x07;
-}
-
-/*
-  Read pins P0-P7 of TI99's 9901.
-  Nothing is connected !
-*/
-/*static int ti99_R9901_2(int offset)
-{
-	return 0;
-}*/
-
-/*
-  Read pins P8-P15 of TI99's 9901.
-*/
-static int ti99_R9901_3(int offset)
-{
-	/*only important bit : bit 26 : tape input */
-
-	/*return 8; */
-	return 0;
-}
-
-
-
-
-
-/*
-  WRITE column number bit 2
-*/
-static void ti99_KeyC2(int offset, int data)
-{
-	if (mode9901)
-	{									/* exit timer mode */
-		mode9901 = 0;
-
-		if (clockinvlchanged)
-			reset_tms9901_timer();
-	}
-
-	if (data & 1)
-		KeyCol |= 1;
-	else
-		KeyCol &= (~1);
-}
-
-/*
-  WRITE column number bit 1
-*/
-static void ti99_KeyC1(int offset, int data)
-{
-	if (mode9901)
-	{									/* exit timer mode */
-		mode9901 = 0;
-
-		if (clockinvlchanged)
-			reset_tms9901_timer();
-	}
-
-	if (data & 1)
-		KeyCol |= 2;
-	else
-		KeyCol &= (~2);
-}
-
-/*
-  WRITE column number bit 0
-*/
-static void ti99_KeyC0(int offset, int data)
-{
-	if (mode9901)
-	{									/* exit timer mode */
-		mode9901 = 0;
-
-		if (clockinvlchanged)
-			reset_tms9901_timer();
-	}
-
-	if (data & 1)
-		KeyCol |= 4;
-	else
-		KeyCol &= (~4);
-}
-
-/*
-  WRITE alpha lock line
-*/
-static void ti99_AlphaW(int offset, int data)
-{
-	if (mode9901)
-	{									/* exit timer mode */
-		mode9901 = 0;
-
-		if (clockinvlchanged)
-			reset_tms9901_timer();
-	}
-
-	AlphaLockLine = (data & 1);
-}
-
-/*
-  command CS1 tape unit motor - not emulated
-*/
-static void ti99_CS1_motor(int offset, int data)
-{
-	if (mode9901)
-	{									/* exit timer mode */
-		mode9901 = 0;
-
-		if (clockinvlchanged)
-			reset_tms9901_timer();
-	}
-
-
-}
-
-/*
-  command CS2 tape unit motor - not emulated
-*/
-static void ti99_CS2_motor(int offset, int data)
-{
-	if (mode9901)
-	{									/* exit timer mode */
-		mode9901 = 0;
-
-		if (clockinvlchanged)
-			reset_tms9901_timer();
-	}
-
-
-}
-
-/*
-  audio gate
-
-  connected to the AUDIO IN pin of TMS9919
-
-  set to 1 before using tape (in order not to burn the TMS9901 ??)
-
-  I am not sure about polarity.
-*/
-static void ti99_audio_gate(int offset, int data)
-{
-	if (mode9901)
-	{									/* exit timer mode */
-		mode9901 = 0;
-
-		if (clockinvlchanged)
-			reset_tms9901_timer();
-	}
-
-	if (data & 1)
-		DAC_data_w(1, 0xFF);
-	else
-		DAC_data_w(1, 0);
-}
-
-/*
-  tape output
-  I am not sure about polarity.
-*/
-static void ti99_CS_output(int offset, int data)
-{
-	if (mode9901)
-	{									/* exit timer mode */
-		mode9901 = 0;
-
-		if (clockinvlchanged)
-			reset_tms9901_timer();
-	}
-
-	if (data & 1)
-		DAC_data_w(0, 0xFF);
-	else
-		DAC_data_w(0, 0);
-}
-
 

@@ -30,10 +30,8 @@ void mc10_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				sy = (offs / 32) * 3;
 				sx = (offs % 32) * 8;
                 code = videoram[offs];
-                drawgfx(
-					bitmap,Machine->gfx[1],code,color,0,0,sx,sy,
+				drawgfx( bitmap,Machine->gfx[1],code,color,0,0,sx,sy,
                     &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-				osd_mark_dirty(sx,sy,sx+7,sy+2,0);
                 dirtybuffer[offs] = 0;
             }
         }
@@ -52,10 +50,8 @@ void mc10_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 					color = (code & 0x80) ? ((code >> 4) & 3) + 5 : 9;
                 else
 					color = (code & 0x80) ? ((code >> 4) & 3) + 1 : 0;
-                drawgfx(
-					bitmap,Machine->gfx[0],code,color,0,0,sx,sy,
+				drawgfx( bitmap,Machine->gfx[0],code,color,0,0,sx,sy,
                     &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-				osd_mark_dirty(sx,sy,sx+7,sy+11,0);
                 dirtybuffer[offs] = 0;
             }
         }

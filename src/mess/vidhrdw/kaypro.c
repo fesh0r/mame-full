@@ -84,7 +84,7 @@
 #include "vidhrdw/generic.h"
 #include "mess/vidhrdw/kaypro.h"
 
-static  int channel;
+//static  int channel;
 #define BELL_SIZE	1024
 #define CLICK_SIZE	64
 static	signed char *bell;
@@ -289,31 +289,21 @@ void kaypro_vh_screenrefresh(struct osd_bitmap * bitmap, int full_refresh)
 			code = video_buffer[i] & 0x3ff;
 			color = video_buffer[i] >> 10;
 
-			drawgfx(tmpbitmap,
-				Machine->gfx[0], code, color,
-				0, 0, r.min_x, r.min_y,
-				&r, TRANSPARENCY_NONE, 0);
-			drawgfx(bitmap,
-				Machine->gfx[0], code, color,
-				0, 0, r.min_x, r.min_y,
-				&r, TRANSPARENCY_NONE, 0);
+			drawgfx(tmpbitmap, Machine->gfx[0], code, color,
+				0, 0, r.min_x, r.min_y, &r, TRANSPARENCY_NONE, 0);
+			drawgfx(bitmap, Machine->gfx[0], code, color,
+				0, 0, r.min_x, r.min_y, &r, TRANSPARENCY_NONE, 0);
 
 			if ( i == j && (cursor_count & 16) )
             {
 				/* toggle reverse */
 				code ^= 0x0200;
-				drawgfx(tmpbitmap,
-					Machine->gfx[0], code, color,
-					0, 0, r.min_x, r.min_y,
-					&r, TRANSPARENCY_NONE, 0);
-				drawgfx(bitmap,
-					Machine->gfx[0], code, color,
-					0, 0, r.min_x, r.min_y,
-					&r, TRANSPARENCY_NONE, 0);
+				drawgfx(tmpbitmap, Machine->gfx[0], code, color,
+					0, 0, r.min_x, r.min_y, &r, TRANSPARENCY_NONE, 0);
+				drawgfx(bitmap, Machine->gfx[0], code, color,
+					0, 0, r.min_x, r.min_y, &r, TRANSPARENCY_NONE, 0);
 				dirtybuffer[i] = 1;
             }
-
-			osd_mark_dirty(r.min_x, r.min_y, r.max_x, r.max_y, 1);
         }
     }
 }
@@ -323,7 +313,7 @@ void kaypro_vh_screenrefresh(struct osd_bitmap * bitmap, int full_refresh)
  ******************************************************/
 static void kaypro_bell(void)
 {
-	osd_play_sample(channel, bell, BELL_SIZE, 22050, 255, 0);
+	//osd_play_sample(channel, bell, BELL_SIZE, 22050, 255, 0);
 }
 
 /******************************************************
@@ -331,7 +321,7 @@ static void kaypro_bell(void)
  ******************************************************/
 static void kaypro_click(void)
 {
-	osd_play_sample(channel, click, CLICK_SIZE, 22050, 140, 0);
+	//osd_play_sample(channel, click, CLICK_SIZE, 22050, 140, 0);
 }
 
 /******************************************************

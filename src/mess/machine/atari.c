@@ -19,10 +19,8 @@
 
 #define LOG(x) if (errorlog) fprintf x
 
-POKEY   pokey;
-PIA 	pia;
-
-static unsigned char *ROM;
+ATARI_FDC atari_fdc;
+ATARI_PIA atari_pia;
 
 typedef struct {
 	UINT8 *image;		/* malloc'd image */
@@ -39,16 +37,21 @@ typedef struct {
 	int sectors;		/* total sectors, ie. tracks x heads x spt */
 }	DRIVE;
 
-DRIVE	drv[4] = {{0}, };
+static DRIVE drv[4] = {{0}, };
 
-void a800_serial_command(void);
-void a800_serial_write(void);
-void a800_serial_read(void);
+extern void a800_serial_command(void);
+extern void a800_serial_write(void);
+extern void a800_serial_read(void);
 
-int  a800_cart_loaded = 0;
-int  a800_cart_16k = 0;
-int  a800_cart_banked = 0;
-int  a800xl_mode = 0;
+static int atari = 0;
+#define ATARI_5200	0
+#define ATARI_400	1
+#define ATARI_800	2
+#define ATARI_800XL 3
+
+static int a800_cart_loaded = 0;
+static int a800_cart_is_16k = 0;
+
 void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu);
 
 void gtia_reset(void);
@@ -63,31 +66,41 @@ static void add_serin(UINT8 data, int with_checksum);
 
 void a800_setbank(int n)
 {
-	switch (n)
+	UINT8 *mem = memory_region(REGION_CPU1);
+    switch (n)
     {
         case 1:
-			cpu_setbankhandler_r(2, MRA_BANK1);
-			cpu_setbankhandler_w(2, MWA_ROM);
-			cpu_setbank(1, memory_region(REGION_CPU1)+0x10000);
+			cpu_setbankhandler_r(1, MRA_BANK1);
+			cpu_setbankhandler_w(1, MWA_ROM);
+			cpu_setbank(1, &mem[0x10000]);
 			break;
 		case 2:
-			cpu_setbankhandler_r(2, MRA_BANK1);
-			cpu_setbankhandler_w(2, MWA_ROM);
-			cpu_setbank(1, memory_region(REGION_CPU1)+0x12000);
+			cpu_setbankhandler_r(1, MRA_BANK1);
+			cpu_setbankhandler_w(1, MWA_ROM);
+			cpu_setbank(1, &mem[0x12000]);
             break;
 		default:
-			cpu_setbankhandler_r(2, MRA_RAM);
-			cpu_setbankhandler_w(2, MWA_RAM);
-			cpu_setbank(1, memory_region(REGION_CPU1)+0x0a000);
+			if( atari <= ATARI_400 )
+			{
+				/* Atari 400 has no RAM here, so install the NOP handler */
+				cpu_setbankhandler_r(1, MRA_NOP);
+				cpu_setbankhandler_w(1, MWA_NOP);
+			}
+			else
+			{
+				cpu_setbankhandler_r(1, MRA_RAM);
+				cpu_setbankhandler_w(1, MWA_RAM);
+            }
+			cpu_setbank(1, &mem[0x0a000]);
             break;
     }
 }
 
-void a800_init_machine(void)
+void a400_init_machine(void)
 {
 	int i;
 
-	a800xl_mode = 0;
+	atari = ATARI_400;
 
     gtia_reset();
 	pokey_reset();
@@ -95,7 +108,24 @@ void a800_init_machine(void)
 	antic_reset();
 
     if( a800_cart_loaded )
-		a800_setbank( 1 );
+		a800_setbank(1);
+	for( i = 0; i < 4; i ++ )
+		drv[i].image = NULL;
+}
+
+void a800_init_machine(void)
+{
+	int i;
+
+	atari = ATARI_800;
+
+    gtia_reset();
+	pokey_reset();
+	atari_pia_reset();
+	antic_reset();
+
+    if( a800_cart_loaded )
+		a800_setbank(1);
 	for( i = 0; i < 4; i ++ )
 		drv[i].image = NULL;
 }
@@ -106,12 +136,20 @@ int a800_floppy_init(int id, const char *name)
 	return 0;
 }
 
+void a800_floppy_exit(int id)
+{
+	if( drv[id].image )
+		free(drv[id].image);
+	drv[id].image = NULL;
+	drv[id].name = NULL;
+}
+
 int a800_load_rom(int id, const char *name)
 {
+	UINT8 *mem = memory_region(REGION_CPU1);
 	const char *filename;
     void *file;
 	int size;
-	ROM = memory_region(REGION_CPU1);
 
 	/* load an optional monitor.rom */
 	filename = "monitor.rom";
@@ -119,7 +157,7 @@ int a800_load_rom(int id, const char *name)
 	if (file)
 	{
 		LOG((errorlog,"%s loading optional image '%s' to C000-CFFF\n", Machine->gamedrv->name, filename));
-		size = osd_fread(file, ROM + 0xc000, 0x1000);
+		size = osd_fread(file, &mem[0xc000], 0x1000);
 		osd_fclose(file);
 	}
 	else
@@ -127,38 +165,38 @@ int a800_load_rom(int id, const char *name)
 		LOG((errorlog,"%s optional image '%s' not found\n", Machine->gamedrv->name, filename));
 	}
 
-    /* load an optional (dual) cartidge (e.g. basic.rom) */
-	if( strlen(name) )
+	/* load an optional (dual) cartridge (e.g. basic.rom) */
+	if( name && strlen(name) )
 	{
 		filename = name;
 		file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_R, 0);
 		if( file )
 		{
-			if( id )
+			if( id > 0 )
 			{
-				size = osd_fread(file, ROM + 0x12000, 0x2000);
-				a800_cart_16k = (size == 0x2000);
+				size = osd_fread(file, &mem[0x12000], 0x2000);
+				a800_cart_is_16k = (size == 0x2000);
 				osd_fclose(file);
 				LOG((errorlog,"%s loaded right cartridge '%s' size 16K\n", Machine->gamedrv->name, filename));
             }
 			else
 			{
-				size = osd_fread(file, ROM + 0x10000, 0x2000);
-				a800_cart_loaded = size / 0x2000;
-				size = osd_fread(file, ROM + 0x12000, 0x2000);
-				a800_cart_16k = size / 0x2000;
+				size = osd_fread(file, &mem[0x10000], 0x2000);
+				a800_cart_loaded = size > 0x0000;
+				size = osd_fread(file, &mem[0x12000], 0x2000);
+				a800_cart_is_16k = size > 0x2000;
 				osd_fclose(file);
-				LOG((errorlog,"%s loaded left cartridge '%s' size %s\n", Machine->gamedrv->name, filename, (a800_cart_16k) ? "16K":"8K"));
+				LOG((errorlog,"%s loaded left cartridge '%s' size %s\n", Machine->gamedrv->name, filename, (a800_cart_is_16k) ? "16K":"8K"));
 			}
 			if( a800_cart_loaded )
-				a800_setbank( 1 );
+				a800_setbank(1);
         }
 		else
 		{
 			LOG((errorlog,"%s cartridge '%s' not found\n", Machine->gamedrv->name, filename));
 		}
 	}
-	return 0;
+	return INIT_OK;
 }
 
 int a800_id_rom(const char *name, const char *gamename)
@@ -176,33 +214,32 @@ void a800xl_init_machine(void)
 {
 	int i;
 
-	a800xl_mode = 1;
+	atari = ATARI_800XL;
 
     gtia_reset();
 	pokey_reset();
 	atari_pia_reset();
 	antic_reset();
+    a800xl_mmu(atari_pia.w.pbout, atari_pia.w.pbout);
 
 	for( i = 0; i < 4; i ++ )
 		drv[i].image = NULL;
+
 }
 
 
-int a800xl_load_rom(int id, const char *rom_name)
+int a800xl_load_rom(int id, const char *name)
 {
+	UINT8 *mem = memory_region(REGION_CPU1);
     static char filename[200];
     void *file;
     unsigned size;
-
-    memcpy(ROM + 0x0c000, ROM + 0x10000, 0x01000);
-	memcpy(ROM + 0x05000, ROM + 0x11000, 0x00800);
-	memcpy(ROM + 0x0d800, ROM + 0x11800, 0x02800);
 
 	sprintf(filename, "basic.rom");
 	file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_ROM, 0);
 	if( file )
     {
-		size = osd_fread(file, ROM + 0x14000, 0x2000);
+		size = osd_fread(file, &mem[0x14000], 0x2000);
         osd_fclose(file);
 		if( size < 0x2000 )
 		{
@@ -212,21 +249,19 @@ int a800xl_load_rom(int id, const char *rom_name)
 	}
 
     /* load an optional (dual) cartidge (e.g. basic.rom) */
-	if( strlen(rom_name) )
+	if( name && strlen(name) )
     {
-		strcpy(filename, rom_name);
+		strcpy(filename, name);
         file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_R, 0);
         if( file )
         {
-			size = osd_fread(file, ROM + 0x14000, 0x2000);
+			size = osd_fread(file, &mem[0x14000], 0x2000);
             a800_cart_loaded = size / 0x2000;
-			size = osd_fread(file, ROM + 0x16000, 0x2000);
-			a800_cart_16k = size / 0x2000;
+			size = osd_fread(file, &mem[0x16000], 0x2000);
+			a800_cart_is_16k = size / 0x2000;
             osd_fclose(file);
             LOG((errorlog,"%s loaded cartridge '%s' size %s\n",
-                Machine->gamedrv->name,
-                filename,
-				(a800_cart_16k) ? "16K":"8K"));
+				Machine->gamedrv->name, filename, (a800_cart_is_16k) ? "16K":"8K"));
         }
         else
         {
@@ -234,7 +269,7 @@ int a800xl_load_rom(int id, const char *rom_name)
         }
     }
 
-    return 0;
+	return INIT_OK;
 }
 
 int a800xl_id_rom(const char *name, const char *gamename)
@@ -250,36 +285,37 @@ int a800xl_id_rom(const char *name, const char *gamename)
 
 void a5200_init_machine(void)
 {
-	gtia_reset();
+	atari = ATARI_5200;
+    gtia_reset();
 	pokey_reset();
 	antic_reset();
 }
 
-int a5200_load_rom(int id, const char *rom_name)
+int a5200_load_rom(int id, const char *name)
 {
-	static char filename[200];
+	UINT8 *mem = memory_region(REGION_CPU1);
+    static char filename[200];
 	void *file;
 	int size;
-	ROM = memory_region(REGION_CPU1);
 
 	/* load an optional (dual) cartidge */
-	if( strlen(rom_name) )
+	if( name && strlen(name) )
 	{
-		strcpy(filename, rom_name);
+		strcpy(filename, name);
 		file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_R, 0);
 		if (file)
 		{
-			size = osd_fread(file, ROM + 0x4000, 0x8000);
+			size = osd_fread(file, &mem[0x4000], 0x8000);
             osd_fclose(file);
 			/* move it into upper memory */
 			if (size < 0x8000)
 			{
-				memcpy(ROM + 0x8000, ROM + 0x6000, 0x1000);
-				memcpy(ROM + 0xa000, ROM + 0x6000, 0x1000);
-				memcpy(ROM + 0x9000, ROM + 0x7000, 0x1000);
-				memcpy(ROM + 0xb000, ROM + 0x7000, 0x1000);
-				memcpy(ROM + 0x6000, ROM + 0x4000, 0x1000);
-				memcpy(ROM + 0x7000, ROM + 0x5000, 0x1000);
+				memcpy(&mem[0x8000], &mem[0x6000], 0x1000);
+				memcpy(&mem[0xa000], &mem[0x6000], 0x1000);
+				memcpy(&mem[0x9000], &mem[0x7000], 0x1000);
+				memcpy(&mem[0xb000], &mem[0x7000], 0x1000);
+				memcpy(&mem[0x6000], &mem[0x4000], 0x1000);
+				memcpy(&mem[0x7000], &mem[0x5000], 0x1000);
 			}
 			LOG((errorlog,"%s loaded cartridge '%s' size %dK\n",
 				Machine->gamedrv->name, filename, size/1024));
@@ -289,7 +325,7 @@ int a5200_load_rom(int id, const char *rom_name)
 			LOG((errorlog,"%s %s not found\n", Machine->gamedrv->name, filename));
 		}
 	}
-	return 0;
+	return INIT_OK;
 }
 
 int a5200_id_rom(const char *name, const char *gamename)
@@ -391,7 +427,7 @@ static  xfd_format xfd_formats[] = {
  *****************************************************************************/
 static void open_floppy(int drive)
 {
-#define MAXSIZE 2880 * 256 + 80
+#define MAXSIZE 5760 * 256 + 80
 	char * ext;
 	UINT8 * image;
 	void * file;
@@ -620,30 +656,30 @@ UINT8 new;
 
 static  void clr_serout(int expect_data)
 {
-    pokey.serout_chksum = 0;
-    pokey.serout_offs = 0;
-    pokey.serout_count = expect_data + 1;
+	atari_fdc.serout_chksum = 0;
+	atari_fdc.serout_offs = 0;
+	atari_fdc.serout_count = expect_data + 1;
 }
 
 static  void add_serout(int expect_data)
 {
-    pokey.serout_chksum = 0;
-    pokey.serout_count = expect_data + 1;
+	atari_fdc.serout_chksum = 0;
+	atari_fdc.serout_count = expect_data + 1;
 }
 
 static	void clr_serin(int ser_delay)
 {
-    pokey.serin_chksum = 0;
-    pokey.serin_offs = 0;
-    pokey.serin_count = 0;
+	atari_fdc.serin_chksum = 0;
+	atari_fdc.serin_offs = 0;
+	atari_fdc.serin_count = 0;
 	pokey1_serin_ready(ser_delay * 40);
 }
 
 static  void add_serin(UINT8 data, int with_checksum)
 {
-    pokey.serin_buff[pokey.serin_count++] = data;
+	atari_fdc.serin_buff[atari_fdc.serin_count++] = data;
     if (with_checksum)
-        make_chksum(&pokey.serin_chksum, data);
+		make_chksum(&atari_fdc.serin_chksum, data);
 }
 
 /*****************************************************************************
@@ -706,7 +742,7 @@ void a800_serial_command(void)
 {
 	int  i, drive, sector, offset;
 
-	if( !pokey.serout_offs )
+	if( !atari_fdc.serout_offs )
     {
 #if VERBOSE_SERIAL
 	LOG((errorlog,"atari serout command offset = 0\n"));
@@ -716,16 +752,16 @@ void a800_serial_command(void)
     clr_serin(10);
 #if VERBOSE_SERIAL
 	LOG((errorlog,"atari serout command %d: %02X %02X %02X %02X %02X : %02X ",
-        pokey.serout_offs,
-        pokey.serout_buff[0], pokey.serout_buff[1], pokey.serout_buff[2],
-		pokey.serout_buff[3], pokey.serout_buff[4], pokey.serout_chksum));
+		atari_fdc.serout_offs,
+		atari_fdc.serout_buff[0], atari_fdc.serout_buff[1], atari_fdc.serout_buff[2],
+		atari_fdc.serout_buff[3], atari_fdc.serout_buff[4], atari_fdc.serout_chksum));
 #endif
-    if (pokey.serout_chksum == 0)
+	if (atari_fdc.serout_chksum == 0)
     {
 #if VERBOSE_SERIAL
 		LOG((errorlog,"OK\n"));
 #endif
-        drive = pokey.serout_buff[0] - '1';   /* drive # */
+		drive = atari_fdc.serout_buff[0] - '1';   /* drive # */
         open_floppy(drive);
         /* sector # */
         if (drive < 0 || drive > 3)             /* ignore unknown drives */
@@ -735,9 +771,9 @@ void a800_serial_command(void)
         }
 
         /* extract sector number from the command buffer */
-        sector = pokey.serout_buff[2] + 256 * pokey.serout_buff[3];
+		sector = atari_fdc.serout_buff[2] + 256 * atari_fdc.serout_buff[3];
 
-        switch (pokey.serout_buff[1]) /* command ? */
+		switch (atari_fdc.serout_buff[1]) /* command ? */
         {
             case 'S':   /* status */
 #if VERBOSE_SERIAL
@@ -771,7 +807,7 @@ void a800_serial_command(void)
                     add_serin(0x7f,1);  /* door open: 0x7f */
                 add_serin(0xe0,1);  /* dunno */
                 add_serin(0x00,1);  /* dunno */
-                add_serin(pokey.serin_chksum,0);
+				add_serin(atari_fdc.serin_chksum,0);
                 break;
 
             case 'R':   /* read sector */
@@ -800,7 +836,7 @@ void a800_serial_command(void)
 					for (i = 0; i < drv[drive].seclen; i++)
 						add_serin(drv[drive].image[offset++],1);
                 }
-                add_serin(pokey.serin_chksum,0);
+				add_serin(atari_fdc.serin_chksum,0);
                 break;
 
             case 'W':   /* write sector with verify */
@@ -833,7 +869,7 @@ void a800_serial_command(void)
                 add_serin('C',0);   /* completed */
                 for (i = 0; i < 128; i++)
                     add_serin(0,1);
-                add_serin(pokey.serin_chksum,0);
+				add_serin(atari_fdc.serin_chksum,0);
                 break;
 
             case '"':   /* DD format */
@@ -844,12 +880,12 @@ void a800_serial_command(void)
                 add_serin('C',0);   /* completed */
                 for (i = 0; i < 256; i++)
                     add_serin(0,1);
-                add_serin(pokey.serin_chksum,0);
+				add_serin(atari_fdc.serin_chksum,0);
                 break;
 
             default:
 #if VERBOSE_SERIAL
-				LOG((errorlog,"atari unknown command #%c\n", pokey.serout_buff[1]));
+				LOG((errorlog,"atari unknown command #%c\n", atari_fdc.serout_buff[1]));
 #endif
                 add_serin('N',0);   /* negative acknowledge */
         }
@@ -862,7 +898,7 @@ void a800_serial_command(void)
         add_serin('E',0);
     }
 #if VERBOSE_SERIAL
-	LOG((errorlog,"atari %d bytes to read\n", pokey.serin_count));
+	LOG((errorlog,"atari %d bytes to read\n", atari_fdc.serin_count));
 #endif
 }
 
@@ -871,22 +907,22 @@ void a800_serial_write(void)
 int i, drive, sector, offset;
 #if VERBOSE_SERIAL
 	LOG((errorlog,"atari serout %d bytes written : %02X ",
-		pokey.serout_offs, pokey.serout_chksum));
+		atari_fdc.serout_offs, atari_fdc.serout_chksum));
 #endif
     clr_serin(80);
-    if (pokey.serout_chksum == 0)
+	if (atari_fdc.serout_chksum == 0)
     {
 #if VERBOSE_SERIAL
 		LOG((errorlog,"OK\n"));
 #endif
         add_serin('C',0);
         /* write the sector */
-        drive = pokey.serout_buff[0] - '1';   /* drive # */
+		drive = atari_fdc.serout_buff[0] - '1';   /* drive # */
         /* not write protected and image available ? */
 		if (drv[drive].mode && drv[drive].image)
         {
             /* extract sector number from the command buffer */
-            sector = pokey.serout_buff[2] + 256 * pokey.serout_buff[3];
+			sector = atari_fdc.serout_buff[2] + 256 * atari_fdc.serout_buff[3];
             if (sector < 4)     /* sector 1 .. 3 might be different length */
             {
 				offset = (sector - 1) * drv[drive].bseclen + drv[drive].header_skip;
@@ -895,7 +931,7 @@ int i, drive, sector, offset;
 					sector, offset ));
 #endif
                 for (i = 0; i < 128; i++)
-					drv[drive].image[offset++] = pokey.serout_buff[5+i];
+					drv[drive].image[offset++] = atari_fdc.serout_buff[5+i];
             }
             else
             {
@@ -905,7 +941,7 @@ int i, drive, sector, offset;
 					drv[drive].seclen, sector, offset ));
 #endif
 				for (i = 0; i < drv[drive].seclen; i++)
-					drv[drive].image[offset++] = pokey.serout_buff[5+i];
+					drv[drive].image[offset++] = atari_fdc.serout_buff[5+i];
             }
             add_serin('C',0);
         }
@@ -928,54 +964,57 @@ int atari_serin_r(int offset)
 	int data = 0x00;
 	int ser_delay = 0;
 
-	if (pokey.serin_count)
+	if (atari_fdc.serin_count)
 	{
-		data = pokey.serin_buff[pokey.serin_offs];
+		data = atari_fdc.serin_buff[atari_fdc.serin_offs];
 		ser_delay = 2 * 40;
-		if (pokey.serin_offs < 3)
+		if (atari_fdc.serin_offs < 3)
 		{
 			ser_delay = 4 * 40;
-			if (pokey.serin_offs < 2)
+			if (atari_fdc.serin_offs < 2)
 				ser_delay = 200 * 40;
 		}
-		pokey.serin_offs++;
-		if (--pokey.serin_count == 0)
-			pokey.serin_offs = 0;
+		atari_fdc.serin_offs++;
+		if (--atari_fdc.serin_count == 0)
+			atari_fdc.serin_offs = 0;
 		else
 			pokey1_serin_ready(ser_delay);
     }
 #if VERBOSE_SERIAL
-	LOG((errorlog,"atari serin[$%04x] -> $%02x; delay %d\n", pokey.serin_offs, data, ser_delay));
+	LOG((errorlog,"atari serin[$%04x] -> $%02x; delay %d\n", atari_fdc.serin_offs, data, ser_delay));
 #endif
     return data;
 }
 
-void    atari_serout_w(int offset, int data)
+void atari_serout_w(int offset, int data)
 {
-	if (pokey.serout_count)
+	/* ignore serial commands if no floppy image name is specified */
+    if (!drv[0].name)
+		return;
+	if (atari_fdc.serout_count)
 	{
 		/* store data */
-		pokey.serout_buff[pokey.serout_offs] = data;
+		atari_fdc.serout_buff[atari_fdc.serout_offs] = data;
 #if VERBOSE_SERIAL
-		LOG((errorlog,"atari serout[$%04x] <- $%02x; count %d\n", pokey.serout_offs, data, pokey.serout_count));
+		LOG((errorlog,"atari serout[$%04x] <- $%02x; count %d\n", atari_fdc.serout_offs, data, atari_fdc.serout_count));
 #endif
-		pokey.serout_offs++;
-		if (--pokey.serout_count == 0)
+		atari_fdc.serout_offs++;
+		if (--atari_fdc.serout_count == 0)
 		{
 			/* exclusive or written checksum with calculated */
-			pokey.serout_chksum ^= data;
+			atari_fdc.serout_chksum ^= data;
 			/* if the attention line is high, this should be data */
-			if (pia.rw.pbctl & 0x08)
+			if (atari_pia.rw.pbctl & 0x08)
                 a800_serial_write();
 		}
 		else
 		{
-			make_chksum(&pokey.serout_chksum, data);
+			make_chksum(&atari_fdc.serout_chksum, data);
 		}
 	}
 }
 
-void    atari_interrupt_cb(int mask)
+void atari_interrupt_cb(int mask)
 {
 	if (errorlog)
 	{
@@ -1002,7 +1041,7 @@ void    atari_interrupt_cb(int mask)
 			fprintf(errorlog, "atari interrupt_cb TIMR1\n");
 #endif
 	}
-	cpu_cause_interrupt(0, M6502_INT_IRQ);
+	cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 /**************************************************************
@@ -1016,15 +1055,15 @@ int MRA_PIA(int offset)
     switch (offset & 3)
     {
         case 0: /* PIA port A */
-            pia.r.painp = input_port_1_r(0);
-            return (pia.w.paout & pia.h.pamsk) | (pia.r.painp & ~pia.h.pamsk);
+			atari_pia.r.painp = input_port_1_r(0);
+			return (atari_pia.w.paout & atari_pia.h.pamsk) | (atari_pia.r.painp & ~atari_pia.h.pamsk);
         case 1: /* PIA port B */
-            pia.r.pbinp = input_port_2_r(0);
-            return (pia.w.pbout & pia.h.pbmsk) | (pia.r.pbinp & ~pia.h.pbmsk);
+			atari_pia.r.pbinp = input_port_2_r(0);
+			return (atari_pia.w.pbout & atari_pia.h.pbmsk) | (atari_pia.r.pbinp & ~atari_pia.h.pbmsk);
         case 2: /* PIA port A control */
-            return pia.rw.pactl;
+			return atari_pia.rw.pactl;
         case 3: /* PIA port B control */
-            return pia.rw.pbctl;
+			return atari_pia.rw.pbctl;
     }
     return 0xff;
 }
@@ -1040,40 +1079,40 @@ void MWA_PIA(int offset, int data)
     switch (offset & 3)
     {
 		case 0: /* PIA port A */
-			if (pia.rw.pactl & 0x04)
-				pia.w.paout = data;   /* output */
+			if (atari_pia.rw.pactl & 0x04)
+				atari_pia.w.paout = data;	/* output */
             else
-				pia.h.pamsk = data;   /* mask register */
+				atari_pia.h.pamsk = data;	/* mask register */
             break;
 		case 1: /* PIA port B */
-			if( pia.rw.pbctl & 0x04 )
+			if( atari_pia.rw.pbctl & 0x04 )
             {
-				if( a800xl_mode )
-					a800xl_mmu(pia.w.pbout, data);
-				pia.w.pbout = data;   /* output */
+				if( atari == ATARI_800XL )
+					a800xl_mmu(atari_pia.w.pbout, data);
+				atari_pia.w.pbout = data;	/* output */
             }
             else
             {
-				pia.h.pbmsk = data;   /* 400/800 mode mask register */
+				atari_pia.h.pbmsk = data;	/* 400/800 mode mask register */
             }
             break;
 		case 2: /* PIA port A control */
-			pia.rw.pactl = data;
+			atari_pia.rw.pactl = data;
             break;
 		case 3: /* PIA port B control */
-			if( (pia.rw.pbctl ^ data) & 0x08 )	/* serial attention change ? */
+			if( (atari_pia.rw.pbctl ^ data) & 0x08 )  /* serial attention change ? */
 			{
-				if( pia.rw.pbctl & 0x08 )		/* serial attention before ? */
+				if( atari_pia.rw.pbctl & 0x08 ) 	  /* serial attention before ? */
 				{
 					clr_serout(4);				/* expect 4 command bytes + checksum */
 				}
 				else
 				{
-					pokey.serin_delay = 0;
+					atari_fdc.serin_delay = 0;
 					a800_serial_command();
 				}
 			}
-			pia.rw.pbctl = data;
+			atari_pia.rw.pbctl = data;
             break;
     }
 }
@@ -1109,20 +1148,20 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 			LOG((errorlog,"%s MMU BIOS ROM\n", Machine->gamedrv->name));
 			cpu_setbankhandler_r(3, MRA_BANK3);
 			cpu_setbankhandler_w(3, MWA_ROM);
-            cpu_setbank(3, memory_region(REGION_CPU1)+0x10000);  /* 0x1000 bytes */
+			cpu_setbank(3, memory_region(REGION_CPU1)+0x14000);  /* 8K lo BIOS */
 			cpu_setbankhandler_r(4, MRA_BANK4);
 			cpu_setbankhandler_w(4, MWA_ROM);
-            cpu_setbank(4, memory_region(REGION_CPU1)+0x11800);  /* 0x2800 bytes */
+			cpu_setbank(4, memory_region(REGION_CPU1)+0x15800);  /* 4K FP ROM + 8K hi BIOS */
         }
 		else
 		{
 			LOG((errorlog,"%s MMU BIOS RAM\n", Machine->gamedrv->name));
             cpu_setbankhandler_r(3, MRA_RAM);
 			cpu_setbankhandler_w(3, MWA_RAM);
-            cpu_setbank(3, memory_region(REGION_CPU1)+0x0c000);  /* 0x1000 bytes */
+			cpu_setbank(3, memory_region(REGION_CPU1)+0x0c000);  /* 8K RAM */
 			cpu_setbankhandler_r(4, MRA_RAM);
 			cpu_setbankhandler_w(4, MWA_RAM);
-            cpu_setbank(4, memory_region(REGION_CPU1)+0x0d800);  /* 0x2800 bytes */
+			cpu_setbank(4, memory_region(REGION_CPU1)+0x0d800);  /* 4K RAM + 8K RAM */
         }
 	}
 	/* check if BASIC changed */
@@ -1131,16 +1170,16 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 		if( new_mmu & 0x02 )
         {
 			LOG((errorlog,"%s MMU BASIC RAM\n", Machine->gamedrv->name));
-            cpu_setbankhandler_r(2, MRA_RAM);
-            cpu_setbankhandler_w(2, MWA_RAM);
-            cpu_setbank(2, memory_region(REGION_CPU1)+0x0a000);  /* 0x2000 bytes */
+			cpu_setbankhandler_r(1, MRA_RAM);
+			cpu_setbankhandler_w(1, MWA_RAM);
+			cpu_setbank(1, memory_region(REGION_CPU1)+0x0a000);  /* 8K RAM */
         }
 		else
 		{
 			LOG((errorlog,"%s MMU BASIC ROM\n", Machine->gamedrv->name));
-            cpu_setbankhandler_r(2, MRA_BANK2);
-            cpu_setbankhandler_w(2, MWA_ROM);
-            cpu_setbank(2, memory_region(REGION_CPU1)+0x14000);  /* 0x2000 bytes */
+			cpu_setbankhandler_r(1, MRA_BANK2);
+			cpu_setbankhandler_w(1, MWA_ROM);
+			cpu_setbank(1, memory_region(REGION_CPU1)+0x10000);  /* 8K BASIC */
 		}
     }
 	/* check if self-test ROM changed */
@@ -1149,16 +1188,16 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 		if( new_mmu & 0x80 )
         {
 			LOG((errorlog,"%s MMU SELFTEST RAM\n", Machine->gamedrv->name));
-            cpu_setbankhandler_r(1, MRA_RAM);
-            cpu_setbankhandler_w(1, MWA_RAM);
-            cpu_setbank(1, memory_region(REGION_CPU1)+0x05000);  /* 0x0800 bytes */
+			cpu_setbankhandler_r(2, MRA_RAM);
+			cpu_setbankhandler_w(2, MWA_RAM);
+			cpu_setbank(2, memory_region(REGION_CPU1)+0x05000);  /* 0x0800 bytes */
         }
 		else
 		{
 			LOG((errorlog,"%s MMU SELFTEST ROM\n", Machine->gamedrv->name));
-            cpu_setbankhandler_r(1, MRA_BANK1);
-            cpu_setbankhandler_w(1, MWA_ROM);
-            cpu_setbank(1, memory_region(REGION_CPU1)+0x11000);  /* 0x0800 bytes */
+			cpu_setbankhandler_r(2, MRA_BANK1);
+			cpu_setbankhandler_w(2, MWA_ROM);
+			cpu_setbank(2, memory_region(REGION_CPU1)+0x15000);  /* 0x0800 bytes */
         }
     }
 }

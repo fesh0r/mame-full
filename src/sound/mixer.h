@@ -72,6 +72,7 @@ void mixer_play_streamed_sample_16(int channel,INT16 *data,int len,int freq);
 /* private functions for user interface only - don't call them from drivers! */
 void mixer_set_mixing_level(int channel,int level);
 int mixer_get_mixing_level(int level);
+int mixer_get_default_mixing_level(int level);
 
 void mixer_read_config(void *f);
 void mixer_write_config(void *f);

@@ -93,6 +93,7 @@ typedef struct {
 	UINT8	heads;					/* maximum # of heads */
 	UINT8	density;				/* FM/MFM, single / double density */
 	UINT16	offset; 				/* track 0 offset */
+        UINT8   first_sector_id;                /* id of first sector */
 	UINT8	sec_per_track;			/* sectors per track */
 	UINT16	sector_length;			/* sector length (byte) */
 
@@ -139,7 +140,7 @@ extern void *wd179x_select_drive(UINT8 drive, UINT8 head, void (*callback)(int),
 extern void wd179x_stop_drive(void);
 
 extern void wd179x_read_sectormap(UINT8 drive, UINT8 *tracks, UINT8 *heads, UINT8 *sec_per_track);
-extern void wd179x_set_geometry(UINT8 drive, UINT8 tracks, UINT8 heads, UINT8 sec_per_track, UINT16 sector_length, UINT16 dir_sector, UINT16 dir_length);
+extern void wd179x_set_geometry(UINT8 drive, UINT8 tracks, UINT8 heads, UINT8 sec_per_track, UINT16 sector_length, UINT16 dir_sector, UINT16 dir_length, UINT8 first_sector_id);
 
 extern void wd179x_command_w(int offset, int data);
 extern void wd179x_track_w(int offset, int data);

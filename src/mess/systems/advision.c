@@ -32,7 +32,6 @@ extern void advision_vh_init_palette(unsigned char *game_palette, unsigned short
 
 /* machine/advision.c */
 extern void advision_init_machine(void);
-extern void advision_stop_machine(void);
 extern int advision_id_rom (const char *name, const char *gamename);
 extern int advision_load_rom (int id, const char *rom_name);
 extern int advision_MAINRAM_r(int offset);
@@ -48,13 +47,15 @@ static struct MemoryReadAddress readmem[] =
 {
     { 0x0000, 0x03FF,  MRA_BANK1 },
     { 0x0400, 0x0fff,  MRA_ROM },
+	{ 0x2000, 0x23ff,  MRA_RAM },	/* MAINRAM four banks */
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
     { 0x0000, 0x0fff, MWA_ROM },
-	{ -1 }  /* end of table */
+	{ 0x2000, 0x23ff, MWA_RAM },	/* MAINRAM four banks */
+    { -1 }  /* end of table */
 };
 
 static struct IOReadPort readport[] =
@@ -88,11 +89,6 @@ INPUT_PORTS_START( advision )
     PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT)
 INPUT_PORTS_END
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ -1 } /* end of array */
-};
-
 static struct MachineDriver machine_driver_advision =
 {
 	/* basic machine hardware */
@@ -101,19 +97,19 @@ static struct MachineDriver machine_driver_advision =
             CPU_I8048,
             14000000/15,
             readmem,writemem,readport,writeport,
-            ignore_interrupt,0
+			ignore_interrupt,1
 		}
 	},
-    15, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	8*15, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
-    advision_init_machine, /* init_machine */
-    advision_stop_machine, /* stop_machine */
+	advision_init_machine,	/* init_machine */
+	0,						/* stop_machine */
 
 	/* video hardware */
-    320,200, {0,319,0,199},
-	gfxdecodeinfo,
-	4,
-	8,
+	320,200, {0,320-1,0,200-1},
+	NULL,
+	(8+2)*3,
+	8*2,
 	advision_vh_init_palette,
 
 	VIDEO_TYPE_RASTER,
@@ -128,7 +124,7 @@ static struct MachineDriver machine_driver_advision =
 
 
 ROM_START (advision)
-    ROM_REGIONX(0x1400,REGION_CPU1)
+	ROM_REGION(0x2800,REGION_CPU1)
     ROM_LOAD ("avbios.rom", 0x1000, 0x400, 0x279e33d1)
 ROM_END
 
@@ -155,6 +151,5 @@ static const struct IODevice io_advision[] = {
 };
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-//CONS( 1979, advision, 0,		advision, advision,	0,		  "Entex",  "Adventurevision" )
 CONSX( 1979, advision, 0,		advision, advision,	0,		  "Entex",  "Adventurevision", GAME_NO_SOUND )
 

@@ -12,115 +12,35 @@
 /* point to memory mapped IO, the result is different from a real machine */
 #define ACCURATE_ANTIC_READMEM	1
 
-/* Enable this if you want to see screen data outside of */
-/* the normally visible rectangle (for debugging purposes) */
-#define SHOW_EVERY_SCREEN_BIT   0
 
-/* Enable this if you want per scan line optimizations (reduce amount of redrawn lines) */
-#define OPTIMIZE				1
+#define CYCLES_PER_LINE 114 	/* total number of cpu cycles per scanline (incl. hblank) */
+#define CYCLES_REFRESH	9		/* number of cycles lost for ANTICs RAM refresh using DMA */
+#define CYCLES_HSTART	32		/* where does the ANTIC DMA fetch start */
+#define CYCLES_DLI_NMI	7		/* number of cycles until the CPU recognizes a DLI */
+#define CYCLES_HSYNC	104 	/* where does the HSYNC position of a scanline start */
 
-/* Enable this if you want to see which lines change and */
-/* which don't (scrolling dots at the left side of the screen) */
-#define OPTIMIZE_VISIBLE		0
+#define VBL_END 		8		/* vblank ends in this scanline */
+#define VDATA_START 	12		/* video display begins in this scanline */
+#define VDATA_END		244 	/* video display ends in this scanline */
+#define VBL_START		248 	/* vblank starts in this scanline */
 
-/*************************************************************************
- * Some calculations concerning the Atari 800 NTSC video signal timings:
- * ----------------------------------------------------------------------
- * An Atari 800 has 228 'color clocks' per scanline, but only 176 of
- * them are visible due to the limited overscan range of normal TV sets.
- * That is 44 characters with 4 color clocks (= 8 pixels) each.
- *
- * Drawing the entire screen takes 16,684 microseconds.
- * This is equal to 59.9376 Hz; very close to 60 Hz (what we use here).
- * A single scanline takes 64 microseconds (15.625 kHz) to go through
- * the 228 color clocks. The 6502 CPU clock is derived from the color
- * clock divided by two, so there are 114 CPU clock cycles per scanline.
- * During 9 clock cycles per scanline the CPU is halted by ANTIC to
- * to allow DMA DRAM refresh. The horizontal blank has a duration of
- * 14 microseconds. This is close to 25 cpu cycles per scanline.
- *
- *	   A detailed graph will hopefully make the timings more clear:
- *	   (Right now it's not even clear to myself - but I'm working on it ;)
- *
- *    #0                                                             #113
- *	   |			  entire scanline takes 64 microseconds 			|
- *	   |<------------------------ 114clks ----------------------------->|
- *	   |		   9 clks lost due to ANTICs DMA RAM refresh			|
- *	   |		  [1]  [2]	 [3]  [4]  [5]	[6]  [7]  [8]  [9]			|
- *	   |																|
- *	   |			  BIOS DLI srvc 									|
- *	   |			#22 		 #33									|
- *	   |			  |<- 11clks ->|									|
- *	   |		   DLI NMI		   |									|
- *	   |<-- 22clks -->| 		   |									|
- *	   |		#15   | 		   |					  #103			|
- *	-->|  HBLANK  |   | 		   |	  DLI phase one 	 |	HBLANK	|-->
- *	   |<-15clks->|   | 		   |<------ 21-62 clks ----->|<-10clks->|
- *	   +----------+>--+------------+-------------------------+----------+
- *	   |		  |<----------- max. 80 clks --------------->|
- *	   |		  | 	  ANTIC fetching video data 		 | DLI phase two -->
- *	   |		  | 		   [ 0 - 48 clks ]				 |	max 24 clks
- *	   |		  |-7-> 									 |
- *	   |		DLI NMI 									 |
- *	   |													 |
- *	   ANTIC scanline DMA									 WSYNC reset
- *	   [0 - 8 cycles lost]									 CPU continues
- *	   1 clk per command
- *	   2 clks if LMS is set
- *	   1 clk for missile graphics
- *	   4 clks for player graphics
- *
- * The first 8 scanlines are invisible, because they occur during
- * vertical blank. Another 4 scanlines are invisible due to overscan.
- * Scanline 12 to 244 are the maximum visible scanlines.
- * VBLANK starts in scanline 248 and lasts until line 260 and after the
- * electron beam returned to line 0 for another 8 scan lines.
- *
- * The need to do 261 scanlines was derived from tests with a Jumpman
- * boot disc and it's attract mode, which seems to use the VBL timing
- * in relation to the POKEY timers to coordinate music and animation.
- *************************************************************************/
-
-/* total number of cpu cycles per scanline (incl. hblank) */
-#define CYCLES_PER_LINE 114
-/* number of cycles lost for ANTICs RAM refresh using DMA */
-#define CYCLES_REFRESH	9
-/* where does the actual line drawing start */
-#define CYCLES_HSTART	15
-/* number of cycles until the CPU recognizes a DLI */
-#define CYCLES_DLI_NMI	7
-/* where does the HSYNC position of a scanline start */
-#define CYCLES_HSYNC	(CYCLES_PER_LINE-CYCLES_HSTART)
-
-/* vblank ends in this scanline */
-#define VBL_END         8
-/* video display begins in this scanline */
-#define VDATA_START     12
-/* video display ends in this scanline */
-#define VDATA_END       244
-/* vblank starts in this scanline */
-#define VBL_START       248
 /* total number of lines per frame (incl. vblank) */
-#define TOTAL_LINES 	260
+#define TOTAL_LINES_60HZ 262
+#define TOTAL_LINES_50HZ 312
 
-/* frame rate: above timing is for NTSC 60Hz display */
-#define FRAME_RATE		60
-
-/* The real CPU clock */
-#define CPU_EXACT		1789790
-
-/* calculate our CPU clock */
-#define CPU_APPROX		FRAME_RATE * TOTAL_LINES * CYCLES_PER_LINE
-
-/* caclulate vertical blank duration; this also catches minor */
-/* deviations from the real CYCLES_PER_LINE and TOTAL_LINES values */
-#define VBL_DURATION	(TOTAL_LINES - VBL_START + VBL_END) * CYCLES_PER_LINE
+/* frame rates */
+#define FRAME_RATE_50HZ 50.32304
+#define FRAME_RATE_60HZ 59.92333
 
 #define HWIDTH			48		/* total characters per line */
 #define HCHARS			44		/* visible characters per line */
 #define VHEIGHT 		32
 #define VCHARS			(VDATA_END-VDATA_START+7)/8
 #define BUF_OFFS0		(HWIDTH-HCHARS)/2
+#define MIN_X			((HWIDTH-42)/2)*8
+#define MAX_X			MIN_X+42*8-1
+#define MIN_Y			VDATA_START
+#define MAX_Y			VDATA_END-1
 
 #define PMOFFSET		32		/* # of pixels to adjust p/m hpos */
 
@@ -276,7 +196,7 @@ typedef struct {
 	UINT8	but1;		/* d011 button stick 1 */
 	UINT8	but2;		/* d012 button stick 2 */
 	UINT8	but3;		/* d013 button stick 3 */
-	UINT8	gtia14; 	/* d014 nothing */
+	UINT8	pal;		/* d014 PAL/NTSC config (D3,2,1 0=PAL, 1=NTSC */
 	UINT8	gtia15; 	/* d015 nothing */
 	UINT8	gtia16; 	/* d016 nothing */
 	UINT8	gtia17; 	/* d017 nothing */
@@ -412,40 +332,33 @@ typedef struct {
 /* per scanline buffer for video data (and optimization variables) */
 typedef struct {
     int     cmd;                /* antic command for this scanline */
-#if OPTIMIZE
-    int     dirty;              /* line is dirty flag */
-    ANTIC_W antic_w;            /* ANTIC write registers */
-    GTIA_H  gtia_h;             /* GTIA helper variables */
-	GTIA_W	gtia_w; 			/* GTIA write registers */
-	GTIA_R	gtia_r; 			/* GTIA read registers */
-#endif
     UINT16  data[HWIDTH];       /* graphics data buffer (text through chargen) */
 }   VIDEO;
 
 typedef struct {
-	int 	cmd;				/* currently executed display list command */
-	int 	scanline;			/* current scan line */
-    int     modelines;          /* number of lines for current ANTIC mode */
-	int 	pfwidth;			/* playfield width */
-	int 	steal_cycles;		/* steal how many cpu cycles for this line ? */
-	int 	vscrol_old; 		/* old vscrol value */
-	int 	hscrol_old; 		/* old hscrol value */
-	int 	dpage;				/* display list address page */
-	int 	doffs;				/* display list offset into page */
-	int 	vpage;				/* video data source page */
-	int 	voffs;				/* video data offset into page */
-    int     pmbase_s;           /* p/m graphics single line source base */
-    int     pmbase_d;           /* p/m graphics double line source base */
-	int 	chbase; 			/* character mode source base */
-	int 	chand;				/* character and mask (chactl) */
-	int 	chxor;				/* character xor mask (chactl) */
+	UINT32	cmd;				/* currently executed display list command */
+	UINT32	scanline;			/* current scan line */
+	INT32	modelines;			/* number of lines for current ANTIC mode */
+	UINT32	pfwidth;			/* playfield width */
+	UINT32	vscrol_old; 		/* old vscrol value */
+	UINT32	hscrol_old; 		/* old hscrol value */
+    UINT32  steal_cycles;       /* steal how many cpu cycles for this line ? */
+	UINT32	dpage;				/* display list address page */
+	UINT32	doffs;				/* display list offset into page */
+	UINT32	vpage;				/* video data source page */
+	UINT32	voffs;				/* video data offset into page */
+	UINT32	pmbase_s;			/* p/m graphics single line source base */
+	UINT32	pmbase_d;			/* p/m graphics double line source base */
+	UINT32	chbase; 			/* character mode source base */
+	UINT32	chand;				/* character and mask (chactl) */
+	UINT32	chxor;				/* character xor mask (chactl) */
 	ANTIC_R r;					/* ANTIC read registers */
 	ANTIC_W w;					/* ANTIC write registers */
     UINT8   cclock[256];        /* color clock buffer filled by ANTIC */
 	UINT8	pmbits[256+32]; 	/* player missile buffer filled by GTIA */
 	UINT16	color_lookup[256];	/* color lookup table */
 	UINT8   *prio_table[64]; 	/* player/missile priority tables */
-	VIDEO	*video[TOTAL_LINES];/* video buffer */
+	VIDEO	*video[312];		/* video buffer */
 	UINT32	*cclk_expand;		/* shared buffer for the following: */
 	UINT32  *pf_21;				/* 1cclk 2 color txt 2,3 */
 	UINT32  *pf_x10b;			/* 1cclk 4 color txt 4,5, gfx D,E */
@@ -475,6 +388,7 @@ int atari_vh_start(void);
 void atari_vh_stop(void);
 void atari_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
+int a400_interrupt(void);
 int a800_interrupt(void);
 int a800xl_interrupt(void);
 int a5200_interrupt(void);
@@ -492,525 +406,6 @@ int a5200_interrupt(void);
 #define RDPMGFXS(o) Machine->memory_region[0][antic.pmbase_s+(o)+(antic.scanline>>1)]
 #define RDPMGFXD(o) Machine->memory_region[0][antic.pmbase_d+(o)+antic.scanline]
 #endif
-
-#if OPTIMIZE
-/*****************************************************************************
- * check for relevant changes in ANTIC or GTIA values
- *****************************************************************************/
-
-#define USED_PM_COLORS \
-	(gtia.h.usedp | gtia.h.usedm0 | gtia.h.usedm1 | gtia.h.usedm2 | gtia.h.usedm3)
-
-#define COMPARE_RELEVANT(used_colors) \
-  ( (video->cmd != antic.cmd) || \
-	(video->antic_w.dmactl != antic.w.dmactl) || \
-	(video->antic_w.chactl != antic.w.chactl) || \
-	((antic.cmd & ANTIC_HSCR) && video->antic_w.hscrol != antic.w.hscrol) || \
-	((antic.cmd & ANTIC_VSCR) && video->antic_w.vscrol != antic.w.vscrol) || \
-	(video->gtia_h.hposp0 != gtia.h.hposp0) || \
-	(video->gtia_h.hposp1 != gtia.h.hposp1) || \
-	(video->gtia_h.hposp2 != gtia.h.hposp2) || \
-	(video->gtia_h.hposp3 != gtia.h.hposp3) || \
-	(video->gtia_h.sizep0 != gtia.h.sizep0) || \
-	(video->gtia_h.sizep1 != gtia.h.sizep1) || \
-	(video->gtia_h.sizep2 != gtia.h.sizep2) || \
-	(video->gtia_h.sizep3 != gtia.h.sizep3) || \
-	(video->gtia_h.grafp0 != gtia.h.grafp0) || \
-	(video->gtia_h.grafp1 != gtia.h.grafp1) || \
-	(video->gtia_h.grafp2 != gtia.h.grafp2) || \
-	(video->gtia_h.grafp3 != gtia.h.grafp3) || \
-	(video->gtia_h.hposm0 != gtia.h.hposm0) || \
-	(video->gtia_h.hposm1 != gtia.h.hposm1) || \
-	(video->gtia_h.hposm2 != gtia.h.hposm2) || \
-	(video->gtia_h.hposm3 != gtia.h.hposm3) || \
-	(video->gtia_h.grafm0 != gtia.h.grafm0) || \
-	(video->gtia_h.grafm1 != gtia.h.grafm1) || \
-	(video->gtia_h.grafm2 != gtia.h.grafm2) || \
-	(video->gtia_h.grafm3 != gtia.h.grafm3) || \
-	(video->gtia_h.sizem != gtia.h.sizem) || \
-    ((used_colors & 0x01) && video->gtia_w.colpf0 != gtia.w.colpf0) || \
-	((used_colors & 0x02) && video->gtia_w.colpf1 != gtia.w.colpf1) || \
-	((used_colors & 0x04) && video->gtia_w.colpf2 != gtia.w.colpf2) || \
-	((used_colors & 0x08) && video->gtia_w.colpf3 != gtia.w.colpf3) || \
-	((used_colors & 0x10) && video->gtia_w.colpm0 != gtia.w.colpm0) || \
-    ((used_colors & 0x20) && video->gtia_w.colpm1 != gtia.w.colpm1) || \
-    ((used_colors & 0x40) && video->gtia_w.colpm2 != gtia.w.colpm2) || \
-    ((used_colors & 0x80) && video->gtia_w.colpm3 != gtia.w.colpm3) || \
-	(video->gtia_w.colbk != gtia.w.colbk) || \
-	(video->gtia_w.prior != gtia.w.prior) )
-
-/*****************************************************************************
- * copy relevant ANTIC and GTIA values to scan line buffer
- *****************************************************************************/
-#define UPDATE_RELEVANT \
-	video->dirty = 1; \
-	video->cmd = antic.cmd; \
-	video->antic_w.dmactl = antic.w.dmactl; \
-	video->antic_w.chactl = antic.w.chactl; \
-	video->antic_w.hscrol = antic.w.hscrol; \
-	video->antic_w.vscrol = antic.w.vscrol; \
-	video->gtia_h.hposp0 = gtia.h.hposp0; \
-	video->gtia_h.hposp1 = gtia.h.hposp1; \
-	video->gtia_h.hposp2 = gtia.h.hposp2; \
-	video->gtia_h.hposp3 = gtia.h.hposp3; \
-	video->gtia_h.sizep0 = gtia.h.sizep0; \
-	video->gtia_h.sizep1 = gtia.h.sizep1; \
-	video->gtia_h.sizep2 = gtia.h.sizep2; \
-	video->gtia_h.sizep3 = gtia.h.sizep3; \
-	video->gtia_h.grafp0 = gtia.h.grafp0; \
-	video->gtia_h.grafp1 = gtia.h.grafp1; \
-	video->gtia_h.grafp2 = gtia.h.grafp2; \
-	video->gtia_h.grafp3 = gtia.h.grafp3; \
-	video->gtia_h.hposm0 = gtia.h.hposm0; \
-	video->gtia_h.hposm1 = gtia.h.hposm1; \
-	video->gtia_h.hposm2 = gtia.h.hposm2; \
-	video->gtia_h.hposm3 = gtia.h.hposm3; \
-	video->gtia_h.grafm0 = gtia.h.grafm0; \
-	video->gtia_h.grafm1 = gtia.h.grafm1; \
-	video->gtia_h.grafm2 = gtia.h.grafm2; \
-	video->gtia_h.grafm3 = gtia.h.grafm3; \
-	video->gtia_h.sizem = gtia.h.sizem; \
-	video->gtia_w.colpf0 = gtia.w.colpf0; \
-	video->gtia_w.colpf1 = gtia.w.colpf1; \
-	video->gtia_w.colpf2 = gtia.w.colpf2; \
-	video->gtia_w.colpf3 = gtia.w.colpf3; \
-	video->gtia_w.colpm0 = gtia.w.colpm0; \
-	video->gtia_w.colpm1 = gtia.w.colpm1; \
-	video->gtia_w.colpm2 = gtia.w.colpm2; \
-	video->gtia_w.colpm3 = gtia.w.colpm3; \
-	video->gtia_w.colbk = gtia.w.colbk; \
-	video->gtia_w.prior = gtia.w.prior
-
-#define PREPARE()												\
-	UINT32 *dst = (UINT32 *)&antic.cclock[PMOFFSET];			\
-    UINT8 used_colors = USED_PM_COLORS;                         \
-	if( video->dirty || COMPARE_RELEVANT(used_colors) ) 		\
-	{															\
-		UPDATE_RELEVANT
-
-#define PREPARE_TXT2(width) 									\
-	UINT32 *dst = (UINT32 *)&antic.cclock[PMOFFSET];			\
-    UINT8 used_colors = USED_PM_COLORS;                         \
-	UINT8 dirty = 0;											\
-	int i;														\
-	for( i = 0; i < width; i++ )								\
-	{															\
-		UINT16 ch = RDVIDEO(i) << 3;							\
-		if( ch & 0x400 )										\
-		{														\
-			ch = RDCHGEN((ch & 0x3f8) + antic.w.chbasl);		\
-			ch = (ch ^ antic.chxor) & antic.chand;				\
-		}														\
-		else													\
-		{														\
-			ch = RDCHGEN(ch + antic.w.chbasl);					\
-		}														\
-        used_colors |= antic.uc_21[ch];                         \
-		if( ch != video->data[i] )								\
-		{														\
-			video->data[i] = ch;								\
-			/* translate rest of line without further checks */ \
-			for( ++i; i < width; i++ )							\
-			{													\
-				ch = RDVIDEO(i) << 3;							\
-				if( ch & 0x400 )								\
-				{												\
-					ch = RDCHGEN((ch & 0x3f8) + antic.w.chbasl);\
-					ch = (ch ^ antic.chxor) & antic.chand;		\
-				}												\
-				else											\
-				{												\
-					ch = RDCHGEN(ch + antic.w.chbasl);			\
-				}												\
-				used_colors |= antic.uc_21[ch]; 				\
-                video->data[i] = ch;                            \
-            }                                                   \
-			dirty = 1;											\
-		}														\
-    }                                                           \
-	if( dirty || video->dirty || COMPARE_RELEVANT(used_colors) )\
-	{															\
-		UPDATE_RELEVANT
-
-#define PREPARE_TXT3(width) 									\
-	UINT32 *dst = (UINT32 *)&antic.cclock[PMOFFSET];			\
-    UINT8 used_colors = USED_PM_COLORS;                         \
-	UINT8 dirty = 0;											\
-    int i;                                                      \
-	for( i = 0; i < width; i++ )								\
-	{															\
-		UINT16 ch = RDVIDEO(i) << 3;							\
-		if( ch & 0x400 )										\
-		{														\
-			ch &= 0x3f8;										\
-			if( (ch & 0x300) == 0x300 ) 						\
-			{													\
-				if( antic.w.chbasl < 2 )						\
-					ch = 0x00; /* first two lines are empty */	\
-				else /* lines 2..7 are standard, 8&9 are 0&1 */ \
-					ch = RDCHGEN(ch + (antic.w.chbasl & 7));	\
-			}													\
-			else												\
-			{													\
-				if( antic.w.chbasl > 7 )						\
-					ch = 0x00;	/* last two lines are empty */	\
-				else /* lines 0..7 are standard */				\
-					ch = RDCHGEN(ch + antic.w.chbasl);			\
-			}													\
-            ch = (ch ^ antic.chxor) & antic.chand;              \
-        }                                                       \
-		else													\
-		{														\
-			if( (ch & 0x300) == 0x300 ) 						\
-			{													\
-				if( antic.w.chbasl < 2 )						\
-					ch = 0x00;	/* first two lines are empty */ \
-				else /* lines 2..7 are standard, 8&9 are 0&1 */ \
-					ch = RDCHGEN(ch + (antic.w.chbasl & 7));	\
-			}													\
-			else												\
-			{													\
-				if( antic.w.chbasl > 7 )						\
-					ch = 0x00;	/* last two lines are empty */	\
-				else /* lines 0..7 are standard */				\
-					ch = RDCHGEN(ch + antic.w.chbasl);			\
-            }                                                   \
-		}														\
-        used_colors |= antic.uc_21[ch];                         \
-		if( ch != video->data[i] )								\
-		{														\
-			video->data[i] = ch;								\
-			/* translate rest of line without further checks */ \
-            for( ++i; i < width; i++ )                          \
-			{													\
-				ch = RDVIDEO(i) << 3;							\
-				if( ch & 0x400 )								\
-				{												\
-					ch &= 0x3f8;								\
-					if( (ch & 0x300) == 0x300 ) 				\
-					{											\
-						if( antic.w.chbasl < 2 )				\
-							ch = 0x00; /* first two lines are empty */	\
-						else /* lines 2..7 are standard, 8&9 are 0&1 */ \
-							ch = RDCHGEN(ch + (antic.w.chbasl & 7));	\
-					}											\
-					else										\
-					{											\
-						if( antic.w.chbasl > 7 )				\
-							ch = 0x00;	/* last two lines are empty */	\
-						else /* lines 0..7 are standard */		\
-							ch = RDCHGEN(ch + antic.w.chbasl);	\
-					}											\
-					ch = (ch ^ antic.chxor) & antic.chand;		\
-				}												\
-				else											\
-				{												\
-					if( (ch & 0x300) == 0x300 ) 				\
-					{											\
-						if( antic.w.chbasl < 2 )				\
-							ch = 0x00;	/* first two lines are empty */ \
-						else /* lines 2..7 are standard, 8&9 are 0&1 */ \
-							ch = RDCHGEN(ch + (antic.w.chbasl & 7));	\
-					}											\
-					else										\
-					{											\
-						if( antic.w.chbasl > 7 )				\
-							ch = 0x00;	/* last two lines are empty */	\
-						else /* lines 0..7 are standard */		\
-							ch = RDCHGEN(ch + antic.w.chbasl);	\
-					}											\
-				}												\
-				used_colors |= antic.uc_21[ch]; 				\
-				video->data[i] = ch;							\
-			}													\
-			dirty = 1;											\
-		}														\
-    }                                                           \
-	if( dirty || video->dirty || COMPARE_RELEVANT(used_colors) )\
-	{															\
-		UPDATE_RELEVANT
-
-#define PREPARE_TXT45(width,shift)                              \
-	UINT32 *dst = (UINT32 *)&antic.cclock[PMOFFSET];			\
-    UINT8 used_colors = USED_PM_COLORS;                         \
-	UINT8 dirty = 0;											\
-    int i;                                                      \
-	for( i = 0; i < width; i++ )								\
-	{															\
-		UINT16 ch = RDVIDEO(i) << 3;							\
-		ch = ((ch>>2) & 0x100) | RDCHGEN( (ch&0x3f8) + (antic.w.chbasl >> shift) ); \
-		used_colors |= antic.uc_x10b[ch];						\
-		if( ch != video->data[i] )								\
-		{														\
-			video->data[i] = ch;								\
-			/* translate rest of line without further checks */ \
-            for( ++i; i < width; i++ )                          \
-			{													\
-				ch = RDVIDEO(i) << 3;							\
-				ch = ((ch>>2) & 0x100) | RDCHGEN( (ch&0x3f8) + (antic.w.chbasl >> shift) ); \
-				used_colors |= antic.uc_x10b[ch];				\
-				video->data[i] = ch;							\
-			}													\
-			dirty = 1;											\
-		}														\
-	}															\
-	if( dirty || video->dirty || COMPARE_RELEVANT(used_colors) )\
-	{															\
-		UPDATE_RELEVANT
-
-#define PREPARE_TXT67(width,shift)								\
-	UINT32 *dst = (UINT32 *)&antic.cclock[PMOFFSET];			\
-    UINT8 used_colors = USED_PM_COLORS;                         \
-	UINT8 dirty = 0;											\
-    int i;                                                      \
-	for( i = 0; i < width; i++ )								\
-	{															\
-		UINT16 ch = RDVIDEO(i) << 3;							\
-		ch = (ch & 0x600) | (RDCHGEN((ch & 0x1f8) + (antic.w.chbasl>>shift)) << 1 ); \
-		used_colors |= antic.uc_3210b2[ch]; 					\
-		if( ch != video->data[i] )								\
-		{														\
-			video->data[i] = ch;								\
-			/* translate rest of line without further checks */ \
-            for( ++i; i < width; i++ )                          \
-			{													\
-				ch = RDVIDEO(i) << 3;							\
-				ch = (ch & 0x600) | (RDCHGEN((ch & 0x1f8) + (antic.w.chbasl>>shift)) << 1 ); \
-				used_colors |= antic.uc_3210b2[ch]; 			\
-				video->data[i] = ch;							\
-			}													\
-			dirty = 1;											\
-		}														\
-    }                                                           \
-	if( dirty || video->dirty || COMPARE_RELEVANT(used_colors) )\
-	{															\
-		UPDATE_RELEVANT
-
-#define PREPARE_GFX8(width) 									\
-	UINT32 *dst = (UINT32 *)&antic.cclock[PMOFFSET];			\
-    UINT8 used_colors = USED_PM_COLORS;                         \
-	UINT8 dirty = 0;											\
-    int i;                                                      \
-	for( i = 0; i < width; i++ )								\
-	{															\
-		UINT16 ch = RDVIDEO(i) << 2;							\
-		used_colors |= antic.uc_210b4[ch];						\
-		if( ch != video->data[i] )								\
-		{														\
-			video->data[i] = ch;								\
-			for( ++i; i < width; i++ )							\
-			{													\
-				ch = RDVIDEO(i) << 2;							\
-				used_colors |= antic.uc_210b4[ch];				\
-				video->data[i] = ch;							\
-            }                                                   \
-			dirty = 1;											\
-        }                                                       \
-	}															\
-	if( dirty || video->dirty || COMPARE_RELEVANT(used_colors) )\
-	{															\
-		UPDATE_RELEVANT
-
-#define PREPARE_GFX9BC(width)									\
-	UINT32 *dst = (UINT32 *)&antic.cclock[PMOFFSET];			\
-    UINT8 used_colors = USED_PM_COLORS;                         \
-	UINT8 dirty = 0;											\
-    int i;                                                      \
-	for( i = 0; i < width; i++ )								\
-	{															\
-		UINT16 ch = RDVIDEO(i) << 1;							\
-		used_colors |= antic.uc_210b2[ch];						\
-		if( ch != video->data[i] )								\
-		{														\
-			video->data[i] = ch;								\
-			for( ++i; i < width; i++ )							\
-			{													\
-				ch = RDVIDEO(i) << 1;							\
-				used_colors |= antic.uc_210b2[ch];				\
-				video->data[i] = ch;							\
-            }                                                   \
-			dirty = 1;											\
-        }                                                       \
-	}															\
-	if( dirty || video->dirty || COMPARE_RELEVANT(used_colors) )\
-	{															\
-        UPDATE_RELEVANT
-
-#define PREPARE_GFXA(width) 									\
-	UINT32 *dst = (UINT32 *)&antic.cclock[PMOFFSET];			\
-    UINT8 used_colors = USED_PM_COLORS;                         \
-	UINT8 dirty = 0;											\
-    int i;                                                      \
-	for( i = 0; i < width; i++ )								\
-	{															\
-		UINT16 ch = RDVIDEO(i) << 1;							\
-		used_colors |= antic.uc_210b2[ch];						\
-		if( ch != video->data[i] )								\
-		{														\
-			video->data[i] = ch;								\
-			for( ++i; i < width; i++ )							\
-			{													\
-				ch = RDVIDEO(i) << 1;							\
-				used_colors |= antic.uc_210b2[ch];				\
-				video->data[i] = ch;							\
-            }                                                   \
-			dirty = 1;											\
-		}														\
-    }                                                           \
-	if( dirty || video->dirty || COMPARE_RELEVANT(used_colors) )\
-	{															\
-		UPDATE_RELEVANT
-
-#define PREPARE_GFXDE(width)									\
-	UINT32 *dst = (UINT32 *)&antic.cclock[PMOFFSET];			\
-    UINT8 used_colors = USED_PM_COLORS;                         \
-	UINT8 dirty = 0;											\
-    int i;                                                      \
-	for( i = 0; i < width; i++ )								\
-	{															\
-		UINT16 ch = RDVIDEO(i); 								\
-		used_colors |= antic.uc_x10b[ch];						\
-		if( ch != video->data[i] )								\
-		{														\
-			video->data[i] = ch;								\
-			for( ++i; i < width; i++ )							\
-			{													\
-				ch = RDVIDEO(i);								\
-				used_colors |= antic.uc_x10b[ch];				\
-				video->data[i] = ch;							\
-			}													\
-			dirty = 1;											\
-        }                                                       \
-	}															\
-	if( dirty || video->dirty || COMPARE_RELEVANT(used_colors) )\
-	{															\
-		UPDATE_RELEVANT
-
-#define PREPARE_GFXF(width) 									\
-	UINT32 *dst = (UINT32 *)&antic.cclock[PMOFFSET];			\
-    UINT8 used_colors = USED_PM_COLORS;                         \
-	UINT8 dirty = 0;											\
-    int i;                                                      \
-	for( i = 0; i < width; i++ )								\
-	{															\
-		UINT16 ch = RDVIDEO(i); 								\
-		used_colors |= antic.uc_1b[ch]; 						\
-		if( ch != video->data[i] )								\
-		{														\
-			video->data[i] = ch;								\
-			for( ++i; i < width; i++ )							\
-			{													\
-				ch = RDVIDEO(i);								\
-				used_colors |= antic.uc_1b[ch]; 				\
-				video->data[i] = ch;							\
-			}													\
-			dirty = 1;											\
-        }                                                       \
-	}															\
-	if( dirty || video->dirty || COMPARE_RELEVANT(used_colors) )\
-	{															\
-		UPDATE_RELEVANT
-
-#define PREPARE_GFXG1(width)									\
-	UINT32 *dst = (UINT32 *)&antic.cclock[PMOFFSET];			\
-    UINT8 used_colors = USED_PM_COLORS;                         \
-	UINT8 dirty = 0;											\
-    int i;                                                      \
-	for( i = 0; i < width; i++ )								\
-	{															\
-		UINT16 ch = RDVIDEO(i); 								\
-		used_colors |= antic.uc_g1[ch]; 						\
-		if( ch != video->data[i] )								\
-		{														\
-			video->data[i] = ch;								\
-			for( ++i; i < width; i++ )							\
-			{													\
-				ch = RDVIDEO(i);								\
-				used_colors |= antic.uc_g1[ch]; 				\
-				video->data[i] = ch;							\
-			}													\
-			dirty = 1;											\
-        }                                                       \
-	}															\
-	if( dirty || video->dirty || COMPARE_RELEVANT(used_colors) )\
-	{															\
-		UPDATE_RELEVANT
-
-#define PREPARE_GFXG2(width)									\
-	UINT32 *dst = (UINT32 *)&antic.cclock[PMOFFSET];			\
-    UINT8 used_colors = USED_PM_COLORS;                         \
-	UINT8 dirty = 0;											\
-    int i;                                                      \
-	for( i = 0; i < width; i++ )								\
-	{															\
-		UINT16 ch = RDVIDEO(i); 								\
-		used_colors |= antic.uc_g2[ch]; 						\
-		if( ch != video->data[i] )								\
-		{														\
-			video->data[i] = ch;								\
-			for( ++i; i < width; i++ )							\
-			{													\
-				ch = RDVIDEO(i);								\
-				used_colors |= antic.uc_g2[ch]; 				\
-				video->data[i] = ch;							\
-			}													\
-			dirty = 1;											\
-        }                                                       \
-	}															\
-	if( dirty || video->dirty || COMPARE_RELEVANT(used_colors) )\
-	{															\
-        UPDATE_RELEVANT
-
-#define PREPARE_GFXG3(width)									\
-	UINT32 *dst = (UINT32 *)&antic.cclock[PMOFFSET];			\
-    UINT8 used_colors = USED_PM_COLORS;                         \
-	UINT8 dirty = 0;											\
-    int i;                                                      \
-	for( i = 0; i < width; i++ )								\
-	{															\
-		UINT16 ch = RDVIDEO(i); 								\
-		used_colors |= antic.uc_g3[ch]; 						\
-		if( ch != video->data[i] )								\
-		{														\
-			video->data[i] = ch;								\
-			for( ++i; i < width; i++ )							\
-			{													\
-				ch = RDVIDEO(i);								\
-				used_colors |= antic.uc_g3[ch]; 				\
-				video->data[i] = ch;							\
-			}													\
-			dirty = 1;											\
-        }                                                       \
-	}															\
-	if( dirty || video->dirty || COMPARE_RELEVANT(used_colors) )\
-	{															\
-        UPDATE_RELEVANT
-
-/******************************************************************
- * common end of a single antic/gtia mode emulation function
- ******************************************************************/
-#define POST()													\
-	}															\
-	--antic.modelines
-
-#define POST_GFX(width) 										\
-	}															\
-	antic.steal_cycles += width;								\
-	if( --antic.modelines == 0 )								\
-		antic.voffs = (antic.voffs + width) & VOFFS
-
-#define POST_TXT(width) 										\
-	}															\
-	antic.steal_cycles += width;								\
-	if( --antic.modelines == 0 )								\
-		antic.voffs = (antic.voffs + width) & VOFFS;			\
-	else														\
-	if( antic.w.chactl & 4 )									\
-		antic.w.chbasl--;										\
-	else														\
-		antic.w.chbasl++
-
-#else   /* !OPTIMIZE */
 
 #define PREPARE()												\
 	UINT32 *dst = (UINT32 *)&antic.cclock[PMOFFSET]
@@ -1153,15 +548,13 @@ int a5200_interrupt(void);
 #define POST()													\
 	--antic.modelines
 
-#define POST_GFX(width,oddlines)								\
-	if( (antic.modelines & oddlines) == 0 ) 					\
-        antic.steal_cycles += width;                            \
+#define POST_GFX(width) 										\
+	antic.steal_cycles += width;								\
 	if( --antic.modelines == 0 )								\
 		antic.voffs = (antic.voffs + width) & VOFFS
 
-#define POST_TXT(width,oddlines)								\
-	if( (antic.modelines & oddlines) == 0 ) 					\
-		antic.steal_cycles += width;							\
+#define POST_TXT(width) 										\
+	antic.steal_cycles += width;								\
 	if( --antic.modelines == 0 )								\
 		antic.voffs = (antic.voffs + width) & VOFFS;			\
 	else														\
@@ -1170,15 +563,22 @@ int a5200_interrupt(void);
 	else														\
         antic.w.chbasl++
 
-#endif
-
 /* erase a number of color clocks to background color PBK */
 #define ERASE4	{	\
-    *dst++ = (PBK << 24) | (PBK << 16) | (PBK << 8) | PBK;  \
+	*dst++ = (PBK << 24) | (PBK << 16) | (PBK << 8) | PBK;	\
     *dst++ = (PBK << 24) | (PBK << 16) | (PBK << 8) | PBK;  \
     *dst++ = (PBK << 24) | (PBK << 16) | (PBK << 8) | PBK;  \
 	*dst++ = (PBK << 24) | (PBK << 16) | (PBK << 8) | PBK;	\
 	}
+
+#define ZAP48() 												\
+	dst = (UINT32 *)&antic.cclock[PMOFFSET];					\
+	dst[ 0] = (PBK << 24) | (PBK << 16) | (PBK << 8) | PBK; 	\
+	dst[ 1] = (PBK << 24) | (PBK << 16) | (PBK << 8) | PBK; 	\
+	dst[ 2] = (PBK << 24) | (PBK << 16) | (PBK << 8) | PBK; 	\
+	dst[45] = (PBK << 24) | (PBK << 16) | (PBK << 8) | PBK; 	\
+	dst[46] = (PBK << 24) | (PBK << 16) | (PBK << 8) | PBK; 	\
+	dst[47] = (PBK << 24) | (PBK << 16) | (PBK << 8) | PBK
 
 #define ERASE8  \
 	ERASE4; 	\
@@ -1254,7 +654,7 @@ int a5200_interrupt(void);
 	ERASE4
 
 #define REP48(FUNC) 						\
-    FUNC( 0); FUNC( 1); FUNC( 2); FUNC( 3); \
+	FUNC( 0); FUNC( 1); FUNC( 2); FUNC( 3); \
 	FUNC( 4); FUNC( 5); FUNC( 6); FUNC( 7); \
 	FUNC( 8); FUNC( 9); FUNC(10); FUNC(11); \
 	FUNC(12); FUNC(13); FUNC(14); FUNC(15); \
@@ -1265,64 +665,64 @@ int a5200_interrupt(void);
 	FUNC(32); FUNC(33); FUNC(34); FUNC(35); \
 	FUNC(36); FUNC(37); FUNC(38); FUNC(39); \
 	FUNC(40); FUNC(41); FUNC(42); FUNC(43); \
-	FUNC(44); FUNC(45); FUNC(46); FUNC(47)
+	FUNC(44); FUNC(45); FUNC(46); FUNC(47);
 
 typedef void (*renderer_function)(VIDEO *video);
 
-void	antic_mode_0_xx(VIDEO *video);
-void	antic_mode_1_xx(VIDEO *video);
-void	antic_mode_2_32(VIDEO *video);
-void	antic_mode_2_40(VIDEO *video);
-void	antic_mode_2_48(VIDEO *video);
-void	antic_mode_3_32(VIDEO *video);
-void	antic_mode_3_40(VIDEO *video);
-void	antic_mode_3_48(VIDEO *video);
-void	antic_mode_4_32(VIDEO *video);
-void	antic_mode_4_40(VIDEO *video);
-void	antic_mode_4_48(VIDEO *video);
-void	antic_mode_5_32(VIDEO *video);
-void	antic_mode_5_40(VIDEO *video);
-void	antic_mode_5_48(VIDEO *video);
-void	antic_mode_6_32(VIDEO *video);
-void	antic_mode_6_40(VIDEO *video);
-void	antic_mode_6_48(VIDEO *video);
-void	antic_mode_7_32(VIDEO *video);
-void	antic_mode_7_40(VIDEO *video);
-void	antic_mode_7_48(VIDEO *video);
-void	antic_mode_8_32(VIDEO *video);
-void	antic_mode_8_40(VIDEO *video);
-void	antic_mode_8_48(VIDEO *video);
-void	antic_mode_9_32(VIDEO *video);
-void	antic_mode_9_40(VIDEO *video);
-void	antic_mode_9_48(VIDEO *video);
-void	antic_mode_a_32(VIDEO *video);
-void	antic_mode_a_40(VIDEO *video);
-void	antic_mode_a_48(VIDEO *video);
-void	antic_mode_b_32(VIDEO *video);
-void	antic_mode_b_40(VIDEO *video);
-void	antic_mode_b_48(VIDEO *video);
-void	antic_mode_c_32(VIDEO *video);
-void	antic_mode_c_40(VIDEO *video);
-void	antic_mode_c_48(VIDEO *video);
-void	antic_mode_d_32(VIDEO *video);
-void	antic_mode_d_40(VIDEO *video);
-void	antic_mode_d_48(VIDEO *video);
-void	antic_mode_e_32(VIDEO *video);
-void	antic_mode_e_40(VIDEO *video);
-void	antic_mode_e_48(VIDEO *video);
-void	antic_mode_f_32(VIDEO *video);
-void	antic_mode_f_40(VIDEO *video);
-void	antic_mode_f_48(VIDEO *video);
+void antic_mode_0_xx(VIDEO *video);
+void antic_mode_1_xx(VIDEO *video);
+void antic_mode_2_32(VIDEO *video);
+void antic_mode_2_40(VIDEO *video);
+void antic_mode_2_48(VIDEO *video);
+void antic_mode_3_32(VIDEO *video);
+void antic_mode_3_40(VIDEO *video);
+void antic_mode_3_48(VIDEO *video);
+void antic_mode_4_32(VIDEO *video);
+void antic_mode_4_40(VIDEO *video);
+void antic_mode_4_48(VIDEO *video);
+void antic_mode_5_32(VIDEO *video);
+void antic_mode_5_40(VIDEO *video);
+void antic_mode_5_48(VIDEO *video);
+void antic_mode_6_32(VIDEO *video);
+void antic_mode_6_40(VIDEO *video);
+void antic_mode_6_48(VIDEO *video);
+void antic_mode_7_32(VIDEO *video);
+void antic_mode_7_40(VIDEO *video);
+void antic_mode_7_48(VIDEO *video);
+void antic_mode_8_32(VIDEO *video);
+void antic_mode_8_40(VIDEO *video);
+void antic_mode_8_48(VIDEO *video);
+void antic_mode_9_32(VIDEO *video);
+void antic_mode_9_40(VIDEO *video);
+void antic_mode_9_48(VIDEO *video);
+void antic_mode_a_32(VIDEO *video);
+void antic_mode_a_40(VIDEO *video);
+void antic_mode_a_48(VIDEO *video);
+void antic_mode_b_32(VIDEO *video);
+void antic_mode_b_40(VIDEO *video);
+void antic_mode_b_48(VIDEO *video);
+void antic_mode_c_32(VIDEO *video);
+void antic_mode_c_40(VIDEO *video);
+void antic_mode_c_48(VIDEO *video);
+void antic_mode_d_32(VIDEO *video);
+void antic_mode_d_40(VIDEO *video);
+void antic_mode_d_48(VIDEO *video);
+void antic_mode_e_32(VIDEO *video);
+void antic_mode_e_40(VIDEO *video);
+void antic_mode_e_48(VIDEO *video);
+void antic_mode_f_32(VIDEO *video);
+void antic_mode_f_40(VIDEO *video);
+void antic_mode_f_48(VIDEO *video);
 
-void	gtia_mode_1_32(VIDEO *video);
-void	gtia_mode_1_40(VIDEO *video);
-void	gtia_mode_1_48(VIDEO *video);
-void	gtia_mode_2_32(VIDEO *video);
-void	gtia_mode_2_40(VIDEO *video);
-void	gtia_mode_2_48(VIDEO *video);
-void	gtia_mode_3_32(VIDEO *video);
-void	gtia_mode_3_40(VIDEO *video);
-void	gtia_mode_3_48(VIDEO *video);
-void	gtia_render(VIDEO *video);
+void gtia_mode_1_32(VIDEO *video);
+void gtia_mode_1_40(VIDEO *video);
+void gtia_mode_1_48(VIDEO *video);
+void gtia_mode_2_32(VIDEO *video);
+void gtia_mode_2_40(VIDEO *video);
+void gtia_mode_2_48(VIDEO *video);
+void gtia_mode_3_32(VIDEO *video);
+void gtia_mode_3_40(VIDEO *video);
+void gtia_mode_3_48(VIDEO *video);
+void gtia_render(VIDEO *video);
 
 

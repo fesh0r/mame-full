@@ -10,6 +10,7 @@
 #include "vidhrdw/generic.h"
 
 extern void advision_vh_write(int data);
+extern void advision_vh_update(int data);
 extern int advision_vh_hpos;
 
 unsigned char *advision_ram;
@@ -22,22 +23,12 @@ static UINT8 *ROM;
 
 void advision_init_machine(void) {
 
- //   ROM = memory_region(REGION_CPU1);
-    advision_ram = malloc(0x400);
-	if (!advision_ram)
-	{
-		if (errorlog) fprintf(errorlog,"Cannot allocate RAM\n");
-	}
+	advision_ram = memory_region(REGION_CPU1) + 0x2000;
     advision_rambank = 0x300;
     cpu_setbank(1,memory_region(REGION_CPU1) + 0x1000);
     advision_framestart = 0;
     advision_videoenable = 0;
 }
-
-void advision_stop_machine(void) {
-    free(advision_ram);
-}
-
 
 int advision_id_rom (const char *name, const char *gamename)
 {
@@ -49,6 +40,12 @@ int advision_load_rom (int id, const char *rom_name)
 {
     FILE *cartfile;
 	
+	if(rom_name==NULL)
+	{
+		printf("%s requires Cartridge!\n", Machine->gamedrv->name);
+		return INIT_FAILED;
+    }
+
     ROM = memory_region(REGION_CPU1);
     cartfile = NULL;
     if (strlen(rom_name)==0)
@@ -101,6 +98,7 @@ void advision_putp1(int offset, int data) {
 void advision_putp2(int offset, int data) {
 
       if ((advision_videoenable == 0x00) && (data & 0x10)) {
+		advision_vh_update(advision_vh_hpos);
         advision_vh_hpos++;
         if (advision_vh_hpos > 255) {
             advision_vh_hpos = 0;
@@ -108,7 +106,7 @@ void advision_putp2(int offset, int data) {
         }
       }
       advision_videoenable = data & 0x10;      
-      advision_videobank = ((data & 0xE0) >> 5) - 1;
+	  advision_videobank = (data & 0xE0) >> 5;
 }
 
 int  advision_getp1(int offset) {

@@ -62,9 +62,6 @@ static struct pia6821_interface coco_pia_1_intf =
 	/*irqs	 : A/B			   */ 0, 0
 };
 
-/* initialized in dragon_floppy_init */
-static const char *floppy_name[4] = { NULL, NULL, NULL, NULL };
-
 static UINT8 *tape_start, *tape_position;
 static int cart_inserted;
 static int tape_size;
@@ -87,7 +84,9 @@ static int generic_rom_load(UINT8 *rambase, UINT8 *rombase, const char *name)
 		UINT8 start_msb;
 	} pak_header;
 
-	if (strlen(name)!=0)
+	if (errorlog) fprintf(errorlog,"Strlen for name is %ld\n",strlen(name));
+
+	if (name!=NULL)
 	{
 		if (!(fp = osd_fopen (Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_R, 0)))
 		{
@@ -161,7 +160,7 @@ int coco_cassette_init(int id, const char *name)
 	void *fp;
 
     tape_start = NULL;
-    if (strlen(name)!=0)
+    if (name!=NULL)
 	{
 		/* Tape */
 		if (!(fp = osd_fopen (Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_R, 0)))
@@ -188,6 +187,7 @@ int coco_cassette_init(int id, const char *name)
 int dragon32_rom_load(int id, const char *name)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
+	if(errorlog) fprintf(errorlog, "Dragon32_rom_load - Name is %s\n",name);
 	return generic_rom_load(&ROM[0], &ROM[0x8000], name);
 }
 
@@ -221,12 +221,20 @@ void dragon_speedctrl_w(int offset, int data)
   MMU
 ***************************************************************************/
 
+/* from vidhrdw/dragon.c */
+extern void coco_ram_w(int offset, int data);
+
+void dragon64_ram_w(int offset, int data)
+{
+	coco_ram_w(offset + 0x8000, data);
+}
+
 void dragon64_enable_64k_w(int offset, int data)
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
 	if (offset) {
 		cpu_setbank(1, &RAM[0x8000]);
-		cpu_setbankhandler_w(1, MWA_BANK1);
+		cpu_setbankhandler_w(1, dragon64_ram_w);
 	}
 	else {
 		cpu_setbank(1, coco_rom);
@@ -391,293 +399,6 @@ void coco3_enable_64k_w(int offset, int data)
 {
 	coco3_enable_64k = offset;
 	coco3_mmu_update(4, 7);
-}
-
-/***************************************************************************
-  Disk Controller
-***************************************************************************/
-
-/* NPW 1-18-2000 - This code needs to be overhauled sometime */
-
-typedef struct {
-	int motor_on;
-	int track;
-	int sector;
-} dragon_drive;
-
-static void *dragon_disk_fd;
-static int dragon_disk_counter;
-static int dragon_disk_haltenable;
-static int dragon_disk_reading;
-static int dragon_disk_writing;
-static dragon_drive dragon_drives[4];
-static int dragon_disk_status;
-static int dragon_disk_datareg;
-
-int coco_floppy_init(int id, const char *name)
-{
-	floppy_name[id] = name;
-	dragon_disk_fd = 0;
-	dragon_disk_counter = 0;
-	dragon_disk_haltenable = 0;
-	dragon_disk_reading = 0;
-	dragon_disk_writing = 0;
-	dragon_disk_status = 0;
-	dragon_disk_datareg = 0;
-	memset(&dragon_drives, 0, sizeof(dragon_drives));
-	return 0;
-}
-
-static void close_sector(void)
-{
-	if (dragon_disk_fd) {
-		osd_fclose(dragon_disk_fd);
-		dragon_disk_fd = NULL;
-	}
-	dragon_disk_reading = 0;
-	dragon_disk_writing = 0;
-}
-
-void coco_floppy_exit(int id)
-{
-	close_sector();
-}
-
-static void check_counter(void)
-{
-	if (dragon_disk_counter == 0) {
-		if (dragon_disk_haltenable) {
-			m6809_set_nmi_line(1);
-			m6809_set_nmi_line(0);
-		}
-		close_sector();
-	}
-	else {
-		dragon_disk_counter--;
-	}
-}
-
-static int open_sector(int drive, int track, int sector)
-{
-	close_sector();
-
-	/* Do we have a floppy open? */
-	if (!floppy_name[drive])
-		return 1;
-
-	dragon_disk_fd = osd_fopen(Machine->gamedrv->name,floppy_name[drive],OSD_FILETYPE_IMAGE_RW,0);
-	if (!dragon_disk_fd)
-	{
-		if (errorlog) fprintf(errorlog,"Couldn't open image.\n");
-		return 1;
-	}
-
-	if (osd_fseek(dragon_disk_fd,track * 0x1200 + ((sector-1) * 0x100),SEEK_CUR)!=0)
-	{
-		if (errorlog) fprintf(errorlog,"Couldn't find track/sector %d/%d.\n", track, sector);
-		osd_fclose(dragon_disk_fd);
-		dragon_disk_fd = NULL;
-		return 1;
-	}
-
-	dragon_disk_counter = 256;
-	return 0;
-}
-
-static int sector_read(int *data)
-{
-	UINT8 d;
-
-	if (!dragon_disk_fd || (osd_fread(dragon_disk_fd,&d,1) <1))
-	{
-		if (errorlog) fprintf(errorlog,"Couldn't read data from disk\n");
-		return 1;
-	}
-
-	*data = d;
-	check_counter();
-	return 0;
-}
-
-static int sector_write(int data)
-{
-	UINT8 d;
-
-	d = data;
-	if (!dragon_disk_fd || (osd_fwrite(dragon_disk_fd,&d,1) <1))
-	{
-		if (errorlog) fprintf(errorlog,"Couldn't read data from disk\n");
-		return 1;
-	}
-
-	check_counter();
-	return 0;
-}
-
-/***************************************************************************/
-
-static dragon_drive *find_drive(void)
-{
-	int i;
-	for (i = 0; i < (sizeof(dragon_drives) / sizeof(dragon_drives[0])); i++) {
-		if (dragon_drives[i].motor_on)
-			return &dragon_drives[i];
-	}
-	return NULL;
-}
-
-/***************************************************************************/
-
-static void set_track(int track)
-{
-	dragon_drive *d;
-
-	d = find_drive();
-	if (d) {
-		d->track = track;
-		dragon_disk_status = track ? 0 : (1 << 2);
-	}
-	else {
-		dragon_disk_status = 0x80;
-	}
-}
-
-int dragon_disk_r(int offset)
-{
-	dragon_drive *d;
-
-	switch(offset) {
-	case 8:
-		/* status register */
-		return dragon_disk_status;
-	case 9:
-		/* track register */
-		d = find_drive();
-		return d ? d->track : 0;
-	case 10:
-		/* sector register */
-		d = find_drive();
-		return d ? d->sector : 0;
-	case 11:
-		/* data register */
-		if (dragon_disk_reading) {
-			int data;
-			dragon_disk_status = sector_read(&data) ? 0x80 : (dragon_disk_counter ? 0x02 : 0x00);
-			return data;
-		}
-		break;
-	default:
-		if (errorlog) fprintf(errorlog,"Bad disk register read: offset=%d\n",offset);
-	}
-	return 0;
-}
-
-void dragon_disk_w(int offset, int data)
-{
-	dragon_drive *d;
-
-	switch(offset) {
-	case 0:
-		/* DSKREG - the control register
-		 *
-		 * Bit
-		 *	7 halt enable flag
-		 *	6 drive select #3
-		 *	5 density flag (0=single, 1=double)
-		 *	4 write precompensation
-		 *	3 drive motor activation
-		 *	2 drive select #2
-		 *	1 drive select #1
-		 *	0 drive select #0
-		 */
-		d = find_drive();
-
-		if (data & 0x01) {
-			dragon_drives[0].motor_on = (data & 0x08) ? 1 : 0;
-		}
-		if (data & 0x02) {
-			dragon_drives[1].motor_on = (data & 0x08) ? 1 : 0;
-		}
-		if (data & 0x04) {
-			dragon_drives[2].motor_on = (data & 0x08) ? 1 : 0;
-		}
-		if (data & 0x40) {
-			dragon_drives[3].motor_on = (data & 0x08) ? 1 : 0;
-		}
-
-		/* If we are selecting a different drive, close out this operation */
-		if (d != find_drive()) {
-			close_sector();
-		}
-
-		dragon_disk_haltenable = (data & 0x80) ? 1 : 0;
-		break;
-	case 8:
-		/* command register */
-		switch(data) {
-		case 0x03:	/* restore */
-			set_track(0);
-			break;
-		case 0x14:	/* seek */
-		case 0x17:	/* seek */
-			set_track(dragon_disk_datareg);
-			break;
-		case 0x23:	/* step */
-			break;
-		case 0x43:	/* step in */
-			break;
-		case 0x53:	/* step out */
-			break;
-		case 0x80:	/* read sector */
-		case 0xa0:	/* write sector */
-			d = find_drive();
-			if (!d) {
-				dragon_disk_status = 0x80;
-				return;
-			}
-			if (open_sector(d - dragon_drives, d->track, d->sector)) {
-				dragon_disk_status = 0x80;
-				return;
-			}
-			dragon_disk_reading = (data == 0x80);
-			dragon_disk_writing = (data == 0xa0);
-			dragon_disk_status = 0x02;
-			break;
-		case 0xc0:	/* read address */
-			break;
-		case 0xe4:	/* read track */
-			break;
-		case 0xf4:	/* write track */
-			break;
-		case 0xd0:	/* force interrupt */
-			break;
-		default:
-			if (errorlog) fprintf(errorlog,"Bad disk command: command=%i\n",data);
-		}
-		break;
-	case 9:
-		/* track register */
-		break;
-	case 10:
-		/* sector register */
-		d = find_drive();
-		if (!d) {
-			dragon_disk_status = 0x80;
-			return;
-		}
-		d->sector = data;
-		break;
-	case 11:
-		/* data register */
-		if (dragon_disk_writing) {
-			dragon_disk_status = sector_write(data) ? 0x80 : (dragon_disk_counter ? 0x02 : 0x00);
-			return;
-		}
-		dragon_disk_datareg = data;
-		break;
-	default:
-		if (errorlog) fprintf(errorlog,"Bad disk register write: offset=%i data=%i\n",offset,data);
-	}
 }
 
 /***************************************************************************
@@ -901,6 +622,6 @@ void coco3_init_machine(void)
 void dragon_stop_machine(void)
 {
 	if (tape_start) free(tape_start);
-	close_sector();
+/*	close_sector(); */
 }
 

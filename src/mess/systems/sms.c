@@ -187,13 +187,13 @@ static struct MachineDriver machine_driver_gamegear =
 };
 
 ROM_START(sms)
-    ROM_REGIONX(0x10000,REGION_CPU1)
-	ROM_REGIONX(256*16384+512,REGION_CPU2)
+    ROM_REGION(0x10000,REGION_CPU1)
+	ROM_REGION(256*16384+512,REGION_CPU2)
 ROM_END
 
 ROM_START(gamegear)
-    ROM_REGIONX(0x10000,REGION_CPU1)
-	ROM_REGIONX(256*16384+512,REGION_CPU2)
+    ROM_REGION(0x10000,REGION_CPU1)
+	ROM_REGION(256*16384+512,REGION_CPU2)
 ROM_END
 
 static const struct IODevice io_sms[] = {
@@ -241,5 +241,5 @@ static const struct IODevice io_gamegear[] = {
 };
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-CONS( 1983, sms,	  0, 		sms,	  sms,		0,		  "Sega",   "Sega Master System" )
-CONS( 19??, gamegear, 0, 		gamegear, sms,		0,		  "Sega",   "Sega Game Gear" )
+CONS( 1987, sms,	  0, 		sms,	  sms,		0,		  "Sega",   "Sega Master System" )
+CONS( 1990, gamegear, 0, 		gamegear, sms,		0,		  "Sega",   "Sega Game Gear" )

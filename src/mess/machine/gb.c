@@ -397,6 +397,12 @@ int gb_load_rom (int id, const char *rom_name)
 
 	for (I = 0; I < 256; I++)
 		RAMMap[I] = ROMMap[I] = NULL;
+
+	if(rom_name==NULL)
+	{
+		printf("Cartridge name not specified!\n");
+		return INIT_FAILED;
+	}
 	if( new_memory_region(REGION_CPU1, 0x10000) )
 	{
 		if(errorlog) fprintf(errorlog,"Memory allocation failed reading roms!\n");

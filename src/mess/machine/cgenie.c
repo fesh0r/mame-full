@@ -1079,7 +1079,7 @@ void cgenie_motor_w(int offset, int data)
 			s_p_t[drive] = pd->SPT / heads[drive];
 			dir_sector[drive] = pd->DDSL * pd->GATM * pd->GPL + pd->SPT;
 			dir_length[drive] = pd->DDGA * pd->GPL;
-			wd179x_set_geometry(drive, tracks[drive], heads[drive], s_p_t[drive], 256, dir_sector[drive], dir_length[drive]);
+			wd179x_set_geometry(drive, tracks[drive], heads[drive], s_p_t[drive], 256, dir_sector[drive], dir_length[drive], 0);
         }
 		return;
 	}
@@ -1120,7 +1120,7 @@ void cgenie_motor_w(int offset, int data)
 					s_p_t[drive] = pd_list[i].SPT / heads[drive];
 					dir_sector[drive] = pd_list[i].DDSL * pd_list[i].GATM * pd_list[i].GPL + pd_list[i].SPT;
 					dir_length[drive] = pd_list[i].DDGA * pd_list[i].GPL;
-					wd179x_set_geometry(drive, tracks[drive], heads[drive], s_p_t[drive], 256, dir_sector[drive], dir_length[drive]);
+					wd179x_set_geometry(drive, tracks[drive], heads[drive], s_p_t[drive], 256, dir_sector[drive], dir_length[drive], 0);
 					memcpy(memory_region(REGION_CPU1) + 0x5A71 + drive * sizeof(PDRIVE), &pd_list[i], sizeof(PDRIVE));
 					return;
 				}

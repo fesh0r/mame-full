@@ -7,7 +7,7 @@
 #include "driver.h"
 
 /* test with preliminary VC1541 emulation */
-/*#define VC1541*/
+/*#define VC1541 */
 
 extern struct MemoryReadAddress vc1541_readmem[];
 extern struct MemoryWriteAddress vc1541_writemem[];
@@ -26,11 +26,11 @@ extern struct MemoryWriteAddress vc1541_writemem[];
 	ROM_LOAD("vc1541.c0",  0xc000, 0x2000, 0x29ae9752) \
 	ROM_LOAD("vc1541.e0",  0xe000, 0x2000, 0x361c9f37)
 
-/*	ROM_LOAD("dos1541",  0xc000, 0x4000, 0x899fa3c5) */
+/*  ROM_LOAD("dos1541",  0xc000, 0x4000, 0x899fa3c5) */
 
-void vc1541_driver_init(void);
-void vc1541_machine_init(void);
-void vc1541_drive_status(char *text, int size);
+void vc1541_driver_init (void);
+void vc1541_machine_init (void);
+void vc1541_drive_status (char *text, int size);
 
 /* serial bus vc20/c64/c16/vc1541 and some printer */
 
@@ -46,12 +46,12 @@ void vc1541_drive_status(char *text, int size);
 #define cbm_serial_request_write(level) vc1541_serial_request_write(0,level)
 #endif
 
-void vc1541_serial_reset_write(int which,int level);
-int vc1541_serial_atn_read(int which);
-void vc1541_serial_atn_write(int which,int level);
-int vc1541_serial_data_read(int which);
-void vc1541_serial_data_write(int which,int level);
-int vc1541_serial_clock_read(int which);
-void vc1541_serial_clock_write(int which,int level);
-int vc1541_serial_request_read(int which);
-void vc1541_serial_request_write(int which,int level);
+void vc1541_serial_reset_write (int which, int level);
+int vc1541_serial_atn_read (int which);
+void vc1541_serial_atn_write (int which, int level);
+int vc1541_serial_data_read (int which);
+void vc1541_serial_data_write (int which, int level);
+int vc1541_serial_clock_read (int which);
+void vc1541_serial_clock_write (int which, int level);
+int vc1541_serial_request_read (int which);
+void vc1541_serial_request_write (int which, int level);

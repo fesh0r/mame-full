@@ -339,9 +339,9 @@ static struct DACinterface nes_dac_interface =
 
 
 ROM_START( nes )
-	ROM_REGIONX( 0x410000, REGION_CPU1 )
-	ROM_REGIONX( 0x200000, REGION_GFX1 )
-	ROM_REGIONX( 0x2000,  REGION_GFX2 )
+	ROM_REGION( 0x410000, REGION_CPU1 )
+	ROM_REGION( 0x200000, REGION_GFX1 )
+	ROM_REGION( 0x2000,  REGION_GFX2 )
 ROM_END
 
 
@@ -420,6 +420,9 @@ static const struct IODevice io_nes[] = {
 ***************************************************************************/
 
 /*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY	 FULLNAME */
-CONS( 1983, nes,	   0,		 nes,	   nes, 	 0,		   "Nintendo", "Nintendo Entertainment System/Famicon" )
+CONS( 1983, nes,	   0,		 nes,	   nes, 	 0,		   "Nintendo", "Nintendo Entertainment System/Famicom" )
 
+/* 1983 Famicom released in Japan
+   1985 US Launch
+   1987 Official UK distribution of the NES finally begins through toy company Mattel. */
 

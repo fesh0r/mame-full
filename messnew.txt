@@ -1,3 +1,136 @@
+0.36b16
+
+Note: .inp record/playback does still not work currently.
+Note: Image CRC information is temporarily disabled.
+     
+
+New drivers supported (in no particular order):
+-----------------------------------------------
+a400, a400pal (16K RAM only) [Juergen Buchmueller]
+spectrum plus3               [Kev Thacker]
+a800pal                      [Juergen Buchmueller]
+sys80                        [Juergen Buchmueller]
+c364, c64gs, sx64            [Peter Trauner]
+ti99_4e, ti99_4ae            [Raphael Nabet]
+
+
+These drivers have improved GRAPHICS:
+-------------------------------------
+- Adventurevision LED flicker added [Juergen Buchmueller]
+
+- Palette colors for Vtech2 series of system drivers fixed.
+  [Juergen Buchmueller]
+
+- Amstrad mode 2 fix [Kev Thacker]
+
+- PMODE 4 artifact colors in the CoCo drivers.  The COCO had 
+  a black and white video mode that actually had two more 
+  colors in there that were created because the TV couldn't 
+  actually handle the high resolution.  These colors would not 
+  appear on some monitors, and when they did appear, they would 
+  sometimes switch back and forth.  Added a "dip switch" to the 
+  driver to control how these artifact colors are displayed, 
+  if at all. [Nate Woods]
+
+- CoCo 3 CMP/RGB color sets - the CoCo 3 had different color sets 
+  depending on whether a composite monitor/tv was used, or whether 
+  an RGB monitor was used.   Now the CoCo 3 driver can emulate 
+  either display, and this is controlled from another dip switch.
+  [Nate Woods]
+
+- Apple2 driver changed to use 'normalized' character and graphics 
+  layout.  The scanlines are now done by the hosts video code.
+  [Juergen Buchmueller]
+
+- atari pallette changes [Julian Eggebrecht, Juergen Buchmueller]
+
+- atari video timing fixed! [Juergen Buchmueller] 
+
+- fixed dirty char update in Spectrum driver [Kev Thacker]
+
+
+These drivers have new or improved SOUND:
+-----------------------------------------
+- Atari Pokey static bug fixed [Juergen Buchmueller]
+
+- Jupiter driver changed to use the DAC sound driver. [Paul Daniels]
+
+- setup buzzer sound for Spectrum and +3 [Kev Thacker]
+
+
+
+Other drivers changes:
+----------------------
+- Atari "mega disk" supported (80 Track HD floppies)
+  [Juergen Buchmueller]
+
+- Wd179x disk access update.  The correct sector size is now 
+  calculated for the nec765 real FDD access.  Now it is calculated 
+  from sector size. Loading from real disc works on Enterprise 
+  emulator.  [Kev Thacker]
+
+- Updates to Cgenie, Trs80 and ti99_4a due to wd179x update.
+  [Juergen Buchmueller]
+
+- Far better disk support in the COCO drivers.  
+  [Paul Burgin, Stewart Orchard, Nate Woods]
+
+- Fixed cartridge banking bug in the a800 driver.  BASIC.ROM can be 
+  loaded again [Juergen Buchmueller]
+
+
+- void via_set_clock(int which,int clock); added to 6522via.c.  This 
+  can be called after via_config() to change the clock, otherwise the 
+  clock speed of CPU1 is used. [Mathis Rosenhauer] 
+
+- added support to load some .Z80 type snapshots in the spectrum 
+  driver. (48k only supported at this time) [Kev Thacker]
+
+- Enterprise driver working with disc images or real discs and should 
+  work properly with new IO structures. [Kev Thacker]
+
+- huge MSX update, which includes rom mapper emulation for nearly all 
+  type of cartridges (including saving sram as MEMCARD), SIMPL 
+  emulation, fixed interrupt emulation, added key-click emulation, and 
+  small bugfixes / rewrites! [Sean Young]
+
+- ti99 update [Raphael Nabet]
+
+
+
+Changes to the main program:
+----------------------------
+- [-listextensions] now outputs all device/extensions for the system 
+   driver [Ben Bruscella]
+
+- using Z80 core v2.6 [Juergen Buchmueller]
+
+- added the M65SC02 and M65CE02 CPU cores [Peter Trauner]
+
+
+Source:
+-------
+- The core is based on MAME 0.36b16. This incorporates all 
+  features of the update to this core.  [MAME team]
+
+- Fixed a bug in the I8039 core that caused the destructed score display 
+  in the adventurevision system driver [Juergen Buchmueller]
+
+
+Other:
+------
+- Extensive CRC updates [Chris Henry, Gerardo Jorrin, Peter Trauner]
+  SysInfo.dat documentation update [Chris Henry, Kev Thacker, Raphael Nabet]  
+  Please send all CRC/sysinfo file contributions to Chris Henry. 
+  (battlepriest@hotmail.com).
+
+- added CRC's for the cpc464, cpc664, kc85_4 and Spectrum+3 roms
+  [Kev Thacker]
+
+
+
+--------------------------------------------------------------------
+
 0.36b15
 
 Note: .inp record/playback does still not work currently.
@@ -170,7 +303,7 @@ Source:
 - The core is based on MAME 0.36b15. This incorporates all 
   features of the update to this core.  [MAME team]
 
-- NOT_A_DRIVER flag added.  Use this when specifying a clone system
+- GAME_ALIAS flag added.  Use this when specifying a clone system
   which requires the same romset as another. [Juergen Buchmueller]
 
 Other:

@@ -170,7 +170,7 @@ static void apple2_text_draw(int page)
 					text_ram[offset],	/* Character */
 					12,		/* Color */
 					0,0,
-					x*7*2,y*8*2,
+					x*7*2,y*8,
 					0,TRANSPARENCY_NONE,0);
 		}
 	}
@@ -225,7 +225,7 @@ static void apple2_lores_draw(int page)
 					lores_ram[offset],	/* Character */
 					12,		/* Color */
 					0,0,
-					x*7*2,y*8*2,
+					x*7*2,y*8,
 					0,TRANSPARENCY_NONE,0);
 		}
 	}
@@ -282,7 +282,7 @@ static void apple2_hires_draw(int page)
 					(hires_ram[offset] & 0x7F),	/* Character */
 					12,		/* Color */
 					0,0,
-					x*7*2,y*2,
+					x*7*2,y,
 					0,TRANSPARENCY_NONE,0);
 #else
 			if (hires_ram[offset] & 0x80)
@@ -290,14 +290,14 @@ static void apple2_hires_draw(int page)
 					(hires_ram[offset] & 0x7F),	/* Character */
 					12,		/* Color */
 					0,0,
-					x*7*2+1,y*2,
+					x*7*2+1,y,
 					0,TRANSPARENCY_NONE,0);
 			else
 				drawgfx(apple2_hires[page], Machine->gfx[5],
 					(hires_ram[offset] & 0x7F),	/* Character */
 					12,		/* Color */
 					0,0,
-					x*7*2,y*2,
+					x*7*2,y,
 					0,TRANSPARENCY_NONE,0);
 
 #endif

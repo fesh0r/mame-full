@@ -189,83 +189,79 @@ INPUT_PORTS_END
 
 static struct GfxLayout apple2_text_layout =
 {
-	14,16,		   /* 14*16 characters */
+	14,8,		   /* 14*8 characters */
 	256,		   /* 256 characters */
 	1,			   /* 1 bits per pixel */
 	{ 0 },		   /* no bitplanes; 1 bit per pixel */
 	{ 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1 },	/* x offsets */
-	{ 0*8, 0x8000, 1*8, 0x8000, 2*8, 0x8000, 3*8, 0x8000,
-	  4*8, 0x8000, 5*8, 0x8000, 6*8, 0x8000, 7*8, 0x8000 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8		   /* every char takes 8 bytes */
 };
 
 static struct GfxLayout apple2_dbl_text_layout =
 {
-	7,16,		   /* 7*16 characters */
+	7,8,		   /* 7*8 characters */
 	256,		   /* 256 characters */
 	1,			   /* 1 bits per pixel */
 	{ 0 },		   /* no bitplanes; 1 bit per pixel */
 	{ 7, 6, 5, 4, 3, 2, 1 },	/* x offsets */
-	{ 0*8, 0x8000, 1*8, 0x8000, 2*8, 0x8000, 3*8, 0x8000,
-	  4*8, 0x8000, 5*8, 0x8000, 6*8, 0x8000, 7*8, 0x8000 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8		   /* every char takes 8 bytes */
 };
 
 static struct GfxLayout apple2_lores_layout =
 {
-	14,16,		   /* 14*16 characters */
+	14,8,		   /* 14*8 characters */
 	0x100,		   /* 0x100 characters */
 	1,			   /* 1 bits per pixel */
 	{ 0 },		   /* no bitplanes; 1 bit per pixel */
 	{ 7+16, 6+16, 5+16, 4+16, 3+16, 2+16, 1+16,
 	  0+16, 7+16, 6+16, 5+16, 4+16, 3+16, 2+16 },	/* x offsets */
-	{ 0,   0x8000, 0,   0x8000, 0,   0x8000, 0,   0x8000,
-	  4*8, 0x8000, 4*8, 0x8000, 4*8, 0x8000, 4*8, 0x8000},
+	{ 0, 0, 0, 0, 4*8, 4*8, 4*8, 4*8 },
 	8*8		   /* every char takes 8 bytes */
 };
 
 static struct GfxLayout apple2_dbl_lores_layout =
 {
-	7,16,		   /* 7*16 characters */
+	7,8,		   /* 7*16 characters */
 	0x100,		   /* 0x100 characters */
 	1,			   /* 1 bits per pixel */
 	{ 0 },		   /* no bitplanes; 1 bit per pixel */
 	{ 7+16, 6+16, 5+16, 4+16, 3+16, 2+16, 1+16 },	/* x offsets */
-	{ 0,   0x8000, 0,   0x8000, 0,   0x8000, 0,   0x8000,
-	  4*8, 0x8000, 4*8, 0x8000, 4*8, 0x8000, 4*8, 0x8000},
-	8*8		   /* every char takes 8 bytes */
+	{ 0, 0, 0, 0, 4*8, 4*8, 4*8, 4*8 },
+    8*8        /* every char takes 8 bytes */
 };
 
 static struct GfxLayout apple2_hires_layout =
 {
-	14,2,		   /* 14*2 characters */
+	14,1,		   /* 14*1 characters */
 	0x80,		   /* 0x80 characters */
 	1,			   /* 1 bits per pixel */
 	{ 0 },		   /* no bitplanes; 1 bit per pixel */
 	{ 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1 },	/* x offsets */
-	{ 0, 0x8000 },
+	{ 0 },
 	8*8		   /* every char takes 1 byte */
 };
 
 static struct GfxLayout apple2_hires_shifted_layout =
 {
-	14,2,		   /* 14*2 characters */
+	14,1,		   /* 14*1 characters */
 	0x80,		   /* 0x80 characters */
 	1,			   /* 1 bits per pixel */
 	{ 0 },		   /* no bitplanes; 1 bit per pixel */
 	{ 0, 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1 },	/* x offsets */
-	{ 0, 0x8000 },
+	{ 0 },
 	8*8		   /* every char takes 1 byte */
 };
 
 static struct GfxLayout apple2_dbl_hires_layout =
 {
-	7,2,		   /* 7*2 characters */
+	7,1,		   /* 7*2 characters */
 	0x800,		   /* 0x800 characters */
 	1,			   /* 1 bits per pixel */
 	{ 0 },		   /* no bitplanes; 1 bit per pixel */
 	{ 7, 6, 5, 4, 3, 2, 1 },	/* x offsets */
-	{ 0, 0x8000 },
+	{ 0 },
 	8*1		   /* every char takes 1 byte */
 };
 
@@ -367,8 +363,8 @@ static struct MachineDriver machine_driver_standard =
 
 	/* video hardware */
 	280*2,							/* screen width */
-	192*2,							/* screen height */
-	{ 0, (280*2)-1,0,(192*2)-1},	/* visible_area */
+	192,							/* screen height */
+	{ 0, (280*2)-1,0,192-1},		/* visible_area */
 	apple2_gfxdecodeinfo,			/* graphics decode info */
 	sizeof(palette)/3,							/* 2 colors used for the characters */
 	sizeof(colortable)/sizeof(unsigned short),	/* 2 colors used for the characters */
@@ -413,8 +409,8 @@ static struct MachineDriver machine_driver_enhanced =
 
 	/* video hardware */
 	280*2,							/* screen width */
-	192*2,							/* screen height */
-	{ 0, (280*2)-1,0,(192*2)-1},	/* visible_area */
+	192,							/* screen height */
+	{ 0, (280*2)-1,0,192-1},		/* visible_area */
 	apple2_gfxdecodeinfo,			/* graphics decode info */
 	sizeof(palette)/3,							/* 2 colors used for the characters */
 	sizeof(colortable)/sizeof(unsigned short),	/* 2 colors used for the characters */
@@ -447,61 +443,61 @@ static struct MachineDriver machine_driver_enhanced =
 ***************************************************************************/
 
 ROM_START(apple2e)
-	ROM_REGIONX(0x24700,REGION_CPU1)
+	ROM_REGION(0x24700,REGION_CPU1)
 	/* 64k main RAM, 64k aux RAM */
 	ROM_LOAD ( "a2e.cd", 0x20000, 0x2000, 0xe248835e )
 	ROM_LOAD ( "a2e.ef", 0x22000, 0x2000, 0xfc3d59d8 )
 	/* 0x700 for individual slot ROMs */
 	//ROM_LOAD ( "disk2_33.rom", 0x24500, 0x0100, 0xce7144f6 ) /* Disk II ROM - DOS 3.3 version */
 
-	ROM_REGIONX(0x2000,REGION_GFX1)
+	ROM_REGION(0x2000,REGION_GFX1)
 	ROM_LOAD ( "a2e.vid", 0x0000, 0x1000, 0x816a86f1 )
 ROM_END
 
 ROM_START(apple2ee)
-	ROM_REGIONX(0x24700,REGION_CPU1)
+	ROM_REGION(0x24700,REGION_CPU1)
 	ROM_LOAD ( "a2ee.cd", 0x20000, 0x2000, 0x443aa7c4 )
 	ROM_LOAD ( "a2ee.ef", 0x22000, 0x2000, 0x95e10034 )
 	/* 0x4000 for bankswitched RAM */
 	/* 0x700 for individual slot ROMs */
 	//ROM_LOAD ( "disk2_33.rom", 0x24500, 0x0100, 0xce7144f6 ) /* Disk II ROM - DOS 3.3 version */
 
-	ROM_REGIONX(0x2000,REGION_GFX1)
+	ROM_REGION(0x2000,REGION_GFX1)
 	ROM_LOAD ( "a2ee.vid", 0x0000, 0x1000, 0x2651014d)
 ROM_END
 
 ROM_START(apple2ep)
-	ROM_REGIONX(0x24700,REGION_CPU1)
+	ROM_REGION(0x24700,REGION_CPU1)
 	ROM_LOAD ("a2ept.cf", 0x20000, 0x4000, 0x02b648c8)
 	/* 0x4000 for bankswitched RAM */
 	/* 0x700 for individual slot ROMs */
 	//ROM_LOAD ("disk2_33.rom", 0x24500, 0x0100, 0xce7144f6) /* Disk II ROM - DOS 3.3 version */
 
-	ROM_REGIONX(0x2000,REGION_GFX1)
+	ROM_REGION(0x2000,REGION_GFX1)
 	ROM_LOAD("a2ept.vid", 0x0000, 0x1000, 0x2651014d)
 ROM_END
 
 ROM_START(apple2c)
-	ROM_REGIONX(0x24700,REGION_CPU1)
+	ROM_REGION(0x24700,REGION_CPU1)
 	ROM_LOAD ( "a2c.128", 0x20000, 0x4000, 0xf0edaa1b )
 
-	ROM_REGIONX(0x2000,REGION_GFX1)
+	ROM_REGION(0x2000,REGION_GFX1)
 	ROM_LOAD ( "a2c.vid", 0x0000, 0x1000, 0x2651014d )
 ROM_END
 
 ROM_START(apple2c0)
-	ROM_REGIONX(0x28000,REGION_CPU1)
+	ROM_REGION(0x28000,REGION_CPU1)
 	ROM_LOAD("a2c.256", 0x20000, 0x8000, 0xc8b979b3)
 
-	ROM_REGIONX(0x2000,REGION_GFX1)
+	ROM_REGION(0x2000,REGION_GFX1)
 	ROM_LOAD("a2c.vid", 0x0000, 0x1000, 0x2651014d)
 ROM_END
 
 ROM_START(apple2cp)
-    ROM_REGIONX(0x28000,REGION_CPU1)
+    ROM_REGION(0x28000,REGION_CPU1)
     ROM_LOAD("a2cplus.mon", 0x20000, 0x8000, 0x0b996420)
 
-    ROM_REGIONX(0x2000,REGION_GFX1)
+    ROM_REGION(0x2000,REGION_GFX1)
     ROM_LOAD("a2cplus.vid", 0x0000, 0x1000, 0x2651014d)
 ROM_END
 

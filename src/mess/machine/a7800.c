@@ -85,6 +85,12 @@ int a7800_load_rom (int id, const char *rom_name)
 	long len,start;
     unsigned char header[128];
 
+	if (rom_name==NULL)
+	{
+		printf("%s requires Cartridge!\n", Machine->gamedrv->name);
+		return INIT_FAILED;
+	}
+
 	ROM = memory_region(REGION_CPU1);
 
 	a7800_bios_f000 = malloc(0x1000);

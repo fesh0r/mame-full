@@ -1,42 +1,43 @@
 # MSX Cartridge CRC List
+# Compiled by Chris Henry
 # Note: This list is provided as a record of known dumps for this system.  
 #       These checksums have not been validated and cannot be assumed correct.  
 #       They are provided here as a database to help the emulation of this system.  
 # Send corrections/submissions to: battlepriest@hotmail.com
 
 [msx]
-879e6ddb = 10 Yard Fight (Irem, 1986)
-d9f1354b = American Truck (Telenet Japan, 19??) (PARTIALLY PLAYABLE; INPUT PROBLEMS)
-aae7028b = Antarctic Adventure (Konami, 1984)
-4fd4f778 = Arkanoid (Taito Imagine Ltd., 1986)
-7b1acdea = Athletic Land (Konami, 1984)
-3df1f56f = Bomber Man (Korea Soft Bank, 19??)
-83b8d8f3 = Circus Charlie (Konami, 1984)
-9a70d9c9 = Comic Bakery (Konami, 1984)
-71edc580 = Frogger (Konami, 1983)
- d94e7b2 = Konami's Boxing (Konami, 1985)
-adc58732 = Lode Runner (Broderbund/Doug Smith, 1983)
-d4151ce7 = Moon Patrol (ProSoft, 1985)
-195f5366 = Pairs (ASCII, 1983)
- 1043328 = Rise Out From Dungeons (ASCII, 1983)
-7de493ab = Super Boy 2 (Zemina, 1989)
-2149c32d = The Castle (ASCII, 1986)
-353dd532 = Zaxxon (Sega, 1985)
+879e6ddb = 10 Yard Fight, Irem, 1986
+d9f1354b = American Truck, Telenet Japan, 19??, PARTIALLY PLAYABLE/INPUT PROBLEMS
+aae7028b = Antarctic Adventure, Konami, 1984
+4fd4f778 = Arkanoid, Taito Imagine Ltd., 1986
+7b1acdea = Athletic Land, Konami, 1984
+3df1f56f = Bomber Man, Korea Soft Bank, 19??
+83b8d8f3 = Circus Charlie, Konami, 1984
+9a70d9c9 = Comic Bakery, Konami, 1984
+71edc580 = Frogger, Konami, 1983
+ d94e7b2 = Konami's Boxing, Konami, 1985
+adc58732 = Lode Runner, Broderbund/Doug Smith, 1983
+d4151ce7 = Moon Patrol, ProSoft, 1985
+195f5366 = Pairs, ASCII, 1983
+ 1043328 = Rise Out From Dungeons, ASCII, 1983
+7de493ab = Super Boy 2, Zemina, 1989
+2149c32d = The Castle, ASCII, 1986
+353dd532 = Zaxxon, Sega, 1985
 
-#[NOT WORKING]
-10d97b9e = 1942 (NOT WORKING; CRASHES}
-74a3b125 = Arkanoid 2 (NOT WORKING)
-af3c5d48 = Bosconian (NOT WORKING)
-8b73f133 = Bubble Bobble (NOT WORKING; CRASHES)
-fabb0ee7 = Chess (NOT WORKING)
-fe122fbc = Dambusters (NOT WORKING)
-bcc4dd7a = Demonia (NOT WORKING)
-7c3d7dea = Dig Dug (NOT WORKING)
-5640e6e2 = Donkey Kong (NOT WORKING)
-6ed06ee5 = Galaga (NOT WORKING)
-b15aa545 = Galaxian (NOT WORKING)
-a006ad6b = Mappy (NOT WORKING)
- a9f8d6c = Outrun (NOT WORKING)
-926bc903 = Pac-Man (NOT WORKING)
-51b2c93f = Q*Bert (NOT WORKING)
-b490ea4f = Rally X (NOT WORKING)
+#[NOT PLAYABLE]
+10d97b9e = 1942, NOT PLAYABLE; CRASHES
+74a3b125 = Arkanoid 2, NOT PLAYABLE
+af3c5d48 = Bosconian, NOT PLAYABLE
+8b73f133 = Bubble Bobble, NOT PLAYABLE/CRASHES
+fabb0ee7 = Chess, NOT PLAYABLE
+fe122fbc = Dambusters, NOT PLAYABLE
+bcc4dd7a = Demonia, NOT PLAYABLE
+7c3d7dea = Dig Dug, NOT PLAYABLE
+5640e6e2 = Donkey Kong, NOT PLAYABLE
+6ed06ee5 = Galaga, NOT PLAYABLE
+b15aa545 = Galaxian, NOT PLAYABLE
+a006ad6b = Mappy, NOT PLAYABLE
+ a9f8d6c = Outrun, NOT PLAYABLE
+926bc903 = Pac-Man, NOT PLAYABLE
+51b2c93f = Q*Bert, NOT PLAYABLE
+b490ea4f = Rally X, NOT PLAYABLE

@@ -18,12 +18,20 @@
  *   - This entire notice must remain in the source code.
  *
  *****************************************************************************/
+/* 2. February 2000 PeT added support for 65sc02 subtype */
+/* 2. February 2000 PeT added support for 65ce02 variant */
+/* 3. February 2000 PeT bbr bbs displayment */
+/* 4. February 2000 PeT ply inw dew */
+/* 4. February 2000 PeT fixed relative word operand */
 
 #include <stdio.h>
 #ifdef MAME_DEBUG
 #include "driver.h"
 #include "mamedbg.h"
 #include "m6502.h"
+#if HAS_M65CE02
+#include "m65ce02.h"
+#endif
 
 #define OPCODE(A)	cpu_readop(A)
 #define ARGBYTE(A)	cpu_readop_arg(A)
@@ -36,6 +44,7 @@ enum addr_mode {
 	imp,	/* implicit */
 	acc,	/* accumulator */
 	imm,	/* immediate */
+	imm2,	/* immediate word (65ce02) */
 	adr,	/* absolute address (jmp,jsr) */
 	aba,	/* absolute */
 	zpg,	/* zero page */
@@ -46,8 +55,11 @@ enum addr_mode {
 	abx,	/* absolute + X */
 	aby,	/* absolute + Y */
 	rel,	/* relative */
+	rel2,	/* relative word (65cs02, 65ce02) */
 	idx,	/* zero page pre indexed */
 	idy,	/* zero page post indexed */
+	idz,	/* zero page post indexed (65ce02) */
+	isy,	/* zero page pre indexed sp and post indexed y (65ce02) */
 	ind,	/* indirect (jmp) */
 	iax 	/* indirect + X (65c02 jmp) */
 };
@@ -63,11 +75,20 @@ enum opcodes {
 	ill,
 /* 65c02 (only) mnemonics */
 	bbr,  bbs,	bra,  rmb,	smb,  stz,	trb,  tsb,
+/* 65sc02 (only) mnemonics */
+	bsr,
 /* 6510 + 65c02 mnemonics */
 	anc,  asr,	ast,  arr,	asx,  axa,	dcp,  dea,
 	dop,  ina,	isc,  lax,	phx,  phy,	plx,  ply,
 	rla,  rra,	sax,  slo,	sre,  sah,	say,  ssh,
-	sxh,  syh,	top
+	sxh,  syh,	top,
+/* 65ce02 mnemonics */
+    cle,  see,  map,
+	tab,  tba,  taz,  tza, tys, tsy,
+	ldz,  stz2/* real register store */,
+	dez,  inz,  cpz,  phz,  plz,
+    neg,  asr2/* arithmetic shift right */,
+    asw,  row,  dew,  inw,  phw
 };
 
 
@@ -83,11 +104,20 @@ static const char *token[]=
 	"ill",
 /* 65c02 mnemonics */
 	"bbr", "bbs", "bra", "rmb", "smb", "stz", "trb", "tsb",
+/* 65sc02 (only) mnemonics */
+	"bsr",
 /* 6510 mnemonics */
 	"anc", "asr", "ast", "arr", "asx", "axa", "dcp", "dea",
 	"dop", "ina", "isc", "lax", "phx", "phy", "plx", "ply",
 	"rla", "rra", "sax", "slo", "sre", "sah", "say", "ssh",
-	"sxh", "syh", "top"
+	"sxh", "syh", "top",
+	/* 65ce02 mnemonics */
+    "cle", "see", "map",
+	"tab", "tba", "taz", "tza", "tys", "tsy",
+    "ldz", "stz",
+	"dez", "inz", "cpz", "phz", "plz",
+    "neg", "asr",
+    "asw", "row", "dew", "inw", "phw"
 };
 
 /* Some really short names for the EA access modes */
@@ -100,6 +130,12 @@ static const char *token[]=
 #define ZRD EA_ZPG_RD
 #define ZWR EA_ZPG_WR
 #define ZRW EA_ZPG_RDWR
+
+/* words */
+#define MRD2 EA_MEM_RD
+#define MRW2 EA_MEM_RDWR
+#define ZRD2 EA_ZPG_RD
+#define ZRW2 EA_ZPG_RDWR
 
 static const UINT8 op6502[256][3] =
 {
@@ -120,7 +156,7 @@ static const UINT8 op6502[256][3] =
   {sec,imp,0  },{and,aby,MRD},{ill,non,0  },{ill,non,0	},
   {ill,non,0  },{and,abx,MRD},{rol,abx,MRW},{ill,non,0	},
   {rti,imp,0  },{eor,idx,MRD},{ill,non,0  },{ill,non,0	},/* 40 */
-  {ill,non,0  },{eor,zpg,ZRD},{lsr,zpg,ZRW},{ill,non,0	},
+  {ill,non,0  },{eor,zpg,ZRD},{lsr,zpg,ZRW},{ill,non,0  },
   {pha,imp,0  },{eor,imm,VAL},{lsr,acc,0  },{ill,non,0	},
   {jmp,adr,JMP},{eor,aba,MRD},{lsr,aba,MRW},{ill,non,0	},
   {bvc,rel,BRA},{eor,idy,MRD},{ill,non,0  },{ill,non,0	},/* 50 */
@@ -153,7 +189,7 @@ static const UINT8 op6502[256][3] =
   {ldy,abx,MRD},{lda,abx,MRD},{ldx,aby,MRD},{ill,non,0	},
   {cpy,imm,VAL},{cmp,idx,MRD},{ill,non,0  },{ill,non,0	},/* c0 */
   {cpy,zpg,ZRD},{cmp,zpg,ZRD},{dec,zpg,ZRW},{ill,non,0	},
-  {iny,imp,0  },{cmp,imm,VAL},{dex,imp,0  },{ill,non,0	},
+  {iny,imp,0  },{cmp,imm,VAL},{dex,imp,0  },{ill,non,0  },
   {cpy,aba,MRD},{cmp,aba,MRD},{dec,aba,MRW},{ill,non,0	},
   {bne,rel,BRA},{cmp,idy,MRD},{ill,non,0  },{ill,non,0	},/* d0 */
   {ill,non,0  },{cmp,zpx,ZRD},{dec,zpx,ZRW},{ill,non,0	},
@@ -196,6 +232,75 @@ static const UINT8 op65c02[256][3] =
   {cli,imp,0  },{eor,aby,MRD},{phy,imp,0  },{ill,non,0	},
   {ill,non,0  },{eor,abx,MRD},{lsr,abx,MRW},{bbr,zpb,ZRD},
   {rts,imp,0  },{adc,idx,MRD},{ill,non,0  },{ill,non,0	},/* 60 */
+  {stz,zpg,ZWR},{adc,zpg,ZRD},{ror,zpg,ZRW},{rmb,zpg,ZRW},
+  {pla,imp,0  },{adc,imm,VAL},{ror,acc,0  },{ill,non,0	},
+  {jmp,ind,JMP},{adc,aba,MRD},{ror,aba,MRW},{bbr,zpb,ZRD},
+  {bvs,rel,BRA},{adc,idy,MRD},{adc,zpi,MRD},{ill,non,0	},/* 70 */
+  {stz,zpx,ZWR},{adc,zpx,ZRD},{ror,zpx,ZRW},{rmb,zpg,ZRW},
+  {sei,imp,0  },{adc,aby,MRD},{ply,imp,0  },{ill,non,0	},
+  {jmp,iax,JMP},{adc,abx,MRD},{ror,abx,MRW},{bbr,zpb,ZRD},
+  {bra,rel,BRA},{sta,idx,MWR},{ill,non,0  },{ill,non,0	},/* 80 */
+  {sty,zpg,ZWR},{sta,zpg,ZWR},{stx,zpg,ZWR},{smb,zpg,ZRW},
+  {dey,imp,0  },{bit,imm,VAL},{txa,imp,0  },{ill,non,0	},
+  {sty,aba,MWR},{sta,aba,MWR},{stx,aba,MWR},{bbs,zpb,ZRD},
+  {bcc,rel,BRA},{sta,idy,MWR},{sta,zpi,MWR},{ill,non,0	},/* 90 */
+  {sty,zpx,ZWR},{sta,zpx,ZWR},{stx,zpy,ZWR},{smb,zpg,ZRW},
+  {tya,imp,0  },{sta,aby,MWR},{txs,imp,0  },{ill,non,0	},
+  {stz,aba,MWR},{sta,abx,MWR},{stz,abx,MWR},{bbs,zpb,ZRD},
+  {ldy,imm,VAL},{lda,idx,MRD},{ldx,imm,VAL},{ill,non,0	},/* a0 */
+  {ldy,zpg,ZRD},{lda,zpg,ZRD},{ldx,zpg,ZRD},{smb,zpg,ZRW},
+  {tay,imp,0  },{lda,imm,VAL},{tax,imp,0  },{ill,non,0	},
+  {ldy,aba,MRD},{lda,aba,MRD},{ldx,aba,MRD},{bbs,zpb,ZRD},
+  {bcs,rel,BRA},{lda,idy,MRD},{lda,zpi,MRD},{ill,non,0	},/* b0 */
+  {ldy,zpx,ZRD},{lda,zpx,ZRD},{ldx,zpy,ZRD},{smb,zpg,ZRW},
+  {clv,imp,0  },{lda,aby,MRD},{tsx,imp,0  },{ill,non,0	},
+  {ldy,abx,MRD},{lda,abx,MRD},{ldx,aby,MRD},{bbs,zpb,ZRD},
+  {cpy,imm,VAL},{cmp,idx,MRD},{ill,non,0  },{ill,non,0	},/* c0 */
+  {cpy,zpg,ZRD},{cmp,zpg,ZRD},{dec,zpg,ZRW},{smb,zpg,ZRW},
+  {iny,imp,0  },{cmp,imm,VAL},{dex,imp,0  },{ill,non,0	},
+  {cpy,aba,MRD},{cmp,aba,MRD},{dec,aba,MRW},{bbs,zpb,ZRD},
+  {bne,rel,BRA},{cmp,idy,MRD},{cmp,zpi,MRD},{ill,non,0	},/* d0 */
+  {ill,non,0  },{cmp,zpx,ZRD},{dec,zpx,ZRW},{smb,zpg,ZRW},
+  {cld,imp,0  },{cmp,aby,MRD},{phx,imp,0  },{ill,non,0	},
+  {ill,non,0  },{cmp,abx,MRD},{dec,abx,MRW},{bbs,zpb,ZRD},
+  {cpx,imm,VAL},{sbc,idx,MRD},{ill,non,0  },{ill,non,0	},/* e0 */
+  {cpx,zpg,ZRD},{sbc,zpg,ZRD},{inc,zpg,ZRW},{smb,zpg,ZRW},
+  {inx,imp,0  },{sbc,imm,VAL},{nop,imp,0  },{ill,non,0	},
+  {cpx,aba,MRD},{sbc,aba,MRD},{inc,aba,MRW},{bbs,zpb,ZRD},
+  {beq,rel,BRA},{sbc,idy,MRD},{sbc,zpi,MRD},{ill,non,0	},/* f0 */
+  {ill,non,0  },{sbc,zpx,ZRD},{inc,zpx,ZRW},{smb,zpg,ZRW},
+  {sed,imp,0  },{sbc,aby,MRD},{plx,imp,0  },{ill,non,0	},
+  {ill,non,0  },{sbc,abx,MRD},{inc,abx,MRW},{bbs,zpb,ZRD}
+};
+
+/* only bsr additional to 65c02 yet */
+static const UINT8 op65sc02[256][3] =
+{
+  {brk,imp,0  },{ora,idx,MRD},{ill,non,0  },{ill,non,0	},/* 00 */
+  {tsb,zpg,0  },{ora,zpg,ZRD},{asl,zpg,ZRW},{rmb,zpg,ZRW},
+  {php,imp,0  },{ora,imm,VAL},{asl,acc,MRW},{ill,non,0	},
+  {tsb,aba,MRD},{ora,aba,MRD},{asl,aba,MRW},{bbr,zpb,ZRD},
+  {bpl,rel,BRA},{ora,idy,MRD},{ora,zpi,MRD},{ill,non,0	},/* 10 */
+  {trb,zpg,ZRD},{ora,zpx,ZRD},{asl,zpx,ZRW},{rmb,zpg,ZRW},
+  {clc,imp,0  },{ora,aby,MRD},{ina,imp,0  },{ill,non,0	},
+  {tsb,aba,MRD},{ora,abx,MRD},{asl,abx,MRW},{bbr,zpb,ZRD},
+  {jsr,adr,0  },{and,idx,MRD},{ill,non,0  },{ill,non,0	},/* 20 */
+  {bit,zpg,ZRD},{and,zpg,ZRD},{rol,zpg,ZRW},{rmb,zpg,ZRW},
+  {plp,imp,0  },{and,imm,VAL},{rol,acc,0  },{ill,non,0	},
+  {bit,aba,MRD},{and,aba,MRD},{rol,aba,MRW},{bbr,zpb,ZRD},
+  {bmi,rel,BRA},{and,idy,MRD},{and,zpi,MRD},{ill,non,0	},/* 30 */
+  {bit,zpx,ZRD},{and,zpx,ZRD},{rol,zpx,ZRW},{rmb,zpg,ZRW},
+  {sec,imp,0  },{and,aby,MRD},{dea,imp,0  },{ill,non,0	},
+  {bit,abx,MRD},{and,abx,MRD},{rol,abx,MRW},{bbr,zpb,ZRD},
+  {rti,imp,0  },{eor,idx,MRD},{ill,non,0  },{ill,non,0	},/* 40 */
+  {ill,non,0  },{eor,zpg,ZRD},{lsr,zpg,ZRW},{rmb,zpg,ZRW},
+  {pha,imp,0  },{eor,imm,VAL},{lsr,acc,0  },{ill,non,0	},
+  {jmp,adr,JMP},{eor,aba,MRD},{lsr,aba,MRW},{bbr,zpb,ZRD},
+  {bvc,rel,BRA},{eor,idy,MRD},{eor,zpi,MRD},{ill,non,0	},/* 50 */
+  {ill,non,0  },{eor,zpx,ZRD},{lsr,zpx,ZRW},{rmb,zpg,ZRW},
+  {cli,imp,0  },{eor,aby,MRD},{phy,imp,0  },{ill,non,0	},
+  {ill,non,0  },{eor,abx,MRD},{lsr,abx,MRW},{bbr,zpb,ZRD},
+  {rts,imp,0  },{adc,idx,MRD},{ill,non,0  },{bsr,rel2,BRA},/* 60 */
   {stz,zpg,ZWR},{adc,zpg,ZRD},{ror,zpg,ZRW},{rmb,zpg,ZRW},
   {pla,imp,0  },{adc,imm,VAL},{ror,acc,0  },{ill,non,0	},
   {jmp,ind,JMP},{adc,aba,MRD},{ror,aba,MRW},{bbr,zpb,ZRD},
@@ -305,6 +410,76 @@ static const UINT8 op6510[256][3] =
   {top,imp,0  },{sbc,abx,MRD},{inc,abx,MRW},{isc,abx,MRW}
 };
 
+#if HAS_M65CE02
+static const UINT8 op65ce02[256][3] =
+{
+  {brk,imp,0  },{ora,idx,MRD},{cle,imp,0  },{see,imp,0	},/* 00 */
+  {tsb,zpg,0  },{ora,zpg,ZRD},{asl,zpg,ZRW},{rmb,zpg,ZRW},
+  {php,imp,0  },{ora,imm,VAL},{asl,acc,MRW},{tsy,imp,0	},
+  {tsb,aba,MRD},{ora,aba,MRD},{asl,aba,MRW},{bbr,zpb,ZRD},
+  {bpl,rel,BRA},{ora,idy,MRD},{ora,idz,MRD},{bpl,rel2,BRA},/* 10 */
+  {trb,zpg,ZRD},{ora,zpx,ZRD},{asl,zpx,ZRW},{rmb,zpg,ZRW},
+  {clc,imp,0  },{ora,aby,MRD},{ina,imp,0  },{inz,imp,0	},
+  {tsb,aba,MRD},{ora,abx,MRD},{asl,abx,MRW},{bbr,zpb,ZRD},
+  {jsr,adr,0  },{and,idx,MRD},{jsr,ind,0  },{jsr,iax,0	},/* 20 */
+  {bit,zpg,ZRD},{and,zpg,ZRD},{rol,zpg,ZRW},{rmb,zpg,ZRW},
+  {plp,imp,0  },{and,imm,VAL},{rol,acc,0  },{tys,imp,0	},
+  {bit,aba,MRD},{and,aba,MRD},{rol,aba,MRW},{bbr,zpb,ZRD},
+  {bmi,rel,BRA},{and,idz,MRD},{and,zpi,MRD},{bmi,rel2,BRA},/* 30 */
+  {bit,zpx,ZRD},{and,zpx,ZRD},{rol,zpx,ZRW},{rmb,zpg,ZRW},
+  {sec,imp,0  },{and,aby,MRD},{dea,imp,0  },{dez,imp,0	},
+  {bit,abx,MRD},{and,abx,MRD},{rol,abx,MRW},{bbr,zpb,ZRD},
+  {rti,imp,0  },{eor,idx,MRD},{neg,imp,0  },{asr2,imp,0	},/* 40 */
+  {asr2,zpg,ZRW},{eor,zpg,ZRD},{lsr,zpg,ZRW},{rmb,zpg,ZRW},
+  {pha,imp,0  },{eor,imm,VAL},{lsr,acc,0  },{taz,imp,0	},
+  {jmp,adr,JMP},{eor,aba,MRD},{lsr,aba,MRW},{bbr,zpb,ZRD},
+  {bvc,rel,BRA},{eor,idy,MRD},{eor,idz,MRD},{bvc,rel2,BRA},/* 50 */
+  {asr2,zpx,ZRW},{eor,zpx,ZRD},{lsr,zpx,ZRW},{rmb,zpg,ZRW},
+  {cli,imp,0  },{eor,aby,MRD},{phy,imp,0  },{tab,imp,0	},
+  {map,imp,0  },{eor,abx,MRD},{lsr,abx,MRW},{bbr,zpb,ZRD},
+  {rts,imp,0  },{adc,idx,MRD},{rts,imm,VAL},{bsr,rel2,BRA},/* 60 */
+  {stz2,zpg,ZWR},{adc,zpg,ZRD},{ror,zpg,ZRW},{rmb,zpg,ZRW},
+  {pla,imp,0  },{adc,imm,VAL},{ror,acc,0  },{tza,imp,0	},
+  {jmp,ind,JMP},{adc,aba,MRD},{ror,aba,MRW},{bbr,zpb,ZRD},
+  {bvs,rel,BRA},{adc,idy,MRD},{adc,zpi,MRD},{bvs,rel2,BRA},/* 70 */
+  {stz2,zpx,ZWR},{adc,zpx,ZRD},{ror,zpx,ZRW},{rmb,zpg,ZRW},
+  {sei,imp,0  },{adc,aby,MRD},{ply,imp,0  },{tba,imp,0	},
+  {jmp,iax,JMP},{adc,abx,MRD},{ror,abx,MRW},{bbr,zpb,ZRD},
+  {bra,rel,BRA},{sta,idx,MWR},{sta,isy,MWR  },{bra,rel2,BRA},/* 80 */
+  {sty,zpg,ZWR},{sta,zpg,ZWR},{stx,zpg,ZWR},{smb,zpg,ZRW},
+  {dey,imp,0  },{bit,imm,VAL},{txa,imp,0  },{sty,abx,MWR},
+  {sty,aba,MWR},{sta,aba,MWR},{stx,aba,MWR},{bbs,zpb,ZRD},
+  {bcc,rel,BRA},{sta,idy,MWR},{sta,inz,MWR},{bcc,rel2,BRA},/* 90 */
+  {sty,zpx,ZWR},{sta,zpx,ZWR},{stx,zpy,ZWR},{smb,zpg,ZRW},
+  {tya,imp,0  },{sta,aby,MWR},{txs,imp,0  },{stx,aby,MWR},
+  {stz2,aba,MWR},{sta,abx,MWR},{stz2,abx,MWR},{bbs,zpb,ZRD},
+  {ldy,imm,VAL},{lda,idx,MRD},{ldx,imm,VAL},{ldz,imm,VAL},/* a0 */
+  {ldy,zpg,ZRD},{lda,zpg,ZRD},{ldx,zpg,ZRD},{smb,zpg,ZRW},
+  {tay,imp,0  },{lda,imm,VAL},{tax,imp,0  },{ldz,aba,MRD},
+  {ldy,aba,MRD},{lda,aba,MRD},{ldx,aba,MRD},{bbs,zpb,ZRD},
+  {bcs,rel,BRA},{lda,idy,MRD},{lda,inz,MRD},{bcs,rel2,BRA},/* b0 */
+  {ldy,zpx,ZRD},{lda,zpx,ZRD},{ldx,zpy,ZRD},{smb,zpg,ZRW},
+  {clv,imp,0  },{lda,aby,MRD},{tsx,imp,0  },{ldz,abx,MRD},
+  {ldy,abx,MRD},{lda,abx,MRD},{ldx,aby,MRD},{bbs,zpb,ZRD},
+  {cpy,imm,VAL},{cmp,idx,MRD},{cpz,imm,VAL},{dew,zpg,ZRW2},/* c0 */
+  {cpy,zpg,ZRD},{cmp,zpg,ZRD},{dec,zpg,ZRW},{smb,zpg,ZRW},
+  {iny,imp,0  },{cmp,imm,VAL},{dex,imp,0  },{asw,aba,MRW2},
+  {cpy,aba,MRD},{cmp,aba,MRD},{dec,aba,MRW},{bbs,zpb,ZRD},
+  {bne,rel,BRA},{cmp,idy,MRD},{cmp,idz,MRD},{bne,rel,BRA},/* d0 */
+  {cpz,zpg,MRD},{cmp,zpx,ZRD},{dec,zpx,ZRW},{smb,zpg,ZRW},
+  {cld,imp,0  },{cmp,aby,MRD},{phx,imp,0  },{phz,imp,0	},
+  {cpz,aba,MRD},{cmp,abx,MRD},{dec,abx,MRW},{bbs,zpb,ZRD},
+  {cpx,imm,VAL},{sbc,idx,MRD},{lda,isy,MRD},{inw,zpg,ZRW2},/* e0 */
+  {cpx,zpg,ZRD},{sbc,zpg,ZRD},{inc,zpg,ZRW},{smb,zpg,ZRW},
+  {inx,imp,0  },{sbc,imm,VAL},{nop,imp,0  },{row,aba,MRW2},
+  {cpx,aba,MRD},{sbc,aba,MRD},{inc,aba,MRW},{bbs,zpb,ZRD},
+  {beq,rel,BRA},{sbc,idy,MRD},{sbc,idz,MRD},{beq,rel2,BRA},/* f0 */
+  {phw,imm2,VAL},{sbc,zpx,ZRD},{inc,zpx,ZRW},{smb,zpg,ZRW},
+  {sed,imp,0  },{sbc,aby,MRD},{plx,imp,0  },{plz,imp,0	},
+  {phw,aba,MRD2},{sbc,abx,MRD},{inc,abx,MRW},{bbs,zpb,ZRD}
+};
+#endif
+
 /*****************************************************************************
  *	Disassemble a single opcode starting at pc
  *****************************************************************************/
@@ -313,6 +488,7 @@ unsigned Dasm6502(char *buffer, unsigned pc)
 	char *dst = buffer;
 	const char *symbol;
 	INT8 offset;
+	INT16 offset16;
 	unsigned PC = pc;
 	UINT16 addr, ea;
 	UINT8 op, opc, arg, access, value;
@@ -328,6 +504,13 @@ unsigned Dasm6502(char *buffer, unsigned pc)
 			access = op65c02[op][2];
 			break;
 #endif
+#if HAS_M65SC02
+		case SUBTYPE_65SC02:
+			opc = op65sc02[op][0];
+			arg = op65sc02[op][1];
+			access = op65sc02[op][2];
+			break;
+#endif
 #if HAS_M6510
 		case SUBTYPE_6510:
 			opc = op6510[op][0];
@@ -341,7 +524,6 @@ unsigned Dasm6502(char *buffer, unsigned pc)
 			access = op6502[op][2];
             break;
 	}
-
 	dst += sprintf(dst, "%-5s", token[opc]);
 	if( opc == bbr || opc == bbs || opc == rmb || opc == smb )
 		dst += sprintf(dst, "%d,", (op >> 3) & 7);
@@ -358,6 +540,13 @@ unsigned Dasm6502(char *buffer, unsigned pc)
     case rel:
 		offset = (INT8)ARGBYTE(pc++);
 		symbol = set_ea_info( 0, pc, offset, access );
+		dst += sprintf(dst,"%s", symbol);
+		break;
+
+    case rel2:
+		offset16 = ARGWORD(pc)-1;
+		pc += 2;
+		symbol = set_ea_info( 0, pc, offset16, access );
 		dst += sprintf(dst,"%s", symbol);
 		break;
 
@@ -414,7 +603,7 @@ unsigned Dasm6502(char *buffer, unsigned pc)
 		symbol = set_ea_info( 0, addr, EA_UINT8, access );
 		dst += sprintf(dst,"$%02X", addr);
 		offset = (INT8)ARGBYTE(pc++);
-		symbol = set_ea_info( 1, pc, offset, access );
+		symbol = set_ea_info( 1, pc, offset, BRA );
 		dst += sprintf(dst,",%s", symbol);
         break;
 
@@ -469,6 +658,187 @@ unsigned Dasm6502(char *buffer, unsigned pc)
 	}
 	return pc - PC;
 }
+
+
+#if HAS_M65CE02
+/*****************************************************************************
+ *	Disassemble a single opcode starting at pc
+ *****************************************************************************/
+unsigned Dasm65ce02(char *buffer, unsigned pc)
+{
+	char *dst = buffer;
+	const char *symbol;
+	INT8 offset;
+	INT16 offset16;
+	unsigned PC = pc;
+	UINT16 addr, ea;
+	UINT8 op, opc, arg, access, value;
+
+	op = OPCODE(pc++);
+
+	opc = op65ce02[op][0];
+	arg = op65ce02[op][1];
+	access = op65ce02[op][2];
+
+	dst += sprintf(dst, "%-5s", token[opc]);
+	if( opc == bbr || opc == bbs || opc == rmb || opc == smb )
+		dst += sprintf(dst, "%d,", (op >> 3) & 7);
+
+    switch(arg)
+	{
+	case imp:
+		break;
+
+	case acc:
+		dst += sprintf(dst,"a");
+		break;
+
+    case rel:
+		offset = (INT8)ARGBYTE(pc++);
+		symbol = set_ea_info( 0, pc, offset, access );
+		dst += sprintf(dst,"%s", symbol);
+		break;
+
+    case rel2:
+		offset16 = ARGWORD(pc)-1;
+		pc += 2;
+		symbol = set_ea_info( 0, pc, offset16, access );
+		dst += sprintf(dst,"%s", symbol);
+		break;
+
+	case imm:
+		value = ARGBYTE(pc++);
+		symbol = set_ea_info( 0, value, EA_UINT8, access );
+		dst += sprintf(dst,"#%s", symbol);
+		break;
+
+	case imm2:
+		addr = ARGWORD(pc);
+		pc += 2;
+		symbol = set_ea_info( 0, addr, EA_UINT16, access );
+		dst += sprintf(dst,"#%s", symbol);
+		break;
+
+	case zpg:
+		addr = ARGBYTE(pc++);
+		symbol = set_ea_info( 0, addr, EA_UINT8, access );
+		dst += sprintf(dst,"$%02X", addr);
+		break;
+
+	case zpx:
+		addr = ARGBYTE(pc++);
+		ea = (addr + m65ce02_get_reg(M65CE02_X)) & 0xff;
+		symbol = set_ea_info( 0, ea, EA_UINT8, access );
+        dst += sprintf(dst,"$%02X,x", addr);
+		break;
+
+	case zpy:
+		addr = ARGBYTE(pc++);
+		ea = (addr + m65ce02_get_reg(M65CE02_Y)) & 0xff;
+		symbol = set_ea_info( 0, ea, EA_UINT8, access );
+        dst += sprintf(dst,"$%02X,y", addr);
+		break;
+
+	case idx:
+		addr = ARGBYTE(pc++);
+		ea = (addr + m65ce02_get_reg(M65CE02_X)) & 0xff;
+		ea = RDMEM(ea) + (RDMEM((ea+1) & 0xff) << 8);
+		symbol = set_ea_info( 0, ea, EA_UINT16, access );
+        dst += sprintf(dst,"($%02X,x)", addr);
+		break;
+
+	case idy:
+		addr = ARGBYTE(pc++);
+        ea = (RDMEM(addr) + (RDMEM((addr+1) & 0xff) << 8)
+			  + m65ce02_get_reg(M65CE02_Y)) & 0xffff;
+		symbol = set_ea_info( 0, ea, EA_UINT16, access );
+        dst += sprintf(dst,"($%02X),y", addr);
+		break;
+
+	case idz:
+		addr = ARGBYTE(pc++);
+        ea = (RDMEM(addr) + (RDMEM((addr+1) & 0xff) << 8)
+			  + m65ce02_get_reg(M65CE02_Y)) & 0xffff;
+		symbol = set_ea_info( 0, ea, EA_UINT16, access );
+        dst += sprintf(dst,"($%02X),z", addr);
+		break;
+
+	case isy:
+		addr = ARGBYTE(pc++);
+        ea = (((RDMEM(addr) + m6502_get_reg(M65CE02_S))&0xff)
+			  +(RDMEM((addr+1) & 0xff) << 8)+ m65ce02_get_reg(M65CE02_Y)) & 0xffff;
+		symbol = set_ea_info( 0, ea, EA_UINT16, access );
+        dst += sprintf(dst,"($%02X,s),y", addr);
+		break;
+
+	case zpi:
+		addr = ARGBYTE(pc++);
+        ea = RDMEM(addr) + (RDMEM((addr+1) & 0xff) << 8);
+		symbol = set_ea_info( 0, ea, EA_UINT16, access );
+        dst += sprintf(dst,"($%02X)", addr);
+		break;
+
+	case zpb:
+		addr = ARGBYTE(pc++);
+		symbol = set_ea_info( 0, addr, EA_UINT8, access );
+		dst += sprintf(dst,"$%02X", addr);
+		offset = (INT8)ARGBYTE(pc++);
+		symbol = set_ea_info( 1, pc, offset, BRA );
+		dst += sprintf(dst,",%s", symbol);
+        break;
+
+    case adr:
+		addr = ARGWORD(pc);
+		pc += 2;
+		symbol = set_ea_info( 0, addr, EA_UINT16, access );
+		dst += sprintf(dst,"%s", symbol);
+		break;
+
+	case aba:
+		addr = ARGWORD(pc);
+		pc += 2;
+		symbol = set_ea_info( 0, addr, EA_UINT16, access );
+		dst += sprintf(dst,"%s", symbol);
+		break;
+
+	case abx:
+		addr = ARGWORD(pc);
+		pc += 2;
+		ea = (addr + m65ce02_get_reg(M65CE02_X)) & 0xffff;
+		symbol = set_ea_info( 0, ea, EA_UINT16, access );
+        dst += sprintf(dst,"$%04X,x", addr);
+		break;
+
+	case aby:
+		addr = ARGWORD(pc);
+		pc += 2;
+		ea = (addr + m65ce02_get_reg(M65CE02_Y)) & 0xffff;
+		symbol = set_ea_info( 0, ea, EA_UINT16, access );
+        dst += sprintf(dst,"$%04X,y", addr);
+		break;
+
+	case ind:
+		addr = ARGWORD(pc);
+		pc += 2;
+        ea = ARGWORD(addr);
+		symbol = set_ea_info( 0, ea, EA_UINT16, access );
+        dst += sprintf(dst,"($%04X)", addr);
+		break;
+
+	case iax:
+		addr = ARGWORD(pc);
+		pc += 2;
+		ea = (ARGWORD(addr) + m65ce02_get_reg(M65CE02_X)) & 0xffff;
+		symbol = set_ea_info( 0, ea, EA_UINT16, access );
+        dst += sprintf(dst,"($%04X),X", addr);
+		break;
+
+	default:
+		dst += sprintf(dst,"$%02X", op);
+	}
+	return pc - PC;
+}
+#endif
 
 #endif
 

@@ -76,7 +76,7 @@ void apple2e_init_machine(void)
 
 	AY3600_init();
 
-	memset (&a2, sizeof (APPLE2_STRUCT), 0);
+	memset (&a2, 0, sizeof (APPLE2_STRUCT));
 	a2_speaker_state = 0;
 
 	/* TODO: add more initializers as we add more slots */
@@ -108,25 +108,23 @@ int apple2_id_rom (const char *name, const char *gamename)
 /***************************************************************************
   apple2e_load_rom
 ***************************************************************************/
-//int apple2e_load_rom (void)
 int apple2e_load_rom (int id, const char *rom_name)
 {
 	/* Initialize second half of graphics memory to 0xFF for sneaky decoding purposes */
 	memset(memory_region(REGION_GFX1) + 0x1000, 0xFF, 0x1000);
 
-	return 0;
+	return INIT_OK;
 }
 
 /***************************************************************************
   apple2ee_load_rom
 ***************************************************************************/
-//int apple2ee_load_rom (void)
 int apple2ee_load_rom (int id, const char *rom_name)
 {
 	/* Initialize second half of graphics memory to 0xFF for sneaky decoding purposes */
 	memset(memory_region(REGION_GFX1) + 0x1000, 0xFF, 0x1000);
 
-	return 0;
+	return INIT_OK;
 }
 
 /***************************************************************************

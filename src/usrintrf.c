@@ -577,7 +577,7 @@ static void drawbox(int leftx,int topy,int width,int height)
 }
 
 
-static void drawbar(int leftx,int topy,int width,int height,int percentage)
+static void drawbar(int leftx,int topy,int width,int height,int percentage,int default_percentage)
 {
 	int y;
 	unsigned short black,white;
@@ -598,8 +598,8 @@ static void drawbar(int leftx,int topy,int width,int height,int percentage)
 	{
 		drawpixel(leftx,			y, white);
 		drawpixel(leftx+1,			y, white);
-		drawpixel(leftx+width/2-1,	y, white);
-		drawpixel(leftx+width/2,	y, white);
+		if (default_percentage)
+			drawpixel(leftx+width*default_percentage/100-1,	y, white);
 		drawpixel(leftx+width-2,	y, white);
 		drawpixel(leftx+width-1,	y, white);
 	}
@@ -609,8 +609,8 @@ static void drawbar(int leftx,int topy,int width,int height,int percentage)
 	{
 		drawpixel(leftx,			y, white);
 		drawpixel(leftx+1,			y, white);
-		drawpixel(leftx+width/2-1,	y, white);
-		drawpixel(leftx+width/2,	y, white);
+		if (default_percentage)
+			drawpixel(leftx+width*default_percentage/100-1,	y, white);
 		drawpixel(leftx+width-2,	y, white);
 		drawpixel(leftx+width-1,	y, white);
 	}
@@ -2376,8 +2376,8 @@ static int displayimageinfo(int selected)
 		displaymessagewindow(buf);
 
 		sel = 0;
-		if (keyboard_read_async() != KEYCODE_NONE ||
-				joystick_read_async() != JOYCODE_NONE)
+		if (code_read_async() != KEYCODE_NONE ||
+				code_read_async() != JOYCODE_NONE)
 			sel = -1;
 	}
 	else
@@ -3209,7 +3209,7 @@ sel = sel & 0xff;
 
 *********************************************************************/
 
-static void displayosd(const char *text,int percentage)
+static void displayosd(const char *text,int percentage,int default_percentage)
 {
 	struct DisplayText dt[2];
 	int avail;
@@ -3228,7 +3228,7 @@ static void displayosd(const char *text,int percentage)
 			(Machine->uiheight - 3*Machine->uifontheight),
 			avail * Machine->uifontwidth,
 			Machine->uifontheight,
-			percentage);
+			percentage,default_percentage);
 
 	dt[0].text = text;
 	dt[0].color = DT_COLOR_WHITE;
@@ -3256,7 +3256,7 @@ static void onscrd_volume(int increment,int arg)
 	attenuation = osd_get_mastervolume();
 
 	sprintf(buf,"Volume %3ddB",attenuation);
-	displayosd(buf,100 * (attenuation + 32) / 32);
+	displayosd(buf,100 * (attenuation + 32) / 32,100);
 }
 
 static void onscrd_mixervol(int increment,int arg)
@@ -3339,7 +3339,7 @@ static void onscrd_mixervol(int increment,int arg)
 		sprintf(buf,"ALL CHANNELS Volume %3d%%",volume);
 	else
 		sprintf(buf,"%s Volume %3d%%",mixer_get_name(arg),volume);
-	displayosd(buf,volume);
+	displayosd(buf,volume,mixer_get_default_mixing_level(arg));
 }
 
 static void onscrd_brightness(int increment,int arg)
@@ -3359,7 +3359,7 @@ static void onscrd_brightness(int increment,int arg)
 	brightness = osd_get_brightness();
 
 	sprintf(buf,"Brightness %3d%%",brightness);
-	displayosd(buf,brightness);
+	displayosd(buf,brightness,100);
 }
 
 static void onscrd_gamma(int increment,int arg)
@@ -3369,18 +3369,18 @@ static void onscrd_gamma(int increment,int arg)
 
 	if (increment)
 	{
-		gamma_correction = vector_get_gamma();
+		gamma_correction = osd_get_gamma();
 
 		gamma_correction += 0.05 * increment;
 		if (gamma_correction < 0.5) gamma_correction = 0.5;
 		if (gamma_correction > 2.0) gamma_correction = 2.0;
 
-		vector_set_gamma(gamma_correction);
+		osd_set_gamma(gamma_correction);
 	}
-	gamma_correction = vector_get_gamma();
+	gamma_correction = osd_get_gamma();
 
 	sprintf(buf,"Gamma %1.2f",gamma_correction);
-	displayosd(buf,100*(gamma_correction-0.5)/(2.0-0.5));
+	displayosd(buf,100*(gamma_correction-0.5)/(2.0-0.5),100*(1.0-0.5)/(2.0-0.5));
 }
 
 static void onscrd_vector_intensity(int increment,int arg)
@@ -3401,7 +3401,7 @@ static void onscrd_vector_intensity(int increment,int arg)
 	intensity_correction = vector_get_intensity();
 
 	sprintf(buf,"Vector intensity %1.2f",intensity_correction);
-	displayosd(buf,100*(intensity_correction-0.5)/(3.0-0.5));
+	displayosd(buf,100*(intensity_correction-0.5)/(3.0-0.5),100*(1.0-0.5)/(3.0-0.5));
 }
 
 
@@ -3434,7 +3434,7 @@ static void onscrd_overclock(int increment,int arg)
 		sprintf(buf,"ALL CPUS Overclock %3d%%", oc);
 	else
 		sprintf(buf,"Overclock CPU#%d %3d%%", arg, oc);
-	displayosd(buf,oc/2);
+	displayosd(buf,oc/2,100/2);
 }
 
 #define MAX_OSD_ITEMS 30

@@ -819,6 +819,12 @@ int nes_load_rom (int id, const char *rom_name)
 	int battery;
 	int i;
 
+	if(!rom_name)
+	{
+		printf("NES requires cartridge!\n");
+		return INIT_FAILED;
+	}
+
 	if(errorlog) fprintf (errorlog,"Beginning nes_load_rom\n");
 	if (!(romfile = osd_fopen (Machine->gamedrv->name, rom_name, OSD_FILETYPE_IMAGE_R, 0)))
 	{

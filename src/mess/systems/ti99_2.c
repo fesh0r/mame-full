@@ -8,7 +8,7 @@ TODO :
   * implement cassette
   * implement Hex-Bus
 
-  Raphael Nabet (who really has too much time to waste), december 1999
+  Raphael Nabet (who really has too much time to waste), december 1999, 2000
 */
 
 /*
@@ -109,17 +109,19 @@ memory map :
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "tms9900.h"
+#include "mess/machine/tms9901.h"
+#include "mess/vidhrdw/tms9928a.h"
+//#include "tms9900.h"
 
 static int ROM_paged;
 
-static void ti99_2_24_driver_init(void)
+static void init_ti99_2_24(void)
 {
 	/* no ROM paging */
 	ROM_paged = 0;
 }
 
-static void ti99_2_32_driver_init(void)
+static void init_ti99_2_32(void)
 {
 	/* ROM paging enabled */
 	ROM_paged = 1;
@@ -132,8 +134,8 @@ static int ti99_2_24_load_rom(void)
 	return 0;
 }
 
-#define TI99_2_32_ROMPAGE0 memory_region(REGION_CPU1)+0x14000
-#define TI99_2_32_ROMPAGE1 memory_region(REGION_CPU1)+0x16000
+#define TI99_2_32_ROMPAGE0 memory_region(REGION_CPU1)+0x4000
+#define TI99_2_32_ROMPAGE1 memory_region(REGION_CPU1)+0x10000
 
 static int ti99_2_32_load_rom(void)
 {
@@ -186,7 +188,7 @@ static unsigned short ti99_2_colortable[] =
 #define TI99_2_PALETTE_SIZE sizeof(ti99_2_palette)/3
 #define TI99_2_COLORTABLE_SIZE sizeof(ti99_2_colortable)/2
 
-static void ti99_2_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *)
+static void ti99_2_init_palette(unsigned char *palette, unsigned short *colortable)
 {
 	memcpy(palette, & ti99_2_palette, sizeof(ti99_2_palette));
 	memcpy(colortable, & ti99_2_colortable, sizeof(ti99_2_colortable));
@@ -292,12 +294,13 @@ static void ti99_2_write_kbd(int offset, int data)
 	offset &= 0x7;  /* other address lines are not decoded */
 
 	if (offset <= 2)
+	{
 		/* this implementation is just a guess */
 		if (data)
 			KeyRow |= 1 << offset;
 		else
 			KeyRow &= ~ (1 << offset);
-
+	}
 	/* now, we handle ROM paging */
 	if (ROM_paged)
 	{	/* if we have paged ROMs, page according to S0 keyboard interface line */
@@ -440,13 +443,9 @@ static struct MachineDriver machine_driver_ti99_2 =
 	/* basic machine hardware */
 	{
 		{
-			/*we NEED a tms9995*/
 			CPU_TMS9995,
 			10700000,     /* 10.7 Mhz*/
-/*
-			CPU_TMS9900,
-			5000000,     /* 10.7 Mhz*/
-*/
+
 			ti99_2_readmem, ti99_2_writemem, ti99_2_readport, ti99_2_writeport,
 			ti99_2_vblank_interrupt, 1,
 			0, 0,
@@ -486,94 +485,29 @@ static struct MachineDriver machine_driver_ti99_2 =
 */
 ROM_START(ti99_224)
 	/*CPU memory space*/
-	ROM_REGIONX(0x10000,REGION_CPU1)
+	ROM_REGION(0x10000,REGION_CPU1)
 	ROM_LOAD("992rom.bin", 0x0000, 0x6000, 0x00000000)      /* system ROMs */
-
 ROM_END
 
 ROM_START(ti99_232)
-	/*64kb CPU memory space + 32kb to read the system ROM*/
-	ROM_REGIONX(0x18000,REGION_CPU1)
-	ROM_LOAD("992rom32.bin", 0x10000, 0x8000, 0x00000000)    /* system ROM - 32kb */
-
+	/*64kb CPU memory space + 8kb to read the extra ROM page*/
+	ROM_REGION(0x12000,REGION_CPU1)
+	ROM_LOAD("992rom32.bin", 0x0000, 0x6000, 0x00000000)    /* system ROM - 32kb */
+	ROM_CONTINUE(0x10000,0x2000)
 ROM_END
 
-struct GameDriver ti99_224_driver =
+static const struct IODevice io_ti99_2[] =
 {
-	__FILE__,
-	0,
-	"ti99_224",
-	"TI-99/2 BASIC Computer (24kb ROMs)",
-	"1983 (prototypes)",
-	"Texas Instrument",
-	"Raphael Nabet",
-	0,
-	&machine_driver_ti99_2,
-	ti99_2_24_driver_init,  /* optional function to be called during initialization */
-
-	rom_ti99_2_24,
-	ti99_2_24_load_rom, /* load rom_file images */
-	0,    /* identify rom images */
-	0,
-	0/*1*/,       /* number of ROM slots */
-	/* a TI99/2 console has one slot for cartidges and expansions, but I don't know anything
-	  about the two or three cartidges developped for this console. */
-	0/*4*/,       /* number of floppy drives supported - supported through hex-bus */
-	0,            /* number of hard drives supported */
-	0/*1*/,       /* number of cassette drives supported */
-	0,            /* rom decoder */
-	0,            /* opcode decoder */
-	0,            /* pointer to sample names */
-	0,            /* sound_prom */
-
-	input_ports_ti99_2,
-
-	0,            /* color_prom */
-	0,            /* color palette - obsolete */
-	0,            /* color lookup table - obsolete */
-
-	GAME_COMPUTER | ORIENTATION_DEFAULT,  /* orientation */
-
-	0,            /* hiscore load */
-	0,            /* hiscore save */
+	/* one expansion/cartidge port on the back */
+	/* one tape drive port */
+	/* Hex-bus disk controller supports up to 4 floppy disk drives */
+	/* None of these is supported (tape should be easy) */
+    { IO_END }
 };
 
-struct GameDriver ti99_232_driver =
-{
-	__FILE__,
-	& ti99_224_driver,
-	"ti992_32",
-	"TI-99/2 BASIC Computer (32kb ROMs)",
-	"1983 (prototypes)",
-	"Texas Instrument",
-	"Raphael Nabet",
-	0,
-	&machine_driver_ti99_2,
-	ti99_2_32_driver_init,  /* optional function to be called during initialization */
+#define io_ti99_224 io_ti99_2
+#define io_ti99_232 io_ti99_2
 
-	rom_ti99_2_32,
-	ti99_2_32_load_rom, /* load rom_file images */
-	0,    /* identify rom images */
-	0,
-	0/*1*/,       /* number of ROM slots */
-	/* a TI99/2 console has one slot for cartidges and expansions, but I don't know anything
-	  about the two or three cartidges developped for this console. */
-	0/*4*/,       /* number of floppy drives supported - supported through hex-bus */
-	0,            /* number of hard drives supported */
-	0/*1*/,       /* number of cassette drives supported */
-	0,            /* rom decoder */
-	0,            /* opcode decoder */
-	0,            /* pointer to sample names */
-	0,            /* sound_prom */
-
-	input_ports_ti99_2,
-
-	0,            /* color_prom */
-	0,            /* color palette - obsolete */
-	0,            /* color lookup table - obsolete */
-
-	GAME_COMPUTER | ORIENTATION_DEFAULT,  /* orientation */
-
-	0,            /* hiscore load */
-	0,            /* hiscore save */
-};
+/*		YEAR	NAME		PARENT		MACHINE		INPUT	INIT		COMPANY					FULLNAME */
+COMP(	1983,	ti99_224,	0,			ti99_2,		ti99_2,	ti99_2_24,	"Texas Instruments",	"TI-99/2 BASIC Computer (24kb ROMs)" )
+COMP(	1983,	ti99_232,	ti99_224,	ti99_2,		ti99_2,	ti99_2_32,	"Texas Instruments",	"TI-99/2 BASIC Computer (32kb ROMs)" )

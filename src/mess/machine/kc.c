@@ -49,7 +49,7 @@ bit 6: ROF1
 bit 5: ROF0
 bit 4-2 are not connected
 bit 1: WRITE PROTECT RAM 4
-bit 0: ACCESS RAM 4 
+bit 0: ACCESS RAM 4
 */
 
 /* PIO PORT A: port 0x088:
@@ -79,13 +79,13 @@ bit 0: TRUCK */
 static int kc85_84_data;
 static int kc85_86_data;
 
-static int opbase_reset_done = 0;
+//static int opbase_reset_done = 0;
 
 int     kc85_opbaseoverride(int PC)
 {
-        if (!opbase_reset_done)
-        {
-            opbase_reset_done = 1;
+        //if (!opbase_reset_done)
+        //{
+        //    opbase_reset_done = 1;
 
             cpu_setOPbaseoverride(0,0);
 
@@ -93,9 +93,9 @@ int     kc85_opbaseoverride(int PC)
 
             return (cpu_get_pc() & 0x0ffff);
 
-        }
-
-        return PC;
+        //}
+        //
+        //return PC;
 }
 
 
@@ -114,7 +114,7 @@ static int kc85_4_pio_control_r(int offset)
 
 static void kc85_4_pio_data_w(int offset, int data)
 {
-      
+
    if (errorlog)
    {
         int PC = cpu_get_pc();
@@ -129,8 +129,6 @@ static void kc85_4_pio_data_w(int offset, int data)
 
    if (offset==0)
    {
-        fprintf(errorlog, "do memory update\r\n");
-
            kc85_4_update_0x0c000();
            kc85_4_update_0x0e000();
    }
@@ -173,7 +171,7 @@ static void kc85_4_84_w(int offset, int data)
 
                 if (data & 0x01)
                 {
-                        video_ram +=  
+                        video_ram +=
                                    (KC85_4_SCREEN_PIXEL_RAM_SIZE +
                                    KC85_4_SCREEN_COLOUR_RAM_SIZE);
                 }
@@ -198,7 +196,7 @@ bit 5:
 bit 4:
 bit 3:
 bit 2:
-bit 1: write protect ram 4 
+bit 1: write protect ram 4
 bit 0: ram 4
 */
 
@@ -214,10 +212,10 @@ static void kc85_4_update_0x08000(void)
 
                 /* base address: screen 0 pixel data */
                 ram_page = kc85_4_video_ram;
-        
+
                 if (errorlog)
                 {
-                        
+
                         if (kc85_84_data & 0x04)
                         {
                                 fprintf(errorlog, "access screen 1\r\n");
@@ -226,7 +224,7 @@ static void kc85_4_update_0x08000(void)
                         {
                                 fprintf(errorlog, "access screen 0\r\n");
                         }
-        
+
                         if (kc85_84_data & 0x02)
                         {
                                 fprintf(errorlog, "access colour\r\n");
@@ -237,14 +235,14 @@ static void kc85_4_update_0x08000(void)
                         }
                }
 
-        
+
                 if (kc85_84_data & 0x04)
                 {
                         /* access screen 1 */
                         ram_page += KC85_4_SCREEN_PIXEL_RAM_SIZE +
                                 KC85_4_SCREEN_COLOUR_RAM_SIZE;
                 }
-        
+
                 if (kc85_84_data & 0x02)
                 {
                         /* access colour information of selected screen */
@@ -340,7 +338,7 @@ keyboard_data^=0x0ff;
 
 #define KC85_4_CTC_CLOCK		4000000
 static z80ctc_interface	kc85_4_ctc_intf =
-{	
+{
 	1,
 	{KC85_4_CTC_CLOCK},
 	{0},
@@ -427,7 +425,6 @@ void    kc85_4_reset(void)
         here will be a override */
         cpu_setOPbaseoverride(0, kc85_opbaseoverride);
 
-        fprintf(errorlog, "kc85_4_reset\r\n");
 }
 
 void kc85_4_init_machine(void)
@@ -464,7 +461,7 @@ static struct IOReadPort readport_kc85_4[] =
 	{0x087, 0x087, kc85_4_86_r},
         {0x088, 0x089, kc85_4_pio_data_r},
         {0x08a, 0x08b, kc85_4_pio_control_r},
-	{0x08c, 0x08f, kc85_4_ctc_r},	
+	{0x08c, 0x08f, kc85_4_ctc_r},
 	{-1}							   /* end of table */
 };
 
@@ -570,7 +567,7 @@ static struct MachineDriver machine_driver_kc85_4 =
 			/* MachineCPU */
 		{
 			CPU_Z80,  /* type */
-			4000000,                  
+			4000000,
 			readmem_kc85_4,		   /* MemoryReadAddress */
 			writemem_kc85_4,		   /* MemoryWriteAddress */
 			readport_kc85_4,		   /* IOReadPort */
@@ -613,11 +610,11 @@ static struct MachineDriver machine_driver_kc85_4 =
 
 
 ROM_START(kc85_4)
-	ROM_REGIONX(0x016000, REGION_CPU1)
+	ROM_REGION(0x016000, REGION_CPU1)
 
-	ROM_LOAD("basic_c0.rom", 0x10000, 0x2000, 0x0)
-        ROM_LOAD("caos__c0.rom", 0x12000, 0x1000, 0x0)
-	ROM_LOAD("caos__e0.rom", 0x14000, 0x2000, 0x0)
+        ROM_LOAD("basic_c0.rom", 0x10000, 0x2000, 0x0dfe34b08)
+        ROM_LOAD("caos__c0.rom", 0x12000, 0x1000, 0x057d9ab02)
+        ROM_LOAD("caos__e0.rom", 0x14000, 0x2000, 0x0d64cd50b)
 ROM_END
 
 static const struct IODevice io_kc85_4[] =

@@ -18,6 +18,8 @@ static int sam_vdg_mode, pia_vdg_mode;
 static struct GfxElement *dfont;
 static struct GfxElement *coco3font;
 
+typedef void (*artifactproc)(int *artifactcolors);
+
 /***************************************************************************
   Start the video hardware emulation.
 ***************************************************************************/
@@ -308,12 +310,110 @@ void coco3_vh_stop(void)
 	}
 }
 
+static void coco3_compute_color(int color, int *red, int *green, int *blue)
+{
+	if (!input_port_11_r(0)) {
+		/* CMP colors
+		 *
+		 * These colors are of the format IICCCC, where II is the intensity and
+		 * CCCC is the base color.  There is some weirdness because intensity 
+		 * is often different for each base color.  Thus a table is used here
+		 * to map to RGB colors
+		 *
+		 * This table was based on a color table the "Super Extended Color Basic
+		 * Unravelled" (http://www.giftmarket.org/unravelled/unravelled.shtml)
+		 * that mapped RGB to CMP, then I compared it with the palette that the
+		 * CoCo III uses on startup for CMP. Where they conflicted, the CoCo III
+		 * startup palette took precedence. Where neither of them helped, I guessed
+		 * 
+		 * The fault of this table is that some colors directly map to each other.
+		 * I do not like this, so if anyone can come up with a better formula, I'm
+		 * all ears.
+		 */
+		static const UINT8 cmp2rgb[] = {
+			0,	/*  0 - Black */
+			21,	/*  1 - Magenta tint green */
+			2,	/*  2 - Low intensity green */
+			20,	/*  3 - Red tint green */
+			49,	/*  4 - Blue tint yellow */
+			6,	/*  5 - Low intensity brown */
+			35,	/*  6 - Cyan tint red */
+			36,	/*  7 - Full intensity red*/
+			33,	/*  8 - Blue tint red */
+			27,	/*  9 - Full intensity cyan */
+			14,	/* 10 - Brown tint blue */
+			9,	/* 11 - Full intensity blue */
+			1,	/* 12 - Low intensity blue */
+			10,	/* 13 - Green tint blue */
+			3,	/* 14 - Low intensity cyan */
+			28,	/* 15 - Red tint cyan */
+			7,	/* 16 - Low intensity white */
+			17,	/* 17 - Blue tint green */
+			18,	/* 18 - Full intensity green */
+			22,	/* 19 - Brown tint green */
+			48,	/* 20 - Medium intensity yellow */
+			34,	/* 21 - Light Orange */
+			34,	/* 22 - Light Orange */
+			32,	/* 23 - Medium intensity red */
+			37,	/* 24 - Magenta tint red */
+			40,	/* 25 - Medium intensity magenta */
+			42,	/* 26 - Green tint magenta */
+			13,	/* 27 - Magenta tint blue */
+			8,	/* 28 - Medium intensity blue */
+			11,	/* 29 - Cyan tint blue */
+			24,	/* 30 - Medium intensity cyan */
+			45,	/* 31 - Full intensity magenta */
+			56,	/* 32 - Medium intensity white */
+			19,	/* 33 - Cyan tint green */
+			16,	/* 34 - Medium intensity green */
+			50,	/* 35 - Green tint yellow */
+			54,	/* 36 - Full intensity yellow */
+			52,	/* 37 - Red tint yellow */
+			38,	/* 38 - Brown tint red */
+			36,	/* 39 - Full intensity red */
+			46,	/* 40 - Brown tint magenta */
+			45,	/* 41 - Full intensity magenta */
+			41,	/* 42 - Blue tint magenta */
+			15,	/* 43 - Faded blue */
+			9,	/* 44 - Full intensity blue */
+			25,	/* 45 - Blue tint cyan  */
+			27,	/* 46 - Full intensity cyan */
+			30,	/* 47 - Brown tint cyan */
+			63,	/* 48 - White */
+			58,	/* 49 - Light green */
+			58,	/* 50 - Light green */
+			51,	/* 51 - Cyan tint yellow */
+			55,	/* 52 - Faded yellow */
+			53,	/* 53 - Magenta tint yellow */
+			39,	/* 54 - Faded red */
+			60,	/* 55 - Light red */
+			47,	/* 56 - Faded magenta */
+			61,	/* 57 - Light magenta */
+			43,	/* 58 - Cyan tint magenta */
+			57,	/* 59 - Light blue */
+			29,	/* 60 - Magenta tint cyan */
+			31,	/* 61 - Faded cyan */
+			59,	/* 62 - Light cyan */
+			63,	/* 63 - White */
+		};
+		color = cmp2rgb[color & 63];
+	}
+
+	/* RGB colors 
+	 *
+	 * These colors are of the format RGBRGB, where the first 3 bits
+	 * are more significant than the last three bits
+	 */
+	*red = (((color >> 4) & 2) | ((color >> 2) & 1)) * 0x55;
+	*green = (((color >> 3) & 2) | ((color >> 1) & 1)) * 0x55;
+	*blue = (((color >> 2) & 2) | ((color >> 0) & 1)) * 0x55;
+}
+
 static void coco3_vh_palette_change_color(int color, int data)
 {
-	palette_change_color(color,
-						 (((data >> 4) & 2) | ((data >> 2) & 1)) * 0x55,
-						 (((data >> 3) & 2) | ((data >> 1) & 1)) * 0x55,
-						 (((data >> 2) & 2) | ((data >> 0) & 1)) * 0x55);
+	int red, green, blue;
+	coco3_compute_color(data, &red, &green, &blue);
+	palette_change_color(color, red, green, blue);
 }
 
 static void coco3_vh_setborder(struct osd_bitmap *bitmap, int coco3color, int screenx, int screeny)
@@ -355,7 +455,6 @@ void coco3_palette_w(int offset, int data)
 {
 	paletteram[offset] = data;
 	coco3_vh_palette_change_color(offset, data);
-
 }
 
 static void drawgfx_wf(struct osd_bitmap *dest,const struct GfxElement *gfx,
@@ -375,15 +474,75 @@ static void drawgfx_wf(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	}
 }
 
+static void dragon_artifact_red(int *artifactcolors)
+{
+	switch(artifactcolors[3]) {
+	case 1:
+		artifactcolors[2] = 10;
+		artifactcolors[1] = 9;
+		break;
+	case 5:
+		artifactcolors[2] = 12;
+		artifactcolors[1] = 11;
+		break;
+	}
+}
+
+static void dragon_artifact_blue(int *artifactcolors)
+{
+	switch(artifactcolors[3]) {
+	case 1:
+		artifactcolors[1] = 10;
+		artifactcolors[2] = 9;
+		break;
+	case 5:
+		artifactcolors[1] = 12;
+		artifactcolors[2] = 11;
+		break;
+	}
+}
+
+static void coco3_artifact(int *artifactcolors)
+{
+	int c1, c2, r1, r2, g1, g2, b1, b2;
+	static int oldc1, oldc2;
+
+	c1 = paletteram[artifactcolors[0]];
+	c2 = paletteram[artifactcolors[3]];
+
+	/* Have the colors actually changed? */
+	if ((oldc1 != c1) || (oldc2 != c2)) {
+		coco3_compute_color(c1, &r1, &g1, &b1);
+		coco3_compute_color(c2, &r2, &g2, &b2);
+		palette_change_color(17, r2, (g1+g2)/2, b1);
+		palette_change_color(18, r1, (g1+g2)/2, b2);
+	}
+}
+
+static void coco3_artifact_red(int *artifactcolors)
+{
+	coco3_artifact(artifactcolors);
+	artifactcolors[2] = 18;
+	artifactcolors[1] = 17;
+}
+
+static void coco3_artifact_blue(int *artifactcolors)
+{
+	coco3_artifact(artifactcolors);
+	artifactcolors[1] = 18;
+	artifactcolors[2] = 17;
+}
+
 /* This is a refresh function used by the Dragon/CoCo as well as the CoCo 3 when in lo-res
  * mode.  Internally, it treats the colors like a CoCo 3 and uses the 'metapalette' to
  * translate those colors to the proper palette.
  */
-static void generic_vh_screenrefresh(struct osd_bitmap *bitmap, const int *metapalette, UINT8 *vrambase, int basex, int basey, int wf)
+static void generic_vh_screenrefresh(struct osd_bitmap *bitmap, const int *metapalette, UINT8 *vrambase, int basex, int basey, int wf, artifactproc artifact)
 {
 	int x, y, fg, bg, offset, text_color;
 	int c1, c2, c3, c4;
 	UINT8 *vram, *p1, *p2, *db;
+	int artifactpalette[4];
 
 	/* clear vblank */
 	pia_0_cb1_w (0, 0);
@@ -393,7 +552,7 @@ static void generic_vh_screenrefresh(struct osd_bitmap *bitmap, const int *metap
 
 	if (pia_vdg_mode & 0x10)
 	{
-		if (pia_vdg_mode & 0x02)
+		if ((pia_vdg_mode & 0x02) && !(artifact && ((sam_vdg_mode >> 1) == 0x03)))
 		{
 			/* resolution graphics modes */
 			fg = Machine->pens[metapalette[pia_vdg_mode & 0x1 ? 11: 9]];
@@ -493,6 +652,14 @@ static void generic_vh_screenrefresh(struct osd_bitmap *bitmap, const int *metap
 					}
 				break;
 			case 0x3:
+				if (pia_vdg_mode & 0x02) {
+					/* I am here because we are doing PMODE 4 artifact colors */
+					artifactpalette[0] = metapalette[pia_vdg_mode & 0x1 ? 10: 8];
+					artifactpalette[3] = metapalette[pia_vdg_mode & 0x1 ? 11: 9];
+					artifact(artifactpalette);
+					offset = 0;
+					metapalette = artifactpalette;
+				}
 				for (y = 0; y < 192; y++)
 					for (x = 0; x < 32; x++)
 					{
@@ -608,11 +775,16 @@ void dragon_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	static int dragon_metapalette[] = {
 		1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 0, 5, 0, 1, 0, 8
 	};
+	static artifactproc artifacts[] = {
+		NULL,
+		dragon_artifact_red,
+		dragon_artifact_blue
+	};
 
 	if (full_refresh)
 		memset(dirtybuffer,1,MAX_VRAM);
 
-	generic_vh_screenrefresh(bitmap, dragon_metapalette, coco_ram, 0, 0, 1);
+	generic_vh_screenrefresh(bitmap, dragon_metapalette, coco_ram, 0, 0, 1, artifacts[input_port_10_r(0)]);
 }
 
 void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
@@ -624,11 +796,29 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	static int hires_linesperrow[] = {
 		1, 2, 3, 8, 9, 10, 12, 12
 	};
+	static artifactproc artifacts[] = {
+		NULL,
+		coco3_artifact_red,
+		coco3_artifact_blue
+	};
+	static int old_cmprgb;
+	int cmprgb, i;
+
+	/* Did the user change between CMP and RGB? */
+	cmprgb = input_port_11_r(0);
+	if (cmprgb != old_cmprgb) {
+		old_cmprgb = cmprgb;
+
+		/* Reset all colors and border */
+		coco3_bordercolor = -1;	/* force border to redraw */
+		for (i = 0; i < 16; i++)
+			coco3_vh_palette_change_color(i, paletteram[i]);
+	}
 
 	if (coco3_hires) {
 		static int blink_status, blink_timer;
 		int vidbase, bytesperrow, linesperrow, rows = 0, x, y, basex = 0, basey, wf = 0;
-		int use_attr, charsperrow = 0, i, blink_switch = 0, underlined = 0;
+		int use_attr, charsperrow = 0, blink_switch = 0, underlined = 0;
 		int visualbytesperrow, c, emupixelsperbyte;
 		UINT8 *vram, *db;
 		UINT8 b;
@@ -863,7 +1053,7 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		coco3_vh_setborder(bitmap, (pia_vdg_mode & 0x10) ? ((pia_vdg_mode & 0x1) ? 077 : 022) : 000, 512, 192);
 		if (palette_recalc() || full_refresh)
 			memset(dirtybuffer, 1, MAX_VRAM);
-		generic_vh_screenrefresh(bitmap, coco3_metapalette, &RAM[0x70000], 64, 16, 2);
+		generic_vh_screenrefresh(bitmap, coco3_metapalette, &RAM[0x70000], 64, 16, 2, artifacts[input_port_10_r(0)]);
 	}
 }
 

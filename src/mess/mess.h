@@ -22,6 +22,12 @@ void showmessinfo(void);
 /* driver.h - end */
 
 
+
+/* IODevice Initialisation return values.  Use these to determine if */
+/* The emulation can continue if IODevice initialisation fails */
+enum { INIT_OK, INIT_FAILED, INIT_UNKNOWN };
+
+
 /* fileio.c */
 typedef struct
 {
@@ -128,6 +134,7 @@ unsigned char osd_fdc_get_sector(unsigned char track, unsigned char side, unsign
  *	_private;			to be used by the peripheral driver code
  *	id					identify file
  *	init				initialize device
+ *	exit				shutdown device
  *	info				get info for device instance
  *	open				open device (with specific args)
  *	close				close device
@@ -146,7 +153,9 @@ enum {
 	IO_HARDDISK,
 	IO_CASSETTE,
 	IO_PRINTER,
-	IO_SERIAL
+	IO_SERIAL,
+	IO_SNAPSHOT,
+	IO_COUNT
 };
 
 struct IODevice {
@@ -195,8 +204,6 @@ extern const char *device_filename(int type, int id);
 extern struct GameDriver driver_0;
 
 
-//#define init_0	NULL
-
 
 /******************************************************************************
  * MESS' version of the GAME() and GAMEX() macros of MAME
@@ -213,16 +220,12 @@ struct GameDriver driver_##NAME =			\
 	FULLNAME,								\
 	#YEAR,									\
 	COMPANY,								\
-"",0,\
 	&machine_driver_##MACHINE,				\
+	input_ports_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
-	io_##NAME, 					\
-0,0,0,0,\
-	input_ports_##INPUT,					\
-0,0,0,\
-	ROT0,									\
-0,0\
+	io_##NAME, 								\
+	ROT0									\
 };
 
 #define CONSX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME,FLAGS)	\
@@ -235,16 +238,12 @@ struct GameDriver driver_##NAME =			\
 	FULLNAME,								\
 	#YEAR,									\
 	COMPANY,								\
-"",0,\
 	&machine_driver_##MACHINE,				\
+	input_ports_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
-	io_##NAME, 					\
-0,0,0,0,\
-	input_ports_##INPUT,					\
-0,0,0,\
-	ROT0|(FLAGS),							\
-0,0\
+	io_##NAME, 								\
+	ROT0|(FLAGS)							\
 };
 
 #define COMP(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME)	\
@@ -257,16 +256,12 @@ struct GameDriver driver_##NAME =			\
 	FULLNAME,								\
 	#YEAR,									\
 	COMPANY,								\
-"",0,\
 	&machine_driver_##MACHINE,				\
+	input_ports_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
-	io_##NAME, 					\
-0,0,0,0,\
-	input_ports_##INPUT,					\
-0,0,0,\
-	ROT0|GAME_COMPUTER, 					\
-0,0\
+	io_##NAME, 								\
+	ROT0|GAME_COMPUTER 						\
 };
 
 #define COMPX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME,FLAGS)	\
@@ -279,16 +274,12 @@ struct GameDriver driver_##NAME =			\
 	FULLNAME,								\
 	#YEAR,									\
 	COMPANY,								\
-"",0,\
 	&machine_driver_##MACHINE,				\
+	input_ports_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
-	io_##NAME, 					\
-0,0,0,0,\
-	input_ports_##INPUT,					\
-0,0,0,\
-	ROT0|GAME_COMPUTER|(FLAGS), 			\
-0,0\
+	io_##NAME, 								\
+	ROT0|GAME_COMPUTER|(FLAGS)	 			\
 };
 
 

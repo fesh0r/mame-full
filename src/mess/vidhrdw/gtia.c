@@ -54,14 +54,17 @@ GTIA    gtia;
  * 
  **************************************************************/
 
-void    gtia_reset(void)
+void gtia_reset(void)
 {
-int i;
+	int i;
     /* reset the GTIA read/write/helper registers */
 	for (i = 0; i < 32; i++)
 		MWA_GTIA(i,0);
     memset(&gtia.r, 0, sizeof(gtia.r));
-	gtia.r.gtia14 = 0xff;
+	if( Machine->drv->frames_per_second > 55 )
+		gtia.r.pal = 0xff;
+	else
+		gtia.r.pal = 0xf1;
 	gtia.r.gtia15 = 0xff;
 	gtia.r.gtia16 = 0xff;
 	gtia.r.gtia17 = 0xff;
@@ -109,8 +112,9 @@ int MRA_GTIA(int offset)
 		case 18: return gtia.r.but2;
 		case 19: return gtia.r.but3;
 
-		case 20: return gtia.r.gtia14;
-		case 21: return gtia.r.gtia15;
+		case 20: return gtia.r.pal;
+
+        case 21: return gtia.r.gtia15;
 		case 22: return gtia.r.gtia16;
 		case 23: return gtia.r.gtia17;
 		case 24: return gtia.r.gtia18;
@@ -674,7 +678,7 @@ static UINT8 huepf1=0,huepf2=0,huebk= 0;
 			VIDEO * video = antic.video[antic.scanline];
 				*(UINT32*)&gtia.r.m0pf = *(UINT32*)&gtia.r.p0pf =
 				*(UINT32*)&gtia.r.m0pl = *(UINT32*)&gtia.r.p0pl = 0;
-                for (i = 0; i < TOTAL_LINES; i++)
+				for (i = 0; i < Machine->drv->screen_height; i++)
 				{
 					video = antic.video[i];
 					*(UINT32*)&video->gtia_r.m0pf =

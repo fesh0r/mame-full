@@ -524,15 +524,15 @@ static struct MachineDriver machine_driver_cgenie =
 ***************************************************************************/
 
 ROM_START (cgenie)
-	ROM_REGIONX(0x13000,REGION_CPU1)
+	ROM_REGION(0x13000,REGION_CPU1)
 	ROM_LOAD ("cgenie.rom",  0x00000, 0x4000, 0xd359ead7)
 	ROM_LOAD ("cgdos.rom",   0x10000, 0x2000, 0x2a96cf74)
 
-	ROM_REGIONX(0x0c00,REGION_GFX1)
+	ROM_REGION(0x0c00,REGION_GFX1)
 	ROM_LOAD ("cgenie1.fnt", 0x0000, 0x0800, 0x4fed774a)
 
 	/* Empty memory region for the character generator */
-	ROM_REGIONX(0x0800,REGION_GFX2)
+	ROM_REGION(0x0800,REGION_GFX2)
 
 ROM_END
 

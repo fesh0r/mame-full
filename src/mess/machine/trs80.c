@@ -203,6 +203,13 @@ int trs80_floppy_init(int id, const char *name)
 	return 0;
 }
 
+void trs80_floppy_exit(int id)
+{
+	wd179x_stop_drive();
+    floppy_name[id] = NULL;
+    first_fdc_access = 1;
+}
+
 void trs80_init_machine(void)
 {
 	if( floppy_name[0][0] )
@@ -737,7 +744,7 @@ void trs80_motor_w(int offset, int data)
 				dir_length[n] = 5 * buff[9];
 			}
         }
-		wd179x_set_geometry(n, tracks[n], heads[n], spt[n], 256, dir_sector[n], dir_length[n]);
+		wd179x_set_geometry(n, tracks[n], heads[n], spt[n], 256, dir_sector[n], dir_length[n], 0);
 	}
 	wd179x_select_drive(drive, head[drive], trs80_fdc_callback, floppy_name[drive]);
 }

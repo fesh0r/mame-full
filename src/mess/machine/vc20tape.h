@@ -8,11 +8,11 @@ extern struct DACinterface vc20tape_sound_interface;
 {\
    IO_CASSETTE,        /* type */\
    1,                  /* count */\
-   "WAV\0",    /* TAP, LNX and T64(maybe) later file extensions */\
+   "wav\0",    /* TAP, LNX and T64(maybe) later file extensions */\
    NULL,               /* private */\
    NULL,               /* id */\
-   vc20_tape_attach_image,      /* init */\
-   NULL,                           /* exit */\
+   vc20_tape_attach_image,	/* init */\
+   vc20_tape_detach_image,	/* exit */\
    NULL,               /* info */\
    NULL,               /* open */\
    NULL,               /* close */\
@@ -25,25 +25,27 @@ extern struct DACinterface vc20tape_sound_interface;
 }
 
 /* the function which should be called by change on readline */
-extern void vc20_tape_open(void (*read_callback)(int,int));
-extern void c16_tape_open(void);
-extern void vc20_tape_close(void);
+extern void vc20_tape_open (void (*read_callback) (int, int));
+extern void c16_tape_open (void);
+extern void vc20_tape_close (void);
 
 /* call this with the name of the tape image */
-int vc20_tape_attach_image(int id, const char *name);
+int vc20_tape_attach_image (int id, const char *name);
+void vc20_tape_detach_image (int id);
 
 /* must be high active keys */
 /* set it frequently */
-extern void vc20_tape_buttons(int play, int record, int stop);
-extern void vc20_tape_config(int on, int noise);
+extern void vc20_tape_buttons (int play, int record, int stop);
+extern void vc20_tape_config (int on, int noise);
 
-extern int vc20_tape_read(void);
-extern void vc20_tape_write(int data);
-extern void vc20_tape_motor(int data);
+extern int vc20_tape_read (void);
+extern void vc20_tape_write (int data);
+extern void vc20_tape_motor (int data);
+
 /* pressed wenn cassette is in */
-extern int vc20_tape_switch(void);
+extern int vc20_tape_switch (void);
 
 /* delivers status for displaying */
-extern void vc20_tape_status(char *text, int size);
+extern void vc20_tape_status (char *text, int size);
 
 #endif

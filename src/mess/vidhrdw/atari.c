@@ -10,6 +10,12 @@
 #include "mess/machine/atari.h"
 #include "mess/vidhrdw/atari.h"
 
+#ifdef	LSB_FIRST
+#define BYTE_XOR(n) (n)
+#else
+#define BYTE_XOR(n) ((n)^1)
+#endif
+
 #define VERBOSE 0
 
 /* flag for displaying television artifacts in ANTIC mode F (15) */
@@ -768,7 +774,7 @@ int atari_vh_start(void)
 #endif
     prio_init();
 
-	for( i = 0; i < TOTAL_LINES; i++ )
+	for( i = 0; i < Machine->drv->screen_height; i++ )
     {
 		antic.video[i] = malloc(sizeof(VIDEO));
 		if( !antic.video[i] )
@@ -799,7 +805,7 @@ void atari_vh_stop(void)
 			antic.prio_table[i] = 0;
 		}
 	}
-	for( i = 0; i < TOTAL_LINES; i++ )
+	for( i = 0; i < Machine->drv->screen_height; i++ )
 	{
 		if (antic.video[i])
 		{
@@ -822,34 +828,23 @@ void atari_vh_stop(void)
  ************************************************************************/
 void atari_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	/* Television Artifacts mode changed ? */
-	if( color_artifacts != (input_port_0_r(0) & 0x40) )
+	if( color_artifacts != (readinputport(0) & 0x40) )
 	{
-		color_artifacts = input_port_0_r(0) & 0x40;
+		color_artifacts = readinputport(0) & 0x40;
 		full_refresh = 1;
 	}
-
-#if OPTIMIZE
-    if (full_refresh)
-	{
-		int y;
-		for( y = 0; y < TOTAL_LINES; y++ )
-			antic.video[y]->dirty = 1;
-		fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
-    }
-#endif
-	full_refresh = 0;
+    if( full_refresh )
+		fillbitmap(Machine->scrbitmap, Machine->pens[0], &Machine->drv->visible_area);
 }
 
 static renderer_function antic_renderer = antic_mode_0_xx;
 
-static void artifacts_gfx(UINT8 * src, UINT32 * dst, int width)
+static void artifacts_gfx(UINT8 *src, UINT8 *dst, int width)
 {
 	int x;
 	UINT8 n, bits = 0;
 	UINT8 b = gtia.w.colbk & 0xf0;
 	UINT8 c = gtia.w.colpf1 & 0x0f;
-	UINT8 *d = (UINT8 *)dst;
 	UINT8 _A = Machine->remapped_colortable[((b+0x30)&0xf0)+c];
 	UINT8 _B = Machine->remapped_colortable[((b+0x70)&0xf0)+c];
 	UINT8 _C = Machine->remapped_colortable[b+c];
@@ -861,70 +856,69 @@ static void artifacts_gfx(UINT8 * src, UINT32 * dst, int width)
 		bits <<= 2;
 		switch( n )
 		{
-			case G00:
-				break;
-			case G01:
-				bits |= 1;
-				break;
-			case G10:
-				bits |= 2;
-				break;
-			case G11:
-				bits |= 3;
-				break;
-			default:
-                *d++ = antic.color_lookup[n];
-				*d++ = antic.color_lookup[n];
-				continue;
+		case G00:
+			break;
+		case G01:
+			bits |= 1;
+			break;
+		case G10:
+			bits |= 2;
+			break;
+		case G11:
+			bits |= 3;
+			break;
+		default:
+			*dst++ = antic.color_lookup[n];
+			*dst++ = antic.color_lookup[n];
+			continue;
 		}
 		switch( (bits >> 1) & 7 )
 		{
-			case 0: /* 0 0 0 */
-			case 1: /* 0 0 1 */
-			case 4: /* 1 0 0 */
-				*d++ = _D;
-				break;
-			case 3: /* 0 1 1 */
-			case 6: /* 1 1 0 */
-			case 7: /* 1 1 1 */
-				*d++ = _C;
-				break;
-			case 2: /* 0 1 0 */
-				*d++ = _B;
-				break;
-			case 5: /* 1 0 1 */
-				*d++ = _A;
-				break;
+		case 0: /* 0 0 0 */
+		case 1: /* 0 0 1 */
+		case 4: /* 1 0 0 */
+			*dst++ = _D;
+			break;
+		case 3: /* 0 1 1 */
+		case 6: /* 1 1 0 */
+		case 7: /* 1 1 1 */
+			*dst++ = _C;
+			break;
+		case 2: /* 0 1 0 */
+			*dst++ = _B;
+			break;
+		case 5: /* 1 0 1 */
+			*dst++ = _A;
+			break;
 		}
 		switch( bits & 7 )
 		{
-			case 0: /* 0 0 0 */
-			case 1: /* 0 0 1 */
-			case 4: /* 1 0 0 */
-				*d++ = _D;
-				break;
-			case 3: /* 0 1 1 */
-			case 6: /* 1 1 0 */
-			case 7: /* 1 1 1 */
-				*d++ = _C;
-				break;
-			case 2: /* 0 1 0 */
-				*d++ = _A;
-				break;
-			case 5: /* 1 0 1 */
-				*d++ = _B;
-				break;
+		case 0: /* 0 0 0 */
+		case 1: /* 0 0 1 */
+		case 4: /* 1 0 0 */
+			*dst++ = _D;
+			break;
+		case 3: /* 0 1 1 */
+		case 6: /* 1 1 0 */
+		case 7: /* 1 1 1 */
+			*dst++ = _C;
+			break;
+		case 2: /* 0 1 0 */
+			*dst++ = _A;
+			break;
+		case 5: /* 1 0 1 */
+			*dst++ = _B;
+			break;
         }
     }
 }
 
-static void artifacts_txt(UINT8 * src, UINT32 * dst, int width)
+static void artifacts_txt(UINT8 * src, UINT8 * dst, int width)
 {
 	int x;
 	UINT8 n, bits = 0;
 	UINT8 b = gtia.w.colpf2 & 0xf0;
 	UINT8 c = gtia.w.colpf1 & 0x0f;
-	UINT8 *d = (UINT8 *)dst;
 	UINT8 _A = Machine->remapped_colortable[((b+0x30)&0xf0)+c];
 	UINT8 _B = Machine->remapped_colortable[((b+0x70)&0xf0)+c];
 	UINT8 _C = Machine->remapped_colortable[b+c];
@@ -936,150 +930,118 @@ static void artifacts_txt(UINT8 * src, UINT32 * dst, int width)
 		bits <<= 2;
 		switch( n )
 		{
-			case T00:
-				break;
-			case T01:
-				bits |= 1;
-				break;
-			case T10:
-				bits |= 2;
-				break;
-			case T11:
-				bits |= 3;
-				break;
-			default:
-				*d++ = antic.color_lookup[n];
-				*d++ = antic.color_lookup[n];
-                continue;
+		case T00:
+			break;
+		case T01:
+			bits |= 1;
+			break;
+		case T10:
+			bits |= 2;
+			break;
+		case T11:
+			bits |= 3;
+			break;
+		default:
+			*dst++ = antic.color_lookup[n];
+			*dst++ = antic.color_lookup[n];
+			continue;
         }
 		switch( (bits >> 1) & 7 )
 		{
-			case 0: /* 0 0 0 */
-			case 1: /* 0 0 1 */
-			case 4: /* 1 0 0 */
-				*d++ = _D;
-				break;
-			case 3: /* 0 1 1 */
-			case 6: /* 1 1 0 */
-			case 7: /* 1 1 1 */
-				*d++ = _C;
-				break;
-			case 2: /* 0 1 0 */
-				*d++ = _A;
-				break;
-			case 5: /* 1 0 1 */
-				*d++ = _B;
-				break;
+		case 0: /* 0 0 0 */
+		case 1: /* 0 0 1 */
+		case 4: /* 1 0 0 */
+			*dst++ = _D;
+			break;
+		case 3: /* 0 1 1 */
+		case 6: /* 1 1 0 */
+		case 7: /* 1 1 1 */
+			*dst++ = _C;
+			break;
+		case 2: /* 0 1 0 */
+			*dst++ = _A;
+			break;
+		case 5: /* 1 0 1 */
+			*dst++ = _B;
+			break;
 		}
 		switch( bits & 7 )
 		{
-			case 0:/* 0 0 0 */
-			case 1:/* 0 0 1 */
-			case 4:/* 1 0 0 */
-				*d++ = _D;
-				break;
-			case 3: /* 0 1 1 */
-			case 6: /* 1 1 0 */
-			case 7: /* 1 1 1 */
-				*d++ = _C;
-				break;
-			case 2: /* 0 1 0 */
-				*d++ = _B;
-				break;
-			case 5: /* 1 0 1 */
-				*d++ = _A;
-				break;
+		case 0:/* 0 0 0 */
+		case 1:/* 0 0 1 */
+		case 4:/* 1 0 0 */
+			*dst++ = _D;
+			break;
+		case 3: /* 0 1 1 */
+		case 6: /* 1 1 0 */
+		case 7: /* 1 1 1 */
+			*dst++ = _C;
+			break;
+		case 2: /* 0 1 0 */
+			*dst++ = _B;
+			break;
+		case 5: /* 1 0 1 */
+			*dst++ = _A;
+			break;
         }
     }
 }
 
-static void antic_linerefresh(VIDEO *video)
+
+static void antic_linerefresh(void)
 {
 	int x, y;
 	UINT8 *src;
 	UINT32 *dst;
 
-#if SHOW_EVERY_SCREEN_BIT
-#define WIDTH   HWIDTH
-	src = &antic.cclock[PMOFFSET-antic.hscrol_old];
-	y = antic.scanline;
-	dst = (UINT32 *)&Machine->scrbitmap->line[y][0];
-#else
-#define WIDTH	HCHARS
-	if( antic.scanline < VDATA_START || antic.scanline >= VDATA_END )
+	/* increment the scanline */
+    if( ++antic.scanline == Machine->drv->screen_height )
+    {
+        /* and return to the top if the frame was complete */
+        antic.scanline = 0;
+        antic.modelines = 0;
+        /* count frames gone since last write to hitclr */
+        gtia.h.hitclr_frames++;
+    }
+
+    if( antic.scanline < VDATA_START || antic.scanline >= VDATA_END )
         return;
-    src = &antic.cclock[PMOFFSET-antic.hscrol_old+BUF_OFFS0*4];
-	y = antic.scanline - VDATA_START;
-	dst = (UINT32 *)&Machine->scrbitmap->line[y][BUF_OFFS0*8];
-#endif
 
-#if OPTIMIZE_VISIBLE
-	memmove(&Machine->scrbitmap->line[y][0],
-			&Machine->scrbitmap->line[y][1],
-			BUF_OFFS0*8-1);
-#endif
-
-#if OPTIMIZE
-	if( video->dirty == 0 )
-	{
-#if OPTIMIZE_VISIBLE
-		Machine->scrbitmap->line[y][BUF_OFFS0*8-1] = Machine->pens[0];
-#endif
-        return;
-	}
-#endif
-
-#if OPTIMIZE_VISIBLE
-	Machine->scrbitmap->line[y][BUF_OFFS0*8-1] = Machine->pens[15];
-#endif
+    y = antic.scanline - VDATA_START;
+	src = &antic.cclock[PMOFFSET - antic.hscrol_old + 12];
+	dst = (UINT32 *)&Machine->scrbitmap->line[y][12];
 
 	if( color_artifacts )
 	{
-		switch( antic.cmd & 0x0f )
+		if( (antic.cmd & 0x0f) == 2 ||
+			(antic.cmd & 0x0f) == 3 )
 		{
-			case 2: case 3:
-				artifacts_txt(src, dst, WIDTH);
-				break;
-			case 15:
-				artifacts_gfx(src, dst, WIDTH);
-				break;
-			default:
-				for( x = 0; x < WIDTH; x += 2, src += 8 )
-				{
-#if LSB_FIRST
-					*dst++ = antic.color_lookup[src[ 0]] | antic.color_lookup[src[ 1]] << 16;
-					*dst++ = antic.color_lookup[src[ 2]] | antic.color_lookup[src[ 3]] << 16;
-					*dst++ = antic.color_lookup[src[ 4]] | antic.color_lookup[src[ 5]] << 16;
-					*dst++ = antic.color_lookup[src[ 6]] | antic.color_lookup[src[ 7]] << 16;
-#else
-					*dst++ = antic.color_lookup[src[ 1]] | antic.color_lookup[src[ 0]] << 16;
-					*dst++ = antic.color_lookup[src[ 3]] | antic.color_lookup[src[ 2]] << 16;
-					*dst++ = antic.color_lookup[src[ 5]] | antic.color_lookup[src[ 4]] << 16;
-					*dst++ = antic.color_lookup[src[ 7]] | antic.color_lookup[src[ 6]] << 16;
-#endif
-				}
-        }
+			artifacts_txt(src, (UINT8*)dst, HCHARS);
+			return;
+		}
+		else
+		if( (antic.cmd & 0x0f) == 15 )
+		{
+			artifacts_gfx(src, (UINT8*)dst, HCHARS);
+			return;
+		}
 	}
-	else
+	dst[0] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
+	dst[1] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
+	dst[2] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
+	dst[3] = antic.color_lookup[src[BYTE_XOR(0)]] | antic.color_lookup[src[BYTE_XOR(1)]] << 16;
+    src += 2;
+	dst += 4;
+	for( x = 1; x < HCHARS-1; x++ )
 	{
-		for( x = 0; x < WIDTH; x += 2, src += 8  )
-		{
-#if LSB_FIRST
-			*dst++ = antic.color_lookup[src[ 0]] | antic.color_lookup[src[ 1]] << 16;
-			*dst++ = antic.color_lookup[src[ 2]] | antic.color_lookup[src[ 3]] << 16;
-			*dst++ = antic.color_lookup[src[ 4]] | antic.color_lookup[src[ 5]] << 16;
-			*dst++ = antic.color_lookup[src[ 6]] | antic.color_lookup[src[ 7]] << 16;
-#else
-			*dst++ = antic.color_lookup[src[ 1]] | antic.color_lookup[src[ 0]] << 16;
-			*dst++ = antic.color_lookup[src[ 3]] | antic.color_lookup[src[ 2]] << 16;
-			*dst++ = antic.color_lookup[src[ 5]] | antic.color_lookup[src[ 4]] << 16;
-			*dst++ = antic.color_lookup[src[ 7]] | antic.color_lookup[src[ 6]] << 16;
-#endif
-        }
-	}
-#if OPTIMIZE
-    video->dirty = 0;
-#endif
+		*dst++ = antic.color_lookup[src[BYTE_XOR(0)]] | antic.color_lookup[src[BYTE_XOR(1)]] << 16;
+		*dst++ = antic.color_lookup[src[BYTE_XOR(2)]] | antic.color_lookup[src[BYTE_XOR(3)]] << 16;
+		src += 4;
+    }
+	dst[0] = antic.color_lookup[src[BYTE_XOR(0)]] | antic.color_lookup[src[BYTE_XOR(1)]] << 16;
+	dst[1] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
+	dst[2] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
+	dst[3] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
 }
 
 #if VERBOSE
@@ -1089,37 +1051,22 @@ static int cycle(void)
 }
 #endif
 
-static void after(int cycles, VIDEO * video, void (*function)(VIDEO *video))
+static void after(int cycles, void (*function)(int))
 {
-	double duration = 64.0e-6 * cycles / CYCLES_PER_LINE;
+	double duration = cpu_getscanlineperiod() * cycles / CYCLES_PER_LINE;
 #if VERBOSE
 	if (errorlog) fprintf(errorlog, "ANTIC #%3d after %3d (%5.1f us)\n",
 		antic.scanline, cycles, duration * 1.0e6);
 #endif
-    timer_set(duration, (int)video, (void(*)(int)) function);
+	timer_set(duration, 0, function);
 }
 
-static void antic_issue_dli(VIDEO * video)
+static void antic_issue_dli(int param)
 {
 	antic.r.nmist |= DLI_NMI;
     cpu_set_nmi_line(0, PULSE_LINE);
 }
 
-static void antic_handle_dli(VIDEO * video)
-{
-    antic.r.nmist &= ~DLI_NMI;
-	if( antic.modelines == 1 )
-	{
-		/* display list interrupt requested and enabled? */
-		if( (antic.cmd & ANTIC_DLI) != 0 && (antic.w.nmien & DLI_NMI) != 0 )
-		{
-#if VERBOSE
-			if (errorlog) fprintf(errorlog, "ANTIC #%3d cause DLI NMI @ cycle #%d\n", antic.scanline, cycle());
-#endif
-			after(CYCLES_DLI_NMI, video, antic_issue_dli);
-		}
-    }
-}
 
 static  renderer_function renderer[2][19][5] = {
 	/*	 no playfield	 narrow 		 normal 		 wide		  */
@@ -1169,7 +1116,7 @@ static  renderer_function renderer[2][19][5] = {
 	}
 };
 
-static	void LMS(int new_cmd)
+INLINE void LMS(int new_cmd)
 {
 	/**************************************************************
 	 * If the LMS bit (load memory scan) of the current display
@@ -1194,6 +1141,49 @@ static	void LMS(int new_cmd)
 	}
 }
 
+void atari_line_done(int param)
+{
+	/* release the CPU (held for emulating cycles stolen by ANTIC DMA) */
+    cpu_trigger(TRIGGER_STEAL);
+
+}
+
+/*****************************************************************************
+ *
+ *	Atari Steal Cycles
+ *  This is called once per scanline by a interrupt issued in the
+ *  atari_scanline_render function. Set a new timer for the HSYNC
+ *  position and release the CPU; but hold it again immediately until
+ *  TRIGGER_HSYNC if WSYNC (D01A) was accessed
+ *
+ *****************************************************************************/
+void atari_steal_cycles(int param)
+{
+#if VERBOSE
+    if (errorlog) fprintf(errorlog, "ANTIC #%3d @cycle #%d steal_cycles\n", antic.scanline, cycle());
+#endif
+
+    if( antic.w.wsync )
+    {
+#if VERBOSE
+        if (errorlog) fprintf(errorlog, "ANTIC #%3d wsync release @ cycle #%d\n", antic.scanline, cycle());
+#endif
+        /* release the CPU if it was actually waiting for HSYNC */
+        cpu_trigger(TRIGGER_HSYNC);
+        /* and turn off the 'wait for hsync' flag */
+        antic.w.wsync = 0;
+    }
+	/* hold the CPU for the stolen cycles */
+	cpu_spinuntil_trigger(TRIGGER_STEAL);
+
+    /* refresh the display (translate color clocks to pixels) */
+    antic_linerefresh();
+	after(antic.steal_cycles, atari_line_done);
+    antic.steal_cycles = 0;
+
+}
+
+
 /*****************************************************************************
  *
  *	Antic Scan Line DMA
@@ -1206,9 +1196,11 @@ static	void LMS(int new_cmd)
  *	of the GTIA if enabled (DMA_PLAYER or DMA_MISSILE)
  *
  *****************************************************************************/
-static void antic_scanline_dma(VIDEO *video)
+static void antic_scanline_dma(int param)
 {
-	if( antic.w.dmactl & DMA_ANTIC )
+    VIDEO *video = antic.video[antic.scanline];
+
+    if( antic.w.dmactl & DMA_ANTIC )
 	{
 		if( antic.scanline >= VBL_END && antic.scanline < VBL_START )
 		{
@@ -1287,7 +1279,7 @@ static void antic_scanline_dma(VIDEO *video)
 								if (errorlog) fprintf(errorlog, "ANTIC #%3d DLI NMI\n", antic.scanline);
 #endif
 								antic.r.nmist |= DLI_NMI;
-								after(CYCLES_DLI_NMI, video, antic_issue_dli);
+								after(CYCLES_DLI_NMI, antic_issue_dli);
 							}
 						}
 						/* load memory scan bit set ? */
@@ -1296,7 +1288,7 @@ static void antic_scanline_dma(VIDEO *video)
 							/* produce empty scanlines until vblank start */
 							antic.modelines = VBL_START + 1 - antic.scanline;
 							if( antic.modelines < 0 )
-								antic.modelines = TOTAL_LINES - antic.scanline;
+								antic.modelines = Machine->drv->screen_height - antic.scanline;
 #if VERBOSE
 							if (errorlog) fprintf(errorlog, "ANTIC #%3d JVB ", antic.scanline);
 #endif
@@ -1470,157 +1462,52 @@ static void antic_scanline_dma(VIDEO *video)
 			}
         }
 	}
-}
 
-
-/*****************************************************************************
- *
- *	Atari Scan Line Done
- *	This is called once per scanline by a interrupt issued in the
- *	atari_steal_cycles_done function.
- *  Refresh the actual display (translate color clocks to host pixels)
- *	Release the CPU if it was halted by an access to WSYNC (D01A)
- *	Increment the scan line and wrap around at TOTAL_LINES
- *
- *****************************************************************************/
-void atari_scanline_done(VIDEO *video)
-{
-#if VERBOSE
-	if (errorlog) fprintf(errorlog, "ANTIC #%3d @cycle #%d scanline done\n", antic.scanline, cycle());
-#endif
-	if( antic.w.wsync )
-	{
-#if VERBOSE
-		if (errorlog) fprintf(errorlog, "ANTIC #%3d wsync release @ cycle #%d\n", antic.scanline, cycle());
-#endif
-		/* release the CPU if it was actually waiting for HSYNC */
-		cpu_trigger(TRIGGER_HSYNC);
-		/* and turn off the 'wait for hsync' flag */
-        antic.w.wsync = 0;
-    }
-
-	/* refresh the display (translate color clocks to pixels) */
-    antic_linerefresh(video);
-
-    /* increment the scanline */
-	if( ++antic.scanline == TOTAL_LINES )
+    antic.r.nmist &= ~DLI_NMI;
+    if( antic.modelines == 1 )
     {
-		/* and return to the top if the frame was complete */
-        antic.scanline = 0;
-        antic.modelines = 0;
-        /* count frames gone since last write to hitclr */
-		gtia.h.hitclr_frames++;
+        /* display list interrupt requested and enabled? */
+        if( (antic.cmd & ANTIC_DLI) != 0 && (antic.w.nmien & DLI_NMI) != 0 )
+        {
+#if VERBOSE
+            if (errorlog) fprintf(errorlog, "ANTIC #%3d cause DLI NMI @ cycle #%d\n", antic.scanline, cycle());
+#endif
+            after(CYCLES_DLI_NMI, antic_issue_dli);
+        }
     }
-}
 
-/*****************************************************************************
- *
- *	Atari Steal Cycles
- *	This is called once per scanline by a interrupt issued in the
- *	atari_scanline_render function. Set a new timer for the HSYNC
- *	position and release the CPU; but hold it again immediately until
- *	TRIGGER_HSYNC if WSYNC (D01A) was accessed
- *
- *****************************************************************************/
-void atari_steal_cycles_done(VIDEO *video)
-{
 #if VERBOSE
-	if (errorlog) fprintf(errorlog, "ANTIC #%3d @cycle #%d steal_cycles_done\n", antic.scanline, cycle());
+    if (errorlog) fprintf(errorlog, "ANTIC #%3d @cycle #%d render\n", antic.scanline, cycle());
 #endif
-    /* release the CPU again */
-    cpu_trigger(TRIGGER_STEAL);
-	/* but immediately hold the CPU again for TRIGGER_HSYNC if wsync was accessed */
-	if( antic.w.wsync )
-	{
-		cpu_spinuntil_trigger(TRIGGER_HSYNC);
-#if VERBOSE
-		if (errorlog) fprintf(errorlog, "ANTIC #%3d steal cycles: wsync active @ cycle #%d\n", antic.scanline, cycle());
-#endif
-    }
-#if VERBOSE
-	else
-	if (errorlog) fprintf(errorlog, "ANTIC #%3d steal cycles: to go #%d @ cycle #%d\n", antic.scanline, CYCLES_HSYNC - antic.steal_cycles, cycle());
-#endif
-	/* set a new timer for the HSYNC position */
-    after(CYCLES_HSYNC - antic.steal_cycles, video, atari_scanline_done);
-	/* reset the steal cycles count */
-    antic.steal_cycles = 0;
-}
-
-/*****************************************************************************
- *
- *	Atari Scan Line Render
- *	This is called once per scanline by a interrupt issued in the
- *	atari_scanline_dma function:
- *	handle display list interrupt on the last scan line of a ANTIC mode
- *	ANTIC render the actual mode line
- *	GTIA render player / missile graphics and update collisions
- *	hold CPU for cycles stolen by ANTICs DMA accesses and set an
- *	interrupt after antic.steal_cycles to release the CPU again
- *
- *****************************************************************************/
-void atari_scanline_render(VIDEO *video)
-{
-#if VERBOSE
-	if (errorlog) fprintf(errorlog, "ANTIC #%3d @cycle #%d render\n", antic.scanline, cycle());
-#endif
-
-	antic_handle_dli(video);
 
     (*antic_renderer)(video);
+    gtia_render(video);
 
-#if OPTIMIZE
-	/* Do we need to recalculate p/m graphics and collisions too ? */
-	if( video->dirty )
-	{
-        gtia_render(video);
-		/* copy collisions registers into the per scanline buffer */
-		*(UINT32*)&video->gtia_r.m0pf = *(UINT32*)&gtia.r.m0pf;
-		*(UINT32*)&video->gtia_r.p0pf = *(UINT32*)&gtia.r.p0pf;
-		*(UINT32*)&video->gtia_r.m0pl = *(UINT32*)&gtia.r.m0pl;
-		*(UINT32*)&video->gtia_r.p0pl = *(UINT32*)&gtia.r.p0pl;
-    }
-    else
-	/* if hitclr was written less than two frames ago */
-	if( gtia.h.hitclr_frames < 2 )
-	{
-		/* combine collisions regsiters from the scanline buffer with the current GTIA ones */
-		*(UINT32*)&gtia.r.m0pf |= *(UINT32*)&video->gtia_r.m0pf;
-		*(UINT32*)&gtia.r.p0pf |= *(UINT32*)&video->gtia_r.p0pf;
-		*(UINT32*)&gtia.r.m0pl |= *(UINT32*)&video->gtia_r.m0pl;
-		*(UINT32*)&gtia.r.p0pl |= *(UINT32*)&video->gtia_r.p0pl;
-    }
-#else
-	gtia_render(video);
-#endif
-
-	antic.steal_cycles += CYCLES_REFRESH;
+    antic.steal_cycles += CYCLES_REFRESH;
 #if VERBOSE
-	if (errorlog) fprintf(errorlog, "ANTIC #%3d steal %d cycles \n", antic.scanline, antic.steal_cycles);
+    if (errorlog) fprintf(errorlog, "ANTIC #%3d steal %d cycles \n", antic.scanline, antic.steal_cycles);
 #endif
-	cpu_spinuntil_trigger(TRIGGER_STEAL);
-	after(antic.steal_cycles, video, atari_steal_cycles_done);
+	after(CYCLES_HSYNC - CYCLES_HSTART - antic.steal_cycles, atari_steal_cycles);
 }
+
 
 /*****************************************************************************
  *
- *	Atari 800 Interrupt Dispatcher
+ *	Atari 400 Interrupt Dispatcher
  *	This is called once per scanline and handles:
  *	vertical blank interrupt
  *	ANTIC DMA to possibly access the next display list command
  *
  *****************************************************************************/
-int  a800_interrupt(void)
+int  a400_interrupt(void)
 {
-	VIDEO * video = antic.video[antic.scanline];
 #if VERBOSE
     if (errorlog) fprintf(errorlog, "ANTIC #%3d @cycle #%d interrupt\n", antic.scanline, cycle());
 #endif
 
-	if( antic.scanline < VBL_START )
+    if( antic.scanline < VBL_START )
     {
-        antic_scanline_dma(video);
-        after(CYCLES_HSTART, video, atari_scanline_render);
+		after(CYCLES_HSTART, antic_scanline_dma);
 		return ignore_interrupt();
     }
 
@@ -1637,7 +1524,7 @@ int  a800_interrupt(void)
 		a800_handle_keyboard();
 
         /* do nothing new for the rest of the frame */
-        antic.modelines = TOTAL_LINES - VBL_START;
+		antic.modelines = Machine->drv->screen_height - VBL_START;
         antic_renderer = antic_mode_0_xx;
 
         /* if the CPU want's to be interrupted at vertical blank... */
@@ -1651,8 +1538,61 @@ int  a800_interrupt(void)
 			cpu_set_nmi_line(0, PULSE_LINE);
         }
     }
-	atari_scanline_done(video);
-	return ignore_interrupt();
+	/* refresh the display (translate color clocks to pixels) */
+    antic_linerefresh();
+    return ignore_interrupt();
+}
+
+/*****************************************************************************
+ *
+ *	Atari 800 Interrupt Dispatcher
+ *	This is called once per scanline and handles:
+ *	vertical blank interrupt
+ *	ANTIC DMA to possibly access the next display list command
+ *
+ *****************************************************************************/
+int  a800_interrupt(void)
+{
+#if VERBOSE
+    if (errorlog) fprintf(errorlog, "ANTIC #%3d @cycle #%d interrupt\n", antic.scanline, cycle());
+#endif
+
+    if( antic.scanline < VBL_START )
+    {
+        after(CYCLES_HSTART, antic_scanline_dma);
+		return ignore_interrupt();
+    }
+
+    if( antic.scanline == VBL_START )
+    {
+		UINT8 port3 = input_port_3_r(0);
+		if( (gtia.w.gractl & GTIA_TRIGGER) == 0 )
+            gtia.r.but0 = gtia.r.but1 = gtia.r.but2 = gtia.r.but3 = 1;
+		gtia.r.but0 &= (port3 >> 0) & 1;
+		gtia.r.but1 &= (port3 >> 1) & 1;
+		gtia.r.but2 &= (port3 >> 2) & 1;
+		gtia.r.but3 &= (port3 >> 3) & 1;
+
+		a800_handle_keyboard();
+
+        /* do nothing new for the rest of the frame */
+		antic.modelines = Machine->drv->screen_height - VBL_START;
+        antic_renderer = antic_mode_0_xx;
+
+        /* if the CPU want's to be interrupted at vertical blank... */
+		if( antic.w.nmien & VBL_NMI )
+        {
+#if VERBOSE
+            if (errorlog) fprintf(errorlog, "ANTIC #%3d cause VBL NMI\n", antic.scanline);
+#endif
+            /* set the VBL NMI status bit */
+            antic.r.nmist |= VBL_NMI;
+			cpu_set_nmi_line(0, PULSE_LINE);
+        }
+    }
+	/* refresh the display (translate color clocks to pixels) */
+    antic_linerefresh();
+    return ignore_interrupt();
 }
 
 /*****************************************************************************
@@ -1665,15 +1605,13 @@ int  a800_interrupt(void)
  *****************************************************************************/
 int  a800xl_interrupt(void)
 {
-	VIDEO * video = antic.video[antic.scanline];
 #if VERBOSE
     if (errorlog) fprintf(errorlog, "ANTIC #%3d @cycle #%d interrupt\n", antic.scanline, cycle());
 #endif
 
-	if( antic.scanline < VBL_START )
+    if( antic.scanline < VBL_START )
     {
-        antic_scanline_dma(video);
-        after(CYCLES_HSTART, video, atari_scanline_render);
+        after(CYCLES_HSTART, antic_scanline_dma);
 		return ignore_interrupt();
     }
 
@@ -1690,7 +1628,7 @@ int  a800xl_interrupt(void)
 		a800_handle_keyboard();
 
         /* do nothing new for the rest of the frame */
-        antic.modelines = TOTAL_LINES - VBL_START;
+		antic.modelines = Machine->drv->screen_height - VBL_START;
         antic_renderer = antic_mode_0_xx;
 
         /* if the CPU want's to be interrupted at vertical blank... */
@@ -1704,8 +1642,9 @@ int  a800xl_interrupt(void)
 			cpu_set_nmi_line(0, PULSE_LINE);
         }
     }
-	atari_scanline_done(video);
-	return ignore_interrupt();
+	/* refresh the display (translate color clocks to pixels) */
+    antic_linerefresh();
+    return ignore_interrupt();
 }
 
 /*****************************************************************************
@@ -1718,15 +1657,13 @@ int  a800xl_interrupt(void)
  *****************************************************************************/
 int  a5200_interrupt(void)
 {
-	VIDEO * video = antic.video[antic.scanline];
 #if VERBOSE
     if (errorlog) fprintf(errorlog, "ANTIC #%3d @cycle #%d interrupt\n", antic.scanline, cycle());
 #endif
 
-	if( antic.scanline < VBL_START )
+    if( antic.scanline < VBL_START )
     {
-        antic_scanline_dma(video);
-        after(CYCLES_HSTART, video, atari_scanline_render);
+        after(CYCLES_HSTART, antic_scanline_dma);
 		return ignore_interrupt();
     }
 
@@ -1743,7 +1680,7 @@ int  a5200_interrupt(void)
 		a5200_handle_keypads();
 
         /* do nothing new for the rest of the frame */
-        antic.modelines = TOTAL_LINES - VBL_START;
+		antic.modelines = Machine->drv->screen_height - VBL_START;
         antic_renderer = antic_mode_0_xx;
 
         /* if the CPU want's to be interrupted at vertical blank... */
@@ -1757,8 +1694,9 @@ int  a5200_interrupt(void)
 			cpu_set_nmi_line(0, PULSE_LINE);
         }
     }
-	atari_scanline_done(video);
-	return ignore_interrupt();
+	/* refresh the display (translate color clocks to pixels) */
+    antic_linerefresh();
+    return ignore_interrupt();
 }
 
 

@@ -361,7 +361,10 @@ int laser_rom_init(int id, const char *name)
 	int size = 0;
     void *file;
 
-	file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	if( name == NULL )
+		return INIT_OK;
+
+    file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
     if( file )
     {
 		size = osd_fread(file, &mem[0x30000], 0x10000);
@@ -413,7 +416,10 @@ int laser_cassette_init(int id, const char *name)
     char buff[4];
     void *file;
 
-	file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	if( name == NULL )
+		return INIT_OK;
+
+    file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
     if( file )
     {
         osd_fread(file, buff, sizeof(buff));
@@ -460,7 +466,7 @@ int laser_floppy_id(const char *name, const char *gamename)
 int laser_floppy_init(int id, const char *name)
 {
     floppy_name[id] = name;
-    return 0;
+	return INIT_OK;
 }
 
 void laser_floppy_exit(int id)

@@ -30,12 +30,13 @@ NMI
 #define FW  TRS80_FONT_W
 #define FH  TRS80_FONT_H
 
-extern int	trs80_cassette_init(int id, const char *name);
-extern int	trs80_floppy_init(int id, const char *name);
-extern int  trs80_rom_load(int id, const char *name);
-extern int	trs80_rom_id(const char *name, const char *gamename);
+extern int trs80_cassette_init(int id, const char *name);
+extern int trs80_floppy_init(int id, const char *name);
+extern void trs80_floppy_exit(int id);
+extern int trs80_rom_load(int id, const char *name);
+extern int trs80_rom_id(const char *name, const char *gamename);
 
-extern int  trs80_vh_start(void);
+extern int trs80_vh_start(void);
 extern void trs80_vh_stop(void);
 extern void trs80_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
@@ -46,22 +47,22 @@ extern void trs80_init_machine(void);
 extern void trs80_shutdown_machine(void);
 
 extern void trs80_port_ff_w(int offset, int data);
-extern int  trs80_port_ff_r(int offset);
-extern int  trs80_port_xx_r(int offset);
+extern int trs80_port_ff_r(int offset);
+extern int trs80_port_xx_r(int offset);
 
-extern int  trs80_timer_interrupt(void);
-extern int  trs80_frame_interrupt(void);
+extern int trs80_timer_interrupt(void);
+extern int trs80_frame_interrupt(void);
 
-extern int  trs80_irq_status_r(int offset);
+extern int trs80_irq_status_r(int offset);
 extern void trs80_irq_mask_w(int offset, int data);
 
-extern int  trs80_printer_r(int offset);
+extern int trs80_printer_r(int offset);
 extern void trs80_printer_w(int offset, int data);
 
-extern int  trs80_status_r(int offset);
-extern int  trs80_track_r(int offset);
-extern int  trs80_sector_r(int offset);
-extern int  trs80_data_r(int offset);
+extern int trs80_status_r(int offset);
+extern int trs80_track_r(int offset);
+extern int trs80_sector_r(int offset);
+extern int trs80_data_r(int offset);
 
 extern void trs80_command_w(int offset, int data);
 extern void trs80_track_w(int offset, int data);
@@ -70,7 +71,7 @@ extern void trs80_data_w(int offset, int data);
 
 extern void trs80_motor_w(int offset, int data);
 
-extern int  trs80_keyboard_r(int offset);
+extern int trs80_keyboard_r(int offset);
 extern void trs80_videoram_w(int offset, int data);
 
 static struct MemoryReadAddress readmem_model1[] =
@@ -453,19 +454,28 @@ static struct MachineDriver machine_driver_model3 =
 ***************************************************************************/
 
 ROM_START(trs80)
-	ROM_REGIONX(0x10000, REGION_CPU1)
+	ROM_REGION(0x10000, REGION_CPU1)
 	ROM_LOAD("trs80.rom",   0x0000, 0x3000, 0xd6fd9041)
 
-	ROM_REGIONX(0x0c00, REGION_GFX1)
+	ROM_REGION(0x0c00, REGION_GFX1)
+	ROM_LOAD("trs80m1.chr", 0x0800, 0x0400, 0x0033f2b9)
+ROM_END
+
+
+ROM_START(sys80)
+	ROM_REGION(0x10000, REGION_CPU1)
+	ROM_LOAD("sys80.rom",   0x0000, 0x3000, 0x2bfef8f7)
+
+	ROM_REGION(0x0c00, REGION_GFX1)
 	ROM_LOAD("trs80m1.chr", 0x0800, 0x0400, 0x0033f2b9)
 ROM_END
 
 
 ROM_START(trs80m3)
-	ROM_REGIONX(0x10000, REGION_CPU1)
+	ROM_REGION(0x10000, REGION_CPU1)
 	ROM_LOAD("trs80.rom",   0x0000, 0x3000, 0xd6fd9041)
 
-	ROM_REGIONX(0x0c00, REGION_GFX1)
+	ROM_REGION(0x0c00, REGION_GFX1)
 	ROM_LOAD("trs80m1.chr", 0x0800, 0x0400, 0x0033f2b9)
 ROM_END
 
@@ -515,7 +525,7 @@ static const struct IODevice io_trs80[] = {
         NULL,               /* private */
         NULL,               /* id */
 		trs80_floppy_init,	/* init */
-		NULL,				/* exit */
+		trs80_floppy_exit,	/* exit */
         NULL,               /* info */
         NULL,               /* open */
         NULL,               /* close */
@@ -529,8 +539,10 @@ static const struct IODevice io_trs80[] = {
     { IO_END }
 };
 
+#define io_sys80 io_trs80
 #define io_trs80m3 io_trs80
 
 /*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-COMP ( 1978, trs80,	  0, 		model1,   trs80,	trs80,	  "Tandy Radio Shack",  "TRS-80 Model I (Level II Basic)" )
-COMPX( 19??, trs80m3,  trs80,	model3,   trs80,	trs80,	  "Tandy Radio Shack",  "TRS-80 Model III", GAME_NOT_WORKING )
+COMP ( 1978, trs80,    0,		 model1,   trs80,	 trs80,    "Tandy Radio Shack",  "TRS-80 Model I (Level II Basic)" )
+COMP ( 1980, sys80,    trs80,	 model1,   trs80,	 trs80,    "EACA Computers Ltd.",  "System-80" )
+COMPX( 19??, trs80m3,  trs80,	 model3,   trs80,	 trs80,    "Tandy Radio Shack",  "TRS-80 Model III", GAME_NOT_WORKING )

@@ -177,10 +177,8 @@ void laser_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 						sy = BORDER_V/2 + y;
 						sx = BORDER_H/2 + x * 8;
                         code = videoram[offs];
-                        drawgfx(
-							bitmap,Machine->gfx[2],code,color,0,0,sx,sy,
+						drawgfx(bitmap,Machine->gfx[2],code,color,0,0,sx,sy,
                             &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-                        osd_mark_dirty(sx,sy,sx+7,sy,0);
                         dirtybuffer[offs] = 0;
                     }
                 }
@@ -204,10 +202,8 @@ void laser_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 						sx = BORDER_H/2 + x * 16;
                         code = videoram[offs];
 						color = videoram[offs+1];
-                        drawgfx(
-							bitmap,Machine->gfx[3],code,color,0,0,sx,sy,
+						drawgfx(bitmap,Machine->gfx[3],code,color,0,0,sx,sy,
                             &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-						osd_mark_dirty(sx,sy,sx+15,sy,0);
 						dirtybuffer[offs] = dirtybuffer[offs+1] = 0;
                     }
                 }
@@ -230,10 +226,8 @@ void laser_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 						sy = BORDER_V/2 + y;
 						sx = BORDER_H/2 + x * 8;
                         code = videoram[offs];
-                        drawgfx(
-							bitmap,Machine->gfx[5],code,0,0,0,sx,sy,
+						drawgfx(bitmap,Machine->gfx[5],code,0,0,0,sx,sy,
                             &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-						osd_mark_dirty(sx,sy,sx+7,sy,0);
 						dirtybuffer[offs] = 0;
                     }
                 }
@@ -257,10 +251,8 @@ void laser_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 						sy = BORDER_V/2 + y * 2;
 						sx = BORDER_H/2 + x * 8;
                         code = videoram[offs];
-                        drawgfx(
-							bitmap,Machine->gfx[6],code,0,0,0,sx,sy,
+						drawgfx(bitmap,Machine->gfx[6],code,0,0,0,sx,sy,
                             &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-						osd_mark_dirty(sx,sy,sx+7,sy+1,0);
 						dirtybuffer[offs] = 0;
                     }
                 }
@@ -283,10 +275,8 @@ void laser_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 						sy = BORDER_V/2 + y;
 						sx = BORDER_H/2 + x * 16;
                         code = videoram[offs];
-                        drawgfx(
-                            bitmap,Machine->gfx[3],code,color,0,0,sx,sy,
+						drawgfx(bitmap,Machine->gfx[3],code,color,0,0,sx,sy,
                             &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-                        osd_mark_dirty(sx,sy,sx+15,sy,0);
                         dirtybuffer[offs] = 0;
                     }
                 }
@@ -310,10 +300,8 @@ void laser_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 						sx = BORDER_H/2 + x * 32;
                         code = videoram[offs];
 						color = videoram[offs+1];
-                        drawgfx(
-							bitmap,Machine->gfx[4],code,color,0,0,sx,sy,
+						drawgfx(bitmap,Machine->gfx[4],code,color,0,0,sx,sy,
                             &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-						osd_mark_dirty(sx,sy,sx+31,sy,0);
 						dirtybuffer[offs] = dirtybuffer[offs+1] = 0;
                     }
                 }
@@ -338,10 +326,8 @@ void laser_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 						sy = BORDER_V/2 + y * 8;
 						sx = BORDER_H/2 + x * 8;
                         code = videoram[0x3800+offs];
-                        drawgfx(
-                            bitmap,Machine->gfx[0],code,color,0,0,sx,sy,
+						drawgfx(bitmap,Machine->gfx[0],code,color,0,0,sx,sy,
                             &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-                        osd_mark_dirty(sx,sy,sx+7,sy+7,0);
                         dirtybuffer[offs] = 0;
                     }
                 }
@@ -362,10 +348,8 @@ void laser_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 						sx = BORDER_H/2 + x * 16;
                         code = videoram[0x3800+offs];
                         color = videoram[0x3801+offs];
-                        drawgfx(
-                            bitmap,Machine->gfx[1],code,color,0,0,sx,sy,
+						drawgfx(bitmap,Machine->gfx[1],code,color,0,0,sx,sy,
                             &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-                        osd_mark_dirty(sx,sy,sx+15,sy+7,0);
                         dirtybuffer[0x3800+offs] = dirtybuffer[0x3801+offs] = 0;
                     }
                 }

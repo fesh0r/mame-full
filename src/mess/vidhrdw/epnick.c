@@ -96,9 +96,9 @@ void nick_init_palette(unsigned char *palette, unsigned short *colortable,const 
 
     memcpy(palette, nick_colour_palette , sizeof(nick_colour_palette));
         memcpy(colortable, nick_colour_table, sizeof(nick_colour_table));
-	color_prom=malloc(0*sizeof(char));
+        //color_prom=malloc(0*sizeof(char));
 
-	palette_recalc();
+        //palette_recalc();
 
 }
 
@@ -233,7 +233,14 @@ static void Nick_WritePixels2Colour(unsigned char Pen0, unsigned char Pen1, unsi
 			PenIndex = Pen0;
 		}
 
-		ColIndex = Nick.LPT.COL[PenIndex];
+                if (PenIndex & 0x08)
+                {
+                        ColIndex = ((Nick.FIXBIAS & 0x01f)<<3) | (PenIndex & 0x07);
+                }
+                else
+                {
+                        ColIndex = Nick.LPT.COL[PenIndex];
+                }
 
 		NICK_WRITE_PIXEL(ColIndex, Nick.dest);
 
@@ -261,7 +268,14 @@ static void Nick_WritePixels2Colour2(unsigned char Pen0, unsigned char Pen1, uns
 			PenIndex = Pen0;
 		}
 
-		ColIndex = Nick.LPT.COL[PenIndex];
+                if (PenIndex & 0x08)
+                {
+                        ColIndex = ((Nick.FIXBIAS & 0x01f)<<3) | (PenIndex & 0x07);
+                }
+                else
+                {
+                        ColIndex = Nick.LPT.COL[PenIndex];
+                }
 
 		NICK_WRITE_PIXEL(ColIndex, Nick.dest);
 		NICK_WRITE_PIXEL(ColIndex, Nick.dest);

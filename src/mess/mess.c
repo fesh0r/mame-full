@@ -9,56 +9,30 @@ This file is a set of function calls and defs required for MESS.
 
 extern struct GameOptions options;
 
-static const char **cartslot_names = NULL;
-static const char **floppy_names = NULL;
-static const char **harddisk_names = NULL;
-static const char **cassette_names = NULL;
-static const char **printer_names = NULL;
-static const char **serial_names = NULL;
-
-static int cartslot_count = 0;
-static int floppy_count = 0;
-static int harddisk_count = 0;
-static int cassette_count = 0;
-static int printer_count = 0;
-static int serial_count = 0;
+static const char **names[IO_COUNT] = {NULL,};
+static int count[IO_COUNT] = {0,};
+static const char *typename[IO_COUNT] = {
+	"NONE",
+    "Cartridge",
+    "Floppydisk",
+    "Harddisk",
+    "Cassette",
+    "Printer",
+    "Serial",
+    "Snapshot"
+};
 
 static char *mess_alpha = "";
 
 
-/* Add a filename from the GameOptions to the arrays of names */
-#define ADD_DEVICE_FILE(dbgmsg,type,name)					\
-	if (type##_names)										\
-		type##_names = realloc(type##_names,(type##_count+1)*sizeof(char *));  \
-	else													\
-		type##_names = malloc(sizeof(char *));				\
-	if (!type##_names)										\
-		return 1;											\
-	type##_names[type##_count] = name;						\
-	if (errorlog)											\
-		fprintf(errorlog, dbgmsg, type##_count, type##_names[type##_count]); \
-	type##_count++
-
-/* Zap the array of filenames and the count for a device type */
-#define ZAP_DEVICE_FILES(type)								\
-	if (type##_names) free(type##_names);					\
-	type##_names = NULL;									\
-	type##_count = 0;
 
 /*
  * Return a name for the device type (to be used for UI functions)
  */
 const char *device_typename(int type)
 {
-    switch( type )
-    {
-    case IO_CARTSLOT: return "Cartridge";
-    case IO_FLOPPY:   return "Floppydisk";
-    case IO_HARDDISK: return "Harddisk";
-    case IO_CASSETTE: return "Cassette";
-    case IO_PRINTER:  return "Printer";
-    case IO_SERIAL:   return "Serial";
-    }
+	if (type < IO_COUNT)
+		return typename[type];
     return "UNKNOWN";
 }
 
@@ -68,33 +42,10 @@ const char *device_typename(int type)
  */
 const char *device_filename(int type, int id)
 {
-    switch( type )
-    {
-    case IO_CARTSLOT:
-		if (id < cartslot_count)
-            return cartslot_names[id];
-        return NULL;
-    case IO_FLOPPY:
-		if (id < floppy_count)
-            return floppy_names[id];
-        return NULL;
-    case IO_HARDDISK:
-		if (id < harddisk_count)
-            return harddisk_names[id];
-        return NULL;
-    case IO_CASSETTE:
-		if (id < cassette_count)
-            return cassette_names[id];
-        return NULL;
-    case IO_PRINTER:
-		if (id < printer_count)
-            return printer_names[id];
-        return NULL;
-    case IO_SERIAL:
-		if (id < serial_count)
-            return serial_names[id];
-        return NULL;
-    }
+	if (type >= IO_COUNT)
+		return NULL;
+    if (id < count[type])
+		return names[type][id];
     return NULL;
 }
 
@@ -103,16 +54,9 @@ const char *device_filename(int type, int id)
  */
 int device_count(int type)
 {
-    switch( type )
-    {
-    case IO_CARTSLOT: return cartslot_count;
-    case IO_FLOPPY:   return floppy_count;
-    case IO_HARDDISK: return harddisk_count;
-    case IO_CASSETTE: return cassette_count;
-    case IO_PRINTER:  return printer_count;
-    case IO_SERIAL:   return serial_count;
-    }
-    return 0;
+	if (type >= IO_COUNT)
+		return 0;
+	return count[type];
 }
 
 /*
@@ -125,32 +69,26 @@ int get_filenames(void)
 	int i;
 	for( i = 0; i < options.image_count; i++ )
 	{
-		const char *name = options.image_files[i].name;
         int type = options.image_files[i].type;
 
-		switch( type )
+		if (type < IO_COUNT)
 		{
-		case IO_CARTSLOT:
-			ADD_DEVICE_FILE("IO_CARTSLOT #%d %s\n", cartslot, name);
-            break;
-		case IO_FLOPPY:
-			ADD_DEVICE_FILE("IO_FLOPPY   #%d %s\n", floppy, name);
-			break;
-		case IO_HARDDISK:
-			ADD_DEVICE_FILE("IO_HARDDISK #%d %s\n", harddisk, name);
-			break;
-		case IO_CASSETTE:
-			ADD_DEVICE_FILE("IO_CASSETTE #%d %s\n", cassette, name);
-			break;
-		case IO_PRINTER:
-			ADD_DEVICE_FILE("IO_PRINTER  #%d %s\n", printer, name);
-			break;
-        case IO_SERIAL:
-			ADD_DEVICE_FILE("IO_SERIAL   #%d %s\n", serial, name);
-			break;
-		default:
+			/* Add a filename from the GameOptions to the arrays of names */
+			if (names[type])
+				names[type] = realloc(names[type],(count[type]+1)*sizeof(char *));
+			else
+				names[type] = malloc(sizeof(char *));
+			if (!names[type])
+				return 1;
+			names[type][count[type]] = options.image_files[i].name;
+			if (errorlog)
+				fprintf(errorlog, "%-16s #%d %s", typename[type], count[type], names[type][count[type]]);
+			count[type]++;
+		}
+		else
+		{
 			if(errorlog)
-				fprintf(errorlog, "Invalid IO_ type %d for %s\n", type, name);
+				fprintf(errorlog, "Invalid IO_ type %d for %s\n", type, options.image_files[i].name);
 			return 1;
         }
 	}
@@ -170,7 +108,7 @@ int init_devices(const void *game)
     int id;
 
     /* initialize all devices */
-	while( dev->count )
+    while( dev->count )
 	{
 		/* if this device supports initialize (it should!) */
         if( dev->init )
@@ -179,15 +117,15 @@ int init_devices(const void *game)
 			for( id = 0; id < dev->count; id++ )
 			{
 				const char *filename = device_filename(dev->type,id);
-				if( filename )
+                /* initialize */
+				int result = (*dev->init)(id,filename);
+
+				printf("Device #%d (%s) Init %d\n", id, device_typename(dev->type), result);
+				if( result != INIT_OK && filename )
 				{
-					/* initialize */
-					if( (*dev->init)(id,filename) != 0 )
-					{
-						printf("%s #%d init failed (%s).\n", device_typename(dev->type), id, filename);
-						return 1;
-					}
-				}
+					printf("%s #%d init failed (%s).\n", device_typename(dev->type), id, filename);
+					return 1;
+                }
 			}
 		}
 		else
@@ -206,7 +144,7 @@ int init_devices(const void *game)
 void exit_devices(void)
 {
 	const struct IODevice *dev = Machine->gamedrv->dev;
-    int id;
+	int type, id;
 
     /* shutdown all devices */
     while( dev->count )
@@ -224,12 +162,13 @@ void exit_devices(void)
         }
         dev++;
     }
-	ZAP_DEVICE_FILES(cartslot)
-	ZAP_DEVICE_FILES(floppy)
-	ZAP_DEVICE_FILES(harddisk)
-	ZAP_DEVICE_FILES(cassette)
-	ZAP_DEVICE_FILES(printer)
-	ZAP_DEVICE_FILES(serial)
+	for( type = IO_CARTSLOT; type < IO_COUNT; type++ )
+	{
+		if( names[type] )
+			free(names[type]);
+		names[type] = NULL;
+		count[type] = 0;
+	}
 }
 
 void showmessdisclaimer(void)

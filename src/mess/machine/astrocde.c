@@ -28,7 +28,13 @@ int astrocade_load_rom(int id, const char *name)
 	void *file;
 	int size = 0;
 
-	/* load a cartidge  */
+	if (name == NULL)
+	{
+		if (errorlog) fprintf(errorlog, "%s no Cartridge #%d specified\n", Machine->gamedrv->name, id);
+		return INIT_UNKNOWN;
+	}
+
+    /* load a cartidge  */
 	if (strlen(name))
 	{
 		file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_R, 0);

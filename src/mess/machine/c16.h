@@ -4,23 +4,20 @@
 #include "driver.h"
 #include "c1551.h"
 
-/* damned c16 joystick
- * connected to the keyboard latch
- * without! selection (also activ) */
 #define JOYSTICK1_PORT (input_port_7_r(0)&0x80)
 #define JOYSTICK2_PORT (input_port_7_r(0)&0x40)
 
-#define JOYSTICK_2_LEFT	(JOYSTICK2_PORT&&(input_port_1_r(0)&0x80))
-#define JOYSTICK_2_RIGHT	(JOYSTICK2_PORT&&(input_port_1_r(0)&0x40))
-#define JOYSTICK_2_UP		(JOYSTICK2_PORT&&(input_port_1_r(0)&0x20))
-#define JOYSTICK_2_DOWN	(JOYSTICK2_PORT&&(input_port_1_r(0)&0x10))
-#define JOYSTICK_2_BUTTON (JOYSTICK2_PORT&&(input_port_1_r(0)&8))
+#define JOYSTICK_2_LEFT	((input_port_1_r(0)&0x80))
+#define JOYSTICK_2_RIGHT	((input_port_1_r(0)&0x40))
+#define JOYSTICK_2_UP		((input_port_1_r(0)&0x20))
+#define JOYSTICK_2_DOWN	((input_port_1_r(0)&0x10))
+#define JOYSTICK_2_BUTTON ((input_port_1_r(0)&8))
 
-#define JOYSTICK_1_LEFT	(JOYSTICK1_PORT&&(input_port_0_r(0)&0x80))
-#define JOYSTICK_1_RIGHT	(JOYSTICK1_PORT&&(input_port_0_r(0)&0x40))
-#define JOYSTICK_1_UP		(JOYSTICK1_PORT&&(input_port_0_r(0)&0x20))
-#define JOYSTICK_1_DOWN	(JOYSTICK1_PORT&&(input_port_0_r(0)&0x10))
-#define JOYSTICK_1_BUTTON (JOYSTICK1_PORT&&(input_port_0_r(0)&8))
+#define JOYSTICK_1_LEFT	((input_port_0_r(0)&0x80))
+#define JOYSTICK_1_RIGHT	((input_port_0_r(0)&0x40))
+#define JOYSTICK_1_UP		((input_port_0_r(0)&0x20))
+#define JOYSTICK_1_DOWN	((input_port_0_r(0)&0x10))
+#define JOYSTICK_1_BUTTON ((input_port_0_r(0)&8))
 
 #define KEY_ESC (input_port_2_r(0)&0x8000)
 #define KEY_1 (input_port_2_r(0)&0x4000)
@@ -96,11 +93,11 @@
 
 #define JOYSTICK_SWAP (input_port_6_r(0)&0x2000)
 
-#define DATASSETTE_PLAY		(input_port_6_r(6)&4)
-#define DATASSETTE_RECORD	(input_port_6_r(6)&2)
-#define DATASSETTE_STOP		(input_port_6_r(6)&1)
+#define DATASSETTE_PLAY		(input_port_6_r(0)&4)
+#define DATASSETTE_RECORD	(input_port_6_r(0)&2)
+#define DATASSETTE_STOP		(input_port_6_r(0)&1)
 
-#define QUICKLOAD		(input_port_6_r(6)&8)
+#define QUICKLOAD		(input_port_6_r(0)&8)
 
 #define KEY_SHIFT (KEY_LEFT_SHIFT||KEY_RIGHT_SHIFT||KEY_SHIFTLOCK)
 
@@ -118,46 +115,47 @@
 
 extern UINT8 *c16_memory;
 
-extern void c16_m7501_port_w(int offset, int data);
-extern int c16_m7501_port_r(int offset);
+extern void c16_m7501_port_w (int offset, int data);
+extern int c16_m7501_port_r (int offset);
 
-extern void c16_6551_port_w(int offset, int data);
-extern int c16_6551_port_r(int offset);
+extern void c16_6551_port_w (int offset, int data);
+extern int c16_6551_port_r (int offset);
 
-extern int c16_fd1x_r(int offset);
-extern void plus4_6529_port_w(int offset, int data);
-extern int plus4_6529_port_r(int offset);
+extern int c16_fd1x_r (int offset);
+extern void plus4_6529_port_w (int offset, int data);
+extern int plus4_6529_port_r (int offset);
 
-extern void c16_6529_port_w(int offset, int data);
-extern int c16_6529_port_r(int offset);
+extern void c16_6529_port_w (int offset, int data);
+extern int c16_6529_port_r (int offset);
 
 
 #if 0
-extern void c16_iec9_port_w(int offset, int data);
-extern int c16_iec9_port_r(int offset);
+extern void c16_iec9_port_w (int offset, int data);
+extern int c16_iec9_port_r (int offset);
 
-extern void c16_iec8_port_w(int offset, int data);
-extern int c16_iec8_port_r(int offset);
+extern void c16_iec8_port_w (int offset, int data);
+extern int c16_iec8_port_r (int offset);
+
 #endif
 
-extern void c16_select_roms(int offset, int data);
-extern void c16_switch_to_rom(int offset, int data);
-extern void c16_switch_to_ram(int offset, int data);
-extern void plus4_switch_to_ram(int offset, int data);
+extern void c16_select_roms (int offset, int data);
+extern void c16_switch_to_rom (int offset, int data);
+extern void c16_switch_to_ram (int offset, int data);
+extern void plus4_switch_to_ram (int offset, int data);
 
 /* ted reads */
-extern int c16_read_keyboard(int databus);
-extern void c16_interrupt(int);
+extern int c16_read_keyboard (int databus);
+extern void c16_interrupt (int);
 
-extern void c16_driver_init(void);
-extern void plus4_driver_init(void);
-extern void c16_driver_shutdown(void);
-extern void c16_init_machine(void);
-extern void c16_shutdown_machine(void);
-extern int  c16_frame_interrupt(void);
+extern void c16_driver_init (void);
+extern void plus4_driver_init (void);
+extern void c16_driver_shutdown (void);
+extern void c16_init_machine (void);
+extern void c16_shutdown_machine (void);
+extern int c16_frame_interrupt (void);
 
-extern int  c16_rom_init(int id, const char *name);
-extern int  c16_rom_load(int id, const char *name);
-extern int  c16_rom_id(const char *name, const char *gamename);
+extern int c16_rom_init (int id, const char *name);
+extern int c16_rom_load (int id, const char *name);
+extern int c16_rom_id (const char *name, const char *gamename);
 
 #endif

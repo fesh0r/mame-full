@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  driver.c/system.c for MESS
+  driver.c
 
   The list of all available drivers. Drivers have to be included here to be
   recognized by the executable.
@@ -14,8 +14,10 @@
 
 #include "driver.h"
 
+
 #ifndef DRIVER_RECURSIVE
 
+/* The "root" driver, defined so we can have &driver_##NAME in macros. */
 /* The "root" driver, defined so we can have &driver_##NAME in macros. */
 struct GameDriver driver_0 =
 {
@@ -25,16 +27,12 @@ struct GameDriver driver_0 =
 	0,
 	0,
 	0,
-	0, 0,
 	0,
 	0,
 	0,
 	0,
-	0, 0, 0, 0,
 	0,
-	0, 0, 0,
 	NOT_A_DRIVER,
-	0,0
 };
 
 #endif
@@ -73,7 +71,6 @@ const struct GameDriver *drivers[] =
 #else	/* DRIVER_RECURSIVE */
 
 #ifndef NEOMAME
-
 
   /****************CONSOLES****************************************************/
 
@@ -130,19 +127,27 @@ const struct GameDriver *drivers[] =
       DRIVER( apple2ep )    /* plus? - 1979                                   */
 
       /* ATARI */
+      DRIVER( a400 )        /* Atari 400                                      */
+      DRIVER( a400pal )     /* Atari 400 PAL                                  */
       DRIVER( a800 )        /* Atari 800                                      */
+      DRIVER( a800pal )     /* Atari 800 PAL                                  */
   TESTDRIVER( a800xl )      /* Atari 800 XL                                   */
 
       /* COMMODORE */
 
       DRIVER( c16 )         /* Commodore 16                                   */
       DRIVER( plus4 )       /* Commodore +4                                   */
-  TESTDRIVER( c364 )        /* Commodore ??                                   */
+	  DRIVER( c364 )		/* Commodore 364 - Prototype					  */
 
       DRIVER( c64 )         /* Commodore 64 - NTSC                            */
       DRIVER( c64pal )      /* Commodore 64 - PAL                             */
+	  DRIVER( c64gs )		/* Commodore 64 Game System 					  */
+	  DRIVER( sx64 )		/* Commodore SX 64 - PAL						  */
       DRIVER( max )         /* Ulitimax                                       */
-
+  TESTDRIVER( c65 ) 		/* Commodore 65 - NTSC							  */
+  TESTDRIVER( c65ger ) 		/*                               				  */
+  TESTDRIVER( c128 ) 		/*                  							  */
+  TESTDRIVER( c128ger ) 	/*                           					  */
       DRIVER( vic20 )       /* Commodore Vic-20 NTSC                          */
       DRIVER( vc20 )        /* Commodore Vic-20 PAL                           */
 
@@ -180,6 +185,7 @@ const struct GameDriver *drivers[] =
 	  DRIVER( coco3 )       /* Color Computer 3                               */
       DRIVER( cp400 )       /* Prologica CP400                                */
       DRIVER( trs80 )       /* TRS-80 Model I   - Radio Shack/Tandy           */
+	  DRIVER( sys80 )		/* System 80 - EACA Computers Ltd.				  */
   TESTDRIVER( trs80m3 )     /* TRS-80 Model III - Radio Shack/Tandy           */
 
       /* Dragon Data Ltd */
@@ -206,10 +212,13 @@ const struct GameDriver *drivers[] =
 	  DRIVER( orica )       /* ORIC Atmos                                     */
 
       /* Texas Instruments */
-  TESTDRIVER( ti99_2_24 )      /* Texas Instruments TI/99 2                      */
-  TESTDRIVER( ti99_2_32 )      /* Texas Instruments TI/99 2                      */
-      DRIVER( ti99_4 )      /* Texas Instruments TI/99 4                      */
-      DRIVER( ti99_4a )     /* Texas Instruments TI/99 4a                     */
+  TESTDRIVER( ti99_2_24 )   /* Texas Instruments TI/99 2                      */
+  TESTDRIVER( ti99_2_32 )   /* Texas Instruments TI/99 2                      */
+      DRIVER( ti99_4 )      /* Texas Instruments TI/99                        */
+      DRIVER( ti99_4e )     /* Texas Instruments TI/99                        */
+      DRIVER( ti99_4a )     /* Texas Instruments TI/99                        */
+      DRIVER( ti99_4ae )    /* Texas Instruments TI/99                        */
+
 
       /* IBM & Clones */
   TESTDRIVER( pc )          /* IBM PC  - parent Driver, so no need            */
@@ -226,7 +235,7 @@ const struct GameDriver *drivers[] =
 	  DRIVER( pow3000 )
 
       DRIVER( spectrum )    /* Sinclair 48k                                   */
-
+      DRIVER( specpls3 )    /* Spectrum Plus 3                                */
 
 	  /* Other */
       DRIVER( msx )         /* MSX                                            */
@@ -242,13 +251,6 @@ const struct GameDriver *drivers[] =
 
 
 
-
-
-
-
-
-
-
     //DRIVER( applemac )    /* Apple Macintosh                                */
     //DRIVER( arcadia )     /* Arcadia 2001                                   */
     //DRIVER( atarist )     /* Atari ST                                       */
@@ -257,8 +259,6 @@ const struct GameDriver *drivers[] =
 
     //DRIVER( channelf )    /* Fairchild Channel F VES - 1976                 */
     //DRIVER( coco2 )       /* Color Computer 2                               */
-
-    //DRIVER( c128 )        /* Commodore 128                                  */
 
   							/* AkA Phillips Videopac                          */
     //DRIVER( intv )        /* Mattel Intellivision - 1979 AKA INTV           */
@@ -278,7 +278,7 @@ const struct GameDriver *drivers[] =
     //DRIVER( x68000 )      /* X68000                                         */
 
 
-#endif	/* NEOFREE */
+#endif  /* NEOMAME */
 
 #endif	/* DRIVER_RECURSIVE */
 

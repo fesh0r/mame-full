@@ -29,8 +29,11 @@
 #if (HAS_8080 || HAS_8085A)
 #include "cpu/i8085/i8085.h"
 #endif
-#if (HAS_M6502 || HAS_M65C02 || HAS_M6510 || HAS_N2A03)
+#if (HAS_M6502 || HAS_M65C02 || HAS_M65SC02 || HAS_M6510 || HAS_N2A03)
 #include "cpu/m6502/m6502.h"
+#endif
+#if (HAS_M65CE02)
+#include "cpu/m6502/m65ce02.h"
 #endif
 #if (HAS_H6280)
 #include "cpu/h6280/h6280.h"
@@ -580,6 +583,78 @@ struct cpu_interface cpuintf[] =
 		0,16,CPU_IS_LE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
+#endif
+#if (HAS_M65SC02)
+    {
+		CPU_M65SC02,
+		m65sc02_reset,
+		m65sc02_exit,
+		m65sc02_execute,
+		NULL,
+		m65sc02_get_context,
+		m65sc02_set_context,
+		m65sc02_get_pc,
+		m65sc02_set_pc,
+		m65sc02_get_sp,
+		m65sc02_set_sp,
+		m65sc02_get_reg,
+		m65sc02_set_reg,
+		m65sc02_set_nmi_line,
+		m65sc02_set_irq_line,
+		m65sc02_set_irq_callback,
+		NULL,
+		m65sc02_state_save,
+		m65sc02_state_load,
+		m65sc02_info,
+		m65sc02_dasm,
+		1,0,
+		&m65sc02_ICount,
+		1.0,
+		M65SC02_INT_NONE,
+		M65SC02_INT_IRQ,
+		M65SC02_INT_NMI,
+		cpu_readmem16,
+		cpu_writemem16,
+		cpu_setOPbase16,
+		0,16,CPU_IS_LE,1,3,
+		ABITS1_16,ABITS2_16,ABITS_MIN_16
+    },
+#endif
+#if (HAS_M65CE02)
+    {
+		CPU_M65CE02,
+		m65ce02_reset,
+		m65ce02_exit,
+		m65ce02_execute,
+		NULL,
+		m65ce02_get_context,
+		m65ce02_set_context,
+		m65ce02_get_pc,
+		m65ce02_set_pc,
+		m65ce02_get_sp,
+		m65ce02_set_sp,
+		m65ce02_get_reg,
+		m65ce02_set_reg,
+		m65ce02_set_nmi_line,
+		m65ce02_set_irq_line,
+		m65ce02_set_irq_callback,
+		NULL,
+		m65ce02_state_save,
+		m65ce02_state_load,
+		m65ce02_info,
+		m65ce02_dasm,
+		1,0,
+		&m65ce02_ICount,
+		1.0,
+		M65CE02_INT_NONE,
+		M65CE02_INT_IRQ,
+		M65CE02_INT_NMI,
+		cpu_readmem16,
+		cpu_writemem16,
+		cpu_setOPbase16,
+		0,16,CPU_IS_LE,1,3,
+		ABITS1_16,ABITS2_16,ABITS_MIN_16
+    },
 #endif
 #if (HAS_M6510)
 	{

@@ -13,6 +13,9 @@ unsigned char *spectrum_characterram;
 unsigned char *spectrum_colorram;
 unsigned char *charsdirty;
 
+
+extern unsigned char *spectrum_plus3_screen_location;
+
 /***************************************************************************
   Start the video hardware emulation.
 ***************************************************************************/
@@ -29,7 +32,7 @@ int spectrum_vh_start(void) {
 		return 1;
 	}
 
-	charsdirty = malloc(0xc00);
+        charsdirty = malloc(0x300);
 	if (!charsdirty) {
 		free(spectrum_colorram);
 		free(spectrum_characterram);
@@ -45,9 +48,13 @@ void    spectrum_vh_stop(void) {
 	free(charsdirty);
 }
 
+/* screen is stored as:
+32 chars wide. first 0x100 bytes are top scan of lines 0 to 7 */
+
 void spectrum_characterram_w(int offset, int data) {
 	spectrum_characterram[offset] = data;
-	charsdirty[(offset&0xff)*(offset>>9)] = 1;
+
+        charsdirty[((offset & 0x0f800)>>3) + (offset & 0x0ff)] = 1;
 }
 
 int spectrum_characterram_r(int offset) {
@@ -73,7 +80,7 @@ int spectrum_colorram_r(int offset) {
 void spectrum_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh) {
 	int count;
 
-	if (full_refresh)
+        if (full_refresh)
 		memset(charsdirty,1,0x300);
 
 	for (count=0;count<32*8;count++) {
@@ -130,6 +137,68 @@ void spectrum_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh) {
 				0,TRANSPARENCY_NONE,0);
 			charsdirty[count+512] = 0;
 		}
+	}
+}
+
+
+int spectrum_plus3_vh_start(void)
+{
+        return 0;
+}
+
+void    spectrum_plus3_vh_stop(void)
+{
+}
+
+void spectrum_plus3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh) {
+	int count;
+
+        /* for now plus 3 will do a full-refresh */
+        unsigned char *spectrum_plus3_colorram;
+        unsigned char *spectrum_plus3_charram;
+
+        spectrum_plus3_charram = spectrum_plus3_screen_location;
+        spectrum_plus3_colorram = spectrum_plus3_screen_location + 0x01800;
+
+	for (count=0;count<32*8;count++) {
+                decodechar( Machine->gfx[0],count,spectrum_plus3_charram,
+				    Machine->drv->gfxdecodeinfo[0].gfxlayout );
+
+                decodechar( Machine->gfx[1],count,&spectrum_plus3_charram[0x800],
+				    Machine->drv->gfxdecodeinfo[0].gfxlayout );
+
+                decodechar( Machine->gfx[2],count,&spectrum_plus3_charram[0x1000],
+				    Machine->drv->gfxdecodeinfo[0].gfxlayout );
+	}
+
+	for (count=0;count<32*8;count++) {
+		int sx=count%32;
+		int sy=count/32;
+		unsigned char color;
+
+                color=spectrum_plus3_colorram[count];
+                drawgfx(bitmap,Machine->gfx[0],
+				count,
+				color,
+				0,0,
+				sx*8,sy*8,
+				0,TRANSPARENCY_NONE,0);
+
+                color=spectrum_plus3_colorram[count+0x100];
+                drawgfx(bitmap,Machine->gfx[1],
+				count,
+				color,
+				0,0,
+				sx*8,(sy+8)*8,
+				0,TRANSPARENCY_NONE,0);
+
+                color=spectrum_plus3_colorram[count+0x200];
+                drawgfx(bitmap,Machine->gfx[2],
+				count,
+				color,
+				0,0,
+				sx*8,(sy+16)*8,
+				0,TRANSPARENCY_NONE,0);
 	}
 }
 

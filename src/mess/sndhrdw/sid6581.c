@@ -12,38 +12,81 @@
 
 #include "sid6581.h"
 
-static int sid6581[0x20];
-static int(*paddle_read)(int offset);
+typedef struct {
+	int (*paddle_read) (int offset); 
+	int reg[0x20];
+} SID6581;
 
-void sid6581_init(int(*paddle)(int offset))
+static SID6581 sid6581[2]= {{0}};
+
+static void sid6581_init (SID6581 *this, int (*paddle) (int offset))
 {
-  paddle_read=paddle;
+	memset(this, 0, sizeof(SID6581));
+	this->paddle_read = paddle;
 }
 
-void sid6581_port_w(int offset, int data)
+static void sid6581_port_w (SID6581 *this, int offset, int data)
 {
-  offset&=0x1f;
-  switch (offset) {
-  case 0x1d: case 0x1e: case 0x1f:
-    break;
-  default:
-    sid6581[offset]=data;
-  }
+	offset &= 0x1f;
+	switch (offset)
+	{
+	case 0x1d:
+	case 0x1e:
+	case 0x1f:
+		break;
+	default:
+		this->reg[offset] = data;
+	}
 }
 
-int sid6581_port_r(int offset)
+static int sid6581_port_r (SID6581 *this, int offset)
 {
-  offset&=0x1f;
-  switch (offset) {
-  case 0x1d: case 0x1e: case 0x1f:
-    return 0xff;
-  case 0x19: /* paddle 1*/
-    if (paddle_read!=NULL) return paddle_read(0);
-    return 0;
-  case 0x1a: /* paddle 2*/
-    if (paddle_read!=NULL) return paddle_read(1);
-    return 0;
-  default:
-    return sid6581[offset];
-  }
+	offset &= 0x1f;
+	switch (offset)
+	{
+	case 0x1d:
+	case 0x1e:
+	case 0x1f:
+		return 0xff;
+	case 0x19:						   /* paddle 1 */
+		if (this->paddle_read != NULL)
+			return this->paddle_read (0);
+		return 0;
+	case 0x1a:						   /* paddle 2 */
+		if (this->paddle_read != NULL)
+			return this->paddle_read (1);
+		return 0;
+	default:
+		return this->reg[offset];
+	}
+}
+
+void sid6581_0_init (int (*paddle) (int offset))
+{
+	sid6581_init(sid6581, paddle);
+}
+
+void sid6581_1_init (int (*paddle) (int offset))
+{
+	sid6581_init(sid6581+1, paddle);
+}
+
+int sid6581_0_port_r (int offset)
+{
+	return sid6581_port_r(sid6581, offset);
+}
+
+int sid6581_1_port_r (int offset)
+{
+	return sid6581_port_r(sid6581+1, offset);
+}
+
+void sid6581_0_port_w (int offset, int data)
+{
+	sid6581_port_w(sid6581, offset, data);
+}
+
+void sid6581_1_port_w (int offset, int data)
+{
+	sid6581_port_w(sid6581+1, offset, data);
 }

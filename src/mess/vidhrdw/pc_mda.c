@@ -557,7 +557,6 @@ static void HGC_gfx_720(struct osd_bitmap *bitmap)
                 /* draw the character */
 				drawgfx(bitmap, Machine->gfx[1], code, 0,
 					0,0, sx,sy, &r, TRANSPARENCY_NONE, 0);
-				osd_mark_dirty(sx,sy,r.max_x,r.max_y,0);
             }
         }
 		if( (sx += 8) == (2 * MDA_HDISP * 8) )
@@ -588,7 +587,6 @@ static void HGC_gfx_720(struct osd_bitmap *bitmap)
                 /* draw the character */
 				drawgfx(bitmap, Machine->gfx[1], code, 0,
 					0,0, sx,sy, &r, TRANSPARENCY_NONE, 0);
-				osd_mark_dirty(sx,sy,r.max_x,r.max_y,0);
             }
         }
 		if( (sx += 8) == (2 * MDA_HDISP * 8) )
@@ -619,7 +617,6 @@ static void HGC_gfx_720(struct osd_bitmap *bitmap)
                 /* draw the character */
 				drawgfx(bitmap, Machine->gfx[1], code, 0,
 					0,0, sx,sy, &r, TRANSPARENCY_NONE, 0);
-				osd_mark_dirty(sx,sy,r.max_x,r.max_y,0);
             }
         }
 		if( (sx += 8) == (2 * MDA_HDISP * 8) )
@@ -650,7 +647,6 @@ static void HGC_gfx_720(struct osd_bitmap *bitmap)
                 /* draw the character */
 				drawgfx(bitmap, Machine->gfx[1], code, 0,
 					0,0, sx,sy, &r, TRANSPARENCY_NONE, 0);
-				osd_mark_dirty(sx,sy,r.max_x,r.max_y,0);
             }
         }
 		if( (sx += 8) == (2 * MDA_HDISP * 8) )

@@ -57,7 +57,10 @@ if (errorlog) fprintf (errorlog, "ROM load/init regions\n");
 
 
 	if (!(romfile = osd_fopen (Machine->gamedrv->name, rom_name, OSD_FILETYPE_IMAGE_R, 0)))
-		return 1;
+	{
+		printf("Genesis Requires Cartridge!\n");
+		return INIT_FAILED;
+	}
 	/* Allocate memory and set up memory regions */
 	if( new_memory_region(REGION_CPU1,0x405000) )
 	{

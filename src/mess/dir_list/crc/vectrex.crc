@@ -1,57 +1,102 @@
 # Vectrex Cartridge and Demo CRC List
+# Compiled by MESSDEV team, updated by Chris Henry
 # Note: This list is provided as a record of known dumps for this system.  
 #       These checksums have not been validated and cannot be assumed correct.  
 #       They are provided here as a database to help the emulation of this system.  
 
 [vectrex]
 b2313487 = 3D Mine Storm
-e98ab5a2 = All Good Things
-b7510971 = Armor Attack
-a2fa649b = Bedlam
-eafe2455 = Berzerk
- f11ce0c = Blitz!
-f1b1de78 = Clean Sweep
-6c1afa52 = Cosmic Chasm
-61bae868 = Demo (Non Playable)
-13a35c8a = Fortress Of Narzod
-9c5410be = Frogger
-e61a7de3 = Heads Up
-4bb13472 = Hyper Chase
+e98ab5a2 = All Good Things, John Dondzilla, 1996
+b7510971 = Armor Attack, GCE, 1982
+a2fa649b = Bedlam, GCE, 1982
+eafe2455 = Berzerk, GCE, 1982
+ f11ce0c = Blitz!, GCE, 1982
+f1b1de78 = Clean Sweep, GCE, 1982
+61bae868 = Cologne Nightline Demo, Martin Balazs, 1999
+6c1afa52 = Cosmic Chasm, GCE, 1982
+13a35c8a = Fortress Of Narzod, GCE, 1982
+e61a7de3 = Heads Up, GCE, 1983
+4bb13472 = Hyper Chase, GCE, 1982
 67ed5845 = Lunar Lander
-8617c304 = Moon Lander
-55a79111 = Moon Lander [Beta Version]
-f5b3b374 = Mine Storm 2
- 50bd949 = Narrow Escape
-1ae8e788 = Omega Chase
-f0073328 = Patriots
-a7471784 = Polar Rescue
-c10f37d8 = Pole Position
-c999f9c5 = Pop (Demo)
-34a98132 = Rip Off
-d1e0268f = Rockaroids Remix
-707c8ffe = Scramble
-d17ddc97 = Spike Goes Skiing
-5c4611c8 = Solar Quest
-a3be5aff = Space Wars
-62a61843 = Spike
-1c6b030e = Spike Hoppin'
- 2f41733 = Spin Ball
-c9039623 = Star Castle
-4de1f06b = Star Hawk
-3768d8c3 = Star Trek - The Game
- ccca430 = The Star Wars Clone Demo
- eeb4805 = Vecmania, Part 1 (John Dondzilla, 1999)
-8c915c4d = Vecmania, Part 2 (John Dondzilla, 1999)
-8bd103c1 = Vector Vaders
- a5ff28d = Vectrex Pong
-2ee20103 = Web Wars
+8617c304 = Moon Lander, Clay Cowgill, 1999
+55a79111 = Moon Lander (Beta 9), Clay Cowgill, 1997
+f5b3b374 = Mine Storm 2, GCE, 1983
+ 50bd949 = Narrow Escape, GCE, 1983
+1ae8e788 = Omega Chase, Christopher L. Tumber, 1998
+f0073328 = Patriots, John Dondzilla, 1996
+a7471784 = Polar Rescue, GCE, 1983
+c10f37d8 = Pole Position, GCE, 1983
+c999f9c5 = Pop (Demo), ?, 199?
+34a98132 = Rip Off, GCE, 1982
+d1e0268f = Rockaroids Remix, John Dondzilla, 1996
+707c8ffe = Scramble, GCE, 1982
+5c4611c8 = Solar Quest, GCE, 1982 
+a3be5aff = Space Wars, GCE, 1982
+62a61843 = Spike, GCE, 1983
+d17ddc97 = Spike Goes Skiing, ?, 1998
+1c6b030e = Spike Hoppin', John Dondzilla, 1997
+ 2f41733 = Spin Ball, GCE, 1983
+c9039623 = Star Castle, GCE, 1983
+4de1f06b = Star Hawk, GCE, 1982
+3768d8c3 = Star Trek: The Game, GCE, 1982
+ ccca430 = The Star Wars Clone Demo, John Dondzilla, 1998
+ eeb4805 = Vecmania Part 1, John Dondzilla, 1999
+8c915c4d = Vecmania Part 2, John Dondzilla, 1999
+9c5410be = Vectrex Frogger, Chris Salomon, 1998
+8bd103c1 = Vector Vaders, John Dondzilla, 1996
+e50bb30d = Vectrace, Rohen Habot, 2000
+ 5f67127 = Vectrexians, Kristof Tuts, 1999
+ a5ff28d = Vectrex Pong, Chris Salomon, 1998
+2ee20103 = Web Wars, GCE, 1983
+
+# Demos and Test images
+5d7af9b8 = 4D Rotating Cube, GCE?, 1983?
+6f7a27b9 = Alpha Test, ?, 199?
+5ec7d559 = Anthem (music demo), ?, 199?
+8fdb6c3a = Well Tempered Clavichord: Bach Prelude #1, ?, 19??
+309e6b20 = BCOR-FTS Beta 1
+24e2f808 = Bonnie (music demo)
+e818c1cd = Curved Lines Test
+3947506a = Daisy (earlier)
+ba7be9d3 = Daisy
+c99abda6 = Digitized Sound Test
+2e54332e = Disc Duel Demo
+2fe6d308 = Dual Vectrex Test (Ver. 1)
+5b2d8391 = Dual Vectrex Test (Ver. 2)
+963062a6 = Etch-A-Sketch
+ 68cd49f = Figgy
+59181c32 = Line Demo
+ 1cd710b = Loader Test, ?, 199?
+67ed5845 = Lunar Lander
+afefa29c = Melody
+c6ed30ab = Mike's Molecules
+bcc59075 = Mike's Molecules Demo
+410d7d82 = Minestorm (Lives and Bullets Hack)
+fd74f4d6 = Minestorm (Bullets Hack)
+65d9ad00 = Minestorm (Lives Hack)
+6397b8b6 = Music Test
+863b89e8 = Rocket Sledge
+81a2cff6 = Saw Gallery
+46779d76 = Song Demo
+8a0858e7 = Sound Test 1
+7297e815 = Test Revision 4
+e2c6c910 = Text Demo
+6c327889 = Vectrace (Beta) 
+8fa4280e = YM Sound: Axel F
+5ea65185 = YM Sound: Dr. Who
+e007d5f8 = YM Sound: Horror Zombies
+772945de = YM Sound: Jaws
+6ecad660 = YM Sound: Madonna - Get Into The Groove
+7795c0ae = YM Sound: Misfits 1
+e8e6fe06 = YM Sound: Star Wars
+4d467e41 = Zzap Demo
 
 
 #[not_working]
 9f62e167 = Animaction
 c8e2f247 = Art Master
 92709b11 = Crazy Coaster
-9dcfd5b7 = Dark Tower (NOT WORKING, CRASHES)
+9dcfd5b7 = Dark Tower, 1982, GCE, NOT PLAYABLE/CRASHES
 afefa29c = Melody Master
 
 

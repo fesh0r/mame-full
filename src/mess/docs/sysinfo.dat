@@ -100,18 +100,12 @@ $end
 
 $info=a7800
 $bio
-Atari 7800 ProSystem (a7800)
+Atari 7800 ProSystem
 
 
 Required System ROM:
 
 7800.rom (4096 bytes; 649913e5)
-
-
-Known Issues:
-
-The Select key 'S' is currently mapped to the same key as player 2's button 2. For a quick 
-fix, remap player 2's button 2 under "Keys (This Machine)" in the Tab/Options menu.
 
 
 Usage:
@@ -126,6 +120,12 @@ The following console buttons are mapped as follows:
 "R"  = Reset
 
 "S"  = Select
+
+
+Known Issues:
+
+The Select key 'S' is currently mapped to the same key as player 2's button 2. For a quick 
+fix, remap player 2's button 2 under "Keys (This Machine)" in the Tab/Options menu.
 
 
 Compatibility:
@@ -171,7 +171,7 @@ $end
 
 $info=a800
 $bio
-Atari 800 Home Computer (a800)
+Atari 800 Home Computer
 
 
 Required System ROM:
@@ -212,6 +212,52 @@ cartridge emulation at present.
 History and Trivia:
 
 Submissions welcome.
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=advision
+$bio
+Entex Adventurevision
+
+Required System ROM:
+
+avrom.bin (1,024 Bytes; CRC 279e33d1)
+
+
+Usage:
+
+To load the adventurevision with a cartridge image, from a command line interface, use a
+command similar to:
+
+mess advision turtles.bin
+
+
+Default key assignments can be found in the TAB/Options menu under Keys (This Machine).
+
+
+Known Issues:
+
+Sound is not currently supported.
+
+
+Compatibility:
+
+All four games are playable. 
+
+
+History and Trivia:
+
+The Adventure Vision was a cartridge based, electronic handheld video game that was 
+manufactured by Entex Industries in 1982. It measured about 13 1/4" X 10" X 9" and used 
+one vertical strip of 40 red LEDs and a spinning mirror to produce a screen with a 150X40 
+resolution drawn at 15 frames/sec. There were only four cartridges produced for it: Defender, 
+Turtles, Super Cobra, and an Asteroids clone, Space Force.
+
+
+Visit http://www.adventurevision.com for more information.
 
 
 $end
@@ -298,7 +344,7 @@ Preliminary.
 
 History and Trivia:
 
-Submissions welcome. Send to battlepriest@hotmail.com
+Submissions welcome.
 
 
 $end
@@ -616,9 +662,9 @@ kernal2.c0 (16,384 bytes; 77bab934)
 
 Usage:
 
-CASSETTES: Cassette images (DAC 1 volume in noise volume) with the .wav or .prg 
-extensions as well as multiple .prg files contained within a zip file can be loaded with a 
-command line interface, using a command such as:
+CASSETTES: Cassette images with the .wav or .prg extensions as well as multiple .prg files 
+contained within a zip file can be loaded with a command line interface, using a command 
+such as:
 
 mess c16 basic.wav
 
@@ -631,6 +677,10 @@ The format for WAVs are:
 8 bit (16 bit may work, but hasn't been tested), mono, 12500 Hz minimum. This has the same 
 problems as an original Datasette tape drive (the tone head must be adjusted to get working 
 (no load error...) wav-files)
+
+
+Note that tape volume is DAC1 volume within the MESS UI On Screen Display Options (accessed
+with the tilde (~) key in the DOS version.
 
 
 Within the emulation, use LOAD or LOAD"" or LOAD"",1 for loading normal programs. Use 
@@ -690,6 +740,12 @@ Files with boot-sign in it are recognised as roms.
 accordingly to their order in the command line.
 
 
+Note that .prg and .p00 files are assigned to the quickloader (so you have to use 
+the -rom switch when loading rom images) The quickloader is currently assigned as a 
+harddisk device.
+
+
+
 QUICKLOADER: A quickloader is available via the f8 key. It supports program image files 
 with the .prg extension. This loads the program into memory and sets the program end 
 pointer. It works with most programs. The program can be started by entering "RUN" in 
@@ -718,9 +774,7 @@ Imperfect colors; should be enough for 95% of the games and programs.
 
 Imperfect scrolling support (when 40 columns or 25 lines)
 
-Lightpen support missing
-
-Imperfect sound (noise channel completely wrong).
+Lightpen support missing.
 
 Some PC-Keyboards do not behave well when special two or more keys are pressed at the same 
 time (with my keyboard printscreen clears the pressed pause key!)
@@ -818,9 +872,15 @@ Files with boot-sign in it are recognised as roms.
 .crt roms are loaded to the addresses specified in crt file.
 
 
-CASSETTES: Cassette images (DAC 1 volume in noise volume) with the .wav or .prg 
-extensions as well as multiple .prg files contained within a zip file can be loaded with a 
-command line interface, using a command such as:
+Note that .prg files are assigned to the quickloader (so you have to use 
+the -rom switch when loading rom images) The quickloader is currently assigned as a 
+harddisk device.
+
+
+
+CASSETTES: Cassette images with the .wav or .prg extensions as well as multiple .prg files 
+contained within a zip file can be loaded with a command line interface, using a command 
+such as:
 
 mess c64 basic.wav
 
@@ -833,6 +893,10 @@ The format for WAVs are:
 8 bit (16 bit may work, but hasn't been tested), mono, 12500 Hz minimum. This has the same 
 problems as an original Datasette tape drive (the tone head must be adjusted to get working 
 (no load error...) wav-files)
+
+
+Note that tape volume is DAC1 volume within the MESS UI On Screen Display Options (accessed
+with the tilde (~) key in the DOS version.
 
 
 Within the emulation, use LOAD or LOAD"" or LOAD"",1 for loading normal programs. Use 
@@ -1186,7 +1250,7 @@ $end
 
 $info=coleco
 $bio
-Coleco Industries ColecoVision (coleco)
+Coleco Industries ColecoVision
 
 
 Required System ROM:
@@ -1245,7 +1309,7 @@ $end
 
 $info=dragon32
 $bio
-Dragon 32 (dragon32)
+Dragon Data Ltd. Dragon 32
 
 
 Required System ROM:
@@ -1266,7 +1330,7 @@ $end
 
 $info=ep128
 $bio
-Enterprise 128 (ep128)
+Enterprise 128
 
 
 Required System ROMs:
@@ -1278,6 +1342,29 @@ exbas.rom (16,384 bytes; CRC 683cf455)
 exdos.rom (32,768 bytes; CRC d1d7e157)
 
 
+Usage:
+
+This computer has a built in word processor, from BASIC enter "type" to enter it.
+
+to load programs:
+
+You can type ":EXDOS" to enter a CLI interface where you can type EXDOS commands.
+If typing from BASIC you must enter ":" in front of EXDOS commands.
+
+The following EXDOS commands are allowed:
+
+CHDIR	<dir name>
+		- Change Dir.<dir name> does not need to be enclosed in quotes.
+DIR		
+		- show directory listing
+
+To run a program, enter from BASIC:
+
+RUN"<filename>" or
+
+LOAD"<filename>"
+
+
 Known Issues:
 
 Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by 
@@ -1285,11 +1372,69 @@ default. Whilst in full keyboard emulation mode, some key associated functionali
 disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the 
 scroll_lock key.
 
+Some programs do not work well.
+
+Not all graphic modes are emulated.
+
+Interrupts are not emulated correctly.
+
+Sound is not supported.
+
+Tapes are not supported.
+
 
 Compatibility:
 
-This driver is considered preliminary. The system ROM is loaded, and the Enterprise 
-screen is shown. Image loading is not supported yet.
+This driver is considered preliminary.
+
+
+Bugs:
+
+
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=gameboy
+$bio
+Nintendo GameBoy
+
+
+Required System ROMs:
+
+None, though this system requires cartridge images for proper use.
+
+
+Usage:
+
+From a command line interface, you can load a cartridge image with a command similar to:
+
+mess gameboy asteroids.gb
+
+
+See "Keys {This Machine}", in the TAB/Options menu for key assignments.
+
+
+Known Issues:
+
+Input is broken in several games.
+
+Sound is not yet supported.
+
+	
+Compatibility:
+
+Currently low, but games that do work, do so well. See gameboy.crc for a brief compatibility 
+list.
+
+
+History and Trivia:
+
+The best selling video game system of all time.
+
+
 
 $end
 
@@ -1300,9 +1445,9 @@ $bio
 Sega Gamegear
 
 
-Required System ROMS:
+Required System ROMs:
 
-None.
+None, though this system requires cartridge images for proper use.
 
 
 Usage:
@@ -1335,7 +1480,7 @@ Sega Megadrive/Genesis
 
 Required System ROMs:
 
-None.
+None, though this system requires cartridge images for proper use.
 
 
 Usage:
@@ -1433,6 +1578,15 @@ kccos.rom (16,384 bytes; CRC 7f9ab3f7)
 kccbas.rom (16,384 bytes; CRC ca6af63d)
 
 
+Usage:
+
+Image loading is the same as for the Amstrad CPC series.
+
+At this time the driver doesn't support loading from disk images. I don't
+know if a disc interface was designed for this computer.
+However, snapshots will work.
+
+
 Known Issues:
 
 Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by 
@@ -1445,6 +1599,40 @@ Compatibility:
 
 This driver is considered preliminary. The system ROM is loaded, and the KC compact screen is 
 shown. Image loading is not supported yet.
+
+
+History and Trivia:
+
+The KC Compact is a copy of the Amstrad CPC series, made in East Germany
+around 1985 just before the Berlin wall came down.
+The system contains a hacked Amstrad CPC 6128 Operating System and the
+Amstrad CPC 6128 BASIC. Unlike the CPC, this
+system didn't come with a built in disc drive or cassette unit, and did not
+require a special monitor.
+
+Not many of these systems were produced.
+
+The Amstrad CPC had a gate array chip which contained the logic for the
+palette, mode display, rom paging,ram paging and interrupt
+system. This is emulated in the KC Compact using a lot of TTL logic chips
+and a Zilog 8536 chip.
+
+Hardware that was designed for the CPC systems should work on the KC
+Compact, however, since the KC Compact has a different
+expansion port layout, a adaptor must be made.
+
+The KC Compact interrupt system is driven by a counter inside the Zilog
+8536. This counts HSYNC transitions and decrements a counter.
+The count is reset by a VSYNC. What this means is that the interrupt system
+is slightly different to the CPC, and so any programs which
+rely on exact interrupt behavior will not work as expected.
+
+What is interesting though, is that since the counter in the 8536 can be
+re-programmed, interrupt frequency can be changed. The KC
+therefore has a superior interrupt system compared to the CPC. The 8536 has
+two other counters, which from the schematics, appear
+to be connected to the video hardware. This could mean that different
+resolutions could be generated, but this is not confirmed yet.
 
 
 $end
@@ -1564,8 +1752,15 @@ $bio
 Nintendo Entertainment System/Famicom
 
 
+Required System ROMs:
+
+None, though this system requires cartridge images for proper use.
+
+
 Usage:
 
+From a command line interface, the NES emulation can be started with a command similar to:
+mess nes smb.nes
 
 
 Under the "Options" menu, accessible by hitting TAB, are two settings.
@@ -1693,9 +1888,9 @@ kernelv4.nts (16,384 bytes; CRC 799a633d)
 
 Usage:
 
-CASSETTES: Cassette images (DAC 1 volume in noise volume) with the .wav or .prg 
-extensions as well as multiple .prg files contained within a zip file can be loaded with a 
-command line interface, using a command such as:
+CASSETTES: Cassette images with the .wav or .prg extensions as well as multiple .prg files 
+contained within a zip file can be loaded with a command line interface, using a command 
+such as:
 
 mess plus4 basic.wav
 
@@ -1708,6 +1903,10 @@ The format for WAVs are:
 8 bit (16 bit may work, but hasn't been tested), mono, 12500 Hz minimum. This has the same 
 problems as an original Datasette tape drive (the tone head must be adjusted to get working 
 (no load error...) wav-files)
+
+
+Note that tape volume is DAC1 volume within the MESS UI On Screen Display Options (accessed
+with the tilde (~) key in the DOS version.
 
 
 Within the emulation, use LOAD or LOAD"" or LOAD"",1 for loading normal programs. Use 
@@ -1767,6 +1966,12 @@ Files with boot-sign in it are recognised as roms.
 accordingly to their order in the command line.
 
 
+Note that .prg files are assigned to the quickloader (so you have to use 
+the -rom switch when loading rom images) The quickloader is currently assigned as a 
+harddisk device.
+
+
+
 QUICKLOADER: A quickloader is available via the f8 key. It supports program image files 
 with the .prg extension. This loads the program into memory and sets the program end 
 pointer. It works with most programs. The program can be started by entering "RUN" in 
@@ -1794,8 +1999,6 @@ Imperfect colors; should be enough for 95% of the games and programs.
 Imperfect scrolling support (when 40 columns or 25 lines)
 
 Lightpen support missing
-
-Imperfect sound (noise channel completely wrong).
 
 Some PC-Keyboards do not behave well when special two or more keys are pressed at the same 
 time (with my keyboard printscreen clears the pressed pause key!)
@@ -1886,20 +2089,29 @@ $bio
 Sega Master System
 
 
-Default Usage:
+Required System ROMs:
+None, though this system requires cartridge images for proper use.
 
-arrow keys - 1p move
 
-control, alt - 1p fire
+Usage:
 
-3,4 - 1, 2 player select
+The SMS emulation can be started from a command line interface with a command similar to:
 
-1 - 1p start (Games usually start with buttons a or b (ctrl, alt) however)
+mess sms alexkidd.sms
+
+
+
+Known Issues:
+
+Some games are not playable, see sms.crc for a partial list.
+
 
 
 Compatibility:
 
 See sms.crc for compatibility notes.
+
+
 
 $end
 
@@ -2254,10 +2466,14 @@ Files with boot-sign in it are recognised as roms.
 .bin and .rom files are loaded at 0x4000 when 0x4000 bytes long, 
 otherwise they are loaded at 0xa000
 
+Note that .prg and .p00 files are assigned to the quickloader (so you have to use 
+the -rom switch when loading rom images) The quickloader is currently assigned as a 
+harddisk device.
 
-CASSETTES: Cassette images (DAC 1 volume in noise volume) with the .wav or .prg 
-extensions as well as multiple .prg files contained within a zip file can be loaded with a 
-command line interface, using a command such as:
+
+CASSETTES: Cassette images with the .wav or .prg extensions as well as multiple .prg 
+files contained within a zip file can be loaded with a command line interface, using a 
+command such as:
 
 mess vc20 basic.wav
 
@@ -2270,6 +2486,10 @@ The format for WAVs are:
 8 bit (16 bit may work, but hasn't been tested), mono, 12500 Hz minimum. This has the same 
 problems as an original Datasette tape drive (the tone head must be adjusted to get working 
 (no load error...) wav-files)
+
+
+Note that tape volume is DAC1 volume within the MESS UI On Screen Display Options (accessed
+with the tilde (~) key in the DOS version.
 
 
 Within the emulation, use LOAD or LOAD"" or LOAD"",1 for loading normal programs. Use 
@@ -2342,8 +2562,6 @@ Known Issues:
 Some PC-Keyboards do not behave well when two or more special keys are pressed at the same 
 time (with my keyboard printscreen clears the pressed pause key!)
 
-Sound is imperfect.
-
 The timer system only 98% accurate.
 
 The serial bus allows simple disk support, but no printer or other devices at present.
@@ -2415,10 +2633,15 @@ Files with boot-sign in it are recognised as roms.
 .bin and .rom files are loaded at 0x4000 when 0x4000 bytes long, 
 otherwise they are loaded at 0xa000
 
+Note that .prg files are assigned to the quickloader (so you have to use 
+the -rom switch when loading rom images) The quickloader is currently assigned as a 
+harddisk device.
 
-CASSETTES: Cassette images (DAC 1 volume in noise volume) with the .wav or .prg 
-extensions as well as multiple .prg files contained within a zip file can be loaded with a 
-command line interface, using a command such as:
+
+
+CASSETTES: Cassette images with the .wav or .prg extensions as well as multiple .prg files 
+contained within a zip file can be loaded with a command line interface, using a command 
+such as:
 
 mess vic20 basic.wav
 
@@ -2431,6 +2654,10 @@ The format for WAVs are:
 8 bit (16 bit may work, but hasn't been tested), mono, 12500 Hz minimum. This has the same 
 problems as an original Datasette tape drive (the tone head must be adjusted to get working 
 (no load error...) wav-files)
+
+
+Note that tape volume is DAC1 volume within the MESS UI On Screen Display Options (accessed
+with the tilde (~) key in the DOS version.
 
 
 Within the emulation, use LOAD or LOAD"" or LOAD"",1 for loading normal programs. Use 
@@ -2507,8 +2734,6 @@ Known Issues:
 
 Some PC-Keyboards do not behave well when two or more special keys are pressed at the same 
 time (with my keyboard printscreen clears the pressed pause key!)
-
-Sound is imperfect.
 
 The timer system only 98% accurate.
 

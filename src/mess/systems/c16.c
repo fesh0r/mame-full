@@ -1,8 +1,157 @@
 /***************************************************************************
-
 	commodore c16 home computer
 
+	peter.trauner@jk.uni-linz.ac.at
+    documentation
+ 	 www.funet.fi     
+
 ***************************************************************************/
+
+/*
+------------------------------------
+c16	commodore c16/c116/c232/c264 (pal version)
+plus4	commodore plus4 (ntsc version)
+c364 commodore c364/v364 prototype (ntsc version)
+------------------------------------
+(beta version)
+
+if the game runs to fast with the ntsc version, try the pal version!
+flickering affects in one video version, try the other video version
+
+c16(pal version, ntsc version?):
+ design like the vc20/c64
+ sequel to c64
+ other keyboardlayout, 
+ worse soundchip, 
+ more colors, but no sprites,
+ other tape and gameports plugs
+ 16 kbyte ram
+ newer basic and kernal (ieee floppy support)
+
+c116(pal version, ntsc version?):
+ 100% softwarecompatible to c16
+ small and flat
+ gummi keys
+
+232:
+ video system versions (?)
+ plus4 case
+ 32 kbyte ram
+ userport?, acia6551 chip?
+
+264:
+ video system versions (?)
+ plus4 case
+ 64 kbyte ram
+ userport?, acia6551 chip?
+
+plus4(pal version, ntsc version?):
+ in emu ntsc version!
+ case like c116, but with normal keys
+ 64 kbyte ram
+ userport
+ build in additional rom with programs
+
+c364 prototype:
+ video system versions (?)
+ like plus4, but with additional numeric keyblock
+ slightly modified kernel rom
+ build in speech hardware/rom
+
+state
+-----
+rasterline based video system
+ imperfect scrolling support (when 40 columns or 25 lines)
+ lightpen support missing?
+ should be enough for 95% of the games and programs
+imperfect sound
+keyboard, joystick 1 and 2
+no speech hardware (c364)
+simple tape support
+serial bus
+ simple disk drives
+ no printer or other devices
+expansion modules
+ rom cartridges
+ simple ieee488 floppy support (c1551 floppy disk drive)
+ no other expansion modules
+no userport (plus4)
+ no rs232/v.24 interface
+quickloader
+
+some unsolved problems
+ memory check by c16 kernel will not recognize more memory without restart of mess
+ cpu clock switching/changing (overclocking should it be)
+
+Keys
+----
+Some PC-Keyboards does not behave well when special two or more keys are
+pressed at the same time
+(with my keyboard printscreen clears the pressed pause key!)
+
+shift-cbm switches between upper-only and normal character set
+(when wrong characters on screen this can help)
+run (shift-stop) loads first program from device 8 (dload"*) and starts it
+stop-reset activates monitor (use x to leave it)
+
+Tape
+----
+(DAC 1 volume in noise volume)
+loading of wav, prg and prg files in zip archiv
+commandline -cassette image
+wav:
+ 8 or 16(not tested) bit, mono, 5000 Hz minimum
+ has the same problems like an original tape drive (tone head must
+ be adjusted to get working(no load error,...) wav-files)
+zip:
+ must be placed in current directory
+ prg's are played in the order of the files in zip file
+
+use LOAD or LOAD"" or LOAD"",1 for loading of normal programs
+use LOAD"",1,1 for loading programs to their special address
+
+several programs relies on more features
+(loading other file types, writing, ...)
+
+Discs
+-----
+only file load from drive 8 and 9 implemented
+ loads file from rom directory (*.prg,*p00) (must NOT be specified on commandline)
+ or file from d64 image (here also directory LOAD"$",8 supported)
+use DLOAD"filename"
+or LOAD"filename",8
+or LOAD"filename",8,1 (for loading machine language programs at their address)
+for loading
+type RUN or the appropriate sys call to start them
+
+several programs rely on more features
+(loading other file types, writing, ...)
+
+most games rely on starting own programs in the floppy drive
+(and therefor cpu level emulation is needed)
+
+Roms
+----
+.bin .rom .lo .hi .prg
+files with boot-sign in it
+  recogniced as roms
+
+.prg files loaded at address in its first two bytes
+.bin, .rom, .lo , .hi roms loaded to cs1 low, cs1 high, cs2 low, cs2 high
+ address accordingly to order in command line
+
+Quickloader
+-----------
+.prg files supported
+loads program into memory and sets program end pointer
+(works with most programs)
+program ready to get started with RUN
+loads first rom when you press quickload key (f8)
+
+when problems start with -log and look into error.log file
+ */
+
+
 #include "driver.h"
 
 #define VERBOSE_DBG 0
@@ -14,144 +163,144 @@
 #include "mess/vidhrdw/ted7360.h"
 
 /*
-	commodore c16/c116/plus 4
-	16 KByte (C16/C116) or 32 KByte or 64 KByte (plus4) RAM
-	32 KByte Rom (C16/C116) 64 KByte Rom (plus4)
-	availability to append additional 64 KByte Rom
-
-	ports 0xfd00 till 0xff3f are always read/writeable for the cpu
-		for the video interface chip it seams to read from
-		ram or from rom in this	area
-
-	writes go always to ram
-	only 16 KByte Ram mapped to 0x4000,0x8000,0xc000
-	only 32 KByte Ram mapped to 0x8000
-
-	rom bank at 0x8000: 16K Byte(low bank)
-		first: basic
-		second(plus 4 only): plus4 rom low
-		third: expansion slot
-		fourth: expansion slot
-	rom bank at 0xc000: 16K Byte(high bank)
-		first: kernal
-		second(plus 4 only): plus4 rom high
-		third: expansion slot
-		fourth: expansion slot
-	writes to 0xfddx select rom banks:
-		address line 0 and 1: rom bank low
-		address line 2 and 3: rom bank high
-
-	writes to 0xff3e switches to roms (0x8000 till 0xfd00, 0xff40 till 0xffff)
-	writes to 0xff3f switches to rams
-
-	at 0xfc00 till 0xfcff is ram or rom kernal readable
-*/
+ * commodore c16/c116/plus 4
+ * 16 KByte (C16/C116) or 32 KByte or 64 KByte (plus4) RAM
+ * 32 KByte Rom (C16/C116) 64 KByte Rom (plus4)
+ * availability to append additional 64 KByte Rom
+ * 
+ * ports 0xfd00 till 0xff3f are always read/writeable for the cpu
+ * for the video interface chip it seams to read from
+ * ram or from rom in this  area
+ * 
+ * writes go always to ram
+ * only 16 KByte Ram mapped to 0x4000,0x8000,0xc000
+ * only 32 KByte Ram mapped to 0x8000
+ * 
+ * rom bank at 0x8000: 16K Byte(low bank)
+ * first: basic
+ * second(plus 4 only): plus4 rom low
+ * third: expansion slot
+ * fourth: expansion slot
+ * rom bank at 0xc000: 16K Byte(high bank)
+ * first: kernal
+ * second(plus 4 only): plus4 rom high
+ * third: expansion slot
+ * fourth: expansion slot
+ * writes to 0xfddx select rom banks:
+ * address line 0 and 1: rom bank low
+ * address line 2 and 3: rom bank high
+ * 
+ * writes to 0xff3e switches to roms (0x8000 till 0xfd00, 0xff40 till 0xffff)
+ * writes to 0xff3f switches to rams
+ * 
+ * at 0xfc00 till 0xfcff is ram or rom kernal readable
+ */
 
 static struct MemoryReadAddress c16_readmem[] =
 {
-	{ 0x0000, 0x0001, c16_m7501_port_r },
-	{ 0x0002, 0x3fff, MRA_RAM },
-	{ 0x4000, 0x7fff, MRA_BANK1 }, /* only ram memory configuration */
-	{ 0x8000, 0xbfff, MRA_BANK2 },
-	{ 0xc000, 0xfbff, MRA_BANK3 },
-	{ 0xfc00, 0xfcff, MRA_BANK4 },
-	{ 0xfd10, 0xfd1f, c16_fd1x_r },
-	{ 0xfd30, 0xfd3f, c16_6529_port_r }, /* 6529 keyboard matrix */
+	{0x0000, 0x0001, c16_m7501_port_r},
+	{0x0002, 0x3fff, MRA_RAM},
+	{0x4000, 0x7fff, MRA_BANK1},	   /* only ram memory configuration */
+	{0x8000, 0xbfff, MRA_BANK2},
+	{0xc000, 0xfbff, MRA_BANK3},
+	{0xfc00, 0xfcff, MRA_BANK4},
+	{0xfd10, 0xfd1f, c16_fd1x_r},
+	{0xfd30, 0xfd3f, c16_6529_port_r}, /* 6529 keyboard matrix */
 /* some games uses a sid audio chip (the c64 audio chip) */
 /* at this address !? */
 /* eoroid pro */
 /* { 0xfd40, 0xfd5f, sid6581_port_r }, */
 #if 0
-	{ 0xfec0, 0xfedf, c16_iec9_port_r }, // configured in c16_common_init
-	{ 0xfee0, 0xfeff, c16_iec8_port_r }, // configured in c16_common_init
+	{0xfec0, 0xfedf, c16_iec9_port_r}, /* configured in c16_common_init */
+	{0xfee0, 0xfeff, c16_iec8_port_r}, /* configured in c16_common_init */
 #endif
-	{ 0xff00, 0xff1f, ted7360_port_r },
-	{ 0xff20, 0xffff, MRA_BANK8 },
-/*	{ 0x10000, 0x3ffff, MRA_ROM }, */
-	{ -1 }  /* end of table */
+	{0xff00, 0xff1f, ted7360_port_r},
+	{0xff20, 0xffff, MRA_BANK8},
+/*  { 0x10000, 0x3ffff, MRA_ROM }, */
+	{-1}							   /* end of table */
 };
 
 static struct MemoryWriteAddress c16_writemem[] =
 {
-	{ 0x0000, 0x0001, c16_m7501_port_w, &c16_memory },
-	{ 0x0002, 0x3fff, MWA_RAM },
+	{0x0000, 0x0001, c16_m7501_port_w, &c16_memory},
+	{0x0002, 0x3fff, MWA_RAM},
 #ifndef NEW_BANKHANDLER
-	{ 0x4000, 0x7fff, MWA_BANK5 },
-	{ 0x8000, 0xbfff, MWA_BANK6 },
-	{ 0xc000, 0xfcff, MWA_BANK7 },
+	{0x4000, 0x7fff, MWA_BANK5},
+	{0x8000, 0xbfff, MWA_BANK6},
+	{0xc000, 0xfcff, MWA_BANK7},
 #endif
 #if 0
-	{ 0x4000, 0x7fff, c16_write_4000 }, //configured in c16_common_init
-	{ 0x8000, 0xbfff, c16_write_8000 }, //configured in c16_common_init
-	{ 0xc000, 0xfcff, c16_write_c000 }, //configured in c16_common_init
+	{0x4000, 0x7fff, c16_write_4000},  /*configured in c16_common_init */
+	{0x8000, 0xbfff, c16_write_8000},  /*configured in c16_common_init */
+	{0xc000, 0xfcff, c16_write_c000},  /*configured in c16_common_init */
 #endif
-	{ 0xfd30, 0xfd3f, c16_6529_port_w },/* 6529 keyboard matrix */
+	{0xfd30, 0xfd3f, c16_6529_port_w}, /* 6529 keyboard matrix */
 #if 0
-	{ 0xfd40, 0xfd5f, sid6581_port_w },
+	{0xfd40, 0xfd5f, sid6581_port_w},
 #endif
-	{ 0xfdd0, 0xfddf, c16_select_roms }, /* rom chips selection */
+	{0xfdd0, 0xfddf, c16_select_roms}, /* rom chips selection */
 #if 0
-	{ 0xfec0, 0xfedf, c16_iec9_port_w }, //configured in c16_common_init
-	{ 0xfee0, 0xfeff, c16_iec8_port_w }, //configured in c16_common_init
+	{0xfec0, 0xfedf, c16_iec9_port_w}, /*configured in c16_common_init */
+	{0xfee0, 0xfeff, c16_iec8_port_w}, /*configured in c16_common_init */
 #endif
-	{ 0xff00, 0xff1f, ted7360_port_w },
+	{0xff00, 0xff1f, ted7360_port_w},
 #if 0
-	{ 0xff20, 0xff3d, c16_write_ff20 }, //configure in c16_common_init
+	{0xff20, 0xff3d, c16_write_ff20},  /*configure in c16_common_init */
 #endif
-	{ 0xff3e, 0xff3e, c16_switch_to_rom },
-	{ 0xff3f, 0xff3f, c16_switch_to_ram },
+	{0xff3e, 0xff3e, c16_switch_to_rom},
+	{0xff3f, 0xff3f, c16_switch_to_ram},
 #if 0
-	{ 0xff40, 0xffff, c16_write_ff40 }, //configure in c16_common_init
-	{ 0x10000, 0x3ffff, MWA_ROM },
+	{0xff40, 0xffff, c16_write_ff40},  /*configure in c16_common_init */
+	{0x10000, 0x3ffff, MWA_ROM},
 #endif
-	{ -1 }  /* end of table */
+	{-1}							   /* end of table */
 };
 static struct MemoryReadAddress plus4_readmem[] =
 {
-	{ 0x0000, 0x0001, c16_m7501_port_r },
-	{ 0x0002, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xbfff, MRA_BANK2 },
-	{ 0xc000, 0xfbff, MRA_BANK3 },
-	{ 0xfc00, 0xfcff, MRA_BANK4 },
-	{ 0xfd00, 0xfd0f, c16_6551_port_r },
-	{ 0xfd10, 0xfd1f, plus4_6529_port_r },
-	{ 0xfd30, 0xfd3f, c16_6529_port_r }, /* 6529 keyboard matrix */
+	{0x0000, 0x0001, c16_m7501_port_r},
+	{0x0002, 0x7fff, MRA_RAM},
+	{0x8000, 0xbfff, MRA_BANK2},
+	{0xc000, 0xfbff, MRA_BANK3},
+	{0xfc00, 0xfcff, MRA_BANK4},
+	{0xfd00, 0xfd0f, c16_6551_port_r},
+	{0xfd10, 0xfd1f, plus4_6529_port_r},
+	{0xfd30, 0xfd3f, c16_6529_port_r}, /* 6529 keyboard matrix */
 /* some games uses a sid audio chip (the c64 audio chip) */
 /* at this address !? */
 /* eoroid pro */
 /* { 0xfd40, 0xfd5f, sid6581_port_r }, */
 #if 0
-	{ 0xfec0, 0xfedf, c16_iec9_port_r }, // configured in c16_common_init
-	{ 0xfee0, 0xfeff, c16_iec8_port_r }, // configured in c16_common_init
+	{0xfec0, 0xfedf, c16_iec9_port_r}, /* configured in c16_common_init */
+	{0xfee0, 0xfeff, c16_iec8_port_r}, /* configured in c16_common_init */
 #endif
-	{ 0xff00, 0xff1f, ted7360_port_r },
-	{ 0xff20, 0xffff, MRA_BANK8 },
-/*	{ 0x10000, 0x3ffff, MRA_ROM }, */
-	{ -1 }  /* end of table */
+	{0xff00, 0xff1f, ted7360_port_r},
+	{0xff20, 0xffff, MRA_BANK8},
+/*  { 0x10000, 0x3ffff, MRA_ROM }, */
+	{-1}							   /* end of table */
 };
 
 static struct MemoryWriteAddress plus4_writemem[] =
 {
-	{ 0x0000, 0x0001, c16_m7501_port_w, &c16_memory },
-	{ 0x0002, 0xfcff, MWA_RAM },
-	{ 0xfd00, 0xfd0f, c16_6551_port_w },
-	{ 0xfd10, 0xfd1f, plus4_6529_port_w },
-	{ 0xfd30, 0xfd3f, c16_6529_port_w },/* 6529 keyboard matrix */
+	{0x0000, 0x0001, c16_m7501_port_w, &c16_memory},
+	{0x0002, 0xfcff, MWA_RAM},
+	{0xfd00, 0xfd0f, c16_6551_port_w},
+	{0xfd10, 0xfd1f, plus4_6529_port_w},
+	{0xfd30, 0xfd3f, c16_6529_port_w}, /* 6529 keyboard matrix */
 #if 0
-	{ 0xfd40, 0xfd5f, sid6581_port_w },
+	{0xfd40, 0xfd5f, sid6581_port_w},
 #endif
-	{ 0xfdd0, 0xfddf, c16_select_roms }, /* rom chips selection */
+	{0xfdd0, 0xfddf, c16_select_roms}, /* rom chips selection */
 #if 0
-	{ 0xfec0, 0xfedf, c16_iec9_port_w }, //configured in c16_common_init
-	{ 0xfee0, 0xfeff, c16_iec8_port_w }, //configured in c16_common_init
+	{0xfec0, 0xfedf, c16_iec9_port_w}, /*configured in c16_common_init */
+	{0xfee0, 0xfeff, c16_iec8_port_w}, /*configured in c16_common_init */
 #endif
-	{ 0xff00, 0xff1f, ted7360_port_w },
-	{ 0xff20, 0xff3d, MWA_RAM },
-	{ 0xff3e, 0xff3e, c16_switch_to_rom },
-	{ 0xff3f, 0xff3f, plus4_switch_to_ram },
-	{ 0xff40, 0xffff, MWA_RAM },
-	{ 0x10000, 0x3ffff, MWA_ROM },
-	{ -1 }  /* end of table */
+	{0xff00, 0xff1f, ted7360_port_w},
+	{0xff20, 0xff3d, MWA_RAM},
+	{0xff3e, 0xff3e, c16_switch_to_rom},
+	{0xff3f, 0xff3f, plus4_switch_to_ram},
+	{0xff40, 0xffff, MWA_RAM},
+	{0x10000, 0x3ffff, MWA_ROM},
+	{-1}							   /* end of table */
 };
 
 #define DIPS_HELPER(bit, name, keycode) \
@@ -269,7 +418,7 @@ static struct MemoryWriteAddress plus4_writemem[] =
 	PORT_DIPNAME   ( 0x20, 0x20, "Tape Drive/Device 1")\
 	PORT_DIPSETTING(  0, DEF_STR( Off ) )\
 	PORT_DIPSETTING(0x20, DEF_STR( On ) )\
-	PORT_DIPNAME   ( 0x10, 0x00, " Noise")\
+	PORT_DIPNAME   ( 0x10, 0x00, " Tape Sound")\
 	PORT_DIPSETTING(  0, DEF_STR( Off ) )\
 	PORT_DIPSETTING(0x10, DEF_STR( On ) )\
 	PORT_DIPNAME ( 0x0c, 0x04, "Device 8")\
@@ -282,214 +431,254 @@ static struct MemoryWriteAddress plus4_writemem[] =
 	PORT_DIPSETTING(  2, "Serial Bus/VC1541 Floppy Drive" )\
 	PORT_START
 
-INPUT_PORTS_START( c16 )
-	DIPS_BOTH
-	PORT_DIPNAME ( 3, 3, "Memory")
-	PORT_DIPSETTING(  0, "16 KByte" )
-	PORT_DIPSETTING(	2, "32 KByte" )
-	PORT_DIPSETTING(	3, "64 KByte" )
+INPUT_PORTS_START (c16)
+	 DIPS_BOTH
+     PORT_DIPNAME (3, 3, "Memory")
+	 PORT_DIPSETTING (0, "16 KByte")
+	 PORT_DIPSETTING (2, "32 KByte")
+	 PORT_DIPSETTING (3, "64 KByte")
 INPUT_PORTS_END
 
-INPUT_PORTS_START( plus4 )
-	DIPS_BOTH
-	PORT_BIT ( 0x3, 0x3,	 IPT_UNUSED ) /* 64K Memory */
+INPUT_PORTS_START (plus4)
+	 DIPS_BOTH
+     PORT_BIT (0x3, 0x3, IPT_UNUSED)		   /* 64K Memory */
 INPUT_PORTS_END
+
+#if 0
+INPUT_PORTS_START (c364)
+	 DIPS_BOTH
+     PORT_BIT (0x3, 0x3, IPT_UNUSED)		   /* 64K Memory */
+	 /* numeric block
+        hardware wired to other keys?
+        @ + - =
+        7 8 9 *
+        4 5 6 /
+        1 2 3
+        ? ? ? ?
+        ( 0 , . Return ???) */
+INPUT_PORTS_END
+#endif
 
 /* Initialise the c16 palette */
-static void c16_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+static void c16_init_palette (unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
 {
-  memcpy(sys_palette,ted7360_palette,sizeof(ted7360_palette));
+	memcpy (sys_palette, ted7360_palette, sizeof (ted7360_palette));
 }
 
-ROM_START(c16)
-	ROM_REGIONX(0x40000,REGION_CPU1)
-	ROM_LOAD("basic.80",  0x10000, 0x4000, 0x74eaae87)
-/*	ROM_LOAD("kernel.c0",    0x14000, 0x4000, 0x71c07bd4) */
-	ROM_LOAD("kernel2.c0",    0x14000, 0x4000, 0x77bab934)
-/*	ROM_LOAD("kernelv4.nts", 0x14000,0x4000,0x799a633d) */
+#if 0
+     /* 318006-01 */
+	 ROM_LOAD ("basic.80",     0x10000, 0x4000, 0x74eaae87)
+
+	 /* 318004-05 pal */
+	 ROM_LOAD("kernel5p.c0",   0x14000, 0x4000, 0x71c07bd4)
+	 /* unknown revision, maybe dump of pal c16 */
+	 ROM_LOAD ("kernelp.c0",   0x14000, 0x4000, 0x77bab934)
+
+	 /* 318005-05 */
+	 ROM_LOAD ("kernel5.c0",   0x14000, 0x4000, 0x70295038)
+	 /* 318005-04 */
+	 ROM_LOAD ("kernel4.c0",   0x14000, 0x4000, 0x799a633d)
+
+	 /* 317053-01 */
+	 ROM_LOAD ("3plus1lo.rom", 0x18000, 0x4000, 0x4fd1d8cb)
+	 /* 317054-01 */
+	 ROM_LOAD ("3plus1hi.rom", 0x1c000, 0x4000, 0x109de2fc)
+
+	 /* same as 109de2fc, but saved from running machine, so
+		io area different ! */
+	 ROM_LOAD ("3plus1hi.rom", 0x1c000, 0x4000, 0xaab61387)
+	 /* same but lo and hi in one rom */
+	 ROM_LOAD ("3plus1.rom",   0x18000, 0x8000, 0x7d464449)
+#endif
+
+ROM_START (c16)
+	 ROM_REGION (0x40000, REGION_CPU1)
+	 ROM_LOAD ("basic.80",     0x10000, 0x4000, 0x74eaae87)
+	 ROM_LOAD ("kernel5p.c0",  0x14000, 0x4000, 0x71c07bd4)
 #ifdef VC1541
-       VC1541_ROM(REGION_CPU2)
+	 VC1541_ROM (REGION_CPU2)
 #endif
 ROM_END
 
-ROM_START(plus4)
-     ROM_REGIONX(0x40000,REGION_CPU1)
-     ROM_LOAD("basic.80",  0x10000, 0x4000, 0x74eaae87)
-     ROM_LOAD("kernelv4.nts", 0x14000,0x4000,0x799a633d)
-     ROM_LOAD("3plus1lo.rom",    0x18000, 0x4000, 0x4fd1d8cb)
-     ROM_LOAD("3plus1hi.rom",    0x1c000, 0x4000, 0xaab61387)
+ROM_START (plus4)
+	 ROM_REGION (0x40000, REGION_CPU1)
+	 ROM_LOAD ("basic.80",     0x10000, 0x4000, 0x74eaae87)
+	 ROM_LOAD ("kernel5.c0",   0x14000, 0x4000, 0x70295038)
+	 ROM_LOAD ("3plus1lo.rom", 0x18000, 0x4000, 0x4fd1d8cb)
+	 ROM_LOAD ("3plus1hi.rom", 0x1c000, 0x4000, 0x109de2fc)
 #ifdef VC1541
-       VC1541_ROM(REGION_CPU2)
+	 VC1541_ROM (REGION_CPU2)
 #endif
 ROM_END
 
-ROM_START(c364)
-     ROM_REGIONX(0x40000,REGION_CPU1)
-     ROM_LOAD("basic.80",  0x10000, 0x4000, 0x74eaae87)
-     ROM_LOAD("kern364p.bin", 0x14000,0x4000,0x84fd4f7a)
-     ROM_LOAD("3plus1lo.rom",    0x18000, 0x4000, 0x4fd1d8cb)
-     ROM_LOAD("3plus1hi.rom",    0x1c000, 0x4000, 0xaab61387)
-     /* at address 0x18000 or 0x20000 not so good */
-     ROM_LOAD("spk3cc4.bin", 0x28000,0x4000,0x5227c2ee)
+ROM_START (c364)
+	 ROM_REGION (0x40000, REGION_CPU1)
+	 ROM_LOAD ("basic.80",     0x10000, 0x4000, 0x74eaae87)
+	 ROM_LOAD ("kern364p.bin", 0x14000, 0x4000, 0x84fd4f7a)
+	 ROM_LOAD ("3plus1lo.rom", 0x18000, 0x4000, 0x4fd1d8cb)
+	 ROM_LOAD ("3plus1hi.rom", 0x1c000, 0x4000, 0x109de2fc)
+	 /* at address 0x18000 or 0x20000 not so good */
+	 ROM_LOAD ("spk3cc4.bin",  0x28000, 0x4000, 0x5227c2ee)
 #ifdef VC1541
-       VC1541_ROM(REGION_CPU2)
+	 VC1541_ROM (REGION_CPU2)
 #endif
 ROM_END
 
 static struct MachineDriver machine_driver_c16 =
 {
   /* basic machine hardware */
-  {
-    {
-      CPU_M6510,/* MOS7501 has no nmi line */
-      1400000, /*TED7360PAL_CLOCK/2, */
-      c16_readmem,c16_writemem,
-      0,0,
-      c16_frame_interrupt,1,
-      ted7360_raster_interrupt, TED7360_HRETRACERATE,
-    },
+	{
+		{
+			CPU_M6510,				   /* MOS7501 has no nmi line */
+			1400000,				   /*TED7360PAL_CLOCK/2, */
+			c16_readmem, c16_writemem,
+			0, 0,
+			c16_frame_interrupt, 1,
+			ted7360_raster_interrupt, TED7360_HRETRACERATE,
+		},
 #ifdef VC1541
-    VC1541_CPU(REGION_CPU2)
+		VC1541_CPU (REGION_CPU2)
 #endif
-  },
-  TED7360PAL_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,		 /* frames per second, vblank duration */
-  0,
-  c16_init_machine,
-  c16_shutdown_machine,
+	},
+	TED7360PAL_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,		/* frames per second, vblank duration */
+	0,
+	c16_init_machine,
+	c16_shutdown_machine,
 
   /* video hardware */
-  336,										/* screen width */
-  216,										/* screen height */
-  { 0,336-1, 0,216-1 },					/* visible_area */
-  0,						/* graphics decode info */
-  sizeof(ted7360_palette) / sizeof(ted7360_palette[0]) / 3,
-  0,
-  c16_init_palette,											/* convert color prom */
-  VIDEO_TYPE_RASTER,
-  0,
-  ted7360_vh_start,
-  ted7360_vh_stop,
-  ted7360_vh_screenrefresh,
+	336,							   /* screen width */
+	216,							   /* screen height */
+	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
+	0,								   /* graphics decode info */
+	sizeof (ted7360_palette) / sizeof (ted7360_palette[0]) / 3,
+	0,
+	c16_init_palette,				   /* convert color prom */
+	VIDEO_TYPE_RASTER,
+	0,
+	ted7360_vh_start,
+	ted7360_vh_stop,
+	ted7360_vh_screenrefresh,
 
   /* sound hardware */
-  0,0,0,0,
-  {
-    { SOUND_CUSTOM, &ted7360_sound_interface },
-    { SOUND_DAC, &vc20tape_sound_interface }
-  }
+	0, 0, 0, 0,
+	{
+		{SOUND_CUSTOM, &ted7360_sound_interface},
+		{SOUND_DAC, &vc20tape_sound_interface}
+	}
 };
 
 static struct MachineDriver machine_driver_plus4 =
 {
   /* basic machine hardware */
-  {
-    {
-      CPU_M6510,/* MOS 7501 */
-      1200000, /*TED7360NTSC_CLOCK/2, */
-      plus4_readmem,plus4_writemem,
-      0,0,
-      c16_frame_interrupt,1,
-      ted7360_raster_interrupt, TED7360_HRETRACERATE,
-    },
+	{
+		{
+			CPU_M6510,				   /* MOS 7501 */
+			1200000,				   /*TED7360NTSC_CLOCK/2, */
+			plus4_readmem, plus4_writemem,
+			0, 0,
+			c16_frame_interrupt, 1,
+			ted7360_raster_interrupt, TED7360_HRETRACERATE,
+		},
 #ifdef VC1541
-    VC1541_CPU(REGION_CPU2)
+		VC1541_CPU (REGION_CPU2)
 #endif
-  },
-  TED7360NTSC_VRETRACERATE,
-  DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-  0,
-  c16_init_machine,
-  c16_shutdown_machine,
+	},
+	TED7360NTSC_VRETRACERATE,
+	DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
+	0,
+	c16_init_machine,
+	c16_shutdown_machine,
 
   /* video hardware */
-  336,	/* screen width */
-  216,	/* screen height */
-  { 0,336-1, 0,216-1 },	/* visible_area */
-  0,	/* graphics decode info */
-  sizeof(ted7360_palette) / sizeof(ted7360_palette[0]) / 3,
-  0,
-  c16_init_palette,		/* convert color prom */
-  VIDEO_TYPE_RASTER,
-  0,
-  ted7360_vh_start,
-  ted7360_vh_stop,
-  ted7360_vh_screenrefresh,
+	336,							   /* screen width */
+	216,							   /* screen height */
+	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
+	0,								   /* graphics decode info */
+	sizeof (ted7360_palette) / sizeof (ted7360_palette[0]) / 3,
+	0,
+	c16_init_palette,				   /* convert color prom */
+	VIDEO_TYPE_RASTER,
+	0,
+	ted7360_vh_start,
+	ted7360_vh_stop,
+	ted7360_vh_screenrefresh,
 
   /* sound hardware */
-  0,0,0,0,
-  {
-    { SOUND_CUSTOM, &ted7360_sound_interface },
-    { SOUND_DAC, &vc20tape_sound_interface }
-  }
+	0, 0, 0, 0,
+	{
+		{SOUND_CUSTOM, &ted7360_sound_interface},
+		{SOUND_DAC, &vc20tape_sound_interface}
+	}
 };
 
 static struct MachineDriver machine_driver_c364 =
 {
   /* basic machine hardware */
-  {
-    {
-      CPU_M6510,/* MOS 7501 */
-      1200000, /*TED7360NTSC_CLOCK/2, */
-      plus4_readmem,plus4_writemem,
-      0,0,
-      c16_frame_interrupt,1,
-      ted7360_raster_interrupt, TED7360_HRETRACERATE,
-    },
+	{
+		{
+			CPU_M6510,				   /* MOS 7501 */
+			1200000,				   /*TED7360NTSC_CLOCK/2, */
+			plus4_readmem, plus4_writemem,
+			0, 0,
+			c16_frame_interrupt, 1,
+			ted7360_raster_interrupt, TED7360_HRETRACERATE,
+		},
 #ifdef VC1541
-    VC1541_CPU(REGION_CPU2)
+		VC1541_CPU (REGION_CPU2)
 #endif
-  },
-  TED7360NTSC_VRETRACERATE,
-  DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-  0,
-  c16_init_machine,
-  c16_shutdown_machine,
+	},
+	TED7360NTSC_VRETRACERATE,
+	DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
+	0,
+	c16_init_machine,
+	c16_shutdown_machine,
 
   /* video hardware */
-  336,	/* screen width */
-  216,	/* screen height */
-  { 0,336-1, 0,216-1 },	/* visible_area */
-  0,	/* graphics decode info */
-  sizeof(ted7360_palette) / sizeof(ted7360_palette[0]) / 3,
-  0,
-  c16_init_palette,		/* convert color prom */
-  VIDEO_TYPE_RASTER,
-  0,
-  ted7360_vh_start,
-  ted7360_vh_stop,
-  ted7360_vh_screenrefresh,
+	336,							   /* screen width */
+	216,							   /* screen height */
+	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
+	0,								   /* graphics decode info */
+	sizeof (ted7360_palette) / sizeof (ted7360_palette[0]) / 3,
+	0,
+	c16_init_palette,				   /* convert color prom */
+	VIDEO_TYPE_RASTER,
+	0,
+	ted7360_vh_start,
+	ted7360_vh_stop,
+	ted7360_vh_screenrefresh,
 
   /* sound hardware */
-  0,0,0,0,
-  {
-    { SOUND_CUSTOM, &ted7360_sound_interface },
-    { SOUND_DAC, &vc20tape_sound_interface }
-  }
+	0, 0, 0, 0,
+	{
+		{SOUND_CUSTOM, &ted7360_sound_interface},
+		{SOUND_DAC, &vc20tape_sound_interface}
+	}
 };
 
-static const struct IODevice io_c16[] = {
-  IODEVICE_CBM_QUICK,
-        {
-                IO_CARTSLOT,            /* type */
-                2,  /* normal 1*/   /* count */
-                NULL,                           /* file extensions */
-        NULL,               /* private */
-                c16_rom_id,             /* id */
-                c16_rom_init,           /* init */
-                NULL,                           /* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-    IODEVICE_VC20TAPE,
-    IODEVICE_CBM_DRIVE,
-    { IO_END }
+static const struct IODevice io_c16[] =
+{
+	IODEVICE_CBM_QUICK,
+	{
+		IO_CARTSLOT,				   /* type */
+		2,							   /* normal 1 *//* count */
+		NULL,						   /* file extensions */
+		NULL,						   /* private */
+		c16_rom_id,					   /* id */
+		c16_rom_init,				   /* init */
+		NULL,						   /* exit */
+		NULL,						   /* info */
+		NULL,						   /* open */
+		NULL,						   /* close */
+		NULL,						   /* status */
+		NULL,						   /* seek */
+		NULL,						   /* input */
+		NULL,						   /* output */
+		NULL,						   /* input_chunk */
+		NULL						   /* output_chunk */
+	},
+	IODEVICE_VC20TAPE,
+	IODEVICE_CBM_DRIVE,
+	{IO_END}
 };
 
 #define io_plus4 io_c16
@@ -499,15 +688,7 @@ static const struct IODevice io_c16[] = {
 #define init_plus4 plus4_driver_init
 #define init_c364 plus4_driver_init
 
-/*     YEAR  NAME    PARENT MACHINE INPUT INIT
-       COMPANY   FULLNAME */
-COMPX( 198?, c16,    0,     c16,    c16,  c16,
-       "Commodore Business Machines Co.",  "Commodore C16 (PAL)",
-       GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
-COMPX( 198?, plus4,  c16,   plus4,  plus4,plus4,
-       "Commodore Business Machines Co.",  "Commodore +4 (NTSC)",
-       GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
-COMPX( 198?, c364,   c16,   c364,   plus4,plus4,
-       "Commodore Business Machines Co.",  "Commodore 364 (Prototype)",
-       GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
-
+/*	   YEAR  NAME	 PARENT MACHINE INPUT  INIT   COMPANY	FULLNAME */
+COMPX( 1984, c16,	 0, 	c16,	c16,   c16,   "Commodore Business Machines Co.", "Commodore C16/C116/C232/C264 (PAL)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+COMPX( 1984, plus4,  c16,	plus4,	plus4, plus4, "Commodore Business Machines Co.", "Commodore +4 (NTSC)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+COMPX( 198?, c364,	 c16,	c364,	plus4, plus4, "Commodore Business Machines Co.", "Commodore 364 (Prototype)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )

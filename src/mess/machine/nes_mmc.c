@@ -27,7 +27,7 @@ int MMC3_DOIRQ, MMC3_IRQ;
 int MMC1_extended;	/* 0 = normal MMC1 cart, 1 = 512k MMC1, 2 = 1024k MMC1 */
 void (*mmc_write)(int offset, int data);
 
-unsigned char *NES_ROM;
+extern unsigned char *NES_ROM;
 
 /* Local variables */
 //static int MMC_chr;

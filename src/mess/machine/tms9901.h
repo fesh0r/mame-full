@@ -18,18 +18,19 @@
 #define TMS9901_INTF 0x8000
 
 
+typedef struct tms9901reset_param
+{
+	int supported_int_mask;	/* a bit for each input pin whose state is always notified to the TMS9901 core */
+	int (*read_handlers[4])(int offset);
+	void (*write_handlers[16])(int offset, int data);
+} tms9901reset_param;
 
 
-void tms9901_init(void);
+void tms9901_init(tms9901reset_param *param);
 void tms9901_cleanup(void);
 
-void tms9901_set_int2(int state);
+void tms9901_set_single_int(int pin_number, int state);
 
 int tms9901_CRU_read(int offset);
 void tms9901_CRU_write(int offset, int data);
-
-
-
-
-
 

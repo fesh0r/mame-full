@@ -1,27 +1,29 @@
 # Atari 7800 ProSystem Cartridge CRC List
+# Compiled by MESSDEV team
 # Note: This list is provided as a record of known dumps for this system.  
 #       These checksums have not been validated and cannot be assumed correct.  
 #       They are provided here as a database to help the emulation of this system.  
 # Send corrections and submissions to: battlepriest@hotmail.com
 
+
 [a7800]
-eac69cf0 = Asteroids (Atari, 1984/1986)
-44615260 = Ball Blazer (LucasFilm, 1987)
-5f94939e = Centipede (Atari, 1984/1986)
-d3ba607f = Choplifter (Atari, 1987)
-a6a62e78 = Desert Falcon (Atari, 1987)
-8ead573d = DigDug (Atari, 1984/1986)
-d7a55f95 = Donkey Kong (Atari, 1988)
-6e989686 = Donkey Kong Jr. (Atari, 1988)
- 3ec1894 = Food Fight (Atari, 1984/1986)
-cffaa1b7 = Galaga (Atari, 1984/1986)
-6247efa8 = Hat Trick (Atari, 1987)
-fda13f77 = Joust (Atari, 1984/1986)
-5ec9c910 = Ms. PacMan (Atari, 1984/1986)
-34646e22 = One-on-One (Atari, 1987)
-4bf501cb = Pole Position 2 (Atari, 1984/1986)
-ab7bc9ce = RoboTron 2084 (Atari, 1984/1986)
-44584fa2 = Xevious (Atari, 1984/1986)
+eac69cf0 = Asteroids, Atari, 1984/1986
+44615260 = Ball Blazer, LucasFilm, 1987
+5f94939e = Centipede, Atari, 1984/1986
+d3ba607f = Choplifter, Atari, 1987
+a6a62e78 = Desert Falcon, Atari, 1987
+8ead573d = DigDug, Atari, 1984/1986
+d7a55f95 = Donkey Kong, Atari, 1988
+6e989686 = Donkey Kong Jr., Atari, 1988
+ 3ec1894 = Food Fight, Atari, 1984/1986
+cffaa1b7 = Galaga, Atari, 1984/1986
+6247efa8 = Hat Trick, Atari, 1987
+fda13f77 = Joust, Atari, 1984/1986
+5ec9c910 = Ms. PacMan, Atari, 1984/1986
+34646e22 = One-on-One, Atari, 1987
+4bf501cb = Pole Position 2, Atari, 1984/1986
+ab7bc9ce = RoboTron 2084, Atari, 1984/1986
+44584fa2 = Xevious, Atari, 1984/1986
 
 
 #[known_bad_dumps]
