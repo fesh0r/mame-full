@@ -158,7 +158,7 @@ CFLAGSPEDANTIC = $(CFLAGS) -pedantic
 ifdef SYMBOLS
 LDFLAGS =
 else
-#LDFLAGS = -s -Wl,--warn-common
+#LDFLAGS = -Wl,--warn-common
 LDFLAGS = -s
 endif
 
@@ -281,12 +281,13 @@ messtest$(EXE):	$(OBJS) $(COREOBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 		$(OBJ)/windows/fileio.o					\
 		$(OBJ)/windows/rc.o						\
 		$(OBJ)/windows/misc.o					\
+		$(OBJ)/windows/winalloc.o				\
 		$(OBJ)/mess/windows/dirio.o				\
 		$(OBJ)/mess/windows/dirutils.o			\
 		$(OBJ)/mess/windows/glob.o				\
 		$(OBJ)/mess/windows/parallel.o
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $^ -lz -lwinmm -o $@
+	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $^ -Wl,--allow-multiple-definition -lz -lwinmm -o $@
 
 
 

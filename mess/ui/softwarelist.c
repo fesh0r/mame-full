@@ -185,50 +185,47 @@ static void MessDiscoverImageType(ImageData *img, mess_image_type *imagetypes, B
 		*hash = '\0';
 	lpExt = strrchr(filename, '.');
 
-    if (lpExt)
+	/* are we a ZIP file? */
+	if (lpExt && !stricmp(lpExt, ".zip"))
 	{
-		/* are we a ZIP file? */
-		if (!stricmp(lpExt, ".zip"))
+		lpExt = NULL;
+		if (bReadZip)
 		{
-			lpExt = NULL;
-			if (bReadZip)
+			img->realized = 1;
+			pZip = openzip(0, 0, filename);
+			if (pZip)
 			{
-				img->realized = 1;
-				pZip = openzip(0, 0, filename);
-				if (pZip)
+				lpExt = NULL;
+				pZipEnt = readzip(pZip);
+				if (pZipEnt)
 				{
-					lpExt = NULL;
-					pZipEnt = readzip(pZip);
-					if (pZipEnt)
-					{
-						lpExt = strrchr(pZipEnt->name, '.');
-						zipcrc = pZipEnt->crc32;
-					}
+					lpExt = strrchr(pZipEnt->name, '.');
+					zipcrc = pZipEnt->crc32;
 				}
 			}
 		}
-		else
-			img->realized = 1;
+	}
+	else
+		img->realized = 1;
 
-		if (lpExt)
+	if (lpExt)
+	{
+		lpExt++;
+		imgtype = MessLookupImageType(imagetypes, lpExt);
+		if (imgtype)
 		{
-			lpExt++;
-			imgtype = MessLookupImageType(imagetypes, lpExt);
-			if (imgtype)
-			{
-				img->dev = imgtype->dev;
+			img->dev = imgtype->dev;
 #if HAS_HASH
-				/* while we have the ZIP file open, we have a convenient opportunity
-				 * to specify the CRC */
-				if (hash && zipcrc && !imgtype->dev->partialhash)
-					sprintf(hash, "c:%08x#", zipcrc);
+			/* while we have the ZIP file open, we have a convenient opportunity
+				* to specify the CRC */
+			if (hash && zipcrc && (!imgtype->dev || !imgtype->dev->partialhash))
+				sprintf(hash, "c:%08x#", zipcrc);
 #endif /* HAS_HASH */
-			}
 		}
+	}
 
-        if (pZip)
-            closezip(pZip);
-    }
+    if (pZip)
+        closezip(pZip);
 }
 
 
@@ -409,7 +406,7 @@ static BOOL ImageData_Realize(ImageData *img, enum RealizeLevel eRealize, mess_i
 
 #if HAS_HASH
 	/* Calculate a hash? */
-	if ((eRealize >= REALIZE_ALL) && img->dev &&
+	if (mess_hash_file && (eRealize >= REALIZE_ALL) && img->dev &&
 		(hashfile_functions_used(mess_hash_file) & ~hash_data_used_functions(img->hash)))
 	{
 		CalculateHash(img->hash, img->fullname,
