@@ -497,3 +497,12 @@ listed as WD900-138/2 and WD900-425/2.
 
 MSU II and MSU IIa are SCSI units to be connected to the 990/SCSI controller
 board.
+
+
+Macintosh MFS images (mfs)
+-----------------------------
+
+This module can catalog macintosh floppy disk images in diskcopy 4.2 format and
+in raw format (which is mostly equivalent to diskcopy 6 format).  The module is
+preliminary, but it seems to work fine.
+
