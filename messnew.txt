@@ -45,6 +45,8 @@ System Driver Changes:
   now fixed.
   [Kev Thacker]
 
+- [EP128/EP128A] Initial sound emulation. Some sampled sounds work, and simple tone is working.
+  Fixed some interrupt problems [Kev Thacker]
 
 Other Changes:
 --------------
