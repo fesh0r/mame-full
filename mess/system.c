@@ -654,8 +654,8 @@ TESTDRIVER( hp48g ) 	/* HP48 G/GX									*/
 	DRIVER( svi328 ) 	/* SVI-328									*/
 	DRIVER( svi328a ) 	/* SVI-328	(BASIC 1.11)						*/
 
-	/* Booth (this is the builder, not a company) */
-	DRIVER( apexc )	/* 1951(?) APEXC : All-Purpose Electronic X-ray Computer */
+	/* Andrew Donald Booth (this is the name of the designer, not a company) */
+	DRIVER( apexc )		/* 1951(?) APEXC : All-Purpose Electronic X-ray Computer */
 
 	/* Sony */
 TESTDRIVER( psx )
@@ -668,6 +668,9 @@ TESTDRIVER( psxe30 )
 TESTDRIVER( psxj40 )
 TESTDRIVER( psxa41 )
 TESTDRIVER( psxe41 )
+
+	/* Corvus */
+	DRIVER(concept)		/* 1983? Corvus Concept */
 
 /****************Games*******************************************************/
 	/* Computer Electronic */
