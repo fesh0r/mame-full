@@ -10,14 +10,11 @@
 	<checkdirectory/>
 </imgtooltest>
 
-<!--
 <imgtooltest name="prodos_525_nib">
 	<createimage driver="apple2_nib_prodos_525"/>
 	<checkdirectory/>
 </imgtooltest>
--->
 
-<!--
 <imgtooltest name="prodos_35_raw">
 	<createimage driver="apple35_raw_prodos_35"/>
 	<checkdirectory/>
@@ -32,6 +29,5 @@
 	<createimage driver="apple35_2img_prodos_35"/>
 	<checkdirectory/>
 </imgtooltest>
--->
 
 </tests>

@@ -727,10 +727,26 @@ static floperr_t apple35_write_track(floppy_image *floppy, int head, int track, 
 
 
 static floperr_t apple35_construct(floppy_image *floppy, UINT32 data_offset, UINT32 data_size,
-	UINT32 tag_offset, UINT32 tag_size, UINT8 format_byte, UINT8 sides)
+	UINT32 tag_offset, UINT32 tag_size, INT16 format_byte, UINT8 sides)
 {
 	struct apple35_tag *tag;
 	struct FloppyCallbacks *format;
+
+	/* figure out format byte if not specified */
+	if (format_byte < 0)
+	{
+		switch(sides)
+		{
+			case 1:
+				format_byte = 0x02;
+				break;
+			case 2:
+				format_byte = 0x22;
+				break;
+			default:
+				return FLOPPY_ERROR_INVALIDIMAGE;
+		}
+	}
 
 	/* create tag */
 	tag = (struct apple35_tag *) floppy_create_tag(floppy, APPLE35_TAG, sizeof(struct apple35_tag));
@@ -740,7 +756,7 @@ static floperr_t apple35_construct(floppy_image *floppy, UINT32 data_offset, UIN
 	tag->data_size = data_size;
 	tag->tag_offset = tag_offset;
 	tag->tag_size = tag_size;
-	tag->format_byte = format_byte;
+	tag->format_byte = (UINT8) format_byte;
 	tag->sides = sides;
 
 
@@ -776,23 +792,26 @@ static FLOPPY_CONSTRUCT(apple35_raw_construct)
 {
 	UINT64 size;
 	UINT8 sides;
-	UINT8 format_byte;
 
-	size = floppy_image_size(floppy);
-	if (size == 80*1*10*512)
+	if (params)
 	{
-		format_byte = 0x02;
-		sides = 1;
-	}
-	else if (size == 80*2*10*512)
-	{
-		format_byte = 0x22;
-		sides = 2;
+		/* create */
+		sides = option_resolution_lookup_int(params, PARAM_HEADS);
+		size = 80*sides*10*512;
 	}
 	else
-		return FLOPPY_ERROR_INVALIDIMAGE;
+	{
+		/* load */
+		size = floppy_image_size(floppy);
+		if (size == 80*1*10*512)
+			sides = 1;
+		else if (size == 80*2*10*512)
+			sides = 2;
+		else
+			return FLOPPY_ERROR_INVALIDIMAGE;
+	}
 
-	return apple35_construct(floppy, 0, (UINT32) size, 0, 0, format_byte, sides);
+	return apple35_construct(floppy, 0, (UINT32) size, 0, 0, -1, sides);
 }
 
 
@@ -897,14 +916,25 @@ static FLOPPY_CONSTRUCT(apple35_diskcopy_construct)
 	UINT8 format_byte, sides;
 	UINT32 data_offset, data_size;
 	UINT32 tag_offset, tag_size;
+	INT16 format_byte_param = -1;
 
-	err = apple35_diskcopy_headerdecode(floppy, &data_offset, &data_size,
-		&tag_offset, &tag_size, &format_byte, &sides);
-	if (err)
-		return err;
+	if (params)
+	{
+		/* create */
+		sides = option_resolution_lookup_int(params, PARAM_HEADS);
+	}
+	else
+	{
+		/* load */
+		err = apple35_diskcopy_headerdecode(floppy, &data_offset, &data_size,
+			&tag_offset, &tag_size, &format_byte, &sides);
+		if (err)
+			return err;
 
+		format_byte_param = format_byte;
+	}
 	return apple35_construct(floppy, data_offset, data_size,
-		tag_offset, tag_size, format_byte, sides);
+		tag_offset, tag_size, format_byte_param, sides);
 }
 
 
@@ -1006,45 +1036,61 @@ static FLOPPY_CONSTRUCT(apple35_2img_construct)
 	UINT32 image_format;
 	UINT32 data_offset;
 	UINT32 data_size;
-	UINT8 format_byte = 0x00;
 	UINT8 sides = 2;
 
-	err = apple35_2img_decode(floppy, &image_format, &data_offset, &data_size);
-	if (err)
-		return err;
-
-	if (data_size == 80*1*10*512)
+	if (params)
 	{
-		/* single sided */
-		format_byte = 0x02;
-		sides = 1;
-	}
-	else if (data_size == 80*2*10*512)
-	{
-		/* double sided */
-		format_byte = 0x22;
-		sides = 2;
+		/* create */
+		sides = option_resolution_lookup_int(params, PARAM_HEADS);
 	}
 	else
 	{
-		/* unknown... what to do... */
-		format_byte = 0x00;
-		sides = 2;
+		/* load */
+		err = apple35_2img_decode(floppy, &image_format, &data_offset, &data_size);
+		if (err)
+			return err;
+
+		if (data_size == 80*1*10*512)
+			sides = 1;	/* single sided */
+		else if (data_size == 80*2*10*512)
+			sides = 2;	/* double sided */
+		else
+			sides = 2;	/* unknown... what to do... */
 	}
 
 	return apple35_construct(floppy, data_offset, data_size,
-		0, 0, format_byte, sides);
+		0, 0, -1, sides);
 }
 
 
 
 FLOPPY_OPTIONS_START( apple35_mac )
-	FLOPPY_OPTION( apple35_raw, "dsk\0img\0image\0",	"Apple raw 3.5\" disk image",	apple35_raw_identify,		apple35_raw_construct,	NULL )
-	FLOPPY_OPTION( apple35_dc, "dc\0dsk\0img\0image\0",	"Apple DiskCopy disk image",	apple35_diskcopy_identify,	apple35_diskcopy_construct,	NULL )
+	FLOPPY_OPTION( apple35_raw, "dsk\0img\0image\0",	"Apple raw 3.5\" disk image",	apple35_raw_identify,		apple35_raw_construct,
+		HEADS([1]-2)
+		TRACKS([80])
+		SECTOR_LENGTH([512])
+		FIRST_SECTOR_ID([0]))
+	FLOPPY_OPTION( apple35_dc, "dc\0dsk\0img\0image\0",	"Apple DiskCopy disk image",	apple35_diskcopy_identify,	apple35_diskcopy_construct,
+		HEADS([1]-2)
+		TRACKS([80])
+		SECTOR_LENGTH([512])
+		FIRST_SECTOR_ID([0]))
 FLOPPY_OPTIONS_END
 
 FLOPPY_OPTIONS_START( apple35_iigs )
-	FLOPPY_OPTION( apple35_raw, "dsk\0img\0image\0",	"Apple raw 3.5\" disk image",	apple35_raw_identify,		apple35_raw_construct,	NULL )
-	FLOPPY_OPTION( apple35_dc, "dc\0dsk\0img\0image\0",	"Apple DiskCopy disk image",	apple35_diskcopy_identify,	apple35_diskcopy_construct,	NULL )
-	FLOPPY_OPTION( apple35_2img, "2img\0002mg\0",		"Apple ][gs 2IMG disk image",	apple35_2img_identify,		apple35_2img_construct,	NULL )
+	FLOPPY_OPTION( apple35_raw, "dsk\0img\0image\0",	"Apple raw 3.5\" disk image",	apple35_raw_identify,		apple35_raw_construct,
+		HEADS([1]-2)
+		TRACKS([80])
+		SECTOR_LENGTH([512])
+		FIRST_SECTOR_ID([0]))
+	FLOPPY_OPTION( apple35_dc, "dc\0dsk\0img\0image\0",	"Apple DiskCopy disk image",	apple35_diskcopy_identify,	apple35_diskcopy_construct,	
+		HEADS([1]-2)
+		TRACKS([80])
+		SECTOR_LENGTH([512])
+		FIRST_SECTOR_ID([0]))
+	FLOPPY_OPTION( apple35_2img, "2img\0002mg\0",		"Apple ][gs 2IMG disk image",	apple35_2img_identify,		apple35_2img_construct,
+		HEADS([1]-2)
+		TRACKS([80])
+		SECTOR_LENGTH([512])
+		FIRST_SECTOR_ID([0]))
 FLOPPY_OPTIONS_END

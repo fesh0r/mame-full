@@ -34,6 +34,9 @@ imgtoolerr_t imgtool_floppy_error(floperr_t err)
 
 		case FLOPPY_ERROR_SEEKERROR:
 			return IMGTOOLERR_SEEKERROR;
+
+		case FLOPPY_ERROR_UNSUPPORTED:
+			return IMGTOOLERR_UNIMPLEMENTED;
 			
 		default:
 			return IMGTOOLERR_UNEXPECTED;
