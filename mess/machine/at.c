@@ -105,7 +105,7 @@ DRIVER_INIT( at_vga )
 
 	init_at_common(&at8042);
 	pc_turbo_setup(0, 3, 0x02, 4.77/12, 1);
-	vga_init(input_port_0_r);
+	pc_vga_init(input_port_0_r);
 }
 
 
@@ -117,7 +117,7 @@ DRIVER_INIT( ps2m30286 )
 	};
 	init_at_common(&at8042);
 	pc_turbo_setup(0, 3, 0x02, 4.77/12, 1);
-	vga_init(input_port_0_r);
+	pc_vga_init(input_port_0_r);
 }
 
 
@@ -132,7 +132,7 @@ MACHINE_INIT( at )
 
 MACHINE_INIT( at_vga )
 {
-	vga_reset();
+	pc_vga_reset();
 	dma8237_reset();
 	pic8259_reset();
 }

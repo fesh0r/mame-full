@@ -915,7 +915,7 @@ WRITE8_HANDLER(vga_port_03d0_w)
 	return data;
 }
 
-void vga_reset(void)
+void pc_vga_reset(void)
 {
 	UINT8 *memory=vga.memory, *dirty=vga.dirty, *fontdirty=vga.fontdirty;
 
@@ -937,7 +937,7 @@ void vga_reset(void)
 	vga_cpu_interface();
 }
 
-void vga_init(read8_handler read_dipswitch)
+void pc_vga_init(read8_handler read_dipswitch)
 {
 	int i, j, k, mask;
 
@@ -984,7 +984,7 @@ void vga_init(read8_handler read_dipswitch)
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3c0, 0x3cf, 0, 0, vga_port_03c0_w );
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, vga_port_03d0_w );
 
-	vga_reset();
+	pc_vga_reset();
 }
 
 static void vga_timer(int param)

@@ -4,9 +4,9 @@
 MACHINE_DRIVER_EXTERN( pcvideo_vga );
 MACHINE_DRIVER_EXTERN( pcvideo_pc1640 );
 
-void vga_init(read8_handler read_dipswitch);
+void pc_vga_init(read8_handler read_dipswitch);
 
-void vga_reset(void);
+void pc_vga_reset(void);
 
 // include in port access list
  READ8_HANDLER( ega_port_03b0_r );
