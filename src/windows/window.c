@@ -208,7 +208,6 @@ static struct win_effect_data effect_table[] =
 
 static void compute_multipliers_internal(const RECT *rect, int visible_width, int visible_height, int *xmult, int *ymult);
 static void update_system_menu(void);
-static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
 static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update);
 
 static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update);
@@ -436,7 +435,11 @@ int win_init_window(void)
 		// initialize the description of the window class
 		wc.lpszClassName 	= TEXT("MAME");
 		wc.hInstance 		= GetModuleHandle(NULL);
-		wc.lpfnWndProc		= video_window_proc;
+#ifdef MESS
+		wc.lpfnWndProc		= win_mess_window_proc;
+#else
+		wc.lpfnWndProc		= win_video_window_proc;
+#endif
 		wc.hCursor			= LoadCursor(NULL, IDC_ARROW);
 		wc.hIcon			= LoadIcon(NULL, IDI_APPLICATION);
 		wc.lpszMenuName		= NULL;
@@ -759,10 +762,10 @@ static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct
 
 
 //============================================================
-//	video_window_proc
+//	win_video_window_proc
 //============================================================
 
-static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
+LRESULT CALLBACK win_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
 	extern void win_timer_enable(int enabled);
 
@@ -864,11 +867,7 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 
 		// everything else: defaults
 		default:
-#ifdef MESS
-			return win_mess_window_proc(wnd, message, wparam, lparam);
-#else
 			return DefWindowProc(wnd, message, wparam, lparam);
-#endif
 	}
 
 	return 0;

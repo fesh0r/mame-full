@@ -347,7 +347,7 @@ void at_keyboard_set_input_port_base(int base)
 static void at_keyboard_queue_insert(UINT8 data)
 {
 #if LOG_KEYBOARD
-	logerror("keyboard queueing 0x%02x\n",data);
+	logerror("keyboard queueing %.2x\n",data);
 #endif
 	keyboard.queue[keyboard.head] = data;
 	keyboard.head++;
@@ -793,7 +793,7 @@ static UINT8 unicode_char_to_at_keycode(unicode_char_t ch)
 {
 	UINT8 b;
 	switch(ch) {
-	case '`':						b = 1;		break;
+	case '\032':					b = 1;		break;
 	case '1':						b = 2;		break;
 	case '2':						b = 3;		break;
 	case '3':						b = 4;		break;
@@ -833,7 +833,7 @@ static UINT8 unicode_char_to_at_keycode(unicode_char_t ch)
 	case 'l':						b = 38;		break;
 	case ';':						b = 39;		break;
 	case '\'':						b = 40;		break;
-	case '\032':					b = 41;		break;
+	case '`':						b = 41;		break;
 	case '\\':						b = 43;		break;
 	case 'z':						b = 44;		break;
 	case 'x':						b = 45;		break;

@@ -24,7 +24,7 @@ extern int win_use_natural_keyboard;
 //============================================================
 
 int win_setup_menus(HMODULE module, HMENU menu_bar);
-LRESULT win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
+LRESULT CALLBACK win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
 void win_toggle_menubar(void);
 
 

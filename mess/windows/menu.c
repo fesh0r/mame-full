@@ -1464,13 +1464,14 @@ error:
 //	win_mess_window_proc
 //============================================================
 
-LRESULT win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
+LRESULT CALLBACK win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
 	int i;
 	MSG msg;
 
 	static WPARAM keytrans[][2] =
 	{
+		{ VK_ESCAPE,	UCHAR_MAMEKEY(ESC) },
 		{ VK_F1,		UCHAR_MAMEKEY(F1) },
 		{ VK_F2,		UCHAR_MAMEKEY(F2) },
 		{ VK_F3,		UCHAR_MAMEKEY(F3) },
@@ -1542,7 +1543,7 @@ LRESULT win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lpara
 		/* fall through */
 
 	default:
-		return DefWindowProc(wnd, message, wparam, lparam);
+		return win_video_window_proc(wnd, message, wparam, lparam);
 	}
 	return 0;
 }

@@ -296,6 +296,7 @@ static const struct
 	{ 0x2047,				"??" },		/* double question mark */
 	{ 0x2048,				"?!" },		/* question exclamation mark */
 	{ 0x2049,				"!?" },		/* exclamation question mark */
+	{ UCHAR_MAMEKEY(ESC),	"\032" },	/* esc key */
 	{ UCHAR_MAMEKEY(DEL),	"\010" },	/* delete key */
 	{ UCHAR_MAMEKEY(HOME),	"\014" }	/* clear key */
 };

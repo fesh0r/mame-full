@@ -5707,7 +5707,7 @@ static void MameLoadState()
 		if (path[strlen(path)-1] == '\\')
 			path[strlen(path)-1] = 0; // take off trailing back slash
 		cPos = strchr(bare_fname, '-' );
-		iPos = cPos - bare_fname;
+		iPos = cPos ? cPos - bare_fname : strlen(bare_fname);
 		strncpy(romname, bare_fname, iPos );
 		romname[iPos] = '\0';
 		if( strcmp(selected_filename,romname) != 0 )
