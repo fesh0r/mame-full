@@ -38,7 +38,7 @@ System Driver Changes:
   transfers. Fixed missing tiles. Added preliminary mode 7 support. Added
   subscreens, including colour addition/subtraction. Improved ROM loading with
   better header and ROM type detection. Improved vertical/horizontal latches.
-  [Anthony Kruize]
+  Improved the SPCSkipper so a lot more games actually run now. [Anthony Kruize]
 
 Source Changes:
 ---------------
