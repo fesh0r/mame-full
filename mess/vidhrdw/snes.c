@@ -852,12 +852,12 @@ static void snes_update_line_mode7( UINT8 screen, UINT16 curline )
 		return;
 #endif /* SNES_DBG_VIDHRDW */
 
-	ma = mode7_data[0];
-	mb = mode7_data[1];
-	mc = mode7_data[2];
-	md = mode7_data[3];
-	xc = mode7_data[4];
-	yc = mode7_data[5];
+	ma = snes_ppu.mode7.matrix_a;
+	mb = snes_ppu.mode7.matrix_b;
+	mc = snes_ppu.mode7.matrix_c;
+	md = snes_ppu.mode7.matrix_d;
+	xc = snes_ppu.mode7.origin_x;
+	yc = snes_ppu.mode7.origin_y;
 	hs = snes_ppu.bgd_offset.horizontal[0];
 	vs = snes_ppu.bgd_offset.vertical[0];
 
@@ -1636,11 +1636,11 @@ void snes_refresh_scanline( UINT16 curline )
 		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
 		sprintf( t, "SetINI: %s %s %s %s %s", (snes_ram[SETINI] & 0x1)?" I":"NI", (snes_ram[SETINI] & 0x2)?"P":"R", (snes_ram[SETINI] & 0x4)?"240":"225",(snes_ram[SETINI] & 0x8)?"512":"256",(snes_ram[SETINI] & 0x40)?"E":"N" );
 		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
-		sprintf( t, "Mode7: A %5d B %5d", mode7_data[0], mode7_data[1] );
+		sprintf( t, "Mode7: A %5d B %5d", snes_ppu.mode7.matrix_a, snes_ppu.mode7.matrix_b );
 		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
-		sprintf( t, " %s%s%s   C %5d D %5d", (snes_ram[M7SEL] & 0xc0)?((snes_ram[M7SEL] & 0x40)?"0":"C"):"R", (snes_ram[M7SEL] & 0x1)?"H":" ", (snes_ram[M7SEL] & 0x2)?"V":" ", mode7_data[2], mode7_data[3] );
+		sprintf( t, " %s%s%s   C %5d D %5d", (snes_ram[M7SEL] & 0xc0)?((snes_ram[M7SEL] & 0x40)?"0":"C"):"R", (snes_ram[M7SEL] & 0x1)?"H":" ", (snes_ram[M7SEL] & 0x2)?"V":" ", snes_ppu.mode7.matrix_c, snes_ppu.mode7.matrix_d );
 		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
-		sprintf( t, "       X %5d Y %5d", mode7_data[4], mode7_data[5] );
+		sprintf( t, "       X %5d Y %5d", snes_ppu.mode7.origin_x, snes_ppu.mode7.origin_y );
 		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
 	}
 	/* Just for testing, draw as many tiles as possible */

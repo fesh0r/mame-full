@@ -29,7 +29,8 @@ System Driver Changes:
 
 - [SNES] Improved 16x16 background tile mode. Fixed another GDMA bug. Various
   mode 7 fixes. Fixed background priorities in modes 2 to 7. Added support for
-  direct select to mode 7. [Anthony Kruize]
+  direct select to mode 7. Removed support for horizontal interrupts as it was
+  totally broken. 16bit by 8bit multiply is now signed. [Anthony Kruize]
 
 - [SUPERGB/GBCOLOR] No longer marked as clones of the GameBoy. [Anthony
   Kruize]

@@ -349,7 +349,6 @@ extern UINT8  *snes_vram;			/* Video RAM (Should be 16-bit, but it's easier this
 extern UINT16 *snes_cgram;			/* Colour RAM */
 extern UINT16 *snes_oam;			/* Object Attribute Memory */
 extern UINT8  *snes_ram;			/* Main memory */
-extern UINT16 mode7_data[6];		/* Data for mode7 matrix calculation */
 extern VIDEO_UPDATE( snes );
 struct SNES_PPU_STRUCT
 {
@@ -383,6 +382,15 @@ struct SNES_PPU_STRUCT
 		UINT8 last_visible_line;
 		UINT8 interlace_count;
 	} beam;
+	struct
+	{
+		INT16 matrix_a;
+		INT16 matrix_b;
+		INT16 matrix_c;
+		INT16 matrix_d;
+		INT16 origin_x;
+		INT16 origin_y;
+	} mode7;
 	UINT8 clipmasks[6][SNES_SCR_WIDTH + 8];
 	UINT8 update_windows;
 	UINT8 update_palette;

@@ -24,12 +24,11 @@
 #define USE_SPCSKIPPER		/* Use the SPCSkipper instead of the SPC700 */
 
 /* -- Globals -- */
-UINT8  *snes_ram;				/* 65816 ram */
-UINT8  *spc_ram;				/* spc700 ram */
-UINT8  *snes_vram;				/* Video RAM (Should be 16-bit, but it's easier this way) */
-UINT16 *snes_cgram;				/* Colour RAM */
-UINT16 *snes_oam;				/* Object Attribute Memory */
-UINT16 mode7_data[6];			/* Data for mode7 matrix calculation */
+UINT8  *snes_ram = NULL;		/* 65816 ram */
+UINT8  *spc_ram = NULL;			/* spc700 ram */
+UINT8  *snes_vram = NULL;		/* Video RAM (Should be 16-bit, but it's easier this way) */
+UINT16 *snes_cgram = NULL;		/* Colour RAM */
+UINT16 *snes_oam = NULL;		/* Object Attribute Memory */
 static UINT16 cgram_address;	/* CGRAM address */
 static UINT8  vram_read_offset;	/* VRAM read offset */
 static UINT16 vram_fg_count;	/* Fullgraphic increase count */
@@ -335,7 +334,7 @@ READ_HANDLER( snes_r_io )
 		case MPYH:		/* Multiplication result (high) */
 			{
 				/* Perform 16bit * 8bit multiply */
-				UINT32 c = mode7_data[0] * (mode7_data[1] >> 8);
+				INT32 c = snes_ppu.mode7.matrix_a * (snes_ppu.mode7.matrix_b >> 8);
 				snes_ram[MPYL] = c & 0xff;
 				snes_ram[MPYM] = (c >> 8) & 0xff;
 				snes_ram[MPYH] = (c >> 16) & 0xff;
@@ -835,12 +834,22 @@ WRITE_HANDLER( snes_w_io )
 		case M7SEL:		/* Mode 7 initial settings */
 			break;
 		case M7A:		/* Mode 7 COS angle/x expansion (DW) */
+			DOUBLE_WRITE( snes_ppu.mode7.matrix_a, data )
+			break;
 		case M7B:		/* Mode 7 SIN angle/ x expansion (DW) */
+			DOUBLE_WRITE( snes_ppu.mode7.matrix_b, data )
+			break;
 		case M7C:		/* Mode 7 SIN angle/y expansion (DW) */
+			DOUBLE_WRITE( snes_ppu.mode7.matrix_c, data )
+			break;
 		case M7D:		/* Mode 7 COS angle/y expansion (DW) */
+			DOUBLE_WRITE( snes_ppu.mode7.matrix_d, data )
+			break;
 		case M7X:		/* Mode 7 x center position (DW) */
+			DOUBLE_WRITE( snes_ppu.mode7.origin_x, data )
+			break;
 		case M7Y:		/* Mode 7 y center position (DW) */
-			DOUBLE_WRITE( mode7_data[offset - M7A], data )
+			DOUBLE_WRITE( snes_ppu.mode7.origin_y, data )
 			break;
 		case CGADD:		/* Initial address for colour RAM writing */
 			/* CGRAM is 16-bit, but when reading/writing we treat it as
@@ -870,7 +879,7 @@ WRITE_HANDLER( snes_w_io )
 		case TSW:		/* Window mask for subscreen designation */
 			break;
 		case CGWSEL:	/* Initial settings for Fixed colour addition or screen addition */
-			/* FIXME: We don't support direct select(bit 0) or subscreen window stuff */
+			/* FIXME: We don't support direct select for modes 3 & 4 or subscreen window stuff */
 #ifdef SNES_DBG_REG_W
 			if( (data & 0x2) != (snes_ram[CGWSEL] & 0x2) )
 				printf( "Add/Sub Layer: %s\n", ((data & 0x2) >> 1) ? "Subscreen" : "Fixed colour" );
@@ -1044,7 +1053,7 @@ WRITE_HANDLER( snes_w_io )
 	snes_ram[offset] = data;
 }
 
-/* In this function, we check everything is in a valid range and return how
+/* This function checks everything is in a valid range and returns how
  * 'valid' this section is as an information block.
  * If it fails at least 3 checks then we'll assume it's not valid */
 static int snes_validate_infoblock( UINT8 *infoblock, UINT16 offset )
@@ -1338,14 +1347,15 @@ INTERRUPT_GEN(snes_scanline_interrupt)
 		}
 	}
 	/* Horizontal IRQ timer */
-	if( snes_ram[NMITIMEN] & 0x10 )
+	/* FIXME: Commented out as it causes heaps of trouble right now */
+/*	if( snes_ram[NMITIMEN] & 0x10 )
 	{
 		if( (((snes_ram[HTIMEH] << 8) | snes_ram[HTIMEL]) & 0x1ff) )
 		{
-			snes_ram[TIMEUP] = 0x80;	/* Indicate that irq occured */
+			snes_ram[TIMEUP] = 0x80;
 			cpu_set_irq_line( 0, G65816_LINE_IRQ, HOLD_LINE );
 		}
-	}
+	} */
 
 	/* Increase current line */
 	snes_ppu.beam.current_vert = (snes_ppu.beam.current_vert + 1) % (snes_ram[STAT78] == SNES_NTSC ? SNES_MAX_LINES_NTSC : SNES_MAX_LINES_PAL);
