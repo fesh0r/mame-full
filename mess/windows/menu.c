@@ -278,7 +278,7 @@ static void loadsave(int type)
 	}
 	else
 	{
-		sprintf(filename, "machinestate.sta");
+		snprintf(filename, sizeof(filename) / sizeof(filename[0]), "%s State.sta", Machine->gamedrv->description);
 		dir = NULL;
 	}
 

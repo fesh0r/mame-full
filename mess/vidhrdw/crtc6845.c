@@ -88,6 +88,13 @@ static const struct reg_mask crtc6845_reg_mask[2][18] =
 	}
 };
 
+/* The PC1512 has not got a full MC6845; the first 9 registers act as if they
+ * had these hardwired values: */
+static UINT8 pc1512_defaults[] =
+{
+	113, 80, 90, 10, 127, 6, 100, 112, 2 
+};
+
 /***************************************************************************
 
 	Functions
@@ -97,6 +104,7 @@ static const struct reg_mask crtc6845_reg_mask[2][18] =
 struct crtc6845 *crtc6845_init(const struct crtc6845_config *config)
 {
 	struct crtc6845 *crtc;
+	int index_;
 
 	crtc = auto_malloc(sizeof(struct crtc6845));
 	if (!crtc)
@@ -106,6 +114,16 @@ struct crtc6845 *crtc6845_init(const struct crtc6845_config *config)
 	crtc->cursor_time = timer_get_time();
 	crtc->config = *config;
 	crtc6845 = crtc;
+
+	/* Hardwire the values which can't be changed in the PC1512 version */
+	if (config->personality == M6845_PERSONALITY_PC1512)
+	{
+		for (index_ = 0; index_ < sizeof(pc1512_defaults); index_++)
+		{
+			crtc->reg[index_] = pc1512_defaults[index_];
+		}
+	}
+
 	return crtc;
 }
 
@@ -177,6 +195,19 @@ int crtc6845_get_start(struct crtc6845 *crtc)
 	return CRTC6845_VIDEO_START;
 }
 
+
+void crtc6845_set_char_columns(struct crtc6845 *crtc, UINT8 columns)
+{ 
+	crtc->reg[1] = columns;
+}
+
+
+void crtc6845_set_char_lines(struct crtc6845 *crtc, UINT8 lines)
+{ 
+	crtc->reg[6] = lines;
+}
+
+
 int crtc6845_get_personality(struct crtc6845 *crtc)
 {
 	return crtc->config.personality;
@@ -226,6 +257,7 @@ void crtc6845_port_w(struct crtc6845 *crtc, int offset, data8_t data)
 {
 	struct crtc6845_cursor cursor;
 	int index_;
+	UINT8 mask;
 
 	if (offset & 1)
 	{
@@ -233,7 +265,10 @@ void crtc6845_port_w(struct crtc6845 *crtc, int offset, data8_t data)
 		index_ = crtc->index_ & 0x1f;
 		if (index_ < (sizeof(crtc->reg) / sizeof(crtc->reg[0])))
 		{
-			crtc->reg[crtc->index_] = data & crtc6845_reg_mask[crtc->config.personality][index_].store_mask;
+			mask = crtc6845_reg_mask[crtc->config.personality][index_].store_mask;
+			/* Don't zero out bits not covered by the mask. */
+			crtc->reg[crtc->index_] &= ~mask;
+			crtc->reg[crtc->index_] |= (data & mask);
 
 			/* are there special consequences to writing to this register */
 			switch (index_) {

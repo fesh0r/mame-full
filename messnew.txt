@@ -9,6 +9,9 @@ System Driver Changes:
 - [APPLE2] Moved Apple 2 disks over to use the standard floppy device code.
   [Nate Woods]
 
+- [GENEVE] Fixed a bug with undocumented VDP behaviour.  Fixed Mouse buttons.
+  [Raphael Nabet]
+
 - [PC] Fixed a bug in keyboard handling that caused a 'stuck key' keyboard
   error to be displayed (bug #427). [Colin Howell, Nate Woods]
 
@@ -17,10 +20,9 @@ System Driver Changes:
 - [PC] Fixed a bug that would occasionally cause garbage to be displayed on
   the screen after a screen resolution change (bug #100).  [Nate Woods]
 
-- [TRS80] Fixed a crash on startup. [Nate Woods]
+- [PC1512] Fixed a few more video modes. [John Elliott]
 
-- [Geneve] Fixed a bug with undocumented VDP behaviour.  Fixed Mouse buttons.
-  [Raphael Nabet]
+- [TRS80] Fixed a crash on startup. [Nate Woods]
 
 User Interface Changes:
 -----------------------

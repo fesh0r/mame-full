@@ -135,6 +135,7 @@
 ****************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "machine/atarigen.h"
 #include "cpu/mips/r3000.h"
 #include "cpu/m68000/m68000.h"
@@ -737,6 +738,13 @@ VIDEO_START( cojag )
 		return 1;
 
 	vi_timer = timer_alloc(vi_callback);
+
+	assert(sizeof(*pen_table) == sizeof(UINT32));
+	state_save_register_UINT32("cojag", 0, "pen_table",     pen_table,      65536);
+	state_save_register_UINT32("cojag", 0, "blitter_regs",  blitter_regs,   BLITTER_REGS);
+	state_save_register_UINT16("cojag", 0, "gpu_regs",      gpu_regs,       GPU_REGS);
+	state_save_register_UINT8 ("cojag", 0, "cpu_irq_state", &cpu_irq_state, 1);
+	state_save_register_func_postload(update_cpu_irq);
 	return 0;
 }
 

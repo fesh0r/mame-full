@@ -81,6 +81,8 @@ int crtc6845_get_char_columns(struct crtc6845 *crtc);
 int crtc6845_get_char_height(struct crtc6845 *crtc);
 int crtc6845_get_char_lines(struct crtc6845 *crtc);
 int crtc6845_get_start(struct crtc6845 *crtc);
+void crtc6845_set_char_columns(struct crtc6845 *crtc, UINT8 columns);
+void crtc6845_set_char_lines(struct crtc6845 *crtc, UINT8 lines);
 
 int crtc6845_get_personality(struct crtc6845 *crtc);
 

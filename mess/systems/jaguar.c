@@ -40,6 +40,7 @@
 
 
 #include "driver.h"
+#include "state.h"
 #include "cpu/mips/r3000.h"
 #include "cpu/jaguar/jaguar.h"
 #include "jaguar.h"
@@ -714,24 +715,27 @@ ROM_END
  *
  *************************************/
 
-static void common_init(UINT8 crosshair, UINT16 gpu_jump_offs, UINT16 spin_pc)
+static DRIVER_INIT( jaguar )
 {
-	/* copy over the ROM */
-	cojag_draw_crosshair = crosshair;
+	state_save_register_UINT32("jaguar", 0, "ram",               jaguar_shared_ram, 0x200000 / 4);
+	state_save_register_UINT32("jaguar", 0, "cart",              cart_base,         0x600000 / 4);
+	state_save_register_UINT32("jaguar", 0, "gpu_clut",          jaguar_gpu_clut,   0x000400 / 4);
+	state_save_register_UINT32("jaguar", 0, "gpu_ram",           jaguar_gpu_ram,    0x001000 / 4);
+	state_save_register_UINT32("jaguar", 0, "dspram",            jaguar_dsp_ram,    0x002000 / 4);
+	state_save_register_UINT32("jaguar", 0, "joystick_data",     &joystick_data,           1);
+	state_save_register_UINT32("jaguar", 0, "misc_control_data", &misc_control_data,       1);
+	state_save_register_UINT8("jaguar",  0, "eeprom_enable",     &eeprom_enable,           1);
+
+	cojag_draw_crosshair = FALSE;
 
 	/* install synchronization hooks for GPU */
 	//install_mem_write32_handler(0, 0xf0b000 + gpu_jump_offs, 0xf0b003 + gpu_jump_offs, gpu_jump_w);
 	//install_mem_read32_handler(1, 0xf03000 + gpu_jump_offs, 0xf03003 + gpu_jump_offs, gpu_jump_r);
-	gpu_jump_address = &jaguar_gpu_ram[gpu_jump_offs/4];
-	gpu_spin_pc = 0xf03000 + spin_pc;
+	//gpu_jump_address = &jaguar_gpu_ram[gpu_jump_offs/4];
+	//gpu_spin_pc = 0xf03000 + spin_pc;
 
 	/* init the sound system and install DSP speedups */
 	cojag_sound_init();
-}
-
-static DRIVER_INIT( jaguar )
-{
-	common_init(0, 0x0c0, 0x09e);
 }
 
 static DEVICE_LOAD( jaguar_cart )

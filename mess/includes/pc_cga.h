@@ -4,7 +4,7 @@
 
 
 extern unsigned char cga_palette[16][3];
-extern unsigned short cga_colortable[256*2+16*2+2*4];
+extern unsigned short cga_colortable[256*2+16*2+96*4];
 extern struct GfxLayout CGA_charlayout;
 extern struct GfxLayout CGA_gfxlayout_1bpp;
 extern struct GfxLayout CGA_gfxlayout_2bpp;
