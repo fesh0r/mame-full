@@ -8,6 +8,9 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [A2600] Remap Select/Reset Keys to match a7800 driver (bug #670)
+  [Christopher Stone]
+
 - [APPLE2] Reset key fixes.  The default Apple RESET key is now F12.  The
   apple2 driver no longer requires a CTRL key to reset.  (bug #642)
   [Christopher Stone]
@@ -19,13 +22,13 @@ System Driver Changes:
 
 - [VIC20] Fixed regression introduced in 0.93.  (bug #659) [Nate Woods]
 
-- [A2600] Remap Select/Reset Keys to match a7800 driver (bug #670)
-  [Christopher Stone]
-
 
 
 User Interface Changes:
 -----------------------
+- Classic MESS UI now performs hard resets instead of soft resets.  [Nate
+  Woods]
+
 - [Windows GUI] If MESS crashes at runtime, an error message will now be
   displayed.  Previously, the emulation would end and the user would be sent
   back into the GUI without explanation.  [Nate Woods]

@@ -16,9 +16,10 @@
 #include "state.h"
 
 #ifdef MESS
-  #include "mess.h"
+#include "mess.h"
 #include "mesintrf.h"
 #include "inputx.h"
+#define machine_reset machine_hard_reset
 #endif
 
 
