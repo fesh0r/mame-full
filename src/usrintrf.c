@@ -3508,16 +3508,12 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 	{
 		if( ui_display_count > 0 )
 		{
-			char text[] = "KBD: UI  (ScrLock)";
-			int x, x0 = Machine->uiwidth - sizeof(text) * Machine->uifont->width - 2;
-			int y0 = Machine->uiymin + Machine->uiheight - Machine->uifont->height - 2;
-			for( x = 0; text[x]; x++ )
-			{
-				drawgfx(bitmap,
-					Machine->uifont,text[x],0,0,0,
-					x0+x*Machine->uifont->width,
-					y0,0,TRANSPARENCY_NONE,0);
-			}
+			ui_displaymessagewindow(bitmap, "Keyboard Emulation Status\n"\
+											"-------------------------\n"\
+											"Mode: PARTIAL Emulation\n"\
+											"UI:   ENABLED\n"\
+											"-------------------------\n"\
+											"**Use SCRLOCK to toggle**\n");
 			if( --ui_display_count == 0 )
 				schedule_full_refresh();
 		}
@@ -3526,16 +3522,13 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 	{
 		if( ui_display_count > 0 )
 		{
-			char text[] = "KBD: EMU (ScrLock)";
-			int x, x0 = Machine->uiwidth - sizeof(text) * Machine->uifont->width - 2;
-			int y0 = Machine->uiymin + Machine->uiheight - Machine->uifont->height - 2;
-			for( x = 0; text[x]; x++ )
-			{
-				drawgfx(bitmap,
-					Machine->uifont,text[x],0,0,0,
-					x0+x*Machine->uifont->width,
-					y0,0,TRANSPARENCY_NONE,0);
-			}
+			ui_displaymessagewindow(bitmap, "Keyboard Emulation Status\n"\
+											"-------------------------\n"\
+											"Mode: FULL Emulation\n"\
+											"UI:   DISABLED\n"\
+											"-------------------------\n"\
+											"**Use SCRLOCK to toggle**\n");
+
 			if( --ui_display_count == 0 )
 				schedule_full_refresh();
 		}
