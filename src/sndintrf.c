@@ -830,7 +830,7 @@ struct snd_interface sndintf[] =
 		0,
 		beep_sh_start,
 		beep_sh_stop,
-                0,
+                beep_sh_update,
 		0
 	},
 #endif
