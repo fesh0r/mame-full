@@ -53,17 +53,25 @@ endif
 LIBS.x11        = $(X11LIB) $(JOY_X11_LIBS) $(XINPUT_DEVICES_LIBS) -lX11 -lXext
 LIBS.svgalib    = $(X11LIB) -lvga -lvgagl
 LIBS.ggi        = $(X11LIB) -lggi
-LIBS.xgl        = $(X11LIB) $(JOY_X11_LIBS) -lX11 -lXext $(GLLIBS) -ljpeg
+LIBS.xgl        = $(X11LIB) $(JOY_X11_LIBS) $(XINPUT_DEVICES_LIBS) -lX11 -lXext $(GLLIBS) -ljpeg
+ifdef GLIDE2
 LIBS.xfx        = $(X11LIB) $(JOY_X11_LIBS) -lX11 -lXext -lglide2x
-LIBS.svgafx     = $(X11LIB) -lvga -lvgagl -lglide2x
+else
+LIBS.xfx        = $(X11LIB) $(JOY_X11_LIBS) -lX11 -lXext -lglide3
+endif
+LIBS.svgafx     = $(X11LIB) -lvga -lvgagl -lglide3
 LIBS.openstep	= -framework AppKit
 LIBS.SDL	= $(X11LIB) `$(SDL_CONFIG) --libs`
 LIBS.photon2	= -L/usr/lib -lph -lphrender
 
 CFLAGS.x11      = $(X11INC) $(JOY_X11_CFLAGS) $(XINPUT_DEVICES_CFLAGS)
-CFLAGS.xgl      = $(X11INC) $(JOY_X11_CFLAGS) $(GLCFLAGS)
+CFLAGS.xgl      = $(X11INC) $(JOY_X11_CFLAGS) $(XINPUT_DEVICES_CFLAGS) $(GLCFLAGS)
+ifdef GLIDE2
 CFLAGS.xfx      = $(X11INC) $(JOY_X11_CFLAGS) -I/usr/include/glide
-CFLAGS.svgafx   = -I/usr/include/glide
+else
+CFLAGS.xfx      = $(X11INC) $(JOY_X11_CFLAGS) -I/usr/include/glide3
+endif
+CFLAGS.svgafx   = -I/usr/include/glide3
 CFLAGS.SDL      = $(X11INC) `$(SDL_CONFIG) --cflags` -D_REENTRANT
 CFLAGS.photon2	=
 
@@ -271,9 +279,9 @@ VID_OBJS.xgl    = $(VID_DIR)/gltool.o $(VID_DIR)/glxtool.o $(VID_DIR)/glcaps.o \
 		  $(VID_DIR)/glvec.o $(VID_DIR)/glgen.o $(VID_DIR)/glexport.o \
 		  $(VID_DIR)/glcab.o $(VID_DIR)/gljpg.o \
 		  $(VID_DIR)/xinput.o
-VID_OBJS.xfx    = $(VID_DIR)/fxgen.o $(VID_DIR)/xinput.o
+VID_OBJS.xfx    = $(VID_DIR)/fxgen.o $(VID_DIR)/xinput.o $(VID_DIR)/fxvec.o
 VID_OBJS.svgalib = $(VID_DIR)/svgainput.o
-VID_OBJS.svgafx = $(VID_DIR)/svgainput.o $(VID_DIR)/fxgen.o
+VID_OBJS.svgafx = $(VID_DIR)/svgainput.o $(VID_DIR)/fxgen.o $(VID_DIR)/fxvec.o
 VID_OBJS.openstep = $(VID_DIR)/openstep_input.o
 VID_OBJS.photon2 = $(VID_DIR)/photon2_input.o \
 	$(VID_DIR)/photon2_window.o \
@@ -310,10 +318,6 @@ FRAMESKIP_OBJS = $(FRAMESKIP_DIR)/dos.o $(FRAMESKIP_DIR)/barath.o
 # all objs
 UNIX_OBJS = $(COMMON_OBJS) $(SYSDEP_OBJS) $(VID_OBJS) $(SOUND_OBJS) \
 	    $(JOY_OBJS) $(FRAMESKIP_OBJS)
-
-ifneq ($(DISPLAY_METHOD), xgl)
-UNIX_OBJS += $(VECTOR)
-endif
 
 ##############################################################################
 # CFLAGS
@@ -422,13 +426,9 @@ ifdef EFENCE
 MY_LIBS += -lefence
 endif
 
-#we remove $(OBJ)/vidhrdw/vector.o from $(COREOBJS) since we have our own
-#build rules for this object because it is display dependent.
-OBJS += $(subst $(OBJ)/vidhrdw/vector.o, ,$(COREOBJS)) $(DRVLIBS)
+OBJS += $(COREOBJS) $(DRVLIBS)
 
 OSDEPEND = $(OBJDIR)/osdepend.a
-
-VECTOR = $(OBJDIR)/vector.o
 
 # MMX assembly language effects
 ifdef EFFECT_MMX_ASM
@@ -490,8 +490,7 @@ messtest: $(OBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 	$(OBJDIR)/parallel.o \
 	$(OBJDIR)/sysdep/misc.o \
 	$(OBJDIR)/sysdep/rc.o \
-	$(OBJDIR)/tststubs.o \
-	$(VECTOR)
+	$(OBJDIR)/tststubs.o
 	$(CC_COMMENT) @echo Linking $@...
 	$(CC_COMPILE) $(LD) $(LDFLAGS) $(MY_LIBS) $^ -o $@
 
@@ -582,14 +581,6 @@ $(OBJ)/unix.$(DISPLAY_METHOD)/effect_asm.o: src/unix/effect_asm.asm
 	$(CC_COMMENT) @echo Assembling $<...
 	$(CC_COMPILE) nasm $(NASM_FMT) -o $@ $<
 
-#some tricks, since vector.o these days is display method-dependent:
-$(VECTOR): src/vidhrdw/vector.c
-	$(CC_COMMENT) @echo 'Compiling $< ...'
-	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
-
-#make sure this isn't accidently in makefile.$(OBJ):
-$(OBJ)/vidhrdw/vector.o: bla
-
 doc: doc/xmame-doc.txt doc/x$(TARGET)rc.dist doc/gamelist.$(TARGET) doc/x$(TARGET).6
 
 doc/xmame-doc.txt: doc/xmame-doc.sgml
@@ -640,7 +631,7 @@ copycab:
 	for j in $$i/*; do $(INSTALL_DATA) $$j $(XMAMEROOT)/$$i; done; done
 
 clean: 
-	rm -fr $(OBJ) $(NAME).* xlistdev src/unix/contrib/cutzlib-1.2.1/libz.a src/unix/contrib/cutzlib-1.2.1/*.o $(TOOLS)
+	rm -fr $(OBJ) $(NAME).* xlistdev $(TOOLS)
 #	cd makedep; make clean
 
 clean68k:
