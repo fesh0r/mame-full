@@ -1,10 +1,13 @@
-
+#include "driver.h"
+#include "osd_cpu.h"
+#include "mamedbg.h"
 
 unsigned DasmF8(char *buffer, unsigned pc)
 {
 	UINT8 op = cpu_readop(pc);
+	UINT16 ea;
 	unsigned size = 1;
-	char *sym;
+	const char *sym;
 
     switch( op )
 	{
@@ -146,14 +149,14 @@ unsigned DasmF8(char *buffer, unsigned pc)
 		size += 2;
         ea = cpu_readop_arg(pc+1) << 8;
         ea |= cpu_readop_arg(pc+2);
-        sym = set_ea_info( 0, ea, EA_UINT16, EA_ABSPC );
+		sym = set_ea_info( 0, ea, EA_UINT16, EA_ABS_PC );
         sprintf(buffer, "PI  %s",sym);
         break;
     case 0x28: /* 0010 1000 */
 		size += 2;
         ea = cpu_readop_arg(pc+1) << 8;
         ea |= cpu_readop_arg(pc+2);
-        sym = set_ea_info( 0, ea, EA_UINT16, EA_ABSPC );
+		sym = set_ea_info( 0, ea, EA_UINT16, EA_ABS_PC );
 		sprintf(buffer, "JMP %s",sym);
         break;
     case 0x29: /* 0010 1001 */
@@ -184,7 +187,7 @@ unsigned DasmF8(char *buffer, unsigned pc)
 	case 0x39: /* 0011 1001 */
 	case 0x3a: /* 0011 1010 */
 	case 0x3b: /* 0011 1011 */
-		sprintf(buffer, "DS  r%",op&15);
+		sprintf(buffer, "DS  r%d",op&15);
         break;
     case 0x3c: /* 0011 1100 */
 		sprintf(buffer, "DS  ISAR");
@@ -211,7 +214,7 @@ unsigned DasmF8(char *buffer, unsigned pc)
 	case 0x49: /* 0100 1001 */
 	case 0x4a: /* 0100 1010 */
 	case 0x4b: /* 0100 1011 */
-		sprintf(buffer, "LR  A,r%",op&15);
+		sprintf(buffer, "LR  A,r%d",op&15);
         break;
     case 0x4c: /* 0100 1100 */
 		sprintf(buffer, "LR  A,ISAR");
@@ -238,7 +241,7 @@ unsigned DasmF8(char *buffer, unsigned pc)
 	case 0x59: /* 0101 1001 */
 	case 0x5a: /* 0101 1010 */
 	case 0x5b: /* 0101 1011 */
-		sprintf(buffer, "LR  r%,A",op&15);
+		sprintf(buffer, "LR  r%d,A",op&15);
         break;
     case 0x5c: /* 0101 1100 */
 		sprintf(buffer, "LR  ISAR,A");
