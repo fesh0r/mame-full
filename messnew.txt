@@ -8,6 +8,8 @@ System Driver Changes:
 ----------------------
 - [IBMPC] Fixed a bug in keyboard handling that caused a 'stuck key' keyboard
   error to be displayed (bug #427). [Colin Howell, Nate Woods]
+  Added support for CGA 160x100 mode and fixed bugs #100 and #225.
+  [Nate Woods]
 
 User Interface Changes:
 -----------------------
