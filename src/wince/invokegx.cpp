@@ -151,10 +151,53 @@ static struct gxstate_params *create_gxstate(osd_bitmap *bitmap, int orientation
 
 static struct gxstate_params *gxstate;
 
-int gx_open_display(HWND hWnd)
+int gx_open_display(HWND hWnd, int *rsrc_shift, int *gsrc_shift, int *bsrc_shift,
+	int *rdest_shift, int *gdest_shift, int *bdest_shift)
 {
+	int result;
+
 	gxstate = NULL;
-	return GXOpenDisplay(hWnd, GX_FULLSCREEN);
+	result = GXOpenDisplay(hWnd, GX_FULLSCREEN);
+
+	{
+		GXDisplayProperties properties;
+		int r = 0;
+		int g = 0;
+		int b = 0;
+
+		properties = GXGetDisplayProperties();
+		if (properties.ffFormat & kfDirect444)
+		{
+			r = 4;
+			g = 4;
+			b = 4;
+		}
+		else if (properties.ffFormat & kfDirect555)
+		{
+			r = 5;
+			g = 5;
+			b = 5;
+			
+		}
+		else if (properties.ffFormat & kfDirect565)
+		{
+			r = 5;
+			g = 6;
+			b = 5;
+		}
+		else {
+			/* ??? */
+		}
+
+		*rsrc_shift = 8 - r;
+		*gsrc_shift = 8 - g;
+		*bsrc_shift = 8 - b;
+		*rdest_shift = g + b;
+		*gdest_shift = b;
+		*bdest_shift = 0;
+	}
+
+	return result;
 }
 
 int gx_close_display(void)

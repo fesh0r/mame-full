@@ -101,7 +101,9 @@ BEGIN
 
         MENUITEM "",                            ID_MENUITEM40021
         MENUITEM "Show Frame Rate",             ID_OPTIONS_SHOWFRAMERATE
+#ifdef MAME_DEBUG
         MENUITEM "Show Profiler",               ID_OPTIONS_SHOWPROFILER
+#endif
         MENUITEM "",                            ID_MENUITEM40022
         MENUITEM "Rotate Screen Left",          ID_OPTIONS_ROTATESCREENLEFT
         MENUITEM "Rotate Screen Right",         ID_OPTIONS_ROTATESCREENRIGHT
@@ -129,7 +131,9 @@ BEGIN
     POPUP "Options"
     BEGIN
         MENUITEM "Show Frame Rate",             ID_OPTIONS_SHOWFRAMERATE
+#ifdef MAME_DEBUG
         MENUITEM "Show Profiler",               ID_OPTIONS_SHOWPROFILER
+#endif
     END
 END
 

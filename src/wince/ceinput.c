@@ -30,11 +30,11 @@
 #define VK_CASIO_E115_B3		0x5B
 
 #define VK_IPAQ_ACTION			0x86
-#define VK_IPAQ_REC				0x5B
-#define VK_IPAQ_B1				0xC1
-#define VK_IPAQ_B2				0xC2
-#define VK_IPAQ_B3				0xC3
-#define VK_IPAQ_B4				0xC4
+#define VK_IPAQ_CALENDAR		0xC1
+#define VK_IPAQ_CONTACTS		0xC2
+#define VK_IPAQ_QMENU			0xC3
+#define VK_IPAQ_QSTART			0xC4
+#define VK_IPAQ_REC				0xC5
 
 #define VK_HP_ACTION			0x0D
 #define VK_HP_REC				0x1B
@@ -99,10 +99,10 @@ void win_shutdown_input(void)
 static struct KeyboardInfo keylist[] =
 {
 #ifdef ARM
-	{ "QStart",		VK_IPAQ_B4,			KEYCODE_CEBTN1 },
-	{ "QMenu",		VK_IPAQ_B3,			KEYCODE_CEBTN2 },
-	{ "Contacts",	VK_IPAQ_B2,			KEYCODE_CEBTN3 },
-	{ "Calendar",	VK_IPAQ_B1,			KEYCODE_CEBTN4 },
+	{ "QStart",		VK_IPAQ_QSTART,		KEYCODE_CEBTN1 },
+	{ "QMenu",		VK_IPAQ_QMENU,		KEYCODE_CEBTN2 },
+	{ "Contacts",	VK_IPAQ_CONTACTS,	KEYCODE_CEBTN3 },
+	{ "Calendar",	VK_IPAQ_CALENDAR,	KEYCODE_CEBTN4 },
 	{ "Action",		VK_IPAQ_ACTION,		KEYCODE_CEBTN7 },
 	{ "Record",		VK_IPAQ_REC,		KEYCODE_CEBTN8 },
 #elif defined(MIPS)

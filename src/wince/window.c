@@ -492,7 +492,8 @@ int win_init_window(void)
 	update_system_menu();
 
 #ifdef UNDER_CE
-	gx_open_display(win_video_window);
+	gx_open_display(win_video_window, &win_color16_rsrc_shift, &win_color16_gsrc_shift, &win_color16_bsrc_shift,
+		&win_color16_rdst_shift, &win_color16_gdst_shift, &win_color16_bdst_shift);
 #endif
 
 	return 0;
@@ -846,8 +847,10 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 				{
 					ID_FILE_PAUSE,				IPT_UI_PAUSE,
 					IDOK,						IPT_UI_CANCEL,
-					ID_OPTIONS_SHOWFRAMERATE,	IPT_UI_SHOW_FPS,
-					ID_OPTIONS_SHOWPROFILER,	IPT_UI_SHOW_PROFILER
+#ifdef MAME_DEBUG
+					ID_OPTIONS_SHOWPROFILER,	IPT_UI_SHOW_PROFILER,
+#endif
+					ID_OPTIONS_SHOWFRAMERATE,	IPT_UI_SHOW_FPS
 				};
 				int i;
 

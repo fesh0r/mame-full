@@ -89,7 +89,9 @@ static void SetDefaultOptions(HWND hWnd)
 
 	CheckMenuItem(pExtra->hMenu,	ID_OPTIONS_ENABLESOUND,			MF_CHECKED);
 	CheckMenuItem(pExtra->hMenu,	ID_OPTIONS_SHOWFRAMERATE,		MF_UNCHECKED);
+#ifdef MAME_DEBUG
 	CheckMenuItem(pExtra->hMenu,	ID_OPTIONS_SHOWPROFILER,		MF_UNCHECKED);
+#endif
 	CheckMenuItem(pExtra->hMenu,	ID_OPTIONS_ENABLEFLICKER,		MF_CHECKED);
 	CheckMenuItem(pExtra->hMenu,	ID_OPTIONS_ENABLETRANSLUCENCY,	MF_UNCHECKED);
 	CheckMenuItem(pExtra->hMenu,	ID_OPTIONS_ENABLEANTIALIASING,	MF_UNCHECKED);
@@ -117,7 +119,9 @@ static void SoftwareList_Run(struct SmartListView *pListView)
 
 	opts.enable_sound			= GetMenuOption(s_hwndMain, ID_OPTIONS_ENABLESOUND);
 	opts.show_framerate			= GetMenuOption(s_hwndMain, ID_OPTIONS_SHOWFRAMERATE);
+#ifdef MAME_DEBUG
 	opts.show_profiler			= GetMenuOption(s_hwndMain, ID_OPTIONS_SHOWPROFILER);
+#endif
 	opts.enable_flicker			= GetMenuOption(s_hwndMain, ID_OPTIONS_ENABLEFLICKER);
 	opts.enable_translucency	= GetMenuOption(s_hwndMain, ID_OPTIONS_ENABLETRANSLUCENCY);
 	opts.enable_antialias		= GetMenuOption(s_hwndMain, ID_OPTIONS_ENABLEANTIALIASING);
@@ -464,7 +468,9 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 
 				case ID_OPTIONS_ENABLESOUND:
 				case ID_OPTIONS_SHOWFRAMERATE:
+#ifdef MAME_DEBUG
 				case ID_OPTIONS_SHOWPROFILER:
+#endif
 				case ID_OPTIONS_ENABLEANTIALIASING:
 				case ID_OPTIONS_ENABLETRANSLUCENCY:
 				case ID_OPTIONS_ENABLEFLICKER:
