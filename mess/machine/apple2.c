@@ -142,6 +142,7 @@ void apple2_update_memory(void)
 			else if ((meminfo.read_mem & 0xC0000000) == APPLE2_MEM_AUX)
 			{
 				/* auxillary memory */
+				assert(apple2_mem_config.auxmem);
 				offset = meminfo.read_mem & APPLE2_MEM_MASK;
 				rbase = &apple2_mem_config.auxmem[offset];
 			}
@@ -215,6 +216,7 @@ void apple2_update_memory(void)
 			else if ((meminfo.write_mem & 0xC0000000) == APPLE2_MEM_AUX)
 			{
 				/* auxillary memory */
+				assert(apple2_mem_config.auxmem);
 				offset = meminfo.write_mem & APPLE2_MEM_MASK;
 				wbase = &apple2_mem_config.auxmem[offset];
 			}
