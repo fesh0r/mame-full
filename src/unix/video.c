@@ -31,7 +31,6 @@ static int bitmap_depth;
 static int rgb_direct;
 static struct osd_bitmap *scrbitmap = NULL;
 static int debugger_has_focus = 0;
-/*struct sysdep_palette_struct *debug_palette = NULL;*/
 static struct my_rectangle normal_visual;
 static struct my_rectangle debug_visual;
 
@@ -463,7 +462,7 @@ static void osd_change_display_settings(struct my_rectangle *new_visual,
       }
       
       /* only realloc the palette if it has been initialised */
-      if(current_palette)
+      if (current_palette)
       {
          if (sysdep_display_alloc_palette(video_colors_used))
          {
@@ -550,6 +549,7 @@ int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
 {
    int i = 0;
    int r, g, b;
+   int normal_colors;
 
    /* if we have debug pens, map them 1:1 */
    if (debug_pens)
@@ -566,37 +566,44 @@ int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
    {
       if (bitmap_depth == 16)
       {
-         video_colors_used = 32768;
+         normal_colors = 32768;
 
          /* create the normal palette */
          if (!(normal_palette = sysdep_palette_create(bitmap_depth,
-                                                      video_colors_used)))
+                                                      normal_colors)))
+         {
             return 1;
+         }
       }
       else
       {
-         video_colors_used = 2;
+         normal_colors = 2;
 
          /* create the normal palette */
          if (!(normal_palette = sysdep_palette_create(bitmap_depth, 0)))
+         {
             return 1;
+         }
       }
    }
    else
    {
-      video_colors_used = totalcolors + 2;
+      normal_colors = totalcolors + 2;
 
       /* create the normal palette */
       if (!(normal_palette = sysdep_palette_create(bitmap_depth, 
-                                                   video_colors_used)))
+                                                   normal_colors)))
+      {
          return 1;
+      }
    }
+
+   video_colors_used = normal_colors;
 
    /* create the debug palette */
    if (debug_pens)
    {
-      if (!(debug_palette = sysdep_palette_create(bitmap_depth,
-                               DEBUGGER_TOTAL_COLORS)))
+      if (!(debug_palette = sysdep_palette_create(16, DEBUGGER_TOTAL_COLORS)))
       {
          osd_free_colors();
          return 1;
@@ -624,8 +631,12 @@ int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
       sysdep_palette_set_gamma(debug_palette, gamma_correction);
       sysdep_palette_set_brightness(debug_palette, 
          brightness * brightness_paused_adjust);
-      sysdep_palette_set_pen(debug_palette, i, debugger_palette[i * 3],
-         debugger_palette[i * 3 + 1], debugger_palette[i * 3 + 2]);
+
+      for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
+      {
+         sysdep_palette_set_pen(debug_palette, i, debugger_palette[i * 3],
+            debugger_palette[i * 3 + 1], debugger_palette[i * 3 + 2]);
+      }
    }
    
    /* init the palette */
@@ -680,7 +691,7 @@ int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
       /* normal palette */
 
       /* initialize the palette to black */
-      for (i = 0; i < video_colors_used; i++)
+      for (i = 0; i < normal_colors; i++)
       {
          sysdep_palette_set_pen(normal_palette, i, 0, 0, 0);
       }
@@ -866,7 +877,7 @@ void osd_update_video_and_audio(struct osd_bitmap *normal_bitmap,
       if (debugger_has_focus)
          current_bitmap = debug_bitmap;
    }
-   /* this should not happen I guess, but better safe then sorry */
+   /* this should not happen I guess, but better safe than sorry */
    else if (debugger_has_focus)
       osd_debugger_focus(0);
 
