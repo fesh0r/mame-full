@@ -12,12 +12,16 @@ Notes:
 6. NVRAM is saved properly only when calculator is turned off during MESS exiting.
 7. To receive data from TI press "R" immediately after TI starts to send data.
 8. To request screen dump from calculator press "S".
+9. TI-81 have not serial link.
 
 Needed:
 1. Info about ports 3 (bit 2 seems to be allways 0) and 4.
-2. Artworks.
+2. Any info on TI-81 hardware.
+3. ROM dumps of unemulated models.
+4. Artworks.
 
 New:
+15/08/2001 TI-81 kayboard is now mapped as it should be.
 14/08/2001 TI-81 preliminary driver added.
 05/07/2001 Serial communication corrected (transmission works now after reset).
 02/07/2001 Many source cleanups.
@@ -54,17 +58,28 @@ New:
 02/02/2001 Preliminary driver
 
 To do:
-- port 4 and 6
-- better artworks
-- finish TI-86 (link)
-- finish TI-81 (kayboard, port, nvram, etc.)
 - add TI-82, TI-83 and TI-83+ drivers
+
+TI-81:
+- fix port 3 (ON/OFF not works)
+- port 4, 5 and 7
+- artwork
+- nvram;
+
+TI-85:
+- port 4
+- artwork
+
+TI-86:
+- finish port 7
+- artwork
 
 TI-81 memory map
 
 	CPU: Z80 2MHz
 		0000-7fff ROM
-		8000-ffff RAM
+		8000-ffff RAM (?)
+
 TI-85 memory map
 
 	CPU: Z80 6MHz
@@ -89,10 +104,10 @@ TI-81 ports:
 	0: Video buffer offset (write only)
 	1: Keypad
 	2: Contrast (write only)
-	3: ?
-	4: ?
+	3: ON status, LCD power
+	4: Video buffer width, interrupt control (write only)
 	5: ?
-	6: ?
+	6: 
 	7: ?
 
 TI-85 ports:
@@ -130,7 +145,6 @@ PORT_READ_START( ti81_readport )
 	{0x0002, 0x0002, ti85_port_0002_r},
 	{0x0003, 0x0003, ti85_port_0003_r},
 	{0x0004, 0x0004, ti85_port_0004_r},
-	{0x0006, 0x0006, ti85_port_0006_r},
 PORT_END
 
 PORT_WRITE_START( ti81_writeport )
@@ -139,7 +153,6 @@ PORT_WRITE_START( ti81_writeport )
 	{0x0002, 0x0002, ti85_port_0002_w},
 	{0x0003, 0x0003, ti85_port_0003_w},
 	{0x0004, 0x0004, ti85_port_0004_w},
-	{0x0006, 0x0006, ti85_port_0006_w},
 PORT_END
 
 PORT_READ_START( ti85_readport )
@@ -239,50 +252,50 @@ INPUT_PORTS_START (ti81)
 		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "3"     , KEYCODE_3,          IP_JOY_NONE )
 		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "2"     , KEYCODE_2,          IP_JOY_NONE )
 		PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "1"     , KEYCODE_1,          IP_JOY_NONE )
-		PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "STORE" , KEYCODE_TAB,          IP_JOY_NONE )
-		PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F4"    , KEYCODE_F4,         IP_JOY_NONE )
+		PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "STORE" , KEYCODE_TAB,        IP_JOY_NONE )
+		PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "TRACE" , KEYCODE_F4,         IP_JOY_NONE )
 	PORT_START   /* bit 2 */
 		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Right" , KEYCODE_RIGHT,      IP_JOY_NONE )
 		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "-"     , KEYCODE_MINUS,      IP_JOY_NONE )
 		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "6"     , KEYCODE_6,          IP_JOY_NONE )
 		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "5"     , KEYCODE_5,          IP_JOY_NONE )
 		PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "4"     , KEYCODE_4,          IP_JOY_NONE )
-		PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, ","     , KEYCODE_COMMA,      IP_JOY_NONE )
-		PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F3"    , KEYCODE_F3,         IP_JOY_NONE )
+		PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "LN"    , KEYCODE_BACKSLASH,  IP_JOY_NONE )
+		PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ZOOM"  , KEYCODE_F3,         IP_JOY_NONE )
 	PORT_START   /* bit 3 */
 		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Up"    , KEYCODE_UP,         IP_JOY_NONE )
 		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "*"     , KEYCODE_L,          IP_JOY_NONE )
 		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "9"     , KEYCODE_9,          IP_JOY_NONE )
 		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "8"     , KEYCODE_8,          IP_JOY_NONE )
 		PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "7"     , KEYCODE_7,          IP_JOY_NONE )
-		PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "x^2"   , KEYCODE_COLON,      IP_JOY_NONE )
-		PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F2"    , KEYCODE_F2,         IP_JOY_NONE )
+		PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "LOG"   , KEYCODE_QUOTE,      IP_JOY_NONE )
+		PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "RANGE" , KEYCODE_F2,         IP_JOY_NONE )
 	PORT_START   /* bit 4 */
 		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "/"     , KEYCODE_SLASH,      IP_JOY_NONE )
 		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, ")"     , KEYCODE_CLOSEBRACE, IP_JOY_NONE )
 		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "("     , KEYCODE_OPENBRACE,  IP_JOY_NONE )
 		PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "EE"    , KEYCODE_END,        IP_JOY_NONE )
-		PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "LN"    , KEYCODE_BACKSLASH,  IP_JOY_NONE )
-		PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F1"    , KEYCODE_F1,         IP_JOY_NONE )
+		PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "x^2"   , KEYCODE_COLON,      IP_JOY_NONE )
+		PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Y="    , KEYCODE_F1,         IP_JOY_NONE )
 	PORT_START   /* bit 5 */                                                        
 		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "^"     , KEYCODE_P,          IP_JOY_NONE )
 		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "TAN"   , KEYCODE_PGUP,       IP_JOY_NONE )
 		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "COS"   , KEYCODE_HOME,       IP_JOY_NONE )
 		PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SIN"   , KEYCODE_INSERT,     IP_JOY_NONE )
-		PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "LOG"   , KEYCODE_QUOTE,      IP_JOY_NONE )
+		PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "x^-1"  , KEYCODE_COMMA,      IP_JOY_NONE )
 		PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "2nd"   , KEYCODE_LALT,       IP_JOY_NONE )
 	PORT_START   /* bit 6 */
 		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CLEAR" , KEYCODE_PGDN,       IP_JOY_NONE )
-		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CUSTOM", KEYCODE_F9,         IP_JOY_NONE )
+		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "VARS"  , KEYCODE_F9,         IP_JOY_NONE )
 		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "PRGM"  , KEYCODE_F8,         IP_JOY_NONE )
-		PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "STAT"  , KEYCODE_F7,         IP_JOY_NONE )
-		PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "GRAPH" , KEYCODE_F6,         IP_JOY_NONE )
-		PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "EXIT"  , KEYCODE_ESC,        IP_JOY_NONE )
+		PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "MATRX" , KEYCODE_F7,         IP_JOY_NONE )
+		PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "MATH"  , KEYCODE_F6,         IP_JOY_NONE )
+		PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "INS"   , KEYCODE_TILDE,      IP_JOY_NONE )
 	PORT_START   /* bit 7 */
-		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "DEL"   , KEYCODE_DEL,        IP_JOY_NONE )
-		PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "x-VAR" , KEYCODE_LCONTROL,   IP_JOY_NONE )
+		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "MODE"  , KEYCODE_ESC,        IP_JOY_NONE )
+		PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "X|T"   , KEYCODE_X,          IP_JOY_NONE )
 		PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ALPHA" , KEYCODE_CAPSLOCK,   IP_JOY_NONE )
-		PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "MORE"  , KEYCODE_TILDE,      IP_JOY_NONE )
+		PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "DEL"   , KEYCODE_DEL,        IP_JOY_NONE )
 	PORT_START   /* ON */
 		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ON/OFF", KEYCODE_Q,          IP_JOY_NONE )
 INPUT_PORTS_END
@@ -566,7 +579,7 @@ static const struct IODevice io_ti85[] = {
 	1,			/* count */
 	"sav\0",        	/* file extensions */
 	IO_RESET_ALL,		/* reset if file changed */
-        NULL,               	/* id */
+        0,               	/* id */
 	ti85_load_snap,		/* load */
 	ti85_exit_snap,		/* exit */
         NULL,		        /* info */
@@ -586,7 +599,7 @@ static const struct IODevice io_ti85[] = {
 	"85p\085s\085i\085n\085c\085l\085k\085m\085v\085d\085e\085r\085g\085b\0",
 				/* file extensions */
 	IO_RESET_NONE,		/* reset if file changed */
-	NULL,			/* id */
+	0,			/* id */
 	ti85_serial_init,	/* init */
 	ti85_serial_exit,		/* exit */
 	NULL,                   /* info */
@@ -609,7 +622,7 @@ static const struct IODevice io_ti86[] = {
 	1,			/* count */
 	"sav\0",        	/* file extensions */
 	IO_RESET_ALL,		/* reset if file changed */
-        NULL,               	/* id */
+        0,               	/* id */
 	ti85_load_snap,		/* init */
 	ti85_exit_snap,		/* exit */
         NULL,		        /* info */
@@ -629,7 +642,7 @@ static const struct IODevice io_ti86[] = {
 	"86p\086s\086i\086n\086c\086l\086k\086m\086v\086d\086e\086r\086g\0",
 				/* file extensions */
 	IO_RESET_NONE,		/* reset if file changed */
-	NULL,			/* id */
+	0,			/* id */
 	ti85_serial_init,	/* init */
 	ti85_serial_exit,		/* exit */
 	NULL,                   /* info */

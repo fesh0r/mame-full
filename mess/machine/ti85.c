@@ -30,6 +30,10 @@ static UINT8 ti85_LCD_mask;
 static UINT8 ti85_power_mode;
 static UINT8 ti85_keypad_mask;
 
+static UINT8 ti85_video_buffer_width;
+static UINT8 ti85_interrupt_speed;
+static UINT8 ti85_port4_bit0;
+
 static UINT8 *ti86_ram = NULL;
 
 #define	TI85_NONE	0
@@ -377,6 +381,9 @@ WRITE_HANDLER ( ti85_port_0003_w )
 
 WRITE_HANDLER ( ti85_port_0004_w )
 {
+	ti85_video_buffer_width = (data>>3)&0x03;
+	ti85_interrupt_speed = (data>>1)&0x03;
+	ti85_port4_bit0 = data&0x01;
 }
 
 WRITE_HANDLER ( ti85_port_0005_w )
