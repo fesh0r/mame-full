@@ -5,8 +5,8 @@
 //============================================================
 //
 //	registers used by blitter:
-//		R0		source bits
-//		R1		dest bits
+//		R0		dest bits
+//		R1		source bits
 //		R2		palette index
 //		R3		blend register
 //		R4		dest height
@@ -24,8 +24,8 @@
 
 enum
 {
-	RSRC	= 0,
-	RDEST	= 1,
+	RDEST	= 0,
+	RSRC	= 1,
 	RPAL	= 2,
 	RBLEND	= 3,
 	RROWS	= 4,
@@ -262,11 +262,11 @@ void emit_header(struct blitter_params *params)
 
 void emit_footer(struct blitter_params *params)
 {
-	// ldmfd	sp!, {r15, r8, r7, r6, r5, r4}
-	emit_int32(params, AL | 0x08b00000 | (0x10000 * RSP) | 0x81f0);
+	// ldmfd	sp!, {r8, r7, r6, r5, r4}
+	emit_int32(params, AL | 0x08b00000 | (0x10000 * RSP) | 0x01f0);
 
 	// mov		pc, r14
-	//emit_regreg(params, MOV, RPC, RLINK, 0);
+	emit_regreg(params, MOV, RPC, 0, RLINK);
 }
 
 void emit_increment_sourcebits(struct blitter_params *params, INT32 adjustment)
@@ -289,8 +289,8 @@ void emit_copy_pixel(struct blitter_params *params, int pixel_mode, int divisor)
 		// mov	r6, r5, LSL #2
 		emit_regreg_shift(params, MOV, RSC2, 0, RSCH, LSL, 2);
 
-		// ldrh	r5, [r6], r2
-		emit_int32(params, AL | 0x00100000 | (RSC2 << 16) | (RSCH << 12) | 0x000000b0 | (RPAL << 0));
+		// ldrh	r5, [r6 +r2]
+		emit_int32(params, AL | 0x01900000 | (RSC2 << 16) | (RSCH << 12) | 0x000000b0 | (RPAL << 0));
 	}
 
 	switch(divisor) {
@@ -320,8 +320,8 @@ void emit_copy_pixel(struct blitter_params *params, int pixel_mode, int divisor)
 		// fallthrough
 
 	case PIXELMODE_SOLO:
-		// strh	[r1], r5
-		emit_int32(params, AL | 0x00000000 | (RDEST << 16) | (RSCH << 12) | 0x000000b0);
+		// strh	r5, [r1]
+		emit_int32(params, AL | 0x00400000 | (RDEST << 16) | (RSCH << 12) | 0x000000b0);
 		break;
 
 	case PIXELMODE_BEGIN:

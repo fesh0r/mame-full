@@ -43,6 +43,9 @@ WINCE_VERSION		= wce300
 ifeq "$(TARGETCPU)" "ARM"
 WCEPLAT = arm
 endif
+ifeq "$(TARGETCPU)" "THUMB"
+WCEPLAT = thumb
+endif
 ifeq "$(TARGETCPU)" "SH3"
 WCEPLAT = sh3
 endif
