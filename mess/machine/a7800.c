@@ -72,6 +72,16 @@ Versions:
                Changed 53 bit 2, added bit 3
 
 */
+extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
+
+UINT32 a7800_partialcrc(const unsigned char *buf,unsigned int size)
+{
+UINT32 crc;
+if (size < 129) return 0;
+crc = (UINT32) crc32(0L,&buf[128],size-128);
+logerror("A7800 Partial CRC: %08lx %d [%s]\n",crc,size,&buf[1]);
+return crc;
+}
 
 int a7800_id_rom (int id)
 {
@@ -80,7 +90,7 @@ int a7800_id_rom (int id)
     char header[128];
     char tag[] = "ATARI7800";
 
-    logerror("IDROM\n");
+    logerror("A7800 IDROM\n");
     /* If no file was specified, don't bother */
 	if (strlen(gamename) == 0)
 		return ID_FAILED;

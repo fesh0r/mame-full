@@ -28,6 +28,7 @@ extern unsigned char *a7800_cartridge_rom;
 extern void a7800_init_machine(void);
 extern void a7800_stop_machine(void);
 extern int a7800_id_rom (int id);
+extern UINT32 a7800_partialcrc(const unsigned char *,unsigned int);
 extern int a7800_load_rom (int id);
 extern void a7800_exit_rom (int id);
 extern READ_HANDLER  ( a7800_TIA_r );
@@ -329,7 +330,8 @@ static const struct IODevice io_a7800[] = {
         NULL,               /* input */
         NULL,               /* output */
         NULL,               /* input_chunk */
-        NULL                /* output_chunk */
+        NULL,               /* output_chunk */
+	a7800_partialcrc,		    /* partial CRC */
     },
     { IO_END }
 };
