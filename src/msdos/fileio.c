@@ -11,7 +11,7 @@
 #endif
 
 /* Verbose outputs to error.log ? */
-#define VERBOSE 	0
+#define VERBOSE 	1
 
 /* Use the file cache ? */
 #define FILE_CACHE	1
@@ -481,6 +481,7 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 					sprintf(name,"%s/%s",dir_name,filename);
                     if( checksum_file (name, &f->data, &f->length, &f->crc) == 0 )
                     {
+						LOG(("Found '%s'\n", name));
                         f->type = kRAMFile;
                         f->offset = 0;
                         found = 1;
@@ -496,28 +497,22 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 				{
 					sprintf (name, "%s/%s/%s", dir_name, gamename, filename);
 					LOG(("Trying %s file\n", name));
-                    if( filetype == OSD_FILETYPE_ROM )
+					if( checksum_file(name, &f->data, &f->length, &f->crc) == 0 )
 					{
-						if( checksum_file(name, &f->data, &f->length, &f->crc) == 0 )
-						{
-							f->type = kRAMFile;
-							f->offset = 0;
-							found = 1;
-						}
-					}
-					else
-					{
-						f->type = kPlainFile;
-						f->file = fopen (name, "rb");
-						found = f->file != 0;
+						LOG(("Found '%s'\n", name));
+                        f->type = kRAMFile;
+						f->offset = 0;
+						found = 1;
 					}
 				}
 			}
 
-			/* Zip cart support for MESS */
-			if( !found && filetype == OSD_FILETYPE_IMAGE_R )
+			/* Zip cart support for MESS: dir_on_path/game.zip */
+			if( !found )
 			{
-				char *extension = strrchr (name, '.');    /* find extension */
+				char *extension;
+				sprintf (name, "%s/%s", dir_name, filename);
+				extension = strrchr (name, '.');    /* find extension */
 				if( extension )
 					strcpy (extension, ".zip");
 				else
@@ -527,7 +522,7 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 				{
 					if( load_zipped_file(name, filename, &f->data, &f->length) == 0 )
 					{
-						LOG(("Using (osd_fopen) zip file for %s\n", filename));
+						LOG(("Found '%s'\n", name));
 						f->type = kZippedFile;
 						f->offset = 0;
 						f->crc = crc32 (0L, f->data, f->length);
@@ -536,7 +531,32 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 				}
 			}
 
+			/* Zip cart support for MESS: dir_on_path/driver/game.zip */
 			if( !found )
+			{
+				char *extension;
+				sprintf (name, "%s/%s/%s", dir_name, gamename, filename);
+				extension = strrchr (name, '.');    /* find extension */
+				if( extension )
+					strcpy (extension, ".zip");
+				else
+					strcat (name, ".zip");
+				LOG(("Trying %s file\n", name));
+				if( cache_stat(name, &stat_buffer) == 0 )
+				{
+					if( load_zipped_file(name, filename, &f->data, &f->length) == 0 )
+					{
+						LOG(("Found '%s'\n", name));
+						f->type = kZippedFile;
+						f->offset = 0;
+						f->crc = crc32 (0L, f->data, f->length);
+						found = 1;
+					}
+				}
+			}
+
+			/* Zip cart support for MESS: dir_on_path/driver.zip */
+            if( !found )
 			{
 				/* try with a .zip extension */
 				sprintf (name, "%s/%s.zip", dir_name, gamename);
@@ -545,15 +565,17 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 				{
 					if( load_zipped_file(name, filename, &f->data, &f->length) == 0 )
 					{
-						LOG(("Using (osd_fopen) zip file for %s\n", filename));
-						f->type = kZippedFile;
+						LOG(("Found '%s'\n", name));
+                        f->type = kZippedFile;
 						f->offset = 0;
 						f->crc = crc32 (0L, f->data, f->length);
 						found = 1;
 					}
 				}
 			}
-    	}
+			if( found )
+				LOG(("IMAGE_RW %s FOUND in %s!\n", file, name));
+        }
     break; /* end of IMAGE_R */
 
 	case OSD_FILETYPE_IMAGE_RW:
@@ -585,14 +607,14 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 						{
 							sprintf (name, "%s/%s/%s", dir_name, gamename, file);
 							LOG(("Trying %s file\n", name));
-                                                        f->file = fopen (name, write_modes[_write]);
+							f->file = fopen (name, write_modes[_write]);
 							found = f->file != 0;
 							if( !found && _write == 3 )
 							{
 								f->file = fopen(name, write_modes[4]);
 								found = f->file != 0;
-                                                         }
-                                                 }
+							}
+						}
 					}
 
 					/* Steph - Zip disk images support for MESS */
@@ -626,13 +648,13 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 						{
 							sprintf(name,"%s/%s", dir_name, file);
 							LOG(("Trying %s file\n", name));
-                                                        f->file = fopen(name, write_modes[_write]);
+							f->file = fopen(name, write_modes[_write]);
 							found = f->file != 0;
 							if( !found && _write == 3 )
 							{
 								f->file = fopen(name, write_modes[4]);
 								found = f->file != 0;
-                                                         }
+							}
 						}
 					}
 
