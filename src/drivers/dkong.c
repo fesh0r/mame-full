@@ -1193,9 +1193,16 @@ static const struct MachineDriver machine_driver_dkongjr =
 
 static struct NESinterface nes_interface =
 {
+/*
 	2,
 	{ REGION_CPU2, REGION_CPU3 },
 	{ 50, 50 },
+*/
+	2,
+	{ 50, 50 },
+	N2A03_DEFAULTCLOCK,
+	{ NULL, NULL },
+	{ NULL, NULL },
 };
 
 

@@ -145,7 +145,7 @@ enum
 	CPU_M6805,
 #endif
 #if (HAS_M68705)
-	CPU_M68705, /* same as CPU_M6805 */
+	CPU_M68705,	/* same as CPU_M6805 */
 #endif
 #if (HAS_HD63705)
 	CPU_HD63705,	/* M6805 family but larger address space, different stack size */

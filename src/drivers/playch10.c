@@ -457,9 +457,16 @@ static int playch10_interrupt( void ) {
 
 static struct NESinterface nes_interface =
 {
+/*
 	1,
 	{ REGION_CPU2 },
 	{ 50 },
+*/
+	1,
+	{ 50 },
+	N2A03_DEFAULTCLOCK,
+	{ NULL },
+	{ NULL }
 };
 
 static struct DACinterface nes_dac_interface =

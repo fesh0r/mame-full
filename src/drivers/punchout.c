@@ -785,9 +785,16 @@ static struct GfxDecodeInfo armwrest_gfxdecodeinfo[] =
 
 static struct NESinterface nes_interface =
 {
+/*
 	1,
 	{ REGION_CPU2 },
 	{ 50 },
+*/
+	1,
+	{ 50 },
+	N2A03_DEFAULTCLOCK,
+	{ NULL },
+	{ NULL }
 };
 
 /* filename for speech sample files */
