@@ -102,6 +102,9 @@ CORE_OBJDIRS = $(OBJ) \
 	$(OBJ)/mess $(OBJ)/mess/formats $(OBJ)/mess/systems $(OBJ)/mess/machine \
 	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/tools
 
+IMGTOOL_OBJS = $(OBJ)/unix.$(DISPLAY_METHOD)/dirio.o
+IMGTOOL_LIBS = -lz
+INCLUDE_PATH = -Isrc -Imess -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 
 ##############################################################################
 # "Calculate" the final CFLAGS, unix CONFIG, LIBS and OBJS
@@ -283,11 +286,11 @@ $(OBJ)/vidhrdw/vector.o: bla
 doc: doc/xmame-doc.txt doc/x$(TARGET)rc.dist doc/gamelist.$(TARGET) doc/x$(TARGET).6
 
 doc/xmame-doc.txt: doc/xmame-doc.sgml
-	cd doc; \
-	sgml2txt   -l en -p a4 -f          xmame-doc.sgml; \
-	sgml2html  -l en -p a4             xmame-doc.sgml; \
-	sgml2latex -l en -p a4 --output=ps xmame-doc.sgml; \
-	rm -f xmame-doc.lyx~
+	cd doc;
+	sgml2txt   -l en -p a4 -f          xmame-doc.sgml;
+	sgml2html  -l en -p a4             xmame-doc.sgml;
+	sgml2latex -l en -p a4 --output=ps xmame-doc.sgml;
+	rm -f "xmame-doc.lyx~"
 	
 doc/x$(TARGET)rc.dist: all src/unix/xmamerc-keybinding-notes.txt
 	./x$(TARGET).$(DISPLAY_METHOD) -noloadconfig -showconfig | \
