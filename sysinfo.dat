@@ -1070,7 +1070,7 @@ no userport
 
 Video notes
 -----------
-if the game runs to fast with the NTSC version, try the PAL version!
+if the game runs too fast with the NTSC version, try the PAL version!
 flickering affects in one video version, try the other video version
 
 
@@ -1602,7 +1602,7 @@ Gameport B supports paddles 3 & 4, joystick 2
 If you run into difficulty, be sure to start the emulation with the -log switch, and look into
 the error.log file that is created in your mess directory.
 
-If the game runs to fast with the NTSC version, try the PAL version! (c64pal)
+If the game runs too fast with the NTSC version, try the PAL version! (c64pal)
 
 
 Known Issues:
@@ -2152,7 +2152,7 @@ First off, also read the history for the Color Computer and Color Computer 2 dri
 of the information there also applies to this driver.
 
 Besides fully emulating the Color Computer 3 this driver also contains some extras. It contains
-two different real time clocks. Currently they can be set under the 'DIP switches". The two
+two different real time clocks. Currently they can be set under the "DIP switches". The two
 types are Disto and Cloud-9.
 
 Disto Real Time Clock:
@@ -4321,120 +4321,6 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
-$info=nc
-$bio
-Amstrad NC100 Notepad computer
-
-
-The Amstrad NC100 Notepad computer is a portable computer.
-
-This system has a LCD screen and nice keyboard. The memory is
-protected by a lithium battery which is charged when the computer
-is connected to a mains supply.
-
-PCMCIA ram cards can be used to store programs and documents.
-
-The computer has a built in wordprocessor, BBC Basic, Serial Terminal,
-Calculator, Diary and more. The whole system is a personal organiser with lots
-of extras.
-
-Mess Emulation State
---------------------
-
-a. ACCURACY
------------
-
-The emulation is reasonably accurate. I have used NCIOSPEC.TXT published by Cliff
-Lawson at Amstrad to write the driver. Unfortunately this document does not describe
-undocumented hardware features, so at this time, any programs relying on undocumented
-behaviour will not work well. I am currently looking for NC owners (especially NC150
-owners) to run some tests for me.
-
-a. PRINTER
-----------
-
-Printer emulation is working. All data is saved out to a file on the host filesystem.
-The data is not processed in any way, so the file will contain the raw bytes output
-to the printer port.
-
-b. PCMCIA RAM CARD
-------------------
-
-The NC100 supports a PCMCIA Ram card up to 1mb in size. 
-
-The emulator supports all ram card operations: reading, writing, formatting
-and write enable/write protect.
-
-It also supports ram cards of all sizes (128k, 256k, 512k and 1mb).
-
-The file format of a ram card is a simple memory dump; there are no headers or 
-other information stored in the file.
-
-If files have been saved onto the ram card by the emulation, then the file
-on the host filesystem will be updated (the update will happen when MESS is exited,
-or a new card is inserted).
-
-Use imgtool to create blank cards, and to put/get files to the card image.
-At this time, only 1mb cards can be created and there is no support to create unformatted
-or executable cards.
-
-Do not forget to insert memory card (as "Cartridge"), and if you want to write files
-to it make sure it is write enabled (see dipswitches in UI).
-
-imgtool create nccard <card name>
-	Create a blank formatted memory card. The NC100 can write files to this.
-
-	You can view the files by:
-		1. Pressing FUNCTION + B to enter BASIC, then typing "*." at the ">"
-		prompt.
-		2. Enter wordprocessor menu and select list files.
-	
-imgtool put nccard <card name> <host filesystem name> <nc100 name>
-	Put a file from the host filesystem (e.g. PC harddrive) to the nc memory card.
-	The file will be cut if it is larger than 64k (64k is the maximum file size
-	supported by the nc100 filesystem).
-
-	At this time, all files are assumed to be ASCII. There is no support to put binary
-	or BASIC files.
-
-imgtool get nccard <card name> <nc100 name> <host filesystem name>
-	Get a file from the nc memory card to the host filesystem. Files are always
-	saved as binary regardless of file type on memory card.
-
-imgtool dir nccard <card name>
-	Show a directory listing of the memory card.
-
-imgtool del nccard <card name> <nc100 name>
-	Delete a file from the memory card
-
-
-c. SERIAL
----------
-
-Serial is mostly working. 
-
-MESS does not have a UI to change the serial device transmit/receive properties, so at 
-this time it is fixed to: 9600 baud, 8 data bits, 1 stop bit, no parity for the NC100
-driver.
-
-At this time, the serial device only supports a simple protocol. (Each byte is transmitted
-in a basic serial form, with start bits, data bits, parity and stop bits).
-
-In the future the serial device will support xmodem and xmodem send/receive will then
-work in the emulation.
-
-Notes
-=====
-
-Links:
-
-http://genesis8.free.fr/
-http://www.ncus.org.uk/
-
-$end
-
-#---------------------------------------------------------------------------------------------#
-
 $info=nc100
 $bio
 Amstrad NC100 Notepad computer
@@ -4449,7 +4335,7 @@ is connected to a mains supply.
 PCMCIA ram cards can be used to store programs and documents.
 
 The computer has a built in wordprocessor, BBC Basic, Serial Terminal,
-Calculator, Diary and more. The whole system is a personal organizer with lots
+Calculator, Diary and more. The whole system is a personal organiser with lots
 of extras.
 
 Mess Emulation State
@@ -6560,25 +6446,6 @@ build in rom expects selection of game
 without printing something to screen! (keys 1 to 5)
 
 
-Emulators
----------
-Paul Robson's stem for DOS at www.classicgaming.com/studio2
-
-
-Mess Emulation State
---------------------
-no support for st2 cartridges
-
-
-$end
-
-#---------------------------------------------------------------------------------------------#
-
-$info=studio2
-$bio
-RCA Studio 2
-
-
 2 Keypads: Player 1 left, Player 2 right
 
 Keypads have following Layout
@@ -6586,6 +6453,7 @@ Keypads have following Layout
  4 5 6
  7 8 9
    0
+
 
 The console has 5 Built in programs. Without a cartridge inserted, the screen stays black 
 after turning on. Player 1 selects game.
@@ -6595,6 +6463,17 @@ after turning on. Player 1 selects game.
 3 Bowling, working
 4 Rally, not working now
 5 Math (calculate the sum of the 3 digits, and enter it), working
+
+
+Emulators
+---------
+Paul Robson's stem for DOS at www.classicgaming.com/studio2
+
+
+Mess Emulation State
+--------------------
+no support for st2 cartridges
+
 
 $end
 
