@@ -481,7 +481,7 @@ int win_init_window(void)
 	if (!win_video_window)
 		return 1;
 
-	wince_add_button(TEXT("Exit"), 0, 300, 80, 20, IPT_UI_CANCEL);
+	//wince_add_button(TEXT("Exit"), 0, 300, 80, 20, IPT_UI_CANCEL);
 
 	// possibly create the debug window, but don't show it yet
 	if (options.mame_debug)

@@ -3421,66 +3421,75 @@ void CLIB_DECL usrintf_showmessage_secs(int seconds, const char *text,...)
 	messagecounter = seconds * Machine->drv->frames_per_second;
 }
 
+#ifdef MESS
+#ifdef SUPPRESS_UI_WARNING
+#define HAVE_UI_WARNING 0
+#else
+#define HAVE_UI_WARNING 1
+#endif
+#endif /* MESS */
+
 int handle_user_interface(struct osd_bitmap *bitmap)
 {
 	static int show_profiler;
 	int request_loadsave = LOADSAVE_NONE;
 #ifdef MESS   
 	static int mess_pause_for_ui = 0;
+	static int ui_posted_press;
 #endif	
 
 #ifdef MESS
-if (Machine->gamedrv->flags & GAME_COMPUTER)
-{
-	static int ui_active = 0, ui_toggle_key = 0;
-	static int ui_display_count = 4 * 60;
+	if (Machine->gamedrv->flags & GAME_COMPUTER)
+	{
+		static int ui_active = 0, ui_toggle_key = 0;
+		static int ui_display_count = 4 * 60;
 
-	if( input_ui_pressed(IPT_UI_TOGGLE_UI) )
-	{
-		if( !ui_toggle_key )
+		if( input_ui_pressed(IPT_UI_TOGGLE_UI) )
 		{
-			ui_toggle_key = 1;
-			ui_active = !ui_active;
-			ui_display_count = 4 * 60;
-			schedule_full_refresh();
-		 }
-	}
-	else
-	{
-		ui_toggle_key = 0;
-	}
-
-	if( ui_active )
-	{
-		if( ui_display_count > 0 )
-		{
-			ui_displaymessagewindow(bitmap, "Keyboard Emulation Status\n"\
-											"-------------------------\n"\
-											"Mode: PARTIAL Emulation\n"\
-											"UI:   ENABLED\n"\
-											"-------------------------\n"\
-											"**Use SCRLOCK to toggle**\n");
-			if( --ui_display_count == 0 )
+			if( !ui_toggle_key )
+			{
+				ui_toggle_key = 1;
+				ui_active = !ui_active;
+				ui_display_count = 4 * 60;
 				schedule_full_refresh();
+			 }
+		}
+		else
+		{
+			ui_toggle_key = 0;
+		}
+
+		if( ui_active )
+		{
+			if( HAVE_UI_WARNING && ui_display_count > 0 )
+			{
+				ui_displaymessagewindow(bitmap, "Keyboard Emulation Status\n"\
+												"-------------------------\n"\
+												"Mode: PARTIAL Emulation\n"\
+												"UI:   ENABLED\n"\
+												"-------------------------\n"\
+												"**Use SCRLOCK to toggle**\n");
+				if( --ui_display_count == 0 )
+					schedule_full_refresh();
+			}
+		}
+		else
+		{
+			if( HAVE_UI_WARNING && ui_display_count > 0 )
+			{
+				ui_displaymessagewindow(bitmap, "Keyboard Emulation Status\n"\
+												"-------------------------\n"\
+												"Mode: FULL Emulation\n"\
+												"UI:   DISABLED\n"\
+												"-------------------------\n"\
+												"**Use SCRLOCK to toggle**\n");
+
+				if( --ui_display_count == 0 )
+					schedule_full_refresh();
+			}
+			return 0;
 		}
 	}
-	else
-	{
-		if( ui_display_count > 0 )
-		{
-			ui_displaymessagewindow(bitmap, "Keyboard Emulation Status\n"\
-											"-------------------------\n"\
-											"Mode: FULL Emulation\n"\
-											"UI:   DISABLED\n"\
-											"-------------------------\n"\
-											"**Use SCRLOCK to toggle**\n");
-
-			if( --ui_display_count == 0 )
-				schedule_full_refresh();
-		}
-		return 0;
-	}
-}
 #endif
 
 	/* if the user pressed F12, save the screen to a file */
