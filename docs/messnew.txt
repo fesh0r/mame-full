@@ -19,6 +19,8 @@ System Driver Changes:
 - [APPLE2] Driver will now accept .dsk images with up to eight extraneous
   bytes.  (bug #638) [Nate Woods]
 
+- [COCO] Added support for The Rat graphics mouse.  (bug #639)  [Tim Lindner]
+
 
 
 User Interface Changes:

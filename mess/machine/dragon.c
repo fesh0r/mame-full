@@ -935,6 +935,7 @@ double read_joystick(int joyport)
 #define JOYSTICKMODE_NORMAL			0x00
 #define JOYSTICKMODE_HIRES			0x10
 #define JOYSTICKMODE_HIRES_CC3MAX	0x30
+#define JOYSTICKMODE_RAT			0x20
 
 #define joystick_mode()	(readinputport(12) & 0x30)
 
@@ -1158,8 +1159,10 @@ static int keyboard_r(void)
 {
 	int porta = 0x7f;
 	int joyport;
+	const char *joyport_tag;
 	int joyval;
-
+	static const int joy_rat_table[] = {15, 24, 42, 33 };
+	
 	if ((input_port_0_r(0) | pia0_pb) != 0xff) porta &= ~0x01;
 	if ((input_port_1_r(0) | pia0_pb) != 0xff) porta &= ~0x02;
 	if ((input_port_2_r(0) | pia0_pb) != 0xff) porta &= ~0x04;
@@ -1169,13 +1172,23 @@ static int keyboard_r(void)
 	if ((input_port_6_r(0) | pia0_pb) != 0xff) porta &= ~0x40;
 
 
-	if (!joystick && (joystick_mode() != JOYSTICKMODE_NORMAL)) {
+	if (joystick_mode() == JOYSTICKMODE_RAT)
+	{
+		/* The RAT graphic mouse */
+		joyport_tag = joystick_axis ? "rat_mouse_y" : "rat_mouse_x";
+		joyval = readinputportbytag(joyport_tag);
+
+		if ((d_dac >> 2) <= joy_rat_table[joyval])
+			porta |= 0x80;
+	}
+	else if (!joystick && (joystick_mode() != JOYSTICKMODE_NORMAL))
+	{
 		/* Hi res joystick */
 		if (joystick_axis ? coco_hiresjoy_ry() : coco_hiresjoy_rx())
 			porta |= 0x80;
-
 	}
-	else {
+	else
+	{
 		/* Normal joystick */
 		joyport = joystick ? (joystick_axis ? JOYSTICK_LEFT_Y : JOYSTICK_LEFT_X) : (joystick_axis ? JOYSTICK_RIGHT_Y : JOYSTICK_RIGHT_X);
 		joyval = (read_joystick(joyport) * 64.0) - 1.0;
