@@ -341,7 +341,7 @@ $(OBJ)/cbmshare.a: \
 	  $(OBJ)/mess/machine/cbmdrive.o \
 	  $(OBJ)/mess/machine/vc1541.o	 \
 	  $(OBJ)/mess/machine/cbmieeeb.o \
-	  $(OBJ)/mess/machine/c1551.o	 \
+	  $(OBJ)/mess/machine/cbmserb.o	 \
 	  $(OBJ)/mess/machine/vc20tape.o \
 	  $(OBJ)/mess/vidhrdw/vic6567.o  \
 	  $(OBJ)/mess/machine/c64.o	 \
@@ -740,8 +740,8 @@ mess/makedep/makedep$(EXE): $(wildcard mess/makedep/*.c) $(wildcard mess/makedep
 	make -Cmess/makedep
 
 src/$(NAME).dep depend: mess/makedep/makedep$(EXE) src/$(TARGET).mak src/rules.mak src/core.mak
-	mess/makedep/makedep$(EXE) -f - -p$(NAME).obj/ -q -- $(INCLUDE_PATH) -- src/*.c \
-	src/cpu/*/*.c src/sound/*.c mess/systems/*.c mess/machine/*.c mess/vidhrdw/*.c mess/sndhrdw/*.c \
+	mess/makedep/makedep$(EXE) -f - -p$(NAME).obj/ -DMESS -q -- $(INCLUDE_PATH) -- src/*.c \
+	src/cpu/*/*.c src/sound/*.c mess/systems/*.c* mess/machine/*.c* mess/vidhrdw/*.c* mess/sndhrdw/*.c* \
 	mess/tools/*.c mess/formats/*.c mess/messroms/*.c >src/$(NAME).dep
 
 ## uncomment the following line to include dependencies
