@@ -1,8 +1,7 @@
 /******************************************************************************
 	BBC Model A,B
 
-	BBC Model B Plus is still very much WIP. Very little of the extra
-	memory as been added correctly
+	BBC Model B Plus
 
 	MESS Driver By:
 
@@ -17,7 +16,6 @@
 #include "machine/6522via.h"
 #include "includes/upd7002.h"
 #include "includes/basicdsk.h"
-
 
 
 /******************************************************************************
@@ -42,210 +40,6 @@ read:
 &C0-&DF uPD7002 		Analogue to digital converter	32 ( 4 bytes x	8 ) 1Mhz
 &E0-&FF Tube ULA		Tube system interface			32 (32 bytes x  1 ) 2Mhz
 ******************************************************************************/
-
-/* for the model A just address the 4 on board ROM sockets */
-static WRITE_HANDLER ( page_selecta_w )
-{
-	cpu_setbank(3,memory_region(REGION_USER1)+((data&0x03)<<14));
-}
-
-/* for the model B address all 16 of the ROM sockets */
-static WRITE_HANDLER ( page_selectb_w )
-{
-	cpu_setbank(3,memory_region(REGION_USER1)+((data&0x0f)<<14));
-}
-
-
-static WRITE_HANDLER ( memory_w )
-{
-	memory_region(REGION_CPU1)[offset]=data;
-
-	// this array is set so that the video emulator know which addresses to redraw
-	vidmem[offset]=1;
-}
-
-
-/* functions to return reads to empty hardware addresses */
-
-static READ_HANDLER ( BBC_NOP_00_r )
-{
-	return 0x00;
-}
-
-static READ_HANDLER ( BBC_NOP_FE_r )
-{
-	return 0xFE;
-}
-
-static READ_HANDLER ( BBC_NOP_FF_r )
-{
-	return 0xFF;
-}
-
-
-
-/****************************************/
-/* BBC B Plus memory handling function */
-/****************************************/
-
-static int pagedRAM=0;
-static int vdusel=0;
-static int rombankselect=0;
-/* the model B plus addresses all 16 of the ROM sockets plus the extra 12K of ram at 0x8000
-   and 20K of shadow ram at 0x3000 */
-static WRITE_HANDLER ( page_selectbp_w )
-{
-	if ((offset&0x04)==0)
-	{
-		logerror("write to rom pal $%04X  $%02X\n",offset,data);
-		pagedRAM=(data&0x80)>>7;
-		rombankselect=data&0x0f;
-
-		if (pagedRAM)
-		{
-			/* if paged ram then set 8000 to afff to read from the ram 8000 to afff */
-			cpu_setbank(3,memory_region(REGION_CPU1)+0x8000);
-		} else {
-			/* if paged rom then set the rom to be read from 8000 to afff */
-			cpu_setbank(3,memory_region(REGION_USER1)+(rombankselect<<14));
-		};
-
-		/* set the rom to be read from b000 to bfff */
-		cpu_setbank(4,memory_region(REGION_USER1)+(rombankselect<<14)+0x03000);
-	}
-	else
-	{
-		//the video display should now use this flag to display the shadow ram memory
-		vdusel=(data&0x80)>>7;
-		bbcbp_setvideoshadow(vdusel);
-		//need to make the video display do a full screen refresh for the new memory area
-	}
-}
-
-
-/* write to the normal memory from 0x0000 to 0x2fff
-   the writes to this memory are just done the normal
-   way */
-
-static WRITE_HANDLER ( memorybp0_w )
-{
-	memory_region(REGION_CPU1)[offset]=data;
-
-	// this array is set so that the video emulator know which addresses to redraw
-	vidmem[offset]=1;
-}
-
-
-/*  this function should return true if
-	the instruction is in the VDU driver address ranged
-	these are set when:
-	PC is in the range c000 to dfff
-	or if pagedRAM set and PC is in the range a000 to afff
-*/
-int vdudriverset(void)
-{
-	int PC;
-	PC=m6502_get_pc(); // this needs to be set to the 6502 program counter
-	return (((PC>=0xc000) && (PC<=0xdfff)) || ((pagedRAM) && ((PC>=0xa000) && (PC<=0xafff))));
-}
-
-/* the next two function handle reads and write to the shadow video ram area
-   between 0x3000 and 0x7fff
-
-   when vdusel is set high the video display uses the shadow ram memory
-   the processor only reads and write to the shadow ram when vdusel is set
-   and when the instruction being executed is stored in a set range of memory
-   addresses known as the VDU driver instructions.
-*/
-
-
-READ_HANDLER ( memorybp1_r )
-{
-	if (vdusel==0)
-	{
-		// not in shadow ram mode so just read normal ram
-		return memory_region(REGION_CPU1)[offset+0x3000];
-	} else {
-		if (vdudriverset())
-		{
-			// if VDUDriver set then read from shadow ram
-			return memory_region(REGION_CPU1)[offset+0xb000];
-		} else {
-			// else read from normal ram
-			return memory_region(REGION_CPU1)[offset+0x3000];
-		}
-	}
-}
-
-static WRITE_HANDLER ( memorybp1_w )
-{
-	if (vdusel==0)
-	{
-		// not in shadow ram mode so just write to normal ram
-		memory_region(REGION_CPU1)[offset+0x3000]=data;
-		vidmem[offset+0x3000]=1;
-	} else {
-		if (vdudriverset())
-		{
-			// if VDUDriver set then write to shadow ram
-			memory_region(REGION_CPU1)[offset+0xb000]=data;
-			vidmem[offset+0xb000]=1;
-		} else {
-			// else write to normal ram
-			memory_region(REGION_CPU1)[offset+0x3000]=data;
-			vidmem[offset+0x3000]=1;
-		}
-	}
-}
-
-
-/* if the pagedRAM is set write to RAM between 0x8000 to 0xafff
-otherwise this area contains ROM so no write is required */
-static WRITE_HANDLER ( memorybp3_w )
-{
-	if (pagedRAM)
-	{
-		memory_region(REGION_CPU1)[offset+0x8000]=data;
-	}
-}
-
-
-/* the BBC B plus 128K had extra ram mapped in replacing the
-rom bank 0,1,c and d.
-The function memorybp3_128_w handles memory writes from 0x8000 to 0xafff
-which could either be sideways ROM, paged RAM, or sideways RAM.
-The function memorybp4_128_w handles memory writes from 0xb000 to 0xbfff
-which could either be sideways ROM or sideways RAM */
-
-
-unsigned short bbc_b_plus_sideways_ram_banks[16]=
-{
-	1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0
-};
-
-
-static WRITE_HANDLER ( memorybp3_128_w )
-{
-	if (pagedRAM)
-	{
-		memory_region(REGION_CPU1)[offset+0x8000]=data;
-	}
-	else
-	{
-		if (bbc_b_plus_sideways_ram_banks[rombankselect])
-		{
-			memory_region(REGION_USER1)[offset+(rombankselect<<14)]=data;
-		}
-	}
-}
-
-static WRITE_HANDLER ( memorybp4_128_w )
-{
-	if (bbc_b_plus_sideways_ram_banks[rombankselect])
-	{
-		memory_region(REGION_USER1)[offset+(rombankselect<<14)+0x3000]=data;
-	}
-}
 
 
 static MEMORY_READ_START(readmem_bbca)
@@ -474,6 +268,430 @@ static MEMORY_WRITE_START(writemem_bbcbp128)
 MEMORY_END
 
 
+/***************/
+/* bbc TUBE    */
+/***************/
+// This code can live here right now but will get turned into a fully generic TUBE driver (in its own file) when it is working
+// This tube code is very much WIP right now.
+
+
+UINT8  r1ph[24];
+UINT8  r1ph_top=0;
+UINT8  r1ph_bottom=0;
+UINT8  r1ph_da=0;
+UINT8  r1ph_nf=1;
+
+UINT8  r1hp[1];
+UINT8  r1hp_top=0;
+UINT8  r1hp_bottom=0;
+UINT8  r1hp_da=0;
+UINT8  r1hp_nf=1;
+UINT8  r1hp_p=0;
+UINT8  r1hp_v=0;
+UINT8  r1hp_m=0;
+UINT8  r1hp_j=0;
+UINT8  r1hp_i=0;
+UINT8  r1hp_q=0;
+
+
+UINT8  r2ph[1];
+UINT8  r2ph_top=0;
+UINT8  r2ph_bottom=0;
+UINT8  r2ph_da=0;
+UINT8  r2ph_nf=1;
+
+UINT8  r2hp[1];
+UINT8  r2hp_top=0;
+UINT8  r2hp_bottom=0;
+UINT8  r2hp_da=0;
+UINT8  r2hp_nf=1;
+
+UINT8  r3ph[2];
+UINT8  r3ph_top=0;
+UINT8  r3ph_bottom=0;
+UINT8  r3ph_da=0;
+UINT8  r3ph_nf=1;
+
+UINT8  r3hp[2];
+UINT8  r3hp_top=0;
+UINT8  r3hp_bottom=0;
+UINT8  r3hp_da=0;
+UINT8  r3hp_nf=1;
+
+UINT8  r4ph[1];
+UINT8  r4ph_top=0;
+UINT8  r4ph_bottom=0;
+UINT8  r4ph_da=0;
+UINT8  r4ph_nf=1;
+
+UINT8  r4hp[1];
+UINT8  r4hp_top=0;
+UINT8  r4hp_bottom=0;
+UINT8  r4hp_da=0;
+UINT8  r4hp_nf=1;
+
+int    r1irq=0;
+int    r3nmi=0;
+int    r4irq=0;
+
+static WRITE_HANDLER ( tube_port_a_w )
+{
+	switch (offset&0x7)
+	{
+	case 0:
+		logerror("Port A write to R1STAT %02X\n",data);
+		//r1hp_da=(data>>7)|1;
+		//r1hp_nf=(data>>6)|1;
+		r1hp_p =(data>>5)|1;
+		r1hp_v =(data>>4)|1;
+		r1hp_m =(data>>3)|1;
+		r1hp_j =(data>>2)|1;
+		r1hp_i =(data>>1)|1;
+		r1hp_q =(data>>0)|1;
+		break;
+	case 1:
+		logerror("Port A write to R1DATA %02X\n",data);
+		exit(1);
+		break;
+	case 2:
+		logerror("Port A write to R2STAT %02X\n",data);
+		exit(1);
+		break;
+	case 3:
+		logerror("Port A write to R2DATA %02X\n",data);
+		exit(1);
+		break;
+	case 4:
+		logerror("Port A write to R3STAT %02X\n",data);
+		exit(1);
+		break;
+	case 5:
+		if (r3hp_nf)
+		{
+			logerror("Port A write to R3DATA %02X\n",data);
+			r3hp[r3hp_top]=data;
+			r3hp_top=(r3hp_top+1)%1;
+			r3hp_da=1;
+			if (r3hp_top==r3hp_bottom) r3hp_nf=0;
+
+			if (r1hp_m && (r3nmi==0)) {
+				r3nmi=1;
+				cpu_set_irq_line(1, M6502_INT_NMI, r3nmi);
+			}
+		} else {
+			logerror("Port A write to R3DATA on full buffer %02X\n",data);
+			r3hp[r3hp_top]=data;
+			r3hp_top=(r3hp_top+1)%1;
+			r3hp_da=1;
+			if (r3hp_top==r3hp_bottom) r3hp_nf=0;
+
+			if (r1hp_m && (r3nmi==0)) {
+				r3nmi=1;
+				cpu_set_irq_line(1, M6502_INT_NMI, r3nmi);
+			}
+		}
+		break;
+	case 6:
+		logerror("Port A write to R4STAT %02X\n",data);
+		exit(1);
+		break;
+	case 7:
+		logerror("Port A write to R4DATA %02X\n",data);
+		if (r4hp_nf)
+		{
+			r4hp[r4hp_top]=data;
+			r4hp_top=(r4hp_top+1)%1;
+			r4hp_da=1;
+			if (r4hp_top==r4hp_bottom) r4hp_nf=0;
+
+			if (r1hp_j) {
+				r4irq=1;
+				cpu_set_irq_line(1, M6502_INT_IRQ, r1irq|r4irq);
+			}
+		} else {
+			logerror("Port A write to R4DATA on full buffer\n");
+			exit(1);
+		}
+		break;
+	};
+}
+
+static READ_HANDLER ( tube_port_a_r )
+{
+	UINT8 retval=0x00;
+
+	switch (offset&0x7)
+	{
+	case 0:
+		logerror("Port A read from R1STAT\n");
+		retval=(r1ph_da<<7) | (r1hp_nf<<6) | 0x3f;
+		break;
+	case 1:
+		logerror("Port A read from R1DATA\n");
+		if (r1ph_da)
+		{
+			retval=r1ph[r1ph_bottom];
+			r1ph_bottom=(r1ph_bottom+1)%24;
+			r1ph_nf=1;
+			if (r1ph_top==r1ph_bottom) r1ph_da=0;
+		} else {
+			logerror("Port A read from R1DATA on empty buffer\n");
+			exit(1);
+		}
+
+		break;
+	case 2:
+		logerror("Port A read from R2STAT\n");
+		exit(1);
+		break;
+	case 3:
+		logerror("Port A read from R2DATA\n");
+		exit(1);
+		break;
+	case 4:
+		logerror("Port A read from R3STAT\n");
+		exit(1);
+		break;
+	case 5:
+		logerror("Port A read from R3DATA\n");
+		exit(1);
+		break;
+	case 6:
+		logerror("Port A read from R4STAT\n");
+		retval=(r4ph_da<<7) | (r4hp_nf<<6) | 0x3f;
+		break;
+	case 7:
+		logerror("Port A read from R4DATA\n");
+		exit(1);
+		break;
+	};
+	logerror("returning %02X\n",retval);
+	return retval;
+}
+
+
+static WRITE_HANDLER ( tube_port_b_w )
+{
+	switch (offset&0x7)
+	{
+	case 0:
+		logerror("Port B write to R1STAT %02X\n",data);
+		exit(1);
+		break;
+	case 1:
+		logerror("Port B write to R1DATA %02X\n",data);
+		if (r1ph_nf)
+		{
+			r1ph[r1ph_top]=data;
+			r1ph_top=(r1ph_top+1)%24;
+			r1ph_da=1;
+			if (r1ph_top==r1ph_bottom) r1ph_nf=0;
+		} else {
+			logerror("Port B write to R1DATA on full buffer\n");
+			exit(1);
+		}
+		break;
+	case 2:
+		logerror("Port B write to R2STAT %02X\n",data);
+		exit(1);
+		break;
+	case 3:
+		logerror("Port B write to R2DATA %02X\n",data);
+		exit(1);
+		break;
+	case 4:
+		logerror("Port B write to R3STAT %02X\n",data);
+		exit(1);
+		break;
+	case 5:
+		logerror("Port B write to R3DATA %02X\n",data);
+		exit(1);
+		break;
+	case 6:
+		logerror("Port B write to R4STAT %02X\n",data);
+		exit(1);
+		break;
+	case 7:
+		logerror("Port B write to R4DATA %02X\n",data);
+		exit(1);
+		break;
+	};
+}
+
+
+static READ_HANDLER ( tube_port_b_r )
+{
+	UINT8 retval=0x00;
+
+	switch (offset&0x7)
+	{
+	case 0:
+		logerror("Port B read from R1STAT\n");
+		retval=(r1hp_da<<7) | (r1ph_nf<<6) | 0x3f;
+		break;
+	case 1:
+		logerror("Port B read from R1DATA\n");
+		exit(1);
+		break;
+	case 2:
+		logerror("Port B read from R2STAT\n");
+		retval=(r2hp_da<<7) | (r2ph_nf<<6) | 0x3f;
+		break;
+	case 3:
+		logerror("Port B read from R2DATA\n");
+		exit(1);
+		break;
+	case 4:
+		logerror("Port B read from R3STAT\n");
+		retval=(r3hp_da<<7) | (r3ph_nf<<6) | 0x3f;
+		break;
+	case 5:
+		if (r3hp_da)
+		{
+			logerror("Port B read from R3DATA\n");
+
+			retval=r3hp[r3hp_bottom];
+			r3hp_bottom=(r3hp_bottom+1)%1;
+			r3hp_nf=1;
+			if (r3hp_top==r3hp_bottom) r3hp_da=0;
+			if (r3nmi==1)
+			{
+				r3nmi=0;
+				cpu_set_irq_line(1, M6502_INT_NMI, r3nmi);
+			}
+		} else {
+			logerror("Port B read from R3DATA on empty buffer\n");
+			retval=r3hp[r3hp_bottom];
+			if (r3nmi==1)
+			{
+				r3nmi=0;
+				cpu_set_irq_line(1, M6502_INT_NMI, r3nmi);
+			}
+		}
+		break;
+	case 6:
+		logerror("Port B read from R4STAT\n");
+		retval=(r4hp_da<<7) | (r4ph_nf<<6) | 0x3f;
+		break;
+	case 7:
+		if (r4hp_da)
+		{
+			logerror("Port B read from R4DATA\n");
+
+			retval=r4hp[r4hp_bottom];
+			r4hp_bottom=(r4hp_bottom+1)%1;
+			r4hp_nf=1;
+			if (r4hp_top==r4hp_bottom) r4hp_da=0;
+			if (r4irq==1)
+			{
+				r4irq=0;
+				cpu_set_irq_line(1, M6502_INT_IRQ, r1irq|r4irq);
+			}
+		} else {
+			logerror("Port B read from R4DATA on empty buffer\n");
+			exit(1);
+		}
+		break;
+	};
+
+	logerror("returning %02X\n",retval);
+	return retval;
+}
+
+
+/******************************************************/
+/* Starting to look at adding a 6502 second processor */
+/******************************************************/
+
+//the 6502 second processor emulation is more or less complete with this,
+//I just need to write the TUBE driver now
+
+//initially the rom is mapped in for read cycles when A15 is high
+//the first read or write to the tube maps the rom out leaving only the ram accessable
+//the first access to the tube is a read, so the map out code is only implemented in the read function
+
+
+
+
+static READ_HANDLER ( bbcs_tube_r )
+{
+
+	if (startbank)
+	{
+		cpu_setbank(5,memory_region(REGION_CPU2)+0xf000);
+		startbank=0;
+	}
+	return tube_port_b_r( offset );
+}
+
+
+
+/* now add a bbc B with the Tube Connected */
+
+static MEMORY_READ_START(readmem_bbcbtube)
+	{ 0x0000, 0x7fff, MRA_RAM		   },
+	{ 0x8000, 0xbfff, MRA_BANK3 	   },
+	{ 0xc000, 0xfbff, MRA_BANK2		   },
+	{ 0xfc00, 0xfdff, BBC_NOP_FF_r	   },  /* FRED & JIM Pages */
+										   /* Shiela Address Page &fe00 - &feff 				   */
+	{ 0xfe00, 0xfe07, BBC_6845_r	   },  /* &00-&07  6845 CRTC	 Video controller			   */
+	{ 0xfe08, 0xfe0f, BBC_NOP_00_r	   },  /* &08-&0f  6850 ACIA	 Serial Controller			   */
+	{ 0xfe10, 0xfe17, BBC_NOP_00_r	   },  /* &10-&17  Serial ULA	 Serial system chip 		   */
+	{ 0xfe18, 0xfe1f, BBC_NOP_00_r	   },  /* &18-&1f  INTOFF/STATID ECONET Interrupt Off / ID No. */
+	{ 0xfe20, 0xfe2f, BBC_NOP_00_r	   },  /* &20-&2f  INTON         ECONET Interrupt On		   */
+	{ 0xfe30, 0xfe3f, BBC_NOP_FE_r	   },  /* &30-&3f  NC    		 Not Connected		 		   */
+	{ 0xfe40, 0xfe5f, via_0_r		   },  /* &40-&5f  6522 VIA 	 SYSTEM VIA 				   */
+	{ 0xfe60, 0xfe7f, via_1_r		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
+	{ 0xfe80, 0xfe9f, bbc_wd1770_read  },  /* &80-&9f  1770 FDC      Floppy disc controller 	   */
+	{ 0xfea0, 0xfebf, BBC_NOP_FE_r	   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
+	{ 0xfec0, 0xfedf, uPD7002_r  	   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
+	{ 0xfee0, 0xfeff, tube_port_a_r	   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
+	{ 0xff00, 0xffff, MRA_BANK2		   },
+MEMORY_END
+
+static MEMORY_WRITE_START(writemem_bbcbtube)
+	{ 0x0000, 0x7fff, memory_w		   },
+	{ 0x8000, 0xdfff, MWA_ROM		   },
+	{ 0xc000, 0xfdff, MWA_ROM		   },
+	{ 0xfc00, 0xfdff, MWA_NOP		   },  /* FRED & JIM Pages */
+										   /* Shiela Address Page &fe00 - &feff 				   */
+	{ 0xfe00, 0xfe07, BBC_6845_w	   },  /* &00-&07  6845 CRTC	 Video controller			   */
+	{ 0xfe08, 0xfe0f, MWA_NOP		   },  /* &08-&0f  6850 ACIA	 Serial Controller			   */
+	{ 0xfe10, 0xfe17, MWA_NOP		   },  /* &10-&17  Serial ULA	 Serial system chip 		   */
+	{ 0xfe18, 0xfe1f, MWA_NOP          },  /* &18-&1f  INTOFF/STATID ECONET Interrupt Off / ID No. */
+	{ 0xfe20, 0xfe2f, videoULA_w	   },  /* &20-&2f  Video ULA	 Video system chip			   */
+	{ 0xfe30, 0xfe3f, page_selectb_w   },  /* &30-&3f  84LS161		 Paged ROM selector 		   */
+	{ 0xfe40, 0xfe5f, via_0_w		   },  /* &40-&5f  6522 VIA 	 SYSTEM VIA 				   */
+	{ 0xfe60, 0xfe7f, via_1_w		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
+	{ 0xfe80, 0xfe9f, bbc_wd1770_write },  /* &80-&9f  1770 FDC      Floppy disc controller 	   */
+	{ 0xfea0, 0xfebf, MWA_NOP		   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
+	{ 0xfec0, 0xfedf, uPD7002_w		   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
+	{ 0xfee0, 0xfeff, tube_port_a_w	   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
+	{ 0xff00, 0xffff, MWA_ROM		   },
+MEMORY_END
+
+/* Tube memory */
+
+static MEMORY_READ_START(readmem_bbc6502)
+	{ 0x0000, 0xefff, MRA_RAM       },
+	{ 0xf000, 0xfeF7, MRA_BANK5     },
+	{ 0xfef8, 0xfeff, bbcs_tube_r   },
+	{ 0xff00, 0xffff, MRA_BANK5     },
+MEMORY_END
+
+static MEMORY_WRITE_START(writemem_bbc6502)
+	{ 0x0000, 0xfeF7, MWA_RAM       },
+	{ 0xfef8, 0xfeff, tube_port_b_w },
+	{ 0xff00, 0xffff, MWA_RAM       },
+MEMORY_END
+
+
+
+// end of tube connection WIP
+/********************/
+
+
+
 unsigned short bbc_colour_table[8]=
 {
 	0,1,2,3,4,5,6,7
@@ -655,6 +873,7 @@ INPUT_PORTS_START(bbca)
 
 INPUT_PORTS_END
 
+
 /* the BBC came with 4 rom sockets on the mother board as shown in the model A driver */
 /* you could get a number of rom upgrade boards that took this up to 16 roms as in the */
 /* model B driver */
@@ -812,11 +1031,46 @@ ROM_START(bbcbp128)
 ROM_END
 
 
+
+ROM_START(bbcb6502)
+	ROM_REGION(0x08000,REGION_CPU1,0) /* RAM */
+
+	ROM_REGION(0x44000,REGION_USER1,0) /* ROM */
+	ROM_LOAD("os12.rom", 0x40000,0x4000, 0x3c14fc70)
+
+#ifdef MAME_DEBUG
+	ROM_LOAD("advromm.rom", 0x00000, 0x4000, 0xe7e2a294 ) /* rom page 0  00000 */
+	ROM_LOAD("exmon.rom",   0x04000, 0x4000, 0x9a50231f ) /* rom page 1  04000 */
+	ROM_LOAD("help.rom",    0x08000, 0x4000, 0xc1505821 ) /* rom page 2  08000 */
+	ROM_LOAD("toolkit.rom", 0x0c000, 0x4000, 0x557ce483 ) /* rom page 3  0c000 */
+	ROM_LOAD("view.rom",    0x10000, 0x4000, 0x4345359f ) /* rom page 4  10000 */
+	                                                      /* rom page 5  14000 */
+			  											  /* rom page 6  18000 */
+	                                                      /* rom page 7  1c000 */
+														  /* rom page 8  20000 */
+														  /* rom page 9  24000 */
+														  /* rom page 10 28000 */
+														  /* rom page 11 2c000 */
+														  /* rom page 12 30000 */
+														  /* rom page 13 34000 */
+#endif
+/* ddfs 2.23 this is acorns 1770 disc controller Double density disc filing system */
+    ROM_LOAD("ddfs223.rom", 0x38000, 0x4000, 0x7891f9b7 ) /* rom page 14 38000 */
+
+	ROM_LOAD("basic2.rom",  0x3c000, 0x4000, 0x79434781 ) /* rom page 15 3c000 */
+
+	ROM_REGION(0x11000,REGION_CPU2,0)
+	ROM_LOAD("6502tube.rom" , 0x10000,0x1000,0x98b5fe42)
+
+ROM_END
+
+
+
 static int bbcb_vsync(void)
 {
-	via_0_ca1_w(0,0);
 	via_0_ca1_w(0,1);
-    //check_disc_status();
+	via_0_ca1_w(0,0);
+	bbc_frameclock();
 	return 0;
 }
 
@@ -1048,6 +1302,60 @@ static struct MachineDriver machine_driver_bbcbp128 =
 };
 
 
+
+static struct MachineDriver machine_driver_bbcb6502 =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			2000000,		/* 2.00Mhz */
+			readmem_bbcbtube,
+			writemem_bbcbtube,
+			0,
+			0,
+
+			bbcb_vsync, 	1,				/* screen refresh interrupts */
+			bbcb_keyscan, 1000				/* scan keyboard */
+		},
+		{
+			CPU_M6502,
+			2000000,		/* 2.00Mhz */
+			readmem_bbc6502,
+			writemem_bbc6502,
+			0,
+			0,
+		}
+
+	},
+	50, 128,
+	1,
+	init_machine_bbcb6502, /* init_machine */
+	stop_machine_bbcb6502, /* stop_machine */
+
+	/* video hardware */
+	800,300, {0,800-1,0,300-1},
+	0,
+	16, /*total colours*/
+	16, /*colour_table_length*/
+	init_palette_bbc, /*init palette */
+
+	VIDEO_TYPE_RASTER,
+	0, 	/* screen refresh interrupts */
+	bbc_vh_startb,
+	bbc_vh_stop,
+	bbc_vh_screenrefresh,
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SN76496,
+			&sn76496_interface
+		}
+	}
+};
+
+
 static const struct IODevice io_bbca[] = {
 	{
 		IO_CASSETTE,			/* type */
@@ -1237,6 +1545,51 @@ static const struct IODevice io_bbcbp128[] = {
 	{ IO_END }
 };
 
+
+
+static const struct IODevice io_bbcb6502[] = {
+	{
+		IO_CASSETTE,			/* type */
+		1,						/* count */
+		"wav\0",                /* File extensions */
+		IO_RESET_NONE,			/* reset if file changed */
+		NULL,					/* id */
+		NULL,					/* init */
+		NULL,					/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		NULL,					/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
+	},	{
+		IO_FLOPPY,				/* type */
+		2,						/* count */
+        "ssd\0bbc\0img\0",      /* file extensions */
+		IO_RESET_NONE,			/* reset if file changed */
+		0,
+		bbc_floppy_init,		/* init */
+		basicdsk_floppy_exit,	/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		floppy_status,			/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
+	},
+	{ IO_END }
+};
+
+
+
 /*	   year name	parent	machine  input	init	company */
 COMP (1981,bbca,	0,		bbca,	 bbca,	0,	"Acorn","BBC Micro Model A" )
 COMP (1981,bbcb,	bbca,	bbcb,	 bbca,	0,	"Acorn","BBC Micro Model B" )
@@ -1246,4 +1599,14 @@ COMP (1985,bbcbp128,bbca,   bbcbp128,bbca,  0,  "Acorn","BBC Micro Model B+ 128k
 /*
 COMP (198?,bbcm,    0,      bbcm    ,bbcm,  0,  "Acorn","BBC Master" )
 */
+
+
+
+// This bbc6502 is the BBC second processor upgrade
+// I have just added the second processor on its own right now until I work out how it works.
+// then it will get connected up to another BBC driver
+// The code for this second processor upgrade is more or less complete here now.
+// It just needs a TUBE driver made to connect it to the BBC
+
+COMP (198?,bbcb6502,bbca,      bbcb6502,bbca,  0,  "Acorn","BBC Micro Model B with a 6502 Second Processor")
 

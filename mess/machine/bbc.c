@@ -8,6 +8,236 @@
 
 ******************************************************************************/
 
+#include "ctype.h"
+#include "driver.h"
+#include "cpu/m6502/m6502.h"
+#include "machine/6522via.h"
+#include "includes/wd179x.h"
+#include "includes/bbc.h"
+#include "includes/upd7002.h"
+#include "includes/i8271.h"
+#include "includes/basicdsk.h"
+
+
+
+
+/*************************
+memory handleing functions
+*************************/
+
+/* for the model A just address the 4 on board ROM sockets */
+WRITE_HANDLER ( page_selecta_w )
+{
+	cpu_setbank(3,memory_region(REGION_USER1)+((data&0x03)<<14));
+}
+
+/* for the model B address all 16 of the ROM sockets */
+WRITE_HANDLER ( page_selectb_w )
+{
+	cpu_setbank(3,memory_region(REGION_USER1)+((data&0x0f)<<14));
+}
+
+
+WRITE_HANDLER ( memory_w )
+{
+	memory_region(REGION_CPU1)[offset]=data;
+
+	// this array is set so that the video emulator know which addresses to redraw
+	vidmem[offset]=1;
+}
+
+
+/* functions to return reads to empty hardware addresses */
+
+READ_HANDLER ( BBC_NOP_00_r )
+{
+	return 0x00;
+}
+
+READ_HANDLER ( BBC_NOP_FE_r )
+{
+	return 0xFE;
+}
+
+READ_HANDLER ( BBC_NOP_FF_r )
+{
+	return 0xFF;
+}
+
+
+
+/****************************************/
+/* BBC B Plus memory handling function */
+/****************************************/
+
+static int pagedRAM=0;
+static int vdusel=0;
+static int rombankselect=0;
+/* the model B plus addresses all 16 of the ROM sockets plus the extra 12K of ram at 0x8000
+   and 20K of shadow ram at 0x3000 */
+WRITE_HANDLER ( page_selectbp_w )
+{
+	if ((offset&0x04)==0)
+	{
+		pagedRAM=(data&0x80)>>7;
+		rombankselect=data&0x0f;
+
+		if (pagedRAM)
+		{
+			/* if paged ram then set 8000 to afff to read from the ram 8000 to afff */
+			cpu_setbank(3,memory_region(REGION_CPU1)+0x8000);
+		} else {
+			/* if paged rom then set the rom to be read from 8000 to afff */
+			cpu_setbank(3,memory_region(REGION_USER1)+(rombankselect<<14));
+		};
+
+		/* set the rom to be read from b000 to bfff */
+		cpu_setbank(4,memory_region(REGION_USER1)+(rombankselect<<14)+0x03000);
+	}
+	else
+	{
+		//the video display should now use this flag to display the shadow ram memory
+		vdusel=(data&0x80)>>7;
+		bbcbp_setvideoshadow(vdusel);
+		//need to make the video display do a full screen refresh for the new memory area
+	}
+}
+
+
+/* write to the normal memory from 0x0000 to 0x2fff
+   the writes to this memory are just done the normal
+   way */
+
+WRITE_HANDLER ( memorybp0_w )
+{
+	memory_region(REGION_CPU1)[offset]=data;
+
+	// this array is set so that the video emulator know which addresses to redraw
+	vidmem[offset]=1;
+}
+
+
+/*  this function should return true if
+	the instruction is in the VDU driver address ranged
+	these are set when:
+	PC is in the range c000 to dfff
+	or if pagedRAM set and PC is in the range a000 to afff
+*/
+static int vdudriverset(void)
+{
+	int PC;
+	PC=m6502_get_pc(); // this needs to be set to the 6502 program counter
+	return (((PC>=0xc000) && (PC<=0xdfff)) || ((pagedRAM) && ((PC>=0xa000) && (PC<=0xafff))));
+}
+
+/* the next two function handle reads and write to the shadow video ram area
+   between 0x3000 and 0x7fff
+
+   when vdusel is set high the video display uses the shadow ram memory
+   the processor only reads and write to the shadow ram when vdusel is set
+   and when the instruction being executed is stored in a set range of memory
+   addresses known as the VDU driver instructions.
+*/
+
+
+READ_HANDLER ( memorybp1_r )
+{
+	if (vdusel==0)
+	{
+		// not in shadow ram mode so just read normal ram
+		return memory_region(REGION_CPU1)[offset+0x3000];
+	} else {
+		if (vdudriverset())
+		{
+			// if VDUDriver set then read from shadow ram
+			return memory_region(REGION_CPU1)[offset+0xb000];
+		} else {
+			// else read from normal ram
+			return memory_region(REGION_CPU1)[offset+0x3000];
+		}
+	}
+}
+
+WRITE_HANDLER ( memorybp1_w )
+{
+	if (vdusel==0)
+	{
+		// not in shadow ram mode so just write to normal ram
+		memory_region(REGION_CPU1)[offset+0x3000]=data;
+		vidmem[offset+0x3000]=1;
+	} else {
+		if (vdudriverset())
+		{
+			// if VDUDriver set then write to shadow ram
+			memory_region(REGION_CPU1)[offset+0xb000]=data;
+			vidmem[offset+0xb000]=1;
+		} else {
+			// else write to normal ram
+			memory_region(REGION_CPU1)[offset+0x3000]=data;
+			vidmem[offset+0x3000]=1;
+		}
+	}
+}
+
+
+/* if the pagedRAM is set write to RAM between 0x8000 to 0xafff
+otherwise this area contains ROM so no write is required */
+WRITE_HANDLER ( memorybp3_w )
+{
+	if (pagedRAM)
+	{
+		memory_region(REGION_CPU1)[offset+0x8000]=data;
+	}
+}
+
+
+/* the BBC B plus 128K had extra ram mapped in replacing the
+rom bank 0,1,c and d.
+The function memorybp3_128_w handles memory writes from 0x8000 to 0xafff
+which could either be sideways ROM, paged RAM, or sideways RAM.
+The function memorybp4_128_w handles memory writes from 0xb000 to 0xbfff
+which could either be sideways ROM or sideways RAM */
+
+
+static unsigned short bbc_b_plus_sideways_ram_banks[16]=
+{
+	1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0
+};
+
+
+WRITE_HANDLER ( memorybp3_128_w )
+{
+	if (pagedRAM)
+	{
+		memory_region(REGION_CPU1)[offset+0x8000]=data;
+	}
+	else
+	{
+		if (bbc_b_plus_sideways_ram_banks[rombankselect])
+		{
+			memory_region(REGION_USER1)[offset+(rombankselect<<14)]=data;
+		}
+	}
+}
+
+WRITE_HANDLER ( memorybp4_128_w )
+{
+	if (bbc_b_plus_sideways_ram_banks[rombankselect])
+	{
+		memory_region(REGION_USER1)[offset+(rombankselect<<14)+0x3000]=data;
+	}
+}
+
+
+
+
+
+/** via irq status local store **/
+
+static int via_system_irq=0;
+static int via_user_irq=0;
+
+
 /******************************************************************************
 
 System VIA 6522
@@ -122,16 +352,6 @@ B7 - Operates the SHIFT lock LED (Pin 16 keyboard connector)
 
 
 ******************************************************************************/
-
-#include "ctype.h"
-#include "driver.h"
-#include "cpu/m6502/m6502.h"
-#include "machine/6522via.h"
-#include "includes/wd179x.h"
-#include "includes/bbc.h"
-#include "includes/upd7002.h"
-#include "includes/i8271.h"
-#include "includes/basicdsk.h"
 
 static int b0_sound;
 static int b1_speech_read;
@@ -413,8 +633,6 @@ static WRITE_HANDLER( bbcb_via_system_write_cb2 )
 }
 
 
-static int via_system_irq=0;
-static int via_user_irq=0;
 
 static void bbc_via_system_irq(int level)
 {
@@ -423,13 +641,6 @@ static void bbc_via_system_irq(int level)
   cpu_set_irq_line(0, M6502_INT_IRQ, via_system_irq|via_user_irq);
 }
 
-
-static void bbc_via_user_irq(int level)
-{
-  via_user_irq=level;
-//  logerror("USER via irq %d %d %d\n",via_system_irq,via_user_irq,level);
-  cpu_set_irq_line(0, M6502_INT_IRQ, via_system_irq|via_user_irq);
-}
 
 static struct via6522_interface
 bbcb_system_via= {
@@ -506,6 +717,14 @@ static WRITE_HANDLER( bbcb_via_user_write_ca2 )
 	bbc_printer_ca1=data;
 	via_1_ca1_w(0,data);
 }
+
+static void bbc_via_user_irq(int level)
+{
+  via_user_irq=level;
+//  logerror("USER via irq %d %d %d\n",via_system_irq,via_user_irq,level);
+  cpu_set_irq_line(0, M6502_INT_IRQ, via_system_irq|via_user_irq);
+}
+
 
 static struct via6522_interface
 bbcb_user_via= {
@@ -658,9 +877,9 @@ WRITE_HANDLER( bbc_i8271_write )
 
 static int  drive_control;
 /* bit 0: 1 = drq set, bit 1: 1 = irq set */
-static int	bbc_wd179x_drq_irq_state;
+static int	bbc_wd177x_drq_irq_state;
 
-static int previous_wd179x_int_state;
+static int previous_wd177x_int_state;
 
 /*
    B/ B+ drive control:
@@ -686,14 +905,14 @@ density disc image
 */
 
 
-void bbc_wd179x_callback(int event)
+void bbc_wd177x_callback(int event)
 {
 	int state;
-	/* WD179X_IRQ_SET and latch bit 4 (nmi_enable) are NAND'ED together
-	   WD179X_DRQ_SET and latch bit 4 (nmi_enable) are NAND'ED together
+	/* wd177x_IRQ_SET and latch bit 4 (nmi_enable) are NAND'ED together
+	   wd177x_DRQ_SET and latch bit 4 (nmi_enable) are NAND'ED together
 	   the output of the above two NAND gates are then OR'ED together and sent to the 6502 NMI line.
-		DRQ and IRQ are active low outputs from wd179x. We use WD179X_DRQ_SET for DRQ = 0,
-		and WD179X_DRQ_CLR for DRQ = 1. Similarly WD179X_IRQ_SET for IRQ = 0 and WD179X_IRQ_CLR
+		DRQ and IRQ are active low outputs from wd177x. We use wd177x_DRQ_SET for DRQ = 0,
+		and wd177x_DRQ_CLR for DRQ = 1. Similarly wd177x_IRQ_SET for IRQ = 0 and wd177x_IRQ_CLR
 		for IRQ = 1.
 
 	  The above means that if IRQ or DRQ are set, a interrupt should be generated.
@@ -701,36 +920,36 @@ void bbc_wd179x_callback(int event)
 	  The nmi is edge triggered, and triggers on a +ve edge.
 	*/
 
-	/* update bbc_wd179x_drq_irq_state depending on event */
+	/* update bbc_wd177x_drq_irq_state depending on event */
 	switch (event)
 	{
         case WD179X_DRQ_SET:
 		{
-			bbc_wd179x_drq_irq_state |= 1;
+			bbc_wd177x_drq_irq_state |= 1;
 		}
 		break;
 
 		case WD179X_DRQ_CLR:
 		{
-			bbc_wd179x_drq_irq_state &= ~1;
+			bbc_wd177x_drq_irq_state &= ~1;
 		}
 		break;
 
 		case  WD179X_IRQ_SET:
 		{
-			bbc_wd179x_drq_irq_state |= (1<<1);
+			bbc_wd177x_drq_irq_state |= (1<<1);
 		}
 		break;
 
 		case WD179X_IRQ_CLR:
 		{
-			bbc_wd179x_drq_irq_state &= ~(1<<1);
+			bbc_wd177x_drq_irq_state &= ~(1<<1);
 		}
 		break;
 	}
 
 	/* if drq or irq is set, and interrupt is enabled */
-	if (((bbc_wd179x_drq_irq_state & 3)!=0) && ((drive_control & (1<<4))==0))
+	if (((bbc_wd177x_drq_irq_state & 3)!=0) && ((drive_control & (1<<4))==0))
 	{
 		/* int trigger */
 		state = 1;
@@ -743,7 +962,7 @@ void bbc_wd179x_callback(int event)
 
 	/* nmi is edge triggered, and triggers when the state goes from clear->set.
 	Here we are checking this transition before triggering the nmi */
-	if (state!=previous_wd179x_int_state)
+	if (state!=previous_wd177x_int_state)
 	{
 		if (state)
 		{
@@ -753,15 +972,15 @@ void bbc_wd179x_callback(int event)
 		}
 	}
 
-	previous_wd179x_int_state = state;
+	previous_wd177x_int_state = state;
 
 }
 
 
-void bbc_wd179x_status_w(int offset,int data)
+void bbc_wd177x_status_w(int offset,int data)
 {
 	int drive;
-	DENSITY density;
+	int density;
 
 	drive_control = data;
 
@@ -828,7 +1047,7 @@ WRITE_HANDLER ( bbc_wd1770_write )
 	switch (offset)
 	{
 	case 0:
-		bbc_wd179x_status_w(offset, data);
+		bbc_wd177x_status_w(offset, data);
 		break;
 	case 4:
 		wd179x_command_w(offset, data);
@@ -915,8 +1134,8 @@ void init_machine_bbcb1770(void)
 
 	uPD7002_config(&BBC_uPD7002);
 
-	previous_wd179x_int_state=1;
-    wd179x_init(WD_TYPE_177X,bbc_wd179x_callback);
+	previous_wd177x_int_state=1;
+    wd179x_init(WD_TYPE_177X,bbc_wd177x_callback);
     wd179x_reset();
 }
 
@@ -950,8 +1169,8 @@ void init_machine_bbcbp(void)
 
 	uPD7002_config(&BBC_uPD7002);
 
-	previous_wd179x_int_state=1;
-    wd179x_init(WD_TYPE_177X,bbc_wd179x_callback);
+	previous_wd177x_int_state=1;
+    wd179x_init(WD_TYPE_177X,bbc_wd177x_callback);
     wd179x_reset();
 }
 
@@ -959,3 +1178,38 @@ void stop_machine_bbcbp(void)
 {
 	wd179x_exit();
 }
+
+
+
+void init_machine_bbcb6502(void)
+{
+	cpu_setbank(2,memory_region(REGION_USER1)+0x40000);  /* bank 2 points at the OS rom  from c000 to ffff */
+	cpu_setbank(3,memory_region(REGION_USER1));          /* bank 3 is the paged ROMs     from 8000 to bfff */
+
+	via_config(0, &bbcb_system_via);
+	via_set_clock(0,1000000);
+
+	via_config(1, &bbcb_user_via);
+	via_set_clock(1,1000000);
+
+	via_reset();
+
+	bbcb_IC32_initialise();
+
+	uPD7002_config(&BBC_uPD7002);
+
+	previous_wd177x_int_state=1;
+    wd179x_init(WD_TYPE_177X,bbc_wd177x_callback);
+    wd179x_reset();
+
+	/* second processor init */
+
+	startbank=1;
+	cpu_setbank(5,memory_region(REGION_CPU2)+0x10000);
+}
+
+void stop_machine_bbcb6502(void)
+{
+	wd179x_exit();
+}
+
