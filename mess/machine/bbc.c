@@ -142,7 +142,7 @@ static int b6_caps_lock_led;
 static int b7_shift_lock_led;
 
 
-static int via0_porta;
+static int via_system_porta;
 
 
 static int column=0;
@@ -161,7 +161,7 @@ int bbcb_keyscan(void)
 		{
 
   			/* KBD IC4 8 input NAND gate */
-  			/* set the value of via0 ca2, by checking for any keys
+  			/* set the value of via_system ca2, by checking for any keys
     			 being pressed on the selected column */
 
 			if ((readinputport(column)|0x01)!=0xff)
@@ -224,12 +224,12 @@ static void bbcb_IC32_initialise(void)
 	b7_shift_lock_led=0x01;
 }
 
-static WRITE_HANDLER( bbcb_via0_write_porta )
+static WRITE_HANDLER( bbcb_via_system_write_porta )
 {
-	via0_porta=data;
+	via_system_porta=data;
 	if (b0_sound==0)
 	{
-		SN76496_0_w(0,via0_porta);
+		SN76496_0_w(0,via_system_porta);
 	}
 	if (b1_speech_read==0)
 	{
@@ -241,13 +241,13 @@ static WRITE_HANDLER( bbcb_via0_write_porta )
 	}
 	if (b3_keyboard==0)
 	{
-		via0_porta=bbc_keyboard(via0_porta);
+		via_system_porta=bbc_keyboard(via_system_porta);
 	}
 
 }
 
 
-static WRITE_HANDLER( bbcb_via0_write_portb )
+static WRITE_HANDLER( bbcb_via_system_write_portb )
 {
 	int bit,value;
 	bit=data & 0x07;
@@ -306,13 +306,13 @@ static WRITE_HANDLER( bbcb_via0_write_portb )
 		case 0:
 			if (b0_sound==1) {
 				b0_sound=0;
-				SN76496_0_w(0,via0_porta);
+				SN76496_0_w(0,via_system_porta);
 			}
 			break;
 		case 1:
 			if (b1_speech_read==1) {
 				b1_speech_read=0;
-				via0_porta=0xff;
+				via_system_porta=0xff;
 			}
 			break;
 		case 2:
@@ -324,7 +324,7 @@ static WRITE_HANDLER( bbcb_via0_write_portb )
 			if (b3_keyboard==1) {
 				b3_keyboard=0;
 				/* *** call keyboard enabled *** */
-				via0_porta=bbc_keyboard(via0_porta);
+				via_system_porta=bbc_keyboard(via_system_porta);
 			}
 			break;
 		case 4:
@@ -356,39 +356,39 @@ static WRITE_HANDLER( bbcb_via0_write_portb )
 
 }
 
-static READ_HANDLER( bbcb_via0_read_porta )
+static READ_HANDLER( bbcb_via_system_read_porta )
 {
-  return via0_porta;
+  return via_system_porta;
 }
 
-static READ_HANDLER( bbcb_via0_read_portb )
+static READ_HANDLER( bbcb_via_system_read_portb )
 {
   return 0xff;
 }
 
 /* vertical sync pulse from video circuit */
-static READ_HANDLER( bbcb_via0_read_ca1 )
+static READ_HANDLER( bbcb_via_system_read_ca1 )
 {
   return 0xf0;
 }
 
 
 /* joystick EOC (not emulated yet) */
-static READ_HANDLER( bbcb_via0_read_cb1 )
+static READ_HANDLER( bbcb_via_system_read_cb1 )
 {
   return 0x01;
 }
 
 
 /* keyboard pressed detect */
-static READ_HANDLER( bbcb_via0_read_ca2 )
+static READ_HANDLER( bbcb_via_system_read_ca2 )
 {
   return 0x01;
 }
 
 
 /* light pen strobe detect (not emulated yet) */
-static READ_HANDLER( bbcb_via0_read_cb2 )
+static READ_HANDLER( bbcb_via_system_read_cb2 )
 {
   return 0x01;
 }
@@ -396,72 +396,126 @@ static READ_HANDLER( bbcb_via0_read_cb2 )
 
 /* this is wired as in input port so writing to this port would be bad */
 
-static WRITE_HANDLER( bbcb_via0_write_ca2 )
+static WRITE_HANDLER( bbcb_via_system_write_ca2 )
 {
-  //if( errorlog ) fprintf(errorlog, "via0_write_ca2: $%02X\n", data);
+  //if( errorlog ) fprintf(errorlog, "via_system_write_ca2: $%02X\n", data);
 }
 
 /* this is wired as in input port so writing to this port would be bad */
 
-static WRITE_HANDLER( bbcb_via0_write_cb2 )
+static WRITE_HANDLER( bbcb_via_system_write_cb2 )
 {
-  //if( errorlog ) fprintf(errorlog, "via0_write_cb2: $%02X\n", data);
+  //if( errorlog ) fprintf(errorlog, "via_system_write_cb2: $%02X\n", data);
 }
 
 
-static int via0_irq=0;
-static int via1_irq=0;
+static int via_system_irq=0;
+static int via_user_irq=0;
 
-static void bbc_via0_irq(int level)
+static void bbc_via_system_irq(int level)
 {
-  via0_irq=level;
-//  logerror("SYSTEM via irq %d %d %d\n",via0_irq,via1_irq,level);
-  cpu_set_irq_line(0, M6502_INT_IRQ, via0_irq|via1_irq);
+  via_system_irq=level;
+//  logerror("SYSTEM via irq %d %d %d\n",via_system_irq,via_user_irq,level);
+  cpu_set_irq_line(0, M6502_INT_IRQ, via_system_irq|via_user_irq);
 }
 
 
-static void bbc_via1_irq(int level)
+static void bbc_via_user_irq(int level)
 {
-  via1_irq=level;
-//  logerror("USER via irq %d %d %d\n",via0_irq,via1_irq,level);
-  cpu_set_irq_line(0, M6502_INT_IRQ, via0_irq|via1_irq);
+  via_user_irq=level;
+//  logerror("USER via irq %d %d %d\n",via_system_irq,via_user_irq,level);
+  cpu_set_irq_line(0, M6502_INT_IRQ, via_system_irq|via_user_irq);
 }
 
 static struct via6522_interface
 bbcb_system_via= {
-  bbcb_via0_read_porta,
-  bbcb_via0_read_portb,
-  bbcb_via0_read_ca1,
-  bbcb_via0_read_cb1,
-  bbcb_via0_read_ca2,
-  bbcb_via0_read_cb2,
-  bbcb_via0_write_porta,
-  bbcb_via0_write_portb,
-  bbcb_via0_write_ca2,
-  bbcb_via0_write_cb2,
-  bbc_via0_irq
+  bbcb_via_system_read_porta,
+  bbcb_via_system_read_portb,
+  bbcb_via_system_read_ca1,
+  bbcb_via_system_read_cb1,
+  bbcb_via_system_read_ca2,
+  bbcb_via_system_read_cb2,
+  bbcb_via_system_write_porta,
+  bbcb_via_system_write_portb,
+  bbcb_via_system_write_ca2,
+  bbcb_via_system_write_cb2,
+  bbc_via_system_irq
 };
 
 
-static READ_HANDLER( bbcb_via1_read_portb )
+/**********************************************************************
+USER VIA
+Port A output is buffered before being connected to the printer connector.
+This means that hey can only be operated as output lines.
+CA1 is pulled high by a 4K7 resistor. CA1 normally acts as an acknowledge
+line when a printer is used. CA2 is buffered so that it has become an open
+collector output only. It usially acts as the printer strobe line.
+***********************************************************************/
+
+/* this code just sends the output of the printer port to the errorlog
+file. I now need to look at the new printer code and see how I should
+connect this code up to that */
+
+int bbc_printer_porta;
+int bbc_printer_ca1;
+int bbc_printer_ca2;
+
+/* USER VIA 6522 port A is buffered as an output through IC70 so
+reading from this port will always return 0xff */
+static READ_HANDLER( bbcb_via_user_read_porta )
 {
-  return 0xff;
+	return 0xff;
 }
 
+/* USER VIA 6522 port B is connected to the BBC user port */
+static READ_HANDLER( bbcb_via_user_read_portb )
+{
+	return 0xff;
+}
+
+static READ_HANDLER( bbcb_via_user_read_ca1 )
+{
+	return bbc_printer_ca1;
+}
+
+static READ_HANDLER( bbcb_via_user_read_ca2 )
+{
+	return 1;
+}
+
+static WRITE_HANDLER( bbcb_via_user_write_porta )
+{
+	bbc_printer_porta=data;
+}
+
+static WRITE_HANDLER( bbcb_via_user_write_ca2 )
+{
+	/* write value to printer on rising edge of ca2 */
+	if ((bbc_printer_ca2==0) && (data==1))
+	{
+		logerror("print character $%02X\n",bbc_printer_porta);
+	}
+	bbc_printer_ca2=data;
+
+	/* this is a very bad way of returning an acknowledge
+	by just linking the strobe output into the acknowledge input */
+	bbc_printer_ca1=data;
+	via_1_ca1_w(0,data);
+}
 
 static struct via6522_interface
 bbcb_user_via= {
-  0,//via1_read_porta,
-  bbcb_via1_read_portb,//via1_read_portb,
-  0,//via1_read_ca1,
-  0,//via1_read_cb1,
-  0,//via1_read_ca2,
-  0,//via1_read_cb2,
-  0,//via1_write_porta,
-  0,//via1_write_portb,
-  0,//via1_write_ca2,
-  0,//via1_write_cb2,
-  bbc_via1_irq //via1_irq
+  bbcb_via_user_read_porta,//via_user_read_porta,
+  bbcb_via_user_read_portb,//via_user_read_portb,
+  bbcb_via_user_read_ca1,//via_user_read_ca1,
+  0,//via_user_read_cb1,
+  bbcb_via_user_read_ca2,//via_user_read_ca2,
+  0,//via_user_read_cb2,
+  bbcb_via_user_write_porta,//via_user_write_porta,
+  0,//via_user_write_portb,
+  bbcb_via_user_write_ca2,//via_user_write_ca2,
+  0,//via_user_write_cb2,
+  bbc_via_user_irq //via_user_irq
 };
 
 /**************************************
@@ -722,14 +776,14 @@ READ_HANDLER ( bbc_wd1770_read )
 	default:
 		break;
 	}
-	logerror("wd177x read: $%02X  $%02X\n", offset,retval);
+	//logerror("wd177x read: $%02X  $%02X\n", offset,retval);
 
 	return retval;
 }
 
 WRITE_HANDLER ( bbc_wd1770_write )
 {
-	logerror("wd177x write: $%02X  $%02X\n", offset,data);
+	//logerror("wd177x write: $%02X  $%02X\n", offset,data);
 	switch (offset)
 	{
 	case 0:
@@ -760,10 +814,9 @@ WRITE_HANDLER ( bbc_wd1770_write )
 
 void init_machine_bbca(void)
 {
-	cpu_setbankhandler_r(1, MRA_BANK1);
-	cpu_setbankhandler_r(2, MRA_BANK2);
-
-	cpu_setbank(1,memory_region(REGION_CPU1));
+	cpu_setbank(1,memory_region(REGION_CPU1));         /* bank 1 repeat of the 16K ram from 4000 to 7fff */
+	cpu_setbank(2,memory_region(REGION_CPU2)+0x10000); /* bank 2 points at the OS rom  from c000 to ffff */
+	cpu_setbank(3,memory_region(REGION_CPU2));         /* bank 3 is the paged ROMs     from 8000 to bfff */
 
 	via_config(0, &bbcb_system_via);
 	via_set_clock(0,1000000);
@@ -776,8 +829,8 @@ void init_machine_bbca(void)
 
 void init_machine_bbcb(void)
 {
-	cpu_setbankhandler_r(1, MRA_BANK1);
-	cpu_setbankhandler_r(2, MRA_BANK2);
+	cpu_setbank(2,memory_region(REGION_CPU2)+0x40000);/* bank 2 points at the OS rom  from c000 to ffff */
+	cpu_setbank(3,memory_region(REGION_CPU2));        /* bank 3 is the paged ROMs     from 8000 to bfff */
 
 	via_config(0, &bbcb_system_via);
 	via_set_clock(0,1000000);
@@ -802,8 +855,8 @@ void stop_machine_bbcb(void)
 
 void init_machine_bbcb1770(void)
 {
-	cpu_setbankhandler_r(1, MRA_BANK1);
-	cpu_setbankhandler_r(2, MRA_BANK2);
+	cpu_setbank(2,memory_region(REGION_CPU2)+0x40000);  /* bank 2 points at the OS rom  from c000 to ffff */
+	cpu_setbank(3,memory_region(REGION_CPU2));          /* bank 3 is the paged ROMs     from 8000 to bfff */
 
 	via_config(0, &bbcb_system_via);
 	via_set_clock(0,1000000);
@@ -822,6 +875,38 @@ void init_machine_bbcb1770(void)
 
 
 void stop_machine_bbcb1770(void)
+{
+	wd179x_exit();
+}
+
+
+
+void init_machine_bbcbp(void)
+{
+	cpu_setbankhandler_r(1, memorybp1_r);
+
+	cpu_setbank(1,memory_region(REGION_CPU1)+0x03000); /* BANK 1 points at the screen  from 3000 to 7fff */
+	cpu_setbank(2,memory_region(REGION_CPU2)+0x40000); /* bank 2 points at the OS rom  from c000 to ffff */
+	cpu_setbank(3,memory_region(REGION_CPU2));         /* bank 3 is paged ROM or RAM   from 8000 to afff */
+	cpu_setbank(4,memory_region(REGION_CPU2)+0x03000); /* bank 4 is the paged ROMs     from b000 to bfff */
+
+
+	via_config(0, &bbcb_system_via);
+	via_set_clock(0,1000000);
+
+	via_config(1, &bbcb_user_via);
+	via_set_clock(1,1000000);
+
+	via_reset();
+
+	bbcb_IC32_initialise();
+
+	previous_wd179x_int_state=1;
+    wd179x_init(bbc_wd179x_callback);
+    wd179x_reset();
+}
+
+void stop_machine_bbcbp(void)
 {
 	wd179x_exit();
 }

@@ -30,7 +30,7 @@ void BBC_ula_showteletext(int col);
  ************************************************************************/
 
 static int video_refresh;
-unsigned char vidmem[0x8000];
+unsigned char vidmem[0x10000];
 
 /************************************************************************
  * video memory lookup arrays.
@@ -276,6 +276,7 @@ void SAA5050_clock(int code)
 }
 
 
+
 /************************************************************************
  * VideoULA
  ************************************************************************/
@@ -323,7 +324,7 @@ void videoULA_select_pallet(void)
 // -96 sets the screen display to the middle of emulated screen.
 static int x_screen_offset=-96;
 
-static int y_screen_offset=0;
+static int y_screen_offset=-8;
 
 WRITE_HANDLER ( videoULA_w )
 {
@@ -356,7 +357,7 @@ WRITE_HANDLER ( videoULA_w )
 			pixels_per_byte=pixels_per_byte_set[videoULA_characters_per_line|(videoULA_6845_clock_rate<<2)];
 			pixels_per_clock=pixels_per_clock_set[videoULA_characters_per_line];
 			x_screen_offset=-96;
-			y_screen_offset=0;
+			y_screen_offset=-8;
 		}
 
 		break;
@@ -407,6 +408,8 @@ static int BBC_DE=0;
 
 
 static unsigned char *BBC_Video_RAM;
+static unsigned char *vidmem_RAM;
+
 static unsigned char *BBC_display;
 static struct osd_bitmap *BBC_bitmap;
 
@@ -427,9 +430,9 @@ void BBC_draw_hi_res_enabled(void)
 	// the logic for the memory location address is very complicated so it
 	// is stored in a number of look up arrays (and is calculated once at the start of the emulator).
 	meml=video_ram_lookup[crtc6845_memory_address_r(0)]|(BBC_Character_Row&0x7);
-	if (vidmem[meml] || video_refresh )
+	if (vidmem_RAM[meml] || video_refresh )
 	{
-		vidmem[meml]=0;
+		vidmem_RAM[meml]=0;
 		i=BBC_Video_RAM[meml];
 
 		for(sc1=0;sc1<pixels_per_byte;sc1++)
@@ -705,6 +708,17 @@ void bbc_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 }
 
+void bbcbp_setvideoshadow(int vdusel)
+{
+	if (vdusel)
+	{
+		BBC_Video_RAM= memory_region(REGION_CPU1)+0x8000;
+		vidmem_RAM=(vidmem)+0x8000;
+	} else {
+		BBC_Video_RAM= memory_region(REGION_CPU1);
+		vidmem_RAM=vidmem;
+	}
+}
 
 /************************************************************************
  * bbc_vh_start
@@ -718,6 +732,7 @@ int bbc_vh_starta(void)
 	crtc6845_config(&BBC6845);
 
 	BBC_Video_RAM= memory_region(REGION_CPU1);
+	vidmem_RAM=vidmem;
 	draw_function=*BBC_draw_screen_disabled;
 	return 0;
 
@@ -731,6 +746,22 @@ int bbc_vh_startb(void)
 	crtc6845_config(&BBC6845);
 
 	BBC_Video_RAM= memory_region(REGION_CPU1);
+	vidmem_RAM=vidmem;
+	draw_function=*BBC_draw_screen_disabled;
+	return 0;
+
+}
+
+
+int bbc_vh_startbp(void)
+{
+	/* need to set up the lookups to work with the BBC B plus memory */
+	set_pixel_lookup();
+	set_video_memory_lookups(32);
+	crtc6845_config(&BBC6845);
+
+	BBC_Video_RAM= memory_region(REGION_CPU1);
+	vidmem_RAM=vidmem;
 	draw_function=*BBC_draw_screen_disabled;
 	return 0;
 

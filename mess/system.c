@@ -192,6 +192,8 @@ TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
     DRIVER( bbca )      /* 1981 BBC Micro Model A                         */
     DRIVER( bbcb )      /* 1981 BBC Micro Model B                         */
     DRIVER( bbcb1770 )  /* 1981 BBC Micro Model B with WD 1770 disc       */
+    DRIVER( bbcbp )     /* 198? BBC Micro Model B+ 64K                    */
+    DRIVER( bbcbp128 )  /* 198? BBC Micro Model B+ 128K                   */
 
 TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310                      */
 
