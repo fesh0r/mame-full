@@ -7,17 +7,48 @@
   Anthony Kruize
   Based on the original code by Lee Hammerton (aka Savoury Snax)
 
+  Some notes on the snes video hardware:
+
+  Object Attribute Memory(OAM) is made up of 128 blocks of 32 bits, followed
+  by 128 blocks of 2 bits. The format for each block is:
+  -First Block----------------------------------------------------------------
+  | x pos  | y pos  |char no.| v flip | h flip |priority|palette |char no msb|
+  +--------+--------+--------+--------+--------+--------+--------+-----------+
+  | 8 bits | 8 bits | 8 bits | 1 bit  | 1 bit  | 2 bits | 3 bits | 1 bit     |
+  -Second Block---------------------------------------------------------------
+  | size  | x pos msb |
+  +-------+-----------+
+  | 1 bit | 1 bit     |
+  ---------------------
+
+  Video RAM contains information for character data and screen maps.
+  Screen maps are made up of 32 x 32 blocks of 16 bits each.
+  The format for each block is:
+  ----------------------------------------------
+  | v flip | x flip |priority|palette |char no.|
+  +--------+--------+--------+--------+--------+
+  | 1 bit  | 1 bit  | 1 bit  | 3 bits |10 bits |
+  ----------------------------------------------
+  Mode 7 is stored differently. Character data and screen map are interleaved.
+  There are two formats:
+  -Normal-----------------  -EXTBG-----------------------------
+  | char data | char no. |  | priority | char data | char no. |
+  +-----------+----------+  +----------+-----------+----------+
+  | 8 bits    | 8 bits   |  | 1 bit    | 7 bits    | 8 bits   |
+  ------------------------  -----------------------------------
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/snes.h"
 
-static UINT16 scanline[SNES_SCR_WIDTH];			/* Scanline buffer. */
-static UINT8 zbuf[SNES_SCR_WIDTH + 8];			/* Z buffer.  Allows for drawing 1 tile past the edge of the screen */
+static UINT16 scanline[SNES_SCR_WIDTH + 8];	/* Scanline buffer. Allow for drawing 1 tile past edge of the screen */
+static UINT8  zbuf[SNES_SCR_WIDTH + 8];		/* Z buffer. Allow for drawing 1 tile past edge of the screen */
+UINT8  obj_size[2];					/* Object sizes */
 /* Lookup tables */
-static UINT8 table_bgd_pty[4][2] = { {5,7}, {4,6}, {1,3}, {0,2} };
-static UINT8 table_obj_pty[4] = { 2, 4, 6, 8 };
+static UINT8  table_bgd_pty[4][2] = { {5,7}, {4,6}, {1,3}, {0,2} };
+static UINT8  table_obj_pty[4]    = { 2, 4, 6, 8 };
 static UINT16 table_hscroll[4][4] = { {0,0,0,0}, {0,0x800,0,0x800}, {0,0,0,0}, {0,0x800,0,0x800} };
 static UINT16 table_vscroll[4][4] = { {0,0,0,0}, {0,0,0,0}, {0,0x800,0,0x800}, {0,0x1000,0,0x1000} };
 
@@ -183,10 +214,8 @@ INLINE void snes_draw_tile_4( UINT8 layer, UINT8 line, UINT16 tileaddr, INT16 x,
 	{
 		if( flip )
 		{
-			register UINT8 colour = (plane[0] & 0x1 ? 1 : 0) |
-									(plane[1] & 0x1 ? 2 : 0) |
-									(plane[2] & 0x1 ? 4 : 0) |
-									(plane[3] & 0x1 ? 8 : 0);
+			register UINT8 colour = (plane[0] & 0x1 ? 1 : 0) | (plane[1] & 0x1 ? 2 : 0) |
+									(plane[2] & 0x1 ? 4 : 0) | (plane[3] & 0x1 ? 8 : 0);
 			if( colour )
 			{
 				layers[layer].line[x+ii] = Machine->remapped_colortable[pal + colour];
@@ -199,10 +228,8 @@ INLINE void snes_draw_tile_4( UINT8 layer, UINT8 line, UINT16 tileaddr, INT16 x,
 		}
 		else
 		{
-			register UINT8 colour = (plane[0] & 0x80 ? 1 : 0) |
-									(plane[1] & 0x80 ? 2 : 0) |
-									(plane[2] & 0x80 ? 4 : 0) |
-									(plane[3] & 0x80 ? 8 : 0);
+			register UINT8 colour = (plane[0] & 0x80 ? 1 : 0) | (plane[1] & 0x80 ? 2 : 0) |
+									(plane[2] & 0x80 ? 4 : 0) | (plane[3] & 0x80 ? 8 : 0);
 			if( colour )
 			{
 				layers[layer].line[x+ii] = Machine->remapped_colortable[pal + colour];
@@ -240,14 +267,10 @@ void snes_draw_tile_8( UINT8 layer, UINT8 line, UINT16 tileaddr, UINT16 x, UINT1
 	{
 		if( flip )
 		{
-			register UINT8 colour = (plane[0] & 0x1 ? 1 : 0) |
-									(plane[1] & 0x1 ? 2 : 0) |
-									(plane[2] & 0x1 ? 4 : 0) |
-									(plane[3] & 0x1 ? 8 : 0) |
-									(plane[4] & 0x1 ? 16 : 0) |
-									(plane[5] & 0x1 ? 32 : 0) |
-									(plane[6] & 0x1 ? 64 : 0) |
-									(plane[7] & 0x1 ? 128 : 0);
+			register UINT8 colour = (plane[0] & 0x1 ? 1 : 0)  | (plane[1] & 0x1 ? 2 : 0)  |
+									(plane[2] & 0x1 ? 4 : 0)  | (plane[3] & 0x1 ? 8 : 0)  |
+									(plane[4] & 0x1 ? 16 : 0) | (plane[5] & 0x1 ? 32 : 0) |
+									(plane[6] & 0x1 ? 64 : 0) | (plane[7] & 0x1 ? 128 : 0);
 			if( colour )
 			{
 				layers[layer].line[x+ii] = Machine->remapped_colortable[colour];
@@ -264,14 +287,10 @@ void snes_draw_tile_8( UINT8 layer, UINT8 line, UINT16 tileaddr, UINT16 x, UINT1
 		}
 		else
 		{
-			register UINT8 colour = (plane[0] & 0x80 ? 1 : 0) |
-									(plane[1] & 0x80 ? 2 : 0) |
-									(plane[2] & 0x80 ? 4 : 0) |
-									(plane[3] & 0x80 ? 8 : 0) |
-									(plane[4] & 0x80 ? 16 : 0) |
-									(plane[5] & 0x80 ? 32 : 0) |
-									(plane[6] & 0x80 ? 64 : 0) |
-									(plane[7] & 0x80 ? 128 : 0);
+			register UINT8 colour = (plane[0] & 0x80 ? 1 : 0)  | (plane[1] & 0x80 ? 2 : 0)  |
+									(plane[2] & 0x80 ? 4 : 0)  | (plane[3] & 0x80 ? 8 : 0)  |
+									(plane[4] & 0x80 ? 16 : 0) | (plane[5] & 0x80 ? 32 : 0) |
+									(plane[6] & 0x80 ? 64 : 0) | (plane[7] & 0x80 ? 128 : 0);
 			if( colour && (priority > zbuf[x+ii]) )
 			{
 				layers[layer].line[x+ii] = Machine->remapped_colortable[colour];
@@ -311,11 +330,9 @@ INLINE void snes_draw_object( UINT8 line, UINT16 tileaddr, INT16 x, INT16 y, UIN
 	{
 		if( flip )
 		{
-			register UINT8 colour = (plane[0] & 0x1 ? 1 : 0) |
-									(plane[1] & 0x1 ? 2 : 0) |
-									(plane[2] & 0x1 ? 4 : 0) |
-									(plane[3] & 0x1 ? 8 : 0);
-			if( colour && (priority > layers[4].zbuf[x+ii]) )
+			register UINT8 colour = (plane[0] & 0x1 ? 1 : 0) | (plane[1] & 0x1 ? 2 : 0) |
+									(plane[2] & 0x1 ? 4 : 0) | (plane[3] & 0x1 ? 8 : 0);
+			if( colour && (priority >= layers[4].zbuf[x+ii]) )
 			{
 				layers[4].line[x+ii] = Machine->remapped_colortable[pal + colour];
 				layers[4].zbuf[x+ii] = priority;
@@ -327,11 +344,9 @@ INLINE void snes_draw_object( UINT8 line, UINT16 tileaddr, INT16 x, INT16 y, UIN
 		}
 		else
 		{
-			register UINT8 colour = (plane[0] & 0x80 ? 1 : 0) |
-									(plane[1] & 0x80 ? 2 : 0) |
-									(plane[2] & 0x80 ? 4 : 0) |
-									(plane[3] & 0x80 ? 8 : 0);
-			if( colour && (priority > layers[4].zbuf[x+ii]) )
+			register UINT8 colour = (plane[0] & 0x80 ? 1 : 0) | (plane[1] & 0x80 ? 2 : 0) |
+									(plane[2] & 0x80 ? 4 : 0) | (plane[3] & 0x80 ? 8 : 0);
+			if( colour && (priority >= layers[4].zbuf[x+ii]) )
 			{
 				layers[4].line[x+ii] = Machine->remapped_colortable[pal + colour];
 				layers[4].zbuf[x+ii] = priority;
@@ -358,7 +373,7 @@ void snes_update_line_2( UINT8 layer, UINT16 curline, UINT8 bg3_pty )
 	/* scrolling */
 	UINT32 basevmap;
 	UINT16 vscroll, hscroll;
-	UINT8 vshift, hshift, /*map[2],*/ map_size;
+	UINT8 vshift, hshift, map_size;
 
 #ifdef MAME_DEBUG
 	if( !(readinputport( 10 ) & (1 << layer)) )
@@ -453,7 +468,7 @@ void snes_update_line_4( UINT8 layer, UINT16 curline )
 	/* scrolling */
 	UINT32 basevmap;
 	UINT16 vscroll, hscroll;
-	UINT8 vshift, hshift, /*map[2],*/ map_size;
+	UINT8 vshift, hshift, map_size;
 
 #ifdef MAME_DEBUG
 	if( !(readinputport( 10 ) & (1 << layer)) )
@@ -543,7 +558,7 @@ void snes_update_line_8( UINT8 layer, UINT16 curline )
 	/* scrolling */
 	UINT32 basevmap;
 	UINT16 vscroll, hscroll;
-	UINT8 vshift, hshift, /*map[2],*/ map_size;
+	UINT8 vshift, hshift, map_size;
 
 #ifdef MAME_DEBUG
 	if( !(readinputport( 10 ) & (1 << layer)) )
@@ -711,11 +726,12 @@ void snes_update_line_mode7( UINT16 curline )
 INLINE void snes_update_objects( UINT16 curline )
 {
 	INT8 xs, tileincr;
-	UINT8 i, ys, scale[2], extra, line;
-	UINT16 oam, oam_extra;
+	UINT8 ys, line;
+	UINT16 oam, oam_extra, extra;
 	UINT8 range_over = 0, time_over = 0;
 	UINT8 size, vflip, hflip, priority, pal, count;
 	UINT16 x, y, tile;
+	INT16 i;
 
 #ifdef MAME_DEBUG
 	if( !(readinputport( 10 ) & 0x10) )
@@ -724,54 +740,27 @@ INLINE void snes_update_objects( UINT16 curline )
 	}
 #endif
 
-	/* Determine sprite size */
-	switch( (snes_ram[OBSEL] & 0xE0) >> 5 )
-	{
-		case 0:			/* 8 & 16 */
-			scale[0] = 1;
-			scale[1] = 2;
-			break;
-		case 1:			/* 8 & 32 */
-			scale[0] = 1;
-			scale[1] = 4;
-			break;
-		case 2:			/* 8 & 64 */
-			scale[0] = 1;
-			scale[1] = 8;
-			break;
-		case 3:			/* 16 & 32 */
-			scale[0] = 2;
-			scale[1] = 4;
-			break;
-		case 4:			/* 16 & 64 */
-			scale[0] = 2;
-			scale[1] = 8;
-			break;
-		case 5:			/* 32 & 64 */
-			scale[0] = 4;
-			scale[1] = 8;
-			break;
-	}
-
-	oam = 0x00;
-	oam_extra = 0x200;
+	oam = 0x1ff;
+	oam_extra = oam + 0x20;
 	extra = 0;
-	for( i = 0; i < 128; i++ )
+	for( i = 128; i > 0; i-- )
 	{
 		if( (i % 4) == 0 )
-			extra = snes_oam[oam_extra++];
+			extra = snes_oam[oam_extra--];
 
-		x = snes_oam[oam++] | ((extra & 0x1) << 8);
-		extra >>= 1;
-		size = (extra & 0x1);
-		extra >>= 1;
-		y = snes_oam[oam++];
-		tile = snes_oam[oam++];
-		tile |= (snes_oam[oam] & 0x1) << 8;
 		vflip = (snes_oam[oam] & 0x80) >> 7;
 		hflip = (snes_oam[oam] & 0x40) >> 6;
 		priority = table_obj_pty[(snes_oam[oam] & 0x30) >> 4];
-		pal = 128 + ((snes_oam[oam++] & 0xE) << 3);
+		pal = 128 + ((snes_oam[oam] & 0xE) << 3);
+		tile = (snes_oam[oam--] & 0x1) << 8;
+		tile |= snes_oam[oam--];
+		y = snes_oam[oam--];
+		x = snes_oam[oam--];
+		size = (extra & 0x80) >> 7;
+		extra <<= 1;
+		x |= ((extra & 0x80) << 1);
+		extra <<= 1;
+
 		tileincr = 16;
 		if( vflip )
 		{
@@ -783,7 +772,7 @@ INLINE void snes_update_objects( UINT16 curline )
 			y -= 256;	/* y is past sprite max pos */
 
 		/* Draw sprite if it intersects the current line */
-		for( ys = 0; ys < scale[size]; ys++ )
+		for( ys = 0; ys < obj_size[size]; ys++ )
 		{
 			count = 0;
 			line = curline - (y + (ys << 3));
@@ -795,7 +784,7 @@ INLINE void snes_update_objects( UINT16 curline )
 			{
 				if( hflip )
 				{
-					for( xs = (scale[size] - 1); xs >= 0; xs-- )
+					for( xs = (obj_size[size] - 1); xs >= 0; xs-- )
 					{
 						if( (x + (count << 3) < SNES_SCR_WIDTH + 8) )
 							snes_draw_object( line, layers[4].data + ((tile + xs) << 5), x + (count++ << 3), curline, priority, hflip, pal );
@@ -804,7 +793,7 @@ INLINE void snes_update_objects( UINT16 curline )
 				}
 				else
 				{
-					for( xs = 0; xs < scale[size]; xs++ )
+					for( xs = 0; xs < obj_size[size]; xs++ )
 					{
 						if( (x + (count << 3) < SNES_SCR_WIDTH + 8) )
 							snes_draw_object( line, layers[4].data + ((tile + xs) << 5), x + (count++ << 3), curline, priority, hflip, pal );
@@ -939,7 +928,7 @@ void snes_dbg_draw_all_tiles( struct mame_bitmap *bitmap, UINT32 tileaddr, UINT8
 void snes_refresh_scanline( UINT16 curline )
 {
 	UINT16 ii;
-	INT8 jj/*, kk*/;
+	INT8 jj;
 	struct mame_bitmap *bitmap = Machine->scrbitmap;
 	struct rectangle r = Machine->visible_area;
 	r.min_y = r.max_y = curline;
