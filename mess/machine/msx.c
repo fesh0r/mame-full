@@ -809,11 +809,11 @@ READ_HANDLER (msx_rtc_reg_r)
 	return tc8521_r (msx1.rtc_latch);
 	}
 
-void msx2_nvram (void *file, int write)
+void msx2_nvram (void *file, int write_local)
 	{
 	if (file)
 		{
-		if (write)
+		if (write_local)
 			tc8521_save_stream (file);
 		else
 			tc8521_load_stream (file);
@@ -1007,7 +1007,7 @@ static int msx_ppi_port_b_r (int chip)
     int row, data;
 
     row = ppi8255_0_r (2) & 0x0f;
-    if (row <= 10) 
+    if (row <= 10)
 		{
 		data = readinputport (row/2);
 		if (row & 1) data >>= 8;
@@ -1046,7 +1046,7 @@ static void msx_set_slot_1 (int page) {
     } else {
         if (page == 0 || page == 3 || !msx1.cart[0].mem)
         {
-    		if (!page && !strncmp (Machine->gamedrv->name, "msx2", 4) ) 
+    		if (!page && !strncmp (Machine->gamedrv->name, "msx2", 4) )
 				{
 		        cpu_setbank (1, ROM + 0x8000);
        			cpu_setbank (2, ROM + 0xa000);
@@ -1163,7 +1163,7 @@ static void msx_cart_write (int cart, int offset, int data)
         {
             offset &= 0xff;
             if (offset < 0x80)
-				{ 
+				{
 				K051649_waveform_w (offset, data);
                 p = msx1.cart[cart].mem +
                     (msx1.cart[cart].bank_mask + 1) * 0x2000;

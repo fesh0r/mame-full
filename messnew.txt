@@ -1,4 +1,4 @@
-0.37??
+0.37b11
 
 Several drivers may be broken due to the MAME memory handling changes.
 And as a result, the Amiga has been temporarily removed.
@@ -15,49 +15,51 @@ System Driver Changes:
 ----------------------
 
 - [KC85/4] Implemented keyboard hardware. Previous hack has been removed.
-Seperated machine/kc.c into machine/kc.c and systems/kc.c.
-Merged all headers into includes/kc.h, and added all defines here.
-Cleaned up some of the code, and made sure allocated memory was free'd properly.
-Implemented preliminary tape reading using ".wav". Implemented preliminary
-sound emulation. Added IO_QUICKLOAD to load ".kcc" and binary files with 128 byte
-header. Load the file then type MENU and it should appear in the list, now you
-can type the name of the program to run it.
-[Kev Thacker]
+  Seperated machine/kc.c into machine/kc.c and systems/kc.c.
+  Merged all headers into includes/kc.h, and added all defines here.
+  Cleaned up some of the code, and made sure allocated memory was free'd properly.
+  Implemented preliminary tape reading using ".wav". Implemented preliminary
+  sound emulation. Added IO_QUICKLOAD to load ".kcc" and binary files with 128 byte
+  header. Load the file then type MENU and it should appear in the list, now you
+  can type the name of the program to run it.
+  [Kev Thacker]
 
 - [ORIC1/ORICA/TELSTRAT] .tap tape images can now be used. These are converted
-at run-time into .wav files, and can be used in the same way as .wav. Code based
-heavily on tap2wav by Fabrice Frances [Kev Thacker, Fabrice Frances]
+  at run-time into .wav files, and can be used in the same way as .wav. Code based
+  heavily on tap2wav by Fabrice Frances [Kev Thacker, Fabrice Frances]
 
 
 - [COCO 1/2/3] Reworked m6847 synchronization and sound mux signals to make
-them much more accurate.  Fixed a bug that caused the joystick to max out all
-the time. Added a new abstraction layer for cartridge IO interfaces.  Optimized
-graphics emulation a bit.  Adjusted default controls so that joystick buttons
-will work by default.  [Nate Woods]
+  them much more accurate.  Fixed a bug that caused the joystick to max out all
+  the time. Added a new abstraction layer for cartridge IO interfaces.  Optimized
+  graphics emulation a bit.  Adjusted default controls so that joystick buttons
+  will work by default.  [Nate Woods]
 
 - [DRAGON] Fixed DragonDOS cartrdige, so now DragonDOS works fine.  [Nate Woods]
 
 - [NC100/NC200] Fixed PCMCIA Memory card emulation: Read/Write state can be changed using
-a dipswitch in the UI, memory card changes are saved back to memory card file. 
-Discovered more about the NC200 hardware and updated the code. Cleaned up more
-of the source, added better description about the I/O ports and seperated it into 
-common code, nc100 only and nc200 only code. Serial baud rate was not setup correct,
-now fixed.
-[Kev Thacker]
+  a dipswitch in the UI, memory card changes are saved back to memory card file. 
+  Discovered more about the NC200 hardware and updated the code. Cleaned up more
+  of the source, added better description about the I/O ports and seperated it into 
+  common code, nc100 only and nc200 only code. Serial baud rate was not setup correct,
+  now fixed.
+  [Kev Thacker]
 
 
 Other Changes:
 --------------
 
-- The core is based on MAME 0.37??. This incorporates all 
+- The core is based on MAME 0.37b11. This incorporates all 
   features of the update to this core.  [MAME team] 
  
 - [src/machine/z80fmly] Added support for BSTB and ASTB inputs for Z80 PIO.
-These are required by KC85/4 and KC85/3 systems. Added code to execute callback for 
-BRDY and ARDY outputs. [Kev Thacker]
+  These are required by KC85/4 and KC85/3 systems. Added code to execute callback for 
+  BRDY and ARDY outputs. [Kev Thacker]
 
 - [IMGTOOL] Fixed a bug that caused crashes when parameters to create were not
-properly specified [Nate Woods]
+  properly specified [Nate Woods]
+
+
 
 -------------------------------------------------------------------------------  
 0.37b10

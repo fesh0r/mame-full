@@ -67,6 +67,27 @@ void gb_init_machine (void)
 
 	/* Initialise the timer */
 	gb_w_io (0x07, gb_ram [0xFF07]);
+
+	/* Initialise the Sound Registers */
+	   gameboy_sound_w(0xFF10,0x80);
+	   gameboy_sound_w(0xFF11,0xBF);
+   	   gameboy_sound_w(0xFF12,0xBF);
+   	   gameboy_sound_w(0xFF14,0xBF);
+   	   gameboy_sound_w(0xFF16,0x3F);
+   	   gameboy_sound_w(0xFF17,0x00);
+   	   gameboy_sound_w(0xFF19,0xBF);
+   	   gameboy_sound_w(0xFF1A,0x7F);
+   	   gameboy_sound_w(0xFF1B,0xFF);
+   	   gameboy_sound_w(0xFF1C,0x9F);
+   	   gameboy_sound_w(0xFF1E,0xBF);
+   	   gameboy_sound_w(0xFF20,0xFF);
+   	   gameboy_sound_w(0xFF21,0x00);
+   	   gameboy_sound_w(0xFF22,0x00);
+   	   gameboy_sound_w(0xFF23,0xBF);
+   	   gameboy_sound_w(0xFF24,0x77);
+   	   gameboy_sound_w(0xFF25,0xF3);
+   	   gameboy_sound_w(0xFF26,0xF1); /*Gameboy, F0 for SGB*/
+
 }
 
 WRITE_HANDLER ( gb_rom_bank_select )
@@ -266,15 +287,23 @@ WRITE_HANDLER ( gb_w_io )
 		break;
 	default:
 
+		/* Sound Registers */
 		if ((offset >= 0xFF10) && (offset <= 0xFF26))
 		{
-            logerror("SOUND WRITE offset: %x  data: %x\n",offset,data);
+            /*logerror("SOUND WRITE offset: %x  data: %x\n",offset,data);*/
             gameboy_sound_w(offset,data);
 			gb_ram [offset] = data;
 			return;
 		}
 
-/*		if (offset == 0xFF26)
+		/*Pre defined Waveform Area */
+		if ((offset >= 0xFF30) && (offset <= 0xFF3F))
+		{
+			gb_ram [offset] = data;
+			return;
+		}
+
+		if (offset == 0xFF26)
 		{
 			if (data & 0x80)
 				gb_ram [0xFF26] = 0xFF;
@@ -282,7 +311,7 @@ WRITE_HANDLER ( gb_w_io )
 				gb_ram [0xFF26] = 0;
 			return;
 		}
-*/
+
 	}
 	gb_ram [offset] = data;
 }
