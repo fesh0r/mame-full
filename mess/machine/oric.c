@@ -1,9 +1,33 @@
+/* ORIC driver */
+
+/* By:
+
+
+  - (add previous author here)
+  - Kev Thacker
+
+  Thankyou to Fabrice Frances for his ORIC documentation which helped with this driver 
+  http://oric.ifrance.com/oric/
+  
+*/
+
 #include <stdio.h>
 #include "driver.h"
 #include "includes/oric.h"
 #include "includes/basicdsk.h"
 #include "includes/wd179x.h"
 #include "machine/6522via.h"
+#include "includes/mfmdisk.h"
+
+enum
+{
+	ORIC_FLOPPY_NONE,
+	ORIC_FLOPPY_MFM_DISK,
+	ORIC_FLOPPY_BASIC_DISK
+};
+
+static int oric_floppy_type[4] = {ORIC_FLOPPY_NONE, ORIC_FLOPPY_NONE, ORIC_FLOPPY_NONE, ORIC_FLOPPY_NONE};
+
 /*
 
 TODO's / BUGLIST
@@ -40,6 +64,7 @@ loading tape image to update MESS GUI settings for current image
   - Jasmin: overlay ram access, ROMDIS, fdc reset
 
 */
+static	char *oric_ram_0x0c000;
 
 
 /* index of keyboard line to scan */
@@ -358,8 +383,29 @@ unsigned char port_318_r;
 /* bit 3: double density enable */
 /* bit 0: enable FDC IRQ to trigger IRQ on CPU */
 unsigned char port_314_w;
+#else
+unsigned char port_3fa_w;
+unsigned char port_3fb_w;
 #endif
 
+
+static unsigned char oric_wd179x_int_state = 0;
+
+#ifdef MICRODISC_FLOPPY_DISC_INTERFACE
+static void oric_refresh_wd179x_ints(void)
+{
+	if ((oric_wd179x_int_state) && (port_314_w & (1<<0)))
+	{
+		cpu_set_irq_line(0,0,HOLD_LINE);
+	}
+	else
+	{
+		/* this might cause problems with via?? */
+		cpu_set_irq_line(0,0,CLEAR_LINE);
+	}
+
+}
+#endif
 
 static void oric_wd179x_callback(int State)
 {
@@ -368,12 +414,11 @@ static void oric_wd179x_callback(int State)
 		case WD179X_IRQ_CLR:
 		{
 #ifdef MICRODISC_FLOPPY_DISC_INTERFACE
-			port_314_r &=~(1<<7);
+			port_314_r |=(1<<7);
 
-			if (port_314_w & (1<<0))
-			{
-				cpu_set_irq_line(0,0,CLEAR_LINE);
-			}
+			oric_wd179x_int_state = 0;
+
+			oric_refresh_wd179x_ints();
 #endif
 		}
 		break;
@@ -381,12 +426,11 @@ static void oric_wd179x_callback(int State)
 		case WD179X_IRQ_SET:
 		{
 #ifdef MICRODISC_FLOPPY_DISC_INTERFACE
-			port_314_r |= (1<<7);
+			port_314_r &= ~(1<<7);
 
-			if (port_314_r & (1<<0))
-			{
-				cpu_set_irq_line(0,0,HOLD_LINE);
-			}
+			oric_wd179x_int_state = 1;
+
+			oric_refresh_wd179x_ints();
 #endif
 		}
 		break;
@@ -417,11 +461,25 @@ static void oric_wd179x_callback(int State)
 
 int oric_floppy_init(int id)
 {
+	int result;
+
+	/* attempt to open mfm disk */
+	result = mfm_disk_floppy_init(id);
+
+	if (result==INIT_OK)
+	{
+		oric_floppy_type[id] = ORIC_FLOPPY_MFM_DISK;
+	
+		return INIT_OK;
+	}
+
 	if (basicdsk_floppy_init(id))
 	{
 		/* I don't know what the geometry of the disc image should be, so the
 		default is 80 tracks, 2 sides, 9 sectors per track */
 		basicdsk_set_geometry(id, 80, 2, 9, 512, 1);
+
+		oric_floppy_type[id] = ORIC_FLOPPY_BASIC_DISK;
 
 		return INIT_OK;
 	}
@@ -429,9 +487,175 @@ int oric_floppy_init(int id)
 	return INIT_FAILED;
 }
 
+void	oric_floppy_exit(int id)
+{
+	switch (oric_floppy_type[id])
+	{
+		case ORIC_FLOPPY_MFM_DISK:
+		{
+			mfm_disk_floppy_exit(id);
+		}
+		break;
+
+		case ORIC_FLOPPY_BASIC_DISK:
+		{
+			basicdsk_floppy_exit(id);
+		}
+		break;
+
+		default:
+			break;
+	}
+
+	oric_floppy_type[id] = ORIC_FLOPPY_NONE;
+}
+
+int		oric_floppy_id(int id)
+{
+	int result;
+
+	/* check if it's a mfm disk first */
+	result = mfm_disk_floppy_id(id);
+
+	if (result==1)
+		return 1;
+
+	return basicdsk_floppy_id(id);
+}
+
+void	oric_set_mem_0x0c000(void)
+{
+#ifdef MICRODISC_FLOPPY_DISC_INTERFACE
+
+	/* for 0x0c000-0x0dfff: */
+	/* if os disabled, ram takes priority */
+	/* /ROMDIS */
+	if ((port_314_w & (1<<1))==0)
+	{
+/*		logerror("&c000-&dfff is ram\n"); */
+		/* rom disabled enable ram */
+		cpu_setbankhandler_r(1, MRA_BANK1);
+		cpu_setbankhandler_w(5, MWA_BANK5);
+		cpu_setbank(1, oric_ram_0x0c000);
+		cpu_setbank(5, oric_ram_0x0c000);
+	}
+	else
+	{
+		unsigned char *rom_ptr;
+/*		logerror("&c000-&dfff is os rom\n"); */
+		/* basic rom */
+		cpu_setbankhandler_r(1, MRA_BANK1);
+		cpu_setbankhandler_w(5, MWA_NOP);
+		rom_ptr = memory_region(REGION_CPU1) + 0x010000;
+		cpu_setbank(1, rom_ptr);
+		cpu_setbank(5, rom_ptr);
+	}
+
+	/* for 0x0e000-0x0ffff */
+	/* if not disabled, os takes priority */
+	if ((port_314_w & (1<<1))!=0)
+	{
+		unsigned char *rom_ptr;
+/*		logerror("&e000-&ffff is os rom\n"); */
+		/* basic rom */
+		cpu_setbankhandler_r(2, MRA_BANK2);
+		cpu_setbankhandler_w(6, MWA_NOP);
+		rom_ptr = memory_region(REGION_CPU1) + 0x010000;
+		cpu_setbank(2, rom_ptr+0x02000);
+		cpu_setbank(6, rom_ptr+0x02000);
+	}
+	else
+	{
+		/* if eprom is enabled, it takes priority over ram */
+		if ((port_314_w & (1<<7))==0)
+		{
+			unsigned char *rom_ptr;
+/*			logerror("&e000-&ffff is disk rom\n"); */
+			cpu_setbankhandler_r(2, MRA_BANK2);
+			cpu_setbankhandler_w(6, MWA_NOP);
+
+			/* enable rom of microdisc interface */
+			rom_ptr = memory_region(REGION_CPU1) + 0x014000;
+			cpu_setbank(2, rom_ptr);
+		}
+		else
+		{
+/*			logerror("&e000-&ffff is ram\n"); */
+			/* rom disabled enable ram */
+			cpu_setbankhandler_r(2, MRA_BANK2);
+			cpu_setbankhandler_w(6, MWA_BANK6);
+			cpu_setbank(1, oric_ram_0x0c000+0x02000);
+			cpu_setbank(5, oric_ram_0x0c000+0x02000);
+		}
+	}
+#else
+	/* /ROMDIS */
+	if ((port_3fb_w & (1<<0))!=0)
+	{
+		/* rom disabled enable ram */
+		cpu_setbankhandler_r(1, MRA_BANK1);
+		cpu_setbankhandler_r(2, MRA_BANK2);
+		cpu_setbankhandler_w(5, MWA_BANK5);
+		cpu_setbankhandler_w(6, MWA_BANK6);
+		cpu_setbank(1, oric_ram_0x0c000);
+		cpu_setbank(2, oric_ram_0x0c000+0x02000);
+		cpu_setbank(5, oric_ram_0x0c000);
+		cpu_setbank(6, oric_ram_0x0c000+0x02000);
+
+/*		logerror("select ram\n"); */
+	}
+	else
+	{
+		unsigned char *rom_ptr;
+		/* ROM */
+
+		/* writes are ignored */
+		cpu_setbankhandler_w(5, MWA_NOP);
+		cpu_setbankhandler_w(6, MWA_NOP);
+		cpu_setbankhandler_r(1, MRA_BANK1);
+		cpu_setbankhandler_r(2, MRA_BANK2);
+	
+		if ((port_3fa_w & (1<<0))==0)
+		{
+/*			logerror("Select disk rom\n"); */
+			/* enable rom of microdisc interface */
+			rom_ptr = memory_region(REGION_CPU1) + 0x014000;
+			cpu_setbank(2, rom_ptr);
+			cpu_setbank(1, rom_ptr);
+	
+		}
+		else
+		{
+/*			logerror("Select OS rom\n"); */
+			/* basic rom */
+			rom_ptr = memory_region(REGION_CPU1) + 0x010000;
+			cpu_setbank(1, rom_ptr);
+			cpu_setbank(2, rom_ptr+0x02000);
+		}
+
+	}
+#endif
+}
 
 void oric_init_machine (void)
 {
+
+	oric_ram_0x0c000 = malloc(16384);
+
+#ifdef MICRODISC_FLOPPY_DISC_INTERFACE
+	/* disable os rom, enable microdisc rom */
+	/* 0x0c000-0x0dfff will be ram, 0x0e000-0x0ffff will be microdisc rom */
+	port_314_w = 0x0ff^((1<<7)|(1<<0)|(1<<1));
+	oric_set_mem_0x0c000();
+#else
+	port_3fa_w = 0;
+	port_3fb_w = 0;
+	oric_set_mem_0x0c000();
+#endif
+
+
+
+#if 0
 	int i;
 
 	//int found,f2;
@@ -511,7 +735,7 @@ void oric_init_machine (void)
 					if (RAM[0xedae] == 0x0d)
 						if (RAM[0xedaf] == 0x0a)
 							strcpy (oric_rom_version, "1.1");
-
+#endif
 
 	via_config(0, &oric_6522_interface);
 	via_set_clock(0,1000000);
@@ -523,18 +747,22 @@ void oric_init_machine (void)
 
 void oric_shutdown_machine (void)
 {
+	if (oric_ram_0x0c000)
+		free(oric_ram_0x0c000);
+	oric_ram_0x0c000 = NULL;
 	wd179x_exit();
 }
 
 
 READ_HANDLER ( oric_IO_r )
 {
-	unsigned char data;
+	unsigned char data = 0x0ff;
 
-	/* it is repeated 16 times */
-	data = via_0_r(offset & 0x0f);
-	
-#if 0
+	if (offset<0x010)
+	{
+		/* it is repeated 16 times */
+		data = via_0_r(offset & 0x0f);
+	}
 
 	switch (offset & 0x0ff)
 	{
@@ -542,29 +770,40 @@ READ_HANDLER ( oric_IO_r )
 		/* microdisc floppy disc interface */
 		case 0x010:
 			data = wd179x_status_r(0);
+			break;
 		case 0x011:
 			data =wd179x_track_r(0);
+			break;
 		case 0x012:
 			data = wd179x_sector_r(0);
+			break;
 		case 0x013:
 			data = wd179x_data_r(0);
+			break;
 		case 0x014:
-			data = port_314_r;
+			data = port_314_r | 0x07f;
+/*			logerror("port_314_r: %02x\n",data); */
+			break;
 		case 0x018:
-			data = port_318_r;
+			data = port_318_r | 0x07f;
+/*			logerror("port_318_r: %02x\n",data); */
+			break;
 #else
 		/* Jasmin floppy disc interface */
 		case 0x0f4:
 			data = wd179x_status_r(0);
+			break;
 		case 0x0f5:
 			data = wd179x_track_r(0);
+			break;
 		case 0x0f6:
 			data = wd179x_sector_r(0);
+			break;
 		case 0x0f7:
 			data = wd179x_data_r(0);
+			break;
 #endif
 	}
-#endif
 
 	return data;
 }
@@ -618,9 +857,11 @@ WRITE_HANDLER ( oric_IO_w )
 		}
 	}
 
-	/* it is repeated 16 times, but for now only use first few entries */
-	via_0_w(offset & 0x0f,data);
-
+	if (offset<0x010)
+	{
+		/* it is repeated 16 times, but for now only use first few entries */
+		via_0_w(offset & 0x0f,data);
+	}
 	switch (offset & 0x0ff)
 	{
 #ifdef MICRODISC_FLOPPY_DISC_INTERFACE
@@ -643,6 +884,8 @@ WRITE_HANDLER ( oric_IO_w )
 
 			port_314_w = data;
 
+/*			logerror("port_314_w: %02x\n",data); */
+
 			/* bit 6,5: drive */
 			/* bit 4: side */
 			/* bit 3: double density enable */
@@ -659,6 +902,9 @@ WRITE_HANDLER ( oric_IO_w )
 			}
 
 			wd179x_set_density(density);
+	
+			oric_set_mem_0x0c000();
+			oric_refresh_wd179x_ints();
 		}
 		break;		
 #else
@@ -681,6 +927,22 @@ WRITE_HANDLER ( oric_IO_w )
 			wd179x_set_side(data & 0x01);
 		}
 		break;
+
+		/* bit 0 = overlay ram access 1 = overlay ram enabled */
+		case 0x0fa:
+		{
+			port_0x03fa_w = data;
+		}
+		break;
+
+		/* bit 0 = romdis, internal basic rom disabled */
+		case 0x0fb:
+		{
+			port_0x03fb_w = data;
+		}
+		break;
+
+
 
 		/* port 0x03fc selects drive 0, port 0x03fd selects drive 1.. */
 		case 0x0fc:
