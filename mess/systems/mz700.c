@@ -303,11 +303,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+#if 0
 static struct CustomSound_interface spkr_interface = {
 	mz700_sh_start,
 	mz700_sh_stop,
 	mz700_sh_update
 };
+#endif
+static struct beep_interface mz700_beep_interface =
+{
+        1
+};
+
 
 static struct Wave_interface wave_interface = {
 	1,
@@ -347,9 +354,13 @@ static struct MachineDriver machine_driver_mz700 =
 	/* sound hardware */
 	0,0,0,0,
 	{
-		{
-			SOUND_CUSTOM,
-			&spkr_interface
+//                {
+  //                      SOUND_CUSTOM,
+    //                    &spkr_interface
+    //    },
+                {
+                        SOUND_BEEP,
+                        &mz700_beep_interface
         },
         {
             SOUND_WAVE,
@@ -391,9 +402,13 @@ static struct MachineDriver machine_driver_mz800 =
 	/* sound hardware */
 	0,0,0,0,
 	{
-		{
-			SOUND_CUSTOM,
-			&spkr_interface
+//                {
+  //                      SOUND_CUSTOM,
+    //                    &spkr_interface
+    //    },
+                {
+                        SOUND_BEEP,
+                        &mz700_beep_interface
         },
         {
             SOUND_WAVE,
