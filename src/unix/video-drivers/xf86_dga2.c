@@ -172,7 +172,6 @@ static int xf86_dga_vidmode_setup_mode_restore(void)
 		disp = XOpenDisplay(NULL);
 		XDGACloseFramebuffer(disp, xf86ctx.screen);
 		XDGASetMode(disp, xf86ctx.screen, 0);
-		XSync(display, True);
 		XCloseDisplay(disp);
 		_exit(!WIFEXITED(status));
 	}
@@ -403,7 +402,6 @@ void xf86_dga2_update_display(struct mame_bitmap *bitmap)
 
 void xf86_dga2_close_display(void)
 {
-	XDGASync(display,xf86ctx.screen);
 	if(xf86ctx.device)
 	{
 		XFree(xf86ctx.device);
@@ -423,6 +421,8 @@ void xf86_dga2_close_display(void)
 	xinput_close();
 	if(xf86ctx.vidmode_changed)
 	{
+		/* HDG: is this really nescesarry ? */
+		XDGASync(display,xf86ctx.screen);
 #ifdef TDFX_DGA_WORKAROUND
 		/* Restore the right video mode before leaving DGA  */
 		/* The tdfx driver would have to do it, but it doesn't work ...*/

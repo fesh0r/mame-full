@@ -65,6 +65,7 @@ static void x11_window_update_16_to_32bpp (struct mame_bitmap *bitmap);
 static void x11_window_update_32_to_16bpp_direct (struct mame_bitmap *bitmap);
 static void x11_window_update_32_to_16bpp_rgb_565_direct (struct mame_bitmap *bitmap);
 static void x11_window_update_32_to_16bpp_rgb_555_direct (struct mame_bitmap *bitmap);
+static void x11_window_update_32_to_24bpp_direct (struct mame_bitmap *bitmap);
 static void x11_window_update_32_to_32bpp_direct (struct mame_bitmap *bitmap);
 static void (*x11_window_update_display_func) (struct mame_bitmap *bitmap) = NULL;
 
@@ -1002,6 +1003,9 @@ int x11_window_create_display (int bitmap_depth)
 				  fprintf(stderr_file, "\n Using generic (slow) 32 bpp to 16 bpp downsampling... ");
                                 }
                                 break;
+			    case 24:
+				x11_window_update_display_func = x11_window_update_32_to_24bpp_direct;
+				break;
 			    case 32:
 				x11_window_update_display_func = x11_window_update_32_to_32bpp_direct;
                                 break;
@@ -1578,9 +1582,9 @@ static void x11_window_update_32_to_16bpp_rgb_565_direct (struct mame_bitmap *bi
 #define DEST_PIXEL unsigned short
 #define CONVERT_PIXEL(p) _32TO16_RGB_565(p)
 #include "blit.h"
-#undef CONVERT_PIXEL
 #undef SRC_PIXEL
 #undef DEST_PIXEL
+#undef CONVERT_PIXEL
 }
 
 static void x11_window_update_32_to_16bpp_rgb_555_direct (struct mame_bitmap *bitmap)
@@ -1589,9 +1593,9 @@ static void x11_window_update_32_to_16bpp_rgb_555_direct (struct mame_bitmap *bi
 #define DEST_PIXEL unsigned short
 #define CONVERT_PIXEL(p) _32TO16_RGB_555(p)
 #include "blit.h"
-#undef CONVERT_PIXEL
 #undef SRC_PIXEL
 #undef DEST_PIXEL
+#undef CONVERT_PIXEL
 }
 
 static void x11_window_update_32_to_16bpp_direct (struct mame_bitmap *bitmap)
@@ -1601,9 +1605,20 @@ static void x11_window_update_32_to_16bpp_direct (struct mame_bitmap *bitmap)
 #define CONVERT_PIXEL(p) \
    sysdep_palette_make_pen(current_palette, p)
 #include "blit.h"
-#undef CONVERT_PIXEL
 #undef SRC_PIXEL
 #undef DEST_PIXEL
+#undef CONVERT_PIXEL
+}
+
+static void x11_window_update_32_to_24bpp_direct (struct mame_bitmap *bitmap)
+{
+#define SRC_PIXEL unsigned int
+#define DEST_PIXEL unsigned int
+#define PACK_BITS
+#include "blit.h"
+#undef SRC_PIXEL
+#undef DEST_PIXEL
+#undef PACK_BITS
 }
 
 static void x11_window_update_32_to_32bpp_direct(struct mame_bitmap *bitmap)

@@ -156,7 +156,6 @@ static void xf86_dga_vidmode_restoremode(Display *disp)
 	XF86VidModeSwitchMode(disp,xf86ctx.screen,-1);
 	XF86VidModeSwitchMode(disp,xf86ctx.screen,1);
 	/**************************************************/
-	XSync(disp,True);
 }
 
 static int xf86_dga_vidmode_setup_mode_restore(void)
@@ -441,6 +440,7 @@ void xf86_dga1_close_display(void)
 		xf86_dga_vidmode_restoremode(display);
 		xf86ctx.vidmode_changed = FALSE;
 	}
+	XSync(display,True);
 }
 
 #endif /*def USE_DGA*/

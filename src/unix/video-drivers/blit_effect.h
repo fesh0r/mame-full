@@ -1,18 +1,63 @@
 /* this file is used by blit.h -- don't use it directly ! */
-#ifdef DOUBLEBUFFER
+
+/* For now CONVERT_PIXEL is only used to downsample 32bpp bitmaps for
+   display on 15 or 16 bpp destinations, in this case the effect code renders
+   in 32bpp format and we convert this afterwards in the MEMCPY macro
+   The 6tap2x effect is an exception which renders directly in 16 bpp format */
+#ifdef CONVERT_PIXEL
+#  define MEMCPY(d, s, n) \
+   {\
+     SRC_PIXEL  *src = (SRC_PIXEL *)(s); \
+     SRC_PIXEL  *end = src + (n); \
+     DEST_PIXEL *dst = (DEST_PIXEL *)(d); \
+     for(;src<end;src+=8,dst+=8) \
+     { \
+        *(dst  ) = CONVERT_PIXEL(*(src  )); \
+        *(dst+1) = CONVERT_PIXEL(*(src+1)); \
+        *(dst+2) = CONVERT_PIXEL(*(src+2)); \
+        *(dst+3) = CONVERT_PIXEL(*(src+3)); \
+        *(dst+4) = CONVERT_PIXEL(*(src+4)); \
+        *(dst+5) = CONVERT_PIXEL(*(src+5)); \
+        *(dst+6) = CONVERT_PIXEL(*(src+6)); \
+        *(dst+7) = CONVERT_PIXEL(*(src+7)); \
+     }\
+   }
+#endif
+
+/* when packing bits the effect code renders in sparse 32bpp and we pack this
+   in the MEMCPY macro */
+#ifdef PACK_BITS
+#  define MEMCPY(d, s, n) \
+   {\
+     unsigned int *src =  (unsigned int *)s; \
+     unsigned int *end = ((unsigned int *)s) + n; \
+     DEST_PIXEL *dst = (DEST_PIXEL *)d; \
+     for(;src<end;dst+=3,src+=4) \
+     { \
+        *(dst  ) = ((*(src  ))    ) | ((*(src+1))<<24); \
+        *(dst+1) = ((*(src+1))>> 8) | ((*(src+2))<<16); \
+        *(dst+2) = ((*(src+2))>>16) | ((*(src+3))<< 8); \
+     }\
+   }
+#endif
+
+/* double buf / MEMCPY tricks for downsampling and packing bits or 24 bpp
+   packed bits modes. WARNING this assumes that the effect code renders in
+   sparse 32 bpp format for these cases ! */
+#if defined CONVERT_PIXEL || defined PACK_BITS
 #  define EFFECT() \
-     effect_func(effect_dbbuf, effect_dbbuf+visual_width*widthscale*DEST_PIXEL_SIZE, line_src, visual_width); \
-     MEMCPY(line_dest, effect_dbbuf, visual_width*widthscale*DEST_PIXEL_SIZE); \
-     MEMCPY(line_dest+CORRECTED_DEST_WIDTH, effect_dbbuf+visual_width*widthscale*DEST_PIXEL_SIZE, visual_width*widthscale*DEST_PIXEL_SIZE)
+     effect_func(effect_dbbuf, effect_dbbuf+visual_width*widthscale*4, line_src, visual_width); \
+     MEMCPY(line_dest, effect_dbbuf, visual_width*widthscale); \
+     MEMCPY(line_dest+CORRECTED_DEST_WIDTH, effect_dbbuf+visual_width*widthscale*4, visual_width*widthscale)
 #  define EFFECT2X() \
-     effect_scale2x_func(effect_dbbuf, effect_dbbuf+visual_width*2*DEST_PIXEL_SIZE, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, visual_width); \
-     MEMCPY(line_dest, effect_dbbuf, visual_width*2*DEST_PIXEL_SIZE); \
-     MEMCPY(line_dest+CORRECTED_DEST_WIDTH, effect_dbbuf+visual_width*2*DEST_PIXEL_SIZE, visual_width*2*DEST_PIXEL_SIZE)
+     effect_scale2x_func(effect_dbbuf, effect_dbbuf+visual_width*8, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, visual_width); \
+     MEMCPY(line_dest, effect_dbbuf, visual_width*2); \
+     MEMCPY(line_dest+CORRECTED_DEST_WIDTH, effect_dbbuf+visual_width*8, visual_width*2)
 #  define EFFECT3X() \
-     effect_scale3x_func(effect_dbbuf, effect_dbbuf+visual_width*widthscale*DEST_PIXEL_SIZE, effect_dbbuf+visual_width*widthscale*DEST_PIXEL_SIZE*2, line_src, visual_width); \
-     MEMCPY(line_dest, effect_dbbuf, visual_width*widthscale*DEST_PIXEL_SIZE); \
-     MEMCPY(line_dest+CORRECTED_DEST_WIDTH, effect_dbbuf+visual_width*widthscale*DEST_PIXEL_SIZE, visual_width*widthscale*DEST_PIXEL_SIZE); \
-     MEMCPY(line_dest+CORRECTED_DEST_WIDTH*2, effect_dbbuf+visual_width*widthscale*DEST_PIXEL_SIZE*2, visual_width*widthscale*DEST_PIXEL_SIZE)
+     effect_scale3x_func(effect_dbbuf, effect_dbbuf+visual_width*widthscale*4, effect_dbbuf+visual_width*widthscale*8, line_src, visual_width); \
+     MEMCPY(line_dest, effect_dbbuf, visual_width*widthscale); \
+     MEMCPY(line_dest+CORRECTED_DEST_WIDTH, effect_dbbuf+visual_width*widthscale*4, visual_width*widthscale); \
+     MEMCPY(line_dest+CORRECTED_DEST_WIDTH*2, effect_dbbuf+visual_width*widthscale*8, visual_width*widthscale)
 #else
 #  define EFFECT() \
      effect_func(line_dest, line_dest+CORRECTED_DEST_WIDTH, line_src, visual_width)
@@ -22,12 +67,13 @@
      effect_scale3x_func(line_dest, line_dest+CORRECTED_DEST_WIDTH, line_dest+CORRECTED_DEST_WIDTH*2, line_src, visual_width)
 #endif
 
-/* no double buffering for 6tap2x, since it doesn't do any reads from DEST */
-#if 0 
+/* only use MEMCPY tricks for PACK_BITS, since 6tap2x can render 15/16 bpp
+   directly even if the src is 32 bpp */
+#ifdef PACK_BITS
 #  define EFFECT_6TAP() \
-     effect_6tap_render_func(effect_dbbuf, effect_dbbuf+visual_width*2*DEST_PIXEL_SIZE, visual_width); \
-     MEMCPY(line_dest, effect_dbbuf, visual_width*2*DEST_PIXEL_SIZE); \
-     MEMCPY(line_dest+CORRECTED_DEST_WIDTH, effect_dbbuf+visual_width*2*DEST_PIXEL_SIZE, visual_width*2*DEST_PIXEL_SIZE)
+     effect_6tap_render_func(effect_dbbuf, effect_dbbuf+visual_width*8, visual_width); \
+     MEMCPY(line_dest, effect_dbbuf, visual_width*2); \
+     MEMCPY(line_dest+CORRECTED_DEST_WIDTH, effect_dbbuf+visual_width*8, visual_width*2)
 #else     
 #  define EFFECT_6TAP() \
      effect_6tap_render_func(line_dest, line_dest+CORRECTED_DEST_WIDTH, visual_width)

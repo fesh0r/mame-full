@@ -8,6 +8,8 @@
  * and for direct/non-pallettized where needed.
  *
  * HISTORY:
+ *  2004-13-09:
+ *   - lots of changes, see mess CVS ChangeLog <j.w.r.degoede@hhs.nl>
  *
  *  2001-10-06:
  *   - minor changes to make -effect option trump -arbheight option <adam@gimp.org>
