@@ -18,6 +18,7 @@
 char battery_name[1024];
 UINT8 battery_data[BATTERY_SIZE];
 
+static int famicom_image_registered = 0;
 struct ppu_struct ppu;
 struct nes_struct nes;
 struct fds_struct nes_fds;
@@ -1075,7 +1076,7 @@ end:
 	PPU_address += PPU_add;
 }
 
-int nes_load_rom (int id)
+int nes_init_cart (int id)
 {
 
 	const char *mapinfo;
@@ -1089,8 +1090,10 @@ int nes_load_rom (int id)
 
 	if ((!device_filename(IO_CARTSLOT,id)) && (id == 0))
 	{
-//		printf("NES requires cartridge!\n");
-		return INIT_FAIL;
+		if(famicom_image_registered)
+			return INIT_PASS;
+		else
+			return INIT_FAIL;
 	}
 	else
 	{
@@ -1112,8 +1115,8 @@ int nes_load_rom (int id)
 
 	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-		logerror("image_fopen failed in nes_load_rom.\n");
-			return 1;
+		logerror("image_fopen failed in nes_init_cart.\n");
+			return INIT_FAIL;
 	}
 
 	/* Verify the file is in iNES format */
@@ -1288,12 +1291,13 @@ int nes_load_rom (int id)
 	}
 
 	osd_fclose (romfile);
-	return 0;
+	famicom_image_registered = 1;
+	return INIT_PASS;
 
 bad:
 	logerror("BAD section hit during LOAD ROM.\n");
 	osd_fclose (romfile);
-	return 1;
+	return INIT_FAIL;
 }
 
 // extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
@@ -1307,39 +1311,23 @@ logerror("NES Partial CRC: %08lx %d\n",crc,size);
 return crc;
 }
 
-#ifdef IMAGE_VERIFY
-int nes_id_rom (int id)
-{
-    FILE *romfile;
-	unsigned char magic[4];
-	int retval;
-
-	if (!(romfile = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0))) return 0;
-
-	retval = 1;
-	/* Verify the file is in iNES format */
-	osd_fread (romfile, magic, 4);
-	if ((magic[0] != 'N') ||
-		(magic[1] != 'E') ||
-		(magic[2] != 'S'))
-		retval = 0;
-
-	osd_fclose (romfile);
-	return retval;
-}
-#endif
-
 int nes_load_disk (int id)
 {
  	FILE *diskfile;
 	unsigned char magic[4];
 
-	if (!device_filename(IO_FLOPPY,id)) return INIT_FAIL;
+	if (!device_filename(IO_FLOPPY,id))
+	{
+		/* The cart will be checked next - if that also fails, then stop */
+		logerror("No floppy Disk specified - hope there is a cart!\n");
+		famicom_image_registered = 0;
+		return INIT_PASS;
+	}
 
 	if (!(diskfile = image_fopen (IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		logerror("image_fopen failed in nes_load_disk for [%s].\n",device_filename(IO_FLOPPY,id));
-			return 1;
+			return INIT_FAIL;
 	}
 
 	/* See if it has a fucking redundant header on it */
@@ -1382,7 +1370,8 @@ int nes_load_disk (int id)
 	logerror ("Number of sides: %d", nes_fds.sides);
 
 	osd_fclose (diskfile);
-	return 0;
+	famicom_image_registered = 1;
+	return INIT_PASS;
 
 //bad:
 	logerror("BAD section hit during disk load.\n");

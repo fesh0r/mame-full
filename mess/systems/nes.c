@@ -221,7 +221,7 @@ INPUT_PORTS_START( famicom )
 
 INPUT_PORTS_END
 
-/* !! Warning: the charlayout is changed by nes_load_rom !! */
+/* !! Warning: the charlayout is changed by nes_init_cart !! */
 struct GfxLayout nes_charlayout =
 {
     8,8,    /* 8*8 characters */
@@ -395,25 +395,6 @@ static struct MachineDriver machine_driver_nespal =
 
 static const struct IODevice io_famicom[] = {
     {
-        IO_CARTSLOT,        /* type */
-        1,                  /* count */
-        "nes\0",            /* file extensions */
-        IO_RESET_CPU,       /* reset if file changed */
-        0,
-        nes_load_rom,       /* init */
-        NULL,               /* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-    {
         IO_FLOPPY,          /* type */
         1,                  /* count */
         "dsk\0",            /* file extensions */
@@ -433,6 +414,25 @@ static const struct IODevice io_famicom[] = {
         NULL,                /* output_chunk */
         nes_partialcrc      /* correct CRC */
     },
+    {
+        IO_CARTSLOT,        /* type */
+        1,                  /* count */
+        "nes\0",            /* file extensions */
+        IO_RESET_CPU,       /* reset if file changed */
+        0,
+        nes_init_cart,      /* init */
+        NULL,               /* exit */
+        NULL,               /* info */
+        NULL,               /* open */
+        NULL,               /* close */
+        NULL,               /* status */
+        NULL,               /* seek */
+        NULL,               /* tell */
+        NULL,               /* input */
+        NULL,               /* output */
+        NULL,               /* input_chunk */
+        NULL                /* output_chunk */
+    },
     { IO_END }
 };
 
@@ -443,7 +443,7 @@ static const struct IODevice io_nes[] = {
         "nes\0",            /* file extensions */
         IO_RESET_CPU,       /* reset if file changed */
         0,
-        nes_load_rom,       /* init */
+        nes_init_cart,      /* init */
         NULL,               /* exit */
         NULL,               /* info */
         NULL,               /* open */
@@ -467,7 +467,7 @@ static const struct IODevice io_nespal[] = {
         "nes\0",            /* file extensions */
         IO_RESET_CPU,       /* reset if file changed */
         0,
-        nes_load_rom,       /* init */
+        nes_init_cart,      /* init */
         NULL,               /* exit */
         NULL,               /* info */
         NULL,               /* open */
