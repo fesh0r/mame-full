@@ -49,11 +49,6 @@ void mc10_stop_machine(void)
 {
 }
 
-int mc10_interrupt(void)
-{
-	return ignore_interrupt();
-}
-
 READ_HANDLER ( mc10_bfff_r )
 {
 	/*   BIT 0 KEYBOARD ROW 1

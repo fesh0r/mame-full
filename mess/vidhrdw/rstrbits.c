@@ -676,16 +676,19 @@ drawchar:
 /* -------------------------------------------------------------------------
  * Now here is the actual raster_bits() call!  Note the asserts that raise
  * errors when the holes are walked into
+ *
+ * basey is the logical beginning of content
  * ------------------------------------------------------------------------- */
 
-void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struct rasterbits_videomode *mode,
-	struct rasterbits_frame *frame, struct rasterbits_clip *clip)
+int raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struct rasterbits_videomode *mode,
+	struct rasterbits_frame *frame, struct rasterbits_clip *clip, int basey)
 {
 	int scalex, scaley;
-	int basex, basey;
+	int basex;
 	int bitmapwidth;
 	int bitmapheight;
 	int drawingbody;
+	int totalcoverage;
 	struct rasterbits_clip myclip;
 
 	assert(bitmap);
@@ -713,15 +716,15 @@ void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struc
 		if (myclip.ybegin < 0)
 			myclip.ybegin = 0;
 		else if (myclip.ybegin >= bitmapheight)
-			return;
+			return 0;
 
 		if (myclip.yend < 0)
-			return;
+			return 0;
 		else if (myclip.yend >= bitmapheight)
 			myclip.yend = bitmapheight - 1;
 
 		if (myclip.ybegin > myclip.yend)
-			return;
+			return 0;
 	}
 	else {
 		myclip.ybegin = 0;
@@ -732,7 +735,6 @@ void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struc
 	scalex = (frame->width + mode->width - 1) / mode->width;
 	scaley = (frame->height + mode->height - 1) / mode->height;
 	basex = (bitmapwidth - frame->width) / 2;
-	basey = (bitmapheight - frame->height) / 2;
 
 	assert(scalex > 0);
 	assert(scaley > 0);
@@ -792,7 +794,7 @@ void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struc
 	}
 
 	if (drawingbody) {
-		int firstrow, lastrow, totalcoverage;
+		int firstrow, lastrow;
 
 		/* Clip to content */
 		if (myclip.ybegin < basey)
@@ -810,13 +812,11 @@ void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struc
 		/* Render the content */
 		((mode->flags & RASTERBITS_FLAG_TEXT) ? raster_text : raster_graphics)
 			(bitmap, src, mode, &myclip, scalex, scaley, basex, basey, firstrow, lastrow);
-
-		/* Now update the source */
-		src->videoram += totalcoverage;
-		if (src->db)
-			src->db += totalcoverage;
-
 	}
+	else {
+		totalcoverage = 0;
+	}
+	return totalcoverage;
 }
 
 

@@ -9,7 +9,6 @@ extern WRITE_HANDLER ( mc10_port2_w );
 
 extern int mc10_vh_start(void);
 extern void mc10_vh_stop(void);
-extern int mc10_interrupt(void);
 extern void mc10_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 extern WRITE_HANDLER ( mc10_ram_w );
 

@@ -3,7 +3,6 @@
 #include "vidhrdw/m6847.h"
 #include "includes/mc10.h"
 
-
 extern int coco_cassette_init(int id);
 extern void coco_cassette_exit(int id);
 
@@ -148,7 +147,7 @@ static struct MachineDriver machine_driver_mc10 =
 			894886,	/* 0,894886 Mhz */
 			mc10_readmem,mc10_writemem,
 			mc10_readport, mc10_writeport,
-			mc10_interrupt, 1,
+			m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME,
 			0, 0,
 		},
 	},

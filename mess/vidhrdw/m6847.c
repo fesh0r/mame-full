@@ -27,10 +27,15 @@
 #define LOG_HS	0
 #endif /* MAME_DEBUG */
 
+static void m6847_rastertrack_newscreen(struct rastertrack_vvars *vvars, struct rastertrack_hvars *hvars);
+static void m6847_rastertrack_endcontent(void);
+static void m6847_rastertrack_getvideomode(struct rastertrack_hvars *hvars);
+
 struct m6847_state {
 	struct m6847_init_params initparams;
 	int modebits;
 	int videooffset;
+	int latched_videooffset;
 	int rowsize;
 	int fs, hs;
 };
@@ -289,7 +294,6 @@ void m6847_vh_normalparams(struct m6847_init_params *params)
 	memset(params, '\0', sizeof(struct m6847_init_params));
 	params->version = M6847_VERSION_ORIGINAL;
 	params->artifactdipswitch = -1;
-	params->clock = TIME_IN_HZ(3588545.0);
 }
 
 void m6847_vh_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
@@ -313,11 +317,24 @@ void m6847_vh_init_palette(unsigned char *sys_palette, unsigned short *sys_color
 	game_palette = sys_palette;
 }
 
-int internal_m6847_vh_start(const struct m6847_init_params *params, int dirtyramsize)
+static struct rastertrack_interface m6847_rastertrack_intf =
 {
+	263,
+	m6847_rastertrack_newscreen,
+	NULL,
+	internal_m6847_rastertrack_endcontent,
+	m6847_rastertrack_getvideomode,
+	0
+};
+
+int internal_m6847_vh_start(const struct m6847_init_params *params, struct rastertrack_interface *intf, int dirtyramsize)
+{
+	struct rastertrack_initvars vars;
+
 	the_state.initparams = *params;
 	the_state.modebits = 0;
 	the_state.videooffset = 0;
+	the_state.latched_videooffset = 0;
 	the_state.rowsize = 12;
 	the_state.fs = 1;
 	the_state.hs = 1;
@@ -326,6 +343,11 @@ int internal_m6847_vh_start(const struct m6847_init_params *params, int dirtyram
 	if (generic_vh_start())
 		return 1;
 
+	vars.intf = intf;
+	vars.vram = params->ram;
+	vars.vramwrap = params->ramsize;
+	rastertrack_init(&vars);
+
 	return 0;
 }
 
@@ -333,12 +355,22 @@ int m6847_vh_start(const struct m6847_init_params *params)
 {
 	int result;
 
-	result = internal_m6847_vh_start(params, MAX_VRAM);
+	result = internal_m6847_vh_start(params, &m6847_rastertrack_intf, MAX_VRAM);
 	if (result)
 		return result;
 
 	state_save_register_func_postload(schedule_full_refresh);
 	return 0;
+}
+
+void m6847_vh_stop(void)
+{
+	generic_vh_stop();
+}
+
+int m6847_vh_interrupt(void)
+{
+	return rastertrack_hblank();
 }
 
 /* --------------------------------------------------
@@ -369,7 +401,6 @@ int m6847_vh_start(const struct m6847_init_params *params)
  * Source: Motorola M6847 Manual
  * -------------------------------------------------- */
 
-#define CLK		(the_state.initparams.clock)
 #define DHS_F	TIME_IN_NSEC(550)
 #define DHS_R	TIME_IN_NSEC(740)
 #define DFS_F	TIME_IN_NSEC(520)
@@ -380,8 +411,6 @@ int m6847_vh_start(const struct m6847_init_params *params)
  * happen every 228 clock cycles.  To be honest, I'm not sure what the truth
  * really is... maybe they were different?  (Remember that the CoCo 3 did not
  * actually use the m6847 */
-#define HSYNC	(CLK * 228)
-/*#define HSYNC	(CLK * 227.5)*/
 
 /* The reason we have a delay is because of a very fine point in MAME/MESS's
  * emulation.  In the CoCo, fs/hs are tied to interrupts, and the game "Popcorn"
@@ -422,26 +451,20 @@ static void invoke_callback(mem_write_handler callback, double delay, int value)
 	}
 }
 
-static void hs_fall(int hsyncsleft)
+static void hs_fall(int dummy)
 {
 	the_state.hs = 0;
 	invoke_callback(the_state.initparams.hs_func, the_state.initparams.callback_delay, the_state.hs);
-
-	if (hsyncsleft)
-		timer_set(HSYNC, hsyncsleft - 1, hs_fall);
 
 #if LOG_HS
 	logerror("hs_fall(): hs=0 time=%g\n", timer_get_time());
 #endif
 }
 
-static void hs_rise(int hsyncsleft)
+static void hs_rise(int dummy)
 {
 	the_state.hs = 1;
 	invoke_callback(the_state.initparams.hs_func, the_state.initparams.callback_delay, the_state.hs);
-
-	if (hsyncsleft)
-		timer_set(HSYNC, hsyncsleft - 1, hs_rise);
 
 #if LOG_HS
 	logerror("hs_rise(): hs=1 time=%g\n", timer_get_time());
@@ -468,64 +491,16 @@ static void fs_rise(int dummy)
 #endif
 }
 
-struct newlineproc_info {
-	void (*newlineproc)(void);
-	int hsyncsleft;
-};
-
-static void call_newlineproc(int data)
+int m6847_rastertrack_hblank(void)
 {
-	struct newlineproc_info *ni;
-	ni = (struct newlineproc_info *) data;
-	ni->newlineproc();
-	if (ni->hsyncsleft--)
-		timer_set(HSYNC, (int) ni, call_newlineproc);
-	else
-		free(ni);
-}
-
-int internal_m6847_vblank(int hsyncs, double trailingedgerow, void (*newlineproc)(void))
-{
-	if (newlineproc) {
-		struct newlineproc_info *ni;
-		ni = malloc(sizeof(struct newlineproc_info));
-		if (ni) {
-			ni->newlineproc = newlineproc;
-			ni->hsyncsleft = hsyncs - 2;
-			timer_set(HSYNC, (int) ni, call_newlineproc);
-		}
-	}
-
-	timer_set(CLK * 0                   + DHS_F,	hsyncs-1,	hs_fall);
-	timer_set(CLK * 16.5                + DHS_R,	hsyncs-1,	hs_rise);
-	timer_set(CLK * 0                   + DFS_F,	0,			fs_fall);
-	timer_set(HSYNC * trailingedgerow	+ DFS_R,	0,			fs_rise);
-
+	timer_set(DHS_F, 0, hs_fall);
+	timer_set(DHS_R + (TIME_IN_HZ(3588545.0) * 16.5), 0, hs_rise);
 	return ignore_interrupt();
 }
 
-int m6847_vblank(void)
+void internal_m6847_rastertrack_endcontent(void)
 {
-	int hsyncs;
-
-	switch(the_state.initparams.version) {
-	case M6847_VERSION_ORIGINAL:
-		hsyncs = 262;
-		break;
-
-	case M6847_VERSION_M6847T1:
-	case M6847_VERSION_M6847Y:
-		hsyncs = 263;
-		break;
-
-	default:
-		/* Not allowed */
-		hsyncs = 0;
-		assert(0);
-		break;
-	}
-
-	return internal_m6847_vblank(hsyncs, 32.0, NULL);
+	timer_set(DFS_F, 0, fs_fall);
 }
 
 /* --------------------------------------------------
@@ -632,101 +607,89 @@ static UINT8 *mapper_alphanumeric(UINT8 *mem, int param, int *fg, int *bg, int *
  *     bit 1    1=b/w graphics, 0=color graphics
  *     bit 0	color set
  */
-void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
-	struct rasterbits_videomode *rvm, struct rasterbits_frame *rf, int full_refresh,
-	UINT32 *pens, UINT8 *vrambase,
-	int skew_up, int border_color, int wf,
+void internal_m6847_rastertrack_getvideomode(struct rastertrack_hvars *hvars,
+	UINT32 *pens, int skew_up, int border_pen, int wf,
 	int artifact_value, int artifact_palettebase,
 	void (*getcolorrgb)(int c, UINT8 *red, UINT8 *green, UINT8 *blue))
 {
-	rs->videoram = vrambase;
-	rs->size = the_state.initparams.ramsize;
-	rs->position = the_state.videooffset;
-	rs->db = full_refresh ? NULL : dirtybuffer;
-	rvm->height = 192 / the_state.rowsize;
-	rvm->offset = 0;
-	rf->width = 256 * wf;
-	rf->height = 192;
-	rf->total_scanlines = -1;
-	rf->top_scanline = -1;
-	rf->border_pen = (border_color == -1) ? -1 : Machine->pens[border_color];
-
-	if (full_refresh) {
-		/* Since we are not passing the dirty buffer to raster_bits(), we should clear it here */
-		memset(dirtybuffer, 0, videoram_size);
-	}
+	hvars->mode.height = 192 / the_state.rowsize;
+	hvars->mode.offset = 0;
+	hvars->frame_width = 256 * wf;
+	hvars->frame_height = 192;
+	hvars->border_pen = Machine->pens[border_pen];
 
 	if (the_state.modebits & M6847_MODEBIT_AG)
 	{
-		rvm->flags = RASTERBITS_FLAG_GRAPHICS;
+		hvars->mode.flags = RASTERBITS_FLAG_GRAPHICS;
+		hvars->mode.flags = RASTERBITS_FLAG_GRAPHICS;
 
 		if (the_state.modebits & M6847_MODEBIT_GM0)
 		{
 			/* Resolution modes */
-			rvm->bytesperrow = ((the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) == (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) ? 32 : 16;
-			rvm->width = rvm->bytesperrow * 8;
-			rvm->depth = 1;
+			hvars->mode.bytesperrow = ((the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) == (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) ? 32 : 16;
+			hvars->mode.width = hvars->mode.bytesperrow * 8;
+			hvars->mode.depth = 1;
 			if (the_state.modebits & M6847_MODEBIT_CSS) {
-				rvm->pens[0] = pens[10];
-				rvm->pens[1] = pens[11];
+				hvars->mode.pens[0] = pens[10];
+				hvars->mode.pens[1] = pens[11];
 			}
 			else {
-				rvm->pens[0] = pens[8];
-				rvm->pens[1] = pens[9];
+				hvars->mode.pens[0] = pens[8];
+				hvars->mode.pens[1] = pens[9];
 			}
 
-			if (artifact_value && (rvm->bytesperrow == 32)) {
+			if (artifact_value && (hvars->mode.bytesperrow == 32)) {
 				/* I am here because we are doing PMODE 4 artifact colors */
 
-				rvm->flags |= RASTERBITS_FLAG_ARTIFACT;
+				hvars->mode.flags |= RASTERBITS_FLAG_ARTIFACT;
 				if (artifact_palettebase < 0) {
-					rvm->u.artifact.flags = RASTERBITS_ARTIFACT_STATICPALLETTE;
-					rvm->u.artifact.u.staticpalette = game_palette;
+					hvars->mode.u.artifact.flags = RASTERBITS_ARTIFACT_STATICPALLETTE;
+					hvars->mode.u.artifact.u.staticpalette = game_palette;
 				}
 				else {
-					rvm->u.artifact.flags = RASTERBITS_ARTIFACT_DYNAMICPALETTE;
-					rvm->u.artifact.u.dynamicpalettebase = artifact_palettebase;
+					hvars->mode.u.artifact.flags = RASTERBITS_ARTIFACT_DYNAMICPALETTE;
+					hvars->mode.u.artifact.u.dynamicpalettebase = artifact_palettebase;
 				}
 
 				if (artifact_value >= 2)
-					rvm->u.artifact.flags |= RASTERBITS_ARTIFACT_REVERSE;
+					hvars->mode.u.artifact.flags |= RASTERBITS_ARTIFACT_REVERSE;
 
-				rvm->u.artifact.colorfactors = artifactfactors;
-				rvm->u.artifact.numfactors = M6847_ARTIFACT_COLOR_COUNT;
-				rvm->u.artifact.getcolorrgb = getcolorrgb;
+				hvars->mode.u.artifact.colorfactors = artifactfactors;
+				hvars->mode.u.artifact.numfactors = M6847_ARTIFACT_COLOR_COUNT;
+				hvars->mode.u.artifact.getcolorrgb = getcolorrgb;
 			}
 		}
 		else
 		{
 			/* Color modes */
-			rvm->bytesperrow = ((the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) != 0) ? 32 : 16;
-			rvm->width = rvm->bytesperrow * 4;
-			rvm->depth = 2;
+			hvars->mode.bytesperrow = ((the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) != 0) ? 32 : 16;
+			hvars->mode.width = hvars->mode.bytesperrow * 4;
+			hvars->mode.depth = 2;
 			if (the_state.modebits & M6847_MODEBIT_CSS) {
-				rvm->pens[0] = pens[4];
-				rvm->pens[1] = pens[5];
-				rvm->pens[2] = pens[6];
-				rvm->pens[3] = pens[7];
+				hvars->mode.pens[0] = pens[4];
+				hvars->mode.pens[1] = pens[5];
+				hvars->mode.pens[2] = pens[6];
+				hvars->mode.pens[3] = pens[7];
 			}
 			else {
-				rvm->pens[0] = pens[0];
-				rvm->pens[1] = pens[1];
-				rvm->pens[2] = pens[2];
-				rvm->pens[3] = pens[3];
+				hvars->mode.pens[0] = pens[0];
+				hvars->mode.pens[1] = pens[1];
+				hvars->mode.pens[2] = pens[2];
+				hvars->mode.pens[3] = pens[3];
 			}
 		}
 	}
 	else
 	{
-		rvm->flags = RASTERBITS_FLAG_TEXT | RASTERBITS_FLAG_TEXTMODULO;
-		rvm->bytesperrow = 32;
-		rvm->width = 32;
-		rvm->depth = 8;
-		memcpy(rvm->pens, pens, sizeof(rvm->pens));
-		rvm->u.text.mapper = mapper_alphanumeric;
-		rvm->u.text.mapper_param = skew_up;
-		rvm->u.text.fontheight = 12;
-		rvm->u.text.underlinepos = -1;
+		hvars->mode.flags = RASTERBITS_FLAG_TEXT | RASTERBITS_FLAG_TEXTMODULO;
+		hvars->mode.bytesperrow = 32;
+		hvars->mode.width = 32;
+		hvars->mode.depth = 8;
+		memcpy(hvars->mode.pens, pens, sizeof(hvars->mode.pens));
+		hvars->mode.u.text.mapper = mapper_alphanumeric;
+		hvars->mode.u.text.mapper_param = skew_up;
+		hvars->mode.u.text.fontheight = 12;
+		hvars->mode.u.text.underlinepos = -1;
 	}
 }
 
@@ -777,30 +740,42 @@ static int m6847_bordercolor(void)
 	return pen;
 }
 
-void m6847_vh_update(struct osd_bitmap *bitmap,int full_refresh)
+static void m6847_rastertrack_getvideomode(struct rastertrack_hvars *hvars)
 {
+	int artifact_value;
 	static UINT32 m6847_metapalette[] = {
 		1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 0, 5, 9, 10, 11, 12
 	};
-/*	static artifactproc artifacts[] = {
-		NULL,
-		m6847_artifact_red,
-		m6847_artifact_blue
-	};
-*/
-	struct rasterbits_source rs;
-	struct rasterbits_videomode rvm;
-	struct rasterbits_frame rf;
-	int artifact_value;
 
 	artifact_value = (the_state.initparams.artifactdipswitch == -1) ? 0 : (readinputport(the_state.initparams.artifactdipswitch) & 3);
+	internal_m6847_rastertrack_getvideomode(hvars, m6847_metapalette, 0, m6847_bordercolor(), 1, artifact_value, -1, NULL);
+}
 
-	internal_m6847_vh_screenrefresh(&rs, &rvm, &rf,
-		full_refresh, m6847_metapalette, the_state.initparams.ram,
-		0, (full_refresh ? m6847_bordercolor() : -1),
-		1, artifact_value, -1, NULL);
+void internal_m6847_rastertrack_newscreen(struct rastertrack_vvars *vvars, struct rastertrack_hvars *hvars,
+	int border_top, int rows, int baseoffset, int use_m6847_offset, void (*getvideomode)(struct rastertrack_hvars *))
+{
+	timer_set(DFS_R, 0, fs_rise);
 
-	raster_bits(bitmap, &rs, &rvm, &rf, NULL);
+	the_state.latched_videooffset = the_state.videooffset;
+
+	if (vvars) {
+		vvars->bordertop = border_top;
+		vvars->rows = rows;
+		vvars->baseaddress = (use_m6847_offset ? the_state.latched_videooffset : 0) + baseoffset;
+	}
+	if (hvars) {
+		getvideomode(hvars);
+	}
+}
+
+static void m6847_rastertrack_newscreen(struct rastertrack_vvars *vvars, struct rastertrack_hvars *hvars)
+{
+	internal_m6847_rastertrack_newscreen(vvars, hvars, 38, 192, 0, TRUE, m6847_rastertrack_getvideomode);
+}
+
+void m6847_vh_update(struct osd_bitmap *bitmap, int full_refresh)
+{
+	rastertrack_refresh(bitmap, full_refresh);
 }
 
 /* --------------------------------------------------
@@ -827,7 +802,7 @@ int m6847_get_video_offset(void)
 
 void m6847_touch_vram(int offset)
 {
-	offset -= the_state.videooffset;
+	offset -= the_state.latched_videooffset;
 	offset %= the_state.initparams.ramsize;
 
 	if (offset < videoram_size)
@@ -838,7 +813,7 @@ void m6847_set_row_height(int rowheight)
 {
 	if (rowheight != the_state.rowsize) {
 		the_state.rowsize = rowheight;
-		schedule_full_refresh();
+		rastertrack_touchvideomode();
 	}
 }
 
@@ -879,7 +854,7 @@ static void write_modebits(int data, int mask, int causesrefresh)
 	if (newmodebits != the_state.modebits) {
 		the_state.modebits = newmodebits;
 		if (causesrefresh)
-			schedule_full_refresh();
+			rastertrack_touchvideomode();
 	}
 }
 

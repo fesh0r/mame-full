@@ -16,6 +16,8 @@ extern "C" {
 
 #define M6847_TOTAL_COLORS (13 + (M6847_ARTIFACT_COLOR_COUNT * 4))
 
+#define M6847_INTERRUPTS_PER_FRAME	263
+
 enum {
 	M6847_VERSION_ORIGINAL,
 	M6847_VERSION_M6847Y,
@@ -24,7 +26,6 @@ enum {
 
 struct m6847_init_params {
 	int version;				/* use one of the above initialization constants */
-	double clock;				/* the clock speed (normally ~3.58MHz) */
 	int artifactdipswitch;		/* dip switch that controls artifacting; -1 if NA */
 	UINT8 *ram;					/* the base of RAM */
 	int ramsize;				/* the size of accessible RAM */
@@ -42,7 +43,9 @@ void m6847_vh_normalparams(struct m6847_init_params *params);
 void m6847_vh_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
 int m6847_vh_start(const struct m6847_init_params *params);
 void m6847_vh_update(struct osd_bitmap *bitmap,int full_refresh);
-#define m6847_vh_stop			generic_vh_stop
+void m6847_vh_stop(void);
+int m6847_vh_interrupt(void);
+
 
 /******************* Modifiers *******************/
 

@@ -85,8 +85,8 @@ struct rasterbits_clip {
 };
 
 /* The main call for rastering bits */
-void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struct rasterbits_videomode *mode,
-	struct rasterbits_frame *frame, struct rasterbits_clip *clip);
+int raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struct rasterbits_videomode *mode,
+	struct rasterbits_frame *frame, struct rasterbits_clip *clip, int basey);
 
 /* This call is used to create static palettes with precomputed artifact colors */
 void setup_artifact_palette(UINT8 *destpalette, int destcolor, UINT16 c0, UINT16 c1,

@@ -5,7 +5,7 @@
 #include "includes/rstrbits.h"
 
 #define COCO_CPU_SPEED_HZ		894886	/* 0.894886 MHz */
-#define COCO_FRAMES_PER_SECOND	(COCO_CPU_SPEED_HZ / 57.0 / 262.5)
+#define COCO_FRAMES_PER_SECOND	(COCO_CPU_SPEED_HZ / 57.0 / 263)
 #define COCO_CPU_SPEED			(TIME_IN_HZ(COCO_CPU_SPEED_HZ))
 #define COCO_TIMER_CMPCARRIER	(COCO_CPU_SPEED * 0.25)
 
@@ -17,13 +17,17 @@
  * Backdoors into mess/vidhrdw/m6847.c                                     *
  * ----------------------------------------------------------------------- */
 
-int internal_m6847_vh_start(const struct m6847_init_params *params, int dirtyramsize);
-void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
-	struct rasterbits_videomode *rvm, struct rasterbits_frame *rf, int full_refresh,
-	UINT32 *pens, UINT8 *vrambase, int skew_up, int border_color, int wf,
+int internal_m6847_vh_start(const struct m6847_init_params *params, struct rastertrack_interface *intf, int dirtyramsize);
+
+void internal_m6847_rastertrack_endcontent(void);
+
+void internal_m6847_rastertrack_newscreen(struct rastertrack_vvars *vvars, struct rastertrack_hvars *hvars,
+	int border_top, int rows, int baseoffset, int use_m6847_offset, void (*getvideomode)(struct rastertrack_hvars *));
+
+void internal_m6847_rastertrack_getvideomode(struct rastertrack_hvars *hvars,
+	UINT32 *pens, int skew_up, int border_pen, int wf,
 	int artifact_value, int artifact_palettebase,
 	void (*getcolorrgb)(int c, UINT8 *red, UINT8 *green, UINT8 *blue));
-int internal_m6847_vblank(int hsyncs, double trailingedgerow, void (*newlineproc)(void));
 
 /* ----------------------------------------------------------------------- *
  * from vidhrdw/dragon.c                                                   *
@@ -49,7 +53,6 @@ extern READ_HANDLER ( coco3_gimevh_r );
 extern WRITE_HANDLER ( coco3_gimevh_w );
 extern WRITE_HANDLER ( coco3_palette_w );
 extern void coco3_vh_blink(void);
-extern int coco3_vblank(void);
 
 /* ----------------------------------------------------------------------- *
  * from machine/dragon.c                                                   *
@@ -90,7 +93,6 @@ extern int dragon_floppy_init(int id);
 extern int coco_bitbanger_init (int id);
 extern void coco_bitbanger_exit (int id);
 extern void coco_bitbanger_output (int id, int data);
-extern int coco3_calculate_rows(int *bordertop, int *borderbottom);
 extern READ_HANDLER( coco_pia_1_r );
 extern READ_HANDLER( coco3_pia_1_r );
 

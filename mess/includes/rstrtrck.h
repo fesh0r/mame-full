@@ -3,20 +3,53 @@
 
 #include "rstrbits.h"
 
-typedef void (*rastertrack_getvideoinfoproc)(int full_refresh, struct rasterbits_source *rs,
-	struct rasterbits_videomode *rvm, struct rasterbits_frame *rf);
-
-struct rastertrack_info {
-	int total_scanlines;
-	int visible_scanlines;
-	rastertrack_getvideoinfoproc videoproc;
+struct rastertrack_vvars
+{
+	int bordertop;
+	int rows;
+	int baseaddress;
 };
 
-void rastertrack_init(const struct rastertrack_info *ri);
-void rastertrack_newline(void);
-void rastertrack_newscreen(int toplines, int contentlines);
-void rastertrack_refresh(struct osd_bitmap *bitmap, int full_refresh);
+struct rastertrack_hvars
+{
+	struct rasterbits_videomode mode;
+	int border_pen;
+	int frame_height;
+	int frame_width;
+};
+
+enum {
+	RI_PALETTERECALC = 1
+};
+
+struct rastertrack_interface
+{
+	/* The total real scanlines on this system */
+	int real_scanlines;
+
+	/* function to be called at the beginning of the screen */
+	void (*newscreen)(struct rastertrack_vvars *vvars, struct rastertrack_hvars *hvars);
+	/* function to be called at the beginning of the first scanline of the content */
+	void (*begincontent)(void);
+	/* function to be called at the beginning of the first scanline after the content */
+	void (*endcontent)(void);
+
+	void (*getvideomode)(struct rastertrack_hvars *hvars);
+
+	int flags;
+};
+
+struct rastertrack_initvars
+{
+	struct rastertrack_interface *intf;
+	UINT8 *vram;
+	int vramwrap;
+};
+
+void rastertrack_init(struct rastertrack_initvars *initvars);
 void rastertrack_touchvideomode(void);
+int rastertrack_hblank(void);
+void rastertrack_refresh(struct osd_bitmap *bitmap, int full_refresh);
 int rastertrack_scanline(void);
 
 #endif /* RSTRTRCK_H */

@@ -23,6 +23,11 @@ System Driver Changes:
   and Centipede now work!  Also, keys now configurable from OSD for both controllers.
   (As usual, let us know of any breakages).  [Ben]
 
+- [DRAGON/COCO1-2-3] Completely rewritten midframe video mode rendering, which
+  now applies not just to the CoCo 3, but to all systems that use the m6847 and
+  derivatives.  Also, a few effects now work that never have done before,
+  including the dynamite effect in Canyon Climber and some SockMaster demos.
+
 - [DRAGON/COCO1-2-3] Totally reworked ROM support; cartridge IO is now modular,
   the CART signal is handled better, and ROMs that don't take up the full
   address space are properly mirrored.  These changes make many more cartridges

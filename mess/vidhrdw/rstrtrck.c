@@ -1,327 +1,216 @@
-#include "includes/rstrtrck.h"
-#include "mame.h"
-#include <stdlib.h>
-#include <assert.h>
+#include "driver.h"
+#include "rstrtrck.h"
+#include "vidhrdw/generic.h"
 
-/* ----------------------------------------------------------------------------
- * rstrtrck.c
- *
- * This code, with the help of rstrbits.c, implements mid frame video register
- * modification.
- *
- * TODO - Since I changed it so that the source gets attached read from the
- * top and incremented on the way down, I need to change this code so that
- * the rasterbits_source is passed into rastertrack_newscreen(), and not from
- * getvideoinfo
- */
+static struct rastertrack_interface *intf;
+static UINT8 *vram;
+static int vramwrap;
+static struct rastertrack_vvars vvars;
+static struct rastertrack_hvars hvars;
+static struct osd_bitmap *bitmap;
+static UINT8 *dirtybuffer_position;
 
 #ifdef MAME_DEBUG
-#define LOG_RASTERTRACK 1
+#define LOG_LINES		1
+#define LOG_FRAMES		1
+#define LOG_POSITIONS	0
 #else
-#define LOG_RASTERTRACK 0
+#define LOG_LINES		0
+#define LOG_FRAMES		0
+#define LOG_POSITIONS	0
 #endif
 
-#define ADHOC_DRAWING 0
+/* If you don't want to use dirty buffers, turn this on */
+#define ALWAYS_REFRESH	0
 
-struct rastertrack_queueent {
-#if !ADHOC_DRAWING
-	struct rastertrack_queueent *next;
-	int end;
+#define myMIN(a, b) ((a) < (b) ? (a) : (b))
+#define myMAX(a, b) ((a) > (b) ? (a) : (b))
+
+/* ----------------------------------------------------------------------- */
+
+static void update_lines(int beginline, int endline, int full_refresh)
+{
+	int visible_base;
+	int total_coverage;
+	int before_frames, after_frames;
+	struct rasterbits_source src;
+	struct rasterbits_frame frame;
+	struct rasterbits_clip clip;
+
+	visible_base = (intf->real_scanlines - Machine->drv->screen_height) / 2;
+
+#if LOG_LINES
+	logerror("update_lines(): Updating lines [%i..%i] (logical [%i..%i])... %s refresh\n",
+		beginline, endline, beginline - visible_base, endline - visible_base,
+		full_refresh ? "full" : "partial");
 #endif
-	struct rasterbits_source rs;
-	struct rasterbits_videomode rvm;
-	struct rasterbits_frame rf;
+
+	src.videoram = vram;
+	src.size = vramwrap;
+	src.position = vvars.baseaddress;
+	src.db = full_refresh ? NULL : dirtybuffer_position;
+	frame.width = hvars.frame_width;
+	frame.height = hvars.frame_height;
+	frame.border_pen = full_refresh ? hvars.border_pen : -1;
+	frame.total_scanlines = intf->real_scanlines;
+	frame.top_scanline = vvars.bordertop;
+	clip.ybegin = beginline - visible_base;
+	clip.yend = endline - visible_base;
+
+	if (bitmap) {
+		total_coverage = raster_bits(bitmap, &src, &hvars.mode, &frame, &clip, vvars.bordertop - visible_base);
+		before_frames = vvars.baseaddress / vramwrap;
+		vvars.baseaddress += total_coverage;
+		after_frames = vvars.baseaddress / vramwrap;
+		vvars.baseaddress -= (after_frames - before_frames) * vramwrap;
+
+		if (dirtybuffer_position)
+			dirtybuffer_position += total_coverage;
+	}
+}
+
+/* ----------------------------------------------------------------------- */
+
+static int dirty;
+static int scanline_current;
+static int scanline_updatebase;
+static int frame_state;
+
+enum {
+	FRAME_PARTIALREFRESH,
+	FRAME_FULLREFRESH,
+	FRAME_SKIP
 };
 
-struct rastertrack_queuehdr {
-	struct rastertrack_queueent *head;
-	struct rastertrack_queueent *tail;
-};
-
-#if ADHOC_DRAWING
-static struct osd_bitmap *the_bitmap;
-#else
-static struct rastertrack_queuehdr queue;
-#endif
-
-static struct rastertrack_queueent *createentry(rastertrack_getvideoinfoproc proc, int full_refresh)
+void rastertrack_init(struct rastertrack_initvars *initvars)
 {
-	struct rastertrack_queueent *newentry;
-
-	newentry = malloc(sizeof(struct rastertrack_queueent));
-	if (!newentry)
-		return NULL; /* PANIC */
-
-	memset(newentry, '\0', sizeof(struct rastertrack_queueent));
-	proc(full_refresh, &newentry->rs, &newentry->rvm, &newentry->rf);
-	return newentry;
+	intf = initvars->intf;
+	vram = initvars->vram;
+	vramwrap = initvars->vramwrap;
+	bitmap = NULL;
+	dirty = 0;
+	scanline_current = 0;
+	scanline_updatebase = 0;
+	frame_state = FRAME_FULLREFRESH;
+	dirtybuffer_position = NULL;
 }
-
-static int equalentry(const struct rastertrack_queueent *e1, const struct rastertrack_queueent *e2)
-{
-	return !memcmp(&e1->rs, &e2->rs, sizeof(e1->rs))
-		&& !memcmp(&e1->rvm, &e2->rvm, sizeof(e1->rvm))
-		&& !memcmp(&e1->rf, &e2->rf, sizeof(e1->rf));
-}
-
-/* The queue is simply a linked list that fully accomodates all physical
- * scanlines on the screen
- *
- * "Demarcating" the queue means "for all scanlines from A to B; these
- * characteristics are associated with it
- */
-
-#if LOG_RASTERTRACK
-static int logicalbase;
-#endif
-
-static void demarcate(int begin, int end, struct rastertrack_queueent *newentry)
-{
-#if LOG_RASTERTRACK
-	logerror("demarcate(): Demarcating [%i..%i] (logical %i..%i) with entry 0x%08x\n", begin, end, begin - logicalbase, end - logicalbase, newentry);
-#endif
-
-	/* Check to see if this is a bogus demarcation */
-	if (begin > end) {
-		free(newentry);
-		return;
-	}
-
-#if ADHOC_DRAWING
-	if (the_bitmap) {
-		struct rasterbits_clip rc;
-		rc.ybegin = begin;
-		rc.yend = end;
-
-		raster_bits(the_bitmap, &newentry->rs, &newentry->rvm, &newentry->rf, &rc);
-	}
-#else /* !ADHOC_DRAWING */
-	{
-		struct rastertrack_queueent **e;
-		struct rastertrack_queueent *dupentry;
-		struct rastertrack_queueent *afterthis;
-		struct rastertrack_queueent *ent;
-
-		newentry->end = end;
-
-		/* First we need to find the entry which we are after */ 
-		e = &queue.head;
-		afterthis = NULL;
-		while(*e && ((*e)->end < begin)) {
-			afterthis = *e;
-			e = &(*e)->next;
-		}
-
-		/* Now afterthis points to the last unmodified entry that we go after.  Now
-		 * there are two possibilities:
-		 *
-		 * 1.  afterthis->end+1 == begin; in this case, afterthis->next should be newentry
-		 * 2.  afterthis->end+1 < begin; in this case, afterthis->next->next should be newentry
-		 * 3.  afterthis->next is NULL; we are appending to the end
-		 * 4.  afterthis is NULL; we are prepending to the beginning
-		 *
-		 */
-		if (afterthis) {
-			assert(afterthis->end+1 <= begin);
-
-			if (afterthis->next) {
-				newentry->next = afterthis->next;
-				if (afterthis->end+1 < begin) {
-					dupentry = malloc(sizeof(struct rastertrack_queueent));
-					if (!dupentry) {
-						free(newentry);
-						return; /* PANIC */
-					}
-					memcpy(dupentry, afterthis->next, sizeof(struct rastertrack_queueent));
-					dupentry->next = newentry;
-					afterthis->next = dupentry;
-					dupentry->end = begin - 1;
-				}
-				else {
-					afterthis->next = newentry;
-				}
-			}
-			else {
-				/* we are appending to the end of the list */
-				assert(queue.tail == afterthis);
-				afterthis->next = newentry;
-			}
-		}
-		else {
-			/* afterthis is NULL; we are at the head */
-			newentry->next = queue.head;
-			queue.head = newentry;
-		}
-
-		/* Now that our entry is in, we need to remove extraneous entries */
-		while(newentry->next && (newentry->end >= newentry->next->end)) {
-			ent = newentry->next;
-			newentry->next = ent->next;
-			free(ent);
-		}
-
-		/* We also need to combine equivalent entries */
-		while(newentry->next && equalentry(newentry, newentry->next)) {
-			ent = newentry->next;
-			newentry->next = ent->next;
-			newentry->end = ent->end;
-			free(ent);
-		}
-
-		if (!newentry->next)
-			queue.tail = newentry;
-
-#if LOG_RASTERTRACK
-		/* This code verifies the integrity of the queue */
-		ent = queue.head;
-		while(ent) {
-			if (ent->next) {
-				assert(ent->end < ent->next->end);
-			}
-			else {
-				assert(queue.tail == ent);
-			}
-			ent = ent->next;
-		}
-#endif /* LOG_RASTERTRACK */
-	}
-#endif /* ADHOC_DRAWING */
-}
-
-static const struct rastertrack_info *the_ri;
-static struct rastertrack_queueent *current_state;
-static int current_base;
-static int current_scanline;
-static int screen_adjustment;
-static int videomode_dirty;
-static int last_full_refresh;
-
-void rastertrack_init(const struct rastertrack_info *ri)
-{
-	the_ri = ri;
-	current_state = NULL;
-	videomode_dirty = 0;
-
-#if ADHOC_DRAWING
-	the_bitmap = NULL;
-#else /* !ADHOC_DRAWING */
-	memset(&queue, '\0', sizeof(queue));
-#endif
-
-	/* Start with a full refresh */
-	last_full_refresh = 1;
-	current_base = 0;
-	current_scanline = the_ri->total_scanlines;
-
-	rastertrack_newscreen(28, 192);
-}
-
-void rastertrack_newscreen(int toplines, int contentlines)
-{
-#if LOG_RASTERTRACK
-	logicalbase = toplines;
-#endif
-
-	if (!current_state) {
-		current_state = createentry(the_ri->videoproc, last_full_refresh);
-	}
-	if (current_state) {
-		demarcate(current_base, current_scanline, current_state);
-		current_state = NULL;
-	}
-
-	screen_adjustment = (the_ri->visible_scanlines - contentlines) / 2 - toplines;
-
-#if LOG_RASTERTRACK
-	logerror("rastertrack_newscreen(): In new screen; current_scanline was %i; screen_adjustment=%i\n", current_scanline, screen_adjustment);
-#endif
-
-	current_base = 0;
-	current_scanline = 0;
-}
-
-void rastertrack_newline(void)
-{
-	/*
-	if ((current_scanline % 40) == 0) {
-		rastertrack_touchvideomode();
-	}
-	*/
-
-	if (videomode_dirty) {
-		/* We are demarcating current_base up to the _previous_ scanline; this
-		 * is because timing routines that wait on hsync don't get activated
-		 * until the last line just begun
-		 */
-		if (current_state) {
-			demarcate(current_base, current_scanline-1, current_state);
-		}
-		else {
-#if LOG_RASTERTRACK
-			logerror("rastertrack_newline(): Would have demarcated [%i..%i]... but no current_state!\n", current_base, current_scanline);
-#endif
-		}
-
-		current_base = current_scanline;
-		current_state = NULL;
-		videomode_dirty = 0;
-	}
-	current_scanline++;
-}
-
-void rastertrack_refresh(struct osd_bitmap *bitmap, int full_refresh)
-{
-	if (full_refresh)
-		last_full_refresh = 2;
-	else if (last_full_refresh > 0)
-		last_full_refresh--;
-
-#if ADHOC_DRAWING
-	the_bitmap = bitmap;
-#else /* !ADHOC_DRAWING */
-	{
-		int begin;
-		struct rastertrack_queueent *ent;
-		struct rasterbits_source rs;
-		struct rasterbits_clip rc;
-
-		ent = queue.head;
-		begin = 0;
-		rs = ent->rs;
-
-		while(ent) {
-			rc.ybegin = (ent == queue.head) ? 0 : begin + screen_adjustment;
-			rc.yend = ent->end + screen_adjustment;
-
-#if LOG_RASTERTRACK
-			logerror("rastertrack_refresh(): Calling with clip [%i..%i] height=%i offset=%i\n", rc.ybegin, rc.yend, ent->rvm.height, ent->rvm.offset);
-#endif
-
-			raster_bits(bitmap, &rs, &ent->rvm, &ent->rf, &rc);
-			begin = ent->end + 1;
-
-			ent = ent->next;
-		}
-	}
-#endif /* ADHOC_DRAWING */
-}
-
 
 void rastertrack_touchvideomode(void)
 {
-#if LOG_RASTERTRACK
-	logerror("rastertrack_touchvideomode(): Touching video mode at scanline #%i\n", current_scanline);
+	dirty = 1;
+	schedule_full_refresh();
+}
+
+enum {
+	POSITION_OTHER = 0,
+	POSITION_TOP,
+	POSITION_BEGINCONTENT,
+	POSITION_ENDCONTENT
+};
+
+int rastertrack_hblank(void)
+{
+	int position;
+	int frame_end;
+	int scanline_before;
+
+	scanline_before = scanline_current++;
+
+	/* Did we wrap around without refreshing? */
+	frame_end = (scanline_current >= intf->real_scanlines);
+	scanline_current %= intf->real_scanlines;
+
+	/* What position are we at? */
+	if (scanline_current == 0)
+		position = POSITION_TOP;
+	else if (scanline_current == vvars.bordertop)
+		position = POSITION_BEGINCONTENT;
+	else if (scanline_current == (vvars.bordertop + vvars.rows))
+		position = POSITION_ENDCONTENT;
+	else
+		position = POSITION_OTHER;
+
+	/* If appropriate, update the lines */
+	if (dirty || frame_end || (position > POSITION_TOP)) {
+		if ((frame_state != FRAME_SKIP) && (hvars.mode.width != 0) && (hvars.mode.height != 0))
+			update_lines(scanline_updatebase, scanline_before, frame_state == FRAME_FULLREFRESH);
+
+		scanline_updatebase = scanline_before + 1;
+
+		/* If we are dirty; subsequent frames must be full refresh */
+		if (dirty && (frame_state != FRAME_SKIP)) {
+			intf->getvideomode(&hvars);
+			frame_state = FRAME_FULLREFRESH;
+		}
+	}
+
+	if (frame_end) {
+#if LOG_FRAMES
+		logerror("rastertrack_hblank(): Setting state to FRAME_SKIP\n");
+#endif
+		frame_state = FRAME_SKIP;
+	}
+
+#if LOG_POSITIONS
+	if (position) {
+		static char *msgs[] = {
+			NULL,				/* POSITION_OTHER */
+			"At new frame",		/* POSITION_TOP */
+			"At content",		/* POSITION_BEGINCONTENT */
+			"At bottom border"	/* POSITION_ENDCONTENT */
+		};
+		logerror("rastertrack_hblank(): %s; scanline=%i\n", msgs[position], scanline_current);
+	}
 #endif
 
-	schedule_full_refresh();
-	videomode_dirty = 1;
+	switch(position) {
+	case POSITION_TOP:
+		if (frame_state == FRAME_SKIP)
+			intf->newscreen(NULL, NULL);
+		else
+			intf->newscreen(&vvars, &hvars);
+		dirtybuffer_position = dirtybuffer;
+		break;
 
-	if (!current_state)
-		current_state = createentry(the_ri->videoproc, 1);
+	case POSITION_BEGINCONTENT:
+		if (intf->begincontent)
+			intf->begincontent();
+		break;
+
+	case POSITION_ENDCONTENT:
+		if (intf->endcontent)
+			intf->endcontent();
+		break;
+	}
+	return ignore_interrupt();
+}
+
+void rastertrack_refresh(struct osd_bitmap *bmap, int full_refresh)
+{
+	bitmap = bmap;
+
+#if LOG_FRAMES
+	logerror("rastertrack_refresh(): full_refresh=%i frame_state=%i\n", full_refresh, frame_state);
+#endif
+
+	if ((intf->flags & RI_PALETTERECALC) && palette_recalc())
+		full_refresh = 1;
+
+	switch(frame_state) {
+	case FRAME_PARTIALREFRESH:
+	case FRAME_FULLREFRESH:
+		update_lines(scanline_updatebase, scanline_current, (frame_state == FRAME_FULLREFRESH) || full_refresh || ALWAYS_REFRESH);
+		break;
+	}
+
+	frame_state = full_refresh ? FRAME_FULLREFRESH : FRAME_PARTIALREFRESH;
+	scanline_current = -1;
+	scanline_updatebase = 0;
+	dirty = 0;
 }
 
 int rastertrack_scanline(void)
 {
-	return current_scanline;
+	return scanline_current;
 }
 
