@@ -51,6 +51,10 @@ extern struct GameDriver driver_neogeo;
 #endif
 #endif
 
+#if defined(__sgi) && !defined(MESS)
+static int game_paused = 0; /* not zero if the game is paused */
+#endif
+
 extern int neogeo_memcard_load(int);
 extern void neogeo_memcard_save(void);
 extern void neogeo_memcard_eject(void);
@@ -3055,11 +3059,16 @@ int memcard_menu(struct mame_bitmap *bitmap, int selection)
 #ifndef MESS
 enum { UI_SWITCH = 0,UI_DEFCODE,UI_CODE,UI_ANALOG,UI_CALIBRATE,
 		UI_STATS,UI_GAMEINFO, UI_HISTORY,
-		UI_CHEAT,UI_RESET,UI_MEMCARD,UI_EXIT };
+		UI_CHEAT,UI_RESET,UI_MEMCARD,UI_RAPIDFIRE,UI_EXIT };
 #else
 enum { UI_SWITCH = 0,UI_DEFCODE,UI_CODE,UI_ANALOG,UI_CALIBRATE,
 		UI_GAMEINFO, UI_IMAGEINFO,UI_FILEMANAGER,UI_TAPECONTROL,
-		UI_HISTORY,UI_CHEAT,UI_RESET,UI_MEMCARD,UI_EXIT };
+		UI_HISTORY,UI_CHEAT,UI_RESET,UI_MEMCARD,UI_RAPIDFIRE,UI_EXIT };
+#endif
+
+
+#ifdef XMAME
+extern int setrapidfire(struct mame_bitmap *bitmap, int selected);
 #endif
 
 
@@ -3076,6 +3085,18 @@ static void setup_menu_init(void)
 	menu_item[menu_total] = ui_getstring (UI_inputgeneral); menu_action[menu_total++] = UI_DEFCODE;
 	menu_item[menu_total] = ui_getstring (UI_inputspecific); menu_action[menu_total++] = UI_CODE;
 	menu_item[menu_total] = ui_getstring (UI_dipswitches); menu_action[menu_total++] = UI_SWITCH;
+
+#ifdef XMAME
+        {
+                extern int rapidfire_enable;
+
+                if(rapidfire_enable != 0)
+		{
+			menu_item[menu_total] = "Rapid Fire";
+			menu_action[menu_total++] = UI_RAPIDFIRE;
+		}
+	}
+#endif
 
 	/* Determine if there are any analog controls */
 	{
@@ -3158,6 +3179,11 @@ static int setup_menu(struct mame_bitmap *bitmap, int selected)
 	{
 		switch (menu_action[sel & SEL_MASK])
 		{
+#ifdef XMAME
+		        case UI_RAPIDFIRE:
+				res = setrapidfire(bitmap, sel >> SEL_BITS);
+				break;
+#endif
 			case UI_SWITCH:
 				res = setdipswitches(bitmap, sel >> SEL_BITS);
 				break;
@@ -3237,6 +3263,9 @@ static int setup_menu(struct mame_bitmap *bitmap, int selected)
 	{
 		switch (menu_action[sel])
 		{
+#ifdef XMAME
+			case UI_RAPIDFIRE:
+#endif
 			case UI_SWITCH:
 			case UI_DEFCODE:
 			case UI_CODE:
@@ -3926,6 +3955,9 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 			osd_selected = 0;	/* disable on screen display */
 			schedule_full_refresh();
 		}
+#ifdef XMAME
+		update_video_and_audio(); /* for rapid-fire support */
+#endif
 	}
 	if (setup_selected != 0) setup_selected = setup_menu(bitmap, setup_selected);
 
@@ -4101,6 +4133,9 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 		schedule_full_refresh();
 	}
 
+#if defined(__sgi) && !defined(MESS)
+	game_paused = 0;
+#endif
 
 	/* show popup message if any */
 	if (messagecounter > 0)
@@ -4200,3 +4235,12 @@ int setup_active(void)
 	return setup_selected;
 }
 
+#if defined(__sgi) && !defined(MESS)
+
+/* Return if the game is paused or not */
+int is_game_paused(void)
+{
+	return game_paused;
+}
+
+#endif

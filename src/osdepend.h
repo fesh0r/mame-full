@@ -356,18 +356,26 @@ int osd_display_loading_rom_message(const char *name,struct rom_load_data *romda
 
 /* called when the game is paused/unpaused, so the OS dependant code can do special */
 /* things like changing the title bar or darkening the display. */
-/* Note that the OS dependant code must NOT stop processing input, since the user */
+/* Note that the OS dependent code must NOT stop processing input, since the user */
 /* interface is still active while the game is paused. */
 void osd_pause(int paused);
 
 
 
-#ifdef MAME_NET
+#if defined MAME_NET || defined XMAME_NET
 /* network */
 int osd_net_init(void);
+#ifdef XMAME_NET
+int osd_net_active(void);
+#endif
 int osd_net_send(int player, unsigned char buf[], int *size);
 int osd_net_recv(int player, unsigned char buf[], int *size);
+#ifdef MAME_NET
 int osd_net_sync(void);
+#elif defined XMAME_NET
+void osd_net_sync(unsigned short input_port_values[MAX_INPUT_PORTS],
+                  unsigned short input_port_defaults[MAX_INPUT_PORTS]);
+#endif
 int osd_net_input_sync(void);
 int osd_net_exit(void);
 int osd_net_add_player(void);
