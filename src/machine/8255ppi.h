@@ -21,6 +21,10 @@ void ppi8255_init( ppi8255_interface *intfce);
 int ppi8255_r ( int which, int offset );
 void ppi8255_w( int which, int offset, int data );
 
+/* Peek at the ports */
+data8_t ppi8255_peek( int which, offs_t offset );
+
+
 /* Helpers */
 READ_HANDLER( ppi8255_0_r );
 READ_HANDLER( ppi8255_1_r );
