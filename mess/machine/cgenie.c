@@ -83,7 +83,7 @@ static UINT8 head = 0;
 
 /* current tape file handles */
 static char tape_name[12+1];
-static void *tape_get_file = 0;
+static mame_file *tape_get_file = 0;
 
 /* tape buffer for the first eight bytes at write (to extract a filename) */
 static UINT8 tape_buffer[9];
@@ -127,7 +127,7 @@ static OPBASE_HANDLER (opbaseoverride)
 		{
 			UINT8 *buff = (UINT8*)malloc(65536), *s, data;
 			UINT16 size, entry = 0, block_len, block_ofs = 0;
-			void *cmd;
+			mame_file *cmd;
 
 			if( !buff )
 			{
@@ -475,7 +475,7 @@ int cgenie_rom_load(int id, mame_file *fp, int open_mode)
 {
 	int result = 0;
 	UINT8 *ROM = memory_region(REGION_CPU1);
-	void *rom;
+	mame_file *rom;
 	const char *filename;
 
 	/* Initialize memory */
