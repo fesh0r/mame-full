@@ -194,7 +194,7 @@ when problems start with -log and look into error.log file
 #include "includes/cia6526.h"
 #include "includes/vic6567.h"
 #include "includes/sid6581.h"
-#include "includes/c1551.h"
+#include "includes/cbmserb.h"
 #include "includes/vc1541.h"
 #include "includes/vc20tape.h"
 
@@ -1117,3 +1117,20 @@ COMPX(1983, vip64,		c64,	sx64,			vip64,	sx64,	"Commodore Business Machines Co.",
 /*c64c (bios in 1 chip) */
 /*c64g late 8500/8580 based c64, sold at aldi/germany */
 /*c64cgs late c64, sold in ireland, gs bios?, but with keyboard */
+
+#ifdef RUNTIME_LOADER
+extern void c64_runtime_loader_init(void)
+{
+	int i;
+	for (i=0; drivers[i]; i++) {
+		if ( strcmp(drivers[i]->name,"max")==0) drivers[i]=&driver_max;
+		if ( strcmp(drivers[i]->name,"c64")==0) drivers[i]=&driver_c64;
+		if ( strcmp(drivers[i]->name,"cbm4064")==0) drivers[i]=&driver_cbm4064;
+		if ( strcmp(drivers[i]->name,"c64pal")==0) drivers[i]=&driver_c64pal;
+		if ( strcmp(drivers[i]->name,"vic64s")==0) drivers[i]=&driver_vic64s;
+		if ( strcmp(drivers[i]->name,"c64gs")==0) drivers[i]=&driver_c64gs;
+		if ( strcmp(drivers[i]->name,"sx64")==0) drivers[i]=&driver_sx64;
+		if ( strcmp(drivers[i]->name,"vip64")==0) drivers[i]=&driver_vip64;
+	}
+}
+#endif

@@ -300,7 +300,7 @@ U102 23256 (read compatible 27256?) 32kB 1571 system rom
 #include "includes/vic6567.h"
 #include "includes/vdc8563.h"
 #include "includes/sid6581.h"
-#include "includes/c1551.h"
+#include "includes/cbmserb.h"
 #include "includes/vc1541.h"
 #include "includes/vc20tape.h"
 
@@ -1435,3 +1435,19 @@ COMPX (1985, c128swe,	c128,	c128pal,	c128swe,	c128pal,	"Commodore Business Machi
 /* please leave the following as testdriver */
 COMP (1985, c128nor,	c128,	c128pal,	c128ita,	c128pal,	"Commodore Business Machines Co.","Commodore 128 Norwegian (PAL)")
 COMP (1985, c128d,		0,		c128d,		c128,		c128,		"Commodore Business Machines Co.","Commodore 128D NTSC")
+
+#ifdef RUNTIME_LOADER
+extern void c128_runtime_loader_init(void)
+{
+	int i;
+	for (i=0; drivers[i]; i++) {
+		if ( strcmp(drivers[i]->name,"c128")==0) drivers[i]=&driver_c128;
+		if ( strcmp(drivers[i]->name,"c128ger")==0) drivers[i]=&driver_c128ger;
+		if ( strcmp(drivers[i]->name,"c128fra")==0) drivers[i]=&driver_c128fra;
+		if ( strcmp(drivers[i]->name,"c128ita")==0) drivers[i]=&driver_c128ita;
+		if ( strcmp(drivers[i]->name,"c128swe")==0) drivers[i]=&driver_c128swe;
+		if ( strcmp(drivers[i]->name,"c128nor")==0) drivers[i]=&driver_c128nor;
+		if ( strcmp(drivers[i]->name,"c128d")==0) drivers[i]=&driver_c128d;
+	}
+}
+#endif

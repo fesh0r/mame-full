@@ -158,7 +158,7 @@ when problems start with -log and look into error.log file
 #include "includes/cbm.h"
 #include "includes/vc20.h"
 #include "machine/6522via.h"
-#include "includes/c1551.h"
+#include "includes/cbmserb.h"
 #include "includes/vc1541.h"
 #include "includes/vc20tape.h"
 #include "includes/vic6560.h"
@@ -894,3 +894,18 @@ COMPX ( 1981,	vic20swe,	vic20,	vc20,	vc20,		vc20,	"Commodore Business Machines C
 COMPX ( 1981,	vic20v, 	vic20,	vic20v, vic20,		vic20,	"Commodore Business Machines Co.",  "VIC20 (NTSC), VC1540", GAME_IMPERFECT_SOUND)
 COMPX ( 1981,	vc20v,		vic20,	vc20v,	vic20,		vc20,	"Commodore Business Machines Co.",  "VC20 (PAL), VC1541", GAME_IMPERFECT_SOUND)
 
+
+#ifdef RUNTIME_LOADER
+extern void vc20_runtime_loader_init(void)
+{
+	int i;
+	for (i=0; drivers[i]; i++) {
+		if ( strcmp(drivers[i]->name,"vic20")==0) drivers[i]=&driver_vic20;
+		if ( strcmp(drivers[i]->name,"vic20i")==0) drivers[i]=&driver_vic20i;
+		if ( strcmp(drivers[i]->name,"vc20")==0) drivers[i]=&driver_vc20;
+		if ( strcmp(drivers[i]->name,"vic20swe")==0) drivers[i]=&driver_vic20swe;
+		if ( strcmp(drivers[i]->name,"vic20v")==0) drivers[i]=&driver_vic20v;
+		if ( strcmp(drivers[i]->name,"vc20v")==0) drivers[i]=&driver_vc20v;
+	}
+}
+#endif

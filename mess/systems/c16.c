@@ -157,7 +157,7 @@ when problems start with -log and look into error.log file
 #define VERBOSE_DBG 0
 #include "includes/cbm.h"
 #include "includes/c16.h"
-#include "includes/c1551.h"
+#include "includes/cbmserb.h"
 #include "includes/vc1541.h"
 #include "includes/vc20tape.h"
 #include "includes/ted7360.h"
@@ -1168,3 +1168,19 @@ COMPX ( 198?,	c364,	c16,	c364,	plus4,	plus4,	"Commodore Business Machines Co.", 
 COMPX ( 1984,	c16v,	c16,	c16v,	c16v,	c16,	"Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL), VC1541", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
 COMPX ( 1984,	plus4v, c16,	plus4v, plus4v, plus4,	"Commodore Business Machines Co.",      "Commodore +4 (NTSC), VC1541", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
 
+#ifdef RUNTIME_LOADER
+extern void c16_runtime_loader_init(void)
+{
+	int i;
+	for (i=0; drivers[i]; i++) {
+		if ( strcmp(drivers[i]->name,"c16")==0) drivers[i]=&driver_c16;
+		if ( strcmp(drivers[i]->name,"c16hun")==0) drivers[i]=&driver_c16hun;
+		if ( strcmp(drivers[i]->name,"c16c")==0) drivers[i]=&driver_c16c;
+		if ( strcmp(drivers[i]->name,"c16v")==0) drivers[i]=&driver_c16v;
+		if ( strcmp(drivers[i]->name,"plus4")==0) drivers[i]=&driver_plus4;
+		if ( strcmp(drivers[i]->name,"plus4c")==0) drivers[i]=&driver_plus4c;
+		if ( strcmp(drivers[i]->name,"plus4v")==0) drivers[i]=&driver_plus4v;
+		if ( strcmp(drivers[i]->name,"c364")==0) drivers[i]=&driver_c364;
+	}
+}
+#endif

@@ -119,7 +119,7 @@ when problems start with -log and look into error.log file
 #include "machine/6522via.h"
 #include "includes/pet.h"
 #include "includes/crtc6845.h"
-#include "includes/c1551.h"
+#include "includes/cbmserb.h"
 #include "includes/cbmieeeb.h"
 /*#include "includes/vc1541.h" */
 
@@ -1190,3 +1190,24 @@ COMPX (198?,	superpet,	pet,	superpet,	superpet,superpet,"Commodore Business Mach
 
 // please leave the following as testdriver only
 COMP (198?, 	mmf9000,	pet,	superpet,	superpet,superpet,"Commodore Business Machines Co.",  "MMF9000 (50Hz) Swedish")
+
+#ifdef RUNTIME_LOADER
+extern void pet_runtime_loader_init(void)
+{
+	int i;
+	for (i=0; drivers[i]; i++) {
+		if ( strcmp(drivers[i]->name,"pet")==0) drivers[i]=&driver_pet;
+		if ( strcmp(drivers[i]->name,"cbm30")==0) drivers[i]=&driver_cbm30;
+		if ( strcmp(drivers[i]->name,"cbm30b")==0) drivers[i]=&driver_cbm30b;
+		if ( strcmp(drivers[i]->name,"cbm40")==0) drivers[i]=&driver_cbm40;
+		if ( strcmp(drivers[i]->name,"cbm40pal")==0) drivers[i]=&driver_cbm40pal;
+		if ( strcmp(drivers[i]->name,"cbm40b")==0) drivers[i]=&driver_cbm40b;
+		if ( strcmp(drivers[i]->name,"cbm80")==0) drivers[i]=&driver_cbm80;
+		if ( strcmp(drivers[i]->name,"cbm80pal")==0) drivers[i]=&driver_cbm80pal;
+		if ( strcmp(drivers[i]->name,"cbm80ger")==0) drivers[i]=&driver_cbm80ger;
+		if ( strcmp(drivers[i]->name,"cbm80swe")==0) drivers[i]=&driver_cbm80swe;
+		if ( strcmp(drivers[i]->name,"superpet")==0) drivers[i]=&driver_superpet;
+		if ( strcmp(drivers[i]->name,"mmf9000")==0) drivers[i]=&driver_mmf9000;
+	}
+}
+#endif

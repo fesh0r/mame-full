@@ -145,7 +145,7 @@ when problems start with -log and look into error.log file
 #include "includes/cia6526.h"
 #include "includes/vic6567.h"
 #include "includes/sid6581.h"
-#include "includes/c1551.h"
+#include "includes/cbmserb.h"
 #include "includes/vc1541.h"
 
 #include "includes/c65.h"
@@ -641,3 +641,17 @@ COMPX ( 199?,	c65c,	c65,	c65,	c65,	c65,		"Commodore Business Machines Co.",  "C6
 COMPX ( 199?,	c65ger, c65,	c65pal, c65ger, c65pal, 	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, German PAL, 910429)",  GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
 COMPX ( 199?,	c65a,	c65,	c65,	c65,	c65_alpha1, "Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910111)",        GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
 
+#ifdef RUNTIME_LOADER
+extern void c65_runtime_loader_init(void)
+{
+	int i;
+	for (i=0; drivers[i]; i++) {
+		if ( strcmp(drivers[i]->name,"c65")==0) drivers[i]=&driver_c65;
+		if ( strcmp(drivers[i]->name,"c65e")==0) drivers[i]=&driver_c65e;
+		if ( strcmp(drivers[i]->name,"c65d")==0) drivers[i]=&driver_c65d;
+		if ( strcmp(drivers[i]->name,"c65c")==0) drivers[i]=&driver_c65c;
+		if ( strcmp(drivers[i]->name,"c65ger")==0) drivers[i]=&driver_c65ger;
+		if ( strcmp(drivers[i]->name,"c64a")==0) drivers[i]=&driver_c65a;
+	}
+}
+#endif

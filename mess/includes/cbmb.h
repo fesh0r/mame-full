@@ -11,6 +11,14 @@
 #include "cia6526.h"
 #include "praster.h"
 
+#ifdef RUNTIME_LOADER
+# ifdef __cplusplus
+	extern "C" void cbmb_runtime_loader_init(void);
+# else
+	extern void cbmb_runtime_loader_init(void);
+# endif
+#endif
+
 #define C64_DIPS \
      PORT_START \
      PORT_BIT( 0x800, IP_ACTIVE_HIGH, IPT_BUTTON1) \

@@ -11,6 +11,14 @@
 #include "praster.h"
 #include "crtc6845.h"
 
+#ifdef RUNTIME_LOADER
+# ifdef __cplusplus
+	extern "C" void pet_runtime_loader_init(void);
+# else
+	extern void pet_runtime_loader_init(void);
+# endif
+#endif
+
 //  commodore pet discrete video circuit
 
 /* call to init videodriver */

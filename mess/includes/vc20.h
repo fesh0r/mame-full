@@ -4,7 +4,16 @@
 
 #include "driver.h"
 
-#include "c1551.h"
+#include "cbmserb.h"
+
+#ifdef RUNTIME_LOADER
+# ifdef __cplusplus
+	extern "C" void vc20_runtime_loader_init(void);
+# else
+	extern void vc20_runtime_loader_init(void);
+# endif
+#endif
+
 
 /**
   joystick (4 directions switches, 1 button),
