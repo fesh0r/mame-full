@@ -200,13 +200,18 @@ static void blitgraphics4artifact(struct osd_bitmap *bitmap, UINT8 *vrambase,
 	for (y = 0; y < sizey; y++) {
 		x = 0;
 		while(x < sizex) {
-			if (db[0] || ((x < (sizex-1)) && db[1])) {
+			if (!db || db[0] || ((x < (sizex-1)) && db[1])) {
 				/* We are in a run; calculate the size of the run */
-				drunlen = 1;
-				while((x + drunlen < (sizex-1)) && db[drunlen])
-					drunlen++;
-				if (x + drunlen < (sizex-1))
-					drunlen++;
+				if (db) {
+					drunlen = 1;
+					while((x + drunlen < (sizex-1)) && db[drunlen])
+						drunlen++;
+					if (x + drunlen < (sizex-1))
+						drunlen++;
+				}
+				else {
+					drunlen = sizex;
+				}
 
 				thisx = (x * 8) * scalex + basex;
 
@@ -227,8 +232,10 @@ static void blitgraphics4artifact(struct osd_bitmap *bitmap, UINT8 *vrambase,
 					w |= ((UINT32) vidram[-1]) << 16;
 
 				crunlen = 0;
-				memset(db, 0, drunlen);
-				db += drunlen;
+				if (db) {
+					memset(db, 0, drunlen);
+					db += drunlen;
+				}
 				x += drunlen;
 
 				while(drunlen--) {
@@ -272,7 +279,8 @@ static void blitgraphics4artifact(struct osd_bitmap *bitmap, UINT8 *vrambase,
 				plot_box(bitmap, thisx, thisy, scalex * crunlen, scaley, crunc);
 			}
 			else {
-				db++;
+				if (db)
+					db++;
 				vidram++;
 				x++;
 			}

@@ -376,10 +376,6 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 {
 	int artifacting;
 	int artifactpalette[4];
-	int vrampos;
-	int vramsize;
-	int video_rowheight;
-
 	struct rasterbits_source rs;
 	struct rasterbits_videomode rvm;
 	struct rasterbits_frame rf;
@@ -389,21 +385,18 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 		3,		3,		3,		2,		2,		1,		1,		1
 	};
 
-	video_rowheight = rowheights[currentstate->video_vmode >> 1];
-	vrampos = currentstate->video_offset;
-	vramsize = currentstate->vram_mask + 1;
-
 	rs.videoram = vrambase;
-	rs.size = vramsize;
-	rs.position = vrampos;
-	rs.db = dirtybuffer;
-	rvm.height = 192 / video_rowheight;
+	rs.size = currentstate->vram_mask + 1;
+	rs.position = currentstate->video_offset;
+	rs.db = full_refresh ? NULL : dirtybuffer;
+	rvm.height = 192 / rowheights[currentstate->video_vmode >> 1];
 	rf.width = 256 * wf;
 	rf.height = 192;
 	rf.border_pen = (border_color == -1) ? -1 : Machine->pens[border_color];
 
 	if (full_refresh) {
-		memset(dirtybuffer, 1, videoram_size);
+		/* Since we are not passing the dirty buffer to raster_bits(), we should clear it here */
+		memset(dirtybuffer, 0, videoram_size);
 	}
 
 	if (currentstate->video_gmode & 0x10)
