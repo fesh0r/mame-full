@@ -290,7 +290,7 @@ void emit_copy_pixel(struct blitter_params *params, int pixel_mode, int divisor)
 {
 	struct drccore *drc = params->blitter;
 
-	// ldrh	r5, [r0]
+	// ldrh	r5, [r1]
 	_ldrh_r16_m16bd(AL, RSCH, RSRC, 0);
 
 	if (params->source_palette)
@@ -298,7 +298,7 @@ void emit_copy_pixel(struct blitter_params *params, int pixel_mode, int divisor)
 		// mov	r6, r5, LSL #2
 		emit_regreg_shift(params, MOV, RSC2, 0, RSCH, LSL, 2);
 
-		// ldrh	r5, [r6 +r2]
+		// ldrh	r5, [r6 + r2]
 		_ldrh_r16_m16id(AL, RSCH, RSC2, RPAL);
 	}
 
@@ -358,14 +358,4 @@ void emit_finish_loop(struct blitter_params *params, void *loop_begin)
 	// bne	begin
 	_bcc(COND_NE, loop_begin);
 }
-
-void emit_filler(void *dest, size_t sz)
-{
-	UINT32 *destw = (UINT32 *) dest;
-
-	sz /= 4;
-	while(sz--)
-		*(destw++) = AL | 0x06000000;
-}
-
 

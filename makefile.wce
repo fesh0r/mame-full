@@ -156,7 +156,9 @@ DEFS += -DMIPS -D_MIPS_
 endif
 endif
 
-ifndef DEBUG
+ifdef DEBUG
+DEFS += -DDEBUG
+else
 DEFS += -DNDEBUG
 endif
 

@@ -98,7 +98,7 @@ struct drcconfig
 **#################################################################################################*/
 
 /* lowest-level opcode emitters */
-#define OP(x)		do { *((UINT32 *) &drc->cache_top) = (UINT32)(x); drc->cache_top += 4; } while (0)
+#define OP(x)		do { *((UINT32 *) drc->cache_top) = (UINT32)(x); drc->cache_top += 4; } while (0)
 
 #define OP3(cond, rd, rn, rm, op)	\
 	OP((cond) | ((rd) << 12) | ((rn) << 16) | ((rm) << 0) | (op))
@@ -118,14 +118,14 @@ struct drcconfig
 	OP3((cond), (dreg), (base), (disp), 0x005000b0)
 
 #define _ldrh_r16_m16id(cond, dreg, base, index) \
-	OP3((cond), (dreg), (base), (index), 0x001000b0)
+	OP3((cond), (dreg), (base), (index), 0x019000b0)
 
 /*###################################################################################################
 **	BRANCH EMITTERS
 **#################################################################################################*/
 
 #define _bcc(cond, target)	\
-	OP((cond) | 0x0a000000 | ((((UINT8 *) (target)) - params->blitter->cache_top - 8) & 0x00ffffff))
+	OP((cond) | 0x0a000000 | (((((UINT8 *) (target)) - params->blitter->cache_top - 8) >> 2) & 0x00ffffff))
 
 /*###################################################################################################
 **	FUNCTION PROTOTYPES

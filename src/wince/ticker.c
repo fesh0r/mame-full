@@ -79,7 +79,7 @@ static cycles_t init_cycle_counter(void)
 #endif // _X86_
 	{
 		cycle_counter = tickcount_cycle_counter;
-		ticks_counter = nop_cycle_counter;
+		ticks_counter = tickcount_cycle_counter;
 		logerror("using GetTickCount for timing ... ");
 	}
 

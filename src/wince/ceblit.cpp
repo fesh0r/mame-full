@@ -262,6 +262,7 @@ extern "C" void ce_blit(struct mame_bitmap *bitmap, int orientation, const UINT3
 			current_source_width = 0;
 			return;
 		}
+		assert(current_blitter->entry_point);
 	}
 
 #ifdef PROFILER_GAPI

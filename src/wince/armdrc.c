@@ -33,6 +33,7 @@ struct drccore *drc_init(UINT8 cpunum, struct drcconfig *config)
 	drc->cache_base = malloc(config->cachesize);
 	if (!drc->cache_base)
 		return NULL;
+	drc->cache_top = drc->cache_base;
 	drc->cache_end = drc->cache_base + config->cachesize;
 	drc->cache_danger = drc->cache_end - 65536;
 	return drc;
