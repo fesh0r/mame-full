@@ -311,6 +311,7 @@ COMMON_OBJS  =  \
 
 ifdef MESS
 COMMON_OBJS += $(OBJDIR)/xmess.o
+TOOLS = dat2html chdman imgtool
 endif
 ifdef LIRC
 CONFIG  += -I/usr/include/lirc
@@ -587,8 +588,6 @@ xml2info: $(OBJ)/xml2info.o $(EXPAT)
 dat2html: $(DAT2HTML_OBJS)
 	$(CC_COMMENT) @echo 'Compiling $@...'
 	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ -o $@
-
-messdocs: 
 
 imgtool: $(IMGTOOL_OBJS) $(PLATFORM_IMGTOOL_OBJS)
 	$(CC_COMMENT) @echo 'Compiling $@...'
