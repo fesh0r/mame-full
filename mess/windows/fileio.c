@@ -89,7 +89,8 @@ typedef struct
 	unsigned int offset;
 	unsigned int length;
 	eFileType type;
-	unsigned int crc;
+	unsigned int crc;       
+	int		eof;	// for kRamFiles only	
 }	FakeFileHandle;
 
 #ifdef _MSC_VER
@@ -1229,7 +1230,7 @@ int osd_fread (void *file, void *buffer, int length)
 		/* reading from the RAM image of a file */
 		if( f->data )
 		{
-			if( length + f->offset > f->length )
+			if ((f->eof=(length + f->offset > f->length)) )
 				length = f->length - f->offset;
 			memcpy (buffer, f->offset + f->data, length);
 			f->offset += length;
@@ -1601,6 +1602,11 @@ int osd_feof(void *file)
 
 	if (f->type == kPlainFile && f->file)
 		return feof(f->file);
+	else if (f->type == kRAMFile)
+	{
+		if (!f->data) return 1;
+		return f->eof;
+	}
 	else
 		return 1;
 }
