@@ -15,6 +15,12 @@ TARGET = mess
 # build a version for debugging games
 # MAME_DEBUG = -DMAME_DEBUG
 
+# build with browser information for debugging
+BSCMAKE = bscmake.exe
+
+# command to invoke UPX (Ultimate Packer for eXecutables)
+UPX = upx.exe -6
+
 # uncomment next line to use Assembler 68000 engine
 # X86_ASM_68000 = 1
 
@@ -218,6 +224,10 @@ else
 LDFLAGS += -release -incremental:no -map
 endif
 
+ifdef BSCMAKE
+BSCDEFS = -FR$(@:%.o=%.sbr)
+endif
+
 #####################################################################
 
 OBJDIRS = \
@@ -265,15 +275,20 @@ endif
 extra:	romcmp$(EXE) $(TOOLS) $(HELPFILES)
 
 # combine the various definitions to one
-CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS)
+CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS) $(BSCDEFS)
 
 $(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS) $(RES) 
 # always recompile the version string
 	$(CC) $(CDEFS) $(CFLAGS) -Fo$(OBJ)/version.o -c src/version.c
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(WINDOWS_PROGRAM) -out:$(EMULATOR) $(LIBS) $(COREOBJS) $(OBJS) $(OSOBJS) $(DRVLIBS) $(RES)
+ifdef BSCMAKE
+	$(BSCMAKE) -nologo -o$(<:%.exe=%.bsc) $(OBJS:%.o=%.sbr) $(COREOBJS:%.o=%.sbr) $(OSOBJS:%.o=%.sbr)
+endif
 ifndef DEBUG
-#	upx $(EMULATOR)
+ifdef UPX
+	$(UPX) $(EMULATOR)
+endif
 endif
 
 romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
@@ -363,5 +378,10 @@ maketree: $(sort $(OBJDIRS))
 clean:
 	@echo Deleting object tree $(OBJ)...
 	@if exist $(OBJ) $(RMDIR) $(OBJ)
+ifdef BSCMAKE
+	@echo Deleting browser information $(OBJ)...
+	@if exist $(OBJ:%.o=%.sbr) $(RMDIR) $(OBJ:%.o=%.sbr)
+	@if exist $(EMULATOR:%.exe=%.bsc) $(RM) $(EMULATOR:%.exe=%.bsc)
+endif
 	@echo Deleting $(EMULATOR)...
 	@if exist $(EMULATOR) $(RM) $(EMULATOR)
