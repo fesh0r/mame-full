@@ -44,6 +44,8 @@
 #include "xmame.h"
 #include "x11.h"
 #include "driver.h"
+#include "pixel_convert.h"
+
 /* for xscreensaver support */
 /* Commented out for now since it causes problems with some 
  * versions of KDE.
@@ -63,6 +65,8 @@ static void x11_window_update_16_to_16bpp (struct mame_bitmap *bitmap);
 static void x11_window_update_16_to_24bpp (struct mame_bitmap *bitmap);
 static void x11_window_update_16_to_32bpp (struct mame_bitmap *bitmap);
 static void x11_window_update_32_to_16bpp_direct (struct mame_bitmap *bitmap);
+static void x11_window_update_32_to_16bpp_rgb_565_direct (struct mame_bitmap *bitmap);
+static void x11_window_update_32_to_16bpp_rgb_555_direct (struct mame_bitmap *bitmap);
 static void x11_window_update_32_to_32bpp_direct (struct mame_bitmap *bitmap);
 static void (*x11_window_update_display_func) (struct mame_bitmap *bitmap) = NULL;
 
@@ -123,6 +127,7 @@ static unsigned long black_pen;
 static int use_xsync = 0;
 static int root_window_id; /* root window id (for swallowing the mame window) */
 static char *geometry = NULL;
+static int cursors_allocated = 0;
 
 /* we need to look a lookup table for pseudo modes since X doesn't give us full
    access to the palette */
@@ -453,6 +458,7 @@ static int x11_window_create_window(XSizeHints *hints, int width, int height)
         if (!window)
         {
                 fprintf (stderr_file, "OSD ERROR: failed in XCreateWindow().\n");
+                x11_window_close_display();
                 return 1;
         }
         
@@ -526,6 +532,7 @@ int x11_window_create_display (int bitmap_depth)
 	mit_shm_attached = 0;
 #endif
 	private_cmap_allocated = 0;
+	cursors_allocated = 0;
 	pseudo_color_allocated = NULL;
 	pseudo_color_lookup = NULL;
 	pseudo_color_lookup_dirty = FALSE;
@@ -763,6 +770,7 @@ int x11_window_create_display (int bitmap_depth)
                                                   image_height = 2*visual_height;
                                                   widthscale   = 2;
                                                   heightscale  = 2;
+                                                  yarbsize     = 0;
                                                 }
                                                 else /* we don't do effects! */
                                                 {
@@ -818,6 +826,7 @@ int x11_window_create_display (int bitmap_depth)
                                 if (shm_info.shmid < 0)
                                 {
                                         fprintf (stderr_file, "\nError: failed to create MITSHM block.\n");
+                                        x11_window_close_display();
                                         return OSD_NOT_OK;
                                 }
 
@@ -830,7 +839,7 @@ int x11_window_create_display (int bitmap_depth)
                                 if (!scaled_buffer_ptr)
                                 {
                                         fprintf (stderr_file, "\nError: failed to allocate MITSHM bitmap buffer.\n");
-                                        return OSD_NOT_OK;
+                                        x11_window_close_display();return OSD_NOT_OK;
                                 }
 
                                 shm_info.readOnly = FALSE;
@@ -840,10 +849,10 @@ int x11_window_create_display (int bitmap_depth)
                                 if (!XShmAttach (display, &shm_info))
                                 {
                                         fprintf (stderr_file, "\nError: failed to attach MITSHM block.\n");
-                                        return OSD_NOT_OK;
+                                        x11_window_close_display();return OSD_NOT_OK;
                                 }
                                 XSync (display, False);  /* be sure to get request processed */
-                                sleep (2);          /* enought time to notify error if any */
+                                /* sleep (2);          enought time to notify error if any */
                                 /* Mark segment as deletable after we attach.  When all processes
                                    detach from the segment (progam exits), it will be deleted.
                                    This way it won't be left in memory if we crash or something.
@@ -864,7 +873,7 @@ int x11_window_create_display (int bitmap_depth)
                                       ClearYUY2();
                                     x11_window_refresh_screen();
                                     XSync (display, False);  /* be sure to get request processed */
-                                    sleep (1);          /* enought time to notify error if any */
+                                    /* sleep (1);          enought time to notify error if any */
                                   }
                                 }
                                 
@@ -917,6 +926,7 @@ int x11_window_create_display (int bitmap_depth)
 				if (shm_info.shmid < 0)
 				{
 					fprintf (stderr_file, "\nError: failed to create MITSHM block.\n");
+					x11_window_close_display();
 					return OSD_NOT_OK;
 				}
 
@@ -929,6 +939,7 @@ int x11_window_create_display (int bitmap_depth)
 				if (!scaled_buffer_ptr)
 				{
 					fprintf (stderr_file, "\nError: failed to allocate MITSHM bitmap buffer.\n");
+					x11_window_close_display();
 					return OSD_NOT_OK;
 				}
 
@@ -939,10 +950,11 @@ int x11_window_create_display (int bitmap_depth)
 				if (!XShmAttach (display, &shm_info))
 				{
 					fprintf (stderr_file, "\nError: failed to attach MITSHM block.\n");
+					x11_window_close_display();
 					return OSD_NOT_OK;
 				}
 				XSync (display, False);  /* be sure to get request processed */
-				sleep (2);          /* enought time to notify error if any */
+				/* sleep (2);          enought time to notify error if any */
 				/* Mark segment as deletable after we attach.  When all processes
 				   detach from the segment (progam exits), it will be deleted.
 				   This way it won't be left in memory if we crash or something.
@@ -974,6 +986,7 @@ int x11_window_create_display (int bitmap_depth)
 			if (!scaled_buffer_ptr)
 			{
 				fprintf (stderr_file, "Error: failed to allocate bitmap buffer.\n");
+				x11_window_close_display();
 				return OSD_NOT_OK;
 			}
 			image = XCreateImage (display,
@@ -989,11 +1002,13 @@ int x11_window_create_display (int bitmap_depth)
 			if (!image)
 			{
 				fprintf (stderr_file, "OSD ERROR: could not create image.\n");
+				x11_window_close_display();
 				return OSD_NOT_OK;
 			}
 			break;
 		default:
 			fprintf (stderr_file, "Error unknown X11 update method, this shouldn't happen\n");
+			x11_window_close_display();
 			return OSD_NOT_OK;
 	}
 
@@ -1121,7 +1136,19 @@ int x11_window_create_display (int bitmap_depth)
 			switch(depth)
 			{
                             case 16:
-				x11_window_update_display_func = x11_window_update_32_to_16bpp_direct;
+                                if ((xvisual->red_mask   == (0x1F << 11)) &&
+                                    (xvisual->green_mask == (0x3F <<  5)) &&
+                                    (xvisual->blue_mask  == (0x1F      )))
+				  x11_window_update_display_func = x11_window_update_32_to_16bpp_rgb_565_direct;
+                                else if ((xvisual->red_mask   == (0x1F << 10)) &&
+                                         (xvisual->green_mask == (0x1F <<  5)) &&
+                                         (xvisual->blue_mask  == (0x1F      )))
+				  x11_window_update_display_func = x11_window_update_32_to_16bpp_rgb_555_direct;
+                                else
+                                {
+				  x11_window_update_display_func = x11_window_update_32_to_16bpp_direct;
+				  fprintf(stderr_file, "\n Using generic (slow) 32 bpp to 16 bpp downsampling... ");
+                                }
                                 break;
 			    case 32:
 				x11_window_update_display_func = x11_window_update_32_to_32bpp_direct;
@@ -1180,6 +1207,7 @@ int x11_window_create_display (int bitmap_depth)
 	if (x11_window_update_display_func == NULL)
 	{
 		fprintf(stderr_file, "Error: Unsupported bitmap depth = %dbpp, video depth = %dbpp\n", bitmap_depth, depth);
+		x11_window_close_display();
 		return OSD_NOT_OK;
 	}
 	fprintf(stderr_file, "Ok\n");
@@ -1190,12 +1218,16 @@ int x11_window_create_display (int bitmap_depth)
 		x11_grab_mouse = FALSE;
 
 	if (x11_grab_keyboard && XGrabKeyboard(display, window, True, GrabModeAsync, GrabModeAsync, CurrentTime))
+        {
 		fprintf(stderr_file, "Warning: keyboard grab failed\n");
+		x11_grab_keyboard = FALSE;
+        }
 
 	if (!run_in_root_window)
 	{
 		normal_cursor = XCreateFontCursor (display, XC_trek);
 		invisible_cursor = create_invisible_cursor (display, window);
+		cursors_allocated = 1;
 
 		if (x11_grab_mouse || !show_cursor)
 			XDefineCursor (display, window, invisible_cursor);
@@ -1255,6 +1287,13 @@ void x11_window_close_display (void)
 
       if (x11_grab_keyboard)
          XUngrabKeyboard (display, CurrentTime);
+
+      if(cursors_allocated)
+      {
+		XFreeCursor(display, normal_cursor);
+                XFreeCursor(display, invisible_cursor);
+                cursors_allocated = FALSE;
+      }
 
       XDestroyWindow (display, window);
    }
@@ -1459,15 +1498,7 @@ void x11_window_update_display (struct mame_bitmap *bitmap)
 
    (*x11_window_update_display_func) (bitmap);
 
-#ifdef USE_XV
-   if (use_xv)
-      x11_window_refresh_screen();
-#endif
-
-#ifdef USE_XIL
-   if (use_xil)
-      refresh_xil_screen ();
-#endif
+   x11_window_refresh_screen();
 
    if (use_mouse &&
        code_pressed (KEYCODE_LALT) &&
@@ -1528,8 +1559,8 @@ void x11_window_refresh_screen (void)
          break;
       case X11_MITSHM:
 #ifdef USE_MITSHM
-         XShmPutImage (display, window, gc, image, 0, 0, 0, 0, image->width,
-                       image->height, FALSE);
+         XShmPutImage (display, window, gc, image, 0, 0, startx, starty,
+                       image->width, image->height, FALSE);
 #endif
          break;
       case X11_XV:
@@ -1563,29 +1594,8 @@ void x11_window_refresh_screen (void)
 #endif
          break;
       case X11_NORMAL:
-         XPutImage (display, window, gc, image, 0, 0, 0, 0, image->width,
-                    image->height);
-         break;
-   }
-}
-
-INLINE void x11_window_put_image (int x, int y, int width, int height)
-{
-   switch (x11_window_update_method)
-   {
-      case X11_XV:
-         break;
-      case X11_XIL:
-         /* xil doesn't need a put_image */
-         break;
-      case X11_MITSHM:
-#ifdef USE_MITSHM
-         XShmPutImage (display, window, gc, image, x, y, x+startx, y+starty, width, height,
-                       FALSE);
-#endif
-         break;
-      case X11_NORMAL:
-         XPutImage (display, window, gc, image, x, y, x+startx, y+starty, width, height);
+         XPutImage (display, window, gc, image, 0, 0, startx, starty,
+                    image->width, image->height);
          break;
    }
 }
@@ -1593,7 +1603,6 @@ INLINE void x11_window_put_image (int x, int y, int width, int height)
 #define DEST_WIDTH image_width
 #define DEST scaled_buffer_ptr
 #define SRC_PIXEL unsigned short
-#define PUT_IMAGE(X, Y, WIDTH, HEIGHT) x11_window_put_image(X, Y, WIDTH, HEIGHT);
 
 #ifdef USE_HWSCALE
 #define RMASK 0xff0000
@@ -2025,6 +2034,28 @@ static void x11_window_update_16_to_32bpp (struct mame_bitmap *bitmap)
 #undef SRC_PIXEL
 #undef DEST_PIXEL
 #undef INDIRECT
+}
+
+static void x11_window_update_32_to_16bpp_rgb_565_direct (struct mame_bitmap *bitmap)
+{
+#define SRC_PIXEL unsigned int
+#define DEST_PIXEL unsigned short
+#define CONVERT_PIXEL(p) _32TO16_RGB_565(p)
+#include "blit.h"
+#undef CONVERT_PIXEL
+#undef SRC_PIXEL
+#undef DEST_PIXEL
+}
+
+static void x11_window_update_32_to_16bpp_rgb_555_direct (struct mame_bitmap *bitmap)
+{
+#define SRC_PIXEL unsigned int
+#define DEST_PIXEL unsigned short
+#define CONVERT_PIXEL(p) _32TO16_RGB_555(p)
+#include "blit.h"
+#undef CONVERT_PIXEL
+#undef SRC_PIXEL
+#undef DEST_PIXEL
 }
 
 static void x11_window_update_32_to_16bpp_direct (struct mame_bitmap *bitmap)

@@ -46,10 +46,7 @@ Todo:
 #include "xmame.h"
 #include "driver.h"
 #include "vidhrdw/vector.h"
-
-#define _32TO16(p) (UINT16)((((p) & 0x00F80000) >> 9) | \
-                            (((p) & 0x0000F800) >> 6) | \
-                            (((p) & 0x000000F8) >> 3))
+#include "pixel_convert.h"
 
 #define PAUSEDCOLOR(p) (UINT16) ((((p) >> 11) << 10) | ((((p) &0x03E0) >> 6)<< 5) | (((p) & 0x001F) >> 1))
 
@@ -652,12 +649,12 @@ void UpdateTexture(struct mame_bitmap *bitmap)
 				if (!emulation_paused) {
 					for(i = 0;i < width;i++) {
 						square->texture[texline*texsize+i] = 
-							_32TO16((((UINT32*)(bitmap->line[y]))[visual.min_x+ofs+i]));
+							_32TO16_RGB_555((((UINT32*)(bitmap->line[y]))[visual.min_x+ofs+i]));
 					}
 				} else {
 					for(i = 0;i < width;i++) {
 						square->texture[texline*texsize+i] =
-							PAUSEDCOLOR(_32TO16((((UINT32*)(bitmap->line[y]))[visual.min_x+ofs+i])));
+							PAUSEDCOLOR(_32TO16_RGB_555((((UINT32*)(bitmap->line[y]))[visual.min_x+ofs+i])));
 					}
 				}
 			}
