@@ -694,9 +694,7 @@ void exit_devices(void)
 	for( type = 0; type < IO_COUNT; type++ )
 	{
 		if (count[type])
-			mess_printf("OOPS!!!  Not all images free!\n");
-		else
-			mess_printf("All Images removed from devices!\n");
+			mess_printf("OOPS!!!  Appears not all images free!\n");
 
 	}
 #endif
