@@ -63,12 +63,12 @@ Vidhrdw:
 
 //static int disk_changed[2];
 
-unsigned char *atarist_ram,*sub_ram,*atarist_bank_ram,*atarist_edfs_ram,*atarist_blitter_ram;
+UINT16 *atarist_ram,*sub_ram,*atarist_bank_ram,*atarist_edfs_ram,*atarist_blitter_ram;
 unsigned int pal_lookup[16];
 
 int atarist_current_drive;
 
-unsigned char *atarist_fakehdc_ram;
+UINT16 *atarist_fakehdc_ram;
 
 static int atarist_options;
 
@@ -277,12 +277,12 @@ void atarist_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 /***************************************************************************/
 
-static READ_HANDLER( atarist_psg_r )
+static READ16_HANDLER( atarist_psg_r )
 {
 	return AY8910_read_port_0_r(0)<<8;
 }
 
-static WRITE_HANDLER( atarist_psg_w )
+static WRITE16_HANDLER( atarist_psg_w )
 {
 	offset&=3; /* Mirror addresses */
 	if (offset)
@@ -345,7 +345,7 @@ static void timer_d_callback(int param)
 
 
 /* MFP Master Clock is 2,457,600 cycles/second */
-static READ_HANDLER( atarist_mfp_r )
+static READ16_HANDLER( atarist_mfp_r )
 {
 	switch (offset) {
 	case 0x00: /* General purpose IO */
@@ -422,7 +422,7 @@ if (mfp.timer_c)
 	return 0;
 }
 
-static WRITE_HANDLER( atarist_mfp_w )
+static WRITE16_HANDLER( atarist_mfp_w )
 {
 	switch (offset) {
 
@@ -720,7 +720,7 @@ static void atarist_fake_ikbd_w(int data)
 	last_frame[1]=new_frame[1];
 }
 
-static READ_HANDLER( atarist_acia_r )
+static READ16_HANDLER( atarist_acia_r )
 {
 	int a;
 
@@ -743,7 +743,7 @@ static READ_HANDLER( atarist_acia_r )
 	return 0;
 }
 
-static WRITE_HANDLER( atarist_acia_w )
+static WRITE16_HANDLER( atarist_acia_w )
 {
 logerror("%06x: ikbd write %02x %04x\n", cpu_get_pc(),offset,data);
 
@@ -885,7 +885,7 @@ void atarist_fdc_callback(int event)
 	}
 }
 
-static READ_HANDLER( atarist_fdc_r )
+static READ16_HANDLER( atarist_fdc_r )
 {
 	switch (offset) {
 		case 0: /* Reserved (unused) */
@@ -920,7 +920,7 @@ static READ_HANDLER( atarist_fdc_r )
 	return 0xff;
 }
 
-static WRITE_HANDLER( atarist_fdc_w )
+static WRITE16_HANDLER( atarist_fdc_w )
 {
 	switch (offset) {
 		case 0: /* Unused */
@@ -1018,12 +1018,12 @@ static char *get_hdc_string(int param)
 }
 #endif
 
-static READ_HANDLER(atarist_fakehdc_r)
+static READ16_HANDLER(atarist_fakehdc_r)
 {
 	return READ_WORD(&atarist_fakehdc_ram[offset]);
 }
 
-static WRITE_HANDLER(atarist_fakehdc_w)
+static WRITE16_HANDLER(atarist_fakehdc_w)
 {
 // KT - commented this lot out because loads of osd functions could not be found
 #if 0
@@ -1455,14 +1455,14 @@ logerror("Doing blit\n");
 	WRITE_WORD(&atarist_blitter_ram[0x38],0); /* Y count */
 }
 
-static READ_HANDLER( atarist_blitter_r )
+static READ16_HANDLER( atarist_blitter_r )
 {
 //	logerror("%06x:  blitter read %02x\n",cpu_get_pc(),offset);
 	if (offset==0x3c) return READ_WORD(&atarist_blitter_ram[0x3c])&0x3fff;
 	return READ_WORD(&atarist_blitter_ram[offset]);
 }
 
-static WRITE_HANDLER( atarist_blitter_w )
+static WRITE16_HANDLER( atarist_blitter_w )
 {
 if (offset==0x3c) logerror("%06x:  blitter write %02x %04x\n",cpu_get_pc(),offset,data);
 	COMBINE_WORD_MEM(&atarist_blitter_ram[offset],data);
@@ -1475,7 +1475,7 @@ if (offset==0x3c) logerror("%06x:  blitter write %02x %04x\n",cpu_get_pc(),offse
 	}
 }
 
-static READ_HANDLER( atarist_shifter_r )
+static READ16_HANDLER( atarist_shifter_r )
 {
 	/* Video ram base: $ffff8200 and $ffff8202 */
 	if (offset==0x0)
@@ -1529,7 +1529,7 @@ static READ_HANDLER( atarist_shifter_r )
 	return 0;
 }
 
-static WRITE_HANDLER( atarist_shifter_w )
+static WRITE16_HANDLER( atarist_shifter_w )
 {
 	if (offset==0) { /* Video ram base: $ffff8200 and $ffff8202 */
 		logerror("Switched screen base at line %d\n",current_line);
@@ -1587,24 +1587,23 @@ static int a;
 
 static int mmu;
 
-static READ_HANDLER( atarist_mmu_r )
+static READ16_HANDLER( atarist_mmu_r )
 {
 	return mmu;
 }
 
-static WRITE_HANDLER( atarist_mmu_w )
+static WRITE16_HANDLER( atarist_mmu_w )
 {
 	mmu=data&0xff;
 }
 
 /***************************************************************************/
 
-static struct MemoryReadAddress atarist_readmem[] =
-{
-	{ 0x000000, 0x000007, MRA_ROM },
-	{ 0x000008, 0x3fffff, MRA_RAM },	/* User RAM */
-	{ 0xfa0000, 0xfbffff, MRA_BANK1 },	/* User ROM */
-	{ 0xfc0000, 0xfeffff, MRA_BANK2 },	/* System ROM */
+static MEMORY_READ16_START (atarist_readmem)
+	{ 0x000000, 0x000007, MRA16_ROM },
+	{ 0x000008, 0x3fffff, MRA16_RAM },	/* User RAM */
+	{ 0xfa0000, 0xfbffff, MRA16_BANK1 },	/* User ROM */
+	{ 0xfc0000, 0xfeffff, MRA16_BANK2 },	/* System ROM */
 	{ 0xef0000, 0xef01ff, atarist_fakehdc_r },
 	{ 0xff8000, 0xff8007, atarist_mmu_r },
 	{ 0xff8200, 0xff82ff, atarist_shifter_r },
@@ -1613,22 +1612,20 @@ static struct MemoryReadAddress atarist_readmem[] =
 	{ 0xff8a00, 0xff8a3f, atarist_blitter_r },
 	{ 0xfffa00, 0xfffa2f, atarist_mfp_r },
 	{ 0xfffc00, 0xfffc07, atarist_acia_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static WRITE_HANDLER(log_mem)
+static WRITE16_HANDLER(log_mem)
 {
 	COMBINE_WORD_MEM(&atarist_ram[offset+0x122],data);
 	logerror("%06x: Write LOGMEM %04x (line %d)\n",cpu_get_pc(),data,current_line);
 }
 
-static struct MemoryWriteAddress atarist_writemem[] =
-{
-	{ 0x000000, 0x000007, MWA_ROM, &atarist_ram },	/* Mirror of first 8 bytes of ROM */
+static MEMORY_WRITE16_START (atarist_writemem)
+	{ 0x000000, 0x000007, MWA16_ROM, &atarist_ram },	/* Mirror of first 8 bytes of ROM */
 //	{ 0x000122, 0x000123, log_mem },
-	{ 0x000008, 0x3fffff, MWA_RAM },	/* User RAM */
-	{ 0xfa0000, 0xfbffff, MWA_BANK1 },	/* User ROM */ //todo!
-	{ 0xfc0000, 0xfeffff, MWA_ROM },	/* System ROM */
+	{ 0x000008, 0x3fffff, MWA16_RAM },	/* User RAM */
+	{ 0xfa0000, 0xfbffff, MWA16_BANK1 },	/* User ROM */ //todo!
+	{ 0xfc0000, 0xfeffff, MWA16_ROM },	/* System ROM */
 
 	{ 0xef0000, 0xef01ff, atarist_fakehdc_w, &atarist_fakehdc_ram },
 	{ 0xff8000, 0xff8001, atarist_mmu_w },
@@ -1638,8 +1635,7 @@ static struct MemoryWriteAddress atarist_writemem[] =
 	{ 0xff8a00, 0xff8a3f, atarist_blitter_w, &atarist_blitter_ram },
 	{ 0xfffa00, 0xfffa2f, atarist_mfp_w },
 	{ 0xfffc00, 0xfffc07, atarist_acia_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /***************************************************************************/
 
@@ -1967,10 +1963,10 @@ static void atarist_eof_callback(void)
 		}
 
 		/* Turn unavailable memory areas into a NOP region */
-		install_mem_write_handler(0, 0x8,mid-1, MWA_RAM);
-		install_mem_read_handler (0, 0x8,mid-1, MRA_RAM);
-		install_mem_write_handler(0, mid,0x3fffff, MWA_NOP);
-		install_mem_read_handler (0, mid,0x3fffff, MRA_NOP);
+		install_mem_write16_handler(0, 0x8,mid-1, MWA16_RAM);
+		install_mem_read16_handler (0, 0x8,mid-1, MRA16_RAM);
+		install_mem_write16_handler(0, mid,0x3fffff, MWA16_NOP);
+		install_mem_read16_handler (0, mid,0x3fffff, MRA16_NOP);
 		last_mem=new_mem;
 	}
 }
@@ -2193,10 +2189,10 @@ ROM_START( atarist )
 	ROM_REGION(0x400000, REGION_CPU1,0)
 	/* Up to 4 Meg Main RAM */
 
-	ROM_REGION(0x40000, REGION_USER1,0) /* System rom */
+	ROM_REGION(0x40000, REGION_USER1,ROMREGION_16BIT) /* System rom */
 //	ROM_LOAD_WIDE( "tos_206.img", 0x00000, 0x30000,  0x3b5cd0c5 )
 
-	ROM_LOAD_WIDE( "tos_104.img", 0x00000, 0x30000,  0x3b5cd0c5 )
+	ROM_LOAD ( "tos_104.img", 0x00000, 0x30000,  0x3b5cd0c5 )
 //	ROM_LOAD_WIDE( "tos102uk.rom", 0x00000, 0x30000,  0x3b5cd0c5 )
 //	ROM_LOAD_WIDE( "tos100.img", 0x00000, 0x30000,  0xd331af30 )
 
