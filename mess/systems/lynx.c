@@ -346,6 +346,7 @@ extern void lynx_runtime_loader_init(void)
 	int i;
 	for (i=0; drivers[i]; i++) {
 		if ( strcmp(drivers[i]->name,"lynx")==0) drivers[i]=&driver_lynx;
+		if ( strcmp(drivers[i]->name,"lynxa")==0) drivers[i]=&driver_lynxa;
 		if ( strcmp(drivers[i]->name,"lynx2")==0) drivers[i]=&driver_lynx2;
 	}
 }
