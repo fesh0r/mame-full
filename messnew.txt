@@ -6,7 +6,7 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [Lviv] Support for .SAV snapshots. Joystick support. [Krzysztof Strzecha]
 
 Source Changes:
 ---------------
