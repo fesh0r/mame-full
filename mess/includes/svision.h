@@ -16,16 +16,17 @@
 	you must not do declarations in c files with external bindings
 */
 
-typedef struct {
+typedef struct
+{
     UINT8 reg[3];
     int pos;
     int size;
 } SVISION_CHANNEL;
+
 extern SVISION_CHANNEL svision_channel[2];
 
-extern int svision_custom_start (const struct MachineSound *driver);
-extern void svision_custom_stop (void);
-extern void svision_custom_update (void);
-extern void svision_soundport_w (SVISION_CHANNEL *channel, int offset, int data);
+int svision_custom_start(const struct MachineSound *driver);
+void svision_custom_update(void);
+void svision_soundport_w(SVISION_CHANNEL *channel, int offset, int data);
 
 #endif

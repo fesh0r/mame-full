@@ -40,28 +40,34 @@ void svision_soundport_w (SVISION_CHANNEL *channel, int offset, int data)
 /************************************/
 static void svision_update (int param, INT16 **buffer, int length)
 {
-    INT16 *left=buffer[0], *right=buffer[1];
-    int i, j;
-    SVISION_CHANNEL *channel;
-    
-    for (i = 0; i < length; i++, left++, right++)
-    {
-	*left = 0;
-	*right = 0;
-	for (channel=svision_channel, j=0; j<ARRAY_LENGTH(svision_channel); j++, channel++) {
-	    if (channel->pos<=channel->size/2) {
-		if (channel->reg[2]&0x40) {
-		    *left+=(channel->reg[2]&0xf)<<8;
+	INT16 *left=buffer[0], *right=buffer[1];
+	int i, j;
+	SVISION_CHANNEL *channel;
+
+	for (i = 0; i < length; i++, left++, right++)
+	{
+		*left = 0;
+		*right = 0;
+		for (channel=svision_channel, j=0; j<ARRAY_LENGTH(svision_channel); j++, channel++)
+		{
+			if (channel->pos<=channel->size/2)
+			{
+				if (channel->reg[2]&0x40)
+				{
+					*left+=(channel->reg[2]&0xf)<<8;
+				}
+				if (channel->reg[2]&0x20)
+				{
+					*right+=(channel->reg[2]&0xf)<<8;
+				}
+			}
+			if (channel->reg[2]&0x60)
+			{
+				if (++channel->pos>=channel->size)
+					channel->pos=0;
+			}
 		}
-		if (channel->reg[2]&0x20) {
-		    *right+=(channel->reg[2]&0xf)<<8;
-		}
-	    }
-	    if (channel->reg[2]&0x60) {
-		if (++channel->pos>=channel->size) channel->pos=0;
-	    }
 	}
-    }
 }
 
 /************************************/

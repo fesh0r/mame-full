@@ -114,9 +114,6 @@ a13 15
 a14 16
 */
 
-// in pixel
-#define XPOS svision_reg[2]
-
 static UINT8 *svision_reg;
 /*
   0x2000 0xa0 something to do with video dma?
@@ -144,57 +141,73 @@ static UINT8 *svision_reg;
   0x3041-
  */
 
-struct {
-    void *timer1;
+struct
+{
+    mame_timer *timer1;
     int timer1_shot;
 } svision;
 
 static void svision_timer(int param)
 {
-    svision.timer1_shot=TRUE;
-    svision.timer1=NULL;
+    svision.timer1_shot = TRUE;
     cpu_set_irq_line(0, M65C02_IRQ_LINE, ASSERT_LINE);
+}
+
+static void svision_update_banks(void)
+{
+	UINT8 *cart_rom = memory_region(REGION_USER1);
+	cpu_setbank(1, cart_rom + ((svision_reg[0x26] & 0x60) << 9));
+	cpu_setbank(2, cart_rom + 0xC000);
 }
 
 static READ_HANDLER(svision_r)
 {
-    int data=svision_reg[offset];
-    switch (offset) {
-    case 0x20:
-	data=readinputport(0);
-	break;
-    case 0x27:
-	if (svision.timer1_shot) data|=1; //crystball irq routine
-	break;
-    case 0x24: case 0x25://deltahero irq routine read
-	break;
-    default:
-	logerror("%.6f svision read %04x %02x\n",timer_get_time(),offset,data);
-	break;
-    }
+	int data = svision_reg[offset];
+	switch (offset) {
+	case 0x20:
+		data = readinputport(0);
+		break;
 
-    return data;
+	case 0x27:
+		if (svision.timer1_shot)
+			data |= 1; //crystball irq routine
+		break;
+
+	case 0x24:
+	case 0x25://deltahero irq routine read
+		break;
+
+	default:
+		logerror("%.6f svision read %04x %02x\n",timer_get_time(),offset,data);
+		break;
+	}
+
+	return data;
 }
 
 static WRITE_HANDLER(svision_w)
 {
-	svision_reg[offset]=data;
+	svision_reg[offset] = data;
 	switch (offset) {
-	case 0x26: // bits 5,6 memory management for a000?
-		cpu_setbank(1,memory_region(REGION_CPU1)+0x10000+((data&0x60)<<9) );
+	case 0x26: /* bits 5,6 memory management for a000? */
+		svision_update_banks();
 		break;
 
-	case 0x23: //delta hero irq routine write
+	case 0x23:	/* delta hero irq routine write */
 		cpu_set_irq_line(0, M65C02_IRQ_LINE, CLEAR_LINE);
 		svision.timer1_shot=FALSE;
 		timer_reset(svision.timer1, TIME_IN_CYCLES(data*256, 0));
 		break;
 
-	case 0x10: case 0x11: case 0x12:
+	case 0x10:
+	case 0x11:
+	case 0x12:
 		svision_soundport_w(svision_channel+0, offset&3, data);
 		break;
 
-	case 0x14: case 0x15: case 0x16:
+	case 0x14:
+	case 0x15:
+	case 0x16:
 		svision_soundport_w(svision_channel+1, offset&3, data);
 		break;
 
@@ -210,7 +223,7 @@ static MEMORY_READ_START( readmem )
     { 0x4000, 0x5fff, MRA_RAM }, //?
 	{ 0x6000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xffff, MRA_ROM },
+	{ 0xc000, 0xffff, MRA_BANK2 },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
@@ -222,58 +235,35 @@ MEMORY_END
 
 INPUT_PORTS_START( svision )
 	PORT_START
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT)
-    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
-    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP   )
-	PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2, "B", CODE_DEFAULT, CODE_DEFAULT )
-	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1, "A", CODE_DEFAULT, CODE_DEFAULT )
-	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "select", KEYCODE_5, IP_JOY_DEFAULT )
-	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "start/pause",  KEYCODE_1, IP_JOY_DEFAULT )
+    PORT_BIT(		0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT)
+    PORT_BIT(		0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+    PORT_BIT(		0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+    PORT_BIT(		0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP   )
+	PORT_BIT_NAME(	0x10, IP_ACTIVE_LOW, IPT_BUTTON2,	"B" )
+	PORT_BIT_NAME(	0x20, IP_ACTIVE_LOW, IPT_BUTTON1,	"A" )
+	PORT_BIT_NAME(	0x40, IP_ACTIVE_LOW, IPT_SELECT,	"Select" )
+	PORT_BIT_NAME(	0x80, IP_ACTIVE_LOW, IPT_START,		"Start/Pause" )
 INPUT_PORTS_END
 
 /* most games contain their graphics in roms, and have hardware to
    draw complete rectangular objects */
-/* look into src/drawgfx.h for more info */
-/* this is for a console with monochrom hires graphics in ram
-   1 byte/ 8 pixels are enlarged */
-static struct GfxLayout svision_charlayout =
-{
-	8,	/* width of object */
-	1,	/* height of object */
-	256,/* 256 characters */
-	2,	/* bits per pixel */
-	{ 0,1 }, /* no bitplanes */
-	/* x offsets */
-	{ 6,4,2,0 },
-	/* y offsets */
-	{ 0 },
-	8*1 /* size of 1 object in bits */
-};
 
-static struct GfxDecodeInfo svision_gfxdecodeinfo[] = {
-	{
-		REGION_GFX1, /* memory region */
-		0x0000, /* offset in memory region */
-		&svision_charlayout,
-		0, /* index in the color lookup table where color codes start */
-		1  /* total number of color codes */
-	},
-    { -1 } /* end of array */
-};
-
-/* palette in red, green, blue tribles */
+/* palette in red, green, blue triples */
 static unsigned char svision_palette[] =
 {
+	/* these are necessary to appease the MAME core */
+	0x00, 0x00, 0x00,
+	0xff, 0xff, 0xff,
 #if 0
-    // greens grabbed from a scan of a handheld
-    // in its best adjustment for contrast
+    /* greens grabbed from a scan of a handheld
+     * in its best adjustment for contrast
+	 */
 	53, 73, 42,
 	42, 64, 47,
 	22, 42, 51,
 	22, 25, 32
 #else
-	// grabbed from chris covell's black white pics
+	/* grabbed from chris covell's black white pics */
 	0xe0, 0xe0, 0xe0,
 	0xb9, 0xb9, 0xb9,
 	0x54, 0x54, 0x54,
@@ -281,26 +271,32 @@ static unsigned char svision_palette[] =
 #endif
 };
 
-/* color table for 1 2 color objects */
-static unsigned short svision_colortable[1][4] = {
-	{ 0, 1, 2, 3 }
-};
-
 static PALETTE_INIT( svision )
 {
 	palette_set_colors(0, svision_palette, sizeof(svision_palette) / 3);
-	memcpy(colortable, svision_colortable, sizeof(svision_colortable));
 }
 
 static VIDEO_UPDATE( svision )
 {
-	int x, y, i, j;
-	UINT8 *vram=memory_region(REGION_CPU1)+0x4000+XPOS/4;
+	int x, y;
+	UINT8 *vram = memory_region(REGION_CPU1) + 0x4000 + (svision_reg[2] / 4);
+	UINT8 *vram_line;
+	UINT16 *line;
+	UINT8 b;
 
-	for (y=0,i=0; y<160; y++,i+=0x30) {
-		for (x=0,j=i; x<160; x+=4,j++) {
-			drawgfx(bitmap, Machine->gfx[0], vram[j],0,0,0,
-				x,y, 0, TRANSPARENCY_NONE,0);
+	for (y = 0; y < 160; y++)
+	{
+		line = (UINT16 *) bitmap->line[y];
+		vram_line = &vram[y * 0x30];
+
+		for (x = 0; x < 160; x += 4)
+		{
+			b = *(vram_line++);
+			line[3] = ((b >> 6) & 0x03) + 2;
+			line[2] = ((b >> 4) & 0x03) + 2;
+			line[1] = ((b >> 2) & 0x03) + 2;
+			line[0] = ((b >> 0) & 0x03) + 2;
+			line += 4;
 		}
 	}
 }
@@ -312,22 +308,19 @@ static INTERRUPT_GEN( svision_frame_int )
 
 static DRIVER_INIT( svision )
 {
-	UINT8 *gfx=memory_region(REGION_GFX1);
-	int i;
-	for (i=0; i<256;i++)
-		gfx[i]=i;
+	svision.timer1 = timer_alloc(svision_timer);
 }
 
 static MACHINE_INIT( svision )
 {
-	svision.timer1 = timer_alloc(svision_timer);
     svision.timer1_shot = FALSE;
+	svision_update_banks();
 }
 
 struct CustomSound_interface svision_sound_interface =
 {
 	svision_custom_start,
-	svision_custom_stop,
+	NULL,
 	svision_custom_update
 };
 
@@ -347,9 +340,7 @@ static MACHINE_DRIVER_START( svision )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)	/* lcd */
 	MDRV_SCREEN_SIZE(160, 160)
 	MDRV_VISIBLE_AREA(0, 160-1, 0, 160-1)
-	MDRV_GFXDECODE( svision_gfxdecodeinfo )
-	MDRV_PALETTE_LENGTH(sizeof(svision_palette) / sizeof(svision_palette[0]))
-	MDRV_COLORTABLE_LENGTH(sizeof (svision_colortable) / sizeof(svision_colortable[0][0]))
+	MDRV_PALETTE_LENGTH(sizeof(svision_palette) / (sizeof(svision_palette[0]) * 3))
 	MDRV_PALETTE_INIT( svision )
 
 	MDRV_VIDEO_UPDATE( svision )
@@ -360,8 +351,8 @@ static MACHINE_DRIVER_START( svision )
 MACHINE_DRIVER_END
 
 ROM_START(svision)
-	ROM_REGION(0x20000,REGION_CPU1, 0)
-	ROM_REGION(0x100,REGION_GFX1, 0)
+	ROM_REGION( 0x8000, REGION_CPU1, 0)
+	ROM_REGION(0x10000, REGION_USER1, 0)
 ROM_END
 
 /* deltahero
@@ -383,31 +374,11 @@ ROM_END
 
 static DEVICE_LOAD( svision_cart )
 {
-	UINT8 *rom = memory_region(REGION_CPU1);
-	int size;
-
-	size = mame_fsize(file);
-	if (size>0x10000)
-	{
-	    logerror("%s: size %d not yet supported\n",image_filename(image), size);
-	    return 1;
-	}
-
-	if (mame_fread(file, rom+0x20000-size, size)!=size)
-	{
-		logerror("%s load error\n",image_filename(image));
-		return 1;
-	}
-	if (size==0x8000)
-	{
-	    memcpy(rom+0x10000, rom+0x20000-size, size);
-	}
-	memcpy(rom+0xc000, rom+0x1c000, 0x10000-0xc000);
-	return 0;
+	return cartslot_load_generic(file, REGION_USER1, 0, 1, 0x10000, CARTLOAD_MUSTBEPOWEROFTWO);
 }
 
 SYSTEM_CONFIG_START(svision)
-	CONFIG_DEVICE_CARTSLOT_REQ(1, "bin\0", NULL, NULL, device_load_svision_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ(1, "bin\0ws\0sv\0", NULL, NULL, device_load_svision_cart, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************
