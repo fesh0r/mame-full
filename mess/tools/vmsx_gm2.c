@@ -4,12 +4,12 @@
 #include "osdepend.h"
 #include "imgtool.h"
 
-/* 
+/*
    vMSX gmaster2.ram
 
    Virtual MSX 1.x (being replaced by the MSX driver in mess) had
    it's on format for Konami's Game Master 2 SRAM. The file was
-   always saved as gmaster2.ram; however the file was 16kB when 
+   always saved as gmaster2.ram; however the file was 16kB when
    the actual data is 8kB. 8kB is redundant, which is not used
    by MESS, Virtual MSX 2.0 (never finished), and the patches for
    fMSX written by me (Sean Young). So suppose you'd like to use
@@ -70,7 +70,6 @@ IMAGEMODULE(
 static int vmsx_gm2_image_init(STREAM *f, IMAGE **outimg)
 	{
 	GM2_IMAGE *image;
-	int rc;
 
 	image = (GM2_IMAGE*)malloc (sizeof (GM2_IMAGE) );
 	if (!image) return IMGTOOLERR_OUTOFMEMORY;
@@ -90,7 +89,7 @@ static int vmsx_gm2_image_init(STREAM *f, IMAGE **outimg)
 
 	image->data = (unsigned char *) malloc(image->size);
 	if ( (!image->data)
-		 ||(stream_read(f, image->data, image->size)!=image->size) ) 
+		 ||(stream_read(f, image->data, image->size)!=image->size) )
 		{
 		free(image);
 		*outimg=NULL;
@@ -126,9 +125,9 @@ static int vmsx_gm2_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 static int vmsx_gm2_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	{
 	TAP_ITERATOR *iter=(TAP_ITERATOR*)enumeration;
-	
+
 	ent->eof=iter->index;
-	if (!ent->eof) 
+	if (!ent->eof)
 		{
 		strcpy (ent->fname, NewName);
 		ent->corrupt=0;
@@ -148,7 +147,7 @@ static int vmsx_gm2_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	{
 	GM2_IMAGE *image=(GM2_IMAGE*)img;
 
-	if (stricmp (fname, NewName) ) 
+	if (stricmp (fname, NewName) )
 		return IMGTOOLERR_MODULENOTFOUND;
 
 	if (stream_write(destf, image->data + 0x1000, 0x1000)!=0x1000)
