@@ -113,7 +113,7 @@ static MACHINE_INIT( ddragon2 )
 
 static WRITE_HANDLER( ddragon_bankswitch_w )
 {
-	const data8_t *RAM = memory_region(REGION_CPU1);
+	data8_t *RAM = memory_region(REGION_CPU1);
 
 	ddragon_scrolly_hi = ( ( data & 0x02 ) << 7 );
 	ddragon_scrollx_hi = ( ( data & 0x01 ) << 8 );
@@ -170,7 +170,7 @@ static WRITE_HANDLER( darktowr_bankswitch_w )
 
 static READ_HANDLER( darktowr_bank_r )
 {
-	const data8_t *RAM = memory_region(REGION_CPU1);
+	data8_t *RAM = memory_region(REGION_CPU1);
 
 	/* MCU is mapped into main cpu memory as a bank */
 	if (darktowr_bank==4) {
@@ -513,12 +513,14 @@ static ADDRESS_MAP_START( dd2_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mcu_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
 	AM_RANGE(0x0000, 0x0007) AM_READ(darktowr_mcu_r)
 	AM_RANGE(0x0008, 0x007f) AM_READ(MRA8_RAM)
 	AM_RANGE(0x0080, 0x07ff) AM_READ(MRA8_ROM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mcu_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
 	AM_RANGE(0x0000, 0x0007) AM_WRITE(darktowr_mcu_w) AM_BASE(&darktowr_mcu_ports)
 	AM_RANGE(0x0008, 0x007f) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x0080, 0x07ff) AM_WRITE(MWA8_ROM)

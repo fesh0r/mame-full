@@ -39,38 +39,24 @@
  *
  *************************************/
 
-static ADDRESS_MAP_START( master_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x2000, 0x9fff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0xa000, 0xdfff) AM_READ(MRA8_BANK2)
-	AM_RANGE(0xe000, 0xf7ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xf800, 0xffff) AM_READ(ataxx_paletteram_and_misc_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( master_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x9fff) AM_WRITE(MWA8_ROM)
+static ADDRESS_MAP_START( master_map_program, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x2000, 0x9fff) AM_ROMBANK(1)
+	AM_RANGE(0xa000, 0xdfff) AM_ROMBANK(2)
 	AM_RANGE(0xa000, 0xdfff) AM_WRITE(ataxx_battery_ram_w)
-	AM_RANGE(0xe000, 0xf7ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xf800, 0xffff) AM_WRITE(ataxx_paletteram_and_misc_w) AM_BASE(&paletteram)
+	AM_RANGE(0xe000, 0xf7ff) AM_RAM
+	AM_RANGE(0xf800, 0xffff) AM_READWRITE(ataxx_paletteram_and_misc_r, ataxx_paletteram_and_misc_w) AM_BASE(&paletteram)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( master_readport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( master_map_io, ADDRESS_SPACE_IO, 8 )
     AM_RANGE(0x04, 0x04) AM_READ(leland_i86_response_r)
-    AM_RANGE(0x20, 0x20) AM_READ(ataxx_eeprom_r)
-    AM_RANGE(0xd0, 0xef) AM_READ(ataxx_mvram_port_r)
-    AM_RANGE(0xf0, 0xff) AM_READ(ataxx_master_input_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( master_writeport, ADDRESS_SPACE_IO, 8 )
     AM_RANGE(0x05, 0x05) AM_WRITE(leland_i86_command_hi_w)
     AM_RANGE(0x06, 0x06) AM_WRITE(leland_i86_command_lo_w)
     AM_RANGE(0x0c, 0x0c) AM_WRITE(ataxx_i86_control_w)
-    AM_RANGE(0x20, 0x20) AM_WRITE(ataxx_eeprom_w)
-    AM_RANGE(0xd0, 0xef) AM_WRITE(ataxx_mvram_port_w)
-    AM_RANGE(0xf0, 0xff) AM_WRITE(ataxx_master_output_w)
+    AM_RANGE(0x20, 0x20) AM_READWRITE(ataxx_eeprom_r, ataxx_eeprom_w)
+    AM_RANGE(0xd0, 0xef) AM_READWRITE(ataxx_mvram_port_r, ataxx_mvram_port_w)
+    AM_RANGE(0xf0, 0xff) AM_READWRITE(ataxx_master_input_r, ataxx_master_output_w)
 ADDRESS_MAP_END
 
 
@@ -82,30 +68,19 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( slave_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x2000, 0x9fff) AM_READ(MRA8_BANK3)
-	AM_RANGE(0xa000, 0xdfff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xfffe, 0xfffe) AM_READ(leland_raster_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( slave_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xdfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM)
+static ADDRESS_MAP_START( slave_map_program, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x2000, 0x9fff) AM_ROMBANK(3)
+	AM_RANGE(0xa000, 0xdfff) AM_ROM
+	AM_RANGE(0xe000, 0xefff) AM_RAM
 	AM_RANGE(0xfffc, 0xfffd) AM_WRITE(leland_slave_video_addr_w)
+	AM_RANGE(0xfffe, 0xfffe) AM_READ(leland_raster_r)
 	AM_RANGE(0xffff, 0xffff) AM_WRITE(ataxx_slave_banksw_w)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( slave_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x60, 0x7f) AM_READ(ataxx_svram_port_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( slave_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x60, 0x7f) AM_WRITE(ataxx_svram_port_w)
+static ADDRESS_MAP_START( slave_map_io, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x60, 0x7f) AM_READWRITE(ataxx_svram_port_r, ataxx_svram_port_w)
 ADDRESS_MAP_END
 
 
@@ -359,17 +334,17 @@ static MACHINE_DRIVER_START( ataxx )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("master", Z80, 6000000)
-	MDRV_CPU_PROGRAM_MAP(master_readmem,master_writemem)
-	MDRV_CPU_IO_MAP(master_readport,master_writeport)
+	MDRV_CPU_PROGRAM_MAP(master_map_program,0)
+	MDRV_CPU_IO_MAP(master_map_io,0)
 
 	MDRV_CPU_ADD_TAG("slave", Z80, 6000000)
-	MDRV_CPU_PROGRAM_MAP(slave_readmem,slave_writemem)
-	MDRV_CPU_IO_MAP(slave_readport,slave_writeport)
+	MDRV_CPU_PROGRAM_MAP(slave_map_program,0)
+	MDRV_CPU_IO_MAP(slave_map_io,0)
 
 	MDRV_CPU_ADD_TAG("sound", I186, 16000000/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_PROGRAM_MAP(leland_i86_readmem,leland_i86_writemem)
-	MDRV_CPU_IO_MAP(leland_i86_readport,ataxx_i86_writeport)
+	MDRV_CPU_PROGRAM_MAP(leland_i86_map_program,0)
+	MDRV_CPU_IO_MAP(ataxx_i86_map_io,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((1000000*16)/(256*60))
@@ -874,6 +849,10 @@ static DRIVER_INIT( asylum )
 
 	leland_rotate_memory(0);
 	leland_rotate_memory(1);
+	
+	/* asylum appears to have some extra RAM for the slave CPU */
+	install_mem_read_handler(1, 0xf000, 0xfffb, MRA8_RAM);
+	install_mem_write_handler(1, 0xf000, 0xfffb, MWA8_RAM);
 
 	/* set up additional input ports */
 	install_port_read_handler(0, 0x0d, 0x0d, input_port_3_r);

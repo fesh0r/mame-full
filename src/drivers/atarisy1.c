@@ -118,6 +118,7 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
+#include "machine/6522via.h"
 #include "atarisy1.h"
 
 
@@ -136,9 +137,9 @@ static UINT8 joystick_int;
 static UINT8 joystick_int_enable;
 static UINT8 joystick_value;
 
-static UINT8 m6522_ddra, m6522_ddrb;
-static UINT8 m6522_dra, m6522_drb;
-static UINT8 m6522_regs[16];
+static UINT8 tms5220_out_data;
+static UINT8 tms5220_in_data;
+static UINT8 tms5220_ctl;
 
 
 
@@ -185,11 +186,6 @@ static MACHINE_INIT( atarisy1 )
 	joystick_timer = timer_alloc(delayed_joystick_int);
 	joystick_int = 0;
 	joystick_int_enable = 0;
-
-	/* reset the 6522 controller */
-	m6522_ddra = m6522_ddrb = 0xff;
-	m6522_dra = m6522_drb = 0xff;
-	memset(m6522_regs, 0xff, sizeof(m6522_regs));
 }
 
 
@@ -334,28 +330,7 @@ static READ_HANDLER( switch_6502_r )
  *************************************/
 
 /*
- *	All communication to the 5220 goes through an SY6522A, which is an overpowered chip
- *	for the job.  Here is a listing of the I/O addresses:
- *
- *		$00	DRB		Data register B
- *		$01	DRA		Data register A
- *		$02	DDRB	Data direction register B (0=input, 1=output)
- *		$03	DDRA	Data direction register A (0=input, 1=output)
- *		$04	T1CL	T1 low counter
- *		$05	T1CH	T1 high counter
- *		$06	T1LL	T1 low latches
- *		$07	T1LH	T1 high latches
- *		$08	T2CL	T2 low counter
- *		$09	T2CH	T2 high counter
- *		$0A	SR		Shift register
- *		$0B	ACR		Auxiliary control register
- *		$0C	PCR		Peripheral control register
- *		$0D	IFR		Interrupt flag register
- *		$0E	IER		Interrupt enable register
- *		$0F	NHDRA	No handshake DRA
- *
- *	Fortunately, only addresses $00,$01,$0B,$0C, and $0F are accessed in the code, and
- *	$0B and $0C are merely set up once.
+ *	All communication to the 5220 goes through an VIA6522.
  *
  *	The ports are hooked in like follows:
  *
@@ -365,70 +340,54 @@ static READ_HANDLER( switch_6502_r )
  *	        D1 = 	Read strobe (out)
  *	        D2 = 	Ready signal (in)
  *	        D3 = 	Interrupt signal (in)
- *	        D4 = 	LED (out)
- *	        D5 = 	??? (out)
+ *	        D4 = 	TMS5220 frequency select (out)
+ *	        D5 = 	LED (out)
  */
 
-static READ_HANDLER( m6522_r )
+static WRITE_HANDLER( via_pa_w )
 {
-	switch (offset)
-	{
-		case 0x00:	/* DRB */
-			return (m6522_drb & m6522_ddrb) | (!tms5220_ready_r() << 2) | (!tms5220_int_r() << 3);
-
-		case 0x01:	/* DRA */
-		case 0x0f:	/* NHDRA */
-			return (m6522_dra & m6522_ddra);
-
-		case 0x02:	/* DDRB */
-			return m6522_ddrb;
-
-		case 0x03:	/* DDRA */
-			return m6522_ddra;
-
-		default:
-			return m6522_regs[offset & 15];
-	}
+	tms5220_out_data = data;
 }
 
 
-WRITE_HANDLER( m6522_w )
+static READ_HANDLER( via_pa_r )
 {
-	int old;
-
-	switch (offset)
-	{
-		case 0x00:	/* DRB */
-			old = m6522_drb;
-			m6522_drb = (m6522_drb & ~m6522_ddrb) | (data & m6522_ddrb);
-			if (!(old & 1) && (m6522_drb & 1))
-				tms5220_data_w(0, m6522_dra);
-			if (!(old & 2) && (m6522_drb & 2))
-				m6522_dra = (m6522_dra & m6522_ddra) | (tms5220_status_r(0) & ~m6522_ddra);
-
-			/* bit 4 is connected to an up-counter, clocked by SYCLKB */
-			data = 5 | ((data >> 3) & 2);
-			tms5220_set_frequency(ATARI_CLOCK_14MHz/2 / (16 - data));
-			break;
-
-		case 0x01:	/* DRA */
-		case 0x0f:	/* NHDRA */
-			m6522_dra = (m6522_dra & ~m6522_ddra) | (data & m6522_ddra);
-			break;
-
-		case 0x02:	/* DDRB */
-			m6522_ddrb = data;
-			break;
-
-		case 0x03:	/* DDRA */
-			m6522_ddra = data;
-			break;
-
-		default:
-			m6522_regs[offset & 15] = data;
-			break;
-	}
+	return tms5220_in_data;
 }
+
+
+static WRITE_HANDLER( via_pb_w )
+{
+	data8_t old = tms5220_ctl;
+	tms5220_ctl = data;
+
+	/* write strobe */
+	if (!(old & 1) && (tms5220_ctl & 1))
+		tms5220_data_w(0, tms5220_out_data);
+
+	/* read strobe */
+	if (!(old & 2) && (tms5220_ctl & 2))
+		tms5220_in_data = tms5220_status_r(0);
+
+	/* bit 4 is connected to an up-counter, clocked by SYCLKB */
+	data = 5 | ((data >> 3) & 2);
+	tms5220_set_frequency(ATARI_CLOCK_14MHz/2 / (16 - data));
+}
+
+
+static READ_HANDLER( via_pb_r )
+{
+	return (!tms5220_ready_r() << 2) | (!tms5220_int_r() << 3);
+}
+
+
+static struct via6522_interface via_interface =
+{
+	/*inputs : A/B         */ via_pa_r, via_pb_r,
+	/*inputs : CA/B1,CA/B2 */ 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2   */ via_pa_w, via_pb_w, 0, 0,
+	/*irq                  */ 0
+};
 
 
 
@@ -489,24 +448,10 @@ static OPBASE_HANDLER( indytemp_setopbase )
  *
  *************************************/
 
-static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x087fff) AM_READ(MRA16_ROM)
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x087fff) AM_ROM
 	AM_RANGE(0x2e0000, 0x2e0001) AM_READ(atarisy1_int3state_r)
-	AM_RANGE(0x400000, 0x401fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x900000, 0x9fffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0xa00000, 0xa03fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0xb00000, 0xb007ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0xf00000, 0xf00fff) AM_READ(atarigen_eeprom_r)
-	AM_RANGE(0xf20000, 0xf20007) AM_READ(trakball_r)
-	AM_RANGE(0xf40000, 0xf4001f) AM_READ(joystick_r)
-	AM_RANGE(0xf60000, 0xf60003) AM_READ(port4_r)
-	AM_RANGE(0xfc0000, 0xfc0001) AM_READ(atarigen_sound_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x087fff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x400000, 0x401fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x400000, 0x401fff) AM_RAM
 	AM_RANGE(0x800000, 0x800001) AM_WRITE(atarisy1_xscroll_w) AM_BASE(&atarigen_xscroll)
 	AM_RANGE(0x820000, 0x820001) AM_WRITE(atarisy1_yscroll_w) AM_BASE(&atarigen_yscroll)
 	AM_RANGE(0x840000, 0x840001) AM_WRITE(atarisy1_priority_w)
@@ -514,14 +459,17 @@ static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x880000, 0x880001) AM_WRITE(watchdog_reset16_w)
 	AM_RANGE(0x8a0000, 0x8a0001) AM_WRITE(atarigen_video_int_ack_w)
 	AM_RANGE(0x8c0000, 0x8c0001) AM_WRITE(atarigen_eeprom_enable_w)
-	AM_RANGE(0x900000, 0x9fffff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0xa00000, 0xa01fff) AM_WRITE(atarigen_playfield_w) AM_BASE(&atarigen_playfield)
-	AM_RANGE(0xa02000, 0xa02fff) AM_WRITE(atarisy1_spriteram_w) AM_BASE(&atarimo_0_spriteram)
-	AM_RANGE(0xa03000, 0xa03fff) AM_WRITE(atarigen_alpha_w) AM_BASE(&atarigen_alpha)
-	AM_RANGE(0xb00000, 0xb007ff) AM_WRITE(paletteram16_IIIIRRRRGGGGBBBB_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0xf00000, 0xf00fff) AM_WRITE(atarigen_eeprom_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
-	AM_RANGE(0xf40000, 0xf4001f) AM_WRITE(joystick_w)
+	AM_RANGE(0x900000, 0x9fffff) AM_RAM
+	AM_RANGE(0xa00000, 0xa01fff) AM_READWRITE(MRA16_RAM, atarigen_playfield_w) AM_BASE(&atarigen_playfield)
+	AM_RANGE(0xa02000, 0xa02fff) AM_READWRITE(MRA16_RAM, atarisy1_spriteram_w) AM_BASE(&atarimo_0_spriteram)
+	AM_RANGE(0xa03000, 0xa03fff) AM_READWRITE(MRA16_RAM, atarigen_alpha_w) AM_BASE(&atarigen_alpha)
+	AM_RANGE(0xb00000, 0xb007ff) AM_READWRITE(MRA16_RAM, paletteram16_IIIIRRRRGGGGBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xf00000, 0xf00fff) AM_READWRITE(atarigen_eeprom_r, atarigen_eeprom_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
+	AM_RANGE(0xf20000, 0xf20007) AM_READ(trakball_r)
+	AM_RANGE(0xf40000, 0xf4001f) AM_READWRITE(joystick_r, joystick_w)
+	AM_RANGE(0xf60000, 0xf60003) AM_READ(port4_r)
 	AM_RANGE(0xf80000, 0xf80001) AM_WRITE(atarigen_sound_w)	/* used by roadbls2 */
+	AM_RANGE(0xfc0000, 0xfc0001) AM_READ(atarigen_sound_r)
 	AM_RANGE(0xfe0000, 0xfe0001) AM_WRITE(atarigen_sound_w)
 ADDRESS_MAP_END
 
@@ -533,27 +481,16 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x1000, 0x100f) AM_READ(m6522_r)
-	AM_RANGE(0x1800, 0x1801) AM_READ(YM2151_status_port_0_r)
-	AM_RANGE(0x1810, 0x1810) AM_READ(atarigen_6502_sound_r)
-	AM_RANGE(0x1820, 0x1820) AM_READ(switch_6502_r)
-	AM_RANGE(0x1870, 0x187f) AM_READ(pokey1_r)
-	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x1000, 0x100f) AM_WRITE(m6522_w)
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_RAM
+	AM_RANGE(0x1000, 0x100f) AM_READWRITE(via_0_r, via_0_w)
 	AM_RANGE(0x1800, 0x1800) AM_WRITE(YM2151_register_port_0_w)
-	AM_RANGE(0x1801, 0x1801) AM_WRITE(YM2151_data_port_0_w)
-	AM_RANGE(0x1810, 0x1810) AM_WRITE(atarigen_6502_sound_w)
+	AM_RANGE(0x1800, 0x1801) AM_READWRITE(YM2151_status_port_0_r, YM2151_data_port_0_w)
+	AM_RANGE(0x1810, 0x1810) AM_READWRITE(atarigen_6502_sound_r, atarigen_6502_sound_w)
+	AM_RANGE(0x1820, 0x1820) AM_READ(switch_6502_r)
 	AM_RANGE(0x1824, 0x1825) AM_WRITE(led_w)
-	AM_RANGE(0x1820, 0x1827) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0x1870, 0x187f) AM_WRITE(pokey1_w)
-	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1870, 0x187f) AM_READWRITE(pokey1_r, pokey1_w)
+	AM_RANGE(0x4000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -819,11 +756,11 @@ static MACHINE_DRIVER_START( atarisy1 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68010, ATARI_CLOCK_14MHz/2)
-	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
 
 	MDRV_CPU_ADD(M6502, ATARI_CLOCK_14MHz/8)
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -2142,6 +2079,8 @@ ROM_END
 
 static DRIVER_INIT( marble )
 {
+	via_config(0, &via_interface);
+
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 103);
 
@@ -2152,6 +2091,8 @@ static DRIVER_INIT( marble )
 
 static DRIVER_INIT( peterpak )
 {
+	via_config(0, &via_interface);
+
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 107);
 
@@ -2162,6 +2103,8 @@ static DRIVER_INIT( peterpak )
 
 static DRIVER_INIT( indytemp )
 {
+	via_config(0, &via_interface);
+
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 105);
 
@@ -2175,6 +2118,8 @@ static DRIVER_INIT( indytemp )
 
 static DRIVER_INIT( roadrunn )
 {
+	via_config(0, &via_interface);
+
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 108);
 
@@ -2185,6 +2130,8 @@ static DRIVER_INIT( roadrunn )
 
 static DRIVER_INIT( roadb109 )
 {
+	via_config(0, &via_interface);
+
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 109);
 
@@ -2195,6 +2142,8 @@ static DRIVER_INIT( roadb109 )
 
 static DRIVER_INIT( roadb110 )
 {
+	via_config(0, &via_interface);
+
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 110);
 

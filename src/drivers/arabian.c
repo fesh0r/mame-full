@@ -210,19 +210,13 @@ static WRITE_HANDLER( custom_cocktail_w )
  *
  *************************************/
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(arabian_videoram_w) AM_BASE(&videoram)
 	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_0_r)
 	AM_RANGE(0xc200, 0xc200) AM_READ(input_port_1_r)
-	AM_RANGE(0xd000, 0xd7ef) AM_READ(MRA8_RAM)
-	AM_RANGE(0xd7f0, 0xd7ff) AM_READ(custom_cpu_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x8000, 0xbfff) AM_WRITE(arabian_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(MWA8_RAM) AM_BASE(&custom_cpu_ram)
+	AM_RANGE(0xd000, 0xd7ef) AM_RAM AM_BASE(&custom_cpu_ram)
+	AM_RANGE(0xd7f0, 0xd7ff) AM_READWRITE(custom_cpu_r, MWA8_RAM)
 	AM_RANGE(0xe000, 0xe07f) AM_WRITE(arabian_blitter_w) AM_BASE(&spriteram)
 ADDRESS_MAP_END
 
@@ -234,7 +228,7 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( main_io_map, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xc800, 0xc800) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0xca00, 0xca00) AM_WRITE(AY8910_write_port_0_w)
 ADDRESS_MAP_END
@@ -361,8 +355,8 @@ static MACHINE_DRIVER_START( arabian )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, MAIN_OSC/4)
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_IO_MAP(0,writeport)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
+	MDRV_CPU_IO_MAP(main_io_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

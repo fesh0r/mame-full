@@ -166,11 +166,13 @@ static WRITE16_HANDLER( latch_w )
  *
  *************************************/
 
-static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x200000, 0x21ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x3c0000, 0x3c07ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x3e0000, 0x3effff) AM_READ(MRA16_RAM)
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_ROM
+	AM_RANGE(0x200000, 0x21ffff) AM_READWRITE(MRA16_RAM, rampart_bitmap_w) AM_BASE(&rampart_bitmap)
+	AM_RANGE(0x3c0000, 0x3c07ff) AM_READWRITE(MRA16_RAM, atarigen_expanded_666_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x3e0000, 0x3e07ff) AM_READWRITE(MRA16_RAM, atarimo_0_spriteram_w) AM_BASE(&atarimo_0_spriteram)
+	AM_RANGE(0x3e0800, 0x3effbf) AM_RAM
+	AM_RANGE(0x3effc0, 0x3effff) AM_READWRITE(MRA16_RAM, atarimo_0_slipram_w) AM_BASE(&atarimo_0_slipram)
 	AM_RANGE(0x640000, 0x640001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x640002, 0x640003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x640010, 0x640011) AM_READ(input_port_2_word_r)
@@ -179,22 +181,10 @@ static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x640022, 0x640023) AM_READ(input_port_5_word_r)
 	AM_RANGE(0x640024, 0x640025) AM_READ(input_port_6_word_r)
 	AM_RANGE(0x640026, 0x640027) AM_READ(input_port_7_word_r)
-	AM_RANGE(0x641000, 0x641fff) AM_READ(atarigen_eeprom_r)
-	AM_RANGE(0x642000, 0x642001) AM_READ(adpcm_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x200000, 0x21ffff) AM_WRITE(rampart_bitmap_w) AM_BASE(&rampart_bitmap)
-	AM_RANGE(0x3c0000, 0x3c07ff) AM_WRITE(atarigen_expanded_666_paletteram_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x3e0000, 0x3e07ff) AM_WRITE(atarimo_0_spriteram_w) AM_BASE(&atarimo_0_spriteram)
-	AM_RANGE(0x3e0800, 0x3effbf) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x3effc0, 0x3effff) AM_WRITE(atarimo_0_slipram_w) AM_BASE(&atarimo_0_slipram)
 	AM_RANGE(0x640040, 0x64004f) AM_WRITE(latch_w)
 	AM_RANGE(0x640060, 0x64006f) AM_WRITE(atarigen_eeprom_enable_w)
-	AM_RANGE(0x641000, 0x641fff) AM_WRITE(atarigen_eeprom_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
-	AM_RANGE(0x642000, 0x642001) AM_WRITE(adpcm_w)
+	AM_RANGE(0x641000, 0x641fff) AM_READWRITE(atarigen_eeprom_r, atarigen_eeprom_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
+	AM_RANGE(0x642000, 0x642001) AM_READWRITE(adpcm_r, adpcm_w)
 	AM_RANGE(0x646000, 0x646fff) AM_WRITE(atarigen_scanline_int_ack_w)
 	AM_RANGE(0x647000, 0x647fff) AM_WRITE(watchdog_reset16_w)
 ADDRESS_MAP_END
@@ -369,8 +359,8 @@ static struct OKIM6295interface okim6295_interface =
 static MACHINE_DRIVER_START( arcadecl )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000,	ATARI_CLOCK_14MHz)
-	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

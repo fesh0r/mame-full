@@ -27,41 +27,23 @@
  *
  *************************************/
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x003fffff) AM_READ(midtunit_vram_data_r)
-	AM_RANGE(0x00800000, 0x00bfffff) AM_READ(midtunit_vram_color_r)
-	AM_RANGE(0x20000000, 0x20ffffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x60400000, 0x6040001f) AM_READ(midxunit_status_r)
-	AM_RANGE(0x60c00000, 0x60c0007f) AM_READ(midxunit_io_r)
-	AM_RANGE(0x60c000e0, 0x60c000ff) AM_READ(midwunit_security_r)
-	AM_RANGE(0x80800000, 0x8080001f) AM_READ(midxunit_analog_r)
-	AM_RANGE(0x80c00000, 0x80c000ff) AM_READ(midxunit_uart_r)
-	AM_RANGE(0xa0440000, 0xa047ffff) AM_READ(midwunit_cmos_r)
-	AM_RANGE(0xa0800000, 0xa08fffff) AM_READ(midxunit_paletteram_r)
-	AM_RANGE(0xc0000000, 0xc00003ff) AM_READ(tms34020_io_register_r)
-	AM_RANGE(0xc0c00000, 0xc0c000ff) AM_READ(midtunit_dma_r)
-	AM_RANGE(0xf8000000, 0xfeffffff) AM_READ(midwunit_gfxrom_r)
-	AM_RANGE(0xff000000, 0xffffffff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x003fffff) AM_WRITE(midtunit_vram_data_w)
-	AM_RANGE(0x00800000, 0x00bfffff) AM_WRITE(midtunit_vram_color_w)
-	AM_RANGE(0x20000000, 0x20ffffff) AM_WRITE(MWA16_RAM) AM_BASE(&midyunit_scratch_ram)
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x003fffff) AM_READWRITE(midtunit_vram_data_r, midtunit_vram_data_w)
+	AM_RANGE(0x00800000, 0x00bfffff) AM_READWRITE(midtunit_vram_color_r, midtunit_vram_color_w)
+	AM_RANGE(0x20000000, 0x20ffffff) AM_RAM
 	AM_RANGE(0x40800000, 0x4fffffff) AM_WRITE(midxunit_unknown_w)
-	AM_RANGE(0x60400000, 0x6040001f) AM_WRITE(midxunit_security_clock_w)
+	AM_RANGE(0x60400000, 0x6040001f) AM_READWRITE(midxunit_status_r, midxunit_security_clock_w)
+	AM_RANGE(0x60c00000, 0x60c0007f) AM_READ(midxunit_io_r)
 	AM_RANGE(0x60c00080, 0x60c000df) AM_WRITE(midxunit_io_w)
-	AM_RANGE(0x60c000e0, 0x60c000ff) AM_WRITE(midxunit_security_w)
-	AM_RANGE(0x80800000, 0x8080001f) AM_WRITE(midxunit_analog_select_w)
-	AM_RANGE(0x80c00000, 0x80c000ff) AM_WRITE(midxunit_uart_w)
-	AM_RANGE(0xa0440000, 0xa047ffff) AM_WRITE(midxunit_cmos_w) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
-	AM_RANGE(0xa0800000, 0xa08fffff) AM_WRITE(midxunit_paletteram_w) AM_BASE(&paletteram16)
-	AM_RANGE(0xc0000000, 0xc00003ff) AM_WRITE(tms34020_io_register_w)
-	AM_RANGE(0xc0800000, 0xc08000ff) AM_WRITE(midtunit_dma_w)
-	AM_RANGE(0xc0c00000, 0xc0c000ff) AM_WRITE(midtunit_dma_w)
-	AM_RANGE(0xf8000000, 0xfbffffff) AM_WRITE(MWA16_ROM) AM_BASE((data16_t **)&midwunit_decode_memory)
-	AM_RANGE(0xff000000, 0xffffffff) AM_WRITE(MWA16_ROM) AM_BASE(&midyunit_code_rom)
+	AM_RANGE(0x60c000e0, 0x60c000ff) AM_READWRITE(midwunit_security_r, midxunit_security_w)
+	AM_RANGE(0x80800000, 0x8080001f) AM_READWRITE(midxunit_analog_r, midxunit_analog_select_w)
+	AM_RANGE(0x80c00000, 0x80c000ff) AM_READWRITE(midxunit_uart_r, midxunit_uart_w)
+	AM_RANGE(0xa0440000, 0xa047ffff) AM_READWRITE(midwunit_cmos_r, midxunit_cmos_w) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xa0800000, 0xa08fffff) AM_READWRITE(midxunit_paletteram_r, midxunit_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xc0000000, 0xc00003ff) AM_READWRITE(tms34020_io_register_r, tms34020_io_register_w)
+	AM_RANGE(0xc0c00000, 0xc0c000ff) AM_MIRROR(0x00400000) AM_READWRITE(midtunit_dma_r, midtunit_dma_w)
+	AM_RANGE(0xf8000000, 0xfeffffff) AM_READ(midwunit_gfxrom_r) AM_BASE((data16_t **)&midwunit_decode_memory)
+	AM_RANGE(0xff000000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0)
 ADDRESS_MAP_END
 
 
@@ -214,7 +196,7 @@ static MACHINE_DRIVER_START( midxunit )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(TMS34020, 40000000/TMS34020_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(cpu_config)
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 
 	MDRV_FRAMES_PER_SECOND(MKLA5_FPS)
 	MDRV_VBLANK_DURATION((1000000 * (288 - 254)) / (MKLA5_FPS * 288))
@@ -243,10 +225,6 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( revx )
-	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34020 dummy region */
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 data */
-	
 	ROM_REGION( 0x800000, REGION_SOUND1, 0 )
 	ROM_LOAD( "revx_snd.2", 0x000000, 0x80000, CRC(4ed9e803) SHA1(ba50f1beb9f2a2cf5110897209b5e9a2951ff165) )
 	ROM_LOAD( "revx_snd.3", 0x100000, 0x80000, CRC(af8f253b) SHA1(25a0000cab177378070f7a6e3c7378fe87fad63e) )
@@ -257,7 +235,7 @@ ROM_START( revx )
 	ROM_LOAD( "revx_snd.8", 0x600000, 0x80000, CRC(793a7eb5) SHA1(4b1f81b68f95cedf1b356ef362d1eb37acc74b16) )
 	ROM_LOAD( "revx_snd.9", 0x700000, 0x80000, CRC(14ddbea1) SHA1(8dba9dc5529ea77c4312ea61f825bf9062ffc6c3) )
 
-	ROM_REGION16_LE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 34020 code */
+	ROM_REGION16_LE( 0x200000, REGION_USER1, 0 )	/* 34020 code */
 	ROM_LOAD32_BYTE( "revx.51",  0x00000, 0x80000, CRC(9960ac7c) SHA1(441322f061d627ca7573f612f370a85794681d0f) )
 	ROM_LOAD32_BYTE( "revx.52",  0x00001, 0x80000, CRC(fbf55510) SHA1(8a5b0004ed09391fe37f0f501b979903d6ae4868) )
 	ROM_LOAD32_BYTE( "revx.53",  0x00002, 0x80000, CRC(a045b265) SHA1(b294d3a56e41f5ec4ab9bbcc0088833b1cab1879) )

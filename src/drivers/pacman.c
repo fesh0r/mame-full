@@ -35,6 +35,7 @@
 	0000-3fff ROM
 	4000-43ff Video RAM
 	4400-47ff Color RAM
+	4800-4bff RAM (Dream Shopper only)
 	4c00-4fff RAM
 	8000-9fff ROM (Ms Pac-Man and Ponpoko only)
 	a000-bfff ROM (Ponpoko only)
@@ -4322,6 +4323,12 @@ static DRIVER_INIT( porky )
 
 }
 
+static DRIVER_INIT( dremshpr )
+{
+	install_mem_read_handler(0, 0x4800, 0x4bff, MRA8_RAM);
+	install_mem_write_handler(0, 0x4800, 0x4bff, MWA8_RAM);
+}
+
 
 /*************************************
  *
@@ -4374,7 +4381,7 @@ GAME( 1985, lizwiz,   0,        pacman,   lizwiz,   0,        ROT90,  "Techstar 
 GAME( 1983, theglobp, suprglob, theglobp, theglobp, 0,        ROT90,  "Epos Corporation", "The Glob (Pac-Man hardware)" )
 GAME( 1984, beastf,   suprglob, theglobp, theglobp, 0,        ROT90,  "Epos Corporation", "Beastie Feastie" )
 GAME( 1983, bwcasino, 0,        acitya,   bwcasino, 0,        ROT90,  "Epos Corporation", "Boardwalk Casino" )
-GAME( 1982, dremshpr, 0,        dremshpr, dremshpr, 0,        ROT270, "Sanritsu", "Dream Shopper" )
+GAME( 1982, dremshpr, 0,        dremshpr, dremshpr, dremshpr, ROT270, "Sanritsu", "Dream Shopper" )
 GAME( 1983, acitya,   bwcasino, acitya,   acitya,   0,        ROT90,  "Epos Corporation", "Atlantic City Action" )
 GAME( 1983, vanvan,   0,        vanvan,   vanvan,   0,        ROT270, "Sanritsu", "Van-Van Car" )
 GAME( 1983, vanvank,  vanvan,   vanvan,   vanvank,  0,        ROT270, "Karateco", "Van-Van Car (Karateco)" )

@@ -696,7 +696,8 @@ static ADDRESS_MAP_START( system24_cpu1_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xcc0006, 0xcc0007) AM_READWRITE(mlatch_r, mlatch_w)
 AM_RANGE(0xd00300, 0xd00301) AM_WRITE(MWA16_NOP)
 	AM_RANGE(0xf00000, 0xf3ffff) AM_RAM AM_SHARE(3)
-	AM_RANGE(0xfc0000, 0xffffff) AM_RAM AM_SHARE(4)
+	AM_RANGE(0xf40000, 0xf7ffff) AM_ROM AM_SHARE(1)
+	AM_RANGE(0xf80000, 0xffffff) AM_RAM AM_SHARE(2)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( system24_cpu2_map, ADDRESS_SPACE_PROGRAM, 16 )
@@ -728,7 +729,8 @@ static ADDRESS_MAP_START( system24_cpu2_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xcc0006, 0xcc0007) AM_READWRITE(mlatch_r, mlatch_w)
 AM_RANGE(0xd00300, 0xd00301) AM_WRITE(MWA16_NOP)
 	AM_RANGE(0xf00000, 0xf3ffff) AM_RAM AM_SHARE(3)
-	AM_RANGE(0xfc0000, 0xffffff) AM_RAM AM_SHARE(4)
+	AM_RANGE(0xf40000, 0xf7ffff) AM_ROM AM_SHARE(1)
+	AM_RANGE(0xf80000, 0xffffff) AM_RAM AM_SHARE(2)
 ADDRESS_MAP_END
 
 
@@ -939,7 +941,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( bnzabros )
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -949,7 +951,7 @@ INPUT_PORTS_START( bnzabros )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1349,7 +1351,8 @@ ROM_START( sspirits )
 	ROM_LOAD16_BYTE( "epr12186.ic1", 0x000001, 0x20000, CRC(ce76319d) SHA1(0ede61f0700f9161285c768fa97636f0e42b96f8) )
 
 	ROM_REGION( 0x1c2000, REGION_USER2, 0)
-	ROM_LOAD( "ss-dump.bin",         0x000000, 0x1c2000, CRC(75d79c0c) SHA1(413ff2c10ce5e74d47da946fdd07eab14af53778) )
+	/* this image was repaired using other images, a dump of a known good disk would be preferable */
+	ROM_LOAD( "ss-repaired.bin",         0x000000, 0x1c2000, BAD_DUMP CRC(cefbda69) SHA1(5b47ae0f1584ce1eb697246273ba761bd9e981c1)  )
 ROM_END
 
 ROM_START( sgmast )
@@ -1443,26 +1446,18 @@ static MACHINE_DRIVER_START( system24 )
 MACHINE_DRIVER_END
 
 
-GAME( 1988, hotrod,   0, system24, hotrod,   hotrod,   ROT0, "Sega", "Hot Rod (turbo 3 player)")
-GAME( 1990, bnzabros, 0, system24, bnzabros, bnzabros, ROT0, "Sega", "Bonanza Bros")
-GAME( 1991, dcclub,   0, system24, dcclub,   dcclub,   ROT0, "Sega", "Dynamic Country Club")
-GAME( 1992, mahmajn,  0, system24, mahmajn,  mahmajn,  ROT0, "Sega", "Tokoro San no MahMahjan")
-GAME( 1994, qgh,      0, system24, qgh,      qgh,      ROT0, "Sega", "Quiz Ghost Hunter")
-GAME( 1994, quizmeku, 0, system24, quizmeku, quizmeku, ROT0, "Sega", "Quiz Mekurumeku Story")
-GAME( 1994, qrouka,   0, system24, qgh,      qrouka,   ROT0, "Sega", "Quiz Rouka Ni Tattenasai")
-GAME( 1994, mahmajn2, 0, system24, mahmajn,  mahmajn2, ROT0, "Sega", "Tokoro San no MahMahjan 2")
+GAME( 1988, hotrod,   0,        system24, hotrod,   hotrod,   ROT0,   "Sega", "Hot Rod (turbo 3 player)")
+GAME( 1990, bnzabros, 0,        system24, bnzabros, bnzabros, ROT0,   "Sega", "Bonanza Bros")
+GAME( 1991, dcclub,   0,        system24, dcclub,   dcclub,   ROT0,   "Sega", "Dynamic Country Club")
+GAME( 1992, mahmajn,  0,        system24, mahmajn,  mahmajn,  ROT0,   "Sega", "Tokoro San no MahMahjan")
+GAME( 1994, qgh,      0,        system24, qgh,      qgh,      ROT0,   "Sega", "Quiz Ghost Hunter")
+GAME( 1994, quizmeku, 0,        system24, quizmeku, quizmeku, ROT0,   "Sega", "Quiz Mekurumeku Story")
+GAME( 1994, qrouka,   0,        system24, qgh,      qrouka,   ROT0,   "Sega", "Quiz Rouka Ni Tattenasai")
+GAME( 1994, mahmajn2, 0,        system24, mahmajn,  mahmajn2, ROT0,   "Sega", "Tokoro San no MahMahjan 2")
+GAME( 1988, sspirits, 0,        system24, bnzabros, sspirits, ROT270, "Sega", "Scramble Spirits" )
 
 /* Encrypted */
-GAMEX( ????, sspirits, 0, system24, bnzabros, sspirits, ROT0, "Sega", "Scramble Spirits", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)
 GAMEX( ????, sgmast,   0, system24, bnzabros, sgmast,   ROT0, "Sega", "Super Masters Golf", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)
 GAMEX( ????, qsww,     0, system24, bnzabros, qsww,     ROT0, "Sega", "Quiz Syukudai wo Wasuremashita", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)
 GAMEX( ????, gground,  0, system24, bnzabros, gground,  ROT0, "Sega", "Gain Ground", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)
 GAMEX( ????, crkdown,  0, system24, bnzabros, crkdown,  ROT0, "Sega", "Crackdown", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)
-
-/* Other S24 Games, mostly not dumped / encrypted / only bad disk images exist
-
-Jumbo Ozaki Super Masters - Encrypted, Disk Based?
-Scramble Spirits - Disk Based, Encrypted and Non-Encrypted versions Exist
-+ a bunch of other Japanese Quiz Games
-
-*/

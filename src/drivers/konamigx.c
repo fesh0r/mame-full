@@ -1110,6 +1110,13 @@ static WRITE32_HANDLER( type4_prot_w )
 						program_write_word(0xc01400+i, program_read_word(0xc01000+i));
 					}
 				}
+				else if(last_prot_op == 0x57a)
+				{
+					program_write_dword(0xc10f00, program_read_dword(0xc00f10));
+					program_write_dword(0xc10f04, program_read_dword(0xc00f14));
+					program_write_dword(0xc0fe00, program_read_dword(0xc00f30));
+					program_write_dword(0xc0fe04, program_read_dword(0xc00f34));
+				}
 				else
 				{
 					logerror("GXT4: unknown protection command %x (PC=%x)\n", last_prot_op, activecpu_get_pc());
@@ -2801,9 +2808,10 @@ ROM_START( winspike )
 	ROM_LOAD16_BYTE("705a09.7c", 0x000001, 128*1024, CRC(24e58845) SHA1(a01caced5bad9d98a3f33d72ca5eb9096c45e4ba) )
 
 	/* tiles: length of 1 meg each is TRUSTED by the internal checksum code */
+	/* do NOT change these to the 4 meg dumps again, those are WRONG!!!!!!! */
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_ERASE00 )
-    ROM_LOAD16_BYTE( "705a19", 0x000000, 0x400000, CRC(16986d64) SHA1(a9ad25607375c1c0e366bf268bad9ca64559586d) )
-	ROM_LOAD16_BYTE( "705a18", 0x000001, 0x400000, CRC(5055ae43) SHA1(24283f5d2ba24061dacd7c88347e051a7adbc85f) )
+    	ROM_LOAD16_BYTE( "705a19.17h", 0x000000, 0x100000, CRC(bab84b30) SHA1(8522a0dc5e37524f51d632e9d975e949a14c0dc3) )
+	ROM_LOAD16_BYTE( "705a18.22h", 0x000001, 0x100000, CRC(eb97fb5f) SHA1(13de0ad060fd6f1312fa10edde1fef6481e8df64) )
 
 	/* sprites */
 	ROM_REGION( 0x1000000, REGION_GFX2, ROMREGION_ERASE00 )
@@ -2884,6 +2892,43 @@ ROM_START( dragoonj )
 	ROM_LOAD( "417a17.9g", 0x000000, 2*1024*1024, CRC(88d47dfd) SHA1(b5d6dd7ee9ac0c427dc3e714a97945c954260913) )
 ROM_END
 
+/* Dragoon Might (Asia) */
+ROM_START( dragoona )
+	/* main program */
+	ROM_REGION( 0x600000, REGION_CPU1, 0 )
+	GX_BIOS
+	ROM_LOAD32_WORD_SWAP( "417aab02.31b", 0x200002, 512*1024, CRC(0421c19c) )
+	ROM_LOAD32_WORD_SWAP( "417aab03.27b", 0x200000, 512*1024, CRC(813dd8d5) )
+
+	/* data roms */
+	ROM_LOAD32_WORD_SWAP( "417a04.26c", 0x400002, 1024*1024, CRC(dc574747) SHA1(43cbb6a08c27bb96bb25568c3b636c44fff3e08e) )
+	ROM_LOAD32_WORD_SWAP( "417a05.23c", 0x400000, 1024*1024, CRC(2ee2c587) SHA1(a1b2b288c375a3406d4b12e66c973484c03fe26e) )
+
+	/* sound program */
+	ROM_REGION( 0x40000, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE("417a06.9c", 0x000000, 128*1024, CRC(8addbbee) SHA1(fdb38fab1fd65b7362578b108bf6128e926b5f13) )
+	ROM_LOAD16_BYTE("417a07.7c", 0x000001, 128*1024, CRC(c1fd7584) SHA1(1b204165ef07b6b53f47adc16eed69d11dab53b2) )
+
+	/* tiles */
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_ERASE00 )
+	TILE_WORD_ROM_LOAD( "417a16.17h", 0x000000, 2*1024*1024, CRC(88b2213b) SHA1(ac4ac57618cf98d7486b147f5494e6943bff1a4d) )
+
+	/* sprites */
+	ROM_REGION( 0x1000000, REGION_GFX2, ROMREGION_ERASE00 )
+	ROM_LOAD32_WORD( "417a15.25g", 0x000000, 2*1024*1024, CRC(83bccd01) SHA1(c0e65c43115164c3f64ac14a449c65c4e3e3c4cf) )
+	ROM_LOAD32_WORD( "417a11.28g", 0x000002, 2*1024*1024, CRC(624a7c4c) SHA1(5fda37cd02b4dcb328b80b29041214c685c77a78) )
+	ROM_LOAD32_WORD( "417a14.18h", 0x400000, 2*1024*1024, CRC(fbf551f1) SHA1(871c5804aba9845aa04596db51def3ba3b8bae30) )
+	ROM_LOAD32_WORD( "417a10.27g", 0x400002, 2*1024*1024, CRC(18fde49f) SHA1(f85b2981172be2cddc5d691bb803f0133a36cb1a) )
+	ROM_LOAD32_WORD( "417a13.20h", 0x800000, 2*1024*1024, CRC(d2e3959d) SHA1(efe516e6b84c67c0a154726a0f7f7054ee866738) )
+	ROM_LOAD32_WORD( "417a09.30g", 0x800002, 2*1024*1024, CRC(b5653e24) SHA1(ffa44d6b65feef298fa4dcc064ebd173c7cc22aa) )
+	ROM_LOAD32_WORD( "417a12.23h", 0xc00000, 2*1024*1024, CRC(25496115) SHA1(e53164f8ad95187011059c465a67fff1d18ba888) )
+	ROM_LOAD32_WORD( "417a08.33g", 0xc00002, 2*1024*1024, CRC(801e9d93) SHA1(9364d802b4ca03e652b25304c8298be8de8936b4) )
+
+	/* sound data */
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
+	ROM_LOAD( "417a17.9g", 0x000000, 2*1024*1024, CRC(88d47dfd) SHA1(b5d6dd7ee9ac0c427dc3e714a97945c954260913) )
+ROM_END
+
 /* Soccer Superstars */
 ROM_START( soccerss )
 	/* main program */
@@ -2891,6 +2936,50 @@ ROM_START( soccerss )
 	GX_BIOS
 	ROM_LOAD32_WORD_SWAP( "427jaa02.28m", 0x200000, 512*1024, CRC(210f9ba7) SHA1(766fc821d1c7aaf9e306c6e2379d85e7aa50738c) )
 	ROM_LOAD32_WORD_SWAP( "427jaa03.30m", 0x200002, 512*1024, CRC(f76add04) SHA1(755dff41ce3b0488ed8f9f5feebfe95a22b70d16) )
+
+	/* data roms */
+	ROM_LOAD32_WORD_SWAP( "427a04.28r",   0x400000, 0x080000, CRC(c7d3e1a2) SHA1(5e1e4f4c97def36902ad853248014a7af62e0c5e) )
+	ROM_LOAD32_WORD_SWAP( "427a05.30r",   0x400002, 0x080000, CRC(5372f0a5) SHA1(36e8d0a73918cbd018c1865d1a05445daba8997c) )
+
+	/* sound program */
+	ROM_REGION( 0x40000, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE("427a07.6m", 0x000000, 128*1024, CRC(8dbaf4c7) SHA1(cb69bf94090a4871b35e7ba1f58e3225077b82cd) )
+	ROM_LOAD16_BYTE("427a06.9m", 0x000001, 128*1024, CRC(979df65d) SHA1(7499e9a27aa562692bd3a296789696492a6254bc) )
+
+	/* tiles */
+	ROM_REGION( 0x500000, REGION_GFX1, ROMREGION_ERASE00 )
+	TILE_WORDS2_ROM_LOAD( "427a15.11r", 0x000000, 0x100000, CRC(33ce2b8e) SHA1(b0936386cdc7c41f33b1d7b4f5ce25fe618d1286) )
+	TILE_BYTES2_ROM_LOAD( "427a14.143", 0x000004, 0x080000, CRC(7575a0ed) SHA1(92fda2747ac090f93e60cff8478af6721b949dc2) )
+
+	/* sprites */
+	ROM_REGION( 0xc00000, REGION_GFX2, ROMREGION_ERASE00 )
+	ROM_LOAD32_WORD( "427a08.140", 0x000000, 2*1024*1024, CRC(221250af) SHA1(fd24e7f0e3024df5aa08506523953c5e35d2267b) )
+	ROM_LOAD32_WORD( "427a09.137", 0x000002, 2*1024*1024, CRC(56bdd480) SHA1(01d164aedc77f71f6310cfd739c00b33289a2e7e) )
+	ROM_LOAD32_WORD( "427a10.25r", 0x400000, 2*1024*1024, CRC(6b3ccb41) SHA1(b246ef350a430e60f0afd1b80ff48139c325e926) )
+	ROM_LOAD32_WORD( "427a11.23r", 0x400002, 2*1024*1024, CRC(c1ca74c1) SHA1(b7286df8e59f8f1939ebf17aaf9345a857b0b100) )
+	ROM_LOAD32_WORD( "427a12.21r", 0x800000, 2*1024*1024, CRC(97d6fd38) SHA1(8d2895850cafdea95db08c84e7eeea90a1921515) )
+	ROM_LOAD32_WORD( "427a13.18r", 0x800002, 2*1024*1024, CRC(815a9b87) SHA1(7d9d5932fff7dd7aa4cbccf0c8d3784dc8042e70) )
+
+	/* PSAC2 tiles */
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_ERASE00 )
+	ROM_LOAD( "427a18.145", 0x000000, 0x100000, CRC(bb6e6ec6) SHA1(aa1365a4318866d9e7e74461a6e6c113f83b6771) )
+
+	/* PSAC2 map data */
+	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_ERASE00 )
+	ROM_LOAD( "427a17.24c", 0x000000, 0x080000, CRC(fb6eb01f) SHA1(28cdb30ff70ee5fc7624e18fe048dd85dfa49ace) )
+
+	/* sound data */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
+	ROM_LOAD( "427a16.9r", 0x000000, 2*1024*1024,  CRC(39547265) SHA1(c0efd68c0c1ea59141045150842f36d43e1f01d8) )
+ROM_END
+
+/* Soccer Superstars (Asian ver AAA) */
+ROM_START( soccersa )
+	/* main program */
+	ROM_REGION( 0x600000, REGION_CPU1, 0 )
+	GX_BIOS
+	ROM_LOAD32_WORD_SWAP( "427aaa02.28m", 0x200000, 512*1024, CRC(a001d4bf)  )
+	ROM_LOAD32_WORD_SWAP( "427aaa03.30m", 0x200002, 512*1024, CRC(83d37f48)  )
 
 	/* data roms */
 	ROM_LOAD32_WORD_SWAP( "427a04.28r",   0x400000, 0x080000, CRC(c7d3e1a2) SHA1(5e1e4f4c97def36902ad853248014a7af62e0c5e) )
@@ -3311,12 +3400,8 @@ static DRIVER_INIT(konamigx)
 		for (i=3; i<=7; i++) K054539_set_gain(1, i, 2.0);
 	}
 
-	else if (!strcmp(Machine->gamedrv->name, "dragoonj"))
+	else if ((!strcmp(Machine->gamedrv->name, "dragoonj")) || (!strcmp(Machine->gamedrv->name, "dragoona")))
 	{
-		#if GX_SKIPIDLE
-			ADD_SKIPPER32(0x202f48, 0xc00000, 0x1020, 0x1020, 0xff00, 0x0000ff00)
-		#endif
-
 		esc_cb = dragoonj_esc;
 		konamigx_cfgport = 7;
 
@@ -3449,20 +3534,23 @@ GAMEX( 1994, gokuparo, konamigx, konamigx, gokuparo, konamigx, ROT0, "Konami", "
 GAMEX( 1994, puzldama, konamigx, konamigx, puzldama, konamigx, ROT0, "Konami", "Taisen Puzzle-dama (ver JAA)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1995, tbyahhoo, konamigx, konamigx, gokuparo, konamigx, ROT0, "Konami", "Twin Bee Yahhoo! (ver JAA)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1995, tkmmpzdm, konamigx, konamigx_6bpp, puzldama, konamigx, ROT0, "Konami", "Tokimeki Memorial Taisen Puzzle-dama (ver JAB)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995, dragoonj, konamigx, dragoonj, dragoonj, konamigx, ROT0, "Konami", "Dragoon Might (ver JAA)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, dragoona, konamigx, dragoonj, dragoonj, konamigx, ROT0, "Konami", "Dragoon Might (ver AAB)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, dragoonj, dragoona, dragoonj, dragoonj, konamigx, ROT0, "Konami", "Dragoon Might (ver JAA)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, sexyparo, konamigx, konamigx, gokuparo, konamigx, ROT0, "Konami", "Sexy Parodius (ver JAA)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, daiskiss, konamigx, konamigx, gokuparo, konamigx, ROT0, "Konami", "Daisu-Kiss (ver JAA)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, tokkae,   konamigx, konamigx_6bpp, puzldama, konamigx, ROT0, "Konami", "Taisen Tokkae-dama (ver JAA)", GAME_IMPERFECT_GRAPHICS )
-/* protection controls player ship direction in attract mode? */
+/* protection controls player ship direction in attract mode - doesn't impact playability */
 GAMEX( 1996, salmndr2, konamigx, konamigx_6bpp_2, gokuparo, konamigx, ROT0, "Konami", "Salamander 2 (ver JAA)", GAME_IMPERFECT_GRAPHICS|GAME_UNEMULATED_PROTECTION )
+/* bad sprite colours, part of tilemap gets blanked out when a game starts (might be more protection) */
+GAMEX( 1997, winspike, konamigx, winspike, konamigx, konamigx, ROT0, "Konami", "Winning Spike (ver JAA)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
 
-/* these games are unplayable due to protection (winspike has the same FPGA protection as the type 4 games) */
+/* this game is unplayable due to protection */
 GAMEX( 1994, fantjour, gokuparo, konamigx, gokuparo, konamigx, ROT0, "Konami", "Fantastic Journey", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
-GAMEX( 1997, winspike, konamigx, winspike, konamigx, konamigx, ROT0, "Konami", "Winning Spike (ver JAA)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING  )
 
 
 /* Type 3: dual monitor output and 53936 on the ROM board, external palette RAM */
 GAMEX( 1994, soccerss, konamigx, gxtype3,  type3, konamigx, ROT0, "Konami", "Soccer Superstars (ver JAA)", GAME_NOT_WORKING )
+GAMEX( 1994, soccersa, soccerss, gxtype3,  type3, konamigx, ROT0, "Konami", "Soccer Superstars (ver AAA)", GAME_NOT_WORKING )
 
 
 /* Type 4: dual monitor output and 53936 on the ROM board, external palette RAM, DMA protection */

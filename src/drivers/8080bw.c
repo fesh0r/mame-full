@@ -59,16 +59,13 @@
 extern struct Samplesinterface circus_samples_interface;
 
 
-static ADDRESS_MAP_START( c8080bw_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x4000, 0x63ff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
+/* gmissile and m4 need the RAM mirror */
 
-static ADDRESS_MAP_START( c8080bw_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x2000, 0x3fff) AM_WRITE(c8080bw_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0x4000, 0x63ff) AM_WRITE(MWA8_ROM)
+static ADDRESS_MAP_START( c8080bw_cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(15) )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x2000, 0x3fff) AM_MIRROR(0x4000) AM_READWRITE(MRA8_RAM, c8080bw_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4000, 0x5fff) AM_ROM
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( c8080bw_readport, ADDRESS_SPACE_IO, 8 )
@@ -107,7 +104,7 @@ static MACHINE_DRIVER_START( 8080bw )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main",8080,2000000)        /* 2 MHz? */
-	MDRV_CPU_PROGRAM_MAP(c8080bw_readmem,c8080bw_writemem)
+	MDRV_CPU_PROGRAM_MAP(c8080bw_cpu_map,0)
 	MDRV_CPU_IO_MAP(c8080bw_readport,writeport_2_4)
 	MDRV_CPU_VBLANK_INT(c8080bw_interrupt,2)    /* two interrupts per frame */
 	MDRV_FRAMES_PER_SECOND(60)
@@ -722,6 +719,13 @@ MACHINE_DRIVER_END
 
 /* colour version of Space Stranger, board has Stranger 2 written on it */
 
+static ADDRESS_MAP_START( sstrngr2_cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(15) )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(MRA8_RAM, c8080bw_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4000, 0x63ff) AM_ROM
+ADDRESS_MAP_END
+
 INPUT_PORTS_START( sstrngr2 )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -779,6 +783,7 @@ static MACHINE_DRIVER_START( sstrngr2 )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(sstrngr2_cpu_map,0)
 	MDRV_CPU_IO_MAP(sstrangr_readport,sstrangr_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 	MDRV_MACHINE_INIT(sstrangr)
@@ -1954,7 +1959,6 @@ INPUT_PORTS_START( gmissile )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
-
 	PORT_DIPNAME( 0x0c, 0x0c, "Time" )
 	PORT_DIPSETTING(    0x00, "60" )
 	PORT_DIPSETTING(    0x08, "70" )
@@ -1964,8 +1968,8 @@ INPUT_PORTS_START( gmissile )
 	PORT_DIPSETTING(    0x00, "500" )
 	PORT_DIPSETTING(    0x20, "700" )
 	PORT_DIPSETTING(    0x10, "1000" )
-	PORT_DIPSETTING(    0x30, "None" )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPSETTING(    0x30, "1300" )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 

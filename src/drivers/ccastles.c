@@ -129,10 +129,14 @@ static WRITE_HANDLER( flip_screen_w )
  *
  *************************************/
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0002, 0x0002) AM_READ(ccastles_bitmode_r)
-	AM_RANGE(0x0000, 0x8fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x9000, 0x90ff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0001) AM_WRITE(MWA8_RAM) AM_BASE(&ccastles_screen_addr)
+	AM_RANGE(0x0002, 0x0002) AM_READWRITE(ccastles_bitmode_r, ccastles_bitmode_w)
+	AM_RANGE(0x0000, 0x8fff) AM_RAM
+	AM_RANGE(0x0c00, 0x7fff) AM_BASE(&videoram)
+	AM_RANGE(0x8e00, 0x8eff) AM_BASE(&spriteram_2) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x8f00, 0x8fff) AM_BASE(&spriteram)
+	AM_RANGE(0x9000, 0x90ff) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0x9400, 0x9400) AM_READ(input_port_2_r)	/* trackball y - player 1 */
 	AM_RANGE(0x9402, 0x9402) AM_READ(input_port_2_r)	/* trackball y - player 2 */
 	AM_RANGE(0x9500, 0x9500) AM_READ(input_port_2_r)	/* trackball y - player 1 mirror */
@@ -140,24 +144,8 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x9403, 0x9403) AM_READ(input_port_3_r)	/* trackball x - player 2 */
 	AM_RANGE(0x9501, 0x9501) AM_READ(input_port_3_r)	/* trackball x - player 1 mirror */
 	AM_RANGE(0x9600, 0x9600) AM_READ(input_port_0_r)	/* IN0 */
-	AM_RANGE(0x9800, 0x980f) AM_READ(pokey1_r) /* Random # generator on a Pokey */
-	AM_RANGE(0x9a00, 0x9a0f) AM_READ(pokey2_r) /* Random #, IN1 */
-	AM_RANGE(0xa000, 0xdfff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM)	/* ROMs/interrupt vectors */
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0001) AM_WRITE(MWA8_RAM) AM_BASE(&ccastles_screen_addr)
-	AM_RANGE(0x0002, 0x0002) AM_WRITE(ccastles_bitmode_w)
-	AM_RANGE(0x0003, 0x0bff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0c00, 0x7fff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram)
-	AM_RANGE(0x8000, 0x8dff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x8e00, 0x8eff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x8f00, 0x8fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
-	AM_RANGE(0x9000, 0x90ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
-	AM_RANGE(0x9800, 0x980f) AM_WRITE(pokey1_w)
-	AM_RANGE(0x9a00, 0x9a0f) AM_WRITE(pokey2_w)
+	AM_RANGE(0x9800, 0x980f) AM_READWRITE(pokey1_r, pokey1_w) /* Random # generator on a Pokey */
+	AM_RANGE(0x9a00, 0x9a0f) AM_READWRITE(pokey2_r, pokey2_w) /* Random #, IN1 */
 	AM_RANGE(0x9c80, 0x9c80) AM_WRITE(MWA8_RAM) AM_BASE(&ccastles_scrollx)
 	AM_RANGE(0x9d00, 0x9d00) AM_WRITE(MWA8_RAM) AM_BASE(&ccastles_scrolly)
 	AM_RANGE(0x9d80, 0x9d80) AM_WRITE(MWA8_NOP)
@@ -171,7 +159,8 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x9f05, 0x9f06) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x9f07, 0x9f07) AM_WRITE(MWA8_RAM) AM_BASE(&ccastles_sprite_bank)
 	AM_RANGE(0x9f80, 0x9fbf) AM_WRITE(ccastles_paletteram_w)
-	AM_RANGE(0xa000, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xa000, 0xdfff) AM_ROMBANK(1)
+	AM_RANGE(0xe000, 0xffff) AM_ROM					/* ROMs/interrupt vectors */
 ADDRESS_MAP_END
 
 
@@ -274,7 +263,7 @@ static MACHINE_DRIVER_START( ccastles )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,1500000)
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
 	MDRV_FRAMES_PER_SECOND(60)

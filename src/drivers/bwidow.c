@@ -324,26 +324,16 @@ WRITE_HANDLER( bwidow_misc_w )
  *
  *************************************/
 
-static ADDRESS_MAP_START( bwidow_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x2000, 0x27ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x2800, 0x5fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x6000, 0x600f) AM_READ(pokey1_r)
-	AM_RANGE(0x6800, 0x680f) AM_READ(pokey2_r)
+static ADDRESS_MAP_START( bwidow_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_RAM
+	AM_RANGE(0x2000, 0x27ff) AM_RAM AM_BASE(&vectorram) AM_SIZE(&vectorram_size)
+	AM_RANGE(0x2800, 0x5fff) AM_ROM
+	AM_RANGE(0x6000, 0x67ff) AM_READWRITE(pokey1_r, pokey1_w)
+	AM_RANGE(0x6800, 0x6fff) AM_READWRITE(pokey2_r, pokey2_w)
 	AM_RANGE(0x7000, 0x7000) AM_READ(atari_vg_earom_r)
 	AM_RANGE(0x7800, 0x7800) AM_READ(bzone_IN0_r)	/* IN0 */
 	AM_RANGE(0x8000, 0x8000) AM_READ(input_port_3_r)	/* IN1 */
 	AM_RANGE(0x8800, 0x8800) AM_READ(input_port_4_r)	/* IN1 */
-	AM_RANGE(0x9000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( bwidow_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x2000, 0x27ff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size)
-	AM_RANGE(0x2800, 0x5fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x6000, 0x67ff) AM_WRITE(pokey1_w)
-	AM_RANGE(0x6800, 0x6fff) AM_WRITE(pokey2_w)
 	AM_RANGE(0x8800, 0x8800) AM_WRITE(bwidow_misc_w) /* coin counters, leds */
 	AM_RANGE(0x8840, 0x8840) AM_WRITE(avgdvg_go_w)
 	AM_RANGE(0x8880, 0x8880) AM_WRITE(avgdvg_reset_w)
@@ -351,27 +341,16 @@ static ADDRESS_MAP_START( bwidow_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8900, 0x8900) AM_WRITE(atari_vg_earom_ctrl_w)
 	AM_RANGE(0x8940, 0x897f) AM_WRITE(atari_vg_earom_w)
 	AM_RANGE(0x8980, 0x89ed) AM_WRITE(MWA8_NOP) /* watchdog clear */
-	AM_RANGE(0x9000, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x9000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( spacduel_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( spacduel_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_RAM
 	AM_RANGE(0x0800, 0x0800) AM_READ(bzone_IN0_r)	/* IN0 */
 	AM_RANGE(0x0900, 0x0907) AM_READ(spacduel_IN3_r)	/* IN1 */
-	AM_RANGE(0x0a00, 0x0a00) AM_READ(atari_vg_earom_r)
-	AM_RANGE(0x1000, 0x100f) AM_READ(pokey1_r)
-	AM_RANGE(0x1400, 0x140f) AM_READ(pokey2_r)
-	AM_RANGE(0x2000, 0x27ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x2800, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0x8fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( spacduel_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x0905, 0x0906) AM_WRITE(MWA8_NOP) /* ignore? */
+	AM_RANGE(0x0a00, 0x0a00) AM_READ(atari_vg_earom_r)
 //	AM_RANGE(0x0c00, 0x0c00) AM_WRITE(coin_counter_w) /* coin out */
 	AM_RANGE(0x0c80, 0x0c80) AM_WRITE(avgdvg_go_w)
 	AM_RANGE(0x0d00, 0x0d00) AM_WRITE(MWA8_NOP) /* watchdog clear */
@@ -379,12 +358,11 @@ static ADDRESS_MAP_START( spacduel_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0e00, 0x0e00) AM_WRITE(MWA8_NOP) /* interrupt acknowledge */
 	AM_RANGE(0x0e80, 0x0e80) AM_WRITE(atari_vg_earom_ctrl_w)
 	AM_RANGE(0x0f00, 0x0f3f) AM_WRITE(atari_vg_earom_w)
-	AM_RANGE(0x1000, 0x13ff) AM_WRITE(pokey1_w)
-	AM_RANGE(0x1400, 0x17ff) AM_WRITE(pokey2_w)
-	AM_RANGE(0x2000, 0x27ff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size)
-	AM_RANGE(0x2800, 0x3fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x4000, 0x8fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1000, 0x100f) AM_READWRITE(pokey1_r, pokey1_w)
+	AM_RANGE(0x1400, 0x140f) AM_READWRITE(pokey2_r, pokey2_w)
+	AM_RANGE(0x2000, 0x27ff) AM_RAM AM_BASE(&vectorram) AM_SIZE(&vectorram_size)
+	AM_RANGE(0x2800, 0x3fff) AM_ROM
+	AM_RANGE(0x4000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -699,7 +677,7 @@ static MACHINE_DRIVER_START( bwidow )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 1500000)	/* 1.5 MHz */
-	MDRV_CPU_PROGRAM_MAP(bwidow_readmem,bwidow_writemem)
+	MDRV_CPU_PROGRAM_MAP(bwidow_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4) 		/* 4.1ms */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -735,7 +713,7 @@ static MACHINE_DRIVER_START( lunarbat )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(gravitar)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(spacduel_readmem,spacduel_writemem)
+	MDRV_CPU_PROGRAM_MAP(spacduel_map,0)
 
 	MDRV_FRAMES_PER_SECOND(45)
 
@@ -749,7 +727,7 @@ static MACHINE_DRIVER_START( spacduel )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(gravitar)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(spacduel_readmem,spacduel_writemem)
+	MDRV_CPU_PROGRAM_MAP(spacduel_map,0)
 
 	MDRV_FRAMES_PER_SECOND(45)
 

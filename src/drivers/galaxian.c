@@ -29,8 +29,6 @@ TODO:
 
 - $4800-4bff in Streaking/Ghost Muncher
 
-- Need valid color prom for Fantazia. Current one is slightly damaged.
-
 
 
 Moon Cresta versions supported:
@@ -4747,9 +4745,7 @@ ROM_START( fantazia )
 	ROM_LOAD( "mcs_c",        0x1800, 0x0800, CRC(24cfd145) SHA1(08c6599db170dd6ee364c44f70a0f5c0f881b6ef) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	/* this PROM was bad (bit 3 always set). I tried to "fix" it to get more reasonable */
-	/* colors, but it should not be considered correct. It's a bootleg anyway. */
-	ROM_LOAD( "6l_prom.bin",  0x0000, 0x0020, BAD_DUMP CRC(f5381d3e) SHA1(977a5e024b2a08649269533d36984bc1f290cb14)  )
+	ROM_LOAD( "fantazia.clr", 0x0000, 0x0020, CRC(a84ff0af) SHA1(c300dc937c608d2d1c113ca7a53c649472c72379) )
 ROM_END
 
 ROM_START( eagle )
@@ -5322,7 +5318,7 @@ GAME( 1980, mooncrsg, mooncrst, mooncrst, mooncrsg, mooncrsu, ROT90,  "Gremlin",
 GAME( 1980?,smooncrs, mooncrst, mooncrst, smooncrs, mooncrsu, ROT90,  "Gremlin", "Super Moon Cresta" )
 GAME( 1980, mooncrsb, mooncrst, mooncrst, mooncrsa, mooncrsu, ROT90,  "bootleg", "Moon Cresta (bootleg set 1)" )
 GAME( 1980, mooncrs2, mooncrst, mooncrst, mooncrsa, mooncrsu, ROT90,  "Nichibutsu", "Moon Cresta (bootleg set 2)" )
-GAMEX(1980, fantazia, mooncrst, mooncrst, fantazia, mooncrsu, ROT90,  "bootleg", "Fantazia", GAME_IMPERFECT_COLORS )
+GAME( 1980, fantazia, mooncrst, mooncrst, fantazia, mooncrsu, ROT90,  "bootleg", "Fantazia" )
 GAME( 1980, eagle,    mooncrst, mooncrst, eagle,    mooncrsu, ROT90,  "Centuri", "Eagle (set 1)" )
 GAME( 1980, eagle2,   mooncrst, mooncrst, eagle2,   mooncrsu, ROT90,  "Centuri", "Eagle (set 2)" )
 GAME( 1981?,spctbird, mooncrst, mooncrst, eagle2,   mooncrsu, ROT90,  "Fortrek", "Space Thunderbird" )

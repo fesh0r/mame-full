@@ -490,24 +490,10 @@ static WRITE_HANDLER( coincount_w )
  *
  *************************************/
 
-static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x1000, 0x11ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x1400, 0x1403) AM_READ(adc_r)
-	AM_RANGE(0x1800, 0x1801) AM_READ(switch_r)
-	AM_RANGE(0x1c00, 0x1c01) AM_READ(sound_r)
-	AM_RANGE(0x2000, 0x3fff) AM_READ(atarisy2_videoram_r)
-	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA16_BANK1)
-	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA16_BANK2)
-	AM_RANGE(0x8000, 0x81ff) AM_READ(atarisy2_slapstic_r)
-	AM_RANGE(0x8200, 0xffff) AM_READ(MRA16_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x1000, 0x11ff) AM_WRITE(atarisy2_paletteram_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x1400, 0x1403) AM_WRITE(bankselect_w) AM_BASE(&bankselect)
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x0000, 0x0fff) AM_RAM
+	AM_RANGE(0x1000, 0x11ff) AM_READWRITE(MRA16_RAM, atarisy2_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x1400, 0x1403) AM_READWRITE(adc_r, bankselect_w) AM_BASE(&bankselect)
 	AM_RANGE(0x1480, 0x148f) AM_WRITE(adc_strobe_w)
 	AM_RANGE(0x1580, 0x159f) AM_WRITE(int0_ack_w)
 	AM_RANGE(0x15a0, 0x15bf) AM_WRITE(int1_ack_w)
@@ -517,11 +503,13 @@ static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x1680, 0x1681) AM_WRITE(atarigen_sound_w)
 	AM_RANGE(0x1700, 0x1701) AM_WRITE(atarisy2_xscroll_w) AM_BASE(&atarigen_xscroll)
 	AM_RANGE(0x1780, 0x1781) AM_WRITE(atarisy2_yscroll_w) AM_BASE(&atarigen_yscroll)
-	AM_RANGE(0x1800, 0x1801) AM_WRITE(watchdog_reset16_w)
-	AM_RANGE(0x2000, 0x3fff) AM_WRITE(atarisy2_videoram_w)
-	AM_RANGE(0x4000, 0x7fff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x8000, 0x81ff) AM_WRITE(atarisy2_slapstic_w) AM_BASE(&atarisy2_slapstic)
-	AM_RANGE(0x8200, 0xffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x1800, 0x1801) AM_READWRITE(switch_r, watchdog_reset16_w)
+	AM_RANGE(0x1c00, 0x1c01) AM_READ(sound_r)
+	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(atarisy2_videoram_r, atarisy2_videoram_w)
+	AM_RANGE(0x4000, 0x5fff) AM_ROMBANK(1)
+	AM_RANGE(0x6000, 0x7fff) AM_ROMBANK(2)
+	AM_RANGE(0x8000, 0x81ff) AM_READWRITE(atarisy2_slapstic_r, atarisy2_slapstic_w) AM_BASE(&atarisy2_slapstic)
+	AM_RANGE(0x8200, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -532,26 +520,16 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x1000, 0x17ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x1800, 0x180f) AM_READ(pokey1_r)
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_RAM
+	AM_RANGE(0x1000, 0x17ff) AM_RAM AM_BASE((data8_t **)&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
+	AM_RANGE(0x1800, 0x180f) AM_READWRITE(pokey1_r, pokey1_w)
 	AM_RANGE(0x1810, 0x1813) AM_READ(leta_r)
-	AM_RANGE(0x1830, 0x183f) AM_READ(pokey2_r)
+	AM_RANGE(0x1830, 0x183f) AM_READWRITE(pokey2_r, pokey2_w)
 	AM_RANGE(0x1840, 0x1840) AM_READ(switch_6502_r)
-	AM_RANGE(0x1850, 0x1851) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x1850, 0x1850) AM_READWRITE(YM2151_status_port_0_r, YM2151_register_port_0_w)
+	AM_RANGE(0x1851, 0x1851) AM_READWRITE(YM2151_status_port_0_r, YM2151_data_port_0_w)
 	AM_RANGE(0x1860, 0x1860) AM_READ(sound_6502_r)
-	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x1000, 0x17ff) AM_WRITE(MWA8_RAM) AM_BASE((data8_t **)&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
-	AM_RANGE(0x1800, 0x180f) AM_WRITE(pokey1_w)
-	AM_RANGE(0x1830, 0x183f) AM_WRITE(pokey2_w)
-	AM_RANGE(0x1850, 0x1850) AM_WRITE(YM2151_register_port_0_w)
-	AM_RANGE(0x1851, 0x1851) AM_WRITE(YM2151_data_port_0_w)
 	AM_RANGE(0x1870, 0x1870) AM_WRITE(tms5220_w)
 	AM_RANGE(0x1872, 0x1873) AM_WRITE(tms5220_strobe_w)
 	AM_RANGE(0x1874, 0x1874) AM_WRITE(sound_6502_w)
@@ -560,7 +538,7 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x187a, 0x187a) AM_WRITE(mixer_w)
 	AM_RANGE(0x187c, 0x187c) AM_WRITE(switch_6502_w)
 	AM_RANGE(0x187e, 0x187e) AM_WRITE(sound_enable_w)
-	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -1180,11 +1158,11 @@ static MACHINE_DRIVER_START( atarisy2 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", T11, ATARI_CLOCK_20MHz/2)
 	MDRV_CPU_CONFIG(t11_data)
-	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(vblank_int,1)
 	
 	MDRV_CPU_ADD_TAG("sound", M6502, ATARI_CLOCK_14MHz/8)
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_PERIODIC_INT(atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_20MHz/2/16/16/16/10)))
 	
 	MDRV_FRAMES_PER_SECOND(60)

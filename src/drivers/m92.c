@@ -2251,17 +2251,20 @@ static READ_HANDLER( gunforc2_snd_cycle_r )
 
 /***************************************************************************/
 
-static void m92_startup(void)
+static void m92_startup(int hasbanks)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	memcpy(RAM+0xffff0,RAM+0x7fff0,0x10); /* Start vector */
-	bankaddress = 0xa0000; /* Initial bank */
-	set_m92_bank();
+	if (hasbanks)
+	{
+		memcpy(RAM+0xffff0,RAM+0x7fff0,0x10); /* Start vector */
+		bankaddress = 0xa0000; /* Initial bank */
+		set_m92_bank();
 
-	/* Mirror used by In The Hunt for protection */
-	memcpy(RAM+0xc0000,RAM+0x00000,0x10000);
-	cpu_setbank(2,&RAM[0xc0000]);
+		/* Mirror used by In The Hunt for protection */
+		memcpy(RAM+0xc0000,RAM+0x00000,0x10000);
+		cpu_setbank(2,&RAM[0xc0000]);
+	}
 
 	RAM = memory_region(REGION_CPU2);
 	memcpy(RAM+0xffff0,RAM+0x1fff0,0x10); /* Sound cpu Start vector */
@@ -2272,9 +2275,9 @@ static void m92_startup(void)
 	m92_sprite_buffer_busy=0x80;
 }
 
-static void init_m92(const unsigned char *decryption_table)
+static void init_m92(const unsigned char *decryption_table, int hasbanks)
 {
-	m92_startup();
+	m92_startup(hasbanks);
 	setvector_callback(VECTOR_INIT);
 	irem_cpu_decrypt(1,decryption_table);
 
@@ -2287,36 +2290,36 @@ static void init_m92(const unsigned char *decryption_table)
 static DRIVER_INIT( bmaster )
 {
 	install_mem_read_handler(0, 0xe6fde, 0xe6fdf, bmaster_cycle_r);
-	init_m92(bomberman_decryption_table);
+	init_m92(bomberman_decryption_table, 1);
 }
 
 static DRIVER_INIT( gunforce )
 {
 	install_mem_read_handler(0, 0xe61d0, 0xe61d1, gunforce_cycle_r);
-	init_m92(gunforce_decryption_table);
+	init_m92(gunforce_decryption_table, 1);
 }
 
 static DRIVER_INIT( hook )
 {
 	install_mem_read_handler(0, 0xe0012, 0xe0013, hook_cycle_r);
-	init_m92(hook_decryption_table);
+	init_m92(hook_decryption_table, 1);
 }
 
 static DRIVER_INIT( mysticri )
 {
-	init_m92(mysticri_decryption_table);
+	init_m92(mysticri_decryption_table, 1);
 }
 
 static DRIVER_INIT( uccops )
 {
 	install_mem_read_handler(0, 0xe3a02, 0xe3a03, uccops_cycle_r);
-	init_m92(dynablaster_decryption_table);
+	init_m92(dynablaster_decryption_table, 1);
 }
 
 static DRIVER_INIT( rtypeleo )
 {
 	install_mem_read_handler(0, 0xe0032, 0xe0033, rtypeleo_cycle_r);
-	init_m92(rtypeleo_decryption_table);
+	init_m92(rtypeleo_decryption_table, 1);
 	m92_irq_vectorbase=0x20;
 	m92_game_kludge=1;
 }
@@ -2324,14 +2327,14 @@ static DRIVER_INIT( rtypeleo )
 static DRIVER_INIT( rtypelej )
 {
 	install_mem_read_handler(0, 0xe0032, 0xe0033, rtypelej_cycle_r);
-	init_m92(rtypeleo_decryption_table);
+	init_m92(rtypeleo_decryption_table, 1);
 	m92_irq_vectorbase=0x20;
 	m92_game_kludge=1;
 }
 
 static DRIVER_INIT( majtitl2 )
 {
-	init_m92(majtitl2_decryption_table);
+	init_m92(majtitl2_decryption_table, 1);
 
 	/* This game has an eprom on the game board */
 	install_mem_read_handler(0, 0xf0000, 0xf3fff, m92_eeprom_r);
@@ -2343,14 +2346,17 @@ static DRIVER_INIT( majtitl2 )
 static DRIVER_INIT( inthunt )
 {
 	install_mem_read_handler(0, 0xe025e, 0xe025f, inthunt_cycle_r);
-	init_m92(inthunt_decryption_table);
+	init_m92(inthunt_decryption_table, 1);
 }
 
 static DRIVER_INIT( lethalth )
 {
 	install_mem_read_handler(0, 0xe001e, 0xe001f, lethalth_cycle_r);
-	init_m92(lethalth_decryption_table);
+	init_m92(lethalth_decryption_table, 0);
 	m92_irq_vectorbase=0x20;
+	
+	/* NOP out the bankswitcher */
+	install_port_write_handler(0, 0x20, 0x21, MWA8_NOP);
 
 	/* This game sets the raster IRQ position, but the interrupt routine
 		is just an iret, no need to emulate it */
@@ -2362,7 +2368,7 @@ static DRIVER_INIT( nbbatman )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	init_m92(leagueman_decryption_table);
+	init_m92(leagueman_decryption_table, 1);
 
 	memcpy(RAM+0x80000,RAM+0x100000,0x20000);
 }
@@ -2372,7 +2378,7 @@ static DRIVER_INIT( ssoldier )
  install_mem_read_handler(0, 0xe1aec, 0xe1aed, ssoldier_cycle_r);
  install_mem_read_handler(1, 0xa0c34, 0xa0c35, psoldier_snd_cycle_r);
 
- init_m92(psoldier_decryption_table);
+ init_m92(psoldier_decryption_table, 1);
  m92_irq_vectorbase=0x20;
  /* main CPU expects an answer even before writing the first command */
  sound_status = 0x80;
@@ -2383,7 +2389,7 @@ static DRIVER_INIT( psoldier )
 	install_mem_read_handler(0, 0xe1aec, 0xe1aed, psoldier_cycle_r);
 	install_mem_read_handler(1, 0xa0c34, 0xa0c35, psoldier_snd_cycle_r);
 
-	init_m92(psoldier_decryption_table);
+	init_m92(psoldier_decryption_table, 1);
 	m92_irq_vectorbase=0x20;
 	/* main CPU expects an answer even before writing the first command */
 	sound_status = 0x80;
@@ -2392,13 +2398,13 @@ static DRIVER_INIT( psoldier )
 static DRIVER_INIT( dsccr94j )
 {
 	install_mem_read_handler(0, 0xe8636, 0xe8637, dsccr94j_cycle_r);
-	init_m92(dsoccr94_decryption_table);
+	init_m92(dsoccr94_decryption_table, 1);
 }
 
 static DRIVER_INIT( gunforc2 )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
-	init_m92(lethalth_decryption_table);
+	init_m92(lethalth_decryption_table, 1);
 	memcpy(RAM+0x80000,RAM+0x100000,0x20000);
 
 	install_mem_read_handler(0, 0xe9fa0, 0xe9fa1, gunforc2_cycle_r);

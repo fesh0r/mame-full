@@ -154,36 +154,26 @@
  *
  *************************************/
 
-static ADDRESS_MAP_START( readmem_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x8fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x9400, 0x9401) AM_READ(balsente_adc_data_r)
-	AM_RANGE(0x9900, 0x9900) AM_READ(input_port_0_r)
-	AM_RANGE(0x9901, 0x9901) AM_READ(input_port_1_r)
-	AM_RANGE(0x9902, 0x9902) AM_READ(input_port_2_r)
-	AM_RANGE(0x9903, 0x9903) AM_READ(input_port_3_r)
-	AM_RANGE(0x9a00, 0x9a03) AM_READ(balsente_random_num_r)
-	AM_RANGE(0x9a04, 0x9a05) AM_READ(balsente_m6850_r)
-	AM_RANGE(0x9b00, 0x9bff) AM_READ(MRA8_RAM)		/* system NOVRAM */
-	AM_RANGE(0x9c00, 0x9cff) AM_READ(MRA8_RAM)		/* cart NOVRAM */
-	AM_RANGE(0xa000, 0xbfff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_BANK2)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( writemem_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
-	AM_RANGE(0x0800, 0x7fff) AM_WRITE(balsente_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0x8000, 0x8fff) AM_WRITE(balsente_paletteram_w) AM_BASE(&paletteram)
+static ADDRESS_MAP_START( cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_RAM AM_BASE(&spriteram)
+	AM_RANGE(0x0800, 0x7fff) AM_READWRITE(MRA8_RAM, balsente_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x8000, 0x8fff) AM_READWRITE(MRA8_RAM, balsente_paletteram_w) AM_BASE(&paletteram)
 	AM_RANGE(0x9000, 0x9007) AM_WRITE(balsente_adc_select_w)
+	AM_RANGE(0x9400, 0x9401) AM_READ(balsente_adc_data_r)
 	AM_RANGE(0x9800, 0x987f) AM_WRITE(balsente_misc_output_w)
 	AM_RANGE(0x9880, 0x989f) AM_WRITE(balsente_random_reset_w)
 	AM_RANGE(0x98a0, 0x98bf) AM_WRITE(balsente_rombank_select_w)
 	AM_RANGE(0x98c0, 0x98df) AM_WRITE(balsente_palette_select_w)
 	AM_RANGE(0x98e0, 0x98ff) AM_WRITE(watchdog_reset_w)
-	AM_RANGE(0x9903, 0x9903) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0x9a04, 0x9a05) AM_WRITE(balsente_m6850_w)
-	AM_RANGE(0x9b00, 0x9cff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)		/* system NOVRAM + cart NOVRAM */
-	AM_RANGE(0xa000, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x9900, 0x9900) AM_READ(input_port_0_r)
+	AM_RANGE(0x9901, 0x9901) AM_READ(input_port_1_r)
+	AM_RANGE(0x9902, 0x9902) AM_READ(input_port_2_r)
+	AM_RANGE(0x9903, 0x9903) AM_READWRITE(input_port_3_r, MWA8_NOP)
+	AM_RANGE(0x9a00, 0x9a03) AM_READ(balsente_random_num_r)
+	AM_RANGE(0x9a04, 0x9a05) AM_READWRITE(balsente_m6850_r, balsente_m6850_w)
+	AM_RANGE(0x9b00, 0x9cff) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)	/* system+cart NOVRAM */
+	AM_RANGE(0xa000, 0xbfff) AM_ROMBANK(1)
+	AM_RANGE(0xc000, 0xffff) AM_ROMBANK(2)
 ADDRESS_MAP_END
 
 
@@ -194,28 +184,17 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( readmem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x2000, 0x5fff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( cpu2_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x2000, 0x5fff) AM_RAM
+	AM_RANGE(0x6000, 0x7fff) AM_WRITE(balsente_m6850_sound_w)
 	AM_RANGE(0xe000, 0xffff) AM_READ(balsente_m6850_sound_r)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( writemem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x2000, 0x5fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x6000, 0x7fff) AM_WRITE(balsente_m6850_sound_w)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( readport_cpu2, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x03) AM_READ(balsente_counter_8253_r)
+static ADDRESS_MAP_START( cpu2_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x03) AM_READWRITE(balsente_counter_8253_r, balsente_counter_8253_w)
 	AM_RANGE(0x08, 0x0f) AM_READ(balsente_counter_state_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( writeport_cpu2, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x03) AM_WRITE(balsente_counter_8253_w)
 	AM_RANGE(0x08, 0x09) AM_WRITE(balsente_counter_control_w)
 	AM_RANGE(0x0a, 0x0b) AM_WRITE(balsente_dac_data_w)
 	AM_RANGE(0x0c, 0x0d) AM_WRITE(balsente_register_addr_w)
@@ -231,18 +210,10 @@ ADDRESS_MAP_END
  *************************************/
 
 /* CPU 1 read addresses */
-static ADDRESS_MAP_START( readmem_shrike68k, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x003fff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x010000, 0x01001f) AM_READ(shrike_shared_68k_r)
-	AM_RANGE(0x018000, 0x018fff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-
-/* CPU 1 write addresses */
-static ADDRESS_MAP_START( writemem_shrike68k, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x003fff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x010000, 0x01001f) AM_WRITE(shrike_shared_68k_w) AM_BASE(&shrike_shared)
-	AM_RANGE(0x018000, 0x018fff) AM_WRITE(MWA16_RAM)
+static ADDRESS_MAP_START( shrike68k_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x003fff) AM_ROM
+	AM_RANGE(0x010000, 0x01001f) AM_READWRITE(shrike_shared_68k_r, shrike_shared_68k_w) AM_BASE(&shrike_shared)
+	AM_RANGE(0x018000, 0x018fff) AM_RAM
 ADDRESS_MAP_END
 
 
@@ -1576,13 +1547,13 @@ static MACHINE_DRIVER_START( balsente )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 5000000/4)
-	MDRV_CPU_PROGRAM_MAP(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_PROGRAM_MAP(cpu1_map,0)
 	MDRV_CPU_VBLANK_INT(balsente_update_analog_inputs,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_PROGRAM_MAP(readmem_cpu2,writemem_cpu2)
-	MDRV_CPU_IO_MAP(readport_cpu2,writeport_cpu2)
+	MDRV_CPU_PROGRAM_MAP(cpu2_map,0)
+	MDRV_CPU_IO_MAP(cpu2_io_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -1611,7 +1582,7 @@ static MACHINE_DRIVER_START( shrike )
 	MDRV_IMPORT_FROM(balsente)
 
 	MDRV_CPU_ADD(M68000, 8000000)
-	MDRV_CPU_PROGRAM_MAP(readmem_shrike68k,writemem_shrike68k)
+	MDRV_CPU_PROGRAM_MAP(shrike68k_map,0)
 
 	MDRV_INTERLEAVE(100)
 

@@ -59,7 +59,6 @@ static MACHINE_INIT( midvunit )
 	dcs_reset_w(1);
 	dcs_reset_w(0);
 
-	cpu_setbank(1, memory_region(REGION_USER1));
 	memcpy(ram_base, memory_region(REGION_USER1), 0x20000*4);
 
 	timer[0] = timer_alloc(NULL);
@@ -72,7 +71,6 @@ static MACHINE_INIT( midvplus )
 	dcs_reset_w(1);
 	dcs_reset_w(0);
 
-//	cpu_setbank(1, ram_base);
 	memcpy(ram_base, memory_region(REGION_USER1), 0x20000*4);
 
 	timer[0] = timer_alloc(NULL);
@@ -476,94 +474,60 @@ static void midvplus_xf1_w(UINT8 val)
  *
  *************************************/
 
-static ADDRESS_MAP_START( vunit_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x01ffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x400000, 0x41ffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x808000, 0x80807f) AM_READ(tms32031_control_r)
-	AM_RANGE(0x809800, 0x809fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x900000, 0x97ffff) AM_READ(midvunit_videoram_r)
+static ADDRESS_MAP_START( midvunit_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x01ffff) AM_RAM AM_BASE(&ram_base)
+	AM_RANGE(0x400000, 0x41ffff) AM_RAM
+	AM_RANGE(0x600000, 0x600000) AM_WRITE(midvunit_dma_queue_w)
+	AM_RANGE(0x808000, 0x80807f) AM_READWRITE(tms32031_control_r, tms32031_control_w) AM_BASE(&tms32031_control)
+	AM_RANGE(0x809800, 0x809fff) AM_RAM
+	AM_RANGE(0x900000, 0x97ffff) AM_READWRITE(midvunit_videoram_r, midvunit_videoram_w) AM_BASE((data32_t **)&midvunit_videoram)
 	AM_RANGE(0x980000, 0x980000) AM_READ(midvunit_dma_queue_entries_r)
 	AM_RANGE(0x980020, 0x980020) AM_READ(midvunit_scanline_r)
-	AM_RANGE(0x980040, 0x980040) AM_READ(midvunit_page_control_r)
-	AM_RANGE(0x980080, 0x980080) AM_READ(MRA32_NOP)
+	AM_RANGE(0x980020, 0x98002b) AM_WRITE(midvunit_video_control_w)
+	AM_RANGE(0x980040, 0x980040) AM_READWRITE(midvunit_page_control_r, midvunit_page_control_w)
+	AM_RANGE(0x980080, 0x980080) AM_NOP
 	AM_RANGE(0x980082, 0x980083) AM_READ(midvunit_dma_trigger_r)
 	AM_RANGE(0x990000, 0x990000) AM_READ(MRA32_NOP)	// link PAL (low 4 bits must == 4)
 	AM_RANGE(0x991030, 0x991030) AM_READ(port1_r)
 //	AM_RANGE(0x991050, 0x991050) AM_READ(MRA32_RAM)	// seems to be another port
 	AM_RANGE(0x991060, 0x991060) AM_READ(port0_r)
 	AM_RANGE(0x992000, 0x992000) AM_READ(port2_r)
-	AM_RANGE(0x993000, 0x993000) AM_READ(midvunit_adc_r)
-	AM_RANGE(0x997000, 0x997000) AM_READ(MRA32_NOP)	// communications
-	AM_RANGE(0x9c0000, 0x9c1fff) AM_READ(midvunit_cmos_r)
-	AM_RANGE(0x9e0000, 0x9e7fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0xa00000, 0xbfffff) AM_READ(midvunit_textureram_r)
-	AM_RANGE(0xc00000, 0xffffff) AM_READ(MRA32_BANK1)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( vunit_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x01ffff) AM_WRITE(MWA32_RAM) AM_BASE(&ram_base)
-	AM_RANGE(0x400000, 0x41ffff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x600000, 0x600000) AM_WRITE(midvunit_dma_queue_w)
-	AM_RANGE(0x808000, 0x80807f) AM_WRITE(tms32031_control_w) AM_BASE(&tms32031_control)
-	AM_RANGE(0x809800, 0x809fff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x900000, 0x97ffff) AM_WRITE(midvunit_videoram_w) AM_BASE((data32_t **)&midvunit_videoram)
-	AM_RANGE(0x980020, 0x98002b) AM_WRITE(midvunit_video_control_w)
-	AM_RANGE(0x980040, 0x980040) AM_WRITE(midvunit_page_control_w)
-	AM_RANGE(0x980080, 0x980080) AM_WRITE(MWA32_NOP)
-	AM_RANGE(0x993000, 0x993000) AM_WRITE(midvunit_adc_w)
+	AM_RANGE(0x993000, 0x993000) AM_READWRITE(midvunit_adc_r, midvunit_adc_w)
 	AM_RANGE(0x994000, 0x994000) AM_WRITE(midvunit_control_w)
 	AM_RANGE(0x995000, 0x995000) AM_WRITE(MWA32_NOP)	// force feedback?
 	AM_RANGE(0x995020, 0x995020) AM_WRITE(midvunit_cmos_protect_w)
-	AM_RANGE(0x997000, 0x997000) AM_WRITE(MWA32_NOP)	// link communications
+	AM_RANGE(0x997000, 0x997000) AM_NOP	// communications
 	AM_RANGE(0x9a0000, 0x9a0000) AM_WRITE(midvunit_sound_w)
-	AM_RANGE(0x9c0000, 0x9c1fff) AM_WRITE(midvunit_cmos_w) AM_BASE((data32_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
-	AM_RANGE(0x9e0000, 0x9e7fff) AM_WRITE(midvunit_paletteram_w) AM_BASE(&paletteram32)
-	AM_RANGE(0xa00000, 0xbfffff) AM_WRITE(midvunit_textureram_w) AM_BASE(&midvunit_textureram)
-	AM_RANGE(0xc00000, 0xffffff) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0x9c0000, 0x9c1fff) AM_READWRITE(midvunit_cmos_r, midvunit_cmos_w) AM_BASE((data32_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x9e0000, 0x9e7fff) AM_READWRITE(MRA32_RAM, midvunit_paletteram_w) AM_BASE(&paletteram32)
+	AM_RANGE(0xa00000, 0xbfffff) AM_READWRITE(midvunit_textureram_r, midvunit_textureram_w) AM_BASE(&midvunit_textureram)
+	AM_RANGE(0xc00000, 0xffffff) AM_ROM AM_REGION(REGION_USER1, 0)
 ADDRESS_MAP_END
 
 
 static struct tms32031_config midvplus_config = { 0, NULL, midvplus_xf1_w };
 
-static ADDRESS_MAP_START( midvplus_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x01ffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x400000, 0x41ffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x808000, 0x80807f) AM_READ(tms32031_control_r)
-	AM_RANGE(0x809800, 0x809fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x900000, 0x97ffff) AM_READ(midvunit_videoram_r)
+static ADDRESS_MAP_START( midvplus_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x01ffff) AM_RAM AM_BASE(&ram_base)
+	AM_RANGE(0x400000, 0x41ffff) AM_RAM AM_BASE(&fastram_base)
+	AM_RANGE(0x600000, 0x600000) AM_WRITE(midvunit_dma_queue_w)
+	AM_RANGE(0x808000, 0x80807f) AM_READWRITE(tms32031_control_r, tms32031_control_w) AM_BASE(&tms32031_control)
+	AM_RANGE(0x809800, 0x809fff) AM_RAM
+	AM_RANGE(0x900000, 0x97ffff) AM_READWRITE(midvunit_videoram_r, midvunit_videoram_w) AM_BASE((data32_t **)&midvunit_videoram)
 	AM_RANGE(0x980000, 0x980000) AM_READ(midvunit_dma_queue_entries_r)
 	AM_RANGE(0x980020, 0x980020) AM_READ(midvunit_scanline_r)
-	AM_RANGE(0x980040, 0x980040) AM_READ(midvunit_page_control_r)
-	AM_RANGE(0x980080, 0x980080) AM_READ(MRA32_NOP)
-	AM_RANGE(0x980082, 0x980083) AM_READ(midvunit_dma_trigger_r)
-	AM_RANGE(0x990000, 0x99000f) AM_READ(midway_ioasic_r)
-	AM_RANGE(0x9a0000, 0x9a0007) AM_READ(midway_ide_asic_r)
-	AM_RANGE(0x9c0000, 0x9c7fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x9d0000, 0x9d000f) AM_READ(midvplus_misc_r)
-	AM_RANGE(0xa00000, 0xbfffff) AM_READ(midvunit_textureram_r)
-	AM_RANGE(0xc00000, 0xcfffff) AM_READ(MRA32_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( midvplus_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x01ffff) AM_WRITE(MWA32_RAM) AM_BASE(&ram_base)
-	AM_RANGE(0x400000, 0x41ffff) AM_WRITE(MWA32_RAM) AM_BASE(&fastram_base)
-	AM_RANGE(0x600000, 0x600000) AM_WRITE(midvunit_dma_queue_w)
-	AM_RANGE(0x808000, 0x80807f) AM_WRITE(tms32031_control_w) AM_BASE(&tms32031_control)
-	AM_RANGE(0x809800, 0x809fff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x900000, 0x97ffff) AM_WRITE(midvunit_videoram_w) AM_BASE((data32_t **)&midvunit_videoram)
 	AM_RANGE(0x980020, 0x98002b) AM_WRITE(midvunit_video_control_w)
-	AM_RANGE(0x980040, 0x980040) AM_WRITE(midvunit_page_control_w)
-	AM_RANGE(0x980080, 0x980080) AM_WRITE(MWA32_NOP)
-	AM_RANGE(0x990000, 0x99000f) AM_WRITE(midway_ioasic_w)
+	AM_RANGE(0x980040, 0x980040) AM_READWRITE(midvunit_page_control_r, midvunit_page_control_w)
+	AM_RANGE(0x980080, 0x980080) AM_NOP
+	AM_RANGE(0x980082, 0x980083) AM_READ(midvunit_dma_trigger_r)
+	AM_RANGE(0x990000, 0x99000f) AM_READWRITE(midway_ioasic_r, midway_ioasic_w)
 	AM_RANGE(0x994000, 0x994000) AM_WRITE(midvunit_control_w)
 	AM_RANGE(0x995020, 0x995020) AM_WRITE(midvunit_cmos_protect_w)
-	AM_RANGE(0x9a0000, 0x9a0007) AM_WRITE(midway_ide_asic_w)
-	AM_RANGE(0x9c0000, 0x9c7fff) AM_WRITE(midvunit_paletteram_w) AM_BASE(&paletteram32)
-	AM_RANGE(0x9d0000, 0x9d000f) AM_WRITE(midvplus_misc_w) AM_BASE(&midvplus_misc)
-	AM_RANGE(0xa00000, 0xbfffff) AM_WRITE(midvunit_textureram_w) AM_BASE(&midvunit_textureram)
-	AM_RANGE(0xc00000, 0xcfffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x9a0000, 0x9a0007) AM_READWRITE(midway_ide_asic_r, midway_ide_asic_w)
+	AM_RANGE(0x9c0000, 0x9c7fff) AM_READWRITE(MRA32_RAM, midvunit_paletteram_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x9d0000, 0x9d000f) AM_READWRITE(midvplus_misc_r, midvplus_misc_w) AM_BASE(&midvplus_misc)
+	AM_RANGE(0xa00000, 0xbfffff) AM_READWRITE(midvunit_textureram_r, midvunit_textureram_w) AM_BASE(&midvunit_textureram)
+	AM_RANGE(0xc00000, 0xcfffff) AM_RAM
 ADDRESS_MAP_END
 
 
@@ -1030,7 +994,7 @@ MACHINE_DRIVER_START( midvcommon )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", TMS32031, 50000000)
-	MDRV_CPU_PROGRAM_MAP(vunit_readmem,vunit_writemem)
+	MDRV_CPU_PROGRAM_MAP(midvunit_map,0)
 
 	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -1063,7 +1027,7 @@ MACHINE_DRIVER_START( midvplus )
 	/* basic machine hardware */
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_CONFIG(midvplus_config)
-	MDRV_CPU_PROGRAM_MAP(midvplus_readmem,midvplus_writemem)
+	MDRV_CPU_PROGRAM_MAP(midvplus_map,0)
 
 	MDRV_MACHINE_INIT(midvplus)
 	MDRV_NVRAM_HANDLER(midway_serial_pic2)
@@ -1081,10 +1045,6 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( crusnusa )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* dummy 32C031 region */
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
-	
 	ROM_REGION( 0x800000, REGION_SOUND1, 0 )	/* sound data */
 	ROM_LOAD( "cusa.u2",  0x000000, 0x80000, CRC(b9338332) SHA1(e5c420e63c4eba0010a68c7e0a57ef210e2c83d2) )
 	ROM_LOAD( "cusa.u3",  0x100000, 0x80000, CRC(cd8325d6) SHA1(d65d7263e056ca1d637adb44cafef523e0831a34) )
@@ -1120,10 +1080,6 @@ ROM_END
 
 
 ROM_START( crusnu40 )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* dummy 32C031 region */
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
-	
 	ROM_REGION( 0x800000, REGION_SOUND1, 0 )	/* sound data */
 	ROM_LOAD( "cusa.u2",  0x000000, 0x80000, CRC(b9338332) SHA1(e5c420e63c4eba0010a68c7e0a57ef210e2c83d2) )
 	ROM_LOAD( "cusa.u3",  0x100000, 0x80000, CRC(cd8325d6) SHA1(d65d7263e056ca1d637adb44cafef523e0831a34) )
@@ -1159,10 +1115,6 @@ ROM_END
 
 
 ROM_START( crusnu21 )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* dummy 32C031 region */
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
-	
 	ROM_REGION( 0x800000, REGION_SOUND1, 0 )	/* sound data */
 	ROM_LOAD( "cusa.u2",  0x000000, 0x80000, CRC(b9338332) SHA1(e5c420e63c4eba0010a68c7e0a57ef210e2c83d2) )
 	ROM_LOAD( "cusa.u3",  0x100000, 0x80000, CRC(cd8325d6) SHA1(d65d7263e056ca1d637adb44cafef523e0831a34) )
@@ -1198,10 +1150,6 @@ ROM_END
 
 
 ROM_START( crusnwld )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* dummy 32C031 region */
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
-	
 	ROM_REGION( 0x800000, REGION_SOUND1, 0 )	/* sound data */
 	ROM_LOAD( "cwld.u2",  0x000000, 0x80000, CRC(7a233c89) SHA1(ecfad4bc48a69cd3399e3b3266c81574082e0169) )
 	ROM_LOAD( "cwld.u3",  0x100000, 0x80000, CRC(be9a5ff0) SHA1(98d69dbfa6aa8462cdd46772e991ee418b79c653) )
@@ -1233,10 +1181,6 @@ ROM_END
 
 
 ROM_START( crusnw20 )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* dummy 32C031 region */
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
-	
 	ROM_REGION( 0x800000, REGION_SOUND1, 0 )	/* sound data */
 	ROM_LOAD( "cwld.u2",  0x000000, 0x80000, CRC(7a233c89) SHA1(ecfad4bc48a69cd3399e3b3266c81574082e0169) )
 	ROM_LOAD( "cwld.u3",  0x100000, 0x80000, CRC(be9a5ff0) SHA1(98d69dbfa6aa8462cdd46772e991ee418b79c653) )
@@ -1268,10 +1212,6 @@ ROM_END
 
 
 ROM_START( crusnw13 )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* dummy 32C031 region */
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
-	
 	ROM_REGION( 0x800000, REGION_SOUND1, 0 )	/* sound data */
 	ROM_LOAD( "cwld.u2",  0x000000, 0x80000, CRC(7a233c89) SHA1(ecfad4bc48a69cd3399e3b3266c81574082e0169) )
 	ROM_LOAD( "cwld.u3",  0x100000, 0x80000, CRC(be9a5ff0) SHA1(98d69dbfa6aa8462cdd46772e991ee418b79c653) )
@@ -1303,10 +1243,6 @@ ROM_END
 
 
 ROM_START( offroadc )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* dummy 32C031 region */
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
-	
 	ROM_REGION( 0x800000, REGION_SOUND1, 0 )	/* sound data */
 	ROM_LOAD( "offroadc.u2",  0x000000, 0x80000, CRC(69976e9d) SHA1(63c886ac2563c43a10840f49f929f8613cd94de2) )
 	ROM_LOAD( "offroadc.u3",  0x100000, 0x80000, CRC(2db9b548) SHA1(4f454a3e6a8851b0ef5d325dd28102d57ea11a11) )
@@ -1338,10 +1274,6 @@ ROM_END
 
 
 ROM_START( wargods )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* dummy 32C031 region */
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* ADSP-2105 program */
-	
 	ROM_REGION( 0x208000, REGION_SOUND1, 0 )	/* sound data */
 	ROM_LOAD( "u2.rom",   0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 

@@ -603,6 +603,15 @@ static struct OKIM6295interface okim6295_interface =
 };
 
 
+MACHINE_INIT (semiprot)
+{
+	data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
+	int i;
+
+	for (i = 0;i < 0x200/2;i++)
+	hyperpac_ram[0xf000/2 + i] = PROTDATA[i];
+}
+
 static MACHINE_DRIVER_START( snowbros )
 
 	/* basic machine hardware */
@@ -643,7 +652,7 @@ static MACHINE_DRIVER_START( wintbob )
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( hyperpac )
+static MACHINE_DRIVER_START( semicom )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(snowbros)
@@ -661,9 +670,14 @@ static MACHINE_DRIVER_START( hyperpac )
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( semiprot )
+	MDRV_IMPORT_FROM(semicom)
+	MDRV_MACHINE_INIT ( semiprot )
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( _4in1 )
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(hyperpac)
+	MDRV_IMPORT_FROM(semicom)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 MACHINE_DRIVER_END
 
@@ -793,6 +807,14 @@ ROM_START( moremorp )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
 	ROM_LOAD( "mmp_u35.bin", 0x00000, 0x10000 , CRC(4d098cad) SHA1(a79d417e7525a25dd6697da9f3d1de269e759d2e) )
 
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Intel 87C52 MCU Code */
+	ROM_LOAD( "87c52.mcu", 0x00000, 0x10000 , NO_DUMP ) /* can't be dumped */
+
+	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
+	/* this is not a real rom but instead the data extracted from
+	   shared ram, the MCU puts it there */
+	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(782dd2aa) SHA1(2587734271e0c85cb76bcdee171366c4e6fc9f81) )
+
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "mmp_u14.bin", 0x00000, 0x40000, CRC(211a2566) SHA1(48138547822a8e76c101dd4189d581f80eee1e24) )
 
@@ -833,7 +855,7 @@ ROM_START( 4in1boot ) /* snow bros, tetris, hyperman 1, pacman 2 */
 	ROM_LOAD( "u14", 0x00000, 0x40000, CRC(94b09b0e) SHA1(414de3e36eff85126038e8ff74145b35076e0a43) )
 
 	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Sprites */
-	ROM_LOAD( "u78", 0x000000, 0x200000, BAD_DUMP CRC(9d00c0e5) SHA1(83bab8ce92f692f5446f200e27637b11545f4884) ) // fixed bits in second half
+	ROM_LOAD( "u78", 0x000000, 0x200000, CRC(6c1fbc9c) SHA1(067f32cae89fd4d57b90be659d2d648e557c11df) )
 ROM_END
 
 
@@ -862,11 +884,29 @@ ROM_START( cookbib2 )
 	ROM_LOAD( "cookbib2.03", 0x100000, 0x40000, CRC(e1604821) SHA1(bede6bdd8331128b9f2b229d718133470bf407c9) )
 ROM_END
 
+READ16_HANDLER ( moremorp_0a_read )
+{
+	return 0x000a;
+}
+
+static DRIVER_INIT( moremorp )
+{
+//	data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
+//	int i;
+
+//	for (i = 0;i < 0x200/2;i++)
+//		hyperpac_ram[0xf000/2 + i] = PROTDATA[i];
+
+	/* explicit check in the code */
+	install_mem_read16_handler (0, 0x200000, 0x200001, moremorp_0a_read );
+}
+
+
 static DRIVER_INIT( cookbib2 )
 {
 //	data16_t *HCROM = (data16_t*)memory_region(REGION_CPU1);
-	data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
-	int i;
+//	data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
+//	int i;
 //	hyperpac_ram[0xf000/2] = 0x46fc;
 //	hyperpac_ram[0xf002/2] = 0x2700;
 
@@ -883,8 +923,8 @@ static DRIVER_INIT( cookbib2 )
 //for (i = 0;i < sizeof(cookbib2_mcu68k)/sizeof(cookbib2_mcu68k[0]);i++)
 //		hyperpac_ram[0xf000/2 + i] = cookbib2_mcu68k[i];
 
-	for (i = 0;i < 0x200/2;i++)
-		hyperpac_ram[0xf000/2 + i] = PROTDATA[i];
+//	for (i = 0;i < 0x200/2;i++)
+//		hyperpac_ram[0xf000/2 + i] = PROTDATA[i];
 
 
 	// trojan is actually buggy and gfx flicker like crazy
@@ -1266,12 +1306,13 @@ GAME( 1990, snowbrob, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Br
 GAME( 1990, snowbroj, snowbros, snowbros, snowbroj, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (Japan)" )
 GAME( 1990, wintbob,  snowbros, wintbob,  snowbros, 0, ROT0, "bootleg", "The Winter Bobble" )
 /* SemiCom Games */
-GAME( 1995, hyperpac, 0,        hyperpac, hyperpac, hyperpac, ROT0, "SemiCom", "Hyper Pacman" )
-GAME( 1995, hyperpcb, hyperpac, hyperpac, hyperpac, 0,        ROT0, "bootleg", "Hyper Pacman (bootleg)" )
-GAME (1996, cookbib2, 0,        hyperpac, cookbib2, cookbib2, ROT0, "SemiCom", "Cookie and Bibi 2" ) // sound cuts out in later levels? (investigate)
+GAME( 1995, hyperpac, 0,        semicom, hyperpac, hyperpac, ROT0, "SemiCom", "Hyper Pacman" )
+GAME( 1995, hyperpcb, hyperpac, semicom, hyperpac, 0,        ROT0, "bootleg", "Hyper Pacman (bootleg)" )
+GAME( 1996, cookbib2, 0,        semiprot, cookbib2, cookbib2, ROT0, "SemiCom", "Cookie and Bibi 2" )
+GAME( 1999, moremorp, 0,        semiprot, hyperpac, moremorp, ROT0, "SemiCom / Exit", "More More Plus" )
+
 /* the following don't work, they either point the interrupts at an area of ram probably shared by
    some kind of mcu which puts 68k code there, or jump to the area in the interrupts */
-GAMEX(199?, moremorp, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "More More +", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX(1997, 3in1semi, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "3-in-1 (SemiCom)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX(1997, 3in1semi, 0,        semicom, hyperpac, 0,        ROT0, "SemiCom", "3-in-1 (SemiCom)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 /* bad dump */
 GAMEX(199?, 4in1boot, 0,        _4in1,    snowbros, 4in1boot, ROT0, "bootleg", "4-in-1 bootleg", GAME_NOT_WORKING ) // gfx rom is half the size it should be, pacman 2 and snowbros are playable tho

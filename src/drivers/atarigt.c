@@ -610,41 +610,28 @@ static WRITE32_HANDLER( colorram_protection_w )
  *
  *************************************/
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA32_ROM)
-	AM_RANGE(0xc00000, 0xc00003) AM_READ(sound_data_r)
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x1fffff) AM_ROM
+	AM_RANGE(0xc00000, 0xc00003) AM_READWRITE(sound_data_r, sound_data_w)
 	AM_RANGE(0xd00014, 0xd00017) AM_READ(analog_port0_r)
 	AM_RANGE(0xd0001c, 0xd0001f) AM_READ(analog_port1_r)
-	AM_RANGE(0xd20000, 0xd20fff) AM_READ(atarigen_eeprom_upper32_r)
-	AM_RANGE(0xd70000, 0xd7ffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0xd80000, 0xdfffff) AM_READ(colorram_protection_r)
-	AM_RANGE(0xe80000, 0xe80003) AM_READ(inputs_01_r)
-	AM_RANGE(0xe82000, 0xe82003) AM_READ(special_port2_r)
-	AM_RANGE(0xe82004, 0xe82007) AM_READ(special_port3_r)
-	AM_RANGE(0xf80000, 0xffffff) AM_READ(MRA32_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA32_ROM)
-	AM_RANGE(0xc00000, 0xc00003) AM_WRITE(sound_data_w)
-	AM_RANGE(0xd20000, 0xd20fff) AM_WRITE(atarigen_eeprom32_w) AM_BASE((data32_t **)&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
+	AM_RANGE(0xd20000, 0xd20fff) AM_READWRITE(atarigen_eeprom_upper32_r, atarigen_eeprom32_w) AM_BASE((data32_t **)&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
 	AM_RANGE(0xd40000, 0xd4ffff) AM_WRITE(atarigen_eeprom_enable32_w)
-	AM_RANGE(0xd70000, 0xd71fff) AM_WRITE(MWA32_RAM)
 	AM_RANGE(0xd72000, 0xd75fff) AM_WRITE(atarigen_playfield32_w) AM_BASE(&atarigen_playfield32)
 	AM_RANGE(0xd76000, 0xd76fff) AM_WRITE(atarigen_alpha32_w) AM_BASE(&atarigen_alpha32)
-	AM_RANGE(0xd77000, 0xd77fff) AM_WRITE(MWA32_RAM)
 	AM_RANGE(0xd78000, 0xd78fff) AM_WRITE(atarirle_0_spriteram32_w) AM_BASE(&atarirle_0_spriteram32)
-	AM_RANGE(0xd79000, 0xd7a1ff) AM_WRITE(MWA32_RAM)
 	AM_RANGE(0xd7a200, 0xd7a203) AM_WRITE(mo_command_w) AM_BASE(&mo_command)
-	AM_RANGE(0xd7a204, 0xd7ffff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0xd80000, 0xdfffff) AM_WRITE(colorram_protection_w) AM_BASE((data32_t **)&atarigt_colorram)
+	AM_RANGE(0xd70000, 0xd7ffff) AM_RAM
+	AM_RANGE(0xd80000, 0xdfffff) AM_READWRITE(colorram_protection_r, colorram_protection_w) AM_BASE((data32_t **)&atarigt_colorram)
 	AM_RANGE(0xe04000, 0xe04003) AM_WRITE(led_w)
 	AM_RANGE(0xe08000, 0xe08003) AM_WRITE(latch_w)
 	AM_RANGE(0xe0a000, 0xe0a003) AM_WRITE(atarigen_scanline_int_ack32_w)
 	AM_RANGE(0xe0c000, 0xe0c003) AM_WRITE(atarigen_video_int_ack32_w)
 	AM_RANGE(0xe0e000, 0xe0e003) AM_WRITE(MWA32_NOP)//watchdog_reset_w },
-	AM_RANGE(0xf80000, 0xffffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0xe80000, 0xe80003) AM_READ(inputs_01_r)
+	AM_RANGE(0xe82000, 0xe82003) AM_READ(special_port2_r)
+	AM_RANGE(0xe82004, 0xe82007) AM_READ(special_port3_r)
+	AM_RANGE(0xf80000, 0xffffff) AM_RAM
 ADDRESS_MAP_END
 
 
@@ -844,7 +831,7 @@ static MACHINE_DRIVER_START( atarigt )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68EC020, ATARI_CLOCK_50MHz/2)
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
 	MDRV_CPU_PERIODIC_INT(atarigen_scanline_int_gen,250)
 

@@ -129,6 +129,7 @@ static data32_t* stv_backupram;
 data32_t* stv_scu;
 static data32_t* ioga;
 static data16_t* scsp_regs;
+static data16_t* sound_ram;
 
 int stv_vblank;
 /*SMPC stuff*/
@@ -1450,7 +1451,7 @@ void do_cd_command(void){
 
 				}else{
 
-					cdb_inject_file_info(fid, cdb_sat_file_info);
+					cdb_inject_file_info(fid, (UINT8 *)cdb_sat_file_info);
 
 					size = 12;
 				}
@@ -2715,7 +2716,10 @@ static void dma_direct_lv0()
 		if(scu_dst_add_0 == 2)
 			program_write_word(scu_dst_0,program_read_word(scu_src_0));
 		else
-			program_write_dword(scu_dst_0,program_read_dword(scu_src_0));
+		{
+			program_write_word(scu_dst_0,program_read_word(scu_src_0));
+			program_write_word(scu_dst_0+2,program_read_word(scu_src_0+2));
+		}
 
 		scu_dst_0+=scu_dst_add_0;
 		scu_src_0+=scu_src_add_0;
@@ -2750,7 +2754,10 @@ static void dma_direct_lv1()
 		if(scu_dst_add_1 == 2)
 			program_write_word(scu_dst_1,program_read_word(scu_src_1));
 		else
-			program_write_dword(scu_dst_1,program_read_dword(scu_src_1));
+		{
+			program_write_word(scu_dst_1,program_read_word(scu_src_1));
+			program_write_word(scu_dst_1+2,program_read_word(scu_src_1+2));
+		}
 
 		scu_dst_1+=scu_dst_add_1;
 		scu_src_1+=scu_src_add_1;
@@ -2785,7 +2792,10 @@ static void dma_direct_lv2()
 		if(scu_dst_add_2 == 2)
 			program_write_word(scu_dst_2,program_read_word(scu_src_2));
 		else
-			program_write_dword(scu_dst_2,program_read_dword(scu_src_2));
+		{
+			program_write_word(scu_dst_2,program_read_word(scu_src_2));
+			program_write_word(scu_dst_2+2,program_read_word(scu_src_2+2));
+		}
 
 		scu_dst_2+=scu_dst_add_2;
 		scu_src_2+=scu_src_add_2;
@@ -2991,20 +3001,15 @@ static void dma_indirect_lv2()
 
 WRITE32_HANDLER( stv_sh2_soundram_w )
 {
-	data8_t *SNDRAM = memory_region(REGION_CPU3);
-
-	if (!(mem_mask & 0xff000000)) SNDRAM[offset*4+1] = (data & 0xff000000)>>24;
-	if (!(mem_mask & 0x00ff0000)) SNDRAM[offset*4+0] = (data & 0x00ff0000)>>16;
-	if (!(mem_mask & 0x0000ff00)) SNDRAM[offset*4+3] = (data & 0x0000ff00)>>8;
-	if (!(mem_mask & 0x000000ff)) SNDRAM[offset*4+2] = (data & 0x000000ff)>>0;
+	COMBINE_DATA(sound_ram+offset*2+1);
+	data >>= 16;
+	mem_mask >>= 16;
+	COMBINE_DATA(sound_ram+offset*2);
 }
 
 READ32_HANDLER( stv_sh2_soundram_r )
 {
-	data8_t *SNDRAM = memory_region(REGION_CPU3);
-
-	return  (SNDRAM[offset*4+1]<<24) | (SNDRAM[offset*4+0]<<16) | (SNDRAM[offset*4+3]<<8) | (SNDRAM[offset*4+2]<<0);
-
+	return (sound_ram[offset*2]<<16)|sound_ram[offset*2+1];
 }
 
 static READ32_HANDLER( stv_scsp_regs_r32 )
@@ -3053,120 +3058,38 @@ extern WRITE32_HANDLER( stv_vdp1_regs_w );
 extern READ32_HANDLER ( stv_vdp1_vram_r );
 extern WRITE32_HANDLER ( stv_vdp1_vram_w );
 
-static READ32_HANDLER( stv_workram_h_mirror_r )
-{
-	offset = offset & ((0x0100000/4)-1);
-	return stv_workram_h[offset];
-}
-
-
-static ADDRESS_MAP_START( stv_master_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x0007ffff) AM_READ(MRA32_ROM)   // bios
-	AM_RANGE(0x00100000, 0x0010007f) AM_READ(stv_SMPC_r32)/*SMPC*/
-	AM_RANGE(0x00180000, 0x0018ffff) AM_READ(MRA32_BANK5)	 /*Back up RAM*/
-	AM_RANGE(0x00200000, 0x002fffff) AM_READ(MRA32_BANK4)
-	AM_RANGE(0x00400000, 0x0040001f) AM_READ(stv_io_r32)
-	AM_RANGE(0x02000000, 0x04ffffff) AM_READ(MRA32_BANK1) // cartridge
-//	AM_RANGE(0x02200000, 0x04ffffff) AM_READ(read_cart) // cartridge
-//	AM_RANGE(0x05000000, 0x058fffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x05800000, 0x0589ffff) AM_READ(cdregister_r)
+static ADDRESS_MAP_START( stv_mem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x0007ffff) AM_ROM   // bios
+	AM_RANGE(0x00100000, 0x0010007f) AM_READWRITE(stv_SMPC_r32, stv_SMPC_w32)
+	AM_RANGE(0x00180000, 0x0018ffff) AM_RAM AM_SHARE(1) AM_BASE(&stv_backupram)
+	AM_RANGE(0x00200000, 0x002fffff) AM_RAM AM_SHARE(2) AM_BASE(&stv_workram_l)
+	AM_RANGE(0x00400000, 0x0040001f) AM_READWRITE(stv_io_r32, stv_io_w32) AM_BASE(&ioga) AM_SHARE(4)
+	AM_RANGE(0x01000000, 0x01000003) AM_WRITE(minit_w)
+	AM_RANGE(0x01406f40, 0x01406f43) AM_WRITE(minit_w) // prikura seems to write here ..
+//	AM_RANGE(0x01000000, 0x01000003) AM_WRITE(minit_w) AM_MIRROR(0x0007ffffc)
+	AM_RANGE(0x01800000, 0x01800003) AM_WRITE(sinit_w)
+	AM_RANGE(0x02000000, 0x04ffffff) AM_ROMBANK(1) // cartridge
+	AM_RANGE(0x05800000, 0x0589ffff) AM_READWRITE(cdregister_r, cdregister_w)
 	/* Sound */
-	AM_RANGE(0x05a00000, 0x05afffff) AM_READ(stv_sh2_soundram_r)
-	AM_RANGE(0x05b00000, 0x05b00fff) AM_READ(stv_scsp_regs_r32)
+	AM_RANGE(0x05a00000, 0x05a7ffff) AM_READWRITE(stv_sh2_soundram_r, stv_sh2_soundram_w)
+	AM_RANGE(0x05b00000, 0x05b00fff) AM_READWRITE(stv_scsp_regs_r32, stv_scsp_regs_w32)
 	/* VDP1 */
 	/*0x05c00000-0x05c7ffff VRAM*/
 	/*0x05c80000-0x05c9ffff Frame Buffer 0*/
 	/*0x05ca0000-0x05cbffff Frame Buffer 1*/
 	/*0x05d00000-0x05d7ffff VDP1 Regs */
-	AM_RANGE(0x05c00000, 0x05cbffff) AM_READ(stv_vdp1_vram_r)
-	AM_RANGE(0x05d00000, 0x05d0001f) AM_READ(stv_vdp1_regs_r)
-	AM_RANGE(0x5e00000, 0x5efffff) AM_READ(stv_vdp2_vram_r)
-	AM_RANGE(0x5f00000, 0x5f7ffff) AM_READ(stv_vdp2_cram_r)
-	AM_RANGE(0x5f80000, 0x5fbffff) AM_READ(stv_vdp2_regs_r)
-//	AM_RANGE(0x05e00000, 0x05e7ffff) AM_READ(MRA32_RAM)
-//	AM_RANGE(0x05f00000, 0x05f0ffff) AM_READ(stv_palette_r) /* CRAM */
-//	AM_RANGE(0x05f80000, 0x05fbffff) AM_READ(stv_vdp2_regs_r32) /* REGS */
-	AM_RANGE(0x05fe0000, 0x05fe00cf) AM_READ(stv_scu_r32)
-	AM_RANGE(0x06000000, 0x060fffff) AM_READ(MRA32_BANK3)
-	AM_RANGE(0x06100000, 0x07ffffff) AM_READ(stv_workram_h_mirror_r) // hanagumi reads the char select 1p icon and timer gfx from here ..
+	AM_RANGE(0x05c00000, 0x05cbffff) AM_READWRITE(stv_vdp1_vram_r, stv_vdp1_vram_w)
+	AM_RANGE(0x05d00000, 0x05d0001f) AM_READWRITE(stv_vdp1_regs_r, stv_vdp1_regs_w)
+	AM_RANGE(0x05e00000, 0x05efffff) AM_READWRITE(stv_vdp2_vram_r, stv_vdp2_vram_w)
+	AM_RANGE(0x05f00000, 0x05f7ffff) AM_READWRITE(stv_vdp2_cram_r, stv_vdp2_cram_w)
+	AM_RANGE(0x05f80000, 0x05fbffff) AM_READWRITE(stv_vdp2_regs_r, stv_vdp2_regs_w)
+	AM_RANGE(0x05fe0000, 0x05fe00cf) AM_READWRITE(stv_scu_r32, stv_scu_w32)
+	AM_RANGE(0x06000000, 0x060fffff) AM_RAM AM_MIRROR(0x01f00000) AM_SHARE(3) AM_BASE(&stv_workram_h)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( stv_master_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x0007ffff) AM_WRITE(MWA32_ROM)
-	AM_RANGE(0x00100000, 0x0010007f) AM_WRITE(stv_SMPC_w32)
-	AM_RANGE(0x00180000, 0x0018ffff) AM_WRITE(MWA32_BANK5) // backup ram
-	AM_RANGE(0x00200000, 0x002fffff) AM_WRITE(MWA32_BANK4) // workram low
-	AM_RANGE(0x00400000, 0x0040001f) AM_WRITE(stv_io_w32) AM_BASE(&ioga)
-	AM_RANGE(0x01000000, 0x01000003) AM_WRITE(minit_w)
-	AM_RANGE(0x01406f40, 0x01406f43) AM_WRITE(minit_w)	/* needed by prikura */	
-	AM_RANGE(0x02000000, 0x04ffffff) AM_WRITE(MWA32_ROM)
-//	AM_RANGE(0x05000000, 0x058fffff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x05800000, 0x0589ffff) AM_WRITE(cdregister_w)
-	/* Sound */
-	AM_RANGE(0x05a00000, 0x05afffff) AM_WRITE(stv_sh2_soundram_w)
-	AM_RANGE(0x05b00000, 0x05b00fff) AM_WRITE(stv_scsp_regs_w32)
-	/* VDP1 */
-	AM_RANGE(0x05c00000, 0x05cbffff) AM_WRITE(stv_vdp1_vram_w)
-	AM_RANGE(0x05d00000, 0x05d0001f) AM_WRITE(stv_vdp1_regs_w)
-	AM_RANGE(0x5e00000, 0x5efffff) AM_WRITE(stv_vdp2_vram_w)
-	AM_RANGE(0x5f00000, 0x5f7ffff) AM_WRITE(stv_vdp2_cram_w)
-	AM_RANGE(0x5f80000, 0x5fbffff) AM_WRITE(stv_vdp2_regs_w)
-	AM_RANGE(0x05fe0000, 0x05fe00cf) AM_WRITE(stv_scu_w32)
-	AM_RANGE(0x06000000, 0x060fffff) AM_WRITE(MWA32_BANK3)
-//	AM_RANGE(0x06100000, 0x07ffffff) AM_WRITE(MWA32_NOP)
-ADDRESS_MAP_END
-
-/* slave cpu shares all devices with master */
-
-static ADDRESS_MAP_START( stv_slave_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x0007ffff) AM_READ(MRA32_ROM)   // bios
-	AM_RANGE(0x00100000, 0x0010007f) AM_READ(stv_SMPC_r32)/*SMPC*/
-	AM_RANGE(0x00180000, 0x0018ffff) AM_READ(MRA32_BANK5)	 /*Back up RAM*/
-	AM_RANGE(0x00200000, 0x002fffff) AM_READ(MRA32_BANK4)
-	AM_RANGE(0x00400000, 0x0040001f) AM_READ(stv_io_r32)
-	AM_RANGE(0x02000000, 0x04ffffff) AM_READ(MRA32_BANK1) // cartridge
-//	AM_RANGE(0x05000000, 0x058fffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x05a00000, 0x05afffff) AM_READ(stv_sh2_soundram_r)
-	AM_RANGE(0x05b00000, 0x05b00fff) AM_READ(stv_scsp_regs_r32)
-	AM_RANGE(0x05c00000, 0x05cbffff) AM_READ(stv_vdp1_vram_r)
-	AM_RANGE(0x05d00000, 0x05d0001f) AM_READ(stv_vdp1_regs_r)
-	AM_RANGE(0x05e00000, 0x05efffff) AM_READ(stv_vdp2_vram_r)
-	AM_RANGE(0x05f00000, 0x05f7ffff) AM_READ(stv_vdp2_cram_r)
-	AM_RANGE(0x05f80000, 0x05fbffff) AM_READ(stv_vdp2_regs_r)
-	AM_RANGE(0x05fe0000, 0x05fe00cf) AM_READ(stv_scu_r32)
-	AM_RANGE(0x06000000, 0x060fffff) AM_READ(MRA32_BANK3)
-	AM_RANGE(0x06100000, 0x07ffffff) AM_READ(stv_workram_h_mirror_r) // hanagumi reads the char select 1p icon and timer gfx from here ..
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( stv_slave_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x0007ffff) AM_WRITE(MWA32_ROM)
-	AM_RANGE(0x00100000, 0x0010007f) AM_WRITE(stv_SMPC_w32)
-	AM_RANGE(0x00180000, 0x0018ffff) AM_WRITE(MWA32_BANK5)
-	AM_RANGE(0x00200000, 0x002fffff) AM_WRITE(MWA32_BANK4)
-	AM_RANGE(0x00400000, 0x0040001f) AM_WRITE(stv_io_w32) AM_BASE(&ioga)
-//	AM_RANGE(0x01000000, 0x01000003) AM_WRITE(minit_w)
-	AM_RANGE(0x01800000, 0x01800003) AM_WRITE(sinit_w)
-	AM_RANGE(0x02000000, 0x04ffffff) AM_WRITE(MWA32_ROM)
-//	AM_RANGE(0x05000000, 0x058fffff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x05a00000, 0x05afffff) AM_WRITE(stv_sh2_soundram_w)
-	AM_RANGE(0x05b00000, 0x05b00fff) AM_WRITE(stv_scsp_regs_w32)
-	AM_RANGE(0x05c00000, 0x05cbffff) AM_WRITE(stv_vdp1_vram_w)
-	AM_RANGE(0x05d00000, 0x05d0001f) AM_WRITE(stv_vdp1_regs_w)
-	AM_RANGE(0x05e00000, 0x05efffff) AM_WRITE(stv_vdp2_vram_w)
-	AM_RANGE(0x05f00000, 0x05f7ffff) AM_WRITE(stv_vdp2_cram_w)
-	AM_RANGE(0x05f80000, 0x05fbffff) AM_WRITE(stv_vdp2_regs_w)
-	AM_RANGE(0x05fe0000, 0x05fe00cf) AM_WRITE(stv_scu_w32)
-	AM_RANGE(0x06000000, 0x060fffff) AM_WRITE(MWA32_BANK3)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_BANK2)
-	AM_RANGE(0x100000, 0x100fff) AM_READ(SCSP_0_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_BANK2)	/*actually SDRAM*/
-	AM_RANGE(0x100000, 0x100fff) AM_WRITE(SCSP_0_w)
+static ADDRESS_MAP_START( sound_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_RAM AM_BASE(&sound_ram)
+	AM_RANGE(0x100000, 0x100fff) AM_READWRITE(SCSP_0_r, SCSP_0_w)
 ADDRESS_MAP_END
 
 #define STV_PLAYER_INPUTS(_n_, _b1_, _b2_, _b3_, _b4_) \
@@ -3528,19 +3451,9 @@ DRIVER_INIT ( stv )
 
 	cpu_setbank(1,&ROM[0x000000]);
 
-	/* we allocate the memory here so its easier to share between cpus */
 	smpc_ram = auto_malloc (0x80);
 	stv_scu = auto_malloc (0x100);
 	scsp_regs = auto_malloc (0x1000);
-
-	stv_workram_h = auto_malloc (0x100000);
-	stv_workram_l = auto_malloc (0x100000);
-	stv_workram_l = auto_malloc (0x100000);
-	stv_backupram = auto_malloc (0x10000);
-
-	cpu_setbank(3,&stv_workram_h[0x000000]);
-	cpu_setbank(4,&stv_workram_l[0x000000]);
-	cpu_setbank(5,&stv_backupram[0x000000]);
 
 	install_stvbios_speedups();
 
@@ -3564,11 +3477,7 @@ DRIVER_INIT ( stv )
 
 MACHINE_INIT( stv )
 {
-
-	unsigned char *SH2ROM = memory_region(REGION_USER1);
-	unsigned char *SNDRAM = memory_region(REGION_CPU3);
-	cpu_setbank(1,&SH2ROM[0x000000]);
-	cpu_setbank(2,&SNDRAM[0x000000]);
+	cpu_setbank(1,memory_region(REGION_USER1));
 
 	// don't let the slave cpu and the 68k go anywhere
 	cpu_set_halt_line(1, ASSERT_LINE);
@@ -3703,16 +3612,16 @@ static MACHINE_DRIVER_START( stv )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(SH2, 28000000) // 28MHz
-	MDRV_CPU_PROGRAM_MAP(stv_master_readmem,stv_master_writemem)
+	MDRV_CPU_PROGRAM_MAP(stv_mem, 0)
 	MDRV_CPU_VBLANK_INT(stv_interrupt,264)/*264 lines,224 display lines*/
 	MDRV_CPU_CONFIG(sh2_conf_master)
 
 	MDRV_CPU_ADD(SH2, 28000000) // 28MHz
-	MDRV_CPU_PROGRAM_MAP(stv_slave_readmem,stv_slave_writemem)
+	MDRV_CPU_PROGRAM_MAP(stv_mem, 0)
 	MDRV_CPU_CONFIG(sh2_conf_slave)
 
 	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_mem, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -4565,31 +4474,31 @@ GAMEBX( 1995, ejihon,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega",
 GAMEBX( 1996, colmns97,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 "Columns 97", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1996, diehard,   stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 "Die Hard Arcade (US)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
 GAMEBX( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  dnmtdeka,  ROT0,   "Sega", 	 "Dynamite Deka (Japan)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
-GAMEBX( 1997, winterht,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 "Winter Heat", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
+GAMEBX( 1997, winterht,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 "Winter Heat", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS  )
 GAMEBX( 1996, prikura,   stvbios, stvbios, stv, stv,  prikura,   ROT0,   "Atlus",    "Princess Clara Daisakusen", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 
 /* Almost */
 GAMEBX( 1995, fhboxers,  stvbios, stvbios, stv, stv,  fhboxers,  ROT0,   "Sega", 	 "Funky Head Boxers", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Success",  "Othello Shiyouyo", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stvmp,ic13,      ROT0,   "Athena",   "Pro Mahjong Kiwame S", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Success",  "Othello Shiyouyo", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stvmp,ic13,      ROT0,   "Athena",   "Pro Mahjong Kiwame S", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 
 /* Doing Something.. but not enough yet */
 GAMEBX( 1995, shanhigw,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sunsoft / Activision", "Shanghai - The Great Wall / Shanghai Triple Threat", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Atlus",      "Power Instinct 3 - Groove On Fight", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1999, danchih,   stvbios, stvbios, stv, stvmp,stv,       ROT0, "Altron (Tecmo license)", "Danchi de Hanafuda", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",    "Guardian Force", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, elandore,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sai-Mate",   "Fighting Dragon Legend Elan Doree", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1999, danchih,   stvbios, stvbios, stv, stvmp,stv,       ROT0, "Altron (Tecmo license)", "Danchi de Hanafuoda", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",    "Guardian Force", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, elandore,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sai-Mate",   "Fighting Dragon Legend Elan Doree", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, myfairld,  stvbios, stvbios, stv, stvmp,stv,       ROT0, "Micronet",   "Virtual Mahjong 2 - My Fair Lady", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, rsgun,     stvbios, stvbios, stv, stv,  stv,       ROT0, "Treasure",   "Radiant Silvergun", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, rsgun,     stvbios, stvbios, stv, stv,  stv,       ROT0, "Treasure",   "Radiant Silvergun", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, sassisu,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Taisen Tanto-R Sashissu!!", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, sleague,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Super Major League (US)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, finlarch,  sleague, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Final Arch (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, sleague,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Super Major League (US)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, finlarch,  sleague, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Final Arch (Japan)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 
 // crashes
 GAMEBX( 1995, suikoenb,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Data East",  "Suikoenbu", GAME_NO_SOUND | GAME_NOT_WORKING )
 
 // this needs the dsp
-GAMEBX( 1995, vfremix,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Virtua Fighter Remix", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, vfremix,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Virtua Fighter Remix", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 
 /* not working */
 
@@ -4599,18 +4508,18 @@ GAMEBX( 1998, astrass,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sunsoft"
 GAMEBX( 1996, batmanfr,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Acclaim",    "Batman Forever", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, decathlt,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Decathlete", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1999, ffreveng,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Capcom",     "Final Fight Revenge", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, findlove,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Daiki",	     "Find Love", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, findlove,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Daiki",	     "Find Love", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1994, gaxeduel,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Golden Axe - The Duel", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, introdon,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sunsoft / Success", "Karaoke Quiz Intro Don Don!", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, maruchan,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Maru-Chan de Goo!", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1997, maruchan,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Maru-Chan de Goo!", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, pblbeach,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "T&E Soft",   "Pebble Beach - The Great Shot", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, sandor,    stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Sando-R", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, thunt,     sandor,  stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Treasure Hunt", GAME_NO_SOUND | GAME_NOT_WORKING ) // this one actually does something if you use the sandor gfx
 GAMEBX( 1998, seabass,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "A Wave inc. (Able license)", "Sea Bass Fishing", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, sokyugrt,  stvbios, stvbios, stv, stv,  ic13,      ROT0, "Raizing",    "Soukyugurentai / Terra Diver", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, sss,       stvbios, stvbios, stv, stv,  ic13,      ROT0, "Victor / Cave / Capcom", "Steep Slope Sliders", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, twcup98,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Tecmo",      "Tecmo World Cup '98", GAME_NO_SOUND | GAME_NOT_WORKING ) // protected?
-GAMEBX( 1997, vmahjong,  stvbios, stvbios, stv, stvmp,stv,       ROT0, "Micronet",   "Virtual Mahjong", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, twcup98,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Tecmo",      "Tecmo World Cup '98", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING ) // protected?
+GAMEBX( 1997, vmahjong,  stvbios, stvbios, stv, stvmp,stv,       ROT0, "Micronet",   "Virtual Mahjong", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1997, znpwfv,    stvbios, stvbios, stv, stv,  ic13,      ROT0, "Sega", 	     "Zen Nippon Pro-Wrestling Featuring Virtua", GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* there are probably a bunch of other games (some fishing games with cd-rom,Print Club 2 etc.) */

@@ -430,6 +430,20 @@ ROM_END
 
 /*************************************
  *
+ *	Driver init
+ *
+ *************************************/
+
+static DRIVER_INIT( bowlrama )
+{
+	/* turn off the bank switcher */
+	install_mem_write_handler(0, 0x4800, 0x4800, MWA8_NOP);
+}
+
+
+
+/*************************************
+ *
  *	Game drivers
  *
  *************************************/
@@ -437,4 +451,4 @@ ROM_END
 GAME( 1988, capbowl,  0,       capbowl,  capbowl, 0, ROT270, "Incredible Technologies", "Capcom Bowling (set 1)" )
 GAME( 1988, capbowl2, capbowl, capbowl,  capbowl, 0, ROT270, "Incredible Technologies", "Capcom Bowling (set 2)" )
 GAME( 1989, clbowl,   capbowl, capbowl,  capbowl, 0, ROT270, "Incredible Technologies", "Coors Light Bowling" )
-GAME( 1991, bowlrama, 0,       bowlrama, capbowl, 0, ROT270, "P&P Marketing", "Bowl-O-Rama" )
+GAME( 1991, bowlrama, 0,       bowlrama, capbowl, bowlrama, ROT270, "P&P Marketing", "Bowl-O-Rama" )

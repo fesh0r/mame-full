@@ -49,36 +49,34 @@ static DRIVER_INIT( poolshrk )
 }
 
 
-WRITE_HANDLER( poolshrk_scratch_sound_w )
+static WRITE_HANDLER( poolshrk_scratch_sound_w )
 {
-	discrete_sound_w(1, offset);
+	discrete_sound_w(1, offset & 1);
 }
 
-WRITE_HANDLER( poolshrk_score_sound_w )
+static WRITE_HANDLER( poolshrk_score_sound_w )
 {
-	/* This will trigger the sound code for 1 sample */
-	discrete_sound_w(3, 1);
+	discrete_sound_w(3, 1); /* this will trigger the sound code for 1 sample */
 }
 
-WRITE_HANDLER( poolshrk_click_sound_w )
+static WRITE_HANDLER( poolshrk_click_sound_w )
 {
-	/* This will trigger the sound code for 1 sample */
-	discrete_sound_w(2, 1);
+	discrete_sound_w(2, 1); /* this will trigger the sound code for 1 sample */
 }
 
-WRITE_HANDLER( poolshrk_bump_sound_w )
+static WRITE_HANDLER( poolshrk_bump_sound_w )
 {
-	discrete_sound_w(0, offset);
+	discrete_sound_w(0, offset & 1);
 }
 
 
-WRITE_HANDLER( poolshrk_da_latch_w )
+static WRITE_HANDLER( poolshrk_da_latch_w )
 {
 	poolshrk_da_latch = data & 15;
 }
 
 
-WRITE_HANDLER( poolshrk_led_w )
+static WRITE_HANDLER( poolshrk_led_w )
 {
 	if (offset & 2)
 		set_led_status(0, offset & 1);
@@ -87,9 +85,18 @@ WRITE_HANDLER( poolshrk_led_w )
 }
 
 
-READ_HANDLER( poolshrk_input_r )
+static WRITE_HANDLER( poolshrk_watchdog_w )
 {
-	UINT8 val = readinputport(offset);
+	if ((offset & 3) == 3)
+	{
+		watchdog_reset_w(0, 0);
+	}
+}
+
+
+static READ_HANDLER( poolshrk_input_r )
+{
+	UINT8 val = readinputport(offset & 3);
 
 	int x = readinputport(4 + (offset & 1));
 	int y = readinputport(6 + (offset & 1));
@@ -97,11 +104,16 @@ READ_HANDLER( poolshrk_input_r )
 	if (x >= poolshrk_da_latch) val |= 8;
 	if (y >= poolshrk_da_latch) val |= 4;
 
+	if ((offset & 3) == 3)
+	{
+		watchdog_reset_r(0);
+	}
+
 	return val;
 }
 
 
-READ_HANDLER( poolshrk_interrupt_ack_r )
+static READ_HANDLER( poolshrk_irq_reset_r )
 {
 	cpu_set_irq_line(0, 0, CLEAR_LINE);
 
@@ -109,28 +121,22 @@ READ_HANDLER( poolshrk_interrupt_ack_r )
 }
 
 
-static ADDRESS_MAP_START( poolshrk_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x1000, 0x1003) AM_READ(poolshrk_input_r)
-	AM_RANGE(0x6800, 0x6800) AM_READ(poolshrk_interrupt_ack_r)
-	AM_RANGE(0x7000, 0x7fff) AM_READ(MRA8_ROM) /* program */
-	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM) /* program mirror */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( poolshrk_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0400, 0x07ff) AM_WRITE(MWA8_RAM) AM_BASE(&poolshrk_playfield_ram)
-	AM_RANGE(0x0800, 0x0810) AM_WRITE(MWA8_RAM) AM_BASE(&poolshrk_hpos_ram)
-	AM_RANGE(0x0c00, 0x0c10) AM_WRITE(MWA8_RAM) AM_BASE(&poolshrk_vpos_ram)
-	AM_RANGE(0x1003, 0x1003) AM_WRITE(watchdog_reset_w)
-	AM_RANGE(0x1400, 0x1401) AM_WRITE(poolshrk_scratch_sound_w)
-	AM_RANGE(0x1800, 0x1800) AM_WRITE(poolshrk_score_sound_w)
-	AM_RANGE(0x1c00, 0x1c00) AM_WRITE(poolshrk_click_sound_w)
-	AM_RANGE(0x6000, 0x6000) AM_WRITE(poolshrk_da_latch_w)
-	AM_RANGE(0x6400, 0x6401) AM_WRITE(poolshrk_bump_sound_w)
-	AM_RANGE(0x6c00, 0x6c07) AM_WRITE(poolshrk_led_w)
-	AM_RANGE(0x7000, 0x7fff) AM_WRITE(MWA8_ROM) /* program */
-	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_ROM) /* program mirror */
+static ADDRESS_MAP_START( poolshrk_cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(15) )
+	AM_RANGE(0x0000, 0x00ff) AM_MIRROR(0x2300) AM_RAM
+	AM_RANGE(0x0400, 0x07ff) AM_MIRROR(0x2000) AM_WRITE(MWA8_RAM) AM_BASE(&poolshrk_playfield_ram)
+	AM_RANGE(0x0800, 0x080f) AM_MIRROR(0x23f0) AM_WRITE(MWA8_RAM) AM_BASE(&poolshrk_hpos_ram)
+	AM_RANGE(0x0c00, 0x0c0f) AM_MIRROR(0x23f0) AM_WRITE(MWA8_RAM) AM_BASE(&poolshrk_vpos_ram)
+	AM_RANGE(0x1000, 0x13ff) AM_MIRROR(0x2000) AM_READWRITE(poolshrk_input_r, poolshrk_watchdog_w)
+	AM_RANGE(0x1400, 0x17ff) AM_MIRROR(0x2000) AM_WRITE(poolshrk_scratch_sound_w)
+	AM_RANGE(0x1800, 0x1bff) AM_MIRROR(0x2000) AM_WRITE(poolshrk_score_sound_w)
+	AM_RANGE(0x1c00, 0x1fff) AM_MIRROR(0x2000) AM_WRITE(poolshrk_click_sound_w)
+	AM_RANGE(0x4000, 0x4000) AM_NOP /* diagnostic ROM location */
+	AM_RANGE(0x6000, 0x63ff) AM_WRITE(poolshrk_da_latch_w)
+	AM_RANGE(0x6400, 0x67ff) AM_WRITE(poolshrk_bump_sound_w)
+	AM_RANGE(0x6800, 0x6bff) AM_READ(poolshrk_irq_reset_r)
+	AM_RANGE(0x6c00, 0x6fff) AM_WRITE(poolshrk_led_w)
+	AM_RANGE(0x7000, 0x7fff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -342,11 +348,10 @@ static MACHINE_DRIVER_START( poolshrk )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6800, 11055000 / 8) /* ? */
-	MDRV_CPU_PROGRAM_MAP(poolshrk_readmem, poolshrk_writemem)
+	MDRV_CPU_PROGRAM_MAP(poolshrk_cpu_map, 0)
 	MDRV_CPU_VBLANK_INT(irq0_line_assert, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -367,7 +372,6 @@ ROM_START( poolshrk )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "7329.k1", 0x7000, 0x800, CRC(88152245) SHA1(c7c5e43ea488a197e92a1dc2231578f8ed86c98d) )
 	ROM_LOAD( "7330.l1", 0x7800, 0x800, CRC(fb41d3e9) SHA1(c17994179362da13acfcd36a28f45e328428c031) )
-	ROM_RELOAD(          0xF800, 0x800 )
 
 	ROM_REGION( 0x400, REGION_GFX1, ROMREGION_DISPOSE )   /* sprites */
 	ROM_LOAD( "7325.j5", 0x0000, 0x200, CRC(fae87eed) SHA1(8891d0ea60f72f826d71dc6b064a2ba81b298914) )
@@ -376,7 +380,7 @@ ROM_START( poolshrk )
 	ROM_REGION( 0x200, REGION_GFX2, ROMREGION_DISPOSE )   /* tiles */
 	ROM_LOAD( "7328.n6", 0x0000, 0x200, CRC(64bcbf3a) SHA1(a4e3ce6b4734234359e3ef784a771e40580c2a2a) )
 
-	ROM_REGION( 0x20, REGION_PROMS, 0 )                   /* sprite offsets */
+	ROM_REGION( 0x20, REGION_PROMS, 0 )                   /* line offsets */
 	ROM_LOAD( "7327.k6", 0x0000, 0x020, CRC(f74cef5b) SHA1(f470bf5b193dae4b44e89bc4c4476cf8d98e7cfd) )
 ROM_END
 

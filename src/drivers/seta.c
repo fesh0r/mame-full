@@ -1078,6 +1078,44 @@ X1-010                           5168-10       68000-16
 
                              X1-007    X1-004
 
+***************************************************************************
+
+
+Pairs Love
+Allumer, 199x
+
+PCB Layout
+----------
+
+PO-068B
+|-----------------------------------------|
+|             X1-007  X1-006   UT2-001-005|
+|                                         |
+|     4050                     UT2-001-004|
+|                                         |
+|                                         |
+|                             X1-002A     |
+|                                         |
+|J                                        |
+|A   X1-004                               |
+|M                            X1-001A     |
+|M           DSW1                         |
+|A                                        |
+|            DSW2                  6264   |
+|                                  6264   |
+|    X1-009                               |
+|                      62256              |
+|                                         |
+|                    68000                |
+|    UT2-001-003       62256  UT2-001-002 |
+|                   6264                  |
+|    X1-010  16MHz            UT2-001-001 |
+|-----------------------------------------|
+Notes:
+      68000 clock: 8.000MHz
+      VSync: 60Hz
+
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -2795,6 +2833,36 @@ static ADDRESS_MAP_START( utoukond_sound_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x80, 0x80) AM_WRITE(MWA8_NOP) //?
 ADDRESS_MAP_END
 
+/***************************************************************************
+								Pairs Love
+***************************************************************************/
+
+static ADDRESS_MAP_START( pairlove_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x300000, 0x300003) AM_READ(seta_dsw_r			)	// DSW
+	AM_RANGE(0x500000, 0x500001) AM_READ(input_port_0_word_r	)	// P1
+	AM_RANGE(0x500002, 0x500003) AM_READ(input_port_1_word_r	)	// P2
+	AM_RANGE(0x500004, 0x500005) AM_READ(input_port_2_word_r	)	// Coins
+	AM_RANGE(0xa00000, 0xa03fff) AM_READ(seta_sound_word_r		)	// Sound
+	AM_RANGE(0xb00000, 0xb00fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0xc00000, 0xc03fff) AM_READ(MRA16_RAM				)	// Sprites Code + X + Attr
+	AM_RANGE(0xd00000, 0xd00001) AM_READ(MRA16_RAM				)	// ? 0x4000
+	AM_RANGE(0xe00000, 0xe00607) AM_READ(MRA16_RAM				)	// Sprites Y
+	AM_RANGE(0xf00000, 0xf0ffff) AM_READ(MRA16_RAM				)	// RAM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( pairlove_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM					)	// ROM
+	AM_RANGE(0x100000, 0x100001) AM_WRITE(MWA16_NOP					)	// ? 1 (start of interrupts, main loop: watchdog?)
+	AM_RANGE(0x200000, 0x200001) AM_WRITE(MWA16_NOP					)	// ? 0/1 (IRQ acknowledge?)
+	AM_RANGE(0x400000, 0x400001) AM_WRITE(seta_vregs_w) AM_BASE(&seta_vregs	)	// Coin Lockout + Sound Enable (bit 4?)
+	AM_RANGE(0xa00000, 0xa03fff) AM_WRITE(seta_sound_word_w			)	// Sound
+	AM_RANGE(0xb00000, 0xb00fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2	)	// Sprites Code + X + Attr
+	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(MWA16_RAM					)	// ? 0x4000
+	AM_RANGE(0xe00000, 0xe00607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16	)	// Sprites Y
+	AM_RANGE(0xf00000, 0xf0ffff) AM_WRITE(MWA16_RAM					)	// RAM
+ADDRESS_MAP_END
 
 
 
@@ -5746,6 +5814,75 @@ INPUT_PORTS_START( zingzip )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
 INPUT_PORTS_END
 
+/*************************************
+  Pairs Love
+*************************************/
+
+INPUT_PORTS_START( pairlove )
+	PORT_START	// IN0 - Player 1 - $500001.b
+	JOY_TYPE1_2BUTTONS(1)	// button2 = speed up
+
+	PORT_START	// IN1 - Player 2 - $500003.b
+	JOY_TYPE1_2BUTTONS(2)
+
+	PORT_START	// IN2 - Coins + DSW - $500005.b
+	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 5 )
+	PORT_BIT_IMPULSE( 0x0002, IP_ACTIVE_LOW, IPT_COIN2, 5 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_TILT     )
+
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown )  )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+INPUT_PORTS_END
+
+
 
 /***************************************************************************
 
@@ -7133,7 +7270,34 @@ static MACHINE_DRIVER_START( zingzip )
 	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
 MACHINE_DRIVER_END
 
+/***************************************************************************
+								Pairs Love
+***************************************************************************/
 
+static MACHINE_DRIVER_START( pairlove )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_PROGRAM_MAP(pairlove_readmem,pairlove_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 48*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(tndrcade_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)	/* sprites only */
+
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -7220,6 +7384,31 @@ ROM_START( downtown )
 	ROM_LOAD16_BYTE( "ud2001.003", 0x000001, 0x040000, CRC(e7d5fa5f) SHA1(48612514598711aa73bf75243c842f0aca72f3d0) )
 	ROM_LOAD16_BYTE( "ud2000.002", 0x080000, 0x010000, CRC(ca976b24) SHA1(3b2e362f414b0103dd02c9af6a5d480ec2cf9ca3) )
 	ROM_LOAD16_BYTE( "ud2000.001", 0x080001, 0x010000, CRC(1708aebd) SHA1(337a9e8d5da5b13a7ea4ee728de6b82fe92e16c5) )
+
+	ROM_REGION( 0x04c000, REGION_CPU2, 0 )		/* 65c02 Code */
+	ROM_LOAD( "ud2002.004", 0x004000, 0x040000, CRC(bbd538b1) SHA1(de4c43bfc4004a14f9f66b5e8ff192b00c45c003) )
+	ROM_RELOAD(             0x00c000, 0x040000             )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD16_BYTE( "ud2005.t01", 0x000000, 0x080000, CRC(77e6d249) SHA1(cdf67211cd447858293188511e826640fe24078b) )
+	ROM_LOAD16_BYTE( "ud2006.t02", 0x000001, 0x080000, CRC(6e381bf2) SHA1(ba46e019d2991dec539444ef7376fe0e9a6a8b75) )
+	ROM_LOAD16_BYTE( "ud2007.t03", 0x100000, 0x080000, CRC(737b4971) SHA1(2a034011b0ac03d532a89b544f4eec497ac7ee80) )
+	ROM_LOAD16_BYTE( "ud2008.t04", 0x100001, 0x080000, CRC(99b9d757) SHA1(c3a763993305110ec2a0b231d75fbef4c385d21b) )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "ud2009.t05", 0x000000, 0x080000, CRC(aee6c581) SHA1(5b2150a308ca12eea8148d0bbff663b3baf0c831) )
+	ROM_LOAD( "ud2010.t06", 0x080000, 0x080000, CRC(3d399d54) SHA1(7d9036e73fbf0e9c3b976336e3e4786b17b2f4fc) )
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "ud2011.t07", 0x000000, 0x080000, CRC(9c9ff69f) SHA1(3840b654f4f709bc4c03dfe4ee79369d5c70dd62) )
+ROM_END
+
+ROM_START( downtowp )
+	ROM_REGION( 0x0a0000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "ud2001.000",   0x000000, 0x040000, CRC(f1965260) SHA1(c0560342238d75f9b81ae9f3408cacfbcd331529) )
+	ROM_LOAD16_BYTE( "ud2001.003",   0x000001, 0x040000, CRC(e7d5fa5f) SHA1(48612514598711aa73bf75243c842f0aca72f3d0) )
+	ROM_LOAD16_BYTE( "ud2_061e.bin", 0x080000, 0x010000, CRC(251d6552) SHA1(0f78bf142db826e956f670ba81102804e88fa2ed) )
+	ROM_LOAD16_BYTE( "ud2_061o.bin", 0x080001, 0x010000, CRC(6394a7c0) SHA1(9f5099b32b3c3e100441f6c0ccbe88c19b01a9e5) )
 
 	ROM_REGION( 0x04c000, REGION_CPU2, 0 )		/* 65c02 Code */
 	ROM_LOAD( "ud2002.004", 0x004000, 0x040000, CRC(bbd538b1) SHA1(de4c43bfc4004a14f9f66b5e8ff192b00c45c003) )
@@ -8028,6 +8217,21 @@ ROM_START( neobattl )
 	ROM_LOAD( "bp923005.u4", 0x000000, 0x100000, CRC(7c0e37be) SHA1(5d5779de948f986971a82db2a5a4302044c3257a) )
 ROM_END
 
+ROM_START( pairlove )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "ut2-001-001.1a",  0x000000, 0x010000, CRC(083338b7) SHA1(d775c1618272967713bd3f3164fdfc42dc5c36ca) )
+	ROM_LOAD16_BYTE( "ut2-001-002.3a",  0x000001, 0x010000, CRC(39d88aae) SHA1(8498dfb221e9b34a889594fe5ed0431814b733e6) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "ut2-001-004.5j",  0x000000, 0x080000, CRC(fdc47b26) SHA1(0de51bcf67b909ac9578f0d1b14af8a4c758aacf) )
+	ROM_LOAD( "ut2-001-005.5l",  0x080000, 0x080000, CRC(076f94a2) SHA1(94b4b41a497dea1b6db5396bd7cd81ebcb217735) )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "ut2-001-003.12a",  0x000000, 0x080000, CRC(900219a9) SHA1(3260a900df25beba597bf947a9fbb6f7392827d7) )
+	ROM_RELOAD(                0x080000, 0x080000             )
+ROM_END
+
+
 
 READ16_HANDLER( twineagl_debug_r )
 {
@@ -8231,6 +8435,7 @@ GAME( 1987, tndrcade, 0,        tndrcade, tndrcade, 0,        ROT270, "[Seta] (T
 GAME( 1987, tndrcadj, tndrcade, tndrcade, tndrcadj, 0,        ROT270, "[Seta] (Taito license)", "Tokusyu Butai U.A.G. (Japan)" ) // License: DSW
 GAME( 1988, twineagl, 0,        twineagl, twineagl, twineagl, ROT270, "Seta (Taito license)",   "Twin Eagle - Revenge Joe's Brother" ) // Country/License: DSW
 GAME( 1989, downtown, 0,        downtown, downtown, downtown, ROT270, "Seta",                   "DownTown" ) // Country/License: DSW
+GAME( 1989, downtowp, downtown,        downtown, downtown, downtown, ROT270, "Seta",                   "DownTown (prototype)" ) // Country/License: DSW
 GAMEX(1989, usclssic, 0,        usclssic, usclssic, 0,        ROT270, "Seta",                   "U.S. Classic", GAME_WRONG_COLORS ) // Country/License: DSW
 GAME( 1989, calibr50, 0,        calibr50, calibr50, 0,        ROT270, "Athena / Seta",          "Caliber 50" ) // Country/License: DSW
 GAME( 1989, arbalest, 0,        metafox,  arbalest, arbalest, ROT270, "Seta",                   "Arbalester" ) // Country/License: DSW
@@ -8242,6 +8447,7 @@ GAME( 1989, wits,     0,        wits,     wits,     0,        ROT0,   "Athena (V
 GAME( 1990, thunderl, 0,        thunderl, thunderl, 0,        ROT270, "Seta",                   "Thunder & Lightning" ) // Country/License: DSW
 GAME( 1991, rezon,    0,        rezon,    rezon,    rezon,    ROT0,   "Allumer",                "Rezon" )
 GAME( 1991, stg,      0,        drgnunit, stg,      0,        ROT270, "Athena / Tecmo",         "Strike Gunner S.T.G" )
+GAME( 1991, pairlove, 0,        pairlove, pairlove, 0,        ROT270, "Athena",                 "Pairs Love" )
 GAME( 1992, blandia,  0,        blandia,  blandia,  blandia,  ROT0,   "Allumer",                "Blandia" )
 GAME( 1992, blandiap, blandia,  blandiap, blandia,  0,        ROT0,   "Allumer",                "Blandia (prototype)" )
 GAME( 1992, blockcar, 0,        blockcar, blockcar, 0,        ROT90,  "Visco",                  "Block Carnival / Thunder & Lightning 2" ) // Title: DSW

@@ -17,49 +17,26 @@ static INTERRUPT_GEN( namcos10_vblank )
 {
 }
 
-static ADDRESS_MAP_START( namcos10_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x003fffff) AM_WRITE(MWA32_RAM)    /* ram */
-	AM_RANGE(0x1f800000, 0x1f8003ff) AM_WRITE(MWA32_BANK1)  /* scratchpad */
-	AM_RANGE(0x1f801000, 0x1f801007) AM_WRITE(MWA32_NOP)
-	AM_RANGE(0x1f801008, 0x1f80100b) AM_WRITE(MWA32_RAM)    /* ?? */
-	AM_RANGE(0x1f80100c, 0x1f80102f) AM_WRITE(MWA32_NOP)
-	AM_RANGE(0x1f801040, 0x1f80105f) AM_WRITE(psx_sio_w)
-	AM_RANGE(0x1f801060, 0x1f80106f) AM_WRITE(MWA32_NOP)
-	AM_RANGE(0x1f801070, 0x1f801077) AM_WRITE(psx_irq_w)
-	AM_RANGE(0x1f801080, 0x1f8010ff) AM_WRITE(psx_dma_w)
-	AM_RANGE(0x1f801100, 0x1f80113f) AM_WRITE(psx_counter_w)
-	AM_RANGE(0x1f801810, 0x1f801817) AM_WRITE(psx_gpu_w)
-	AM_RANGE(0x1f801820, 0x1f801827) AM_WRITE(psx_mdec_w)
-	AM_RANGE(0x1f801c00, 0x1f801dff) AM_WRITE(MWA32_NOP)
-	AM_RANGE(0x1f802020, 0x1f802033) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x1f802040, 0x1f802043) AM_WRITE(MWA32_NOP)
-	AM_RANGE(0x1fc00000, 0x1fffffff) AM_WRITE(MWA32_ROM)    /* bios mirror */
-	AM_RANGE(0x80000000, 0x803fffff) AM_WRITE(MWA32_BANK3)  /* ram mirror */
-	AM_RANGE(0x9fc00000, 0x9fffffff) AM_WRITE(MWA32_ROM)    /* bios mirror */
-	AM_RANGE(0xa0000000, 0xa03fffff) AM_WRITE(MWA32_BANK5)  /* ram mirror */
-	AM_RANGE(0xbfc00000, 0xbfffffff) AM_WRITE(MWA32_ROM)    /* bios */
-	AM_RANGE(0xfffe0130, 0xfffe0133) AM_WRITE(MWA32_NOP)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( namcos10_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x003fffff) AM_READ(MRA32_RAM)    /* ram */
-	AM_RANGE(0x1f800000, 0x1f8003ff) AM_READ(MRA32_BANK1)  /* scratchpad */
-	AM_RANGE(0x1f801008, 0x1f80100b) AM_READ(MRA32_RAM)    /* ?? */
-	AM_RANGE(0x1f801010, 0x1f801013) AM_READ(MRA32_NOP)
-	AM_RANGE(0x1f801014, 0x1f801017) AM_READ(MRA32_NOP)
-	AM_RANGE(0x1f801040, 0x1f80105f) AM_READ(psx_sio_r)
-	AM_RANGE(0x1f801070, 0x1f801077) AM_READ(psx_irq_r)
-	AM_RANGE(0x1f801080, 0x1f8010ff) AM_READ(psx_dma_r)
-	AM_RANGE(0x1f801100, 0x1f80113f) AM_READ(psx_counter_r)
-	AM_RANGE(0x1f801810, 0x1f801817) AM_READ(psx_gpu_r)
-	AM_RANGE(0x1f801820, 0x1f801827) AM_READ(psx_mdec_r)
-	AM_RANGE(0x1f801c00, 0x1f801dff) AM_READ(MRA32_NOP)
-	AM_RANGE(0x1f802020, 0x1f802033) AM_READ(MRA32_RAM)
-	AM_RANGE(0x1fc00000, 0x1fffffff) AM_READ(MRA32_BANK2)  /* bios mirror */
-	AM_RANGE(0x80000000, 0x807fffff) AM_READ(MRA32_BANK3)  /* ram mirror */
-	AM_RANGE(0x9fc00000, 0x9fffffff) AM_READ(MRA32_BANK4)  /* bios mirror */
-	AM_RANGE(0xa0000000, 0xa07fffff) AM_READ(MRA32_BANK5)  /* ram mirror */
-	AM_RANGE(0xbfc00000, 0xbfffffff) AM_READ(MRA32_BANK6)  /* bios */
+static ADDRESS_MAP_START( namcos10_map, ADDRESS_SPACE_PROGRAM, 32 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(29) )
+	AM_RANGE(0x00000000, 0x003fffff) AM_RAM AM_BASE(&psxram) AM_SIZE(&psxramsize)    /* ram */
+	AM_RANGE(0x1f800000, 0x1f8003ff) AM_RAM				  /* scratchpad */
+	AM_RANGE(0x1f801000, 0x1f801007) AM_WRITENOP
+	AM_RANGE(0x1f801008, 0x1f80100b) AM_RAM    /* ?? */
+	AM_RANGE(0x1f80100c, 0x1f80102f) AM_WRITENOP
+	AM_RANGE(0x1f801010, 0x1f801013) AM_READNOP
+	AM_RANGE(0x1f801014, 0x1f801017) AM_READNOP
+	AM_RANGE(0x1f801040, 0x1f80105f) AM_READWRITE(psx_sio_r, psx_sio_w)
+	AM_RANGE(0x1f801060, 0x1f80106f) AM_WRITENOP
+	AM_RANGE(0x1f801070, 0x1f801077) AM_READWRITE(psx_irq_r, psx_irq_w)
+	AM_RANGE(0x1f801080, 0x1f8010ff) AM_READWRITE(psx_dma_r, psx_dma_w)
+	AM_RANGE(0x1f801100, 0x1f80113f) AM_READWRITE(psx_counter_r, psx_counter_w)
+	AM_RANGE(0x1f801810, 0x1f801817) AM_READWRITE(psx_gpu_r, psx_gpu_w)
+	AM_RANGE(0x1f801820, 0x1f801827) AM_READWRITE(psx_mdec_r, psx_mdec_w)
+	AM_RANGE(0x1f801c00, 0x1f801dff) AM_NOP
+	AM_RANGE(0x1f802020, 0x1f802033) AM_RAM
+	AM_RANGE(0x1f802040, 0x1f802043) AM_WRITENOP
+	AM_RANGE(0x1fc00000, 0x1fffffff) AM_ROM AM_REGION(REGION_USER2, 0)    /* bios mirror */
 ADDRESS_MAP_END
 
 static DRIVER_INIT( namcos10 )
@@ -73,13 +50,6 @@ static DRIVER_INIT( namcos10 )
 			0xc, 0xd, 0xf, 0xe, 0xb, 0xa, 0x9, 0x8,
 			0x7, 0x6, 0x4, 0x1, 0x2, 0x5, 0x0, 0x3 );
 	}
-
-	cpu_setbank( 1, memory_region( REGION_USER1 ) );
-	cpu_setbank( 2, memory_region( REGION_USER2 ) );
-	cpu_setbank( 3, memory_region( REGION_CPU1 ) );
-	cpu_setbank( 4, memory_region( REGION_USER2 ) );
-	cpu_setbank( 5, memory_region( REGION_CPU1 ) );
-	cpu_setbank( 6, memory_region( REGION_USER2 ) );
 }
 
 MACHINE_INIT( namcos10 )
@@ -90,7 +60,7 @@ MACHINE_INIT( namcos10 )
 static MACHINE_DRIVER_START( namcos10 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD( PSXCPU, 33868800 / 2 ) /* 33MHz ?? */
-	MDRV_CPU_PROGRAM_MAP( namcos10_readmem, namcos10_writemem )
+	MDRV_CPU_PROGRAM_MAP( namcos10_map, 0 )
 	MDRV_CPU_VBLANK_INT( namcos10_vblank, 1 )
 
 	MDRV_FRAMES_PER_SECOND( 60 )
@@ -172,9 +142,6 @@ INPUT_PORTS_START( namcos10 )
 INPUT_PORTS_END
 
 ROM_START( mrdrilr2 )
-	ROM_REGION( 0x0400000, REGION_CPU1, 0 ) /* main ram */
-	ROM_REGION( 0x0000400, REGION_USER1, 0 ) /* scratchpad */
-
 	ROM_REGION32_LE( 0x800000, REGION_USER2, 0 ) /* main prg */
 	ROM_LOAD( "dr21vera.1a",  0x000000, 0x800000, CRC(f93532a2) SHA1(8b72f2868978be1f0e0abd11425a3c8b2b0c4e99) )
 ROM_END

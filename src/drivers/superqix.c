@@ -282,7 +282,7 @@ ROM_START( sqixbl )
 	ROM_LOAD( "sq05.1",       0x00000, 0x10000, CRC(df326540) SHA1(1fe025edcd38202e24c4e1005f478b6a88533453) )
 ROM_END
 
-ROM_START( perestro )
+ROM_START( perestrf )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code */
 	/* 0x8000 - 0x10000 in the rom is empty anyway */
 	ROM_LOAD( "rom1.bin",        0x00000, 0x20000, CRC(0cbf96c1) SHA1(cf2b1367887d1b8812a56aa55593e742578f220c) )
@@ -297,6 +297,20 @@ ROM_START( perestro )
 	ROM_LOAD( "rom3.bin",       0x00000, 0x10000, CRC(00c91d5a) SHA1(fdde56d3689a47e6bfb296e442207b93b887ec7a) )
 ROM_END
 
+ROM_START( perestro )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code */
+	/* 0x8000 - 0x10000 in the rom is empty anyway */
+	ROM_LOAD( "rom1.bin",        0x00000, 0x20000, CRC(0cbf96c1) SHA1(cf2b1367887d1b8812a56aa55593e742578f220c) )
+
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "rom4.bin",       0x00000, 0x10000, CRC(c56122a8) SHA1(1d24b2f0358e14aca5681f92175869224584a6ea) ) /* both halves identical */
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "rom2.bin",       0x00000, 0x20000, CRC(36f93701) SHA1(452cb23efd955c6c155cef2b1b650e253e195738) )
+
+	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "rom3a.bin",       0x00000, 0x10000, CRC(7a2a563f) SHA1(e3654091b858cc80ec1991281447fc3622a0d4f9) )
+ROM_END
 
 static DRIVER_INIT(perestro)
 {
@@ -363,4 +377,5 @@ static DRIVER_INIT(perestro)
 
 GAMEX(1987, superqix, 0,        superqix, superqix, 0,        ROT90, "Taito", "Super Qix", GAME_NOT_WORKING )
 GAME( 1987, sqixbl,   superqix, superqix, superqix, 0,        ROT90, "bootleg", "Super Qix (bootleg)" )
-GAME( 1993, perestro, 0,        superqix, superqix, perestro, ROT90, "Promat / Fuuki", "Perestroika Girls" )
+GAME( 1994, perestro, 0,        superqix, superqix, perestro, ROT90, "Promat", "Perestroika Girls" )
+GAME( 1993, perestrf, perestro, superqix, superqix, perestro, ROT90, "Promat (Fuuki license)", "Perestroika Girls (Fuuki license)" )

@@ -2643,6 +2643,112 @@ ROM_START( dfeveron )
 	ROM_LOAD( "cv01-u19.bin", 0x000000, 0x400000, CRC(5f5514da) SHA1(53f27364aee544572a82649c9ff29bacc642b732) )
 ROM_END
 
+/*
+
+Fever SOS
+
+this doesn't work, I don't know why, roms should be good
+
+Jumper JP1:
+INT Version - 2 & 3
+JAP Version - 1 & 2
+
+However there are more differences:
+
+U4:
+INT Version  - 9838EX003
+JAP Version - 9807EX004
+
+UA2 & UB2:
+INT Version  - 038 9838WX001
+JAP Version - 038 9808WX003
+
+TA8030S (Beside SW1)
+INT Version  - NOT MOUNTED
+JAP Version - TA8030S (WatchDog Timer, might be controlled by JP1)
+
+U47 & U48 - Differ
+U38 & U37 - Differ
+
+These chips however are Static RAM so I don't think anything is wrong!
+
+I suspect the main difference is the graphics chips. Looks like the
+international version is running on different H/W ?
+
+It actually looks like the international version is older than
+the Japanese version PCB wise, but the software date is 98/09/25
+and mine is 98/09/17!
+
+The famous full extent of the JAM is inside the image but so is
+"full extent" of the LAW. There are also other version strings
+inside the same image look here...
+
+          NOTICE
+  THIS GAME IS FOR USE IN
+                KOREA ONLY
+            HONG KONG ONLY
+               TAIWAN ONLY
+       SOUTHEAST ASIA ONLY
+               EUROPE ONLY
+                U.S.A ONLY
+                JAPAN ONLY
+SALES, EXPORT OR OPERATION
+OUTSIDE THIS COUNTRY MAY BE
+CONSTRUED AS COPYRIGHT AND
+TRADEMARK INFRINGEMENT AND
+IS STRICTLY PROHIBITED.
+VIOLATOR AND SUBJECT TO
+SEVERE PENALTIES AND WILL
+BE PROSECUTED TO THE FULL
+EXTENT OF THE JAM.
+              98/09/10 VER.
+
+Look at the version date!
+
+          NOTICE
+THIS GAME MAY NOT BE SOLD,
+EXPORTED OR OPERATED
+WITHOUTPROOF OF LEGAL CONSENT
+BY CAVE CO.,LTD.
+VIOLATION OF THESE TERMS WILL
+RESULT IN COPYRIGHT AND
+TRADEMARK INFRINGEMENT,AND IS
+STRICTLY PROHIBITED.
+VIOLATORS ARE SUBJECT TO
+SEVERE PENALTIES AND WILL BE
+PROSECUTED TO THE FULL EXTENT
+OF THE LAW GOVERNED BY THE
+COUNTRY OF ORIGIN.
+                 98/09/25 VER
+
+This is from Fever SOS image! Both version strings are present!
+
+The PCB is also different, UD's PCB does not have the Cave logo and
+the CV01 marker in the lower left corner of the PCB.
+
+There is some "engrish" story inside the UD image but this is NOT
+present in the japanese images...
+
+*/
+
+ROM_START( feversos )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "rom1.bin", 0x000000, 0x080000, CRC(24ef3ce6) SHA1(42799eebbb2686a837b8972aec684143deadca59) )
+	ROM_LOAD16_BYTE( "rom2.bin", 0x000001, 0x080000, CRC(64ff73fd) SHA1(7fc3a8469cec2361d373a4dac4a547c13ca5f709) )
+
+	ROM_REGION( 0x800000 * 2, REGION_GFX1, 0 )		/* Sprites: * 2 , do not dispose */
+	ROM_LOAD( "cv01-u25.bin", 0x000000, 0x400000, CRC(a6f6a95d) SHA1(e1eb45cb5d0e6163edfd9d830633b913fb53c6ca) )
+	ROM_LOAD( "cv01-u26.bin", 0x400000, 0x400000, CRC(32edb62a) SHA1(3def74e1316b80cc25a8c3ac162cd7bcb8cc807c) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "cv01-u50.bin", 0x000000, 0x200000, CRC(7a344417) SHA1(828bd8f95d2fcc34407e17629ccafc904a4ea12d) )
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "cv01-u49.bin", 0x000000, 0x200000, CRC(d21cdda7) SHA1(cace4650de580c3c4a037f1f5c32bfc1846b383c) )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "cv01-u19.bin", 0x000000, 0x400000, CRC(5f5514da) SHA1(53f27364aee544572a82649c9ff29bacc642b732) )
+ROM_END
 
 /***************************************************************************
 
@@ -3738,6 +3844,7 @@ GAME( 1996, hotdogst, 0,        hotdogst, cave,     hotdogst, ROT90,  "Marble", 
 GAME( 1997, ddonpach, 0,        ddonpach, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DoDonPachi (International)" )
 GAME( 1997, ddonpchj, ddonpach, ddonpach, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DoDonPachi (Japan)"         )
 GAME( 1998, dfeveron, 0,        dfeveron, cave,     dfeveron, ROT270, "Cave (Nihon System license)",          "Dangun Feveron (Japan)"     )
+GAMEX( 1998, feversos, dfeveron, dfeveron, cave,     dfeveron, ROT270, "Cave (Nihon System license)",          "Fever SOS (International)", GAME_NOT_WORKING     )
 GAME( 1998, esprade,  0,        esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (International Ver 1998 4/22)" )
 GAME( 1998, espradej, esprade,  esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (Japan Ver 1998 4/21)" )
 GAME( 1998, espradeo, esprade,  esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (Japan Ver 1998 4/14)" )

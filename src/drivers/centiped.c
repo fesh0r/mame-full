@@ -281,6 +281,7 @@
 static int oldpos[4];
 static UINT8 sign[4];
 static UINT8 dsw_select;
+static data8_t *rambase;
 
 
 /*************************************
@@ -308,9 +309,15 @@ static MACHINE_INIT( centiped )
 	timer_set(cpu_getscanlinetime(0), 0, generate_interrupt);
 	cpu_set_irq_line(0, 0, CLEAR_LINE);
 	dsw_select = 0;
+}
+
+
+static MACHINE_INIT( magworm )
+{
+	machine_init_centiped();
 
 	/* kludge: clear RAM so that magworm can be reset cleanly */
-	memset(memory_region(REGION_CPU1), 0, 0x400);
+	memset(rambase, 0, 0x400);
 }
 
 
@@ -447,74 +454,55 @@ static READ_HANDLER( centipdb_AY8910_r )
  *
  *************************************/
 
-static ADDRESS_MAP_START( centiped_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( centiped_map, ADDRESS_SPACE_PROGRAM, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(14) )
-	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0400, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0000, 0x03ff) AM_RAM AM_BASE(&rambase)
+	AM_RANGE(0x0400, 0x07bf) AM_READWRITE(MRA8_RAM, centiped_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x07c0, 0x07ff) AM_RAM AM_BASE(&spriteram)
 	AM_RANGE(0x0800, 0x0800) AM_READ(input_port_4_r)	/* DSW1 */
 	AM_RANGE(0x0801, 0x0801) AM_READ(input_port_5_r)	/* DSW2 */
 	AM_RANGE(0x0c00, 0x0c00) AM_READ(centiped_IN0_r)	/* IN0 */
 	AM_RANGE(0x0c01, 0x0c01) AM_READ(input_port_1_r)	/* IN1 */
 	AM_RANGE(0x0c02, 0x0c02) AM_READ(centiped_IN2_r)	/* IN2 */
 	AM_RANGE(0x0c03, 0x0c03) AM_READ(input_port_3_r)	/* IN3 */
-	AM_RANGE(0x1000, 0x100f) AM_READ(pokey1_r)
-	AM_RANGE(0x1700, 0x173f) AM_READ(atari_vg_earom_r)
-	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( centiped_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(14) )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0400, 0x07bf) AM_WRITE(centiped_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0x07c0, 0x07ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
-	AM_RANGE(0x1000, 0x100f) AM_WRITE(pokey1_w)
+	AM_RANGE(0x1000, 0x100f) AM_READWRITE(pokey1_r, pokey1_w)
 	AM_RANGE(0x1400, 0x140f) AM_WRITE(centiped_paletteram_w) AM_BASE(&paletteram)
 	AM_RANGE(0x1600, 0x163f) AM_WRITE(atari_vg_earom_w)
 	AM_RANGE(0x1680, 0x1680) AM_WRITE(atari_vg_earom_ctrl_w)
+	AM_RANGE(0x1700, 0x173f) AM_READ(atari_vg_earom_r)
 	AM_RANGE(0x1800, 0x1800) AM_WRITE(irq_ack_w)
 	AM_RANGE(0x1c00, 0x1c02) AM_WRITE(coin_count_w)
 	AM_RANGE(0x1c03, 0x1c04) AM_WRITE(led_w)
 	AM_RANGE(0x1c07, 0x1c07) AM_WRITE(centiped_flip_screen_w)
 	AM_RANGE(0x2000, 0x2000) AM_WRITE(watchdog_reset_w)
-	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x3fff) AM_ROM
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( centipb2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( centipb2_map, ADDRESS_SPACE_PROGRAM, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(15) )
-	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0400, 0x07ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0800, 0x0800) AM_READ(input_port_4_r)	/* DSW1 */
-	AM_RANGE(0x0801, 0x0801) AM_READ(input_port_5_r)	/* DSW2 */
-	AM_RANGE(0x0c00, 0x0c00) AM_READ(centiped_IN0_r)	/* IN0 */
-	AM_RANGE(0x0c01, 0x0c01) AM_READ(input_port_1_r)	/* IN1 */
-	AM_RANGE(0x0c02, 0x0c02) AM_READ(centiped_IN2_r)	/* IN2 */
-	AM_RANGE(0x0c03, 0x0c03) AM_READ(input_port_3_r)	/* IN3 */
-	AM_RANGE(0x1001, 0x1001) AM_READ(AY8910_read_port_0_r)
-	AM_RANGE(0x1700, 0x173f) AM_READ(atari_vg_earom_r)
-	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x6000, 0x67ff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( centipb2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(15) )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0400, 0x07bf) AM_WRITE(centiped_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0x07c0, 0x07ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
-	AM_RANGE(0x1000, 0x1000) AM_WRITE(AY8910_write_port_0_w)
-	AM_RANGE(0x1001, 0x1001) AM_WRITE(AY8910_control_port_0_w)
-	AM_RANGE(0x1400, 0x140f) AM_WRITE(centiped_paletteram_w) AM_BASE(&paletteram)
-	AM_RANGE(0x1600, 0x163f) AM_WRITE(atari_vg_earom_w)
-	AM_RANGE(0x1680, 0x1680) AM_WRITE(atari_vg_earom_ctrl_w)
-	AM_RANGE(0x1800, 0x1800) AM_WRITE(irq_ack_w)
-	AM_RANGE(0x1c00, 0x1c02) AM_WRITE(coin_count_w)
-	AM_RANGE(0x1c03, 0x1c04) AM_WRITE(led_w)
-	AM_RANGE(0x1c07, 0x1c07) AM_WRITE(centiped_flip_screen_w)
-	AM_RANGE(0x2000, 0x2000) AM_WRITE(watchdog_reset_w)
-	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x6000, 0x67ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x0000, 0x03ff) AM_MIRROR(0x4000) AM_RAM
+	AM_RANGE(0x0400, 0x07bf) AM_MIRROR(0x4000) AM_READWRITE(MRA8_RAM, centiped_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x07c0, 0x07ff) AM_MIRROR(0x4000) AM_RAM AM_BASE(&spriteram)
+	AM_RANGE(0x0800, 0x0800) AM_MIRROR(0x4000) AM_READ(input_port_4_r)	/* DSW1 */
+	AM_RANGE(0x0801, 0x0801) AM_MIRROR(0x4000) AM_READ(input_port_5_r)	/* DSW2 */
+	AM_RANGE(0x0c00, 0x0c00) AM_MIRROR(0x4000) AM_READ(centiped_IN0_r)	/* IN0 */
+	AM_RANGE(0x0c01, 0x0c01) AM_MIRROR(0x4000) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0x0c02, 0x0c02) AM_MIRROR(0x4000) AM_READ(centiped_IN2_r)	/* IN2 */
+	AM_RANGE(0x0c03, 0x0c03) AM_MIRROR(0x4000) AM_READ(input_port_3_r)	/* IN3 */
+	AM_RANGE(0x1000, 0x1000) AM_MIRROR(0x4000) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x1001, 0x1001) AM_MIRROR(0x4000) AM_READWRITE(AY8910_read_port_0_r, AY8910_control_port_0_w)
+	AM_RANGE(0x1400, 0x140f) AM_MIRROR(0x4000) AM_WRITE(centiped_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0x1600, 0x163f) AM_MIRROR(0x4000) AM_WRITE(atari_vg_earom_w)
+	AM_RANGE(0x1680, 0x1680) AM_MIRROR(0x4000) AM_WRITE(atari_vg_earom_ctrl_w)
+	AM_RANGE(0x1700, 0x173f) AM_MIRROR(0x4000) AM_READ(atari_vg_earom_r)
+	AM_RANGE(0x1800, 0x1800) AM_MIRROR(0x4000) AM_WRITE(irq_ack_w)
+	AM_RANGE(0x1c00, 0x1c02) AM_MIRROR(0x4000) AM_WRITE(coin_count_w)
+	AM_RANGE(0x1c03, 0x1c04) AM_MIRROR(0x4000) AM_WRITE(led_w)
+	AM_RANGE(0x1c07, 0x1c07) AM_MIRROR(0x4000) AM_WRITE(centiped_flip_screen_w)
+	AM_RANGE(0x2000, 0x27ff) AM_ROM
+	AM_RANGE(0x2800, 0x3fff) AM_MIRROR(0x4000) AM_ROM
+	AM_RANGE(0x6000, 0x67ff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -525,28 +513,18 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( milliped_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( milliped_map, ADDRESS_SPACE_PROGRAM, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(15) )
-	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0400, 0x040f) AM_READ(pokey1_r)
-	AM_RANGE(0x0800, 0x080f) AM_READ(pokey2_r)
-	AM_RANGE(0x1000, 0x13ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0000, 0x03ff) AM_RAM
+	AM_RANGE(0x0400, 0x040f) AM_READWRITE(pokey1_r, pokey1_w)
+	AM_RANGE(0x0800, 0x080f) AM_READWRITE(pokey2_r, pokey2_w)
+	AM_RANGE(0x1000, 0x13bf) AM_READWRITE(MRA8_RAM, centiped_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x13c0, 0x13ff) AM_RAM AM_BASE(&spriteram)
 	AM_RANGE(0x2000, 0x2000) AM_READ(centiped_IN0_r)
 	AM_RANGE(0x2001, 0x2001) AM_READ(milliped_IN1_r)
 	AM_RANGE(0x2010, 0x2010) AM_READ(input_port_2_r)
 	AM_RANGE(0x2011, 0x2011) AM_READ(input_port_3_r)
 	AM_RANGE(0x2030, 0x2030) AM_READ(atari_vg_earom_r)
-	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( milliped_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(15) )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0400, 0x040f) AM_WRITE(pokey1_w)
-	AM_RANGE(0x0800, 0x080f) AM_WRITE(pokey2_w)
-	AM_RANGE(0x1000, 0x13ff) AM_WRITE(centiped_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0x13c0, 0x13ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
 	AM_RANGE(0x2480, 0x249f) AM_WRITE(milliped_paletteram_w) AM_BASE(&paletteram)
 	AM_RANGE(0x2500, 0x2502) AM_WRITE(coin_count_w)
 	AM_RANGE(0x2503, 0x2504) AM_WRITE(led_w)
@@ -556,7 +534,7 @@ static ADDRESS_MAP_START( milliped_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x2680, 0x2680) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0x2700, 0x2700) AM_WRITE(atari_vg_earom_ctrl_w)
 	AM_RANGE(0x2780, 0x27bf) AM_WRITE(atari_vg_earom_w)
-	AM_RANGE(0x4000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -567,28 +545,21 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( warlords_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( warlords_map, ADDRESS_SPACE_PROGRAM, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(15) )
-	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0000, 0x03ff) AM_RAM
+	AM_RANGE(0x0400, 0x07bf) AM_READWRITE(MRA8_RAM, centiped_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x07c0, 0x07ff) AM_RAM AM_BASE(&spriteram)
 	AM_RANGE(0x0800, 0x0800) AM_READ(input_port_2_r) /* DSW1 */
 	AM_RANGE(0x0801, 0x0801) AM_READ(input_port_3_r) /* DSW2 */
 	AM_RANGE(0x0c00, 0x0c00) AM_READ(input_port_0_r) /* IN0 */
 	AM_RANGE(0x0c01, 0x0c01) AM_READ(input_port_1_r) /* IN1 */
-	AM_RANGE(0x1000, 0x100f) AM_READ(pokey1_r)
-	AM_RANGE(0x5000, 0x7fff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( warlords_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(15) )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0400, 0x07bf) AM_WRITE(centiped_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0x07c0, 0x07ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
-	AM_RANGE(0x1000, 0x100f) AM_WRITE(pokey1_w)
+	AM_RANGE(0x1000, 0x100f) AM_READWRITE(pokey1_r, pokey1_w)
 	AM_RANGE(0x1800, 0x1800) AM_WRITE(irq_ack_w)
 	AM_RANGE(0x1c00, 0x1c02) AM_WRITE(coin_count_w)
 	AM_RANGE(0x1c03, 0x1c06) AM_WRITE(led_w)
 	AM_RANGE(0x4000, 0x4000) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x5000, 0x7fff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -1229,7 +1200,7 @@ static MACHINE_DRIVER_START( centiped )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 12096000/8)	/* 1.512 MHz (slows down to 0.75MHz while accessing playfield RAM) */
-	MDRV_CPU_PROGRAM_MAP(centiped_readmem,centiped_writemem)
+	MDRV_CPU_PROGRAM_MAP(centiped_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1460)
@@ -1269,7 +1240,7 @@ static MACHINE_DRIVER_START( centipb2 )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(centiped)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(centipb2_readmem,centipb2_writemem)
+	MDRV_CPU_PROGRAM_MAP(centipb2_map,0)
 
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("pokey", AY8910, centipb2_ay8910_interface)
@@ -1280,6 +1251,7 @@ static MACHINE_DRIVER_START( magworm )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(centiped)
+	MDRV_MACHINE_INIT(magworm)
 
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("pokey", AY8910, centipb2_ay8910_interface)
@@ -1291,7 +1263,7 @@ static MACHINE_DRIVER_START( milliped )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(centiped)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(milliped_readmem,milliped_writemem)
+	MDRV_CPU_PROGRAM_MAP(milliped_map,0)
 
 	/* video hardware */
 	MDRV_GFXDECODE(milliped_gfxdecodeinfo)
@@ -1311,7 +1283,7 @@ static MACHINE_DRIVER_START( warlords )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(centiped)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(warlords_readmem,warlords_writemem)
+	MDRV_CPU_PROGRAM_MAP(warlords_map,0)
 
 	/* video hardware */
 	MDRV_GFXDECODE(warlords_gfxdecodeinfo)
@@ -1391,7 +1363,6 @@ ROM_START( centipb2 )
 	ROM_LOAD( "e1",  		  0x2800, 0x0800, CRC(7684398e) SHA1(eea8e05506a7af2fec55c2689e3caafc62ea524f) )
 	ROM_LOAD( "h1",  		  0x3000, 0x0800, CRC(74580fe4) SHA1(35b8a8675e4e020e234e51c3e4bd4ee5c24b79d2) )
 	ROM_LOAD( "j1",  		  0x3800, 0x0800, CRC(84600161) SHA1(e9a6801c6f59e2b34e692e9aa71845d2e64a2379) )
-	ROM_RELOAD( 	  		  0x7800, 0x0800 )
 	ROM_LOAD( "k1",  		  0x6000, 0x0800, CRC(f1aa329b) SHA1(e4689de0f94d11f125ee7548a3f8128ff8e8da51) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -1405,7 +1376,6 @@ ROM_START( millpac )
 	ROM_LOAD( "millpac2.1e",  0x2800, 0x0800, CRC(411c81f1) SHA1(15184642522f0b7eab81301295d435c10ce2d78d) )
 	ROM_LOAD( "millpac3.1h",  0x3000, 0x0800, CRC(577076cc) SHA1(3124fcfb56f33ebd17d2c0da1098023474187066) )
 	ROM_LOAD( "millpac4.1j",  0x3800, 0x0800, CRC(89aedd75) SHA1(74635079e7103bf6fa9577f5980e1adaa34d9be0) )
-	ROM_RELOAD(    0x7800, 0x0800 )
 	ROM_LOAD( "millpac5.1k",  0x6000, 0x0800, CRC(67ac481b) SHA1(cef839d1c9dd207fdf41ae47d5f279b783f2f4cf) )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -1493,13 +1463,13 @@ static DRIVER_INIT( magworm )
  *
  *************************************/
 
-GAME( 1980, centiped, 0,        centiped, centiped, 0,        ROT270, "Atari", "Centipede (revision 3)" )
-GAME( 1980, centipd2, centiped, centiped, centiped, 0,        ROT270, "Atari", "Centipede (revision 2)" )
-GAME( 1980, centtime, centiped, centiped, centtime, 0,        ROT270, "Atari", "Centipede (1 player, timed)" )
+GAME( 1980, centiped, 0,        centiped, centiped, 0,        ROT270, "Atari",   "Centipede (revision 3)" )
+GAME( 1980, centipd2, centiped, centiped, centiped, 0,        ROT270, "Atari",   "Centipede (revision 2)" )
+GAME( 1980, centtime, centiped, centiped, centtime, 0,        ROT270, "Atari",   "Centipede (1 player, timed)" )
 GAME( 1980, centipdb, centiped, centipdb, centipdb, centipdb, ROT270, "bootleg", "Centipede (bootleg set 1)" )
 GAME( 1980, centipb2, centiped, centipb2, centiped, 0,        ROT270, "bootleg", "Centipede (bootleg set 2)" )
-GAME( 1980, millpac,  centiped, centipb2, centiped,  0, 	  ROT270, "Valadon Automation", "Millpac" )
+GAME( 1980, millpac,  centiped, centipb2, centiped, 0, 	      ROT270, "Valadon Automation", "Millpac" )
 GAME( 1980, magworm,  centiped, magworm,  magworm,  magworm,  ROT270, "bootleg", "Magic Worm (bootleg)" )
-GAME( 1982, milliped, 0,        milliped, milliped, 0,        ROT270, "Atari", "Millipede" )
+GAME( 1982, milliped, 0,        milliped, milliped, 0,        ROT270, "Atari",   "Millipede" )
 
-GAME( 1980, warlords, 0,        warlords, warlords, 0,        ROT0,   "Atari", "Warlords" )
+GAME( 1980, warlords, 0,        warlords, warlords, 0,        ROT0,   "Atari",   "Warlords" )
