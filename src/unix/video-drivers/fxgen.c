@@ -3,31 +3,42 @@
   Generic glide routines
 
   Copyright 1998 by Mike Oliphant - oliphant@ling.ed.ac.uk
+  Copyright 2004 Hans de Goede - j.w.r.degoede@hhs.nl
 
     http://www.ling.ed.ac.uk/~oliphant/glmame
 
   This code may be used and distributed under the terms of the
   Mame license
+  
+ChangeLog:
+
+16 August 2004 (Hans de Goede):
+-fixed crash when using 16bpp palettised modes
+-added support for rotated/flipped games, set blit_hardware_rotation to 1
+ to notify the rest of xmame of this.
+-removed some unused variables and macros
+-inverted (corrected) emulation paused test
+-added support for compiling and linking against glide3 instead of glide2
+-revived fxvec.c and modified it to use: vector_register_aux_renderer,
+ now we no longer need any core modifcations, and
+ the code is somewhat cleaner.
+
+Todo:
+-use FX HW palette (take a look at fxgen.c from 0.37b7.1 for example code)
 
 *****************************************************************/
 
 #if defined xfx || defined svgafx
 #include <stdio.h>
 #include <math.h>
-#include <glide.h>
+#include "fxcompat.h"
 #include "xmame.h"
 #include "driver.h"
+#include "vidhrdw/vector.h"
 
 #define _32TO16(p) (UINT16)((((p) & 0x00F80000) >> 9) | \
                             (((p) & 0x0000F800) >> 6) | \
                             (((p) & 0x000000F8) >> 3))
-
-#define PIXELCOLOR(x) fxdepth == 15 ? \
-						(UINT16)(x) : \
-                        (fxdepth == 16 ? \
-                        	color_values[(UINT16)(x)] : \
-                            (fxdepth == 24 || fxdepth == 32 ? \
-                            _32TO16((UINT32)(x)) : 0))
 
 #define PAUSEDCOLOR(p) (UINT16) ((((p) >> 11) << 10) | ((((p) &0x03E0) >> 6)<< 5) | (((p) & 0x001F) >> 1))
 
@@ -37,27 +48,24 @@ int  InitVScreen(void);
 void CloseVScreen(void);
 void UpdateTexture(struct mame_bitmap *bitmap);
 void DrawFlatBitmap(void);
-void UpdateFlatDisplay(void);
 void UpdateFXDisplay(struct mame_bitmap *bitmap);
 static int SetResolution(struct rc_option *option, const char *arg,
    int priority);
+int fxvec_renderer(point *pt, int num_points);
 
-extern int pointnum;
-extern UINT32 direct_rgb_components[3];
-extern UINT16 *color_values;
 extern int emulation_paused;
 
 int fxwidth = 640;
 int fxheight = 480;
+float vscrntlx;
+float vscrntly;
+float vscrnwidth;
+float vscrnheight;
+
 static int fxdepth;
 static int black;
 static int white;
-
-GuTexPalette texpal;
-
-static int Gr_format = GR_TEXFMT_ARGB_1555;
 static GrScreenResolution_t Gr_resolution = GR_RESOLUTION_640x480;
-static GrHwConfiguration hwconfig;
 static char version[80];
 static GrTexInfo texinfo;
 static int bilinear=1; /* Do binlinear filtering? */
@@ -70,7 +78,6 @@ struct TexSquare
   UINT16 *texture;
   unsigned int texobj;
   long texadd;
-  float x1,y1,z1,x2,y2,z2,x3,y3,z3,x4,y4,z4;
   GrVertex vtxA, vtxB, vtxC, vtxD;
   float xcov,ycov;
 };
@@ -78,18 +85,13 @@ struct TexSquare
 static struct TexSquare *texgrid=NULL;
 static int texnumx;
 static int texnumy;
-static float texpercx;
-static float texpercy;
-static float vscrntlx;
-static float vscrntly;
-static float vscrnwidth;
-static float vscrnheight;
-static float xinc,yinc;
-
-float cscrx1,cscry1,cscrz1,cscrx2,cscry2,cscrz2,
-  cscrx3,cscry3,cscrz3,cscrx4,cscry4,cscrz4;
-float cscrwdx,cscrwdy,cscrwdz;
-float cscrhdx,cscrhdy,cscrhdz;
+static int texdestwidth;
+static int texdestheight;
+static int firsttexdestwidth;
+static int firsttexdestheight;
+static int destwidth;
+static int destheight;
+static int vecgame=0;
 
 struct rc_option fx_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -128,11 +130,21 @@ int sysdep_display_set_pen(int pen, unsigned char red,unsigned char green,
 
 void CalcPoint(GrVertex *vert,int x,int y)
 {
-  vert->x=vscrntlx+(float)x*texpercx*vscrnwidth;
-  if(vert->x>vscrntlx+vscrnwidth) vert->x=vscrntlx+vscrnwidth;
+  if(x)
+  {
+    vert->x=vscrntlx+firsttexdestwidth+(x-1)*texdestwidth;
+    if(vert->x>vscrntlx+vscrnwidth) vert->x=vscrntlx+vscrnwidth;
+  }
+  else
+    vert->x = vscrntlx;
 
-  vert->y=vscrntly+vscrnheight-(float)y*texpercy*vscrnheight;
-  if(vert->y<vscrntly) vert->y=vscrntly;
+  if(y)
+  {
+    vert->y=vscrntly+vscrnheight-(firsttexdestheight+(y-1)*texdestheight);
+    if(vert->y<vscrntly) vert->y=vscrntly;
+  }
+  else
+    vert->y = vscrntly+vscrnheight;
 }
 
 int InitGlide(void)
@@ -147,27 +159,38 @@ int InitGlide(void)
      close(fd);
   putenv("FX_GLIDE_NO_SPLASH=");
   grGlideInit();
-  if (!grSstQueryHardware(&hwconfig))
-  {
-     grGlideShutdown();
-     fprintf(stderr, "Glide error: no boards found\n");
-     return OSD_NOT_OK;
-  }
+  grSetupVertexLayout();
+
+  blit_hardware_rotation = 1;
   return OSD_OK;
 }
 
 void InitTextures(void)
 {
-  int x,y;
+  int i,j,x=0,y=0;
   struct TexSquare *tsq;
   long texmem,memaddr;
+  float firsttexdestwidthfac=0.0, firsttexdestheightfac=0.0;
+  float texpercx, texpercy;
 
   texinfo.smallLod=texinfo.largeLod=GR_LOD_256;
   texinfo.aspectRatio=GR_ASPECT_1x1;
-  texinfo.format=Gr_format;
+  texinfo.format=GR_TEXFMT_ARGB_1555;
 
   texmem=grTexTextureMemRequired(GR_MIPMAPLEVELMASK_BOTH,&texinfo);
 
+  if(vecgame)
+  {
+    grAlphaCombine(GR_COMBINE_FUNCTION_LOCAL,
+                                       GR_COMBINE_FACTOR_LOCAL,
+                                       GR_COMBINE_LOCAL_CONSTANT,
+                                       GR_COMBINE_OTHER_NONE,
+                                       FXFALSE);
+
+    grAlphaBlendFunction(GR_BLEND_ALPHA_SATURATE,GR_BLEND_ONE,
+						 GR_BLEND_ALPHA_SATURATE,GR_BLEND_ONE);
+  }                                          
+	
   grColorCombine(GR_COMBINE_FUNCTION_SCALE_OTHER,
 				   GR_COMBINE_FACTOR_ONE,
 				   GR_COMBINE_LOCAL_NONE,
@@ -203,58 +226,149 @@ void InitTextures(void)
   texnumy=visual_height/texsize;
   if(texnumy*texsize!=visual_height) texnumy++;
   
-  xinc=vscrnwidth*((float)texsize/(float)visual_width);
-  yinc=vscrnheight*((float)texsize/(float)visual_height);
-  
-  texpercx=(float)texsize/(float)visual_width;
+  texpercx=(float)texsize/(float)destwidth;
   if(texpercx>1.0) texpercx=1.0;
   
-  texpercy=(float)texsize/(float)visual_height;
+  texpercy=(float)texsize/(float)destheight;
   if(texpercy>1.0) texpercy=1.0;
-  
+
+  texdestwidth=vscrnwidth*texpercx;
+  texdestheight=vscrnheight*texpercy;
+
   texgrid=(struct TexSquare *)
 	malloc(texnumx*texnumy*sizeof(struct TexSquare));
   memaddr=grTexMinAddress(GR_TMU0);
   
-  for(y=0;y<texnumy;y++) {
-	for(x=0;x<texnumx;x++) {
-	  tsq=texgrid+y*texnumx+x;
+  for(i=0;i<texnumy;i++) {
+	for(j=0;j<texnumx;j++) {
+	  tsq=texgrid+i*texnumx+j;
 
 	  tsq->texadd=memaddr;
 	  memaddr+=texmem;
 
-	  if(x==(texnumx-1) && visual_width%texsize)
+	  if(j==(texnumx-1) && visual_width%texsize)
 		tsq->xcov=(float)((visual_width)%texsize)/(float)texsize;
 	  else tsq->xcov=1.0;
 	  
-	  if(y==(texnumy-1) && visual_height%texsize)
+	  if(i==(texnumy-1) && visual_height%texsize)
 		tsq->ycov=(float)((visual_height)%texsize)/(float)texsize;
 	  else tsq->ycov=1.0;
 
 	  tsq->vtxA.oow=1.0;
 	  tsq->vtxB=tsq->vtxC=tsq->vtxD=tsq->vtxA;
+
+          if(blit_flipy)
+          {
+            tsq->vtxA.tmuvtx[0].tow=256.0;
+            tsq->vtxB.tmuvtx[0].tow=256.0;
+            tsq->vtxC.tmuvtx[0].tow=0.0;
+            tsq->vtxD.tmuvtx[0].tow=0.0;
+            if (blit_swapxy)
+            {
+              y = (texnumx-1) - j;
+              firsttexdestheightfac = (visual_width%texsize)/(float)texsize;
+            }
+            else
+            {
+              y = (texnumy-1) - i;
+              firsttexdestheightfac = (visual_height%texsize)/(float)texsize;
+            }
+          }
+          else
+          {
+            tsq->vtxA.tmuvtx[0].tow=0.0;
+            tsq->vtxB.tmuvtx[0].tow=0.0;
+            tsq->vtxC.tmuvtx[0].tow=256.0;
+            tsq->vtxD.tmuvtx[0].tow=256.0;
+            if (blit_swapxy)
+            {
+              y = j;
+              firsttexdestheightfac = 1.0;
+            }
+            else
+            {
+              y = i;
+              firsttexdestheightfac = 1.0;
+            }
+          }
+
+          if(blit_flipx)
+          {
+            tsq->vtxA.tmuvtx[0].sow=256.0;
+            tsq->vtxB.tmuvtx[0].sow=0.0;
+            tsq->vtxC.tmuvtx[0].sow=0.0;
+            tsq->vtxD.tmuvtx[0].sow=256.0;
+            if (blit_swapxy)
+            {
+              x = (texnumy-1) - i;
+              firsttexdestwidthfac = (visual_height%texsize)/(float)texsize;
+            }
+            else
+            {
+              x = (texnumx-1) - j;
+              firsttexdestwidthfac = (visual_width%texsize)/(float)texsize;
+            }
+          }
+          else
+          {
+            tsq->vtxA.tmuvtx[0].sow=0.0;
+            tsq->vtxB.tmuvtx[0].sow=256.0;
+            tsq->vtxC.tmuvtx[0].sow=256.0;
+            tsq->vtxD.tmuvtx[0].sow=0.0;
+            if (blit_swapxy)
+            {
+              x = i;
+              firsttexdestwidthfac = 1.0;
+            }
+            else
+            {
+              x = j;
+              firsttexdestwidthfac = 1.0;
+            }
+          }
+          
+          if(blit_swapxy)
+          {
+            float temp;
+            
+            temp=tsq->vtxA.tmuvtx[0].sow;
+            tsq->vtxA.tmuvtx[0].sow=tsq->vtxA.tmuvtx[0].tow;
+            tsq->vtxA.tmuvtx[0].tow=temp;
+
+            temp=tsq->vtxB.tmuvtx[0].sow;
+            tsq->vtxB.tmuvtx[0].sow=tsq->vtxB.tmuvtx[0].tow;
+            tsq->vtxB.tmuvtx[0].tow=temp;
+
+            temp=tsq->vtxC.tmuvtx[0].sow;
+            tsq->vtxC.tmuvtx[0].sow=tsq->vtxC.tmuvtx[0].tow;
+            tsq->vtxC.tmuvtx[0].tow=temp;
+
+            temp=tsq->vtxD.tmuvtx[0].sow;
+            tsq->vtxD.tmuvtx[0].sow=tsq->vtxD.tmuvtx[0].tow;
+            tsq->vtxD.tmuvtx[0].tow=temp;
+          }
+
+          tsq->vtxA.tmuvtx[0].tow*=tsq->ycov;
+          tsq->vtxB.tmuvtx[0].tow*=tsq->ycov;
+          tsq->vtxC.tmuvtx[0].tow*=tsq->ycov;
+          tsq->vtxD.tmuvtx[0].tow*=tsq->ycov;
+
+          tsq->vtxA.tmuvtx[0].sow*=tsq->xcov;
+          tsq->vtxB.tmuvtx[0].sow*=tsq->xcov;
+          tsq->vtxC.tmuvtx[0].sow*=tsq->xcov;
+          tsq->vtxD.tmuvtx[0].sow*=tsq->xcov;
+
+          firsttexdestwidth=texdestwidth*firsttexdestwidthfac;
+          firsttexdestheight=texdestheight*firsttexdestheightfac;
+
+          CalcPoint(&(tsq->vtxA), x  , y  );
+          CalcPoint(&(tsq->vtxB), x+1, y  );
+          CalcPoint(&(tsq->vtxC), x+1, y+1);
+          CalcPoint(&(tsq->vtxD), x  , y+1);
 	
-	  CalcPoint(&(tsq->vtxA),x,y);
-	  CalcPoint(&(tsq->vtxB),x+1,y);
-	  CalcPoint(&(tsq->vtxC),x+1,y+1);
-	  CalcPoint(&(tsq->vtxD),x,y+1);
- 	
-	  tsq->vtxA.tmuvtx[0].sow=0.0;
-	  tsq->vtxA.tmuvtx[0].tow=0.0;
-
-	  tsq->vtxB.tmuvtx[0].sow=256.0*tsq->xcov;
-	  tsq->vtxB.tmuvtx[0].tow=0.0;
-
-	  tsq->vtxC.tmuvtx[0].sow=256.0*tsq->xcov;
-	  tsq->vtxC.tmuvtx[0].tow=256.0*tsq->ycov;
-
-	  tsq->vtxD.tmuvtx[0].sow=0.0;
-	  tsq->vtxD.tmuvtx[0].tow=256.0*tsq->ycov;
-	  
-
-	  /* Initialize the texture memory */
-	  tsq->texture=calloc(texsize*texsize, sizeof *(tsq->texture));
-	}
+          /* Initialize the texture memory */
+          tsq->texture=calloc(texsize*texsize, sizeof *(tsq->texture));
+        }
   }
 }
 
@@ -324,6 +438,12 @@ int InitVScreen(void)
 
   grGlideGetVersion(version);
 
+  if(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
+  {
+        vector_register_aux_renderer(fxvec_renderer);
+	vecgame=1;
+  }
+
   fxdepth = Machine->color_depth;
 
   fprintf(stderr_file, "info: using Glide version %s\n", version);
@@ -341,12 +461,22 @@ int InitVScreen(void)
 
   /* clear the buffer */
 
-  grBufferClear(0,0,GR_ZDEPTHVALUE_FARTHEST);
+  grBufferClear(0,0,0);
 
-
+  if (blit_swapxy)
+  {
+     destwidth  = visual_height;
+     destheight = visual_width;
+  }
+  else
+  {
+     destwidth  = visual_width;
+     destheight = visual_height;
+  }
+  
   if (use_aspect_ratio)
   {
-     scrnaspect=(float)visual_width/(float)visual_height;
+     scrnaspect=(float)destwidth/(float)destheight;
      vscrnaspect=(float)fxwidth/(float)fxheight;
 
      if(scrnaspect<vscrnaspect) {
@@ -452,7 +582,7 @@ void UpdateTexture(struct mame_bitmap *bitmap)
 				
 				square=texgrid+(ysquare*texnumx)+xsquare;
 
-				if (emulation_paused) {	
+				if (!emulation_paused) {	
 					for(i = 0;i < width;i++) {	
 						square->texture[texline*texsize+i] = ((UINT16*)(bitmap->line[y]))[visual.min_x+ofs+i];
 					}
@@ -480,15 +610,15 @@ void UpdateTexture(struct mame_bitmap *bitmap)
 				else width=visual_width%texsize;
 				
 				square=texgrid+(ysquare*texnumx)+xsquare;
-				if (emulation_paused) {
+				if (!emulation_paused) {
 					for(i = 0;i < width;i++) {
 						square->texture[texline*texsize+i] = 
-							color_values[(((UINT16*)(bitmap->line[y]))[visual.min_x+ofs+i])];
+							current_palette->lookup[(((UINT16*)(bitmap->line[y]))[visual.min_x+ofs+i])];
 					}
 				} else {
 					for(i = 0;i < width;i++) {
 						square->texture[texline*texsize+i] =
-							PAUSEDCOLOR(color_values[(((UINT16*)(bitmap->line[y]))[visual.min_x+ofs+i])]);
+							PAUSEDCOLOR(current_palette->lookup[(((UINT16*)(bitmap->line[y]))[visual.min_x+ofs+i])]);
 					}
 				}
 			}
@@ -511,15 +641,15 @@ void UpdateTexture(struct mame_bitmap *bitmap)
 				
 				square=texgrid+(ysquare*texnumx)+xsquare;
 					
-				if (emulation_paused) {
+				if (!emulation_paused) {
 					for(i = 0;i < width;i++) {
 						square->texture[texline*texsize+i] = 
-							PIXELCOLOR((((UINT32*)(bitmap->line[y]))[visual.min_x+ofs+i]));
+							_32TO16((((UINT32*)(bitmap->line[y]))[visual.min_x+ofs+i]));
 					}
 				} else {
 					for(i = 0;i < width;i++) {
 						square->texture[texline*texsize+i] =
-							PAUSEDCOLOR(PIXELCOLOR((((UINT32*)(bitmap->line[y]))[visual.min_x+ofs+i])));
+							PAUSEDCOLOR(_32TO16((((UINT32*)(bitmap->line[y]))[visual.min_x+ofs+i])));
 					}
 				}
 			}
@@ -540,9 +670,9 @@ void DrawFlatBitmap(void)
 	  texinfo.data=(void *)square->texture;
 
 	  grTexDownloadMipMapLevel(GR_TMU0,square->texadd,
-							   GR_LOD_256,GR_LOD_256,GR_ASPECT_1x1,
-							   Gr_format,
-							   GR_MIPMAPLEVELMASK_BOTH,texinfo.data);
+		   GR_LOD_256,GR_LOD_256,GR_ASPECT_1x1,
+		   GR_TEXFMT_ARGB_1555,
+		   GR_MIPMAPLEVELMASK_BOTH,texinfo.data);
 
 	  grTexSource(GR_TMU0,square->texadd,
 				  GR_MIPMAPLEVELMASK_BOTH,&texinfo);
@@ -553,19 +683,14 @@ void DrawFlatBitmap(void)
   }
 }
 
-void UpdateFlatDisplay(void)
-{
-  grBufferClear(0,0,GR_ZDEPTHVALUE_FARTHEST);
-  DrawFlatBitmap();
-  grBufferSwap(1);
-}
-
 void UpdateFXDisplay(struct mame_bitmap *bitmap)
 {
   if(bitmap) 
     UpdateTexture(bitmap);
 
-  UpdateFlatDisplay();
+  DrawFlatBitmap();
+  grBufferSwap(1);
+  grBufferClear(0,0,0);
 }
 
 /* used when expose events received */

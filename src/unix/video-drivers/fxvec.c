@@ -3,99 +3,63 @@
   Glide vector routines
 
   Copyright 1998 by Mike Oliphant - oliphant@ling.ed.ac.uk
+  Copyright 2004 Hans de Goede - j.w.r.degoede@hhs.nl
 
     http://www.ling.ed.ac.uk/~oliphant/glmame
 
   This code may be used and distributed under the terms of the
   Mame license
 
+ChangeLog:
+
+16 August 2004 (Hans de Goede):
+-revived and modified to use: vector_register_aux_renderer,
+ now we no longer need any core modifcations, and
+ the code is somewhat cleaner.
+-added support for vector clipping, this fixes mhavoc
+
 *****************************************************************/
 
 #if defined xfx || defined svgafx
 
-#include <glide.h>
+#include "fxcompat.h"
 #include "xmame.h"
 #include "driver.h"
 #include "artwork.h"
+#include "vidhrdw/vector.h"
 
-extern int fxwidth,fxheight;
-extern GuTexPalette texpal;
+extern int fxheight;
+extern float vscrntlx;
+extern float vscrntly;
+extern float vscrnwidth;
+extern float vscrnheight;
+static int vecwidth, vecheight;
 
-unsigned char *vectorram;
-int vectorram_size;
-
-int antialias;                            /* flag for anti-aliasing */
-int beam;                                 /* size of vector beam    */
-int translucency;
-
-int pointnum;
-GrVertex vec_vert[10000];
-
-static int vecshift;
-static float vecwidth,vecheight;
-
-static int vector_orientation;
-
-static float flicker_correction = 0.0;
-
-/*
- * Initializes vector game video emulation
- */
-
-int vector_vh_start (void)
-{
-  vecwidth=(float)(Machine->drv->default_visible_area.max_x-
-	Machine->drv->default_visible_area.min_x);
-
-  vecheight=(float)(Machine->drv->default_visible_area.max_y-
-	Machine->drv->default_visible_area.min_y);
-
-  pointnum=0;
-
-  return 0;
-}
-
-/*
- * Stop the vector video hardware emulation. Free memory.
- */
-
-void vector_vh_stop (void)
-{
-}
-
-/*
- * Setup scaling. Currently the Sega games are stuck at VECSHIFT 15
- * and the the AVG games at VECSHIFT 16
- */
-
-void vector_set_shift (int shift)
-{
-  vecshift=shift;
-}
 
 /* Convert an xy point to xyz in the 3D scene */
 
-void PointConvert(int x,int y,float *sx,float *sy)
+static void PointConvert(int x,int y,float *sx,float *sy)
 {
   float dx,dy,tmp;
 
-  dx=(float)(x>>vecshift)/vecwidth;
-  dy=(float)(y>>vecshift)/vecheight;
-
-  if(Machine->orientation&ORIENTATION_SWAP_XY) {
-    tmp=dx;
-    dx=dy;
-    dy=tmp;
+  dx=(float)((x+0x8000)>>16)/vecwidth;
+  dy=(float)((y+0x8000)>>16)/vecheight;
+  
+  if (blit_swapxy)
+  {
+    tmp = dx;
+    dx = dy;
+    dy = tmp;
   }
 
-  if(Machine->orientation&ORIENTATION_FLIP_X)
-    dx=1.0-dx;
+  if (blit_flipx)
+    dx = 1.0 - dx;
 
-  if(Machine->orientation&ORIENTATION_FLIP_Y)
-    dy=1.0-dy;
-
-  *sx=dx*(float)fxwidth;
-  *sy=(float)fxheight-dy*(float)fxheight;
+  if (blit_flipy)
+    dy = 1.0 - dy;
+    
+  *sx=vscrntlx + dx*vscrnwidth;
+  *sy=fxheight - (vscrntly + dy*vscrnheight);
 }
 
 /*
@@ -103,88 +67,107 @@ void PointConvert(int x,int y,float *sx,float *sy)
  * needs to call this.
  */
 
-void vector_add_point(int x, int y, int color, int intensity)
+static void fxvec_fill_vert(GrVertex *vert, int x, int y, rgb_t color, int intensity)
 {
-  GrVertex *vert;
-  FxU32 pen;
-
-  if(pointnum==10000)
-	printf("Vector buffer overflow\n");
-  else {
-	vert=vec_vert+pointnum;
-
 	vert->oow=1.0;
 
-	pen=texpal.data[Machine->pens[color]];
-
-	vert->r=(float)((pen>>16)&0x000000ff);
-	vert->g=(float)((pen>>8)&0x000000ff);
-	vert->b=(float)(pen&0x000000ff);
-
-	vert->a=(float)intensity; /* /1.7; */
+	vert->r=(float)((color>>16)&0x000000ff);
+	vert->g=(float)((color>>8)&0x000000ff);
+	vert->b=(float)(color&0x000000ff);
+	vert->a=(float)intensity;
 
 	PointConvert(x,y,&(vert->x),&(vert->y));
+}
+
+int fxvec_renderer(point *pt, int num_points)
+{
+  if (num_points)
+  {
+    GrVertex v1,v2;
+    int vertexcount = 0;
+
+    vecwidth  =Machine->visible_area.max_x-Machine->visible_area.min_x;
+    vecheight =Machine->visible_area.max_y-Machine->visible_area.min_y;
+
+    grColorCombine(GR_COMBINE_FUNCTION_LOCAL,
+                                   GR_COMBINE_FACTOR_NONE,
+                                   GR_COMBINE_LOCAL_ITERATED,
+                                   GR_COMBINE_OTHER_NONE,
+                                   FXFALSE);
+
+    grAlphaCombine(GR_COMBINE_FUNCTION_LOCAL,
+                                   GR_COMBINE_FACTOR_LOCAL,
+                                   GR_COMBINE_LOCAL_ITERATED,
+                                   GR_COMBINE_OTHER_NONE,
+                                   FXFALSE);
+
+    grClipWindow(vscrntlx, vscrntly, vscrntlx + vscrnwidth,
+      vscrntly + vscrnheight);
+      
+    grEnableAA();
+
+    while(num_points)
+    {
+      if (pt->status == VCLIP)
+      {
+        float xmin, ymin, xmax, ymax, tmp;
+        PointConvert(pt->x, pt->x, &xmin, &ymin);
+        PointConvert(pt->arg1, pt->arg2, &xmax, &ymax);
+        /* this can be caused by blit_flip* */
+        if (xmin > xmax)
+        {
+          tmp = xmin;
+          xmin = xmax;
+          xmax = tmp;
+        }
+        if (ymin > ymax)
+        {
+          tmp = ymin;
+          ymin = ymax;
+          ymax = tmp;
+        }
+        grClipWindow(xmin, ymin, xmax, ymax);
+      }
+      else
+      {
+        vertexcount++;
+        
+        if (pt->callback)
+          fxvec_fill_vert(&v2, pt->x, pt->y, pt->callback(), pt->intensity);
+        else
+          fxvec_fill_vert(&v2, pt->x, pt->y, pt->col, pt->intensity);
+          
+	if((vertexcount >= 2) && (v2.a>0.0)) {
+		if(v1.x==v2.x&&v1.y==v2.y)
+		  grAADrawPoint(&v2);
+		else {
+		  v1.r=v2.r; v1.g=v2.g; v1.b=v2.b; v1.a=v2.a;
+		  grAADrawLine(&v1,&v2);
+		}
+	}
+        v1 = v2;
+      }
+      pt++;
+      num_points--;
+    }
+    grDisableAA();
+
+    grClipWindow(vscrntlx, vscrntly, vscrntlx + vscrnwidth,
+      vscrntly + vscrnheight);
+
+    grColorCombine(GR_COMBINE_FUNCTION_SCALE_OTHER,
+                                       GR_COMBINE_FACTOR_ONE,
+                                       GR_COMBINE_LOCAL_NONE,
+                                       GR_COMBINE_OTHER_TEXTURE,
+                                       FXFALSE);
+
+    grAlphaCombine(GR_COMBINE_FUNCTION_LOCAL,
+                                       GR_COMBINE_FACTOR_LOCAL,
+                                       GR_COMBINE_LOCAL_CONSTANT,
+                                       GR_COMBINE_OTHER_NONE,
+                                       FXFALSE);
   }
-
-  pointnum++;
+  return 0;
 }
 
-/*
- * Add new clipping info to the list
- */
-
-void vector_add_clip (int x1, int yy1, int x2, int y2)
-{
-}
-
-/*
- * The vector CPU creates a new display list.
- */
-
-void vector_clear_list(void)
-{
-  pointnum=0;
-}
-
-/* Called when the frame is complete */
-
-void vector_vh_update(struct mame_bitmap *bitmap,int full_refresh)
-{
-}
-
-void vector_set_flip_x (int flip)
-{
-	if (flip)
-		vector_orientation |= ORIENTATION_FLIP_X;
-	else
-		vector_orientation &= ~ORIENTATION_FLIP_X;
-}
-
-void vector_set_flip_y (int flip)
-{
-	if (flip)
-		vector_orientation |= ORIENTATION_FLIP_Y;
-	else
-		vector_orientation &= ~ORIENTATION_FLIP_Y;
-}
-
-void vector_set_swap_xy (int swap)
-{
-	if (swap)
-		vector_orientation |= ORIENTATION_SWAP_XY;
-	else
-		vector_orientation &= ~ORIENTATION_SWAP_XY;
-}
-
-void vector_set_flicker(float _flicker)
-{
-	flicker_correction = _flicker;
-	/* flicker = (int)(flicker_correction * 2.55); */
-}
-
-float vector_get_flicker(void)
-{
-	return flicker_correction;
-}
-
-#endif /* if defined xfx || defined svgafx */
+#endif
