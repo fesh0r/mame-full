@@ -25,7 +25,7 @@
 ** nes_apu.h
 **
 ** NES APU emulation header file
-** $Id: nes_apu.h,v 1.5 2000/09/12 04:17:51 hjb Exp $
+** $Id: nes_apu.h,v 1.6 2000/09/12 13:23:37 hjb Exp $
 */
 
 #ifndef _NES_APU_H_
@@ -133,8 +133,6 @@ typedef struct triangle_s
 
 	int 	vbl_length;
 	int 	linear_length;
-	INT32	linear_dec;
-	INT32	linear_inc;
 } triangle_t;
 
 
@@ -274,6 +272,11 @@ extern void apu_write(UINT32 address, UINT8 value);
 
 /*
 ** $Log: nes_apu.h,v $
+** Revision 1.6  2000/09/12 13:23:37  hjb
+** Removed the incorrect handling of triangle linear_length and replaced it
+** with what was in Matthew's submission (shut off a triangle wave after
+** 0 - 0.25 seconds depending on the linear_length value)
+**
 ** Revision 1.5  2000/09/12 04:17:51  hjb
 ** - Several lookup tables are gone, all is done in-line (simple math)
 ** - The code now uses a static struct apu_t (not a pointer to that struct),

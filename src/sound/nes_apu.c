@@ -25,7 +25,7 @@
 ** nes_apu.c
 **
 ** NES APU emulation
-** $Id: nes_apu.c,v 1.6 2000/09/12 04:17:51 hjb Exp $
+** $Id: nes_apu.c,v 1.7 2000/09/12 13:23:37 hjb Exp $
 */
 
 #include <string.h>
@@ -350,27 +350,33 @@ static INT32 apu_triangle(void)
 {
 	APU_VOLUME_DECAY(apu.triangle.output_vol);
 
-	if (FALSE == apu.triangle.enabled || 0 == apu.triangle.vbl_length)
+	if (FALSE == apu.triangle.enabled ||
+		0 == apu.triangle.vbl_length ||
+		0 == apu.triangle.linear_length)
 		return apu.triangle.output_vol;
 
 	if (FALSE == apu.triangle.holdnote)
-		apu.triangle.vbl_length--;
+	{
+		if (apu.triangle.vbl_length > 0)
+			apu.triangle.vbl_length--;
+		if (apu.triangle.linear_length > 0)
+			apu.triangle.linear_length--;
+	}
 
 #ifndef APU_OVERSAMPLE
     if (apu.triangle.freq > apu.sample_rate)    /* inaudible */
 		return apu.triangle.output_vol;
 #endif
 
-	/* accomplish for the 128 stage linear_length range */
-	apu.triangle.accu -= 4 * apu.triangle.freq;
+	apu.triangle.accu -= apu.triangle.freq;
 	while (apu.triangle.accu < 0)
 	{
 		apu.triangle.accu += apu.sample_rate;
-		apu.triangle.adder = (apu.triangle.adder + 1) & 0x7f;
-		if (apu.triangle.adder <= apu.triangle.linear_length)
-			apu.triangle.output_vol -= apu.triangle.linear_dec;
+		apu.triangle.adder = (apu.triangle.adder + 1) & 0x1f;
+		if (apu.triangle.adder <= 0x10)
+			apu.triangle.output_vol -= 2 * 256;
 		else
-			apu.triangle.output_vol += apu.triangle.linear_inc;
+			apu.triangle.output_vol += 2 * 256;
 	}
 
 	return apu.triangle.output_vol;
@@ -659,9 +665,7 @@ void apu_write(UINT32 address, UINT8 value)
 	/* triangle */
 	case APU_WRC0:
 		apu.triangle.regs[0] = value;
-		apu.triangle.linear_length = value & 0x7f;
-		apu.triangle.linear_dec = APU_MIX_TRIANGLE * (128 - apu.triangle.linear_length) / 64;
-		apu.triangle.linear_inc = APU_MIX_TRIANGLE * (apu.triangle.linear_length + 1) / 64;
+		apu.triangle.linear_length = apu.sample_rate * ((value & 0x7f) + 1) / 128 / 4;
 		apu.triangle.holdnote = (value & 0x80) ? TRUE : FALSE;
 		break;
 
@@ -1010,6 +1014,11 @@ void apu_setext(apu_t *src_apu, apuext_t *ext)
 
 /*
 ** $Log: nes_apu.c,v $
+** Revision 1.7  2000/09/12 13:23:37  hjb
+** Removed the incorrect handling of triangle linear_length and replaced it
+** with what was in Matthew's submission (shut off a triangle wave after
+** 0 - 0.25 seconds depending on the linear_length value)
+**
 ** Revision 1.6  2000/09/12 04:17:51  hjb
 ** - Several lookup tables are gone, all is done in-line (simple math)
 ** - The code now uses a static struct apu_t (not a pointer to that struct),
