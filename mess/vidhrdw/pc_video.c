@@ -11,7 +11,7 @@ int pc_video_start(struct _CRTC6845 *crtc, CRTC6845_CONFIG *config,
 	pc_crtc = crtc;
 
 	crtc6845_init(crtc, config);
-    return video_start_generic();
+	return 0;
 }
 
 VIDEO_UPDATE( pc_video )
@@ -60,3 +60,12 @@ VIDEO_UPDATE( pc_video )
 	}
 }
 
+WRITE_HANDLER ( pc_video_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		if (dirtybuffer)
+			dirtybuffer[offset] = 1;
+	}
+}

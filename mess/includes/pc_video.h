@@ -18,4 +18,6 @@ int pc_video_start(struct _CRTC6845 *crtc, CRTC6845_CONFIG *config,
 
 VIDEO_UPDATE( pc_video );
 
+WRITE_HANDLER ( pc_video_videoram_w );
+
 #endif /* PC_VIDEO_H */

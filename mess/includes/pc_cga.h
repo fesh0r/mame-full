@@ -22,7 +22,6 @@ pc_video_update_proc pc_cga_choosevideomode(int *xfactor, int *yfactor);
 /* call this 240 times per second */
 void pc_cga_timer(void);
 
-WRITE_HANDLER ( pc_cga_videoram_w );
 WRITE_HANDLER ( pc_CGA_w );
 READ_HANDLER ( pc_CGA_r );
 

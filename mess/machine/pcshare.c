@@ -642,8 +642,9 @@ void pc_mda_init(void)
 		gfx[i] = i;
 
 	install_mem_read_handler(0, 0xb0000, 0xbffff, MRA_RAM );
-	install_mem_write_handler(0, 0xb0000, 0xbffff, pc_mda_videoram_w );
-	videoram=memory_region(REGION_CPU1)+0xb0000; videoram_size=0x10000;
+	install_mem_write_handler(0, 0xb0000, 0xbffff, pc_video_videoram_w );
+	videoram = memory_region(REGION_CPU1)+0xb0000;
+	videoram_size = 0x10000;
 
 	install_port_read_handler(0, 0x3b0, 0x3bf, pc_MDA_r );
 	install_port_write_handler(0, 0x3b0, 0x3bf, pc_MDA_w );
@@ -658,8 +659,9 @@ void pc_cga_init(void)
 		gfx[i] = i;
 
 	install_mem_read_handler(0, 0xb8000, 0xbbfff, MRA_RAM );
-	install_mem_write_handler(0, 0xb8000, 0xbbfff, pc_cga_videoram_w );
-	videoram=memory_region(REGION_CPU1)+0xb8000; videoram_size=0x4000;
+	install_mem_write_handler(0, 0xb8000, 0xbbfff, pc_video_videoram_w );
+	videoram = memory_region(REGION_CPU1)+0xb8000;
+	videoram_size = 0x4000;
 
 	install_port_read_handler(0, 0x3d0, 0x3df, pc_CGA_r );
 	install_port_write_handler(0, 0x3d0, 0x3df, pc_CGA_w );

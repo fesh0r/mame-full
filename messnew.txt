@@ -35,6 +35,9 @@ System Driver Changes:
 - [PC200] Fixed a bug causing corrupted characters (bug #398) and a bug
   affecting floppies at startup. [John Elliott]
 
+- [PCMDA] Fixed a bug whereby the screen wouldn't fully refresh all the time
+  (bug #419).  [Nate Woods, John Elliott]
+
 - [SNES] Fixed negative increment in GDMA. [Anthony Kruize]
 
 - [TI99] Fixed some bugs that had been introduced in IDE emulation. [Raphael

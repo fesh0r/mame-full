@@ -16,8 +16,6 @@ void pc_mda_timer(void);
 VIDEO_START ( pc_mda );
 pc_video_update_proc pc_mda_choosevideomode(int *xfactor, int *yfactor);
 
-WRITE_HANDLER ( pc_mda_videoram_w );
-
 WRITE_HANDLER ( pc_MDA_w );
 READ_HANDLER ( pc_MDA_r );
 

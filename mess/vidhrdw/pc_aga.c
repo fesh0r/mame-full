@@ -181,10 +181,11 @@ extern WRITE_HANDLER ( pc_aga_videoram_w )
 {
 	switch (aga.mode) {
 	case AGA_COLOR:
-		if (offset>=0x8000) pc_cga_videoram_w(offset-0x8000, data);
+		if (offset>=0x8000)
+			pc_video_videoram_w(offset-0x8000, data);
 		break;
 	case AGA_MONO:
-		pc_mda_videoram_w(offset,data);
+		pc_video_videoram_w(offset,data);
 		break;
 	case AGA_OFF: break;
 	}
@@ -207,10 +208,11 @@ extern WRITE_HANDLER ( pc200_videoram_w )
 {
 	switch (aga.mode) {
 	default:
-		if (offset>=0x8000) pc_cga_videoram_w(offset-0x8000, data);
+		if (offset>=0x8000)
+			pc_video_videoram_w(offset-0x8000, data);
 		break;
 	case AGA_MONO:
-		pc_mda_videoram_w(offset,data);
+		pc_video_videoram_w(offset,data);
 		break;
 	}
 }

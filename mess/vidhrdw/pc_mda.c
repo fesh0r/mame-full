@@ -149,7 +149,8 @@ extern void pc_mda_timer(void)
 
 void pc_mda_cursor(CRTC6845_CURSOR *cursor)
 {
-	dirtybuffer[cursor->pos*2]=1;
+	if (dirtybuffer)
+		dirtybuffer[cursor->pos*2]=1;
 }
 
 static CRTC6845_CONFIG config= { 14318180 /*?*/, pc_mda_cursor };
@@ -157,8 +158,8 @@ static CRTC6845_CONFIG config= { 14318180 /*?*/, pc_mda_cursor };
 extern void pc_mda_init_video(struct _CRTC6845 *crtc)
 {
 	int i;
-	mda.gfx_char=Machine->gfx[0];
-	mda.gfx_graphic=Machine->gfx[1];
+	mda.gfx_char = Machine->gfx[0];
+	mda.gfx_graphic = Machine->gfx[1];
 
     /* remove pixel column 9 for character codes 0 - 175 and 224 - 255 */
 	for( i = 0; i < 256; i++)
@@ -196,14 +197,6 @@ VIDEO_START( pc_mda )
 {
 	pc_mda_init_video(crtc6845);
 	return pc_video_start(mda.crtc, &config, pc_mda_choosevideomode);
-}
-
-WRITE_HANDLER ( pc_mda_videoram_w )
-{
-	if (videoram[offset] == data)
-		return;
-	videoram[offset] = data;
-	dirtybuffer[offset] = 1;
 }
 
 /*
@@ -308,7 +301,7 @@ static void mda_text_inten(struct mame_bitmap *bitmap)
 
 		for (sx=0, r.min_x=0, r.max_x=8; sx<columns; 
 			 sx++, offs=(offs+2)&0x3fff, r.min_x+=9, r.max_x+=9) {
-			if (dirtybuffer[offs] || dirtybuffer[offs+1]) {
+			if (!dirtybuffer || dirtybuffer[offs] || dirtybuffer[offs+1]) {
 				
 				drawgfx(bitmap, mda.gfx_char, videoram[offs], videoram[offs+1], 
 						0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
@@ -326,7 +319,8 @@ static void mda_text_inten(struct mame_bitmap *bitmap)
 								 9, k, Machine->pens[2/*?*/]);
 				}
 
-				dirtybuffer[offs]=dirtybuffer[offs+1]=0;
+				if (dirtybuffer)
+					dirtybuffer[offs] = dirtybuffer[offs+1] = 0;
 			}
 		}
 	}
@@ -356,7 +350,7 @@ static void mda_text_blink(struct mame_bitmap *bitmap)
 		for (sx=0, r.min_x=0, r.max_x=8; sx<columns; 
 			 sx++, offs=(offs+2)&0x3fff, r.min_x+=9, r.max_x+=9) {
 
-			if (dirtybuffer[offs] || dirtybuffer[offs+1]) {
+			if (!dirtybuffer || dirtybuffer[offs] || dirtybuffer[offs+1]) {
 				
 				int attr = videoram[offs+1];
 				
@@ -384,7 +378,8 @@ static void mda_text_blink(struct mame_bitmap *bitmap)
 								 9, k, Machine->pens[2/*?*/]);
 				}
 
-				dirtybuffer[offs]=dirtybuffer[offs+1]=0;
+				if (dirtybuffer)
+					dirtybuffer[offs] = dirtybuffer[offs+1] = 0;
 			}
 		}
 	}

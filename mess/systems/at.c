@@ -79,7 +79,7 @@ static MEMORY_WRITE_START( at_writemem )
 	{ 0x080000, 0x09ffff, MWA_RAM },
 	{ 0x0a0000, 0x0affff, MWA_NOP },
 	{ 0x0b0000, 0x0b7fff, MWA_NOP },
-	{ 0x0b8000, 0x0bbfff, pc_cga_videoram_w, &videoram, &videoram_size },
+	{ 0x0b8000, 0x0bbfff, pc_video_videoram_w, &videoram, &videoram_size },
 	{ 0x0c0000, 0x0c7fff, MWA_ROM },
 	{ 0x0c8000, 0x0cffff, MWA_ROM },
     { 0x0d0000, 0x0effff, MWA_ROM },

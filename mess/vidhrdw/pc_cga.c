@@ -231,16 +231,6 @@ VIDEO_START( pc_cga )
 	return pc_video_start(cga.crtc, &config, pc_cga_choosevideomode);
 }
 
-WRITE_HANDLER ( pc_cga_videoram_w )
-{
-	if (videoram[offset] != data)
-	{
-		videoram[offset] = data;
-		if (dirtybuffer)
-			dirtybuffer[offset] = 1;
-	}
-}
-
 /*
  *	rW	CGA mode control register (see #P138)
  */
