@@ -441,6 +441,7 @@ void via_write(int which, int offset, int data)
 {
 	struct via6522 *v = via + which;
 
+	offset &=0x0f;
 	switch (offset)
     {
     case VIA_PB:
