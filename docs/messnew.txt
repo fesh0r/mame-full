@@ -8,7 +8,8 @@ New System Drivers Supported (in no particular order):
 
 User Interface Changes:
 -----------------------
-(none)
+- Fixed a bug that caused the image info screen to not work properly with
+  multiple images of the same device type.  (bug #677) [Nate Woods]
 
 
 

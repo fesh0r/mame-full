@@ -124,7 +124,8 @@ int handle_mess_user_interface(struct mame_bitmap *bitmap)
 int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 {
 	char buf[2048], *dst = buf;
-	int type, id, sel = selected - 1;
+	const struct IODevice *dev;
+	int id, sel = selected - 1;
 
 	dst += sprintf(dst, "%s\n\n", Machine->gamedrv->description);
 
@@ -134,11 +135,11 @@ int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 		dst += sprintf(dst, "RAM: %s\n\n", ram_string(buf2, options.ram));
 	}
 
-	for (type = 0; type < IO_COUNT; type++)
+	for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
 	{
-		for( id = 0; id < device_count(type); id++ )
+		for (id = 0; id < dev->count; id++)
 		{
-			mess_image *img = image_from_devtype_and_index(type, id);
+			mess_image *img = image_from_device_and_index(dev, id);
 			const char *name = image_filename(img);
 			if( name )
 			{
