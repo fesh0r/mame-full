@@ -30,7 +30,7 @@
 XMAME/XMESS DOCUMENTATION
 \layout Date
 
-6 May 2004
+17 July 2004
 \layout SGML
 
 <authorgroup>
@@ -4487,16 +4487,11 @@ Unix sources and docs
 \layout Itemize
 
 The xmame/xmess sources
-\begin_deeper 
-\layout Standard
-
-
-\begin_inset LatexCommand \url[xmame/xmess-0.82.1 sources]{download/xmame-0.82.1.tar.bz2}
+\begin_inset LatexCommand \url[xmame/xmess-0.84.1 sources]{download/xmame-0.84.1.tar.bz2}
 
 \end_inset 
 
 
-\end_deeper 
 \layout Itemize
 
 xmame/xmess FAQ & Installation Guide:
@@ -4561,7 +4556,7 @@ Unix binaries
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[xmame RPMs for several display targets]{ftp://ftp.rx3.net/pub/arc/xmame/0.80.1/}
+\begin_inset LatexCommand \url[xmame RPMs for several display targets]{ftp://ftp.rx3.net/pub/arc/xmame/}
 
 \end_inset 
 

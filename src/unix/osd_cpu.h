@@ -98,13 +98,18 @@ typedef union {
 	UINT32 d;
 }	PAIR;
 
-/* disable BIG_SWITCH optimalisation in z80.c and m6809.c on buggy gcc
+/* disable BIG_SWITCH optimization in z80.c and m6809.c on buggy gcc
    versions */
 #if (defined __GNUC__) && \
    ((__GNUC__ < 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ < 8)))
 #define BIG_SWITCH          0
 #else
 #define BIG_SWITCH          1
+#endif
+
+/* Suppress warnings about redefining the macro 'PPC' on LinuxPPC. */
+#ifdef PPC
+#undef PPC
 #endif
 
 #endif	/* defined OSD_CPU_H */

@@ -15,7 +15,7 @@ int osd_display_loading_rom_message(const char *name,
 	static int count = 0;
 	
 	if (name)
-		fprintf(stderr_file,"loading rom %d: %-12s\n", count, name);
+		fprintf(stderr_file,"loading rom %d: %-32s\n", count, name);
 	else
 		fprintf(stderr_file,"done\n");
 	

@@ -2,14 +2,32 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
-Release 0.82.2
+Release 0.84.1, 17 July 2004
+	- Everything from MAME 0.84 (http://x.mame.net/changes-mame.html) and
+	  MESS 0.84 (http://x.mame.net/changes-mess.html).
+	- Removed -listinfo, since it's no longer supported by the core. 
+	- The support for network play and rapidfire is no longer in vanilla 
+	  MAME, so they have to be patched into the core for releases.
+	- Builds on LinuxPPC should no longer give warnings about "PPC" being
+	  redefined.
+	- Removed romalizer from src/unix/contrib/tools since it has been 
+	  abandoned.
+	- Reworked the makefiles so that dirtied files in src/unix are once 
+	  again compiled and force the application to relink.  It also seems to 
+	  behave well with parallel (-j) invocations of 'make'.
+	- Enabled messtest in src/unix/unix.mak since it should now build 
+	  without errors with 'make -j'.
+
+Release 0.83.1, 12 June 2004
+	- Everything from MAME 0.83 and MESS 0.83.
 	- The Xv driver now turns on XV_AUTOPAINT_COLORKEY, in case it was 
 	  turned off by, for example, by the xine movie player.  This prevents 
 	  the display from being blank in this case.  (Shyouzou Sugitani)
+	- Moved a misplaced vprintf() call that was causing a bunch of log 
+	  messages to display and slowing down the emulation for some games.
 
 Release 0.82.1, 15 May 2004
-	- Everything from MAME 0.82 (http://x.mame.net/changes-mame.html) and 
-	  MESS 0.82 (http://x.mame.net/changes-mess.html).
+	- Everything from MAME 0.82 and MESS 0.82.
 	- The romcmp tool now builds on Solaris.
 	- Improved the message that is displayed when a suitable X11 visual 
 	  cannot be found.  Fixes Bugzilla bug 219.  (Christopher Stone)

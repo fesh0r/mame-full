@@ -136,6 +136,18 @@ OBJDIRS += $(OBJ)/mess $(OBJ)/mess/expat $(OBJ)/mess/cpu \
 	   $(OBJ)/mess/sound
 endif
 
+UNIX_OBJDIR = $(OBJ)/unix.$(DISPLAY_METHOD)
+
+SYSDEP_DIR = $(UNIX_OBJDIR)/sysdep
+DSP_DIR = $(UNIX_OBJDIR)/sysdep/dsp-drivers
+MIXER_DIR = $(UNIX_OBJDIR)/sysdep/mixer-drivers
+VID_DIR = $(UNIX_OBJDIR)/video-drivers
+JOY_DIR = $(UNIX_OBJDIR)/joystick-drivers
+FRAMESKIP_DIR = $(UNIX_OBJDIR)/frameskip-drivers
+
+OBJDIRS += $(UNIX_OBJDIR) $(SYSDEP_DIR) $(DSP_DIR) $(MIXER_DIR) $(VID_DIR) \
+	$(JOY_DIR) $(FRAMESKIP_DIR)
+
 IMGTOOL_LIBS = -lz
 
 ifeq ($(TARGET), mess)
@@ -174,8 +186,6 @@ include src/rules.mak
 ifeq ($(TARGET), mess)
 include mess/rules_ms.mak
 endif
-
-include src/unix/dirs.mak
 
 ifdef DEBUG
 DBGDEFS = -DMAME_DEBUG
@@ -229,11 +239,101 @@ ifdef HAVE_MPROTECT
 MY_CFLAGS += -DHAVE_MPROTECT
 endif
 
+##############################################################################
+# Object listings
+##############################################################################
+
+# common objs
+COMMON_OBJS  =  \
+	$(OBJDIR)/main.o $(OBJDIR)/sound.o \
+	$(OBJDIR)/keyboard.o $(OBJDIR)/devices.o \
+	$(OBJDIR)/video.o $(OBJDIR)/mode.o \
+	$(OBJDIR)/fileio.o $(OBJDIR)/dirio.o $(OBJDIR)/config.o \
+	$(OBJDIR)/fronthlp.o $(OBJDIR)/ident.o $(OBJDIR)/network.o \
+	$(OBJDIR)/snprintf.o $(OBJDIR)/nec765_dummy.o $(OBJDIR)/effect.o \
+	$(OBJDIR)/ticker.o $(OBJDIR)/parallel.o $(OBJDIR)/fileio_more.o
+
+# sysdep objs
+SYSDEP_OBJS = $(SYSDEP_DIR)/rc.o $(SYSDEP_DIR)/misc.o \
+   $(SYSDEP_DIR)/plugin_manager.o $(SYSDEP_DIR)/sound_stream.o \
+   $(SYSDEP_DIR)/sysdep_palette.o $(SYSDEP_DIR)/sysdep_dsp.o \
+   $(SYSDEP_DIR)/sysdep_mixer.o
+
+# video driver objs per display method
+VID_OBJS.x11    = $(VID_DIR)/xinput.o $(VID_DIR)/xil.o \
+	$(VID_DIR)/x11_window.o \
+	$(VID_DIR)/xf86_dga1.o $(VID_DIR)/xf86_dga2.o $(VID_DIR)/xf86_dga.o
+VID_OBJS.xgl    = $(VID_DIR)/gltool.o $(VID_DIR)/glxtool.o $(VID_DIR)/glcaps.o \
+		  $(VID_DIR)/glvec.o $(VID_DIR)/glgen.o $(VID_DIR)/glexport.o \
+		  $(VID_DIR)/glcab.o $(VID_DIR)/gljpg.o \
+		  $(VID_DIR)/xinput.o
+VID_OBJS.xfx    = $(VID_DIR)/fxgen.o $(VID_DIR)/xinput.o
+VID_OBJS.svgalib = $(VID_DIR)/svgainput.o
+VID_OBJS.svgafx = $(VID_DIR)/svgainput.o $(VID_DIR)/fxgen.o
+VID_OBJS.openstep = $(VID_DIR)/openstep_input.o
+VID_OBJS.photon2 = $(VID_DIR)/photon2_input.o \
+	$(VID_DIR)/photon2_window.o \
+	$(VID_DIR)/photon2_overlay.o
+VID_OBJS = $(VID_DIR)/$(DISPLAY_METHOD).o $(VID_OBJS.$(DISPLAY_METHOD))
+
+# sound driver objs per arch
+SOUND_OBJS.linux   = $(DSP_DIR)/oss.o $(MIXER_DIR)/oss.o $(DSP_DIR)/alsa.o
+SOUND_OBJS.freebsd = $(DSP_DIR)/oss.o $(MIXER_DIR)/oss.o
+SOUND_OBJS.netbsd  = $(DSP_DIR)/netbsd.o
+#SOUND_OBJS.openbsd = $(DSP_DIR)/oss.o $(MIXER_DIR)/oss.o
+SOUND_OBJS.openbsd = $(DSP_DIR)/netbsd.o 
+SOUND_OBJS.solaris = $(DSP_DIR)/solaris.o $(MIXER_DIR)/solaris.o
+SOUND_OBJS.next    = $(DSP_DIR)/soundkit.o
+SOUND_OBJS.macosx  = $(DSP_DIR)/coreaudio.o
+SOUND_OBJS.nto     = $(DSP_DIR)/io-audio.o
+SOUND_OBJS.irix    = $(DSP_DIR)/irix.o
+SOUND_OBJS.irix_al = $(DSP_DIR)/irix_al.o
+SOUND_OBJS.beos    =
+SOUND_OBJS.generic =
+#these need to be converted to plugins first
+#SOUND_OBJS.aix     = $(DSP_DIR)/aix.o
+SOUND_OBJS = $(SOUND_OBJS.$(ARCH)) $(DSP_DIR)/esound.o $(DSP_DIR)/artssound.o \
+    $(DSP_DIR)/arts.o $(DSP_DIR)/sdl.o $(DSP_DIR)/waveout.o
+
+# joystick objs
+JOY_OBJS = $(JOY_DIR)/joy_i386.o $(JOY_DIR)/joy_pad.o $(JOY_DIR)/joy_x11.o \
+    $(JOY_DIR)/joy_usb.o $(JOY_DIR)/joy_ps2.o $(JOY_DIR)/joy_SDL.o \
+    $(JOY_DIR)/XInputDevices.o $(JOY_DIR)/lightgun_abs_event.o
+
+# framskip objs
+FRAMESKIP_OBJS = $(FRAMESKIP_DIR)/dos.o $(FRAMESKIP_DIR)/barath.o
+
+# all objs
+UNIX_OBJS = $(COMMON_OBJS) $(SYSDEP_OBJS) $(VID_OBJS) $(SOUND_OBJS) $(JOY_OBJS) \
+   $(FRAMESKIP_OBJS)
+
+##############################################################################
+# CFLAGS
+##############################################################################
+
+# per arch
+CFLAGS.linux      = -DSYSDEP_DSP_OSS -DSYSDEP_MIXER_OSS -DHAVE_SNPRINTF -DHAVE_VSNPRINTF
+CFLAGS.freebsd    = -DSYSDEP_DSP_OSS -DSYSDEP_MIXER_OSS -DHAVE_SNPRINTF -DHAVE_VSNPRINTF
+CFLAGS.netbsd     = -DSYSDEP_DSP_NETBSD -DHAVE_SNPRINTF -DHAVE_VSNPRINTF
+#CFLAGS.openbsd    = -DSYSDEP_DSP_OSS -DSYSDEP_MIXER_OSS -DHAVE_SNPRINTF -DHAVE_VSNPRINTF
+CFLAGS.openbsd    = -DSYSDEP_DSP_NETBSD -DHAVE_SNPRINTF -DHAVE_VSNPRINTF
+CFLAGS.solaris    = -DSYSDEP_DSP_SOLARIS -DSYSDEP_MIXER_SOLARIS
+CFLAGS.next       = -DSYSDEP_DSP_SOUNDKIT -DBSD43
+CFLAGS.macosx     = -DSYSDEP_DSP_COREAUDIO -DHAVE_SNPRINTF -DHAVE_VSNPRINTF
+CFLAGS.nto        = -DSYSDEP_DSP_ALSA -DSYSDEP_MIXER_ALSA
+CFLAGS.irix       = -DSYSDEP_DSP_IRIX -DHAVE_SNPRINTF
+CFLAGS.irix_al    = -DSYSDEP_DSP_IRIX -DHAVE_SNPRINTF
+CFLAGS.beos       = `sdl-config --cflags` -DSYSDEP_DSP_SDL
+CFLAGS.generic    =
+#these need to be converted to plugins first
+#CFLAGS.aix        = -DSYSDEP_DSP_AIX -I/usr/include/UMS -I/usr/lpp/som/include
+
 # CONFIG are the cflags used to build the unix tree, this is where most defines
 # go
-CONFIG = $(MY_CFLAGS) $(CFLAGS.$(DISPLAY_METHOD)) -DNAME='\"x$(TARGET)\"' \
-	-DDISPLAY_METHOD='\"$(DISPLAY_METHOD)\"' \
-	-DXMAMEROOT='\"$(XMAMEROOT)\"' -DSYSCONFDIR='\"$(SYSCONFDIR)\"'
+CONFIG = $(MY_CFLAGS) $(CFLAGS.$(DISPLAY_METHOD)) -DNAME='"x$(TARGET)"' \
+	-DDISPLAY_METHOD='"$(DISPLAY_METHOD)"' \
+	-DXMAMEROOT='"$(XMAMEROOT)"' -DSYSCONFDIR='"$(SYSCONFDIR)"' \
+	$(CFLAGS.$(ARCH))
 
 ifdef HAVE_GETTIMEOFDAY
 CONFIG += -DHAVE_GETTIMEOFDAY
@@ -326,28 +426,18 @@ VECTOR = $(OBJDIR)/vector.o
 ##############################################################################
 # Start of the real makefile.
 ##############################################################################
-$(NAME).$(DISPLAY_METHOD): $(ZLIB) $(OBJS) $(OSDEPEND) $(VECTOR)
+$(NAME).$(DISPLAY_METHOD): $(ZLIB) $(OBJS) $(UNIX_OBJS) $(VECTOR) $(OSDEPEND)
 	$(CC_COMMENT) @echo 'Linking $@ ...'
-	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $(OBJS) $(OSDEPEND) $(VECTOR) $(MY_LIBS)
+	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $(OBJS) $(UNIX_OBJS) $(OSDEPEND) $(VECTOR) $(MY_LIBS)
 
 maketree: $(sort $(OBJDIRS))
 
 $(sort $(OBJDIRS)):
 	-mkdir -p $@
 
-osdepend-objdirs:
-	$(CC_COMPILE) \
-	 ( \
-	 cd src/unix; \
-	  $(MAKE) CC="$(CC)" RANLIB="$(RANLIB)" ARCH="$(ARCH)" \
-	  DISPLAY_METHOD="$(DISPLAY_METHOD)" CFLAGS="$(CONFIG)" \
-	  CC_COMMENT="$(CC_COMMENT)" CC_COMPILE="$(CC_COMPILE)" \
-	  AR_OPTS="$(AR_OPTS)" OBJ="$(OBJ)" objdirs\
-	 )
+tools: $(ZLIB) $(TOOLS)
 
-tools: $(OSDEPEND) $(ZLIB) $(TOOLS)
-
-$(PLATFORM_IMGTOOL_OBJS): $(OSDEPEND)
+$(PLATFORM_IMGTOOL_OBJS):
 
 xlistdev: src/unix/contrib/tools/xlistdev.c
 	$(CC_COMMENT) @echo 'Compiling $< ...'
@@ -394,17 +484,6 @@ messtest: $(OBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 $(OBJDIR)/tststubs.o: src/unix/tststubs.c
 	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
 
-$(OSDEPEND):
-	$(CC_COMMENT) @echo 'Compiling in the unix directory...'
-	$(CC_COMPILE) \
-	 ( \
-	 cd src/unix; \
-	  $(MAKE) CC="$(CC)" RANLIB="$(RANLIB)" ARCH="$(ARCH)" \
-	  DISPLAY_METHOD="$(DISPLAY_METHOD)" CFLAGS="$(CONFIG)" \
-	  CC_COMMENT="$(CC_COMMENT)" CC_COMPILE="$(CC_COMPILE)" \
-	  AR_OPTS="$(AR_OPTS)" OBJ="$(OBJ)" \
-	 )
-
 src/unix/contrib/cutzlib-1.2.1/libz.a:
 	( \
 	cd src/unix/contrib/cutzlib-1.2.1; \
@@ -426,6 +505,19 @@ $(OBJ)/%.a:
 	$(CC_COMMENT) @echo 'Archiving $@ ...'
 	$(CC_COMPILE) ar $(AR_OPTS) $@ $^
 	$(CC_COMPILE) $(RANLIB) $@
+
+$(OSDEPEND): $(UNIX_OBJS)
+	$(CC_COMMENT) @echo 'Archiving $@ ...'
+	$(CC_COMPILE) ar $(AR_OPTS) $@ $(UNIX_OBJS)
+	$(CC_COMPILE) $(RANLIB) $@
+
+$(UNIX_OBJDIR)/%.o: src/unix/%.c src/unix/xmame.h
+	$(CC_COMMENT) @echo '[OSEPEND] Compiling $< ...'
+	$(CC_COMPILE) $(CC) $(CONFIG) -o $@ -c $<
+
+$(UNIX_OBJDIR)/%.o: %.m src/unix/xmame.h
+	$(CC_COMMENT) @echo '[OSEPEND] Compiling $< ...'
+	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
 
 # special cases for the 68000 core
 #
