@@ -104,10 +104,9 @@ CORE_OBJDIRS = $(OBJ) \
 	$(OBJ)/mess $(OBJ)/mess/formats $(OBJ)/mess/systems $(OBJ)/mess/machine \
 	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/tools
 
-IMGTOOL_OBJS = $(OBJ)/unix.$(DISPLAY_METHOD)/dirio.o
+IMGTOOL_OBJS =  $(OBJ)/unix.$(DISPLAY_METHOD)/dirio.o
 IMGTOOL_LIBS = -lz
 INCLUDE_PATH = -Isrc -Imess -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
-
 
 ##############################################################################
 # "Calculate" the final CFLAGS, unix CONFIG, LIBS and OBJS
@@ -327,7 +326,7 @@ doinstall:
 
 doinstallsuid:
 	@echo installing binaries under $(DESTDIR)...
-	$(INSTALL) x$(TARGET).$(DISPLAY_METHOD) $(DESTDIR)
+	$(INSTALL) $(NAME).$(DISPLAY_METHOD) $(DESTDIR)
 	chmod 4755 $(DESTDIR)/$(NAME).$(DISPLAY_METHOD)
 
 copycab:

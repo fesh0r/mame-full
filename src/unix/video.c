@@ -724,10 +724,15 @@ void osd_update_video_and_audio(struct osd_bitmap *normal_bitmap,
       if (showfpstemp)
       {
 	 showfpstemp = 0;
+	 schedule_full_refresh();
       }
       else
       {
 	 showfps ^= 1;
+	 if (showfps == 0)
+	 {
+	    schedule_full_refresh();
+	 }
       }
    }
    
@@ -796,6 +801,7 @@ void osd_update_video_and_audio(struct osd_bitmap *normal_bitmap,
    if (showfpstemp)         /* MAURY_BEGIN: nuove opzioni */
    {
       showfpstemp--;
+      if (showfpstemp == 0) schedule_full_refresh();
    }
 
    skip_this_frame = skip_next_frame;
