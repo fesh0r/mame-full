@@ -42,8 +42,9 @@ extern INTERRUPT_GEN( msx_interrupt );
 extern INTERRUPT_GEN( msx2_interrupt );
 extern NVRAM_HANDLER( msx2 );
 
-int msx_cart_load (mess_image *img, mame_file *fp, int open_mode);
-void msx_cart_unload (int id);
+DEVICE_LOAD( msx_cart );
+DEVICE_UNLOAD( msx_cart );
+
 void msx_vdp_interrupt (int);
 
 /* I/O functions */
@@ -70,9 +71,9 @@ WRITE_HANDLER ( msx_writemem2 );
 WRITE_HANDLER ( msx_writemem3 );
 
 /* cassette functions */
-int msx_cassette_init (mess_image *img, mame_file *fp, int open_mode);
+DEVICE_LOAD( msx_cassette );
 
 /* disk functions */
-int msx_floppy_init (mess_image *img, mame_file *fp, int open_mode);
+DEVICE_LOAD( msx_floppy );
 
 

@@ -509,7 +509,7 @@ ROM_END
 SYSTEM_CONFIG_START(ti85)
 	CONFIG_DEVICE_BASE ( IO_SERIAL, 1,
 			"85p\085s\085i\085n\085c\085l\085k\085m\085v\085d\085e\085r\085g\085b\0",
-			DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, ti85_serial_init, NULL, ti85_serial_load, ti85_serial_unload,
+			DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, device_init_ti85_serial, NULL, device_load_ti85_serial, device_unload_ti85_serial,
 			NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL )
 	CONFIG_DEVICE_SNAPSHOT( "sav\0", ti8x )
 SYSTEM_CONFIG_END
@@ -517,7 +517,7 @@ SYSTEM_CONFIG_END
 SYSTEM_CONFIG_START(ti86)
 	CONFIG_DEVICE_BASE ( IO_SERIAL, 1,
 			"86p\086s\086i\086n\086c\086l\086k\086m\086v\086d\086e\086r\086g\0",
-			DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, ti85_serial_init, NULL, ti85_serial_load, ti85_serial_unload,
+			DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, device_init_ti85_serial, NULL, device_load_ti85_serial, device_unload_ti85_serial,
 			NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL )
 	CONFIG_DEVICE_SNAPSHOT( "sav\0", ti8x )
 SYSTEM_CONFIG_END

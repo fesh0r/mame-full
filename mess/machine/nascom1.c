@@ -116,10 +116,10 @@ WRITE_HANDLER (	nascom1_port_01_w )
 {
 }
 
-int	nascom1_cassette_load(int id, mame_file *file, int open_mode)
+DEVICE_LOAD( nascom1_cassette )
 {
 	nascom1_tape_size = mame_fsize(file);
-	nascom1_tape_image = (UINT8 *) image_malloc(IO_CASSETTE, id, nascom1_tape_size);
+	nascom1_tape_image = (UINT8 *) image_malloc(image, nascom1_tape_size);
 	if (!nascom1_tape_image || (mame_fread(file, nascom1_tape_image, nascom1_tape_size) != nascom1_tape_size))
 		return INIT_FAIL;
 
@@ -127,7 +127,7 @@ int	nascom1_cassette_load(int id, mame_file *file, int open_mode)
 	return INIT_PASS;
 }
 
-void nascom1_cassette_unload(int id)
+DEVICE_UNLOAD( nascom1_cassette )
 {
 	nascom1_tape_image = NULL;
 	nascom1_tape_size = nascom1_tape_index = 0;

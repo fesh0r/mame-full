@@ -671,14 +671,14 @@ SNAPSHOT_LOAD( ti8x )
   TI calculators serial link transmission
 ***************************************************************************/
 
-int ti85_serial_init(int id)
+DEVICE_INIT( ti85_serial )
 {
 	ti85_free_serial_data_memory();
 	ti85_receive_serial (NULL,0);
 	return INIT_PASS;
 }
 
-int ti85_serial_load(int id, mame_file *file, int open_mode)
+DEVICE_LOAD( ti85_serial )
 {
 	UINT8* file_data;
 	UINT16 file_size;
@@ -709,7 +709,7 @@ int ti85_serial_load(int id, mame_file *file, int open_mode)
 	return INIT_PASS;
 }
 
-void ti85_serial_unload(int id)
+DEVICE_UNLOAD( ti85_serial )
 {
 	ti85_free_serial_data_memory();
 	ti85_serial_status = TI85_SEND_STOP;

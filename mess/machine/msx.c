@@ -96,7 +96,7 @@ static int msx_probe_type (UINT8* pmem, int size)
         return (asc8 > asc16) ? 4 : 5;
 }
 
-int msx_cart_load (int id, mame_file *F, int open_mode)
+DEVICE_LOAD( msx_cart )
 {
     UINT8 *pmem,*m;
     int size,size_aligned,n,p,type,i;
@@ -111,29 +111,30 @@ int msx_cart_load (int id, mame_file *F, int open_mode)
         "Konami Synthesizer", "Cross Blaim", "Disk ROM",
 		"Korean 80-in-1", "Korean 126-in-1" };
 
+	int id = image_index(image);
+
     /* try to load it */
-    size = mame_fsize (F);
+    size = mame_fsize (file);
     if (size < 0x2000)
     {
-        logerror("%s: file to small\n",
-            image_filename (IO_CARTSLOT, id));
+        logerror("%s: file to small\n", image_filename(image));
         return 1;
     }
     /* get mapper type */
-    pext = image_extrainfo (IO_CARTSLOT, id);
+    pext = image_extrainfo (image);
 	if (!pext || (1 != sscanf (pext, "%d", &type) ) )
    	{
-       	logerror("Cart #%d No extra info found in crc file\n", id);
+		logerror("Cart: No extra info found in crc file\n");
        	type = -1;
    	}
    	else
    	{
        	if (type < 0 || type > 17)
 		{
-           	logerror("Cart #%d Invalid extra info\n", id);
+			logerror("Cart: Invalid extra info\n");
            	type = -1;
 		}
-      	else logerror("Cart %d extra info: %s\n", id, pext);
+      	else logerror("Cart extra info: %s\n", pext);
    	}
 
     /* calculate aligned size (8, 16, 32, 64, 128, 256, etc. (kB) ) */
@@ -147,10 +148,10 @@ int msx_cart_load (int id, mame_file *F, int open_mode)
         return 1;
     }
     memset (pmem, 0xff, size_aligned);
-    if (mame_fread (F, pmem, size) != size)
+    if (mame_fread (file, pmem, size) != size)
     {
         logerror("%s: can't read file\n",
-            image_filename (IO_CARTSLOT, id));
+            image_filename (image));
         free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
         return 1;
     }
@@ -162,7 +163,7 @@ int msx_cart_load (int id, mame_file *F, int open_mode)
 
         if ( !( (pmem[0] == 'A') && (pmem[1] == 'B') ) )
         {
-            logerror("%s: May not be a valid ROM file\n",image_filename (IO_CARTSLOT, id) );
+            logerror("%s: May not be a valid ROM file\n",image_filename (image) );
         }
 
         logerror("Probed cartridge mapper %s\n", mapper_types[type]);
@@ -191,7 +192,7 @@ int msx_cart_load (int id, mame_file *F, int open_mode)
     logerror("Cart #%d size %d, mask %d, type: %s\n",id, size, msx1.cart[id].bank_mask, mapper_types[type]);
     /* set filename for sram (memcard) */
     msx1.cart[id].sramfile = malloc (strlen (image_filename
-        (IO_CARTSLOT, id)) + 1);
+        (image)) + 1);
     if (!msx1.cart[id].sramfile)
     {
         logerror("malloc () failed\n");
@@ -199,7 +200,7 @@ int msx_cart_load (int id, mame_file *F, int open_mode)
         return 1;
     }
 
-	strcpy(msx1.cart[id].sramfile, image_basename(IO_CARTSLOT, id));
+	strcpy(msx1.cart[id].sramfile, image_basename(image));
     pext2 = strrchr (msx1.cart[id].sramfile, '.');
     if (pext2)
 		*pext2 = 0;
@@ -284,14 +285,14 @@ int msx_cart_load (int id, mame_file *F, int open_mode)
         }
 
 		i = 0;
-        F = mame_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
+        file = mame_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
                 FILETYPE_MEMCARD, 0);
-		if (F)
+		if (file)
 			{
-			n = mame_fsize (F);
+			n = mame_fsize (file);
 			if (n == 0x2000)
 				{
-	        	if (mame_fread (F, pmem + 0x21000, 0x2000) == 0x2000)
+	        	if (mame_fread (file, pmem + 0x21000, 0x2000) == 0x2000)
 	   		    	{
    	         		memcpy (pmem + 0x20000, pmem + 0x21000, 0x1000);
             		memcpy (pmem + 0x23000, pmem + 0x22000, 0x1000);
@@ -302,7 +303,7 @@ int msx_cart_load (int id, mame_file *F, int open_mode)
 			/* if it's an Virtual MSX Game Master 2 file, convert */
 			if (n == 0x4000)
 				{
-	        	if (mame_fread (F, pmem + 0x20000, 0x4000) == 0x4000)
+	        	if (mame_fread (file, pmem + 0x20000, 0x4000) == 0x4000)
 	   		    	{
    	         		memcpy (pmem + 0x20000, pmem + 0x21000, 0x1000);
             		memcpy (pmem + 0x22000, pmem + 0x23000, 0x1000);
@@ -311,7 +312,7 @@ int msx_cart_load (int id, mame_file *F, int open_mode)
 				}
 			}
 
-        if (F) mame_fclose (F);
+        if (file) mame_fclose (file);
 
 		if (i) logerror ("Cart #%d SRAM loaded\n", id);
 		else
@@ -346,16 +347,16 @@ int msx_cart_load (int id, mame_file *F, int open_mode)
             free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
             return 1;
         }
-        F = mame_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
+        file = mame_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
                 FILETYPE_MEMCARD, 0);
-        if (F && (mame_fread (F, pmem + size_aligned, 0x2000) == 0x2000) )
+        if (file && (mame_fread (file, pmem + size_aligned, 0x2000) == 0x2000) )
         {
             logerror("Cart #%d SRAM loaded\n", id);
         } else {
             memset (pmem + size_aligned, 0, 0x2000);
             logerror("Cart #%d Failed to load SRAM\n", id);
         }
-        if (F) mame_fclose (F);
+        if (file) mame_fclose (file);
 
         msx1.cart[id].mem = pmem;
         break;
@@ -366,9 +367,9 @@ int msx_cart_load (int id, mame_file *F, int open_mode)
             free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
             return 1;
         }
-        F = mame_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
+        file = mame_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
                 FILETYPE_MEMCARD, 0);
-        if (F && (mame_fread (F, pmem + size_aligned, 0x2000) == 0x2000) )
+        if (file && (mame_fread (file, pmem + size_aligned, 0x2000) == 0x2000) )
         {
             for (i=1;i<8;i++)
             {
@@ -380,7 +381,7 @@ int msx_cart_load (int id, mame_file *F, int open_mode)
             memset (pmem + size_aligned, 0, 0x4000);
             logerror("Cart #%d Failed to load SRAM\n", id);
         }
-        if (F) mame_fclose (F);
+        if (file) mame_fclose (file);
 
         msx1.cart[id].mem = pmem;
         break;
@@ -403,19 +404,19 @@ int msx_cart_load (int id, mame_file *F, int open_mode)
         pmem[0x13ff7] = 0;
         if (msx1.cart[id].pacsram)
         {
-            F = mame_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
+            file = mame_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
                 FILETYPE_MEMCARD, 0);
-            if (F &&
-                (mame_fread (F, buf, PAC_HEADER_LEN) == PAC_HEADER_LEN) &&
+            if (file &&
+                (mame_fread (file, buf, PAC_HEADER_LEN) == PAC_HEADER_LEN) &&
                 !strncmp (buf, PAC_HEADER, PAC_HEADER_LEN) &&
-                (mame_fread (F, pmem + 0x10000, 0x1ffe) == 0x1ffe) )
+                (mame_fread (file, pmem + 0x10000, 0x1ffe) == 0x1ffe) )
             {
                logerror("Cart #%d SRAM loaded\n", id);
             } else {
                memset (pmem + 0x10000, 0, 0x2000);
                logerror("Cart #%d Failed to load SRAM\n", id);
             }
-            if (F) mame_fclose (F);
+            if (file) mame_fclose (file);
         }
         msx1.cart[id].banks[2] = (0x14000/0x2000);
         msx1.cart[id].banks[3] = (0x16000/0x2000);
@@ -462,8 +463,9 @@ static int save_sram (int id, char *filename, UINT8* pmem, int size)
     return res;
 }
 
-void msx_cart_unload (int id)
+DEVICE_UNLOAD( msx_cart )
 {
+	int id = image_index(image);
     mame_file *F;
     int size,res;
 
@@ -642,11 +644,21 @@ WRITE_HANDLER ( msx_psg_w )
         AY8910_control_port_0_w (offset, data);
 }
 
+static mess_image *cassette_image(void)
+{
+	return image_instance(IO_CASSETTE, 0);
+}
+
+static mess_image *printer_image(void)
+{
+	return image_instance(IO_PRINTER, 0);
+}
+
 READ_HANDLER ( msx_psg_port_a_r )
 {
     int data, inp;
 
-    data = (device_input (IO_CASSETTE, 0) > 255 ? 0x80 : 0);
+    data = (device_input(cassette_image()) > 255 ? 0x80 : 0);
 
     if ( (msx1.psg_b ^ readinputport (8) ) & 0x40)
 		{
@@ -745,7 +757,7 @@ WRITE_HANDLER ( msx_printer_w )
 		else
 		{
 			if ( (msx1.prn_strobe & 2) && !(data & 2) )
-				device_output (IO_PRINTER, 0, msx1.prn_data);
+				device_output(printer_image(), msx1.prn_data);
 
 			msx1.prn_strobe = data;
 		}
@@ -755,7 +767,7 @@ WRITE_HANDLER ( msx_printer_w )
 READ_HANDLER ( msx_printer_r )
 {
 	if (offset == 0 && ! (readinputport (8) & 0x80) &&
-			device_status (IO_PRINTER, 0, 0) )
+			device_status(printer_image(), 0) )
 		return 253;
 
     return 0xff;
@@ -908,16 +920,13 @@ static WRITE_HANDLER (msx_disk_w)
 		}
 	}
 
-int msx_floppy_init (mess_image *img, mame_file *fp, int open_mode)
-	{
+DEVICE_LOAD( msx_floppy )
+{
 	int size, heads = 2;
 
-	if (fp == NULL)
-		return INIT_PASS;
-
-	if (fp && ! is_effective_mode_create(open_mode))
+	if (file && ! is_effective_mode_create(open_mode))
 		{
-		size = mame_fsize (fp);
+		size = mame_fsize (file);
 
 		switch (size)
 			{
@@ -932,22 +941,22 @@ int msx_floppy_init (mess_image *img, mame_file *fp, int open_mode)
 	else
 		return INIT_FAIL;
 
-	if (basicdsk_floppy_load (id, fp, open_mode) != INIT_PASS)
+	if (basicdsk_floppy_load (image, file, open_mode) != INIT_PASS)
 		return INIT_FAIL;
 
-	basicdsk_set_geometry (id, 80, heads, 9, 512, 1, 0, FALSE);
+	basicdsk_set_geometry (image, 80, heads, 9, 512, 1, 0, FALSE);
 
 	return INIT_PASS;
-	}
+}
 
 /*
 ** The PPI functions
 */
 
 static WRITE_HANDLER ( msx_ppi_port_a_w )
-	{
+{
     msx_set_all_mem_banks ();
-	}
+}
 
 static WRITE_HANDLER ( msx_ppi_port_c_w )
 	{
@@ -961,10 +970,10 @@ static WRITE_HANDLER ( msx_ppi_port_c_w )
         DAC_signed_data_w (0, (data & 0x80 ? 0x7f : 0));
     /* cassette motor on/off */
     if ( (old_val ^ data) & 0x10)
-        device_status (IO_CASSETTE, 0, (data & 0x10) ? 0 : 1);
+        device_status (cassette_image(), (data & 0x10) ? 0 : 1);
     /* cassette signal write */
     if ( (old_val ^ data) & 0x20)
-        device_output (IO_CASSETTE, 0, (data & 0x20) ? -32768 : 32767);
+        device_output (cassette_image(), (data & 0x20) ? -32768 : 32767);
 
     old_val = data;
 	}
@@ -1562,7 +1571,7 @@ static int check_fmsx_cas (mame_file *f)
     return ret;
 }
 
-int msx_cassette_init(int id, mame_file *file, int open_mode)
+DEVICE_LOAD( msx_cassette )
 {
 	int ret;
 
@@ -1588,7 +1597,7 @@ int msx_cassette_init(int id, mame_file *file, int open_mode)
 				wa.chunk_size = cas_len;
 				wa.chunk_samples = 0;
 			}
-			ret = device_open(IO_CASSETTE,id,0,&wa);
+			ret = device_open(image,0,&wa);
 			free (cas_samples);
 			cas_samples = NULL;
 			cas_len = -1;
@@ -1600,7 +1609,7 @@ int msx_cassette_init(int id, mame_file *file, int open_mode)
 			struct wave_args_legacy wa = {0,};
 			wa.file = file;
 			wa.smpfreq = 44100;
-			if( device_open(IO_CASSETTE,id,1,&wa) )
+			if( device_open(image,1,&wa) )
 				return INIT_FAIL;
 			return INIT_PASS;
 		}

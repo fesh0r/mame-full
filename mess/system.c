@@ -151,7 +151,7 @@ const struct GameDriver *test_drivers[] =
 //TESTDRIVER( studio2 )	/* Studio II										*/
 
 	/* FAIRCHILD */
-//	DRIVER( channelf )	/* Fairchild Channel F VES - 1976					*/
+	DRIVER( channelf )	/* Fairchild Channel F VES - 1976					*/
 
 	/* COLECO */
 //	DRIVER( coleco )	/* ColecoVision (Original BIOS)						*/
@@ -179,13 +179,13 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)				*/
 
 	/* MAGNAVOX */
-//	DRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983					*/
+	DRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983					*/
 
 	/* WATARA */
 //	DRIVER( svision )	/* Super Vision	Handheld							*/
 
 	/* INTERON */
-//TESTDRIVER( vc4000 )	/* Interton vc4000									*/
+TESTDRIVER( vc4000 )	/* Interton vc4000									*/
 
 /****************COMPUTERS***************************************************/
     /* ACORN */
@@ -469,25 +469,25 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS			*/
 //	DRIVER( ti81 )		/* TI 81 rom ver. 1.8								*/
 
 /* TI-85 (Z80 6MHz) */
-//	DRIVER( ti85 )  	/* TI 85 rom ver. 3.0a								*/
-//	DRIVER( ti85v40 )	/* TI 85 rom ver. 4.0								*/
-//	DRIVER( ti85v50 )	/* TI 85 rom ver. 5.0								*/
-//	DRIVER( ti85v60 )	/* TI 85 rom ver. 6.0								*/
-//	DRIVER( ti85v80 )	/* TI 85 rom ver. 8.0								*/
-//	DRIVER( ti85v90 )	/* TI 85 rom ver. 9.0								*/
-//	DRIVER( ti85v100 )	/* TI 85 rom ver. 10.0								*/
+	DRIVER( ti85 )  	/* TI 85 rom ver. 3.0a								*/
+	DRIVER( ti85v40 )	/* TI 85 rom ver. 4.0								*/
+	DRIVER( ti85v50 )	/* TI 85 rom ver. 5.0								*/
+	DRIVER( ti85v60 )	/* TI 85 rom ver. 6.0								*/
+	DRIVER( ti85v80 )	/* TI 85 rom ver. 8.0								*/
+	DRIVER( ti85v90 )	/* TI 85 rom ver. 9.0								*/
+	DRIVER( ti85v100 )	/* TI 85 rom ver. 10.0								*/
 
 /* TI-86 (Z80 6 MHz) */
-//	DRIVER( ti86 )		/* TI 86 rom ver. 1.2								*/
-//	DRIVER( ti86v13 )	/* TI 86 rom ver. 1.3								*/
-//	DRIVER( ti86v14 )	/* TI 86 rom ver. 1.4								*/
-//TESTDRIVER( ti86v15 )	/* TI 86 rom ver. 1.5								*/
-//	DRIVER( ti86v16 )	/* TI 86 rom ver. 1.6								*/
-//	DRIVER( ti86grom )	/* TI 86 homebrew rom by Daniel Foesch				*/
+	DRIVER( ti86 )		/* TI 86 rom ver. 1.2								*/
+	DRIVER( ti86v13 )	/* TI 86 rom ver. 1.3								*/
+	DRIVER( ti86v14 )	/* TI 86 rom ver. 1.4								*/
+TESTDRIVER( ti86v15 )	/* TI 86 rom ver. 1.5								*/
+	DRIVER( ti86v16 )	/* TI 86 rom ver. 1.6								*/
+	DRIVER( ti86grom )	/* TI 86 homebrew rom by Daniel Foesch				*/
 
 	/* NEC */
-//	DRIVER( pc88srl )	/* PC-8801mkIISR(Low resolution display, VSYNC 15KHz) */
-//	DRIVER( pc88srh )	/* PC-8801mkIISR(High resolution display, VSYNC 24KHz) */
+	DRIVER( pc88srl )	/* PC-8801mkIISR(Low resolution display, VSYNC 15KHz) */
+	DRIVER( pc88srh )	/* PC-8801mkIISR(High resolution display, VSYNC 24KHz) */
 
 	/* CANTAB */
 	DRIVER( jupiter )	/* Jupiter Ace										*/
@@ -583,24 +583,24 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 //	DRIVER( superbrd )	/* 1979 Superboard II								*/
 
 	/* ASCII & MICROSOFT */
-//	DRIVER( msx )		/* 1983 MSX 										*/
-//	DRIVER( msxj )		/* 1983 MSX Jap 									*/
-//	DRIVER( msxkr ) 	/* 1983 MSX Korean									*/
-//	DRIVER( msxuk ) 	/* 1983 MSX UK										*/
-//	DRIVER( hotbit11 )	/* 198? ???											*/
-//	DRIVER( hotbit12 )	/* 198? ???											*/
-//	DRIVER( expert10 )	/* 198? ???											*/
-//	DRIVER( expert11 )	/* 198? ???											*/
-//	DRIVER( msx2 ) 		/* 1985 MSX2										*/
-//	DRIVER( msx2a )		/* 1985 MSX2										*/
-//	DRIVER( msx2j ) 	/* 1983 MSX2 Jap									*/
+	DRIVER( msx )		/* 1983 MSX 										*/
+	DRIVER( msxj )		/* 1983 MSX Jap 									*/
+	DRIVER( msxkr ) 	/* 1983 MSX Korean									*/
+	DRIVER( msxuk ) 	/* 1983 MSX UK										*/
+	DRIVER( hotbit11 )	/* 198? ???											*/
+	DRIVER( hotbit12 )	/* 198? ???											*/
+	DRIVER( expert10 )	/* 198? ???											*/
+	DRIVER( expert11 )	/* 198? ???											*/
+	DRIVER( msx2 ) 		/* 1985 MSX2										*/
+	DRIVER( msx2a )		/* 1985 MSX2										*/
+	DRIVER( msx2j ) 	/* 1983 MSX2 Jap									*/
 
 	/* NASCOM MICROCOMPUTERS */
-//	DRIVER( nascom1 )	/* 1978 Nascom 1									*/
-//	DRIVER( nascom1a )  /**/
-//	DRIVER( nascom1b )  /**/
-//	DRIVER( nascom2 )	/* 1979 Nascom 2									*/
-//	DRIVER( nascom2a )	/* 1979 Nascom 2									*/
+	DRIVER( nascom1 )	/* 1978 Nascom 1									*/
+	DRIVER( nascom1a )  /**/
+	DRIVER( nascom1b )  /**/
+	DRIVER( nascom2 )	/* 1979 Nascom 2									*/
+	DRIVER( nascom2a )	/* 1979 Nascom 2									*/
 
 
 	/* MILES GORDON TECHNOLOGY */
@@ -613,7 +613,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 //	DRIVER( pdp1 )      /* 1961 DEC PDP1									*/
 
 	/* MEMOTECH */
-//	DRIVER( mtx512 )    /* 1983 Memotech MTX512								*/
+	DRIVER( mtx512 )    /* 1983 Memotech MTX512								*/
 
 	/* MATTEL */
 //	DRIVER( intvkbd )	/* 1981 - Mattel Intellivision Keyboard Component	*/
@@ -624,15 +624,15 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( exidy )  /* Sorcerer											*/
 
 	/* GALAKSIJA */
-//	DRIVER( galaxy )
+	DRIVER( galaxy )
 
 	/* PK-01 Lviv */
-//	DRIVER( lviv )		/* PK-01 Lviv										*/
-//	DRIVER( lviva )		/* PK-01 Lviv (alternate)							*/
-//	DRIVER( lvivp )		/* PK-01 Lviv (early)								*/
+	DRIVER( lviv )		/* PK-01 Lviv										*/
+	DRIVER( lviva )		/* PK-01 Lviv (alternate)							*/
+	DRIVER( lvivp )		/* PK-01 Lviv (early)								*/
 
 	/* Tesla */
-//TESTDRIVER( pmd85 )	/* PMD-85.1											*/
+TESTDRIVER( pmd85 )	/* PMD-85.1											*/
 
 	/* Team Concepts */
 	/* CPU not known, else should be easy, look into systems/comquest.c */
@@ -652,9 +652,9 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 
 /****************Games*******************************************************/
 	/* Computer Electronic */
-//TESTDRIVER( mk1 )		/* Chess Champion MK I								*/
+TESTDRIVER( mk1 )		/* Chess Champion MK I								*/
 	/* Quelle International */
-//	DRIVER( mk2 )		/* Chess Champion MK II								*/
+	DRIVER( mk2 )		/* Chess Champion MK II								*/
 	/* NOVAG Industries Ltd. */
 //TESTDRIVER( ssystem3 )	/* Chess Champion Super System III / MK III			*/
 

@@ -19,9 +19,9 @@ NVRAM_HANDLER( ti86 );
 
 SNAPSHOT_LOAD( ti8x );
 
-int ti85_serial_init(int id);
-int ti85_serial_load(int, mame_file *fp, int open_mode);
-void ti85_serial_unload(int);
+DEVICE_INIT( ti85_serial );
+DEVICE_LOAD( ti85_serial );
+DEVICE_UNLOAD( ti85_serial );
 
 WRITE_HANDLER( ti81_port_0007_w);
 READ_HANDLER( ti85_port_0000_r);

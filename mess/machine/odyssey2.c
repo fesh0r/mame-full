@@ -20,16 +20,16 @@ static UINT8 p1,p2;
 MACHINE_INIT( odyssey2 )
 {
     cpu_setbank(1, memory_region(REGION_USER1)+3*0x800);
-    p1=0;
-    p2=0;
+    p1 = 0;
+    p2 = 0;
     return;
 }
 
 
-int odyssey2_cart_load(int id, mame_file *cartfile, int open_mode)
+DEVICE_LOAD( odyssey2_cart )
 {
 	/* non banked carts */
-	return cartslot_load_generic(cartfile, REGION_USER1, 0, 0x0001, 0x2000, CARTLOAD_MUSTBEPOWEROFTWO | CARTLOAD_MIRROR);
+	return cartslot_load_generic(file, REGION_USER1, 0, 0x0001, 0x2000, CARTLOAD_MUSTBEPOWEROFTWO | CARTLOAD_MIRROR);
 }
 
 

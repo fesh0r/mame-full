@@ -197,23 +197,23 @@ DRVLIBS = \
 	$(OBJ)/cpschngr.a \
 	$(OBJ)/veb.a	  \
 	$(OBJ)/amstrad.a  \
+	$(OBJ)/necpc.a	  \
+	$(OBJ)/nec.a	  \
+	$(OBJ)/fairch.a   \
+	$(OBJ)/ascii.a	  \
+	$(OBJ)/nascom1.a  \
+	$(OBJ)/magnavox.a \
+	$(OBJ)/mtx.a	  \
+	$(OBJ)/mk1.a      \
+	$(OBJ)/mk2.a      \
+	$(OBJ)/ti85.a     \
+	$(OBJ)/galaxy.a   \
+	$(OBJ)/vc4000.a   \
+	$(OBJ)/lviv.a     \
+	$(OBJ)/pmd85.a    \
 #	$(OBJ)/ti99.a     \
 #	$(OBJ)/apexc.a	  \
 #	$(OBJ)/pdp1.a	  \
-#	$(OBJ)/necpc.a	  \
-#	$(OBJ)/nec.a	  \
-#	$(OBJ)/fairch.a   \
-#	$(OBJ)/ascii.a	  \
-#	$(OBJ)/nascom1.a  \
-#	$(OBJ)/magnavox.a \
-#	$(OBJ)/mtx.a	  \
-#	$(OBJ)/mk1.a      \
-#	$(OBJ)/mk2.a      \
-#	$(OBJ)/ti85.a     \
-#	$(OBJ)/galaxy.a   \
-#	$(OBJ)/vc4000.a   \
-#	$(OBJ)/lviv.a     \
-#	$(OBJ)/pmd85.a    \
 #	$(OBJ)/sinclair.a \
 #	$(OBJ)/lynx.a     \
 #	$(OBJ)/intv.a     \

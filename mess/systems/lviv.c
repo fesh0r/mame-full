@@ -478,7 +478,7 @@ ROM_END
 
 SYSTEM_CONFIG_START(lviv)
 	CONFIG_RAM_DEFAULT(64 * 1024)
-	CONFIG_DEVICE_CASSETTE(1, "lv?\0", lviv_cassette_init)
+	CONFIG_DEVICE_CASSETTE(1, "lv?\0", device_load_lviv_cassette)
 	CONFIG_DEVICE_SNAPSHOT( "sav\0", lviv )
 SYSTEM_CONFIG_END
 

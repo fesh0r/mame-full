@@ -62,7 +62,7 @@ static READ_HANDLER ( lviv_ppi_0_portb_r )
 static READ_HANDLER ( lviv_ppi_0_portc_r )
 {
 	UINT8 data = lviv_ppi_port_outputs[0][2] & 0x0f;
-	if (device_input(IO_CASSETTE,0) > 255)
+	if (device_input(image_instance(IO_CASSETTE, 0)) > 255)
 		data |= 0x10;
 	if (lviv_ppi_port_outputs[0][0] & readinputport(13))
 		data |= 0x80;
@@ -85,7 +85,7 @@ static WRITE_HANDLER ( lviv_ppi_0_portc_w )	/* tape in/out, video memory on/off 
 	lviv_ppi_port_outputs[0][2] = data;
 	if (lviv_ppi_port_outputs[0][1]&0x80)
 		speaker_level_w(0, data&0x01);
-	device_output(IO_CASSETTE, 0, (data & 0x01) ? -32768 : 32767);
+	device_output(image_instance(IO_CASSETTE, 0), (data & 0x01) ? -32768 : 32767);
 	lviv_update_memory();
 }
 
@@ -259,9 +259,9 @@ static struct cassette_args lviv_cassette_args =
 	44100											/* create_smpfreq */
 };
 
-int lviv_cassette_init(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( lviv_cassette )
 {
-	return cassette_init(id, fp, open_mode, &lviv_cassette_args);
+	return cassette_init(image, file, open_mode, &lviv_cassette_args);
 }
 
 /*******************************************************************************

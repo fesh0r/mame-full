@@ -206,7 +206,7 @@ static DRIVER_INIT( odyssey2 )
 }
 
 SYSTEM_CONFIG_START(odyssey2)
-	CONFIG_DEVICE_CARTSLOT_REQ(1, "bin\0", NULL, NULL, odyssey2_cart_load, NULL, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ(1, "bin\0", NULL, NULL, device_load_odyssey2_cart, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT  MACHINE   INPUT     INIT      CONFIG    COMPANY     FULLNAME     FLAGS */

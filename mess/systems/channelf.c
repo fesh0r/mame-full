@@ -35,7 +35,7 @@ static void init_channelf(void)
 		mem[i] = i;
 }
 
-static int channelf_cart_load(int id, mame_file *file, int open_mode)
+static DEVICE_LOAD( channelf_cart )
 {
 	return cartslot_load_generic(file, REGION_CPU1, 0x800, 0x800, 0x800, 0);
 }
@@ -217,7 +217,7 @@ ROM_START(channelf)
 ROM_END
 
 SYSTEM_CONFIG_START(channelf)
-	CONFIG_DEVICE_CARTSLOT_OPT( 1, "bin\0", NULL, NULL, channelf_cart_load, NULL, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT( 1, "bin\0", NULL, NULL, device_load_channelf_cart, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

@@ -2,8 +2,8 @@
 extern int odyssey2_framestart;
 extern int odyssey2_videobank;
 
-extern MACHINE_INIT( odyssey2 );
-extern int odyssey2_cart_load(mess_image *img, mame_file *fp, int open_mode);
+MACHINE_INIT( odyssey2 );
+DEVICE_LOAD( odyssey2_cart );
 
 
 /* vidhrdw/odyssey2.c */
