@@ -1,0 +1,2341 @@
+<!doctype linuxdoc system>
+
+<!-- LyX 1.1 created this file. For more info see http://www.lyx.org/ -->
+<article>
+<title>
+XMAME/XMESS DOCUMENTATION
+</title>
+<author>
+Juan Antonio Marmnez <tt><url url="mailto:jantonio@dit.upm.es" name="jantonio@dit.upm.es"></tt> and Hans de Goede <tt><url url="mailto:hans@highrise.nl" name="hans@highrise.nl"></tt> and Rene' Herrmann (4 doc/sgml)
+ <tt><url url="mailto:rene.herrmann@berlin.de" name="rene.herrmann@berlin.de"></tt>
+</author>
+<date>
+v2.1, xx. July 2000
+</date>
+<abstract>
+xmame/xmess documentation with an installation guide, the faq (frequently
+ asked questions), hints, tips and tricks, the changes on the code and many
+ more!
+</abstract>
+<toc>
+<sect>
+Introduction and Links <label id="Introduction and Links" >
+<sect1>
+Keep everything up-to-date!
+<p>
+The most recent copy of this guide, the xmame-sources and many more can
+ be found on the xmame project homepage at <url url="http://x.mame.net/" name="http://x.mame.net/">
+</p>
+<sect1>
+Some Links
+<p>
+<itemize>
+ <item>
+The official M.A.M.E home is at <url url="http://www.mame.net" name="http://www.mame.net">
+ <item>
+The realy best ROM site on this planet is at <url url="http://www.mame.dk/" name="http://www.mame.dk/">
+ <item>
+grustibus the <bf>very good</bf> frontend (if you gnome) <url url="http://grustibus.sourceforge.net/" name="http://grustibus.sourceforge.net/">
+ <item>
+<bf>M</bf>ame <bf>A</bf>ction <bf>R</bf>eplay <bf>P</bf>age for those who want to have a  look at other monitors
+ at <url url="http://marp.retrogames.com/" name="http://marp.retrogames.com/">
+ <item>
+and of course dont forget our project homepage at <bf><url url="http://x.mame.net/" name="http://x.mame.net/"></bf>
+</itemize>
+</p><sect1>
+Pending Jobs - or TODO
+<p>
+If you think you can help with the todo list or you can make a  contribution
+ that you feel is interesting, please send mail to the xmame/xmess coordinator.
+ See <ref id="Mail" name="Mail" > for contact information.
+</p>
+<p>
+<itemize>
+ <item>
+optimise mouse warping
+ <item>
+remove osd_input_init_post, add display ready flag
+ <item>
+updating of fps is off (dirty marking problem) with vector games
+ <item>
+update porting.txt
+ <item>
+convert all remaining sound-drivers to plugins
+ <item>
+rewrite display/input code to be more modular, oo-ish and usable as a seperate
+ library.
+ <item>
+split <tt>-&lsqb;no&rsqb;scanline</tt> option in emulated and real scanline options
+ <item>
+add an option to specify which resolution to use, add clipping and panning
+ if it doesn't fit and use it anyway.
+ <item>
+use pentium TSC for uclock where available
+ <item>
+network:
+ <itemize>
+  <item>
+fix since the dos team broke it, find out if the dosnet team is still alive
+  <item>
+add mouse / joystick support to network play
+  <item>
+try converting networksupport to tcp, currently we have no error correction
+  <item>
+make network code more robust, version check, input settings check etc.
+ </itemize>
+ <item>
+check x11-joystick rumors have it it's broken, then again only one bug-report
+ so it seems no-one is using it.
+ <item>
+fm soundhack for linux-i386
+ <item>
+Make which messages are emitted and when configurable. (log-type's and
+ log-level), make fileio emit messages about which files it tries to open, to
+ help debugging rom-loading problems, and walk through all messages xmame emits
+ giving them all a standard format like:
+ <verb>
+OSD:        Info:    bla
+X11-window: Warning: bla
+Svgalib:    Error:   bla
+ </verb>
+ <item>
+add scancode 128-255 for none pc keys like F13-F24, more keypad keys etc,
+ update all display targets to use this.
+ <item>
+Also see the text todo file, kept around to quickly enter stuff while hacking:
+ <url url="todo" name="todo">.
+</itemize>
+</p><sect>
+Compiling, Setting Up and Starting xmame/xmess
+<p>
+Note: This section is not a Unix tutorial. You need to know some basic
+  Unix commands to compile and install xmame/xmess.
+</p>
+<sect1>
+Requirements     
+<p>
+<itemize>
+ <item>
+GNU make is MANDATORY in ALL Systems, even if you use a different  compiler.
+ 
+ <item>
+On all platforms zlib is now needed since the core uses it, if you don't
+ have zlib a stripped version is included with xmame see: <ref id="FAQ: Why do I get gz_open symbol not found while compiling?" name="FAQ: Why do I get gz_open symbol not while compiling?" > and <ref id="FAQ: Why do I get zlib.h not found?" name="FAQ: Why do I get zlib.h not found?" >
+ <item>
+You are encouraged to use GNU development environment gcc, gmake gnu- ar.
+ Lots of problems found due to the very permissive syntax in gcc, so if you
+ use a strictly ANSI C compiler, you'll get lots of warnings, and if the version
+ of xmame/xmess is not fully debugged, compilation errors.
+ <item>
+Xmame compilation breaks when using egcs-1.1.x or gcc-2.95, use <tt>-fno-strict-aliasing</tt>
+ to fix it. gcc-2.95.1 does work with <tt>-fstrict-aliasing</tt>, and gives a nice speed
+ increase.
+</itemize>
+</p><sect1>
+Follow these steps to compile xmame/xmess
+<p>
+<enum>
+ <item>
+See <ref id="Compile Notes for Specific Operating Systems" name="Compile Notes for Specific Operating Systems" > for platform specific compiling information.
+ <item>
+See <ref id="Display subsystem specific comments and notes" name="Display subsystem specific comments and notes" > for special display methods information.
+ <item>
+Download the xmame/xmess source files archive.
+ <item>
+Move the xmame/xmess source files archive to a suitable work directory.
+ When you extract the archive, sub directories will be created under the  work
+ directory.
+ <item>
+Rename the source files archive so its extension is .gz, so that gzip doesn't
+ complain. For example, change <tt>xmame-0.34b1.1.tgz</tt> to <tt>xmame-0.34b1.1.tar.gz
+</tt>
+ <item>
+Use gzip -d to uncompress the archive. For example, type:
+ <verb>
+gzip -d xmame-0.34b1.1.tar.gz
+ </verb>
+ <item>
+Extract the files with tar. For example, type:
+ <verb>
+tar xvf xmame-0.34b1.1.tar
+ </verb>
+ <item>
+After extracting the archive, change to the subdirectory created by  the
+ extraction process. For example, after extracting the xmame- 0.34b1.1.tar archive,
+ a directory named <tt>xmame-0.34b1.1</tt> is created. Change to it. This directory is
+ the top of the source tree.
+ <item>
+Copy makefile.unix to Makefile, the distributed Makefile is used for development
+ and is not a good starting point!
+ <item>
+Edit the <tt>Makefile</tt> and change the settings according to your system. The
+ default <tt>makefile.unix</tt> is pre configured to run under X11/Linux. Be careful
+ editing this file.
+ <itemize>
+  <item>
+If you intend to compile in X11 joystick support, type the following to
+ see the available Xdevice list:
+  <verb>
+make xlistdev; ./xlistdev
+  </verb>
+  <item>
+Choose the desired device and re-edit Makefile, setting the option X11_JOYNAME
+ to the correct device.
+ </itemize>
+ <item>
+Compile xmame/xmess by typing:
+ <verb>
+make
+ </verb>
+ <item>
+If the compile fails, report the problem to the author.
+ <item>
+<bf>*** YOU MAY NEED TO BE root TO PERFORM THIS STEP ***</bf> To install xmame/xmess,
+ type:
+ <verb>
+make install
+ </verb>
+ <item>
+If you want you can now build xmame / xmess for another target / display-method,
+ otherwise skip to the next step.
+ <enum>
+  <item>
+If you want to also build for another target repeat repeat the <tt>"make"</tt> and
+ <tt>"make install"</tt> steps adding <tt>"TARGET=&lt;target&gt;"</tt> to the make command for example:
+  <verb>
+make TARGET=mess
+make install
+  </verb>
+  <item>
+If you want to also build for another display method repeat the <tt>"make"</tt> and
+ <tt>"make install"</tt> steps adding <tt>"DISPLAY_METHOD=&lt;method&gt;"</tt> to the make command
+ for example:
+  <verb>
+make DISPLAY_METHOD=svgalib
+make install
+  </verb>
+  <item>
+You can also combine the 2 above for example:
+  <verb>
+make TARGET=mess DISPLAY_METHOD=svgalib
+make install
+  </verb>
+ </enum>
+ <item>
+In your home directory, create a subdirectory called .xmame.
+ <item>
+From the top of the source tree, copy the file doc/xmamerc.dist to the
+ &dollar;&lcub;HOME&rcub;/.xmame/ directory. (For xmess do this for xmessrc)
+ <item>
+If desired copy xmamerc.dist to the global xmamerc location as &quot;xmamerc&quot;
+ (For mess copy xmamerc.dist to xmessrc). The global xmamerc location is defined
+ in the Makefile.
+ <item>
+Edit &dollar;&lcub;HOME&rcub;/.xmame/xmamerc to match your preferences.
+ (For xmess edit &dollar;&lcub;HOME&rcub;/.xmess/xmessrc)
+ <item>
+Be sure that DISPLAY and PATH enviromment variables are  set correctly.
+ <item>
+Make sure your ROM images are installed.
+ <item>
+Start X-Windows. (Unless you compiled for a different display method in
+ which case you skip this step.)
+ <item>
+Start xmame/xmess. For example:
+ <verb>
+/usr/games/xmame.x11 dkong
+ </verb>
+</enum>
+</p><sect1>
+If you have problems compiling, installing and starting xmame/xmess...
+     
+<p>
+<itemize>
+ <item>
+Read  <ref id="Xmame frequently asked questions" name="Xmame frequently asked questions" >
+ <item>
+Read (the recent parts of) <ref id="ChangeLogs" name="Changelogs" >, they might contain some hints about recent
+ changes which aren't fully documented yet.
+ <item>
+Check <ref id="Compile Notes for Specific Operating Systems" name="Compile Notes for Specific Operating Systems" > for operating system specific notes. You may need to do something
+ special for your operating system.
+ <item>
+Check <ref id="Display subsystem specific comments and notes" name="Display subsystem specific comments and notes" > for display subsystem specific notes. You may need to do something
+ special for your operating system.
+ <item>
+If you get an error about gz_open and a bunch of other functions not found
+ during linking read: <ref id="FAQ: Why do I get gz_open symbol not found while compiling?" name="FAQ: Why do I get gz_open symbol not while compiling?" > and <ref id="FAQ: Why do I get zlib.h not found?" name="FAQ: Why do I get zlib.h not found?" >
+ <item>
+Be sure that the rompath in your xmamerc/xmessrc is correct, see <ref id="FAQ: Where do roms, images, samples, highscores, configfiles, etc go?" name="FAQ: Where do roms.images.etc go?" >
+ <item>
+Check xmamerc/xmessrc: is it configured correctly?
+ <item>
+Are you getting messages that you are missing files? Maybe you are missing
+ PROMs, see <ref id="FAQ: Why doesn't a game work?" name="FAQ: Why doesn't a game work?" > and <ref id="FAQ: What are PROMs?" name="FAQ: What are PROMs?" >
+ <item>
+Is the program in your PATH?
+ <item>
+The svgalib/xf86_dga build of xmame/xmess requires setuid root. Are your
+ permissions correct?
+ <item>
+Try asking the friendly folks at the newsgroup alt.game.mame to see if
+ anyone else has experienced the same problem as you.
+ <item>
+Try mailing to the xmame mailinglist, see <ref id="Mail" name="Mail" > for more information.
+</itemize>
+</p><p>
+If all else fails, send email to the current maintainer of the xmame/xmess
+ project. See <ref id="Mail" name="Mail" > for contact information.
+</p>
+<sect1>
+Compile Notes for Specific Operating Systems <label id="Compile Notes for Specific Operating Systems" >
+<sect2>
+Linux i386
+<p>
+Linux i386 is the platform I (Hans) use, so xmame should compile without
+ any hassles on Linux i386.
+</p>
+<p>
+Some bugs have been found and worked around when using gcc27x, please use
+ egcs if available. If more gcc bugs popup egcs will be  made mandatory, but
+ I hope that won't be nescesarry.
+</p>
+<p>
+It has been reported that some SoundBlaster AWE32 cards do not  correctly
+ manage get_freespace(). If so you'll get some audio_ioctl() calls failed messages
+ in console, and if everything goes right a message that xmame/xmess is falling
+ back to timer based audio. If  this doesn't happen and sound isn't right try
+ forcing timer based  audio by starting xmame/xmess with <tt>-timer</tt>.
+</p>
+<p>
+Sb64/128pci cards (ensoniq 137x based cards) also do not correctly manage
+ get_freespace(), unfortunatly this doesn't result in failed ioctl's instead
+ they just ignore the calls. Xmame tries to autodetect this and to fall back
+ to timer based audio. If this doesn't happen and sound isn't right try forcing
+ timer based audio by starting xmame/xmess with <tt>-timer</tt>.
+</p>
+<p>
+Also, I've tested sound using the PC-Speaker driver module. It  works!!
+ But needs <tt>-timer</tt>, again it should do this  automagicly, but you know what todo
+ if it doesn't.
+</p>
+<p>
+Distribution Specific Comments:
+</p>
+<p>
+<itemize>
+ <item>
+S.u.S.E. Linux: Besides the gcc compiler and libc  libraries, which are
+ both from the &quot;d&quot; series, other packages  need to be installed or
+ the build will fail. If compiling for svgalib, the svgalib package from series
+ &quot;d&quot; installed. If compiling for X-Windows, you must have xdevel package
+ from series &quot;x&quot; installed. These packages can be installed using
+ the &quot;yast&quot; utility included in the S.u.S.E. distribution.
+ <item>
+Red Hat Linux is the operating system used by the author. xmame/xmess 
+ should build correctly under Red Hat Linux. :-)
+</itemize>
+</p><sect2>
+Linux powerpc
+<p>
+Linux powerpc should work from now on, here's an email from: Andreas Varga
+ <tt><url url="mailto:sid@skater.htu.tuwien.ac.at" name="sid@skater.htu.tuwien.ac.at"></tt>, the linux/powerpc maintainer describing the nescesarry steps:
+</p>
+<p>
+Required changes to compile xmame 0.34b3.1 on Linux/PowerPC with SVGALIB
+</p>
+<p>
+Makefile:
+</p>
+<p>
+<itemize>
+ <item>
+enable CFLAGS for linux/ppc 
+ <item>
+enable DISPLAY_METHOD = svgalib 
+ <item>
+enable ARCH = linux 
+ <item>
+remove -lvgagl from LIBS.svgalib in src/unix/unix.mak(only -lvga is required)
+</itemize>
+</p><p>
+Required changes to compile xmame 0.34b3.1 on Linux/PowerPC with X11 
+</p>
+<p>
+Makefile: 
+</p>
+<p>
+<itemize>
+ <item>
+enable CFLAGS for linux/ppc 
+ <item>
+enable DISPLAY_METHOD = x11 
+ <item>
+enable ARCH = linux 
+</itemize>
+</p><p>
+Another thing... sound is not working, because sound drivers support is
+ currently under development in Linux/PPC kernels...there is an old driver that
+ is a hacked Soundblaster driver, and newer 2.1.1xx kernels have a sound drivers
+ based on Amiga DMA sound drivers... Once this issues are settled there should
+ be a full OSS-compatible driver... sound should work then...
+</p>
+<p>
+I can't speak about Joystick support...
+</p>
+<p>
+The original Linux/PPC target changes in the Makefile were done by me,
+ but there are some other changes required to get it to compile... Starting
+ from October I will have some more time to work on this, and I'll keep you
+ updated...
+</p>
+<p>
+Cheers, Andreas
+</p>
+<sect2>
+IRIX
+<p>
+Use the generic unix arch for those machines that have no  sound support
+ installed. ( xmame/xmess uses the dmedia package or the newer AL package on
+ IRIX systems )
+</p>
+<p>
+Silicon Graphics provides several native compilers. xmame/xmess has  been
+ compiled and tested with the normal cc. There were some problems with this
+ when using -n32 for new style 32bit code. It does work when using -o32 for
+ oldstyle 32 bit code. It should now also work with -n32 wich is much faster.
+</p>
+<p>
+The use of DCC is not recommended (anymore) since it's a c++  compiler
+ and thus won't even compile xmame/xmess out of the box due to uncasted malloc's.
+ Changing all these malloc's would be crazy, esp since they are not only in
+ the osd part, but also in the core which is not under our control. Besides
+ that mame is normal c, so please compile it with a normal c compiler.
+</p>
+<p>
+Some problems have been reported using GNU linker. It's recommended that
+ you use native one.
+</p>
+<sect2>
+HPUX
+<p>
+Use the generic unix arch. In HP-UX gcc and gnu-make is MANDATORY.
+</p>
+<sect2>
+ULTRIX 
+<p>
+Use the generic unix arch.
+</p>
+<p>
+Notes received from Danny <tt><url url="mailto:dboxhoor@iso.vilspa.esa.es" name="dboxhoor@iso.vilspa.esa.es"></tt>
+</p>
+<p>
+<bf>VERY IMPORTANT!!!</bf>
+</p>
+<p>
+The xmame/xmess CPU emulators access memory through pointers which are
+ sometimes cast to illegal addresses - as far as the MIPS CPU is concerned.
+ The Ultrix operating system is aware of that and fixes this &quot;unaligned
+ data access&quot;.
+</p>
+<p>
+Depending on your system setup, lots of warnings are generated for certain
+ games. Fortunately these messages can be disabled by  executing the command
+ &quot;uac p 0&quot; in the same shell where xmame/xmess  will be running.
+</p>
+<p>
+UPDATE: The new <tt>-DALIGN_INTS</tt> switch in the makefile fixes these unaligned
+ accesses in the source which is probably a lot faster than hot fixing them
+ in the kernel segfault handler.
+</p>
+<p>
+Use gnu make.
+</p>
+<p>
+Compile with the `c89' compiler. Though `gcc' has no problems  with compiling
+ and optimizing xmame/xmess, the resulting `c89'  executable is faster on an
+ empty machine (read: xmame can use all  cpu &amp; memory without competing
+ with other high priority  processes), so you can set `frameskip' to 1.
+</p>
+<p>
+When compiling with `c89 -O2' don't forget to also use `-Olimit  1000'.
+ If 1000 is not enough, the compiler will tell you to  increase it.
+</p>
+<sect2>
+SunOS &amp; Solaris
+<p>
+There are 2 relevant architecture options available in the makefile: 
+</p>
+<p>
+<verb>
+    ARCH = generic : use this for old SunOs running on Sparcs,
+                     but a Sparc running Solaris will usually
+                     handle this option too.
+    ARCH = solaris : this is the one you should use for Sparcs
+                     running Solaris.        
+</verb>
+</p><p>
+Currently sound is not supported under sunos. The solaris arch does support
+ audio.
+</p>
+<p>
+If you are using Sun's OpenWindows implementation of X11, then make sure
+ that the X11INC and X11LIB variables in the X11 Options section of the makefile
+ are set properly. (There are already entries for the standard OpenWin directory
+ there that you can uncomment).
+</p>
+<p>
+Of course, if you are compiling for X11 then you need to set these variables
+ properly, no matter what implementation of X11 you are using!  :)
+</p>
+<p>
+If you are using Sun's SunPro cc compiler, then the following optimisation
+ flags have been reported to be good:
+</p>
+<p>
+<verb>
+    OPTFLAGS    = -fast -xO4 -native
+</verb>
+</p><p>
+Finally, there has been a case of the xmame compilation processes breaking
+ over the &quot;ar&quot; program. Most Solaris installations will include a
+ set of utilities that conform to the XPG4 standard, usually in the &quot;/usr/xpg4/bin&quot;
+ directory. The XPG4 version of &quot;ar&quot; should be avoided like the plague.
+ Ensure that the &quot;/usr/ccs/bin&quot; appears in your path before the &quot;/usr/xpg4/bin&quot;
+ directory and everything should go smoothly.
+</p>
+<p>
+PLEASE NOTE : there is currently not much support for SunOS/Solaris. If
+ you have any trouble, try to fix it yourself. If you succeed, send a message
+ to the mailing list detailing what you did. If you don't succeed, send a message
+ anyway and someone _may_ be able to help you. Either way, this is the only
+ way that problems with xmame on SunOS/Solaris will get fixed.
+</p>
+<sect2>
+Openstep
+<p>
+You must use the OpenStep gnumake, not make. You must also use the NeXT/Apple
+ cc rather than gcc. Also use only the optimisation options as recommended for
+ OpenStep in the makefile, others will cause the resulting executable to crash.
+ The OpenStep assembler on i386 architectures is incompatible with the mame
+ assembler cpu cores and thus you must use the C versions (Use i386-noasm instead
+ of i386 when compiling for i386).
+</p>
+<p>
+The supplied complier is based on gcc 2.7.2.1 which will not compile src/profiler.c
+ without crashing. To get around this you must turn off + optimisation when
+ this crash occurs, re-make to compile this file only, then stop the make, re-enable
+ optimisation and continue.
+</p>
+<p>
+On an OpenStep keyboard the functions keys do not all operate as expected.
+ Using the command key in conjuction with a number key generates the equivalent
+ function key within xmame, with 0, - and = + representing F10, F11 and F12
+ resepectively. Also note that the ALT + keys cannot be mapped. As most games
+ tend to use this as the default fire button it is exteremly useful to remap
+ this globally the first time you run xmame.
+</p>
+<sect>
+Xmame frequently asked questions<label id="Xmame frequently asked questions" >
+<sect1>
+What is mame?
+<p>
+Mame is a arcade machine emulator. Started in 1997, by Nicola  Salmoria,
+ mame started out as a series of emulators for  individual games. This series
+ of emulators was combined into a  multiple game emulator format. This is the
+ current form of mame, no longer a one man show, there are over 100 contributors
+ to the project.
+</p>
+<p>
+Mame was created by Nicola Salmoria.
+</p>
+<p>
+Also see <url url="readme.mame" name="the official mame readme file (readme.mame)">
+</p>
+<sect1>
+What is mess?
+<p>
+Mess is just like mame a virtual machine emulator, only it doesn't emulate
+ arcade machines but other computers and consoles.
+</p>
+<p>
+Also see <url url="readme.mess" name="the official mess readme file (readme.mess)">
+</p>
+<sect1>
+What is xmame/xmess?
+<p>
+Xmame/xmess are the Unix/X11 ports of the mame and mess projects. It makes
+ mame/mess available on *ix machines using the X11R6 X-Window system (and SVGAlib/ggi/XF86-DGA
+ too).
+</p>
+<p>
+Mame was orginally ported by Allard Van Der Bas, Dick the Ridder and Juan
+ Antonio Marmnez.
+</p>
+<p>
+Xmame/xmess is currently maintained by Hans de Goede.
+</p>
+<sect1>
+What are the differences between mame/mess and xmame/xmess?
+<p>
+None significant.
+</p>
+<p>
+Xmame/xmess is based on the mame/mess source code. Due to technical reasons
+ beyond the scope of this document, the mame/mess source may not compile under
+ Unix. That why the xmame/xmess project exists. Each time mame/mess is updated,
+ the code is tested  (and patched if needed) under Unix. This way xmame/xmess
+ releases are always the same as their mame counterparts.
+</p>
+<p>
+There are no plans for the independent development of xmame/xmess.
+</p>
+<sect1>
+What hardware and operating systems are supported?     
+<p>
+Xmame runs on both little endian and big endian CPU's, using aligned integer
+ access if needed and is compatible with 64 bit CPU's. The current list of supported
+ CPU's in the makefile is:
+</p>
+<p>
+<itemize>
+ <item>
+i386 + gnu-asm
+ <item>
+i386 no asm
+ <item>
+alpha
+ <item>
+ia64 (merced)
+ <item>
+m68k
+ <item>
+generic risc (powerpc, sparc, hppa, ibm)
+ <item>
+generic risc, lsb-first (RISC (ultrix machines))
+ <item>
+mips (generic risc + SGI compiler bug workarounds)
+</itemize>
+</p><p>
+Adding support for another cpu (if nescesarry) should be trivial.
+</p>
+<p>
+The following Unix platform's are specificly supported:
+</p>
+<p>
+<itemize>
+ <item>
+Linux
+ <item>
+FreeBSD
+ <item>
+NetBSD
+ <item>
+Solaris (SunOS)
+ <item>
+OpenStep (noasm only on i386)
+ <item>
+IRIX with sound using the dmedia package or the new al package (sound currently
+ broken)
+ <item>
+AIX (sound currently broken)
+ <item>
+generic unix, no sound
+</itemize>
+</p><p>
+The generic unix entry should work for any reasonable standard Unix variant,
+ but lacks sound since there is no single Unix sound standard.
+</p>
+<p>
+On all platforms zlib is now needed since the core uses it, if you don't
+ have zlib use the included one by uncommenting the appropriate line in Makefile.
+</p>
+<p>
+The following display methods are supported, X11 is the only one which
+ works on all platforms, except for OpenStep which only work with Openstep bitmaps:
+</p>
+<p>
+<itemize>
+ <item>
+X11 (X-windows)
+ <item>
+svgalib
+ <item>
+GGI (Generic Graphics Interface)
+ <item>
+OpenGL using X11 for input
+ <item>
+glide using X11 for input (3DFX)
+ <item>
+glide using svgalib for input (3DFX)
+ <item>
+OpenStep bitmaps
+ <item>
+SDL (Simple Direct Medialayer)
+</itemize>
+</p><p>
+The following is a list of arch/os/display combinations, with maintainers,
+ for arch/os/display combinations which are activly supported. Please mail the
+ maintainer of the arch/os/display combination for compilation and other arch/os/display
+ specific problems. Mail Hans <tt><url url="mailto:hans@highrise.nl" name="hans@highrise.nl"></tt> for generic (e.g. x11) problems.
+</p>
+<p>
+<itemize>
+ <item>
+i386/linux/x11 (+DGA) -&gt; Hans <tt><url url="mailto:hans@highrise.nl" name="<hans@highrise.nl>"></tt>
+ <item>
+i386/linux/svgalib -&gt; Hans <tt><url url="mailto:hans@highrise.nl" name="<hans@highrise.nl>"></tt>
+ <item>
+i386/linux/xgl -&gt; Hans <tt><url url="mailto:hans@highrise.nl" name="<hans@highrise.nl>"></tt>
+ <item>
+i386/linux/xfx -&gt; Hans <tt><url url="mailto:hans@highrise.nl" name="<hans@highrise.nl>"></tt>
+ <item>
+i386/linux/svgafx -&gt; Hans <tt><url url="mailto:hans@highrise.nl" name="<hans@highrise.nl>"></tt>
+ <item>
+i386/linux/ggi -&gt; Christian <tt><url url="mailto:cpg@aladdin.de" name="<cpg@aladdin.de>"></tt>
+ <item>
+alpha/linux/x11 -&gt; Christian <tt><url url="mailto:cpg@aladdin.de" name="<cpg@aladdin.de>"></tt>
+ <item>
+alpha/digital unix/x11 * -&gt; Leandro <tt><url url="mailto:ldardini@usl4.toscana.it" name="<ldardini@usl4.toscana.it>"></tt>
+ <item>
+powerpc/linux/x11 -&gt; Andreas <tt><url url="mailto:sid@skater.htu.tuwien.ac.at" name="<sid@skater.htu.tuwien.ac.at>"></tt>
+ <item>
+powerpc/linux/svgalib -&gt; Andreas <tt><url url="mailto:sid@skater.htu.tuwien.ac.at" name="<sid@skater.htu.tuwien.ac.at>"></tt>
+ <item>
+i386/freebsd/x11 -&gt; Jacob A. Hart <tt><url url="mailto:c9710216@studentmail.newcastle.edu.au" name="<c9710216@studentmail.newcastle.edu.au>"></tt>
+ <item>
+i386/netbsd/x11 -&gt; Dave <tt><url url="mailto:dave@dtsp.co.nz" name="<dave@dtsp.co.nz>"></tt>
+ <item>
+alpha/netbsd/x11 -&gt; Christian <tt><url url="mailto:cpg@aladdin.de" name="<cpg@aladdin.de>"></tt>
+ <item>
+Sparc/Solaris/x11 -&gt; Mathis <tt><url url="mailto:rosenhau@mailserv.sm.go.dlr.de" name="<rosenhau@mailserv.sm.go.dlr.de>"></tt>
+ <item>
+i386/Unixware7/x11 * -&gt; Richard <tt><url url="mailto:xmame@frogface.ddns.org" name="<xmame@frogface.ddns.org>"></tt>
+ <item>
+i386/openstep -&gt; Pete French <tt><url url="mailto:pete@toybox.twisted.org.uk" name="<pete@toybox.twisted.org.uk>"></tt>
+ <item>
+Sparc/SunOs -&gt; Saga <tt><url url="mailto:jolletx@cybercable.fr" name="<jolletx@cybercable.fr>"></tt>
+ <item>
+mips/irix/x11 -&gt; Dingus Family <tt><url url="mailto:ddingus@usewest.net" name="<ddingus@usewest.net>"></tt>
+</itemize>
+</p><p>
+* These are supported using the generic unix entry of the makefile, and
+ thus lack sound.
+</p>
+<p>
+We are always looking for people willing to test and answer questions about
+ xmame on a new arch/os/display. This takes very little work and could help
+ other people tremendously. If you're interested mail Hans <tt><url url="mailto:hans@highrise.nl" name="hans@highrise.nl"></tt>.
+</p>
+<sect1>
+My system is supported but xmame/xmess give me errors and fails. Why?
+<p>
+Xmame/xmess should run on 8bpp Pseudo Color displays and on 16, 24 and
+ 32bpp True Color displays. If your X-Server does not support any  of these
+ display types, xmame/xmess will not run.
+</p>
+<p>
+You can verify your X-Server support by starting your X-Server  and running
+ the xdpyinfo program. See the xdpyinfo manual page  for more information.
+</p>
+<sect1>
+What is the role of the xmamerc/xmessrc file?
+<p>
+A normal xmame/xmess invocation looks like:
+</p>
+<p>
+<verb>
+    xmame pacman -sound -nojoy -frameskip 2 -heightscale 3 &bsol;   
+        -widthscale 2
+</verb>
+</p><p>
+Most of the time, you will want to use the same configuration for  each
+ game. Xmame/xmess will read this file for default values for the  parameters
+ that you can set. This way the only parameters you  need to express on the
+ command line are the ones you want to  override.
+</p>
+<p>
+Another reason for xmamerc/xmessrc is keyboard remapping. Some Unix  keyboards
+ are very different than their PC counterparts. To  compensate for the changes,
+ xmame/xmess allows you to remap keys that  are not available on Unix keyboards
+ to keys that are available.
+</p>
+<sect1>
+What is the syntax of the xmamerc/xmessrc file.
+<p>
+The syntax is quite simple:
+</p>
+<p>
+<verb>
+   &quot;keyword value&quot;
+</verb>
+</p><p>
+See <url url="xmamerc.dist" name="xmamerc.dist"> for most keywords. Allmost all commandline options can be used as
+ keywords (without the -), use value 0 or 1 for commandline options which have
+ a negating (-no&lsqb;option&rsqb;) counterpart. As usual lines begining with
+ &quot;&num;&quot; are comments.
+</p>
+<p>
+You can also generate a configfile with all the current settings to use
+ as a template by typing:
+</p>
+<p>
+<verb>
+   xmame -showconfig &gt; &tilde;/.xmame/xmamerc
+</verb>
+</p><sect1>
+Where do roms, images, samples, highscores, configfiles, etc go? <label id="FAQ: Where do roms, images, samples, highscores, configfiles, etc go?" >
+<sect2>
+Roms/Samples
+<p>
+Xmame/xmess uses a &quot;:&quot; seperated rompath to find out which dirs
+ to search for roms/samples.
+</p>
+<p>
+The default rompath is XMAMEROOT as defined in Makefile during compile.
+</p>
+<p>
+This is overwritten by any rompath in xmamerc/xmessrc. Which can be overwritten
+ again with the -rompath commandline option.
+</p>
+<p>
+Xmame/xmess searches every dir in this path for roms/samples in the following
+ way:
+</p>
+<p>
+<verb>
+    &lt;dir&gt;/gamename.zip             (containing filename.ext)
+    &lt;dir&gt;/gamename/filename.ext
+    &lt;dir&gt;/gamename/filename.ext.gz (containing filename.ext)
+    &lt;dir&gt;/gamename/filename.zip    (containing filename.ext)
+</verb>
+</p><p>
+So lets say that we are searching for rom0001.1 which is part of pacman
+ then xmame/xmess would search every dir in your rompath for:
+</p>
+<p>
+<verb>
+    &lt;dir&gt;/pacman.zip               (containing rom0001.1)
+    &lt;dir&gt;/pacman/rom0001.1
+    &lt;dir&gt;/pacman/rom0001.1.gz      (containing rom0001.1)
+    &lt;dir&gt;/pacman/rom0001.zip       (containing rom0001.1)
+</verb>
+</p><p>
+Note: If your neogeo games can't find neogeo.rom put it in a dir called
+ neogeo somewhere in your rompath, or put it in neogeo.zip somewhere in your
+ rompath.
+</p>
+<sect2>
+Read/write Diskette Images
+<p>
+This section only applies to xmess emulations which support read/write
+ diskette images and thus try to open the image read/write.
+</p>
+<p>
+Xmess first searches for read/write images with the name specified on the
+ commandline:
+</p>
+<p>
+<verb>
+    &lt;path&gt;/image.ext
+</verb>
+</p><p>
+Where path is the path specified with the image on the commandline, this
+ way absoulte and relative filenames can be used directly on the commandline
+ for an image which is not in the rompath.
+</p>
+<p>
+Then xmess searches every dir in the rompath for roms/samples in the following
+ way:
+</p>
+<p>
+<verb>
+    &lt;dir&gt;/image.ext
+</verb>
+</p><p>
+Note that (g)zipped images are not supported for r/w images.
+</p>
+<sect2>
+Rom Cartridges/Read Only Diskette Images
+<p>
+Xmess begins by searching for cartdriges/disks from the current dir in
+ the following way:
+</p>
+<p>
+<verb>
+    &lt;path&gt;/image.ext
+    &lt;path&gt;/image.ext.gz            (containing image.ext)
+    &lt;path&gt;/image.zip               (containing image.ext)
+</verb>
+</p><p>
+Where path is the path specified with the image on the commandline, this
+ way absoulte and relative filenames can be used directly on the commandline
+ for an image which is not in the rompath.
+</p>
+<p>
+Then xmess searches every dir in the rompath for carts/images in the following
+ way:
+</p>
+<p>
+<verb>
+    &lt;dir&gt;/image.ext
+    &lt;dir&gt;/image.ext.gz             (containing image.ext)
+    &lt;dir&gt;/image.zip                (containing image.ext)
+</verb>
+</p><p>
+Finally xmess searches the rompath as desribed above using the systemtype
+ for gamename.
+</p>
+<p>
+So letts say we want to play mario.nes on the nes emulation of xmess. We
+ would then type: &quot;xmess nes mario.nes&quot;. Xmess then begins by searching
+ the current dir for:
+</p>
+<p>
+<verb>
+    mario.nes
+    mario.nes.gz                   (containing mario.nes)
+    mario.zip                      (containing mario.nes)
+</verb>
+</p><p>
+After that xmess searches each dir in your rompath for:
+</p>
+<p>
+<verb>
+    &lt;dir&gt;/mario.nes
+    &lt;dir&gt;/mario.nes.gz             (containing mario.nes)
+    &lt;dir&gt;/mario.zip                (containing mario.nes)
+</verb>
+</p><p>
+And finally xmess searches each dir in your rompath for:
+</p>
+<p>
+<verb>
+    &lt;dir&gt;/nes.zip                  (containing mario.nes)
+    &lt;dir&gt;/nes/mario.nes
+    &lt;dir&gt;/nes/mario.nes.gz         (containing mario.nes)
+    &lt;dir&gt;/nes/mario.zip            (containing mario.nes)
+</verb>
+</p><p>
+Since xmess first searches for cartridges/disks from the current dir you
+ can also specify cartridges/disks not in your rompath for example:
+</p>
+<p>
+<verb>
+    &quot;xmess nes ../mario.nes&quot;
+</verb>
+</p><p>
+Xmess then searches for:
+</p>
+<p>
+<verb>
+    ../mario.nes
+    ../mario.nes.gz                (containing mario.nes)
+    ../mario.zip                   (containing mario.nes)
+</verb>
+</p><p>
+And will also search the rompath as described above with ../mario.nes as
+ image name but this is not that usefull.
+</p>
+<sect2>
+Artwork
+<p>
+Xmame/xmess searches every dir in the rompath for artwork in the following
+ way:
+</p>
+<p>
+<verb>
+    &lt;dir&gt;/artwork.png
+    &lt;dir&gt;/artwork.png.gz           (containing artwork.png)
+    &lt;dir&gt;/artwork.zip              (containing artwork.png)
+</verb>
+</p><p>
+Then xmame/xmess searches the rompath as in roms/samples.
+</p>
+<p>
+So lets say we want to play foo which uses bar.png. Xmame/xmess then begins
+ searching each dir in your rompath for:
+</p>
+<p>
+<verb>
+    &lt;dir&gt;/bar.png
+    &lt;dir&gt;/bar.png.gz               (containing bar.png)
+    &lt;dir&gt;/bar.zip                  (containing bar.png)
+</verb>
+</p><p>
+And then xmame/xmess searches each dir in your rompath for:
+</p>
+<p>
+<verb>
+    &lt;dir&gt;/foo.zip                  (containing bar.png)
+    &lt;dir&gt;/foo/bar.png
+    &lt;dir&gt;/foo/bar.png.gz           (containing bar.png)
+    &lt;dir&gt;/foo/bar.zip              (containing bar.png)
+</verb>
+</p><sect2>
+Xmame configuration
+<p>
+Xmame looks for the following configuration files and parses each one found,
+ later parsed files can overwrite options in previously parsed files:
+</p>
+<p>
+<verb>
+    XMAMEROOT/xmamerc
+    XMAMEROOT/xmame-DISPLAY_METHODrc
+    &dollar;&lcub;HOME&rcub;/.xmame/xmamerc
+    &dollar;&lcub;HOME&rcub;/.xmame/xmame-DISPLAY_METHODrc
+    &dollar;&lcub;HOME&rcub;/.xmame/rc/&lt;gamename&gt;rc
+</verb>
+</p><p>
+<tt>XMAMEROOT</tt> is defined during compile time, see Makefile.
+</p>
+<p>
+<tt>DISPLAY_METHOD</tt> is the <tt>DISPLAY_METHOD</tt> for which xmame was compiled, this
+ can be one of: x11, svgalib, ggi, xgl, xfx, svgafx, openstep, SDL.
+</p>
+<p>
+For xmess of course replace xmame by xmess ;)
+</p>
+<sect2>
+Game configuration
+<p>
+Game configuration files are kept on a per user base in:
+</p>
+<p>
+<verb>
+    &dollar;&lcub;HOME&rcub;/.xmame/cfg/&lt;game&gt;.cfg resp
+    &dollar;&lcub;HOME&rcub;/.xmess/cfg/&lt;game&gt;.cfg
+</verb>
+</p><sect2>
+Game state
+<p>
+Game state files are kept on a per user base in:
+</p>
+<p>
+<verb>
+    &dollar;&lcub;HOME&rcub;/.xmame/sta/&lt;game&gt;.sta resp
+    &dollar;&lcub;HOME&rcub;/.xmess/sta/&lt;game&gt;.sta
+</verb>
+</p><sect2>
+NVram
+<p>
+NVram files are kept on a per user base in:
+</p>
+<p>
+<verb>
+    &dollar;&lcub;HOME&rcub;/.xmame/nvram/&lt;game&gt;.nv resp
+    &dollar;&lcub;HOME&rcub;/.xmess/nvram/&lt;game&gt;.nv
+</verb>
+</p><sect2>
+Mem cards
+<p>
+Mem cards files are kept on a per user base in:
+</p>
+<p>
+<verb>
+    &dollar;&lcub;HOME&rcub;/.xmame/mem/&lt;filename&gt;.mem resp
+    &dollar;&lcub;HOME&rcub;/.xmess/mem/&lt;filename&gt;.mem
+</verb>
+</p><p>
+Where &lt;filename&gt; is given by the game-driver. 
+</p>
+<sect2>
+Screenshots
+<p>
+Screenshots which can be made pry pressing F12 are saved as png files in
+ the directory from where xmame is started (cwd).
+</p>
+<p>
+This can be overidden by the screenshotdir entry in xmamerc/xmessrc. Which
+ can again be overidden by the <tt>-screenshotdir</tt> cmdline-option.
+</p>
+<p>
+They are saved as:
+</p>
+<p>
+<verb>
+    &lt;screenshotdir&gt;/&lt;game&gt;xxxx.png
+    Where xxxx is a number.
+</verb>
+</p><sect2>
+Highscore's
+<p>
+Hi-scores are stored in XMAMEROOT as defined in Makefile when building.
+ This can be overidden by the spooldir entry in xmamerc/xmessrc. Which can again
+ be overidden by the <tt>-spooldir</tt> cmdline-option.
+</p>
+<p>
+So only give a 
+</p>
+<p>
+<verb>
+    drwxrwsr-x root games &lt;spooldir&gt;
+</verb>
+</p><p>
+permission and setgid xmame/xmess to &quot;games&quot; to get it to work.
+ Note this doesn't work with suid root versions (svgalib &amp; XF86-DGA), suggestions
+ welcome.
+</p>
+<p>
+For know use <tt>&dollar;&lcub;HOME&rcub;/.xmame</tt> or <tt>&dollar; &lcub;HOME&rcub;/.xmess</tt>
+ as spooldir in xmamerc/xmessrc for  suid root versions.
+</p>
+<p>
+Note for highscores to work, xmame must also be able to find hiscore.dat
+</p>
+<sect2>
+hiscore.dat
+<p>
+If you want to use highscores mame needs to load hiscore.dat to get highscore
+ info.
+</p>
+<p>
+The default is <tt>XMAMEROOT</tt>hiscore.dat/. XMAMEROOT is set during compile-time,
+ see the Makefile. This can be overriden by the hiscorefile entry in xmamerc
+ if present, which can again be overiden by the cmdline-option <tt>-hiscorefile</tt>.
+</p>
+<p>
+<tt>hiscore.dat</tt> is available from the mame webpage: <url url="http://www.mame.net" name="http://www.mame.net">
+</p>
+<sect2>
+cheat.dat
+<p>
+If you want to use cheats mame needs to load cheat.dat to get cheat info.
+</p>
+<p>
+The default is XMAMEROOT/cheat.dat . XMAMEROOT is set during compile-time,
+ see Makefile. This can be overriden by the cheatfile entry in xmamerc if present,
+ which can again be overiden by the cmdline-option <tt>-cheatfile</tt>.
+</p>
+<p>
+<tt>cheat.dat</tt> is available from the mame webpage: <url url="http://www.mame.net" name="http://www.mame.net">
+</p>
+<sect2>
+history.dat
+<p>
+If you want to display some nice background info on games mame needs to
+ load history.dat.
+</p>
+<p>
+The default is XMAMEROOT/history.dat . XMAMEROOT is set during compile-time,
+ see Makefile. This can be overriden by the historyfile entry in xmamerc if
+ present, which can again be overiden by the cmdline-option <tt>-historyfile</tt>.
+</p>
+<p>
+<tt>history.dat</tt> is available from the mame webpage: <url url="http://www.mame.net" name="http://www.mame.net">
+</p>
+<sect2>
+Input logs
+<p>
+Input logs are saved / read under the name specified after the <tt>-record
+ / -playback</tt> option, this name is relative to the current path.
+</p>
+<sect2>
+Xmame/xmess still can't find file's / store highscore's
+<p>
+Type <tt>&quot;xmame/xmess -showconfig | more&quot;</tt> and check that the rompath
+ and spooldir showed are correct and readable/writable. Otherwise recheck xmamerc/xmessrc.
+ Remember that xmess also searches the current dir.
+</p>
+<sect1>
+How do I start xmess/xmame ?
+<p>
+To start xmame type:
+</p>
+<p>
+<verb>
+    xmame &lsqb;options&rsqb; &lt;gamename&gt; &lsqb;more options&rsqb;
+</verb>
+</p><p>
+For xmess type: 
+</p>
+<p>
+<verb>
+    xmess &lsqb;options&rsqb; &lt;systemname&gt; &lsqb;more options&rsqb; &bsol;
+    &lt;disk/romimage(s)&gt; &lsqb;more options&rsqb;
+</verb>
+</p><p>
+All options are optional ;)
+</p>
+<p>
+Xmame/xmess supports most dos commandline-options (see readme.mame / readme.mess)
+ as well as a few of its own, type xmame -help |  more for a  complete list.
+</p>
+<p>
+With xmess some systems don't require a disk/romimage, but most do.
+</p>
+<sect1>
+What are the command line parameters for xmame/xmess?
+<p>
+To see a list of available parameters, type:
+</p>
+<p>
+<verb>
+    /usr/games/xmame -help | more
+</verb>
+</p><p>
+Xmame/xmess supports most of the command line parameters as the DOS  version
+ as well a some of its own.
+</p>
+<p>
+See the file readme.mame / readme.mess for more information about the command
+ line parameters.
+</p>
+<sect1>
+What keys does xmame/xmess use?
+<p>
+Xmame/xmess uses the same key-bindings as the DOS version of mame: The
+ following keys work in all emulators:
+</p>
+<p>
+<verb>
+    `  or &tilde;      Enter On screen display to change volume, brightness etc.
+    Tab          Enter configuration menu. Press Tab or Esc to get back to
+                 the emulation.
+    P            Pause
+    F3           Reset
+    F4           Show the game graphics. Use cursor keys to change set/color,
+                 F4 or Esc to return to the emulation.
+    F8           Reduce frame skip
+    F9           Increase frameskip
+    F10          Toggle speed throttling
+    F10 + shift  Toggle idle sleeping
+    F11          Toggle speed display
+    F11 + shift  Toggle profiler display
+    F12          Save a screen snapshot.
+    ESC          Exit emulator
+</verb>
+</p><p>
+Xmame has 2 different auto frameskipping algorithms, these can be selected
+ with the -frameskipper option. And with key combis:
+</p>
+<p>
+<verb>
+    Key combi:             Gives you the:
+    left-ctrl + insert     standard dos frameskipper
+    left-ctrl + home       William Barath's frameskipper
+</verb>
+</p><p>
+Xmames display scaling can be controlled on the fly with the following
+ key combis:
+</p>
+<p>
+<verb>
+    Key combi:             Result:
+    left-shift + insert    Increase widthscale
+    left-shift + delete    Decrease widthscale
+    left-shift + home      Increase heightscale
+    left-shift + end       Decrease heightscale
+    left-shift + pageup    Increase scale
+    left-shift + pagedown  Decrease scale
+</verb>
+</p><p>
+Under X11 xmame can switch to and from different modes runtime: 
+</p>
+<p>
+<verb>
+    Key combi:             Warps you to:
+    left-alt + insert      Normal window
+    left-alt + home        DGA fullscreen mode
+</verb>
+</p><p>
+Under X11 in a window you can also grab the mouse to be able to play with
+ the mouse, press left-alt + page-down to grab the mouse, press it again to
+ release it.
+</p>
+<sect1>
+Why doesn't a game have sound?
+<p>
+<itemize>
+ <item>
+First check that sound is working in other applications.
+ <item>
+Check that sound is supported for the game that has no sound,  not all
+ games have sound:
+ <item>
+For xmame take a look at gamelist.mame, is the sound for the game emulated?
+ <item>
+For xmess take a look at readme.mess is the sound for the system emulated?
+ <item>
+Check the operating system support chart in the earlier part of  this file,
+ does xmame/xmess support sound on your system?
+</itemize>
+</p><sect1>
+My sound seems lagged? / My sound Clicks? / What does -bufsize do?
+<p>
+With the <tt>-bufsize</tt> commandline option / the bufsize configfile keyword you
+ can specify the number of frames of audio to buffer. The default is 2 frames.
+</p>
+<p>
+This value should be ok for everyone, but if you still have problems read
+ on.
+</p>
+<p>
+If the buffersize is to small, this causes the buffer to get empty between
+ frames which in turn causes clicks/pauses in the sound. If this is the case
+ highering the -bufsize value to for example 2.5 should help.
+</p>
+<p>
+If however you make the buffersize to large, then so much audio becomes
+ buffered, that the sound could become lagged. E.g. you would here the coin
+ drop sound 0.5 seconds after pressing the insert coin key. In this case lower
+ the bufsize to for example 1.5 .
+</p>
+<p>
+Please lett me know if you need to change this setting, since I'm planning
+ on removing it in a future release.
+</p>
+<sect1>
+Why doesn't a game work? <label id="FAQ: Why doesn't a game work?" >
+<p>
+<itemize>
+ <item>
+Do you have the right roms or did you get checksum failures?
+ <item>
+Xmame version 0.34 and higher require PROM files that were not included
+ in ROM images released before version 0.34. See the question on PROMs  below
+ for more information.
+ <item>
+For xmame check the file gamelist.mame to see if the game is playable,
+ just because a game is included doesn't mean it is working yet.
+ <item>
+For xmess take a look at readme.mess maybe the system isn't emulated all
+ that good yet.
+ <item>
+Some games require sound support. If you don't have sound  support under
+ your Unix or sound isn't supported by xmame/xmess under  your Unix, try the
+ <tt>-fakesound</tt> command line parameter.
+</itemize>
+</p><sect1>
+What are PROMs? <label id="FAQ: What are PROMs?" >
+<p>
+PROMs contain game specific information that used to be built in  to mame
+ in versions prior to 0.34. This information has been  extracted and is now
+ included with new versions of ROM files for  games that require this information.
+</p>
+<p>
+If you want to use your current ROM files, you can obtain just the PROM
+ images in one large file at:
+</p>
+<p>
+<url url="http://mame.retrogames.com/" name="http://mame.retrogames.com/">
+</p>
+<sect1>
+Why is xmame/xmess slow?
+<p>
+xmame/xmess is a compiled C program that is emulating hardware.  Software
+ emulation of hardware always pays a speed penalty. Here  are some things you
+ can do:
+</p>
+<p>
+<itemize>
+ <item>
+Try using the -frameskip command line parameter.
+ <item>
+Try pressing F8 while running xmame/xmess to alter the frame rate.
+ <item>
+Try disabling the throttle with the -nothrottle command line  parameter
+ or by pressing F10 while running xmame/xmess.
+ <item>
+While running xmame/xmess, press F11 to check the speed of xmame/xmess.
+  If you never get a display of 100&percnt;, you need a faster computer.
+</itemize>
+</p><p>
+You can also try recompiling xmame/xmess with more optimal settings, the
+ following suggestions may not work or may not be appropriate on some machines
+ and in some installations.  However, in cases where they do work, there can
+ be a noticeable increase in overall performance of xmame/xmess.
+</p>
+<p>
+These &quot;enhancements&quot; simply require editing the Makefile that
+ is distributed with xMame, and then recompiling the source.  If you are compiling
+ the source for the second time you will need to do:
+</p>
+<p>
+<verb>
+    make clean
+    make
+    make install
+</verb>
+</p><p>
+after editing the Makefile to set your new settings.
+</p>
+<sect2>
+SPEEDUP &num; 1 - Inline compiling
+<p>
+Try enabling inline compiling by commenting and uncommenting the following
+ lines:
+</p>
+<p>
+<verb>
+    &num; IL    = '-DINLINE=static inline'
+    IL     = -DINLINE=static
+</verb>
+</p><sect2>
+SPEEDUP &num; 2 - Direct Graphics Access
+<p>
+For a big boost try enabling DGA by uncommenting the following line:
+</p>
+<p>
+<verb>
+    DGA = 1
+</verb>
+</p><p>
+Then start xmame as root, and press left-alt + home to switch to dga mode,
+ that should be a lot faster, and doesn't need / use xsync ;) 
+</p>
+<p>
+To get back to a window without exiting press left-alt + insert.
+</p>
+<p>
+The benefit of DGA is that it is Direct Graphics Access and as such writes
+ directly to the framebuffer (Think directx versus GDI under windows). So it
+ should be a tad faster, unless you've got a really really well accelerated
+ X-server, which could be just as fast. Try pressing F11 to see the actual framerate,
+ although it might be hardly noticable (visually atleast), it should give you
+ some speed increase.
+</p>
+<p>
+Besides that it automaticly switches to the right mode and removes any
+ window manager stuff, but that can be done without DGA too (I might at such
+ a feature later, sine it allows easy fullscreen without running as root).
+</p>
+<p>
+And adding a 320x240 mode will most definatly get you a very nice fullscreen
+ display at scale = 1 ;)
+</p>
+<p>
+Don't forget that you need still need to set up the Modes line of the 
+  &quot;Display&quot; subsection of the &quot;Screen&quot; section of your X
+ config file if you want the games to fill the screen in DGA mode. Xmame will
+ pick the best mode it can find, so if you have a line like:
+</p>
+<p>
+<verb>
+    Modes  &quot;1024x768&quot; &quot;800x600&quot; &quot;640x480&quot; &quot;320x240&quot; &quot;256x224&quot;
+</verb>
+</p><p>
+then any game which fits into a 320x240 screen can be displayed in that
+ resolution, and so on. Don't forget you X11 config file might have a number
+ of different &quot;Screen&quot; sections in it, and you will need to add Modes
+ to the one that is actually active with your Xserver is running. And of course
+ it's not always that easy, since you also need to tell X what monitor settings
+ are required for these resolution modes. This is done through Modeline entries
+ in the &quot;Monitor&quot; section of your X config file.
+</p>
+<p>
+You can check out the <tt>/contrib/tools/modelines</tt> file for a set of crazy
+ modes made especially for xmame in DGA mode, they should work on any reasonable
+ multisync, but don't use them on an old fixed-frequency (well if you can't
+ resist trying I won't pay for a new one)
+</p>
+<sect2>
+SPEEDUP &num; 3 - NASM
+<p>
+You can also try installing nasm and compiling the asm core, that helps
+ a bit too.
+</p>
+<sect1>
+I've got a dual processor machine. What can I do to take full advantage
+ of this?
+<p>
+Not much. Xmame is a single-threaded port of a single-threaded DOS app.
+ Some degree of speedup will hopefully be found on an SMP since xmame is more
+ likely to get to hog its one CPU for longer. But of course the same applies
+ to any CPU-intensive program. And all the things one would normally do to any
+ application to give it more CPU time (higher priority, kill or renice unecessary
+ process, etc.) will work with xmame.
+</p>
+<p>
+Now you may at this point be thinking &quot;Surely you could have one thread
+ doing emulation and another thead doing graphics to get a speedup.&quot; Yes,
+ but there are some serious issues to consider. The first is synchronisation
+ between the threads, which needs to be pretty tight. If not done smoothly the
+ overhead will blow most of the benefit away. Also it needs to be implemented
+ with a portable threads interface ... which basically means POSIX threads.
+ In a nutshell its a lot of effort and probably not much gain. But of course
+ if you are feeling particulary energetic and in the mood to code then patches
+ can always be submitted to the xmame devel mailing list ... :)
+</p>
+<sect1>
+Why doesn't my joystick handle diagonal movement correctly on my Intel
+ x86 system?
+<p>
+Xmame/xmess uses autocalibrating but you could try to use specific programs
+ to calibrate it ( jscal that comes with joystick  module works fine.... )
+</p>
+<sect1>
+How do I enable XinputExtensions X11 based joystick in Xfree86?
+<p>
+You need to edit XF86Config to enable the XInput section. See the  manual
+ page for XF86Config.
+</p>
+<sect1>
+How do I read a manual page?
+<p>
+Easy. If you want to read the manual page for XF86Config, type: man XF86Config
+</p>
+<sect1>
+Why do I get gz_open symbol not found while compiling? <label id="FAQ: Why do I get gz_open symbol not found while compiling?" >
+<p>
+Xmame/xmess versions newer then 0.35 use zlib for some compression routines.
+ Unfortunatly a lott of Linux distributions have an old version of zlib installed
+ as /usr/X11R6/lib/libz.a And the new version installed as /usr/lib/libz.a.
+ If this is the case its harmless to remove /usr/X11R6/lib/libz.a. If your not
+ sure wether this is the case just move /usr/X11R6/lib/libz.a to another location.
+</p>
+<p>
+Removing or just moving /usr/X11R6/lib/libz.a should fix this problem.
+</p>
+<p>
+Also see: <ref id="FAQ: Why do I get zlib.h not found?" name="FAQ: Why do I get zlib.h not found?" >
+</p>
+<sect1>
+Why do I get zlib.h not found? <label id="FAQ: Why do I get zlib.h not found?" >
+<p>
+Xmame/xmess versions newer then 0.35 use zlib for some compression routines.
+</p>
+<p>
+Zlib is standard on most Unix versions, for those who don't ship with zlib
+ or ship with a too old version xmame/xmess now comes with a stripped down version
+ of zlib. Uncomment the appropriate line in the Makefile to use this.
+</p>
+<sect1>
+Where can I get the latest version of xmame/xmess?
+<p>
+The xmame/xmess Home Page always has the most up to date version. The address
+ is:
+</p>
+<p>
+<url url="http://x.mame.net/" name="http://x.mame.net/">
+</p>
+<sect1>
+Where can I send fixes, bug reports, suggestions, or money?  :-)
+<p>
+See <ref id="Mail" name="Mail" > of this document.
+</p>
+<sect1>
+What if my question is still not answered?
+<p>
+Please check the offical mame and mess readme files to see if that answers
+ your question:
+</p>
+<p>
+<itemize>
+ <item>
+<url url="readme.mame" name="The official mame readme file (readme.mame)">
+ <item>
+<url url="readme.mess" name="The official mess readme file (readme.mess)">
+</itemize>
+</p><p>
+If that doesn't help then ask your question on the mailinglist or send
+ it to the xmame/xmess maintainer, see  <ref id="Mail" name="Mail" > for contact information.
+</p>
+<sect>
+Display subsystem specific comments &amp; notes <label id="Display subsystem specific comments and notes" >
+<sect1>
+FX-Mame a glide driver for xmame
+<p>
+The latest version of this driver can be obtained at: <url url="http://glmame.linuxgames.com" name="http://glmame.linuxgames.com">
+</p>
+<sect2>
+Requirements
+<p>
+To run FXmame you must have:
+</p>
+<p>
+<itemize>
+ <item>
+A 3Dfx card
+ <item>
+Glide 2x o the xmame distribution
+</itemize>
+</p><sect2>
+Compiling and Installing
+<p>
+FXmame comes in two flavours -- xfx and svgafx. The xfx version is designed
+ to run under X11. It uses an X window for input. The svgafx version runs from
+ the console, and uses svgalib for input. Both use the 3Dfx hardware for rendering.
+</p>
+<p>
+To install FXmame, follow the general instructions for installing xmame.
+ To specify the glide driver, do the following the Makefile:
+</p>
+<p>
+<itemize>
+ <item>
+Select either &quot;xfx&quot; or &quot;svgafx&quot; as your display method
+ <item>
+Configure the glide variables to correspond to your glide setup
+</itemize>
+</p><p>
+The FXmame executables are called &quot;xmame.xfx&quot; and &quot;xmame.svgafx&quot;
+</p>
+<sect2>
+Running
+<p>
+FXmame runs with the same parameters and uses the same keyboard commands
+ that xmame.x11 does.
+</p>
+<p>
+A few extra keyboard commands have been added in the glide driver:
+</p>
+<p>
+<itemize>
+ <item>
+RIGHTCTRL-A -- toggle antialiasing in vector games 
+ <item>
+RIGHTCTRL-B -- toggle bilinear filtering
+</itemize>
+</p><p>
+The glide driver also adds several command-line options:
+</p>
+<p>
+<verb>
+    -fxgama &lt;value&gt; 3Dfx gamma correction value
+</verb>
+</p><p>
+Note that in order to display the game options or the fps display in vector
+ games, I have to overlay the game bitmap over the vector display. This is because
+ I circumvent the bitmap entirely in vector games. Drawing the bitmap is a big
+ cpu hog, so you'll notice that the game slows down when you turn on the fps
+ display (I know, not ideal when you want to find out the frame rate...)
+</p>
+<sect2>
+Common Questions (FAQ)
+<p>
+Q: When I run FXmame, it just dumps core.
+</p>
+<p>
+A: Make sure you are running FXmame as root. Root priviledges are required
+ to access the 3Dfx hardware
+</p>
+<p>
+Q: When I run xmame.xfx, it just hangs at the initial game screen
+</p>
+<p>
+A: Are you running KDE? For some reason, I can't get keyboard input under
+ KDE. If you have this problem, switch window managers or use xmame.svgafx instead.
+</p>
+<sect2>
+Present Limitations/Bugs
+<p>
+<itemize>
+ <item>
+antialiasing isn't working quite as well as it should o input problems
+ under KDE
+</itemize>
+</p><sect2>
+Future Work
+<p>
+<itemize>
+ <item>
+Optimize the drawing code to update only the changed portions of the game
+ bitmap.
+</itemize>
+</p><sect2>
+License
+<p>
+The FXmame code is Copyright 1998 by Mike Oliphant. It may be used and
+ distributed under the terms of the MAME license.
+</p>
+<sect2>
+Version History
+<p>
+v0.5 -- December 11th, 1998 ---------------------------
+</p>
+<p>
+<itemize>
+ <item>
+implemented long copies in screen update
+ <item>
+added dirty handling. this greatly increases the speed of games that support
+ the dirty update strategy (although most of them are older games that already
+ ran at full speed on modern hardware)
+ <item>
+merged source with xmame b8.1
+</itemize>
+</p><p>
+v0.4 -- October 30th, 1998 --------------------------
+</p>
+<p>
+<itemize>
+ <item>
+improved alpha handling in vector games - now bitmapped overlays do not
+ dim the screen o added svgalib support (xmame.svgafx) o fixed a tiling bug
+ that gave artifacts on texture tile boundaries
+</itemize>
+</p><p>
+v0.3 -- October 29th, 1998 --------------------------
+</p>
+<p>
+<itemize>
+ <item>
+got rid of extra lines in vector games o added bitmap overlay in vector
+ games to show options/fps o added antialiasing in vector games
+</itemize>
+</p><p>
+v0.2 -- October 28th, 1998 --------------------------
+</p>
+<p>
+<itemize>
+ <item>
+added screenshots o added 3Dfx gamma adjustment o added direct acceleration
+ of vector games (still buggy)
+</itemize>
+</p><p>
+v0.1 -- October 27th, 1998 --------------------------
+</p>
+<p>
+<itemize>
+ <item>
+first public release
+</itemize>
+</p><sect2>
+Author
+<p>
+Mike Oliphant <tt><url url="mailto:oliphant@ling.ed.ac.uk" name="(oliphant@ling.ed.ac.uk)"></tt> <url url="http://glmame.linuxgames.com" name="http://glmame.linuxgames.com">
+</p>
+<sect1>
+GL-Mame a OPENGL driver for xmame
+<p>
+The latest version of this driver can be obtained at: <url url="http://glmame.linuxgames.com" name="http://glmame.linuxgames.com">
+</p>
+<sect2>
+Requirements
+<p>
+To run GLmame you must have:
+</p>
+<p>
+<itemize>
+ <item>
+An OpenGL implementation
+ <item>
+libjpeg
+ <item>
+hardware 3D acceleration (if you want any kind of framerate) o the xmame
+ distribution
+</itemize>
+</p><sect2>
+Compiling and Installing
+<p>
+Follow the general instructions for installing xmame. To specify the OpenGL
+ driver, do the following in the Makefile:
+</p>
+<p>
+<itemize>
+ <item>
+Select &quot;xgl&quot; as your display method
+ <item>
+Configure the OpenGL variables to correspond to your OpenGL implementation
+ <item>
+Configure the CABDIR variable
+</itemize>
+</p><p>
+The GLmame executable is called &quot;xmame.xgl&quot;
+</p>
+<sect2>
+Running
+<p>
+xmame.xgl runs with the same parameters and uses the same keyboard commands
+ that xmame.x11 does.
+</p>
+<p>
+The program starts up in cabinet mode. While this is pretty, and cool,
+ you'll probably want to actually play in fullscreen mode.
+</p>
+<p>
+A few extra keyboard commands have been added in the OpenGL driver:
+</p>
+<p>
+<itemize>
+ <item>
+RIGHTCTRL-B -- toggle bilinear filtering
+ <item>
+RIGHTCTRL-C -- toggle cabinet/fullscreen display
+ <item>
+RIGHTCTRL-T -- toggle phosphor trails --use at your own risk! -- it works
+ best if double buffering is disabled (see below)
+</itemize>
+</p><p>
+The OpenGL driver also adds several command-line options:
+</p>
+<p>
+<verb>
+    -&lsqb;no&rsqb;dblbuffer          Disable/enable double buffering
+    -cabview                Start in cabinet view mode
+    -nocabview              Start in fullscreen view mode
+    -cabinet &lt;cabname&gt;      Use the cabinet model &lt;cabname&gt;
+    -fxgama &lt;value&gt;         3Dfx gamma correction value
+</verb>
+</p><p>
+Two cabinet models are provided. The default, &quot;glmame&quot;, is designed
+ to look like a standard arcade cabinet. The other, &quot;trans&quot;, is a
+ box with a transparent games screen that you can see through.
+</p>
+<p>
+Note that in order to display the game options or the fps display in vector
+ games, I have to overlay the game bitmap over the vector display. This is because
+ I circumvent the bitmap entirely in vector games. Drawing the bitmap is a big
+ cpu hog, so you'll notice that the game slows down when you turn on the fps
+ display (I know, not ideal when you want to find out the frame rate...) This
+ overlaying seems to have some glitches in cabinet mode. I don't know what causes
+ them.
+</p>
+<p>
+<bf>*** IMPORTANT! ***</bf>
+</p>
+<p>
+If you have trouble with GLmame, or it is slow, read the &quot;Common Questions&quot;
+ section. Most of the questions people email me are answered here.
+</p>
+<sect2>
+Cabinet Models
+<p>
+Cabinet model information is stored in the &quot;cab&quot; subdirectory
+ of the directory you specified with the ROMPATH variable in the Makefile. Path
+ information specified in xmamerc or with the 'rompath' shell environment variable
+ is currently not used. Each cabinet model has it's own subdirectory. GLmame
+ will first try to load either the user-specified cabinet model (using the -cabinet
+ command-line option), or a model corresponding to the current game name. Failing
+ that, it will use the generic &quot;glmame&quot; model.
+</p>
+<p>
+A cabinet model directory must contain a geometry file &lt;modelname&gt;.cab,
+ and any .jpg files used for textures on the model. The format of the .cab file
+ will be familiar if you have ever programmed using OpenGL -- it looks much
+ like an OpenGL display list. The format is as follows:
+</p>
+<p>
+<verb>
+    cabv1.0
+</verb>
+</p><p>
+This header must be the first 7 characters of the file.
+</p>
+<p>
+<verb>
+    &num;&lt;text&gt;
+</verb>
+</p><p>
+Comment lines begin with '&num;'
+</p>
+<p>
+<verb>
+    begin &lt;type&gt;
+</verb>
+</p><p>
+Begins a geometry object, where type is one of (polygon, quads, quad_strip,
+ screen). Each &quot;begin&quot; must be paired with an &quot;end&quot; statement.
+ A &quot;polygon&quot; is specified using one vertex per, well... vertex. &quot;quads&quot;
+ are four-sided polygons, each specified by four vertices in order around the
+ polygon. A &quot;quad_strip&quot; is a series of four-sided polygons, each
+ of which shares an edge with the polygons before and after it in the strip.
+ A &quot;screen&quot; is a quad that defines the actual area in 3D space where
+ the game will be displayed. only one of these should be defined. For more info,
+ look at any description of OpenGL geometry.
+</p>
+<p>
+<verb>
+    end
+</verb>
+</p><p>
+Ends the geometry object begun with &quot;begin&quot;.
+</p>
+<p>
+<verb>
+    color4 &lt;r&gt; &lt;g&gt; &lt;b&gt;
+</verb>
+</p><p>
+Changes the current color to the corresponding rgb value (specified as
+ floating point numbers between 0 and 1).
+</p>
+<p>
+<verb>
+    color4 &lt;r&gt; &lt;g&gt; &lt;b&gt; &lt;a&gt;
+</verb>
+</p><p>
+Changes the current color to the corresponding rgba value (specified as
+ floating point numbers between 0 and 1).
+</p>
+<p>
+<verb>
+    shading &lt;type&gt;
+</verb>
+</p><p>
+Sets the shading type. available types are &quot;smooth&quot; (which blends
+ colors from one vertex to the next) or &quot;flat&quot; (which doesn't).
+</p>
+<p>
+<verb>
+    vertex &lt;x&gt; &lt;y&gt; &lt;z&gt;
+</verb>
+</p><p>
+Specifies a vertex for the current geometry object as a point in 3-space.
+</p>
+<p>
+<verb>
+    numtex &lt;num&gt;
+</verb>
+</p><p>
+Specifies the number of different textures to be loaded. This declaration
+ must precede any &quot;loadtex&quot; call.
+</p>
+<p>
+<verb>
+    loadtex &lt;num&gt; &lt;width&gt; &lt;height&gt; &lt;filename&gt;
+</verb>
+</p><p>
+Loads texture number &lt;num&gt; from .jpg file &lt;filename&gt;. The .jpg
+ file *must* be &lt;width&gt; by &lt;height&gt; pixels, and both &lt;width&gt;
+ and &lt;height&gt; must be powers of two (and must conform to the hardware
+ requirements of any 3D card you want the cabinet to work with -- 256x256 for
+ 3Dfx).
+</p>
+<p>
+<verb>
+    texcoord &lt;xcoord&gt; &lt;ycoord&gt;
+</verb>
+</p><p>
+Sets the texture coordinate of the next vertex. This specifies where in
+ 2D texture space the vertex lies.
+</p>
+<p>
+<verb>
+    enable texture
+</verb>
+</p><p>
+Enables texture mapping (using the currently-selected texture).
+</p>
+<p>
+<verb>
+    disable texture
+</verb>
+</p><p>
+Turns off texture mapping.
+</p>
+<p>
+<verb>
+    settex &lt;num&gt;
+</verb>
+</p><p>
+Select texture &lt;num&gt; for doing texturing. The texture must previously
+ have been loaded using &quot;loadtex&quot;.
+</p>
+<p>
+<verb>
+    camerapan &lt;num&gt;
+</verb>
+</p><p>
+Starts the camera pan definition that will be followed by &lt;num&gt; camera
+ transistions. After the last transision definition, the pan sequence must be
+ ended with an &quot;end&quot; statement.
+</p>
+<p>
+<verb>
+    goto &lt;lx&gt; &lt;ly&gt; &lt;lz&gt; &lt;px&gt; &lt;py&gt; &lt;pz&gt; &lt;nx&gt; &lt;ny&gt; &lt;nz&gt;
+</verb>
+</p><p>
+Relocates and reorients the camera. The arguments are the same as are used
+ by the OpenGL command &quot;gluLookAt()&quot;. The camera is positioned at
+ point &lt;lx,ly,lz&gt;, pointing along vector &lt;px,py,pz&gt;, with &quot;up&quot;
+ normal (the direction that is &quot;up&quot; for the camera) &lt;nx,ny,nz&gt;.
+</p>
+<p>
+<verb>
+    moveto &lt;lx&gt; &lt;ly&gt; &lt;lz&gt; &lt;px&gt; &lt;py&gt; &lt;pz&gt; &lt;nx&gt; &lt;ny&gt; &lt;nz&gt; &lt;frames&gt;
+</verb>
+</p><p>
+Moves the camera to a new location (specified as in &quot;goto&quot;).
+ The transition occurs over &lt;frames&gt; frames.
+</p>
+<p>
+All commands must be on separate lines. Use the (somewhat) commented glmame
+ cabinet as an example to work from.
+</p>
+<sect2>
+Common Questions (FAQ)
+<p>
+Q: I am only getting a few frames-per-second. This sucks! What gives?
+</p>
+<p>
+A1: You're probably running Mesa in software mode. You should read the
+ &quot;README.3Dfx&quot; file in the Mesa distro. Specifically, you need to
+ &quot;setenv MESA_GLX_FX fullscreen&quot;
+</p>
+<p>
+A2: You don't have a 3D graphics card. Go buy one!
+</p>
+<p>
+Q: When I run xmame.xgl, it just dumps core. That's not as much fun as
+ 3D Pacman, now is it?
+</p>
+<p>
+A1: If you are using a 3Dfx card, make sure you are running xmame.xgl as
+ root. Root priviledges are required to access the 3Dfx hardware
+</p>
+<p>
+A2: If you're using Mesa and haven't upgraded to v3.0, do so.
+</p>
+<p>
+Q: When I run xmame.xgl, it just hangs at the initial game screen
+</p>
+<p>
+A: Are you running KDE? For some reason, I can't get keyboard input under
+ KDE. If you have this problem, switch window managers
+</p>
+<sect2>
+Present Limitations/Bugs
+<p>
+<itemize>
+ <item>
+No clipping of vector games (most noticeable in cabinet mode) o No preservation
+ of game aspect ratio in cabinet mode o The phosphor trail stuff is *very* experimental
+ at this point :-) o There's some weirdness when overlaying the configuration
+ screen or fps display in cabinet mode for vector games
+</itemize>
+</p><sect2>
+Future Work
+<p>
+<itemize>
+ <item>
+Fixing existing bugs
+ <item>
+Optimize the drawing code to update only the changed portions of the game
+ bitmap.
+</itemize>
+</p><sect2>
+License
+<p>
+The GLmame code is Copyright 1998 by Mike Oliphant. It may be used and
+ distributed under the terms of the MAME license.
+</p>
+<sect2>
+Version History
+<p>
+v0.6 -- December 14th, 1998 ---------------------------
+</p>
+<p>
+<itemize>
+ <item>
+added support for systems that do not support paletted textures (SGI and
+ solaris OpenGL implementations, for example)
+ <item>
+merged source with xmame b8.1
+</itemize>
+</p><p>
+v0.5 -- October 30th, 1998 --------------------------
+</p>
+<p>
+<itemize>
+ <item>
+fixed a bug with texturing being left on in bad places o added 3Dfx gamma
+ adjustment
+</itemize>
+</p><p>
+v0.4 -- October 21st, 1998 --------------------------
+</p>
+<p>
+<itemize>
+ <item>
+updated to work with xmame v0.34b5.2
+</itemize>
+</p><p>
+v0.3 -- October 12th, 1998 --------------------------
+</p>
+<p>
+<itemize>
+ <item>
+fixed verticle screen centering in fullscreen mode o moved cabinet and
+ camera panning information into a user-editable configuration file o added
+ 'trans' cabinet model o added double buffer, view type, and cabinet selection
+ command line options
+</itemize>
+</p><p>
+v0.2 -- October 6th, 1998 -------------------------
+</p>
+<p>
+<itemize>
+ <item>
+adding missing 'cab' directory
+</itemize>
+</p><p>
+v0.1 -- October 5th, 1998 -------------------------
+</p>
+<p>
+<itemize>
+ <item>
+first public release
+</itemize>
+</p><sect2>
+Author
+<p>
+Mike Oliphant <tt><url url="mailto:oliphant@ling.ed.ac.uk" name="(oliphant@ling.ed.ac.uk)"></tt> <url url="http://glmame.linuxgames.com" name="http://glmame.linuxgames.com">
+</p>
+<sect>
+contact information and credits
+<sect1>
+Mail <label id="Mail" >
+<p>
+There is an official xmame/xmess mail List. All operations related to this
+ list are performed via email to <tt><url url="mailto:xmame-request@acm.csres.utexas.edu" name="xmame-request@acm.csres.utexas.edu"></tt> with a proper keyword in the body.
+</p>
+<p>
+Currently recognized commands are:
+</p>
+<p>
+<verb>
+    subscribe      - subscribe to the list
+    unsubscribe    - unsubscribe from the list
+</verb>
+</p><p>
+X-Mame Mail List ideario
+</p>
+<p>
+<itemize>
+ <item>
+The X-Mame mail list is intended to be a technical forum for XMame  developers
+ that is:
+ <itemize>
+  <item>
+To exchange ideas about getting a better X-Mame 
+  <item>
+To share patches and notify bugs 
+  <item>
+Study new design strategies
+  <item>
+To expose problems and learn know-how
+ </itemize>
+ <item>
+The X-Mame mail list <bf>is not</bf> a forum about playing games (but everyone in
+ xmame-list plays...), so please:
+ <itemize>
+  <item>
+<bf>Dont use the list to ask about ROM's</bf>
+  <item>
+<bf>Dont ask about non-UNIX ports of Mame, just about MAME and X-Mame</bf>
+  <item>
+<bf>Dont ask for implementing a game. Just search doc and contribute yourself
+ (you'll enjoy twice: programming and playing...)</bf>
+  <item>
+<bf>Dont show your last high score in xxx game (we are interested in programming,
+ and then playing, in this order)</bf>
+ </itemize>
+ <item>
+<bf>Copyright notice: NEVER, I repeat NEVER send ROM images to the  list.</bf> (but
+ you can tell where to retrieve it... ;-) )
+ <item>
+At this moment X-Mame List is <bf>unmoderated</bf>, that is: every one subscribed
+ will received everything sent to the list. Expected not  need to change this
+ policy...
+</itemize>
+</p><p>
+If you want to send a personal mail to the xmame/xmess coordinator, send
+ to the address below. Everyone that contributes to xmame/xmess should subscribe
+ to the xmame/xmess mail list.
+</p>
+<p>
+<itemize>
+ <item>
+mailinglist: <tt><url url="mailto:xmame-request@acm.csres.utexas.edu" name="xmame-request@acm.csres.utexas.edu"></tt>
+ <item>
+xmame/xmess coordinator: <tt><url url="mailto:hans@highrise.nl" name="hans@highrise.nl"></tt>
+</itemize>
+</p><p>
+That's all. Enjoy X-Mame !
+</p>
+<sect1>
+credits
+<p>
+Lots and lots and lots of thank to everyone for there great help on the
+ xmame project. I would like to thank the following people and of course anyone
+ I've forgotten.
+</p>
+<p>
+Thank you all,
+</p>
+<p>
+Hans
+</p>
+<p>
+<enum>
+ <item>
+Fathers of the mame-creature (main version)
+ <itemize>
+  <item>
+Nicola Salmoria
+  <item>
+Allard van der Bas
+  <item>
+Mirko (Mix) Buffoni (General Mantainer)
+ </itemize>
+ <item>
+Fathers of mess
+ <itemize>
+  <item>
+Brad Oliver 
+  <item>
+Richard Bannister
+  <item>
+Ben Bruscella (current coordinator) 
+ </itemize>
+ <item>
+Original UNIX/X11 port
+ <itemize>
+  <item>
+Allard van der Bas
+  <item>
+Dick the Ridder
+  <item>
+Juan Antonio Marmnez
+ </itemize>
+ <item>
+Unix maintainer
+ <itemize>
+  <item>
+Hans de Goede
+ </itemize>
+ <item>
+Alpha specific issues
+ <itemize>
+  <item>
+Christian Groessler
+ </itemize>
+ <item>
+Sun specific issues
+ <itemize>
+  <item>
+Keith Hargrove
+  <item>
+Mathis Rosenhau
+ </itemize>
+ <item>
+Irix specific issues
+ <itemize>
+  <item>
+Tristram Scott
+ </itemize>
+ <item>
+GGI maintainance
+ <itemize>
+  <item>
+Gabriele Boccone (original port)
+  <item>
+Christian Groessler (current maintainer)
+ </itemize>
+ <item>
+OpenGL code &amp; maintainance
+ <itemize>
+  <item>
+Mike Oliphant
+ </itemize>
+ <item>
+Network code
+ <itemize>
+  <item>
+Eric Totel
+ </itemize>
+ <item>
+Perl scripts for automation of some porting issues
+ <itemize>
+  <item>
+Bill Adams
+ </itemize>
+ <item>
+Xmame rpms
+ <itemize>
+  <item>
+Jeremy Hansen
+ </itemize>
+ <item>
+Mailing list maintainer
+ <itemize>
+  <item>
+Chris McCraw
+ </itemize>
+ <item>
+Bits and pieces
+ <itemize>
+  <item>
+Christian Groessler
+  <item>
+Torsten Paul
+  <item>
+Jack Patton
+  <item>
+David Black
+ </itemize>
+ <item>
+AIX Sound code
+ <itemize>
+  <item>
+Chris Sharpp
+ </itemize>
+ <item>
+IRIX Sound code
+ <itemize>
+  <item>
+<tt><url url="mailto:entropy@zippy.bernstein.com" name="entropy@zippy.bernstein.com"></tt> 
+ </itemize>
+ <item>
+German readme
+ <itemize>
+  <item>
+Robert Hamberger
+ </itemize>
+ <item>
+Documentation (SGML, HTML, MAN)
+ <itemize>
+  <item>
+Rene Herrmann
+ </itemize>
+</enum>
+</p><sect>
+Legal issues and copyrights concerning mame/mess
+<p>
+<itemize>
+ <item>
+<bf>Please read the MAME/MESS readme-files first!</bf>
+ <item>
+xmame/xmess should be distributed under terms of the license in <url url="readme.mame" name="readme.mame">
+ <item>
+and if you are intessested in mess take a look in <url url="readme.mess" name="readme.mess">
+ <item>
+The main issue involves ROM images. ROM images are protected under the
+ copyrights of their authors, and CANNOT be distributed in the same package
+ as xmame/xmess. Download any ROM images at your own risk and responsibility.
+ <item>
+XInputExtensions based Joystick support. Source code is entirely pure 
+ hack work. No sample code, no info at all was found (only library  reference
+ manual) and is copyrighted by me (Juan Antonio Marmnez). Use it under terms
+ of GNU General Public License.
+</itemize>
+</p><sect>
+ChangeLogs<label id="ChangeLogs" >
+<sect1>
+The mame/mess ChangeLogs
+<p>
+This are the changelogs of the offical mame and mess release, the core
+ of xmame / xmess.
+</p>
+<p>
+<itemize>
+ <item>
+<url url="changes.mame" name="The mame changelog (changes.mame)">
+ <item>
+<url url="changes.mess" name="The mess changelog (changes.mame)">
+</itemize>
+</p><sect1>
+The Unix ChangeLog
+<p>
+And now here is the HISTORY of the xmame-project (of course thats why you
+ are here :;-)) ... René
+</p>
+<p>
+<itemize>
+ <item>
+<url url="changes.unix" name="The Unix port changelog (changes.unix)">
+</itemize>
+
+
+</article>
