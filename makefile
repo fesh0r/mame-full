@@ -6,7 +6,7 @@ TARGET = mame
 # TARGET = tiny
 
 # uncomment next line to include the debugger
- DEBUG = 1
+# DEBUG = 1
 
 # uncomment next line to include the symbols for symify
 # SYMBOLS = 1
@@ -193,6 +193,7 @@ maketree:
 	@md $(OBJ)\cpu\i86
 	@md $(OBJ)\cpu\nec
 	@md $(OBJ)\cpu\i8039
+	@md $(OBJ)\cpu\cdp1802
 	@md $(OBJ)\cpu\i8085
 	@md $(OBJ)\cpu\m6800
 	@md $(OBJ)\cpu\m6805
@@ -201,6 +202,7 @@ maketree:
 	@md $(OBJ)\cpu\konami
 	@md $(OBJ)\cpu\m68000
 	@md $(OBJ)\cpu\s2650
+	@md $(OBJ)\cpu\f8
 	@md $(OBJ)\cpu\t11
 	@md $(OBJ)\cpu\tms34010
 	@md $(OBJ)\cpu\tms9900
@@ -213,7 +215,6 @@ maketree:
 	@md $(OBJ)\cpu\sc61860
 	@md $(OBJ)\cpu\arm
 	@md $(OBJ)\cpu\g65816
-	@md $(OBJ)\cpu\f8
 	@md $(OBJ)\sound
 	@md $(OBJ)\msdos
 	@md $(OBJ)\drivers
@@ -235,3 +236,4 @@ clean:
 	@rm -fr $(OBJ)
 	@echo Deleting $(EMULATOR)...
 	@rm -f $(EMULATOR)
+
