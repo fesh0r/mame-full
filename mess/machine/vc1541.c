@@ -639,7 +639,7 @@ static struct via6522_interface via2 =
 	vc1541_via1_irq
 };
 
-int vc1541_init (int id, void *in, int open_mode)
+int vc1541_init (int id, mame_file *in, int open_mode)
 {
 	int size;
 

@@ -10,7 +10,7 @@
 #include "includes/exidy.h"
 #include "cassette.h"
 
-int exidy_cassette_init(int id, void *fp, int open_mode)
+int exidy_cassette_init(int id, mame_file *fp, int open_mode)
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));

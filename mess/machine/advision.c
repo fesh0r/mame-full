@@ -28,7 +28,7 @@ MACHINE_INIT( advision )
     advision_videoenable = 0;
 }
 
-int advision_load_rom(int id, void *cartfile, int open_mode)
+int advision_load_rom(int id, mame_file *cartfile, int open_mode)
 {
 	if (cartfile == NULL)
 	{
@@ -44,7 +44,8 @@ int advision_load_rom(int id, void *cartfile, int open_mode)
 
 /****** External RAM ******************************/
 
-READ_HANDLER ( advision_MAINRAM_r ) {
+READ_HANDLER ( advision_MAINRAM_r )
+{
     int d;
 
     d = advision_ram[advision_rambank + offset];
@@ -54,36 +55,37 @@ READ_HANDLER ( advision_MAINRAM_r ) {
     return d;
 }
 
-WRITE_HANDLER ( advision_MAINRAM_w ) {
+WRITE_HANDLER ( advision_MAINRAM_w )
+{
     advision_ram[advision_rambank + offset] = data;
 }
 
 /***** 8048 Ports ************************/
 
-WRITE_HANDLER ( advision_putp1 ) {
-
-	  ROM = memory_region(REGION_CPU1);
-      if (data & 0x04) {
-        cpu_setbank(1,&ROM[0x0000]);
-      }
-      else {
-        cpu_setbank(1,&ROM[0x1000]);
-      }
-      advision_rambank = (data & 0x03) << 8;
+WRITE_HANDLER ( advision_putp1 )
+{
+	ROM = memory_region(REGION_CPU1);
+	if (data & 0x04)
+		cpu_setbank(1,&ROM[0x0000]);
+	else
+		cpu_setbank(1,&ROM[0x1000]);
+	advision_rambank = (data & 0x03) << 8;
 }
 
-WRITE_HANDLER ( advision_putp2 ) {
-
-      if ((advision_videoenable == 0x00) && (data & 0x10)) {
+WRITE_HANDLER ( advision_putp2 )
+{
+	if ((advision_videoenable == 0x00) && (data & 0x10))
+	{
 		advision_vh_update(advision_vh_hpos);
-        advision_vh_hpos++;
-        if (advision_vh_hpos > 255) {
-            advision_vh_hpos = 0;
-            logerror("HPOS OVERFLOW\n");
-        }
-      }
-      advision_videoenable = data & 0x10;
-	  advision_videobank = (data & 0xE0) >> 5;
+		advision_vh_hpos++;
+		if (advision_vh_hpos > 255)
+		{
+			advision_vh_hpos = 0;
+			logerror("HPOS OVERFLOW\n");
+		}
+	}
+	advision_videoenable = data & 0x10;
+	advision_videobank = (data & 0xE0) >> 5;
 }
 
 READ_HANDLER ( advision_getp1 ) {

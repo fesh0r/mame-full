@@ -1,7 +1,7 @@
 #include "driver.h"
 
 
-extern int	pc_harddisk_init(int id, void *fp, int open_mode);
+extern int	pc_harddisk_init(int id, mame_file *fp, int open_mode);
 extern void pc_harddisk_exit(int id);
 
 #if 0

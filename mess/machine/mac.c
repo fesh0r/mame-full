@@ -1560,7 +1560,7 @@ WRITE16_HANDLER ( mac_iwm_w )
 		iwm_w(offset >> 8, data & 0xff);
 }
 
-int mac_floppy_init(int id, void *fp, int open_mode)
+int mac_floppy_init(int id, mame_file *fp, int open_mode)
 {
 #if 0
 	if ((mac_model == model_Mac128k512k) && (id == 0))

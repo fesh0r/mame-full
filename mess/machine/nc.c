@@ -111,7 +111,7 @@ static int nc_card_load(int id, void *file, unsigned char **ptr)
 }
 
 /* load pcmcia card */
-int nc_pcmcia_card_load(int id, void *fp, int open_mode)
+int nc_pcmcia_card_load(int id, mame_file *fp, int open_mode)
 {
 	/* a pcmcia card is not required for this machine,
 	so if no image is specified, initialisation has succeeded */
@@ -167,7 +167,7 @@ void nc_pcmcia_card_exit(int id)
 /*************************************************************************************************/
 /* Serial */
 
-int	nc_serial_init(int id, void *fp, int open_mode)
+int	nc_serial_init(int id, mame_file *fp, int open_mode)
 {
 	/* serial device is not require for this machine, so if no image
 	is specified, initialisation has succeeded */

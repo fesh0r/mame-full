@@ -46,7 +46,7 @@ cylinder apexc_cylinder;
 /*
 	Open cylinder image and read RAM
 */
-static int apexc_cylinder_init(int id, void *fp, int open_mode)
+static int apexc_cylinder_init(int id, mame_file *fp, int open_mode)
 {
 	/* open file */
 	apexc_cylinder.fd = fp;
@@ -81,7 +81,7 @@ static void apexc_cylinder_exit(int id)
 	if (apexc_cylinder.fd && apexc_cylinder.writable)
 	{	/* save RAM contents */
 		/* rewind file */
-		osd_fseek(apexc_cylinder.fd, 0, SEEK_SET);
+		mame_fseek(apexc_cylinder.fd, 0, SEEK_SET);
 #ifdef LSB_FIRST
 		{	/* fix endianness */
 			UINT32 *RAM;
@@ -154,7 +154,7 @@ tape apexc_tapes[2];
 /*
 	Open a tape image
 */
-static int apexc_tape_init(int id, void *fp, int open_mode)
+static int apexc_tape_init(int id, mame_file *fp, int open_mode)
 {
 	tape *t = &apexc_tapes[id];
 

@@ -155,7 +155,7 @@ static void execute_read(void)
 			{
 				if( read == 0 )
 				{
-					osd_fseek(f, offset_[idx], SEEK_SET);
+					mame_fseek(f, offset_[idx], SEEK_SET);
 					if( !first )
 					{
 						HDC_LOG(2,"hdc_PIO_read next",("C:%02d H:%d S:%02d N:%d $%08x, $%04x\n",
@@ -195,7 +195,7 @@ static void execute_read(void)
 			{
 				if (read == 0)
 				{
-					osd_fseek(f, offset_[idx], SEEK_SET);
+					mame_fseek(f, offset_[idx], SEEK_SET);
 					if (!first)
 					{
 						HDC_LOG(2,"hdc_DMA_read next",("C:%02d H:%d S:%02d N:%d $%08x -> $%06x, $%04x\n",
@@ -266,7 +266,7 @@ static void execute_write(void)
 				*dst++ = buffer[data_cnt++];
 				if( --write == 0 )
 				{
-					osd_fseek(f, offset_[idx], SEEK_SET);
+					mame_fseek(f, offset_[idx], SEEK_SET);
 					write = mame_fwrite(f, data, 512);
                     offset_[idx] += write;
 					size -= write;
@@ -305,7 +305,7 @@ static void execute_write(void)
 #endif
 				if( --write == 0 )
 				{
-					osd_fseek(f, offset_[idx], SEEK_SET);
+					mame_fseek(f, offset_[idx], SEEK_SET);
 					write = mame_fwrite(f, data, 512);
                     size -= 512;
 					offset_[idx] += write;
@@ -481,7 +481,7 @@ static void pc_hdc_command(int n)
 				buffer[14] = 0x00;
 				buffer[15] = 0x00;
 				buffer[16] = dip[idx];					/* a non zero value is expected */
-				osd_fseek(pc_hdc_file[idx], 0x1ad, SEEK_SET);
+				mame_fseek(pc_hdc_file[idx], 0x1ad, SEEK_SET);
 				mame_fwrite(pc_hdc_file[idx], buffer, 16);
             }
 #endif
@@ -769,7 +769,7 @@ READ_HANDLER ( pc_HDC2_r ) { return pc_HDC_r(1, offset); }
  *		Port handlers.
  *
  *************************************/
-int pc_harddisk_init(int id, void *fp, int open_mode)
+int pc_harddisk_init(int id, mame_file *fp, int open_mode)
 {
 	pc_hdc_file[id] = fp;
 

@@ -336,7 +336,7 @@ static ppi8255_interface sord_ppi8255_interface =
 
 static char cart_data[0x06fff-0x02000];
 
-static int sord_cartslot_init(int id, void *file, int open_mode)
+static int sord_cartslot_init(int id, mame_file *file, int open_mode)
 {
 	if (file == NULL)
 		return INIT_FAIL;
@@ -359,7 +359,7 @@ static int sord_cartslot_init(int id, void *file, int open_mode)
 	return INIT_FAIL;
 }
 
-static int sord_floppy_init(int id, void *fp, int open_mode)
+static int sord_floppy_init(int id, mame_file *fp, int open_mode)
 {
 	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
@@ -376,7 +376,7 @@ static int sord_floppy_init(int id, void *fp, int open_mode)
 
 
 
-static int sord_cassette_init(int id, void *fp, int open_mode)
+static int sord_cassette_init(int id, mame_file *fp, int open_mode)
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));

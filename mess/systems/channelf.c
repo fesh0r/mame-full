@@ -34,7 +34,7 @@ static void init_channelf(void)
 		mem[i] = i;
 }
 
-static int channelf_load_rom(int id, void *file, int open_mode)
+static int channelf_load_rom(int id, mame_file *file, int open_mode)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
 	int size;

@@ -1078,7 +1078,7 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
  SPECTRUM WAVE CASSETTE SUPPORT
 --------------------------------------------------*/
 
-int spectrum_cassette_init(int id, void *fp, int open_mode)
+int spectrum_cassette_init(int id, mame_file *fp, int open_mode)
 {
 	struct cassette_args args;
 
@@ -1144,7 +1144,7 @@ QUICKLOAD_LOAD(spectrum)
 	return INIT_PASS;
 }
 
-int spectrum_cart_load(int id, void *file, int open_mode)
+int spectrum_cart_load(int id, mame_file *file, int open_mode)
 {
 	logerror("Trying to load cartridge!\n");
 	if (file)
@@ -1172,7 +1172,7 @@ int spectrum_cart_load(int id, void *file, int open_mode)
 	return 0;
 }
 
-int timex_cart_load(int id, void *file, int open_mode)
+int timex_cart_load(int id, mame_file *file, int open_mode)
 {
 	int file_size;
 	UINT8 * file_data;

@@ -271,7 +271,7 @@ ROM_START(vip)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
-static int studio2_load_rom(int id, void *cartfile, int open_mode)
+static int studio2_load_rom(int id, mame_file *cartfile, int open_mode)
 {
 	UINT8 *rom = memory_region(REGION_CPU1);
 	int size;

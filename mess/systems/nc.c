@@ -462,7 +462,7 @@ static void nc_common_restore_memory_from_stream(void)
 	/* read as much as will fit into memory */
 	mame_fread(file, mess_ram, restore_size);
 	/* seek over remaining data */
-	osd_fseek(file, SEEK_CUR,stored_size - restore_size);
+	mame_fseek(file, SEEK_CUR,stored_size - restore_size);
 }
 
 /* store a block of memory to the nvram file */

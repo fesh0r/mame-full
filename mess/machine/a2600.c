@@ -1323,7 +1323,7 @@ MACHINE_INIT( a2600 )
   Cartridge Loading
 
 ***************************************************************************/
-int a2600_load_rom(int id, void *cartfile, int open_mode)
+int a2600_load_rom(int id, mame_file *cartfile, int open_mode)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
 

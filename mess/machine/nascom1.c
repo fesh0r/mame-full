@@ -116,7 +116,7 @@ WRITE_HANDLER (	nascom1_port_01_w )
 {
 }
 
-int	nascom1_init_cassette(int id, void *file, int open_mode)
+int	nascom1_init_cassette(int id, mame_file *file, int open_mode)
 {
 	/* a cassette for the nascom1 isnt needed */
 	if (file == NULL)
@@ -163,7 +163,7 @@ int	nascom1_read_cassette(void)
    Note <addr> and <byte> are in hex.
 */
 
-int	nascom1_init_cartridge(int id, void *file)
+int	nascom1_init_cartridge(int id, mame_file *file)
 {
 	int		done;
 	char	fileaddr[5];

@@ -145,7 +145,7 @@ static void cas_copy_callback(int param)
 	activecpu_set_reg(Z80_PC, entry);
 }
 
-int trs80_cas_init(int id, void *file, int open_mode)
+int trs80_cas_init(int id, mame_file *file, int open_mode)
 {
 	if (file)
 	{
@@ -249,7 +249,7 @@ extern QUICKLOAD_LOAD( trs80_cmd )
 	return INIT_PASS;
 }
 
-int trs80_floppy_init(int id, void *fp, int open_mode)
+int trs80_floppy_init(int id, mame_file *fp, int open_mode)
 {
 	static UINT8 pdrive[4*16];
 	int i;
@@ -267,7 +267,7 @@ int trs80_floppy_init(int id, void *fp, int open_mode)
 		if (fp)
 		{
 
-            osd_fseek(fp, 0, SEEK_SET);
+            mame_fseek(fp, 0, SEEK_SET);
 			mame_fread(fp, pdrive, 2);
 #if 0
 			if (pdrive[0] != 0x00 || pdrive[1] != 0xfe)
@@ -277,7 +277,7 @@ int trs80_floppy_init(int id, void *fp, int open_mode)
 			else
 #endif
 
-			osd_fseek(fp, 2 * 256, SEEK_SET);
+			mame_fseek(fp, 2 * 256, SEEK_SET);
 			mame_fread(fp, pdrive, 4*16);
 		}
 	}

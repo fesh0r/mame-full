@@ -77,7 +77,7 @@ READ_HANDLER (uk101_acia0_statin )
 
 /* || */
 
-int	uk101_init_cassette(int id, void *file, int open_mode)
+int	uk101_init_cassette(int id, mame_file *file, int open_mode)
 {
 	/* a cassette for the uk101 isnt needed */
 	if (file == NULL)

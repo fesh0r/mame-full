@@ -299,7 +299,7 @@ unsigned long serial_device_get_state(int id);
 void	serial_device_connect(int id, struct serial_connection *connection);
 
 /* init this device */
-int     serial_device_init(int id, void *fp);
+int     serial_device_init(int id, mame_file *fp);
 void    serial_device_exit(int id);
 
 void serial_device_setup(int id, int baud_rate, int num_data_bits, int stop_bit_count, int parity_code);

@@ -11,9 +11,9 @@
 #include "image.h"
 
 static MEMORY_READ_START( arcadia_readmem )
-{ 0x0000, 0x0fff, MRA_ROM },
-{ 0x1800, 0x1aff, arcadia_video_r },
-{ 0x2000, 0x2fff, MRA_ROM },
+	{ 0x0000, 0x0fff, MRA_ROM },
+	{ 0x1800, 0x1aff, arcadia_video_r },
+	{ 0x2000, 0x2fff, MRA_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( arcadia_writemem )
@@ -269,7 +269,7 @@ ROM_START(vcg)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
-static int arcadia_init_cart(int id, void *cartfile, int open_mode)
+static int arcadia_init_cart(int id, mame_file *cartfile, int open_mode)
 {
 	UINT8 *rom = memory_region(REGION_CPU1);
 	int size;

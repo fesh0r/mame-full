@@ -31,7 +31,7 @@ floppy_interface basicdsk_floppy_interface=
 };
 
 /* attempt to insert a disk into the drive specified with id */
-int basicdsk_floppy_init(int id, void *fp, int open_mode)
+int basicdsk_floppy_init(int id, mame_file *fp, int open_mode)
 {
 	if (id < basicdsk_MAX_DRIVES)
 	{
@@ -272,7 +272,7 @@ unsigned long offset;
 		return 0;
 	}
 
-	if (osd_fseek(w->image_file, offset, SEEK_SET) < 0)
+	if (mame_fseek(w->image_file, offset, SEEK_SET) < 0)
 	{
 		logerror("basicdsk seek failed\n");
 		return 0;

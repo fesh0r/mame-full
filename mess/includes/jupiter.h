@@ -3,9 +3,9 @@
 extern OPBASE_HANDLER( jupiter_opbaseoverride );
 extern MACHINE_INIT( jupiter );
 extern MACHINE_STOP( jupiter );
-extern int jupiter_load_ace (int id, void *fp, int open_mode);
+extern int jupiter_load_ace (int id, mame_file *fp, int open_mode);
 extern void jupiter_exit_tap (int id);
-extern int jupiter_load_tap (int id, void *fp, int open_mode);
+extern int jupiter_load_tap (int id, mame_file *fp, int open_mode);
 extern READ_HANDLER( jupiter_port_fefe_r);
 extern READ_HANDLER( jupiter_port_fdfe_r);
 extern READ_HANDLER( jupiter_port_fbfe_r);

@@ -18,7 +18,7 @@ extern DRIVER_INIT( svi318 );
 extern MACHINE_INIT( svi318 );
 extern MACHINE_STOP( svi318 );
 
-int svi318_load_rom (int id, void *fp, int open_mode);
+int svi318_load_rom (int id, mame_file *fp, int open_mode);
 void svi318_exit_rom (int id);
 extern INTERRUPT_GEN( svi318_interrupt );
 extern void svi318_vdp_interrupt (int i);
@@ -36,7 +36,7 @@ WRITE_HANDLER (svi318_psg_port_b_w);
 READ_HANDLER (svi318_psg_port_a_r);
 
 /* cassette functions */
-int svi318_cassette_init (int id, void *fp, int open_mode);
+int svi318_cassette_init (int id, mame_file *fp, int open_mode);
 int svi318_cassette_present (int id);
 
 /* floppy functions */
@@ -46,5 +46,5 @@ WRITE_HANDLER (fdc_density_side_w);
 READ_HANDLER (svi318_fdc_status_r);
 #endif
 
-int svi318_floppy_init(int id, void *fp, int open_mode);
+int svi318_floppy_init(int id, mame_file *fp, int open_mode);
 

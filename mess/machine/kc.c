@@ -155,7 +155,7 @@ QUICKLOAD_LOAD(kc)
 /* bit 4: Index pulse from disc */
 static unsigned char kc85_disc_hw_input_gate;
 
-int kc85_floppy_init(int id, void *fp, int open_mode)
+int kc85_floppy_init(int id, mame_file *fp, int open_mode)
 {
 	if (fp == NULL)
 		return INIT_PASS;
@@ -425,7 +425,7 @@ static void kc85_module_system_init(void)
 
 #define KC_CASSETTE_TIMER_FREQUENCY TIME_IN_HZ(4800)
 
-int kc_cassette_device_init(int id, void *file, int open_mode)
+int kc_cassette_device_init(int id, mame_file *file, int open_mode)
 {
 	if (file == NULL)
 		return INIT_PASS;

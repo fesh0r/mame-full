@@ -707,7 +707,7 @@ static int c16_rom_id (int id, void *romfile)
 	logerror("c16_rom_id %s\n", name);
 	retval = 0;
 
-	osd_fseek (romfile, 7, SEEK_SET);
+	mame_fseek (romfile, 7, SEEK_SET);
 	mame_fread (romfile, buffer, sizeof (magic));
 
 	if (memcmp (magic, buffer, sizeof (magic)) == 0)
@@ -729,7 +729,7 @@ static int c16_rom_id (int id, void *romfile)
 	return retval;
 }
 
-int c16_rom_init (int id, void *fp, int open_mode)
+int c16_rom_init (int id, mame_file *fp, int open_mode)
 {
 	rom_fp[id] = fp;
 	return (rom_fp[id] && !c16_rom_id(id, rom_fp[id])) ? INIT_FAIL : INIT_PASS;
@@ -744,7 +744,7 @@ int c16_rom_load (int id)
 {
 	const char *name = image_filename(IO_CARTSLOT,id);
     UINT8 *mem = memory_region (REGION_CPU1);
-	void *fp = rom_fp[id];
+	mame_file *fp = rom_fp[id];
 	int size, read;
 	char *cp;
 	static unsigned int addr = 0;

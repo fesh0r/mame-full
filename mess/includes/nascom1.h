@@ -1,9 +1,9 @@
 /* machine/nascom1.c */
 extern MACHINE_INIT( nascom1 );
-extern int nascom1_init_cassette (int id, void *fp, int open_mode);
+extern int nascom1_init_cassette (int id, mame_file *fp, int open_mode);
 extern void nascom1_exit_cassette (int id);
 extern int nascom1_read_cassette (void);
-extern int nascom1_init_cartridge (int id, void *fp);
+extern int nascom1_init_cartridge (int id, mame_file *fp);
 extern READ_HANDLER( nascom1_port_00_r);
 extern READ_HANDLER( nascom1_port_01_r);
 extern READ_HANDLER( nascom1_port_02_r);

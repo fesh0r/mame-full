@@ -43,7 +43,7 @@ extern int wave_output_chunk(int id, void *src, int chunks);
 extern void cassette_exit(int id);
 
 extern void wave_specify(struct IODevice *iodev, int count, char *actualext, const char *fileext,
-	int (*init)(int id, void *fp, int open_mode), void (*exit_)(int id));
+	int (*init)(int id, mame_file *fp, int open_mode), void (*exit_)(int id));
 
 #define CONFIG_DEVICE_CASSETTEX(count,fileext,init,exit)					\
 	if (cfg->device_num-- == 0)												\

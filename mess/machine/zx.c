@@ -131,7 +131,7 @@ MACHINE_INIT( pow3000 )
 	memory_set_opbase_handler(0, pow3000_setopbase);
 }
 
-int zx_cassette_init(int id, void *file, int open_mode)
+int zx_cassette_init(int id, mame_file *file, int open_mode)
 {
 	if (file)
 	{

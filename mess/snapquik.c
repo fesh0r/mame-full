@@ -7,7 +7,7 @@ struct snapquick_info
 {
 	const struct IODevice *dev;
 	int id;
-	void *fp;
+	mame_file *fp;
 	int file_size;
 	struct snapquick_info *next;
 };
@@ -27,7 +27,7 @@ static void snapquick_load(int arg)
 	image_unload(si->dev->type, si->id);
 }
 
-static int snapquick_init(int type, int id, void *fp, int open_mode)
+static int snapquick_init(int type, int id, mame_file *fp, int open_mode)
 {
 	const struct IODevice *dev;
 	struct snapquick_info *si;
@@ -73,7 +73,7 @@ static void snapquick_exit(int type, int id)
 
 /* ----------------------------------------------------------------------- */
 
-static int snapshot_init(int id, void *fp, int open_mode)
+static int snapshot_init(int id, mame_file *fp, int open_mode)
 {
 	return snapquick_init(IO_SNAPSHOT, id, fp, open_mode);
 }
@@ -83,7 +83,7 @@ static void snapshot_exit(int id)
 	snapquick_exit(IO_SNAPSHOT, id);
 }
 
-static int quickload_init(int id, void *fp, int open_mode)
+static int quickload_init(int id, mame_file *fp, int open_mode)
 {
 	return snapquick_init(IO_QUICKLOAD, id, fp, open_mode);
 }

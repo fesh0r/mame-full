@@ -96,7 +96,7 @@ extern READ16_HANDLER  ( amiga_custom_r );
 extern WRITE16_HANDLER ( amiga_custom_w );
 extern MACHINE_INIT( amiga );
 extern INTERRUPT_GEN( amiga_vblank_irq );
-extern int amiga_fdc_init(int id, void *fp, int open_mode);
+extern int amiga_fdc_init(int id, mame_file *fp, int open_mode);
 
 /* from vidhrdw/amiga.c */
 extern VIDEO_START( amiga );

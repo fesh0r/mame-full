@@ -41,7 +41,7 @@ extern MACHINE_STOP( msx );
 extern INTERRUPT_GEN( msx_interrupt );
 extern INTERRUPT_GEN( msx2_interrupt );
 extern NVRAM_HANDLER( msx2 );
-int msx_load_rom (int id, void *fp, int open_mode);
+int msx_load_rom (int id, mame_file *fp, int open_mode);
 void msx_exit_rom (int id);\
 void msx_vdp_interrupt (int);
 
@@ -69,9 +69,9 @@ WRITE_HANDLER ( msx_writemem2 );
 WRITE_HANDLER ( msx_writemem3 );
 
 /* cassette functions */
-int msx_cassette_init (int id, void *fp, int open_mode);
+int msx_cassette_init (int id, mame_file *fp, int open_mode);
 
 /* disk functions */
-int msx_floppy_init (int id, void *fp, int open_mode);
+int msx_floppy_init (int id, mame_file *fp, int open_mode);
 
 

@@ -667,7 +667,7 @@ static void data_stream_init(struct data_stream *stream, unsigned char *pData, u
 }
 
 
-int		serial_device_init(int id, void *fp)
+int		serial_device_init(int id, mame_file *fp)
 {
 	int data_length;
 	unsigned char *data;

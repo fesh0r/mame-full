@@ -19,7 +19,7 @@ extern NVRAM_HANDLER( ti86 );
 
 extern SNAPSHOT_LOAD( ti8x );
 
-extern int ti85_serial_init (int, void *fp, int open_mode);
+extern int ti85_serial_init (int, mame_file *fp, int open_mode);
 extern void ti85_serial_exit (int);
 
 extern WRITE_HANDLER( ti81_port_0007_w);

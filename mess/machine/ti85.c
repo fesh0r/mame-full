@@ -671,7 +671,7 @@ SNAPSHOT_LOAD( ti8x )
   TI calculators serial link transmission
 ***************************************************************************/
 
-int ti85_serial_init (int id, void *file, int open_mode)
+int ti85_serial_init (int id, mame_file *file, int open_mode)
 {
 	UINT8* file_data;
 	UINT16 file_size;

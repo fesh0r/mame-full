@@ -15,10 +15,10 @@ TIMEX_CART_TYPE;
 extern TIMEX_CART_TYPE timex_cart_type;
 extern UINT8 timex_cart_chunks;
 extern UINT8 * timex_cart_data;
-extern int  spectrum_cart_load(int id, void *fp, int open_mode);
+extern int  spectrum_cart_load(int id, mame_file *fp, int open_mode);
 extern void spectrum_cart_exit(int id);
 
-extern int  timex_cart_load(int id, void *fp, int open_mode);
+extern int  timex_cart_load(int id, mame_file *fp, int open_mode);
 extern void timex_cart_exit(int id);
 extern void ts2068_update_memory(void);
 
@@ -30,7 +30,7 @@ extern QUICKLOAD_LOAD( spectrum );
 /*-----------------27/02/00 10:49-------------------
  code for WAV reading writing
 --------------------------------------------------*/
-extern int spectrum_cassette_init(int, void *fp, int open_mode);
+extern int spectrum_cassette_init(int, mame_file *fp, int open_mode);
 extern void spectrum_cassette_exit(int);
 
 extern int spectrum_128_port_7ffd_data;

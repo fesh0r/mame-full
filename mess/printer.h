@@ -16,7 +16,7 @@ extern "C" {
  * ("online/offline") and output of bytes is supported.
  */
 
-extern int printer_init (int id, void *fp, int open_mode);
+extern int printer_init (int id, mame_file *fp, int open_mode);
 extern void printer_exit (int id);
 extern int printer_status (int id, int newstatus);
 extern void printer_output (int id, int data);

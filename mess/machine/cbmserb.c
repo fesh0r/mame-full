@@ -142,7 +142,7 @@ static int d64_open (int id, void *in)
 }
 
 /* open an d64 image */
-int cbm_drive_attach_image (int id, void *fp, int open_mode)
+int cbm_drive_attach_image (int id, mame_file *fp, int open_mode)
 {
 #if 1
 	if (!image_exists(IO_FLOPPY, id))

@@ -612,7 +612,7 @@ static int vc20_rom_id (int id, void *romfile)
 
 	retval = 0;
 
-	osd_fseek (romfile, 4, SEEK_SET);
+	mame_fseek (romfile, 4, SEEK_SET);
 	mame_fread (romfile, buffer, sizeof (magic));
 
 	if (!memcmp (buffer, magic, sizeof (magic)))
@@ -639,10 +639,10 @@ static int vc20_rom_id (int id, void *romfile)
 	return retval;
 }
 
-int vc20_rom_load (int id, void *fp, int open_mode)
+int vc20_rom_load (int id, mame_file *fp, int open_mode)
 {
 	UINT8 *mem = memory_region (REGION_CPU1);
-	//void *fp;
+	//mame_file *fp;
 	int size, read;
 	const char *cp;
 	int addr = 0;
@@ -654,7 +654,7 @@ int vc20_rom_load (int id, void *fp, int open_mode)
 
 	if (!vc20_rom_id (id, fp))
 		return 1;
-	osd_fseek (fp, 0, SEEK_SET);
+	mame_fseek (fp, 0, SEEK_SET);
 
 	size = mame_fsize (fp);
 

@@ -404,7 +404,7 @@ static int intv_load_rom_file(int id, void *romfile, int required)
 	return INIT_PASS;
 }
 
-int intv_load_rom(int id, void *fp, int open_mode)
+int intv_load_rom(int id, mame_file *fp, int open_mode)
 {
 	/* First, initialize these as empty so that the intellivision
 	 * will think that the playcable and keyboard are not attached */
@@ -501,7 +501,7 @@ void init_intvkbd(void)
 {
 }
 
-int intvkbd_load_rom (int id, void *romfile, int open_mode)
+int intvkbd_load_rom (int id, mame_file *romfile, int open_mode)
 {
 	if (id == 0) /* Legacy cartridge slot */
 	{

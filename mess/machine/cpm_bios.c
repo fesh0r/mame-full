@@ -38,7 +38,7 @@ static int fmt[NDSK] = {0,};		/* index of disk formats */
 static int mode[NDSK] = {0,};		/* 0 read only, !0 read/write */
 static int bdos_trk[NDSK] = {0,};	/* BDOS track number */
 static int bdos_sec[NDSK] = {0,};	/* BDOS sector number */
-static void *fp[NDSK] = {NULL, };	/* image file pointer */
+static mame_file *fp[NDSK] = {NULL, };	/* image file pointer */
 static int ff[NDSK] = {0, };            /* image filenames specified flags */
 static void *lp = NULL; 			/* list file handle (ie. PIP LST:=X:FILE.EXT) */
 //static void *pp = NULL;			/* punch file handle (ie. PIP PUN:=X:FILE.EXT) */
@@ -109,7 +109,7 @@ static void cpm_jumptable(void)
 	RAM[BIOS_EXEC + 2] = 0xc9;			/* RET */
 }
 
-int cpm_floppy_init(int id, void *file, int open_mode)
+int cpm_floppy_init(int id, mame_file *file, int open_mode)
 {
 	ff[id] = (file != NULL);
 
@@ -452,7 +452,7 @@ static void cpm_disk_image_seek(void)
 		break;
 
 	}
-	osd_fseek(fp[curdisk], offs, SEEK_SET);
+	mame_fseek(fp[curdisk], offs, SEEK_SET);
 }
 
 

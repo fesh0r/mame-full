@@ -71,7 +71,7 @@
 #include "includes/basicdsk.h"
 #include "image.h"
 
-static int exidy_floppy_init(int id, void *fp, int open_mode)
+static int exidy_floppy_init(int id, mame_file *fp, int open_mode)
 {
 	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;

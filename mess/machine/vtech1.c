@@ -241,7 +241,7 @@ static int fill_wave(INT16 *buffer, int length, UINT8 *code)
     return BYTESAMPLES;
 }
 
-int vtech1_cassette_init(int id, void *file, int open_mode)
+int vtech1_cassette_init(int id, mame_file *file, int open_mode)
 {
 	if( file )
 	{
@@ -376,7 +376,7 @@ int vtech1_floppy_id(int id)
 }
 */
 
-int vtech1_floppy_init(int id, void *fp, int open_mode)
+int vtech1_floppy_init(int id, mame_file *fp, int open_mode)
 {
 	vtech1_fdc_file[id] = fp;
 	if ((vtech1_fdc_file[id]) && is_effective_mode_writable(open_mode))
@@ -402,7 +402,7 @@ static void vtech1_get_track(void)
 		int size, offs;
 		size = TRKSIZE_VZ;
 		offs = TRKSIZE_VZ * vtech1_track_x2[vtech1_drive]/2;
-		osd_fseek(vtech1_fdc_file[vtech1_drive], offs, SEEK_SET);
+		mame_fseek(vtech1_fdc_file[vtech1_drive], offs, SEEK_SET);
 		size = mame_fread(vtech1_fdc_file[vtech1_drive], vtech1_fdc_data, size);
 		logerror("get track @$%05x $%04x bytes\n", offs, size);
     }
@@ -417,7 +417,7 @@ static void vtech1_put_track(void)
 	{
 		int size, offs;
 		offs = TRKSIZE_VZ * vtech1_track_x2[vtech1_drive]/2;
-		osd_fseek(vtech1_fdc_file[vtech1_drive], offs + vtech1_fdc_start, SEEK_SET);
+		mame_fseek(vtech1_fdc_file[vtech1_drive], offs + vtech1_fdc_start, SEEK_SET);
 		size = mame_fwrite(vtech1_fdc_file[vtech1_drive], &vtech1_fdc_data[vtech1_fdc_start], vtech1_fdc_write);
 		logerror("put track @$%05X+$%X $%04X/$%04X bytes\n", offs, vtech1_fdc_start, size, vtech1_fdc_write);
     }

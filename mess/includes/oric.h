@@ -11,10 +11,10 @@ extern VIDEO_UPDATE( oric );
 
 extern WRITE_HANDLER(oric_psg_porta_write);
 
-int	oric_floppy_init(int id, void *fp, int open_mode);
+int	oric_floppy_init(int id, mame_file *fp, int open_mode);
 void oric_floppy_exit(int id);
 
-extern int oric_cassette_init(int id, void *fp, int open_mode);
+extern int oric_cassette_init(int id, mame_file *fp, int open_mode);
 
 /* Telestrat specific */
 extern MACHINE_INIT( telestrat );

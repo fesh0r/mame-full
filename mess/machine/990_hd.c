@@ -145,7 +145,7 @@ INLINE UINT32 get_bigendian_uint32(UINT8 *base)
 /*
 	Initialize hard disk unit and open a hard disk image
 */
-int ti990_hd_init(int id, void *fp, int open_mode)
+int ti990_hd_init(int id, mame_file *fp, int open_mode)
 {
 	hd_unit_t *d;
 	disk_image_header header;
@@ -322,7 +322,7 @@ static int seek_to_sector(int unit, unsigned int cylinder, unsigned int head, un
 
 	byte_position = ((cylinder*hdc.d[unit].heads + head)*hdc.d[unit].sectors_per_track + sector)*hdc.d[unit].bytes_per_sector + header_len;
 
-	if (osd_fseek(hdc.d[unit].fd, byte_position, SEEK_SET))
+	if (mame_fseek(hdc.d[unit].fd, byte_position, SEEK_SET))
 	{
 			hdc.w[0] |= w0_unsafe | w0_pack_change;
 			hdc.w[7] |= w7_idle | w7_error | w7_unit_err;

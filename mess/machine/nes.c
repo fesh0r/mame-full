@@ -1081,7 +1081,7 @@ end:
 	PPU_address += PPU_add;
 }
 
-int nes_init_cart (int id, void *romfile, int open_mode)
+int nes_init_cart (int id, mame_file *romfile, int open_mode)
 {
 	const char *mapinfo;
 	int mapint1=0,mapint2=0,mapint3=0,mapint4=0,goodcrcinfo = 0;
@@ -1190,7 +1190,7 @@ int nes_init_cart (int id, void *romfile, int open_mode)
 	nes.wram = memory_region(REGION_USER1);
 
 	/* Position past the header */
-	osd_fseek (romfile, 16, SEEK_SET);
+	mame_fseek (romfile, 16, SEEK_SET);
 
 	/* Load the 0x200 byte trainer at 0x7000 if it exists */
 	if (nes.trainer)
@@ -1282,7 +1282,7 @@ UINT32 nes_partialcrc(const unsigned char *buf,unsigned int size)
 	return crc;
 }
 
-int nes_load_disk (int id, void *diskfile, int open_mode)
+int nes_load_disk (int id, mame_file *diskfile, int open_mode)
 {
 	unsigned char magic[4];
 
@@ -1305,11 +1305,11 @@ int nes_load_disk (int id, void *diskfile, int open_mode)
 		(magic[2] == 'S'))
 	{
 		/* Skip past the fucking redundant header */
-		osd_fseek (diskfile, 0x10, SEEK_SET);
+		mame_fseek (diskfile, 0x10, SEEK_SET);
 	}
 	else
 		/* otherwise, point to the start of the image */
-		osd_fseek (diskfile, 0, SEEK_SET);
+		mame_fseek (diskfile, 0, SEEK_SET);
 
 	/* clear some of the cart variables we don't use */
 	nes.trainer = 0;
@@ -1324,7 +1324,7 @@ int nes_load_disk (int id, void *diskfile, int open_mode)
 	nes_fds.data = NULL;
 
 	/* read in all the sides */
-	while (!osd_feof (diskfile))
+	while (!mame_feof (diskfile))
 	{
 		nes_fds.sides ++;
 		nes_fds.data = realloc (nes_fds.data, nes_fds.sides * 65500);

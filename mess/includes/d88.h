@@ -36,7 +36,7 @@ typedef struct
 } d88image;
 
 /* init */
-int     d88image_floppy_init(int id, void *fp, int open_mode);
+int     d88image_floppy_init(int id, mame_file *fp, int open_mode);
 /* exit and free up data */
 void d88image_floppy_exit(int id);
 

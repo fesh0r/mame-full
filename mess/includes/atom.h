@@ -17,13 +17,13 @@ extern VIDEO_START( atom );
 extern READ_HANDLER (atom_8271_r);
 extern WRITE_HANDLER (atom_8271_w);
 
-extern int atom_floppy_init(int id, void *fp, int open_mode);
+extern int atom_floppy_init(int id, mame_file *fp, int open_mode);
 
 extern READ_HANDLER(atom_via_r);
 extern WRITE_HANDLER(atom_via_w);
 
 /* for .WAV */
-extern int atom_cassette_init(int, void *fp, int open_mode);
+extern int atom_cassette_init(int, mame_file *fp, int open_mode);
 
 extern READ_HANDLER(atom_eprom_box_r);
 extern WRITE_HANDLER(atom_eprom_box_w);

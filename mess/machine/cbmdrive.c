@@ -337,7 +337,7 @@ static int c1551_d64_command (CBM_Drive * c1551, unsigned char *name)
 
 static int c1551_fs_command (CBM_Drive * c1551, unsigned char *name)
 {
-	void *fp;
+	mame_file *fp;
 	int type=0;
 	int read;
 	int i;

@@ -2,7 +2,7 @@
 extern DRIVER_INIT( kim1 );
 extern MACHINE_INIT( kim1 );
 
-extern int kim1_cassette_init(int id, void *fp, int open_mode);
+extern int kim1_cassette_init(int id, mame_file *fp, int open_mode);
 extern void kim1_cassette_exit(int id);
 
 extern INTERRUPT_GEN( kim1_interrupt );

@@ -26,7 +26,7 @@ typedef struct {
 	int devicenr;
 } VC1541_CONFIG;
 
-int vc1541_init(int id, void *fp, int open_mode);
+int vc1541_init(int id, mame_file *fp, int open_mode);
 void vc1541_exit(int id);
 
 int vc1541_config(int id, int mode, VC1541_CONFIG*config);

@@ -317,7 +317,7 @@ void init_ti99_4p(void)
 	has_evpc = TRUE;
 }
 
-int ti99_floppy_init(int id, void *fp, int open_mode)
+int ti99_floppy_init(int id, mame_file *fp, int open_mode)
 {
 	if (basicdsk_floppy_init(id, fp, open_mode)==INIT_PASS)
 	{
@@ -338,7 +338,7 @@ int ti99_floppy_init(int id, void *fp, int open_mode)
 	return INIT_FAIL;
 }
 
-int ti99_cassette_init(int id, void *fp, int open_mode)
+int ti99_cassette_init(int id, mame_file *fp, int open_mode)
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));
@@ -354,7 +354,7 @@ int ti99_cassette_init(int id, void *fp, int open_mode)
 
 	We don't need to support 99/4p, as it has no cartridge port.
 */
-int ti99_load_rom(int id, void *cartfile, int open_mode)
+int ti99_load_rom(int id, mame_file *cartfile, int open_mode)
 {
 	const char *name = image_filename(IO_CARTSLOT,id);
 

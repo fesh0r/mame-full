@@ -45,7 +45,7 @@ typedef struct
 } svi318dsk;
 
 /* init */
-int     svi318dsk_floppy_init(int id, void *fp, int open_mode);
+int     svi318dsk_floppy_init(int id, mame_file *fp, int open_mode);
 /* exit and free up data */
 void svi318dsk_floppy_exit(int id);
 

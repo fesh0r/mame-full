@@ -273,7 +273,7 @@ static const struct cartridge_slot *coco_cart_interface;
   evolved into a snapshot file format, with a file format so convoluted and
   changing to make it worthy of Microsoft.
 ***************************************************************************/
-static int load_pak_into_region(void *fp, int *pakbase, int *paklen, UINT8 *mem, int segaddr, int seglen)
+static int load_pak_into_region(mame_file *fp, int *pakbase, int *paklen, UINT8 *mem, int segaddr, int seglen)
 {
 	if (*paklen) {
 		if (*pakbase < segaddr) {
@@ -281,7 +281,7 @@ static int load_pak_into_region(void *fp, int *pakbase, int *paklen, UINT8 *mem,
 			int skiplen;
 
 			skiplen = segaddr - *pakbase;
-			if (osd_fseek(fp, skiplen, SEEK_CUR)) {
+			if (mame_fseek(fp, skiplen, SEEK_CUR)) {
 #if LOG_PAK
 				logerror("Could not fully read PAK.\n");
 #endif
@@ -358,7 +358,7 @@ static void pak_load_trailer(const pak_decodedtrailer *trailer)
 	sam_setstate(trailer->sam, 0x7fff);
 }
 
-static int generic_pak_load(void *fp, int rambase_index, int rombase_index, int pakbase_index)
+static int generic_pak_load(mame_file *fp, int rambase_index, int rombase_index, int pakbase_index)
 {
 	UINT8 *ROM;
 	UINT8 *rambase;
@@ -398,7 +398,7 @@ static int generic_pak_load(void *fp, int rambase_index, int rombase_index, int 
 	if (pakstart == 0xc000)
 		cart_inserted = 1;
 
-	if (osd_fseek(fp, paklength, SEEK_CUR))
+	if (mame_fseek(fp, paklength, SEEK_CUR))
 	{
 #if LOG_PAK
 		logerror("Could not fully read PAK.\n");
@@ -420,7 +420,7 @@ static int generic_pak_load(void *fp, int rambase_index, int rombase_index, int 
 		trailer_load = 1;
 	}
 
-	if (osd_fseek(fp, sizeof(pak_header), SEEK_SET))
+	if (mame_fseek(fp, sizeof(pak_header), SEEK_SET))
 	{
 #if LOG_PAK
 		logerror("Unexpected error while reading PAK.\n");
@@ -472,7 +472,7 @@ SNAPSHOT_LOAD ( coco3_pak )
   be used in place of PAK files, when possible
 ***************************************************************************/
 
-static int generic_rom_load(int id, void *fp, UINT8 *dest, UINT16 destlength)
+static int generic_rom_load(int id, mame_file *fp, UINT8 *dest, UINT16 destlength)
 {
 	UINT8 *rombase;
 	int   romsize;
@@ -494,7 +494,7 @@ static int generic_rom_load(int id, void *fp, UINT8 *dest, UINT16 destlength)
 		{
 			if ( destlength == 0x4000 )						/* Test if CoCo2      */
 			{
-				osd_fseek( fp, 0x4000, SEEK_SET );			/* Move ahead in file */
+				mame_fseek( fp, 0x4000, SEEK_SET );			/* Move ahead in file */
 				romsize -= 0x4000;							/* Adjust ROM size    */
 			}
 		}
@@ -521,20 +521,20 @@ static int generic_rom_load(int id, void *fp, UINT8 *dest, UINT16 destlength)
 	return INIT_PASS;
 }
 
-int coco_rom_load(int id, void *fp, int open_mode)
+int coco_rom_load(int id, mame_file *fp, int open_mode)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
 	return generic_rom_load(id, fp, &ROM[0x4000], 0x4000);
 }
 
-int coco3_rom_load(int id, void *fp, int open_mode)
+int coco3_rom_load(int id, mame_file *fp, int open_mode)
 {
 	UINT8 	*ROM = memory_region(REGION_CPU1);
 	int		count;
 
 	count = count_bank();
 	if (fp)
-		osd_fseek(fp, 0, SEEK_SET);
+		mame_fseek(fp, 0, SEEK_SET);
 
 	if( count == 0 )
 		/* Load roms starting at 0x8000 and mirror upwards. */
@@ -1910,7 +1910,7 @@ static void autocenter_init(int dipport, int dipmask)
   Cassette support
 ***************************************************************************/
 
-static void coco_cassette_calcchunkinfo(void *file, int *chunk_size,
+static void coco_cassette_calcchunkinfo(mame_file *file, int *chunk_size,
 	int *chunk_samples)
 {
 	coco_wave_size = mame_fsize(file);
@@ -1932,7 +1932,7 @@ static struct cassette_args coco_cassette_args =
 	19200											/* create_smpfreq */
 };
 
-int coco_cassette_init(int id, void *fp, int open_mode)
+int coco_cassette_init(int id, mame_file *fp, int open_mode)
 {
 	return cassette_init(id, fp, open_mode, &coco_cassette_args);
 }
@@ -2036,7 +2036,7 @@ static int is_Orch90(void)
 
 static void generic_setcartbank(int bank, UINT8 *cartpos)
 {
-	void *fp;
+	mame_file *fp;
 
 	if (count_bank() > 0) {
 		/* Pin variable to proper bit width */
@@ -2044,7 +2044,7 @@ static void generic_setcartbank(int bank, UINT8 *cartpos)
 		fp = image_fopen_custom(IO_CARTSLOT, 0, FILETYPE_IMAGE, OSD_FOPEN_READ);
 		if (fp) {
 			if (bank)
-				osd_fseek(fp, 0x4000 * bank, SEEK_SET);
+				mame_fseek(fp, 0x4000 * bank, SEEK_SET);
 			mame_fread(fp, cartpos, 0x4000);
 			mame_fclose(fp);
 		}

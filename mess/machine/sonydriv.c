@@ -506,10 +506,10 @@ static int sony_get_track(void)
 					(int) f->track, (int) len, (int) imgpos);
 #endif
 
-	if (osd_fseek(f->fd, (f->image_format == apple_diskcopy) ? imgpos + 84 : imgpos, SEEK_SET))
+	if (mame_fseek(f->fd, (f->image_format == apple_diskcopy) ? imgpos + 84 : imgpos, SEEK_SET))
 	{
 		#if LOG_SONY
-			logerror("sony_get_track(): osd_fseek() failed!\n");
+			logerror("sony_get_track(): mame_fseek() failed!\n");
 		#endif
 		return 1;
 	}
@@ -546,10 +546,10 @@ static int sony_get_track(void)
 
 		imgpos *= 12;
 
-		if (osd_fseek(f->fd, f->format_specific.apple_diskcopy.tag_offset + imgpos, SEEK_SET))
+		if (mame_fseek(f->fd, f->format_specific.apple_diskcopy.tag_offset + imgpos, SEEK_SET))
 		{
 			#if LOG_SONY
-				logerror("sony_get_track(): osd_fseek() failed!\n");
+				logerror("sony_get_track(): mame_fseek() failed!\n");
 			#endif
 			return 1;
 		}
@@ -913,10 +913,10 @@ static int sony_put_track(void)
 
 		imgpos *= 12;
 
-		if (osd_fseek(f->fd, f->format_specific.apple_diskcopy.tag_offset + imgpos, SEEK_SET))
+		if (mame_fseek(f->fd, f->format_specific.apple_diskcopy.tag_offset + imgpos, SEEK_SET))
 		{
 			#if LOG_SONY
-				logerror("sony_put_track(): osd_fseek() failed!\n");
+				logerror("sony_put_track(): mame_fseek() failed!\n");
 			#endif
 			return 1;
 		}
@@ -976,10 +976,10 @@ static int sony_put_track(void)
 					(int) f->loadedtrack_num, (int) len, (int) imgpos);
 #endif
 
-	if (osd_fseek(f->fd, (f->image_format == apple_diskcopy) ? imgpos + 84 : imgpos, SEEK_SET))
+	if (mame_fseek(f->fd, (f->image_format == apple_diskcopy) ? imgpos + 84 : imgpos, SEEK_SET))
 	{
 		#if LOG_SONY
-			logerror("sony_put_track(): osd_fseek() failed!\n");
+			logerror("sony_put_track(): mame_fseek() failed!\n");
 		#endif
 		return 1;
 	}
@@ -1312,7 +1312,7 @@ static void sony_doaction(void)
 	the allowablesizes tells which formats should be supported
 	(single-sided and double-sided 3.5'' GCR)
 */
-int sony_floppy_init(int id, void *fp, int open_mode, int allowablesizes)
+int sony_floppy_init(int id, mame_file *fp, int open_mode, int allowablesizes)
 {
 	floppy *f;
 	long image_len=0;
@@ -1436,7 +1436,7 @@ void sony_floppy_exit(int id)
 			/* we just zero the checksum fields - for now */
 			UINT32 dataChecksum = 0, tagChecksum = 0;
 
-			osd_fseek(f->fd, 72, SEEK_SET);
+			mame_fseek(f->fd, 72, SEEK_SET);
 
 #ifdef LSB_FIRST
 			dataChecksum = ((dataChecksum << 24) & 0xff000000)

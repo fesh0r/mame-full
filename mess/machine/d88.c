@@ -27,7 +27,7 @@ floppy_interface d88image_floppy_interface=
 };
 
 /* attempt to insert a disk into the drive specified with id */
-int d88image_floppy_init(int id, void *fp, int open_mode)
+int d88image_floppy_init(int id, mame_file *fp, int open_mode)
 {
 	UINT8 tmp8;
 	UINT16 tmp16;
@@ -60,15 +60,15 @@ int d88image_floppy_init(int id, void *fp, int open_mode)
 		w->image_size=tmp32;
 
 		for(i=0;i<D88_NUM_TRACK;i++) {
-		  osd_fseek(w->image_file, 0x20 + i*4, SEEK_SET);
+		  mame_fseek(w->image_file, 0x20 + i*4, SEEK_SET);
 		  mame_fread_lsbfirst(w->image_file, &tmp32, 4);
 		  toffset = tmp32;
 		  if(toffset) {
-		    osd_fseek(w->image_file, toffset + 4, SEEK_SET);
+		    mame_fseek(w->image_file, toffset + 4, SEEK_SET);
 		    mame_fread_lsbfirst(w->image_file, &tmp16, 2);
 		    w->num_sects[i] = tmp16;
 		    w->sects[i]=malloc(sizeof(d88sect)*w->num_sects[i]);
-		    osd_fseek(w->image_file, toffset, SEEK_SET);
+		    mame_fseek(w->image_file, toffset, SEEK_SET);
 
 		    for(j=0;j<w->num_sects[i];j++) {
 		      mame_fread(w->image_file, &(w->sects[i][j].C), 1);
@@ -94,7 +94,7 @@ int d88image_floppy_init(int id, void *fp, int open_mode)
 		      for(k=0;k<5;k++) mame_fread(w->image_file, &tmp8, 1);
 		      mame_fread_lsbfirst(w->image_file, &tmp16, 2);
 		      w->sects[i][j].offset = osd_ftell(w->image_file);
-		      osd_fseek(w->image_file, tmp16, SEEK_CUR);
+		      mame_fseek(w->image_file, tmp16, SEEK_CUR);
 		    }
 		  } else {
 		    w->num_sects[i] = 0;
@@ -172,7 +172,7 @@ unsigned long offset;
 		return 0;
 	}
 
-	if (osd_fseek(w->image_file, offset, SEEK_SET) < 0)
+	if (mame_fseek(w->image_file, offset, SEEK_SET) < 0)
 	{
 		logerror("d88image seek failed\n");
 		return 0;

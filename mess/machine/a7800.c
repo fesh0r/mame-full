@@ -148,7 +148,7 @@ static int a7800_verify_cart(char header[128])
 	return IMAGE_VERIFY_PASS;
 }
 
-static int a7800_init_cart_cmn(int id, void *cartfile)
+static int a7800_init_cart_cmn(int id, mame_file *cartfile)
 {
 	long len,start;
 	unsigned char header[128];
@@ -303,13 +303,13 @@ static int a7800_init_cart_cmn(int id, void *cartfile)
 	return 0;
 }
 
-int a7800_init_cart(int id, void *cartfile, int open_mode)
+int a7800_init_cart(int id, mame_file *cartfile, int open_mode)
 {
 	a7800_ispal = 0;
 	return a7800_init_cart_cmn(id, cartfile);
 }
 
-int a7800p_init_cart(int id, void *cartfile, int open_mode)
+int a7800p_init_cart(int id, mame_file *cartfile, int open_mode)
 {
 	a7800_ispal = 1;
 	return a7800_init_cart_cmn(id, cartfile);

@@ -14,7 +14,7 @@ static struct
 }
 quick;
 
-int cbm_quick_init (int id, void *fp, int open_mode)
+int cbm_quick_init (int id, mame_file *fp, int open_mode)
 {
 	int read;
 	const char *cp;
@@ -43,7 +43,7 @@ int cbm_quick_init (int id, void *fp, int open_mode)
 			mame_fread (fp, buffer, sizeof (buffer));
 			if (strncmp (buffer, "C64File", sizeof (buffer)) == 0)
 			{
-				osd_fseek (fp, 26, SEEK_SET);
+				mame_fseek (fp, 26, SEEK_SET);
 				mame_fread_lsbfirst (fp, &quick.addr, 2);
 				quick.length -= 28;
 			}
@@ -189,7 +189,7 @@ static const struct IODevice *cbm_rom_find_device(void)
 	return device_find(Machine->gamedrv, IO_CARTSLOT);
 }
 
-int cbm_rom_init(int id, void *fp, int open_mode)
+int cbm_rom_init(int id, mame_file *fp, int open_mode)
 {
 	int i;
 	int size, j, read;
@@ -236,10 +236,10 @@ int cbm_rom_init(int id, void *fp, int open_mode)
 		else if (stricmp (cp, "crt") == 0)
 		{
 			unsigned short in;
-			osd_fseek (fp, 0x18, SEEK_SET);
+			mame_fseek (fp, 0x18, SEEK_SET);
 			mame_fread( fp, &cbm_c64_exrom, 1);
 			mame_fread( fp, &cbm_c64_game, 1);
-			osd_fseek (fp, 64, SEEK_SET);
+			mame_fseek (fp, 64, SEEK_SET);
 			j = 64;
 			logerror("loading rom %s size:%.4x\n",
 						 image_filename(IO_CARTSLOT,id), size);

@@ -145,7 +145,7 @@ MACHINE_STOP( jupiter )
    <byt>		: <byt>
 */
 
-int jupiter_load_ace(int id, void *file, int open_mode)
+int jupiter_load_ace(int id, mame_file *file, int open_mode)
 {
 	unsigned char jupiter_repeat, jupiter_byte, loop;
 	int done, jupiter_index;
@@ -222,7 +222,7 @@ void	jupiter_exit_tap(int id)
 	}
 }
 
-int jupiter_load_tap(int id, void *file, int open_mode)
+int jupiter_load_tap(int id, mame_file *file, int open_mode)
 {
 	UINT8 inpbyt;
 	int loop;

@@ -485,7 +485,7 @@ static int sms_verify_cart(char * magic, int size) {
 	return retval;
 }
 
-int sms_init_cart(int id, void *handle, int open_mode)
+int sms_init_cart(int id, mame_file *handle, int open_mode)
 {
 	int size;
 	UINT8 *USER_RAM, *RAM;
@@ -579,7 +579,7 @@ int sms_init_cart(int id, void *handle, int open_mode)
 
 		/* Check for 512-byte header */
 		if ((size / 512) & 1) {
-			osd_fseek(handle, 512, SEEK_SET);
+			mame_fseek(handle, 512, SEEK_SET);
 			size -= 512;
 		}
 

@@ -1,5 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <ctype.h>
 #include "driver.h"
 #include "mess.h"
 #include "unzip.h"

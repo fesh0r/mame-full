@@ -12,7 +12,7 @@ static void *image_fopen_new(int type, int id, int *effective_mode);
 
 struct image_info
 {
-	void *fp;
+	mame_file *fp;
 	int loaded;
 	char *name;
 	char *dir;
@@ -28,7 +28,6 @@ struct image_info
 
 static struct image_info images[IO_COUNT][MAX_DEV_INSTANCES];
 int images_is_running;
-char *renamed_image;
 
 /* CRC database file for this driver, supplied by the OS specific code */
 extern const char *crcfile;
@@ -101,7 +100,7 @@ int image_load(int type, int id, const char *name)
 	char *newname;
 	struct image_info *img;
 	int err;
-	void *fp = NULL;
+	mame_file *fp = NULL;
 
 	img = get_image(type, id);
 
@@ -241,7 +240,8 @@ void *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 {
 	struct image_info *img;
 	const char *sysname;
-	void *file;
+	mame_file *file;
+	char buffer[512];
 
 	img = get_image(type, id);
 	assert(img);
@@ -258,14 +258,37 @@ void *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 		void *config;
 		const struct IODevice *pc_dev = device_first(Machine->gamedrv);
 
-		/* did mame_fopen() rename the image? (yes, I know this is a hack) */
-		if (renamed_image)
+		/* is this file actually a zip file? */
+		if ((mame_fread(file, buffer, 4) == 4) && (buffer[0] == 0x50)
+			&& (buffer[1] == 0x4B) && (buffer[2] == 0x03) && (buffer[3] == 0x04))
 		{
-			img->name = image_strdup(type, id, renamed_image);
-			img->dir = NULL;
-			free(renamed_image);
-			renamed_image = NULL;
+			mame_fseek(file, 26, SEEK_SET);
+			if (mame_fread(file, buffer, 2) == 2)
+			{
+				int fname_length = buffer[0];
+				char *newname;
+				mame_file *newfile;
+
+				mame_fseek(file, 30, SEEK_SET);
+				mame_fread(file, buffer, fname_length);
+				buffer[fname_length] = '\0';
+
+				newname = image_malloc(type, id, strlen(img->name) + 1 + fname_length + 1);
+				if (newname)
+				{
+					strcpy(newname, img->name);
+					strcat(newname, "/");
+					strcat(newname, buffer);
+					newfile = mame_fopen(sysname, newname, filetype, read_or_write);
+					if (newfile)
+					{
+						file = newfile;
+						img->name = newname;
+					}
+				}
+			}
 		}
+		mame_fseek(file, 0, SEEK_SET);
 
 		logerror("image_fopen: found image %s for system %s\n", img->name, sysname);
 		img->length = mame_fsize(file);
@@ -279,9 +302,9 @@ void *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 				unsigned char *pc_buf = (unsigned char *)malloc(img->length);
 				if( pc_buf )
 				{
-					osd_fseek(file,0,SEEK_SET);
+					mame_fseek(file,0,SEEK_SET);
 					mame_fread(file,pc_buf,img->length);
-					osd_fseek(file,0,SEEK_SET);
+					mame_fseek(file,0,SEEK_SET);
 					logerror("Calling partialcrc()\n");
 					img->crc = (*pc_dev->partialcrc)(pc_buf,img->length);
 					free(pc_buf);
@@ -473,7 +496,7 @@ const char *image_extrainfo(int type, int id)
 	return get_image(type, id)->extrainfo;
 }
 
-void *image_fp(int type, int id)
+mame_file *image_fp(int type, int id)
 {
 	return get_image(type, id)->fp;
 }

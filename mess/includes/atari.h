@@ -50,15 +50,15 @@ extern MACHINE_INIT( a800 );
 extern MACHINE_INIT( a800xl );
 extern MACHINE_INIT( a5200 );
 
-extern int a800_floppy_init(int id, void *fp, int open_mode);
+extern int a800_floppy_init(int id, mame_file *fp, int open_mode);
 
-extern int a800_rom_init(int id, void *fp, int open_mode);
+extern int a800_rom_init(int id, mame_file *fp, int open_mode);
 extern void a800_rom_exit(int id);
 
-extern int a800xl_load_rom(int id, void *fp, int open_mode);
+extern int a800xl_load_rom(int id, mame_file *fp, int open_mode);
 extern int a800xl_id_rom(int id);
 
-extern int a5200_rom_init(int id, void *fp, int open_mode);
+extern int a5200_rom_init(int id, mame_file *fp, int open_mode);
 extern void a5200_rom_exit(int id);
 
 extern READ_HANDLER ( MRA_GTIA );

@@ -28,7 +28,7 @@ static int coleco_verify_cart (UINT8 *cartdata)
 	return retval;
 }
 
-int coleco_init_cart (int id, void *cartfile, int open_mode)
+int coleco_init_cart (int id, mame_file *cartfile, int open_mode)
 {
 	UINT8 *cartdata;
 	int init_result = INIT_FAIL;

@@ -133,7 +133,7 @@ MACHINE_INIT( sym1 )
 }
 
 #if 0
-int kim1_cassette_init(int id, void *file, int open_mode)
+int kim1_cassette_init(int id, mame_file *file, int open_mode)
 {
 	const char magic[] = "KIM1";
 	char buff[4];

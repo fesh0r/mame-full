@@ -2,9 +2,9 @@
 extern MACHINE_INIT( mbee );
 
 extern void mbee_interrupt(void);
-extern int mbee_cassette_init(int id, void *fp, int open_mode);
+extern int mbee_cassette_init(int id, mame_file *fp, int open_mode);
 extern int mbee_floppy_init(int id);
-extern int mbee_rom_load(int id, void *fp, int open_mode);
+extern int mbee_rom_load(int id, mame_file *fp, int open_mode);
 
 extern READ_HANDLER ( mbee_pio_r );
 extern WRITE_HANDLER ( mbee_pio_w );

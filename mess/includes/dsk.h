@@ -3,7 +3,7 @@
 
 #include "messdrv.h"
 
-int dsk_floppy_load(int id, void *fp, int open_mode);
+int dsk_floppy_load(int id, mame_file *fp, int open_mode);
 void dsk_floppy_exit(int id);
 void dsk_seek_callback(int drive, int physical_track);
 void dsk_get_id_callback(int drive, struct chrn_id *id, int id_index, int side);

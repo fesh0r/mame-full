@@ -1007,7 +1007,7 @@ int snes_validate_infoblock( UINT8 *infoblock, UINT16 offset )
 	return valid;
 }
 
-int snes_load_rom(int id, void *file, int open_mode)
+int snes_load_rom(int id, mame_file *file, int open_mode)
 {
 	int i;
 	UINT16 totalblocks, readblocks;
@@ -1096,12 +1096,12 @@ int snes_load_rom(int id, void *file, int open_mode)
 		/* No header found so go back to the start of the file */
 		logerror( "No header found.\n" );
 		offset = 0;
-		osd_fseek( file, offset, SEEK_SET );
+		mame_fseek( file, offset, SEEK_SET );
 	}
 
 	/* We need to take a sample of 128kb to test what mode we need to be in */
 	mame_fread( file, sample, 0xffff );
-	osd_fseek( file, offset, SEEK_SET );	/* Rewind */
+	mame_fseek( file, offset, SEEK_SET );	/* Rewind */
 	/* Now to determine if this is a lo-ROM or a hi-ROM */
 	valid_mode20 = snes_validate_infoblock( sample, 0x7fc0 );
 	valid_mode21 = snes_validate_infoblock( sample, 0xffc0 );

@@ -81,7 +81,7 @@ void apple2_slot6_init(void)
 	read_state    = 1;
 }
 
-int apple2_floppy_init(int id, void *f, int open_mode)
+int apple2_floppy_init(int id, mame_file *f, int open_mode)
 {
 	int t, s;
 	int pos;
@@ -108,7 +108,7 @@ int apple2_floppy_init(int id, void *f, int open_mode)
 
 	for (t = 0; t < TOTAL_TRACKS; t ++)
 	{
-		if (osd_fseek(f,256*16*t,SEEK_CUR)!=0)
+		if (mame_fseek(f,256*16*t,SEEK_CUR)!=0)
 		{
 			LOG(("Couldn't find track %d.\n", t));
 			return INIT_FAIL;
@@ -123,7 +123,7 @@ int apple2_floppy_init(int id, void *f, int open_mode)
 			int oldvalue;
 
 			sec_pos = 256*r_skewing6[s] + t*256*16;
-			if (osd_fseek(f,sec_pos,SEEK_SET)!=0)
+			if (mame_fseek(f,sec_pos,SEEK_SET)!=0)
 			{
 				LOG(("Couldn't find sector %d.\n", s));
 				return INIT_FAIL;

@@ -4,10 +4,10 @@
 #include <stdlib.h>
 #include "messdrv.h"
 
-typedef int (*snapquick_loadproc)(void *fp, const char *file_type, int file_size);
+typedef int (*snapquick_loadproc)(mame_file *fp, const char *file_type, int file_size);
 
-#define SNAPSHOT_LOAD(name)		int snapshot_load_##name(void *fp, const char *file_type, int snapshot_size)
-#define QUICKLOAD_LOAD(name)	int quickload_load_##name(void *fp, const char *file_type, int quickload_size)
+#define SNAPSHOT_LOAD(name)		int snapshot_load_##name(mame_file *fp, const char *file_type, int snapshot_size)
+#define QUICKLOAD_LOAD(name)	int quickload_load_##name(mame_file *fp, const char *file_type, int quickload_size)
 
 const struct IODevice *snapquick_specify(struct IODevice *iodev, int type,
 	const char *file_extensions, snapquick_loadproc loadproc, double delay);

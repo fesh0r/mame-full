@@ -640,7 +640,7 @@ static int fdc_rdy = 1;
 
 static void fdc_rev_proc( int drive );
 
-int amiga_fdc_init(int id, void *fp, int open_mode) {
+int amiga_fdc_init(int id, mame_file *fp, int open_mode) {
 
 	fdc_status[id].motor_on = 0;
 	fdc_status[id].side = 0;
@@ -843,8 +843,8 @@ static void setup_fdc_buffer( int drive )
 	if ( fdc_status[drive].cached == offset )
 		return;
 
-	if ( osd_fseek( fdc_status[drive].f, offset * len, SEEK_SET ) ) {
-		logerror("FDC: osd_fseek failed!\n" );
+	if ( mame_fseek( fdc_status[drive].f, offset * len, SEEK_SET ) ) {
+		logerror("FDC: mame_fseek failed!\n" );
 		fdc_status[drive].f = NULL;
 		fdc_status[drive].disk_changed = 1;
 	}

@@ -156,7 +156,7 @@ extern int vic6560_dma_read_color (int offset);
 extern int vic6560_dma_read (int offset);
 
 extern int vc20_rom_init (int id);
-extern int vc20_rom_load (int id, void *fp, int open_mode);
+extern int vc20_rom_load (int id, mame_file *fp, int open_mode);
 
 extern void vc20_driver_init (void);
 extern void vic20_driver_init (void);

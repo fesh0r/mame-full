@@ -10,4 +10,4 @@ extern VIDEO_START( exidy );
 extern VIDEO_UPDATE( exidy );
 extern PALETTE_INIT( exidy );
 
-int exidy_cassette_init(int id, void *fp, int open_mode);
+int exidy_cassette_init(int id, mame_file *fp, int open_mode);

@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include "formats.h"
+#include "fileio.h"
 
 /******************************************************************************
  * This is a start at the proposed peripheral structure.
@@ -36,7 +37,7 @@ struct IODevice
 	const char *file_extensions;
 	int reset_depth;
 	int open_mode;
-	int (*init)(int id, void *fp, int open_mode);
+	int (*init)(int id, mame_file *fp, int open_mode);
 	void (*exit)(int id);
 	const void *(*info)(int id, int whatinfo);
 	int (*open)(int id, int mode, void *args);

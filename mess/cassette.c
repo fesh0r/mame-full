@@ -4,7 +4,7 @@
 
 #if HAS_WAVE
 
-int cassette_init(int id, void *file, int open_mode, const struct cassette_args *args)
+int cassette_init(int id, mame_file *file, int open_mode, const struct cassette_args *args)
 {
 	struct wave_args_legacy wa;
 

@@ -1829,7 +1829,7 @@ static int atari_st_image_type[2] = {ATARI_ST_IMAGE_TYPE_NONE, ATARI_ST_IMAGE_TY
 
 
 /* basic format like .ST */
-static int atarist_basic_floppy_init(int id, void *file, int open_mode)
+static int atarist_basic_floppy_init(int id, mame_file *file, int open_mode)
 {
 	if (basicdsk_floppy_init(id)==INIT_PASS)
 	{
@@ -1860,7 +1860,7 @@ static int atarist_basic_floppy_init(int id, void *file, int open_mode)
 			if (f==0) { /* No standard format found - take data from the bootsector */
 				char bootsector[512];
 
-				osd_fseek(file, 0, SEEK_SET);
+				mame_fseek(file, 0, SEEK_SET);
 
 				if (mame_fread(file, bootsector, 512))
 				{
@@ -2258,7 +2258,7 @@ void msa_read_sector_data_into_buffer(int drive, int side, int index1, char *ptr
 	memcpy(ptr, pDataPtr, length);
 }
 
-int atarist_msa_floppy_init(int id, void *file, int open_mode)
+int atarist_msa_floppy_init(int id, mame_file *file, int open_mode)
 {
 	/* load whole file into memory */
 	if (atarist_load(file, &msa_images_data[id])!=NULL)

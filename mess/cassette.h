@@ -10,7 +10,7 @@ struct cassette_args
 
 	/* Args to use when the wave file is already there */
 	int (*fill_wave)(INT16 *buffer, int length, UINT8 *bytes);
-	void (*calc_chunk_info)(void *file, int *chunk_size, int *chunk_samples);
+	void (*calc_chunk_info)(mame_file *file, int *chunk_size, int *chunk_samples);
 	int input_smpfreq;
     int header_samples;
     int trailer_samples;
@@ -21,7 +21,7 @@ struct cassette_args
 	int create_smpfreq;
 };
 
-int cassette_init(int id, void *file, int open_mode, const struct cassette_args *args);
+int cassette_init(int id, mame_file *file, int open_mode, const struct cassette_args *args);
 void cassette_exit(int id);
 
 #endif /* CASSETTE_H */

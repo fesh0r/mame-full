@@ -343,7 +343,7 @@ static void mwa_bank(int bank, int offs, int data)
     }
 }
 
-int laser_rom_init(int id, void *file, int open_mode)
+int laser_rom_init(int id, mame_file *file, int open_mode)
 {
 	int size = 0;
 
@@ -506,7 +506,7 @@ int laser_cassette_verify (UINT8 buff[])
 }
 */
 
-int laser_cassette_init(int id, void *file, int open_mode)
+int laser_cassette_init(int id, mame_file *file, int open_mode)
 {
 	if (file == NULL)
 		return INIT_PASS;
@@ -541,7 +541,7 @@ int laser_cassette_init(int id, void *file, int open_mode)
     return INIT_FAIL;
 }
 
-int laser_floppy_init(int id, void *file, int open_mode)
+int laser_floppy_init(int id, mame_file *file, int open_mode)
 {
 	UINT8 buff[32];
 
@@ -571,7 +571,7 @@ static void laser_get_track(void)
         int size, offs;
         size = TRKSIZE_VZ;
         offs = TRKSIZE_VZ * laser_track_x2[laser_drive]/2;
-        osd_fseek(laser_fdc_file[laser_drive], offs, SEEK_SET);
+        mame_fseek(laser_fdc_file[laser_drive], offs, SEEK_SET);
         size = mame_fread(laser_fdc_file[laser_drive], laser_fdc_data, size);
         logerror("get track @$%05x $%04x bytes\n", offs, size);
     }
@@ -586,7 +586,7 @@ static void laser_put_track(void)
     {
         int size, offs;
         offs = TRKSIZE_VZ * laser_track_x2[laser_drive]/2;
-        osd_fseek(laser_fdc_file[laser_drive], offs + laser_fdc_start, SEEK_SET);
+        mame_fseek(laser_fdc_file[laser_drive], offs + laser_fdc_start, SEEK_SET);
         size = mame_fwrite(laser_fdc_file[laser_drive], &laser_fdc_data[laser_fdc_start], laser_fdc_write);
         logerror("put track @$%05X+$%X $%04X/$%04X bytes\n", offs, laser_fdc_start, size, laser_fdc_write);
     }

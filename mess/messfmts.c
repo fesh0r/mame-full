@@ -144,7 +144,7 @@ static floppy_interface bdf_floppy_interface =
 	NULL
 };
 
-static int bdf_floppy_init_internal(int id, void *file, int mode, const formatdriver_ctor *open_formats, formatdriver_ctor create_format, void *fp, int open_mode)
+static int bdf_floppy_init_internal(int id, void *file, int mode, const formatdriver_ctor *open_formats, formatdriver_ctor create_format, mame_file *fp, int open_mode)
 {
 	const char *name;
 	const char *ext;
@@ -182,7 +182,7 @@ static int bdf_floppy_init_internal(int id, void *file, int mode, const formatdr
 	return INIT_PASS;
 }
 
-static int bdf_floppy_init(int id, void *fp, int open_mode)
+static int bdf_floppy_init(int id, mame_file *fp, int open_mode)
 {
 	const struct IODevice *dev;
 	const formatdriver_ctor *open_formats;

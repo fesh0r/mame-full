@@ -325,7 +325,7 @@ WRITE18_HANDLER(pdp1_write_mem)
 
 	unit 0 is reader (read-only), unit 1 is puncher (write-only)
 */
-int pdp1_tape_init(int id, void *fp, int open_mode  )
+int pdp1_tape_init(int id, mame_file *fp, int open_mode  )
 {
 	switch (id)
 	{
@@ -643,7 +643,7 @@ void iot_ppb(int op2, int nac, int mb, int *io, int ac)
 /*
 	Open a file for typewriter output
 */
-int pdp1_typewriter_init(int id, void *fp, int open_mode)
+int pdp1_typewriter_init(int id, mame_file *fp, int open_mode)
 {
 	/* open file */
 	typewriter.fd = fp;

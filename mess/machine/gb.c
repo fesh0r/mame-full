@@ -1225,7 +1225,7 @@ READ_HANDLER ( gb_r_io )
 	}
 }
 
-int gb_load_rom (int id, void *F, int open_mode)
+int gb_load_rom (int id, mame_file *F, int open_mode)
 {
 	static const char *CartTypes[] =
 	{

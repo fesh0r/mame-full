@@ -96,7 +96,7 @@ static int msx_probe_type (UINT8* pmem, int size)
         return (asc8 > asc16) ? 4 : 5;
 }
 
-int msx_load_rom (int id, void *F, int open_mode)
+int msx_load_rom (int id, mame_file *F, int open_mode)
 {
     UINT8 *pmem,*m;
     int size,size_aligned,n,p,type,i;
@@ -911,7 +911,7 @@ static WRITE_HANDLER (msx_disk_w)
 		}
 	}
 
-int msx_floppy_init (int id, void *fp, int open_mode)
+int msx_floppy_init (int id, mame_file *fp, int open_mode)
 	{
 	int size, heads = 2;
 
@@ -1550,9 +1550,9 @@ static int check_fmsx_cas (void *f)
        	return -1;
    	}
 
-    osd_fseek (f, 0, SEEK_SET);
+    mame_fseek (f, 0, SEEK_SET);
  	if (caslen != mame_fread (f, casdata, caslen) ) return -1;
-   	osd_fseek (f, 0, SEEK_SET);
+   	mame_fseek (f, 0, SEEK_SET);
 
     ret = fmsx_cas_to_wav (casdata, caslen, &cas_samples, &cas_len);
     if (ret == 2)
@@ -1565,7 +1565,7 @@ static int check_fmsx_cas (void *f)
     return ret;
 }
 
-int msx_cassette_init(int id, void *file, int open_mode)
+int msx_cassette_init(int id, mame_file *file, int open_mode)
 {
 	int ret;
 

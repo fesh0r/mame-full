@@ -124,7 +124,7 @@ static struct GameSample *vc20_read_wav_sample (void *f)
 			break;
 
 		/* seek to the next block */
-		osd_fseek (f, length, SEEK_CUR);
+		mame_fseek (f, length, SEEK_CUR);
 		offset += length;
 		if (offset >= filesize)
 			return NULL;
@@ -153,7 +153,7 @@ static struct GameSample *vc20_read_wav_sample (void *f)
 		return NULL;
 
 	/* seek past any extra data */
-	osd_fseek (f, length - 16, SEEK_CUR);
+	mame_fseek (f, length - 16, SEEK_CUR);
 	offset += length - 16;
 
 	/* seek until we find a data tag */
@@ -166,7 +166,7 @@ static struct GameSample *vc20_read_wav_sample (void *f)
 			break;
 
 		/* seek to the next block */
-		osd_fseek (f, length, SEEK_CUR);
+		mame_fseek (f, length, SEEK_CUR);
 		offset += length;
 		if (offset >= filesize)
 			return NULL;
@@ -275,7 +275,7 @@ static void vc20_wav_state (void)
 
 static void vc20_wav_open (int image_type, int image_id)
 {
-	void *fp;
+	mame_file *fp;
 
 	fp = mame_fopen (Machine->gamedrv->name, image_filename(image_type,image_id), FILETYPE_IMAGE, 0);
 	if (!fp)
@@ -410,7 +410,7 @@ static void vc20_prg_state (void)
 static void vc20_prg_open (int image_type, int image_id)
 {
 	const char *name;
-    void *fp;
+    mame_file *fp;
 	int i;
 
 	fp = mame_fopen (Machine->gamedrv->name, image_filename(image_type,image_id), FILETYPE_IMAGE, 0);
@@ -923,7 +923,7 @@ void c16_tape_open (void)
 	prg.c16 = 1;
 }
 
-int vc20_tape_attach_image (int id, void *fp, int open_mode)
+int vc20_tape_attach_image (int id, mame_file *fp, int open_mode)
 {
 	const char *cp;
 

@@ -20,7 +20,7 @@ static int common_length_spt_heads[][3] = {
     {36*2*80*512, 36, 2}};  /* 3 1/2 inch enhanced density */
 
 
-int pc_floppy_init(int id, void *fp, int open_mode)
+int pc_floppy_init(int id, mame_file *fp, int open_mode)
 {
 	if (basicdsk_floppy_init(id, fp, open_mode)==INIT_PASS)
 	{
@@ -66,11 +66,11 @@ int pc_floppy_init(int id, void *fp, int open_mode)
 				 * get info from boot sector.
 				 * not correct on all disks
 				 */
-				osd_fseek(fp, 0x0c, SEEK_SET);
+				mame_fseek(fp, 0x0c, SEEK_SET);
 				mame_fread(fp, &scl, 1);
-				osd_fseek(fp, 0x018, SEEK_SET);
+				mame_fseek(fp, 0x018, SEEK_SET);
 				mame_fread(fp, &spt, 1);
-				osd_fseek(fp, 0x01a, SEEK_SET);
+				mame_fseek(fp, 0x01a, SEEK_SET);
 				mame_fread(fp, &heads, 1);
 				
 				if (scl*spt*heads*0x200!=length) { // seems neccessary for plain disk images

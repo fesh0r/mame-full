@@ -1,7 +1,7 @@
 extern VIDEO_START( lisa );
 extern VIDEO_UPDATE( lisa );
 
-int lisa_floppy_init(int id, void *fp, int open_mode);
+int lisa_floppy_init(int id, mame_file *fp, int open_mode);
 void lisa_floppy_exit(int id);
 extern NVRAM_HANDLER(lisa);
 

@@ -73,7 +73,7 @@ static int genesis_verify_cart(unsigned char *temp,unsigned int len)
 	return retval;
 }
 
-int genesis_init_cart (int id, void *romfile, int open_mode)
+int genesis_init_cart (int id, mame_file *romfile, int open_mode)
 {
 	unsigned char *tmpROMnew, *tmpROM;
 	unsigned char *secondhalf;

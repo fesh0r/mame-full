@@ -637,7 +637,7 @@ MACHINE_INIT( kim1 )
 	set_chip_clock(1, 255);
 }
 
-int kim1_cassette_init(int id, void *file, int open_mode)
+int kim1_cassette_init(int id, mame_file *file, int open_mode)
 {
 	const char magic[] = "KIM1";
 	char buff[4];

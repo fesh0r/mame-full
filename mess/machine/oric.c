@@ -1210,7 +1210,7 @@ static void oric_wd179x_callback(int State)
 	}
 }
 
-int oric_floppy_init(int id, void *fp, int open_mode)
+int oric_floppy_init(int id, mame_file *fp, int open_mode)
 {
 	int result;
 
@@ -1453,7 +1453,7 @@ WRITE_HANDLER ( oric_IO_w )
 }
 
 
-int oric_cassette_init(int id, void *file, int open_mode)
+int oric_cassette_init(int id, mame_file *file, int open_mode)
 {
 	struct wave_args_legacy wa;
 
@@ -1493,7 +1493,7 @@ int oric_cassette_init(int id, void *file, int open_mode)
 					size_in_samples = oric_cassette_calculate_size_in_samples(oric_tap_size, oric_tap_data);
 
 					/* seek back to start */
-					osd_fseek(file, 0, SEEK_SET);
+					mame_fseek(file, 0, SEEK_SET);
 
 					/* free temporary buffer */
 					free(oric_tap_data);

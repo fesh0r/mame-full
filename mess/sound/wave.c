@@ -104,7 +104,7 @@ static int wave_read(int id)
 			break;
 
 		/* seek to the next block */
-		osd_fseek(w->file, w->length, SEEK_CUR);
+		mame_fseek(w->file, w->length, SEEK_CUR);
 		offset += w->length;
 		if( offset >= filesize )
 		{
@@ -143,7 +143,7 @@ static int wave_read(int id)
 	w->resolution = bitsPerSample;
 
 	/* seek past any extra data */
-	osd_fseek(w->file, w->length - 16, SEEK_CUR);
+	mame_fseek(w->file, w->length - 16, SEEK_CUR);
 	offset += w->length - 16;
 
 	/* Compute a few constants */
@@ -166,7 +166,7 @@ static int wave_read(int id)
 			break;
 
 		/* seek to the next block */
-		osd_fseek(w->file, w->length, SEEK_CUR);
+		mame_fseek(w->file, w->length, SEEK_CUR);
 		offset += w->length;
 		if( offset >= filesize )
 		{
@@ -210,7 +210,7 @@ static int wave_read(int id)
 				sample_buf = 0;
 				/* skip pad bytes */
 				if (sample_padding)
-					osd_fseek(w->file, sample_padding, SEEK_CUR);
+					mame_fseek(w->file, sample_padding, SEEK_CUR);
 				/* read ceil(wave_file->bitsPerSample/8) bits */
 				for (bit=0; bit<bitsPerSample; bit+=8)
 				{
@@ -719,7 +719,7 @@ int wave_open(int id, int mode, void *args)
 
 			/* convert the file data to samples */
 			bytes = 0;
-			osd_fseek(w->file, 0, SEEK_SET);
+			mame_fseek(w->file, 0, SEEK_SET);
 			while( pos < w->max_samples )
 			{
 				length = mame_fread(w->file, data, wa->chunk_size);
@@ -1041,7 +1041,7 @@ int wave_output_chunk(int id, void *src, int count)
 /* ----------------------------------------------------------------------- */
 
 void wave_specify(struct IODevice *iodev, int count, char *actualext, const char *fileext,
-	int (*init)(int id, void *fp, int open_mode), void (*exit_)(int id))
+	int (*init)(int id, mame_file *fp, int open_mode), void (*exit_)(int id))
 {
 	strcpy(actualext, "wav");
 	strcpy(actualext + 4, fileext);

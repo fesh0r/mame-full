@@ -25,7 +25,7 @@ MACHINE_INIT( odyssey2 )
 }
 
 
-int odyssey2_load_rom (int id, void *cartfile, int open_mode)
+int odyssey2_load_rom (int id, mame_file *cartfile, int open_mode)
 {
     int size;
 

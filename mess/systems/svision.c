@@ -380,7 +380,7 @@ ROM_END
  dd6a clear 0x2000 at ($57/58) (0x4000)
  */
 
-static int svision_load_rom(int id, void *cartfile, int open_mode)
+static int svision_load_rom(int id, mame_file *cartfile, int open_mode)
 {
 	UINT8 *rom = memory_region(REGION_CPU1);
 	int size;

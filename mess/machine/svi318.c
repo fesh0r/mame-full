@@ -42,7 +42,7 @@ static int svi318_verify_cart (UINT8 magic[2])
 
 
 
-int svi318_load_rom (int id, void *f, int open_mode)
+int svi318_load_rom (int id, mame_file *f, int open_mode)
 {
 	UINT8 *p;
 	int size;
@@ -369,7 +369,7 @@ READ_HANDLER (svi318_fdc_status_r)
 }
 
 
-int svi318_floppy_init(int id, void *fp, int open_mode)
+int svi318_floppy_init(int id, mame_file *fp, int open_mode)
 {
 	int size;
 
@@ -648,9 +648,9 @@ static int check_svi_cas (void *f)
        	return -1;
    		}
 
-    osd_fseek (f, 0, SEEK_SET);
+    mame_fseek (f, 0, SEEK_SET);
  	if (caslen != mame_fread (f, casdata, caslen) ) return -1;
-   	osd_fseek (f, 0, SEEK_SET);
+   	mame_fseek (f, 0, SEEK_SET);
 
     ret = svi_cas_to_wav (casdata, caslen, &cas_samples, &cas_len);
     if (ret == 2)
@@ -663,10 +663,9 @@ static int check_svi_cas (void *f)
     return ret;
 	}
 
-int svi318_cassette_init(int id, void *file, int open_mode)
-	{
+int svi318_cassette_init(int id, mame_file *file, int open_mode)
+{
 	int ret;
-
 
    	/* A cassette isn't mandatory */
 	if (file == NULL)

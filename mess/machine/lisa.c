@@ -1017,7 +1017,7 @@ static OPBASE_HANDLER (lisa_fdc_OPbaseoverride)
 }
 
 
-int lisa_floppy_init(int id, void *fp, int open_mode)
+int lisa_floppy_init(int id, mame_file *fp, int open_mode)
 {
 	/*if (lisa_features.lisa_floppy_hardware == twiggy)
 		return twiggy_floppy_init(id);

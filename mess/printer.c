@@ -9,7 +9,7 @@
 
 static void *prn_ports[MAX_PRINTER]= { 0 };
 
-int printer_init(int id, void *fp, int open_mode)
+int printer_init(int id, mame_file *fp, int open_mode)
 {
 	prn_ports[id] = fp;
 	return INIT_PASS;

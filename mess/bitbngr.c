@@ -22,7 +22,7 @@ struct bitbanger_info
 
 static struct bitbanger_info *bitbangers[MAX_PRINTER];
 
-static int bitbanger_init(int id, void *fp, int open_mode)
+static int bitbanger_init(int id, mame_file *fp, int open_mode)
 {
 	struct bitbanger_info *bi;
 	const struct bitbanger_config *config;

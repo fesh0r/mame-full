@@ -97,11 +97,11 @@ void init_ti99_4p(void);
 void machine_init_ti99(void);
 void machine_stop_ti99(void);
 
-int ti99_floppy_init(int id, void *fp, int open_mode);
+int ti99_floppy_init(int id, mame_file *fp, int open_mode);
 
-int ti99_cassette_init(int id, void *fp, int open_mode);
+int ti99_cassette_init(int id, mame_file *fp, int open_mode);
 
-int ti99_load_rom(int id, void *fp, int open_mode);
+int ti99_load_rom(int id, mame_file *fp, int open_mode);
 void ti99_rom_cleanup(int id);
 
 int video_start_ti99_4(void);

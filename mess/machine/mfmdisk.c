@@ -327,7 +327,7 @@ static int mfm_disk_load(int type, int id, void *file, unsigned char **ptr)
 	return 0;
 }
 
-int mfm_disk_floppy_init(int id, void *fp)
+int mfm_disk_floppy_init(int id, mame_file *fp)
 {
 	if ((id<0) || (id>=MAX_MFM_DISK))
 		return INIT_FAIL;

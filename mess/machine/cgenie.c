@@ -339,7 +339,7 @@ MACHINE_STOP( cgenie )
 	tape_put_close();
 }
 
-int cgenie_cassette_init(int id, void *fp, int open_mode)
+int cgenie_cassette_init(int id, mame_file *fp, int open_mode)
 {
 	return INIT_PASS;
 }
@@ -369,7 +369,7 @@ int cgenie_cassette_init(int id, void *fp, int open_mode)
  * of tracks, number of sides, number of sectors etc, so we need to
  * set that up here
  */
-int cgenie_floppy_init(int id, void *fp, int open_mode)
+int cgenie_floppy_init(int id, mame_file *fp, int open_mode)
 {
 	/* A Floppy Isnt manditory, so return if none */
 	if (fp == NULL)
@@ -392,12 +392,12 @@ int cgenie_floppy_init(int id, void *fp, int open_mode)
 		short dir_sector = 0;
 		short dir_length = 0;
 
-		osd_fseek(fp, 0, SEEK_SET);
+		mame_fseek(fp, 0, SEEK_SET);
 
 		/* determine geometry from disk contents */
 		for( i = 0; i < 12; i++ )
 		{
-			osd_fseek(fp, pd_list[i].SPT * 256, SEEK_SET);
+			mame_fseek(fp, pd_list[i].SPT * 256, SEEK_SET);
 			mame_fread(fp, buff, 16);
 			/* find an entry with matching DDSL */
 			if (buff[0] != 0x00 || buff[1] != 0xfe || buff[2] != pd_list[i].DDSL)
@@ -412,7 +412,7 @@ int cgenie_floppy_init(int id, void *fp, int open_mode)
 			for( j = 16; j < 32; j += 8 )
 			{
 				dir_offset = dir_sector * 256 + j * 32;
-				if( osd_fseek(fp, dir_offset, SEEK_SET) < 0 )
+				if( mame_fseek(fp, dir_offset, SEEK_SET) < 0 )
 					break;
 				if( mame_fread(fp, buff, 16) != 16 )
 					break;
@@ -471,7 +471,7 @@ int cgenie_floppy_init(int id, void *fp, int open_mode)
 	return INIT_FAIL;
 }
 
-int cgenie_rom_load(int id, void *fp, int open_mode)
+int cgenie_rom_load(int id, mame_file *fp, int open_mode)
 {
 	int result = 0;
 	UINT8 *ROM = memory_region(REGION_CPU1);
@@ -735,7 +735,7 @@ static void tape_get_open(void)
 			else
 			{
 				/* seek back to start of tape */
-				osd_fseek(tape_get_file, 0, SEEK_SET);
+				mame_fseek(tape_get_file, 0, SEEK_SET);
 			}
 		}
 		tape_count = 0;

@@ -86,7 +86,7 @@ static int dsk_floppy_verify(UINT8 *diskimage_data)
 
 
 /* load floppy */
-int dsk_floppy_load(int id, void *fp, int open_mode)
+int dsk_floppy_load(int id, mame_file *fp, int open_mode)
 {
 	dsk_drive *thedrive = &drives[id];
 
