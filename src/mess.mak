@@ -685,6 +685,7 @@ COREOBJS += \
 	$(OBJ)/mess/tapectrl.o	       \
 	$(OBJ)/mess/menu.o	       \
 	$(OBJ)/mess/printer.o	       \
+	$(OBJ)/mess/cassette.o	       \
 	$(OBJ)/mess/menuentr.o	       \
 	$(OBJ)/mess/utils.o	       \
 	$(OBJ)/mess/bcd.o	       \

@@ -62,6 +62,7 @@
 #include "formats/cococas.h"
 #include "includes/6883sam.h"
 #include "includes/cococart.h"
+#include "cassette.h"
 
 static UINT8 *coco_rom;
 static int coco3_enable_64k;
@@ -1684,48 +1685,31 @@ static void autocenter_init(int dipport, int dipmask)
   Cassette support
 ***************************************************************************/
 
+static void coco_cassette_calcchunkinfo(void *file, int *chunk_size,
+	int *chunk_samples)
+{
+	coco_wave_size = osd_fsize(file);
+	*chunk_size = coco_wave_size;
+	*chunk_samples = 8*8 * coco_wave_size;	/* 8 bits * 4 samples */
+}
+
+static struct cassette_args coco_cassette_args =
+{
+	WAVE_STATUS_MOTOR_ENABLE | WAVE_STATUS_MUTED
+		| WAVE_STATUS_MOTOR_INHIBIT,				/* initial_status */
+	coco_cassette_fill_wave,									/* fill_wave */
+	coco_cassette_calcchunkinfo,					/* calc_chunk_info */
+	4800,											/* input_smpfreq */	
+	COCO_WAVESAMPLES_HEADER,						/* header_samples */
+	COCO_WAVESAMPLES_TRAILER,						/* trailer_samples */
+	0,												/* NA */
+	0,												/* NA */
+	19200											/* create_smpfreq */
+};
+
 int coco_cassette_init(int id)
 {
-	void *file;
-	struct wave_args wa;
-
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
-	if( file )
-	{
-		coco_wave_size = osd_fsize(file);
-
-		memset(&wa, 0, sizeof(&wa));
-		wa.file = file;
-		wa.chunk_size = coco_wave_size;
-		wa.chunk_samples = 8*8 * coco_wave_size;	/* 8 bits * 4 samples */
-		wa.smpfreq = 4800; /* cassette samples go at 4800 baud */
-		wa.fill_wave = coco_cassette_fill_wave;
-		wa.header_samples = COCO_WAVESAMPLES_HEADER;
-		wa.trailer_samples = COCO_WAVESAMPLES_TRAILER;
-		wa.display = 1;
-		if( device_open(IO_CASSETTE,id,0,&wa) )
-			return INIT_FAIL;
-
-		/* immediately inhibit/mute/play the output */
-        device_status(IO_CASSETTE,id, WAVE_STATUS_MOTOR_ENABLE|WAVE_STATUS_MUTED|WAVE_STATUS_MOTOR_INHIBIT);
-		return INIT_PASS;
-	}
-
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
-	if( file )
-    {
-		memset(&wa, 0, sizeof(&wa));
-		wa.file = file;
-		wa.display = 1;
-		wa.smpfreq = 19200;
-		if( device_open(IO_CASSETTE,id,1,&wa) )
-            return INIT_FAIL;
-
-		/* immediately inhibit/mute/play the output */
-        device_status(IO_CASSETTE,id, WAVE_STATUS_MOTOR_ENABLE|WAVE_STATUS_MUTED|WAVE_STATUS_MOTOR_INHIBIT);
-		return INIT_PASS;
-    }
-	return INIT_PASS;
+	return cassette_init(id, &coco_cassette_args);
 }
 
 void coco_cassette_exit(int id)
