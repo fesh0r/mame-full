@@ -1582,7 +1582,7 @@ ROM_START( pcmda )
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, CRC(8e9e2bd4))
     ROM_LOAD("pcxt.rom",    0xfe000, 0x02000, CRC(031aafad))
 	ROM_REGION(0x08100,REGION_GFX1, 0)
-    ROM_LOAD("mda.chr",     0x00000, 0x01000, CRC(ac1686f3))
+    ROM_LOAD("mda.rom",     0x00000, 0x02000, CRC(0bf56d70)) // taken from original IBM MDA
 ROM_END
 
 ROM_START( pc )
