@@ -394,7 +394,8 @@ static int wd179x_find_sector(WD179X *w)
 				{
 					w->sector_length = 1<<(id.N+7);
 					w->sector_data_id = id.data_id;
-
+					/* get ddam status */
+					w->ddam = id.flags & ID_FLAG_DELETED_DATA;
 					/* got record type here */
 #if VERBOSE
 	logerror("sector found! C: %02x H: %02x R: %02x N: %02x\r\n", id.C, id.H, id.R, id.N);
@@ -471,7 +472,7 @@ static void wd179x_write_sector(WD179X *w)
 		w->data_count = w->sector_length;
 
 		/* write data */
-		floppy_drive_write_sector_data(drv, hd, w->sector_data_id, (char *)w->buffer, w->sector_length);
+		floppy_drive_write_sector_data(drv, hd, w->sector_data_id, (char *)w->buffer, w->sector_length,w->write_cmd & 0x01);
 	}
 }
 
@@ -575,6 +576,15 @@ READ_HANDLER ( wd179x_data_r )
 		w->status &= ~STA_2_DRQ;
 		if (--w->data_count <= 0)
 		{
+			/* clear ddam type */
+			w->status &=~STA_2_REC_TYPE;
+			/* read a sector with ddam set? */
+			if (w->ddam!=0)
+			{
+				/* set it */
+				w->status |= STA_2_REC_TYPE;
+			}
+
 			wd179x_complete_command(w);
 		}
 		w->data = w->buffer[w->data_offset++];
