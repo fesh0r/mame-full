@@ -1028,25 +1028,6 @@ static OPBASE_HANDLER (lisa_fdc_OPbaseoverride)
 }
 
 
-DEVICE_LOAD(lisa_floppy)
-{
-	/*if (lisa_features.lisa_floppy_hardware == twiggy)
-		return twiggy_floppy_load(image);
-	else*/
-		return sony_floppy_load(image, file,
-									(lisa_features.has_double_sided_floppy)
-										? SONY_FLOPPY_ALLOW400K | SONY_FLOPPY_ALLOW800K
-										: SONY_FLOPPY_ALLOW400K | SONY_FLOPPY_EXT_SPEED_CONTROL);
-}
-
-DEVICE_UNLOAD(lisa_floppy)
-{
-	/*if (lisa_features.lisa_floppy_hardware == twiggy)
-		return twiggy_floppy_unload(image);
-	else*/
-		sony_floppy_unload(image);
-}
-
 /* should save PRAM to file */
 /* TODO : save time difference with host clock, set default date, etc */
 NVRAM_HANDLER(lisa)

@@ -39,6 +39,7 @@
 #include "inputx.h"
 #include "vidhrdw/generic.h"
 #include "machine/6522via.h"
+#include "machine/sonydriv.h"
 #include "includes/mac.h"
 #include "videomap.h"
 
@@ -260,38 +261,30 @@ ROM_START( macplus )
 	ROM_LOAD16_WORD_SWAP( "macplus.rom",  0x00000, 0x20000, CRC(b2102e8e) SHA1(7d2f808a045aa3a1b242764f0e2c7d13e288bf1f))
 ROM_END
 
+static void mac128512_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	sonydriv_device_getinfo(dev, SONY_FLOPPY_ALLOW400K);
+}
 
 static void mac_floppy_getinfo(struct IODevice *dev)
 {
 	/* floppy */
-	dev->type = IO_FLOPPY;
-	dev->count = 2;
-	dev->file_extensions = "dsk\0img\0";
-	dev->readable = 1;
-	dev->writeable = 1;
-	dev->creatable = 0;
-	dev->load = device_load_mac_floppy;
-	dev->unload = device_unload_mac_floppy;
+	sonydriv_device_getinfo(dev, SONY_FLOPPY_ALLOW400K | SONY_FLOPPY_ALLOW800K);
 }
 
-SYSTEM_CONFIG_START(mac_base)
-	CONFIG_DEVICE(mac_floppy_getinfo)
-SYSTEM_CONFIG_END
-
-
 SYSTEM_CONFIG_START(mac128k)
-	CONFIG_IMPORT_FROM(mac_base)
+	CONFIG_DEVICE(mac128512_floppy_getinfo)
 	CONFIG_RAM_DEFAULT(0x020000)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(mac512k)
-	CONFIG_IMPORT_FROM(mac_base)
+	CONFIG_DEVICE(mac128512_floppy_getinfo)
 	CONFIG_RAM_DEFAULT(0x080000)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(macplus)
-	CONFIG_IMPORT_FROM(mac_base)
-
+	CONFIG_DEVICE(mac_floppy_getinfo)
 	CONFIG_RAM			(0x080000)
 	CONFIG_RAM_DEFAULT	(0x100000)
 	CONFIG_RAM			(0x200000)

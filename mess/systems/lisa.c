@@ -6,6 +6,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/sonydriv.h"
 /*#include "machine/6522via.h"*/
 #include "machine/lisa.h"
 
@@ -275,14 +276,7 @@ ROM_END
 static void lisa_floppy_getinfo(struct IODevice *dev)
 {
 	/* floppy */
-	dev->type = IO_FLOPPY;
-	dev->count = 1;
-	dev->file_extensions = "img\0image\0";
-	dev->readable = 1;
-	dev->writeable = 1;
-	dev->creatable = 0;
-	dev->load = device_load_lisa_floppy;
-	dev->unload = device_unload_lisa_floppy;
+	sonydriv_device_getinfo(dev, SONY_FLOPPY_ALLOW400K | SONY_FLOPPY_ALLOW800K);
 }
 
 SYSTEM_CONFIG_START(lisa)
