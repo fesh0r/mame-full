@@ -8,6 +8,7 @@ timer                   0
 # sound-mixer-plugin    <NULL> (not set)
 
 ### Video Related ###
+video-mode              0
 bpp                     0
 heightscale             1
 widthscale              1
@@ -30,18 +31,15 @@ flicker                 0.000000
 antialias               1
 translucency            1
 
-### X11 Related ###
-x11-mode                0
-
 ### X11-window Related ###
 cursor                  1
 mitshm                  1
 xsync                   1
-xil                     1
-mtxil                   0
+#xil                     1
+#mtxil                   0
 run-in-root-window      0
 root_window_id          0
-geometry                640x480
+#geometry                640x480
 
 ### XFree86 DGA Related ###
 
