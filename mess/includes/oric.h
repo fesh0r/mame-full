@@ -24,6 +24,8 @@ int oric_extract_file_from_tape (int filenum);
 extern WRITE_HANDLER(oric_psg_porta_write);
 
 int	oric_floppy_init(int id);
+int oric_floppy_id(int id);
+void oric_floppy_exit(int id);
 
 void oric_vh_stop(void);
 void oric_init_char_attrs(void);
