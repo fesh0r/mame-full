@@ -138,7 +138,8 @@ INCLUDES += \
         -Imess \
         -Imess/includes \
         -Imess/Win32 \
-		-Imess/windows
+		-Imess/windows \
+		-Isrc/windows
 endif
 
 ifdef DX_INCPATH
