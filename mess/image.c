@@ -170,6 +170,8 @@ int image_load(int type, int id, const char *name)
 		if (err)
 			goto error;
 
+		mame_fseek(fp, 0, SEEK_SET);
+
 		free(buffer);
 		buffer = NULL;
 	}

@@ -154,8 +154,8 @@ TESTDRIVER( saturn )	/* Sega Saturn										*/
 	DRIVER( channelf )	/* Fairchild Channel F VES - 1976					*/
 
 	/* COLECO */
-//	DRIVER( coleco )	/* ColecoVision (Original BIOS)						*/
-//	DRIVER( colecoa )	/* ColecoVision (Thick Characters)					*/
+	DRIVER( coleco )	/* ColecoVision (Original BIOS)						*/
+	DRIVER( colecoa )	/* ColecoVision (Thick Characters)					*/
 
 	/* NEC */
 	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993		*/
@@ -182,7 +182,7 @@ TESTDRIVER( vcg )		/* Palladium Video-Computer-Game					*/
 	DRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983					*/
 
 	/* WATARA */
-//	DRIVER( svision )	/* Super Vision	Handheld							*/
+	DRIVER( svision )	/* Super Vision	Handheld							*/
 
 	/* INTERON */
 TESTDRIVER( vc4000 )	/* Interton vc4000									*/
@@ -498,8 +498,8 @@ TESTDRIVER( ti86v15 )	/* TI 86 rom ver. 1.5								*/
 	DRIVER( sordm5 )
 
 	/* APF Electronics Inc. */
-//	DRIVER( apfm1000 )
-//	DRIVER( apfimag )
+	DRIVER( apfm1000 )
+	DRIVER( apfimag )
 
 	/* Tatung */
 	DRIVER( einstein )

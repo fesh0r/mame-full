@@ -1,9 +1,14 @@
+#ifndef COLECO_H
+#define COLECO_H
+
 #include "driver.h"
 
 /* machine/coleco.c */
-extern int coleco_init_cart (int id, mame_file *fp, int open_mode);
+int coleco_cart_verify(const UINT8 *buf, size_t size);
+int coleco_cart_load(int id, mame_file *fp, int open_mode);
 
-extern READ_HANDLER  ( coleco_paddle_r );
-extern WRITE_HANDLER ( coleco_paddle_toggle_off );
-extern WRITE_HANDLER ( coleco_paddle_toggle_on );
+READ_HANDLER  ( coleco_paddle_r );
+WRITE_HANDLER ( coleco_paddle_toggle_off );
+WRITE_HANDLER ( coleco_paddle_toggle_on );
 
+#endif /* COLECO_H */

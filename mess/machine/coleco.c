@@ -11,11 +11,12 @@
 #include "driver.h"
 #include "vidhrdw/tms9928a.h"
 #include "includes/coleco.h"
+#include "devices/cartslot.h"
 #include "image.h"
 
 static int JoyMode=0;
 
-static int coleco_verify_cart (UINT8 *cartdata)
+int coleco_cart_verify(const UINT8 *cartdata, size_t size)
 {
 	int retval = IMAGE_VERIFY_FAIL;
 
@@ -28,36 +29,9 @@ static int coleco_verify_cart (UINT8 *cartdata)
 	return retval;
 }
 
-int coleco_init_cart (int id, mame_file *cartfile, int open_mode)
+int coleco_cart_load(int id, mame_file *cartfile, int open_mode)
 {
-	UINT8 *cartdata;
-	int init_result = INIT_FAIL;
-
-	/* A cartridge isn't strictly mandatory for the coleco */
-	if (cartfile == NULL)
-	{
-		logerror("Coleco - warning: no cartridge specified!\n");
-		return INIT_PASS;
-	}
-
-	/* Load the specified Cartridge File */
-
-	/* All seems OK */
-	cartdata = memory_region(REGION_CPU1) + 0x8000;
-	mame_fread (cartfile, cartdata, 0x8000);
-
-	/* Verify the cartridge image */
-	if (coleco_verify_cart(cartdata) == IMAGE_VERIFY_FAIL)
-	{
-		logerror("Coleco - Image verify FAIL\n");
-		init_result = INIT_FAIL;
-	}
-	else
-	{
-		logerror("Coleco - Image verify PASS\n");
-		init_result = INIT_PASS;
-	}
-	return init_result;
+	return cartslot_load_generic(cartfile, REGION_CPU1, 0x8000, 0x0001, 0x8000, 0);
 }
 
 

@@ -203,11 +203,10 @@ DRVLIBS = \
 	$(OBJ)/lynx.a     \
 	$(OBJ)/intv.a     \
 	$(OBJ)/cpschngr.a \
-	$(OBJ)/magnavox.a \
 	$(OBJ)/bally.a	  \
-#	$(OBJ)/svision.a  \
-#	$(OBJ)/coleco.a   \
-#	$(OBJ)/apf.a      \
+	$(OBJ)/svision.a  \
+	$(OBJ)/coleco.a   \
+	$(OBJ)/apf.a      \
 #	$(OBJ)/rca.a	  \
 #	$(OBJ)/teamconc.a \
 #	$(OBJ)/amiga.a    \

@@ -31,6 +31,9 @@ Source Changes:
 
 - Added a osd_image_load_status_changed() call, so that front ends can get
   notified when the load status of an image changes. [Nate Woods]
+  
+- Introduced a cartslot_load_generic() call, to make simple cartridge image
+  loading a bit simpler. [Nate Woods]
 
 - [Win32 GUI] Fixed a bug where screenshots with periods in them would not be
   loaded properly. [Nate Woods]
