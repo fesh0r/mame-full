@@ -2448,7 +2448,11 @@ static void UpdateStatusBar()
 	while (i != -1);
 
 	/* Show number of games in the current 'View' in the status bar */
+#ifdef MESS
+	sprintf(game_text, "%d systems", games_shown);
+#else
 	sprintf(game_text, "%d games", games_shown);
+#endif
 	SendMessage(hStatusBar, SB_SETTEXT, (WPARAM)2, (LPARAM)game_text);
 
 	i = GetSelectedPickItem();

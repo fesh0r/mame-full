@@ -329,8 +329,13 @@ void OptionsInit(int total_games)
 	settings.imgdir            = strdup("snap");
 	settings.cheatdir          = strdup("cheat");
 	settings.cheatfile         = strdup("cheat.dat");
+#ifdef MESS
+	settings.history_filename  = strdup("sysinfo.dat");
+	settings.mameinfo_filename = strdup("messinfo.dat");
+#else
 	settings.history_filename  = strdup("history.dat");
 	settings.mameinfo_filename = strdup("mameinfo.dat");
+#endif
 
 	settings.list_font.lfHeight         = -8;
 	settings.list_font.lfWidth          = 0;
