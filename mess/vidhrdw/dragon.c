@@ -418,8 +418,8 @@ static int coco3_calculate_rows(int *bordertop, int *borderbottom)
 		break;
 	case 3:
 		rows = 225;
-		t = 31;
-		b = 7;
+		t = 26;
+		b = 12;
 		break;
 	}
 

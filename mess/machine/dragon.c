@@ -131,6 +131,7 @@ static void coco3_setcartline(int data);
 #define LOG_OS9         0
 #define LOG_TIMER       0
 #define LOG_DEC_TIMER	0
+#define LOG_IRQ_RECALC	1
 #else /* !MAME_DEBUG */
 #define LOG_PAK			0
 #define LOG_CASSETTE	0
@@ -145,6 +146,7 @@ static void coco3_setcartline(int data);
 #define LOG_FLOPPY		0
 #define LOG_TIMER       0
 #define LOG_DEC_TIMER	0
+#define LOG_IRQ_RECALC	0
 #endif /* MAME_DEBUG */
 
 static void coco3_timer_hblank(void);
@@ -559,6 +561,11 @@ static void d_recalc_firq(void)
 
 static void coco3_recalc_irq(void)
 {
+#if LOG_IRQ_RECALC
+	logerror("coco3_recalc_irq(): gime_irq=%i pia0_irq_a=%i pia0_irq_b=%i (GIME IRQ %s)\n",
+		gime_irq, pia0_irq_a, pia0_irq_b, coco3_gimereg[0] & 0x20 ? "enabled" : "disabled");
+#endif
+
 	if ((coco3_gimereg[0] & 0x20) && gime_irq)
 		cpu_set_irq_line(0, M6809_IRQ_LINE, ASSERT_LINE);
 	else
@@ -675,7 +682,7 @@ WRITE_HANDLER( coco3_m6847_fs_w )
 #if LOG_VBORD
 	logerror("coco3_m6847_fs_w(): data=%i scanline=%i\n", data, rastertrack_scanline());
 #endif
-	pia_0_cb1_w(0, data);
+	pia_0_cb1_w(0, !data);
 	coco3_raise_interrupt(COCO3_INT_VBORD, !data);
 }
 
