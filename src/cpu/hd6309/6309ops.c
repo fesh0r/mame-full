@@ -14,7 +14,7 @@ HNZVC
 
 INLINE void illegal( void )
 {
-	logerror("HD6309: illegal opcode at %04x\nVectoring to [$fff0]\n",PC);
+	LOG(("HD6309: illegal opcode at %04x\nVectoring to [$fff0]\n",PC));
 
 	CC |= CC_E; 				/* save entire state */
 	PUSHWORD(pPC);
@@ -27,13 +27,12 @@ INLINE void illegal( void )
 	{
 		PUSHBYTE(F);
 		PUSHBYTE(E);
-		hd6309.extra_cycles += 2; /* subtract +2 cycles */
+		hd6309_ICount -= 2;
 	}
 
 	PUSHBYTE(B);
 	PUSHBYTE(A);
 	PUSHBYTE(CC);
-	hd6309.extra_cycles += 19;	/* subtract +19 cycles next time */
 
 	PCD = RM16(0xfff0);
 	CHANGE_PC;
@@ -296,7 +295,6 @@ INLINE void lbsr( void )
 
 /* $18 ILLEGAL */
 
-#if 1
 /* $19 DAA inherent (A) -**0* */
 INLINE void daa( void )
 {
@@ -311,20 +309,6 @@ INLINE void daa( void )
 	SET_NZ8((UINT8)t); SET_C8(t);
 	A = t;
 }
-#else
-/* $19 DAA inherent (A) -**0* */
-INLINE void daa( void )
-{
-	UINT16 t;
-	t = A;
-	if (CC & CC_H) t+=0x06;
-	if ((t&0x0f)>9) t+=0x06;		/* ASG -- this code is broken! $66+$99=$FF -> DAA should = $65, we get $05! */
-	if (CC & CC_C) t+=0x60;
-	if ((t&0xf0)>0x90) t+=0x60;
-	if (t&0x100) SEC;
-	A = t;
-}
-#endif
 
 /* $1A ORCC immediate ##### */
 INLINE void orcc( void )
@@ -1006,8 +990,6 @@ INLINE void tfmpp( void )
 	
 	if ( W != 0 )
 	{
-		
-
 		switch(tb>>4) {
 			case  0: srcValue = RM(D++); break;
 			case  1: srcValue = RM(X++); break;
@@ -1053,6 +1035,8 @@ INLINE void tfmpp( void )
 			W--;
 		}
 	}
+	else
+		hd6309_ICount -= 3;   /* Needs three aditional cycles  to get the 6+3n */
 }
 
 /* $1139 TFM R0-,R1- */
@@ -1110,6 +1094,8 @@ INLINE void tfmmm( void )
 			W--;
 		}
 	}
+	else
+		hd6309_ICount -= 3;   /* Needs three aditional cycles  to get the 6+3n */
 }
 
 /* $113A TFM R0+,R1 */
@@ -1167,6 +1153,8 @@ INLINE void tfmpc( void )
 			W--;
 		}
 	}
+	else
+		hd6309_ICount -= 3;   /* Needs three aditional cycles  to get the 6+3n */
 }
 
 /* $113B TFM R0,R1+ */
@@ -1224,6 +1212,8 @@ INLINE void tfmcp( void )
 			W--;
 		}
 	}
+	else
+		hd6309_ICount -= 3;   /* Needs three aditional cycles  to get the 6+3n */
 }
 
 /* $30 LEAX indexed --*-- */
@@ -1447,6 +1437,7 @@ INLINE void swi( void )
 	{
 		PUSHBYTE(F);
 		PUSHBYTE(E);
+		hd6309_ICount -= 2;
 	}
 	PUSHBYTE(B);
 	PUSHBYTE(A);
@@ -1621,6 +1612,7 @@ INLINE void swi2( void )
 	{
 		PUSHBYTE(F);
 		PUSHBYTE(E);
+		hd6309_ICount -= 2;
 	}
 	PUSHBYTE(B);
 	PUSHBYTE(A);
@@ -1642,6 +1634,7 @@ INLINE void swi3( void )
 	{
 		PUSHBYTE(F);
 		PUSHBYTE(E);
+		hd6309_ICount -= 2;
 	}
 	PUSHBYTE(B);
 	PUSHBYTE(A);
@@ -5266,140 +5259,149 @@ INLINE void pref10( void )
 {
 	UINT8 ireg2 = ROP(PCD);
 	PC++;
+
+#ifdef BIG_SWITCH
 	switch( ireg2 )
 	{
-		case 0x21: lbrn();		hd6309_ICount-=5;	break;
-		case 0x22: lbhi();		hd6309_ICount-=5;	break;
-		case 0x23: lbls();		hd6309_ICount-=5;	break;
-		case 0x24: lbcc();		hd6309_ICount-=5;	break;
-		case 0x25: lbcs();		hd6309_ICount-=5;	break;
-		case 0x26: lbne();		hd6309_ICount-=5;	break;
-		case 0x27: lbeq();		hd6309_ICount-=5;	break;
-		case 0x28: lbvc();		hd6309_ICount-=5;	break;
-		case 0x29: lbvs();		hd6309_ICount-=5;	break;
-		case 0x2a: lbpl();		hd6309_ICount-=5;	break;
-		case 0x2b: lbmi();		hd6309_ICount-=5;	break;
-		case 0x2c: lbge();		hd6309_ICount-=5;	break;
-		case 0x2d: lblt();		hd6309_ICount-=5;	break;
-		case 0x2e: lbgt();		hd6309_ICount-=5;	break;
-		case 0x2f: lble();		hd6309_ICount-=5;	break;
+		case 0x21: lbrn();			break;
+		case 0x22: lbhi();			break;
+		case 0x23: lbls();			break;
+		case 0x24: lbcc();			break;
+		case 0x25: lbcs();			break;
+		case 0x26: lbne();			break;
+		case 0x27: lbeq();			break;
+		case 0x28: lbvc();			break;
+		case 0x29: lbvs();			break;
+		case 0x2a: lbpl();			break;
+		case 0x2b: lbmi();			break;
+		case 0x2c: lbge();			break;
+		case 0x2d: lblt();			break;
+		case 0x2e: lbgt();			break;
+		case 0x2f: lble();			break;
 
-		case 0x30: addr_r();	hd6309_ICount-=4;	break;
-		case 0x31: adcr();		hd6309_ICount-=4;	break;
-		case 0x32: subr();		hd6309_ICount-=4;	break;
-		case 0x33: sbcr();		hd6309_ICount-=4;	break;
-		case 0x34: andr();		hd6309_ICount-=4;	break;
-		case 0x35: orr();		hd6309_ICount-=4;	break;
-		case 0x36: eorr();		hd6309_ICount-=4;	break;
-		case 0x37: cmpr();		hd6309_ICount-=4;	break;
-		case 0x38: pshsw(); 	hd6309_ICount-=6;	break;
-		case 0x39: pulsw(); 	hd6309_ICount-=6;	break;
-		case 0x3a: pshuw(); 	hd6309_ICount-=6;	break;
-		case 0x3b: puluw(); 	hd6309_ICount-=6;	break;
-		case 0x3f: swi2();		hd6309_ICount-=20;	break;
+		case 0x30: addr_r();		break;
+		case 0x31: adcr();			break;
+		case 0x32: subr();			break;
+		case 0x33: sbcr();			break;
+		case 0x34: andr();			break;
+		case 0x35: orr();			break;
+		case 0x36: eorr();			break;
+		case 0x37: cmpr();			break;
+		case 0x38: pshsw(); 		break;
+		case 0x39: pulsw(); 		break;
+		case 0x3a: pshuw(); 		break;
+		case 0x3b: puluw(); 		break;
+		case 0x3f: swi2();		    break;
 
-		case 0x40: negd();		hd6309_ICount-=3;	break;
-		case 0x43: comd();		hd6309_ICount-=3;	break;
-		case 0x44: lsrd();		hd6309_ICount-=3;	break;
-		case 0x46: rord();		hd6309_ICount-=3;	break;
-		case 0x47: asrd();		hd6309_ICount-=3;	break;
-		case 0x48: asld();		hd6309_ICount-=3;	break;
-		case 0x49: rold();		hd6309_ICount-=3;	break;
-		case 0x4a: decd();		hd6309_ICount-=3;	break;
-		case 0x4c: incd();		hd6309_ICount-=3;	break;
-		case 0x4d: tstd();		hd6309_ICount-=3;	break;
-		case 0x4f: clrd();		hd6309_ICount-=3;	break;
+		case 0x40: negd();			break;
+		case 0x43: comd();			break;
+		case 0x44: lsrd();			break;
+		case 0x46: rord();			break;
+		case 0x47: asrd();			break;
+		case 0x48: asld();			break;
+		case 0x49: rold();			break;
+		case 0x4a: decd();			break;
+		case 0x4c: incd();			break;
+		case 0x4d: tstd();			break;
+		case 0x4f: clrd();			break;
 
-		case 0x53: comw();		hd6309_ICount-=3;	break;
-		case 0x54: lsrw();		hd6309_ICount-=3;	break;
-		case 0x56: rorw();		hd6309_ICount-=3;	break;
-		case 0x59: rolw();		hd6309_ICount-=3;	break;
-		case 0x5a: decw();		hd6309_ICount-=3;	break;
-		case 0x5c: incw();		hd6309_ICount-=3;	break;
-		case 0x5d: tstw();		hd6309_ICount-=3;	break;
-		case 0x5f: clrw();		hd6309_ICount-=3;	break;
+		case 0x53: comw();			break;
+		case 0x54: lsrw();			break;
+		case 0x56: rorw();			break;
+		case 0x59: rolw();			break;
+		case 0x5a: decw();			break;
+		case 0x5c: incw();			break;
+		case 0x5d: tstw();			break;
+		case 0x5f: clrw();			break;
 
-		case 0x80: subw_im();	hd6309_ICount-=5;	break;
-		case 0x81: cmpw_im();	hd6309_ICount-=5;	break;
-		case 0x82: sbcd_im();	hd6309_ICount-=5;	break;
-		case 0x83: cmpd_im();	hd6309_ICount-=5;	break;
-		case 0x84: andd_im();	hd6309_ICount-=5;	break;
-		case 0x85: bitd_im();	hd6309_ICount-=5;	break;
-		case 0x86: ldw_im();	hd6309_ICount-=4;	break;
-		case 0x88: eord_im();	hd6309_ICount-=5;	break;
-		case 0x89: adcd_im();	hd6309_ICount-=5;	break;
-		case 0x8a: ord_im();	hd6309_ICount-=5;	break;
-		case 0x8b: addw_im();	hd6309_ICount-=5;	break;
-		case 0x8c: cmpy_im();	hd6309_ICount-=5;	break;
-		case 0x8e: ldy_im();	hd6309_ICount-=4;	break;
+		case 0x80: subw_im();		break;
+		case 0x81: cmpw_im();		break;
+		case 0x82: sbcd_im();		break;
+		case 0x83: cmpd_im();		break;
+		case 0x84: andd_im();		break;
+		case 0x85: bitd_im();		break;
+		case 0x86: ldw_im();		break;
+		case 0x88: eord_im();		break;
+		case 0x89: adcd_im();		break;
+		case 0x8a: ord_im();		break;
+		case 0x8b: addw_im();		break;
+		case 0x8c: cmpy_im();		break;
+		case 0x8e: ldy_im();		break;
 
-		case 0x90: subw_di();	hd6309_ICount-=7;	break;
-		case 0x91: cmpw_di();	hd6309_ICount-=7;	break;
-		case 0x92: sbcd_di();	hd6309_ICount-=7;	break;
-		case 0x93: cmpd_di();	hd6309_ICount-=7;	break;
-		case 0x94: andd_di();	hd6309_ICount-=7;	break;
-		case 0x95: bitd_di();	hd6309_ICount-=7;	break;
-		case 0x96: ldw_di();	hd6309_ICount-=6;	break;
-		case 0x97: stw_di();	hd6309_ICount-=6;	break;
-		case 0x98: eord_di();	hd6309_ICount-=7;	break;
-		case 0x99: adcd_di();	hd6309_ICount-=7;	break;
-		case 0x9a: ord_di();	hd6309_ICount-=7;	break;
-		case 0x9b: addw_di();	hd6309_ICount-=7;	break;
-		case 0x9c: cmpy_di();	hd6309_ICount-=7;	break;
-		case 0x9e: ldy_di();	hd6309_ICount-=6;	break;
-		case 0x9f: sty_di();	hd6309_ICount-=6;	break;
+		case 0x90: subw_di();		break;
+		case 0x91: cmpw_di();		break;
+		case 0x92: sbcd_di();		break;
+		case 0x93: cmpd_di();		break;
+		case 0x94: andd_di();		break;
+		case 0x95: bitd_di();		break;
+		case 0x96: ldw_di();		break;
+		case 0x97: stw_di();		break;
+		case 0x98: eord_di();		break;
+		case 0x99: adcd_di();		break;
+		case 0x9a: ord_di();		break;
+		case 0x9b: addw_di();		break;
+		case 0x9c: cmpy_di();		break;
+		case 0x9e: ldy_di();		break;
+		case 0x9f: sty_di();		break;
 
-		case 0xa0: subw_ix();	hd6309_ICount-=7;	break;
-		case 0xa1: cmpw_ix();	hd6309_ICount-=7;	break;
-		case 0xa2: sbcd_ix();	hd6309_ICount-=7;	break;
-		case 0xa3: cmpd_ix();	hd6309_ICount-=7;	break;
-		case 0xa4: andd_ix();	hd6309_ICount-=7;	break;
-		case 0xa5: bitd_ix();	hd6309_ICount-=7;	break;
-		case 0xa6: ldw_ix();	hd6309_ICount-=6;	break;
-		case 0xa7: stw_ix();	hd6309_ICount-=6;	break;
-		case 0xa8: eord_ix();	hd6309_ICount-=7;	break;
-		case 0xa9: adcd_ix();	hd6309_ICount-=7;	break;
-		case 0xaa: ord_ix();	hd6309_ICount-=7;	break;
-		case 0xab: addw_ix();	hd6309_ICount-=7;	break;
-		case 0xac: cmpy_ix();	hd6309_ICount-=7;	break;
-		case 0xae: ldy_ix();	hd6309_ICount-=6;	break;
-		case 0xaf: sty_ix();	hd6309_ICount-=6;	break;
+		case 0xa0: subw_ix();		break;
+		case 0xa1: cmpw_ix();		break;
+		case 0xa2: sbcd_ix();		break;
+		case 0xa3: cmpd_ix();		break;
+		case 0xa4: andd_ix();		break;
+		case 0xa5: bitd_ix();		break;
+		case 0xa6: ldw_ix();		break;
+		case 0xa7: stw_ix();		break;
+		case 0xa8: eord_ix();		break;
+		case 0xa9: adcd_ix();		break;
+		case 0xaa: ord_ix();		break;
+		case 0xab: addw_ix();		break;
+		case 0xac: cmpy_ix();		break;
+		case 0xae: ldy_ix();		break;
+		case 0xaf: sty_ix();		break;
 
-		case 0xb0: subw_ex();	hd6309_ICount-=8;	break;
-		case 0xb1: cmpw_ex();	hd6309_ICount-=8;	break;
-		case 0xb2: sbcd_ex();	hd6309_ICount-=8;	break;
-		case 0xb3: cmpd_ex();	hd6309_ICount-=8;	break;
-		case 0xb4: andd_ex();	hd6309_ICount-=8;	break;
-		case 0xb5: bitd_ex();	hd6309_ICount-=8;	break;
-		case 0xb6: ldw_ex();	hd6309_ICount-=7;	break;
-		case 0xb7: stw_ex();	hd6309_ICount-=7;	break;
-		case 0xb8: eord_ex();	hd6309_ICount-=8;	break;
-		case 0xb9: adcd_ex();	hd6309_ICount-=8;	break;
-		case 0xba: ord_ex();	hd6309_ICount-=8;	break;
-		case 0xbb: addw_ex();	hd6309_ICount-=8;	break;
-		case 0xbc: cmpy_ex();	hd6309_ICount-=8;	break;
-		case 0xbe: ldy_ex();	hd6309_ICount-=7;	break;
-		case 0xbf: sty_ex();	hd6309_ICount-=7;	break;
+		case 0xb0: subw_ex();		break;
+		case 0xb1: cmpw_ex();		break;
+		case 0xb2: sbcd_ex();		break;
+		case 0xb3: cmpd_ex();		break;
+		case 0xb4: andd_ex();		break;
+		case 0xb5: bitd_ex();		break;
+		case 0xb6: ldw_ex();		break;
+		case 0xb7: stw_ex();		break;
+		case 0xb8: eord_ex();		break;
+		case 0xb9: adcd_ex();		break;
+		case 0xba: ord_ex();		break;
+		case 0xbb: addw_ex();		break;
+		case 0xbc: cmpy_ex();		break;
+		case 0xbe: ldy_ex();		break;
+		case 0xbf: sty_ex();		break;
 
-		case 0xce: lds_im();	hd6309_ICount-=4;	break;
+		case 0xce: lds_im();		break;
 
-		case 0xdc: ldq_di();	hd6309_ICount-=8;	break;
-		case 0xdd: stq_di();	hd6309_ICount-=8;	break;
-		case 0xde: lds_di();	hd6309_ICount-=6;	break;
-		case 0xdf: sts_di();	hd6309_ICount-=6;	break;
+		case 0xdc: ldq_di();		break;
+		case 0xdd: stq_di();		break;
+		case 0xde: lds_di();		break;
+		case 0xdf: sts_di();		break;
 
-		case 0xec: ldq_ix();	hd6309_ICount-=8;	break;
-		case 0xed: stq_ix();	hd6309_ICount-=8;	break;
-		case 0xee: lds_ix();	hd6309_ICount-=6;	break;
-		case 0xef: sts_ix();	hd6309_ICount-=6;	break;
+		case 0xec: ldq_ix();		break;
+		case 0xed: stq_ix();		break;
+		case 0xee: lds_ix();		break;
+		case 0xef: sts_ix();		break;
 
-		case 0xfc: ldq_ex();	hd6309_ICount-=9;	break;
-		case 0xfd: stq_ex();	hd6309_ICount-=9;	break;
-		case 0xfe: lds_ex();	hd6309_ICount-=7;	break;
-		case 0xff: sts_ex();	hd6309_ICount-=7;	break;
+		case 0xfc: ldq_ex();		break;
+		case 0xfd: stq_ex();		break;
+		case 0xfe: lds_ex();		break;
+		case 0xff: sts_ex();		break;
 
-		default:   IIError();						break;
+		default:  IIError();        break;
 	}
+#else
+
+	(*hd6309_page01[ireg2])();
+
+#endif /* BIG_SWITCH */
+
+	hd6309_ICount -= cycle_counts_page01[ireg2];
 }
 
 /* $11xx opcodes */
@@ -5407,103 +5409,111 @@ INLINE void pref11( void )
 {
 	UINT8 ireg2 = ROP(PCD);
 	PC++;
+
+#ifdef BIG_SWITCH
 	switch( ireg2 )
 	{
-		case 0x30: band();		hd6309_ICount-=7;	break;
-		case 0x31: biand(); 	hd6309_ICount-=7;	break;
-		case 0x32: bor();		hd6309_ICount-=7;	break;
-		case 0x33: bior();		hd6309_ICount-=7;	break;
-		case 0x34: beor();		hd6309_ICount-=7;	break;
-		case 0x35: bieor(); 	hd6309_ICount-=7;	break;
-		case 0x36: ldbt();		hd6309_ICount-=7;	break;
-		case 0x37: stbt();		hd6309_ICount-=8;	break;
-		case 0x38: tfmpp(); 	hd6309_ICount-=3;	break;	/* Timing for TFM is actually 6+3n.       */
-		case 0x39: tfmmm(); 	hd6309_ICount-=3;	break;	/* To avoid saving the state, I decided   */
-		case 0x3a: tfmpc(); 	hd6309_ICount-=3;	break;	/* to ignore to initial 6 cycles.         */
-		case 0x3b: tfmcp(); 	hd6309_ICount-=3;	break;  /* We will soon see how this fairs!       */
-		case 0x3c: bitmd_im();	hd6309_ICount-=4;	break;
-		case 0x3d: ldmd_im();	hd6309_ICount-=5;	break;
-		case 0x3f: swi3();		hd6309_ICount-=20;	break;
+		case 0x30: band();			break;
+		case 0x31: biand(); 		break;
+		case 0x32: bor();			break;
+		case 0x33: bior();			break;
+		case 0x34: beor();			break;
+		case 0x35: bieor(); 		break;
+		case 0x36: ldbt();			break;
+		case 0x37: stbt();			break;
+		case 0x38: tfmpp(); 		break;	/* Timing for TFM is actually 6+3n.       */
+		case 0x39: tfmmm(); 		break;	/* To avoid saving the state, I decided   */
+		case 0x3a: tfmpc(); 		break;	/* to ignore to initial 6 cycles.         */
+		case 0x3b: tfmcp(); 		break;  /* We will soon see how this fairs!       */
+		case 0x3c: bitmd_im();		break;
+		case 0x3d: ldmd_im();		break;
+		case 0x3f: swi3();			break;
 
-		case 0x43: come();		hd6309_ICount-=3;	break;
-		case 0x4a: dece();		hd6309_ICount-=3;	break;
-		case 0x4c: ince();		hd6309_ICount-=3;	break;
-		case 0x4d: tste();		hd6309_ICount-=3;	break;
-		case 0x4f: clre();		hd6309_ICount-=3;	break;
+		case 0x43: come();			break;
+		case 0x4a: dece();			break;
+		case 0x4c: ince();			break;
+		case 0x4d: tste();			break;
+		case 0x4f: clre();			break;
 
-		case 0x53: comf();		hd6309_ICount-=3;	break;
-		case 0x5a: decf();		hd6309_ICount-=3;	break;
-		case 0x5c: incf();		hd6309_ICount-=3;	break;
-		case 0x5d: tstf();		hd6309_ICount-=3;	break;
-		case 0x5f: clrf();		hd6309_ICount-=3;	break;
+		case 0x53: comf();			break;
+		case 0x5a: decf();			break;
+		case 0x5c: incf();			break;
+		case 0x5d: tstf();			break;
+		case 0x5f: clrf();			break;
 
-		case 0x80: sube_im();	hd6309_ICount-=3;	break;
-		case 0x81: cmpe_im();	hd6309_ICount-=3;	break;
-		case 0x83: cmpu_im();	hd6309_ICount-=5;	break;
-		case 0x86: lde_im();	hd6309_ICount-=3;	break;
-		case 0x8b: adde_im();	hd6309_ICount-=3;	break;
-		case 0x8c: cmps_im();	hd6309_ICount-=5;	break;
-		case 0x8d: divd_im();	hd6309_ICount-=25;	break;
-		case 0x8e: divq_im();	hd6309_ICount-=34;	break;
-		case 0x8f: muld_im();	hd6309_ICount-=28;	break;
+		case 0x80: sube_im();		break;
+		case 0x81: cmpe_im();		break;
+		case 0x83: cmpu_im();		break;
+		case 0x86: lde_im();		break;
+		case 0x8b: adde_im();		break;
+		case 0x8c: cmps_im();		break;
+		case 0x8d: divd_im();		break;
+		case 0x8e: divq_im();		break;
+		case 0x8f: muld_im();		break;
 
-		case 0x90: sube_di();	hd6309_ICount-=5;	break;
-		case 0x91: cmpe_di();	hd6309_ICount-=5;	break;
-		case 0x93: cmpu_di();	hd6309_ICount-=7;	break;
-		case 0x96: lde_di();	hd6309_ICount-=5;	break;
-		case 0x97: ste_di();	hd6309_ICount-=5;	break;
-		case 0x9b: adde_di();	hd6309_ICount-=5;	break;
-		case 0x9c: cmps_di();	hd6309_ICount-=7;	break;
-		case 0x9d: divd_di();	hd6309_ICount-=27;	break;
-		case 0x9e: divq_di();	hd6309_ICount-=36;	break;
-		case 0x9f: muld_di();	hd6309_ICount-=30;	break;
+		case 0x90: sube_di();		break;
+		case 0x91: cmpe_di();		break;
+		case 0x93: cmpu_di();		break;
+		case 0x96: lde_di();		break;
+		case 0x97: ste_di();		break;
+		case 0x9b: adde_di();		break;
+		case 0x9c: cmps_di();		break;
+		case 0x9d: divd_di();		break;
+		case 0x9e: divq_di();		break;
+		case 0x9f: muld_di();		break;
 
-		case 0xa0: sube_ix();	hd6309_ICount-=5;	break;
-		case 0xa1: cmpe_ix();	hd6309_ICount-=5;	break;
-		case 0xa3: cmpu_ix();	hd6309_ICount-=7;	break;
-		case 0xa6: lde_ix();	hd6309_ICount-=5;	break;
-		case 0xa7: ste_ix();	hd6309_ICount-=5;	break;
-		case 0xab: adde_ix();	hd6309_ICount-=5;	break;
-		case 0xac: cmps_ix();	hd6309_ICount-=7;	break;
-		case 0xad: divd_ix();	hd6309_ICount-=27;	break;
-		case 0xae: divq_ix();	hd6309_ICount-=36;	break;
-		case 0xaf: muld_ix();	hd6309_ICount-=30;	break;
+		case 0xa0: sube_ix();		break;
+		case 0xa1: cmpe_ix();		break;
+		case 0xa3: cmpu_ix();		break;
+		case 0xa6: lde_ix();		break;
+		case 0xa7: ste_ix();		break;
+		case 0xab: adde_ix();		break;
+		case 0xac: cmps_ix();		break;
+		case 0xad: divd_ix();		break;
+		case 0xae: divq_ix();		break;
+		case 0xaf: muld_ix();		break;
 
-		case 0xb0: sube_ex();	hd6309_ICount-=6;	break;
-		case 0xb1: cmpe_ex();	hd6309_ICount-=6;	break;
-		case 0xb3: cmpu_ex();	hd6309_ICount-=8;	break;
-		case 0xb6: lde_ex();	hd6309_ICount-=6;	break;
-		case 0xb7: ste_ex();	hd6309_ICount-=6;	break;
-		case 0xbb: adde_ex();	hd6309_ICount-=6;	break;
-		case 0xbc: cmps_ex();	hd6309_ICount-=8;	break;
-		case 0xbd: divd_ex();	hd6309_ICount-=28;	break;
-		case 0xbe: divq_ex();	hd6309_ICount-=37;	break;
-		case 0xbf: muld_ex();	hd6309_ICount-=31;	break;
+		case 0xb0: sube_ex();		break;
+		case 0xb1: cmpe_ex();		break;
+		case 0xb3: cmpu_ex();		break;
+		case 0xb6: lde_ex();		break;
+		case 0xb7: ste_ex();		break;
+		case 0xbb: adde_ex();		break;
+		case 0xbc: cmps_ex();		break;
+		case 0xbd: divd_ex();		break;
+		case 0xbe: divq_ex();		break;
+		case 0xbf: muld_ex();		break;
 
-		case 0xc0: subf_im();	hd6309_ICount-=3;	break;
-		case 0xc1: cmpf_im();	hd6309_ICount-=3;	break;
-		case 0xc6: ldf_im();	hd6309_ICount-=3;	break;
-		case 0xcb: addf_im();	hd6309_ICount-=3;	break;
+		case 0xc0: subf_im();		break;
+		case 0xc1: cmpf_im();		break;
+		case 0xc6: ldf_im();		break;
+		case 0xcb: addf_im();		break;
 
-		case 0xd0: subf_di();	hd6309_ICount-=5;	break;
-		case 0xd1: cmpf_di();	hd6309_ICount-=5;	break;
-		case 0xd6: ldf_di();	hd6309_ICount-=5;	break;
-		case 0xd7: stf_di();	hd6309_ICount-=5;	break;
-		case 0xdb: addf_di();	hd6309_ICount-=5;	break;
+		case 0xd0: subf_di();		break;
+		case 0xd1: cmpf_di();		break;
+		case 0xd6: ldf_di();		break;
+		case 0xd7: stf_di();		break;
+		case 0xdb: addf_di();		break;
 
-		case 0xe0: subf_ix();	hd6309_ICount-=5;	break;
-		case 0xe1: cmpf_ix();	hd6309_ICount-=5;	break;
-		case 0xe6: ldf_ix();	hd6309_ICount-=5;	break;
-		case 0xe7: stf_ix();	hd6309_ICount-=5;	break;
-		case 0xeb: addf_ix();	hd6309_ICount-=5;	break;
+		case 0xe0: subf_ix();		break;
+		case 0xe1: cmpf_ix();		break;
+		case 0xe6: ldf_ix();		break;
+		case 0xe7: stf_ix();		break;
+		case 0xeb: addf_ix();		break;
 
-		case 0xf0: subf_ex();	hd6309_ICount-=6;	break;
-		case 0xf1: cmpf_ex();	hd6309_ICount-=6;	break;
-		case 0xf6: ldf_ex();	hd6309_ICount-=6;	break;
-		case 0xf7: stf_ex();	hd6309_ICount-=6;	break;
-		case 0xfb: addf_ex();	hd6309_ICount-=6;	break;
+		case 0xf0: subf_ex();		break;
+		case 0xf1: cmpf_ex();		break;
+		case 0xf6: ldf_ex();		break;
+		case 0xf7: stf_ex();		break;
+		case 0xfb: addf_ex();		break;
 
-		default:   IIError();						break;
+		default:   IIError();		break;
 	}
+#else
+
+	(*hd6309_page11[ireg2])();
+
+#endif /* BIG_SWITCH */
+	hd6309_ICount -= cycle_counts_page11[ireg2];
 }
 

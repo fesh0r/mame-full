@@ -71,8 +71,15 @@
 	Removed unused jmp/jsr _slap functions from 6809ops.c,
 	m6809_slapstick check moved into the opcode functions.
 
-00809 TJL:
+000809 TJL:
 	Started converting m6809 into hd6309
+	
+001217 TJL:
+	Finished:
+		All opcodes
+		Dual Timing
+	To Do:
+		Verify new DIV opcodes.
 
 *****************************************************************************/
 
@@ -89,11 +96,6 @@
 #define LOG(x)	logerror x
 #else
 #define LOG(x)
-#endif
-
-#if MAME_DEBUG
-#undef INLINE
-#define INLINE
 #endif
 
 #ifndef true
@@ -265,137 +267,12 @@ int hd6309_ICount=50000;
 #define SET_V8(a,b,r)	CC|=(((a^b^r^(r>>1))&0x80)>>6)
 #define SET_V16(a,b,r)	CC|=(((a^b^r^(r>>1))&0x8000)>>14)
 
-static UINT8 flags8i[256]=	 /* increment */
-{
-CC_Z,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-CC_N|CC_V,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,
-CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,
-CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,
-CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,
-CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,
-CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,
-CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,
-CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N
-};
-static UINT8 flags8d[256]= /* decrement */
-{
-CC_Z,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,CC_V,
-CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,
-CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,
-CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,
-CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,
-CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,
-CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,
-CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,
-CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N
-};
 #define SET_FLAGS8I(a)		{CC|=flags8i[(a)&0xff];}
 #define SET_FLAGS8D(a)		{CC|=flags8d[(a)&0xff];}
 
-#define II0E	19			/* Illegal instruction cycle count, page 0, emulate 6809 */
-#define II0N	21			/* Illegal instruction cycle count, page 0, native 6309 */
-
-
-static UINT8 ccounts_page0_em[256] = 
-{
-/*	         0xX0, 0xX1, 0xX2, 0xX3, 0xX4, 0xX5, 0xX6, 0xX7, 0xX8, 0xX9, 0xXA, 0xXB, 0xXC, 0xXD, 0xXE, 0xXF */
-/* 0x0X */     6,    6,    6,    6,    6,    6,    6,    6,    6,    6,    6,    6,    6,    6,    3,    6, 
-/* 0x1X */     0,    0,    2,    2,    4, II0E,    5,    9, II0E,    2,    3, II0E,    3,    2,    8,    6,
-/* 0x2X */     3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,
-/* 0x3X */     4,    4,    4,    4,    5,    5,    6,    5, II0E,    5,    3,    6,   22,   11, II0E,   19,
-/* 0x4X */     2, II0E, II0E,    2,    2, II0E,    2,    2,    2,    2,    2, II0E,    2,    2, II0E,    2,
-/* 0x5X */     2, II0E, II0E,    2,    2, II0E,    2,    2,    2,    2,    2, II0E,    2,    2, II0E,    2,
-/* 0x6X */     6,    7,    7,    6,    6,    7,    6,    6,    6,    6,    6,    7,    6,    6,    3,    6,
-/* 0x7X */     7,    7,    7,    7,    7,    7,    7,    7,    7,    7,    7,    7,    7,    7,    4,    7,
-/* 0x8X */     2,    2,    2,    4,    2,    2,    2, II0E,    2,    2,    2,    2,    4,    7,    3, II0E,
-/* 0x9X */     4,    4,    4,    6,    4,    4,    4,    4,    4,    4,    4,    4,    6,    7,    5,    5,
-/* 0xAX */     4,    4,    4,    6,    4,    4,    4,    4,    4,    4,    4,    4,    6,    7,    5,    5,
-/* 0xBX */     5,    5,    5,    7,    5,    5,    5,    5,    5,    5,    5,    5,    7,    8,    6,    6,
-/* 0xCX */     2,    2,    2,    4,    2,    2,    2, II0E,    2,    2,    2,    2,    3,    5,    3, II0E,
-/* 0xDX */     4,    4,    4,    6,    4,    4,    4,    4,    4,    4,    4,    4,    5,    5,    5,    5,
-/* 0xEX */     4,    4,    4,    6,    4,    4,    4,    4,    4,    4,    4,    4,    5,    5,    5,    5,
-/* 0xFX */     5,    5,    5,    7,    5,    5,    5,    5,    5,    5,    5,    5,    6,    6,    6,    6
-};
-
-static UINT8 ccounts_page0_na[256] = 
-{
-/*	         0xX0, 0xX1, 0xX2, 0xX3, 0xX4, 0xX5, 0xX6, 0xX7, 0xX8, 0xX9, 0xXA, 0xXB, 0xXC, 0xXD, 0xXE, 0xXF */
-/* 0x0X */     5,    6,    6,    5,    5,    6,    5,    5,    5,    5,    5,    6,    5,    4,    2,    5, 
-/* 0x1X */     0,    0,    1,    1,    4, II0N,    4,    7, II0N,    1,    2, II0N,    3,    1,    5,    4,
-/* 0x2X */     3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,
-/* 0x3X */     4,    4,    4,    4,    4,    4,    4,    4, II0N,    4,    1,    6,   20,   10, II0N,   21,
-/* 0x4X */     1, II0N, II0N,    1,    1, II0N,    1,    1,    1,    1,    1, II0N,    1,    1, II0N,    1,
-/* 0x5X */     1, II0N, II0N,    1,    1, II0N,    1,    1,    1,    1,    1, II0N,    1,    1, II0N,    1,
-/* 0x6X */     6,    7,    7,    6,    6,    7,    6,    6,    6,    6,    6,    7,    6,    5,    3,    6,
-/* 0x7X */     6,    7,    7,    6,    6,    7,    6,    6,    6,    6,    6,    7,    6,    5,    3,    6,
-/* 0x8X */     2,    2,    2,    3,    2,    2,    2, II0N,    2,    2,    2,    2,    3,    6,    3, II0N,
-/* 0x9X */     3,    3,    3,    4,    3,    3,    3,    3,    3,    3,    3,    3,    4,    6,    4,    4,
-/* 0xAX */     4,    4,    4,    5,    4,    4,    4,    4,    4,    4,    4,    4,    5,    6,    5,    5,
-/* 0xBX */     4,    4,    4,    5,    4,    4,    4,    4,    4,    4,    4,    4,    5,    7,    5,    5,
-/* 0xCX */     2,    2,    2,    3,    2,    2,    2, II0N,    2,    2,    2,    2,    3,    5,    3, II0N,
-/* 0xDX */     3,    3,    3,    4,    3,    3,    3,    3,    3,    3,    3,    3,    4,    4,    4,    4,
-/* 0xEX */     4,    4,    4,    5,    4,    4,    4,    4,    4,    4,    4,    4,    5,    5,    5,    5,
-/* 0xFX */     4,    4,    4,    5,    4,    4,    4,    4,    4,    4,    4,    4,    5,    5,    5,    5
-};
-
 static UINT8 *cycle_counts_page0;
-
-static UINT8 index_cycle_em[256] = {
-/*	         0xX0, 0xX1, 0xX2, 0xX3, 0xX4, 0xX5, 0xX6, 0xX7, 0xX8, 0xX9, 0xXA, 0xXB, 0xXC, 0xXD, 0xXE, 0xXF */
-
-/* 0x0X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x1X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x2X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x3X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x4X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x5X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x6X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x7X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x8X */      2,    3,    2,    3,    0,    1,    1,    1,    1,    4,    1,    4,    1,    5,    4,    0,
-/* 0x9X */      3,    6,    5,    6,    3,    4,    4,    4,    4,    7,    4,    7,    4,    8,    7,    5,
-/* 0xAX */      2,    3,    2,    3,    0,    1,    1,    1,    1,    4,    1,    4,    1,    5,    4,    5,
-/* 0xBX */      5,    6,    5,    6,    3,    4,    4,    4,    4,    7,    4,    7,    4,    8,    7,    8,
-/* 0xCX */      2,    3,    2,    3,    0,    1,    1,    1,    1,    4,    1,    4,    1,    5,    4,    3,
-/* 0xDX */      4,    6,    5,    6,    3,    4,    4,    4,    4,    7,    4,    7,    4,    8,    7,    8,
-/* 0xEX */      2,    3,    2,    3,    0,    1,    1,    1,    1,    4,    1,    4,    1,    5,    4,    3,
-/* 0xFX */      4,    6,    5,    6,    3,    4,    4,    4,    4,    7,    4,    7,    4,    8,    7,    8
-};
-
-static UINT8 index_cycle_na[256] = {
-/*	         0xX0, 0xX1, 0xX2, 0xX3, 0xX4, 0xX5, 0xX6, 0xX7, 0xX8, 0xX9, 0xXA, 0xXB, 0xXC, 0xXD, 0xXE, 0xXF */
-
-/* 0x0X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x1X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x2X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x3X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x4X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x5X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x6X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x7X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x8X */      1,    2,    1,    3,    0,    1,    1,    1,    1,    3,    1,    2,    1,    3,    1,    0,
-/* 0x9X */      3,    5,    4,    5,    3,    4,    4,    4,    4,    5,    4,    7,    4,    6,    5,    5,
-/* 0xAX */      1,    2,    1,    2,    0,    1,    1,    1,    1,    3,    1,    2,    1,    3,    1,    2,
-/* 0xBX */      5,    5,    4,    5,    3,    4,    4,    4,    4,    7,    4,    5,    4,    6,    4,    7,
-/* 0xCX */      1,    2,    1,    2,    0,    1,    1,    1,    1,    3,    1,    2,    1,    3,    1,    1,
-/* 0xDX */      4,    5,    4,    5,    3,    4,    4,    4,    4,    7,    4,    5,    4,    6,    4,    7,
-/* 0xEX */      1,    2,    1,    2,    0,    1,    1,    1,    1,    3,    1,    2,    1,    3,    1,    1,
-/* 0xFX */      4,    5,    4,    5,    3,    4,    4,    4,    4,    7,    4,    5,    4,    6,    4,    7
-};
-
+static UINT8 *cycle_counts_page01;
+static UINT8 *cycle_counts_page11;
 static UINT8 *index_cycle;
 
 /* combos */
@@ -446,6 +323,9 @@ static UINT8 *index_cycle;
 #define EXTBYTE(b) {EXTENDED;b=RM(EAD);}
 #define EXTWORD(w) {EXTENDED;w.d=RM16(EAD);}
 #define EXTLONG(lng) {EXTENDED;lng.w.h=RM16(EAD);lng.w.l=RM16(EAD+2);}
+
+/* includes the static function prototypes and other tables */
+#include "6309tbl.c"
 
 /* macros for branch instructions */
 #define BRANCH(f) { 					\
@@ -507,13 +387,17 @@ void UpdateState( void )
 {
 	if ( hd6309.md & MD_EM )
 	{
-		cycle_counts_page0 = ccounts_page0_na;
-		index_cycle        = index_cycle_na;
+		cycle_counts_page0  = ccounts_page0_na;
+		cycle_counts_page01 = ccounts_page01_na;
+		cycle_counts_page11 = ccounts_page11_na;
+		index_cycle         = index_cycle_na;
 	}
 	else
 	{
-		cycle_counts_page0 = ccounts_page0_em;
-		index_cycle        = index_cycle_em;
+		cycle_counts_page0  = ccounts_page0_em;
+		cycle_counts_page01 = ccounts_page01_em;
+		cycle_counts_page11 = ccounts_page11_em;
+		index_cycle         = index_cycle_em;
 	}
 }
 
@@ -895,7 +779,7 @@ const char *hd6309_info(void *context, int regnum)
 		case CPU_INFO_WIN_LAYOUT: return (const char*)hd6309_win_layout;
 
 		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c (MD:%c%c%c%c%c%c%c%c)",
+			sprintf(buffer[which], "%c%c%c%c%c%c%c%c (MD:%c%c%c%c)",
 				r->cc & 0x80 ? 'E':'.',
 				r->cc & 0x40 ? 'F':'.',
 				r->cc & 0x20 ? 'H':'.',
@@ -907,17 +791,13 @@ const char *hd6309_info(void *context, int regnum)
 
 				r->md & 0x80 ? 'E':'e',
 				r->md & 0x40 ? 'F':'f',
-				r->md & 0x20 ? '.':'.',
-				r->md & 0x10 ? '.':'.',
-				r->md & 0x08 ? '.':'.',
-				r->md & 0x04 ? '.':'.',
 				r->md & 0x02 ? 'I':'i',
 				r->md & 0x01 ? 'Z':'z');
 			break;
 		case CPU_INFO_REG+HD6309_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
 		case CPU_INFO_REG+HD6309_S: sprintf(buffer[which], "S:%04X", r->s.w.l); break;
 		case CPU_INFO_REG+HD6309_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
-		case CPU_INFO_REG+HD6309_MD: sprintf(buffer[which], "MD:%02X", r->md); UpdateState(); break;
+		case CPU_INFO_REG+HD6309_MD: sprintf(buffer[which], "MD:%02X", r->md); break;
 		case CPU_INFO_REG+HD6309_U: sprintf(buffer[which], "U:%04X", r->u.w.l); break;
 		case CPU_INFO_REG+HD6309_A: sprintf(buffer[which], "A:%02X", r->d.b.h); break;
 		case CPU_INFO_REG+HD6309_B: sprintf(buffer[which], "B:%02X", r->d.b.l); break;
@@ -943,9 +823,6 @@ unsigned hd6309_dasm(char *buffer, unsigned pc)
 	return 1;
 #endif
 }
-
-/* includes the static function prototypes and the master opcode table */
-#include "6309tbl.c"
 
 /* includes the actual opcode implementations */
 #include "6309ops.c"
@@ -1233,7 +1110,7 @@ int hd6309_execute(int cycles)	/* NS 970908 */
 			}
 #else
 			(*hd6309_main[hd6309.ireg])();
-#endif
+#endif    /* BIG_SWITCH */
 
 			hd6309_ICount -= cycle_counts_page0[hd6309.ireg];
 				
