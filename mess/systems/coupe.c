@@ -28,18 +28,6 @@ Changes:
 #include "vidhrdw/generic.h"
 #include "includes/coupe.h"
 
-void coupe_init_machine(void);
-void coupe_shutdown_machine(void);
-int coupe_vh_start(void);
-void coupe_vh_stop(void);
-void coupe_eof_callback(void);
-void coupe_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-
-void drawMode1_line(struct osd_bitmap *,int);
-void drawMode2_line(struct osd_bitmap *,int);
-void drawMode3_line(struct osd_bitmap *,int);
-void drawMode4_line(struct osd_bitmap *,int);
-
 static struct MemoryReadAddress coupe_readmem[] = {
 	{ 0x0000, 0x3FFF, MRA_BANK1 },
 	{ 0x4000, 0x7FFF, MRA_BANK2 },

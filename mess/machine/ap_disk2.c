@@ -258,7 +258,7 @@ static int ReadByte(int drive)
 /***************************************************************************
   apple2_c0xx_slot6_r
 ***************************************************************************/
-int apple2_c0xx_slot6_r(int offset)
+READ_HANDLER ( apple2_c0xx_slot6_r )
 {
 	int cur_drive;
 	int phase;
@@ -366,7 +366,7 @@ int apple2_c0xx_slot6_r(int offset)
 /***************************************************************************
   apple2_c0xx_slot6_w
 ***************************************************************************/
-void apple2_c0xx_slot6_w(int offset, int data)
+WRITE_HANDLER (  apple2_c0xx_slot6_w )
 {
 	switch (offset)
 	{
@@ -386,7 +386,7 @@ void apple2_c0xx_slot6_w(int offset, int data)
 /***************************************************************************
   apple2_slot6_w
 ***************************************************************************/
-void apple2_slot6_w(int offset, int data)
+WRITE_HANDLER (  apple2_slot6_w )
 {
 	return;
 }

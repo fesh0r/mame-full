@@ -13,10 +13,6 @@ unsigned char *apple2_lores_text2_ram;
 unsigned char *apple2_hires1_ram;
 unsigned char *apple2_hires2_ram;
 
-extern APPLE2_STRUCT a2;
-
-void apple2_vh_stop(void);
-
 /* temp bitmaps for quicker blitting */
 static struct osd_bitmap *apple2_text[2];
 static struct osd_bitmap *apple2_lores[2];

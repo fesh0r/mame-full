@@ -52,3 +52,18 @@ extern unsigned char Dsk_Sector;
 
 void coupe_update_memory(void);
 int coupe_fdc_init(int);
+
+
+
+void coupe_init_machine(void);
+void coupe_shutdown_machine(void);
+int coupe_vh_start(void);
+void coupe_vh_stop(void);
+void coupe_eof_callback(void);
+void coupe_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+
+void drawMode1_line(struct osd_bitmap *,int);
+void drawMode2_line(struct osd_bitmap *,int);
+void drawMode3_line(struct osd_bitmap *,int);
+void drawMode4_line(struct osd_bitmap *,int);
+
