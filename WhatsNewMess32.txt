@@ -1,6 +1,12 @@
 Whats new:
 
 ----------
+0.37 BETA 10
+------------
+
+- Updated MESS32 to use makefile.vc as per MAME32 [Nate Woods]
+
+----------
 0.37 BETA 9
 ------------
 
