@@ -1498,7 +1498,8 @@ static void msx_cart_write (int cart, int offset, int data)
         cpu_setbank (4,msx1.cart[cart].mem + (n + 1) * 0x2000);
         break;
     case 13: /* Konami Synthesizer */
-        if (!offset) DAC_data_w (0, data);
+		if ( (offset < 0x4000) && !(offset & 0x0010) )
+			DAC_data_w (0, data);
         break;
 	case 15: /* disk rom */
 		if ( (offset >= 0x2000) && (offset < 0x4000) )
