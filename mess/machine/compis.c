@@ -53,8 +53,8 @@ struct timer_state
 	UINT16	maxA;
 	UINT16	maxB;
 	UINT16	count;
-	void *	int_timer;
-	void *	time_timer;
+	mame_timer *	int_timer;
+	mame_timer *	time_timer;
 	UINT8	time_timer_active;
 	double	last_time;
 };
@@ -66,7 +66,7 @@ struct dma_state
 	UINT16	count;
 	UINT16	control;
 	UINT8	finished;
-	void *	finish_timer;
+	mame_timer *	finish_timer;
 };
 
 struct intr_state

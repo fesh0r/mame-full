@@ -86,7 +86,7 @@ typedef struct tms5501_t
 
 	/* internal timers */
 	UINT8 timer_counter[5];
-	void * timer[5];
+	mame_timer * timer[5];
 	double clock_rate;
 } tms5501_t;
 

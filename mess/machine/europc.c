@@ -225,7 +225,7 @@ static struct {
 	UINT8 data[0x10];
 	int reg;
 	int state;
-	void *timer;
+	mame_timer *timer;
 } europc_rtc;
 
 void europc_rtc_set_time(void)

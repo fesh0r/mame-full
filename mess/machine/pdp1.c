@@ -87,7 +87,7 @@ typedef struct tape_reader_t
 	int rby;		/* 1-bit reader binary mode flip-flop */
 	int rcp;		/* 1-bit reader "need a completion pulse" flip-flop */
 
-	void *timer;	/* timer to simulate reader timing */
+	mame_timer *timer;	/* timer to simulate reader timing */
 } tape_reader_t;
 
 static tape_reader_t tape_reader;
@@ -98,7 +98,7 @@ typedef struct tape_puncher_t
 {
 	mame_file *fd;	/* file descriptor of tape image */
 
-	void *timer;	/* timer to generate completion pulses */
+	mame_timer *timer;	/* timer to generate completion pulses */
 } tape_puncher_t;
 
 static tape_puncher_t tape_puncher;
@@ -111,14 +111,14 @@ typedef struct typewriter_t
 
 	int tb;			/* typewriter buffer */
 
-	void *tyo_timer;/* timer to generate completion pulses */
+	mame_timer *tyo_timer;/* timer to generate completion pulses */
 } typewriter_t;
 
 static typewriter_t typewriter;
 
 
 /* crt display timer */
-static void *dpy_timer;
+static mame_timer *dpy_timer;
 
 /* light pen config */
 static lightpen_t lightpen;

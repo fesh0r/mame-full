@@ -24,7 +24,7 @@ unsigned char vectrex_via_out[2];
 UINT32 vectrex_beam_color = WHITE;	   /* the color of the vectrex beam */
 int vectrex_imager_status = 0;	   /* 0 = off, 1 = right eye, 2 = left eye */
 double imager_freq;
-void *imager_timer;
+mame_timer *imager_timer;
 
 /*********************************************************************
   Local variables

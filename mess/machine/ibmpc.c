@@ -196,7 +196,7 @@ WRITE_HANDLER ( pc_ppi_portc_w )
 // will do more when I have a program supporting it
 static struct {
 	int data[0x18];
-	void *timer;
+	mame_timer *timer;
 } pc_rtc;
 
 static void pc_rtc_timer(int param)

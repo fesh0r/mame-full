@@ -1352,8 +1352,8 @@ static void d_sam_set_memorysize(int val)
 ***************************************************************************/
 
 static double coco3_timer_counterbase;
-static void *coco3_timer_counter;
-static void *coco3_timer_fallingedge;
+static mame_timer *coco3_timer_counter;
+static mame_timer *coco3_timer_fallingedge;
 static int coco3_timer_interval;	/* interval: 1=280 nsec, 0=63.5 usec */
 static int coco3_timer_value;
 static int coco3_timer_base;
