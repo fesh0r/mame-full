@@ -12,7 +12,7 @@
 #define __SVGAFX_C
 
 #include <vga.h>
-#include <glide.h>
+#include "fxcompat.h"
 #include "xmame.h"
 #include "svgainput.h"
 
@@ -55,12 +55,12 @@ void sysdep_close(void)
 
 static void release_function(void)
 {
-   grSstControl(GR_CONTROL_DEACTIVATE);
+   grEnablePassThru();
 }
 
 static void acquire_function(void)
 {
-   grSstControl(GR_CONTROL_ACTIVATE);
+   grDisablePassThru();
 }
 
 /* This name doesn't really cover this function, since it also sets up mouse
