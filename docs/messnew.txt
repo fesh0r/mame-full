@@ -24,6 +24,9 @@ System Driver Changes:
 - [TELMAC] Fixed a crash regression introduced in the 0.93 MAME core update.
   (bug #671) [Nate Woods]
 
+- [TI990_10] Fixed a crash regression introduced in the 0.93 MAME core update.
+  [Nate Woods]
+
 
 
 User Interface Changes:
