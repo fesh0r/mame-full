@@ -326,21 +326,10 @@ static void InitMessPicker()
 		SetMessColumnShown(shown);
 	}
 
-	/* Create IconsList for ListView Control
-	 *
-	 * Note that CreateIcons() overrides the hLarge and hSmall globals, so we
-	 * have to use this hack to preserve them
-	 */
-	{
-		HIMAGELIST hOldLarge, hOldSmall;
-		hOldLarge = hLarge;
-		hOldSmall = hSmall;
+	/* Create IconsList for ListView Control */
+	ListView_SetImageList (hwndSoftware, hSmall, LVSIL_SMALL);
+	ListView_SetImageList (hwndSoftware, hLarge, LVSIL_NORMAL);
 
-		CreateIcons(hwndSoftware);
-
-		hLarge = hOldLarge;
-		hSmall = hOldSmall;
-	}
 	GetMessColumnOrder(messRealColumn);
 
 	ResetMessColumnDisplay(TRUE);
