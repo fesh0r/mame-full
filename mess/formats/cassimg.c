@@ -14,6 +14,8 @@
 #include "utils.h"
 #include "pool.h"
 
+/* debugging parameters */
+#define LOG_PUT_SAMPLES			0
 #define DUMP_CASSETTES			0
 
 #define SAMPLES_PER_BLOCK		0x40000
@@ -273,7 +275,6 @@ static casserr_t cassette_perform_save(cassette_image *cassette)
 casserr_t cassette_save(cassette_image *cassette)
 {
 	casserr_t err;
-	struct CassetteInfo info;
 
 	if (!cassette->format || !cassette->format->save)
 		return CASSETTE_ERROR_UNSUPPORTED;
@@ -375,7 +376,8 @@ static casserr_t compute_manipulation_ranges(cassette_image *cassette, int chann
 	}
 
 	ranges->sample_first = (size_t) (time_index * cassette->sample_frequency);
-	ranges->sample_last = ranges->sample_first - 1 + ((size_t) (sample_period * cassette->sample_frequency));
+	ranges->sample_last = ((size_t) ((time_index + sample_period) * cassette->sample_frequency)) - 1;
+//	ranges->sample_last = ranges->sample_first - 1 + ((size_t) (sample_period * cassette->sample_frequency));
 	return CASSETTE_ERROR_SUCCESS;
 }
 
@@ -526,6 +528,12 @@ casserr_t cassette_put_samples(cassette_image *cassette, int channel,
 	if (cassette->sample_count < ranges.sample_last+1)
 		cassette->sample_count = ranges.sample_last + 1;
 	cassette->flags |= CASSETTE_FLAG_DIRTY;
+
+#if LOG_PUT_SAMPLES
+	logerror("cassette_put_samples(): Putting samples TIME=[%2.6g..%2.6g] INDEX=[%i..%i]\n",
+		time_index,				time_index + sample_period,
+		ranges.sample_first,	ranges.sample_last);
+#endif
 
 	for (sample_index = ranges.sample_first; sample_index <= ranges.sample_last; sample_index++)
 	{
