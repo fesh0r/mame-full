@@ -81,7 +81,7 @@ static int decode_ftr(struct rc_option *option, const char *arg, int priority);
 static void change_debugger_focus(int new_debugger_focus);
 static void update_debug_display(struct mame_display *display);
 static void osd_free_colors(void);
-static void round_rectangle_to_8(struct rectangle *rect);
+static void round_rectangle_to_long(struct rectangle *rect);
 static void update_visible_area(struct mame_display *display);
 static void update_palette(struct mame_display *display, int force_dirty);
 
@@ -507,17 +507,24 @@ int osd_create_display(const struct osd_create_params *params,
 		}
 	}
 
+	normal_visual.min_x = 0;
+	normal_visual.min_y = 0;
 	if (blit_swapxy && !blit_hardware_rotation)
 	{
-		visual_width	= video_width	= params->height;
-		visual_height	= video_height	= params->width;
+		normal_visual.max_x = params->height - 1;
+		normal_visual.max_y = params->width - 1;
 	}
 	else
 	{
-		visual_width	= video_width	= params->width;
-		visual_height	= video_height	= params->height;
+		normal_visual.max_x = params->width - 1;
+		normal_visual.max_y = params->height - 1;
 	}
 
+	/* Round to sizeof(long). */
+	round_rectangle_to_long(&normal_visual);
+
+	visual_width	= video_width	= normal_visual.max_x - normal_visual.min_x + 1;
+	visual_height	= video_height	= normal_visual.max_y - normal_visual.min_y + 1;
 	video_depth = (params->depth == 15) ? 16 : params->depth;
 	video_real_depth = params->depth;
 
@@ -692,22 +699,24 @@ static void change_display_settings(struct rectangle *new_visual,
 	}
 }
 
-static void round_rectangle_to_8(struct rectangle *rect)
+static void round_rectangle_to_long(struct rectangle *rect)
 {
-	if (rect->min_x & 7)
+	int odd_bits = sizeof(long) - 1;
+	int threshold = sizeof(long) / 2;
+	if (rect->min_x & odd_bits)
 	{
-		if ((rect->min_x - (rect->min_x & ~7)) < 4)
-			rect->min_x &= ~7;
+		if ((rect->min_x - (rect->min_x & ~odd_bits)) < threshold)
+			rect->min_x &= ~odd_bits;
 		else
-			rect->min_x = (rect->min_x + 7) & ~7;
+			rect->min_x = (rect->min_x + odd_bits) & ~odd_bits;
 	}
 
-	if ((rect->max_x + 1) & 7)
+	if ((rect->max_x + 1) & odd_bits)
 	{
-		if (((rect->max_x + 1) - ((rect->max_x + 1) & ~7)) > 4)
-			rect->max_x = ((rect->max_x + 1 + 7) & ~7) - 1;
+		if (((rect->max_x + 1) - ((rect->max_x + 1) & ~odd_bits)) > threshold)
+			rect->max_x = ((rect->max_x + 1 + odd_bits) & ~odd_bits) - 1;
 		else
-			rect->max_x = ((rect->max_x + 1) & ~7) - 1;
+			rect->max_x = ((rect->max_x + 1) & ~odd_bits) - 1;
 	}
 }
 
@@ -728,11 +737,8 @@ static void update_visible_area(struct mame_display *display)
 
 	orient_rect(&normal_visual);
 
-	/*
-	 * round to 8, since the new dirty code works with 8x8 blocks,
-	 * and we need to round to sizeof(long) for the long copies anyway
-	 */
-	round_rectangle_to_8(&normal_visual);
+	/* Round to sizeof(long). */
+	round_rectangle_to_long(&normal_visual);
 
 	if (!debugger_has_focus)
 		change_display_settings(&normal_visual, normal_palette,
