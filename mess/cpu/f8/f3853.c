@@ -16,7 +16,7 @@
   and placing their bytes to the databus!
 */
 
-/* 
+/*
    8 bit shift register
    feedback in0 = not ( (out3 xor out4) xor (out5 xor out7) )
    interrupt at 0xfe
@@ -75,7 +75,7 @@ void f3853_init(F3853_CONFIG *config)
     int i;
 
     for (i=254/*known to get 0xfe after 255 cycles*/; i>=0; i--) {
-	bool o7=reg&0x80?true:false, o5=reg&0x20?true:false, 
+	bool o7=reg&0x80?true:false, o5=reg&0x20?true:false,
 	    o4=reg&0x10?true:false, o3=reg&8?true:false;
 	f3853_value_to_cycle[reg]=i;
 	reg<<=1;
@@ -134,13 +134,13 @@ WRITE_HANDLER(f3853_w)
 	f3853.low=data;
 	break;
     case 2: //interrupt control
-	f3853.external_enable=data&3==1;
-	f3853.timer_enable=data&3==3;
+	f3853.external_enable = ((data&3)==1);
+	f3853.timer_enable = ((data&3)==3);
 	f3853_set_interrupt_request_line();
 	break;
     case 3: //timer
 	f3853.request_flipflop=false;
-	f3853_set_interrupt_request_line();	
+	f3853_set_interrupt_request_line();
 	if (f3853.timer!=0) timer_remove(f3853.timer);
 	f3853.timer=0;
 	if (data!=0xff) {
