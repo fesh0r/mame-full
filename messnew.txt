@@ -8,6 +8,7 @@ Note: .inp record/playback does still not work currently.
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - Atari Lynx (preliminary) [PeT]
+- KC85/3 (preliminary) [Kev Thacker]
 
 System Driver Changes:
 ----------------------
@@ -16,12 +17,20 @@ System Driver Changes:
 Seperated machine/kc.c into machine/kc.c and systems/kc.c.
 Merged all headers into includes/kc.h, and added all defines here.
 Cleaned up some of the code, and made sure allocated memory was free'd properly.
+Implemented preliminary tape reading using ".wav". Implemented preliminary
+sound emulation. Added IO_QUICKLOAD to load ".kcc" and binary files with 128 byte
+header. Load the file then type MENU and it should appear in the list, now you
+can type the name of the program to run it.
 [Kev Thacker]
 
+Other Changes:
+--------------
 
+- The core is based on MAME 0.37??. This incorporates all 
+  features of the update to this core.  [MAME team] 
  
 - [src/machine/z80fmly] Added support for BSTB and ASTB inputs for Z80 PIO.
-These are required by KC85/4 system. Added code to execute callback for 
+These are required by KC85/4 and KC85/3 systems. Added code to execute callback for 
 BRDY and ARDY outputs. [Kev Thacker]
 
 -------------------------------------------------------------------------------  
