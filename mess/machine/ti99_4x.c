@@ -97,6 +97,8 @@ static void ti99_CS_motor(int offset, int data);
 static void ti99_audio_gate(int offset, int data);
 static void ti99_CS_output(int offset, int data);
 
+static void ti99_8_internal_dsr_init(void);
+
 static void ti99_4p_internal_dsr_init(void);
 static void ti99_TIxram_init(void);
 static void ti99_sAMSxram_init(void);
@@ -762,11 +764,11 @@ void machine_init_ti99(void)
 	/* set up optional expansion hardware */
 	ti99_peb_init(ti99_model == model_99_4p, tms9901_set_int1, NULL);
 
+	if (ti99_model == model_99_8)
+		ti99_8_internal_dsr_init();
+
 	if (ti99_model == model_99_4p)
 		ti99_4p_internal_dsr_init();
-
-	/*if (ti99_model == model_99_8)
-		ti99_8_internal_dsr_init();*/
 
 	if (has_speech)
 	{
@@ -2022,11 +2024,13 @@ KNOWN PROBLEMS:
 	the pending interrupt (or am I wrong once again ?).
 
 nota:
-	All interrupt routines notify (by software) the TMS9901 of interrupt recognition ("SBO n").
-	However, AFAIK, this has strictly no consequence in the TMS9901, and interrupt routines
-	would work fine without this (except probably TIMER interrupt).  All this is quite weird.
-	Maybe the interrupt recognition notification is needed on TMS9985, or any other weird
-	variant of TMS9900 (TI990/10 with TI99 development system?).
+	All interrupt routines notify (by software) the TMS9901 of interrupt
+	recognition (with a "SBO n").  However, unless I am missing something, this
+	has absolutely no consequence on the TMS9901 (except for the TIMER
+	interrupt routine), and interrupt routines would work fine without this
+	SBO instruction.  This is quite weird.  Maybe the interrupt recognition
+	notification is needed on TMS9985, or any other weird variant of TMS9900
+	(how about the TI-99 development system connected to a TI990/10?).
 */
 
 /*
@@ -2303,7 +2307,65 @@ static void ti99_audio_gate(int offset, int data)
 static void ti99_CS_output(int offset, int data)
 {
 	device_output(image_from_devtype_and_index(IO_CASSETTE, 0), data ? 32767 : -32767);
-	device_output(image_from_devtype_and_index(IO_CASSETTE, 1), data ? 32767 : -32767);
+	if (ti99_model != model_99_8)	/* 99/8 only has one tape port!!! */
+		device_output(image_from_devtype_and_index(IO_CASSETTE, 1), data ? 32767 : -32767);
+}
+
+
+
+/*===========================================================================*/
+#if 0
+#pragma mark -
+#pragma mark 99/8 INTERNAL DSR
+#endif
+/*
+	TI 99/8 internal DSR support.
+
+	Includes a few specific signals, and an extra ROM.
+*/
+
+/* prototypes */
+static void ti99_8_internal_dsr_cru_w(int offset, int data);
+static READ_HANDLER(ti99_8_rw_internal_dsr);
+
+
+static const ti99_peb_card_handlers_t ti99_8_internal_dsr_handlers =
+{
+	NULL,
+	ti99_8_internal_dsr_cru_w,
+	ti99_8_rw_internal_dsr,
+	NULL
+};
+
+/* pointer to the internal DSR ROM data */
+static UINT8 *ti99_8_internal_DSR;
+
+
+/* set up handlers, and set initial state */
+static void ti99_8_internal_dsr_init(void)
+{
+	ti99_8_internal_DSR = memory_region(REGION_CPU1) + offset_rom0_8 + 0x4000;
+
+	ti99_peb_set_card_handlers(0x2700, & ti99_8_internal_dsr_handlers);
+}
+
+/* write CRU bit:
+	bit0: enable/disable internal DSR ROM,
+	bit1: hard reset */
+static void ti99_8_internal_dsr_cru_w(int offset, int data)
+{
+	switch (offset)
+	{
+	case 1:
+		/* hard reset -- not emulated */
+		break;
+	}
+}
+
+/* read internal DSR ROM */
+static READ_HANDLER(ti99_8_rw_internal_dsr)
+{
+	return ti99_8_internal_DSR[offset];
 }
 
 
