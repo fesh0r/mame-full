@@ -64,7 +64,10 @@ char *image_strdup(int type, int id, const char *src)
 static void image_free_resources(struct image_info *img)
 {
 	if (img->fp)
+	{
 		mame_fclose(img->fp);
+		img->fp = NULL;
+	}
 	pool_exit(&img->memory_pool);
 }
 
@@ -143,7 +146,10 @@ int image_load(int type, int id, const char *name)
 		if (err != INIT_PASS)
 		{
 			if (fp)
+			{
 				mame_fclose(fp);
+				img->fp = NULL;
+			}
 			return err;
 		}
 	}
@@ -153,7 +159,7 @@ int image_load(int type, int id, const char *name)
 	if ((type == IO_FLOPPY) && img->name)
 		floppy_device_common_init(id);
 
-	img->fp = fp;
+	//img->fp = fp;
 	img->loaded = TRUE;
 	return INIT_PASS;
 }
@@ -247,9 +253,13 @@ mame_file *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 	if (!img->name)
 		return NULL;
 
+	if (img->fp)
+		/* If already open, we won't open the file again until it is closed. */
+		return NULL;
+
 	sysname = Machine->gamedrv->name;
 	logerror("image_fopen: trying %s for system %s\n", img->name, sysname);
-	file = mame_fopen(sysname, img->name, filetype, read_or_write);
+	img->fp = file = mame_fopen(sysname, img->name, filetype, read_or_write);
 
 	if (file)
 	{
@@ -268,7 +278,7 @@ mame_file *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 				mame_fseek(file, 30, SEEK_SET);
 				mame_fread(file, buffer, fname_length);
 				mame_fclose(file);
-				file = NULL;
+				img->fp = file = NULL;
 
 				buffer[fname_length] = '\0';
 
@@ -279,7 +289,7 @@ mame_file *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 				strcpy(newname, img->name);
 				strcat(newname, osd_path_separator());
 				strcat(newname, buffer);
-				file = mame_fopen(sysname, newname, filetype, read_or_write);
+				img->fp = file = mame_fopen(sysname, newname, filetype, read_or_write);
 				if (!file)
 					return NULL;
 
