@@ -7,10 +7,10 @@
 #include "driver.h"
 #include "config.h"
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 #if VERBOSE
-#define LOG(x)	if( errorlog ) fprintf x
+#define LOG(x)	logerror x
 #else
 #define LOG(x)	/* x */
 #endif
@@ -150,18 +150,18 @@ void *config_create(const char *name)
     cfg = (struct config_hdl *) malloc(sizeof (struct config_hdl));
 	if (!cfg)
 	{
-		LOG((errorlog, "config_create: memory problem\n"));
+		LOG(("config_create: memory problem\n"));
 		return cfg;
 	}
 	memset(cfg, 0, sizeof(struct config_hdl));
 	cfg->file = fopen(name, "w");
 	if (!cfg->file)
 	{
-		LOG((errorlog, "config_create: couldn't create file '%s'\n", name));
+		LOG(("config_create: couldn't create file '%s'\n", name));
 		free(cfg);
 		return NULL;
 	}
-	LOG((errorlog, "config_create: created file '%s'\n", name));
+	LOG(("config_create: created file '%s'\n", name));
     return cfg;
 }
 
@@ -175,18 +175,18 @@ void *config_open(const char *name)
     cfg = (struct config_hdl *) malloc(sizeof (struct config_hdl));
 	if (!cfg)
 	{
-		LOG((errorlog, "config_open: memory problem\n"));
+		LOG(("config_open: memory problem\n"));
 		return cfg;
 	}
 	memset(cfg, 0, sizeof(struct config_hdl));
 	cfg->file = fopen(name, "r");
 	if (!cfg->file)
 	{
-		LOG((errorlog, "config_open: couldn't open file '%s'\n", name));
+		LOG(("config_open: couldn't open file '%s'\n", name));
         free(cfg);
 		return NULL;
 	}
-	LOG((errorlog, "config_open: opened file '%s'\n", name));
+	LOG(("config_open: opened file '%s'\n", name));
     return cfg;
 }
 
@@ -216,7 +216,7 @@ static void CLIB_DECL config_printf(void *config, const char *fmt,...)
 
 	if (fwrite(buffer, 1, length, cfg->file) != length)
 	{
-		LOG((errorlog, "config_printf: Error while saving cfg '%s'\n", buffer));
+		LOG(("config_printf: Error while saving cfg '%s'\n", buffer));
 	}
 }
 
@@ -422,7 +422,7 @@ void config_load_section(void *config, const char *section, int instance)
 		sprintf(searching, "[%s.%d]", section, instance);
 	else
 		sprintf(searching, "[%s]", section);
-	LOG((errorlog, "config_load_section: searching for '%s'\n", searching));
+	LOG(("config_load_section: searching for '%s'\n", searching));
 
 	for (;;)
 	{
@@ -449,7 +449,7 @@ void config_load_section(void *config, const char *section, int instance)
 					p = strchr(buffer, '\r');
 				if (!p)
 				{
-					LOG((errorlog, "config_load_section: Line to long in section '%s'\n", searching));
+					LOG(("config_load_section: Line to long in section '%s'\n", searching));
 					return;
 				}
 
@@ -473,7 +473,7 @@ void config_load_section(void *config, const char *section, int instance)
 				p = strchr(buffer, '=');
 				if (!p)
 				{
-					LOG((errorlog, "config_load_section: Line contains no '=' character\n"));
+					LOG(("config_load_section: Line contains no '=' character\n"));
 					return;
 				}
 
@@ -495,7 +495,7 @@ void config_load_section(void *config, const char *section, int instance)
 							v = v->next;
 						if (!v)
 						{
-							LOG((errorlog, "config_load_section: Invalid variable continuation found '%s.%04X'\n", buffer, offs));
+							LOG(("config_load_section: Invalid variable continuation found '%s.%04X'\n", buffer, offs));
 							return;
 						}
 					}
@@ -507,7 +507,7 @@ void config_load_section(void *config, const char *section, int instance)
 						*d = '\0';
 					offs = 0;
 				}
-				LOG((errorlog, "config_load_section: reading %s.%d=%s\n", buffer, offs, p));
+				LOG(("config_load_section: reading %s.%d=%s\n", buffer, offs, p));
 
                 if (cfg->list)
 				{
@@ -526,14 +526,14 @@ void config_load_section(void *config, const char *section, int instance)
 				}
 				if (!v)
 				{
-					LOG((errorlog, "config_load_section: out of memory while reading '%s'\n", searching));
+					LOG(("config_load_section: out of memory while reading '%s'\n", searching));
 					return;
 				}
 				memset(v, 0, sizeof(struct config_var));
                 v->name = malloc(strlen(buffer) + 1);
 				if (!v->name)
 				{
-					LOG((errorlog, "config_load_section: out of memory while reading '%s'\n", searching));
+					LOG(("config_load_section: out of memory while reading '%s'\n", searching));
 					return;
 				}
 				strcpy(v->name, buffer);
@@ -560,7 +560,7 @@ void config_load_section(void *config, const char *section, int instance)
 						/* check if the (re-)allocation failed */
 						if (!v->data)
 						{
-							LOG((errorlog, "config_load_section: out of memory while reading '%s'\n", searching));
+							LOG(("config_load_section: out of memory while reading '%s'\n", searching));
 							return;
 						}
 						/* store element */
@@ -594,7 +594,7 @@ void config_load_section(void *config, const char *section, int instance)
 						/* check if the (re-)allocation failed */
 						if (!v->data)
 						{
-							LOG((errorlog, "config_load_section: Out of memory while reading '%s'\n", searching));
+							LOG(("config_load_section: Out of memory while reading '%s'\n", searching));
 							return;
 						}
 						*((UINT8 *)v->data + v->size) = data;
@@ -624,11 +624,11 @@ void config_load_string(void *s, const char *section, int instance,
 			size = v->size;
 		memcpy(dst, v->data, size - 1);
 		dst[size-1] = '\0';
-		LOG((errorlog, "config_load_string: '%s' is '%s'\n", name, dst));
+		LOG(("config_load_string: '%s' is '%s'\n", name, dst));
     }
 	else
 	{
-		LOG((errorlog, "config_load_string: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
+		LOG(("config_load_string: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
 		memset(dst, 0, size);
 	}
 }
@@ -654,7 +654,7 @@ void config_load_UINT8(void *s, const char *section, int instance,
 	}
 	else
 	{
-		LOG((errorlog, "config_load_UINT8: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
+		LOG(("config_load_UINT8: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
 		memset(val, 0, size);
 	}
 }
@@ -680,7 +680,7 @@ void config_load_INT8(void *s, const char *section, int instance,
 	}
 	else
 	{
-		LOG((errorlog, "config_load_INT8: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
+		LOG(("config_load_INT8: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
         memset(val, 0, size);
 	}
 }
@@ -706,7 +706,7 @@ void config_load_UINT16(void *s, const char *section, int instance,
 	}
 	else
 	{
-		LOG((errorlog, "config_load_UINT16: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
+		LOG(("config_load_UINT16: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
 		memset(val, 0, size * 2);
 	}
 }
@@ -732,7 +732,7 @@ void config_load_INT16(void *s, const char *section, int instance,
 	}
 	else
 	{
-		LOG((errorlog, "config_load_INT16: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
+		LOG(("config_load_INT16: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
         memset(val, 0, size * 2);
 	}
 }
@@ -758,7 +758,7 @@ void config_load_UINT32(void *s, const char *section, int instance,
 	}
 	else
 	{
-		LOG((errorlog, "config_load_UINT32: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
+		LOG(("config_load_UINT32: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
 		memset(val, 0, size * 4);
 	}
 }
@@ -784,7 +784,7 @@ void config_load_INT32(void *s, const char *section, int instance,
 	}
 	else
 	{
-		LOG((errorlog, "config_load_INT32: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
+		LOG(("config_load_INT32: variable '%s' not found in section '%s' instance %d\n", name, section, instance));
 		memset(val, 0, size * 4);
 	}
 }
