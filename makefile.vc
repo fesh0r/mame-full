@@ -11,14 +11,14 @@ TARGET = mess
 # build with browser information for debugging
 BSCMAKE = @-bscmake.exe
 
-# command to invoke UPX (Ultimate Packer for eXecutables)
-# UPX = upx.exe -9 --compress-icons=0
-
 # uncomment next line to use Assembler 68000 engine
-# X86_ASM_68000 = 1
+X86_ASM_68000 = 1
 
 # uncomment next line to use Assembler 68020 engine
 # X86_ASM_68020 = 1
+
+# uncomment next line to use DRC MIPS3 engine
+X86_MIPS3_DRC = 1
 
 # set this the operating system you're building for
 MAMEOS = windows

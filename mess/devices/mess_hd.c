@@ -54,11 +54,11 @@ static void encode_image_ref(/*const*/ mess_image *image, char encoded_image_ref
 */
 static mess_image *decode_image_ref(const char encoded_image_ref[encoded_image_ref_len])
 {
-	int index;
+	int index_;
 
 
-	if (sscanf(encoded_image_ref, encoded_image_ref_format, & index) == 1)
-		return image_from_absolute_index(index);
+	if (sscanf(encoded_image_ref, encoded_image_ref_format, & index_) == 1)
+		return image_from_absolute_index(index_);
 
 	return NULL;
 }

@@ -231,7 +231,7 @@ DRVLIBS = \
 	$(OBJ)/cbmshare.a \
 	$(OBJ)/kim1.a     \
 	$(OBJ)/sym1.a     \
-
+	$(OBJ)/sony.a     \
 
 
 $(OBJ)/coleco.a:   \
@@ -730,6 +730,10 @@ $(OBJ)/sord.a:     \
 $(OBJ)/tatung.a:     \
 	$(OBJ)/mess/systems/einstein.o
 
+$(OBJ)/sony.a:     \
+	$(OBJ)/mess/systems/psx.o	\
+	$(OBJ)/mess/machine/psx.o
+
 # MESS specific core $(OBJ)s
 COREOBJS += \
 	$(OBJ)/cheat.o  			   \
@@ -757,6 +761,7 @@ COREOBJS += \
 	$(OBJ)/mess/devices/snapquik.o \
 	$(OBJ)/mess/devices/basicdsk.o \
 	$(OBJ)/mess/devices/flopdrv.o  \
+	$(OBJ)/mess/devices/mess_hd.o  \
 	$(OBJ)/mess/devices/idedrive.o \
 	$(OBJ)/mess/devices/pc_flopp.o \
 	$(OBJ)/mess/devices/dsk.o      \

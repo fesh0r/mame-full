@@ -654,6 +654,18 @@ TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 	/* Booth (this is the builder, not a company) */
 	DRIVER( apexc )		/* 1951(?) APEXC : All-Purpose Electronic X-ray Computer */
 
+	/* Sony */
+TESTDRIVER( psx )
+TESTDRIVER( psxa )
+TESTDRIVER( psxb )
+TESTDRIVER( psxc )
+TESTDRIVER( psxd )
+TESTDRIVER( psxe )
+TESTDRIVER( psxf )
+TESTDRIVER( psxg )
+TESTDRIVER( psxh )
+TESTDRIVER( psxi )
+
 /****************Games*******************************************************/
 	/* Computer Electronic */
 TESTDRIVER( mk1 )		/* Chess Champion MK I								*/
