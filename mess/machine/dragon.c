@@ -1611,7 +1611,7 @@ void coco_cassette_exit(int id)
   Cartridge Expansion Slot
  ***************************************************************************/
 
-const struct cartridge_callback {
+struct cartridge_callback {
 	void (*cart_w)(int data);
 };
 
@@ -1627,7 +1627,7 @@ static const struct cartridge_slot *coco_cart_interface;
 static void coco_cartrige_init(const struct cartridge_slot *cartinterface, const struct cartridge_callback *callbacks)
 {
 	coco_cart_interface = cartinterface;
-	
+
 	if (cartinterface)
 		cartinterface->init(callbacks);
 }
@@ -2090,7 +2090,7 @@ static const struct cartridge_callback coco3_cartcallbacks =
 	coco3_setcartline
 };
 
-static void generic_init_machine(struct pia6821_interface *piaintf, const struct cartridge_slot *cartinterface, const struct cartridge_callback *cartcallbacks)
+static void generic_init_machine(struct pia6821_interface *piaintf, const struct cartridge_slot *cartinterface, const struct cartridge_callback *cartcallback)
 {
 	pia0_irq_a = CLEAR_LINE;
 	pia0_irq_b = CLEAR_LINE;
@@ -2110,7 +2110,7 @@ static void generic_init_machine(struct pia6821_interface *piaintf, const struct
 		timer_set(0, 0, pak_load_trailer_callback);
 	}
 
-	coco_cartrige_init(cartinterface, cartcallbacks);
+	coco_cartrige_init(cartinterface, cartcallback);
 	autocenter_init(12, 0x04);
 
 	timer_pulse(TIME_IN_HZ(600), 0, coco_bitbanger_poll);
