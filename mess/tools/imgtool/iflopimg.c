@@ -175,9 +175,18 @@ static imgtoolerr_t imgtool_floppy_create(imgtool_image *image, imgtool_stream *
 		goto done;
 	}
 
+	/* do we have to do extra stuff when creating the image? */
 	if (extra->create)
 	{
 		err = extra->create(image, opts);
+		if (err)
+			goto done;
+	}
+
+	/* do we have to do extra stuff when opening the image? */
+	if (extra->open)
+	{
+		err = extra->open(image);
 		if (err)
 			goto done;
 	}

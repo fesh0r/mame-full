@@ -782,10 +782,6 @@ static imgtoolerr_t os9_diskimage_create(imgtool_image *img, option_resolution *
 	if (err)
 		goto done;
 
-	err = os9_diskimage_open(img);
-	if (err)
-		goto done;
-
 done:
 	if (header)
 		free(header);
