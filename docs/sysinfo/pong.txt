@@ -3,6 +3,8 @@ pong games
 
 first done in discret logic
 later pong in a chip by several firms (atari, ge, ...)
+late pongs probably signetnics 2650/2636 system in germany
+
 
 ay-3-8500-7 6(7) games in this chip
  pelota
