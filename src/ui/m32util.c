@@ -1,7 +1,7 @@
 /***************************************************************************
 
   M.A.M.E.32	-  Multiple Arcade Machine Emulator for Win32
-  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+  Win32 Portions Copyright (C) 1997-2003 Michael Soderstrom and Chris Kirmse
 
   This file is part of MAME32, and may only be used, modified and
   distributed under the terms of the MAME license, in "readme.txt".
@@ -259,7 +259,7 @@ char * ConvertToWindowsNewlines(const char *source)
  * This assumes their is a pathname passed to the function
  * like src\drivers\blah.c
  */
-extern const char * GetDriverFilename(int nIndex)
+const char * GetDriverFilename(int nIndex)
 {
     static char tmp[40];
     char *ptmp;

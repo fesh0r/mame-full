@@ -1,7 +1,7 @@
 /***************************************************************************
 
   M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+  Win32 Portions Copyright (C) 1997-2003 Michael Soderstrom and Chris Kirmse
 
   This file is part of MAME32, and may only be used, modified and
   distributed under the terms of the MAME license, in "readme.txt".
@@ -295,10 +295,10 @@ static void ProcessNextSample()
 			SendDlgItemMessage(hAudit, IDC_SAMPLES_TOTAL, WM_SETTEXT, 0, (LPARAM)buffer);
 			break;
 		}
-		
+
 	case NOTFOUND:
 		break;
-		
+			
 	case INCORRECT:
 		samples_incorrect++;
 		sprintf(buffer, "%i", samples_incorrect);
@@ -337,7 +337,7 @@ static void CLIB_DECL DetailsPrintf(const char *fmt, ...)
 	vsprintf(buffer, fmt, marker);
 	
 	va_end(marker);
-	
+
 	s = ConvertToWindowsNewlines(buffer);
 
 	Edit_SetSel(hEdit, Edit_GetTextLength(hEdit), Edit_GetTextLength(hEdit));

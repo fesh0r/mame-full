@@ -20,7 +20,6 @@ OBJDIRS += $(OBJ)/ui
 
 # only OS specific output files and rules
 OSOBJS += \
-        $(OBJ)/ui/mame32.o \
         $(OBJ)/ui/m32util.o \
         $(OBJ)/ui/directinput.o \
         $(OBJ)/ui/dijoystick.o \

@@ -1,7 +1,7 @@
 /***************************************************************************
 
   M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+  Win32 Portions Copyright (C) 1997-2003 Michael Soderstrom and Chris Kirmse
 
   This file is part of MAME32, and may only be used, modified and
   distributed under the terms of the MAME license, in "readme.txt".
@@ -262,7 +262,7 @@ INT_PTR InternalColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 				}
 				if( pnmv->uOldState & LVIS_SELECTED && pnmv->iItem == 0 && pnmv->hdr.idFrom == IDC_LISTSHOWCOLUMNS )
 				{
-					/*we enable the buttons again, if the first Entry looses selection*/
+					/*we enable the buttons again, if the first Entry loses selection*/
 					EnableWindow(GetDlgItem(hDlg, IDC_BUTTONREMOVE),   TRUE);
 					EnableWindow(GetDlgItem(hDlg, IDC_BUTTONMOVEUP),   TRUE);
 					EnableWindow(GetDlgItem(hDlg, IDC_BUTTONMOVEDOWN), TRUE);
@@ -286,7 +286,7 @@ INT_PTR InternalColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 						if (ListView_GetItemCount(nm->hwndFrom) != 0)
 						{
 							EnableWindow(GetDlgItem(hDlg, IDC_BUTTONADD),	   FALSE);
-
+							
 							if (ListView_GetNextItem(hShown, -1, LVIS_SELECTED | LVIS_FOCUSED) == 0 )
 							{
 								EnableWindow(GetDlgItem(hDlg, IDC_BUTTONREMOVE),   FALSE);
@@ -338,10 +338,10 @@ INT_PTR InternalColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 						}
 						else
 						{
-						EnableWindow(GetDlgItem(hDlg, IDC_BUTTONREMOVE),   TRUE);
-						EnableWindow(GetDlgItem(hDlg, IDC_BUTTONMOVEDOWN), TRUE);
-						EnableWindow(GetDlgItem(hDlg, IDC_BUTTONMOVEUP),   TRUE);
-					}
+							EnableWindow(GetDlgItem(hDlg, IDC_BUTTONREMOVE),   TRUE);
+							EnableWindow(GetDlgItem(hDlg, IDC_BUTTONMOVEDOWN), TRUE);
+							EnableWindow(GetDlgItem(hDlg, IDC_BUTTONMOVEUP),   TRUE);
+						}
 					}
 					break;
 				}

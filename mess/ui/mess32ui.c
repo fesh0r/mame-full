@@ -15,6 +15,7 @@
 #include "windows/window.h"
 #include "messwin.h"
 #include "rc.h"
+#include "utils.h"
 
 #ifdef _MSC_VER
 #define alloca _alloca
@@ -541,7 +542,6 @@ static void SoftwareListClass_SetColumnInfo(struct SmartListView *pListView, int
 static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, BOOL bWasSelected, BOOL bNowSelected, int nRow)
 {
 	BOOL bResult;
-	BOOL bNewScreenShot;
 	const char *name;
 	char *s;
 

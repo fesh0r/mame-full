@@ -25,12 +25,14 @@
 #include "ui/splitters.h"
 #include "ui/help.h"
 
+static BOOL FilterAvailable(int driver_index);
+
 FOLDERDATA g_folderData[] =
 {
 	{"All Systems",     FOLDER_ALLGAMES,     IDI_FOLDER,				0,             0,            NULL,                       NULL,              TRUE },
-	{"Available",       FOLDER_AVAILABLE,    IDI_FOLDER_AVAILABLE,     F_AVAILABLE,   0,            NULL,                       NULL,              TRUE },
+	{"Available",       FOLDER_AVAILABLE,    IDI_FOLDER_AVAILABLE,     F_AVAILABLE,   0,            NULL,                       FilterAvailable,              TRUE },
 #ifdef SHOW_UNAVAILABLE_FOLDER
-	{"Unavailable",     FOLDER_UNAVAILABLE,  IDI_FOLDER_UNAVAILABLE,	0,             F_AVAILABLE,  NULL,                       NULL,              FALSE },
+	{"Unavailable",     FOLDER_UNAVAILABLE,  IDI_FOLDER_UNAVAILABLE,	0,             F_AVAILABLE,  NULL,                       FilterAvailable,              FALSE },
 #endif
 	{"Console",         FOLDER_CONSOLE,      IDI_FOLDER,				F_CONSOLE,     F_COMPUTER,   NULL,                       DriverIsComputer,  FALSE },
 	{"Computer",        FOLDER_COMPUTER,     IDI_FOLDER,				F_COMPUTER,    F_CONSOLE,    NULL,                       DriverIsComputer,  TRUE },
@@ -59,12 +61,12 @@ FILTER_ITEM g_filterList[] =
 	{ F_MODIFIED,     IDC_FILTER_MODIFIED,    DriverIsModified, TRUE },
 	{ F_CLONES,       IDC_FILTER_CLONES,      DriverIsClone, TRUE },
 	{ F_NONWORKING,   IDC_FILTER_NONWORKING,  DriverIsBroken, TRUE },
-	{ F_UNAVAILABLE,  IDC_FILTER_UNAVAILABLE, GetHasRoms, FALSE },
+	{ F_UNAVAILABLE,  IDC_FILTER_UNAVAILABLE, FilterAvailable, FALSE },
 	{ F_RASTER,       IDC_FILTER_RASTER,      DriverIsVector, FALSE },
 	{ F_VECTOR,       IDC_FILTER_VECTOR,      DriverIsVector, TRUE },
 	{ F_ORIGINALS,    IDC_FILTER_ORIGINALS,   DriverIsClone, FALSE },
 	{ F_WORKING,      IDC_FILTER_WORKING,     DriverIsBroken, FALSE },
-	{ F_AVAILABLE,    IDC_FILTER_AVAILABLE,   GetHasRoms, TRUE },
+	{ F_AVAILABLE,    IDC_FILTER_AVAILABLE,   FilterAvailable, TRUE },
 	{ 0 }
 };
 
@@ -110,3 +112,9 @@ const MAMEHELPINFO g_helpInfo[] =
 };
 
 const char g_szDefaultGame[] = "nes";
+
+static BOOL FilterAvailable(int driver_index)
+{
+	// GetHasRoms() returns FALSE, TRUE, UNKNOWN... sigh.
+	return GetHasRoms(driver_index) == TRUE;
+}

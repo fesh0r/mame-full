@@ -1,7 +1,7 @@
 /***************************************************************************
 
   M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+  Win32 Portions Copyright (C) 1997-2003 Michael Soderstrom and Chris Kirmse
 
   This file is part of MAME32, and may only be used, modified and
   distributed under the terms of the MAME license, in "readme.txt".
@@ -35,12 +35,14 @@
 #include "splitters.h"
 #include "help.h"
 
+static BOOL FilterAvailable(int driver_index);
+
 FOLDERDATA g_folderData[] =
 {
 	{"All Games",       FOLDER_ALLGAMES,     IDI_FOLDER,				0,             0,            NULL,                       NULL,              TRUE },
-	{"Available",       FOLDER_AVAILABLE,    IDI_FOLDER_AVAILABLE,     F_AVAILABLE,   0,            NULL,                       NULL,              TRUE },
+	{"Available",       FOLDER_AVAILABLE,    IDI_FOLDER_AVAILABLE,     F_AVAILABLE,   0,            NULL,                       FilterAvailable,              TRUE },
 #ifdef SHOW_UNAVAILABLE_FOLDER
-	{"Unavailable",     FOLDER_UNAVAILABLE,  IDI_FOLDER_UNAVAILABLE,	0,             F_AVAILABLE,  NULL,                       NULL,              FALSE },
+	{"Unavailable",     FOLDER_UNAVAILABLE,  IDI_FOLDER_UNAVAILABLE,	0,             F_AVAILABLE,  NULL,                       FilterAvailable,              FALSE },
 #endif
 	{"Manufacturer",    FOLDER_MANUFACTURER, IDI_FOLDER_MANUFACTURER,  0,             0,            CreateManufacturerFolders },
 	{"Year",            FOLDER_YEAR,         IDI_FOLDER_YEAR,          0,             0,            CreateYearFolders },
@@ -64,12 +66,12 @@ FILTER_ITEM g_filterList[] =
 {
 	{ F_CLONES,       IDC_FILTER_CLONES,      DriverIsClone, TRUE },
 	{ F_NONWORKING,   IDC_FILTER_NONWORKING,  DriverIsBroken, TRUE },
-	{ F_UNAVAILABLE,  IDC_FILTER_UNAVAILABLE, GetHasRoms, FALSE },
+	{ F_UNAVAILABLE,  IDC_FILTER_UNAVAILABLE, FilterAvailable, FALSE },
 	{ F_RASTER,       IDC_FILTER_RASTER,      DriverIsVector, FALSE },
 	{ F_VECTOR,       IDC_FILTER_VECTOR,      DriverIsVector, TRUE },
 	{ F_ORIGINALS,    IDC_FILTER_ORIGINALS,   DriverIsClone, FALSE },
 	{ F_WORKING,      IDC_FILTER_WORKING,     DriverIsBroken, FALSE },
-	{ F_AVAILABLE,    IDC_FILTER_AVAILABLE,   GetHasRoms, TRUE },
+	{ F_AVAILABLE,    IDC_FILTER_AVAILABLE,   FilterAvailable, TRUE },
 	{ 0 }
 };
 
@@ -115,3 +117,9 @@ const MAMEHELPINFO g_helpInfo[] =
 };
 
 const char g_szDefaultGame[] = "pacman";
+
+static BOOL FilterAvailable(int driver_index)
+{
+	// GetHasRoms() returns FALSE, TRUE, UNKNOWN... sigh.
+	return GetHasRoms(driver_index) == TRUE;
+}
