@@ -19,9 +19,7 @@ System Driver Changes:
 - [BBC B] Cleaned up the memory accessing a little. This fixed a problem with
   the DNFS rom thinking it found an econet controller. [Gordon Jefferyes]
 
-- [SAM COUPE] Updated Sam Coupe to use WD179x code (same as WD1772). However, this
-may not work because the implementation of how this works in the Sam Coupe
-hardware is not complete yet [Kev Thacker]
+- [SAM COUPE] Updated Sam Coupe to use WD179x code (same as WD1772). [Kev Thacker]
 
 - [COCO] Updated CoCo and CoCo 3 drivers with new romsets to match the actual
 chips in the system.  coco.rom split into bas12.rom, extbas11.rom and
