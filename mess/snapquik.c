@@ -5,7 +5,7 @@
 
 struct snapquick_info
 {
-	int type;
+	const struct IODevice *dev;
 	int id;
 	void *fp;
 	struct snapquick_info *next;
@@ -15,21 +15,20 @@ static struct snapquick_info *snapquick_infolist;
 
 static void snapquick_load(int arg)
 {
-	const struct IODevice *dev;
 	struct snapquick_info *si;
 	snapquick_loadproc loadproc;
 	
 	si = (struct snapquick_info *) arg;
-	dev = device_find(Machine->gamedrv, si->type);
-	assert(dev);
-	loadproc = (snapquick_loadproc) dev->user1;
+	loadproc = (snapquick_loadproc) si->dev->user1;
 	loadproc(si->fp);
-	image_unload(si->type, si->id);
+	image_unload(si->dev->type, si->id);
 }
 
 static int snapquick_init(int type, int id, void *fp, int open_mode)
 {
+	const struct IODevice *dev;
 	struct snapquick_info *si;
+	double delay;
 
 	if (fp)
 	{
@@ -37,13 +36,18 @@ static int snapquick_init(int type, int id, void *fp, int open_mode)
 		if (!si)
 			return INIT_FAIL;
 
-		si->type = type;
+		dev = device_find(Machine->gamedrv, type);
+		assert(dev);
+
+		si->dev = dev;
 		si->id = id;
 		si->fp = fp;
 		si->next = snapquick_infolist;
 		snapquick_infolist = si;
 
-		timer_set(0, (int) si, snapquick_load);
+		delay = ((double) (UINT32) dev->user2) / 65536.0;
+
+		timer_set(delay, (int) si, snapquick_load);
 	}
 	return INIT_PASS;
 }
@@ -52,7 +56,7 @@ static void snapquick_exit(int type, int id)
 {
 	struct snapquick_info **si = &snapquick_infolist;
 
-	while(*si && ((*si)->type != type) && ((*si)->id != id))
+	while(*si && ((*si)->dev->type != type) && ((*si)->id != id))
 		si = &(*si)->next;
 	if (*si)
 		*si = (*si)->next;
@@ -80,8 +84,8 @@ static void quickload_exit(int id)
 	snapquick_exit(IO_QUICKLOAD, id);
 }
 
-const struct IODevice *snapquick_specify(struct IODevice *iodev,
-	int type, const char *file_extensions, snapquick_loadproc loadproc)
+const struct IODevice *snapquick_specify(struct IODevice *iodev, int type,
+	const char *file_extensions, snapquick_loadproc loadproc, double delay)
 {
 	memset(iodev, 0, sizeof(*iodev));
 	iodev->type = type;
@@ -92,6 +96,7 @@ const struct IODevice *snapquick_specify(struct IODevice *iodev,
 	iodev->init = (type == IO_SNAPSHOT) ? snapshot_init : quickload_init;
 	iodev->exit = (type == IO_SNAPSHOT) ? snapshot_exit : quickload_exit;
 	iodev->user1 = (void *) loadproc;
+	iodev->user2 = (void *) (UINT32) (delay * 65536);
 	return iodev;
 }
 

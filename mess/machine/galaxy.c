@@ -14,9 +14,6 @@
 
 #define GALAXY_SNAPSHOT_SIZE	8268
 
-static int galaxy_snapshot_loaded = 0;
-static UINT8 * galaxy_snapshot_data;
-
 int galaxy_interrupts_enabled = TRUE;
 
 /***************************************************************************
@@ -109,38 +106,29 @@ static void galaxy_setup_snapshot (UINT8 * data)
 		cpu_writemem16(i + 0x2000, data[i+76]);
 }
 
-static void gal_load_trailer_callback(int param)
+int galaxy_snapshot_load(void *file)
 {
-	galaxy_setup_snapshot(galaxy_snapshot_data);
-}
+	UINT8 *galaxy_snapshot_data;
 
-int galaxy_snapshot_load(int id, void *file, int open_mode)
-{
-	logerror("Snapshot loading\n");
-	if (file)
+	if (osd_fsize(file) != GALAXY_SNAPSHOT_SIZE)
 	{
-		if (osd_fsize(file) != GALAXY_SNAPSHOT_SIZE)
-		{
-			logerror ("Incomplete snapshot file\n");
-			osd_fclose(file);
-			return INIT_FAIL;
-		}
-
-		if (!(galaxy_snapshot_data = image_malloc(IO_SNAPSHOT, id, GALAXY_SNAPSHOT_SIZE)))
-		{
-			logerror ("Unable to load snapshot file\n");
-			osd_fclose(file);
-			return INIT_FAIL;
-		}
-
-		osd_fread(file, galaxy_snapshot_data, GALAXY_SNAPSHOT_SIZE);
-		osd_fclose(file);
-
-		galaxy_snapshot_loaded = 1;
-
-		logerror("Snapshot file loaded\n");
-
+		logerror ("Incomplete snapshot file\n");
+		return INIT_FAIL;
 	}
+
+	galaxy_snapshot_data = malloc(GALAXY_SNAPSHOT_SIZE);
+	if (!galaxy_snapshot_data)
+	{
+		logerror ("Unable to load snapshot file\n");
+		return INIT_FAIL;
+	}
+
+	osd_fread(file, galaxy_snapshot_data, GALAXY_SNAPSHOT_SIZE);
+
+	galaxy_setup_snapshot(galaxy_snapshot_data);
+	free(galaxy_snapshot_data);
+
+	logerror("Snapshot file loaded\n");
 	return INIT_PASS;
 }
 
@@ -152,8 +140,4 @@ int galaxy_snapshot_load(int id, void *file, int open_mode)
 MACHINE_INIT( galaxy )
 {
 	cpu_set_irq_callback(0, galaxy_irq_callback);
-	if (galaxy_snapshot_loaded) {
-		galaxy_snapshot_loaded = 0;
-		timer_set(0, 0, gal_load_trailer_callback);
-	}
 }

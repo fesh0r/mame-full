@@ -15,10 +15,6 @@
 #define TI85_SNAPSHOT_SIZE	 32976
 #define TI86_SNAPSHOT_SIZE	131284
 
-static int ti8x_snapshot_loaded = 0;
-static UINT8 *ti8x_snapshot_data = NULL;
-static void ti8x_sav_load_trailer_callback(int);
-
 enum
 {
 	TI_NOT_INITIALIZED,
@@ -233,11 +229,6 @@ MACHINE_INIT( ti85 )
 	memory_set_bankhandler_w(4, 0, MWA_ROM);
 	cpu_setbank(1,memory_region(REGION_CPU1) + 0x010000);
 	cpu_setbank(2,memory_region(REGION_CPU1) + 0x014000);
-
-	if (ti8x_snapshot_loaded) {
-		ti8x_snapshot_loaded = 0;
-		timer_set(0, 0, ti8x_sav_load_trailer_callback);
-	}
 }
 
 MACHINE_STOP( ti85 )
@@ -288,11 +279,6 @@ MACHINE_INIT( ti86 )
 		ti_calculator_model = TI_86;
 
 		timer_pulse(TIME_IN_HZ(200), 0, ti85_timer_callback);
-
-		if (ti8x_snapshot_loaded) {
-			ti8x_snapshot_loaded = 0;
-			timer_set(0, 0, ti8x_sav_load_trailer_callback);
-		}
 	}
 }
 
@@ -648,18 +634,10 @@ static void ti86_setup_snapshot (UINT8 * data)
 	ti85_interrupt_speed = 0x03;
 }
 
-static void ti8x_sav_load_trailer_callback(int param)
-{
-	switch (ti_calculator_model)
-	{
-		case TI_85: ti85_setup_snapshot(ti8x_snapshot_data); break;
-		case TI_86: ti86_setup_snapshot(ti8x_snapshot_data); break;
-	}	
-}
-
-int ti8x_snapshot_load (int id, void *file, int open_mode)
+int ti8x_snapshot_load(void *file)
 {
 	int snapshot_size = 0;
+	UINT8 *ti8x_snapshot_data;
 
 	switch (ti_calculator_model)
 	{
@@ -668,26 +646,29 @@ int ti8x_snapshot_load (int id, void *file, int open_mode)
 	}	
 
 	logerror("Snapshot loading\n");
-	if (file)
+
+	if (osd_fsize(file) != snapshot_size)
 	{
-		if (osd_fsize(file) != snapshot_size)
-		{
-			logerror ("Incomplete snapshot file\n");
-			osd_fclose(file);
-			return INIT_FAIL;
-		}
-
-		if (!(ti8x_snapshot_data = image_malloc(IO_SNAPSHOT, id, snapshot_size)))
-		{
-			osd_fclose(file);
-			return INIT_FAIL;
-		}
-
-		osd_fread(file, ti8x_snapshot_data, snapshot_size);
+		logerror ("Incomplete snapshot file\n");
 		osd_fclose(file);
-
-		ti8x_snapshot_loaded = 1;
+		return INIT_FAIL;
 	}
+
+	if (!(ti8x_snapshot_data = malloc(snapshot_size)))
+	{
+		osd_fclose(file);
+		return INIT_FAIL;
+	}
+
+	osd_fread(file, ti8x_snapshot_data, snapshot_size);
+	osd_fclose(file);
+
+	switch (ti_calculator_model)
+	{
+		case TI_85: ti85_setup_snapshot(ti8x_snapshot_data); break;
+		case TI_86: ti86_setup_snapshot(ti8x_snapshot_data); break;
+	}
+	free(ti8x_snapshot_data);
 	return INIT_PASS;
 }
 

@@ -45,6 +45,7 @@ $F000-$FFFF:	PROM (programmable read-only memory) used by the Apple Monitor prog
 #include "machine/6821pia.h"
 #include "vidhrdw/generic.h"
 #include "includes/apple1.h"
+#include "snapquik.h"
 
 /* port i/o functions */
 
@@ -208,7 +209,7 @@ ROM_START(apple1)
 ROM_END
 
 SYSTEM_CONFIG_START(apple1)
-	CONFIG_DEVICE_LEGACY(IO_SNAPSHOT, 1, "snp\0", IO_RESET_CPU, OSD_FOPEN_READ, apple1_load_snap, NULL, NULL)
+	CONFIG_DEVICE_SNAPSHOT("snp\0", apple1_load_snap)
 SYSTEM_CONFIG_END
 
 /*    YEAR	NAME	PARENT	MACHINE		INPUT		INIT	CONFIG	COMPANY				FULLNAME */

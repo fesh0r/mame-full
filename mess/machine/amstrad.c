@@ -29,9 +29,6 @@ rom/ram selection
 #include "cassette.h"
 #include "image.h"
 
-static unsigned char *snapshot = NULL;
-static int snapshot_loaded = 0;
-
 int amstrad_floppy_init(int id, void *fp, int open_mode)
 {
 	if (!image_exists(IO_FLOPPY, id))
@@ -40,46 +37,10 @@ int amstrad_floppy_init(int id, void *fp, int open_mode)
 	return dsk_floppy_load(id, fp, open_mode);
 }
 
-
-
-/* used to setup computer if a snapshot was specified */
-static OPBASE_HANDLER( amstrad_opbaseoverride )
-{
-	/* clear op base override */
-	memory_set_opbase_handler(0,0);
-
-	if (snapshot_loaded)
-	{
-		/* its a snapshot file - setup hardware state */
-		amstrad_handle_snapshot(snapshot);
-
-		/* free memory */
-		free(snapshot);
-		snapshot = 0;
-
-		snapshot_loaded = 0;
-
-	}
-
-	return (cpunum_get_pc(0) & 0x0ffff);
-}
-
 void amstrad_setup_machine(void)
 {
-	if (snapshot_loaded)
-	{
-		/* setup for snapshot */
-		memory_set_opbase_handler(0,amstrad_opbaseoverride);
-	}
-
-
-	if (!snapshot_loaded)
-	{
-		Amstrad_Reset();
-	}
+	Amstrad_Reset();
 }
-
-
 
 int amstrad_cassette_init(int id, void *fp, int open_mode)
 {
@@ -226,75 +187,33 @@ void amstrad_handle_snapshot(unsigned char *pSnapshot)
 	Amstrad_RethinkMemory();
 }
 
-/* load image (i.e. open image, allocate buffer, load the entire image in buffer, close image) */
-static int amstrad_load(int type, int id, void *file, unsigned char **ptr)
-{
-	if (file)
-	{
-		int datasize;
-		unsigned char *data;
-
-		/* get file size */
-		datasize = osd_fsize(file);
-
-		if (datasize!=0)
-		{
-			/* malloc memory for this data */
-			data = malloc(datasize);
-
-			if (data!=NULL)
-			{
-				/* read whole file */
-				osd_fread(file, data, datasize);
-
-				*ptr = data;
-
-				/* close file */
-				osd_fclose(file);
-
-				logerror("File loaded!\r\n");
-
-				/* ok! */
-				return 1;
-			}
-			osd_fclose(file);
-
-		}
-	}
-
-	return 0;
-}
-
 /* load snapshot */
-int amstrad_snapshot_load(int id, void *fp, int open_mode)
+int amstrad_snapshot_load(void *fp)
 {
-	/* machine can be started without a snapshot */
-	/* if filename not specified, then init is ok */
-	if (fp == NULL)
-		return INIT_PASS;
+	UINT8 *snapshot;
+	int datasize;
 
-	/* filename specified */
-	snapshot_loaded = 0;
+	/* get file size */
+	datasize = osd_fsize(fp);
+	if (datasize < 8)
+		return INIT_FAIL;
 
-	/* load and verify image */
-	if (amstrad_load(IO_SNAPSHOT, id, fp, &snapshot))
+	snapshot = malloc(datasize);
+	if (!snapshot)
+		return INIT_FAIL;
+
+	/* read whole file */
+	osd_fread(fp, snapshot, datasize);
+
+    if (memcmp(snapshot, "MV - SNA", 8))
 	{
-		snapshot_loaded = 1;
-		if (memcmp(snapshot, "MV - SNA", 8)==0)
-			return INIT_PASS;
-		else
-			return INIT_FAIL;
+		free(snapshot);
+		return INIT_FAIL;
 	}
 
-	return INIT_FAIL;
-}
-
-void amstrad_snapshot_exit(int id)
-{
-	if (snapshot!=NULL)
-		free(snapshot);
-
-	snapshot_loaded = 0;
+	amstrad_handle_snapshot(snapshot);
+	free(snapshot);
+	return INIT_PASS;
 }
 
 int	amstrad_plus_cartridge_init(int id, void *fp, int open_mode)
@@ -304,9 +223,5 @@ int	amstrad_plus_cartridge_init(int id, void *fp, int open_mode)
 		return INIT_FAIL;
 
 	return INIT_PASS;
-}
-
-void amstrad_plus_cartridge_exit(int id)
-{
 }
 

@@ -51,6 +51,7 @@ Ports:
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
 #include "includes/galaxy.h"
+#include "snapquik.h"
 
 PORT_READ_START( galaxy_readport )
 PORT_END
@@ -187,7 +188,7 @@ ROM_START (galaxy)
 ROM_END
 
 SYSTEM_CONFIG_START(galaxy)
-	CONFIG_DEVICE_SNAPSHOT_LEGACY	( "gal\0", galaxy_snapshot_load, NULL )
+	CONFIG_DEVICE_SNAPSHOT( "gal\0", galaxy_snapshot_load )
 SYSTEM_CONFIG_END
 
 

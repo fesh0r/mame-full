@@ -113,18 +113,11 @@ static int apple1_verify_header (UINT8 *data)
 **	Where xxyy is the hex value to load the Data zzzzzzz to
 **
 *****************************************************************************/
-int apple1_load_snap(int id, void *snapfile, int open_mode)
+int apple1_load_snap(void *snapfile)
 {
 	UINT8 *memptr;
 	UINT8 snapdata[0x1000];
 	UINT16 starting_offset = 0x0000;
-
-	/* A snapshot isn't mandatory for the apple1 */
-	if (snapfile == NULL)
-	{
-		logerror("Apple1 - warning: no snapshot specified - OK\n");
-		return INIT_PASS;
-	}
 
 	/* Load the specified Snapshot */
 

@@ -38,10 +38,6 @@ int vtech1_latch = -1;
 #define TRKSIZE_VZ	0x9a0	/* arbitrary (actually from analyzing format) */
 #define TRKSIZE_FM	3172	/* size of a standard FM mode track */
 
-static int vtech1_snapshot_size = 0;
-static int vtech1_snapshot_count = 0;
-static UINT8 *vtech1_snapshot_data = NULL;
-
 static void *vtech1_fdc_file[2] = {NULL, NULL};
 static UINT8 vtech1_track_x2[2] = {80, 80};
 static UINT8 vtech1_fdc_wrprot[2] = {0x80, 0x80};
@@ -292,47 +288,40 @@ int vtech1_cassette_init(int id, void *file, int open_mode)
  * SNAPSHOT HANDLING
  ***************************************************************************/
 
-static void vtech1_snapshot_copy(void)
+static void vtech1_snapshot_copy(UINT8 *vtech1_snapshot_data, int vtech1_snapshot_size)
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
-	if( memcmp(&RAM[0x7000+3*32], "READY", 5) == 0 &&
-		--vtech1_snapshot_count == 0 )
-	{
-		UINT16 start, end;
+	UINT16 start, end;
 
-        start = vtech1_snapshot_data[22] + 256 * vtech1_snapshot_data[23];
-		/* skip loading address */
-		end = start + vtech1_snapshot_size - 24;
-        if( vtech1_snapshot_data[21] == 0xf0 )
-		{
-			memcpy(&RAM[start], &vtech1_snapshot_data[24], end - start);
-      //      sprintf(vtech1_frame_message, "BASIC snapshot %04x-%04x", start, end);
-      //      vtech1_frame_time = (int)Machine->drv->frames_per_second;
-			logerror("VTECH1 BASIC snapshot %04x-%04x\n", start, end);
-            /* patch BASIC variables */
-			RAM[0x78a4] = start % 256;
-			RAM[0x78a5] = start / 256;
-			RAM[0x78f9] = end % 256;
-			RAM[0x78fa] = end / 256;
-			RAM[0x78fb] = end % 256;
-			RAM[0x78fc] = end / 256;
-			RAM[0x78fd] = end % 256;
-			RAM[0x78fe] = end / 256;
-        }
-		else
-		{
-			memcpy(&RAM[start], &vtech1_snapshot_data[24], end - start);
-        //    sprintf(vtech1_frame_message, "M-Code snapshot %04x-%04x", start, end);
-        //    vtech1_frame_time = (int)Machine->drv->frames_per_second;
-			logerror("VTECH1 MCODE snapshot %04x-%04x\n", start, end);
-            /* set USR() address */
-			RAM[0x788e] = start % 256;
-			RAM[0x788f] = start / 256;
-        }
-		free(vtech1_snapshot_data);
-		vtech1_snapshot_data = NULL;
-		vtech1_snapshot_size = 0;
-	}
+    start = vtech1_snapshot_data[22] + 256 * vtech1_snapshot_data[23];
+	/* skip loading address */
+	end = start + vtech1_snapshot_size - 24;
+    if( vtech1_snapshot_data[21] == 0xf0 )
+	{
+		memcpy(&RAM[start], &vtech1_snapshot_data[24], end - start);
+    //      sprintf(vtech1_frame_message, "BASIC snapshot %04x-%04x", start, end);
+    //      vtech1_frame_time = (int)Machine->drv->frames_per_second;
+		logerror("VTECH1 BASIC snapshot %04x-%04x\n", start, end);
+        /* patch BASIC variables */
+		RAM[0x78a4] = start % 256;
+		RAM[0x78a5] = start / 256;
+		RAM[0x78f9] = end % 256;
+		RAM[0x78fa] = end / 256;
+		RAM[0x78fb] = end % 256;
+		RAM[0x78fc] = end / 256;
+		RAM[0x78fd] = end % 256;
+		RAM[0x78fe] = end / 256;
+    }
+	else
+	{
+		memcpy(&RAM[start], &vtech1_snapshot_data[24], end - start);
+    //    sprintf(vtech1_frame_message, "M-Code snapshot %04x-%04x", start, end);
+    //    vtech1_frame_time = (int)Machine->drv->frames_per_second;
+		logerror("VTECH1 MCODE snapshot %04x-%04x\n", start, end);
+        /* set USR() address */
+		RAM[0x788e] = start % 256;
+		RAM[0x788f] = start / 256;
+    }
 }
 
 /*
@@ -362,34 +351,25 @@ int vtech1_snapshot_id(int id)
 }
 */
 
-int vtech1_snapshot_init(int id, void *file, int open_mode)
+int vtech1_snapshot_load(void *file)
 {
+	int snapshot_size;
+	UINT8 *snapshot_data;
+
 	logerror("VTECH snapshot_init\n");
-    if( file )
-	{
-		vtech1_snapshot_size = osd_fsize(file);
-		vtech1_snapshot_data =(UINT8*) malloc(vtech1_snapshot_size);
-        if( vtech1_snapshot_data )
-		{
-			osd_fread(file, vtech1_snapshot_data, vtech1_snapshot_size);
-			osd_fclose(file);
-			/* 1/2 second delay after the READY message */
-			vtech1_snapshot_count = (int)Machine->drv->frames_per_second / 2;
-            return INIT_PASS;
-		}
-		osd_fclose(file);
-	}
+
+	snapshot_size = osd_fsize(file);
+	snapshot_data = (UINT8*) malloc(snapshot_size);
+	if (!snapshot_data)
+		return INIT_FAIL;
+
+	osd_fread(file, snapshot_data, snapshot_size);
+	vtech1_snapshot_copy(snapshot_data, snapshot_size);
+	free(snapshot_data);
 	return INIT_PASS;
 }
 
-void vtech1_snapshot_exit(int id)
-{
-	logerror("VTECH snapshot_exit\n");
-    if( vtech1_snapshot_data )
-		free(vtech1_snapshot_data);
-	vtech1_snapshot_data = NULL;
-	vtech1_snapshot_size = 0;
-}
+/***************************************************************************/
 
 /*
 int vtech1_floppy_id(int id)
@@ -739,7 +719,5 @@ WRITE_HANDLER( vtech1_latch_w )
 
 INTERRUPT_GEN( vtech1_interrupt )
 {
-	if( vtech1_snapshot_size > 0 )
-		vtech1_snapshot_copy();
 	cpu_set_irq_line(0, 0, PULSE_LINE);
 }
