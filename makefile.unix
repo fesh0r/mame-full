@@ -120,7 +120,7 @@ CFLAGS = -O -Wall -Wno-unused
 
 # GCC on Linux/PowerPC
 # CFLAGS = -O2 -Wall -Wno-unused -funroll-loops -fstrength-reduce \
-#  -fomit-frame-pointer -ffast-math -fsigned-char
+#  -fomit-frame-pointer -ffast-math -fsigned-char -mlongcall
 
 # GCC on OpenStep/Intel
 # CFLAGS = -O2 -Wall -Wno-unused -finline-functions -ffast-math \
@@ -154,7 +154,7 @@ ifneq (,$(findstring gcc,$(CC)))
   #########################################################################
 
   # Uncomment for Linux on a PowerPC system.
-  # CFLAGS += -fsigned-char
+  # CFLAGS += -fsigned-char -mlongcall
 
   # Uncomment for OpenStep.  This might also apply to some versions of 
   # Mac OS X, but it definitely breaks things in OS X 10.3 with GCC 3.3.
@@ -372,7 +372,7 @@ IL	= '-DINLINE=static __inline__'
 ###########################################################################
 
 # Normal linking.
-LD	= $(CC) -Wl,-s
+LD	= $(CC) -Wl,-s,--relax
 
 # For the Intel C++ Compiler -- expect large link time due to -ipo 
 # optimization.
@@ -757,8 +757,8 @@ GLCFLAGS += -D_X11_
 
 # Uncomment depending on which is supplying GLX functions.  nVidia uses
 # libglx, Mesa/SGI use libglut 
-GLCFLAGS+=-DGLXLIB_NAME='\"libglut.so\"'
-# GLCFLAGS+=-DGLXLIB_NAME='\"libglx.so\"'
+GLCFLAGS+=-DGLXLIB_NAME='"libglut.so"'
+# GLCFLAGS+=-DGLXLIB_NAME='"libglx.so"'
 
 ###########################################################################
 # Debug support and object file format
