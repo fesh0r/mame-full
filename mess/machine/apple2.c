@@ -193,7 +193,7 @@ static void apple2_install_slot_memory(int slot, void *memory)
 		wh = MWA8_ROM;
 	}
 
-	LOG(("apple2_install_slot_memory(): installing {%04X-%04X} --> 0x%08x\n", start, end, memory));
+	LOG(("apple2_install_slot_memory(): installing {%04X-%04X} --> 0x%p\n", start, end, memory));
 
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, start, end, 0, 0, rh);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, start, end, 0, 0, wh);
