@@ -272,7 +272,7 @@ WRITE32_HANDLER( psx_dma_w )
 					m_p_fn_dma_read[ n_channel ]( n_address, n_size );
 					if( n_channel == 1 )
 					{
-						dma_start_timer( n_channel, 16384 );
+						dma_start_timer( n_channel, 16384 / 2 );
 					}
 					else
 					{

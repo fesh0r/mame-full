@@ -189,6 +189,9 @@ static void apple2_setvar(UINT32 val, UINT32 mask)
 		apple_rom = &memory_region(REGION_CPU1)[(a2 & VAR_ROMSWITCH) ? 0x4000 : 0x0000];
 	}
 
+	/* debugging note: if there are any problems, it is worthwhile to set mask
+	 * to ~0, which removes any possibility that this mapping code's
+	 * optimizations are at the root of the problem */
 	for (i = 0; i < sizeof(apple2_bankmap) / sizeof(apple2_bankmap[0]); i++)
 	{
 		const struct apple2_bankmap_entry *entry;
@@ -787,7 +790,7 @@ WRITE8_HANDLER ( apple2_c07x_w )
 		break;
 	}
 
-	if (offset & 0x08)
+	if ((offset & 0x08) == 0)
 		val |= VAR_LCRAM2;
 
 	apple2_setvar(val, mask);

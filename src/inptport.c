@@ -1635,19 +1635,13 @@ const char *input_port_name(const struct InputPort *in)
 
 	i = 0;
 
-	if ((in->type & ~IPF_MASK) == IPT_EXTENSION)
-		type = (in-1)->type & (~IPF_MASK | IPF_PLAYERMASK);
-	else
-		type = in->type & (~IPF_MASK | IPF_PLAYERMASK);
+ 	type = in->type | (in->player << 16);
 
 	while (inputport_defaults[i].type != IPT_END &&
 			inputport_defaults[i].type != type)
 		i++;
 
-	if ((in->type & ~IPF_MASK) == IPT_EXTENSION)
-		return inputport_defaults[i+1].name;
-	else
-		return inputport_defaults[i].name;
+	return inputport_defaults[i].name;
 }
 
 int input_port_active(const struct InputPort *in)

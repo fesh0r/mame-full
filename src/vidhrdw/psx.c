@@ -670,10 +670,11 @@ VIDEO_UPDATE( psx )
 	UINT32 n_x;
 	UINT32 n_y;
 	int n_top;
+	int n_line;
 	int n_lines;
 	int n_left;
-	int n_columns;
 	int n_column;
+	int n_columns;
 	int n_displaystartx;
 	int n_overscantop;
 	int n_overscanleft;
@@ -770,24 +771,25 @@ VIDEO_UPDATE( psx )
 		}
 
 		n_top = (INT32)m_n_vert_disstart - n_overscantop;
+		n_lines = (INT32)m_n_vert_disend - (INT32)m_n_vert_disstart;
 		if( n_top < 0 )
 		{
 			n_y = -n_top;
+			n_lines += n_top;
 		}
 		else
 		{
 			/* todo: draw top border */
 			n_y = 0;
 		}
-		n_lines = ( (INT32)m_n_vert_disend - n_overscantop ) - n_top;
 		if( ( m_n_gpustatus & ( 1 << 0x16 ) ) != 0 )
 		{
 			/* interlaced */
 			n_lines *= 2;
 		}
-		if( n_lines > m_n_screenheight - n_y - n_top )
+		if( n_lines > m_n_screenheight - ( n_y + n_top ) )
 		{
-			n_lines = m_n_screenheight - n_y - n_top;
+			n_lines = m_n_screenheight - ( n_y + n_top );
 		}
 		else
 		{
@@ -795,19 +797,20 @@ VIDEO_UPDATE( psx )
 		}
 
 		n_left = ( ( (INT32)m_n_horiz_disstart - n_overscanleft ) * (INT32)m_n_screenwidth ) / 2560;
+		n_columns = ( ( ( (INT32)m_n_horiz_disend - m_n_horiz_disstart ) * (INT32)m_n_screenwidth ) / 2560 );
 		if( n_left < 0 )
 		{
 			n_x = -n_left;
+			n_columns += n_left;
 		}
 		else
 		{
 			/* todo: draw left border */
 			n_x = 0;
 		}
-		n_columns = ( ( (INT32)m_n_horiz_disend - m_n_horiz_disstart ) * (INT32)m_n_screenwidth ) / 2560;
-		if( n_columns > m_n_screenwidth - n_x - n_left )
+		if( n_columns > m_n_screenwidth - ( n_x + n_left ) )
 		{
-			n_columns = m_n_screenwidth - n_x - n_left;
+			n_columns = m_n_screenwidth - ( n_x + n_left );
 		}
 		else
 		{
@@ -817,7 +820,8 @@ VIDEO_UPDATE( psx )
 		if( ( m_n_gpustatus & ( 1 << 0x15 ) ) != 0 )
 		{
 			/* 24bit */
-			while( n_y < n_lines )
+			n_line = n_lines;
+			while( n_line > 0 )
 			{
 				data16_t *p_n_src = m_p_p_vram[ n_y + m_n_displaystarty ] + n_x + n_displaystartx;
 				data16_t *p_n_dest = &( (data16_t *)bitmap->line[ n_y + n_top ] )[ n_x + n_left ];
@@ -838,15 +842,18 @@ VIDEO_UPDATE( psx )
 					}
 				}
 				n_y++;
+				n_line--;
 			}
 		}
 		else
 		{
 			/* 15bit */
-			while( n_y < n_lines )
+			n_line = n_lines;
+			while( n_line > 0 )
 			{
 				draw_scanline16( bitmap, n_x + n_left, n_y + n_top, n_columns, m_p_p_vram[ n_y + m_n_displaystarty ] + n_x + n_displaystartx, Machine->pens, -1 );
 				n_y++;
+				n_line--;
 			}
 		}
 	}

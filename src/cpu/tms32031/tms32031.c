@@ -621,7 +621,8 @@ static void tms32031_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + TMS32031_TINT1:	set_irq_line(TMS32031_TINT1, info->i);	break;
 		case CPUINFO_INT_INPUT_STATE + TMS32031_DINT:	set_irq_line(TMS32031_DINT, info->i);	break;
 
-		case CPUINFO_INT_PC:							tms32031.pc = info->i; 					break;
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + TMS32031_PC:		tms32031.pc = info->i; 					break;
 		case CPUINFO_INT_REGISTER + TMS32031_R0:		IREG(TMR_R0) = info->i; 				break;
 		case CPUINFO_INT_REGISTER + TMS32031_R1:		IREG(TMR_R1) = info->i; 				break;
 		case CPUINFO_INT_REGISTER + TMS32031_R2:		IREG(TMR_R2) = info->i; 				break;
@@ -720,7 +721,8 @@ void tms32031_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = tms32031.ppc;					break;
 
-		case CPUINFO_INT_PC:							info->i = tms32031.pc;					break;
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + TMS32031_PC:		info->i = tms32031.pc;					break;
 
 		case CPUINFO_INT_REGISTER + TMS32031_R0:		info->i = IREG(TMR_R0);					break;
 		case CPUINFO_INT_REGISTER + TMS32031_R1:		info->i = IREG(TMR_R1);					break;

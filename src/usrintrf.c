@@ -3075,17 +3075,12 @@ int memcard_menu(struct mame_bitmap *bitmap, int selection)
 #ifndef MESS
 enum { UI_SWITCH = 0,UI_DEFCODE,UI_CODE,UI_ANALOG,UI_CALIBRATE,
 		UI_STATS,UI_GAMEINFO, UI_HISTORY,
-		UI_CHEAT,UI_RESET,UI_MEMCARD,UI_RAPIDFIRE,UI_EXIT };
+		UI_CHEAT,UI_RESET,UI_MEMCARD,UI_EXIT };
 #else
 enum { UI_SWITCH = 0,UI_DEFCODE,UI_CODE,UI_ANALOG,UI_CALIBRATE,
 		UI_GAMEINFO, UI_IMAGEINFO,UI_FILEMANAGER,UI_TAPECONTROL,
-		UI_HISTORY,UI_CHEAT,UI_RESET,UI_MEMCARD,UI_RAPIDFIRE,UI_EXIT,
+		UI_HISTORY,UI_CHEAT,UI_RESET,UI_MEMCARD,UI_EXIT,
 		UI_CONFIGURATION, UI_CATEGORIES };
-#endif
-
-
-#ifdef XMAME
-extern int setrapidfire(struct mame_bitmap *bitmap, int selected);
 #endif
 
 
@@ -3184,17 +3179,6 @@ static void setup_menu_init(void)
 #endif /* MESS */
 
 
-#ifdef XMAME
-	{
-		extern int rapidfire_enable;
-
-		if (rapidfire_enable != 0)
-		{
-			append_menu(UI_rapidfire, UI_RAPIDFIRE);
-		}
-	}
-#endif
-
 	if (has_analog())
 		append_menu(UI_analogcontrols, UI_ANALOG);
 
@@ -3255,11 +3239,6 @@ static int setup_menu(struct mame_bitmap *bitmap, int selected)
 	{
 		switch (menu_action[sel & SEL_MASK])
 		{
-#ifdef XMAME
-			case UI_RAPIDFIRE:
-				res = setrapidfire(bitmap, sel >> SEL_BITS);
-				break;
-#endif
 			case UI_SWITCH:
 				res = setdipswitches(bitmap, sel >> SEL_BITS);
 				break;
@@ -3343,9 +3322,6 @@ static int setup_menu(struct mame_bitmap *bitmap, int selected)
 	{
 		switch (menu_action[sel])
 		{
-#ifdef XMAME
-			case UI_RAPIDFIRE:
-#endif
 			case UI_SWITCH:
 			case UI_DEFCODE:
 			case UI_CODE:
@@ -4005,9 +3981,6 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 			osd_selected = 0;	/* disable on screen display */
 			schedule_full_refresh();
 		}
-#ifdef XMAME
-		update_video_and_audio(); /* for rapid-fire support */
-#endif
 	}
 	if (setup_selected != 0) setup_selected = setup_menu(bitmap, setup_selected);
 
