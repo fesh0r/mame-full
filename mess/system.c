@@ -18,7 +18,7 @@
 #ifndef DRIVER_RECURSIVE
 
 /* The "root" driver, defined so we can have &driver_##NAME in macros. */
-const struct GameDriver driver_0 =
+struct GameDriver driver_0 =
 {
   __FILE__,
   0,
