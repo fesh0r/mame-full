@@ -33,7 +33,7 @@
 
 	NOTES:
 	- The ADC is not emulated!
-	- printer not emulated
+	- printer emulation needs checking!
 
 	Many thanks to Chris Coxall for the schematics of the TC-01, the dump of the
 	system rom and a dump of a Xtal boot disc.
@@ -59,12 +59,15 @@
 /* 0x38-0x3f ADC */
 
 /* MISC */
-/* 0x20 - bit 0 is keyboard int mask */
-/* 0x21 - bit 0 is adc int mask */
+/* 0x20 - bit 0 is keyboard int mask; read to get state of some keys and /fire button states;
+		set to 0 to ENABLE interrupt; 1 to DISABLE interrupt; write to set mask. */
+/* 0x21 - bit 0 is adc int mask; set to 0 to ENABLE interrupt; 1 to DISABLE interrupt; 
+		write to set mask; read has no effect */
 /* 0x22 - alph */
 /* 0x23 - drive select and side select */
 /* 0x24 - rom */
-/* 0x25 - bit 0 is fire int mask */
+/* 0x25 - bit 0 is fire int mask; set to 0 to ENABLE interrupt; 1 to DISABLE interrupt;
+		write to set mask; read has no effect */
 /* 0x25 - */
 /* 0x26 - */
 /* 0x27 - */
@@ -106,6 +109,26 @@ static int einstein_ctc_trigger = 0;
 static void *einstein_keyboard_timer = NULL;
 static int einstein_keyboard_line = 0;
 static int einstein_keyboard_data = 0x0ff;
+
+
+#define EINSTEIN_DUMP_RAM
+
+#ifdef EINSTEIN_DUMP_RAM
+void einstein_dump_ram(void)
+{
+	void *file;
+
+	file = osd_fopen(Machine->gamedrv->name, "einstein.bin", OSD_FILETYPE_NVRAM,OSD_FOPEN_WRITE);
+ 
+	if (file)
+	{
+		osd_fwrite(file, einstein_ram, 0x10000);
+
+		/* close file */
+		osd_fclose(file);
+	}
+}
+#endif
 
 /**********************************************************/
 /* 
@@ -288,8 +311,8 @@ void einstein_ctc_trigger_callback(int dummy)
 	einstein_ctc_trigger^=1;
 
 	/* channel 0 and 1 have a 2Mhz input clock for triggering */
-//	z80ctc_0_trg0_w(0,einstein_ctc_trigger);
-//	z80ctc_0_trg1_w(0,einstein_ctc_trigger);
+	z80ctc_0_trg0_w(0,einstein_ctc_trigger);
+	z80ctc_0_trg1_w(0,einstein_ctc_trigger);
 }
 
 /* refresh keyboard data. It is refreshed when the keyboard line is written */
@@ -311,10 +334,33 @@ void einstein_scan_keyboard(void)
 
 static void einstein_update_interrupts(void)
 {
+	if (einstein_int & einstein_int_mask & EINSTEIN_KEY_INT)
+	{
+		cpu_cause_interrupt(0, Z80_VECTOR(0,Z80_INT_REQ));
+	}
+	else
+	{
+		cpu_cause_interrupt(0, Z80_VECTOR(0,Z80_INT_IEO));
+	}
 
-
-
-
+	if (einstein_int & einstein_int_mask & EINSTEIN_ADC_INT)
+	{
+		cpu_cause_interrupt(0, Z80_VECTOR(2,Z80_INT_REQ));
+	}
+	else
+	{
+		cpu_cause_interrupt(0, Z80_VECTOR(2,Z80_INT_IEO));
+	}
+/*
+	if (einstein_int & einstein_int_mask & EINSTEIN_FIRE_INT)
+	{
+		cpu_cause_interrupt(0, Z80_VECTOR(4,Z80_INT_REQ);
+	}
+	else
+	{
+		cpu_cause_interrupt(0, Z80_VECTOR(4,Z80_INT_IEO);
+	}
+*/
 }
 
 void	einstein_keyboard_timer_callback(int dummy)
@@ -336,14 +382,13 @@ void	einstein_keyboard_timer_callback(int dummy)
 	{
 		/* generate interrupt */
 		einstein_int |= EINSTEIN_KEY_INT;
-		
-		einstein_update_interrupts();
-
-//		if (einstein_int & einstein_int_mask)
-//		{
-//			cpu_cause_interrupt(0, 0x0ff);
-//		}
 	}
+	else
+	{
+		einstein_int &= ~EINSTEIN_KEY_INT;
+	}
+
+	einstein_update_interrupts();
 }
 
 
@@ -356,9 +401,19 @@ int einstein_floppy_init(int id)
 	return dsk_floppy_load(id);
 }
 
-static void einstein_z80fmly_interrupt(int state)
+/* interrupt state callback for ctc */
+static void einstein_ctc_interrupt(int state)
 {
-	cpu_cause_interrupt(0, Z80_VECTOR(0, state));
+	logerror("ctc irq state: %02x\n",state);
+
+	cpu_cause_interrupt(0, Z80_VECTOR(1,state));
+}
+
+static void einstein_pio_interrupt(int state)
+{
+	logerror("pio irq state: %02x\n",state);
+
+	cpu_cause_interrupt(0, Z80_VECTOR(3,state));
 }
 
 WRITE_HANDLER(einstein_serial_transmit_clock)
@@ -371,22 +426,15 @@ WRITE_HANDLER(einstein_serial_receive_clock)
 	msm8251_receive_clock();
 }
 
-WRITE_HANDLER(einstein_ctc_ch2_zc0)
-{
-	/* the terminal count of channel 2 is connected to the trigger for channel 3 */
-	z80ctc_0_trg3_w(0,data);
-}
-
-
 static z80ctc_interface	einstein_ctc_intf =
 {
 	1,
 	{EINSTEIN_SYSTEM_CLOCK},
 	{0},
-	{einstein_z80fmly_interrupt},
+	{einstein_ctc_interrupt},
 	{einstein_serial_transmit_clock},
 	{einstein_serial_receive_clock},
-    {einstein_ctc_ch2_zc0}
+    {z80ctc_0_trg3_w}
 };
 
 static void einstein_pio_ardy(int data)
@@ -407,27 +455,80 @@ static void einstein_pio_ardy(int data)
 static z80pio_interface einstein_pio_intf = 
 {
 	1,
-	{einstein_z80fmly_interrupt},
+	{einstein_pio_interrupt},
 	{einstein_pio_ardy},
 	{NULL}
 };
 
-#if 0
-void einstein_int_reset(int code)
+/* not required for this interrupt source */
+void einstein_keyboard_int_reset(int which)
+{
+	einstein_int_mask &= ~EINSTEIN_KEY_INT;
+
+	einstein_update_interrupts();
+}
+
+
+/* not required for this interrupt source */
+void einstein_adc_int_reset(int which)
+{
+	einstein_int_mask &= ~EINSTEIN_ADC_INT;
+
+	einstein_update_interrupts();
+}
+
+/* not required for this interrupt source */
+void einstein_fire_int_reset(int which)
+{
+	einstein_int_mask &= ~EINSTEIN_FIRE_INT;
+
+	einstein_update_interrupts();
+}
+
+int einstein_keyboard_interrupt(int which)
+{
+	logerror("keyboard int routine in daisy chain\n");
+
+	/* return vector */
+	return 0x0ff;
+}
+
+int einstein_adc_interrupt(int which)
+{
+	logerror("adc int routine in daisy chain\n");
+	/* return vector */
+	return 0x0ff;
+}
+
+int einstein_fire_interrupt(int which)
+{
+	logerror("fire int routine in daisy chain\n");
+	/* return vector */
+	return 0x0ff;
+}
+
+/* reti has no effect on this interrupt */
+void einstein_keyboard_reti(int which)
 {
 }
 
-int	einstein_interrupt(int code)
+/* reti has no effect on this interrupt */
+void einstein_adc_reti(int which)
 {
-
 }
-#endif
+
+/* reti has no effect on this interrupt */
+void einstein_fire_reti(int which)
+{
+}
 
 static Z80_DaisyChain einstein_daisy_chain[] =
 {
+	{einstein_keyboard_int_reset, einstein_keyboard_interrupt, einstein_keyboard_reti, 0},
     {z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0},
+	{einstein_adc_int_reset,einstein_adc_interrupt, einstein_adc_reti, 0},
 	{z80pio_reset, z80pio_interrupt, z80pio_reti, 0},
-//	{einstein_int_reset, einstein_interrupt, NULL, 0},
+//	{einstein_fire_int_reset,einstein_fire_interrupt, einstein_fire_reti, 0},
     {0,0,0,-1}
 };
 
@@ -696,7 +797,8 @@ MEMORY_END
 
 
 MEMORY_WRITE_START( writemem_einstein )
-	{0x0000, 0x0ffff, MWA_BANK3},
+	{0x0000, 0x01fff, MWA_BANK3},
+	{0x2000, 0x0ffff, MWA_BANK4},
 MEMORY_END
 
 static void einstein_page_rom(void)
@@ -707,6 +809,9 @@ static void einstein_page_rom(void)
 	}
 	else
 	{
+#ifdef EINSTEIN_DUMP_RAM
+		einstein_dump_ram();
+#endif
 		cpu_setbank(1, einstein_ram);
 	}
 }
@@ -744,17 +849,6 @@ static WRITE_HANDLER(einstein_drive_w)
 	}
 }
 
-
-static WRITE_HANDLER(einstein_unmapped_w)
-{
-}
-
-static READ_HANDLER(einstein_unmapped_r)
-{
-	return 0x0ff;
-}
-
-
 static WRITE_HANDLER(einstein_rom_w)
 {
 	einstein_rom_enabled^=1;
@@ -766,10 +860,10 @@ static READ_HANDLER(einstein_key_int_r)
 	int centronics_handshake;
 	int data;
 
-	logerror("mask r\n");
-
-	/* clear key int */
+	/* clear key int. a read of this I/O port will do this or a reset */
 	einstein_int &= ~EINSTEIN_KEY_INT;
+
+	einstein_update_interrupts();
 
 	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
 	centronics_handshake = centronics_read_handshake(0);
@@ -810,24 +904,72 @@ static READ_HANDLER(einstein_key_int_r)
 		data |= (1<<2);
 	}
 
+	logerror("key int r: %02x\n",data);
+
 	return data;
 }
 
 
 static WRITE_HANDLER(einstein_key_int_w)
 {
-	logerror("mask: %02x\n",data);
+	logerror("key int w: %02x\n",data);
 
 	/* set mask from bit 0 */
 	if (data & 0x01)
 	{
-		einstein_int_mask |= EINSTEIN_KEY_INT;
+		logerror("key int is disabled\n");
+		einstein_int_mask &= ~EINSTEIN_KEY_INT;
 	}
 	else
 	{
-		einstein_int_mask &= ~EINSTEIN_KEY_INT;
+		logerror("key int is enabled\n");
+		einstein_int_mask |= EINSTEIN_KEY_INT;
 	}
+
+	einstein_update_interrupts();
 }
+
+static WRITE_HANDLER(einstein_adc_int_w)
+{
+	logerror("adc int w: %02x\n",data);
+	/* writing to this I/O port sets the state of the mask; D0 is used */
+	/* writing 0 enables the /ADC interrupt */
+
+	if (data & 0x01)
+	{
+		logerror("adc int is disabled\n");
+		einstein_int_mask &= ~EINSTEIN_ADC_INT;
+	}
+	else
+	{
+		logerror("adc int is enabled\n");
+		einstein_int_mask |= EINSTEIN_ADC_INT;
+	}
+
+	einstein_update_interrupts();
+}
+
+static WRITE_HANDLER(einstein_fire_int_w)
+{
+	logerror("fire int w: %02x\n",data);
+
+	/* writing to this I/O port sets the state of the mask; D0 is used */
+	/* writing 0 enables the /FIRE interrupt */
+
+	if (data & 0x01)
+	{
+		logerror("fire int is disabled\n");
+		einstein_int_mask &= ~EINSTEIN_FIRE_INT;
+	}
+	else
+	{
+		logerror("fire int is enabled\n");
+		einstein_int_mask |= EINSTEIN_FIRE_INT;
+	}
+
+	einstein_update_interrupts();
+}
+
 
 READ_HANDLER(einstein2_port_r)
 {
@@ -910,6 +1052,9 @@ READ_HANDLER(einstein2_port_r)
 		default:
 			break;
 	}
+
+	logerror("unhandled port r: %04x\n",offset);
+
 	return 0xff;
 }
 
@@ -926,7 +1071,7 @@ WRITE_HANDLER(einstein2_port_w)
 		case 0x06:
 		case 0x07:
 			einstein_psg_w(offset,data);
-			break;
+			return;
 		case 0x08:
 		case 0x09:
 		case 0x0a:
@@ -936,7 +1081,7 @@ WRITE_HANDLER(einstein2_port_w)
 		case 0x0e:
 		case 0x0f:
 			einstein_vdp_w(offset,data);
-			break;
+			return;
 		case 0x10:
 		case 0x11:
 		case 0x12:
@@ -946,7 +1091,7 @@ WRITE_HANDLER(einstein2_port_w)
 		case 0x16:
 		case 0x17:
 			einstein_serial_w(offset,data);
-			break;
+			return;
 		case 0x18:
 		case 0x19:
 		case 0x1a:
@@ -956,16 +1101,22 @@ WRITE_HANDLER(einstein2_port_w)
 		case 0x1e:
 		case 0x1f:
 			einstein_fdc_w(offset,data);
-			break;
+			return;
 		case 0x20:
 			einstein_key_int_w(offset,data);
-			break;
+			return;
+		case 0x21:
+			einstein_adc_int_w(offset,data);
+			return;
 		case 0x23:
 			einstein_drive_w(offset,data);
-			break;
+			return;
 		case 0x24:
 			einstein_rom_w(offset,data);
-			break;
+			return;
+		case 0x25:
+			einstein_fire_int_w(offset,data);
+			return;
 		case 0x28:
 		case 0x29:
 		case 0x2a:
@@ -975,7 +1126,7 @@ WRITE_HANDLER(einstein2_port_w)
 		case 0x2e:
 		case 0x2f:
 			einstein_ctc_w(offset,data);
-			break;
+			return;
 		case 0x30:
 		case 0x31:
 		case 0x32:
@@ -985,7 +1136,7 @@ WRITE_HANDLER(einstein2_port_w)
 		case 0x36:
 		case 0x37:
 			einstein_pio_w(offset,data);
-			break;
+			return;
 		case 0x40:
 		case 0x41:
 		case 0x42:
@@ -1003,11 +1154,13 @@ WRITE_HANDLER(einstein2_port_w)
 		case 0x4e:
 		case 0x4f:
 			einstein_80col_w(offset,data);
-			break;
+			return;
 
 		default:
 			break;
 	}
+
+	logerror("unhandled port w: %04x %02x\n",offset,data);
 }
 
 
@@ -1075,6 +1228,9 @@ READ_HANDLER(einstein_port_r)
 		default:
 			break;
 	}
+
+	logerror("unhandled port r: %04x\n",offset);
+
 	return 0xff;
 }
 
@@ -1091,7 +1247,7 @@ WRITE_HANDLER(einstein_port_w)
 		case 0x06:
 		case 0x07:
 			einstein_psg_w(offset,data);
-			break;
+			return;
 		case 0x08:
 		case 0x09:
 		case 0x0a:
@@ -1101,7 +1257,7 @@ WRITE_HANDLER(einstein_port_w)
 		case 0x0e:
 		case 0x0f:
 			einstein_vdp_w(offset,data);
-			break;
+			return;
 		case 0x10:
 		case 0x11:
 		case 0x12:
@@ -1111,7 +1267,7 @@ WRITE_HANDLER(einstein_port_w)
 		case 0x16:
 		case 0x17:
 			einstein_serial_w(offset,data);
-			break;
+			return;
 		case 0x18:
 		case 0x19:
 		case 0x1a:
@@ -1121,16 +1277,22 @@ WRITE_HANDLER(einstein_port_w)
 		case 0x1e:
 		case 0x1f:
 			einstein_fdc_w(offset,data);
-			break;
+			return;
 		case 0x20:
 			einstein_key_int_w(offset,data);
-			break;
+			return;
+		case 0x21:
+			einstein_adc_int_w(offset,data);
+			return;
 		case 0x23:
 			einstein_drive_w(offset,data);
-			break;
+			return;
 		case 0x24:
 			einstein_rom_w(offset,data);
-			break;
+			return;
+		case 0x25:
+			einstein_fire_int_w(offset,data);
+			return;
 		case 0x28:
 		case 0x29:
 		case 0x2a:
@@ -1140,7 +1302,7 @@ WRITE_HANDLER(einstein_port_w)
 		case 0x2e:
 		case 0x2f:
 			einstein_ctc_w(offset,data);
-			break;
+			return;
 		case 0x30:
 		case 0x31:
 		case 0x32:
@@ -1150,11 +1312,12 @@ WRITE_HANDLER(einstein_port_w)
 		case 0x36:
 		case 0x37:
 			einstein_pio_w(offset,data);
-			break;
+			return;
 
 		default:
 			break;
 	}
+	logerror("unhandled port w: %04x %02x\n",offset,data);
 }
 
 
@@ -1201,25 +1364,6 @@ PORT_END
 
 
 
-//#define EINSTEIN_DUMP_RAM
-
-#ifdef EINSTEIN_DUMP_RAM
-void einstein_dump_ram(void)
-{
-	void *file;
-
-	file = osd_fopen(Machine->gamedrv->name, "einstein.bin", OSD_FILETYPE_NVRAM,OSD_FOPEN_WRITE);
- 
-	if (file)
-	{
-		osd_fwrite(file, einstein_ram, 0x10000);
-
-		/* close file */
-		osd_fclose(file);
-	}
-}
-#endif
-
 
 struct msm8251_interface einstein_msm8251_intf=
 {
@@ -1252,12 +1396,42 @@ static CENTRONICS_CONFIG einstein_cent_config[1]={
 	},
 };
 
+
+/* when Z80 acknowledges int, /IORQ and /M1 will be low */
+/* this allows I057 octal latch to output data onto the bus */
+static int einstein_cpu_acknowledge_int(int cpu)
+{
+	int vector = 0;
+
+	/* 8 different values for vector */
+
+	/* vector */
+	/* bits 7,6,5,4 and 0 are forced to "0" */
+
+	/* if /adc int OR /ctc int, then pio is not allowed to interrupt */
+
+	/* 4d set to 1 */
+	/* 1d is set to 0 if key int has occured */
+	/* 2d is set to 0 if adc int has occured and CTC int hasn't occured */
+	/* 3d is set to 0 if fire int has occured but not if adc or CTC or PIO int has occured */
+
+	/* priority (highest to lowest): */
+	/* keyboard */
+	/* ctc */
+	/* adc */
+	/* pio */
+	/* fire */
+
+	return (vector<<1);
+}
+
 void einstein_init_machine(void)
 {
 	einstein_ram = malloc(65536);
 	memset(einstein_ram, 0x0aa, 65536);
 	cpu_setbank(2,einstein_ram+0x02000);
 	cpu_setbank(3,einstein_ram);
+	cpu_setbank(4,einstein_ram+0x02000);
 
 	z80ctc_init(&einstein_ctc_intf);
 	z80pio_init(&einstein_pio_intf);
@@ -1273,10 +1447,15 @@ void einstein_init_machine(void)
 
 	wd179x_init(WD_TYPE_177X,NULL);
 
-	einstein_int=0;
+	einstein_ctc_trigger = 0;
 
+	einstein_int=0;
+	/* a reset causes the fire int, adc int, keyboard int mask
+	to be set to 1, which causes all these to be DISABLED */
+	einstein_int_mask = 0;
 	floppy_drive_set_geometry(0, FLOPPY_DRIVE_SS_40);
 
+	cpu_set_irq_callback(0, einstein_cpu_acknowledge_int);
 
 	/* the einstein keyboard can generate a interrupt */
 	/* the int is actually clocked at the system clock 4Mhz, but this would be too fast for our
@@ -1285,7 +1464,7 @@ void einstein_init_machine(void)
 
 	/* the input to channel 0 and 1 of the ctc is a 2mhz clock */
 	einstein_ctc_trigger = 0;
-	einstein_ctc_trigger_timer = timer_pulse(TIME_IN_HZ(1000000), 0, einstein_ctc_trigger_callback);
+	einstein_ctc_trigger_timer = timer_pulse(TIME_IN_HZ(2000000), 0, einstein_ctc_trigger_callback);
 
 	centronics_config(0, einstein_cent_config);
 	/* assumption: select is tied low */
@@ -1304,7 +1483,7 @@ void einstein2_init_machine(void)
 void einstein_shutdown_machine(void)
 {
 #ifdef EINSTEIN_DUMP_RAM
-	einstein_dump_ram();
+//	einstein_dump_ram();
 #endif
 	if (einstein_ram)
 	{
@@ -1593,7 +1772,7 @@ static struct MachineDriver machine_driver_einstein =
 	{
 		/* MachineCPU */
 		{
-			CPU_Z80_MSX | CPU_16BIT_PORT,  /* type */
+			CPU_Z80 | CPU_16BIT_PORT,  /* type */
 			EINSTEIN_SYSTEM_CLOCK,
 			readmem_einstein,		   /* MemoryReadAddress */
 			writemem_einstein,		   /* MemoryWriteAddress */
@@ -1636,7 +1815,7 @@ static struct MachineDriver machine_driver_einstei2 =
 	{
 		/* MachineCPU */
 		{
-			CPU_Z80_MSX | CPU_16BIT_PORT,  /* type */
+			CPU_Z80 | CPU_16BIT_PORT,  /* type */
 			EINSTEIN_SYSTEM_CLOCK,
 			readmem_einstein,		   /* MemoryReadAddress */
 			writemem_einstein,		   /* MemoryWriteAddress */
@@ -1683,7 +1862,7 @@ static struct MachineDriver machine_driver_einstei2 =
 ***************************************************************************/
 
 ROM_START(einstein)
-	ROM_REGION(0x010000+0x02000+0x0800, REGION_CPU1,0)
+	ROM_REGION(0x010000+0x02000, REGION_CPU1,0)
 	ROM_LOAD("einstein.rom",0x10000, 0x02000, 0x0ec134953)
 ROM_END
 
