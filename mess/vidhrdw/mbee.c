@@ -8,6 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "mbee.h"
 
 typedef struct {		 // CRTC 6545
 	UINT8 horizontal_total;
@@ -56,89 +57,90 @@ UINT8 *pcgram;
 extern struct GfxLayout mbee_charlayout;
 
 
-void mbee_pcg_color_latch_w(int offs, int data)
+WRITE_HANDLER ( mbee_pcg_color_latch_w )
 {
 	logerror("mbee pcg_color_latch_w $%02X\n", data);
 	mbee_pcg_color_latch = data;
 }
 
-int mbee_pcg_color_latch_r(int offs)
+READ_HANDLER ( mbee_pcg_color_latch_r )
 {
 	int data = mbee_pcg_color_latch;
 	logerror("mbee pcg_color_latch_r $%02X\n", data);
 	return data;
 }
 
-void mbee_videoram_w(int offs, int data)
+WRITE_HANDLER ( mbee_videoram_w )
 {
-    if( videoram[offs] != data )
+    if( videoram[offset] != data )
 	{
-		logerror("mbee videoram [$%04X] <- $%02X\n",offs,data);
-		videoram[offs] = data;
-		dirtybuffer[offs] = 1;
+		logerror("mbee videoram [$%04X] <- $%02X\n", offset, data);
+		videoram[offset] = data;
+		dirtybuffer[offset] = 1;
 	}
 }
 
-int mbee_videoram_r(int offs)
+READ_HANDLER ( mbee_videoram_r )
 {
 	int data;
 	if( m6545_video_bank & 0x01 )
 	{
-		data = pcgram[offs];
-		logerror("mbee pcgram [$%04X] -> $%02X\n",offs,data);
+		data = pcgram[offset];
+		logerror("mbee pcgram [$%04X] -> $%02X\n", offset, data);
 	}
 	else
 	{
-		data = videoram[offs];
-		logerror("mbee videoram [$%04X] -> $%02X\n",offs,data);
+		data = videoram[offset];
+		logerror("mbee videoram [$%04X] -> $%02X\n", offset, data);
     }
     return data;
 }
 
-void mbee_pcg_color_w(int offs, int data)
+WRITE_HANDLER ( mbee_pcg_color_w )
 {
 	if( (m6545_video_bank & 0x01) || (mbee_pcg_color_latch & 0x40) == 0 )
 	{
-		if( pcgram[0x0800+offs] != data )
+		if( pcgram[0x0800+offset] != data )
         {
-            int chr = 0x80 + offs / 16;
+            int chr = 0x80 + offset / 16;
+			int i;
 
-            logerror("mbee pcgram  [$%04X] <- $%02X\n",offs,data);
-            pcgram[0x0800+offs] = data;
+            logerror("mbee pcgram  [$%04X] <- $%02X\n", offset, data);
+            pcgram[0x0800+offset] = data;
             /* decode character graphics again */
             decodechar(Machine->gfx[0], chr, pcgram, &mbee_charlayout);
 
             /* mark all visible characters with that code dirty */
-            for( offs = 0; offs < videoram_size; offs++ )
+            for( i = 0; i < videoram_size; i++ )
             {
-                if( videoram[offs] == chr )
-                    dirtybuffer[offs] = 1;
+                if( videoram[i] == chr )
+                    dirtybuffer[i] = 1;
             }
         }
     }
 	else
 	{
-		if( colorram[offs] != data )
+		if( colorram[offset] != data )
         {
-            logerror("colorram [$%04X] <- $%02X\n",offs,data);
-            colorram[offs] = data;
-            dirtybuffer[offs] = 1;
+            logerror("colorram [$%04X] <- $%02X\n", offset, data);
+            colorram[offset] = data;
+            dirtybuffer[offset] = 1;
         }
 	}
 }
 
-int mbee_pcg_color_r(int offs)
+READ_HANDLER ( mbee_pcg_color_r )
 {
 	int data;
 
 	if( mbee_pcg_color_latch & 0x40 )
-        data = colorram[offs];
+        data = colorram[offset];
 	else
-		data = pcgram[0x0800+offs];
+		data = pcgram[0x0800+offset];
     return data;
 }
 
-int keyboard_matrix_r(int offs)
+static int keyboard_matrix_r(int offs)
 {
 	int port = (offs >> 7) & 7;
 	int bit = (offs >> 4) & 7;
@@ -201,33 +203,33 @@ static void m6545_offset_xy(void)
 	logerror("6545 offset x:%d  y:%d\n", off_x, off_y);
 }
 
-int mbee_color_bank_r(int offs)
+READ_HANDLER ( mbee_color_bank_r )
 {
 	int data = m6545_color_bank;
 	logerror("6545 color_bank_r $%02X\n", data);
 	return data;
 }
 
-void mbee_color_bank_w(int offs, int data)
+WRITE_HANDLER ( mbee_color_bank_w )
 {
 	logerror("6545 color_bank_w $%02X\n", data);
 	m6545_color_bank = data;
 }
 
-int mbee_video_bank_r(int offs)
+READ_HANDLER ( mbee_video_bank_r )
 {
 	int data = m6545_video_bank;
 	logerror("6545 video_bank_r $%02X\n", data);
 	return data;
 }
 
-void mbee_video_bank_w(int offs, int data)
+WRITE_HANDLER ( mbee_video_bank_w )
 {
 	logerror("6545 video_bank_w $%02X\n", data);
     m6545_video_bank = data;
 }
 
-void m6545_update_strobe(int param)
+static void m6545_update_strobe(int param)
 {
 	int data;
     data = keyboard_matrix_r(param);
@@ -238,7 +240,7 @@ void m6545_update_strobe(int param)
 	}
 }
 
-int m6545_status_r(int offs)
+READ_HANDLER ( m6545_status_r )
 {
 	int data = 0, y = cpu_getscanline();
 
@@ -253,7 +255,7 @@ int m6545_status_r(int offs)
     return data;
 }
 
-int m6545_data_r(int offs)
+READ_HANDLER ( m6545_data_r )
 {
 	int addr, data = 0;
 
@@ -328,12 +330,12 @@ int m6545_data_r(int offs)
 	return data;
 }
 
-void m6545_index_w(int offs, int data)
+WRITE_HANDLER ( m6545_index_w )
 {
 	crt.idx = data & 0x1f;
 }
 
-void m6545_data_w(int offs, int data)
+WRITE_HANDLER ( m6545_data_w )
 {
 	int addr;
 
