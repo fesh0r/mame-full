@@ -303,6 +303,7 @@ $(OBJ)/dragon.a:   \
 	  $(OBJ)/mess/machine/6883sam.o  \
 	  $(OBJ)/mess/formats/cocopak.o  \
 	  $(OBJ)/mess/formats/cococas.o  \
+	  $(OBJ)/mess/formats/dmkdsk.o   \
 	  $(OBJ)/mess/machine/mc10.o	 \
 	  $(OBJ)/mess/systems/mc10.o	 \
 	  $(OBJ)/mess/vidhrdw/dragon.o	 \
