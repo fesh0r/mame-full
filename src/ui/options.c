@@ -426,6 +426,7 @@ static REG_OPTION global_game_options[] =
 {
 	{"skip_disclaimer",         RO_BOOL,    &settings.skip_disclaimer,   "0" },
 	{"skip_gameinfo",           RO_BOOL,    &settings.skip_gameinfo,     "0" },
+	{"skip_validitychecks",    RO_BOOL,    &settings.skip_validitychecks,     "0" },
 	{"high_priority",           RO_BOOL,    &settings.high_priority,     "0" },
 
 
@@ -915,7 +916,7 @@ void SyncInFolderOptions(options_type *opts, int folder_index)
 						strncpy(title, ExtraFolderData[folder_index]->m_szTitle, strlen(ExtraFolderData[folder_index]->m_szTitle)-2 );
 						title[strlen(ExtraFolderData[folder_index]->m_szTitle)-2] = '\0';
 						//Core expects it there
-						snprintf(buffer,sizeof(buffer),"%s\\mame\\src\\drivers\\%s.ini",GetIniDir(), title );
+						snprintf(buffer,sizeof(buffer),"%s\\drivers\\%s.ini",GetIniDir(), title );
 					}
 					else
 					{
@@ -1011,7 +1012,7 @@ options_type * GetSourceOptions(int driver_index )
 	strcpy(title, GetDriverFilename(driver_index) );
 	title[strlen(title)-2] = '\0';
 	//Core expects it there
-	snprintf(buffer,sizeof(buffer),"%s\\mame\\src\\drivers\\%s.ini",GetIniDir(), title );
+	snprintf(buffer,sizeof(buffer),"%s\\drivers\\%s.ini",GetIniDir(), title );
 	SyncInGameOptions(&game_options[driver_index], buffer);
 	return &gOpts;
 }
@@ -1034,7 +1035,7 @@ options_type * GetGameOptions(int driver_index, int folder_index )
 	strcpy(title, GetDriverFilename(driver_index) );
 	title[strlen(title)-2] = '\0';
 	//Core expects it there
-	snprintf(buffer,sizeof(buffer),"%s\\mame\\src\\drivers\\%s.ini",GetIniDir(), title );
+	snprintf(buffer,sizeof(buffer),"%s\\drivers\\%s.ini",GetIniDir(), title );
 	SyncInGameOptions(&game_options[driver_index], buffer);
 	//last but not least, sync in game specific settings
 	snprintf(buffer,sizeof(buffer),"%s\\%s.ini",GetIniDir(),drivers[driver_index]->name );
@@ -1278,6 +1279,16 @@ void SetSkipGameInfo(BOOL skip_gameinfo)
 BOOL GetSkipGameInfo(void)
 {
 	return settings.skip_gameinfo;
+}
+
+void SetSkipValidityChecks(BOOL skip_validitychecks)
+{
+	settings.skip_validitychecks = skip_validitychecks;
+}
+
+BOOL GetSkipValidityChecks(void)
+{
+	return settings.skip_validitychecks;
 }
 
 void SetHighPriority(BOOL high_priority)
@@ -3217,7 +3228,7 @@ void LoadFolderOptions(int folder_index )
 						strncpy(title, ExtraFolderData[folder_index]->m_szTitle, strlen(ExtraFolderData[folder_index]->m_szTitle)-2 );
 						title[strlen(ExtraFolderData[folder_index]->m_szTitle)-2] = '\0';
 						//Core expects it there
-						snprintf(buffer,sizeof(buffer),"%s\\mame\\src\\drivers\\%s.ini",GetIniDir(), title );
+						snprintf(buffer,sizeof(buffer),"%s\\drivers\\%s.ini",GetIniDir(), title );
 					}
 					else
 					{
@@ -3611,8 +3622,8 @@ void SaveFolderOptions(int folder_index, int game_index)
 						strncpy(title, ExtraFolderData[folder_index]->m_szTitle, strlen(ExtraFolderData[folder_index]->m_szTitle)-2 );
 						title[strlen(ExtraFolderData[folder_index]->m_szTitle)-2] = '\0';
 						//Core expects it there
-						snprintf(buffer,sizeof(buffer),"%s\\mame\\src\\drivers\\%s.ini",GetIniDir(), title );
-						snprintf(subdir,sizeof(subdir),"%s\\mame\\src\\drivers\\",GetIniDir() );
+						snprintf(buffer,sizeof(buffer),"%s\\drivers\\%s.ini",GetIniDir(), title );
+						snprintf(subdir,sizeof(subdir),"%s\\drivers\\",GetIniDir() );
 					}
 					else
 					{

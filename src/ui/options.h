@@ -304,6 +304,7 @@ typedef struct
     COLORREF list_clone_color;
     BOOL     skip_disclaimer;
     BOOL     skip_gameinfo;
+    BOOL     skip_validitychecks;
     BOOL     high_priority;
 
 	// Keyboard control of ui
@@ -490,6 +491,9 @@ BOOL GetSkipDisclaimer(void);
 
 void SetSkipGameInfo(BOOL show_gameinfo);
 BOOL GetSkipGameInfo(void);
+
+void SetSkipValidityChecks(BOOL skip_validitychecks);
+BOOL GetSkipValidityChecks(void);
 
 void SetHighPriority(BOOL high_priority);
 BOOL GetHighPriority(void);

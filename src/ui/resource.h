@@ -258,8 +258,8 @@
 #define IDC_ARTMISCTEXT                 1175
 #define IDC_SKIP_DISCLAIMER             1176
 #define IDC_SKIP_GAME_INFO              1177
-#define IDC_PROP_SOURCE                 1177
-#define IDC_OLD_TIMING                  1178
+#define IDC_PROP_SOURCE                 1178
+#define IDC_OLD_TIMING                  1179
 #define IDC_PAUSEBRIGHT                 1180
 #define IDC_PAUSEBRIGHTDISP             1181
 #define IDC_HIGH_PRIORITY               1182
@@ -300,6 +300,7 @@
 #define IDC_GAME_CAPTION                1224
 #define IDC_SCREENSHOT_BORDERSIZE       1225
 #define IDC_SCREENSHOT_BORDERCOLOR      1226
+#define IDC_SKIP_VALIDITY_CHECKS        1227
 #define IDC_CYCLETIMESECTXT             1230
 #define IDC_SCREENSHOT_BORDERSIZETXT    1232
 #define ID_CONTEXT_SHOW_FOLDER_START    39000
