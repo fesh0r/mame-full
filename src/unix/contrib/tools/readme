@@ -105,4 +105,4 @@ Contents of directory contrib/tools
 			onto CDs.  All games on a CD can be played without 
 			requiring ROMs from other CDs.
 	Usage:		makecd_mame.pl gamedir burndir gameslist
-			See script for more information.
+			See script for more information. 
