@@ -9,6 +9,7 @@ Note: .inp record/playback does still not work currently.
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - Super Vision [PeT]
+- SVI-318 and SVI-328 [Sean Young]
 
 
 System Driver Changes:
