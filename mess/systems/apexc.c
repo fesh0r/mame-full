@@ -433,18 +433,31 @@ static unsigned short apexc_colortable[] =
 #define APEXC_PALETTE_SIZE sizeof(apexc_palette)/3
 #define APEXC_COLORTABLE_SIZE sizeof(apexc_colortable)/2
 
-static struct mame_bitmap *apexc_bitmap1;
-static struct mame_bitmap *apexc_bitmap2;
+static struct mame_bitmap *apexc_bitmap;
+
+enum
+{
+	/* size and position of panel window */
+	panel_window_width = 256,
+	panel_window_height = 64,
+	panel_window_offset_x = 0,
+	panel_window_offset_y = 0,
+	/* size and position of teletyper window */
+	teletyper_window_width = 256,
+	teletyper_window_height = 128,
+	teletyper_window_offset_x = 0,
+	teletyper_window_offset_y = panel_window_height
+};
 
 static const struct rectangle panel_window =
 {
-	0,	256-1,	/* min_x, max_x */
-	0,	64-1,	/* min_y, max_y */
+	panel_window_offset_x,	panel_window_offset_x+panel_window_width-1,	/* min_x, max_x */
+	panel_window_offset_y,	panel_window_offset_y+panel_window_height-1,/* min_y, max_y */
 };
 static const struct rectangle teletyper_window =
 {
-	0,	256-1,	/* min_x, max_x */
-	64,	192-1,	/* min_y, max_y */
+	teletyper_window_offset_x,	teletyper_window_offset_x+teletyper_window_width-1,	/* min_x, max_x */
+	teletyper_window_offset_y,	teletyper_window_offset_y+teletyper_window_height-1,/* min_y, max_y */
 };
 enum
 {
@@ -452,8 +465,8 @@ enum
 };
 static const struct rectangle teletyper_scroll_clear_window =
 {
-	0,	256-1,	/* min_x, max_x */
-	192-teletyper_scroll_step,	192-1,	/* min_y, max_y */
+	teletyper_window_offset_x,	teletyper_window_offset_x+teletyper_window_width-1,	/* min_x, max_x */
+	teletyper_window_offset_y+teletyper_window_height-teletyper_scroll_step,	teletyper_window_offset_y+teletyper_window_height-1,	/* min_y, max_y */
 };
 static const int var_teletyper_scroll_step = - teletyper_scroll_step;
 
@@ -469,12 +482,10 @@ static PALETTE_INIT( apexc )
 
 static VIDEO_START( apexc )
 {
-	if ((apexc_bitmap1 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == NULL)
-		return 1;
-	if ((apexc_bitmap2 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == NULL)
+	if ((apexc_bitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == NULL)
 		return 1;
 
-	fillbitmap(apexc_bitmap1, Machine->pens[0], &/*Machine->visible_area*/teletyper_window);
+	fillbitmap(apexc_bitmap, Machine->pens[0], &/*Machine->visible_area*/teletyper_window);
 	return 0;
 }
 
@@ -522,7 +533,7 @@ static void video_update_apexc(struct mame_bitmap *bitmap, const struct rectangl
 		apexc_draw_string(bitmap, "data :", 0, 24, 0);
 	}
 
-	copybitmap(bitmap, apexc_bitmap1, 0, 0, 0, 0, &teletyper_window, TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap, apexc_bitmap, 0, 0, 0, 0, &teletyper_window, TRANSPARENCY_NONE, 0);
 
 
 	apexc_draw_led(bitmap, 0, 0, 1);
@@ -553,16 +564,16 @@ static void apexc_teletyper_init(void)
 
 static void apexc_teletyper_linefeed(void)
 {
-	struct mame_bitmap *tmp;
+	UINT8 buf[teletyper_window_width];
+	int y;
 
-	copybitmap(apexc_bitmap2, apexc_bitmap1, 0, 0, 0, -teletyper_scroll_step, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+	for (y=teletyper_window_offset_y; y<teletyper_window_offset_y+teletyper_window_height-teletyper_scroll_step; y++)
+	{
+		extract_scanline8(apexc_bitmap, teletyper_window_offset_x, y+teletyper_scroll_step, teletyper_window_width, buf);
+		draw_scanline8(apexc_bitmap, teletyper_window_offset_x, y, teletyper_window_width, buf, Machine->pens, -1);
+	}
 
-	fillbitmap(apexc_bitmap2, Machine->pens[0], &teletyper_scroll_clear_window);
-
-	/* swap apexc_bitmap1 & apexc_bitmap2 (goofy, but faster than calling copybitmap) */
-	tmp = apexc_bitmap1;
-	apexc_bitmap1 = apexc_bitmap2;
-	apexc_bitmap2 = tmp;
+	fillbitmap(apexc_bitmap, Machine->pens[0], &teletyper_scroll_clear_window);
 }
 
 static void apexc_teletyper_putchar(int character)
@@ -629,7 +640,7 @@ static void apexc_teletyper_putchar(int character)
 		/* print character */
 		buffer[0] = ascii_table[letters][character];	/* lookup ASCII equivalent in table */
 		buffer[1] = '\0';								/* terminate string */
-		apexc_draw_string(apexc_bitmap1, buffer, 8*pos, 176, 0);	/* print char */
+		apexc_draw_string(apexc_bitmap, buffer, 8*pos, 176, 0);	/* print char */
 		pos++;											/* step carriage forward */
 
 		break;
