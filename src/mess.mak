@@ -622,6 +622,8 @@ imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/cococas.o   \
 	  $(OBJ)/mess/tools/vmsx_tap.o   \
 	  $(OBJ)/mess/tools/vmsx_gm2.o   \
+	  $(OBJ)/mess/formats/fmsx_cas.o  \
+	  $(OBJ)/mess/tools/fmsx_cas.o  \
 	  $(OBJ)/mess/formats/cococas.o  \
 	  $(OBJ)/mess/tools/rsdos.o   \
 	  $(OBJ)/mess/tools/stream.o  \

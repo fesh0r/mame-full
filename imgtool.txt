@@ -100,7 +100,23 @@ Very simple, not overly useful but some might want it. Virtual MSX stored the
 SRAM of Konami's Game Master 2 in "gmaster2.ram". To convert this to something
 useful with MESS and other MSX emulators, go:
 
-imgtool extract vmsx_gm2 gmaster2.mem
+imgtool extract vmsx_gm2 gmaster2.ram gmaster2.mem
+
+
+fMSX style .cas file
+--------------------
+Converts .cas files to .wav files. The MSX driver can use .cas files directly
+so you don't have to convert them. You can use it to export files to a real
+MSX. Connect the MSX to the line out of your computer. Give the apropriate
+command on the MSX (BLOAD "CAS:",R for example) and then play the .wav file
+on your computer. 
+
+Not tested at all, but it should work fine.
+
+imgtool dir fmsx_cas file.cas
+imgtool extract fmsx_cas file.cas file.wav
+imgtool getall fmsx_cas file.cas
+imgtool get fmsx_cas file.cas file.wav newfile.wav
 
 
 rom16 16 bit wide rom image
