@@ -33,6 +33,7 @@
 #include "directories.h"
 #include "options.h"
 #include "splitters.h"
+#include "help.h"
 
 FOLDERDATA g_folderData[] =
 {
@@ -100,6 +101,16 @@ const SPLITTERINFO g_splitterInfo[] =
 {
 	{ 0.25,	IDC_SPLITTER,	IDC_TREE,	IDC_LIST,		AdjustSplitter1Rect },
 	{ 0.5,	IDC_SPLITTER2,	IDC_LIST,	IDC_SSFRAME,	AdjustSplitter2Rect },
+	{ -1 }
+};
+
+const MAMEHELPINFO g_helpInfo[] =
+{
+	{ ID_HELP_CONTENTS,		TRUE,	MAME32HELP "::/html/mame32_overview.htm" },
+	{ ID_HELP_WHATS_NEW32,	TRUE,	MAME32HELP "::/html/mame32_changes.htm" },
+	{ ID_HELP_TROUBLE,		TRUE,	MAME32HELP "::/html/mame32_support.htm" },
+	{ ID_HELP_RELEASE,		FALSE,	"windows.txt" },
+	{ ID_HELP_WHATS_NEW,	TRUE,	MAME32HELP "::/docs/whatsnew.txt" },
 	{ -1 }
 };
 

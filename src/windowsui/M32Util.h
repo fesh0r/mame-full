@@ -19,7 +19,7 @@ extern void __cdecl dprintf(const char* fmt, ...);
 extern UINT GetDepth(HWND hWnd);
 
 /* Open a text file */
-extern void DisplayTextFile(HWND hWnd, char *cName);
+extern void DisplayTextFile(HWND hWnd, const char *cName);
 
 #define PACKVERSION(major,minor) MAKELONG(minor,major)
 

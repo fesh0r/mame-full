@@ -170,7 +170,7 @@ LONG GetCommonControlVersion()
 	return PACKVERSION(0,0);
 }
 
-void DisplayTextFile(HWND hWnd, char *cName)
+void DisplayTextFile(HWND hWnd, const char *cName)
 {
 	HINSTANCE hErr;
 	const char	  *msg = 0;

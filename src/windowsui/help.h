@@ -24,16 +24,14 @@
 #include <htmlhelp.h>
 #endif
 
-#ifdef MESS
-/* MESS32 text files */
-#define HELPTEXT_RELEASE    "docs\\Mess.txt"
-#define HELPTEXT_WHATS_NEW  "Messnew.txt"
-#else
-/* MAME32 text files */
-#define HELPTEXT_SUPPORT    "support.htm"
-#define HELPTEXT_RELEASE    "windows.txt"
-#define HELPTEXT_WHATS_NEW  "whatsnew.txt"
-#endif
+typedef struct
+{
+	int		nMenuItem;
+	BOOL	bIsHtmlHelp;
+	LPCSTR	lpFile;
+} MAMEHELPINFO;
+
+extern const MAMEHELPINFO g_helpInfo[];
 
 #if !defined(MAME32HELP)
 #define MAME32HELP "mame32.chm"

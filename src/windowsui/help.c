@@ -116,4 +116,3 @@ static void Help_Load(void)
 	g_pHtmlHelp = HtmlHelp;
 #endif
 }
-

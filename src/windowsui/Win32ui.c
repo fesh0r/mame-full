@@ -3364,6 +3364,7 @@ static void PickCloneColor(void)
 
 static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 {
+	int i;
 	switch (id)
 	{
 	case ID_FILE_PLAY:
@@ -3689,40 +3690,6 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 				  LanguageDialogProc);
 		return TRUE;
 
-	case ID_HELP_CONTENTS:
-#ifdef MESS
-		HelpFunction(hMain, MAME32HELP "::/html/mess_overview.htm", HH_DISPLAY_TOPIC, 0);
-#else
-		HelpFunction(hMain, MAME32HELP "::/html/mame32_overview.htm", HH_DISPLAY_TOPIC, 0);
-#endif
-		break;
-
-#ifndef MESS
-	case ID_HELP_WHATS_NEW32:
-		HelpFunction(hMain, MAME32HELP "::/html/mame32_changes.htm", HH_DISPLAY_TOPIC, 0);
-		break;
-#endif
-
-#ifndef MESS
-	case ID_HELP_TROUBLE:
-		HelpFunction(hMain, MAME32HELP "::/html/mame32_support.htm", HH_DISPLAY_TOPIC, 0);
-		break;
-#endif
-
-	case ID_HELP_RELEASE:
-		DisplayTextFile(hMain, (char *)HELPTEXT_RELEASE);
-/*      HelpFunction(hMain, MAME32HELP "::/html/mame_windows.htm", HH_DISPLAY_TOPIC, 0); */
-		break;
-
-	case ID_HELP_WHATS_NEW:
-/*		DisplayTextFile(hMain, HELPTEXT_WHATS_NEW); */
-#ifdef MESS
-		HelpFunction(hMain, MAME32HELP "::/messnew.txt", HH_DISPLAY_TOPIC, 0);
-#else
-		HelpFunction(hMain, MAME32HELP "::/docs/whatsnew.txt", HH_DISPLAY_TOPIC, 0);
-#endif
-		break;
-
 	case ID_HELP_ABOUT:
 		DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_ABOUT),
 				  hMain, AboutDialogProc);
@@ -3770,9 +3737,22 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		TreeView_EditLabel(hTreeView,TreeView_GetSelection(hTreeView));
 		break;
 
-#ifdef MESS
 	default:
+		for (i = 0; g_helpInfo[i].nMenuItem > 0; i++)
+		{
+			if (g_helpInfo[i].nMenuItem == id)
+			{
+				if (g_helpInfo[i].bIsHtmlHelp)
+					HelpFunction(hMain, g_helpInfo[i].lpFile, HH_DISPLAY_TOPIC, 0);
+				else
+					DisplayTextFile(hMain, g_helpInfo[i].lpFile);
+				return FALSE;
+			}
+		}
+#ifdef MESS
 		return MessCommand(hwnd, id, hwndCtl, codeNotify);
+#else
+		break;
 #endif
 	}
 
