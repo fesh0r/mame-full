@@ -333,7 +333,8 @@ messtest$(EXE):	$(OBJS) $(COREOBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 		$(OBJ)/mess/windows/dirio.o				\
 		$(OBJ)/mess/windows/dirutils.o			\
 		$(OBJ)/mess/windows/glob.o				\
-		$(OBJ)/mess/windows/parallel.o
+		$(OBJ)/mess/windows/parallel.o			\
+		$(OBJ)/mess/windows/strconv.o			
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $^ -Wl,--allow-multiple-definition -lz -lwinmm -o $@
 

@@ -26,16 +26,16 @@ static int entry_count;
 
 
 
-static void error_imgtoolerr(struct messtest_state *state, imgtoolerr_t err)
+static void error_imgtoolerr(imgtoolerr_t err)
 {
 	const char *msg;
 	msg = imgtool_error(err);
-	error_report(state, msg);
+	error_report(msg);
 }
 
 
 
-static void createimage_handler(struct messtest_state *state, const char **attributes)
+static void createimage_handler(const char **attributes)
 {
 	imgtoolerr_t err;
 	const char *driver;
@@ -43,35 +43,37 @@ static void createimage_handler(struct messtest_state *state, const char **attri
 	driver = find_attribute(attributes, "driver");
 	if (!driver)
 	{
-		error_missingattribute(state, "driver");
+		error_missingattribute("driver");
 		return;
 	}
+
+	report_message(MSG_INFO, "Creating image (module '%s')", driver);
 
 	err = img_create_byname(library, driver, TEMPFILE, NULL);
 	if (err)
 	{
-		error_imgtoolerr(state, err);
+		error_imgtoolerr(err);
 		return;
 	}
 
 	err = img_open_byname(library, driver, TEMPFILE, OSD_FOPEN_RW, &image);
 	if (err)
 	{
-		error_imgtoolerr(state, err);
+		error_imgtoolerr(err);
 		return;
 	}
 }
 
 
 
-static void putfile_start_handler(struct messtest_state *state, const char **attributes)
+static void putfile_start_handler(const char **attributes)
 {
 	const char *filename;
 
 	filename = find_attribute(attributes, "name");
 	if (!filename)
 	{
-		error_missingattribute(state, "name");
+		error_missingattribute("name");
 		return;
 	}
 
@@ -80,7 +82,7 @@ static void putfile_start_handler(struct messtest_state *state, const char **att
 
 
 
-static void putfile_end_handler(struct messtest_state *state, const void *buffer, size_t size)
+static void putfile_end_handler(const void *buffer, size_t size)
 {
 	imgtoolerr_t err;
 	imgtool_stream *stream;
@@ -88,21 +90,21 @@ static void putfile_end_handler(struct messtest_state *state, const void *buffer
 	stream = stream_open_mem((void *) buffer, size);
 	if (!stream)
 	{
-		error_outofmemory(state);
+		error_outofmemory();
 		return;
 	}
 
 	err = img_writefile(image, filename_buffer, stream, NULL, NULL);
 	if (err)
 	{
-		error_imgtoolerr(state, err);
+		error_imgtoolerr(err);
 		return;
 	}
 }
 
 
 
-static void checkdirectory_start_handler(struct messtest_state *state, const char **attributes)
+static void checkdirectory_start_handler(const char **attributes)
 {
 	memset(&entries, 0, sizeof(entries));
 	entry_count = 0;
@@ -110,7 +112,7 @@ static void checkdirectory_start_handler(struct messtest_state *state, const cha
 
 
 
-static void checkdirectory_entry_handler(struct messtest_state *state, const char **attributes)
+static void checkdirectory_entry_handler(const char **attributes)
 {
 	const char *name;
 	const char *size;
@@ -118,7 +120,7 @@ static void checkdirectory_entry_handler(struct messtest_state *state, const cha
 
 	if (entry_count >= sizeof(entries) / sizeof(entries[0]))
 	{
-		error_report(state, "Too many directory entries");
+		error_report("Too many directory entries");
 		return;
 	}
 
@@ -134,7 +136,7 @@ static void checkdirectory_entry_handler(struct messtest_state *state, const cha
 
 
 
-static void checkdirectory_end_handler(struct messtest_state *state, const void *buffer, size_t size)
+static void checkdirectory_end_handler(const void *buffer, size_t size)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	imgtool_imageenum *imageenum;
@@ -144,7 +146,7 @@ static void checkdirectory_end_handler(struct messtest_state *state, const void 
 
 	if (!image)
 	{
-		error_report(state, "Image not loaded");
+		error_report("Image not loaded");
 		return;
 	}
 
@@ -164,7 +166,7 @@ static void checkdirectory_end_handler(struct messtest_state *state, const void 
 
 		if (ent.eof || strcmp(ent.filename, entries[i].filename))
 		{
-			error_report(state, "Misnamed file entry");
+			error_report("Misnamed file entry");
 			goto done;
 		}
 	}
@@ -174,7 +176,7 @@ static void checkdirectory_end_handler(struct messtest_state *state, const void 
 		goto done;
 	if (!ent.eof)
 	{
-		error_report(state, "Extra file entries");
+		error_report("Extra file entries");
 		goto done;
 	}
 
@@ -182,12 +184,12 @@ done:
 	if (imageenum)
 		img_closeenum(imageenum);
 	if (err)
-		error_imgtoolerr(state, err);
+		error_imgtoolerr(err);
 }
 
 
 
-void testimgtool_start_handler(struct messtest_state *state, const char **attributes)
+void testimgtool_start_handler(const char **attributes)
 {
 	imgtoolerr_t err;
 	
@@ -196,16 +198,20 @@ void testimgtool_start_handler(struct messtest_state *state, const char **attrib
 		err = imgtool_create_cannonical_library(&library);
 		if (err)
 		{
-			error_imgtoolerr(state, err);
+			error_imgtoolerr(err);
 			return;
 		}
 	}
+
+	report_testcase_begin(find_attribute(attributes, "name"));
 }
 
 
 
-void testimgtool_end_handler(struct messtest_state *state, const void *buffer, size_t size)
+void testimgtool_end_handler(const void *buffer, size_t size)
 {
+	report_message(MSG_INFO, "Test succeeded");
+
 	if (image)
 	{
 		img_close(image);

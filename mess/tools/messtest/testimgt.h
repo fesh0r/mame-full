@@ -13,7 +13,7 @@
 
 extern const struct messtest_tagdispatch testimgtool_dispatch[];
 
-void testimgtool_start_handler(struct messtest_state *state, const char **attributes);
-void testimgtool_end_handler(struct messtest_state *state, const void *buffer, size_t size);
+void testimgtool_start_handler(const char **attributes);
+void testimgtool_end_handler(const void *buffer, size_t size);
 
 #endif /* TESTIMGT_H */

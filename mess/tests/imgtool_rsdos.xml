@@ -1,6 +1,6 @@
 <tests>
 
-<imgtooltest>
+<imgtooltest name="coco">
 	<createimage driver="coco_jvc_rsdos"/>
 	<checkdirectory/>
 	<putfile name="FOO.TXT">'Hello World!'</putfile>
