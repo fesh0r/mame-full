@@ -306,4 +306,4 @@ static const struct IODevice io_gamegear[] = {
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
 CONS( 1987, sms,	  0, 		sms,	  sms,		0,		  "Sega",   "Master System" )
-CONS( 1990, gamegear, 0, 		gamegear, sms,		0,		  "Sega",   "Sega Game Gear" )
+CONS( 1990, gamegear, 0, 		gamegear, sms,		0,		  "Sega",   "Game Gear" )
