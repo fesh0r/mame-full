@@ -135,6 +135,8 @@ ifdef NEW_DEBUGGER
 DEFS += -DNEW_DEBUGGER
 endif
 
+MESSTOOLS = chdman.exe imgtool$(EXE)
+
 ifeq ($(MAMEOS),windows)
 
 DEFS += -DWIN32 -DWINNT -D_WIN32_WINNT=0x0400 -DMAME32NAME='"MESS"' -DMAMENAME='"MESS"'
@@ -143,6 +145,7 @@ EMULATORGUI = $(GUINAME)$(EXE)
 EMULATORALL = $(EMULATORDLL) $(EMULATORCLI) $(EMULATORGUI)
 MESSTEST = messtest.exe
 MESSDOCS = messdocs.exe
+MESSTOOLS += wimgtool$(EXE)
 
 else
 
@@ -192,7 +195,7 @@ MAPFLAGS =
 endif
 
 # platform .mak files will want to add to this
-LIBS = -lz
+#LIBS = -lz
 
 OBJDIRS = obj $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/$(MAMEOS) \
 	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw $(OBJ)/debug $(OBJ)/xml2info
@@ -205,13 +208,14 @@ OBJDIRS += 	$(OBJ)/mess         $(OBJ)/mess/$(MAMEOS)			\
 		$(OBJ)/mess/formats $(OBJ)/mess/tools					\
 		$(OBJ)/mess/tools/dat2html $(OBJ)/mess/tools/mkhdimg	\
 		$(OBJ)/mess/tools/messroms $(OBJ)/mess/tools/imgtool 	\
-		$(OBJ)/mess/tools/imgtool/windows 						\
-		$(OBJ)/mess/tools/imgtool/windows/res					\
 		$(OBJ)/mess/tools/messdocs $(OBJ)/mess/tools/messtest	\
 		$(OBJ)/mess/tools/mkimage  $(OBJ)/mess/sound			\
 		$(OBJ)/ui $(OBJ)/mess/ui
 
 ifeq ($(MAMEOS),windows)
+OBJDIRS +=	$(OBJ)/mess/tools/imgtool/windows 						\
+		$(OBJ)/mess/tools/imgtool/windows/res
+
 PLATFORM_TOOL_OBJS =				\
 	$(OBJ)/mess/windows/glob.o		\
 	$(OBJ)/mess/windows/dirutils.o	\
@@ -230,6 +234,7 @@ EXPAT =
 endif
 
 ifdef BUILD_ZLIB
+CFLAGS += -Isrc/zlib
 OBJDIRS += $(OBJ)/zlib
 ZLIB = $(OBJ)/libz.a
 else
@@ -237,12 +242,14 @@ LIBS += -lz
 ZLIB =
 endif
 
-all:	maketree $(EMULATORCLI) $(EMULATORGUI) $(MESSTEST) $(MESSDOCS) chdman.exe imgtool$(EXE) wimgtool$(EXE)
+all:	maketree $(EMULATORCLI) $(EMULATORGUI) $(MESSTEST) $(MESSDOCS) $(MESSTOOLS)
 
 # include the various .mak files
 include src/core.mak
 include mess/$(TARGET).mak
+ifeq ($(MAMEOS),windows)
 include mess/tools/imgtool/windows/wimgtool.mak
+endif
 include src/rules.mak
 include src/$(MAMEOS)/$(MAMEOS).mak
 include mess/rules_ms.mak
@@ -296,11 +303,11 @@ endif
 
 romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ -lz -o $@
+	$(LD) $(LDFLAGS) $^ $(ZLIB) $(LIBS) -o $@
 
 chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ -lz -o $@
+	$(LD) $(LDFLAGS) $^ $(ZLIB) $(LIBS) -o $@
 
 xml2info$(EXE): $(OBJ)/xml2info.o $(OBJ)/libexpat.a
 	@echo Linking $@...
@@ -316,13 +323,13 @@ messdocs$(EXE): $(MESSDOCS_OBJS) $(OBJ)/mess/windows/dirutils.o
 
 imgtool$(EXE): $(IMGTOOL_OBJS) $(PLATFORM_TOOL_OBJS)
 	@echo Compiling $@...
-	$(LD) $(LDFLAGS) $^ -lz -o $@
+	$(LD) $(LDFLAGS) $^ $(ZLIB) $(LIBS) -o $@
 
 wimgtool$(EXE): \
 		$(WIMGTOOL_OBJS)						\
 		$(PLATFORM_TOOL_OBJS)
 	@echo Compiling $@...
-	$(LD) $(LDFLAGS) $(LIBS) $(WINDOWS_PROGRAM) $^ -lz -lcomctl32 -lshlwapi -o $@
+	$(LD) $(LDFLAGS) $(LIBS) $(WINDOWS_PROGRAM) $^ $(ZLIB) $(LIBS) -lcomctl32 -lshlwapi -o $@
 
 messtest$(EXE):	$(OBJS) $(COREOBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 		$(OBJ)/windows/asmtile.o				\
@@ -337,7 +344,7 @@ messtest$(EXE):	$(OBJS) $(COREOBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 		$(OBJ)/mess/windows/parallel.o			\
 		$(OBJ)/mess/windows/strconv.o			
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $^ -Wl,--allow-multiple-definition -lz -lwinmm -o $@
+	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $^ -Wl,--allow-multiple-definition $(ZLIB) $(LIBS) -lwinmm -o $@
 
 # secondary libraries
 $(OBJ)/libexpat.a: $(OBJ)/expat/xmlparse.o $(OBJ)/expat/xmlrole.o $(OBJ)/expat/xmltok.o
