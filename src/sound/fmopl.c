@@ -1907,10 +1907,12 @@ static unsigned char OPLRead(FM_OPL *OPL,int a)
 	{
 		/* status port */
 
+#if BUILD_Y8950
 		if(OPL->type&OPL_TYPE_ADPCM)	/* Y8950 */
 		{
 			return (OPL->status & (OPL->statusmask|0x80)) | (OPL->deltat->PCM_BSY&1);
 		}
+#endif
 		/* OPL and OPL2 */
 		return OPL->status & (OPL->statusmask|0x80);
 	}
