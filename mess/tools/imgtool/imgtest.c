@@ -206,8 +206,6 @@ static imgtoolerr_t internal_test(const struct ImageModule *module)
 {
 	imgtoolerr_t err;
 	int i;
-	const struct OptionTemplate *createopts;
-	char *s;
 	int freespace, freespace2, filesize;
 	void *testbuf;
 	char buf[2048];
@@ -303,7 +301,6 @@ done:
 imgtoolerr_t imgtool_test(imgtool_library *library, const struct ImageModule *module)
 {
 	imgtoolerr_t err;
-	int i;
 
 	if (module)
 	{
