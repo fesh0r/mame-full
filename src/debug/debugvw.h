@@ -165,9 +165,7 @@ INLINE genf *debug_view_get_property_fct(struct debug_view *view, int property)
 
 INLINE void debug_view_set_property_fct(struct debug_view *view, int property, genf *value)
 {
-	void *v;
-	memcpy(&v, &value, sizeof(v));
-	debug_view_set_property(view, property, v);
+	debug_view_set_property(view, property, (void *) value);
 }
 
 #endif
