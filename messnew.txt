@@ -26,6 +26,9 @@ System Driver Changes:
   Implemented extra VDP ports in ti99 mode.  Implemented third mouse button.
   [Raphael Nabet]
 
+- [IBMPC] Fixed a bug in the DAA instruction that prevented the driver from
+  starting up (bugs #423, #425). [Colin Howell]
+
 - [LISA] Implemented some missing MMU feature.  The Lisa OS still won't boot,
   though. [Raphael Nabet]
 
