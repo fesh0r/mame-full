@@ -492,8 +492,8 @@ HAVE_GETTIMEOFDAY = 1
 # NO_EXECUTE bit (currently only 64-bit AMD chips).
 # HAVE_MPROTECT = 1
 
-# Most UNIX-like systems use LF for an end-of-line.  Set this to 1 for CR or 2 
-# for CR/LF.
+# Most UNIX-like systems use LF for an end-of-line.  Set this to 1 for CR, 2 
+# for LF, or 3 for CR/LF.
 CRLF = 2
 
 # Uncomment this if you want to link with ElectricFence (for developers 
