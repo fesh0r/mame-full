@@ -7,6 +7,9 @@
         system driver
 
 
+		Thankyou to:
+			Cliff Lawson, Russell Marks and Tim Surtel
+
         Documentation:
 
 		NC100:
@@ -20,7 +23,7 @@
 		NC100:
 
         Hardware:
-            - Z80 CPU
+            - Z80 CPU, 6mhz
             - memory powered by lithium batterys!
             - 2 channel tone (programmable frequency beep's)
             - LCD screen
@@ -42,6 +45,7 @@
 
         TODO:
            - find out what the unused key bits are for
+		   (checked all unused bits on nc200! - do not seem to have any use!)
            - complete serial (xmodem protocol!)
 		   - overlay would be nice!
 		   - finish NC200 disc drive emulation
@@ -50,9 +54,12 @@
 
 		Interrupt system of NC100:
 
-		The current interrupts that are latched can be cleared using IRQ status.
-		However, interrupts such as the RXRDY and TXRDY continue to trigger until
-		the UART register has been read. This will stop data being lost???
+		The IRQ mask is used to control the interrupt sources that can interrupt.
+		
+		The IRQ status can be read to determine which devices are interrupting.
+		Some devices, e.g. serial, cannot be cleared by writing to the irq status
+		register. These can only be cleared by performing an operation on the 
+		device (e.g. reading a data register).
 
 		Self Test:
 
@@ -101,6 +108,7 @@ static int nc_membank_rom_mask;
 static int nc_membank_internal_ram_mask;
 static int nc_membank_card_ram_mask;
 /*
+NC100:
         bit 7: memory card present 0 = yes, 1 = no
         bit 6: memory card write protected 1 = yes, 0 = no
         bit 5: input voltage = 1, if >= to 4 volts
@@ -185,12 +193,25 @@ Bit 0: NC100: Rx Ready NC200: ACK from parallel interface
 */
 static int nc_irq_mask;
 static int nc_irq_status;
+
+
+
+/* latched interrupts are interrupts that cannot be cleared by writing to the irq
+mask. latched interrupts can only be cleared by accessing the interrupting
+device e.g. serial chip, fdc */
+static int nc_irq_latch;
+/* this is a mask of irqs that are latched, and it is different for nc100 and
+nc200 */
+static int nc_irq_latch_mask;
 static int nc_sound_channel_periods[2];
 
 static unsigned char previous_on_off_button_state;
 
 static void nc_update_interrupts(void)
 {
+		nc_irq_status &= ~nc_irq_latch_mask;
+		nc_irq_status |= nc_irq_latch;
+
         /* any ints set and they are not masked? */
         if (
                 (((nc_irq_status & nc_irq_mask) & 0x3f)!=0)
@@ -383,11 +404,11 @@ void	nc_tc8521_alarm_callback(int state)
 
 static void nc100_txrdy_callback(int state)
 {
-	nc_irq_status &= ~(1<<1);
+	nc_irq_latch &= ~(1<<1);
 
 	if (state)
 	{
-		nc_irq_status |= (1<<1);
+		nc_irq_latch |= (1<<1);
 	}
 
 	nc_update_interrupts();
@@ -395,11 +416,11 @@ static void nc100_txrdy_callback(int state)
 
 static void nc100_rxrdy_callback(int state)
 {
-	nc_irq_status &= ~(1<<0);
+	nc_irq_latch &= ~(1<<0);
 
 	if (state)
 	{
-		nc_irq_status |= (1<<0);
+		nc_irq_latch |= (1<<0);
 	}
 
 	nc_update_interrupts();
@@ -425,10 +446,10 @@ static UINT8 nc200_uart_interrupt_irq;
 
 static void nc200_refresh_uart_interrupt(void)
 {
-	nc_irq_status &=~(1<<2);
+	nc_irq_latch &=~(1<<2);
 	if ((nc200_uart_interrupt_irq & 0x03)!=0)
 	{
-		nc_irq_status |= (1<<2);
+		nc_irq_latch |= (1<<2);
 	}
 }
 
@@ -635,7 +656,12 @@ void nc_common_init_machine(void)
         /* no ints wanting servicing */
         nc_irq_status = 0;
         /* at reset set to 0x0ffff */
-        nc_sound_channel_periods[0] = (nc_sound_channel_periods[1] = 0x0ffff);
+        
+		nc_irq_latch = 0;
+		nc_irq_latch_mask = 0;
+
+		nc_sound_channel_periods[0] = (nc_sound_channel_periods[1] = 0x0ffff);
+
 
         /* at reset set to 1 */
         nc_poweroff_control = 1;
@@ -656,10 +682,6 @@ void nc_common_init_machine(void)
 
         dummy_timer = timer_pulse(TIME_IN_HZ(50), 0, dummy_timer_callback);
 
-        /* 256k of rom */
-        nc_membank_rom_mask = 0x0f;
-
-
 		nc_uart_control = 0x0ff;
 }
 
@@ -668,6 +690,9 @@ void nc100_init_machine(void)
     nc_type = NC_TYPE_1xx;
 
     nc_memory_size = 64*1024;
+
+    /* 256k of rom */
+    nc_membank_rom_mask = 0x0f;
 
     nc_memory = (unsigned char *)malloc(nc_memory_size);
     nc_membank_internal_ram_mask = 3;
@@ -690,6 +715,10 @@ void nc100_init_machine(void)
 	nc_common_restore_memory_from_stream();
 
 	nc_common_close_stream();
+
+	/* serial */
+	nc_irq_latch_mask = (1<<0) | (1<<1);
+
 }
 
 #if 0
@@ -706,11 +735,11 @@ void nc150_init_machine(void)
 
 static void nc200_fdc_interrupt(int state)
 {
-        nc_irq_status &=~(1<<5);
+        nc_irq_latch &=~(1<<5);
 
         if (state)
         {
-                nc_irq_status |=(1<<5);
+                nc_irq_latch |=(1<<5);
         }
 
         nc_update_interrupts();
@@ -725,6 +754,10 @@ static struct nec765_interface nc200_nec765_interface=
 void nc200_init_machine(void)
 {
         nc_type = NC_TYPE_200;
+
+	    /* 512k of rom */
+		nc_membank_rom_mask = 0x1f;
+
 
         nc_memory_size = 128*1024;
         nc_memory = (unsigned char *)malloc(nc_memory_size);
@@ -759,6 +792,8 @@ void nc200_init_machine(void)
 		nc_common_restore_memory_from_stream();
 		nc_common_close_stream();
 
+		/* fdc, serial */
+		nc_irq_latch_mask = (1<<5) | (1<<2);
 }
 
 void nc_common_shutdown_machine(void)
@@ -896,7 +931,6 @@ WRITE_HANDLER(nc_display_memory_start_w)
         /* bit 5: A13 */
         /* bit 4: A12 */
         /* bit 3-0: not used */
-
         nc_display_memory_start = (data & 0x0f0)<<(12-4);
 
 #ifdef VERBOSE
@@ -1162,7 +1196,7 @@ INPUT_PORTS_START(nc100)
         PORT_BIT (0x080, 0x00, IPT_UNUSED)
         /* 1 */
         PORT_START
-        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "YELLOW/FUNCTION", KEYCODE_INSERT, IP_JOY_NONE) 
+        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "YELLOW/FUNCTION", KEYCODE_RALT, IP_JOY_NONE) 
         PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CONTROL", KEYCODE_LCONTROL, IP_JOY_NONE)
         PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CONTROL", KEYCODE_RCONTROL, IP_JOY_NONE)
         PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ESCAPE/STOP", KEYCODE_ESC, IP_JOY_NONE)
@@ -1174,7 +1208,6 @@ INPUT_PORTS_START(nc100)
         /* 2 */
         PORT_START
 		PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ALT", KEYCODE_LALT, IP_JOY_NONE)
-        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ALT", KEYCODE_RALT, IP_JOY_NONE)
         PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SYMBOL", KEYCODE_HOME, IP_JOY_NONE) 
         PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "1 !", KEYCODE_1, IP_JOY_NONE)
         PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "TAB", KEYCODE_TAB, IP_JOY_NONE)
@@ -1228,7 +1261,7 @@ INPUT_PORTS_START(nc100)
         PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "7 & ", KEYCODE_7, IP_JOY_NONE)
         PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "/ |", KEYCODE_BACKSLASH, IP_JOY_NONE)
         PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "UP", KEYCODE_UP, IP_JOY_NONE)
-        PORT_BIT (0x010, 0x00, IPT_UNUSED)
+        PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "MENU", KEYCODE_PGUP, IP_JOY_NONE)
         PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "U", KEYCODE_U, IP_JOY_NONE)
         PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "M", KEYCODE_M, IP_JOY_NONE)
         PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "K", KEYCODE_K, IP_JOY_NONE)
@@ -1265,38 +1298,37 @@ INPUT_PORTS_START(nc200)
         PORT_START
         PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "LEFT SHIFT", KEYCODE_LSHIFT, IP_JOY_NONE)
         PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "RIGHT SHIFT", KEYCODE_RSHIFT, IP_JOY_NONE)
-        PORT_BIT (0x004, 0x00, IPT_UNUSED)
-        PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "LEFT/RED", KEYCODE_LEFT, IP_JOY_NONE)
+        PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "4 $", KEYCODE_4, IP_JOY_NONE)
+	    PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "LEFT/RED", KEYCODE_LEFT, IP_JOY_NONE)
         PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "RETURN", KEYCODE_ENTER, IP_JOY_NONE)
         PORT_BIT (0x020, 0x00, IPT_UNUSED)
         PORT_BIT (0x040, 0x00, IPT_UNUSED)
-        PORT_BIT (0x080, 0x00, IPT_UNUSED)
-        /* 1 */
+		PORT_BIT (0x080, 0x00, IPT_UNUSED)
+	    /* 1 */
         PORT_START
-        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "YELLOW/FUNCTION", KEYCODE_INSERT, IP_JOY_NONE)
+        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "YELLOW/FUNCTION", KEYCODE_RALT, IP_JOY_NONE)
         PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CONTROL", KEYCODE_LCONTROL, IP_JOY_NONE)
         PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CONTROL", KEYCODE_RCONTROL, IP_JOY_NONE)
         PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ESCAPE/STOP", KEYCODE_ESC, IP_JOY_NONE)
         PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SPACE", KEYCODE_SPACE, IP_JOY_NONE)
         PORT_BIT (0x010, 0x00, IPT_UNUSED)
         PORT_BIT (0x020, 0x00, IPT_UNUSED)
-        PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "5 %", KEYCODE_5, IP_JOY_NONE)
-        PORT_BIT (0x080, 0x00, IPT_UNUSED)
+        PORT_BIT (0x040, 0x00, IPT_UNUSED)
+        PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "9 (", KEYCODE_9, IP_JOY_NONE)
         /* 2 */
         PORT_START
         PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ALT", KEYCODE_LALT, IP_JOY_NONE)
-        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ALT", KEYCODE_RALT, IP_JOY_NONE)
         PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SYMBOL", KEYCODE_HOME, IP_JOY_NONE)
         PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "1 !", KEYCODE_1, IP_JOY_NONE)
         PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "TAB", KEYCODE_TAB, IP_JOY_NONE)
-        PORT_BIT (0x010, 0x00, IPT_UNUSED)
+        PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "5", KEYCODE_5, IP_JOY_NONE)
         PORT_BIT (0x020, 0x00, IPT_UNUSED)
-        PORT_BIT (0x040, 0x00, IPT_UNUSED)
+        PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "6 ^", KEYCODE_6, IP_JOY_NONE)
         PORT_BIT (0x080, 0x00, IPT_UNUSED)
-        /* 3 */
+	    /* 3 */
         PORT_START
         PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "3", KEYCODE_3, IP_JOY_NONE)
-        PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "2 \" ", KEYCODE_2, IP_JOY_NONE)
+        PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "2 \"", KEYCODE_2, IP_JOY_NONE)
         PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Q", KEYCODE_Q, IP_JOY_NONE)
         PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "W", KEYCODE_W, IP_JOY_NONE)
         PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "E", KEYCODE_E, IP_JOY_NONE)
@@ -1306,17 +1338,17 @@ INPUT_PORTS_START(nc200)
         /* 4 */
         PORT_START
         PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "8 *", KEYCODE_8, IP_JOY_NONE)
-        PORT_BIT (0x002, 0x00, IPT_UNUSED)
+        PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "7 &", KEYCODE_7, IP_JOY_NONE)
         PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Z", KEYCODE_Z, IP_JOY_NONE)
         PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "X", KEYCODE_X, IP_JOY_NONE)
         PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "A", KEYCODE_A, IP_JOY_NONE)
         PORT_BIT (0x020, 0x00, IPT_UNUSED)
-        PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "R", KEYCODE_R, IP_JOY_NONE)
+	    PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "R", KEYCODE_R, IP_JOY_NONE)
         PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F", KEYCODE_F, IP_JOY_NONE)
         /* 5 */
         PORT_START
         PORT_BIT (0x001, 0x00, IPT_UNUSED)
-        PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "8 *", KEYCODE_4, IP_JOY_NONE)
+        PORT_BIT (0x002, 0x00, IPT_UNUSED)
         PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "B", KEYCODE_B, IP_JOY_NONE)
         PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "V", KEYCODE_V, IP_JOY_NONE)
         PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "T", KEYCODE_T, IP_JOY_NONE)
@@ -1324,8 +1356,8 @@ INPUT_PORTS_START(nc200)
         PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "G", KEYCODE_G, IP_JOY_NONE)
         PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "C", KEYCODE_C, IP_JOY_NONE)
         /* 6 */
-        PORT_START
-        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "6 ^", KEYCODE_6, IP_JOY_NONE)
+        PORT_START        
+		PORT_BIT (0x001, 0x00, IPT_UNUSED)
         PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "DOWN/BLUE", KEYCODE_DOWN, IP_JOY_NONE)
         PORT_BIT (0x004, 0x00, IPT_UNUSED)
         PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "RIGHT/GREEN", KEYCODE_RIGHT, IP_JOY_NONE)
@@ -1339,13 +1371,13 @@ INPUT_PORTS_START(nc200)
         PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "+ = ", KEYCODE_EQUALS, IP_JOY_NONE)
         PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "/ |", KEYCODE_BACKSLASH, IP_JOY_NONE)
         PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "UP", KEYCODE_UP, IP_JOY_NONE)
-        PORT_BIT (0x010, 0x00, IPT_UNUSED)
+        PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "MENU", KEYCODE_PGUP, IP_JOY_NONE)
         PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "U", KEYCODE_U, IP_JOY_NONE)
         PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "M", KEYCODE_M, IP_JOY_NONE)
         PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "K", KEYCODE_K, IP_JOY_NONE)
         /* 8 */
         PORT_START
-        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "8 *", KEYCODE_8, IP_JOY_NONE)
+        PORT_BIT (0x001, 0x00, IPT_UNUSED)
         PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "- _", KEYCODE_MINUS, IP_JOY_NONE)
         PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "} ]", KEYCODE_CLOSEBRACE, IP_JOY_NONE)
         PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "{ [", KEYCODE_OPENBRACE, IP_JOY_NONE)
@@ -1384,7 +1416,7 @@ static struct MachineDriver machine_driver_nc100 =
 		/* MachineCPU */
 		{
                         CPU_Z80 ,  /* type */
-                        4000000, /* clock: See Note Above */
+                        6000000, /* clock: See Note Above */
                         readmem_nc,                   /* MemoryReadAddress */
                         writemem_nc,                  /* MemoryWriteAddress */
                         readport_nc,                  /* IOReadPort */
@@ -1438,7 +1470,7 @@ static struct MachineDriver machine_driver_nc200 =
 		/* MachineCPU */
 		{
                         CPU_Z80 ,  /* type */
-                        4000000, /* clock: See Note Above */
+                        6000000, /* clock: See Note Above */
                         readmem_nc,                   /* MemoryReadAddress */
                         writemem_nc,                  /* MemoryWriteAddress */
                         readport_nc200,                  /* IOReadPort */
@@ -1546,7 +1578,7 @@ static const struct IODevice io_nc100[] =
                 NULL,                   /* input chunk */
                 NULL,                   /* output chunk */
         },		
-	IO_PRINTER_PORT(1,"prn\0"),
+	IO_PRINTER_PORT(1,"\0"),
 		{IO_END}
 };
 
@@ -1609,7 +1641,7 @@ static const struct IODevice io_nc200[] =
                 NULL,                   /* input chunk */
                 NULL,                   /* output chunk */
         },	
-	IO_PRINTER_PORT(1,"prn\0"),
+	IO_PRINTER_PORT(1,"\0"),
 	{IO_END}
 };
 
