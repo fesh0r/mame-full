@@ -208,11 +208,6 @@ static int DMKHeuristicVerify( dmkdsk *w )
 
 	if ( read != 0 )
 	{
-		/* Adjust endian */
-
-		header->trackLength = LITTLE_ENDIANIZE_INT16( header->trackLength );
-		header->realDiskCode = LITTLE_ENDIANIZE_INT32( header->realDiskCode );
-
 		/* If this expression is true then we are virtuality guaranteed that this is a real DMK image */
 
 		calc_size = dmkdsk_GetTrackLength( header ) * header->trackCount * (DMKSIDECOUNT( (*header) )) + sizeof( dmkHeader );
@@ -220,14 +215,14 @@ static int DMKHeuristicVerify( dmkdsk *w )
 		if( calc_size == w->image_size )
 		{
 			if( dmkdsk_GetRealDiskCode( header ) != 0x12345678 ) /* Real disk files unsupported */
-				result = INIT_OK;
+				result = INIT_PASS;
 			else
-				return INIT_FAILED;
+				return INIT_FAIL;
 			
 			if( dmkdsk_GetRealDiskCode( header ) == 0x00000000 ) /* A real DMK disk will have these bytes zeroed */
-				result = INIT_OK;
+				result = INIT_PASS;
 			else
-				return INIT_FAILED;
+				return INIT_FAIL;
 		}
 	}
 
