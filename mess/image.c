@@ -1,5 +1,6 @@
 #include "image.h"
 #include "mess.h"
+#include "unzip.h"
 #include "devices/flopdrv.h"
 #include "crcfile.h"
 #include "utils.h"
@@ -863,8 +864,7 @@ int image_index_in_devtype(mess_image *img)
 static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_write)
 {
 	const char *sysname;
-	mame_file *file;
-	char buffer[512];
+	char *lpExt;
 	const struct GameDriver *gamedrv = Machine->gamedrv;
 
 	assert(img);
@@ -880,54 +880,110 @@ static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_
 	{
 		sysname = gamedrv->name;
 		logerror("image_fopen: trying %s for system %s\n", img->name, sysname);
-		img->fp = file = mame_fopen(sysname, img->name, filetype, read_or_write);
 
+		img->fp = mame_fopen(sysname, img->name, filetype, read_or_write);
+
+		if( img->fp && !is_effective_mode_create( read_or_write ) )
+		{
+			lpExt = strrchr( img->name, '.' );
+			if( stricmp( lpExt, ".ZIP" ) == 0 )
+			{
+				int pathindex;
+				int pathcount = osd_get_path_count(filetype);
+				ZIP *zipfile;
+				struct zipent *zipentry;
+				char *newname;
+				char *name;
+				char *zipname;
+				const char *ext;
+				const struct IODevice *dev;
+
+				mame_fclose( img->fp );
+				img->fp = NULL;
+
+				dev = image_device(img);
+				assert(dev);
+
+				newname = NULL;
+
+				zipname = image_malloc( img, strlen( sysname ) + 1 + strlen( img->name ) + 1 );
+				if( osd_is_absolute_path( img->name ) )
+				{
+					strcpy( zipname, img->name );
+				}
+				else
+				{
+					strcpy( zipname, sysname );
+					strcat( zipname, osd_path_separator() );
+					strcat( zipname, img->name );
+				}
+
+				for (pathindex = 0; pathindex < pathcount; pathindex++)
+				{
+					zipfile = openzip(filetype, pathindex, zipname);
+					if (zipfile)
+					{
+						zipentry = readzip(zipfile);
+						while( zipentry )
+						{
+							/* mess doesn't support paths in zip files */
+							name = osd_basename( zipentry->name );
+							lpExt = strrchr(name, '.');
+							if (lpExt)
+							{
+								lpExt++;
+
+								ext = dev->file_extensions;
+								while(*ext)
+								{
+									if( stricmp( lpExt, ext ) == 0 )
+									{
+										if( newname )
+										{
+											image_freeptr( img, newname );
+										}
+										newname = image_malloc(img, strlen(img->name) + 1 + strlen(name) + 1);
+										if (!newname)
+											return NULL;
+
+										strcpy(newname, img->name);
+										strcat(newname, osd_path_separator());
+										strcat(newname, name);
+									}
+									ext += strlen(ext) + 1;
+								}
+							}
+							zipentry = readzip(zipfile);
+						}
+						closezip(zipfile);
+					}
+					if( !newname )
+					{
+						return NULL;
+					}
+					img->fp = mame_fopen(sysname, newname, filetype, read_or_write);
+					if (img->fp)
+					{
+						image_freeptr(img, img->name);
+						img->name = newname;
+						break;
+					}
+				}
+				image_freeptr( img, zipname );
+			}
+		}
 		gamedrv = mess_next_compatible_driver(gamedrv);
 	}
 	while(!img->fp && gamedrv);
 
-	if ((file) && ! is_effective_mode_create(read_or_write))
+	if( img->fp && ! is_effective_mode_create(read_or_write))
 	{
-		/* is this file actually a zip file? */
-		if ((mame_fread(file, buffer, 4) == 4) && (buffer[0] == 0x50)
-			&& (buffer[1] == 0x4B) && (buffer[2] == 0x03) && (buffer[3] == 0x04))
-		{
-			mame_fseek(file, 26, SEEK_SET);
-			if (mame_fread(file, buffer, 2) == 2)
-			{
-				int fname_length = buffer[0];
-				char *newname;
-
-				mame_fseek(file, 30, SEEK_SET);
-				mame_fread(file, buffer, fname_length);
-				mame_fclose(file);
-				img->fp = file = NULL;
-
-				buffer[fname_length] = '\0';
-
-				newname = image_malloc(img, strlen(img->name) + 1 + fname_length + 1);
-				if (!newname)
-					return NULL;
-
-				strcpy(newname, img->name);
-				strcat(newname, osd_path_separator());
-				strcat(newname, buffer);
-				img->fp = file = mame_fopen(sysname, newname, filetype, read_or_write);
-				if (!file)
-					return NULL;
-
-				image_freeptr(img, img->name);
-				img->name = newname;
-			}
-		}
-		mame_fseek(file, 0, SEEK_SET);
-
 		logerror("image_fopen: found image %s for system %s\n", img->name, sysname);
-		img->length = mame_fsize(file);
+		img->length = mame_fsize(img->fp);
 		img->crc = 0;
 		img->status &= ~IMAGE_STATUS_CRCCALCULATED;
 	}
 
-	return file;
+	return img->fp;
 }
 
