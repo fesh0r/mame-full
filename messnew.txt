@@ -78,3 +78,6 @@ Source Changes:
   
 - [IMGTOOL/FAT driver] Fixed bug where files would get stored into a FAT image
   without forcing the filename to upper case. [Nate Woods]
+
+- [MacMESS] Added configurable RAM sizes and dipswitch controls to the MESS
+  tab. [tim lindner]
