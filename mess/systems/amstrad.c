@@ -21,7 +21,6 @@
   
 Some bugs left :
 ----------------
-    - CRTC emulation : "display enable" is wrong (m6845.c) >(see yao demo (first, third or last part!))
     - CRTC all type support (0,1,2,3,4) ?
     - Gate Array and CRTC aren't synchronised. (The Gate Array can change the color every microseconds?) So the multi-rasters in one line aren't supported (see yao demo p007's part)!
     - Z80 timming is wrong or I miss something in the GateArray interrupt timing ? >(see the menu of "the demo")?
@@ -53,8 +52,6 @@ Some bugs left :
 #define TV_REFRESH_RATE 0x10
 #define CRTC_TYPE 0xA0
 
-extern int y_screen_pos;
-
 //int selected_crtc6845_address = 0;
 
 /* the hardware allows selection of 256 ROMs. Rom 0 is usually BASIC and Rom 7 is AMSDOS */
@@ -68,15 +65,17 @@ static unsigned char *Amstrad_ROM_Table[256];
 static int ppi_port_inputs[3];
 static int ppi_port_outputs[3];
 
+
 /* keyboard line 0-9 */
 static int amstrad_keyboard_line;
 
+static unsigned char previous_amstrad_UpperRom_data;
+static unsigned char previous_printer_data_byte;
 /*------------------
   - Ram Management -
   ------------------*/
 /* current selected upper rom */
 static unsigned char *Amstrad_UpperRom;
-static unsigned char previous_amstrad_UpperRom_data;
 /* There are 8 different ram configurations which work on the currently selected 64k logical block. 
    The following tables show the possible ram configurations :*/
 static int RamConfigurations[8 * 4] =
@@ -100,10 +99,7 @@ static int amstrad_GateArray_ModeAndRomConfiguration = 0;
 /* Ram configuration */
 static int amstrad_GateArray_RamConfiguration = 0;
 /* The gate array counts CRTC HSYNC pulses. (It has a internal 6-bit counter). */
-int amstrad_CRTC_HS_Counter;
-/* 2 HSYNCS after the VSYNC Counter */
-int amstrad_CRTC_HS_After_VS_Counter;
-/* cycles at end of last frame */
+extern int amstrad_CRTC_HS_Counter;
 /* cycle count of last write */
 int amstrad_cycles_last_write = 0;
 /*-------------
@@ -591,34 +587,33 @@ static READ_HANDLER ( AmstradCPC_ReadPortHandler )
 {
 	unsigned char data = 0xFF;
 	unsigned int r1r0 = (unsigned int)((offset & 0x0300) >> 8);
+	int crtc_type;
 
-/* if b14 = 0 : CRTC Read selected */
-  	if ((offset & (1<<14)) == 0) {
-    int crtc_type = (readinputport(10)&CRTC_TYPE)>>5;
-    switch(r1r0) {
-      case 0x02: {
-/* CRTC Type 1 : Read Status Register
-   CRTC Type 3 or 4 : Read from selected internal 6845 register */
-        switch(crtc_type) {
-          case 0x01: {
-            data = amstrad_CRTC_CR; /* Read Status Register */
-          } break;
-          case 0x03:
-          case 0x04: {
-            data = crtc6845_register_r(0);
-          } break;
-          default: {
-          } break;
-        }
-      } break;
-      case 0x03:{
-/* All CRTC type : Read from selected internal 6845 register Read only */
-        data = crtc6845_register_r(0);
-      } break;
-      default: {
-      } break;
-    }
-  }
+	/* if b14 = 0 : CRTC Read selected */
+	if ((offset & (1<<14)) == 0)
+	{
+		switch(r1r0) {
+		case 0x02:
+			/* CRTC Type 1 : Read Status Register
+			   CRTC Type 3 or 4 : Read from selected internal 6845 register */
+			crtc_type = (readinputport(10)&CRTC_TYPE)>>5;
+			switch(crtc_type) {
+			case 0x01:
+				data = amstrad_CRTC_CR; /* Read Status Register */
+				break;
+			case 0x03:
+			case 0x04:
+				data = crtc6845_register_r(0);
+				break;
+			}
+			break;
+		case 0x03:
+			/* All CRTC type : Read from selected internal 6845 register Read only */
+			data = crtc6845_register_r(0);
+			break;
+		}
+	}
+
 /* if b11 = 0 : 8255 PPI Read selected - bits 9 and 8 then define the PPI function access as shown below: 
 
 b9 b8 | PPI Function Read/Write status 
@@ -627,10 +622,10 @@ b9 b8 | PPI Function Read/Write status
 1  0  | Port C data  Read/Write 
 1  1  | Control      Write Only
 */    
-	if ((offset & (1<<11)) == 0)	{
-    if (r1r0 < 0x03 ) {
-      data = ppi8255_r(0, r1r0);
-    }
+	if ((offset & (1<<11)) == 0)
+	{
+		if (r1r0 < 0x03 )
+			data = ppi8255_r(0, r1r0);
 	}
 /* if b10 = 0 : Expansion Peripherals Read selected
 
@@ -667,8 +662,6 @@ The exception is the case where none of b7-b0 are reset (i.e. port &FBFF), which
 	}
   return data;
 }
-
-static unsigned char previous_printer_data_byte;
 
 /* Offset handler for write */
 static WRITE_HANDLER ( AmstradCPC_WritePortHandler )
@@ -735,11 +728,10 @@ b9 b8 | PPI Function Read/Write status
 1  1  | Control      Write Only
 */    
 	if ((offset & (1<<11)) == 0) {
-		unsigned int Index;
-		Index = ((offset & 0x0300) >> 8);
+		unsigned int Index = ((offset & 0x0300) >> 8);
 		ppi8255_w(0, Index, data);
 	}
-/* if b10 = 0 : Expansion Peripherals Read selected */
+/* if b10 = 0 : Expansion Peripherals Write selected */
 	if ((offset & (1<<10)) == 0) {
 /* bits b7-b5 are used to select an expansion peripheral. This is done by resetting the peripheral's bit:
 Bit | Device 
@@ -1062,61 +1054,6 @@ static WRITE_HANDLER(multiface_io_write)
 		 }
 
 }
-
-
-/* ---------------------------------
-   - 28-May-2004 - Interrupt system -
-   ---------------------------------
-   
-Interrupt Generation Facility of the Amstrad Gate Array
--------------------------------------------------------
-In the CPC the Gate Array generates maskable interrupts, to do this it uses the HSYNC and VSYNC signals from the CRTC, a 6-bit internal counter and monitors the interrupt acknowledge from the Z80. 
-
-The 6-bit counter is incremented after each HSYNC from the CRTC. (When standard CRTC display settings are used, this is equivalent to counting scan-lines). (to be confirmed: does gate array count positive or negative edge transitions of HSYNC signal?) 
-
-When the counter equals "52", it is cleared to "0" and the Gate-Array will issue a interrupt request to the Z80, the interrupt request remains active until the Z80 acknowledges it.
-These two operations will continue even if the interrupt has not been acknowledged.
-(When standard CRTC display settings are used, this has the potential to generate a interrupt every 52 scan-lines giving 6 possible interrupts per video frame). 
-
-The Z80 will acknowledge if the interrupt acknowledge is enabled. (Z80 internal flag IFF1="1"; this flag can be set with the EI instruction). (When the Z80 acknowledges a interrupt /IORQ = "0" and /M1 = "0" from the Z80.) If IFF1="0" interrupts are ignored and there is no acknowledge. 
-
-When the interrupt is acknowledged, this is sensed by the Gate-Array. The top bit (bit 5), of the counter is set to "0" and the interrupt request is cleared. This prevents the next interrupt from occuring closer than 32 HSYNCs time. 
-
-If bit 4 of the "Select screen mode and rom configuration" register of the Gate-Array (bit 7="1" and bit 6="0") is set to "1" then the interrupt request is cleared and the 6-bit counter is reset to "0". 
-
-The Gate-Array senses the VSYNC signal. If two HSYNCs have been detected following the start of the VSYNC then there are two possible actions: 
-
-If the top bit of the 6-bit counter is set to "1" (i.e. the counter >=32), then there is no interrupt request, and the 6-bit counter is reset to "0". (If a interrupt was requested and acknowledged it would be closer than 32 HSYNCs compared to the position of the previous interrupt). 
-If the top bit of the 6-bit counter is set to "0" (i.e. the counter <32), then a interrupt request is issued, and the 6-bit counter is reset to "0". 
-In both cases the following interrupt requests are synchronised with the VSYNC. 
-
-Interrupts generated by the Gate-Array are the only source of interrupts in the CPC system unless they are generated by expansion devices. 
-
-The NMI interrupt of the Z80 is not used by the Amstrad CPC hardware but is available for expansion devices to use.
-*/	
-void amstrad_interrupt_timer_update(void)
-{
-  	amstrad_CRTC_HS_Counter++;
-
-	if (amstrad_CRTC_HS_After_VS_Counter == 0) {
-  	if (amstrad_CRTC_HS_Counter == 52) {
-  		amstrad_CRTC_HS_Counter = 0;
-        cpu_set_irq_line(0,0, HOLD_LINE);
-  	}
-  } else {
-		amstrad_CRTC_HS_After_VS_Counter--;
-
-		if (amstrad_CRTC_HS_After_VS_Counter == 0) {
-    	if (amstrad_CRTC_HS_Counter > 32) {
-        cpu_set_irq_line(0,0, HOLD_LINE);
-      }	
-      else {
-      	cpu_set_irq_line(0,0, CLEAR_LINE);
-      }
-  	  amstrad_CRTC_HS_Counter = 0;
-		}
-	}
-}
 /* called when cpu acknowledges int */
 /* reset top bit of interrupt line counter */
 /* this ensures that the next interrupt is no closer than 32 lines */
@@ -1175,7 +1112,6 @@ static void amstrad_common_init(void)
 {
 	amstrad_GateArray_ModeAndRomConfiguration = 0;
 	amstrad_CRTC_HS_Counter = 0;
-	amstrad_CRTC_HS_After_VS_Counter = 0;
 	amstrad_cycles_last_write = 0;
 	previous_amstrad_UpperRom_data = 0xff;
 
@@ -1222,10 +1158,9 @@ static MACHINE_INIT( amstrad )
 	}
 	
 	Amstrad_ROM_Table[7] = &memory_region(REGION_CPU1)[0x018000];
-
 	amstrad_common_init();
-
 	amstrad_reset_machine();
+
 	multiface_init();
 }
 

@@ -33,10 +33,10 @@ int amstrad_CRTC_CR = 0;        /* CR = Cursor Enabled */
 
 /* this is the real pixel position */
 static int x_screen_pos;
-//static int y_screen_pos;
-int y_screen_pos;
+static int y_screen_pos;
 
 /* this is the pixel position of the start of a scanline for the amstrad screen */
+static int x_screen_offset = -224;
 static int y_screen_offset = -32;
 
 /* this contains the colours in Machine->pens form.*/
@@ -44,6 +44,10 @@ static int y_screen_offset = -32;
 of the render colours - these may be different to the current colour palette values */
 /* colours can be changed at any time and will take effect immediatly */
 static unsigned long amstrad_GateArray_render_colours[17];
+/* The gate array counts CRTC HSYNC pulses. (It has a internal 6-bit counter). */
+int amstrad_CRTC_HS_Counter;
+/* 2 HSYNCS after the VSYNC Counter */
+int amstrad_CRTC_HS_After_VS_Counter;
 
 static struct mame_bitmap	*amstrad_bitmap;
 
@@ -53,9 +57,6 @@ static int amstrad_render_mode;
 /* current programmed mode */
 static int amstrad_current_mode;
  
-/* */
-extern int amstrad_CRTC_HS_After_VS_Counter;
-
 static unsigned long Mode0Lookup[256];
 static unsigned long Mode1Lookup[256];
 static unsigned long Mode3Lookup[256];
@@ -145,7 +146,7 @@ static unsigned char kccomp_get_colour_element(int colour_value)
 		case 2:
 			return 0x60;
 		case 3:
-			return 0x0ff;
+			return 0xff;
 	}
 
 	return 0xff;
@@ -247,10 +248,9 @@ static void amstrad_draw_screen_enabled(void)
 	int x = x_screen_pos;
 	int y = y_screen_pos;
   
-    /* render screen depending on the mode! */
+	/* render screen depending on the mode! */
 	switch (amstrad_render_mode)		
 	{
-    
 		/* mode 0 - low resolution - 16 colours */
 		case 0:
 		{
@@ -285,7 +285,7 @@ static void amstrad_draw_screen_enabled(void)
 				plot_pixel(bitmap,x,y,messpen);
 				x++;                
 
-			data = byte2;
+				data = byte2;
 
 				cpcpen = Mode0Lookup[data];
 				messpen = amstrad_GateArray_render_colours[cpcpen];
@@ -444,18 +444,11 @@ static void amstrad_draw_screen_enabled(void)
 		default:
 			break;
 	}
-
-
 }
 
 static void amstrad_draw_screen_disabled(void)
 {
-	struct mame_bitmap *bitmap = amstrad_bitmap;
-	int i;
-	for(i=0;i<(AMSTRAD_CHARACTERS*2);i++)
-	{
-		plot_pixel(bitmap,x_screen_pos+i,y_screen_pos,amstrad_GateArray_render_colours[16]);
-	}
+	plot_box(amstrad_bitmap,x_screen_pos,y_screen_pos,(AMSTRAD_CHARACTERS*2),1,amstrad_GateArray_render_colours[16]);
 }
 
 
@@ -474,18 +467,69 @@ static void amstrad_Set_RA(int offset, int data)
 }
 /* CRTC - Set new Horizontal Sync Status */
 static void amstrad_Set_HS(int offset, int data)
-		{
+{
 //  if (((amstrad_CRTC_HS^data) != 0)&&(data != 0)) {// New CRTC_HSync ? 
-  if (data != 0) {
-    amstrad_render_mode = amstrad_current_mode;
-  } else { // End of CRTC_HSync
-		if (y_screen_pos<AMSTRAD_SCREEN_HEIGHT) {
-      y_screen_pos++;
-    } //else {y_screen_pos = y_screen_offset;}
-    x_screen_pos = 0;
+	if (data != 0)
+	{
+		amstrad_render_mode = amstrad_current_mode;
+		x_screen_pos = x_screen_offset;
+	}
+	else
+	{
+		/* End of CRTC_HSync */
+		if (y_screen_pos<AMSTRAD_SCREEN_HEIGHT)
+		{
+			y_screen_pos++;
+		} /* else {y_screen_pos = y_screen_offset;} */
 
+/* -----------------------------------------------------------
+   - Interrupt Generation Facility of the Amstrad Gate Array -
+   -----------------------------------------------------------
+In the CPC the Gate Array generates maskable interrupts, to do this it uses the HSYNC and VSYNC signals from the CRTC, a 6-bit internal counter and monitors the interrupt acknowledge from the Z80. 
+
+The 6-bit counter is incremented after each HSYNC from the CRTC. (When standard CRTC display settings are used, this is equivalent to counting scan-lines). (to be confirmed: does gate array count positive or negative edge transitions of HSYNC signal?) 
+
+When the counter equals "52", it is cleared to "0" and the Gate-Array will issue a interrupt request to the Z80, the interrupt request remains active until the Z80 acknowledges it.
+These two operations will continue even if the interrupt has not been acknowledged.
+(When standard CRTC display settings are used, this has the potential to generate a interrupt every 52 scan-lines giving 6 possible interrupts per video frame). 
+
+The Z80 will acknowledge if the interrupt acknowledge is enabled. (Z80 internal flag IFF1="1"; this flag can be set with the EI instruction). (When the Z80 acknowledges a interrupt /IORQ = "0" and /M1 = "0" from the Z80.) If IFF1="0" interrupts are ignored and there is no acknowledge. 
+
+When the interrupt is acknowledged, this is sensed by the Gate-Array. The top bit (bit 5), of the counter is set to "0" and the interrupt request is cleared. This prevents the next interrupt from occuring closer than 32 HSYNCs time. 
+
+If bit 4 of the "Select screen mode and rom configuration" register of the Gate-Array (bit 7="1" and bit 6="0") is set to "1" then the interrupt request is cleared and the 6-bit counter is reset to "0". 
+
+The Gate-Array senses the VSYNC signal. If two HSYNCs have been detected following the start of the VSYNC then there are two possible actions: 
+
+If the top bit of the 6-bit counter is set to "1" (i.e. the counter >=32), then there is no interrupt request, and the 6-bit counter is reset to "0". (If a interrupt was requested and acknowledged it would be closer than 32 HSYNCs compared to the position of the previous interrupt). 
+If the top bit of the 6-bit counter is set to "0" (i.e. the counter <32), then a interrupt request is issued, and the 6-bit counter is reset to "0". 
+In both cases the following interrupt requests are synchronised with the VSYNC. 
+
+Interrupts generated by the Gate-Array are the only source of interrupts in the CPC system unless they are generated by expansion devices. 
+
+The NMI interrupt of the Z80 is not used by the Amstrad CPC hardware but is available for expansion devices to use.
+*/	
 //	The GA has a counter that increments on every falling edge of the CRTC generated HSYNC signal.
-                amstrad_interrupt_timer_update();
+ 
+  amstrad_CRTC_HS_Counter++;
+
+  	if (amstrad_CRTC_HS_After_VS_Counter > 0) {
+  
+  		amstrad_CRTC_HS_After_VS_Counter--;
+  
+  		if (amstrad_CRTC_HS_After_VS_Counter == 0) {
+      	if (amstrad_CRTC_HS_Counter >= 32) {
+          cpu_set_irq_line(0,0, HOLD_LINE);
+        }	else {
+       	  cpu_set_irq_line(0,0, CLEAR_LINE);
+        }
+    	  amstrad_CRTC_HS_Counter = 0;
+  		}
+  	}
+  	if (amstrad_CRTC_HS_Counter == 52) {
+  		amstrad_CRTC_HS_Counter = 0;
+      cpu_set_irq_line(0,0, HOLD_LINE);
+  	}
   }
   amstrad_CRTC_HS = data;
 }
@@ -497,7 +541,7 @@ static void amstrad_Set_VS(int offset, int data)
 //  if (((amstrad_CRTC_VS^data) != 0)&&(data != 0)) {
   if (data != 0) {
     y_screen_pos = y_screen_offset;
-    x_screen_pos = 0;
+      x_screen_pos = x_screen_offset;
 /* Reset the amstrad_CRTC_HS_After_VS_Counter */
     amstrad_CRTC_HS_After_VS_Counter = 2;
   }
@@ -566,9 +610,8 @@ void amstrad_vh_execute_crtc_cycles(int crtc_execute_cycles)
       } else {
         amstrad_draw_screen_enabled();
       }
-
-      x_screen_pos += (AMSTRAD_CHARACTERS*2);
     }
+      x_screen_pos += (AMSTRAD_CHARACTERS*2);
 // Clock the 6845
 		crtc6845_clock();
 		crtc_execute_cycles--;
@@ -586,11 +629,12 @@ VIDEO_UPDATE( amstrad )
 
 	rect.min_x = 0;
 	rect.max_x = AMSTRAD_SCREEN_WIDTH-1;
-	rect.min_y = -8;
+	rect.min_y = 0;
 	rect.max_y = AMSTRAD_SCREEN_HEIGHT-1;
 
     copybitmap(bitmap, amstrad_bitmap, 0,0,0,0,&rect, TRANSPARENCY_NONE,0); 
 }
+
 
 
 /************************************************************************
@@ -609,6 +653,8 @@ VIDEO_START( amstrad )
 	
 	amstrad_cycles_last_write = 0;
 	amstrad_CRTC_HS_After_VS_Counter = 2;
+	x_screen_pos = x_screen_offset;
+	y_screen_pos = y_screen_offset;
 
 	amstrad_bitmap = auto_bitmap_alloc_depth(AMSTRAD_SCREEN_WIDTH, AMSTRAD_SCREEN_HEIGHT,16);
 

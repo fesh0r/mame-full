@@ -186,7 +186,7 @@ SNAPSHOT_LOAD(amstrad)
 	/* read whole file */
 	mame_fread(fp, snapshot, snapshot_size);
 
-    if (memcmp(snapshot, "MV - SNA", 8))
+	if (memcmp(snapshot, "MV - SNA", 8))
 	{
 		free(snapshot);
 		return INIT_FAIL;

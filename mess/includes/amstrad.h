@@ -53,7 +53,7 @@ This gives a total of 19968 NOPs per frame. */
 #define AMSTRAD_CHARACTERS 8
 
 /* REAL AMSTRAD SCREEN WIDTH and HEIGHT */
-#define AMSTRAD_SCREEN_WIDTH	(AMSTRAD_FPS*AMSTRAD_CHARACTERS*2)
+#define AMSTRAD_SCREEN_WIDTH	(50*AMSTRAD_CHARACTERS*2)
 #define AMSTRAD_SCREEN_HEIGHT	(39*AMSTRAD_CHARACTERS)
 
 /* number of us cycles per frame (measured) */

@@ -2,7 +2,7 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-- Amstrad CPC6128 (French AZERTY keyboard) [Yohann Courtois]
+- Amstrad CPC6128 (French AZERTY keyboard) [Yoann Courtois]
 - Megaduck [Wilbert Pol]
 - Sinclair ZX-80 (fixed & readded) [Krzysztof Strzecha]
 - Sinclair ZX-81 (fixed & readded) [Krzysztof Strzecha]
@@ -28,7 +28,8 @@ System Driver Changes:
  
 - [AMSTRAD] Added natural keyboard support.  [Nate Woods]
 
-- [AMSTRAD] Video enhancements; a few demos work now.  [Yohann Courtois]
+- [AMSTRAD] Interrupts, Gate Array and Video enhancements; a few demos work
+  now.  [Yoann Courtois] 
 
 - [GENESIS] Split Genesis driver into gen_usa, gen_eur and gen_jpn drivers
   for different countries.  Also fixed a bug that caused sound to be gone in
