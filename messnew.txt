@@ -1,3 +1,36 @@
+0.37b12
+
+Several drivers may be broken due to the MAME memory handling changes.
+And as a result, the Amiga has been temporarily removed.
+
+Note: .inp record/playback does still not work currently.
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+
+System Driver Changes:
+----------------------
+
+- [KC85/4 & KC85/3] Colours fixed. Added colour flash support. Improved accuracy of video redraw;
+  mid frame changes are now supported (only flash changes are supported at this time); flashing
+  lines in Boulderdash are reproduced now. Thankyou to Torsten Paul for his information about
+  the colour flash. Swapped CLR and DEL keys (previously you had to press "delete" near Scroll
+  Lock to delete back a char. Now you can press backspace).
+  [Kev Thacker]
+
+Other Changes:
+--------------
+
+- The core is based on MAME 0.37b12. This incorporates all 
+  features of the update to this core.  [MAME team] 
+
+- [machine/z80fmly] The Zero count/Timeout output pulse was very short. Now the pulse is
+  active for longer. Required for KC85/4 colour flash to work! [Kev Thacker]
+
+-------------------------------------------------------------------------------  
+
+
+
 0.37b11
 
 Several drivers may be broken due to the MAME memory handling changes.
