@@ -218,12 +218,12 @@ WRITE_HANDLER ( crtc6845_port_w )
 			default:
 				crtc.reg[crtc.index]=data;
 				DBG_LOG (2, "crtc_port_w",
-						 (errorlog, "%.2x:%.2x\n", crtc.index, data));
+						 ("%.2x:%.2x\n", crtc.index, data));
 				break;
 			}
 		}
 		DBG_LOG (1, "crtc6845_port_w",
-				 (errorlog, "%.2x:%.2x\n", crtc.index, data));
+				 ("%.2x:%.2x\n", crtc.index, data));
 	}
 	else
 	{
@@ -277,7 +277,7 @@ READ_HANDLER ( crtc6845_port_r )
 				val=crtc.reg[offset];
 			}
 		}
-		DBG_LOG (1, "crtc6845_port_r", (errorlog, "%.2x:%.2x\n", crtc.index, val));
+		DBG_LOG (1, "crtc6845_port_r", ("%.2x:%.2x\n", crtc.index, val));
 	}
 	else
 	{

@@ -8,14 +8,6 @@
 #include "machine/6821pia.h"
 #include "mess/vidhrdw/m6847.h"
 
-/* from machine/cocodisk.c */
-extern int coco_floppy_init(int id);
-extern void coco_floppy_exit(int id);
-extern READ_HANDLER ( coco_floppy_r );
-extern WRITE_HANDLER ( coco_floppy_w );
-extern int dragon_floppy_r(int offset);
-extern WRITE_HANDLER ( dragon_floppy_w );
-
 /* from machine/dragon.c */
 extern void dragon32_init_machine(void);
 extern void dragon64_init_machine(void);
@@ -41,6 +33,12 @@ extern WRITE_HANDLER ( dragon_sam_page_mode );
 extern WRITE_HANDLER ( dragon_sam_memory_size );
 extern READ_HANDLER ( coco3_floppy_r);
 extern WRITE_HANDLER ( coco3_floppy_w );
+extern int coco_floppy_init(int id);
+extern void coco_floppy_exit(int id);
+extern READ_HANDLER ( coco_floppy_r );
+extern WRITE_HANDLER ( coco_floppy_w );
+extern int dragon_floppy_r(int offset);
+extern WRITE_HANDLER ( dragon_floppy_w );
 
 extern int dragon_vh_start(void);
 extern int coco3_vh_start(void);
@@ -118,7 +116,8 @@ static struct MemoryReadAddress coco3_readmem[] =
 	{ 0x8000, 0x9fff, MRA_BANK5 },
 	{ 0xa000, 0xbfff, MRA_BANK6 },
 	{ 0xc000, 0xdfff, MRA_BANK7 },
-	{ 0xe000, 0xfeff, MRA_BANK8 },
+	{ 0xe000, 0xfdff, MRA_BANK8 },
+	{ 0xfe00, 0xfeff, MRA_BANK9 },
 	{ 0xff00, 0xff1f, pia_0_r },
 	{ 0xff20, 0xff3f, pia_1_r },
 	{ 0xff40, 0xff5f, coco3_floppy_r },
@@ -144,7 +143,8 @@ static struct MemoryWriteAddress coco3_writemem[] =
 	{ 0x8000, 0x9fff, MWA_BANK5 },
 	{ 0xa000, 0xbfff, MWA_BANK6 },
 	{ 0xc000, 0xdfff, MWA_BANK7 },
-	{ 0xe000, 0xfeff, MWA_BANK8 },
+	{ 0xe000, 0xfdff, MWA_BANK8 },
+	{ 0xfe00, 0xfeff, MWA_BANK9 },
 	{ 0xff00, 0xff1f, pia_0_w },
 	{ 0xff20, 0xff3f, pia_1_w },
 	{ 0xff40, 0xff5f, coco3_floppy_w },
@@ -152,6 +152,7 @@ static struct MemoryWriteAddress coco3_writemem[] =
 	{ 0xff98, 0xff9f, coco3_gimevh_w },
 	{ 0xffa0, 0xffaf, coco3_mmu_w },
 	{ 0xffb0, 0xffbf, coco3_palette_w },
+	{ 0xffc0, 0xffc5, MWA_NOP },
 	{ 0xffc6, 0xffd3, dragon_sam_display_offset },
 	{ 0xffd4, 0xffd5, dragon_sam_page_mode },
 	{ 0xffd6, 0xffd9, dragon_sam_speedctrl },
@@ -253,8 +254,10 @@ INPUT_PORTS_START( dragon32 )
 	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y | IPF_PLAYER2, 100, 10, 0x0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_2_UP, JOYCODE_2_DOWN)
 
 	PORT_START /* 11 */
-	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1, "right button", KEYCODE_RALT, IP_JOY_DEFAULT)
-	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2, "left button", KEYCODE_LALT, IP_JOY_DEFAULT)
+	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1, "Right Button 1", KEYCODE_RALT, IP_JOY_DEFAULT)
+	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2, "Left Button 1", KEYCODE_LALT, IP_JOY_DEFAULT)
+	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1, "Right Button 2", KEYCODE_RCONTROL, IP_JOY_DEFAULT)
+	PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2, "Left Button 2", KEYCODE_LCONTROL, IP_JOY_DEFAULT)
 
 	PORT_START /* 12 */
 	PORT_DIPNAME( 0x03, 0x01, "Artifacting" )
@@ -359,8 +362,10 @@ INPUT_PORTS_START( coco )
 	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y | IPF_PLAYER2, 100, 10, 0x0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_2_UP, JOYCODE_2_DOWN)
 
 	PORT_START /* 11 */
-	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1, "right button", KEYCODE_RALT, IP_JOY_DEFAULT)
-	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2, "left button", KEYCODE_LALT, IP_JOY_DEFAULT)
+	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1, "Right Button 1", KEYCODE_RALT, IP_JOY_DEFAULT)
+	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2, "Left Button 1", KEYCODE_LALT, IP_JOY_DEFAULT)
+	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1, "Right Button 2", KEYCODE_RCONTROL, IP_JOY_DEFAULT)
+	PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2, "Left Button 2", KEYCODE_LCONTROL, IP_JOY_DEFAULT)
 
 	PORT_START /* 12 */
 	PORT_DIPNAME( 0x03, 0x01, "Artifacting" )
@@ -469,8 +474,10 @@ INPUT_PORTS_START( coco3 )
 	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y | IPF_PLAYER2, 100, 10, 0x0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_2_UP, JOYCODE_2_DOWN)
 
 	PORT_START /* 11 */
-	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1, "right button", KEYCODE_RALT, IP_JOY_DEFAULT)
-	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2, "left button", KEYCODE_LALT, IP_JOY_DEFAULT)
+	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1, "Right Button 1", KEYCODE_RALT, IP_JOY_DEFAULT)
+	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2, "Left Button 1", KEYCODE_LALT, IP_JOY_DEFAULT)
+	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1, "Right Button 2", KEYCODE_RCONTROL, IP_JOY_DEFAULT)
+	PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2, "Left Button 2", KEYCODE_LCONTROL, IP_JOY_DEFAULT)
 
 	PORT_START /* 12 */
 	PORT_DIPNAME( 0x03, 0x01, "Artifacting" )

@@ -102,23 +102,6 @@ INPUT_PORTS_START( vectrex )
 	PORT_DIPSETTING(0x01, DEF_STR ( Yes ))
 INPUT_PORTS_END
 
-static struct GfxLayout fakelayout =
-{
-	1,1,
-	0,
-	1,
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 0, 0, &fakelayout, 0, 256 },
-	{ -1 }
-};
-
 static struct DACinterface dac_interface =
 {
 	1,
@@ -157,8 +140,8 @@ static struct MachineDriver machine_driver_vectrex =
 
 	/* video hardware */
 	380, 480, { 0, 500, 0, 600 },
-	gfxdecodeinfo,
-	254, 0,
+	0,
+	256 + 32768, 0,
 	vectrex_init_colors,
 
 	VIDEO_TYPE_VECTOR,
@@ -287,7 +270,7 @@ static struct MachineDriver machine_driver_raaspec =
 
 	/* video hardware */
 	380, 480, { 0, 500, 0, 600 },
-	gfxdecodeinfo,
+	0,
 	254, 0,
 	raaspec_init_colors,
 

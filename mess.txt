@@ -5,7 +5,7 @@
                     Official Page at: http://mess.emuverse.com
                    ==========================================
 
-This document is generated for MESS 0.37 BETA 2 (May  8 2000)
+This document is generated for MESS 0.37 BETA 3 (Jun  1 2000)
 
 Please note that many people helped with this project, either directly or by
 releasing source code which was used to write the drivers. We are not trying to
@@ -53,7 +53,7 @@ we are perfectly capable of finding it ourselves, thank you.
 
 Complete Emulated System List
 =============================
-Here is the list of systems supported by MESS 0.37 BETA 2 (May  8 2000)
+Here is the list of systems supported by MESS 0.37 BETA 3 (Jun  1 2000)
 
 The meanings of the columns are as follows:
 Working - "No" means that the emulation has shortcomings that cause the system
@@ -115,20 +115,21 @@ dat2html.exe.
 | Commodore 364 (Prototype)               |  Yes  | Close |Partial| c364     |
 | Commodore C64 (NTSC)                    |  Yes  |  Yes  |Partial| c64      |
 | Commodore C64/VC64/VIC64 (PAL)          |  Yes  |  Yes  |Partial| c64pal   |
-| Commodore C64GS (NTSC)                  |  Yes  |  Yes  |Partial| c64gs    |
-| Commodore CBM4064/Pet64/Educator64 (NTSC|  Yes  |  Yes  |Partial| cbm4064  |
-| Commodore Max (VIC10/Ultimax/Vickie)    |  Yes  |  Yes  |Partial| max      |
-| Commodore VIC64S (PAL, Swedish)         |  Yes  |  Yes  |Partial| vic64s   |
+| Commodore C64 Games Systems (NTSC)      |  Yes  |  Yes  |Partial| c64gs    |
+| Commodore CBM4064/PET64/Educator64 (NTSC|  Yes  |  Yes  |Partial| cbm4064  |
+| Commodore Max (Ultimax/VC10)            |  Yes  |  Yes  |Partial| max      |
+| Commodore Video Interface Chip 64 Swedis|  Yes  |  Yes  |Partial| vic64s   |
 | Commodore C65/C64DX (Prototype) NTSC    |   No  |  Yes  |Partial| c65      |
 | Commodore C65/C64DX (Prototype) German (|   No  |  Yes  |Partial| c65ger   |
 | Commodore C128 NTSC 656x216             |  Yes  |  Yes  |Partial| c128     |
 | Commodore C128 German (PAL) 336x216     |  Yes  |  Yes  |Partial| c128ger  |
 | Commodore C128 French (PAL) 656x432     |  Yes  |  Yes  |Partial| c128fra  |
 | Commodore C128 Italian (PAL) 656x432    |  Yes  |  Yes  |Partial| c128ita  |
-| Commodore VIC20 (NTSC)                  |  Yes  |  Yes  |Partial| vic20    |
+| Commodore Video Interface Chip 20 (NTSC)|  Yes  |  Yes  |Partial| vic20    |
 | Commodore VIC20 PAL, Swedish Expansion K|  Yes  |  Yes  |Partial| vic20swe |
-| Commodore VC20 (PAL)                    |  Yes  |  Yes  |Partial| vc20     |
-| Commodore PET2001/CBM2000 Series (Basic |  Yes  |  Yes  |   No  | pet      |
+| Commodore VolksComputer 20 (PAL)        |  Yes  |  Yes  |Partial| vc20     |
+| Commodore VIC20 (NTSC), IEEE488 Interfac|  Yes  |  Yes  |Partial| vic20i   |
+| Commodore Personal Electronic Translator|  Yes  |  Yes  |   No  | pet      |
 | Commodore CBM3000 Series (Basic 2)      |  Yes  |  Yes  |   No  | cbm30    |
 | Commodore CBM3000 Series (Basic 2) (busi|  Yes  |  Yes  |   No  | cbm30b   |
 | Commodore CBM4000 FAT Series (CRTC) 60Hz|  Yes  |  Yes  |   No  | cbm40    |
@@ -148,6 +149,7 @@ dat2html.exe.
 | Amstrad/Schneider CPC464                |  Yes  |  Yes  |  Yes  | cpc464   |
 | Amstrad/Schneider CPC664                |  Yes  |  Yes  |  Yes  | cpc664   |
 | Amstrad/Schneider CPC6128               |  Yes  |  Yes  |  Yes  | cpc6128  |
+| PCW                                     |  Yes  |  Yes  |  Yes  | pcw      |
 | KC Compact                              |  Yes  |  Yes  |  Yes  | kccomp   |
 | KC 85/4                                 |   No  |  Yes  |  Yes  | kc85_4   |
 | Jupiter Ace 49k                         |  Yes  |  Yes  |  Yes  | jupiter  |
@@ -182,7 +184,7 @@ dat2html.exe.
 | TI99/4A Home Computer (50 Hz)           |  Yes  |  Yes  |  Yes  | ti99_4ae |
 | IBM PC-XT MDA                           |  Yes  |  Yes  |  Yes  | pcmda    |
 | IBM PC-XT CGA                           |  Yes  |  Yes  |  Yes  | pccga    |
-| Tandy 1000TX                            |  Yes  | Close |  Yes  | tandy1t  |
+| Tandy 1000HX                            |  Yes  | Close |  Yes  | t1000hx  |
 | Philips P2000T                          |  Yes  |  Yes  |  Yes  | p2000t   |
 | Philips P2000M                          |  Yes  |  Yes  |  Yes  | p2000m   |
 | Compukit UK101                          |  Yes  |  Yes  |  Yes  | uk101    |
@@ -204,6 +206,9 @@ dat2html.exe.
 | Spectrum +2                             |  Yes  |  Yes  |  Yes  | specpls2 |
 | Spectrum +2a                            |  Yes  |  Yes  |  Yes  | specpl2a |
 | Spectrum +3                             |  Yes  |  Yes  |  Yes  | specpls3 |
+| Spectrum +2 (France)                    |  Yes  |  Yes  |  Yes  | specp2fr |
+| Spectrum +2 (Spain)                     |  Yes  |  Yes  |  Yes  | specp2sp |
+| Spectrum +3 (Spain)                     |  Yes  |  Yes  |  Yes  | specp3sp |
 | MSX1                                    |  Yes  |  Yes  |  Yes  | msx      |
 | MSX1 (Japan)                            |  Yes  |  Yes  |  Yes  | msxj     |
 | MSX1 (Korean)                           |  Yes  |  Yes  |  Yes  | msxkr    |
@@ -216,6 +221,7 @@ dat2html.exe.
 | PDP1 Spacewar!                          |  Yes  |  Yes  |  Yes  | pdp1     |
 | MTX 512                                 |  Yes  |  Yes  |  Yes  | mtx512   |
 | CPS Changer (Street Fighter ZERO)       |  Yes  |  Yes  |  Yes  | sfzch    |
+| BBC Micro Model B                       |   No  |  Yes  |  Yes  | bbc      |
 +-----------------------------------------+-------+-------+-------+----------+
 (1) There are variants of the system that work correctly
 (2) Needs samples provided separately
@@ -383,7 +389,9 @@ vic64s       Quickload   (Quik)   .p00  .prg
              Cartridge   (Cart)   .crt  .80   
              Floppydisk  (Flop)   .d64  
 c65          Quickload   (Quik)   .p00  .prg  
+             Floppydisk  (Flop)   .d64  
 c65ger       Quickload   (Quik)   .p00  .prg  
+             Floppydisk  (Flop)   .d64  
 c128         Quickload   (Quik)   .p00  .prg  
              Floppydisk  (Flop)   .d64  
 c128ger      Quickload   (Quik)   .p00  .prg  
@@ -404,22 +412,53 @@ vc20         Quickload   (Quik)   .p00  .prg
              Cartridge   (Cart)   .a0   .20   .40   .60   .rom  .bin  
              Cassette    (Cass)   .wav  
              Floppydisk  (Flop)   .d64  
+vic20i       Quickload   (Quik)   .p00  .prg  
+             Cartridge   (Cart)   .a0   .20   .40   .60   .rom  .bin  
+             Cassette    (Cass)   .wav  
+             Floppydisk  (Flop)   .d64  
 pet          Quickload   (Quik)   .p00  .prg  
+             Cartridge   (Cart)   .crt  .a0   .b0   
+             Floppydisk  (Flop)   .d64  
 cbm30        Quickload   (Quik)   .p00  .prg  
+             Cartridge   (Cart)   .crt  .a0   .b0   
+             Floppydisk  (Flop)   .d64  
 cbm30b       Quickload   (Quik)   .p00  .prg  
+             Cartridge   (Cart)   .crt  .a0   .b0   
+             Floppydisk  (Flop)   .d64  
 cbm40        Quickload   (Quik)   .p00  .prg  
+             Cartridge   (Cart)   .crt  .a0   
+             Floppydisk  (Flop)   .d64  
 cbm40pal     Quickload   (Quik)   .p00  .prg  
+             Cartridge   (Cart)   .crt  .a0   
+             Floppydisk  (Flop)   .d64  
 cbm40b       Quickload   (Quik)   .p00  .prg  
+             Cartridge   (Cart)   .crt  .a0   
+             Floppydisk  (Flop)   .d64  
 cbm80        Quickload   (Quik)   .p00  .prg  
+             Cartridge   (Cart)   .crt  .a0   
+             Floppydisk  (Flop)   .d64  
 cbm80pal     Quickload   (Quik)   .p00  .prg  
+             Cartridge   (Cart)   .crt  .a0   
+             Floppydisk  (Flop)   .d64  
 cbm80ger     Quickload   (Quik)   .p00  .prg  
+             Cartridge   (Cart)   .crt  .a0   
+             Floppydisk  (Flop)   .d64  
 cbm80swe     Quickload   (Quik)   .p00  .prg  
+             Cartridge   (Cart)   .crt  .a0   
+             Floppydisk  (Flop)   .d64  
 superpet     Quickload   (Quik)   .p00  .prg  
+             Cartridge   (Cart)   .crt  .a0   
+             Floppydisk  (Flop)   .d64  
 cbm710       Quickload   (Quik)   .p00  .prg  
+             Cartridge   (Cart)   .crt  .10   .20   .40   .60   
 cbm720       Quickload   (Quik)   .p00  .prg  
+             Cartridge   (Cart)   .crt  .10   .20   .40   .60   
 cbm610       Quickload   (Quik)   .p00  .prg  
+             Cartridge   (Cart)   .crt  .10   .20   .40   .60   
 cbm620       Quickload   (Quik)   .p00  .prg  
+             Cartridge   (Cart)   .crt  .10   .20   .40   .60   
 cbm500       Quickload   (Quik)   .p00  .prg  
+             Cartridge   (Cart)   .crt  .10   .20   .40   .60   
 amiga        Floppydisk  (Flop)   .adf  
 cpc464       Cartridge   (Cart)   .sna  
              Floppydisk  (Flop)   .dsk  
@@ -430,6 +469,7 @@ cpc664       Cartridge   (Cart)   .sna
 cpc6128      Cartridge   (Cart)   .sna  
              Floppydisk  (Flop)   .dsk  
              Cassette    (Cass)   .wav  
+pcw          Floppydisk  (Flop)   .dsk  
 kccomp       Cartridge   (Cart)   .sna  
              Floppydisk  (Flop)   .dsk  
              Cassette    (Cass)   .wav  
@@ -517,7 +557,7 @@ pcmda        Floppydisk  (Flop)   .dsk
              Harddisk    (Hard)   .img  
 pccga        Floppydisk  (Flop)   .dsk  
              Harddisk    (Hard)   .img  
-tandy1t      Floppydisk  (Flop)   .dsk  
+t1000hx      Floppydisk  (Flop)   .dsk  
              Harddisk    (Hard)   .img  
 p2000t       UNKNOWN     
 p2000m       UNKNOWN     
@@ -529,29 +569,36 @@ ts1000       Cassette    (Cass)   .81   .p
 aszmic       Cassette    (Cass)   .80   .o    
 pc8300       Cassette    (Cass)   .81   .p    
 pow3000      Cassette    (Cass)   .81   .p    
-spectrum     Snapshot    (Snap)   .sna  .z80  .tap  
-             Cassette    (Cass)   .wav  
-specpls4     Snapshot    (Snap)   .sna  .z80  .tap  
-             Cassette    (Cass)   .wav  
-inves        Snapshot    (Snap)   .sna  .z80  .tap  
-             Cassette    (Cass)   .wav  
-tk90x        Snapshot    (Snap)   .sna  .z80  .tap  
-             Cassette    (Cass)   .wav  
-tk95         Snapshot    (Snap)   .sna  .z80  .tap  
-             Cassette    (Cass)   .wav  
-tc2048       Snapshot    (Snap)   .sna  .z80  .tap  
-             Cassette    (Cass)   .wav  
-ts2068       Snapshot    (Snap)   .sna  .z80  .tap  
-             Cassette    (Cass)   .wav  
-spec128      Snapshot    (Snap)   .sna  .z80  .tap  
-             Cassette    (Cass)   .wav  
-specpls2     Snapshot    (Snap)   .sna  .z80  .tap  
-             Cassette    (Cass)   .wav  
-specpl2a     Snapshot    (Snap)   .sna  .z80  .tap  
-             Cassette    (Cass)   .wav  
+spectrum     Snapshot    (Snap)   .sna  .z80  
+             Cassette    (Cass)   .wav  .tap  
+specpls4     Snapshot    (Snap)   .sna  .z80  
+             Cassette    (Cass)   .wav  .tap  
+inves        Snapshot    (Snap)   .sna  .z80  
+             Cassette    (Cass)   .wav  .tap  
+tk90x        Snapshot    (Snap)   .sna  .z80  
+             Cassette    (Cass)   .wav  .tap  
+tk95         Snapshot    (Snap)   .sna  .z80  
+             Cassette    (Cass)   .wav  .tap  
+tc2048       Snapshot    (Snap)   .sna  .z80  
+             Cassette    (Cass)   .wav  .tap  
+ts2068       Snapshot    (Snap)   .sna  .z80  
+             Cassette    (Cass)   .wav  .tap  
+spec128      Snapshot    (Snap)   .sna  .z80  
+             Cassette    (Cass)   .wav  .tap  
+specpls2     Snapshot    (Snap)   .sna  .z80  
+             Cassette    (Cass)   .wav  .tap  
+specpl2a     Snapshot    (Snap)   .sna  .z80  
+             Cassette    (Cass)   .wav  .tap  
              Floppydisk  (Flop)   .dsk  
-specpls3     Snapshot    (Snap)   .sna  .z80  .tap  
-             Cassette    (Cass)   .wav  
+specpls3     Snapshot    (Snap)   .sna  .z80  
+             Cassette    (Cass)   .wav  .tap  
+             Floppydisk  (Flop)   .dsk  
+specp2fr     Snapshot    (Snap)   .sna  .z80  
+             Cassette    (Cass)   .wav  .tap  
+specp2sp     Snapshot    (Snap)   .sna  .z80  
+             Cassette    (Cass)   .wav  .tap  
+specp3sp     Snapshot    (Snap)   .sna  .z80  
+             Cassette    (Cass)   .wav  .tap  
              Floppydisk  (Flop)   .dsk  
 msx          Cartridge   (Cart)   .rom  
              Cassette    (Cass)   .wav  
@@ -569,3 +616,4 @@ kim1         Cassette    (Cass)   .kim
 pdp1         Cartridge   (Cart)   .bin  
 mtx512       Cartridge   (Cart)   .bin  
 sfzch        UNKNOWN     
+bbc          UNKNOWN     

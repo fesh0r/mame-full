@@ -2,6 +2,7 @@
 #include <string.h>
 #include <zlib.h>
 #include "unzip.h"
+#include "osdepend.h"
 #include "imgtool.h"
 //#include "zlib/zlib.h"
 
@@ -179,6 +180,11 @@ size_t stream_transfer(STREAM *dest, STREAM *source, size_t sz)
 		result += readsz;
 	}
 	return result;
+}
+
+size_t stream_transfer_all(STREAM *dest, STREAM *source)
+{
+	return stream_transfer(dest, source, stream_size(source));
 }
 
 int stream_crc(STREAM *f, unsigned long *result)

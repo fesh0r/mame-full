@@ -5,10 +5,12 @@
  *		- Figure out what Bit 3 of $FF98 is and implement it
  *		- Support palette rotation at HBLANK time, and maybe get a SockMaster
  *		  demo working...
+ *		- Learn more about the "mystery" CoCo 3 video modes
  */
 #include "driver.h"
 #include "machine/6821pia.h"
 #include "mess/vidhrdw/m6847.h"
+#include "cpu/m6809/m6809.h"
 #include "vidhrdw/generic.h"
 
 static int coco3_hires;
@@ -27,6 +29,10 @@ int internal_m6847_vh_start(int maxvram);
 void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, const int *metapalette, UINT8 *vram,
 	int has_lowercase, int basex, int basey, int wf, artifactproc artifact);
 extern int m6847_full_refresh;
+
+#define LOG_PALETTE	0
+#define LOG_GIME	0
+#define LOG_VIDEO	0
 
 /* --------------------------------------------------
  * CoCo 1/2 Stuff
@@ -408,6 +414,10 @@ void coco3_palette_w(int offset, int data)
 {
 	paletteram[offset] = data;
 	coco3_vh_palette_change_color(offset, data);
+
+#if LOG_PALETTE
+	logerror("CoCo3 Palette: %i <== $%02x\n", offset, data);
+#endif
 }
 
 static void coco3_artifact(int *artifactcolors)
@@ -441,10 +451,72 @@ static void coco3_artifact_blue(int *artifactcolors)
 	artifactcolors[2] = 17;
 }
 
+static int coco3_calculate_rows(void)
+{
+	int rows=0;
+	switch((coco3_gimevhreg[1] & 0x60) >>5) {
+	case 0:
+		rows = 192;
+		break;
+	case 1:
+		rows = 200;
+		break;
+	case 2:
+		rows = 210;
+		break;
+	case 3:
+		rows = 225;
+		break;
+	}
+	return rows;
+}
+
+#if LOG_VIDEO
+static void log_video(void)
+{
+	int rows, cols, visualbytesperrow, bytesperrow, vidbase;
+
+	switch(coco3_gimevhreg[0] & 0x80) {
+	case 0x00:	/* Text */
+		logerror("CoCo3 HiRes Video: Text Mode\n");
+		break;
+	case 0x80:	/* Graphics */
+		logerror("CoCo3 HiRes Video: Graphics Mode\n");
+
+		visualbytesperrow = 16 << ((coco3_gimevhreg[1] & 0x18) >> 3);
+		if (coco3_gimevhreg[1] & 0x04)
+			visualbytesperrow |= (visualbytesperrow / 4);
+
+		switch(coco3_gimevhreg[1] & 3) {
+		case 0:
+			cols = visualbytesperrow * 8;
+			logerror("CoCo3 HiRes Video: 2 colors");
+			break;
+		case 1:
+			cols = visualbytesperrow * 4;
+			logerror("CoCo3 HiRes Video: 4 colors");
+			break;
+		case 2:
+			cols = visualbytesperrow * 2;
+			logerror("CoCo3 HiRes Video: 16 colors");
+			break;
+		default:
+			logerror("CoCo3 HiRes Video: ??? colors\n");
+			return;
+		}
+		rows = coco3_calculate_rows();
+		logerror(" @ %dx%d\n", cols, rows);
+
+		vidbase = (coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8);
+		bytesperrow = (coco3_gimevhreg[7] & 0x80) ? 256 : visualbytesperrow;
+		logerror("CoCo3 HiRes Video: Occupies memory %05x-%05x\n", vidbase, (vidbase + (rows * bytesperrow) - 1) & 0x7ffff);
+		break;
+	}
+}
+#endif
+
 void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	extern void coco3_vbord(void);
-
 	UINT8 *RAM = memory_region(REGION_CPU1);
 	static int coco3_metapalette[] = {
 		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
@@ -460,6 +532,7 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	static int old_cmprgb;
 	int cmprgb, i;
 	int use_mark_dirty;
+	extern void coco3_vblank(void);
 
 	/* Did the user change between CMP and RGB? */
 	cmprgb = readinputport(12) & 0x08;
@@ -473,7 +546,7 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	}
 
 	/* clear vblank */
-	coco3_vbord();
+	coco3_vblank();
 
 	if (coco3_hires) {
 		static int last_blink;
@@ -495,20 +568,7 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			bytesperrow = 0;
 		}
 
-		switch((coco3_gimevhreg[1] & 0x60) >>5) {
-		case 0:
-			rows = 192;
-			break;
-		case 1:
-			rows = 200;
-			break;
-		case 2:
-			rows = 210;
-			break;
-		case 3:
-			rows = 225;
-			break;
-		}
+		rows = coco3_calculate_rows();
 		basey = (225 - rows) / 2;
 
 		/* check border */
@@ -524,6 +584,10 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			m6847_full_refresh = 0;
 	        osd_mark_dirty(0, (225 - rows) / 2, 639, (225 - rows) / 2 + rows-1, 0);
 			coco3_somethingdirty = 1;
+
+#if LOG_VIDEO
+			log_video();
+#endif
 		}
 
 		use_mark_dirty = 1;
@@ -787,6 +851,10 @@ void coco3_ram_b8_w (int offset, int data)
 {
 	coco3_ram_w(offset, data, 7);
 }
+void coco3_ram_b9_w (int offset, int data)
+{
+	coco3_ram_w(offset, data, 8);
+}
 
 int coco3_gimevh_r(int offset)
 {
@@ -797,6 +865,9 @@ void coco3_gimevh_w(int offset, int data)
 {
 	int xorval;
 
+#if LOG_GIME
+	logerror("CoCo3 GIME: $%04x <== $%02x pc=$%04x\n", offset + 0xff98, data, m6809_get_pc());
+#endif
 	/* Features marked with '!' are not yet implemented */
 
 	xorval = coco3_gimevhreg[offset] ^ data;
@@ -815,6 +886,9 @@ void coco3_gimevh_w(int offset, int data)
 		if (xorval & 0xA7) {
 			coco3_borderred = -1;	/* force border to redraw */
 			m6847_full_refresh = 1;
+#if LOG_GIME
+			logerror("CoCo3 GIME: $ff98 forcing refresh\n");
+#endif
 		}
 		if (xorval & 0x10) {
 			coco3_vh_palette_recompute();
@@ -842,7 +916,7 @@ void coco3_gimevh_w(int offset, int data)
 	case 4:
 		/*	$FF9C Vertical Scroll Register
 		 *		  Bits 4-7 Reserved
-		 *		  Bits 0-3 VSC Vertical Scroll bits
+		 *		! Bits 0-3 VSC Vertical Scroll bits
 		 */
 		m6847_full_refresh = 1;
 		break;
@@ -852,6 +926,9 @@ void coco3_gimevh_w(int offset, int data)
 		/*	$FF9D,$FF9E Vertical Offset Registers
 		 */
 		m6847_full_refresh = 1;
+#if LOG_GIME
+		logerror("CoCo3 GIME: HiRes Video at $%05x\n", (coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8));
+#endif
 		break;
 
 	case 7:
@@ -868,6 +945,10 @@ void coco3_vh_sethires(int hires)
 {
 	if (hires != coco3_hires) {
 		coco3_hires = hires;
+#if LOG_GIME
+		logerror("CoCo3 GIME: %s hires graphics/text\n", hires ? "Enabling" : "Disabling");
+#endif
+		m6847_full_refresh = 1;
 	}
 }
 

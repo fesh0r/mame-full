@@ -4,12 +4,20 @@
 
   Functions to emulate the video hardware of the ZX Spectrum.
 
+  Changes:
+
+  DJR 08/02/00 - Added support for FLASH 1.
+  DJR 16/05/00 - Support for TS2068/TC2048 hires and 64 column modes.
+  DJR 19/05/00 - Speeded up Spectrum 128 screen refresh.
+  DJR 23/05/00 - Preliminary support for border colour emulation.
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
-/* DJR 8/2/00 - Added support for FLASH 1 */
+#include "mess/vidhrdw/spectrum.h"
+#include "mess/eventlst.h"
+#include "mess/vidhrdw/border.h"
 
 unsigned char *spectrum_characterram;
 unsigned char *spectrum_colorram;
@@ -48,11 +56,16 @@ int spectrum_vh_start(void)
 		return 1;
 	}
 	memset(charsdirty,1,0x300);
+
+	EventList_Initialise(30000);
+
 	return 0;
 }
 
 void    spectrum_vh_stop(void)
 {
+	EventList_Finish();
+
 	free(spectrum_characterram);
 	free(spectrum_colorram);
 	free(charsdirty);
@@ -98,11 +111,26 @@ INLINE unsigned char get_display_color (unsigned char color, int invert)
    independent of frame skip etc. */
 void spectrum_eof_callback(void)
 {
+        EVENT_LIST_ITEM *pItem;
+        int NumItems;
+
         frame_number++;
         if (frame_number >= 25)
         {
                 frame_number = 0;
                 flash_invert = !flash_invert;
+        }
+
+        /* Empty event buffer for undisplayed frames noting the last border
+           colour (in case colours are not changed in the next frame). */
+        NumItems = EventList_NumEvents();
+        if (NumItems)
+        {
+                pItem = EventList_GetFirstItem();
+                set_last_border_color ( pItem[NumItems-1].Event_Data );
+                EventList_Reset();
+                EventList_SetOffsetStartTime ( cpu_getcurrentcycles() );
+                logerror ("Event log reset in callback fn.\n");
         }
 }
 
@@ -110,20 +138,54 @@ void spectrum_eof_callback(void)
 /* Update FLASH status for ts2068. Assumes flash update every 1/2s. */
 void ts2068_eof_callback(void)
 {
+        EVENT_LIST_ITEM *pItem;
+        int NumItems;
+
         frame_number++;
         if (frame_number >= 30)
         {
                 frame_number = 0;
                 flash_invert = !flash_invert;
         }
+
+        /* Empty event buffer for undisplayed frames noting the last border
+           colour (in case colours are not changed in the next frame). */
+        NumItems = EventList_NumEvents();
+        if (NumItems)
+        {
+                pItem = EventList_GetFirstItem();
+                set_last_border_color ( pItem[NumItems-1].Event_Data );
+                EventList_Reset();
+                EventList_SetOffsetStartTime ( cpu_getcurrentcycles() );
+                logerror ("Event log reset in callback fn.\n");
+        }
 }
 
 /***************************************************************************
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function,
-  it will be called by the main emulation engine.
+  Update the spectrum screen display.
+
+  The screen consists of 312 scanlines as follows:
+  64  border lines (the last 48 are actual border lines; the others may be
+                    border lines or vertical retrace)
+  192 screen lines
+  56  border lines
+
+  Each screen line has 48 left border pixels, 256 screen pixels and 48 right
+  border pixels.
+
+  Each scanline takes 224 T-states divided as follows:
+  128 Screen (reads a screen and ATTR byte [8 pixels] every 4 T states)
+  24  Right border
+  48  Horizontal retrace
+  24  Left border
+
+  The 128K Spectrums have only 63 scanlines before the TV picture (311 total)
+  and take 228 T-states per scanline.
+
 ***************************************************************************/
-void spectrum_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh) {
+
+void spectrum_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
 	int count;
         static int last_invert = 0;
 
@@ -167,14 +229,14 @@ void spectrum_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh) {
 		int sy=count/32;
 		unsigned char color;
 
-		if (charsdirty[count]) {
+                if (charsdirty[count]) {
                         color=get_display_color(spectrum_colorram[count],
                                                 flash_invert);
 			drawgfx(bitmap,Machine->gfx[0],
 				count,
 				color,
 				0,0,
-				sx*8,sy*8,
+                                (sx*8)+SPEC_LEFT_BORDER,(sy*8)+SPEC_TOP_BORDER,
 				0,TRANSPARENCY_NONE,0);
 			charsdirty[count] = 0;
 		}
@@ -186,7 +248,7 @@ void spectrum_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh) {
 				count,
 				color,
 				0,0,
-				sx*8,(sy+8)*8,
+                                (sx*8)+SPEC_LEFT_BORDER,((sy+8)*8)+SPEC_TOP_BORDER,
 				0,TRANSPARENCY_NONE,0);
 			charsdirty[count+256] = 0;
 		}
@@ -198,78 +260,90 @@ void spectrum_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh) {
 				count,
 				color,
 				0,0,
-				sx*8,(sy+16)*8,
+                                (sx*8)+SPEC_LEFT_BORDER,((sy+16)*8)+SPEC_TOP_BORDER,
 				0,TRANSPARENCY_NONE,0);
 			charsdirty[count+512] = 0;
 		}
 	}
+
+        /* When screen refresh is called there is only one blank line
+           (synchronised with start of screen data) before the border lines.
+           There should be 16 blank lines after an interrupt is called.
+        */
+        if (full_refresh)
+                force_border_redraw ();
+        draw_border(bitmap,
+                SPEC_TOP_BORDER, SPEC_DISPLAY_YSIZE, SPEC_BOTTOM_BORDER,
+                SPEC_LEFT_BORDER, SPEC_DISPLAY_XSIZE, SPEC_RIGHT_BORDER,
+                SPEC_LEFT_BORDER_CYCLES, SPEC_DISPLAY_XSIZE_CYCLES,
+                SPEC_RIGHT_BORDER_CYCLES, SPEC_RETRACE_CYCLES, 200);
 }
 
 
 int spectrum_128_vh_start(void)
 {
+        frame_number = 0;
+        flash_invert = 0;
+
+	EventList_Initialise(30000);
+
         return 0;
 }
 
 void    spectrum_128_vh_stop(void)
 {
+        EventList_Finish();
 }
 
-void spectrum_128_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh) {
-	int count;
+/* Refresh the spectrum 128 screen (code modified from COUPE.C) */
+void spectrum_128_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
+        /* for now do a full-refresh */
+        int x, y, b, scrx, scry;
+        unsigned short ink, pap;
+        unsigned char *attr, *scr;
 
-        /* for now 128K/+2/+3 will do a full-refresh */
-        unsigned char *spectrum_128_colorram;
-        unsigned char *spectrum_128_charram;
+        scr=spectrum_128_screen_location;
 
-        spectrum_128_charram = spectrum_128_screen_location;
-        spectrum_128_colorram = spectrum_128_screen_location + 0x01800;
-
-        for (count=0;count<32*8;count++)
+        for (y=0; y<192; y++)
         {
-                decodechar( Machine->gfx[0],count,spectrum_128_charram,
-				    Machine->drv->gfxdecodeinfo[0].gfxlayout );
+                scrx=SPEC_LEFT_BORDER;
+                scry=((y&7) * 8) + ((y&0x38)>>3) + (y&0xC0);
+                attr=spectrum_128_screen_location + ((scry>>3)*32) + 0x1800;
 
-                decodechar( Machine->gfx[1],count,&spectrum_128_charram[0x800],
-				    Machine->drv->gfxdecodeinfo[0].gfxlayout );
+                for (x=0;x<32;x++)
+                {
+                        /* Get ink and paper colour with bright */
+                        if (flash_invert && (*attr & 0x80))
+                        {
+                                ink=((*attr)>>3) & 0x0f;
+                                pap=((*attr) & 0x07) + (((*attr)>>3) & 0x08);
+                        }
+                        else
+                        {
+                                ink=((*attr) & 0x07) + (((*attr)>>3) & 0x08);
+                                pap=((*attr)>>3) & 0x0f;
+                        }
 
-                decodechar( Machine->gfx[2],count,&spectrum_128_charram[0x1000],
-				    Machine->drv->gfxdecodeinfo[0].gfxlayout );
+                        for (b=0x80;b!=0;b>>=1)
+                        {
+                                if (*scr&b)
+                                        plot_pixel(bitmap,scrx++,SPEC_TOP_BORDER+scry,Machine->pens[ink]);
+                                else
+                                        plot_pixel(bitmap,scrx++,SPEC_TOP_BORDER+scry,Machine->pens[pap]);
+			}
+                scr++;
+                attr++;
+                }
 	}
 
-        for (count=0;count<32*8;count++)
-        {
-		int sx=count%32;
-		int sy=count/32;
-		unsigned char color;
-
-                color=get_display_color(spectrum_128_colorram[count],
-                                        flash_invert);
-                drawgfx(bitmap,Machine->gfx[0],
-				count,
-				color,
-				0,0,
-				sx*8,sy*8,
-				0,TRANSPARENCY_NONE,0);
-
-                color=get_display_color(spectrum_128_colorram[count+0x100],
-                                        flash_invert);
-                drawgfx(bitmap,Machine->gfx[1],
-				count,
-				color,
-				0,0,
-				sx*8,(sy+8)*8,
-				0,TRANSPARENCY_NONE,0);
-
-                color=get_display_color(spectrum_128_colorram[count+0x200],
-                                        flash_invert);
-                drawgfx(bitmap,Machine->gfx[2],
-				count,
-				color,
-				0,0,
-				sx*8,(sy+16)*8,
-				0,TRANSPARENCY_NONE,0);
-	}
+        if (full_refresh)
+                force_border_redraw ();
+        draw_border(bitmap,
+                SPEC_TOP_BORDER, SPEC_DISPLAY_YSIZE, SPEC_BOTTOM_BORDER,
+                SPEC_LEFT_BORDER, SPEC_DISPLAY_XSIZE, SPEC_RIGHT_BORDER,
+                SPEC_LEFT_BORDER_CYCLES, SPEC_DISPLAY_XSIZE_CYCLES,
+                SPEC_RIGHT_BORDER_CYCLES, SPEC128_RETRACE_CYCLES, 200);
 }
 
 /*******************************************************************
@@ -286,74 +360,214 @@ void spectrum_128_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh) 
  *                                    columns 1,3,5,...63 from DFILE 2)
  *      other = unpredictable results
  *
- *      bits 5..3  64 column mode ink/paper selection
- *      000 = Black/White       100 = Green/Magenta
- *      001 = Blue/Yellow       101 = Cyan/Red
- *      010 = Red/Cyan          110 = Yellow/Blue
- *      011 = Magenta/Green     111 = White/Black
+ *      bits 5..3  64 column mode ink/paper selection (attribute value in brackets)
+ *      000 = Black/White   (56)        100 = Green/Magenta (28)
+ *      001 = Blue/Yellow   (49)        101 = Cyan/Red      (21)
+ *      010 = Red/Cyan      (42)        110 = Yellow/Blue   (14)
+ *      011 = Magenta/Green (35)        111 = White/Black   (7)
  *
  *******************************************************************/
+
+/* Draw a scanline in TS2068/TC2048 hires mode (code modified from COUPE.C) */
+void ts2068_hires_scanline(struct osd_bitmap *bitmap, int y, int borderlines)
+{
+	int x,b,scrx,scry;
+	unsigned short ink,pap;
+        unsigned char *attr, *scr;
+
+        scrx=TS2068_LEFT_BORDER;
+	scry=((y&7) * 8) + ((y&0x38)>>3) + (y&0xC0);
+
+        scr=ts2068_ram + y*32;
+        attr=scr + 0x2000;
+
+        for (x=0;x<32;x++)
+	{
+                /* Get ink and paper colour with bright */
+                if (flash_invert && (*attr & 0x80))
+                {
+                        ink=((*attr)>>3) & 0x0f;
+                        pap=((*attr) & 0x07) + (((*attr)>>3) & 0x08);
+                }
+                else
+                {
+                        ink=((*attr) & 0x07) + (((*attr)>>3) & 0x08);
+                        pap=((*attr)>>3) & 0x0f;
+                }
+
+		for (b=0x80;b!=0;b>>=1)
+		{
+                        if (*scr&b)
+			{
+                                plot_pixel(bitmap,scrx++,scry+borderlines,Machine->pens[ink]);
+                                plot_pixel(bitmap,scrx++,scry+borderlines,Machine->pens[ink]);
+			}
+			else
+			{
+                                plot_pixel(bitmap,scrx++,scry+borderlines,Machine->pens[pap]);
+                                plot_pixel(bitmap,scrx++,scry+borderlines,Machine->pens[pap]);
+			}
+		}
+                scr++;
+                attr++;
+	}
+}
+
+/* Draw a scanline in TS2068/TC2048 64-column mode */
+void ts2068_64col_scanline(struct osd_bitmap *bitmap, int y, int borderlines, unsigned short inkcolor)
+{
+	int x,b,scrx,scry;
+        unsigned char *scr1, *scr2;
+
+        scrx=TS2068_LEFT_BORDER;
+	scry=((y&7) * 8) + ((y&0x38)>>3) + (y&0xC0);
+
+        scr1=ts2068_ram + y*32;
+        scr2=scr1 + 0x2000;
+
+        for (x=0;x<32;x++)
+	{
+		for (b=0x80;b!=0;b>>=1)
+		{
+                        if (*scr1&b)
+                                plot_pixel(bitmap,scrx++,scry+borderlines,Machine->pens[inkcolor]);
+			else
+                                plot_pixel(bitmap,scrx++,scry+borderlines,Machine->pens[7-inkcolor]);
+		}
+                scr1++;
+
+		for (b=0x80;b!=0;b>>=1)
+		{
+                        if (*scr2&b)
+                                plot_pixel(bitmap,scrx++,scry+borderlines,Machine->pens[inkcolor]);
+			else
+                                plot_pixel(bitmap,scrx++,scry+borderlines,Machine->pens[7-inkcolor]);
+		}
+                scr2++;
+	}
+}
+
+/* Draw a scanline in TS2068/TC2048 lores (normal Spectrum) mode */
+void ts2068_lores_scanline(struct osd_bitmap *bitmap, int y, int borderlines, int screen)
+{
+	int x,b,scrx,scry;
+	unsigned short ink,pap;
+        unsigned char *attr, *scr;
+
+        scrx=TS2068_LEFT_BORDER;
+	scry=((y&7) * 8) + ((y&0x38)>>3) + (y&0xC0);
+
+        scr=ts2068_ram + y*32 + screen*0x2000;
+        attr=ts2068_ram + ((scry>>3)*32) + screen*0x2000 + 0x1800;
+
+        for (x=0;x<32;x++)
+	{
+                /* Get ink and paper colour with bright */
+                if (flash_invert && (*attr & 0x80))
+                {
+                        ink=((*attr)>>3) & 0x0f;
+                        pap=((*attr) & 0x07) + (((*attr)>>3) & 0x08);
+                }
+                else
+                {
+                        ink=((*attr) & 0x07) + (((*attr)>>3) & 0x08);
+                        pap=((*attr)>>3) & 0x0f;
+                }
+
+		for (b=0x80;b!=0;b>>=1)
+		{
+                        if (*scr&b)
+			{
+                                plot_pixel(bitmap,scrx++,scry+borderlines,Machine->pens[ink]);
+                                plot_pixel(bitmap,scrx++,scry+borderlines,Machine->pens[ink]);
+			}
+			else
+			{
+                                plot_pixel(bitmap,scrx++,scry+borderlines,Machine->pens[pap]);
+                                plot_pixel(bitmap,scrx++,scry+borderlines,Machine->pens[pap]);
+			}
+		}
+                scr++;
+                attr++;
+	}
+}
+
 void ts2068_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
+        /* for now TS2068 will do a full-refresh */
 	int count;
 
-        /* TODO: Add support for Extended Color & 64 column modes */
-
-        /* for now TS2068 will do a full-refresh */
-        unsigned char *ts2068_colorram;
-        unsigned char *ts2068_charram;
-
-        if ((ts2068_port_ff_data & 7) == 1)
+        if ((ts2068_port_ff_data & 7) == 6)
+        {
+                /* 64 Column mode */
+                unsigned short inkcolor = (ts2068_port_ff_data & 0x38) >> 3;
+                for (count = 0; count < 192; count++)
+                        ts2068_64col_scanline(bitmap, count, TS2068_TOP_BORDER, inkcolor);
+	}
+        else if ((ts2068_port_ff_data & 7) == 2)
+        {
+                /* Extended Color mode */
+                for (count = 0; count < 192; count++)
+                        ts2068_hires_scanline(bitmap, count, TS2068_TOP_BORDER);
+        }
+        else if ((ts2068_port_ff_data & 7) == 1)
+        {
                 /* Screen 6000-7aff */
-                ts2068_charram = ts2068_ram + 0x2000;
+                for (count = 0; count < 192; count++)
+                        ts2068_lores_scanline(bitmap, count, TS2068_TOP_BORDER, 1);
+        }
         else
+        {
                 /* Screen 4000-5aff */
-                ts2068_charram = ts2068_ram;
-        ts2068_colorram = ts2068_charram + 0x01800;
+                for (count = 0; count < 192; count++)
+                        ts2068_lores_scanline(bitmap, count, TS2068_TOP_BORDER, 0);
+        }
 
-        for (count=0;count<32*8;count++)
+        if (full_refresh)
+                force_border_redraw ();
+        draw_border(bitmap,
+                TS2068_TOP_BORDER, SPEC_DISPLAY_YSIZE, TS2068_BOTTOM_BORDER,
+                TS2068_LEFT_BORDER, TS2068_DISPLAY_XSIZE, TS2068_RIGHT_BORDER,
+                SPEC_LEFT_BORDER_CYCLES, SPEC_DISPLAY_XSIZE_CYCLES,
+                SPEC_RIGHT_BORDER_CYCLES, SPEC_RETRACE_CYCLES, 200);
+}
+
+void tc2048_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
+        /* for now TS2068 will do a full-refresh */
+	int count;
+
+        if ((ts2068_port_ff_data & 7) == 6)
         {
-                decodechar( Machine->gfx[0],count,ts2068_charram,
-				    Machine->drv->gfxdecodeinfo[0].gfxlayout );
-
-                decodechar( Machine->gfx[1],count,&ts2068_charram[0x800],
-				    Machine->drv->gfxdecodeinfo[0].gfxlayout );
-
-                decodechar( Machine->gfx[2],count,&ts2068_charram[0x1000],
-				    Machine->drv->gfxdecodeinfo[0].gfxlayout );
+                /* 64 Column mode */
+                unsigned short inkcolor = (ts2068_port_ff_data & 0x38) >> 3;
+                for (count = 0; count < 192; count++)
+                        ts2068_64col_scanline(bitmap, count, SPEC_TOP_BORDER, inkcolor);
 	}
-
-        for (count=0;count<32*8;count++)
+        else if ((ts2068_port_ff_data & 7) == 2)
         {
-		int sx=count%32;
-		int sy=count/32;
-		unsigned char color;
+                /* Extended Color mode */
+                for (count = 0; count < 192; count++)
+                        ts2068_hires_scanline(bitmap, count, SPEC_TOP_BORDER);
+        }
+        else if ((ts2068_port_ff_data & 7) == 1)
+        {
+                /* Screen 6000-7aff */
+                for (count = 0; count < 192; count++)
+                        ts2068_lores_scanline(bitmap, count, SPEC_TOP_BORDER, 1);
+        }
+        else
+        {
+                /* Screen 4000-5aff */
+                for (count = 0; count < 192; count++)
+                        ts2068_lores_scanline(bitmap, count, SPEC_TOP_BORDER, 0);
+        }
 
-                color=get_display_color(ts2068_colorram[count],
-                                        flash_invert);
-                drawgfx(bitmap,Machine->gfx[0],
-				count,
-				color,
-				0,0,
-				sx*8,sy*8,
-				0,TRANSPARENCY_NONE,0);
-
-                color=get_display_color(ts2068_colorram[count+0x100],
-                                        flash_invert);
-                drawgfx(bitmap,Machine->gfx[1],
-				count,
-				color,
-				0,0,
-				sx*8,(sy+8)*8,
-				0,TRANSPARENCY_NONE,0);
-
-                color=get_display_color(ts2068_colorram[count+0x200],
-                                        flash_invert);
-                drawgfx(bitmap,Machine->gfx[2],
-				count,
-				color,
-				0,0,
-				sx*8,(sy+16)*8,
-				0,TRANSPARENCY_NONE,0);
-	}
+        if (full_refresh)
+                force_border_redraw ();
+        draw_border(bitmap,
+                SPEC_TOP_BORDER, SPEC_DISPLAY_YSIZE, SPEC_BOTTOM_BORDER,
+                TS2068_LEFT_BORDER, TS2068_DISPLAY_XSIZE, TS2068_RIGHT_BORDER,
+                SPEC_LEFT_BORDER_CYCLES, SPEC_DISPLAY_XSIZE_CYCLES,
+                SPEC_RIGHT_BORDER_CYCLES, SPEC_RETRACE_CYCLES, 200);
 }

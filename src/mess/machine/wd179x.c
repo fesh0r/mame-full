@@ -117,7 +117,7 @@ WD179X *w = wd[drive];
 		w->status_ipl = STA_1_IPL;
 		w->callback = callback;
 
-		if (w->image_name && strcmp(w->image_name, name))
+		if (w->image_name && (!name || strcmp(w->image_name, name)))
 		{
 			if (w->image_file)
 			{
@@ -133,7 +133,7 @@ WD179X *w = wd[drive];
 		}
 
         /* do we have an image name ? */
-        if ((name) && (!strlen(name)))
+        if (!name || !name[0])
 		{
 			w->status = STA_1_NOT_READY;
 			return 0;

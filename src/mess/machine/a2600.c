@@ -13,7 +13,8 @@
 TIA tia;
 
 int a2600_scanline_interrupt(void);
-
+static int cpu_current_state;
+static void *RIOT_timer;
 
 #ifdef USE_RIOT
 static int a2600_riot_a_r(int chip);
@@ -36,6 +37,8 @@ static struct RIOTinterface a2600_riot = {
 
 static int msize0;
 static int msize1;
+
+static int cpu_current_state = 1; /*running*/
 
 /* bitmap */
 struct osd_bitmap *stella_bitmap;
@@ -96,10 +99,21 @@ int a2600_riot_r(int offset)
 
 		case 0x04: /*TIMER READ */
 
-		break;
+		{
+			int time_left = timer_timeleft(RIOT_timer);
+			if(time_left) return (int)1190000*1/time_left;
+		}
+
 	}
 
 	return 	ROM[offset];
+}
+
+
+static void riot_timer_cb(int param)
+{
+	logerror("riot timer expired\n");
+
 }
 
 
@@ -113,6 +127,21 @@ void a2600_riot_w(int offset, int data)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
 
+	switch (offset)
+	{
+		case 0x16: /* Timer 64 Start */
+			if( RIOT_timer )
+				timer_remove(RIOT_timer);
+			logerror("riot TMR64 write: data %02x - time is $%f\n", data,64.0 * data/1190000 );
+			RIOT_timer=timer_pulse(64.0 * data/1190000, 0, riot_timer_cb);
+			ROM[0x284]=	(int)64.0 * data/1190000;
+			break;
+
+
+
+
+
+	}
 	ROM[offset] = data;
 
 }
@@ -143,7 +172,7 @@ int a2600_TIA_r(int offset)
             case CXBLPF:
             case CXPPMM:
 			//break;
- #ifdef CRAP
+
 	        case INPT0:	  /* offset 0x08 */
 	            if (input_port_1_r(0) & 0x02)
 	                return 0x80;
@@ -180,7 +209,7 @@ int a2600_TIA_r(int offset)
 	            else
 	                return 0x80;
 				//break;
-#endif
+
 	        default:
 	            logerror("TIA_r undefined read %x\n",offset);
 
@@ -253,8 +282,12 @@ void a2600_TIA_w(int offset, int data)
 			{
 				if (TIA_VERBOSE)
 					logerror("TIA_w - WSYNC \n");
-				//cpu_spinuntil_int (); /* wait til end of scanline */
+
+				//logerror("WSYNC - waiting for %lf\n", cpu_getscanlinetime(cpu_getscanline()));
+				//cpu_spinuntil_time(cpu_getscanlinetime(cpu_getscanline()));
+
 			}
+
 			else
 			{
 				if (TIA_VERBOSE)
@@ -503,6 +536,7 @@ void a2600_init_machine(void)
 
 	/* start RIOT interface */
 	///riot_init(&a2600_riot);
+	cpu_current_state=1;
 	return;
 
 }
@@ -598,6 +632,11 @@ int a2600_scanline_interrupt(void)
 	int ys = Machine->drv->visible_area.max_y;//228;
 	int currentline =  cpu_getscanline();
 	int backcolor;
+
+
+
+	cpu_current_state=1; /* running again */
+
 
 	/* plot the playfield and background for now               */
 	/* each register value is 4 color clocks                   */

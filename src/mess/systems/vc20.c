@@ -206,13 +206,55 @@ static struct MemoryWriteAddress vc20_writemem[] =
 	{-1}							   /* end of table */
 };
 
+static struct MemoryReadAddress vc20i_readmem[] =
+{
+	{0x0000, 0x03ff, MRA_RAM},
+#if 0
+	{0x0400, 0x0fff, MRA_RAM},		   /* ram, rom or nothing; I think read 0xff! */
+#endif
+	{0x1000, 0x1fff, MRA_RAM},
+#if 0
+	{0x2000, 0x3fff, MRA_RAM},		   /* ram, rom or nothing */
+	{0x4000, 0x5fff, MRA_RAM},		   /* ram, rom or nothing */
+	{0x6000, 0x7fff, MRA_RAM},		   /* ram, rom or nothing */
+#endif
+	{0x8000, 0x8fff, MRA_ROM},
+	{0x9000, 0x900f, vic6560_port_r},
+	{0x9010, 0x910f, MRA_NOP},
+	{0x9110, 0x911f, via_0_r},
+	{0x9120, 0x912f, via_1_r},
+	{0x9400, 0x97ff, MRA_RAM},		   /*color ram 4 bit */
+	{0x9800, 0x980f, via_4_r},
+	{0x9810, 0x981f, via_5_r},
+	{0xa000, 0xbfff, MRA_ROM},
+	{0xc000, 0xffff, MRA_ROM},
+	{-1}							   /* end of table */
+};
+
+static struct MemoryWriteAddress vc20i_writemem[] =
+{
+	{0x0000, 0x03ff, MWA_RAM, &vc20_memory},
+	{0x1000, 0x1fff, MWA_RAM},
+	{0x8000, 0x8fff, MWA_ROM},
+	{0x9000, 0x900f, vic6560_port_w},
+	{0x9010, 0x910f, MWA_NOP},
+	{0x9110, 0x911f, via_0_w},
+	{0x9120, 0x912f, via_1_w},
+	{0x9400, 0x97ff, vc20_write_9400, &vc20_memory_9400},
+	{0x9800, 0x980f, via_4_w},
+	{0x9810, 0x981f, via_5_w},
+	{0xa000, 0xbfff, MWA_ROM},
+	{0xc000, 0xffff, MWA_NOP},		   /* MWA_ROM }, but logfile */
+	{-1}							   /* end of table */
+};
+
 #define DIPS_HELPER(bit, name, keycode) \
    PORT_BITX(bit, IP_ACTIVE_LOW, IPT_KEYBOARD, name, keycode, IP_JOY_NONE)
 
 #define DIPS_HELPER2(bit, name, keycode) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, IP_JOY_NONE)
 
-#define DIPS_BOTH \
+#define DIPS_INPUT \
 	PORT_START\
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,	IPT_JOYSTICK_RIGHT | IPF_8WAY )\
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,	IPT_UNUSED )\
@@ -315,7 +357,10 @@ static struct MemoryWriteAddress vc20_writemem[] =
 	DIPS_HELPER2( 0x08, "Quickload",       KEYCODE_F8)\
 	DIPS_HELPER2( 0x04, "Tape Drive Play",       KEYCODE_F5)\
 	DIPS_HELPER2( 0x02, "Tape Drive Record",     KEYCODE_F6)\
-	DIPS_HELPER2( 0x01, "Tape Drive Stop",       KEYCODE_F7)\
+	DIPS_HELPER2( 0x01, "Tape Drive Stop",       KEYCODE_F7)
+
+
+#define DIPS_BOTH \
 	PORT_START \
 	PORT_DIPNAME ( 0x07, 0, "RAM Cartridge")\
 	PORT_DIPSETTING(	0, "None" )\
@@ -368,32 +413,101 @@ static struct MemoryWriteAddress vc20_writemem[] =
 	PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2, "Lightpen Signal", KEYCODE_LALT, 0)
 
 INPUT_PORTS_START (vic20)
-		DIPS_BOTH
-		PORT_START							   /* in 16 lightpen X */
-		PORT_ANALOGX (0xff, 0, IPT_PADDLE | IPF_PLAYER3,
-					  30, 2, 0, (VIC6560_MAME_XSIZE - 1),
-					  KEYCODE_LEFT, KEYCODE_RIGHT,
-					  JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
-		PORT_START							   /* in 17 lightpen Y */
-		PORT_ANALOGX (0xff, 0, IPT_PADDLE | IPF_PLAYER4,
-					  30, 2, 0, (VIC6560_MAME_YSIZE - 1),
-					  KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN)
+	DIPS_INPUT
+	DIPS_BOTH
+	PORT_START							   /* in 16 lightpen X */
+	PORT_ANALOGX (0xff, 0, IPT_PADDLE | IPF_PLAYER3,
+				  30, 2, 0, (VIC6560_MAME_XSIZE - 1),
+				  KEYCODE_LEFT, KEYCODE_RIGHT,
+				  JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
+	PORT_START							   /* in 17 lightpen Y */
+	PORT_ANALOGX (0xff, 0, IPT_PADDLE | IPF_PLAYER4,
+				  30, 2, 0, (VIC6560_MAME_YSIZE - 1),
+				  KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN)
+INPUT_PORTS_END
+
+INPUT_PORTS_START (vic20i)
+	DIPS_INPUT
+	PORT_START
+	PORT_DIPNAME ( 0x07, 0, "RAM Cartridge")
+	PORT_DIPSETTING(	0, "None" )
+	PORT_DIPSETTING(	1, "3k" )
+	PORT_DIPSETTING(	2, "8k" )
+	PORT_DIPSETTING(	3, "16k" )
+	PORT_DIPSETTING(	4, "32k" )
+	PORT_DIPSETTING(	5, "Custom" )
+	PORT_DIPNAME   ( 0x08, 0, " Ram at 0x0400")
+	PORT_DIPSETTING( 0x00, DEF_STR( No ) )
+	PORT_DIPSETTING( 0x08, DEF_STR( Yes ) )
+	PORT_DIPNAME   ( 0x10, 0, " Ram at 0x2000")
+	PORT_DIPSETTING( 0x00, DEF_STR( No ) )
+	PORT_DIPSETTING( 0x10, DEF_STR( Yes ) )
+	PORT_DIPNAME   ( 0x20, 0, " Ram at 0x4000")
+	PORT_DIPSETTING( 0x00, DEF_STR( No ) )
+	PORT_DIPSETTING( 0x20, DEF_STR( Yes ) )
+	PORT_DIPNAME   ( 0x40, 0, " Ram at 0x6000")
+	PORT_DIPSETTING( 0x00, DEF_STR( No ) )
+	PORT_DIPSETTING( 0x40, DEF_STR( Yes ) )
+	PORT_DIPNAME   ( 0x80, 0, " Ram at 0xa000")
+	PORT_DIPSETTING( 0x00, DEF_STR( No ) )
+	PORT_DIPSETTING( 0x80, DEF_STR( Yes ) )
+	PORT_START 
+	PORT_DIPNAME   ( 0x80, 0x80, "Joystick")
+	PORT_DIPSETTING( 0x00, DEF_STR( No ) )
+	PORT_DIPSETTING( 0x80, DEF_STR( Yes ) )
+	PORT_DIPNAME   ( 0x40, 0x40, "Paddles")
+	PORT_DIPSETTING( 0x00, DEF_STR( No ) )
+	PORT_DIPSETTING( 0x40, DEF_STR( Yes ) )
+	PORT_DIPNAME   ( 0x20, 0x00, "Lightpen")
+	PORT_DIPSETTING( 0x00, DEF_STR( No ) )
+	PORT_DIPSETTING( 0x20, DEF_STR( Yes ) )
+	PORT_DIPNAME   ( 0x10, 0x10, " Draw Pointer")
+	PORT_DIPSETTING( 0x00, DEF_STR( No ) )
+	PORT_DIPSETTING( 0x10, DEF_STR( Yes ) )
+	PORT_DIPNAME   ( 0x08, 0x08, "Tape Drive/Device 1")
+	PORT_DIPSETTING( 0x00, DEF_STR( No ) )
+	PORT_DIPSETTING( 0x08, DEF_STR( Yes ) )
+	PORT_DIPNAME   ( 0x04, 0x00, " Tape Sound")
+	PORT_DIPSETTING( 0x00, DEF_STR( No ) )
+	PORT_DIPSETTING( 0x04, DEF_STR( Yes ) )
+	PORT_DIPNAME ( 0x02, 0x02, "IEEE/Dev 8/Floppy Sim")
+	PORT_DIPSETTING(  0, DEF_STR( No ) )
+	PORT_DIPSETTING(0x02, DEF_STR( Yes ) )
+#if 1
+	/* ieee simu currently not a bus, so only 1 device */
+	PORT_BIT( 0x01, 0,	IPT_UNUSED )
+#else
+	PORT_DIPNAME ( 0x01, 0x01, "IEEE/Dev 9/Floppy Sim")
+	PORT_DIPSETTING(  0, DEF_STR( No ) )
+	PORT_DIPSETTING(  1, DEF_STR( Yes ) )
+#endif
+	PORT_START 
+	PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2, "Lightpen Signal", KEYCODE_LALT, 0)
+	PORT_START							   /* in 16 lightpen X */
+	PORT_ANALOGX (0xff, 0, IPT_PADDLE | IPF_PLAYER3,
+				  30, 2, 0, (VIC6560_MAME_XSIZE - 1),
+				  KEYCODE_LEFT, KEYCODE_RIGHT,
+				  JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
+	PORT_START							   /* in 17 lightpen Y */
+	PORT_ANALOGX (0xff, 0, IPT_PADDLE | IPF_PLAYER4,
+				  30, 2, 0, (VIC6560_MAME_YSIZE - 1),
+				  KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN)
 INPUT_PORTS_END
 
 INPUT_PORTS_START (vc20)
-		DIPS_BOTH
-		PORT_START							   /* in 16 lightpen X */
-		PORT_ANALOGX (0xff, 0, IPT_PADDLE | IPF_PLAYER3,
-					  30, 2, 0, (VIC6561_MAME_XSIZE - 1),
-					  KEYCODE_LEFT, KEYCODE_RIGHT,
-					  JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
-		PORT_START							   /* in 17 lightpen Y */
-		PORT_ANALOGX (0x1ff, 0, IPT_PADDLE | IPF_PLAYER4,
-					  30, 2, 0, (VIC6561_MAME_YSIZE - 1),
-					  KEYCODE_UP, KEYCODE_DOWN,
-					  JOYCODE_1_UP, JOYCODE_1_DOWN)
+	DIPS_INPUT
+	DIPS_BOTH
+	PORT_START							   /* in 16 lightpen X */
+	PORT_ANALOGX (0xff, 0, IPT_PADDLE | IPF_PLAYER3,
+				  30, 2, 0, (VIC6561_MAME_XSIZE - 1),
+				  KEYCODE_LEFT, KEYCODE_RIGHT,
+				  JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
+	PORT_START							   /* in 17 lightpen Y */
+	PORT_ANALOGX (0x1ff, 0, IPT_PADDLE | IPF_PLAYER4,
+				  30, 2, 0, (VIC6561_MAME_YSIZE - 1),
+				  KEYCODE_UP, KEYCODE_DOWN,
+				  JOYCODE_1_UP, JOYCODE_1_DOWN)
 INPUT_PORTS_END
-
 
 /* Initialise the vc20 palette */
 static void vc20_init_palette (unsigned char *sys_palette,
@@ -445,6 +559,7 @@ ROM_START (vic20v)
 	ROM_LOAD ("901486.06", 0xe000, 0x2000, 0xe5e7c174)
 	VC1540_ROM (REGION_CPU2)
 ROM_END
+#endif
 
 ROM_START (vic20i)
 	ROM_REGION (0x10000, REGION_CPU1)
@@ -452,9 +567,8 @@ ROM_START (vic20i)
 	ROM_LOAD ("325329.04", 0xb000, 0x800, 0xd37b6335)	 
 	ROM_LOAD ("901486.01", 0xc000, 0x2000, 0xdb4c43c1)
 	ROM_LOAD ("901486.06", 0xe000, 0x2000, 0xe5e7c174)
-	C2031_ROM (REGION_CPU2)
+//	C2031_ROM (REGION_CPU2)
 ROM_END
-#endif
 
 ROM_START (vc20)
 	ROM_REGION (0x10000, REGION_CPU1)
@@ -560,6 +674,7 @@ static struct MachineDriver machine_driver_vic20v =
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
+#endif
 
 static struct MachineDriver machine_driver_vic20i =
 {
@@ -568,15 +683,15 @@ static struct MachineDriver machine_driver_vic20i =
 		{
 			CPU_M6502,
 			VIC6560_CLOCK,
-			vc20_readmem, vc20_writemem,
+			vc20i_readmem, vc20i_writemem,
 			0, 0,
 			vc20_frame_interrupt, 1,
 			vic656x_raster_interrupt, VIC656X_HRETRACERATE,
 		},
-		C2031_CPU,
+//		C2031_CPU,
 	},
 	VIC6560_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-#ifdef CPU_SYNC
+#if 1 || defined CPU_SYNC
 	1,
 #else
 	3000,
@@ -606,7 +721,6 @@ static struct MachineDriver machine_driver_vic20i =
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
-#endif
 
 static struct MachineDriver machine_driver_vc20 =
 {
@@ -749,6 +863,7 @@ static const struct IODevice io_vc20v[] =
 	{IO_END}
 };
 
+#ifdef PET_TEST_CODE
 static const struct IODevice io_vc20i[] =
 {
 	IODEVICE_CBM_QUICK,
@@ -774,24 +889,28 @@ static const struct IODevice io_vc20i[] =
 	IODEVICE_C2031,
 	{IO_END}
 };
+#endif
  
 #define init_vc20		vc20_driver_init
 #define init_vic20		vic20_driver_init
+#define init_vic20i     vic20ieee_driver_init
 #define io_vic20		io_vc20
 #define io_vic20swe		io_vc20
 #define io_vic20v		io_vc20v
-#define io_vic20i		io_vc20i
+//#define io_vic20i		io_vc20i
+#define io_vic20i		io_vc20
 
 #ifdef PET_TEST_CODE
 /*		YEAR	NAME		PARENT	MACHINE	INPUT		INIT	COMPANY								FULLNAME */
-COMP (	1981,	vic20,		0,		vic20,	vic20,		vic20,	"Commodore Business Machines Co.",	"Commodore VIC20 (NTSC)")
+COMP (	1981,	vic20,		0,		vic20,	vic20,		vic20,	"Commodore Business Machines Co.",	"Commodore Video Interface Chip 20 (NTSC)")
 COMP (	1981,	vic20v,		vic20,	vic20v,	vic20,		vic20,	"Commodore Business Machines Co.",	"Commodore VIC20 (NTSC), VC1540")
-COMP (	1981,	vic20i,		vic20,	vic20i,	vic20,		vic20,	"Commodore Business Machines Co.",	"Commodore VIC20 (NTSC), IEEE488, 2031")
-COMP (	1981,	vc20,		vic20,	vc20,	vc20,		vc20,	"Commodore Business Machines Co.",	"Commodore VC20 (PAL)")
+COMP (	1981,	vic20i,		vic20,	vic20i,	vic20i,		vic20i,	"Commodore Business Machines Co.",	"Commodore VIC20 (NTSC), IEEE488, 2031 (SYS45065)")
+COMP (	1981,	vc20,		vic20,	vc20,	vc20,		vc20,	"Commodore Business Machines Co.",	"Commodore VolksComputer 20 (PAL)")
 COMP (	1981,	vic20swe,	vic20,	vc20,	vic20,		vc20,	"Commodore Business Machines Co.",	"Commodore VIC20 PAL, Swedish Expansion Kit")
 COMP (	1981,	vc20v,		vic20,	vc20v,	vic20,		vc20,	"Commodore Business Machines Co.",	"Commodore VC20 (PAL), VC1541")
 #else
-COMPX (	1981,	vic20,		0,		vic20,	vic20,		vic20,	"Commodore Business Machines Co.",	"Commodore VIC20 (NTSC)",	GAME_IMPERFECT_SOUND)
-COMPX (	1981,	vc20,		vic20,	vc20,	vc20,		vc20,	"Commodore Business Machines Co.", 	"Commodore VC20 (PAL)",		GAME_IMPERFECT_SOUND)
+COMPX (	1981,	vic20,		0,		vic20,	vic20,		vic20,	"Commodore Business Machines Co.",	"Commodore Video Interface Chip 20 (NTSC)",	GAME_IMPERFECT_SOUND)
+COMPX (	1981,	vic20i,		vic20,	vic20i,	vic20i,		vic20i,	"Commodore Business Machines Co.",	"Commodore VIC20 (NTSC), IEEE488 Interface (SYS45065)",	GAME_IMPERFECT_SOUND)
+COMPX (	1981,	vc20,		vic20,	vc20,	vc20,		vc20,	"Commodore Business Machines Co.", 	"Commodore VolksComputer 20 (PAL)",		GAME_IMPERFECT_SOUND)
 COMPX (	1981,	vic20swe,	vic20,	vc20,	vc20,		vc20,	"Commodore Business Machines Co.",	"Commodore VIC20 PAL, Swedish Expansion Kit", GAME_IMPERFECT_SOUND)
 #endif

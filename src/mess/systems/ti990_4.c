@@ -89,7 +89,7 @@ F : flag
 
 */
 
-static int ti990_4_panel_read(int offset)
+static READ_HANDLER ( ti990_4_panel_read )
 {
 	if (offset == 1)
 		return 0x08;
@@ -97,7 +97,7 @@ static int ti990_4_panel_read(int offset)
 	return 0;
 }
 
-static void ti990_4_panel_write(int offset, int data)
+static WRITE_HANDLER ( ti990_4_panel_write )
 {
 }
 

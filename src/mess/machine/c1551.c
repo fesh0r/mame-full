@@ -12,7 +12,7 @@
 
 static void vc1541_reset_write (CBM_Drive * vc1541, int level);
 
-static CBM_Drive cbm_drive[2];
+CBM_Drive cbm_drive[2];
 
 CBM_Serial cbm_serial =
 {0};
@@ -52,9 +52,15 @@ void cbm_drive_close (void)
 	}
 }
 
-static void cbm_drive_config (CBM_Drive * drive, int interface)
+static void cbm_drive_config (CBM_Drive * drive, int interface, int serialnr)
 {
 	int i;
+
+	if (interface==SERIAL)
+		drive->i.serial.device=serialnr;
+
+	if (interface==IEEE)
+		drive->i.ieee.device=serialnr;
 
 	if (drive->interface == interface)
 		return;
@@ -80,21 +86,17 @@ static void cbm_drive_config (CBM_Drive * drive, int interface)
 	else if (drive->interface == SERIAL)
 	{
 		cbm_serial.drives[cbm_serial.count++] = drive;
-		if (drive == cbm_drive)
-			drive->i.serial.device = 8;
-		else
-			drive->i.serial.device = 9;
-		vc1541_reset_write (drive, 0);
+		vc1541_reset_write(drive, 0);
 	}
 }
 
-void cbm_drive_0_config (int interface)
+void cbm_drive_0_config (int interface, int serialnr)
 {
-	cbm_drive_config (cbm_drive, interface);
+	cbm_drive_config (cbm_drive, interface, serialnr);
 }
-void cbm_drive_1_config (int interface)
+void cbm_drive_1_config (int interface, int serialnr)
 {
-	cbm_drive_config (cbm_drive + 1, interface);
+	cbm_drive_config (cbm_drive + 1, interface, serialnr);
 }
 
 /* load *.prg files directy from filesystem (rom directory) */
@@ -431,7 +433,7 @@ static void cbm_drive_status (CBM_Drive * c1551, char *text, int size)
 		case WRITING:
 			snprintf (text, size, "Image %s File %s saving %d",
 					  c1551->d.d64.imagename,
-					  c1551->d.d64.filename, c1551->pos);
+					  c1551->d.d64.filename, c1551->pos);			
 			break;
 		}
 	}

@@ -126,7 +126,7 @@ static void tpi6525_clear_interrupt(TPI6525 *this)
 {
 	if (this->interrupt.level && (this->air==0)) {
 		this->interrupt.level=0;
-		DBG_LOG (3, "tpi6525",(errorlog, "%d clear interrupt\n",this->number));
+		DBG_LOG (3, "tpi6525",("%d clear interrupt\n",this->number));
 		if (this->interrupt.output!=NULL)
 			this->interrupt.output(this->interrupt.level);
 	}
@@ -267,7 +267,7 @@ static int tpi6525_port_r(TPI6525 *this, int offset)
 			data=(data&~this->c.ddr)|(this->c.ddr&this->c.port);
 		}
 		DBG_LOG (2, "tpi6525",
-				 (errorlog, "%d read %.2x %.2x\n",this->number, offset,data));
+				 ("%d read %.2x %.2x\n",this->number, offset,data));
 		break;
 	case 3:
 		data=this->a.ddr;
@@ -307,14 +307,14 @@ static int tpi6525_port_r(TPI6525 *this, int offset)
 		break;
 	}
 	DBG_LOG (3, "tpi6525",
-			 (errorlog, "%d read %.2x %.2x\n",this->number, offset,data));
+			 ("%d read %.2x %.2x\n",this->number, offset,data));
 	return data;
 }
 
 static void tpi6525_port_w(TPI6525 *this, int offset, int data)
 {
 	DBG_LOG (2, "tpi6525",
-			 (errorlog, "%d write %.2x %.2x\n",this->number, offset,data));
+			 ("%d write %.2x %.2x\n",this->number, offset,data));
 
 	switch (offset&7) {
 	case 0:

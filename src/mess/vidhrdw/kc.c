@@ -56,8 +56,8 @@ void kc85_4_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
                 if (x>=320)
                         x = 319;
 
-                if (y>=200)
-                        y = 199;
+                if (y>=(32*8))
+                        y = (32*8)-1;
 
 
                 colour = colour_ram[i];

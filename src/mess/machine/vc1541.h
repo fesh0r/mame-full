@@ -125,7 +125,7 @@ int c1551_config(int id, int mode, C1551_CONFIG*config);
 
 #define C1551_CPU \
           {\
-			CPU_M6510,\
+			CPU_M6510T,\
 			2000000,/* ??? reading seems to need more than 1 mhz */\
 			c1551_readmem,c1551_writemem,\
 			0,0,\

@@ -532,7 +532,7 @@ void cgenie_vh_screenrefresh(struct osd_bitmap * bitmap, int full_refresh)
 
     if( cgenie_frame_time > 0 )
 	{
-		ui_text(cgenie_frame_message, 2, Machine->drv->visible_area.max_y - 9);
+		ui_text(bitmap, cgenie_frame_message, 2, Machine->drv->visible_area.max_y - 9);
 		/* if the message timed out, clear it on the next frame */
 		if( --cgenie_frame_time == 0 )
 			bitmap_dirty = 1;

@@ -223,11 +223,12 @@ static struct MemoryReadAddress cbmb_readmem[] =
 	{0xf0001, 0xf0001, m6509_read_00001 },
 	{0xf0002, 0xf07ff, MRA_RAM },
 #if 0
-	{0xf0800, 0xf1fff, MRA_ROM },
+	{0xf0800, 0xf0fff, MRA_ROM },
+#endif
+	{0xf1000, 0xf1fff, MRA_ROM }, /* cartridges or ram */
 	{0xf2000, 0xf3fff, MRA_ROM }, /* cartridges or ram */
 	{0xf4000, 0xf5fff, MRA_ROM },
 	{0xf6000, 0xf7fff, MRA_ROM },
-#endif
 	{0xf8000, 0xfbfff, MRA_ROM },
 	/*	{0xfc000, 0xfcfff, MRA_ROM }, */
 	{0xfd000, 0xfd7ff, MRA_ROM },
@@ -293,11 +294,10 @@ static struct MemoryWriteAddress cbmb_writemem[] =
 	{0xf0000, 0xf0000, m6509_write_00000 },
 	{0xf0001, 0xf0001, m6509_write_00001 },
 	{0xf0002, 0xf07ff, MWA_RAM },
-#if 0
+	{0xf1000, 0xf1fff, MWA_ROM }, /* cartridges */
 	{0xf2000, 0xf3fff, MWA_ROM }, /* cartridges */
 	{0xf4000, 0xf5fff, MWA_ROM },
 	{0xf6000, 0xf7fff, MWA_ROM },
-#endif
 	{0xf8000, 0xfbfff, MWA_ROM, &cbmb_basic },
 	{0xfd000, 0xfd7ff, crtc6845_videoram_w, &cbmb_videoram }, /* VIDEORAM */
 	{0xfd800, 0xfd8ff, crtc6845_port_w },
@@ -364,11 +364,12 @@ static struct MemoryReadAddress cbm500_readmem[] =
 	{0xf0001, 0xf0001, m6509_read_00001 },
 	{0xf0002, 0xf07ff, MRA_RAM },
 #if 0
-	{0xf0800, 0xf1fff, MRA_ROM },
+	{0xf0800, 0xf0fff, MRA_ROM },
+#endif
+	{0xf1000, 0xf1fff, MRA_ROM }, /* cartridges or ram */
 	{0xf2000, 0xf3fff, MRA_ROM }, /* cartridges or ram */
 	{0xf4000, 0xf5fff, MRA_ROM },
 	{0xf6000, 0xf7fff, MRA_ROM },
-#endif
 	{0xf8000, 0xfbfff, MRA_ROM },
 	/*	{0xfc000, 0xfcfff, MRA_ROM }, */
 	{0xfd000, 0xfd3ff, MRA_RAM }, /* videoram */
@@ -435,11 +436,10 @@ static struct MemoryWriteAddress cbm500_writemem[] =
 	{0xf0000, 0xf0000, m6509_write_00000 },
 	{0xf0001, 0xf0001, m6509_write_00001 },
 	{0xf0002, 0xf07ff, MWA_RAM },
-#if 0
+	{0xf1000, 0xf1fff, MWA_ROM }, /* cartridges */
 	{0xf2000, 0xf3fff, MWA_ROM }, /* cartridges */
 	{0xf4000, 0xf5fff, MWA_ROM },
 	{0xf6000, 0xf7fff, MWA_ROM },
-#endif
 	{0xf8000, 0xfbfff, MWA_ROM, &cbmb_basic },
 	{0xfd000, 0xfd3ff, MWA_RAM, &cbmb_videoram },
 	{0xfd400, 0xfd7ff, cbmb_colorram_w, &cbmb_colorram },
@@ -584,6 +584,14 @@ INPUT_PORTS_START (cbm600)
 #endif
 	 PORT_BIT (0x200, 0x200, IPT_UNUSED) /* ntsc */
 	 PORT_BIT (0x100, 0x000, IPT_UNUSED) /* cbm600 */
+#ifdef PET_TEST_CODE
+	PORT_DIPNAME ( 0x02, 0x02, "IEEE488 Bus/Dev 8/Floppy Sim")
+	PORT_DIPSETTING(  0, DEF_STR( No ) )
+	PORT_DIPSETTING(0x02, DEF_STR( Yes ) )
+	PORT_DIPNAME ( 0x01, 0x00, "IEEE488 Bus/Dev 9/Floppy Sim")
+	PORT_DIPSETTING(  0, DEF_STR( No ) )
+	PORT_DIPSETTING(  1, DEF_STR( Yes ) )
+#endif
 INPUT_PORTS_END
 
 INPUT_PORTS_START (cbm600pal)
@@ -606,6 +614,14 @@ INPUT_PORTS_START (cbm600pal)
 #endif
 	 PORT_BIT (0x200, 0x000, IPT_UNUSED) /* pal */
 	 PORT_BIT (0x100, 0x000, IPT_UNUSED) /* cbm600 */
+#ifdef PET_TEST_CODE
+	PORT_DIPNAME ( 0x02, 0x02, "IEEE488 Bus/Dev 8/Floppy Sim")
+	PORT_DIPSETTING(  0, DEF_STR( No ) )
+	PORT_DIPSETTING(0x02, DEF_STR( Yes ) )
+	PORT_DIPNAME ( 0x01, 0x00, "IEEE488 Bus/Dev 9/Floppy Sim")
+	PORT_DIPSETTING(  0, DEF_STR( No ) )
+	PORT_DIPSETTING(  1, DEF_STR( Yes ) )
+#endif
 INPUT_PORTS_END
 
 INPUT_PORTS_START (cbm700)
@@ -628,6 +644,14 @@ INPUT_PORTS_START (cbm700)
 #endif
 	PORT_BIT (0x200, 0x000, IPT_UNUSED) /* not used */
 	PORT_BIT (0x100, 0x100, IPT_UNUSED) /* cbm700 */
+#ifdef PET_TEST_CODE
+	PORT_DIPNAME ( 0x02, 0x02, "IEEE488 Bus/Dev 8/Floppy Sim")
+	PORT_DIPSETTING(  0, DEF_STR( No ) )
+	PORT_DIPSETTING(0x02, DEF_STR( Yes ) )
+	PORT_DIPNAME ( 0x01, 0x00, "IEEE488 Bus/Dev 9/Floppy Sim")
+	PORT_DIPSETTING(  0, DEF_STR( No ) )
+	PORT_DIPSETTING(  1, DEF_STR( Yes ) )
+#endif
 INPUT_PORTS_END
 
 INPUT_PORTS_START (cbm500)
@@ -650,6 +674,14 @@ INPUT_PORTS_START (cbm500)
 #endif
 	PORT_BIT (0x200, 0x000, IPT_UNUSED) /* not used */
 	PORT_BIT (0x100, 0x000, IPT_UNUSED) /* not used */
+#ifdef PET_TEST_CODE
+	PORT_DIPNAME ( 0x02, 0x02, "IEEE488 Bus/Dev 8/Floppy Sim")
+	PORT_DIPSETTING(  0, DEF_STR( No ) )
+	PORT_DIPSETTING(0x02, DEF_STR( Yes ) )
+	PORT_DIPNAME ( 0x01, 0x00, "IEEE488 Bus/Dev 9/Floppy Sim")
+	PORT_DIPSETTING(  0, DEF_STR( No ) )
+	PORT_DIPSETTING(  1, DEF_STR( Yes ) )
+#endif
 	/*C64_DIPS */
 INPUT_PORTS_END
 
@@ -800,7 +832,7 @@ ROM_END
 
      /* monitor instead of tape */
     ROM_LOAD ("kernal.901244-03b.bin", 0xfe000, 0x2000, 0x4276dbba)
-     /* modified for usage of vc1541 on tape port ??? */
+     /* modified 03b for usage of vc1541 on tape port ??? */
     ROM_LOAD ("kernelnew", 0xfe000, 0x2000, 0x19bf247e)
     ROM_LOAD ("kernal.901244-04a.bin", 0xfe000, 0x2000, 0x09a5667e)
     ROM_LOAD ("kernal.hungarian.bin", 0xfe000, 0x2000, 0x0ea8ca4d)
@@ -818,6 +850,7 @@ ROM_END
     ROM_LOAD ("vt52emu.bin", 0xf4000, 0x2000, 0xb3b6173a)
 	 /* load address 0xf4000? */
     ROM_LOAD ("moni.bin", 0xfe000, 0x2000, 0x43b08d1f)
+
     ROM_LOAD ("profitext.bin", 0xf2000, 0x2000, 0xac622a2b)
 	 /* address ?*/
     ROM_LOAD ("sfd1001-copy-u59.bin", 0xf1000, 0x1000, 0x1c0fd916)
@@ -1005,13 +1038,21 @@ static struct MachineDriver machine_driver_cbm500 =
 static const struct IODevice io_cbmb[] =
 {
 	IODEVICE_CBMB_QUICK,
+	IODEVICE_CBM_ROM("crt\00010\00020\00040\00060\0", NULL),
 	/* monitor OR tape routine in kernal */
+#ifdef PET_TEST_CODE
+	IODEVICE_CBM_DRIVE,	
+#endif
 	{IO_END}
 };
 
 static const struct IODevice io_cbm500[] =
 {
 	IODEVICE_CBM500_QUICK,
+	IODEVICE_CBM_ROM("crt\00010\00020\00040\00060\0", NULL),
+#ifdef PET_TEST_CODE
+	IODEVICE_CBM_DRIVE,	
+#endif
 	/* monitor OR tape routine in kernal */
 	{IO_END}
 };

@@ -11,6 +11,8 @@
 /* from mame.c */
 extern int bitmap_dirty;
 
+static struct osd_bitmap *bitmap;
+
 /* Our private wave file structure */
 struct wave_file {
 	int channel;			/* channel for playback */
@@ -415,7 +417,7 @@ static void wave_display(int id)
         t0 = w->playpos / w->smpfreq;
 		t1 = w->samples / w->smpfreq;
 		sprintf(buf, "%c%c %2d:%02d [%2d:%02d]", n*2+2,n*2+3, t0/60,t0%60, t1/60,t1%60);
-		ui_text(buf, x, y);
+		ui_text(bitmap,buf, x, y);
 		tapepos = w->playpos;
     }
 }
@@ -842,7 +844,10 @@ void wave_close(int id)
 		free(w->data);
     w->data = NULL;
 
-	w->file = NULL;
+	if (w->file) {
+		osd_fclose(w->file);
+		w->file = NULL;
+	}
 	w->offset = 0;
 	w->playpos = 0;
 	w->counter = 0;

@@ -64,7 +64,8 @@ void kim1_init_colors (unsigned char *palette, unsigned short *colortable, const
 
     nextfree = 21;
 
-    if ((kim1_backdrop = artwork_load (backdrop_name, nextfree, Machine->drv->total_colors - nextfree)) != NULL)
+    artwork_load (&kim1_backdrop, backdrop_name, nextfree, Machine->drv->total_colors - nextfree);
+	if (kim1_backdrop)
     {
         logerror("backdrop %s successfully loaded\n", backdrop_name);
         memcpy (&palette[nextfree * 3], kim1_backdrop->orig_palette, kim1_backdrop->num_pens_used * 3 * sizeof (unsigned char));
@@ -92,7 +93,7 @@ int kim1_vh_start (void)
 void kim1_vh_stop (void)
 {
     if (kim1_backdrop)
-        artwork_free (kim1_backdrop);
+        artwork_free (&kim1_backdrop);
     kim1_backdrop = NULL;
     if (videoram)
         free (videoram);

@@ -1,6 +1,8 @@
 #ifndef __C1551_H_
 #define __C1551_H_
 
+#include "cbmdrive.h"
+
 /* must be called before other functions */
 void cbm_drive_open (void);
 void cbm_drive_close (void);
@@ -28,8 +30,9 @@ void cbm_drive_close (void);
 
 #define IEC 1
 #define SERIAL 2
-void cbm_drive_0_config (int interface);
-void cbm_drive_1_config (int interface);
+#define IEEE 3
+void cbm_drive_0_config (int interface, int serialnr);
+void cbm_drive_1_config (int interface, int serialnr);
 
 /* open an d64 image */
 int cbm_drive_attach_image (int id);
@@ -64,5 +67,8 @@ int cbm_serial_clock_read (void);
 void cbm_serial_clock_write (int level);
 int cbm_serial_request_read (void);
 void cbm_serial_request_write (int level);
+
+/* private */
+extern CBM_Drive cbm_drive[2];
 
 #endif

@@ -1258,11 +1258,7 @@ static struct MachineDriver machine_driver_c128 =
 			c128_raster_irq, VIC2_HRETRACERATE,
 		},
 		{
-#if HAS_M8502
 			CPU_M8502,
-#else
-			CPU_M6502,
-#endif
 			VIC6567_CLOCK,
 			c128_readmem, c128_writemem,
 			0, 0,
@@ -1312,11 +1308,7 @@ static struct MachineDriver machine_driver_c128d =
 			c128_raster_irq, VIC2_HRETRACERATE,
 		},
 		{
-#if HAS_M8502
 			CPU_M8502,
-#else
-			CPU_M6510,
-#endif
 			VIC6567_CLOCK,
 			c128_readmem, c128_writemem,
 			0, 0,
@@ -1367,11 +1359,7 @@ static struct MachineDriver machine_driver_c128pal =
 			c128_raster_irq, VIC2_HRETRACERATE,
 		},
 		{
-#if HAS_M8502
 			CPU_M8502,
-#else
-			CPU_M6510,
-#endif
 			VIC6569_CLOCK,
 			c128_readmem, c128_writemem,
 			0, 0,
@@ -1421,11 +1409,7 @@ static struct MachineDriver machine_driver_c128pal2 =
 			c128_raster_irq, VIC2_HRETRACERATE,
 		},
 		{
-#if HAS_M8502
 			CPU_M8502,
-#else
-			CPU_M6510,
-#endif
 			VIC6569_CLOCK,
 			c128_readmem, c128_writemem,
 			0, 0,

@@ -8,10 +8,10 @@
 /* must be defined until some driver init problems are solved */
 #define NEW_GAMEDRIVER
 
-/* global header file for
+/* global header file for 
  * vc20
  * c16
- * c64
+ * c64 
  * c128
  * c65*/
 
@@ -34,7 +34,7 @@ void *cbm_memset16 (void *dest, int value, size_t size);
 	  if(LEVEL>=N) { \
 	    if( M ) \
               logerror("%11.6f: %-24s",timer_get_time(), (char*)M );\
-	    fprintf##A; \
+	    logerror A; \
 	  } \
         }
 
@@ -248,7 +248,7 @@ extern CBM_ROM cbm_rom[0x20];
 
 /* t64 file format
  * introduced in c64s?
- *
+ * 
  */
 
 /* d64 file format
@@ -270,7 +270,7 @@ extern CBM_ROM cbm_rom[0x20];
  * sectors (in the same ordering */
 
 /* crt file format
- * file format for little endian machine contains
+ * file format for little endian machine contains 
  * data in big endian format
  * 0 "C64 CARTRIDGE   " (string filled with spaces)
  * 0x0010 msb 32bit size of section
@@ -278,14 +278,14 @@ extern CBM_ROM cbm_rom[0x20];
  * name of cartridge
  * next sections:
  * 0 CHIP
- * 4 0 0
+ * 4 0 0 
  * 6 msb 16bit size of section
  * 8 0 0 0
  * b ?
  * 0x000c msb 16bit address of chip
- * 0x000e msb 16bit size of data in chip
+ * 0x000e msb 16bit size of data in chip 
  * 0x0010 chipdata
- *
+ * 
  * supergam: chip section offset b: 0 1 2 3, 4x data at 0x8000 size 0x4000
  * robocop2: chip section offset b: 0 .. 0x1f
  * 16x data at 0x8000 size 0x2000

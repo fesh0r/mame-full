@@ -331,10 +331,6 @@ READ_HANDLER( input_port_17_r );
 READ_HANDLER( input_port_18_r );
 READ_HANDLER( input_port_19_r );
 
-
-
-
-
 struct ipd
 {
 	UINT32 type;

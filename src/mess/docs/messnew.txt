@@ -1,3 +1,105 @@
+0.37b3
+
+Note: .inp record/playback does still not work currently.
+
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+Spectrum +2 (France) [David Robertson]
+Spectrum +2 (Spain) [David Robertson]
+Spectrum +3 (Spain) [David Robertson]
+BBC Micro Model B (preliminary) [Gordon Jefferyes]
+Vic20 with IEEE488 interface cartridge [Peter Trauner]
+PCW [Kev Thacker]
+
+
+System Driver Changes:
+----------------------
+- VECTREX: Support for true color artwork added [Mathis Rosenhauer]
+
+- SPECTRUM: .TAP loading on TS2068 now works, and fixed bug where the last byte 
+  in .Z80 blocks was not decoded - Head Over Heels now works. 
+  .TAP files now classified as cassettes files not snapshots because of how they are 
+  used - this now means they appear on Tape Control menu, corrected clock speed of 
+  TS2068, fixed Issue 2/3 dipswitch implementation, dipswitch to enable/disable disk 
+  drives on +3 and clones (disabling disk drives on +3 correctly shows machine as +2a 
+  on start up menu). implemented TS2068/TC2048 64 column and hires modes, rewrote 
+  Spectrum 128 screen refresh to use plot_pixel for a major speedup. 
+  Fixed bug that created a new file if trying to use a non-existant .TAP file, modified 
+  border size based on the comp.sys.sinclair FAQ (48 pixels at the left, right and top 
+  and 56 pixels at the bottom of the screen, initial support for border colour - fills 
+  entire border with last the outputted colour, border colour set when loading snapshots.
+  Added a Border Engine to all Spectrum machines. [David Robertson]
+
+- C65: added m4510 core, memory management changed and keyboard finished, DMA 
+  controller enhanced, quickloader fixed, added floppy simulation for devices 10,11, 
+  very early support of special c65/vic3 videomodes, (on the funet disks are only some 
+  graphic demos, works when you change disk access (bload, loadiff) to:
+  bload "name",u10
+  loadiff "name",u10
+  (load with dload"name",u10 or load"name",10)
+  (and change the names to 8 letters in msdos.  [Peter Trauner]
+
+- C16: emulated flashing mode of the TED chip, activated and fixed blinking. 
+  Disabled blinking in multicolor modes (winter edition) [Peter Trauner]
+
+- PC series: Changed osd_modify_pen calls to palette_change_color.  Emulation of the 
+  EGA/VGA palette registers in tandy1000 video driver, vga palette management fix,
+  changed drivername to t1000hx (rename your romset from tandy1t), added eeprom 
+  support (fixes disk support), added turboswitch functionality, changed frequency 
+  to 8 MHz, removed some dipswitches.  [Peter Trauner]
+
+- CoCo/Dragon/MC-10: Better .CAS file support, now supports cassette writes, 
+  slightly better .PAK file support. [Nate Woods]
+
+- CoCo: Now uses the standard wd179x code.  As a result, src/mess/machine/cocodisk.c 
+  is not necessary anymore, implemented 63.5usec horizontal sync interrupt 
+  (Dragon/CoCo/CoCo 3), implemented secondary fire buttons for both joysticks 
+  (Dragon/CoCo/CoCo 3), keyboard interrupt (CoCo 3). [Nate Woods]
+
+- CBM: cbm floppy drive simulation names for file system access changed, floppy disk 
+  simulation for pet series (not working with first pet and superpet), added 8096 memory 
+  expansion to cbm80 series, and cartridge/rom support in pet and cbmb series.
+  [Peter Trauner]
+
+- MTX: Cassette support can now handle multiple files in the same image, and country cde 
+  (CTYLST) Dipswitches now implemented. [Lee Ward]
+
+- Updated Amstrad and Enterprise driver with correct aspect ratio, updates to the KC85/4 
+  driver including code to emulate the keyboard - works by poking OS system variables.
+  [Kev Thacker]
+
+
+Other Changes:
+--------------
+
+- The core is based on MAME 0.37b3. This incorporates all 
+  features of the update to this core.  [MAME team] 
+
+- Bug fix in wd179x controller [Nate Woods]
+
+- Bug fix in the wave handler (when image is closed, osd_fclose() is now called 
+  on the file descriptor [Nate Woods]
+
+- Bug fix in the tape control that cause the control to give percentage erros when 
+  using *.cas files. [Nate Woods]
+
+- ImgTool: Preliminary PC Hard drive driver, better error reporting, a new command 
+  ('good') that functions as a rom sorter (a la GoodNes).  CRC information is retrieved 
+  from the standard MESS CRC files, the 'crc' command is replaced with 'info'.  This new 
+  command will return data regarding the image if MESS's CRC files are aware of the 
+  image. dir and del now can take multiple arguments. [Nate Woods]
+
+- Extensive CRC updates.
+  [Kurunir, Chris Henry]
+  SysInfo.dat documentation update 
+  [Chris Henry]
+  Please send all CRC/sysinfo file contributions to Chris Henry. 
+  (battlepriest@hotmail.com).
+
+
+
+----------------------------------------------------------------
 0.37b2
 
 Note: .inp record/playback does still not work currently.

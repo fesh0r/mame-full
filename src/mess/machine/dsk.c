@@ -86,10 +86,13 @@ int dsk_floppy_load(int id)
 	/* load disk image */
 	if (dsk_load(IO_FLOPPY,id,&thedrive->data))
 	{
-		dsk_disk_image_init(thedrive); /* initialise dsk */
-		nec765_setup_drive_status(id);	/* mark disk as inserted */
+		if (thedrive->data)
+		{
+			dsk_disk_image_init(thedrive); /* initialise dsk */
+			floppy_drive_setup_drive_status(id); /* mark disk as inserted */
 
-		return INIT_OK;
+			return INIT_OK;
+		}
 	}
 
 	return INIT_FAILED;
@@ -142,16 +145,18 @@ int dsk_floppy_id(int id)
 	if (dsk_load(IO_FLOPPY, id, &diskimage_data))
 	{
 		/* disk image loaded */
-
-		if (
-			/* standard disk image? */
-			(memcmp(diskimage_data, "MV - CPC", 8)==0) ||
-			/* extended disk image? */
-			(memcmp(diskimage_data, "EXTENDED", 8)==0)
-			)
+		if (diskimage_data)
 		{
-			valid = 1;
+			if (
+				/* standard disk image? */
+				(memcmp(diskimage_data, "MV - CPC", 8)==0) ||
+				/* extended disk image? */
+				(memcmp(diskimage_data, "EXTENDED", 8)==0)
+				)
+			{
+				valid = 1;
 
+			}
 		}
 
 		/* free the file */
@@ -403,6 +408,7 @@ void dsk_get_id_callback(int drive, nec765_id *id, int id_index, int side)
 	int id_offset;
 	int track_offset;
 	unsigned char *track_header;
+	unsigned char *data;
 
 	drive = drive & 0x03;
 	side = side & 0x01;
@@ -415,7 +421,12 @@ void dsk_get_id_callback(int drive, nec765_id *id, int id_index, int side)
 		return;
 
 	/* yes */
-	track_header = get_floppy_data(drive) + track_offset;
+	data = get_floppy_data(drive);
+
+	if (data==0)
+		return;
+
+	track_header = data + track_offset;
 
 	id_offset = 0x018 + (id_index<<3);
 
@@ -423,6 +434,9 @@ void dsk_get_id_callback(int drive, nec765_id *id, int id_index, int side)
 	id->H = track_header[id_offset + 1];
 	id->R = track_header[id_offset + 2];
 	id->N = track_header[id_offset + 3];
+	id->ST0 = track_header[id_offset + 4];
+	id->ST1 = track_header[id_offset + 5];
+
 }
 
 
@@ -432,6 +446,7 @@ void dsk_get_sector_ptr_callback(int drive, int sector_index, int side, char **p
 	int sector_offset;
 	int track;
 	dsk_drive *thedrive;
+	unsigned char *data;
 
 	drive = drive & 0x03;
 	side = side & 0x01;
@@ -468,13 +483,19 @@ void dsk_get_sector_ptr_callback(int drive, int sector_index, int side, char **p
 
 	sector_offset = thedrive->sector_offsets[sector_index];
 
-	*ptr = (char *)(get_floppy_data(drive) + track_offset + sector_offset);
+	data = get_floppy_data(drive);
+
+	if (data==0)
+		return;
+
+	*ptr = (char *)(data + track_offset + sector_offset);
 }
 
 int    dsk_get_sectors_per_track(int drive, int side)
 {
 	int track_offset;
 	unsigned char *track_header;
+	unsigned char *data;
 
 	drive = drive & 0x03;
 	side = side & 0x01;
@@ -486,8 +507,13 @@ int    dsk_get_sectors_per_track(int drive, int side)
 	if (track_offset==0)
 		return 0;
 
+	data = get_floppy_data(drive);
+
+	if (data==0)
+		return 0;
+
 	/* yes, get sectors per track */
-	track_header = get_floppy_data(drive) + track_offset;
+	track_header = data  + track_offset;
 
 	return track_header[0x015];
 }

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "osd_cpu.h"
 #include "driver.h"
-#include "cpu/i86/i86intrf.h"
+#include "cpu/i86/i86intf.h"
 #include "vidhrdw/generic.h"
 
 /* enable and set level for verbosity of the various parts of emulation */
@@ -34,7 +34,7 @@ extern UINT8 pc_port[0x400];
  * where "info" can also be 0 to append .."%fmt",args to a line.
  **************************************************************************/
 #define LOG(LEVEL,N,M,A)  \
-	if( (LEVEL>=N) ){ if( M ) logerror("%11.6f: %-24s",timer_get_time(),(char*)M ); }
+	if(LEVEL>=N){ if( M )logerror("%11.6f: %-24s",timer_get_time(),(char*)M ); logerror A; }
 
 #if VERBOSE_DBG
 #define DBG_LOG(n,m,a) LOG(VERBOSE_DBG,n,m,a)
@@ -42,22 +42,10 @@ extern UINT8 pc_port[0x400];
 #define DBG_LOG(n,m,a)
 #endif
 
-#if VERBOSE_DMA
-#define DMA_LOG(n,m,a) LOG(VERBOSE_DMA,n,m,a)
-#else
-#define DMA_LOG(n,m,a)
-#endif
-
 #if VERBOSE_PIO
 #define PIO_LOG(n,m,a) LOG(VERBOSE_PIO,n,m,a)
 #else
 #define PIO_LOG(n,m,a)
-#endif
-
-#if VERBOSE_PIC
-#define PIC_LOG(n,m,a) LOG(VERBOSE_PIC,n,m,a)
-#else
-#define PIC_LOG(n,m,a)
 #endif
 
 #if VERBOSE_PIT
@@ -128,18 +116,13 @@ extern int	pc_harddisk_init(int id);
 extern void pc_harddisk_exit(int id);
 
 extern void init_pc(void);
+extern void init_t1000hx(void);
+extern void init_pc_vga(void);
 extern void pc_mda_init_machine(void);
 extern void pc_cga_init_machine(void);
+extern void pc_vga_init_machine(void);
 extern void pc_t1t_init_machine(void);
 extern void pc_shutdown_machine(void);
-
-extern WRITE_HANDLER ( pc_DMA_w );
-extern READ_HANDLER ( pc_DMA_r );
-extern WRITE_HANDLER ( pc_DMA_page_w );
-extern READ_HANDLER ( pc_DMA_page_r );
-
-extern WRITE_HANDLER ( pc_PIC_w );
-extern READ_HANDLER ( pc_PIC_r );
 
 extern WRITE_HANDLER ( pc_PIT_w );
 extern READ_HANDLER ( pc_PIT_r );
@@ -183,33 +166,10 @@ extern READ_HANDLER ( pc_MDA_r );
 extern WRITE_HANDLER ( pc_CGA_w );
 extern READ_HANDLER ( pc_CGA_r );
 
-extern WRITE_HANDLER ( pc_t1t_p37x_w );
-extern READ_HANDLER ( pc_t1t_p37x_r );
 extern WRITE_HANDLER ( pc_T1T_w );
 extern READ_HANDLER (	pc_T1T_r );
 
 extern int  pc_frame_interrupt(void);
-
-extern UINT8 pc_DMA_msb;
-extern UINT8 pc_DMA_temp;
-extern int pc_DMA_address[4];
-extern int pc_DMA_count[4];
-extern int pc_DMA_page[4];
-extern UINT8 pc_DMA_transfer_mode[4];
-extern INT8 pc_DMA_direction[4];
-extern UINT8 pc_DMA_operation[4];
-extern UINT8 pc_DMA_status;
-extern UINT8 pc_DMA_mask;
-extern UINT8 pc_DMA_command;
-extern UINT8 pc_DMA_DACK_hi;
-extern UINT8 pc_DMA_DREQ_hi;
-extern UINT8 pc_DMA_write_extended;
-extern UINT8 pc_DMA_rotate_priority;
-extern UINT8 pc_DMA_compressed_timing;
-extern UINT8 pc_DMA_enable_controller;
-extern UINT8 pc_DMA_channel;
-
-extern void pc_PIC_issue_irq(int irq);
 
 /* from vidhrdw/pc.c */
 extern int  pc_mda_vh_start(void);

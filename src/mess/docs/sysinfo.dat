@@ -71,6 +71,16 @@ $bio
 Atari 7800 ProSystem
 
 
+Known Issues:
+
+The Reset key "R" and Select ket "S" are hardmapped to the same location as the default 
+Player 2 up and fire two, respectively. You will need to remap these manually to avoid
+control conflicts in some games.
+
+Most games work fine, but a few have graphic and playability issues. See a7800.crc for a 
+full compatibility list.
+
+
 History and Trivia:
 
 Originally developed in 1984 as the Atari 3600, the Atari 7800 Prosystem was released to the 
@@ -1074,6 +1084,51 @@ $bio
 Tandy/Radio Shack Color Computer / Dragon Data Ltd. Dragon 32
 
 
+Usage:
+
+	- Cassette images (.cas):
+
+Not all of these work; don't panic.
+
+You can pick the cassette image you wish to run from the FILE MANAGER in the Tab/Options menu.
+Once you've selected the image, go back into the CoCo emulation, and use "scroll lock" to set 
+it back in keyboard emulation mode.
+
+type CLOAD (if it's a BASIC program) or CLOADM (for assembler programs)
+
+then EXEC (if it's an assembler program)
+
+or RUN (if it's a basic program)
+
+
+	- Cartridge/Snapshot images (.PAK)
+
+Go to file menu pick the .pak
+Should automatically start running the game.
+if it does not run it isnt supported yet.
+
+
+	-Diskette images (.DSK)
+
+Basically the same as cassette images, except you insert the image in Floppy Disk#1 
+from the file manager. Once you return to the coco emulation, switch back to keyboard 
+emulation mode by pressing SCROLL LOCK and type:
+DIR
+
+To load an assembly file (.BIN), type LOADM "1:GAME.BIN" (replacing the "1:" with the 
+appropriate drive designation "1:" through "4:" )
+
+then EXEC
+
+
+To load a basic file (.BAS), type LOAD "1:GAME.BAS"
+
+then RUN
+
+
+Thanks to "Axe" for the command summary.
+
+
 Known Issues:
 
 Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by 
@@ -1596,6 +1651,342 @@ have great success in USA, however was pretty known in Europe (Netherlands and F
 South Americca (Brazil) and USSR. This standard was replaced in 1985 by MSX 2. 
 
 
+A list of known MSX compliant machines:
+
+
+Canon (Japan)
+
+V-8: 16kB RAM (other source says 32kB RAM)
+V-10: 16kB RAM
+V-20: 64kB RAM
+
+  ------------------------------------------------------------------------
+
+Casio (Japan)
+
+MX-10: 16kB RAM (other source says 64k), docking station available
+MX-101: 16kB RAM (other source says 64k)
+PV-7: 32kB RAM
+PV-16: 16kB RAM
+
+  ------------------------------------------------------------------------
+
+Daewoo/Yeno (Korea)
+
+Ce-Tec MPC-80: 64kB RAM (other source says 32KB)
+DPC-100: 16kB RAM, built in loudspeaker, available in green, blue or silver
+DPC-200: 64kB RAM
+DPH-64: 64kB RAM (other source says 32kB RAM)
+DPH-?: 64kB RAM, built in software, arabic version
+IQ-1000: 32kB RAM, produced for Korea
+MX64: 64kB RAM
+
+  ------------------------------------------------------------------------
+
+Dragon (Spain)
+
+MSX-64: 64kB RAM
+
+  ------------------------------------------------------------------------
+
+Dynadata (MSX from Daewoo in Spain)
+
+DPC-200: 64kB RAM
+
+  ------------------------------------------------------------------------
+
+Fenner (Italy?)
+
+FPC-500: 64kB RAM
+
+  ------------------------------------------------------------------------
+
+Fujitsu (Japan)
+
+MB-H1: ??kB RAM
+FM-X: 16kB RAM
+
+  ------------------------------------------------------------------------
+
+General (Japan)
+
+PAXON-PC K50: ??kB RAM, separate keyboard, computer and monitor in one box
+PAXON-PC T50: 16kB RAM, RGB connector
+PAXON-PC T55: 32kB RAM, RGB connector
+
+  ------------------------------------------------------------------------
+
+Goldstar (Korea)
+
+FC-80: ??kB RAM
+FC-100: 16kB RAM
+FC-200: 64kB RAM (with hole for light-pen)
+
+  ------------------------------------------------------------------------
+
+Gradiente (Brazil)
+
+XP-800 Expert 1.0: 64kB RAM, separate keyboard
+XP-800 Expert 1.1: 64kB RAM, separate keyboard (with fixed ASCII tables, grey colour)
+Expert plus: 64kB RAM, separate keyboard (black colour)
+Expert DD plus: 64kB RAM, separate keyboard, 3,5" floppy disk drive (black colour)
+
+  ------------------------------------------------------------------------
+
+Hitachi (Japan)
+
+Hint: 16kB RAM
+MB-H1 (Humanicatio): 32kB RAM, built in software (Sketch and Music)
+MB-H1E: 16kB RAM
+MB-H2: 64kB RAM, built in tape recorder
+MB-H21: ??kB RAM
+MB-H25: ??kB RAM
+MB-H50: 64kB RAM
+MB-H80: 64kB RAM, also built in software (Sketch and Music)
+
+  ------------------------------------------------------------------------
+
+JVC/Victor (Japan)
+
+HC-5: 32kB RAM (other source says 16kB RAM)
+HC-6: 16kB RAM
+HC-6AV: 32kB RAM, RGB connector
+HC-7: 64kB RAM (Japanese version)
+HC-7E: 64kB RAM (English version, other source says 32KB RAM)
+HC-7GB: 64kB RAM
+HC-30: 32kB RAM
+HC-60: 32kB RAM
+
+  ------------------------------------------------------------------------
+
+Kyocera (Japan)
+
+YC-64: 64kB RAM
+
+  ------------------------------------------------------------------------
+
+Mitsubishi (Japan)
+
+Letus: 16kB RAM
+ML-8000: 32kB RAM
+ML-F48: 32kB RAM
+ML-F80: 64kB RAM
+ML-F110: 16kB RAM
+ML-F120(D): 32kB RAM
+ML-F8000: 32kB RAM
+ML-FX1: 64kB RAM
+ML-FX2: 64kB RAM, built in software
+
+  ------------------------------------------------------------------------
+
+National (Japan)
+
+CF-1200: 16kB RAM
+CF-2000: 16kB RAM
+CF-2700: 32kB RAM
+CF-3000: 64kB RAM
+CF-3300: 64kB RAM
+CF-4000: ??kB RAM
+FS-1300: 64kB RAM
+FS-4000: 64kB RAM
+
+  ------------------------------------------------------------------------
+
+Olympia (France)
+
+PHC-2: ??kB RAM, same as some Sanyo?
+PHC-28: 32kB RAM, same as Sanyo's PHC-28S
+
+  ------------------------------------------------------------------------
+
+Panasonic/Matsushita (Japan)
+
+CF-2000: 16kB RAM
+CF-2700: 64kB RAM, same as Sanyo MPC-64
+CF-3000: ??kB RAM
+CF-3300: ??kB RAM
+
+  ------------------------------------------------------------------------
+
+Perfect (Daewoo in Kuwait)
+
+Perfect1: 64kb RAM, 1 slot, no reset, built in software
+
+  ------------------------------------------------------------------------
+
+Philips (The Netherlands)
+
+VG-8000: 16kB RAM
+VG-8010: 32kB RAM
+VG-8020: 64kB RAM, (VG8020 comes in 2 different versions (/00 and /20), new versions use 
+sub-slot for ram)
+
+  ------------------------------------------------------------------------
+
+Pioneer (Japan)
+
+PX-7 PALCOM: 32kB RAM, built in laser disk interface, superimpose (image & sound (stereo)), 
+separate keyboard (UK version in black, JP version in black/silver (lila/blue keys) colour)
+PX-V60: 64kB RAM
+
+  ------------------------------------------------------------------------
+
+Radofin (Hong-Kong)
+
+Triton: 64kB RAM
+
+  ------------------------------------------------------------------------
+
+Radiola (France)
+
+MX-180: 32kB RAM, Same as Philips VG-8010 with a different color case
+
+  ------------------------------------------------------------------------
+
+Sakhr/Universal/Al Alamiah (Kuwait/Yemen)
+
+     Those computers are Yamaha and Sanyo MSX modified for arabian countries.
+
+AX-100: 64kB RAM
+AX-150: 64kB RAM
+AX-170: 64kB RAM, built in special roms with arabic characters set and softwares
+AX-230: 64kB RAM, same software as AX-170 + 1MB of other software
+AX-330: 64kB RAM, same as AX-230 but with built in SEGA-MEGADRIVE board
+AX-990: 64kB RAM, 50 softwares built in, SEGA-MEGADRIVE board built in
+SX-100: 32kB RAM, 3 slots, RGB connector
+SX-101: ??kB RAM, 3 slots
+
+  ------------------------------------------------------------------------
+
+Samsung (Korea)
+
+SPC-800: 64kB RAM
+
+  ------------------------------------------------------------------------
+
+Sanyo (Japan)
+
+MPC-2: 16kB RAM
+MPC-3: 16kB RAM
+MPC-4: 16kB RAM
+MPC-5: 16kB RAM
+MPC-6: 64kB RAM
+MPC-10(mk2): 64kB RAM (other source says 32kB RAM), lightpen-interface
+MPC-11: 64kB RAM (other source says 32kB RAM), lightpen-interface
+MPC-64: 64kB RAM
+MPC-100: 64kB RAM, hole for lightpen
+MPC-200: 64kB RAM
+MPC-X: 64kB RAM, built in lightpen, high-res adaptor and speech-synthesizer
+PHC-27: 64kB RAM
+PHC-28L: 64kB RAM, Same as PHC-28S but with 64kB RAM
+PHC-28S: 16KB (or 32KB) RAM
+PHC-30: 16kB RAM (other source says 32KB), built in tape recorder
+PHC-30N: 64kB RAM
+PHC-33: 32kB RAM
+WAVY-MPC-10: 32KB (other source says 16KB) RAM, built in light pen unit
+
+  ------------------------------------------------------------------------
+
+Schneider (Germany)
+
+MC-810: 32kB RAM, (Same as Philips VG-8010 with a different color case)
+
+  ------------------------------------------------------------------------
+
+Sharp/Epcom (Brazil)
+
+HB-8000 HotBit: 64kB RAM (white colour)
+HB-8000 HotBit 1.2: 64kB RAM (in black color)
+
+  ------------------------------------------------------------------------
+
+Sony (Japan)
+
+     Note: Some of the Sony's computer names are followed by a letter like HB-101P, or 
+HB-101F or HB-700D. The last letter is only depending of the keyboard layout of the 
+country. D=German (QWERTZ) F=French (AZERTY) S=Spanish P=UK (QWERTY)
+
+HB-10: 64kB RAM
+HB-11: 64kB RAM
+HB-11U: ??kB RAM, built in dictionary Japanese-English
+HB-20: 32kB RAM
+HB-55: 16kB RAM
+HB-75: 64kB RAM, built in program: Personal Databank (schedule/memo/address)
+HB-101: 32kB RAM, (Same as HB-201 but with 32kB RAM, but other source says 16kB RAM)
+HB-201: 64kB RAM, built in joystick (Same as HB-501 but without tape recorder)
+HB-501: 64kB RAM, built in tape recorder ('BitCorder'), pause button, joystick
+HB-701, 64kB RAM
+HB-701FD: 64kB RAM, floppy disk drive
+
+  ------------------------------------------------------------------------
+
+Spectravideo (Hong-Kong/USA)
+
+SVI-728: 64kB RAM, numeric keypad
+SVI-738: 64kB RAM, built in 80 columns card (V9938), RS232C interface, 360KB 3,5" floppy 
+disk drive. Also called X'PRESS and also SVI-318 and SVI-328 MSX compatible with an emulator
+
+  ------------------------------------------------------------------------
+
+Talent/Telematica (Argentina)
+
+DPC-200: 64kB RAM, Daewoo's MSX model sold under the Talent name
+
+  ------------------------------------------------------------------------
+
+Toshiba (Japan)
+
+HX-10: 64kB RAM
+HX-10D: 16kB RAM
+HX-10DP: 64kB RAM
+HX-10DPN: 64kB RAM, built in program (??)
+HX-10E: 64kB RAM
+HX-10S: 16kB RAM
+HX-20: 64kB RAM, built in word processor (in total 64kB ROM), RAMdisk feature (32kB of 
+main RAM in page 0 and 1 are used, under BASIC), T6950 VDP (software compatible with 
+9929A which is normally used)
+HX-20e: 64kB RAM, built in wordprocessor, RS232C interface
+HX-21: 64kB RAM, built in software
+HX-22: 64kB RAM, RS-232C interface, RGB connector (SCART 21), built in wordprocessor (in 
+total 64kB ROM)
+HX-30: ??kB RAM, built in software
+HX-31: ??kB RAM, built in software
+HX-32: ??kB RAM, built in software
+HX-51: ??kB RAM
+
+  ------------------------------------------------------------------------
+
+Triton (Hong-Kong)
+
+PC64: 64kB RAM
+
+  ------------------------------------------------------------------------
+
+Yamaha (Japan)
+
+CX5: 32kB RAM
+CX5F: 32kB RAM
+CX5M: 32kB RAM, built in FM synthetizer (SFG-01) and MIDI-Interface
+CX5MII: 64kB RAM, built in FM synthetizer (SFG-01), MIDI-interface
+CX5MII/128: 128kB RAM, built in FM synthetizer (SFG-05), (V9938 built in), built in 
+FM VOICING program II
+CX-11: 32kB RAM
+CX-100: 32kB RAM
+YIS-303: 16kB RAM
+YIS-503: 32kB RAM
+YIS-503II/64: 64kB RAM, FDD
+
+  ------------------------------------------------------------------------
+
+Yashica (Japan)
+
+YC-64: 64kB RAM, Kyocera's MSX sold by Yashica
+
+
+MSX system list compiled from the list by TRD, Manuel Bilderbeek & Alex Wulms. Thanks to
+Stefano Priore, for abridging it to MSX1 specific info.
+
+
 $end
 
 #---------------------------------------------------------------------------------------------#
@@ -1889,7 +2280,21 @@ $end
 
 $info=spectrum
 $bio
-Sinclair ZX Spectrum 48k
+Sinclair ZX Spectrum (and clones)
+
+
+Usage Notes (TK90X/TK95):
+
+TK90X/TK95 add two commands to the Sinclair BASIC: TRACE 1/0 (E cursor, Symbol Shift+P) 
+turns on/off the display of the line currently executed. UDG 0/1/2 (K/L/C cursor, 
+Symbol Shift+X) controls the behaviour of the (guess what?) UDGs: when the parameter is 0/1 
+they restore their shape to accented letters used in the Portuguese language (still haven't 
+discovered the difference between 0 and 1) while the UDG 2 command activate the built-in 
+character editor: you can use the keys 5,6,7,8 +CAPS or Symbol Shift to plot/move the 
+cursor, the A-U keys to select the UDG to edit or copy (with the shift keys), INVERSE 
+VIDEO key to reverse the character. Maybe there are yet more command-keys, but I haven't 
+discovered them yet. Curiously, the BEEP command has been renamed to SOUND: who knows why... 
+[JoJo Priore]
 
 
 Known Issues:
@@ -1899,6 +2304,226 @@ default.  Whilst in full keyboard emulation mode, some key associated functional
 disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the 
 scroll_lock key.   
 
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=specpls4
+$bio
+Amstrad Spectrum +4 Rom
+
+
+The plus4.rom is copyright (c)1982-2000 Amstrad plc
+and is distributed with their kind permission.
+
+I would like to thank Cliff Lawson and Amstrad for making this
+project possible, Phillip Kendall for the Spectrum ROM page, Ian
+Collier for documenting the changes he made to the ROM and giving me
+additional advice, Dr Ian Logan and Dr Frank O'Hara for the invaluable
+Complete Spectrum ROM Disassembly, and whoever it was that sold the
+book to me and contributors to comp.sys.sinclair for keeping me
+constantly amused and informed.
+
+-Andrew Owen, 24-2-2000
+
+
+Introducing the Spectrum +4.
+----------------------------
+Remember when Apple promised its customers a whole new computer for
+$99. What they meant was they hoped their new operating system would
+change the experience of their users so profoundly it would make them
+feel as if they had a new machine. Well now you can have a whole new
+Spectrum for FREE!
+
+
+What is the idea behind this?
+-----------------------------
+I’ve taken the original 48K machine as my starting point and tweaked
+it until the point where I don’t think there is any further room for
+improvement without adding extra hardware. Now if someone wants to
+build a new machine at least they have a place to start.
+
+
+How compatible is it?
+---------------------
+The Spectrum +4 ROM is very similar to the one in the 48 and so it
+should be 90% compatible or better with machine code. BASIC programs
+may require minor modifications but should then run without problems.
+
+
+What are the changes?
+---------------------
+There are so many changes that it is impossible to summarise them all.
+Only the important changes have been detailed with the exception of
+the new NMI routine which is self explanatory.
+
+
+THE KEYBOARD
+
+The keyboard layout has been completely redesigned, based on the
+standard international English keyboard, to make it quicker to use and
+easier to remember which keys are where. This is made possible by
+replacing the keyword entry system.
+
+All the SHIFT functions on the number keys are retained, as are the
+EXTEND and SHIFT-EXTEND attribute functions. But that is where the
+similarity to the old keyboard ends.
+
+All but a few symbols are accessed by holding down SYMBOL shift and
+the relevant key, while the remainder are accessed using EXTEND mode.
+Pressing either SHIFT or SYMBOL shift in EXTEND mode will give the
+same result as if SYMBOL shift alone had been pressed. In addition to
+the characters shown below, the 16 pre-defined graphics characters are
+accessible using SYMBOL shift or EXTEND mode and keys Q-R and A-F.
+
+ ---------------------------------------
+| ! | @ | £ | $ | % | ^ | & | * | ( | ) |
+| 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0 |
+ ----------------------------------------
+ |   |   |   |   |   |   | { | } | : | " |
+ |   |   |   |   |   |   | [ | ] | ; | ' |
+ | Q | W | E | R | T | Y | U | I | O | P |
+  ---------------------------------------
+   |   |   |   |   |   |   | | | _ | + |
+   |   |   |   |   |(c)|   | \ | - | = |
+   | A | S | D | F | G | H | J | K | L |
+    -----------------------------------
+     | ~ |   |   |   | ? | < | > |
+     | # |   |   |   | / | , | . |
+     | Z | X | C | V | B | N | M |
+      ---------------------------
+
+SYMBOL = Lower symbols
+EXTEND = Upper symbols and attributes on number keys
+SHIFT  = Upper case letters and functions on number keys
+
+
+BASIC EDITOR
+
+The most noticeable change is that all commands must be typed in full.
+Instructions are converted into tokens automatically when you press
+ENTER. It is also possible to use the cursors to move up and down
+while editing a line. Instructions can be entered in both capital and
+lower letters. No space is required between commands such as DEF FN or
+after a command unless the argument begins with a letter.
+
+
+BASIC COMMANDS
+
+CAT, when entered without parameters, calls up the built-in monitor.
+
+The PLOT, DRAW and CIRCLE commands have been modified to use the whole
+screen.
+
+ERASE "i" erases extra Interface 1 variables, extended channels and
+such without affecting the BASIC program in memory.
+
+The GO SUB, GO TO and CONTINUE commands have been replaced by GOSUB,
+GOTO, and CONT, to replicate other BASIC interpreters.
+
+MOVE can be used to shift data around in memory. For example, the
+command MOVE "r0,6144","r16384" would copy the first 6144 bytes of ROM
+to the screen area of memory.
+
+The COPY command has been replaced by the FREE command which reports
+the amount of free memory below RAMTOP.
+
+
+THE MONITOR PROGRAM
+
+The Spectrum +4 features a built-in monitor which can be accessed with
+the CAT command or holding down SYMBOL shift, SPACE and B while
+interrupts are enabled. The following commands are then available:
+
+B             Return to BASIC (if possible)
+
+D<hex_num>    Displays entered hex number in decimal notation
+
+G<hex_addr>   Execute a subroutine at address G
+              (RET will return to the monitor).
+
+H<dec_num>    Displays entered decimal number in hex notation
+
+M<hex_addr>   Hex and ASCII dump from given address
+              (SPACE to exit).
+
+R             View and/or change registers
+              AF, BC, DE, HL, IX and SP.
+
+S<hex_addr>   Patch memory from given address using hex editor
+              (SPACE to exit editor).
+
+
+BUG FIXES
+
+Every effort has been made to fix all the bugs mentioned in The
+Complete Spectrum Rom Disassembly and a few others besides as follows:
+
+Fixed a bug the CLOSE # bug. eg CLOSE #4
+
+Fixed the forwardspace (CHR$ 9) bug. e.g. PRINT "A";CHR$ 9;"B"
+
+Fixed the backspace (CHR$ 8) bug. e.g. PRINT AT 0,0;CHR$ 8;"A"
+
+Fixed the STR$ bug. e.g. PRINT "BUG"+STR$ 0.5
+
+Fixed the division bug. e.g. IF 1/2<>0. 5 THEN PRINT "BUG"
+
+Fixed the -65536 bug. e.g. PRINT INT -65536
+
+Fixed the SCREEN$ bug. e.g. IF "X"=SCREEN$ (0,0) THEN PRINT "BUG"
+
+Fixed the "scroll?" bug. Try pressing True Video at the request.
+
+Fixed the syntax check error.
+
+Fixed the double store bug at 257Dh.
+
+Resolved the K-MODE bug. There is no 'K' mode.
+
+Resolved printer buffer error. There is no COPY command.
+
+Resolved the NMI bug. There is a different routine.
+
+Fixed the 'lock up if interrupts are disabled on error report' bug
+
+
+LEGAL NOTICE FOR THE CURIOUS
+
+Just to make sure it was 100% okay to do this I wrote to Amstrad's
+Cliff Lawson on 23/02/00. Here's what followed.
+
+ME: I know it's okay in principle to distribute modified Spectrum
+    ROMs as long as the copyright message is unchanged. However,
+    I've just finished a very major overhaul of the ROM and would
+    like to use an alternative message.
+
+CL: Well you can't really associate a name such as "+4" with
+    "Amstrad Consumer Electronics" because it makes it look as if
+    it's an "official" development.
+
+ME: Would this be acceptable?
+
+      AMSTRAD CONSUMER ELECTRONICS PLC
+       (C)1982-2000 unofficial +4 48K
+
+CL: Yup, sounds OK but you do realise that the company was only
+    called "Amstrad Consumer Electronics" for a few years in the
+    early..mid 80's then the company name was shortened to
+    "Amstrad plc" so it's a bit "out of date" to use it but I
+    guess that probably describes the "Spectrum" too! :-)
+
+ME: Mind if I quote you in the "readme" just so no one accuses me
+    of violating copyrights?
+
+CL: No problem.
+
+ Visit the Amstrad website at http://www.amstrad.com
+
+                   Amstrad plc. Registered in England No. 955321
+Registered Office: Brentwood House, 169 Kings Road, Brentwood,
+                   Essex CM14 4EF, England
 
 $end
 
@@ -1959,7 +2584,40 @@ Tenchi O Kurau II (1995)
 
 $end
 
+
 #---------------------------------------------------------------------------------------------#
+
+
+$info=t1000hx
+$bio
+Tandy 1000 HX
+
+
+Usage Notes:
+
+The Tandy 1000 series computers have 12 function keys (analogous to modern PC keyboards) 
+whose functions depend on the program you are running. 
+
+Some function keys have special functions during boot up, if you press them right after the 
+startup "beep", while MS-DOS loads:
+
+* F1 = Switches the computer into monochrome video mode.
+
+* F2 = Switches the computer into composite/TV video mode (40 Column/200 scanline mode). This can also be achieved by issuing a MODE command from DOS.
+
+* F3 = Reverses the drive references so B: becomes the primary drive, and A: becomes the secondary drive, this lets you start the computer from the B Drive.
+
+* F4 = Starts the computer in slow (4 mhz) mode. This is useful if a program runs too fast or not at all in normal (8 mhz) mode.
+
+
+Note that these additional modes might not work in the current version of MESS.
+
+
+$end
+
+
+#---------------------------------------------------------------------------------------------#
+
 
 $info=ti99_4
 $bio

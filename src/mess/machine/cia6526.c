@@ -148,7 +148,7 @@ static void cia_set_interrupt (CIA6526 *this, int data)
 	{
 		if (!(this->ifr & 0x80))
 		{
-			DBG_LOG (3, "cia set interrupt", (errorlog, "%d %.2x\n",
+			DBG_LOG (3, "cia set interrupt", ("%d %.2x\n",
 											  this->number, data));
 			if (this->intf->irq_func)
 				this->intf->irq_func (1);
@@ -222,7 +222,7 @@ static void cia_tod_timeout (int which)
 static void cia_timer1_state (CIA6526 *this)
 {
 
-	DBG_LOG (1, "timer1 state", (errorlog, "%d\n", this->timer1_state));
+	DBG_LOG (1, "timer1 state", ("%d\n", this->timer1_state));
 	switch (this->timer1_state)
 	{
 	case 0:						   /* timer stopped */
@@ -284,7 +284,7 @@ static void cia_timer1_state (CIA6526 *this)
 		}
 		break;
 	}
-	DBG_LOG (1, "timer1 state", (errorlog, "%d\n", this->timer1_state));
+	DBG_LOG (1, "timer1 state", ("%d\n", this->timer1_state));
 }
 
 static void cia_timer2_state (CIA6526 *this)
@@ -492,28 +492,28 @@ static int cia6526_read (CIA6526 *this, int offset)
 			val = TIME_TO_CYCLES (0, timer_timeleft (this->timer1)) & 0xff;
 		else
 			val = this->t1c & 0xff;
-		DBG_LOG (3, "cia timer 1 lo", (errorlog, "%d %.2x\n", this->number, val));
+		DBG_LOG (3, "cia timer 1 lo", ("%d %.2x\n", this->number, val));
 		break;
 	case 5:
 		if (this->timer1)
 			val = TIME_TO_CYCLES (0, timer_timeleft (this->timer1)) >> 8;
 		else
 			val = this->t1c >> 8;
-		DBG_LOG (3, "cia timer 1 hi", (errorlog, "%d %.2x\n", this->number, val));
+		DBG_LOG (3, "cia timer 1 hi", ("%d %.2x\n", this->number, val));
 		break;
 	case 6:
 		if (this->timer2)
 			val = TIME_TO_CYCLES (0, timer_timeleft (this->timer2)) & 0xff;
 		else
 			val = this->t2c & 0xff;
-		DBG_LOG (3, "cia timer 2 lo", (errorlog, "%d %.2x\n", this->number, val));
+		DBG_LOG (3, "cia timer 2 lo", ("%d %.2x\n", this->number, val));
 		break;
 	case 7:
 		if (this->timer2)
 			val = TIME_TO_CYCLES (0, timer_timeleft (this->timer2)) >> 8;
 		else
 			val = this->t2c >> 8;
-		DBG_LOG (3, "cia timer 2 hi", (errorlog, "%d %.2x\n", this->number, val));
+		DBG_LOG (3, "cia timer 2 hi", ("%d %.2x\n", this->number, val));
 		break;
 	case 0xe:
 		val = this->cra;
@@ -525,7 +525,7 @@ static int cia6526_read (CIA6526 *this, int offset)
 		val = this->sdr;
 		break;
 	}
-	DBG_LOG (1, "cia read", (errorlog, "%d %.2x:%.2x\n", this->number, offset, val));
+	DBG_LOG (1, "cia read", ("%d %.2x:%.2x\n", this->number, offset, val));
 	return val;
 }
 
@@ -534,7 +534,7 @@ static int cia6526_read (CIA6526 *this, int offset)
 
 static void cia6526_write (CIA6526 *this, int offset, int data)
 {
-	DBG_LOG (1, "cia write", (errorlog, "%d %.2x:%.2x\n", this->number, offset, data));
+	DBG_LOG (1, "cia write", ("%d %.2x:%.2x\n", this->number, offset, data));
 	offset &= 0xf;
 
 	switch (offset)
@@ -618,7 +618,7 @@ static void cia6526_write (CIA6526 *this, int offset, int data)
 		}
 		break;
 	case 0xd:
-		DBG_LOG (1, "cia interrupt enable", (errorlog, "%d %.2x\n", this->number, data));
+		DBG_LOG (1, "cia interrupt enable", ("%d %.2x\n", this->number, data));
 		if (data & 0x80)
 		{
 			this->ier |= data;
@@ -634,7 +634,7 @@ static void cia6526_write (CIA6526 *this, int offset, int data)
 		this->t1l = (this->t1l & ~0xff) | data;
 		if (this->t1l == 0)
 			this->t1l = 0x10000;		   /*avoid hanging in timer_schedule */
-		DBG_LOG (3, "cia timer 1 lo write", (errorlog, "%d %.2x\n", this->number, data));
+		DBG_LOG (3, "cia timer 1 lo write", ("%d %.2x\n", this->number, data));
 		break;
 	case 5:
 		this->t1l = (this->t1l & 0xff) | (data << 8);
@@ -642,13 +642,13 @@ static void cia6526_write (CIA6526 *this, int offset, int data)
 			this->t1l = 0x10000;		   /*avoid hanging in timer_schedule */
 		if (TIMER1_STOP)
 			this->t1c = this->t1l;
-		DBG_LOG (3, "cia timer 1 hi write", (errorlog, "%d %.2x\n", this->number, data));
+		DBG_LOG (3, "cia timer 1 hi write", ("%d %.2x\n", this->number, data));
 		break;
 	case 6:
 		this->t2l = (this->t2l & ~0xff) | data;
 		if (this->t2l == 0)
 			this->t2l = 0x10000;		   /*avoid hanging in timer_schedule */
-		DBG_LOG (3, "cia timer 2 lo write", (errorlog, "%d %.2x\n", this->number, data));
+		DBG_LOG (3, "cia timer 2 lo write", ("%d %.2x\n", this->number, data));
 		break;
 	case 7:
 		this->t2l = (this->t2l & 0xff) | (data << 8);
@@ -656,10 +656,10 @@ static void cia6526_write (CIA6526 *this, int offset, int data)
 			this->t2l = 0x10000;		   /*avoid hanging in timer_schedule */
 		if (TIMER2_STOP)
 			this->t2c = this->t2l;
-		DBG_LOG (3, "cia timer 2 hi write", (errorlog, "%d %.2x\n", this->number, data));
+		DBG_LOG (3, "cia timer 2 hi write", ("%d %.2x\n", this->number, data));
 		break;
 	case 0xe:
-		DBG_LOG (3, "cia write cra", (errorlog, "%d %.2x\n", this->number, data));
+		DBG_LOG (3, "cia write cra", ("%d %.2x\n", this->number, data));
 		if ((this->cra & 0x40) != (data & 0x40))
 		{
 			if (!(this->cra & 0x40))
@@ -673,7 +673,7 @@ static void cia6526_write (CIA6526 *this, int offset, int data)
 		cia_timer1_state (this);
 		break;
 	case 0xf:
-		DBG_LOG (3, "cia write crb", (errorlog, "%d %.2x\n", this->number, data));
+		DBG_LOG (3, "cia write crb", ("%d %.2x\n", this->number, data));
 		this->crb = data;
 		cia_timer2_state (this);
 		break;

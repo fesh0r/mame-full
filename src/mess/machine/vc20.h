@@ -90,6 +90,7 @@ extern int vc20_rom_id (int id);
 
 extern void vc20_driver_init (void);
 extern void vic20_driver_init (void);
+extern void vic20ieee_driver_init (void);
 extern void vc20_driver_shutdown (void);
 
 extern void vc20_init_machine (void);

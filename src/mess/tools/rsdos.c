@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "osdepend.h"
 #include "imgtool.h"
 
 #define GRANULE_COUNT	68
@@ -41,20 +42,24 @@ static size_t rsdos_diskimage_freespace(IMAGE *img);
 static int rsdos_diskimage_readfile(IMAGE *img, const char *fname, STREAM *destf);
 static int rsdos_diskimage_writefile(IMAGE *img, const char *fname, STREAM *sourcef);
 static int rsdos_diskimage_deletefile(IMAGE *img, const char *fname);
-static int rsdos_diskimage_create(STREAM *f);
+static int rsdos_diskimage_create(STREAM *f, const geometry_options *options);
 
 IMAGEMODULE(rsdos,
-	"Tandy CoCo RS-DOS disk images",
-	rsdos_diskimage_init,
-	rsdos_diskimage_exit,
-	rsdos_diskimage_beginenum,
-	rsdos_diskimage_nextenum,
-	rsdos_diskimage_closeenum,
-	rsdos_diskimage_freespace,
-	rsdos_diskimage_readfile,
-	rsdos_diskimage_writefile,
-	rsdos_diskimage_deletefile,
-	rsdos_diskimage_create
+	"Tandy CoCo RS-DOS disk images",	/* human readable name */
+	"dsk",								/* file extension */
+	NULL,								/* crcfile */
+	NULL,								/* crc system name */
+	NULL,								/* geometry ranges */
+	rsdos_diskimage_init,				/* init function */
+	rsdos_diskimage_exit,				/* exit function */
+	rsdos_diskimage_beginenum,			/* begin enumeration */
+	rsdos_diskimage_nextenum,			/* enumerate next */
+	rsdos_diskimage_closeenum,			/* close enumeration */
+	rsdos_diskimage_freespace,			/* free space on image */
+	rsdos_diskimage_readfile,			/* read file */
+	rsdos_diskimage_writefile,			/* write file */
+	rsdos_diskimage_deletefile,			/* delete file */
+	rsdos_diskimage_create				/* create image */
 )
 
 static void rtrim(char *buf)
@@ -450,7 +455,7 @@ static int rsdos_diskimage_deletefile(IMAGE *img, const char *fname)
 	return 0;
 }
 
-static int rsdos_diskimage_create(STREAM *f)
+static int rsdos_diskimage_create(STREAM *f, const geometry_options *options)
 {
 	return (stream_fill(f, 0xff, 35*18*256) == 35*18*256) ? 0 : IMGTOOLERR_WRITEERROR;
 }

@@ -17,9 +17,18 @@
 #include <stdio.h>
 
 unsigned char key_sense;
+int mtx_loadindex;
+int mtx_saveindex;
+
+unsigned char relcpmh;
+unsigned char rampage;
+unsigned char rompage;
+
 static unsigned char *mtx_tapebuffer = NULL;
+static unsigned char *mtx_savebuffer = NULL;
 
 static unsigned char *mtx_ram = NULL;
+static unsigned char *mtx_commonram = NULL;
 
 #define MTX_SYSTEM_CLOCK		4000000
 
@@ -96,36 +105,41 @@ static READ_HANDLER ( mtx_key_hi_r )
 {
 	unsigned char rtn = 0;
 
+	unsigned char tmp;
+	tmp = ((readinputport(10) & 0x03) << 2) | 0xf0;
+	rtn = tmp;
+
 	if (key_sense==0xfe)
-		rtn = readinputport(8) & 0x03;
+		rtn = (readinputport(8) & 0x03) | tmp;
 
 	if (key_sense==0xfd)
-		rtn = (readinputport(8) >> 2) & 0x03;
+		rtn = ((readinputport(8) >> 2) & 0x03) | tmp;
 
 	if (key_sense==0xfb)
-		rtn = (readinputport(8) >> 4) & 0x03;
+		rtn = ((readinputport(8) >> 4) & 0x03) | tmp;
 
 	if (key_sense==0xf7)
-		rtn = (readinputport(8) >> 6) & 0x03;
+		rtn = ((readinputport(8) >> 6) & 0x03) | tmp;
 
 	if (key_sense==0xef)
-		rtn = readinputport(9) & 0x03;
+		rtn = (readinputport(9) & 0x03) | tmp;
 
 	if (key_sense==0xdf)
-		rtn = (readinputport(9) >> 2) & 0x03;
+		rtn = ((readinputport(9) >> 2) & 0x03) | tmp;
 
 	if (key_sense==0xbf)
-		rtn = (readinputport(9) >> 4) & 0x03;
+		rtn = ((readinputport(9) >> 4) & 0x03) | tmp;
 
 	if (key_sense==0x7f)
-		rtn = (readinputport(9) >> 6) & 0x03;
+		rtn = ((readinputport(9) >> 6) & 0x03) | tmp;
 
 	return(rtn);
 }
 
 static void mtx_ctc_interrupt(int state)
 {
-	logerror("interrupting ctc %02x\r\n ",state);
+	//logerror("interrupting ctc %02x\r\n ",state);
+
 
          cpu_cause_interrupt(0, Z80_VECTOR(0, state));
 }
@@ -137,7 +151,7 @@ static READ_HANDLER ( mtx_ctc_r )
 
 static WRITE_HANDLER ( mtx_ctc_w )
 {
-        logerror("CTC W: %02x\r\n",data);
+        //logerror("CTC W: %02x\r\n",data);
 
         z80ctc_0_w(offset,data);
 }
@@ -157,16 +171,15 @@ static WRITE_HANDLER ( mtx_bankswitch_w )
 {
 
 	unsigned char *romoffset;
-	unsigned char relcpmh;
-	unsigned char rampage;
-	unsigned char rompage;
-	unsigned int bank1, bank2, bank3, bank4, bank5;
+
+	unsigned int bank1, bank2, bank3, bank4, bank5, bank6;
 
 	bank1 = 0;
 	bank2 = 0;
 	bank3 = 0;
 	bank4 = 0;
 	bank5 = 0;
+	bank6 = 0;
 
 	// todo: cpm RAM mode (relcpmh)
 
@@ -189,87 +202,117 @@ static WRITE_HANDLER ( mtx_bankswitch_w )
 	switch(rampage)
 	{
 		case 0:
-			bank3=0;
+			bank3=0x6000;
 			bank4=0x4000;
-			bank5=0xc000;
+			bank5=0x2000;
+			bank6=0;
 			break;
 
 		case 1:
-			bank3=4 * 0x4000;
-			bank4=2 * 0x4000;
-			bank5=0xc000;
+			bank3=0xe000;
+			bank4=0xc000;
+			bank5=0xa000;
+			bank6=0x8000;
 			break;
 
 		case 2:
-			bank3=5 * 0x4000;
-			bank4=6 * 0x4000;
-			bank5=0xc000;
+			bank3=0x16000;
+			bank4=0x14000;
+			bank5=0x12000;
+			bank6=0x10000;
 			break;
+
 		case 3:
-			bank3=7 * 0x4000;
-			bank4=8 * 0x4000;
-			bank5=0xc000;
+			bank3=0x1e000;
+			bank4=0x1c000;
+			bank5=0x1a000;
+			bank6=0x18000;
 			break;
+
 		case 4:
-			bank3=9 * 0x4000;
-			bank4=10 * 0x4000;
-			bank5=0xc000;
+			bank3=0x26000;
+			bank4=0x24000;
+			bank5=0x22000;
+			bank6=0x20000;
 			break;
+
 		case 5:
-			bank3=11 * 0x4000;
-			bank4=12 * 0x4000;
-			bank5=0xc000;
+			bank3=0x2e000;
+			bank4=0x2c000;
+			bank5=0x2a000;
+			bank6=0x28000;
 			break;
+
 		case 6:
-			bank3=13 * 0x4000;
-			bank4=14 * 0x4000;
-			bank5=0xc000;
+			bank3=0x36000;
+			bank4=0x34000;
+			bank5=0x32000;
+			bank6=0x30000;
 			break;
+
 		case 7:
-			bank3=15 * 0x4000;
-			bank4=16 * 0x4000;
-			bank5=0xc000;
+			bank3=0x3e000;
+			bank4=0x3c000;
+			bank5=0x3a000;
+			bank6=0x38000;
 			break;
+
 		case 8:
-			bank3=17 * 0x4000;
-			bank4=18 * 0x4000;
-			bank5=0xc000;
+			bank3=0x46000;
+			bank4=0x44000;
+			bank5=0x42000;
+			bank6=0x40000;
 			break;
+
 		case 9:
-			bank3=19 * 0x4000;
-			bank4=20 * 0x4000;
-			bank5=0xc000;
+			bank3=0x4e000;
+			bank4=0x4c000;
+			bank5=0x4a000;
+			bank6=0x48000;
 			break;
+
 		case 10:
-			bank3=21 * 0x4000;
-			bank4=22 * 0x4000;
-			bank5=0xc000;
+			bank3=0x56000;
+			bank4=0x54000;
+			bank5=0x52000;
+			bank6=0x50000;
 			break;
+
 		case 11:
-			bank3=23 * 0x4000;
-			bank4=24 * 0x4000;
-			bank5=0xc000;
+			bank3=0x5e000;
+			bank4=0x5c000;
+			bank5=0x5a000;
+			bank6=0x58000;
 			break;
+
 		case 12:
-			bank3=25 * 0x4000;
-			bank4=26 * 0x4000;
-			bank5=0xc000;
+			bank3=0x66000;
+			bank4=0x64000;
+			bank5=0x62000;
+			bank6=0x60000;
 			break;
+
 		case 13:
-			bank3=27 * 0x4000;
-			bank4=28 * 0x4000;
-			bank5=0xc000;
+			bank3=0x6e000;
+			bank4=0x6c000;
+			bank5=0x6a000;
+			bank6=0x68000;
 			break;
+
 		case 14:
-			bank3=29 * 0x4000;
-			bank4=30 * 0x4000;
-			bank5=0xc000;
+			bank3=0x76000;
+			bank4=0x74000;
+			bank5=0x72000;
+			bank6=0x70000;
 			break;
+
 		case 15:
-			bank3=31 * 0x4000;
-			bank4=32 * 0x4000;
-			bank5=0xc000;
+			bank3=0x7e000;
+			bank4=0x7c000;
+			bank5=0x7a000;
+			bank6=0x78000;
 			break;
+
 	}
 
 	// bankswitcherooney type thing (tm)
@@ -280,14 +323,180 @@ static WRITE_HANDLER ( mtx_bankswitch_w )
 	cpu_setbank(2, romoffset);
 
 	cpu_setbank(3, mtx_ram + bank3);
-	cpu_setbank(8, mtx_ram + bank3);
+	cpu_setbank(11, mtx_ram + bank3);
 
 	cpu_setbank(4, mtx_ram + bank4);
-	cpu_setbank(9, mtx_ram + bank4);
+	cpu_setbank(12, mtx_ram + bank4);
 
 	cpu_setbank(5, mtx_ram + bank5);
-	cpu_setbank(10, mtx_ram + bank5);
+	cpu_setbank(13, mtx_ram + bank5);
 
+	cpu_setbank(6, mtx_ram + bank6);
+	cpu_setbank(14, mtx_ram + bank6);
+
+}
+
+unsigned char mtx_peek(int address)
+{
+	int base_address = 0;
+	unsigned char rtn = 0;
+	int offset = address & 0x1fff;
+
+	switch(rampage)
+	{
+		case 0:
+			base_address=0;
+			break;
+
+		case 1:
+			base_address=0x8000;
+			break;
+
+		case 2:
+			base_address=0x10000;
+			break;
+
+		case 3:
+			base_address=0x18000;
+			break;
+
+		case 4:
+			base_address=0x20000;
+			break;
+
+		case 5:
+			base_address=0x28000;
+			break;
+
+		case 6:
+			base_address=0x30000;
+			break;
+
+		case 7:
+			base_address=0x38000;
+			break;
+
+		case 8:
+			base_address=0x40000;
+			break;
+
+		case 9:
+			base_address=0x48000;
+			break;
+
+		case 10:
+			base_address=0x50000;
+			break;
+
+		case 11:
+			base_address=0x58000;
+			break;
+
+		case 12:
+			base_address=0x60000;
+			break;
+
+		case 13:
+			base_address=0x68000;
+			break;
+
+		case 14:
+			base_address=0x70000;
+			break;
+
+		case 15:
+			base_address=0x78000;
+			break;
+
+	}
+
+	if(address>=0x4000 && address<=0x5fff) rtn = mtx_ram[base_address + 0x6000 + offset];
+	if(address>=0x6000 && address<=0x7fff) rtn = mtx_ram[base_address + 0x4000 + offset];
+	if(address>=0x8000 && address<=0x9fff) rtn = mtx_ram[base_address + 0x2000 + offset];
+	if(address>=0xa000 && address<=0xbfff) rtn = mtx_ram[base_address + offset];
+	if(address>=0xc000 && address<=0xffff) rtn = mtx_commonram[address - 0xc000];
+return(rtn);
+
+}
+
+void mtx_poke(int address, unsigned char data)
+{
+	int base_address = 0;
+	int offset = address & 0x1fff;
+
+	switch(rampage)
+	{
+		case 0:
+			base_address=0;
+			break;
+
+		case 1:
+			base_address=0x8000;
+			break;
+
+		case 2:
+			base_address=0x10000;
+			break;
+
+		case 3:
+			base_address=0x18000;
+			break;
+
+		case 4:
+			base_address=0x20000;
+			break;
+
+		case 5:
+			base_address=0x28000;
+			break;
+
+		case 6:
+			base_address=0x30000;
+			break;
+
+		case 7:
+			base_address=0x38000;
+			break;
+
+		case 8:
+			base_address=0x40000;
+			break;
+
+		case 9:
+			base_address=0x48000;
+			break;
+
+		case 10:
+			base_address=0x50000;
+			break;
+
+		case 11:
+			base_address=0x58000;
+			break;
+
+		case 12:
+			base_address=0x60000;
+			break;
+
+		case 13:
+			base_address=0x68000;
+			break;
+
+		case 14:
+			base_address=0x70000;
+			break;
+
+		case 15:
+			base_address=0x78000;
+			break;
+
+	}
+
+	if(address>=0x4000 && address<=0x5fff) mtx_ram[base_address + 0x6000 + offset] = data;
+	if(address>=0x6000 && address<=0x7fff) mtx_ram[base_address + 0x4000 + offset] = data;
+	if(address>=0x8000 && address<=0x9fff) mtx_ram[base_address + 0x2000 + offset] = data;
+	if(address>=0xa000 && address<=0xbfff) mtx_ram[base_address + offset] = data;
+	if(address>=0xc000 && address<=0xffff) mtx_commonram[address - 0xc000] = data;
 
 }
 
@@ -304,39 +513,85 @@ static WRITE_HANDLER ( mtx_trap_write )
 			int length;
 			int filesize = 0;
 
-			unsigned char *ramoffset;
+
 			void *f;
-			static char filename[32];
+			static char filename[64];
 
 			start = cpu_get_reg(Z80_HL);
 			length = cpu_get_reg(Z80_DE);
 
-			logerror("PC %04x\nStart %04x, Length %04x, 0xFD67 %02x, 0xFD68 %02x\n", pc, start, length, mtx_ram[0xfd67], mtx_ram[0xfd68]);
+                        //logerror("PC %04x\nStart %04x, Length %04x, 0xFD67 %02x, 0xFD68 %02x index 0x%04x\n", pc, start, length, mtx_ram[0xfd67], mtx_ram[0xfd68], mtx_loadindex);
 
 
-			if(mtx_ram[0xfd68] == 0)
+			if(mtx_peek(0xfd68) == 0)
 				{
 				 //save
+                                        if((start == 0xc001) && (length == 0x14))
+                                                {
+                                                        //memcpy(mtx_savebuffer, mtx_ram + start, 0x12);
+							int i;
+							for(i=0;i <= 0x12;i++)
+							{
+								mtx_savebuffer[i] = mtx_peek(start + i);
+							}
+
+                                                        mtx_saveindex = 0x12;
+                                                }
+                                                else
+                                                {
+                                                        //memcpy(mtx_savebuffer + mtx_saveindex, ramoffset, length);
+							int i;
+							for(i=0;i <= length;i++)
+							{
+								mtx_savebuffer[mtx_saveindex + i] = mtx_peek(start + i);
+							}
+
+                                                        mtx_saveindex+=length;
+                                                }
+                                                if(start == 0xc000)
+                                                        {
+								int i;
+
+								for(i=0;i<=15;i++)
+								{
+                                                                        filename[i] = mtx_savebuffer[1 + i];
+								}
+
+                                                                    //    logerror("Writing Header Filename ");
+
+                                                                for(i=14; i>0 && filename[i] == 0x20;i--);
+
+
+                                                                filename[i + 1] = '\0';
+								logerror("%s\n", filename);
+                                                                if ((f = osd_fopen(Machine->gamedrv->name, filename,OSD_FILETYPE_IMAGE_RW,1)) != 0)
+									{
+                                                                                    osd_fwrite(f,mtx_savebuffer,mtx_saveindex);
+                                                                                    osd_fclose(f);
+									}
+
+                                                        }
 				}
 				else
 				{
-                                                if(mtx_ram[0xfd67] == 0)
+                                                if(mtx_peek(0xfd67) == 0)
 						{
 								//load
 
-							if((start == 0xc011) & (length == 0x12))
+                                                        if((start == 0xc011) & (length == 0x12) & (mtx_loadindex <= 0))
 							{
 
 								int i;
 								for(i=0;i<=15;i++)
 								{
-									filename[i] = mtx_ram[0xc002 + i];
+                                                                        filename[i] = mtx_peek(0xc002 + i);
 								}
 								for(i=15; i>0 && filename[i] == 0x20;i--)
 								filename[i+1] = '\0';
 								if ((f = osd_fopen(Machine->gamedrv->name, filename,OSD_FILETYPE_IMAGE_R,0)) != 0)
 									{
 										filesize=osd_fsize(f);
+                                                                                mtx_loadindex = filesize;
 										// check for buffer overflow....
 										if(filesize<65536)
 											{
@@ -345,18 +600,20 @@ static WRITE_HANDLER ( mtx_trap_write )
 												osd_fclose(f);
 									}
 							}
-						if(start<=0xbfff)
-							{
-								ramoffset = &mtx_ram[start - 0x4000];
-							}
-							else
-							{
-								ramoffset = &mtx_ram[start];
-							}
+
 						if(filesize<65536)
 							{
-								memcpy(ramoffset, mtx_tapebuffer, length);
+								//memcpy(ramoffset, mtx_tapebuffer, length);
+								int i;
+								unsigned char v;
+								for(i=0;i <= length;i++)
+								{
+								v = mtx_tapebuffer[i];
+								mtx_poke(start + i, v);
+								}
+
 								memcpy(mtx_tapebuffer, mtx_tapebuffer + length, 0x10000 - length);
+                                                                mtx_loadindex -= length;
 							}
 						}
 						else
@@ -367,17 +624,26 @@ static WRITE_HANDLER ( mtx_trap_write )
 		}
 }
 
+
 void mtx_init_machine(void)
 {
 
 	unsigned char *romoffset;
-	mtx_ram = (unsigned char *)malloc(512*1024);
+	mtx_ram = (unsigned char *)malloc(0x80000);
 	if(!mtx_ram) return;
-	memset(mtx_ram, 0, 512*1024);
+	memset(mtx_ram, 0, 64 * 0x2000);
+
+	mtx_commonram = (unsigned char *)malloc(16384);
+	if(!mtx_commonram) return;
+	memset(mtx_commonram, 0, 16384);
 
 	mtx_tapebuffer = (unsigned char *)malloc(65536);
 	if(!mtx_tapebuffer) return;
 	memset(mtx_tapebuffer, 0, 65536);
+
+	mtx_savebuffer = (unsigned char *)malloc(65536);
+	if(!mtx_savebuffer) return;
+	memset(mtx_savebuffer, 0, 65536);
 
 	z80ctc_init(&mtx_ctc_intf);
 
@@ -386,12 +652,19 @@ void mtx_init_machine(void)
 	cpu_setbankhandler_r(3, MRA_BANK3);
 	cpu_setbankhandler_r(4, MRA_BANK4);
 	cpu_setbankhandler_r(5, MRA_BANK5);
+	cpu_setbankhandler_r(6, MRA_BANK6);
+	cpu_setbankhandler_r(7, MRA_BANK7);
+	cpu_setbankhandler_r(8, MRA_BANK8);
 
-	cpu_setbankhandler_w(6, mtx_trap_write);
-	cpu_setbankhandler_w(7, MWA_NOP);
-	cpu_setbankhandler_w(8, MWA_BANK8);
-	cpu_setbankhandler_w(9, MWA_BANK9);
-	cpu_setbankhandler_w(10, MWA_BANK10);
+
+	cpu_setbankhandler_w(9, mtx_trap_write);
+	cpu_setbankhandler_w(10, MWA_NOP);
+	cpu_setbankhandler_w(11, MWA_BANK11);
+	cpu_setbankhandler_w(12, MWA_BANK12);
+	cpu_setbankhandler_w(13, MWA_BANK13);
+	cpu_setbankhandler_w(14, MWA_BANK14);
+	cpu_setbankhandler_w(15, MWA_BANK15);
+	cpu_setbankhandler_w(16, MWA_BANK16);
 
 	// set up memory configuration
 
@@ -406,16 +679,26 @@ void mtx_init_machine(void)
 	romoffset = memory_region(REGION_CPU1) + 0x12000;
 	cpu_setbank(2, romoffset);
 
-	cpu_setbank(3, mtx_ram);
-	cpu_setbank(8, mtx_ram);
+	cpu_setbank(3, mtx_ram + 0x6000);
+	cpu_setbank(11, mtx_ram + 0x6000);
 
 	cpu_setbank(4, mtx_ram + 0x4000);
-	cpu_setbank(9, mtx_ram + 0x4000);
+	cpu_setbank(12, mtx_ram + 0x4000);
 
-	cpu_setbank(5, mtx_ram + 0xc000);
-	cpu_setbank(10, mtx_ram + 0xc000);
+	cpu_setbank(5, mtx_ram + 0x2000);
+	cpu_setbank(13, mtx_ram + 0x2000);
 
+	cpu_setbank(6, mtx_ram);
+	cpu_setbank(14, mtx_ram);
 
+	cpu_setbank(7, mtx_commonram);
+	cpu_setbank(15, mtx_commonram);
+
+	cpu_setbank(8, mtx_commonram + 0x2000);
+	cpu_setbank(16, mtx_commonram + 0x2000);
+
+        mtx_loadindex = 0;
+	mtx_saveindex = 0;
 
 }
 
@@ -425,6 +708,7 @@ void mtx_exit_machine(void)
 	{
 		free(mtx_ram);
 		free(mtx_tapebuffer);
+		free(mtx_savebuffer);
 	}
 
 }
@@ -444,19 +728,25 @@ static struct MemoryReadAddress mtx_readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_BANK1 },
 	{ 0x2000, 0x3fff, MRA_BANK2 },
-	{ 0x4000, 0x7fff, MRA_BANK3 },
-	{ 0x8000, 0xbfff, MRA_BANK4 },
-	{ 0xc000, 0xffff, MRA_BANK5 },
+	{ 0x4000, 0x5fff, MRA_BANK3 },
+	{ 0x6000, 0x7fff, MRA_BANK4 },
+	{ 0x8000, 0x9fff, MRA_BANK5 },
+	{ 0xa000, 0xbfff, MRA_BANK6 },
+	{ 0xc000, 0xdfff, MRA_BANK7 },
+	{ 0xe000, 0xffff, MRA_BANK8 },
 	{ -1 }
 };
 
 static struct MemoryWriteAddress mtx_writemem[] =
 {
-	{ 0x0000, 0x1fff, MWA_BANK6 },
-	{ 0x2000, 0x3fff, MWA_BANK7 },
-	{ 0x4000, 0x7fff, MWA_BANK8 },
-	{ 0x8000, 0xbfff, MWA_BANK9 },
-	{ 0xc000, 0xffff, MWA_BANK10 },
+	{ 0x0000, 0x1fff, MWA_BANK9 },
+	{ 0x2000, 0x3fff, MWA_BANK10 },
+        { 0x4000, 0x5fff, MWA_BANK11 },
+        { 0x6000, 0x7fff, MWA_BANK12 },
+        { 0x8000, 0x9fff, MWA_BANK13 },
+        { 0xa000, 0xbfff, MWA_BANK14 },
+        { 0xc000, 0xdfff, MWA_BANK15 },
+        { 0xe000, 0xffff, MWA_BANK16 },
 	{ -1 }
 };
 
@@ -582,6 +872,15 @@ INPUT_PORTS_START( mtx512 )
   PORT_BITX (0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "F8", KEYCODE_F8, IP_JOY_NONE)
   PORT_BITX (0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "SPACE", KEYCODE_SPACE, IP_JOY_NONE)
   PORT_BITX (0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "F4", KEYCODE_F4, IP_JOY_NONE)
+
+ PORT_START /* 10 */
+  PORT_DIPNAME(0x02, 0x00, "Country Code Switch 1")
+  PORT_DIPSETTING(0x00, "on" )
+  PORT_DIPSETTING(0x02, "off" )
+  PORT_DIPNAME(0x01, 0x00, "Country Code Switch 0")
+  PORT_DIPSETTING(0x00, "on" )
+  PORT_DIPSETTING(0x01, "off" )
+  PORT_BIT(0xfc, IP_ACTIVE_LOW, IPT_UNUSED)
 
 INPUT_PORTS_END
 

@@ -289,7 +289,7 @@ static struct MemoryWriteAddress ti99_2_writemem[] =
 static int KeyRow = 0;
 
 /* write the current keyboard row */
-static void ti99_2_write_kbd(int offset, int data)
+static WRITE_HANDLER ( ti99_2_write_kbd )
 {
 	offset &= 0x7;  /* other address lines are not decoded */
 
@@ -308,7 +308,7 @@ static void ti99_2_write_kbd(int offset, int data)
 	}
 }
 
-static void ti99_2_write_misc_cru(int offset, int data)
+static WRITE_HANDLER ( ti99_2_write_misc_cru )
 {
 	offset &= 0x7;  /* other address lines are not decoded */
 
@@ -343,12 +343,12 @@ static struct IOWritePort ti99_2_writeport[] =
 };
 
 /* read keys in the current row */
-static int ti99_2_read_kbd(int offset)
+static READ_HANDLER ( ti99_2_read_kbd )
 {
 	return readinputport(KeyRow);
 }
 
-static int ti99_2_read_misc_cru(int offset)
+static READ_HANDLER ( ti99_2_read_misc_cru )
 {
 	return 0;
 }

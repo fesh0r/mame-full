@@ -841,7 +841,7 @@ void atari_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		if( --atari_frame_counter == 0 )
 			full_refresh = 1;
 		else
-			ui_text(atari_frame_message, 0, Machine->uiheight - 10);
+			ui_text(bitmap, atari_frame_message, 0, Machine->uiheight - 10);
 	}
     if( full_refresh )
 		fillbitmap(Machine->scrbitmap, Machine->pens[0], &Machine->drv->visible_area);

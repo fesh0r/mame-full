@@ -1,9 +1,9 @@
 #include "driver.h"
 
 /* used to tell updatescreen() to clear the bitmap */
-extern int need_to_clear_bitmap;    
+extern int need_to_clear_bitmap;
 
-int tapecontrol(int selected)
+int tapecontrol(struct osd_bitmap *bitmap, int selected)
 {
 	static int id = 0;
 	char timepos[32];
@@ -25,7 +25,11 @@ int tapecontrol(int selected)
 	total++;
 
 	t0 = device_tell(IO_CASSETTE,id);
-	t1 = device_length(IO_CASSETTE,id);
+	/* Using the following trick because device_length() is the file length,
+	 * and might not be valid */
+	t1 = device_seek(IO_CASSETTE,id,0,SEEK_END);
+	device_seek(IO_CASSETTE,id,t0,SEEK_SET);
+
 	if( t1 )
 		sprintf(timepos, "%3d%%", t0*100/t1);
 	else
@@ -71,11 +75,11 @@ int tapecontrol(int selected)
     if (sel > 255)  /* are we waiting for a new key? */
     {
         /* display the menu */
-		ui_displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
+		ui_displaymenu(bitmap, menu_item,menu_subitem,flag,sel & 0xff,3);
         return sel + 1;
     }
 
-	ui_displaymenu(menu_item,menu_subitem,flag,sel,arrowize);
+	ui_displaymenu(bitmap, menu_item,menu_subitem,flag,sel,arrowize);
 
     if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
     {

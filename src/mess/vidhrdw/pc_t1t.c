@@ -6,6 +6,20 @@
 #include "mess/machine/pc.h"
 #include "mess/vidhrdw/pc.h"
 
+/* I think pc junior and the first tandy series
+ have a graphics adapter with 4 digital lines to the 
+ monitor (16 color palette)
+ dynamic palette management is not necessary here !
+
+ vga registers???
+ vga registers should be removed
+ later tandys had real ega and vga cards,
+ not a mixture between tandy1000 and ega,vga !??? */
+
+/* PeT 13 May 2000
+ changed osd_modify_pen to palette_change_color
+ fixed a little bug in the vga color registers */
+
 /* crtc address line allow only decoding of 8kbyte memory
    so are in graphics mode 2 or 4 of such banks distinquished
    by line */
@@ -91,7 +105,7 @@ READ_HANDLER ( pc_t1t_videoram_r )
  */
 void pc_t1t_index_w(int data)
 {
-	T1T_LOG(3,"T1T_index_w",(errorlog,"$%02x\n",data));
+	T1T_LOG(3,"T1T_index_w",("$%02x\n",data));
 	T1T_index = data;
 	T1T_reg = (data > 17) ? 18 : data;
 }
@@ -99,7 +113,7 @@ void pc_t1t_index_w(int data)
 int pc_t1t_index_r(void)
 {
 	int data = T1T_index;
-	T1T_LOG(3,"T1T_index_r",(errorlog,"$%02x\n",data));
+	T1T_LOG(3,"T1T_index_r",("$%02x\n",data));
 	return data;
 }
 /*
@@ -116,56 +130,56 @@ void pc_t1t_port_w(int data)
 	switch( T1T_reg )
 	{
 		case HTOTAL:
-			T1T_LOG(1,"T1T_horz_total_w",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_horz_total_w",("$%02x\n",data));
 			if (T1T_crtc[T1T_reg] == data) return;
 			T1T_HTOTAL = data;
             break;
 		case HDISP:
-			T1T_LOG(1,"T1T_horz_displayed_w",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_horz_displayed_w",("$%02x\n",data));
 			if (T1T_crtc[T1T_reg] == data) return;
 			T1T_HDISP = data;
 			T1T_size = (int)T1T_HDISP * (int)T1T_VDISP;
             break;
 		case HSYNCP:
-			T1T_LOG(1,"T1T_horz_sync_pos_w",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_horz_sync_pos_w",("$%02x\n",data));
 			if (T1T_crtc[T1T_reg] == data) return;
 			T1T_HSYNCP = data;
             break;
 		case HSYNCW:
-			T1T_LOG(1,"T1T_horz_sync_width_w",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_horz_sync_width_w",("$%02x\n",data));
 			if (T1T_crtc[T1T_reg] == data) return;
 			T1T_HSYNCW = data;
             break;
 
 		case VTOTAL:
-			T1T_LOG(1,"T1T_vert_total_w",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_vert_total_w",("$%02x\n",data));
 			if (T1T_crtc[T1T_reg] == data) return;
 			T1T_VTOTAL = data;
             break;
 		case VTADJ:
-			T1T_LOG(1,"T1T_vert_total_adj_w",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_vert_total_adj_w",("$%02x\n",data));
 			if (T1T_crtc[T1T_reg] == data) return;
 			T1T_VTADJ = data;
             break;
 		case VDISP:
-			T1T_LOG(1,"T1T_vert_displayed_w",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_vert_displayed_w",("$%02x\n",data));
 			if (T1T_crtc[T1T_reg] == data) return;
 			T1T_VDISP = data;
 			T1T_size = (int)T1T_HDISP * (int)T1T_VDISP;
             break;
 		case VSYNCW:
-			T1T_LOG(1,"T1T_vert_sync_width_w",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_vert_sync_width_w",("$%02x\n",data));
 			if (T1T_crtc[T1T_reg] == data) return;
 			T1T_VSYNCW = data;
             break;
 
 		case INTLACE:
-			T1T_LOG(1,"T1T_interlace_w",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_interlace_w",("$%02x\n",data));
 			if (T1T_crtc[T1T_reg] == data) return;
 			T1T_INTLACE = data;
             break;
 		case SCNLINE:
-			T1T_LOG(1,"T1T_scanline_w",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_scanline_w",("$%02x\n",data));
 			if (T1T_crtc[T1T_reg] == data) return;
 			T1T_SCNLINE = data;
 			T1T_maxscan = ((T1T_SCNLINE & 0x1f) + 1) * 2;
@@ -174,7 +188,7 @@ void pc_t1t_port_w(int data)
             break;
 
 		case CURTOP:
-			T1T_LOG(1,"T1T_cursor_top_w",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_cursor_top_w",("$%02x\n",data));
 			if (T1T_crtc[T1T_reg] == data) return;
 			T1T_CURTOP = data;
 			T1T_curmode = T1T_CURTOP & 0x60;
@@ -182,7 +196,7 @@ void pc_t1t_port_w(int data)
 			dirtybuffer[T1T_cursor] = 1;
             break;
 		case CURBOT:
-			T1T_LOG(1,"T1T_cursor_bottom_w",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_cursor_bottom_w",("$%02x\n",data));
 			if (T1T_crtc[T1T_reg] == data) return;
 			T1T_CURBOT = data;
 			T1T_curmaxy = (T1T_CURBOT & 0x1f) * 2;
@@ -190,27 +204,27 @@ void pc_t1t_port_w(int data)
             break;
 
 		case VIDH:
-			T1T_LOG(1,"T1T_base_high_w",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_base_high_w",("$%02x\n",data));
 			if (T1T_crtc[T1T_reg] == data) return;
 			T1T_VIDH = data;
 			T1T_base = (T1T_VIDH*256+T1T_VIDL) % videoram_size;
             break;
 		case VIDL:
-			T1T_LOG(1,"T1T_base_low_w",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_base_low_w",("$%02x\n",data));
 			if (T1T_crtc[T1T_reg] == data) return;
 			T1T_VIDL = data;
 			T1T_base = (T1T_VIDH*256+T1T_VIDL) % videoram_size;
             break;
 
 		case CURH:
-			T1T_LOG(2,"T1T_cursor_high_w",(errorlog,"$%02x\n",data));
+			T1T_LOG(2,"T1T_cursor_high_w",("$%02x\n",data));
 			if (T1T_crtc[T1T_reg] == data) return;
 			T1T_CURH = data;
 			T1T_cursor = ((T1T_CURH*256+T1T_CURL)*2) % videoram_size;
 			dirtybuffer[T1T_cursor] = 1;
             break;
 		case CURL:
-			T1T_LOG(2,"T1T_cursor_low_w",(errorlog,"$%02x\n",data));
+			T1T_LOG(2,"T1T_cursor_low_w",("$%02x\n",data));
 			if (T1T_crtc[T1T_reg] == data) return;
 			T1T_CURL = data;
 			T1T_cursor = ((T1T_CURH*256+T1T_CURL)*2) % videoram_size;
@@ -218,11 +232,11 @@ void pc_t1t_port_w(int data)
             break;
 
 		case LPENH: /* this is read only */
-			T1T_LOG(1,"T1T_light_pen_high_w",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_light_pen_high_w",("$%02x\n",data));
 			if (T1T_crtc[T1T_reg] == data) return;
             break;
 		case LPENL: /* this is read only */
-			T1T_LOG(1,"T1T_light_pen_low_w",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_light_pen_low_w",("$%02x\n",data));
 			if (T1T_crtc[T1T_reg] == data) return;
             break;
     }
@@ -234,71 +248,71 @@ int pc_t1t_port_r(void)
 	switch( T1T_reg )
 	{
 		case HTOTAL:
-			T1T_LOG(1,"T1T_horz_total_r",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_horz_total_r",("$%02x\n",data));
             break;
 		case HDISP:
-			T1T_LOG(1,"T1T_horz_displayed_r",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_horz_displayed_r",("$%02x\n",data));
             break;
 		case HSYNCP:
-			T1T_LOG(1,"T1T_horz_sync_pos_r",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_horz_sync_pos_r",("$%02x\n",data));
             break;
 		case HSYNCW:
-			T1T_LOG(1,"T1T_horz_sync_width_r",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_horz_sync_width_r",("$%02x\n",data));
             break;
 
 		case VTOTAL:
-			T1T_LOG(1,"T1T_vert_total_r",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_vert_total_r",("$%02x\n",data));
             break;
 		case VTADJ:
-			T1T_LOG(1,"T1T_vert_total_adj_r",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_vert_total_adj_r",("$%02x\n",data));
             break;
 		case VDISP:
-			T1T_LOG(1,"T1T_vert_displayed_r",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_vert_displayed_r",("$%02x\n",data));
             break;
 		case VSYNCW:
-			T1T_LOG(1,"T1T_vert_sync_width_r",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_vert_sync_width_r",("$%02x\n",data));
             break;
 
 		case INTLACE:
-			T1T_LOG(1,"T1T_interlace_r",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_interlace_r",("$%02x\n",data));
             break;
 		case SCNLINE:
-			T1T_LOG(1,"T1T_scanline_r",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_scanline_r",("$%02x\n",data));
             break;
 
 		case CURTOP:
-			T1T_LOG(1,"T1T_cursor_top_r",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_cursor_top_r",("$%02x\n",data));
             break;
 		case CURBOT:
-			T1T_LOG(1,"T1T_cursor_bottom_r",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_cursor_bottom_r",("$%02x\n",data));
             break;
 
 
 		case VIDH:
 			data = T1T_VIDH;
-			T1T_LOG(1,"T1T_base_high_r",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_base_high_r",("$%02x\n",data));
             break;
 		case VIDL:
 			data = T1T_VIDL;
-			T1T_LOG(1,"T1T_base_low_r",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_base_low_r",("$%02x\n",data));
             break;
 
 		case CURH:
 			data = T1T_CURH;
-			T1T_LOG(2,"T1T_cursor_high_r",(errorlog,"$%02x\n",data));
+			T1T_LOG(2,"T1T_cursor_high_r",("$%02x\n",data));
             break;
 		case CURL:
 			data = T1T_CURL;
-			T1T_LOG(2,"T1T_cursor_low_r",(errorlog,"$%02x\n",data));
+			T1T_LOG(2,"T1T_cursor_low_r",("$%02x\n",data));
             break;
 
 		case LPENH:
 			data = T1T_LPENH;
-			T1T_LOG(1,"T1T_light_pen_high_r",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_light_pen_high_r",("$%02x\n",data));
             break;
 		case LPENL:
 			data = T1T_LPENL;
-			T1T_LOG(1,"T1T_light_pen_low_r",(errorlog,"$%02x\n",data));
+			T1T_LOG(1,"T1T_light_pen_low_r",("$%02x\n",data));
             break;
     }
     return data;
@@ -309,7 +323,7 @@ int pc_t1t_port_r(void)
  */
 void pc_t1t_mode_control_w(int data)
 {
-	T1T_LOG(1,"T1T_mode_control_w",(errorlog, "$%02x: colums %d, gfx %d, hires %d, blink %d\n",
+	T1T_LOG(1,"T1T_mode_control_w",("$%02x: colums %d, gfx %d, hires %d, blink %d\n",
 		data, (data&1)?80:40, (data>>1)&1, (data>>4)&1, (data>>5)&1));
 	if( (pc_port[0x3d8] ^ data) & 0x3b )   /* text/gfx/width change */
 		memset(dirtybuffer, 1, videoram_size);
@@ -328,7 +342,7 @@ int pc_t1t_mode_control_r(void)
 void pc_t1t_color_select_w(int data)
 {
 	UINT8 r, g, b;
-	T1T_LOG(1,"T1T_color_select_w",(errorlog, "$%02x\n", data));
+	T1T_LOG(1,"T1T_color_select_w",("$%02x\n", data));
 	if (pc_port[0x3d9] == data)
 		return;
 	pc_port[0x3d9] = data;
@@ -346,14 +360,19 @@ void pc_t1t_color_select_w(int data)
 			g <<= 1;
 			b <<= 1;
 		}
-		osd_modify_pen(Machine->pens[16], r, g, b);
+#if 0
+		osd_modify_pen(16, r, g, b);
+//		osd_modify_pen(Machine->pens[16], r, g, b);
+#else
+		palette_change_color(16,r,g,b);
+#endif
 	}
 }
 
 int pc_t1t_color_select_r(void)
 {
 	int data = pc_port[0x3d9];
-	T1T_LOG(1,"T1T_color_select_r",(errorlog, "$%02x\n", data));
+	T1T_LOG(1,"T1T_color_select_r",("$%02x\n", data));
     return data;
 }
 
@@ -363,7 +382,7 @@ int pc_t1t_color_select_r(void)
  */
 void pc_t1t_vga_index_w(int data)
 {
-	T1T_LOG(1,"T1T_vga_index_w",(errorlog, "$%02x\n", data));
+	T1T_LOG(1,"T1T_vga_index_w",("$%02x\n", data));
 	T1T_vga_index = data;
 }
 
@@ -395,7 +414,7 @@ int pc_t1t_status_r(void)
  */
 void pc_t1t_lightpen_strobe_w(int data)
 {
-	T1T_LOG(1,"T1T_lightpen_strobe_w",(errorlog, "$%02x\n", data));
+	T1T_LOG(1,"T1T_lightpen_strobe_w",("$%02x\n", data));
 	pc_port[0x3db] = data;
 }
 
@@ -409,36 +428,40 @@ void pc_t1t_vga_data_w(int data)
 	switch (T1T_vga_index)
 	{
         case 0x00: /* mode control 1 */
-            T1T_LOG(1,"T1T_vga_mode_ctrl_1_w",(errorlog, "$%02x\n", data));
+            T1T_LOG(1,"T1T_vga_mode_ctrl_1_w",("$%02x\n", data));
             break;
         case 0x01: /* palette mask (bits 3-0) */
-            T1T_LOG(1,"T1T_vga_palette_mask_w",(errorlog, "$%02x\n", data));
+            T1T_LOG(1,"T1T_vga_palette_mask_w",("$%02x\n", data));
             break;
         case 0x02: /* border color (bits 3-0) */
-            T1T_LOG(1,"T1T_vga_border_color_w",(errorlog, "$%02x\n", data));
+            T1T_LOG(1,"T1T_vga_border_color_w",("$%02x\n", data));
             break;
         case 0x03: /* mode control 2 */
-            T1T_LOG(1,"T1T_vga_mode_ctrl_2_w",(errorlog, "$%02x\n", data));
+            T1T_LOG(1,"T1T_vga_mode_ctrl_2_w",("$%02x\n", data));
             break;
         case 0x04: /* reset register */
-            T1T_LOG(1,"T1T_vga_reset_w",(errorlog, "$%02x\n", data));
+            T1T_LOG(1,"T1T_vga_reset_w",("$%02x\n", data));
             break;
         /* palette array */
         case 0x10: case 0x11: case 0x12: case 0x13:
         case 0x14: case 0x15: case 0x16: case 0x17:
         case 0x18: case 0x19: case 0x1a: case 0x1b:
         case 0x1c: case 0x1d: case 0x1e: case 0x1f:
-			T1T_LOG(1,"T1T_vga_palette_w",(errorlog, "[$%02x] $%02x\n", T1T_vga_index - 0x10, data));
+			T1T_LOG(1,"T1T_vga_palette_w",("[$%02x] $%02x\n", T1T_vga_index - 0x10, data));
 			r = (data & 4) ? 0x7f : 0;
 			g = (data & 2) ? 0x7f : 0;
 			b = (data & 1) ? 0x7f : 0;
-			if (data & 32)
+			if (data & 8)
 			{
 				r <<= 1;
 				g <<= 1;
 				b <<= 1;
 			}
+#if 0
 			osd_modify_pen(T1T_vga_index - 16, r, g, b);
+#else
+			palette_change_color(T1T_vga_index - 16, r, g, b);
+#endif
             break;
     }
 }
@@ -450,26 +473,26 @@ int pc_t1t_vga_data_r(void)
 	switch (T1T_vga_index)
 	{
         case 0x00: /* mode control 1 */
-			T1T_LOG(1,"T1T_vga_mode_ctrl_1_r",(errorlog, "$%02x\n", data));
+			T1T_LOG(1,"T1T_vga_mode_ctrl_1_r",("$%02x\n", data));
             break;
         case 0x01: /* palette mask (bits 3-0) */
-			T1T_LOG(1,"T1T_vga_palette_mask_r",(errorlog, "$%02x\n", data));
+			T1T_LOG(1,"T1T_vga_palette_mask_r",("$%02x\n", data));
             break;
         case 0x02: /* border color (bits 3-0) */
-			T1T_LOG(1,"T1T_vga_border_color_r",(errorlog, "$%02x\n", data));
+			T1T_LOG(1,"T1T_vga_border_color_r",("$%02x\n", data));
             break;
         case 0x03: /* mode control 2 */
-			T1T_LOG(1,"T1T_vga_mode_ctrl_2_r",(errorlog, "$%02x\n", data));
+			T1T_LOG(1,"T1T_vga_mode_ctrl_2_r",("$%02x\n", data));
             break;
         case 0x04: /* reset register */
-			T1T_LOG(1,"T1T_vga_reset_r",(errorlog, "$%02x\n", data));
+			T1T_LOG(1,"T1T_vga_reset_r",("$%02x\n", data));
             break;
         /* palette array */
         case 0x10: case 0x11: case 0x12: case 0x13:
         case 0x14: case 0x15: case 0x16: case 0x17:
         case 0x18: case 0x19: case 0x1a: case 0x1b:
         case 0x1c: case 0x1d: case 0x1e: case 0x1f:
-			T1T_LOG(1,"T1T_vga_palette_r",(errorlog, "[$%02x] $%02x\n", T1T_vga_index - 0x10, data));
+			T1T_LOG(1,"T1T_vga_palette_r",("[$%02x] $%02x\n", T1T_vga_index - 0x10, data));
             break;
     }
 	return data;
@@ -508,14 +531,14 @@ void pc_t1t_bank_w(int data)
         videoram = &memory_region(REGION_CPU1)[vram];
 		displayram = &memory_region(REGION_CPU1)[dram];
         memset(dirtybuffer, 1, videoram_size);
-		DBG_LOG(1,"t1t_bank_w",(errorlog, "$%02x: display ram $%05x, video ram $%05x\n", data, dram, vram));
+		DBG_LOG(1,"t1t_bank_w",("$%02x: display ram $%05x, video ram $%05x\n", data, dram, vram));
 	}
 }
 
 int pc_t1t_bank_r(void)
 {
 	int data = pc_port[0x3df];
-    DBG_LOG(1,"t1t_bank_r",(errorlog, "$%02x\n", data));
+    DBG_LOG(1,"t1t_bank_r",("$%02x\n", data));
     return data;
 }
 

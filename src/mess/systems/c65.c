@@ -152,22 +152,17 @@ when problems start with -log and look into error.log file
 
 static struct MemoryReadAddress c65_readmem[] =
 {
-#if 1
-	{0x0000, 0x0001, MRA_BANK9},
-#else
-	{0x0000, 0x0001, c64_m6510_port_r},
-#endif
-	{0x0002, 0x1fff, MRA_BANK1},
-	{0x2000, 0x5fff, MRA_BANK2},
-	{0x6000, 0x7fff, MRA_BANK3},
-	{0x8000, 0x9fff, MRA_BANK4},
-	{0xa000, 0xbfff, MRA_BANK5},
-	{0xc000, 0xcfff, MRA_BANK6},
-	{0xd000, 0xdbff, MRA_BANK7},
-	{0xdc00, 0xdfff, MRA_BANK10},
-	{0xe000, 0xffff, MRA_BANK8},	   /* ram or kernel rom or external romh */
-	{0x10000, 0x1ffff, MRA_RAM},	   /* basic at 0xa000 */
-	{0x20000, 0x3ffff, MRA_ROM},	   /* kernal at 0xe000 */
+	{0x00000, 0x00001, c64_m6510_port_r},
+	{0x00002, 0x07fff, MRA_RAM},
+	{0x08000, 0x09fff, MRA_BANK1},
+	{0x0a000, 0x0bfff, MRA_BANK2},
+	{0x0c000, 0x0cfff, MRA_BANK3},
+	{0x0d000, 0x0d7ff, MRA_BANK4},
+	{0x0d800, 0x0dbff, MRA_BANK6},
+	{0x0dc00, 0x0dfff, MRA_BANK8},
+	{0x0e000, 0x0ffff, MRA_BANK10},
+	{0x10000, 0x1ffff, MRA_RAM},
+	{0x20000, 0x3ffff, MRA_ROM},
 	{0x40000, 0x7ffff, MRA_NOP},
 	{0x80000, 0xfffff, MRA_RAM},
 	/* 8 megabyte full address space! */
@@ -176,35 +171,31 @@ static struct MemoryReadAddress c65_readmem[] =
 
 static struct MemoryWriteAddress c65_writemem[] =
 {
-#if 1
-	{0x0000, 0x0001, MWA_BANK9, &c64_memory},
-#else
-	{0x0000, 0x0001, c64_m6510_port_w, &c64_memory},
-#endif
-#if 1
-	{0x0002, 0x1fff, MWA_BANK1},
-	{0x2000, 0x7fff, c65_write_2000},
-#else
-	{0x0002, 0x7fff, c65_write_0002},
-#endif
-	{0x8000, 0x9fff, c65_write_8000},
-	{0xa000, 0xcfff, c65_write_a000},
-	{0xd000, 0xdfff, c65_write_d000},
-	{0xe000, 0xffff, c65_write_e000},
+	{0x00000, 0x00001, c64_m6510_port_w, &c64_memory},
+	{0x00002, 0x07fff, MWA_RAM},
+	{0x08000, 0x09fff, MWA_RAM},
+	{0x0a000, 0x0cfff, MWA_RAM},
+	{0x0d000, 0x0d7ff, MWA_BANK5},
+	{0x0d800, 0x0dbff, MWA_BANK7},
+	{0x0dc00, 0x0dfff, MWA_BANK9},
+	{0x0e000, 0x0ffff, MWA_RAM},
 	{0x10000, 0x1f7ff, MWA_RAM},
 	{0x1f800, 0x1ffff, MWA_RAM, &c64_colorram},
-	{0x20000, 0x23fff, MWA_ROM, &c65_dos},	/* maps to 0x8000 */
-		/*{ 0x24000, 0x28fff, MWA_ROM, reserved */
+	{0x20000, 0x23fff, MWA_ROM}, // &c65_dos},	/* maps to 0x8000 */
+	{0x24000, 0x28fff, MWA_ROM}, // reserved
 	{0x29000, 0x29fff, MWA_ROM, &c65_chargen},
 	{0x2a000, 0x2bfff, MWA_ROM, &c64_basic},
 	{0x2c000, 0x2cfff, MWA_ROM, &c65_interface},
 	{0x2d000, 0x2dfff, MWA_ROM, &c64_chargen},
 	{0x2e000, 0x2ffff, MWA_ROM, &c64_kernal},
-	{0x30000, 0x31fff, MWA_ROM, &c65_monitor},	/*monitor maps to 0x6000 */
-	{0x32000, 0x37fff, MWA_ROM, &c65_basic},
-	{ 0x38000, 0x3bfff, MWA_ROM, &c65_graphics},
-		/* { 0x3c000, 0x3dfff, MWA_ROM, reserved */
-	{0x3e000, 0x3ffff, MWA_ROM, &c65_kernal},
+	{0x30000, 0x31fff, MWA_ROM}, //&c65_monitor},	/*monitor maps to 0x6000 */
+	{0x32000, 0x37fff, MWA_ROM}, //&c65_basic},
+	{0x38000, 0x3bfff, MWA_ROM}, //&c65_graphics},
+	{0x3c000, 0x3dfff, MWA_ROM}, // reserved
+	{0x3e000, 0x3ffff, MWA_ROM}, // &c65_kernal},
+	{0x40000, 0x7ffff, MWA_NOP},
+	{0x80000, 0xfffff, MWA_RAM},
+//	{0x80000, 0xfffff, MWA_BANK16},
 	{-1}							   /* end of table */
 };
 
@@ -217,7 +208,8 @@ static struct MemoryWriteAddress c65_writemem[] =
 	 PORT_BIT (0x7c00, 0x0, IPT_UNUSED) /* no tape */\
      PORT_DIPNAME (0x300, 0x0, "Memory Expansion")\
 	 PORT_DIPSETTING (0, "None")\
-	 PORT_DIPSETTING (0x300, "512 KByte")\
+	 PORT_DIPSETTING (0x100, "512 KByte")\
+	 PORT_DIPSETTING (0x200, "4 MByte")\
 	PORT_DIPNAME   ( 0x80, 0x80, "Sid Chip Type")\
 	PORT_DIPSETTING(  0, "MOS6581" )\
 	PORT_DIPSETTING(0x80, "MOS8580" )\
@@ -227,113 +219,109 @@ static struct MemoryWriteAddress c65_writemem[] =
 	 /*PORT_DIPSETTING (8, "C64 (EXROM)")*/\
 	 /*PORT_DIPSETTING (0x10, "CBM Supergames")*/\
 	 /*PORT_DIPSETTING (0x14, "Ocean Robocop2")*/\
-	 PORT_DIPNAME (0x02, 0x02, "Serial Bus/Device 8")\
+	 PORT_DIPNAME (0x02, 0x02, "Serial Bus/Device 10")\
 	 PORT_DIPSETTING (0, "None")\
-	 PORT_DIPSETTING (2, "VC1541 Floppy Drive")\
-	 PORT_DIPNAME (0x01, 0x01, "Serial Bus/Device 9")\
+	 PORT_DIPSETTING (2, "Floppy Drive Simulation")\
+	 PORT_DIPNAME (0x01, 0x01, "Serial Bus/Device 11")\
 	 PORT_DIPSETTING (0, "None")\
-	 PORT_DIPSETTING (1, "VC1541 Floppy Drive")
+	 PORT_DIPSETTING (1, "Floppy Drive Simulation")
 
 
 INPUT_PORTS_START (c65)
-	 C64_DIPS
-     C65_DIPS
-	 PORT_START
-     DIPS_HELPER (0x8000, "Arrow-Left", KEYCODE_TILDE)
-	 DIPS_HELPER (0x4000, "1 !   BLK   ORNG", KEYCODE_1)
-	 DIPS_HELPER (0x2000, "2 \"   WHT   BRN", KEYCODE_2)
-	 DIPS_HELPER (0x1000, "3 #   RED   L RED", KEYCODE_3)
-	 DIPS_HELPER (0x0800, "4 $   CYN   D GREY", KEYCODE_4)
-	 DIPS_HELPER (0x0400, "5 %   PUR   GREY", KEYCODE_5)
-	 DIPS_HELPER (0x0200, "6 &   GRN   L GRN", KEYCODE_6)
-	 DIPS_HELPER (0x0100, "7 '   BLU   L BLU", KEYCODE_7)
-	 DIPS_HELPER (0x0080, "8 (   YEL   L GREY", KEYCODE_8)
-	 DIPS_HELPER (0x0040, "9 )   RVS-ON", KEYCODE_9)
-	 DIPS_HELPER (0x0020, "0     RVS-OFF", KEYCODE_0)
-	 DIPS_HELPER (0x0010, "+", KEYCODE_PLUS_PAD)
-	 DIPS_HELPER (0x0008, "-", KEYCODE_MINUS_PAD)
-	 DIPS_HELPER (0x0004, "Pound", KEYCODE_MINUS)
-	 DIPS_HELPER (0x0002, "HOME CLR", KEYCODE_EQUALS)
-	 DIPS_HELPER (0x0001, "DEL INST", KEYCODE_BACKSPACE)
-	 PORT_START
-     DIPS_HELPER (0x8000, "(C65)TAB", KEYCODE_TAB)
-	 DIPS_HELPER (0x4000, "Q", KEYCODE_Q)
-	 DIPS_HELPER (0x2000, "W", KEYCODE_W)
-	 DIPS_HELPER (0x1000, "E", KEYCODE_E)
-	 DIPS_HELPER (0x0800, "R", KEYCODE_R)
-	 DIPS_HELPER (0x0400, "T", KEYCODE_T)
-	 DIPS_HELPER (0x0200, "Y", KEYCODE_Y)
-	 DIPS_HELPER (0x0100, "U", KEYCODE_U)
-	 DIPS_HELPER (0x0080, "I", KEYCODE_I)
-	 DIPS_HELPER (0x0040, "O", KEYCODE_O)
-	 DIPS_HELPER (0x0020, "P", KEYCODE_P)
-	 DIPS_HELPER (0x0010, "At", KEYCODE_OPENBRACE)
-	 DIPS_HELPER (0x0008, "*", KEYCODE_ASTERISK)
-	 DIPS_HELPER (0x0004, "Arrow-Up Pi", KEYCODE_CLOSEBRACE)
-	 DIPS_HELPER (0x0002, "RESTORE", KEYCODE_PRTSCR)
-	 DIPS_HELPER (0x0001, "CTRL", KEYCODE_RCONTROL)
-	 PORT_START
-     PORT_BITX (0x8000, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
-				"(Left-Shift) SHIFT-LOCK (switch)",
-				KEYCODE_CAPSLOCK, IP_JOY_NONE)
+	C64_DIPS
+	C65_DIPS
+	PORT_START
+	DIPS_HELPER (0x8000, "Arrow-Left", KEYCODE_TILDE)
+	DIPS_HELPER (0x4000, "1 !   BLK   ORNG", KEYCODE_1)
+	DIPS_HELPER (0x2000, "2 \"   WHT   BRN", KEYCODE_2)
+	DIPS_HELPER (0x1000, "3 #   RED   L RED", KEYCODE_3)
+	DIPS_HELPER (0x0800, "4 $   CYN   D GREY", KEYCODE_4)
+	DIPS_HELPER (0x0400, "5 %   PUR   GREY", KEYCODE_5)
+	DIPS_HELPER (0x0200, "6 &   GRN   L GRN", KEYCODE_6)
+	DIPS_HELPER (0x0100, "7 '   BLU   L BLU", KEYCODE_7)
+	DIPS_HELPER (0x0080, "8 (   YEL   L GREY", KEYCODE_8)
+	DIPS_HELPER (0x0040, "9 )   RVS-ON", KEYCODE_9)
+	DIPS_HELPER (0x0020, "0     RVS-OFF", KEYCODE_0)
+	DIPS_HELPER (0x0010, "+", KEYCODE_PLUS_PAD)
+	DIPS_HELPER (0x0008, "-", KEYCODE_MINUS_PAD)
+	DIPS_HELPER (0x0004, "Pound", KEYCODE_MINUS)
+	DIPS_HELPER (0x0002, "HOME CLR", KEYCODE_EQUALS)
+	DIPS_HELPER (0x0001, "DEL INST", KEYCODE_BACKSPACE)
+	PORT_START
+	DIPS_HELPER (0x8000, "(C65)TAB", KEYCODE_TAB)
+	DIPS_HELPER (0x4000, "Q", KEYCODE_Q)
+	DIPS_HELPER (0x2000, "W", KEYCODE_W)
+	DIPS_HELPER (0x1000, "E", KEYCODE_E)
+	DIPS_HELPER (0x0800, "R", KEYCODE_R)
+	DIPS_HELPER (0x0400, "T", KEYCODE_T)
+	DIPS_HELPER (0x0200, "Y", KEYCODE_Y)
+	DIPS_HELPER (0x0100, "U", KEYCODE_U)
+	DIPS_HELPER (0x0080, "I", KEYCODE_I)
+	DIPS_HELPER (0x0040, "O", KEYCODE_O)
+	DIPS_HELPER (0x0020, "P", KEYCODE_P)
+	DIPS_HELPER (0x0010, "At", KEYCODE_OPENBRACE)
+	DIPS_HELPER (0x0008, "*", KEYCODE_ASTERISK)
+	DIPS_HELPER (0x0004, "Arrow-Up Pi", KEYCODE_CLOSEBRACE)
+	DIPS_HELPER (0x0002, "RESTORE", KEYCODE_PRTSCR)
+	DIPS_HELPER (0x0001, "CTRL", KEYCODE_RCONTROL)
+	PORT_START
+	PORT_BITX (0x8000, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
+			   "(Left-Shift) SHIFT-LOCK (switch)",
+			   KEYCODE_CAPSLOCK, IP_JOY_NONE)
 	PORT_DIPSETTING(  0, DEF_STR(Off) )
 	PORT_DIPSETTING(0x8000, DEF_STR(On) )
-	 DIPS_HELPER (0x4000, "A", KEYCODE_A)
-	 DIPS_HELPER (0x2000, "S", KEYCODE_S)
-	 DIPS_HELPER (0x1000, "D", KEYCODE_D)
-	 DIPS_HELPER (0x0800, "F", KEYCODE_F)
-	 DIPS_HELPER (0x0400, "G", KEYCODE_G)
-	 DIPS_HELPER (0x0200, "H", KEYCODE_H)
-	 DIPS_HELPER (0x0100, "J", KEYCODE_J)
-	 DIPS_HELPER (0x0080, "K", KEYCODE_K)
-	 DIPS_HELPER (0x0040, "L", KEYCODE_L)
-	 DIPS_HELPER (0x0020, ": [", KEYCODE_COLON)
-	 DIPS_HELPER (0x0010, "; ]", KEYCODE_QUOTE)
-	 DIPS_HELPER (0x0008, "=", KEYCODE_BACKSLASH)
-	 DIPS_HELPER (0x0004, "RETURN", KEYCODE_ENTER)
-	 DIPS_HELPER (0x0002, "CBM", KEYCODE_RALT)
-	 DIPS_HELPER (0x0001, "Left-Shift", KEYCODE_LSHIFT)
-	 PORT_START
-     DIPS_HELPER (0x8000, "Z", KEYCODE_Z)
-	 DIPS_HELPER (0x4000, "X", KEYCODE_X)
-	 DIPS_HELPER (0x2000, "C", KEYCODE_C)
-	 DIPS_HELPER (0x1000, "V", KEYCODE_V)
-	 DIPS_HELPER (0x0800, "B", KEYCODE_B)
-	 DIPS_HELPER (0x0400, "N", KEYCODE_N)
-	 DIPS_HELPER (0x0200, "M", KEYCODE_M)
-	 DIPS_HELPER (0x0100, ", <", KEYCODE_COMMA)
-	 DIPS_HELPER (0x0080, ". >", KEYCODE_STOP)
-	 DIPS_HELPER (0x0040, "/ ?", KEYCODE_SLASH)
-	 DIPS_HELPER (0x0020, "Right-Shift", KEYCODE_RSHIFT)
-	 DIPS_HELPER (0x0010, "(Right-Shift Cursor-Down)CRSR-UP",
-				  KEYCODE_8_PAD)
-	 DIPS_HELPER (0x0008, "Space", KEYCODE_SPACE)
-	 DIPS_HELPER (0x0004, "(Right-Shift Cursor-Right)CRSR-LEFT",
-				  KEYCODE_4_PAD)
-	 DIPS_HELPER (0x0002, "CRSR-DOWN", KEYCODE_2_PAD)
-	 DIPS_HELPER (0x0001, "CRSR-RIGHT", KEYCODE_6_PAD)
-     PORT_START
-     DIPS_HELPER (0x8000, "STOP RUN", KEYCODE_ESC)
-	 DIPS_HELPER (0x4000, "(C65)ESC", KEYCODE_F1)
-	 DIPS_HELPER (0x2000, "(C65)ALT", KEYCODE_F2)
-	 PORT_BITX (0x1000, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
-				"(C65)CAPSLOCK(switch)",
-				KEYCODE_F3, IP_JOY_NONE)
-	PORT_DIPSETTING(  0, DEF_STR(Off) )\
-	PORT_DIPSETTING(0x1000, DEF_STR(On) )\
-	 PORT_BITX (0x0800, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
-				"(C65)NO SCRL(switch)",
-				KEYCODE_F4, IP_JOY_NONE)
-	PORT_DIPSETTING(  0, DEF_STR(Off) )\
-	PORT_DIPSETTING(0x800, DEF_STR(On) )\
-	 DIPS_HELPER (0x0400, "f1 f2", KEYCODE_F5)
-	 DIPS_HELPER (0x0200, "f3 f4", KEYCODE_F6)
-	 DIPS_HELPER (0x0100, "f5 f6", KEYCODE_F7)
-	 DIPS_HELPER (0x0080, "f7 f8", KEYCODE_F8)
-	 DIPS_HELPER (0x0040, "(C65)f9 f10", KEYCODE_F9)
-	 DIPS_HELPER (0x0020, "(C65)f11 f12", KEYCODE_F10)
-	 DIPS_HELPER (0x0010, "(C65)f13 f14", KEYCODE_F11)
-	 DIPS_HELPER (0x0008, "(C65)HELP", KEYCODE_F12)
+	DIPS_HELPER (0x4000, "A", KEYCODE_A)
+	DIPS_HELPER (0x2000, "S", KEYCODE_S)
+	DIPS_HELPER (0x1000, "D", KEYCODE_D)
+	DIPS_HELPER (0x0800, "F", KEYCODE_F)
+	DIPS_HELPER (0x0400, "G", KEYCODE_G)
+	DIPS_HELPER (0x0200, "H", KEYCODE_H)
+	DIPS_HELPER (0x0100, "J", KEYCODE_J)
+	DIPS_HELPER (0x0080, "K", KEYCODE_K)
+	DIPS_HELPER (0x0040, "L", KEYCODE_L)
+	DIPS_HELPER (0x0020, ": [", KEYCODE_COLON)
+	DIPS_HELPER (0x0010, "; ]", KEYCODE_QUOTE)
+	DIPS_HELPER (0x0008, "=", KEYCODE_BACKSLASH)
+	DIPS_HELPER (0x0004, "RETURN", KEYCODE_ENTER)
+	DIPS_HELPER (0x0002, "CBM", KEYCODE_RALT)
+	DIPS_HELPER (0x0001, "Left-Shift", KEYCODE_LSHIFT)
+	PORT_START
+	DIPS_HELPER (0x8000, "Z", KEYCODE_Z)
+	DIPS_HELPER (0x4000, "X", KEYCODE_X)
+	DIPS_HELPER (0x2000, "C", KEYCODE_C)
+	DIPS_HELPER (0x1000, "V", KEYCODE_V)
+	DIPS_HELPER (0x0800, "B", KEYCODE_B)
+	DIPS_HELPER (0x0400, "N", KEYCODE_N)
+	DIPS_HELPER (0x0200, "M", KEYCODE_M)
+	DIPS_HELPER (0x0100, ", <", KEYCODE_COMMA)
+	DIPS_HELPER (0x0080, ". >", KEYCODE_STOP)
+	DIPS_HELPER (0x0040, "/ ?", KEYCODE_SLASH)
+	DIPS_HELPER (0x0020, "Right-Shift", KEYCODE_RSHIFT)
+	DIPS_HELPER (0x0010, "(Right-Shift Cursor-Down)CRSR-UP",
+				 KEYCODE_8_PAD)
+	DIPS_HELPER (0x0008, "Space", KEYCODE_SPACE)
+	DIPS_HELPER (0x0004, "(Right-Shift Cursor-Right)CRSR-LEFT",
+				 KEYCODE_4_PAD)
+	DIPS_HELPER (0x0002, "CRSR-DOWN", KEYCODE_2_PAD)
+	DIPS_HELPER (0x0001, "CRSR-RIGHT", KEYCODE_6_PAD)
+	PORT_START
+	DIPS_HELPER (0x8000, "STOP RUN", KEYCODE_ESC)
+	DIPS_HELPER (0x4000, "(C65)ESC", KEYCODE_F1)
+	DIPS_HELPER (0x2000, "(C65)ALT", KEYCODE_F2)
+	PORT_BITX (0x1000, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
+			   "(C65)CAPSLOCK(switch)",
+			   KEYCODE_F3, IP_JOY_NONE)
+	PORT_DIPSETTING(  0, DEF_STR(Off) )
+	PORT_DIPSETTING(0x1000, DEF_STR(On) )
+	DIPS_HELPER (0x0800, "(C65)NO SCRL", KEYCODE_F4)
+	DIPS_HELPER (0x0400, "f1 f2", KEYCODE_F5)
+	DIPS_HELPER (0x0200, "f3 f4", KEYCODE_F6)
+	DIPS_HELPER (0x0100, "f5 f6", KEYCODE_F7)
+	DIPS_HELPER (0x0080, "f7 f8", KEYCODE_F8)
+	DIPS_HELPER (0x0040, "(C65)f9 f10", KEYCODE_F9)
+	DIPS_HELPER (0x0020, "(C65)f11 f12", KEYCODE_F10)
+	DIPS_HELPER (0x0010, "(C65)f13 f14", KEYCODE_F11)
+	DIPS_HELPER (0x0008, "(C65)HELP", KEYCODE_F12)
 INPUT_PORTS_END
 
 INPUT_PORTS_START (c65ger)
@@ -423,47 +411,56 @@ INPUT_PORTS_START (c65ger)
 	 PORT_BITX (0x1000, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
 				"(C65)DIN ASC(switch)",
 				KEYCODE_F3, IP_JOY_NONE)
-	PORT_DIPSETTING(  0, "ASC" )\
-	PORT_DIPSETTING(0x1000, "DIN" )\
-	 PORT_BITX (0x0800, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
-				"(C65)NO SCRL(switch)",
-				KEYCODE_F4, IP_JOY_NONE)
-	PORT_DIPSETTING(  0, DEF_STR(Off) )\
-	PORT_DIPSETTING(0x800, DEF_STR(On) )\
-	 DIPS_HELPER (0x0400, "f1 f2", KEYCODE_F5)
-	 DIPS_HELPER (0x0200, "f3 f4", KEYCODE_F6)
-	 DIPS_HELPER (0x0100, "f5 f6", KEYCODE_F7)
-	 DIPS_HELPER (0x0080, "f7 f8", KEYCODE_F8)
-	 DIPS_HELPER (0x0040, "(C65)f9 f10", KEYCODE_F9)
-	 DIPS_HELPER (0x0020, "(C65)f11 f12", KEYCODE_F10)
-	 DIPS_HELPER (0x0010, "(C65)f13 f14", KEYCODE_F11)
-	 DIPS_HELPER (0x0008, "(C65)HELP", KEYCODE_F12)
+	PORT_DIPSETTING(  0, "ASC" )
+	PORT_DIPSETTING(0x1000, "DIN" )
+	DIPS_HELPER (0x0800, "(C65)NO SCRL", KEYCODE_F4)
+	DIPS_HELPER (0x0400, "f1 f2", KEYCODE_F5)
+	DIPS_HELPER (0x0200, "f3 f4", KEYCODE_F6)
+	DIPS_HELPER (0x0100, "f5 f6", KEYCODE_F7)
+	DIPS_HELPER (0x0080, "f7 f8", KEYCODE_F8)
+	DIPS_HELPER (0x0040, "(C65)f9 f10", KEYCODE_F9)
+	DIPS_HELPER (0x0020, "(C65)f11 f12", KEYCODE_F10)
+	DIPS_HELPER (0x0010, "(C65)f13 f14", KEYCODE_F11)
+	DIPS_HELPER (0x0008, "(C65)HELP", KEYCODE_F12)
 INPUT_PORTS_END
 
 static void c65_init_palette (unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
 {
-	memcpy (sys_palette, vic2_palette, sizeof (vic2_palette));
+	memcpy (sys_palette, vic3_palette, sizeof (vic3_palette));
 }
 
 #if 0
-	 ROM_LOAD ("910111.bin", 0x20000, 0x20000, 0xc5d8d32e)
-	 ROM_LOAD ("910523.bin", 0x20000, 0x20000, 0xe8235dd4)
-	 ROM_LOAD ("910626.bin", 0x20000, 0x20000, 0x12527742)
-	 ROM_LOAD ("910828.bin", 0x20000, 0x20000, 0x3ee40b06)
-	 /* loading demo disk??? */
-	 ROM_LOAD ("911001.bin", 0x20000, 0x20000, 0x0888b50f)
-	 /* german */
-	 ROM_LOAD ("910429.bin", 0x20000, 0x20000, 0xb025805c)
+	/* caff */
+	/* dma routine alpha 1 (0x400000 reversed copy)*/
+	ROM_LOAD ("910111.bin", 0x20000, 0x20000, 0xc5d8d32e)
+	/* b96b */
+	/* dma routine alpha 2 */
+	ROM_LOAD ("910523.bin", 0x20000, 0x20000, 0xe8235dd4)
+	/* 888c */
+	/* dma routine alpha 2 */
+	ROM_LOAD ("910626.bin", 0x20000, 0x20000, 0x12527742)
+	/* c9cd */
+	/* dma routine alpha 2 */
+	ROM_LOAD ("910828.bin", 0x20000, 0x20000, 0x3ee40b06)
+	/* 4bcf loading demo disk??? */
+	/* basic program stored at 0x4000 ? */
+	/* dma routine alpha 2 */
+	ROM_LOAD ("911001.bin", 0x20000, 0x20000, 0x0888b50f)
+	/* german e96a */
+	/* dma routine alpha 1 */
+	ROM_LOAD ("910429.bin", 0x20000, 0x20000, 0xb025805c)
 #endif
 
 ROM_START (c65)
-	 ROM_REGION (0x100000, REGION_CPU1)
-	 ROM_LOAD ("910828.bin", 0x20000, 0x20000, 0x3ee40b06)
+	ROM_REGION (0x800000, REGION_CPU1)
+//	ROM_REGION (0x100000, REGION_CPU1)
+	ROM_LOAD ("910828.bin", 0x20000, 0x20000, 0x3ee40b06)
 ROM_END
 
 ROM_START (c65ger)
-	 ROM_REGION (0x100000, REGION_CPU1)
-	 ROM_LOAD ("910429.bin", 0x20000, 0x20000, 0xb025805c)
+	ROM_REGION (0x800000, REGION_CPU1)
+//	ROM_REGION (0x100000, REGION_CPU1)
+	ROM_LOAD ("910429.bin", 0x20000, 0x20000, 0xb025805c)
 ROM_END
 
 static struct MachineDriver machine_driver_c65 =
@@ -471,13 +468,16 @@ static struct MachineDriver machine_driver_c65 =
   /* basic machine hardware */
 	{
 		{
+#if HAS_M4510
+			CPU_M4510,
+#else
 			CPU_M65CE02,
+#endif
 			3500000, /* or VIC6567_CLOCK, */
 			c65_readmem, c65_writemem,
 			0, 0,
 			c64_frame_interrupt, 1,
 			vic2_raster_irq, VIC2_HRETRACERATE,
-			(void*)c65_map
 		},
 	},
 	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -490,13 +490,13 @@ static struct MachineDriver machine_driver_c65 =
 	216,							   /* screen height */
 	{0, 656 - 1, 0, 216 - 1},		   /* visible_area */
 	0,								   /* graphics decode info */
-	sizeof (vic2_palette) / sizeof (vic2_palette[0]) / 3,
+	sizeof (vic3_palette) / sizeof (vic3_palette[0]) / 3,
 	0,
 	c65_init_palette,				   /* convert color prom */
 #ifdef PET_TEST_CODE
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 #else
-	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER,
+	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 #endif
 	0,
 	vic2_vh_start,
@@ -516,13 +516,16 @@ static struct MachineDriver machine_driver_c65pal =
   /* basic machine hardware */
 	{
 		{
+#if HAS_M4510
+			CPU_M4510,
+#else
 			CPU_M65CE02,
+#endif
 			3500000, /* or VIC6569_CLOCK,*/
 			c65_readmem, c65_writemem,
 			0, 0,
 			c64_frame_interrupt, 1,
 			vic2_raster_irq, VIC2_HRETRACERATE,
-			(void*)c65_map
 		},
 	},
 	VIC6569_VRETRACERATE,
@@ -536,13 +539,13 @@ static struct MachineDriver machine_driver_c65pal =
 	216,							   /* screen height */
 	{0, 656 - 1, 0, 216 - 1},		   /* visible_area */
 	0,								   /* graphics decode info */
-	sizeof (vic2_palette) / sizeof (vic2_palette[0]) / 3,
+	sizeof (vic3_palette) / sizeof (vic3_palette[0]) / 3,
 	0,
 	c65_init_palette,				   /* convert color prom */
 #ifdef PET_TEST_CODE
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 #else
-	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER,
+	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 #endif
 	0,
 	vic2_vh_start,
@@ -562,8 +565,8 @@ static const struct IODevice io_c65[] =
 	IODEVICE_CBM_C65_QUICK,
 #if 0
 	IODEVICE_CBM_ROM(c64_rom_id),
-	IODEVICE_CBM_DRIVE,
 #endif
+	IODEVICE_CBM_DRIVE,
 	{IO_END}
 };
 
@@ -575,8 +578,8 @@ static const struct IODevice io_c65[] =
 /*    	YEAR	NAME    PARENT	MACHINE	INPUT	INIT 	COMPANY   							FULLNAME */
 #ifdef PET_TEST_CODE
 COMP (	199?,	c65,	0,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"Commodore C65/C64DX (Prototype) NTSC")
-COMP (	199?,	c65ger,	c65,	c65pal,	c65ger,	c65,	"Commodore Business Machines Co.",	"Commodore C65/C64DX (Prototype) German (PAL)")
+COMP (	199?,	c65ger,	c65,	c65pal,	c65ger,	c65pal,	"Commodore Business Machines Co.",	"Commodore C65/C64DX (Prototype) German (PAL)")
 #else
 COMPX (	199?, 	c65,	0,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"Commodore C65/C64DX (Prototype) NTSC", 		GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
-COMPX (	199?, 	c65ger,	c65,	c65pal,	c65ger,	c65,	"Commodore Business Machines Co.",	"Commodore C65/C64DX (Prototype) German (PAL)",	GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
+COMPX (	199?, 	c65ger,	c65,	c65pal,	c65ger,	c65pal,	"Commodore Business Machines Co.",	"Commodore C65/C64DX (Prototype) German (PAL)",	GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
 #endif

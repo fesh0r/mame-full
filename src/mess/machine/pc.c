@@ -19,9 +19,12 @@
 	maybe SoundBlaster? EGA? VGA?
 
 ***************************************************************************/
-#include "mess/machine/pc.h"
 
+#include "pic8259.h"
 #include "mess/vidhrdw/vga.h"
+#include "tandy1t.h"
+
+#include "mess/machine/pc.h"
 
 static void (*pc_blink_textcolors)(int on);
 
@@ -88,6 +91,8 @@ static void *mouse_timer = NULL;
 static void pc_mouse_scan(int n);
 static void pc_mouse_poll(int n);
 
+static int tandy1000hx=0;
+
 void init_pc(void)
 {
 	UINT8 *gfx = &memory_region(REGION_GFX1)[0x1000];
@@ -97,12 +102,21 @@ void init_pc(void)
 		gfx[i] = i;
 }
 
+extern void init_t1000hx(void)
+{
+	init_pc();
+	tandy1000_init();
+	tandy1000hx=1;
+}
+
 void init_pc_vga(void)
 {
+#if 0
         int i; 
         UINT8 *memory=memory_region(REGION_CPU1)+0xc0000;
         UINT8 chksum;
 
+		/* oak vga */
         /* plausibility check of retrace signals goes wrong */
         memory[0x00f5]=memory[0x00f6]=memory[0x00f7]=0x90;
         memory[0x00f8]=memory[0x00f9]=memory[0x00fa]=0x90;
@@ -110,6 +124,7 @@ void init_pc_vga(void)
                 chksum+=memory[i];
         }
         memory[i]=0x100-chksum;
+#endif
 
 #if 0
         for (chksum=0, i=0;i<0x8000;i++) {
@@ -237,504 +252,6 @@ void pc_t1t_init_machine(void)
 
 /*************************************************************************
  *
- *		DMA
- *		direct memory access
- *
- *************************************************************************/
-UINT8 pc_DMA_msb = 0;
-UINT8 pc_DMA_temp = 0;
-int pc_DMA_address[4] = {0,0,0,0};
-int pc_DMA_count[4] = {0,0,0,0};
-int pc_DMA_page[4] = {0,0,0,0};
-UINT8 pc_DMA_transfer_mode[4] = {0,0,0,0};
-INT8 pc_DMA_direction[4] = {0,0,0,0};
-UINT8 pc_DMA_operation[4] = {0,0,0,0};
-UINT8 pc_DMA_status = 0x00;
-UINT8 pc_DMA_mask = 0x00;
-UINT8 pc_DMA_command = 0x00;
-UINT8 pc_DMA_DACK_hi = 0;
-UINT8 pc_DMA_DREQ_hi = 0;
-UINT8 pc_DMA_write_extended = 0;
-UINT8 pc_DMA_rotate_priority = 0;
-UINT8 pc_DMA_compressed_timing = 0;
-UINT8 pc_DMA_enable_controller = 0;
-UINT8 pc_DMA_channel = 0;
-
-WRITE_HANDLER ( pc_DMA_w )
-{
-	switch( offset )
-	{
-    case 0: case 2: case 4: case 6:
-        DMA_LOG(1,"DMA_address_w",(errorlog,"chan #%d $%02x: ", offset>>1, data));
-        if (pc_DMA_msb)
-            pc_DMA_address[offset>>1] |= (data & 0xff) << 8;
-        else
-            pc_DMA_address[offset>>1] = data & 0xff;
-        DMA_LOG(1,0,(errorlog,"[$%04x]\n", pc_DMA_address[offset>>1]));
-        pc_DMA_msb ^= 1;
-        break;
-    case 1: case 3: case 5: case 7:
-        DMA_LOG(1,"DMA_count_w",(errorlog,"chan #%d $%02x: ", offset>>1, data));
-        if (pc_DMA_msb)
-            pc_DMA_count[offset>>1] |= (data & 0xff) << 8;
-        else
-            pc_DMA_count[offset>>1] = data & 0xff;
-        DMA_LOG(1,0,(errorlog,"[$%04x]\n", pc_DMA_count[offset>>1]));
-        pc_DMA_msb ^= 1;
-        break;
-    case 8:    /* DMA command register */
-        pc_DMA_command = data;
-        pc_DMA_DACK_hi = (pc_DMA_command >> 7) & 1;
-        pc_DMA_DREQ_hi = (pc_DMA_command >> 6) & 1;
-        pc_DMA_write_extended = (pc_DMA_command >> 5) & 1;
-        pc_DMA_rotate_priority = (pc_DMA_command >> 4) & 1;
-        pc_DMA_compressed_timing = (pc_DMA_command >> 3) & 1;
-        pc_DMA_enable_controller = (pc_DMA_command >> 2) & 1;
-        pc_DMA_channel = pc_DMA_command & 3;
-        DMA_LOG(1,"DMA_command_w",(errorlog,"$%02x: chan #%d, enable %d, CT %d, RP %d, WE %d, DREQ %d, DACK %d\n", data,
-            pc_DMA_channel, pc_DMA_enable_controller, pc_DMA_compressed_timing, pc_DMA_rotate_priority, pc_DMA_write_extended, pc_DMA_DREQ_hi, pc_DMA_DACK_hi));
-        break;
-    case 9:    /* DMA write request register */
-        pc_DMA_channel = data & 3;
-        if (data & 0x04) {
-            DMA_LOG(1,"DMA_request_w",(errorlog,"$%02x: set chan #%d\n", data, pc_DMA_channel));
-            /* set the DMA request bit for the given channel */
-            pc_DMA_status |= 0x10 << pc_DMA_channel;
-        } else {
-            DMA_LOG(1,"DMA_request_w",(errorlog,"$%02x: clear chan #%d\n", data, pc_DMA_channel));
-            /* clear the DMA request bit for the given channel */
-            pc_DMA_status &= ~(0x11 << pc_DMA_channel);
-        }
-        break;
-    case 10:    /* DMA mask register */
-        pc_DMA_channel = data & 3;
-        if (data & 0x04) {
-            DMA_LOG(1,"DMA_mask_w",(errorlog,"$%02x: set chan #%d\n", data, pc_DMA_channel));
-            /* set the DMA request bit for the given channel */
-            pc_DMA_mask |= 0x11 << pc_DMA_channel;
-        } else {
-            DMA_LOG(1,"DMA_mask_w",(errorlog,"$%02x: clear chan #%d\n", data, pc_DMA_channel));
-            /* clear the DMA request bit for the given channel */
-            pc_DMA_mask &= ~(0x11 << pc_DMA_channel);
-        }
-        break;
-    case 11:    /* DMA mode register */
-        pc_DMA_channel = data & 3;
-        pc_DMA_operation[pc_DMA_channel] = (data >> 2) & 3;
-        pc_DMA_direction[pc_DMA_channel] = (data & 0x20) ? -1 : +1;
-        pc_DMA_transfer_mode[pc_DMA_channel] = (data >> 6) & 3;
-        DMA_LOG(1,"DMA_mode_w",(errorlog,"$%02x: chan #%d, oper %d, dir %d, mode %d\n", data, data&3, (data>>2)&3, (data>>5)&1, (data>>6)&3 ));
-        break;
-    case 12:    /* DMA clear byte pointer flip-flop */
-        DMA_LOG(1,"DMA_clear_ff_w",(errorlog,"$%02x\n", data));
-        pc_DMA_temp = data;
-        pc_DMA_msb = 0;
-        break;
-    case 13:    /* DMA master clear */
-        DMA_LOG(1,"DMA_master_w",(errorlog,"$%02x\n", data));
-        pc_DMA_msb = 0;
-        break;
-    case 14:    /* DMA clear mask register */
-        pc_DMA_mask &= ~data;
-        DMA_LOG(1,"DMA_mask_clr_w",(errorlog,"$%02x -> mask $%02x\n", data, pc_DMA_mask));
-        break;
-    case 15:    /* DMA write mask register */
-        pc_DMA_mask |= data;
-        DMA_LOG(1,"DMA_mask_clr_w",(errorlog,"$%02x -> mask $%02x\n", data, pc_DMA_mask));
-        break;
-    }
-}
-
-WRITE_HANDLER ( pc_DMA_page_w )
-{
-	switch( offset )
-	{
-		case 1: /* DMA page register 2 */
-			DMA_LOG(1,"DMA_page_2_w",(errorlog, "$%02x\n", data));
-			pc_DMA_page[2] = (data << 16) & 0xff0000;
-			break;
-		case 2:    /* DMA page register 3 */
-			DMA_LOG(1,"DMA_page_3_w",(errorlog, "$%02x\n", data));
-			pc_DMA_page[3] = (data << 16) & 0xff0000;
-			break;
-		case 3:    /* DMA page register 1 */
-			DMA_LOG(1,"DMA_page_1_w",(errorlog, "$%02x\n", data));
-			pc_DMA_page[1] = (data << 16) & 0xff0000;
-			break;
-		case 7:    /* DMA page register 0 */
-			DMA_LOG(1,"DMA_page_0_w",(errorlog, "$%02x\n", data));
-			pc_DMA_page[0] = (data << 16) & 0xff0000;
-			break;
-    }
-}
-
-READ_HANDLER ( pc_DMA_r )
-{
-	int data = 0xff;
-	switch( offset )
-	{
-		case 0: case 2: case 4: case 6:
-			if (pc_DMA_msb)
-				data = (pc_DMA_address[offset>>1] >> 8) & 0xff;
-			else
-				data = pc_DMA_address[offset>>1] & 0xff;
-			DMA_LOG(1,"DMA_address_r",(errorlog,"chan #%d $%02x ($%04x)\n", offset>>1, data, pc_DMA_address[offset>>1]));
-			pc_DMA_msb ^= 1;
-			break;
-
-		case 1: case 3: case 5: case 7:
-			if (pc_DMA_msb)
-				data = (pc_DMA_count[offset>>1] >> 8) & 0xff;
-			else
-				data = pc_DMA_count[offset>>1] & 0xff;
-			DMA_LOG(1,"DMA_count_r",(errorlog,"chan #%d $%02x ($%04x)\n", offset>>1, data, pc_DMA_count[offset>>1]));
-			pc_DMA_msb ^= 1;
-			break;
-
-		case 8: /* DMA status register */
-			data = pc_DMA_status;
-			DMA_LOG(1,"DMA_status_r",(errorlog,"$%02x\n", data));
-			break;
-
-		case 9: /* DMA write request register */
-			break;
-
-		case 10: /* DMA mask register */
-			data = pc_DMA_mask;
-			DMA_LOG(1,"DMA_mask_r",(errorlog,"$%02x\n", data));
-			break;
-
-		case 11: /* DMA mode register */
-			break;
-
-		case 12: /* DMA clear byte pointer flip-flop */
-			break;
-
-		case 13: /* DMA master clear */
-			data = pc_DMA_temp;
-			DMA_LOG(1,"DMA_temp_r",(errorlog,"$%02x\n", data));
-			break;
-
-		case 14: /* DMA clear mask register */
-			break;
-
-		case 15: /* DMA write mask register */
-			break;
-	}
-	return data;
-}
-
-READ_HANDLER ( pc_DMA_page_r )
-{
-	int data = 0xff;
-	switch( offset )
-	{
-		case 1: /* DMA page register 2 */
-			data = pc_DMA_page[2] >> 16;
-			DMA_LOG(1,"DMA_page_2_r",(errorlog, "$%02x\n", data));
-			break;
-		case 2:    /* DMA page register 3 */
-			data = pc_DMA_page[3] >> 16;
-			DMA_LOG(1,"DMA_page_3_r",(errorlog, "$%02x\n", data));
-			break;
-		case 3:    /* DMA page register 1 */
-			data = pc_DMA_page[1] >> 16;
-			DMA_LOG(1,"DMA_page_1_r",(errorlog, "$%02x\n", data));
-			break;
-		case 7:    /* DMA page register 0 */
-			data = pc_DMA_page[0] >> 16;
-			DMA_LOG(1,"DMA_page_0_w",(errorlog, "$%02x\n", data));
-			break;
-    }
-	return data;
-}
-
-/**************************************************************************
- *
- *		PIC
- *		programmable interrupt controller
- *
- **************************************************************************/
-static UINT8 PIC_icw2 = 0;
-static UINT8 PIC_icw3 = 0;
-static UINT8 PIC_icw4 = 0;
-
-static UINT8 PIC_special = 0;
-static UINT8 PIC_input = 0x00;
-
-static UINT8 PIC_level_trig_mode = 0;
-static UINT8 PIC_vector_size = 0;
-static UINT8 PIC_cascade = 0;
-static UINT8 PIC_base = 0x00;
-static UINT8 PIC_slave = 0x00;
-
-static UINT8 PIC_nested = 0;
-static UINT8 PIC_mode = 0;
-static UINT8 PIC_auto_eoi = 0;
-static UINT8 PIC_x86 = 0;
-
-static UINT8 PIC_enable = 0xff;
-static UINT8 PIC_in_service = 0x00;
-static UINT8 PIC_pending = 0x00;
-static UINT8 PIC_prio = 0;
-
-
-void pc_PIC_issue_irq(int irq)
-{
-	UINT8 mask = 1 << irq;
-	PIC_LOG(1,"PIC_issue_irq",(errorlog,"IRQ%d: ", irq));
-
-	/* PIC not initialized? */
-	if( PIC_icw2 || PIC_icw3 || PIC_icw4 )
-	{
-		PIC_LOG(1,0,(errorlog, "PIC not initialized!\n"));
-        return;
-    }
-
-    /* can't we handle it? */
-	if( irq < 0 || irq > 7 )
-	{
-		PIC_LOG(1,0,(errorlog, "out of range!\n"));
-		return;
-	}
-
-	/* interrupt not enabled? */
-	if( PIC_enable & mask )
-	{
-		PIC_LOG(1,0,(errorlog,"is not enabled\n"));
-/*		PIC_pending &= ~mask; */
-/*		PIC_in_service &= ~mask; */
-        return;
-	}
-
-	/* same interrupt not yet acknowledged ? */
-	if( PIC_in_service & mask )
-	{
-		PIC_LOG(1,0,(errorlog,"is already in service\n"));
-		/* save request mask for later */
-/* HACK! */
-		PIC_in_service &= ~mask;
-        PIC_pending |= mask;
-        return;
-	}
-
-    /* higher priority interrupt in service? */
-	if( PIC_in_service & (mask-1) )
-	{
-		PIC_LOG(1,0,(errorlog,"is lower priority\n"));
-		/* save request mask for later */
-		PIC_pending |= mask;
-        return;
-	}
-
-    /* remove from the requested INTs */
-	PIC_pending &= ~mask;
-
-    /* mask interrupt until acknowledged */
-	PIC_in_service |= mask;
-
-    irq += PIC_base;
-	PIC_LOG(1,0,(errorlog,"INT %02X\n", irq));
-	cpu_irq_line_vector_w(0,0,irq);
-	cpu_set_irq_line(0,0,HOLD_LINE);
-}
-
-int pc_PIC_irq_pending(int irq)
-{
-	UINT8 mask = 1 << irq;
-	return (PIC_pending & mask) ? 1 : 0;
-}
-
-WRITE_HANDLER ( pc_PIC_w )
-{
-	switch( offset )
-	{
-    case 0:    /* PIC acknowledge IRQ */
-		if( data & 0x10 )	/* write ICW1 ? */
-		{
-            PIC_icw2 = 1;
-            PIC_icw3 = 1;
-            PIC_level_trig_mode = (data >> 3) & 1;
-            PIC_vector_size = (data >> 2) & 1;
-			PIC_cascade = ((data >> 1) & 1) ^ 1;
-			if( PIC_cascade == 0 )
-				PIC_icw3 = 0;
-            PIC_icw4 = data & 1;
-            PIC_LOG(1,"PIC_ack_w",(errorlog, "$%02x: ICW1, icw4 %d, cascade %d, vec size %d, ltim %d\n",
-                data, PIC_icw4, PIC_cascade, PIC_vector_size, PIC_level_trig_mode));
-		}
-		else
-		if (data & 0x08)
-		{
-            PIC_LOG(1,"PIC_ack_w",(errorlog, "$%02x: OCW3", data));
-			switch (data & 0x60)
-			{
-                case 0x00:
-                case 0x20:
-                    break;
-                case 0x40:
-                    PIC_LOG(1,0,(errorlog, ", reset special mask"));
-                    break;
-                case 0x60:
-                    PIC_LOG(1,0,(errorlog, ", set special mask"));
-                    break;
-            }
-			switch (data & 0x03)
-			{
-                case 0x00:
-				case 0x01:
-					PIC_LOG(1,0,(errorlog, ", no operation"));
-                    break;
-                case 0x02:
-                    PIC_LOG(1,0,(errorlog, ", read request register"));
-                    PIC_special = 1;
-					PIC_input = PIC_pending;
-                    break;
-                case 0x03:
-                    PIC_LOG(1,0,(errorlog, ", read in-service register"));
-                    PIC_special = 1;
-					PIC_input = PIC_in_service & ~PIC_enable;
-                    break;
-            }
-            PIC_LOG(1,0,(errorlog, "\n"));
-		}
-		else
-		{
-			int n = data & 7;
-            UINT8 mask = 1 << n;
-            PIC_LOG(1,"PIC_ack_w",(errorlog, "$%02x: OCW2", data));
-			switch (data & 0xe0)
-			{
-                case 0x00:
-                    PIC_LOG(1,0,(errorlog, " rotate auto EOI clear\n"));
-					PIC_prio = 0;
-                    break;
-                case 0x20:
-                    PIC_LOG(1,0,(errorlog, " nonspecific EOI\n"));
-					for( n = 0, mask = 1<<PIC_prio; n < 8; n++, mask = (mask<<1) | (mask>>7) )
-					{
-						if( PIC_in_service & mask )
-						{
-                            PIC_in_service &= ~mask;
-							PIC_pending &= ~mask;
-                            break;
-                        }
-                    }
-                    break;
-                case 0x40:
-                    PIC_LOG(1,0,(errorlog, " OCW2 NOP\n"));
-                    break;
-                case 0x60:
-                    PIC_LOG(1,0,(errorlog, " OCW2 specific EOI%d\n", n));
-					if( PIC_in_service & mask )
-                    {
-						PIC_in_service &= ~mask;
-						PIC_pending &= ~mask;
-					}
-                    break;
-                case 0x80:
-					PIC_LOG(1,0,(errorlog, " OCW2 rotate auto EOI set\n"));
-					PIC_prio = ++PIC_prio & 7;
-                    break;
-                case 0xa0:
-                    PIC_LOG(1,0,(errorlog, " OCW2 rotate on nonspecific EOI\n"));
-					for( n = 0, mask = 1<<PIC_prio; n < 8; n++, mask = (mask<<1) | (mask>>7) )
-					{
-						if( PIC_in_service & mask )
-						{
-                            PIC_in_service &= ~mask;
-							PIC_pending &= ~mask;
-							PIC_prio = ++PIC_prio & 7;
-                            break;
-                        }
-                    }
-					break;
-                case 0xc0:
-                    PIC_LOG(1,0,(errorlog, " OCW2 set priority\n"));
-					PIC_prio = n & 7;
-                    break;
-                case 0xe0:
-                    PIC_LOG(1,0,(errorlog, " OCW2 rotate on specific EOI%d\n", n));
-					if( PIC_in_service & mask )
-					{
-						PIC_in_service &= ~mask;
-						PIC_pending &= ~mask;
-						PIC_prio = ++PIC_prio & 7;
-					}
-                    break;
-            }
-        }
-        break;
-    case 1:    /* PIC ICW2,3,4 or OCW1 */
-		if( PIC_icw2 )
-		{
-            PIC_base = data & 0xf8;
-            PIC_LOG(1,"PIC_enable_w",(errorlog, "$%02x: ICW2 (base)\n", PIC_base));
-            PIC_icw2 = 0;
-		}
-		else
-		if( PIC_icw3 )
-		{
-            PIC_slave = data;
-            PIC_LOG(1,"PIC_enable_w",(errorlog, "$%02x: ICW3 (slave)\n", PIC_slave));
-            PIC_icw3 = 0;
-		}
-		else
-		if( PIC_icw4 )
-		{
-            PIC_nested = (data >> 4) & 1;
-            PIC_mode = (data >> 2) & 3;
-            PIC_auto_eoi = (data >> 1) & 1;
-            PIC_x86 = data & 1;
-            PIC_LOG(1,"PIC_enable_w",(errorlog, "$%02x: ICW4 x86 mode %d, auto EOI %d, mode %d, nested %d\n",
-                data, PIC_x86, PIC_auto_eoi, PIC_mode, PIC_nested));
-            PIC_icw4 = 0;
-		}
-		else
-		{
-            PIC_LOG(1,"PIC_enable_w",(errorlog, "$%02x: OCW1 enable\n", data));
-            PIC_enable = data;
-			PIC_in_service &= data;
-			PIC_pending &= data;
-        }
-        break;
-    }
-	if (PIC_pending & 0x01) pc_PIC_issue_irq(0);
-    if (PIC_pending & 0x02) pc_PIC_issue_irq(1);
-    if (PIC_pending & 0x04) pc_PIC_issue_irq(2);
-    if (PIC_pending & 0x08) pc_PIC_issue_irq(3);
-    if (PIC_pending & 0x10) pc_PIC_issue_irq(4);
-    if (PIC_pending & 0x20) pc_PIC_issue_irq(5);
-    if (PIC_pending & 0x40) pc_PIC_issue_irq(6);
-    if (PIC_pending & 0x80) pc_PIC_issue_irq(7);
-}
-
-READ_HANDLER ( pc_PIC_r )
-{
-	int data = 0xff;
-
-	switch( offset )
-	{
-	case 0: /* PIC acknowledge IRQ */
-        if (PIC_special) {
-            PIC_special = 0;
-            data = PIC_input;
-            PIC_LOG(1,"PIC_ack_r",(errorlog, "$%02x read special\n", data));
-        } else {
-            PIC_LOG(1,"PIC_ack_r",(errorlog, "$%02x\n", data));
-        }
-        break;
-
-	case 1: /* PIC mask register */
-        data = PIC_enable;
-        PIC_LOG(1,"PIC_enable_r",(errorlog, "$%02x\n", data));
-        break;
-	}
-	return data;
-}
-
-/*************************************************************************
- *
  *		PIT
  *		programmable interval timer
  *
@@ -765,7 +282,7 @@ static void pc_PIT_timer_pulse(void)
 	} else rate = 65536 / 1193180.0;
 
 	if (rate > 0.0)
-		PIT_timer = timer_pulse(rate, 0, pc_PIC_issue_irq);
+		PIT_timer = timer_pulse(rate, 0, pic8259_0_issue_irq);
 }
 
 WRITE_HANDLER ( pc_PIT_w )
@@ -773,33 +290,33 @@ WRITE_HANDLER ( pc_PIT_w )
 	switch( offset )
 	{
     case 0: case 1: case 2:
-        PIT_LOG(1,"PIT_counter_w",(errorlog, "cntr#%d $%02x: ", offset, data));
+        PIT_LOG(1,"PIT_counter_w",("cntr#%d $%02x: ", offset, data));
 		switch (PIT_access)
 		{
             case 0: /* counter latch command */
-				PIT_LOG(1,0,(errorlog, "*latch command* "));
+				PIT_LOG(1,0,("*latch command* "));
 				PIT_msb ^= 1;
 				if( !PIT_msb )
                     PIT_access = 3;
                 break;
             case 1: /* read/write counter bits 0-7 only */
-				PIT_LOG(1,0,(errorlog, "LSB only "));
+				PIT_LOG(1,0,("LSB only "));
                 PIT_clock[offset] = data & 0xff;
                 break;
             case 2: /* read/write counter bits 8-15 only */
-				PIT_LOG(1,0,(errorlog, "MSB only "));
+				PIT_LOG(1,0,("MSB only "));
                 PIT_clock[offset] = (data & 0xff) << 8;
                 break;
             case 3: /* read/write bits 0-7 first, then 8-15 */
 				if (PIT_msb)
 				{
                     PIT_clock[offset] = (PIT_clock[offset] & 0x00ff) | ((data & 0xff) << 8);
-					PIT_LOG(1,0,(errorlog, "MSB "));
+					PIT_LOG(1,0,("MSB "));
 				}
 				else
 				{
                     PIT_clock[offset] = (PIT_clock[offset] & 0xff00) | (data & 0xff);
-					PIT_LOG(1,0,(errorlog, "LSB "));
+					PIT_LOG(1,0,("LSB "));
 				}
                 PIT_msb ^= 1;
                 break;
@@ -808,15 +325,15 @@ WRITE_HANDLER ( pc_PIT_w )
 		switch( offset )
 		{
             case 0:
-                PIT_LOG(1,0,(errorlog, "sys ticks $%04x\n", PIT_clock[0]));
+                PIT_LOG(1,0,("sys ticks $%04x\n", PIT_clock[0]));
 				pc_PIT_timer_pulse();
                 break;
             case 1:
-                PIT_LOG(1,0,(errorlog, "RAM refresh $%04x\n", PIT_clock[1]));
+                PIT_LOG(1,0,("RAM refresh $%04x\n", PIT_clock[1]));
                 /* DRAM refresh timer: ignored */
                 break;
             case 2:
-                PIT_LOG(1,0,(errorlog, "tone freq $%04x = %d Hz\n", PIT_clock[offset], (PIT_clock[2]) ? 1193180 / PIT_clock[2] : 1193810 / 65536));
+                PIT_LOG(1,0,("tone freq $%04x = %d Hz\n", PIT_clock[offset], (PIT_clock[2]) ? 1193180 / PIT_clock[2] : 1193810 / 65536));
 				/* frequency updated in pc_sh_speaker */
 				switch( pc_port[0x61] & 3 )
 				{
@@ -835,13 +352,13 @@ WRITE_HANDLER ( pc_PIT_w )
         PIT_mode = (data >> 1) & 7;
         PIT_bcd = data & 1;
 		PIT_msb = (PIT_access == 2) ? 1 : 0;
-        PIT_LOG(1,"PIT_mode_w",(errorlog, "$%02x: idx %d, access %d, mode %d, BCD %d\n", data, PIT_index, PIT_access, PIT_mode, PIT_bcd));
+        PIT_LOG(1,"PIT_mode_w",("$%02x: idx %d, access %d, mode %d, BCD %d\n", data, PIT_index, PIT_access, PIT_mode, PIT_bcd));
 		if (PIT_access == 0)
 		{
             int count = PIT_clock[PIT_index] ? PIT_clock[PIT_index] : 65536;
             PIT_latch[PIT_index] = count -
                 ((int)(1193180 * (timer_get_time() - PIT_time_access[PIT_index]))) % count;
-            PIT_LOG(1,"PIT latch value",(errorlog, "#%d $%04x\n", PIT_index, PIT_latch[PIT_index]));
+            PIT_LOG(1,"PIT latch value",("#%d $%04x\n", PIT_index, PIT_latch[PIT_index]));
         }
         break;
 	}
@@ -859,12 +376,12 @@ READ_HANDLER ( pc_PIT_r )
 				if( PIT_msb )
 				{
                     data = (PIT_latch[offset&3] >> 8) & 0xff;
-                    PIT_LOG(1,"PIT_counter_r",(errorlog, "latch#%d MSB $%02x\n", offset&3, data));
+                    PIT_LOG(1,"PIT_counter_r",("latch#%d MSB $%02x\n", offset&3, data));
 				}
 				else
 				{
                     data = PIT_latch[offset&3] & 0xff;
-                    PIT_LOG(1,"PIT_counter_r",(errorlog, "latch#%d LSB $%02x\n", offset&3, data));
+                    PIT_LOG(1,"PIT_counter_r",("latch#%d LSB $%02x\n", offset&3, data));
                 }
                 PIT_msb ^= 1;
 				if( !PIT_msb )
@@ -872,22 +389,22 @@ READ_HANDLER ( pc_PIT_r )
                 break;
             case 1: /* read/write counter bits 0-7 only */
                 data = PIT_clock[offset&3] & 0xff;
-                PIT_LOG(1,"PIT_counter_r",(errorlog, "cntr#%d LSB $%02x\n", offset&3, data));
+                PIT_LOG(1,"PIT_counter_r",("cntr#%d LSB $%02x\n", offset&3, data));
                 break;
             case 2: /* read/write counter bits 8-15 only */
                 data = (PIT_clock[offset&3] >> 8) & 0xff;
-                PIT_LOG(1,"PIT_counter_r",(errorlog, "cntr#%d MSB $%02x\n", offset&3, data));
+                PIT_LOG(1,"PIT_counter_r",("cntr#%d MSB $%02x\n", offset&3, data));
                 break;
             case 3: /* read/write bits 0-7 first, then 8-15 */
 				if (PIT_msb)
 				{
                     data = (PIT_clock[offset&3] >> 8) & 0xff;
-                    PIT_LOG(1,"PIT_counter_r",(errorlog, "cntr#%d MSB $%02x\n", offset&3, data));
+                    PIT_LOG(1,"PIT_counter_r",("cntr#%d MSB $%02x\n", offset&3, data));
 				}
 				else
 				{
                     data = PIT_clock[offset&3] & 0xff;
-                    PIT_LOG(1,"PIT_counter_r",(errorlog, "cntr#%d LSB $%02x\n", offset&3, data));
+                    PIT_LOG(1,"PIT_counter_r",("cntr#%d LSB $%02x\n", offset&3, data));
                 }
                 PIT_msb ^= 1;
                 break;
@@ -908,12 +425,12 @@ WRITE_HANDLER ( pc_PIO_w )
 	switch( offset )
 	{
 		case 0: /* KB controller port A */
-			PIO_LOG(1,"PIO_A_w",(errorlog, "$%02x\n", data));
+			PIO_LOG(1,"PIO_A_w",("$%02x\n", data));
 			pc_port[0x60] = data;
 			break;
 
 		case 1: /* KB controller port B */
-			PIO_LOG(1,"PIO_B_w",(errorlog, "$%02x\n", data));
+			PIO_LOG(1,"PIO_B_w",("$%02x\n", data));
 			pc_port[0x61] = data;
 			switch( data & 3 )
 			{
@@ -925,12 +442,16 @@ WRITE_HANDLER ( pc_PIO_w )
 			break;
 
 		case 2: /* KB controller port C */
-			PIO_LOG(1,"PIO_C_w",(errorlog, "$%02x\n", data));
+			PIO_LOG(1,"PIO_C_w",("$%02x\n", data));
 			pc_port[0x62] = data;
+			if (tandy1000hx) {
+				if (data&8) timer_set_overclock(0, 1);
+				else timer_set_overclock(0, 4.77/8);
+			}
 			break;
 
 		case 3: /* KB controller control port */
-			PIO_LOG(1,"PIO_control_w",(errorlog, "$%02x\n", data));
+			PIO_LOG(1,"PIO_control_w",("$%02x\n", data));
 			pc_port[0x63] = data;
 			break;
     }
@@ -943,29 +464,34 @@ READ_HANDLER ( pc_PIO_r )
 	{
 		case 0: /* KB port A */
             data = pc_port[0x60];
-            PIO_LOG(1,"PIO_A_r",(errorlog, "$%02x\n", data));
+            PIO_LOG(1,"PIO_A_r",("$%02x\n", data));
             break;
 		case 1: /* KB port B */
 			data = pc_port[0x61];
-			PIO_LOG(1,"PIO_B_r",(errorlog, "$%02x\n", data));
+			PIO_LOG(1,"PIO_B_r",("$%02x\n", data));
 			break;
 		case 2: /* KB port C: equipment flags */
 			if (pc_port[0x61] & 0x08)
 			{
 				/* read hi nibble of S2 */
 				data = (input_port_1_r(0) >> 4) & 0x0f;
-				PIO_LOG(1,"PIO_C_r (hi)",(errorlog, "$%02x\n", data));
+				PIO_LOG(1,"PIO_C_r (hi)",("$%02x\n", data));
 			}
 			else
 			{
 				/* read lo nibble of S2 */
 				data = input_port_1_r(0) & 0x0f;
-				PIO_LOG(1,"PIO_C_r (lo)",(errorlog, "$%02x\n", data));
+				PIO_LOG(1,"PIO_C_r (lo)",("$%02x\n", data));
 			}
+			if (tandy1000hx) {
+				data&=~8;
+				data|=pc_port[0x62]&8;
+				if (tandy1000_read_eeprom()) data|=0x10;
+			} 
 			break;
 		case 3:    /* KB controller control port */
 			data = pc_port[0x63];
-			PIO_LOG(1,"PIO_control_r",(errorlog, "$%02x\n", data));
+			PIO_LOG(1,"PIO_control_r",("$%02x\n", data));
 			break;
 	}
 	return data;
@@ -988,14 +514,14 @@ static void pc_LPT_w(int n, int offset, int data)
 	{
 		case 0:
 			LPT_data[n] = data;
-			LPT_LOG(1,"LPT_data_w",(errorlog,"LPT%d $%02x\n", n, data));
+			LPT_LOG(1,"LPT_data_w",("LPT%d $%02x\n", n, data));
 			break;
 		case 1:
-			LPT_LOG(1,"LPT_status_w",(errorlog,"LPT%d $%02x\n", n, data));
+			LPT_LOG(1,"LPT_status_w",("LPT%d $%02x\n", n, data));
 			break;
 		case 2:
 			LPT_control[n] = data;
-			LPT_LOG(1,"LPT_control_w",(errorlog,"%d $%02x\n", n, data));
+			LPT_LOG(1,"LPT_control_w",("%d $%02x\n", n, data));
 			break;
     }
 }
@@ -1012,18 +538,18 @@ static int pc_LPT_r(int n, int offset)
 	{
 		case 0:
 			data = LPT_data[n];
-			LPT_LOG(1,"LPT_data_r",(errorlog, "LPT%d $%02x\n", n, data));
+			LPT_LOG(1,"LPT_data_r",("LPT%d $%02x\n", n, data));
 			break;
 		case 1:
 			/* set status 'out of paper', '*no* error', 'IRQ has *not* occured' */
 			LPT_status[n] = 0x2c;
 			data = LPT_status[n];
-			LPT_LOG(1,"LPT_status_r",(errorlog, "%d $%02x\n", n, data));
+			LPT_LOG(1,"LPT_status_r",("%d $%02x\n", n, data));
 			break;
 		case 2:
 			LPT_control[n] = 0x0c;
 			data = LPT_control[n];
-			LPT_LOG(1,"LPT_control_r",(errorlog, "%d $%02x\n", n, data));
+			LPT_LOG(1,"LPT_control_r",("%d $%02x\n", n, data));
 			break;
     }
 	return data;
@@ -1059,7 +585,7 @@ static void pc_COM_w(int n, int idx, int data)
 
 	if( !(input_port_2_r(0) & (0x80 >> n)) )
 	{
-		COM_LOG(1,"COM_w",(errorlog,"COM%d $%02x: disabled\n", n+1, data));
+		COM_LOG(1,"COM_w",("COM%d $%02x: disabled\n", n+1, data));
 		return;
     }
 	switch (idx)
@@ -1069,13 +595,13 @@ static void pc_COM_w(int n, int idx, int data)
 			{
 				COM_dll[n] = data;
 				tmp = COM_dlm[n] * 256 + COM_dll[n];
-				COM_LOG(1,"COM_dll_w",(errorlog,"COM%d $%02x: [$%04x = %d baud]\n",
+				COM_LOG(1,"COM_dll_w",("COM%d $%02x: [$%04x = %d baud]\n",
 					n+1, data, tmp, (tmp)?1843200/16/tmp:0));
 			}
 			else
 			{
 				COM_thr[n] = data;
-				COM_LOG(2,"COM_thr_w",(errorlog,"COM%d $%02x\n", n+1, data));
+				COM_LOG(2,"COM_thr_w",("COM%d $%02x\n", n+1, data));
             }
 			break;
 		case 1:
@@ -1083,27 +609,27 @@ static void pc_COM_w(int n, int idx, int data)
 			{
 				COM_dlm[n] = data;
 				tmp = COM_dlm[n] * 256 + COM_dll[n];
-                COM_LOG(1,"COM_dlm_w",(errorlog,"COM%d $%02x: [$%04x = %d baud]\n",
+                COM_LOG(1,"COM_dlm_w",("COM%d $%02x: [$%04x = %d baud]\n",
 					n+1, data, tmp, (tmp)?1843200/16/tmp:0));
 			}
 			else
 			{
 				COM_ier[n] = data;
-				COM_LOG(2,"COM_ier_w",(errorlog,"COM%d $%02x: enable int on RX %d, THRE %d, RLS %d, MS %d\n",
+				COM_LOG(2,"COM_ier_w",("COM%d $%02x: enable int on RX %d, THRE %d, RLS %d, MS %d\n",
 					n+1, data, data&1, (data>>1)&1, (data>>2)&1, (data>>3)&1));
 			}
             break;
 		case 2:
-			COM_LOG(1,"COM_fcr_w",(errorlog,"COM%d $%02x (16550 only)\n", n+1, data));
+			COM_LOG(1,"COM_fcr_w",("COM%d $%02x (16550 only)\n", n+1, data));
             break;
 		case 3:
 			COM_lcr[n] = data;
-			COM_LOG(1,"COM_lcr_w",(errorlog,"COM%d $%02x word length %d, stop bits %d, parity %c, break %d, DLAB %d\n",
+			COM_LOG(1,"COM_lcr_w",("COM%d $%02x word length %d, stop bits %d, parity %c, break %d, DLAB %d\n",
 				n+1, data, 5+(data&3), 1+((data>>2)&1), P[(data>>3)&7], (data>>6)&1, (data>>7)&1));
             break;
 		case 4:
 			COM_mcr[n] = data;
-			COM_LOG(1,"COM_mcr_w",(errorlog,"COM%d $%02x DTR %d, RTS %d, OUT1 %d, OUT2 %d, loopback %d\n",
+			COM_LOG(1,"COM_mcr_w",("COM%d $%02x DTR %d, RTS %d, OUT1 %d, OUT2 %d, loopback %d\n",
 				n+1, data, data&1, (data>>1)&1, (data>>2)&1, (data>>3)&1, (data>>4)&1));
             break;
 		case 5:
@@ -1112,7 +638,7 @@ static void pc_COM_w(int n, int idx, int data)
 			break;
 		case 7:
 			COM_scr[n] = data;
-			COM_LOG(2,"COM_scr_w",(errorlog,"COM%d $%02x\n", n+1, data));
+			COM_LOG(2,"COM_scr_w",("COM%d $%02x\n", n+1, data));
             break;
 	}
 }
@@ -1128,7 +654,7 @@ static int pc_COM_r(int n, int idx)
 
 	if( !(input_port_2_r(0) & (0x80 >> n)) )
 	{
-		COM_LOG(1,"COM_r",(errorlog,"COM%d $%02x: disabled\n", n+1, data));
+		COM_LOG(1,"COM_r",("COM%d $%02x: disabled\n", n+1, data));
 		return data;
     }
 	switch (idx)
@@ -1137,7 +663,7 @@ static int pc_COM_r(int n, int idx)
 			if (COM_lcr[n] & 0x80)
 			{
 				data = COM_dll[n];
-				COM_LOG(1,"COM_dll_r",(errorlog,"COM%d $%02x\n", n+1, data));
+				COM_LOG(1,"COM_dll_r",("COM%d $%02x\n", n+1, data));
 			}
 			else
 			{
@@ -1145,7 +671,7 @@ static int pc_COM_r(int n, int idx)
 				if( COM_lsr[n] & 0x01 )
 				{
 					COM_lsr[n] &= ~0x01;		/* clear data ready status */
-					COM_LOG(2,"COM_rbr_r",(errorlog,"COM%d $%02x\n", n+1, data));
+					COM_LOG(2,"COM_rbr_r",("COM%d $%02x\n", n+1, data));
 				}
             }
 			break;
@@ -1153,26 +679,26 @@ static int pc_COM_r(int n, int idx)
 			if (COM_lcr[n] & 0x80)
 			{
 				data = COM_dlm[n];
-				COM_LOG(1,"COM_dlm_r",(errorlog,"COM%d $%02x\n", n+1, data));
+				COM_LOG(1,"COM_dlm_r",("COM%d $%02x\n", n+1, data));
 			}
 			else
 			{
 				data = COM_ier[n];
-				COM_LOG(2,"COM_ier_r",(errorlog,"COM%d $%02x\n", n+1, data));
+				COM_LOG(2,"COM_ier_r",("COM%d $%02x\n", n+1, data));
             }
             break;
 		case 2:
 			data = COM_iir[n];
 			COM_iir[n] |= 1;
-			COM_LOG(2,"COM_iir_r",(errorlog,"COM%d $%02x\n", n+1, data));
+			COM_LOG(2,"COM_iir_r",("COM%d $%02x\n", n+1, data));
             break;
 		case 3:
 			data = COM_lcr[n];
-			COM_LOG(2,"COM_lcr_r",(errorlog,"COM%d $%02x\n", n+1, data));
+			COM_LOG(2,"COM_lcr_r",("COM%d $%02x\n", n+1, data));
             break;
 		case 4:
 			data = COM_mcr[n];
-			COM_LOG(2,"COM_mcr_r",(errorlog,"COM%d $%02x\n", n+1, data));
+			COM_LOG(2,"COM_mcr_r",("COM%d $%02x\n", n+1, data));
             break;
 		case 5:
 			COM_lsr[n] |= 0x40; /* set TSRE */
@@ -1181,7 +707,7 @@ static int pc_COM_r(int n, int idx)
 			if( COM_lsr[n] & 0x1f )
 			{
 				COM_lsr[n] &= 0xe1; /* clear FE, PE and OE and BREAK bits */
-				COM_LOG(2,"COM_lsr_r",(errorlog,"COM%d $%02x, DR %d, OE %d, PE %d, FE %d, BREAK %d, THRE %d, TSRE %d\n",
+				COM_LOG(2,"COM_lsr_r",("COM%d $%02x, DR %d, OE %d, PE %d, FE %d, BREAK %d, THRE %d, TSRE %d\n",
 					n+1, data, data&1, (data>>1)&1, (data>>2)&1, (data>>3)&1, (data>>4)&1, (data>>5)&1, (data>>6)&1));
 			}
             break;
@@ -1195,11 +721,11 @@ static int pc_COM_r(int n, int idx)
 			}
 			data = COM_msr[n];
 			COM_msr[n] &= 0xf0; /* reset delta values */
-			COM_LOG(2,"COM_msr_r",(errorlog,"COM%d $%02x\n", n+1, data));
+			COM_LOG(2,"COM_msr_r",("COM%d $%02x\n", n+1, data));
             break;
 		case 7:
 			data = COM_scr[n];
-			COM_LOG(2,"COM_scr_r",(errorlog,"COM%d $%02x\n", n+1, data));
+			COM_LOG(2,"COM_scr_r",("COM%d $%02x\n", n+1, data));
             break;
 	}
 	if( input_port_3_r(0) & (0x80>>n) )  /* mouse on this COM? */
@@ -1227,17 +753,46 @@ WRITE_HANDLER ( pc_JOY_w )
 	JOY_time = timer_get_time();
 }
 
+#if 0
+#define JOY_VALUE_TO_TIME(v) (24.2e-6+11e-9*(100000.0/256)*v)
 READ_HANDLER ( pc_JOY_r )
 {
 	int data, delta;
 	double new_time = timer_get_time();
 
 	data=input_port_15_r(0)^0xf0;
+#if 0
     /* timer overflow? */
 	if (new_time - JOY_time > 0.01)
 	{
 		//data &= ~0x0f;
-		JOY_LOG(2,"JOY_r",(errorlog,"$%02x, time > 0.01s\n", data));
+		JOY_LOG(2,"JOY_r",("$%02x, time > 0.01s\n", data));
+	}
+	else
+#endif
+	{
+		delta=new_time-JOY_time;
+		if ( delta>JOY_VALUE_TO_TIME(input_port_16_r(0)) ) data &= ~0x01;
+		if ( delta>JOY_VALUE_TO_TIME(input_port_17_r(0)) ) data &= ~0x02;
+		if ( delta>JOY_VALUE_TO_TIME(input_port_18_r(0)) ) data &= ~0x04;
+		if ( delta>JOY_VALUE_TO_TIME(input_port_19_r(0)) ) data &= ~0x08;
+		JOY_LOG(1,"JOY_r",("$%02x: X:%d, Y:%d, time %8.5f, delta %d\n", data, input_port_16_r(0), input_port_17_r(0), new_time - JOY_time, delta));
+	}
+
+	return data;
+}
+#else
+READ_HANDLER ( pc_JOY_r )
+{
+	int data, delta;
+	double new_time = timer_get_time();
+	
+	data=input_port_15_r(0)^0xf0;
+    /* timer overflow? */
+	if (new_time - JOY_time > 0.01)
+	{
+		//data &= ~0x0f;
+		JOY_LOG(2,"JOY_r",("$%02x, time > 0.01s\n", data));
 	}
 	else
 	{
@@ -1246,11 +801,15 @@ READ_HANDLER ( pc_JOY_r )
 		if (input_port_17_r(0) < delta) data &= ~0x02;
 		if (input_port_18_r(0) < delta) data &= ~0x04;
 		if (input_port_19_r(0) < delta) data &= ~0x08;
-		JOY_LOG(1,"JOY_r",(errorlog,"$%02x: X:%d, Y:%d, time %8.5f, delta %d\n", data, input_port_16_r(0), input_port_17_r(0), new_time - JOY_time, delta));
+		JOY_LOG(1,"JOY_r",("$%02x: X:%d, Y:%d, time %8.5f, delta %d\n", data, input
+						   _port_16_r(0), input_port_17_r(0), new_time - JOY_time, delta));
 	}
-
+	
 	return data;
 }
+#endif
+
+
 
 /*************************************************************************
  *
@@ -1290,34 +849,6 @@ READ_HANDLER ( pc_FDC_r )
     }
 	return data;
 }
-
-/*************************************************************************
- *
- *		ATHD
- *		AT hard disk
- *
- *************************************************************************/
-#if 0
-#define ATHD1_W \
-	case 0x1f0: pc_ide_data_w(data);				break; \
-	case 0x1f1: pc_ide_write_precomp_w(data);		break; \
-	case 0x1f2: pc_ide_sector_count_w(data);		break; \
-	case 0x1f3: pc_ide_sector_number_w(data);		break; \
-	case 0x1f4: pc_ide_cylinder_number_l_w(data);	break; \
-	case 0x1f5: pc_ide_cylinder_number_h_w(data);	break; \
-	case 0x1f6: pc_ide_drive_head_w(data);			break; \
-	case 0x1f7: pc_ide_command_w(data); 			break
-
-#define ATHD1_R \
-	case 0x1f0: data = pc_ide_data_r(); 			break; \
-	case 0x1f1: data = pc_ide_error_r();			break; \
-	case 0x1f2: data = pc_ide_sector_count_r(); 	break; \
-	case 0x1f3: data = pc_ide_sector_number_r();	break; \
-	case 0x1f4: data = pc_ide_cylinder_number_l_r();break; \
-	case 0x1f5: data = pc_ide_cylinder_number_h_r();break; \
-	case 0x1f6: data = pc_ide_drive_head_r();		break; \
-	case 0x1f7: data = pc_ide_status_r();			break
-#endif
 
 /*************************************************************************
  *
@@ -1488,14 +1019,14 @@ READ_HANDLER ( pc_CGA_r )
  *************************************************************************/
 WRITE_HANDLER ( pc_EXP_w )
 {
-	DBG_LOG(1,"EXP_unit_w",(errorlog, "$%02x\n", data));
+	DBG_LOG(1,"EXP_unit_w",("$%02x\n", data));
 	pc_port[0x213] = data;
 }
 
 READ_HANDLER ( pc_EXP_r )
 {
     int data = pc_port[0x213];
-    DBG_LOG(1,"EXP_unit_r",(errorlog, "$%02x\n", data));
+    DBG_LOG(1,"EXP_unit_r",("$%02x\n", data));
 	return data;
 }
 
@@ -1505,39 +1036,6 @@ READ_HANDLER ( pc_EXP_r )
  *		Tandy 1000 / PCjr
  *
  *************************************************************************/
-WRITE_HANDLER ( pc_t1t_p37x_w )
-{
-	DBG_LOG(1,"T1T_p37x_w",(errorlog, "#%d $%02x\n", offset, data));
-	switch( offset )
-	{
-		case 0: pc_port[0x378] = data; break;
-		case 1: pc_port[0x379] = data; break;
-		case 2: pc_port[0x37a] = data; break;
-		case 3: pc_port[0x37b] = data; break;
-		case 4: pc_port[0x37c] = data; break;
-		case 5: pc_port[0x37d] = data; break;
-		case 6: pc_port[0x37e] = data; break;
-		case 7: pc_port[0x37f] = data; break;
-	}
-}
-
-READ_HANDLER ( pc_t1t_p37x_r )
-{
-	int data = 0xff;
-	switch( offset )
-	{
-		case 0: data = pc_port[0x378]; break;
-		case 1: data = pc_port[0x379]; break;
-		case 2: data = pc_port[0x37a]; break;
-		case 3: data = pc_port[0x37b]; break;
-		case 4: data = pc_port[0x37c]; break;
-		case 5: data = pc_port[0x37d]; break;
-		case 6: data = pc_port[0x37e]; break;
-		case 7: data = pc_port[0x37f]; break;
-	}
-	DBG_LOG(1,"T1T_p37x_r",(errorlog, "#%d $%02x\n", offset, data));
-    return data;
-}
 
 WRITE_HANDLER ( pc_T1T_w )
 {
@@ -1703,14 +1201,14 @@ static void pc_keyboard(void)
     }
 	
 
-	if( !pc_PIC_irq_pending(1) )
+	if( !pic8259_0_irq_pending(1) )
 	{
 		if( kb_tail != kb_head )
 		{
 			pc_port[0x60] = kb_queue[kb_tail];
-			DBG_LOG(1,"KB_scancode",(errorlog, "$%02x\n", pc_port[0x60]));
+			DBG_LOG(1,"KB_scancode",("$%02x\n", pc_port[0x60]));
 			kb_tail = ++kb_tail % 256;
-			pc_PIC_issue_irq(1);
+			pic8259_0_issue_irq(1);
 		}
 	}
 }
@@ -1738,7 +1236,7 @@ static void change_msr(int n, int new_msr)
     /* OUT2 + modem status interrupt enabled? */
 	if( (COM_mcr[n] & 0x08) && (COM_ier[n] & 0x08) )
 		/* issue COM1/3 IRQ4, COM2/4 IRQ3 */
-		pc_PIC_issue_irq(4-(n&1));
+		pic8259_0_issue_irq(4-(n&1));
 }
 
 /**************************************************************************
@@ -1778,7 +1276,7 @@ static void pc_mouse_scan(int n)
 			m_head = ++m_head % 256;
 			m_queue[m_head] = m2 & 0x3f;
 			m_head = ++m_head % 256;
-			DBG_LOG(1,"mouse_packet",(errorlog, "dx:%d, dy:%d, $%02x $%02x $%02x\n", dx, dy, m0, m1, m2));
+			DBG_LOG(1,"mouse_packet",("dx:%d, dy:%d, $%02x $%02x $%02x\n", dx, dy, m0, m1, m2));
 			dx -= ddx;
 			dy -= ddy;
 		} while( dx || dy );
@@ -1806,9 +1304,9 @@ static void pc_mouse_scan(int n)
         /* OUT2 + received line data avail interrupt enabled? */
 		if( (COM_mcr[n] & 0x08) && (COM_ier[n] & 0x01) )
             /* issue COM1/3 IRQ4, COM2/4 IRQ3 */
-			pc_PIC_issue_irq(4-(n&1));
+			pic8259_0_issue_irq(4-(n&1));
 
-		DBG_LOG(1,"mouse_data",(errorlog, "$%02x\n", COM_rbr[n]));
+		DBG_LOG(1,"mouse_data",("$%02x\n", COM_rbr[n]));
     }
 }
 
@@ -1854,7 +1352,7 @@ int pc_frame_interrupt (void)
 {
 	static int turboswitch=-1;
 
-	if (turboswitch !=(input_port_3_r(0)&2)) {
+	if (!tandy1000hx &&(turboswitch !=(input_port_3_r(0)&2)) ) {
 		if (input_port_3_r(0)&2)
 			timer_set_overclock(0, 1);
 		else 

@@ -58,6 +58,7 @@ extern void vic2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
 extern int vic2_raster_irq (void);
 
 extern unsigned char vic2_palette[16 * 3];
+extern unsigned char vic3_palette[0x100 * 3];
 
 /* to be inserted in GameDriver-Structure */
 
@@ -73,7 +74,7 @@ int vic2e_k0_r (void);
 int vic2e_k1_r (void);
 int vic2e_k2_r (void);
 
-int vic3_p5_r(void);
+WRITE_HANDLER( vic3_palette_w );
 
 /* to be called each vertical retrace */
 extern int vic2_frame_interrupt (void);
@@ -82,7 +83,7 @@ extern void (*vic2_display_state)(PRASTER *this); /* calls machine after rasteri
 
 /* private area */
 
-//extern UINT8 vic2[];
-//extern bool vic2_pal;
+/*extern UINT8 vic2[]; */
+/*extern bool vic2_pal; */
 
 #endif

@@ -128,7 +128,7 @@ void c364_speech_timer(int arg)
 	} else {
 		speech.endOfSample=
 				(memcmp(speech.sample.data,"\xff\xff\xff\xff\xff\xff",6)==0);
-		//speech.endOfSample=true;
+		/*speech.endOfSample=true; */
 		speech.busy=false;
 	}
 }
@@ -145,7 +145,7 @@ WRITE_HANDLER(c364_speech_w)
 				case 9:case 0xb:
 					speech.playing=false;
 					break;
-				case 1: // start
+				case 1: /* start */
 					speech.timer=timer_pulse(1.0/8000, 0, c364_speech_timer);
 					speech.playing=true;
 					speech.endOfSample=false;
@@ -153,17 +153,17 @@ WRITE_HANDLER(c364_speech_w)
 					break;
 				case 2:
 					speech.endOfSample=false;
-					//speech.busy=false;
+					/*speech.busy=false; */
 					if (speech.timer) {
 						timer_remove(speech.timer);
 						speech.timer=0;
 					}
 					speech.playing=false;
 					break;
-				case 5: // set rate (in next nibble)
+				case 5: /* set rate (in next nibble) */
 					speech.command.state=1;
 					break;
-				case 6: // condition
+				case 6: /* condition */
 					speech.command.state=2;
 					break;
 				}
@@ -194,7 +194,7 @@ WRITE_HANDLER(c364_speech_w)
 							   speech.sample.data[4],
 							   speech.sample.data[5]));
 			speech.sample.index=0;
-			//speech.endOfSample=false;
+			/*speech.endOfSample=false; */
 			speech.busy=true;
 			speech.state=0;
 		}
@@ -794,14 +794,14 @@ void c16_init_machine (void)
 		i = IEC;
 	else
 		i = 0;
-	cbm_drive_0_config (i);
+	cbm_drive_0_config (i, 8);
 	if (SERIAL9ON)
 		i = SERIAL;
 	else if (IEC9ON)
 		i = IEC;
 	else
 		i = 0;
-	cbm_drive_1_config (i);
+	cbm_drive_1_config (i, 9);
 
 	if (REAL_C1551)
 		c1551_reset ();

@@ -178,7 +178,7 @@ void zx_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	if (zx_frame_time > 0)
 	{
-		ui_text(zx_frame_message, 2, Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y - 9);
+		ui_text(bitmap, zx_frame_message, 2, Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y - 9);
 		zx_frame_time--;
 	}
 }

@@ -630,7 +630,7 @@ static struct MachineDriver machine_driver_ep128 =
 	NICK_COLOURTABLE_SIZE,						/* color table len */
 	nick_init_palette,							/* convert color prom */
 
-	VIDEO_TYPE_RASTER,							/* video attributes */
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,							/* video attributes */
 	0,											/* MachineLayer */
 	enterprise_vh_start,
 	enterprise_vh_stop,

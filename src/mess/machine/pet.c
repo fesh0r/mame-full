@@ -14,6 +14,8 @@
 #include "machine/6821pia.h"
 #include "mess/machine/6522via.h"
 #include "mess/vidhrdw/pet.h"
+#include "c1551.h"
+#include "cbmieeeb.h"
 
 #include "pet.h"
 
@@ -21,6 +23,7 @@
 static UINT8 pet_keyline[10] = { 0 };
 static int pet_basic1=0; /* basic version 1 for quickloader */
 static int superpet=0;
+static int cbm8096=0;
 static int pet_keyline_select;
 static void *pet_clock;
 
@@ -31,22 +34,30 @@ UINT8 *pet_videoram;
 /* pia at 0xe810
    port a
     7 sense input (low for diagnostics)
-    6
-    5
-    4
+    6 ieee eoi in
+    5 cassette 2 switch in 
+    4 cassette 1 switch in 
     3..0 keyboard line select
+
+  ca1 cassette 1 read
+  ca2 ieee eoi out
+
+  cb1 video sync in
+  cb2 cassette 1 motor out
 */
 static READ_HANDLER ( pet_pia0_port_a_read )
 {
-	return 0xff;
+	int data=0xff;
+	if (!cbm_ieee_eoi_r()) data&=~0x40;
+	return data;
 }
 
-static WRITE_HANDLER ( pet_keyboard_line_select )
+static WRITE_HANDLER ( pet_pia0_port_a_write )
 {
 	pet_keyline_select=data;  /*data is actually line here! */
 }
 
-static READ_HANDLER ( pet_keyboard_line )
+static READ_HANDLER ( pet_pia0_port_b_read )
 {
 	int data=0;
 	switch(pet_keyline_select) {
@@ -64,18 +75,61 @@ static READ_HANDLER ( pet_keyboard_line )
 	return data^0xff;
 }
 
+static WRITE_HANDLER( pet_pia0_ca2_out )
+{
+	cbm_ieee_eoi_w(0, data);
+}
+
 static void pet_irq (int level)
 {
 	static int old_level = 0;
 
 	if (level != old_level)
 	{
-		DBG_LOG (3, "mos6502", (errorlog, "irq %s\n", level ? "start" : "end"));
+		DBG_LOG (3, "mos6502", ("irq %s\n", level ? "start" : "end"));
 		if (superpet)
 			cpu_set_irq_line (1, M6809_IRQ_LINE, level);
 		cpu_set_irq_line (0, M6502_INT_IRQ, level);
 		old_level = level;
 	}
+}
+
+/* pia at 0xe820 (ieee488)
+   port a data in
+   port b data out
+  ca1 atn in
+  ca2 ndac out
+  cb1 srq in
+  cb2 dav out
+ */
+static READ_HANDLER ( pet_pia1_port_a_read )
+{
+	return cbm_ieee_data_r();
+}
+
+static WRITE_HANDLER ( pet_pia1_port_b_write )
+{
+	cbm_ieee_data_w(0, data);
+}
+
+static READ_HANDLER ( pet_pia1_ca1_read )
+{
+	return cbm_ieee_atn_r();
+}
+
+static WRITE_HANDLER ( pet_pia1_ca2_write )
+{
+	cbm_ieee_ndac_w(0,data);
+}
+
+static WRITE_HANDLER ( pet_pia1_cb2_write )
+{
+	cbm_ieee_dav_w(0,data);
+}
+
+static READ_HANDLER ( pet_pia1_cb1_read )
+{
+	return cbm_ieee_srq_r();
 }
 
 static struct pia6821_interface pet_pia0={
@@ -94,26 +148,68 @@ static struct pia6821_interface pet_pia0={
 	void (*irq_b_func)(int state);
 #endif
 	pet_pia0_port_a_read,
-	pet_keyboard_line,
+	pet_pia0_port_b_read,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
-	pet_keyboard_line_select,
+	pet_pia0_port_a_write,
 	NULL,
-	NULL,
+	pet_pia0_ca2_out,
 	NULL,
 	NULL,
 	pet_irq
 }, pet_pia1= {
+	pet_pia1_port_a_read,
 	NULL,
+    pet_pia1_ca1_read,
+    pet_pia1_cb1_read,
+	NULL,
+	NULL,
+	NULL,
+    pet_pia1_port_b_write,
+    pet_pia1_ca2_write,
+    pet_pia1_cb2_write,
 };
 
 static void pet_address_line_11(int offset, int level)
 {
-	DBG_LOG (1, "address line", (errorlog, "%d\n", level));
+	DBG_LOG (1, "address line", ("%d\n", level));
 	crtc6845_address_line_11(level);
 }
+
+/* userport, cassettes, rest ieee488
+   ca1 userport
+   ca2 character rom address line 11
+   pa user port
+   
+   pb0 ieee ndac in
+   pb1 ieee nrfd out
+   pb2 ieee atn out
+   pb3 userport/cassettes
+   pb4 cassettes
+   pb5 userport/???
+   pb6 ieee nrfd in
+   pb7 ieee dav in
+
+   cb1 cassettes
+   cb2 user port
+ */
+static int pet_via_port_b_r(int offset)
+{
+	UINT8 data=0;
+	if (cbm_ieee_ndac_r()) data|=1;
+	if (cbm_ieee_nrfd_r()) data|=0x40;
+	if (cbm_ieee_dav_r()) data|=0x80;
+	return data;
+}
+
+static void pet_via_port_b_w(int offset, int data)
+{
+	cbm_ieee_nrfd_w(0, data&2);
+	cbm_ieee_atn_w(0, data&4);
+}
+
 
 static struct via6522_interface pet_via={
 #if 0
@@ -134,13 +230,13 @@ static struct via6522_interface pet_via={
 	void (*t2_callback)(double time);
 #endif
 	NULL,
+	pet_via_port_b_r,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
-	NULL,
-	NULL,
+	pet_via_port_b_w,
 	pet_address_line_11
 };
 
@@ -148,6 +244,136 @@ static struct {
 	int bank; /* rambank to be switched in 0x9000 */
 	int rom; /* rom socket 6502? at 0x9000 */
 } spet= { 0 };
+
+WRITE_HANDLER(cbm8096_io_w)
+{
+	if (offset<0x10) ;
+	else if (offset<0x14) pia_0_w(offset&3,data);
+	else if (offset<0x20) ;
+	else if (offset<0x24) pia_1_w(offset&3,data);
+	else if (offset<0x40) ;
+	else if (offset<0x50) via_0_w(offset&0xf,data);
+	else if (offset<0x80) ;
+	else if (offset<0x82) crtc6845_pet_port_w(offset&1,data);
+}
+
+extern READ_HANDLER(cbm8096_io_r)
+{
+	int data=0xff;
+	if (offset<0x10) ;
+	else if (offset<0x14) data=pia_0_r(offset&3);
+	else if (offset<0x20) ;
+	else if (offset<0x24) data=pia_1_r(offset&3);
+	else if (offset<0x40) ;
+	else if (offset<0x50) data=via_0_r(offset&0xf);
+	else if (offset<0x80) ;
+	else if (offset<0x82) data=crtc6845_port_r(offset&1);
+	return data;
+}
+
+/*
+65520        8096 memory control register
+        bit 0    1=write protect $8000-BFFF
+        bit 1    1=write protect $C000-FFFF
+        bit 2    $8000-BFFF bank select
+        bit 3    $C000-FFFF bank select
+        bit 5    1=screen peek through
+        bit 6    1=I/O peek through
+        bit 7    1=enable expansion memory
+    
+*/
+WRITE_HANDLER(cbm8096_w)
+{
+	if (data&0x80) {
+		if (data&0x40) {
+			cpu_setbankhandler_r(7, cbm8096_io_r);
+			cpu_setbankhandler_w(7, cbm8096_io_w);
+		} else {
+			cpu_setbankhandler_r(7, MRA_BANK7);
+			if (!(data&2)) {
+				cpu_setbankhandler_w(7,MWA_BANK7);
+			} else {
+				cpu_setbankhandler_w(7,MWA_NOP);
+			}
+		}
+		if (!(data&2)) {
+			cpu_setbankhandler_w(6,MWA_BANK6);
+			cpu_setbankhandler_w(8,MWA_BANK8);
+			cpu_setbankhandler_w(9,MWA_BANK9);
+		} else {
+			cpu_setbankhandler_w(6,MWA_NOP);
+			cpu_setbankhandler_w(8,MWA_NOP);
+			cpu_setbankhandler_w(9,MWA_NOP);
+		}
+		if (data&0x20) {
+			cpu_setbank(1,pet_memory+0x8000);
+			cpu_setbankhandler_w(1, crtc6845_videoram_w);
+		} else {
+			if (!(data&1)) {
+				cpu_setbankhandler_w(1,MWA_BANK1);
+			} else {
+				cpu_setbankhandler_w(1,MWA_NOP);
+			}
+		}
+		if (!(data&1)) {
+			cpu_setbankhandler_w(2,MWA_BANK2);
+			cpu_setbankhandler_w(3,MWA_BANK3);
+			cpu_setbankhandler_w(4,MWA_BANK4);
+		} else {
+			cpu_setbankhandler_w(2,MWA_NOP);
+			cpu_setbankhandler_w(3,MWA_NOP);
+			cpu_setbankhandler_w(4,MWA_NOP);
+		}
+		if (data&4) {
+			if (!(data&0x20)) {
+				cpu_setbank(1,pet_memory+0x14000);
+			}
+			cpu_setbank(2,pet_memory+0x15000);
+			cpu_setbank(3,pet_memory+0x16000);
+			cpu_setbank(4,pet_memory+0x17000);
+		} else {
+			if (!(data&0x20)) {
+				cpu_setbank(1,pet_memory+0x10000);
+			}
+			cpu_setbank(2,pet_memory+0x11000);
+			cpu_setbank(3,pet_memory+0x12000);
+			cpu_setbank(4,pet_memory+0x13000);
+		}
+		if (data&8) {
+			if (!(data&0x40)) {
+				cpu_setbank(7,pet_memory+0x1e800);
+			}
+			cpu_setbank(6, pet_memory+0x1c000);
+			cpu_setbank(8, pet_memory+0x1f000);
+			cpu_setbank(9, pet_memory+0x1fff1);
+		} else {
+			if (!(data&0x40)) {
+				cpu_setbank(7,pet_memory+0x1a800);
+			}
+			cpu_setbank(6, pet_memory+0x18000);
+			cpu_setbank(8, pet_memory+0x1b000);
+			cpu_setbank(9, pet_memory+0x1bff1);
+		}
+	} else {
+		cpu_setbank(1,pet_memory+0x8000);
+		cpu_setbankhandler_w(1, crtc6845_videoram_w);
+		cpu_setbank(2,pet_memory+0x9000);
+		cpu_setbankhandler_w(2, MWA_ROM);
+		cpu_setbank(3,pet_memory+0xa000);
+		cpu_setbankhandler_w(3, MWA_ROM);
+		cpu_setbank(4,pet_memory+0xb000);
+		cpu_setbankhandler_w(4, MWA_ROM);
+
+		cpu_setbank(6,pet_memory+0xc000);
+		cpu_setbankhandler_w(6, MWA_ROM);
+		cpu_setbankhandler_r(7, cbm8096_io_r);
+		cpu_setbankhandler_w(7, cbm8096_io_w);
+		cpu_setbank(8,pet_memory+0xf000);
+		cpu_setbankhandler_w(8, MWA_ROM);
+		cpu_setbank(9,pet_memory+0xfff1);
+		cpu_setbankhandler_w(9, MWA_ROM);
+	}
+}
 
 extern READ_HANDLER(superpet_r)
 {
@@ -190,6 +416,13 @@ static void pet_common_driver_init (void)
 	via_config(0,&pet_via);
 	pia_config(0,PIA_8BIT,&pet_pia0);
 	pia_config(1,PIA_8BIT,&pet_pia1);
+
+	cbm_drive_open ();
+	
+	cbm_drive_attach_fs (0);
+	cbm_drive_attach_fs (1);
+	
+	cbm_ieee_open();
 }
 
 void pet_driver_init (void)
@@ -209,6 +442,14 @@ void pet_basic1_driver_init (void)
 
 void pet40_driver_init (void)
 {
+	pet_common_driver_init ();
+	raster2.display_state=pet_state;
+	crtc6845_pet_init(pet_videoram);
+}
+
+void cbm80_driver_init (void)
+{
+	cbm8096=1;
 	pet_common_driver_init ();
 	raster2.display_state=pet_state;
 	crtc6845_pet_init(pet_videoram);
@@ -272,10 +513,61 @@ void pet_init_machine (void)
 		install_mem_write_handler (0, 0x4000, 0x7fff, MWA_RAM);
 		break;
 	}
+
+	if (cbm8096) {
+		if (CBM8096_MEMORY) {
+			install_mem_write_handler(0, 0xfff0, 0xfff0, cbm8096_w);
+		} else {
+			install_mem_write_handler(0, 0xfff0, 0xfff0, MWA_NOP);
+		}
+		cbm8096_w(0,0);
+	}
+	
+	cbm_drive_0_config (IEEE8ON ? IEEE : 0, 8);
+	cbm_drive_1_config (IEEE9ON ? IEEE : 0, 9);	
+
+	pet_rom_load();
 }
 
 void pet_shutdown_machine (void)
 {
+}
+
+int pet_rom_id (int id)
+{
+#if 0
+	/* magic lowrom at offset 0x8003: $c3 $c2 $cd $38 $30 */
+	/* jumped to offset 0 (0x8000) */
+	int retval = 0;
+	unsigned char magic[] =
+	{0xc3, 0xc2, 0xcd, 0x38, 0x30}, buffer[sizeof (magic)];
+	FILE *romfile;
+	char *cp;
+	const char *name=device_filename(IO_CARTSLOT,id);
+	
+	logerror("c64_rom_id %s\n", name);
+	retval = 0;
+	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+	{
+		logerror("rom %s not found\n", name);
+		return 0;
+	}
+	
+	osd_fseek (romfile, 3, SEEK_SET);
+	osd_fread (romfile, buffer, sizeof (magic));
+	osd_fclose (romfile);
+#endif
+	return 1;
+}
+
+void pet_rom_load(void)
+{
+	int i;
+
+	for (i=0; (i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))
+			 &&(cbm_rom[i].size!=0); i++) {
+		memcpy(pet_memory+cbm_rom[i].addr, cbm_rom[i].chip, cbm_rom[i].size);
+	}
 }
 
 void pet_keyboard_business(void)
@@ -587,7 +879,6 @@ void pet_frame_interrupt (int param)
 
 void pet_state(PRASTER *this)
 {
-#if VERBOSE_DBG
 	int y;
 	char text[70];
 
@@ -608,5 +899,10 @@ void pet_state(PRASTER *this)
 			 pet_keyline[9]);
 	praster_draw_text (this, text, &y);
 #endif
-#endif
+
+	cbm_drive_0_status (text, sizeof (text));
+	praster_draw_text (this, text, &y);
+	
+	cbm_drive_1_status (text, sizeof (text));
+	praster_draw_text (this, text, &y);
 }

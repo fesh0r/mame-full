@@ -54,7 +54,8 @@ Changes:
 13/4/2000       DJR - TK90X, TK95 and Inves support (48K clones).
 21/4/2000       DJR - TS2068 and TC2048 support (TC2048 Supports extra video
                 modes but doesn't have bank switching or sound chip).
-
+09/5/2000       DJR - Spectrum +2 (France, Spain), +3 (Spain).
+17/5/2000       DJR - Dipswitch to enable/disable disk drives on +3 and clones.
 
 Notes:
 
@@ -68,6 +69,8 @@ thus is not emulated.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "mess/eventlst.h"
+#include "mess/vidhrdw/spectrum.h"
 
 /* +3 hardware */
 #include "mess/machine/nec765.h"
@@ -80,25 +83,8 @@ extern void spectrum_rom_exit(int id);
 extern int  spectrum_rom_id(int id);
 extern int  load_snap(void);
 
-extern int  spectrum_vh_start(void);
-extern void spectrum_vh_stop(void);
-extern void spectrum_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-extern void spectrum_eof_callback(void);
-
-extern int  spectrum_128_vh_start(void);
-extern void spectrum_128_vh_stop(void);
-extern void spectrum_128_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-
-extern void ts2068_eof_callback(void);
-extern void ts2068_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-
 extern void spectrum_init_machine(void);
 extern void spectrum_shutdown_machine(void);
-
-extern WRITE_HANDLER ( spectrum_characterram_w );
-extern READ_HANDLER  ( spectrum_characterram_r );
-extern WRITE_HANDLER ( spectrum_colorram_w );
-extern READ_HANDLER  ( spectrum_colorram_r );
 
 
 /*-----------------27/02/00 10:49-------------------
@@ -113,16 +99,37 @@ extern void spectrum_cassette_exit(int);
  bit 3: MIC/Tape Output
  bit 2-0: border colour
 --------------------------------------------------*/
+
+int PreviousFE = 0;
+
 void spectrum_port_fe_w (int offset,int data)
 {
-        /* DAC output state */
-        speaker_level_w(0,(data>>4) & 0x01);
+	unsigned char Changed;
 
+	Changed = PreviousFE^data;
+
+	/* border colour changed? */
+	if ((Changed & 0x07)!=0)
+	{
+		/* yes - send event */
+                EventList_AddItemOffset(0x0fe, data & 0x07, cpu_getcurrentcycles());
+	}
+
+	if ((Changed & (1<<4))!=0)
+	{
+		/* DAC output state */
+        speaker_level_w(0,(data>>4) & 0x01);
+	}
+
+	if ((Changed & (1<<3))!=0)
+	{
         /*-----------------27/02/00 10:41-------------------
          write cassette data
         --------------------------------------------------*/
         device_output(IO_CASSETTE, 0, (data & (1<<3)) ? -32768: 32767);
+	}
 
+	PreviousFE = data;
 }
 
 
@@ -208,6 +215,9 @@ void spectrum_plus3_init_machine(void)
 
         nec765_init(&spectrum_plus3_nec765_interface);
 
+		floppy_drive_set_geometry(0, FLOPPY_DRIVE_SS_40);
+		floppy_drive_set_geometry(1, FLOPPY_DRIVE_SS_40);
+
         /* Initial configuration */
         spectrum_128_port_7ffd_data = 0;
         spectrum_plus3_port_1ffd_data = 0;
@@ -285,18 +295,25 @@ static void spectrum_128_port_bffd_w(int offset, int data)
 
 static void spectrum_plus3_port_3ffd_w(int offset, int data)
 {
-        nec765_data_w(data);
+        if (~readinputport(16) & 0x20)
+                nec765_data_w(0,data);
 }
 
 static int spectrum_plus3_port_3ffd_r(int offset)
 {
-        return nec765_data_r();
+        if (readinputport(16) & 0x20)
+                return 0xff;
+        else
+                return nec765_data_r(0);
 }
 
 
 static int spectrum_plus3_port_2ffd_r(int offset)
 {
-        return nec765_status_r();
+        if (readinputport(16) & 0x20)
+                return 0xff;
+        else
+                return nec765_status_r(0);
 }
 
 static void spectrum_128_port_fffd_w(int offset, int data)
@@ -384,13 +401,11 @@ extern void spectrum_128_update_memory(void)
         if (spectrum_128_port_7ffd_data & 8)
         {
                 logerror("SCREEN 1: BLOCK 7\n");
-
                 spectrum_128_screen_location = spectrum_128_ram + (7<<14);
         }
         else
         {
                 logerror("SCREEN 0: BLOCK 5\n");
-
                 spectrum_128_screen_location = spectrum_128_ram + (5<<14);
         }
 
@@ -426,13 +441,11 @@ extern void spectrum_plus3_update_memory(void)
         if (spectrum_128_port_7ffd_data & 8)
         {
                 logerror("+3 SCREEN 1: BLOCK 7\n");
-
                 spectrum_128_screen_location = spectrum_128_ram + (7<<14);
         }
         else
         {
                 logerror("+3 SCREEN 0: BLOCK 5\n");
-
                 spectrum_128_screen_location = spectrum_128_ram + (5<<14);
         }
 
@@ -859,7 +872,7 @@ static struct MemoryWriteAddress tc2048_writemem[] = {
 int spectrum_port_fe_r(int offset)
 {
    int lines = offset>>8;
-   int data = (0xbf^0x1f) | 0x1f;
+   int data = 0xff;
 
    int cs_extra1 = readinputport(8)  & 0x1f;
    int cs_extra2 = readinputport(9)  & 0x1f;
@@ -909,6 +922,8 @@ int spectrum_port_fe_r(int offset)
             data &= ~0x02;
    }
 
+   data |= (0xe0); /* Set bits 5-7 - as reset above */
+
 	 /*-----------------27/02/00 10:46-------------------
 		cassette input from wav
 	 --------------------------------------------------*/
@@ -917,19 +932,12 @@ int spectrum_port_fe_r(int offset)
                         data &= ~0x40;
 	}
 
-
    /* Issue 2 Spectrums default to having bits 5, 6 & 7 set.
       Issue 3 Spectrums default to having bits 5 & 7 set and bit 6 reset. */
    if (readinputport(16) & 0x80)
-   {
-        data &= (0x1f);
-        data |= ((0xa0)^0x40);
-   }
-   else
-        data |= ((0xe0)^0x40);
+        data ^= (0x40);
 
-
-	return data;
+   return data;
 }
 
 /* kempston joystick interface */
@@ -1383,7 +1391,10 @@ INPUT_PORTS_START( spectrum )
         PORT_DIPNAME(0x40, 0x00, "End of .TAP action")
         PORT_DIPSETTING(0x00, "Disable .TAP support" )
         PORT_DIPSETTING(0x40, "Rewind tape to start (to reload earlier levels)" )
-        PORT_BIT(0x3f, IP_ACTIVE_LOW, IPT_UNUSED)
+        PORT_DIPNAME(0x20, 0x00, "+3/+2a etc. Disk Drive")
+        PORT_DIPSETTING(0x00, "Enabled" )
+        PORT_DIPSETTING(0x20, "Disabled" )
+        PORT_BIT(0x1f, IP_ACTIVE_LOW, IPT_UNUSED)
 
 INPUT_PORTS_END
 
@@ -1457,9 +1468,9 @@ static struct MachineDriver machine_driver_spectrum =
         spectrum_shutdown_machine,
 
 	/* video hardware */
-	32*8,                                /* screen width */
-	24*8,                                /* screen height */
-	{ 0, 32*8-1, 0, 24*8-1 },             /* visible_area */
+        SPEC_SCREEN_WIDTH,              /* screen width */
+        SPEC_SCREEN_HEIGHT,             /* screen height */
+        { 0, SPEC_SCREEN_WIDTH-1, 0, SPEC_SCREEN_HEIGHT-1},  /* visible_area */
 	spectrum_gfxdecodeinfo,	             /* graphics decode info */
 	16, 256,                             /* colors used for the characters */
 	spectrum_init_palette,               /* initialise palette */
@@ -1506,9 +1517,9 @@ static struct MachineDriver machine_driver_spectrum_128 =
         spectrum_128_exit_machine,
 
 	/* video hardware */
-	32*8,                                /* screen width */
-	24*8,                                /* screen height */
-	{ 0, 32*8-1, 0, 24*8-1 },             /* visible_area */
+        SPEC_SCREEN_WIDTH,              /* screen width */
+        SPEC_SCREEN_HEIGHT,             /* screen height */
+        { 0, SPEC_SCREEN_WIDTH-1, 0, SPEC_SCREEN_HEIGHT-1},  /* visible_area */
 	spectrum_gfxdecodeinfo,	             /* graphics decode info */
 	16, 256,                             /* colors used for the characters */
 	spectrum_init_palette,               /* initialise palette */
@@ -1560,9 +1571,9 @@ static struct MachineDriver machine_driver_spectrum_plus3 =
         spectrum_128_exit_machine,
 
 	/* video hardware */
-	32*8,                                /* screen width */
-	24*8,                                /* screen height */
-	{ 0, 32*8-1, 0, 24*8-1 },             /* visible_area */
+        SPEC_SCREEN_WIDTH,              /* screen width */
+        SPEC_SCREEN_HEIGHT,             /* screen height */
+        { 0, SPEC_SCREEN_WIDTH-1, 0, SPEC_SCREEN_HEIGHT-1},  /* visible_area */
 	spectrum_gfxdecodeinfo,	             /* graphics decode info */
 	16, 256,                             /* colors used for the characters */
 	spectrum_init_palette,               /* initialise palette */
@@ -1602,7 +1613,7 @@ static struct MachineDriver machine_driver_ts2068 =
 	{
 		{
 			CPU_Z80|CPU_16BIT_PORT,
-			3500000,        /* 3.5 Mhz */
+                        3580000,        /* 3.58 Mhz */
                         ts2068_readmem,ts2068_writemem,
                         ts2068_readport,ts2068_writeport,
 			interrupt,1,
@@ -1614,16 +1625,16 @@ static struct MachineDriver machine_driver_ts2068 =
         ts2068_exit_machine,
 
 	/* video hardware */
-	32*8,                                /* screen width */
-	24*8,                                /* screen height */
-	{ 0, 32*8-1, 0, 24*8-1 },             /* visible_area */
+        TS2068_SCREEN_WIDTH,            /* screen width */
+        TS2068_SCREEN_HEIGHT,           /* screen height */
+        { 0, TS2068_SCREEN_WIDTH-1, 0, TS2068_SCREEN_HEIGHT-1},  /* visible_area */
 	spectrum_gfxdecodeinfo,	             /* graphics decode info */
 	16, 256,                             /* colors used for the characters */
 	spectrum_init_palette,               /* initialise palette */
 
 	VIDEO_TYPE_RASTER,
         ts2068_eof_callback,
-        spectrum_128_vh_start,          /* No specialised start/stop routine */
+        spectrum_128_vh_start,
         spectrum_128_vh_stop,
         ts2068_vh_screenrefresh,
 
@@ -1668,18 +1679,18 @@ static struct MachineDriver machine_driver_tc2048 =
         ts2068_exit_machine,
 
 	/* video hardware */
-	32*8,                                /* screen width */
-	24*8,                                /* screen height */
-	{ 0, 32*8-1, 0, 24*8-1 },             /* visible_area */
+        TS2068_SCREEN_WIDTH,            /* screen width */
+        SPEC_SCREEN_HEIGHT,             /* screen height */
+        { 0, TS2068_SCREEN_WIDTH-1, 0, SPEC_SCREEN_HEIGHT-1},  /* visible_area */
 	spectrum_gfxdecodeinfo,	             /* graphics decode info */
 	16, 256,                             /* colors used for the characters */
 	spectrum_init_palette,               /* initialise palette */
 
 	VIDEO_TYPE_RASTER,
         spectrum_eof_callback,
-        spectrum_128_vh_start,          /* No specialised start/stop routine */
+        spectrum_128_vh_start,
         spectrum_128_vh_stop,
-        ts2068_vh_screenrefresh,
+        tc2048_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1770,12 +1781,32 @@ ROM_START(ts2068)
         ROM_LOAD("ts2068_x.rom",0x14000,0x2000, 0xae16233a)
 ROM_END
 
+ROM_START(specp2fr)
+        ROM_REGION(0x18000,REGION_CPU1)
+        ROM_LOAD("plus2fr0.rom",0x10000,0x4000, 0xc684c535)
+        ROM_LOAD("plus2fr1.rom",0x14000,0x4000, 0xf5e509c5)
+ROM_END
+
+ROM_START(specp2sp)
+        ROM_REGION(0x18000,REGION_CPU1)
+        ROM_LOAD("plus2sp0.rom",0x10000,0x4000, 0xe807d06e)
+        ROM_LOAD("plus2sp1.rom",0x14000,0x4000, 0x41981d4b)
+ROM_END
+
+ROM_START(specp3sp)
+        ROM_REGION(0x20000,REGION_CPU1)
+        ROM_LOAD("plus3sp0.rom",0x10000,0x4000, 0x1f86147a)
+        ROM_LOAD("plus3sp1.rom",0x14000,0x4000, 0xa8ac4966)
+        ROM_LOAD("plus3sp2.rom",0x18000,0x4000, 0xf6bb0296)
+        ROM_LOAD("plus3sp3.rom",0x1c000,0x4000, 0xf6d25389)
+ROM_END
+
 static const struct IODevice io_spectrum[] = {
 	{
         IO_SNAPSHOT,            /* type */
-        1,                                      /* count */
-        "sna\0z80\0tap\0",           /* file extensions */
-        NULL,               /* private */
+        1,                      /* count */
+        "sna\0z80\0",           /* file extensions */
+        NULL,                   /* private */
         spectrum_rom_id,        /* id */
         spectrum_rom_load,      /* init */
         spectrum_rom_exit,      /* exit */
@@ -1789,19 +1820,19 @@ static const struct IODevice io_spectrum[] = {
         NULL,               /* input_chunk */
         NULL                /* output_chunk */
     },
-        IO_CASSETTE_WAVE(1,"wav\0", NULL,spectrum_cassette_init, spectrum_cassette_exit),
+        IO_CASSETTE_WAVE(1,"wav\0tap\0", NULL,spectrum_cassette_init, spectrum_cassette_exit),
         { IO_END }
 };
 
 static const struct IODevice io_specpls3[] = {
         {
         IO_SNAPSHOT,            /* type */
-        1,                                      /* count */
-        "sna\0z80\0tap\0",           /* file extensions */
-        NULL,               /* private */
+        1,                      /* count */
+        "sna\0z80\0",           /* file extensions */
+        NULL,                   /* private */
         spectrum_rom_id,        /* id */
         spectrum_rom_load,      /* init */
-        spectrum_rom_exit,                           /* exit */
+        spectrum_rom_exit,      /* exit */
         NULL,               /* info */
         NULL,               /* open */
         NULL,               /* close */
@@ -1812,7 +1843,7 @@ static const struct IODevice io_specpls3[] = {
         NULL,               /* input_chunk */
         NULL                /* output_chunk */
     },
-        IO_CASSETTE_WAVE(1,"wav\0", NULL,spectrum_cassette_init, spectrum_cassette_exit),
+        IO_CASSETTE_WAVE(1,"wav\0tap\0", NULL,spectrum_cassette_init, spectrum_cassette_exit),
 	{
                 IO_FLOPPY,              /* type */
                 2,                      /* count */
@@ -1843,6 +1874,9 @@ static const struct IODevice io_specpls3[] = {
 #define io_tc2048   io_spectrum
 #define io_ts2068   io_spectrum
 #define io_specpl2a io_specpls3
+#define io_specp2fr io_spectrum
+#define io_specp2sp io_spectrum
+#define io_specp3sp io_specpls3
 
 /*    YEAR  NAME      PARENT    MACHINE         INPUT     INIT          COMPANY                 FULLNAME */
 COMP( 1982, spectrum, 0,        spectrum,       spectrum, 0,            "Sinclair Research",    "ZX-Spectrum 48k" )
@@ -1857,3 +1891,7 @@ COMP( 1986, spec128,  0,        spectrum_128,   spectrum, 0,            "Sinclai
 COMP( 1986, specpls2, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "Spectrum +2" )
 COMP( 1987, specpl2a, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "Spectrum +2a" )
 COMP( 1987, specpls3, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "Spectrum +3" )
+
+COMP( 1986, specp2fr, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "Spectrum +2 (France)" )
+COMP( 1986, specp2sp, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "Spectrum +2 (Spain)" )
+COMP( 1987, specp3sp, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "Spectrum +3 (Spain)" )

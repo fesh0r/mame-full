@@ -75,7 +75,7 @@ const struct GameDriver *drivers[] =
   /****************CONSOLES****************************************************/
 
       /* ATARI */
-  TESTDRIVER( a2600 )       /* Atari 2600                                     */
+      TESTDRIVER( a2600 )       /* Atari 2600                                     */
       DRIVER( a5200 )       /* Atari 5200                                     */
       DRIVER( a7800 )       /* Atari 7800                                     */
 
@@ -180,6 +180,7 @@ const struct GameDriver *drivers[] =
       DRIVER( vic20 )       /* Commodore Vic-20 NTSC                          */
       DRIVER( vic20swe )    /*                                                */
       DRIVER( vc20 )        /* Commodore Vic-20 PAL                           */
+      DRIVER( vic20i )
 
       DRIVER( pet )
 	  DRIVER( cbm30 )
@@ -205,6 +206,7 @@ const struct GameDriver *drivers[] =
       DRIVER( cpc464 )      /* Amstrad (Schneider in Germany) 1984            */
       DRIVER( cpc664 )      /* Amstrad (Schneider in Germany) 1985            */
       DRIVER( cpc6128 )     /* Amstrad (Schneider in Germany) 1985                                    */
+      DRIVER( pcw )         /*                                                */
   TESTDRIVER( cpc464p )     /* Amstrad CPC464  Plus - 1987                    */
   TESTDRIVER( cpc6128p )    /* Amstrad CPC6128 Plus - 1987                    */
 
@@ -269,10 +271,13 @@ const struct GameDriver *drivers[] =
   TESTDRIVER( pc )          /* IBM PC  - parent Driver, so no need            */
 	  DRIVER( pcmda )		/* IBM PC/XT with MDA (MGA aka Hercules)		  */
 	  DRIVER( pccga )		/* IBM PC/XT with CGA							  */
+	  DRIVER( t1000hx ) 	/* Tandy 1000TX (similiar to PCJr)				  */
 
-	  DRIVER( tandy1t ) 	/* Tandy 1000TX (similiar to PCJr)				  */
-
-
+  TESTDRIVER( xtcga )       /*                                                */
+  TESTDRIVER( xtega )       /*                                                */
+  TESTDRIVER( xtvga )       /*                                                */
+  TESTDRIVER( atcga )       /*                                                */
+  TESTDRIVER( atvga )       /*                                                */
 
 
 	  DRIVER( p2000t )		/* Philips - P2000T 							  */
@@ -300,6 +305,12 @@ const struct GameDriver *drivers[] =
       DRIVER( specpls2 )    /* Spectrum                                       */
       DRIVER( specpl2a )    /* Spectrum                                       */
       DRIVER( specpls3 )    /* Spectrum Plus 3                                */
+
+      DRIVER( specp2fr )    /*                                                */
+      DRIVER( specp2sp )    /*                                                */
+      DRIVER( specp3sp )    /*                                                */
+
+
 
 	  /* ASCII & Microsoft */
       DRIVER( msx )         /* MSX                                            */
@@ -333,7 +344,7 @@ const struct GameDriver *drivers[] =
       DRIVER( sfzch )       /* CPS Changer (Street Fighter ZERO)              */
 
 
-  TESTDRIVER( bbc  )        /* BBC Micro                                      */
+      DRIVER( bbc  )        /* BBC Micro                                      */
 
 
 

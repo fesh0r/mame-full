@@ -13,7 +13,7 @@
 #include "mess/vidhrdw/kc.h"
 
 #define KC85_4_SCREEN_WIDTH 320
-#define KC85_4_SCREEN_HEIGHT 200
+#define KC85_4_SCREEN_HEIGHT (32*8)
 
 #define KC85_4_SCREEN_PIXEL_RAM_SIZE 0x04000
 #define KC85_4_SCREEN_COLOUR_RAM_SIZE 0x04000
@@ -73,7 +73,419 @@ bit 3: TONE 3
 bit 2: TONE 2
 bit 1: TONE 1
 bit 0: TRUCK */
+/*
+Hi!
 
+Sorry for the late answer. I'm not at the university anymore so I'm
+not reading the mail there very often. The address still works but
+i've registered an address at gmx.de that I can access much more
+easily from home: Torsten.Paul@gmx.de
+
+> From: "Kev Thacker" <kev@distdevs.co.uk>
+> Date: Mon, 6 Mar 2000 11:23:12 -0000
+>
+> I have started a KC85/4 emulation for the MESS project. mess.emuverse.com
+>
+Yes, I already noticed this. Currently I don't have the time to follow
+the MAME/MESS developement but I'm reading emulator news at retrogames.com
+so atleast I can read about new interesting things.
+
+> I used a lot of info that I found from looking at the source code to your
+> emulator,
+>
+The naming of the roms looked a bit familar too ;-).
+
+> and reading the docs from another emulator. I am lucky because in MESS the
+> Z80 PIO, Z80 CTC,
+> and Z80 are already written, so all I needed to write was the code to link
+> these together.
+>
+Yup, the CTC is quite a complex thing to emulate. Fortunately the more
+difficult PIO modes are not used by the KC.
+
+> I hope that you will be able to help me so I can add keyboard
+> emulation to it.
+>
+Oh yes the keyboard caused me a lot of trouble too. I still don't
+understand it completely.
+A first dirty but working keyboard support is quite easy because
+of the good and modular system rom. Most programs use the supplied
+routines to read keyboard input so patching the right memory address
+with the keycode that is originally supplied by the interrupt
+routines for keyboard input will work. So if you first want to
+have a simple start to get other things to work you can try this.
+
+    * write keycode (ascii) to address IX+0dh (0x1fd)
+    * set bit 0 at address IX+08h (0x1f8) - simply writing 01h
+      worked for me but some other bits are used too
+      this bit is reset if the key is read by the system
+
+> From the schematics I see that the keyboard is linked to the CTC and PIO,
+> but I don't understand it fully.
+> Please can you tell me more about how the keyboard is scanned?
+>
+The full emulation is quite tricky and I still have some programs that
+behave odd. (A good hint for a correct keyboard emulation is Digger ;-).
+
+Ok, now the technical things:
+
+The keyboard of the KC is driven by a remote control circuit that is
+originally designed for infrared remote control. This one was named
+U807 and I learned there should be a similar chip called SAB 3021
+available but I never found the specs on the web. The SAB 3021 was
+produced by Valvo which doesn't exist anymore (bought by Phillips
+if I remember correctly). If you have more luck finding the specs
+I'm still interested.
+There also was a complementary chip for the recieving side but that
+was not used in the KC unfortunately. They choosed to measure the
+pulses sent by the U807 via PIO and CTC.
+
+Anyway here is what I know about the protocol:
+
+The U807 sends impulses with equal length. The information is
+given by the time between two impulses. Short time means bit is 1
+long time mean bit is 0. The impulses are modulated by a 62.5 kHz
+Signal but that's not interesting for the emulator.
+The timing comes from a base clock of 4 MHz that is divided
+multiple times:
+
+4 MHz / 64 - 62.5 kHz -> used for filtered amplification
+62.5 kHz / 64 - 976 Hz -> 1.024 ms
+976 / 7 - 140 Hz -> 7.2 ms
+976 / 5 - 195 Hz -> 5.1 ms
+
+short - 5.12 ms - 1 bit
+long - 7.168 ms - 0 bit
+
+       +-+     +-+       +-+     +-+
+       | |     | |       | |     | |
+    +--+ +-----+ +-------+ +-----+ +--....
+
+         |     | |---0---| |--1--|
+            ^
+            |
+        Startbit = shift key
+
+The keyboard can have 64 keys with an additional key that is used by
+the KC as shift key. This additional key is directly connected to the
+chip and changes the startbit. All other keys are arranged in a matrix.
+
+The chip sends full words of 7 bits (including the startbit) at least
+twice for each keypress with a spacing of 14 * 1.024 ms. If the key
+is still pressed the double word is repeated after 19 * 1.024 ms.
+
+The impulses trigger the pio interrupt line for channel B that
+triggers the time measurement by the CTC channel 3.
+
+That's all for today :-). I'm sure I've forgotten some things so
+feel free to mail again...
+
+ciao,
+  Torsten.
+
+
+--
+Torsten.Paul@gmx.de      True wealth is measured not by what you
+//     accumulate, but by what you pass
+__________________ooO_(+ +)_Ooo__________ on to others. (Larry Wall)
+U
+*/
+
+/* the following is a temporary key emulation. This works by poking OS
+variables. Thankyou to Torsten Paul for the details.
+
+  The actual key scanning uses a special transmission protocol where
+  pulses are measured by the CTC and PIO */
+
+/* load image */
+int kc_load(char *filename, int addr)
+{
+	void *file;
+
+	file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_ROM,OSD_FOPEN_READ);
+
+	if (file)
+	{
+		int datasize;
+		unsigned char *data;
+
+		/* get file size */
+		datasize = osd_fsize(file);
+
+		if (datasize!=0)
+		{
+			/* malloc memory for this data */
+			data = malloc(datasize);
+
+			if (data!=NULL)
+			{
+				int i;
+
+				/* read whole file */
+				osd_fread(file, data, datasize);
+
+				for (i=0; i<datasize; i++)
+				{
+					cpu_writemem16(addr+i, data[i]);
+				}
+
+				/* close file */
+				osd_fclose(file);
+
+				free(data);
+
+				logerror("File loaded!\r\n");
+
+				/* ok! */
+				return 1;
+			}
+			osd_fclose(file);
+
+		}
+	}
+
+	return 0;
+}
+
+
+
+
+
+#define KC85_4_KEYCODE_QUEUE_LENGTH 256
+static unsigned char kc85_4_keycodes[KC85_4_KEYCODE_QUEUE_LENGTH];
+static int kc85_4_keycodes_head;
+static int kc85_4_keycodes_tail;
+
+static void kc85_4_keyboard_update(int);
+
+
+/* initialise keyboard queue */
+static void kc85_4_keyboard_init(void)
+{
+	/* head and tail of list is at beginning */
+	kc85_4_keycodes_head = kc85_4_keycodes_tail = 0;
+
+	/* 50hz is just a arbitrary value */
+	timer_pulse(TIME_IN_HZ(50), 0, kc85_4_keyboard_update);
+}
+
+
+/* add a key to the queue */
+static void kc85_4_queue_key(int code)
+{
+	/* add a key */
+	kc85_4_keycodes[kc85_4_keycodes_tail] = code;
+	/* update next insert position */
+	kc85_4_keycodes_tail = (kc85_4_keycodes_tail + 1) % KC85_4_KEYCODE_QUEUE_LENGTH;
+}
+
+/* 1 = true, to send keycode, 0 = false, do not send keycode */
+static int kc85_4_can_send_keycode(void)
+{
+	/* temporary until correct hardware key emulation has been done */
+	/* check if os has read key yet */
+
+	int flag;
+
+	flag = cpu_readmem16(0x01f8);
+	flag = flag & 0x01;
+
+	if (flag==0)
+		return 1;
+
+	return 0;
+}
+
+static void kc85_4_send_keycode(int code)
+{
+	int flag;
+
+	/* temporary until correct hardware key emulation has been done */
+
+	/* write code into OS variables */
+	cpu_writemem16(0x01fd, code);
+
+	/* indicate char is ready in OS variables */
+	flag = cpu_readmem16(0x01f8);
+	flag |= 0x01;
+	cpu_writemem16(0x01f8, flag);
+}
+
+#define KC85_4_KEYBOARD_NUM_LINES	9
+
+/* this table will eventually hold the actual keycodes */
+//static int kc85_4_keycode_translation[64];
+
+
+/* previous state of keyboard - currently used to detect if a key has been pressed/released  since last scan */
+static int kc85_4_previous_keyboard[KC85_4_KEYBOARD_NUM_LINES];
+
+/* update keyboard */
+void	kc85_4_keyboard_update(int dummy)
+{
+	int i;
+
+	/* scan all lines */
+	for (i=0; i<8; i++)
+	{
+		int b;
+		int keyboard_line_data;
+		int changed_keys;
+		int mask = 0x080;
+
+		/* read input port */
+		keyboard_line_data = readinputport(i);
+		/* identify keys that have changed */
+		changed_keys = keyboard_line_data ^ kc85_4_previous_keyboard[i];
+		/* store input port for next time */
+		kc85_4_previous_keyboard[i] = keyboard_line_data;
+
+		/* scan through each bit */
+		for (b=0; b<8; b++)
+		{
+			/* key changed? */
+			if (changed_keys & mask)
+			{
+				/* yes */
+
+				/* new state is pressed? */
+				if ((keyboard_line_data & mask)!=0)
+				{
+					/* pressed */
+					int ascii_code;
+					int fake_code;
+
+					/* generate fake code */
+					fake_code = (i<<3) | (7-b);
+
+					if ((fake_code>=0) && (fake_code<=26))
+					{
+						/* shift? */
+						if ((readinputport(8) & 0x03)!=0)
+						{
+							ascii_code = fake_code + 'A';
+							/* lookup actual kc85/4 keycode - and add to queue */
+							kc85_4_queue_key(ascii_code);
+
+						}
+						else
+						{
+							ascii_code = fake_code + 'a';
+							/* lookup actual kc85/4 keycode - and add to queue */
+							kc85_4_queue_key(ascii_code);
+						}
+					}
+					else if ((fake_code>=27) && (fake_code<=(27+9)))
+					{
+						if (fake_code==27)
+						{
+							if ((readinputport(8) & 0x03)!=0)
+							{
+								ascii_code = '@';
+							}
+							else
+							{
+								ascii_code = '0';
+							}
+						}
+						else
+						{
+
+							if ((readinputport(8) & 0x03)!=0)
+							{
+								ascii_code = fake_code - 27 + '!';
+							}
+							else
+							{
+								ascii_code = fake_code + '0' - 27;
+							}
+						}
+						/* lookup actual kc85/4 keycode - and add to queue */
+						kc85_4_queue_key(ascii_code);
+					}
+					else if (fake_code == ((6*8) + 4))
+					{
+						kc85_4_queue_key(13);
+					}
+					else if (fake_code == ((5*8) + 5))
+					{
+						kc85_4_queue_key(127);
+					}
+					else if (fake_code == ((6*8) + 5))
+					{
+						kc85_4_queue_key(32);
+					}
+					else if (fake_code == ((6*8) + 6))
+					{
+						if ((readinputport(8) & 0x03)!=0)
+						{
+							ascii_code = '<';
+						}
+						else
+						{
+							ascii_code = ',';
+						}
+						kc85_4_queue_key(ascii_code);
+					}
+					else if (fake_code == ((6*8) + 7))
+					{
+						if ((readinputport(8) & 0x03)!=0)
+						{
+							ascii_code = '>';
+						}
+						else
+						{
+							ascii_code = '.';
+						}
+						kc85_4_queue_key(ascii_code);
+					}
+					else if (fake_code == ((7*8) + 1))
+					{
+						if ((readinputport(8) & 0x03)!=0)
+						{
+							ascii_code = ':';
+						}
+						else
+						{
+							ascii_code = '*';
+						}
+
+						kc85_4_queue_key(ascii_code);
+					}
+
+
+				//	/* lookup actual kc85/4 keycode - and add to queue */
+				//	kc85_4_queue_key(ascii_code);
+
+
+				}
+			}
+
+			mask = mask>>1;
+		}
+	}
+
+
+	/* transmit a new keycode? */
+	if (kc85_4_can_send_keycode())
+	{
+
+		/* keycode available? */
+		if (kc85_4_keycodes_head!=kc85_4_keycodes_tail)
+		{
+			int code;
+
+			/* get code */
+			code = kc85_4_keycodes[kc85_4_keycodes_head];
+			/* update start of list */
+			kc85_4_keycodes_head = (kc85_4_keycodes_head + 1) % KC85_4_KEYCODE_QUEUE_LENGTH;
+
+			/* send the code */
+			kc85_4_send_keycode(code);
+
+		}
+	}
+}
 
 
 static int kc85_84_data;
@@ -90,6 +502,10 @@ OPBASE_HANDLER( kc85_opbaseoverride )
             cpu_setOPbaseoverride(0,0);
 
             cpu_set_reg(Z80_PC, 0x0f000);
+
+	kc_load("bd_0400.prg", 0x0400);
+    kc_load("bd_4000.scr", 0x4000);
+
 
             return (cpu_get_pc() & 0x0ffff);
 
@@ -324,12 +740,12 @@ int keyboard_data = 0;
 
 static WRITE_HANDLER ( kc85_4_zc2_callback )
 {
-z80ctc_trg_w(0, 3, 0,keyboard_data);
-z80ctc_trg_w(0, 3, 1,keyboard_data);
-z80ctc_trg_w(0, 3, 2,keyboard_data);
-z80ctc_trg_w(0, 3, 3,keyboard_data);
+//z80ctc_trg_w(0, 3, 0,keyboard_data);
+//z80ctc_trg_w(0, 3, 1,keyboard_data);
+//z80ctc_trg_w(0, 3, 2,keyboard_data);
+//z80ctc_trg_w(0, 3, 3,keyboard_data);
 
-keyboard_data^=0x0ff;
+//keyboard_data^=0x0ff;
 }
 
 
@@ -445,6 +861,10 @@ void kc85_4_init_machine(void)
         kc85_4_display_video_ram = kc85_4_video_ram;
 
 	kc85_4_reset();
+
+	kc85_4_keyboard_init();
+
+
 }
 
 void kc85_4_shutdown_machine(void)
@@ -552,9 +972,81 @@ static struct MemoryWriteAddress writemem_kc85_4[] =
 
 
 
-
+/* this is a fake keyboard layout. The keys are converted into codes which are transmitted to the kc85/4 */
 INPUT_PORTS_START( kc85_4 )
         PORT_START
+		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "A", KEYCODE_A, IP_JOY_NONE)
+		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "B", KEYCODE_B, IP_JOY_NONE)
+		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "C", KEYCODE_C, IP_JOY_NONE)
+		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "D", KEYCODE_D, IP_JOY_NONE)
+		PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "E", KEYCODE_E, IP_JOY_NONE)
+		PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F", KEYCODE_F, IP_JOY_NONE)
+		PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "G", KEYCODE_G, IP_JOY_NONE)
+		PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "H", KEYCODE_H, IP_JOY_NONE)
+        PORT_START
+		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "I", KEYCODE_I, IP_JOY_NONE)
+		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "J", KEYCODE_J, IP_JOY_NONE)
+		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "K", KEYCODE_K, IP_JOY_NONE)
+		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "L", KEYCODE_L, IP_JOY_NONE)
+		PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "M",KEYCODE_M, IP_JOY_NONE)
+		PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "N", KEYCODE_N, IP_JOY_NONE)
+		PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "O", KEYCODE_O, IP_JOY_NONE)
+		PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "P", KEYCODE_P, IP_JOY_NONE)
+        PORT_START
+		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Q", KEYCODE_Q, IP_JOY_NONE)
+		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "R", KEYCODE_R, IP_JOY_NONE)
+		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "S", KEYCODE_S, IP_JOY_NONE)
+		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "T", KEYCODE_T, IP_JOY_NONE)
+		PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "U",KEYCODE_U, IP_JOY_NONE)
+		PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "V", KEYCODE_V, IP_JOY_NONE)
+		PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "W", KEYCODE_W, IP_JOY_NONE)
+		PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "X", KEYCODE_X, IP_JOY_NONE)
+        PORT_START
+		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Y", KEYCODE_Y, IP_JOY_NONE)
+		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Z", KEYCODE_Z, IP_JOY_NONE)
+		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "0 @", KEYCODE_0, IP_JOY_NONE)
+		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "1 !", KEYCODE_1, IP_JOY_NONE)
+		PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "2 \"", KEYCODE_2, IP_JOY_NONE)
+		PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "3 #", KEYCODE_3, IP_JOY_NONE)
+		PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "4 $", KEYCODE_4, IP_JOY_NONE)
+		PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "5 %", KEYCODE_5, IP_JOY_NONE)
+        PORT_START
+		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "6 &", KEYCODE_6, IP_JOY_NONE)
+		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "7 *", KEYCODE_7, IP_JOY_NONE)
+		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "8 (", KEYCODE_8, IP_JOY_NONE)
+		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "9 )", KEYCODE_9, IP_JOY_NONE)
+		PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F1", KEYCODE_F1, IP_JOY_NONE)
+		PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F2", KEYCODE_F2, IP_JOY_NONE)
+		PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F3", KEYCODE_F3, IP_JOY_NONE)
+		PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F4", KEYCODE_F4, IP_JOY_NONE)
+		PORT_START
+		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F5", KEYCODE_F5, IP_JOY_NONE)
+		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F6", KEYCODE_F6, IP_JOY_NONE)
+		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "BRK", KEYCODE_F7, IP_JOY_NONE)
+		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "STOP", KEYCODE_F8, IP_JOY_NONE)
+		PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "INS", KEYCODE_F9, IP_JOY_NONE)
+		PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "DEL", KEYCODE_F10, IP_JOY_NONE)
+		PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "DEL", KEYCODE_DEL, IP_JOY_NONE)
+		PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CLR", KEYCODE_F11, IP_JOY_NONE)
+		PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "HOME", KEYCODE_F12, IP_JOY_NONE)
+		PORT_START
+		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CURSOR UP", KEYCODE_UP, IP_JOY_NONE)
+		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CURSOR DOWN", KEYCODE_DOWN, IP_JOY_NONE)
+		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CURSOR LEFT", KEYCODE_LEFT, IP_JOY_NONE)
+		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CURSOR RIGHT", KEYCODE_RIGHT, IP_JOY_NONE)
+		PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "RETURN/ENTER", KEYCODE_ENTER, IP_JOY_NONE)
+		PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SPACE", KEYCODE_SPACE, IP_JOY_NONE)
+		PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, ", <", KEYCODE_COMMA, IP_JOY_NONE)
+		PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, ". >", KEYCODE_STOP, IP_JOY_NONE)
+
+		PORT_START
+		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, ": *", KEYCODE_COLON, IP_JOY_NONE)
+		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "- = ", KEYCODE_EQUALS, IP_JOY_NONE)
+
+		PORT_START
+		/* has a single shift key. Mapped here to left and right shift */
+		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SHIFT", KEYCODE_LSHIFT, IP_JOY_NONE)
+		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SHIFT", KEYCODE_RSHIFT, IP_JOY_NONE)
 INPUT_PORTS_END
 
 

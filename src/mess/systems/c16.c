@@ -437,8 +437,8 @@ static struct MemoryWriteAddress c364_writemem[] =
 	DIPS_HELPER( 0x0800, "B", KEYCODE_B)\
 	DIPS_HELPER( 0x0400, "N", KEYCODE_N)\
 	DIPS_HELPER( 0x0200, "M", KEYCODE_M)\
-	DIPS_HELPER( 0x0100, ", <", KEYCODE_COMMA)\
-	DIPS_HELPER( 0x0080, ". >", KEYCODE_STOP)\
+	DIPS_HELPER( 0x0100, ", <   FLASH-ON", KEYCODE_COMMA)\
+	DIPS_HELPER( 0x0080, ". >   FLASH-OFF", KEYCODE_STOP)\
 	DIPS_HELPER( 0x0040, "/ ?", KEYCODE_SLASH)\
 	DIPS_HELPER( 0x0020, "Right-Shift", KEYCODE_RSHIFT)\
 	DIPS_HELPER( 0x0010, "Pound", KEYCODE_INSERT)\
@@ -737,7 +737,7 @@ static struct MachineDriver machine_driver_c16 =
   /* basic machine hardware */
 	{
 		{
-			CPU_M6510,				   /* MOS7501 has no nmi line */
+			CPU_M7501,				   /* MOS7501 has no nmi line */
 			1400000,				   /*TED7360PAL_CLOCK/2, */
 			c16_readmem, c16_writemem,
 			0, 0,
@@ -778,7 +778,7 @@ static struct MachineDriver machine_driver_c16c =
   /* basic machine hardware */
 	{
 		{
-			CPU_M6510,				   /* MOS7501 has no nmi line */
+			CPU_M7501,
 			1400000,				   /*TED7360PAL_CLOCK/2, */
 			c16_readmem, c16_writemem,
 			0, 0,
@@ -825,7 +825,7 @@ static struct MachineDriver machine_driver_c16v =
   /* basic machine hardware */
 	{
 		{
-			CPU_M6510,				   /* MOS7501 has no nmi line */
+			CPU_M7501,
 			1400000,				   /*TED7360PAL_CLOCK/2, */
 			c16_readmem, c16_writemem,
 			0, 0,
@@ -872,7 +872,7 @@ static struct MachineDriver machine_driver_plus4 =
   /* basic machine hardware */
 	{
 		{
-			CPU_M6510,				   /* MOS 7501 */
+			CPU_M7501,
 			1200000,				   /*TED7360NTSC_CLOCK/2, */
 			plus4_readmem, plus4_writemem,
 			0, 0,
@@ -913,7 +913,7 @@ static struct MachineDriver machine_driver_plus4c =
   /* basic machine hardware */
 	{
 		{
-			CPU_M6510,				   /* MOS 7501 */
+			CPU_M7501,
 			1200000,				   /*TED7360NTSC_CLOCK/2, */
 			plus4_readmem, plus4_writemem,
 			0, 0,
@@ -961,7 +961,7 @@ static struct MachineDriver machine_driver_plus4v =
   /* basic machine hardware */
 	{
 		{
-			CPU_M6510,				   /* MOS 7501 */
+			CPU_M7501,
 			1200000,				   /*TED7360NTSC_CLOCK/2, */
 			plus4_readmem, plus4_writemem,
 			0, 0,
@@ -1009,7 +1009,7 @@ static struct MachineDriver machine_driver_c364 =
   /* basic machine hardware */
 	{
 		{
-			CPU_M6510,				   /* MOS 7501 */
+			CPU_M7501,
 			1200000,				   /*TED7360NTSC_CLOCK/2, */
 			c364_readmem, c364_writemem,
 			0, 0,

@@ -40,6 +40,11 @@ New (000204) :
 New (000305) :
 	* updated for new MESS devices interfaces
 	* added tape support (??? Does not work on me...)
+New (0004) :
+	* uses file extensions (Norberto Bensa)
+New (0005) :
+	* fixed problems caused by the former patch
+	* fixed some tape bugs.  The CS1 unit now works occasionally
 */
 
 #include "driver.h"
@@ -113,7 +118,7 @@ GPL ports :
 	drivers did not burn when another chip imposed another value on the data bus, so you could
 	override the system GROMs and use custom code instead...)
 
-	The question is : which pieces of hardware do use this ?  I can only make guesses :
+	The question is : which pieces of hardware do use this ? I can only make guesses :
 	* p-code card (-> UCSD Pascal system) contains 8 GROMs, so it must use two ports.
 	* TI99/4 reportedly has 4 GROMs, whereas 1979's Statistics module has 5 GROMs.  So either
 	  the console or the module uses an extra port.  I suspect Equation Editor is located in GPL
@@ -187,9 +192,12 @@ extern int tms9900_ICount;
 ================================================================*/
 
 static unsigned char *cartidge_pages[2] = {NULL, NULL};
-static int cartidge_paged = 0;
-static int minimemory = 0;
+static int cartidge_minimemory = FALSE;
+static int cartidge_paged = FALSE;
 static unsigned char *current_page_ptr;
+/* tells the cart file types - needed for cleanup... */
+typedef enum slot_type_t { SLOT_EMPTY = -1, SLOT_GROM = 0, SLOT_CROM = 1, SLOT_DROM = 2, SLOT_MINIMEM = 3 } slot_type_t;
+static slot_type_t slot_type[3] = { SLOT_EMPTY, SLOT_EMPTY, SLOT_EMPTY};
 
 static const char *floppy_name[3] /*= {NULL, NULL, NULL}*/;
 
@@ -208,6 +216,7 @@ int ti99_cassette_init(int id)
 {
 	void *file;
 
+#if 1
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 	if (file)
 	{
@@ -220,6 +229,7 @@ int ti99_cassette_init(int id)
 
 		return INIT_OK;
 	}
+#endif
 
 	/* HJB 02/18: no file, create a new file instead */
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
@@ -230,10 +240,10 @@ int ti99_cassette_init(int id)
 		wa.display = 1;
 		wa.smpfreq = 22050; /* maybe 11025 Hz would be sufficient? */
 		/* open in write mode */
-        if (device_open(IO_CASSETTE, id, 1, &wa))
-            return INIT_FAILED;
+		if (device_open(IO_CASSETTE, id, 1, &wa))
+			return INIT_FAILED;
 		return INIT_OK;
-    }
+	}
 
 	return INIT_FAILED;
 }
@@ -252,13 +262,16 @@ void ti99_cassette_exit(int id)
 int ti99_load_rom(int id)
 {
 	const char *name = device_filename(IO_CARTSLOT,id);
-    void *cartfile = NULL;
+	void *cartfile = NULL;
 
 	int slot_empty = ! (name && name[0]);
 
 	/* ti99_cart_mem is not initialized yet, so we initialize a local equivalent */
-  cartidge_pages[0] = memory_region(REGION_CPU1)+0x06000;
-  cartidge_pages[1] = memory_region(REGION_CPU1)+0x10000;
+	cartidge_pages[0] = memory_region(REGION_CPU1)+0x06000;
+	cartidge_pages[1] = memory_region(REGION_CPU1)+0x10000;
+
+	if (slot_empty)
+		slot_type[id] = SLOT_EMPTY;
 
 	if (! slot_empty)
 	{
@@ -268,61 +281,69 @@ int ti99_load_rom(int id)
 			logerror("TI99 - Unable to locate cartridge: %s\n", name);
 			return INIT_FAILED;
 		}
-	}
 
-  {
-    /* Trick - we identify file types according to their extension */
-    /* Original idea by Norberto Bensa <nbensa@hotmail.com> */
-    char *ch;
+		/* Trick - we identify file types according to their extension */
+		/* Note that if we do not recognize the extension, we revert to the slot location <-> type
+		scheme.  I do this because the extension concept is quite unfamiliar to mac people
+		(I am dead serious). */
+		/* Original idea by Norberto Bensa <nbensa@hotmail.com> */
+		{
+
+		char *ch, *ch2;
+		slot_type_t type = (slot_type_t) id;
 
 		ch = strrchr(name, '.');
+		ch2 = (ch-1 >= name) ? ch-1 : "";
 
 		if (ch)
 		{
-      if ((! stricmp(ch-1, "g.bin")) || (! stricmp(ch, ".grom")) || (! stricmp(ch, ".g")))
+			if ((! stricmp(ch2, "g.bin")) || (! stricmp(ch, ".grom")) || (! stricmp(ch, ".g")))
 			{
 				/* grom */
-				id = 0;
+				type = SLOT_GROM;
 			}
-      else if ((! stricmp(ch-1, "c.bin")) || (! stricmp(ch, ".crom")) || (! stricmp(ch, ".c")))
+			else if ((! stricmp(ch2, "c.bin")) || (! stricmp(ch, ".crom")) || (! stricmp(ch, ".c")))
 			{
 				/* rom first page */
-				id = 1;
+				type = SLOT_CROM;
 			}
-      else if ((! stricmp(ch-1, "d.bin")) || (! stricmp(ch, ".drom")) || (! stricmp(ch, ".d")))
+			else if ((! stricmp(ch2, "d.bin")) || (! stricmp(ch, ".drom")) || (! stricmp(ch, ".d")))
 			{
 				/* rom second page */
-				id = 2;
+				type = SLOT_DROM;
 			}
-      else if ((! stricmp(ch-1, "m.bin")) || (! stricmp(ch, ".mrom")) || (! stricmp(ch, ".m")))
+			else if ((! stricmp(ch2, "m.bin")) || (! stricmp(ch, ".mrom")) || (! stricmp(ch, ".m")))
 			{
-        /* rom minimemory  */
-        id = 3;
+				/* rom minimemory  */
+				type = SLOT_MINIMEM;
 			}
-
-      switch (id)
-      {
-      case 0:
-        osd_fread(cartfile, memory_region(REGION_USER1) + 0x6000, 0xA000);
-        break;
-
-      case 3:
-        minimemory = 1;
-      case 1:
-        osd_fread_msbfirst(cartfile, cartidge_pages[0], 0x2000);
-        break;
-
-      case 2:
-        cartidge_paged = TRUE;
-        osd_fread_msbfirst(cartfile, cartidge_pages[1], 0x2000);
-        break;
-      }
 		}
-	}
 
+		slot_type[id] = type;
 
-	if (! slot_empty)
-	{
+		switch (type)
+		{
+		case SLOT_EMPTY:
+			break;
+
+		case SLOT_GROM:
+			osd_fread(cartfile, memory_region(REGION_USER1) + 0x6000, 0xA000);
+			break;
+
+		case SLOT_MINIMEM:
+			cartidge_minimemory = TRUE;
+		case SLOT_CROM:
+			osd_fread_msbfirst(cartfile, cartidge_pages[0], 0x2000);
+			break;
+
+		case SLOT_DROM:
+			cartidge_paged = TRUE;
+			osd_fread_msbfirst(cartfile, cartidge_pages[1], 0x2000);
+			break;
+		}
+
+		}
+
 		osd_fclose(cartfile);
 	}
 
@@ -331,18 +352,26 @@ int ti99_load_rom(int id)
 
 void ti99_rom_cleanup(int id)
 {
-	/*if (cartidge_pages[0])
+	switch (slot_type[id])
 	{
-		free(cartidge_pages[0]);
-		cartidge_pages[0] = NULL;
-	}
+	case SLOT_EMPTY:
+		break;
 
-	if (cartidge_pages[1])
-	{
-		free(cartidge_pages[1]);
-		cartidge_pages[1] = NULL;
-	}*/
-	cartidge_paged = FALSE;
+	case SLOT_GROM:
+		memset(memory_region(REGION_USER1) + 0x6000, 0, 0xA000);
+		break;
+
+	case SLOT_MINIMEM:
+		cartidge_minimemory = FALSE;
+		/* we should insert some code to save the minimem contents... */
+	case SLOT_CROM:
+		memset(cartidge_pages[0], 0, 0x2000);
+		break;
+
+	case SLOT_DROM:
+		cartidge_paged = FALSE;
+		break;
+	}
 }
 
 /*
@@ -419,7 +448,7 @@ void ti99_init_machine(void)
 
 	tms9901_init(& tms9901reset_param_ti99);
 
-  current_page_ptr = cartidge_pages[0];
+	current_page_ptr = cartidge_pages[0];
 }
 
 void ti99_stop_machine(void)
@@ -542,10 +571,10 @@ WRITE_HANDLER ( ti99_ww_cartmem )
 {
 	tms9900_ICount -= 4;
 
-  if (minimemory && offset >= 0x1000)
-    WRITE_WORD(current_page_ptr+offset, data | (READ_WORD(current_page_ptr+offset) & (data >> 16)));
-  else if (cartidge_paged)
-    current_page_ptr = cartidge_pages[( offset >> 1 )& 1];
+	if (cartidge_minimemory && offset >= 0x1000)
+		WRITE_WORD(current_page_ptr+offset, data | (READ_WORD(current_page_ptr+offset) & (data >> 16)));
+	else if (cartidge_paged)
+		current_page_ptr = cartidge_pages[( offset >> 1 )& 1];
 }
 
 /*----------------------------------------------------------------
@@ -887,9 +916,10 @@ static int ti99_R9901_3(int offset)
 {
 	/*only important bit : bit 27 : tape input */
 
+	/* we don't take CS2 into account */
 	return device_input(IO_CASSETTE, 0) > 0 ? 8 : 0;
 
-	/*return 8; */
+	/*return 8;*/
 	/*return 0;*/
 }
 
@@ -966,9 +996,9 @@ static void ti99_CS2_motor(int offset, int data)
 static void ti99_audio_gate(int offset, int data)
 {
 	if (data)
-		DAC_data_w(1, 0xFF);
+		DAC_data_w(0, 0xFF);
 	else
-		DAC_data_w(1, 0);
+		DAC_data_w(0, 0);
 }
 
 /*
@@ -977,12 +1007,7 @@ static void ti99_audio_gate(int offset, int data)
 */
 static void ti99_CS_output(int offset, int data)
 {
-	device_output(IO_CASSETTE, 0, data);
-
-	if (data)
-		DAC_data_w(0, 0xFF);
-	else
-		DAC_data_w(0, 0);
+	device_output(IO_CASSETTE, 0, data ? -32768 : 32767);
 }
 
 

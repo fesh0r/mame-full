@@ -760,7 +760,7 @@ void device_output_chunk(int type, int id, void *src, int chunks)
 
 
 
-int displayimageinfo(int selected)
+int displayimageinfo(struct osd_bitmap *bitmap, int selected)
 {
     char buf[2048], *dst = buf;
     int type, id, sel = selected - 1;
@@ -807,8 +807,8 @@ int displayimageinfo(int selected)
         /* startup info, print MAME version and ask for any key */
 
         strcat(buf,"\n\tPress any key to Begin");
-        ui_drawbox(0,0,Machine->uiwidth,Machine->uiheight);
-        ui_displaymessagewindow(buf);
+        ui_drawbox(bitmap,0,0,Machine->uiwidth,Machine->uiheight);
+        ui_displaymessagewindow(bitmap, buf);
 
         sel = 0;
         if (code_read_async() != KEYCODE_NONE ||
@@ -820,7 +820,7 @@ int displayimageinfo(int selected)
 		/* menu system, use the normal menu keys */
         strcat(buf,"\n\t\x1a Return to Main Menu \x1b");
 
-        ui_displaymessagewindow(buf);
+        ui_displaymessagewindow(bitmap,buf);
 
         if (input_ui_pressed(IPT_UI_SELECT))
             sel = -1;

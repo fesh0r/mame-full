@@ -1,20 +1,17 @@
-//
-// /home/ms/source/sidplay/libsidplay/include/RCS/mytypes.h,v
-//
 
 #ifndef MYTYPES_H
 #define MYTYPES_H
 
-
-//#include "compconf.h"
+#include "osd_cpu.h"
+/*#include "compconf.h" */
 
 #if 0
-// A ``bool'' type for compilers that don't (yet) support one.
+/* A ``bool'' type for compilers that don't (yet) support one. */
 #if !HAVE_BOOL
   typedef int bool;
 
   #if defined(true) || defined(false)
-//    #error Better check include file ``mytypes.h''.
+/*    #error Better check include file ``mytypes.h''. */
     #undef true
     #undef false
   #endif
@@ -23,23 +20,23 @@
 #endif
 #endif
 
-// Wanted: 8-bit signed/unsigned.
-typedef signed char sbyte;
-typedef unsigned char ubyte;
+/* Wanted: 8-bit signed/unsigned. */
+#define sbyte INT8
+#define ubyte UINT8
 
-// Wanted: 16-bit signed/unsigned.
-typedef signed short int sword;
-typedef unsigned short int uword;
+/* Wanted: 16-bit signed/unsigned. */
+#define sword INT16
+#define uword UINT16
 
-// Wanted: 32-bit signed/unsigned.
-typedef signed long int sdword;
-typedef unsigned long int udword;
+/* Wanted: 32-bit signed/unsigned. */
+#define sdword INT32
+#define udword UINT32
 
 
-// Some common type shortcuts.
-typedef unsigned char uchar;
-typedef unsigned int uint;
-typedef unsigned long int ulong;
+/* Some common type shortcuts. */
+#define uchar unsigned char
+#define uint  unsigned int
+#define ulong unsigned long
 
 
 #if 1||defined(SID_FPUFILTER)

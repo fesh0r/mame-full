@@ -3,7 +3,6 @@
 
   TODO
 	RS232
-	Cassette Ouput
 	Printer
 	Disk
  *****************************************************************************/
@@ -122,10 +121,10 @@ int mc10_port2_r(int offset)
 
 void mc10_port2_w(int offset, int data)
 {
-	/* ! BIT 0 PRINTER OUTFUT & CASS OUTPUT
+	/*   BIT 0 PRINTER OUTFUT & CASS OUTPUT
 	 */
 
-	/* Nothing here implemented yet */
+	device_output(IO_CASSETTE, 0, (data & 0x01) ? 32767 : -32768);
 }
 
 /* --------------------------------------------------

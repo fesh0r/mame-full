@@ -22,10 +22,32 @@ enum {
 	IMGTOOLERR_FILENOTFOUND,
 	IMGTOOLERR_MODULENOTFOUND,
 	IMGTOOLERR_UNIMPLEMENTED,
-	IMGTOOLERR_BADPARAM,
+	IMGTOOLERR_PARAMTOOSMALL,
+	IMGTOOLERR_PARAMTOOLARGE,
+	IMGTOOLERR_PARAMNEEDED,
+	IMGTOOLERR_PARAMNOTNEEDED,
 	IMGTOOLERR_BADFILENAME,
 	IMGTOOLERR_NOSPACE
 };
+
+/* These error codes are actually modifiers that make it easier to distinguish
+ * the cause of an error
+ *
+ * Note - drivers should not use these modifiers
+ */
+enum {
+	IMGTOOLERR_SRC_MODULE			= 0x1000,
+	IMGTOOLERR_SRC_FUNCTIONALITY	= 0x2000,
+	IMGTOOLERR_SRC_IMAGEFILE		= 0x3000,
+	IMGTOOLERR_SRC_FILEONIMAGE		= 0x4000,
+	IMGTOOLERR_SRC_NATIVEFILE		= 0x5000,
+	IMGTOOLERR_SRC_PARAM_CYLINDERS	= 0x6000,
+	IMGTOOLERR_SRC_PARAM_HEADS		= 0x7000,
+
+	IMGTOOLERR_SRC_MASK				= 0xffff
+};
+
+#define ERRORSOURCE(err)	((err) & IMGTOOLERR_SRC_MASK)
 
 typedef struct {
 	char *fname;
@@ -64,6 +86,7 @@ int stream_seek(STREAM *f, size_t pos, int where);
 
 /* Transfers sz bytes from source to dest */
 size_t stream_transfer(STREAM *dest, STREAM *source, size_t sz);
+size_t stream_transfer_all(STREAM *dest, STREAM *source);
 
 /* Fills sz bytes with b */
 size_t stream_fill(STREAM *f, unsigned char b, size_t sz);
@@ -82,16 +105,29 @@ typedef struct {
 	const struct ImageModule *module;
 } IMAGEENUM;
 
+enum {
+	IMAGE_USES_CYLINDERS	= 0x01,
+	IMAGE_USES_HEADS		= 0x02
+};
+
 typedef struct {
-	int min_cylinders;
-	int max_cylinders;
-	int min_heads;
-	int max_heads;
-} createimgparams;
+	int cylinders;
+	int heads;
+} geometry_options;
+
+typedef struct {
+	int flags;
+	geometry_options minimum;
+	geometry_options maximum;
+} geometry_ranges;
 
 struct ImageModule {
 	const char *name;
 	const char *humanname;
+	const char *fileextension;
+	const char *crcfile;
+	const char *crcsysname;
+	const geometry_ranges *ranges;
 	int (*init)(STREAM *f, IMAGE **outimg);
 	void (*exit)(IMAGE *img);
 	int (*beginenum)(IMAGE *img, IMAGEENUM **outenum);
@@ -101,13 +137,54 @@ struct ImageModule {
 	int (*readfile)(IMAGE *img, const char *fname, STREAM *destf);
 	int (*writefile)(IMAGE *img, const char *fname, STREAM *sourcef);
 	int (*deletefile)(IMAGE *img, const char *fname);
-	int (*create)(STREAM *f);
+	int (*create)(STREAM *f, const geometry_options *options);
 };
 
-#define IMAGEMODULE(name,humanname,init,exit,beginenum,nextenum,closeenum,freespace,readfile,writefile,deletefile,create)	\
-	struct ImageModule imgmod_##name = \
-		{ #name, (humanname), (init), (exit), (beginenum), (nextenum), (closeenum), (freespace), \
-			(readfile), (writefile), (deletefile), (create) };
+/* ----------------------------------------------------------------------- */
+
+/* Use IMAGEMODULE for (potentially) full featured images */
+#define IMAGEMODULE(name,humanname,ext,crcfile,crcsysname,ranges,init,exit,beginenum,nextenum,closeenum,freespace,readfile,writefile,deletefile,create)	\
+struct ImageModule imgmod_##name = \
+{					\
+	#name,			\
+	(humanname),	\
+	(ext),			\
+	(crcfile),		\
+	(crcsysname),	\
+	(ranges),		\
+	(init),			\
+	(exit),			\
+	(beginenum),	\
+	(nextenum),		\
+	(closeenum),	\
+	(freespace),	\
+	(readfile),		\
+	(writefile),	\
+	(deletefile),	\
+	(create)		\
+};
+
+/* Use CARTMODULE for cartriges (where the only relevant option is CRC checking */
+#define CARTMODULE(name,humanname,ext)	\
+struct ImageModule imgmod_##name = \
+{					\
+	#name,			\
+	(humanname),	\
+	(ext),			\
+	(#name ".crc"),	\
+	#name,			\
+	NULL,			\
+	NULL,			\
+	NULL,			\
+	NULL,			\
+	NULL,			\
+	NULL,			\
+	NULL,			\
+	NULL,			\
+	NULL,			\
+	NULL,			\
+	NULL			\
+};
 
 /* ----------------------------------------------------------------------- */
 
@@ -126,10 +203,34 @@ void img_closeenum(IMAGEENUM *enumeration);
 int img_freespace(IMAGE *img, size_t *sz);
 int img_readfile(IMAGE *img, const char *fname, STREAM *destf);
 int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef);
+int img_getfile(IMAGE *img, const char *fname, const char *dest);
+int img_putfile(IMAGE *img, const char *fname, const char *source);
 int img_deletefile(IMAGE *img, const char *fname);
 
 /* These calls are for creating new images */
-int img_create(const struct ImageModule *module, const char *fname);
-int img_create_byname(const char *modulename, const char *fname);
+int img_create(const struct ImageModule *module, const char *fname, const geometry_options *options);
+int img_create_byname(const char *modulename, const char *fname, const geometry_options *options);
+
+typedef struct {
+	unsigned long crc;
+	char *longname;
+	char *manufacturer;
+	int year;
+	char *playable;
+	char *extrainfo;
+	char buffer[1024];
+} imageinfo;
+
+/* img_getinfo loads a given image, and returns information about that image.
+ * Any unknown info is NULL or zero
+ */
+int img_getinfo(const struct ImageModule *module, const char *fname, imageinfo *info);
+int img_getinfo_byname(const char *modulename, const char *fname, imageinfo *info);
+
+/* img_goodname loads an image and figures out what its "goodname" is and
+ * returns the result in result (the callee needs to call free() on result)
+ */
+int img_goodname(const struct ImageModule *module, const char *fname, const char *base, char **result);
+int img_goodname_byname(const char *modulename, const char *fname, const char *base, char **result);
 
 #endif /* IMGTOOL_H */

@@ -395,4 +395,4 @@ static const struct IODevice io_bbc[] =
 };
 
 
-COMP (1980,bbc,0,bbc,bbc,0,"Acorn","BBC Micro Model B")
+COMPX (1981,bbc,0,bbc,bbc,0,"Acorn","BBC Micro Model B",GAME_NOT_WORKING)

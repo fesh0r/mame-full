@@ -1243,15 +1243,18 @@ static void ted7360_drawlines (int first, int last)
 				else if (REVERSEON && (ch & 0x80))
 				{
 					if (MULTICOLORON && (attr & 8))
-					{
+					{				   /* multicolor and hardware reverse? */
 						multi[3] = Machine->pens[attr & 0x77];
 						ted7360_draw_character_multi (ybegin, yend, ch & ~0x80, yoff, xoff);
 					}
 					else
-					{				   /* multicolor and hardware reverse? */
+					{
 						monoinversed[0] = Machine->pens[attr & 0x7f];
-						ted7360_draw_character (ybegin, yend, ch & ~0x80, yoff, xoff,
-												monoinversed);
+						if (!MULTICOLORON && cursor1 && (attr & 0x80))
+							ted7360_draw_cursor (ybegin, yend, yoff, xoff, monoinversed[0]);
+						else
+							ted7360_draw_character (ybegin, yend, ch & ~0x80, yoff, xoff,
+													monoinversed);
 					}
 				}
 				else
@@ -1264,11 +1267,9 @@ static void ted7360_drawlines (int first, int last)
 					else
 					{
 						mono[1] = Machine->pens[attr & 0x7f];
-#if 0
-						if (cursor1 && (attr & 0x80))
-							ted7360_draw_cursor (ybegin, yend, yoff, xoff, mono[1]);
+						if (!MULTICOLORON && cursor1 && (attr & 0x80))
+							ted7360_draw_cursor (ybegin, yend, yoff, xoff, mono[0]);
 						else
-#endif
 							ted7360_draw_character (ybegin, yend, ch, yoff, xoff, mono);
 					}
 				}

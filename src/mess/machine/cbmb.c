@@ -14,6 +14,7 @@
 #include "c1551.h"
 #include "vc1541.h"
 #include "vc20tape.h"
+#include "cbmieeeb.h"
 #include "mess/vidhrdw/vic6567.h"
 #include "mess/vidhrdw/crtc6845.h"
 #include "mess/sndhrdw/sid6581.h"
@@ -36,6 +37,16 @@ UINT8 *cbmb_colorram;
 /* tpi at 0xfde00
  in interrupt mode
  irq to m6509 irq
+ pa7 ieee nrfd
+ pa6 ieee ndac
+ pa5 ieee eoi
+ pa4 ieee dav
+ pa3 ieee atn
+ pa2 ieee ren
+ pa1 ieee io chips te
+ pa0 ieee io chip dc
+ pb1 ieee seq
+ pb0 ieee ifc
  cb ?
  ca chargen rom address line 12
  i4 acia irq
@@ -44,6 +55,28 @@ UINT8 *cbmb_colorram;
  i1 self pb0
  i0 tod (50 or 60 hertz frequency)
  */
+static int cbmb_tpi0_port_a_r(void)
+{
+	int data=0;
+	if (cbm_ieee_nrfd_r()) data|=0x80;
+	if (cbm_ieee_ndac_r()) data|=0x40;
+	if (cbm_ieee_eoi_r()) data|=0x20;
+	if (cbm_ieee_dav_r()) data|=0x10;
+	if (cbm_ieee_atn_r()) data|=8;
+//	if (cbm_ieee_ren_r()) data|=4;
+	return data;
+}
+
+static void cbmb_tpi0_port_a_w(int data)
+{
+	cbm_ieee_nrfd_w(0,data&0x80);
+	cbm_ieee_ndac_w(0,data&0x40);
+	cbm_ieee_eoi_w(0,data&0x20);
+	cbm_ieee_dav_w(0,data&0x10);
+	cbm_ieee_atn_w(0,data&8);
+//	cbm_ieee_ren_w(0,data&4);
+	logerror("cbm ieee %d %d\n",data&2, data&1);
+}
 
 /* tpi at 0xfdf00
   cbm 500
@@ -128,17 +161,36 @@ static void cbmb_irq (int level)
 
 	if (level != old_level)
 	{
-		DBG_LOG (3, "mos6509", (errorlog, "irq %s\n", level ? "start" : "end"));
+		DBG_LOG (3, "mos6509", ("irq %s\n", level ? "start" : "end"));
 		cpu_set_irq_line (0, M6509_INT_IRQ, level);
 		old_level = level;
 	}
 }
 
+/*
+  port a ieee in/out
+  pa7 trigger gameport 2
+  pa6 trigger gameport 1
+  pa1 ?
+  pa0 ?
+  pb7 .. 4 gameport 2
+  pb3 .. 0 gameport 1   
+ */
+static int cbmb_cia_port_a_r(int offset)
+{
+	return cbm_ieee_data_r();
+}
+
+static void cbmb_cia_port_a_w(int offset, int data)
+{
+	cbm_ieee_data_w(0, data);
+}
+
 struct cia6526_interface cbmb_cia =
 {
-	0,/*c64_cia0_port_a_r, */
+	cbmb_cia_port_a_r,/*c64_cia0_port_a_r, */
 	0,/*c64_cia0_port_b_r, */
-	0,/*c64_cia0_port_a_w, */
+	cbmb_cia_port_a_w,/*c64_cia0_port_a_w, */
 	0,/*c64_cia0_port_b_w, */
 	0,								   /*c64_cia0_pc_w */
 	0,								   /*c64_cia0_sp_r */
@@ -179,6 +231,8 @@ static void cbmb_common_driver_init (void)
 	cbmb_cia.todin50hz = 0;
 	cia6526_config (0, &cbmb_cia);
 
+	tpi6525[0].a.read=cbmb_tpi0_port_a_r;
+	tpi6525[0].a.output=cbmb_tpi0_port_a_w;
 	tpi6525[0].ca.output=crtc6845_address_line_12;
 	tpi6525[0].interrupt.output=cbmb_irq;
 	tpi6525[1].a.read=cbmb_keyboard_line_a;
@@ -188,6 +242,13 @@ static void cbmb_common_driver_init (void)
 	tpi6525[1].b.output=cbmb_keyboard_line_select_b;
 	tpi6525[1].c.output=cbmb_keyboard_line_select_c;
 	cbmb_clock=timer_pulse(0.01, 0, cbmb_frame_interrupt);
+
+	cbm_drive_open ();
+	
+	cbm_drive_attach_fs (0);
+	cbm_drive_attach_fs (1);
+	
+	cbm_ieee_open();
 }
 
 void cbm600_driver_init (void)
@@ -229,10 +290,24 @@ void cbmb_init_machine (void)
 	cia6526_reset ();
 	tpi6525_0_reset();
 	tpi6525_1_reset();
+
+	cbm_drive_0_config (IEEE8ON ? IEEE : 0, 8);
+	cbm_drive_1_config (IEEE9ON ? IEEE : 0, 9);
+	cbmb_rom_load();
 }
 
 void cbmb_shutdown_machine (void)
 {
+}
+
+void cbmb_rom_load(void)
+{
+	int i;
+
+	for (i=0; (i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))
+			 &&(cbm_rom[i].size!=0); i++) {
+		memcpy(cbmb_memory+cbm_rom[i].addr+0xf0000, cbm_rom[i].chip, cbm_rom[i].size);
+	}
 }
 
 void cbmb_frame_interrupt (int param)

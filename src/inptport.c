@@ -173,6 +173,7 @@ struct ipd inputport_defaults[] =
 #else
 	{ IPT_TILT,   "Tilt",            SEQ_DEF_0 },
 #endif
+
 	{ IPT_JOYSTICK_UP         | IPF_PLAYER1, "P1 Up",          SEQ_DEF_3(KEYCODE_UP, CODE_OR, JOYCODE_1_UP)    },
 	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER1, "P1 Down",        SEQ_DEF_3(KEYCODE_DOWN, CODE_OR, JOYCODE_1_DOWN)  },
 	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER1, "P1 Left",        SEQ_DEF_3(KEYCODE_LEFT, CODE_OR, JOYCODE_1_LEFT)  },
@@ -1675,6 +1676,7 @@ READ_HANDLER( input_port_16_r ) { return readinputport(16); }
 READ_HANDLER( input_port_17_r ) { return readinputport(17); }
 READ_HANDLER( input_port_18_r ) { return readinputport(18); }
 READ_HANDLER( input_port_19_r ) { return readinputport(19); }
+
 
 #ifdef MAME_NET
 void set_default_player_controls(int player)

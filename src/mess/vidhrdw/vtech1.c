@@ -38,7 +38,7 @@ void vtech1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	if( vtech1_frame_time > 0 )
     {
-		ui_text(vtech1_frame_message, 1, Machine->drv->visible_area.max_y - 9);
+		ui_text(bitmap, vtech1_frame_message, 1, Machine->drv->visible_area.max_y - 9);
         /* if the message timed out, clear it on the next frame */
         if( --vtech1_frame_time == 0 )
 			full_refresh = 1;

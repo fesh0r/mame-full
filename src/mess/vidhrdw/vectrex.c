@@ -2,10 +2,6 @@
 #include "vidhrdw/vector.h"
 #include "mess/machine/6522via.h"
 
-#ifndef MIN
-#define MIN(x,y) ((x)<(y)?(x):(y))
-#endif
-
 #define RAMP_DELAY 6.333e-6
 #define BLANK_DELAY 0
 #define SH_DELAY 6.333e-6
@@ -58,7 +54,6 @@ static struct via6522_interface vectrex_via6522_interface =
 };
 
 static struct osd_bitmap *tmpbitmap;
-static struct artwork *overlay;
 
 static int x_center, y_center, x_max;
 static int x_int, y_int; /* X, Y integrators IC LF347*/
@@ -94,10 +89,7 @@ static void vectrex_screen_update (double time)
 	if (vectrex_refresh_with_T2)
 	{
 		T2_running = 3;
-		if (overlay)
-			vector_vh_update_overlay(tmpbitmap, overlay, 0);
-		else
-			vector_vh_update(tmpbitmap, 0);
+		vector_vh_screenrefresh(tmpbitmap, 0);
 		vector_clear_list();
 	}
 }
@@ -109,10 +101,7 @@ static void vectrex_screen_update_backup (int param)
 			       * for a longer time. */
 	else
 	{
-		if (overlay)
-			vector_vh_update_overlay(tmpbitmap, overlay, 0);
-		else
-			vector_vh_update(tmpbitmap, 0);
+		vector_vh_screenrefresh(tmpbitmap, 0);
 		vector_clear_list();
 	}
 }
@@ -123,11 +112,7 @@ void vectrex_vh_update (struct osd_bitmap *bitmap, int full_refresh)
 	copybitmap(bitmap, tmpbitmap,0,0,0,0,0,TRANSPARENCY_NONE,0);
 
 	if (full_refresh)
-	{
 		osd_mark_dirty (0, 0, bitmap->width, bitmap->height, 0);
-		if (overlay)
-			copybitmap(tmpbitmap, overlay->artwork,0,0,0,0,0,TRANSPARENCY_NONE,0);
-	}
 }
 
 /*********************************************************************
@@ -263,14 +248,9 @@ void vectrex_init_colors (unsigned char *palette, unsigned short *colortable,con
 		sprintf(overlay_name,"mine.png"); /* load the minestorm overlay (built in game) */
 
 
-	if ((overlay=artwork_load(overlay_name, nextfree, Machine->drv->total_colors-nextfree))!=NULL)
-	{
-		if (!overlay_set_palette (overlay, palette, Machine->drv->total_colors-nextfree))
-		{
-			artwork_free(overlay);
-			overlay = 0;
-		}
-	}
+	overlay_load(overlay_name, nextfree, Machine->drv->total_colors-nextfree);
+	if ((artwork_overlay != NULL))
+		overlay_set_palette (palette, MIN(256, Machine->drv->total_colors) - nextfree);
 	else
 	{
 		/* Dark red for red/blue glasses mode */
@@ -321,12 +301,6 @@ int vectrex_start (void)
 	if (!(tmpbitmap = osd_create_bitmap(width,height)))
 		return 1;
 
-	if (overlay)
-	{
-		overlay_remap(overlay);
-		copybitmap(tmpbitmap, overlay->artwork,0,0,0,0,0,TRANSPARENCY_NONE,0);
-	}
-
 	x_center=((Machine->drv->visible_area.max_x
 		  -Machine->drv->visible_area.min_x) / 2) << VEC_SHIFT;
 	y_center=((Machine->drv->visible_area.max_y
@@ -354,12 +328,10 @@ int vectrex_start (void)
 void vectrex_stop(void)
 {
 	if (tmpbitmap) osd_free_bitmap (tmpbitmap);
-	if (overlay) artwork_free(overlay);
 	vector_clear_list();
 	vector_vh_stop();
 	if (backup_timer) timer_remove (backup_timer);
 	backup_timer=NULL;
-	overlay=NULL;
 }
 
 /*********************************************************************
@@ -508,15 +480,15 @@ void raaspec_init_colors (unsigned char *palette, unsigned short *colortable,con
 	/* artwork */
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
-		buttons = artwork_load_size("spec_bt.png", 64, Machine->drv->total_colors - 64, Machine->scrbitmap->height * 0.1151961, Machine->scrbitmap->height);
+		artwork_load_size(&buttons, "spec_bt.png", 64, Machine->drv->total_colors - 64, Machine->scrbitmap->height * 0.1151961, Machine->scrbitmap->height);
 		if (buttons)
-			led = artwork_load_size("led.png", buttons->start_pen + buttons->num_pens_used, Machine->drv->total_colors - 64 - buttons->num_pens_used, buttons->artwork->width, buttons->artwork->height / 8);
+			artwork_load_size(&led, "led.png", buttons->start_pen + buttons->num_pens_used, Machine->drv->total_colors - 64 - buttons->num_pens_used, buttons->artwork->width, buttons->artwork->height / 8);
 	}
 	else
 	{
-		buttons = artwork_load_size("spec_bt.png", 64, Machine->drv->total_colors - 64, Machine->scrbitmap->width, Machine->scrbitmap->width * 0.1151961);
+		artwork_load_size(&buttons, "spec_bt.png", 64, Machine->drv->total_colors - 64, Machine->scrbitmap->width, Machine->scrbitmap->width * 0.1151961);
 		if (buttons)
-			led = artwork_load_size("led.png", buttons->start_pen + buttons->num_pens_used, Machine->drv->total_colors - 64 - buttons->num_pens_used, buttons->artwork->width / 8, buttons->artwork->height);
+			artwork_load_size(&led, "led.png", buttons->start_pen + buttons->num_pens_used, Machine->drv->total_colors - 64 - buttons->num_pens_used, buttons->artwork->width / 8, buttons->artwork->height);
 	}
 
 	if (buttons && led)

@@ -15,6 +15,9 @@
 	read from the MBR (master boot record) at offset 1AD to 1BD is wrong.
 
 ***************************************************************************/
+#include "pic8259.h"
+#include "dma8237.h"
+
 #include "mess/machine/pc.h"
 
 #define MAX_BOARD	2				/* two boards supported */
@@ -92,7 +95,7 @@ static UINT8 *ptr = 0;					/* data pointer */
 static void pc_hdc_result(int n)
 {
 	/* dip switch selected INT 5 or 2 */
-	pc_PIC_issue_irq((dip[n] & 0x40) ? 5 : 2);
+	pic8259_0_issue_irq((dip[n] & 0x40) ? 5 : 2);
 
 	HDC_LOG(1,"hdc_result",(errorlog, "$%02x to $%04x\n", csb[n], data_cnt));
 	buffer[data_cnt++] = csb[n];
@@ -347,7 +350,7 @@ static void pc_hdc_command(int n)
 			get_drive(n);
 			get_chsn(n);
 			HDC_LOG(1,"hdc recalibrate",(errorlog,"INDEX #%d D:%d CTL:$%02x\n", idx, drv, control[idx]));
-//			test_ready(n);
+/*			test_ready(n); */
             break;
 		case CMD_SENSE:
 			get_drive(n);
@@ -389,7 +392,7 @@ static void pc_hdc_command(int n)
 				idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]));
 			if (test_ready(n))
 				execute_read();
-//			{ extern int debug_key_pressed; debug_key_pressed = 1; }
+/*			{ extern int debug_key_pressed; debug_key_pressed = 1; } */
             break;
 		case CMD_WRITE:
 			get_drive(n);

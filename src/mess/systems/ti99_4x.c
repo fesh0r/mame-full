@@ -9,11 +9,12 @@
 
 	static struct TMS5220interface tms5220interface =
 	{
-		640000L,	640kHz -> 8kHz output
-		10000,		Volume.  I don't know the best value.
-		NULL,		no IRQ callback
-		//2,			memory region where the speech ROM is.  -1 means no speech ROM
-		//0			memory size of speech rom (0 -> take memory region length)
+		640000L,		// 640kHz -> 8kHz output
+		10000,			// Volume.  I don't know the best value.
+		NULL,			// no IRQ callback
+		//REGION_SOUND1,	// memory region where the speech ROM is.  -1 means no speech ROM
+		//0				// memory size of speech rom (0 -> take memory region length)
+		//tms5220_ready_callback
 	};
 */
 
@@ -120,12 +121,12 @@ INPUT_PORTS_START(ti99_4a)
 
 	PORT_START	/* col 0 */
 		PORT_BITX(0x88, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
-    PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "CTRL", KEYCODE_RCONTROL, IP_JOY_NONE)
+		PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "CTRL", KEYCODE_RCONTROL, IP_JOY_NONE)
 		PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "CTRL", KEYCODE_LCONTROL, IP_JOY_NONE)
 		PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "SHIFT", KEYCODE_LSHIFT, IP_JOY_NONE)
 		/* TI99/4a has a second shift key which maps the same */
 		PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "SHIFT", KEYCODE_RSHIFT, IP_JOY_NONE)
-    PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "FCTN", KEYCODE_RALT, IP_JOY_NONE)
+		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "FCTN", KEYCODE_RALT, IP_JOY_NONE)
 		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "FCTN", KEYCODE_LALT, IP_JOY_NONE)
 		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "ENTER", KEYCODE_ENTER, IP_JOY_NONE)
 		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "(SPACE)", KEYCODE_SPACE, IP_JOY_NONE)
@@ -375,40 +376,45 @@ static struct SN76496interface tms9919interface =
 	{ 75 }			/* Volume.  I don't know the best value. */
 };
 
-/*static void tms5220_ready_callback(int state)
+static void tms5220_ready_callback(int state)
 {
 	cpu_set_halt_line(0, state ? CLEAR_LINE : ASSERT_LINE);
-}*/
+}
 
 static struct TMS5220interface tms5220interface =
 {
 	640000L,		/* 640kHz -> 8kHz output */
 	50,				/* Volume.  I don't know the best value. */
-	NULL,			/* no IRQ callback */
-	//REGION_SOUND1,	/* memory region where the speech ROM is.  -1 means no speech ROM */
-	//0,				/* memory size of speech rom (0 -> take memory region length) */
-	//tms5220_ready_callback
+	NULL/*,*/			/* no IRQ callback */
+#if 0
+	REGION_SOUND1,	/* memory region where the speech ROM is.  -1 means no speech ROM */
+	0,				/* memory size of speech rom (0 -> take memory region length) */
+	tms5220_ready_callback
+#endif
 };
 
 /*
-	we use 2 DACs to emulate "audio gate" and tape output, even thought
+	we use 2 DACs to emulate "audio gate", even thought
 	a) there was no DAC in an actual TI99
-	b) these are 2-level output (whereas a DAC provides 256-level output...)
+	b) this is a 2-level output (whereas a DAC provides a 256-level output...)
 */
 static struct DACinterface aux_sound_intf =
 {
-	2,				/* total number of DACs */
+	1,				/* total number of DACs */
 	{
-		20,			/* volume for tape output */
 		20			/* volume for audio gate*/
 	}
 };
 
+/*
+	2 tape units
+*/
 static struct Wave_interface tape_input_intf =
 {
-	1,
+	2,
 	{
-		20
+		20,			/* Volume for CS1 */
+		20			/* Volume for CS2 */
 	}
 };
 
@@ -524,8 +530,15 @@ static struct MachineDriver machine_driver_ti99_4_50hz =
 		{
 			SOUND_DAC,
 			&aux_sound_intf
+		},
+		{
+			SOUND_WAVE,
+			&tape_input_intf
 		}
-	}
+	},
+
+	/* NVRAM handler */
+	NULL
 };
 
 
@@ -580,8 +593,15 @@ static struct MachineDriver machine_driver_ti99_4a_60hz =
 		{
 			SOUND_DAC,
 			&aux_sound_intf
+		},
+		{
+			SOUND_WAVE,
+			&tape_input_intf
 		}
-	}
+	},
+
+	/* NVRAM handler */
+	NULL
 };
 
 static struct MachineDriver machine_driver_ti99_4a_50hz =
@@ -632,8 +652,15 @@ static struct MachineDriver machine_driver_ti99_4a_50hz =
 		{
 			SOUND_DAC,
 			&aux_sound_intf
+		},
+		{
+			SOUND_WAVE,
+			&tape_input_intf
 		}
-	}
+	},
+
+	/* NVRAM handler */
+	NULL
 };
 
 /*
@@ -720,7 +747,7 @@ static const struct IODevice io_ti99_4[] =
 	{
 		IO_CARTSLOT,		/* type */
 		3,					/* count */
-    "bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0",      /* file extensions */
+		"bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0",	/* file extensions */
 		NULL,				/* private */
 		ti99_id_rom,		/* id */
 		ti99_load_rom,		/* init */

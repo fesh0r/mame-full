@@ -486,7 +486,7 @@ void fs_generate_filelist(void)
 /* and mask to get bits */
 #define SEL_BITS_MASK           (~SEL_MASK)
 
-int fileselect(int selected)
+int fileselect(struct osd_bitmap *bitmap, int selected)
 {
 	int sel, total, arrowize;
 		int visible;
@@ -535,7 +535,7 @@ int fileselect(int selected)
 			fs_subitem[sel & SEL_MASK] = current_filespecification;
 
 			/* display the menu */
-			ui_displaymenu(fs_item, fs_subitem, fs_flags, sel & SEL_MASK, 3);
+			ui_displaymenu(bitmap, fs_item, fs_subitem, fs_flags, sel & SEL_MASK, 3);
 
 			/* update string with any keys that are pressed */
 			name = update_entered_string();
@@ -559,7 +559,7 @@ int fileselect(int selected)
 		}
 
 
-		ui_displaymenu(fs_item, fs_subitem, fs_flags, sel, arrowize);
+		ui_displaymenu(bitmap, fs_item, fs_subitem, fs_flags, sel, arrowize);
 
 				/* borrowed from usrintrf.c */
 				visible = Machine->uiheight / (3 * Machine->uifontheight /2) -1;
@@ -663,7 +663,7 @@ int fileselect(int selected)
 	return sel + 1;
 }
 
-int filemanager(int selected)
+int filemanager(struct osd_bitmap *bitmap, int selected)
 {
 	static int previous_sel;
 	const char *name;
@@ -705,7 +705,7 @@ int filemanager(int selected)
 	/* if the fileselect() mode is active */
 	if (sel & (2 << SEL_BITS))
 	{
-		sel = fileselect(selected & ~(2 << SEL_BITS));
+		sel = fileselect(bitmap, selected & ~(2 << SEL_BITS));
 		if (sel != 0 && sel != -1 && sel!=-2)
 			return sel | (2 << SEL_BITS);
 
@@ -747,7 +747,7 @@ int filemanager(int selected)
 		menu_subitem[sel & SEL_MASK] = entered_filename;
 
 		/* display the menu */
-		ui_displaymenu(menu_item, menu_subitem, flag, sel & SEL_MASK, 3);
+		ui_displaymenu(bitmap, menu_item, menu_subitem, flag, sel & SEL_MASK, 3);
 
 		/* update string with any keys that are pressed */
 		name = update_entered_string();
@@ -767,7 +767,7 @@ int filemanager(int selected)
 		return sel + 1;
 	}
 
-	ui_displaymenu(menu_item, menu_subitem, flag, sel, arrowize);
+	ui_displaymenu(bitmap, menu_item, menu_subitem, flag, sel, arrowize);
 
 	if (input_ui_pressed_repeat(IPT_UI_DOWN, 8))
 		sel = (sel + 1) % total;

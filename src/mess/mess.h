@@ -16,9 +16,9 @@
 int DECL_SPEC mess_printf(char *fmt, ...);
 
 void showmessinfo(void);
-int displayimageinfo(int selected);
-int filemanager(int selected);
-int tapecontrol(int selected);
+int displayimageinfo(struct osd_bitmap *bitmap, int selected);
+int filemanager(struct osd_bitmap *bitmap, int selected);
+int tapecontrol(struct osd_bitmap *bitmap, int selected);
 
 /* driver.h - begin */
 #define IPT_SELECT1		IPT_COIN1

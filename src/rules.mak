@@ -104,6 +104,13 @@ DBGOBJS += $(OBJ)/cpu/m6502/6502dasm.o
 $(OBJ)/cpu/m6502/m6502.o: m6502.c m6502.h ops02.h t6502.c t65c02.c t65sc02.c t6510.c
 endif
 
+CPU=$(strip $(findstring M4510@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M4510=1
+CPUOBJS += $(OBJ)/cpu/m6502/m4510.o
+DBGOBJS += $(OBJ)/cpu/m6502/6502dasm.o
+endif
+
 CPU=$(strip $(findstring N2A03@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_N2A03=1

@@ -177,6 +177,7 @@ static nec765_interface amstrad_nec765_interface =
 	dsk_get_sectors_per_track,
 	dsk_get_id_callback,
 	dsk_get_sector_ptr_callback,
+	NULL
 };
 
 /* pointers to current ram configuration selected for banks */
@@ -436,14 +437,14 @@ READ_HANDLER ( AmstradCPC_ReadPortHandler )
 			case 2:
 				{
 					/* read status */
-					data = nec765_status_r();
+					data = nec765_status_r(0);
 				}
 				break;
 
 			case 3:
 				{
 					/* read data register */
-					data = nec765_data_r();
+					data = nec765_data_r(0);
 				}
 				break;
 
@@ -526,13 +527,14 @@ WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 			case 0:
 				{
 					/* fdc motor on */
-//					FDD_SetMotor(Data);
+					floppy_drive_set_motor_state(data & 0x01);
+					//					FDD_SetMotor(Data);
 				}
 				break;
 
 			case 3:
 				{
-					nec765_data_w(data);
+					nec765_data_w(0,data);
 				}
 				break;
 
@@ -642,6 +644,9 @@ void amstrad_common_init(void)
 	cpu_0_irq_line_vector_w(0, 0x0ff);
 
 	nec765_init(&amstrad_nec765_interface);
+
+	floppy_drive_set_geometry(0, FLOPPY_DRIVE_SS_40);
+	floppy_drive_set_geometry(1, FLOPPY_DRIVE_SS_40);
 }
 
 void amstrad_init_machine(void)
@@ -1007,7 +1012,7 @@ static struct MachineDriver machine_driver_amstrad =
 	32, 							   /* color table len */
 	amstrad_init_palette,			   /* init palette */
 
-	VIDEO_TYPE_RASTER,				   /* video attributes */
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,				   /* video attributes */
 	0,								   /* MachineLayer */
 	amstrad_vh_start,
 	amstrad_vh_stop,
@@ -1064,7 +1069,7 @@ static struct MachineDriver machine_driver_kccomp =
 	32, 							   /* color table len */
 	amstrad_init_palette,			   /* init palette */
 
-	VIDEO_TYPE_RASTER,				   /* video attributes */
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,				   /* video attributes */
 	0,								   /* MachineLayer */
 	amstrad_vh_start,
 	amstrad_vh_stop,
@@ -1195,7 +1200,7 @@ static const struct IODevice io_cpc6128[] =
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY   FULLNAME */
 COMP( 1984, cpc464,   0,		amstrad,  amstrad,	0,	 "Amstrad plc", "Amstrad/Schneider CPC464")
-COMP( 1985, cpc664,   0,		amstrad,  amstrad,	0,	 "Amstrad plc", "Amstrad/Schneider CPC664")
+COMP( 1985, cpc664,   cpc464,		amstrad,  amstrad,	0,	 "Amstrad plc", "Amstrad/Schneider CPC664")
 COMP( 1985, cpc6128,  0,		amstrad,  amstrad,	0,	 "Amstrad plc", "Amstrad/Schneider CPC6128")
 COMP( 19??, kccomp,   cpc6128,	kccomp,   kccomp,	0,	 "VEB Mikroelektronik", "KC Compact")
 

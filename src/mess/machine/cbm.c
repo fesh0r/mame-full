@@ -193,8 +193,9 @@ int cbm_c65_quick_open (int id, int mode, void *arg)
 	addr = quick.addr + quick.length;
 
 	memcpy (memory + quick.addr, quick.data, quick.length);
-	memory[0x5a] = addr & 0xff;
-	memory[0x5b] = addr >> 8;
+	memory[0x82] = addr & 0xff;
+	memory[0x83] = addr >> 8;
+
 	logerror("quick loading %s at %.4x size:%.4x\n",
 				 quick.name, quick.addr, quick.length);
 
@@ -232,6 +233,7 @@ int cbm_rom_init(int id)
 	char *cp;
 	unsigned int addr, adr = 0;
 	const char *name=device_filename(IO_CARTSLOT,id);
+	const struct IODevice *dev;
 
 	if (name==NULL) return INIT_OK;
 
@@ -239,7 +241,8 @@ int cbm_rom_init(int id)
 		;
 	if (i>=sizeof(cbm_rom)/sizeof(cbm_rom[0])) return INIT_FAILED;
 
-	if (!cbm_rom_find_device()->id(id)) return INIT_FAILED;
+	dev=cbm_rom_find_device();
+	if ( (dev->id!=NULL) && !dev->id(id) ) return INIT_FAILED;
 
 	fp = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
@@ -321,6 +324,8 @@ int cbm_rom_init(int id)
 				adr = CBM_ROM_ADDR_LO;
 			else if (stricmp (cp, ".hi") == 0)
 				adr = CBM_ROM_ADDR_HI;
+			else if (stricmp (cp, ".10") == 0)
+				adr = 0x1000;
 			else if (stricmp (cp, ".20") == 0)
 				adr = 0x2000;
 			else if (stricmp (cp, ".30") == 0)

@@ -137,8 +137,8 @@
 #define VIDEO_NTSC		(input_port_6_r(0)&0x200)
 #define MODELL_700		(input_port_6_r(0)&0x100)
 
-#define SERIAL8ON (input_port_6_r(0)&2)
-#define SERIAL9ON (input_port_6_r(0)&1)
+#define IEEE8ON (input_port_6_r(0)&2)
+#define IEEE9ON (input_port_6_r(0)&1)
 
 #define KEY_ESC (input_port_0_r(0)&0x8000)
 #define KEY_1 (input_port_0_r(0)&0x4000)
@@ -262,8 +262,6 @@ extern void cbmb_shutdown_machine (void);
 extern void cbmb_frame_interrupt (int param);
 
 void cbmb_rom_load(void);
-void cbmb_rom_recognition (void);
-extern int cbmb_rom_id (const char *name, const char *gamename);
 
 void cbmb_state(PRASTER *this);
 

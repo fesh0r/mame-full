@@ -7,6 +7,7 @@
 
 #define C65_MAIN_MEMORY (input_port_8_r(0)&0x300)
 #define C65_512KB (0x100)
+#define C65_4096KB (0x200)
 
 #define C65_KEY_TAB (input_port_10_r(0)&0x8000)
 #define C65_KEY_CTRL (input_port_10_r(0)&1)
@@ -33,24 +34,18 @@
 #define C65_KEY_F13 (input_port_13_r(0)&0x0010)
 #define C65_KEY_HELP (input_port_13_r(0)&0x0008)
 
-//extern UINT8 *c65_memory;
-extern UINT8 *c65_basic;
-extern UINT8 *c65_kernal;
+/*extern UINT8 *c65_memory; */
+//extern UINT8 *c65_basic;
+//extern UINT8 *c65_kernal;
 extern UINT8 *c65_chargen;
-extern UINT8 *c65_dos;
-extern UINT8 *c65_monitor;
+//extern UINT8 *c65_dos;
+//extern UINT8 *c65_monitor;
 extern UINT8 *c65_interface;
-extern UINT8 *c65_graphics;
+//extern UINT8 *c65_graphics;
 
 void c65_map(int a, int x, int y, int z);
 void c65_bankswitch (void);
 void c65_colorram_write (int offset, int value);
-void c65_write_0002 (int offset, int value);
-WRITE_HANDLER ( c65_write_2000 );
-WRITE_HANDLER ( c65_write_8000 );
-WRITE_HANDLER ( c65_write_a000 );
-WRITE_HANDLER ( c65_write_d000 );
-WRITE_HANDLER ( c65_write_e000 );
 
 extern void c65_driver_init (void);
 extern void c65pal_driver_init (void);
@@ -59,10 +54,9 @@ extern void c65_init_machine (void);
 extern void c65_shutdown_machine (void);
 
 /*only for debugging */
-extern void c65_status (char *text, int size);
 void c65_state (PRASTER *this);
 
-extern UINT8 c65_keyline[2];
+extern UINT8 c65_keyline;
 extern int c65;
 extern UINT8 c65_6511_port;
 

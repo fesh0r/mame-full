@@ -10,6 +10,9 @@
 	(ie. support non constant sector lengths / sizes per disk).
 
 ***************************************************************************/
+#include "pic8259.h"
+#include "dma8237.h"
+
 #include "mess/machine/pc.h"
 
 #define TWO_SIDE		0x08
@@ -84,7 +87,7 @@ static UINT8 sta_size[32] = {
 static void FDC_irq(int num)
 {
 	FDC_timer = 0;
-	pc_PIC_issue_irq(num);
+	pic8259_0_issue_irq(num);
 }
 
 #if VERBOSE_FDC
@@ -201,7 +204,7 @@ static void FDC_DMA_write(int deleted_dam)
 
 	head[drv] = (FDC_CMD_UNIT >> 2) & 1;
 	sector[drv] = FDC_CMD_S;  /* get sector */
-//	pc_fdc_spt[drv] = FDC_CMD_EOT;	 /* end of track -> sectors per track */
+/*	pc_fdc_spt[drv] = FDC_CMD_EOT;	    end of track -> sectors per track    */
 
     if (pc_DMA_mask & (0x10 << FDC_DMA)) {
 		FDC_LOG(1,"FDC_DMA_write",(errorlog, "DMA %d is masked\n", FDC_DMA));
@@ -263,7 +266,7 @@ static void FDC_DMA_read(int deleted_dam)
 
 	head[drv] = (FDC_CMD_UNIT >> 2) & 1;
 	sector[drv] = FDC_CMD_S;  /* get sector */
-//	pc_fdc_spt[drv] = FDC_CMD_EOT;	 /* end of track -> sectors per track */
+/*	pc_fdc_spt[drv] = FDC_CMD_EOT;	    end of track -> sectors per track    */
 
     if (pc_DMA_mask & (0x10 << FDC_DMA)) {
 		FDC_LOG(1,"FDC_DMA_read",(errorlog, "DMA %d is masked\n", FDC_DMA));

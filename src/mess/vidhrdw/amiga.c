@@ -337,7 +337,7 @@ INLINE void amiga_render_sprite( int num, int x, int y, unsigned short *dst ) {
 
 ***************************************************************************/
 
-INLINE void amiga_display_msg ( const char *str ) {
+INLINE void amiga_display_msg (struct osd_bitmap *bitmap, const char *str ) {
 	static struct DisplayText dt[2];
 
 	if ( update_regs.once_per_frame == 0 ) {
@@ -345,7 +345,7 @@ INLINE void amiga_display_msg ( const char *str ) {
 		dt[0].color = DT_COLOR_WHITE;
 		dt[0].x = dt[0].y = 10;
 		dt[1].text = 0;
-		displaytext(dt,0,0);
+		displaytext(bitmap, dt,0,0);
 	}
 
 	update_regs.once_per_frame = 1;
@@ -412,7 +412,7 @@ INLINE void init_update_regs( void ) {
 
 ***********************************************************************************/
 #define BEGIN_UPDATE( name ) \
-static void name##( unsigned short *dst, int planes, int x, int y, int min_x ) { \
+static void name##(struct osd_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x ) { \
 	int i; \
 	if ( x < update_regs.ddf_start_pixel ) { /* see if we need to start fetching */ \
 		dst[x] = update_regs.back_color; /* fill the pixel with color 0 */ \
@@ -444,7 +444,7 @@ static void name##( unsigned short *dst, int planes, int x, int y, int min_x ) {
 #endif
 
 #define BEGIN_UPDATE_WITH_SPRITES( name ) \
-static void name##( unsigned short *dst, int planes, int x, int y, int min_x ) { \
+static void name##(struct osd_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x ) { \
 	int i; \
 	if ( x < update_regs.ddf_start_pixel ) { /* see if we need to start fetching */ \
 		dst[x] = update_regs.back_color; /* fill the pixel with color 0 */ \
@@ -490,8 +490,8 @@ static void name##( unsigned short *dst, int planes, int x, int y, int min_x ) {
 }
 
 #define UNIMPLEMENTED( name ) \
-	static void name##( unsigned short *dst, int planes, int x, int y, int min_x ) { \
-		amiga_display_msg( "Unimplemented screen mode: ##name## " ); \
+	static void name##(struct osd_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x ) { \
+		amiga_display_msg(bitmap,  "Unimplemented screen mode: ##name## " ); \
 	}
 
 
@@ -619,7 +619,7 @@ UNIMPLEMENTED( render_pixel_ham_lace )
 UNIMPLEMENTED( render_pixel_ham_sprites )
 UNIMPLEMENTED( render_pixel_ham_lace_sprites )
 
-typedef void (*render_pixel_def)( unsigned short *dst, int planes, int x, int y, int min_x );
+typedef void (*render_pixel_def)(struct osd_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x );
 
 static render_pixel_def render_pixel[] = {
 	render_pixel_lores,
@@ -749,7 +749,7 @@ void amiga_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ) {
 					local_render = render_pixel[get_mode()];
 
 				for ( x = start_x; x < end_x; x++ )
-					(*local_render)( dst, planes, x, y, min_x );
+					(*local_render)( bitmap, dst, planes, x, y, min_x );
 			}
 
 			/* now we start from where we left off */

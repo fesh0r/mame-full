@@ -8,6 +8,7 @@
 #define VERBOSE_DBG 1				   /* general debug messages */
 #include "cbm.h"
 #include "c1551.h"
+#include "cbmieeeb.h"
 
 #include "cbmdrive.h"
 
@@ -200,7 +201,7 @@ static void d64_read_sector (CBM_Drive * c1551, int track, int sector)
 /* reads directory into buffer */
 static void d64_read_directory (CBM_Drive * c1551)
 {
-	int pos, track, sector, i, j, blocksfree, addr = 0x1001;
+	int pos, track, sector, i, j, blocksfree, addr = 0x0101/*0x1001*/;
 
 	c1551->buffer = realloc (c1551->buffer, 8 * 18 * 25);
 	if (!c1551->buffer) {
@@ -336,34 +337,49 @@ static int c1551_d64_command (CBM_Drive * c1551, unsigned char *name)
 static int c1551_fs_command (CBM_Drive * c1551, unsigned char *name)
 {
 	FILE *fp;
+	int type=0;
 	int read;
 	int i;
+	char n[32];
 
-	strcat ((char *) name, ".PRG");
+	strcpy(n,(char*)name);
+	fp = osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE_R, 0);
 
-
-	fp = osd_fopen (Machine->gamedrv->name, (char *) name, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
 	{
-		for (i = 0; name[i] != 0; i++)
-			name[i] = tolower (name[i]);
-		fp = osd_fopen (Machine->gamedrv->name, (char *) name, OSD_FILETYPE_IMAGE_R, 0);
+		for (i = 0; n[i] != 0; i++)
+			n[i] = tolower (n[i]);
+		fp = osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE_R, 0);
 	}
 	if (!fp)
 	{
-		name[strlen ((char *) name) - 1] = '0';
-		name[strlen ((char *) name) - 2] = '0';
-		fp = osd_fopen (Machine->gamedrv->name, (char *) name, OSD_FILETYPE_IMAGE_R, 0);
+		strcpy(n, (char*)name);
+		strcat ((char *) n, ".prg");
+
+		fp = osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE_R, 0);
 	}
 	if (!fp)
 	{
-		for (i = 0; name[i] != 0; i++)
-			name[i] = toupper (name[i]);
-		fp = osd_fopen (Machine->gamedrv->name, (char *) name, OSD_FILETYPE_IMAGE_R, 0);
+		for (i = 0; n[i] != 0; i++)
+			n[i] = tolower (n[i]);
+		fp = osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE_R, 0);
+	}
+	if (!fp)
+	{
+		type=1;
+		strcpy(n,(char*)name);
+		strcat(n,".p00");
+		fp = osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE_R, 0);
+	}
+	if (!fp)
+	{
+		for (i = 0; n[i] != 0; i++)
+			n[i] = tolower (n[i]);
+		fp = osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE_R, 0);
 	}
 	if (fp)
 	{
-		if (name[strlen ((char *) name) - 1] == '0')
+		if (type==1)
 		{
 			c1551->size = osd_fsize (fp);
 			c1551->buffer = realloc (c1551->buffer, c1551->size);
@@ -730,14 +746,14 @@ void c1551_state (CBM_Drive * c1551)
 			c1551->i.iec.state++;
 			if ((c1551->state == 0) || (c1551->state == OPEN))
 			{
-				DBG_LOG (1, "c1551", (errorlog, "taken data %.2x\n",
+				DBG_LOG (1, "c1551", ("taken data %.2x\n",
 									  c1551->i.iec.datain));
 				if (c1551->cmdpos < sizeof (c1551->cmdbuffer))
 					c1551->cmdbuffer[c1551->cmdpos++] = c1551->i.iec.datain;
 			}
 			else if (c1551->state == WRITING)
 			{
-				DBG_LOG (1, "c1551", (errorlog, "written data %.2x\n", c1551->i.iec.datain));
+				DBG_LOG (1, "c1551", ("written data %.2x\n", c1551->i.iec.datain));
 			}
 			c1551->i.iec.handshakeout = 1;
 		}
@@ -756,8 +772,8 @@ void c1551_state (CBM_Drive * c1551)
 		break;
 	}
 #if VERBOSE_DBG
-	if (errorlog && (oldstate != c1551->i.iec.state))
-		fprintf (errorlog, "state %d->%d %d\n", oldstate, c1551->i.iec.state, c1551->state);
+	if (oldstate != c1551->i.iec.state)
+		logerror ("state %d->%d %d\n", oldstate, c1551->i.iec.state, c1551->state);
 #endif
 }
 
@@ -900,9 +916,9 @@ void vc1541_state (CBM_Drive * vc1541)
 			{
 				if (vc1541->cmdpos < sizeof (vc1541->cmdbuffer))
 					vc1541->cmdbuffer[vc1541->cmdpos++] = vc1541->i.serial.value;
-				DBG_LOG (1, "serial read", (errorlog, "%s %s %.2x\n",
-											vc1541->i.serial.broadcast ? "broad" : "",
-											vc1541->i.serial.last ? "last" : "",
+				DBG_LOG (1, "serial read", ("%s %s %.2x\n",
+							vc1541->i.serial.broadcast ? "broad" : "",
+							vc1541->i.serial.last ? "last" : "",
 											vc1541->i.serial.value));
 			}
 			vc1541->i.serial.state++;
@@ -1256,7 +1272,7 @@ void vc1541_state (CBM_Drive * vc1541)
 		}
 		if (timer_get_time () - vc1541->i.serial.time > 20e-6)
 		{
-			DBG_LOG (1, "vc1541", (errorlog, "%.2x written\n", vc1541->i.serial.value));
+			DBG_LOG (1, "vc1541", ("%.2x written\n", vc1541->i.serial.value));
 			vc1541->i.serial.data = 1;
 			vc1541->i.serial.clock = 0;
 			vc1541->i.serial.state++;
@@ -1366,13 +1382,170 @@ void vc1541_state (CBM_Drive * vc1541)
 		break;
 	}
 #if VERBOSE_DBG
-	if (errorlog && (oldstate != vc1541->i.serial.state))
-		fprintf (errorlog, "%d state %d->%d %d %s %s %s\n",
+	if (oldstate != vc1541->i.serial.state)
+		logerror ("%d state %d->%d %d %s %s %s\n",
 				 vc1541->i.serial.device,
 				 oldstate,
 				 vc1541->i.serial.state, vc1541->state,
 				 cbm_serial.atn[0] ? "ATN" : "atn",
 				 cbm_serial.clock[0] ? "CLOCK" : "clock",
 				 cbm_serial.data[0] ? "DATA" : "data");
+#endif
+}
+
+/* difference between vic20 and pet (first series)
+   pet lowers atn and wants a reaction on ndac */
+
+void c2031_state(CBM_Drive *drive)
+{
+#if VERBOSE_DBG
+	int oldstate = drive->i.ieee.state;
+#endif
+	int data;
+
+	switch (drive->i.ieee.state)
+	{
+	case 0:
+		if (!cbm_ieee_dav_r()) {
+			drive->i.ieee.state=10;
+		} else if (!cbm_ieee_atn_r()) {
+			drive->i.ieee.state=11;
+			cbm_ieee_ndac_w(1,0);
+			logerror("arsch\n");
+		}
+		break;
+	case 1:
+		break;
+	case 10:
+		if (cbm_ieee_dav_r()) {
+			drive->i.ieee.state++;
+			cbm_ieee_nrfd_w(1,1);
+			cbm_ieee_ndac_w(1,0);
+		}
+		break;
+	case 11:
+		if (!cbm_ieee_dav_r()) {
+			cbm_ieee_nrfd_w(1,0);
+			data=cbm_ieee_data_r()^0xff;
+			cbm_ieee_ndac_w(1,1);
+			logerror("byte received %.2x\n",data);
+			if (!cbm_ieee_atn_r()&&((data&0x0f)==drive->i.ieee.device) ) {
+				if ((data&0xf0)==0x40)
+					drive->i.ieee.state=30;
+				else
+					drive->i.ieee.state=20;
+				if (drive->cmdpos < sizeof (drive->cmdbuffer))
+					drive->cmdbuffer[drive->cmdpos++] = data;
+			} else if ((data&0xf)==0xf) {
+				drive->i.ieee.state--;
+			} else {
+				drive->i.ieee.state++;
+			}
+		}
+		break;
+		/* wait until atn is released */
+	case 12:
+		if (cbm_ieee_atn_r()) {
+			drive->i.ieee.state++;
+			cbm_ieee_nrfd_w(1,0);
+		}
+		break;
+	case 13:
+		if (!cbm_ieee_atn_r()) {
+			drive->i.ieee.state=10;
+//			cbm_ieee_nrfd_w(1,0);
+		}
+		break;
+
+		/* receiving rest of command */
+	case 20:
+		if (cbm_ieee_dav_r()) {
+			drive->i.ieee.state++;
+			cbm_ieee_nrfd_w(1,1);
+			cbm_ieee_ndac_w(1,0);
+		}
+		break;
+	case 21:
+		if (!cbm_ieee_dav_r()) {
+			cbm_ieee_nrfd_w(1,0);
+			data=cbm_ieee_data_r()^0xff;
+			logerror("byte received %.2x\n",data);
+			if (drive->cmdpos < sizeof (drive->cmdbuffer))
+				drive->cmdbuffer[drive->cmdpos++] = data;
+			if (!cbm_ieee_atn_r()&&((data&0xf)==0xf)) {
+				cbm_command(drive);
+				drive->i.ieee.state=10;
+			} else
+				drive->i.ieee.state=20;
+			cbm_ieee_ndac_w(1,1);
+		}
+		break;
+
+		/* read command */
+	case 30:
+		if (cbm_ieee_dav_r()) {
+			drive->i.ieee.state++;
+			cbm_ieee_nrfd_w(1,1);
+			cbm_ieee_ndac_w(1,0);
+		}
+		break;
+	case 31:
+		if (!cbm_ieee_dav_r()) {
+			cbm_ieee_nrfd_w(1,0);
+			data=cbm_ieee_data_r()^0xff;
+			logerror("byte received %.2x\n",data);
+			if (drive->cmdpos < sizeof (drive->cmdbuffer))
+				drive->cmdbuffer[drive->cmdpos++] = data;
+			cbm_command(drive);
+			if (drive->state==READING)
+				drive->i.ieee.state++;
+			else 
+				drive->i.ieee.state=10;
+			cbm_ieee_ndac_w(1,1);
+		}
+		break;
+	case 32:
+		if (cbm_ieee_dav_r()) {
+			cbm_ieee_nrfd_w(1,1);
+			drive->i.ieee.state=40;
+		}
+		break;
+	case 40:
+		if (!cbm_ieee_ndac_r()) {
+			cbm_ieee_data_w(1,drive->buffer[drive->pos++]^0xff);
+			if (drive->pos>=drive->size)
+				cbm_ieee_eoi_w(1,0);
+			cbm_ieee_dav_w(1,0);
+			drive->i.ieee.state++;
+		}
+		break;
+	case 41:
+		if (!cbm_ieee_nrfd_r()) {
+			drive->i.ieee.state++;
+		}
+		break;
+	case 42:
+		if (cbm_ieee_ndac_r()) {
+			if (cbm_ieee_eoi_r())
+				drive->i.ieee.state=40;
+			else {
+				cbm_ieee_data_w(1,0xff);
+				cbm_ieee_ndac_w(1,0);
+				cbm_ieee_nrfd_w(1,0);
+				cbm_ieee_eoi_w(1,1);
+				drive->i.ieee.state=10;
+			}
+			cbm_ieee_dav_w(1,1);
+		}
+		break;
+	}
+
+#if VERBOSE_DBG
+	if (oldstate != drive->i.ieee.state)
+		logerror("%d state %d->%d %d\n",
+				 drive->i.ieee.device,
+				 oldstate,
+				 drive->i.ieee.state, drive->state
+				 );
 #endif
 }

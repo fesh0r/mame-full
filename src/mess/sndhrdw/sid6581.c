@@ -60,7 +60,7 @@ static void sid6581_reset(SID6581 *this)
 
 static void sid6581_port_w (SID6581 *this, int offset, int data)
 {
-	DBG_LOG (1, "sid6581 write", (errorlog, "offset %.2x value %.2x\n",
+	DBG_LOG (1, "sid6581 write", ("offset %.2x value %.2x\n",
 								  offset, data));
 	offset &= 0x1f;
 	switch (offset)

@@ -22,11 +22,11 @@
 #include "cbm.h"
 
 #include "mess/machine/vc20.h"
-#include "mess/machine/c1551.h"
 #include "mess/machine/vc1541.h"
 #include "mess/machine/6522via.h"
 #include "mess/machine/vc20tape.h"
 #include "mess/machine/c1551.h"
+#include "mess/machine/cbmieeeb.h"
 #include "mess/vidhrdw/vic6560.h"
 
 static UINT8 keyboard[8] =
@@ -34,6 +34,8 @@ static UINT8 keyboard[8] =
 
 static int via1_portb, via0_ca2;
 static int serial_atn = 1, serial_clock = 1, serial_data = 1;
+
+static int ieee=0; /* ieee cartridge (interface and rom)*/
 
 UINT8 *vc20_memory;
 UINT8 *vc20_memory_9400;
@@ -187,6 +189,67 @@ static void vc20_via1_write_cb2 (int offset, int data)
 	cbm_serial_data_write (serial_data = !data);
 }
 
+/* ieee 6522 number 1 (via4)
+ port b
+  0 dav out
+  1 nrfd out
+  2 ndac out (or port a pin 2!?)
+  3 eoi in
+  4 dav in
+  5 nrfd in
+  6 ndac in
+  7 atn in
+ */
+static int vc20_via4_read_portb(int offset)
+{
+	int data=0;
+	if (cbm_ieee_eoi_r()) data|=8;
+	if (cbm_ieee_dav_r()) data|=0x10;
+	if (cbm_ieee_nrfd_r()) data|=0x20;
+	if (cbm_ieee_ndac_r()) data|=0x40;
+	if (cbm_ieee_atn_r()) data|=0x80;
+	return data;
+}
+
+static void vc20_via4_write_portb(int offset, int data )
+{
+	cbm_ieee_dav_w(0,data&1);
+	cbm_ieee_nrfd_w(0,data&2);
+	cbm_ieee_ndac_w(0,data&4);
+}
+
+/* ieee 6522 number 2 (via5)
+   port a data read
+   port b data write
+   cb1 srq in ?
+   cb2 eoi out
+   ca2 atn out
+*/
+static void vc20_via5_write_porta(int offset, int data)
+{
+	cbm_ieee_data_w(0,data);
+}
+
+static int vc20_via5_read_portb(int offset)
+{
+	return cbm_ieee_data_r();
+}
+
+static void vc20_via5_write_ca2(int offset,int level)
+{
+	cbm_ieee_atn_w(0,level);
+}
+
+static int vc20_via5_read_cb1( int offset)
+{
+	return cbm_ieee_srq_r();
+}
+
+static void vc20_via5_write_cb2( int offset, int data )
+{
+	cbm_ieee_eoi_w(0,data);
+}
+
 static struct via6522_interface via0 =
 {
 	vc20_via0_read_porta,
@@ -212,6 +275,34 @@ static struct via6522_interface via0 =
 	vc20_via1_write_portb,
 	vc20_via1_write_ca2,
 	vc20_via1_write_cb2,
+	vc20_via1_irq
+}, 
+/* via2,3 used by vc1541 and 2031 disk drives */
+via4 =
+{
+	0, //vc20_via4_read_porta,
+	vc20_via4_read_portb,
+	0, //vc20_via4_read_ca1,
+	0, //vc20_via5_read_cb1,
+	0, // via1_read_ca2
+	0,								   /*via1_read_cb2, */
+	0,								   /*via1_write_porta, */
+	vc20_via4_write_portb,
+	0, //vc20_via5_write_ca2,
+	0, //vc20_via5_write_cb2,
+	vc20_via1_irq
+}, via5 =
+{
+	0,//vc20_via5_read_porta,
+	vc20_via5_read_portb,
+	0, //vc20_via5_read_ca1,
+	vc20_via5_read_cb1,
+	0,								   /*via1_read_ca2, */
+	0,								   /*via1_read_cb2, */
+	vc20_via5_write_porta,
+	0,//vc20_via5_write_portb,
+	vc20_via5_write_ca2,
+	vc20_via5_write_cb2,
 	vc20_via1_irq
 };
 
@@ -253,7 +344,10 @@ static void vc20_memory_init(void)
 	/* i think roms look like 0xff */
 	memset (memory + 0x400, 0xff, 0x1000 - 0x400);
 	memset (memory + 0x2000, 0xff, 0x6000);
-	memset (memory + 0xa000, 0xff, 0x2000);
+	memset (memory + 0xa000, 0xff, 0x1000);
+	
+	// clears ieee cartrige rom
+	// memset (memory + 0xa000, 0xff, 0x2000);
 
 	inited=1;
 }
@@ -298,6 +392,16 @@ void vic20_driver_init (void)
 	vic6560_init (vic6560_dma_read, vic6560_dma_read_color);
 }
 
+extern void vic20ieee_driver_init (void)
+{
+	ieee=1;
+	vc20_common_driver_init ();
+	vic6560_init (vic6560_dma_read, vic6560_dma_read_color);
+	via_config (4, &via4);
+	via_config (5, &via5);
+	cbm_ieee_open();
+}
+
 void vc20_init_machine (void)
 {
 	if (RAMIN0X0400)
@@ -340,7 +444,12 @@ void vc20_init_machine (void)
 		install_mem_write_handler (0, 0x6000, 0x7fff, MWA_NOP);
 		install_mem_read_handler (0, 0x6000, 0x7fff, MRA_ROM);
 	}
-	if (RAMIN0XA000)
+	if (ieee)
+	{
+		install_mem_write_handler (0, 0xa000, 0xbfff, MWA_ROM);
+		install_mem_read_handler (0, 0xa000, 0xbfff, MRA_ROM);
+	}
+	else if	(RAMIN0XA000)
 	{
 		install_mem_write_handler (0, 0xa000, 0xbfff, MWA_RAM);
 		install_mem_read_handler (0, 0xa000, 0xbfff, MRA_RAM);
@@ -355,10 +464,15 @@ void vc20_init_machine (void)
 #ifdef VC1541
 	vc1541_reset ();
 #endif
-	cbm_drive_0_config (SERIAL8ON ? SERIAL : 0);
-	cbm_drive_1_config (SERIAL9ON ? SERIAL : 0);
+	if (ieee) {
+		cbm_drive_0_config (SERIAL8ON ? IEEE : 0, 8);
+		cbm_drive_1_config (SERIAL9ON ? IEEE : 0, 9);
+	} else {
+		cbm_drive_0_config (SERIAL8ON ? SERIAL : 0, 8);
+		cbm_drive_1_config (SERIAL9ON ? SERIAL : 0, 9);
+	}
 	via_reset ();
-	via_0_ca1_w (0, vc20_via0_read_ca1 (0));
+	via_0_ca1_w (0, vc20_via0_read_ca1(0) );
 }
 
 void vc20_shutdown_machine (void)

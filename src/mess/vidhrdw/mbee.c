@@ -524,7 +524,7 @@ void mbee_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			 */
             while( strlen(mbee_frame_message) < 128 )
 				strcat(mbee_frame_message, " ");
-			ui_text(mbee_frame_message, 0, Machine->uiheight - 10);
+			ui_text(bitmap, mbee_frame_message, 0, Machine->uiheight - 10);
 		}
     }
 

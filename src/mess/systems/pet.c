@@ -119,6 +119,9 @@ when problems start with -log and look into error.log file
 #include "mess/machine/6522via.h"
 #include "mess/vidhrdw/pet.h"
 #include "mess/vidhrdw/crtc6845.h"
+#include "mess/machine/c1551.h"
+#include "mess/machine/cbmieeeb.h"
+//#include "mess/machine/vc1541.h"
 
 #include "mess/machine/pet.h"
 
@@ -130,6 +133,7 @@ static struct MemoryReadAddress pet_readmem[] =
 	{0xe810, 0xe813, pia_0_r },
 	{0xe820, 0xe823, pia_1_r },
 	{0xe840, 0xe84f, via_0_r },
+//	{0xe900, 0xe91f, cbm_ieee_state }, // for debugging
 	{0xf000, 0xffff, MRA_ROM },
 	{-1}							   /* end of table */
 };
@@ -174,30 +178,61 @@ static struct MemoryWriteAddress pet40_writemem[] =
 
 static struct MemoryReadAddress pet80_readmem[] =
 {
-	{0x0000, 0x7fff, MRA_RAM},
-	{0x8000, 0x83ff, MRA_RAM },
-	{0xa000, 0xe7ff, MRA_ROM },
+	{0x0000, 0x7fff, MRA_RAM },
+	{0x8000, 0x8fff, MRA_BANK1 },
+	{0x9000, 0x9fff, MRA_BANK2 },
+	{0xa000, 0xafff, MRA_BANK3 },
+	{0xb000, 0xbfff, MRA_BANK4 },
+	{0xc000, 0xe7ff, MRA_BANK6 },
+#if 1
+	{0xe800, 0xefff, MRA_BANK7 },
+#else
 	{0xe810, 0xe813, pia_0_r },
 	{0xe820, 0xe823, pia_1_r },
 	{0xe840, 0xe84f, via_0_r },
 	{0xe880, 0xe881, crtc6845_port_r },
-	{0xf000, 0xffff, MRA_ROM },
+#endif
+	{0xf000, 0xffff, MRA_BANK8 },
 	{-1}							   /* end of table */
 };
 
 static struct MemoryWriteAddress pet80_writemem[] =
 {
 	{0x0000, 0x7fff, MWA_RAM, &pet_memory},
-	{0x8000, 0x87ff, crtc6845_videoram_w, &pet_videoram },
-	{0xa000, 0xe7ff, MWA_ROM },
+	{0x8000, 0x8fff, MWA_BANK1, &pet_videoram },
+	{0x9000, 0x9fff, MWA_BANK2 },
+	{0xa000, 0xafff, MWA_BANK3 },
+	{0xb000, 0xbfff, MWA_BANK4 },
+	{0xc000, 0xe7ff, MWA_BANK6 },
+#if 1
+	{0xe800, 0xefff, MWA_BANK7 },
+#else
 	{0xe810, 0xe813, pia_0_w },
 	{0xe820, 0xe823, pia_1_w },
 	{0xe840, 0xe84f, via_0_w },
 	{0xe880, 0xe881, crtc6845_pet_port_w },
-	{0xf000, 0xffff, MWA_ROM },
+#endif
+	{0xf000, 0xffef, MWA_BANK8 },
+    {0xfff1, 0xffff, MWA_BANK9 },
 	{-1}							   /* end of table */
 };
 
+
+/* 0xe880 crtc
+   0xefe0 6702 encoder
+   0xeff0 acia6551
+
+   0xeff8 super pet system latch
+61432        SuperPET system latch
+        bit 0    1=6502, 0=6809
+        bit 1    0=read only
+        bit 3    diagnostic sense: set to 1 to switch to 6502
+
+61436        SuperPET bank select latch
+        bit 0-3  bank
+        bit 7    1=enable system latch
+
+*/
 static struct MemoryReadAddress superpet_readmem[] =
 {
 	{0x0000, 0x7fff, MRA_RAM},
@@ -258,31 +293,6 @@ static struct MemoryWriteAddress superpet_m6809_writemem[] =
 	{0x10000, 0x1ffff, MWA_RAM, &superpet_memory },
 	{-1}							   /* end of table */
 };
-
-/* 0xe880 crtc
-   0xefe0 6703 encoder
-   0xeff0 acia6551
-
-   0xeff8 super pet system latch
-61432        SuperPET system latch
-        bit 0    1=6502, 0=6809
-        bit 1    0=read only
-        bit 3    diagnostic sense: set to 1 to switch to 6502
-
-61436        SuperPET bank select latch
-        bit 0-3  bank
-        bit 7    1=enable system latch
-
-65520        8096 memory control register
-        bit 0    1=write protect $8000-BFFF
-        bit 1    1=write protect $C000-FFFF
-        bit 2    $8000-BFFF bank select
-        bit 3    $C000-FFFF bank select
-        bit 5    1=screen peek through
-        bit 6    1=I/O peek through
-        bit 7    1=enable expansion memory
-    
-*/
 
 #define DIPS_HELPER(bit, name, keycode) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, IP_JOY_NONE)
@@ -475,6 +485,14 @@ INPUT_PORTS_START (pet)
 	PORT_DIPSETTING(  0x80, "8KByte" )
 	PORT_DIPSETTING(  0x100, "16KByte" )
 	PORT_DIPSETTING(  0x180, "32KByte" )
+	PORT_BIT (8, 0, IPT_UNUSED) /* no 8096 hardware */
+	PORT_BIT (4, 0, IPT_UNUSED) /* no superpet switch */
+	PORT_DIPNAME ( 0x02, 0x02, "IEEE488 Bus/Dev 8/Floppy Sim")
+	PORT_DIPSETTING(  0, DEF_STR( No ) )
+	PORT_DIPSETTING(0x02, DEF_STR( Yes ) )
+	PORT_DIPNAME ( 0x01, 0x00, "IEEE488 Bus/Dev 9/Floppy Sim")
+	PORT_DIPSETTING(  0, DEF_STR( No ) )
+	PORT_DIPSETTING(  1, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START (petb)
@@ -498,6 +516,43 @@ INPUT_PORTS_START (petb)
 	PORT_DIPSETTING(  0x80, "8KByte" )
 	PORT_DIPSETTING(  0x100, "16KByte" )
 	PORT_DIPSETTING(  0x180, "32KByte" )
+	PORT_BIT (8, 0, IPT_UNUSED) /* no 8096 hardware */
+	PORT_BIT (4, 0, IPT_UNUSED) /* no superpet switch */
+	PORT_DIPNAME ( 0x02, 0x02, "IEEE488 Bus/Dev 8/Floppy Sim")
+	PORT_DIPSETTING(  0, DEF_STR( No ) )
+	PORT_DIPSETTING(0x02, DEF_STR( Yes ) )
+	PORT_DIPNAME ( 0x01, 0x00, "IEEE488 Bus/Dev 9/Floppy Sim")
+	PORT_DIPSETTING(  0, DEF_STR( No ) )
+	PORT_DIPSETTING(  1, DEF_STR( Yes ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START (cbm8096)
+	PET_B_KEYBOARD
+    PORT_START 
+    DIPS_HELPER( 0x8000, "Quickload", KEYCODE_F8)
+#ifdef PET_TEST_CODE
+	PORT_DIPNAME   ( 0x4000, 0x4000, "Tape Drive/Device 1")
+	PORT_DIPSETTING(  0, DEF_STR( Off ) )
+	PORT_DIPSETTING(0x4000, DEF_STR( On ) )
+	PORT_DIPNAME   ( 0x2000, 0x00, " Tape Sound")
+	PORT_DIPSETTING(  0, DEF_STR( Off ) )
+	PORT_DIPSETTING(0x2000, DEF_STR( On ) )
+	DIPS_HELPER( 0x1000, "Tape Drive Play",       KEYCODE_F5)
+	DIPS_HELPER( 0x0800, "Tape Drive Record",     KEYCODE_F6)
+	DIPS_HELPER( 0x0400, "Tape Drive Stop",       KEYCODE_F7)
+#endif
+	PORT_BIT (0x200, 0x200, IPT_UNUSED) /* business keyboard/bios */
+	PORT_BIT (0x180, 0x180, IPT_UNUSED) /* 32 kb Memory */
+	PORT_DIPNAME ( 0x08, 0x08, "CBM8096, 8296 Expansion Memory")
+	PORT_DIPSETTING(  0, DEF_STR( No ) )
+	PORT_DIPSETTING(0x08, DEF_STR( Yes ) )
+	PORT_BIT (4, 0, IPT_UNUSED) /* no superpet switch */
+	PORT_DIPNAME ( 0x02, 0x02, "IEEE488 Bus/Dev 8/Floppy Sim")
+	PORT_DIPSETTING(  0, DEF_STR( No ) )
+	PORT_DIPSETTING(0x02, DEF_STR( Yes ) )
+	PORT_DIPNAME ( 0x01, 0x00, "IEEE488 Bus/Dev 9/Floppy Sim")
+	PORT_DIPSETTING(  0, DEF_STR( No ) )
+	PORT_DIPSETTING(  1, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START (superpet)
@@ -517,9 +572,16 @@ INPUT_PORTS_START (superpet)
 #endif
 	PORT_BIT (0x200, 0x200, IPT_UNUSED) /* business keyboard/bios */
 	PORT_BIT (0x180, 0x180, IPT_UNUSED) /* 32KByte */
-	PORT_DIPNAME   ( 1, 1, "CPU Select")
+	PORT_BIT (8, 0, IPT_UNUSED) /* no 8096 hardware */
+	PORT_DIPNAME   ( 4, 4, "CPU Select")
 	PORT_DIPSETTING( 0, "M6502" )
-	PORT_DIPSETTING( 1, "M6809" )	
+	PORT_DIPSETTING( 4, "M6809" )	
+	PORT_DIPNAME ( 0x02, 0x02, "IEEE488 Bus/Dev 8/Floppy Sim")
+	PORT_DIPSETTING(  0, DEF_STR( No ) )
+	PORT_DIPSETTING(0x02, DEF_STR( Yes ) )
+	PORT_DIPNAME ( 0x01, 0x00, "IEEE488 Bus/Dev 9/Floppy Sim")
+	PORT_DIPSETTING(  0, DEF_STR( No ) )
+	PORT_DIPSETTING(  1, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
 unsigned char pet_palette[] =
@@ -652,7 +714,7 @@ ROM_END
 
 /* basic 4 business 80 columns */
 ROM_START (pet80)
-	ROM_REGION (0x10000, REGION_CPU1)
+	ROM_REGION (0x20000, REGION_CPU1)
     ROM_LOAD ("901465.23", 0xb000, 0x1000, 0xae3deac0)
     ROM_LOAD ("901465.20", 0xc000, 0x1000, 0x0fc17b9c)
     ROM_LOAD ("901465.21", 0xd000, 0x1000, 0x36d91855)
@@ -664,7 +726,7 @@ ROM_END
 
 /* basic 4 business 80 columns 50 hz */
 ROM_START (pet80pal)
-	ROM_REGION (0x10000, REGION_CPU1)
+	ROM_REGION (0x20000, REGION_CPU1)
     ROM_LOAD ("901465.23", 0xb000, 0x1000, 0xae3deac0)
     ROM_LOAD ("901465.20", 0xc000, 0x1000, 0x0fc17b9c)
     ROM_LOAD ("901465.21", 0xd000, 0x1000, 0x36d91855)
@@ -675,7 +737,7 @@ ROM_START (pet80pal)
 ROM_END
 
 ROM_START (cbm80ger)
-	ROM_REGION (0x10000, REGION_CPU1)
+	ROM_REGION (0x20000, REGION_CPU1)
 	ROM_LOAD ("901465.23", 0xb000, 0x1000, 0xae3deac0)
 	ROM_LOAD ("901465.20", 0xc000, 0x1000, 0x0fc17b9c)
 	ROM_LOAD ("901465.21", 0xd000, 0x1000, 0x36d91855)
@@ -686,7 +748,7 @@ ROM_START (cbm80ger)
 ROM_END
 
 ROM_START (cbm80swe)
-	ROM_REGION (0x10000, REGION_CPU1)
+	ROM_REGION (0x20000, REGION_CPU1)
     ROM_LOAD ("901465.23", 0xb000, 0x1000, 0xae3deac0)
     ROM_LOAD ("901465.20", 0xc000, 0x1000, 0x0fc17b9c)
     ROM_LOAD ("901465.21", 0xd000, 0x1000, 0x36d91855)
@@ -811,13 +873,10 @@ ROM_END
 
     ROM_LOAD ("", 0xe000, 0x800, 0x)
 
-	/* 8296 */
-    ROM_LOAD ("324878-01.bin", 0x?000, 0x2000, 0xd262bacd)
+	/* editor rom */
+    ROM_LOAD ("Execudesk.bin", 0xe000, 0x1000, 0xbef0eaa1)
 
-    ROM_LOAD ("324878-02.bin", 0x?000, 0x2000, 0x5e00476d)
-
-    ROM_LOAD ("Execudesk.bin", 0x?000, 0x1000, 0xbef0eaa1)
-    ROM_LOAD ("PaperClip.bin", 0x?000, 0x1000, 0x8fb11d4b)
+    ROM_LOAD ("PaperClip.bin", 0xa000, 0x1000, 0x8fb11d4b)
 
 	/* superpet */
     ROM_LOAD ("waterloo-a000.901898-01.bin", 0xa000, 0x1000, 0x728a998b)
@@ -830,6 +889,11 @@ ROM_END
     ROM_LOAD ("characters.901640-01.bin", 0x0000, 0x1000, 0xee8229c4)
     /* 901447-14 and the 256 chars ascii from 901640-01 */
     ROM_LOAD ("characters.swedish.bin", 0x0000, 0x1000, 0xda1cd630)
+
+	/* scrap */
+	/* fixed bits */
+    ROM_LOAD ("324878-01.bin", 0x?000, 0x2000, 0xd262bacd)
+    ROM_LOAD ("324878-02.bin", 0x?000, 0x2000, 0x5e00476d)
 #endif
 
 static struct MachineDriver machine_driver_pet =
@@ -1088,37 +1152,44 @@ static struct MachineDriver machine_driver_superpet =
 static const struct IODevice io_pet[] =
 {
 	IODEVICE_CBM_PET1_QUICK,
-#if 0
-	IODEVICE_CBM_ROM(c64_rom_id),
-#endif
+	IODEVICE_CBM_ROM("crt\0a0\0b0\0", NULL),
+	IODEVICE_CBM_DRIVE,	
 	{IO_END}
 };
 
 static const struct IODevice io_pet2[] =
 {
 	IODEVICE_CBM_PET_QUICK,
-#if 0
-	IODEVICE_CBM_ROM(c64_rom_id),
-#endif
+	IODEVICE_CBM_ROM("crt\0a0\0b0\0", NULL),
+	IODEVICE_CBM_DRIVE,	
+	{IO_END}
+};
+
+static const struct IODevice io_pet4[] =
+{
+	IODEVICE_CBM_PET_QUICK,
+	IODEVICE_CBM_ROM("crt\0a0\0", NULL),
+	IODEVICE_CBM_DRIVE,	
 	{IO_END}
 };
 
 #define init_pet1 pet_basic1_driver_init
 #define init_pet pet_driver_init
 #define init_pet40 pet40_driver_init
+#define init_cbm80 cbm80_driver_init
 #define init_superpet superpet_driver_init
 
 #define io_cbm30 io_pet2
 #define io_cbm30b io_pet2
-#define io_cbm40 io_pet2
-#define io_cbm40pal io_pet2
-#define io_cbm40b io_pet2
-#define io_cbm80 io_pet2
-#define io_cbm80pal io_pet2
-#define io_cbm80ger io_pet2
-#define io_cbm80swe io_pet2
-#define io_superpet io_pet2
-#define io_mmf9000 io_pet2
+#define io_cbm40 io_pet4
+#define io_cbm40pal io_pet4
+#define io_cbm40b io_pet4
+#define io_cbm80 io_pet4
+#define io_cbm80pal io_pet4
+#define io_cbm80ger io_pet4
+#define io_cbm80swe io_pet4
+#define io_superpet io_pet4
+#define io_mmf9000 io_pet4
 
 #define rom_cbm30 rom_pet2
 #define rom_cbm30 rom_pet2
@@ -1130,29 +1201,29 @@ static const struct IODevice io_pet2[] =
 #define rom_cbm80pal rom_pet80pal
 
 #ifdef PET_TEST_CODE
-COMP (1977, 	pet, 		0, 		pet,		pet,			pet1,		"Commodore Business Machines Co.",	"Commodore PET2001/CBM2000 Series (Basic 1)")
+COMP (1977, 	pet, 		0, 		pet,		pet,			pet1,		"Commodore Business Machines Co.",	"Commodore Personal Electronic Translator 2001/CBM2000 Series (Basic 1)")
 COMP (1979, 	cbm30, 		pet, 	pet,		pet,			pet,		"Commodore Business Machines Co.",	"Commodore CBM3000 Series (Basic 2)")
 COMP (1979, 	cbm30b, 	pet, 	pet,		petb,			pet,		"Commodore Business Machines Co.",	"Commodore CBM3000 Series (Basic 2) (business keyboard)")
 COMP (198 ?, 	cbm40, 		pet, 	pet40,		pet,			pet40,		"Commodore Business Machines Co.",	"Commodore CBM4000 FAT Series (CRTC) 60Hz")
 COMP (198 ?, 	cbm40pal, 	pet, 	pet40pal, 	pet,			pet40,		"Commodore Business Machines Co.",	"Commodore CBM4000 FAT Series (CRTC) 50Hz")
 COMP (198 ?, 	cbm40b, 	pet, 	pet,		petb,			pet,		"Commodore Business Machines Co.",	"Commodore CBM4000 THIN Series (business keyboard)")
-COMP (1980, 	cbm80, 		pet, 	pet80,		petb,			pet40,		"Commodore Business Machines Co.",	"Commodore CBM8000 60Hz")
-COMP (1980, 	cbm80pal, 	pet, 	pet80pal,	 petb,			pet40,		"Commodore Business Machines Co.",	"Commodore CBM8000 50Hz")
-COMP (198 ?, 	cbm80ger, 	pet, 	pet80pal,	petb,			pet40,		"Commodore Business Machines Co.",	"Commodore CBM8000 German (50Hz)")
-COMP (198 ?, 	cbm80swe, 	pet, 	pet80pal,	petb,			pet40,		"Commodore Business Machines Co.",	"Commodore CBM8000 Swedish (50Hz)")
+COMP (1980, 	cbm80, 		pet, 	pet80,		cbm8096,		cbm80,		"Commodore Business Machines Co.",	"Commodore CBM8000 60Hz")
+COMP (1980, 	cbm80pal, 	pet, 	pet80pal,	cbm8096,		cbm80,		"Commodore Business Machines Co.",	"Commodore CBM8000 50Hz")
+COMP (198 ?, 	cbm80ger, 	pet, 	pet80pal,	cbm8096,		cbm80,		"Commodore Business Machines Co.",	"Commodore CBM8000 German (50Hz)")
+COMP (198 ?, 	cbm80swe, 	pet, 	pet80pal,	cbm8096,		cbm80,		"Commodore Business Machines Co.",	"Commodore CBM8000 Swedish (50Hz)")
 COMP (198 ?, 	superpet, 	pet, 	superpet,	superpet,		superpet,	"Commodore Business Machines Co.",	"Commodore SP9000/MMF9000 (50Hz)")
 COMP (198 ?, 	mmf9000, 	pet, 	superpet,	superpet,		superpet,	"Commodore Business Machines Co.",	"Commodore Micro Mainframe 9000 (50Hz) Swedish")
 #else
 /*     YEAR 	NAME		PARENT	MACHINE		INPUT	INIT 	COMPANY   							FULLNAME */
-COMPX (1977,	pet, 		0,		pet,		pet,			pet1, 	"Commodore Business Machines Co.",	"Commodore PET2001/CBM2000 Series (Basic 1)", 				GAME_NO_SOUND)
+COMPX (1977,	pet, 		0,		pet,		pet,			pet1, 	"Commodore Business Machines Co.",	"Commodore Personal Electronic Translator 2001/CBM2000 Series (Basic 1)", 				GAME_NO_SOUND)
 COMPX (1979,	cbm30, 		pet,	pet,		pet,			pet, 	"Commodore Business Machines Co.",	"Commodore CBM3000 Series (Basic 2)", 						GAME_NO_SOUND)
 COMPX (1979,	cbm30b, 	pet,	pet,		petb,			pet,	"Commodore Business Machines Co.",	"Commodore CBM3000 Series (Basic 2) (business keyboard)",	GAME_NO_SOUND)
-COMPX (198 ?,	cbm40, 		pet,	pet40,		pet,			pet40,		"Commodore Business Machines Co.",	"Commodore CBM4000 FAT Series (CRTC) 60Hz", 			GAME_NO_SOUND)
+COMPX (198 ?,	cbm40, 		pet,	pet40,		pet,			pet40,	"Commodore Business Machines Co.",	"Commodore CBM4000 FAT Series (CRTC) 60Hz", 			GAME_NO_SOUND)
 COMPX (198 ?,	cbm40pal, 	pet,	pet40pal, 	pet,			pet40, 	"Commodore Business Machines Co.",	"Commodore CBM4000 FAT Series (CRTC) 50Hz", 				GAME_NO_SOUND)
 COMPX (198 ?,	cbm40b, 	pet,	pet,		petb,			pet, 	"Commodore Business Machines Co.",	"Commodore CBM4000 THIN Series (business keyboard)",		GAME_NO_SOUND)
-COMPX (1980,	cbm80, 		pet,	pet80,		petb,			pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 60Hz", 									GAME_NO_SOUND)
-COMPX (198?,	cbm80pal,	pet,	pet80pal, 	petb,			pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 50Hz", 						           GAME_NO_SOUND)
-COMPX (198?,	cbm80ger,	pet,	pet80pal, 	petb,			pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 German (50Hz)", 							GAME_NO_SOUND)
-COMPX (198?,	cbm80swe,	pet,	pet80pal, 	petb,			pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 Swedish (50Hz)", 						GAME_NO_SOUND)
+COMPX (1980,	cbm80, 		pet,	pet80,		cbm8096,		cbm80, 	"Commodore Business Machines Co.",	"Commodore CBM8000 60Hz", 									GAME_NO_SOUND)
+COMPX (198?,	cbm80pal,	pet,	pet80pal, 	cbm8096,		cbm80, 	"Commodore Business Machines Co.",	"Commodore CBM8000 50Hz", 						           GAME_NO_SOUND)
+COMPX (198?,	cbm80ger,	pet,	pet80pal, 	cbm8096,		cbm80, 	"Commodore Business Machines Co.",	"Commodore CBM8000 German (50Hz)", 							GAME_NO_SOUND)
+COMPX (198?,	cbm80swe,	pet,	pet80pal, 	cbm8096,		cbm80, 	"Commodore Business Machines Co.",	"Commodore CBM8000 Swedish (50Hz)", 						GAME_NO_SOUND)
 COMPX (198 ?, 	superpet, 	pet, 	superpet,	superpet,		superpet,	"Commodore Business Machines Co.",	"Commodore SP9000/MMF9000 (50Hz)",                     GAME_NO_SOUND|GAME_NOT_WORKING )
 #endif

@@ -12,6 +12,7 @@
 #if 0
 #define IEC 1
 #define SERIAL 2
+#define IEEE 3
 #endif
 
 /* data for one drive */
@@ -48,6 +49,12 @@ typedef struct
 			double time;
 		}
 		serial;
+		struct 
+		{
+			int device;
+			int state;
+			UINT8 data;
+		} ieee;
 	}
 	i;
 #define D64_IMAGE 1
@@ -97,6 +104,7 @@ extern CBM_Serial cbm_serial;
 void cbm_drive_open_helper (void);
 void c1551_state (CBM_Drive * c1551);
 void vc1541_state (CBM_Drive * vc1541);
+void c2031_state(CBM_Drive *drive);
 
 #if 0
 void c1551_write_data (CBM_Drive * drive, int data);
