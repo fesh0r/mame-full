@@ -287,6 +287,14 @@ floperr_t floppy_create(void *fp, const struct io_procs *procs, const struct Flo
 		}
 	}
 
+	/* call the post_format function, if present */
+	if (floppy->format.post_format)
+	{
+		err = floppy->format.post_format(floppy, parameters);
+		if (err)
+			goto done;
+	}
+
 	floppy->floppy_option = format;
 	err = FLOPPY_ERROR_SUCCESS;
 

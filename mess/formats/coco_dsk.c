@@ -8,6 +8,7 @@
 
 #include <string.h>
 #include <assert.h>
+#include <time.h>
 
 #include "formats/coco_dsk.h"
 #include "formats/basicdsk.h"
@@ -249,6 +250,60 @@ static FLOPPY_CONSTRUCT(coco_jvc_construct)
 
 /* ----------------------------------------------------------------------- 
  * OS-9 file format
+ *
+ * This file format is largely a hack because there are a large amount of
+ * disk images that do not have geometry image separate from the disk image
+ * itself.  So we support OS-9 images with are simply basic disks whose
+ * geometry is determined by the disk image.
+ *
+ * OS-9 images identified by an LSN; which are simply blocks of 256 bytes
+ *
+ * LSN0
+ * Byte    size    use
+ * $00     3       sector on disk
+ * $03     1       track size in sectors
+ * $04     2       bytes in allocation bit map; typically 1bit/sector so for
+ *                 35 tracks of 18 sectors each that's $4E (single sided disk)
+ *                 40 tracks per side, 18 sectors each = $B4
+ * $06     2       sectors per bit in allocation map; normally 1
+ * $08     3       LSN of root directory; normally 2 but depends on size of
+ *                 $04 value
+ * $0B     2       owner's user number; normally 0
+ * $0D     1       disk attributes; normally $FF
+ * $0E     2       psuedo random number for identification
+ * $10     1       disk format; typical is 3
+ *                 %00000001 0=single side 1=double side
+ *                 %00000010 0=single density (non Coco) 1=double density
+ *                 %00000100 0=48tracks/inch 1=96tracks/inch
+ * $11     2       sectors per track; normal is $12 skip several not needed
+ *                 for Format
+ * $1A     5       date of creation Y:M:D:H:M
+ * $1F     32      ASCII name of disk, last letter has $80 added to it,
+ *                 the full 32 bytes do not need to be used.
+ * 
+ * Allocation bit map, fill with zeros and set bits from low to high as
+ * sectors are used. So, for a fresh disk sectors LSN0,LSN1,LSN2, and LSN3
+ * will be in use so the first byte will be %11110000 or $F0 and all others
+ * in the map are $00
+ * 
+ * Root directory LSN2
+ * Byte    size     use
+ * $00      1       attributes will be $BF
+ * $01      2       owners ID will be $0000
+ * $03      5       date last modified will be creation date  Y:M:D:H:M
+ * $08      1       link count; set to $02
+ * $09      4       file size in bytes, set to $40
+ * $0D      3       date created Y:M:D
+ * $10      3       block LSN set to current sector number+1 ie $03 in this case
+ * $13      2       size in sectors of directory block, set to $07
+ * All other bytes in sector set to $00
+ * LSN3 first sector of directory with names
+ * Fill sector with all $00 and then set listed bytes
+ * $00      2       value $2EAE   which is .. with last byte+$80
+ * $1F      1       value $02     LSN for start of this directory as there is
+ *                  none higher in tree
+ * $20      1       value $AE     which is . with $80 added
+ * $3F      1       value $02     LSN for start of this directory
  * ----------------------------------------------------------------------- */
 
 static floperr_t coco_os9_readheader(floppy_image *floppy, struct basicdsk_geometry *geometry)
@@ -275,6 +330,97 @@ static floperr_t coco_os9_readheader(floppy_image *floppy, struct basicdsk_geome
 
 
 
+static floperr_t coco_os9_post_format(floppy_image *floppy, option_resolution *params)
+{
+	UINT8 header[0x0400];
+	floperr_t err;
+	time_t t;
+	struct tm *ltime;
+	int heads, tracks, sectors;
+
+	heads	= option_resolution_lookup_int(params, PARAM_HEADS);
+	tracks	= option_resolution_lookup_int(params, PARAM_TRACKS);
+	sectors	= option_resolution_lookup_int(params, PARAM_SECTORS);
+
+	/* write the initial header */
+	time(&t);
+	ltime = localtime(&t);
+
+	memset(&header, 0, sizeof(header));
+	header[0x0000] = 0x00;
+	header[0x0001] = 0x00;
+	header[0x0002] = 0x00;
+	header[0x0003] = (UINT8) tracks;
+	header[0x0004] = (UINT8) ((tracks * sectors * heads) / 8) >> 8;
+	header[0x0005] = (UINT8) ((tracks * sectors * heads) / 8) >> 0;
+	header[0x0006] = 0x00;
+	header[0x0007] = 0x00;
+	header[0x0008] = 0x00;
+	header[0x0009] = 0x00;
+	header[0x000a] = 0x02;
+	header[0x000b] = 0x00;
+	header[0x000c] = 0x00;
+	header[0x000d] = 0xff;
+	header[0x000e] = (UINT8) rand();
+	header[0x000f] = (UINT8) rand();
+	header[0x0010] = (heads == 2) ? 3 : 2;
+	header[0x0011] = (UINT8) sectors >> 8;
+	header[0x0012] = (UINT8) sectors >> 0;
+	header[0x001A] = (UINT8) (ltime->tm_year % 100);
+	header[0x001B] = (UINT8) ltime->tm_mon;
+	header[0x001C] = (UINT8) ltime->tm_mday;
+	header[0x001D] = (UINT8) ltime->tm_hour;
+	header[0x001E] = (UINT8) ltime->tm_min;
+	header[0x001F] = 0xA0;
+	header[0x0100] = 0xF0;
+	header[0x0200] = 0xBF;
+	header[0x0201] = 0x00;
+	header[0x0202] = 0x00;
+	header[0x0203] = (UINT8) (ltime->tm_year % 100);
+	header[0x0204] = (UINT8) ltime->tm_mon;
+	header[0x0205] = (UINT8) ltime->tm_mday;
+	header[0x0206] = (UINT8) ltime->tm_hour;
+	header[0x0207] = (UINT8) ltime->tm_min;
+	header[0x0208] = 0x02;
+	header[0x0209] = 0x00;
+	header[0x020A] = 0x00;
+	header[0x020B] = 0x00;
+	header[0x020C] = 0x40;
+	header[0x020D] = (UINT8) (ltime->tm_year % 100);
+	header[0x020E] = (UINT8) ltime->tm_mon;
+	header[0x020F] = (UINT8) ltime->tm_mday;
+	header[0x0210] = 0x00;
+	header[0x0211] = 0x00;
+	header[0x0212] = 0x03;
+	header[0x0213] = 0x00;
+	header[0x0214] = 0x07;
+	header[0x0300] = 0x2E;
+	header[0x0301] = 0xAE;
+	header[0x031F] = 0x02;
+	header[0x0320] = 0xAE;
+	header[0x033F] = 0x02;
+
+	err = floppy_write_sector(floppy, 0, 0, 1, 0, &header[0x0000], 256);
+	if (err)
+		return err;
+
+	err = floppy_write_sector(floppy, 0, 0, 2, 0, &header[0x0100], 256);
+	if (err)
+		return err;
+
+	err = floppy_write_sector(floppy, 0, 0, 3, 0, &header[0x0200], 256);
+	if (err)
+		return err;
+
+	err = floppy_write_sector(floppy, 0, 0, 4, 0, &header[0x0300], 256);
+	if (err)
+		return err;
+
+	return FLOPPY_ERROR_SUCCESS;
+}
+
+
+
 static FLOPPY_IDENTIFY(coco_os9_identify)
 {
 	struct basicdsk_geometry geometry;
@@ -292,7 +438,12 @@ static FLOPPY_CONSTRUCT(coco_os9_construct)
 	if (params)
 	{
 		/* create */
-		return FLOPPY_ERROR_UNSUPPORTED;
+		memset(&geometry, 0, sizeof(geometry));
+		geometry.heads				= option_resolution_lookup_int(params, PARAM_HEADS);
+		geometry.tracks				= option_resolution_lookup_int(params, PARAM_TRACKS);
+		geometry.sectors			= option_resolution_lookup_int(params, PARAM_SECTORS);
+		geometry.first_sector_id	= option_resolution_lookup_int(params, PARAM_FIRST_SECTOR_ID);
+		geometry.sector_length		= option_resolution_lookup_int(params, PARAM_SECTOR_LENGTH);
 	}
 	else
 	{
@@ -301,7 +452,11 @@ static FLOPPY_CONSTRUCT(coco_os9_construct)
 		if (err)
 			return err;
 	}
-	return basicdsk_construct(floppy, &geometry);
+
+	/* actually construct the image */
+	err = basicdsk_construct(floppy, &geometry);
+	floppy_callbacks(floppy)->post_format = coco_os9_post_format;
+	return err;
 }
 
 
@@ -979,7 +1134,9 @@ FLOPPY_OPTIONS_START( coco )
 	FLOPPY_OPTION( coco_os9, "os9\0",			"CoCo OS-9 disk image",	coco_os9_identify,	coco_os9_construct,
 		HEADS([1]-2)
 		TRACKS([35]-255)
-		SECTORS([18]))
+		SECTORS([18])
+		SECTOR_LENGTH([256])
+		FIRST_SECTOR_ID([1]))
 	FLOPPY_OPTION( coco_vdk, "vdk\0",			"CoCo VDK disk image",	coco_vdk_identify,	coco_vdk_construct,
 		HEADS([1]-2)
 		TRACKS([35]-255)

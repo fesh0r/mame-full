@@ -14,6 +14,9 @@ System Driver Changes:
 
 - [C16] Added natural keyboard support.  [Nate Woods]
 
+- [COCO] Implemented .os9 disk image creation support.  (bug #576) [Nate
+  Woods]
+
 - [GENESIS] Fixed button input declarations.  [Nate Woods]
 
 - [MICROTAN] Fixed a video hardware crash.  [Curt Coder]

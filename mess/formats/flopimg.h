@@ -54,6 +54,7 @@ struct FloppyCallbacks
 	floperr_t (*read_track)(floppy_image *floppy, int head, int track, UINT64 offset, void *buffer, size_t buflen);
 	floperr_t (*write_track)(floppy_image *floppy, int head, int track, UINT64 offset, const void *buffer, size_t buflen);
 	floperr_t (*format_track)(floppy_image *floppy, int head, int track, option_resolution *params);
+	floperr_t (*post_format)(floppy_image *floppy, option_resolution *params);
 	int (*get_heads_per_disk)(floppy_image *floppy);
 	int (*get_tracks_per_disk)(floppy_image *floppy);
 	int (*get_sectors_per_track)(floppy_image *floppy, int head, int track);
