@@ -21,22 +21,26 @@ static int cocojvc_decode_header(const void *header, UINT32 file_size, UINT32 he
 
 	/* byte offset 0 - sectors per track */
 	geometry->sectors = (header_size > 0) ? header_bytes[0] : 18;
+	if (geometry->sectors <= 0)
+		return -1;
 
 	/* byte offset 1 - side count */
 	geometry->heads = (header_size > 1) ? header_bytes[1] : 1;
+	if (geometry->heads <= 0)
+		return -1;
 
 	/* byte offset 2 - sector size code */
 	geometry->sector_size = 128 << ((header_size > 2) ? header_bytes[2] : 1);
+	if (geometry->sectors <= 0)
+		return -1;
 
 	/* byte offset 3 - first sector ID */
 	geometry->first_sector_id = (header_size > 3) ? header_bytes[3] : 1;
 
 	/* byte offset 4 - sector attribute flag */
 	sector_attribute_flag = (header_size > 4) ? header_bytes[4] : 0;
-
-	/* we do not support sector attribute flags */
 	if (sector_attribute_flag != 0)
-		return -1;
+		return -1;	/* we do not support sector attribute flags */
 
 	physical_bytes_per_sector = geometry->sector_size;
 	if (sector_attribute_flag)
