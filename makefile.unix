@@ -206,6 +206,8 @@ ARCH  = linux
 # ARCH = openbsd
 ### Solaris / SunOS
 # ARCH  = solaris
+### QNX Neutrino (QNX4\QNX6)
+# ARCH = nto
 ### OpenStep on NeXT systems
 # ARCH  = next
 ### OpenStep on Apple systems (Cocoa)
@@ -268,6 +270,8 @@ DISPLAY_METHOD = x11
 # DISPLAY_METHOD = svgafx
 ### OpenStep bitmaps
 # DISPLAY_METHOD = openstep
+### Photon 2.x (QNX6), currently broken.
+# DISPLAY_METHOD = photon2
 ### SDL library
 # DISPLAY_METHOD = SDL
 
