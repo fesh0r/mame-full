@@ -800,25 +800,35 @@ $(OBJ)/compis.a:					\
 	$(OBJ)/mess/formats/cpis_dsk.o	\
 	$(OBJ)/mess/vidhrdw/i82720.o 
 
+
+
+EXPATOBJS =							\
+	$(OBJ)/mess/expat/xmlrole.o		\
+	$(OBJ)/mess/expat/xmltok.o		\
+	$(OBJ)/mess/expat/xmlparse.o	\
+
+
+
 # MESS specific core $(OBJ)s
-COREOBJS += \
+COREOBJS +=							\
+	$(EXPATOBJS)					\
 	$(OBJ)/cheat.o					\
 	$(OBJ)/vidhrdw/tms9928a.o		\
 	$(OBJ)/mess/mess.o				\
 	$(OBJ)/mess/image.o				\
 	$(OBJ)/mess/system.o			\
 	$(OBJ)/mess/device.o			\
-	$(OBJ)/mess/crcfile.o			\
-	$(OBJ)/mess/inputx.o		   \
-	$(OBJ)/mess/artworkx.o		   \
-	$(OBJ)/mess/mesintrf.o	       \
-	$(OBJ)/mess/filemngr.o	       \
-	$(OBJ)/mess/compcfg.o	       \
-	$(OBJ)/mess/tapectrl.o	       \
-	$(OBJ)/mess/utils.o            \
-	$(OBJ)/mess/eventlst.o         \
-	$(OBJ)/mess/videomap.o         \
-	$(OBJ)/mess/mscommon.o         \
+	$(OBJ)/mess/hashfile.o			\
+	$(OBJ)/mess/inputx.o			\
+	$(OBJ)/mess/artworkx.o			\
+	$(OBJ)/mess/mesintrf.o			\
+	$(OBJ)/mess/filemngr.o			\
+	$(OBJ)/mess/compcfg.o			\
+	$(OBJ)/mess/tapectrl.o			\
+	$(OBJ)/mess/utils.o				\
+	$(OBJ)/mess/eventlst.o			\
+	$(OBJ)/mess/videomap.o			\
+	$(OBJ)/mess/mscommon.o			\
 	$(OBJ)/mess/pool.o				\
 	$(OBJ)/mess/cheatms.o			\
 	$(OBJ)/mess/opresolv.o			\
@@ -865,6 +875,7 @@ COREOBJS += \
 	$(OBJ)/mess/formats/wavfile.o
 
 
+
 # additional tools
 TOOLS = dat2html$(EXE) messtest$(EXE) chdman$(EXE) messdocs$(EXE) imgtool$(EXE)
 
@@ -875,22 +886,18 @@ DAT2HTML_OBJS =								\
 	$(OBJ)/mess/utils.o
 
 MESSDOCS_OBJS =								\
+	$(EXPATOBJS)							\
 	$(OBJ)/mess/tools/messdocs/messdocs.o	\
 	$(OBJ)/mess/utils.o						\
 	$(OBJ)/mess/pool.o						\
-	$(OBJ)/xml2info/xmlrole.o				\
-	$(OBJ)/xml2info/xmltok.o				\
-	$(OBJ)/xml2info/xmlparse.o
 
 MESSTEST_OBJS =								\
+	$(EXPATOBJS)							\
 	$(OBJ)/mess/tools/messtest/main.o		\
 	$(OBJ)/mess/tools/messtest/messtest.o	\
 	$(OBJ)/mess/tools/messtest/testexec.o	\
 	$(OBJ)/mess/tools/messtest/tststubs.o	\
 	$(OBJ)/mess/tools/messtest/tstutils.o	\
-	$(OBJ)/xml2info/xmlrole.o				\
-	$(OBJ)/xml2info/xmltok.o				\
-	$(OBJ)/xml2info/xmlparse.o
 
 IMGTOOL_OBJS =								\
 	$(OBJ)/unzip.o							\

@@ -1,0 +1,1694 @@
+<hashfile>
+	<!-- MSX Cartridge CRC List -->
+	<!-- Compiled by Sean Young -->
+	<!-- Note: This list is provided as a record of known dumps for this system. -->
+	<!-- These checksums have not been validated and cannot be assumed -->
+	<!-- correct. They are provided here as a database to help the emulation -->
+	<!-- of this system. -->
+
+	<!-- Send corrections/submissions to: battlepriest@hotmail.com -->
+
+	<!-- The last parameter (after the last '|') is the mapper type. Values: -->
+
+	<!-- 0 standard (no mapper) -->
+	<!-- 1 msx-dos 2 -->
+	<!-- 2 konami5 with SCC -->
+	<!-- 3 konami4 without SCC -->
+	<!-- 4 ascii/8kb -->
+	<!-- 5 ascii/16kb -->
+	<!-- 6 Game Master 2 with SRAM -->
+	<!-- 7 ascii/8kb with 8kb SRAM -->
+	<!-- 8 ascii/16kb with 2kb SRAM -->
+	<!-- 9 r-type -->
+	<!-- 10 Konami mah-jong 2 -->
+	<!-- 11 Panasonic fm-pac -->
+	<!-- 12 Super Load Runner -->
+	<!-- 13 Konami Synthesizer -->
+	<!-- 14 Cross Blaim -->
+	<!-- 15 Disk ROM (philips/sony) -->
+	<!-- 16 Korean 80-in-1 -->
+	<!-- 17 Korean 126-in-1 -->
+
+	<hash crc32="879e6ddb" name="10-Yard Fight (hacked)">
+		<year>Irem</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="10d97b9e" name="1942 (hacked)">
+		<year>Zemina</year>
+		<manufacturer>1987</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="d5d79f15" name="1942 (hacked)">
+		<year>Zemina</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="4f70c1f9" name="3 Eyed one (hacked)">
+		<year>Natsume</year>
+		<manufacturer>1989</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="da7e2927" name="3 Kingdoms (hacked)">
+		<year>?</year>
+		<manufacturer>?</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="62b1f1df" name="Aleste">
+		<year>Compile (hacked)</year>
+		<manufacturer>1988</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="055254e0" name="Alpha Squadron">
+		<year>AG Corp.</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="716dc9af" name="Alpha Roid (hacked)">
+		<year>?</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="9827fad6" name="Alter Wars (hacked)">
+		<year>Prosoft</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="d9f1354b" name="American Truck (hacked)">
+		<year>Telenet</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="c6f74489" name="Andorogynus">
+		<year>Telenet</year>
+		<manufacturer>1988</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="aee2363d" name="Animal (hacked)">
+		<year>Enix</year>
+		<manufacturer>1987</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="a08559a1" name="Antarctic Adventure">
+		<year>Konami</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="e8bddedd" name="Antarctic Adventure">
+		<year>Konami</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="ab6b56ba" name="Aramo">
+		<year>Sein Soft</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="4fd4f778" name="Arkanoid (hacked)">
+		<year>Taito</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="74a3b125" name="Arkanoid 2 (hacked)">
+		<year>Taito</year>
+		<status>needs msx2</status>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="d982df38" name="Ashguine (hacked)">
+		<year>T&amp;E Soft</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="3d477e08" name="Ashguine (hacked)">
+		<year>Bit2</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="e4a428b5" name="Athletic Land (Beta version?)">
+		<year>Konami</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="d14361b2" name="Athletic Land">
+		<year>Konami</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="795c7aa1" name="Back to the Future (hacked)">
+		<year>Pony</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="86ea609d" name="Balance">
+		<year>HAL</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="b660494b" name="Baseball">
+		<year>Konami</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="25e675ea" name="Battle Cross">
+		<year>Sony (OEC)</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="785fa4cc" name="Beach-Head">
+		<year>Accces software</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="537973c2" name="Billiards">
+		<year>Konami</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="3df1f56f" name="Bomberman (hacked)">
+		<year>?</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="042ad44d" name="Bomberman Special">
+		<year>Hudson soft</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="374b63c9" name="Boogie Woogi Jungle (hacked)">
+		<year>Ample</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="af3c5d48" name="Bosconian (hacked)">
+		<year>Namcot</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="3a442408" name="Boxing">
+		<year>Konami</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="8699f43d" name="Boxing Pro (hacked)">
+		<year>Sony</year>
+		<manufacturer>1988</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="8b73f133" name="Bubble Bobble (hacked)">
+		<year>Taito</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="e8938db6" name="C So! (hacked)">
+		<year>Pony</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="97a1b4b9" name="Cabbage Patch Kids (Euroup)">
+		<year>Konami</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="303187f5" name="Car Figher">
+		<year>Casio</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="90f38029" name="Castle Excellent">
+		<year>ASCII</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="5a0b8739" name="Cat Boy">
+		<year>Casio</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="8d658f41" name="Champion Pro Wrestling (hacked)">
+		<year>Sega</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="11eed1c7" name="Chess">
+		<year>Sapporo</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="83b8d8f3" name="Circus Charlie">
+		<year>Konami</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="625c3689" name="City Connection (hacked)">
+		<year>Jaleco</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="00d996ff" name="Coaster Race (hacked)">
+		<year>Sony</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="9a70d9c9" name="Comic Bakery">
+		<year>Konami</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="8ada195d" name="Computer Billiards">
+		<year>Konami</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="4e82660d" name="Contra">
+		<year>Konami</year>
+		<manufacturer>1989</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="d21f6b76" name="Cosmo Explorer (hacked)">
+		<year>Sony</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="b8764cd3" name="Crazy Train">
+		<year>Konami</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="711a7a6e" name="The Dam Busters (Euroup)">
+		<year>Comptiq</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="bcc4dd7a" name="Demonia">
+		<year>Par Sablatou Claude</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="ce588c20" name="The Designer's Pencil">
+		<year>Activision</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="7c3d7dea" name="Dig Dug (hacked)">
+		<year>Namcot</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="981facd3" name="Dragon Attack (hacked)">
+		<year>HAL</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="49252882" name="Dragon Buster">
+		<year>Namcot</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="0c48ff9e" name="Dragon Quest (hacked)">
+		<year>Enix</year>
+		<manufacturer>1986</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="e012ee7a" name="Dragon Quest 2 (hacked)">
+		<year>Enix</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="87dcd309" name="Dragon Slayer IV">
+		<year>Falcom</year>
+		<manufacturer>1987</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="53163cbc" name="Dragon Slayer IV (hacked)">
+		<year>Falcom</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="47bef309" name="The Tower of Druaga">
+		<year>Namcot</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="33700744" name="Dungeon Master">
+		<year>ASCII</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="99b7eab1" name="Dunk Shot">
+		<year>HAL</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="232b1050" name="Eggerland Mystery">
+		<year>HAL</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="6da446ca" name="Elslid (hacked)">
+		<year>?</year>
+		<manufacturer>????</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="d5b51149" name="Exa Innova (hacked)">
+		<year>Programmers-3</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="70a0cb2c" name="F16 Fighting Falcon">
+		<year>ASCII</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="64d2df7c" name="F1 Spirit">
+		<year>Konami</year>
+		<manufacturer>1987</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="ed74f436" name="The Fairyland Story (hacked)">
+		<year>Taito</year>
+		<manufacturer>1987</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="9221c00c" name="Family Billiards (hacked)">
+		<year>Zemina</year>
+		<manufacturer>????</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="309d996c" name="Fantasm Soldier Valis">
+		<year>Telenet</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="3e96d005" name="Fantasy Zone">
+		<year>Sega</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="3459ce01" name="Fantasy Zone II (hacked)">
+		<year>Sega</year>
+		<manufacturer>1987</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="06310fb1" name="Final Zone (hacked)">
+		<year>Zemina</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="56ec7bbf" name="Flappy (hacked)">
+		<year>dB-soft</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="0e84505d" name="FM Pana Amusement Cartridge (FM-PAC)">
+		<year>Panasoft</year>
+		<manufacturer>1988</manufacturer>
+		<extrainfo>11</extrainfo>
+	</hash>
+	<hash crc32="ba1b16fc" name="Football">
+		<year>Konami</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="97e2fcb4" name="Frogger">
+		<year>Konami</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="b1160421" name="Fruit Search (hacked)">
+		<year>HAL</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="b5c0dace" name="Funky Mouse">
+		<year>ZAP</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="6ed06ee5" name="Galaga (hacked)">
+		<year>Namcot</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="b15aa545" name="Galaxian (hacked)">
+		<year>Namcot</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="f65b5271" name="Gall Force (bogus) (hacked)">
+		<year>Sony</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="99ef860e" name="Gall Force">
+		<year>Sony</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="160cfbd2" name="The Game Master (Euroup)">
+		<year>Konami</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="084c5803" name="The Game Master 2">
+		<year>Konami</year>
+		<manufacturer>1988</manufacturer>
+		<extrainfo>6</extrainfo>
+	</hash>
+	<hash crc32="40e53ea3" name="Ganbare Goemon (Japan)">
+		<year>Konami</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="11bac0e6" name="Ghost Flight - Athletic Ball">
+		<year>ASCII</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="5a23f1ee" name="Glider (hacked)">
+		<year>ZAP</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="c3816d36" name="Go (hacked)">
+		<year>Comtec</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="367d385e" name="Goddess (hacked)">
+		<year>?</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="0e3380fe" name="Golf">
+		<year>Konami</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="5eac55df" name="Golvellius">
+		<year>Compile</year>
+		<manufacturer>1987</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="db327847" name="The Goonies">
+		<year>Konami</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="4d44255f" name="Gradius">
+		<year>Korami</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="db847b2b" name="Gradius 2">
+		<year>Konami</year>
+		<manufacturer>1987</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="61f41bcd" name="Green Beret">
+		<year>Konami UK</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="106230b8" name="Guardic (hacked)">
+		<year>Compile</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="a0d363d3" name="Harryfox Yki No Maoh (hacked)">
+		<year>1985</year>
+		<manufacturer>Micro Cabin</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="c59f9e65" name="Heaven (hacked)">
+		<year>Zemina</year>
+		<manufacturer>1988</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="911185e1" name="Heavy Boxing (hacked)">
+		<year>HAL</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="cd63cd50" name="Helitank">
+		<year>ASCII</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="24851440" name="High way star">
+		<year>Way limit</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="3ab5ae57" name="Hinotori (Japan)">
+		<year>Konami</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="8c0be85e" name="Hit Bit ROM">
+		<year>Sony</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="ff063cdb" name="Hole in one (hacked)">
+		<year>HAL</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="c1c7d101" name="Hole in one Professional (hacked)">
+		<year>HAL</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="24b94274" name="Honkball - Baseball Crazy">
+		<year>Hudson soft</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="d8055f5f" name="Hydlide 2">
+		<year>T&amp;E Soft</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="00c5d5b5" name="Hydlide 3">
+		<year>T&amp;E Soft</year>
+		<manufacturer>1987</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="00db86c8" name="Hydlide 3">
+		<year>T&amp;E Soft</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="fef1d8fa" name="Hyper Olympic 1">
+		<year>Konami</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="38cb690b" name="Hyper Olympic 2">
+		<year>Konami</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="f94d452e" name="Hyper Rally">
+		<year>Konami</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="18db4ff2" name="Hyper Sports 1">
+		<year>Konami</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="968fa8d6" name="Hyper Sports 2">
+		<year>Konami</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="80a831e1" name="Hyper Sports 3">
+		<year>Konami</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="5b66062b" name="Ilchon (hacked)">
+		<year>Angel</year>
+		<manufacturer>1987</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="57a1bfb3" name="Inspecteur Z (hacked)">
+		<year>HAL</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="8ee8212c" name="The Return of Ishtar">
+		<year>Namcot</year>
+		<manufacturer>1988</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="d0c6e2c0" name="Jagur (hacked)">
+		<year>Hudson/Compile</year>
+		<manufacturer>1987</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="93f2c058" name="Return of Jelda (hacked)">
+		<year>Garry lab</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="935f1bde" name="Jissenma (hacked)">
+		<year>Capcom</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="ea67df20" name="Juno First">
+		<year>Konami (Sony license)</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="6a30c707" name="Karuizaw">
+		<year>Enix</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="b1cf2097" name="Keystone Kapers">
+		<year>Activision</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="1eeba987" name="King &amp; Balloon">
+		<year>Namcot</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="23b78a2d" name="King Kong 2">
+		<year>Konami</year>
+		<manufacturer>1986</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="5a141c44" name="King's Valley">
+		<year>Konami</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="e82a8e8e" name="King's Valley 2">
+		<year>Konami</year>
+		<manufacturer>1988</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="b1cb1052" name="King's Valley 2">
+		<year>Konami</year>
+		<manufacturer>1988</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="0db84205" name="Knightmare">
+		<year>Konami</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="103724ad" name="Kung-Fu Master (hacked)">
+		<year>Mass Tael</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="82dddc34" name="Lemans 2">
+		<year>Electric Software</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="adc58732" name="Lode Runner">
+		<year>Broderbound</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="86ccf417" name="Macross (hacked)">
+		<year>Bothtec</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="74d6a1b1" name="Magical Kid Wiz (hacked)">
+		<year>Sony</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="f3606c66" name="Magical Tree">
+		<year>Konami</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="114198e5" name="Mah Jong (Japan)">
+		<year>Konami</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="b625f382" name="Majutsushi BOGUS (Japan) (hacked)">
+		<year>Konami</year>
+		<manufacturer>1989</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="e0e72736" name="Majutsushi (Japan)">
+		<year>Konami</year>
+		<manufacturer>1989</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="af275ca8" name="Manes (hacked)">
+		<year>ZAP</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="a006ad6b" name="Mappy (hacked)">
+		<year>Namcot</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="fe23d253" name="The Maze of Galious">
+		<year>Konami</year>
+		<manufacturer>1987</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="be84c94f" name="Metal Gear (Japan) (hacked)">
+		<year>Konami</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="e85c5731" name="Metal Gear">
+		<year>Konami</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="f7560df0" name="Midnight Building (hacked)">
+		<year>Waylimit</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="187964d3" name="Mini Golf (hacked)">
+		<year>Namcot</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="eba19259" name="Mobile Planet">
+		<year>HAL</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="1d27d31f" name="Mobile-Suit Gundam">
+		<year>Bandai</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="e73c12e6" name="Monkey Academy">
+		<year>Konami</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="1ba6e461" name="Monster's Fair">
+		<year>Toho</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="d4151ce7" name="Moon Patrol (hacked)">
+		<year>Prosoft</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="097f4e4a" name="Mopi Ranger">
+		<year>Konami</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="06a64527" name="Mouser">
+		<year>Sony</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="730b6c3a" name="Mr. Chin (hacked)">
+		<year>HAL</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="77c3424c" name="Musiwriter">
+		<year>MCS</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="74cf041b" name="Music Editor">
+		<year>HAL</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="ba215cfe" name="Music Studio G7">
+		<year>Sony</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="ef43664a" name="Mystery World (hacked)">
+		<year>Zemina</year>
+		<manufacturer>1988</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="4d44255f" name="Nemesis / Gradius">
+		<year>Konami</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="dfa8c827" name="Nemesis 2 / Gradius 2 (Beta version?/hacked)">
+		<year>Konami</year>
+		<manufacturer>1987</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="32aba4e3" name="Nemesis 2 / Gradius 2">
+		<year>Konami</year>
+		<manufacturer>1987</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="329987bc" name="Nemesis 3 (Korea/hacked)">
+		<year>Konami</year>
+		<manufacturer>1988</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="4b61ae91" name="Nemesis 3">
+		<year>Konami</year>
+		<manufacturer>1988</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="f56a00e6" name="Ninja Kun">
+		<year>UPL/HAL</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="489adb64" name="O' MacFarmer (hacked)">
+		<year>Mass Tael</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="6a8ed770" name="Othello (hacked)">
+		<year>Sony</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="0a9f8d6c" name="Outrun">
+		<year>Sega</year>
+		<manufacturer>1988</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="926bc903" name="Pac Man (hacked)">
+		<year>Namcot</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="195f5366" name="Pairs (hacked)">
+		<year>ASCII</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="9bb308f5" name="Parodius (Japan)">
+		<year>Konami</year>
+		<manufacturer>1988</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="fa858cae" name="Paskha (hacked)">
+		<year>Casio</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="d6d8d1d7" name="Past Finder">
+		<year>Activision</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="165eae6d" name="Payload (hacked)">
+		<year>Sony</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="0f6418d3" name="Penguin Adventure">
+		<year>Konami</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="de4b4c8c" name="Penguin Egg (hacked)">
+		<year>Sega?</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="c08faf0e" name="Pennant Race 1">
+		<year>Konami</year>
+		<manufacturer>1988</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="e92fc432" name="Pennant Race 2 (translated)">
+		<year>Konami</year>
+		<manufacturer>1989</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="c44c6330" name="Pennant Race 2">
+		<year>Konami</year>
+		<manufacturer>1989</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="bdcb6199" name="Pine Applin (hacked)">
+		<year>ZAP</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="bbcdd731" name="Ping Pong">
+		<year>Konami</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="d5fe3564" name="Pippols">
+		<year>Konami</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="5a009c55" name="Pitfall">
+		<year>Activision</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="d307a7b8" name="Pitfall 2">
+		<year>Activision</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="558a09f6" name="Pooyan">
+		<year>Konami &amp; Hudson</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="457498fe" name="The Protector (hacked)">
+		<year>Pony</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="0e988f0e" name="Q*Bert">
+		<year>Konami</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="6681d322" name="Quarth (Korea)">
+		<year>Konami</year>
+		<manufacturer>1990</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="a0014e7f" name="Quarth (Japan)">
+		<year>Konami</year>
+		<manufacturer>1990</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="a884911c" name="R-Type">
+		<year>Irem</year>
+		<manufacturer>1988</manufacturer>
+		<extrainfo>9</extrainfo>
+	</hash>
+	<hash crc32="a87a666d" name="Raid on Bungeling Bay">
+		<year>Sony</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="52a33cb2" name="Rally-X (hacked)">
+		<year>Namcot</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="6a2e3726" name="Rambo">
+		<year>Anabis Investments NV</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="01043328" name="Rise Out (hacked)">
+		<year>ASCII</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="cb82d8c9" name="Road Fighter">
+		<year>Konami</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="82e47a43" name="Robofrog">
+		<year>Mass Tael</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="23777f81" name="Roller Ball (hacked)">
+		<year>HAL</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="cebc3257" name="Ruore Cavernicoli">
+		<year>?</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="c36f559d" name="Salamander">
+		<year>Konami</year>
+		<manufacturer>1987</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="243215e9" name="Scramble Formation (hacked)">
+		<year>Taito</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="cf60fa7d" name="Shalom (Japan)">
+		<year>Konami</year>
+		<manufacturer>1987</manufacturer>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="efd954f7" name="Ski command (hacked)">
+		<year>Casio</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="e4f725fd" name="Sky Jaguar">
+		<year>Konami</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="4a44bf23" name="Snake It">
+		<year>Eaglesoft</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="74bc8295" name="Soccer">
+		<year>Konami</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="e683af8a" name="Sokoban (hacked)">
+		<year>ASCII</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="5c4f98d9" name="Solid Snake (translated)">
+		<year>Konami</year>
+		<manufacturer>1990</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="dcee5080" name="Solid Snake demo">
+		<year>Konami</year>
+		<manufacturer>1990</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="18b1f34b" name="Solid Snake (Japan)">
+		<year>Konami</year>
+		<manufacturer>1990</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="eb197b9d" name="Space Camp">
+		<year>ABC Motion Pictures</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="27405eed" name="Space Manbow">
+		<year>Konami</year>
+		<manufacturer>1989</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="d8776861" name="Space Maze Attack (hacked)">
+		<year>HAL</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="2f791048" name="Space Trouble (hacked)">
+		<year>HAL</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="0a65fb79" name="Sparkie">
+		<year>Konami (Sony License)</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="f24066b7" name="Spreadsheet?">
+		<year>?</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="8f65c0f9" name="Spy vs. Spy">
+		<year>First Star</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="a242fe0d" name="Star Blazer (hacked)">
+		<year>Star Craft</year>
+		<manufacturer>1982</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="c6250410" name="Star Soldier (hacked)">
+		<year>Turbo Soft</year>
+		<manufacturer>1987</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="236d2ab1" name="Starship Simulator">
+		<year>ASCII</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="1e0e573a" name="Sungma (hacked)">
+		<year>Sony</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="afc84e3e" name="Suparobo">
+		<year>Mass Tael</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="7de493ab" name="Super Boy II">
+		<year>Zemina</year>
+		<manufacturer>1989</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="bfcc181d" name="Super Cobra (European)">
+		<year>Konami</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="5dc45624" name="Super Laydock">
+		<year>T&amp;E Soft</year>
+		<manufacturer>1987</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="4aa97644" name="Super Ninja - Iga Ninpouten 2">
+		<year>Casio</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="ed2118ab" name="Super Runner (hacked)">
+		<year>Pony</year>
+		<manufacturer>????</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="e31a0336" name="Super Snake (hacked)">
+		<year>HAL</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="6408ed24" name="Super Soccer">
+		<year>Sony</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="31729cd0" name="Super Synth">
+		<year>Musical Plan</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="b9b0999a" name="Synthesizer (Japan)">
+		<year>Konami</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>13</extrainfo>
+	</hash>
+	<hash crc32="d792c827" name="TZR Grand Prix Rider">
+		<year>ASCII</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="76f67623" name="Tank Batallion (hacked)">
+		<year>Namcot</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="895cb183" name="Tawara (hacked)">
+		<year>ASCII</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="29314400" name="Telebunnie">
+		<year>ASCII</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="61726be4" name="Tennis">
+		<year>Konami</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="e2d3377c" name="Tetra Horror (hacked)">
+		<year>ASCII</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="2149c32d" name="The Castle">
+		<year>ASCII</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="c55e68d9" name="Thexder (hacked)">
+		<year>Game Arts</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="b06b8920" name="Thunder Ball (Edited??)">
+		<year>?</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="23152fc3" name="Time Pilot">
+		<year>Konami</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="5da0f013" name="Topple Zip (hacked)">
+		<year>?</year>
+		<manufacturer>????</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="e96b861d" name="Track &amp; Field 1">
+		<year>Konami</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="b1ff5899" name="Track &amp; Field 2">
+		<year>Konami</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="f6b87d85" name="Traffic (hacked)">
+		<year>Sony</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="3827a473" name="Twinbee">
+		<year>Konami</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="1f1f1f26" name="Usas">
+		<year>Konami</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="038c250d" name="Vampire Killer">
+		<year>Konami</year>
+		<manufacturer>1986</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="8d99c3b0" name="Video Hustler (Euroup)">
+		<year>Konami</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="874e59fb" name="Volguard">
+		<year>dB-soft</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="864aa9c9" name="Warp &amp; Warp (hacked)">
+		<year>Namcot</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="e621ebc9" name="Warroid (hacked)">
+		<year>ASCII</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="78ab8fd7" name="Wonderboy (hacked)">
+		<year>Star Frontiers</year>
+		<manufacturer>1988</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="d640deaf" name="Xanadu">
+		<year>Falcom</year>
+		<manufacturer>1987</manufacturer>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="21489e1d" name="Xevious (hacked)">
+		<year>Namcot</year>
+		<manufacturer>1988</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="c9074b91" name="Xyzolog (hacked)">
+		<year>Taito</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="0e197b49" name="Yie Ar Kung-Fu">
+		<year>Konami</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="8099f5c7" name="Yie Ar Kung-Fu 2">
+		<year>Konami</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="bdf332f2" name="Young Sherlock">
+		<year>Paramount Pictures</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="089c8164" name="Zanac-EX (hacked)">
+		<year>Pony</year>
+		<manufacturer>1987?</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="eba6e0d0" name="Zanac (hacked)">
+		<year>Pony</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="353dd532" name="Zaxxon">
+		<year>Sega</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="01a73292" name="Zexas Limited (hacked)">
+		<year>dB-soft</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="688e2e8f" name="Zombie Hunter (hacked)">
+		<year>Hi-Score software</year>
+		<manufacturer>1988</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="8414ea0e" name="Zanac 2nd edition">
+		<year>Pony</year>
+		<manufacturer>1987</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="ebccb796" name="Mon Mon Monster">
+		<year>Hot-B</year>
+		<manufacturer>1989</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="5506bf9b" name="Choroq">
+		<year>Taito</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="190f4ce5" name="Topple Zip">
+		<year>Bothec</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="c065bc29" name="Pro Baseball Fan">
+		<year>Telenet</year>
+		<manufacturer>1988</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="5c808e73" name="Eagle Fighter">
+		<year>Casio</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="2608c959" name="A1 Spirit">
+		<year>Konami</year>
+		<manufacturer>1987</manufacturer>
+		<extrainfo>2</extrainfo>
+	</hash>
+	<hash crc32="be6a5e19" name="Pippols">
+		<year>Konami</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="0774d3e7" name="Logo (Brazilian)">
+		<year>?</year>
+		<manufacturer>198?</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="de02932d" name="Space Invaders">
+		<year>Taito</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="ff974ee3" name="Yaksa">
+		<year>Wolf Team</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="28094960" name="Girly Block">
+		<year>Telenet</year>
+		<manufacturer>1988</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="b1ace0a0" name="Anty">
+		<year>Bothtec</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="8005a9ba" name="Fire Rescue">
+		<year>Hudson Soft</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="1d4de03e" name="King Kong 2 (English)">
+		<year>Konami</year>
+		<manufacturer>1986</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>3</extrainfo>
+	</hash>
+	<hash crc32="712ae3c6" name="Mr. Ghost">
+		<year>Sacom</year>
+		<manufacturer>1988</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="f3144243" name="Exerion 2 (hacked)">
+		<year>Jaleco</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="22e8b312" name="Boggy 84">
+		<year>Nippon Columbia</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="cf270c3b" name="Bouncing Block">
+		<year>Valencia</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="6227b8fb" name="Uranio (hacked)">
+		<year>?</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="b581f746" name="The Legend of Kage (hacked)">
+		<year>Taito</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="14156258" name="Becky (haced)">
+		<year>Mia</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="8334b431" name="Blockade Runner">
+		<year>Interphase</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="443b9498" name="Jump Coaster (hacked)">
+		<year>Nippon Columbia</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="dda3c142" name="Leonard">
+		<year>Mind Games</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="6c034f66" name="Lapstick 2 (hacked)">
+		<year>dB-soft</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="98a3451c" name="Indian no Bouken (hacked)">
+		<year>Hudson</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="42262bd4" name="Panda">
+		<year>Tecno</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="2236ddf6" name="Rambo (hacked)">
+		<year>Anabis Investments NV</year>
+		<manufacturer>1985</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="7abefd3d" name="Exerion">
+		<year>Jaleco</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="b0b90a4d" name="Mayhem (hacked)">
+		<year>Mr Micro</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="32ab8b20" name="Lode Runner 2">
+		<year>Broderbund</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="e81360fc" name="Championship Lode Runner (hacked)">
+		<year>Broderbund</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="76415ef0" name="Grog's Revenge (hacked)">
+		<year>Topia</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="a156ac02" name="The Spider (hacked)">
+		<year>Hudson</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="0e89433b" name="Gyrodine">
+		<year>Taito</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="22aa8966" name="Pretty Sheep (hacked)">
+		<year>Hudson</year>
+		<manufacturer>1983</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="e4dbcdbd" name="Actman">
+		<year>Mass Tael</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="f1d176ff" name="Alibaba (hacked)">
+		<year>ICM</year>
+		<manufacturer>1984</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="47273220" name="Cross Blaim">
+		<year>dB-soft</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>14</extrainfo>
+	</hash>
+	<hash crc32="2949cb19" name="Disk ROM">
+		<year>Microsoft</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>15</extrainfo>
+	</hash>
+	<hash crc32="37b9e10f" name="Ultima Exodus">
+		<year>Origin System</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="08a5ca60" name="Wizardry">
+		<year>Fortune co., ltd</year>
+		<manufacturer>1988</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>7</extrainfo>
+	</hash>
+	<hash crc32="0e03847b" name="Famicle Parodic">
+		<year>Bit2</year>
+		<manufacturer>1988</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="7df16fc8" name="Pac Mania">
+		<year>Namcot</year>
+		<manufacturer>1989</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="3c02a9f8" name="Playball (hacked)">
+		<year>Sony</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>0</extrainfo>
+	</hash>
+	<hash crc32="d2e931a3" name="Sony Disk BIOS">
+		<year>Sony</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>15</extrainfo>
+	</hash>
+	<hash crc32="ca3307d3" name="Philips Disk BIOS">
+		<year>Philips</year>
+		<manufacturer>1986</manufacturer>
+		<extrainfo>15</extrainfo>
+	</hash>
+	<hash crc32="80ecac11" name="Super Load Runner">
+		<year>Irem</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>12</extrainfo>
+	</hash>
+	<hash crc32="ee0fffa2" name="80-in-1 (hacked)">
+		<year>?</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="c13004c5" name="126-in-1 (hacked)">
+		<year>?</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="7e48becf" name="Korean Game's 80-in-1">
+		<year>?</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>16</extrainfo>
+	</hash>
+	<hash crc32="2ee35c23" name="Korean Game's 126-in-1">
+		<year>?</year>
+		<manufacturer>????</manufacturer>
+		<extrainfo>17</extrainfo>
+	</hash>
+	<hash crc32="72c7f5af" name="Super Load Runner (hacked)">
+		<year>Irem</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="5c859406" name="Kikikaikai">
+		<year>Taito</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>4</extrainfo>
+	</hash>
+	<hash crc32="fb348de6" name="Koronisrift">
+		<year>Lucasfilm</year>
+		<manufacturer>1986</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>5</extrainfo>
+	</hash>
+	<hash crc32="94ebc319" name="Victorious Nine II">
+		<year>Taito</year>
+		<manufacturer>1987</manufacturer>
+		<status>needs msx2</status>
+		<extrainfo>5</extrainfo>
+	</hash>
+</hashfile>

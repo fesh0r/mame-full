@@ -107,7 +107,7 @@ ToDo / Notes:
 -some games (rsgun,myfairld) don't pass a sound ram address check if you
  enter then exit from the BIOS test mode,it is a recent issue as before wasn't like
  this...
--grdforce: missing backgrounds(map issue? -AS)
+-grdforce: missing backgrounds(map issue? -AS, no, background is drawn using RBG0 -MW)
 -ejihon: alpha effect is missing on the magifying glass.
 -kiwames: locks up after one match.
 -suikoenb: why the color RAM format doesn't change when you exit the test menu?
@@ -1979,6 +1979,7 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 				logerror ("SMPC: Slave ON\n");
 				smpc_ram[0x5f]=0x02;
 				#if USE_SLAVE
+				cpu_set_reset_line(1, PULSE_LINE);				
 				cpu_set_halt_line(1,CLEAR_LINE);
 				#endif
 				break;

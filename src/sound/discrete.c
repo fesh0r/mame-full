@@ -65,13 +65,15 @@
 /*                                                                      */
 /************************************************************************/
 
-static int init_ok=0;
-static struct node_description **running_order=NULL;
-static int node_count=0;
-static struct node_description *node_list=NULL;
-static struct node_description *output_node=NULL;
-static int discrete_stream=0;
-static int discrete_stereo=0;
+#define MAX_CHANNELS 16
+
+static int init_ok;
+static struct node_description **running_order;
+static int node_count;
+static struct node_description *node_list;
+static struct node_description *output_node[MAX_CHANNELS];
+static int discrete_stream;
+static int discrete_channels;
 
 /* Uncomment this line to log discrete sound output to a file */
 //#define DISCRETE_WAVELOG
@@ -80,7 +82,7 @@ static int discrete_stereo=0;
 
 #ifdef DISCRETE_WAVELOG
 #include "wavwrite.h"
-static void *wav_file;
+static void *wav_file[MAX_CHANNELS];
 #endif
 
 #ifdef DISCRETE_DEBUGLOG
@@ -180,6 +182,8 @@ struct discrete_module module_list[]=
 	{ DST_LOGIC_XOR   ,"DST_LOGIC_XOR"   ,NULL                 ,NULL                 ,NULL                  ,dst_logic_xor_step   },
 	{ DST_LOGIC_NXOR  ,"DST_LOGIC_NXOR"  ,NULL                 ,NULL                 ,NULL                  ,dst_logic_nxor_step  },
 
+	{ DST_LOGIC_DFF   ,"DST_LOGIC_DFF"   ,dst_logic_dff_init   ,dss_default_kill     ,dst_logic_dff_reset   ,dst_logic_dff_step   },
+
 	{ DSD_555_ASTBL   ,"DSD_555_ASTBL"   ,dsd_555_astbl_init   ,dss_default_kill     ,dsd_555_astbl_reset   ,dsd_555_astbl_step   },
 	{ DSD_555_CC      ,"DSD_555_CC"      ,dsd_555_cc_init      ,dss_default_kill     ,dsd_555_cc_reset      ,dsd_555_cc_step      },
 	{ DSD_566         ,"DSD_566"         ,dsd_566_init         ,dss_default_kill     ,dsd_566_reset         ,dsd_566_step         },
@@ -199,7 +203,7 @@ struct node_description* discrete_find_node(int node)
 	return NULL;
 }
 
-static void discrete_stream_update_stereo(int ch, INT16 **buffer, int length)
+static void discrete_stream_update(int ch, INT16 **buffer, int length)
 {
 	/* Now we must do length iterations of the node list, one output for each step */
 	int loop,loop2,loop3;
@@ -223,44 +227,18 @@ static void discrete_stream_update_stereo(int ch, INT16 **buffer, int length)
 		}
 
 		/* Now put the output into the buffers */
-		buffer[0][loop]=((struct dso_output_context*)(output_node->context))->left;
-		buffer[1][loop]=((struct dso_output_context*)(output_node->context))->right;
+		for (loop2 = 0; loop2 < discrete_channels; loop2++)
+			buffer[loop2][loop] = ((struct dso_output_context*)(output_node[loop2]->context))->output;
 	}
 #ifdef DISCRETE_WAVELOG
-	wav_add_data_16lr(wav_file, buffer[0],buffer[1], length);
+	for (loop2 = 0; loop2 < discrete_channels; loop2++)
+		wav_add_data_16(wav_file[loop2], buffer[loop2], length);
 #endif
 }
 
-static void discrete_stream_update_mono(int ch,INT16 *buffer, int length)
+static void discrete_stream_update_one(int ch, INT16 *buffer, int length)
 {
-	/* Now we must do length iterations of the node list, one output for each step */
-	int loop,loop2,loop3;
-	struct node_description *node;
-
-	for(loop=0;loop<length;loop++)
-	{
-		for(loop2=0;loop2<node_count;loop2++)
-		{
-			/* Pick the first node to process */
-			node=running_order[loop2];
-
-			/* Work out what nodes/inputs are required, dont process NO CONNECT nodes */
-			/* these are ones that are connected to NODE_LIST[0]                      */
-			for(loop3=0;loop3<node->active_inputs;loop3++)
-			{
-				if(node->input_node[loop3] && (node->input_node[loop3])->node!=NODE_NC) node->input[loop3]=(node->input_node[loop3])->output;
-			}
-
-			/* Now step the node */
-			if(module_list[node->module].step) (*module_list[node->module].step)(node);
-		}
-
-		/* Now put the output into the buffer */
-		buffer[loop]=(((struct dso_output_context*)(output_node->context))->left+((struct dso_output_context*)(output_node->context))->right)/2;
-	}
-#ifdef DISCRETE_WAVELOG
-	wav_add_data_16(wav_file, buffer, length);
-#endif
+	discrete_stream_update(ch, &buffer, length);
 }
 
 void discrete_sh_reset(void)
@@ -302,15 +280,15 @@ void discrete_sh_reset(void)
 
 int discrete_sh_start (const struct MachineSound *msound)
 {
+	const char *channel_names[MAX_CHANNELS];
+	char channel_name_data[MAX_CHANNELS][32];
+	int channel_vol[MAX_CHANNELS];
 	struct discrete_sound_block *intf;
 	int loop=0,loop2=0,search=0,failed=0;
 
 	if (!Machine->sample_rate)
 		return 0;
 
-#ifdef DISCRETE_WAVELOG
-	wav_file = wav_open("discrete.wav", Machine->sample_rate, ((Machine->drv->sound_attributes&SOUND_SUPPORTS_STEREO) == SOUND_SUPPORTS_STEREO) ? 2: 1);
-#endif
 #ifdef DISCRETE_DEBUGLOG
 	if(!disclogfile) disclogfile=fopen("discrete.log", "w");
 #endif
@@ -406,7 +384,7 @@ int discrete_sh_start (const struct MachineSound *msound)
 	{
 		for(loop2=0;loop2<node_count;loop2++)
 		{
-			if(node_list[loop].node==node_list[loop2].node && loop!=loop2)
+			if(node_list[loop].node==node_list[loop2].node && loop!=loop2 && node_list[loop].node!=NODE_OP)
 			{
 				logerror("discrete_sh_start - Node NODE_%02d defined more than once\n",node_list[loop].node-NODE_00);
 				failed=1;
@@ -464,8 +442,28 @@ int discrete_sh_start (const struct MachineSound *msound)
 			search++;
 		}
 	}
-	/* Setup the output node */
-	if((output_node=discrete_find_node(NODE_OP))==NULL)
+	
+	/* Setup the output nodes */
+	discrete_channels = 0;
+	for (loop = 0; loop < node_count; loop++)
+		if (node_list[loop].node == NODE_OP)
+		{
+			sprintf(&channel_name_data[discrete_channels][0], "Discrete CH%d", discrete_channels);
+			channel_vol[discrete_channels] = node_list[loop].input[1];
+			output_node[discrete_channels] = &node_list[loop];
+			channel_names[discrete_channels] = &channel_name_data[discrete_channels][0];
+
+#ifdef DISCRETE_WAVELOG
+			{
+				char name[32];
+				sprintf(name, "discrete%d.wav", discrete_channels);
+				wav_file[discrete_channels] = wav_open(name, Machine->sample_rate, 1);
+			}
+#endif
+
+			discrete_channels++;
+		}
+	if (discrete_channels == 0)
 	{
 		logerror("discrete_sh_start() - Couldn't find an output node");
 		failed=1;
@@ -473,27 +471,12 @@ int discrete_sh_start (const struct MachineSound *msound)
 
 	discrete_log("discrete_sh_start() - Nodes initialised", node_count);
 
-	/* Different setup for Mono/Stereo systems */
-	if ((Machine->drv->sound_attributes&SOUND_SUPPORTS_STEREO) == SOUND_SUPPORTS_STEREO)
-	{
-		int vol[2];
-		const char *stereo_names[2] = { "Discrete Left", "Discrete Right" };
-		vol[0] = MIXER((int)output_node->input[2],MIXER_PAN_LEFT);
-		vol[1] = MIXER((int)output_node->input[2],MIXER_PAN_RIGHT);
-		/* Initialise a stereo, stream, we always use stereo even if only a mono system */
-		discrete_stream=stream_init_multi(2,stereo_names,vol,Machine->sample_rate,0,discrete_stream_update_stereo);
-		discrete_log("discrete_sh_start() - Stereo Audio Stream Initialised", node_count);
-		discrete_stereo=1;
-	}
+	/* Build up the stream definitions */
+	if (discrete_channels > 1)
+		discrete_stream = stream_init_multi(discrete_channels, channel_names, channel_vol, Machine->sample_rate, 0, discrete_stream_update);
 	else
-	{
-		int vol;
-		vol = output_node->input[2];
-		/* Initialise a stereo, stream, we always use stereo even if only a mono system */
-		discrete_stream=stream_init("Discrete Sound",vol,Machine->sample_rate,0,discrete_stream_update_mono);
-		discrete_log("discrete_sh_start() - Mono Audio Stream Initialised", node_count);
-	}
-
+		discrete_stream = stream_init(channel_names[0], channel_vol[0], Machine->sample_rate, 0, discrete_stream_update_one);
+	discrete_log("discrete_sh_start() - Audio Stream Initialised", node_count);
 	if(discrete_stream==-1)
 	{
 		logerror("discrete_sh_start - Stream init returned an error\n");
@@ -516,7 +499,8 @@ void discrete_sh_stop (void)
 	if(!init_ok) return;
 
 #ifdef DISCRETE_WAVELOG
-	wav_close(wav_file);
+	for (loop = 0; loop < discrete_channels; loop++)
+		wav_close(wav_file[loop]);
 #endif
 
 	for(loop=0;loop<node_count;loop++)

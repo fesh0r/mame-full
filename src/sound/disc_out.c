@@ -14,17 +14,16 @@
 
 struct dso_output_context
 {
-	INT16 left;
-	INT16 right;
+	INT16 output;
 };
 
 /************************************************************************/
 /*                                                                      */
 /* Usage of node_description values for step function                   */
 /*                                                                      */
-/* input[0]    - Left channel output value                              */
-/* input[1]    - Right channel output value                             */
-/* input[2]    - Volume setting (static)                                */
+/* input[0]    - Output value                                           */
+/* input[1]    - Volume setting (static)                                */
+/* input[2]    - NOT USED                                               */
 /* input[3]    - NOT USED                                               */
 /* input[4]    - NOT USED                                               */
 /* input[5]    - NOT USED                                               */
@@ -36,8 +35,7 @@ int dso_output_step(struct node_description *node)
 	struct dso_output_context *context;
 	context=(struct dso_output_context*)node->context;
 	/* Clamp outputs */
-	if(node->input[0]<-32768) context->left=-32768;  else if(node->input[0]>32767) context->left=32767;  else context->left=(INT16)node->input[0];
-	if(node->input[1]<-32768) context->right=-32768; else if(node->input[1]>32767) context->right=32767; else context->right=(INT16)node->input[1];
+	if(node->input[0]<-32768) context->output=-32768;  else if(node->input[0]>32767) context->output=32767;  else context->output=(INT16)node->input[0];
 	return 0;
 }
 

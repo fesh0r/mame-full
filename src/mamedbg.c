@@ -2657,14 +2657,18 @@ static unsigned dump_dasm( unsigned pc )
 				case 4:
 					for( x = 0; x < INSTL; x += 4 )
 					{
-						if ( p < n)
+						int tmp;
+						for (tmp=0; tmp<4; tmp++)
 						{
-							l += win_printf( win, "%02X%02X%02X%02X ",
-								RDMEM(order(p+0,4)), RDMEM(order(p+1,4)),
-								RDMEM(order(p+2,4)), RDMEM(order(p+3,4)) );
-							p += 4;
+							if ( p < n)
+							{
+								l += win_printf( win, "%02X%",
+									RDMEM(order(p,4)) );
+								p ++;
+							}
+							else l += win_printf( win, "  " );
 						}
-						else l += win_printf( win, "         " );
+						l += win_printf( win, " " );
 					}
 					break;
 				}

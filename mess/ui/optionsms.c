@@ -84,14 +84,14 @@ void SetSoftwareDirs(const char* paths)
 
 const char *GetCrcDir(void)
 {
-	return settings.mess.crcdir;
+	return settings.mess.hashdir;
 }
 
-void SetCrcDir(const char *crcdir)
+void SetCrcDir(const char *hashdir)
 {
-	FreeIfAllocated(&settings.mess.crcdir);
-    if (crcdir != NULL)
-        settings.mess.crcdir = strdup(crcdir);
+	FreeIfAllocated(&settings.mess.hashdir);
+    if (hashdir != NULL)
+        settings.mess.hashdir = strdup(hashdir);
 }
 
 BOOL GetUseNewUI(int driver_index)

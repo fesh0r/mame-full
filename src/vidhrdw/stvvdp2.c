@@ -863,6 +863,7 @@ static void stv_vdp2_fade_effects(void);
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
 	#define STV_VDP2_ZMXIN0 ((stv_vdp2_regs[0x078/4] >> 16)&0x0000ffff)
+	#define STV_VDP2_ZMXN0	(stv_vdp2_regs[0x078/4] & 0x007ff00)
 
 	#define STV_VDP2_N0ZMXI ((STV_VDP2_ZMXIN0 & 0x0007) >> 0)
 
@@ -885,6 +886,7 @@ static void stv_vdp2_fade_effects(void);
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
 	#define STV_VDP2_ZMYIN0 ((stv_vdp2_regs[0x07c/4] >> 16)&0x0000ffff)
+	#define STV_VDP2_ZMYN0	(stv_vdp2_regs[0x07c/4] & 0x007ff00)
 
 	#define STV_VDP2_N0ZMYI ((STV_VDP2_ZMYIN0 & 0x0007) >> 0)
 
@@ -939,6 +941,7 @@ static void stv_vdp2_fade_effects(void);
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
 	#define STV_VDP2_ZMXIN1 ((stv_vdp2_regs[0x088/4] >> 16)&0x0000ffff)
+	#define STV_VDP2_ZMXN1	(stv_vdp2_regs[0x088/4] & 0x007ff00)
 
 	#define STV_VDP2_N1ZMXI ((STV_VDP2_ZMXIN1 & 0x0007) >> 0)
 
@@ -961,6 +964,7 @@ static void stv_vdp2_fade_effects(void);
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
 	#define STV_VDP2_ZMYIN1 ((stv_vdp2_regs[0x08c/4] >> 16)&0x0000ffff)
+	#define STV_VDP2_ZMYN1	(stv_vdp2_regs[0x08c/4] & 0x007ff00)
 
 	#define STV_VDP2_N1ZMYI ((STV_VDP2_ZMYIN1 & 0x0007) >> 0)
 
@@ -1618,8 +1622,7 @@ static struct stv_vdp2_tilemap_capabilities
 
 	INT16 scrollx;
 	INT16 scrolly;
-	UINT8 scalex_i,scaley_i;
-	UINT16 scalex_f,scaley_f;
+	UINT32 incx, incy;
 
 	UINT8  plane_size;
 	UINT8  colour_ram_address_offset;
@@ -1630,6 +1633,216 @@ static struct stv_vdp2_tilemap_capabilities
 	int layer_name; /* just to keep track */
 } stv2_current_tilemap;
 
+static void stv_vdp2_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
+		const struct rectangle *clip,int transparency,int transparent_color,int scalex, int scaley,
+		int sprite_screen_width, int sprite_screen_height)
+{
+	struct rectangle myclip;
+
+	if (!scalex || !scaley) return;
+
+	/*
+	scalex and scaley are 16.16 fixed point numbers
+	1<<15 : shrink to 50%
+	1<<16 : uniform scale
+	1<<17 : double to 200%
+	*/
+
+
+	/* KW 991012 -- Added code to force clip to bitmap boundary */
+	if(clip)
+	{
+		myclip.min_x = clip->min_x;
+		myclip.max_x = clip->max_x;
+		myclip.min_y = clip->min_y;
+		myclip.max_y = clip->max_y;
+
+		if (myclip.min_x < 0) myclip.min_x = 0;
+		if (myclip.max_x >= dest_bmp->width) myclip.max_x = dest_bmp->width-1;
+		if (myclip.min_y < 0) myclip.min_y = 0;
+		if (myclip.max_y >= dest_bmp->height) myclip.max_y = dest_bmp->height-1;
+
+		clip=&myclip;
+	}
+
+	if( gfx && gfx->colortable )
+	{
+		const pen_t *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
+		UINT8 *source_base = gfx->gfxdata + (code % gfx->total_elements) * gfx->char_modulo;
+
+		//int sprite_screen_height = (scaley*gfx->height+0x8000)>>16;
+		//int sprite_screen_width = (scalex*gfx->width+0x8000)>>16;
+
+		if (sprite_screen_width && sprite_screen_height)
+		{
+			/* compute sprite increment per screen pixel */
+			//int dx = (gfx->width<<16)/sprite_screen_width;
+			//int dy = (gfx->height<<16)/sprite_screen_height;
+			int dx = stv2_current_tilemap.incx;
+			int dy = stv2_current_tilemap.incy;
+
+			int ex = sx+sprite_screen_width;
+			int ey = sy+sprite_screen_height;
+
+			int x_index_base;
+			int y_index;
+
+			if( flipx )
+			{
+				x_index_base = (sprite_screen_width-1)*dx;
+				dx = -dx;
+			}
+			else
+			{
+				x_index_base = 0;
+			}
+
+			if( flipy )
+			{
+				y_index = (sprite_screen_height-1)*dy;
+				dy = -dy;
+			}
+			else
+			{
+				y_index = 0;
+			}
+
+			if( clip )
+			{
+				if( sx < clip->min_x)
+				{ /* clip left */
+					int pixels = clip->min_x-sx;
+					sx += pixels;
+					x_index_base += pixels*dx;
+				}
+				if( sy < clip->min_y )
+				{ /* clip top */
+					int pixels = clip->min_y-sy;
+					sy += pixels;
+					y_index += pixels*dy;
+				}
+				/* NS 980211 - fixed incorrect clipping */
+				if( ex > clip->max_x+1 )
+				{ /* clip right */
+					int pixels = ex-clip->max_x-1;
+					ex -= pixels;
+				}
+				if( ey > clip->max_y+1 )
+				{ /* clip bottom */
+					int pixels = ey-clip->max_y-1;
+					ey -= pixels;
+				}
+			}
+
+			if( ex>sx )
+			{ /* skip if inner loop doesn't draw anything */
+				int y;
+
+				/* case 0: TRANSPARENCY_NONE */
+				if (transparency == TRANSPARENCY_NONE)
+				{
+					if (gfx->flags & GFX_PACKED)
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
+							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								dest[x] = pal[(source[x_index>>17] >> ((x_index & 0x10000) >> 14)) & 0x0f];
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+					else
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
+							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								dest[x] = pal[source[x_index>>16]];
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+				}
+
+				/* case 1: TRANSPARENCY_PEN */
+				if (transparency == TRANSPARENCY_PEN)
+				{
+					if (gfx->flags & GFX_PACKED)
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
+							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = (source[x_index>>17] >> ((x_index & 0x10000) >> 14)) & 0x0f;
+								if( c != transparent_color ) dest[x] = pal[c];
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+					else
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
+							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = source[x_index>>16];
+								if( c != transparent_color ) dest[x] = pal[c];
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+				}
+
+				/* case 6: TRANSPARENCY_ALPHA */
+				if (transparency == TRANSPARENCY_ALPHA)
+				{
+					for( y=sy; y<ey; y++ )
+					{
+						UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
+						UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+
+						int x, x_index = x_index_base;
+						for( x=sx; x<ex; x++ )
+						{
+							int c = source[x_index>>16];
+							if( c != transparent_color ) dest[x] = alpha_blend16(dest[x], pal[c]);
+							x_index += dx;
+						}
+
+						y_index += dy;
+					}
+				}
+			}
+		}
+	}
+					
+}
 
 
 static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
@@ -1865,6 +2078,16 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 	int base[4];
 
 	int scalex,scaley;
+	int tilesizex, tilesizey;
+	int drawypos, drawxpos;
+
+	if ( stv2_current_tilemap.incx == 0 || stv2_current_tilemap.incy == 0 ) return;
+
+	scalex = (INT32)((INT64)0x100000000LL / (INT64)stv2_current_tilemap.incx);
+	scaley = (INT32)((INT64)0x100000000LL / (INT64)stv2_current_tilemap.incy);
+	tilesizex = scalex * 8;
+	tilesizey = scaley * 8;
+	drawypos = drawxpos = 0;
 
 	/* Calculate the Number of tiles for x / y directions of each page (actually these will be the same */
 	/* (2-stv2_current_tilemap.tile_size) << 5) */
@@ -2029,18 +2252,16 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 	/* most things we need (or don't need) to work out are now worked out */
 
 	for (y = 0; y<mptiles_y; y++) {
-		int drawypos, ypageoffs, yplaneoffs;
+		int ypageoffs, yplaneoffs;
 		int page, map, newbase, offs, data;
 		int tilecode, flipyx, pal, gfx;
 
 		map = 0 ; page = 0 ;
-		if(stv2_current_tilemap.scaley_i != 1)
-			drawypos = ((stv2_current_tilemap.tile_size ? 16 : 8) * 2) * y;
+		if ( y == 0 )
+			drawypos = -(stv2_current_tilemap.scrolly*scaley);
 		else
-			drawypos = (stv2_current_tilemap.tile_size ? 16 : 8) * y;
-		drawypos -= stv2_current_tilemap.scrolly;
-
-		if (drawypos > Machine->visible_area.max_y) continue;
+			drawypos += tilesizey*(stv2_current_tilemap.tile_size ? 2 : 1);
+		if ((drawypos >> 16) > Machine->visible_area.max_y) continue;
 
 		ypageoffs = y & (pgtiles_y-1);
 		yplaneoffs = y & (pltiles_y-1);
@@ -2049,14 +2270,12 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 		if (y > yplaneoffs) map |= 2;
 
 		for (x = 0; x<mptiles_x; x++) {
-			int drawxpos, xpageoffs, xplaneoffs;
-			if(stv2_current_tilemap.scalex_i != 1)
-				drawxpos = ((stv2_current_tilemap.tile_size ? 16 : 8) * 2) * x;
+			int xpageoffs, xplaneoffs;
+			if ( x == 0 )
+				drawxpos = -(stv2_current_tilemap.scrollx*scalex);
 			else
-				drawxpos = (stv2_current_tilemap.tile_size ? 16 : 8) * x;
-			drawxpos -= stv2_current_tilemap.scrollx;
-
-			if (drawxpos > Machine->visible_area.max_x) continue;
+				drawxpos+=tilesizex*(stv2_current_tilemap.tile_size ? 2 : 1);
+			if ( (drawxpos >> 16) > Machine->visible_area.max_x ) continue;
 
 			xpageoffs = x & (pgtiles_x-1);
 			xplaneoffs = x & (pltiles_x-1);
@@ -2159,69 +2378,61 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 /* TILES ARE NOW DECODED */
 
 /* DRAW! */
-			if(stv2_current_tilemap.scalex_i != 1 || stv2_current_tilemap.scaley_i != 1)
+			if(stv2_current_tilemap.incx != 0x10000 || stv2_current_tilemap.incy != 0x10000)
 			{
-				/*We need the H/V Counters,initialize them*/
-				stv_vdp2_regs[0x8/4] = (((Machine->visible_area.max_x - 1)<<16)&0x3ff0000)|(((Machine->visible_area.max_y - 1)<<0)&0x3ff);
-
-				if(stv2_current_tilemap.scalex_i == 0)
-					scalex = stv2_current_tilemap.scalex_f * STV_VDP2_HCNT * 2;
-				else
-					scalex = 0xffff;
-
-				if(stv2_current_tilemap.scaley_i == 0)
-					scaley = stv2_current_tilemap.scaley_f * STV_VDP2_VCNT * 2;
-				else
-					scaley = 0xffff;
-
-				//usrintf_showmessage("%04x %04x",STV_VDP2_HCNT,stv2_current_tilemap.scalex_f);
-
+#define SCR_TILESIZE_X			(((drawxpos + tilesizex) >> 16) - (drawxpos >> 16))
+#define SCR_TILESIZE_X1(startx)	(((drawxpos + (startx) + tilesizex) >> 16) - ((drawxpos + (startx))>>16))
+#define SCR_TILESIZE_Y			(((drawypos + tilesizey) >> 16) - (drawypos >> 16))
+#define SCR_TILESIZE_Y1(starty)	(((drawypos + (starty) + tilesizey) >> 16) - ((drawypos + (starty))>>16))
 				if (stv2_current_tilemap.tile_size==1)
 				{
 					/* normal */
-					drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos, drawypos,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley);
-					drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8,drawypos,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley);
-					drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos,drawypos+8,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley);
-					drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8,drawypos+8,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley);
+					stv_vdp2_drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos >> 16, drawypos >> 16,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley,SCR_TILESIZE_X, SCR_TILESIZE_Y);
+					stv_vdp2_drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(drawxpos+tilesizex) >> 16,drawypos >> 16,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley,SCR_TILESIZE_X1(tilesizex), SCR_TILESIZE_Y);
+					stv_vdp2_drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos >> 16,(drawypos+tilesizey) >> 16,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley,SCR_TILESIZE_X, SCR_TILESIZE_Y1(tilesizey));
+					stv_vdp2_drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(drawxpos+tilesizex)>> 16,(drawypos+tilesizey) >> 16,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley,SCR_TILESIZE_X1(tilesizex), SCR_TILESIZE_Y1(tilesizey));
 
 					/* this isn't very efficient .. we could probably improve it */
 					if (stv2_current_tilemap.scrollx) /* wraparound x */
 					{
-						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+mppixels_x, drawypos,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley);
-						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8+mppixels_x,drawypos,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley);
-						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+mppixels_x,drawypos+8,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley);
-						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8+mppixels_x,drawypos+8,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley);
+						stv_vdp2_drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(drawxpos+mppixels_x*scalex)>>16, drawypos >> 16,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley,SCR_TILESIZE_X1(mppixels_x*scalex),SCR_TILESIZE_Y);
+						stv_vdp2_drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(drawxpos+tilesizex+mppixels_x*scalex)>>16,drawypos >> 16,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley,SCR_TILESIZE_X1(mppixels_x*scalex + tilesizex),SCR_TILESIZE_Y);
+						stv_vdp2_drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(drawxpos+mppixels_x*scalex)>>16,(drawypos+tilesizey)>>16,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley,SCR_TILESIZE_Y1(mppixels_x*scalex),SCR_TILESIZE_Y1(tilesizey));
+						stv_vdp2_drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(drawxpos+tilesizex+mppixels_x*scalex)>>16,(drawypos+tilesizey)>>16,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley,SCR_TILESIZE_X1(tilesizex+mppixels_x*scalex),SCR_TILESIZE_Y1(tilesizey));
 					}
 					if (stv2_current_tilemap.scrolly) /* wraparound y */
 					{
-						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos, drawypos+mppixels_y,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley);
-						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8,drawypos+mppixels_y,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley);
-						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos,drawypos+8+mppixels_y,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley);
-						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8,drawypos+8+mppixels_y,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley);
+						stv_vdp2_drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos >> 16, (drawypos+mppixels_y*scaley)>>16,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley,SCR_TILESIZE_X,SCR_TILESIZE_Y1(mppixels_y*scaley));
+						stv_vdp2_drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(drawxpos+tilesizex)>>16,(drawypos+mppixels_y*scaley)>>16,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley,SCR_TILESIZE_X1(tilesizex),SCR_TILESIZE_Y1(mppixels_y*scaley));
+						stv_vdp2_drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos >> 16,(drawypos+tilesizey+mppixels_y*scaley)>>16,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley, SCR_TILESIZE_X, SCR_TILESIZE_Y1(tilesizey+mppixels_y*scaley));
+						stv_vdp2_drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(drawxpos+tilesizex)>>16,(drawypos+tilesizey+mppixels_y*scaley)>>16,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley, SCR_TILESIZE_X1(tilesizex), SCR_TILESIZE_Y1(tilesizey+mppixels_y*scaley));
 					}
 					if (stv2_current_tilemap.scrollx && stv2_current_tilemap.scrolly) /* wraparound x & y */
 					{
-						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+mppixels_x, drawypos+mppixels_y,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley);
-						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8+mppixels_x,drawypos+mppixels_y,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley);
-						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+mppixels_x,drawypos+8+mppixels_y,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley);
-						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,drawxpos+8+mppixels_x,drawypos+8+mppixels_y,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley);
+						stv_vdp2_drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(drawxpos+mppixels_x*scalex)>>16, (drawypos+mppixels_y*scaley)>>16,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley,SCR_TILESIZE_X1(mppixels_x*scalex), SCR_TILESIZE_Y1(mppixels_y*scaley));
+						stv_vdp2_drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(drawxpos+tilesizex+mppixels_x*scalex)>>16,(drawypos+mppixels_y*scaley)>>16,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley,SCR_TILESIZE_X1(tilesizex+mppixels_x*scalex), SCR_TILESIZE_Y1(mppixels_y*scaley));
+						stv_vdp2_drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(drawxpos+mppixels_x*scalex)>>16,(drawypos+tilesizey+mppixels_y*scaley)>>16,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley,SCR_TILESIZE_X1(mppixels_x*scalex),SCR_TILESIZE_Y1(tilesizey+mppixels_y*scaley));
+						stv_vdp2_drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(drawxpos+tilesizex+mppixels_x*scalex)>>16,(drawypos+tilesizey+mppixels_y*scaley)>>16,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley,SCR_TILESIZE_X1(tilesizex+mppixels_x*scalex),SCR_TILESIZE_Y1(tilesizey+mppixels_y*scaley));
 					}
 
 				}
 				else
 				{
-					drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos, drawypos,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley);
+					stv_vdp2_drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos >> 16, drawypos >> 16,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley,SCR_TILESIZE_X,SCR_TILESIZE_Y);
 					/* this isn't very efficient .. we could probably improve it */
 					if (stv2_current_tilemap.scrollx) /* wraparound x */
-						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos+mppixels_x, drawypos,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley);
+						stv_vdp2_drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, (drawxpos + mppixels_x*scalex) >> 16, drawypos >> 16,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley,SCR_TILESIZE_X1(mppixels_x*scalex), SCR_TILESIZE_Y);
 					if (stv2_current_tilemap.scrolly) /* wraparound y */
-						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos, drawypos+mppixels_y,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley);
+						stv_vdp2_drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos >> 16, (drawypos+mppixels_y*scaley) >> 16,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley,SCR_TILESIZE_X, SCR_TILESIZE_Y1(mppixels_y*scaley));
 					if (stv2_current_tilemap.scrollx && stv2_current_tilemap.scrolly) /* wraparound x & y */
-						drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos+mppixels_x, drawypos+mppixels_y,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley);
+						stv_vdp2_drawgfxzoom(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, (drawxpos+mppixels_x*scalex)>>16, (drawypos+mppixels_y*scaley)>>16,cliprect,stv2_current_tilemap.transparency,0,scalex,scaley,SCR_TILESIZE_X1(mppixels_x*scalex), SCR_TILESIZE_Y1(mppixels_y*scaley));
 				}
 			}
 			else
 			{
+				int olddrawxpos, olddrawypos;
+				olddrawxpos = drawxpos; drawxpos >>= 16;
+				olddrawypos = drawypos; drawypos >>= 16;			
 				if (stv2_current_tilemap.tile_size==1)
 				{
 					/* normal */
@@ -2265,6 +2476,8 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 					if (stv2_current_tilemap.scrollx && stv2_current_tilemap.scrolly) /* wraparound x & y */
 						drawgfx(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, drawxpos+mppixels_x, drawypos+mppixels_y,cliprect,stv2_current_tilemap.transparency,0);
 				}
+				drawxpos = olddrawxpos;
+				drawypos = olddrawypos;				
 			}
 /* DRAWN?! */
 
@@ -2342,10 +2555,8 @@ static void stv_vdp2_draw_NBG0(struct mame_bitmap *bitmap, const struct rectangl
 
 	stv2_current_tilemap.scrollx = STV_VDP2_SCXIN0;
 	stv2_current_tilemap.scrolly = STV_VDP2_SCYIN0;
-	stv2_current_tilemap.scalex_i = STV_VDP2_N0ZMXI;
-	stv2_current_tilemap.scalex_f = STV_VDP2_N0ZMXD;
-	stv2_current_tilemap.scaley_i = STV_VDP2_N0ZMYI;
-	stv2_current_tilemap.scaley_f = STV_VDP2_N0ZMYD;
+	stv2_current_tilemap.incx = STV_VDP2_ZMXN0;
+	stv2_current_tilemap.incy = STV_VDP2_ZMYN0;
 
 	stv2_current_tilemap.plane_size = STV_VDP2_N0PLSZ;
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N0CAOS;
@@ -2410,10 +2621,8 @@ static void stv_vdp2_draw_NBG1(struct mame_bitmap *bitmap, const struct rectangl
 
 	stv2_current_tilemap.scrollx = STV_VDP2_SCXIN1;
 	stv2_current_tilemap.scrolly = STV_VDP2_SCYIN1;
-	stv2_current_tilemap.scalex_i = STV_VDP2_N1ZMXI;
-	stv2_current_tilemap.scalex_f = STV_VDP2_N1ZMXD;
-	stv2_current_tilemap.scaley_i = STV_VDP2_N1ZMYI;
-	stv2_current_tilemap.scaley_f = STV_VDP2_N1ZMYD;
+	stv2_current_tilemap.incx = STV_VDP2_ZMXN1;
+	stv2_current_tilemap.incy = STV_VDP2_ZMYN1;
 
 	stv2_current_tilemap.plane_size = STV_VDP2_N1PLSZ;
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N1CAOS;
@@ -2487,10 +2696,8 @@ static void stv_vdp2_draw_NBG2(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.scrollx = STV_VDP2_SCXN2;
 	stv2_current_tilemap.scrolly = STV_VDP2_SCYN2;
 	/*This layer can't be scaled*/
-	stv2_current_tilemap.scalex_i = 1;
-	stv2_current_tilemap.scalex_f = 0;
-	stv2_current_tilemap.scaley_i = 1;
-	stv2_current_tilemap.scaley_f = 0;
+	stv2_current_tilemap.incx = 0x10000;
+	stv2_current_tilemap.incy = 0x10000;
 
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N2CAOS;
 	stv2_current_tilemap.fade_control = (STV_VDP2_N2COEN * 1) | (STV_VDP2_N2COSL * 2);
@@ -2560,10 +2767,8 @@ static void stv_vdp2_draw_NBG3(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.scrollx = STV_VDP2_SCXN3;
 	stv2_current_tilemap.scrolly = STV_VDP2_SCYN3;
 	/*This layer can't be scaled*/
-	stv2_current_tilemap.scalex_i = 1;
-	stv2_current_tilemap.scalex_f = 0;
-	stv2_current_tilemap.scaley_i = 1;
-	stv2_current_tilemap.scaley_f = 0;
+	stv2_current_tilemap.incx = 0x10000;
+	stv2_current_tilemap.incy = 0x10000;
 
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N3CAOS;
 	stv2_current_tilemap.fade_control = (STV_VDP2_N3COEN * 1) | (STV_VDP2_N3COSL * 2);

@@ -171,6 +171,7 @@
 /* DISCRETE_LOGIC_NOR4(NODE,ENAB,INP0,INP1,INP2,INP3)                   */
 /* DISCRETE_LOGIC_XOR(NODE,ENAB,INP0,INP1)                              */
 /* DISCRETE_LOGIC_NXOR(NODE,ENAB,INP0,INP1)                             */
+/* DISCRETE_LOGIC_DFLIPFLOP(NODE,RESET,SET,CLK,INP)                     */
 /*                                                                      */
 /* DISCRETE_555_ASTABLE(NODE,RESET,AMPL,R1,R2,C,CTRLV,TYPE)             */
 /* DISCRETE_555_CC(NODE,RESET,VIN,R,C,RBIAS,RGND,RDIS,OPTIONS)          */
@@ -1160,6 +1161,40 @@
 /*                                                                      */
 /************************************************************************/
 /*                                                                      */
+/* DISCRETE_LOGIC_DFLIPFLOP - Standard D-type flip-flop                 */
+/*                                                                      */
+/*    /SET       -2-------------+                                       */
+/*                              v                                       */
+/*                        .-----o------.                                */
+/*                        |            |                                */
+/*    INPUT      -4------>|            |                                */
+/*                        |            |                                */
+/*                        |  FLIPFLOP  |---->    Netlist node           */
+/*                        |            |                                */
+/*    CLOCK      -3------>|            |                                */
+/*                        |            |                                */
+/*                        '-----o------'                                */
+/*                              ^                                       */
+/*    /RESET     -1-------------+                                       */
+/*                                                                      */
+/*  Declaration syntax                                                  */
+/*                                                                      */
+/*       DISCRETE_LOGIC_DFLIPFLOP(name of node,                         */
+/*                                enable,                               */
+/*                                reset node or static value,           */
+/*                                set node or static value,             */
+/*                                clock node,                           */
+/*                                input node or static value)           */
+/*                                                                      */
+/*  Example config line                                                 */
+/*                                                                      */
+/*     DISCRETE_LOGIC_DFLIPFLOP(NODE_7,1,NODE_17,0,NODE_13,1)           */
+/*                                                                      */
+/*  A flip-flop that clocks a logic 1 through on the rising edge of     */
+/*  NODE_13. A logic 1 on NODE_17 resets the output to 0.               */
+/*                                                                      */
+/************************************************************************/
+/*                                                                      */
 /* DISCRETE_LADDER - Resistor ladder D/A with smoothing R/C             */
 /*                                                                      */
 /*                        .------------.                                */
@@ -1860,6 +1895,8 @@ enum {
 	DST_LOGIC_XOR,
 	DST_LOGIC_NXOR,
 
+	DST_LOGIC_DFF,
+
 	/* Devices */
 	DSD_555_ASTBL,		/* NE555 Astable Emulation */
 	DSD_555_CC,		/* Constant Current 555 circuit (VCO)*/
@@ -1957,13 +1994,13 @@ enum {
 #define DISCRETE_LOGIC_NOR4(NODE,ENAB,INP0,INP1,INP2,INP3)              { NODE, DST_LOGIC_NOR   , 5, { ENAB,INP0,INP1,INP2,INP3 }, { ENAB,INP0,INP1,INP2,INP3 }, NULL, "Logic NOR (4inp)" },
 #define DISCRETE_LOGIC_XOR(NODE,ENAB,INP0,INP1)                         { NODE, DST_LOGIC_XOR   , 3, { ENAB,INP0,INP1 }, { ENAB,INP0,INP1 }, NULL, "Logic XOR (2inp)" },
 #define DISCRETE_LOGIC_NXOR(NODE,ENAB,INP0,INP1)                        { NODE, DST_LOGIC_NXOR  , 3, { ENAB,INP0,INP1 }, { ENAB,INP0,INP1 }, NULL, "Logic NXOR (2inp)" },
+#define DISCRETE_LOGIC_DFLIPFLOP(NODE,ENAB,RESET,SET,CLK,INP)           { NODE, DST_LOGIC_DFF   , 5, { ENAB,RESET,SET,CLK,INP }, { ENAB,RESET,SET,CLK,INP }, NULL, "Logic DFlipFlop" },
 
 #define DISCRETE_555_ASTABLE(NODE,RESET,R1,R2,C,CTRLV,OPTIONS)          { NODE, DSD_555_ASTBL   , 5, { RESET,R1,R2,C,CTRLV }, { RESET,R1,R2,C,CTRLV }, OPTIONS, "555 Astable" },
 #define DISCRETE_555_CC(NODE,RESET,VIN,R,C,RBIAS,RGND,RDIS,OPTIONS)     { NODE, DSD_555_CC      , 7, { RESET,VIN,R,C,RBIAS,RGND,RDIS }, { RESET,VIN,R,C,RBIAS,RGND,RDIS }, OPTIONS, "555 Constant Current VCO" },
 #define DISCRETE_566(NODE,ENAB,VMOD,R,C,OPTIONS)                        { NODE, DSD_566         , 4, { ENAB,VMOD,R,C }, { ENAB,VMOD,R,C }, OPTIONS, "566" },
 
-#define DISCRETE_OUTPUT(OPNODE,VOL)                                     { NODE_OP, DSO_OUTPUT   , 3, { OPNODE,OPNODE,NODE_NC }, {0,0,VOL }, NULL, "Output Node" },
-#define DISCRETE_OUTPUT_STEREO(OPNODEL,OPNODER,VOL)                     { NODE_OP, DSO_OUTPUT   , 3, { OPNODEL,OPNODER,NODE_NC }, { 0,0,VOL }, NULL, "Stereo Output Node" },
+#define DISCRETE_OUTPUT(OPNODE,VOL)                                     { NODE_OP, DSO_OUTPUT   , 2, { OPNODE,NODE_NC }, {0,VOL }, NULL, "Output Node" },
 
 
 /************************************************************************/

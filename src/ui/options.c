@@ -407,7 +407,7 @@ static REG_OPTION global_game_options[] =
 #ifdef MESS
 	{ "biospath",               RO_STRING,  &settings.romdirs,          "bios" },
 	{ "softwarepath",           RO_STRING,  &settings.mess.softwaredirs,"software" },
-	{ "CRC_directory",          RO_STRING,  &settings.mess.crcdir,      "crc" },
+	{ "hash_directory",         RO_STRING,  &settings.mess.hashdir,     "hash" },
 #else
 	{ "rompath",                RO_STRING,  &settings.romdirs,          "roms" },
 #endif
@@ -720,7 +720,7 @@ BOOL OptionsInit()
 	set_pathlist(FILETYPE_ROM, strdup(settings.romdirs));
 	set_pathlist(FILETYPE_SAMPLE, strdup(settings.sampledirs));
 #ifdef MESS
-	set_pathlist(FILETYPE_CRC, strdup(settings.mess.crcdir));
+	set_pathlist(FILETYPE_HASH, strdup(settings.mess.hashdir));
 #endif
 	return TRUE;
 

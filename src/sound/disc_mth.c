@@ -22,6 +22,7 @@
 /* DST_LOGIC_NOR         - Logic NOR gate 4 input                       */
 /* DST_LOGIC_XOR         - Logic XOR gate 2 input                       */
 /* DST_LOGIC_NXOR        - Logic NXOR gate 2 input                      */
+/* DST_LOGIC_DFLIPFLOP   - Logic D-type flip/flop                       */
 /* DST_MIXER             - Final Mixer Stage                            */
 /* DST_ONESHOT           - One shot pulse generator                     */
 /* DST_RAMP              - Ramp up/down                                 */
@@ -84,6 +85,11 @@ struct dst_samphold_context
 {
 	double lastinput;
 	int clocktype;
+};
+
+struct dst_dflipflop_context
+{
+	int lastClk;
 };
 
 /************************************************************************/
@@ -429,8 +435,7 @@ int dst_ramp_init(struct node_description *node)
 /************************************************************************/
 int dst_oneshot_step(struct node_description *node)
 {
-	struct dst_oneshot_context *context;
-	context=(struct dst_oneshot_context*)node->context;
+	struct dst_oneshot_context *context=(struct dst_oneshot_context*)node->context;
 	int trigger = node->input[1] && node->input[1];
 
 	/* If the state is triggered we will need to countdown later */
@@ -1030,6 +1035,68 @@ int dst_logic_nxor_step(struct node_description *node)
 
 /************************************************************************/
 /*                                                                      */
+/* DST_LOGIC_DFF - Standard D-type flip-flop implementation             */
+/*                                                                      */
+/* input[0]    - /Reset                                                 */
+/* input[1]    - /Set                                                   */
+/* input[2]    - clock                                                  */
+/* input[3]    - input                                                  */
+/*                                                                      */
+/************************************************************************/
+int dst_logic_dff_step(struct node_description *node)
+{
+	struct dst_dflipflop_context *context;
+	context=(struct dst_dflipflop_context*)node->context;
+
+	if (node->input[0])
+	{
+		if (!node->input[1])
+			node->output = 0;
+		else if (!node->input[2])
+			node->output = 1;
+		else if (!context->lastClk && node->input[3])
+			node->output = node->input[4];
+	}
+	else
+	{
+		node->output=0.0;
+	}
+	context->lastClk = node->input[3];
+	return 0;
+}
+
+int dst_logic_dff_reset(struct node_description *node)
+{
+	struct dst_dflipflop_context *context;
+	context=(struct dst_dflipflop_context*)node->context;
+
+	context->lastClk = 0;
+	return 0;
+}
+
+int dst_logic_dff_init(struct node_description *node)
+{
+	/* Allocate memory for the context array and the node execution order array */
+	if((node->context=malloc(sizeof(struct dst_dflipflop_context)))==NULL)
+	{
+		discrete_log("dss_logic_dff_init() - Failed to allocate local context memory.");
+		return 1;
+	}
+	else
+	{
+		/* Initialize memory */
+		memset(node->context,0,sizeof(struct dst_dflipflop_context));
+	}
+
+	/* Initialize the object */
+	dst_logic_dff_reset(node);
+	return 0;
+}
+
+
+
+/************************************************************************/
+/*                                                                      */
 /* DST_COMP_ADDER  - Selectable parallel component adder                */
 /*                                                                      */
 /* input[0]    - Enable input value                                     */
@@ -1041,9 +1108,7 @@ int dst_logic_nxor_step(struct node_description *node)
 /************************************************************************/
 int dst_comp_adder_step(struct node_description *node)
 {
-	struct	discrete_comp_adder_table *info;
-
-	info = (struct discrete_comp_adder_table*)node->custom;
+	struct	discrete_comp_adder_table *info = (struct discrete_comp_adder_table*)node->custom;
 	int bit;
 
 	if(node->input[0])

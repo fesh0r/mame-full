@@ -6,18 +6,19 @@
 
 #ifdef UNDER_CE
 #define HAS_IDLING	0
-#define HAS_CRC		0
+#define HAS_HASH	0
 #else
 #define HAS_IDLING	1
-#define HAS_CRC		1
+#define HAS_HASH	1
 #endif
 
-typedef struct {
+typedef struct
+{
     int type;
     const char *ext;
-#if HAS_CRC
+#if HAS_HASH
 	UINT32 (*partialcrc)(const unsigned char *buf, unsigned int size);
-#endif
+#endif /* HAS_HASH */
 } mess_image_type;
 
 /* SoftwareListView Class calls */

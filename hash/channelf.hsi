@@ -1,0 +1,137 @@
+<hashfile>
+	<!-- Please keep this notice intact if editing this file -->
+	<!-- crc= Game Name | Year | Manufacturer | Emulation Status -->
+	<hash crc32="ff4768b0" name="Videocart 01 - Tic Tac Toe &amp; Shooting Gallery &amp; Doodle &amp; Quadra-Doodle">
+		<year>1976</year>
+		<manufacturer>Fairchild</manufacturer>
+	</hash>
+	<hash crc32="1570934b" name="Videocart 02 - Desert Fox &amp; Shooting Gallery">
+		<year>1976</year>
+		<manufacturer>Fairchild</manufacturer>
+	</hash>
+	<hash crc32="e98d4456" name="Videocart 03 - Video Blackjack">
+		<year>1976</year>
+		<manufacturer>Fairchild</manufacturer>
+	</hash>
+	<hash crc32="5357c5f6" name="Videocart 04 - Spitfire">
+		<year>1976</year>
+		<manufacturer>Fairchild</manufacturer>
+	</hash>
+	<hash crc32="22ef49e8" name="Videocart 05 - Space War">
+		<year>1977</year>
+		<manufacturer>Fairchild</manufacturer>
+	</hash>
+	<hash crc32="bb4c24a2" name="Videocart 06 - Math Quiz 1 (Addition &amp; Subtraction)">
+		<year>1976</year>
+		<manufacturer>Fairchild</manufacturer>
+	</hash>
+	<hash crc32="4aa7ea97" name="Videocart 07 - Math Quiz II &amp; Multiplication &amp; Division">
+		<year>1977</year>
+		<manufacturer>Fairchild</manufacturer>
+	</hash>
+	<hash crc32="24da0529" name="Videocart 08 - Magic Numbers &amp; Mind Reader &amp; Nim">
+		<year>1977</year>
+		<manufacturer>Fairchild</manufacturer>
+	</hash>
+	<hash crc32="6a64dda3" name="Videocart 09 - Drag Race">
+		<year>1977</year>
+		<manufacturer>Fairchild</manufacturer>
+	</hash>
+	<hash crc32="0a948b61" name="Videocart 10 - Maze &amp; Jailbreak &amp; Blind-man's-bluff &amp; Trailblazer">
+		<year>1977</year>
+		<manufacturer>Fairchild</manufacturer>
+	</hash>
+	<hash crc32="4d42b296" name="Videocart 10 - Maze &amp; Jailbreak &amp; Blind-man's-bluff &amp; Trailblazer (newer)">
+		<year>1977</year>
+		<manufacturer>Fairchild</manufacturer>
+	</hash>
+	<hash crc32="a1731b52" name="Videocart 11 - Backgammon &amp; Acey-Ducey">
+		<year>1977</year>
+		<manufacturer>Fairchild</manufacturer>
+	</hash>
+	<hash crc32="01129bcd" name="Videocart 12 - Baseball">
+		<year>1977</year>
+		<manufacturer>Fairchild</manufacturer>
+	</hash>
+	<hash crc32="38241e4f" name="Videocart 13 - Robot War &amp; Torpedo Ally">
+		<year>1977</year>
+		<manufacturer>Fairchild</manufacturer>
+	</hash>
+	<hash crc32="dbdc56bf" name="Videocart 14 - Sonar Search">
+		<year>1977</year>
+		<manufacturer>Fairchild</manufacturer>
+	</hash>
+	<hash crc32="104b5e18" name="Videocart 15 - Memory Match 1 &amp; 2">
+		<year>1978</year>
+		<manufacturer>Fairchild</manufacturer>
+	</hash>
+	<hash crc32="e3c1811c" name="Videocart 16 - Dodge It">
+		<year>1978</year>
+		<manufacturer>Fairchild</manufacturer>
+	</hash>
+	<hash crc32="c610b330" name="Videocart 17 - Pinball Challenge">
+		<year>1978</year>
+		<manufacturer>Fairchild</manufacturer>
+	</hash>
+	<hash crc32="9238d6ce" name="Videocart 18 - Hangman">
+		<year>1978</year>
+		<manufacturer>Fairchild</manufacturer>
+	</hash>
+	<!-- #######= Videocart 19 - Checkers | | Zircon | -->
+	<!-- #######= Videocart 20 - Video Whizball | 197? | Fairchild | -->
+	<hash crc32="94322c79" name="Videocart 21 - Bowling">
+		<year>1978</year>
+		<manufacturer>Fairchild (and Zircon?)</manufacturer>
+	</hash>
+	<!-- #######= Videocart 22 - Slot Machine |  | Zircon | -->
+	<!-- #######= Videocart 23 - Galactic Space Wars | | Zircon | -->
+	<hash crc32="a1ae99be" name="Videocart 24 - Pro Football">
+		<manufacturer>Zircon</manufacturer>
+	</hash>
+	<!-- #######= Videocart 25 - Casino Poker | ???? | Zircon | -->
+	<hash crc32="85e00865" name="Videocart 26 - Alien Invasion">
+		<manufacturer>Zircon</manufacturer>
+	</hash>
+	<!-- #######= Democart 1 | 1977 | Fairchild | -->
+	<!-- #######= Democart 2 | ???? | | -->
+	<!-- Game list - SABA (Germany) -->
+	<!-- 1 - Muehle &amp; Tontauben-Schiessen &amp; Kreatives Malspiel &amp; Videoscope -->
+	<!-- 2 - Wuestenfuchs &amp; Tontaubenschiessen -->
+	<!-- 3 - Blackjack -->
+	<!-- 4 - Luftkampf -->
+	<!-- 5 - Kampf Im Weltraum -->
+	<!-- 6 - Magische Zahlen -->
+	<!-- 7 - Autorennen -->
+	<!-- 8 - Labyrinth -->
+	<!-- 9 - Backgammon &amp; Acey-Deucy -->
+	<!-- 10 - Baseball -->
+	<!-- 11 - Robot-Jagd &amp; Torpedo -->
+	<!-- 12 - Sonar-Peilung -->
+	<!-- 13 - Memeory (Symbole) &amp; Memory (Ziffern) -->
+	<!-- 14 - Voelkerball -->
+	<!-- 15 - Barriere -->
+	<!-- 16 - Rat' Mal -->
+	<!-- 17 - Kickball -->
+	<!-- 18 - Bowling -->
+	<!-- 19 - Odyssee Im Weltraum -->
+	<!-- 20 - Schach -->
+	<!-- Game list - Luxor (Sweden) (Just label swap over US releases?) -->
+	<!-- 1 - Lerduveskytte &amp; Luffarschack &amp; Kaleidoskop &amp; Rita Sj&#228;lv -->
+	<!-- 2 - Lerduveskytte &amp; &#214;kenkrig -->
+	<!-- 3 - &quot;21&quot; 1 Eller 2 Spelare -->
+	<!-- 4 - R&#246;de Baronen -->
+	<!-- 5 - Rymdkrig -->
+	<!-- 6 - Matematik -->
+	<!-- 7 - Matematik -->
+	<!-- 8 - Master Mind (Magiska Tal) -->
+	<!-- 9 - Drag Race -->
+	<!-- 10 - Labyrint &amp; Rymning &amp; Blindbock &amp; Stigfinnare -->
+	<!-- 11 - Br&#228;dspel &amp; Dus-Ess -->
+	<!-- 12 - Baseball -->
+	<!-- 13 - Robotjakt / Torpedskjutning -->
+	<!-- 14 - Sonar-s&#246;kning -->
+	<!-- 15 - Minnestest1 &amp; 2 -->
+	<!-- 16 - Rymmare-Fasttagare -->
+	<!-- 18 - Ordt&#228;vling -->
+	<!-- 21 - Bowling -->
+</hashfile>

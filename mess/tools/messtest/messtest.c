@@ -6,17 +6,7 @@
 #include "osdepend.h"
 #include "pool.h"
 
-#if 0
-/* Include the internal copy of the libexpat library */
-#define ELEMENT_TYPE ELEMENT_TYPE_
-#include "xml2info/xmlrole.c"
-#include "xml2info/xmltok.c"
-#include "xml2info/xmlparse.c"
-#undef ELEMENT_TYPE
-#else
-#define XMLPARSEAPI(type) type
-#include "xml2info/expat.h"
-#endif
+#include "expat/expat.h"
 
 /* ----------------------------------------------------------------------- */
 

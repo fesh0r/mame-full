@@ -1,0 +1,153 @@
+<hashfile>
+	<!-- watara supervision -->
+	<hash crc32="10dcc110" name="Cryst Ball">
+		<year>199?</year>
+	</hash>
+	<!-- SV10001         Blockbuster -->
+	<!-- SV10002         Hash Blocks -->
+	<hash crc32="5ecfb674" name="Carrier">
+		<status>SV10004</status>
+	</hash>
+	<hash crc32="01cb8364" name="Eagle Plan">
+		<status>SV10005</status>
+	</hash>
+	<hash crc32="748f9dae" name="P-52 Sea Battle">
+		<status>SV10006</status>
+	</hash>
+	<hash crc32="6f8abaf9" name="Linear Racing">
+		<year>199?</year>
+		<status>SV10007</status>
+	</hash>
+	<!-- SV10008         PacBoy &amp; Mouse -->
+	<!-- SV10009         Sssnake -->
+	<hash crc32="8dbb2c53" name="Alien">
+		<status>SV10010</status>
+	</hash>
+	<hash crc32="25ddd6e1" name="Hero Kid">
+		<status>SV10011</status>
+	</hash>
+	<!-- SV10012         MahJongg -->
+	<!-- SV10013         Challenger Tank -->
+	<hash crc32="531f0b51" name="Police Bust">
+		<manufacturer>Bon Treasure</manufacturer>
+		<status>SV10014</status>
+	</hash>
+	<hash crc32="bd004cb7" name="Tennis Pro '92">
+		<status>SV10015</status>
+	</hash>
+	<hash crc32="4a458aa8" name="Chimera">
+		<status>SV10016</status>
+	</hash>
+	<!-- SV10017         Space Fighter -->
+	<!-- SV10018         Honey Bee -->
+	<hash crc32="85dc8111" name="Olympic Trials">
+		<status>SV10019</status>
+	</hash>
+	<!-- SV10020         Matta Blatta -->
+	<hash crc32="cef3f295" name="Grand Prix">
+		<year>199?</year>
+		<manufacturer>Bon Treasure</manufacturer>
+		<status>SV10021</status>
+		<extrainfo>noise</extrainfo>
+	</hash>
+	<hash crc32="02e2c7ad" name="Super Block">
+		<year>1992</year>
+		<manufacturer>Bon Treasure</manufacturer>
+		<status>SV10022</status>
+	</hash>
+	<hash crc32="5e6706b9" name="Brain Power">
+		<status>SV10023</status>
+	</hash>
+	<!-- SV10024         2 in 1 (Eagle Plan &amp; Hash Blocks) -->
+	<hash crc32="aa4372d4" name="Jaguar Bomber">
+		<year>1992</year>
+		<manufacturer>Bon Treasure</manufacturer>
+		<status>SV10025</status>
+	</hash>
+	<hash crc32="3d5f3964" name="Tasac 2010">
+		<year>1992</year>
+		<manufacturer>Thin Chen Enterprise</manufacturer>
+		<status>SV10026</status>
+	</hash>
+	<!-- SV10027         Happy Race -->
+	<!-- SV10028         Super Pang -->
+	<!-- SV10029         Galactic Crusader -->
+	<!-- SV10030         Dancing Blocks -->
+	<!-- SV10031         Final Combat -->
+	<hash crc32="fe5f9774" name="Penguin Hideout">
+		<year>1992</year>
+		<manufacturer>Thin Chen Enterprise</manufacturer>
+		<status>SV10032</status>
+	</hash>
+	<hash crc32="7e05d84f" name="Block Buster &amp; Cross High">
+		<status>SV10033</status>
+	</hash>
+	<!-- SV10034         Soccer Champion -->
+	<!-- SV10035         Happy Pair -->
+	<!-- SV10036         John Adventure -->
+	<!-- SV10037         PaPo Team -->
+	<!-- SV10038         Chinese Checkers -->
+	<hash crc32="e406a91c" name="Magincross">
+		<year>1992 Thin Chen Enterprise</year>
+		<status>SV10039</status>
+	</hash>
+	<hash crc32="32ccdf89" name="Delta Hero">
+		<year>1992</year>
+		<manufacturer>Bon Treasure</manufacturer>
+		<status>SV10040</status>
+	</hash>
+	<!-- SV10041         Recycle Design -->
+	<hash crc32="59c7ff64" name="Super Kong">
+		<year>1992</year>
+		<manufacturer>Thin Chen Enterprise</manufacturer>
+		<status>SV10042</status>
+	</hash>
+	<hash crc32="32e68d6f" name="Juggler">
+		<year>1992</year>
+		<manufacturer>Bon Treasure</manufacturer>
+		<status>SV10043</status>
+	</hash>
+	<!-- hash block, jacky lucky, challenger tank, brain power -->
+	<!-- b52 battle -->
+	<!-- balloon fight -->
+	<!-- bubble world -->
+	<!-- classic casino -->
+	<!-- climber -->
+	<!-- dream world -->
+	<!-- earth defender -->
+	<hash crc32="917cab48" name="fatalcraft">
+		<year>1992</year>
+		<manufacturer>Bon Treasure</manufacturer>
+	</hash>
+	<hash crc32="581703be" name="galaxy fighter">
+		<year>1992</year>
+		<manufacturer>Thin Chen Enterprise</manufacturer>
+	</hash>
+	<!-- hero hawk -->
+	<!-- money bee -->
+	<!-- jade legend -->
+	<!-- kabi island -->
+	<!-- kitchen war -->
+	<!-- pacific battle -->
+	<!-- pyramid -->
+	<!-- scaffolder -->
+	<!-- sonny xpress -->
+	<!-- thunder shooting -->
+	<!-- treasure hunter -->
+	<!-- untouchable -->
+	<!-- usa sea battle -->
+	<!-- witty kitty -->
+	<!-- overdumps -->
+	<hash crc32="17a4ca40" name="Penguin Hideout">
+		<year>Overdump, 2 identical halves</year>
+	</hash>
+	<hash crc32="d46ab5e0" name="Super Block">
+		<year>Overdump, 1st half empty</year>
+	</hash>
+	<hash crc32="8847c439" name="Carrier">
+		<year>Overdump, 1st half empty</year>
+	</hash>
+	<!-- [baddump] -->
+	<hash crc32="62f39f8b" name="Delta Hero (bad dump)"/>
+	<hash crc32="b7d5db89" name="Chimera eprom read (scrambled)"/>
+</hashfile>

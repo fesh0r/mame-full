@@ -718,6 +718,7 @@ $(OBJ)/snk.a: \
 	$(OBJ)/vidhrdw/snk68.o $(OBJ)/drivers/snk68.o \
 	$(OBJ)/vidhrdw/prehisle.o $(OBJ)/drivers/prehisle.o \
 	$(OBJ)/vidhrdw/bbusters.o $(OBJ)/drivers/bbusters.o \
+	$(OBJ)/drivers/hng64.o \
 
 $(OBJ)/alpha.a: \
 	$(OBJ)/drivers/shougi.o \
@@ -994,7 +995,7 @@ $(OBJ)/igs.a: \
 	$(OBJ)/machine/pgmprot.o $(OBJ)/machine/pgmcrypt.o \
 
 $(OBJ)/ramtek.a: \
-	$(OBJ)/vidhrdw/hitme.o $(OBJ)/drivers/hitme.o \
+	$(OBJ)/drivers/hitme.o \
 	$(OBJ)/vidhrdw/starcrus.o $(OBJ)/drivers/starcrus.o \
 
 $(OBJ)/omori.a: \

@@ -1,0 +1,79 @@
+<hashfile>
+	<!-- fountain 1392 -->
+	<!-- radofin -->
+	<!-- hanimex -->
+	<!-- acetronic -->
+	<!-- prinztronic -->
+	<hash crc32="682b876a" name="Olympics    (Pack-in Game)">
+		<year>1</year>
+	</hash>
+	<hash crc32="5c7f11e0" name="Grand Prix">
+		<year>2</year>
+	</hash>
+	<hash crc32="ec2a91b3" name="Blackjack">
+		<year>3</year>
+	</hash>
+	<hash crc32="5e8ee224" name="Tank/Plane Battle">
+		<year>4</year>
+	</hash>
+	<hash crc32="cb28b9fe" name="Air Sea Battle">
+		<year>5</year>
+	</hash>
+	<hash crc32="9c8e7de6" name="Shooting Gallery">
+		<year>6</year>
+	</hash>
+	<!-- 7   Math -->
+	<!-- 8   Math 2 -->
+	<!-- 9   Challenge -->
+	<!-- 10? Auto Sport -->
+	<!-- 10? Codebreaker -->
+	<!-- 11  Supermaze -->
+	<hash crc32="3da31bc5" name="Horse Racing">
+		<year>12</year>
+	</hash>
+	<hash crc32="0ab80f3e" name="Circus">
+		<year>13</year>
+	</hash>
+	<!-- 14  Prizefight -->
+	<hash crc32="87977f92" name="Soccer">
+		<year>15</year>
+	</hash>
+	<!-- 16  Hobby Module (never released?) -->
+	<!-- 17  Musical Games -->
+	<!-- 18  Treasure Hunt -->
+	<!-- 19  Golf -->
+	<!-- 20  HeadOn -->
+	<!-- 21  Draughts -->
+	<!-- 22  Spiders Web -->
+	<!-- 23  Chess -->
+	<!-- 24  Othello -->
+	<hash crc32="c6b2cd9a" name="Electronic Pinball">
+		<year>25</year>
+	</hash>
+	<!-- 26  Super Knockout -->
+	<hash crc32="6ae47072" name="Invaders    (Pack-in Game)">
+		<year>27</year>
+	</hash>
+	<!-- 28  ? -->
+	<hash crc32="b589f093" name="Shootout">
+		<year>29</year>
+	</hash>
+	<hash crc32="b1c31f9a" name="Space Wars">
+		<year>30</year>
+	</hash>
+	<!-- 31  Lazer Attack -->
+	<!-- 32  Backgammon -->
+	<!-- 33  Planet Defender -->
+	<!-- 34  Sea Wolf (never released?) -->
+	<!-- direct dump of the chips on vc4000 cartridges -->
+	<!-- (the first/above 13 were dumped with a complex S2650 cpu replacement) -->
+	<hash crc32="f3d37699" name="air_sea_battle_set2.bin">
+		<year>7</year>
+	</hash>
+	<hash crc32="9497204a" name="invaders_set2.bin">
+		<year>32</year>
+	</hash>
+	<hash crc32="468e4779" name="tank_set2.bin">
+		<year>4</year>
+	</hash>
+</hashfile>

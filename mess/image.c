@@ -2,9 +2,9 @@
 #include "mess.h"
 #include "unzip.h"
 #include "devices/flopdrv.h"
-#include "crcfile.h"
 #include "utils.h"
 #include "pool.h"
+#include "hashfile.h"
 #include "snprintf.h"
 
 /* ----------------------------------------------------------------------- */
@@ -434,42 +434,38 @@ void *image_lookuptag(mess_image *img, const char *tag)
 
 
 /****************************************************************************
-  CRC info loading
+  Hash info loading
 
-  If the CRC is not checked and the relevant info not loaded, force that info
+  If the hash is not checked and the relevant info not loaded, force that info
   to be loaded
 ****************************************************************************/
 
-static int read_crc_config(const char *sysname, mess_image *img)
+static int read_crc_config(const char *sysname, mess_image *image)
 {
-	int rc = 1;
-	crc_file *config;
-	char line[1024];
-	char crc[9+1];
+	hash_file *hashfile = NULL;
+	const struct hash_info *info = NULL;
 
-	config = crcfile_open(sysname, sysname, FILETYPE_CRC);
-	if (!config)
+	hashfile = hashfile_open(sysname, FALSE);
+	if (!hashfile)
 		goto done;
 
-	snprintf(crc, sizeof(crc) / sizeof(crc[0]), "%08x", img->crc);
-	crcfile_load_string(config, sysname, 0, crc, line, sizeof(line));
-
-	if (!line[0])
+	info = hashfile_lookup(hashfile, image->crc, NULL, NULL);
+	if (!info)
 		goto done;
 
-	logerror("found CRC %s= %s\n", crc, line);
-	img->longname		= image_strdup(img, stripspace(strtok(line, "|")));
-	img->manufacturer	= image_strdup(img, stripspace(strtok(NULL, "|")));
-	img->year			= image_strdup(img, stripspace(strtok(NULL, "|")));
-	img->playable		= image_strdup(img, stripspace(strtok(NULL, "|")));
-	img->extrainfo		= image_strdup(img, stripspace(strtok(NULL, "|")));
-	rc = 0;
+	image->longname		= image_strdup(image, info->longname);
+	image->manufacturer	= image_strdup(image, info->manufacturer);
+	image->year			= image_strdup(image, info->year);
+	image->playable		= image_strdup(image, info->playable);
+	image->extrainfo	= image_strdup(image, info->extrainfo);
 
 done:
-	if (config)
-		crcfile_close(config);
-	return rc;
+	if (hashfile)
+		hashfile_close(hashfile);
+	return !hashfile || !info;
 }
+
+
 
 static int image_checkcrc(mess_image *img)
 {

@@ -34,7 +34,7 @@ struct mess_specific_settings
 	int      mess_column_shown[MESS_COLUMN_MAX];
 
 	char*    softwaredirs;
-	char*    crcdir;	
+	char*    hashdir;	
 };
 
 void SetMessColumnWidths(int widths[]);

@@ -125,6 +125,7 @@ DEFS = \
 	-DHAS_SOUND \
 	-DLSB_FIRST=1 \
 	-DZLIB_DLL \
+	-DXML_STATIC \
 	$(MAME_VERSION) \
 	$(MAME_NET) \
 
@@ -258,6 +259,7 @@ OBJDIRS += \
 	$(OBJ)/mess/machine \
 	$(OBJ)/mess/vidhrdw \
 	$(OBJ)/mess/sndhrdw \
+	$(OBJ)/mess/expat \
 	$(OBJ)/mess/tools \
 	$(OBJ)/mess/tools/dat2html \
 	$(OBJ)/mess/tools/imgtool \
@@ -399,6 +401,9 @@ $(OBJ)/mess/machine/msx.o: mess/machine/msx.c
 $(OBJ)/cpu/tms9900/%.o:	src/cpu/tms9900/%.c
 	$(CC) $(CDEFS) $(FFLAGS) -W3 -nologo -MT $(INCLUDES) -Oi -Ot -Oy -Ob1 -Gs -G5 -Gr -Fo$@ -c $<
 endif
+
+$(OBJ)/mess/expat/%.o: mess/expat/%.c
+	$(CC) $(CDEFS) $(CFLAGS) -Fo$@ -Imess/expat -DHAVE_MEMMOVE=1 -c $<
 
 $(OBJ)/%.o: src/%.asm
 	$(ASM) -o $@ $(ASMFLAGS) $(ASMDEFS) $<

@@ -32,7 +32,7 @@ RESFILE=$(OBJ)/mess/windows/mess.res
 # uncomment this line to enable guard pages on all memory allocations
 ifdef DEBUG
 ifdef MSVC
-OSOBJS += $(OBJ)/windows/winalloc.o
+#OSOBJS += $(OBJ)/windows/winalloc.o
 endif
 endif
 

@@ -399,7 +399,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 
 	UINT8 source_code, dest_code, source_bit, dest_bit;
 
-	char source[3] = "\0", dest[3] = "\0";
+	char source[4] = "\0", dest[4] = "\0";
 
 	source_code = SOURCECODE(op);
 	dest_code = DESTCODE(op);
@@ -410,7 +410,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 
 	op = READ_OP(pc);
 
-	logerror( "Disassembling opcode %04x at PC %08x\n", op, pc );
+//	logerror( "Disassembling opcode %04x at PC %08x\n", op, pc );
 
 	op_num = (op & 0xff00) >> 8;
 
@@ -1437,70 +1437,98 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 		// FADD
 		case 0xc0:
 
+			buffer += sprintf(buffer, "FADD");
+
 			break;
 
 		// FADDD
 		case 0xc1:
+
+			buffer += sprintf(buffer, "FADDD");
 
 			break;
 
 		// FSUB
 		case 0xc2:
 
+			buffer += sprintf(buffer, "FSUB");
+
 			break;
 
 		// FSUBD
 		case 0xc3:
+
+			buffer += sprintf(buffer, "FSUBD");
 
 			break;
 
 		// FMUL
 		case 0xc4:
 
+			buffer += sprintf(buffer, "FMUL");
+
 			break;
 
 		// FMULD
 		case 0xc5:
+
+			buffer += sprintf(buffer, "FMULD");
 
 			break;
 
 		// FDIV
 		case 0xc6:
 
+			buffer += sprintf(buffer, "FDIV");
+
 			break;
 
 		// FDIVD
 		case 0xc7:
+
+			buffer += sprintf(buffer, "FDIVD");
 
 			break;
 
 		// FCMP
 		case 0xc8:
 
+			buffer += sprintf(buffer, "FCMP");
+
 			break;
 
 		// FCMPD
 		case 0xc9:
+
+			buffer += sprintf(buffer, "FCMPD");
 
 			break;
 
 		// FCMPU
 		case 0xca:
 
+			buffer += sprintf(buffer, "FCMPU");
+
 			break;
 
 		// FCMPUD
 		case 0xcb:
+
+			buffer += sprintf(buffer, "FCMPUD");
 
 			break;
 
 		// FCVT
 		case 0xcc:
 
+			buffer += sprintf(buffer, "FCVT");
+
 			break;
 
 		// FCVTD
 		case 0xcd:
+
+			buffer += sprintf(buffer, "FCVTD");
 
 			break;
 
@@ -1585,6 +1613,8 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 
 		// DO
 		case 0xcf:
+
+			buffer += sprintf(buffer, "DO");
 
 			break;
 
@@ -1948,6 +1978,8 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 
 		// TRAPxx - TRAP
 		case 0xfd: case 0xfe: case 0xff:
+
+			buffer += sprintf(buffer, "TRAPxx");
 
 			break;
 

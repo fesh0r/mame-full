@@ -4,7 +4,6 @@
 #include "osdepend.h"
 #include "imgtoolx.h"
 #include "osd_cpu.h"
-#include "crcfile.h"
 #include "utils.h"
 #include "library.h"
 

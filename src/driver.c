@@ -969,11 +969,13 @@ const struct GameDriver *drivers[] =
 	DRIVER( invaddlx )	/* 852 [1980] Midway */
 	DRIVER( moonbase )	/* Zeta - Nichibutsu */
 	/* 870 - Space Invaders Deluxe cocktail */
-	DRIVER( earthinv )
+	DRIVER( searthin )
+	DRIVER( searthia )
 	DRIVER( spaceatt )
 	DRIVER( spaceat2 )
 	DRIVER( sinvzen )
 	DRIVER( superinv )
+	DRIVER( invasion )
 	DRIVER( sstrangr )
 	DRIVER( sstrngr2 )
 	DRIVER( sinvemag )
@@ -2839,6 +2841,7 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( spidey )	/* (c) 1991 */
 	DRIVER( spideyj )	/* (c) 1991 (Japan) */
 	DRIVER( arabfgt )	/* (c) 1991 */
+	DRIVER( arescue )	/* (c) 1992 */
 	DRIVER( f1lap )
 	DRIVER( dbzvrvs )
 	DRIVER( darkedge )
@@ -5457,6 +5460,7 @@ Other Sun games
 	DRIVER( alpham2 )	/* 0007 (c) 1991 SNK */
 	/* 0008 Sunshine (prototype) 1990 SNK */
 	DRIVER( ncombat )	/* 0009 (c) 1990 Alpha Denshi Co. */
+	DRIVER( ncombata )	/* 0009 (c) 1990 Alpha Denshi Co. */
 	DRIVER( cyberlip )	/* 0010 (c) 1990 SNK */
 	DRIVER( superspy )	/* 0011 (c) 1990 SNK */
 	/* 0012 */
@@ -5637,6 +5641,16 @@ Other Sun games
 	/* 0258 SNK vs. Capcom? (prototype) */
 	DRIVER( bangbead )	/* 0259 (c) 2000 Visco */
 	DRIVER( nitd )		/* 0260 (c) 2000 Eleven / Gavaking */
+
+	/* Hyper NeoGeo 64 uses a 3 digit rom code? */
+
+	/* 001? Roads Edge / Round Trip RV */
+	/* 002? Samurai Shodown 64 / Samurai Spirits 64 */
+	/* 003? Xtreme Rally / Off Beat Racer! */
+	/* 004? Beast Busters: Second Nightmare */
+	/* 005? Samurai Shodown: Warrior's Rage / Samurai Spirits: Asura Zanmaden */
+	/* 006? Fatal Fury: Wild Ambition / Garou Densetsu: Wild Ambition */
+	DRIVER( buriki )	/* 007 (c) 1999 SNK */
 
 
 #endif	/* DRIVER_RECURSIVE */
