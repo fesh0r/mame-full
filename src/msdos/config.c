@@ -1025,7 +1025,6 @@ struct rc_option config_opts[] =
 	{ "language", NULL, rc_string, &s_language, "english", 0, 0, NULL, NULL },
 	{ "skip_disclaimer", NULL, rc_bool, &options.skip_disclaimer, "0", 0, 0, NULL, "skip displaying the disclaimer screen" },
 	{ "skip_gameinfo", NULL, rc_bool, &options.skip_gameinfo, "0", 0, 0, NULL, "skip displaying the game info screen" },
-	{ "skip_warnings", NULL, rc_bool, &options.skip_warnings, "0", 0, 0, NULL, "skip displaying the warnings" },
 	{ "crconly", NULL, rc_bool, &options.crc_only, "0", 0, 0, NULL, "use only CRC for all integrity checks" },
 	{ "bios", NULL, rc_string, &options.bios, "default", 0, 14, NULL, "change system bios" },
 
@@ -1200,7 +1199,6 @@ static void parse_cmdline( int argc, char **argv, int game_index )
 	options.pause_bright		= get_float( "config", "pause_brightness", NULL, 0.65, 0.5, 2.0 );
 	options.skip_disclaimer		= get_bool( "config", "skip_disclaimer", NULL, 0 );
 	options.skip_gameinfo		= get_bool( "config", "skip_gameinfo", NULL, 0 );
-	options.skip_warnings		= get_bool( "config", "skip_warnings", NULL, 0 );
 	options.crc_only			= get_bool( "config", "crconly", NULL, 0 );
 	s_bios						= get_string( "config", "bios", NULL, "default", NULL, NULL, NULL );
 

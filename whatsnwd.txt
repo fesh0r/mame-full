@@ -1,8 +1,7 @@
 
 0.92
 
-- Added -skip_warnings, -zvg_overlay, -zvg_artwork, -zvg_menu &
-  -zvg 3. [Mark Perreira]
+- Added -zvg_overlay, -zvg_artwork, -zvg_menu & -zvg 3. [Mark Perreira]
 
 
 ==========================================================================
