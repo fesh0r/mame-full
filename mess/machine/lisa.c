@@ -116,9 +116,7 @@ static UINT8 *bad_parity_table;	/* array : 1 bit set for each byte in RAM with w
 static int VTMSK;				/* VBI enable */
 static int VTIR;				/* VBI pending */
 static UINT16 video_address_latch;	/* register : MSBs of screen bitmap address (LSBs are 0s) */
-static UINT8 *videoram_ptr;		/* screen bitmap base address (derived from video_address_latch) */
-
-static UINT16 *old_display;		/* points to a copy of the screen, so that we can see which pixel change */
+static UINT16 *videoram_ptr;		/* screen bitmap base address (derived from video_address_latch) */
 
 
 /*
@@ -909,63 +907,29 @@ static READ_HANDLER(parallel_via_in_b)
 
 VIDEO_START( lisa )
 {
-	size_t videoram_size = 32760;	/*max(720*364, 608*431)/8*/
-
-	old_display = (UINT16 *) auto_malloc(videoram_size);
-	if (! old_display)
-	{
-		return 1;
-	}
-	memset(old_display, 0, videoram_size);
-
 	return 0;
 }
 
 /*
-	TODO : use draw_scanline()...
-	"draw_scanline(bitmap, 0, y, (lisa_features.has_mac_xl_video) ? 608 : 720, buf, NULL, -1)"
+	Video update
 */
 VIDEO_UPDATE( lisa )
 {
-	UINT16	data;
-	UINT16	*old;
-	UINT8	*v;
-	int		fg, bg, x, y;
-
+	UINT16 *v;
+	int x, y;
 	/* resolution is 720*364 on lisa, vs 608*431 on mac XL */
-	int resx = (lisa_features.has_mac_xl_video) ? 38 : 45;		/* width/16 */
+	int resx = (lisa_features.has_mac_xl_video) ? 608 : 720;	/* width */
 	int resy = (lisa_features.has_mac_xl_video) ? 431 : 364;	/* height */
 
-	v = videoram_ptr;
-	bg = Machine->pens[0];
-	fg = Machine->pens[1];
-	old = old_display;
+	UINT8 line_buffer[720];
 
-	for (y = 0; y < resy; y++) {
-		for ( x = 0; x < resx; x++ ) {
-			data = READ_WORD( v );
-			if (1 || (data != *old)) {
-				plot_pixel( bitmap, ( x << 4 ) + 0x00, y, ( data & 0x8000 ) ? fg : bg );
-				plot_pixel( bitmap, ( x << 4 ) + 0x01, y, ( data & 0x4000 ) ? fg : bg );
-				plot_pixel( bitmap, ( x << 4 ) + 0x02, y, ( data & 0x2000 ) ? fg : bg );
-				plot_pixel( bitmap, ( x << 4 ) + 0x03, y, ( data & 0x1000 ) ? fg : bg );
-				plot_pixel( bitmap, ( x << 4 ) + 0x04, y, ( data & 0x0800 ) ? fg : bg );
-				plot_pixel( bitmap, ( x << 4 ) + 0x05, y, ( data & 0x0400 ) ? fg : bg );
-				plot_pixel( bitmap, ( x << 4 ) + 0x06, y, ( data & 0x0200 ) ? fg : bg );
-				plot_pixel( bitmap, ( x << 4 ) + 0x07, y, ( data & 0x0100 ) ? fg : bg );
-				plot_pixel( bitmap, ( x << 4 ) + 0x08, y, ( data & 0x0080 ) ? fg : bg );
-				plot_pixel( bitmap, ( x << 4 ) + 0x09, y, ( data & 0x0040 ) ? fg : bg );
-				plot_pixel( bitmap, ( x << 4 ) + 0x0a, y, ( data & 0x0020 ) ? fg : bg );
-				plot_pixel( bitmap, ( x << 4 ) + 0x0b, y, ( data & 0x0010 ) ? fg : bg );
-				plot_pixel( bitmap, ( x << 4 ) + 0x0c, y, ( data & 0x0008 ) ? fg : bg );
-				plot_pixel( bitmap, ( x << 4 ) + 0x0d, y, ( data & 0x0004 ) ? fg : bg );
-				plot_pixel( bitmap, ( x << 4 ) + 0x0e, y, ( data & 0x0002 ) ? fg : bg );
-				plot_pixel( bitmap, ( x << 4 ) + 0x0f, y, ( data & 0x0001 ) ? fg : bg );
-				*old = data;
-			}
-			v += 2;
-			old++;
-		}
+	v = videoram_ptr;
+
+	for (y = 0; y < resy; y++)
+	{
+		for (x = 0; x < resx; x++)
+			line_buffer[x] = (v[(x+y*resx)>>4] & (0x8000 >> ((x+y*resx) & 0xf))) ? 1 : 0;
+		draw_scanline8(bitmap, 0, y, resx, line_buffer, Machine->pens, -1);
 	}
 }
 
@@ -1197,6 +1161,8 @@ static void lisa210_set_iwm_enable_lines(int enable_mask)
 
 MACHINE_INIT( lisa )
 {
+	mouse_timer = timer_alloc(handle_mouse);
+
 	lisa_ram_ptr = memory_region(REGION_CPU1) + RAM_OFFSET;
 	lisa_rom_ptr = memory_region(REGION_CPU1) + ROM_OFFSET;
 
@@ -1230,7 +1196,7 @@ MACHINE_INIT( lisa )
 	set_VTIR(FALSE);
 
 	video_address_latch = 0;
-	videoram_ptr = lisa_ram_ptr;
+	videoram_ptr = (UINT16 *) lisa_ram_ptr;
 
 	/* reset COPS keyboard/mouse controller */
 	init_COPS();
@@ -1270,8 +1236,6 @@ MACHINE_INIT( lisa )
 		if (lisa_features.floppy_hardware == sony_lisa2)
 			sony_set_enable_lines(1);	/* on lisa2, drive unit 1 is always selected (?) */
 	}
-
-	mouse_timer = timer_alloc(handle_mouse);
 }
 
 void lisa_interrupt(void)
@@ -1605,7 +1569,7 @@ READ16_HANDLER ( lisa_r )
 				/* out of segment limits : bus error */
 
 			}
-			answer = READ_WORD(lisa_ram_ptr + address);
+			answer = *(UINT16 *)(lisa_ram_ptr + address);
 
 			if (bad_parity_count && test_parity
 					&& (bad_parity_table[address >> 3] & (0x3 << (address & 0x7))))
@@ -1622,7 +1586,7 @@ READ16_HANDLER ( lisa_r )
 				/* out of segment limits : bus error */
 
 			}
-			answer = READ_WORD(lisa_ram_ptr + address);
+			answer = *(UINT16 *)(lisa_ram_ptr + address);
 
 			if (bad_parity_count && test_parity
 					&& (bad_parity_table[address >> 3] & (0x3 << (address & 0x7))))
@@ -1644,7 +1608,7 @@ READ16_HANDLER ( lisa_r )
 
 		case special_IO:
 			if (! (address & 0x008000))
-				answer = READ_WORD(lisa_rom_ptr + (address & 0x003fff));
+				answer = *(UINT16 *)(lisa_rom_ptr + (address & 0x003fff));
 			else
 			{	/* read serial number from ROM */
 				/* this has to be be the least efficient way to read a ROM :-) */
@@ -2161,7 +2125,7 @@ static WRITE16_HANDLER ( lisa_IO_w )
 		case 0x1:	/* Video Address Latch */
 			/*logerror("video address latch write offs=%X, data=%X\n", offset, data);*/
 			COMBINE_DATA(& video_address_latch);
-			videoram_ptr = lisa_ram_ptr + ((video_address_latch << 7) & 0x1f8000);
+			videoram_ptr = ((UINT16 *)lisa_ram_ptr) + ((video_address_latch << 6) & 0xfc000);
 			/*logerror("video address latch %X -> base address %X\n", video_address_latch,
 							(video_address_latch << 7) & 0x1f8000);*/
 			break;
