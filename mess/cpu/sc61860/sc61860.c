@@ -27,8 +27,6 @@
 #include "sc61860.h"
 #include "sc.h"
 
-//typedef int bool;
-
 #define VERBOSE 0
 
 #if VERBOSE
@@ -89,7 +87,7 @@ typedef struct
 {
 	SC61860_CONFIG *config;
 	UINT8 ram[0x60]; // internal special ram
-	UINT8 p, q, r; //6 bits only?
+	UINT8 p, q, r; //7 bits only?
 
 	UINT16 oldpc, pc, dp;
 
@@ -313,9 +311,9 @@ const char *sc61860_info(void *context, int regnum)
 	case CPU_INFO_FLAGS: sprintf(buffer[which], "%c%c", r->zero?'Z':'.', r->carry ? 'C':'.'); break;
 	case CPU_INFO_NAME: return "SC61860";
 	case CPU_INFO_FAMILY: return "SC61860";
-	case CPU_INFO_VERSION: return "1.0alpha";
+	case CPU_INFO_VERSION: return "1.0beta";
 	case CPU_INFO_FILE: return __FILE__;
-	case CPU_INFO_CREDITS: return "Copyright (c) 2000 Peter Trauner, all rights reserved.";
+	case CPU_INFO_CREDITS: return "Copyright (c) 2000,2001 Peter Trauner, all rights reserved.";
 	case CPU_INFO_REG_LAYOUT: return (const char*)sc61860_reg_layout;
 	case CPU_INFO_WIN_LAYOUT: return (const char*)sc61860_win_layout;
 	}
