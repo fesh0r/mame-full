@@ -131,7 +131,7 @@ static int lookup_rsdos_file(STREAM *f, const char *fname, rsdos_dirent *ent, in
 static size_t process_rsdos_file(rsdos_dirent *ent, rsdos_diskimage *img, STREAM *destf)
 {
 	size_t s, lastgransize;
-	unsigned char i, granule;
+	unsigned char i = 0, granule;
 	unsigned char usedmap[256];	/* Used to detect infinite loops */
 
 	memset(usedmap, 0, img->granule_count);
