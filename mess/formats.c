@@ -110,7 +110,7 @@ int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,
 		dummy_bdf.file = file;
 		for(track = 0; track < geometry->tracks; track++)
 		{
-			for( head = 1; head < geometry->heads; head++ )
+			for( head = 1; head <= geometry->heads; head++ )
 			{
 				err = drv.format_track(&drv, (void *) &dummy_bdf, geometry, track, head);
 				if (err)
