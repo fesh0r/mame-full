@@ -1,45 +1,258 @@
+#include <assert.h>
 #include "includes/lynx.h"
+#include "cpu/m6502/m6502.h"
 
 typedef struct {
 	UINT8 data[0x100];
-	UINT8 color[16];
 	UINT8 high;
 	int low;
 } SUZY;
+
 static SUZY suzy={ { 0 } };
+
+static struct {
+	UINT8 *mem;
+	// global
+	UINT16 screen;
+	UINT16 xoff, yoff;
+	// in command
+	UINT16 cmd;
+	UINT8 color[16]; // or stored
+	UINT16 width, height;
+	int x,y;
+	void (*line_function)(UINT8 *dest, const int xdir);
+	UINT16 bitmap;
+} blitter;
+
+#define GET_WORD(mem, index) ((mem)[(index)]|((mem)[(index)+1]<<8))
 
 #define PLOT_PIXEL(yptr, x, color) \
  if (!((x)&1)) { \
-	 (yptr)[(x)/2]=((yptr)[(x)/2]&0xf)|((color)<<4); \
+	 (yptr)[(x)/2]=(((yptr)[(x)/2])&0xf)|((color)<<4); \
  } else { \
-	 (yptr)[(x)/2]=((yptr)[(x)/2]&0xf0)|(color); \
+	 (yptr)[(x)/2]=(((yptr)[(x)/2])&0xf0)|(color); \
  }
 
-INLINE void lynx_blit_line(UINT8 *mem, UINT16 screen, UINT16 bitmap, int x, int w, int xdir)
+static void lynx_blit_2color_line(UINT8 *dest, const int xdir)
 {
-	int j, xi, wi, b, i;
+	int j, xi, wi, i;
+	UINT8 b;
 
-	i=mem[bitmap];
-	for (xi=x, j=1, wi=0; (j<i)&&(xi<160); j++) {
-		b=mem[bitmap+j]>>4;
-		for (;(wi<w)&&(xi<160);wi+=0x100, xi++) {
-			if (!(xi&1)) {
-				mem[screen+xi/2]=(mem[screen+xi/2]&0xf)|(suzy.color[b]<<4);
-			} else {
-				mem[screen+xi/2]=(mem[screen+xi/2]&0xf0)|suzy.color[b];
-			}
+	i=blitter.mem[blitter.bitmap];
+	for (xi=blitter.x, j=1, wi=0; (j<i); j++) {
+		b=blitter.mem[blitter.bitmap+j];
+		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+			PLOT_PIXEL(dest, xi, blitter.color[b>>7]);
 		}
-		wi-=w;
+		wi-=blitter.width;
 		
-		b=mem[bitmap+j]&0xf;
-		for (;(wi<w)&&(xi<160);wi+=0x100, xi+=xdir) {
-			if (!(xi&1)) {
-				mem[screen+xi/2]=(mem[screen+xi/2]&0xf)|(suzy.color[b]<<4);
-			} else {
-				mem[screen+xi/2]=(mem[screen+xi/2]&0xf0)|suzy.color[b];
+		b&=~0x80;
+		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+			if ((xi>=0)&&(xi<160)) {
+				PLOT_PIXEL(dest, xi, blitter.color[b>>6]);
 			}
 		}
-		wi-=w;
+		wi-=blitter.width;
+		
+		b&=~0x40;
+		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+			if ((xi>=0)&&(xi<160)) {
+				PLOT_PIXEL(dest, xi, blitter.color[b>>5]);
+			}
+		}
+		wi-=blitter.width;
+		
+		b&=~0x20;
+		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+			if ((xi>=0)&&(xi<160)) {
+				PLOT_PIXEL(dest, xi, blitter.color[b>>4]);
+			}
+		}
+		wi-=blitter.width;
+		
+		b&=~0x10;
+		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+			if ((xi>=0)&&(xi<160)) {
+				PLOT_PIXEL(dest, xi, blitter.color[b>>3]);
+			}
+		}
+		wi-=blitter.width;
+		
+		b&=~8;
+		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+			if ((xi>=0)&&(xi<160)) {
+				PLOT_PIXEL(dest, xi, blitter.color[b>>2]);
+			}
+		}
+		wi-=blitter.width;
+		
+		b&=~4;
+		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+			if ((xi>=0)&&(xi<160)) {
+				PLOT_PIXEL(dest, xi, blitter.color[b>>1]);
+			}
+		}
+		wi-=blitter.width;
+		
+		b&=~2;
+		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+			if ((xi>=0)&&(xi<160)) {
+				PLOT_PIXEL(dest, xi, blitter.color[b]);
+			}
+		}
+		wi-=blitter.width;
+	}
+}
+
+static void lynx_blit_4color_line(UINT8 *dest, const int xdir)
+{
+	int j, xi, wi, i;
+	UINT8 b;
+
+	i=blitter.mem[blitter.bitmap];
+	for (xi=blitter.x, j=1, wi=0; (j<i); j++) {
+		
+		b=blitter.mem[blitter.bitmap+j];
+		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+			if ((xi>=0)&&(xi<160)) {
+				PLOT_PIXEL(dest, xi, blitter.color[b>>6]);
+			}
+		}
+		wi-=blitter.width;
+		
+		b&=~0xc0;
+		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+			if ((xi>=0)&&(xi<160)) {
+				PLOT_PIXEL(dest, xi, blitter.color[b>>4]);
+			}
+		}
+		wi-=blitter.width;
+		
+		b&=~0x30;
+		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+			if ((xi>=0)&&(xi<160)) {
+				PLOT_PIXEL(dest, xi, blitter.color[b>>2]);
+			}
+		}
+		wi-=blitter.width;
+		
+		b&=~0xc;
+		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+			if ((xi>=0)&&(xi<160)) {
+				PLOT_PIXEL(dest, xi, blitter.color[b>>2]);
+			}
+		}
+		wi-=blitter.width;
+	}
+}
+
+
+static void lynx_blit_16color_line(UINT8 *dest, const int xdir)
+{
+	int j, xi, wi, i;
+	UINT8 b;
+
+	i=blitter.mem[blitter.bitmap];
+	for (xi=blitter.x, j=1, wi=0; (j<i); j++) {
+		b=blitter.mem[blitter.bitmap+j];
+		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+			if ((xi>=0)&&(xi<160)) {
+				PLOT_PIXEL(dest, xi, blitter.color[b>>4]);
+			}
+		}
+		wi-=blitter.width;
+		b&=~0xf0;
+		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+			if ((xi>=0)&&(xi<160)) {
+				PLOT_PIXEL(dest, xi, blitter.color[b]);
+			}
+		}
+		wi-=blitter.width;
+	}
+}
+
+// for odd count of pixels!
+static void lynx_blit_16color_line_odd(UINT8 *dest, const int xdir)
+{
+	int j, xi, wi, i;
+	UINT8 b;
+
+	i=blitter.mem[blitter.bitmap];
+	for (xi=blitter.x, j=1, wi=0; (j<i); j++) {
+		b=blitter.mem[blitter.bitmap+j];
+		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+			if ((xi>=0)&&(xi<160)) {
+				PLOT_PIXEL(dest, xi, blitter.color[b>>4]);
+			}
+		}
+		wi-=blitter.width;
+		
+		if ((j+1)!=i) {
+			b&=~0xf0;
+			for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+				if ((xi>=0)&&(xi<160)) {
+					PLOT_PIXEL(dest, xi, blitter.color[b]);
+				}
+			}
+			wi-=blitter.width;
+		}
+	}
+}
+
+/*
+2 color rle: ??
+ 0, 4 bit repeat count-1, 1 bit color
+ 1, 4 bit count of values-1, 1 bit color, ....
+*/
+static void lynx_blit_2color_rle_line(UINT8 *dest, const int xdir)
+{
+	int wi, xi;
+	int p, j;
+	int t, count, color;
+	UINT8 b;
+
+	for( p=0, j=0, b=0, xi=blitter.x, wi=0; ; ) { // through the rle entries
+		if (p<6) { // under 6 bits no complete entry
+			j++;
+			if (j>=blitter.mem[blitter.bitmap]) return;
+			p+=8;
+			b=(b<<8)|blitter.mem[blitter.bitmap+j];
+		}
+		t=(b>>(p-1))&1;p--;
+		count=((b>>(p-4))&0xf)+1;p-=4;
+		if (t) { // count of different pixels
+			for (;count; count--) {
+				if (p<1) {
+					j++;
+					if (j>=blitter.mem[blitter.bitmap]) return;
+					p+=8;
+					b=(b<<8)|blitter.mem[blitter.bitmap+j];
+				}
+				color=blitter.color[(b>>(p-1))&1];p-=1;
+				for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+					if ((xi>=0)&&(xi<160) ) {
+						PLOT_PIXEL(dest, xi, color);
+					}
+				}
+				wi-=blitter.width;
+			}
+		} else { // count of same pixels
+			if (p<1) {
+				j++;
+				if (j>=blitter.mem[blitter.bitmap]) return;
+				p+=8;
+				b=(b<<8)|blitter.mem[blitter.bitmap+j];
+			}
+			color=blitter.color[(b>>(p-1))&1];p-=1;
+			for (;count; count--) {
+				for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+					if ((xi>=0)&&(xi<160)) {
+						PLOT_PIXEL(dest, xi, color);
+					}
+				}
+				wi-=blitter.width;
+			}
+		}
 	}
 }
 
@@ -47,43 +260,20 @@ INLINE void lynx_blit_line(UINT8 *mem, UINT16 screen, UINT16 bitmap, int x, int 
 4 color rle:
  0, 4 bit repeat count-1, 2 bit color
  1, 4 bit count of values-1, 2 bit color, ....
-
-16 color rle:
- 0, 4 bit repeat count-1, 4 bit color
- 1, 4 bit count of values-1, 4 bit color, ....
-
-c0 10 00:
---------
-0011100
-0122210
-1233321
-1233321
-1233321
-0122210
-0011100
-04 09 c4 84
-04 09 c4 84
-04 09 44 40
-04 08 84 00
-01 
-04 09 c4 84 
-04 09 44 40
-04 08 84 00
-01 04 91
-
 */
-static void lynx_blit_rle42_line(UINT8 *mem, UINT16 screen, UINT16 bitmap, int x, int w)
+static void lynx_blit_4color_rle_line(UINT8 *dest, const int xdir)
 {
 	int wi, xi;
-	int b, p, j;
+	int p, j;
 	int t, count, color;
+	UINT8 b;
 
-	for( p=0, j=0, b=0, xi=x, wi=0; ; ) { // through the rle entries
+	for( p=0, j=0, b=0, xi=blitter.x, wi=0; ; ) { // through the rle entries
 		if (p<7) { // under 7 bits no complete entry
 			j++;
-			if (j>=mem[bitmap]) return;
+			if (j>=blitter.mem[blitter.bitmap]) return;
 			p+=8;
-			b=(b<<8)|mem[bitmap+j];
+			b=(b<<8)|blitter.mem[blitter.bitmap+j];
 		}
 		t=(b>>(p-1))&1;p--;
 		count=((b>>(p-4))&0xf)+1;p-=4;
@@ -91,52 +281,55 @@ static void lynx_blit_rle42_line(UINT8 *mem, UINT16 screen, UINT16 bitmap, int x
 			for (;count; count--) {
 				if (p<2) {
 					j++;
-					if (j>=mem[bitmap]) return;
+					if (j>=blitter.mem[blitter.bitmap]) return;
 					p+=8;
-					b=(b<<8)|mem[bitmap+j];
+					b=(b<<8)|blitter.mem[blitter.bitmap+j];
 				}
-				color=suzy.color[(b>>(p-2))&3];p-=2;
-				for (;(wi<w);wi+=0x100, xi++) {
-					if (xi>=160) return;
-					if (!(xi&1)) {
-						mem[screen+xi/2]=(mem[screen+xi/2]&0xf)|(color<<4);
-					} else {
-						mem[screen+xi/2]=(mem[screen+xi/2]&0xf0)|color;
+				color=blitter.color[(b>>(p-2))&3];p-=2;
+				for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+					if ((xi>=0)&&(xi<160) ) {
+						PLOT_PIXEL(dest, xi, color);
 					}
 				}
-				wi-=w;
+				wi-=blitter.width;
 			}
 		} else { // count of same pixels
 			if (p<2) {
 				j++;
-				if (j>=mem[bitmap]) return;
+				if (j>=blitter.mem[blitter.bitmap]) return;
 				p+=8;
-				b=(b<<8)|mem[bitmap+j];
+				b=(b<<8)|blitter.mem[blitter.bitmap+j];
 			}
-			color=suzy.color[(b>>(p-2))&3];p-=2;
+			color=blitter.color[(b>>(p-2))&3];p-=2;
 			for (;count; count--) {
-				for (;(wi<w);wi+=0x100, xi++) {
-					if (xi>=160) return;
-					PLOT_PIXEL(mem+screen, xi, color);
+				for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+					if ((xi>=0)&&(xi<160)) {
+						PLOT_PIXEL(dest, xi, color);
+					}
 				}
-				wi-=w;
+				wi-=blitter.width;
 			}
 		}
 	}
 }
 
-static void lynx_blit_rle44_line(UINT8 *mem, UINT16 screen, UINT16 bitmap, int x, int w, int xdir)
+/*
+16 color rle:
+ 0, 4 bit repeat count-1, 4 bit color
+ 1, 4 bit count of values-1, 4 bit color, ....
+*/
+static void lynx_blit_16color_rle_line(UINT8 *dest, const int xdir)
 {
 	int wi, xi;
 	int b, p, j;
 	int t, count, color;
 
-	for( p=0, j=0, b=0, xi=x, wi=0; ; ) { // through the rle entries
+	for( p=0, j=0, b=0, xi=blitter.x, wi=0; ; ) { // through the rle entries
 		if (p<9) { // under 7 bits no complete entry
 			j++;
-			if (j>=mem[bitmap]) return;
+			if (j>=blitter.mem[blitter.bitmap]) return;
 			p+=8;
-			b=(b<<8)|mem[bitmap+j];
+			b=(b<<8)|blitter.mem[blitter.bitmap+j];
 		}
 		t=(b>>(p-1))&1;p--;
 		count=((b>>(p-4))&0xf)+1;p-=4;
@@ -144,249 +337,80 @@ static void lynx_blit_rle44_line(UINT8 *mem, UINT16 screen, UINT16 bitmap, int x
 			for (;count; count--) {
 				if (p<4) {
 					j++;
-					if (j>=mem[bitmap]) return;
+					if (j>=blitter.mem[blitter.bitmap]) return;
 					p+=8;
-					b=(b<<8)|mem[bitmap+j];
+					b=(b<<8)|blitter.mem[blitter.bitmap+j];
 				}
-				color=suzy.color[(b>>(p-4))&0xf];p-=4;
-				for (;(wi<w);wi+=0x100, xi+=xdir) {
-					if (xi>=160) return;
-					if (!(xi&1)) {
-						mem[screen+xi/2]=(mem[screen+xi/2]&0xf)|(color<<4);
-					} else {
-						mem[screen+xi/2]=(mem[screen+xi/2]&0xf0)|color;
+				color=blitter.color[(b>>(p-4))&0xf];p-=4;
+				for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+					if ((xi>=0)&&(xi<160)) {
+						PLOT_PIXEL(dest, xi, color);
 					}
 				}
-				wi-=w;
+				wi-=blitter.width;
 			}
 		} else { // count of same pixels
 			if (p<4) {
 				j++;
-				if (j>=mem[bitmap]) return;
+				if (j>=blitter.mem[blitter.bitmap]) return;
 				p+=8;
-				b=(b<<8)|mem[bitmap+j];
+				b=(b<<8)|blitter.mem[blitter.bitmap+j];
 			}
-			color=suzy.color[(b>>(p-4))&0xf];p-=4;
+			color=blitter.color[(b>>(p-4))&0xf];p-=4;
 			for (;count; count--) {
-				for (;(wi<w);wi+=0x100, xi+=xdir) {
-					if (xi>=160) return;
-					PLOT_PIXEL(mem+screen, xi, color);
+				for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
+					if ((xi>=0)&&(xi<160)) {
+						PLOT_PIXEL(dest, xi, color);
+					}
 				}
-				wi-=w;
+				wi-=blitter.width;
 			}
 		}
 	}
 }
 	
-static void lynx_blit_2color(UINT16 cmd)
+static void lynx_blit_lines(void)
 {
-	UINT16 screen, data, bitmap, x, y, w, h;
-	UINT8 *mem=memory_region(REGION_CPU1);
-	UINT8 b;
-	int xi, i, j;
-
-	screen=suzy.data[0x8]|(suzy.data[0x9]<<8);
-	data=mem[cmd+5]|(mem[cmd+6]<<8);
-	x=mem[cmd+7]|(mem[cmd+8]<<8);
-	y=mem[cmd+9]|(mem[cmd+10]<<8);
-	w=(mem[cmd+11]|(mem[cmd+12]<<8));
-	h=(mem[cmd+13]|(mem[cmd+14]<<8));
-	w>>=8;
-	h>>=8;
-	suzy.color[0]=mem[cmd+0xf]&0xf;
-	suzy.color[1]=mem[cmd+0xf]>>4;
-	for ( screen+=y*80, bitmap=data,i=mem[bitmap]; i==mem[bitmap]; screen+=80, bitmap+=i ) {
-		for (xi=x, j=1; j<i; j++, xi+=8) {
-			b=mem[bitmap+j];
-			mem[screen+xi/2]=(suzy.color[b&0x80?1:0]<<4)|suzy.color[b&0x40?1:0];
-			mem[screen+xi/2+1]=(suzy.color[b&0x20?1:0]<<4)|suzy.color[b&0x10?1:0];
-			mem[screen+xi/2+2]=(suzy.color[b&8?1:0]<<4)|suzy.color[b&4?1:0];
-			mem[screen+xi/2+3]=(suzy.color[b&2?1:0]<<4)|suzy.color[b&1?1:0];
-		}
-	}	
-}
-
-static void lynx_blit_4color(UINT16 cmd)
-{
-	UINT16 screen, data, bitmap, x, y, w, h;
-	UINT8 *mem=memory_region(REGION_CPU1);
-	int xi, i, j, hi, wi, b;
-
-	screen=suzy.data[0x8]|(suzy.data[0x9]<<8);
-	data=mem[cmd+5]|(mem[cmd+6]<<8);
-	x=mem[cmd+7]|(mem[cmd+8]<<8);
-	y=mem[cmd+9]|(mem[cmd+10]<<8);
-	w=(mem[cmd+11]|(mem[cmd+12]<<8));
-	h=(mem[cmd+13]|(mem[cmd+14]<<8));
-
-	suzy.color[0]=mem[cmd+0xf]>>4;
-	suzy.color[1]=mem[cmd+0xf]&0xf;
-	suzy.color[2]=mem[cmd+0xf+1]>>4;
-	suzy.color[3]=mem[cmd+0xf+1]&0xf;
-
-	for ( screen+=y*80, bitmap=data, hi=0; (i=mem[bitmap])&&(y<102); bitmap+=i ) {
-		for (;(hi<h)&&(y<102); hi+=0x100, screen+=80, y++) {
-			for (xi=x, j=1, wi=0; (j<i)&&(xi<160); j++) {
-				b=mem[bitmap+j];
-				for (;(wi<w)&&(xi<160);wi+=0x100, xi++) {
-					if (!(xi&1)) {
-						mem[screen+xi/2]=(mem[screen+xi/2]&0xf)|(suzy.color[b>>6]<<4);
-					} else {
-						mem[screen+xi/2]=(mem[screen+xi/2]&0xf0)|suzy.color[b>>6];
-					}
-				}
-				wi-=w;
-
-				b&=~0xc0;
-				for (;(wi<w)&&(xi<160);wi+=0x100, xi++) {
-					if (!(xi&1)) {
-						mem[screen+xi/2]=(mem[screen+xi/2]&0xf)|(suzy.color[b>>4]<<4);
-					} else {
-						mem[screen+xi/2]=(mem[screen+xi/2]&0xf0)|suzy.color[b>>4];
-					}
-				}
-				wi-=w;
-
-				b&=~0x30;
-				for (;(wi<w)&&(xi<160);wi+=0x100, xi++) {
-					if (!(xi&1)) {
-						mem[screen+xi/2]=(mem[screen+xi/2]&0xf)|(suzy.color[b>>2]<<4);
-					} else {
-						mem[screen+xi/2]=(mem[screen+xi/2]&0xf0)|suzy.color[b>>2];
-					}
-				}
-				wi-=w;
-
-				b&=~0xc;
-				for (;(wi<w)&&(xi<160);wi+=0x100, xi++) {
-					if (!(xi&1)) {
-						mem[screen+xi/2]=(mem[screen+xi/2]&0xf)|(suzy.color[b]<<4);
-					} else {
-						mem[screen+xi/2]=(mem[screen+xi/2]&0xf0)|suzy.color[b];
-					}
-				}
-				wi-=w;
-
-			}
-		}
-		hi-=h;
-	}	
-}
-
-static void lynx_blit_4color_rle(UINT16 cmd)
-{
-	UINT16 screen, data, bitmap, w, h;
-	UINT8 *mem=memory_region(REGION_CPU1);
-	int y, x, i, hi;
-
-	screen=suzy.data[0x8]|(suzy.data[0x9]<<8);
-	data=mem[cmd+5]|(mem[cmd+6]<<8);
-	x=mem[cmd+7]|(mem[cmd+8]<<8);
-	y=mem[cmd+9]|(mem[cmd+10]<<8);
-	w=(mem[cmd+11]|(mem[cmd+12]<<8));
-	h=(mem[cmd+13]|(mem[cmd+14]<<8));
-
-	suzy.color[0]=mem[cmd+0xf]>>4;
-	suzy.color[1]=mem[cmd+0xf]&0xf;
-	suzy.color[2]=mem[cmd+0xf+1]>>4;
-	suzy.color[3]=mem[cmd+0xf+1]&0xf;
-
-	for ( screen+=y*80, bitmap=data, hi=0; (i=mem[bitmap])&&(y<102); bitmap+=i ) {
-		for (;(hi<h)&&(y<102); hi+=0x100, screen+=80, y++) {
-			lynx_blit_rle42_line(mem, screen, bitmap, x, w);
-		}
-		hi-=h;
-	}	
-}
-
-static void lynx_blit_16color_rle(UINT16 cmd, int xdir, int ydir)
-{
-	UINT16 screen, data, bitmap, x, w, h;
-	UINT8 *mem=memory_region(REGION_CPU1);
-	int y, i, hi;
+	int i, hi, y;
+	int ydir, xdir;
 	int flip=0;
 
-	screen=suzy.data[0x8]|(suzy.data[0x9]<<8);
-	data=mem[cmd+5]|(mem[cmd+6]<<8);
-	x=(mem[cmd+7]|(mem[cmd+8]<<8))-(suzy.data[4]|(suzy.data[5]<<8));
-	y=(mem[cmd+9]|(mem[cmd+10]<<8))-(suzy.data[6]|(suzy.data[7]<<8));
-	w=(mem[cmd+11]|(mem[cmd+12]<<8));
-	h=(mem[cmd+13]|(mem[cmd+14]<<8));
-
-	if (mem[cmd+1]!=0x98) {
-		for (i=0; i<8; i++) {
-			suzy.color[i*2]=mem[cmd+0xf+i]>>4;
-			suzy.color[i*2+1]=mem[cmd+0xf+i]&0xf;
-		}
+	switch (blitter.mem[blitter.cmd]&0x30) {
+	case 0: xdir=ydir=1;break;
+	case 0x10: xdir=1;ydir=-1;break;
+	case 0x20: xdir=-1;ydir=1;break;
+	case 0x30: xdir=ydir=-1;break;
 	}
 
-	for ( screen+=y*80, bitmap=data, hi=0; (i=mem[bitmap])&&(y<102); bitmap+=i ) {
+	for ( y=blitter.y, hi=0; (i=blitter.mem[blitter.bitmap]); blitter.bitmap+=i ) {
 		if (i==1) {
 			hi=0;
 			switch (flip) {
 			case 0:
 				ydir*=-1;
-				y=(mem[cmd+9]|(mem[cmd+10]<<8))+ydir;
-				screen=suzy.data[0x8]|(suzy.data[0x9]<<8)+y*80;
+				y=blitter.y+ydir;
 				break;
 			case 1:
 				xdir*=-1;
-				y=(mem[cmd+9]|(mem[cmd+10]<<8))+ydir;
-				screen=suzy.data[0x8]|(suzy.data[0x9]<<8)+y*80;
+				y=blitter.y+ydir;
 				break;
 			case 2:
 				ydir*=-1;
-				y=(mem[cmd+9]|(mem[cmd+10]<<8));
-				screen=suzy.data[0x8]|(suzy.data[0x9]<<8)+y*80;
+				y=blitter.y;
 				break;
 			case 3:
 				xdir*=-1;
-				y=(mem[cmd+9]|(mem[cmd+10]<<8));
-				screen=suzy.data[0x8]|(suzy.data[0x9]<<8)+y*80;
+				y=blitter.y;
 				break;
 			}
 			flip++;
 			continue;
 		}
-		for (;(hi<h)&&(y<102); hi+=0x100, screen+=80*ydir, y+=ydir) {
-			lynx_blit_rle44_line(mem, screen, bitmap, x, w, xdir);
+		for (;(hi<blitter.height); hi+=0x100, y+=ydir) {
+			if ((y>=0)&&(y<102))
+				blitter.line_function(blitter.mem+blitter.screen+y*80,xdir);
 		}
-		hi-=h;
-	}	
-}
-
-static void lynx_blit_16color(UINT16 cmd, int xdir, int ydir)
-{
-	UINT16 screen, data, bitmap, x, w, h;
-	UINT8 *mem=memory_region(REGION_CPU1);
-	int y, i, hi;
-
-	screen=suzy.data[0x8]|(suzy.data[0x9]<<8);
-	data=mem[cmd+5]|(mem[cmd+6]<<8);
-	x=(mem[cmd+7]|(mem[cmd+8]<<8))-(suzy.data[4]|(suzy.data[5]<<8));
-	y=(mem[cmd+9]|(mem[cmd+10]<<8))-(suzy.data[6]|(suzy.data[7]<<8));
-	w=(mem[cmd+11]|(mem[cmd+12]<<8));
-	h=(mem[cmd+13]|(mem[cmd+14]<<8));
-
-	if (mem[cmd+1]!=0x98) {
-		for (i=0; i<8; i++) {
-			suzy.color[i*2]=mem[cmd+0xf+i]>>4;
-			suzy.color[i*2+1]=mem[cmd+0xf+i]&0xf;
-		}
-	}
-
-	for ( screen+=y*80, bitmap=data, hi=0; (i=mem[bitmap])&&(y<102); bitmap+=i ) {
-		if (i==1) {
-			hi=0;
-			ydir*=-1;
-			y=(mem[cmd+9]|(mem[cmd+10]<<8))+ydir;
-			screen=suzy.data[0x8]|(suzy.data[0x9]<<8)+y*80;
-			continue;
-		}
-		for (;(hi<h)&&(y<102); hi+=0x100, screen+=80*ydir, y+=ydir) {
-			lynx_blit_line(mem, screen, bitmap, x, w,xdir);
-		}
-		hi-=h;
+		hi-=blitter.height;
 	}	
 }
 
@@ -397,13 +421,15 @@ static void lynx_blit_16color(UINT16 cmd, int xdir, int ydir)
             11 8 colors?
             11 16 color
    bit 5,4: 00 right down
-            01 left down??
-            10 right up??
-            11 left up??
+            01 right up
+            10 left down
+            11 left up
 
   control 1
    bit 7: 0 bitmap rle encoded
           1 not encoded
+   bit 3: 0 color info with command
+          1 no color info with command
   coll
   word next
   word data
@@ -435,56 +461,95 @@ static void lynx_blit_16color(UINT16 cmd, int xdir, int ydir)
 */
 static void lynx_blitter(void)
 {
-	UINT8 *mem=memory_region(REGION_CPU1);
-	UINT16 cmd, data;
+	int i;
+
+	blitter.mem=memory_region(REGION_CPU1);
+	blitter.screen=GET_WORD(suzy.data, 8);
+	blitter.xoff=GET_WORD(suzy.data,4);
+	blitter.yoff=GET_WORD(suzy.data,6);
 
 	logerror("blitter start\n");
 	
-	for (cmd=suzy.data[0x10]|(suzy.data[0x11]<<8); cmd; cmd=mem[cmd+3]|(mem[cmd+4]<<8) ) {
+	for (blitter.cmd=GET_WORD(suzy.data, 0x10); blitter.cmd; 
+		 blitter.cmd=GET_WORD(blitter.mem, blitter.cmd+3) ) {
 
-		data=mem[cmd+5]|(mem[cmd+6]<<8);
+		blitter.bitmap=GET_WORD(blitter.mem,blitter.cmd+5);
+		blitter.x=GET_WORD(blitter.mem, blitter.cmd+7)-blitter.xoff;
+		blitter.y=GET_WORD(blitter.mem, blitter.cmd+9)-blitter.yoff;
+		blitter.width=GET_WORD(blitter.mem, blitter.cmd+11);
+		blitter.height=GET_WORD(blitter.mem, blitter.cmd+13);
 
-		switch (mem[cmd]) {
-		case 0x4: // text (2 color bitmap?)
-			lynx_blit_2color(cmd);
+		switch (blitter.mem[blitter.cmd]&0xc0) {
+		case 0:
+			if (blitter.mem[blitter.cmd+1]&0x80) {
+				blitter.line_function=lynx_blit_2color_line;
+			} else {
+				blitter.line_function=lynx_blit_2color_rle_line;
+			}
 			break;
-		case 0x40: // compressed 16 color in sprdemo2 ?
-			lynx_blit_4color_rle(cmd);
+		case 0x40:
+			if (blitter.mem[blitter.cmd+1]&0x80) {
+				blitter.line_function=lynx_blit_4color_line;
+			} else {
+				blitter.line_function=lynx_blit_4color_rle_line;
+			}
 			break;
-		case 0xc0: case 0xc1:
-			if (mem[cmd+1]&0x80)
-				lynx_blit_16color(cmd, 1, 1);
-			else
-				lynx_blit_16color_rle(cmd, 1, 1);
+		case 0x80:
+			if (blitter.mem[blitter.cmd+1]&0x80) {
+				blitter.line_function=NULL; //lynx_blit_4color_line;
+			} else {
+				blitter.line_function=NULL; //lynx_blit_4color_rle_line;
+			}
 			break;
-		case 0xd0: 
-			if (mem[cmd+1]&0x80)
-				lynx_blit_16color(cmd, 1, -1);
-			else
-				lynx_blit_16color_rle(cmd, 1, -1);
-			break;
-		case 0xe0: 
-			if (mem[cmd+1]&0x80)
-				lynx_blit_16color(cmd, -1, 1);
-			else
-				lynx_blit_16color_rle(cmd, -1, 1);
-			break;
-		case 0xf0:
-			if (mem[cmd+1]&0x80)
-				lynx_blit_16color(cmd, -1, -1);
-			else
-				lynx_blit_16color_rle(cmd, -1, -1);
+		case 0xc0:
+			if (blitter.mem[blitter.cmd+1]&0x80) {
+				if (blitter.mem[blitter.cmd]&1) {
+					blitter.line_function=lynx_blit_16color_line_odd;
+				} else {
+					blitter.line_function=lynx_blit_16color_line;
+				}
+			} else {
+				blitter.line_function=lynx_blit_16color_rle_line;
+			}
 			break;
 		}
+
+		if (!(blitter.mem[blitter.cmd+1]&8)) {
+			switch (blitter.mem[blitter.cmd]&0xc0) {
+			case 0:
+				blitter.color[0]=blitter.mem[blitter.cmd+0xf]>>4;
+				blitter.color[1]=blitter.mem[blitter.cmd+0xf]&0xf;
+				break;
+			case 0x40:
+				for (i=0; i<2; i++) {
+					blitter.color[i*2]=blitter.mem[blitter.cmd+0xf+i]>>4;
+					blitter.color[i*2+1]=blitter.mem[blitter.cmd+0xf+i]&0xf;
+				}
+				break;
+			case 0x80:
+				for (i=0; i<4; i++) {
+					blitter.color[i*2]=blitter.mem[blitter.cmd+0xf+i]>>4;
+					blitter.color[i*2+1]=blitter.mem[blitter.cmd+0xf+i]&0xf;
+				}
+				break;
+			case 0xc0:
+				for (i=0; i<8; i++) {
+					blitter.color[i*2]=blitter.mem[blitter.cmd+0xf+i]>>4;
+					blitter.color[i*2+1]=blitter.mem[blitter.cmd+0xf+i]&0xf;
+				}
+				break;
+			}
+		}
 #if 1
-		logerror("%04x %.2x %.2x %.2x x:%.4x y:%.4x w:%.4x h:%.4x c:%.2x %.4x\n",
-				 cmd,
-				 mem[cmd],mem[cmd+1],mem[cmd+2],
-				 mem[cmd+7]|(mem[cmd+8]<<8),mem[cmd+9]|(mem[cmd+10]<<8),
-				 mem[cmd+11]|(mem[cmd+12]<<8),mem[cmd+13]|(mem[cmd+14]<<8),
-				 mem[cmd+15],
-				 data);
+		logerror("%04x %.2x %.2x %.2x x:%.4x y:%.4x w:%.4x h:%.4x %.4x\n",
+				 blitter.cmd,
+				 blitter.mem[blitter.cmd],blitter.mem[blitter.cmd+1],blitter.mem[blitter.cmd+2],
+				 blitter.x,blitter.y,
+				 blitter.width,blitter.height,
+				 blitter.bitmap);
 #endif
+		if (blitter.line_function)
+			lynx_blit_lines();
 	}
 }
 
@@ -524,7 +589,22 @@ READ_HANDLER(suzy_read)
 	case 0x92:
 		data=suzy.data[offset]&0x7f; // math finished
 		break;
-	case 0xb0: data=readinputport(0);break;
+	case 0xb0: 
+		if (suzy.data[0x92]&8) {
+			data=0;
+			if (readinputport(0)&0x80) data|=0x40;
+			if (readinputport(0)&0x40) data|=0x80;
+			if (readinputport(0)&0x20) data|=0x10;
+			if (readinputport(0)&0x10) data|=0x20;
+			if (readinputport(0)&8) data|=8;
+			if (readinputport(0)&4) data|=4;
+			if (readinputport(0)&2) data|=2;
+			if (readinputport(0)&1) data|=1;
+		} else {
+			data=readinputport(0);
+		}
+		break;
+	case 0xb1: data=readinputport(1);break;
 	case 0xb2:
 		data=*(memory_region(REGION_USER1)+(suzy.high<<11)+suzy.low);
 		logerror("mikey high %.2x low %.4x\n",suzy.high,suzy.low);
@@ -565,10 +645,133 @@ WRITE_HANDLER(suzy_write)
 */
 MIKEY mikey={ { 0 } };
 
+typedef struct {
+	int nr;
+	int counter;
+	void *timer;
+	UINT8 data[4];
+	double settime;
+} LYNX_TIMER;
+static LYNX_TIMER lynx_timer[8]= {
+	{ 0 },
+	{ 1 },
+	{ 2 },
+	{ 3 },
+	{ 4 },
+	{ 5 },
+	{ 6 },
+	{ 7 }
+};
+
+static void lynx_timer_count_down(LYNX_TIMER *This);
+static void lynx_timer_signal_irq(LYNX_TIMER *This)
+{
+//	if ((This->data[1]&0x80)&&!(mikey.data[0x81]&(1<<This->nr))) {
+	if ((This->data[1]&0x80)) { // irq flag handling later
+		cpu_set_irq_line(0, M65SC02_INT_IRQ, PULSE_LINE);
+		mikey.data[0x81]|=1<<This->nr; // vertical
+	}
+	switch (This->nr) {
+	case 0:
+		if ((lynx_timer[2].data[1]&7)==7) lynx_timer_count_down(lynx_timer+2);
+		break;
+	case 2:
+		if ((lynx_timer[4].data[1]&7)==7) lynx_timer_count_down(lynx_timer+4);
+		break;
+	case 1:
+		if ((lynx_timer[3].data[1]&7)==7) lynx_timer_count_down(lynx_timer+3);
+		break;
+	case 3:
+		if ((lynx_timer[5].data[1]&7)==7) lynx_timer_count_down(lynx_timer+5);
+		break;
+	case 5:
+		if ((lynx_timer[7].data[1]&7)==7) lynx_timer_count_down(lynx_timer+7);
+		break;
+	case 7:
+		// audio 1
+		break;
+	}
+}
+
+static void lynx_timer_count_down(LYNX_TIMER *This)
+{
+	if (This->counter>0) {
+		This->counter--;
+		return;
+	} else if (This->counter==0) {
+		lynx_timer_signal_irq(This);
+		if (This->data[1]&0x10) {
+			This->counter=This->data[0];
+		} else {
+			This->counter--;
+		}
+		return;
+	}
+}
+
+static void lynx_timer_shot(int nr)
+{
+	LYNX_TIMER *This=lynx_timer+nr;
+	lynx_timer_signal_irq(This);
+	if (!(This->data[1]&0x10)) This->timer=NULL;
+}
+
+static double times[]= { 1e-6, 2e-6, 4e-6, 8e-6, 16e-6, 32e-6, 64e-6 };
+
+static UINT8 lynx_timer_read(LYNX_TIMER *This, int offset)
+{
+	UINT8 data;
+	switch (offset) {
+	case 2:
+		data=This->counter;
+		break;
+	default:
+		data=This->data[offset];
+	}
+	logerror("timer %d read %x %.2x\n",This-lynx_timer,offset,data);
+	return data;
+}
+
+static void lynx_timer_write(LYNX_TIMER *This, int offset, UINT8 data)
+{
+	int t;
+	logerror("timer %d write %x %.2x\n",This-lynx_timer,offset,data);
+	This->data[offset]=data;
+
+	if (offset==0) This->counter=This->data[0]+1;
+	if (This->timer) { timer_remove(This->timer); This->timer=NULL; }
+//	if ((This->data[1]&0x80)&&(This->nr!=4)) { //timers are combined!
+	if ((This->data[1]&0x8)&&(This->nr!=4)) {
+		if ((This->data[1]&7)!=7) {
+			t=This->data[0]?This->data[0]:0x100;
+			if (This->data[1]&0x10) {
+				This->timer=timer_pulse(t*times[This->data[1]&7], 
+										This->nr, lynx_timer_shot);
+			} else {
+				This->timer=timer_set(t*times[This->data[1]&7],
+									  This->nr, lynx_timer_shot);
+			}
+		}
+	}
+}
+
 READ_HANDLER(mikey_read)
 {
 	UINT8 data=0;
 	switch (offset) {
+	case 0: case 1: case 2: case 3:
+	case 4: case 5: case 6: case 7:
+	case 8: case 9: case 0xa: case 0xb:
+	case 0xc: case 0xd: case 0xe: case 0xf:
+	case 0x10: case 0x11: case 0x12: case 0x13:
+	case 0x14: case 0x15: case 0x16: case 0x17:
+	case 0x18: case 0x19: case 0x1a: case 0x1b:
+	case 0x1c: case 0x1d: case 0x1e: case 0x1f:
+		data=lynx_timer_read(lynx_timer+(offset/4), offset&3);
+		break;
+	case 0x8c:
+		data=mikey.data[offset]&~0x40; // no serial data received
+		break;
 	default:
 		data=mikey.data[offset];
 	}
@@ -581,6 +784,17 @@ WRITE_HANDLER(mikey_write)
 	mikey.data[offset]=data;
 //	logerror("mikey write %.2x %.2x\n",offset,data);
 	switch (offset) {
+	case 0: case 1: case 2: case 3:
+	case 4: case 5: case 6: case 7:
+	case 8: case 9: case 0xa: case 0xb:
+	case 0xc: case 0xd: case 0xe: case 0xf:
+	case 0x10: case 0x11: case 0x12: case 0x13:
+	case 0x14: case 0x15: case 0x16: case 0x17:
+	case 0x18: case 0x19: case 0x1a: case 0x1b:
+	case 0x1c: case 0x1d: case 0x1e: case 0x1f:
+		mikey.data[offset]=data; // temporary for frame interrupt
+		lynx_timer_write(lynx_timer+(offset/4), offset&3, data);
+		break;
 	case 0x87:
 		if (data&2) {
 			if (data&1) {
