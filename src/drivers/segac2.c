@@ -4819,7 +4819,7 @@ GAMEX( 1996, pclubjv5, pclubj,   segac2, pclub,    pclub,    ROT0, "Atlus",     
 /* 33 */ // unknown
 /* 34 */ // unknown
 /* 35 */ GAMEX( 1989, mt_tlbba, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: Tommy Lasorda Baseball", GAME_NOT_WORKING )
-/* 36 */ GAMEX( 1889, mt_cols,  megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: Columns", GAME_NOT_WORKING )
+/* 36 */ GAMEX( 1990, mt_cols,  megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: Columns", GAME_NOT_WORKING )
 /* 37 */ // unknown
 /* 38 */ GAMEX( 1989, mt_eswat, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: E-Swat", GAME_NOT_WORKING )
 /* 39 */ GAMEX( 1990, mt_smgp,  megatech, megatech, megatech, segac2, ROT0, "Sega",                  "MegaTech: Super Monaco Grand Prix", GAME_NOT_WORKING )

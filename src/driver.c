@@ -1169,6 +1169,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( skychut )	/* Irem [1980] */
 	DRIVER( spacbeam )	/* M15 no copyright notice */
 	DRIVER( greenber )	/* Irem */
+	DRIVER( headoni )	/* Irem no copyright notice */
 
 	DRIVER( redalert )	/* (c) 1981 + "GDI presents" */
 	DRIVER( demoneye )	/* (c) 1981 */
@@ -2369,9 +2370,10 @@ V-V                           TP-027
 	DRIVER( tondemo )	/* Tondemo Crisis (JAPAN) */
 
 	/* PS Arcade 95 */
-	DRIVER( brvblade )	/* Brave Blade */
-	DRIVER( beastrzr )	/* Beastorizer */
-	DRIVER( beastrzb )	/* Beastorizer (bootleg?) */
+	DRIVER( beastrzr )	/* Beastorizer (USA) */
+	DRIVER( beastrzb )	/* Beastorizer (USA Bootleg) */
+	DRIVER( bldyror2 )	/* Bloody Roar 2 (JAPAN) */
+	DRIVER( brvblade )	/* Brave Blade (JAPAN) */
 
 	/* Atari PSX */
 	DRIVER( primrag2 )	/* Primal Rage 2 */
@@ -3686,11 +3688,13 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	/* GX Type 1 */
 	DRIVER( racinfrc )	/* GX250 */
 	DRIVER( opengolf )	/* ? */
+	DRIVER( opengol2 )	/* ? */
 	DRIVER( ggreats2 )	/* GX218 */
 
 	/* GX Type 2 */
 	DRIVER( le2 )		/* GX312 (c) 1994 */
 	DRIVER( le2u )		/* GX312 (c) 1994 */
+	DRIVER( le2j )		/* GX312 (c) 1994 */
 	DRIVER( puzldama )	/* GX315 (c) 1994 (Japan) */
 	DRIVER( gokuparo )	/* GX321 (c) 1994 (Japan) */
 	DRIVER( fantjour )	/* GX321 */
@@ -4157,9 +4161,9 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( tmekprot )	/* 136100			(c) 1994 */
 	DRIVER( primrage )	/* 136102			(c) 1994 */
 	DRIVER( primraga )	/* 136102			(c) 1994 */
-	DRIVER( area51 )	/* 136105			(c) 1995 */
+	DRIVER( area51 )	/*     ??			(c) 1995 */
+	DRIVER( area51t )	/* 136105			(c) 1995 */
 	DRIVER( area51a )	/* 136105			(c) 1995 */
-	DRIVER( a51r3k )	/*     ??			(c) 1995 */
 	DRIVER( area51mx )	/* 136105			(c) 1998 */
 	DRIVER( a51mxr3k )	/*     ??           (c) 1998 */
 	DRIVER( maxforce )	/*     ??			(c) 1996 */
@@ -5223,7 +5227,8 @@ Other Sun games
 
 	/* Yun Sung games */
 	DRIVER( paradise )	/* (c) >1994 Yun Sung */
-	DRIVER( tgtball )	/* (c) 199? Yun Sung */
+	DRIVER( tgtball )	/* (c) 1995 Yun Sung */
+	DRIVER( tgtballa )	/* (c) 1995 Yun Sung */
 	DRIVER( cannball )	/* (c) 1995 Yun Sung / Soft Visio */
 	DRIVER( magix )		/* (c) 1995 Yun Sung */
 	DRIVER( magicbub )	/* (c) Yun Sung */
@@ -5255,12 +5260,12 @@ Other Sun games
 	DRIVER( redhawk )	/* (c) 1997 */
 	DRIVER( grdnstrm )	/* (c) 1998 */
 	DRIVER( bubl2000 )	/* (c) 1998 Tuning */
+	DRIVER( firehawk )	/* (c) 2001 ESD */
 
 	/* ESD games */
 	/* http://www.esdgame.co.kr/english/ */
 	DRIVER( multchmp )	/* (c) 1998 (Korea) */
 	DRIVER( hedpanic )	/* (c) 2000 ESD */
-	DRIVER( firehawk )
 
 	/* Dyna Electronics / Dynax / Nakanihon games */
 	DRIVER( royalmah )	/* (c) 1982 Falcon */
@@ -5302,6 +5307,9 @@ Other Sun games
 						/* "510" Hana Kagerou 1996 Nakanihon */
 	DRIVER( realbrk )	/* "523" Billiard Academy Real Break 1998 */
 						/* "526" Mahjong Reach Ippatsu 1998 Nihon System/Dynax */
+
+	DRIVER( pkgnsh )	/* "???" Pachinko Gindama Shoubu */
+	DRIVER( pkgnshdx )	/* "???" Pachinko Gindama Shoubu DX */
 
 	DRIVER( mjelctrn )	/* "???" Mahjong Electron Base parts 2 & 4 */
 	DRIVER( mjelct3 )	/* "???" Mahjong Electron Base parts 2 & 3 */

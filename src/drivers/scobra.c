@@ -1904,7 +1904,7 @@ GAME( 1982, tazmania, 0,        type1,    tazmania, scobra,       ROT90,  "Stern
 GAME( 1982, tazmani2, tazmania, type2,    tazmania, tazmani2,     ROT90,  "Stern", "Tazz-Mania (set 2)" )
 GAME( 1982, calipso,  0,        calipso,  calipso,  scobra,       ROT90,  "[Stern] (Tago license)", "Calipso" )
 GAME( 1982, anteater, 0,        type1,    anteater, anteater,     ROT90,  "[Stern] (Tago license)", "Anteater" )
-GAMEX(1982, anteatg,  anteater, type1,    anteater, scobra,       ROT90,  "unknown", "Anteater (German)", GAME_NOT_WORKING )
+GAMEX(1982, anteatg,  anteater, type1,    anteater, scobra,       ROT90,  "<unknown>", "Anteater (German)", GAME_NOT_WORKING )
 GAME( 1982, rescue,   0,        rescue,   rescue,   rescue,       ROT90,  "Stern", "Rescue" )
 GAME( 1982, aponow,   rescue,   rescue,   rescue,   rescue,       ROT90,  "bootleg", "Apocaljpse Now" )
 GAME( 1983, minefld,  0,        minefld,  minefld,  minefld,      ROT90,  "Stern", "Minefield" )

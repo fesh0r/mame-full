@@ -149,7 +149,7 @@ ROM_START( sfiii3 )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* dummy cpu region */
 
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
-	ROM_LOAD( "sf33rdbios.rom",  0x000000, 0x080000, CRC(9fa37a05) SHA1(22829c03d5109c451fc677a21592407cc09bcaa1) )
+	ROM_LOAD( "sf33rdbios.rom",  0x000000, 0x080000, BAD_DUMP CRC(9fa37a05) SHA1(22829c03d5109c451fc677a21592407cc09bcaa1) ) // fixed bits
 
 	/* Convert this to CHD? */
 	ROM_REGION( 0x0000800, REGION_USER2, 0 ) /* cd cue image */

@@ -995,7 +995,6 @@ $(OBJ)/afega.a: \
 
 $(OBJ)/esd.a: \
 	$(OBJ)/vidhrdw/esd16.o $(OBJ)/drivers/esd16.o \
-	$(OBJ)/drivers/firehawk.o \
 
 $(OBJ)/dynax.a: \
 	$(OBJ)/drivers/royalmah.o \
