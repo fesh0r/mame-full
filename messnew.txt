@@ -1,3 +1,20 @@
+0.61.3
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+(none)
+
+System Driver Changes:
+----------------------
+(none)
+
+Source Changes:
+---------------
+(none)
+
+System Driver Changes:
+----------------------
+
 0.61.2
 
 New System Drivers Supported (in no particular order):
