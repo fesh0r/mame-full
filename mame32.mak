@@ -8,7 +8,7 @@ VERSION = -DVERSION=37
 BETA_VERSION = -DBETA_VERSION=5
 
 # uncomment this to build an release canidate version
-# RELEASE_CANDIDATE = -DRELEASE_CANDIDATE=1
+RELEASE_CANDIDATE = -DRELEASE_CANDIDATE=1
 
 # uncomment out the MAME_DEBUG = line to build a version of MAME for debugging games
 # MAME_DEBUG = -DMAME_DEBUG
@@ -23,7 +23,7 @@ MAME_MMX = -DMAME_MMX
 USE_FASTCALL = 1
 
 # uncomment to build without MIDAS
-# NOMIDAS =
+NOMIDAS =
 
 # uncomment to build Helpfiles
 # HELPFILE = Mame32.hlp
@@ -88,7 +88,7 @@ Z80OBJS = $(OBJ)/cpu/z80/z80.o
 z80DEF =
 !endif
 
-DEFS   = -DLSB_FIRST -DWIN32 -DPI=3.1415926535 \
+DEFS   = -DLSB_FIRST -DWIN32 -DPI=3.1415926535 -DHAS_ADSP2105 \
          -DINLINE="static __inline" -Dinline=__inline -D__inline__=__inline \
 	 -DPNG_SAVE_SUPPORT -D_WINDOWS -DZLIB_DLL
 

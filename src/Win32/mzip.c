@@ -29,6 +29,7 @@
 #include <io.h>
 #include "mzip.h"
 #include "resource.h"
+#include "mame32.h"
 
 #define ZP_DLL_NAME     "ZIP32.DLL\0"
 #define ZP_DLL_VER_22   "\2\2\0\0"

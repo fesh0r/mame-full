@@ -33,6 +33,7 @@
 #include <stdio.h>  /* for sprintf */
 #include <stdlib.h> /* For malloc and free */
 #include <commctrl.h>
+#include "mame32.h"
 
 /*
    For compilers that don't support nameless unions
