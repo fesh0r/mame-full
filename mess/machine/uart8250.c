@@ -263,6 +263,8 @@ int uart8250_r(int n, int idx)
 {
 	int data = 0x0ff;
 
+        COM_LOG(1,"COM_r",("COM%d $%02x:\n",
+                                        n+1));
 
 	switch (idx)
 	{
