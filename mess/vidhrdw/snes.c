@@ -1,41 +1,41 @@
 /***************************************************************************
 
-snes.c
+  snes.c
 
-Video file to handle emulation of the Nintendo Super NES.
+  Video file to handle emulation of the Nintendo Super NES.
 
-Anthony Kruize
-Based on the original code by Lee Hammerton (aka Savoury Snax)
+  Anthony Kruize
+  Based on the original code by Lee Hammerton (aka Savoury Snax)
 
-Some notes on the snes video hardware:
+  Some notes on the snes video hardware:
 
-Object Attribute Memory(OAM) is made up of 128 blocks of 32 bits, followed
-by 128 blocks of 2 bits. The format for each block is:
--First Block----------------------------------------------------------------
-| x pos  | y pos  |char no.| v flip | h flip |priority|palette |char no msb|
-+--------+--------+--------+--------+--------+--------+--------+-----------+
-| 8 bits | 8 bits | 8 bits | 1 bit  | 1 bit  | 2 bits | 3 bits | 1 bit     |
--Second Block---------------------------------------------------------------
-| size  | x pos msb |
-+-------+-----------+
-| 1 bit | 1 bit     |
----------------------
+  Object Attribute Memory(OAM) is made up of 128 blocks of 32 bits, followed
+  by 128 blocks of 2 bits. The format for each block is:
+  -First Block----------------------------------------------------------------
+  | x pos  | y pos  |char no.| v flip | h flip |priority|palette |char no msb|
+  +--------+--------+--------+--------+--------+--------+--------+-----------+
+  | 8 bits | 8 bits | 8 bits | 1 bit  | 1 bit  | 2 bits | 3 bits | 1 bit     |
+  -Second Block---------------------------------------------------------------
+  | size  | x pos msb |
+  +-------+-----------+
+  | 1 bit | 1 bit     |
+  ---------------------
 
-Video RAM contains information for character data and screen maps.
-Screen maps are made up of 32 x 32 blocks of 16 bits each.
-The format for each block is:
-----------------------------------------------
-| v flip | x flip |priority|palette |char no.|
-+--------+--------+--------+--------+--------+
-| 1 bit  | 1 bit  | 1 bit  | 3 bits |10 bits |
-----------------------------------------------
-Mode 7 is stored differently. Character data and screen map are interleaved.
-There are two formats:
--Normal-----------------  -EXTBG-----------------------------
-| char data | char no. |  | priority | char data | char no. |
-+-----------+----------+  +----------+-----------+----------+
-| 8 bits    | 8 bits   |  | 1 bit    | 7 bits    | 8 bits   |
-------------------------  -----------------------------------
+  Video RAM contains information for character data and screen maps.
+  Screen maps are made up of 32 x 32 blocks of 16 bits each.
+  The format for each block is:
+  ----------------------------------------------
+  | v flip | x flip |priority|palette |char no.|
+  +--------+--------+--------+--------+--------+
+  | 1 bit  | 1 bit  | 1 bit  | 3 bits |10 bits |
+  ----------------------------------------------
+  Mode 7 is stored differently. Character data and screen map are interleaved.
+  There are two formats:
+  -Normal-----------------  -EXTBG-----------------------------
+  | char data | char no. |  | priority | char data | char no. |
+  +-----------+----------+  +----------+-----------+----------+
+  | 8 bits    | 8 bits   |  | 1 bit    | 7 bits    | 8 bits   |
+  ------------------------  -----------------------------------
 
 ***************************************************************************/
 
@@ -57,8 +57,8 @@ There are two formats:
 #ifdef MAME_DEBUG
 struct DEBUGOPTS
 {
-UINT8 input_count;
-UINT8 bg_disabled[5];
+	UINT8 input_count;
+	UINT8 bg_disabled[5];
 };
 static struct DEBUGOPTS debug_options  = {5, {0,0,0,0}};
 #endif
@@ -361,8 +361,8 @@ static void snes_update_line_2( UINT8 screen, UINT8 layer, UINT16 curline, UINT8
 	UINT8 priority;
 	/* scrolling */
 	UINT32 basevmap;
-	UINT16 vscroll, hscroll;
-	UINT8 vshift, hshift, map_size;
+	UINT16 vscroll, hscroll, vtilescroll;
+	UINT8 vshift, hshift, map_size, tile_size;
 
 #ifdef MAME_DEBUG
 	if( debug_options.bg_disabled[layer] )
@@ -371,42 +371,42 @@ static void snes_update_line_2( UINT8 screen, UINT8 layer, UINT16 curline, UINT8
 	}
 #endif
 
+	/* Find the size of the tiles (8x8 or 16x16) */
+	tile_size = (snes_ram[BGMODE] >> (4 + layer)) & 0x1;
 	/* Find the size of the map */
 	map_size = snes_ram[0x2107 + layer] & 0x3;
 	/* Find scroll info */
-	vscroll = (bg_voffset[layer] & 0x3ff) >> 3;
-	vshift = bg_voffset[layer] & 0x7;
-	hscroll = (bg_hoffset[layer] & 0x3ff) >> 3;
-	hshift = bg_hoffset[layer] & 0x7;
+	vscroll = (bg_voffset[layer] & 0x3ff) >> (3 + tile_size);
+	vshift = bg_voffset[layer] & ((8 << tile_size) - 1);
+	hscroll = (bg_hoffset[layer] & 0x3ff) >> (3 + tile_size);
+	hshift = bg_hoffset[layer] & ((8 << tile_size) - 1);
 
-	/*  1k words */
-	tilemap = layers[layer].map + ((curline >> 3) << 6);
-	/* scroll */
-	tilemap += table_vscroll[map_size][vscroll >> 5];
-
-	/* Have we scrolled into the next map? */
-	if( curline >= 256 - (bg_voffset[layer] & 0xff) )
-	{
-		tilemap = layers[layer].map + table_vscroll[map_size][(vscroll >> 5) + 1];
-		vscroll = ((curline >> 3) + (vscroll & 0x1f)) - 32;
-	}
+	/* Find vertical scroll amount */
+	vtilescroll = vscroll + (curline >> (3 + tile_size));
 	/* figure out which line to draw */
-	line = (curline % 8) + vshift;
-	if( line > 7 )	/* scrolled into the next tile */
+	line = (curline % (8 << tile_size)) + vshift;
+	if( line > ((8 << tile_size) - 1) )	/* scrolled into the next tile */
 	{
-		vscroll++;	/* pretend we scrolled by 1 line */
-		line -= 8;
+		vtilescroll++;	/* pretend we scrolled by 1 tile line */
+		line -= (8 << tile_size);
 	}
-	/* scroll vertically */
-	tilemap += (vscroll & 0x1f) << 6;
-	/* Remember the location for later */
-	basevmap = tilemap;
+	if( vtilescroll >= 128 )
+		vtilescroll -= 128;
 
-	/* scroll horizontally */
+	/* Jump to base map address */
+	tilemap = layers[layer].map;
+	/* Offset vertically */
+	tilemap += table_vscroll[map_size][vtilescroll >> 5];
+	/* Scroll vertically */
+	tilemap += (vtilescroll & 0x1f) << 6;
+	/* Remember this position */
+	basevmap = tilemap;
+	/* Offset horizontally */
 	tilemap += table_hscroll[map_size][hscroll >> 5];
+	/* Scroll horizontally */
 	tilemap += (hscroll & 0x1f) << 1;
 
-	for( ii = 0; ii < 66; ii += 2 )
+	for( ii = 0; ii < (66 >> tile_size); ii += 2 )
 	{
 		/* FIXME: A quick hack to stop memory overwrite.... */
 		if( tilemap >= 0x20000 )
@@ -425,16 +425,26 @@ static void snes_update_line_2( UINT8 screen, UINT8 layer, UINT16 curline, UINT8
 		pal = (snes_vram[tilemap + ii + 1] & 0x1c);		/* 8 palettes of 4 colours */
 		tile = (snes_vram[tilemap + ii + 1] & 0x3) << 8;
 		tile |= snes_vram[tilemap + ii];
-		tile_line = line;
+		if( line > 7 )
+		{
+			tile += 32;
+			tile_line = line - 8;
+		}
+		else
+		{
+			tile_line = line;
+		}
 		if( vflip )
-			tile_line = -line + 7;
+			tile_line = -tile_line + 7;
 		tile_line <<= 1;
 
 		/* Special case for bg3 */
 		if( layer == 2 && bg3_pty )
 			priority = 9;
 
-		snes_draw_tile_2( screen, layers[layer].data + (tile << 4) + tile_line, ((ii >> 1) * 8) - hshift, priority, hflip, pal, layers[layer].blend, layers[layer].clip );
+		snes_draw_tile_2( screen, layers[layer].data + (tile << 4) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift, priority, hflip, pal, layers[layer].blend, layers[layer].clip );
+		if( tile_size )
+			snes_draw_tile_2( screen, layers[layer].data + (tile << 4) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift + 8, priority, hflip, pal, layers[layer].blend, layers[layer].clip );
 	}
 }
 
@@ -451,8 +461,8 @@ static void snes_update_line_4( UINT8 screen, UINT8 layer, UINT16 curline )
 	UINT8 priority;
 	/* scrolling */
 	UINT32 basevmap;
-	UINT16 vscroll, hscroll;
-	UINT8 vshift, hshift, map_size;
+	UINT16 vscroll, hscroll, vtilescroll;
+	UINT8 vshift, hshift, map_size, tile_size;
 
 #ifdef MAME_DEBUG
 	if( debug_options.bg_disabled[layer] )
@@ -461,42 +471,42 @@ static void snes_update_line_4( UINT8 screen, UINT8 layer, UINT16 curline )
 	}
 #endif
 
+	/* Find the size of the tiles (8x8 or 16x16) */
+	tile_size = (snes_ram[BGMODE] >> (4 + layer)) & 0x1;
 	/* Find the size of the map */
 	map_size = snes_ram[0x2107 + layer] & 0x3;
 	/* Find scroll info */
-	vscroll = (bg_voffset[layer] & 0x3ff) >> 3;
-	vshift = bg_voffset[layer] & 0x7;
-	hscroll = (bg_hoffset[layer] & 0x3ff) >> 3;
-	hshift = bg_hoffset[layer] & 0x7;
+	vscroll = (bg_voffset[layer] & 0x3ff) >> (3 + tile_size);
+	vshift = bg_voffset[layer] & ((8 << tile_size) - 1);
+	hscroll = (bg_hoffset[layer] & 0x3ff) >> (3 + tile_size);
+	hshift = bg_hoffset[layer] & ((8 << tile_size) - 1);
 
-	/*  1k words */
-	tilemap = layers[layer].map + ((curline >> 3) << 6);
-	/* scroll */
-	tilemap += table_vscroll[map_size][vscroll >> 5];
-
-	/* Have we scrolled into the next map? */
-	if( curline >= 256 - (bg_voffset[layer] & 0xff) )
-	{
-		tilemap = layers[layer].map + table_vscroll[map_size][(vscroll >> 5) + 1];
-		vscroll = ((curline >> 3) + (vscroll & 0x1f)) - 32;
-	}
+	/* Find vertical scroll amount */
+	vtilescroll = vscroll + (curline >> (3 + tile_size));
 	/* figure out which line to draw */
-	line = (curline % 8) + vshift;
-	if( line > 7 )	/* scrolled into the next tile */
+	line = (curline % (8 << tile_size)) + vshift;
+	if( line > ((8 << tile_size) - 1) )	/* scrolled into the next tile */
 	{
-		vscroll++;	/* pretend we scrolled by 1 line */
-		line -= 8;
+		vtilescroll++;	/* pretend we scrolled by 1 tile line */
+		line -= (8 << tile_size);
 	}
-	/* scroll vertically */
-	tilemap += (vscroll & 0x1f) << 6;
-	/* Remember the location for later */
-	basevmap = tilemap;
+	if( vtilescroll >= 128 )
+		vtilescroll -= 128;
 
-	/* scroll horizontally */
+	/* Jump to base map address */
+	tilemap = layers[layer].map;
+	/* Offset vertically */
+	tilemap += table_vscroll[map_size][vtilescroll >> 5];
+	/* Scroll vertically */
+	tilemap += (vtilescroll & 0x1f) << 6;
+	/* Remember this position */
+	basevmap = tilemap;
+	/* Offset horizontally */
 	tilemap += table_hscroll[map_size][hscroll >> 5];
+	/* Scroll horizontally */
 	tilemap += (hscroll & 0x1f) << 1;
 
-	for( ii = 0; ii < 66; ii += 2 )
+	for( ii = 0; ii < (66 >> tile_size); ii += 2 )
 	{
 		/* FIXME: A quick hack to stop memory overwrite.... */
 		if( tilemap >= 0x20000 )
@@ -515,12 +525,22 @@ static void snes_update_line_4( UINT8 screen, UINT8 layer, UINT16 curline )
 		pal = (snes_vram[tilemap + ii + 1] & 0x1c) << 2;	/* 8 palettes of 16 colours */
 		tile = (snes_vram[tilemap + ii + 1] & 0x3) << 8;
 		tile |= snes_vram[tilemap + ii];
-		tile_line = line;
+		if( line > 7 )
+		{
+			tile += 16;
+			tile_line = line - 8;
+		}
+		else
+		{
+			tile_line = line;
+		}
 		if( vflip )
-			tile_line = -line + 7;
+			tile_line = -tile_line + 7;
 		tile_line <<= 1;
 
-		snes_draw_tile_4( screen, layers[layer].data + (tile << 5) + tile_line, ((ii >> 1) * 8)  - hshift, priority, hflip, pal, layers[layer].blend, layers[layer].clip );
+		snes_draw_tile_4( screen, layers[layer].data + (tile << 5) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift, priority, hflip, pal, layers[layer].blend, layers[layer].clip );
+		if( tile_size )
+			snes_draw_tile_4( screen, layers[layer].data + ((tile+1) << 5) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift + 8, priority, hflip, pal, layers[layer].blend, layers[layer].clip );
 	}
 }
 
@@ -537,8 +557,8 @@ static void snes_update_line_8( UINT8 screen, UINT8 layer, UINT16 curline )
 	UINT8 priority;
 	/* scrolling */
 	UINT32 basevmap;
-	UINT16 vscroll, hscroll;
-	UINT8 vshift, hshift, map_size;
+	UINT16 vscroll, hscroll, vtilescroll;
+	UINT8 vshift, hshift, map_size, tile_size;
 
 #ifdef MAME_DEBUG
 	if( debug_options.bg_disabled[layer] )
@@ -547,42 +567,42 @@ static void snes_update_line_8( UINT8 screen, UINT8 layer, UINT16 curline )
 	}
 #endif
 
+	/* Find the size of the tiles (8x8 or 16x16) */
+	tile_size = (snes_ram[BGMODE] >> (4 + layer)) & 0x1;
 	/* Find the size of the map */
 	map_size = snes_ram[0x2107 + layer] & 0x3;
 	/* Find scroll info */
-	vscroll = (bg_voffset[layer] & 0x3ff) >> 3;
-	vshift = bg_voffset[layer] & 0x7;
-	hscroll = (bg_hoffset[layer] & 0x3ff) >> 3;
-	hshift = bg_hoffset[layer] & 0x7;
+	vscroll = (bg_voffset[layer] & 0x3ff) >> (3 + tile_size);
+	vshift = bg_voffset[layer] & ((8 << tile_size) - 1);
+	hscroll = (bg_hoffset[layer] & 0x3ff) >> (3 + tile_size);
+	hshift = bg_hoffset[layer] & ((8 << tile_size) - 1);
 
-	/*  1k words */
-	tilemap = layers[layer].map + ((curline >> 3) << 6);
-	/* scroll */
-	tilemap += table_vscroll[map_size][vscroll >> 5];
-
-	/* Have we scrolled into the next map? */
-	if( curline >= 256 - (bg_voffset[layer] & 0xff) )
-	{
-		tilemap = layers[layer].map + table_vscroll[map_size][(vscroll >> 5) + 1];
-		vscroll = ((curline >> 3) + (vscroll & 0x1f)) - 32;
-	}
+	/* Find vertical scroll amount */
+	vtilescroll = vscroll + (curline >> (3 + tile_size));
 	/* figure out which line to draw */
-	line = (curline % 8) + vshift;
-	if( line > 7 )	/* scrolled into the next tile */
+	line = (curline % (8 << tile_size)) + vshift;
+	if( line > ((8 << tile_size) - 1) )	/* scrolled into the next tile */
 	{
-		vscroll++;	/* pretend we scrolled by 1 line */
-		line -= 8;
+		vtilescroll++;	/* pretend we scrolled by 1 tile line */
+		line -= (8 << tile_size);
 	}
-	/* scroll vertically */
-	tilemap += (vscroll & 0x1f) << 6;
-	/* Remember the location for later */
-	basevmap = tilemap;
+	if( vtilescroll >= 128 )
+		vtilescroll -= 128;
 
-	/* scroll horizontally */
+	/* Jump to base map address */
+	tilemap = layers[layer].map;
+	/* Offset vertically */
+	tilemap += table_vscroll[map_size][vtilescroll >> 5];
+	/* Scroll vertically */
+	tilemap += (vtilescroll & 0x1f) << 6;
+	/* Remember this position */
+	basevmap = tilemap;
+	/* Offset horizontally */
 	tilemap += table_hscroll[map_size][hscroll >> 5];
+	/* Scroll horizontally */
 	tilemap += (hscroll & 0x1f) << 1;
 
-	for( ii = 0; ii < 66; ii += 2 )
+	for( ii = 0; ii < (66 >> tile_size); ii += 2 )
 	{
 		/* FIXME: A quick hack to stop memory overwrite.... */
 		if( tilemap >= 0x20000 )
@@ -601,12 +621,22 @@ static void snes_update_line_8( UINT8 screen, UINT8 layer, UINT16 curline )
 		pal = (snes_vram[tilemap + ii + 1] & 0x1c);		/* what does this do for 8 bit screen? */
 		tile = (snes_vram[tilemap + ii + 1] & 0x3) << 8;
 		tile |= snes_vram[tilemap + ii];
-		tile_line = line;
+		if( line > 7 )
+		{
+			tile += 8;
+			tile_line = line - 8;
+		}
+		else
+		{
+			tile_line = line;
+		}
 		if( vflip )
-			tile_line = -line + 7;
+			tile_line = -tile_line + 7;
 		tile_line <<= 1;
 
-		snes_draw_tile_8( screen, layers[layer].data + (tile << 6) + tile_line, (ii >> 1) * 8, priority, hflip, layers[layer].blend, layers[layer].clip );
+		snes_draw_tile_8( screen, layers[layer].data + (tile << 6) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift, priority, hflip, layers[layer].blend, layers[layer].clip );
+		if( tile_size )
+			snes_draw_tile_8( screen, layers[layer].data + (tile << 6) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift + 8, priority, hflip, layers[layer].blend, layers[layer].clip );
 	}
 }
 
