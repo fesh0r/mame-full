@@ -26,16 +26,16 @@ CPUDEFS += -DHAS_CDP1802=0
 endif
 
 
-CPU=$(strip $(findstring CP1600@,$(CPUS)))
+CPU=$(strip $(findstring CP1610@,$(CPUS)))
 ifneq ($(CPU),)
-CPD = mess/cpu/cp1600
+CPD = mess/cpu/cp1610
 OBJDIRS += $(OBJ)/$(CPD)
-CPUDEFS += -DHAS_CP1600=1
-CPUOBJS += $(OBJ)/$(CPD)/cp1600.o
-DBGOBJS += $(OBJ)/$(CPD)/1600dasm.o
-$(OBJ)/$(CPD)/cp1600.o: $(CPD)/cp1600.c $(CPD)/cp1600.h
+CPUDEFS += -DHAS_CP1610=1
+CPUOBJS += $(OBJ)/$(CPD)/cp1610.o
+DBGOBJS += $(OBJ)/$(CPD)/1610dasm.o
+$(OBJ)/$(CPD)/cp1610.o: $(CPD)/cp1610.c $(CPD)/cp1610.h
 else
-CPUDEFS += -DHAS_CP1600=0
+CPUDEFS += -DHAS_CP1610=0
 endif
 
 

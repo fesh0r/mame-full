@@ -170,8 +170,8 @@
 #if (HAS_CDP1802)
 #include "cpu/cdp1802/cdp1802.h"
 #endif
-#if (HAS_CP1600)
-#include "cpu/cp1600/cp1600.h"
+#if (HAS_CP1610)
+#include "cpu/cp1610/cp1610.h"
 #endif
 #if (HAS_F8)
 #include "cpu/f8/f8.h"
@@ -676,9 +676,9 @@ const struct cpu_interface cpuintrf[] =
 #define cdp1802_ICount cdp1802_icount
 	CPU0(CDP1802,  cdp1802,  1,  0,1.00, 8, 16,	  0,16,BE,1, 3	),
 #endif
-#if (HAS_CP1600)
-#define cp1600_ICount cp1600_icount
-	CPU0(CP1600,   cp1600,	 4,  0,1.00, 16, 24bew,  -1,17,BE,2,3	),
+#if (HAS_CP1610)
+#define cp1610_ICount cp1610_icount
+	CPU0(CP1610,   cp1610,	 4,  0,1.00, 16, 24bew,  -1,17,BE,2,3	),
 #endif
 #if (HAS_F8)
 #define f8_ICount f8_icount

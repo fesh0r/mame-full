@@ -313,8 +313,8 @@ enum
 #if (HAS_CDP1802)
 	CPU_CDP1802,
 #endif
-#if (HAS_CP1600)
-	CPU_CP1600,
+#if (HAS_CP1610)
+	CPU_CP1610,
 #endif
 #if (HAS_F8)
 	CPU_F8,

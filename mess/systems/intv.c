@@ -384,7 +384,7 @@ static INTERRUPT_GEN( intv_interrupt2 )
 
 static MACHINE_DRIVER_START( intv )
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", CP1600, 3579545/4)        /* Colorburst/4 */
+	MDRV_CPU_ADD_TAG("main", CP1610, 3579545/4)        /* Colorburst/4 */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(intv_interrupt,1)
 	MDRV_FRAMES_PER_SECOND(59.92)

@@ -1,7 +1,7 @@
 #include "driver.h"
 #include "vidhrdw/stic.h"
 #include "includes/intv.h"
-#include "cpu/cp1600/cp1600.h"
+#include "cpu/cp1610/cp1610.h"
 #include "image.h"
 
 UINT8 intv_gramdirty;
@@ -444,11 +444,11 @@ DRIVER_INIT( intv )
 
 MACHINE_INIT( intv )
 {
-	cpu_irq_line_vector_w(0, CP1600_RESET, 0x1000);
+	cpu_irq_line_vector_w(0, CP1610_RESET, 0x1000);
 
 	/* These are actually the same vector, and INTR is unused */
-	cpu_irq_line_vector_w(0, CP1600_INT_INTRM, 0x1004);
-	cpu_irq_line_vector_w(0, CP1600_INT_INTR,  0x1004);
+	cpu_irq_line_vector_w(0, CP1610_INT_INTRM, 0x1004);
+	cpu_irq_line_vector_w(0, CP1610_INT_INTR,  0x1004);
 
 	return;
 }
@@ -456,12 +456,12 @@ MACHINE_INIT( intv )
 
 static void intv_interrupt_complete(int x)
 {
-	cpu_set_irq_line(0, CP1600_INT_INTRM, CLEAR_LINE);
+	cpu_set_irq_line(0, CP1610_INT_INTRM, CLEAR_LINE);
 }
 
 INTERRUPT_GEN( intv_interrupt )
 {
-	cpu_set_irq_line(0, CP1600_INT_INTRM, ASSERT_LINE);
+	cpu_set_irq_line(0, CP1610_INT_INTRM, ASSERT_LINE);
 	sr1_int_pending = 1;
 	timer_set(TIME_NOW+TIME_IN_CYCLES(3791, 0), 0, intv_interrupt_complete);
 	stic_screenrefresh();
