@@ -16,7 +16,7 @@ Contents of directory contrib/tools
 	Description:	This file
 
 4)	Name:		romalizer
-	Author:		Christopher Stone <tkmame@retrogames.com>
+	Author:		Christopher Stone <tkmame@ztnet.com>
 	Description:	a rom cleaner/sorting tcl script
 	Notes:		see the contents of the script, or run it with -help
 			for more info
@@ -105,4 +105,4 @@ Contents of directory contrib/tools
 			onto CDs.  All games on a CD can be played without 
 			requiring ROMs from other CDs.
 	Usage:		makecd_mame.pl gamedir burndir gameslist
-			See script for more information. 
+			See script for more information.

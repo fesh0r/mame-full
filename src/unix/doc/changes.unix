@@ -2,6 +2,59 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.69.2, ? June 2003
+	- Fixed an instance of MAME_DEBUG to DEBUG in unix.mak.  (Christopher
+	  Stone)
+	- Removed an obsolete (?) #include from osdutils.h that was interfering
+	  with MESS debug and IRIX builds.  Fixes Bugzilla bug #385.  (Frank 
+	  Everdij, Christopher Stone)
+	- Fixed some unused variable warnings when building non-debug versions
+	  of glgen.c and esound.c.
+	- Fixed the default values for -sysinfo_file and -messinfo_file, which
+	  were missing a '/'.
+	- Fixed a regression in src/mame.h that caused a bus error in Solaris 
+	  when parsing the crc_only option.  (Paul Priest)
+	- Fixed the handling of leading zeros in the fractional part of a float
+	  in src/unix/snprintf.c.  (Chris Kirmse)
+	- Building 'tools' for xmess works again.
+	- Reduced the core changes needed to support networking, rapidfire, and
+	  IRIX-specific support.  Note that MAME_NET in the makefile has been 
+	  changed to XMAME_NET.
+
+Release 0.69.1, 26 May 2003
+	- Almost everything from MAME 0.69.  The included MESS is version 0.68.
+	- Re-added Ben Collins' core change that adds support for extra mice.
+	- Rearranged the doc directory so that MAME- and MESS-specific files are
+	  in their own subdirectories.
+	- Reverted to using the original fronthlp.c (from 0.67.2) modified to 
+	  work with the 0.69 core.
+	- Building with the debugger enabled now works.  Note that in the 
+	  makefile, MAME_DEBUG is now just DEBUG.  (Christopher Stone)
+	- Fixed a logic bug in the XInput devices button-handling.  (Ben 
+	  Collins)
+	- Added UGCI coin/play support based on the libugci library for Linux's
+	  HIDDevice layer.  See http://www.phunnypharm.org/ugci/  (Ben Collins)
+	- Building the neomame target works again.  (Steve Behling)
+	- Made a tiny fix in fileio.c that allows specifying direct paths to 
+	  roms to work again; e.g., ./xmame.x11 ./moo.zip
+
+Release 0.68.1, 22 May 2003
+	- Almost everything from MAME 0.68 and MESS 0.68.
+	- Fixed the analog joystick support so that the Y-axis is recognized as
+	  analog.  (Sebastien Devaux)
+	- The command line is now parsed even if the display cannot be opened.
+	  (Christopher Stone, David Mitchell)
+	- Added support to the core for 4-button mice and 10-button joysticks.
+	  (Ben Collins)
+	- Removed superfluous checks for use_mouse in the OpenStep and SVGA 
+	  targets.  (Ben Collins)
+	- Fixed several problems and did a lot of cleanup in the XInput code, 
+	  especially for the output (e.g., showing detection status).  (Ben 
+	  Collins)
+	- Made a less intrusive change to fm.c which removes LFO support in 
+	  YM2610-only builds.  (Jarek Burczynski)
+	- Fixed a few problems with -listinfo output.  (Andrea Mazzoleni)
+
 Release 0.67.2, 12 April 2003
 	- Fixed a bug in unix.mak that caused libusb to be linked in when the 
 	  USB joystick driver was not enabled.

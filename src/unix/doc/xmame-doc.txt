@@ -4,7 +4,7 @@ Juan Antonio Martinez [mailto:jantonio@dit.upm.es||jantonio@dit.upm.es] and Hans
 Herrmann (4 doc/sgml) [mailto:rene.herrmann@berlin.de||rene.herrmann@berlin.de] and Lawrence Gold (minor 
 editing) [mailto:gold@aros.net||gold@aros.net] and David Heremans (minor editing)
 
-v2.1.27, 12 April 2003
+v2.1.29, 26 May 2003
 
 Abstract
 
@@ -2685,7 +2685,7 @@ maintainer. --Lawrence Gold)
 
 * The xmame/xmess sources
 
-  [download/xmame-0.67.2.tar.bz2||xmame/xmess-0.67.2 sources]
+  [download/xmame-0.69.1.tar.bz2||xmame/xmess-0.69.1 sources]
 
 * xmame/xmess FAQ & Installation Guide:
 
@@ -2759,7 +2759,7 @@ maintainer. --Lawrence Gold)
 
 * The official M.A.M.E home is at [http://www.mame.net||http://www.mame.net]
 
-* The official mess site is [http://mess.emuverse.com||http://mess.emuverse.com]
+* The official mess site is [http://www.mess.org||http://www.mess.org]
 
 * Some other emulation sites are [http://www.vg-network.com||http://www.vg-network.com] and [http://www.retrogames.com||http://www.retrogames.com]
 

@@ -47,48 +47,28 @@ fix-comments `find . -path './src/unix' -prune -o -name "*.[ch]" -print`
 rm -rf artwork bios cfg cheat memcard nvram snap software
 
 # Rename some files.
-if [ -f mess.txt ]; then
-  mv mess.txt doc/readme.mess
-fi
-
 if [ -f messnew.txt ]; then
-  mv messnew.txt doc/changes.mess
-fi
-
-if [ -f docs/messold.txt ]; then
-  mv docs/messold.txt doc/old-changes.mess
-fi
-
-if [ -f docs/credits.txt ]; then
-  mv docs/credits.txt doc/credits.mess
-fi
-
-if [ -f docs/messhelp.txt ]; then
-  mv docs/messhelp.txt doc/
-fi
-
-if [ -f docs/windows.txt ]; then
-  mv docs/windows.txt doc/
-fi
-
-if [ -f docs/compilewin.html ]; then
-  mv docs/compilewin.html doc/
+  mv messnew.txt doc/mess/
 fi
 
 if [ -f sysinfo.dat ]; then
-  mv sysinfo.dat doc/
+  mv sysinfo.dat doc/mess/
 fi
 
 if [ -f tools/imgtool.txt ]; then
-  mv tools/imgtool.txt doc/
+  mv tools/imgtool.txt doc/mess/
 fi
 
 if [ -f tools/messroms.txt ]; then
-  mv tools/messroms.txt doc/
+  mv tools/messroms.txt doc/mess/
 fi
 
-# Delete the MESS tools and docs directories.
-rm -r tools
+if [ -d docs ]; then
+  mv docs/* doc/mess/
+  rm -r docs
+fi
+
+# Delete the MESS docs directory.
 rm -r docs
 
 # Clean up the files left over from d2u and fix-comments.

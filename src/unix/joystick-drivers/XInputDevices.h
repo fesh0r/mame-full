@@ -15,14 +15,12 @@ typedef struct {
   char *deviceName;
   XDeviceInfo *info;
   int mameDevice;
-  int deltas[JOY_AXIS];
   int previousValue[JOY_AXIS];
   int neverMoved;
 } XInputDeviceData;
 
 /* prototypes */
 void XInputDevices_init(void);
-void XInputPollDevices(int, int *, int *);
 int XInputProcessEvent(XEvent *);
 
 

@@ -242,6 +242,6 @@ void plugin_manager_list_plugins(struct plugin_manager_struct *manager,
    
    for(i=0; i < manager->data_size; i++)
       if(manager->data[i].plugin)
-         fprint_colums(f, manager->data[i].plugin->name,
+         fprint_columns(f, manager->data[i].plugin->name,
             manager->data[i].plugin->description);
 }

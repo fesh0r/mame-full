@@ -302,7 +302,7 @@ void sysdep_mouse_poll (void)
 {
 	int i, mouse_buttons;
 	
-	if((mouse_fd < 0) || !use_mouse)
+	if (mouse_fd < 0)
 	   return;
 	
 	mouse_update();

@@ -53,6 +53,7 @@
  ((code < JOY_LIST_LEN) && \
   ((code % JOY_LIST_TOTAL_ENTRIES) <  JOY_LIST_AXIS_ENTRIES))
 
+
   
 /* mouse doesn't support axis */
 
@@ -79,7 +80,7 @@
 #define MOUSE_GET_BUTTON(code) \
  ((code - JOY_LIST_LEN) % MOUSE_LIST_TOTAL_ENTRIES)
 
-enum { JOY_NONE, JOY_I386, JOY_PAD, JOY_X11, JOY_I386NEW, JOY_USB, JOY_SDL };
+enum { JOY_NONE, JOY_I386, JOY_PAD, JOY_X11, JOY_I386NEW, JOY_USB, JOY_PS2, JOY_SDL };
 
 /*** variables ***/
 
@@ -110,18 +111,30 @@ struct mousedata_struct
    int deltas[MOUSE_AXIS];
 };
 
+struct rapidfire_struct
+{
+   int setting[10];
+   int status[10];
+   int enable;
+   int ctrl_button;
+   int ctrl_prev_status;
+};
+
 EXTERN struct joydata_struct joy_data[JOY];
 EXTERN struct mousedata_struct mouse_data[MOUSE];
+EXTERN struct rapidfire_struct rapidfire_data[4];
 EXTERN void (*joy_poll_func) (void);
 EXTERN int joytype;
 EXTERN int hotrod;
 EXTERN int hotrodse;
 EXTERN int is_usb_ps_gamepad;
+EXTERN int rapidfire_enable;
 
 extern struct rc_option joy_i386_opts[];
 extern struct rc_option joy_pad_opts[];
 extern struct rc_option joy_x11_opts[];
 extern struct rc_option joy_usb_opts[];
+extern struct rc_option joy_ps2_opts[];
 
 #ifdef USE_XINPUT_DEVICES
 #include "joystick-drivers/XInputDevices.h"
@@ -133,12 +146,14 @@ void joy_i386_init(void);
 void joy_pad_init(void);
 void joy_x11_init(void);
 void joy_usb_init(void);
+void joy_ps2_init(void);
+void joy_ps2_exit(void);
 void joy_SDL_init(void);
 #undef EXTERN
 
 /*
- * JOY macros copied from windows mame source code
- * Sebastien Devaux <sebastien.devaux@laposte.net> 02/2003
+ * sdevaux 02/2003 : JOY macros copied from windows mame source code
+ *          but don't know if InputCode data type is strictely equivalent
  */ 
 /* macros for building/mapping keycodes */
 #define JOYCODE(joy, type, index)	((index) | ((type) << 8) | ((joy) << 12))

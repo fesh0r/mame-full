@@ -28,7 +28,7 @@ int osd_init(void)
 /*
  * Cleanup routines to be executed when the program is terminated.
  */
-void osd_exit (void)
+void osd_exit(void)
 {
 #ifdef MAME_NET
 	osd_net_close();
@@ -37,9 +37,9 @@ void osd_exit (void)
 }
 
 
-int main (int argc, char **argv)
+int main(int argc, char **argv)
 {
-	int res;
+	int res, res2;
 
 #ifdef __QNXNTO__
 	printf("info: Trying to enable swapfile.... ");
@@ -48,27 +48,28 @@ int main (int argc, char **argv)
 #endif
 
 	/* some display methods need to do some stuff with root rights */
-	if (sysdep_init()!= OSD_OK) exit(OSD_NOT_OK);
-	
-	/* to be absolutly safe force giving up root rights here in case
+	res2 = sysdep_init();
+
+	/* to be absolutely safe force giving up root rights here in case
 	   a display method doesn't */
-	if(setuid(getuid()))
+	if (setuid(getuid()))
 	{
 		perror("setuid");
 		sysdep_close();
 		return OSD_NOT_OK;
 	}
-	
-        /* Set the title, now auto build from defines from the makefile */
-        sprintf(title,"%s (%s) version %s", NAME, DISPLAY_METHOD,
-           build_version);
+
+	/* Set the title, now auto build from defines from the makefile */
+	sprintf(title,"%s (%s) version %s", NAME, DISPLAY_METHOD,
+			build_version);
 
 	/* parse configuration file and environment */
-	if ((res = config_init(argc, argv)) != 1234) goto leave;
-	
-        /* Check the colordepth we're requesting */
-        if (!options.color_depth && !sysdep_display_16bpp_capable())
-           options.color_depth = 8;
+	if ((res = config_init(argc, argv)) != 1234 || res2 == OSD_NOT_OK)
+		goto leave;
+
+	/* Check the colordepth we're requesting */
+	if (!options.color_depth && !sysdep_display_16bpp_capable())
+		options.color_depth = 8;
 
 	/* 
 	 * Initialize whatever is needed before the display is actually 

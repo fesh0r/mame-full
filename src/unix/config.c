@@ -15,8 +15,6 @@
 #include "sysdep/misc.h"
 #include "effect.h"
 
-extern int frontend_help(const char *gamename);
-
 /* be sure that device names are nullified */
 extern void XInput_trackballs_reset();
 
@@ -39,8 +37,9 @@ static int loadconfig = 1;
 static char *language = NULL;
 static char *gamename = NULL;
 char *rompath_extra = NULL;
+#ifndef MESS
 static char *defaultgamename;
-#ifdef MESS
+#else
 static const char *mess_opts;
 void build_crc_database_filename(int game_index);
 
@@ -75,21 +74,11 @@ static int add_device(struct rc_option *option, const char *arg, int priority);
 /* struct definitions */
 static struct rc_option opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
-   { NULL,		NULL,			rc_link,	video_opts,
-     NULL,		0,			0,		NULL,
-     NULL },
-   { NULL,		NULL,			rc_link,	sound_opts,
-     NULL,		0,			0,		NULL,
-     NULL },
-   { NULL,		NULL,			rc_link,	input_opts,
-     NULL,		0,			0,		NULL,
-     NULL },
-   { NULL,		NULL,			rc_link,	network_opts,
-     NULL,		0,			0,		NULL,
-     NULL },
-   { NULL,		NULL,			rc_link,	fileio_opts,
-     NULL,		0,			0,		NULL,
-     NULL },
+	{ NULL, NULL, rc_link, video_opts, NULL, 0, 0, NULL, NULL },
+	{ NULL, NULL, rc_link, sound_opts, NULL, 0, 0, NULL, NULL },
+	{ NULL, NULL, rc_link, input_opts, NULL, 0, 0, NULL, NULL },
+	{ NULL, NULL, rc_link, network_opts, NULL, 0, 0, NULL, NULL },
+	{ NULL, NULL, rc_link, fileio_opts, NULL, 0, 0, NULL, NULL },
 #ifdef MESS
 	/* FIXME - these option->names should NOT be hardcoded! */
 	{ "MESS specific options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
@@ -107,60 +96,29 @@ static struct rc_option opts[] = {
 	{ "quickload", "quik", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to quickload device" },
 	{ "ramsize", "ram", rc_string, &mess_opts, NULL, 0, 0, specify_ram, "Specifies size of RAM (if supported by driver)" },
 #else
-   { "MAME Related",	NULL,			rc_seperator,	NULL,
-     NULL,		0,			0,		NULL,
-     NULL },
-   { "defaultgame",	"def",			rc_string,	&defaultgamename,
-     "pacman",		0,			0,		NULL,
-     "Set the default game started when no game is given on the commandline, only useful for in the configfiles" },
+	{ "MAME Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
+	{ "defaultgame", "def", rc_string, &defaultgamename, "pacman", 0, 0, NULL, "Set the default game started when no game is given on the commandline, only useful for in the configfiles" },
 #endif
-   { "language",	"lang",			rc_string,	&language,
-     "english",		0,			0,		NULL,
-     "Select the language for the menus and osd" },
-   { "fuzzycmp",	"fc",			rc_bool,	&use_fuzzycmp,
-     "1",		0,			0,		NULL,
-     "Enable/disable use of fuzzy gamename matching when there is no exact match" },
-   { "cheat",		"c",			rc_bool,	&options.cheat,
-     "0",		0,			0,		NULL,
-     "Enable/disable cheat subsystem" },
-   { "skip_disclaimer",	NULL,			rc_bool,	&options.skip_disclaimer,
-     "0",		0,			0,		NULL,
-     "Skip displaying the disclaimer screen" },
-   { "skip_gameinfo",	NULL,			rc_bool,	&options.skip_gameinfo,
-     "0",		0,			0,		NULL,
-     "Skip displaying the game info screen" },
+	{ "language", "lang", rc_string, &language, "english", 0, 0, NULL, "Select the language for the menus and osd" },
+	{ "fuzzycmp", "fc", rc_bool, &use_fuzzycmp, "1", 0, 0, NULL, "Enable/disable use of fuzzy gamename matching when there is no exact match" },
+	{ "cheat", "c", rc_bool, &options.cheat, "0", 0, 0, NULL, "Enable/disable cheat subsystem" },
+	{ "skip_disclaimer", NULL, rc_bool, &options.skip_disclaimer, "0", 0, 0, NULL, "Skip displaying the disclaimer screen" },
+	{ "skip_gameinfo", NULL, rc_bool, &options.skip_gameinfo, "0", 0, 0, NULL, "Skip displaying the game info screen" },
+	{ "crconly", NULL, rc_bool, &options.crc_only, "0", 0, 0, NULL, "Use only CRC for all integrity checks" },
+	{ "bios", NULL, rc_int, &options.bios, "0", 0, 14, NULL, "Change system bios" },
 #ifdef MAME_DEBUG
-   { "debug",		"d",			rc_bool,	&options.mame_debug,
-     NULL,		0,			0,		NULL,
-     "Enable/disable debugger" },
-   { "debug-size",	"ds",			rc_use_function, NULL,
-     "640x480",		0,			0,		config_handle_debug_size,
-     "Specify the resolution/windowsize to use for the debugger(window) in the form of XRESxYRES (minimum size = 640x480)" },
+	{ "debug", "d", rc_bool, &options.mame_debug, NULL, 0, 0, NULL, "Enable/disable debugger" },
+	{ "debug-size", "ds", rc_use_function, NULL, "640x480", 0, 0, config_handle_debug_size, "Specify the resolution/window size to use for the debugger (window) in the form of XRESxYRES (minimum size = 640x480)" },
 #endif
-   { NULL,		NULL,			rc_link,	frontend_opts,
-     NULL,		0,			0,		NULL,
-     NULL },
-   { "General Options",	NULL,			rc_seperator,	NULL,
-     NULL,		0,			0,		NULL,
-     NULL },
-   { "loadconfig",	"lcf",			rc_bool,	&loadconfig,
-     "1",		0,			0,		NULL,
-     "Load (don't load) configfiles" },
-   { "showconfig",	"sc",			rc_set_int,	&showconfig,
-     NULL,		1,			0,		NULL,
-     "Display running parameters in rc style" },
-   { "manhelp",		"mh",			rc_set_int,	&showmanusage,
-     NULL,		1,			0,		NULL,
-     "Print commandline help in man format, useful for manpage creation" },
-   { "version",		"V",			rc_set_int,	&showversion,
-     NULL,		1,			0,		NULL,
-     "Display version" },
-   { "help",		"?",			rc_set_int,	&showusage,
-     NULL,		1,			0,		NULL,
-     "Show this help" },
-   { NULL,		NULL,			rc_end,		NULL,
-     NULL,		0,			0,		NULL,
-     NULL }
+	{ NULL, NULL, rc_link, frontend_list_opts, NULL, 0, 0, NULL, NULL },
+	{ NULL, NULL, rc_link, frontend_ident_opts, NULL, 0, 0, NULL, NULL },
+	{ "General Options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
+	{ "loadconfig", "lcf", rc_bool, &loadconfig, "1", 0, 0, NULL, "Load (don't load) configfiles" },
+	{ "showconfig", "sc", rc_set_int, &showconfig, NULL, 1, 0, NULL, "Display running parameters in rc style" },
+	{ "manhelp", "mh", rc_set_int, &showmanusage, NULL, 1, 0, NULL, "Print commandline help in man format, useful for manpage creation" },
+	{ "version", "V", rc_set_int, &showversion, NULL, 1, 0, NULL, "Display version" },
+	{ "help", "?", rc_set_int, &showusage, NULL, 1, 0, NULL, "Show this help" },
+	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 
 /* fuzzy string compare, compare short string against long string        */
@@ -283,18 +241,18 @@ int config_init (int argc, char *argv[])
 #ifdef LSB_FIRST
 	if(*((unsigned short*)lsb_test) != 0x0100)
 #else	
-		if(*((unsigned short*)lsb_test) != 0x0001)
+	if(*((unsigned short*)lsb_test) != 0x0001)
 #endif
-		{
-			fprintf(stderr, "error: compiled byte ordering doesn't match machine byte ordering\n"
-					"are you sure you choose the right arch?\n"
+	{
+		fprintf(stderr, "error: compiled byte ordering doesn't match machine byte ordering\n"
+				"are you sure you choose the right arch?\n"
 #ifdef LSB_FIRST
-					"compiled for lsb-first, are you sure you choose the right cpu in makefile.unix\n");
+				"compiled for lsb-first, are you sure you choose the right cpu in makefile.unix\n");
 #else
-			"compiled for msb-first, are you sure you choose the right cpu in makefile.unix\n");
+				"compiled for msb-first, are you sure you choose the right cpu in makefile.unix\n");
 #endif
-			return OSD_NOT_OK;
-		}
+		return OSD_NOT_OK;
+	}
 
 	/* some settings which are static for xmame and thus aren't controled
 	   by options */
@@ -412,7 +370,10 @@ int config_init (int argc, char *argv[])
 	}
 
 	/* handle frontend options */
-	if ((i = frontend_help(gamename)) != 1234)
+	if ( (i=frontend_list(gamename)) != 1234)
+		return i;
+
+	if ( (i=frontend_ident(gamename)) != 1234)
 		return i;
 
 	if (playbackname)
@@ -714,20 +675,20 @@ void show_usage(void)
 	/* footer */
 	fprintf(stdout_file, "\nFiles:\n\n");
 	fprintf(stdout_file, "Config Files are parsed in the following order:\n");
-	fprint_colums(stdout_file, XMAMEROOT"/"NAME"rc",
+	fprint_columns(stdout_file, XMAMEROOT"/"NAME"rc",
 			"Global configuration config file");
-	fprint_colums(stdout_file, "${HOME}/."NAME"/"NAME"rc",
+	fprint_columns(stdout_file, "${HOME}/."NAME"/"NAME"rc",
 			"User configuration config file");
-	fprint_colums(stdout_file, XMAMEROOT"/"NAME"-"DISPLAY_METHOD"rc",
+	fprint_columns(stdout_file, XMAMEROOT"/"NAME"-"DISPLAY_METHOD"rc",
 			"Global per display method config file");
-	fprint_colums(stdout_file, "${HOME}/."NAME"/"NAME"-"DISPLAY_METHOD"rc",
+	fprint_columns(stdout_file, "${HOME}/."NAME"/"NAME"-"DISPLAY_METHOD"rc",
 			"User per display method config file");
-	fprint_colums(stdout_file, XMAMEROOT"/rc/<game>rc",
+	fprint_columns(stdout_file, XMAMEROOT"/rc/<game>rc",
 			"Global per game config file");
-	fprint_colums(stdout_file, "${HOME}/."NAME"/rc/<game>rc",
+	fprint_columns(stdout_file, "${HOME}/."NAME"/rc/<game>rc",
 			"User per game config file");
 	/*  fprintf(stdout_file, "\nEnvironment variables:\n\n");
-	    fprint_colums(stdout_file, "ROMPATH", "Rom search path"); */
+	    fprint_columns(stdout_file, "ROMPATH", "Rom search path"); */
 	fprintf(stdout_file, "\n"
 #ifdef MESS
 			"M.E.S.S. - Multi-Emulator Super System\n"
@@ -760,3 +721,23 @@ static int add_device(struct rc_option *option, const char *arg, int priority)
 	return register_device(id, arg);
 }
 #endif
+
+
+/*============================================================ */
+/*	logerror */
+/*============================================================ */
+
+extern FILE *errorlog;
+
+void logerror(const char *text, ...)
+{
+	va_list arg;
+
+	if (errorlog)
+	{
+		va_start(arg, text);
+		vfprintf(errorlog, text, arg);
+		va_end(arg);
+		fflush(errorlog);
+	}
+}

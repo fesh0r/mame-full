@@ -67,12 +67,12 @@ static void *esound_dsp_create(const void *flags)
 {
 #ifdef ESOUND_DEBUG
    int server_fd;
+   esd_server_info_t *info = NULL;
 #endif
    struct esound_dsp_priv_data *priv = NULL;
    struct sysdep_dsp_struct *dsp = NULL;
    const struct sysdep_dsp_create_params *params = flags;
    esd_format_t esd_format;
-   esd_server_info_t *info =NULL;
    
    /* allocate the dsp struct */
    if (!(dsp = calloc(1, sizeof(struct sysdep_dsp_struct))))

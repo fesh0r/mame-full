@@ -191,7 +191,7 @@ char *osd_dirname(const char *filename)
 	dirname = malloc(strlen(filename) + 1);
 	if (!dirname)
 	{
-		fprintf(stderr, "error: malloc failed in osd_dirname\n");
+		fprintf(stderr_file, "error: malloc failed in osd_dirname\n");
 		return NULL;
 	}
 

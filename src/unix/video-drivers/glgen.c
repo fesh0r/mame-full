@@ -691,10 +691,11 @@ void InitVScreen (int depth)
   double game_aspect ;
   double cabn_aspect ;
   GLdouble vx_gscr_p4b, vy_gscr_p4b, vz_gscr_p4b; 
-  GLdouble t1x, t1y, t1z;
   GLdouble t1;
 
   #ifndef NDEBUG
+    GLdouble t1x, t1y, t1z;
+
     printf("GLINFO: InitVScreen (glContext=%p)\n", glContext);
     printf("GLINFO: InitVScreen: useColorIndex=%d, alphablending=%d, doublebuffer=%d\n",
 	   useColorIndex, alphablending, doublebuffer);

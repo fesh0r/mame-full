@@ -15,32 +15,22 @@ static XInputDeviceData XIdevices[XINPUT_MAX_NUM_DEVICES];
 
 /* options for XInput-devices */
 struct rc_option XInputDevices_opts[] = {
-   { "XInput-trackball1",		"XItb1",		rc_string,	&XIdevices[XINPUT_MOUSE_0].deviceName,
-     NULL,		1,			0,		NULL,
+   { "XInput-trackball1",	"XItb1",	rc_string,
+     &XIdevices[XINPUT_MOUSE_0].deviceName,
+     NULL,	1,		0,	NULL,
      "Device name for trackball of player 1 (see XInput)" },
-   { "XInput-trackball2",		"XItb2",		rc_string,	&XIdevices[XINPUT_MOUSE_1].deviceName,
-     NULL,		1,			0,		NULL,
+   { "XInput-trackball2",	"XItb2",	rc_string,
+     &XIdevices[XINPUT_MOUSE_1].deviceName,
+     NULL,	1,		0,	NULL,
      "Device name for trackball of player 2 (see XInput)" },
-   { "XInput-trackball3",		"XItb3",		rc_string,	&XIdevices[XINPUT_MOUSE_2].deviceName,
-     NULL,		1,			0,		NULL,
+   { "XInput-trackball3",	"XItb3",	rc_string,
+     &XIdevices[XINPUT_MOUSE_2].deviceName,
+     NULL,	1,		0,	NULL,
      "Device name for trackball of player 3 (see XInput)" },
-   { "XInput-trackball4",		"XItb4",		rc_string,	&XIdevices[XINPUT_MOUSE_3].deviceName,
-     NULL,		1,			0,		NULL,
+   { "XInput-trackball4",	"XItb4",	rc_string,
+     &XIdevices[XINPUT_MOUSE_3].deviceName,
+     NULL,	1,		0,	NULL,
      "Device name for trackball of player 4 (see XInput)" },
-   /* prepared for XInput-Joysticks
-   { "XInput-joystick1",		"XIjoy1",		rc_string,	&XIdevices[XINPUT_JOYSTICK_0].deviceName,
-     NULL,		1,			0,		NULL,
-     "Device name for joystick of player 1 (see XInput)" },
-   { "XInput-joystick2",		"XIjoy2",		rc_string,	&XIdevices[XINPUT_JOYSTICK_1].deviceName,
-     NULL,		1,			0,		NULL,
-     "Device name for joystick of player 2 (see XInput)" },
-   { "XInput-joystick3",		"XIjoy3",		rc_string,	&XIdevices[XINPUT_JOYSTICK_2].deviceName,
-     NULL,		1,			0,		NULL,
-     "Device name for joystick of player 3 (see XInput)" },
-   { "XInput-joystick4",		"XIjoy4",		rc_string,	&XIdevices[XINPUT_JOYSTICK_3].deviceName,
-     NULL,		1,			0,		NULL,
-     "Device name for joystick of player 4 (see XInput)" },
-   */
    { NULL,		NULL,			rc_end,		NULL,
      NULL,		0,			0,		NULL,
      NULL }
@@ -75,7 +65,7 @@ XInput_trackballs_reset()
 static XDeviceInfo*
 find_device_info(Display *display, char *name, Bool only_extended);
 static int
-register_events(Display *dpy, XDeviceInfo *info, char *dev_name);
+register_events(int player_id, Display *dpy, XDeviceInfo *info, char *dev_name);
 
 
 /* initializes XInput devices */
@@ -85,9 +75,10 @@ XInputDevices_init(void)
   int i,j,k;
   XDeviceInfoPtr list;
 
+  fprintf(stderr_file, "XInput: Initialization...\n");
+
   if (!XQueryExtension(display,"XInputExtension",&i,&j,&k)) {
-    fprintf(stderr_file,"Your server doesn't support XInput Extensions\n");
-    fprintf(stderr_file,"XInput disabled\n");
+    fprintf(stderr_file,"XInput: Your Xserver doesn't support XInput Extensions\n");
     return;
   }
 
@@ -97,7 +88,8 @@ XInputDevices_init(void)
       /* if not NULL, check for an existing device */
       XIdevices[i].info=find_device_info(display,XIdevices[i].deviceName,True);
       if (! XIdevices[i].info) {
-	fprintf(stdout,"Unable to find device \"%s\". Ignoring it!\n",XIdevices[i].deviceName);
+	fprintf(stderr_file,"XInput: Unable to find device `%s'. Ignoring it!\n",
+		XIdevices[i].deviceName);
 	XIdevices[i].deviceName=NULL;
       } else {
 	/* ok, found a device, now register device for motion events */
@@ -108,8 +100,9 @@ XInputDevices_init(void)
 	  XIdevices[i].mameDevice=XMAME_JOYSTICK;
 	  */
 	}
-	if (! register_events(display,XIdevices[i].info,XIdevices[i].deviceName)) {
-	  fprintf(stdout,"Couldn't register device \"%s\" for events. Ignoring it!\n",XIdevices[i].deviceName);
+	if (! register_events(i, display,XIdevices[i].info,XIdevices[i].deviceName)) {
+	  fprintf(stderr_file,"XInput: Couldn't register device `%s' for events. Ignoring it\n",
+		  XIdevices[i].deviceName);
 	  XIdevices[i].deviceName=NULL;
 	}
       }
@@ -119,8 +112,9 @@ XInputDevices_init(void)
   /* if core pointer is used as trackball and a XInput device is also defined for player 1
      ignore core pointer */
   if (XIdevices[XINPUT_MOUSE_0].deviceName && use_mouse) {
-    fprintf(stdout,"Device \"%s\" takes precedence over core pointer for player 1\n",XIdevices[XINPUT_MOUSE_0].deviceName);
-    use_mouse=0;
+    fprintf(stderr_file,"XInput: Device `%s' takes precedence over core pointer for player 1\n",
+	    XIdevices[XINPUT_MOUSE_0].deviceName);
+    use_mouse = 0;
   }
 
 }
@@ -130,40 +124,50 @@ int
 XInputProcessEvent(XEvent *ev)
 {
   int i;
+
   if (ev->type == motion_type) {
     XDeviceMotionEvent *motion=(XDeviceMotionEvent *) ev;
-    for(i=0;i<MOUSE;++i) {
-      if (XIdevices[i].deviceName && motion->deviceid == XIdevices[i].info->id) break;
-    }
-    if (i==MOUSE) return 0;
+
+    for(i = 0; i < MOUSE; i++)
+      if (XIdevices[i].deviceName && motion->deviceid == XIdevices[i].info->id)
+	  break;
+
+    if (i == MOUSE)
+	return 0;
+
     if (XIdevices[i].neverMoved) {
-      XIdevices[i].neverMoved=0;
-      XIdevices[i].previousValue[0]=motion->axis_data[0];
-      XIdevices[i].previousValue[1]=motion->axis_data[1];
+	XIdevices[i].neverMoved=0;
+	XIdevices[i].previousValue[0] = motion->axis_data[0];
+	XIdevices[i].previousValue[1] = motion->axis_data[1];
     }
-    XIdevices[i].deltas[0]+=motion->axis_data[0]-XIdevices[i].previousValue[0];
-    XIdevices[i].deltas[1]+=motion->axis_data[1]-XIdevices[i].previousValue[1];
-    XIdevices[i].previousValue[0]=motion->axis_data[0];
-    XIdevices[i].previousValue[1]=motion->axis_data[1];
+
+    mouse_data[i].deltas[0] += motion->axis_data[0] - XIdevices[i].previousValue[0];
+    mouse_data[i].deltas[1] += motion->axis_data[1] - XIdevices[i].previousValue[1];
+
+
+    XIdevices[i].previousValue[0] = motion->axis_data[0];
+    XIdevices[i].previousValue[1] = motion->axis_data[1];
+
+    return 1;
+  } else if (ev->type == button_press_type || ev->type == button_release_type) {
+    XDeviceButtonEvent *button = (XDeviceButtonEvent *)ev;
+
+    for(i = 0; i < MOUSE; i++)
+	if (XIdevices[i].deviceName && button->deviceid == XIdevices[i].info->id)
+	    break;
+
+    if (i == MOUSE)
+	return 0;
+
+    /* fprintf(stderr_file, "XInput: Player %d: Button %d %s\n",
+	    i + 1, button->button, button->state ? "released" : "pressed"); */
+
+    mouse_data[i].buttons[button->button - 1] = (ev->type == button_press_type) ? 1 : 0;
+
     return 1;
   }
-  return 0;
-}
 
-/* call from osd_trak_read for polling trackballs */
-void
-XInputPollDevices(int player, int *deltax, int *deltay)
-{
-  int i=player;
-  if (player < MOUSE && XIdevices[player].deviceName) {
-    *deltax=XIdevices[player].deltas[0];
-    *deltay=XIdevices[player].deltas[1];
-    XIdevices[player].deltas[0] = 0;
-    XIdevices[player].deltas[1] = 0;
-  } else {
-    *deltax=0;
-    *deltay=0;
-  }
+  return 0;
 }
 
 /* this piece of code was taken from package xinput-1.12 */
@@ -177,7 +181,7 @@ find_device_info(Display	*display,
     int		num_devices;
     int		len = strlen(name);
     Bool	is_id = True;
-    XID		id;
+    XID		id = 0;
 
     for(loop=0; loop<len; loop++) {
 	if (!isdigit(name[loop])) {
@@ -204,7 +208,8 @@ find_device_info(Display	*display,
 
 /* this piece of code was taken from package xinput-1.12 */
 static int
-register_events(Display		*dpy,
+register_events(int		player_id,
+		Display		*dpy,
 		XDeviceInfo	*info,
 		char		*dev_name)
 {
@@ -216,6 +221,8 @@ register_events(Display		*dpy,
     Window		root_win;
     unsigned long	screen;
     XInputClassInfo	*ip;
+    XButtonInfoPtr      binfo;
+    XValuatorInfoPtr    vinfo;
 
     screen = DefaultScreen(dpy);
     root_win = RootWindow(dpy, screen);
@@ -223,12 +230,15 @@ register_events(Display		*dpy,
     device = XOpenDevice(dpy, info->id);
 
     if (!device) {
-	fprintf(stderr, "unable to open device %s\n", dev_name);
+	fprintf(stderr_file, "XInput: Unable to open XInput device `%s'\n", dev_name);
 	return 0;
     }
 
-
+    fprintf(stderr_file, "XInput: Player %d using Device `%s'", player_id + 1, dev_name);
+    
     if (device->num_classes > 0) {
+	any = (XAnyClassPtr)(info->inputclassinfo);
+
 	for (ip = device->classes, i=0; i<info->num_classes; ip++, i++) {
 	    switch (ip->input_class) {
 	    case KeyClass:
@@ -237,25 +247,33 @@ register_events(Display		*dpy,
 		break;
 
 	    case ButtonClass:
+		binfo = (XButtonInfoPtr) any;
 		DeviceButtonPress(device, button_press_type, event_list[number]); number++;
 		DeviceButtonRelease(device, button_release_type, event_list[number]); number++;
+		fprintf(stderr_file, ", %d buttons", binfo->num_buttons);
 		break;
 
 	    case ValuatorClass:
-	      DeviceMotionNotify(device, motion_type, event_list[number]); number++;
-	      break;
+		vinfo=(XValuatorInfoPtr) any;
+		DeviceMotionNotify(device, motion_type, event_list[number]); number++;
+		fprintf(stderr_file, ", %d axis", vinfo->num_axes);
+		break;
 
 	    default:
-		fprintf(stderr, "unknown class\n");
 		break;
 	    }
+	    any = (XAnyClassPtr) ((char *) any+any->length);
 	}
 
 	if (XSelectExtensionEvent(dpy, root_win, event_list, number)) {
-	    fprintf(stderr, "error selecting extended events\n");
-	    return 0;
+	    fprintf(stderr_file, ": Could not select extended events, not using");
+	    number = 0;
 	}
-    }
+    } else
+	fprintf(stderr_file, " contains no classes, not using");
+
+    fprintf(stderr_file, "\n");
+
     return number;
 }
 

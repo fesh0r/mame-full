@@ -45,31 +45,15 @@ ln -s src/unix/install-sh .
 
 # Move the MAME text files to the doc directory.
 if [ -f whatsnew.txt ]; then
-  mv whatsnew.txt doc/changes.mame
+  mv whatsnew.txt doc/mame/
 fi
 
-if [ -f docs/ctrlr.txt ]; then
-  mv docs/ctrlr.txt doc
-fi
-
-if [ -f docs/listinfo.txt ]; then
-  mv docs/listinfo.txt doc
-fi
-
-if [ -f docs/mame.txt ]; then
-  mv docs/mame.txt doc/readme.mame
-fi
-
-if [ -f docs/gamelist.txt ]; then
-  mv docs/gamelist.txt doc
-fi
-
-if [ -f docs/windows.txt ]; then
-  mv docs/windows.txt doc
+if [ -f whatsold.txt ]; then
+  mv whatsold.txt doc/mame/
 fi
 
 if [ -d docs ]; then
-  mv docs/* doc
+  mv docs/* doc/mame/
   rm -r docs
 fi
 

@@ -10,8 +10,6 @@
 #define dirent direct
 #endif
 
-/* #define IDENT_DEBUG */
-
 unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
 void romident(const char* name, int enter_dirs);
 
@@ -41,14 +39,36 @@ struct rc_option frontend_ident_opts[] = {
 
 
 /* Identifies a rom from from this checksum */
-void identify_rom(const char* name, int checksum, int length)
+static void match_roms(const struct GameDriver *driver,const char* hash,int *found)
 {
-/* Nicola output format */
-#if 1
+	const struct RomModule *region, *rom;
+
+	for (region = rom_first_region(driver); region; region = rom_next_region(region))
+	{
+		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+		{
+			if (hash_data_is_equal(hash, ROM_GETHASHDATA(rom), 0))
+			{
+				char baddump = hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_BAD_DUMP);
+
+				if (!silentident)
+				{
+					if (*found != 0)
+						fprintf(stdout_file, "             ");
+					fprintf(stdout_file, "= %s%-12s  %s\n",baddump ? "(BAD) " : "",ROM_GETNAME(rom),driver->description);
+				}
+				(*found)++;
+			}
+		}
+	}
+}
+
+void identify_rom(const char* name, const char* hash, int length)
+{
 	int found = 0;
-	int i;
 
 	/* remove directory name */
+	int i;
 	for (i = strlen(name)-1;i >= 0;i--)
 	{
 		if (name[i] == '/' || name[i] == '\\')
@@ -58,27 +78,14 @@ void identify_rom(const char* name, int checksum, int length)
 		}
 	}
 	if (!silentident)
-		fprintf(stdout_file, "%-12s ",&name[i]);
+		fprintf(stdout_file, "%s ",&name[0]);
 
 	for (i = 0; drivers[i]; i++)
-	{
-		const struct RomModule *region, *rom;
+		match_roms(drivers[i],hash,&found);
 
-                for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
-                    for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
-                    {
-                        if (checksum == ROM_GETCRC(rom))
-                        {
-                            if (!silentident)
-                            {
-                                if (found != 0)
-                                   fprintf(stdout_file, "             ");
-				fprintf(stdout_file, "= %-12s %s\n",ROM_GETNAME(rom),drivers[i]->description);
-                            }
-                            found++;
-                        }
-		    }
-	}
+	for (i = 0; test_drivers[i]; i++)
+		match_roms(test_drivers[i],hash,&found);
+
 	if (found == 0)
 	{
 		unsigned size = length;
@@ -105,37 +112,15 @@ void identify_rom(const char* name, int checksum, int length)
 		else if (knownstatus == KNOWN_NONE)
 			knownstatus = KNOWN_SOME;
 	}
-#else
-/* New output format */
-	int i;
-	fprintf(stdout_file, "%s\n",name);
-
-	for (i = 0; drivers[i]; i++)
-        {
-		const struct RomModule *region, *rom;
-
-                for (region = rom_first_region(drivers[i]; region; region = rom_next_region(region))
-                    for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
-                       if (checksum == ROM_GETCRC(rom)) 
-                       {
-				fprintf(stdout_file, "\t%s/%s %s, %s, %s\n",drivers[i]->name,romp->name,
-					drivers[i]->description,
-					drivers[i]->manufacturer,
-					drivers[i]->year);
-                       }
-	}
-#endif
 }
 
-/* Identifies a file from from this checksum */
+/* Identifies a file from this checksum */
 void identify_file(const char* name)
 {
 	FILE *f;
 	int length;
-	char* data;
-#ifdef IDENT_DEBUG
-	fprintf(stderr_file, "identify_file(%s) called\n", name);
-#endif
+	unsigned char* data;
+	char hash[HASH_BUF_SIZE];
 
 	f = fopen(name,"rb");
 	if (!f) {
@@ -161,7 +146,7 @@ void identify_file(const char* name)
 	}
 
 	/* allocate space for entire file */
-	data = (char*)malloc(length);
+	data = (unsigned char*)malloc(length);
 	if (!data) {
 		fclose(f);
 		return;
@@ -181,7 +166,16 @@ void identify_file(const char* name)
 
 	fclose(f);
 
-	identify_rom(name, crc32(0L,(const unsigned char*)data,length), length);
+	/* Compute checksum of all the available functions. Since MAME for
+	   now carries inforamtions only for CRC and SHA1, we compute only
+	   these */
+	if (options.crc_only)
+		hash_compute(hash, data, length, HASH_CRC);
+	else
+		hash_compute(hash, data, length, HASH_CRC|HASH_SHA1);
+	
+	/* Try to identify the ROM */
+	identify_rom(name, hash, length);
 
 	free(data);
 }
@@ -189,11 +183,8 @@ void identify_file(const char* name)
 void identify_zip(const char* zipname)
 {
 	struct zipent* ent;
-	ZIP* zip = openzip( FILETYPE_RAW, 0, zipname );
-#ifdef IDENT_DEBUG
-	fprintf(stderr_file, "identify_zip(%s) called\n", zipname);
-#endif
 
+	ZIP* zip = openzip( FILETYPE_RAW, 0, zipname );
 	if (!zip)
 		return;
 
@@ -201,8 +192,35 @@ void identify_zip(const char* zipname)
 		/* Skip empty file and directory */
 		if (ent->uncompressed_size!=0) {
 			char* buf = (char*)malloc(strlen(zipname)+1+strlen(ent->name)+1);
-			sprintf(buf,"%s/%s",zipname,ent->name);
-			identify_rom(buf,ent->crc32,ent->uncompressed_size);
+			char hash[HASH_BUF_SIZE];
+			UINT8 crcs[4];
+
+/*			sprintf(buf,"%s/%s",zipname,ent->name); */
+			sprintf(buf,"%-12s",ent->name);
+
+			/* Decompress the ROM from the ZIP, and compute all the needed 
+			   checksums. Since MAME for now carries informations only for CRC and
+			   SHA1, we compute only these (actually, CRC is extracted from the
+			   ZIP header) */
+			hash_data_clear(hash);
+
+			if (!options.crc_only)
+			{
+				UINT8* data =  (UINT8*)malloc(ent->uncompressed_size);
+				readuncompresszip(zip, ent, (char *)data);
+				hash_compute(hash, data, ent->uncompressed_size, HASH_SHA1);
+				free(data);
+			}
+			
+			crcs[0] = (UINT8)(ent->crc32 >> 24);
+			crcs[1] = (UINT8)(ent->crc32 >> 16);
+			crcs[2] = (UINT8)(ent->crc32 >> 8);
+			crcs[3] = (UINT8)(ent->crc32 >> 0);
+			hash_data_insert_binary_checksum(hash, HASH_CRC, crcs);
+
+			/* Try to identify the ROM */
+			identify_rom(buf, hash, ent->uncompressed_size);
+
 			free(buf);
 		}
 	}
@@ -214,9 +232,6 @@ void identify_dir(const char* dirname)
 {
 	DIR *dir;
 	struct dirent *ent;
-#ifdef IDENT_DEBUG
-	fprintf(stderr_file, "identdir(%s) called\n", dirname);
-#endif
 
 	dir = opendir(dirname);
 	if (!dir) {
@@ -238,22 +253,16 @@ void identify_dir(const char* dirname)
 	closedir(dir);
 }
 
-void romident(const char* name,int enter_dirs) {
+void romident(const char* name,int enter_dirs)
+{
 	struct stat s;
-#ifdef IDENT_DEBUG
-	fprintf(stderr_file, "romident(%s, %d) called\n", name, enter_dirs);
-#endif
 
 	if (stat(name,&s) != 0)	{
 		fprintf(stdout_file, "%s: %s\n",name,strerror(errno));
 		return;
 	}
 
-#ifdef BSD43
-	if (S_IFDIR & s.st_mode) {
-#else
 	if (S_ISDIR(s.st_mode)) {
-#endif
 		if (enter_dirs)
 			identify_dir(name);
 	} else {
@@ -268,33 +277,29 @@ void romident(const char* name,int enter_dirs) {
 
 int frontend_ident(char *gamename)
 {
-#ifdef IDENT_DEBUG
-   fprintf(stderr_file, "frontend_ident(%d, %s) called\n", ident, gamename);
-#endif
+	if (!ident)
+		return 1234;
 
-   if (!ident)
-      return 1234;
-   
-   if (!gamename)
-   {
-      fprintf(stderr_file, "-ident / -isknown requires a game- or filename as second argument\n");
-      return OSD_NOT_OK;
-   }
-   
-   if (ident == IDENT_ISKNOWN)
-         silentident = 1;
-         
-   romident(gamename, 1);
-   
-   if (ident == IDENT_ISKNOWN)
-   {
-      switch (knownstatus)
-      {
-         case KNOWN_START: fprintf(stdout_file, "ERROR     %s\n",gamename); break;
-         case KNOWN_ALL:   fprintf(stdout_file, "KNOWN     %s\n",gamename); break;
-         case KNOWN_NONE:  fprintf(stdout_file, "UNKNOWN   %s\n",gamename); break;
-         case KNOWN_SOME:  fprintf(stdout_file, "PARTKNOWN %s\n",gamename); break;
-      }
-   }
-   return OSD_OK;
+	if (!gamename)
+	{
+		fprintf(stderr_file, "-ident / -isknown requires a game- or filename as second argument\n");
+		return OSD_NOT_OK;
+	}
+
+	if (ident == IDENT_ISKNOWN)
+		silentident = 1;
+
+	romident(gamename, 1);
+
+	if (ident == IDENT_ISKNOWN)
+	{
+		switch (knownstatus)
+		{
+			case KNOWN_START: fprintf(stdout_file, "ERROR     %s\n",gamename); break;
+			case KNOWN_ALL:   fprintf(stdout_file, "KNOWN     %s\n",gamename); break;
+			case KNOWN_NONE:  fprintf(stdout_file, "UNKNOWN   %s\n",gamename); break;
+			case KNOWN_SOME:  fprintf(stdout_file, "PARTKNOWN %s\n",gamename); break;
+		}
+	}
+	return OSD_OK;
 }

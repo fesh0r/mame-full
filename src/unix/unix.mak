@@ -130,7 +130,6 @@ CORE_OBJDIRS = $(OBJ) \
 	$(OBJ)/mess/tools/messroms $(OBJ)/mess/tools/imgtool \
 	$(OBJ)/mess/tools/mkimage $(OBJ)/mess/tools/makedep
 
-IMGTOOL_OBJS =  $(OBJ)/unix.$(DISPLAY_METHOD)/dirio.o
 IMGTOOL_LIBS = -lz
 INCLUDE_PATH = -I. -Isrc -Isrc/includes -Imess -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 
@@ -146,8 +145,11 @@ all: $(ZLIB) objdirs osdepend $(NAME).$(DISPLAY_METHOD)
 # CPU core include paths
 VPATH=src $(wildcard src/cpu/*)
 
-#the dirio object for imagetool
-IMGTOOL_OBJS = $(OBJ)/unix.$(DISPLAY_METHOD)/dirio.o
+# Platform-dependent objects for imgtool
+PLATFORM_IMGTOOL_OBJS = $(OBJ)/unix.$(DISPLAY_METHOD)/dirio.o \
+			$(OBJ)/unix.$(DISPLAY_METHOD)/fileio.o \
+			$(OBJ)/unix.$(DISPLAY_METHOD)/sysdep/rc.o \
+			$(OBJ)/unix.$(DISPLAY_METHOD)/sysdep/misc.o
 
 include src/core.mak
 
@@ -175,7 +177,7 @@ endif
 MY_CFLAGS = $(CFLAGS) $(IL) $(CFLAGS.$(MY_CPU)) \
 	-D__ARCH_$(ARCH) -D__CPU_$(MY_CPU) -D$(DISPLAY_METHOD) \
 	-Dstricmp=strcasecmp -Dstrnicmp=strncasecmp \
-	-DPI=M_PI -DUNIX -DSIGNED_SAMPLES -DCLIB_DECL= \
+	-DPI=M_PI -DXMAME -DUNIX -DSIGNED_SAMPLES -DCLIB_DECL= \
 	$(COREDEFS) $(SOUNDDEFS) $(CPUDEFS) $(ASMDEFS) \
 	$(INCLUDES) $(INCLUDE_PATH)
 
@@ -190,7 +192,7 @@ MY_CFLAGS += -Isrc/unix/contrib/cutzlib-1.1.4 -I../../contrib/cutzlib-1.1.4
 LDFLAGS   = -Lsrc/unix/contrib/cutzlib-1.1.4
 endif
 
-ifdef MAME_DEBUG
+ifdef DEBUG
 MY_CFLAGS += -DMAME_DEBUG
 MY_LIBS   += -lcurses
 endif
@@ -245,6 +247,10 @@ endif
 ifdef JOY_PAD
 CONFIG += -DLIN_FM_TOWNS
 endif
+ifdef JOY_PS2
+CONFIG += -DPS2_JOYSTICK
+endif
+
 ifdef JOY_USB
 CONFIG += -DUSB_JOYSTICK
 ifeq ($(shell test -f /usr/include/usbhid.h && echo have_usbhid), have_usbhid)
@@ -258,6 +264,12 @@ else
 MY_LIBS += -lusb
 endif
 endif
+endif
+
+# Happ UGCI config
+ifdef UGCICOIN
+CONFIG += -DUGCICOIN
+MY_LIBS += -lugci
 endif
 
 ifdef EFENCE

@@ -7,7 +7,7 @@
 #include "xmame.h"
 
 #ifdef xgl
-	#include "video-drivers/glmame.h"
+#include "video-drivers/glmame.h"
 #endif
 #include <stdio.h>
 #include "driver.h"
@@ -64,17 +64,17 @@ extern UINT8 trying_to_quit;
 
 /* some prototypes */
 static int video_handle_scale(struct rc_option *option, const char *arg,
-   int priority);
+		int priority);
 static int video_verify_beam(struct rc_option *option, const char *arg,
-   int priority);
+		int priority);
 static int video_verify_flicker(struct rc_option *option, const char *arg,
-   int priority);
+		int priority);
 static int video_verify_intensity(struct rc_option *option, const char *arg,
 		int priority);
 static int video_verify_bpp(struct rc_option *option, const char *arg,
-   int priority);
+		int priority);
 static int video_verify_vectorres(struct rc_option *option, const char *arg,
-   int priority);
+		int priority);
 
 #ifndef xgl
 static void adjust_bitmap_and_update_display(struct mame_bitmap *srcbitmap,
@@ -210,20 +210,20 @@ struct rc_option video_opts[] = {
    { NULL,		NULL,			rc_link,	display_opts,
      NULL,		0,			0,		NULL,
      NULL },
-	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
+   { NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 
 static int video_handle_scale(struct rc_option *option, const char *arg,
    int priority)
 {
-   if (rc_set_option2(video_opts, "widthscale", arg, priority))
-      return -1;
-   if (rc_set_option2(video_opts, "heightscale", arg, priority))
-      return -1;
-      
-   option->priority = priority;
-   
-   return 0;
+	if (rc_set_option2(video_opts, "widthscale", arg, priority))
+		return -1;
+	if (rc_set_option2(video_opts, "heightscale", arg, priority))
+		return -1;
+
+	option->priority = priority;
+
+	return 0;
 }
 
 static int video_verify_beam(struct rc_option *option, const char *arg,
@@ -265,35 +265,35 @@ static int video_verify_intensity(struct rc_option *option, const char *arg,
 static int video_verify_bpp(struct rc_option *option, const char *arg,
    int priority)
 {
-   if( (options.color_depth != 0) &&
-       (options.color_depth != 8) &&
-       (options.color_depth != 15) &&
-       (options.color_depth != 16) &&
-       (options.color_depth != 32) )
-   {
-      options.color_depth = 0;
-      fprintf(stderr, "error: invalid value for bpp: %s\n", arg);
-      return -1;
-   }
+	if (options.color_depth != 0
+			&& options.color_depth != 8
+			&& options.color_depth != 15
+			&& options.color_depth != 16
+			&& options.color_depth != 32)
+	{
+		options.color_depth = 0;
+		fprintf(stderr, "error: invalid value for bpp: %s\n", arg);
+		return -1;
+	}
 
-   option->priority = priority;
-   
-   return 0;
+	option->priority = priority;
+
+	return 0;
 }
 
 static int video_verify_vectorres(struct rc_option *option, const char *arg,
    int priority)
 {
-   if(sscanf(arg, "%dx%d", &options.vector_width, &options.vector_height) != 2)
-   {
-      options.vector_width = options.vector_height = 0;
-      fprintf(stderr, "error: invalid value for vectorres: %s\n", arg);
-      return -1;
-   }
+	if (sscanf(arg, "%dx%d", &options.vector_width, &options.vector_height) != 2)
+	{
+		options.vector_width = options.vector_height = 0;
+		fprintf(stderr, "error: invalid value for vectorres: %s\n", arg);
+		return -1;
+	}
 
-   option->priority = priority;
-   
-   return 0;
+	option->priority = priority;
+
+	return 0;
 }
 
 void osd_video_initpre()
@@ -428,7 +428,8 @@ void orient_rect(struct rectangle *rect)
 	}
 }
 
-int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_components)
+int osd_create_display(const struct osd_create_params *params, 
+		UINT32 *rgb_components)
 {
 	int r, g, b;
 
@@ -444,8 +445,8 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 	if (use_auto_double)
 	{
 		if ((params->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK) 
-			== VIDEO_PIXEL_ASPECT_RATIO_1_2)
-      		{
+				== VIDEO_PIXEL_ASPECT_RATIO_1_2)
+		{
 			if (params->orientation & ORIENTATION_SWAP_XY)
 				normal_widthscale *= 2;
 			else
@@ -453,7 +454,7 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 		}
 
 		if ((params->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK) 
-			== VIDEO_PIXEL_ASPECT_RATIO_2_1)
+				== VIDEO_PIXEL_ASPECT_RATIO_2_1)
 		{
 			if (params->orientation & ORIENTATION_SWAP_XY)
 				normal_heightscale *= 2;
@@ -526,10 +527,10 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 				{
 					int idx = (r << 10) | (g << 5) | b;
 					sysdep_palette_set_pen(normal_palette,
-						idx,
-						(r << 3) | (r >> 2),
-						(g << 3) | (g >> 2),
-						(b << 3) | (b >> 2));
+							idx,
+							(r << 3) | (r >> 2),
+							(g << 3) | (g >> 2),
+							(b << 3) | (b >> 2));
 				}
 	}
 	else
@@ -540,7 +541,7 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 				{
 					int idx = (r << 10) | (g << 5) | b;
 					sysdep_palette_set_pen(normal_palette,
-						idx, r, g, b);
+							idx, r, g, b);
 				}
 	}
 
@@ -585,62 +586,62 @@ void osd_close_display(void)
 }
 
 static void osd_change_display_settings(struct rectangle *new_visual,
-   struct sysdep_palette_struct *new_palette, int new_widthscale,
-   int new_heightscale, int new_use_aspect_ratio)
+		struct sysdep_palette_struct *new_palette, int new_widthscale,
+		int new_heightscale, int new_use_aspect_ratio)
 {
-   int new_visual_width, new_visual_height;
-  
-   /* always update the visual info */
-   visual = *new_visual;
-   
-   /* calculate the new visual width / height */
-   new_visual_width  = visual.max_x - visual.min_x + 1;
-   new_visual_height = visual.max_y - visual.min_y + 1;
-   
-   if (current_palette != new_palette)
-      current_palette = new_palette;
-   
-   if ((visual_width     != new_visual_width    ) ||
-       (visual_height    != new_visual_height   ) ||
-       (widthscale       != new_widthscale      ) ||
-       (heightscale      != new_heightscale     ) ||
-       (use_aspect_ratio != new_use_aspect_ratio))
-   {
-      sysdep_display_close();
+	int new_visual_width, new_visual_height;
 
-      visual_width     = new_visual_width;
-      visual_height    = new_visual_height;
-      widthscale       = new_widthscale;
-      heightscale      = new_heightscale;
-      use_aspect_ratio = new_use_aspect_ratio;
+	/* always update the visual info */
+	visual = *new_visual;
 
-      if (sysdep_create_display(bitmap_depth) != OSD_OK)
-      {
-         /* oops this sorta sucks */
-         fprintf(stderr_file, "Argh, resizing the display failed in osd_set_visible_area, aborting\n");
-         exit(1);
-      }
+	/* calculate the new visual width / height */
+	new_visual_width  = visual.max_x - visual.min_x + 1;
+	new_visual_height = visual.max_y - visual.min_y + 1;
 
-      /* only realloc the palette if it has been initialised */
-      if (current_palette && sysdep_display_alloc_palette(video_colors_used))
-      {
-         /* better restore the video mode before calling exit() */
-         sysdep_display_close();
-         /* oops this sorta sucks */
-         fprintf(stderr_file, "Argh, (re)allocating the palette failed in osd_set_visible_area, aborting\n");
-         exit(1);
-      }
+	if (current_palette != new_palette)
+		current_palette = new_palette;
 
-      /* to stop keys from getting stuck */
-      xmame_keyboard_clear();
+	if (visual_width != new_visual_width
+			|| visual_height != new_visual_height
+			|| widthscale != new_widthscale
+			|| heightscale != new_heightscale
+			|| use_aspect_ratio != new_use_aspect_ratio)
+	{
+		sysdep_display_close();
+
+		visual_width     = new_visual_width;
+		visual_height    = new_visual_height;
+		widthscale       = new_widthscale;
+		heightscale      = new_heightscale;
+		use_aspect_ratio = new_use_aspect_ratio;
+
+		if (sysdep_create_display(bitmap_depth) != OSD_OK)
+		{
+			/* oops this sorta sucks */
+			fprintf(stderr_file, "Argh, resizing the display failed in osd_set_visible_area, aborting\n");
+			exit(1);
+		}
+
+		/* only realloc the palette if it has been initialised */
+		if (current_palette && sysdep_display_alloc_palette(video_colors_used))
+		{
+			/* better restore the video mode before calling exit() */
+			sysdep_display_close();
+			/* oops this sorta sucks */
+			fprintf(stderr_file, "Argh, (re)allocating the palette failed in osd_set_visible_area, aborting\n");
+			exit(1);
+		}
+
+		/* to stop keys from getting stuck */
+		xmame_keyboard_clear();
 
 #if 0 /* DEBUG */
-      fprintf(stderr_file, "viswidth = %d, visheight = %d,"
-              "visstartx= %d, visstarty= %d\n",
-               visual_width, visual_height, visual.min_x,
-               visual.min_y);
+		fprintf(stderr_file, "viswidth = %d, visheight = %d,"
+				"visstartx= %d, visstarty= %d\n",
+				visual_width, visual_height, visual.min_x,
+				visual.min_y);
 #endif
-   }
+	}
 }
 
 static void round_rectangle_to_8(struct rectangle *rect)
@@ -686,7 +687,7 @@ static void update_visible_area(struct mame_display *display)
 	 * and we need to round to sizeof(long) for the long copies anyway
 	 */
 	round_rectangle_to_8(&normal_visual);
-   
+
 	if (!debugger_has_focus)
 		osd_change_display_settings(&normal_visual, normal_palette, 
 				normal_widthscale, normal_heightscale, 
@@ -698,7 +699,7 @@ static void update_visible_area(struct mame_display *display)
 			display->game_visible_area.max_y);
 
 #ifndef xgl
-	
+
 	/* Allocate a new buffer for the code that handles rotation/flipping. */
 	if (blit_flipx || blit_flipy || blit_swapxy)
 	{
@@ -732,7 +733,7 @@ static void update_palette(struct mame_display *display, int force_dirty)
 					int b = RGB_BLUE(rgbvalue);
 
 					sysdep_palette_set_pen(current_palette,
-						i + j, r, g, b);
+							i + j, r, g, b);
 					sysdep_palette_mark_dirty(current_palette);
 				}
 		}
@@ -769,17 +770,17 @@ static void update_debug_display(struct mame_display *display)
 
 static void osd_free_colors(void)
 {
-   if (normal_palette)
-   {
-      sysdep_palette_destroy(normal_palette);
-      normal_palette = NULL;
-   }
+	if (normal_palette)
+	{
+		sysdep_palette_destroy(normal_palette);
+		normal_palette = NULL;
+	}
 
-   if (debug_palette)
-   {
-      sysdep_palette_destroy(debug_palette);
-      debug_palette = NULL;
-   }
+	if (debug_palette)
+	{
+		sysdep_palette_destroy(debug_palette);
+		debug_palette = NULL;
+	}
 }
 
 static int skip_next_frame = 0;
@@ -800,7 +801,7 @@ static show_fps_frame_func show_fps_frame_functions[FRAMESKIP_DRIVER_COUNT] =
 
 int osd_skip_this_frame(void)
 {
-   return skip_next_frame;
+	return skip_next_frame;
 }
 
 int osd_get_frameskip(void)
@@ -810,18 +811,18 @@ int osd_get_frameskip(void)
 
 void change_debugger_focus(int new_debugger_focus)
 {
-   if( (!debugger_has_focus &&  new_debugger_focus) ||
-       ( debugger_has_focus && !new_debugger_focus))
-   {
-      if (new_debugger_focus)
-         osd_change_display_settings(&debug_visual, debug_palette,
-            1, 1, 0);
-      else
-         osd_change_display_settings(&normal_visual, normal_palette,
-            normal_widthscale, normal_heightscale, normal_use_aspect_ratio);
+	if ((!debugger_has_focus && new_debugger_focus)
+			|| (debugger_has_focus && !new_debugger_focus))
+	{
+		if (new_debugger_focus)
+			osd_change_display_settings(&debug_visual, debug_palette,
+					1, 1, 0);
+		else
+			osd_change_display_settings(&normal_visual, normal_palette,
+					normal_widthscale, normal_heightscale, normal_use_aspect_ratio);
 
-      debugger_has_focus = new_debugger_focus;
-   }
+		debugger_has_focus = new_debugger_focus;
+	}
 }
 
 /* Update the display. */
@@ -902,7 +903,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 				|| keyboard_pressed(KEYCODE_LSHIFT))
 			sleep_idle ^= 1;
 	}
-   
+
 	if (keyboard_pressed(KEYCODE_LCONTROL))
 	{ 
 		if (keyboard_pressed_memory(KEYCODE_INSERT))
@@ -910,7 +911,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 		if (keyboard_pressed_memory(KEYCODE_HOME))
 			frameskipper = 1;
 	}
-   
+
 	if (keyboard_pressed(KEYCODE_LSHIFT))
 	{
 		int widthscale_mod  = 0;
@@ -938,7 +939,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 		{
 			normal_widthscale  += widthscale_mod;
 			normal_heightscale += heightscale_mod;
- 
+
 			if (normal_widthscale > 8)
 				normal_widthscale = 8;
 			else if (normal_widthscale < 1)
@@ -948,7 +949,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 				normal_heightscale = 8;
 			else if (normal_heightscale < 1)
 				normal_heightscale = 1;
-         
+
 			if (!debugger_has_focus)
 				osd_change_display_settings(&normal_visual,
 						normal_palette,
@@ -957,7 +958,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 						normal_use_aspect_ratio);
 		}
 	}
-   
+
 	skip_this_frame = skip_next_frame;
 	skip_next_frame = (*skip_next_frame_functions[frameskipper])();
 
@@ -1064,13 +1065,13 @@ void osd_save_snapshot(struct mame_bitmap *bitmap,
 	copy = bitmap_alloc_depth(w, h, bitmap->depth);
 	if (!copy)
 		return;
-	
+
 	/* populate the copy */
 	for (y = bounds->min_y; y <= bounds->max_y; y++)
 		for (x = bounds->min_x; x <= bounds->max_x; x++)
 		{
 			int tx = x, ty = y;
-			
+
 			/* apply the rotation/flipping */
 			if (blit_swapxy)
 			{
@@ -1080,23 +1081,23 @@ void osd_save_snapshot(struct mame_bitmap *bitmap,
 				tx = copy->width - tx - 1;
 			if (blit_flipy)
 				ty = copy->height - ty - 1;
-			
+
 			/* read the old pixel and copy to the new location */
 			switch (copy->depth)
 			{
 				case 15:
 				case 16:
 					*((UINT16 *)copy->base + ty * copy->rowpixels + tx) =
-							*((UINT16 *)bitmap->base + y * bitmap->rowpixels + x);
+						*((UINT16 *)bitmap->base + y * bitmap->rowpixels + x);
 					break;
-				
+
 				case 32:
 					*((UINT32 *)copy->base + ty * copy->rowpixels + tx) =
-							*((UINT32 *)bitmap->base + y * bitmap->rowpixels + x);
+						*((UINT32 *)bitmap->base + y * bitmap->rowpixels + x);
 					break;
 			}
 		}
-	
+
 	/* compute the oriented bounds */
 	newbounds = *bounds;
 
@@ -1106,7 +1107,7 @@ void osd_save_snapshot(struct mame_bitmap *bitmap,
 		t = newbounds.min_x; newbounds.min_x = newbounds.min_y; newbounds.min_y = t;
 		t = newbounds.max_x; newbounds.max_x = newbounds.max_y; newbounds.max_y = t;
 	}
-	
+
 	/* apply X flip */
 	if (blit_flipx)
 	{
@@ -1114,7 +1115,7 @@ void osd_save_snapshot(struct mame_bitmap *bitmap,
 		newbounds.min_x = copy->width - newbounds.max_x - 1;
 		newbounds.max_x = t;
 	}
-	
+
 	/* apply Y flip */
 	if (blit_flipy)
 	{
@@ -1122,7 +1123,7 @@ void osd_save_snapshot(struct mame_bitmap *bitmap,
 		newbounds.min_y = copy->height - newbounds.max_y - 1;
 		newbounds.max_y = t;
 	}
-	
+
 	/* now save the copy and nuke it when done */
 	save_screen_snapshot(copy, &newbounds);
 	bitmap_free(copy);
@@ -1164,7 +1165,7 @@ const char *osd_get_fps_text(const struct performance_info *performance)
 	{
 		dest += sprintf(dest, "\n %d partial updates", performance->partial_updates_this_frame);
 	}
-	
+
 	/* return a pointer to the static buffer */
 	return buffer;
 }

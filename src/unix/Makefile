@@ -11,9 +11,9 @@ COMMON_OBJS  =  \
 	$(OBJDIR)/keyboard.o $(OBJDIR)/devices.o \
 	$(OBJDIR)/video.o $(OBJDIR)/mode.o \
 	$(OBJDIR)/fileio.o $(OBJDIR)/dirio.o $(OBJDIR)/config.o \
-	$(OBJDIR)/fronthlp.o $(OBJDIR)/network.o $(OBJDIR)/snprintf.o \
-	$(OBJDIR)/nec765_dummy.o $(OBJDIR)/effect.o $(OBJDIR)/ticker.o \
-	$(OBJDIR)/parallel.o
+	$(OBJDIR)/fronthlp.o $(OBJDIR)/ident.o $(OBJDIR)/network.o \
+	$(OBJDIR)/snprintf.o $(OBJDIR)/nec765_dummy.o $(OBJDIR)/effect.o \
+	$(OBJDIR)/ticker.o $(OBJDIR)/parallel.o
 
 # sysdep objs
 SYSDEP_DIR  = $(OBJDIR)/sysdep
@@ -64,7 +64,8 @@ SOUND_OBJS = $(SOUND_OBJS.$(ARCH)) $(DSP_DIR)/esound.o $(DSP_DIR)/artssound.o \
 # joystick objs
 JOY_DIR  = $(OBJDIR)/joystick-drivers
 JOY_OBJS = $(JOY_DIR)/joy_i386.o $(JOY_DIR)/joy_pad.o $(JOY_DIR)/joy_x11.o \
-    $(JOY_DIR)/joy_usb.o $(JOY_DIR)/joy_SDL.o $(JOY_DIR)/XInputDevices.o
+    $(JOY_DIR)/joy_usb.o $(JOY_DIR)/joy_ps2.o $(JOY_DIR)/joy_SDL.o \
+    $(JOY_DIR)/XInputDevices.o
 
 # framskip objs
 FRAMESKIP_DIR  = $(OBJDIR)/frameskip-drivers

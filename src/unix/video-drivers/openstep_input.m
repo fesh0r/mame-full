@@ -156,9 +156,6 @@ sysdep_mouse_poll(void)
 	static NSPoint last = {0.0, 0.0};
 	NSPoint current;
 
-	if(!use_mouse)		/* to save time */
-		return;
-
 	current = [theWindow mouseLocationOutsideOfEventStream];
 
 	mouse_data[0].deltas[0] = current.x - last.x;

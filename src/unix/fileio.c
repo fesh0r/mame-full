@@ -66,7 +66,7 @@ static osd_file openfile[MAX_OPEN_FILES];
 /*	GLOBAL VARIABLES */
 /*============================================================ */
 
-static FILE *errorlog = NULL;
+FILE *errorlog = NULL;
 
 #ifdef MESS
 static char crcfilename[256] = "";
@@ -78,6 +78,9 @@ char crcdir[256];
 
 char *playbackname;
 char *recordname;
+
+FILE *stdout_file;
+FILE *stderr_file;
 
 
 /*============================================================ */
@@ -110,8 +113,8 @@ struct rc_option fileio_opts[] =
 	{ "cheat_file", NULL, rc_string, &cheatfile, XMAMEROOT"/cheat.dat", 0, 0, NULL, "Cheat filename" },
 	{ "hiscore_file", NULL, rc_string, &db_filename, XMAMEROOT"/hiscore.dat", 0, 0, NULL, NULL },
 #ifdef MESS
-	{ "sysinfo_file", NULL, rc_string, &history_filename, XMAMEROOT"sysinfo.dat", 0, 0, NULL, NULL },
-	{ "messinfo_file", NULL, rc_string, &mameinfo_filename, XMAMEROOT"messinfo.dat", 0, 0, NULL, NULL },
+	{ "sysinfo_file", NULL, rc_string, &history_filename, XMAMEROOT"/sysinfo.dat", 0, 0, NULL, NULL },
+	{ "messinfo_file", NULL, rc_string, &mameinfo_filename, XMAMEROOT"/messinfo.dat", 0, 0, NULL, NULL },
 #else
 	{ "history_file", NULL, rc_string, &history_filename, XMAMEROOT"/history.dat", 0, 0, NULL, NULL },
 	{ "mameinfo_file", NULL, rc_string, &mameinfo_filename, XMAMEROOT"/mameinfo.dat", 0, 0, NULL, NULL },
@@ -360,7 +363,7 @@ static const char *get_path_for_filetype(int filetype, int pathindex, int *count
 			/* this may leak a little memory, but it's a hack anyway! :-P */
 			const char *rawpath = (list->rawpath) ? list->rawpath : "";
 			char *newpath = malloc(strlen(rompath_extra) + strlen(rawpath) + 2);
-			sprintf(newpath, "%s;%s", rompath_extra, rawpath);
+			sprintf(newpath, "%s:%s", rompath_extra, rawpath);
 			list->rawpath = newpath;
 		}
 
@@ -696,25 +699,6 @@ int osd_display_loading_rom_message(const char *name,
 	count++;
 
 	return 0;
-}
-
-
-
-/*============================================================ */
-/*	logerror */
-/*============================================================ */
-
-void logerror(const char *text, ...)
-{
-	va_list arg;
-
-	if (errorlog)
-	{
-		va_start(arg, text);
-		vfprintf(errorlog, text, arg);
-		va_end(arg);
-		fflush(errorlog);
-	}
 }
 
 
