@@ -151,7 +151,7 @@ READ_HANDLER( pc1640_port60_r )
 
 READ_HANDLER( pc1640_port378_r )
 {
-	int data=pc_LPT2_r(offset);
+	int data=pc_parallelport1_r(offset);
 	if (offset==1) data=(data&~7)|(input_port_1_r(0)&7);
 	if (offset==2) {
 		switch (pc1640.dipstate) {
@@ -179,12 +179,14 @@ READ_HANDLER( pc1640_port3d0_r )
 READ_HANDLER( pc1640_port4278_r )
 {
 	if (offset==2) pc1640.dipstate=1;
+	// read parallelport
 	return 0;
 }
 
 READ_HANDLER( pc1640_port278_r )
 {
 	if ((offset==2)||(offset==0)) pc1640.dipstate=2;
+	// read parallelport
 	return 0;
 }
 

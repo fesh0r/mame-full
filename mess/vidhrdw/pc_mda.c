@@ -7,6 +7,14 @@
 
 #include "includes/pc_mda.h"
 
+#define VERBOSE_MDA 0		/* MDA (Monochrome Display Adapter) */
+
+#if VERBOSE_MDA
+#define MDA_LOG(n,m,a) LOG(VERBOSE_MDA,n,m,a)
+#else
+#define MDA_LOG(n,m,a)
+#endif
+
 #define MDA_HTOTAL  MDA_crtc[HTOTAL]
 #define MDA_HDISP   MDA_crtc[HDISP]
 #define MDA_HSYNCP  MDA_crtc[HSYNCP]
@@ -83,6 +91,20 @@ extern void pc_mda_timer(void)
 
 int pc_mda_vh_start(void)
 {
+	int i;
+
+    /* remove pixel column 9 for character codes 0 - 175 and 224 - 255 */
+	for( i = 0; i < 256; i++)
+	{
+		if( i < 176 || i > 223 )
+		{
+			int y;
+			for( y = 0; y < Machine->gfx[0]->height; y++ )
+				Machine->gfx[0]->gfxdata[(i * Machine->gfx[0]->height + y) * Machine->gfx[0]->width + 8] = 0;
+		}
+	}
+
+
     return generic_vh_start();
 }
 

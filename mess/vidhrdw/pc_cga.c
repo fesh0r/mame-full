@@ -9,6 +9,14 @@
 
 #include "includes/pc_cga.h"
 
+#define VERBOSE_CGA 0		/* CGA (Color Graphics Adapter) */
+
+#if VERBOSE_CGA
+#define CGA_LOG(n,m,a) LOG(VERBOSE_CGA,n,m,a)
+#else
+#define CGA_LOG(n,m,a)
+#endif
+
 #define CGA_HTOTAL  CGA_crtc[HTOTAL]
 #define CGA_HDISP   CGA_crtc[HDISP]
 #define CGA_HSYNCP  CGA_crtc[HSYNCP]
@@ -370,7 +378,7 @@ void pc_cga_color_select_w(int data)
 int pc_cga_color_select_r(void)
 {
 	int data = pc_port[0x3d9];
-	MDA_LOG(1,"CGA_color_select_w",(errorlog, "$%02x\n", data));
+	CGA_LOG(1,"CGA_color_select_w",(errorlog, "$%02x\n", data));
 	return data;
 }
 

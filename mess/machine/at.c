@@ -28,12 +28,18 @@
 #define false FALSE
 #define bool int
 
-void init_at(void)
+/* 
+   ibm at post
+   f0339 0xa
+   f059f 0x11 timing of 0x10 bit tested
+ */
+
+void init_atcga(void)
 {
-	init_pc();
+	pc_init_setup(pc_setup_at);
+	init_pc_common();
+	pc_cga_init();
 	mc146818_init(MC146818_STANDARD);
-	mc146818_load();
-	mc146818_set_time();
 	/* initialise keyboard */
 	at_keyboard_init();
 	at_keyboard_set_scan_code_set(1);
@@ -43,32 +49,10 @@ void init_at(void)
 
 void init_at_vga(void)
 {
-#if 0
-        int i; 
-        UINT8 *memory=memory_region(REGION_CPU1)+0xc0000;
-        UINT8 chksum;
-
-		/* oak vga */
-        /* plausibility check of retrace signals goes wrong */
-        memory[0x00f5]=memory[0x00f6]=memory[0x00f7]=0x90;
-        memory[0x00f8]=memory[0x00f9]=memory[0x00fa]=0x90;
-        for (chksum=0, i=0;i<0x7fff;i++) {
-                chksum+=memory[i];
-        }
-        memory[i]=0x100-chksum;
-#endif
-
-#if 0
-        for (chksum=0, i=0;i<0x8000;i++) {
-                chksum+=memory[i];
-        }
-        printf("checksum %.2x\n",chksum);
-#endif
-
+	pc_init_setup(pc_setup_at);
 	init_pc_common();
+	pc_vga_init();
 	mc146818_init(MC146818_STANDARD);
-	mc146818_load();
-	mc146818_set_time();
 	/* initialise keyboard */
 	at_keyboard_init();
 	at_keyboard_set_scan_code_set(1);
@@ -76,11 +60,6 @@ void init_at_vga(void)
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_AT);
 
 	vga_init(input_port_0_r);
-}
-
-void at_driver_close(void)
-{
-	mc146818_save();
 }
 
 void at_machine_init(void)

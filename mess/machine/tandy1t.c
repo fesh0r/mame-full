@@ -8,8 +8,14 @@
 
 extern void init_t1000hx(void)
 {
-	init_pc();
-	tandy1000_init();
+	UINT8 *gfx = &memory_region(REGION_GFX1)[0x1000];
+	int i;
+    /* just a plain bit pattern for graphics data generation */
+    for (i = 0; i < 256; i++)
+		gfx[i] = i;
+	pc_init_setup(pc_setup_t1000hx);
+	init_pc_common();
+	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
 }
 
 void pc_t1t_init_machine(void)
@@ -35,26 +41,15 @@ static struct {
 	} ee[0x40]; /* only 0 to 4 used in hx, addressing seems to allow this */
 } eeprom={0};
 
-void tandy1000_init(void)
+void tandy1000_nvram_handler(void* file, int write)
 {
-	FILE *file;
-
-	if ( (file=osd_fopen(Machine->gamedrv->name,
-						 Machine->gamedrv->name, OSD_FILETYPE_NVRAM, 0))==NULL)
-		return;
-	osd_fread(file, eeprom.ee, sizeof(eeprom.ee));
-
-	osd_fclose(file);
-}
-
-void tandy1000_close(void)
-{
-	FILE *file;
-	if ( (file=osd_fopen(Machine->gamedrv->name,
-						 Machine->gamedrv->name, OSD_FILETYPE_NVRAM, 1))==NULL)
-		return;
-	osd_fwrite(file, eeprom.ee, sizeof(eeprom.ee));
-	osd_fclose(file);
+	if (file==NULL) {
+		// init only 
+	} else if (write) {
+		osd_fwrite(file, eeprom.ee, sizeof(eeprom.ee));
+	} else {
+		osd_fread(file, eeprom.ee, sizeof(eeprom.ee));
+	}
 }
 
 static int tandy1000_read_eeprom(void)
@@ -166,7 +161,7 @@ WRITE_HANDLER ( pc_t1t_p37x_w )
 					logerror("tandy1000 %.2x %.4x written\n",eeprom.oper,eeprom.data);
 					eeprom.ee[eeprom.oper&0x3f].low=eeprom.data&0xff;
 					eeprom.ee[eeprom.oper&0x3f].high=eeprom.data>>8;
-					tandy1000_close();
+//					tandy1000_close();
 					eeprom.state=0;
 					break;
 				}
@@ -253,7 +248,6 @@ READ_HANDLER(tandy1000_pio_r)
 	}
 	return data;
 }
-
 
 int tandy1000_frame_interrupt (void)
 {

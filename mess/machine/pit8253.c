@@ -19,7 +19,7 @@
 #include "driver.h"
 #include "includes/pit8253.h"
 
-#define VERBOSE 2
+//#define VERBOSE 2
 
 #if VERBOSE
 #define LOG(N,M,A)	\

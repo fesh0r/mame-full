@@ -7,6 +7,14 @@
 
 #include "includes/pc_t1t.h"
 
+#define VERBOSE_T1T 0		/* T1T (Tandy 100 Graphics Adapter) */
+
+#if VERBOSE_T1T
+#define T1T_LOG(n,m,a) LOG(VERBOSE_T1T,n,m,a)
+#else
+#define T1T_LOG(n,m,a)
+#endif
+
 /* I think pc junior and the first tandy series
  have a graphics adapter with 4 digital lines to the
  monitor (16 color palette)

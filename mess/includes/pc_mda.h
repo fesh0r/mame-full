@@ -1,3 +1,4 @@
+void pc_mda_init(void);
 
 extern void pc_mda_timer(void);
 extern int  pc_mda_vh_start(void);

@@ -79,11 +79,19 @@
 
 
  ******************************************************************************/
+/* PeT 19.October 2000 
+   added/changed printer support
+   not working reliable, seams to expect parallelport in epp/ecp mode 
+   epp/ecp modes in parallel port not supported yet 
+   so ui disabled */
+
 #include "driver.h"
 #include "includes/pcw16.h"
 
 // PC-Parallel Port
 #include "includes/pclpt.h"
+#include "includes/centroni.h" // centronics printer handshake simulation
+#include "printer.h" // printer device
 // PC-AT keyboard
 #include "includes/pckeybrd.h"
 // change to superio later
@@ -1352,7 +1360,7 @@ PORT_READ_START( readport_pcw16 )
 	{0x01f, 0x01f, pcw16_superio_fdc_digital_input_register_r},
 	{0x020, 0x027, uart8250_0_r},
 	{0x028, 0x02f, uart8250_1_r},
-	{0x038, 0x03a, pc_LPT1_r},
+	{0x038, 0x03a, pc_parallelport0_r},
 	/* anne asic */
 	{0x0f0, 0x0f3, pcw16_bankhw_r},
 	{0x0f4, 0x0f4, pcw16_keyboard_data_shift_r},
@@ -1375,7 +1383,7 @@ PORT_WRITE_START( writeport_pcw16 )
 	{0x01f, 0x01f, pcw16_superio_fdc_datarate_w},
 	{0x020, 0x027, uart8250_0_w},
 	{0x028, 0x02f, uart8250_1_w},
-	{0x038, 0x03a, pc_LPT1_w},
+	{0x038, 0x03a, pc_parallelport0_w},
 	/* anne asic */
 	{0x0e0, 0x0ef, pcw16_palette_w},
 	{0x0f0, 0x0f3, pcw16_bankhw_w},
@@ -1421,6 +1429,17 @@ void pcw16_reset(void)
 }
 
 
+static PC_LPT_CONFIG lpt_config={
+	1,
+	LPT_UNIDIRECTIONAL, // more one of these epp/ecp aware ports
+	NULL
+};
+static CENTRONICS_CONFIG cent_config={
+	PRINTER_CENTRONICS,
+	pc_lpt_handshake_in
+};
+	
+
 void pcw16_init_machine(void)
 {
 	pcw16_ram = NULL;
@@ -1462,7 +1481,11 @@ void pcw16_init_machine(void)
 	pc_fdc_init(&pcw16_fdc_interface);
 	uart8250_init(0, pcw16_com_interface);
 	uart8250_init(1, pcw16_com_interface+1);
-	
+
+	pc_lpt_config(0, &lpt_config);
+	centronics_config(0, &cent_config);
+	pc_lpt_set_device(0, &CENTRONICS_PRINTER_DEVICE);
+
 	/* initialise mouse */
 	pc_mouse_set_protocol(TYPE_MOUSE_SYSTEMS);
 	pc_mouse_set_input_base(1);
@@ -1624,6 +1647,7 @@ static const struct IODevice io_pcw16[] =
         NULL,               /* input_chunk */
         NULL                /* output_chunk */
     },
+//	IO_PRINTER_PORT(1,"\0"),
 	{IO_END}
 };
 

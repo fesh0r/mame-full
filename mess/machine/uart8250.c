@@ -13,7 +13,7 @@ hardware */
 if( M )logerror("%11.6f: %-24s",timer_get_time(),(char*)M ); logerror A;
 
 
-#define VERBOSE_COM
+//#define VERBOSE_COM 0
 #ifdef VERBOSE_COM
 #define COM_LOG(n,m,a) LOG(VERBOSE_COM,n,m,a)
 #else
