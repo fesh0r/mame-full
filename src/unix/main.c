@@ -10,9 +10,6 @@
 #include <sys/mman.h>
 #endif
 
-/* From video.c. */
-void osd_video_initpre();
-
 /* put here anything you need to do when the program is started. Return 0 if */
 /* initialization was successful, nonzero otherwise. */
 int osd_init(void)
@@ -41,19 +38,27 @@ void *osd_alloc_executable(size_t size)
 {
 	void *addr = malloc(size);
 #ifdef HAVE_MPROTECT
-	mprotect(addr, size, PROT_READ | PROT_WRITE | PROT_EXEC);
+	if (addr)
+	{
+		if(mprotect(addr, size, PROT_READ | PROT_WRITE | PROT_EXEC)!=0)
+		{
+			free(addr);
+			addr = NULL;
+		}
+	}
 #endif
 	return addr;
 }
 
 void osd_free_executable(void *ptr)
 {
-	free(ptr);
+	if (ptr)
+		free(ptr);
 }
 
 int main(int argc, char **argv)
 {
-	int res, res2;
+	int res;
 
 #ifdef __QNXNTO__
 	printf("info: Trying to enable swapfile.... ");
@@ -62,14 +67,15 @@ int main(int argc, char **argv)
 #endif
 
 	/* some display methods need to do some stuff with root rights */
-	res2 = sysdep_display_init();
+	if(sysdep_display_init())
+		return 1;
 
 	/* to be absolutely safe force giving up root rights here in case
 	   a display method doesn't */
 	if (setuid(getuid()))
 	{
 		perror("setuid");
-		sysdep_display_close();
+		sysdep_display_exit();
 		return OSD_NOT_OK;
 	}
 
@@ -78,22 +84,14 @@ int main(int argc, char **argv)
 			build_version);
 
 	/* parse configuration file and environment */
-	if ((res = config_init(argc, argv)) != 1234 || res2 == OSD_NOT_OK)
-		goto leave;
+	if ((res = config_init(argc, argv)) == 1234)
+	{
+		/* go for it */
+		res = run_game (game_index);
+	}
 
-	/* 
-	 * Initialize whatever is needed before the display is actually 
-	 * opened, e.g., artwork setup.
-	 */
-	osd_video_initpre();
-
-	/* go for it */
-	res = run_game (game_index);
-
-leave:
-	sysdep_display_close();
-	/* should be done last since this also closes stdout and stderr */
 	config_exit();
+	sysdep_display_exit();
 
 	return res;
 }

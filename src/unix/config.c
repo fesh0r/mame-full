@@ -245,8 +245,7 @@ int config_init (int argc, char *argv[])
 	if(*((unsigned short*)lsb_test) != 0x0001)
 #endif
 	{
-		fprintf(stderr, "error: compiled byte ordering doesn't match machine byte ordering\n"
-				"are you sure you choose the right arch?\n"
+		fprintf(stderr, "error: compiled byte ordering doesn't match machine byte ordering.\n"
 #ifdef LSB_FIRST
 				"compiled for lsb-first, are you sure you choose the right cpu in makefile.unix\n");
 #else
@@ -325,6 +324,24 @@ int config_init (int argc, char *argv[])
 	if (rc_parse_commandline(rc, argc, argv, 2, config_handle_arg))
 		return OSD_NOT_OK;
 
+	if (showmanusage)
+	{
+		rc_print_man_options(rc, stdout);
+		return OSD_OK;
+	}
+
+	if (showversion)
+	{
+		fprintf(stdout, "%s\n", title);
+		return OSD_OK;
+	}
+
+	if (showusage)
+	{
+		show_usage();
+		return OSD_OK;
+	}
+
 	/* parse the various configfiles, starting with the one with the
 	   lowest priority */
 	if(loadconfig)
@@ -351,24 +368,6 @@ int config_init (int argc, char *argv[])
 	if (showconfig)
 	{
 		rc_write(rc, stdout_file, NAME" running parameters");
-		return OSD_OK;
-	}
-
-	if (showmanusage)
-	{
-		rc_print_man_options(rc, stdout_file);
-		return OSD_OK;
-	}
-
-	if (showversion)
-	{
-		fprintf(stdout_file, "%s\n", title);
-		return OSD_OK;
-	}
-
-	if (showusage)
-	{
-		show_usage();
 		return OSD_OK;
 	}
 
@@ -635,6 +634,17 @@ int config_init (int argc, char *argv[])
 	if (language)
 		options.language_file = mame_fopen(0, language, FILETYPE_LANGUAGE,0);
 
+	/* setup ui orientation */
+	options.ui_orientation = drivers[game_index]->flags & ORIENTATION_MASK;
+
+	if (options.ui_orientation & ORIENTATION_SWAP_XY)
+	{
+		/* if only one of the components is inverted, switch them */
+		if ((options.ui_orientation & ROT180) == ORIENTATION_FLIP_X ||
+				(options.ui_orientation & ROT180) == ORIENTATION_FLIP_Y)
+			options.ui_orientation ^= ROT180;
+	}
+
 	return 1234;
 }
 
@@ -665,7 +675,7 @@ void config_exit(void)
 void show_usage(void) 
 {
 	/* header */
-	fprintf(stdout_file, 
+	fprintf(stdout, 
 #ifdef MESS
 			"Usage: xmess <system> [game] [options]\n"
 #else
@@ -674,26 +684,26 @@ void show_usage(void)
 			"Options:\n");
 
 	/* actual help message */
-	rc_print_help(rc, stdout_file);
+	rc_print_help(rc, stdout);
 
 	/* footer */
-	fprintf(stdout_file, "\nFiles:\n\n");
-	fprintf(stdout_file, "Config Files are parsed in the following order:\n");
-	fprint_columns(stdout_file, SYSCONFDIR"/"NAME"rc",
+	fprintf(stdout, "\nFiles:\n\n");
+	fprintf(stdout, "Config Files are parsed in the following order:\n");
+	fprint_columns(stdout, SYSCONFDIR"/"NAME"rc",
 			"Global configuration config file");
-	fprint_columns(stdout_file, "${HOME}/."NAME"/"NAME"rc",
+	fprint_columns(stdout, "${HOME}/."NAME"/"NAME"rc",
 			"User configuration config file");
-	fprint_columns(stdout_file, SYSCONFDIR"/"NAME"-"DISPLAY_METHOD"rc",
+	fprint_columns(stdout, SYSCONFDIR"/"NAME"-"DISPLAY_METHOD"rc",
 			"Global per display method config file");
-	fprint_columns(stdout_file, "${HOME}/."NAME"/"NAME"-"DISPLAY_METHOD"rc",
+	fprint_columns(stdout, "${HOME}/."NAME"/"NAME"-"DISPLAY_METHOD"rc",
 			"User per display method config file");
-	fprint_columns(stdout_file, SYSCONFDIR"/rc/<game>rc",
+	fprint_columns(stdout, SYSCONFDIR"/rc/<game>rc",
 			"Global per game config file");
-	fprint_columns(stdout_file, "${HOME}/."NAME"/rc/<game>rc",
+	fprint_columns(stdout, "${HOME}/."NAME"/rc/<game>rc",
 			"User per game config file");
-	/*  fprintf(stdout_file, "\nEnvironment variables:\n\n");
-	    fprint_columns(stdout_file, "ROMPATH", "Rom search path"); */
-	fprintf(stdout_file, "\n"
+	/*  fprintf(stdout, "\nEnvironment variables:\n\n");
+	    fprint_columns(stdout, "ROMPATH", "Rom search path"); */
+	fprintf(stdout, "\n"
 #ifdef MESS
 			"M.E.S.S. - Multi-Emulator Super System\n"
 			"Copyright (C) 1998-2004 by the MESS team\n"

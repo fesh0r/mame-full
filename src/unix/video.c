@@ -63,15 +63,18 @@ extern UINT8 trying_to_quit;
 /* some prototypes */
 static int video_handle_scale(struct rc_option *option, const char *arg,
 		int priority);
+static int video_verify_artwork(struct rc_option *option, const char *arg,
+		int priority);
+static int video_verify_ftr(struct rc_option *option, const char *arg, int priority);
+static int video_handle_vectorres(struct rc_option *option, const char *arg,
+		int priority);
 static int video_verify_beam(struct rc_option *option, const char *arg,
 		int priority);
 static int video_verify_flicker(struct rc_option *option, const char *arg,
 		int priority);
 static int video_verify_intensity(struct rc_option *option, const char *arg,
 		int priority);
-static int video_handle_vectorres(struct rc_option *option, const char *arg,
-		int priority);
-static int decode_ftr(struct rc_option *option, const char *arg, int priority);
+
 static void osd_free_colors(void);
 
 struct rc_option video_opts[] = {
@@ -113,23 +116,23 @@ struct rc_option video_opts[] = {
      "0",		0,			0,		NULL,
      "Enable/disable displaying simulated scanlines" },
    { "artwork",		"art",			rc_bool,	&use_artwork,
-     "1",		0,			0,		NULL,
+     "1",		0,			0,		video_verify_artwork,
      "Use additional game artwork (sets default for specific options below)" },
    { "use_backdrops",	"backdrop",		rc_bool,	&use_backdrops,
-     "1",		0,			0,		NULL,
+     "1",		0,			0,		video_verify_artwork,
      "Use backdrop artwork" },
    { "use_overlays",	"overlay",		rc_bool,	&use_overlays,
-     "1",		0,			0,		NULL,
+     "1",		0,			0,		video_verify_artwork,
      "Use overlay artwork" },
    { "use_bezels",	"bezel",		rc_bool,	&use_bezels,
-     "1",		0,			0,		NULL,
+     "1",		0,			0,		video_verify_artwork,
      "Use bezel artwork" },
    { "artwork_crop",	"artcrop",		rc_bool,	&options.artwork_crop,
      "0",		0,			0,		NULL,
      "Crop artwork to game screen only." },
-   { "artwork_resolution","artres",		rc_int,		&options.artwork_res,
-     "0",		0,			0,		NULL,
-     "Artwork resolution (0 for auto)" },
+   { "artwork_resolution", "artres",		rc_int,		&options.artwork_res,
+     "1",		1,			2,		NULL,
+     "Artwork resolution" },
    { "frameskipper",	"fsr",			rc_int,		&frameskipper,
      "1",		0,			FRAMESKIP_DRIVER_COUNT-1, NULL,
      "Select which autoframeskip and throttle routines to use. Available choices are:\n0 Dos frameskip code\n1 Enhanced frameskip code by William A. Barath" },
@@ -137,7 +140,7 @@ struct rc_option video_opts[] = {
      "1",		0,			0,		NULL,
      "Enable/disable throttle" },
    { "frames_to_run",	"ftr",			rc_int,		&frames_to_display,
-     "0",		0,			0,		decode_ftr,
+     "0",		0,			2147483647,	video_verify_ftr,
      "Sets the number of frames to run within the game" },
    { "sleepidle",	"si",			rc_bool,	&sleep_idle,
      "0",		0,			0,		NULL,
@@ -185,11 +188,11 @@ struct rc_option video_opts[] = {
      NULL,		0,			0,		NULL,
      NULL },
    { "vectorres",	"vres",			rc_use_function, NULL,
-     NULL,		0,			0,		video_handle_vectorres,
+     "640x480",		0,			0,		video_handle_vectorres,
      "Always scale vectorgames to XresxYres, keeping their aspect ratio. This overrides the scale options" },
-	{ "beam", "B", rc_float, &f_beam, "1.0", 1.0, 16.0, video_verify_beam, "Set the beam size for vector games" },
-	{ "flicker", "f", rc_float, &f_flicker, "0.0", 0.0, 100.0, video_verify_flicker, "Set the flicker for vector games" },
-	{ "intensity", NULL, rc_float, &f_intensity, "1.5", 0.5, 3.0, video_verify_intensity, "Set intensity in vector games" },
+   { "beam", "B", rc_float, &f_beam, "1.0", 1.0, 16.0, video_verify_beam, "Set the beam size for vector games" },
+   { "flicker", "f", rc_float, &f_flicker, "0.0", 0.0, 100.0, video_verify_flicker, "Set the flicker for vector games" },
+   { "intensity", NULL, rc_float, &f_intensity, "1.5", 0.5, 3.0, video_verify_intensity, "Set intensity in vector games" },
    { "antialias",	"aa",			rc_bool,	&options.antialias,
      "1",		0,			0,		NULL,
      "Enable/disable antialiasing" },
@@ -212,6 +215,54 @@ static int video_handle_scale(struct rc_option *option, const char *arg,
 		return -1;
 	if (rc_set_option2(video_opts, "heightscale", arg, priority))
 		return -1;
+
+	option->priority = priority;
+
+	return 0;
+}
+
+static int video_verify_artwork(struct rc_option *option, const char *arg,
+		int priority)
+{
+	/* set the artwork options */
+	if (use_artwork)
+	{
+		options.use_artwork = ARTWORK_USE_ALL;
+		if (use_backdrops == 0)
+			options.use_artwork &= ~ARTWORK_USE_BACKDROPS;
+		if (use_overlays == 0)
+			options.use_artwork &= ~ARTWORK_USE_OVERLAYS;
+		if (use_bezels == 0)
+			options.use_artwork &= ~ARTWORK_USE_BEZELS;
+	}
+	else
+		options.use_artwork = ARTWORK_USE_NONE;
+
+	option->priority = priority;
+	return 0;
+}
+
+static int video_verify_ftr(struct rc_option *option, const char *arg, int priority)
+{
+	/*
+	 * if we're running < 5 minutes, allow us to skip warnings to
+	 * facilitate benchmarking/validation testing
+	 */
+	if (frames_to_display > 0 && frames_to_display < 60*60*5)
+		options.skip_warnings = 1;
+
+	option->priority = priority;
+	return 0;
+}
+
+static int video_handle_vectorres(struct rc_option *option, const char *arg,
+   int priority)
+{
+	if (sscanf(arg, "%dx%d", &options.vector_width, &options.vector_height) != 2)
+	{
+		fprintf(stderr, "error: invalid value for vectorres: %s\n", arg);
+		return -1;
+	}
 
 	option->priority = priority;
 
@@ -254,61 +305,25 @@ static int video_verify_intensity(struct rc_option *option, const char *arg,
 	return 0;
 }
 
-static int video_handle_vectorres(struct rc_option *option, const char *arg,
-   int priority)
+int osd_create_display(const struct osd_create_params *params,
+		UINT32 *rgb_components)
 {
-	if (sscanf(arg, "%dx%d", &options.vector_width, &options.vector_height) != 2)
-	{
-		options.vector_width = options.vector_height = 0;
-		fprintf(stderr, "error: invalid value for vectorres: %s\n", arg);
-		return -1;
-	}
+	int orientation;
 
-	option->priority = priority;
-
-	return 0;
-}
-
-
-/*============================================================ */
-/*	decode_ftr */
-/*============================================================ */
-
-static int decode_ftr(struct rc_option *option, const char *arg, int priority)
-{
-	int ftr;
-
-	if (sscanf(arg, "%d", &ftr) != 1)
-	{
-		fprintf(stderr, "error: invalid value for frames_to_run: %s\n", arg);
-		return -1;
-	}
-
-	/*
-	 * if we're running < 5 minutes, allow us to skip warnings to
-	 * facilitate benchmarking/validation testing
-	 */
-	frames_to_display = ftr;
-	if (frames_to_display > 0 && frames_to_display < 60*60*5)
-		options.skip_warnings = 1;
-
-	option->priority = priority;
-	return 0;
-}
-
-void osd_video_initpre()
-{
-	/* first start with the game's built-in orientation */
-	int orientation = drivers[game_index]->flags & ORIENTATION_MASK;
-	options.ui_orientation = orientation;
-
-	if (options.ui_orientation & ORIENTATION_SWAP_XY)
-	{
-		/* if only one of the components is inverted, switch them */
-		if ((options.ui_orientation & ROT180) == ORIENTATION_FLIP_X ||
-				(options.ui_orientation & ROT180) == ORIENTATION_FLIP_Y)
-			options.ui_orientation ^= ROT180;
-	}
+	video_fps            = params->fps;
+	normal_params.width  = params->width;
+	normal_params.height = params->height;
+	normal_params.depth  = params->depth;
+	normal_params.title  = title;
+	normal_params.max_width  = params->width;
+	normal_params.max_height = params->height;
+	normal_params.aspect_ratio     = (double)params->aspect_x / (double)params->aspect_y;
+	normal_params.keyboard_handler = xmame_keyboard_register_event;
+	normal_params.vec_src_bounds   = NULL;
+	normal_params.vec_dest_bounds  = NULL;
+	
+	/* get the orientation, start with the game's built-in orientation */
+	orientation = drivers[game_index]->flags & ORIENTATION_MASK;
 
 	/* override if no rotation requested */
 	if (video_norotate)
@@ -371,48 +386,6 @@ void osd_video_initpre()
 	   normal_params.orientation |= SYSDEP_DISPLAY_FLIPY;
 	if (orientation & ORIENTATION_SWAP_XY)
 	   normal_params.orientation |= SYSDEP_DISPLAY_SWAPXY;
-
-	/* setup vector specific stuff */
-	if (options.vector_width == 0 && options.vector_height == 0)
-	{
-		options.vector_width = 640;
-		options.vector_height = 480;
-	}
-
-	/* set the artwork options */
-	options.use_artwork = ARTWORK_USE_ALL;
-	if (use_backdrops == 0)
-		options.use_artwork &= ~ARTWORK_USE_BACKDROPS;
-	if (use_overlays == 0)
-		options.use_artwork &= ~ARTWORK_USE_OVERLAYS;
-	if (use_bezels == 0)
-		options.use_artwork &= ~ARTWORK_USE_BEZELS;
-	if (!use_artwork)
-		options.use_artwork = ARTWORK_USE_NONE;
-		
-	/* setup debugger related stuff */
-	debug_params.width   = options.debug_width;
-	debug_params.height  = options.debug_height;
-	debug_bounds.min_x    = 0;
-	debug_bounds.max_x    = options.debug_width - 1;
-	debug_bounds.min_y    = 0;
-	debug_bounds.max_y    = options.debug_height - 1;
-}
-
-int osd_create_display(const struct osd_create_params *params,
-		UINT32 *rgb_components)
-{
-	video_fps            = params->fps;
-	normal_params.width  = params->width;
-	normal_params.height = params->height;
-	normal_params.depth  = params->depth;
-	normal_params.title  = title;
-	normal_params.max_width  = params->width;
-	normal_params.max_height = params->height;
-	normal_params.aspect_ratio     = (double)params->aspect_x / (double)params->aspect_y;
-	normal_params.keyboard_handler = xmame_keyboard_register_event;
-	normal_params.vec_src_bounds   = NULL;
-	normal_params.vec_dest_bounds  = NULL;
 	
 	if (use_auto_double)
 	{
@@ -482,6 +455,14 @@ int osd_create_display(const struct osd_create_params *params,
 		}
 	}
 
+	/* setup debugger related stuff */
+	debug_params.width   = options.debug_width;
+	debug_params.height  = options.debug_height;
+	debug_bounds.min_x    = 0;
+	debug_bounds.max_x    = options.debug_width - 1;
+	debug_bounds.min_y    = 0;
+	debug_bounds.max_y    = options.debug_height - 1;
+
 	return 0;
 }
 
@@ -520,10 +501,9 @@ static void change_display_settings(struct sysdep_display_open_params *new_param
 	if (force || memcmp(new_params, &current_params, sizeof(current_params)))
 	{
 		sysdep_display_close();
-		/* Close sound, my guess is DGA somehow (perhaps fork/exec?) makes
-		   the filehandle open twice, so closing it here and re-openeing after
-		   the transition should fix that.  Fixed it for me anyways.
-		   -- Steve bpk@hoopajoo.net */
+		/* Close sound, DGA (fork) makes the filehandle open twice,
+		   so closing it here and re-openeing after the transition
+		   fixes that.	   -- Steve bpk@hoopajoo.net */
 		osd_sound_enable( 0 );
 
 		if (sysdep_display_open(new_params))
@@ -532,7 +512,8 @@ static void change_display_settings(struct sysdep_display_open_params *new_param
 			/* try again with old settings */
 			if (force || sysdep_display_open(&current_params))
 			{
-				sysdep_display_close();
+				if (!force) /* don't call close twice */
+					sysdep_display_close();
 				/* oops this sorta sucks */
 				fprintf(stderr_file, "Argh, resizing the display failed in osd_set_visible_area, aborting\n");
 				exit(1);

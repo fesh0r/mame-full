@@ -137,7 +137,7 @@ static struct x_func_struct x_func[X11_MODE_COUNT] = {
 #endif
 };
 
-static int mode_available[X11_MODE_COUNT];
+static int mode_available[X11_MODE_COUNT] = { 1, 0, 0, 0, 0 ,0 };
 static struct sysdep_display_open_params orig_params;
 
 static int x11_verify_mode(struct rc_option *option, const char *arg,
@@ -146,7 +146,7 @@ static int x11_verify_mode(struct rc_option *option, const char *arg,
   if(!mode_available[x11_video_mode])
   {
     fprintf(stderr, "Error: x11-mode %d is not available\n", x11_video_mode);
-    exit(1);
+    return 1;
   }
 
   option->priority = priority;
@@ -208,8 +208,10 @@ int sysdep_display_init (void)
 
 	if(!(display = XOpenDisplay (NULL)))
 	{
-		fprintf (stderr, "Could not open display\n");
-		return 1;
+		/* don't make this a fatal error so that cmdline options
+		   like -help will still work. Also don't report this
+		   here to not polute the -help output */
+		return 0;
 	}
 	screen=DefaultScreenOfDisplay(display);
 
@@ -228,12 +230,14 @@ void sysdep_display_exit(void)
 {
         int i;
         
-	for (i=0;i<X11_MODE_COUNT;i++)
-		if(x_func[i].exit)
-			x_func[i].exit();
-
 	if(display)
+	{
+                for (i=0;i<X11_MODE_COUNT;i++)
+                        if(x_func[i].exit)
+                                x_func[i].exit();
+
 		XCloseDisplay (display);
+        }
 }
 
 static void x11_check_mode(int *mode)
@@ -250,6 +254,12 @@ static void x11_check_mode(int *mode)
    mouse and keyboard can't be setup before the display has. */
 int sysdep_display_open (const struct sysdep_display_open_params *params)
 {
+        if (!display)
+        {
+		fprintf (stderr, "Error: could not open display\n");
+		return 1;
+        }
+
 	orig_params = *params;
 	sysdep_display_set_params(params);
 
@@ -259,7 +269,8 @@ int sysdep_display_open (const struct sysdep_display_open_params *params)
 
 void sysdep_display_close(void)
 {
-	(*x_func[x11_video_mode].close_display)();
+  if (display)
+    (*x_func[x11_video_mode].close_display)();
 }
 
 int sysdep_display_resize(int width, int height)
