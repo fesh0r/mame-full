@@ -69,7 +69,7 @@ void pc_cga_cursor(CRTC6845_CURSOR *cursor)
 
 static CRTC6845_CONFIG config= { 14318180 /*?*/, pc_cga_cursor };
 
-extern void pc_cga_init(struct _CRTC6845 *crtc)
+extern void pc_cga_init_video(struct _CRTC6845 *crtc)
 {
 	cga.crtc=crtc;
 }

@@ -47,7 +47,7 @@ extern int  pc_aga_vh_start(void)
 {
 	crtc6845_init(crtc6845, &config);
 	pc_mda_europc_init(crtc6845);
-	pc_cga_init(crtc6845);
+	pc_cga_init_video(crtc6845);
 
 	return generic_vh_start();
 }

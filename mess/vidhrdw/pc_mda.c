@@ -84,7 +84,7 @@ void pc_mda_cursor(CRTC6845_CURSOR *cursor)
 
 static CRTC6845_CONFIG config= { 14318180 /*?*/, pc_mda_cursor };
 
-extern void pc_mda_init(struct _CRTC6845 *crtc)
+extern void pc_mda_init_video(struct _CRTC6845 *crtc)
 {
 	int i;
 	mda.gfx_char=Machine->gfx[0];
@@ -124,7 +124,7 @@ extern void pc_mda_europc_init(struct _CRTC6845 *crtc)
 
 int pc_mda_vh_start(void)
 {
-	pc_mda_init(crtc6845);
+	pc_mda_init_video(crtc6845);
 	crtc6845_init(mda.crtc, &config);
 
     return generic_vh_start();

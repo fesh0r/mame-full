@@ -1,8 +1,8 @@
 extern unsigned char mda_palette[4][3];
 
-void pc_mda_init(void);
+/*void pc_mda_init(void);*/
 
-extern void pc_mda_init(struct _CRTC6845 *crtc);
+extern void pc_mda_init_video(struct _CRTC6845 *crtc);
 extern void pc_mda_europc_init(struct _CRTC6845 *crtc);
 
 extern void pc_mda_timer(void);

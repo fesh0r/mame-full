@@ -3,7 +3,7 @@
 
 extern unsigned char cga_palette[16][3];
 
-extern void pc_cga_init(struct _CRTC6845 *crtc);
+extern void pc_cga_init_video(struct _CRTC6845 *crtc);
 
 extern int	pc_cga_vh_start(void);
 extern void pc_cga_vh_stop(void);
