@@ -130,7 +130,7 @@ TESTDRIVER( vip )		/* Cosmac VIP									  */
 	/* NEC */
 	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993   */
 
-/*  DRIVER( arcadia )*/ /* Emerson Arcadia 2001                           */
+	DRIVER( arcadia ) /* Emerson Arcadia 2001                           */
 	/* schmid tvg 2000 */
 	/* eduscho tele fever */
 	/* hanimex fever 1 (hmg 2650) */
