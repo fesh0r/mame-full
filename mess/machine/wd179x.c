@@ -456,6 +456,13 @@ static void wd179x_read_sector(WD179X *w)
 	}
 }
 
+static void	wd179x_set_irq(WD179X *w)
+{
+	/* generate an IRQ */
+	if (w->callback)
+		(*w->callback) (WD179X_IRQ_SET);
+}
+
 /* called on error, or when command is actually completed */
 static void wd179x_complete_command(WD179X *w)
 {
@@ -464,9 +471,7 @@ static void wd179x_complete_command(WD179X *w)
 
 	wd179x_clear_data_request();
 
-	/* generate an IRQ */
-	if (w->callback)
-		(*w->callback) (WD179X_IRQ_SET);
+	wd179x_set_irq(w);
 }
 
 static void wd179x_write_sector(WD179X *w)
@@ -898,6 +903,9 @@ WRITE_HANDLER ( wd179x_command_w )
 
 		/* simulate seek time busy signal */
 		w->busy_count = w->busy_count * ((data & FDC_STEP_RATE) + 1);
+	
+		/* when command completes set irq */
+		wd179x_set_irq(w);
 	}
 
 	if ((data & ~FDC_MASK_TYPE_I) == FDC_SEEK)
@@ -942,6 +950,8 @@ WRITE_HANDLER ( wd179x_command_w )
 
 		/* simulate seek time busy signal */
 		w->busy_count = w->busy_count * ((data & FDC_STEP_RATE) + 1);
+
+		wd179x_set_irq(w);
 	}
 
 	if ((data & ~(FDC_STEP_UPDATE | FDC_MASK_TYPE_I)) == FDC_STEP)
@@ -958,6 +968,8 @@ WRITE_HANDLER ( wd179x_command_w )
 
 		if (data & FDC_STEP_UPDATE)
 			w->track_reg += w->direction;
+
+		wd179x_set_irq(w);
 	}
 
 	if ((data & ~(FDC_STEP_UPDATE | FDC_MASK_TYPE_I)) == FDC_STEP_IN)
@@ -974,6 +986,8 @@ WRITE_HANDLER ( wd179x_command_w )
 
 		if (data & FDC_STEP_UPDATE)
 			w->track_reg += w->direction;
+
+		wd179x_set_irq(w);
 	}
 
 	if ((data & ~(FDC_STEP_UPDATE | FDC_MASK_TYPE_I)) == FDC_STEP_OUT)
@@ -991,6 +1005,8 @@ WRITE_HANDLER ( wd179x_command_w )
 
 		if (data & FDC_STEP_UPDATE)
 			w->track_reg += w->direction;
+
+		wd179x_set_irq(w);
 	}
 
 	if (w->busy_count)
