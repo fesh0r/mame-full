@@ -895,7 +895,7 @@ static double times[]= { 1e-6, 2e-6, 4e-6, 8e-6, 16e-6, 32e-6, 64e-6 };
 
 static UINT8 lynx_timer_read(LYNX_TIMER *This, int offset)
 {
-    UINT8 data;
+    UINT8 data=0;
     switch (offset) {
     case 2:
 	if ((This->u.s.cntrl1&7)==7) {
