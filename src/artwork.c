@@ -306,9 +306,6 @@
 #include <ctype.h>
 #include <math.h>
 
-#ifdef MESS
-#include "image.h"
-#endif
 
 /***************************************************************************
 
@@ -427,7 +424,7 @@ static const struct overlay_piece *overlay_list;
 ***************************************************************************/
 
 static int artwork_prep(void);
-static int artwork_load(const struct GameDriver *gamename, int width, int height);
+static int artwork_load(const struct GameDriver *gamename, int width, int height, const struct artwork_callbacks *callbacks);
 static int compute_rgb_components(int depth, UINT32 rgb_components[3], UINT32 rgb32_components[3]);
 static int load_bitmap(const char *gamename, struct artwork_piece *piece);
 static int load_alpha_bitmap(const char *gamename, struct artwork_piece *piece, const struct png_info *original);
@@ -587,23 +584,6 @@ INLINE UINT32 blend_over(UINT32 game, UINT32 pre, UINT32 yrgb)
 
 
 
-/*-------------------------------------------------
-	use_artwork_system - decides whether it is
-	appropriate to use the artwork system or not
--------------------------------------------------*/
-
-static int use_artwork_system(struct osd_create_params *params)
-{
-#ifdef MESS
-	if ((params->width < options.min_width) && (params->height < options.min_height))
-	{
-		options.artwork_res = 2;
-		return 1;
-	}
-#endif
-	return artwork_list != NULL;
-}
-
 #if 0
 #pragma mark -
 #pragma mark OSD FRONTENDS
@@ -615,7 +595,7 @@ static int use_artwork_system(struct osd_create_params *params)
 	to osd_create_display
 -------------------------------------------------*/
 
-int artwork_create_display(struct osd_create_params *params, UINT32 *rgb_components)
+int artwork_create_display(struct osd_create_params *params, UINT32 *rgb_components, const struct artwork_callbacks *callbacks)
 {
 	int original_width = params->width;
 	int original_height = params->height;
@@ -630,9 +610,9 @@ int artwork_create_display(struct osd_create_params *params, UINT32 *rgb_compone
 
 	/* first load the artwork; if none, quit now */
 	artwork_list = NULL;
-	if (!artwork_load(Machine->gamedrv, original_width, original_height))
+	if (!artwork_load(Machine->gamedrv, original_width, original_height, callbacks))
 		return 1;
-	if (!use_artwork_system(params))
+	if (!artwork_list && (!callbacks->activate_artwork || !callbacks->activate_artwork(params)))
 		return osd_create_display(params, rgb_components);
 
 	/* determine the game bitmap scale factor */
@@ -1972,36 +1952,31 @@ static void render_ui_overlay(struct mame_bitmap *bitmap, UINT32 *dirty, const r
 	}
 }
 
-#ifdef MESS
-static char *override_artfile;
 
-void artwork_use_device_art(mess_image *img, const char *defaultartfile)
+
+/*-------------------------------------------------
+	artwork_load_artwork_file - default MAME way
+	to locate an artwork file
+-------------------------------------------------*/
+
+mame_file *artwork_load_artwork_file(const struct GameDriver *driver)
 {
-	const char *fname;
-	const char *ext;
-	int len = -1;
+	char filename[100];
+	mame_file *artfile = NULL;
 
-	fname = image_basename(img);
-	if (fname)
+	while (driver)
 	{
-		ext = strrchr(fname, '.');
-		if (ext)
-			len = ext - fname;
+		if (driver->name)
+		{
+			sprintf(filename, "%s.art", driver->name);
+			artfile = mame_fopen(driver->name, filename, FILETYPE_ARTWORK, 0);
+			if (artfile)
+				break;
+		}
+		driver = driver->clone_of;
 	}
-	else
-	{
-		fname = defaultartfile;
-	}
-	if (len == -1)
-		len = strlen(fname);
-
-	override_artfile = malloc(len + 1);
-	if (!override_artfile)
-		return;
-	memcpy(override_artfile, fname, len);
-	override_artfile[len] = 0;
+	return artfile;
 }
-#endif
 
 
 
@@ -2015,12 +1990,11 @@ void artwork_use_device_art(mess_image *img, const char *defaultartfile)
 	read all the bitmaps
 -------------------------------------------------*/
 
-static int artwork_load(const struct GameDriver *driver, int width, int height)
+static int artwork_load(const struct GameDriver *driver, int width, int height, const struct artwork_callbacks *callbacks)
 {
 	const struct overlay_piece *list = overlay_list;
 	struct artwork_piece *piece;
-	char filename[100];
-	mame_file *artfile = NULL;
+	mame_file *artfile;
 	int result;
 
 	/* reset the list of artwork */
@@ -2039,26 +2013,7 @@ static int artwork_load(const struct GameDriver *driver, int width, int height)
 		return 0;
 
 	/* attempt to open the .ART file; if none, that's okay */
-	while (driver)
-	{
-		if (driver->name)
-		{
-#ifdef MESS
-			if (override_artfile)
-			{
-				sprintf(filename, "%s.art", override_artfile);
-				free(override_artfile);
-				override_artfile = NULL;
-			}
-			else	/* else do it the MAME way... */
-#endif /* MESS */
-			sprintf(filename, "%s.art", driver->name);
-			artfile = mame_fopen(driver->name, filename, FILETYPE_ARTWORK, 0);
-			if (artfile)
-				break;
-		}
-		driver = driver->clone_of;
-	}
+	artfile = callbacks->load_artwork(driver);
 	if (!artfile && !list)
 		return 1;
 

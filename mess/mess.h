@@ -163,19 +163,22 @@ const struct IODevice *device_find(const struct GameDriver *gamedrv, int type);
 #define RAM_STRING_BUFLEN 16
 extern UINT32 mess_ram_size;
 extern UINT8 *mess_ram;
-extern UINT32 ram_option(const struct GameDriver *gamedrv, unsigned int i);
-extern int ram_option_count(const struct GameDriver *gamedrv);
-extern int ram_is_valid_option(const struct GameDriver *gamedrv, UINT32 ram);
-extern UINT32 ram_default(const struct GameDriver *gamedrv);
-extern UINT32 ram_parse_string(const char *s);
-extern const char *ram_string(char *buffer, UINT32 ram);
-extern int ram_validate_option(void);
-extern void cpu_setbank_fromram(int bank, UINT32 ramposition, mem_read_handler rhandler, mem_write_handler whandler);
+UINT32 ram_option(const struct GameDriver *gamedrv, unsigned int i);
+int ram_option_count(const struct GameDriver *gamedrv);
+int ram_is_valid_option(const struct GameDriver *gamedrv, UINT32 ram);
+UINT32 ram_default(const struct GameDriver *gamedrv);
+UINT32 ram_parse_string(const char *s);
+const char *ram_string(char *buffer, UINT32 ram);
+int ram_validate_option(void);
+void cpu_setbank_fromram(int bank, UINT32 ramposition, mem_read_handler rhandler, mem_write_handler whandler);
 
 extern void ram_dump(const char *filename);
 
 /* gets the path to the MESS executable */
 extern const char *mess_path;
+
+/* artwork callbacks for MESS */
+extern struct artwork_callbacks mess_artwork_callbacks;
 
 #ifdef __cplusplus
 }

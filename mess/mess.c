@@ -14,6 +14,7 @@ This file is a set of function calls and defs required for MESS.
 #include "image.h"
 #include "inputx.h"
 #include "snprintf.h"
+#include "artwork.h"
 
 extern struct GameOptions options;
 
@@ -364,6 +365,92 @@ void ram_dump(const char *filename)
 		mame_fclose(file);
 	}
 }
+
+/***************************************************************************
+
+	MESS specific artwork code
+
+***************************************************************************/
+
+static char *override_artfile;
+
+void artwork_use_device_art(mess_image *img, const char *defaultartfile)
+{
+	const char *fname;
+	const char *ext;
+	int len = -1;
+
+	fname = image_basename(img);
+	if (fname)
+	{
+		ext = strrchr(fname, '.');
+		if (ext)
+			len = ext - fname;
+	}
+	else
+	{
+		fname = defaultartfile;
+	}
+	if (len == -1)
+		len = strlen(fname);
+
+	override_artfile = malloc(len + 1);
+	if (!override_artfile)
+		return;
+	memcpy(override_artfile, fname, len);
+	override_artfile[len] = 0;
+}
+
+static int mess_activate_artwork(struct osd_create_params *params)
+{
+	if ((params->width < options.min_width) && (params->height < options.min_height))
+	{
+		options.artwork_res = 2;
+		return TRUE;
+	}
+	return FALSE;
+}
+
+static mame_file *mess_load_artwork_file(const struct GameDriver *driver)
+{
+	char filename[2048];
+	mame_file *artfile = NULL;
+
+	while (driver)
+	{
+		if (driver->name)
+		{
+			if (override_artfile)
+			{
+				sprintf(filename, "%s.art", override_artfile);
+				free(override_artfile);
+				override_artfile = NULL;
+			}
+			else
+			{
+				/* else do it the MAME way... */
+				sprintf(filename, "%s.art", driver->name);
+			}
+			artfile = mame_fopen(driver->name, filename, FILETYPE_ARTWORK, 0);
+			if (artfile)
+				break;
+		}
+		driver = driver->clone_of;
+	}
+	return artfile;
+}
+
+struct artwork_callbacks mess_artwork_callbacks =
+{
+	mess_activate_artwork,
+	mess_load_artwork_file
+};
+
+/***************************************************************************
+
+	MESS debug code
+
+***************************************************************************/
 
 #ifdef MAME_DEBUG
 static int hash_verify_string(const char *hash)

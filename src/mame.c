@@ -171,9 +171,19 @@ static struct performance_info performance;
 static int settingsloaded;
 static int leds_status;
 
+/* artwork callbacks */
+#ifndef MESS
+static struct artwork_callbacks mame_artwork_callbacks =
+{
+	NULL,
+	artwork_load_artwork_file
+};
+#endif
+
 #ifdef MESS
 int skip_this_frame;
 #endif
+
 
 
 /***************************************************************************
@@ -652,6 +662,7 @@ void expand_machine_driver(void (*constructor)(struct InternalMachineDriver *), 
 static int vh_open(void)
 {
 	struct osd_create_params params;
+	struct artwork_callbacks *artcallbacks;
 	int bmwidth = Machine->drv->screen_width;
 	int bmheight = Machine->drv->screen_height;
 
@@ -689,8 +700,14 @@ static int vh_open(void)
 	params.video_attributes = Machine->drv->video_attributes;
 	params.orientation = Machine->orientation;
 
+#ifdef MESS
+	artcallbacks = &mess_artwork_callbacks;
+#else
+	artcallbacks = &mame_artwork_callbacks;
+#endif
+
 	/* initialize the display through the artwork (and eventually the OSD) layer */
-	if (artwork_create_display(&params, direct_rgb_components))
+	if (artwork_create_display(&params, direct_rgb_components, artcallbacks))
 		goto cant_create_display;
 
 	/* the create display process may update the vector width/height, so recompute */
