@@ -273,7 +273,6 @@ void cbm600hu_driver_init (void)
 {
 	cbmb_common_driver_init ();
 	state_add_function(cbmb_state);
-	cbm600hu_vh_init();
 	crtc6845_init(crtc6845, &cbm600_crtc);
 }
 

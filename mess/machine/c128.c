@@ -731,8 +731,7 @@ static void c128_common_driver_init (void)
 	UINT8 *gfx=memory_region(REGION_GFX1);
 	int i;
 
-	for (i=0; i<0x10; i++) gfx[i]=0xff;
-	for (i=0; i<0x100; i++) gfx[i+0x10]=i;
+	for (i=0; i<0x100; i++) gfx[i]=i;
 
 	memset(c64_memory, 0xff, 0x100000);
 	c128 = 1;

@@ -7,15 +7,6 @@
 
 static int cbmb_font=0;
 
-void cbm600hu_vh_init(void)
-{
-	UINT8 *gfx = memory_region(REGION_GFX1);
-	int i;
-	
-	for (i=0; i<16; i++ ) gfx[0x2000+i]=0xff;
-}
-
-
 void cbm600_vh_init(void)
 {
 	UINT8 *gfx = memory_region(REGION_GFX1);
@@ -27,7 +18,6 @@ void cbm600_vh_init(void)
 		gfx[0x1800+i]=gfx[0x1000+i]^0xff;
 		gfx[0x800+i]=gfx[i]^0xff;
 	}
-	for (i=0; i<16; i++ ) gfx[0x2000+i]=0xff;
 }
 
 void cbm700_vh_init(void)
@@ -39,7 +29,6 @@ void cbm700_vh_init(void)
 		gfx[0x1800+i]=gfx[0x1000+i]^0xff;
 		gfx[0x800+i]=gfx[i]^0xff;
 	}
-	for (i=0; i<16; i++ ) gfx[0x2000+i]=0xff;
 }
 
 int cbm700_vh_start(void)
@@ -99,13 +88,15 @@ void cbmb_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 						videoram[i], 0, 0, 0, Machine->gfx[cbmb_font]->width*x,height*y,
 						&rect,TRANSPARENCY_NONE,0);
 				if ((cursor.on)&&(i==cursor.pos)) {
+					int k=height-cursor.top;
 					rect2=rect;
 					rect2.min_y+=cursor.top; 
-					if (cursor.bottom<height)
-						rect2.max_y=rect.min_y+cursor.bottom;
-					drawgfx(bitmap,Machine->gfx[2],
-							0, 0, 0, 0, Machine->gfx[cbmb_font]->width*x,height*y,
-							&rect,TRANSPARENCY_NONE,0);
+					if (cursor.bottom<height) k=cursor.bottom-cursor.top+1;
+
+					if (k>0)
+						plot_box(Machine->scrbitmap, Machine->gfx[cbmb_font]->width*x, 
+								 height*y+cursor.top, 
+								 Machine->gfx[cbmb_font]->width, k, Machine->pens[1]);
 				}
 
 				dirtybuffer[i]=0;

@@ -98,7 +98,7 @@ extern "C" {
 
 #define CRTC6845_CURSOR_POS ((REG(0xe)<<8)|REG(0xf))
 
-#define CRTC6845_CURSOR_TOP	REG(0xa)&0x1f
+#define CRTC6845_CURSOR_TOP	(REG(0xa)&0x1f)
 #define CRTC6845_CURSOR_BOTTOM REG(0xb)
 
 

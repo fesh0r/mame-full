@@ -417,7 +417,7 @@ void vdc8563_time(void)
 void vdc8563_monotext_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i;
-	struct rectangle rect, rect2;
+	struct rectangle rect;
 	int w=CRTC6845_CHAR_COLUMNS;
 	int h=CRTC6845_CHAR_LINES;
 	int height=CRTC6845_CHAR_HEIGHT;
@@ -438,13 +438,13 @@ void vdc8563_monotext_screenrefresh (struct osd_bitmap *bitmap, int full_refresh
 						Machine->gfx[0]->width*x+8,height*y+height,
 						&rect,TRANSPARENCY_NONE,0);
 				if ((vdc.cursor_on)&&(i==(CRTC6845_CURSOR_POS&vdc.mask))) {
-					rect2=rect;
-					rect2.min_y+=CRTC6845_CURSOR_TOP; 
-					if (CRTC6845_CURSOR_BOTTOM<height)
-						rect2.max_y=rect.min_y+CRTC6845_CURSOR_BOTTOM;
-					drawgfx(bitmap,Machine->gfx[1],
-							0, (FRAMECOLOR|MONOCOLOR<<4), 0, 0, Machine->gfx[0]->width*x+8,height*y+height,
-							&rect,TRANSPARENCY_NONE,0);
+					int k=height-CRTC6845_CURSOR_TOP;
+					if (CRTC6845_CURSOR_BOTTOM<height) k=CRTC6845_CURSOR_BOTTOM-CRTC6845_CURSOR_TOP+1;
+
+					if (k>0)
+						plot_box(Machine->scrbitmap, Machine->gfx[0]->width*x+8, 
+								 height*y+height+CRTC6845_CURSOR_TOP, 
+								 Machine->gfx[0]->width, k, Machine->pens[FRAMECOLOR]);
 				}
 
 				vdc.dirty[i]=0;
@@ -457,7 +457,7 @@ void vdc8563_monotext_screenrefresh (struct osd_bitmap *bitmap, int full_refresh
 void vdc8563_text_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i, j;
-	struct rectangle rect, rect2;
+	struct rectangle rect;
 	int w=CRTC6845_CHAR_COLUMNS;
 	int h=CRTC6845_CHAR_LINES;
 	int height=CRTC6845_CHAR_HEIGHT;
@@ -480,13 +480,13 @@ void vdc8563_text_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 						Machine->gfx[0]->width*x+8,height*y+height,
 						&rect,TRANSPARENCY_NONE,0);
 				if ((vdc.cursor_on)&&(i==(CRTC6845_CURSOR_POS&vdc.mask))) {
-					rect2=rect;
-					rect2.min_y+=CRTC6845_CURSOR_TOP; 
-					if (CRTC6845_CURSOR_BOTTOM<height)
-						rect2.max_y=rect.min_y+CRTC6845_CURSOR_BOTTOM;
-					drawgfx(bitmap,Machine->gfx[1],
-							0, ch&0x7f, 0, 0, Machine->gfx[0]->width*x+8,height*y+height,
-							&rect,TRANSPARENCY_NONE,0);
+					int k=height-CRTC6845_CURSOR_TOP;
+					if (CRTC6845_CURSOR_BOTTOM<height) k=CRTC6845_CURSOR_BOTTOM-CRTC6845_CURSOR_TOP+1;
+
+					if (k>0)
+						plot_box(Machine->scrbitmap, Machine->gfx[0]->width*x+8, 
+								 height*y+height+CRTC6845_CURSOR_TOP, 
+								 Machine->gfx[0]->width, k, Machine->pens[0x10|(ch&0xf)]);
 				}
 
 				vdc.dirty[i]=0;
@@ -519,7 +519,7 @@ void vdc8563_graphic_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 			for (j=0; j<height; j++) {
 				k=((i<<4)+j)&vdc.mask;
 				if (vdc.dirty[k]) {
-					drawgfx(bitmap,Machine->gfx[2],
+					drawgfx(bitmap,Machine->gfx[1],
 							vdc.ram[k], FRAMECOLOR|(MONOCOLOR<<4), 0, 0, 
 							Machine->gfx[0]->width*x+8,height*y+height+j,
 							&rect,TRANSPARENCY_NONE,0);
@@ -553,40 +553,19 @@ void vdc8563_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	}
 
 	if (full_refresh) {
-		int x, y;
-		struct rectangle rect;
 		int w=CRTC6845_CHAR_COLUMNS;
 		int h=CRTC6845_CHAR_LINES;
 		int height=CRTC6845_CHAR_HEIGHT;
 		
-		rect.min_x=Machine->visible_area.min_x;
-		rect.max_x=Machine->visible_area.max_x;
-		
-		rect.min_y=0; rect.max_y=rect.min_y+height-1;			
-		for (x=0; x<w+2; x++) {
-			drawgfx(bitmap,Machine->gfx[1],
-					0, FRAMECOLOR, 0, 0, 
-					Machine->gfx[0]->width*x,0,
-					&rect,TRANSPARENCY_NONE,0);
-		}
-		rect.min_y+=height; rect.max_y+=height;
-		for (y=0; y<h; y++, rect.min_y+=height, rect.max_y+=height) {
-			drawgfx(bitmap,Machine->gfx[1],
-					0, FRAMECOLOR, 0, 0, 
-					0,height*y+height,
-					&rect,TRANSPARENCY_NONE,0);
-			drawgfx(bitmap,Machine->gfx[1],
-					0, FRAMECOLOR, 0, 0, 
-					Machine->gfx[0]->width*(w+1),height*y+height,
-					&rect,TRANSPARENCY_NONE,0);
-		}
-		for (x=0; x<w+2; x++) {
-			drawgfx(bitmap,Machine->gfx[1],
-					0, FRAMECOLOR, 0, 0, 
-					Machine->gfx[0]->width*x,height*(h+1),
-					&rect,TRANSPARENCY_NONE,0);
-		}
+		plot_box(bitmap, 0, 0, Machine->gfx[0]->width*(w+2), height, Machine->pens[FRAMECOLOR]);
 
+		plot_box(bitmap, 0, height, Machine->gfx[0]->width, height*h, Machine->pens[FRAMECOLOR]);
+
+		plot_box(bitmap, Machine->gfx[0]->width*(w+1), height, Machine->gfx[0]->width, height*h, 
+				 Machine->pens[FRAMECOLOR]);
+
+		plot_box(bitmap, 0, height*(h+1), Machine->gfx[0]->width*(w+2), height, 
+				 Machine->pens[FRAMECOLOR]);
 	}
 
 	vdc.changed=0;

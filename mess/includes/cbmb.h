@@ -273,7 +273,6 @@ void cbmb_rom_load(void);
 
 void cbm600_vh_init(void);
 void cbm700_vh_init(void);
-void cbm600hu_vh_init(void);
 int cbm700_vh_start(void);
 void cbmb_vh_cursor(CRTC6845_CURSOR *cursor);
 void cbmb_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);

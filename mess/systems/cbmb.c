@@ -703,21 +703,6 @@ static struct GfxLayout cbm600_charlayout =
 	8*16
 };
 
-static struct GfxLayout cbm600c_charlayout =
-{
-	8,16,
-	1,                                    /* 256 characters */
-	1,                      /* 1 bits per pixel */
-	{ 0 },                  /* no bitplanes; 1 bit per pixel */
-	/* x offsets */
-	{ 0,1,2,3,4,5,6,7,7 },
-	/* y offsets */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-	  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8
-	},
-	8*16
-};
-
 static struct GfxLayout cbm700_charlayout =
 {
 	9,16,
@@ -733,33 +718,15 @@ static struct GfxLayout cbm700_charlayout =
 	8*16
 };
 
-static struct GfxLayout cbm700c_charlayout =
-{
-	9,16,
-	1,                                    /* 256 characters */
-	1,                      /* 1 bits per pixel */
-	{ 0 },                  /* no bitplanes; 1 bit per pixel */
-	/* x offsets */
-	{ 0,1,2,3,4,5,6,7,7 },
-	/* y offsets */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-	  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8
-	},
-	8*16
-};
-
-
 static struct GfxDecodeInfo cbm600_gfxdecodeinfo[] = {
 	{ 1, 0x0000, &cbm600_charlayout, 0, 1 },
 	{ 1, 0x1000, &cbm600_charlayout, 0, 1 },
-	{ 1, 0x2000, &cbm600c_charlayout, 0, 1 },
     { -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo cbm700_gfxdecodeinfo[] = {
 	{ 1, 0x0000, &cbm700_charlayout, 0, 1 },
 	{ 1, 0x1000, &cbm700_charlayout, 0, 1 },
-	{ 1, 0x2000, &cbm700c_charlayout, 0, 1 },
     { -1 } /* end of array */
 };
 
@@ -779,7 +746,7 @@ ROM_START (cbm610)
 	ROM_LOAD ("901243.04a", 0xf8000, 0x2000, 0xb0dcb56d)
 	ROM_LOAD ("901242.04a", 0xfa000, 0x2000, 0xde04ea4f)
 	ROM_LOAD ("901244.04a", 0xfe000, 0x2000, 0x09a5667e)
-	ROM_REGION (0x2010, REGION_GFX1)
+	ROM_REGION (0x2000, REGION_GFX1)
     ROM_LOAD ("901237.01", 0x0000, 0x1000, 0x1acf5098)
 ROM_END
 
@@ -788,7 +755,7 @@ ROM_START (cbm620)
     ROM_LOAD ("901241.03", 0xf8000, 0x2000, 0x5c1f3347)
     ROM_LOAD ("901240.03", 0xfa000, 0x2000, 0x72aa44e1)
     ROM_LOAD ("901244.04a", 0xfe000, 0x2000, 0x09a5667e)
-	ROM_REGION (0x2010, REGION_GFX1)
+	ROM_REGION (0x2000, REGION_GFX1)
     ROM_LOAD ("901237.01", 0x0000, 0x1000, 0x1acf5098)
 ROM_END
 
@@ -796,7 +763,7 @@ ROM_START (cbm620hu)
 	ROM_REGION (0x100000, REGION_CPU1)
 	ROM_LOAD ("610u60.bin", 0xf8000, 0x4000, 0x8eed0d7e)
 	ROM_LOAD ("kernhun.bin", 0xfe000, 0x2000, 0x0ea8ca4d)
-	ROM_REGION (0x2010, REGION_GFX1)
+	ROM_REGION (0x2000, REGION_GFX1)
 	ROM_LOAD ("charhun.bin", 0x0000, 0x2000, 0x1fb5e596)
 ROM_END
 
@@ -805,7 +772,7 @@ ROM_START (cbm710)
 	ROM_LOAD ("901243.04a", 0xf8000, 0x2000, 0xb0dcb56d)
 	ROM_LOAD ("901242.04a", 0xfa000, 0x2000, 0xde04ea4f)
 	ROM_LOAD ("901244.04a", 0xfe000, 0x2000, 0x09a5667e)
-	ROM_REGION (0x2010, REGION_GFX1)
+	ROM_REGION (0x2000, REGION_GFX1)
     ROM_LOAD ("901232.01", 0x0000, 0x1000, 0x3a350bc3)
 ROM_END
 
@@ -814,7 +781,7 @@ ROM_START (cbm720)
     ROM_LOAD ("901241.03", 0xf8000, 0x2000, 0x5c1f3347)
     ROM_LOAD ("901240.03", 0xfa000, 0x2000, 0x72aa44e1)
     ROM_LOAD ("901244.04a", 0xfe000, 0x2000, 0x09a5667e)
-	ROM_REGION (0x2010, REGION_GFX1)
+	ROM_REGION (0x2000, REGION_GFX1)
     ROM_LOAD ("901232.01", 0x0000, 0x1000, 0x3a350bc3)
 ROM_END
 
@@ -823,7 +790,7 @@ ROM_START (cbm720se)
     ROM_LOAD ("901241.03", 0xf8000, 0x2000, 0x5c1f3347)
     ROM_LOAD ("901240.03", 0xfa000, 0x2000, 0x72aa44e1)
     ROM_LOAD ("901244.03", 0xfe000, 0x2000, 0x87bc142b)
-	ROM_REGION (0x2010, REGION_GFX1)
+	ROM_REGION (0x2000, REGION_GFX1)
     ROM_LOAD ("901233.03", 0x0000, 0x1000, 0x09518b19)
 ROM_END
 
