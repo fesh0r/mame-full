@@ -516,6 +516,7 @@ $(OBJ)/snk.a: \
 
 $(OBJ)/alpha.a: \
 	$(OBJ)/vidhrdw/alpha68k.o $(OBJ)/drivers/alpha68k.o \
+	$(OBJ)/vidhrdw/pushman.o $(OBJ)/drivers/pushman.o \
 	$(OBJ)/vidhrdw/champbas.o $(OBJ)/drivers/champbas.o \
 	$(OBJ)/machine/exctsccr.o $(OBJ)/vidhrdw/exctsccr.o $(OBJ)/drivers/exctsccr.o \
 

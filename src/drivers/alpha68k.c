@@ -71,7 +71,7 @@ WRITE_HANDLER( alpha68k_videoram_w );
 WRITE_HANDLER( kouyakyu_video_w );
 
 static unsigned char *shared_ram,*sound_ram;
-static int invert_controls,microcontroller_id;
+static int invert_controls,microcontroller_id,coin_id;
 
 /******************************************************************************/
 
@@ -203,30 +203,24 @@ static READ_HANDLER( alpha_V_trigger_r )
 		case 0:	/* Dipswitch 1 */
 			WRITE_WORD(&shared_ram[0], (source&0xff00)| readinputport(4));
 			return 0;
-
 		case 0x44: /* Coin value */
 			WRITE_WORD(&shared_ram[0x44], (source&0xff00)|0x1);
 			return 0;
 		case 0x52: /* Query microcontroller for coin insert */
 			if ((readinputport(2)&0x3)==3) latch=0;
 			if ((readinputport(2)&0x1)==0 && !latch) {
-				WRITE_WORD(&shared_ram[0x52], (source&0xff00)|0x23);
+				WRITE_WORD(&shared_ram[0x52], (source&0xff00)|(coin_id&0xff));
 				WRITE_WORD(&shared_ram[0x44], (source&0xff00)|0x0);
 				latch=1;
 			}
 			else if ((readinputport(2)&0x2)==0 && !latch) {
-				WRITE_WORD(&shared_ram[0x52], (source&0xff00)|0x24);
+				WRITE_WORD(&shared_ram[0x52], (source&0xff00)|(coin_id>>8));
 				WRITE_WORD(&shared_ram[0x44], (source&0xff00)|0x0);
 				latch=1;
 			}
 			else
 				WRITE_WORD(&shared_ram[0x52], (source&0xff00)|0x00);
 			return 0;
-
-//		case 0x62: /* Sky Adventure - I don't think is correct, but it works */
-//			WRITE_WORD(&shared_ram[0x154], 0xffff);
-//			return 0;
-
 		case 0x1fc:	/* Custom ID check */
 			WRITE_WORD(&shared_ram[0x1fc], (source&0xff00)|(microcontroller_id>>8));
 			break;
@@ -435,7 +429,8 @@ static struct MemoryWriteAddress alpha68k_V_writemem[] =
 	{ 0x0c0000, 0x0c00ff, alpha68k_V_video_control_w },
 	{ 0x100000, 0x100fff, alpha68k_videoram_w, &videoram },
 	{ 0x200000, 0x207fff, MWA_BANK3, &spriteram },
-	{ 0x303e00, 0x303fff, alpha_microcontroller_w },
+	{ 0x300000, 0x3001ff, alpha_microcontroller_w },
+	{ 0x303e00, 0x303fff, alpha_microcontroller_w }, /* Gang Wars mirror */
 	{ 0x400000, 0x401fff, alpha68k_paletteram_w, &paletteram },
 	{ -1 }  /* end of table */
 };
@@ -2063,6 +2058,28 @@ ROM_START( skyadvnt )
 	ROM_REGION( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "sa_v3.1",   0x00000,  0x20000, 0x862393b5 )
 	ROM_LOAD_ODD ( "sa_v3.2",   0x00000,  0x20000, 0xfa7a14d1 )
+ 
+	ROM_REGION( 0x90000, REGION_CPU2 )	/* Sound CPU */
+	ROM_LOAD( "sa.3",           0x00000,  0x08000, 0x3d0b32e0 )
+	ROM_CONTINUE(               0x18000,  0x08000 )
+	ROM_LOAD( "sa.4",           0x30000,  0x10000, 0xc2e3c30c )
+	ROM_LOAD( "sa.5",           0x50000,  0x10000, 0x11cdb868 )
+	ROM_LOAD( "sa.6",           0x70000,  0x08000, 0x237d93fd )
+
+	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_LOAD( "sa.7",           0x000000, 0x08000, 0xea26e9c5 )
+
+	ROM_REGION( 0x280000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "sachr3",         0x000000, 0x80000, 0xa986b8d5 )
+	ROM_LOAD( "sachr2",         0x0a0000, 0x80000, 0x504b07ae )
+	ROM_LOAD( "sachr1",         0x140000, 0x80000, 0xe734dccd )
+	ROM_LOAD( "sachr0",         0x1e0000, 0x80000, 0xe281b204 )
+ROM_END
+
+ROM_START( skyadvnj )
+	ROM_REGION( 0x40000, REGION_CPU1 )
+	ROM_LOAD_EVEN( "sa1.bin",   0x00000,  0x20000, 0xc2b23080 )
+	ROM_LOAD_ODD ( "sa2.bin",   0x00000,  0x20000, 0x06074e72 )
 
 	ROM_REGION( 0x90000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "sa.3",           0x00000,  0x08000, 0x3d0b32e0 )
@@ -2321,12 +2338,21 @@ static void init_sbasebal(void)
 
 	microcontroller_id=0x8512;
 	invert_controls=0;
+	coin_id=0x23|(0x24<<8);
 }
 
 static void init_skyadvnt(void)
 {
 	microcontroller_id=0x8814;
 	invert_controls=0;
+	coin_id=0x23|(0x24<<8);
+}
+
+static void init_skyadvnj(void)
+{
+	microcontroller_id=0x8814;
+	invert_controls=0;
+	coin_id=0x22|(0x22<<8);
 }
 
 static void init_kyros(void)
@@ -2356,7 +2382,8 @@ GAME( 1987, btlfield, timesold, alpha68k_II,   btlfield, btlfield, ROT90,      "
 GAME( 1988, skysoldr, 0,        alpha68k_II,   skysoldr, skysoldr, ROT90,      "SNK / Romstar", "Sky Soldiers (US)" )
 GAMEX(1988, goldmedl, 0,        alpha68k_II,   goldmedl, goldmedl, ROT0,       "SNK", "Gold Medalist", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1988, goldmedb, goldmedl, alpha68k_II,   goldmedl, goldmedb, ROT0,       "bootleg", "Gold Medalist (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX(1989, skyadvnt, 0,        alpha68k_V,    skyadvnt, skyadvnt, ROT90,      "SNK of America (licensed from Alpha)", "Sky Adventure (US)", GAME_NO_COCKTAIL )
+GAME( 1989, skyadvnt, 0,        alpha68k_V,    skyadvnt, skyadvnt, ROT90,      "SNK of America (licensed from Alpha)", "Sky Adventure (US)" )
+GAME( 1989, skyadvnj, skyadvnt, alpha68k_V,    skyadvnt, skyadvnj, ROT90,      "Alpha Denshi Co.", "Sky Adventure (Japan)" )
 GAME( 1989, gangwars, 0,        alpha68k_V,    gangwars, gangwars, ROT0_16BIT, "Alpha Denshi Co.", "Gang Wars (US)" )
 GAME( 1989, gangwarb, gangwars, alpha68k_V,    gangwars, gangwars, ROT0_16BIT, "bootleg", "Gang Wars (bootleg)" )
 GAMEX(1989, sbasebal, 0,        alpha68k_V_sb, sbasebal, sbasebal, ROT0,       "SNK of America (licensed from Alpha)", "Super Champion Baseball", GAME_NO_COCKTAIL )

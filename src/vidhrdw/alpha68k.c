@@ -341,7 +341,7 @@ void alpha68k_V_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 
 	/* This appears to be correct priority */
-	if (!strcmp(Machine->gamedrv->name,"skyadvnt")) /* Todo */
+	if (!strcmp(Machine->gamedrv->name,"skyadvnt") || !strcmp(Machine->gamedrv->name,"skyadvnj")) /* Todo */
 	{
 		draw_sprites_V(bitmap,0,0x0f80,0x1000,0,0x8000,0x7fff);
 		draw_sprites_V(bitmap,1,0x0000,0x1000,0,0x8000,0x7fff);
@@ -361,8 +361,15 @@ void alpha68k_V_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 void alpha68k_V_sb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
+	static int last_bank=0;
 	int offs,color,tile,i;
 	int colmask[256],code,pal_base;
+
+	if (last_bank!=bank_base)
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	last_bank=bank_base;
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	tilemap_update(fix_tilemap);
 
 	/* Build the dynamic palette */
 	memset(palette_used_colors,PALETTE_COLOR_UNUSED,4096 * sizeof(unsigned char));
@@ -408,8 +415,10 @@ void alpha68k_V_sb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	palette_transparent_color=4095;
 	palette_used_colors[4095] = PALETTE_COLOR_USED;
-	palette_recalc();
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+	tilemap_render(ALL_TILEMAPS);
 
 	/* This appears to be correct priority */
 	draw_sprites_V(bitmap,0,0x0f80,0x1000,0x4000,0x8000,0x3fff);
