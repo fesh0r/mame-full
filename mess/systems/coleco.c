@@ -126,10 +126,9 @@ static struct SN76496interface sn76496_interface =
 
 static int coleco_interrupt(void)
 {
-    if (TMS9928A_interrupt()!=0)
-        return nmi_interrupt();
+    TMS9928A_interrupt();
 
-    return 0;
+    return ignore_interrupt ();
 }
 
 static struct MachineDriver machine_driver_coleco =

@@ -17,9 +17,22 @@
   Start the video hardware emulation.
 
 ***************************************************************************/
+
+static void coleco_vdp_interrupt (int state) 
+{
+	static int last_state = 0;
+
+	if (state && !last_state) cpu_set_nmi_line(0, PULSE_LINE);
+
+	last_state = state;
+}
+
 int coleco_vh_start(void)
 {
-	return TMS9928A_start(TMS99x8A, 0x4000);
+    if (TMS9928A_start(TMS99x8A, 0x4000)) return 1;
+	TMS9928A_int_callback(coleco_vdp_interrupt);
+
+	return 0;
 }
 
 /***************************************************************************
