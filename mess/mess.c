@@ -158,7 +158,7 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 		extern struct GameDriver driver_0;
 		const char *ext;
 		char *p;
-		int l;
+		int extension_storage = -1;
 
 		sysname = Machine->gamedrv->name;
 		logerror("image_fopen: trying %s for system %s\n", img->name, sysname);
@@ -196,16 +196,16 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 		if( !ext )
 			break;
 
-		l = strlen(img->name);
 		p = img->name + original_len;	/* overwrite any extension we may have appended so far */
 		/* does the file name already have an extension appended ? */
-		if( p )
+		if (* p)
 		{
 			++p; /* skip the dot */
 			/* new extension won't fit? */
-			if( strlen(p) < strlen(ext) )
+			if (strlen(ext) > extension_storage)
 			{
-				img->name = realloc(img->name, l - strlen(p) + strlen(ext) + 1);
+				extension_storage = strlen(ext);
+				img->name = realloc(img->name, original_len + 1 + extension_storage + 1);
 				if( !img->name )
 				{
 					logerror("image_fopen: realloc failed.. damn it!\n");
@@ -216,20 +216,26 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 		}
 		else
 		{
-			img->name = realloc(img->name, l + 1 + strlen(ext) + 1);
+			extension_storage = strlen(ext);
+			if (extension_storage < 5)
+				extension_storage = 5;	/* this is intended to avoid too many realloc */
+			img->name = realloc(img->name, original_len + 1 + extension_storage + 1);
 			if( !img->name )
 			{
 				logerror("image_fopen: realloc failed.. damn it!\n");
 				return NULL;
 			}
-			sprintf(img->name + l, ".%s", ext);
+			sprintf(p, ".%s", ext);
 		}
 	}
 
 	if ((! file) && (strlen(img->name) != original_len))
 	{	/* restore original file name, so that we do not mess everything up. (Ha !) */
 		if (img->name)	/* safety check */
-			img->name = realloc(img->name, original_len);
+		{
+			img->name = realloc(img->name, original_len+1);
+			img->name[original_len] = '\0';
+		}
 	}
 
 	if( file )
