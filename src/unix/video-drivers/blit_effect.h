@@ -77,6 +77,9 @@
 
 /* start of actual effect blit code */
   case EFFECT_SCAN2:
+#ifdef EFFECT_MMX_ASM
+     effect_setpalette_asm(palette->lookup);
+#endif
   case EFFECT_RGBSTRIPE:
     if (sysdep_display_params.orientation)
     {
@@ -150,6 +153,9 @@
     break;
 
   case EFFECT_6TAP2X:
+#ifdef EFFECT_MMX_ASM
+     effect_setpalette_asm(palette->lookup);
+#endif
   {
      effect_6tap_clear_func(bounds_width);
      if (sysdep_display_params.orientation) {

@@ -809,6 +809,7 @@ void effect_6tap_clear(unsigned count)
 
 #define Clip(a) (((a) < 0) ? 0 : (((a) > 0xff) ? 0xff : (a)))
 
+#ifndef EFFECT_MMX_ASM
 void effect_6tap_render_32(void *dst0, void *dst1, unsigned count)
 {
   UINT8 *u8dest = (UINT8 *) dst1;
@@ -857,3 +858,4 @@ void effect_6tap_render_32(void *dst0, void *dst1, unsigned count)
     }
 
 }
+#endif

@@ -92,6 +92,12 @@ void effect_lq2x_32_YUY2_direct
 
 void effect_scan2_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette);
 void effect_scan2_32_YUY2_direct(void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette);
+#ifdef EFFECT_MMX_ASM
+void effect_scan2_16_16(void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette);
+void effect_scan2_16_16_direct(void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette);
+void effect_scan2_16_32(void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette);
+void effect_scan2_32_32_direct(void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette);
+#endif
 
 /*****************************/
 
@@ -117,6 +123,9 @@ void effect_6tap_addline_32(const void *src0, unsigned count, struct sysdep_pale
 void effect_6tap_render_15(void *dst0, void *dst1, unsigned count);
 void effect_6tap_render_16(void *dst0, void *dst1, unsigned count);
 void effect_6tap_render_32(void *dst0, void *dst1, unsigned count);
+#ifdef EFFECT_MMX_ASM
+void effect_setpalette_asm(void *pvPalette);
+#endif
 
 /*****************************/
 

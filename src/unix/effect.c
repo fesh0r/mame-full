@@ -217,7 +217,6 @@ void effect_check_params(void)
 /* done */
 #undef GETPIXEL
 
-
 #define DISPLAY_MODES 5 /* 15,16,32,YUY2,YV12 */
 #define EFFECT_MODES (DISPLAY_MODES*3) /* 15,16,32 */
 /* arrays with all the effect functions:
