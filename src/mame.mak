@@ -62,6 +62,7 @@ CPUS+=CCPU@
 CPUS+=ADSP2100@
 CPUS+=MIPS@
 #CPUS+=SC61860@
+#CPUS+=ARM@
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@

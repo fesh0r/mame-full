@@ -293,6 +293,8 @@ void machine_reset(void);
 void cpu_set_reset_line(int cpu,int state);
 /* Use this function to halt a single CPU */
 void cpu_set_halt_line(int cpu,int state);
+/* Use this function to hook into IRQ acknowledge callbacks */
+void cpu_set_irq_callback(int cpunum, int (*callback)(int));
 
 /* This function returns CPUNUM current status (running or halted) */
 int cpu_getstatus(int cpunum);

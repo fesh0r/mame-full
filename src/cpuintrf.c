@@ -211,14 +211,19 @@ static int cpu_0_irq_callback(int irqline);
 static int cpu_1_irq_callback(int irqline);
 static int cpu_2_irq_callback(int irqline);
 static int cpu_3_irq_callback(int irqline);
+static int cpu_4_irq_callback(int irqline);
+static int cpu_5_irq_callback(int irqline);
+static int cpu_6_irq_callback(int irqline);
+static int cpu_7_irq_callback(int irqline);
 
 /* and a list of them for indexed access */
 static int (*cpu_irq_callbacks[MAX_CPU])(int) = {
-	cpu_0_irq_callback,
-	cpu_1_irq_callback,
-	cpu_2_irq_callback,
-	cpu_3_irq_callback
+	cpu_0_irq_callback, cpu_1_irq_callback, cpu_2_irq_callback, cpu_3_irq_callback,
+	cpu_4_irq_callback, cpu_5_irq_callback, cpu_6_irq_callback, cpu_7_irq_callback
 };
+
+/* and a list of driver interception hooks */
+static int (*drv_irq_callbacks[MAX_CPU])(int) = { NULL, };
 
 /* Default window layout for the debugger */
 UINT8 default_win_layout[] = {
@@ -679,6 +684,9 @@ logerror("Machine reset\n");
 		/* Set the irq callback for the cpu */
 		SETIRQCALLBACK(i,cpu_irq_callbacks[i]);
 
+        /* Reset any driver hooks into the IRQ acknowledge callbacks */
+        drv_irq_callbacks[i] = NULL;
+
 		/* save the CPU context if necessary */
 		if (cpu[i].save_context) GETCONTEXT (i, cpu[i].context);
 
@@ -873,6 +881,17 @@ void cpu_set_reset_line(int cpunum,int state)
 void cpu_set_halt_line(int cpunum,int state)
 {
 	timer_set(TIME_NOW, (cpunum & 7) | (state << 3), cpu_haltcallback);
+}
+
+
+/***************************************************************************
+
+  Use this function to install a callback for IRQ acknowledge
+
+***************************************************************************/
+void cpu_set_irq_callback(int cpunum, int (*callback)(int))
+{
+	drv_irq_callbacks[cpunum] = callback;
 }
 
 
@@ -1130,49 +1149,29 @@ int cpu_getiloops(void)
   is HOLD_LINE and returns the interrupt vector for that line.
 
 ***************************************************************************/
-static int cpu_0_irq_callback(int irqline)
-{
-	if( irq_line_state[0 * MAX_IRQ_LINES + irqline] == HOLD_LINE )
-	{
-		SETIRQLINE(0, irqline, CLEAR_LINE);
-		irq_line_state[0 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
-	}
-	LOG(("cpu_0_irq_callback(%d) $%04x\n", irqline, irq_line_vector[0 * MAX_IRQ_LINES + irqline]));
-	return irq_line_vector[0 * MAX_IRQ_LINES + irqline];
+#define MAKE_IRQ_CALLBACK(num)												\
+static int cpu_##num##_irq_callback(int irqline)							\
+{																			\
+	int vector = irq_line_vector[num * MAX_IRQ_LINES + irqline];			\
+    if( irq_line_state[num * MAX_IRQ_LINES + irqline] == HOLD_LINE )        \
+	{																		\
+		SETIRQLINE(num, irqline, CLEAR_LINE);								\
+		irq_line_state[num * MAX_IRQ_LINES + irqline] = CLEAR_LINE; 		\
+	}																		\
+	LOG(("cpu_##num##_irq_callback(%d) $%04x\n", irqline, vector));         \
+	if( drv_irq_callbacks[num] )											\
+		return (*drv_irq_callbacks[num])(vector);							\
+	return vector;															\
 }
 
-static int cpu_1_irq_callback(int irqline)
-{
-	if( irq_line_state[1 * MAX_IRQ_LINES + irqline] == HOLD_LINE )
-	{
-		SETIRQLINE(1, irqline, CLEAR_LINE);
-		irq_line_state[1 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
-	}
-	LOG(("cpu_1_irq_callback(%d) $%04x\n", irqline, irq_line_vector[1 * MAX_IRQ_LINES + irqline]));
-	return irq_line_vector[1 * MAX_IRQ_LINES + irqline];
-}
-
-static int cpu_2_irq_callback(int irqline)
-{
-	if( irq_line_state[2 * MAX_IRQ_LINES + irqline] == HOLD_LINE )
-	{
-		SETIRQLINE(2, irqline, CLEAR_LINE);
-		irq_line_state[2 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
-	}
-	LOG(("cpu_2_irq_callback(%d) $%04x\n", irqline, irq_line_vector[2 * MAX_IRQ_LINES + irqline]));
-	return irq_line_vector[2 * MAX_IRQ_LINES + irqline];
-}
-
-static int cpu_3_irq_callback(int irqline)
-{
-	if( irq_line_state[3 * MAX_IRQ_LINES + irqline] == HOLD_LINE )
-	{
-		SETIRQLINE(3, irqline, CLEAR_LINE);
-		irq_line_state[3 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
-	}
-	LOG(("cpu_3_irq_callback(%d) $%04x\n", irqline, irq_line_vector[2 * MAX_IRQ_LINES + irqline]));
-	return irq_line_vector[3 * MAX_IRQ_LINES + irqline];
-}
+MAKE_IRQ_CALLBACK(0)
+MAKE_IRQ_CALLBACK(1)
+MAKE_IRQ_CALLBACK(2)
+MAKE_IRQ_CALLBACK(3)
+MAKE_IRQ_CALLBACK(4)
+MAKE_IRQ_CALLBACK(5)
+MAKE_IRQ_CALLBACK(6)
+MAKE_IRQ_CALLBACK(7)
 
 /***************************************************************************
 
