@@ -113,6 +113,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( gamegear )	/* Sega Game Gear Handheld						  */
 	DRIVER( sms )		/* Sega Sega Master System						  */
 	DRIVER( genesis )	/* Sega Genesis/MegaDrive						  */
+TESTDRIVER( saturn )	/* Sega Saturn									  */
 
 	/* GCE */
 	DRIVER( vectrex )	/* General Consumer Electric Vectrex - 1982-1984  */
@@ -246,7 +247,7 @@ TESTDRIVER( plus4v )	/* Commodore +4 								  */
 	DRIVER( pcw10 ) 	/* 198? PCW10									  */
 	DRIVER( pcw16 ) 	/* 1995 PCW16									  */
 	DRIVER( nc100 ) 	/* 19?? NC100									  */
-        DRIVER( nc200 )         /* 19?? NC200 */
+		DRIVER( nc200 ) 		/* 19?? NC200 */
 #endif
 #ifndef MESS_EXCLUDE_ACORN
 TESTDRIVER( z88 )		/*												  */
