@@ -567,14 +567,14 @@ static void pcw16_update_memory(void)
 
 READ_HANDLER(pcw16_bankhw_r)
 {
-//	logerror("bank r: %d \r\n", offset);
+//	logerror("bank r: %d \n", offset);
 
 	return pcw16_banks[offset];
 }
 
 WRITE_HANDLER(pcw16_bankhw_w)
 {
-	//logerror("bank w: %d block: %02x\r\n", offset, data);
+	//logerror("bank w: %d block: %02x\n", offset, data);
 
 	pcw16_banks[offset] = data;
 
@@ -583,7 +583,7 @@ WRITE_HANDLER(pcw16_bankhw_w)
 
 WRITE_HANDLER(pcw16_video_control_w)
 {
-	//logerror("video control w: %02x\r\n", data);
+	//logerror("video control w: %02x\n", data);
 
 	pcw16_video_control = data;
 }
@@ -697,7 +697,7 @@ static void pcw16_keyboard_reset(void)
 /* interfaces to a pc-at keyboard */
 READ_HANDLER(pcw16_keyboard_data_shift_r)
 {
-	//logerror("keyboard data shift r: %02x\r\n", pcw16_keyboard_data_shift);
+	//logerror("keyboard data shift r: %02x\n", pcw16_keyboard_data_shift);
 	pcw16_keyboard_state &= ~(PCW16_KEYBOARD_BUSY_STATUS);
 
 	pcw16_keyboard_int(0);
@@ -754,7 +754,7 @@ void	pcw16_keyboard_signal_byte_received(int data)
 
 WRITE_HANDLER(pcw16_keyboard_data_shift_w)
 {
-	//logerror("Keyboard Data Shift: %02x\r\n", data);
+	//logerror("Keyboard Data Shift: %02x\n", data);
 	/* writing to shift register clears parity */
 	/* writing to shift register clears start bit */
 	pcw16_keyboard_state &= ~(
@@ -782,7 +782,7 @@ READ_HANDLER(pcw16_keyboard_status_r)
 
 WRITE_HANDLER(pcw16_keyboard_control_w)
 {
-	//logerror("Keyboard control w: %02x\r\n",data);
+	//logerror("Keyboard control w: %02x\n",data);
 
 	pcw16_keyboard_previous_state = pcw16_keyboard_state;
 
@@ -1110,7 +1110,7 @@ static void pcw16_trigger_fdc_int(void)
 
 READ_HANDLER(pcw16_system_status_r)
 {
-//	logerror("system status r: \r\n");
+//	logerror("system status r: \n");
 
 	return pcw16_system_status | (readinputport(0) & 0x04);
 }
@@ -1133,7 +1133,7 @@ READ_HANDLER(pcw16_timer_interrupt_counter_r)
 
 WRITE_HANDLER(pcw16_system_control_w)
 {
-	//logerror("0x0f8: function: %d\r\n",data);
+	//logerror("0x0f8: function: %d\n",data);
 
 	/* lower 4 bits define function code */
 	switch (data & 0x0f)
@@ -1485,13 +1485,15 @@ void pcw16_init_machine(void)
 	
 	pcw16_reset();
 
-        beep_set_state(0,0);
-        beep_set_frequency(0,3750);
+	beep_set_state(0,0);
+	beep_set_frequency(0,3750);
 }
 
 
 void pcw16_shutdown_machine(void)
 {
+	pc_fdc_exit();
+
 	if (pcw16_ram!=NULL)
 	{
 		free(pcw16_ram);
