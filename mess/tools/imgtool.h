@@ -109,6 +109,37 @@ size_t stream_fill(STREAM *f, unsigned char b, size_t sz);
 int stream_crc(STREAM *f, unsigned long *result);
 int file_crc(const char *fname,  unsigned long *result);
 
+/* -----------------------------------------------------------------------
+ * Filters                                                            
+ * ----------------------------------------------------------------------- */
+
+struct filter_info {
+	int (*sendproc)(struct filter_info *fi, void *buf, int buflen);
+	void *filterstate;
+	void *filterparam;
+	void *internalparam;
+};
+
+struct filter_module {
+	const char *name;
+	const char *longname;
+	int (*filterproc)(struct filter_info *fi, void *buf, int buflen);
+	int statesize;
+};
+
+typedef struct {
+	int dummy;
+} FILTER;
+
+FILTER *filter_init(struct filter_module *filter, void *param);
+void filter_term(FILTER *f);
+int filter_writetostream(FILTER *f, STREAM *s, void *buf, int buflen);
+int filter_readfromstream(FILTER *f, STREAM *s, void *buf, int buflen);
+
+const struct filter_module *filters[];
+
+const struct filter_module *filter_lookup(const char *name);
+
 /* ----------------------------------------------------------------------- */
 
 typedef struct {
@@ -388,8 +419,10 @@ int img_freespace(IMAGE *img, int *sz);
  *		img:				The image to read from
  *		fname:				The filename on the image
  *		destf:				Place to receive the stream
+ *      filter:             Filter to use, or NULL if none
  */
-int img_readfile(IMAGE *img, const char *fname, STREAM *destf);
+int img_readfile(IMAGE *img, const char *fname, STREAM *destf,
+	const struct filter_module *filter);
 
 /* img_writefile
  *
@@ -401,8 +434,10 @@ int img_readfile(IMAGE *img, const char *fname, STREAM *destf);
  *		fname:				The filename on the image
  *		destf:				Place to receive the stream
  *		options:			Options to specify on the new file
+ *      filter:             Filter to use, or NULL if none
  */
-int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const struct NamedOption *_options);
+int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
+	const struct NamedOption *_options, const struct filter_module *filter);
 
 /* img_getfile
  *
@@ -413,8 +448,10 @@ int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const struct N
  *		img:				The image to read from
  *		fname:				The filename on the image
  *		dest:				Filename for native file to write to
+ *      filter:             Filter to use, or NULL if none
  */
-int img_getfile(IMAGE *img, const char *fname, const char *dest);
+int img_getfile(IMAGE *img, const char *fname, const char *dest,
+	const struct filter_module *filter);
 
 /* img_putfile
  *
@@ -427,8 +464,10 @@ int img_getfile(IMAGE *img, const char *fname, const char *dest);
  *							the file will be named basename(source)
  *		source:				Native filename for source
  *		options:			Options to specify on the new file
+ *      filter:             Filter to use, or NULL if none
  */
-int img_putfile(IMAGE *img, const char *newfname, const char *source, const struct NamedOption *_options);
+int img_putfile(IMAGE *img, const char *newfname, const char *source,
+	const struct NamedOption *_options, const struct filter_module *filter);
 
 /* img_deletefile
  *

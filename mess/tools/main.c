@@ -213,7 +213,7 @@ static int cmd_get(struct command *c, int argc, char *argv[])
 	if (err)
 		goto error;
 
-	err = img_getfile(img, argv[2], (argc == 4) ? argv[3] : NULL);
+	err = img_getfile(img, argv[2], (argc == 4) ? argv[3] : NULL, NULL);
 	img_close(img);
 	if (err)
 		goto error;
@@ -242,7 +242,7 @@ static int cmd_put(struct command *c, int argc, char *argv[])
 	if (err)
 		goto error;
 
-	err = img_putfile(img, newfname, argv[2], nopts);
+	err = img_putfile(img, newfname, argv[2], nopts, NULL);
 	img_close(img);
 	if (err)
 		goto error;
@@ -279,7 +279,7 @@ static int cmd_getall(struct command *c, int argc, char *argv[])
 	while (((err = img_nextenum(imgenum, &ent)) == 0) && !ent.eof) {
 		fprintf(stdout, "Retrieving %s (%i bytes)\n", ent.fname, ent.filesize);
 
-		err = img_getfile(img, ent.fname, NULL);
+		err = img_getfile(img, ent.fname, NULL, NULL);
 		if (err)
 			break;
 	}

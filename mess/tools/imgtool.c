@@ -243,7 +243,7 @@ int img_freespace(IMAGE *img, int *sz)
 	return 0;
 }
 
-int img_readfile(IMAGE *img, const char *fname, STREAM *destf)
+int img_readfile(IMAGE *img, const char *fname, STREAM *destf, const struct filter_module *filter)
 {
 	int err;
 
@@ -332,7 +332,7 @@ static int resolve_options(const struct OptionTemplate *opttemplate, const struc
 	return 0;
 }
 
-int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const struct NamedOption *nopts)
+int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const struct NamedOption *nopts, const struct filter_module *filter)
 {
 	int err;
 	ResolvedOption ropts[MAX_OPTIONS];
@@ -374,7 +374,7 @@ done:
 	return err;
 }
 
-int img_getfile(IMAGE *img, const char *fname, const char *dest)
+int img_getfile(IMAGE *img, const char *fname, const char *dest, const struct filter_module *filter)
 {
 	int err;
 	STREAM *f;
@@ -386,12 +386,12 @@ int img_getfile(IMAGE *img, const char *fname, const char *dest)
 	if (!f)
 		return IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_NATIVEFILE;
 
-	err = img_readfile(img, fname, f);
+	err = img_readfile(img, fname, f, filter);
 	stream_close(f);
 	return err;
 }
 
-int img_putfile(IMAGE *img, const char *newfname, const char *source, const struct NamedOption *nopts)
+int img_putfile(IMAGE *img, const char *newfname, const char *source, const struct NamedOption *nopts, const struct filter_module *filter)
 {
 	int err;
 	STREAM *f;
@@ -403,7 +403,7 @@ int img_putfile(IMAGE *img, const char *newfname, const char *source, const stru
 	if (!f)
 		return IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_NATIVEFILE;
 
-	err = img_writefile(img, newfname, f, nopts);
+	err = img_writefile(img, newfname, f, nopts, filter);
 	stream_close(f);
 	return err;
 }

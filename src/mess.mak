@@ -753,6 +753,8 @@ imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/main.o    \
 	  $(OBJ)/mess/tools/imgtool.o \
 	  $(OBJ)/mess/tools/imgwave.o \
+	  $(OBJ)/mess/tools/filter.o \
+	  $(OBJ)/mess/tools/filteoln.o \
 	  $(OBJ)/mess/tools/cococas.o   \
 	  $(OBJ)/mess/tools/vmsx_tap.o   \
 	  $(OBJ)/mess/tools/vmsx_gm2.o   \
