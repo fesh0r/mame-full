@@ -2,20 +2,11 @@
 #include <stdio.h>
 #include "mamece.h"
 #include "driver.h"
-#include "window.h"
+#include "..\windows\window.h"
 
 void decompose_rom_sample_path (const char *_rompath, const char *_samplepath);
 #ifdef MESS
 void decompose_software_path (const char *_softwarepath);
-#endif
-
-#ifdef MESS
-#include "messwin.h"
-const char *crcdir = NULL;
-static char crcfilename[256] = "";
-const char *crcfile = crcfilename;
-static char pcrcfilename[256] = "";
-const char *pcrcfile = pcrcfilename;
 #endif
 
 #define localconcat(s1, s2)	((s1) ? ((s2) ? __localconcat(_alloca(strlen(s1) + strlen(s2) + 1), (s1), (s2)) : (s1)) : (s2))
@@ -83,7 +74,7 @@ void setup_paths()
 	set_mame_dir(&screenshotdir,		rootpath,	"Snap");
 	set_mame_dir(&my_mameinfo_filename,	rootpath,	"mameinfo.dat");
 #ifdef MESS
-	set_mame_dir((char**)&crcdir,		rootpath,	"Crc");
+//	set_mame_dir((char**)&crcdir,		rootpath,	"Crc");
 	set_mame_dir(&my_cheatfile,			rootpath,	"cheat.cdb");
 	set_mame_dir(&my_history_filename,	rootpath,	"sysinfo.dat");
 	decompose_software_path(localconcat(rootpath, "\\Software"));
@@ -118,8 +109,8 @@ int play_game(int game_index, struct ui_options *opts)
 	options.use_samples = 1;
 	options.use_filter = 1;
 	options.vector_flicker = (float) (opts->enable_flicker ? 255 : 0);
-	options.vector_width = gfx_width;
-	options.vector_height = gfx_height;
+	options.vector_width = win_gfx_width;
+	options.vector_height = win_gfx_height;
 	options.color_depth = 0;
 	options.norotate = 0;
 	options.flipx = 0;
@@ -134,19 +125,19 @@ int play_game(int game_index, struct ui_options *opts)
 	attenuation = 0;
 	use_dirty = opts->enable_dirtyline;
 	throttle = !opts->disable_throttle;
-	window_mode = 0;
+	win_window_mode = 0;
 
 	/* remember the initial LED states */
 	original_leds = osd_get_leds();
 
 	#ifdef MESS
 	/* Build the CRC database filename */
-	sprintf(crcfilename, "%s/%s.crc", crcdir, drivers[game_index]->name);
+/*	sprintf(crcfilename, "%s/%s.crc", crcdir, drivers[game_index]->name);
 	if (drivers[game_index]->clone_of->name)
 		sprintf (pcrcfilename, "%s/%s.crc", crcdir, drivers[game_index]->clone_of->name);
 	else
 		pcrcfilename[0] = 0;
-    #endif
+  */  #endif
 
 	err = run_game(game_index);
 
@@ -162,18 +153,18 @@ int play_game(int game_index, struct ui_options *opts)
 
 int osd_init(void)
 {
-	extern int win32_init_input(void);
+	extern int win_init_input(void);
 	int result;
 
-	result = win32_init_window();
+	result = win_init_window();
 	if (result) {
-		logerror("win32_init_window() failed!\n");
+		logerror("win_init_window() failed!\n");
 		return result;
 	}
 
-	result = win32_init_input();
+	result = win_init_input();
 	if (result) {
-		logerror("win32_init_input() failed!\n");
+		logerror("win_init_input() failed!\n");
 		return result;
 	}
 
@@ -188,11 +179,11 @@ int osd_init(void)
 
 void osd_exit(void)
 {
-	extern void win32_shutdown_input(void);
-	extern void win32_shutdown_window(void);
+	extern void win_shutdown_input(void);
+	extern void win_shutdown_window(void);
 
-	win32_shutdown_input();
-	win32_shutdown_window();
+	win_shutdown_input();
+	win_shutdown_window();
 	osd_set_leds(0);
 }
 

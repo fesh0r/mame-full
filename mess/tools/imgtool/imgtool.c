@@ -631,7 +631,7 @@ int img_putfile_resolved(IMAGE *img, const char *newfname, const char *source, c
 	STREAM *f;
 
 	if (!newfname)
-		newfname = osd_basename(source);
+		newfname = (const char *) osd_basename((char *) source);
 
 	f = stream_open(source, OSD_FOPEN_READ);
 	if (!f)
@@ -648,7 +648,7 @@ int img_putfile(IMAGE *img, const char *newfname, const char *source, const stru
 	STREAM *f;
 
 	if (!newfname)
-		newfname = osd_basename(source);
+		newfname = (const char *) osd_basename((char *) source);
 
 	f = stream_open(source, OSD_FOPEN_READ);
 	if (!f)
@@ -898,6 +898,27 @@ int img_goodname_byname(const char *modulename, const char *fname, const char *b
 
 	return img_goodname(module, fname, base, result);
 }
+
+/* copying osd_basename() here because we cannot separate it from fileio.c */
+char *osd_basename (char *filename)
+{
+	char *c;
+
+	if (!filename)
+		return NULL;
+
+	c = filename + strlen(filename);
+
+	while (c != filename)
+	{
+		c--;
+		if (*c == '\\' || *c == '/' || *c == ':')
+			return (c+1);
+	}
+
+	return filename;
+}
+
 
 
 

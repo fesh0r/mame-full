@@ -619,7 +619,7 @@ static struct MachineDriver machine_driver_coco3 =
 	0,
 	NULL,							/* initialise palette */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE | VIDEO_PIXEL_ASPECT_RATIO_1_2,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,
 	coco3_vh_start,
 	coco3_vh_stop,
@@ -666,7 +666,7 @@ static struct MachineDriver machine_driver_coco3h =
 	0,
 	NULL,							/* initialise palette */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE | VIDEO_PIXEL_ASPECT_RATIO_1_2,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,
 	coco3_vh_start,
 	coco3_vh_stop,

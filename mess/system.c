@@ -618,6 +618,7 @@ TESTDRIVER( kc85_4d )   /* VEB KC 85/4 with disk interface                */
 	DRIVER( lnw80 ) 	/* LNW Research LNW-80							  */
 /*	DRIVER( trs80m2 )*/	/* TRS-80 Model II -							  */
 TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
+#endif
 
 	DRIVER( coco )		/* Color Computer								  */
 	DRIVER( cocoe )		/* Color Computer (Extended BASIC 1.0)			  */
@@ -634,9 +635,8 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 /*	DRIVER( dragon64 */	/* Dragon 64									  */
 
 	/* EACA */
-	DRIVER( cgenie )	/* Colour Genie EG2000							  */
+//	DRIVER( cgenie )	/* Colour Genie EG2000							  */
 	/* system 80 trs80 compatible */
-#endif
 
 	/* VIDEO TECHNOLOGY */
 	DRIVER( laser110 )	/* 1983 Laser 110								  */

@@ -23,6 +23,7 @@
 #include "window.h"
 #include "rc.h"
 #include "mamece.h"
+#include "..\windows\window.h"
 
 #define NUMKEYSTATES    256
 
@@ -66,7 +67,7 @@ struct rc_option input_opts[] =
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
-UINT8						trying_to_quit;
+UINT8 win_trying_to_quit;
 
 struct tKeyboard_private
 {
@@ -90,7 +91,7 @@ static struct tKeyboard_private This;
     put here anything you need to do when the program is started. Return 0 if 
     initialization was successful, nonzero otherwise.
 */
-int win32_init_input(void)
+int win_init_input(void)
 {
     memset(&This, 0, sizeof(struct tKeyboard_private));
     return gx_open_input() ? 0 : -1;
@@ -99,7 +100,7 @@ int win32_init_input(void)
 /*
     put here cleanup routines to be executed when the program is terminated.
 */
-void win32_shutdown_input(void)
+void win_shutdown_input(void)
 {
 	gx_close_input();
 }
@@ -334,12 +335,12 @@ int osd_is_key_pressed(int keycode)
     SHORT state;
 
 	// special case: if we're trying to quit, fake up/down/up/down
-	if (keycode == VK_ESCAPE && trying_to_quit) {
+	if (keycode == VK_ESCAPE && win_trying_to_quit) {
 		static int dummy_state = 1;
 		return dummy_state ^= 1;
 	}
 
-    process_events_periodic();
+    win_process_events_periodic();
 
 	/* Are we pressing a char received by WM_KEYDOWN? */
 	if (keycode == pressed_char) {
@@ -377,7 +378,7 @@ int osd_wait_keypress(void)
     while (1)
     {
        Sleep(1);
-       process_events_periodic();
+       win_process_events_periodic();
 
        if (This.m_key_pressed)
           break;
@@ -438,12 +439,12 @@ int osd_readkey_unicode(int flush)
 	return 0;
 }
 
-void win32_poll_input(void)
+void win_poll_input(void)
 {
 	HWND focus = GetFocus();
 }
 
-void win32_pause_input(int paused)
+void win_pause_input(int paused)
 {
 }
 

@@ -167,7 +167,7 @@ DRVLIBS = \
 	$(OBJ)/apf.a      \
 	$(OBJ)/sord.a     \
 	$(OBJ)/tatung.a   \
-#	$(OBJ)/coco.a     \
+	$(OBJ)/coco.a     \
 #	$(OBJ)/atari.a    \
 #	$(OBJ)/sharp.a    \
 #	$(OBJ)/cbm.a      \
@@ -309,8 +309,8 @@ $(OBJ)/coco.a:   \
 	  $(OBJ)/mess/machine/mc10.o	 \
 	  $(OBJ)/mess/systems/mc10.o	 \
 	  $(OBJ)/mess/machine/dragon.o	 \
-#	  $(OBJ)/mess/vidhrdw/dragon.o	 \
-#	  $(OBJ)/mess/systems/dragon.o
+	  $(OBJ)/mess/vidhrdw/dragon.o	 \
+	  $(OBJ)/mess/systems/dragon.o
 
 
 $(OBJ)/trs80.a:    \

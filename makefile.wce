@@ -11,10 +11,10 @@ TARGET = mess
 # TARGET=tinyms
 
 # uncomment next line to make a debug version
-# DEBUG = 1
+DEBUG = 1
 
 # build a version for debugging games
-# MAME_DEBUG = -DMAME_DEBUG
+MAME_DEBUG = -DMAME_DEBUG
 
 # build with browser information for debugging
 BSCMAKE = bscmake.exe
@@ -82,6 +82,13 @@ ASMFLAGS = -f win32
 RM = rm
 RMDIR = rd /S /Q
 MD = -mkdir
+
+ifeq "$(TARGET)" "mess"
+MESS = 1
+endif
+ifeq "$(TARGET)" "tinyms"
+MESS = 1
+endif
 
 ifeq "$(OS)" "wince"
 ifeq "$(WCEPLAT)" "x86em"
@@ -179,13 +186,13 @@ DEFS += -DMIDAS
 endif
 
 INCLUDES = \
-        -I. \
-        -Isrc \
-        -Isrc/wince \
-        -Isrc/wince/crt \
-		-Isrc/windows \
-        -Isrc/cpu/m68000 \
-        -I$(OBJ)/cpu/m68000
+	-I. \
+	-Isrc \
+	-Isrc/wince \
+	-Isrc/wince/crt \
+	-Isrc/windows \
+	-Isrc/cpu/m68000 \
+	-I$(OBJ)/cpu/m68000
 
 ifdef MESS
 INCLUDES += \

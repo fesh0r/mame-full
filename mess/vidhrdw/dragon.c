@@ -345,17 +345,11 @@ static void coco3_compute_color(int color, int *red, int *green, int *blue)
 static int coco3_palette_recalc(int force)
 {
 	int flag;
-	int i, r, g, b;
 	static int lastflag;
 
 	flag = readinputport(COCO3_DIP_MONITORTYPE) & (COCO3_DIP_MONITORTYPE_MASK | ((coco3_gimevhreg[0] & 0x10) << 16));
 	if (force || (flag != lastflag)) {
 		lastflag = flag;
-
-		for (i = 0; i < 64; i++) {
-			coco3_compute_color(i, &r, &g, &b);
-			palette_change_color(i, r, g, b);
-		}
 		return 1;
 	}
 	return 0;

@@ -4,10 +4,9 @@
 //
 //============================================================
 
-#ifndef __WIN32_VIDEO__
-#define __WIN32_VIDEO__
+#ifndef __WIN_VIDEO__
+#define __WIN_VIDEO__
 
-#include "osd_cpu.h"
 
 //============================================================
 //	PARAMETERS
@@ -78,7 +77,7 @@ extern const UINT8 *dbg_palette;
 //	PROTOTYPES
 //============================================================
 
-void mark_palette_dirty(void);
+void win_mark_palette_dirty(void);
 
 
 #endif
