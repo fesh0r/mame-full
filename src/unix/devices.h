@@ -195,7 +195,7 @@ struct axisdata_struct
 struct joydata_struct
 {
 	int fd;
-	int num_axis;
+	int num_axes;
 	int num_buttons;
 	struct axisdata_struct axis[JOY_AXES];
 	int buttons[JOY_BUTTONS];

@@ -26,12 +26,6 @@
 #include "sysdep/rc.h"
 #include "sysdep/fifo.h"
 
-#if defined svgalib || defined svgafx
-#include <vgakeyboard.h>
-#define sysdep_update_keyboard keyboard_update
-#endif
-
-
 
 /*============================================================ */
 /*	IMPORTS */
@@ -64,10 +58,6 @@ UINT8				trying_to_quit;
 /* this will be filled in dynamically */
 static struct OSCodeInfo	codelist[KEY_CODES + JOY_CODES];
 static int			total_codes = 0;
-
-/* global states */
-static int			input_paused;
-static cycles_t			last_poll;
 
 /* Controller override options */
 static float			a2d_deadzone;
@@ -429,6 +419,22 @@ static int joy_trans_table[][2] =
 	{ JOYCODE(1, CODETYPE_MOUSEAXIS, 1),	MOUSECODE_2_ANALOG_Y },
 	{ JOYCODE(1, CODETYPE_MOUSEAXIS, 2),	MOUSECODE_2_ANALOG_Z },
 
+	{ JOYCODE(2, CODETYPE_MOUSEBUTTON, 0), 	MOUSECODE_3_BUTTON1 },
+	{ JOYCODE(2, CODETYPE_MOUSEBUTTON, 1), 	MOUSECODE_3_BUTTON2 },
+	{ JOYCODE(2, CODETYPE_MOUSEBUTTON, 2), 	MOUSECODE_3_BUTTON3 },
+	{ JOYCODE(2, CODETYPE_MOUSEBUTTON, 3), 	MOUSECODE_3_BUTTON4 },
+	{ JOYCODE(2, CODETYPE_MOUSEAXIS, 0),	MOUSECODE_3_ANALOG_X },
+	{ JOYCODE(2, CODETYPE_MOUSEAXIS, 1),	MOUSECODE_3_ANALOG_Y },
+	{ JOYCODE(2, CODETYPE_MOUSEAXIS, 2),	MOUSECODE_3_ANALOG_Z },
+
+	{ JOYCODE(3, CODETYPE_MOUSEBUTTON, 0), 	MOUSECODE_4_BUTTON1 },
+	{ JOYCODE(3, CODETYPE_MOUSEBUTTON, 1), 	MOUSECODE_4_BUTTON2 },
+	{ JOYCODE(3, CODETYPE_MOUSEBUTTON, 2), 	MOUSECODE_4_BUTTON3 },
+	{ JOYCODE(3, CODETYPE_MOUSEBUTTON, 3), 	MOUSECODE_4_BUTTON4 },
+	{ JOYCODE(3, CODETYPE_MOUSEAXIS, 0),	MOUSECODE_4_ANALOG_X },
+	{ JOYCODE(3, CODETYPE_MOUSEAXIS, 1),	MOUSECODE_4_ANALOG_Y },
+	{ JOYCODE(3, CODETYPE_MOUSEAXIS, 2),	MOUSECODE_4_ANALOG_Z },
+
 	{ JOYCODE(0, CODETYPE_GUNAXIS, 0),	GUNCODE_1_ANALOG_X },
 	{ JOYCODE(0, CODETYPE_GUNAXIS, 1),	GUNCODE_1_ANALOG_Y },
 
@@ -443,7 +449,7 @@ static int joy_trans_table[][2] =
 
 int osd_input_initpre(void)
 {
-	int i, j, k, joy_list_count = 0;
+	int i, j;
 	int stick, axis;
 
 	joy_poll_func = NULL;
@@ -536,10 +542,10 @@ int osd_input_initpre(void)
 
 		for (stick = 0; stick < JOY_MAX; stick++)
 		{
-			if (joy_data[stick].num_axis || joy_data[stick].num_buttons)
+			if (joy_data[stick].num_axes || joy_data[stick].num_buttons)
 			{
 				fprintf(stderr_file, "OSD: Info: Joystick %d, %d axis, %d buttons\n",
-						stick, joy_data[stick].num_axis, joy_data[stick].num_buttons);
+						stick, joy_data[stick].num_axes, joy_data[stick].num_buttons);
 				found = TRUE;
 			}
 		}
@@ -1006,7 +1012,7 @@ void joy_evaluate_moves(void)
 	{
 		for (stick = 0; stick < JOY_MAX; stick++)
 		{
-			for (axis = 0; axis < joy_data[stick].num_axis; axis++)
+			for (axis = 0; axis < joy_data[stick].num_axes; axis++)
 			{
 				memset(joy_data[stick].axis[axis].dirs, FALSE, JOY_DIRS*sizeof(int));
 
@@ -1107,10 +1113,10 @@ static INT32 get_joycode_value(os_code_t joycode)
 		/* analog gun axis */
 		case CODETYPE_GUNAXIS:
 		{
+#ifdef USE_LIGHTGUN_ABS_EVENT
 			int delta = 0;
 
 			/* return the latest gun info */
-#ifdef USE_LIGHTGUN_ABS_EVENT
 			if (lightgun_event_abs_read(joynum, joyindex, &delta))
 				return delta;
 #endif
