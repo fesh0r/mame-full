@@ -765,12 +765,16 @@ int x11_window_open_display(void)
 		{
 			if(!sysdep_display_params.fullscreen)
 			{
+			        /* set window hints to resizable */
+			        x11_set_window_hints(window_width, window_height, 2);
+			        /* determine window size and resize */
 				if (custom_window_width)
 				  mode_clip_aspect(custom_window_width, custom_window_height, &window_width, &window_height);
 				else
                                   mode_stretch_aspect(window_width, window_height, &window_width, &window_height);
-			        x11_set_window_hints(window_width, window_height, 1);
                                 XResizeWindow(display, window, window_width, window_height);
+                                /* set window hints to resizable, keep aspect */
+			        x11_set_window_hints(window_width, window_height, 1);
                         }
                         else    
                         {
@@ -779,7 +783,7 @@ int x11_window_open_display(void)
 				   allow switching to fullscreen after
 				   the window has been mapped */
 				XDestroyWindow(display,window);
-				if (x11_create_window(&window_width, &window_height, 2))
+				if (x11_create_window(&window_width, &window_height, 3))
 				       return 1;
 			}
 		}

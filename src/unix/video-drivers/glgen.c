@@ -626,15 +626,11 @@ int gl_open_display (void)
     text_height = sysdep_display_params.orig_height;
   }
   
-  /* achieve the 2**e_x:=text_width, 2**e_y:=text_height */
-  x=1;
-  while (x<text_width)
-    x*=2;
+  /* round text_width and height up to a power of 2 */
+  for(x=1;x<text_width;x*=2) {}
   text_width=x;
 
-  y=1;
-  while (y<text_height)
-    y*=2;
+  for(y=1;y<text_height;y*=2) {}
   text_height=y;
 
   /* Test the max texture size */

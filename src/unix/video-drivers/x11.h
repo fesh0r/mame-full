@@ -56,19 +56,22 @@ void process_x11_joy_event(XEvent *event);
 int xinput_open(int force_grab, int event_mask);
 void xinput_close(void);
 void xinput_check_hotkeys(unsigned int flags);
-/* Create a window, type can be:
-   0: Fixed size of width and height
-   1: Resizable initial size is width and height
-   2: Fullscreen return width and height in width and height */
-int x11_create_window(int *width, int *height, int type);
-/* Set the hints for a window, window-type can be:
-   0: Fixed size of width and height
-   1: Resizable initial size is width and height
-   2: Fullscreen of width and height */
-void x11_set_window_hints(unsigned int width, unsigned int height, int type);
 
 /* generic helper functions */
 int x11_init_palette_info(Visual *xvisual);
+/* Create a window, type can be:
+   0: Fixed size of width and height
+   1: Resizable initial size is width and height, aspect is always
+      kept to sysdep_display_params.aspect .
+   2: Resizable initial size is width and height
+   3: Fullscreen return width and height in width and height */
+int x11_create_window(int *width, int *height, int type);
+/* Set the hints for a window, window-type can be:
+   0: Fixed size
+   1: Resizable, aspect is always kept to sysdep_display_params.aspect .
+   2: Resizable
+   3: Fullscreen */
+void x11_set_window_hints(unsigned int width, unsigned int height, int type);
 
 /* Normal x11_window functions */
 int  x11_window_open_display(void);
@@ -115,6 +118,7 @@ void xfx_update_display(struct mame_bitmap *bitmap,
 #endif
 /* OpenGL functions */
 #ifdef USE_OPENGL
+int xgl_init(void);
 int  xgl_open_display(void);
 void xgl_close_display(void);
 void xgl_update_display(struct mame_bitmap *bitmap,

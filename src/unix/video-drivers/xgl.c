@@ -91,6 +91,18 @@ struct rc_option xgl_opts[] = {
      NULL }
 };
 
+int xgl_init(void)
+{
+  if (!loadGLLibrary(libGLName, libGLUName))
+  {
+    fprintf(stderr, "Use of OpenGL mode disabled\n");
+    return 1;
+  }
+
+  fetch_GL_FUNCS(libGLName, libGLUName, 0);
+  return 0;
+}
+
 /* This name doesn't really cover this function, since it also sets up mouse
    and keyboard. This is done over here, since on most display targets the
    mouse and keyboard can't be setup before the display has. */
@@ -107,8 +119,8 @@ int xgl_open_display(void)
   mode_set_aspect_ratio((double)screen->width/screen->height);
 
   fprintf(stderr, xgl_version_str);
-    
-  /* If using 3Dfx */
+  
+  /* Determine window size, type, etc. If using 3Dfx */
   if((glxfx=getenv("MESA_GLX_FX")) && (glxfx[0]=='f'))
   {
     winmask     = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
@@ -122,9 +134,8 @@ int xgl_open_display(void)
       window_width  = 640;
       window_height = 480;
     }
-    force_grab  = 2; /* grab mouse and keyb */
     window_type = 0; /* non resizable */
-    sysdep_display_params.fullscreen = 1; /* don't allow resizing */
+    force_grab  = 2; /* grab mouse and keyb */
   }
   else if(sysdep_display_params.fullscreen)
   {
@@ -132,8 +143,8 @@ int xgl_open_display(void)
                     CWColormap | CWDontPropagate | CWCursor;
     window_width  = screen->width;
     window_height = screen->height;
+    window_type   = 3; /* fullscreen */
     force_grab    = 1; /* grab mouse */
-    window_type   = 2; /* sysdep_display_params.fullscreen */
   }
   else
   {
@@ -150,24 +161,21 @@ int xgl_open_display(void)
         window_width  = 640;
         window_height = 480;
       }
+      window_type = 2; /* resizable window */
     }
     else
     {
       if(custom_window_width)
-      {
-        window_width  = custom_window_width;
-        window_height = custom_window_height;
-        mode_clip_aspect(window_width, window_height, &window_width, &window_height);
-      }
+        mode_clip_aspect(custom_window_width, custom_window_height,
+          &window_width, &window_height);
       else
-      {
-        window_width  = sysdep_display_params.width * sysdep_display_params.widthscale;
-        window_height = sysdep_display_params.yarbsize;
-        mode_stretch_aspect(window_width, window_height, &window_width, &window_height);
-      }
+        mode_stretch_aspect(sysdep_display_params.width *
+          sysdep_display_params.widthscale,
+          sysdep_display_params.yarbsize,
+          &window_width, &window_height);
+      window_type = 1; /* resizable, keep aspect */
     }
     force_grab    = 0; /* no grab */
-    window_type   = 1; /* resizable window */
   }
 
   window_attr.background_pixel=0;
@@ -182,11 +190,6 @@ int xgl_open_display(void)
   window_attr.colormap=0; /* done later, within findVisualGlX .. */
   window_attr.cursor=None;
 
-  if (!loadGLLibrary(libGLName, libGLUName))
-    return 1;
-
-  fetch_GL_FUNCS(libGLName, libGLUName, 0);
-  
   if (root_window_id)
     window = root_window_id;
   else
