@@ -228,7 +228,7 @@ ROM_START(hp48s)
 //	ROM_LOAD("sxrom-c", 0x00000, 0x40000, CRC(a9a0279d))
 //	ROM_LOAD("sxrom-d", 0x00000, 0x40000, CRC(6e71244e))
 //	ROM_LOAD("sxrom-e", 0x00000, 0x40000, CRC(704ffa08))
-	ROM_LOAD("sxrom-e", 0x00000, 0x40000, CRC(d4f1390b)) // differences only in the hardware window
+	ROM_LOAD("sxrom-e", 0x00000, 0x40000, CRC(d4f1390b) SHA1(f6be01a05aedefa8a285d480e33458447cf2bdaa)) // differences only in the hardware window
 //	ROM_LOAD("rom.sx", 0x00000, 0x40000, CRC(5619ccaf)) //revision E bad dump
 //	ROM_LOAD("sxrom-j", 0x00000, 0x40000, CRC(1a6378ef))
 	ROM_REGION(0x100,REGION_GFX1,0)

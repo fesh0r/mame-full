@@ -292,10 +292,10 @@ MACHINE_DRIVER_END
 
 ROM_START( mbee )
     ROM_REGION(0x10000,REGION_CPU1,0)
-    ROM_LOAD("bas522a.rom",  0x8000, 0x2000, CRC(7896a696))
-    ROM_LOAD("bas522b.rom",  0xa000, 0x2000, CRC(b21d9679))
-    ROM_LOAD("edasm.rom",    0xc000, 0x2000, CRC(1af1b3a9))
-    ROM_LOAD("charrom.bin",  0xf000, 0x1000, CRC(1f9fcee4))
+    ROM_LOAD("bas522a.rom",  0x8000, 0x2000, CRC(7896a696) SHA1(a158f7803296766160e1f258dfc46134735a9477))
+    ROM_LOAD("bas522b.rom",  0xa000, 0x2000, CRC(b21d9679) SHA1(332844433763331e9483409cd7da3f90ac58259d))
+    ROM_LOAD("edasm.rom",    0xc000, 0x2000, CRC(1af1b3a9) SHA1(d035a997c2dbbb3918b3395a3a5a1076aa203ee5))
+    ROM_LOAD("charrom.bin",  0xf000, 0x1000, CRC(1f9fcee4) SHA1(e57ac94e03638075dde68a0a8c834a4f84ba47b0))
 
     ROM_REGION(0x1000,REGION_GFX1,0)
     /* videoram and colorram are remapped here */
@@ -303,10 +303,10 @@ ROM_END
 
 ROM_START( mbeepc85 )
     ROM_REGION(0x10000,REGION_CPU1,0)
-    ROM_LOAD("bas522a.rom",  0x8000, 0x2000, CRC(7896a696))
-    ROM_LOAD("bas522b.rom",  0xa000, 0x2000, CRC(b21d9679))
-    ROM_LOAD("wbee12.rom",   0xc000, 0x2000, CRC(0fc21cb5))
-    ROM_LOAD("charrom.bin",  0xf000, 0x1000, CRC(1f9fcee4))
+    ROM_LOAD("bas522a.rom",  0x8000, 0x2000, CRC(7896a696) SHA1(a158f7803296766160e1f258dfc46134735a9477))
+    ROM_LOAD("bas522b.rom",  0xa000, 0x2000, CRC(b21d9679) SHA1(332844433763331e9483409cd7da3f90ac58259d))
+    ROM_LOAD("wbee12.rom",   0xc000, 0x2000, CRC(0fc21cb5) SHA1(33b3995988fc51ddef1568e160dfe699867adbd5))
+    ROM_LOAD("charrom.bin",  0xf000, 0x1000, CRC(1f9fcee4) SHA1(e57ac94e03638075dde68a0a8c834a4f84ba47b0))
 
     ROM_REGION(0x1000,REGION_GFX1,0)
     /* videoram and colorram are remapped here */
@@ -314,10 +314,10 @@ ROM_END
 
 ROM_START( mbeepc )
     ROM_REGION(0x10000,REGION_CPU1,0)
-    ROM_LOAD("bas522a.rom",  0x8000, 0x2000, CRC(7896a696))
-    ROM_LOAD("bas522b.rom",  0xa000, 0x2000, CRC(b21d9679))
-    ROM_LOAD("telc321.rom",  0xe000, 0x2000, CRC(15b9d2df))
-    ROM_LOAD("charrom.bin",  0xf000, 0x1000, CRC(1f9fcee4))
+    ROM_LOAD("bas522a.rom",  0x8000, 0x2000, CRC(7896a696) SHA1(a158f7803296766160e1f258dfc46134735a9477))
+    ROM_LOAD("bas522b.rom",  0xa000, 0x2000, CRC(b21d9679) SHA1(332844433763331e9483409cd7da3f90ac58259d))
+    ROM_LOAD("telc321.rom",  0xe000, 0x2000, CRC(15b9d2df) SHA1(6e7606099d036f87230b3595eb873be60c190f11))
+    ROM_LOAD("charrom.bin",  0xf000, 0x1000, CRC(1f9fcee4) SHA1(e57ac94e03638075dde68a0a8c834a4f84ba47b0))
 
     ROM_REGION(0x1000,REGION_GFX1,0)
     /* videoram and colorram are remapped here */
@@ -325,8 +325,8 @@ ROM_END
 
 ROM_START( mbee56 )
     ROM_REGION(0x10000,REGION_CPU1,0)
-    ROM_LOAD("56kb.rom",     0xe000, 0x1000, CRC(28211224))
-    ROM_LOAD("charrom.bin",  0xf000, 0x1000, CRC(1f9fcee4))
+    ROM_LOAD("56kb.rom",     0xe000, 0x1000, CRC(28211224) SHA1(b6056339402a6b2677b0e6c57bd9b78a62d20e4f))
+    ROM_LOAD("charrom.bin",  0xf000, 0x1000, CRC(1f9fcee4) SHA1(e57ac94e03638075dde68a0a8c834a4f84ba47b0))
 
     ROM_REGION(0x1000,REGION_GFX1,0)
     /* videoram and colorram are remapped here */
