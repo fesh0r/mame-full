@@ -3851,6 +3851,8 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 			single_step = 0;
 			mame_pause(0);
 		}
+
+		schedule_full_refresh();
 	}
 
 

@@ -607,6 +607,7 @@ void mame_pause(int pause)
 	osd_pause(pause);
 	osd_sound_enable(!pause);
 	palette_set_global_brightness_adjust(pause ? 0.65 : 1.00);
+	schedule_full_refresh();
 }
 
 
