@@ -3,6 +3,7 @@
 #include "mess.h"
 #include "includes/flopdrv.h"
 #include "image.h"
+#include "utils.h"
 
 struct mess_bdf
 {
@@ -158,7 +159,7 @@ static int bdf_floppy_init_internal(int id, const formatdriver_ctor *open_format
 	return INIT_PASS;
 }
 
-int bdf_floppy_init(int id)
+static int bdf_floppy_init(int id)
 {
 	const struct IODevice *dev;
 	const formatdriver_ctor *open_formats;
@@ -173,7 +174,7 @@ int bdf_floppy_init(int id)
 	return bdf_floppy_init_internal(id, open_formats, create_format);
 }
 
-void bdf_floppy_exit(int id)
+static void bdf_floppy_exit(int id)
 {
 	if (bdfs[id].bdf)
 	{
@@ -181,3 +182,61 @@ void bdf_floppy_exit(int id)
 		memset(&bdfs[id], 0, sizeof(bdfs[id]));
 	}
 }
+
+static void specify_extension(char *extbuf, size_t extbuflen, formatdriver_ctor format)
+{
+	struct InternalBdFormatDriver drv;
+	size_t len;
+
+	format(&drv);
+
+	if (drv.extension)
+	{
+		while(*extbuf)
+		{
+			/* already have this extension? */
+			if (!strcmpi(extbuf, drv.extension))
+				return;
+
+			len = strlen(extbuf) + 1;
+			extbuf += len;
+			extbuflen -= len;
+		}
+
+		assert(strlen(drv.extension)+1 <= extbuflen);
+		strncpyz(extbuf, drv.extension, extbuflen);
+	}
+}
+
+const struct IODevice *bdf_device_specify(struct IODevice *iodev, char *extbuf, size_t extbuflen,
+	int count, const formatdriver_ctor *open_formats, formatdriver_ctor create_format)
+{
+	int i;
+
+	assert(count);
+	if (iodev->count == 0)
+	{
+		memset(extbuf, 0, extbuflen);
+		if (open_formats)
+		{
+			for(i = 0; open_formats[i]; i++)
+				specify_extension(extbuf, extbuflen, open_formats[i]);
+		}
+		if (create_format)
+			specify_extension(extbuf, extbuflen, create_format);
+		assert(extbuf[0]);
+
+		memset(iodev, 0, sizeof(*iodev));
+		iodev->type = IO_FLOPPY;
+		iodev->count = count;
+		iodev->file_extensions = extbuf;
+		iodev->reset_depth = IO_RESET_NONE;
+		iodev->open_mode = create_format ? OSD_FOPEN_RW_CREATE_OR_READ : OSD_FOPEN_RW_OR_READ;
+		iodev->init = bdf_floppy_init;
+		iodev->exit = bdf_floppy_exit;
+		iodev->input = (int (*)(int)) (void *) open_formats;
+		iodev->output = (void (*)(int, int)) (void *) create_format;
+	}
+	return iodev;
+}
+

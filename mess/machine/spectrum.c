@@ -1234,7 +1234,7 @@ static void spectrum_nmi_generate(int param)
 int spec_quick_init(int id)
 {
 	FILE *fp;
-	int read;
+	int read_;
 
 	memset(&quick, 0, sizeof (quick));
 
@@ -1255,9 +1255,9 @@ int spec_quick_init(int id)
 		osd_fclose(fp);
 		return INIT_FAIL;
 	}
-	read = osd_fread(fp, quick.data, quick.length);
+	read_ = osd_fread(fp, quick.data, quick.length);
 	osd_fclose(fp);
-	return read != quick.length;
+	return read_ != quick.length;
 }
 
 void spec_quick_exit(int id)
