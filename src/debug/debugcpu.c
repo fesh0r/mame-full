@@ -48,6 +48,8 @@
 int debug_key_pressed;
 /* fixme: end */
 
+FILE *debug_source_file;
+
 static UINT64 wpdata;
 static UINT64 wpaddr;
 
@@ -754,7 +756,7 @@ void MAME_Debug(void)
 			}
 		}
 	}
-	
+
 	/* if we are supposed to halt, do it now */
 	if (execution_state == EXECUTION_STATE_STOPPED)
 	{
@@ -765,11 +767,36 @@ void MAME_Debug(void)
 		/* update all views */
 		debug_view_update_all();
 		debug_refresh_display();
-		
+
 		/* wait for the debugger; during this time, disable sound output */
 		osd_sound_enable(0);
 		while (execution_state == EXECUTION_STATE_STOPPED)
+		{
 			osd_wait_for_debugger();
+
+			/* check for commands in the source file */
+			while (debug_source_file && (execution_state == EXECUTION_STATE_STOPPED))
+			{
+				char buf[512];
+				int i;
+
+				if (feof(debug_source_file))
+				{
+					fclose(debug_source_file);
+					debug_source_file = NULL;
+				}
+				else
+				{
+					memset(buf, 0, sizeof(buf));
+					fgets(buf, sizeof(buf), debug_source_file);
+					i = strlen(buf);
+					while((i > 0) && (isspace(buf[i-1])))
+						buf[--i] = '\0';
+					if (buf[0])
+						debug_console_execute_command(buf, 1);
+				}
+			}
+		}
 		osd_sound_enable(1);
 		
 		/* remember the last cpunum where we stopped */
