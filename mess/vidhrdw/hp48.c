@@ -99,7 +99,7 @@ static void hp48_draw_special(struct mame_bitmap *bitmap,int x, int y, const cha
 
 #define LCD_LINES (hp48_hardware.data[0x28]|((hp48_hardware.data[0x29]&3)<<4)
 
-static const char *orange={ 
+static const char *hp48_orange={ 
 	"11111111111\r"
 	"111 1111111\r"
 	"11  1111111\r"
@@ -107,7 +107,7 @@ static const char *orange={
 	"11  11111 1\r"
 	"111 11111 1\r"
 	"111111111 1"
-}, *blue= {
+}, *hp48_blue= {
 	"11111111111\r"
 	"1111111 111\r"
 	"1111111  11\r"
@@ -115,7 +115,7 @@ static const char *orange={
 	"1 11111  11\r"
 	"1 11111 111\r"
 	"1 111111111"
-}, *alpha= {
+}, *hp48_alpha= {
 	"          1\r"
 	"   11111 1\r"
 	"  1     1\r"
@@ -123,7 +123,7 @@ static const char *orange={
 	" 1      1\r"
 	" 1     11\r"
 	"  11111  1"
-}, *alarm= {
+}, *hp48_alarm= {
 	"  1       1\r"
 	" 1  1   1  1\r"
 	"1  1  1  1  1\r"
@@ -131,7 +131,7 @@ static const char *orange={
 	"1  1  1  1  1\r"
 	" 1  1   1  1\r"
 	"  1       1"
-}, *busy= {
+}, *hp48_busy= {
 	"11111111\r"
 	" 1    1\r"
 	"  1  1\r"
@@ -139,7 +139,7 @@ static const char *orange={
 	"  1  1\r"
 	" 1    1\r"
 	"11111111"
-}, *transmit={
+}, *hp48_transmit={
 	" 11\r"
 	"1  1   1\r"
 	"    1   1\r"
@@ -182,16 +182,16 @@ VIDEO_UPDATE( hp48 )
 		}
 	}
 
-	hp48_draw_special(bitmap,RIGHT+12,DOWN-13,orange,
+	hp48_draw_special(bitmap,RIGHT+12,DOWN-13,hp48_orange,
 					  hp48_hardware.data[0xb]&1?color[1]:color[0]);
-	hp48_draw_special(bitmap,RIGHT+57,DOWN-13,blue,
+	hp48_draw_special(bitmap,RIGHT+57,DOWN-13,hp48_blue,
 					  hp48_hardware.data[0xb]&2?color[1]:color[0]);
-	hp48_draw_special(bitmap,RIGHT+102,DOWN-13,alpha,
+	hp48_draw_special(bitmap,RIGHT+102,DOWN-13,hp48_alpha,
 					  hp48_hardware.data[0xb]&4?color[1]:color[0]);
-	hp48_draw_special(bitmap,RIGHT+147,DOWN-13,alarm,
+	hp48_draw_special(bitmap,RIGHT+147,DOWN-13,hp48_alarm,
 					  hp48_hardware.data[0xb]&8?color[1]:color[0]);
-	hp48_draw_special(bitmap,RIGHT+192,DOWN-13,busy,
+	hp48_draw_special(bitmap,RIGHT+192,DOWN-13,hp48_busy,
 					  hp48_hardware.data[0xc]&1?color[1]:color[0]);
-	hp48_draw_special(bitmap,RIGHT+237,DOWN-13,transmit,
+	hp48_draw_special(bitmap,RIGHT+237,DOWN-13,hp48_transmit,
 					  hp48_hardware.data[0xc]&2?color[1]:color[0]);
 }
