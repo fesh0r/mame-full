@@ -10,7 +10,7 @@ typedef struct __mmc
 	mem_write_handler mmc_write_mid; /* $6000-$7fff write routine */
 	mem_write_handler mmc_write; /* $8000-$ffff write routine */
 	void (*ppu_latch)(offs_t offset);
-	int (*mmc_irq)(int scanline);
+	ppu2c03b_scanline_cb mmc_irq;
 } mmc;
 
 extern mmc mmc_list[];
@@ -29,7 +29,6 @@ extern mem_write_handler mmc_write_mid;
 extern mem_read_handler mmc_read_mid;
 extern mem_write_handler mmc_write;
 extern void (*ppu_latch)(offs_t offset);
-extern int (*mmc_irq)(int scanline);
 
 int mapper_reset (int mapperNum);
 

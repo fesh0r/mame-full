@@ -19,38 +19,6 @@
 #define SPRITERAM_SIZE			0x100	/* spriteram size */
 #define CHARGEN_NUM_CHARS		512		/* max number of characters handled by the chargen */
 
-/* registers definition */
-enum {
-	PPU_CONTROL0 = 0,
-	PPU_CONTROL1,
-	PPU_STATUS,
-	PPU_SPRITE_ADDRESS,
-	PPU_SPRITE_DATA,
-	PPU_SCROLL,
-	PPU_ADDRESS,
-	PPU_DATA,
-	PPU_MAX_REG
-};
-
-/* bit definitions for (some of) the registers */
-enum {
-	PPU_CONTROL0_INC			= 0x04,
-	PPU_CONTROL0_SPR_SELECT		= 0x08,
-	PPU_CONTROL0_CHR_SELECT		= 0x10,
-	PPU_CONTROL0_SPRITE_SIZE	= 0x20,
-	PPU_CONTROL0_NMI			= 0x80,
-
-	PPU_CONTROL1_DISPLAY_MONO	= 0x01,
-	PPU_CONTROL1_BACKGROUND_L8	= 0x02,
-	PPU_CONTROL1_SPRITES_L8		= 0x04,
-	PPU_CONTROL1_BACKGROUND		= 0x08,
-	PPU_CONTROL1_SPRITES		= 0x10,
-
-	PPU_STATUS_8SPRITES			= 0x20,
-	PPU_STATUS_SPRITE0_HIT		= 0x40,
-	PPU_STATUS_VBLANK			= 0x80
-};
-
 /* default monochromatic colortable */
 pen_t default_colortable_mono[] =
 {
@@ -747,8 +715,8 @@ static void update_scanline( int num )
 	/* If NMI's are set to be triggered, go for it */
 	if ( ( scanline == NMI_SCANLINE ) && ( ppu_regs[PPU_CONTROL0] & PPU_CONTROL0_NMI ) )
 	{
-		if ( intf->handler[num] )
-			(*intf->handler[num])( num );
+		if ( intf->nmi_handler[num] )
+			(*intf->nmi_handler[num])( num, ppu_regs );
 	}
 }
 
@@ -1308,16 +1276,16 @@ void ppu2c03b_set_mirroring( int num, int mirroring )
 	}
 }
 
-void ppu2c03b_set_irq_callback( int num, ppu2c03b_irq_cb cb )
+void ppu2c03b_set_nmi_callback( int num, ppu2c03b_nmi_cb cb )
 {
 	/* check bounds */
 	if ( num >= intf->num )
 	{
-		logerror( "PPU(set_irq_callback): Attempting to access an unmapped chip\n" );
+		logerror( "PPU(set_nmi_callback): Attempting to access an unmapped chip\n" );
 		return;
 	}
 
-	intf->handler[num] = cb;
+	intf->nmi_handler[num] = cb;
 }
 
 void ppu2c03b_set_scanline_callback( int num, ppu2c03b_scanline_cb cb )

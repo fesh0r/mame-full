@@ -13,7 +13,7 @@
 
 int nes_vram_sprite[8]; /* Used only by mmc5 for now */
 
-static void ppu_irq(int num)
+static void ppu_nmi(int num, int *ppu_regs)
 {
 	cpu_set_nmi_line(0, PULSE_LINE);
 }
@@ -30,7 +30,7 @@ VIDEO_START( nes )
 	ppu_interface->num				= 1;
 	ppu_interface->vrom_region[0]	= nes.chr_chunks ? REGION_GFX1 : REGION_INVALID;
 	ppu_interface->mirroring[0]		= PPU_MIRROR_NONE;
-	ppu_interface->handler[0]		= ppu_irq;
+	ppu_interface->nmi_handler[0]	= ppu_nmi;
 
 	return ppu2c03b_init(ppu_interface);
 }

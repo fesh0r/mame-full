@@ -26,8 +26,6 @@ extern int nes_vram_sprite[8];
 
 extern unsigned char *battery_ram;
 
-extern int PPU_Control1; /* $2001 */
-
 struct nes_struct
 {
 	/* load-time cart variables which remain constant */

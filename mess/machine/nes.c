@@ -101,7 +101,7 @@ static void init_nes_core (void)
 				mmc_write_mid = mmc_list[i].mmc_write_mid;
 				mmc_write = mmc_list[i].mmc_write;
 				ppu_latch = mmc_list[i].ppu_latch;
-				mmc_irq = mmc_list[i].mmc_irq;
+//				mmc_irq = mmc_list[i].mmc_irq;
 				break;
 			}
 			i ++;
@@ -409,6 +409,10 @@ DEVICE_LOAD(nes_cart)
 	}
 	if (!goodcrcinfo)
 	{
+		// image_extrainfo() resets the file position back to start.
+		// Let's skip past the magic header once again.
+		mame_fseek (file, 4, SEEK_SET);
+
 		mame_fread (file, &nes.prg_chunks, 1);
 		mame_fread (file, &nes.chr_chunks, 1);
 		/* Read the first ROM option byte (offset 6) */
@@ -610,6 +614,3 @@ void ppu_mirror_custom_vrom (int page, int address)
 {
 	exit(-1);
 }
-
-int PPU_Control1;
-

@@ -27,10 +27,8 @@
 #include "includes/nes.h"
 #include "nes_mmc.h"
 
-#define M6502_INT_NONE	0
-
-#define LOG_MMC
-#define LOG_FDS
+#define LOG_MMC	1
+#define LOG_FDS	1
 
 /* Global variables */
 int prg_mask;
@@ -48,7 +46,6 @@ mem_write_handler mmc_write_mid;
 mem_read_handler mmc_read_mid;
 mem_write_handler mmc_write;
 void (*ppu_latch)(offs_t offset);
-int (*mmc_irq)(int scanline);
 
 static int vrom_bank[16];
 static int mult1, mult2;
@@ -577,24 +574,21 @@ static void mapper4_set_chr (void)
 	ppu2c03b_set_videorom_bank(0, chr_page ^ 7, 1, MMC3_chr[5], 1);
 }
 
-static int mapper4_irq (int scanline)
+static void mapper4_irq ( int num, int scanline, int vblank, int blanked )
 {
-	int ret = M6502_INT_NONE;
-
 	if ((scanline < BOTTOM_VISIBLE_SCANLINE) || (scanline == ppu_scanlines_per_frame-1))
 	{
-		if ((IRQ_enable) && (PPU_Control1 & 0x18))
+//		if ((IRQ_enable) && (PPU_Control1 & 0x18))
+		if ((IRQ_enable) && !blanked)
 		{
 			if (IRQ_count == 0)
 			{
 				IRQ_count = IRQ_count_latch;
-				ret = M6502_IRQ_LINE;
+				cpu_set_irq_line (0, M6502_IRQ_LINE, HOLD_LINE);
 			}
 			IRQ_count --;
 		}
 	}
-
-	return ret;
 }
 
 static WRITE_HANDLER( mapper4_w )
@@ -614,6 +608,9 @@ static WRITE_HANDLER( mapper4_w )
 				/* Reset the banks */
 				mapper4_set_prg ();
 				mapper4_set_chr ();
+#ifdef LOG_MMC
+				logerror("     MMC3 reset banks\n");
+#endif
 			}
 			last_bank = data & 0xc0;
 			break;
@@ -627,11 +624,17 @@ static WRITE_HANDLER( mapper4_w )
 					data &= 0xfe;
 					MMC3_chr[cmd] = data * 64;
 					mapper4_set_chr ();
+#ifdef LOG_MMC
+					logerror("     MMC3 set vram %d: %d\n", cmd, data);
+#endif
 					break;
 
 				case 2: case 3: case 4: case 5:
 					MMC3_chr[cmd] = data * 64;
 					mapper4_set_chr ();
+#ifdef LOG_MMC
+					logerror("     MMC3 set vram %d: %d\n", cmd, data);
+#endif
 					break;
 
 				case 6:
@@ -802,10 +805,8 @@ static WRITE_HANDLER( mapper118_w )
 	}
 }
 
-static int mapper5_irq (int scanline)
+static void mapper5_irq ( int num, int scanline, int vblank, int blanked )
 {
-	int ret = M6502_INT_NONE;
-
 #if 1
 	if (scanline == 0)
 		IRQ_status |= 0x40;
@@ -816,12 +817,10 @@ static int mapper5_irq (int scanline)
 	if (scanline == IRQ_count)
 	{
 		if (IRQ_enable)
-			ret = M6502_IRQ_LINE;
+			cpu_set_irq_line (0, M6502_IRQ_LINE, HOLD_LINE);
 
 		IRQ_status = 0xff;
 	}
-
-	return ret;
 }
 
 static READ_HANDLER( mapper5_l_r )
@@ -1534,10 +1533,8 @@ static WRITE_HANDLER( mapper15_w )
 	}
 }
 
-static int bandai_irq (int scanline)
+static void bandai_irq ( int num, int scanline, int vblank, int blanked )
 {
-	int ret = M6502_INT_NONE;
-
 	/* 114 is the number of cycles per scanline */
 	/* TODO: change to reflect the actual number of cycles spent */
 
@@ -1545,12 +1542,10 @@ static int bandai_irq (int scanline)
 	{
 		if (IRQ_count <= 114)
 		{
-			ret = M6502_IRQ_LINE;
+			cpu_set_irq_line (0, M6502_IRQ_LINE, HOLD_LINE);
 		}
 		IRQ_count -= 114;
 	}
-
-	return ret;
 }
 
 static WRITE_HANDLER( mapper16_w )
@@ -1651,10 +1646,8 @@ static WRITE_HANDLER( mapper17_l_w )
 	}
 }
 
-static int jaleco_irq (int scanline)
+static void jaleco_irq ( int num, int scanline, int vblank, int blanked )
 {
-	int ret = M6502_INT_NONE;
-
 	if (scanline <= BOTTOM_VISIBLE_SCANLINE)
 	{
 		/* Increment & check the IRQ scanline counter */
@@ -1667,32 +1660,29 @@ static int jaleco_irq (int scanline)
 			{
 				if ((IRQ_count & 0x0f) == 0x00)
 					/* rollover every 0x10 */
-					ret = M6502_IRQ_LINE;
+					cpu_set_irq_line (0, M6502_IRQ_LINE, HOLD_LINE);
 			}
 			else if (IRQ_mode_jaleco & 0x04)
 			{
 				if ((IRQ_count & 0x0ff) == 0x00)
 					/* rollover every 0x100 */
-					ret = M6502_IRQ_LINE;
+					cpu_set_irq_line (0, M6502_IRQ_LINE, HOLD_LINE);
 			}
 			else if (IRQ_mode_jaleco & 0x02)
 			{
 				if ((IRQ_count & 0x0fff) == 0x000)
 					/* rollover every 0x1000 */
-					ret = M6502_IRQ_LINE;
+					cpu_set_irq_line (0, M6502_IRQ_LINE, HOLD_LINE);
 			}
 			else if (IRQ_count == 0)
 				/* rollover at 0x10000 */
-				ret = M6502_IRQ_LINE;
+				cpu_set_irq_line (0, M6502_IRQ_LINE, HOLD_LINE);
 		}
 	}
 	else
 	{
 		IRQ_count = IRQ_count_latch;
 	}
-
-
-	return ret;
 }
 
 
@@ -1898,18 +1888,14 @@ static WRITE_HANDLER( mapper18_w )
 	}
 }
 
-static int namcot_irq (int scanline)
+static void namcot_irq ( int num, int scanline, int vblank, int blanked )
 {
-	int ret = M6502_INT_NONE;
-
 	IRQ_count ++;
 	/* Increment & check the IRQ scanline counter */
 	if (IRQ_enable && (IRQ_count == 0x7fff))
 	{
-		ret = M6502_IRQ_LINE;
+		cpu_set_irq_line (0, M6502_IRQ_LINE, HOLD_LINE);
 	}
-
-	return ret;
 }
 
 static WRITE_HANDLER( mapper19_l_w )
@@ -1962,27 +1948,23 @@ static WRITE_HANDLER( mapper19_w )
 	}
 }
 
-static int fds_irq (int scanline)
+static void fds_irq ( int num, int scanline, int vblank, int blanked )
 {
-	int ret = M6502_INT_NONE;
-
 	if (IRQ_enable_latch)
-		ret = M6502_IRQ_LINE;
+		cpu_set_irq_line (0, M6502_IRQ_LINE, HOLD_LINE);
 
 	/* Increment & check the IRQ scanline counter */
 	if (IRQ_enable)
 	{
 		if (IRQ_count <= 114)
 		{
-			ret = M6502_IRQ_LINE;
+			cpu_set_irq_line (0, M6502_IRQ_LINE, HOLD_LINE);
 			IRQ_enable = 0;
 			nes_fds.status0 |= 0x01;
 		}
 		else
 			IRQ_count -= 114;
 	}
-
-	return ret;
 }
 
 READ_HANDLER ( fds_r )
@@ -2079,19 +2061,15 @@ WRITE_HANDLER ( fds_w )
 
 }
 
-static int konami_irq (int scanline)
+static void konami_irq ( int num, int scanline, int vblank, int blanked )
 {
-	int ret = M6502_INT_NONE;
-
 	/* Increment & check the IRQ scanline counter */
 	if (IRQ_enable && (++IRQ_count == 0x100))
 	{
 		IRQ_count = IRQ_count_latch;
 		IRQ_enable = IRQ_enable_latch;
-		ret = M6502_IRQ_LINE;
+		cpu_set_irq_line (0, M6502_IRQ_LINE, HOLD_LINE);
 	}
-
-	return ret;
 }
 
 static WRITE_HANDLER( konami_vrc2a_w )
@@ -2742,20 +2720,16 @@ static WRITE_HANDLER( mapper34_w )
 	prg32 (data);
 }
 
-static int mapper40_irq (int scanline)
+static void mapper40_irq ( int num, int scanline, int vblank, int blanked )
 {
-	int ret = M6502_INT_NONE;
-
 	/* Decrement & check the IRQ scanline counter */
 	if (IRQ_enable)
 	{
 		if (--IRQ_count == 0)
 		{
-			ret = M6502_IRQ_LINE;
+			cpu_set_irq_line (0, M6502_IRQ_LINE, HOLD_LINE);
 		}
 	}
-
-	return ret;
 }
 
 static WRITE_HANDLER( mapper40_w )
@@ -2974,18 +2948,14 @@ static WRITE_HANDLER( mapper64_w )
 	}
 }
 
-static int irem_irq (int scanline)
+static void irem_irq ( int num, int scanline, int vblank, int blanked )
 {
-	int ret = M6502_INT_NONE;
-
 	/* Increment & check the IRQ scanline counter */
 	if (IRQ_enable)
 	{
 		if (--IRQ_count == 0)
-			ret = M6502_IRQ_LINE;
+			cpu_set_irq_line (0, M6502_IRQ_LINE, HOLD_LINE);
 	}
-
-	return ret;
 }
 
 
@@ -3061,10 +3031,8 @@ static WRITE_HANDLER( mapper66_w )
 	chr8 (data & 0x03);
 }
 
-static int sunsoft_irq (int scanline)
+static void sunsoft_irq ( int num, int scanline, int vblank, int blanked )
 {
-	int ret = M6502_INT_NONE;
-
 	/* 114 is the number of cycles per scanline */
 	/* TODO: change to reflect the actual number of cycles spent */
 
@@ -3072,12 +3040,10 @@ static int sunsoft_irq (int scanline)
 	{
 		if (IRQ_count <= 114)
 		{
-			ret = M6502_IRQ_LINE;
+			cpu_set_irq_line (0, M6502_IRQ_LINE, HOLD_LINE);
 		}
 		IRQ_count -= 114;
 	}
-
-	return ret;
 }
 
 
@@ -3990,6 +3956,9 @@ int mapper_reset (int mapperNum)
 
 	/* Set the vram bank-switch values to the default */
 	ppu2c03b_set_videorom_bank(0, 0, 8, 0, 64);
+	
+	/* Set the mapper irq callback */
+	ppu2c03b_set_scanline_callback (0, mmc_list[mapperNum].mmc_irq);
 
 	mapper_warning = 0;
 	/* 8k mask */
