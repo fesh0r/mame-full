@@ -54,6 +54,9 @@ struct rc_option input_opts[] = {
    { "hotrodse",	"hr",			rc_set_int,	&use_hotrod,
       NULL,      	2,			0,		NULL,
       "Select HotRod SE joystick support" },
+   { "usbpspad",	"pspad",		rc_bool,	&is_usb_ps_gamepad,
+     "0",		0,			0,		NULL,
+     "The Joystick(s) are USB PS Game Pads" },
    { NULL,		NULL,			rc_end,		NULL,
      NULL,		0,			0,		NULL,
      NULL }
@@ -318,27 +321,41 @@ void joy_evaluate_moves (void)
 {
    int i, j, treshold;
 
-   for (i=0; i<JOY; i++)
+   if( is_usb_ps_gamepad )
+    {
+     for (i=0; i<JOY; i++)
+     {
+	 joy_data[i].axis[0].dirs[0] = joy_data[i].buttons[15] == 1 ? TRUE : FALSE;
+	 joy_data[i].axis[0].dirs[1] = joy_data[i].buttons[13] == 1 ? TRUE : FALSE;
+	 joy_data[i].axis[1].dirs[0] = joy_data[i].buttons[12] == 1 ? TRUE : FALSE;
+	 joy_data[i].axis[1].dirs[1] = joy_data[i].buttons[14] == 1 ? TRUE : FALSE;
+       }
+   } 
+   else 
    {
-      for (j=0; j<joy_data[i].num_axis; j++)
-      {
-         memset(joy_data[i].axis[j].dirs, FALSE, JOY_DIRS*sizeof(int));
-
-         /* auto calibrate */
-         if (joy_data[i].axis[j].val > joy_data[i].axis[j].max)
-            joy_data[i].axis[j].max = joy_data[i].axis[j].val;
-         else if (joy_data[i].axis[j].val < joy_data[i].axis[j].min)
-            joy_data[i].axis[j].min = joy_data[i].axis[j].val;
-
-         treshold = (joy_data[i].axis[j].max - joy_data[i].axis[j].center) >> 1;
-
-         if (joy_data[i].axis[j].val < (joy_data[i].axis[j].center - treshold))
-            joy_data[i].axis[j].dirs[0] = TRUE;
-         else if (joy_data[i].axis[j].val > (joy_data[i].axis[j].center + treshold))
-            joy_data[i].axis[j].dirs[1] = TRUE;
-      }
+     for (i=0; i<JOY; i++)
+     {
+	 for (j=0; j<joy_data[i].num_axis; j++)
+	 {
+	     memset(joy_data[i].axis[j].dirs, FALSE, JOY_DIRS*sizeof(int));
+	     
+	     /* auto calibrate */
+	     if (joy_data[i].axis[j].val > joy_data[i].axis[j].max)
+	       joy_data[i].axis[j].max = joy_data[i].axis[j].val;
+	     else if (joy_data[i].axis[j].val < joy_data[i].axis[j].min)
+	       joy_data[i].axis[j].min = joy_data[i].axis[j].val;
+	     
+	     treshold = (joy_data[i].axis[j].max - joy_data[i].axis[j].center) >> 1;
+	     
+	     if (joy_data[i].axis[j].val < (joy_data[i].axis[j].center - treshold))
+	       joy_data[i].axis[j].dirs[0] = TRUE;
+	     else if (joy_data[i].axis[j].val > (joy_data[i].axis[j].center + treshold))
+	       joy_data[i].axis[j].dirs[1] = TRUE;
+	   }
+       }
    }
 }
+
 
 /* 
  * return a value in the range -128 .. 128 (yes, 128, not 127)
