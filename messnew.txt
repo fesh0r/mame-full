@@ -9,6 +9,7 @@ Note: .inp record/playback does still not work currently.
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - CoCo 2B (CoCo with a M6847T1 VDG chip) [Nate Woods]
+- EURO PC, IBMXT [PeT]
 
 System Driver Changes:
 ----------------------
@@ -24,6 +25,10 @@ machine. [Nate Woods]
 - [COCO & COCO 3] Fixed the border colors when POKE 65314, [64-79;88-95] is invoked. [Nate Woods]
 - [ORIC] fixed a bug in microdisc memory paging. Some discs start to boot now.
 Added a dipswitch to enable/disable microdisc interface [Kev Thacker]
+- [PC & compatibles] repartitioned, several problems fixed,
+  major rewrite of graphic subsytems (dirtybuffering disabled temporary),
+  Tandy 1000HX now uses EURO PC'S fontrom for acceptable displayment of its 8x9 characters,
+  EURO PC supports CGA and MDA/Herules (adjust it in its the emulated setup) [PeT]
 
 Other Changes:
 --------------
