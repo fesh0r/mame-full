@@ -1886,13 +1886,13 @@ void eint( void )
 {
 	pSR |= (SR_N|SR_Z|SR_C|SR_I);
 	tms7000_icount -= 5;
+	tms7000_check_IRQ_lines();
 }
 
 void idle( void );
 void idle( void )
 {
 	tms7000.idle_state = 1;
-	cpu_yielduntil_int();
 	tms7000_icount -= 6;
 }
 
@@ -2955,6 +2955,7 @@ void reti( void )
 	PULLBYTE( pSR );
 	
 	tms7000_icount -= 9;
+	tms7000_check_IRQ_lines();
 }
 
 void rets_imp( void );
