@@ -8,7 +8,7 @@
 /*
  todo:
 
- - sprite collision / 5th/8th sprite
+ - sprite collision 
  - vdp engine -- make run at correct speed
  - vr/hr/fh flags: double-check all of that
  - make vdp engine work in exp. ram
@@ -645,7 +645,7 @@ READ_HANDLER (v9938_status_r)
 		{
 		case 0:
 			ret = vdp.statReg[0];
-			vdp.statReg[0] &= 0x5f;
+			vdp.statReg[0] &= 0x1f;
 			break;
 		case 1:
 			ret = vdp.statReg[1];
@@ -1049,7 +1049,10 @@ static void v9938_refresh_8 (struct osd_bitmap *bmp, int line)
 	if (vdp.size == RENDER_HIGH)
 		{
 		if (vdp.contReg[9] & 0x08)
+			{
+			vdp.size_now = RENDER_HIGH;
 			ln = bmp->line[line*2+((vdp.statReg[2]>>1)&1)];
+			}
 		else
 			{
 			ln = bmp->line[line*2];
@@ -1105,7 +1108,10 @@ static void v9938_refresh_16 (struct osd_bitmap *bmp, int line)
 	if (vdp.size == RENDER_HIGH)
 		{
 		if (vdp.contReg[9] & 0x08)
+			{
+			vdp.size_now = RENDER_HIGH;
 			ln = (UINT16*)bmp->line[line*2+((vdp.statReg[2]>>1)&1)];
+			}
 		else
 			{
 			ln = (UINT16*)bmp->line[line*2];
@@ -1304,18 +1310,18 @@ static void v9938_interrupt_bottom (void)
 #if 0
 	if (keyboard_pressed (KEYCODE_D) )
 		{
-	FILE *fp;
-	int i;
+		FILE *fp;
+		int i;
 
-	fp = fopen ("vram.dmp", "wb");
-	if (fp)
-		{
-		fwrite (vdp.vram, 0x10000, 1, fp);
-		fclose (fp);
-		usrintf_showmessage ("saved");
-		}
+		fp = fopen ("vram.dmp", "wb");
+		if (fp)
+			{
+			fwrite (vdp.vram, 0x10000, 1, fp);
+			fclose (fp);
+			usrintf_showmessage ("saved");
+			}
 
-	for (i=0;i<24;i++) printf ("R#%d = %02x\n", i, vdp.contReg[i]);
+		for (i=0;i<24;i++) printf ("R#%d = %02x\n", i, vdp.contReg[i]);
 		}
 #endif
 
