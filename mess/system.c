@@ -682,7 +682,7 @@ TESTDRIVER( comquest )	/* Comquest Plus German								*/
 //	DRIVER( psxa45 )
 
 	/* Corvus */
-//	DRIVER(concept)		/* 1982 Corvus Concept								*/
+	DRIVER(concept)		/* 1982 Corvus Concept								*/
 
 	/* DAI */
 //	DRIVER(dai)			/* DAI												*/
