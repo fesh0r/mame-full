@@ -23,7 +23,7 @@
 #ifdef LSB_FIRST
 #define intelWord(x) (x)
 #else
-#define intelWord(x) ( (x) << 8) | ( ((x) >> 8) & 0xff) )
+#define intelWord(x) ( ((x) << 8) | (((x) >> 8) & 0xff) )
 #endif
 
 typedef struct {
