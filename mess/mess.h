@@ -168,9 +168,9 @@ int messvaliditychecks(void);
 extern int get_filenames(void);
 extern int init_devices(const void *game);
 extern void exit_devices(void);
+extern int system_supports_cassette_device (void);
 
 /* access mess.c internal fields for a device type (instance id) */
-
 extern int          device_count(int type);
 extern const char  *device_typename(int type);
 extern const char  *device_brieftypename(int type);

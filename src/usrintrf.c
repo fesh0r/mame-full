@@ -2900,7 +2900,7 @@ static void setup_menu_init(void)
 #else
 	menu_item[menu_total] = ui_getstring (UI_imageinfo); menu_action[menu_total++] = UI_IMAGEINFO;
 	menu_item[menu_total] = ui_getstring (UI_filemanager); menu_action[menu_total++] = UI_FILEMANAGER;
-	if (device_count(IO_CASSETTE)!=0)
+	if (system_supports_cassette_device())
 	{
 		menu_item[menu_total] = ui_getstring (UI_tapecontrol); menu_action[menu_total++] = UI_TAPECONTROL;
 	}

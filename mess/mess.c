@@ -293,6 +293,26 @@ static void floppy_device_common_exit(int id)
 	floppy_drive_set_flag_state(id, FLOPPY_DRIVE_CONNECTED, 0);
 }
 
+
+/*
+ * Does the system support cassette (for tapecontrol)
+ * TRUE, FALSE return
+ */
+int system_supports_cassette_device (void)
+{
+	const struct IODevice *dev = Machine->gamedrv->dev;
+
+	/* Cycle through all devices for this system */
+	while(dev->type != IO_END)
+	{
+		if (dev->type == IO_CASSETTE)
+			return TRUE;
+		dev++;
+	}
+
+	return FALSE;
+}
+
 /*
  * Return a name for the device type (to be used for UI functions)
  */
