@@ -27,6 +27,7 @@ struct SmartListViewOptions {
 	COLORREF rgbListFontColor;
 	HIMAGELIST hSmall;
 	HIMAGELIST hLarge;
+	BOOL bOldControl;
 	BOOL bCenterOnParent;
 	int nInsetPixels;
 };
@@ -40,6 +41,7 @@ struct SmartListView {
 	HPALETTE hPALbg;
 	MYBITMAPINFO bmDesc;
 	COLORREF rgbListFontColor;
+	BOOL bOldControl;
 	int *piRealColumns;
 };
 

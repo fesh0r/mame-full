@@ -97,10 +97,11 @@ static char mess_crc_category[16];
 extern const char *osd_get_cwd(void);
 extern void resetdir(void);
 extern void osd_change_directory(const char *);
+
+static void InitMessPicker(void);
 static void FillSoftwareList(int nGame);
 static void MessUpdateSoftwareList(void);
 static void MessSetPickerDefaults(void);
-static void MessRetrievePickerDefaults(HWND hWnd);
 static void MessOpenOtherSoftware(int iDevice);
 static void MessCreateDevice(int iDevice);
 static BOOL CreateMessIcons(void);
@@ -118,31 +119,44 @@ struct deviceentry {
 	const char *dlgname;
 };
 
+/* ------------------------------------------------------------------------ *
+ * Image types
+ *
+ * IO_END (0) is used for ZIP files
+ * IO_ALIAS is used for unknown types
+ * IO_COUNT is used for bad files
+ * ------------------------------------------------------------------------ */
+
+/* TODO - We need to make icons for Cylinders, Punch Cards, and Punch Tape! */
+static struct deviceentry s_devices[] =
+{
+	{ 1, "cart",	"cartridge",	"Cartridge images" },	/* IO_CARTSLOT */
+	{ 4, "flop",	"floppy",		"Floppy disk images" },	/* IO_FLOPPY */
+	{ 9, "hard",	"harddisk",		"Hard disk images" },	/* IO_HARDDISK */
+	{ 2, "cyln",	"cylinder",		"Cylinders" },			/* IO_CYLINDER */
+	{ 5, "cass",	"cassette",		"Cassette images" },	/* IO_CASSETTE */
+	{ 2, "pncd",	"punchcard",	"Punchcard images" },	/* IO_PUNCHCARD */
+	{ 2, "pntp",	"punchtape",	"Punchtape images" },	/* IO_PUNCHTAPE */
+	{ 8, "prin",	"printer",		"Printer Output" },		/* IO_PRINTER */
+	{ 6, "serl",	"serial",		"Serial Output" },		/* IO_SERIAL */
+	{ 2, "parl",	"parallel",		"Parallel Output" },	/* IO_PARALLEL */
+	{ 7, "snap",	"snapshot",		"Snapshots" },			/* IO_SNAPSHOT */
+	{ 7, "quik",	"quickload",	"Quickloads" }			/* IO_QUICKLOAD */
+};
+
+static void AssertValidDevice(int d)
+{
+	assert((sizeof(s_devices) / sizeof(s_devices[0])) + 1 == IO_ALIAS);
+	assert((d > 0) && (d < IO_ALIAS));
+}
+
 static const struct deviceentry *lookupdevice(int d)
 {
-	/* TODO - We need to make icons for Cylinders, Punch Cards, and Punch Tape! */
-
-	static struct deviceentry devices[] =
-	{
-		{ 1, "cart",	"cartridge",	"Cartridge images" },	/* IO_CARTSLOT */
-		{ 4, "flop",	"floppy",		"Floppy disk images" },	/* IO_FLOPPY */
-		{ 9, "hard",	"harddisk",		"Hard disk images" },	/* IO_HARDDISK */
-		{ 2, "cyln",	"cylinder",		"Cylinders" },			/* IO_CYLINDER */
-		{ 5, "cass",	"cassette",		"Cassette images" },	/* IO_CASSETTE */
-		{ 2, "pncd",	"punchcard",	"Punchcard images" },	/* IO_PUNCHCARD */
-		{ 2, "pntp",	"punchtape",	"Punchtape images" },	/* IO_PUNCHTAPE */
-		{ 8, "prin",	"printer",		"Printer Output" },		/* IO_PRINTER */
-		{ 6, "serl",	"serial",		"Serial Output" },		/* IO_SERIAL */
-		{ 2, "parl",	"parallel",		"Parallel Output" },	/* IO_PARALLEL */
-		{ 7, "snap",	"snapshot",		"Snapshots" },			/* IO_SNAPSHOT */
-		{ 7, "quik",	"quickload",	"Quickloads" }			/* IO_QUICKLOAD */
-	};
-
-	assert((sizeof(devices) / sizeof(devices[0])) + 1 == IO_ALIAS);
-	assert((d > 0) && (d < IO_ALIAS));
-
-	return &devices[d - 1];
+	AssertValidDevice(d);
+	return &s_devices[d - 1];
 }
+
+/* ------------------------------------------------------------------------ */
 
 static int requested_device_type(char *tchar)
 {
@@ -248,7 +262,7 @@ static int MessDiscoverImageType(const char *filename, mess_image_type *imagetyp
             }
         }
 
-        if (lpExt) {
+        if (lpExt && stricmp(lpExt, ".ZIP")) {
             lpExt++;
             for (i = 0; imagetypes[i].ext; i++) {
                 if (!stricmp(lpExt, imagetypes[i].ext)) {
@@ -261,6 +275,9 @@ static int MessDiscoverImageType(const char *filename, mess_image_type *imagetyp
         if (pZip)
             closezip(pZip);
     }
+
+	if ((type != IO_ALIAS) && (type != IO_COUNT))
+		AssertValidDevice(type);
     return type;
 }
 
@@ -658,45 +675,50 @@ static void MessSetPickerDefaults(void)
         free(default_software);
 }
 
-static void MessPickerSelectSoftware(HWND hWnd, const char *software, BOOL bFocus)
+static void InitMessPicker(void)
 {
+	struct SmartListViewOptions opts;
+	char *default_software;
+	char *this_software;
+	char *s;
 	int i;
 
-    i = MessLookupByFilename(software);
-    if (i >= 0) {
-        if (bFocus) {
-            ListView_SetItemState(hWnd, i, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
-            ListView_EnsureVisible(hWnd, i, FALSE);
-        }
-        else {
-            ListView_SetItemState(hWnd, i, LVIS_SELECTED, LVIS_SELECTED);
-        }
-    }
-}
+	memset(&opts, 0, sizeof(opts));
+	opts.pClass = &s_softwareListClass;
+	opts.hwndParent = hPicker;
+	opts.nIDDlgItem = IDC_LIST2;
+	opts.hBackground = hBitmap;
+	opts.hPALbg = hPALbg;
+	opts.bmDesc = bmDesc;
+	opts.hSmall = hSmall;
+	opts.hLarge = hLarge;
+	opts.rgbListFontColor = GetListFontColor();
+	opts.bOldControl = oldControl;
+	s_pSoftwareListView = SmartListView_Init(&opts);
 
-static void MessRetrievePickerDefaults(HWND hWnd)
-{
-    char *default_software = strdup(GetDefaultSoftware());
-    char *this_software;
-    char *s;
+	SmartListView_SetTotalItems(s_pSoftwareListView, mess_images_count);
+	Header_Initialize(s_pSoftwareListView->hwndListView);
 
-    if (!default_software)
-        return;
+	default_software = strdup(GetDefaultSoftware());
 
-    this_software = default_software;
-    while(this_software && *this_software) {
-        s = strchr(this_software, '|');
-        if (s)
-            *(s++) = '\0';
-        else
-            s = NULL;
+	if (default_software) {
+		this_software = default_software;
+		while(this_software && *this_software) {
+			s = strchr(this_software, '|');
+			if (s)
+				*(s++) = '\0';
+			else
+				s = NULL;
 
-		MessPickerSelectSoftware(hWnd, this_software, this_software == default_software);
+			i = MessLookupByFilename(this_software);
+			if (i >= 0)
+				SmartListView_SelectItem(s_pSoftwareListView, i, this_software == default_software);
 
-        this_software = s;
-    }
+			this_software = s;
+		}
 
-    free(default_software);
+		free(default_software);
+	}
 }
 
 /* ------------------------------------------------------------------------ *
@@ -1090,6 +1112,7 @@ static INT_PTR CALLBACK FileManagerProc(HWND hDlg, UINT message, WPARAM wParam, 
 		opts.hSmall = hSmall;
 		opts.hLarge = hLarge;
 		opts.rgbListFontColor = GetListFontColor();
+		opts.bOldControl = oldControl;
 		opts.bCenterOnParent = TRUE;
 		opts.nInsetPixels = 10;
 

@@ -100,6 +100,7 @@ struct SmartListView *SmartListView_Init(struct SmartListViewOptions *pOptions)
 	pListView->hBackground = pOptions->hBackground;
 	pListView->hPALbg = pOptions->hPALbg;
 	pListView->bmDesc = pOptions->bmDesc;
+	pListView->bOldControl = pOptions->bOldControl;
 	pListView->rgbListFontColor = pOptions->rgbListFontColor;
 
 	/* Create IconsList for ListView Control */
@@ -241,19 +242,24 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
 
 	nColumnMax = GetNumColumns(pListView);
 
-	/* Get the Column Order and save it */
-	ListView_GetColumnOrderArray(pListView->hwndListView, nColumnMax, order);
+	if (pListView->bOldControl) {
+		pListView->pClass->pfnGetColumnInfo(pListView, NULL, order, NULL);
+	}
+	else {
+		/* Get the Column Order and save it */
+		ListView_GetColumnOrderArray(pListView->hwndListView, nColumnMax, order);
 
-	/* Disallow moving column 0 */
-	if (order[0] != 0) {
-		for (i = 0; i < nColumnMax; i++) {
-			if (order[i] == 0) {
-				order[i] = order[0];
-				order[0] = 0;
+		/* Disallow moving column 0 */
+		if (order[0] != 0) {
+			for (i = 0; i < nColumnMax; i++) {
+				if (order[i] == 0) {
+					order[i] = order[0];
+					order[0] = 0;
+				}
 			}
+			ListView_SetColumnOrderArray(pListView->hwndListView, nColumnMax, order);
 		}
-		ListView_SetColumnOrderArray(pListView->hwndListView, nColumnMax, order);
-    }
+	}
 
     // Labels are offset by a certain amount  
     // This offset is related to the width of a space character

@@ -1363,23 +1363,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
     /* Initialize listview columns */
     InitPicker();
 #ifdef MESS
-	{
-		struct SmartListViewOptions opts;
-		memset(&opts, 0, sizeof(opts));
-		opts.pClass = &s_softwareListClass;
-		opts.hwndParent = hPicker;
-		opts.nIDDlgItem = IDC_LIST2;
-		opts.hBackground = hBitmap;
-		opts.hPALbg = hPALbg;
-		opts.bmDesc = bmDesc;
-		opts.hSmall = hSmall;
-		opts.hLarge = hLarge;
-		opts.rgbListFontColor = GetListFontColor();
-		opts.bCenterOnParent = TRUE;
-		opts.nInsetPixels = 10;
-		s_pSoftwareListView = SmartListView_Init(&opts);
-		SmartListView_SetTotalItems(s_pSoftwareListView, mess_images_count);
-	}
+	InitMessPicker();
 #endif
     SetFocus(hwndList);
 
@@ -1671,12 +1655,6 @@ static long WINAPI MameWindowProc(HWND hWnd,UINT message,UINT wParam,LONG lParam
                 return MamePickerNotify( lpNmHdr );
             if (lpNmHdr->hwndFrom == hTreeView)
                 return TreeViewNotify( lpNmHdr );
-#ifdef MESS
-#if 0
-            if (lpNmHdr->hwndFrom == hwndSoftware)
-                return MessPickerNotify( hwndSoftware, lpNmHdr, MamePlayGame, MainItemChangeProc );
-#endif
-#endif
         }
         break;
 
@@ -1688,13 +1666,6 @@ static long WINAPI MameWindowProc(HWND hWnd,UINT message,UINT wParam,LONG lParam
             case IDC_LIST:
                 DrawItem((LPDRAWITEMSTRUCT)lParam);
                 break;
-#ifdef MESS
-#if 0
-			case IDC_LIST2:
-                DrawMessItem((LPDRAWITEMSTRUCT)lParam, hwndSoftware, hBitmap, MessIsImageSelected);
-                break;
-#endif
-#endif
             }
         }
         break;
