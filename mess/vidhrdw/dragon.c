@@ -376,7 +376,7 @@ static void coco3_line_callback(struct videomap_linecallback_info *info)
 		{
 			/* graphics */
 			info->grid_depth = 1 << (coco3_gimevhreg[1] & 3);
-			info->grid_width = 128 << (((coco3_gimevhreg[1] >> 3) & 0x03) - (coco3_gimevhreg[1] & 3));
+			info->grid_width = 1 << (((coco3_gimevhreg[1] >> 3) & 0x03) - (coco3_gimevhreg[1] & 3) + 6);
 			info->flags = VIDEOMAP_FLAGS_USEPALETTERAM;
 		}
 		else
