@@ -38,12 +38,19 @@
 			- Z80 CPU
 			- Intel 8251 compatible uart
             - nec765 compatible floppy disc controller
-			- mc146818 real time clock
+			- mc146818 real time clock?
 
         TODO:
            - find out what the unused key bits are for
-           - serial, parallel and loads more!!!
-           - overlay would be nice!
+           - complete serial (xmodem protocol!)
+		   - overlay would be nice!
+
+
+
+		Self Test:
+
+		- not got it to trigger yet:
+		- FUNCTION+SYMBOL must be pressed together.
 
 		Kevin Thacker [MESS driver]
 
@@ -65,6 +72,11 @@
 /* uncomment for verbose debugging information */
 //#define VERBOSE
 
+#include "includes/centroni.h"
+#include "printer.h"
+
+static void nc_printer_update(int);
+
 static unsigned long nc_memory_size;
 UINT8 nc_type;
 
@@ -84,7 +96,7 @@ static int nc_membank_card_ram_mask;
         bit 3: alkaline batteries. 0 if >=3.2 volts
         bit 2: lithium battery 0 if >= 2.7 volts
         bit 1: parallel interface busy (0 if busy)
-        bit 0: parallel interface ack (1 if ack);
+        bit 0: parallel interface ack (1 if ack)
 */
 static int nc_card_battery_status=0x0c0;
 
@@ -149,14 +161,15 @@ unsigned char nc_uart_control;
 
 
 /*
-NC100:
+IRQ/MASK
 bits 7: not used
-bits 5: NC100: not used. NC200: FDC interrupt
+bit 6: NC100: not used. NC200: RTC??
+bit 5: NC100: not used. NC200: FDC interrupt
 bits 4: Not used
 Bit 3: Key scan interrupt (10ms)
-Bit 2: ACK from parallel interface
+Bit 2: NC100: ACK from parallel interface NC200: serial interrupt
 Bit 1: Tx Ready
-Bit 0: Rx Ready
+Bit 0: NC100: Rx Ready NC200: ACK from parallel interface
 */
 static int nc_irq_mask;
 static int nc_irq_status;
@@ -203,6 +216,7 @@ static void dummy_timer_callback(int dummy)
 
     on_off_button_state = readinputport(10) & 0x01;
 
+
     if (on_off_button_state^previous_on_off_button_state)
     {
         if (on_off_button_state)
@@ -212,7 +226,7 @@ static void dummy_timer_callback(int dummy)
 #endif
             cpu_set_nmi_line(0, PULSE_LINE);
         }
-    }
+	}
 
     previous_on_off_button_state = on_off_button_state;
 }
@@ -392,6 +406,125 @@ static struct msm8251_interface nc100_uart_interface=
 };
 
 
+/* assumption. nc200 uses the same uart chip. The rxrdy and txrdy are combined
+together with a or to generate a single interrupt */
+static UINT8 nc200_uart_interrupt_irq;
+
+static void nc200_refresh_uart_interrupt(void)
+{
+	nc_irq_status &=~(1<<2);
+	if ((nc200_uart_interrupt_irq & 0x03)!=0)
+	{
+		nc_irq_status |= (1<<2);
+	}
+}
+
+static void nc200_txrdy_callback(int state)
+{
+	nc200_uart_interrupt_irq &=~(1<<0);
+
+	if (state)
+	{
+		nc200_uart_interrupt_irq |=(1<<0);
+	}
+
+	nc200_refresh_uart_interrupt();
+}
+
+static void nc200_rxrdy_callback(int state)
+{
+	nc200_uart_interrupt_irq &=~(1<<1);
+
+	if (state)
+	{
+		nc200_uart_interrupt_irq |=(1<<1);
+	}
+
+	nc200_refresh_uart_interrupt();
+}
+
+static struct msm8251_interface nc200_uart_interface=
+{
+	nc200_rxrdy_callback,
+	NULL,
+	nc200_txrdy_callback,
+};
+
+
+/* NC100 printer emulation */
+/* port 0x040 (write only) = 8-bit printer data */
+/* port 0x030 bit 6 = printer strobe */
+
+/* same for nc100 and nc200 */
+static WRITE_HANDLER(nc_printer_data_w)
+{
+#ifdef VERBOSE
+	logerror("printer write %02x\n",data);
+#endif
+	centronics_write_data(0,data);
+}
+
+/* same for nc100 and nc200 */
+static void	nc_printer_update(int port0x030)
+{
+	int handshake = 0;
+
+	if (port0x030 & (1<<6))
+	{
+		handshake = CENTRONICS_STROBE;
+	}
+	/* assumption: select is tied low */
+	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
+	centronics_write_handshake(0, handshake, CENTRONICS_STROBE);
+}
+
+
+static void nc100_printer_handshake_in(int number, int data, int mask)
+{
+	nc_irq_status &= ~(1<<2);
+
+	if (mask & CENTRONICS_ACKNOWLEDGE)
+	{
+		if (data & CENTRONICS_ACKNOWLEDGE)
+		{
+			nc_irq_status|=(1<<2);
+		}
+	}
+	/* trigger an int if the irq is set */
+	nc_update_interrupts();
+}
+
+static void nc200_printer_handshake_in(int number, int data, int mask)
+{
+	nc_irq_status &= ~(1<<0);
+
+	if (mask & CENTRONICS_ACKNOWLEDGE)
+	{
+		if (data & CENTRONICS_ACKNOWLEDGE)
+		{
+			nc_irq_status|=(1<<0);
+		}
+	}
+	/* trigger an int if the irq is set */
+	nc_update_interrupts();
+}
+
+
+static CENTRONICS_CONFIG nc100_cent_config[1]={
+	{
+		PRINTER_CENTRONICS,
+		nc100_printer_handshake_in
+	},
+};
+
+
+static CENTRONICS_CONFIG nc200_cent_config[1]={
+	{
+		PRINTER_CENTRONICS,
+		nc200_printer_handshake_in
+	},
+};
+
 void nc_common_init_machine(void)
 {
 
@@ -455,25 +588,31 @@ void nc_common_init_machine(void)
         }
 
 		nc_uart_control = 0x0ff;
-
-
-		msm8251_init(&nc100_uart_interface);
 }
+
 
 void nc100_init_machine(void)
 {
-        nc_type = NC_TYPE_1xx;
+    nc_type = NC_TYPE_1xx;
 
-        nc_memory_size = 64*1024;
+    nc_memory_size = 64*1024;
 
-        nc_memory = (unsigned char *)malloc(nc_memory_size);
-        nc_membank_internal_ram_mask = 3;
+    nc_memory = (unsigned char *)malloc(nc_memory_size);
+    nc_membank_internal_ram_mask = 3;
 
-        nc_membank_card_ram_mask = 0x03f;
+    nc_membank_card_ram_mask = 0x03f;
 
-        nc_common_init_machine();
+    nc_common_init_machine();
 
-	    tc8521_init(&nc100_tc8521_interface);
+	tc8521_init(&nc100_tc8521_interface);
+
+	msm8251_init(&nc100_uart_interface);
+
+	centronics_config(0, nc100_cent_config);
+	/* assumption: select is tied low */
+	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
+
+
 }
 
 #if 0
@@ -524,6 +663,18 @@ void nc200_init_machine(void)
         floppy_drive_set_ready_state(0,1,0);
 
 		mc146818_init(MC146818_STANDARD);
+
+
+		nc_card_battery_status = 0;
+
+		nc200_uart_interrupt_irq = 0;
+		msm8251_init(&nc200_uart_interface);
+
+		centronics_config(0, nc200_cent_config);
+		/* assumption: select is tied low */
+		centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
+
+
 }
 
 void nc_common_shutdown_machine(void)
@@ -705,7 +856,60 @@ READ_HANDLER(nc_key_data_in_r)
 
 READ_HANDLER(nc_card_battery_status_r)
 {
-        return nc_card_battery_status;
+	int printer_handshake;
+
+	/* bit 1: printer busy */
+	/* bit 2: printer acknowledge */
+	nc_card_battery_status &=~3;
+	
+
+	/* assumption: select is tied low */
+	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
+
+	printer_handshake = centronics_read_handshake(0);
+
+	nc_card_battery_status |=(1<<1);
+
+	/* if printer is not online, it is busy */
+	if ((printer_handshake & CENTRONICS_ONLINE)!=0)
+	{
+		nc_card_battery_status &=~(1<<1);
+	}
+
+	if (printer_handshake & CENTRONICS_ACKNOWLEDGE)
+	{
+		nc_card_battery_status |=(1<<0);
+	}
+
+    return nc_card_battery_status;
+}
+
+
+/* port &80:
+
+  bit 0: Parallel interface BUSY
+ */
+
+static unsigned char nc200_printer_status;
+
+READ_HANDLER(nc200_printer_status_r)
+{
+	int printer_handshake;
+	
+	/* assumption: select is tied low */
+	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
+
+	printer_handshake = centronics_read_handshake(0);
+
+	nc200_printer_status |=(1<<0);
+
+	/* if printer is not online, it is busy */
+	if ((printer_handshake & CENTRONICS_ONLINE)!=0)
+	{
+		nc200_printer_status &=~(1<<0);
+	}
+
+    return nc200_printer_status;
 }
 
 
@@ -793,6 +997,8 @@ static unsigned long baud_rate_table[]=
 
 WRITE_HANDLER(nc_uart_control_w)
 {
+	/* update printer state */
+	nc_printer_update(data);
 
 	/* on/off changed state? */
 	if (((nc_uart_control ^ data) & (1<<3))!=0)
@@ -810,7 +1016,6 @@ WRITE_HANDLER(nc_uart_control_w)
 
 }
 
-
 PORT_READ_START( readport_nc )
         {0x010, 0x013, nc_memory_management_r},
         {0x0a0, 0x0a0, nc_card_battery_status_r},
@@ -825,6 +1030,7 @@ PORT_WRITE_START( writeport_nc )
         {0x000, 0x000, nc_display_memory_start_w},
         {0x010, 0x013, nc_memory_management_w},
 		{0x030, 0x030, nc_uart_control_w},
+		{0x040, 0x040, nc_printer_data_w},
         {0x060, 0x060, nc_irq_mask_w},
         {0x070, 0x070, nc_poweroff_control_w},
         {0x090, 0x090, nc_irq_status_w},
@@ -837,9 +1043,11 @@ PORT_END
 
 PORT_READ_START( readport_nc200 )
         {0x010, 0x013, nc_memory_management_r},
-//        {0x0a0, 0x0a0, nc_card_battery_status_r},
+		{0x080, 0x080, nc200_printer_status_r},
         {0x0b0, 0x0b9, nc_key_data_in_r},
         {0x090, 0x090, nc_irq_status_r},
+		{0x0c0, 0x0c0, msm8251_data_r},
+		{0x0c1, 0x0c1, msm8251_status_r},
 		{0x0d0, 0x0d1, mc146818_port_r },
         {0x0e0, 0x0e0, nec765_status_r},
         {0x0e1, 0x0e1, nec765_data_r},
@@ -848,9 +1056,12 @@ PORT_END
 PORT_WRITE_START( writeport_nc200 )
         {0x000, 0x000, nc_display_memory_start_w},
         {0x010, 0x013, nc_memory_management_w},
+		{0x040, 0x040, nc_printer_data_w},
+		{0x030, 0x030, nc_uart_control_w},
         {0x060, 0x060, nc_irq_mask_w},
-  //      {0x070, 0x070, nc_poweroff_control_w},
         {0x090, 0x090, nc_irq_status_w},
+		{0x0c0, 0x0c0, msm8251_data_w},
+		{0x0c1, 0x0c1, msm8251_control_w},
 		{0x0d0, 0x0d1, mc146818_port_w },
         {0x050, 0x053, nc_sound_w},
         {0x0e1, 0x0e1, nec765_data_w},
@@ -871,7 +1082,7 @@ INPUT_PORTS_START(nc100)
         PORT_BIT (0x080, 0x00, IPT_UNUSED)
         /* 1 */
         PORT_START
-        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "YELLOW/FUNCTION", KEYCODE_INSERT, IP_JOY_NONE)
+        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "YELLOW/FUNCTION", KEYCODE_INSERT, IP_JOY_NONE) 
         PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CONTROL", KEYCODE_LCONTROL, IP_JOY_NONE)
         PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CONTROL", KEYCODE_RCONTROL, IP_JOY_NONE)
         PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ESCAPE/STOP", KEYCODE_ESC, IP_JOY_NONE)
@@ -882,9 +1093,9 @@ INPUT_PORTS_START(nc100)
         PORT_BIT (0x080, 0x00, IPT_UNUSED)
         /* 2 */
         PORT_START
-        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ALT", KEYCODE_LALT, IP_JOY_NONE)
+		PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ALT", KEYCODE_LALT, IP_JOY_NONE)
         PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ALT", KEYCODE_RALT, IP_JOY_NONE)
-        PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SYMBOL", KEYCODE_HOME, IP_JOY_NONE)
+        PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SYMBOL", KEYCODE_HOME, IP_JOY_NONE) 
         PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "1 !", KEYCODE_1, IP_JOY_NONE)
         PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "TAB", KEYCODE_TAB, IP_JOY_NONE)
         PORT_BIT (0x010, 0x00, IPT_UNUSED)
@@ -1110,9 +1321,9 @@ static struct MachineDriver machine_driver_nc100 =
         nc100_init_machine,                      /* init machine */
         nc100_shutdown_machine,
 	/* video hardware */
-        NC_SCREEN_WIDTH, /* screen width */
-        NC_SCREEN_HEIGHT,  /* screen height */
-        {0, (NC_SCREEN_WIDTH - 1), 0, (NC_SCREEN_HEIGHT - 1)},        /* rectangle: visible_area */
+        640/*NC_SCREEN_WIDTH*/, /* screen width */
+        480/*NC_SCREEN_HEIGHT*/,  /* screen height */
+        {0, (640/*NC_SCREEN_WIDTH*/ - 1), 0, (480/*NC_SCREEN_HEIGHT*/ - 1)},        /* rectangle: visible_area */
 	0,								   /*amstrad_gfxdecodeinfo, 			 *//* graphics
 										* decode info */
         NC_NUM_COLOURS,                                                        /* total colours */
@@ -1255,6 +1466,7 @@ static const struct IODevice io_nc100[] =
                 NULL,                   /* input chunk */
                 NULL,                   /* output chunk */
         },		
+	IO_PRINTER_PORT(1,"\0"),
 		{IO_END}
 };
 
@@ -1317,6 +1529,7 @@ static const struct IODevice io_nc200[] =
                 NULL,                   /* input chunk */
                 NULL,                   /* output chunk */
         },	
+	IO_PRINTER_PORT(1,"\0"),
 	{IO_END}
 };
 
