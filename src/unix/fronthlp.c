@@ -25,16 +25,19 @@ static int sortby     = 0;
 enum {
 	/* standard list commands */
 	LIST_LIST = 1, LIST_FULL, LIST_GAMES, LIST_DETAILS, LIST_GAMELIST,
-	LIST_SOURCEFILE, LIST_COLORS, LIST_ROMSIZE, LIST_PALETTESIZE,
-	LIST_ROMS, LIST_CRC, LIST_SHA1, LIST_MD5, LIST_SAMPLES, LIST_SAMDIR, 
+	LIST_SOURCEFILE, LIST_COLORS,
+#ifdef MESS
+	/* MESS-specific commands */
+	LIST_MESSDEVICES, LIST_MESSTEXT, LIST_MESSCREATEDIR,	
+#endif
+	LIST_ROMSIZE, LIST_PALETTESIZE, LIST_ROMS, LIST_CRC, LIST_SHA1, 
+	LIST_MD5, LIST_SAMPLES, LIST_SAMDIR, 
 	VERIFY_ROMS, VERIFY_ROMSETS, VERIFY_SAMPLES, VERIFY_SAMPLESETS,
 	/* internal verification list commands (developers only) */
 	LIST_MISSINGROMS, LIST_DUPCRC, LIST_WRONGORIENTATION, LIST_WRONGMERGE,
 	LIST_WRONGFPS,
 	/* standard list commands which require special handling */
-	LIST_CLONES, LIST_XML, LIST_CPU,
-	/* MESS-specific commands */
-	LIST_MESSTEXT, LIST_MESSDEVICES, LIST_MESSCREATEDIR
+	LIST_CLONES, LIST_XML, LIST_CPU
 };
    
 /* Mame frontend interface & commandline */
@@ -56,7 +59,7 @@ struct rc_option frontend_list_opts[] = {
 	{ "createdir", NULL, rc_set_int, &list, NULL, LIST_MESSCREATEDIR, 0, NULL, NULL },
 #endif
 	{ "listromsize", "lrs", rc_set_int, &list, NULL, LIST_ROMSIZE, 0, NULL, "Like -list, with the year and size of the roms used" },
-	{ "listpalettesize", "lps", rc_set_int, &list, NULL, LIST_ROMSIZE, 0, NULL, "Like -list, with the year and palette size of the roms used" },
+	{ "listpalettesize", "lps", rc_set_int, &list, NULL, LIST_PALETTESIZE, 0, NULL, "Like -list, with the year and palette size of the roms used" },
 	{ "listroms", "lr", rc_set_int, &list, NULL, LIST_ROMS, 0, NULL, "Like -list, but lists used ROMs" },
 	{ "listcrc", "lcrc", rc_set_int, &list, NULL, LIST_CRC, 0, NULL, "Like -list, but lists used ROMs with CRC-32s" },
 	{ "listsha1", "lsha1", rc_set_int, &list, NULL, LIST_SHA1, 0, NULL, "Like -list, but lists used ROMs with SHA-1s" },
@@ -267,21 +270,29 @@ int frontend_list(char *gamename)
 			"--------  -----------\n",
 		/* listgames        */ "year manufacturer                         name\n"
 			"---- ------------------------------------ --------------------------------\n",
-		/* listdetails      */ " romname driver     cpu 1    cpu 2    cpu 3    cpu 4    cpu 5    cpu 6    cpu 7    cpu 8    sound 1     sound 2     sound 3     sound 4     sound 5     name\n"
-			"-------- ---------- -------- -------- -------- -------- -------- -------- -------- -------- ----------- ----------- ----------- ----------- ----------- --------------------------\n",
+		/* listdetails      */ "rom name driver     cpu 1    cpu 2    cpu 3    cpu 4    cpu 5    cpu 6    cpu 7    cpu 8     sound 1     sound 2     sound 3     sound 4     sound 5      name\n"
+			"-------- ---------- -------- -------- -------- -------- -------- -------- -------- --------  ----------- ----------- ----------- ----------- ----------- --------------------------\n",
 		/* listgamelist     */ "",
-		/* listsourcefile   */ "name     sourcefile\n"
-			"-------- ----------\n",
+		/* listsourcefile   */ "name     source file\n"
+			"-------- -----------\n",
 		/* listcolors       */ "name      colors\n"
 			"--------  ------\n",
-		/* listextensions   */ "name      device      image file extensions supported\n"
-			"--------  ----------  -------------------------------\n",
+#ifdef MESS
+		/* listdevices      */ "",
+		/* listtext         */ "",
+		/* createdir        */ "",
+#endif
 		/* listromsize      */ "name    \tyear \tsize\n"
 			"--------\t-----\t----\n",
-		/* listpalettesize  */ "",
+		/* listpalettesize  */ "name    \tyear \tcolors\n"
+			"--------\t-----\t----\n",
 		/* listroms         */ "",
 		/* listcrc          */ "CRC      filename     description\n"
 			"-------- ------------ -----------\n",
+		/* listsha1         */ "SHA1                                     filename     description\n"
+			"---------------------------------------- ------------ -----------\n",
+		/* listmd5          */ "MD5                              filename     description\n"
+			"-------------------------------- ------------ -----------\n",
 		/* listsamples      */ "",
 		/* listsamdir       */ "name      samples dir\n"
 			"--------  -----------\n",
@@ -291,6 +302,9 @@ int frontend_list(char *gamename)
 		/* verifysamples    */ "",
 		/* verifysamplesets */ "name      result\n"
 			"--------  ------\n",
+		/* listclones       */ "",
+		/* listxml          */ "",
+		/* listcpu          */ "",
 		/*** internal verification list commands (developers only) ***/
 		/* listmissingroms  */ "name      clone of  description\n"
 			"--------  --------  -----------\n",
@@ -345,18 +359,21 @@ int frontend_list(char *gamename)
 			return OSD_OK;
 		case LIST_CPU:
 			return frontend_list_cpu();
-		case LIST_CRC: /* list all crc-32 */
+		case LIST_CRC: /* list all CRC32 */
+			fprintf(stdout_file, header[list - 1]);
 			return frontend_list_hash(HASH_CRC);
-		case LIST_SHA1: /* list all sha-1 */
+		case LIST_SHA1: /* list all SHA1 */
+			fprintf(stdout_file, header[list - 1]);
 			return frontend_list_hash(HASH_SHA1);
-		case LIST_MD5: /* list all md5 */
+		case LIST_MD5: /* list all MD5 */
+			fprintf(stdout_file, header[list - 1]);
 			return frontend_list_hash(HASH_MD5);
 		case LIST_GAMELIST: /* list all of the games */
 			frontend_list_gamelistheader(); /* display the header */
 			break;
 	}
 
-	fprintf(stdout_file, header[list-1]);
+	fprintf(stdout_file, header[list - 1]);
 
 	for (i=0;drivers[i];i++)
 	{
@@ -554,6 +571,7 @@ int frontend_list(char *gamename)
 					{
 						fprintf(stdout_file, "%-8s\t%-5s\t%u\n",drivers[i]->name,drivers[i]->year,drv.total_colors); 
 					}
+					break;
 
 				case LIST_ROMS: /* game roms list */
 					if(!frontend_uses_roms(i))
