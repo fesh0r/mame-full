@@ -1,0 +1,75 @@
+Amstrad NC100 Notepad computer
+------------------------------
+
+The Amstrad NC100 Notepad computer is a portable computer.
+
+This system has a LCD screen and nice keyboard. The memory is
+protected by a lithium battery which is charged when the computer
+is connected to a mains supply.
+
+PCMCIA ram cards can be used to store programs and documents.
+
+The computer has a built in wordprocessor, BBC Basic, Serial Terminal,
+Calculator, Diary and more. The whole system is a personal organiser with lots
+of extras.
+
+Mess Emulation State
+--------------------
+
+a. ACCURACY
+-----------
+
+The emulation is reasonably accurate. I have used NCIOSPEC.TXT published by Cliff
+Lawson at Amstrad to write the driver. Unfortunatly this document does not describe
+undocumented hardware features, so at this time, any programs relying on undocumented
+behaviour will not work well. I am currently looking for NC owners (especially NC150
+owners) to run some tests for me.
+
+a. PRINTER
+----------
+
+Printer emulation is working. All data is saved out to a file on the host filesystem.
+The data is not processed in any way, so the file will contain the raw bytes output
+to the printer port.
+
+b. PCMCIA RAM CARD
+------------------
+
+The NC100 supports a PCMCIA Ram card up to 1mb in size. 
+
+The emulator supports all ram card operations: reading, writing, formatting
+and write enable/write protect.
+
+It also supports ram cards of all sizes (128k, 256k, 512k and 1mb).
+
+The file format of a ram card is a simple memory dump; there are no headers or 
+other information stored in the file.
+
+If files have been saved onto the ram card by the emulation, then the file
+on the host filesystem will be updated (the update will happen when MESS is exited,
+or a new card is inserted).
+
+There are no utilities at this time to create a ram card.
+
+c. SERIAL
+---------
+
+Serial is mostly working. 
+
+MESS does not have a UI to change the serial device transmit/receive properties, so at 
+this time it is fixed to: 9600 baud, 8 data bits, 1 stop bit, no parity for the NC100
+driver.
+
+At this time, the serial device only supports a simple protocol. (Each byte is transmitted
+in a basic serial form, with start bits, data bits, parity and stop bits).
+
+In the future the serial device will support xmodem and xmodem send/receive will then
+work in the emulation.
+
+Notes
+=====
+
+Links:
+
+http://genesis8.free.fr/
+http://www.ncus.org.uk/
