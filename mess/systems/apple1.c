@@ -54,11 +54,11 @@ MEMORY_END
 
 struct GfxLayout apple1_charlayout =
 {
-	8, 8,
+	7, 8,
 	128,
 	1,
 	{ 0 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },
+	{ 7, 6, 5, 4, 3, 2, 1 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8 * 8
 };
@@ -174,9 +174,9 @@ static struct MachineDriver machine_driver_apple1 =
 	1,
 	apple1_init_machine,
 	apple1_stop_machine,
-	40 * 8,
+	40 * 7,
 	24 * 8,
-	{ 0, 40 * 8 - 1, 0, 24 * 8 - 1 },
+	{ 0, 40 * 7 - 1, 0, 24 * 8 - 1 },
 	apple1_gfxdecodeinfo,
 	sizeof (apple1_palette) / 3,
 	sizeof (apple1_colortable),
