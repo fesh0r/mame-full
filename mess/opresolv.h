@@ -138,6 +138,8 @@ const char *option_resolution_lookup_string(option_resolution *resolution, int o
 optreserr_t option_resolution_listranges(const char *specification, int option_char,
 	struct OptionRange *range, size_t range_count);
 
+optreserr_t option_resolution_getdefault(const char *specification, int option_char, int *val);
+
 const char *option_resolution_error_string(optreserr_t err);
 
 #endif /* RANGEOPT_H */

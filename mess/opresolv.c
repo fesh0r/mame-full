@@ -473,6 +473,22 @@ optreserr_t option_resolution_listranges(const char *specification, int option_c
 
 
 
+optreserr_t option_resolution_getdefault(const char *specification, int option_char, int *val)
+{
+	assert(val);
+
+	/* clear out default */
+	*val = -1;
+
+	specification = strchr(specification, option_char);
+	if (!specification)
+		return OPTIONRESOLUTION_ERROR_SYNTAX;
+
+	return resolve_single_param(specification + 1, val, NULL, NULL);
+}
+
+
+
 const char *option_resolution_error_string(optreserr_t err)
 {
 	static const char *errors[] =
