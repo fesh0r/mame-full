@@ -16,8 +16,8 @@ System Driver Changes:
 - [GameBoy] Finally fixed the interrupt problem, which in turn helped alot of carts 
   actually run now. [Lee Ward] 
 
-- [Vectrex] Loading carts should work again but there are still issues with screen 
-  refresh (F4) and selecting carts with the filemanager. [Mathis Rosenhauer]
+- [Vectrex] Loading carts should work again but there are still issues with selecting 
+  carts with the filemanager. [Mathis Rosenhauer]
 
 - [ORIC] Rewrote to use 6522via code in MESS core. Previously it had it's own 
   implementation which was not complete. Added floppy disc emulation (emulates a 
@@ -30,6 +30,8 @@ Other Changes:
 --------------
 - The core is based on MAME 0.37b8. This incorporates all 
   features of the update to this core.  [MAME team] 
+
+- pure DOS mode crash fixed [Ben Bruscella]
 
 - SID6581 Approximation [PeT]
   Interface changed,
