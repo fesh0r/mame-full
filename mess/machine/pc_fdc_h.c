@@ -252,26 +252,27 @@ READ8_HANDLER ( pc_fdc_r )
 {
 	data8_t data = 0xff;
 
-	switch(offset) {
-	case 0: /* status register a */
-	case 1: /* status register b */
-		data = 0x00;
-	case 2:
-		data = fdc.digital_output_register;
-		break;
-	case 3: /* tape drive select? */
-		break;
-	case 4:
-		data = nec765_status_r(0);
-		break;
-	case 5:
-		data = nec765_data_r(offset);
-		break;
-	case 6: /* FDC reserved */
-		break;
-	case 7:
-		data = fdc.digital_input_register;
-		break;
+	switch(offset)
+	{
+		case 0: /* status register a */
+		case 1: /* status register b */
+			data = 0x00;
+		case 2:
+			data = fdc.digital_output_register;
+			break;
+		case 3: /* tape drive select? */
+			break;
+		case 4:
+			data = nec765_status_r(0);
+			break;
+		case 5:
+			data = nec765_data_r(offset);
+			break;
+		case 6: /* FDC reserved */
+			break;
+		case 7:
+			data = fdc.digital_input_register;
+			break;
     }
 	return data;
 }
@@ -280,25 +281,37 @@ READ8_HANDLER ( pc_fdc_r )
 
 WRITE8_HANDLER ( pc_fdc_w )
 {
-	switch(offset) {
-	case 0:	/* n/a */
-	case 1:	/* n/a */
-		break;
-	case 2:
-		pc_fdc_dor_w(data);
-		break;
-	case 3:
-		/* tape drive select? */
-		break;
-	case 4:
-		pc_fdc_data_rate_w(data);
-		break;
-	case 5:
-		nec765_data_w(0, data);
-		break;
-	case 6: /* fdc reserved */
-	case 7: /* n/a */
-		break;
+	switch(offset)
+	{
+		case 0:	/* n/a */
+		case 1:	/* n/a */
+			break;
+		case 2:
+			pc_fdc_dor_w(data);
+			break;
+		case 3:
+			/* tape drive select? */
+			break;
+		case 4:
+			pc_fdc_data_rate_w(data);
+			break;
+		case 5:
+			nec765_data_w(0, data);
+			break;
+		case 6:
+			/* FDC reserved */
+			break;
+		case 7:
+			/* Configuration Control Register
+			 *
+			 * Currently unimplemented; bits 1-0 are supposed to control data
+			 * flow rates:
+			 *		0 0		 500 kbps
+			 *		0 1		 300 kbps
+			 *		1 0		 250 kbps
+			 *		1 1		1000 kbps
+			 */
+			break;
 	}
 }
 
