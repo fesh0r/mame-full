@@ -43,7 +43,7 @@ static unsigned char vectrex_imager_pinlevel=0x00;
 static double imager_wheel_time = 0;
 
 
-static int vectrex_varify_cart (char *data)
+static int vectrex_verify_cart (char *data)
 {
 	/* Verify the file is accepted by the Vectrex bios */
 	if (!memcmp(data,"g GCE", 5))
@@ -73,7 +73,7 @@ int vectrex_init_cart (int id)
 		osd_fclose (cartfile);
 
 		/* check image! */
-		if (vectrex_varify_cart((char*)memory_region(REGION_CPU1)) == IMAGE_VERIFY_FAIL)
+		if (vectrex_verify_cart((char*)memory_region(REGION_CPU1)) == IMAGE_VERIFY_FAIL)
 		{
 			logerror("Invalid image!\n");
 			return INIT_FAIL;
@@ -84,13 +84,13 @@ int vectrex_init_cart (int id)
 	{
 		if (device_filename(IO_CARTSLOT,id))
 		{
-			logerror("Coleco - Cart specified but not found!\n");
+			logerror("Vectrex - Cart specified but not found!\n");
 			return INIT_FAIL;
 		}
 
 	}
 	vectrex_imager_angles = unknown_game_angles;
-	name = device_filename(IO_CARTSLOT,id);
+/*	name = device_filename(IO_CARTSLOT,id);
 	if (name)
 	{
 		/* A bit ugly but somehow we need to know which 3D game is running */
@@ -101,7 +101,20 @@ int vectrex_init_cart (int id)
 			vectrex_imager_angles = crazy_coaster_angles;
 		if (!strcmp(name,"mine3.bin"))
 			vectrex_imager_angles = minestorm_3d_angles;
-	}
+	}*/
+
+	/* let's do this 3D detection with a strcmp using data inside the cart images */
+	/* slightly prettier than having to hardcode CRCs */
+
+	/* handle 3D Narrow Escape but skip the 2-d hack of it from Fred Taft */
+	if (!strcmp((char*)memory_region(REGION_CPU1)+0x11,"NARROW",6) && (char*)memory_region(REGION_CPU1)+0x39 == 0x0c)
+		vectrex_imager_angles = narrow_escape_angles;
+
+	if (!strcmp((char*)memory_region(REGION_CPU1)+0x11,"CRAZY COASTER",13))
+		vectrex_imager_angles = crazy_coaster_angles;
+
+	if (!strcmp((char*)memory_region(REGION_CPU1)+0x11,"3D MINE STORM",13))
+		vectrex_imager_angles = minestorm_3d_angles;
 
 	if (Machine->scrbitmap)
 		vectrex_init_overlay ();
