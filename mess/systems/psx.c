@@ -19,48 +19,73 @@ psxe30
 #include "devices/snapquik.h"
 #include "includes/psx.h"
 
-typedef struct 
+struct 
 {
-	unsigned char id[ 8 ];
-	unsigned long text;		/* SCE only */
-	unsigned long data;		/* SCE only */
-	unsigned long pc0;
-	unsigned long gp0;		/* SCE only */
-	unsigned long t_addr;
-	unsigned long t_size;
-	unsigned long d_addr;	/* SCE only */
-	unsigned long d_size;	/* SCE only */
-	unsigned long b_addr;	/* SCE only */
-	unsigned long b_size;	/* SCE only */
-	unsigned long s_addr;
-	unsigned long s_size;
-	unsigned long SavedSP;
-	unsigned long SavedFP;
-	unsigned long SavedGP;
-	unsigned long SavedRA;
-	unsigned long SavedS0;
-	unsigned char dummy[ 0x800 - 76 ];
-} EXE_HEADER;
+	UINT8 id[ 8 ];
+	UINT32 text;	/* SCE only */
+	UINT32 data;	/* SCE only */
+	UINT32 pc0;
+	UINT32 gp0;		/* SCE only */
+	UINT32 t_addr;
+	UINT32 t_size;
+	UINT32 d_addr;	/* SCE only */
+	UINT32 d_size;	/* SCE only */
+	UINT32 b_addr;	/* SCE only */
+	UINT32 b_size;	/* SCE only */
+	UINT32 s_addr;
+	UINT32 s_size;
+	UINT32 SavedSP;
+	UINT32 SavedFP;
+	UINT32 SavedGP;
+	UINT32 SavedRA;
+	UINT32 SavedS0;
+	UINT8 dummy[ 0x800 - 76 ];
+} m_psxexe_header;
 
-static EXE_HEADER quickload_exe;
-static UINT8 *quickload_buff;
+static UINT8 *m_p_psxexe;
 
 static OPBASE_HANDLER( psx_setopbase )
 {
 	if( address == 0x80030000 )
 	{
-		logerror( "psx_load_exe: start %08x\n", (unsigned int)quickload_exe.t_addr );
-		logerror( "psx_load_exe: len   %08x\n", (unsigned int)quickload_exe.t_size );
-		logerror( "psx_load_exe: pc0   %08x\n", (unsigned int)quickload_exe.pc0 );
-		logerror( "psx_load_exe: gp0   %08x\n", (unsigned int)quickload_exe.gp0 );
-		logerror( "psx_load_exe: sp    %08x\n", (unsigned int)quickload_exe.s_addr );
+		UINT8 *p_ram;
+		UINT8 *p_psxexe;
+		UINT32 n_stack;
+		UINT32 n_ram;
+		UINT32 n_left;
+		UINT32 n_address;
 
-		memcpy( memory_region( REGION_CPU1 ) + ( quickload_exe.t_addr % memory_region_length( REGION_CPU1 ) ), quickload_buff, quickload_exe.t_size );
-		free( quickload_buff );
+		logerror( "psxexe_load: pc  %08x\n", m_psxexe_header.pc0 );
+		logerror( "psxexe_load: org %08x\n", m_psxexe_header.t_addr );
+		logerror( "psxexe_load: len %08x\n", m_psxexe_header.t_size );
+		logerror( "psxexe_load: sp  %08x\n", m_psxexe_header.s_addr );
+		logerror( "psxexe_load: len %08x\n", m_psxexe_header.s_size );
 
-		activecpu_set_reg( MIPS_PC, quickload_exe.pc0 );
-		activecpu_set_reg( MIPS_R28, quickload_exe.gp0 );
-		activecpu_set_reg( MIPS_R29, quickload_exe.s_addr );
+		p_ram = memory_region( REGION_CPU1 );
+		n_ram = memory_region_length( REGION_CPU1 );
+
+		p_psxexe = m_p_psxexe;
+
+		n_address = m_psxexe_header.t_addr;
+		n_left = m_psxexe_header.t_size;
+		while( n_left != 0 )
+		{
+			p_ram[ BYTE4_XOR_LE( n_address ) % n_ram ] = *( p_psxexe );
+			n_address++;
+			p_psxexe++;
+			n_left--;
+		}
+
+		free( m_p_psxexe );
+
+		activecpu_set_reg( MIPS_PC, m_psxexe_header.pc0 );
+		activecpu_set_reg( MIPS_R28, m_psxexe_header.gp0 );
+		n_stack = m_psxexe_header.s_addr + m_psxexe_header.s_size;
+		if( n_stack != 0 )
+		{
+			activecpu_set_reg( MIPS_R29, n_stack );
+			activecpu_set_reg( MIPS_R30, n_stack );
+		}
 
 		memory_set_opbase_handler( 0, NULL );
 		mips_stop();
@@ -68,27 +93,58 @@ static OPBASE_HANDLER( psx_setopbase )
 	return address;
 }
 
-static QUICKLOAD_LOAD( psx_load_exe )
+static void psxexe_conv32( UINT32 *p_uint32 )
 {
-	if( mame_fread( fp, &quickload_exe, sizeof( quickload_exe ) ) != sizeof( quickload_exe ) )
+	UINT8 *p_uint8;
+
+	p_uint8 = (UINT8 *)p_uint32;
+
+	*( p_uint32 ) = p_uint8[ 0 ] |
+		( p_uint8[ 1 ] << 8 ) |
+		( p_uint8[ 2 ] << 16 ) |
+		( p_uint8[ 3 ] << 24 );
+}
+
+static QUICKLOAD_LOAD( psxexe_load )
+{
+	if( mame_fread( fp, &m_psxexe_header, sizeof( m_psxexe_header ) ) != sizeof( m_psxexe_header ) )
 	{
-		logerror( "psx_load_exe: invalid exe\n" );
+		logerror( "psxexe_load: invalid exe\n" );
 		return INIT_FAIL;
 	}
-	if( memcmp( quickload_exe.id, "PS-X EXE", 8 ) != 0 )
+	if( memcmp( m_psxexe_header.id, "PS-X EXE", 8 ) != 0 )
 	{
-		logerror( "psx_load_exe: invalid header id\n" );
+		logerror( "psxexe_load: invalid header id\n" );
 		return INIT_FAIL;
 	}
-	quickload_buff = malloc( quickload_exe.t_size );
-	if( quickload_buff == NULL )
+
+	psxexe_conv32( &m_psxexe_header.text );
+	psxexe_conv32( &m_psxexe_header.data );
+	psxexe_conv32( &m_psxexe_header.pc0 );
+	psxexe_conv32( &m_psxexe_header.gp0 );
+	psxexe_conv32( &m_psxexe_header.t_addr );
+	psxexe_conv32( &m_psxexe_header.t_size );
+	psxexe_conv32( &m_psxexe_header.d_addr );
+	psxexe_conv32( &m_psxexe_header.d_size );
+	psxexe_conv32( &m_psxexe_header.b_addr );
+	psxexe_conv32( &m_psxexe_header.b_size );
+	psxexe_conv32( &m_psxexe_header.s_addr );
+	psxexe_conv32( &m_psxexe_header.s_size );
+	psxexe_conv32( &m_psxexe_header.SavedSP );
+	psxexe_conv32( &m_psxexe_header.SavedFP );
+	psxexe_conv32( &m_psxexe_header.SavedGP );
+	psxexe_conv32( &m_psxexe_header.SavedRA );
+	psxexe_conv32( &m_psxexe_header.SavedS0 );
+
+	m_p_psxexe = malloc( m_psxexe_header.t_size );
+	if( m_p_psxexe == NULL )
 	{
-		logerror( "psx_load_exe: out of memory\n" );
+		logerror( "psxexe_load: out of memory\n" );
 		return INIT_FAIL;
 	}
-	if( mame_fread( fp, quickload_buff, quickload_exe.t_size ) != quickload_exe.t_size )
+	if( mame_fread( fp, m_p_psxexe, m_psxexe_header.t_size ) != m_psxexe_header.t_size )
 	{
-		logerror( "psx_load_exe: invalid size\n" );
+		logerror( "psxexe_load: invalid size\n" );
 		return INIT_FAIL;
 	}
 	memory_set_opbase_handler( 0, psx_setopbase );
@@ -286,7 +342,7 @@ ROM_START( psxe41 )
 ROM_END
 
 SYSTEM_CONFIG_START( psx )
-	CONFIG_DEVICE_QUICKLOAD( "exe\0", psx_load_exe )
+	CONFIG_DEVICE_QUICKLOAD( "exe\0", psxexe_load )
 SYSTEM_CONFIG_END
 
 /*
