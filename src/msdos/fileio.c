@@ -575,7 +575,7 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 			do
             {
 			/* 29-05-00 Lee Ward: Reversed the search order. */
-			for( indx = rompathc; indx >= 0 && !found; --indx )
+            for (indx=rompathc-1; indx>=0; --indx)
 			{
 				const char *dir_name = rompathv[indx];
 
