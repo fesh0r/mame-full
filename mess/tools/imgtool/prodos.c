@@ -545,25 +545,31 @@ static int prodos_get_volume_bitmap_bit(const UINT8 *buffer, UINT32 block)
 
 
 
-static imgtoolerr_t prodos_alloc_block(imgtool_image *image, UINT32 *block)
+static imgtoolerr_t prodos_alloc_block(imgtool_image *image, UINT8 *bitmap,
+	UINT32 *block)
 {
-	imgtoolerr_t err;
-	UINT8 *bitmap;
+	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	struct prodos_diskinfo *di;
 	UINT32 bitmap_blocks, i;
+	UINT8 *alloc_bitmap = NULL;
 
 	di = get_prodos_info(image);
 	*block = 0;
 	bitmap_blocks = (di->total_blocks + (BLOCK_SIZE * 8) - 1) / (BLOCK_SIZE * 8);
 
-	err = prodos_load_volume_bitmap(image, &bitmap);
-	if (err)
-		goto done;
+	if (!bitmap)
+	{
+		err = prodos_load_volume_bitmap(image, &alloc_bitmap);
+		if (err)
+			goto done;
+		alloc_bitmap = bitmap;
+	}
 
 	for (i = (di->volume_bitmap_block + bitmap_blocks); i < di->total_blocks; i++)
 	{
 		if (!prodos_get_volume_bitmap_bit(bitmap, i))
 		{
+			prodos_set_volume_bitmap_bit(bitmap, i, 1);
 			*block = i;
 			break;
 		}
@@ -571,9 +577,12 @@ static imgtoolerr_t prodos_alloc_block(imgtool_image *image, UINT32 *block)
 
 	if (*block > 0)
 	{
-		err = prodos_save_volume_bitmap(image, bitmap);
-		if (err)
-			goto done;
+		if (alloc_bitmap)
+		{
+			err = prodos_save_volume_bitmap(image, bitmap);
+			if (err)
+				goto done;
+		}
 	}
 	else
 	{
@@ -583,8 +592,8 @@ static imgtoolerr_t prodos_alloc_block(imgtool_image *image, UINT32 *block)
 done:
 	if (err)
 		*block = 0;
-	if (bitmap)
-		free(bitmap);
+	if (alloc_bitmap)
+		free(alloc_bitmap);
 	return err;
 }
 
@@ -824,31 +833,99 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 
 
 
+static imgtoolerr_t prodos_grow_file(imgtool_image *image, struct prodos_direnum *direnum,
+	struct prodos_dirent *ent, UINT8 *bitmap, UINT32 new_blockcount)
+{
+	imgtoolerr_t err;
+	int depth, new_depth;
+	UINT32 new_block;
+	UINT8 buffer[BLOCK_SIZE];
+
+	if (ent->key_pointer == 0)
+		depth = 0;
+	else
+		depth = ent->storage_type / 0x10;
+
+	if (new_blockcount == 0)
+		new_depth = 0;
+	else if (new_blockcount <= 1)
+		new_depth = 1;
+	else if (new_blockcount <= 256)
+		new_depth = 2;
+	else
+		new_depth = 3;
+
+	while(new_depth > depth)
+	{
+		err = prodos_alloc_block(image, bitmap, &new_block);
+		if (err)
+			return err;
+
+		memset(buffer, 0, sizeof(buffer));
+		buffer[0] = (UINT8) (ent->key_pointer >> 0);
+		buffer[256] = (UINT8) (ent->key_pointer >> 8);
+		err = prodos_save_block(image, new_block, buffer);
+		if (err)
+			return err;
+
+		depth++;
+		ent->key_pointer = new_block;
+		ent->storage_type &= ~0xF0;
+		ent->storage_type |= depth * 0x10;
+	}
+
+	if (ent->key_pointer)
+	{
+/*		err = prodos_fill_file(image, ent->key_pointer, depth, new_blockcount);
+		if (err)
+			return err;
+*/	}
+	return IMGTOOLERR_UNIMPLEMENTED;
+}
+
+
+
 static imgtoolerr_t prodos_set_file_size(imgtool_image *image, struct prodos_direnum *direnum,
 	struct prodos_dirent *ent, UINT32 new_size)
 {
-	imgtoolerr_t err;
+	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	UINT32 blockcount, new_blockcount;
+	UINT8 *bitmap = NULL;
 
-	if (ent->filesize == new_size)
-		return IMGTOOLERR_SUCCESS;
-
-	blockcount = (ent->filesize + BLOCK_SIZE - 1) / BLOCK_SIZE;
-	new_blockcount = (new_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
-
-	if (blockcount != new_blockcount)
+	if (ent->filesize != new_size)
 	{
-		/* NYI: do the dirty work of changing the blocks */
-		return IMGTOOLERR_UNIMPLEMENTED;
+		blockcount = (ent->filesize + BLOCK_SIZE - 1) / BLOCK_SIZE;
+		new_blockcount = (new_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
+
+		/* do we need to change the block chain? */
+		if (new_blockcount != blockcount)
+		{
+			err = prodos_load_volume_bitmap(image, &bitmap);
+			if (err)
+				goto done;
+
+			if (new_blockcount > blockcount)
+				err = prodos_grow_file(image, direnum, ent, bitmap, new_blockcount);
+			else
+				err = IMGTOOLERR_UNIMPLEMENTED;
+			if (err)
+				goto done;
+
+			err = prodos_save_volume_bitmap(image, bitmap);
+			if (err)
+				goto done;
+		}
+
+		ent->filesize = new_size;
+		err = prodos_put_dirent(image, direnum, ent);
+		if (err)
+			goto done;
 	}
 
-
-	ent->filesize = new_size;
-	err = prodos_put_dirent(image, direnum, ent);
-	if (err)
-		return err;
-
-	return IMGTOOLERR_SUCCESS;
+done:
+	if (bitmap)
+		free(bitmap);
+	return err;
 }
 
 
@@ -963,6 +1040,8 @@ static imgtoolerr_t prodos_send_file(imgtool_image *image, UINT32 *filesize,
 		/* this is an index block */
 		for (i = 0; i < 256; i++)
 		{
+			/* retrieve the block pointer; the two bytes are on either half
+			 * of the block */
 			subblock = buffer[i + 256];
 			subblock <<= 8;
 			subblock |= buffer[i + 0];
@@ -1014,9 +1093,6 @@ static imgtoolerr_t prodos_diskimage_writefile(imgtool_image *image, const char 
 	imgtoolerr_t err;
 	struct prodos_dirent ent;
 	struct prodos_direnum direnum;
-
-	if (stream_size(sourcef) != 0)
-		return IMGTOOLERR_UNIMPLEMENTED;
 
 	err = prodos_lookup_path(image, filename, CREATE_FILE, &direnum, &ent);
 	if (err)
