@@ -548,12 +548,23 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 {
 	char pModule[_MAX_PATH];
 	options_type* pOpts;
+#ifdef MESS
+	int i;
+	extern struct rc_option mess_opts[1];
+#endif
 
 	GetModuleFileName(GetModuleHandle(NULL), pModule, _MAX_PATH);
 
 	pOpts = GetGameOptions(nGameIndex);
 
 	sprintf(pCmdLine, "%s %s", pModule, drivers[nGameIndex]->name);
+
+#ifdef MESS
+	for (i = 0; i < options.image_count; i++)
+	{
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%s \"%s\"", mess_opts[options.image_files[i].type].shortname, options.image_files[i].name);
+	}
+#endif
 
 #ifdef MESS
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -biospath \"%s\"",           GetRomDirs());
@@ -1431,6 +1442,10 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 				SetWindowFont(hTreeView, hFont, FALSE);
             }
 
+#ifdef MESS
+			if (hwndSoftware != NULL)
+				SetWindowFont(hwndSoftware, hFont, FALSE);
+#endif
 			SetWindowFont(GetDlgItem(hPicker, IDC_HISTORY), hFont, FALSE);
 		}
 	}
@@ -1573,6 +1588,10 @@ static void Win32UI_exit()
 		free(game_data);
 	if (icon_index != NULL)
 		free(icon_index);
+#ifdef MESS
+	if (mess_icon_index != NULL)
+		free(mess_icon_index);
+#endif
 
 	DirectInputClose();
 	DirectDraw_Close();
@@ -3315,6 +3334,15 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		{
 			InitPropertyPage(hInst, hwnd, GetSelectedPickItem());
 			SaveGameOptions(GetSelectedPickItem());
+#ifdef MESS
+			{
+				//extern BOOL g_bModifiedSoftwarePaths;
+				//if (g_bModifiedSoftwarePaths) {
+				//	g_bModifiedSoftwarePaths = FALSE;
+				//	MessUpdateSoftwareList();
+				//}
+		}
+#endif
 		}
 		/* Just in case the toggle MMX on/off */
 		UpdateStatusBar();
@@ -3350,6 +3378,9 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 			int  nResult;
 			BOOL bUpdateRoms;
 			BOOL bUpdateSamples;
+#ifdef MESS
+			BOOL bUpdateSoftware;
+#endif
 
 			nResult = DialogBox(GetModuleHandle(NULL),
 								MAKEINTRESOURCE(IDD_DIRECTORIES),
@@ -3358,6 +3389,9 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 
 			bUpdateRoms    = ((nResult & DIRDLG_ROMS)	 == DIRDLG_ROMS)	? TRUE : FALSE;
 			bUpdateSamples = ((nResult & DIRDLG_SAMPLES) == DIRDLG_SAMPLES) ? TRUE : FALSE;
+#ifdef MESS
+			bUpdateSoftware = ((nResult & DIRDLG_SOFTWARE) == DIRDLG_SOFTWARE) ? TRUE : FALSE;
+#endif
 
 			/* update file code */
 			File_UpdatePaths();
@@ -3441,6 +3475,22 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 	case ID_CONTEXT_SELECT_RANDOM:
 		SetRandomPickItem();
 		break;
+
+#ifdef MESS
+	case ID_MESS_OPEN_SOFTWARE:
+		MessOpenOtherSoftware(IO_END);
+		break;
+
+	case ID_MESS_CREATE_SOFTWARE:
+		MessCreateDevice(IO_END);
+		break;
+
+#ifdef MAME_DEBUG
+	case ID_MESS_RUN_TESTS:
+		MessTestsBegin();
+		break;
+#endif /* MAME_DEBUG */
+#endif /* MESS */
 	}
 
 	SetFocus(hwndList);

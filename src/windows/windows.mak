@@ -28,5 +28,49 @@ CFLAGS += -mwindows -include src/windows/winprefix.h
 LIBS += -luser32 -lgdi32 -lddraw -ldsound -ldinput -ldxguid -lwinmm
 endif
 
+# remove pedantic
+$(OBJ)/windowsui/%.o: src/windowsui/%.c
+	@echo Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
+
+# obj files for gui
+GUIOBJS = \
+        $(OBJ)/windowsui/MAME32.o \
+        $(OBJ)/windowsui/M32Util.o \
+        $(OBJ)/windowsui/DirectInput.o \
+        $(OBJ)/windowsui/DIJoystick.o \
+        $(OBJ)/windowsui/DirectDraw.o \
+        $(OBJ)/windowsui/Joystick.o \
+        $(OBJ)/windowsui/file.o \
+        $(OBJ)/windowsui/Directories.o \
+        $(OBJ)/windowsui/mzip.o \
+        $(OBJ)/windowsui/audit32.o \
+        $(OBJ)/windowsui/ColumnEdit.o \
+        $(OBJ)/windowsui/Screenshot.o \
+        $(OBJ)/windowsui/TreeView.o \
+        $(OBJ)/windowsui/Splitters.o \
+        $(OBJ)/windowsui/Bitmask.o \
+        $(OBJ)/windowsui/DataMap.o \
+        $(OBJ)/windowsui/dxdecode.o \
+        $(OBJ)/windowsui/Properties.o \
+        $(OBJ)/windowsui/ChildOutputStream.o \
+        $(OBJ)/windowsui/help.o
+
+ifdef MESS
+GUIOBJS += \
+		$(OBJ)/mess/windowsui/mess32ui.o \
+		$(OBJ)/mess/windowsui/MessOptions.o \
+		$(OBJ)/mess/windowsui/SmartListView.o \
+		$(OBJ)/mess/windowsui/SoftwareList.o
+
+GUIRES = $(OBJ)/mess/windowsui/mess32.res
+else
+GUIOBJS += \
+		$(OBJ)/windowsui/Win32ui.o \
+		$(OBJ)/windowsui/options.o
+
+GUIRES = $(OBJ)/windowsui/mame32.res
+endif
+
 # due to quirks of using /bin/sh, we need to explicitly specify the current path
 CURPATH = ./

@@ -66,7 +66,7 @@ enum
 /* per-game data we calculate */
 enum
 {
-	UNKNOWN = 2,
+	UNKNOWN = 2
 };
 
 /* Reg helpers types */
@@ -95,7 +95,7 @@ enum
 {
 	INPUT_LAYOUT_STD,
 	INPUT_LAYOUT_HR,
-	INPUT_LAYOUT_HRSE,
+	INPUT_LAYOUT_HRSE
 };
 
 /* Reg data list */

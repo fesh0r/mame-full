@@ -168,10 +168,11 @@ DRVLIBS = \
 	$(OBJ)/sord.a     \
 	$(OBJ)/tatung.a   \
 	$(OBJ)/coco.a     \
-#	$(OBJ)/atari.a    \
+	$(OBJ)/sega.a     \
+	$(OBJ)/cbm.a      \
+	$(OBJ)/cbmshare.a \
+	$(OBJ)/atari.a    \
 #	$(OBJ)/sharp.a    \
-#	$(OBJ)/cbm.a      \
-#	$(OBJ)/cbmshare.a \
 #	$(OBJ)/pc.a       \
 #	$(OBJ)/at.a       \
 #	$(OBJ)/pcshare.a  \
@@ -193,7 +194,6 @@ DRVLIBS = \
 #	$(OBJ)/mk1.a      \
 #	$(OBJ)/mk2.a      \
 #	$(OBJ)/ssystem3.a \
-#	$(OBJ)/sega.a     \
 #	$(OBJ)/kim1.a     \
 #	$(OBJ)/sym1.a     \
 #	$(OBJ)/aim65.a    \
@@ -214,14 +214,14 @@ $(OBJ)/arcadia.a:  \
 	  $(OBJ)/mess/systems/arcadia.o
 
 $(OBJ)/sega.a:	   \
-	  $(OBJ)/mess/vidhrdw/smsvdp.o	 \
-	  $(OBJ)/mess/machine/sms.o	 \
-	  $(OBJ)/mess/systems/sms.o	 \
-	  $(OBJ)/mess/vidhrdw/genesis.o  \
-	  $(OBJ)/mess/machine/genesis.o  \
-	  $(OBJ)/mess/sndhrdw/genesis.o  \
-	  $(OBJ)/mess/systems/genesis.o  \
 	  $(OBJ)/mess/systems/saturn.o	 \
+#	  $(OBJ)/mess/vidhrdw/smsvdp.o	 \
+#	  $(OBJ)/mess/machine/sms.o	 \
+#	  $(OBJ)/mess/systems/sms.o	 \
+#	  $(OBJ)/mess/vidhrdw/genesis.o  \
+#	  $(OBJ)/mess/machine/genesis.o  \
+#	  $(OBJ)/mess/sndhrdw/genesis.o  \
+#	  $(OBJ)/mess/systems/genesis.o  \
 
 $(OBJ)/atari.a:    \
 	  $(OBJ)/mess/machine/atari.o	 \
@@ -232,7 +232,7 @@ $(OBJ)/atari.a:    \
 	  $(OBJ)/mess/systems/a7800.o	 \
 	  $(OBJ)/mess/machine/a2600.o	 \
 	  $(OBJ)/mess/systems/a2600.o    \
-#	  $(OBJ)/mess/vidhrdw/a7800.o	 \
+	  $(OBJ)/mess/vidhrdw/a7800.o	 \
 #	  $(OBJ)/mess/vidhrdw/atari.o	 \
 #         $(OBJ)/mess/systems/atarist.o
 
@@ -297,8 +297,8 @@ $(OBJ)/cbm.a: \
 	  $(OBJ)/mess/systems/c128.o	 \
 	  $(OBJ)/mess/machine/c128.o	\
 	  $(OBJ)/mess/sndhrdw/vic6560.o  \
-#	  $(OBJ)/mess/vidhrdw/ted7360.o  \
-#	  $(OBJ)/mess/vidhrdw/vic6560.o  \
+	  $(OBJ)/mess/vidhrdw/ted7360.o  \
+	  $(OBJ)/mess/vidhrdw/vic6560.o  \
 
 $(OBJ)/coco.a:   \
 	  $(OBJ)/mess/machine/6883sam.o  \
@@ -521,9 +521,9 @@ $(OBJ)/vtech.a :   \
 	  $(OBJ)/mess/vidhrdw/vtech1.o	 \
 	  $(OBJ)/mess/machine/vtech1.o	 \
 	  $(OBJ)/mess/systems/vtech1.o	 \
-#	  $(OBJ)/mess/vidhrdw/vtech2.o	 \
-#	  $(OBJ)/mess/machine/vtech2.o	 \
-#	  $(OBJ)/mess/systems/vtech2.o
+	  $(OBJ)/mess/vidhrdw/vtech2.o	 \
+	  $(OBJ)/mess/machine/vtech2.o	 \
+	  $(OBJ)/mess/systems/vtech2.o
 
 $(OBJ)/jupiter.a : \
 	  $(OBJ)/mess/vidhrdw/jupiter.o  \
@@ -585,7 +585,7 @@ $(OBJ)/sharp.a:    \
 	  $(OBJ)/mess/machine/mz700.o	 \
 	  $(OBJ)/mess/vidhrdw/mz700.o	 \
 	  $(OBJ)/mess/systems/mz700.o	\
-#	  $(OBJ)/mess/vidhrdw/pocketc.o  \
+	  $(OBJ)/mess/vidhrdw/pocketc.o  \
 
 $(OBJ)/hp48.a:     \
 	  $(OBJ)/mess/machine/hp48.o     \
@@ -725,7 +725,7 @@ TOOLS +=  dat2html$(EXE)       \
 
 
 ifdef MSVC
-OUTOPT = $(OBJ)/Win32/dirent.o -out:$@
+OUTOPT = $(DIRENTOBJS) -out:$@
 else
 OUTOPT = -o $@
 endif
