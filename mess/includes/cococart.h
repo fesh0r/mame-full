@@ -25,6 +25,6 @@ struct cartridge_slot {
 extern const struct cartridge_slot cartridge_fdc_coco;
 extern const struct cartridge_slot cartridge_fdc_dragon;
 extern const struct cartridge_slot cartridge_standard;
-extern const struct cartridge_slot cartridge_twobanks;
+extern const struct cartridge_slot cartridge_banks;
 
 #endif /* COCOCART_H */

@@ -1,6 +1,7 @@
 #include "includes/cococart.h"
 #include "includes/wd179x.h"
 #include "includes/basicdsk.h"
+#include "formats/dmkdsk.h"
 #include "includes/dragon.h"
 
 static const struct cartridge_callback *cartcallbacks;
@@ -43,6 +44,7 @@ static const struct cartridge_callback *cartcallbacks;
 static int haltenable;
 static int nmienable;
 static int dskreg;
+static int diskKind[4];
 static void coco_fdc_callback(int event);
 static void dragon_fdc_callback(int event);
 static int ff4b_count;
@@ -50,6 +52,11 @@ static int ff4b_count;
 enum {
 	HW_COCO,
 	HW_DRAGON
+};
+
+enum {
+	DSK_DMK,
+	DSK_BASIC
 };
 
 static void coco_fdc_init(const struct cartridge_callback *callbacks)
@@ -136,30 +143,49 @@ static void dragon_fdc_callback(int event)
 	}
 }
 
+void dragon_floppy_exit( int id)
+{
+	switch( diskKind[ id ] )
+	{
+		case DSK_DMK:
+			dmkdsk_floppy_exit( id );
+			break;
+		case DSK_BASIC:
+			basicdsk_floppy_exit( id );
+			break;
+		default:
+			break;
+	}
+}
+
 int dragon_floppy_init(int id)
 {
-	void *file;
-	int tracks;
-	int heads;
-	int err;
+	if (dmkdsk_floppy_init(id)==INIT_PASS)
+	{
+		diskKind[ id ] = DSK_DMK;
+		return INIT_PASS;
+	}
+	
+	if (basicdsk_floppy_init(id)==INIT_PASS)
+	{
+		void *file;
+		int tracks;
+		int heads;
 
-	err = basicdsk_floppy_init(id);
-	if (err != INIT_PASS)
-		return err;
+		diskKind[ id ] = DSK_BASIC;
+		file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
+		if (file) {
+			tracks = osd_fsize(file) / (18*256);
+			heads = (tracks > 80) ? 2 : 1;
+			tracks /= heads;
 
-	file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
-	if (file) {
-		tracks = osd_fsize(file) / (18*256);
-		heads = (tracks > 80) ? 2 : 1;
-		tracks /= heads;
+			basicdsk_set_geometry(id, tracks, heads, 18, 256, 1);
 
-		basicdsk_set_geometry(id, tracks, heads, 18, 256, 1);
-
-		osd_fclose(file);
+			osd_fclose(file);
+		}
 	}
 	return INIT_PASS;
 }
-
 
 static void set_dskreg(int data, int hardware)
 {
@@ -168,20 +194,29 @@ static void set_dskreg(int data, int hardware)
 	int motor_mask = 0;
 	int haltenable_mask = 0;
 
-#if LOG_FLOPPY
-	logerror("set_dskreg(): data=$%02x\n", data);
-#endif
-
 	switch(hardware) {
 	case HW_COCO:
 		if ((dskreg & 0x1cf) == (data & 0xcf))
 			return;
 
-		/* An email from John Kowalski informed me that if the last drive is
-		 * selected, and one of the other drive bits is selected, then the
-		 * second side is selected.  If multiple bits are selected in other
-		 * situations, then both drives are selected, and any read signals get
-		 * yucky.
+#if LOG_FLOPPY
+		logerror("set_dskreg(): %c%c%c%c%c%c%c%c ($%02x)\n",  
+									data & 0x80 ? 'H' : 'h',
+									data & 0x40 ? '3' : '.',
+									data & 0x20 ? 'D' : 'S',
+									data & 0x10 ? 'P' : 'p',
+									data & 0x08 ? 'M' : 'm',
+									data & 0x04 ? '2' : '.',
+									data & 0x02 ? '1' : '.',
+									data & 0x01 ? '0' : '.',
+									data );
+#endif
+
+		/* An email from John Kowalski informed me that if the DS3 is
+		 * high, and one of the other drive bits is selected (DS0-DS2), then the
+		 * second side of DS0, DS1, or DS2 is selected.  If multiple bits are
+		 * selected in other situations, then both drives are selected, and any
+		 * read signals get yucky.
 		 */
 		motor_mask = 0x08;
 		haltenable_mask = 0x80;
@@ -201,6 +236,11 @@ static void set_dskreg(int data, int hardware)
 		break;
 
 	case HW_DRAGON:
+
+#if LOG_FLOPPY
+	logerror("set_dskreg(): data=$%02x\n", data);
+#endif
+
 		if ((dskreg & 0x127) == (data & 0x27))
 			return;
 		drive = data & 0x03;
@@ -276,21 +316,25 @@ static void dc_floppy_w(int offset, int data, int hardware)
 
 /* ---------------------------------------------------- */
 
+READ_HANDLER(coco_floppy_r);
 READ_HANDLER(coco_floppy_r)
 {
 	return dc_floppy_r(offset);
 }
 
+WRITE_HANDLER(coco_floppy_w);
 WRITE_HANDLER(coco_floppy_w)
 {
 	dc_floppy_w(offset, data, HW_COCO);
 }
 
+READ_HANDLER(dragon_floppy_r);
 READ_HANDLER(dragon_floppy_r)
 {
 	return dc_floppy_r(offset ^ 8);
 }
 
+WRITE_HANDLER(dragon_floppy_w);
 WRITE_HANDLER(dragon_floppy_w)
 {
 	dc_floppy_w(offset ^ 8, data, HW_DRAGON);
@@ -324,9 +368,11 @@ static void cartidge_standard_init(const struct cartridge_callback *callbacks)
 	cartcallbacks->setcartline(CARTLINE_Q);
 }
 
-static WRITE_HANDLER(cartridge_twobanks_io_w)
+static WRITE_HANDLER(cartridge_banks_io_w)
 {
-	cartcallbacks->setbank(data & 1);
+/* TJL- trying to turn this into a generic banking call */
+	if (offset == 0 )
+		cartcallbacks->setbank(data);
 }
 
 const struct cartridge_slot cartridge_standard =
@@ -338,12 +384,12 @@ const struct cartridge_slot cartridge_standard =
 	NULL
 };
 
-const struct cartridge_slot cartridge_twobanks =
+const struct cartridge_slot cartridge_banks =
 {
 	cartidge_standard_init,
 	NULL,
 	NULL,
-	cartridge_twobanks_io_w,
+	cartridge_banks_io_w,
 	NULL
 };
 
