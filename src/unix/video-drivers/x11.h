@@ -62,7 +62,7 @@ void process_x11_joy_event(XEvent *event);
 /* xinput functions */
 int xinput_open(int force_grab, int event_mask);
 void xinput_close(void);
-void xinput_check_hotkeys(unsigned int flags);
+void xinput_update(int keyb_leds, int flags);
 
 /* generic helper functions */
 int x11_init_palette_info(void);
@@ -90,10 +90,11 @@ void x11_set_window_hints(unsigned int width, unsigned int height, int type);
 int  x11_window_init(void);
 int  x11_window_open_display(int reopen);
 void x11_window_close_display(void);
-void x11_window_update_display(struct mame_bitmap *bitmap,
+const char * x11_window_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
-	  unsigned int flags, const char **status_msg);
+	  int flags);
+void x11_window_clear_display_buffer(void);
 #ifdef USE_MITSHM
 int  x11_test_mit_shm (Display * display, XErrorEvent * error);
 #endif
@@ -102,20 +103,21 @@ int  x11_test_mit_shm (Display * display, XErrorEvent * error);
 int  xv_init(void);
 int  xv_open_display(int reopen);
 void xv_close_display(void);
-void xv_update_display(struct mame_bitmap *bitmap,
+const char * xv_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
-	  unsigned int flags, const char **status_msg);
+	  int flags);
+void xv_clear_display_buffer(void);
 #endif
 /* OpenGL functions */
 #ifdef USE_OPENGL
 int  xgl_init(void);
 int  xgl_open_display(int reopen);
 void xgl_close_display(void);
-void xgl_update_display(struct mame_bitmap *bitmap,
+const char * xgl_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
-	  unsigned int flags, const char **status_msg);
+	  int flags);
 #endif
 /* Glide functions */
 #ifdef USE_GLIDE
@@ -123,44 +125,48 @@ int  xfx_init(void);
 void xfx_exit(void);
 int  xfx_open_display(int reopen);
 void xfx_close_display(void);
-void xfx_update_display(struct mame_bitmap *bitmap,
+const char * xfx_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
-	  unsigned int flags, const char **status_msg);
+	  int flags);
 #endif
 /* XIL functions */
 #ifdef USE_XIL
 int  xil_init(void);
 int  xil_open_display(int reopen);
 void xil_close_display(void);
-void xil_update_display(struct mame_bitmap *bitmap,
+const char * xil_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
-	  unsigned int flags, const char **status_msg);
+	  int flags);
+void xil_clear_display_buffer(void);
 #endif
 /* Xf86_dga functions */
 #ifdef USE_DGA
 int  xf86_dga_init(void);
 int  xf86_dga_open_display(int reopen);
 void xf86_dga_close_display(void);
-void xf86_dga_update_display(struct mame_bitmap *bitmap,
+const char * xf86_dga_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
-	  unsigned int flags, const char **status_msg);
+	  int flags);
+void xf86_dga_clear_display(void);
 int  xf86_dga1_init(void);
 int  xf86_dga1_open_display(int reopen);
 void xf86_dga1_close_display(void);
-void xf86_dga1_update_display(struct mame_bitmap *bitmap,
+const char * xf86_dga1_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
-	  unsigned int flags, const char **status_msg);
+	  int flags);
+void xf86_dga1_clear_display(void);
 int  xf86_dga2_init(void);
 int  xf86_dga2_open_display(int reopen);
 void xf86_dga2_close_display(void);
-void xf86_dga2_update_display(struct mame_bitmap *bitmap,
+const char * xf86_dga2_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
-	  unsigned int flags, const char **status_msg);
+	  int flags);
+void xf86_dga2_clear_display(void);
 #endif
 
 #undef EXTERN

@@ -442,16 +442,7 @@ int xv_open_display(int reopen)
           /* HACK, GRRR sometimes this all succeeds, but the first call to
              XvShmPutImage to a mapped window fails with:
              "BadAlloc (insufficient resources for operation)" */
-          switch(sysdep_display_properties.palette_info.fourcc_format)
-          {
-            case FOURCC_YUY2:
-              ClearYUY2();
-              break;
-            case FOURCC_YV12:
-              ClearYV12();
-              break;
-          }
-            
+          xv_clear_display_buffer();
           mode_clip_aspect(window_width, window_height, &width, &height);
           XvShmPutImage (display, xv_port, window, gc, xvimage,
             0, 0, xvimage->width, xvimage->height,
@@ -583,10 +574,9 @@ static void xv_destroy_image(void)
 }
 
 /* invoked by main tree code to update bitmap into screen */
-void xv_update_display(struct mame_bitmap *bitmap,
+const char *xv_update_display(struct mame_bitmap *bitmap,
   struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
-  struct sysdep_palette_struct *palette, unsigned int flags,
-  const char **status_msg)
+  struct sysdep_palette_struct *palette, int flags)
 {
   Window _dw;
   int _dint;
@@ -621,6 +611,24 @@ void xv_update_display(struct mame_bitmap *bitmap,
     XSync (display, False);   /* be sure to get request processed */
   else
     XFlush (display);         /* flush buffer to server */
+    
+  return NULL;
+}
+
+void xv_clear_display_buffer(void)
+{
+  switch(sysdep_display_properties.palette_info.fourcc_format)
+  {
+    case FOURCC_YUY2:
+      ClearYUY2();
+      break;
+    case FOURCC_YV12:
+      ClearYV12();
+      break;
+    default:
+      memset(xvimage->data, 0, xvimage->width*xvimage->height*
+        sysdep_display_properties.palette_info.bpp/8);
+  }
 }
 
 #define RMASK 0xff0000
@@ -883,3 +891,4 @@ static void xv_update_32_to_YV12_direct_perfect(struct mame_bitmap *bitmap,
       }
    }
 }
+

@@ -1656,12 +1656,12 @@ static void UpdateGLDisplay (struct mame_bitmap *bitmap,
  *    - no swapxy, flipx or flipy and no resize !
  *    - shall be Machine->scrbitmap
  */
-void gl_update_display(struct mame_bitmap *bitmap,
+const char *gl_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
-	  struct sysdep_palette_struct *palette,
-	  unsigned int flags, const char **status_msg)
+	  struct sysdep_palette_struct *palette, int flags)
 {
   static char msg_buf[32];
+  const char *msg = NULL;
   
   UpdateGLDisplay (bitmap, vis_area, dirty_area, palette, flags);
 
@@ -1669,9 +1669,9 @@ void gl_update_display(struct mame_bitmap *bitmap,
   {
     gl_set_bilinear (1 - bilinear);
     if(bilinear)
-      *status_msg = "bilinear filtering on";
+      msg = "bilinear filtering on";
     else
-      *status_msg = "bilinear filtering off";
+      msg = "bilinear filtering off";
   }
   if (flags & SYSDEP_DISPLAY_HOTKEY_OPTION3)
   {
@@ -1679,17 +1679,17 @@ void gl_update_display(struct mame_bitmap *bitmap,
     {
       antialiasvec = 1 - antialiasvec;
       if(antialiasvec)
-        *status_msg = "vector antialiasing on";
+        msg = "vector antialiasing on";
       else
-        *status_msg = "vector antialiasing off";
+        msg = "vector antialiasing off";
     }
     else
     {
       gl_set_antialias (1-antialias);
       if(antialias)
-        *status_msg = "antialiasing on";
+        msg = "antialiasing on";
       else
-        *status_msg = "antialiasing off";
+        msg = "antialiasing off";
     }
   }
   if (flags & SYSDEP_DISPLAY_HOTKEY_OPTION2)
@@ -1698,7 +1698,7 @@ void gl_update_display(struct mame_bitmap *bitmap,
     {
       gl_set_beam(gl_beam+0.5);
       snprintf(msg_buf, 32, "vector beam size %.1f", (double)gl_beam);
-      *status_msg = msg_buf;
+      msg = msg_buf;
     }
   }
   if (flags & SYSDEP_DISPLAY_HOTKEY_OPTION4)
@@ -1707,9 +1707,10 @@ void gl_update_display(struct mame_bitmap *bitmap,
     {
       gl_set_beam(gl_beam-0.5);
       snprintf(msg_buf, 32, "vector beam size %.1f", (double)gl_beam);
-      *status_msg = msg_buf;
+      msg = msg_buf;
     }
   }
+  return msg;
 }
 
 #if 0 /* disabled for now */

@@ -20,7 +20,6 @@
 #define FRAMESKIP_DRIVER_COUNT 2
 static int frameskipper = 0;
 static int debugger_has_focus = 0;
-static int led_state = 0;
 static int show_effect_or_scale = 0;
 static int show_status = 0;
 static const char *status_msg = NULL;
@@ -217,7 +216,7 @@ struct rc_option video_opts[] = {
 static int video_verify_mode(struct rc_option *option, const char *arg,
 		int priority)
 {
-  if(!sysdep_display_properties.mode[normal_params.video_mode])
+  if(!sysdep_display_properties.mode_info[normal_params.video_mode])
   {
     fprintf(stderr, "Error: x11-mode %d is not available\n",
       normal_params.video_mode);
@@ -499,12 +498,36 @@ void osd_close_display(void)
 	}
 }
 
-static void display_settings_changed(void)
-{
-	osd_free_colors();
-	sysdep_display_set_keybleds(led_state);
+#define NORMAL_PARAMS_CHANGED      0x01
+#define VIDMODE_FULLSCREEN_CHANGED 0x02
+#define VISIBLE_AREA_CHANGED       0x04
+#define EVERYTHING_CHANGED         0xFF
 
-	if (!debugger_has_focus && normal_params.vec_src_bounds)
+static void change_display_settings(struct sysdep_display_open_params *new_params, int flags)
+{
+  int retval;
+#ifdef x11
+  int sound_disabled = 0;
+  
+  /* Close sound, DGA (fork) makes the filehandle open twice,
+     so closing it here and re-openeing after the transition
+     fixes that.	   -- Steve bpk@hoopajoo.net */
+  if ((flags & VIDMODE_FULLSCREEN_CHANGED) &&
+      (new_params->video_mode == 0) &&
+      (new_params->fullscreen == 1))
+  {
+    osd_sound_enable( 0 );
+    sound_disabled = 1;
+  }
+#endif
+
+  retval = sysdep_display_change_params(new_params);
+  
+  if (retval & SYSDEP_DISPLAY_PROPERTIES_CHANGED)
+  {
+	osd_free_colors();
+
+	if (new_params->vec_src_bounds)
 	{
 		/* we could have switched between hw and sw drawn vectors,
 		   so clear Machine->scrbitmap and don't use vector_dirty_pixels
@@ -513,31 +536,22 @@ static void display_settings_changed(void)
 		ui_dirty = FRAMESKIP_LEVELS + 1;
 		vector_register_aux_renderer(sysdep_display_properties.vector_renderer);
 	}
-}
-
-#define NORMAL_PARAMS_CHANGED      0x01
-#define VIDMODE_FULLSCREEN_CHANGED 0x02
-#define VISIBLE_AREA_CHANGED       0x04
-
-static void change_display_settings(struct sysdep_display_open_params *new_params, int flags)
-{
-#ifdef x11
-  int sound_disabled = 0;
-  
-  /* Close sound, DGA (fork) makes the filehandle open twice,
-     so closing it here and re-openeing after the transition
-     fixes that.	   -- Steve bpk@hoopajoo.net */
-  if ((flags & VIDMODE_FULLSCREEN_CHANGED) &&
-      (normal_params.video_mode == 0) &&
-      (normal_params.fullscreen == 1))
-  {
-    osd_sound_enable( 0 );
-    sound_disabled = 1;
   }
-#endif
-
-  if (sysdep_display_change_params(new_params, flags & VISIBLE_AREA_CHANGED))
-    display_settings_changed();
+    
+  if ((flags  & NORMAL_PARAMS_CHANGED) ||
+      (retval & SYSDEP_DISPLAY_SCALING_EFFECT_CHANGED))
+  {
+    show_effect_or_scale = 2.0 * video_fps;
+    ui_show_fps_temp(2.0);
+  }
+  
+  if ((flags  & VIDMODE_FULLSCREEN_CHANGED) ||
+      (retval & SYSDEP_DISPLAY_VIDMODE_FULLSCREEN_CHANGED))
+  {
+    status_msg  = sysdep_display_properties.mode_name[new_params->video_mode];
+    show_status = 2.0 * video_fps;
+    ui_show_fps_temp(2.0);
+  }
 
 #ifdef x11
   /* Re-enable sound */
@@ -577,8 +591,6 @@ static void update_palette(struct mame_display *display, int force_dirty)
 
 static void update_debug_display(struct mame_display *display)
 {
-	const char *msg = NULL;
-	
 	if (!debug_palette)
 	{
 		int  i, r, g, b;
@@ -605,7 +617,7 @@ static void update_debug_display(struct mame_display *display)
 		}
 	}
 	sysdep_display_update(display->debug_bitmap, &debug_bounds,
-	   &debug_bounds, debug_palette, 0, &msg);
+	   &debug_bounds, debug_palette, 0, 0);
 }
 
 static void osd_free_colors(void)
@@ -655,9 +667,9 @@ void change_debugger_focus(int new_debugger_focus)
 	{
 		debugger_has_focus = new_debugger_focus;
 		if (new_debugger_focus)
-			change_display_settings(&debug_params,  VISIBLE_AREA_CHANGED);
+			change_display_settings(&debug_params,  EVERYTHING_CHANGED);
 		else
-			change_display_settings(&normal_params, VISIBLE_AREA_CHANGED);
+			change_display_settings(&normal_params, EVERYTHING_CHANGED);
 	}
 }
 
@@ -680,15 +692,8 @@ void osd_update_video_and_audio(struct mame_display *display)
 		video_fps = display->game_refresh_rate;
 		sound_update_refresh_rate(display->game_refresh_rate);
 	}
-	if (display->changed_flags & LED_STATE_CHANGED)
-	{
-		led_state = display->led_state;
-		sysdep_display_set_keybleds(led_state);
-	}
 	if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
 	{
-                int scaled_width, scaled_height;
-                
 		set_ui_visarea(display->game_visible_area.min_x,
 				display->game_visible_area.min_y,
 				display->game_visible_area.max_x,
@@ -700,20 +705,6 @@ void osd_update_video_and_audio(struct mame_display *display)
 		   display->game_visible_area.min_y;
 
 		normal_params_changed |= VISIBLE_AREA_CHANGED;
-
-                /* is this going to fit? */
-                scaled_width  = normal_params.width * normal_params.widthscale;
-                scaled_height = normal_params.yarbsize? normal_params.yarbsize:
-                  normal_params.height * normal_params.heightscale;
-                if ((scaled_width  > sysdep_display_properties.max_width ) ||
-                    (scaled_height > sysdep_display_properties.max_height))
-                {
-                   normal_params.effect      = 0;
-                   normal_params.widthscale  = 1;
-                   normal_params.heightscale = 1;
-                   normal_params.yarbsize    = 0;
-                   normal_params_changed |= NORMAL_PARAMS_CHANGED;
-                }
 	}
 	if ((display->changed_flags & GAME_PALETTE_CHANGED))
 		palette_changed = 1;
@@ -951,11 +942,6 @@ void osd_update_video_and_audio(struct mame_display *display)
 		{
 		        change_display_settings(&normal_params,
 		          normal_params_changed);
-                        if (normal_params_changed & NORMAL_PARAMS_CHANGED)
-                        {
-                          show_effect_or_scale = 2.0 * display->game_refresh_rate;
-                          ui_show_fps_temp(2.0);
-                        }
                         normal_params_changed = 0;
 		}
 		
@@ -982,10 +968,10 @@ void osd_update_video_and_audio(struct mame_display *display)
 
 		profiler_mark(PROFILER_BLIT);
 		/* udpate and check if the display properties were changed */
-		sysdep_display_update(display->game_bitmap,
+		msg = sysdep_display_update(display->game_bitmap,
 		   &(display->game_visible_area),
 		   &(display->game_bitmap_update),
-		   normal_palette, flags, &msg);
+		   normal_palette, display->led_state, flags);
 		profiler_mark(PROFILER_END);
 		if (msg)
 		{

@@ -17,10 +17,10 @@
 
 static int  (*p_xf86_dga_open_display)(int reopen);
 static void (*p_xf86_dga_close_display)(void);
-static void (*p_xf86_dga_update_display)(struct mame_bitmap *,
+static const char * (*p_xf86_dga_update_display)(struct mame_bitmap *,
 	  struct rectangle *vis_area, struct rectangle *dirty_area,
-	  struct sysdep_palette_struct *palette, unsigned int flags,
-	  const char **status_msg);
+	  struct sysdep_palette_struct *palette, int flags);
+static void (*p_xf86_dga_clear_display)(void);
 
 struct rc_option xf86_dga_opts[] = {
   /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -51,6 +51,7 @@ int xf86_dga_init(void)
                 p_xf86_dga_open_display   = xf86_dga2_open_display;
                 p_xf86_dga_close_display  = xf86_dga2_close_display;
                 p_xf86_dga_update_display = xf86_dga2_update_display;
+                p_xf86_dga_clear_display  = xf86_dga2_clear_display;
                 return xf86_dga2_init();
         }
 #endif
@@ -59,6 +60,7 @@ int xf86_dga_init(void)
                 p_xf86_dga_open_display   = xf86_dga1_open_display;
                 p_xf86_dga_close_display  = xf86_dga1_close_display;
                 p_xf86_dga_update_display = xf86_dga1_update_display;
+                p_xf86_dga_clear_display  = xf86_dga1_clear_display;
                 return xf86_dga1_init();
         }
 
@@ -76,11 +78,15 @@ void xf86_dga_close_display(void)
 	(*p_xf86_dga_close_display)();
 }
 
-void xf86_dga_update_display(struct mame_bitmap *bitmap,
+const char *xf86_dga_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area, struct rectangle *dirty_area,
-	  struct sysdep_palette_struct *palette, unsigned int flags,
-	  const char **status_msg)
+	  struct sysdep_palette_struct *palette, int flags)
 {
-	(*p_xf86_dga_update_display)(bitmap, vis_area, dirty_area,
-		palette, flags, status_msg);
+  return p_xf86_dga_update_display(bitmap, vis_area, dirty_area,
+    palette, flags);
+}
+
+void xf86_dga_clear_display(void)
+{
+  p_xf86_dga_clear_display();
 }

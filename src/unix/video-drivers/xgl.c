@@ -269,14 +269,14 @@ void xgl_close_display (void)
 #endif
 }
 
-void xgl_update_display(struct mame_bitmap *bitmap,
+const char *xgl_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
-	  struct sysdep_palette_struct *palette,
-	  unsigned int flags, const char **status_msg)
+	  struct sysdep_palette_struct *palette, int flags)
 {
   Window _dw;
   int _dint;
   unsigned int _duint,w,h;
+  const char *msg;
   
   XGetGeometry(display, window, &_dw, &_dint, &_dint, &w, &h, &_duint, &_duint);
   if ( (w != window_width) || (h != window_height) )
@@ -286,27 +286,29 @@ void xgl_update_display(struct mame_bitmap *bitmap,
     gl_set_windowsize();
   }
 
+  msg = gl_update_display(bitmap, vis_area, dirty_area, palette, flags);
+
   if (flags & SYSDEP_DISPLAY_HOTKEY_OPTION1)
   {
     gl_set_cabview (1-cabview);
     if(cabview)
     {
-      *status_msg = "cabinet view on";
+      msg = "cabinet view on";
       if((window_type == 1) || (window_type == 2))
         x11_set_window_hints(window_width, window_height, 2); /* resizable */
     }
     else
     {
-      *status_msg = "cabinet view off";
+      msg = "cabinet view off";
       if((window_type == 1) || (window_type == 2))
         x11_set_window_hints(window_width, window_height, 1); /* keep aspect */
     }
   }
   
-  gl_update_display(bitmap, vis_area, dirty_area, palette, flags, status_msg);
-
   if (glCaps.buffer)
     disp__glXSwapBuffers(display,window);
   else
     disp__glFlush ();
+    
+  return msg;
 }

@@ -180,10 +180,9 @@ void xil_close_display (void)
 }
 
 /* invoked by main tree code to update bitmap into screen */
-void xil_update_display(struct mame_bitmap *bitmap,
+const char *xil_update_display(struct mame_bitmap *bitmap,
   struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
-  struct sysdep_palette_struct *palette, unsigned int flags,
-  const char **status_msg)
+  struct sysdep_palette_struct *palette, int flags)
 {
   Window _dw;
   int _dint;
@@ -229,6 +228,13 @@ void xil_update_display(struct mame_bitmap *bitmap,
     XSync (display, False);   /* be sure to get request processed */
   else
     XFlush (display);         /* flush buffer to server */
+    
+  return NULL;
+}
+
+void xil_clear_display_buffer(void)
+{
+   memset(scaled_buffer_ptr, 0, draw_image_width*draw_image_height*2);
 }
 
 static void *redraw_thread( void *arg )

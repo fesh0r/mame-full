@@ -72,6 +72,11 @@
 /* number of modes */
 #define SYSDEP_DISPLAY_VIDEO_MODES	5
 
+/* flags for the return value of sysdep_display_change_params */
+#define SYSDEP_DISPLAY_PROPERTIES_CHANGED         0x01
+#define SYSDEP_DISPLAY_SCALING_EFFECT_CHANGED     0x02
+#define SYSDEP_DISPLAY_VIDMODE_FULLSCREEN_CHANGED 0x04
+
 /* from mame's palette.h */
 #ifndef PALETTE_H
 typedef unsigned int pen_t;
@@ -174,7 +179,8 @@ struct sysdep_display_open_params {
 
 struct sysdep_display_properties_struct {
   /* per mode info availabe after sysdep_display_init */
-  int mode[SYSDEP_DISPLAY_VIDEO_MODES];
+  int mode_info[SYSDEP_DISPLAY_VIDEO_MODES];
+  const char *mode_name[SYSDEP_DISPLAY_VIDEO_MODES];
   /* info available after sysdep_display_open */
   unsigned int max_width, max_height;
   struct sysdep_palette_info palette_info;
@@ -198,19 +204,32 @@ void sysdep_display_exit(void);
 int sysdep_display_open(struct sysdep_display_open_params *params);
 void sysdep_display_close(void);
 
-/* update */
+/* change params, this function will always honor the following parts of the
+   param struct: width, height, depth, orientation, vec_src_bounds and
+   vec_dest_bounds. All other params may be left at their original value if
+   the change request can't be met.
+   
+   This function may change sysdep_display_properties in the case the
+   SYSDEP_DISPLAY_PROPERTIES_CHANGED_FLAG is set in the return value.
+   
+   Under certain circumstances this function may even change the parameters
+   not listed above to a different value then their original or new value.
+   In this case the following flags will be set in the return value:
+   SYSDEP_DISPLAY_SCALING_EFFECT_CHANGED:
+     widthscale and heightscale have been set to 1, yarbsize and effect to 0
+   SYSDEP_DISPLAY_VIDMODE_FULLSCREEN_CHANGED
+     video_mode and fullscreen have been set to 0 */
 int sysdep_display_change_params(
-  struct sysdep_display_open_params *new_params, int force);
-void sysdep_display_update(struct mame_bitmap *bitmap,
+  struct sysdep_display_open_params *new_params);
+
+/* update */
+const char *sysdep_display_update(struct mame_bitmap *bitmap,
   struct rectangle *vis_area, struct rectangle *dirty_area,
-  struct sysdep_palette_struct *palette, unsigned int flags,
-  const char **status_msg);
-void sysdep_display_clear(void);
+  struct sysdep_palette_struct *palette, int keyb_leds, int flags);
 
 /* input */
 int  sysdep_display_update_keyboard(void);
 void sysdep_display_update_mouse(void);
-void sysdep_display_set_keybleds(int leds);
 
 /* misc */
 /* check if widthscale, heightscale and yarbsize are compatible with

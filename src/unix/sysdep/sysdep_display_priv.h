@@ -35,6 +35,7 @@ void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *v
 /* from the sysdep display driver */
 int  sysdep_display_driver_open(int reopen);
 int  sysdep_display_driver_update_keyboard(void);
+void sysdep_display_driver_clear_buffer(void);
 
 #include "end_code.h"
 #endif /* ifndef __SYSDEP_DISPLAY_PRIV_H */

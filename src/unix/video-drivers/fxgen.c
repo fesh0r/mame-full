@@ -715,11 +715,12 @@ void DrawFlatBitmap(void)
   }
 }
 
-void xfx_update_display(struct mame_bitmap *bitmap,
+const char *xfx_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area, struct rectangle *dirty_area,
-	  struct sysdep_palette_struct *palette, unsigned int flags,
-	  const char **status_msg)
+	  struct sysdep_palette_struct *palette, int flags)
 {
+  const char *msg = NULL;
+  
   if(!sysdep_display_params.vec_src_bounds || (flags & SYSDEP_DISPLAY_UI_DIRTY))
     bitmap_dirty=2;
 
@@ -732,14 +733,14 @@ void xfx_update_display(struct mame_bitmap *bitmap,
           grTexFilterMode(GR_TMU0,
                                           GR_TEXTUREFILTER_BILINEAR,
                                           GR_TEXTUREFILTER_BILINEAR);
-          *status_msg = "bilinear filtering on";
+          msg = "bilinear filtering on";
     }
     else
     {
           grTexFilterMode(GR_TMU0,
                                           GR_TEXTUREFILTER_POINT_SAMPLED,
                                           GR_TEXTUREFILTER_POINT_SAMPLED);
-          *status_msg = "bilinear filtering off";
+          msg = "bilinear filtering off";
     }
   }
   
@@ -752,4 +753,6 @@ void xfx_update_display(struct mame_bitmap *bitmap,
   DrawFlatBitmap();
   grBufferSwap(1);
   grBufferClear(0,0,0);
+  
+  return msg;
 }

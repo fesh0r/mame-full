@@ -344,10 +344,9 @@ static void x11_window_destroy_image(void)
 }
 
 /* invoked by main tree code to update bitmap into screen */
-void x11_window_update_display(struct mame_bitmap *bitmap,
+const char *x11_window_update_display(struct mame_bitmap *bitmap,
   struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
-  struct sysdep_palette_struct *palette, unsigned int flags,
-  const char **status_msg)
+  struct sysdep_palette_struct *palette, int flags)
 {
    x11_window_update_display_func(bitmap, vis_in_dest_out, dirty_area,
      palette, (unsigned char *)image->data, image->width);
@@ -372,4 +371,11 @@ void x11_window_update_display(struct mame_bitmap *bitmap,
       XSync (display, False);   /* be sure to get request processed */
    else
       XFlush (display);         /* flush buffer to server */
+      
+   return NULL;
+}
+
+void x11_window_clear_display_buffer(void)
+{
+   memset(image->data, 0, image->width*image->height*image->bits_per_pixel/8);
 }

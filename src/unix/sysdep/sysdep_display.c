@@ -66,18 +66,18 @@ static int sysdep_display_check_params(struct sysdep_display_open_params *params
   }
   if ((params->video_mode < 0) ||
       (params->video_mode >= SYSDEP_DISPLAY_VIDEO_MODES) ||
-      (!sysdep_display_properties.mode[params->video_mode]))
+      (!sysdep_display_properties.mode_info[params->video_mode]))
   {
     fprintf(stderr, "Error invalid video mode: %d\n",
       params->video_mode);
     return 1;
   }
   
-  if (!(sysdep_display_properties.mode[params->video_mode] &
+  if (!(sysdep_display_properties.mode_info[params->video_mode] &
         SYSDEP_DISPLAY_WINDOWED))
     params->fullscreen = 1;
   
-  if (!(sysdep_display_properties.mode[params->video_mode] &
+  if (!(sysdep_display_properties.mode_info[params->video_mode] &
         SYSDEP_DISPLAY_FULLSCREEN))
     params->fullscreen = 0;
   
@@ -135,32 +135,46 @@ int sysdep_display_open (struct sysdep_display_open_params *params)
 }
 
 int sysdep_display_change_params(
-  struct sysdep_display_open_params *new_params, int force)
+  struct sysdep_display_open_params *new_params)
 {
   struct sysdep_display_properties_struct orig_properties = 
     sysdep_display_properties;
   struct sysdep_display_open_params orig_params = current_params;
+  int attempt = 0;
+  int retval  = 0;
   
-  /* If the changes aren't forced and the video mode is not available
-     use the original video mode */
-  if (!force && (new_params->video_mode >= 0) &&
+  /* Skip attempting again with the original params if one of these
+     obligatory params changes */
+  if ((new_params->width            != orig_params.width)          ||
+      (new_params->height           != orig_params.height)         ||
+      (new_params->depth            != orig_params.depth)          ||
+      (new_params->orientation      != orig_params.orientation)    ||
+      (new_params->vec_src_bounds   != orig_params.vec_src_bounds) ||
+      (new_params->vec_dest_bounds  != orig_params.vec_dest_bounds))
+     attempt = 1;
+  
+  /* If the video mode is not available use the original video mode */
+  if ((new_params->video_mode >= 0) &&
       (new_params->video_mode < SYSDEP_DISPLAY_VIDEO_MODES) &&
-      !sysdep_display_properties.mode[new_params->video_mode])
+      !sysdep_display_properties.mode_info[new_params->video_mode])
     new_params->video_mode = orig_params.video_mode;
 
   /* Check and adjust the new params */
   if (sysdep_display_check_params(new_params))
   {
-    if (force)
-      goto sysdep_display_change_params_error;
-    
-    /* report back we're using the orig params */
-    *new_params = orig_params;
-    return 0;
+    /* If none of the obligatory params changed then report back we're using
+       the orig params */
+    if (!attempt) 
+    {
+      *new_params = orig_params;
+      return 0;
+    }
+    sysdep_display_close();
+    goto sysdep_display_change_params_error;
   }
   
   /* Are there any changes after checking the params? */
-  if (memcmp(new_params, &current_params, sizeof(current_params)))
+  if (memcmp(new_params, &orig_params, sizeof(orig_params)))
   {
     int scaled_width, scaled_height, reopen;
 
@@ -183,53 +197,75 @@ int sysdep_display_change_params(
         sysdep_display_params.yarbsize:
         sysdep_display_params.height * sysdep_display_params.heightscale;
         
+      /* to big? */
       if ((scaled_width  > sysdep_display_properties.max_width ) ||
           (scaled_height > sysdep_display_properties.max_height))
       {
-        if (force)
+        /* If none of the obligatory params changed then restore and report
+           back the orig params */
+        if (!attempt) 
         {
-          fprintf(stderr, "Error requested display size is too large\n");
-          goto sysdep_display_change_params_error;
+          sysdep_display_set_params(&orig_params);
+          *new_params = orig_params;
+          return 0;
         }
-        /* restore and report back the orig params */
-        sysdep_display_set_params(&orig_params);
-        *new_params = orig_params;
-        return 0;
+        /* Else attempt with no scaling and effects */
+        current_params.widthscale  = 1;
+        current_params.heightscale = 1;
+        current_params.yarbsize    = 0;
+        current_params.effect      = 0;
+        sysdep_display_set_params(&current_params);
+        retval |= SYSDEP_DISPLAY_SCALING_EFFECT_CHANGED;
+        attempt = 2;
       }
       reopen = 1;
     }
 
     /* (re)open the display) */
-    if (sysdep_display_driver_open(reopen))
+    while (sysdep_display_driver_open(reopen))
     {
-      if (force)
-        goto sysdep_display_change_params_error;
-
       sysdep_display_close();
       force_keyboard_dirty = 1;
-
-      /* try again with old settings */
-      sysdep_display_set_params(&orig_params);
-      if (sysdep_display_driver_open(0))
-        goto sysdep_display_change_params_error;
-
-      /* report back we're using the orig params */
-      *new_params = orig_params;
+      reopen = 0;
+      switch(attempt)
+      {
+        case 0: /* first attempt, try again with orig params */
+          sysdep_display_set_params(&orig_params);
+          break;
+        case 1: /* second attempt try without scaling and effects */
+          current_params.widthscale  = 1;
+          current_params.heightscale = 1;
+          current_params.yarbsize    = 0;
+          current_params.effect      = 0;
+          sysdep_display_set_params(&current_params);
+          retval |= SYSDEP_DISPLAY_SCALING_EFFECT_CHANGED;
+          break;
+        case 2: /* thirth attempt, try with video_mode 0, no fullscreen */
+          current_params.video_mode  = 0;
+          current_params.fullscreen  = 0;
+          sysdep_display_set_params(&current_params);
+          retval |= SYSDEP_DISPLAY_VIDMODE_FULLSCREEN_CHANGED;
+          break;
+        case 3: /* fourth attempt, give up! */
+          goto sysdep_display_change_params_error;
+      }
+      attempt++;
     }
-    /* update current params with and report back changes to effect made by
-       the effect code, which is called from the display driver code */
-    current_params.effect = new_params->effect = sysdep_display_params.effect;
+    /* update current params with changes to effect made by the effect code,
+       which is called from the display driver code */
+    current_params.effect = sysdep_display_params.effect;
+    /* report back the params we're using */
+    *new_params = current_params;
 
     if(memcmp(&sysdep_display_properties, &orig_properties,
         sizeof(struct sysdep_display_properties_struct)))
-      return 1;
+      retval |= SYSDEP_DISPLAY_PROPERTIES_CHANGED;
   }
 
-  return 0;
+  return retval;
   
 sysdep_display_change_params_error:
   /* oops this sorta sucks, FIXME don't use exit! */
-  sysdep_display_close();
   fprintf(stderr, "Fatal error in sysdep_display_change_params\n");
   exit(1);
   return 0; /* shut up warnings, never reached */

@@ -59,10 +59,10 @@ struct x_func_struct {
 	int  (*init)(void);
 	int  (*open_display)(int reopen);
 	void (*close_display)(void);
-	void (*update_display)(struct mame_bitmap *bitmap,
+	const char * (*update_display)(struct mame_bitmap *bitmap,
 	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
-	  struct sysdep_palette_struct *palette, unsigned int flags,
-	  const char **status_msg);
+	  struct sysdep_palette_struct *palette, int flags);
+        void (*clear_display_buffer)(void);
         void (*exit)(void);
 };
 
@@ -80,55 +80,61 @@ static struct x_func_struct x_func[] = {
   x11_window_open_display,
   x11_window_close_display,
   x11_window_update_display,
+  x11_window_clear_display_buffer,
   NULL },
 #ifdef USE_XV
 { xv_init,
   xv_open_display,
   xv_close_display,
   xv_update_display,
+  xv_clear_display_buffer,
   NULL },
 #else
-{ NULL, NULL, NULL, NULL, NULL },
+{ NULL, NULL, NULL, NULL, NULL, NULL },
 #endif
 #ifdef USE_OPENGL
 { xgl_init,
   xgl_open_display,
   xgl_close_display,
   xgl_update_display,
+  NULL,
   NULL },
 #else
-{ NULL, NULL, NULL, NULL, NULL },
+{ NULL, NULL, NULL, NULL, NULL, NULL },
 #endif
 #ifdef USE_GLIDE
 { xfx_init,
   xfx_open_display,
   xfx_close_display,
   xfx_update_display,
+  NULL,
   xfx_exit },
 #else
-{ NULL, NULL, NULL, NULL, NULL },
+{ NULL, NULL, NULL, NULL, NULL, NULL },
 #endif
 #ifdef USE_XIL
 { xil_init,
   xil_open_display,
   xil_close_display,
   xil_update_display,
+  xil_clear_display_buffer,
   NULL },
 #else
-{ NULL, NULL, NULL, NULL, NULL },
+{ NULL, NULL, NULL, NULL, NULL, NULL },
 #endif
 #ifdef USE_DGA
 { xf86_dga_init,
   xf86_dga_open_display,
   xf86_dga_close_display,
   xf86_dga_update_display,
+  xf86_dga_clear_display,
   NULL }
 #else
-{ NULL, NULL, NULL, NULL, NULL }
+{ NULL, NULL, NULL, NULL, NULL, NULL }
 #endif
 };
 
-static const char *x11_mode_names[] = {
+static const char *x11_mode_name[] = {
   "Normal",
   "XVideo",
   "OpenGL",
@@ -188,13 +194,16 @@ int sysdep_display_init (void)
 
 	window = 0;
 
-	memset(sysdep_display_properties.mode, 0,
+	memset(sysdep_display_properties.mode_info, 0,
 	  SYSDEP_DISPLAY_VIDEO_MODES * sizeof(int));
         /* to satisfy checking for a valid video_mode for
            handling -help, etc without a display. */
-        sysdep_display_properties.mode[X11_WINDOW] =
+        sysdep_display_properties.mode_info[X11_WINDOW] =
           SYSDEP_DISPLAY_WINDOWED|SYSDEP_DISPLAY_EFFECTS;
-
+        /* fill in the mode names */
+        memcpy(sysdep_display_properties.mode_name, x11_mode_name,
+          SYSDEP_DISPLAY_VIDEO_MODES * sizeof(const char *));
+        
 	if(!(display = XOpenDisplay (NULL)))
 	{
 		/* don't make this a fatal error so that cmdline options
@@ -207,13 +216,13 @@ int sysdep_display_init (void)
 	for (i=0;i<SYSDEP_DISPLAY_VIDEO_MODES;i++)
 	{
 		if(x_func[i].init)
-			sysdep_display_properties.mode[i] = x_func[i].init();
+			sysdep_display_properties.mode_info[i] = x_func[i].init();
 		else
-			sysdep_display_properties.mode[i] = 0;
+			sysdep_display_properties.mode_info[i] = 0;
 	}
 
 	if (x_func[X11_DGA].init)
-          sysdep_display_properties.mode[X11_WINDOW] |= x_func[X11_DGA].init();
+          sysdep_display_properties.mode_info[X11_WINDOW] |= x_func[X11_DGA].init();
 
 	return 0;
 }
@@ -237,15 +246,23 @@ void sysdep_display_exit(void)
    mouse and keyboard can't be setup before the display has. */
 int sysdep_display_driver_open(int reopen)
 {
-        int mode = ((sysdep_display_params.video_mode == X11_WINDOW) &&
-          sysdep_display_params.fullscreen)? X11_DGA:
-           sysdep_display_params.video_mode;
+        int mode = sysdep_display_params.video_mode;
+        
+        if ((sysdep_display_params.video_mode == X11_WINDOW) &&
+            sysdep_display_params.fullscreen)
+        {
+          mode = X11_DGA;
+          sysdep_display_properties.mode_name[X11_WINDOW] = "DGA";
+        }
         
         if (!display)
         {
 		fprintf (stderr, "Error: could not open display\n");
 		return 1;
         }
+        
+        /* force a full update the next update */
+        x11_exposed = 1;
 
 	return x_func[mode].open_display(reopen);
 }
@@ -258,19 +275,20 @@ void sysdep_display_close(void)
   
   if (display)
     (*x_func[mode].close_display)();
+    
+  /* restore default mode name for X11_WINDOW mode */
+  sysdep_display_properties.mode_name[X11_WINDOW] = 
+    x11_mode_name[X11_WINDOW];
 }
 
-void sysdep_display_update(struct mame_bitmap *bitmap,
+const char *sysdep_display_update(struct mame_bitmap *bitmap,
   struct rectangle *vis_area, struct rectangle *dirty_area,
-  struct sysdep_palette_struct *palette, unsigned int flags,
-  const char **status_msg)
+  struct sysdep_palette_struct *palette, int keyb_leds, int flags)
 {
         int mode = ((sysdep_display_params.video_mode == X11_WINDOW) &&
           sysdep_display_params.fullscreen)? X11_DGA:
           sysdep_display_params.video_mode;
         
-	*status_msg = NULL;
-
 	/* do we need todo a full update? */
 	if(x11_exposed)
 	{
@@ -278,9 +296,19 @@ void sysdep_display_update(struct mame_bitmap *bitmap,
 	 	x11_exposed = 0;
 	}
    
-	(*x_func[mode].update_display)
-	  (bitmap, vis_area, dirty_area, palette, flags, status_msg);
-	xinput_check_hotkeys(flags);
+	xinput_update(keyb_leds, flags);
+	
+	return x_func[mode].update_display(
+	  bitmap, vis_area, dirty_area, palette, flags);
+}
+
+void sysdep_display_driver_clear_buffer(void)
+{
+  int mode = ((sysdep_display_params.video_mode == X11_WINDOW) &&
+    sysdep_display_params.fullscreen)? X11_DGA:
+    sysdep_display_params.video_mode;
+  
+  x_func[mode].clear_display_buffer();
 }
 
 int x11_init_palette_info(void)
@@ -446,10 +474,9 @@ int x11_create_window(unsigned int *width, unsigned int *height, int type)
    3: Fullscreen */
 void x11_set_window_hints(unsigned int width, unsigned int height, int type)
 {
+        struct rc_option *option;
         XWMHints wm_hints;
 	XSizeHints hints = x11_init_hints;
-	unsigned int x = 1024;
-	unsigned int y = 1024;
 
 	/* WM hints */
         wm_hints.input    = True;
@@ -463,9 +490,15 @@ void x11_set_window_hints(unsigned int width, unsigned int height, int type)
 		hints.flags |= PSize | PMinSize | PMaxSize;
 		break;
 	    case 1: /* resizable, keep aspect */
-	    	mode_clip_aspect(x, y, &x, &y);
-	    	if (x != y) /* detect -nokeepaspect */
+	    	/* detect -keepaspect */
+	        option = rc_get_option2(aspect_opts, "keepaspect");
+	    	if (option && *((int *)option->dest))
 	    	{
+                  unsigned int x = 1024;
+                  unsigned int y = 1024;
+
+	    	  mode_clip_aspect(x, y, &x, &y);
+
 	    	  hints.min_aspect.x = x;
 	    	  hints.min_aspect.y = y;
 	    	  hints.max_aspect.x = x;

@@ -384,18 +384,12 @@ static int xf86_dga2_set_mode(void)
         if(xf86_dga_setup_graphics(xf86ctx.device->mode))
           return 1;
 
-	/* clear the screen
-	memset(xf86ctx.device->data, 0,
-	       xf86ctx.device->mode.bytesPerScanline
-	       * xf86ctx.device->mode.imageHeight); */
-
         return sysdep_display_effect_open();
 }
 
-void xf86_dga2_update_display(struct mame_bitmap *bitmap,
+const char *xf86_dga2_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
-	  struct sysdep_palette_struct *palette, unsigned int flags,
-	  const char **status_msg)
+	  struct sysdep_palette_struct *palette, int flags)
 {
   if (xf86ctx.max_page)
   {
@@ -431,6 +425,24 @@ void xf86_dga2_update_display(struct mame_bitmap *bitmap,
   }
 
   XDGASync(display,xf86ctx.screen);
+  
+  return NULL;
+}
+
+void xf86_dga2_clear_display(void)
+{
+  int page,y;
+  int scaled_height = sysdep_display_params.yarbsize?
+          sysdep_display_params.yarbsize:
+          sysdep_display_params.height*sysdep_display_params.heightscale;
+  int scaled_width  = sysdep_display_params.width *
+          sysdep_display_params.widthscale;
+
+  for(page=0; page<=xf86ctx.max_page; page++)
+    for(y=0; y<scaled_height; y++)
+      memset(xf86ctx.addr + (xf86ctx.aligned_viewport_height * page + y) *
+        xf86ctx.device->mode.bytesPerScanline, 0,
+        scaled_width * xf86ctx.device->mode.bitsPerPixel / 8);
 }
 
 void xf86_dga2_close_display(void)

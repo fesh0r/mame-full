@@ -148,7 +148,7 @@ void sysdep_display_check_effect_params(
   static int firsttime = 1;
 
   /* Can we do effects? */  
-  if (!(sysdep_display_properties.mode[params->video_mode] &
+  if (!(sysdep_display_properties.mode_info[params->video_mode] &
         SYSDEP_DISPLAY_EFFECTS))
     params->effect = 0;
 
@@ -517,6 +517,8 @@ int sysdep_display_effect_open(void)
           /* handled by normal blitting, not supported on YV12 for now */
           if ((i%COLOR_FORMATS) == 4) 
             sysdep_display_params.effect = 0;
+          else
+            sysdep_display_driver_clear_buffer();
           break;
       }
       /* report our results to the user */

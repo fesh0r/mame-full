@@ -369,37 +369,33 @@ static Cursor xinput_create_invisible_cursor (Display * display, Window win)
 
 static void xinput_set_leds(int leds)
 {
-   XKeyboardControl values;
-   int i;
-   
-   for (i=0;i<32;i++)
-   {
-      values.led_mode = -1;
-      if ((xinput_old_leds & (0x01 << i)) &&
-	            !(leds & (0x01 << i)) )
-         values.led_mode = LedModeOff;
-      if (!(xinput_old_leds & (0x01 << i)) &&
-	              (leds & (0x01 << i)) )
-         values.led_mode = LedModeOn;
-      if (values.led_mode != -1)
-      {
-         values.led = i + 1;
-         /* GRR leds 1 and 2 are swapped in X */
-         if (values.led == 1)
-            values.led = 2;
-         else if (values.led == 2)
-            values.led = 1;
-         XChangeKeyboardControl(display, KBLed|KBLedMode, &values);
-      }
-   }
-   xinput_old_leds = leds;
-}
+  if (xinput_old_leds != leds)
+  {   
+    XKeyboardControl values;
+    int i;
 
-void sysdep_display_set_keybleds(int leds)
-{
-   xinput_keyb_leds = leds;
-   if (xinput_focus)
-      xinput_set_leds(leds);
+    for (i=0;i<32;i++)
+    {
+       values.led_mode = -1;
+       if ((xinput_old_leds & (0x01 << i)) &&
+                     !(leds & (0x01 << i)) )
+          values.led_mode = LedModeOff;
+       if (!(xinput_old_leds & (0x01 << i)) &&
+                       (leds & (0x01 << i)) )
+          values.led_mode = LedModeOn;
+       if (values.led_mode != -1)
+       {
+          values.led = i + 1;
+          /* GRR leds 1 and 2 are swapped in X */
+          if (values.led == 1)
+             values.led = 2;
+          else if (values.led == 2)
+             values.led = 1;
+          XChangeKeyboardControl(display, KBLed|KBLedMode, &values);
+       }
+    }
+    xinput_old_leds = leds;
+  }
 }
 
 int xinput_open(int force_grab, int event_mask)
@@ -468,7 +464,8 @@ int xinput_open(int force_grab, int event_mask)
 
 void xinput_close(void)
 {
-  sysdep_display_set_keybleds(0);
+  xinput_keyb_leds = 0;
+  xinput_set_leds(0);
 
   if (xinput_mouse_grabbed)
   {
@@ -490,8 +487,12 @@ void xinput_close(void)
   }
 }
 
-void xinput_check_hotkeys(unsigned int flags)
+void xinput_update(int keyb_leds, int flags)
 {
+  xinput_keyb_leds = keyb_leds;
+  if (xinput_focus)
+     xinput_set_leds(keyb_leds);
+
   if (!xinput_force_grab && (flags & SYSDEP_DISPLAY_HOTKEY_GRABMOUSE))
   {
      if (xinput_mouse_grabbed)

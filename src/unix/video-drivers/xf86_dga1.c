@@ -343,10 +343,9 @@ static int xf86_dga1_set_mode(void)
 	return sysdep_display_effect_open();
 }
 
-void xf86_dga1_update_display(struct mame_bitmap *bitmap,
+const char *xf86_dga1_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area, struct rectangle *dirty_area,
-	  struct sysdep_palette_struct *palette, unsigned int flags,
-	  const char **status_msg)
+	  struct sysdep_palette_struct *palette, int flags)
 {
 	if(xf86_dga_fix_viewport)
 	{
@@ -356,6 +355,13 @@ void xf86_dga1_update_display(struct mame_bitmap *bitmap,
 	
 	xf86ctx.update_display_func(bitmap, vis_area, dirty_area,
 		palette, xf86ctx.addr, xf86ctx.width);
+        
+        return NULL;
+}
+
+void xf86_dga1_clear_display(void)
+{
+	memset(xf86ctx.base_addr,0,xf86ctx.bank_size);
 }
 
 void xf86_dga1_close_display(void)
