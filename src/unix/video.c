@@ -132,7 +132,7 @@ struct rc_option video_opts[] = {
      "0",		0,			2147483647,	video_verify_ftr,
      "Sets the number of frames to run within the game" },
    { "sleepidle",	"si",			rc_bool,	&sleep_idle,
-     "0",		0,			0,		NULL,
+     "1",		0,			0,		NULL,
      "Enable/disable sleep during idle" },
    { "autoframeskip",	"afs",			rc_bool,	&autoframeskip,
      "1",		0,			0,		NULL,
