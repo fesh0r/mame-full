@@ -75,12 +75,14 @@ READ8_HANDLER ( apple2_c0xx_slot2_r );
 READ8_HANDLER ( apple2_c0xx_slot3_r );
 READ8_HANDLER ( apple2_c0xx_slot4_r );
 READ8_HANDLER ( apple2_c0xx_slot5_r );
+READ8_HANDLER ( apple2_c0xx_slot6_r );
 READ8_HANDLER ( apple2_c0xx_slot7_r );
 WRITE8_HANDLER ( apple2_c0xx_slot1_w );
 WRITE8_HANDLER ( apple2_c0xx_slot2_w );
 WRITE8_HANDLER ( apple2_c0xx_slot3_w );
 WRITE8_HANDLER ( apple2_c0xx_slot4_w );
 WRITE8_HANDLER ( apple2_c0xx_slot5_w );
+WRITE8_HANDLER ( apple2_c0xx_slot6_w );
 WRITE8_HANDLER ( apple2_c0xx_slot7_w );
 
 void apple2_setvar(UINT32 val, UINT32 mask);
@@ -88,8 +90,6 @@ void apple2_setvar(UINT32 val, UINT32 mask);
 /* machine/ap_disk2.c */
 void apple2_slot6_init(void);
 DEVICE_LOAD ( apple2_floppy );
-READ8_HANDLER ( apple2_c0xx_slot6_r );
-WRITE8_HANDLER ( apple2_c0xx_slot6_w );
 UINT8 apple2_slot6_readbyte(mess_image *image);
 void apple2_slot6_writebyte(mess_image *image, UINT8 byte);
 void apple2_slot6_set_lines(mess_image *image, UINT8 new_state);
