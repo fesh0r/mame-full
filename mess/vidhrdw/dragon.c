@@ -235,7 +235,7 @@ static UINT8 internal_coco3_hires_charproc(UINT32 c, int row)
 		/* subtracting here so that we can get an offset that looks like a real CoCo address */
 		ROM = memory_region(REGION_CPU1) - 0x8000;
 
-		c &= 0xff;
+		c &= 0x7f;
 		if (c < 32)
 			resultptr = &ROM[0xfa10 + (c * 8)];	/* characters 0-31 are at $FA10 - $FB0F */
 		else

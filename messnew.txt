@@ -19,6 +19,9 @@ System Driver Changes:
 
 - [COCO3] Fixed a palette timing bug that affected mid-frame video rendering.
   (bug #253) [Nate Woods]
+  
+- [COCO3] Fixed a bug where hi-res text characters with the high bit set were
+  rendered as garbage. [Nate Woods]
 
 - [DRAGON64] Fixed a bug that prevented the system to run (the dragon64 driver
   was using the coco memory map) [Nate Woods]
