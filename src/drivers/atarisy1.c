@@ -1437,6 +1437,53 @@ ROM_START( indytem4 )
 	ROM_LOAD( "136036.151",   0x200, 0x200, 0x7daf351f )  /* color */
 ROM_END
 
+ROM_START( indytemd )
+	ROM_REGION( 0x88000, REGION_CPU1 )	/* 8.5*64k for 68000 code & slapstic ROM */
+	ROM_LOAD_EVEN( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
+	ROM_LOAD_ODD ( "136032.206",   0x00000, 0x04000, 0x3c79ef05 )
+	ROM_LOAD_EVEN( "136036.462",   0x10000, 0x08000, 0x317dc430 )
+	ROM_LOAD_ODD ( "136036.461",   0x10000, 0x08000, 0x8c73f974 )
+	ROM_LOAD_EVEN( "136036.464",   0x20000, 0x08000, 0x3fcb199f )
+	ROM_LOAD_ODD ( "136036.463",   0x20000, 0x08000, 0xd6bda19a )
+	ROM_LOAD_EVEN( "136036.466",   0x30000, 0x04000, 0xb71e9aca )
+	ROM_LOAD_ODD ( "136036.467",   0x30000, 0x04000, 0xf1de8999 )
+	ROM_LOAD_EVEN( "136036.358",   0x80000, 0x04000, 0xd9351106 )
+	ROM_LOAD_ODD ( "136036.359",   0x80000, 0x04000, 0xe731caea )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for 6502 code */
+	ROM_LOAD( "136036.153",   0x4000, 0x4000, 0x95294641 )
+	ROM_LOAD( "136036.154",   0x8000, 0x4000, 0xcbfc6adb )
+	ROM_LOAD( "136036.155",   0xc000, 0x4000, 0x4c8233ac )
+
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
+
+	ROM_REGION( 0xc0000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "136036.135",   0x00000, 0x08000, 0xffa8749c )  /* bank 1, plane 0 */
+	ROM_LOAD( "136036.139",   0x08000, 0x08000, 0xb682bfca )  /* bank 1, plane 1 */
+	ROM_LOAD( "136036.143",   0x10000, 0x08000, 0x7697da26 )  /* bank 1, plane 2 */
+	ROM_LOAD( "136036.147",   0x18000, 0x08000, 0x4e9d664c )  /* bank 1, plane 3 */
+
+	ROM_LOAD( "136036.136",   0x30000, 0x08000, 0xb2b403aa )  /* bank 2, plane 0 */
+	ROM_LOAD( "136036.140",   0x38000, 0x08000, 0xec0c19ca )  /* bank 2, plane 1 */
+	ROM_LOAD( "136036.144",   0x40000, 0x08000, 0x4407df98 )  /* bank 2, plane 2 */
+	ROM_LOAD( "136036.148",   0x48000, 0x08000, 0x70dce06d )  /* bank 2, plane 3 */
+
+	ROM_LOAD( "136036.137",   0x60000, 0x08000, 0x3f352547 )  /* bank 3, plane 0 */
+	ROM_LOAD( "136036.141",   0x68000, 0x08000, 0x9cbdffd0 )  /* bank 3, plane 1 */
+	ROM_LOAD( "136036.145",   0x70000, 0x08000, 0xe828e64b )  /* bank 3, plane 2 */
+	ROM_LOAD( "136036.149",   0x78000, 0x08000, 0x81503a23 )  /* bank 3, plane 3 */
+
+	ROM_LOAD( "136036.138",   0x90000, 0x08000, 0x48c4d79d )  /* bank 4, plane 0 */
+	ROM_LOAD( "136036.142",   0x98000, 0x08000, 0x7faae75f )  /* bank 4, plane 1 */
+	ROM_LOAD( "136036.146",   0xa0000, 0x08000, 0x8ae5a7b5 )  /* bank 4, plane 2 */
+	ROM_LOAD( "136036.150",   0xa8000, 0x08000, 0xa10c4bd9 )  /* bank 4, plane 3 */
+
+	ROM_REGION( 0x400, REGION_PROMS )	/* graphics mapping PROMs */
+	ROM_LOAD( "136036.152",   0x000, 0x200, 0x4f96e57c )  /* remap */
+    ROM_LOAD( "136036.151",   0x200, 0x200, 0x7daf351f )  /* color */
+ROM_END
+
 ROM_START( roadrunn )
 	ROM_REGION( 0x88000, REGION_CPU1 )	/* 8.5*64k for 68000 code & slapstic ROM */
 	ROM_LOAD_EVEN( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
@@ -1574,5 +1621,6 @@ GAME( 1985, indytemp, 0,        atarisy1, indytemp, indytemp, ROT0, "Atari Games
 GAME( 1985, indytem2, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (set 2)" )
 GAME( 1985, indytem3, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (set 3)" )
 GAME( 1985, indytem4, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (set 4)" )
+GAMEX(1985, indytemd, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (German)", GAME_NOT_WORKING )
 GAME( 1985, roadrunn, 0,        atarisy1, roadrunn, roadrunn, ROT0, "Atari Games", "Road Runner" )
 GAME( 1987, roadblst, 0,        atarisy1, roadblst, roadblst, ROT0, "Atari Games", "Road Blasters" )
