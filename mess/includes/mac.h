@@ -1,3 +1,14 @@
+/*********************************************************************
+
+	mac.h
+	
+	MESS Macintosh driver declarations
+
+*********************************************************************/
+
+#ifndef MESS_MAC_H
+#define MESS_MAC_H
+
 /* from machine/mac.c */
 MACHINE_INIT( mac );
 
@@ -17,8 +28,6 @@ READ16_HANDLER ( mac_scc_r );
 WRITE16_HANDLER ( mac_scc_w );
 READ16_HANDLER ( macplus_scsi_r );
 WRITE16_HANDLER ( macplus_scsi_w );
-DEVICE_LOAD(mac_floppy);
-DEVICE_UNLOAD(mac_floppy);
 NVRAM_HANDLER( mac );
 void mac_scc_mouse_irq( int x, int y );
 
@@ -39,3 +48,6 @@ void mac_set_sound_buffer( int buffer );
 void mac_set_volume( int volume );
 
 void mac_sh_updatebuffer(void);
+
+#endif /* MESS_MAC_H */
+
