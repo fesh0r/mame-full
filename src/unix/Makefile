@@ -26,14 +26,19 @@ VID_DIR = $(OBJDIR)/video-drivers
 VID_OBJS.x11    = $(VID_DIR)/xinput.o $(VID_DIR)/xil.o \
 	$(VID_DIR)/x11_window.o \
 	$(VID_DIR)/xf86_dga1.o $(VID_DIR)/xf86_dga2.o $(VID_DIR)/xf86_dga.o
-VID_OBJS.xgl    = $(VID_DIR)/glvec.o $(VID_DIR)/glgen.o $(VID_DIR)/gljpg.o \
-	$(VID_DIR)/glcab.o $(VID_DIR)/xinput.o $(VID_DIR)/vectorgen.o
+VID_OBJS.xgl    = $(VID_DIR)/gltool.o $(VID_DIR)/glxtool.o \
+		  $(VID_DIR)/glvec.o $(VID_DIR)/glgen.o \
+		  $(VID_DIR)/glcab.o $(VID_DIR)/gljpg.o \
+		  $(VID_DIR)/xinput.o $(VID_DIR)/vectorgen.o
 VID_OBJS.xfx    = $(VID_DIR)/fxgen.o $(VID_DIR)/fxvec.o $(VID_DIR)/xinput.o \
 	$(VID_DIR)/vectorgen.o
 VID_OBJS.svgalib = $(VID_DIR)/svgainput.o
 VID_OBJS.svgafx = $(VID_DIR)/svgainput.o $(VID_DIR)/fxgen.o \
 	$(VID_DIR)/fxvec.o $(VID_DIR)/vectorgen.o
 VID_OBJS.openstep = $(VID_DIR)/openstep_input.o
+VID_OBJS.photon2 = $(VID_DIR)/photon2_input.o \
+	$(VID_DIR)/photon2_window.o \
+	#$(VID_DIR)/photon2_overlay.o
 VID_OBJS = $(VID_DIR)/$(DISPLAY_METHOD).o $(VID_OBJS.$(DISPLAY_METHOD))
 
 # sound driver objs per arch
