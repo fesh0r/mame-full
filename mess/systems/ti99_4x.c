@@ -287,84 +287,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }		/* end of array */
 };
 
-#if 1
-/*
-	Use normal palette.
-*/
-
-
-
-#else
-
-/*
-	My palette.  Nicer than the default TMS9928A_palette, but does not work quite well...
-*/
-static unsigned char TMS9928A_palette[] =
-{
-	0, 0, 0,
-	0, 0, 0,
-	64, 179, 64,
-	96, 192, 96,
-	64, 64, 192,
-	96, 96, 244,
-	192, 64, 64,
-	64, 244, 244,
-	244, 64, 64,
-	255, 128, 64,
-	224, 192, 64,
-	255, 224, 64,
-	64, 128, 64,
-	192, 64, 192,
-	224, 224, 224,
-	255, 255, 255
-};
-/*
-Color           Y	R-Y	B-Y	R	G	B
-0 Transparent
-1 Black         0.00	0.47	0.47	0.00	0.00	0.00
-2 Medium green  0.53	0.07	0.20	0.13?	0.53	0.13?
-3 Light green   0.67	0.17	0.27	0.37?	0.67	0.37?
-4 Dark blue     0.40	0.40	1.00	0.33?	0.40
-5 Light blue    0.53	0.43	0.93	0.49?	0.43
-6 Dark red      0.47	0.83	0.30
-7 Cyan          0.73	0.00	0.70
-8 Medium red    0.53	0.93	0.27
-9 Light red     0.67	0.93	0.27
-A Dark yellow   0.73	0.57	0.07
-B Light yellow  0.80	0.57	0.17
-C Dark green    0.47	0.13	0.23
-D Magenta       0.53	0.73	0.67
-E Gray          0.80	0.47	0.47
-F White         1.00	0.47	0.47	1.00	1.00	1.00
-*/
-static unsigned short TMS9928A_colortable[] =
-{
-	0, 1,
-	0, 2,
-	0, 3,
-	0, 4,
-	0, 5,
-	0, 6,
-	0, 7,
-	0, 8,
-	0, 9,
-	0,10,
-	0,11,
-	0,12,
-	0,13,
-	0,14,
-	0,15
-};
-
-static void tms9928A_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *)
-{
-	memcpy(palette, & TMS9928A_palette, sizeof(TMS9928A_palette));
-	memcpy(colortable, & TMS9928A_colortable, sizeof(TMS9928A_colortable));
-}
-
-#endif
-
-
 /*
 	TMS9919 sound chip parameters.
 */
@@ -666,7 +588,7 @@ static struct MachineDriver machine_driver_ti99_4a_50hz =
 	ROM loading
 
 	Note that we actually use the same ROMset for 50Hz and 60Hz version, but the MAME core
-	stpidly regards 2 drivers sharing the same ROMset as a mistake.
+	stupidly regards 2 drivers sharing the same ROMset as a mistake.
 */
 
 ROM_START(ti99_4)
@@ -685,24 +607,6 @@ ROM_START(ti99_4)
 	ROM_LOAD("spchrom.bin",     0x0000, 0x8000, 0x58b155f7) /* system speech ROM */
 ROM_END
 
-#if 0
-ROM_START(ti99_4e)
-	/*CPU memory space*/
-	/* 0x4000 extra RAM for paged cartidges */
-	ROM_REGION(0x14000,REGION_CPU1)
-	ROM_LOAD_WIDE("994rom.bin", 0x0000, 0x2000, 0x00000000) /* system ROMs */
-	ROM_LOAD_WIDE("disk.bin",   0x4000, 0x2000, 0x8f7df93f) /* disk DSR ROM */
-
-	/*GPL memory space*/
-	ROM_REGION(0x10000,REGION_USER1)
-	ROM_LOAD("994grom.bin",     0x0000, 0x8000, 0x00000000) /* system GROMs */
-
-	/*TMS5220 ROM space*/
-	ROM_REGION(0x8000,REGION_SOUND1)
-	ROM_LOAD("spchrom.bin",     0x0000, 0x8000, 0x58b155f7) /* system speech ROM */
-ROM_END
-#endif
-
 ROM_START(ti99_4a)
 	/*CPU memory space*/
 	/* 0x4000 extra RAM for paged cartidges */
@@ -718,24 +622,6 @@ ROM_START(ti99_4a)
 	ROM_REGION(0x8000,REGION_SOUND1)
 	ROM_LOAD("spchrom.bin",     0x0000, 0x8000, 0x58b155f7) /* system speech ROM */
 ROM_END
-
-#if 0
-ROM_START(ti99_4ae)
-	/*CPU memory space*/
-	/* 0x4000 extra RAM for paged cartidges */
-	ROM_REGION(0x14000,REGION_CPU1)
-	ROM_LOAD_WIDE("994arom.bin",0x0000, 0x2000, 0xdb8f33e5) /* system ROMs */
-	ROM_LOAD_WIDE("disk.bin",   0x4000, 0x2000, 0x8f7df93f) /* disk DSR ROM */
-
-	/*GPL memory space*/
-	ROM_REGION(0x10000,REGION_USER1)
-	ROM_LOAD("994agrom.bin",    0x0000, 0x6000, 0xaf5c2449) /* system GROMs */
-
-	/*TMS5220 ROM space*/
-	ROM_REGION(0x8000,REGION_SOUND1)
-	ROM_LOAD("spchrom.bin",     0x0000, 0x8000, 0x58b155f7) /* system speech ROM */
-ROM_END
-#endif
 
 /* a TI99 console only had one cartidge slot, but cutting the ROMs
  * in 3 files seems to be the only way to handle cartidges until I use
