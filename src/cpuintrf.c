@@ -208,8 +208,11 @@ void adsp2115_get_info(UINT32 state, union cpuinfo *info);
 #if (HAS_Z80GB)
 #include "cpu/z80gb/z80gb.h"
 #endif
-
+#if (HAS_TMS7000)
+#include "cpu/tms7000/tms7000.h"
 #endif
+
+#endif /* MESS */
 
 
 
@@ -641,7 +644,10 @@ const struct
 #if (HAS_Z80GB)
 	{ CPU_Z80GB, z80gb_get_info },
 #endif
+#if (HAS_TMS7000)
+	{ CPU_TMS7000, tms7000_get_info },
 #endif
+#endif /* MESS */
 
 };
 

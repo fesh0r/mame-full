@@ -116,14 +116,17 @@ else
 CPUDEFS += -DHAS_Z80GB=0
 endif
 
-CPU=$(strip $(findstring Z80_MSX@,$(CPUS)))
+CPU=$(strip $(findstring TMS7000@,$(CPUS)))
 ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/z80
-CPUDEFS += -DHAS_Z80_MSX=1
-CPUOBJS += $(OBJ)/cpu/z80/z80_msx.o
-$(OBJ)/cpu/z80/z80_msx.o: z80_msx.c z80_msx.h z80daa.h z80.h z80.c
+TM7D = mess/cpu/tms7000
+OBJDIRS += $(OBJ)/$(TM7D)
+CPUDEFS += -DHAS_TMS7000=1
+CPUOBJS += $(OBJ)/$(TM7D)/tms7000.o
+DBGOBJS += $(OBJ)/$(TM7D)/7000dasm.o
+$(OBJ)/$(TM7D)/tms7000.o:	$(TM7D)/tms7000.h $(TM7D)/tms7000.c
+$(OBJ)/$(TM7D)/7000dasm.o:	$(TM7D)/tms7000.h $(TM7D)/7000dasm.c
 else
-CPUDEFS += -DHAS_Z80_MSX=0
+CPUDEFS += -DHAS_TMS7000=0
 endif
 
 

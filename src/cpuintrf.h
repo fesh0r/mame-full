@@ -137,6 +137,7 @@ enum
 	CPU_SATURN,
 	CPU_SC61860,
 	CPU_Z80GB,
+	CPU_TMS7000,
 #endif
     CPU_COUNT
 };
