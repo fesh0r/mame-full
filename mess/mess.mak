@@ -755,11 +755,14 @@ tools/messroms$(EXE): $(OBJ)/mess/tools/messroms/main.o $(OBJ)/unzip.o
 
 
 tools/imgtool$(EXE):	     \
-	  $(IMGTOOL_OBJS)                      \
-	  $(OBJ)/mess/tools/imgtool/stubs.o    \
-	  $(OBJ)/mess/config.o	               \
+	  $(PLATFORM_IMGTOOL_OBJS)	       \
 	  $(OBJ)/unzip.o	               \
+	  $(OBJ)/mess/config.o	               \
 	  $(OBJ)/mess/utils.o	               \
+	  $(OBJ)/mess/formats/fmsx_cas.o       \
+	  $(OBJ)/mess/formats/svi_cas.o        \
+	  $(OBJ)/mess/formats/cococas.o        \
+	  $(OBJ)/mess/tools/imgtool/stubs.o    \
 	  $(OBJ)/mess/tools/imgtool/main.o     \
 	  $(OBJ)/mess/tools/imgtool/imgtool.o  \
 	  $(OBJ)/mess/tools/imgtool/imgwave.o  \
@@ -771,11 +774,8 @@ tools/imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/imgtool/cococas.o  \
 	  $(OBJ)/mess/tools/imgtool/vmsx_tap.o \
 	  $(OBJ)/mess/tools/imgtool/vmsx_gm2.o \
-	  $(OBJ)/mess/formats/fmsx_cas.o       \
 	  $(OBJ)/mess/tools/imgtool/fmsx_cas.o \
-	  $(OBJ)/mess/formats/svi_cas.o        \
 	  $(OBJ)/mess/tools/imgtool/svi_cas.o  \
-	  $(OBJ)/mess/formats/cococas.o        \
 	  $(OBJ)/mess/tools/imgtool/msx_dsk.o  \
 	  $(OBJ)/mess/tools/imgtool/xsa.o      \
 	  $(OBJ)/mess/tools/imgtool/rsdos.o    \
