@@ -22,6 +22,7 @@ struct update_regs_def {
 	int h_stop;
 	int old_DIWSTRT;
 	int old_DIWSTOP;
+	int h_scroll[2];
 /* display data fetch */
 	int ddf_start_pixel;
 	int ddf_word_count;
@@ -292,14 +293,14 @@ INLINE void amiga_render_sprite( int num, int x, int y, unsigned short *dst ) {
 		bit = 15 - ( x - update_regs.sprite_h_start[num] );
 
 		/* check for attached sprites */
-		if ( num < 6 && update_regs.sprite_attached[num+1] ) {
+		if ( num < 7 && update_regs.sprite_attached[num+1] ) {
 			unsigned short word[4];
 			int color, i;
 
 			word[0] = *((data16_t *) &update_regs.RAM[custom_regs.SPRxPT[num]] );
 			word[1] = *((data16_t *) &update_regs.RAM[custom_regs.SPRxPT[num]+2] );
 			word[2] = *((data16_t *) &update_regs.RAM[custom_regs.SPRxPT[num+1]] );
-			word[3] = *((data16_t *) &update_regs.RAM[custom_regs.SPRxPT[num+2]+2] );
+			word[3] = *((data16_t *) &update_regs.RAM[custom_regs.SPRxPT[num+1]+2] );
 
 			color = 0;
 
@@ -309,20 +310,22 @@ INLINE void amiga_render_sprite( int num, int x, int y, unsigned short *dst ) {
 			if ( color )
 				dst[x] = Machine->pens[custom_regs.COLOR[color+16]];
 		} else {
-			unsigned short word[2];
-			int color, i;
+			if ( !update_regs.sprite_attached[num] ) {
+				unsigned short word[2];
+				int color, i;
 
-			word[0] = *((data16_t *) &update_regs.RAM[custom_regs.SPRxPT[num]] );
-			word[1] = *((data16_t *) &update_regs.RAM[custom_regs.SPRxPT[num]+2] );
+				word[0] = *((data16_t *) &update_regs.RAM[custom_regs.SPRxPT[num]] );
+				word[1] = *((data16_t *) &update_regs.RAM[custom_regs.SPRxPT[num]+2] );
 
-			color = 0;
+				color = 0;
 
-			for( i = 0; i < 2; i++ )
-				color |= ( ( word[i] >> bit ) & 1 ) << i;
+				for( i = 0; i < 2; i++ )
+					color |= ( ( word[i] >> bit ) & 1 ) << i;
 
-			if ( color ) {
-				color += 16 + ( ( num >> 1 ) << 2 );
-				dst[x] = Machine->pens[custom_regs.COLOR[color]];
+				if ( color ) {
+					color += 16 + ( ( num >> 1 ) << 2 );
+					dst[x] = Machine->pens[custom_regs.COLOR[color]];
+				}
 			}
 		}
 
@@ -404,6 +407,8 @@ INLINE void init_update_regs( void ) {
 	}
 	
 	update_regs.sprite_dma_enabled = ( custom_regs.DMACON & ( DMACON_SPREN | DMACON_DMAEN ) ) == ( DMACON_SPREN | DMACON_DMAEN );
+	update_regs.h_scroll[0] = custom_regs.BPLCON1 & 0xf;
+	update_regs.h_scroll[1] = (custom_regs.BPLCON1 >> 4) & 0xf;
 }	
 
 /***********************************************************************************
@@ -415,14 +420,12 @@ INLINE void init_update_regs( void ) {
 static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x ) { \
 	int i; \
 	if ( x < update_regs.ddf_start_pixel ) { /* see if we need to start fetching */ \
-		dst[x] = update_regs.back_color; /* fill the pixel with color 0 */ \
 		return; \
 	} else { \
 		/* Now we have to figure out if we need to fetch another 16 bit word */ \
 		if ( update_regs.fetch_pending ) { \
 			/* see if we are past DDFSTOP */ \
 			if ( ++update_regs.fetch_count > update_regs.ddf_word_count ) { \
-				dst[x] = update_regs.back_color; /* fill the pixel with color 0 */ \
 				return; \
 			} \
 			/* fetch the new word from the bitplane pointers, and update them */ \
@@ -433,11 +436,11 @@ static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, in
 			update_regs.current_bit = 15; \
 			update_regs.fetch_pending = 0; \
 		} \
+		x += update_regs.h_scroll[0]; \
 		if ( x >= min_x ) { \
 			/* before rendering the pixel, see if we still are within display window bounds */ \
-			if ( x > update_regs.h_stop || x < update_regs.h_start ) { \
-				dst[x] = update_regs.back_color; \
-			} else {
+			if ( x >= update_regs.h_start && x <= update_regs.h_stop ) { \
+
 
 #if 0 /* this is a small kludge for the Mac source code editor */
 } } } }
@@ -447,7 +450,6 @@ static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, in
 static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x ) { \
 	int i; \
 	if ( x < update_regs.ddf_start_pixel ) { /* see if we need to start fetching */ \
-		dst[x] = update_regs.back_color; /* fill the pixel with color 0 */ \
 		if ( x < update_regs.h_stop ) { \
 			for ( i = 0; i < 8; i++ ) \
 				amiga_render_sprite( i, x, y, dst ); \
@@ -458,7 +460,6 @@ static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, in
 		if ( update_regs.fetch_pending ) { \
 			/* see if we are past DDFSTOP */ \
 			if ( ++update_regs.fetch_count > update_regs.ddf_word_count ) { \
-				dst[x] = update_regs.back_color; /* fill the pixel with color 0 */ \
 				if ( x < update_regs.h_stop ) { \
 					for ( i = 0; i < 8; i++ ) \
 						amiga_render_sprite( i, x, y, dst ); \
@@ -473,11 +474,10 @@ static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, in
 			update_regs.current_bit = 15; \
 			update_regs.fetch_pending = 0; \
 		} \
+		x += update_regs.h_scroll[0]; \
 		if ( x >= min_x ) { \
 			/* before rendering the pixel, see if we still are within display window bounds */ \
-			if ( x > update_regs.h_stop || x < update_regs.h_start ) { \
-				dst[x] = update_regs.back_color; \
-			} else {
+			if ( x >= update_regs.h_start && x <= update_regs.h_stop ) { \
 
 #define END_UPDATE( curbit ) \
 			} \
@@ -489,9 +489,23 @@ static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, in
 	} \
 }
 
+#define END_UPDATE_WITH_SPRITES( curbit ) \
+			} \
+		} \
+		x -= update_regs.h_scroll[0]; \
+		if ( x >= min_x ) \
+			for ( i = 0; i < 8; i++ ) \
+				amiga_render_sprite(i, x, y, dst); \
+		update_regs.current_bit -= curbit; \
+		/* see if we're done with this word */ \
+		if ( update_regs.current_bit < 0 ) \
+			update_regs.fetch_pending = 1; /* signal we need a new fetch */ \
+	} \
+}
+
 #define UNIMPLEMENTED( name ) \
 	static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x ) { \
-		amiga_display_msg(bitmap,  "Unimplemented screen mode: ##name## " ); \
+		amiga_display_msg(bitmap,  "Unimplemented screen mode: "#name ); \
 	}
 
 
@@ -523,9 +537,7 @@ BEGIN_UPDATE_WITH_SPRITES( render_pixel_lores_sprites ) {
 
 	dst[x] = Machine->pens[custom_regs.COLOR[color]];
 
-	for ( i = 0; i < 8; i++ )
-		amiga_render_sprite( i, x, y, dst );
-} END_UPDATE( 1 )
+} END_UPDATE_WITH_SPRITES( 1 )
 
 UNIMPLEMENTED( render_pixel_lores_lace )
 UNIMPLEMENTED( render_pixel_lores_lace_sprites )
@@ -558,9 +570,7 @@ BEGIN_UPDATE_WITH_SPRITES( render_pixel_hires_sprites ) {
 
 	dst[x] = Machine->pens[custom_regs.COLOR[color]];
 
-	for ( i = 0; i < 8; i++ )
-		amiga_render_sprite( i, x, y, dst );
-} END_UPDATE( 2 )
+} END_UPDATE_WITH_SPRITES( 2 )
 
 UNIMPLEMENTED( render_pixel_hires_lace )
 UNIMPLEMENTED( render_pixel_hires_lace_sprites )
@@ -745,6 +755,15 @@ VIDEO_UPDATE(amiga)
 				else
 					local_render = render_pixel[get_mode()];
 				
+				/* first clear buffer */
+				if ( start_x == 0 ) {
+					for ( x = start_x; x < end_x; x++ )
+						dst[x] = update_regs.back_color;
+				} else {
+					for ( x = start_x + update_regs.h_scroll[0]; x < end_x; x++ )
+						dst[x] = update_regs.back_color;
+				}
+
 				for ( x = start_x; x < end_x; x++ )
 					(*local_render)( bitmap, dst, planes, x, y, min_x );
 			}

@@ -96,6 +96,127 @@ MACHINE_DRIVER_END
 
 /***************************************************************************
 
+  Amiga specific stuff
+
+***************************************************************************/
+
+static int amiga_cia_0_portA_r( void )
+{
+	int ret = readinputport( 0 ) & 0xc0;
+	ret |= amiga_fdc_status_r();
+	return ret; /* Gameport 1 and 0 buttons */
+}
+
+static void amiga_cia_0_portA_w( int data ) 
+{
+	if ( (data & 1) == 1)
+	{
+		/* overlay enabled, map Amiga system ROM on 0x000000 */
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MRA16_BANK3 );
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MWA16_ROM );
+	}
+	else if ( ((data & 1) == 0))
+	{
+		/* overlay disabled, map RAM on 0x000000 */
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MRA16_RAM );
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MWA16_RAM );
+	}
+
+	set_led_status( 0, ( data & 2 ) ? 0 : 1 ); /* bit 2 = Power Led on Amiga*/
+}
+
+static data16_t amiga_read_joy0dat(void)
+{
+	if ( readinputport( 0 ) & 0x20 ) {
+		int input = ( readinputport( 1 ) >> 4 );
+		int	top,bot,lft,rgt;
+
+		top = ( input >> 3 ) & 1;
+		bot = ( input >> 2 ) & 1;
+		lft = ( input >> 1 ) & 1;
+		rgt = input & 1;
+
+		if ( lft ) top ^= 1;
+		if ( rgt ) bot ^= 1;
+
+		return ( bot | ( rgt << 1 ) | ( top << 8 ) | ( lft << 9 ) );
+	} else {
+		int input = ( readinputport( 2 ) & 0xff );
+
+		input |= ( readinputport( 3 ) & 0xff ) << 8;
+
+		return input;
+	}
+}
+
+static data16_t amiga_read_joy1dat(void)
+{
+	if ( readinputport( 0 ) & 0x10 ) {
+		int input = ( readinputport( 1 ) & 0x0f );
+		int	top,bot,lft,rgt;
+
+		top = ( input >> 3 ) & 1;
+		bot = ( input >> 2 ) & 1;
+		lft = ( input >> 1 ) & 1;
+		rgt = input & 1;
+
+		if ( lft ) top ^= 1;
+		if ( rgt ) bot ^= 1;
+
+		return ( bot | ( rgt << 1 ) | ( top << 8 ) | ( lft << 9 ) );
+	} else {
+		int input = ( readinputport( 4 ) & 0xff );
+
+		input |= ( readinputport( 5 ) & 0xff ) << 8;
+
+		return input;
+	}
+}
+
+static data16_t amiga_read_dskbytr(void)
+{
+	return amiga_fdc_get_byte();
+}
+
+static void amiga_write_dsklen(data16_t data)
+{
+	extern custom_regs_def custom_regs;
+
+	if ( data & 0x8000 ) {
+		if ( custom_regs.DSKLEN & 0x8000 )
+			amiga_fdc_setup_dma();
+	}
+}
+
+static const struct amiga_machine_interface amiga_intf =
+{
+	amiga_cia_0_portA_r,	/* CIA0 port A read */
+	NULL,					/* CIA0 port B read: parallel port? */
+	amiga_cia_0_portA_w,	/* CIA0 port A write */
+	NULL,					/* CIA0 port B write: parallel port? */
+	NULL,					/* CIA1 port A read */
+	NULL,					/* CIA1 port B read */
+	NULL,					/* CIA1 port A write */
+	amiga_fdc_control_w,	/* CIA1 port B write */
+	amiga_read_joy0dat,		/* read_joy0dat */
+	amiga_read_joy1dat,		/* read_joy1dat */
+	amiga_read_dskbytr,		/* read_dskbytr */
+	amiga_write_dsklen,		/* write_dsklen */
+	NULL,					/* interrupt_callback */
+	NULL					/* reset_callback */
+};
+
+static DRIVER_INIT( amiga )
+{
+	amiga_machine_config(&amiga_intf);
+
+	/* set up memory */
+	cpu_setbank(1, memory_region(REGION_USER1));
+	cpu_setbank(3, memory_region(REGION_USER1));
+}
+
+/***************************************************************************
+
   Game driver(s)
 
 ***************************************************************************/
@@ -117,13 +238,6 @@ ROM_END
 SYSTEM_CONFIG_START(amiga)
 	CONFIG_DEVICE(amiga_floppy_getinfo)
 SYSTEM_CONFIG_END
-
-static DRIVER_INIT( amiga )
-{
-	/* set up memory */
-	cpu_setbank(1, memory_region(REGION_USER1));
-	cpu_setbank(3, memory_region(REGION_USER1));
-}
 
 /*     YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT	CONFIG	COMPANY	FULLNAME */
 COMPX( 1984, amiga,    0,		0,		ntsc,     amiga,    amiga,	amiga,	"Commodore Business Machines Co.",  "Amiga 500 (NTSC)", GAME_NOT_WORKING )

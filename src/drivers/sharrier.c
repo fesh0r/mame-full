@@ -18,7 +18,7 @@ Various Hang-On fixes:
 - Cleaned up input management, now entering test mode does not crash
   MAME, there are no specific control hacks for the name entry screen,
   and the ROM patches are no longer needed.
-  
+
 To do:
 - Missing color bars in CRT tests
 - Proper Enduro Racer and Space Harrier inputs
@@ -40,7 +40,7 @@ static int ppi_reg[2][4];			/* PPI registers */
 static WRITE16_HANDLER( hangon_io_w )
 {
 	if( ACCESSING_LSB )
-	{                        
+	{
 		switch( offset & 0x003020/2 )
 		{
 			case 0x0000: /* PPI @ 4B */
@@ -62,15 +62,15 @@ static WRITE16_HANDLER( hangon_io_w )
 
 						/* D3 : LAMP2 */
 						set_led_status(1, data & 0x08);
-						
+
 						/* D2 : LAMP1 */
 						set_led_status(0, data & 0x04);
-						
+
 						/* D1 : COIN2 */
 						coin_counter_w(1, data & 0x02);
-						
+
 						/* D0 : COIN1 */
-						coin_counter_w(0, data & 0x01);						
+						coin_counter_w(0, data & 0x01);
 						return;
 
 					case 0x02: /* Port C : Tilemap origin and audio mute */
@@ -78,8 +78,8 @@ static WRITE16_HANDLER( hangon_io_w )
 
 						/* D2 : SCONT1 - Tilemap origin bit 1 */
 						/* D1 : SCONT0 - Tilemap origin bit 0 */
-						/* D0 : MUTE (1= audio on, 0= audio off) */					
-						
+						/* D0 : MUTE (1= audio on, 0= audio off) */
+
   						/* Not used */
 						return;
 
@@ -94,7 +94,7 @@ static WRITE16_HANDLER( hangon_io_w )
 			{
 				case 0x00: /* Port A : S.CPU control and ADC channel select */
 					ppi_reg[1][0] = data;
-				
+
 #if 0 // Not sure this is correct
 
 					/* To S.RES of second CPU */
@@ -102,7 +102,7 @@ static WRITE16_HANDLER( hangon_io_w )
 					cpunum_set_input_line(2, INPUT_LINE_RESET, CLEAR_LINE);
 					else
 					cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
-					
+
 					/* To S.INT of second CPU */
 					if(data & 0x10)
 					cpunum_set_input_line(2, 1, HOLD_LINE);
@@ -110,17 +110,17 @@ static WRITE16_HANDLER( hangon_io_w )
 					cpunum_set_input_line(2, 1, CLEAR_LINE);
 #endif
 					return;
-				
+
 				case 0x01: /* Port B : High-current outputs */
-					ppi_reg[1][1] = data;		
+					ppi_reg[1][1] = data;
 					/* Not used */
 					return;
-				
+
 				case 0x02: /* Port C : LED driver control (?) */
-					ppi_reg[1][2] = data;				
+					ppi_reg[1][2] = data;
 					/* Not used */
 					return;
-					
+
 				case 0x03: /* PPI control register */
 					ppi_reg[1][3] = data;
 					return;
@@ -133,15 +133,15 @@ static WRITE16_HANDLER( hangon_io_w )
 				case 0x00: /* "ANGLE" */
 					latched_analog_input = readinputport(0);
 					return;
-				
+
 				case 0x04: /* "ACCEL" */
 					latched_analog_input = readinputport(1);
 					return;
-			
+
 				case 0x08: /* "BRAKE" */
 					latched_analog_input = readinputport(5);
 					return;
-				
+
 				case 0x0C: /* Not used */
 					latched_analog_input = 0;
 					return;
@@ -164,31 +164,31 @@ static READ16_HANDLER( hangon_io_r )
 				by the main 68000.
 				*/
 				return 0xFF;
-			
+
 				case 0x01: /* Port B */
 					return ppi_reg[0][1];
-				
+
 				case 0x02: /* Port C */
 					return ppi_reg[0][2];
-				
+
 				case 0x03: /* PPI control register */
 					return ppi_reg[0][3];
 			}
 			break;
-			
+
 			case 0x1000/2: /* Input ports and DIP switches */
 				switch( offset & 0x0F )
 				{
 					case 0x00: /* Input port #0 */
 						return readinputport(2);
-			
-					case 0x01: /* Input port #1 */	
+
+					case 0x01: /* Input port #1 */
 						/* Not used */
 						return 0xFF;
-			
+
 					case 0x04: /* DIP switch A */
 						return readinputport(3);
-			
+
 					case 0x06: /* DIP switch B */
 						return readinputport(4);
 				}
@@ -199,31 +199,31 @@ static READ16_HANDLER( hangon_io_r )
 				{
 					case 0x00: /* Port A */
 						return ppi_reg[1][0];
-					
+
 					case 0x01: /* Port B */
 						return ppi_reg[1][1];
-					
+
 					case 0x02: /* Port C : ADC status */
 						/*
 						D7 = 0 (left open)
 						D6 = /INTR of ADC0804
 						D5 = 0 (left open)
 						D4 = 0 (left open)
-						
+
 						We leave /INTR low to indicate converted data is
 						always ready to be read.
 						*/
 						return (ppi_reg[1][2] & 0x0F);
-					
+
 					case 0x03: /* PPI control register */
 						return ppi_reg[1][3];
 				}
 				break;
-				
+
 			case 0x3020/2: /* ADC0804 data output */
 				return latched_analog_input;
-	}	
-	
+	}
+
 	return -1;
 }
 
@@ -421,7 +421,7 @@ static ADDRESS_MAP_START( hangon_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x600000, 0x6007ff) AM_READ(SYS16_MRA16_SPRITERAM)
 	AM_RANGE(0xa00000, 0xa00fff) AM_READ(SYS16_MRA16_PALETTERAM)
 	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(SYS16_CPU3ROM16_r)
-	AM_RANGE(0xc68000, 0xc68fff) AM_READ(hangon_roadram_r)	
+	AM_RANGE(0xc68000, 0xc68fff) AM_READ(hangon_roadram_r)
 	AM_RANGE(0xc7c000, 0xc7ffff) AM_READ(hangon_sharedram_r)
 	AM_RANGE(0xe00000, 0xffffff) AM_READ(hangon_io_r)
 ADDRESS_MAP_END
@@ -502,12 +502,12 @@ static MACHINE_INIT( hangon ){
 	sys16_textlayer_hi_min=0;
 	sys16_textlayer_hi_max=0xff;
 
-/*  
+/*
 	The following patches modified the input code to read the first three
 	analog inputs from unique addresses rather than the single address
 	the ADC is mapped to, so the input selection behavior didn't have to be
 	emulated. Not needed anymore, but left in for reference.
-	
+
 	sys16_patch_code( 0x83bd, 0x29); // $E03021 -> $E03029
 	sys16_patch_code( 0x8495, 0x2a); // $E03021 -> $E0302A
 	sys16_patch_code( 0x84f9, 0x2b); // $E03021 -> $E0302B
@@ -545,33 +545,33 @@ static MACHINE_DRIVER_START( hangon )
 	MDRV_CPU_ADD(M68000, 10000000)
 	MDRV_CPU_PROGRAM_MAP(hangon_readmem,hangon_writemem)
 	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
-	
+
 	MDRV_CPU_ADD(Z80, 4096000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(hangon_sound_readmem,hangon_sound_writemem)
 	MDRV_CPU_IO_MAP(hangon_sound_readport,hangon_sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
-	
+
 	MDRV_CPU_ADD(M68000, 10000000)
 	MDRV_CPU_PROGRAM_MAP(hangon_readmem2,hangon_writemem2)
 	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)
 
 	MDRV_MACHINE_INIT(hangon)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(40*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(sys16_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048*ShadowColorsMultiplier)
-	
+
 	MDRV_VIDEO_START(hangon)
 	MDRV_VIDEO_UPDATE(hangon)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2203, sys16_ym2203_interface)
@@ -738,33 +738,33 @@ static MACHINE_DRIVER_START( sharrier )
 	MDRV_CPU_ADD(M68000, 10000000)
 	MDRV_CPU_PROGRAM_MAP(harrier_readmem,harrier_writemem)
 	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
-	
+
 	MDRV_CPU_ADD(Z80, 4096000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(harrier_sound_readmem,harrier_sound_writemem)
 	MDRV_CPU_IO_MAP(harrier_sound_readport,harrier_sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
-	
+
 	MDRV_CPU_ADD(M68000, 10000000)
 	MDRV_CPU_PROGRAM_MAP(harrier_readmem2,harrier_writemem2)
 	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)
 
 	MDRV_MACHINE_INIT(harrier)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(40*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(sys16_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048*ShadowColorsMultiplier)
-	
+
 	MDRV_VIDEO_START(hangon)
 	MDRV_VIDEO_UPDATE(hangon)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2203, sys16_ym2203_interface)
@@ -969,13 +969,8 @@ static MACHINE_INIT( enduror ){
 }
 
 static void enduror_sprite_decode( void ){
-	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	sys16_interleave_sprite_data( 8*0x20000 );
 	generate_gr_screen(512,1024,8,0,4,0x8000);
-
-//	enduror_decode_data (rom,rom,0x10000);	// no decrypt info.
-	enduror_decode_data (rom+0x10000/2,rom+0x10000/2,0x10000);
-	enduror_decode_data2(rom+0x20000/2,rom+0x20000/2,0x10000);
 }
 
 static void endurob_sprite_decode( void ){
@@ -1023,11 +1018,15 @@ static void endurob2_opcode_decode( void )
 
 static DRIVER_INIT( enduror )
 {
+	void fd1089_decrypt_enduror(void);
+
 	machine_init_sys16_onetime();
 	sys16_MaxShadowColors=NumOfShadowColors / 2;
 //	sys16_MaxShadowColors=0;
 
 	enduror_sprite_decode();
+
+	fd1089_decrypt_enduror();
 }
 
 static DRIVER_INIT( endurobl )
@@ -1058,33 +1057,33 @@ static MACHINE_DRIVER_START( enduror )
 	MDRV_CPU_ADD(M68000, 10000000)
 	MDRV_CPU_PROGRAM_MAP(enduror_readmem,enduror_writemem)
 	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
-	
+
 	MDRV_CPU_ADD(Z80, 4096000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(enduror_sound_readmem,enduror_sound_writemem)
 	MDRV_CPU_IO_MAP(enduror_sound_readport,enduror_sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
-	
+
 	MDRV_CPU_ADD(M68000, 10000000)
 	MDRV_CPU_PROGRAM_MAP(enduror_readmem2,enduror_writemem2)
 	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)
 
 	MDRV_MACHINE_INIT(enduror)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(40*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(sys16_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048*ShadowColorsMultiplier)
-	
+
 	MDRV_VIDEO_START(hangon)
 	MDRV_VIDEO_UPDATE(hangon)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2203, sys16_ym2203_interface)
@@ -1098,32 +1097,32 @@ static MACHINE_DRIVER_START( endurob2 )
 	MDRV_CPU_ADD(M68000, 10000000)
 	MDRV_CPU_PROGRAM_MAP(enduror_readmem,enduror_writemem)
 	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
-	
+
 	MDRV_CPU_ADD(Z80, 4096000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(enduror_b2_sound_readmem,enduror_b2_sound_writemem)
 	MDRV_CPU_IO_MAP(enduror_b2_sound_readport,enduror_b2_sound_writeport)
-	
+
 	MDRV_CPU_ADD(M68000, 10000000)
 	MDRV_CPU_PROGRAM_MAP(enduror_readmem2,enduror_writemem2)
 	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)
 
 	MDRV_MACHINE_INIT(enduror)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(40*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(sys16_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048*ShadowColorsMultiplier)
-	
+
 	MDRV_VIDEO_START(hangon)
 	MDRV_VIDEO_UPDATE(hangon)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2203, sys16_3xym2203_interface)
@@ -1557,6 +1556,6 @@ INPUT_PORTS_END
 
 GAME( 1985, hangon,   0,        hangon,   hangon,   hangon,   ROT0, "Sega",    "Hang-On" )
 GAME( 1985, sharrier, 0,        sharrier, sharrier, sharrier, ROT0, "Sega",    "Space Harrier" )
-GAMEX(1986, enduror,  0,        enduror,  enduror,  enduror,  ROT0, "Sega",    "Enduro Racer", GAME_NOT_WORKING )
+GAMEX(1986, enduror,  0,        enduror,  enduror,  enduror,  ROT0, "Sega",    "Enduro Racer (FD1089B 317-unknown)", GAME_NOT_WORKING )
 GAME( 1986, endurobl, enduror,  enduror,  enduror,  endurobl, ROT0, "bootleg", "Enduro Racer (bootleg set 1)" )
 GAME( 1986, endurob2, enduror,  endurob2, enduror,  endurob2, ROT0, "bootleg", "Enduro Racer (bootleg set 2)" )

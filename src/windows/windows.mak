@@ -31,8 +31,8 @@ OSOBJS += \
 	$(OBJ)/mess/windows/winutils.o
 endif 
 
-# add resource file
-ifndef MESS
+# add resource file if no UI
+ifeq ($(WINUI),)
 OSOBJS += $(OBJ)/windows/mame.res
 endif
 
@@ -45,8 +45,8 @@ RESFILE=$(OBJ)/mess/windows/mess.res
 # enable guard pages on all memory allocations in the debug build
 ifdef DEBUG
 ifndef MESS
-#OSOBJS += $(OBJ)/windows/winalloc.o
-#LDFLAGS += -Wl,--allow-multiple-definition
+OSOBJS += $(OBJ)/windows/winalloc.o
+LDFLAGS += -Wl,--allow-multiple-definition
 endif
 endif
 

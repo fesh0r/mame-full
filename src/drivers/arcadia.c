@@ -9,19 +9,19 @@ SportTime Bowling
 Leader Board
 Ninja Mission
 Road Wars
-
-Non-working games supported:
-Cool Spot
+Spot
 Magic Johnson's Fast Break
-Sidewinder
-Space Ranger
-SportTime Table Hockey
 World Darts
 Xenon
 
+Non-working games supported:
+Sidewinder
+Space Ranger
+SportTime Table Hockey
+
 Other Arcadia games (not dumped):
 Aaargh!
-Blastaball (or Blasta Bowl)
+Blasta Ball
 N.Y. Warriors
 Pool
 Rockford
@@ -202,7 +202,7 @@ static MACHINE_DRIVER_START( arcadia )
 
 
     /* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
 	MDRV_SCREEN_SIZE(456, 262)
 	MDRV_VISIBLE_AREA(120, 456-1, 32, 262-1)
 	MDRV_GFXDECODE( gfxdecodeinfo )
@@ -768,17 +768,157 @@ static void xeon_decode(void)
 
 /***************************************************************************
 
+					Arcadia machine interface
+
+***************************************************************************/
+
+static unsigned char coin_counter[2];
+
+static int arcadia_cia_0_portA_r( void )
+{
+	int ret = readinputport( 0 ) & 0xc0;
+	ret |= 0x3f;
+	return ret; /* Gameport 1 and 0 buttons */
+}
+
+static int arcadia_cia_0_portB_r( void )
+{
+	/* parallel port */
+	int ret = 0;
+	ret = readinputport( 1 ) & 0x0f;
+
+	ret |= ( coin_counter[0] & 3 ) << 4;
+	ret |= ( coin_counter[1] & 3 ) << 6;
+
+	logerror( "Coin counter read at PC=%06x\n", activecpu_get_pc() );
+	return ret;
+}
+
+static void arcadia_cia_0_portA_w( int data ) 
+{
+	if ( (data & 1) == 1)
+	{
+		/* overlay enabled, map Amiga system ROM on 0x000000 */
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MRA16_BANK3 );
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MWA16_ROM );
+	}
+	else if ( ((data & 1) == 0))
+	{
+		/* overlay disabled, map RAM on 0x000000 */
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MRA16_RAM );
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MWA16_RAM );
+	}
+
+	set_led_status( 0, ( data & 2 ) ? 0 : 1 ); /* bit 2 = Power Led on Amiga*/
+}
+
+static void arcadia_cia_0_portB_w( int data )
+{
+	/* parallel port */
+	/* bit 0 = coin counter reset? */
+	if ( (data & 1) == 1 ) {
+		if (coin_counter[0] > 0 )
+			coin_counter[0]--;
+		if (coin_counter[1] > 0 )
+			coin_counter[1]--;
+	}
+}
+
+static void arcadia_update_coins(void)
+{
+	/* update coin counters */
+
+	/* check for a 0 -> 1 transition */
+	if ( readinputport( 0 ) & 0x20 ) {
+		if ( ( coin_counter[0] & 0x80 ) == 0 ) {
+			if ( coin_counter[0] < 3 )
+				coin_counter[0]++;
+			coin_counter[0] |= 0x80;
+		}
+	} else
+		coin_counter[0] = 0;
+
+	/* check for a 0 -> 1 transition */
+	if ( readinputport( 0 ) & 0x10 ) {
+		if ( ( coin_counter[1] & 0x80 ) == 0 ) {
+			if ( coin_counter[1] < 3 )
+				coin_counter[1]++;
+			coin_counter[1] |= 0x80;
+		}
+	} else
+		coin_counter[1] = 0;
+}
+
+static void arcadia_reset_coins(void)
+{
+	/* reset coin counters */
+	coin_counter[0] = coin_counter[1] = 0;
+}
+
+static data16_t arcadia_read_joy0dat(void)
+{
+	int input = ( readinputport( 2 ) >> 4 );
+	int	top,bot,lft,rgt;
+	
+	top = ( input >> 3 ) & 1;
+	bot = ( input >> 2 ) & 1;
+	lft = ( input >> 1 ) & 1;
+	rgt = input & 1;
+
+	if ( lft ) top ^= 1;
+	if ( rgt ) bot ^= 1;
+
+	return ( bot | ( rgt << 1 ) | ( top << 8 ) | ( lft << 9 ) );
+}
+
+static data16_t arcadia_read_joy1dat(void)
+{
+	int input = ( readinputport( 2 ) & 0x0f );
+	int	top,bot,lft,rgt;
+	
+	top = ( input >> 3 ) & 1;
+	bot = ( input >> 2 ) & 1;
+	lft = ( input >> 1 ) & 1;
+	rgt = input & 1;
+
+	if ( lft ) top ^= 1;
+	if ( rgt ) bot ^= 1;
+	
+	return ( bot | ( rgt << 1 ) | ( top << 8 ) | ( lft << 9 ) );
+}
+
+/***************************************************************************
+
 					Driver init
 
 ***************************************************************************/
 
+static const struct amiga_machine_interface arcadia_intf =
+{
+	arcadia_cia_0_portA_r,
+	arcadia_cia_0_portB_r,
+	arcadia_cia_0_portA_w,
+	arcadia_cia_0_portB_w,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	arcadia_read_joy0dat,
+	arcadia_read_joy1dat,
+	NULL,
+	NULL,
+	arcadia_update_coins,
+	arcadia_reset_coins
+};
+
 static void arcadia_common_init(void)
 {
+	amiga_machine_config(&arcadia_intf);
+
 	/* set up memory */
 	cpu_setbank(1, memory_region(REGION_USER1));
 	cpu_setbank(2, memory_region(REGION_USER2));
 	cpu_setbank(3, memory_region(REGION_USER1));
-
 }
 
 DRIVER_INIT( ar_airh )
@@ -797,12 +937,25 @@ DRIVER_INIT( ar_bowl )
 	bowl_decode();
 }
 
+/* This kludge should be gone after sound and sound irqs are emulated */
+READ16_HANDLER( dart_kludge2 )
+{
+	return 0;
+}
+
+READ16_HANDLER( dart_kludge1 )
+{
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x02a804, 0x02a805, 0, 0, dart_kludge2 );
+	return *((data16_t*)memory_region(REGION_USER2) + 0x003622/2);
+}
+
 DRIVER_INIT( ar_dart )
 {
 	arcadia_common_init();
 	autoconfig_init( 0x98f564 );
 	arcadia_decode();
 	dart_decode();
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x803622, 0x803623, 0, 0, dart_kludge1 );
 }
 
 DRIVER_INIT( ar_fast )
@@ -880,29 +1033,23 @@ GAMEX( 1988, ar_bios,	0,		 arcadia, arcadia, 0,		 0, "Arcadia Systems", "Arcadia
 
 /* working */
 GAMEX( 1988, ar_bowl,	ar_bios, arcadia, arcadia, ar_bowl,	 0, "Arcadia Systems", "SportTime Bowling (Arcadia, V 2.1)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1987, ar_dart,	ar_bios, arcadia, arcadia, ar_dart,	 0, "Arcadia Systems", "World Darts (Arcadia, V 2.1)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1988, ar_fast,	ar_bios, arcadia, arcadia, ar_fast,  0, "Arcadia Systems", "Magic Johnson's Fast Break (Arcadia, V 2.8?)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1988, ar_ldrb,	ar_bios, arcadia, arcadia, ar_ldrb,	 0, "Arcadia Systems", "Leader Board Golf (Arcadia, V 2.4?)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1988, ar_ldrba,	ar_ldrb, arcadia, arcadia, ar_ldrba, 0, "Arcadia Systems", "Leader Board Golf (Arcadia, V 2.5)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1987, ar_ninj,	ar_bios, arcadia, arcadia, ar_ninj,  0, "Arcadia Systems", "Ninja Mission (Arcadia, V 2.5)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1988, ar_rdwr,	ar_bios, arcadia, arcadia, ar_rdwr,	 0, "Arcadia Systems", "Road Wars (Arcadia, V 2.3)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1990, ar_spot,	ar_bios, arcadia, arcadia, ar_spot,	 0, "Arcadia Systems", "Spot (Arcadia)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1987, ar_xeon,	ar_bios, arcadia, arcadia, ar_xeon,	 0, "Arcadia Systems", "Xenon (Arcadia, V 2.3)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 
 /* almost playable */
-/* some gfx glitches, resets after coin up, playable in free play mode*/
-GAMEX( 1989, ar_fast,	ar_bios, arcadia, arcadia, ar_fast,  0, "Arcadia Systems", "Magic Johnson's Fast Break (Arcadia, V 2.8?)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING)
-
-/* somewhat playable, serious gfx glitches */
-GAMEX( 1988, ar_xeon,	ar_bios, arcadia, arcadia, ar_xeon,	 0, "Arcadia Systems", "Xenon (Arcadia, V 2.3)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+/* slight gfx bugs (video timing)*/
+GAMEX( 1987, ar_sprg,	ar_bios, arcadia, arcadia, ar_sprg,	 0, "Arcadia Systems", "Space Ranger (Arcadia)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 
 /* not playable */
 /* gfx glitches, no player sprites (?) in game */
 GAMEX( 1988, ar_airh,	ar_bios, arcadia, arcadia, ar_airh,	 0, "Arcadia Systems", "SportTime Table Hockey (Arcadia)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 
-/* freezes when starting the game */
-GAMEX( 1988, ar_dart,	ar_bios, arcadia, arcadia, ar_dart,	 0, "Arcadia Systems", "World Darts (Arcadia, V 2.1)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
-
-/* serious gfx glitches, freezes when starting the game */
+/* crashes due to incorrect blitter memory access */
 GAMEX( 1988, ar_sdwr,	ar_bios, arcadia, arcadia, ar_sdwr,	 0, "Arcadia Systems", "Sidewinder (Arcadia, V 2.1)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
-GAMEX( 1987, ar_sprg,	ar_bios, arcadia, arcadia, ar_sprg,	 0, "Arcadia Systems", "Space Ranger (Arcadia)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
-
-/* doesn't boot */
-GAMEX( 1993, ar_spot,	ar_bios, arcadia, arcadia, ar_spot,	 0, "Arcadia Systems", "Cool Spot (Arcadia, Prototype?)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 

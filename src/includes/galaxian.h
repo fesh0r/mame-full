@@ -67,6 +67,7 @@ READ8_HANDLER( rockclim_videoram_r );
 WRITE8_HANDLER( galaxian_attributesram_w );
 
 WRITE8_HANDLER( galaxian_stars_enable_w );
+WRITE8_HANDLER( tazzmang_stars_enable_w );
 WRITE8_HANDLER( scramble_background_enable_w );
 WRITE8_HANDLER( scramble_background_red_w );
 WRITE8_HANDLER( scramble_background_green_w );

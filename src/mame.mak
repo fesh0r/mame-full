@@ -511,11 +511,11 @@ $(OBJ)/sega.a: \
 	$(OBJ)/vidhrdw/segas16a.o $(OBJ)/drivers/segas16a.o \
 	$(OBJ)/vidhrdw/segas16b.o $(OBJ)/drivers/segas16b.o \
 	$(OBJ)/vidhrdw/segas18.o $(OBJ)/drivers/segas18.o \
-	$(OBJ)/machine/fd1094.o $(OBJ)/machine/s16fd.o \
+	$(OBJ)/machine/fd1094.o $(OBJ)/machine/s16fd.o $(OBJ)/machine/fd1089.o \
 	$(OBJ)/machine/mc8123.o \
 	$(OBJ)/drivers/system16.o $(OBJ)/drivers/segas16b.o \
 	$(OBJ)/drivers/segaxbd.o $(OBJ)/vidhrdw/segaxbd.o \
-	$(OBJ)/drivers/outrun.o \
+	$(OBJ)/drivers/outrun.o $(OBJ)/drivers/segaorun.o $(OBJ)/vidhrdw/segaorun.o \
 	$(OBJ)/drivers/sharrier.o $(OBJ)/drivers/system18.o \
 	$(OBJ)/drivers/yboard.o $(OBJ)/vidhrdw/yboard.o $(OBJ)/machine/s16math.o \
 	$(OBJ)/drivers/system24.o $(OBJ)/machine/system24.o $(OBJ)/vidhrdw/system24.o \

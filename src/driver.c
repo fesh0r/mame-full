@@ -229,6 +229,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( bongo )		/* Jetsoft */
 	DRIVER( hunchbkg )	/* Century */
 	DRIVER( harem )		/* I.G.R. */
+	DRIVER( tazzmang )
 
 	/* Has some similarities with Moon Cresta but Board is very different */
 	DRIVER( rockclim )	/* (c)1981 Taito */
@@ -3162,7 +3163,7 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( seabass )
 	DRIVER( shanhigw )
 	DRIVER( shienryu )
-	DRIVER( sleague )
+	DRIVER( smleague )
 	DRIVER( sokyugrt )
 	DRIVER( sss )
 	DRIVER( suikoenb )
@@ -3786,6 +3787,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( kicker )	/* GX477 (c) 1985 */
 	DRIVER( shaolins )	/* GX477 (c) 1985 */
 	DRIVER( pingpong )	/* GX555 (c) 1985 */
+	DRIVER( merlinmm )	/* */
 	DRIVER( gberet )	/* GX577 (c) 1985 */
 	DRIVER( rushatck )	/* GX577 (c) 1985 */
 	DRIVER( gberetb )	/* bootleg on different hardware */

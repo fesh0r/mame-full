@@ -991,6 +991,16 @@ WRITE8_HANDLER( galaxian_stars_enable_w )
 	}
 }
 
+WRITE8_HANDLER( tazzmang_stars_enable_w )
+{
+	galaxian_stars_on = ~data & 0x01;
+
+	if (!galaxian_stars_on)
+	{
+		stars_scrollpos = 0;
+	}
+}
+
 
 WRITE8_HANDLER( darkplnt_bullet_color_w )
 {

@@ -8,10 +8,6 @@ VIDEO_UPDATE( system16a );
 
 void system16a_set_draw_enable(int enable);
 void system16a_set_screen_flip(int flip);
-void system16a_set_rowscroll(int enable);
-void system16a_set_colscroll(int enable);
-
-WRITE16_HANDLER( system16a_textram_w );
 
 
 /* from vidhrdw/segas16b.c */
@@ -24,8 +20,6 @@ void system16b_set_draw_enable(int enable);
 void system16b_set_screen_flip(int flip);
 void system16b_configure_sprite_banks(int use_default);
 void system16b_set_tile_bank(int which, int bank);
-
-WRITE16_HANDLER( system16b_textram_w );
 
 
 /* from vidhrdw/segas18.c */
@@ -41,11 +35,23 @@ void system18_set_vdp_enable(int eanble);
 void system18_set_vdp_mixing(int mixing);
 void system18_set_sprite_bank(int which, int bank);
 
-WRITE16_HANDLER( system18_textram_w );
+
+/* from vidhrdw/segaorun.c */
+VIDEO_START( outrun );
+VIDEO_START( shangon );
+VIDEO_UPDATE( outrun );
+VIDEO_UPDATE( shangon );
+
+void outrun_reset_video(void);
+void outrun_set_draw_enable(int enable);
+void outrun_set_screen_flip(int flip);
+
+WRITE16_HANDLER( outrun_render_start_w );
+READ16_HANDLER( outrun_road_latch_r );
+WRITE16_HANDLER( outrun_road_control_w );
 
 
 /* from vidhrdw/segaxbd.c */
-extern UINT16 *xboard_roadram;
 VIDEO_START( xboard );
 VIDEO_UPDATE( xboard );
 
@@ -55,7 +61,6 @@ void xboard_set_screen_flip(int flip);
 void xboard_set_tile_bank(int which, int bank);
 void xboard_set_road_priority(int priority);
 
-WRITE16_HANDLER( xboard_textram_w );
 WRITE16_HANDLER( xboard_render_start_w );
 READ16_HANDLER( xboard_road_latch_r );
 WRITE16_HANDLER( xboard_road_control_w );
@@ -177,12 +182,7 @@ extern struct GfxDecodeInfo sys16_gfxdecodeinfo[];
 // encryption decoding
 void endurob2_decode_data(data16_t *dest,data16_t *source,int size);
 void endurob2_decode_data2(data16_t *dest,data16_t *source,int size);
-void enduror_decode_data(data16_t *dest,data16_t *source,int size);
-void enduror_decode_data2(data16_t *dest,data16_t *source,int size);
 
-void aurail_decode_data(data16_t *dest,data16_t *source,int size);
-void aurail_decode_opcode1(data16_t *dest,data16_t *source,int size);
-void aurail_decode_opcode2(data16_t *dest,data16_t *source,int size);
 
 #define SYS16_JOY1 PORT_START_TAG("IN0")\
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 ) \
@@ -297,8 +297,8 @@ extern VIDEO_START( hangon );
 extern VIDEO_UPDATE( hangon );
 
 /* outrun video hardware */
-extern VIDEO_START( outrun );
-extern VIDEO_UPDATE( outrun );
+extern VIDEO_START( old_outrun );
+extern VIDEO_UPDATE( old_outrun );
 
 /* aburner video hardware */
 extern VIDEO_START( aburner );
