@@ -6,8 +6,8 @@ New System Drivers Supported (in no particular order):
 System Driver Changes:
 ----------------------
 - [COCO1] Update CRC for bas10.rom. Previous dump was bad. I would like to send a
-  special "Thank you" to Sellam Ismail for finding a Color Computer that contained
-  Color BASIC 1.0. [tim lindner]
+  special "Thank you" to Sellam Ismail (http://www.vintage.org) for finding a
+  Color Computer that contained Color BASIC 1.0. [tim lindner]
 
 - [COCO1/2/3] Moved disk handling code over to new FormatDriver system;
   allowing transparent disk image handling for JVC, VDK, and DMK file formats.
@@ -88,6 +88,8 @@ Source Changes:
   
 - [Imgtool] Fixed a bug in the FormatDriver handling that caused some file puts
   to not be properly written.  [Nate Woods]
+
+- [Imgtool] Added Color Computer DMK disk image support. [tim lindner]
 
 0.61
 
