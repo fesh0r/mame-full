@@ -15,6 +15,14 @@
 
 #include "includes/pit8253.h"
 
+#define VERBOSE_SND 0		/* SND (sound / speaker) */
+#if VERBOSE_SND
+#define SND_LOG(n,m,a) \
+	if(VERBOSE_SND>=N){ if( M )logerror("%11.6f: %-24s",timer_get_time(),(char*)M ); logerror A; }
+#else
+#define SND_LOG(n,m,a)
+#endif
+
 #define BASECLOCK	1193180
 
 static int channel = 0;
