@@ -672,7 +672,7 @@ TODO:
 #include "sound/namco.h"
 #include "sound/namco52.h"
 #include "sound/namco54.h"
-#include "sound/sn76477.h"
+#include "rc.h"
 #include "sound/samples.h"
 
 

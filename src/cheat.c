@@ -1,4 +1,4 @@
-/***************************************************************************** 
+/*****************************************************************************
  *
  *	cheat.c
  *	by Ian Patterson [ianpatt at pacbell dot net]
@@ -325,7 +325,7 @@ to hex.
 
 Refresh rate: (01100110 -------- -1------ --------) 0x66004000
 
-Sets the refresh rate. Put the new refresh rate in the data field. Use 16.16 fixed 
+Sets the refresh rate. Put the new refresh rate in the data field. Use 16.16 fixed
 point notation for the refresh rate.
 
 Example 1: set the refresh rate to 56.3333333
@@ -2797,7 +2797,7 @@ static int EnableDisableCheatMenu(struct mame_bitmap * bitmap, int selection, in
 	{
 		schedule_full_refresh();
 	}
-	
+
 	return sel + 1;
 }
 
@@ -2812,7 +2812,7 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 		"Comment",
 		"Select"
 	};
-	
+
 	static const char *	kNumbersTable[] =
 	{
 		"0",	"1",	"2",	"3",	"4",	"5",	"6",	"7",
@@ -10394,7 +10394,7 @@ static void BuildCPUInfoList(void)
 					break;
 #endif
 #if HAS_TMS34020
-				case HAS_TMS34020:
+				case CPU_TMS34020:
 					info->addressShift = 3;
 					break;
 #endif

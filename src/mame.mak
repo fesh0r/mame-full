@@ -508,6 +508,7 @@ $(OBJ)/sega.a: \
 	$(OBJ)/machine/turbo.o $(OBJ)/sndhrdw/turbo.o $(OBJ)/vidhrdw/turbo.o $(OBJ)/drivers/turbo.o \
 	$(OBJ)/drivers/kopunch.o $(OBJ)/vidhrdw/kopunch.o \
 	$(OBJ)/vidhrdw/suprloco.o $(OBJ)/drivers/suprloco.o \
+	$(OBJ)/drivers/calorie.o \
 	$(OBJ)/vidhrdw/dotrikun.o $(OBJ)/drivers/dotrikun.o \
 	$(OBJ)/vidhrdw/angelkds.o $(OBJ)/drivers/angelkds.o \
 	$(OBJ)/vidhrdw/system1.o $(OBJ)/drivers/system1.o \
@@ -878,7 +879,7 @@ $(OBJ)/cinemar.a: \
 	$(OBJ)/drivers/embargo.o \
 
 $(OBJ)/cinemav.a: \
-	$(OBJ)/sndhrdw/cinemat.o $(OBJ)/drivers/cinemat.o \
+	$(OBJ)/sndhrdw/cinemat.o $(OBJ)/drivers/cinemat.o $(OBJ)/vidhrdw/cinemat.o \
 	$(OBJ)/machine/cchasm.o $(OBJ)/vidhrdw/cchasm.o $(OBJ)/sndhrdw/cchasm.o $(OBJ)/drivers/cchasm.o \
 
 $(OBJ)/thepit.a: \
@@ -1225,6 +1226,7 @@ $(OBJ)/otherz80.a: \
 	$(OBJ)/vidhrdw/freekick.o $(OBJ)/drivers/freekick.o \
 	$(OBJ)/drivers/monzagp.o \
 	$(OBJ)/drivers/couple.o \
+	$(OBJ)/drivers/pipeline.o \
 
 $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/redalert.o $(OBJ)/sndhrdw/redalert.o $(OBJ)/drivers/redalert.o \

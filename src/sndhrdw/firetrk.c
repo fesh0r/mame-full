@@ -171,10 +171,9 @@ const struct discrete_schmitt_osc_desc firetrk_screech_osc =
 const struct discrete_mixer_desc firetrk_mixer =
 {
 	DISC_MIXER_IS_OP_AMP,
-	7,					// 7 inputs
-	{RES_K(4.7), RES_K(22), RES_K(31.333), RES_K(33), RES_K(10.5456), RES_K(32), RES_K(150), 0}, // R54, R55, R72||(R70+R71), R53, R56 + R37||R35||R36||R34, R58 + R73||R74, R52
-	{0,0,0,0,0,0,0,0},			// No variable resistor nodes
-	{CAP_U(0.22), CAP_U(0.22), CAP_U(0.01), CAP_U(0.22), CAP_U(0.22), 0, CAP_U(0.22), 0}, // C34, C32, C44, C35, C33, NA, C31
+	{RES_K(4.7), RES_K(22), RES_K(31.333), RES_K(33), RES_K(10.5456), RES_K(32), RES_K(150)}, // R54, R55, R72||(R70+R71), R53, R56 + R37||R35||R36||R34, R58 + R73||R74, R52
+	{0},			// No variable resistor nodes
+	{CAP_U(0.22), CAP_U(0.22), CAP_U(0.01), CAP_U(0.22), CAP_U(0.22), 0, CAP_U(0.22)}, // C34, C32, C44, C35, C33, NA, C31
 	0,					// No rI
 	RES_K(22),			// R43
 	0,					// No Filter
@@ -383,15 +382,14 @@ const struct discrete_schmitt_osc_desc superbug_screech_osc =
 const struct discrete_mixer_desc superbug_mixer =
 {
 	DISC_MIXER_IS_RESISTOR,
-	4,							// 4 inputs
-	{RES_K(15), RES_K(10.5456), RES_K(33), RES_K(47), 0,0,0,0}, // R54, R55, R72||(R70+R71), R53, R56 + R37||R35||R36||R34, R58 + R73||R74, R52
-	{0,0,0,0,0,0,0,0},			// No variable resistor nodes
-	{0, 0, 0, 0, 0,0,0,0},		// No caps
-	0,							// No rI
-	RES_K(5),					// R63
-	0,							// No Filter
-	CAP_U(0.1),					// C35
-	0,							// not used in resistor network
+	{RES_K(15), RES_K(10.5456), RES_K(33), RES_K(47)}, // R54, R55, R72||(R70+R71), R53, R56 + R37||R35||R36||R34, R58 + R73||R74, R52
+	{0},			// No variable resistor nodes
+	{0},			// No caps
+	0,				// No rI
+	RES_K(5),		// R63
+	0,				// No Filter
+	CAP_U(0.1),		// C35
+	0,				// not used in resistor network
 	33000	// final gain
 };
 
@@ -567,10 +565,9 @@ const struct discrete_schmitt_osc_desc montecar_screech_osc =
 const struct discrete_mixer_desc montecar_mixer =
 {
 	DISC_MIXER_IS_OP_AMP,
-	5,				// 5 inputs
-	{RES_K(15), RES_K(33), RES_K(10), RES_K(10), RES_K(13.3333), 0,0,0}, // R93, R97, R96, variable , R95 + R31||R30||R29
-	{0,0,0,NODE_30,0,0,0,0},			// Only drone has variable node
-	{CAP_U(0.22), CAP_U(0.22), CAP_U(0.22), CAP_U(1), CAP_U(1), 0,0,0},	// C83, C84, C85, C88, C47
+	{RES_K(15), RES_K(33), RES_K(10), RES_K(10), RES_K(13.3333)}, // R93, R97, R96, variable , R95 + R31||R30||R29
+	{0,0,0,NODE_30,0},			// Only drone has variable node
+	{CAP_U(0.22), CAP_U(0.22), CAP_U(0.22), CAP_U(1), CAP_U(1)},	// C83, C84, C85, C88, C47
 	RES_K(27),		// R92
 	RES_K(82),		// R98
 	0,				// No Filter

@@ -115,7 +115,21 @@ VIDEO_START( wbeachvl )
 	return 0;
 }
 
+VIDEO_START( excelsr )
+{
+	bgbitmap = auto_bitmap_alloc(512,512);
 
+	tx_tilemap = tilemap_create(bigtwin_get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	fg_tilemap = tilemap_create(bigtwin_get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+
+	if (!tx_tilemap || !fg_tilemap || !bgbitmap)
+		return 1;
+
+	tilemap_set_transparent_pen(tx_tilemap,0);
+	tilemap_set_transparent_pen(fg_tilemap,0);
+
+	return 0;
+}
 
 /***************************************************************************
 
@@ -276,4 +290,14 @@ VIDEO_UPDATE( wbeachvl )
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 	draw_sprites(bitmap,cliprect,0);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+}
+
+VIDEO_UPDATE( excelsr )
+{
+//	palette_set_color(256,0,0,0);	/* keep the background black */
+
+	copyscrollbitmap(bitmap,bgbitmap,1,&bgscrollx,1,&bgscrolly,cliprect,TRANSPARENCY_NONE,0);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	draw_sprites(bitmap,cliprect,2);
 }

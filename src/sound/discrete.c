@@ -37,7 +37,6 @@
 #include "driver.h"
 #include "wavwrite.h"
 #include "discrete.h"
-#include "sn76477.h"
 #include <stdio.h>
 #include <stdarg.h>
 #include <math.h>
@@ -71,6 +70,10 @@ struct discrete_info
 	/* output node tracking */
 	int discrete_outputs;
 	struct node_description *output_node[DISCRETE_MAX_OUTPUTS];
+
+	/* the input streams */
+	int discrete_input_streams;
+	stream_sample_t *input_stream_data[DISCRETE_MAX_OUTPUTS];
 
 	/* the output stream */
 	sound_stream *discrete_stream;
@@ -149,11 +152,11 @@ struct discrete_module module_list[] =
 	/* from disc_inp.c */
 	{ DSS_ADJUSTMENT  ,"DSS_ADJUSTMENT"  ,sizeof(struct dss_adjustment_context)  ,dss_adjustment_reset  ,dss_adjustment_step  },
 	{ DSS_CONSTANT    ,"DSS_CONSTANT"    ,0                                      ,NULL                  ,dss_constant_step    },
-	{ DSS_INPUT_DATA  ,"DSS_INPUT_DATA"  ,sizeof(struct dss_input_context)       ,dss_input_reset       ,dss_input_step       },
-	{ DSS_INPUT_LOGIC ,"DSS_INPUT_LOGIC" ,sizeof(struct dss_input_context)       ,dss_input_reset       ,dss_input_step       },
-	{ DSS_INPUT_NOT   ,"DSS_INPUT_NOT"   ,sizeof(struct dss_input_context)       ,dss_input_reset       ,dss_input_step       },
-	{ DSS_INPUT_PULSE ,"DSS_INPUT_PULSE" ,sizeof(struct dss_input_context)       ,dss_input_reset       ,dss_input_pulse_step },
-	{ DSS_INPUT_STREAM,"DSS_INPUT_STREAM",0                                      ,NULL                  ,NULL                 },
+	{ DSS_INPUT_DATA  ,"DSS_INPUT_DATA"  ,sizeof(data8_t)                        ,dss_input_reset       ,dss_input_step       },
+	{ DSS_INPUT_LOGIC ,"DSS_INPUT_LOGIC" ,sizeof(data8_t)                        ,dss_input_reset       ,dss_input_step       },
+	{ DSS_INPUT_NOT   ,"DSS_INPUT_NOT"   ,sizeof(data8_t)                        ,dss_input_reset       ,dss_input_step       },
+	{ DSS_INPUT_PULSE ,"DSS_INPUT_PULSE" ,sizeof(data8_t)                        ,dss_input_reset       ,dss_input_pulse_step },
+	{ DSS_INPUT_STREAM,"DSS_INPUT_STREAM",sizeof(stream_sample_t)                ,dss_input_stream_reset,dss_input_stream_step},
 
 	/* from disc_wav.c */
 	/* Generic modules */
@@ -259,7 +262,7 @@ static void *discrete_start(int sndindex, int clock, const void *config)
 {
 	struct discrete_sound_block *intf = (struct discrete_sound_block *)config;
 	struct discrete_info *info;
-	
+
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 
@@ -402,6 +405,12 @@ static void discrete_stream_update(void *param, stream_sample_t **inputs, stream
 	/* Now we must do length iterations of the node list, one output for each step */
 	for (samplenum = 0; samplenum < length; samplenum++)
 	{
+		/* Setup any input streams */
+		for (nodenum = 0; nodenum < info->discrete_input_streams; nodenum++)
+		{
+			*info->input_stream_data[nodenum] = inputs[nodenum][samplenum];
+		}
+
 		/* loop over all nodes */
 		for (nodenum = 0; nodenum < info->node_count; nodenum++)
 		{
@@ -446,8 +455,9 @@ static void init_nodes(struct discrete_info *info, struct discrete_sound_block *
 {
 	int nodenum;
 
-	/* start with no outputs */
+	/* start with no outputs or input streams */
 	info->discrete_outputs = 0;
+	info->discrete_input_streams = 0;
 
 	/* loop over all nodes */
 	for (nodenum = 0; nodenum < info->node_count; nodenum++)
@@ -461,7 +471,11 @@ static void init_nodes(struct discrete_info *info, struct discrete_sound_block *
 
 		/* if we are an output node, track that */
 		if (block->node == NODE_OP)
+		{
+			if (info->discrete_outputs == DISCRETE_MAX_OUTPUTS)
+				osd_die("init_nodes() - There can not be more then %d output nodes", DISCRETE_MAX_OUTPUTS);
 			info->output_node[info->discrete_outputs++] = node;
+		}
 
 		/* otherwise, make sure we are not a duplicate, and put ourselves into the indexed list */
 		else
@@ -500,6 +514,14 @@ static void init_nodes(struct discrete_info *info, struct discrete_sound_block *
 			if (!node->context)
 				osd_die("init_nodes() - Out of memory allocating memory for NODE_%02d\n", node->node - NODE_START);
 			memset(node->context, 0, node->module.contextsize);
+		}
+
+		/* if we are an stream input node, track that */
+		if (block->type == DSS_INPUT_STREAM)
+		{
+			if (info->discrete_input_streams == DISCRETE_MAX_OUTPUTS)
+				osd_die("init_nodes() - There can not be more then %d input stream nodes", DISCRETE_MAX_OUTPUTS);
+			info->input_stream_data[info->discrete_input_streams++] = node->context;
 		}
 	}
 
@@ -570,7 +592,7 @@ static void setup_output_nodes(struct discrete_info *info)
 	}
 
 	/* initialize the stream(s) */
-	info->discrete_stream = stream_create(0, info->discrete_outputs, Machine->sample_rate, info, discrete_stream_update);
+	info->discrete_stream = stream_create(info->discrete_input_streams, info->discrete_outputs, Machine->sample_rate, info, discrete_stream_update);
 }
 
 

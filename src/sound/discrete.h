@@ -1,7 +1,7 @@
 #ifndef _discrete_h_
 #define _discrete_h_
 
-#include "sn76477.h"
+#include "rc.h"
 
 /***********************************************************************
  *
@@ -21,6 +21,11 @@
  * http://www.ibiblio.org/obp/electricCircuits/
  *
  ***********************************************************************
+ *
+ * Currently only one instance of a discrete sound system is supported.
+ * If more then one instance is required in the future, then a chip #
+ * will have to be added to the read/writes and the discrete inputs
+ * modified to match.
  *
  * Unused/Unconnected input nodes should be set to NODE_NC (No Connect)
  *
@@ -115,6 +120,8 @@
  * DISCRETE_INPUT_NOT(NODE)
  * DISCRETE_INPUTX_NOT(NODE,GAIN,OFFSET,INIT)
  * DISCRETE_INPUT_PULSE(NODE,INIT)
+ * DISCRETE_INPUT_STREAM(NODE)
+ * DISCRETE_INPUTX_STREAM(NODE,GAIN,OFFSET)
  *
  * DISCRETE_COUNTER(NODE,ENAB,RESET,CLK,MAX,DIR,INIT0,CLKTYPE)
  * DISCRETE_LFSR_NOISE(NODE,ENAB,RESET,CLK,AMPL,FEED,BIAS,LFSRTB)
@@ -132,9 +139,9 @@
  * DISCRETE_OP_AMP_VCO2(NODE,ENAB,VMOD1,VMOD2,INFO)
  * DISCRETE_SCHMITT_OSCILLATOR(NODE,ENAB,INP0,AMPL,TABLE)
  *
- * DISCRETE_ADDER2(NODE,IN0,IN1)
- * DISCRETE_ADDER3(NODE,IN0,IN1,IN2)
- * DISCRETE_ADDER4(NODE,IN0,IN1,IN2,IN3)
+ * DISCRETE_ADDER2(NODE,ENAB,IN0,IN1)
+ * DISCRETE_ADDER3(NODE,ENAB,IN0,IN1,IN2)
+ * DISCRETE_ADDER4(NODE,ENAB,IN0,IN1,IN2,IN3)
  * DISCRETE_CLAMP(NODE,ENAB,IN0,MIN,MAX,CLAMP)
  * DISCRETE_DIVIDE(NODE,ENAB,IN0,IN1)
  * DISCRETE_GAIN(NODE,IN0,GAIN)
@@ -239,7 +246,7 @@
  *      DISC_LOGADJ 1.0
  *      DISC_LINADJ 0.0
  *
- * EXAMPLES: see Hit Me
+ * EXAMPLES: see Hit Me, Fire Truck
  *
  ***********************************************************************
  *
@@ -293,6 +300,27 @@
  *     DISCRETE_INPUT_PULSE (name of node, default value)
  *
  *  Can be written to with:    discrete_sound_w(NODE_xx, data);
+ *
+ ***********************************************************************
+ *
+ * !!!!! NOT WORKING YET !!!!!
+ *
+ * DISCRETE_INPUT_STREAM(NODE)              - Accepts a stream input
+ * DISCRETE_INPUTX_STREAM(NODE,GAIN,OFFSET) - Accepts a stream input and
+ *                                            applies a gain and offset.
+ *
+ *  Declaration syntax
+ *
+ *     DISCRETE_INPUT_STREAM (name of node)
+ *     DISCRETE_INPUTX_STREAM(name of node, gain, offset)
+ *
+ * Note: These inputs must be defined in the same order that the sound routes
+ *       are defined in the game's MACHINE_DRIVER.
+ *       The discrete system is floating point based.  So when routing a stream
+ *       set it's gain to 100% and then use DISCRETE_INPUTX_STREAM to adjust
+ *       it if needed.
+ *
+ * EXAMPLES: see
  *
  ***********************************************************************
  =======================================================================
@@ -1460,7 +1488,7 @@
  *                     input 7 node,  (if used)
  *                     address of discrete_mixer_info structure)
  *
- *     discrete_mixer_desc = {type, mixerLength, r{}, rNode{}, c{}, rI, rF, cF, cAmp, vRef, gain}
+ *     discrete_mixer_desc = {type, r{}, rNode{}, c{}, rI, rF, cF, cAmp, vRef, gain}
  *
  * Note: Set all unused components to 0.
  *       If an rNode is not used it should also be set to 0.
@@ -1943,7 +1971,7 @@
  *                                             |
  *                                            gnd
  *
- * EXAMPLES: see 
+ * EXAMPLES: see
  *
  *          --------------------------------------------------
  *
@@ -1963,7 +1991,7 @@
  *                              |           gnd
  *                             gnd
  *
- * EXAMPLES: see 
+ * EXAMPLES: see
  *
  *          --------------------------------------------------
  *
@@ -1983,7 +2011,7 @@
  *                                           gnd
  *
  *
- * EXAMPLES: see 
+ * EXAMPLES: see
  *
  ***********************************************************************
  *
@@ -2087,7 +2115,7 @@
  *    {
  *        options,        // bit mapped options
  *        v555,           // B+ voltage of 555
- *        v555high,       // High output voltage of 555 (Usually v555 - 1.7)
+ *        v555high,       // High output voltage of 555 (Usually v555 - 1.2)
  *        threshold555,   // normally 2/3 of v555
  *        trigger555      // normally 1/3 of v555
  *    }
@@ -2643,7 +2671,6 @@ struct discrete_integrate_info
 struct discrete_mixer_desc
 {
 	int		type;
-	int		mixerLength;
 	double	r[DISC_MAX_MIXER_INPUTS];	// static input resistance values.  These are in series with rNode, if used.
 	int		rNode[DISC_MAX_MIXER_INPUTS];	// variable resistance nodes, if needed.  0 if not used.
 	double	c[DISC_MAX_MIXER_INPUTS];
@@ -2707,7 +2734,7 @@ struct discrete_555_desc
 {
 	int		options;		// bit mapped options
 	double	v555;			// B+ voltage of 555
-	double	v555high;		// High output voltage of 555 (Usually v555 - 1.4)
+	double	v555high;		// High output voltage of 555 (Usually v555 - 1.2)
 	double	threshold555;	// normally 2/3 of v555
 	double	trigger555;		// normally 1/3 of v555
 };
@@ -2913,8 +2940,8 @@ enum
 #define DISCRETE_SOUND_END                                              { NODE_00, DSS_NULL     , 0, { NODE_NC }, { 0 } ,NULL  ,"End Marker" }  };
 
 /* from disc_inp.c */
-#define DISCRETE_ADJUSTMENT(NODE,ENAB,MIN,MAX,LOGLIN,PORT)              { NODE, DSS_ADJUSTMENT  , 7, { ENAB,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC }, { ENAB,MIN,MAX,LOGLIN,PORT,0   ,100  }, NULL  , NULL  },
-#define DISCRETE_ADJUSTMENTX(NODE,ENAB,MIN,MAX,LOGLIN,PORT,PMIN,PMAX)   { NODE, DSS_ADJUSTMENT  , 7, { ENAB,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC }, { ENAB,MIN,MAX,LOGLIN,PORT,PMIN,PMAX }, NULL  , NULL  },
+#define DISCRETE_ADJUSTMENT(NODE,ENAB,MIN,MAX,LOGLIN,PORT)              { NODE, DSS_ADJUSTMENT  , 7, { ENAB,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC }, { ENAB,MIN,MAX,LOGLIN,PORT,0   ,100  }, NULL  , "DISCRETE_ADJUSTMENT"  },
+#define DISCRETE_ADJUSTMENTX(NODE,ENAB,MIN,MAX,LOGLIN,PORT,PMIN,PMAX)   { NODE, DSS_ADJUSTMENT  , 7, { ENAB,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC }, { ENAB,MIN,MAX,LOGLIN,PORT,PMIN,PMAX }, NULL  , "DISCRETE_ADJUSTMENTX"  },
 #define DISCRETE_CONSTANT(NODE,CONST)                                   { NODE, DSS_CONSTANT    , 1, { NODE_NC }, { CONST } ,NULL  ,"Constant" },
 #define DISCRETE_INPUT_DATA(NODE)                                       { NODE, DSS_INPUT_DATA  , 3, { NODE_NC,NODE_NC,NODE_NC }, { 1,0,0 }, NULL, "Input Data" },
 #define DISCRETE_INPUTX_DATA(NODE,GAIN,OFFSET,INIT)                     { NODE, DSS_INPUT_DATA  , 3, { NODE_NC,NODE_NC,NODE_NC }, { GAIN,OFFSET,INIT }, NULL, "InputX Data" },
@@ -2923,8 +2950,8 @@ enum
 #define DISCRETE_INPUT_NOT(NODE)                                        { NODE, DSS_INPUT_NOT   , 3, { NODE_NC,NODE_NC,NODE_NC }, { 1,0,0 }, NULL, "Input Not" },
 #define DISCRETE_INPUTX_NOT(NODE,GAIN,OFFSET,INIT)                      { NODE, DSS_INPUT_NOT   , 3, { NODE_NC,NODE_NC,NODE_NC }, { GAIN,OFFSET,INIT }, NULL, "InputX Not" },
 #define DISCRETE_INPUT_PULSE(NODE,INIT)                                 { NODE, DSS_INPUT_PULSE , 3, { NODE_NC,NODE_NC,NODE_NC }, { 1,0,INIT }, NULL, "Input Pulse" },
-#define DISCRETE_INPUT_STREAM(NODE,STREAM,CHANNEL)                      { NODE, DSS_INPUT_STREAM, 4, { NODE_NC,NODE_NC,NODE_NC,NODE_NC }, { STREAM,CHANNEL,1,0 }, NULL, "Input Stream" },
-#define DISCRETE_INPUTX_STREAM(NODE,STREAM,CHANNEL,GAIN,OFFSET)         { NODE, DSS_INPUT_STREAM, 4, { NODE_NC,NODE_NC,NODE_NC,NODE_NC }, { STREAM,CHANNEL,GAIN,OFFSET }, NULL, "InputX Stream" },
+#define DISCRETE_INPUT_STREAM(NODE)                                     { NODE, DSS_INPUT_STREAM, 2, { NODE_NC,NODE_NC }, { 1,0 }, NULL, "Input Stream" },
+#define DISCRETE_INPUTX_STREAM(NODE,GAIN,OFFSET)                        { NODE, DSS_INPUT_STREAM, 2, { NODE_NC,NODE_NC }, { GAIN,OFFSET }, NULL, "InputX Stream" },
 
 /* from disc_wav.c */
 /* generic modules */
@@ -2989,9 +3016,9 @@ enum
 /* Component specific */
 #define DISCRETE_COMP_ADDER(NODE,ENAB,DATA,TABLE)                       { NODE, DST_COMP_ADDER  , 2, { ENAB,DATA }, { ENAB,DATA }, TABLE, "Selectable R or C component Adder" },
 #define DISCRETE_DAC_R1(NODE,ENAB,DATA,VDATA,LADDER)                    { NODE, DST_DAC_R1      , 3, { ENAB,DATA,VDATA }, { ENAB,DATA,VDATA }, LADDER, "DAC with R1 Ladder" },
-#define DISCRETE_DIODE_MIXER2(NODE,ENAB,VJUNC,IN0,IN1)                  { NODE, DST_DIODE_MIX, 4,  { ENAB,NODE_NC,IN0,IN1 }, { ENAB,VJUNC,IN0,IN1 }, INFO, "Diode Mixer 2 Stage" },
-#define DISCRETE_DIODE_MIXER3(NODE,ENAB,VJUNC,IN0,IN1,IN2)              { NODE, DST_DIODE_MIX, 5,  { ENAB,NODE_NC,IN0,IN1,IN2 }, { ENAB,VJUNC,IN0,IN1,IN2 }, INFO, "Diode Mixer 3 Stage" },
-#define DISCRETE_DIODE_MIXER4(NODE,ENAB,VJUNC,IN0,IN1,IN2,IN3)          { NODE, DST_DIODE_MIX, 6,  { ENAB,NODE_NC,IN0,IN1,IN2,IN3 }, { ENAB,VJUNC,IN0,IN1,IN2,IN3 }, INFO, "Diode Mixer 4 Stage" },
+#define DISCRETE_DIODE_MIXER2(NODE,ENAB,VJUNC,IN0,IN1)                  { NODE, DST_DIODE_MIX   , 4, { ENAB,NODE_NC,IN0,IN1 }, { ENAB,VJUNC,IN0,IN1 }, INFO, "Diode Mixer 2 Stage" },
+#define DISCRETE_DIODE_MIXER3(NODE,ENAB,VJUNC,IN0,IN1,IN2)              { NODE, DST_DIODE_MIX   , 5, { ENAB,NODE_NC,IN0,IN1,IN2 }, { ENAB,VJUNC,IN0,IN1,IN2 }, INFO, "Diode Mixer 3 Stage" },
+#define DISCRETE_DIODE_MIXER4(NODE,ENAB,VJUNC,IN0,IN1,IN2,IN3)          { NODE, DST_DIODE_MIX   , 6, { ENAB,NODE_NC,IN0,IN1,IN2,IN3 }, { ENAB,VJUNC,IN0,IN1,IN2,IN3 }, INFO, "Diode Mixer 4 Stage" },
 #define DISCRETE_INTEGRATE(NODE,TRG0,TRG1,INFO)                         { NODE, DST_INTEGRATE   , 2, { TRG0,TRG1 }, { TRG0,TRG1 }, INFO, "Various Integraton Circuit" },
 #define DISCRETE_MIXER2(NODE,ENAB,IN0,IN1,INFO)                         { NODE, DST_MIXER       , 3, { ENAB,IN0,IN1 }, { ENAB,IN0,IN1 }, INFO, "Final Mixer 2 Stage" },
 #define DISCRETE_MIXER3(NODE,ENAB,IN0,IN1,IN2,INFO)                     { NODE, DST_MIXER       , 4, { ENAB,IN0,IN1,IN2 }, { ENAB,IN0,IN1,IN2 }, INFO, "Final Mixer 3 Stage" },

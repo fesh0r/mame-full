@@ -486,27 +486,27 @@ const struct discrete_op_amp_osc_info polaris_plane_vco_info =
 	{DISC_OP_AMP_OSCILLATOR_VCO_1 | DISC_OP_AMP_IS_NORTON, RES_M(1), RES_K(680), RES_K(680), RES_M(1), RES_M(1), RES_K(100), RES_K(10), RES_K(100), CAP_U(0.002), 12};
 
 const struct discrete_mixer_desc polaris_mixer_vr1_desc =
-	{DISC_MIXER_IS_RESISTOR, 4,
-		{RES_K(66), RES_K(43), RES_K(20), RES_K(43), 0,0,0,0},
-		{0,0,0,0,0,0,0,0},	// no variable resistors
-		{CAP_U(1), CAP_U(1), CAP_U(1), CAP_U(1), 0,0,0,0},
+	{DISC_MIXER_IS_RESISTOR,
+		{RES_K(66), RES_K(43), RES_K(20), RES_K(43)},
+		{0},	// no variable resistors
+		{CAP_U(1), CAP_U(1), CAP_U(1), CAP_U(1)},
 		0, RES_K(50), 0, 0, 0, 1};
 
 const struct discrete_mixer_desc polaris_mixer_vr2_desc =
-	{DISC_MIXER_IS_RESISTOR, 2,
-		{RES_K(66), RES_K(110), 0,0,0,0,0,0},
-		{0,0,0,0,0,0,0,0},	// no variable resistors
-		{CAP_U(1), CAP_U(1), 0,0,0,0,0,0},
+	{DISC_MIXER_IS_RESISTOR,
+		{RES_K(66), RES_K(110)},
+		{0},	// no variable resistors
+		{CAP_U(1), CAP_U(1)},
 		0, RES_K(50), 0, 0, 0, 1};
 
 // Note: the final gain leaves the explosions (SX3) at a level
 // where they clip.  From the schematics, this is how they wanted it.
 // This makes them have more bass and distortion.
 const struct discrete_mixer_desc polaris_mixer_vr4_desc =
-	{DISC_MIXER_IS_RESISTOR, 4,
-		{RES_K(22), RES_K(20), RES_K(22), RES_K(22),0,0,0,0},
-		{0,0,0,0,0,0,0,0},	// no variable resistors
-		{0, CAP_U(1), 0,0,0,0,0,0},
+	{DISC_MIXER_IS_RESISTOR,
+		{RES_K(22), RES_K(20), RES_K(22), RES_K(22)},
+		{0},	// no variable resistors
+		{0, CAP_U(1), 0, 0},
 		0, RES_K(50), 0, CAP_U(1), 0, 40000};
 
 /* Nodes - Inputs */
@@ -932,21 +932,21 @@ MACHINE_INIT( desertgu )
 
 struct SN76477interface schaser_sn76477_interface =
 {
-	RES_K( 47)   ,		/*	4  noise_res		 */
-	RES_K(330)   ,		/*	5  filter_res		 */
-	CAP_P(470)   ,		/*	6  filter_cap		 */
-	RES_M(2.2)   ,		/*	7  decay_res		 */
-	CAP_U(1.0)   ,		/*	8  attack_decay_cap  */
-	RES_K(4.7)   ,		/* 10  attack_res		 */
-	0			   ,		/* 11  amplitude_res (variable)	 */
-	RES_K(33)    ,		/* 12  feedback_res 	 */
-	0            ,		/* 16  vco_voltage		 */
-	CAP_U(0.1)   ,		/* 17  vco_cap			 */
-	RES_K(39)    ,		/* 18  vco_res			 */
-	5.0		   ,		/* 19  pitch_voltage	 */
-	RES_K(120)   ,		/* 20  slf_res			 */
-	CAP_U(1.0)   ,		/* 21  slf_cap			 */
-	0 		   ,		/* 23  oneshot_cap (variable) */
+	RES_K( 47)	,		/*	4  noise_res		 */
+	RES_K(330)	,		/*	5  filter_res		 */
+	CAP_P(470)	,		/*	6  filter_cap		 */
+	RES_M(2.2)	,		/*	7  decay_res		 */
+	CAP_U(1.0)	,		/*	8  attack_decay_cap  */
+	RES_K(4.7)	,		/* 10  attack_res		 */
+	0			,		/* 11  amplitude_res (variable)	 */
+	RES_K(33)	,		/* 12  feedback_res 	 */
+	0			,		/* 16  vco_voltage		 */
+	CAP_U(0.1)	,		/* 17  vco_cap			 */
+	RES_K(39)	,		/* 18  vco_res			 */
+	5.0			,		/* 19  pitch_voltage	 */
+	RES_K(120)	,		/* 20  slf_res			 */
+	CAP_U(1.0)	,		/* 21  slf_cap			 */
+	0			,		/* 23  oneshot_cap (variable) */
 	RES_K(220)   		/* 24  oneshot_res		 */
 };
 
@@ -969,6 +969,7 @@ MACHINE_INIT( schaser )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, schaser_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, schaser_sh_port5_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x06, 0x06, 0, 0, watchdog_reset_w);
 
 	SN76477_mixer_a_w(0, 0);
 	SN76477_mixer_c_w(0, 0);
@@ -1037,6 +1038,12 @@ static void schaser_sh_start(void)
 	sample_start_raw(0,backgroundwave,sizeof(backgroundwave)/2,1000,1);
 }
 
+
+/*******************************************************/
+/*                                                     */
+/* Midway "Clowns"                                     */
+/*                                                     */
+/*******************************************************/
 
 static WRITE8_HANDLER( clowns_sh_port7_w )
 {

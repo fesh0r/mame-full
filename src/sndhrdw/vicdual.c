@@ -51,10 +51,10 @@ const struct discrete_555_cc_desc frogsZip555cc =
 
 const struct discrete_mixer_desc frogsMixer =
 {
-	DISC_MIXER_IS_OP_AMP, 2,
-	{RES_K(1), RES_K(5), 0,0,0,0,0,0},
-	{FROGS_R93, 0,0,0,0,0,0,0},
-	{CAP_U(0.01), CAP_U(0.01), 0,0,0,0,0,0},
+	DISC_MIXER_IS_OP_AMP,
+	{RES_K(1), RES_K(5)},
+	{FROGS_R93, 0},
+	{CAP_U(0.01), CAP_U(0.01)},
 	0, RES_K(56), 0, CAP_U(0.1), 0, 10000
 };
 

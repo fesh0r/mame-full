@@ -63,6 +63,7 @@ struct dst_integrate_context
 struct dst_mixer_context
 {
 	int	type;
+	int	size;
 	double	rTotal;
 	struct	node_description* rNode[DISC_MIXER_MAX_INPS];	// Either pointer to input node OR NULL
 	double	exponent_rc[DISC_MIXER_MAX_INPS];	// For high pass filtering cause by cIn
@@ -865,7 +866,7 @@ void dst_mixer_step(struct node_description *node)
 	{
 		rTotal = context->rTotal;
 
-		for(bit=0; bit < info->mixerLength; bit++)
+		for(bit=0; bit < context->size; bit++)
 		{
 			rTemp = info->r[bit];
 			connected = 1;
@@ -958,6 +959,8 @@ void dst_mixer_reset(struct node_description *node)
 	int	bit;
 	double	rTemp = 0;
 
+	context->size = node->active_inputs - 1;
+
 	/*
 	 * THERE IS NO ERROR CHECKING!!!!!!!!!
 	 * If you are an idiot and pass a bad ladder table
@@ -972,7 +975,7 @@ void dst_mixer_reset(struct node_description *node)
 	 * Also calculate the exponents while we are here.
 	 */
 	context->rTotal = 0;
-	for(bit=0; bit < info->mixerLength; bit++)
+	for(bit=0; bit < context->size; bit++)
 	{
 		if (info->rNode[bit])
 		{
@@ -1322,7 +1325,6 @@ void dst_switch_step(struct node_description *node)
 {
 	if(DSS_SWITCH__ENABLE)
 	{
-		/* Input 1 switches between input[0]/input[2] */
 		node->output=DSS_SWITCH__SWITCH ? DSS_SWITCH__IN1 : DSS_SWITCH__IN0;
 	}
 	else

@@ -2517,6 +2517,7 @@ V-V                           TP-027
 	DRIVER( shngmtkb )  /* Shanghai Matekibuyuu */
 	DRIVER( tondemo )	/* Tondemo Crisis (JAPAN) */
 	DRIVER( glpracr3 )	/* Gallop Racer 3 (JAPAN) */
+	DRIVER( tecmowcm )	/* Tecmo World Cup Millenium (JAPAN) */
 	DRIVER( mfjump )	/* Monster Farm Jump (JAPAN) */
 
 	/* Atlus ZN1 */
@@ -2928,6 +2929,8 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( dotriku2 )	/* cabinet test board */
 	DRIVER( spcpostn )	/* (c) 1986 Sega / Nasco" */
 	DRIVER( angelkds )	/* 833-6599 (c) 1988 Sega / Nasco? */
+	DRIVER( calorie )	/* (c) 1986 Sega */
+	DRIVER( calorieb )	/* (c) 1986 Sega (but bootleg) */
 
 	/* Enduro Racer / Space Harrier / Hang On */
 	DRIVER( enduror )	/* (c) 1985 (protected) */
@@ -4187,6 +4190,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( starfire )	/* Exidy [1979?] */
 	DRIVER( starfira )	/* Exidy [1979?] */
 	DRIVER( fireone )	/* (c) 1979 Exidy */
+	DRIVER( starfir2 )	/* (c) 1979 Exidy */
 	DRIVER( victory )	/* (c) 1982 */
 	DRIVER( victorba )	/* (c) 1982 */
 
@@ -5941,6 +5945,7 @@ Other Sun games
 	DRIVER( sslama )	/* (c) 1993 */
 	DRIVER( bigtwin )	/* (c) 1995 */
 	DRIVER( wbeachvl )	/* (c) 1995 */
+	DRIVER( excelsr )	/* (c) 1995 */
 
 	/* Pacific Novelty games */
 	DRIVER( sharkatt )	/* (c) [1980] */
@@ -6467,6 +6472,7 @@ Other Sun games
 	DRIVER( laserbsa )
 	DRIVER( futflash )
 	DRIVER( turbosub )
+	DRIVER( pipeline )
 
 #endif	/* DRIVER_RECURSIVE */
 

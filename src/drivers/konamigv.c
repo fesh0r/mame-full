@@ -10,11 +10,11 @@ Known Dumps
 
 Game       Description                  Mother Board   Code       Version       Date   Time
 
-kdeadeye   Dead Eye    			GV999          ?       ?            ?         ?
 pbball96   Powerful Pro Baseball '96    GV999          GV017   JAPAN 1.03   96.05.27  18:00
 hyperath   Hyper Athlete                ZV610          GV021   JAPAN 1.00   96.06.09  19:00
 susume     Susume! Taisen Puzzle-Dama   ZV610          GV027   JAPAN 1.20   96.03.04  12:00
 btchamp    Beat the Champ               GV999          GV053   UAA01        ?
+kdeadeye   Dead Eye                     GV999          GV054   UA01         ?
 weddingr   Wedding Rhapsody             ?              GX624   JAA          97.05.29   9:12
 simpbowl   Simpsons Bowling             ?              GQ829   UAA          ?
 
@@ -191,7 +191,7 @@ static ADDRESS_MAP_START( konamigv_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x1f801060, 0x1f80106f) AM_WRITENOP
 	AM_RANGE(0x1f801070, 0x1f801077) AM_READWRITE(psx_irq_r, psx_irq_w)
 	AM_RANGE(0x1f801080, 0x1f8010ff) AM_READWRITE(psx_dma_r, psx_dma_w)
-	AM_RANGE(0x1f801100, 0x1f80113f) AM_READWRITE(psx_counter_r, psx_counter_w)
+	AM_RANGE(0x1f801100, 0x1f80112f) AM_READWRITE(psx_counter_r, psx_counter_w)
 	AM_RANGE(0x1f801810, 0x1f801817) AM_READWRITE(psx_gpu_r, psx_gpu_w)
 	AM_RANGE(0x1f801820, 0x1f801827) AM_READWRITE(psx_mdec_r, psx_mdec_w)
 	AM_RANGE(0x1f801c00, 0x1f801dff) AM_READWRITE(psx_spu_r, psx_spu_w)
@@ -452,8 +452,8 @@ static READ32_HANDLER( flash_r )
 		int chip = (flash_address >= 0x200000) ? 2 : 0;
 		int ret;
 
-		ret = intelflash_read_byte(chip, flash_address & 0x1fffff) & 0xff;
-		ret |= intelflash_read_byte(chip+1, flash_address & 0x1fffff)<<8;
+		ret = intelflash_read(chip, flash_address & 0x1fffff) & 0xff;
+		ret |= intelflash_read(chip+1, flash_address & 0x1fffff)<<8;
 		flash_address++;
 
 		return ret;
@@ -476,8 +476,8 @@ static WRITE32_HANDLER( flash_w )
 	{
 		case 0:
 			chip = (flash_address >= 0x200000) ? 2 : 0;
-			intelflash_write_byte(chip, flash_address & 0x1fffff, data&0xff);
-			intelflash_write_byte(chip+1, flash_address & 0x1fffff, (data>>8)&0xff);
+			intelflash_write(chip, flash_address & 0x1fffff, data&0xff);
+			intelflash_write(chip+1, flash_address & 0x1fffff, (data>>8)&0xff);
 			break;
 
 		case 1:
@@ -522,25 +522,23 @@ static READ32_HANDLER( unknown_r )
 	return 0xffffffff;
 }
 
-static MACHINE_INIT( simpbowl )
+static DRIVER_INIT( simpbowl )
 {
+	intelflash_init( 0, FLASH_INTEL_28F016S5, NULL );
+	intelflash_init( 1, FLASH_INTEL_28F016S5, NULL );
+	intelflash_init( 2, FLASH_INTEL_28F016S5, NULL );
+	intelflash_init( 3, FLASH_INTEL_28F016S5, NULL );
+
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f680080, 0x1f68008f, 0, 0, flash_r );
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f680080, 0x1f68008f, 0, 0, flash_w );
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f6800c0, 0x1f6800c7, 0, 0, trackball_r );
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f6800c8, 0x1f6800cb, 0, 0, unknown_r ); /* ?? */
 
-	psx_machine_init();
-
-	// Intel (0x89) 29F016 (0xaa)
-	intelflash_set_ids_0(0xaa, 0x89);
-	intelflash_set_ids_1(0xaa, 0x89);
-	intelflash_set_ids_2(0xaa, 0x89);
-	intelflash_set_ids_3(0xaa, 0x89);
+	init_konamigv();
 }
 
 static MACHINE_DRIVER_START( simpbowl )
 	MDRV_IMPORT_FROM( konamigv )
-	MDRV_MACHINE_INIT( simpbowl )
 	MDRV_NVRAM_HANDLER( simpbowl )
 MACHINE_DRIVER_END
 
@@ -618,11 +616,11 @@ static READ32_HANDLER( btcflash_r )
 {
 	if (mem_mask == 0xffff0000)
 	{
-		return intelflash_read_word(0, offset*2);
+		return intelflash_read(0, offset*2);
 	}
 	else if (mem_mask == 0x0000ffff)
 	{
-		return intelflash_read_word(0, (offset*2)+1)<<16;
+		return intelflash_read(0, (offset*2)+1)<<16;
 	}
 
 	return 0;
@@ -632,11 +630,11 @@ static WRITE32_HANDLER( btcflash_w )
 {
 	if (mem_mask == 0xffff0000)
 	{
-		intelflash_write_word(0, offset*2, data);
+		intelflash_write(0, offset*2, data&0xffff);
 	}
 	else if (mem_mask == 0x0000ffff)
 	{
-		intelflash_write_word(0, (offset*2)+1, data>>16);
+		intelflash_write(0, (offset*2)+1, (data>>16)&0xffff);
 	}
 }
 
@@ -672,25 +670,24 @@ static WRITE32_HANDLER( btc_trackball_w )
 static NVRAM_HANDLER( btchamp )
 {
 	nvram_handler_konamigv_93C46( file, read_or_write );
-	nvram_handler_intelflash_0( file, read_or_write );
+	nvram_handler_intelflash_16le_0( file, read_or_write );
 }
 
-static MACHINE_INIT( btchamp )
+static DRIVER_INIT( btchamp )
 {
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f680080, 0x1f68008f, 0, 0, btc_trackball_r );
+	intelflash_init( 0, FLASH_SHARP_LH28F400, NULL );
+
+	memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x1f680080, 0x1f68008f, 0, 0, btc_trackball_r );
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f680080, 0x1f68008f, 0, 0, btc_trackball_w );
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f380000, 0x1f4fffff, 0, 0, btcflash_r );
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f380000, 0x1f4fffff, 0, 0, btcflash_w );
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f6800e0, 0x1f6800e3, 0, 0, MWA32_NOP );
+	memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x1f380000, 0x1f3fffff, 0, 0, btcflash_r );
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f380000, 0x1f3fffff, 0, 0, btcflash_w );
 
-	psx_machine_init();
-
-	// Sharp (0xb0) LH28F400 (0xed)
-	intelflash_set_ids_0(0xb0, 0x3d);
+	init_konamigv();
 }
 
 static MACHINE_DRIVER_START( btchamp )
 	MDRV_IMPORT_FROM( konamigv )
-	MDRV_MACHINE_INIT( btchamp )
 	MDRV_NVRAM_HANDLER( btchamp )
 MACHINE_DRIVER_END
 
@@ -852,10 +849,10 @@ ROM_END
 /* BIOS placeholder */
 GAMEX( 1995, konamigv, 0, konamigv, konamigv, konamigv, ROT0, "Konami", "Baby Phoenix/GV System", NOT_A_DRIVER )
 
-GAMEX( 1996, kdeadeye, konamigv, btchamp,  konamigv, konamigv, ROT0, "Konami", "Dead Eye (Konami)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, pbball96, konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "Powerful Baseball '96 (GV017 JAPAN 1.03)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, hyperath, konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "Hyper Athlete (GV021 JAPAN 1.00)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, susume,   konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "Susume! Taisen Puzzle-Dama (GV027 JAPAN 1.20)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1996, btchamp,  konamigv, btchamp,  btchamp,  konamigv, ROT0, "Konami", "Beat the Champ (GV053 UAA01)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, btchamp,  konamigv, btchamp,  btchamp,  btchamp,  ROT0, "Konami", "Beat the Champ (GV053 UAA01)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, kdeadeye, konamigv, btchamp,  konamigv, btchamp,  ROT0, "Konami", "Dead Eye (Konami)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1997, weddingr, konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "Wedding Rhapsody (GX624 JAA)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 2000, simpbowl, konamigv, simpbowl, simpbowl, konamigv, ROT0, "Konami", "Simpsons Bowling (GQ829 UAA)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 2000, simpbowl, konamigv, simpbowl, simpbowl, simpbowl, ROT0, "Konami", "Simpsons Bowling (GQ829 UAA)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
