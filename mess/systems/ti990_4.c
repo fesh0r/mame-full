@@ -20,8 +20,6 @@ TODO :
 #include "vidhrdw/generic.h"
 #include "cpu/tms9900/tms9900.h"
 
-static int ROM_paged;
-
 void *timer;
 
 static void clear_load(int dummy)
