@@ -31,6 +31,7 @@
 #include "state.h"
 #include "mamedbg.h"
 #include "sh2.h"
+#include "memory.h"
 
 /* speed up delay loops, bail out of tight loops */
 #define BUSY_LOOP_HACKS 	1
@@ -109,25 +110,25 @@ static SH2 sh2;
 #define Rn	((opcode>>8)&15)
 #define Rm	((opcode>>4)&15)
 
-INLINE data_t RB(offs_t A)
+INLINE data8_t RB(offs_t A)
 {
 	if (A >= 0xe0000000)
 		return sh2_internal_r(A);
 	if (A >= 0x40000000)
 		return 0xa5;
-	return cpu_readmem27bew(A & AM);
+	return cpu_readmem32bew(A & AM);
 }
 
-INLINE data_t RW(offs_t A)
+INLINE data16_t RW(offs_t A)
 {
 	if (A >= 0xe0000000)
 		return (sh2_internal_r(A) << 8) | sh2_internal_r(A+1);
 	if (A >= 0x40000000)
 		return 0xa5a5;
-	return cpu_readmem27bew_word(A & AM);
+	return cpu_readmem32bew_word(A & AM);
 }
 
-INLINE data_t RL(offs_t A)
+INLINE data32_t RL(offs_t A)
 {
 	if (A >= 0xe0000000)
 		return (sh2_internal_r(A+0) << 24) |
@@ -136,10 +137,10 @@ INLINE data_t RL(offs_t A)
 			   (sh2_internal_r(A+3) <<	0);
 	if (A >= 0x40000000)
 		return 0xa5a5a5a5;
-	return cpu_readmem27bew_dword(A & AM);
+	return ((cpu_readmem32bew_word(A) << 16) | cpu_readmem32bew_word(A+2));
 }
 
-INLINE void WB(offs_t A, data_t V)
+INLINE void WB(offs_t A, data8_t V)
 {
 	if (A >= 0xe0000000)
 	{
@@ -148,10 +149,10 @@ INLINE void WB(offs_t A, data_t V)
 	}
 	if (A >= 0x40000000)
 		return;
-	cpu_writemem27bew(A & AM,V);
+	cpu_writemem32bew(A & AM,V);
 }
 
-INLINE void WW(offs_t A, data_t V)
+INLINE void WW(offs_t A, data16_t V)
 {
 	if (A >= 0xe0000000)
 	{
@@ -161,10 +162,10 @@ INLINE void WW(offs_t A, data_t V)
 	}
 	if (A >= 0x40000000)
 		return;
-	cpu_writemem27bew_word(A & AM,V);
+	cpu_writemem32bew_word(A & AM,V);
 }
 
-INLINE void WL(offs_t A, data_t V)
+INLINE void WL(offs_t A, data32_t V)
 {
 	if (A >= 0xe0000000)
 	{
@@ -176,7 +177,8 @@ INLINE void WL(offs_t A, data_t V)
 	}
 	if (A >= 0x40000000)
 		return;
-	cpu_writemem27bew_dword(A & AM,V);
+	cpu_writemem32bew_word(A,V >> 16);
+	cpu_writemem32bew_word(A+2,V & 0xffff);
 }
 
 INLINE void sh2_exception(char *message, int irqline)
@@ -209,7 +211,7 @@ INLINE void sh2_exception(char *message, int irqline)
 
     /* fetch PC */
 	sh2.pc = RL( sh2.vbr + vector * 4 );
-	change_pc27bew(sh2.pc & AM);
+	change_pc32bew(sh2.pc & AM);
 }
 
 #define CHECK_PENDING_IRQ(message)				\
@@ -258,7 +260,7 @@ static UINT8 sh2_win_layout[] = {
  *	0011 nnnn mmmm 1100  1		 -
  *	ADD 	Rm,Rn
  */
-INLINE void ADD(data_t m, data_t n)
+INLINE void ADD(UINT32 m, UINT32 n)
 {
 	sh2.r[n] += sh2.r[m];
 }
@@ -267,7 +269,7 @@ INLINE void ADD(data_t m, data_t n)
  *	0111 nnnn iiii iiii  1		 -
  *	ADD 	#imm,Rn
  */
-INLINE void ADDI(data_t i, data_t n)
+INLINE void ADDI(UINT32 i, UINT32 n)
 {
 	sh2.r[n] += (INT32)(INT16)(INT8)i;
 }
@@ -276,7 +278,7 @@ INLINE void ADDI(data_t i, data_t n)
  *	0011 nnnn mmmm 1110  1		 carry
  *	ADDC	Rm,Rn
  */
-INLINE void ADDC(data_t m, data_t n)
+INLINE void ADDC(UINT32 m, UINT32 n)
 {
 	UINT32 tmp0, tmp1;
 
@@ -295,7 +297,7 @@ INLINE void ADDC(data_t m, data_t n)
  *	0011 nnnn mmmm 1111  1		 overflow
  *	ADDV	Rm,Rn
  */
-INLINE void ADDV(data_t m, data_t n)
+INLINE void ADDV(UINT32 m, UINT32 n)
 {
 	INT32 dest, src, ans;
 
@@ -329,7 +331,7 @@ INLINE void ADDV(data_t m, data_t n)
  *	0010 nnnn mmmm 1001  1		 -
  *	AND 	Rm,Rn
  */
-INLINE void AND(data_t m, data_t n)
+INLINE void AND(UINT32 m, UINT32 n)
 {
 	sh2.r[n] &= sh2.r[m];
 }
@@ -339,7 +341,7 @@ INLINE void AND(data_t m, data_t n)
  *	1100 1001 iiii iiii  1		 -
  *	AND 	#imm,R0
  */
-INLINE void ANDI(data_t i)
+INLINE void ANDI(UINT32 i)
 {
 	sh2.r[0] &= i;
 }
@@ -348,9 +350,9 @@ INLINE void ANDI(data_t i)
  *	1100 1101 iiii iiii  1		 -
  *	AND.B	#imm,@(R0,GBR)
  */
-INLINE void ANDM(data_t i)
+INLINE void ANDM(UINT32 i)
 {
-	data_t temp;
+	UINT32 temp;
 
 	sh2.ea = sh2.gbr + sh2.r[0];
 	temp = i & RB( sh2.ea );
@@ -362,13 +364,13 @@ INLINE void ANDM(data_t i)
  *	1000 1011 dddd dddd  3/1	 -
  *	BF		disp8
  */
-INLINE void BF(data_t d)
+INLINE void BF(UINT32 d)
 {
 	if ((sh2.sr & T) == 0)
 	{
 		INT32 disp = ((INT32)d << 24) >> 24;
 		sh2.pc = sh2.ea = sh2.pc + disp * 2 + 2;
-		change_pc27bew(sh2.pc & AM);
+		change_pc32bew(sh2.pc & AM);
 		sh2_icount -= 2;
 	}
 }
@@ -377,14 +379,14 @@ INLINE void BF(data_t d)
  *	1000 1111 dddd dddd  3/1	 -
  *	BFS 	disp8
  */
-INLINE void BFS(data_t d)
+INLINE void BFS(UINT32 d)
 {
 	UINT32 temp = sh2.pc;
 	if ((sh2.sr & T) == 0)
 	{
 		INT32 disp = ((INT32)d << 24) >> 24;
 		sh2.pc = sh2.ea = sh2.pc + disp * 2 + 2;
-		change_pc27bew(sh2.pc & AM);
+		change_pc32bew(sh2.pc & AM);
 		sh2.delay = temp;
 		sh2_icount--;
 	}
@@ -394,7 +396,7 @@ INLINE void BFS(data_t d)
  *	1010 dddd dddd dddd  2		 -
  *	BRA 	disp12
  */
-INLINE void BRA(data_t d)
+INLINE void BRA(UINT32 d)
 {
 	INT32 disp = ((INT32)d << 20) >> 20;
 
@@ -410,7 +412,7 @@ INLINE void BRA(data_t d)
 	}
 #endif
 	sh2.pc = sh2.ea = sh2.pc + disp * 2 + 2;
-	change_pc27bew(sh2.pc & AM);
+	change_pc32bew(sh2.pc & AM);
 	sh2.delay = sh2.ppc;
 	sh2_icount--;
 }
@@ -419,10 +421,10 @@ INLINE void BRA(data_t d)
  *	0000 mmmm 0010 0011  2		 -
  *	BRAF	Rm
  */
-INLINE void BRAF(data_t m)
+INLINE void BRAF(UINT32 m)
 {
 	sh2.pc += sh2.r[m] + 2;
-	change_pc27bew(sh2.pc & AM);
+	change_pc32bew(sh2.pc & AM);
 	sh2.delay = sh2.ppc;
 	sh2_icount--;
 }
@@ -431,13 +433,13 @@ INLINE void BRAF(data_t m)
  *	1011 dddd dddd dddd  2		 -
  *	BSR 	disp12
  */
-INLINE void BSR(data_t d)
+INLINE void BSR(UINT32 d)
 {
 	INT32 disp = ((INT32)d << 20) >> 20;
 
 	sh2.pr = sh2.pc;
 	sh2.pc = sh2.ea = sh2.pc + disp * 2 + 2;
-	change_pc27bew(sh2.pc & AM);
+	change_pc32bew(sh2.pc & AM);
 	sh2.delay = sh2.pr;
 	sh2.pr += 2;
 	sh2_icount--;
@@ -447,11 +449,11 @@ INLINE void BSR(data_t d)
  *	0000 mmmm 0000 0011  2		 -
  *	BSRF	Rm
  */
-INLINE void BSRF(data_t m)
+INLINE void BSRF(UINT32 m)
 {
 	sh2.pr = sh2.pc;
 	sh2.pc += sh2.r[m] + 2;
-	change_pc27bew(sh2.pc & AM);
+	change_pc32bew(sh2.pc & AM);
 	sh2.delay = sh2.pr;
 	sh2.pr += 2;
 	sh2_icount--;
@@ -461,13 +463,13 @@ INLINE void BSRF(data_t m)
  *	1000 1001 dddd dddd  3/1	 -
  *	BT		disp8
  */
-INLINE void BT(data_t d)
+INLINE void BT(UINT32 d)
 {
 	if ((sh2.sr & T) != 0)
 	{
 		INT32 disp = ((INT32)d << 24) >> 24;
 		sh2.pc = sh2.ea = sh2.pc + disp * 2 + 2;
-		change_pc27bew(sh2.pc & AM);
+		change_pc32bew(sh2.pc & AM);
 		sh2_icount -= 2;
 	}
 }
@@ -476,13 +478,13 @@ INLINE void BT(data_t d)
  *	1000 1101 dddd dddd  2/1	 -
  *	BTS 	disp8
  */
-INLINE void BTS(data_t d)
+INLINE void BTS(UINT32 d)
 {
 	if ((sh2.sr & T) != 0)
 	{
 		INT32 disp = ((INT32)d << 24) >> 24;
 		sh2.pc = sh2.ea = sh2.pc + disp * 2 + 2;
-		change_pc27bew(sh2.pc & AM);
+		change_pc32bew(sh2.pc & AM);
 		sh2.delay = sh2.ppc;
 		sh2_icount--;
 	}
@@ -511,7 +513,7 @@ INLINE void CLRT(void)
  *	0011 nnnn mmmm 0000  1		 comparison result
  *	CMP_EQ	Rm,Rn
  */
-INLINE void CMPEQ(data_t m, data_t n)
+INLINE void CMPEQ(UINT32 m, UINT32 n)
 {
 	if (sh2.r[n] == sh2.r[m])
 		sh2.sr |= T;
@@ -523,7 +525,7 @@ INLINE void CMPEQ(data_t m, data_t n)
  *	0011 nnnn mmmm 0011  1		 comparison result
  *	CMP_GE	Rm,Rn
  */
-INLINE void CMPGE(data_t m, data_t n)
+INLINE void CMPGE(UINT32 m, UINT32 n)
 {
 	if ((INT32) sh2.r[n] >= (INT32) sh2.r[m])
 		sh2.sr |= T;
@@ -535,7 +537,7 @@ INLINE void CMPGE(data_t m, data_t n)
  *	0011 nnnn mmmm 0111  1		 comparison result
  *	CMP_GT	Rm,Rn
  */
-INLINE void CMPGT(data_t m, data_t n)
+INLINE void CMPGT(UINT32 m, UINT32 n)
 {
 	if ((INT32) sh2.r[n] > (INT32) sh2.r[m])
 		sh2.sr |= T;
@@ -547,7 +549,7 @@ INLINE void CMPGT(data_t m, data_t n)
  *	0011 nnnn mmmm 0110  1		 comparison result
  *	CMP_HI	Rm,Rn
  */
-INLINE void CMPHI(data_t m, data_t n)
+INLINE void CMPHI(UINT32 m, UINT32 n)
 {
 	if ((UINT32) sh2.r[n] > (UINT32) sh2.r[m])
 		sh2.sr |= T;
@@ -559,7 +561,7 @@ INLINE void CMPHI(data_t m, data_t n)
  *	0011 nnnn mmmm 0010  1		 comparison result
  *	CMP_HS	Rm,Rn
  */
-INLINE void CMPHS(data_t m, data_t n)
+INLINE void CMPHS(UINT32 m, UINT32 n)
 {
 	if ((UINT32) sh2.r[n] >= (UINT32) sh2.r[m])
 		sh2.sr |= T;
@@ -572,7 +574,7 @@ INLINE void CMPHS(data_t m, data_t n)
  *	0100 nnnn 0001 0101  1		 comparison result
  *	CMP_PL	Rn
  */
-INLINE void CMPPL(data_t n)
+INLINE void CMPPL(UINT32 n)
 {
 	if ((INT32) sh2.r[n] > 0)
 		sh2.sr |= T;
@@ -584,7 +586,7 @@ INLINE void CMPPL(data_t n)
  *	0100 nnnn 0001 0001  1		 comparison result
  *	CMP_PZ	Rn
  */
-INLINE void CMPPZ(data_t n)
+INLINE void CMPPZ(UINT32 n)
 {
 	if ((INT32) sh2.r[n] >= 0)
 		sh2.sr |= T;
@@ -596,7 +598,7 @@ INLINE void CMPPZ(data_t n)
  *	0010 nnnn mmmm 1100  1		 comparison result
  * CMP_STR	Rm,Rn
  */
-INLINE void CMPSTR(data_t m, data_t n)
+INLINE void CMPSTR(UINT32 m, UINT32 n)
 {
 	UINT32 temp;
 	INT32 HH, HL, LH, LL;
@@ -616,7 +618,7 @@ INLINE void CMPSTR(data_t m, data_t n)
  *	1000 1000 iiii iiii  1		 comparison result
  *	CMP/EQ #imm,R0
  */
-INLINE void CMPIM(data_t i)
+INLINE void CMPIM(UINT32 i)
 {
 	UINT32 imm = (UINT32)(INT32)(INT16)(INT8)i;
 
@@ -630,7 +632,7 @@ INLINE void CMPIM(data_t i)
  *	0010 nnnn mmmm 0111  1		 calculation result
  *	DIV0S	Rm,Rn
  */
-INLINE void DIV0S(data_t m, data_t n)
+INLINE void DIV0S(UINT32 m, UINT32 n)
 {
 	if ((sh2.r[n] & 0x80000000) == 0)
 		sh2.sr &= ~Q;
@@ -659,7 +661,7 @@ INLINE void DIV0U(void)
  *	0011 nnnn mmmm 0100  1		 calculation result
  *	DIV1 Rm,Rn
  */
-INLINE void DIV1(data_t m, data_t n)
+INLINE void DIV1(UINT32 m, UINT32 n)
 {
 	UINT32 tmp0;
 	UINT32 old_q;
@@ -716,7 +718,7 @@ INLINE void DIV1(data_t m, data_t n)
 }
 
 /*	DMULS.L Rm,Rn */
-INLINE void DMULS(data_t m, data_t n)
+INLINE void DMULS(UINT32 m, UINT32 n)
 {
 	UINT32 RnL, RnH, RmL, RmH, Res0, Res1, Res2;
 	UINT32 temp0, temp1, temp2, temp3;
@@ -765,7 +767,7 @@ INLINE void DMULS(data_t m, data_t n)
 }
 
 /*	DMULU.L Rm,Rn */
-INLINE void DMULU(data_t m, data_t n)
+INLINE void DMULU(UINT32 m, UINT32 n)
 {
 	UINT32 RnL, RnH, RmL, RmH, Res0, Res1, Res2;
 	UINT32 temp0, temp1, temp2, temp3;
@@ -793,7 +795,7 @@ INLINE void DMULU(data_t m, data_t n)
 }
 
 /*	DT		Rn */
-INLINE void DT(data_t n)
+INLINE void DT(UINT32 n)
 {
 	sh2.r[n]--;
 	if (sh2.r[n] == 0)
@@ -819,43 +821,43 @@ INLINE void DT(data_t n)
 }
 
 /*	EXTS.B	Rm,Rn */
-INLINE void EXTSB(data_t m, data_t n)
+INLINE void EXTSB(UINT32 m, UINT32 n)
 {
 	sh2.r[n] = ((INT32)sh2.r[m] << 24) >> 24;
 }
 
 /*	EXTS.W	Rm,Rn */
-INLINE void EXTSW(data_t m, data_t n)
+INLINE void EXTSW(UINT32 m, UINT32 n)
 {
 	sh2.r[n] = ((INT32)sh2.r[m] << 16) >> 16;
 }
 
 /*	EXTU.B	Rm,Rn */
-INLINE void EXTUB(data_t m, data_t n)
+INLINE void EXTUB(UINT32 m, UINT32 n)
 {
 	sh2.r[n] = sh2.r[m] & 0x000000ff;
 }
 
 /*	EXTU.W	Rm,Rn */
-INLINE void EXTUW(data_t m, data_t n)
+INLINE void EXTUW(UINT32 m, UINT32 n)
 {
 	sh2.r[n] = sh2.r[m] & 0x0000ffff;
 }
 
 /*	JMP 	@Rm */
-INLINE void JMP(data_t m)
+INLINE void JMP(UINT32 m)
 {
 	sh2.pc = sh2.ea = sh2.r[m];
-	change_pc27bew(sh2.pc & AM);
+	change_pc32bew(sh2.pc & AM);
 	sh2.delay = sh2.ppc;
 }
 
 /*	JSR 	@Rm */
-INLINE void JSR(data_t m)
+INLINE void JSR(UINT32 m)
 {
 	sh2.pr = sh2.pc;
 	sh2.pc = sh2.ea = sh2.r[m];
-	change_pc27bew(sh2.pc & AM);
+	change_pc32bew(sh2.pc & AM);
 	sh2.delay = sh2.pr;
 	sh2.pr += 2;
 	sh2_icount--;
@@ -863,26 +865,26 @@ INLINE void JSR(data_t m)
 
 
 /*	LDC 	Rm,SR */
-INLINE void LDCSR(data_t m)
+INLINE void LDCSR(UINT32 m)
 {
 	sh2.sr = sh2.r[m] & FLAGS;
 	CHECK_PENDING_IRQ("LDC  Rm,SR")
 }
 
 /*	LDC 	Rm,GBR */
-INLINE void LDCGBR(data_t m)
+INLINE void LDCGBR(UINT32 m)
 {
 	sh2.gbr = sh2.r[m];
 }
 
 /*	LDC 	Rm,VBR */
-INLINE void LDCVBR(data_t m)
+INLINE void LDCVBR(UINT32 m)
 {
 	sh2.vbr = sh2.r[m];
 }
 
 /*	LDC.L	@Rm+,SR */
-INLINE void LDCMSR(data_t m)
+INLINE void LDCMSR(UINT32 m)
 {
 	sh2.ea = sh2.r[m];
 	sh2.sr = RL( sh2.ea ) & FLAGS;
@@ -892,7 +894,7 @@ INLINE void LDCMSR(data_t m)
 }
 
 /*	LDC.L	@Rm+,GBR */
-INLINE void LDCMGBR(data_t m)
+INLINE void LDCMGBR(UINT32 m)
 {
 	sh2.ea = sh2.r[m];
 	sh2.gbr = RL( sh2.ea );
@@ -901,7 +903,7 @@ INLINE void LDCMGBR(data_t m)
 }
 
 /*	LDC.L	@Rm+,VBR */
-INLINE void LDCMVBR(data_t m)
+INLINE void LDCMVBR(UINT32 m)
 {
 	sh2.ea = sh2.r[m];
 	sh2.vbr = RL( sh2.ea );
@@ -910,25 +912,25 @@ INLINE void LDCMVBR(data_t m)
 }
 
 /*	LDS 	Rm,MACH */
-INLINE void LDSMACH(data_t m)
+INLINE void LDSMACH(UINT32 m)
 {
 	sh2.mach = sh2.r[m];
 }
 
 /*	LDS 	Rm,MACL */
-INLINE void LDSMACL(data_t m)
+INLINE void LDSMACL(UINT32 m)
 {
 	sh2.macl = sh2.r[m];
 }
 
 /*	LDS 	Rm,PR */
-INLINE void LDSPR(data_t m)
+INLINE void LDSPR(UINT32 m)
 {
 	sh2.pr = sh2.r[m];
 }
 
 /*	LDS.L	@Rm+,MACH */
-INLINE void LDSMMACH(data_t m)
+INLINE void LDSMMACH(UINT32 m)
 {
 	sh2.ea = sh2.r[m];
 	sh2.mach = RL( sh2.ea );
@@ -936,7 +938,7 @@ INLINE void LDSMMACH(data_t m)
 }
 
 /*	LDS.L	@Rm+,MACL */
-INLINE void LDSMMACL(data_t m)
+INLINE void LDSMMACL(UINT32 m)
 {
 	sh2.ea = sh2.r[m];
 	sh2.macl = RL( sh2.ea );
@@ -944,7 +946,7 @@ INLINE void LDSMMACL(data_t m)
 }
 
 /*	LDS.L	@Rm+,PR */
-INLINE void LDSMPR(data_t m)
+INLINE void LDSMPR(UINT32 m)
 {
 	sh2.ea = sh2.r[m];
 	sh2.pr = RL( sh2.ea );
@@ -952,7 +954,7 @@ INLINE void LDSMPR(data_t m)
 }
 
 /*	MAC.L	@Rm+,@Rn+ */
-INLINE void MAC_L(data_t m, data_t n)
+INLINE void MAC_L(UINT32 m, UINT32 n)
 {
 	UINT32 RnL, RnH, RmL, RmH, Res0, Res1, Res2;
 	UINT32 temp0, temp1, temp2, temp3;
@@ -1029,7 +1031,7 @@ INLINE void MAC_L(data_t m, data_t n)
 }
 
 /*	MAC.W	@Rm+,@Rn+ */
-INLINE void MAC_W(data_t m, data_t n)
+INLINE void MAC_W(UINT32 m, UINT32 n)
 {
 	INT32 tempm, tempn, dest, src, ans;
 	UINT32 templ;
@@ -1082,55 +1084,55 @@ INLINE void MAC_W(data_t m, data_t n)
 }
 
 /*	MOV 	Rm,Rn */
-INLINE void MOV(data_t m, data_t n)
+INLINE void MOV(UINT32 m, UINT32 n)
 {
 	sh2.r[n] = sh2.r[m];
 }
 
 /*	MOV.B	Rm,@Rn */
-INLINE void MOVBS(data_t m, data_t n)
+INLINE void MOVBS(UINT32 m, UINT32 n)
 {
 	sh2.ea = sh2.r[n];
 	WB( sh2.ea, sh2.r[m] & 0x000000ff);
 }
 
 /*	MOV.W	Rm,@Rn */
-INLINE void MOVWS(data_t m, data_t n)
+INLINE void MOVWS(UINT32 m, UINT32 n)
 {
 	sh2.ea = sh2.r[n];
 	WW( sh2.ea, sh2.r[m] & 0x0000ffff);
 }
 
 /*	MOV.L	Rm,@Rn */
-INLINE void MOVLS(data_t m, data_t n)
+INLINE void MOVLS(UINT32 m, UINT32 n)
 {
 	sh2.ea = sh2.r[n];
 	WL( sh2.ea, sh2.r[m] );
 }
 
 /*	MOV.B	@Rm,Rn */
-INLINE void MOVBL(data_t m, data_t n)
+INLINE void MOVBL(UINT32 m, UINT32 n)
 {
 	sh2.ea = sh2.r[m];
 	sh2.r[n] = (UINT32)(INT32)(INT16)(INT8) RB( sh2.ea );
 }
 
 /*	MOV.W	@Rm,Rn */
-INLINE void MOVWL(data_t m, data_t n)
+INLINE void MOVWL(UINT32 m, UINT32 n)
 {
 	sh2.ea = sh2.r[m];
 	sh2.r[n] = (UINT32)(INT32)(INT16) RW( sh2.ea );
 }
 
 /*	MOV.L	@Rm,Rn */
-INLINE void MOVLL(data_t m, data_t n)
+INLINE void MOVLL(UINT32 m, UINT32 n)
 {
 	sh2.ea = sh2.r[m];
 	sh2.r[n] = RL( sh2.ea );
 }
 
 /*	MOV.B	Rm,@-Rn */
-INLINE void MOVBM(data_t m, data_t n)
+INLINE void MOVBM(UINT32 m, UINT32 n)
 {
 	UINT32 data = sh2.r[n];
 	sh2.r[n] -= 1;
@@ -1138,25 +1140,25 @@ INLINE void MOVBM(data_t m, data_t n)
 }
 
 /*	MOV.W	Rm,@-Rn */
-INLINE void MOVWM(data_t m, data_t n)
+INLINE void MOVWM(UINT32 m, UINT32 n)
 {
-	data_t data = sh2.r[m] & 0x0000ffff;
+	UINT32 data = sh2.r[m] & 0x0000ffff;
 
 	sh2.r[n] -= 2;
 	WW( sh2.r[n], data );
 }
 
 /*	MOV.L	Rm,@-Rn */
-INLINE void MOVLM(data_t m, data_t n)
+INLINE void MOVLM(UINT32 m, UINT32 n)
 {
-	data_t data = sh2.r[m];
+	UINT32 data = sh2.r[m];
 
 	sh2.r[n] -= 4;
 	WL( sh2.r[n], data );
 }
 
 /*	MOV.B	@Rm+,Rn */
-INLINE void MOVBP(data_t m, data_t n)
+INLINE void MOVBP(UINT32 m, UINT32 n)
 {
 	sh2.r[n] = (UINT32)(INT32)(INT16)(INT8) RB( sh2.r[m] );
 	if (n != m)
@@ -1164,7 +1166,7 @@ INLINE void MOVBP(data_t m, data_t n)
 }
 
 /*	MOV.W	@Rm+,Rn */
-INLINE void MOVWP(data_t m, data_t n)
+INLINE void MOVWP(UINT32 m, UINT32 n)
 {
 	sh2.r[n] = (UINT32)(INT32)(INT16) RW( sh2.r[m] );
 	if (n != m)
@@ -1172,7 +1174,7 @@ INLINE void MOVWP(data_t m, data_t n)
 }
 
 /*	MOV.L	@Rm+,Rn */
-INLINE void MOVLP(data_t m, data_t n)
+INLINE void MOVLP(UINT32 m, UINT32 n)
 {
 	sh2.r[n] = RL( sh2.r[m] );
 	if (n != m)
@@ -1180,55 +1182,55 @@ INLINE void MOVLP(data_t m, data_t n)
 }
 
 /*	MOV.B	Rm,@(R0,Rn) */
-INLINE void MOVBS0(data_t m, data_t n)
+INLINE void MOVBS0(UINT32 m, UINT32 n)
 {
 	sh2.ea = sh2.r[n] + sh2.r[0];
 	WB( sh2.ea, sh2.r[m] & 0x000000ff );
 }
 
 /*	MOV.W	Rm,@(R0,Rn) */
-INLINE void MOVWS0(data_t m, data_t n)
+INLINE void MOVWS0(UINT32 m, UINT32 n)
 {
 	sh2.ea = sh2.r[n] + sh2.r[0];
 	WW( sh2.ea, sh2.r[m] & 0x0000ffff );
 }
 
 /*	MOV.L	Rm,@(R0,Rn) */
-INLINE void MOVLS0(data_t m, data_t n)
+INLINE void MOVLS0(UINT32 m, UINT32 n)
 {
 	sh2.ea = sh2.r[n] + sh2.r[0];
 	WL( sh2.ea, sh2.r[m] );
 }
 
 /*	MOV.B	@(R0,Rm),Rn */
-INLINE void MOVBL0(data_t m, data_t n)
+INLINE void MOVBL0(UINT32 m, UINT32 n)
 {
 	sh2.ea = sh2.r[m] + sh2.r[0];
 	sh2.r[n] = (UINT32)(INT32)(INT16)(INT8) RB( sh2.ea );
 }
 
 /*	MOV.W	@(R0,Rm),Rn */
-INLINE void MOVWL0(data_t m, data_t n)
+INLINE void MOVWL0(UINT32 m, UINT32 n)
 {
 	sh2.ea = sh2.r[m] + sh2.r[0];
 	sh2.r[n] = (UINT32)(INT32)(INT16) RW( sh2.ea );
 }
 
 /*	MOV.L	@(R0,Rm),Rn */
-INLINE void MOVLL0(data_t m, data_t n)
+INLINE void MOVLL0(UINT32 m, UINT32 n)
 {
 	sh2.ea = sh2.r[m] + sh2.r[0];
 	sh2.r[n] = RL( sh2.ea );
 }
 
 /*	MOV 	#imm,Rn */
-INLINE void MOVI(data_t i, data_t n)
+INLINE void MOVI(UINT32 i, UINT32 n)
 {
 	sh2.r[n] = (UINT32)(INT32)(INT16)(INT8) i;
 }
 
 /*	MOV.W	@(disp8,PC),Rn */
-INLINE void MOVWI(data_t d, data_t n)
+INLINE void MOVWI(UINT32 d, UINT32 n)
 {
 	UINT32 disp = d & 0xff;
 	sh2.ea = sh2.pc + disp * 2 + 2;
@@ -1236,7 +1238,7 @@ INLINE void MOVWI(data_t d, data_t n)
 }
 
 /*	MOV.L	@(disp8,PC),Rn */
-INLINE void MOVLI(data_t d, data_t n)
+INLINE void MOVLI(UINT32 d, UINT32 n)
 {
 	UINT32 disp = d & 0xff;
 	sh2.ea = ((sh2.pc + 2) & ~3) + disp * 4;
@@ -1244,7 +1246,7 @@ INLINE void MOVLI(data_t d, data_t n)
 }
 
 /*	MOV.B	@(disp8,GBR),R0 */
-INLINE void MOVBLG(data_t d)
+INLINE void MOVBLG(UINT32 d)
 {
 	UINT32 disp = d & 0xff;
 	sh2.ea = sh2.gbr + disp;
@@ -1252,7 +1254,7 @@ INLINE void MOVBLG(data_t d)
 }
 
 /*	MOV.W	@(disp8,GBR),R0 */
-INLINE void MOVWLG(data_t d)
+INLINE void MOVWLG(UINT32 d)
 {
 	UINT32 disp = d & 0xff;
 	sh2.ea = sh2.gbr + disp * 2;
@@ -1260,7 +1262,7 @@ INLINE void MOVWLG(data_t d)
 }
 
 /*	MOV.L	@(disp8,GBR),R0 */
-INLINE void MOVLLG(data_t d)
+INLINE void MOVLLG(UINT32 d)
 {
 	UINT32 disp = d & 0xff;
 	sh2.ea = sh2.gbr + disp * 4;
@@ -1268,7 +1270,7 @@ INLINE void MOVLLG(data_t d)
 }
 
 /*	MOV.B	R0,@(disp8,GBR) */
-INLINE void MOVBSG(data_t d)
+INLINE void MOVBSG(UINT32 d)
 {
 	UINT32 disp = d & 0xff;
 	sh2.ea = sh2.gbr + disp;
@@ -1276,7 +1278,7 @@ INLINE void MOVBSG(data_t d)
 }
 
 /*	MOV.W	R0,@(disp8,GBR) */
-INLINE void MOVWSG(data_t d)
+INLINE void MOVWSG(UINT32 d)
 {
 	UINT32 disp = d & 0xff;
 	sh2.ea = sh2.gbr + disp * 2;
@@ -1284,7 +1286,7 @@ INLINE void MOVWSG(data_t d)
 }
 
 /*	MOV.L	R0,@(disp8,GBR) */
-INLINE void MOVLSG(data_t d)
+INLINE void MOVLSG(UINT32 d)
 {
 	UINT32 disp = d & 0xff;
 	sh2.ea = sh2.gbr + disp * 4;
@@ -1292,7 +1294,7 @@ INLINE void MOVLSG(data_t d)
 }
 
 /*	MOV.B	R0,@(disp4,Rn) */
-INLINE void MOVBS4(data_t d, data_t n)
+INLINE void MOVBS4(UINT32 d, UINT32 n)
 {
 	UINT32 disp = d & 0x0f;
 	sh2.ea = sh2.r[n] + disp;
@@ -1300,7 +1302,7 @@ INLINE void MOVBS4(data_t d, data_t n)
 }
 
 /*	MOV.W	R0,@(disp4,Rn) */
-INLINE void MOVWS4(data_t d, data_t n)
+INLINE void MOVWS4(UINT32 d, UINT32 n)
 {
 	UINT32 disp = d & 0x0f;
 	sh2.ea = sh2.r[n] + disp * 2;
@@ -1308,7 +1310,7 @@ INLINE void MOVWS4(data_t d, data_t n)
 }
 
 /* MOV.L Rm,@(disp4,Rn) */
-INLINE void MOVLS4(data_t m, data_t d, data_t n)
+INLINE void MOVLS4(UINT32 m, UINT32 d, UINT32 n)
 {
 	UINT32 disp = d & 0x0f;
 	sh2.ea = sh2.r[n] + disp * 4;
@@ -1316,7 +1318,7 @@ INLINE void MOVLS4(data_t m, data_t d, data_t n)
 }
 
 /*	MOV.B	@(disp4,Rm),R0 */
-INLINE void MOVBL4(data_t m, data_t d)
+INLINE void MOVBL4(UINT32 m, UINT32 d)
 {
 	UINT32 disp = d & 0x0f;
 	sh2.ea = sh2.r[m] + disp;
@@ -1324,7 +1326,7 @@ INLINE void MOVBL4(data_t m, data_t d)
 }
 
 /*	MOV.W	@(disp4,Rm),R0 */
-INLINE void MOVWL4(data_t m, data_t d)
+INLINE void MOVWL4(UINT32 m, UINT32 d)
 {
 	UINT32 disp = d & 0x0f;
 	sh2.ea = sh2.r[m] + disp * 2;
@@ -1332,7 +1334,7 @@ INLINE void MOVWL4(data_t m, data_t d)
 }
 
 /*	MOV.L	@(disp4,Rm),Rn */
-INLINE void MOVLL4(data_t m, data_t d, data_t n)
+INLINE void MOVLL4(UINT32 m, UINT32 d, UINT32 n)
 {
 	UINT32 disp = d & 0x0f;
 	sh2.ea = sh2.r[m] + disp * 4;
@@ -1340,7 +1342,7 @@ INLINE void MOVLL4(data_t m, data_t d, data_t n)
 }
 
 /*	MOVA	@(disp8,PC),R0 */
-INLINE void MOVA(data_t d)
+INLINE void MOVA(UINT32 d)
 {
 	UINT32 disp = d & 0xff;
 	sh2.ea = ((sh2.pc + 2) & ~3) + disp * 4;
@@ -1348,38 +1350,38 @@ INLINE void MOVA(data_t d)
 }
 
 /*	MOVT	Rn */
-INLINE void MOVT(data_t n)
+INLINE void MOVT(UINT32 n)
 {
 	sh2.r[n] = sh2.sr & T;
 }
 
 /*	MUL.L	Rm,Rn */
-INLINE void MULL(data_t m, data_t n)
+INLINE void MULL(UINT32 m, UINT32 n)
 {
 	sh2.macl = sh2.r[n] * sh2.r[m];
 	sh2_icount--;
 }
 
 /*	MULS	Rm,Rn */
-INLINE void MULS(data_t m, data_t n)
+INLINE void MULS(UINT32 m, UINT32 n)
 {
 	sh2.macl = (INT16) sh2.r[n] * (INT16) sh2.r[m];
 }
 
 /*	MULU	Rm,Rn */
-INLINE void MULU(data_t m, data_t n)
+INLINE void MULU(UINT32 m, UINT32 n)
 {
 	sh2.macl = (UINT16) sh2.r[n] * (UINT16) sh2.r[n];
 }
 
 /*	NEG 	Rm,Rn */
-INLINE void NEG(data_t m, data_t n)
+INLINE void NEG(UINT32 m, UINT32 n)
 {
 	sh2.r[n] = 0 - sh2.r[m];
 }
 
 /*	NEGC	Rm,Rn */
-INLINE void NEGC(data_t m, data_t n)
+INLINE void NEGC(UINT32 m, UINT32 n)
 {
 	UINT32 temp;
 
@@ -1399,28 +1401,28 @@ INLINE void NOP(void)
 }
 
 /*	NOT 	Rm,Rn */
-INLINE void NOT(data_t m, data_t n)
+INLINE void NOT(UINT32 m, UINT32 n)
 {
 	sh2.r[n] = ~sh2.r[m];
 }
 
 /*	OR		Rm,Rn */
-INLINE void OR(data_t m, data_t n)
+INLINE void OR(UINT32 m, UINT32 n)
 {
 	sh2.r[n] |= sh2.r[m];
 }
 
 /*	OR		#imm,R0 */
-INLINE void ORI(data_t i)
+INLINE void ORI(UINT32 i)
 {
 	sh2.r[0] |= i;
 	sh2_icount -= 2;
 }
 
 /*	OR.B	#imm,@(R0,GBR) */
-INLINE void ORM(data_t i)
+INLINE void ORM(UINT32 i)
 {
-	data_t temp;
+	UINT32 temp;
 
 	sh2.ea = sh2.gbr + sh2.r[0];
 	temp = RB( sh2.ea );
@@ -1429,7 +1431,7 @@ INLINE void ORM(data_t i)
 }
 
 /*	ROTCL	Rn */
-INLINE void ROTCL(data_t n)
+INLINE void ROTCL(UINT32 n)
 {
 	UINT32 temp;
 
@@ -1439,7 +1441,7 @@ INLINE void ROTCL(data_t n)
 }
 
 /*	ROTCR	Rn */
-INLINE void ROTCR(data_t n)
+INLINE void ROTCR(UINT32 n)
 {
 	UINT32 temp;
 
@@ -1452,14 +1454,14 @@ INLINE void ROTCR(data_t n)
 }
 
 /*	ROTL	Rn */
-INLINE void ROTL(data_t n)
+INLINE void ROTL(UINT32 n)
 {
 	sh2.sr = (sh2.sr & ~T) | ((sh2.r[n] >> 31) & T);
 	sh2.r[n] = (sh2.r[n] << 1) | (sh2.r[n] >> 31);
 }
 
 /*	ROTR	Rn */
-INLINE void ROTR(data_t n)
+INLINE void ROTR(UINT32 n)
 {
 	sh2.sr = (sh2.sr & ~T) | (sh2.r[n] & T);
 	sh2.r[n] = (sh2.r[n] >> 1) | (sh2.r[n] << 31);
@@ -1470,7 +1472,7 @@ INLINE void RTE(void)
 {
 	sh2.ea = sh2.r[15];
 	sh2.pc = RL( sh2.ea );
-	change_pc27bew(sh2.pc & AM);
+	change_pc32bew(sh2.pc & AM);
 	sh2.r[15] += 4;
 	sh2.ea = sh2.r[15];
 	sh2.sr = RL( sh2.ea ) & FLAGS;
@@ -1484,7 +1486,7 @@ INLINE void RTE(void)
 INLINE void RTS(void)
 {
 	sh2.pc = sh2.ea = sh2.pr;
-	change_pc27bew(sh2.pc & AM);
+	change_pc32bew(sh2.pc & AM);
 	sh2.delay = sh2.ppc;
 	sh2_icount--;
 }
@@ -1496,65 +1498,65 @@ INLINE void SETT(void)
 }
 
 /*	SHAL	Rn		(same as SHLL) */
-INLINE void SHAL(data_t n)
+INLINE void SHAL(UINT32 n)
 {
 	sh2.sr = (sh2.sr & ~T) | ((sh2.r[n] >> 31) & T);
 	sh2.r[n] <<= 1;
 }
 
 /*	SHAR	Rn */
-INLINE void SHAR(data_t n)
+INLINE void SHAR(UINT32 n)
 {
 	sh2.sr = (sh2.sr & ~T) | (sh2.r[n] & T);
 	sh2.r[n] = (UINT32)((INT32)sh2.r[n] >> 1);
 }
 
 /*	SHLL	Rn		(same as SHAL) */
-INLINE void SHLL(data_t n)
+INLINE void SHLL(UINT32 n)
 {
 	sh2.sr = (sh2.sr & ~T) | ((sh2.r[n] >> 31) & T);
 	sh2.r[n] <<= 1;
 }
 
 /*	SHLL2	Rn */
-INLINE void SHLL2(data_t n)
+INLINE void SHLL2(UINT32 n)
 {
 	sh2.r[n] <<= 2;
 }
 
 /*	SHLL8	Rn */
-INLINE void SHLL8(data_t n)
+INLINE void SHLL8(UINT32 n)
 {
 	sh2.r[n] <<= 8;
 }
 
 /*	SHLL16	Rn */
-INLINE void SHLL16(data_t n)
+INLINE void SHLL16(UINT32 n)
 {
 	sh2.r[n] <<= 16;
 }
 
 /*	SHLR	Rn */
-INLINE void SHLR(data_t n)
+INLINE void SHLR(UINT32 n)
 {
 	sh2.sr = (sh2.sr & ~T) | (sh2.r[n] & T);
 	sh2.r[n] >>= 1;
 }
 
 /*	SHLR2	Rn */
-INLINE void SHLR2(data_t n)
+INLINE void SHLR2(UINT32 n)
 {
 	sh2.r[n] >>= 2;
 }
 
 /*	SHLR8	Rn */
-INLINE void SHLR8(data_t n)
+INLINE void SHLR8(UINT32 n)
 {
 	sh2.r[n] >>= 8;
 }
 
 /*	SHLR16	Rn */
-INLINE void SHLR16(data_t n)
+INLINE void SHLR16(UINT32 n)
 {
 	sh2.r[n] >>= 16;
 }
@@ -1568,25 +1570,25 @@ INLINE void SLEEP(void)
 }
 
 /*	STC 	SR,Rn */
-INLINE void STCSR(data_t n)
+INLINE void STCSR(UINT32 n)
 {
 	sh2.r[n] = sh2.sr;
 }
 
 /*	STC 	GBR,Rn */
-INLINE void STCGBR(data_t n)
+INLINE void STCGBR(UINT32 n)
 {
 	sh2.r[n] = sh2.gbr;
 }
 
 /*	STC 	VBR,Rn */
-INLINE void STCVBR(data_t n)
+INLINE void STCVBR(UINT32 n)
 {
 	sh2.r[n] = sh2.vbr;
 }
 
 /*	STC.L	SR,@-Rn */
-INLINE void STCMSR(data_t n)
+INLINE void STCMSR(UINT32 n)
 {
 	sh2.r[n] -= 4;
 	sh2.ea = sh2.r[n];
@@ -1595,7 +1597,7 @@ INLINE void STCMSR(data_t n)
 }
 
 /*	STC.L	GBR,@-Rn */
-INLINE void STCMGBR(data_t n)
+INLINE void STCMGBR(UINT32 n)
 {
 	sh2.r[n] -= 4;
 	sh2.ea = sh2.r[n];
@@ -1604,7 +1606,7 @@ INLINE void STCMGBR(data_t n)
 }
 
 /*	STC.L	VBR,@-Rn */
-INLINE void STCMVBR(data_t n)
+INLINE void STCMVBR(UINT32 n)
 {
 	sh2.r[n] -= 4;
 	sh2.ea = sh2.r[n];
@@ -1613,25 +1615,25 @@ INLINE void STCMVBR(data_t n)
 }
 
 /*	STS 	MACH,Rn */
-INLINE void STSMACH(data_t n)
+INLINE void STSMACH(UINT32 n)
 {
 	sh2.r[n] = sh2.mach;
 }
 
 /*	STS 	MACL,Rn */
-INLINE void STSMACL(data_t n)
+INLINE void STSMACL(UINT32 n)
 {
 	sh2.r[n] = sh2.macl;
 }
 
 /*	STS 	PR,Rn */
-INLINE void STSPR(data_t n)
+INLINE void STSPR(UINT32 n)
 {
 	sh2.r[n] = sh2.pr;
 }
 
 /*	STS.L	MACH,@-Rn */
-INLINE void STSMMACH(data_t n)
+INLINE void STSMMACH(UINT32 n)
 {
 	sh2.r[n] -= 4;
 	sh2.ea = sh2.r[n];
@@ -1639,7 +1641,7 @@ INLINE void STSMMACH(data_t n)
 }
 
 /*	STS.L	MACL,@-Rn */
-INLINE void STSMMACL(data_t n)
+INLINE void STSMMACL(UINT32 n)
 {
 	sh2.r[n] -= 4;
 	sh2.ea = sh2.r[n];
@@ -1647,7 +1649,7 @@ INLINE void STSMMACL(data_t n)
 }
 
 /*	STS.L	PR,@-Rn */
-INLINE void STSMPR(data_t n)
+INLINE void STSMPR(UINT32 n)
 {
 	sh2.r[n] -= 4;
 	sh2.ea = sh2.r[n];
@@ -1655,13 +1657,13 @@ INLINE void STSMPR(data_t n)
 }
 
 /*	SUB 	Rm,Rn */
-INLINE void SUB(data_t m, data_t n)
+INLINE void SUB(UINT32 m, UINT32 n)
 {
 	sh2.r[n] -= sh2.r[m];
 }
 
 /*	SUBC	Rm,Rn */
-INLINE void SUBC(data_t m, data_t n)
+INLINE void SUBC(UINT32 m, UINT32 n)
 {
 	UINT32 tmp0, tmp1;
 
@@ -1677,7 +1679,7 @@ INLINE void SUBC(data_t m, data_t n)
 }
 
 /*	SUBV	Rm,Rn */
-INLINE void SUBV(data_t m, data_t n)
+INLINE void SUBV(UINT32 m, UINT32 n)
 {
 	INT32 dest, src, ans;
 
@@ -1708,7 +1710,7 @@ INLINE void SUBV(data_t m, data_t n)
 }
 
 /*	SWAP.B	Rm,Rn */
-INLINE void SWAPB(data_t m, data_t n)
+INLINE void SWAPB(UINT32 m, UINT32 n)
 {
 	UINT32 temp0, temp1;
 
@@ -1719,7 +1721,7 @@ INLINE void SWAPB(data_t m, data_t n)
 }
 
 /*	SWAP.W	Rm,Rn */
-INLINE void SWAPW(data_t m, data_t n)
+INLINE void SWAPW(UINT32 m, UINT32 n)
 {
 	UINT32 temp;
 
@@ -1728,9 +1730,9 @@ INLINE void SWAPW(data_t m, data_t n)
 }
 
 /*	TAS.B	@Rn */
-INLINE void TAS(data_t n)
+INLINE void TAS(UINT32 n)
 {
-	data_t temp;
+	UINT32 temp;
 	sh2.ea = sh2.r[n];
 	/* Bus Lock enable */
 	temp = RB( sh2.ea );
@@ -1745,9 +1747,9 @@ INLINE void TAS(data_t n)
 }
 
 /*	TRAPA	#imm */
-INLINE void TRAPA(data_t i)
+INLINE void TRAPA(UINT32 i)
 {
-	data_t imm = i & 0xff;
+	UINT32 imm = i & 0xff;
 
 	sh2.ea = sh2.vbr + imm * 4;
 
@@ -1757,13 +1759,13 @@ INLINE void TRAPA(data_t i)
 	WL( sh2.r[15], sh2.pc );
 
 	sh2.pc = RL( sh2.ea );
-	change_pc27bew(sh2.pc & AM);
+	change_pc32bew(sh2.pc & AM);
 
 	sh2_icount -= 7;
 }
 
 /*	TST 	Rm,Rn */
-INLINE void TST(data_t m, data_t n)
+INLINE void TST(UINT32 m, UINT32 n)
 {
 	if ((sh2.r[n] & sh2.r[m]) == 0)
 		sh2.sr |= T;
@@ -1772,7 +1774,7 @@ INLINE void TST(data_t m, data_t n)
 }
 
 /*	TST 	#imm,R0 */
-INLINE void TSTI(data_t i)
+INLINE void TSTI(UINT32 i)
 {
 	UINT32 imm = i & 0xff;
 
@@ -1783,7 +1785,7 @@ INLINE void TSTI(data_t i)
 }
 
 /*	TST.B	#imm,@(R0,GBR) */
-INLINE void TSTM(data_t i)
+INLINE void TSTM(UINT32 i)
 {
 	UINT32 imm = i & 0xff;
 
@@ -1796,23 +1798,23 @@ INLINE void TSTM(data_t i)
 }
 
 /*	XOR 	Rm,Rn */
-INLINE void XOR(data_t m, data_t n)
+INLINE void XOR(UINT32 m, UINT32 n)
 {
 	sh2.r[n] ^= sh2.r[m];
 }
 
 /*	XOR 	#imm,R0 */
-INLINE void XORI(data_t i)
+INLINE void XORI(UINT32 i)
 {
 	UINT32 imm = i & 0xff;
 	sh2.r[0] ^= imm;
 }
 
 /*	XOR.B	#imm,@(R0,GBR) */
-INLINE void XORM(data_t i)
+INLINE void XORM(UINT32 i)
 {
 	UINT32 imm = i & 0xff;
-	data_t temp;
+	UINT32 temp;
 
 	sh2.ea = sh2.gbr + sh2.r[0];
 	temp = RB( sh2.ea );
@@ -1822,7 +1824,7 @@ INLINE void XORM(data_t i)
 }
 
 /*	XTRCT	Rm,Rn */
-INLINE void XTRCT(data_t m, data_t n)
+INLINE void XTRCT(UINT32 m, UINT32 n)
 {
 	UINT32 temp;
 
@@ -2161,7 +2163,7 @@ void sh2_reset(void *param)
 	sh2.pc = RL(0);
 	sh2.r[15] = RL(4);
 	sh2.sr = I;
-	change_pc27bew(sh2.pc & AM);
+	change_pc32bew(sh2.pc & AM);
 }
 
 /* Shut down CPU core */
@@ -2410,7 +2412,7 @@ WRITE_HANDLER( sh2_internal_w )
 
 READ_HANDLER( sh2_internal_r )
 {
-	data_t data;
+	UINT32 data;
 	int cpu = cpu_getactivecpu();
 
 	switch( offset )
