@@ -194,7 +194,7 @@ static void set_memory_overlay(int overlay)
 		cpu_setbank(RAM_BANK1, rom_ptr);
 
 		install_mem_read16_handler(0, rom_size, 0x3fffff, mac_ROM_r);
-		install_mem_write16_handler(0, rom_size, 0x3fffff, MWA_RAM_BANK1);
+		install_mem_write16_handler(0, rom_size, 0x3fffff, MWA16_NOP);
 
 		/* HACK! - copy in the initial reset/stack */
 		memcpy(mac_ram_ptr, rom_ptr, 8);
