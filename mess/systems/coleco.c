@@ -228,7 +228,7 @@ static const struct IODevice io_coleco[] = {
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
 CONS( 1982, coleco,   0,        coleco,   coleco,   0,        "Coleco", "Colecovision" )
-CONS( 1982, colecoa,  coleco,   coleco,   coleco,   0,        "Coleco", "Colecovision \"Thick Characters\"" )
+CONS( 1982, colecoa,  coleco,   coleco,   coleco,   0,        "Coleco", "Colecovision (Thick Characters)" )
 
 #ifdef COLECO_HACKS
 CONSX( 1982, colecofb, coleco,   coleco,   coleco,   0,        "Coleco", "Colecovision (Fast BIOS Hack)"
