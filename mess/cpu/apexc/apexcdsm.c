@@ -143,7 +143,8 @@ unsigned DasmAPEXC(char *buffer, unsigned pc)
 	switch (the_desc->format)
 	{
 	case branch:
-		buffer += sprintf(buffer-1, "<(%02d/%02d) >=", (x >> 5) & 0x1f, x & 0x1f);	/* 10+1 chars */
+		buffer--;	/* eat last char */
+		buffer += sprintf(buffer, "<(%02d/%02d) >=", (x >> 5) & 0x1f, x & 0x1f);	/* 10+1 chars */
 		break;
 
 	case multiply:
