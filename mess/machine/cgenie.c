@@ -216,7 +216,7 @@ static OPBASE_HANDLER (opbaseoverride)
 					}
 				}
 				osd_fclose(cmd);
-				cpu_set_pc(entry);
+				cpunum_set_pc(0,entry);
 			}
 			free(buff);
 		}
