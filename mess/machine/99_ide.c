@@ -19,6 +19,7 @@
 /*#include "harddisk.h"
 #include "machine/idectrl.h"*/
 #include "devices/idedrive.h"
+#include "machine/rtc65271.h"
 #include "ti99_4x.h"
 #include "99_ide.h"
 
@@ -38,12 +39,6 @@ enum
 {	/* 0xff for 2 mbytes, 0x3f for 512kbytes, 0x03 for 32 kbytes */
 	page_mask = /*0xff*/0x3f
 };
-
-static UINT8 *ti99_ide_rtc_RAM;
-static int cur_rtc_page;
-
-static UINT8 ti99_ide_rtc_regs[64];
-static int cur_rtc_reg;
 
 static const ti99_exp_card_handlers_t ide_handlers =
 {
@@ -149,16 +144,15 @@ void ti99_ide_unload(int id)
 */
 void ti99_ide_init(void)
 {
+	rtc65271_init(memory_region(region_dsr) + offset_ide_ram2);
+
 	ti99_ide_RAM = memory_region(region_dsr) + offset_ide_ram;
-	ti99_ide_rtc_RAM = memory_region(region_dsr) + offset_ide_ram2;
 
 	ti99_exp_set_card_handlers(0x1000, & ide_handlers);
 
 	ide_hd_machine_init(0, 0, & ti99_ide_interface);
 
 	cur_page = 0;
-	cur_rtc_page = 0;
-	cur_rtc_reg = 0;
 	sram_enable = 0;
 	cru_register = 0;
 }
@@ -233,18 +227,18 @@ static READ_HANDLER(ide_mem_r)
 		case 0:		/* RTC RAM */
 			if (offset & 0x80)
 				/* RTC RAM page register */
-				reply = cur_rtc_page;
+				reply = rtc65271_r(1, (offset & 0x1f) | 0x20);
 			else
-				/* RTC RAM write */
-				reply = ti99_ide_rtc_RAM[offset+0x0020*cur_rtc_page];
+				/* RTC RAM read */
+				reply = rtc65271_r(1, offset);
 			break;
 		case 1:		/* RTC registers */
 			if (offset & 0x10)
 				/* register data */
-				reply = ti99_ide_rtc_regs[cur_rtc_reg];
+				reply = rtc65271_r(0, 1);
 			else
 				/* register select */
-				reply = cur_rtc_reg;
+				reply = rtc65271_r(0, 0);
 			break;
 		case 2:		/* IDE registers set 1 (CS1Fx) */
 			if (offset & 1)
@@ -300,18 +294,18 @@ static WRITE_HANDLER(ide_mem_w)
 		case 0:		/* RTC RAM */
 			if (offset & 0x80)
 				/* RTC RAM page register */
-				cur_rtc_page = data & 0x7f;
+				rtc65271_w(1, (offset & 0x1f) | 0x20, data);
 			else
 				/* RTC RAM write */
-				ti99_ide_rtc_RAM[offset+0x0020*cur_rtc_page] = data;
+				rtc65271_w(1, offset, data);
 			break;
 		case 1:		/* RTC registers */
 			if (offset & 0x10)
 				/* register data */
-				ti99_ide_rtc_regs[cur_rtc_reg] = data;
+				rtc65271_w(0, 1, data);
 			else
 				/* register select */
-				cur_rtc_reg = data & 0x3f;
+				rtc65271_w(0, 0, data);
 			break;
 		case 2:		/* IDE registers set 1 (CS1Fx) */
 			if (offset & 1)
