@@ -61,19 +61,6 @@ static UINT16 pal_ind16[16], pal_ind256[256], *pal_indYJK;
 #define V9938_MODE_TEXT2	(9)
 #define V9938_MODE_UNKNOWN	(10)
 
-enum v9938_mode_t
-{
-	TEXT1,
-	MULTI
-};
-typedef enum v9938_mode_t v9938_mode;
-
-void
-testfunk(v9938_mode mode)
-{
-	printf("mode: %d\n", (int)mode);
-}
-
 
 static const char *v9938_modes[] = {
 	"TEXT 1", "MULTICOLOR", "GRAPHIC 1", "GRAPHIC 2", "GRAPHIC 3",
