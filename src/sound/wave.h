@@ -39,7 +39,7 @@ extern int wave_output_chunk(int id, void *src, int chunks);
 	IO_CASSETTE,		/* type */						\
 	count,				/* count */ 					\
 	fileext,			/* file extensions */			\
-	NULL,				/* private */					\
+	IO_RESET_NONE,				/* reset depth */					\
 	id, 				/* id */						\
 	init,				/* init */						\
 	exit,				/* exit */						\
