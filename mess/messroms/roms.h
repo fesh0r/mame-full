@@ -185,12 +185,14 @@ static struct {
 	{ 0x5c1f3347, 0x2000, "901241-03 CBMB basic 256kb f8000" },
 	{ 0x72aa44e1, 0x2000, "901240-03 CBMB basic 256kb fa000" },
 	{ 0x4276dbba, 0x2000, "901244-03b CBMB kernel monitor instead of tape fe000" },
+	{ 0x87bc142b, 0x2000, "901244-03 CBMB Kernel swedish/finish fe000" },
 	{ 0x19bf247e, 0x2000, "? CBMB kernel fe000" },
 	{ 0x09a5667e, 0x2000, "901244-04a CBMB kernel fe000" },
 	{ 0x0ea8ca4d, 0x2000, "? CBMB hungarian kernel fe000" },
 	{ 0x1acf5098, 0x1000, "901237-01 CBMB 8x8 in 8x16 2x128 character set (needs inversion hardware)" },
 	{ 0x1fb5e596, 0x2000, "? CBMB 8x8 in 8x16 2x256 hungarian character" },
 	{ 0x3a350bc3, 0x1000, "901232-01 CBMB 9x14 in 8x16 2x128 character set (needs inversion hardware)" },
+	{ 0x09518b19, 0x1000, "901233-03 CBMB swedish/finnish 9x14 in 8x16 2x128 character set (needs inversion hardware)" },
 	{ 0xc62ab16f, 0x2000, "901236-02 CBM500 basic 128kb f8000" },
 	{ 0x20b7df33, 0x2000, "901235-02 CBM500 basic 128kb fa000" },
 	{ 0xf46bbd2b, 0x2000, "901234-02 CBM500 kernal monitor instead of type fe000" },
@@ -265,15 +267,23 @@ static struct {
 	{ 0xc38d83c6 , 0x1000, "UNUSEABLE PART! C128 Z80 Bios d000" },
 	{ 0x6aaaafe6 , 0x1000, "390059-01 C128 8x8 character set c64, c128" },
 	{ 0xfe5a2db1 , 0x1000, "315079-01 C128 8x8 character set c64, c128 german" },
+	{ 0x7a70d9b8 , 0x1000, "325181-01 C128 8x8 character set c64, c128 swedish" },
 	{ 0xbad36b88 , 0x1000, "325167-01 I/F/B C128 8x8 characters sets" }, //italian and french verified to be the same
-	// commodore ieee bus disk drives
+
+	// commodore ieee disk drives
 	{ 0xd04c1fbb , 0x2000, "? CBM2040 ???" },
 	{ 0xf4967a7f , 0x3000, "? CBM3040 ???" },
 	{ 0x40e0ebaa , 0x3000, "? CBM4040 ???" },
 	{ 0x87e6a94e , 0x4000, "? CBM1001 ???" },
 	{ 0x21b80fdf , 0x4000, "? CBM2031 2parts, 1541 hardware? c000" },
+	{ 0xc6bb0977 , 0x2000, "? CBM4023 printer 4023 /P 360-02 (1526 hardware?)" },
+	{ 0xb6d8519c , 0x1000, "901472-06 CBM3022 printer" },
+	{ 0xe5c4a58c , 0x2000, "325320-02 CBM8023P printer" },
+	{ 0x9d662c74 , 0x2000, "? CBM8028 printer german cpu" },
+	{ 0x209e70a1 , 0x800, "? CBM8028 printer german car" },
+	{ 0x05d30d5f , 0x800, "? CBM8028 printer german dsy" },
 
-	// commodore serial bus disk drives
+	// commodore serial bus devices
 	{ 0x29ae9752 , 0x2000, "325302-01 CBM1540 c000" },
 	{ 0x10b39158 , 0x2000, "325303-01 CBM1540 e000" },
 	{ 0x9a48d3f0 , 0x2000, "901229-01 CBM1541 e000" },
@@ -299,6 +309,10 @@ static struct {
 	{ 0xa9011b84 , 0x8000, "318045-02 CBM1581 bios 8000" },
 	{ 0xecc223cd , 0x8000, "? CBM1581 beta 8000" },
 	{ 0xe08801d7 , 0x8000, "? CBM1581 modified 8000" },
+	{ 0x3ef63c59 , 0x2000, "? CBM1526 printer rev05?" },
+	{ 0x21051f69 , 0x2000, "? CBM1526 printer rev07b scandinavian?" },
+	{ 0x38f85b4a , 0x2000, "? CBM1526 printer rev07c?" },
+	{ 0xf8a9f45c , 0x10000, "? CBM1230 printer pdl2 german" },
 
 	{ 0xf6290043 , 0x80000, "AMIGA kickstart 1.3" },
 
