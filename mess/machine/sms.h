@@ -23,7 +23,7 @@ WRITE_HANDLER ( gg_sio_w );
 READ_HANDLER  ( gg_sio_r );
 WRITE_HANDLER ( gg_psg_w );
 
-int sms_load_rom(int id);
+int sms_init_cart(int id);
 void sms_init_machine (void);
 
 #endif /* _SMS_H_ */
