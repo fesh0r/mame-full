@@ -2,7 +2,9 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
-Release 0.89
+Release 0.89, 5 December 2004
+	- Everything from MAME 0.89 (http://x.mame.net/changes-mame.html) and
+	  MESS 0.89 (http://x.mame.net/changes-mess.html).
 	- Re-added a missing "Rapid Fire" entry from the setup menu that caused 
 	  the other entries to be off by one.  Fixes Bugzilla bug 621.
 	- Another batch from Hans de Goede:
@@ -32,10 +34,13 @@ Release 0.89
 	    libGL.so and libGLU.so.
 	- Added LIRC support for remote controls, e.g., with MythTV.  (Andrew 
 	  Chuah)
+	- Fixed a typo that caused absolute analog axes to interfere with 
+	  digital negative axes in the input setup.
+	- Fixed NetBSD warnings reported by Krister Walfridsson.  (Only the 
+	  lazy fix for now.)
 
 Release 0.88, 9 November 2004
-	- Everything from MAME 0.88 (http://x.mame.net/changes-mame.html) and
-	  MESS 0.88 (http://x.mame.net/changes-mess.html).
+	- Everything from MAME 0.88 and MESS 0.88.
 	- Highlights of this release (PLEASE READ) (video changes by Hans de 
 	  Goede):
 	  * Completely reorganized the video code.  The OpenStep and Photon2 

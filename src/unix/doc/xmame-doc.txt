@@ -1,6 +1,6 @@
 XMAME/XMESS DOCUMENTATION
 
-6 November 2004
+29 November 2004
 
 <authorgroup>
 <author><firstname>Juan 
@@ -1598,7 +1598,7 @@ If you have trouble with GLmame, or it is slow, read
 the "Common Questions" section. Most of the questions 
 people email me are answered here.
 
- Cabinet Models
+  Cabinet Models
 
 Cabinet model information is stored in the "cab" 
 subdirectory of the directory you specified with the 
@@ -1730,14 +1730,14 @@ All commands must be on separate lines. Use the
 (somewhat) commented glmamejau cabinet as an example to 
 work from.
 
- Present Limitations/Bugs
+  Present Limitations/Bugs
 
 * No clipping of vector games (most noticeable in 
   cabinet mode).
 
 * No preservation of game aspect ratio in cabinet mode.
 
- Future Work
+  Future Work
 
 * Fixing existing bugs .. are there any ? Or are there 
   some unknown features only ;-) ? 
@@ -1746,7 +1746,7 @@ work from.
   portions of the game bitmap. Optimizing the dirty 
   code ..
 
- License
+  License
 
 The GLmame code is based upon Mike Oliphant's GLmame 
 code version 0.6. 
@@ -1759,7 +1759,7 @@ Since GLmame version 0.7, the code has been changed and
 improved heavily by Sven Goethel --- no license change, 
 of course!
 
- Version History
+  Version History
 
 v0.83 -- March 29th, 2001 ---------------------------
 
@@ -1809,11 +1809,104 @@ v0.1 -- October 5th, 1998 -------------------------
 
 * first public release
 
- Authors
+  Authors
 
 Since GLmame version 0.7: Sven Goethel [mailto:sgoethel@jausoft.com||(sgoethel@jausoft.com)] [http://www.jausoft.com/glmame.html||http://www.jausoft.com/glmame.html]
 
 Till GLmame version 0.6: Mike Oliphant [mailto:oliphant@ling.ed.ac.uk||(oliphant@ling.ed.ac.uk)] [http://glmame.linuxgames.com||http://glmame.linuxgames.com]
+
+FXmame, a glide driver for xmame
+
+The latest version of this driver can be obtained at [http://glmame.linuxgames.com||http://glmame.linuxgames.com].
+
+ xmame.x11/GLIDE
+
+To run with 3Dfx support, you must have:
+
+* A 3Dfx card
+
+* Glide 2x or 3
+
+* The xmame distribution
+
+Select "DISPLAY_METHOD = x11" and uncomment the line "
+X11_GLIDE = 1" in the makefile. For Glide 2x support, 
+also uncomment "GLIDE2 = 1".
+
+The Glide driver adds several command-line options:
+
+    -fxgama <value> 3Dfx gamma correction value
+
+  Common Questions (FAQ)
+
+Q: When I run with Glide support, it just dumps core.
+
+A: Make sure you are running xmame as root. Root 
+privileges are required to access the 3Dfx hardware
+
+Q: When I run with Glide support, it just hangs at the 
+initial game screen.
+
+A: Are you running KDE? For some reason, I can't get 
+keyboard input under KDE. If you have this problem, 
+switch window managers or use xmame.svgafx instead.
+
+  Present Limitations/Bugs
+
+* Antialiasing isn't working quite as well as it should
+
+* Input problems under KDE
+
+  Future Work
+
+* Optimize the drawing code to update only the changed 
+  portions of the game bitmap.
+
+  License
+
+The FXmame code is Copyright 1998 by Mike Oliphant. It 
+may be used and distributed under the terms of the MAME license.
+
+  Version History
+
+v0.5 -- December 11th, 1998 ---------------------------
+
+* implemented long copies in screen update
+
+* added dirty handling. this greatly increases the 
+  speed of games that support the dirty update strategy 
+  (although most of them are older games that already 
+  ran at full speed on modern hardware)
+
+* merged source with xmame b8.1
+
+v0.4 -- October 30th, 1998 --------------------------
+
+* improved alpha handling in vector games - now 
+  bitmapped overlays do not dim the screen o added 
+  svgalib support (xmame.svgafx) o fixed a tiling bug 
+  that gave artifacts on texture tile boundaries
+
+v0.3 -- October 29th, 1998 --------------------------
+
+* got rid of extra lines in vector games o added bitmap 
+  overlay in vector games to show options/fps o added 
+  antialiasing in vector games
+
+v0.2 -- October 28th, 1998 --------------------------
+
+* added screenshots o added 3Dfx gamma adjustment o 
+  added direct acceleration of vector games (still buggy)
+
+v0.1 -- October 27th, 1998 --------------------------
+
+* first public release
+
+ Authors
+
+Since fall of 2004: Hans de Goede
+
+Original author: Mike Oliphant [mailto:oliphant@ling.ed.ac.uk||(oliphant@ling.ed.ac.uk)] [http://glmame.linuxgames.com||http://glmame.linuxgames.com]
 
  xmame.SDL
 
@@ -2004,137 +2097,7 @@ If that doesn't help, then ask your question on the
 mailing list or send it to the xmame/xmess maintainer, 
 see  [Mail] for contact information.
 
- <xmame-doc-4>Display Subsystem-Specific Comments and Notes <displaysubsystem>
-
- FXmame, a glide driver for xmame
-
-The latest version of this driver can be obtained at [http://glmame.linuxgames.com||http://glmame.linuxgames.com].
-
- Requirements
-
-To run FXmame, you must have:
-
-* A 3Dfx card
-
-* Glide 2x
-
-* The xmame distribution
-
- Compiling and Installing
-
-FXmame comes in two flavours---xfx and svgafx. The xfx 
-version is designed to run under X11. It uses an X 
-window for input. The svgafx version runs from the 
-console, and uses svgalib for input. Both use the 3Dfx 
-hardware for rendering.
-
-To install FXmame, follow the general instructions for 
-installing xmame. To specify the glide driver, do the 
-following to the Makefile:
-
-* Select either "xfx" or "svgafx" as your display method
-
-* Configure the glide variables to correspond to your 
-  glide setup
-
-The FXmame executables are called "xmame.xfx" and "xmame.svgafx"
-
- Running
-
-FXmame runs with the same parameters and uses the same 
-keyboard commands that xmame.x11 does.
-
-A few extra keyboard commands have been added in the 
-glide driver:
-
-* RIGHTCTRL-A -- toggle antialiasing in vector games 
-
-* RIGHTCTRL-B -- toggle bilinear filtering
-
-The glide driver also adds several command-line options:
-
-    -fxgama <value> 3Dfx gamma correction value
-
-Note that in order to display the game options or the 
-fps display in vector games, I have to overlay the game 
-bitmap over the vector display. This is because I 
-circumvent the bitmap entirely in vector games. Drawing 
-the bitmap is a big cpu hog, so you'll notice that the 
-game slows down when you turn on the fps display (I 
-know, not ideal when you want to find out the frame rate...).
-
- Common Questions (FAQ)
-
-Q: When I run FXmame, it just dumps core.
-
-A: Make sure you are running FXmame as root. Root 
-privileges are required to access the 3Dfx hardware
-
-Q: When I run xmame.xfx, it just hangs at the initial 
-game screen.
-
-A: Are you running KDE? For some reason, I can't get 
-keyboard input under KDE. If you have this problem, 
-switch window managers or use xmame.svgafx instead.
-
- Present Limitations/Bugs
-
-* Antialiasing isn't working quite as well as it should
-
-* Input problems under KDE
-
- Future Work
-
-* Optimize the drawing code to update only the changed 
-  portions of the game bitmap.
-
- License
-
-The FXmame code is Copyright 1998 by Mike Oliphant. It 
-may be used and distributed under the terms of the MAME license.
-
- Version History
-
-v0.5 -- December 11th, 1998 ---------------------------
-
-* implemented long copies in screen update
-
-* added dirty handling. this greatly increases the 
-  speed of games that support the dirty update strategy 
-  (although most of them are older games that already 
-  ran at full speed on modern hardware)
-
-* merged source with xmame b8.1
-
-v0.4 -- October 30th, 1998 --------------------------
-
-* improved alpha handling in vector games - now 
-  bitmapped overlays do not dim the screen o added 
-  svgalib support (xmame.svgafx) o fixed a tiling bug 
-  that gave artifacts on texture tile boundaries
-
-v0.3 -- October 29th, 1998 --------------------------
-
-* got rid of extra lines in vector games o added bitmap 
-  overlay in vector games to show options/fps o added 
-  antialiasing in vector games
-
-v0.2 -- October 28th, 1998 --------------------------
-
-* added screenshots o added 3Dfx gamma adjustment o 
-  added direct acceleration of vector games (still buggy)
-
-v0.1 -- October 27th, 1998 --------------------------
-
-* first public release
-
- Author
-
-Mike Oliphant<[mailto:oliphant@ling.ed.ac.uk||(oliphant@ling.ed.ac.uk)] [http://glmame.linuxgames.com||http://glmame.linuxgames.com]
-
- GLmame, an OpenGL driver for xmame
-
- <xmame-doc-5>Contact Information and Credits
+ <xmame-doc-4>Contact Information and Credits
 
  Mail <Mail>
 
@@ -2373,7 +2336,7 @@ maintainer. --Lawrence Gold)
 
   * Sean Young
 
- <xmame-doc-6>Legal Issues and Copyrights Concerning MAME/MESS
+ <xmame-doc-5>Legal Issues and Copyrights Concerning MAME/MESS
 
 * Please read the MAME/MESS readme-files first!
 
@@ -2394,11 +2357,11 @@ maintainer. --Lawrence Gold)
   is copyrighted by me (Juan Antonio Martinez). Use it 
   under terms of GNU General Public License.
 
- <xmame-doc-7>Some Links
+ <xmame-doc-6>Some Links
 
  Unix sources and docs
 
-* The xmame/xmess sources[download/xmame-0.88.tar.bz2||xmame/xmess-0.88 sources]
+* The xmame/xmess sources[download/xmame-0.89.tar.bz2||xmame/xmess-0.89 sources]
 
 * xmame/xmess FAQ & Installation Guide:
 
@@ -2512,7 +2475,7 @@ maintainer. --Lawrence Gold)
 
 * And, of course, don't forget our project homepage at [http://x.mame.net/||http://x.mame.net/]
 
- <xmame-doc-8>ChangeLogs<ChangeLogs>
+ <xmame-doc-7>ChangeLogs<ChangeLogs>
 
  The MAME/MESS ChangeLogs
 
