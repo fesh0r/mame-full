@@ -330,7 +330,7 @@ void get_rom_sample_path (int argc, char **argv, int game_index)
 	rompath 	= get_string ("directory", "rompath",    NULL, ".;ROMS");
 	samplepath	= get_string ("directory", "samplepath", NULL, ".;SAMPLES");
 #else
-	rompath 	= get_string ("directory", "biosath",      NULL, ".;BIOS");
+	rompath 	= get_string ("directory", "biospath",     NULL, ".;BIOS");
 	softwarepath= get_string ("directory", "softwarepath", NULL, ".;SOFTWARE");
 #endif
 
