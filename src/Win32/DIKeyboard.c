@@ -318,6 +318,9 @@ static int DIKeyboard_is_key_pressed(int keycode)
   systems while using the debugger. If you don't want to or can't support this
   function you can just return OSD_KEY_NONE.
 */
+
+#define OSD_KEY_NONE 0
+
 static int DIKeyboard_wait_keypress(void)
 {
     int i;
