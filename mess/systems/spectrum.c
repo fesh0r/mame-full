@@ -1724,6 +1724,26 @@ ROM_START(spectrum)
 	ROM_LOAD("spectrum.rom", 0x0000, 0x4000, 0xddee531f)
 ROM_END
 
+ROM_START(specbusy)
+	ROM_REGION(0x10000,REGION_CPU1)
+	ROM_LOAD("48-busy.rom", 0x0000, 0x4000, 0x1511cddb)
+ROM_END
+
+ROM_START(specgrot)
+	ROM_REGION(0x10000,REGION_CPU1)
+	ROM_LOAD("48-groot.rom", 0x0000, 0x4000, 0xabf18c45)
+ROM_END
+
+ROM_START(specimc)
+	ROM_REGION(0x10000,REGION_CPU1)
+	ROM_LOAD("48-imc.rom", 0x0000, 0x4000, 0xd1be99ee)
+ROM_END
+
+ROM_START(speclec)
+	ROM_REGION(0x10000,REGION_CPU1)
+	ROM_LOAD("48-lec.rom", 0x0000, 0x4000, 0x5b5c92b1)
+ROM_END
+
 ROM_START(spec128)
         ROM_REGION(0x18000,REGION_CPU1)
 	ROM_LOAD("zx128_0.rom",0x10000,0x4000, 0xe76799d2)
@@ -1897,6 +1917,10 @@ static const struct IODevice io_specpls3[] = {
 
 #define io_spec128  io_spectrum
 #define io_specpls2 io_spectrum
+#define io_specbusy io_spectrum
+#define io_specgrot io_spectrum
+#define io_specimc  io_spectrum
+#define io_speclec  io_spectrum
 #define io_specpls4 io_spectrum
 #define io_inves    io_spectrum
 #define io_tk90x    io_spectrum
@@ -1910,20 +1934,24 @@ static const struct IODevice io_specpls3[] = {
 #define io_specpl3e io_specpls3
 
 /*     YEAR  NAME      PARENT    MACHINE         INPUT     INIT          COMPANY                 FULLNAME */
-COMP ( 1982, spectrum, 0,        spectrum,       spectrum, 0,            "Sinclair Research",    "ZX-Spectrum 48k" )
-COMPX( 2000, specpls4, spectrum, spectrum,       spectrum, 0,            "Amstrad plc",          "Spectrum +4 (48K)", GAME_COMPUTER_MODIFIED )
+COMP ( 1982, spectrum, 0,        spectrum,       spectrum, 0,            "Sinclair Research",    "ZX Spectrum" )
+COMPX( 2000, specpls4, spectrum, spectrum,       spectrum, 0,            "Amstrad plc",          "ZX Spectrum +4", GAME_COMPUTER_MODIFIED )
+COMPX( 1994, specbusy, spectrum, spectrum,       spectrum, 0,            "Amstrad plc",          "ZX Spectrum (BusySoft Upgrade)", GAME_COMPUTER_MODIFIED )
+COMPX( ????, specgrot, spectrum, spectrum,       spectrum, 0,            "Amstrad plc",          "ZX Spectrum (De Groot's Upgrade)", GAME_COMPUTER_MODIFIED )
+COMPX( ????, specimc,  spectrum, spectrum,       spectrum, 0,            "Amstrad plc",          "ZX Spectrum (Collier's Upgrade)", GAME_COMPUTER_MODIFIED )
+COMPX( ????, speclec,  spectrum, spectrum,       spectrum, 0,            "Amstrad plc",          "ZX Spectrum (LEC Upgrade)", GAME_COMPUTER_MODIFIED )
 COMP ( 1986, inves,    spectrum, spectrum,       spectrum, 0,            "Investronica",         "Inves Spectrum 48K+" )
 COMP ( 1985, tk90x,    spectrum, spectrum,       spectrum, 0,            "Micro Digital",        "TK90x Color Computer" )
 COMP ( 1986, tk95,     spectrum, spectrum,       spectrum, 0,            "Micro Digital",        "TK95 Color Computer" )
 COMP ( 198?, tc2048,   spectrum, tc2048,         spectrum, 0,            "Timex of Portugal",    "TC2048" )
 COMP ( 1983, ts2068,   spectrum, ts2068,         spectrum, 0,            "Timex Sinclair",       "TS2068" )
 
-COMPX( 1986, spec128,  0,        spectrum_128,   spectrum, 0,            "Sinclair Research",    "Spectrum 128K" ,GAME_NOT_WORKING)
-COMPX( 1986, specpls2, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "Spectrum +2" ,GAME_NOT_WORKING)
-COMPX( 1987, specpl2a, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "Spectrum +2a" ,GAME_NOT_WORKING)
-COMPX( 1987, specpls3, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "Spectrum +3" ,GAME_NOT_WORKING)
+COMPX( 1986, spec128,  0,        spectrum_128,   spectrum, 0,            "Sinclair Research",    "ZX Spectrum 128" ,GAME_NOT_WORKING)
+COMPX( 1986, specpls2, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "ZX Spectrum +2" ,GAME_NOT_WORKING)
+COMPX( 1987, specpl2a, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "ZX Spectrum +2a" ,GAME_NOT_WORKING)
+COMPX( 1987, specpls3, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "ZX Spectrum +3" ,GAME_NOT_WORKING)
 
-COMPX( 1986, specp2fr, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "Spectrum +2 (France)" ,GAME_NOT_WORKING)
-COMPX( 1986, specp2sp, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "Spectrum +2 (Spain)" ,GAME_NOT_WORKING)
-COMPX( 1987, specp3sp, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "Spectrum +3 (Spain)" ,GAME_NOT_WORKING)
-COMPX( 2000, specpl3e, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "Spectrum +3e" , GAME_COMPUTER_MODIFIED )
+COMPX( 1986, specp2fr, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "ZX Spectrum +2 (France)" ,GAME_NOT_WORKING)
+COMPX( 1986, specp2sp, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "ZX Spectrum +2 (Spain)" ,GAME_NOT_WORKING)
+COMPX( 1987, specp3sp, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "ZX Spectrum +3 (Spain)" ,GAME_NOT_WORKING)
+COMPX( 2000, specpl3e, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "ZX Spectrum +3e" , GAME_COMPUTER_MODIFIED )
