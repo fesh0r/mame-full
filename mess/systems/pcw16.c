@@ -1062,6 +1062,8 @@ WRITE_HANDLER(rtc_year_w)
 	rtc_setup_max_days();
 }
 
+static int previous_fdc_int_state;
+
 static void pcw16_trigger_fdc_int(void)
 {
 	int state;
@@ -1073,13 +1075,20 @@ static void pcw16_trigger_fdc_int(void)
 		/* nmi */
 		case 0:
 		{
-			if (state)
+			/* I'm assuming that the nmi is edge triggered */
+			/* a interrupt from the fdc will cause a change in line state, and
+			the nmi will be triggered, but when the state changes because the int
+			is cleared this will not cause another nmi */
+			/* I'll emulate it like this to be sure */
+		
+			if (state!=previous_fdc_int_state)
 			{
-				cpu_set_nmi_line(0, ASSERT_LINE);
-			}
-			else
-			{
-				cpu_set_nmi_line(0, CLEAR_LINE);
+				if (state)
+				{
+					/* I'll pulse it because if I used hold-line I'm not sure
+					it would clear - to be checked */
+					cpu_set_nmi_line(0, PULSE_LINE);
+				}
 			}
 		}
 		break;
@@ -1095,6 +1104,8 @@ static void pcw16_trigger_fdc_int(void)
 		default:
 			break;
 	}
+
+	previous_fdc_int_state = state;
 }
 
 READ_HANDLER(pcw16_system_status_r)
