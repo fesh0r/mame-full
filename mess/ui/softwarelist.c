@@ -95,7 +95,7 @@ static enum RealizeLevel s_eRealizeLevel;
 #endif /* HAS_IDLING */
 
 #if HAS_CRC
-static void *mess_crc_file;
+static config_file *mess_crc_file;
 static char mess_crc_category[64];
 #endif /* HAS_CRC */
 
@@ -506,17 +506,6 @@ static void AddImagesFromDirectory(int nDriver, const char *dir, BOOL bRecurse, 
     }
 }
 
-#if HAS_CRC
-static void *OpenCrcFile(const struct GameDriver *drv, char *outname)
-{
-	extern const char *crcdir;
-	char buffer[MAX_PATH];
-	strcpy(outname, drv->name);
-	snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), "%s\\%s.crc", crcdir, drv->name);
-	return config_open(buffer);
-}
-#endif /* HAS_CRC */
-
 static void InternalFillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nPaths, LPCSTR *plpPaths)
 {
     int i;
@@ -532,9 +521,9 @@ static void InternalFillSoftwareList(struct SmartListView *pSoftwareListView, in
 #if HAS_CRC
 	if (mess_crc_file)
 		config_close(mess_crc_file);
-	mess_crc_file = OpenCrcFile(drivers[nGame], mess_crc_category);
-	if (!mess_crc_file)
-		mess_crc_file = OpenCrcFile(drivers[nGame]->clone_of, mess_crc_category);
+	mess_crc_file = config_open(drivers[nGame]->name, drivers[nGame]->name, FILETYPE_CRC);
+	if (mess_crc_file)
+		strcpy(mess_crc_category, drivers[nGame]->name);
 #endif
 
     /* This fixes any changes the file manager may have introduced */

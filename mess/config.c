@@ -1,11 +1,23 @@
-/* Config file save/load functions */
+/***************************************************************************
+
+	config.c - config file save/load functions
+
+***************************************************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdarg.h>
+
 #include "driver.h"
 #include "config.h"
+#include "fileio.h"
+
+
+/***************************************************************************
+	DEBUGGING
+***************************************************************************/
 
 #define VERBOSE 0
 
@@ -15,8 +27,21 @@
 #define LOG(x)	/* x */
 #endif
 
+/***************************************************************************
+	CONSTANTS
+***************************************************************************/
+
+/* Amount of memory to allocate while reading variable size arrays
+ * Tradeoff between calling realloc() all the time and wasting memory */
+#define CHUNK_SIZE	512
+
+/***************************************************************************
+	TYPE DEFINITIONS
+***************************************************************************/
+
 /* A forward linked list of the contents of a section */
-struct config_var {
+struct config_var
+{
 	struct config_var *next;
 	char *name;
 	unsigned size;
@@ -25,13 +50,18 @@ struct config_var {
 };
 
 /* our config handling structure */
-struct config_hdl {
-	FILE *file;
+struct _config_file
+{
+	mame_file *file;
 	const char *section;
 	int instance;
 	struct config_var *list;
     struct config_var *end_of_list; // to avoid n*(n/2) runtime complexity when appending
 };
+
+/***************************************************************************
+	xtoul
+***************************************************************************/
 
 INLINE unsigned xtoul(char **p, int *size)
 {
@@ -55,6 +85,10 @@ INLINE unsigned xtoul(char **p, int *size)
 		(*size) >>= 1;
 	return val;
 }
+
+/***************************************************************************
+	ctoul
+***************************************************************************/
 
 /* extract next character from the string. un-escape \oct codes */
 INLINE unsigned ctoul(char **p)
@@ -87,6 +121,10 @@ INLINE unsigned ctoul(char **p)
 	return val;
 }
 
+/***************************************************************************
+	ultox
+***************************************************************************/
+
 INLINE char *ultox(unsigned val, unsigned size)
 {
 	static char buffer[32+1];
@@ -101,12 +139,20 @@ INLINE char *ultox(unsigned val, unsigned size)
 	return buffer;
 }
 
+/***************************************************************************
+	xdigits_only
+***************************************************************************/
+
 INLINE int xdigits_only(const char *src)
 {
 	while (*src && (isxdigit(*src) || isspace(*src)))
 		src++;
 	return (*src) ? 0 : 1;
 }
+
+/***************************************************************************
+	findstr
+***************************************************************************/
 
 INLINE int findstr(const char *dst, const char *src)
 {
@@ -122,10 +168,13 @@ INLINE int findstr(const char *dst, const char *src)
 	return *dst - *src;
 }
 
+/***************************************************************************
+	config_free_section
+***************************************************************************/
+
 /* free a linked list of state_vars (aka section) */
-static void config_free_section(void *config)
+static void config_free_section(config_file *cfg)
 {
-	struct config_hdl *cfg = (struct config_hdl *) config;
 	struct config_var *this, *next;
 
 	next = cfg->list;
@@ -142,20 +191,23 @@ static void config_free_section(void *config)
 	cfg->list = NULL;
 }
 
-void *config_create(const char *name)
-{
-	struct config_hdl *cfg = NULL;
+/***************************************************************************
+	config_create
+***************************************************************************/
 
-	if (!name || !*name)
-		return cfg;
-    cfg = (struct config_hdl *) malloc(sizeof (struct config_hdl));
+config_file *config_create(const char *gamename, const char *filename, int filetype)
+{
+	config_file *cfg;
+
+    cfg = (struct _config_file *) malloc(sizeof (struct _config_file));
 	if (!cfg)
 	{
 		LOG(("config_create: memory problem\n"));
 		return cfg;
 	}
-	memset(cfg, 0, sizeof(struct config_hdl));
-	cfg->file = fopen(name, "w");
+
+	memset(cfg, 0, sizeof(struct _config_file));
+	cfg->file = mame_fopen(gamename, filename, filetype, OSD_FOPEN_RW_CREATE);
 	if (!cfg->file)
 	{
 		LOG(("config_create: couldn't create file '%s'\n", name));
@@ -166,48 +218,54 @@ void *config_create(const char *name)
     return cfg;
 }
 
-void *config_open(const char *name)
+/***************************************************************************
+	config_open
+***************************************************************************/
+
+config_file *config_open(const char *gamename, const char *filename, int filetype)
 {
-	struct config_hdl *cfg = NULL;
+	config_file *cfg;
 
-	if (!name || !*name)
-		return cfg;
-
-    cfg = (struct config_hdl *) malloc(sizeof (struct config_hdl));
+    cfg = (struct _config_file *) malloc(sizeof (struct _config_file));
 	if (!cfg)
 	{
 		LOG(("config_open: memory problem\n"));
 		return cfg;
 	}
-	memset(cfg, 0, sizeof(struct config_hdl));
-	cfg->file = fopen(name, "r");
+
+	memset(cfg, 0, sizeof(struct _config_file));
+	cfg->file = mame_fopen(gamename, filename, filetype, OSD_FOPEN_READ);
 	if (!cfg->file)
 	{
 		LOG(("config_open: couldn't open file '%s'\n", name));
         free(cfg);
 		return NULL;
 	}
+
 	LOG(("config_open: opened file '%s'\n", name));
     return cfg;
 }
 
-void config_close(void *config)
-{
-	struct config_hdl *cfg = (struct config_hdl *) config;
+/***************************************************************************
+	config_close
+***************************************************************************/
 
-	if (!cfg)
-		return;
+void config_close(config_file *cfg)
+{
 	config_free_section(cfg);
-	if (cfg->file)
-		fclose(cfg->file);
+	mame_fclose(cfg->file);
 	free(cfg);
 }
+
+/***************************************************************************
+	config_printf
+***************************************************************************/
 
 /* Output a formatted string to the config file */
 static void CLIB_DECL config_printf(void *config, const char *fmt,...)
 {
 	static char buffer[255 + 1];
-	struct config_hdl *cfg = (struct config_hdl *) config;
+	struct _config_file *cfg = (struct _config_file *) config;
 	va_list arg;
 	int length;
 
@@ -215,16 +273,18 @@ static void CLIB_DECL config_printf(void *config, const char *fmt,...)
 	length = vsprintf(buffer, fmt, arg);
 	va_end(arg);
 
-	if (fwrite(buffer, 1, length, cfg->file) != length)
+	if (mame_fwrite(cfg->file, buffer, length) != length)
 	{
 		LOG(("config_printf: Error while saving cfg '%s'\n", buffer));
 	}
 }
 
-static void config_save_section(void *config, const char *section, int instance)
-{
-	struct config_hdl *cfg = (struct config_hdl *) config;
+/***************************************************************************
+	config_save_section
+***************************************************************************/
 
+static void config_save_section(config_file *cfg, const char *section, int instance)
+{
 	if (!cfg->section ||
 		(cfg->section && findstr(cfg->section, section)) ||
 		cfg->instance != instance)
@@ -240,10 +300,13 @@ static void config_save_section(void *config, const char *section, int instance)
 	}
 }
 
-void config_save_string(void *config, const char *section, int instance,
+/***************************************************************************
+	config_save_string
+***************************************************************************/
+
+void config_save_string(config_file *cfg, const char *section, int instance,
 					   const char *name, const char *src)
 {
-	struct config_hdl *cfg = (struct config_hdl *) config;
 	unsigned size = strlen(src);
 
     config_save_section(cfg, section, instance);
@@ -268,11 +331,13 @@ void config_save_string(void *config, const char *section, int instance,
 	config_printf(cfg, "\n");
 }
 
-void config_save_UINT8(void *config, const char *section, int instance,
+/***************************************************************************
+	config_save_UINT8
+***************************************************************************/
+
+void config_save_UINT8(config_file *cfg, const char *section, int instance,
 					   const char *name, const UINT8 *val, unsigned size)
 {
-	struct config_hdl *cfg = (struct config_hdl *) config;
-
 	config_save_section(cfg, section, instance);
 
 	/* If next is to much for a single line use the dump format */
@@ -306,17 +371,23 @@ void config_save_UINT8(void *config, const char *section, int instance,
 	}
 }
 
-void config_save_INT8(void *config, const char *section, int instance,
+/***************************************************************************
+	config_save_INT8
+***************************************************************************/
+
+void config_save_INT8(config_file *config, const char *section, int instance,
 					  const char *name, const INT8 *val, unsigned size)
 {
 	config_save_UINT8(config, section, instance, name, (UINT8 *)val, size);
 }
 
-void config_save_UINT16(void *config, const char *section, int instance,
+/***************************************************************************
+	config_save_UINT16
+***************************************************************************/
+
+void config_save_UINT16(config_file *cfg, const char *section, int instance,
 						const char *name, const UINT16 *val, unsigned size)
 {
-	struct config_hdl *cfg = (struct config_hdl *) config;
-
 	config_save_section(cfg, section, instance);
 
 	/* If next is to much for a single line use the dump format */
@@ -350,17 +421,23 @@ void config_save_UINT16(void *config, const char *section, int instance,
 	}
 }
 
-void config_save_INT16(void *config, const char *section, int instance,
+/***************************************************************************
+	config_save_INT16
+***************************************************************************/
+
+void config_save_INT16(config_file *config, const char *section, int instance,
 					   const char *name, const INT16 *val, unsigned size)
 {
 	config_save_UINT16(config, section, instance, name, (UINT16 *)val, size);
 }
 
-void config_save_UINT32(void *config, const char *section, int instance,
+/***************************************************************************
+	config_save_UINT32
+***************************************************************************/
+
+void config_save_UINT32(config_file *cfg, const char *section, int instance,
 						const char *name, const UINT32 *val, unsigned size)
 {
-	struct config_hdl *cfg = (struct config_hdl *) config;
-
 	config_save_section(cfg, section, instance);
 
 	/* If next is to much for a single line use the dump format */
@@ -394,17 +471,23 @@ void config_save_UINT32(void *config, const char *section, int instance,
 	}
 }
 
-void config_save_INT32(void *config, const char *section, int instance,
+/***************************************************************************
+	config_save_INT32
+***************************************************************************/
+
+void config_save_INT32(config_file *config, const char *section, int instance,
 					   const char *name, const INT32 *val, unsigned size)
 {
 	config_save_UINT32(config, section, instance, name, (UINT32 *)val, size);
 }
 
-/* load a linked list of config_vars (aka section) */
-static void config_load_section(void *config, const char *section, int instance)
-{
-	struct config_hdl *cfg = (struct config_hdl *) config;
+/***************************************************************************
+	config_load_section
+***************************************************************************/
 
+/* load a linked list of config_vars (aka section) */
+static void config_load_section(config_file *cfg, const char *section, int instance)
+{
 	/* Make the buffer twice as big as it was while saving
 	 * the config, so we should always catch a [section] */
 	static char buffer[2047+1];
@@ -428,7 +511,7 @@ static void config_load_section(void *config, const char *section, int instance)
 	for (;;)
 	{
 		buffer[0] = '\0';
-		fgets(buffer, sizeof(buffer), cfg->file);
+		mame_fgets(buffer, sizeof(buffer), cfg->file);
 		if (!buffer[0])
 			return;
 		if (findstr(buffer, searching) == 0)
@@ -441,7 +524,7 @@ static void config_load_section(void *config, const char *section, int instance)
 				struct config_var *v;
 
 				buffer[0] = '\0';
-                fgets(buffer, sizeof (buffer), cfg->file);
+                mame_fgets(buffer, sizeof (buffer), cfg->file);
 				if (!buffer[0])
 					return;
 
@@ -607,10 +690,13 @@ static void config_load_section(void *config, const char *section, int instance)
 	}
 }
 
-void config_load_string(void *s, const char *section, int instance,
+/***************************************************************************
+	config_load_string
+***************************************************************************/
+
+void config_load_string(config_file *cfg, const char *section, int instance,
 					   const char *name, char *dst, unsigned size)
 {
-	struct config_hdl *cfg = (struct config_hdl *) s;
 	struct config_var *v;
 
 	config_load_section(cfg, section, instance);
@@ -634,10 +720,13 @@ void config_load_string(void *s, const char *section, int instance,
 	}
 }
 
-void config_load_UINT8(void *s, const char *section, int instance,
+/***************************************************************************
+	config_load_UINT8
+***************************************************************************/
+
+void config_load_UINT8(config_file *cfg, const char *section, int instance,
 					   const char *name, UINT8 *val, unsigned size)
 {
-	struct config_hdl *cfg = (struct config_hdl *) s;
 	struct config_var *v;
 
 	config_load_section(cfg, section, instance);
@@ -660,10 +749,13 @@ void config_load_UINT8(void *s, const char *section, int instance,
 	}
 }
 
-void config_load_INT8(void *s, const char *section, int instance,
+/***************************************************************************
+	config_load_INT8
+***************************************************************************/
+
+void config_load_INT8(config_file *cfg, const char *section, int instance,
 					  const char *name, INT8 *val, unsigned size)
 {
-	struct config_hdl *cfg = (struct config_hdl *) s;
 	struct config_var *v;
 
 	config_load_section(cfg, section, instance);
@@ -686,10 +778,13 @@ void config_load_INT8(void *s, const char *section, int instance,
 	}
 }
 
-void config_load_UINT16(void *s, const char *section, int instance,
+/***************************************************************************
+	config_load_UINT16
+***************************************************************************/
+
+void config_load_UINT16(config_file *cfg, const char *section, int instance,
 						const char *name, UINT16 *val, unsigned size)
 {
-	struct config_hdl *cfg = (struct config_hdl *) s;
 	struct config_var *v;
 
 	config_load_section(cfg, section, instance);
@@ -712,10 +807,13 @@ void config_load_UINT16(void *s, const char *section, int instance,
 	}
 }
 
-void config_load_INT16(void *s, const char *section, int instance,
+/***************************************************************************
+	config_load_INT16
+***************************************************************************/
+
+void config_load_INT16(config_file *cfg, const char *section, int instance,
 					   const char *name, INT16 *val, unsigned size)
 {
-	struct config_hdl *cfg = (struct config_hdl *) s;
 	struct config_var *v;
 
 	config_load_section(cfg, section, instance);
@@ -738,10 +836,13 @@ void config_load_INT16(void *s, const char *section, int instance,
 	}
 }
 
-void config_load_UINT32(void *s, const char *section, int instance,
+/***************************************************************************
+	config_load_UINT32
+***************************************************************************/
+
+void config_load_UINT32(config_file *cfg, const char *section, int instance,
 						const char *name, UINT32 *val, unsigned size)
 {
-	struct config_hdl *cfg = (struct config_hdl *) s;
 	struct config_var *v;
 
 	config_load_section(cfg, section, instance);
@@ -764,10 +865,13 @@ void config_load_UINT32(void *s, const char *section, int instance,
 	}
 }
 
-void config_load_INT32(void *s, const char *section, int instance,
+/***************************************************************************
+	config_load_INT32
+***************************************************************************/
+
+void config_load_INT32(config_file *cfg, const char *section, int instance,
 					   const char *name, INT32 *val, unsigned size)
 {
-	struct config_hdl *cfg = (struct config_hdl *) s;
 	struct config_var *v;
 
 	config_load_section(cfg, section, instance);

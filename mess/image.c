@@ -29,10 +29,6 @@ struct image_info
 static struct image_info images[IO_COUNT][MAX_DEV_INSTANCES];
 int images_is_running;
 
-/* CRC database file for this driver, supplied by the OS specific code */
-extern const char *crcfile;
-extern const char *pcrcfile;
-
 /* ----------------------------------------------------------------------- */
 
 static struct image_info *get_image(int type, int id)
@@ -204,35 +200,37 @@ void image_unload_all(void)
 
 /* ----------------------------------------------------------------------- */
 
-static int read_crc_config (const char *file, int type, int id, const char* sysname)
+static int read_crc_config(const char *sysname, int type, int id)
 {
-	int retval;
-	void *config;
+	int rc = 1;
+	config_file *config;
 	struct image_info *img;
 	char line[1024];
 	char crc[9+1];
 
-	config = config_open (file);
+	config = config_open(sysname, sysname, FILETYPE_CRC);
+	if (!config)
+		goto done;
 
-	retval = 1;
+	img = get_image(type, id);
+	snprintf(crc, sizeof(crc) / sizeof(crc[0]), "%08x", img->crc);
+	config_load_string(config, sysname, 0, crc, line, sizeof(line));
+
+	if (!line[0])
+		goto done;
+
+	logerror("found CRC %s= %s\n", crc, line);
+	img->longname		= image_strdup(type, id, stripspace(strtok(line, "|")));
+	img->manufacturer	= image_strdup(type, id, stripspace(strtok(NULL, "|")));
+	img->year			= image_strdup(type, id, stripspace(strtok(NULL, "|")));
+	img->playable		= image_strdup(type, id, stripspace(strtok(NULL, "|")));
+	img->extrainfo		= image_strdup(type, id, stripspace(strtok(NULL, "|")));
+	rc = 0;
+
+done:
 	if (config)
-	{
-		img = get_image(type, id);
-		sprintf(crc, "%08x", img->crc);
-		config_load_string(config, sysname, 0, crc, line, sizeof(line));
-		if (line[0])
-		{
-			logerror("found CRC %s= %s\n", crc, line);
-			img->longname		= image_strdup(type, id, stripspace(strtok(line, "|")));
-			img->manufacturer	= image_strdup(type, id, stripspace(strtok(NULL, "|")));
-			img->year			= image_strdup(type, id, stripspace(strtok(NULL, "|")));
-			img->playable		= image_strdup(type, id, stripspace(strtok(NULL, "|")));
-			img->extrainfo		= image_strdup(type, id, stripspace(strtok(NULL, "|")));
-			retval = 0;
-		}
 		config_close(config);
-	}
-	return retval;
+	return rc;
 }
 
 
@@ -255,7 +253,6 @@ mame_file *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 
 	if (file)
 	{
-		void *config;
 		const struct IODevice *pc_dev = device_first(Machine->gamedrv);
 
 		/* is this file actually a zip file? */
@@ -326,10 +323,7 @@ mame_file *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 			logerror("image_fopen: CRC is %08x\n", img->crc);
 		}
 
-		if (read_crc_config (crcfile, type, id, sysname) && Machine->gamedrv->clone_of->name)
-			read_crc_config (pcrcfile, type, id, Machine->gamedrv->clone_of->name);
-
-		config = config_open(crcfile);
+		read_crc_config(sysname, type, id);
 	}
 
 	return file;

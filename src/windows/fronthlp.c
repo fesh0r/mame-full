@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <dirent.h>
 #include <unzip.h>
 
 #ifdef MESS
@@ -15,6 +14,7 @@
 #include "ui/dirent.h"
 #define S_ISDIR(mode) ((mode) & _S_IFDIR)
 #endif
+#include <dirent.h>
 #endif
 
 #ifndef MESS

@@ -824,11 +824,11 @@ static char *nextentry(char **s)
 int img_getinfo(const struct ImageModule *module, const char *fname, imageinfo *info)
 {
 	int err;
-	void *config;
+	config_file *config;
 	const char *year;
 	char *s;
-	char fnamebuf[32];
-
+	char buf[32];
+	
 	info->longname = NULL;
 	info->manufacturer = NULL;
 	info->year = 0;
@@ -842,14 +842,14 @@ int img_getinfo(const struct ImageModule *module, const char *fname, imageinfo *
 	if (!module || !module->crcfile)
 		return 0;
 
-	sprintf(fnamebuf, "crc/%s", module->crcfile);
-	config = config_open(fnamebuf);
+	config = config_open(module->crcfile, module->crcfile, FILETYPE_CRC);
 	if (!config)
 		return 0;
 
-	sprintf(fnamebuf, "%08x", (int)info->crc);
-	config_load_string(config, module->crcsysname, 0, fnamebuf, info->buffer, sizeof(info->buffer));
-	if (info->buffer[0]) {
+	sprintf(buf, "%08x", (int)info->crc);
+	config_load_string(config, module->crcsysname, 0, buf, info->buffer, sizeof(info->buffer));
+	if (info->buffer[0])
+	{
 		s = info->buffer;
 		info->longname = nextentry(&s);
 		info->manufacturer = nextentry(&s);

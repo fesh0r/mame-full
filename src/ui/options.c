@@ -535,7 +535,9 @@ void OptionsInit()
 	// this leaks a little, but the win32 file core writes to this string
 	set_pathlist(FILETYPE_ROM,strdup(settings.romdirs));
 	set_pathlist(FILETYPE_SAMPLE,strdup(settings.sampledirs));
-
+#ifdef MESS
+	set_pathlist(FILETYPE_CRC,strdup(settings.crcdir));
+#endif
 }
 
 void OptionsExit(void)

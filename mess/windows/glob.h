@@ -95,7 +95,9 @@
  */
 #ifndef	NO_ANSI_KEYWORDS
 #define	const				/* delete ANSI C keywords */
+#ifndef inline
 #define	inline
+#endif
 #define	signed
 #define	volatile
 #endif	/* !NO_ANSI_KEYWORDS */

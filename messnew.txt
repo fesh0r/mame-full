@@ -1,3 +1,17 @@
+0.65.1
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+(none)
+
+System Driver Changes:
+----------------------
+(none)
+
+Source Changes:
+---------------
+- Moved CRC handling to use the core fileio functions. [Nate Woods]
+
 0.65
 
 New System Drivers Supported (in no particular order):

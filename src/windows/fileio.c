@@ -71,14 +71,6 @@ static osd_file openfile[MAX_OPEN_FILES];
 //	GLOBAL VARIABLES
 //============================================================
 
-#ifdef MESS
-static char crcfilename[256] = "";
-const char *crcfile = crcfilename;
-static char pcrcfilename[256] = "";
-const char *pcrcfile = pcrcfilename;
-char crcdir[256];
-#endif
-
 
 //============================================================
 //	FILE PATH OPTIONS
@@ -758,10 +750,11 @@ void set_pathlist(int file_type, const char *new_rawpath)
 void build_crc_database_filename(int game_index)
 {
 	/* Build the CRC database filename */
-	sprintf(crcfilename, "%s/%s.crc", crcdir, drivers[game_index]->name);
+	/*sprintf(crcfilename, "%s/%s.crc", crcdir, drivers[game_index]->name);
 	if (drivers[game_index]->clone_of->name)
 		sprintf (pcrcfilename, "%s/%s.crc", crcdir, drivers[game_index]->clone_of->name);
 	else
 		pcrcfilename[0] = 0;
+	*/
 }
 #endif

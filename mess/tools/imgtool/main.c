@@ -9,6 +9,7 @@
 #include "utils.h"
 #include "mess.h"
 #include "main.h"
+#include "fileio.h"
 
 /* ---------------------------------------------------------------------- */
 /* HACK */
@@ -762,3 +763,29 @@ cmderror:
 	writeusage(stdout, 1, &cmds[i], argv);
 	return -1;
 }
+
+/* ----------------------------------------------------------------------- */
+/* total hack */
+
+mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, int openforwrite)
+{
+	char buffer[2048];
+	snprintf(buffer, sizeof(buffer), "crc/%s", filename);
+	return (mame_file *) fopen(buffer, "r");
+}
+
+char *mame_fgets(char *s, int n, mame_file *file)
+{
+	return fgets(s, n, (FILE *) file);
+}
+
+UINT32 mame_fwrite(mame_file *file, const void *buffer, UINT32 length)
+{
+	return fwrite(buffer, 1, length, (FILE *) file);
+}
+
+void mame_fclose(mame_file *file)
+{
+	fclose((FILE *) file);
+}
+

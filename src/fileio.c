@@ -244,6 +244,12 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 		case FILETYPE_INI:
 			return generic_fopen(filetype, NULL, gamename, 0, FILEFLAG_OPENREAD);
 
+#ifdef MESS
+		/* CRC files */
+		case FILETYPE_CRC:
+			return generic_fopen(filetype, NULL, gamename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD);
+#endif
+
 		/* anything else */
 		default:
 			logerror("mame_fopen(): unknown filetype %02x\n", filetype);
@@ -830,6 +836,12 @@ static const char *get_extension_for_filetype(int filetype)
 		case FILETYPE_INI:			/* game specific ini files */
 			extension = "ini";
 			break;
+
+#ifdef MESS
+		case FILETYPE_CRC:
+			extension = "crc";
+			break;
+#endif
 	}
 	return extension;
 }

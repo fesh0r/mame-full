@@ -7,7 +7,6 @@ needs it ;-)
 #include "driver.h"
 #include "messwin.h"
 #include <ctype.h>
-#include <dirent.h>
 
 #ifndef _MSC_VER
 #include <sys/stat.h>

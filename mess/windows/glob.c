@@ -73,7 +73,13 @@ static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #include <sys/stat.h>
 
 #include <ctype.h>
+
+#ifndef _MSC_VER
 #include <dirent.h>
+#else
+#include "ui/dirent.h"
+#endif
+
 #include <errno.h>
 #include "glob.h"
 #include <stdio.h>
