@@ -585,6 +585,7 @@ $(OBJ)/acorn.a:    \
 	  $(OBJ)/mess/vidhrdw/atom.o	 \
 	  $(OBJ)/mess/systems/atom.o	 \
 	  $(OBJ)/mess/machine/i8271.o	 \
+	  $(OBJ)/mess/machine/upd7002.o  \
 	  $(OBJ)/mess/vidhrdw/bbc.o	 \
 	  $(OBJ)/mess/machine/bbc.o	 \
 	  $(OBJ)/mess/systems/bbc.o \
