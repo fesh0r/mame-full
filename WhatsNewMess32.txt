@@ -8,11 +8,6 @@ Whats new:
   paths are modified. [Nate Woods]
 - Fixed a bug that could cause crashes if too many images were selected in the
   software pane. [Nate Woods]
-
-----------
-0.37 BETA 12
-------------
-
 - Updated MESS32 to properly recognize the new device types (cylinders, punch
   cards and punch tapes) introduced with the ApexC driver. [Nate Woods]
 - Fixed a minor bug that caused crashes when opening images without file
