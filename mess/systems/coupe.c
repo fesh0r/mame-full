@@ -154,7 +154,7 @@ unsigned char getSamKey2(unsigned char hi)
 }
 
 
-READ_HANDLER ( coupe_port_r )
+READ_HANDLER( coupe_port_r )
 {
 	if (offset==SSND_ADDR)						// Sound address request
 		return SOUND_ADDR;
@@ -206,7 +206,7 @@ READ_HANDLER ( coupe_port_r )
 }
 
 
-WRITE_HANDLER (  coupe_port_w )
+WRITE_HANDLER( coupe_port_w )
 {
 	if (offset==SSND_ADDR)						// Set sound address
 	{

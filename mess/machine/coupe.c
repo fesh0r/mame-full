@@ -37,15 +37,15 @@ extern unsigned char *sam_screen;
 
 int coupe_floppy_init(int id)
 {
-        if (basicdsk_floppy_init(id)==INIT_OK)
-        {
+	if (basicdsk_floppy_init(id)==INIT_OK)
+	{
 
-                basicdsk_set_geometry(id, 80, 2, 9, 512, 10, 3, 1);
+		basicdsk_set_geometry(id, 80, 2, 10, 512, 0, 0, 1);
 
-                return INIT_OK;
-        }
+		return INIT_OK;
+	}
 
-        return INIT_FAILED;
+	return INIT_FAILED;
 }
 
 void coupe_update_memory(void)
@@ -157,10 +157,10 @@ void coupe_init_machine(void)
 
 	coupe_update_memory();
 
-        /* KT */
-        /* how are DRQ and IRQ from WD177X handled by Coupe? */
-        floppy_drives_init();
-        wd179x_init(NULL);
+	/* KT */
+	/* how are DRQ and IRQ from WD177X handled by Coupe? */
+	floppy_drives_init();
+	wd179x_init(NULL);
 }
 
 void coupe_shutdown_machine(void)
