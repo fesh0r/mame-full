@@ -425,6 +425,9 @@ DRV_OBJS = \
           $(OBJ)/mess/vidhrdw/mac.o      \
           $(OBJ)/mess/machine/mac.o      \
           $(OBJ)/mess/systems/mac.o	\
+          $(OBJ)/mess/systems/avigo.o    \
+          $(OBJ)/mess/vidhrdw/avigo.o    \
+          $(OBJ)/mess/machine/28f008sa.o \
           $(OBJ)/mess/machine/tms9901.o  \
           $(OBJ)/mess/machine/ti99_4x.o  \
           $(OBJ)/mess/systems/ti99_4x.o  \
@@ -476,6 +479,7 @@ DRV_OBJS = \
           $(OBJ)/mess/machine/nc.o       \
           $(OBJ)/mess/machine/tc8521.o   \
           $(OBJ)/mess/systems/pcw16.o    \
+          $(OBJ)/mess/machine/28f008sa.o \
           $(OBJ)/mess/vidhrdw/pcw16.o	\
           $(OBJ)/mess/vidhrdw/vdc.o      \
           $(OBJ)/mess/machine/pce.o      \
