@@ -22,7 +22,7 @@
 
 #define VERBOSE 0
 
-#define MEM_DUMP
+/* #define MEM_DUMP */
 
 #ifdef MEM_DUMP
 static void mem_dump( void );
