@@ -366,34 +366,84 @@ WRITE32_HANDLER( psx_cd_w )
 
 /* ----------------------------------------------------------------------- */
 
-static UINT16 ser_statreg = 0xff, ser_modereg, ser_ctrlreg, ser_baudreg;
+/* status Flags */
+#define TX_RDY		0x0001
+#define RX_RDY		0x0002
+#define TX_EMPTY	0x0004
+#define PARITY_ERR	0x0008
+#define RX_OVERRUN	0x0010
+#define FRAMING_ERR	0x0020
+#define SYNC_DETECT	0x0040
+#define DSR			0x0080
+#define CTS			0x0100
+#define IRQ			0x0200
+
+/* control flags */
+#define TX_PERM		0x0001
+#define DTR			0x0002
+#define RX_PERM		0x0004
+#define BREAK		0x0008
+#define RESET_ERR	0x0010
+#define RTS			0x0020
+#define SIO_RESET	0x0040
+
+static UINT16 ser_statreg = TX_RDY | TX_EMPTY;
+static UINT16 ser_modereg, ser_ctrlreg, ser_baudreg;
 
 static UINT8 psx_sioread(void)
 {
-	return 0;
+	UINT8 result = 0;
+
+	if (ser_statreg & RX_RDY)
+	{
+	}
+
+	return result;
+}
+
+static void psx_siowrite(UINT8 data)
+{
+}
+
+static void psx_siowrite_ctrl(UINT16 data)
+{
+	ser_ctrlreg = data & ~RESET_ERR;
+	if (data & RESET_ERR)
+		ser_statreg &= ~IRQ;
+
+	if ((ser_ctrlreg & SIO_RESET) || !ser_ctrlreg)
+	{
+		ser_statreg = TX_RDY | TX_EMPTY;
+	}
 }
 
 READ32_HANDLER( psx_serial_r )
 {
 	UINT32 result = 0;
 
+	logerror( "%08x serial read offset=%d mem_mask=0x%08x\n", activecpu_get_pc(), offset, mem_mask );
+
 	switch(offset) {
 	case 0:
+		/* 0x1f801040 */
 		result = psx_sioread();
 		result *= 0x01010101;
 		break;
 
-	case 4:
+	case 1:
+		/* 0x1f801044 */
 		result = ser_statreg;
 		result *= 0x00010001;
 		break;
 
-	case 8:
+	case 2:
+		/* 0x1f801048 */
 		result = ser_modereg;
 		result *= 0x00010000;
 		result |= ser_ctrlreg;
 
-	case 12:
+	case 3:
+		/* 0x1f80104c */
 		result = ser_baudreg;
 		result *= 0x00010001;
 		break;
@@ -403,5 +453,40 @@ READ32_HANDLER( psx_serial_r )
 
 WRITE32_HANDLER( psx_serial_w )
 {
+	logerror( "%08x serial write offset=%i mem_mask=0x%08x data=0x%08x\n", activecpu_get_pc(), offset, mem_mask, data );
+
+	switch(offset) {
+	case 0:
+		/* 0x1f801040 */
+		psx_siowrite((UINT8) (data >> 0));
+		if (mem_mask == 0xffff0000)
+			psx_siowrite((UINT8) (data >> 8));
+		break;
+
+	case 1:
+		/* 0x1f801044 */
+		break;
+
+	case 2:
+		if ((mem_mask & 0x0000ffff) == 0)
+		{
+			/* 0x1f801048 */
+			ser_modereg = (UINT16) (data >> 0);
+		}
+		if ((mem_mask & 0xffff0000) == 0)
+		{	
+			/* 0x1f80104a */
+			psx_siowrite_ctrl((UINT16) (data >> 16));
+		}
+		break;
+
+	case 3:
+		if ((mem_mask & 0xffff0000) == 0)
+		{	
+			/* 0x1f80104e */
+			ser_baudreg = (UINT16) (data >> 16);
+		}
+		break;
+	}
 }
 
