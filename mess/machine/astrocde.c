@@ -37,12 +37,6 @@ int astrocade_load_rom(int id)
 	return 0;
 }
 
-int astrocade_id_rom(int id)
-{
-	/* driver doesn't support ID'ing of images */
-	return 0;
-}
-
 WRITE_HANDLER ( astrocade_interrupt_enable_w )
 {
 

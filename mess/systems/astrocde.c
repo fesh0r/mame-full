@@ -232,7 +232,7 @@ static const struct IODevice io_astrocde[] = {
 		1,					/* count */
 		"bin\0",            /* file extensions */
 		IO_RESET_CPU,		/* reset if file changed */
-        astrocade_id_rom,   /* id */
+        NULL,   			/* id */
 		astrocade_load_rom, /* init */
 		NULL,				/* exit */
 		NULL,				/* info */

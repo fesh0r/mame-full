@@ -2,7 +2,6 @@
 extern unsigned char *astrocade_videoram;
 
 int astrocade_load_rom(int id);
-int astrocade_id_rom(int id);
 
 void astrocade_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
 READ_HANDLER ( astrocade_intercept_r );
