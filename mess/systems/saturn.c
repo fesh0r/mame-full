@@ -1469,14 +1469,22 @@ UINT32 colortab[2048];
 
 static UINT32 lookup_0_15[256], lookup_1_15[256];
 
-static UINT32 vdp2_plane0[PLANE_SX * PLANE_SY];
+/*static UINT32 vdp2_plane0[PLANE_SX * PLANE_SY];
 static UINT32 vdp2_plane1[PLANE_SX * PLANE_SY];
 static UINT32 vdp2_plane2[PLANE_SX * PLANE_SY];
 static UINT32 vdp2_plane3[PLANE_SX * PLANE_SY];
 static UINT8 vdp2_pri0[PLANE_SX * PLANE_SY];
 static UINT8 vdp2_pri1[PLANE_SX * PLANE_SY];
 static UINT8 vdp2_pri2[PLANE_SX * PLANE_SY];
-static UINT8 vdp2_pri3[PLANE_SX * PLANE_SY];
+static UINT8 vdp2_pri3[PLANE_SX * PLANE_SY];*/
+static UINT32 *vdp2_plane0;
+static UINT32 *vdp2_plane1;
+static UINT32 *vdp2_plane2;
+static UINT32 *vdp2_plane3;
+static UINT8 *vdp2_pri0;
+static UINT8 *vdp2_pri1;
+static UINT8 *vdp2_pri2;
+static UINT8 *vdp2_pri3;
 
 static int vdp2_nplanes;
 static UINT32 *vdp2_dadr[4];
@@ -1842,6 +1850,17 @@ static const char *vdp2_reg_names[] =
 void vdp2_init(void)
 {
 	int i;
+
+	/* R Nabet : allocate the structure dynamically */
+	/* note : they are not deallocated when quitting the driver (FIXME !) */
+	vdp2_plane0 = malloc(sizeof(UINT32) * PLANE_SX * PLANE_SY);
+	vdp2_plane1 = malloc(sizeof(UINT32) * PLANE_SX * PLANE_SY);
+	vdp2_plane2 = malloc(sizeof(UINT32) * PLANE_SX * PLANE_SY);
+	vdp2_plane3 = malloc(sizeof(UINT32) * PLANE_SX * PLANE_SY);
+	vdp2_pri0 = malloc(sizeof(UINT8) * PLANE_SX * PLANE_SY);
+	vdp2_pri1 = malloc(sizeof(UINT8) * PLANE_SX * PLANE_SY);
+	vdp2_pri2 = malloc(sizeof(UINT8) * PLANE_SX * PLANE_SY);
+	vdp2_pri3 = malloc(sizeof(UINT8) * PLANE_SX * PLANE_SY);
 
 	for (i = 0; i < 144; i++)
 		vdp2.reg[i] = 0;
