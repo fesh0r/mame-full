@@ -333,6 +333,9 @@ static void MessWriteMountedSoftware(int nGame)
 		softwarename = options.image_files[i].name;
 		devtype = options.image_files[i].type;
 
+		if ((devtype == IO_ZIP) || (devtype == IO_UNKNOWN) || (devtype == IO_BAD))
+			continue;
+
 		assert(softwarename);
 		assert(devtype >= 0);
 		assert(devtype < IO_COUNT);
