@@ -612,7 +612,8 @@ static void pet64_init_palette (unsigned char *sys_palette, unsigned short *sys_
 }
 
 ROM_START (ultimax)
-	ROM_REGION (0x10000, REGION_CPU1, 0)
+	ROM_REGION (0x14000, REGION_CPU1, 0)
+	ROM_LOAD ("kernel.max", 0x12000, 0x2000, 0xcaac20ff)
 ROM_END
 
 ROM_START (c64gs)
