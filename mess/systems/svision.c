@@ -293,11 +293,11 @@ static void svision_init_colors (unsigned char *sys_palette,
 static void svision_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i, j;
-	UINT8 *vram=memory_region(REGION_CPU1)+0x4000;
+	UINT8 *vram=memory_region(REGION_CPU1)+0x4000+XPOS/4;
 
 	for (y=0,i=0; y<160; y++,i+=0x30) {
 		for (x=0,j=i; x<160; x+=4,j++) {
-			drawgfx(bitmap, Machine->gfx[0], vram[XPOS/4+j],0,0,0,
+			drawgfx(bitmap, Machine->gfx[0], vram[j],0,0,0,
 					x,y, 0, TRANSPARENCY_NONE,0);
 		}
 	}
@@ -306,7 +306,7 @@ static void svision_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refres
 static int svision_frame_int(void)
 {
 	cpu_set_nmi_line(0, PULSE_LINE);
-	return 0;
+	return ignore_interrupt();
 }
 
 static void init_svision(void)
@@ -408,11 +408,18 @@ static int svision_load_rom(int id)
 		return 1;
 	}
 	size=osd_fsize(cartfile);
+	if (size>0x10000) {
+	    logerror("%s: size %d not yet supported\n",device_filename(IO_CARTSLOT,id), size);
+	    return 1;
+	}
 
-	if (osd_fread(cartfile, rom+0x10000, size)!=size) {
+	if (osd_fread(cartfile, rom+0x20000-size, size)!=size) {
 		logerror("%s load error\n",device_filename(IO_CARTSLOT,id));
 		osd_fclose(cartfile);
 		return 1;
+	}
+	if (size==0x8000) {
+	    memcpy(rom+0x10000, rom+0x20000-size, size);
 	}
 	memcpy(rom+0xc000, rom+0x1c000, 0x10000-0xc000);
 	osd_fclose(cartfile);
