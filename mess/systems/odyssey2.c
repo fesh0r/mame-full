@@ -205,9 +205,9 @@ static DRIVER_INIT( odyssey2 )
 }
 
 SYSTEM_CONFIG_START(odyssey2)
-	CONFIG_DEVICE_CARTSLOT_REQ(1, "bin\0", odyssey2_load_rom, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ(1, "bin\0", NULL, NULL, odyssey2_load_rom, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
-/*     YEAR  NAME		PARENT	MACHINE   INPUT 	INIT		CONFIG		COMPANY		FULLNAME */
-COMPX( 1982, odyssey2,	0,		odyssey2, odyssey2, odyssey2,	odyssey2,	"Magnavox",  "Odyssey 2", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
+/*     YEAR  NAME      PARENT  MACHINE   INPUT     INIT      CONFIG    COMPANY     FULLNAME     FLAGS */
+COMPX( 1982, odyssey2, 0,      odyssey2, odyssey2, odyssey2, odyssey2, "Magnavox", "Odyssey 2", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
 /* philips g7000/videopac */

@@ -356,8 +356,8 @@ static QUICKLOAD_LOAD( lynx )
 }
 
 SYSTEM_CONFIG_START(lynx)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "lnx\0",	lynx_init_cart, NULL, lynx_partialcrc)
-	CONFIG_DEVICE_QUICKLOAD(  "o\0",	lynx)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "lnx\0", NULL, NULL, lynx_init_cart, NULL, NULL, lynx_partialcrc)
+	CONFIG_DEVICE_QUICKLOAD("o\0", lynx)
 SYSTEM_CONFIG_END
 
 /***************************************************************************
