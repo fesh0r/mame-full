@@ -75,8 +75,8 @@ Needed roms:
 - Japanese version of Vs. Tennis			(1984)
 - Japanese version of Vs. Soccer			(1985)
 - Japanese version of Vs. Super Mario Bros. (1986)
-- Lionex ?									(title uncertain, prototype by Sunsoft, 1986)
-- Madoula no Tsubasa						(prototype by Sunsoft, 1985)
+- Lionex									(prototype by Sunsoft, 1987)
+- Madura no Tsubasa							(prototype by Sunsoft, 1987)
 - Predators									(prototype by Williams, 84)
 - Pro Yakyuu Family Stadium					(by Namco, 1986?)
 - Quest of Ki								(by Namco/Game Studio, 198?)
@@ -2512,6 +2512,14 @@ ROM_START( rbibb )
 	ROM_LOAD( "rbi-cha",  0x0000, 0x8000, CRC(a3c14889) SHA1(ef00f4fbf21cf34e946957b9b6825b8e2cb16536) )
 ROM_END
 
+ROM_START( rbibba )
+	ROM_REGION( 0x20000,REGION_CPU1,0 ) /* 6502 memory */
+	ROM_LOAD( "rbi-prga", 0x10000, 0x10000, CRC(a5939d0d) SHA1(476ac2a3974b69082bb8eebdfc0d15befaa2e165) )
+
+	ROM_REGION( 0x8000,REGION_GFX1, 0 ) /* PPU memory */
+	ROM_LOAD( "rbi-cha",  0x0000, 0x8000, CRC(a3c14889) SHA1(ef00f4fbf21cf34e946957b9b6825b8e2cb16536) )
+ROM_END
+
 ROM_START( vsskykid )
 	ROM_REGION( 0x18000,REGION_CPU1,0 ) /* 6502 memory */
 	ROM_LOAD( "sk-prg1",  0x10000, 0x08000, CRC(cf36261e) SHA1(e4a3d2a223f066c231631d92504f08e60b303dfd) )
@@ -2777,7 +2785,8 @@ GAME( 1984, iceclmbj, iceclimb, vsnes,   iceclmbj, suprmrio, ROT0, "Nintendo",  
 GAME( 1984, ladygolf, 0,        vsnes,   golf,     machridr, ROT0, "Nintendo",  "Vs. Stroke and Match Golf (Ladies Version)" )
 GAMEX(1985, machridr, 0,        vsnes,   machridr, machridr, ROT0, "Nintendo",  "Vs. Mach Rider (Endurance Course Version)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1985, machridj, machridr, vsnes,   machridj, vspinbal, ROT0, "Nintendo",  "Vs. Mach Rider (Japan, Fighting Course Version)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1986, rbibb,    0,        vsnes,   rbibb,    rbibb,    ROT0, "Namco",     "Vs. Atari R.B.I. Baseball" )
+GAME( 1986, rbibb,    0,        vsnes,   rbibb,    rbibb,    ROT0, "Namco",     "Vs. Atari R.B.I. Baseball (set 1)" )
+GAME( 1986, rbibba,	  rbibb,    vsnes,   rbibb,    rbibb,    ROT0, "Namco",     "Vs. Atari R.B.I. Baseball (set 2)" )
 GAME( 1986, suprmrio, 0,        vsnes,   suprmrio, suprmrio, ROT0, "Nintendo",  "Vs. Super Mario Bros." )
 GAME( 1985, vsskykid, 0,        vsnes,   vsskykid, MMC3,	 ROT0, "Namco",     "Vs. Super SkyKid"  )
 GAMEX(1987, tkoboxng, 0,        vsnes,   tkoboxng, tkoboxng, ROT0, "Namco LTD.","Vs. TKO Boxing", GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )

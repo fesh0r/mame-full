@@ -5,6 +5,7 @@
 	driver by Aaron Giles
 
 	Games supported:
+		* Bio Freaks [Midway]
 		* CarnEvil [Midway, 150MHz]
 		* NFL Blitz [Midway, 150MHz]
 		* NFL Blitz 99 [Midway, 150MHz]
@@ -13,9 +14,6 @@
 		* Mace: The Dark Age [Atari, 200MHz]
 		* San Francisco Rush [Atari]
 		* Wayne Gretzky's 3d Hockey [Atari]
-
-	Not working:
-		* Bio Freaks [Midway]
 
 	Potentially to be added:
 		* Hyperdrive [Midway, 200MHz]
@@ -29,11 +27,7 @@
 		* Blitz99/2k: crash when running full powerup tests
 		* Blitz99/2k: sounds play at the wrong frequency unless we use 12MHz
 		* Wayne Gretzky: loses sound occasionally and has to reset it
-		* Wayne Gretzky/Mace: random poly glitches (seriously out of whack parameters)
-		* California Speed: freaks out while driving with a MATH ERR
 		* SF Rush: hangs when trying to start a game (security?)
-		* SF Rush: displays "MATH ERR: frexpf(Inf): DOMAIN error" (FP exceptions necessary?)
-		* SF Rush: crashes eventually using the DRC
 
 **************************************************************************/
 
@@ -64,7 +58,7 @@ static data32_t pci_bridge_regs[0x40];
 static data32_t pci_3dfx_regs[0x40];
 
 static void *timer[4];
-static UINT32 timer_start[4];
+static UINT32 timer_count[4];
 static UINT8 timer_active[4];
 
 static UINT8 vblank_signalled;
@@ -332,15 +326,15 @@ static void timer_callback(int which)
 		logerror("timer %d fired\n", which);
 
 	/* copy the start value from the registers */
-	timer_start[which] = galileo_regs[0x850/4 + which];
+	timer_count[which] = galileo_regs[0x850/4 + which];
 	if (which != 0)
-		timer_start[which] &= 0xffffff;
+		timer_count[which] &= 0xffffff;
 
 	/* if we're a timer, adjust the timer to fire again */
 	if (galileo_regs[0x864/4] & (2 << (2 * which)))
-		timer_adjust(timer[which], TIMER_CLOCK * timer_start[which], which, 0);
+		timer_adjust(timer[which], TIMER_CLOCK * timer_count[which], which, 0);
 	else
-		timer_active[which] = timer_start[which] = 0;
+		timer_active[which] = timer_count[which] = 0;
 
 	/* trigger the interrupt */
 	galileo_regs[0xc18/4] |= 0x100 << which;
@@ -633,7 +627,7 @@ static READ32_HANDLER( galileo_r )
 		{
 			int which = offset % 4;
 
-			result = timer_start[which];
+			result = timer_count[which];
 			if (timer_active[which])
 			{
 				UINT32 elapsed = (UINT32)(timer_timeelapsed(timer[which]) / TIMER_CLOCK);
@@ -732,9 +726,9 @@ static WRITE32_HANDLER( galileo_w )
 			if (which != 0)
 				data &= 0xffffff;
 			if (!timer_active[which])
-				timer_start[which] = data;
+				timer_count[which] = data;
 			if (LOG_TIMERS)
-				logerror("%06X:timer/counter %d count = %08X [start=%08X]\n", activecpu_get_pc(), offset % 4, data, timer_start[which]);
+				logerror("%06X:timer/counter %d count = %08X [start=%08X]\n", activecpu_get_pc(), offset % 4, data, timer_count[which]);
 			break;
 		}
 
@@ -749,15 +743,21 @@ static WRITE32_HANDLER( galileo_w )
 				if (!timer_active[which] && (data & mask))
 				{
 					timer_active[which] = 1;
-					timer_adjust(timer[which], TIMER_CLOCK * timer_start[which], which, 0);
+					if (timer_count[which] == 0)
+					{
+						timer_count[which] = galileo_regs[0x850/4 + which];
+						if (which != 0)
+							timer_count[which] &= 0xffffff;
+					}
+					timer_adjust(timer[which], TIMER_CLOCK * timer_count[which], which, 0);
 					if (LOG_TIMERS)
-						logerror("Adjusted timer to fire in %f secs\n", TIMER_CLOCK * timer_start[which]);
+						logerror("Adjusted timer to fire in %f secs\n", TIMER_CLOCK * timer_count[which]);
 				}
 				else if (timer_active[which] && !(data & mask))
 				{
 					UINT32 elapsed = (UINT32)(timer_timeelapsed(timer[which]) / TIMER_CLOCK);
 					timer_active[which] = 0;
-					timer_start[which] = (timer_start[which] > elapsed) ? (timer_start[which] - elapsed) : 0;
+					timer_count[which] = (timer_count[which] > elapsed) ? (timer_count[which] - elapsed) : 0;
 					timer_adjust(timer[which], TIME_NEVER, which, 0);
 					if (LOG_TIMERS)
 						logerror("Disabled timer\n");
@@ -1473,68 +1473,52 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( biofreak )
 	PORT_START	    /* DIPs */
-	PORT_DIPNAME( 0x0001, 0x0001, "Coinage Source" )
-	PORT_DIPSETTING(      0x0001, "Dipswitch" )
-	PORT_DIPSETTING(      0x0000, "CMOS" )
-	PORT_DIPNAME( 0x003e, 0x003e, DEF_STR( Coinage ))
-	PORT_DIPSETTING(      0x003e, "USA 1" )
-	PORT_DIPSETTING(      0x003c, "USA 2" )
-	PORT_DIPSETTING(      0x003a, "USA 3" )
-	PORT_DIPSETTING(      0x0038, "USA 4" )
-	PORT_DIPSETTING(      0x0036, "USA 5" )
-	PORT_DIPSETTING(      0x0034, "USA 6" )
-	PORT_DIPSETTING(      0x0032, "USA 7" )
-	PORT_DIPSETTING(      0x0030, "USA ECA" )
-	PORT_DIPSETTING(      0x002e, "France 1" )
-	PORT_DIPSETTING(      0x002c, "France 2" )
-	PORT_DIPSETTING(      0x002a, "France 3" )
-	PORT_DIPSETTING(      0x0028, "France 4" )
-	PORT_DIPSETTING(      0x0026, "France 5" )
-	PORT_DIPSETTING(      0x0024, "France 6" )
-	PORT_DIPSETTING(      0x0022, "France 7" )
-	PORT_DIPSETTING(      0x0020, "France ECA" )
-	PORT_DIPSETTING(      0x001e, "German 1" )
-	PORT_DIPSETTING(      0x001c, "German 2" )
-	PORT_DIPSETTING(      0x001a, "German 3" )
-	PORT_DIPSETTING(      0x0018, "German 4" )
-	PORT_DIPSETTING(      0x0016, "German 5" )
-//	PORT_DIPSETTING(      0x0014, "German 5" )
-//	PORT_DIPSETTING(      0x0012, "German 5" )
-	PORT_DIPSETTING(      0x0010, "German ECA" )
-	PORT_DIPSETTING(      0x000e, "U.K. 1 ECA" )
-	PORT_DIPSETTING(      0x000c, "U.K. 2 ECA" )
-	PORT_DIPSETTING(      0x000a, "U.K. 3 ECA" )
-	PORT_DIPSETTING(      0x0008, "U.K. 4" )
-	PORT_DIPSETTING(      0x0006, "U.K. 5" )
-	PORT_DIPSETTING(      0x0004, "U.K. 6 ECA" )
-	PORT_DIPSETTING(      0x0002, "U.K. 7 ECA" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ))
-	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ))
-	PORT_DIPSETTING(      0x0040, "0" )
-	PORT_DIPSETTING(      0x0000, "1" )
-	PORT_DIPNAME( 0x0080, 0x0080, "Power Up Test Loop" )
-	PORT_DIPSETTING(      0x0080, DEF_STR( No ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( Yes ))
-	PORT_DIPNAME( 0x0100, 0x0100, "Joysticks" )
-	PORT_DIPSETTING(      0x0100, "8-Way" )
-	PORT_DIPSETTING(      0x0000, "49-Way" )
-	PORT_DIPNAME( 0x0600, 0x0600, "Resolution" )
-//	PORT_DIPSETTING(      0x0600, "0" )
-	PORT_DIPSETTING(      0x0200, "Medium" )
-	PORT_DIPSETTING(      0x0400, "Low" )
-//	PORT_DIPSETTING(      0x0000, "3" )
-	PORT_DIPNAME( 0x1800, 0x1800, DEF_STR( Unknown ))
-	PORT_DIPSETTING(      0x1800, "0" )
-	PORT_DIPSETTING(      0x0800, "1" )
-	PORT_DIPSETTING(      0x1000, "2" )
-	PORT_DIPSETTING(      0x0000, "3" )
-	PORT_DIPNAME( 0x2000, 0x2000, "Players" )
-	PORT_DIPSETTING(      0x2000, "2" )
-	PORT_DIPSETTING(      0x0000, "4" )
-	PORT_DIPNAME( 0x4000, 0x4000, "Power Up Tests" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( No ))
-	PORT_DIPSETTING(      0x4000, DEF_STR( Yes ))
-	PORT_DIPNAME( 0x8000, 0x8000, "Test Switch" )
+	PORT_DIPNAME( 0x0001, 0x0001, "Unknown0001" )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0002, 0x0002, "Unknown0002" )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0004, 0x0004, "Unknown0004" )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0008, 0x0008, "Unknown0008" )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0010, 0x0010, "Unknown0010" )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0020, 0x0020, "Unknown0020" )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0040, 0x0040, "Unknown0040" )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0080, 0x0080, "Unknown0080" )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0100, 0x0100, "Unknown0100" )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0200, 0x0200, "Unknown0200" )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0400, 0x0400, "Unknown0400" )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0800, 0x0800, "Unknown0800" )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x1000, 0x1000, "Unknown1000" )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x2000, 0x2000, "Unknown2000" )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x4000, 0x4000, "Unknown4000" )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x8000, 0x8000, "Unknown8000" )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 
@@ -2067,7 +2051,7 @@ ROM_START( calspeed )
 	ROM_LOAD( "caspd1_2.u32", 0x000000, 0x80000, CRC(0a235e4e) SHA1(b352f10fad786260b58bd344b5002b6ea7aaf76d) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "calspeed.chd", 0, BAD_DUMP MD5(dc8c919af86a1ab88a0b05ea2b6c74b3) SHA1(e6cbc8290af2df9704838a925cb43b6972b80d95) )
+	DISK_IMAGE( "calspeed.chd", 0, MD5(dc8c919af86a1ab88a0b05ea2b6c74b3) SHA1(e6cbc8290af2df9704838a925cb43b6972b80d95) )
 ROM_END
 
 
@@ -2081,7 +2065,7 @@ ROM_START( biofreak )
 	ROM_LOAD( "biofreak.u32", 0x000000, 0x80000, CRC(cefa00bb) SHA1(7e171610ede1e8a448fb8d175f9cb9e7d549de28) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "biofreak.chd", 0, NO_DUMP )
+	DISK_IMAGE( "biofreak.chd", 0, MD5(f4663a3fd0ceed436756710b97d283e4) SHA1(88b87cb651b97eac117c9342127938e30dc8c138) )
 ROM_END
 
 
@@ -2165,7 +2149,7 @@ static void init_common(int ioasic, int serialnum, int yearoffs)
 static DRIVER_INIT( wg3dh )
 {
 	dcs2_init(0x3839);
-	init_common(MIDWAY_IOASIC_STANDARD, 450/* unknown */, 80);
+	init_common(MIDWAY_IOASIC_STANDARD, 310/* others? */, 80);
 
 	/* speedups */
 	install_mem_read32_handler(0, 0x80115e00, 0x80115e03, generic_speedup_r);
@@ -2203,6 +2187,7 @@ static DRIVER_INIT( calspeed )
 {
 	dcs2_init(0x39c0);
 	init_common(MIDWAY_IOASIC_CALSPEED, 450/* unknown */, 100);
+	midway_ioasic_set_auto_ack(1);
 
 	/* set up the analog inputs */
 	install_mem_read32_handler(0, 0xb6c00010, 0xb6c00013, analog_port_r);
@@ -2217,7 +2202,7 @@ static DRIVER_INIT( calspeed )
 
 static DRIVER_INIT( biofreak )
 {
-	dcs2_init(0);
+	dcs2_init(0x3835);
 	init_common(MIDWAY_IOASIC_STANDARD, 231/* no alternates */, 80);
 
 	/* speedups */
@@ -2288,10 +2273,10 @@ static DRIVER_INIT( carnevil )
 GAME ( 1996, wg3dh,    0,        seattle150, wg3dh,    wg3dh,    ROT0, "Atari Games",  "Wayne Gretzky's 3D Hockey" )
 GAME ( 1996, mace,     0,        seattle200, mace,     mace,     ROT0, "Atari Games",  "Mace: The Dark Age" )
 GAMEX( 1996, sfrush,   0,        flagstaff,  sfrush,   sfrush,   ROT0, "Atari Games",  "San Francisco Rush", GAME_NOT_WORKING )
-GAMEX( 1996, calspeed, 0,        seattle150, calspeed, calspeed, ROT0, "Atari Games",  "California Speed", GAME_NOT_WORKING )
+GAME ( 1998, calspeed, 0,        seattle150, calspeed, calspeed, ROT0, "Atari Games",  "California Speed" )
 
 /* Midway */
-GAMEX( 1997, biofreak, 0,        seattle150, biofreak, biofreak, ROT0, "Midway Games", "BioFreaks (prototype)", GAME_NOT_WORKING )
+GAME ( 1997, biofreak, 0,        seattle150, biofreak, biofreak, ROT0, "Midway Games", "BioFreaks (prototype)" )
 GAME ( 1997, blitz,    0,        seattle150, blitz,    blitz,    ROT0, "Midway Games", "NFL Blitz" )
 GAME ( 1998, blitz99,  0,        seattle150, blitz99,  blitz99,  ROT0, "Midway Games", "NFL Blitz '99" )
 GAME ( 1999, blitz2k,  0,        seattle150, blitz99,  blitz2k,  ROT0, "Midway Games", "NFL Blitz 2000" )

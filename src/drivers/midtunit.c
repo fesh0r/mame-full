@@ -279,7 +279,7 @@ INPUT_PORTS_START( mk2 )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( jdredd )
+INPUT_PORTS_START( jdreddp )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 | IPF_8WAY )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 | IPF_8WAY )
@@ -1276,7 +1276,7 @@ ROM_START( nbajamt3 )
 ROM_END
 
 
-ROM_START( jdredd )
+ROM_START( jdreddp )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
 
 	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* sound CPU */
@@ -1332,7 +1332,7 @@ GAME( 1993, mk2r42,   mk2,     tunit_dcs,   mk2,     mk2,      ROT0, "hack",    
 GAME( 1993, mk2r91,   mk2,     tunit_dcs,   mk2,     mk2,      ROT0, "hack",     "Mortal Kombat II (rev L9.1, hack)" )
 GAME( 1993, mk2chal,  mk2,     tunit_dcs,   mk2,     mk2,      ROT0, "hack",     "Mortal Kombat II Challenger (hack)" )
 
-GAME( 1993, jdredd,   0,       tunit_adpcm, jdredd,  jdredd,   ROT0, "Midway",   "Judge Dredd (rev LA1, prototype)" )
+GAME( 1993, jdreddp,  0,       tunit_adpcm, jdreddp, jdreddp,  ROT0, "Midway",   "Judge Dredd (rev LA1, prototype)" )
 
 GAME( 1993, nbajam,   0,       tunit_adpcm, nbajam,  nbajam,   ROT0, "Midway",   "NBA Jam (rev 3.01 04/07/93)" )
 GAME( 1993, nbajamr2, nbajam,  tunit_adpcm, nbajam,  nbajam20, ROT0, "Midway",   "NBA Jam (rev 2.00 02/10/93)" )

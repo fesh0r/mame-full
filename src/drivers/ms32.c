@@ -201,6 +201,8 @@ static data32_t *ms32_fc000000;
 
 static data32_t *ms32_mahjong_input_select;
 
+static data32_t to_main;
+
 /********** READ INPUTS **********/
 
 static READ32_HANDLER ( ms32_read_inputs1 )
@@ -275,6 +277,19 @@ static WRITE32_HANDLER( ms32_sound_w )
 	cpu_spinuntil_time(TIME_IN_USEC(40));
 }
 
+static READ32_HANDLER( ms32_sound_r )
+{
+	return to_main^0xff;
+}
+
+static WRITE32_HANDLER( reset_sub_w )
+{
+	if(data) cpu_set_reset_line(1,PULSE_LINE); // 0 too ?
+}
+
+
+
+
 /********** MEMORY MAP **********/
 
 /* some games games test more ram than others .. ram areas with closed comments before
@@ -311,7 +326,7 @@ static MEMORY_READ32_START( ms32_readmem )
 /**/{ 0xfce00a00, 0xfce00a17, MRA32_RAM },	/* tx scroll registers */
 /**/{ 0xfce00a20, 0xfce00a37, MRA32_RAM },	/* bg scroll registers */
 
-//	{ 0xfd000000, 0xfd000003, MRA32_NOP }, /* f1superb? */
+	{ 0xfd000000, 0xfd000003, ms32_sound_r },
 	{ 0xfd0e0000, 0xfd0e0003, ms32_read_inputs3 }, /* analog controls in f1superb? */
 
 ///**/{ 0xfd104000, 0xfd105fff, MRA32_RAM }, /* f1superb */
@@ -352,6 +367,7 @@ static MEMORY_WRITE32_START( ms32_writemem )
 	{ 0xfc800000, 0xfc800003, ms32_sound_w }, /* sound? */
 	{ 0xfce00000, 0xfce00003, ms32_gfxctrl_w },	/* flip screen + other unknown bits */
 	{ 0xfce00034, 0xfce00037, MWA32_NOP }, // irq ack?
+	{ 0xfce00038, 0xfce0003b, reset_sub_w },
 	{ 0xfce00050, 0xfce0005f, MWA32_NOP },	// watchdog? I haven't investigated
 //	{ 0xfce00000, 0xfce0007f, MWA32_RAM, &ms32_fce00000 }, /* registers not ram? */
 	{ 0xfce00280, 0xfce0028f, ms32_brightness_w },	// global brightness control
@@ -390,14 +406,6 @@ static MEMORY_WRITE32_START( ms32_writemem )
 	{ 0xfee00000, 0xfee1ffff, MWA32_RAM, &ms32_mainram },
 	{ 0xffe00000, 0xffffffff, MWA32_ROM },
 MEMORY_END
-
-/*
-static MEMORY_READ_START( ms32_sound_readmem )
-MEMORY_END
-
-static MEMORY_WRITE_START( ms32_sound_writemem )
-MEMORY_END
-*/
 
 /********** INPUT PORTS **********/
 
@@ -1454,7 +1462,6 @@ static INTERRUPT_GEN(ms32_interrupt)
 {
 	if( cpu_getiloops() == 0 ) irq_raise(10);
 	if( cpu_getiloops() == 1 ) irq_raise(9);
-	if( cpu_getiloops() == 2 ) irq_raise(1);
 	/* hayaosi1 needs at least 12 IRQ 0 per frame to work (see code at FFE02289)
 	   kirarast needs it too, at least 8 per frame, but waits for a variable amount
 	   47pi2 needs ?? per frame (otherwise it hangs when you lose)
@@ -1471,34 +1478,60 @@ static INTERRUPT_GEN(ms32_interrupt)
 /*
  Jaleco Mega System 32 sound Z80
 
+ RAM 62256 - the highest RAM adr line is grounded, only 16k is used
+
  0000-3eff: program ROM (fixed)
  3f00-3f0f: YMF271-F
- 3f10     : command latch (bidirectional)
- 8000     : banked ROM area
+ 3f10     : RW :command latch
+ 3f20	  : RW :2nd command latch  ?? (not connected on PCB)
+ 3f40     : W : YMF271 pin 4 (bit 1) , YMF271 pin 39 (bit 4)
+ 3f70	  : W : unknown ? connected to JALECO GS91022-04 pin 55 (from GAL)
+ 3f80	  : Bank select - $bB
+ 4000-7fff: RAM
+ 8000-bfff: banked ROM area #1 - bank B+1
+ c000-ffff: banked ROM area #2 - bank b+1
 
  IRQ is unused (YMF271 timers are polled to control tempo)
  NMI reads the command latch
+ code at $38 reads the 2nd command latch ??
 */
 
 static READ_HANDLER( latch_r )
 {
 	cpu_set_irq_line(1, IRQ_LINE_NMI, CLEAR_LINE);
-	return soundlatch_r(0);
+	return soundlatch_r(0)^0xff;
+}
+
+static WRITE_HANDLER( ms32_snd_bank_w )
+{
+		cpu_setbank(4, memory_region(REGION_CPU2) + 0x14000+0x4000*(data&0xf));
+		cpu_setbank(5, memory_region(REGION_CPU2) + 0x14000+0x4000*(data>>4));
+}
+
+static WRITE_HANDLER( to_main_w )
+{
+		to_main=data;
+		irq_raise(1);
 }
 
 static MEMORY_READ_START( ms32_snd_readmem )
 	{ 0x0000, 0x3eff, MRA_ROM },
 	{ 0x3f00, 0x3f0f, YMF271_0_r },
 	{ 0x3f10, 0x3f10, latch_r },
+	{ 0x3f20, 0x3f20, MRA_NOP }, /* 2nd latch ? */
 	{ 0x4000, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_BANK4 },
+	{ 0x8000, 0xbfff, MRA_BANK4 },
+	{ 0xc000, 0xffff, MRA_BANK5 },
 MEMORY_END
 
 static MEMORY_WRITE_START( ms32_snd_writemem )
 	{ 0x0000, 0x3eff, MWA_ROM },
 	{ 0x3f00, 0x3f0f, YMF271_0_w },
-//	{ 0x3f10, 0x3f10, latch_w },	// writeback to V70
-	{ 0x3f70, 0x3f70, MWA_NOP },	// watchdog? banking? very noisy.
+	{ 0x3f10, 0x3f10, to_main_w },
+	{ 0x3f20, 0x3f20, MWA_NOP }, /* to_main2_w  ? */
+	{ 0x3f40, 0x3f40, MWA_NOP },   /* YMF271 pin 4 (bit 1) , YMF271 pin 39 (bit 4) */
+	{ 0x3f70, 0x3f70, MWA_NOP },   // watchdog? banking? very noisy
+	{ 0x3f80, 0x3f80, ms32_snd_bank_w },
 	{ 0x4000, 0x7fff, MWA_RAM },
 	{ 0x8000, 0xffff, MWA_ROM },
 MEMORY_END
@@ -1517,6 +1550,7 @@ static MACHINE_INIT( ms32 )
 {
 	cpu_setbank(1, memory_region(REGION_CPU1));
 	cpu_setbank(4, memory_region(REGION_CPU2) + 0x14000);
+	cpu_setbank(5, memory_region(REGION_CPU2) + 0x18000);
 	irq_init();
 }
 
@@ -1626,7 +1660,7 @@ ROM_START( 47pie2 )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples */
 	ROM_LOAD( "94019-10.22", 0x000000, 0x200000, CRC(745d41ec) SHA1(9118d0f27b65c9d37970326ccf86fdccb81d32f5) )
-	ROM_LOAD( "94019-11.23", 0x000000, 0x200000, CRC(021dc350) SHA1(c71936091f86440201fdbdc94b0d1d22c4018188) )
+	ROM_LOAD( "94019-11.23", 0x200000, 0x200000, CRC(021dc350) SHA1(c71936091f86440201fdbdc94b0d1d22c4018188) )
 ROM_END
 
 ROM_START( 47pie2o )
@@ -1661,7 +1695,7 @@ ROM_START( 47pie2o )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples */
 	ROM_LOAD( "94019-10.22", 0x000000, 0x200000, CRC(745d41ec) SHA1(9118d0f27b65c9d37970326ccf86fdccb81d32f5) )
-	ROM_LOAD( "94019-11.23", 0x000000, 0x200000, CRC(021dc350) SHA1(c71936091f86440201fdbdc94b0d1d22c4018188) )
+	ROM_LOAD( "94019-11.23", 0x200000, 0x200000, CRC(021dc350) SHA1(c71936091f86440201fdbdc94b0d1d22c4018188) )
 ROM_END
 
 ROM_START( desertwr )
@@ -1697,8 +1731,8 @@ ROM_START( desertwr )
 	ROM_RELOAD(              0x010000, 0x40000 )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples */
-	ROM_LOAD( "94038-13.34", 0x200000, 0x200000, CRC(b0cac8f2) SHA1(f7d2e32d9c2f301341f7c02678c2c1e09ce655ba) )
 	ROM_LOAD( "92042-01.33", 0x000000, 0x200000, CRC(0fa26f65) SHA1(e92b14862fbce33ea4ab4567ec48199bfcbbdd84) ) // common samples
+	ROM_LOAD( "94038-13.34", 0x200000, 0x200000, CRC(b0cac8f2) SHA1(f7d2e32d9c2f301341f7c02678c2c1e09ce655ba) )
 ROM_END
 
 ROM_START( f1superb )
@@ -1885,9 +1919,9 @@ ROM_START( hayaosi1 )
 	ROM_LOAD( "mb93138a.21", 0x000000, 0x040000, CRC(8e8048b0) SHA1(93285a0570ed829b36f4e8c57d133a7dd14f123d) )
 	ROM_RELOAD(              0x010000, 0x40000 )
 
-	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples - 8-bit signed PCM */
-	ROM_LOAD( "mr93038.01",  0x000000, 0x200000, CRC(b8a38bfc) SHA1(1aa7b69beebceb6f09a1ee006de054cb84002e94) )
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples - 8-bit signed PCM */
 	ROM_LOAD( "mr92042.01",  0x000000, 0x200000, CRC(0fa26f65) SHA1(e92b14862fbce33ea4ab4567ec48199bfcbbdd84) ) // common samples
+	ROM_LOAD( "mr93038.01",  0x200000, 0x200000, CRC(b8a38bfc) SHA1(1aa7b69beebceb6f09a1ee006de054cb84002e94) )
 ROM_END
 
 ROM_START( kirarast )
@@ -1921,9 +1955,9 @@ ROM_START( kirarast )
 	ROM_LOAD( "mr95025.21",  0x000000, 0x040000, CRC(a6c70c7f) SHA1(fe2108f3e8d46ed53d8c5c98e8d0fdb19b77075d) )
 	ROM_RELOAD(              0x010000, 0x40000 )
 
-	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples - 8-bit signed PCM */
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples - 8-bit signed PCM */
 	ROM_LOAD( "mr95025.12",  0x000000, 0x200000, CRC(1dd4f766) SHA1(455befd3a216f2197cd2e7e4899d4f1af7d20bf7) )
-	ROM_LOAD( "mr95025.13",  0x000000, 0x200000, CRC(0adfe5b8) SHA1(02309e5789b58896e5f68603502c76d4a917bd91) )
+	ROM_LOAD( "mr95025.13",  0x200000, 0x200000, CRC(0adfe5b8) SHA1(02309e5789b58896e5f68603502c76d4a917bd91) )
 ROM_END
 
 ROM_START( akiss )
@@ -1993,9 +2027,9 @@ ROM_START( p47aces )
 	ROM_LOAD( "p47-21.bin",  0x000000, 0x040000, CRC(f2d43927) SHA1(69ac20f339a515d58cafbcd6f7d7982ca5cda681) )
 	ROM_RELOAD(              0x010000, 0x40000 )
 
-	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples - 8-bit signed PCM */
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples - 8-bit signed PCM */
 	ROM_LOAD( "p47-22.bin",  0x000000, 0x200000, CRC(0fa26f65) SHA1(e92b14862fbce33ea4ab4567ec48199bfcbbdd84) )
-	ROM_LOAD( "p47-23.bin",  0x000000, 0x200000, CRC(547fa4d4) SHA1(8a5ecb3300646762f63d37a27e643e1f6ce5e775) )
+	ROM_LOAD( "p47-23.bin",  0x200000, 0x200000, CRC(547fa4d4) SHA1(8a5ecb3300646762f63d37a27e643e1f6ce5e775) )
 ROM_END
 
 ROM_START( tetrisp )
@@ -2051,7 +2085,7 @@ ROM_START( tp2m32 )
 	ROM_LOAD( "tp2m3221.21", 0x000000, 0x040000, CRC(2bcc4176) SHA1(74740fa13ab81b9819b4cfbe9d34a0749ba23b8f) )
 	ROM_RELOAD(              0x010000, 0x40000 )
 
-	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples */
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples */
 	ROM_LOAD( "tp2m3205.22", 0x000000, 0x200000, CRC(74aa5c31) SHA1(7e3f86198fb678244fab76bee9c72bbdfc818118) )
 ROM_END
 
@@ -2264,21 +2298,28 @@ static DRIVER_INIT (tp2m32)
 	init_ss91022_10();
 }
 
+static DRIVER_INIT (f1superb)
+{
+	data32_t *pROM = (data32_t *)memory_region(REGION_CPU1);
+	pROM[0x19d04/4]=0x167a021a; // bne->br  : sprite Y offset table is always copied to RAM
+	init_ss92046_01();
+}
+
 /********** GAME DRIVERS **********/
 
-GAMEX( 1994, hayaosi1, 0,        ms32, hayaosi1, ss92046_01, ROT0,   "Jaleco", "Hayaoshi Quiz Ouza Ketteisen", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1994, bbbxing,  0,        ms32, bbbxing,  ss92046_01, ROT0,   "Jaleco", "Best Bout Boxing", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1994, 47pie2,   0,        ms32, kirarast, 47pie2,     ROT0,   "Jaleco", "Idol Janshi Su-Chi-Pie 2 (v1.1)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1994, 47pie2o,  47pie2,   ms32, kirarast, 47pie2,     ROT0,   "Jaleco", "Idol Janshi Su-Chi-Pie 2 (v1.0)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1995, desertwr, 0,        ms32, desertwr, ss91022_10, ROT270, "Jaleco", "Desert War / Wangan Sensou", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND  )
-GAMEX( 1995, gametngk, 0,        ms32, gametngk, ss91022_10, ROT270, "Jaleco", "The Game Paradise - Master of Shooting! / Game Tengoku - The Game Paradise", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1995, tetrisp,  0,        ms32, tetrisp,  ss92046_01, ROT0,   "Jaleco / BPS", "Tetris Plus", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1995, p47aces,  0,        ms32, p47aces,  ss92048_01, ROT0,   "Jaleco", "P-47 Aces", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1995, akiss,    0,        ms32, kirarast, kirarast,   ROT0,   "Jaleco", "Mahjong Angel Kiss", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1996, gratia,   0,        ms32, gratia,   ss92047_01, ROT0,   "Jaleco", "Gratia - Second Earth (92047-01 version)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1996, gratiaa,  gratia,   ms32, gratia,   ss91022_10, ROT0,   "Jaleco", "Gratia - Second Earth (91022-10 version)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1996, kirarast, 0,        ms32, kirarast, kirarast,   ROT0,   "Jaleco", "Ryuusei Janshi Kirara Star", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1997, tp2m32,   tetrisp2, ms32, tp2m32,   tp2m32,     ROT0,   "Jaleco", "Tetris Plus 2 (MegaSystem 32 Version)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1994, hayaosi1, 0,        ms32, hayaosi1, ss92046_01, ROT0,   "Jaleco", "Hayaoshi Quiz Ouza Ketteisen", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1994, bbbxing,  0,        ms32, bbbxing,  ss92046_01, ROT0,   "Jaleco", "Best Bout Boxing", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1994, 47pie2,   0,        ms32, kirarast, 47pie2,     ROT0,   "Jaleco", "Idol Janshi Su-Chi-Pie 2 (v1.1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1994, 47pie2o,  47pie2,   ms32, kirarast, 47pie2,     ROT0,   "Jaleco", "Idol Janshi Su-Chi-Pie 2 (v1.0)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, desertwr, 0,        ms32, desertwr, ss91022_10, ROT270, "Jaleco", "Desert War / Wangan Sensou", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
+GAMEX( 1995, gametngk, 0,        ms32, gametngk, ss91022_10, ROT270, "Jaleco", "The Game Paradise - Master of Shooting! / Game Tengoku - The Game Paradise", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, tetrisp,  0,        ms32, tetrisp,  ss92046_01, ROT0,   "Jaleco / BPS", "Tetris Plus", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, p47aces,  0,        ms32, p47aces,  ss92048_01, ROT0,   "Jaleco", "P-47 Aces", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, akiss,    0,        ms32, kirarast, kirarast,   ROT0,   "Jaleco", "Mahjong Angel Kiss", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1996, gratia,   0,        ms32, gratia,   ss92047_01, ROT0,   "Jaleco", "Gratia - Second Earth (92047-01 version)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1996, gratiaa,  gratia,   ms32, gratia,   ss91022_10, ROT0,   "Jaleco", "Gratia - Second Earth (91022-10 version)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1996, kirarast, 0,        ms32, kirarast, kirarast,   ROT0,   "Jaleco", "Ryuusei Janshi Kirara Star", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1997, tp2m32,   tetrisp2, ms32, tp2m32,   tp2m32,     ROT0,   "Jaleco", "Tetris Plus 2 (MegaSystem 32 Version)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 
 /* these boot and show something */
-GAMEX( 1994, f1superb, 0,        ms32, f1superb, ss92046_01, ROT0,   "Jaleco", "F1 Super Battle", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1994, f1superb, 0,        ms32, f1superb, f1superb, ROT0,   "Jaleco", "F1 Super Battle", GAME_NOT_WORKING | GAME_NO_SOUND )

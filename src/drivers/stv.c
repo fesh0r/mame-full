@@ -3520,12 +3520,13 @@ WRITE32_HANDLER ( w60ffc48_write )
 
 DRIVER_INIT ( stv )
 {
+	unsigned char *ROM = memory_region(REGION_USER1);
+
 	time_t ltime;
 	struct tm *today;
 	time(&ltime);
 	today = localtime(&ltime);
 
-	unsigned char *ROM = memory_region(REGION_USER1);
 	cpu_setbank(1,&ROM[0x000000]);
 
 	/* we allocate the memory here so its easier to share between cpus */

@@ -269,7 +269,7 @@ static MACHINE_DRIVER_START( quizpani )
 	MDRV_CPU_ADD(M68000, 10000000)
 	MDRV_CPU_MEMORY(quizpani_readmem,quizpani_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
-	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112) //?
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold,164) // music tempo
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -314,4 +314,4 @@ ROM_START( quizpani )
 	ROM_LOAD( "qz8.121", 0x200, 0x100, CRC(b4c19741) SHA1(a6d3686bad6ef2336463b89bc2d249003d9b4bcc) ) /* unknown */
 ROM_END
 
-GAMEX( 1993, quizpani, 0, quizpani, quizpani, 0, ROT0, "NMK", "Quiz Panicuru Fantasy", GAME_IMPERFECT_SOUND )
+GAME( 1993, quizpani, 0, quizpani, quizpani, 0, ROT0, "NMK", "Quiz Panicuru Fantasy" )
