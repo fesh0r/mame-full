@@ -36,7 +36,6 @@ struct wimgtool_info
 
 	HICON readonly_icon;
 	int readonly_icon_index;
-	HICON directory_icon;
 	int directory_icon_index;
 
 	HIMAGELIST dragimage;
@@ -63,39 +62,65 @@ static struct wimgtool_info *get_wimgtool_info(HWND window)
 
 
 
+static int get_selected_item(HWND window)
+{
+	struct wimgtool_info *info;
+	LVITEM item;
+	int selected_index;
+
+	info = get_wimgtool_info(window);
+	if (!info->image)
+		return -1;
+
+	selected_index = ListView_GetNextItem(info->listview, -1, LVIS_SELECTED | LVIS_FOCUSED);
+	if (selected_index < 0)
+		return -1;
+
+	item.mask = LVIF_PARAM;
+	item.iItem = selected_index;
+	ListView_GetItem(info->listview, &item);
+
+	if (item.lParam < 0)
+		return -1;
+
+	return item.lParam;
+}
+
+
+
 static imgtoolerr_t get_selected_dirent(HWND window, imgtool_dirent *entry)
 {
 	struct wimgtool_info *info;
 	int selected_item;
 	imgtoolerr_t err;
-	LVITEM item;
+	size_t filename_sz, curdir_sz;
+	char *s;
 	
 	info = get_wimgtool_info(window);
-	if (!info->image)
-	{
-		err = IMGTOOLERR_UNEXPECTED;
-		goto done;
-	}
-	selected_item = ListView_GetNextItem(info->listview, -1, LVIS_SELECTED | LVIS_FOCUSED);
+
+	selected_item = get_selected_item(window);
 	if (selected_item < 0)
 	{
 		err = IMGTOOLERR_UNEXPECTED;
 		goto done;
 	}
 
-	item.mask = LVIF_PARAM;
-	item.iItem = selected_item;
-	ListView_GetItem(info->listview, &item);
-
-	if (item.lParam < 0)
-	{
-		err = IMGTOOLERR_UNEXPECTED;
-		goto done;
-	}
-
-	err = img_getdirent(info->image, info->current_directory, item.lParam, entry);
+	/* retrieve the directory entry */
+	err = img_getdirent(info->image, info->current_directory, selected_item, entry);
 	if (err)
 		goto done;
+
+	/* if we have a path, prepend the path */
+	if (info->current_directory && info->current_directory[0])
+	{
+		curdir_sz = strlen(info->current_directory);
+		filename_sz = strlen(entry->filename);
+
+		s = (char *) alloca((curdir_sz + filename_sz + 1) * sizeof(*s));
+		strcpy(s, info->current_directory);
+		strcpy(s + curdir_sz, entry->filename);
+		snprintf(entry->filename, entry->filename_len, "%s", s);
+	}
 
 done:
 	return err;
@@ -110,10 +135,12 @@ static void report_error(HWND window, imgtoolerr_t err)
 
 
 
+#define FOLDER_ICON	((const char *) ~0)
+
 static int append_associated_icon(HWND window, const char *extension)
 {
 	HICON icon;
-	HANDLE file;
+	HANDLE file = INVALID_HANDLE_VALUE;
 	WORD icon_index;
 	TCHAR file_path[MAX_PATH];
 	int index = -1;
@@ -121,13 +148,20 @@ static int append_associated_icon(HWND window, const char *extension)
 
 	info = get_wimgtool_info(window);
 
+	/* retrieve temporary file path */
 	GetTempPath(sizeof(file_path) / sizeof(file_path[0]), file_path);
-	_tcscat(file_path, "tmp");
-	if (extension)
-		_tcscat(file_path, A2T(extension));
 
-	file = CreateFile(file_path, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
+	if (extension != FOLDER_ICON)
+	{
+		/* create bogus temporary file so that we can get the icon */
+		_tcscat(file_path, TEXT("tmp"));
+		if (extension)
+			_tcscat(file_path, A2T(extension));
 
+		file = CreateFile(file_path, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
+	}
+
+	/* extract the icon */
 	icon = ExtractAssociatedIcon(GetModuleHandle(NULL), file_path, &icon_index);
 	if (icon)
 	{
@@ -136,6 +170,7 @@ static int append_associated_icon(HWND window, const char *extension)
 		DestroyIcon(icon);
 	}
 
+	/* remote temporary file if we created one */
 	if (file != INVALID_HANDLE_VALUE)
 	{
 		CloseHandle(file);
@@ -657,7 +692,8 @@ static void menu_insert(HWND window)
 	imgtoolerr_t err;
 	const char *image_filename;
 	TCHAR host_filename[MAX_PATH] = { 0 };
-	const TCHAR *s;
+	const TCHAR *s1;
+	char *s2;
 	OPENFILENAME ofn;
 	struct wimgtool_info *info;
 	option_resolution *opts = NULL;
@@ -685,13 +721,19 @@ static void menu_insert(HWND window)
 			goto done;
 	}
 
-	s = _tcsrchr(ofn.lpstrFile, '\\');
-	s = s ? s + 1 : ofn.lpstrFile;
-	image_filename = T2A(s);
+	s1 = _tcsrchr(ofn.lpstrFile, '\\');
+	s1 = s1 ? s1 + 1 : ofn.lpstrFile;
+	image_filename = T2U(s1);
 
-	// TODO:  Need to fully qualify the path
+	if (info->current_directory)
+	{
+		s2 = (char *) alloca(strlen(info->current_directory) + strlen(image_filename) + 1);
+		strcpy(s2, info->current_directory);
+		strcat(s2, image_filename);
+		image_filename = s2;
+	}
 
-	err = img_putfile(info->image, NULL, ofn.lpstrFile, opts, NULL);
+	err = img_putfile(info->image, image_filename, ofn.lpstrFile, opts, NULL);
 	if (err)
 		goto done;
 
@@ -728,8 +770,6 @@ static void menu_extract(HWND window)
 	if (err)
 		goto done;
 	filename = entry.filename;
-
-	// TODO:  Need to fully qualify the path
 
 	strcpy(host_filename, image_filename);
 
@@ -818,6 +858,8 @@ static void menu_createdir(HWND window)
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	struct createdir_dialog_info cdi;
 	struct wimgtool_info *info;
+	char *dirname;
+	char *s;
 
 	info = get_wimgtool_info(window);
 
@@ -827,10 +869,17 @@ static void menu_createdir(HWND window)
 
 	if (cdi.buf[0] == '\0')
 		goto done;
+	dirname = T2U(cdi.buf);
 
-	// TODO:  Need to fully qualify the path
+	if (info->current_directory)
+	{
+		s = (char *) alloca(strlen(info->current_directory) + strlen(dirname) + 1);
+		strcpy(s, info->current_directory);
+		strcat(s, dirname);
+		dirname = s;
+	}
 
-	err = img_createdir(info->image, T2U(cdi.buf));
+	err = img_createdir(info->image, dirname);
 	if (err)
 		goto done;
 
@@ -860,8 +909,6 @@ static void menu_delete(HWND window)
 	err = get_selected_dirent(window, &entry);
 	if (err)
 		goto done;
-
-	// TODO:  Need to fully qualify the path
 
 	if (entry.directory)
 		err = img_deletedir(info->image, image_filename);
@@ -922,8 +969,8 @@ static LRESULT wimgtool_create(HWND window, CREATESTRUCT *pcs)
 		(LPARAM) status_widths);
 
 	// create imagelists
-	info->iconlist_normal = ImageList_Create(32, 32, ILC_COLOR, 0, 0);
-	info->iconlist_small = ImageList_Create(16, 16, ILC_COLOR, 0, 0);
+	info->iconlist_normal = ImageList_Create(32, 32, ILC_COLORDDB | ILC_MASK , 0, 0);
+	info->iconlist_small = ImageList_Create(16, 16, ILC_COLORDDB | ILC_MASK , 0, 0);
 	if (!info->iconlist_normal || !info->iconlist_small)
 		return -1;
 	ListView_SetImageList(info->listview, info->iconlist_normal, LVSIL_NORMAL);
@@ -931,11 +978,9 @@ static LRESULT wimgtool_create(HWND window, CREATESTRUCT *pcs)
 
 	// get icons
 	info->readonly_icon = LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_READONLY), IMAGE_ICON, 16, 16, 0);
-	info->directory_icon = LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_DIRECTORY), IMAGE_ICON, 16, 16, 0);
 	info->readonly_icon_index = ImageList_AddIcon(info->iconlist_normal, info->readonly_icon);
 	ImageList_AddIcon(info->iconlist_small, info->readonly_icon);
-	info->directory_icon_index = ImageList_AddIcon(info->iconlist_normal, info->directory_icon);
-	ImageList_AddIcon(info->iconlist_small, info->directory_icon);
+	info->directory_icon_index = append_associated_icon(window, FOLDER_ICON);
 
 	full_refresh_image(window);
 	return 0;
@@ -955,7 +1000,6 @@ static void wimgtool_destroy(HWND window)
 			img_close(info->image);
 		pile_delete(&info->iconlist_extensions);
 		DestroyIcon(info->readonly_icon);
-		DestroyIcon(info->directory_icon);
 		if (info->current_directory)
 			free(info->current_directory);
 		free(info);
@@ -1124,6 +1168,7 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 	int window_width;
 	int window_height;
 	int status_height;
+	int selected_item;
 	NMHDR *notify;
 	POINT pt;
 	LRESULT lres;
@@ -1166,6 +1211,17 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 			else
 				memset(&features, 0, sizeof(features));
 
+			selected_item = get_selected_item(window);
+			if (selected_item < 0)
+			{
+				features.supports_reading = 0;
+				features.supports_deletefile = 0;
+				features.supports_deletedir = 0;
+			}
+
+			/* TODO - At some point, we need to enabled ID_IMAGE_DELETE
+			 * conditionally based on whether the current selection is a
+			 * file or a directory, but for now I'm being lazy */
 			EnableMenuItem(menu, ID_IMAGE_INSERT,
 				MF_BYCOMMAND | (features.supports_writing ? MF_ENABLED : MF_GRAYED));
 			EnableMenuItem(menu, ID_IMAGE_EXTRACT,
