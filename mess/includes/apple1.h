@@ -3,12 +3,8 @@
 /* machine/apple1.c */
 
 DRIVER_INIT( apple1 );
-void apple1_interrupt (void);
+MACHINE_INIT( apple1 );
 SNAPSHOT_LOAD( apple1 );
- READ8_HANDLER( apple1_pia0_kbdin );
- READ8_HANDLER( apple1_pia0_dsprdy );
- READ8_HANDLER( apple1_pia0_kbdrdy );
-WRITE8_HANDLER( apple1_pia0_dspout );
 
 /* vidhrdw/apple1.c */
 
@@ -17,6 +13,9 @@ VIDEO_UPDATE( apple1 );
 
 void apple1_vh_dsp_w (int data);
 void apple1_vh_dsp_clr (void);
+double apple1_vh_dsp_time_to_ready (void);
+
+extern int apple1_vh_clrscrn_pressed;
 
 /* systems/apple1.c */
 

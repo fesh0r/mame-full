@@ -27,6 +27,7 @@ struct terminal
 	int num_rows;
 	int (*getcursorcode)(int original_code);
 	int cur_offset;
+	int cur_hidden;
 	termchar_t mem[1];
 };
 
@@ -41,7 +42,7 @@ static void terminal_gettileinfo(int memory_offset)
 	color = ch >> current_terminal->char_bits;
 	gfxfont = current_terminal->gfx;
 
-	if ((memory_offset == current_terminal->cur_offset) && current_terminal->getcursorcode)
+	if ((memory_offset == current_terminal->cur_offset) && !current_terminal->cur_hidden && current_terminal->getcursorcode)
 		code = current_terminal->getcursorcode(code);
 
 	SET_TILE_INFO(
@@ -79,7 +80,8 @@ struct terminal *terminal_create(
 	term->num_rows = num_rows;
 	term->getcursorcode = getcursorcode;
 	term->cur_offset = -1;
-	terminal_clear(term, blank_char);
+	term->cur_hidden = 0;
+	terminal_clear(term);
 	return term;
 }
 
@@ -121,6 +123,11 @@ int terminal_getchar(struct terminal *terminal, int x, int y)
 	return terminal->mem[offs];
 }
 
+void terminal_putblank(struct terminal *terminal, int x, int y)
+{
+	terminal_putchar(terminal, x, y, terminal->blank_char);
+}
+
 static void terminal_dirtycursor(struct terminal *terminal)
 {
 	if (terminal->cur_offset >= 0)
@@ -136,7 +143,14 @@ void terminal_setcursor(struct terminal *terminal, int x, int y)
 
 void terminal_hidecursor(struct terminal *terminal)
 {
-	terminal_setcursor(terminal, -1, -1);
+	terminal->cur_hidden = 1;
+	terminal_dirtycursor(terminal);
+}
+
+void terminal_showcursor(struct terminal *terminal)
+{
+	terminal->cur_hidden = 0;
+	terminal_dirtycursor(terminal);
 }
 
 void terminal_getcursor(struct terminal *terminal, int *x, int *y)
@@ -145,11 +159,17 @@ void terminal_getcursor(struct terminal *terminal, int *x, int *y)
 	*y = terminal->cur_offset / terminal->num_cols;
 }
 
-void terminal_clear(struct terminal *terminal, int val)
+void terminal_fill(struct terminal *terminal, int val)
 {
 	int i;
 	for (i = 0; i < terminal->num_cols * terminal->num_rows; i++)
 		terminal->mem[i] = val;
+	tilemap_mark_all_tiles_dirty(terminal->tm);
+}
+
+void terminal_clear(struct terminal *terminal)
+{
+	terminal_fill(terminal, terminal->blank_char);
 }
 
 /***************************************************************************

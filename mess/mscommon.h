@@ -32,10 +32,13 @@ void terminal_draw(struct mame_bitmap *dest, const struct rectangle *cliprect,
 	struct terminal *terminal);
 void terminal_putchar(struct terminal *terminal, int x, int y, int ch);
 int terminal_getchar(struct terminal *terminal, int x, int y);
+void terminal_putblank(struct terminal *terminal, int x, int y);
 void terminal_setcursor(struct terminal *terminal, int x, int y);
 void terminal_hidecursor(struct terminal *terminal);
+void terminal_showcursor(struct terminal *terminal);
 void terminal_getcursor(struct terminal *terminal, int *x, int *y);
-void terminal_clear(struct terminal *terminal, int val);
+void terminal_fill(struct terminal *terminal, int val);
+void terminal_clear(struct terminal *terminal);
 
 /***************************************************************************
 

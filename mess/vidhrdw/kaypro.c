@@ -209,9 +209,10 @@ VIDEO_UPDATE( kaypro )
 	cursor_count++;
 
 	if (cursor && (cursor_count & 16))
-		terminal_setcursor(kaypro_terminal, cur_x, cur_y);
+		terminal_showcursor(kaypro_terminal);
 	else
 		terminal_hidecursor(kaypro_terminal);
+	terminal_setcursor(kaypro_terminal, cur_x, cur_y);
 	terminal_draw(bitmap, NULL, kaypro_terminal);
 }
 

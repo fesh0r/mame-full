@@ -8,6 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [APPLE1] Improved driver.  [Colin Howell]
+
 - [SVISION] Fixed aspect ratio.  [PeT]
 
 
