@@ -2,6 +2,33 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.61.1 (in progress)
+	- The mouse cursor is now hidden in OpenGL fullscreen mode.  (Craig 
+	  Servin)
+	- Applied a patch for FreeBSD to unix/video-drivers/svgainput.c.  
+	  (Stijn Hoop)
+	- Applied the NetMAME 0.5 patch, which adds a new option, -parallelsync,
+	  which should allow games to work without lag at network latencies of 
+	  up to 16 milliseconds.  (Steve Freeland)
+	- Applied the ps2linux patch.  (Joan Sarah Touzet)
+	- Fixed a problem in the ALSA 0.9 driver with setting the sample rate 
+	  on SB128 soundcards.  (Stephen Anthony)
+	- Fixed a bug in unix/devices.h that prevented compilation on non-X11 
+	  platforms.
+	- Fixed the register constraints in cpu/i8085/i8085cpu.h so that 
+	  cpu/i8085/i8085.c can build for x86 using gcc-3.1 with -O3.  This 
+	  change was missed in the MAME 0.61 release.
+	- Fixed multiple definition warnings in the psikyosh driver.
+	- Increased the size of the buffer used to display history.  (Steve 
+	  Fewell)
+	- Modified unix/fronthlp.c so that it flushes its output more often to 
+	  aid frontends.  (Shadow Walker)
+
+Release 0.561.1 (xmess)
+	- Everything from MESS 0.561.
+	- Fixed the register constraints in cpu/i8085/i8085cpu.h so that 
+	  cpu/i8085/i8085.c can build for x86 using gcc-3.1 with -O3.
+
 Release 0.60.1 (xmame only)
 	- Everything from MAME 0.60, except for the new special controllers 
 	  support.
