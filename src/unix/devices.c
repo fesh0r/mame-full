@@ -57,12 +57,12 @@ UINT8				trying_to_quit;
 
 /* this will be filled in dynamically */
 static struct OSCodeInfo	codelist[KEY_CODES + JOY_CODES];
-static int			total_codes = 0;
+static int			total_codes;
 
 /* Controller override options */
 static float			a2d_deadzone;
 static int			steadykey;
-static int			analogstick = 0;
+static int			analogstick;
 static int			ugcicoin;
 static int			dummy;
 
@@ -98,10 +98,18 @@ struct rc_option input_opts[] =
 		"6 PS2-Linux native pad (if compiled in)\n"
 		"7 SDL joystick driver" },
 	{ "analogstick", "as", rc_bool, &analogstick, "0", 0, 0, NULL, "Use Joystick as analog for analog controls" },
+#ifdef I386_JOYSTICK
 	{ NULL, NULL, rc_link, joy_i386_opts, NULL, 0, 0, NULL, NULL },
+#endif
+#ifdef LIN_FM_TOWNS
 	{ NULL, NULL, rc_link, joy_pad_opts, NULL, 0, 0, NULL, NULL },
+#endif
+#ifdef X11_JOYSTICK
 	{ NULL, NULL, rc_link, joy_x11_opts, NULL, 0, 0, NULL, NULL },
+#endif
+#ifdef USB_JOYSTICK
 	{ NULL, NULL, rc_link, joy_usb_opts, NULL, 0, 0, NULL, NULL },
+#endif
 #ifdef PS2_JOYSTICK
 	{ NULL, NULL, rc_link, joy_ps2_opts, NULL, 0, 0, NULL, NULL },
 #endif
@@ -407,6 +415,7 @@ static int joy_trans_table[][2] =
 	{ JOYCODE(0, CODETYPE_MOUSEBUTTON, 1), 	MOUSECODE_1_BUTTON2 },
 	{ JOYCODE(0, CODETYPE_MOUSEBUTTON, 2), 	MOUSECODE_1_BUTTON3 },
 	{ JOYCODE(0, CODETYPE_MOUSEBUTTON, 3), 	MOUSECODE_1_BUTTON4 },
+	{ JOYCODE(0, CODETYPE_MOUSEBUTTON, 4), 	MOUSECODE_1_BUTTON5 },
 	{ JOYCODE(0, CODETYPE_MOUSEAXIS, 0),	MOUSECODE_1_ANALOG_X },
 	{ JOYCODE(0, CODETYPE_MOUSEAXIS, 1),	MOUSECODE_1_ANALOG_Y },
 	{ JOYCODE(0, CODETYPE_MOUSEAXIS, 2),	MOUSECODE_1_ANALOG_Z },
@@ -415,6 +424,7 @@ static int joy_trans_table[][2] =
 	{ JOYCODE(1, CODETYPE_MOUSEBUTTON, 1), 	MOUSECODE_2_BUTTON2 },
 	{ JOYCODE(1, CODETYPE_MOUSEBUTTON, 2), 	MOUSECODE_2_BUTTON3 },
 	{ JOYCODE(1, CODETYPE_MOUSEBUTTON, 3), 	MOUSECODE_2_BUTTON4 },
+	{ JOYCODE(1, CODETYPE_MOUSEBUTTON, 4), 	MOUSECODE_2_BUTTON5 },
 	{ JOYCODE(1, CODETYPE_MOUSEAXIS, 0),	MOUSECODE_2_ANALOG_X },
 	{ JOYCODE(1, CODETYPE_MOUSEAXIS, 1),	MOUSECODE_2_ANALOG_Y },
 	{ JOYCODE(1, CODETYPE_MOUSEAXIS, 2),	MOUSECODE_2_ANALOG_Z },
@@ -526,6 +536,8 @@ int osd_input_initpre(void)
 					"   Disabling joystick support.\n", joytype);
 			joytype = JOY_NONE;
 	}
+
+	total_codes = 0;
 
 	/* init the keyboard list */
 	init_keycodes();
