@@ -1944,7 +1944,7 @@ static void mac_vblank_irq(void)
 	}
 }
 
-void mac_interrupt(void)
+INTERRUPT_GEN( mac_interrupt )
 {
 	mac_sh_data_w(current_scanline);
 

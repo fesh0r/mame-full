@@ -21,22 +21,22 @@ extern void trs80_cmd_exit(int id);
 
 extern int trs80_floppy_init(int id);
 
-extern int trs80_vh_start(void);
-extern void trs80_vh_stop(void);
-extern void trs80_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_START( trs80 );
+extern VIDEO_UPDATE( trs80 );
 
 extern void trs80_sh_sound_init(const char * gamename);
 
 extern void init_trs80(void);
-extern void trs80_init_machine(void);
-extern void trs80_shutdown_machine(void);
+extern MACHINE_INIT( trs80 );
+extern MACHINE_STOP( trs80 );
 
 extern WRITE_HANDLER ( trs80_port_ff_w );
 extern READ_HANDLER ( trs80_port_ff_r );
 extern READ_HANDLER ( trs80_port_xx_r );
 
-extern void trs80_timer_interrupt(void);
-extern void trs80_frame_interrupt(void);
+extern INTERRUPT_GEN( trs80_frame_interrupt );
+extern INTERRUPT_GEN( trs80_timer_interrupt );
+extern INTERRUPT_GEN( trs80_fdc_interrupt );
 
 extern READ_HANDLER ( trs80_irq_status_r );
 extern WRITE_HANDLER ( trs80_irq_mask_w );

@@ -10,7 +10,11 @@
 #include "includes/basicdsk.h"
 #include "includes/flopdrv.h"
 
+#ifdef MAME_DEBUG
 #define VERBOSE 1
+#else
+#define VERBOSE 0
+#endif
 
 #if VERBOSE
 #define LOG(x)	logerror x
@@ -29,11 +33,11 @@ static	UINT8			irq_status = 0;
 #define MAX_GRANULES	8		/* lumps consisted of granules.. aha */
 #define MAX_SECTORS 	5		/* and granules of sectors */
 
-#if USE_TRACK
+#ifdef USE_TRACK
 static UINT8 track[4] = {0, };				/* current track per drive */
 #endif
 static UINT8 head;							 /* current head per drive */
-#if USE_SECTOR
+#ifdef USE_SECTOR
 static UINT8 sector[4] = {0, }; 			/* current sector per drive */
 #endif
 static UINT8 irq_mask = 0;
@@ -144,7 +148,7 @@ static void cas_copy_callback(int param)
 		}
 	}
 	cas_size = 0;
-	cpu_set_reg(Z80_PC, entry);
+	activecpu_set_reg(Z80_PC, entry);
 }
 
 int trs80_cas_init(int id)
@@ -243,7 +247,7 @@ static void cmd_copy_callback(int param)
 		}
 	}
 	cmd_size = 0;
-	cpu_set_reg(Z80_PC, entry);
+	activecpu_set_reg(Z80_PC, entry);
 }
 
 int trs80_cmd_init(int id)
@@ -350,7 +354,7 @@ int trs80_floppy_init(int id)
 
 static void trs80_fdc_callback(int);
 
-void trs80_init_machine(void)
+MACHINE_INIT( trs80 )
 {
 	wd179x_init(WD_TYPE_179X,trs80_fdc_callback);
 
@@ -367,7 +371,7 @@ void trs80_init_machine(void)
 	}
 }
 
-void trs80_shutdown_machine(void)
+MACHINE_STOP( trs80 )
 {
 	wd179x_exit();
 	tape_put_close();
@@ -653,26 +657,22 @@ READ_HANDLER( trs80_port_ff_r )
  *
  *************************************/
 
-int trs80_timer_interrupt(void)
+INTERRUPT_GEN( trs80_timer_interrupt )
 {
 	if( (irq_status & IRQ_TIMER) == 0 )
 	{
 		irq_status |= IRQ_TIMER;
 		cpu_set_irq_line (0, 0, HOLD_LINE);
-		return 0;
 	}
-	return ignore_interrupt ();
 }
 
-int trs80_fdc_interrupt(void)
+INTERRUPT_GEN( trs80_fdc_interrupt )
 {
 	if ((irq_status & IRQ_FDC) == 0)
 	{
 		irq_status |= IRQ_FDC;
 		cpu_set_irq_line (0, 0, HOLD_LINE);
-		return 0;
 	}
-	return ignore_interrupt ();
 }
 
 void trs80_fdc_callback(int event)
@@ -688,14 +688,13 @@ void trs80_fdc_callback(int event)
 	}
 }
 
-int trs80_frame_interrupt (void)
+INTERRUPT_GEN( trs80_frame_interrupt )
 {
-	return 0;
 }
 
 void trs80_nmi_generate (int param)
 {
-	cpu_cause_interrupt (0, Z80_NMI_INT);
+	cpu_set_irq_line (0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 /*************************************

@@ -435,7 +435,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static unsigned char palette[] =
+static unsigned char vt_palette[] =
 {
       0,  0,  0,    /* black */
       0,  0,127,    /* blue */
@@ -456,18 +456,19 @@ static unsigned char palette[] =
 };
 
 /* Initialise the palette */
-static void init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( vtech2 )
 {
 	int i;
 
-    memcpy(sys_palette,palette,sizeof(palette));
+	palette_set_colors(0, vt_palette, sizeof(vt_palette) / 3);
+
 	for (i = 0; i < 256; i++)
 	{
-		sys_colortable[2*i] = i%16;
-		sys_colortable[2*i+1] = i/16;
+		colortable[2*i] = i%16;
+		colortable[2*i+1] = i/16;
 	}
 	for (i = 0; i < 16; i++)
-		sys_colortable[2*256+i] = i;
+		colortable[2*256+i] = i;
 }
 
 static struct Speaker_interface speaker_interface =
@@ -481,7 +482,7 @@ static struct Wave_interface wave_interface = {
 	{ 50 }
 };
 
-static int vtech2_interrupt(void)
+static INTERRUPT_GEN( vtech2_interrupt )
 {
 	int tape_control = readinputport(12);
 	if( tape_control & 0x80 )
@@ -491,143 +492,51 @@ static int vtech2_interrupt(void)
 	if( tape_control & 0x20 )
 		device_seek(IO_CASSETTE, 0, 0, SEEK_SET);
 
-    return interrupt();
+	cpu_set_irq_line(0, 0, PULSE_LINE);
 }
 
-static struct MachineDriver machine_driver_laser350 =
-{
+static MACHINE_DRIVER_START( laser350 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3694700, /* 3.694700 Mhz */
-            readmem,writemem,readport,writeport,
-			vtech2_interrupt,1
-		},
-	},
-	50, 0,									/* frames per second, vblank duration */
-	1,
-	laser350_init_machine,
-	laser_shutdown_machine,
+	MDRV_CPU_ADD_TAG("main", Z80, 3694700)        /* 3.694700 Mhz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(vtech2_interrupt, 1)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(0)
+	MDRV_INTERLEAVE(1)
 
-	/* video hardware */
-	88*8,									/* screen width (inc. blank/sync) */
-	24*8+32,								/* screen height (inc. blank/sync) */
-	{ 0*8, 88*8-1, 0*8, 24*8+32-1}, 		/* visible_area */
-    gfxdecodeinfo,                          /* graphics decode info */
-	sizeof(palette)/sizeof(palette[0])/3,	/* colors used for the characters */
-	256*2+16,
-    init_palette,                           /* init palette */
+	MDRV_MACHINE_INIT( laser350 )
+	MDRV_MACHINE_STOP( laser )
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	laser_vh_start,
-	laser_vh_stop,
-	laser_vh_screenrefresh,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(88*8, 24*8+32)
+	MDRV_VISIBLE_AREA(0*8, 88*8-1, 0*8, 24*8+32-1)
+	MDRV_GFXDECODE( gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(sizeof(vt_palette)/sizeof(vt_palette[0])/3)
+	MDRV_COLORTABLE_LENGTH(256*2+16)
+	MDRV_PALETTE_INIT(vtech2)
+
+	MDRV_VIDEO_START(laser)
+	MDRV_VIDEO_UPDATE(laser)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SPEAKER,
-			&speaker_interface
-		},
-		{
-			SOUND_WAVE,
-			&wave_interface
-		}
-    }
-};
+	MDRV_SOUND_ADD(SPEAKER, speaker_interface)
+	MDRV_SOUND_ADD(WAVE, wave_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_laser500 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3694700, /* 3.694700 Mhz */
-            readmem,writemem,readport,writeport,
-			vtech2_interrupt,1
-		},
-	},
-	50, 0,									/* frames per second, vblank duration */
-	1,
-	laser500_init_machine,
-	laser_shutdown_machine,
 
-	/* video hardware */
-	88*8,									/* screen width (inc. blank/sync) */
-	24*8+32,								/* screen height (inc. blank/sync) */
-	{ 0*8, 88*8-1, 0*8, 24*8+32-1}, 		/* visible_area */
-    gfxdecodeinfo,                          /* graphics decode info */
-	sizeof(palette)/sizeof(palette[0])/3,	/* colors used for the characters */
-	256*2+16,
-    init_palette,                           /* init palette */
+static MACHINE_DRIVER_START( laser500 )
+	MDRV_IMPORT_FROM( laser350 )
+	MDRV_MACHINE_INIT( laser500 )
+MACHINE_DRIVER_END
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	laser_vh_start,
-	laser_vh_stop,
-	laser_vh_screenrefresh,
 
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SPEAKER,
-			&speaker_interface
-        },
-		{
-			SOUND_WAVE,
-			&wave_interface
-        }
-    }
-};
+static MACHINE_DRIVER_START( laser700 )
+	MDRV_IMPORT_FROM( laser350 )
+	MDRV_MACHINE_INIT( laser700 )
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_laser700 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3694700, /* 3.694700 Mhz */
-            readmem,writemem,readport,writeport,
-			interrupt,1
-		},
-	},
-	50, 0,									/* frames per second, vblank duration */
-	1,
-	laser700_init_machine,
-	laser_shutdown_machine,
-
-	/* video hardware */
-	88*8,									/* screen width (inc. blank/sync) */
-	24*8+32,								/* screen height (inc. blank/sync) */
-	{ 0*8, 88*8-1, 0*8, 24*8+32-1}, 		/* visible_area */
-    gfxdecodeinfo,                          /* graphics decode info */
-	sizeof(palette)/sizeof(palette[0])/3,	/* colors used for the characters */
-	256*2+16,
-	init_palette,							/* init palette */
-
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	laser_vh_start,
-	laser_vh_stop,
-	laser_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SPEAKER,
-			&speaker_interface
-        },
-		{
-			SOUND_WAVE,
-			&wave_interface
-        }
-    }
-};
 
 ROM_START(laser350)
 	ROM_REGION(0x40000,REGION_CPU1,0)

@@ -109,7 +109,7 @@ void init_laser(void)
         gfx[i] = i;
 }
 
-void laser350_init_machine(void)
+MACHINE_INIT( laser350 )
 {
     mem = memory_region(REGION_CPU1);
 	/* banks 0 to 3 only, optional ROM extension */
@@ -119,7 +119,7 @@ void laser350_init_machine(void)
 	logerror("laser350 init machine: bank mask $%04X, video %d [$%05X]\n", laser_bank_mask, laser_video_bank, laser_video_bank * 0x04000);
 }
 
-void laser500_init_machine(void)
+MACHINE_INIT( laser500 )
 {
     mem = memory_region(REGION_CPU1);
 	/* banks 0 to 2, and 4-7 only , optional ROM extension */
@@ -129,7 +129,7 @@ void laser500_init_machine(void)
 	logerror("laser500 init machine: bank mask $%04X, video %d [$%05X]\n", laser_bank_mask, laser_video_bank, laser_video_bank * 0x04000);
 }
 
-void laser700_init_machine(void)
+MACHINE_INIT( laser700 )
 {
     mem = memory_region(REGION_CPU1);
 	/* all banks except #3 */
@@ -139,7 +139,7 @@ void laser700_init_machine(void)
 	logerror("laser700 init machine: bank mask $%04X, video %d [$%05X]\n", laser_bank_mask, laser_video_bank, laser_video_bank * 0x04000);
 }
 
-void laser_shutdown_machine(void)
+MACHINE_STOP( laser )
 {
     int i;
     for( i = 0; i < 2; i++ )

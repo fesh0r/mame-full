@@ -285,13 +285,13 @@ static struct GfxDecodeInfo trs80_gfxdecodeinfo[] =
 	{ REGION_GFX1, 0, &trs80_charlayout_double_width, 0, 4 },
 MEMORY_END	 /* end of array */
 
-static unsigned char palette[] =
+static unsigned char trs80_palette[] =
 {
    0x00,0x00,0x00,
    0xff,0xff,0xff
 };
 
-static unsigned short colortable[] =
+static unsigned short trs80_colortable[] =
 {
 	0,1 	/* green on black */
 };
@@ -299,10 +299,10 @@ static unsigned short colortable[] =
 
 
 /* Initialise the palette */
-static void trs80_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( trs80 )
 {
-	memcpy(sys_palette,palette,sizeof(palette));
-	memcpy(sys_colortable,colortable,sizeof(colortable));
+	palette_set_colors(0, trs80_palette, sizeof(trs80_palette)/3);
+	memcpy(colortable,trs80_colortable,sizeof(trs80_colortable));
 }
 
 static INT16 speaker_levels[3] = {0.0*32767,0.46*32767,0.85*32767};
@@ -316,134 +316,52 @@ static struct Speaker_interface speaker_interface =
 };
 
 
-static struct MachineDriver machine_driver_level1 =
-{
+static MACHINE_DRIVER_START( level1 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			1796000,	/* 1.796 Mhz */
-			readmem_level1,writemem_level1,
-			readport_level1,writeport_level1,
-			trs80_frame_interrupt,1,
-			trs80_timer_interrupt,40
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,		/* frames per second, vblank duration */
-	1,
-	trs80_init_machine,
-	trs80_shutdown_machine,
+	MDRV_CPU_ADD_TAG("main", Z80, 1796000)        /* 1.796 Mhz */
+	MDRV_CPU_MEMORY(readmem_level1,writemem_level1)
+	MDRV_CPU_PORTS(readport_level1,writeport_level1)
+	MDRV_CPU_VBLANK_INT(trs80_frame_interrupt, 1)
+	MDRV_CPU_PERIODIC_INT(trs80_timer_interrupt, 40)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	/* video hardware */
-	64*FW,									/* screen width */
-	16*FH,									/* screen height */
-	{ 0*FW,64*FW-1,0*FH,16*FH-1},			/* visible_area */
-	trs80_gfxdecodeinfo,					/* graphics decode info */
-	sizeof(palette)/sizeof(palette[0])/3,
-	sizeof(colortable)/sizeof(colortable[0]),/* colors used for the characters */
-	trs80_init_palette, 					/* init palette */
+	MDRV_MACHINE_INIT( trs80 )
+	MDRV_MACHINE_STOP( trs80 )
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	trs80_vh_start,
-	trs80_vh_stop,
-	trs80_vh_screenrefresh,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(64*FW, 16*FH)
+	MDRV_VISIBLE_AREA(0*FW,64*FW-1,0*FH,16*FH-1)
+	MDRV_GFXDECODE( trs80_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(sizeof(trs80_palette)/sizeof(trs80_palette[0])/3)
+	MDRV_COLORTABLE_LENGTH(sizeof(trs80_colortable)/sizeof(trs80_colortable[0]))
+	MDRV_PALETTE_INIT( trs80 )
+
+	MDRV_VIDEO_START( trs80 )
+	MDRV_VIDEO_UPDATE( trs80 )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SPEAKER,
-			&speaker_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SPEAKER, speaker_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_model1 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			1796000,	/* 1.796 Mhz */
-			readmem_model1,writemem_model1,
-			readport_model1,writeport_model1,
-			trs80_frame_interrupt,1,
-			trs80_timer_interrupt,40
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,		/* frames per second, vblank duration */
-	1,
-	trs80_init_machine,
-	trs80_shutdown_machine,
 
-	/* video hardware */
-	64*FW,									/* screen width */
-	16*FH,									/* screen height */
-	{ 0*FW,64*FW-1,0*FH,16*FH-1},			/* visible_area */
-	trs80_gfxdecodeinfo,					/* graphics decode info */
-	sizeof(palette)/sizeof(palette[0])/3,
-	sizeof(colortable)/sizeof(colortable[0]),/* colors used for the characters */
-	trs80_init_palette, 					/* init palette */
+static MACHINE_DRIVER_START( model1 )
+	MDRV_IMPORT_FROM( level1 )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( readmem_model1, writemem_model1 )
+	MDRV_CPU_PORTS( readport_model1,writeport_model1 )
+MACHINE_DRIVER_END
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	trs80_vh_start,
-	trs80_vh_stop,
-	trs80_vh_screenrefresh,
 
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SPEAKER,
-			&speaker_interface
-		}
-	}
-};
-
-static struct MachineDriver machine_driver_model3 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			1796000,		/* 1.796 Mhz */
-			readmem_model3,writemem_model3,
-			readport_model3,writeport_model3,
-			trs80_frame_interrupt,2,
-			trs80_timer_interrupt,40
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,		/* frames per second, vblank duration */
-	1,
-	trs80_init_machine,
-	trs80_shutdown_machine,
-
-	/* video hardware */
-	64*FW,									/* screen width */
-	16*FH,									/* screen height */
-	{ 0*FW,64*FW-1,0*FH,16*FH-1},			/* visible_area */
-	trs80_gfxdecodeinfo,					/* graphics decode info */
-	sizeof(palette)/sizeof(palette[0])/3,
-	sizeof(colortable)/sizeof(colortable[0]),/* colors used for the characters */
-	trs80_init_palette, 					/* convert color prom */
-
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	trs80_vh_start,
-	trs80_vh_stop,
-	trs80_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SPEAKER,
-			&speaker_interface
-		}
-	}
-};
+static MACHINE_DRIVER_START( model3 )
+	MDRV_IMPORT_FROM( level1 )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( readmem_model3, writemem_model3 )
+	MDRV_CPU_PORTS( readport_model3,writeport_model3 )
+	MDRV_CPU_VBLANK_INT(trs80_frame_interrupt, 2)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

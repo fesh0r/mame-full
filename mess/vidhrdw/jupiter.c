@@ -13,15 +13,11 @@
 unsigned char *jupiter_charram;
 size_t jupiter_charram_size;
 
-int jupiter_vh_start (void)
+VIDEO_START( jupiter )
 {
 	if( video_start_generic() )
 		return 1;
     return 0;
-}
-
-void jupiter_vh_stop (void)
-{
 }
 
 WRITE_HANDLER( jupiter_vh_charram_w )
@@ -44,10 +40,10 @@ WRITE_HANDLER( jupiter_vh_charram_w )
 	}
 }
 
-void jupiter_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( jupiter )
 {
-
 	int offs;
+	int full_refresh = 1;
 
 	/* do we need a full refresh? */
     if( full_refresh )

@@ -38,6 +38,8 @@ UINT8 internal_m6847_charproc(UINT32 c, UINT16 *charpalette, const UINT16 *metap
 int internal_m6847_getadjustedscanline(void);
 void internal_m6847_vh_interrupt(int scanline, int rise_scanline, int fall_scanline);
 
+void internal_video_update_m6847(struct mame_bitmap *bitmap, const struct rectangle *cliprect);
+
 /* ----------------------------------------------------------------------- *
  * from vidhrdw/dragon.c                                                   *
  * ----------------------------------------------------------------------- */
@@ -53,11 +55,11 @@ extern void coco3_ram_b8_w (offs_t offset, data8_t data);
 extern void coco3_ram_b9_w (offs_t offset, data8_t data);
 extern void coco3_vh_sethires(int hires);
 
-extern int video_start_dragon(void);
-extern int video_start_coco(void);
-extern int video_start_coco2b(void);
-extern int video_start_coco3(void);
-extern void video_update_coco3(struct mame_bitmap *bitmap, const struct rectangle *cliprect);
+extern VIDEO_START( dragon );
+extern VIDEO_START( coco );
+extern VIDEO_START( coco2b );
+extern VIDEO_START( coco3 );
+extern VIDEO_UPDATE( coco3 );
 
 extern WRITE_HANDLER ( coco_ram_w );
 extern READ_HANDLER ( coco3_gimevh_r );
@@ -69,14 +71,14 @@ extern void coco3_vh_blink(void);
  * from machine/dragon.c                                                   *
  * ----------------------------------------------------------------------- */
 
-extern void machine_init_dragon32(void);
-extern void machine_init_dragon64(void);
-extern void machine_init_coco(void);
-extern void machine_init_coco2(void);
-extern void machine_init_coco3(void);
-extern void machine_stop_coco(void);
+extern MACHINE_INIT( dragon32 );
+extern MACHINE_INIT( dragon64 );
+extern MACHINE_INIT( coco );
+extern MACHINE_INIT( coco2 );
+extern MACHINE_INIT( coco3 );
+extern MACHINE_STOP( coco );
 
-extern void coco3_vh_interrupt(void);
+extern INTERRUPT_GEN( coco3_vh_interrupt );
 extern int coco_cassette_init(int id);
 extern int coco3_cassette_init(int id);
 extern void coco_cassette_exit(int id);

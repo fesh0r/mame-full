@@ -48,20 +48,13 @@ int laser_frame_time = 0;
 static int laser_bg_mode = 0;
 static int laser_two_color = 0;
 
-int laser_vh_start(void)
+VIDEO_START( laser )
 {
 	videoram_size = 0x04000;
-	dirtybuffer = (UINT8*)malloc(videoram_size);
+	dirtybuffer = (UINT8*) auto_malloc(videoram_size);
 	if (!dirtybuffer)
 		return 1;
 	return 0;
-}
-
-void laser_vh_stop(void)
-{
-	if (dirtybuffer)
-		free(dirtybuffer);
-	dirtybuffer = NULL;
 }
 
 static int offs_2[192] = {
@@ -133,9 +126,10 @@ static int offs_0[96] = {
 	0x26a0,0x2ea0,0x36a0,0x3ea0,0x27a0,0x2fa0,0x37a0,0x3fa0
 };
 
-void laser_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( laser )
 {
 	int offs, x, y;
+	int full_refresh = 1;
 
     if( full_refresh )
 	{

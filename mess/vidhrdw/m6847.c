@@ -880,7 +880,7 @@ static void setup_artifact_palette(int destcolor, UINT16 c0, UINT16 c1,
 	}
 }
 
-PALETTE_INIT( m6847 )
+static PALETTE_INIT( m6847 )
 {
 	assert((sizeof(artifactfactors) / (sizeof(artifactfactors[0]) * 3)) == M6847_ARTIFACT_COLOR_COUNT);
 
@@ -1394,7 +1394,7 @@ void internal_m6847_vh_interrupt(int scanline, int rise_scanline, int fall_scanl
 	timer_set(DHS_R + (TIME_IN_HZ(3588545.0) * 16.5), 0, hs_rise);
 }
 
-void m6847_vh_interrupt(void)
+INTERRUPT_GEN( m6847_vh_interrupt )
 {
 	internal_m6847_vh_interrupt(internal_m6847_getadjustedscanline(), 0, 13+25+192);
 }
@@ -1434,7 +1434,7 @@ int m6847_get_bordercolor(void)
 	return bordercolor;
 }
 
-void video_update_m6847(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void internal_video_update_m6847(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	static int last_artifact_value = 0;
 	int artifact_value;
@@ -1452,6 +1452,11 @@ void video_update_m6847(struct mame_bitmap *bitmap, const struct rectangle *clip
 	}
 
 	videomap_update(bitmap, cliprect);
+}
+
+static VIDEO_UPDATE( m6847 )
+{
+	internal_video_update_m6847(bitmap, cliprect);
 }
 
 int m6847_is_t1(int version)
@@ -1516,6 +1521,17 @@ void m6847_set_cannonical_row_height(void)
 		rowheight = 12;
 	}
 	m6847_set_row_height(rowheight);
+}
+
+void mdrv_m6847(struct InternalMachineDriver *machine, int (*video_start_proc)(void))
+{
+	MDRV_VIDEO_ATTRIBUTES(M6847_VIDEO_TYPE)
+	MDRV_SCREEN_SIZE(M6847_SCREEN_WIDTH, M6847_SCREEN_HEIGHT)
+	MDRV_VISIBLE_AREA(0,319,11,250)
+	MDRV_PALETTE_LENGTH(M6847_TOTAL_COLORS)
+	MDRV_PALETTE_INIT(m6847)
+	MDRV_VIDEO_START(proc)
+	MDRV_VIDEO_UPDATE(m6847)
 }
 
 READ_HANDLER( m6847_ag_r )		{ return (the_state.modebits & M6847_MODEBIT_AG) ? 1 : 0; }

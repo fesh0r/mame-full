@@ -769,7 +769,7 @@ static UINT8 *coco3_textmapper_noattr(UINT8 *mem, int param, int *fg, int *bg, i
 void video_update_coco3(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	coco3_palette_recalc(0);
-	video_update_m6847(bitmap, cliprect);
+	internal_video_update_m6847(bitmap, cliprect);
 }
 
 static void coco3_ram_w(int offset, int data, int block)

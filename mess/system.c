@@ -586,7 +586,7 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 	/* PC-9801 series i8086 based (V30, i386, ..) */
 
 	/* CANTAB */
-//	DRIVER( jupiter )	/* Jupiter Ace									  */
+	DRIVER( jupiter )	/* Jupiter Ace									  */
 
 	/* SORD */
 //	DRIVER( sordm5 )
@@ -623,12 +623,12 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 	DRIVER( mbee56 )	/* Microbee 56K (CP/M)							  */
 
 	/* TANDY RADIO SHACK */
-//	DRIVER( trs80 )	    /* TRS-80 Model I	- Radio Shack Level I BASIC   */
-//	DRIVER( trs80l2 ) 	/* TRS-80 Model I	- Radio Shack Level II BASIC  */
-//	DRIVER( trs80l2a )	/* TRS-80 Model I	- R/S L2 BASIC				  */
-//	DRIVER( sys80 ) 	/* EACA System 80								  */
-//	DRIVER( lnw80 ) 	/* LNW Research LNW-80							  */
-/*//	DRIVER( trs80m2 )*/	/* TRS-80 Model II -							  */
+	DRIVER( trs80 )	    /* TRS-80 Model I	- Radio Shack Level I BASIC   */
+	DRIVER( trs80l2 ) 	/* TRS-80 Model I	- Radio Shack Level II BASIC  */
+	DRIVER( trs80l2a )	/* TRS-80 Model I	- R/S L2 BASIC				  */
+	DRIVER( sys80 ) 	/* EACA System 80								  */
+	DRIVER( lnw80 ) 	/* LNW Research LNW-80							  */
+//	DRIVER( trs80m2 )	/* TRS-80 Model II -							  */
 //TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 
 	DRIVER( coco )		/* Color Computer								  */
@@ -653,12 +653,12 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 	DRIVER( laser210 )	/* 1983 Laser 210 (indentical to Laser 200 ?)	  */
 	DRIVER( laser310 )	/* 1983 Laser 310 (210 with diff. keyboard and RAM) */
 	DRIVER( vz200 ) 	/* 1983 Dick Smith Electronics / Sanyo VZ200	  */
-//	DRIVER( vz300 ) 	/* 1983 Dick Smith Electronics / Sanyo VZ300	  */
-//	DRIVER( fellow )	/* 1983 Salora Fellow (Finland) 				  */
-//	DRIVER( tx8000 )	/* 1983 Texet TX-8000 (U.K.)					  */
-//	DRIVER( laser350 )	/* 1984? Laser 350								  */
-//	DRIVER( laser500 )	/* 1984? Laser 500								  */
-//	DRIVER( laser700 )	/* 1984? Laser 700								  */
+	DRIVER( vz300 ) 	/* 1983 Dick Smith Electronics / Sanyo VZ300	  */
+	DRIVER( fellow )	/* 1983 Salora Fellow (Finland) 				  */
+	DRIVER( tx8000 )	/* 1983 Texet TX-8000 (U.K.)					  */
+	DRIVER( laser350 )	/* 1984? Laser 350								  */
+	DRIVER( laser500 )	/* 1984? Laser 500								  */
+	DRIVER( laser700 )	/* 1984? Laser 700								  */
 
 	/* Creativision console */
 

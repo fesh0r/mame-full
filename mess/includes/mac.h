@@ -2,7 +2,7 @@
 extern MACHINE_INIT( mac );
 extern void init_mac512ke( void );
 extern void init_macplus( void );
-extern void mac_interrupt( void );
+extern INTERRUPT_GEN( mac_interrupt );
 extern READ16_HANDLER ( mac_via_r );
 extern WRITE16_HANDLER ( mac_via_w );
 extern READ16_HANDLER ( mac_autovector_r );

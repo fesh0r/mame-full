@@ -149,7 +149,8 @@ DRVLIBS = \
 	$(OBJ)/advision.a \
 	$(OBJ)/mbee.a	  \
 	$(OBJ)/vtech.a	  \
-#	$(OBJ)/jupiter.a  \
+	$(OBJ)/jupiter.a  \
+	$(OBJ)/trs80.a	  \
 #	$(OBJ)/arcadia.a  \
 #	$(OBJ)/coleco.a   \
 #	$(OBJ)/bally.a	  \
@@ -185,7 +186,6 @@ DRVLIBS = \
 #	$(OBJ)/svi.a      \
 #	$(OBJ)/ti85.a     \
 #	$(OBJ)/sinclair.a \
-#	$(OBJ)/trs80.a	  \
 #	$(OBJ)/cgenie.a   \
 #	$(OBJ)/necpc.a	  \
 #	$(OBJ)/nec.a	  \
@@ -525,9 +525,9 @@ $(OBJ)/vtech.a :   \
 	  $(OBJ)/mess/vidhrdw/vtech1.o	 \
 	  $(OBJ)/mess/machine/vtech1.o	 \
 	  $(OBJ)/mess/systems/vtech1.o	 \
-#	  $(OBJ)/mess/vidhrdw/vtech2.o	 \
-#	  $(OBJ)/mess/machine/vtech2.o	 \
-#	  $(OBJ)/mess/systems/vtech2.o
+	  $(OBJ)/mess/vidhrdw/vtech2.o	 \
+	  $(OBJ)/mess/machine/vtech2.o	 \
+	  $(OBJ)/mess/systems/vtech2.o
 
 $(OBJ)/jupiter.a : \
 	  $(OBJ)/mess/vidhrdw/jupiter.o  \

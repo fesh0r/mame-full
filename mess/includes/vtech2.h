@@ -5,10 +5,10 @@
 extern int laser_latch;
 
 extern void init_laser(void);
-extern void laser350_init_machine(void);
-extern void laser500_init_machine(void);
-extern void laser700_init_machine(void);
-extern void laser_shutdown_machine(void);
+extern MACHINE_INIT( laser350 );
+extern MACHINE_INIT( laser500 );
+extern MACHINE_INIT( laser700 );
+extern MACHINE_STOP( laser );
 
 extern int laser_rom_init(int id);
 extern void laser_rom_exit(int id);
@@ -28,17 +28,7 @@ extern WRITE_HANDLER ( laser_bank_select_w );
 extern char laser_frame_message[64+1];
 extern int laser_frame_time;
 
-
-extern int laser_vh_start(void);
-extern void laser_vh_stop(void);
-extern void laser_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_START( laser );
+extern VIDEO_UPDATE( laser );
 extern WRITE_HANDLER ( laser_bg_mode_w );
 extern WRITE_HANDLER ( laser_two_color_w );
-
-#ifdef RUNTIME_LOADER
-# ifdef __cplusplus
-	extern "C" void vtech2_runtime_loader_init(void);
-# else
-	extern void vtech2_runtime_loader_init(void);
-# endif
-#endif

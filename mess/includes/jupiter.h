@@ -1,8 +1,8 @@
 /* machine/jupiter.c */
 
 extern OPBASE_HANDLER( jupiter_opbaseoverride );
-extern void jupiter_init_machine (void);
-extern void jupiter_stop_machine (void);
+extern MACHINE_INIT( jupiter );
+extern MACHINE_STOP( jupiter );
 extern void jupiter_exit_ace (int id);
 extern int jupiter_load_ace (int id);
 extern void jupiter_exit_tap (int id);
@@ -18,11 +18,8 @@ extern READ_HANDLER( jupiter_port_7ffe_r);
 extern WRITE_HANDLER( jupiter_port_fe_w);
 
 /* vidhrdw/jupiter.c */
-
-extern int jupiter_vh_start (void);
-extern void jupiter_vh_stop (void);
-extern void jupiter_vh_screenrefresh (struct mame_bitmap *bitmap,
-												int full_refresh);
+extern VIDEO_START( jupiter );
+extern VIDEO_UPDATE( jupiter );
 extern WRITE_HANDLER( jupiter_vh_charram_w );
 extern unsigned char *jupiter_charram;
 extern size_t jupiter_charram_size;

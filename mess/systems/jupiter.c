@@ -110,10 +110,10 @@ static unsigned short jupiter_colortable[] =
 	1, 0
 };
 
-static void jupiter_init_palette (unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+static PALETTE_INIT( jupiter )
 {
-	memcpy (sys_palette, jupiter_palette, sizeof (jupiter_palette));
-	memcpy (sys_colortable, jupiter_colortable, sizeof (jupiter_colortable));
+	palette_set_colors(0, jupiter_palette, sizeof(jupiter_palette) / 3);
+	memcpy (colortable, jupiter_colortable, sizeof (jupiter_colortable));
 }
 
 /* keyboard input */
@@ -191,54 +191,46 @@ static struct Speaker_interface speaker_interface =
 	{ NULL }	/* optional: level lookup table */
 };
 
-/* machine definition */
-
-static	struct MachineDriver machine_driver_jupiter =
+static INTERRUPT_GEN( jupiter_interrupt )
 {
+	cpu_set_irq_line(0, 0, PULSE_LINE);
+}
+
+/* machine definition */
+static MACHINE_DRIVER_START( jupiter )
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80 | CPU_16BIT_PORT,
-			3250000,				   /* 3.25 Mhz */
-			jupiter_readmem, jupiter_writemem,
-			jupiter_readport, jupiter_writeport,
-			interrupt, 1,
-		},
-	},
-	50, 2500,			   /* frames per second, vblank duration */
-	1,
-	jupiter_init_machine,
-	jupiter_stop_machine,
+	MDRV_CPU_ADD_TAG("main", Z80, 3250000)        /* 3.25 Mhz */
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
+	MDRV_CPU_MEMORY(jupiter_readmem, jupiter_writemem)
+	MDRV_CPU_PORTS(jupiter_readport, jupiter_writeport)
+	MDRV_CPU_VBLANK_INT(jupiter_interrupt,1)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(2500)
+	MDRV_INTERLEAVE(1)
+
+	MDRV_MACHINE_INIT( jupiter )
+	MDRV_MACHINE_STOP( jupiter )
 
 	/* video hardware */
-	32 * 8,							   /* screen width */
-	24 * 8,							   /* screen height */
-	{0, 32 * 8 - 1, 0, 24 * 8 - 1},	   /* visible_area */
-	jupiter_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (jupiter_palette) / 3,
-	sizeof (jupiter_colortable),	   /* colors used for the characters */
-	jupiter_init_palette,			   /* initialise palette */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32 * 8, 24 * 8)
+	MDRV_VISIBLE_AREA(0, 32 * 8 - 1, 0, 24 * 8 - 1)
+	MDRV_GFXDECODE( jupiter_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(sizeof(jupiter_palette) / 3)
+	MDRV_COLORTABLE_LENGTH(sizeof (jupiter_colortable))
+	MDRV_PALETTE_INIT( jupiter )
 
-	VIDEO_TYPE_RASTER,
-	0,
-	jupiter_vh_start,
-	jupiter_vh_stop,
-	jupiter_vh_screenrefresh,
+	MDRV_VIDEO_START( jupiter )
+	MDRV_VIDEO_UPDATE( jupiter )
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_SPEAKER,
-			&speaker_interface
-        }
-    }
-};
+	MDRV_SOUND_ADD(SPEAKER, speaker_interface)
+MACHINE_DRIVER_END
 
 ROM_START (jupiter)
-ROM_REGION (0x10000, REGION_CPU1,0)
-ROM_LOAD ("jupiter.lo", 0x0000, 0x1000, 0xdc8438a5)
-ROM_LOAD ("jupiter.hi", 0x1000, 0x1000, 0x4009f636)
+	ROM_REGION (0x10000, REGION_CPU1,0)
+	ROM_LOAD ("jupiter.lo", 0x0000, 0x1000, 0xdc8438a5)
+	ROM_LOAD ("jupiter.hi", 0x1000, 0x1000, 0x4009f636)
 ROM_END
 
 static const struct IODevice io_jupiter[] = {

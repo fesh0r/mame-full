@@ -772,7 +772,7 @@ WRITE_HANDLER( vtech1_latch_w )
     vtech1_latch = data;
 }
 
-void vtech1_interrupt(void)
+INTERRUPT_GEN( vtech1_interrupt )
 {
 	if( vtech1_snapshot_size > 0 )
 		vtech1_snapshot_copy();

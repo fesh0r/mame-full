@@ -18,7 +18,7 @@ static int color = 0;
 /***************************************************************************
   Start the video hardware emulation.
 ***************************************************************************/
-int trs80_vh_start(void)
+VIDEO_START( trs80 )
 {
 	if (video_start_generic() != 0)
 		return 1;
@@ -26,16 +26,12 @@ int trs80_vh_start(void)
 	return 0;
 }
 
-void trs80_vh_stop(void)
-{
-}
-
 /***************************************************************************
   Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function,
   it will be called by the main emulation engine.
 ***************************************************************************/
-void trs80_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( trs80 )
 {
 /* Special translation if video RAM with only 7 bits is present
  * I don't know if it's entirely correct, but it's close ;-)
@@ -80,6 +76,7 @@ static UINT8 translate_videoram[2][256] = {
 
 	int offs = 0;
 	int translate = (input_port_0_r(0) & 0x40) ? 1 : 0;
+	int full_refresh = 1;
 
 	if( readinputport(0) & 0x08 )
         cpu_set_nmi_line(0, PULSE_LINE);
@@ -98,7 +95,7 @@ static UINT8 translate_videoram[2][256] = {
 		   been modified since last time and update it accordingly. */
 		for (offs = videoram_size - 2; offs >= 0; offs -= 2)
 		{
-			if (dirtybuffer[offs])
+			/*if (dirtybuffer[offs])*/
 			{
 				int sx, sy;
 
@@ -117,7 +114,7 @@ static UINT8 translate_videoram[2][256] = {
 		* been modified since last time and update it accordingly. */
 		for (offs = videoram_size - 1; offs >= 0; offs--)
 		{
-			if (dirtybuffer[offs])
+			/*if (dirtybuffer[offs])*/
 			{
 				int sx, sy;
 

@@ -738,7 +738,7 @@ WRITE_HANDLER( coco3_m6847_hs_w )
 
 int coco3_calculate_rows(int *bordertop, int *borderbottom);
 
-void coco3_vh_interrupt(void)
+INTERRUPT_GEN( coco3_vh_interrupt )
 {
 	int border_top, border_bottom, body_scanlines;
 	int scanline;
@@ -2152,14 +2152,14 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 	autocenter_init(12, 0x04);
 }
 
-void machine_init_dragon32(void)
+MACHINE_INIT( dragon32 )
 {
 	cpu_setbank(1, &mess_ram[0]);
 	memory_set_bankhandler_w(1, 0, coco_ram_w);
 	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks);
 }
 
-void machine_init_dragon64(void)
+MACHINE_INIT( dragon64 )
 {
 	cpu_setbank(1, &mess_ram[0]);
 	memory_set_bankhandler_w(1, 0, coco_ram_w);
@@ -2168,21 +2168,21 @@ void machine_init_dragon64(void)
 	dragon64_sethipage(DRAGON64_ALL, 0);
 }
 
-void machine_init_coco(void)
+MACHINE_INIT( coco )
 {
 	cpu_setbank(1, &mess_ram[0]);
 	memory_set_bankhandler_w(1, 0, coco_ram_w);
 	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks);
 }
 
-void machine_init_coco2(void)
+MACHINE_INIT( coco2 )
 {
 	cpu_setbank(1, &mess_ram[0]);
 	memory_set_bankhandler_w(1, 0, coco_ram_w);
 	generic_init_machine(coco2_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks);
 }
 
-void machine_init_coco3(void)
+MACHINE_INIT( coco3 )
 {
 	int i;
 
@@ -2207,7 +2207,7 @@ void machine_init_coco3(void)
 	timer_pulse(TIME_IN_HZ(50), 0, coco3_poll_keyboard);
 }
 
-void machine_stop_coco(void)
+MACHINE_STOP( coco )
 {
 	if (coco_cart_interface && coco_cart_interface->term)
 		coco_cart_interface->term();

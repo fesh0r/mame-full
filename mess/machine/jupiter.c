@@ -84,9 +84,8 @@ OPBASE_HANDLER( jupiter_opbaseoverride )
 
 static	int	jupiter_ramsize = 2;
 
-void jupiter_init_machine(void)
+MACHINE_INIT( jupiter )
 {
-
 	logerror("jupiter_init\r\n");
 	logerror("data: %08X\n", jupiter_data);
 
@@ -125,7 +124,7 @@ void jupiter_init_machine(void)
 	}
 }
 
-void jupiter_stop_machine(void)
+MACHINE_STOP( jupiter )
 {
 	logerror("jupiter_stop_machine\n");
 	if (jupiter_data)
