@@ -3,7 +3,7 @@
 
 	The only difference is that the US # character is a Pound character in UK.
 */
-static US_key_translate[4][90] =
+static unsigned char US_key_translate[4][91] =
 {
 	{	/* lower case */
 		0x92,
@@ -439,14 +439,15 @@ static US_key_translate[4][90] =
 		0x2E,
 
 		0,
-		0x20
+		0x20,
+		0
 	}
 };
 
 /*
 	key translation table for French terminals
 */
-static French_key_translate[4][90] =
+static unsigned char French_key_translate[4][91] =
 {
 	{	/* lower case */
 		0x92,
@@ -882,7 +883,8 @@ static French_key_translate[4][90] =
 		0x2C,
 
 		0,
-		0x20
+		0x20,
+		0
 	}
 };
 
