@@ -3450,7 +3450,7 @@ INLINE void divd_ix( void )
 INLINE void divq_ix( void )
 {
 	UINT16	t;
-	INT16	v;
+	INT32	v;
 	PAIR	q;
 
 	q.w.h = D;
