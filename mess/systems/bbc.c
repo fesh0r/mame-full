@@ -505,7 +505,7 @@ static const struct IODevice io_bbcb[] = {
 	},	{
 		IO_FLOPPY,				/* type */
 		2,						/* count */
-		"ssd\0",                /* file extensions */
+        "ssd\0bbc\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
 		basicdsk_floppy_id, 	/* id */
 		bbc_floppy_init,		/* init */
