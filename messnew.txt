@@ -114,6 +114,8 @@ System Driver Changes:
 
 - [VECTREX] Improved detection of 3D games. [Cowering]
 
+- [sysinfo.dat] Updates to genesis and nes [Hobie Troxell]
+
 Source Changes:
 ---------------
 - The core is based on MAME 0.56.  This incorporates all features of the 
