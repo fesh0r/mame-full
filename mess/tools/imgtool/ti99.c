@@ -5305,6 +5305,10 @@ static int dsk_image_create(const struct ImageModule *mod, STREAM *f, option_res
 	protected = option_resolution_lookup_int(createoptions, dsk_createopts_protection);
 	density = option_resolution_lookup_int(createoptions, dsk_createopts_density);
 
+	/* NPW 03-DEC-2003 - Fixes a crash if volname is NULL */
+	if (!volname)
+		volname = "";
+
 	totphysrecs = l1_img.geometry.secspertrack * l1_img.geometry.cylinders * l1_img.geometry.heads;
 	physrecsperAU = (totphysrecs + 1599) / 1600;
 	/* round to next larger power of 2 */
