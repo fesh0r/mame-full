@@ -198,7 +198,14 @@ void nes_init_palette(unsigned char *palette, unsigned short *colortable,const u
 	}
 #endif
 
+#if 0
+/*	base type of arrays are different now!*/
 	memcpy(colortable,nes_colortable,sizeof(nes_colortable));
+#else
+	for (i=0; i<ARRAY_LENGTH(nes_colortable); i++) {
+	    colortable[i]=nes_colortable[i];
+	}
+#endif
 }
 
 /***************************************************************************
