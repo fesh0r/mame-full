@@ -5,15 +5,18 @@
 
 -Implement date and year,
 -find out how the alarm works
--find out what pa1, pa0 is
--find out what 1hz, 16hz are. (Interrupts??)
 -find out what time and alarm are reset to... (all zeros!?)
+- find out if ints trigger when timer is disabled
+- find out if alarm continues to trigger if it hits the time and timer is not enabled
+
 */
 
 #include "driver.h"
 #include "includes/tc8521.h"
 
 /* Registers:
+
+Page 0 (timer):
 
 0x00:
    seconds 0-9 (units digit)
@@ -28,12 +31,24 @@
 0x05:
    hours 0-9 (tens digit)
 
+Page 1 (alarm):
+
+
+Page 2 (RAM):
+0x00-0x0c: ram
+
+
+
+Page 3 (RAM):
+0x00-0x0c: ram
+
+
 0x01d:
 
 bit 7-4: ??
 bit 3: timer enable
 bit 2: alarm enable
-bit 1: pa1
+bit 1: pa1 (pa1 and pa0 are page select 0-3)
 bit 0: pa0
 
 0x01e:
@@ -59,9 +74,12 @@ bit 0: alarm reset
 struct tc8521
 {
         void *tc8521_timer;
-        unsigned char registers[16];
+		/* 3 register pages */
+        unsigned char registers[16*4];
 
         struct tc8521_interface interface;
+
+		unsigned long current_page;
 
         int sixteen_hz_counter;
         int hz_counter;
@@ -162,8 +180,8 @@ void tc8521_init(struct tc8521_interface *intf)
         rtc.tc8521_timer = timer_pulse(TIME_IN_HZ(16), 0, tc8521_timer_callback);
         rtc.sixteen_hz_counter = 0;
         rtc.hz_counter = 0;
-        /* disable timer */
-        rtc.registers[0x0d] &= ~ (1<<3);
+
+        memset(&rtc, 0, sizeof(struct tc8521));
 
         memset(&rtc.interface, 0, sizeof(struct tc8521_interface));
         if (intf)
@@ -187,7 +205,22 @@ void tc8521_stop(void)
 READ_HANDLER(tc8521_r)
 {
         logerror("8521 RTC R: %04x %02x\r\n", offset, rtc.registers[offset]);
-        return rtc.registers[offset];
+        
+		switch (offset)
+		{
+			/* control registers */
+			case 0x0c:
+			case 0x0d:
+			case 0x0e:
+			case 0x0f:
+				return rtc.registers[offset];
+		
+			default:
+				break;
+		}
+
+		/* data from selected page */
+		return rtc.registers[((rtc.current_page)<<4) | (offset & 0x0f)];
 }
 
 
@@ -196,7 +229,8 @@ WRITE_HANDLER(tc8521_w)
 
 #ifdef VERBOSE
         logerror("8521 RTC W: %04x %02x\r\n", offset, data);
-        switch (offset)
+
+		switch (offset)
         {
                 case 0x0D:
                 {
@@ -210,16 +244,8 @@ WRITE_HANDLER(tc8521_w)
                             logerror("alarm enable\r\n");
                         }
 
-                        if (data & 0x02)
-                        {
-                            logerror("PA1\r\n");
-                        }
-
-                        if (data & 0x01)
-                        {
-                            logerror("PA0\r\n");
-                        }
-                }
+						logerror("page %02x selected\r\n", data & 0x03);
+	              }
                 break;
 
                 case 0x0e:
@@ -274,7 +300,27 @@ WRITE_HANDLER(tc8521_w)
                   break;
         }
 #endif
-        rtc.registers[offset] = data;
+		switch (offset)
+		{
+			/* control registers */
+			case 0x0c:
+			case 0x0d:
+			case 0x0e:
+			case 0x0f:
+				rtc.registers[offset] = data;
+		
+				if (offset==0x0d)
+				{
+					/* page to read/write */
+					rtc.current_page = data & 0x03;
+				}
+				
+				return;
+			default:
+				break;
+		}
+		/* register in selected page */
+        rtc.registers[(rtc.current_page<<4) | (offset & 0x0f)] = data;
 }
 
 
