@@ -1307,7 +1307,7 @@ TESTDRIVER( defndjeu )	/* bootleg */
 	DRIVER( pang3j )	/*  5/11/1995 (c) 1995 Mitchell (Japan) not listed on Capcom's site */
 	DRIVER( megaman )	/* 10/ 6/1995 (c) 1995 (Asia)  */
 	DRIVER( rockmanj )	/*  9/22/1995 (c) 1995 (Japan) */
-//	DRIVER( sfzch )		/* 10/20/1995 (c) 1995 (Japan) (CPS Changer) */
+/*	DRIVER( sfzch ) */	/* 10/20/1995 (c) 1995 (Japan) (CPS Changer) */
 
 	/* Capcom CPS2 games */
 	/* list completed by CPS2Shock */
@@ -1618,7 +1618,7 @@ TESTDRIVER( kopunch )	/* 834-0103 (c) 1981 Sega */
 	DRIVER( dotriku2 )	/* cabinet test board */
 
 	/* Sega System 16 games */
-	// Not working
+	/* Not working */
 	DRIVER( alexkidd )	/* (c) 1986 (protected) */
 	DRIVER( aliensya )	/* (c) 1987 (protected) */
 	DRIVER( aliensyb )	/* (c) 1987 (protected) */
@@ -1672,7 +1672,7 @@ TESTDRIVER( thndrbdj )  /* (protected?) */
 TESTDRIVER( toutrun )	/* (protected) */
 TESTDRIVER( toutruna )	/* (protected) */
 
-	// Working
+	/* Working */
 	DRIVER( alexkida )	/* (c) 1986 */
 	DRIVER( aliensyn )	/* (c) 1987 */
 	DRIVER( altbeas2 )	/* (c) 1988 */
@@ -2768,7 +2768,7 @@ TESTDRIVER( shogwarr )
 	DRIVER( tndrcadj )	/* UA-0 (c) 1987 Taito */
 	DRIVER( twineagl )	/* UA-2 (c) 1988 + Taito license */
 	DRIVER( downtown )	/* UD-2 (c) 1989 + Romstar or Taito license (DSW) */
-	DRIVER( usclssic )	/* UE   (c) 1989 + Romstar or Taito license (DSW) */
+	DRIVER( usclssic )	/* UE	(c) 1989 + Romstar or Taito license (DSW) */
 	DRIVER( calibr50 )	/* UH   (c) 1989 + Romstar or Taito license (DSW) */
 	DRIVER( drgnunit )	/* (c) 1989 Athena / Seta + Romstar or Taito license (DSW) */
 	DRIVER( arbalest )	/* UK   (c) 1989 + Jordan, Romstar or Taito license (DSW) */
@@ -2840,7 +2840,8 @@ TESTDRIVER( dlair )
 	DRIVER( mermaid )	/* (c) 1982 Rock-ola */
 	DRIVER( magix )		/* (c) 1995 Yun Sung */
 	DRIVER( royalmah )	/* (c) 1982 Falcon */
-
+	DRIVER( lastday )	/* (c) 1990 Dooyong */
+	DRIVER( lastdaya )	/* (c) 1990 Dooyong */
 
 #endif /* NEOMAME */
 

@@ -666,6 +666,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/mermaid.o $(OBJ)/drivers/mermaid.o \
 	$(OBJ)/vidhrdw/magix.o $(OBJ)/drivers/magix.o \
 	$(OBJ)/drivers/royalmah.o \
+	$(OBJ)/drivers/lastday.o $(OBJ)/vidhrdw/lastday.o \
 
 COREOBJS += $(OBJ)/driver.o
 
