@@ -289,5 +289,5 @@ static const struct IODevice io_orica[] = {
 
 /*    YEAR   NAME      PARENT    MACHINE   INPUT     INIT      COMPANY      FULLNAME */
 COMP( 1983,  oric1,    0,		 oric,	   oric,	 0,		   "Tangerine", "Oric 1" )
-COMP( 1984,  orica,    0,		 oric,	   oric,	 0,		   "Tangerine", "Oric Atmos" )
+COMP( 1984,  orica,    oric1,		 oric,	   oric,	 0,		   "Tangerine", "Oric Atmos" )
 
