@@ -142,6 +142,7 @@
 #endif
 
 /* Compiler-dependent macros that rely on FreeBSD-specific extensions. */
+#define __FreeBSD_cc_version 0
 #if __FreeBSD_cc_version >= 300001
 #define	__printf0like(fmtarg, firstvararg) \
 	    __attribute__((__format__ (__printf0__, fmtarg, firstvararg)))
