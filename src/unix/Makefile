@@ -27,14 +27,12 @@ VID_OBJS.x11    = $(VID_DIR)/xinput.o $(VID_DIR)/xil.o \
 	$(VID_DIR)/x11_window.o \
 	$(VID_DIR)/xf86_dga1.o $(VID_DIR)/xf86_dga2.o $(VID_DIR)/xf86_dga.o
 VID_OBJS.xgl    = $(VID_DIR)/gltool.o $(VID_DIR)/glxtool.o $(VID_DIR)/glcaps.o \
-		  $(VID_DIR)/glvec.o $(VID_DIR)/glgen.o \
-		  $(VID_DIR)/gldirty.o $(VID_DIR)/glexport.o \
+		  $(VID_DIR)/glvec.o $(VID_DIR)/glgen.o $(VID_DIR)/glexport.o \
 		  $(VID_DIR)/glcab.o $(VID_DIR)/gljpg.o \
 		  $(VID_DIR)/xinput.o
-VID_OBJS.xfx    = $(VID_DIR)/fxgen.o $(VID_DIR)/fxvec.o $(VID_DIR)/xinput.o \
-	$(VID_DIR)/vectorgen.o
+VID_OBJS.xfx    = $(VID_DIR)/fxgen.o $(VID_DIR)/xinput.o
 VID_OBJS.svgalib = $(VID_DIR)/svgainput.o
-VID_OBJS.svgafx = $(VID_DIR)/svgainput.o $(VID_DIR)/fxgen.o 
+VID_OBJS.svgafx = $(VID_DIR)/svgainput.o $(VID_DIR)/fxgen.o
 VID_OBJS.openstep = $(VID_DIR)/openstep_input.o
 VID_OBJS.photon2 = $(VID_DIR)/photon2_input.o \
 	$(VID_DIR)/photon2_window.o \
@@ -60,12 +58,12 @@ SOUND_OBJS.generic =
 #these need to be converted to plugins first
 #SOUND_OBJS.aix     = $(DSP_DIR)/aix.o
 SOUND_OBJS = $(SOUND_OBJS.$(ARCH)) $(DSP_DIR)/esound.o $(DSP_DIR)/artssound.o \
-    $(DSP_DIR)/arts.o
+    $(DSP_DIR)/arts.o $(DSP_DIR)/sdl.o
 
 # joystick objs
 JOY_DIR  = $(OBJDIR)/joystick-drivers
 JOY_OBJS = $(JOY_DIR)/joy_i386.o $(JOY_DIR)/joy_pad.o $(JOY_DIR)/joy_x11.o \
-    $(JOY_DIR)/joy_usb.o
+    $(JOY_DIR)/joy_usb.o $(JOY_DIR)/XInputDevices.o
 
 # framskip objs
 FRAMESKIP_DIR  = $(OBJDIR)/frameskip-drivers
@@ -96,7 +94,7 @@ CFLAGS.macosx     = -DSYSDEP_DSP_COREAUDIO
 CFLAGS.nto        = -DSYSDEP_DSP_ALSA -DSYSDEP_MIXER_ALSA
 CFLAGS.irix       = -DSYSDEP_DSP_IRIX
 CFLAGS.irix_al    = -DSYSDEP_DSP_IRIX
-CFLAGS.beos       = `sdl-config --cflags`
+CFLAGS.beos       = `sdl-config --cflags` -DSYSDEP_DSP_SDL
 CFLAGS.generic    =
 #these need to be converted to plugins first
 #CFLAGS.aix        = -DSYSDEP_DSP_AIX -I/usr/include/UMS -I/usr/lpp/som/include
@@ -141,7 +139,7 @@ $(VID_DIR)/xinput.o:  video-drivers/xkeyboard.h video-drivers/glmame.h
 $(VID_DIR)/xinput.o:  video-drivers/xkeyboard.h video-drivers/glmame.h
 $(VID_DIR)/xinput.o:  video-drivers/xkeyboard.h
 $(VID_DIR)/glgen.o:   video-drivers/glmame.h video-drivers/gltool.h \
-	              video-drivers/glxtool.h video-drivers/gldirty.h 
+	              video-drivers/glxtool.h 
 $(VID_DIR)/glvec.o:   video-drivers/glmame.h video-drivers/gltool.h \
 	              video-drivers/glxtool.h
 $(VID_DIR)/glcab.o:   video-drivers/glmame.h video-drivers/gltool.h \
