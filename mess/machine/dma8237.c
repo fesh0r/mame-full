@@ -11,7 +11,7 @@
 #if 0
 #define DMA_LOG(level, text, print) \
 		if (level>0) { \
-				logerror("%s\t", text); \
+				logerror("%s %g %06x\t", text, timer_get_time(), cpu_get_pc()); \
 				logerror print; \
 		}
 #else
@@ -51,7 +51,7 @@ static void dma8237_w(DMA8237 *this, offs_t offset, data8_t data)
             this->chan[offset>>1].address = data & 0xff;
             this->chan[offset>>1].base_address = data & 0xff;
 		}
-        DMA_LOG(1,"",("[$%04x]\n", this->address[offset>>1]));
+        DMA_LOG(1,"",("[$%04x]\n", this->chan[offset>>1].address));
         this->msb ^= 1;
         break;
     case 1: case 3: case 5: case 7:
@@ -63,7 +63,7 @@ static void dma8237_w(DMA8237 *this, offs_t offset, data8_t data)
             this->chan[offset>>1].count = data & 0xff;
             this->chan[offset>>1].base_count = data & 0xff;
 		}
-        DMA_LOG(1,"",("[$%04x]\n", this->count[offset>>1]));
+        DMA_LOG(1,"",("[$%04x]\n", this->chan[offset>>1].count));
         this->msb ^= 1;
         break;
     case 8:    /* DMA command register */
@@ -141,7 +141,8 @@ static int dma8237_r(DMA8237 *this, offs_t offset)
 			else
 				data = this->chan[offset>>1].address & 0xff;
 
-			DMA_LOG(1,"DMA_address_r",("chan #%d $%02x ($%04x)\n", offset>>1, data, this->address[offset>>1]));
+			DMA_LOG(1,"DMA_address_r",("chan #%d $%02x ($%04x)\n", offset>>1, data, 
+									   this->chan[offset>>1].address));
 			this->msb ^= 1;
 
 			if ( (this->chan[0].operation==2)&&(offset==0) ) {
@@ -282,7 +283,7 @@ void pc_page_w(offs_t offset, data8_t data)
 }
 
 
-static UINT8 pages[0xf]={ 0 };
+static UINT8 pages[0x10]={ 0 };
 
 /* in an at SN74LS612N, full 16 register memory mapper,
    so 0x80-0x8f read and writeable */
@@ -290,6 +291,7 @@ void at_page_w(offs_t offset, data8_t data)
 {
 	offset&=0xf;
 	pages[offset]=data;
+	logerror("at page write %g %06x\t%02x %02x\n", timer_get_time(), cpu_get_pc(), offset, data);
 	switch( offset )
 	{
 	case 0:
@@ -337,7 +339,6 @@ READ_HANDLER( pc_page_r )
 
 READ_HANDLER( at_page_r )
 {
-	/* is it really readable!?*/
 	int data = 0xff;
 	offset&=0xf;
 	data=pages[offset];
@@ -376,6 +377,7 @@ READ_HANDLER( at_page_r )
 		DMA_LOG(1,"DMA_page_7_w",("$%02x\n", data));
 		break;
     }
+	logerror("at page read %g %06x\t%02x %02x\n", timer_get_time(), cpu_get_pc(), offset, data);
 	return data;
 }
 
