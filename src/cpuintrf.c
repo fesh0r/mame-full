@@ -592,7 +592,7 @@ struct cpu_interface cpuintf[] =
 	CPU3(CCPU,	   ccpu,	 2,  0,1.00,0,				   -1,			   -1,			   16,16bew,  0,15,BE,2, 3	),
 #endif
 #if (HAS_PDP1)
-	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,18,LE,1, 3	),
+	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,				   -1,			   -1,			   32, 18bedw,	  0,18,LE,1, 3	),
 #endif
 #if (HAS_ADSP2100)
 	CPU3(ADSP2100, adsp2100, 4,  0,1.00,ADSP2100_INT_NONE, -1,			   -1,			   16,17lew, -1,14,LE,2, 4	),
