@@ -1,5 +1,5 @@
 
-/* 
+/*
 	Systems supported by this driver:
 
 	Oric 1,
@@ -8,7 +8,7 @@
 	Pravetz 8D
 
 	Pravetz is a Bulgarian copy of the Oric Atmos and uses
-	Apple 2 disc drives for storage 
+	Apple 2 disc drives for storage
 
 	This driver originally by Paul Cook, rewritten by Kevin Thacker.
 */
@@ -22,8 +22,10 @@
 
 
 extern int apple2_floppy_init(int id);
+extern void	apple2_floppy_exit(int id);
 
-/* 
+
+/*
 	Explaination of memory regions:
 
 	I have split the memory region &c000-&ffff in this way because:
@@ -35,7 +37,7 @@ extern int apple2_floppy_init(int id);
 	There is also 16k of ram at &c000-&ffff which is normally masked
 	by the os rom, but when the microdisc or jasmin interfaces are used,
 	this ram can be accessed. For the microdisc and jasmin, the ram not
-	covered by the roms for these interfaces, can be accessed 
+	covered by the roms for these interfaces, can be accessed
 	if it is enabled.
 
 	MRA_BANK1,MRA_BANK2 and MRA_BANK3 are used for a 16k rom.
@@ -44,7 +46,7 @@ extern int apple2_floppy_init(int id);
 
 	0x0300-0x03ff is I/O access. It is not defined below because the
 	memory is setup dynamically depending on hardware that has been selected (microdisc, jasmin, apple2) etc.
-	
+
 */
 
 
@@ -55,8 +57,8 @@ static MEMORY_READ_START(oric_readmem)
     { 0x0400, 0xBFFF, MRA_RAM },
 
     { 0xc000, 0xdFFF, MRA_BANK1 },
-	{ 0xe000, 0xf7ff, MRA_BANK2 },	
-	{ 0xf800, 0xffff, MRA_BANK3 },	
+	{ 0xe000, 0xf7ff, MRA_BANK2 },
+	{ 0xf800, 0xffff, MRA_BANK3 },
 MEMORY_END
 
 static MEMORY_WRITE_START(oric_writemem)
@@ -68,7 +70,7 @@ static MEMORY_WRITE_START(oric_writemem)
 	{ 0xf800, 0xffff, MWA_BANK7 },
 MEMORY_END
 
-/* 
+/*
 The telestrat has the memory regions split into 16k blocks.
 Memory region &c000-&ffff can be ram or rom. */
 static MEMORY_READ_START(telestrat_readmem)
@@ -184,7 +186,7 @@ INPUT_PORTS_START(oric)
 	allowing interrupts to be generated from the vsync signal. */
     PORT_BITX(0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Vsync cable hardware", IP_KEY_NONE, IP_JOY_NONE)
 	PORT_DIPSETTING(0x0, DEF_STR( Off) )
-	PORT_DIPSETTING(0x4, DEF_STR( On) )	
+	PORT_DIPSETTING(0x4, DEF_STR( On) )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK)
 INPUT_PORTS_END
 
@@ -206,8 +208,8 @@ INPUT_PORTS_START(telstrat)
 	PORT_BIT (0x03, 0x00, IPT_UNUSED)
 	PORT_BITX(0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Vsync cable hardware", IP_KEY_NONE, IP_JOY_NONE)
 	PORT_DIPSETTING(0x0, DEF_STR( Off) )
-	PORT_DIPSETTING(0x4, DEF_STR( On) )	
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK)	
+	PORT_DIPSETTING(0x4, DEF_STR( On) )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK)
 	/* left joystick port */
 	PORT_START
 	PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 UP", IP_KEY_NONE, JOYCODE_1_RIGHT)
