@@ -77,6 +77,9 @@ struct rc_option input_opts[] =
 #endif
 	{ "mouse", "m", rc_bool, &use_mouse, "1", 0, 0, NULL, "Enable/disable mouse (if supported)" },
 	{ "ugcicoin", NULL, rc_bool, &ugcicoin, "0", 0, 0, NULL, "Enable/disable UGCI(tm) Coin/Play support" },
+#ifdef USE_LIGHTGUN_ABS_EVENT
+	{ NULL, NULL, rc_link, lightgun_abs_event_opts, NULL, 0, 0, NULL, NULL },
+#endif
 	{ "usbpspad", "pspad", rc_bool, &is_usb_ps_gamepad, "0", 0, 0, NULL, "The Joystick(s) are USB PS Game Pads" },
 	{ "rapidfire", "rapidf", rc_bool, &rapidfire_enable, "0", 0, 0, NULL, "Enable rapid-fire support for joysticks" },
 	{ "ctrlr", NULL, rc_string, &ctrlrtype, 0, 0, 0, NULL, "Preconfigure for specified controller" },
@@ -340,6 +343,9 @@ int osd_input_initpre(void)
 		if (ugci_init(ugci_callback, UGCI_EVENT_MASK_COIN | UGCI_EVENT_MASK_PLAY, 1) <= 0)
 			ugcicoin = 0;
 	}
+#endif
+#ifdef USE_LIGHTGUN_ABS_EVENT
+	lightgun_event_abs_init();
 #endif
 
 #ifdef JOY_PS2
@@ -884,6 +890,9 @@ void osd_poll_joysticks(void)
 		}
 	}
 #endif
+#ifdef USE_LIGHTGUN_ABS_EVENT
+	lightgun_event_abs_poll();
+#endif
 }
 
 int osd_is_joy_pressed (int joycode)
@@ -1014,9 +1023,17 @@ int osd_is_joystick_axis_code(int joycode)
 	}
 }
 
+/* There may be multiple things implementing the lightguns. Try each one
+ * until one claims to have handled it (returns non-zero). */
 void osd_lightgun_read(int player, int *deltax, int *deltay)
 {
-	/* NEED TO FILL THIS IN */
+#ifdef USE_LIGHTGUN_ABS_EVENT
+	if (lightgun_event_abs_read(player, deltax, deltay))
+		return;
+#endif
+
+	/* Default */
+	return;
 }
 
 int osd_joystick_needs_calibration(void)

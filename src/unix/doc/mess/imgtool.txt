@@ -264,18 +264,18 @@ The v9t9 module supports the v9t9 disk images that is used by MESS, the pc99fm
 module supports FM-encoded pc99 images, and the pc99mfm supports MFM-encoded
 pc99 images, and the ti99_old module supports the now obsolete image format
 that was used by MESS versions prior to .69.  The MESS ti99 drivers supports
-the v9t9 disk image format only.  (Note that the old MESS was identical to the
-V9T9 format for single-sided disks, but that the track order was completely
-different for double-sided disks, which caused the two formats to be
+the v9t9 disk image format only.  (Note that the old MESS format was identical
+to the V9T9 format for single-sided disks, but that the track order was
+completely different for double-sided disks, which caused the two formats to be
 incompatible for double-sided disk images.  I have changed the format to v9t9
-to make interexchange with other utilities easier.)
+as this format is used by most other TI99 utilities and emulators.)
 
 The TIFILE format is a file format that is supported by many ti99 utilities: it
 encodes a TI99 file as a flat stream of bytes, which enables to store it on
 file systems that do not support the TI99 file structure and to transmit it
 through networks.  This format uses a data format similar to the one used on
-ti99 floppies (i.e. logical records are grouped in records of 256 bytes
-matching the sector size of 256 bytes), with a custom 128-byte header.
+ti99 floppies (i.e. logical records are grouped in physical records of 256
+bytes), with a custom 128-byte header.
 
 Legal characters for volume and file names are upper case ASCII characters,
 except period ('.') and space (' ').  Lower case characters are not recommended
@@ -297,18 +297,17 @@ require filename extensions as it is often the case in the DOS/windows world.
 Parameters for create:
 
 --label=...: an optional string of up to 10 characters.
---sides=[1|2]: 1 for single-sided, 2 for double-sided
---tracks=[1-80]: number of track per side.  From 1 to 40 on 40-track disks,
-    from 1 to 80 on 80-track disks.
---sectors=[1-36]: number of sectors per track.  From 1 to 9 in single density
-    (FM), from 1 to 18 in double density (MFM), from 1 to 36 in high density
-    (MFM).
+--sides=[1|2]: 1 for single-sided, 2 for double-sided.
+--tracks=[1-80]: number of track per side.  Should be 40 for a 40-track disk,
+    and 80 for an 80-track disk.
+--sectors=[1-36]: number of sectors per track.  Should be 9 in single density
+    (FM), 18 in double density (MFM), and 36 in high density (MFM).
 --protection=[0|1]: when set to 1, the disk will be protected and some (but not
     all) TI99 programs won't overwrite the disk.
---density=[0|1|2|3]: you should probably leave this parameter to 0 to select
-    the correct value automatically.  If you really want to know, 1 means
-    single density (FM), 2 means double density (MFM), and 3 means high density
-    (MFM).
+--density=[Auto|SD|DD|HD]: you should probably leave this parameter to Auto, so
+    that imgtool picks the correct value automatically (according to the number
+    of sectors per track).  If you really need to, SD forces single density
+    (FM), DD forces double density (MFM), and HD forces high density (MFM).
 
 Supported geometries for create:
 
@@ -348,7 +347,7 @@ imgtool get v9t9 test.dsk SUBDIR1.FILE1
 Write file FILE1 on image test.dsk:
 imgtool put v9t9 test.dsk FILE1
 (Note that file FILE1 must not exist before the command is run.  Use the delete
-command if you need to an existing file.)
+command first if you need to overwrite an existing file.)
 
 Delete file FILE1 located in subdirectory SUBDIR1 on image test.dsk:
 imgtool delete v9t9 test.dsk SUBDIR1.FILE1
@@ -427,7 +426,7 @@ through 5-28, 946250-9701B pp. 2-1 through 2-3, 2540219A-0001 pp. 4-2 and 4-3,
 126-Plus Product Reference Manual" by Cipher P/N 8500055 revision A4 page 2-8.)
 
 Disk Type       Units   Size (MB)   Cylinders   Heads   Sectors/Track   Bytes/Sector
-FD800 (min)     1          .244?      77         1?      26?            128?
+FD800 (min)     1          .244?      77         1       26             128
 FD800 (max)     1          .978???    77         2???    26???          256???
 FD1000          1         1.15        77         2       26             288
 DS31/DS32       1         2.81       203         2       24             288
@@ -470,12 +469,12 @@ CMD 80, WD800A-43 and WD800A-100 for the former, and WD500-10 for the later).
 Since there are no other references anywhere and DX-10 does not seem to know
 about them, I assume that these models were uncommon.
 
-FD800 is a 8'' floppy disc unit that is not emulated, and it is only cited for
+FD800 is a 8" floppy disc unit that is not emulated, and it is only cited for
 completeness.  (The FD800 controller is connected to the CRU bus instead of the
 TILINE bus, and it is the only disc controller that is supported by non-TILINE
 systems).
 
-FD1000 is a 8'' floppy disc unit.
+FD1000 is a 8" floppy disc unit.
 
 DS31/DS32 was the first hard disk unit for ti990.  The only difference between
 DS31 and DS32 is that DS32 does not require a screwdriver to change the disc
@@ -488,9 +487,9 @@ unit (16 mb for CD1400-32 and 80 mb for CD1400-96).
 
 WDxxx units are Winchester drives that connect to a proprietary PBUS bus
 interface.  This bus is a built-in interface in BS300 and BS300A systems, and
-the TPBI card enables any TILINE 990 system to support it.  WD800s are 8''
-drives with integrated tape backup, WD500s are 5''1/4 drives with integrated
-FD1000 backup, and WD900s are 9'' drives.  The WD900 controller can optionally
+the TPBI card enables any TILINE 990 system to support it.  WD800s are 8"
+drives with integrated tape backup, WD500s are 5"1/4 drives with integrated
+FD1000 backup, and WD900s are 9" drives.  The WD900 controller can optionally
 partition the disc into two partitions: the set-up with no partitioning is
 listed as WD900-138 and WD900-425, whereas the set-up with partitioning is
 listed as WD900-138/2 and WD900-425/2.
@@ -506,8 +505,11 @@ This module supports MFS (Macintosh File System) and HFS (Hierarchical File
 System) floppy disk images, either in diskcopy 4.2 or raw image format (the raw
 image format is partially compatible with diskcopy 6 format).
 
-This module can catalog images and extract individual files.  It does not
-support folders in MFS format, because MFS folders are not documented by Apple.
+This module can catalog images, and get files in MacBinary format.  You can put
+files on MFS-formatted images, too, but not on HFS-formatted images.
+
+The module does not support folders in MFS format, because MFS folders are not
+documented by Apple.
 
 Extracted files are in MacBinary III format (which is fully compatible with
 MacBinary I and II).  The MacBinary III format joins both macintosh file forks,

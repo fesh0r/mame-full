@@ -216,24 +216,44 @@ Use Joystick as analog for analog controls
 .It Fl [no]mouse , [no]m
 Enable/disable mouse (if supported)
 .It \fB*** Fileio Related ***\fR
-.It Fl rompath , rp Ar string
-Set the rom search path
-.It Fl spooldir , sd Ar string
-Set highscore spooldir
-.It Fl screenshotdir , ssd Ar string
-Set dir to store screenshots in
-.It Fl cheatdir Ar string
-Set dir to look for cheat files in
-.It Fl crcdir Ar string
+.It Fl biospath , bp Ar string
+Set the BIOS search path
+.It Fl softwarepath , swp Ar string
+Set the software search path
+.It Fl CRC_directory Ar string
 Set dir to look for crc files in
-.It Fl cheatfile , cf Ar string
+.It Fl samplepath ,  sp Ar string
+Set the sample search path
+.It Fl inipath Ar string
+Set the ini search path
+.It Fl cfg_directory Ar string
+Set dir for saving configurations
+.It Fl nvram_directory Ar string
+Set dir for saving nvram contents
+.It Fl memcard_directory Ar string
+Set dir for saving memory card contents
+.It Fl input_directory Ar string
+Set dir for saving input device logs
+.It Fl hiscore_directory Ar string
+Set dir for saving high scores
+.It Fl state_directory Ar string
+Set dir for saving states
+.It Fl artwork_directory Ar string
+Set dir to look for artwork files in
+.It Fl snapshot_directory Ar string
+Set dir for screenshots (.png format)
+.It Fl diff_directory Ar string
+Set dir for hard drive image difference files
+.It Fl ctlrl_directory Ar string
+Set dir for saving controller definitions
+.It Fl cheat_file Ar string
 Set the file to use as cheat database
-.It Fl hiscorefile , hif Ar string
-Set the file to use as high score database
-.It Fl historyfile , hf Ar string
-Set the file to use as history database
-.It Fl mameinfofile , mf Ar string
-Set the file to use as mameinfo database
+.It Fl hiscore_file Ar string
+no help available
+.It Fl sysinfo_file Ar string
+no help available
+.It Fl messinfo_file Ar string
+no help available
 .It Fl record , rec Ar arg
 Set a file to record keypresses into
 .It Fl playback , pb Ar arg

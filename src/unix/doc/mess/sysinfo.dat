@@ -1,5 +1,6 @@
 # MESS System Information Data File
 # Maintained by Hobie Troxell &  Chris Henry
+
 # Send corrections/submissions to: 
 #   Hobie Troxell <ht1848@yahoo.com> 
 #   Chris Henry <battlepriest@hotmail.com>
@@ -12,6 +13,13 @@
 # Driver entries are usually divided into sections such as: Usage, Features, Links, Known Issues,
 # History and Trivia, and MESS Emulation State.
 
+
+# History and Trivia - This section contains various background pieces for a system. Much of the 
+# information in these sections was kindly provided by Thierry Schembri and Olivier Boisseau of the 
+# "Old-computers.com Museum". Visit the excellent site at:  www.old-computers.com.
+
+# Features - Usualy a qucik list of important features of that system.
+
 # Usage - This section lists any helpful commands for the computer or console in question, 
 # such as disk operating system and file loading BASIC commands. This information is not 
 # intended to replace a proper owner's manual for the system in question, and only contains 
@@ -20,12 +28,11 @@
 
 # Known Issues - This section lists any known problematic spots for the driver. These will be
 # fixed as time and knowledge permit. Please be patient. If you have information that may
-# help the MESS team resolve these issues, contact them at the addresses listed in MESS.TXT
+# help the MESS team resolve these issues go to www.mess.org.
 
-# History and Trivia - This section contains various background pieces for a system. If you
-# have anything you'd like to contribute contact me at the address above. Much of the 
-# information in these sections was kindly provided by Thierry Schembri and Olivier Boisseau of the 
-# "Old-computers.com Museum". Visit the excellent site at:  www.old-computers.com.
+# MESS Emulation State: This section highlights the overall status of the MESS driver. Some system
+# drivers are TESTDRIVERS.
+
 
 #---------------------------------------------------------------------------------------------#
 
@@ -49,16 +56,27 @@ distance access as a hobby.
 Features:
 
 Resolution: 160 x 260 (horz.) at 60.00 Hz
+
 CPU: 6507
+
 Cpu Clock: 1.19 MHz
+
 Graphics Clock: 1.19 MHz
-Bits: 8 
+
+Bits: 8
+
 ROM: 4k max
+
 RAM: 128 bytes, in VLSI
+
 Video Display Processor: Stella
-Sprites: 32 
+
+Sprites: 32
+
 Colors: 256 (static)
+
 Sound Processor: Two Channel Square or Noise (TIA)
+
 Cartridge ROM: 2k up to 64k
 
 
@@ -74,11 +92,11 @@ MESS Emulation State:
 
 1) Restricted to 2KB and 4KB carts
 
-2) supports NTSC games only
+2) Supports NTSC games only
 
 3) Limited compatibility
 
-4) no support for keypad controls
+4) No support for keypad controls
 
 5) Dip switch used to select joystick or paddles
 
@@ -102,7 +120,6 @@ scroll_lock key.
 Most disk and cartridge images should work, though some graphic issues may exist. Note that
 the Atari 400 has less memory than the Atari 800, and some disk images may not work as a
 consequence; this is not a bug in the emulation.
-
 
 
 History and Trivia:
@@ -283,19 +300,32 @@ Very early computer
 
 
 Features:
-* Integrated 20 digit (16segment) display 
-* Full size keyboard
-* Integrated printer
-* Connector for tty input/output
-* Tape interface
+
+Integrated 20 digit (16segment) display
+ 
+Full size keyboard
+
+Integrated printer
+
+Connector for tty input/output
+
+Tape interface
 
 
 Known Issues:
 
-* Display and keyboard working
-* Usable picture of the display with its white frame as artwork would be nice.
-* Would suffer from support for intelligent terminals as tty equipment.
-* Stopped. For me it is much to cryptic to operate, and therefore not interesting for me anymore.
+Display and keyboard working
+
+Usable picture of the display with its white frame as artwork would be nice.
+
+Would suffer from support for intelligent terminals as tty equipment.
+
+Stopped. For me it is much to cryptic to operate, and therefore not interesting for me anymore.
+
+
+MESS Emulation State:
+
+This system is a TESTDRIVER.
 
 
 Contributors:
@@ -340,7 +370,9 @@ with its successor, the Amiga 2000) had a PAL display, the enhanced video modes
 (HAM & EHB) and was built in Germany.
 
 
+MESS Emulation State:
 
+This system is a TESTDRIVER.
 
 $end
 
@@ -581,31 +613,54 @@ a basic keyword making it easier to enter programs.
 
 
 FUNCTION+Q = IF
+
 FUNCTION+W = STEP
+
 FUNCTION+E = STOP
+
 FUNCTION+R = READ
+
 FUNCTION+T = NEXT
+
 FUNCTION+Y = PRINT
+
 FUNCTION+U = END
+
 FUNCTION+I = LIST
+
 FUNCTION+O = REM
+
 FUNCTION+P = USING
+
 FUNCTION+1 = GOSUB
+
 FUNCTION+2 = LET
+
 FUNCTION+3 = DATA
+
 FUNCTION+4 = INPUT
+
 FUNCTION+5 = DIM
+
 FUNCTION+6 = FOR
+
 FUNCTION+7 = RETURN
+
 FUNCTION+8 = THEN
+
 FUNCTION+9 = ON
+
 FUNCTION+0 = GOTO
+
 FUNCTION+- = RESTORE
+
 FUNCTION+ENTER = CLOAD
+
 
 For cassette:
 
 Use CSAVE"<filename>" to save a file, and CLOAD"" to load the file back.
+
 
 For disc:
 
@@ -618,19 +673,19 @@ Basic disk images with the ".APD" extension are supported.
 
 Known issues:
 
-* cassette loading and saving is working
+* Cassette loading and saving is working
 
-* interrupts are not exact. I don't know enough about them, any info would be appreciated.
+* Interrupts are not exact. I don't know enough about them, any info would be appreciated.
 
-* disc interface is working, but there may be some bugs.
+* Disc interface is working, but there may be some bugs.
 
-* keyboard is mostly working but some keys may be missing
+* Keyboard is mostly working but some keys may be missing
 
-* keypad is not emulated
+* Keypad is not emulated
 
-* the M6847 emulation is very advanced *BUT* I don't think I have set it up correctly for the APF Imagination, therefore the graphics are wrong.
+* The M6847 emulation is very advanced *BUT* I don't think I have set it up correctly for the APF Imagination, therefore the graphics are wrong.
 
-* memory emulation is not complete
+* Memory emulation is not complete
 
 $end
 
@@ -644,9 +699,11 @@ APF M-1000
 The APF M-1000 is a console. It has a built in game. The emulation is not exact and the
 built in game does not work.
 
+
 Known issues:
 
 * internal game does not work
+
 * keypad is not emulated
 
 $end
@@ -703,7 +760,7 @@ History and Trivia:
 
 Apple "][", Apple "II", Apple "//" - Which is correct?
 
-"][", "II", and "//" tend to be used pretty much interchangably for any model of Apple II
+"][", "II", and "//" tend to be used pretty much interchangeably for any model of Apple II
 computer, although, practically speaking, there are a few usages which may provoke a
 correction.
 
@@ -711,6 +768,7 @@ correction.
 Disk ][ drive. It is, easily, the most attractive and distinctive II symbol; but, it is also
 associated with old Apple II's. The "//" usage is generally associated with the "c" and
 newer "e" models.
+
 
 The generally preferred machine designations are:
 
@@ -755,7 +813,7 @@ producing accurate baud rates for serial communications.
 
 If 0 is displayed, you can use 3.5" drives, but you don't have the memory expansion connector.
 
-If 3 is displayed, you have the memory exapnsion connector and you can plug in extra memory.
+If 3 is displayed, you have the memory expansion connector and you can plug in extra memory.
 
 If 4 is displayed, you have the latest model with memory expansion connector and extra upgrades.
 
@@ -789,7 +847,7 @@ History and Trivia:
 
 Apple "][", Apple "II", Apple "//" - Which is correct?
 
-"][", "II", and "//" tend to be used pretty much interchangably for any model of Apple II
+"][", "II", and "//" tend to be used pretty much interchangeably for any model of Apple II
 computer, although, practically speaking, there are a few usages which may provoke a
 correction.
 
@@ -797,6 +855,7 @@ correction.
 Disk ][ drive. It is, easily, the most attractive and distinctive II symbol; but, it is also
 associated with old Apple II's. The "//" usage is generally associated with the "c" and
 newer "e" models.
+
 
 The generally preferred machine designations are:
 
@@ -969,7 +1028,6 @@ Controller Layout:
 
 Links:
 
-
 r2001 for DOS by Paul Robson at http://users.aol.com/mk14emu/arcadia.htm
 
 
@@ -993,7 +1051,7 @@ Bally Professional Arcade/Astrocade
 
 Usage:
 
-Loading the Astrocade driver without a cassetridge image will allow you to use the four
+Loading the Astrocade driver without a cartridge image will allow you to use the four
 built-in programs.
 
 
@@ -1008,7 +1066,7 @@ The game console commonly known as the "Bally Astrocade" was never officially so
 name, having originally been released by Bally Manufacturing in 1978 as the Bally Professional 
 Arcade. It was withdrawn rather quickly though, due to the success of the competing Atari VCS. 
 A group of Pro Arcade enthusiasts under the name Astrovision Inc., bought the rights to the 
-Pro Arcade and reintroduced it as the Bally Computer System, including the Basic casettrige as 
+Pro Arcade and reintroduced it as the Bally Computer System, including the Basic cartridge as 
 a pack-in. In 1982, the system and company was renamed Astrocade, once again trying to market 
 it as a video game system. The system didn't last much longer, though; it was a product with a 
 limited interest base even before the video game slump of the next few years.
@@ -1028,6 +1086,7 @@ Features:
 
 MESS Emulation State:
 
+
 $end
 
 #---------------------------------------------------------------------------------------------#
@@ -1040,9 +1099,7 @@ Acorn Atom (1979)
 Features:
 
 
-
 MESS Emulation State:
-
 
 
 $end
@@ -1052,6 +1109,9 @@ $end
 $info=avigo
 $bio
 TI Avigo
+
+
+MESS Emulation State:
 
 
 This system does not work properly.
@@ -1087,10 +1147,10 @@ Features:
 CPU on pc-type adapter
  8088 with 3.75/8 mhz (turboswitch)
  socket for 8087
- 512 kb ram build in 
- sockets for additional 128kb ram on board
+ 512 kb RAM built in 
+ sockets for additional 128kb RAM on board
  integrated floppy disk controller
- setup ram/realtime clock?
+ setup RAM/realtime clock?
  MF2 Keyboard (US layout)
  socket for additional bios?
 game port on motherboard or slot?
@@ -1104,9 +1164,13 @@ harddisk controller in slot or motherboard?
 MESS Emulation State:
 
 basically the same as mess ibmpc emulation
-rtc/setup ram not emulated
-character rom dump missing
+
+rtc/setup RAM not emulated
+
+Character ROM dump missing
+
 needs i8086 "dirval reset fix" to work
+
 bios stops without emulation of disketts controller (->you have to start with disk image!)
 
 
@@ -1129,9 +1193,9 @@ hardware emulation mode for c64
  c64 cartridges
  c64 userport
  only the c64 standard keys available
-country support (keyboard, character rom, kernel (keyboard polling))
- character rom german
- character rom french, belgium, italian
+country support (keyboard, character ROM, kernel (keyboard polling))
+ character ROM german
+ character ROM french, belgium, italian
  editor, kernel for german
  editor, kernel for swedish
  editor, kernel for finish
@@ -1141,23 +1205,23 @@ country support (keyboard, character rom, kernel (keyboard polling))
 enhanced keyboard
 m8502 processor (additional port pin)
 additional vdc videochip for 80 column modes with own connector (rgbi)
- 16k byte ram for this chip
-128 kbyte ram, 64 kbyte rom, 8k byte charrom, 2k byte static colorram
- (1 mbyte ram possible)
+ 16k byte RAM for this chip
+128 kbyte RAM, 64 kbyte ROM, 8k byte charrom, 2k byte static colorram
+ (1 mbyte RAM possible)
 sid6581 soundchip
 c64 expansion port with some additional pins
 z80 CPU for CPM mode
 
 c128d:
 
- c1571 floppy drive build in
- 64kb vdc ram
+ c1571 floppy drive built in
+ 64kb vdc RAM
  sid8580 sound chip
 
 c128cr/c128dcr:
 
  cost reduced
- only modified for cheaper production (newer rams, ...)
+ only modified for cheaper production (newer RAM, ...)
 
 
 MESS emulation state:
@@ -1181,7 +1245,7 @@ z80 emulation
  floppy simulation not enough for booting CPM
  so simplified z80 memory management not tested
 no CPU clock doubling
-no internal function rom
+no internal function ROM
 c64 mode
  differences to real c64???
 no sound
@@ -1206,10 +1270,10 @@ serial bus
 expansion modules
  no c128 modules
 expansion modules c64
- rom cartridges (exrom)
- ultimax rom cartridges (game)
- c64 cartridges (only standard rom cartridges)
- no other rom cartridges (bankswitching logic in it, switching exrom, game)
+ ROM cartridges (exrom)
+ ultimax ROM cartridges (game)
+ c64 cartridges (only standard ROM cartridges)
+ no other ROM cartridges (bankswitching logic in it, switching exrom, game)
  no ieee488 support
  no cpm cartridge
  no speech cartridge (no circuit diagram found)
@@ -1221,7 +1285,7 @@ no userport
 
 Video notes:
 
-if the game runs too fast with the NTSC version, try the PAL version!
+If the game runs too fast with the NTSC version, try the PAL version!
 flickering affects in one video version, try the other video version
 
 
@@ -1242,6 +1306,7 @@ additional keys (to c64) are in c64mode not useable
 Lightpen:
 
 Paddle 5 x-axe
+
 Paddle 6 y-axe
 
 
@@ -1268,7 +1333,7 @@ several programs relies on more features
 Discs:
 
 only file load from drive 8 and 9 implemented
- loads file from rom directory (*.prg,*.p00) (must NOT be specified on command line)
+ loads file from ROM directory (*.prg,*.p00) (must NOT be specified on command line)
  or file from d64 image (here also directory LOAD"$",8 supported)
 use LOAD"filename",8
 or LOAD"filename",8,1 (for loading machine language programs at their address)
@@ -1288,11 +1353,11 @@ Roms:
 .crt
 .80 .90 .a0 .b0 .e0 .f0
 files with boot-sign in it
-  recognized as roms
+  recognized as ROMs
 
 .prg files loaded at address in its first two bytes
 .?0 files to address specified in extension
-.crt roms to addresses in crt file
+.crt ROMs to addresses in crt file
 
 
 Quickloader:
@@ -1301,7 +1366,7 @@ Quickloader:
 loads program into memory and sets program end pointer
 (works with most programs)
 program ready to get started with RUN
-loads first rom when you press quickload key (numeric slash)
+loads first ROM when you press quickload key (numeric slash)
 
 
 c64 mode:
@@ -1322,7 +1387,7 @@ when problems start with -log and look into error.log file
 
 rom dumping:
 
-Dumping of the roms from the running machine:
+Dumping of the ROMs from the running machine:
 in the monitor program
 s "drive:name",device,start,end
 
@@ -1390,7 +1455,7 @@ Then you could read this buffer into the computer, or write
 these buffers to disk.
 
 Transportation to your pc:
-1571 writing to mfm encoded disketts (in cpm mode only, or use program)
+1571 writing to mfm encoded diskettes (in cpm mode only, or use program)
  maybe the IBM CPM-86 formats are like the standard DOS formats.
  but using dd may create images known by some other emulators.
 1581 writes mfm encoded:
@@ -1398,21 +1463,21 @@ Transportation to your pc:
 Some years ago I build a simple adapter pc/parport to vc1541
  floppy disk drive.
 
-Dumping roms with epromer:
+Dumping ROM with epromer:
 
 c128
-U18       (read compatible 2764?) 8kB c64 character rom, c128 character rom
+U18       (read compatible 2764?) 8kB c64 character ROM, c128 character ROM
 U32 23128 (read compatible 27128?) 16kB c64 Basic, c64 Kernel
 U33 23128 (read compatible 27128?) 16kB c128 Basic at 0x4000
 U34 23128 (read compatible 27128?) 16kB c128 Basic at 0x8000
 U35 23128 (read compatible 27128?) 16kB c128 Editor, Z80Bios, C128 Kernel
 c128 cost reduced
-U18       (read compatible 2764?) 8kB c64 character rom, c128 character rom
+U18       (read compatible 2764?) 8kB c64 character ROM, c128 character ROM
 U32 23256 (read compatible 27256?) 32kB c64 Basic, c64 Kernel, c128 Editor, Z80Bios, C128 Kernel
 U34 23256 (read compatible 27256?) 32kB C128 Basic
 c128dcr
 as c128 cr
-U102 23256 (read compatible 27256?) 32kB 1571 system rom
+U102 23256 (read compatible 27256?) 32kB 1571 system ROM
 
 $end
 
@@ -1447,7 +1512,7 @@ LOAD"",1,1 for loading programs to a special address.
 Diskette Usage:
 
 Disk drives are simulated at the moment, and only file loads from drive 8 and 9 
-are implemented. You can load a program file from the rom directory (*.prg,*.p00)
+are implemented. You can load a program file from the ROM directory (*.prg,*.p00)
 (This must NOT be specified on command line, start the c16 emulation with no images specified)
 
 
@@ -1479,7 +1544,7 @@ floppy drive's processor (and therefore CPU level emulation of the 1541 is neede
 Cartridge Usage:
 
 Cartridges may have any of the following extensions: .bin .rom .lo .hi .prg
-Files with boot-sign in it are recognized as roms. Some cartridges require more than one 
+Files with boot-sign in it are recognized as ROMs. Some cartridges require more than one 
 image to load (e.g., tutor.lo tutor.hi).
 
 
@@ -1488,13 +1553,13 @@ image to load (e.g., tutor.lo tutor.hi).
 
 
  
-.bin, .rom, .lo , .hi roms are loaded to cs1 low, cs1 high, cs2 low, cs2 high addresses 
+.bin, .rom, .lo , .hi ROMs are loaded to cs1 low, cs1 high, cs2 low, cs2 high addresses 
 accordingly to their order in the command line.
 
 
  
 Note that .prg and .p00 files are assigned to the quickloader (so you have to use 
-the -cart switch when loading rom images).
+the -cart switch when loading ROM images).
 
 
 Quickloader Usage:
@@ -1667,7 +1732,7 @@ Commodore 64
 Diskette Usage:
 
 Disk drives are simulated at the moment, and only file loads from drive 8 and 9 
-are implemented. You can load a program file from the rom directory (*.prg,*.p00)
+are implemented. You can load a program file from the ROM directory (*.prg,*.p00)
 You can also load a file from a d64 image (The directory command LOAD"$",8 is supported when 
 using d64 images).
 
@@ -1693,7 +1758,7 @@ floppy drive's processor (and therefore CPU level emulation of the 1541 is neede
 Cartridge Usage:
 
 Cartridges may have any of the following extensions: .prg .crt .80 .90 .a0 .b0 
-.e0 .f0   Files with boot-sign in it are recognized as roms. Some cartridges may require more 
+.e0 .f0   Files with boot-sign in it are recognized as ROMs. Some cartridges may require more 
 than one image.
 
  
@@ -1703,12 +1768,12 @@ than one image.
 .?0 files are loaded to the address specified in the extension.
 
  
-.crt roms are loaded to the addresses specified in crt file.
+.crt ROMs are loaded to the addresses specified in crt file.
 
 
  
 Note that .prg files are assigned to the quickloader (so you have to use 
-the -cart switch when loading rom images).
+the -cart switch when loading ROM images).
 
 
 Cassette Usage:
@@ -1773,8 +1838,8 @@ No printer or other devices support in the serial bus (apart from simple disk dr
 
 Simple tape support not working (cia timing?)
 
-As far as expansion modules go, non-bankswitching rom cartridges (exrom) should work, but no 
-other rom cartridges (those with bankswitching logic in it, switching exrom, game). There is 
+As far as expansion modules go, non-bankswitching ROM cartridges (exrom) should work, but no 
+other ROM cartridges (those with bankswitching logic in it, switching exrom, game). There is 
 no ieee488 support nor support for other expansion modules.
 
 No userport support and no rs232/v.24 interface.
@@ -1877,13 +1942,14 @@ $bio
 Commodore c65 (1991)
 
 
-homecomputer under the keyboard to redo the commodore c64
+Homecomputer under the keyboard to redo the commodore c64
 success (with good c64 compatibility)
 
 Never released, because the compatibility was not good enough!
 (Some prototypes! were sold)
 
 Project name was C64DX
+
 
 Features:
 
@@ -1900,11 +1966,11 @@ vic3 (4567) with additional capabilities
 second sid audio chip (both 8580)
 uart 6511 rs232 chip
 special dma controller
-128 kb ram
-128 kb rom (kernel, editor, basic, monitor, characters, c64 roms)
+128 kb RAM
+128 kb ROM (kernel, editor, basic, monitor, characters, c64 ROMs)
 build in mfm floppy disk 3 1/2 inch double sided double density
 connector for second mem floppy disk
-special ram expansion slot
+special RAM expansion slot
 rs232 connector (round din)
 no tape connector
 new expansion slot
@@ -1919,34 +1985,43 @@ rasterline based video system
  imperfect scrolling support (when 40 columns or 25 lines)
  lightpen support not finished
  rasterline not finished
+
 no sound
+
 cia6526's look in machine/cia6526.c
+
 keyboard
+
 gameport a
  paddles 1,2
  joystick 1
  2 button joystick/mouse joystick emulation
  no mouse
  lightpen (not finished)
+
 gameport b
  paddles 3,4
  joystick 2
  2 button joystick/mouse joystick emulation
  no mouse
+
 serial bus
  simple disk drives (device 10 and 11, hang in c64 mode!)
  no printer or other devices
+
 expansion modules
  none (did there any exist)
+
 expansion modules c64 (adapter needed)
- ultimax rom cartridges not working
- rom cartridges (exrom) not working
- no other rom cartridges (bankswitching logic in it, switching exrom, game)
+ ultimax ROM cartridges not working
+ ROM cartridges (exrom) not working
+ no other ROM cartridges (bankswitching logic in it, switching exrom, game)
  no ieee488 support
  no cpm cartridge
  no speech cartridge (no circuit diagram found)
  no fm sound cartridge
  no other expansion modules
+
 no userport
  no rs232/v.24 interface
 
@@ -1971,7 +2046,7 @@ Paddle 6 y-axe
 Discs:
 
 only file load from drive 10 and 11 implemented
- loads file from rom directory (*.prg,*.p00) (must NOT be specified on command line
+ loads file from ROM directory (*.prg,*.p00) (must NOT be specified on command line
  or file from d64 image (here also directory LOAD"$",8 supported)
 use LOAD"filename",10
 or LOAD"filename",10,1 (for loading machine language programs at their address)
@@ -1991,7 +2066,7 @@ Quickloader:
 loads program into memory and sets program end pointer
 (works with most programs)
 program ready to get started with RUN
-loads first rom when you press quickload key (numeric slash)
+loads first ROM when you press quickload key (numeric slash)
 
 when problems start with -log and look into error.log file
 
@@ -2027,6 +2102,7 @@ Features:
 
 
 MESS Emulation State:
+
 
 $end
 
@@ -2068,7 +2144,7 @@ see a file basicA.cas later and you can CLOAD"A it again.
 
 To load a binary image there was a different command: SYSTEM
 
-You'll see a prompt looking like this: 
+You will see a prompt looking like this: 
 
 *?
 
@@ -2087,7 +2163,7 @@ After several minutes you'll see the prompt again
 *?
 
 
-now type / (slash) and ENTER and the program will be started at it's defined run address. If 
+Now type / (slash) and ENTER and the program will be started at it's defined run address. If 
 a program does not have a run address, you could also specify /[decimal value] to run from a 
 specific value...
 
@@ -2132,7 +2208,7 @@ newe000.rom (2,772 bytes; CRC 953491a7) but not enabled by default. If you enabl
 you can type HELP (hehe ;) and DIR and simply give a name to execute a binary file.
 
 The optional newe000.rom is loaded if the corresponding "dip switch" is set from within the 
-driver itself. There is no need to specify this rom on the command line.
+driver itself. There is no need to specify this ROM on the command line.
 
 
 Miscellaneous Usage Notes:
@@ -2239,7 +2315,7 @@ Go to file menu pick the .pak
 Should automatically start running the game.
 if it does not run, it isn't supported yet.
 
-    - Cartridge rom images (.ROM)
+    - Cartridge ROM images (.ROM)
 
 Go to file menu and pick the .rom
 Reset to CoCo and it will start running the game.
@@ -2398,18 +2474,25 @@ laptop computer for children
 
 Features:
 
-mono LCD display with about 144x100 pixels
-integrated speaker
-integrated keyboard and joypad
-integrated batterie box
-serial port connector (for special printer)
-connector for external power supply
-cartridge slot
+Mono LCD display with about 144x100 pixels
+
+Integrated speaker
+
+Integrated keyboard and joypad
+
+Integrated batterie box
+
+Serial port connector (for special printer)
+
+Connector for external power supply
+
+Cartridge slot
 
 
 MESS Emulation State:
 
 not working (not even CPU is known)
+
 stopped until CPU type is recognized or info found
 
 $end
@@ -2487,6 +2570,7 @@ Features:
 
 MESS Emulation State:
 
+
 $end
 
 #---------------------------------------------------------------------------------------------#
@@ -2560,7 +2644,7 @@ Runs many disk images and snapshots well.
 
 History and Trivia:
 
-The CPC464 was an 8-bit Amstrad computer, produced in 1984, with 64k of ram and a tape 
+The CPC464 was an 8-bit Amstrad computer, produced in 1984, with 64k of RAM and a tape 
 recorder built in.
 
 $end
@@ -2643,11 +2727,11 @@ only a single plug was required. The CPC6128 was the third in the CPC series. It
 hardware as the CPC464 and the CPC664.
 
 
-CPC464: 64k of ram, tape recorder built in.
+CPC464: 64k of RAM, tape recorder built in.
 
-CPC664: 64k of ram, 3" disk drive built in
+CPC664: 64k of RAM, 3" disk drive built in
 
-CPC6128: 128k of ram, 3" disk drive built in.
+CPC6128: 128k of RAM, 3" disk drive built in.
 
 
 The Amstrad had a Z80 at it's core. It had a palette of 27 colours, produced from combinations 
@@ -2728,8 +2812,26 @@ Runs many disk images and snapshots well.
 
 History and Trivia:
 
-The CPC664 was an 8-bit Amstrad computer, produced in 1985, with 64k of ram and a 3" disk 
+The CPC664 was an 8-bit Amstrad computer, produced in 1985, with 64k of RAM and a 3" disk 
 drive built in.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=dai
+$bio
+DAI Personal Computer (1978)
+
+
+Features:
+
+
+Notes:
+
+
+MESS Emulation State:
+
 
 $end
 
@@ -2740,20 +2842,23 @@ $bio
 ETI Dream
 
 
-early 6800 based computer
+Early 6800 based computer
 
 
 Features:
 
 video connector
+
 chip8 interpreter
 
 
 Notes:
 
-seams to be very related to rca cosmac vip.
+seams to be very related to RCA Cosmac VIP.
+
 emulator source available
-documented bios source available
+
+Documented bios source available
 
 
 Emulators:
@@ -2768,33 +2873,41 @@ $info=einstein
 $bio
 Tatung Einstein TC-01
 
+
 The Tatung Einstein is a 8-bit computer with hardware similar
 to the MSX-1. The computer was produced with two 3" disk drives and
 ran the CP/M operating system.
 
+
 The TC-01 is the first version of the hardware, with the 256 being
 the second version aimed more towards games.
 
+
 When this driver starts, and a disk is not in the drive, a internal
-monitor program will start. 
+monitor program will start.
+
 
 To use this driver you will need the Xtal operating system disks
 which will start CP/M and from here you can run many CP/M based
 programs.
 
+
 You can put a disk image into the drive and boot CP/M by pressing
 CTRL+ALT together.
+
 
 Usage/Known Issues:
 
 The floppy disc emulation may not be fully working.
 Interrupts are not working properly.
 
-Thankyou to Chris Coxall for the schematics, a dump of the bios rom,
+
+Thank you to Chris Coxall for the schematics, a dump of the bios ROM,
 and the Xtal operating system. He has been a great help with the development
 of this driver.
 
-Thankyou to Andrew Dunipace for help with the 80-column expansion card.
+
+Thank you to Andrew Dunipace for help with the 80-column expansion card.
 
 
 $end
@@ -2806,23 +2919,24 @@ $bio
 RCA Cosmac ELF and ELF2
 
 
-very early computer
+Very early computer
 
 
 Features:
 
-operation without builtin roms, you can enter your program directly with
+Operation without built-in ROMs, you can enter your program directly with
 help of the CPU integrated dma.
+
 2 segment digits
-tape connector
+
+Tape connector
 
 
 Notes:
 
-much like rca cosmac vip without video chip
+much like RCA Cosmac VIP without video chip
 
-Info for building an elf/elf2 is at
-http://incolor.inetnebr.com/bill_r/computer_simulators.htm
+Info for building an elf/elf2 is at http://incolor.inetnebr.com/bill_r/computer_simulators.htm
 
 $end
 
@@ -2932,25 +3046,38 @@ IBM PC compatible computer "under the keyboard"
 
 Features:
 
-integrated cga/mda/hercules graphics adapter, connector for CGA and MDA/Hercules monitors
-multi language and keyboard support in bios
-integrated harddisk controller, connector for 2 external harddisks
+Integrated cga/mda/hercules graphics adapter, connector for CGA and MDA/Hercules monitors
+
+Multi-language and keyboard support in bios
+
+Integrated harddisk controller, connector for 2 external harddisks
+
 3 1/2 inch 720 kb disk drive, connector for 1 external disk drive
-integrated realtimeclock 
-setup memory
+
+Integrated realtime clock
+
+Setup memory
+
 Joystick/Mouse connector
-connector for external xt busplane
-connector for external power supply
+
+Connector for external xt busplane
+
+Connector for external power supply
+
 at type connector for rs232 serial port
-parallel port connector
+
+Parallel port connector
 
 
 MESS Emulation State:
 
-basically the same as mess ibmpc emulation
-special keyboard emulated
-rough emulation of rtc, setup memory, special graphics adapter
-work stopped until more info or system software available
+Basically the same as mess ibmpc emulation
+
+Special keyboard emulated
+
+Rough emulation of rtc, setup memory, special graphics adapter
+
+Work stopped until more info or system software available
 
 
 $end
@@ -2963,25 +3090,35 @@ Casio FX850P
 
 
 Pocket Computer/Scientific Calculator
-(fx880p is the big brother (better display, more ram?))
+(fx880p is the big brother (better display, more RAM?))
 
 
 Features:
 
 2 lines with 32 5x7 characters LCD display
+
 (some indicators and a 5 digit 7segment display)
-8 kb ram
-integrated speaker
-internal slot for memory expansion (32kb?)
+
+8 kb RAM
+
+Integrated speaker
+
+Internal slot for memory expansion (32kb?)
+
 connector with support for rs232 and centronics
+
 (only level converter for rs232 needed)
+
 (only latch for centronics needed)
+
 2 3V CR2032 lithium as power supply
-1 3V CR2012 lithium as ram power supply
+
+1 3V CR2012 lithium as RAM power supply
+
 
 MESS Emulation State:
 
-not started, need information about the hd62002 CPU
+Not started, need information about the hd62002 CPU
 (should be in the normal user manual!)
 
 $end
@@ -2995,6 +3132,7 @@ Galaksija
 
 ZX81 class kit built computer from Yugoslavia (Serbia) invented by Voja Antonic.
 Also available in complete form.
+
 There were 7000 kit complets sold and approximately 10.000 made computers
 (including kit built ones).
 
@@ -3002,8 +3140,11 @@ There were 7000 kit complets sold and approximately 10.000 made computers
 Features:
 
 Z80A 3.072MHz
+
 RAM 6kB
+
 text mode 32 x 16
+
 I/O ports Z80 Bus, tape, video
 
 
@@ -3014,10 +3155,13 @@ Galaksija emulator by Miodrag Jevremovic
 
 MESS Emulation State:
 
-tape not emulated
-video hardware not emulated (hack used)
-sound not emulated (if any)
-work stopped until info about Galaksija hardware is available
+Tape not emulated
+
+Video hardware not emulated (hack used)
+
+Sound not emulated (if any)
+
+Work stopped until info about Galaksija hardware is available
 
 
 $end
@@ -3035,7 +3179,8 @@ original Game Boy was released in 1989 and allowed game players to play a huge l
 of games away from home.  Games like Super Mario Land, The Legend of Zelda: Link's 
 Awakening and Tetris proved that quality games could be developed for portable use.
 
-Nintendo later released the “Play it Loud” Game Boy series in 5 colors, and the redesigned 
+
+Nintendo later released the 'Play it Loud' Game Boy series in 5 colors, and the redesigned 
 slimmed down Game Boy pocket version was released in 1996.
 
 
@@ -3323,37 +3468,47 @@ Hewlett Packard HP48S/SX/G/GX
 
 Scientific Calculator
 
-S 32kb ram
-SX 128KB ram
-G 1MB rom, 32kb ram
-GX 128kb ram
+HP48S - 32kb RAM
+
+HP48SX - 128KB RAM
+
+HP48G - 1MB ROM, 32kb RAM
+
+HP48GX -128kb RAM
 
 
 Features:
 
 131x64 monochrome LCD display
-memory/cartridge slot
-batterie slot
-infrared interface
-serial rs232 interface
+
+Memory/cartridge slot
+
+Battery slot
+
+Infrared interface
+
+Serial rs232 interface
 
 
 Notes:
 
 on and - decreases contrast
+
 on and + increases contrast
 
 
-Official and legal HP rom images:
+Official and Public Domain HP ROM images:
 
 http://www.hpcalc.org/hp.php
 
 
 MESS Emulation State:
 
-not working
-(g memory management not finished)
-(s is a few bugfixes from working)
+Not working
+
+(G memory management not finished)
+
+(S is a few bugfixes from working)
 
 $end
 
@@ -3369,26 +3524,41 @@ concrete IBM AT model
 Features:
 
 80286 with 10 mhz
+
 socket for 80287
-512kb ram (expandable to 1mb, 2mb or 4mb) (4? 30pin 8?bit simms)
+
+512kb RAM (expandable to 1mb, 2mb or 4mb) (4? 30pin 8?bit simms)
+
 3 isa slots
+
 integrated vga adapter
+
 ps2 keyboard and mouse connectors
+
 3 1/2 inch high density (1.44mb) floppy disk drive
+
 1 parallel port
+
 1 serial port (pc style dsub)
+
 mf2 keyboard with 102 keys
+
 ps2 mouse with 2 buttons
+
 greyscale or color vga monitor
+
 optional: ethernet adapter with bnc (coax) and rj45 (twisted pair) connectors
 
 
 MESS Emulation State:
 
-basically the same as ibmat emulation
+Basically the same as ibmat emulation
+
 ps2 mouse not emulated now
-vga emulation incomplete
-needs i286 core v1.5
+
+VGA emulation incomplete
+
+Needs i286 core v1.5
 
 $end
 
@@ -3405,19 +3575,32 @@ concrete IBM XT model
 Features:
 
 8086 with 8 mhz
-socket for 8087
-640mb ram
-3 8 bit slots
+
+Socket for 8087
+
+640mb RAM
+
+3 8-bit slots
+
 integrated mcga adapter (vga style connector for vga monitor)
+
 ps2 keyboard and mouse connectors
-2 3 1/2 inch double density (720kb) floppy disk drive
+
+2 3.5 inch double density (720kb) floppy disk drive
+
 in some models instead of the 2nd disk drive a 20mb or 30mb harddisk drive
+
 1 parallel port
+
 1 serial port (pc style dsub)
+
 ethernet adapter with bnc (coax) and rj45 (twisted pair) connectors
+
 mf2 keyboard with 102 keys
+
 ps2 mouse with 2 buttons
-greyscale or color vga monitor
+
+greyscale or color VGA monitor
 
 $end
 
@@ -3428,40 +3611,58 @@ $bio
 IBM AT
 
 
-extended IBM PC
+Extended IBM PC
 
 
 Features:
 
-basically an IBMPC,
+Basically an IBMPC,
+
 80286 processor
+
 16 mb memory space
+
 16 bit wide, 24 bit wide slots (xt downwards compatible)
+
 2nd programmable interrupt controller
+
 16 bit direct memory access controller
-realtimeclock and setup memory
+
+Realtime clock and setup memory
+
 (changed keyboard and keyboard circuits on board)
-high density supporting disk controller
-hard disk support in bios
+
+High density supporting disk controller
+
+Hard disk support in bios
 
 
 Emulators:
 
 Virtual PC for Linux, NT (commercial, very usable)
+
 Bochs
 
 
 MESS Emulation State:
 
-basically the same as ibmpc emulation
-rough emulation of keyboard controller
-rough emulation of keyboard
-rough emulation of dma chips
-rough emulation of pic chips
-incomplete emulation of CPU
-no support for high density disks
-no support for at harddisks
-needs i80286 v1.5
+Basically the same as ibmpc emulation
+
+Rough emulation of keyboard controller
+
+Rough emulation of keyboard
+
+Rough emulation of dma chips
+
+Rough emulation of pic chips
+
+Incomplete emulation of CPU
+
+No support for high density disks
+
+No support for at harddisks
+
+Needs i80286 v1.5
 
 $end
 
@@ -3472,18 +3673,25 @@ $bio
 IBM PC
 
 
-the grandfather of the now common personal computer
+The grandfather of the now common personal computer
 
 
 Features:
 
 8088 CPU
-expanded through several slots for interface cards
-programmable interrupt controller
-direct memory access controller
-support for a tape drive on the motherboard of the first series
-even elementary equipment is not on the motherboard
-even a display adapter must be plugged in
+
+Expanded through several slots for interface cards
+
+Programmable interrupt controller
+
+Direct memory access controller
+
+Support for a tape drive on the motherboard of the first series
+
+Even elementary equipment is not on the motherboard
+
+Even a display adapter must be plugged in
+
 
 Features IBMXT:
 
@@ -3493,18 +3701,31 @@ Features IBMXT:
 MESS Emulation State:
 
 rough emulation of the keyboard controller
+
 rough emulation of the pic chip
+
 rough emulation of the dma chip
+
 no emulation of the tape drive
+
 mono display adapter emulated
+
 color graphics adapter emulated
+
 hercules graphics adapter emulated
+
 rough ega/vga emulation
+
 1 floppy disk controller emulated
+
 1 harddisk controller emulated
+
 rough emulation of up to 4 serial ports emulated
+
 rough emulation up to 3 parallel ports emulated
+
 1 serial mouse emulated
+
 rough emulation of 1 game port and its 2 joysticks
 
 
@@ -3517,25 +3738,33 @@ $bio
 IBM PC Junior
 
 
-enhanced IBM PC for home use
+Enhanced IBM PC for home use
 
 
 Features:
 
-basically an IBM PC
-support for cartridges
-enhanced cga graphics adapter with additional graphics modes (160x200x4, 320x200x4, 640x200x2)
-integrated sound chip
-unique keyboard
-integrated joystick support
+Basically an IBM PC
+
+Support for cartridges
+
+Enhanced CGA graphics adapter with additional graphics modes (160x200x4, 320x200x4, 640x200x2)
+
+Integrated sound chip
+
+Unique keyboard
+
+Integrated joystick support
 
 
 MESS Emulation State:
 
-basically the same as mess ibmpc emulation
+Basically the same as mess ibmpc emulation
+
 pc junior graphics emulated
+
 pc junior sound emulated
-work stopped until complete bios roms are available
+
+Work stopped until complete bios ROMs are available
 
 
 $end
@@ -3599,22 +3828,24 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
-#$info=jaguar
-#$bio
-#Atari Jaguar (1993)
+$info=jaguar
+$bio
+Atari Jaguar (1993)
 
 
-#Features:
+Features:
 
 
-#Usage/Known Issues:
+Usage/Known Issues:
 
 
-#MESS Emulation State:
-#nowhere near working yet, but the title screen now loads
+MESS Emulation State:
+
+
+Preliminary driver.
 
   
-#$end
+$end
 
 #---------------------------------------------------------------------------------------------#
 
@@ -3627,6 +3858,7 @@ Features:
 
 
 MESS Emulation State:
+
 
 $end
 
@@ -3701,7 +3933,7 @@ The base unit can connect to a TV through a aerial or scart lead.
 Not many of these systems were produced and they are rare.
 
 The Amstrad CPC had a gate array chip which contained the logic for the
-palette, mode display, rom paging, ram paging and interrupt
+palette, mode display, ROM paging, RAM paging and interrupt
 system. This is emulated in the KC Compact using a lot of TTL logic chips
 and a Zilog 8536 chip.
 
@@ -3927,16 +4159,23 @@ the Lynx and focused on their new console, the Jaguar. (Notes taken from FAQ and
 Features:
 
 Two 16-Bit custom CMOS chips running at 16Mhz (named Mikey and Suzy)
+
 Sound: 8 bit DAC for each channel; 4 channels integrated stereo speaker (wired for mono in original)
-Screen: 160 x 102 (horz) 60.00 Hz 
+
+Screen: 160 x 102 (horz) 60.00 Hz
+
 Color: 4096 colors, 16 max per scanline
+
 Others: 64KB RAM of 120ns DRAM
 
-
 Headphone port (mini-DIN 3.5mm stereo; wired for mono on the original Lynx)
+
 ComLynx (multiple unit communications, serial)
+
 Power (9V DC, 1 A)
+
 Game cartridge slot
+
 Battery holder (six AA) ~4-5 hours
 
 
@@ -3959,17 +4198,17 @@ FAQ on Lynx - www.digiserve.com/eescape/atari/Atari.shtml
 
 MESS Emulation State:
 
-several cartridges playable
+Several cartridges playable
 
-blitter imperfect
+Blitter imperfect
 
-timer system incomplete
+Timer system incomplete
 
-audio imperfect
+Audio imperfect
 
-no serial port emulation
+No serial port emulation
 
-Lynx II bios is needed.
+Lynx II bios is needed!
 
 $end
 
@@ -4096,6 +4335,9 @@ Delivered in japan only?
 
  (all modules should work with c64)
 
+
+Features:
+
  cartridges necessary (nothing works without cartridge)
 
  low cost c64
@@ -4130,7 +4372,7 @@ Delivered in japan only?
 
  cartridge/expansion port (some signals different to c64)
 
- no rom on board (minibasic with kernel delivered as cartridge?)
+ no ROM on board (minibasic with kernel delivered as cartridge?)
 
 
 $end
@@ -4174,6 +4416,7 @@ Features:
 
 MESS Emulation State:
 
+
 $end
 
 #---------------------------------------------------------------------------------------------#
@@ -4192,7 +4435,8 @@ in Germany as MK1
 Features:
 
 4 7segment led digits
-plug for external power supply
+
+Plug for external power supply
 
 
 Instructions:
@@ -4207,8 +4451,9 @@ than you can play as white and enter your move (enter is d/play)
 
 MESS Emulation State:
 
-operating instructions needed!
-not working (CPU core problem?)
+Operating instructions needed!
+
+Not working (CPU core problem?)
 
 
 $end
@@ -4220,7 +4465,7 @@ $bio
 Super System 2/MK 2
 
 
-early chess computer
+Early chess computer
 
 sold from several firms
 in Germany as MK2
@@ -4231,8 +4476,10 @@ in Germany as MK2
 Features:
 
 4 7segment led digit
-integrated speaker
-plug for external power supply
+
+Integrated speaker
+
+Plug for external power supply
 
 
 Notes:
@@ -4240,13 +4487,14 @@ Notes:
 for the computer to start as white
  switch to black (h enter)
  swap players (g enter)
-Pinout and instructions for reading roms are in messroms.txt
+Pinout and instructions for reading ROMs are in messroms.txt
 
 
 MESS Emulation State:
 
 Random number generation is not accurate (rriot6530 emulation)
-led emulation not accurate (noticeable while computer is thinking)
+
+Led emulation not accurate (noticeable while computer is thinking)
 
 
 $end
@@ -4486,7 +4734,7 @@ Philips (The Netherlands)
 VG-8000: 16kB RAM
 VG-8010: 32kB RAM
 VG-8020: 64kB RAM, (VG8020 comes in 2 different versions (/00 and /20), new versions use 
-sub-slot for ram)
+sub-slot for RAM)
 
 
 
@@ -4516,7 +4764,7 @@ Sakhr/Universal/Al Alamiah (Kuwait/Yemen)
 
 AX-100: 64kB RAM
 AX-150: 64kB RAM
-AX-170: 64kB RAM, built in special roms with Arabic characters set and software
+AX-170: 64kB RAM, built in special ROMs with Arabic characters set and software
 AX-230: 64kB RAM, same software as AX-170 + 1MB of other software
 AX-330: 64kB RAM, same as AX-230 but with built in SEGA-MEGADRIVE board
 AX-990: 64kB RAM, 50 programs built in, SEGA-MEGADRIVE board built in
@@ -4830,7 +5078,7 @@ quite right)
 
 RELCPMH Mode (CP/M Memory configuration)
 
-support for additional roms
+Support for additional ROMs
 
 No Cassette Save support.
 
@@ -4866,7 +5114,8 @@ First handheld (mono)
 Features:
 
 16x16 LCD display
-CPU is in the cartridge (normally TMS1100 with on chip rom)
+
+CPU is in the cartridge (normally TMS1100 with on chip ROM)
 
 how to dump the TMS1100?
 
@@ -4880,17 +5129,27 @@ Nascom 1 & 2
 
 
 Usage Notes:
+
 The Nascom 2 clone has support for .cas, .bin and .nas cassette files.
+
 
 The .cas files are used by BASIC. To get there from the monitor, type
 EE000, enter 49152 as the memory size then CLOAD "<letter>". You can use
-RUN/LIST etc. The <letter> for the existing cassettes are:
+RUN/LIST etc. 
+
+
+The <letter> for the existing cassettes are:
 
 adventr.cas     A
+
 snailr.cas      S
+
 startrek.cas    T
+
 swinghs.cas     M
+
 swords.cas      S
+
 
 The .nas files are loaded by the monitor. Type L, wait for the loading to
 finish, then E<start addr>. The start address is the address first
@@ -4913,11 +5172,12 @@ This system has a LCD screen and nice keyboard. The memory is
 protected by a lithium battery which is charged when the computer
 is connected to a mains supply.
 
-PCMCIA ram cards can be used to store programs and documents.
+PCMCIA RAM cards can be used to store programs and documents.
 
 The computer has a built in wordprocessor, BBC Basic, Serial Terminal,
 Calculator, Diary and more. The whole system is a personal organiser with lots
 of extras.
+
 
 MESS Emulation State:
 
@@ -4941,15 +5201,15 @@ c. PCMCIA RAM CARD
 
 The NC100 supports a PCMCIA Ram card up to 1mb in size. 
 
-The emulator supports all ram card operations: reading, writing, formatting
+The emulator supports all RAM card operations: reading, writing, formatting
 and write enable/write protect.
 
-It also supports ram cards of all sizes (128k, 256k, 512k and 1mb).
+It also supports RAM cards of all sizes (128k, 256k, 512k and 1mb).
 
-The file format of a ram card is a simple memory dump; there are no headers or 
+The file format of a RAM card is a simple memory dump; there are no headers or 
 other information stored in the file.
 
-If files have been saved onto the ram card by the emulation, then the file
+If files have been saved onto the RAM card by the emulation, then the file
 on the host filesystem will be updated (the update will happen when MESS is exited,
 or a new card is inserted).
 
@@ -5006,17 +5266,24 @@ XMODEM transfer instructions:
 NC100:
 
 1. Enter wordprocessor.
+
 2. Start a new document
+
 3. Quit wordprocessor
+
 3. Go to list documents.
+
 4. Press MENU key
+
 5. Here you can navigate the menu to find "XMODEM receive document".
+
 6. Start XMODEM send on PC.
 
 
 Links:
 
 http://genesis8.free.fr/
+
 http://www.ncus.org.uk/
 
 $end
@@ -5036,11 +5303,12 @@ This system has a fold-down LCD screen, nice keyboard and disc drive.
 The memory is  protected by a lithium battery which is charged when the computer
 is connected to a mains supply.
 
-PCMCIA ram cards can be used to store programs and documents.
+PCMCIA RAM cards can be used to store programs and documents.
 
 The computer has a built in wordprocessor, BBC Basic, Serial Terminal,
 Calculator, Diary and more. The whole system is a personal organiser with lots
 of extras.
+
 
 MESS Emulation State:
 
@@ -5094,9 +5362,11 @@ New Enhanced AT
 
 popular AT compatible chipset for 80286
 
+
 Features:
 
 support of LIM EMS4.0 (or only 3.2?)
+
 
 Notes:
 
@@ -5105,9 +5375,9 @@ msdos utilities for quickset and ems available
 
 MESS Emulation State:
 
-basically the same as mess ibmat emulation
-special chipset features not emulated yet
-not working
+Basically the same as mess ibmat emulation
+Special chipset features not emulated yet
+Not working
 
 
 $end
@@ -5125,6 +5395,7 @@ in August, 1985. The 8-bit graphics were far superior to any-home based console 
 before it. Strong sales were were driven by the gamers wanting the feeling of real-life arcade
 games in their homes.
 
+
 The NES boasts an impressive library of games with over 8000 games (Cowering goodnes), offering
 a smorgasbord of titles for fans of every genre. The Nintendo continued it's reign with other 
 big hits such as The Mega Man series, Ninja Gaiden, Contra, Castlevania, Double Dragon and of 
@@ -5134,37 +5405,38 @@ worldwide by its official cancellation in January 1996 but not before releasing 
 
 Usage:
 
-Note that the one player hand controller Select is
-mapped as Coin 1 (default key 5), and 
+Select is mapped as Coin 1 (default key 5).
+
 Start is mapped as Player 1 Start (default key 1).
-This makes it convenient to use the driver with a
-"MAME" configured controller.
 
+This makes it convenient to use the driver with a "MAME" configured controller.
 
-Famicom Disk System switching is mapped to Player 1
-Button 3 (default key [space]).
+Famicom Disk System switching is mapped to Player 1 Button 3 (default key [space]).
 
 
 Features:
 
-Main Processor: 8bit NMOS 6502 CPU with a secondary PPU (Picture Processing Unit). 
-Clock Speed: 1.7897725MHz for NTSC and 1.773447MHz for the PAL version.
+Main Processor: 8bit NMOS 6502 CPU with a secondary PPU (Picture Processing Unit)
+
+Clock Speed: 1.7897725MHz for NTSC and 1.773447MHz for the PAL version
+
 Data Path width: 8-bits
+
 Color Palette: 256; 16 max on screen
+
 Sprites: 64 (8x8 or 8x16)
+
 Sound: FM with 5 sound channels (4 analog, 1 digital)
+
 Video Ram: 16 Kbits
+
 SPR-RAM: 256 Bytes
+
 Rom addressing: 8k
+
 Cart Size: 64k - 4 Megabit
+
 Controls:  8 directional D-Pad, A, B, select, and start buttons.  
-
-
-Links:
-
-Nintendo - www.nintendo.com
-NES World - nesworld.parodius.com
-The Warp Zone - www.classicgaming.com/thewarpzone
 
 
 MESS Emulation State:
@@ -5198,7 +5470,8 @@ Philips G7000 videopac
 Features:
 
 2 digital joysticks
-keyboard
+
+Keyboard
 
 
 Emulators:
@@ -5246,10 +5519,14 @@ can be chosen using a Dipswitch.
 Known issues:
 
 - The disc controller emulation is not exact and some programs may fail to load.
+
 - The cassette emulation is not exact and some programs may fail to load
+
 - Screen display should be accurate, but there might be some small bugs.
+
 - Tape programs are found but not loaded.
-- there are bugs in the Microdisc and Jasmin floppy disc controller emulation so some
+
+- There are bugs in the Microdisc and Jasmin floppy disc controller emulation so some
 programs will not boot.
 
 
@@ -5301,40 +5578,51 @@ the PC series became a standard and IBM dominated the computer market up until t
 The following PC's and compatibles are supported by, or currently under development in MESS:
 
 
-IBM PC
+IBM PC:
 
 Intel 8088 process with 4.77 Mhz clock.
 
 
-IBM PC Junior
+IBM PC Junior:
 
 based on IBM PC
+
 Special keyboard
+
 CGA with 160x200x16, 320x200x16 and 640x200x4? colors
+
 3 channel sound chip
 
 
-IBM PC/XT
+IBM PC/XT:
 
 based on IBM PC
-Intel 8086 instead of 8088, but only ram memory data bus
-enhanced to 16 bit.
+
+Intel 8086 instead of 8088, but only RAM memory data bus
+
+Enhanced to 16 bit.
 
 
-Tandy1000 Series
+Tandy1000 Series:
 
 IBM PC Junior compatible graphic system.
+
 Later the 640x200x16 graphic mode was also available.
+
 Later models were delivered with EGA/VGA compatible graphic system/card.
+
 IBM PC Junior compatible sound system.
+
 In later models there was also a DAC channel available.
+
 First series with own keyboard (own layout, different keys)
 
 
 
-Tandy1000HX
+Tandy1000HX:
 
 First Tandy 1000 with EEPROM memory for configuration.
+
 Delivered with 3,5 inch  double density disk drive (720kb).
 
 
@@ -5345,7 +5633,7 @@ Packed IBM PC/XT functionality in few custom chips.
 Power supply in the monitor was also used for the computer.
 Serial Port,
 Parallel Port,
-Real Time clock with battery buffered cmos ram,
+Real Time clock with battery buffered cmos RAM,
 Graphics adapter,
 mouse port for included mouse integrated in the motherboard.
 Joystick port for cpc-joystick in the keyboard.
@@ -5356,7 +5644,7 @@ Amstrad PC 1512
 (Schneider in Germany/Austria)
 
 CGA compatible graphics system with special 640x200x16 graphics mode.
-512 KB ram on board, sockets for additional 128 kb on board.
+512 KB RAM on board, sockets for additional 128 kb on board.
 
 delivered as
 PC1512SD (1 5,25 inch double density disk drive (360kb))
@@ -5394,6 +5682,7 @@ Features:
 
 MESS Emulation State:
 
+
 $end
 
 #---------------------------------------------------------------------------------------------#
@@ -5411,14 +5700,17 @@ also marketed as tandy trs80 pc-3
 Features:
 
 24 digit (5x7 pixel) LCD display
-integrated speaker
-same connector for printer and tape drive as pc1401
-2 "build in" batteries
+
+Integrated speaker
+
+Same connector for printer and tape drive as pc1401
+
+2 built in batteries
 
 
 MESS Emulation State:
 
-look at pc1401
+Look at pc1401
 
 
 $end
@@ -5436,12 +5728,16 @@ small pocket computer
 Features:
 
 150x32 pixel LCD display
+
 integrated speaker
+
 connector for printer and tape drive
-2 build in batteries
+
+2 built in batteries
 
 Features of this model included a BASIC interpreter, an 8-bit sharp CPU, 150x32 pixel 
 display, 8+32K ROM, 4K RAM which was expandable with a RAM cartridge to 12 or 20K.
+
 
 Emulator:
 
@@ -5450,7 +5746,7 @@ pockemul for win32
 
 MESS Emulation State:
 
-look at pc1401
+Look at pc1401
 
 
 $end
@@ -5464,11 +5760,17 @@ Sharp Pocket Computer 1401
 
 small scientific calculator and pocket computer
 
+
 Features:
+
 16 digit (5x7 pixel) LCD display
+
 integrated speaker
+
 connector for printer and tape drive
-2 "build in" batteries
+
+2 built in batteries
+
 
 Usage Notes:
 
@@ -5479,20 +5781,27 @@ Holding C-CE while resetting, preserves basic programs. (simulated when starting
 holding CE while hitting reset prevents the basic area from being overwritten
 
 
-Error Codes:
-error codes found at the inner side of the top:
-( should be the same for several models)
-1 syntax error
-2 calculation error
-3 illegal function argument
-4 too large a line number
-5 next without for
-  return without gosub
-6 memory overflow
-7 print using error
-8 i/o device error
-9 other errors
+Error Codes (found at the inner side of the top):
 
+(should be the same for several models)
+
+1 Syntax error
+
+2 Calculation error
+
+3 Illegal function argument
+
+4 Too large a line number
+
+5 Next without for return without gosub
+
+6 Memory overflow
+
+7 Print using error
+
+8 I/O device error
+
+9 Other errors
 
 
 History and Trivia:
@@ -5519,53 +5828,59 @@ derived from the pc1251, reduced keyboard
 
 
 pc1260
-basic computer
-16x2 5x7 character display
-8 bit sharp CPU
-6+32kb rom, 4kb ram
 
+basic computer
+
+16x2 5x7 character display
+
+8 bit sharp CPU
+
+6+32kb ROM, 4kb RAM
 
 
 pc1261
-pc1260 with 10kb ram
 
+pc1260 with 10kb RAM
 
 
 pc1360
-pc1350 with?
 
+pc1350 with  ?? RAM
 
 
 pc1403
+
 derived from the pc1401
-8+32+32kb rom, 8 kb ram
+
+8+32+32kb ROM, 8 kb RAM
+
 24 5x7 character display
 
 
-
 pc1403h
-pc1403 with 32 kb ram
 
+pc1403 with 32 kb RAM
 
 
 pc1421
+
 derived from the pc1401
 
 
-
 pc1430
+
 prequel to pc1401
 
 
-
 pc1450
+
 pc1401 with some additional keys
 
 
 
 pc1475
-derived from the pc1450 with some pc1403 features
-24x2 5x7 character display
+
+derived from the pc1450 with some pc1403 features 24x2 5x7 character display
 
 
 $end
@@ -5579,22 +5894,27 @@ Sharp Pocket Computer 1403
 
 small scientific calculator and pocket computer
 
-sequel of the pc1401 (better display, more ram, better system software,...)
+sequel of the pc1401 (better display, more RAM, better system software,...)
 
-pc1403 has 8kbyte? ram
-pc1403h has 32kbyte ram
+pc1403 has 8kbyte? RAM
+
+pc1403h has 32kbyte RAM
+
 
 Features:
 
 24 digit (5x7 pixel) LCD display
-integrated speaker
-connector for printer and disk drive
-no contrast adjustment
+
+Integrated speaker
+
+Connector for printer and disk drive
+
+No contrast adjustment
 
 
 MESS Emulation State:
 
-look at pc1401
+Look at pc1401
 
 $end
 
@@ -5614,26 +5934,39 @@ cost reduced redesign with more memory pc1500a
 Features:
 
 156x7 pixel LCD display
-integrated speaker
-integrated realtimeclock
-memory/cartridge slot
-expansion port for printer and tape drives
-batterie slot
-connector for external power supply
+
+Integrated speaker
+
+Integrated realtimeclock
+
+Memory/cartridge slot
+
+Expansion port for printer and tape drives
+
+Battery slot
+
+Connector for external power supply
 
 
 MESS Emulation State:
 
-not working
-incomplete CPU core
+Not working
+
+Incomplete CPU core
+
 lh5811 not emulated
-speaker not emulated
-realtimeclock not emulated
-tape not emulated
-printer not emulated
+
+Speaker not emulated
+
+Realtime clock not emulated
+
+Tape not emulated
+
+Printer not emulated
+
 work stopped until more info about
- lh5811
- CPU lh5801 power/interrupt management available
+ - lh5811
+ - CPU lh5801 power/interrupt management available
 
 
 $end
@@ -5652,29 +5985,46 @@ sold as Schneider PC1512 in Germany
 
 Features:
 
-integrated 5 1/4 inch 360 kb disk drive
-RTC with integrated setup ram as in IBM AT
+Integrated 5 1/4 inch 360 kb disk drive
+
+RTC with integrated setup RAM as in IBM AT
+
 1 serial port connector
+
 1 parallel port connector
-special mouse (keys wired to keyboard, movement counters on the motherboard)
-special connector for cpc compatible joysticks (digital)
-power supply in monitor
-color graphics adapter with 640x200 in 16 colors
-multi language support in bios
+
+Special mouse (keys wired to keyboard, movement counters on the motherboard)
+
+Special connector for cpc compatible joysticks (digital)
+
+Power supply in monitor
+
+Color graphics adapter with 640x200 in 16 colors
+
+Multi-language support in bios
+
 Some models sold with second 5 1/4 inch disk drive
+
 Some models sold with harddisk controller and 20mb harddisk
 
 
 MESS Emulation State:
 
-basically the same as mess ibmpc emulation
-special keyboard emulated
-special mouse emulated
-special joystick emulated
-unique dipswitches are emulated
-unique color graphics adapter mode emulated
-CHARACTER rom dump is missing, and so multinational character support
-work stopped until more information available or character rom available
+Basically the same as MESS ibmpc emulation
+
+Special keyboard emulated
+
+Special mouse emulated
+
+Special joystick emulated
+
+Unique dipswitches are emulated
+
+Unique color graphics adapter mode emulated
+
+CHARACTER ROM dump is missing, and so multinational character support
+
+Work stopped until more information available or character ROM available
 
 
 $end
@@ -5721,7 +6071,7 @@ Features:
 
 8086 with 8 mhz
 socket for 8087 math coprocessor
-512 kb ram on board, sockets for additional 128kb
+512 kb RAM on board, sockets for additional 128kb
 integrated cga/mda/hercules graphics adapter, 
 connector for CGA and MDA/Hercules monitors and TV (hf modulated; PAL?)
 integrated 102 key keyboard
@@ -5736,16 +6086,21 @@ proprietary pc1512 style mouse connector, delivered with sinclair 2 button mouse
 rtc?
 delivered with msdos, dr gem, organizer software
 
+
 Notes:
 
-download the mouse driver at http://www.users.zetnet.co.uk/johnhayward/pc200/software.htm
+Download the mouse driver at http://www.users.zetnet.co.uk/johnhayward/pc200/software.htm
+
 
 MESS Emulation State:
 
-basically the same as mess ibmpc emulation
-character rom dump missing
-rough emulation of special graphics adapter
-work stopped until more info or system software available
+Basically the same as MESS ibmpc emulation
+
+Character ROM dump missing
+
+Rough emulation of special graphics adapter
+
+Work stopped until more info or system software available
 
 
 $end
@@ -5757,39 +6112,61 @@ $bio
 NEC PC-8801 series
 
 
-early Z80 based computer commonly used in Japan
+Early Z80 based computer commonly used in Japan
+
 
 Features:
 
-main Z80 CPU 4MHz(some models has 8MHz version)
-sub Z80 CPU 4MHz(for 5'floppy disk drive)
+Main Z80 CPU 4MHz(some models has 8MHz version)
+Sub Z80 CPU 4MHz(for 5'floppy disk drive)
+
 64KB RAM
+
 48KB Video RAM
+
 640x200 8colors or B/W graphics
+
 640x400 B/W graphics(required "high-resolution" display(VSYNC 24KHz))
+
 80x25 text(alphabet or Kata-kana only, can overlay on graphics)
+
 YM-2203 or YM-2608 FM sound(some models or optional)
+
 extended RAM(various size, some models or optional)
+
 5'2D or 5'2HD or 8'2D floppy disk drives(some models or optional)
+
 96KB BASIC ROM
+
 Kanji ROM(some models or optional)
+
 Kana-Kanji dictionary ROM(some models)
+
 RS-232C
+
 CD-ROM(some models)
-printer port
+
+Printer port
+
 
 MESS emulation state:
 
 CPU
+
 text or graphics
+
 YM-2203 sound(YM-2608 not yet)
-extended RAM
+
+Extended RAM
+
 5'2D disk drives
+
 Kanji ROM
-Note: Currently, each model is separated which use "High-resolution"
-      display and "Low-resolution" display. Because I don't know how
-      to change display resolution and HSYNC frequency dynamically
-      (when machine is running).
+
+Note: Currently, each model is separated which use "High-resolution" display
+and "Low-resolution" display. Because I don't know how to change display 
+resolution and HSYNC frequency dynamically (when machine is running).
+
 
 ROM:
 
@@ -5800,7 +6177,8 @@ from this:
 
 	http://www.remus.dti.ne.jp/~cisc/m88/
 
-Currently PC-8801mkIISR rom is only tested.
+Currently PC-8801mkIISR ROM is only tested.
+
 
 Disk Emulation:
 
@@ -5809,26 +6187,43 @@ files are not supported, That is, disk in image file must be only
 one. The D88 disk image format is supported by more PC-8801
 emulators. Tools for D88 format can be downloaded from these:
 
-	http://www1.plala.or.jp/aoto/index.html
-	http://www.remus.dti.ne.jp/~cisc/m88/
-	http://member.nifty.ne.jp/arearea/M882.html
+http://www1.plala.or.jp/aoto/index.html
+
+http://www.remus.dti.ne.jp/~cisc/m88/
+
+http://member.nifty.ne.jp/arearea/M882.html
 
 
 TODO:
+
 integrate "high-resolution" and "low-resolution" mode
+
 optimization of CPU switching
+
 more accurate speed(memory wait and DMAC overhead)
+
 YM-2608 sound
+
 joystick and mouse
+
 5'2HD or 8'2D floppy disk drives
+
 font substitution
+
 Kana-Kanji dictionary ROM
+
 test ROMs of other models
+
 multiple disks image support
+
 source clean-up
+
 printer
+
 RS-232C
+
 CD-ROM
+
 more good English documentation
 
 $end
@@ -5860,12 +6255,18 @@ homecomputer for TV connection in Czechoslovakia.
 Features:
 
 8080 compatible CPU
+
 288x256 dots resolution
+
 (version 1 and 2 mono)
+
 (version 3 with 4 colors)
-integrated beeper or beep generation for TV
-centronics port?
-something like user port?
+
+Integrated beeper or beep generation for TV
+
+Centronics port?
+
+Something like user port?
 
 
 $end
@@ -6199,7 +6600,7 @@ Pong Games
 
 
 first done in discrete logic
-later pong in a chip by several firms (atari, ge, ...)
+later pong in a chip by several firms (Atari, GE, ...)
 late pongs probably signetnics 2650/2636 system in Germany
 
 
@@ -6260,8 +6661,10 @@ The disk drive interface has a boot-rom which loads the DOS from the disc
 in the drive. 
 
 The driver supports 2 versions of the disc interface:
-- "low dos 8d" has a 256 byte boot rom and supports DOS v1.0 to v1.30 ("Apple 2" on dipswitch)
-- "high dos 8d" has a 512 byte boot rom and supports DOS v2.10 and higher. ("Apple 2 v2" on dipswitch)
+
+- "low dos 8d" has a 256 byte boot ROM and supports DOS v1.0 to v1.30 ("Apple 2" on dipswitch)
+
+- "high dos 8d" has a 512 byte boot ROM and supports DOS v2.10 and higher. ("Apple 2 v2" on dipswitch)
 
 If you are using the standard prav8d driver you will need to type:
 
@@ -6269,7 +6672,7 @@ CALL #320
 
 to start the boot procedure.
 
-If you are using prav8dd (with the "BOBY" rom), then the disc is booted
+If you are using prav8dd (with the "BOBY" ROM), then the disc is booted
 automatically.
 
 The Pravetz 8D uses Apple 2 compatible disk drives only and these
@@ -6277,34 +6680,55 @@ are supported by the driver.
 
 Here is a brief listing of DOS commands provided by George:
 
-options:
+
+Options:
+
 f - FileName (1-30 signs)
+
 d - drive (one or two)
+
 v - volume
+
 a - beginning address
+
 e - end address
+
 l - record length
+
 r - record number
+
 b - number of byte in the record
 
 
-filetypes:
+Filetypes:
 B - Basic program
+
 C - Bynary file
+
 T - Text file
+
 M - Text file, created with Make command ( batch file:) )
 
-commands:
+Commands:
+
 DIR [1] [2] - not comment
+
 INIT [,Vv] [,Dd] - formatting Disk (in first or second Disk Drive)
+
 DOS [f] [,Dd], [,Vv] - writing Dos on the disk without formatting It. File f automatically starts after booting
+
 MAP [1] [2] - show chart of the disk.
+
 SAVE f [,A,a] [,Ee] [,Vv] [,Dd] - Saves file on the disk. If missing parameter of the addresses A,E - 
 saving Basic file in Memory
+
 LOAD f [,Aa] [,Dd] [,Vv] - loads file in memory
+
 MERGE - adding program in Basic to already exists in Memory
 - -only for files B or C types. Loads file in Memory and start It. (RUN and BRUN together in Apple ][)
+
 DELETE f [,Dd] [,Vv] - deleting file f
+
 RENAME f1, f2 [,Vv] [,Dd] - renaming last name of the file f1 with f2
 * f [,Dd] [,Vv] - lock/unlock file
 
@@ -6339,10 +6763,13 @@ It was produced between 1985 and 1989: Pravetz is both the name of the firm and 
 the city where the firm is located. The "D" in the name stands for "Domashen" ('home' in
 Bulgarian) while the "8" stands for (you've never guess!) '8 bits'.
 
+
 There was a whole family of Pravetz computer which included the following models:
 
 Pravetz 82, 8M, 8A, 8E, 8C, 8D (8 bits)
+
 Pravetz 16, 16A, 286 (16 bits, PC clones)
+
 
 Most of 8 bits machines were Apple II compatibles, "8D" being the exception. The "8D" model was
 issued in 1985 and cost 420 lev - if you think that the average salary by that time was about
@@ -6370,8 +6797,20 @@ the DOS from the disk.
 
 Thanks to:
 
-Joro Dramchev, Ventzislav Alexandrov and Todor Arnaudov for Pravetz information,
-Fabrice Frances for Oric information.
+Joro Dramchev, Ventzislav Alexandrov and Todor Arnaudov for Pravetz information, Fabrice Frances for Oric information.
+
+
+$end
+#---------------------------------------------------------------------------------------------#
+
+$info=psx
+$bio
+Sony Playstation
+
+
+MESS Emulation State:
+
+Driver is currently a TESTDRIVER.
 
 
 $end
@@ -6414,7 +6853,6 @@ $bio
 Sega Saturn (1994)
 
 
-
 In 1994 Sega launched its new 32-bit console, just a few weeks ahead of its rival Sony Playstation.
 The Playstation was much easier to develop for and quickly overtook the Saturn in sales.  While 
 the Saturn was much more successful in Japan than it was in the US or Europe the lack of good 
@@ -6428,14 +6866,23 @@ Saturn.  Sega turns its focus to the 128-bit Dreamcast a few years later.
 Features:
 
 CPU: Two Hitachi SH2 7604 32 Bit RISC chips at ~27 MHz (36 MIPS)
+
 Sound CPU: Motorola 68EC000 at 11.3 MHz
+
 Sound: 32 Channels, with 16 bit sampling at a sampling rate of 44.1 KHz max.
+
 Resolution: 704 x 512 (horz) 60.00 Hz 
+
 Colors: 32768 (static)
+
 Main Memory: 1 Megabyte of SDRAM and 1 Megabyte of DRAM
+
 Internal Memory Card 
+
 Video Hardware: Two VDP (video display processors) chip sets (VRAM: 512Kb each)
+
 -VDP1 Draw Sprites, lines, warped sprites (quads)
+
 -VDP2 controls background graphics.
 
 
@@ -6444,7 +6891,7 @@ CDROM: Max 2x speed - custom interface controlled by Hitachi SH1 processor. (512
 
 MESS Emulation State:
 
-See source code for more information.
+See source code for more information. Driver is currently a TESTDRIVER.
 
 Bios starts requesting pad data so maybe we are now in the time set area ????
 Need to emulate pad system, add more interrupts and get some grafix working so we can see exactly 
@@ -6527,13 +6974,21 @@ end of 1994. (note taken from www.eidolons-inn.de)
 Features:
 
 CPU: Z80 at 4 MHz
+
 Custom video controller (VDP) derived from the TI chip TMS9918/9928
+
 Resolution: 256x192 tile-based screen in 16 colors
+
 Sprites: 64 at 8x8, 8x16 or 16x16
+
 Color Pallette: 64; 32 max on screen (16 for sprites, 16 for background)
+
 Scrolling: Hardware up/down/left/right - all or part of screen.
+
 Sound chip: Generic SN76489 sound chip (PSG) made by Texas Instruments
+
 Sound output: 3 square-wave sound and white noise/periodic noise channel
+
 Music: Yamaha YM2413 FM sound chip
 
 
@@ -6568,27 +7023,32 @@ included a CD-ROM expansion.
 Features:
 
 CPU: Custom 16-bit - 65C816 at 3.58 MHz (Machine adjustable to 3.58, 2.68, and 1.79 Mhz)
+
 Co-processor: None (DSP and SuperFX were inside the cartridge of selected games )
+
 RAM: (?)
+
 Video RAM: (?)
 
 Color Palette: 32,768; 256 max on screen
+
 Maximum Screen Resolution: 512 x 448 pixels
+
 Max # of sprites: 128, 32 per scanline
+
 Max and Min Sprite Size: 64 x 64 pixels; 8 x 8 pixels
+
 Scrolling: Horizontal, Vertical, Diagonal
 
 Sound channels: 8 ADPCM with 64 Kb Ram
+
 Sound Processor: Sony SPC700 ("wavetable-like" music, near 16-bit sound quality playback(CD) & Q-Sound surround sound.)
 
 Cart Size: 4Mbit - 128 Megabit Max. (Tengay Maikio at 70+ Megabits is the largest game)
+
 Controller: 8-way direction pad with Select, Start, A, B, X, Y and 2 Flipper buttons labeled R and L
+
 Controller Response: 16ms
-
-
-Links:
-
-Nintendo - www.nintendo.com
 
 
 MESS Emulation State:
@@ -6615,16 +7075,22 @@ Cartridges:
 The Sord must have a cartridge to start up.
 - some cartridges may not work
 
+
 Cassette:
 
 The cassette emulation uses .WAV sample files.
 
-saving:
+
+Saving:
+
 save"cmt:<filename>" where <filename> is the name of the file. 
 
-loading:
+
+Loading:
+
 old"cmt:" will load the next file on the cassette.
 chan"cmt:" and run"cmt:" can also be used to load and run the next file on the cassette.
+
 
 History and Trivia:
 
@@ -6634,8 +7100,11 @@ a different sound chip and the I/O port assignments are not the same).
 
 In fact some MSX games have been converted to the Sord by enthusiasts.
 
-Known Issues:
+
+MESS Emulation State:
+
 - no memory expansion supported
+
 - loading from cassette does not work
 
 $end
@@ -6716,9 +7185,11 @@ standard international English keyboard, to make it quicker to use and
 easier to remember which keys are where. This is made possible by
 replacing the keyword entry system.
 
+
 All the SHIFT functions on the number keys are retained, as are the
 EXTEND and SHIFT-EXTEND attribute functions. But that is where the
 similarity to the old keyboard ends.
+
 
 All but a few symbols are accessed by holding down SYMBOL shift and
 the relevant key, while the remainder are accessed using EXTEND mode.
@@ -6728,24 +7199,41 @@ the characters shown below, the 16 pre-defined graphics characters are
 accessible using SYMBOL shift or EXTEND mode and keys Q-R and A-F.
 
  ---------------------------------------
+
 | ! | @ | £ | $ | % | ^ | & | * | ( | ) |
+
 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0 |
+
  ----------------------------------------
+
  |   |   |   |   |   |   | { | } | : | " |
+
  |   |   |   |   |   |   | [ | ] | ; | ' |
+
  | Q | W | E | R | T | Y | U | I | O | P |
+
   ---------------------------------------
+
    |   |   |   |   |   |   | | | _ | + |
+
    |   |   |   |   |(c)|   | \ | - | = |
+
    | A | S | D | F | G | H | J | K | L |
+
     -----------------------------------
+
      | ~ |   |   |   | ? | < | > |
+
      | # |   |   |   | / | , | . |
+
      | Z | X | C | V | B | N | M |
+
       ---------------------------
 
 SYMBOL = Lower symbols
+
 EXTEND = Upper symbols and attributes on number keys
+
 SHIFT  = Upper case letters and functions on number keys
 
 
@@ -6923,10 +7411,15 @@ for floating point operations.
 To use the disc interface, use the floating point basic "BASIC-F". This has support
 for the disc interface built-in.
 
+
 This driver consists of:
+
 - a Sord M5 computer
+
 - a Sord FD-5 disc interface
+
 - a Sord PI-5 parallel interface
+
 
 The Sord M5 computer communicates with the FD-5 through the parallel interface.
 
@@ -6935,12 +7428,19 @@ The parallel interface has:
 Communication with the FD-5 is done using mode-2 operation. i.e. port A is
 a bi-directional 8-bit port, port C upper is a control port.
 
+
 The floppy disc interface:
+
 - Z80
+
 - 16k ROM
+
 - RAM
+
 - NEC765 compatible disc controller
-- internally the disc interface uses interrupts to transfer data into it's own ram.
+
+- internally the disc interface uses interrupts to transfer data into it's own RAM.
+
 
 The floppy disc drives are 3" and are believed to use 40 track, double density, double sided discs,
 giving 360K per disc.
@@ -6953,39 +7453,73 @@ fx 0,<command>
 <command> can be:
 
 TDA
+
 TRA
+
 WBI
+
 RBI
+
 WTX
+
 RTX
+
 WBL
+
 RBL
+
 WMM
+
 RMM
+
 EXC
+
 SDR
+
 WDR
+
 RDR
+
 RDC
+
 OPN
+
 CLS
+
 CHN
+
 MAP
+
 SAP
+
 CAP
+
 ATR
+
 NAM
+
 DEL
+
 FMT	- Format disc
+
 CPY
+
 GEN
+
 VPR
+
 RVI
+
 IDV
+
 FNM
+
 RDB
+
 WDB
+
 WHO
+
 DOM
 
 Known issues:
@@ -7009,17 +7543,21 @@ sold in Germany as MK III
 Features:
 
 LCD display with 4 digits and several symbols
-integrated speaker
-connection for external power supply
-connection for printer
-connection for board display
+
+Integrated speaker
+
+Connection for external power supply
+
+Connection for printer
+
+Connection for board display
 
 
 MESS Emulation State:
 
-not working
-low priority for me because it uses features not implemented in via6522 emulation
-(pin b6 timer counting!)
+Not working.
+
+Low priority for me because it uses features not implemented in via6522 emulation (pin b6 timer counting!)
 
 
 $end
@@ -7038,17 +7576,16 @@ sold from several firms under different names
 
 Features:
 
-mono display of 64x128
-integrated speaker
+Mono display of 64x128
+
+Integrated speaker
+
 Controls for 2 Player2
+
 Cartridge port
 
 
 Notes:
-
-build in rom expects selection of game
-without printing something to screen! (keys 1 to 5)
-
 
 2 Keypads: Player 1 left, Player 2 right
 
@@ -7059,13 +7596,17 @@ Keypads have following Layout
    0
 
 
-The console has 5 Built in programs. Without a cartridge inserted, the screen stays black 
+The console has 5 Built in programs in ROM. Without a cartridge inserted, the screen stays black 
 after turning on. Player 1 selects game.
 
 1 Paint? not working now
+
 2 Not sure what game 2 is; it's not working currently
+
 3 Bowling, working
+
 4 Rally, not working now
+
 5 Math (calculate the sum of the 3 digits, and enter it), working
 
 
@@ -7076,7 +7617,7 @@ Paul Robson's stem for DOS at www.classicgaming.com/studio2
 
 Mess Emulation State:
 
-no support for st2 cartridges
+No support for st2 cartridges
 
 
 $end
@@ -7151,11 +7692,17 @@ There are several designs, but all have the same functionality.
 Features:
 
 160x160 in 4 greys LCD display
+
 4? stereo voices (integrated mono speaker, port for stereo speaker)
+
 Controls for 1 Player
+
 Serial port
+
 Cartridge port
-Batterie port
+
+Battery port
+
 Connector for external power supply
 
 
@@ -7172,11 +7719,15 @@ Pinout of cartridge is in mess/messroms/svision.txt
 
 MESS Emulation State:
 
-very preliminary support
-preliminary sound support
-no serial port
-no TV adapter support
-work stopped until more cartridges are available
+Very preliminary support
+
+Preliminary sound support
+
+No serial port
+
+No TV adapter support
+
+Work stopped until more cartridges are available
 
 
 $end
@@ -7194,13 +7745,16 @@ very early computer
 Features:
 
 6 digit 7segment display
-connector for tty input/output
-tape interface
+
+Connector for tty input/output
+
+Tape interface
 
 
 MESS Emulation State:
 
-display, keyboard working
+Display & keyboard working.
+
 Work on it stopped. For me it is much to cryptic to operate and therefore not interesting
 for me anymore.
 
@@ -7219,14 +7773,21 @@ IBM PC Junior compatible
 
 Features:
 
-basically the same features as ibmpcjr
+Basically the same features as ibmpcjr
+
 setup memory
-integrated serial port
-integrated parallel port
-integrated game port with unique connectors (but software compatible with ibm joysticks)
-integrated 3 1/2 inch 720 kb disk drive
-connector for external disk drive
-support for msdos with multilanguage support in rom
+
+Integrated serial port
+
+Integrated parallel port
+
+Integrated game port with unique connectors (but software compatible with ibm joysticks)
+
+Integrated 3 1/2 inch 720 kb disk drive
+
+Connector for external disk drive
+
+Support for msdos with multilanguage support in ROM
 
 
 Keyboard notes:
@@ -7247,15 +7808,16 @@ This is useful if a program runs too fast or not at all in normal (8 mhz) mode.
 
 Notes:
 
-get the setup utility for msdos at tandy's web side 
-to change setup
+get the setup utility for msdos at tandy's web side to change setup
 
 
 MESS Emulation State:
 
-basically the same as ibmpcjr
-special setup memory emulated
-work stopped until dump of character rom available
+Basically the same as ibmpcjr
+
+Special setup memory emulated
+
+Work stopped until dump of character ROM available
 
 
 $end
@@ -7268,6 +7830,7 @@ Oric Telestrat
 
 
 This system is a update to the Atmos.
+
 
 Known Issues:
 
@@ -7293,23 +7856,31 @@ Compact Computer CC40 seams to be related
 Features:
 
 31 5x7 character LCD display
-32+4kb rom
-8 kb ram
+
+32+4kb ROM
+
+8 kb RAM
+
 ram/rom memory expansion port
+
 hexbus port
-place for 4 micro batteries
+
+Place for 4 micro batteries
 
 
 Peripherals:
 
 Texas Instruments PC-324 thermo? printer
-(how to dump the C70016 integrated rom? (tms7000 family))
+
+(how to dump the C70016 integrated ROM? (tms7000 family))
+
 24 characters per line
+
 hexbus port
+
 place for 4 mignon batteries
+
 port for power supply
-
-
 
 $end
 
@@ -7331,8 +7902,11 @@ other programs, since the code must be typed into the calculator by hand.
 Features:
 
 CPU: Z80 2 MHz
+
 Memory: RAM 32kB(?), ROM 128kB
+
 Screen: 96x64 pixels, 16x8 characters
+
 Known ROM versions: 1.1, 1.8, 2.0
 
 
@@ -7340,42 +7914,53 @@ Emulator:
 
 Texas Instruments TI-81 simulator (http://www.ti.com)
 
+
 Links:
 
-Texas Instruments Homepage
-http://www.ti.com
-ticalc.org
-http://www.ticalc.org
-TI-Files
-http://www.ti-files.org
+Texas Instruments Homepage - http://www.ti.com
+
+ticalc.org - http://www.ticalc.org
+
+TI-Files - http://www.ti-files.org
 
 
 MESS Emulation State:
 
-driver for rom versions:  1.8
-grayscale effects emulated
+Driver for ROM versions:  1.8
+
+Grayscale effects emulated
+
 200Hz(?) timer and ON key interrupts emulated
-there are bugs in port 3 emulation (ON/OFF)
+
+There are bugs in port 3 emulation (ON/OFF)
+
 
 Notes:
 
 1. After start TI-81 waits for ON key interrupt, so press ON key to start
    calculator.
+
 2. Video engine (with grayscale support) based on the idea found in VTI source
    emulator written by Rusty Wagner.
+
 
 To do:
 
 port 3 and 4
-nvram
-better artworks
-drivers for other rom versions
+
+NVRAM
+
+Better artworks
+
+Drivers for other ROM versions
 
 Needed:
 
 1. Any hardware info.
+
 2. High quality artwork.
-3. Dumps of other rom versions.
+
+3. Dumps of other ROM versions.
 
 
 $end
@@ -7397,68 +7982,90 @@ the TI-86, which features TI-85 compatibility along with more advanced features.
 Features:
 
 CPU: Z80 6 MHz
+
 Memory: RAM 32kB, ROM 128kB
+
 Screen: 128x64 pixels, 21x8 characters
+
 Known ROM versions: 1.0, 2.0, 3.0A, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0
+
 Link port
 
 
 Emulator:
 
 TI-85 Emulator by David Ellsworth and others (ftp://users.aol.com/davidells/TI-Calc/)
+
 TI86EMU by Steve Gordon (http://www.dogtech.com/cybop/ti86)
+
 TI-8X emulator by Randy Gluvna (http://ti8xemu.home.ml.org)
+
 TIGraph by Rene Doss & Joerg Sander
+
 Virtual TI by Rusty Wagner (http://vti.acz.org)
 
 
 Links:
 
-Texas Instruments Homepage
-http://www.ti.com
-ticalc.org
-http://www.ticalc.org
-TI-Files
-http://www.ti-files.org
+Texas Instruments Homepage - http://www.ti.com
+
+ticalc.org - http://www.ticalc.org
+
+TI-Files - http://www.ti-files.org
 
 
 MESS Emulation State:
 
-drivers for rom versions:  3.0A, 4.0, 5.0, 6.0, 8.0, 9.0, 10.0
-sound emulated (speaker connected to link port)
-link port emulated
-grayscale effects emulated
-nvram emulated
+Drivers for ROM versions:  3.0A, 4.0, 5.0, 6.0, 8.0, 9.0, 10.0
+
+Sound emulated (speaker connected to link port)
+
+Link port emulated
+
+Grayscale effects emulated
+
+NVRAM emulated
+
 200Hz timer and ON key interrupts emulated
-snapshot loading (Virtual TI 2.0 save state files)
+
+Snapshot loading (Virtual TI 2.0 save state files)
 
 
 Notes:
 
 1. After start TI-85 waits for ON key interrupt, so press ON key to start
    calculator.
+
 2. Video engine (with grayscale support) based on the idea found in VTI source
    emulator written by Rusty Wagner.
+
 3. NVRAM is saved properly only when calculator is turned off during MESS
    exiting.
+
 4. To receive data from TI press "R" immediately after TI starts to send data.
+
 5. To send data to calculator start receiving on TI and choose file from
    Built-in File Manager.
+
 6. To request screen dump from calculator press "S".
 
 
 To do:
 
 port 3 and 4
-better artworks
-drivers for rom versions: 1.0, 2.0, 7.0
+
+Better artworks
+
+Drivers for ROM versions: 1.0, 2.0, 7.0
 
 
 Needed:
 
 1. Info about ports 3 (bit 2 seems to be always 0) and 4.
+
 2. High quality artwork.
-3. Dumps of rom versions: 1.0, 2.0, 7.0
+
+3. Dumps of ROM versions: 1.0, 2.0, 7.0
 
 
 $end
@@ -7480,69 +8087,93 @@ maintaining compatibility with TI-85 programs.
 Features:
 
 CPU: Z80 6 MHz
+
 Memory: RAM 128kB, ROM 256kB
+
 Screen: 128x64 pixels, 21x8 characters
+
 Known ROM versions: 1.2, 1.3, 1.4, 1.5, 1.6
+
 Link port
 
 
 Emulator:
 
 Emulator86 by Kirk Meyer
+
 TI86EMU by Steve Gordon (http://www.dogtech.com/cybop/ti86)
+
 TI-8X emulator by Randy Gluvna (http://ti8xemu.home.ml.org)
+
 Virtual 86 by Daniel Foesch (http://www.geocities.com/Area51/Station/7142/?startpage=v86.html)
+
 Virtual TI by Rusty Wagner (http://vti.acz.org)
 
 
 Links:
 
-Texas Instruments Homepage
-http://www.ti.com
-ticalc.org
-http://www.ticalc.org
-TI-Files
-http://www.ti-files.org
+Texas Instruments Homepage - http://www.ti.com
+
+ticalc.org - http://www.ticalc.org
+
+TI-Files - http://www.ti-files.org
 
 
 MESS Emulation State:
 
-drivers for rom versions: 1.3, 1.4, 1.5, 1.6
-driver for ti86grom (homebrew rom by Daniel Foesch)
-sound emulated (speaker connected to link port)
-link port preliminary emulation
-grayscale effects emulated
-nvram emulated
+Drivers for ROM versions: 1.3, 1.4, 1.5, 1.6
+
+Driver for ti86grom (homebrew ROM by Daniel Foesch)
+
+Sound emulated (speaker connected to link port)
+
+Link port preliminary emulation
+
+Grayscale effects emulated
+
+NVRAM emulated
+
 200Hz timer and ON key interrupts emulated
-snapshot loading (Virtual TI 2.0 save state files)
+
+Snapshot loading (Virtual TI 2.0 save state files)
 
 
 Notes:
 
 1. After start TI-86 waits for ON key interrupt, so press ON key to start
    calculator.
+
 2. Video engine (with grayscale support) based on the idea found in VTI source
    emulator written by Rusty Wagner.
+
 3. NVRAM is saved properly only when calculator is turned off during MESS exiting.
+
 4. To receive data from TI press "R" immediately after TI starts to send data.
+
 5. To send data to calculator start receiving on TI and choose file from
    Built-in File Manager.
-6. Homebrew rom by Daniel Foesch does nothing but showing charset.
+
+6. Homebrew ROM by Daniel Foesch does nothing but showing charset.
 
 
 To do:
 
-many corrections of existing code
+Many corrections of existing code
+
 port 3 and 4
-better artworks
-driver for rom version 1.2
+
+Better artworks
+
+Driver for ROM version 1.2
 
 
 Needed:
 
 1. Info about ports 3 (bit 2 seems to be always 0) and 4.
+
 2. High quality artwork.
-3. Dumps of rom version 1.2
+
+3. Dumps of ROM version 1.2
 
 
 $end
@@ -7552,39 +8183,39 @@ $end
 #$info=ti99_2
 #$bio
 #Texas Instruments TI-99/2 BASIC Computer
-
-
+#
+#
 #Known Issues:
-
+#
 #This TI99/2 driver is preliminary and could not be tested. (It may work,
 #it may not work.) It is commented out in the source code distribution.
-
-
+#
+#
 #History and Trivia:
-
+#
 #The TI99/2 BASIC Computer was an attempt at producing a cheap ($100)
 #computer.  TI started designing it in the summer of 1982, it was first
 #introduced in January 1983, and it was abandoned, before entering
 #production, by April 1983.
-
+#
 #It featured a TMS9995 microprocessor (with on-line timer and 256-byte RAM),
 #4kb of RAM, 24kb (or 32kb) of ROM, a B&W character-based display.  There
 #was no sound generator.  It was mostly incompatible with TI99/4(a), but
 #it used the same Basic syntax and file format.
-
+#
 #The computer was obviously unattractive. On the other hand, it would have
 #been cheap, fairly fast for its time, and easy to program in both BASIC and
 #assembly.
-
+#
 #Moreover, the expansion port of TI99/2 carried every bus signal, and even
 #allowed to disable the system ROMs and use one's own ROMs instead, so this
 #computer could have been a hobbyist's dream.
-
-
+#
+#
 #Wanted (dead or alive):
 #If you have an actual TI99/2 or TI99/2 ROM image at hand, please mail me at
 #pytheas@club-internet.fr
-
+#
 #$end
 
 #---------------------------------------------------------------------------------------------#
@@ -7944,6 +8575,86 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=990189
+$bio
+Texas Instruments TM 990/189 Microcomputer
+
+
+Usage:
+
+This driver emulates a TM990/189 with University Basic.
+
+This computer has a 10-character 8-segment LED display and a 45-key keyboard.
+Key mapping can be read in the TAB menu.
+
+Programs can be saved to tape with 'SAVE', and restored with 'LOAD'.
+
+The 10-char window can be moved horizontally with Shift+V, Shift+W, Shift+Y,
+and Shift+Z.  Previously typed characters can be deleted with Shift+M.  You
+can discard the current line, exit List mode or break program execution with
+Shift+9 (ESC).
+
+
+History and Trivia:
+
+The TM990/189 University Board Microcomputer was designed in 1978 and probably
+released in early 1979.
+
+Its primary target was University computing courses.
+
+It was sold with a simple assembler & debugger, UNIBUG, and a 500-page
+textbook titled "Introduction to Microprocessor".  The UNIBUG program has not
+been dumped, and is therefore not available.
+
+TI additionally sold University Basic for the TM990/189.  It is a relatively simple
+Basic interpreter.  This program is emulated.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=990189v
+$bio
+TM 990/189 University Board microcomputer with University Basic and Video Board Interface
+
+
+Usage:
+
+This driver emulates a TM990/189 with University Basic and the optional Color
+Video Board.
+
+You can use all the video opcodes documented in the University Basic Manual.
+
+The optional demonstration EPROM set includes demonstration programs.  They can
+be loaded with LOAD 0, LOAD 1, LOAD 2 and LOAD 3.  Some programs are supposed
+to do some user interaction, but they were set up to run in demo mode, so that
+you must edit the source code to run the programs interactively: for instance,
+to play the brick-wall game, you must type 'LOAD 2', then enter '5 SP=0' to
+disable demonstration mode, then 'RUN'.
+
+There is one undocumented built-in Basic function that can be used if you have
+the demonstration EPROMs installed: JOY.  This instruction is not fully
+implemented in University Basic, and it relies on an assembly language
+subroutine located on the Demonstration EPROMs.  "JOY 0" reads the analog
+X-axis for joystick 1, "JOY 1" reads the analog Y-axis for joystick 1, "JOY 2"
+reads the button state for joystick 1, "JOY 2" reads the analog X-axis for
+joystick 2, "JOY 3" reads the analog Y-axis for joystick 2, "JOY 4" reads the
+button state for joystick 2.
+
+
+History and Trivia:
+
+The Color Video Board was released in 1980.  It includes a TMS9918 VDP, a
+joystick interface, and two EPROM sockets.  The VDP enables to display colorful
+graphics on a video monitor.
+
+This board was not designed by TI, but an external society (Eyring Research
+Institute).
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=tutor
 $bio
 Tomy Tutor (a.k.a. Grandstand Tutor)
@@ -8123,15 +8834,21 @@ hanimex?
 Features:
 
 grid 
+
 4 8x10 single color sprites
+
 single channel sound
+
 special << load/reset button (must be pressed after power up)
+
 special > select button
+
 special start button
+
 2 controller with analog joystick and 14 key keypad
 
 
-controller keypad:
+Controller keypad:
 
 (keys do not have a label)
 a   b
@@ -8145,9 +8862,11 @@ a,b,d are the same: fire
 
 Dumping Cartridges:
 
-9316 type roms are commonly used in these cartridges
+9316 type ROMs are commonly used in these cartridges 
 (a little bit different to 2716)
-look into messroms for a pinout of it
+
+Look into messroms for a pinout of it.
+
 
 MESS Emulation State:
 
@@ -8166,8 +8885,7 @@ Palladium Video - Computer - Game
 
 Console
 
-emerson arcadia clone with different cartridge connector/pinout
-and 4 additional keys per controller
+Emerson Arcadia clone with different cartridge connector/pinout and 4 additional keys per controller
 
 look into messroms for cartridge pinout
 
@@ -8256,7 +8974,7 @@ Commodore VIC20 and VC20
 Cartridge Usage:
 
 Cartridges may have any of the following extensions: .bin .rom .a0 .20 .40 .60 .prg
-Files with boot-sign in it are recognized as roms. Some cartridges require more than one 
+Files with boot-sign in it are recognized as ROMs. Some cartridges require more than one 
 image (for example, defender.60 defender.a0).
 
 
@@ -8274,7 +8992,7 @@ image (for example, defender.60 defender.a0).
 otherwise they are loaded at 0xa000
 
 Note that .prg files are assigned to the quickloader (so you have to use 
-the -cart switch when loading rom images).
+the -cart switch when loading ROM images).
 
 
 Cassette Usage:
@@ -8301,7 +9019,7 @@ LOAD"",1,1 for loading programs to a special address.
 Diskette Usage:
 
 Disk drives are simulated at the moment, and only file loads from drive 8 and 9 
-are implemented. You can load a program file from the rom directory (*.prg,*.p00)
+are implemented. You can load a program file from the ROM directory (*.prg,*.p00)
 (This must NOT be specified on command line, start the vc20 emulation with no images specified)
  
 
@@ -8346,7 +9064,7 @@ use the following switches:
 
 
 If you run into difficulty, be sure to start the emulation with the -log switch, and look into
-the error.log file that is created in your mess directory.
+the error.log file that is created in your MESS directory.
 
 
 See "Keys (This Machine)" in the TAB/Options menu for key assignments. Some key usages of note: 
@@ -8384,7 +9102,7 @@ No special expansion modules like ieee488 interface are supported in the expansi
 Image compatibility is quite high, see vic20.crc for a partial list. The emulation features a
 rasterline based video system which should be enough for all vic20 games and programs. The 
 emulation supports the keyboard, as well as joysticks, paddles and lightpen, via the emulated
-gameport, and simple Disk and Tape support. The expansion slot supports ram and rom 
+gameport, and simple Disk and Tape support. The expansion slot supports RAM and ROM 
 cartridges, though not special expansion modules (see known issues). For a more complete vic20 
 emulation, take a look at the very good vice emulator.
 
@@ -8416,28 +9134,115 @@ very early home computer for TV connection
 
 Features:
 
-tape interface
+Tape interface
 TV output
-integrated speaker
+Integrated speaker
 
 
 MESS Emulation State:
 
 display, keyboard working
 Stopped. For me it is much too cryptic to operate and therefore not interesting.
-( I did it because it is the same hardware as in the studio2)
+(I did it because it is the same hardware as in the studio2)
 
 
 $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=wswan
+$bio
+Bandai WonderSwan (1999)
+
+In March of 1999, Bandai released a portable gaming console in Japan that was designed to compete with
+the Neo Geo Pocket and Game Boy Color. The machine was met with rave reviews and has 
+gained a major share of the handheld market. The WS was available in ten case colors, playable both 
+vertically and horizontally, and features a fairly large library of games.
+
+In December of 2000, Bandai followed up its WonderSwan with the WonderSwan Color. 
+Designed to continue the fight against Nintendo's Game Boy empire, the WSC is equipped
+with a color display and improved specifications. The WonderSwan Color is backwards compatible 
+with the WonderSwan's black and white library, as well as having games of its own. Remakes of the older Final
+Fantasy games and many other RPGs make the WonderSwan Color a popular system in Japan.
+
+
+WonderSwan Features:
+
+CPU : 16-bit processor at 3.072 MHz 
+
+Screen (dot matrix section): FSTN reflective LCD, 224 x 144 pixels (2.49-inch)
+
+Display performance : Max. 512 characters, max. 128 sprites (32 on one horizontal line),
+	 two screens (overlay possible), screen windows and sprite windows.
+
+Graphics : 8-shade monochrome in the dot matrix section and six icons at the static section.
+
+Audio: 4-channel digital stereo sound. Built-in speaker or optional headphones with stereo adapter.
+
+Size : 74.3mm x 121mm x 24.3 mm (H)
+ 
+Weight : 93g (without battery) 110g (with battery)
+
+Power : 1 AA battery or rechargeable pack, ~40 hours playtime
+
+Connecting Ports : Link Port, Stereo Jack & cartridge port
+
+Cartridge Capacity: ROM and/or RAM - maximum 128Meg (like Beat Mania)
+
+Features: Can be played holding the unit vertically or horizontally.
+            Built-in EEPROM and 1Kbit RAM for backing up game data.
+            Several levels of energy-saving control.
+
+
+WonderSwan color Features:
+
+CPU: 16 bit processor at 3.072 Mhz
+
+RAM: 512k
+
+Display: LCD screen reflection type FSTN (2.8 inch size)
+
+Color: 41 colors at once of a 4096 color palette or 57 colors in extended mode.
+
+Audio: Digital sound source 4ch (2 for voices and 2 for Hyper voice)
+
+Communication: 9600bps/38.4kbps (for the Wonder Gate)
+
+Size: 74.3mm X 128mm X 24.3mm (with AA battery)
+      74.3mm X 128mm X 17.5mm (with rechargeable pack)
+
+Weight: about 95 grams (without the battery)
+
+Buttons: 13 (X 1-4, Y 1-4, Start, A, B, Volume & Power)
+
+Power: 1 AA battery or echargable pack, ~20 hours of playtime
+
+Other Features: Fully compatible with Wonder Swan Cartridges.
+
+  
+Cartrige Size: 42mm X 67mm X 6mm
+
+Cartrige Weight: About 12 grams
+
+Cartrige Capacity: ROM or FLASHROM max 512Mbit(LUXSOR2), RAM max 512Mbit(LUXSOR2)
+
+
+
+MESS Emulation State:
+
+Very Preliminary Driver. Driver is currently a TESTDRIVER.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+
 $info=z88
 $bio
 Acorn Z88
 
 
-The Z88 is a portable system, with a LCD screen display and good sized keyboard.
+The Z88 is a portable system with a LCD screen display and good sized keyboard.
 
 $end
 

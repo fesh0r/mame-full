@@ -156,6 +156,7 @@ break;
 
 
 
+#ifndef LOW_MEM
 case 2:
 #define SCALE_X(X) ((X)*2)
 #ifdef INDIRECT
@@ -265,6 +266,7 @@ case 3:
 #include "blit_core.h"
 break;
 
+#endif /* #ifndef LOW_MEM */
 #undef SCALE_X
 #undef COPY_LINE2
 
@@ -517,6 +519,7 @@ break;
 #define SCALE_Y(Y)   ((Y)<<1)
 
 /* 1x2 no scanlines */
+#ifndef LOW_MEM
 case 0x00102:
 
 #ifdef DOUBLEBUFFER
@@ -958,6 +961,10 @@ break;
 /* This is what happens when you give an assembly-language programmer
    a C compiler.  Thanks to td, of course.                             -JDL */
 
+#endif /* #ifndef LOW_MEM */
+#undef COPY_LINE2
+#undef SCALE_X
+#undef SCALE_Y
 default:
 
 #ifdef INDIRECT

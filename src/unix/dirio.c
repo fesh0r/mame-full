@@ -258,7 +258,7 @@ int osd_is_absolute_path(const char *path)
 {
 	int result;
 
-	if ((path[0] == '/') || (path[0] == '/'))
+	if (osd_is_path_separator(path[0]) || path[0] == '.')
 		result = 1;
 	else
 		result = 0;

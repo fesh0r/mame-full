@@ -66,7 +66,7 @@ Juan Antonio Martinez
  and David Heremans (minor editing)
 \layout Date
 
-v2.1.33, 15 September 2003
+v2.1.34, 24 October 2003
 \layout Abstract
 
 xmame/xmess documentation with an installation guide, the FAQ (frequently
@@ -4432,7 +4432,7 @@ The xmame/xmess sources
 \layout Standard
 
 
-\begin_inset LatexCommand \url[xmame/xmess-0.74.1 sources]{download/xmame-0.74.1.tar.bz2}
+\begin_inset LatexCommand \url[xmame/xmess-0.76.1 sources]{download/xmame-0.76.1.tar.bz2}
 
 \end_inset 
 
@@ -4540,27 +4540,19 @@ Xmame/xmess download mirrors
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[Romeo]{http://digilander.libero.it/stefanobolli/index.html}
+\begin_inset LatexCommand \url[CXmame]{http://yeeking.net/cxmame/}
 
 \end_inset 
 
-, a Java front-end
+, a simple console-based front-end
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[Mamecat]{http://www.mameworld.net/mamecat/}
+\begin_inset LatexCommand \url[Flynn]{http://www.foxbox.org/adam/code/flynn/index.html}
 
 \end_inset 
 
-
-\layout Itemize
-
-
-\begin_inset LatexCommand \url[GXMame]{http://gxmame.sourceforge.net/}
-
-\end_inset 
-
-, a GTK front-end striving for MAME32 compatibility
+, a front-end primarily for converted arcade cabinets
 \layout Itemize
 
 
@@ -4572,23 +4564,7 @@ Xmame/xmess download mirrors
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[Kmamerun]{ftp://ftp.sad.it/pub/kde/local/}
-
-\end_inset 
-
-
-\layout Itemize
-
-
 \begin_inset LatexCommand \url[GrokMame]{http://user.cs.tu-berlin.de/~gator/mame/}
-
-\end_inset 
-
-
-\layout Itemize
-
-
-\begin_inset LatexCommand \url[StartXmame]{http://www.geocities.com/SiliconValley/Mouse/1570/}
 
 \end_inset 
 
@@ -4604,6 +4580,22 @@ Xmame/xmess download mirrors
 \layout Itemize
 
 
+\begin_inset LatexCommand \url[GXMame]{http://gxmame.sourceforge.net/}
+
+\end_inset 
+
+, a GTK front-end striving for MAME32 compatibility
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[IQF]{http://www.sourceforge.net/projects/iqf/}
+
+\end_inset 
+
+
+\layout Itemize
+
+
 \begin_inset LatexCommand \url[it-mame]{http://it-mame.sourceforge.net/index2.html}
 
 \end_inset 
@@ -4612,7 +4604,39 @@ Xmame/xmess download mirrors
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[IQF]{http://www.sourceforge.net/projects/iqf/}
+\begin_inset LatexCommand \url[jMame]{http://www.voicenet.com/~jceklosk/}
+
+\end_inset 
+
+, a Java front-end (requires JRE 1.4.0)
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[KAF]{http://sourceforge.net/projects/kaf}
+
+\end_inset 
+
+, the Khelben Arcade Frontend (requires QT)
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[Kemulator]{http://kemulator.sourceforge.net/}
+
+\end_inset 
+
+, a KDE front-end with MESS and Stella support
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[KMameleon]{http://designs.stormheart.com/kmameleon/}
+
+\end_inset 
+
+, a KDE front-end
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[Kmamerun]{ftp://ftp.sad.it/pub/kde/local/}
 
 \end_inset 
 
@@ -4628,7 +4652,7 @@ Xmame/xmess download mirrors
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[ptkmame]{http://ant.eelinux.com/ptkmame/}
+\begin_inset LatexCommand \url[Mamecat]{http://www.mameworld.net/mamecat/}
 
 \end_inset 
 
@@ -4636,23 +4660,7 @@ Xmame/xmess download mirrors
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[Kemulator]{http://kemulator.sourceforge.net/}
-
-\end_inset 
-
-, a KDE front-end with MESS and Stella support
-\layout Itemize
-
-
-\begin_inset LatexCommand \url[Flynn]{http://www.foxbox.org/adam/code/flynn/index.html}
-
-\end_inset 
-
-, a front-end primarily for converted arcade cabinets
-\layout Itemize
-
-
-\begin_inset LatexCommand \url[MAMEd]{www.xs4all.nl/~phulshof/mame.html}
+\begin_inset LatexCommand \url[MAMEd]{http://www.xs4all.nl/~phulshof/mame.html}
 
 \end_inset 
 
@@ -4668,27 +4676,35 @@ Xmame/xmess download mirrors
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[jMame]{http://www.voicenet.com/~jceklosk/}
+\begin_inset LatexCommand \url[ptkmame]{http://ant.eelinux.com/ptkmame/}
 
 \end_inset 
 
-, a Java front-end (requires JDE 1.4.0)
+
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[CXmame]{http://yeeking.net/cxmame/}
+\begin_inset LatexCommand \url[Romeo]{http://stefanobolli.sourceforge.net/}
 
 \end_inset 
 
-, a simple console-based front-end
+, a Java front-end
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[KMameleon]{http://designs.stormheart.com/kmameleon/}
+\begin_inset LatexCommand \url[StartXmame]{http://www.geocities.com/SiliconValley/Mouse/1570/}
 
 \end_inset 
 
-, a KDE front-end
+
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[xmame-fe]{http://gradbert.home.comcast.net/}
+
+\end_inset 
+
+, a TCL/TK front-end that dynamically builds the configuration GUI
 \layout Itemize
 
 

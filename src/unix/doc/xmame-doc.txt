@@ -4,7 +4,7 @@ Juan Antonio Martinez [mailto:jantonio@dit.upm.es||jantonio@dit.upm.es] and Hans
 Herrmann (4 doc/sgml) [mailto:rene.herrmann@berlin.de||rene.herrmann@berlin.de] and Lawrence Gold (minor 
 editing) [mailto:gold@aros.net||gold@aros.net] and David Heremans (minor editing)
 
-v2.1.32, 14 August 2003
+v2.1.34, 24 October 2003
 
 Abstract
 
@@ -815,13 +815,13 @@ tremendously. If you're interested, mail Lawrence [mailto:gold@aros.net||gold@ar
  My system is supported but xmame/xmess gives me errors 
   and fails. Why?
 
-Xmame/xmess should run on 8bpp Pseudo Color displays 
-and on 16, 24 and 32bpp True Color displays. If your 
-X-Server does not support any  of these display types, 
-xmame/xmess will not run.
+Xmame/xmess should run on 16, 24 and 32bpp true color 
+displays. If your X server does not support any  of 
+these display types, xmame/xmess will not run. Support 
+for 8bpp pseudo color displays may return in future versions.
 
-You can verify your X-Server support by starting your 
-X-Server  and running the xdpyinfo program. See the 
+You can verify your X server support by starting your X 
+server  and running the xdpyinfo program. See the 
 xdpyinfo manual page  for more information.
 
  What is the role of the xmamerc/xmessrc file?
@@ -1381,7 +1381,7 @@ The benefit of DGA is that it is Direct Graphics Access
 and therefore writes directly to the framebuffer (think 
 DirectX versus GDI under MS Windows). So it should be a 
 tad faster, unless you've got a really really well 
-accelerated X-server, which could be just as fast. Try 
+accelerated X server, which could be just as fast. Try 
 pressing F11 to see the actual framerate, although it 
 might be hardly noticable (visually, at least), it 
 should give you some speed increase.
@@ -2687,7 +2687,7 @@ maintainer. --Lawrence Gold)
 
 * The xmame/xmess sources
 
-  [download/xmame-0.72.1.tar.bz2||xmame/xmess-0.72.1 sources]
+  [download/xmame-0.76.1.tar.bz2||xmame/xmess-0.76.1 sources]
 
 * xmame/xmess FAQ & Installation Guide:
 
@@ -2719,41 +2719,48 @@ maintainer. --Lawrence Gold)
 
 * [http://www.mame.net/frontend.html||The official mame frontend page ]
 
-* [http://digilander.libero.it/stefanobolli/index.html||Romeo], a Java front-end
+* [http://yeeking.net/cxmame/||CXmame], a simple console-based front-end
 
-* [http://www.mameworld.net/mamecat/||Mamecat]
-
-* [http://gxmame.sourceforge.net/||GXMame], a GTK front-end striving for MAME32 compatibility
+* [http://www.foxbox.org/adam/code/flynn/index.html||Flynn], a front-end primarily for converted arcade cabinets
 
 * [http://gnomame.sourceforge.net/||GnoMame], a GNOME front-end
 
-* [ftp://ftp.sad.it/pub/kde/local/||Kmamerun]
-
 * [http://user.cs.tu-berlin.de/~gator/mame/||GrokMame]
-
-* [http://www.geocities.com/SiliconValley/Mouse/1570/||StartXmame]
 
 * [http://grustibus.sourceforge.net||gRustibus], a GNOME front-end 
 
-* [http://it-mame.sourceforge.net/index2.html||it-mame]
+* [http://gxmame.sourceforge.net/||GXMame], a GTK front-end striving for MAME32 compatibility
 
 * [http://www.sourceforge.net/projects/iqf/||IQF]
 
-* [http://lanzamame.mameworld.net/||LANZAMAME]
+* [http://it-mame.sourceforge.net/index2.html||it-mame]
 
-* [http://ant.eelinux.com/ptkmame/||ptkmame]
+* [http://www.voicenet.com/~jceklosk/||jMame], a Java front-end (requires JRE 1.4.0)
+
+* [http://sourceforge.net/projects/kaf||KAF], the Khelben Arcade Frontend (requires QT)
 
 * [http://kemulator.sourceforge.net/||Kemulator], a KDE front-end with MESS and Stella support
 
-* [http://www.foxbox.org/adam/code/flynn/index.html||Flynn](primarily for converted arcade cabinets)
+* [http://designs.stormheart.com/kmameleon/||KMameleon], a KDE front-end
+
+* [ftp://ftp.sad.it/pub/kde/local/||Kmamerun]
+
+* [http://lanzamame.mameworld.net/||LANZAMAME]
+
+* [http://www.mameworld.net/mamecat/||Mamecat]
+
+* [http://www.xs4all.nl/~phulshof/mame.html||MAMEd], a new front-end for arcade cabinets
 
 * [http://www.swentelomania.be/swentel/module.php?boxcontent=35&page=40||Playmame & Playmess] (perl-based menu makers)
 
-* [http://www.voicenet.com/~jceklosk/||jMame], a Java front-end (requires JDE 1.4.0)
+* [http://ant.eelinux.com/ptkmame/||ptkmame]
 
-* [http://yeeking.net/cxmame/||CXmame], a simple console-based front-end
+* [http://stefanobolli.sourceforge.net/||Romeo], a Java front-end
 
-* [http://designs.stormheart.com/kmameleon/||KMameleon], a KDE front-end
+* [http://www.geocities.com/SiliconValley/Mouse/1570/||StartXmame]
+
+* [http://gradbert.home.comcast.net/||xmame-fe], a TCL/TK front-end that dynamically builds the 
+  configuration GUI
 
 * [http://tkmame.retrogames.com/icons||Mamu_'s Icons for X]
 

@@ -138,6 +138,10 @@ extern struct rc_option joy_ps2_opts[];
 #include "joystick-drivers/XInputDevices.h"
 #endif
 
+#ifdef USE_LIGHTGUN_ABS_EVENT
+#include "joystick-drivers/lightgun_abs_event.h"
+#endif
+
 /*** prototypes ***/
 void joy_evaluate_moves(void);
 void joy_i386_init(void);

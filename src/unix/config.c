@@ -42,20 +42,6 @@ static char *defaultgamename;
 #else
 static const char *mess_opts;
 void build_crc_database_filename(int game_index);
-
-static int specify_ram(struct rc_option *option, const char *arg, int priority)
-{
-	UINT32 specified_ram;
-
-	specified_ram = ram_parse_string(arg);
-	if (specified_ram == 0)
-	{
-		fprintf(stderr, "Cannot recognize the RAM option %s; aborting\n", arg);
-		return -1;
-	}
-	options.ram = specified_ram;
-	return 0;
-}
 #endif
 
 static int config_handle_arg(char *arg);
@@ -67,6 +53,7 @@ void show_usage(void);
 
 #ifdef MESS
 static int add_device(struct rc_option *option, const char *arg, int priority);
+static int specify_ram(struct rc_option *option, const char *arg, int priority);
 #endif
 
 /* struct definitions */
@@ -218,6 +205,13 @@ static int config_handle_debug_size(struct rc_option *option, const char *arg,
 }
 #endif /* MAME_DEBUG */
 
+#ifdef MESS
+int xmess_printf_output(const char *fmt, va_list arg)
+{
+	return vfprintf(stderr_file, fmt, arg);
+}
+#endif /* MESS */
+
 /*
  * get configuration from configfile and env.
  */
@@ -255,6 +249,9 @@ int config_init (int argc, char *argv[])
 	/* some settings which are static for xmame and thus aren't controled
 	   by options */
 	options.gui_host = 1;
+#ifdef MESS
+	options.mess_printf_output = xmess_printf_output;
+#endif
 	cheatfile = NULL;
 	db_filename = NULL;
 	history_filename = NULL;
@@ -699,6 +696,7 @@ void show_usage(void)
 }
 
 #ifdef MESS
+
 /*	add_device() is called when the MESS CLI option has been identified
  *	This searches throught the devices{} struct array to grab the ID of the
  *	option, which then registers the device using register_device()
@@ -718,6 +716,24 @@ static int add_device(struct rc_option *option, const char *arg, int priority)
 	option->priority = priority;
 	return register_device(id, arg);
 }
+
+static int specify_ram(struct rc_option *option, const char *arg, int priority)
+{
+	UINT32 specified_ram = 0;
+
+	if (strcmp(arg, "0"))
+	{
+		specified_ram = ram_parse_string(arg);
+		if (specified_ram == 0)
+		{
+			fprintf(stderr, "Cannot recognize the RAM option %s; aborting\n", arg);
+			return -1;
+		}
+	}
+	options.ram = specified_ram;
+	return 0;
+}
+
 #endif
 
 

@@ -58,16 +58,10 @@ Weak dumps: had different dumps with watara supervision cartridges
  when oe, ce was not switched when reading
 
 MOS6332: rom 4 kbyte 8bit, DIL 24 package
- for pinout look into mess/messroms/rddil24.c or read6332.c
+ for pinout look into mess/messroms/read6332.c
  to allow dumping as 2732 build an adapter exchanging pin 18 and 20
  
-Signetics C19081, C19082 (24 pin dil) look into rddil24.c
-
-CN45048N look into rddil24.c
-
-Bally 9316 (24 pin dil) look into rddil24.c
-
-generic 24 pin dil: you might find an idea for dumping in rddil24.c
+Signetics C19081, C19082 (24 pin dil) look into rd24dil.c
 
 EPROM DIL 32 PIN:
  dumping as 278001 should be save
@@ -106,21 +100,21 @@ SC61860: Sharp Pocket Computer internal rom of the cpu
  not known if it is accessible on the pinout
 
 TC531000 (128k x 8 mask rom)
- look into mess/tools/messroms/tc.txt
+ look into mess/messroms/tc.txt
 
 TC571001 (128k x 8 eprom )
- look into mess/tools/messroms/tc.txt
+ look into mess/messroms/tc.txt
 
 Sharp PC1500, PC1500A
 Tandy TRS80 PC-2
 ----------------
- look into mess/tools/messroms/pc1500.txt for rom pinout
+ look into mess/messroms/pc1500.txt for rom pinout
 
 RCA Studio 2 and cartridges
  look at Paul Robson's Studio2 page at www.classicgaming.com/studio2
 
 Watara Supervision Cartridges
- look into mess/tools/messroms/svision.txt for building an adapter
+ look into mess/messroms/svision.txt for building an adapter
 
 Saving roms
 -----------
