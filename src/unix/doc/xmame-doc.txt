@@ -6,8 +6,9 @@ Juan Antonio Martinez [mailto:jantonio@dit.upm.es||jantonio@dit.upm.es]
 and Hans de Goede [mailto:hans@highrise.nl||hans@highrise.nl]
 and Rene' Herrmann (4 doc/sgml) [mailto:rene.herrmann@berlin.de||rene.herrmann@berlin.de]
 and Lawrence Gold (minor editing) [mailto:gold@aros.net||gold@aros.net]
+and David Heremans (minor editing)
 
-v2.1.7, 4 July 2001
+v2.1.9, 20 December 2001
 
 Abstract
 
@@ -17,9 +18,9 @@ the changes on the code and many more!
 
 Table of Contents
 
-1 Introduction and Links 
-    1.1 Keep everything up-to-date!
-    1.2 Some Links
+1 Introduction
+    1.1 Welcome to XMAME
+    1.2 Keep everything up-to-date!
     1.3 Pending Jobs - or TODO
 2 Compiling, Setting Up and Starting Xmame/Xmess
     2.1 Requirements     
@@ -70,6 +71,7 @@ Table of Contents
         3.17.1 SPEEDUP # 1 - Inline compiling
         3.17.2 SPEEDUP # 2 - Direct Graphics Access
         3.17.3 SPEEDUP # 3 - NASM
+        3.17.4 SPEEDUP # 4 - ICC
     3.18 I've got a dual processor machine. What can I do to take full advantage of this?
     3.19 Why doesn't my joystick handle diagonal movement correctly on my Intel x86 system?
     3.20 How do I enable XinputExtensions X11 based joystick in Xfree86?
@@ -77,9 +79,15 @@ Table of Contents
     3.22 Why do I get gz_open symbol not found while compiling? 
     3.23 Why do I get zlib.h not found? 
     3.24 When I run xmame.x11, nothing happens---no window pops up or anything. Help!
-    3.25 Where can I get the latest version of xmame/xmess?
-    3.26 Where can I send fixes, bug reports, suggestions, or money?  :-)
-    3.27 What if my question is still not answered?
+    3.25 Can I run xmame fullscreen?
+        3.25.1 xmame.x11
+        3.25.2 xmame.sdl
+    3.26 xmame.SDL / fullscreen has a large border around the game. 
+    3.27 I only use some of the emulation parts (Neo Geo / CPS-2 /...). Do I need the entire xmame? 
+    3.28 Where can I get the latest version of xmame/xmess?
+    3.29 I upgraded xmame and now some games do not work anymore.
+    3.30 Where can I send fixes, bug reports, suggestions, or money?  :-)
+    3.31 What if my question is still not answered?
 4 Display Subsystem-Specific Comments and Notes 
     4.1 FXmame, a glide driver for xmame
         4.1.1 Requirements
@@ -106,36 +114,34 @@ Table of Contents
     5.1 Mail 
     5.2 Credits
 6 Legal Issues and Copyrights Concerning MAME/MESS
-7 ChangeLogs
-    7.1 The MAME/MESS ChangeLogs
-    7.2 The Unix ChangeLog
+7 Some Links
+    7.1 Unix sources and docs
+    7.2 Unix binaries
+    7.3 Xmame/xmess download mirrors
+    7.4 (X)Mame frontends
+    7.5 Some other links
+8 ChangeLogs
+    8.1 The MAME/MESS ChangeLogs
+    8.2 The Unix ChangeLog
 
 
 
-1 Introduction and Links <Introduction and Links>
+1 Introduction<Introduction>
 
-1.1 Keep everything up-to-date!
+1.1 Welcome to XMAME
+
+This the the *nix port of the almost legendary mame. Mame
+is an arcade machine emulator, started in 1997 by Nicola
+Salmoria. It started out as a series of emulators for  individual
+games. This series of emulators was combined into a  simgle
+multi-game emulator. This is the current form of mame; no
+longer a one-man show, there are over 100 contributors to
+the project.
+
+1.2 Keep everything up-to-date!
 
 The most recent copy of this guide, the xmame-sources and
 many more can be found on the xmame project homepage at [http://x.mame.net/||http://x.mame.net/]
-
-1.2 Some Links
-
-* The official M.A.M.E home is at [http://www.mame.net||http://www.mame.net]
-
-* The very best ROM site on this planet is at [http://www.mame.dk/||http://www.mame.dk/]
-
-* grustibus, the very good frontend (if you gnome) [http://grustibus.sourceforge.net/||http://grustibus.sourceforge.net/]
-
-* gnomame, another great gnome-based frontend [http://gnomame.sourceforge.net/||http://gnomame.sourceforge.net/]
-
-* tkmame, the Tcl/TK frontend that works in Linux/Unix and
-  MS Windows [http://tkmame.retrogames.com/||http://tkmame.retrogames.com/] 
-
-* MAME Action Replay Page for those who want to have a  look
-  at other monitors at [http://marp.retrogames.com/||http://marp.retrogames.com/]
-
-* and of course don't forget our project homepage at [http://x.mame.net/||http://x.mame.net/]
 
 1.3 Pending Jobs - or TODO
 
@@ -765,7 +771,7 @@ for generic (e.g., X11) problems.
 
 * alpha/linux/x11	 -> Christian [mailto:cpg@aladdin.de||<cpg@aladdin.de>]
 
-* alpha/digital unix/x11 *	 -> Leandro [mailto:ldardini@usl4.toscana.it||<ldardini@usl4.toscana.it>]
+* alpha/digital unix/x11 *	 -> Leandro [mailto:gold@aros.net||<gold@aros.net>]
 
 * powerpc/linux/x11	 -> Andreas [mailto:sid@skater.htu.tuwien.ac.at||<sid@skater.htu.tuwien.ac.at>]
 
@@ -777,7 +783,7 @@ for generic (e.g., X11) problems.
 
 * alpha/netbsd/x11	 -> Christian [mailto:cpg@aladdin.de||<cpg@aladdin.de>]
 
-* Sparc/Solaris/x11	 -> Mathis [mailto:rosenhau@mailserv.sm.go.dlr.de||<rosenhau@mailserv.sm.go.dlr.de>]
+* Sparc/Solaris/x11	 -> Lawrence [mailto:gold@aros.net||<gold@aros.net>]
 
 * i386/Unixware7/x11 *	 -> Richard [mailto:xmame@frogface.ddns.org||<xmame@frogface.ddns.org>]
 
@@ -1151,7 +1157,7 @@ as the DOS  version as well a some of its own.
 See the file readme.mame / readme.mess for more information
 about the command line parameters.
 
-3.12 What keys does xmame/xmess use?
+3.12 What keys does xmame/xmess use?<FAQ: What keys does xmame/xmess use?>
 
 Xmame/xmess uses the same key-bindings as the DOS version
 of mame: The following keys work in all emulators:
@@ -1389,6 +1395,12 @@ you can't resist trying, I won't pay for a new one!)
 You can also try installing nasm and compiling the asm core,
 that helps a bit too.
 
+3.17.4 SPEEDUP # 4 - ICC
+
+If you are running on an intel architecture machine, you
+could try to compile xmame with the Intel C Compiler. Some
+people have reported speed gains from +10%.
+
 3.18 I've got a dual processor machine. What can I do to take
   full advantage of this?
 
@@ -1470,22 +1482,170 @@ as being successful:
 xmame.x11 -rid `xwininfo -root | grep xwininfo: | awk '{print
 $4}'`
 
-Update: I have been told that as of KDE 2.2b1, this problem
-has been fixed.
+3.25 Can I run xmame fullscreen?
 
-3.25 Where can I get the latest version of xmame/xmess?
+Yes, of course you can. There are several ways to accomplish
+this, each with its own advantages and disadvantages.
+
+To enable the fullscreen support, you will need to change
+some settings in the makefile and recompile xmame.
+
+Besides the x11 and SDL drivers, the FX and GL drivers are
+also capable of playing games full screen. There is a separate
+chapter for these later on.
+
+3.25.1 xmame.x11
+
+First, before recompiling, make sure you have an xserver
+with the "xfree-dga" extension enabled (do a "xdpyinfo"
+and see if you've got the "xfree-dga"
+extension); any recent release of XFree86 should have it.
+
+Select DISPLAY_METHOD = x11 and uncomment the line "DGA=1"
+in the makefile.
+
+Now build xmame and give the xmame.x11 file permanent root
+permissions so that you don't need to start xmame as root
+(do a "chown root xmame.x11" and a "chmod
+u+s xmame.x11").
+
+If you want to start immediately in fullscreen mode, start
+xmame.x11 with the "-x11 1" argument or specify "x11-mode
+1" in your xmamerc file.
+
+During play you can switch between windowed and fullscreen
+mode. See [FAQ: What keys does xmame/xmess use?]
+
+3.25.2 xmame.sdl
+
+The SDL library was meant to make it easy for programmers
+to make full screen applications. To start SDL in fullscreen
+mode, just run xmame.SDL with the option '-fullscreen'.
+If you want to know the resolutions that SDL can use, run
+"xmame.SDL -listmodes", choose the
+resolution you want, and start "xmame.SDL
+-modenumber <insert chosen number here>".
+
+You can add "fullscreen 1"
+to your xmamerc file if you want SDL to start fullscreen
+automatically; the modenumber line can also be used in the
+xmamerc. :-)
+
+Most problems experienced by people who are trying to use
+SDL for fullscreen are related to the section [FAQ: xmame.sdl / xmame.x11 fullscreen has a large border around the game.]
+
+During play you can switch between windowed and fullscreen
+mode. See [FAQ: What keys does xmame/xmess use?]
+
+3.26 xmame.SDL / fullscreen has a large border around the game. <FAQ: xmame.sdl / xmame.x11 fullscreen has a large border around the game.>
+
+If the game runs in fullscreen but occupies only a small
+area in the center of the screen, then your xserver does
+not have access to low resolutions (320x240, 400x300, and
+512x384, for instance). In the case of SDL, the window will
+be in the resolution of closest matching resolution that
+SDL can switch to for full screen display.
+
+In this case, you have to add "Modelines" for these resolutions
+in your XF86config file and add these resolutions to the
+resolutions list of your display somewhere in your XF86config
+file (you know, the list of resolutions you can switch to
+using ctrl-+).
+
+You should find modelines that works with most graphic cards
+in the xmame contrib subdirectory.
+
+If you don't want to alter your XF86config file, another
+solution is to run xmame.x11 with the "-scale 2" argument.
+In this case, the emulator will use 640x480 instead of 320x240,
+800x600 instead of 400x300, etc. But I don't recommend it.
+The scaling uses cpu and the games will run more slowly.
+
+However, if your cpu is fast enough, a better option is to
+use the effects "-ef 1".
+This introduces advanced render methods to create a nicer
+looking effect than the simple scaling. On the website you
+can see [http://x.mame.net/gamescreenshots.html||screenshots]
+of the different effects.
+
+3.27 I only use some of the emulation parts (Neo Geo / CPS-2
+  /...). Do I need the entire xmame? 
+
+If you are interested in compiling only some of the games
+you, can compile xmame with an alternate target. Edit the
+makefile.unix and change the target line to accomplish the
+desired effect. Using this approach, only the CPUs, sound
+devices, and other chips needed for that particular target
+are compiled, resulting in a much smaller executable.
+
+* 'TARGET = cpmame' makes a mame version that will only emulate
+  the CPS-1 and CPS-2 games
+
+* 'TARGET = neomame' makes a mame version that will only
+  emulate the Neo Geo system
+
+There are some other targets but they are really only useful
+for the mame developers who create new drivers.
+
+3.28 Where can I get the latest version of xmame/xmess?
 
 The xmame/xmess Home Page always has the most up-to-date
 version. The address is
 
 [http://x.mame.net/||http://x.mame.net/]
 
-3.26 Where can I send fixes, bug reports, suggestions, or money?
+3.29 I upgraded xmame and now some games do not work anymore.
+
+This can happen, especially if the drivers are in full development
+or some internal core routines have changed and the drivers
+have to be updated to accomodate for these core changes.
+Sometimes a new romdump has been made from the game and
+you still have the old version, or the zipfile has changed
+names and you need to rename yours (or any combination of
+these factors :-).
+
+Here are some things you can do:
+
+1. Clear all the old configuration files, nvram files, etc.
+  Also delete the content of the directories mem, nvram,
+  cfg, and try to run the game again. Don't forget to delete
+  the default.cfg file!
+
+2. If that fails, check to see if the name of the zipfile
+  is still in the list of supported games. If you enter
+  an invalid game name, xmame will take a guess to determine
+  which game you wanted; look at the first lines of output
+  to see if it tries to load a different game than the one
+  you want. To know if your game is still supported, try
+  'xmame.x11 -list gamename'. If you do not pass a game
+  name, the complete list of supported games is printed,
+  and you can search for the new game name (better use 'xmame.x11
+  -listfull').
+
+3. If the name hasn't changed, check to see if you have the
+  correct romdump. Run 'xmame.x11 -verifyroms gamename'
+  to check your romset. If this fails you will need to download
+  a newer romdump. Also check your parent roms as a possible
+  cause of this romset failure.
+
+4. Read the documentation!! Or like the experts would say,
+  "RTFM!" :-) Chances are that if the driver is
+  broken, the developer has noted this in the documentation.
+
+5. If the above steps don't solve the problem, then check
+  to see if it is a known problem; if necessary, report
+  it to the mame testers project.
+
+If none of these fixes the problem, then try using the older
+version of xmame you have backed up somewhere to play the
+game. (You did back-up, didn't you?)
+
+3.30 Where can I send fixes, bug reports, suggestions, or money?
    :-)
 
 See [Mail] of this document.
 
-3.27 What if my question is still not answered?
+3.31 What if my question is still not answered?
 
 Please check the offical mame and mess readme files to see
 if that answers your question:
@@ -2116,20 +2276,43 @@ Till GLmame version 0.6: Mike Oliphant [mailto:oliphant@ling.ed.ac.uk||(oliphant
 
 There is an official xmame/xmess mailing list. All operations
 related to this list are performed via email to [mailto:Xmame-request@toybox.twisted.org.uk||Xmame-request@toybox.twisted.org.uk]
+
+* To subscribe, send mail to: [mailto:Xmame-request@toybox.twisted.org.uk||Xmame-request@toybox.twisted.org.uk]
+  with the keyword "subscribe" in the body. 
+
+* To unsubscribe, send a mail to: [mailto:Xmame-request@toybox.twisted.org.uk||Xmame-request@toybox.twisted.org.uk]
+  with the keyword "unsubscribe" in the body. 
+
+* To send mail to the list, use: [mailto:xmame@toybox.twisted.org.uk||xmame@toybox.twisted.org.uk] 
+
+* To ask specific questions about the xmame mailing list,
+  send mail to: [mailto:Xmame-request@toybox.twisted.org.uk||Xmame-request@toybox.twisted.org.uk]
+
+If you're just curious, and only want to take a look into
+the mailing list without subscribing, you can use the web-based
+archive at: [http://www.mail-archive.com||http://www.mail-archive.com] 
+
+To ask UNIX-specific xmame/xmess questions, you could send
+mail to: [mailto:gold@aros.net||Lawrence's folder],
+but you're better off sending mail to the list. 
+
+To ask general questions about MAME, send mail to: Mirko
+(Mix) Buffoni[mailto:mix@lim.dsi.unimi.it||Mirko (Mix) Buffoni] 
+
+Also see (and post) articles on USENET group [news:comp.emulators.misc||comp.emulators.misc]comp.emulators.misc 
+
 with a proper keyword in the body.
 
-Some of the currently recognized commands are:
+Other proper keywords currently recognized as commands by
+[mailto:Xmame-request@toybox.twisted.org.uk||Xmame-request@toybox.twisted.org.uk]
+are:
 
-    subscribe      - subscribe to the list
-
-    unsubscribe    - unsubscribe from the list
-
-    who            - see everyone who is on the list
+    who             - see everyone who is on the list
 
     info           - view the introductory information for
 this list
 
-    help           - list all recognized commands
+    help            - list all recognized commands
 
     
 
@@ -2167,7 +2350,8 @@ Xmame Mailing List
 
 * At this moment, the xmame list is unmoderated; that is,
   everyone subscribed will receive everything sent to the
-  list. We foresee no need to change this policy.
+  list. We foresee a need to change this policy since the
+  list starts to suffer from spam :-(.
 
 If you want to send a personal mail to the xmame/xmess coordinator,
 send to the address below. Everyone who contributes to xmame/xmess
@@ -2306,28 +2490,124 @@ Gold)
   at your own risk and responsibility.
 
 * XInputExtensions-based Joystick support. Source code is
-  entirely pure  hack work. No sample code, no info at all
+  entirely pure hack work. No sample code, no info at all
   was found (only library  reference manual) and is copyrighted
   by me (Juan Antonio Martinez). Use it under terms of GNU
   General Public License.
 
-7 ChangeLogs<ChangeLogs>
+7 Some Links
 
-7.1 The MAME/MESS ChangeLogs
+7.1 Unix sources and docs
+
+* The xmame/xmess sources
+
+  [download/xmame-0.36.1.tgz||xmame 0.36.1 sources (xmame & xmess)]
+
+  [download/xmame-0.57.1.tar.bz2||xmame 0.57.1 sources (xmame only)]
+
+  [download/xmame-0.56.2.tar.bz2||xmame 0.56.2 sources (xmame & xmess)]
+
+* xmame/xmess FAQ & Installation Guide:
+
+  [download/xmame-doc.pdf||xmame-doc (pdf format)]
+
+* xmame/xmess known bug list:
+
+  [open_issues.html||open issues]
+
+7.2 Unix binaries
+
+* [http://www.forte-intl.com/~ronald/xmame/||xmame RPMs]
+
+* [http://www.beimborn.com/cps2/linux/rpms||xmame+CPS2 RPMs]
+
+* [http://come.to/georgie||Source and binary for Solaris UltraSPARC]
+
+7.3 Xmame/xmess download mirrors
+
+* [ftp://cps2:cps2@wingnut.beimborn.com||ftp://cps2:cps2@wingnut.beimborn.com](US)
+
+* [http://www.mame.dk||http://www.mame.dk](Denmark)
+
+* [ftp://ftp.kaupp.cx/pub/xmame||ftp://ftp.kaupp.cx/pub/xmame](US)
+
+7.4 (X)Mame frontends
+
+* [http://www.mame.net/frontend.html||The official mame frontend page ]
+
+* [http://tkmame.retrogames.com||TkMame], the Tcl/TK frontend
+  that works in Linux/Unix and MS Windows
+
+* [http://www.toetag.com/~tom/xmame.html||Xmameload]
+
+* [ftp://ftp.sad.it/pub/kde/local/||Kmamerun]
+
+* [http://www.mameworld.net/mamecat/||Mamecat]
+
+* [http://user.cs.tu-berlin.de/~gator/mame/||GrokMame]
+
+* [http://members.xoom.com/gmame/||Gmame]
+
+* [http://www.geocities.com/SiliconValley/Mouse/1570/||startxmame]
+
+* [http://it-mame.sourceforge.net/index2.html||it-mame]
+
+* [http://grustibus.sourceforge.net||gRustibus], the very
+  good frontend (if you gnome) 
+
+* [http://www.sourceforge.net/projects/iqf/||IQF]
+
+* [http://gnomame.sourceforge.net/||GnoMame], another great
+  gnome-based frontend 
+
+* [file:/home/david/tmp/xmame-try/realsite/download/lanzamame.tar.bz2||LANZAMAME]
+
+* [http://www.terra.es/personal3/victorote/frontend/index_en.html||Victor Manuel's TCL/TK Frontend]
+
+* [http://ant.eelinux.com/ptkmame/||ptkmame]
+
+* [http://kemulator.sourceforge.net/||Kemulator], a KDE
+  frontend with MESS and Stella support
+
+* [http://www.foxbox.org/adam/code/flynn/index.html||Flynn](primarily
+  for converted arcade cabinets)
+
+7.5 Some other links
+
+* The official M.A.M.E home is at [http://www.mame.net||http://www.mame.net]
+
+* The official mess site is [http://mess.emuverse.com||http://mess.emuverse.com]
+
+* Some other emulation sites are [http://www.vg-network.com||http://www.vg-network.com]
+  and [http://www.retrogames.com||http://www.retrogames.com]
+
+* The very best ROM site on this planet is at [http://www.mame.dk/||http://www.mame.dk/]
+
+* A couple of sites with CPS2 and other patches [http://www.beimborn.com/cps2/linux/||Dan Beimborn's Linux CPS2Mame page]
+  and [http://www.win.tue.nl/~stijn/xmame/||Stijn Hoop's xmame patches ]
+
+* MAME Action Replay Page for those who want to have a  look
+  at other monitors at [http://marp.retrogames.com/||http://marp.retrogames.com/]
+
+* and of course don't forget our project homepage at [http://x.mame.net/||http://x.mame.net/]
+
+8 ChangeLogs<ChangeLogs>
+
+8.1 The MAME/MESS ChangeLogs
 
 These are the changelogs of the offical MAME and MESS release,
 the core of xmame/xmess.
 
-* [changes.mame||The MAME changelog (changes.mame)]
+* [changes-mame.html||The MAME changelog (changes.mame)]
 
 * [changes.mess||The MESS changelog (changes.mess)]
 
-7.2 The Unix ChangeLog
+8.2 The Unix ChangeLog
 
 And now here is the HISTORY of the xmame project (of course
 that's why you are here :;-)) ... René
 
-* [changes.unix||The Unix port changelog (changes.unix)]
+* [changes-unix.html||The Unix port changelog (changes.unix)]
 
 * The OpenGL display driver changelog: [changes.opengl||changes.opengl]
   or [http://www.jausoft.com/glmame.html||http://www.jausoft.com/glmame.html]

@@ -119,7 +119,9 @@ clones                  1
 # (Other example). To use the F8 key to insert a coin, you should use
 # mapkey 0xffc5,0x0006
 
-### suggested german keymap mods by Peter Trauner <peter.trauner@jk.uni-linz.ac.at> ###
+### Suggested German keymap mods by Peter Trauner.
+#   <peter.trauner@jk.uni-linz.ac.at>
+#
 #mapkey 0xfe52,0x0029
 #mapkey 0x00df,0x000c
 #mapkey 0xfe51,0x000d
@@ -152,3 +154,61 @@ clones                  1
 #
 # (Other example). To use the F8 key to insert a coin, you should use
 # sdlmapkey 0x0121,0x0006
+
+### Suggested French (azerty) SDL keymap mods by Luc Saillard.
+#
+#   SDLK_WORLD_18 ² => KEY_TILDE
+#sdlmapkey 0x00b2,0x0029
+#   SDLK_AMPERSAND  => KEY_1
+#sdlmapkey 0x0026,0x0002
+#   SDLK_WORLD_73 é => KEY_2
+#sdlmapkey 0x00e9,0x0003
+#   SDLK_QUOTEDBL   => KEY_3
+#sdlmapkey 0x0022,0x0004
+#   SDLK_QUOTE      => KEY_4
+#sdlmapkey 0x0027,0x0005
+#   SDLK_LEFTPAREN  => KEY_5
+#sdlmapkey 0x0028,0x0006
+#   SDLK_MINUS      => KEY_6
+#sdlmapkey 0x002d,0x0007
+#   SDLK_WORLD_73 è => KEY_7
+#sdlmapkey 0x00e8,0x0008
+#   SDLK_UNDERSCORE => KEY_8
+#sdlmapkey 0x005f,0x0009
+#   SDLK_WORLD_71 ç => KEY_9
+#sdlmapkey 0x00e7,0x000a
+#   SDLK_WORLD_64 à => KEY_10
+#sdlmapkey 0x00e0,0x000b
+#   SDLK_RIGHTPAREN => KEY_11
+#sdlmapkey 0x0029,0x000c
+#   SDLK_EQUALS     => KEY_12
+#sdlmapkey 0x003d,0x000d
+
+#   SDLK_A          => KEY_Q
+#sdlmapkey 0x0041,0x0010
+#   SDLK_Z          => KEY_W
+#sdlmapkey 0x005a,0x0011
+#   SDLK_CARET      => KEY_OPENBRACE
+#sdlmapkey 0x005e,0x001a
+#   SDLK_DOLLAR     => KEY_CLOSEBRACE
+#sdlmapkey 0x0024,0x001b
+
+#   SDLK_Q          => KEY_A
+#sdlmapkey 0x0051,0x001e
+#   SDLK_M          => KEY_COLON
+#sdlmapkey 0x004d,0x0027
+#   SDLK_WORLD_89 ù => KEY_QUOTE
+#sdlmapkey 0x00f9,0x0028
+#   SDLK_ASTERISK   => KEY_TILDE
+#sdlmapkey 0x002a,0x0029
+
+#   SDLK_W          => KEY_Z
+#sdlmapkey 0x0057,0x002c
+#   SDLK_COMMA      => KEY_M
+#sdlmapkey 0x002c,0x0032
+#   SDLK_SEMICOLON  => KEY_COMMA
+#sdlmapkey 0x003b,0x0033
+#   SDLK_COLON      => KEY_STOP
+#sdlmapkey 0x003a,0x0034
+#   SDLK_EXCLAIM    => KEY_SLASH
+#sdlmapkey 0x0021,0x0035

@@ -61,10 +61,10 @@ Juan Antonio Martinez
 
 \end_inset 
 
-
+ and David Heremans (minor editing)
 \layout Date
 
-v2.1.7, 4 July 2001
+v2.1.9, 20 December 2001
 \layout Abstract
 
 xmame/xmess documentation with an installation guide, the FAQ (frequently
@@ -80,12 +80,23 @@ xmame/xmess documentation with an installation guide, the FAQ (frequently
 
 \layout Section
 
-Introduction and Links 
-\begin_inset LatexCommand \label{Introduction and Links}
+Introduction
+\begin_inset LatexCommand \label{Introduction}
 
 \end_inset 
 
 
+\layout Subsection
+
+Welcome to XMAME
+\layout Standard
+
+This the the *nix port of the almost legendary mame.
+ Mame is an arcade machine emulator, started in 1997 by Nicola Salmoria.
+ It started out as a series of emulators for  individual games.
+ This series of emulators was combined into a  simgle multi-game emulator.
+ This is the current form of mame; no longer a one-man show, there are over
+ 100 contributors to the project.
 \layout Subsection
 
 Keep everything up-to-date!
@@ -93,87 +104,6 @@ Keep everything up-to-date!
 
 The most recent copy of this guide, the xmame-sources and many more can
  be found on the xmame project homepage at 
-\begin_inset LatexCommand \url[http://x.mame.net/]{http://x.mame.net/}
-
-\end_inset 
-
-
-\layout Subsection
-
-Some Links
-\layout Itemize
-
-The official M.A.M.E home is at 
-\begin_inset LatexCommand \url[http://www.mame.net]{http://www.mame.net}
-
-\end_inset 
-
-
-\layout Itemize
-
-The very best ROM site on this planet is at 
-\begin_inset LatexCommand \url[http://www.mame.dk/]{http://www.mame.dk/}
-
-\end_inset 
-
-
-\layout Itemize
-
-grustibus, the 
-\series bold 
-very good
-\series default 
- frontend (if you gnome) 
-\begin_inset LatexCommand \url[http://grustibus.sourceforge.net/]{http://grustibus.sourceforge.net/}
-
-\end_inset 
-
-
-\layout Itemize
-
-gnomame, another great gnome-based frontend 
-\begin_inset LatexCommand \url[http://gnomame.sourceforge.net/]{http://gnomame.sourceforge.net/}
-
-\end_inset 
-
-
-\layout Itemize
-
-tkmame, the Tcl/TK frontend that works in Linux/Unix and MS Windows 
-\begin_inset LatexCommand \url[http://tkmame.retrogames.com/]{http://tkmame.retrogames.com/}
-
-\end_inset 
-
- 
-\layout Itemize
-
-
-\series bold 
-MAME
-\series default 
- 
-\series bold 
-A
-\series default 
-ction 
-\series bold 
-R
-\series default 
-eplay 
-\series bold 
-P
-\series default 
-age for those who want to have a  look at other monitors at 
-\begin_inset LatexCommand \url[http://marp.retrogames.com/]{http://marp.retrogames.com/}
-
-\end_inset 
-
-
-\layout Itemize
-
-and of course don't forget our project homepage at 
-\series bold 
-
 \begin_inset LatexCommand \url[http://x.mame.net/]{http://x.mame.net/}
 
 \end_inset 
@@ -1351,7 +1281,7 @@ alpha/digital unix/x11 *
  -> Leandro 
 \family typewriter 
 
-\begin_inset LatexCommand \url[<ldardini@usl4.toscana.it>]{mailto:ldardini@usl4.toscana.it}
+\begin_inset LatexCommand \url[<gold@aros.net>]{mailto:gold@aros.net}
 
 \end_inset 
 
@@ -1421,10 +1351,10 @@ alpha/netbsd/x11
 
 Sparc/Solaris/x11
 \hfill 
- -> Mathis 
+ -> Lawrence 
 \family typewriter 
 
-\begin_inset LatexCommand \url[<rosenhau@mailserv.sm.go.dlr.de>]{mailto:rosenhau@mailserv.sm.go.dlr.de}
+\begin_inset LatexCommand \url[<gold@aros.net>]{mailto:gold@aros.net}
 
 \end_inset 
 
@@ -2089,6 +2019,11 @@ See the file readme.mame / readme.mess for more information about the command
 \layout Subsection
 
 What keys does xmame/xmess use?
+\begin_inset LatexCommand \label{FAQ: What keys does xmame/xmess use?}
+
+\end_inset 
+
+
 \layout Standard
 
 Xmame/xmess uses the same key-bindings as the DOS version of mame: The following
@@ -2427,6 +2362,14 @@ SPEEDUP # 3 - NASM
 
 You can also try installing nasm and compiling the asm core, that helps
  a bit too.
+\layout Subsubsection
+
+SPEEDUP # 4 - ICC
+\layout Standard
+
+If you are running on an intel architecture machine, you could try to compile
+ xmame with the Intel C Compiler.
+ Some people have reported speed gains from +10%.
 \layout Subsection
 
 I've got a dual processor machine.
@@ -2545,13 +2488,212 @@ Are you running a recent version of KDE, such as 2.1.1? It appears that there's
 \layout Verbatim
 
 xmame.x11 -rid `xwininfo -root | grep xwininfo: | awk '{print $4}'`
+\layout Subsection
+
+Can I run xmame fullscreen?
 \layout Standard
 
+Yes, of course you can.
+ There are several ways to accomplish this, each with its own advantages
+ and disadvantages.
+\layout Standard
 
-\emph on 
-Update: 
-\emph default 
-I have been told that as of KDE 2.2b1, this problem has been fixed.
+To enable the fullscreen support, you will need to change some settings
+ in the makefile and recompile xmame.
+\layout Standard
+
+Besides the x11 and SDL drivers, the FX and GL drivers are also capable
+ of playing games full screen.
+ There is a separate chapter for these later on.
+\layout Subsubsection
+
+xmame.x11
+\layout Standard
+
+First, before recompiling, make sure you have an xserver with the 
+\begin_inset Quotes eld
+\end_inset 
+
+xfree-dga" extension enabled (do a 
+\begin_inset Quotes eld
+\end_inset 
+
+xdpyinfo
+\begin_inset Quotes erd
+\end_inset 
+
+ and see if you've got the 
+\begin_inset Quotes eld
+\end_inset 
+
+xfree-dga" extension); any recent release of XFree86 should have it.
+\layout Standard
+
+Select DISPLAY_METHOD = x11 and uncomment the line 
+\begin_inset Quotes eld
+\end_inset 
+
+DGA=1" in the makefile.
+\layout Standard
+
+Now build xmame and give the xmame.x11 file permanent root permissions so
+ that you don't need to start xmame as root (do a 
+\begin_inset Quotes eld
+\end_inset 
+
+chown root xmame.x11" and a 
+\begin_inset Quotes eld
+\end_inset 
+
+chmod u+s xmame.x11").
+\layout Standard
+
+If you want to start immediately in fullscreen mode, start xmame.x11 with
+ the "-x11 1" argument or specify "x11-mode 1" in your xmamerc file.
+\layout Standard
+
+During play you can switch between windowed and fullscreen mode.
+ See 
+\begin_inset LatexCommand \ref[What keys does xmame/xmess use?]{FAQ: What keys does xmame/xmess use?}
+
+\end_inset 
+
+
+\layout Subsubsection
+
+xmame.sdl
+\layout Standard
+
+The SDL library was meant to make it easy for programmers to make full screen
+ applications.
+ To start SDL in fullscreen mode, just run xmame.SDL with the option '-fullscreen
+'.
+ If you want to know the resolutions that SDL can use, run 
+\begin_inset Quotes eld
+\end_inset 
+
+xmame.SDL -listmodes
+\begin_inset Quotes erd
+\end_inset 
+
+, choose the resolution you want, and start 
+\begin_inset Quotes erd
+\end_inset 
+
+xmame.SDL -modenumber <insert chosen number here>
+\begin_inset Quotes erd
+\end_inset 
+
+.
+\layout Standard
+
+You can add 
+\begin_inset Quotes eld
+\end_inset 
+
+fullscreen 1
+\begin_inset Quotes erd
+\end_inset 
+
+ to your xmamerc file if you want SDL to start fullscreen automatically;
+ the modenumber line can also be used in the xmamerc.
+ :-)
+\layout Standard
+
+Most problems experienced by people who are trying to use SDL for fullscreen
+ are related to the section 
+\begin_inset LatexCommand \ref[fullscreen has a large border]{FAQ: xmame.sdl / xmame.x11 fullscreen has a large border around the game.}
+
+\end_inset 
+
+
+\layout Standard
+
+During play you can switch between windowed and fullscreen mode.
+ See 
+\begin_inset LatexCommand \ref[What keys does xmame/xmess use?]{FAQ: What keys does xmame/xmess use?}
+
+\end_inset 
+
+
+\layout Subsection
+
+xmame.SDL / fullscreen has a large border around the game.
+ 
+\begin_inset LatexCommand \label{FAQ: xmame.sdl / xmame.x11 fullscreen has a large border around the game.}
+
+\end_inset 
+
+
+\layout Standard
+
+If the game runs in fullscreen but occupies only a small area in the center
+ of the screen, then your xserver does not have access to low resolutions
+ (320x240, 400x300, and 512x384, for instance).
+ In the case of SDL, the window will be in the resolution of closest matching
+ resolution that SDL can switch to for full screen display.
+\layout Standard
+
+In this case, you have to add "Modelines" for these resolutions in your
+ XF86config file and add these resolutions to the resolutions list of your
+ display somewhere in your XF86config file (you know, the list of resolutions
+ you can switch to using ctrl-+).
+\layout Standard
+
+You should find modelines that works with most graphic cards in the xmame
+ contrib subdirectory.
+\layout Standard
+
+If you don't want to alter your XF86config file, another solution is to
+ run xmame.x11 with the "-scale 2" argument.
+ In this case, the emulator will use 640x480 instead of 320x240, 800x600
+ instead of 400x300, etc.
+ But I don't recommend it.
+ The scaling uses cpu and the games will run more slowly.
+\layout Standard
+
+However, if your cpu is fast enough, a better option is to use the effects
+ 
+\begin_inset Quotes erd
+\end_inset 
+
+-ef 1
+\begin_inset Quotes erd
+\end_inset 
+
+.
+ This introduces advanced render methods to create a nicer looking effect
+ than the simple scaling.
+ On the website you can see 
+\begin_inset LatexCommand \url[screenshots]{http://x.mame.net/gamescreenshots.html}
+
+\end_inset 
+
+ of the different effects.
+\layout Subsection
+
+I only use some of the emulation parts (Neo Geo / CPS-2 /...).
+ Do I need the entire xmame? 
+\layout Standard
+
+If you are interested in compiling only some of the games you, can compile
+ xmame with an alternate target.
+ Edit the makefile.unix and change the target line to accomplish the desired
+ effect.
+ Using this approach, only the CPUs, sound devices, and other chips needed
+ for that particular target are compiled, resulting in a much smaller executable.
+\layout Itemize
+
+'TARGET = cpmame' makes a mame version that will only emulate the CPS-1
+ and CPS-2 games
+\layout Itemize
+
+'TARGET = neomame' makes a mame version that will only emulate the Neo Geo
+ system
+\layout Standard
+
+There are some other targets but they are really only useful for the mame
+ developers who create new drivers.
 \layout Subsection
 
 Where can I get the latest version of xmame/xmess?
@@ -2567,6 +2709,64 @@ The xmame/xmess Home Page always has the most up-to-date version.
 \end_inset 
 
 
+\layout Subsection
+
+I upgraded xmame and now some games do not work anymore.
+\layout Standard
+
+This can happen, especially if the drivers are in full development or some
+ internal core routines have changed and the drivers have to be updated
+ to accomodate for these core changes.
+ Sometimes a new romdump has been made from the game and you still have
+ the old version, or the zipfile has changed names and you need to rename
+ yours (or any combination of these factors :-).
+\layout Standard
+
+Here are some things you can do:
+\layout Enumerate
+
+Clear all the old configuration files, nvram files, etc.
+ Also delete the content of the directories mem, nvram, cfg, and try to
+ run the game again.
+ Don't forget to delete the default.cfg file!
+\layout Enumerate
+
+If that fails, check to see if the name of the zipfile is still in the list
+ of supported games.
+ If you enter an invalid game name, xmame will take a guess to determine
+ which game you wanted; look at the first lines of output to see if it tries
+ to load a different game than the one you want.
+ To know if your game is still supported, try 'xmame.x11 -list gamename'.
+ If you do not pass a game name, the complete list of supported games is
+ printed, and you can search for the new game name (better use 'xmame.x11
+ -listfull').
+\layout Enumerate
+
+If the name hasn't changed, check to see if you have the correct romdump.
+ Run 'xmame.x11 -verifyroms gamename' to check your romset.
+ If this fails you will need to download a newer romdump.
+ Also check your parent roms as a possible cause of this romset failure.
+\layout Enumerate
+
+Read the documentation!! Or like the experts would say, 
+\begin_inset Quotes eld
+\end_inset 
+
+RTFM!
+\begin_inset Quotes erd
+\end_inset 
+
+ :-) Chances are that if the driver is broken, the developer has noted this
+ in the documentation.
+\layout Enumerate
+
+If the above steps don't solve the problem, then check to see if it is a
+ known problem; if necessary, report it to the mame testers project.
+\layout Standard
+
+If none of these fixes the problem, then try using the older version of
+ xmame you have backed up somewhere to play the game.
+ (You did back-up, didn't you?)
 \layout Subsection
 
 Where can I send fixes, bug reports, suggestions, or money?  :-)
@@ -3589,26 +3789,95 @@ There is an official xmame/xmess mailing list.
 \end_inset 
 
 
-\family default 
- with a proper keyword in the body.
+\layout Itemize
+
+To subscribe, send mail to: 
+\begin_inset LatexCommand \url[Xmame-request@toybox.twisted.org.uk]{mailto:Xmame-request@toybox.twisted.org.uk}
+
+\end_inset 
+
+ with the keyword "subscribe" in the body.
+ 
+\layout Itemize
+
+To unsubscribe, send a mail to: 
+\begin_inset LatexCommand \url[Xmame-request@toybox.twisted.org.uk]{mailto:Xmame-request@toybox.twisted.org.uk}
+
+\end_inset 
+
+ with the keyword "unsubscribe" in the body.
+ 
+\layout Itemize
+
+To send mail to the list, use: 
+\begin_inset LatexCommand \url[xmame@toybox.twisted.org.uk]{mailto:xmame@toybox.twisted.org.uk}
+
+\end_inset 
+
+ 
+\layout Itemize
+
+To ask specific questions about the xmame mailing list, send mail to: 
+\begin_inset LatexCommand \url[Xmame-request@toybox.twisted.org.uk]{mailto:Xmame-request@toybox.twisted.org.uk}
+
+\end_inset 
+
+
 \layout Standard
 
-Some of the currently recognized commands are:
+If you're just curious, and only want to take a look into the mailing list
+ without subscribing, you can use the web-based archive at: 
+\begin_inset LatexCommand \url[http://www.mail-archive.com]{http://www.mail-archive.com}
+
+\end_inset 
+
+ 
+\layout Standard
+
+To ask UNIX-specific xmame/xmess questions, you could send mail to: 
+\begin_inset LatexCommand \url[Lawrence's folder]{mailto:gold@aros.net}
+
+\end_inset 
+
+, but you're better off sending mail to the list.
+ 
+\layout Standard
+
+To ask general questions about MAME, send mail to: Mirko (Mix) Buffoni
+\begin_inset LatexCommand \url[Mirko (Mix) Buffoni]{mailto:mix@lim.dsi.unimi.it}
+
+\end_inset 
+
+ 
+\layout Standard
+
+Also see (and post) articles on USENET group 
+\begin_inset LatexCommand \url[comp.emulators.misc]{news:comp.emulators.misc}
+
+\end_inset 
+
+comp.emulators.misc\SpecialChar ~
+
+\layout Standard
+
+with a proper keyword in the body.
+\layout Standard
+
+Other proper keywords currently recognized as commands by 
+\begin_inset LatexCommand \url[Xmame-request@toybox.twisted.org.uk]{mailto:Xmame-request@toybox.twisted.org.uk}
+
+\end_inset 
+
+ are:
 \layout Verbatim
 
-    subscribe      - subscribe to the list
-\layout Verbatim
-
-    unsubscribe    - unsubscribe from the list
-\layout Verbatim
-
-    who            - see everyone who is on the list
+    who             - see everyone who is on the list
 \layout Verbatim
 
     info           - view the introductory information for this list
 \layout Verbatim
 
-    help           - list all recognized commands
+    help            - list all recognized commands
 \layout Verbatim
 
     
@@ -3681,7 +3950,8 @@ At this moment, the xmame list is
 unmoderated
 \series default 
 ; that is, everyone subscribed will receive everything sent to the list.
- We foresee no need to change this policy.
+ We foresee a need to change this policy since the list starts to suffer
+ from spam :-(.
 \layout Standard
 
 If you want to send a personal mail to the xmame/xmess coordinator, send
@@ -3954,10 +4224,355 @@ The main issue involves ROM images.
 \layout Itemize
 
 XInputExtensions-based Joystick support.
- Source code is entirely pure  hack work.
+ Source code is entirely pure hack work.
  No sample code, no info at all was found (only library  reference manual)
  and is copyrighted by me (Juan Antonio Martinez).
  Use it under terms of GNU General Public License.
+\layout Section
+
+Some Links
+\layout Subsection
+
+Unix sources and docs
+\layout Itemize
+
+The xmame/xmess sources
+\begin_deeper 
+\layout Standard
+
+
+\begin_inset LatexCommand \htmlurl[xmame 0.36.1 sources (xmame & xmess)]{download/xmame-0.36.1.tgz}
+
+\end_inset 
+
+
+\layout Standard
+
+
+\begin_inset LatexCommand \htmlurl[xmame 0.57.1 sources (xmame only)]{download/xmame-0.57.1.tar.bz2}
+
+\end_inset 
+
+
+\layout Standard
+
+
+\begin_inset LatexCommand \htmlurl[xmame 0.56.2 sources (xmame & xmess)]{download/xmame-0.56.2.tar.bz2}
+
+\end_inset 
+
+
+\end_deeper 
+\layout Itemize
+
+xmame/xmess FAQ & Installation Guide:
+\begin_deeper 
+\layout Standard
+
+
+\begin_inset LatexCommand \htmlurl[xmame-doc (pdf format)]{download/xmame-doc.pdf}
+
+\end_inset 
+
+
+\end_deeper 
+\layout Itemize
+
+xmame/xmess known bug list:
+\begin_deeper 
+\layout Standard
+
+
+\begin_inset LatexCommand \htmlurl[open issues]{open_issues.html}
+
+\end_inset 
+
+
+\end_deeper 
+\layout Subsection
+
+Unix binaries
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[xmame RPMs]{http://www.forte-intl.com/~ronald/xmame/}
+
+\end_inset 
+
+
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[xmame+CPS2 RPMs]{http://www.beimborn.com/cps2/linux/rpms}
+
+\end_inset 
+
+
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[Source and binary for Solaris UltraSPARC]{http://come.to/georgie}
+
+\end_inset 
+
+
+\layout Subsection
+
+Xmame/xmess download mirrors
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[ftp://cps2:cps2@wingnut.beimborn.com]{ftp://cps2:cps2@wingnut.beimborn.com}
+
+\end_inset 
+
+(US)
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[http://www.mame.dk]{http://www.mame.dk}
+
+\end_inset 
+
+(Denmark)
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[ftp://ftp.kaupp.cx/pub/xmame]{ftp://ftp.kaupp.cx/pub/xmame}
+
+\end_inset 
+
+(US)
+\layout Subsection
+
+(X)Mame frontends
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[The official mame frontend page ]{http://www.mame.net/frontend.html}
+
+\end_inset 
+
+
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[TkMame]{http://tkmame.retrogames.com}
+
+\end_inset 
+
+, the Tcl/TK frontend that works in Linux/Unix and MS Windows
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[Xmameload]{http://www.toetag.com/~tom/xmame.html}
+
+\end_inset 
+
+
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[Kmamerun]{ftp://ftp.sad.it/pub/kde/local/}
+
+\end_inset 
+
+
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[Mamecat]{http://www.mameworld.net/mamecat/}
+
+\end_inset 
+
+
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[GrokMame]{http://user.cs.tu-berlin.de/~gator/mame/}
+
+\end_inset 
+
+
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[Gmame]{http://members.xoom.com/gmame/}
+
+\end_inset 
+
+
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[startxmame]{http://www.geocities.com/SiliconValley/Mouse/1570/}
+
+\end_inset 
+
+
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[it-mame]{http://it-mame.sourceforge.net/index2.html}
+
+\end_inset 
+
+
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[gRustibus]{http://grustibus.sourceforge.net}
+
+\end_inset 
+
+, the 
+\series bold 
+very good
+\series default 
+ frontend (if you gnome) 
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[IQF]{http://www.sourceforge.net/projects/iqf/}
+
+\end_inset 
+
+
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[GnoMame]{http://gnomame.sourceforge.net/}
+
+\end_inset 
+
+, another great gnome-based frontend 
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[LANZAMAME]{file:/home/david/tmp/xmame-try/realsite/download/lanzamame.tar.bz2}
+
+\end_inset 
+
+
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[Victor Manuel's TCL/TK Frontend]{http://www.terra.es/personal3/victorote/frontend/index_en.html}
+
+\end_inset 
+
+
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[ptkmame]{http://ant.eelinux.com/ptkmame/}
+
+\end_inset 
+
+
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[Kemulator]{http://kemulator.sourceforge.net/}
+
+\end_inset 
+
+, a KDE frontend with MESS and Stella support
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[Flynn]{http://www.foxbox.org/adam/code/flynn/index.html}
+
+\end_inset 
+
+(primarily for converted arcade cabinets)
+\layout Subsection
+
+Some other links
+\layout Itemize
+
+The official M.A.M.E home is at 
+\begin_inset LatexCommand \url[http://www.mame.net]{http://www.mame.net}
+
+\end_inset 
+
+
+\layout Itemize
+
+The official mess site is 
+\begin_inset LatexCommand \url[http://mess.emuverse.com]{http://mess.emuverse.com}
+
+\end_inset 
+
+
+\layout Itemize
+
+Some other emulation sites are 
+\begin_inset LatexCommand \url[http://www.vg-network.com]{http://www.vg-network.com}
+
+\end_inset 
+
+ and 
+\begin_inset LatexCommand \url[http://www.retrogames.com]{http://www.retrogames.com}
+
+\end_inset 
+
+
+\layout Itemize
+
+The very best ROM site on this planet is at 
+\begin_inset LatexCommand \url[http://www.mame.dk/]{http://www.mame.dk/}
+
+\end_inset 
+
+
+\layout Itemize
+
+A couple of sites with CPS2 and other patches 
+\begin_inset LatexCommand \url[Dan Beimborn's Linux CPS2Mame page]{http://www.beimborn.com/cps2/linux/}
+
+\end_inset 
+
+ and 
+\begin_inset LatexCommand \url[Stijn Hoop's xmame patches ]{http://www.win.tue.nl/~stijn/xmame/}
+
+\end_inset 
+
+
+\layout Itemize
+
+
+\series bold 
+MAME
+\series default 
+ 
+\series bold 
+A
+\series default 
+ction 
+\series bold 
+R
+\series default 
+eplay 
+\series bold 
+P
+\series default 
+age for those who want to have a  look at other monitors at 
+\begin_inset LatexCommand \url[http://marp.retrogames.com/]{http://marp.retrogames.com/}
+
+\end_inset 
+
+
+\layout Itemize
+
+and of course don't forget our project homepage at 
+\series bold 
+
+\begin_inset LatexCommand \url[http://x.mame.net/]{http://x.mame.net/}
+
+\end_inset 
+
+
 \layout Section
 
 ChangeLogs
@@ -3976,7 +4591,7 @@ These are the changelogs of the offical MAME and MESS release, the core
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[The MAME changelog (changes.mame)]{changes.mame}
+\begin_inset LatexCommand \url[The MAME changelog (changes.mame)]{changes-mame.html}
 
 \end_inset 
 
@@ -4000,7 +4615,7 @@ And now here is the HISTORY of the xmame project (of course that's why you
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[The Unix port changelog (changes.unix)]{changes.unix}
+\begin_inset LatexCommand \url[The Unix port changelog (changes.unix)]{changes-unix.html}
 
 \end_inset 
 

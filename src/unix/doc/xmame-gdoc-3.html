@@ -6,8 +6,9 @@
  <LINK HREF="xmame-gdoc-4.html" REL=next>
  <LINK HREF="xmame-gdoc-2.html" REL=previous>
  <LINK HREF="xmame-gdoc.html#toc3" REL=contents>
+<link rel="stylesheet" href="xmame.css" type="text/css" >
 </HEAD>
-<BODY>
+<BODY BACKGROUND="img/xmame.jpg" BGPROPERTIES="fixed" >
 <A HREF="xmame-gdoc-4.html">Weiter</A> <A HREF="xmame-gdoc-2.html">Zurück</A> <A HREF="xmame-gdoc.html#toc3">Inhalt</A>
 <HR>
 <H2><A NAME="Xmame frequently asked questions"></A>  <A NAME="s3">3. XMame
@@ -20,14 +21,14 @@ häufig gestellte Fragen (FAQ)</A></H2>
 geschrieben worden waren. Diese Einzelemulatoren wurden	kombiniert zu einem "Multispiele
 Emulator&quot;. Dies ist die	aktuelle Form von Mame, kein Projekt eines Einzelnen, sondern	es arbeiten über 100 Personen daran.<br>
 <br>
-Mame wurde geschaffen von Nicola Salmoria.<P>Siehe auch <A HREF="readme.mame">das
-offizielle Mame Readme (readme.mame)</A><P>
+Mame wurde geschaffen von Nicola Salmoria.<P>Siehe auch <a HREF="../download/readme.mame">das
+offizielle Mame Readme (readme.mame)</a><P>
 <H2><A NAME="ss3.2">3.2 Was ist Mess?</A>
 </H2>
 
 <P>Mess ist, wie Mame, ein Emulator für virtuelle Maschinen. Im Unterschied zu Mame emuliert Mess Computer und Konsolen.<br>
 <br>
-Sieh auch <A HREF="readme.mess">das offizielle Mess Readme (readme.mess)</A><P>
+Sieh auch <a HREF="../download/readme.mess">das offizielle Mess Readme (readme.mess)</a><P>
 <H2><A NAME="ss3.3">3.3 Was sind XMame/XMess?</A>
 </H2>
 
@@ -102,8 +103,7 @@ Lawrence <CODE>
 <A HREF="mailto:gold@aros.net">&lt;gold@aros.net></A></CODE></LI>
 <LI>i386/linux/svgalib -&gt; Lawrence <CODE>
 <A HREF="mailto:gold@aros.net">&lt;gold@aros.net></A></CODE></LI>
-<LI>i386/linux/xgl -&gt; Lawrence <CODE>
-<A HREF="mailto:gold@aros.net">&lt;gold@aros.net></A></CODE></LI>
+<LI>i386/linux/xgl -&gt; Sven Goethel <CODE><a HREF="mailto:sgoethel@jausoft.com">&lt;sgoethel@jausoft.com&gt;</a></CODE></LI>
 <LI>i386/linux/xfx -&gt; Lawrence <CODE>
 <A HREF="mailto:gold@aros.net">&lt;gold@aros.net></A></CODE></LI>
 <LI>i386/linux/svgafx -&gt; Lawrence <CODE>
@@ -644,8 +644,20 @@ bekomme ich &quot;get zlib.h not found&quot; ? </A>
 <br>
 Zlib ist Standard auf den meisten Unix-Systemen. Für Leute, die sich nicht mit zlib herumärgern wolle, oder keine veraltete Version	haben wollen, ist nun bei XMame/XMess eine abgespeckte Version von	zlib mit dabei. Entferne die Kommentare bei der betreffenden	Stelle im Makefile um dies zu benutzen.<br>
 <br>
-<H2><A NAME="ss3.24">3.24 Wo bekomme ich die neueste Version von XMame/XMess her
-?</A>
+<H2><A NAME="ss3.24">3.24 Wenn ich xmame.x11 starte, passiert nichts --- kein
+Fenster geht auf oder irgendwas anderes. Hilfe !</A>
+</H2>
+
+<P>Läuft bei Dir eine aktuelle Version von KDE, z.B. 2.1.1 ? Im KDE
+Fenstermanager ist vermutlich ein Fehler, der bei einigen X11-Anwendungen
+verhindert, dass deren Hauptfenster aufgeht. Du kannst entweder die SDL-Version
+von XMame nehmen, oder folgenden Workaround probieren, der bei etlichen Leuten
+funktioniert hat:<P><font face="Courier">xmame.x11 -rid `xwininfo -root | grep xwininfo: | awk '{print $4}'`<br>
+</font><br>
+Update: Es wurde uns mitgeteilt, dass seit KDE 2.2b1 dieser Fehler nicht mehr
+auftritt.<br>
+<H2><a NAME="ss3.25">3.25 Wo bekomme ich die neueste Version von XMame/XMess her
+?</a>
 </H2>
 
 <P>Auf der Xmame/Xmess-Homepage ist immer die aktuellste	Version verfügbar.&nbsp;<br>
@@ -656,14 +668,14 @@ Zlib ist Standard auf den meisten Unix-Systemen. Für Leute, die sich nicht mit z
 <br>
 	Adresse: <a href="http://www.bingo-ev.de/~rh474"> http://www.bingo-ev.de/~rh474</a><br>
 <br>
-<H2><A NAME="ss3.25">3.25 Wohin kann ich Korrekturen, Fehlermeldungen,
-Anmerkungen, Geld :-) hinschicken ?</A>
+<H2><a NAME="ss3.26">3.26 Wohin kann ich Korrekturen, Fehlermeldungen,
+Anmerkungen, Geld :-) hinschicken ?</a>
 </H2>
 
 <P>Siehe <A HREF="xmame-gdoc-5.html#Mail">Mail</A>
  in diesem Dokument.<br>
-<H2><A NAME="ss3.26">3.26 Was kann ich tun, wenn meine Frage immer noch nicht
-beantwortet ist ?</A>
+<H2><a NAME="ss3.27">3.27 Was kann ich tun, wenn meine Frage immer noch nicht
+beantwortet ist ?</a>
 </H2>
 
 <P>Bitte prüfe die offiziellen Readme's von Mame und Mess. Vielleicht ist Deine
