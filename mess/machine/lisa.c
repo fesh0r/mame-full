@@ -960,8 +960,8 @@ static OPBASE_HANDLER (lisa_OPbaseoverride)
 			{	/* system ROMs */
 				opcode_mask = 0xffffff;
 				opcode_base = opcode_arg_base = lisa_rom_ptr - (address & 0xffc000);
-				opcode_memory_min = address & 0xffc000;
-				opcode_memory_max = address & 0xffc000 + 0x003fff;
+				opcode_memory_min = (address & 0xffc000);
+				opcode_memory_max = (address & 0xffc000) + 0x003fff;
 				/*logerror("ROM (setup mode)\n");*/
 			}
 
@@ -992,8 +992,8 @@ static OPBASE_HANDLER (lisa_OPbaseoverride)
 			}
 			opcode_mask = 0xffffff;
 			opcode_base = opcode_arg_base = lisa_ram_ptr + mapped_address - address;
-			opcode_memory_min = address & 0xffc000;
-			opcode_memory_max = address & 0xffc000 + 0x003fff;
+			opcode_memory_min = (address & 0xffc000);
+			opcode_memory_max = (address & 0xffc000) + 0x003fff;
 			/*logerror("RAM\n");*/
 			break;
 
@@ -1008,8 +1008,8 @@ static OPBASE_HANDLER (lisa_OPbaseoverride)
 		case special_IO:
 			opcode_mask = 0xffffff;
 			opcode_base = opcode_arg_base = lisa_rom_ptr + (mapped_address & 0x003fff) - address;
-			opcode_memory_min = address & 0xffc000;
-			opcode_memory_max = address & 0xffc000 + 0x003fff;
+			opcode_memory_min = (address & 0xffc000);
+			opcode_memory_max = (address & 0xffc000) + 0x003fff;
 			/*logerror("ROM\n");*/
 			break;
 		}

@@ -179,6 +179,9 @@ SOUNDS+=BEEP@
 DRVLIBS = \
 	$(OBJ)/coco.a     \
 	$(OBJ)/apple.a    \
+	$(OBJ)/apexc.a	  \
+	$(OBJ)/pdp1.a	  \
+	$(OBJ)/sony.a     \
 #	$(OBJ)/nintendo.a \
 #	$(OBJ)/at.a       \
 #	$(OBJ)/pc.a       \
@@ -233,8 +236,6 @@ DRVLIBS = \
 #	$(OBJ)/svi.a      \
 #	$(OBJ)/ti99.a     \
 #	$(OBJ)/tutor.a    \
-#	$(OBJ)/apexc.a	  \
-#	$(OBJ)/pdp1.a	  \
 #	$(OBJ)/sharp.a    \
 #	$(OBJ)/aim65.a    \
 #	$(OBJ)/avigo.a    \
@@ -245,7 +246,6 @@ DRVLIBS = \
 #	$(OBJ)/cbmshare.a \
 #	$(OBJ)/kim1.a     \
 #	$(OBJ)/sym1.a     \
-#	$(OBJ)/sony.a     \
 #	$(OBJ)/concept.a  \
 #	$(OBJ)/dai.a      \
 #	$(OBJ)/bandai.a		\
@@ -418,15 +418,15 @@ $(OBJ)/apple.a:   \
 	$(OBJ)/mess/formats/ap2_dsk.o		\
 	$(OBJ)/mess/machine/ay3600.o		\
 	$(OBJ)/mess/machine/ap_disk2.o		\
-#	$(OBJ)/mess/machine/lisa.o			\
-#	$(OBJ)/mess/systems/lisa.o			\
-#	$(OBJ)/mess/machine/iwm.o			\
-#	$(OBJ)/mess/machine/sonydriv.o		\
-#	$(OBJ)/mess/sndhrdw/mac.o			\
-#	$(OBJ)/mess/machine/sonydriv.o		\
-#	$(OBJ)/mess/vidhrdw/mac.o			\
-#	$(OBJ)/mess/machine/mac.o			\
-#	$(OBJ)/mess/systems/mac.o			\
+	$(OBJ)/mess/machine/lisa.o			\
+	$(OBJ)/mess/systems/lisa.o			\
+	$(OBJ)/mess/machine/iwm.o			\
+	$(OBJ)/mess/machine/sonydriv.o		\
+	$(OBJ)/mess/sndhrdw/mac.o			\
+	$(OBJ)/mess/machine/sonydriv.o		\
+	$(OBJ)/mess/vidhrdw/mac.o			\
+	$(OBJ)/mess/machine/mac.o			\
+	$(OBJ)/mess/systems/mac.o			\
 #	$(OBJ)/mess/vidhrdw/apple1.o		\
 #	$(OBJ)/mess/machine/apple1.o		\
 #	$(OBJ)/mess/systems/apple1.o
