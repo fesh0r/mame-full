@@ -160,17 +160,25 @@ typedef enum
 	CLOCKMODE_BRAM2
 } apple2gs_clock_mode;
 
-static data8_t clock_data;
-static data8_t clock_control;
-static data8_t clock_read;
-static data8_t clock_reg1;
+static UINT8 clock_data;
+static UINT8 clock_control;
+static UINT8 clock_read;
+static UINT8 clock_reg1;
 static apple2gs_clock_mode clock_mode;
-static data8_t clock_bram[256];
+static UINT32 clock_curtime;				/* number of seconds since 1-Jan-1904 */
+static seconds_t clock_curtime_interval;	/* second index at which clock_curtime is valid */
+static UINT8 clock_bram[256];
 
 
 static void process_clock(void)
 {
 	data8_t operation;
+	seconds_t current_interval;
+
+	/* update clock_curtime */
+	current_interval = mame_timer_get_time().seconds;
+	clock_curtime += current_interval - clock_curtime_interval;
+	clock_curtime_interval = current_interval;
 
 	switch(clock_mode)
 	{
@@ -235,9 +243,40 @@ static void process_clock(void)
 			clock_mode = CLOCKMODE_IDLE;
 			break;
 
+		case CLOCKMODE_TIME:
+			if (clock_data & 0x40)
+			{
+				clock_data = clock_curtime >> (clock_reg1 * 8);
+			}
+			else
+			{
+				clock_curtime &= ~(0xFF << (clock_reg1 * 8));
+				clock_curtime |= clock_data << (clock_reg1 * 8);
+			}
+			clock_mode = CLOCKMODE_IDLE;
+			break;
+
 		default:
 			//osd_die("NYI");
 			break;
+	}
+}
+
+
+
+NVRAM_HANDLER( apple2gs )
+{
+	if (read_or_write)
+	{
+		mame_fwrite(file, clock_bram, sizeof(clock_bram));
+	}
+	else if (file)
+	{
+		mame_fread(file, clock_bram, sizeof(clock_bram));
+	}
+	else
+	{
+		memset(clock_bram, 0x00, sizeof(clock_bram));
 	}
 }
 
@@ -1802,6 +1841,10 @@ DRIVER_INIT( apple2gs )
 	apple2gs_mouse_y = 0x00;
 	apple2gs_mouse_dx = 0x00;
 	apple2gs_mouse_dy = 0x00;
+
+	/* init time */
+	clock_curtime = 0;
+	clock_curtime_interval = 0;
 
 	/* init the various subsystems */
 	scc_init(NULL);

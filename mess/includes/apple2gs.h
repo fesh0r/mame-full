@@ -19,4 +19,6 @@ DRIVER_INIT( apple2gs );
 VIDEO_START( apple2gs );
 VIDEO_UPDATE( apple2gs );
 
+NVRAM_HANDLER( apple2gs );
+
 #endif /* APPLE2GS_H */

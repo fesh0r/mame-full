@@ -115,6 +115,8 @@ static MACHINE_DRIVER_START( apple2gs )
 	MDRV_PALETTE_INIT( apple2gs )
 	MDRV_VIDEO_START( apple2gs )
 	MDRV_VIDEO_UPDATE( apple2gs )
+
+	MDRV_NVRAM_HANDLER( apple2gs )
 MACHINE_DRIVER_END
 
 
