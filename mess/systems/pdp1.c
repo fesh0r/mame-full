@@ -113,6 +113,10 @@ binary form plus a makro assembler for PDP1 programs.
  * be all right to use them.
  * This gives sometimes IO warnings!
  */
+#ifdef SUPPORT_ODD_WORD_SIZES
+#define pdp1_read_mem MRA32_RAM
+#define pdp1_write_mem MWA32_RAM
+#endif
 static MEMORY_READ_START18(pdp1_readmem)
 	{ 0x0000, 0xffff, pdp1_read_mem },
 MEMORY_END
@@ -245,7 +249,13 @@ static const struct IODevice io_pdp1[] = {
 	{ IO_END }
 };
 
+#ifdef SUPPORT_ODD_WORD_SIZES
+ROM_START(pdp1)
+	ROM_REGION(0x10000 * sizeof(data32_t),REGION_CPU1,0)
+ROM_END
+#else
 #define rom_pdp1    NULL
+#endif
 
 /***************************************************************************
 
