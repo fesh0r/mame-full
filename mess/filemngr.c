@@ -623,6 +623,10 @@ static int fileselect(struct mame_bitmap *bitmap, int selected, const char *defa
 
 				case FILESELECT_FILESPEC:
 					start_enter_string(current_filespecification, 32, 0);
+
+	                                /* flush keyboard buffer */
+        	                        do {} while (keyboard_read_async() != CODE_NONE);
+
 					sel |= 1 << SEL_BITS; /* we'll ask for a key */
 					schedule_full_refresh();
 					break;
@@ -836,6 +840,9 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 				else
 					strcpy(entered_filename, menu_subitem[sel]);
 				start_enter_string(entered_filename, (sizeof(entered_filename) / sizeof(entered_filename[0])) - 1, 1);
+
+				/* flush keyboard buffer */
+				do {} while (keyboard_read_async() != CODE_NONE);
 
 				sel |= 1 << SEL_BITS;	/* we'll ask for a key */
 

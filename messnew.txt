@@ -28,6 +28,15 @@ Source Changes:
 - The file manager will now default to the directory that a preexisting image
   resides in. [Nate Woods]
 
+- Fixed bugs #192 and #200 - remember that:
+
+  1) In File Manager you can press SHIFT+ENTER to manually edit a filename
+     and CTRL-Y to delete the field.
+
+  2) In the file selector you can edit the file specification and you can use
+     SHIFT+UP/DOWN as PgUp/PgDown and
+     CTRL+UP/DOWN as Home/End. [Stefano Priore]
+
 0.561
 
 New System Drivers Supported (in no particular order):
