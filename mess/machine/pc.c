@@ -22,7 +22,7 @@
 #include <assert.h>
 #include "driver.h"
 #include "machine/8255ppi.h"
-#include "julian.h"
+#include "vidhrdw/generic.h"
 
 #include "includes/pic8259.h"
 #include "includes/pit8253.h"
@@ -32,6 +32,7 @@
 #include "includes/vga.h"
 #include "includes/pc_cga.h"
 #include "includes/pc_mda.h"
+#include "includes/pc_aga.h"
 
 #include "includes/pc_flopp.h"
 #include "includes/pc_mouse.h"
@@ -44,10 +45,18 @@
 #include "includes/nec765.h"
 #include "includes/amstr_pc.h"
 #include "includes/europc.h"
+#include "includes/ibmpc.h"
+
 #include "includes/pc.h"
 #include "includes/state.h"
 
-
+#define VERBOSE_DBG 0       /* general debug messages */
+#if VERBOSE_DBG
+#define DBG_LOG(N,M,A) \
+	if(VERBOSE_DBG>=N){ if( M )logerror("%11.6f: %-24s",timer_get_time(),(char*)M ); logerror A; }
+#else
+#define DBG_LOG(n,m,a)
+#endif
 
 // preliminary machines setup 
 //#define MESS_MENU
@@ -55,8 +64,6 @@
 #include "menu.h"
 #include "menuentr.h"
 #endif
-
-UINT8 pc_port[0x400];
 
 #define FDC_DMA 2
 
@@ -112,27 +119,6 @@ static uart8250_interface com_interface[4]=
 		NULL,
 		pc_com_refresh_connected
 	}
-};
-
-static int pc_ppi_porta_r(int chip );
-static int pc_ppi_portb_r(int chip );
-static int pc_ppi_portc_r(int chip);
-static void pc_ppi_porta_w(int chip, int data );
-static void pc_ppi_portb_w( int chip, int data );
-static void pc_ppi_portc_w(int chip, int data );
-
-
-/* PC-XT has a 8255 which is connected to keyboard and other
-status information */
-static ppi8255_interface pc_ppi8255_interface =
-{
-	1,
-	pc_ppi_porta_r,
-	pc_ppi_portb_r,
-	pc_ppi_portc_r,
-	pc_ppi_porta_w,
-	pc_ppi_portb_w,
-	pc_ppi_portc_w
 };
 
 /*
@@ -760,15 +746,18 @@ void init_europc(void)
 	dma8237_config(dma8237,&dma);
 	dma8237_reset(dma8237);
 
+#if 0
 	install_mem_read_handler(0, 0xb8000, 0xbbfff, MRA_RAM );
 	install_mem_write_handler(0, 0xb8000, 0xbbfff, pc_cga_videoram_w );
 	videoram=memory_region(REGION_CPU1)+0xb8000; videoram_size=0x4000;
 
 	install_port_read_handler(0, 0x3d0, 0x3df, pc_CGA_r );
 	install_port_write_handler(0, 0x3d0, 0x3df, pc_CGA_w );
+#endif
 
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
 	europc_rtc_init();
+	pc_aga_set_mode(AGA_COLOR);
 //	europc_rtc_set_time();
 }
 
@@ -852,6 +841,12 @@ void pc_cga_init_machine(void)
 	dma8237_reset(dma8237);
 }
 
+void pc_aga_init_machine(void)
+{
+//	pc_keyboard_init();
+	dma8237_reset(dma8237);
+}
+
 void pc_vga_init_machine(void)
 {
 	vga_reset();
@@ -929,259 +924,7 @@ WRITE_HANDLER(pc_COM4_w)
 	uart8250_w(3, offset,data);
 }
 
-
-/*************************************************************************
- *
- *		PIO
- *		parallel input output
- *
- *************************************************************************/
-static struct {
-	int portc_switch_high;
-	int speaker;
-} pc_ppi={ 0 };
-
-int pc_ppi_porta_r(int chip )
-{
-	int data;
-
-	/* KB port A */
-	data = pc_keyb_read();
-    PIO_LOG(1,"PIO_A_r",("$%02x\n", data));
-    return data;
-}
-
-int pc_ppi_portb_r(int chip )
-{
-	int data;
-
-	data = 0xff;
-	PIO_LOG(1,"PIO_B_r",("$%02x\n", data));
-	return data;
-}
-
-int pc_ppi_portc_r( int chip )
-{
-	int data=0xff;
-
-	data&=~0x80; // no parity error
-	data&=~0x40; // no error on expansion board
-	/* KB port C: equipment flags */
-//	if (pc_port[0x61] & 0x08)
-	if (pc_ppi.portc_switch_high)
-	{
-		/* read hi nibble of S2 */
-		data = (data&0xf0)|((input_port_1_r(0) >> 4) & 0x0f);
-		PIO_LOG(1,"PIO_C_r (hi)",("$%02x\n", data));
-	}
-	else
-	{
-		/* read lo nibble of S2 */
-		data = (data&0xf0)|(input_port_1_r(0) & 0x0f);
-		PIO_LOG(1,"PIO_C_r (lo)",("$%02x\n", data));
-	}
-
-	return data;
-}
-
-void pc_ppi_porta_w(int chip, int data )
-{
-	/* KB controller port A */
-	PIO_LOG(1,"PIO_A_w",("$%02x\n", data));
-}
-
-void pc_ppi_portb_w(int chip, int data )
-{
-	/* KB controller port B */
-	PIO_LOG(1,"PIO_B_w",("$%02x\n", data));
-	pc_ppi.portc_switch_high=data&0x8;
-	pc_sh_speaker(data&3);
-	pc_keyb_set_clock(data&0x40);
-}
-
-void pc_ppi_portc_w(int chip, int data )
-{
-	/* KB controller port C */
-	PIO_LOG(1,"PIO_C_w",("$%02x\n", data));
-}
-
-/*************************************************************************
- *
- *		JOY
- *		joystick port
- *
- *************************************************************************/
-
-static double JOY_time = 0.0;
-
-WRITE_HANDLER ( pc_JOY_w )
-{
-	JOY_time = timer_get_time();
-}
-
-#if 0
-#define JOY_VALUE_TO_TIME(v) (24.2e-6+11e-9*(100000.0/256)*v)
-READ_HANDLER ( pc_JOY_r )
-{
-	int data, delta;
-	double new_time = timer_get_time();
-
-	data=input_port_15_r(0)^0xf0;
-#if 0
-    /* timer overflow? */
-	if (new_time - JOY_time > 0.01)
-	{
-		//data &= ~0x0f;
-		JOY_LOG(2,"JOY_r",("$%02x, time > 0.01s\n", data));
-	}
-	else
-#endif
-	{
-		delta=new_time-JOY_time;
-		if ( delta>JOY_VALUE_TO_TIME(input_port_16_r(0)) ) data &= ~0x01;
-		if ( delta>JOY_VALUE_TO_TIME(input_port_17_r(0)) ) data &= ~0x02;
-		if ( delta>JOY_VALUE_TO_TIME(input_port_18_r(0)) ) data &= ~0x04;
-		if ( delta>JOY_VALUE_TO_TIME(input_port_19_r(0)) ) data &= ~0x08;
-		JOY_LOG(1,"JOY_r",("$%02x: X:%d, Y:%d, time %8.5f, delta %d\n", data, input_port_16_r(0), input_port_17_r(0), new_time - JOY_time, delta));
-	}
-
-	return data;
-}
-#else
-READ_HANDLER ( pc_JOY_r )
-{
-	int data, delta;
-	double new_time = timer_get_time();
-
-	data=input_port_15_r(0)^0xf0;
-    /* timer overflow? */
-	if (new_time - JOY_time > 0.01)
-	{
-		//data &= ~0x0f;
-		JOY_LOG(2,"JOY_r",("$%02x, time > 0.01s\n", data));
-	}
-	else
-	{
-		delta = (int)( 256 * 1000 * (new_time - JOY_time) );
-		if (input_port_16_r(0) < delta) data &= ~0x01;
-		if (input_port_17_r(0) < delta) data &= ~0x02;
-		if (input_port_18_r(0) < delta) data &= ~0x04;
-		if (input_port_19_r(0) < delta) data &= ~0x08;
-		JOY_LOG(1,"JOY_r",("$%02x: X:%d, Y:%d, time %8.5f, delta %d\n", data, input
-						   _port_16_r(0), input_port_17_r(0), new_time - JOY_time, delta));
-	}
-
-	return data;
-}
-#endif
-
-
-// damned old checkit doesn't test at standard adresses
-// will do more when I have a program supporting it
-static struct {
-	int data[0x18];
-	void *timer;
-} pc_rtc;
-
-static void pc_rtc_timer(int param)
-{
-	int year;
-	if (++pc_rtc.data[2]>=60) {
-		pc_rtc.data[2]=0;
-		if (++pc_rtc.data[3]>=60) {
-			pc_rtc.data[3]=0;
-			if (++pc_rtc.data[4]>=24) {
-				pc_rtc.data[4]=0;
-				pc_rtc.data[5]=(pc_rtc.data[5]%7)+1;
-				year=pc_rtc.data[9]+2000;
-				if (++pc_rtc.data[6]>=julian_days_in_month(pc_rtc.data[7], year)) {
-					pc_rtc.data[6]=1;
-					if (++pc_rtc.data[7]>12) {
-						pc_rtc.data[7]=1;
-						pc_rtc.data[9]=(pc_rtc.data[9]+1)%100;
-					}
-				}
-			}
-		}
-	}
-}
-
-void pc_rtc_init(void)
-{
-	memset(&pc_rtc,0,sizeof(pc_rtc));
-	pc_rtc.timer=timer_pulse(1.0,0,pc_rtc_timer);
-}
-
-READ_HANDLER( pc_rtc_r )
-{
-	int data;
-	switch (offset) {
-	default:
-		data=pc_rtc.data[offset];
-	}
-	logerror( "rtc read %.2x %.2x\n", offset, data);
-	return data;
-}
-
-WRITE_HANDLER( pc_rtc_w )
-{
-	logerror( "rtc write %.2x %.2x\n", offset, data);
-	switch(offset) {
-	default:
-		pc_rtc.data[offset]=data;
-	}
-}
-
-// I even don't know what it is!
-static struct {
-	/*
-	  reg 0 ram behaviour if in
-	  reg 3 write 1 to enable it
-	  reg 4 ram behaviour ???
-	  reg 5,6 (5 hi, 6 lowbyte) ???
-	*/
-	/* selftest in ibmpc, ibmxt */
-	UINT8 reg[8];
-} pc_expansion={ { 0,0,0,0,0,0,1 } };
-/*************************************************************************
- *
- *		EXP
- *		expansion port
- *
- *************************************************************************/
-WRITE_HANDLER ( pc_EXP_w )
-{
-	DBG_LOG(1,"EXP_unit_w",("%.2x $%02x\n", offset, data));
-	switch (offset) {
-	case 4:
-		pc_expansion.reg[4]=pc_expansion.reg[5]=pc_expansion.reg[6]=data;
-		break;
-	default:
-		pc_expansion.reg[offset] = data;
-	}
-}
-
-READ_HANDLER ( pc_EXP_r )
-{
-    int data;
-	UINT16 a;
-
-	switch (offset) {
-	case 6: 
-		data = pc_expansion.reg[offset];
-		a=(pc_expansion.reg[5]<<8)|pc_expansion.reg[6];
-		a<<=1;
-		pc_expansion.reg[5]=a>>8;
-		pc_expansion.reg[6]=a&0xff;
-		break;
-	default:
-		data = pc_expansion.reg[offset];
-	}
-    DBG_LOG(1,"EXP_unit_r",("%.2x $%02x\n", offset, data));
-	return data;
-}
-
-/* 
+/*
    keyboard seams to permanently sent data clocked by the mainboard
    clock line low for longer means "resync", keyboard sends 0xaa as answer
    will become automatically 0x00 after a while
@@ -1266,6 +1009,16 @@ int pc_cga_frame_interrupt (void)
 	}
 
 	pc_cga_timer();
+
+    if( !onscrd_active() && !setup_active() )
+		pc_keyboard();
+
+    return ignore_interrupt ();
+}
+
+int pc_aga_frame_interrupt (void)
+{
+	pc_aga_timer();
 
     if( !onscrd_active() && !setup_active() )
 		pc_keyboard();
