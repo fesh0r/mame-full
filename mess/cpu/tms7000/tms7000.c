@@ -446,7 +446,7 @@ void tms7000_starttimer1( void )
 		/* Source: internal clock */
 		timer_reset(tms7000.timer1, TIME_IN_CYCLES( 16 * ((tms7000.pf[ 0x03 ] & 0x1f)+1) * ((tms7000.pf[ 0x02 ])+1),
 															cpu_getactivecpu() ) );
-		tms7000.time_timer1 = getabsolutetime();
+		tms7000.time_timer1 = timer_get_time();
 	}
 }
 
@@ -488,9 +488,18 @@ void tms7000_int2_callback( int	param )
 UINT8 tms7000_calculate_timer1_decrementator( void )
 {
 	UINT8	result;
-	double prescalertimer = TIME_IN_CYCLES(16,cpu_getactivecpu()) * (tms7000.pf[0x03] & 0x1f);
 	
-	result = (tms7000.time_timer1 - getabsolutetime()) / prescalertimer;
+	/* Since we are not really decrementating the register every cycle,
+	   I use this function to calculate the value if/when it is needed.
+	   
+	   This will return the incorrect result if the the absolute time
+	   overflows.
+	*/
+	
+	double prescalertimer = TIME_IN_CYCLES(16,cpu_getactivecpu()) *
+													(tms7000.pf[0x03] & 0x1f);
+	
+	result = (tms7000.time_timer1 - timer_get_time()) / prescalertimer;
 
 	return result;
 }
