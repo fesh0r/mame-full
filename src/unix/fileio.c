@@ -38,6 +38,7 @@ static char *artworkpath = NULL;
 static char *spooldir = NULL; /* directory to store high scores */
 static char *screenshotdir = NULL;
 static FILE *errorlog = NULL;
+static char *cfgname = NULL; /* config sub-folder name */
 #ifdef MESS
 static char *cheatdir = NULL;
 #endif
@@ -85,6 +86,9 @@ struct rc_option fileio_opts[] = {
    { "ctrlrdir",	"ctd",			rc_string,	&ctrlrdir,
      XMAMEROOT"/ctrlr",	0,			0,		NULL,
      "Set the dir for saving controller definitions" },
+   { "cfgname",		"cn",			rc_string,	&cfgname,
+     ".",		0,			0,		NULL,
+     "Set the config name in case you use several control panels" },
 #ifdef MESS
    { "cheatdir",	NULL,			rc_string,	&cheatdir,
      XMAMEROOT"/cheat",	0,			0,		NULL,
@@ -521,7 +525,9 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype,
 		    f->file = fopen(name, write ? "w" : "r");
 		    break;
 		case OSD_FILETYPE_CONFIG:
-		    snprintf(name, MAXPATHL, "%s/.%s/cfg/%s.cfg", home_dir, NAME, gamename);
+		    snprintf(name, MAXPATHL, "%s/.%s/cfg/%s", home_dir, NAME, cfgname);
+		    rc_check_and_create_dir(name);
+		    snprintf(name, MAXPATHL, "%s/.%s/cfg/%s/%s.cfg", home_dir, NAME, cfgname, gamename);
 		    f->file = fopen(name,write ? "w" : "r");
 		    break;
 		case OSD_FILETYPE_STATE:
