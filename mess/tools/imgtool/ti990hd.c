@@ -19,7 +19,7 @@
 /* Max sector lenght is bytes.  Generally 256, except for a few older disk
 units which use 288-byte-long sectors, and SCSI units which generally use
 standard 512-byte-long sectors. */
-/* I chose a limit of 512.  No need to use more until someone write CD-ROMs
+/* I chose a limit of 512.  No need to use more until someone creates CD-ROMs
 for TI990. */
 #define MAX_SECTOR_SIZE 512
 #define MIN_SECTOR_SIZE 256
@@ -28,7 +28,13 @@ for TI990. */
 #define MAX_HEADS 31
 #define MAX_SECTORS_PER_TRACK 256	/* 255 for 512-byte-long sector, so that the total number of words that can be recorded on a track may fit in one 16-bit word (store registers command) */
 
-
+/* Max path len in chars: this value is 48 characters in DX10, but since the
+path includes at least a leading '.', our value is 47. */
+/* Since path generally include a volume name that can be up to 8 character
+long, we should dsiplay a warning message when the user wants to create a path
+that is more than 39 character long. */
+#define MAX_PATH_LEN 47
+#define MAX_SAFE_PATH_LEN 39
 
 typedef struct UINT16BE
 {
@@ -544,7 +550,7 @@ static int read_sector_physical_len(STREAM *file_handle, const ti990_phys_sec_ad
 	file_handle: imgtool file handle
 	address: physical sector address
 	geometry: disk geometry (sectors per track, tracks per side, sides)
-	dest: pointer to destination buffer
+	dest: pointer to a destination buffer of geometry->bytes_per_sector bytes
 */
 static int read_sector_physical(STREAM *file_handle, const ti990_phys_sec_address *address, const ti990_geometry *geometry, void *dest)
 {
@@ -557,7 +563,8 @@ static int read_sector_physical(STREAM *file_handle, const ti990_phys_sec_addres
 	file_handle: imgtool file handle
 	address: physical sector address
 	geometry: disk geometry (sectors per track, tracks per side, sides)
-	src: pointer to 256-byte source buffer
+	src: pointer to source buffer
+	len: lenght of source buffer
 */
 static int write_sector_physical_len(STREAM *file_handle, const ti990_phys_sec_address *address, const ti990_geometry *geometry, const void *src, int len)
 {
@@ -592,7 +599,7 @@ static int write_sector_physical_len(STREAM *file_handle, const ti990_phys_sec_a
 	file_handle: imgtool file handle
 	address: physical sector address
 	geometry: disk geometry (sectors per track, tracks per side, sides)
-	src: pointer to 256-byte source buffer
+	dest: pointer to a source buffer of geometry->bytes_per_sector bytes
 */
 static int write_sector_physical(STREAM *file_handle, const ti990_phys_sec_address *address, const ti990_geometry *geometry, const void *src)
 {
@@ -616,7 +623,8 @@ static void log_address_to_phys_address(int secnum, const ti990_geometry *geomet
 	file_handle: imgtool file handle
 	secnum: logical sector address
 	geometry: disk geometry (sectors per track, tracks per side, sides)
-	dest: pointer to 256-byte destination buffer
+	dest: pointer to destination buffer
+	len: lenght of data to read
 */
 static int read_sector_logical_len(STREAM *file_handle, int secnum, const ti990_geometry *geometry, void *dest, int len)
 {
@@ -634,7 +642,7 @@ static int read_sector_logical_len(STREAM *file_handle, int secnum, const ti990_
 	file_handle: imgtool file handle
 	secnum: logical sector address
 	geometry: disk geometry (sectors per track, tracks per side, sides)
-	dest: pointer to 256-byte destination buffer
+	dest: pointer to a destination buffer of geometry->bytes_per_sector bytes
 */
 static int read_sector_logical(STREAM *file_handle, int secnum, const ti990_geometry *geometry, void *dest)
 {
@@ -647,7 +655,8 @@ static int read_sector_logical(STREAM *file_handle, int secnum, const ti990_geom
 	file_handle: imgtool file handle
 	secnum: logical sector address
 	geometry: disk geometry (sectors per track, tracks per side, sides)
-	src: pointer to 256-byte source buffer
+	src: pointer to source buffer
+	len: lenght of source buffer
 */
 static int write_sector_logical_len(STREAM *file_handle, int secnum, const ti990_geometry *geometry, const void *src, int len)
 {
@@ -665,14 +674,13 @@ static int write_sector_logical_len(STREAM *file_handle, int secnum, const ti990
 	file_handle: imgtool file handle
 	secnum: logical sector address
 	geometry: disk geometry (sectors per track, tracks per side, sides)
-	src: pointer to 256-byte source buffer
+	dest: pointer to a source buffer of geometry->bytes_per_sector bytes
 */
 static int write_sector_logical(STREAM *file_handle, int secnum, const ti990_geometry *geometry, const void *src)
 {
 	return write_sector_logical_len(file_handle, secnum, geometry, src, geometry->bytes_per_sector);
 }
 
-#if 0
 /*
 	Find the catalog entry and fdr record associated with a file name
 
@@ -681,34 +689,95 @@ static int write_sector_logical(STREAM *file_handle, int secnum, const ti990_geo
 	fdr: pointer to buffer where the fdr record should be stored (may be NULL)
 	catalog_index: on output, index of file catalog entry (may be NULL)
 */
-static int find_fdr(ti99_image *image, char fname[10], ti99_fdr *fdr, int *catalog_index)
+static int find_fdr(ti990_image *image, const char fname[MAX_PATH_LEN+1]/*, ti990_fdr *fdr, int *catalog_index*/)
 {
-	int fdr_secnum;
+	//int fdr_secnum;
 	int i;
+	const char *element_start, *element_end;
+	int element_len;
+	char element[8];
+	ti990_dor dor;
+	ti990_fdr fdr;
+	int hash_key;
+	int nrc;
+	unsigned base;
+	int reply;
 
 
-	i = 0;
-	if ((image->catalog[0].fdr_secnum == 0) && (image->catalog[1].fdr_secnum != 0))
-		i = 1;	/* skip empty entry 0 (it must be a non-listable catalog) */
+	base = (unsigned) get_UINT16BE(image->sec0.vda) * get_UINT16BE(image->sec0.spa);
 
-	for (; (i<128) && ((fdr_secnum = image->catalog[i].fdr_secnum) != 0); i++)
+	element_start = fname;
+	do
 	{
-		if (memcmp(image->catalog[i].fname, fname, 10) == 0)
-		{	/* file found */
-			if (catalog_index)
-				*catalog_index = i;
+		/* read directory header */
+		reply = read_sector_logical_len(image->file_handle, base, & image->geometry, &dor, sizeof(dor));
+		if (reply)
+			return IMGTOOLERR_READERROR;
 
-			if (fdr)
-				if (read_sector_logical(image->file_handle, fdr_secnum, & image->geometry, fdr))
-					return IMGTOOLERR_READERROR;
+		nrc = get_UINT16BE(dor.nrc);
 
-			return 0;
+		/* find next path element */
+		element_end = strchr(element_start, '.');
+		element_len = element_end ? (element_end - element_start) : strlen(element_start);
+		if ((element_len > 8) || (element_len == 0))
+			return IMGTOOLERR_PARAMCORRUPT;
+		/* generate file name and hash key */
+		hash_key = 1;
+		for (i=0; i<element_len; i++)
+		{
+			element[i] = element_start[i];
+			hash_key = ((hash_key * (unsigned char) element_start[i]) % nrc) + 1;
 		}
+		while (i<8)
+		{
+			element[i] = ' ';
+			i++;
+		}
+
+		/* search entry in directory */
+		i = hash_key;
+		while (1)
+		{
+			reply = read_sector_logical_len(image->file_handle, base + i, & image->geometry,
+												& fdr, 0x86);
+			if (reply)
+				return IMGTOOLERR_READERROR;
+			if (!memcmp(element, fdr.fnm, 8))
+			{	/* found match !!! */
+				/* ... */
+				break;
+			}
+
+			/* next record */
+			if (i != nrc)
+				i++;
+			else
+				i = 1;
+
+			/* exit if we have tested every record */
+			if (i == hash_key)
+				return IMGTOOLERR_FILENOTFOUND;
+		}
+
+		/* iterate */
+		if (element_end)
+		{
+			element_start = element_end+1;
+			/* we need to check that this is a directory */
+			/* if it is an alias to a directory, we need to follow it, too. */
+			/* ... */
+			/* initialize base */
+			base = (unsigned) get_UINT16BE(fdr.paa) * get_UINT16BE(image->sec0.spa);
+		}
+		else
+			element_start = NULL;
 	}
+	while (element_start);
 
 	return IMGTOOLERR_FILENOTFOUND;
 }
 
+#if 0
 /*
 	Allocate one sector on disk, for use as a fdr record
 
@@ -1097,7 +1166,7 @@ static int ti990_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	iter->image = image;
 
 	reply = read_sector_logical_len(iter->image->file_handle,
-									get_UINT16BE(iter->image->sec0.vda) * get_UINT16BE(iter->image->sec0.spa),
+									(unsigned) get_UINT16BE(iter->image->sec0.vda) * get_UINT16BE(iter->image->sec0.spa),
 									& iter->image->geometry, &dor, sizeof(dor));
 
 	if (reply)
