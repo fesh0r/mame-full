@@ -174,6 +174,33 @@ static time_t prodos_crack_time(UINT32 prodos_time)
 
 
 
+static UINT32 prodos_setup_time(time_t ansi_time)
+{
+	struct tm t;
+	UINT32 result = 0;
+
+	t = *localtime(&ansi_time);
+	if ((t.tm_year >= 100) && (t.tm_year <= 149))
+		t.tm_year -= 100;
+
+	result |= (((UINT32) t.tm_min)	& 0x003F) << 16;
+	result |= (((UINT32) t.tm_hour)	& 0x001F) << 24;
+	result |= (((UINT32) t.tm_mday)	& 0x001F) <<  0;
+	result |= (((UINT32) t.tm_mon)	& 0x000F) <<  5;
+	result |= (((UINT32) t.tm_year)	& 0x007F) <<  9;
+	return result;
+}
+
+
+
+static UINT32 prodos_time_now(void)
+{
+	time_t now;
+	time(&now);
+	return prodos_setup_time(now);
+}
+
+
 
 static int is_file_storagetype(UINT8 storage_type)
 {
@@ -435,7 +462,6 @@ static imgtoolerr_t prodos_diskimage_open_35(imgtool_image *image)
 
 /* ----------------------------------------------------------------------- */
 
-#if 0
 static imgtoolerr_t prodos_load_volume_bitmap(imgtool_image *image, UINT8 **bitmap)
 {
 	imgtoolerr_t err;
@@ -494,7 +520,6 @@ static imgtoolerr_t prodos_save_volume_bitmap(imgtool_image *image, const UINT8 
 	}
 	return IMGTOOLERR_SUCCESS;
 }
-#endif
 
 
 
@@ -507,6 +532,61 @@ static void prodos_set_volume_bitmap_bit(UINT8 *buffer, UINT32 block, int value)
 		*buffer &= ~mask;
 	else
 		*buffer |= mask;
+}
+
+
+
+static int prodos_get_volume_bitmap_bit(const UINT8 *buffer, UINT32 block)
+{
+	UINT8 mask;
+	buffer += block / 8;
+	mask = 1 << (7 - (block % 8));
+	return (*buffer & mask) ? 1 : 0;
+}
+
+
+
+static imgtoolerr_t prodos_alloc_block(imgtool_image *image, UINT32 *block)
+{
+	imgtoolerr_t err;
+	UINT8 *bitmap;
+	struct prodos_diskinfo *di;
+	UINT32 bitmap_blocks, i;
+
+	di = get_prodos_info(image);
+	*block = 0;
+	bitmap_blocks = (di->total_blocks + (BLOCK_SIZE * 8) - 1) / (BLOCK_SIZE * 8);
+
+	err = prodos_load_volume_bitmap(image, &bitmap);
+	if (err)
+		goto done;
+
+	for (i = (di->volume_bitmap_block + bitmap_blocks); i < di->total_blocks; i++)
+	{
+		if (!prodos_get_volume_bitmap_bit(bitmap, i))
+		{
+			*block = i;
+			break;
+		}
+	}
+
+	if (*block > 0)
+	{
+		err = prodos_save_volume_bitmap(image, bitmap);
+		if (err)
+			goto done;
+	}
+	else
+	{
+		err = IMGTOOLERR_NOSPACE;
+	}
+
+done:
+	if (err)
+		*block = 0;
+	if (bitmap)
+		free(bitmap);
+	return err;
 }
 
 
@@ -573,24 +653,6 @@ static imgtoolerr_t prodos_diskimage_create_35(imgtool_image *image, option_reso
 
 /* ----------------------------------------------------------------------- */
 
-static imgtoolerr_t prodos_load_enum_block(imgtool_image *image,
-	struct prodos_direnum *appleenum, int block)
-{
-	imgtoolerr_t err;
-	UINT8 buffer[BLOCK_SIZE];
-
-	err = prodos_load_block(image, block, buffer);
-	if (err)
-		return err;
-
-	/* copy the data */
-	appleenum->block = block;
-	memcpy(appleenum->block_data, buffer, sizeof(buffer));
-	return IMGTOOLERR_SUCCESS;
-}
-
-
-
 static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 	struct prodos_direnum *appleenum, struct prodos_dirent *ent)
 {
@@ -598,6 +660,7 @@ static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 	struct prodos_diskinfo *di;
 	UINT32 next_block;
 	UINT32 offset;
+	UINT8 buffer[BLOCK_SIZE];
 
 	di = get_prodos_info(image);
 
@@ -613,9 +676,12 @@ static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 
 			if (next_block > 0)
 			{
-				err = prodos_load_enum_block(image, appleenum, next_block);
+				/* read next block */
+				err = prodos_load_block(image, next_block, buffer);
 				if (err)
 					return err;
+				appleenum->block = next_block;
+				memcpy(appleenum->block_data, buffer, sizeof(buffer));
 			}
 			else
 			{
@@ -649,12 +715,39 @@ static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 
 
 
+static imgtoolerr_t prodos_put_dirent(imgtool_image *image,
+	struct prodos_direnum *appleenum, const struct prodos_dirent *ent)
+{
+	imgtoolerr_t err;
+	struct prodos_diskinfo *di;
+	UINT32 offset;
+
+	di = get_prodos_info(image);
+	offset = appleenum->index * di->dirent_size + 4;
+
+	appleenum->block_data[offset + 0] = ent->storage_type;
+	memcpy(&appleenum->block_data[offset + 1], ent->filename, 15);
+	place_integer(appleenum->block_data, offset + 17, 2, ent->key_pointer);
+	place_integer(appleenum->block_data, offset + 21, 3, ent->filesize);
+	place_integer(appleenum->block_data, offset + 24, 4, ent->creation_time);
+	place_integer(appleenum->block_data, offset + 33, 4, ent->lastmodified_time);
+
+	err = prodos_save_block(image, appleenum->block, appleenum->block_data);
+	if (err)
+		return err;
+
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
 static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 	creation_policy_t create, struct prodos_dirent *ent)
 {
 	imgtoolerr_t err;
 	struct prodos_direnum direnum;
 	UINT32 block = ROOTDIR_BLOCK;
+	const char *old_path;
 
 	while(*path)
 	{
@@ -667,8 +760,9 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 			if (err)
 				return err;
 		}
-		while(strcmp(path, ent->filename));
+		while(direnum.block && strcmp(path, ent->filename));
 
+		old_path = path;
 		path += strlen(path) + 1;	
 		if (*path)
 		{
@@ -680,11 +774,17 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 		else if (!ent->storage_type)
 		{
 			/* did not find file; maybe we need to create it */
-			if (!create)
+			if (create == CREATE_NONE)
 				return IMGTOOLERR_FILENOTFOUND;
 
-			/* NYI */
-			return IMGTOOLERR_UNIMPLEMENTED;
+			memset(ent, 0, sizeof(*ent));
+			ent->storage_type = 0x10;
+			ent->creation_time = ent->lastmodified_time = prodos_time_now();
+			strncpy(ent->filename, old_path, sizeof(ent->filename) / sizeof(ent->filename[0]));
+
+			err = prodos_put_dirent(image, &direnum, ent);
+			if (err)
+				return err;
 		}
 	}
 	return IMGTOOLERR_SUCCESS;
@@ -842,6 +942,9 @@ static imgtoolerr_t prodos_diskimage_writefile(imgtool_image *image, const char 
 	imgtoolerr_t err;
 	struct prodos_dirent ent;
 
+	if (stream_size(sourcef) != 0)
+		return IMGTOOLERR_UNIMPLEMENTED;
+
 	err = prodos_lookup_path(image, filename, CREATE_FILE, &ent);
 	if (err)
 		return err;
@@ -849,8 +952,7 @@ static imgtoolerr_t prodos_diskimage_writefile(imgtool_image *image, const char 
 	if (is_dir_storagetype(ent.storage_type))
 		return IMGTOOLERR_FILENOTFOUND;
 
-	/* NYI */
-	return IMGTOOLERR_UNIMPLEMENTED;
+	return IMGTOOLERR_SUCCESS;
 }
 
 
