@@ -22,6 +22,9 @@ merged Street Fighter Zero for MESS
 #include "drivers/cps1.h"       /* External CPS1 definitions */
 
 
+WRITE16_HANDLER( qsound_sharedram1_w );
+READ16_HANDLER( qsound_sharedram1_r );
+
 static READ16_HANDLER( cps1_input2_r )
 {
 	int buttons=readinputport(7);
@@ -214,50 +217,6 @@ static WRITE_HANDLER( qsound_banksw_w )
 *
 ********************************************************************/
 
-static struct EEPROM_interface qsound_eeprom_interface =
-{
-	7,		/* address bits */
-	8,		/* data bits */
-	"0110",	/*  read command */
-	"0101",	/* write command */
-	"0111"	/* erase command */
-};
-
-static struct EEPROM_interface pang3_eeprom_interface =
-{
-	6,		/* address bits */
-	16,		/* data bits */
-	"0110",	/*  read command */
-	"0101",	/* write command */
-	"0111"	/* erase command */
-};
-
-static void qsound_nvram_handler(void *file,int read_or_write)
-{
-	if (read_or_write)
-		EEPROM_save(file);
-	else
-	{
-		EEPROM_init(&qsound_eeprom_interface);
-
-		if (file)
-			EEPROM_load(file);
-	}
-}
-
-static void pang3_nvram_handler(void *file,int read_or_write)
-{
-	if (read_or_write)
-		EEPROM_save(file);
-	else
-	{
-		EEPROM_init(&pang3_eeprom_interface);
-
-		if (file)
-			EEPROM_load(file);
-	}
-}
-
 READ16_HANDLER( cps1_eeprom_port_r )
 {
 	return EEPROM_read_bit();
@@ -277,7 +236,6 @@ WRITE16_HANDLER( cps1_eeprom_port_w )
 		EEPROM_set_clock_line((data & 0x40) ? ASSERT_LINE : CLEAR_LINE);
 	}
 }
-
 
 
 MEMORY_READ16_START( cps1_readmem )
@@ -420,60 +378,62 @@ static struct GfxLayout tilelayout8 =
 {
 	8,8,
 #if DECODE_GFX
-	RGN_FRAC(1,2),
+	RGN_FRAC(1,1),
 #else
 	0,
 #endif
 	4,
-	{ RGN_FRAC(1,2)+8, RGN_FRAC(1,2)+0, 8, 0 },
+	{ 24+32, 16+32, 8+32, 0+32 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64 },
+	8*64
 };
 
 static struct GfxLayout tilelayout16 =
 {
 	16,16,
 #if DECODE_GFX
-	RGN_FRAC(1,4),
+	RGN_FRAC(1,1),
 #else
 	0,
 #endif
 	4,
-	{ RGN_FRAC(1,2)+8, RGN_FRAC(1,2)+0, 8, 0 },
-	{ RGN_FRAC(1,4)+0, RGN_FRAC(1,4)+1, RGN_FRAC(1,4)+2, RGN_FRAC(1,4)+3,
-	  RGN_FRAC(1,4)+4, RGN_FRAC(1,4)+5, RGN_FRAC(1,4)+6, RGN_FRAC(1,4)+7,
-	  0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	16*16
+	{ 24, 16, 8, 0 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+		32+0, 32+1, 32+2, 32+3, 32+4, 32+5, 32+6, 32+7 },
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,
+			8*64, 9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64 },
+	16*64
 };
 
 static struct GfxLayout tilelayout32 =
 {
 	32,32,
 #if DECODE_GFX
-	RGN_FRAC(1,4),
+	RGN_FRAC(1,1),
 #else
 	0,
 #endif
 	4,
-	{ RGN_FRAC(1,2)+8, RGN_FRAC(1,2)+0, 8, 0 },
-	{
-		RGN_FRAC(1,4)+0, RGN_FRAC(1,4)+1, RGN_FRAC(1,4)+2, RGN_FRAC(1,4)+3,
-		RGN_FRAC(1,4)+4, RGN_FRAC(1,4)+5, RGN_FRAC(1,4)+6, RGN_FRAC(1,4)+7,
-		0, 1, 2, 3, 4, 5, 6, 7,
-		16+RGN_FRAC(1,4)+0, 16+RGN_FRAC(1,4)+1, 16+RGN_FRAC(1,4)+2, 16+RGN_FRAC(1,4)+3,
-		16+RGN_FRAC(1,4)+4, 16+RGN_FRAC(1,4)+5, 16+RGN_FRAC(1,4)+6, 16+RGN_FRAC(1,4)+7,
-		16+0, 16+1, 16+2, 16+3, 16+4, 16+5, 16+6, 16+7
-	},
-	{
-		 0*32,  1*32,  2*32,  3*32,  4*32,  5*32,  6*32,  7*32,
-		 8*32,  9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32,
-		16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32,
-		24*32, 25*32, 26*32, 27*32, 28*32, 29*32, 30*32, 31*32
-	},
-	32*32
+	{ 24, 16, 8, 0 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+		32+0, 32+1, 32+2, 32+3, 32+4, 32+5, 32+6, 32+7,
+		2*32+0, 2*32+1, 2*32+2, 2*32+3, 2*32+4, 2*32+5, 2*32+6, 2*32+7,
+		3*32+0, 3*32+1, 3*32+2, 3*32+3, 3*32+4, 3*32+5, 3*32+6, 3*32+7 },
+	{ 0*128, 1*128, 2*128, 3*128, 4*128, 5*128, 6*128, 7*128,
+			8*128, 9*128, 10*128, 11*128, 12*128, 13*128, 14*128, 15*128,
+			16*128, 17*128, 18*128, 19*128, 20*128, 21*128, 22*128, 23*128,
+			24*128, 25*128, 26*128, 27*128, 28*128, 29*128, 30*128, 31*128 },
+	32*128
+};
+
+struct GfxDecodeInfo cps1_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &tilelayout16, 0x000, 32*8 },	/* sprites */
+	{ REGION_GFX1, 0, &tilelayout8,  0x000, 32*8 },	/* tiles 8x8 */
+	{ REGION_GFX1, 0, &tilelayout16, 0x000, 32*8 },	/* tiles 16x16 */
+	{ REGION_GFX1, 0, &tilelayout32, 0x000, 32*8 },	/* tiles 32x32 */
+	{ -1 } /* end of array */
 };
 
 static void cps1_irq_handler_mus(int irq)
@@ -547,20 +507,17 @@ struct QSound_interface qsound_interface =
 	{ 100,100 }
 };
 
-struct GfxDecodeInfo cps1_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &tilelayout16, 0x000, 32 },	/* sprites */
-	{ REGION_GFX1, 0, &tilelayout8,  0x200, 32 },	/* tiles 8x8 */
-	{ REGION_GFX1, 0, &tilelayout16, 0x400, 32 },	/* tiles 16x16 */
-	{ REGION_GFX1, 0, &tilelayout32, 0x600, 32 },	/* tiles 32x32 */
-	/* stars use colors 0x800-087ff and 0xa00-0a7ff */
-	{ -1 } /* end of array */
-};
-
 /*
 Export this function so that the vidhrdw routine can drive the
 Q-Sound hardware
 */
+
+WRITE16_HANDLER( qsound_sharedram1_w )
+{
+	if (ACCESSING_LSB)
+		qsound_sharedram1[offset] = data;
+}
+
 WRITE16_HANDLER( cps2_qsound_sharedram_w )
 {
     qsound_sharedram1_w(offset/2, data, 0xff00);
@@ -571,11 +528,6 @@ READ16_HANDLER( qsound_sharedram1_r )
 	return qsound_sharedram1[offset] | 0xff00;
 }
 
-WRITE16_HANDLER( qsound_sharedram1_w )
-{
-	if (ACCESSING_LSB)
-		qsound_sharedram1[offset] = data;
-}
 
 
 /***************************************************************************
@@ -594,23 +546,24 @@ ROM_START( sfzch )
 	ROM_LOAD16_WORD_SWAP( "sfzch21",        0x100000, 0x80000, 0x5435225d )
 	ROM_LOAD16_WORD_SWAP( "sfza20",         0x180000, 0x80000, 0x806e8f38 )
 
-	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "sfz03",         0x000000, 0x80000, 0x9584ac85 )
-	ROM_LOAD( "sfz07",         0x080000, 0x80000, 0xbb2c734d )
-	ROM_LOAD( "sfz12",         0x100000, 0x80000, 0xf122693a )
-	ROM_LOAD( "sfz16",         0x180000, 0x80000, 0x19a5abd6 )
-	ROM_LOAD( "sfz01",         0x200000, 0x80000, 0x0dd53e62 )
-	ROM_LOAD( "sfz05",         0x280000, 0x80000, 0x2b47b645 )
-	ROM_LOAD( "sfz10",         0x300000, 0x80000, 0x2a7d675e )
-	ROM_LOAD( "sfz14",         0x380000, 0x80000, 0x09038c81 )
-	ROM_LOAD( "sfz04",         0x400000, 0x80000, 0xb983624c )
-	ROM_LOAD( "sfz08",         0x480000, 0x80000, 0x454f7868 )
-	ROM_LOAD( "sfz13",         0x500000, 0x80000, 0x7cf942c8 )
-	ROM_LOAD( "sfz17",         0x580000, 0x80000, 0x248b3b73 )
-	ROM_LOAD( "sfz02",         0x600000, 0x80000, 0x94c31e3f )
-	ROM_LOAD( "sfz06",         0x680000, 0x80000, 0x74fd9fb1 )
-	ROM_LOAD( "sfz11",         0x700000, 0x80000, 0xe35546c8 )
-	ROM_LOAD( "sfz15",         0x780000, 0x80000, 0x1aa17391 )
+	ROM_REGION( 0x800000, REGION_GFX1, 0 )
+	ROMX_LOAD( "sfz01",         0x000000, 0x80000, 0x0dd53e62, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sfz02",         0x000002, 0x80000, 0x94c31e3f, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sfz03",         0x000004, 0x80000, 0x9584ac85, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sfz04",         0x000006, 0x80000, 0xb983624c, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sfz05",         0x200000, 0x80000, 0x2b47b645, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sfz06",         0x200002, 0x80000, 0x74fd9fb1, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sfz07",         0x200004, 0x80000, 0xbb2c734d, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sfz08",         0x200006, 0x80000, 0x454f7868, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sfz10",         0x400000, 0x80000, 0x2a7d675e, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sfz11",         0x400002, 0x80000, 0xe35546c8, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sfz12",         0x400004, 0x80000, 0xf122693a, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sfz13",         0x400006, 0x80000, 0x7cf942c8, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sfz14",         0x600000, 0x80000, 0x09038c81, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sfz15",         0x600002, 0x80000, 0x1aa17391, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sfz16",         0x600004, 0x80000, 0x19a5abd6, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sfz17",         0x600006, 0x80000, 0x248b3b73, ROM_GROUPWORD | ROM_SKIP(6) )
+
 
 	ROM_REGION( 0x18000, REGION_CPU2,0 ) /* 64k for the audio CPU (+banks) */
 	ROM_LOAD( "sfz09",         0x00000, 0x08000, 0xc772628b )

@@ -625,8 +625,8 @@ $(OBJ)/nascom1.a:  \
 
 $(OBJ)/cpschngr.a: \
 	  $(OBJ)/machine/eeprom.o	 \
-	  $(OBJ)/vidhrdw/cps1.o 	 \
-	  $(OBJ)/mess/systems/cpschngr.o
+	  $(OBJ)/mess/systems/cpschngr.o \
+	  $(OBJ)/vidhrdw/cps1.o
 
 $(OBJ)/mtx.a:	   \
 	  $(OBJ)/mess/systems/mtx.o
