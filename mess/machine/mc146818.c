@@ -27,7 +27,7 @@ static struct {
 
 	double last_refresh;
 	void *timer;
-} mc146818= {0};
+} mc146818= { MC146818_STANDARD };
 
 #define HOURS_24 mc146818.data[0xb]&2
 #define BCD_MODE !(mc146818.data[0xb]&4) // book has other description!

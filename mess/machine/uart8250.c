@@ -47,7 +47,7 @@ typedef struct {
 	} send;
 } UART8250;
 
-UART8250 uart[4]={ { { 0 } } };
+UART8250 uart[4]={ { { TYPE8250 } } };
 
 /* int's pending */
 #define COM_INT_PENDING_RECEIVED_DATA_AVAILABLE	0x0001
