@@ -7,6 +7,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [A2600/A7800] Fixed reset handling.  [Nate Woods]
+
 - [A7800] Fixed RAM0 and RAM1 bank handling, which has been broken since MESS
   0.61.  Ikari Warriors now runs, among other games most likely.  [Nate Woods]
 

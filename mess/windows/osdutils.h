@@ -1,23 +1,9 @@
-#include <windows.h>
-
 #ifdef UNDER_CE
 #include <string.h>
-#else
-#include <direct.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
 #endif
 
 #define strcmpi		stricmp
 #define strncmpi	strnicmp
-
-#ifndef UNDER_CE
-#define osd_mkdir(dir)			CreateDirectory((dir), NULL)
-#define osd_rmdir(dir)			RemoveDirectory(dir)
-#define osd_rmfile(file)		DeleteFile(file)
-#define osd_copyfile(dest, src)	CopyFile((src), (dest), TRUE)
-#endif
 
 /* some irritating redefinitions */
 #define read	read_

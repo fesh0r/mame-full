@@ -10,10 +10,10 @@
 #include "cassimg.h"
 #include "utils.h"
 
-static const char magic1[4] = "RIFF";
-static const char magic2[4] = "WAVE";
-static const char format_tag_id[4] = "fmt ";
-static const char data_tag_id[4] = "data";
+static const char magic1[4] = { 'R', 'I', 'F', 'F' };
+static const char magic2[4] = { 'W', 'A', 'V', 'E' };
+static const char format_tag_id[4] = { 'f', 'm', 't', ' ' };
+static const char data_tag_id[4] = { 'd', 'a', 't', 'a' };
 
 #define WAV_FORMAT_PCM		1
 

@@ -108,15 +108,32 @@ int strncmpi(const char *dst, const char *src, size_t n);
 char *osd_basename (char *name);
 #endif /* osd_basename */
 
+
+
 /* -----------------------------------------------------------------------
  * osd_mkdir
+ * osd_rmdir
+ * osd_rmfile
+ * osd_copyfile
  *
- * A platform independant mkdir().  No default implementation exists, but
- * so far, only imgtool uses this.  Either way, a 'prototype' is given here
- * for informational purposes.
+ * Misc platform independent dir/file functions.
  * ----------------------------------------------------------------------- */
 
-/* void osd_mkdir(const char *dir); */
+#ifndef osd_mkdir
+void osd_mkdir(const char *dir);
+#endif /* osd_mkdir */
+
+#ifndef osd_rmdir
+void osd_rmdir(const char *dir);
+#endif /* osd_rmdir */
+
+#ifndef osd_rmfile
+void osd_rmfile(const char *filepath);
+#endif /* osd_rmfile */
+
+#ifndef osd_copyfile
+void osd_copyfile(const char *destfile, const char *srcfile);
+#endif /* osd_copyfile */
 
 
 /* -----------------------------------------------------------------------

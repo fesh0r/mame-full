@@ -844,7 +844,11 @@ else
 OUTOPT = -o $@
 endif
 
-dat2html$(EXE): $(OBJ)/mess/tools/dat2html/dat2html.o $(OBJ)/mess/utils.o 
+dat2html$(EXE):								\
+	$(PLATFORM_IMGTOOL_OBJS)				\
+	$(OBJ)/mess/tools/dat2html/dat2html.o	\
+	$(OBJ)/mess/tools/imgtool/stubs.o		\
+	$(OBJ)/mess/utils.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(OUTOPT)
 
@@ -873,7 +877,7 @@ tools/messdocs$(EXE):						\
 
 tools/imgtool$(EXE):	                   \
 	$(PLATFORM_IMGTOOL_OBJS)	           \
-	$(OBJ)/unzip.o	                   \
+	$(OBJ)/unzip.o							\
 	$(OBJ)/harddisk.o	                   \
 	$(OBJ)/md5.o					       \
 	$(OBJ)/mess/crcfile.o	               \
@@ -888,7 +892,7 @@ tools/imgtool$(EXE):	                   \
 	$(OBJ)/mess/formats/coco_dsk.o			\
 	$(OBJ)/mess/formats/coco_cas.o			\
 	$(OBJ)/mess/formats/wavfile.o			\
-	$(OBJ)/mess/tools/imgtool/stubs.o    \
+	$(OBJ)/mess/tools/imgtool/stubs.o		\
 	$(OBJ)/mess/tools/imgtool/main.o     \
 	$(OBJ)/mess/tools/imgtool/stream.o   \
 	$(OBJ)/mess/tools/imgtool/library.o  \

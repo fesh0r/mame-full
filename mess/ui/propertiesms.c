@@ -10,6 +10,7 @@
 #include <commctrl.h>
 #include <commdlg.h>
 #include <windowsx.h>
+#include <sys/stat.h>
 
 #include "ui/screenshot.h"
 #include "ui/bitmask.h"

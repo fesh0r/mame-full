@@ -1,8 +1,12 @@
+#include <windows.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
 #include "osdepend.h"
+#include "strconv.h"
+
+
 
 //============================================================
 //	osd_dirname
@@ -42,6 +46,8 @@ char *osd_dirname(const char *filename)
 	return dirname;
 }
 
+
+
 //============================================================
 //	osd_basename
 //============================================================
@@ -63,6 +69,8 @@ char *osd_basename(char *filename)
 	return filename;
 }
 
+
+
 //============================================================
 //	osd_path_separator
 //============================================================
@@ -71,6 +79,8 @@ const char *osd_path_separator(void)
 {
 	return "\\";
 }
+
+
 
 //============================================================
 //	osd_is_path_separator
@@ -81,9 +91,12 @@ int osd_is_path_separator(char ch)
 	return (ch == '\\') || (ch == '/');
 }
 
+
+
 //============================================================
 //	osd_is_absolute_path
 //============================================================
+
 int osd_is_absolute_path(const char *path)
 {
 	int result;
@@ -97,5 +110,49 @@ int osd_is_absolute_path(const char *path)
 	else
 		result = 0;
 	return result;
+}
+
+
+
+//============================================================
+//	osd_mkdir
+//============================================================
+
+void osd_mkdir(const char *dir)
+{
+	CreateDirectory(A2T(dir), NULL);
+}
+
+
+
+//============================================================
+//	osd_rmdir
+//============================================================
+
+void osd_rmdir(const char *dir)
+{
+	RemoveDirectory(A2T(dir));
+}
+
+
+
+//============================================================
+//	osd_rmfile
+//============================================================
+
+void osd_rmfile(const char *filepath)
+{
+	DeleteFile(A2T(filepath));
+}
+
+
+
+//============================================================
+//	osd_copyfile
+//============================================================
+
+void osd_copyfile(const char *destfile, const char *srcfile)
+{
+	CopyFile(A2T(srcfile), A2T(destfile), TRUE);
 }
 

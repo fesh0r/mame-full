@@ -4,11 +4,13 @@
 
 	Machine file to handle emulation of the Atari 7800.
 
-	14-May-2002	kubecj fixed Fatal Run - adding simple riot timer helped.
+	 5-Nov-2003 npwoods		Cleanups
+
+	14-May-2002	kubecj		Fixed Fatal Run - adding simple riot timer helped.
 							maybe someone with knowledge should add full fledged
 							riot emulation?
 
-	13-May-2002 kubecj	fixed a7800_cart_type not to be too short ;-D
+	13-May-2002 kubecj		Fixed a7800_cart_type not to be too short ;-D
 							fixed for loading of bank6 cart (uh, I hope)
 							fixed for loading 64k supercarts
 							fixed for using PAL bios
@@ -28,46 +30,39 @@
 
 #include "includes/a7800.h"
 
-unsigned char *a7800_cart_bkup = NULL;
-unsigned char *a7800_bios_bkup = NULL;
-int a7800_ctrl_lock;
-int a7800_ctrl_reg;
-int maria_flag;
-
-int riot_pa_ddr;
-int riot_pa_out;
-int riot_pb_ddr;
-int riot_pb_out;
-int riot_timer;
-
-/* number of lines on screen */
-int a7800_lines = 262;
-
-/* 1 if pal */
-int a7800_ispal = 0;
+int a7800_lines;
+int a7800_ispal;
 
 /* local */
-unsigned char *a7800_ram;
-unsigned char *a7800_cartridge_rom;
-unsigned int a7800_cart_type;
-unsigned long a7800_cart_size;
-unsigned char a7800_stick_type;
+static unsigned char *a7800_cart_bkup = NULL;
+static unsigned char *a7800_bios_bkup = NULL;
+static int a7800_ctrl_lock;
+static int a7800_ctrl_reg;
+static int maria_flag;
+
+static int riot_pa_ddr;
+static int riot_pa_out;
+static int riot_pb_ddr;
+static int riot_pb_out;
+static int riot_timer;
+
+static unsigned char *a7800_cartridge_rom;
+static unsigned int a7800_cart_type;
+static unsigned long a7800_cart_size;
+static unsigned char a7800_stick_type;
 static UINT8 *ROM;
 
-static void a7800_common_init_machine(int ispal, int lines)
+
+
+/* -----------------------------------------------------------------------
+ * Driver/Machine Init
+ * ----------------------------------------------------------------------- */
+
+static void a7800_driver_init(int ispal, int lines)
 {
 	ROM = memory_region(REGION_CPU1);
-
 	a7800_ispal = ispal;
 	a7800_lines = lines;
-
-	a7800_ctrl_lock = 0;
-	a7800_ctrl_reg = 0;
-	maria_flag = 0;
-
-	/* pokey cartridge */
-	if (a7800_cart_type & 0x01)
-		install_mem_write_handler(0, 0x4000, 0x7FFF, pokey1_w);
 
 	/* standard banks */
 	cpu_setbank(5, &ROM[0x2040]);		/* RAM0 */
@@ -75,17 +70,36 @@ static void a7800_common_init_machine(int ispal, int lines)
 	cpu_setbank(7, &ROM[0x2000]);		/* MAINRAM */
 }
 
-/* NTSC machine init */
-MACHINE_INIT( a7800 )
+
+
+DRIVER_INIT( a7800_ntsc )
 {
-	a7800_common_init_machine(FALSE, 262);
+	a7800_driver_init(FALSE, 262);
 }
 
-/* PAL machine init */
-MACHINE_INIT( a7800p )
+
+
+DRIVER_INIT( a7800_pal )
 {
-	a7800_common_init_machine(TRUE, 312);
+	a7800_driver_init(TRUE, 312);
 }
+
+
+
+MACHINE_INIT( a7800 )
+{
+	a7800_ctrl_lock = 0;
+	a7800_ctrl_reg = 0;
+	maria_flag = 0;
+
+	/* pokey cartridge */
+	if (a7800_cart_type & 0x01)
+		install_mem_write_handler(0, 0x4000, 0x7FFF, pokey1_w);
+}
+
+
+
+/* ----------------------------------------------------------------------- */
 
 #define MBANK_TYPE_ATARI 0x0000
 #define MBANK_TYPE_ACTIVISION 0x0100
@@ -126,13 +140,10 @@ Versions:
 UINT32 a7800_partialcrc(const unsigned char *buf, size_t size)
 {
 	UINT32 crc;
-	if(size < 129)
+	if (size < 129)
 		return 0;
-
-	crc =(UINT32) crc32(0L,&buf[128],size-128);
-
+	crc =(UINT32) crc32(0L, &buf[128], size-128);
 	logerror("A7800 Partial CRC: %08lx %d [%s]\n", (long) crc, (int)size, &buf[1]);
-
 	return crc;
 }
 
@@ -150,21 +161,21 @@ static int a7800_verify_cart(char header[128])
 	return IMAGE_VERIFY_PASS;
 }
 
-static int a7800_load_cart_cmn(mess_image *image, mame_file *cartfile)
+DEVICE_LOAD( a7800_cart )
 {
 	long len,start;
 	unsigned char header[128];
+	UINT8 *memory;
 
-	ROM = memory_region(REGION_CPU1);
-
+	memory = memory_region(REGION_CPU1);
 	a7800_bios_bkup = NULL;
 	a7800_cart_bkup = NULL;
 
 	/* set banks to default states */
-	cpu_setbank( 1, ROM + 0x4000 );
-	cpu_setbank( 2, ROM + 0x8000 );
-	cpu_setbank( 3, ROM + 0xA000 );
-	cpu_setbank( 4, ROM + 0xC000 );
+	cpu_setbank( 1, memory + 0x4000 );
+	cpu_setbank( 2, memory + 0x8000 );
+	cpu_setbank( 3, memory + 0xA000 );
+	cpu_setbank( 4, memory + 0xC000 );
 
 	/* Allocate memory for BIOS bank switching */
 	a7800_bios_bkup = (UINT8*) image_malloc(image, 0x4000);
@@ -182,129 +193,113 @@ static int a7800_load_cart_cmn(mess_image *image, mame_file *cartfile)
 	}
 
 	/* save the BIOS so we can switch it in and out */
-	memcpy( a7800_bios_bkup, ROM + 0xC000, 0x4000 );
+	memcpy( a7800_bios_bkup, memory + 0xC000, 0x4000 );
 
 	/* defaults for PAL bios without cart */
 	a7800_cart_type = 0;
 	a7800_stick_type = 1;
 
-	if( cartfile != NULL )
+	/* Load and decode the header */
+	mame_fread( file, header, 128 );
+
+	/* Check the cart */
+	if( a7800_verify_cart((char *)header) == IMAGE_VERIFY_FAIL)
+		return INIT_FAIL;
+
+	len =(header[49] << 24) |(header[50] << 16) |(header[51] << 8) | header[52];
+	a7800_cart_size = len;
+
+	a7800_cart_type =(header[53] << 8) | header[54];
+	a7800_stick_type = header[55];
+	logerror( "Cart type: %x\n", a7800_cart_type );
+
+	/* For now, if game support stick and gun, set it to stick */
+	if( a7800_stick_type == 3 )
+		a7800_stick_type = 1;
+
+	if( a7800_cart_type == 0 || a7800_cart_type == 1 )
 	{
-		/* Load and decode the header */
-		mame_fread( cartfile, header, 128 );
+		/* Normal Cart */
 
-		/* Check the cart */
-		if( a7800_verify_cart((char *)header) == IMAGE_VERIFY_FAIL)
-			return INIT_FAIL;
+		start = 0x10000 - len;
+		a7800_cartridge_rom = memory + start;
+		mame_fread(file, a7800_cartridge_rom, len);
+	}
+	else if( a7800_cart_type & 0x02 )
+	{
+		/* Super Cart */
 
-		len =(header[49] << 24) |(header[50] << 16) |(header[51] << 8) | header[52];
-		a7800_cart_size = len;
-
-		a7800_cart_type =(header[53] << 8) | header[54];
-		a7800_stick_type = header[55];
-		logerror( "Cart type: %x\n", a7800_cart_type );
-
-		/* For now, if game support stick and gun, set it to stick */
-		if( a7800_stick_type == 3 )
-			a7800_stick_type = 1;
-
-		if( a7800_cart_type == 0 || a7800_cart_type == 1 )
+		/* Extra ROM at $4000 */
+		if( a7800_cart_type & 0x08 )
 		{
-			/* Normal Cart */
-
-			start = 0x10000 - len;
-			a7800_cartridge_rom = ROM + start;
-			mame_fread(cartfile, a7800_cartridge_rom, len);
-		}
-		else if( a7800_cart_type & 0x02 )
-		{
-			/* Super Cart */
-
-			/* Extra ROM at $4000 */
-			if( a7800_cart_type & 0x08 )
-			{
-				mame_fread(cartfile, ROM + 0x4000, 0x4000 );
-				len -= 0x4000;
-			}
-
-			a7800_cartridge_rom = ROM + 0x10000;
-			mame_fread(cartfile, a7800_cartridge_rom, len);
-
-			/* bank 0 */
-			memcpy( ROM + 0x8000, ROM + 0x10000, 0x4000);
-
-			/* last bank */
-			memcpy( ROM + 0xC000, ROM + 0x10000 + len - 0x4000, 0x4000);
-
-			/* fixed 2002/05/13 kubecj
-				there was 0x08, I added also two other cases.
-				Now, it loads bank n-2 to $4000 if it's empty.
-			*/
-
-			/* bank n-2	*/
-			if( ! ( a7800_cart_type & 0x0D ) )
-			{
-				memcpy( ROM + 0x4000, ROM + 0x10000 + len - 0x8000, 0x4000);
-			}
-		}
-		else if( a7800_cart_type == MBANK_TYPE_ABSOLUTE )
-		{
-			/* F18 Hornet */
-
-			logerror( "Cart type: %x Absolute\n",a7800_cart_type );
-
-			a7800_cartridge_rom = ROM + 0x10000;
-			mame_fread(cartfile, a7800_cartridge_rom, len );
-
-			/* bank 0 */
-			memcpy( ROM + 0x4000, ROM + 0x10000, 0x4000 );
-
-			/* last bank */
-			memcpy( ROM + 0x8000, ROM + 0x18000, 0x8000);
-		}
-		else if( a7800_cart_type == MBANK_TYPE_ACTIVISION )
-		{
-			/* Activision */
-
-			logerror( "Cart type: %x Activision\n",a7800_cart_type );
-
-			a7800_cartridge_rom = ROM + 0x10000;
-			mame_fread( cartfile, a7800_cartridge_rom, len );
-
-			/* bank 0 */
-			memcpy( ROM + 0xA000, ROM + 0x10000, 0x4000 );
-
-			/* bank6 hi */
-			memcpy( ROM + 0x4000, ROM + 0x2A000, 0x2000 );
-
-			/* bank6 lo */
-			memcpy( ROM + 0x6000, ROM + 0x28000, 0x2000 );
-
-			/* bank7 hi */
-			memcpy( ROM + 0x8000, ROM + 0x2E000, 0x2000 );
-
-			/* bank7 lo */
-			memcpy( ROM + 0xE000, ROM + 0x2C000, 0x2000 );
-
+			mame_fread(file, memory + 0x4000, 0x4000 );
+			len -= 0x4000;
 		}
 
-		memcpy( a7800_cart_bkup, ROM + 0xC000, 0x4000 );
-		memcpy( ROM + 0xC000, a7800_bios_bkup, 0x4000 );
+		a7800_cartridge_rom = memory + 0x10000;
+		mame_fread(file, a7800_cartridge_rom, len);
+
+		/* bank 0 */
+		memcpy( memory + 0x8000, memory + 0x10000, 0x4000);
+
+		/* last bank */
+		memcpy( memory + 0xC000, memory + 0x10000 + len - 0x4000, 0x4000);
+
+		/* fixed 2002/05/13 kubecj
+			there was 0x08, I added also two other cases.
+			Now, it loads bank n-2 to $4000 if it's empty.
+		*/
+
+		/* bank n-2	*/
+		if( ! ( a7800_cart_type & 0x0D ) )
+		{
+			memcpy( memory + 0x4000, memory + 0x10000 + len - 0x8000, 0x4000);
+		}
+	}
+	else if( a7800_cart_type == MBANK_TYPE_ABSOLUTE )
+	{
+		/* F18 Hornet */
+
+		logerror( "Cart type: %x Absolute\n",a7800_cart_type );
+
+		a7800_cartridge_rom = memory + 0x10000;
+		mame_fread(file, a7800_cartridge_rom, len );
+
+		/* bank 0 */
+		memcpy( memory + 0x4000, memory + 0x10000, 0x4000 );
+
+		/* last bank */
+		memcpy( memory + 0x8000, memory + 0x18000, 0x8000);
+	}
+	else if( a7800_cart_type == MBANK_TYPE_ACTIVISION )
+	{
+		/* Activision */
+
+		logerror( "Cart type: %x Activision\n",a7800_cart_type );
+
+		a7800_cartridge_rom = memory + 0x10000;
+		mame_fread( file, a7800_cartridge_rom, len );
+
+		/* bank 0 */
+		memcpy( memory + 0xA000, memory + 0x10000, 0x4000 );
+
+		/* bank6 hi */
+		memcpy( memory + 0x4000, memory + 0x2A000, 0x2000 );
+
+		/* bank6 lo */
+		memcpy( memory + 0x6000, memory + 0x28000, 0x2000 );
+
+		/* bank7 hi */
+		memcpy( memory + 0x8000, memory + 0x2E000, 0x2000 );
+
+		/* bank7 lo */
+		memcpy( memory + 0xE000, memory + 0x2C000, 0x2000 );
+
 	}
 
-	return 0;
-}
-
-DEVICE_LOAD( a7800 )
-{
-	a7800_ispal = 0;
-	return a7800_load_cart_cmn(image, file);
-}
-
-DEVICE_LOAD( a7800p )
-{
-	a7800_ispal = 1;
-	return a7800_load_cart_cmn(image, file);
+	memcpy( a7800_cart_bkup, memory + 0xC000, 0x4000 );
+	memcpy( memory + 0xC000, a7800_bios_bkup, 0x4000 );
+	return INIT_PASS;
 }
 
 
@@ -341,23 +336,22 @@ READ_HANDLER( a7800_TIA_r )
 
 WRITE_HANDLER( a7800_TIA_w )
 {
-	switch(offset)
-	{
-		case 0x01:
-			if(data & 0x01)
-			{
-				maria_flag=1;
-			}
-			if(!a7800_ctrl_lock)
-			{
-				a7800_ctrl_lock = data & 0x01;
-				a7800_ctrl_reg = data;
+	switch(offset) {
+	case 0x01:
+		if(data & 0x01)
+		{
+			maria_flag=1;
+		}
+		if(!a7800_ctrl_lock)
+		{
+			a7800_ctrl_lock = data & 0x01;
+			a7800_ctrl_reg = data;
 
-				if (data & 0x04)
-					memcpy( ROM + 0xC000, a7800_cart_bkup, 0x4000 );
-				else
-					memcpy( ROM + 0xC000, a7800_bios_bkup, 0x4000 );
-			}
+			if (data & 0x04)
+				memcpy( ROM + 0xC000, a7800_cart_bkup, 0x4000 );
+			else
+				memcpy( ROM + 0xC000, a7800_bios_bkup, 0x4000 );
+		}
 		break;
 	}
 	tia_sound_w(offset,data);
@@ -491,4 +485,5 @@ WRITE_HANDLER( a7800_cart_w )
 		cpu_setbank( 4, memory_region( REGION_CPU1 ) + 0x12000 + ( data << 14 ) );
 	}
 }
+
 
