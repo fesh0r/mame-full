@@ -177,6 +177,7 @@ static const struct
 	const char *str;
 } alternate_charmap[] =
 {
+	{ 0x0009,	"    " },	/* TAB */
 	{ 0x0061,	"A" },		/* a */
 	{ 0x0062,	"B" },		/* b */
 	{ 0x0063,	"C" },		/* c */

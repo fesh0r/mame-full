@@ -160,6 +160,7 @@ static int at_keyboard_scancode_set_2_3[]=
 };
 
 
+#define AT_KEYBOARD_QUEUE_MAXSIZE	256
 
 typedef struct at_keyboard
 {	
@@ -168,7 +169,7 @@ typedef struct at_keyboard
 	UINT8 delay;   /* 240/60 -> 0,25s */
 	UINT8 repeat;   /* 240/ 8 -> 30/s */
 	int numlock;
-	UINT8 queue[256];
+	UINT8 queue[AT_KEYBOARD_QUEUE_MAXSIZE];
 	UINT8 head;
 	UINT8 tail;
 	UINT8 make[128];	
@@ -355,7 +356,17 @@ static void at_keyboard_queue_insert(UINT8 data)
 	logerror("keyboard queueing %.2x\n",data);
 #endif
 	keyboard.queue[keyboard.head] = data;
-	keyboard.head = ++keyboard.head % 256;
+	keyboard.head++;
+	keyboard.head %= (sizeof(keyboard.queue) / sizeof(keyboard.queue[0]));
+}
+
+static int at_keyboard_queue_size(void)
+{
+	int queue_size;
+	queue_size = keyboard.head - keyboard.tail;
+	if (queue_size < 0)
+		queue_size += sizeof(keyboard.queue) / sizeof(keyboard.queue[0]);
+	return queue_size;
 }
 
 /* add a list of codes to the keyboard buffer */
@@ -840,6 +851,7 @@ static UINT8 unicode_char_to_at_keycode(unicode_char_t ch)
 	case ',':						b = 51;		break;
 	case '.':						b = 52;		break;
 	case '/':						b = 53;		break;
+	case ' ':						b = 0x39;	break;
 	case UCHAR_MAMEKEY(F1):			b = 0x3b;	break;
 	case UCHAR_MAMEKEY(F2):			b = 0x3c;	break;
 	case UCHAR_MAMEKEY(F3):			b = 0x3d;	break;
@@ -928,7 +940,7 @@ QUEUE_CHARS( at_keyboard )
 	int i;
 	UINT8 b;
 
-	for (i = 0; i < text_len; i++)
+	for (i = 0; (i < text_len) && ((at_keyboard_queue_size()) + 4 < AT_KEYBOARD_QUEUE_MAXSIZE); i++)
 	{
 		b = unicode_char_to_at_keycode(text[i]);
 		if (b)
