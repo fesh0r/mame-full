@@ -35,7 +35,6 @@ static int bbc_SWRAMtype=0;
    if 1 then we are emulating a BBC Master style machine */
 static int bbc_Master=0;
 
-/** via irq status local store **/
 
 /****************************
  IRQ inputs
@@ -45,8 +44,6 @@ static int via_system_irq=0;
 static int via_user_irq=0;
 static int MC6850_irq=0;
 static int ACCCON_IRR=0;
-
-
 
 static void bbc_setirq(void)
 {
@@ -76,7 +73,6 @@ WRITE8_HANDLER ( page_selecta_w )
 {
 	cpu_setbank(4,memory_region(REGION_USER1)+((data&0x03)<<14));
 }
-
 
 
 WRITE8_HANDLER ( memorya1_w )
@@ -124,8 +120,9 @@ WRITE8_HANDLER ( memoryb3_w )
 2: 64K (banks 4 to 7) for Acorn sideways ram FE30 bank latch
 3: 128K (banks 8 to 15) for Acown sideways ram FE30 bank latch
 */
-static unsigned short bbc_SWRAMtype0[16]={0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1};
-static unsigned short bbc_SWRAMtype1[16]={0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0};
+static unsigned short bbc_SWRAMtype1[16]={0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1};
+static unsigned short bbc_SWRAMtype2[16]={0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0};
+static unsigned short bbc_SWRAMtype3[16]={0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1};
 
 WRITE8_HANDLER ( memoryb4_w )
 {
@@ -136,9 +133,9 @@ WRITE8_HANDLER ( memoryb4_w )
 	} else
 	{
 		switch (bbc_SWRAMtype) {
-			case 1:	if (bbc_SWRAMtype0[bbc_userport]) memory_region(REGION_USER1)[(bbc_userport<<14)+offset]=data;
-			case 2:	if (bbc_SWRAMtype1[bbc_rombank])  memory_region(REGION_USER1)[(bbc_rombank<<14)+offset]=data;
-			case 3:	if (bbc_SWRAMtype0[bbc_rombank])  memory_region(REGION_USER1)[(bbc_rombank<<14)+offset]=data;
+			case 1:	if (bbc_SWRAMtype1[bbc_userport]) memory_region(REGION_USER1)[(bbc_userport<<14)+offset]=data;
+			case 2:	if (bbc_SWRAMtype2[bbc_rombank])  memory_region(REGION_USER1)[(bbc_rombank<<14)+offset]=data;
+			case 3:	if (bbc_SWRAMtype3[bbc_rombank])  memory_region(REGION_USER1)[(bbc_rombank<<14)+offset]=data;
 		}
 	}
 }
@@ -149,8 +146,6 @@ WRITE8_HANDLER ( memoryb4_w )
 
 static int pagedRAM=0;
 static int vdusel=0;
-
-
 
 /*  this function should return true if
 	the instruction is in the VDU driver address ranged
@@ -165,28 +160,15 @@ static int vdudriverset(void)
 	return (((PC>=0xc000) && (PC<=0xdfff)) || ((pagedRAM) && ((PC>=0xa000) && (PC<=0xafff))));
 }
 
-/* the next two function handle reads and write to the shadow video ram area
-   between 0x3000 and 0x7fff
 
-   when vdusel is set high the video display uses the shadow ram memory
-   the processor only reads and write to the shadow ram when vdusel is set
-   and when the instruction being executed is stored in a set range of memory
-   addresses known as the VDU driver instructions.
-*/
-
-
-
-
-
-
-/* the model B plus addresses all 16 of the ROM sockets plus the extra 12K of ram at 0x8000
+/* the model B Plus addresses all 16 of the ROM sockets plus the extra 12K of ram at 0x8000
    and 20K of shadow ram at 0x3000 */
 WRITE8_HANDLER ( page_selectbp_w )
 {
 	if ((offset&0x04)==0)
 	{
-		pagedRAM=(data&0x80)>>7;
-		bbc_rombank=data&0x0f;
+		pagedRAM   =(data>>7)&0x01;
+		bbc_rombank= data    &0x0f;
 
 		if (pagedRAM)
 		{
@@ -203,11 +185,10 @@ WRITE8_HANDLER ( page_selectbp_w )
 	else
 	{
 		//the video display should now use this flag to display the shadow ram memory
-		vdusel=(data&0x80)>>7;
+		vdusel=(data>>7)&0x01;
 		bbcbp_setvideoshadow(vdusel);
 		//need to make the video display do a full screen refresh for the new memory area
 		cpu_setbank(2, memory_region(REGION_CPU1)+0x3000);
-
 	}
 }
 
@@ -223,6 +204,19 @@ WRITE8_HANDLER ( memorybp1_w )
 	// this array is set so that the video emulator know which addresses to redraw
 	vidmem[offset]=1;
 }
+
+
+
+
+
+/* the next two function handle reads and write to the shadow video ram area
+   between 0x3000 and 0x7fff
+
+   when vdusel is set high the video display uses the shadow ram memory
+   the processor only reads and write to the shadow ram when vdusel is set
+   and when the instruction being executed is stored in a set range of memory
+   addresses known as the VDU driver instructions.
+*/
 
 
 static OPBASE_HANDLER( bbcbp_opbase_handler )
@@ -244,25 +238,6 @@ static OPBASE_HANDLER( bbcbp_opbase_handler )
 	return address;
 }
 
-
-/* not used */
-READ8_HANDLER ( memorybp2_r )
-{
-	if (vdusel==0)
-	{
-		// not in shadow ram mode so just read normal ram
-		return memory_region(REGION_CPU1)[offset+0x3000];
-	} else {
-		if (vdudriverset())
-		{
-			// if VDUDriver set then read from shadow ram
-			return memory_region(REGION_CPU1)[offset+0xb000];
-		} else {
-			// else read from normal ram
-			return memory_region(REGION_CPU1)[offset+0x3000];
-		}
-	}
-}
 
 WRITE8_HANDLER ( memorybp2_w )
 {
@@ -305,10 +280,7 @@ The function memorybp4_128_w handles memory writes from 0xb000 to 0xbfff
 which could either be sideways ROM or sideways RAM */
 
 
-static unsigned short bbc_b_plus_sideways_ram_banks[16]=
-{
-	1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0
-};
+static unsigned short bbc_b_plus_sideways_ram_banks[16]={ 1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0 };
 
 
 WRITE8_HANDLER ( memorybp4_128_w )
@@ -388,7 +360,7 @@ if the program counter is anywhere else main ram is accessed.
 */
 
 static int ACCCON=0;
-//static int ACCCON_IRR=0;
+//static int ACCCON_IRR=0; This is defined at the top in the IRQ code
 static int ACCCON_TST=0;
 static int ACCCON_IFJ=0;
 static int ACCCON_ITU=0;
@@ -449,7 +421,7 @@ WRITE8_HANDLER ( bbcm_ACCCON_write )
 static int bbcm_vdudriverset(void)
 {
 	int PC;
-	PC=activecpu_get_pc(); // this needs to be set to the 6502 program counter
+	PC=activecpu_get_pc();
 	return ((PC>=0xc000) && (PC<=0xdfff));
 }
 
@@ -481,37 +453,38 @@ WRITE8_HANDLER ( memorybm1_w )
 
 static OPBASE_HANDLER( bbcm_opbase_handler )
 {
-
-	if ((ACCCON_E && bbcm_vdudriverset()) || ACCCON_X)
+	if (ACCCON_X)
+	{
+		cpu_setbank( 2, memory_region( REGION_CPU1 ) + 0xb000 );
+	} else {
+		if (ACCCON_E && bbcm_vdudriverset())
 		{
 			cpu_setbank( 2, memory_region( REGION_CPU1 ) + 0xb000 );
 		} else {
 			cpu_setbank( 2, memory_region( REGION_CPU1 ) + 0x3000 );
+		}
 	}
 
 	return address;
 }
 
-/* this is now not used, replaced with above OPBASE_HANDLER */
-READ8_HANDLER ( memorybm2_r )
-{
-	if ((ACCCON_E && bbcm_vdudriverset()) || ACCCON_X)
-	{
-		return memory_region(REGION_CPU1)[offset+0xb000];
-	} else {
-		return memory_region(REGION_CPU1)[offset+0x3000];
-	}
-}
+
 
 WRITE8_HANDLER ( memorybm2_w )
 {
-	if ((ACCCON_E && bbcm_vdudriverset()) || ACCCON_X)
+	if (ACCCON_X)
 	{
 		memory_region(REGION_CPU1)[offset+0xb000]=data;
 		vidmem[offset+0xb000]=1;
 	} else {
-		memory_region(REGION_CPU1)[offset+0x3000]=data;
-		vidmem[offset+0x3000]=1;
+		if (ACCCON_E && bbcm_vdudriverset())
+		{
+			memory_region(REGION_CPU1)[offset+0xb000]=data;
+			vidmem[offset+0xb000]=1;
+		} else {
+			memory_region(REGION_CPU1)[offset+0x3000]=data;
+			vidmem[offset+0x3000]=1;
+		}
 	}
 }
 

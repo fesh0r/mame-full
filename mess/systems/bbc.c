@@ -522,9 +522,15 @@ ROM_START(bbcb)
 
 	ROM_LOAD("os12.rom", 0x40000,0x4000, CRC(3c14fc70) SHA1(0d9bcaf6a393c9ce2359ed700ddb53c232c2c45d))
 
+	// usos12.rom is the USA version of the OS. acorn tried to release the BBC B in the USA calling it the
+	// "Acorn Proton", it failed to sell in the USA and was withdrawn from the market.
+	// the main difference is the screen resolution setting the display to work on American TV's
+	//ROM_LOAD("usos12.rom", 0x40000,0x4000, CRC(c8e946a9) )
+
+
 	ROM_LOAD("basic2.rom",  0x00000, 0x4000, CRC(79434781) SHA1(4a7393f3a45ea309f744441c16723e2ef447a281)) /* rom page 15 3c000 */
 	//ROM_LOAD("speech-1.0.rom",  0x08000, 0x2000, CRC(e63f7fb7) )
-	ROM_RELOAD(                 0x0a000, 0x2000                )
+	//ROM_RELOAD(                 0x0a000, 0x2000                )
 	//ROM_LOAD("dfs144.rom",  0x04000, 0x4000, CRC(9fb8d13f) SHA1(387d2468c6e1360f5b531784ce95d5f71a50c2b5)) /* rom page 14 38000 */
 	                                                      /* rom page 0  00000 */
 	                                                      /* rom page 1  04000 */

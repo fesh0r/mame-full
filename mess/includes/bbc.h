@@ -36,7 +36,7 @@ WRITE8_HANDLER ( page_selectb_w );
 
 
 WRITE8_HANDLER ( memorybp1_w );
-READ8_HANDLER  ( memorybp2_r );
+//READ8_HANDLER  ( memorybp2_r );
 WRITE8_HANDLER ( memorybp2_w );
 WRITE8_HANDLER ( memorybp4_w );
 WRITE8_HANDLER ( memorybp4_128_w );
@@ -45,7 +45,7 @@ WRITE8_HANDLER ( page_selectbp_w );
 
 
 WRITE8_HANDLER ( memorybm1_w );
-READ8_HANDLER  ( memorybm2_r );
+//READ8_HANDLER  ( memorybm2_r );
 WRITE8_HANDLER ( memorybm2_w );
 WRITE8_HANDLER ( memorybm4_w );
 WRITE8_HANDLER ( memorybm5_w );
