@@ -10453,28 +10453,31 @@ static void BuildCRCTable(void)
 		for(deviceID = 0; deviceID < device_count(deviceType); deviceID++)
 		{
 			mess_image *img = image_from_devtype_and_index(deviceType, deviceID);
-			UINT32	crc = image_crc(img);
-			int		isUnique = 1;
-
-			for(listIdx = 0; listIdx < deviceCRCListLength; listIdx++)
+			if (image_exists(img))
 			{
-				if(deviceCRCList[listIdx] == crc)
+				UINT32	crc = image_crc(img);
+				int		isUnique = 1;
+
+				for(listIdx = 0; listIdx < deviceCRCListLength; listIdx++)
 				{
-					isUnique = 0;
+					if(deviceCRCList[listIdx] == crc)
+					{
+						isUnique = 0;
 
-					break;
+						break;
+					}
 				}
-			}
 
-			if(isUnique)
-			{
-				if(!thisGameCRC)
-					thisGameCRC = crc;
+				if(isUnique)
+				{
+					if(!thisGameCRC)
+						thisGameCRC = crc;
 
-				deviceCRCList = realloc(deviceCRCList, (deviceCRCListLength + 1) * sizeof(UINT32));
+					deviceCRCList = realloc(deviceCRCList, (deviceCRCListLength + 1) * sizeof(UINT32));
 
-				deviceCRCList[deviceCRCListLength] = crc;
-				deviceCRCListLength++;
+					deviceCRCList[deviceCRCListLength] = crc;
+					deviceCRCListLength++;
+				}
 			}
 		}
 	}
