@@ -369,17 +369,18 @@ static void blitgraphics16(struct osd_bitmap *bitmap, UINT8 *vrambase,
 static void raster_text(struct osd_bitmap *bitmap, struct rasterbits_source *src,
 	struct rasterbits_videomode *mode, int scalex, int scaley, int basex, int basey)
 {
-	int x, y;
+	int x, y, i;
 	int xi, yi;
 	int chartop, charbottom, charleft;
 	int bytesperchar;
 	UINT8 *vram;
 	UINT8 *vramtop;
 	UINT8 *db;
-	UINT8 c;
+	UINT8 b;
 	UINT8 *thechar;
 	int fg, bg, attr;
 	int additionalrowbytes;
+	int c[16];
 
 #if COUNTDIRTYCHARS
 	int dirtychars = 0;
@@ -389,9 +390,15 @@ static void raster_text(struct osd_bitmap *bitmap, struct rasterbits_source *src
 
 	bytesperchar = mode->depth / 8;
 	db = src->db;
-	fg = Machine->pens[1];
-	bg = Machine->pens[0];
 	attr = 0;
+
+	/* Build up our pen table; save some work later */
+	for (i = 0; i < (sizeof(c) / sizeof(c[0])); i++) {
+		if (mode->metapalette)
+			c[i] = Machine->pens[mode->metapalette[i]];
+		else
+			c[i] = Machine->pens[i];
+	}
 
 	vram = src->videoram + src->position;
 	vramtop = vram + (src->size - (src->position % src->size));
@@ -415,24 +422,17 @@ drawchar:
 
 				charleft = x * scalex + basex;
 
-				if (mode->metapalette) {
-					fg = Machine->pens[mode->metapalette[fg]];
-					bg = Machine->pens[mode->metapalette[bg]];
-				}
-				else {
-					fg = Machine->pens[fg];
-					bg = Machine->pens[bg];
-				}
-
 				if (thechar) {
 					/* We're a bonafide character */
+					fg = c[fg];
+					bg = c[bg];
 					for (yi = chartop; yi <= charbottom; yi++) {
 						if ((attr & RASTERBITS_CHARATTR_UNDERLINE) && (yi == charbottom))
-							c = 0xff;
+							b = 0xff;
 						else
-							c = thechar[(yi-basey) % mode->u.text.modulo];
+							b = thechar[(yi-basey) % mode->u.text.modulo];
 
-						switch(c) {
+						switch(b) {
 						case 0x00:
 							plot_box(bitmap, charleft, yi, scalex, 1, bg);
 							break;
@@ -441,8 +441,8 @@ drawchar:
 							break;
 						default:
 							for (xi = 0; xi < scalex; xi+=(scalex/8)) {
-								plot_box(bitmap, xi + charleft, yi, scalex / 8, 1, (c & 0x80) ? fg : bg);
-								c <<= 1;
+								plot_box(bitmap, xi + charleft, yi, scalex / 8, 1, (b & 0x80) ? fg : bg);
+								b <<= 1;
 							}
 							break;
 						}
@@ -450,7 +450,7 @@ drawchar:
 				}
 				else {
 					/* We're a space */
-					plot_box(bitmap, charleft, chartop, scalex, (charbottom - chartop + 1), bg);
+					plot_box(bitmap, charleft, chartop, scalex, (charbottom - chartop + 1), c[bg]);
 				}
 
 				/* Make us 'undirty', if appropriate */
