@@ -41,4 +41,4 @@ OSOBJS += \
 		$(OBJ)/mess/windows/messwin.o
 endif
 
-RES = $(OBJ)/wince/mamece.res $(OBJ)/mess/windows/mess.res
+RES = $(OBJ)/wince/mamece.res

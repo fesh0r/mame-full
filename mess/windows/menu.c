@@ -456,7 +456,7 @@ static HMENU find_sub_menu(HMENU menu, const char *menutext, int create_sub_menu
 			mii.cch = sizeof(buf) / sizeof(buf[0]);
 			if (!GetMenuItemInfo(menu, i, TRUE, &mii))
 				return NULL;
-			if (mii.dwTypeData && !strcmp(menutext, T2A(mii.dwTypeData)))
+			if ((mii.fType != MFT_SEPARATOR) && mii.dwTypeData && !strcmp(menutext, T2A(mii.dwTypeData)))
 				break;
 		}
 		if (i >= item_count)
@@ -487,15 +487,20 @@ static HMENU find_sub_menu(HMENU menu, const char *menutext, int create_sub_menu
 
 static void set_command_state(HMENU menu_bar, UINT command, UINT state)
 {
-	MENUITEMINFO mii;
 	BOOL result;
 	int err;
+
+#ifdef UNDER_CE
+	result = EnableMenuItem(menu_bar, command, state | MF_BYCOMMAND);
+#else
+	MENUITEMINFO mii;
 
 	memset(&mii, 0, sizeof(mii));
 	mii.cbSize = sizeof(mii);
 	mii.fMask = MIIM_STATE;
 	mii.fState = state;
 	result = SetMenuItemInfo(menu_bar, command, FALSE, &mii);
+#endif
 	if (!result)
 	{
 		err = GetLastError();
