@@ -89,6 +89,8 @@ static void ne556_callback(int param)
 
 void init_mz700(void)
 {
+	videoram=memory_region(REGION_CPU1)+0x12000;videoram_size=0x800;
+	colorram=memory_region(REGION_CPU1)+0x12800;
     mz700_bank_w(4, 0);
 }
 
@@ -1123,6 +1125,9 @@ WRITE_HANDLER( pcgram_w ) { videoram_w(offset + 0x4000, data); }
 void init_mz800(void)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
+
+	videoram=memory_region(REGION_CPU1)+0x12000;videoram_size=0x5000;
+	colorram=memory_region(REGION_CPU1)+0x12800;
 
     mem[0x10001] = 0x4a;
 	mem[0x10002] = 0x00;
