@@ -1,5 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <hashfile>
-	<!-- crc= Game Name | Year | Manufacturer | Emulation Status -->
 	<hash crc32="47be051f" name="BASIC-F">
 		<year>1983</year>
 		<manufacturer>Sord</manufacturer>
@@ -51,8 +51,6 @@
 		<manufacturer>Namco Ltd.</manufacturer>
 	</hash>
 	<hash crc32="68c85890" name="Up Up Balloon">
-		<year>1983</year>
-		<manufacturer>Takara-Monkey Punch</manufacturer>
 		<status>INCORRECT HEADER</status>
 	</hash>
 	<hash crc32="4e12e6bc" name="Up Up Balloon">
