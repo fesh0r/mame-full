@@ -195,7 +195,7 @@ DBGOBJS =
 endif
 
 # Perhaps one day original mame/mess sources will use POSIX strcasecmp and
-# M_PI instead MS-DOS counterparts... ( a long and sad history ...)
+# M_PI instead MS-DOS counterparts... (a long and sad history ...)
 MY_CFLAGS = $(CFLAGS) $(IL) $(CFLAGS.$(MY_CPU)) \
 	-D__ARCH_$(ARCH) -D__CPU_$(MY_CPU) -D$(DISPLAY_METHOD) \
 	-Dstricmp=strcasecmp -Dstrnicmp=strncasecmp \
@@ -304,8 +304,12 @@ JOY_OBJS = $(JOY_DIR)/joy_i386.o $(JOY_DIR)/joy_pad.o $(JOY_DIR)/joy_x11.o \
 FRAMESKIP_OBJS = $(FRAMESKIP_DIR)/dos.o $(FRAMESKIP_DIR)/barath.o
 
 # all objs
-UNIX_OBJS = $(COMMON_OBJS) $(SYSDEP_OBJS) $(VID_OBJS) $(SOUND_OBJS) $(JOY_OBJS) \
-   $(FRAMESKIP_OBJS)
+UNIX_OBJS = $(COMMON_OBJS) $(SYSDEP_OBJS) $(VID_OBJS) $(SOUND_OBJS) \
+	    $(JOY_OBJS) $(FRAMESKIP_OBJS)
+
+ifneq ($(DISPLAY_METHOD), xgl)
+UNIX_OBJS += $(VECTOR)
+endif
 
 ##############################################################################
 # CFLAGS
@@ -426,9 +430,10 @@ VECTOR = $(OBJDIR)/vector.o
 ##############################################################################
 # Start of the real makefile.
 ##############################################################################
-$(NAME).$(DISPLAY_METHOD): $(ZLIB) $(OBJS) $(UNIX_OBJS) $(VECTOR) $(OSDEPEND)
+
+$(NAME).$(DISPLAY_METHOD): $(ZLIB) $(OBJS) $(UNIX_OBJS) $(OSDEPEND)
 	$(CC_COMMENT) @echo 'Linking $@ ...'
-	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $(OBJS) $(UNIX_OBJS) $(OSDEPEND) $(VECTOR) $(MY_LIBS)
+	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $(OBJS) $(UNIX_OBJS) $(OSDEPEND) $(MY_LIBS)
 
 maketree: $(sort $(OBJDIRS))
 
@@ -477,7 +482,7 @@ messtest: $(OBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 	$(OBJDIR)/sysdep/misc.o \
 	$(OBJDIR)/sysdep/rc.o \
 	$(OBJDIR)/tststubs.o \
-	$(OBJDIR)/vector.o
+	$(VECTOR)
 	$(CC_COMMENT) @echo Linking $@...
 	$(CC_COMPILE) $(LD) $(LDFLAGS) $(MY_LIBS) $^ -o $@
 
