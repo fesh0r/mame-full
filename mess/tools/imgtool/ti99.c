@@ -3673,10 +3673,10 @@ static int win_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
 static int win_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void win_image_closeenum(IMAGEENUM *enumeration);
 static size_t ti99_image_freespace(IMAGE *img);
-static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_);
-static int dsk_image_deletefile(IMAGE *img, const char *fname);
-static int win_image_deletefile(IMAGE *img, const char *fname);
+static int ti99_image_readfile(IMAGE *img, const char *fpath, STREAM *destf);
+static int ti99_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, const ResolvedOption *options_);
+static int dsk_image_deletefile(IMAGE *img, const char *fpath);
+static int win_image_deletefile(IMAGE *img, const char *fpath);
 static int dsk_image_create_mess(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
 static int dsk_image_create_v9t9(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
 
@@ -4407,7 +4407,7 @@ static size_t ti99_image_freespace(IMAGE *img)
 /*
 	Extract a file from a ti99_image.  The file is saved in tifile format.
 */
-static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
+static int ti99_image_readfile(IMAGE *img, const char *fpath, STREAM *destf)
 {
 #if 1
 
@@ -4422,18 +4422,18 @@ static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	int errorcode;
 
 
-	if (check_fpath(fname))
+	if (check_fpath(fpath))
 		return IMGTOOLERR_BADFILENAME;
 
 	/* open file on TI image */
 	switch (image->type)
 	{
 	case L2I_DSK:
-		errorcode = open_file_lvl2_dsk(image, fname, &src_file);
+		errorcode = open_file_lvl2_dsk(image, fpath, &src_file);
 		break;
 
 	case L2I_WIN:
-		errorcode = open_file_lvl2_win(image, fname, &src_file);
+		errorcode = open_file_lvl2_win(image, fpath, &src_file);
 		break;
 
 	default:
@@ -4503,18 +4503,18 @@ static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	int errorcode;
 
 
-	if (check_fpath(fname))
+	if (check_fpath(fpath))
 		return IMGTOOLERR_BADFILENAME;
 
 	/* open file on TI image */
 	switch (image->type)
 	{
 	case L2I_DSK:
-		errorcode = open_file_lvl2_dsk(image, fname, &src_file.l2_file);
+		errorcode = open_file_lvl2_dsk(image, fpath, &src_file.l2_file);
 		break;
 
 	case L2I_WIN:
-		errorcode = open_file_lvl2_win(image, fname, &src_file.l2_file);
+		errorcode = open_file_lvl2_win(image, fpath, &src_file.l2_file);
 		break;
 	}
 	if (errorcode)
@@ -4559,6 +4559,8 @@ static int ti99_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, 
 	int parent_ref_valid, parent_ref;
 	ti99_catalog *catalog, catalog_buf;
 
+
+	(void) in_options;
 
 	if (check_fpath(fpath))
 		return IMGTOOLERR_BADFILENAME;
@@ -4766,7 +4768,7 @@ static int ti99_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, 
 /*
 	Delete a file from a ti99_image.
 */
-static int dsk_image_deletefile(IMAGE *img, const char *fname)
+static int dsk_image_deletefile(IMAGE *img, const char *fpath)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
 	dsk_fdr fdr;
@@ -4779,10 +4781,10 @@ static int dsk_image_deletefile(IMAGE *img, const char *fname)
 	ti99_catalog *catalog;
 
 
-	if (check_fpath(fname))
+	if (check_fpath(fpath))
 		return IMGTOOLERR_BADFILENAME;
 
-	errorcode = dsk_find_catalog_entry(image, fname, NULL, &parent_ref, &is_dir, &catalog_index);
+	errorcode = dsk_find_catalog_entry(image, fpath, NULL, &parent_ref, &is_dir, &catalog_index);
 	if (errorcode)
 		return errorcode;
 
@@ -4885,7 +4887,7 @@ static int dsk_image_deletefile(IMAGE *img, const char *fname)
 	return 0;
 }
 
-static int win_image_deletefile(IMAGE *img, const char *fname)
+static int win_image_deletefile(IMAGE *img, const char *fpath)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
 	int parent_ddr_AU, is_dir, catalog_index;
@@ -4899,10 +4901,10 @@ static int win_image_deletefile(IMAGE *img, const char *fname)
 	ti99_catalog catalog;
 
 
-	if (check_fpath(fname))
+	if (check_fpath(fpath))
 		return IMGTOOLERR_BADFILENAME;
 
-	errorcode = win_find_catalog_entry(image, fname, NULL, &parent_ddr_AU, &catalog, &is_dir, &catalog_index);
+	errorcode = win_find_catalog_entry(image, fpath, NULL, &parent_ddr_AU, &catalog, &is_dir, &catalog_index);
 	if (errorcode)
 		return errorcode;
 
