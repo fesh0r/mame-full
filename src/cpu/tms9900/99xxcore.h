@@ -106,154 +106,71 @@ Other references can be found on spies.com:
 
 #if (TMS99XX_MODEL == TI990_10_ID)
 
-	/*#define TMS99XX_PREFIX ti990_10
-	#define TMS99XX_ICOUNT TMS99XX_PREFIX##_ICount	// generates TMS99XX_PREFIX_ICount
-	#define dummy(a) a
-	#define TMS99XX_ICOUNT dummy(TMS99XX_PREFIX)##_ICount	// generates ti990_10_ICount*/
-
-	#define TMS99XX_ICOUNT ti990_10_ICount
-	#define TMS99XX_INIT ti990_10_init
-	#define TMS99XX_RESET ti990_10_reset
-	#define TMS99XX_EXIT ti990_10_exit
-	#define TMS99XX_EXECUTE ti990_10_execute
-	#define TMS99XX_GET_CONTEXT ti990_10_get_context
-	#define TMS99XX_SET_CONTEXT ti990_10_set_context
-	#define TMS99XX_GET_REG ti990_10_get_reg
-	#define TMS99XX_SET_REG ti990_10_set_reg
-	#define TMS99XX_SET_IRQ_CALLBACK ti990_10_set_irq_callback
-	#define TMS99XX_INFO ti990_10_info
-	#define TMS99XX_DASM ti990_10_dasm
-
+	#define TMS99XX_PREFIX ti990_10
 	#define TMS99XX_CPU_NAME "TI990/10"
 
 #elif (TMS99XX_MODEL == TMS9900_ID)
 
-	#define TMS99XX_ICOUNT tms9900_ICount
-	#define TMS99XX_INIT tms9900_init
-	#define TMS99XX_RESET tms9900_reset
-	#define TMS99XX_EXIT tms9900_exit
-	#define TMS99XX_EXECUTE tms9900_execute
-	#define TMS99XX_GET_CONTEXT tms9900_get_context
-	#define TMS99XX_SET_CONTEXT tms9900_set_context
-	#define TMS99XX_GET_REG tms9900_get_reg
-	#define TMS99XX_SET_REG tms9900_set_reg
-	#define TMS99XX_SET_IRQ_CALLBACK tms9900_set_irq_callback
-	#define TMS99XX_INFO tms9900_info
-	#define TMS99XX_DASM tms9900_dasm
-
+	#define TMS99XX_PREFIX tms9900
 	#define TMS99XX_CPU_NAME "TMS9900"
 
 #elif (TMS99XX_MODEL == TMS9940_ID)
 
-	#define TMS99XX_ICOUNT tms9940_ICount
-	#define TMS99XX_INIT tms9940_init
-	#define TMS99XX_RESET tms9940_reset
-	#define TMS99XX_EXIT tms9940_exit
-	#define TMS99XX_EXECUTE tms9940_execute
-	#define TMS99XX_GET_CONTEXT tms9940_get_context
-	#define TMS99XX_SET_CONTEXT tms9940_set_context
-	#define TMS99XX_GET_REG tms9940_get_reg
-	#define TMS99XX_SET_REG tms9940_set_reg
-	#define TMS99XX_SET_IRQ_CALLBACK tms9940_set_irq_callback
-	#define TMS99XX_INFO tms9940_info
-	#define TMS99XX_DASM tms9940_dasm
-
+	#define TMS99XX_PREFIX tms9940
 	#define TMS99XX_CPU_NAME "TMS9940"
 
 	#error "tms9940 is not yet supported"
 
 #elif (TMS99XX_MODEL == TMS9980_ID)
 
-	#define TMS99XX_ICOUNT tms9980a_ICount
-	#define TMS99XX_INIT tms9980a_init
-	#define TMS99XX_RESET tms9980a_reset
-	#define TMS99XX_EXIT tms9980a_exit
-	#define TMS99XX_EXECUTE tms9980a_execute
-	#define TMS99XX_GET_CONTEXT tms9980a_get_context
-	#define TMS99XX_SET_CONTEXT tms9980a_set_context
-	#define TMS99XX_GET_REG tms9980a_get_reg
-	#define TMS99XX_SET_REG tms9980a_set_reg
-	#define TMS99XX_SET_IRQ_CALLBACK tms9980a_set_irq_callback
-	#define TMS99XX_INFO tms9980a_info
-	#define TMS99XX_DASM tms9980a_dasm
-
+	#define TMS99XX_PREFIX tms9980a
 	#define TMS99XX_CPU_NAME "TMS9980A/TMS9981"
 
 #elif (TMS99XX_MODEL == TMS9985_ID)
 
-	#define TMS99XX_ICOUNT tms9985_ICount
-	#define TMS99XX_INIT tms9985_init
-	#define TMS99XX_RESET tms9985_reset
-	#define TMS99XX_EXIT tms9985_exit
-	#define TMS99XX_EXECUTE tms9985_execute
-	#define TMS99XX_GET_CONTEXT tms9985_get_context
-	#define TMS99XX_SET_CONTEXT tms9985_set_context
-	#define TMS99XX_GET_REG tms9985_get_reg
-	#define TMS99XX_SET_REG tms9985_set_reg
-	#define TMS99XX_SET_IRQ_CALLBACK tms9985_set_irq_callback
-	#define TMS99XX_INFO tms9985_info
-	#define TMS99XX_DASM tms9985_dasm
-
+	#define TMS99XX_PREFIX tms9985
 	#define TMS99XX_CPU_NAME "TMS9985"
 
 	#error "tms9985 is not yet supported"
 
 #elif (TMS99XX_MODEL == TMS9989_ID)
 
-	#define TMS99XX_ICOUNT tms9989_ICount
-	#define TMS99XX_INIT tms9989_init
-	#define TMS99XX_RESET tms9989_reset
-	#define TMS99XX_EXIT tms9989_exit
-	#define TMS99XX_EXECUTE tms9989_execute
-	#define TMS99XX_GET_CONTEXT tms9989_get_context
-	#define TMS99XX_SET_CONTEXT tms9989_set_context
-	#define TMS99XX_GET_REG tms9989_get_reg
-	#define TMS99XX_SET_REG tms9989_set_reg
-	#define TMS99XX_SET_IRQ_CALLBACK tms9989_set_irq_callback
-	#define TMS99XX_INFO tms9989_info
-	#define TMS99XX_DASM tms9989_dasm
-
+	#define TMS99XX_PREFIX tms9989
 	#define TMS99XX_CPU_NAME "TMS9989"
 
 	#error "tms9989 is not yet supported"
 
 #elif (TMS99XX_MODEL == TMS9995_ID)
 
-	#define TMS99XX_ICOUNT tms9995_ICount
-	#define TMS99XX_INIT tms9995_init
-	#define TMS99XX_RESET tms9995_reset
-	#define TMS99XX_EXIT tms9995_exit
-	#define TMS99XX_EXECUTE tms9995_execute
-	#define TMS99XX_GET_CONTEXT tms9995_get_context
-	#define TMS99XX_SET_CONTEXT tms9995_set_context
-	#define TMS99XX_GET_REG tms9995_get_reg
-	#define TMS99XX_SET_REG tms9995_set_reg
-	#define TMS99XX_SET_IRQ_CALLBACK tms9995_set_irq_callback
-	#define TMS99XX_INFO tms9995_info
-	#define TMS99XX_DASM tms9995_dasm
-
+	#define TMS99XX_PREFIX tms9995
 	#define TMS99XX_CPU_NAME "TMS9995"
 
 #elif (TMS99XX_MODEL == TMS99000_ID)
 
-	#define TMS99XX_ICOUNT tms99000_ICount
-	#define TMS99XX_INIT tms99000_init
-	#define TMS99XX_RESET tms99000_reset
-	#define TMS99XX_EXIT tms99000_exit
-	#define TMS99XX_EXECUTE tms99000_execute
-	#define TMS99XX_GET_CONTEXT tms99000_get_context
-	#define TMS99XX_SET_CONTEXT tms99000_set_context
-	#define TMS99XX_GET_REG tms99000_get_reg
-	#define TMS99XX_SET_REG tms99000_set_reg
-	#define TMS99XX_SET_IRQ_CALLBACK tms99000_set_irq_callback
-	#define TMS99XX_INFO tms99000_info
-	#define TMS99XX_DASM tms99000_dasm
-
+	#define TMS99XX_PREFIX tms99000
 	#define TMS99XX_CPU_NAME "TMS99000"
 
 	#error "tms99000 is not yet supported"
 
 #endif
+
+#define DUMMY_EVAL(a) a
+#define TMS99XX_PREFIXED_NAME(suffix) DUMMY_EVAL(TMS99XX_PREFIX)##suffix
+
+#define TMS99XX_ICOUNT TMS99XX_PREFIXED_NAME(_ICount)
+#define TMS99XX_INIT TMS99XX_PREFIXED_NAME(_init)
+#define TMS99XX_RESET TMS99XX_PREFIXED_NAME(_reset)
+#define TMS99XX_EXIT TMS99XX_PREFIXED_NAME(_exit)
+#define TMS99XX_EXECUTE TMS99XX_PREFIXED_NAME(_execute)
+#define TMS99XX_GET_CONTEXT TMS99XX_PREFIXED_NAME(_get_context)
+#define TMS99XX_SET_CONTEXT TMS99XX_PREFIXED_NAME(_set_context)
+#define TMS99XX_GET_REG TMS99XX_PREFIXED_NAME(_get_reg)
+#define TMS99XX_SET_REG TMS99XX_PREFIXED_NAME(_set_reg)
+#define TMS99XX_SET_IRQ_CALLBACK TMS99XX_PREFIXED_NAME(_set_irq_callback)
+#define TMS99XX_INFO TMS99XX_PREFIXED_NAME(_info)
+#define TMS99XX_DASM TMS99XX_PREFIXED_NAME(_dasm)
+#define TMS99XX_RESET_PARAM TMS99XX_PREFIXED_NAME(reset_param)
+
 
 
 /*
@@ -1027,6 +944,8 @@ WRITE_HANDLER(tms9995_internal2_w)
 	/*8-bit external data bus, with on-chip 16-bit RAM, and 16-bit address bus*/
 	/*The code is complex, so we use functions rather than macros*/
 
+	static void decrementer_callback(int ignored);
+
 	static int readword(int addr)
 	{
 		if (addr < 0xf000)
@@ -1322,29 +1241,22 @@ static void set_flag1(int val);
 */
 void TMS99XX_INIT(void)
 {
+#if (TMS99XX_MODEL == TMS9995_ID)
+	I.timer = timer_alloc(decrementer_callback);
+#endif
 }
 
 void TMS99XX_RESET(void *p)
 {
-#if (TMS99XX_MODEL == TI990_10_ID)
-	ti990_10reset_param *param = (ti990_10reset_param *) p;
-#elif (TMS99XX_MODEL == TMS9900_ID)
-	tms9900reset_param *param = (tms9900reset_param *) p;
-#elif (TMS99XX_MODEL == TMS9995_ID)
-	tms9995reset_param *param = (tms9995reset_param *) p;
-#endif
+	TMS99XX_RESET_PARAM *param = (TMS99XX_RESET_PARAM *) p;
 
+	I.idle_callback = param ? param->idle_callback : NULL;
 	#if (TMS99XX_MODEL == TI990_10_ID)
-		I.idle_callback = param ? param->idle_callback : NULL;
 		I.rset_callback = param ? param->rset_callback : NULL;
 		I.lrex_callback = param ? param->lrex_callback : NULL;
 		I.ckon_ckof_callback = param ? param->ckon_ckof_callback : NULL;
 
 		I.error_interrupt_callback = param ? param->error_interrupt_callback : NULL;
-	#endif
-
-	#if (TMS99XX_MODEL == TMS9900_ID)
-		I.idle_callback = param ? param->idle_callback : NULL;
 	#endif
 
 
@@ -2423,6 +2335,7 @@ static void write_single_CRU(int port, int data)
 /* on tms9995, we have to handle internal CRU ports */
 static void write_single_CRU(int port, int data)
 {
+	/* Internal CRU */
 	switch (port)
 	{
 	case 0xF70:
@@ -2459,11 +2372,13 @@ static void write_single_CRU(int port, int data)
 		/* MID flag */
 		I.MID_flag = data & 0x01;
 		break;
-	default:
-		/* External CRU */
-		WRITEPORT(port, (data & 0x01));
-		break;
 	}
+	/* External CRU */
+	/* Even though all the registers above are implemented internally, accesses
+	are passed to the external bus, too, and an external device might respond
+	to a write to these CRU address as well (particularly a write to the user
+	flag registers). */
+	WRITEPORT(port, (data & 0x01));
 }
 #else
 #define write_single_CRU(port, data) WRITEPORT(port, data)

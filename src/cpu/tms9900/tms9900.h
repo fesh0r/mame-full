@@ -31,8 +31,8 @@
                           /* to the so-called macrostore feature. */
 
 /* NPW 25-May-2002 - Added these to get it to compile under windows */
-#define TI9940_ID		11
-#define TI9985_ID		12
+#define TI9940_ID		TMS9940_ID
+#define TI9985_ID		TMS9985_ID
 
 
 enum {
@@ -132,6 +132,14 @@ extern void tms9940_set_irq_callback(int (*callback)(int irqline));
 extern const char *tms9940_info(void *context, int regnum);
 extern unsigned tms9940_dasm(char *buffer, unsigned pc);
 
+/*
+	structure with optional parameters for tms9940_reset.
+*/
+typedef struct tms9940reset_param
+{
+	void (*idle_callback)(int state);
+} tms9940reset_param;
+
 #endif
 
 #if (HAS_TMS9980)
@@ -150,6 +158,14 @@ extern void tms9980a_set_irq_line(int irqline, int state);
 extern void tms9980a_set_irq_callback(int (*callback)(int irqline));
 extern const char *tms9980a_info(void *context, int regnum);
 extern unsigned tms9980a_dasm(char *buffer, unsigned pc);
+
+/*
+	structure with optional parameters for tms9980a_reset.
+*/
+typedef struct tms9980areset_param
+{
+	void (*idle_callback)(int state);
+} tms9980areset_param;
 
 #endif
 
@@ -170,6 +186,14 @@ extern void tms9985_set_irq_callback(int (*callback)(int irqline));
 extern const char *tms9985_info(void *context, int regnum);
 extern unsigned tms9985_dasm(char *buffer, unsigned pc);
 
+/*
+	structure with optional parameters for tms9985_reset.
+*/
+typedef struct tms9985reset_param
+{
+	void (*idle_callback)(int state);
+} tms9985reset_param;
+
 #endif
 
 #if (HAS_TMS9989)
@@ -188,6 +212,14 @@ extern void tms9989_set_irq_line(int irqline, int state);
 extern void tms9989_set_irq_callback(int (*callback)(int irqline));
 extern const char *tms9989_info(void *context, int regnum);
 extern unsigned tms9989_dasm(char *buffer, unsigned pc);
+
+/*
+	structure with optional parameters for tms9989_reset.
+*/
+typedef struct tms9989reset_param
+{
+	void (*idle_callback)(int state);
+} tms9989reset_param;
 
 #endif
 
@@ -216,6 +248,8 @@ typedef struct tms9995reset_param
 	/* auto_wait_state : a non-zero value makes tms9995 generate a wait state automatically on each
 	   memory access */
 	int auto_wait_state;
+
+	void (*idle_callback)(int state);
 } tms9995reset_param;
 
 /* accessor for the first 252 bytes of internal RAM */
@@ -226,8 +260,8 @@ extern READ_HANDLER(tms9995_internal2_r);
 extern WRITE_HANDLER(tms9995_internal2_w);
 
 #endif
-/*
-#if (HAS_TMS99000)
+
+#if 0/*(HAS_TMS99000)*/
 
 extern	int tms99000_ICount;
 
@@ -244,8 +278,16 @@ extern void tms99000_set_irq_callback(int (*callback)(int irqline));
 extern const char *tms99000_info(void *context, int regnum);
 extern unsigned tms99000_dasm(char *buffer, unsigned pc);
 
-#endif
+/*
+	structure with optional parameters for tms99000_reset.
 */
+typedef struct tms99000reset_param
+{
+	void (*idle_callback)(int state);
+} tms99000reset_param;
+
+#endif
+
 #ifdef MAME_DEBUG
 unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, data16_t (*readop)(offs_t address), data16_t (*readop_arg)(offs_t address));
 #endif
