@@ -249,6 +249,7 @@ static MEMORY_WRITE_START( c64_writemem )
 	{0x0002, 0x7fff, MWA_RAM},
 	{0x8000, 0x9fff, MWA_BANK2},
 	{0xa000, 0xcfff, MWA_RAM},
+//	{0xa000, 0xcfff, MWA_BANK16},
 #if 1
 	{0xd000, 0xdfff, MWA_BANK6},
 #else
@@ -1046,9 +1047,7 @@ static const struct IODevice io_c64[] =
 {
 	IODEVICE_CBM_QUICK,
 	IODEVICE_CBM_ROM("crt\080\0", c64_rom_id),
-#ifdef PET_TEST_CODE
 	IODEVICE_VC20TAPE,
-#endif
 	IODEVICE_CBM_DRIVE,
 	{IO_END}
 };
@@ -1065,9 +1064,7 @@ static const struct IODevice io_ultimax[] =
 {
 	IODEVICE_CBM_QUICK,
 	IODEVICE_CBM_ROM("crt\0e0\0f0\0", c64_rom_id),
-#ifdef PET_TEST_CODE
 	IODEVICE_VC20TAPE,
-#endif
 	{IO_END}
 };
 

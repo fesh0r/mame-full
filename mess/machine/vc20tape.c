@@ -207,7 +207,7 @@ static struct GameSample *vc20_read_wav_sample (void *f)
 
 		/* convert 8-bit data to signed samples */
 		for (temp32 = 0; temp32 < length; temp32++)
-			result->data[temp32] ^= 0x80;
+			result->data[temp32] -= 0x80;
 	}
 	else
 	{
@@ -1225,7 +1225,7 @@ int vc20_tape_read (void)
 			return tape.data;
 		break;
 	case TAPE_PRG:
-		if (zip.state == 3)
+		if (prg.state == 3)
 			return tape.data;
 		break;
 	case TAPE_ZIP:
