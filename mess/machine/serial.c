@@ -295,7 +295,7 @@ void	receive_register_update_bit(struct serial_receive_register *receive, int bi
 	/* shift previous bit 7 out */
 	receive->register_data = receive->register_data<<1;
 	/* shift new bit in */
-	receive->register_data = (receive->register_data & 0x0fe) | bit;
+	receive->register_data = (receive->register_data & 0xfffe) | bit;
 	/* update bit count received */
 	receive->bit_count_received++;
 
