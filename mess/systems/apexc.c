@@ -61,7 +61,7 @@ static int apexc_cylinder_init(int id)
 	if (apexc_cylinder.fd)
 	{	/* load RAM contents */
 
-		osd_fread(apexc_cylinder.fd, memory_region(REGION_CPU1), 0x8000);
+		osd_fread(apexc_cylinder.fd, memory_region(REGION_CPU1), /*0x8000*/0x1000);
 #ifdef LSB_FIRST
 		{	/* fix endianness */
 			UINT32 *RAM;
@@ -99,7 +99,7 @@ static void apexc_cylinder_exit(int id)
 		}
 #endif
 		/* write */
-		osd_fwrite(apexc_cylinder.fd, memory_region(REGION_CPU1), 0x8000);
+		osd_fwrite(apexc_cylinder.fd, memory_region(REGION_CPU1), /*0x8000*/0x1000);
 	}
 	if (apexc_cylinder.fd)
 	{
