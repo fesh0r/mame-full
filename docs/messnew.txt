@@ -2,7 +2,15 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-(none)
+- Sinclair ZX-80 (fixed & readded) [Krzysztof Strzecha]
+- Sinclair ZX-81 (fixed & readded) [Krzysztof Strzecha]
+- Sinclair ZX-81 (2nd rev) (fixed & readded) [Krzysztof Strzecha]
+- Sinclair ZX-81 (3nd rev) (fixed & readded) [Krzysztof Strzecha]
+- Timex Sinclair 1000 (fixed & readded) [Krzysztof Strzecha]
+- ASZMIC ZX-81 ROM swap (fixed & readded) [Krzysztof Strzecha]
+- Your Computer - PC8300 (fixed & readded) [Krzysztof Strzecha]
+- Creon Enterprises - Power 3000 (fixed & readded) [Krzysztof Strzecha]
+- Lambda 8300 (fixed & readded) [Krzysztof Strzecha]
 
 
 

@@ -1,5 +1,7 @@
 /***************************************************************************
 	zx.c
+    14.05.2004 finally fixed and readded
+	Krzysztof Strzecha
 
     system driver
 	Juergen Buchmueller <pullmoll@t-online.de>, Dec 1999
@@ -8,6 +10,8 @@
 	Check the CPU clock, scanlines, cycles per scanlines value ect.
 	It seems I'm very close to the real video timing now, but it
 	still isn't perfect (see also vidhrdw/zx.c)
+	Tape emulation is broken and needs rewrite.
+	PC8300, POW3000 and Lambda video emulation is not fully correct.
 
 ****************************************************************************/
 
@@ -457,6 +461,7 @@ static struct DACinterface dac_interface =
 static MACHINE_DRIVER_START( zx80 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, CPU_CLOCK)
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(readmem_zx80, writemem_zx80)
 	MDRV_CPU_IO_MAP(readport, writeport)
 	MDRV_FRAMES_PER_SECOND(1.0 * CPU_CLOCK / 310 / CYCLES_PER_SCANLINE)
@@ -608,13 +613,13 @@ SYSTEM_CONFIG_END
   Game driver(s)
 
 ***************************************************************************/
-/*	  YEAR 	NAME	 PARENT	COMPAT	MACHINE		INPUT		INIT	CONFIG	COMPANY		FULLNAME */
-COMPX(1980,	zx80,    0,		0,		zx80,		zx80,		zx,		zx80,	"Sinclair Research", "ZX-80",		GAME_NOT_WORKING)
-COMPX(1981,	aszmic,  zx80,	0,		zx80,		zx80,		zx,		zx80,	"Sinclair Research", "ZX.Aszmic",	GAME_NOT_WORKING)
-COMPX(1981,	zx81,    0,		0,		zx81,		zx81,       zx,		zx81,	"Sinclair Research", "ZX-81",           GAME_NOT_WORKING)
-COMPX(198?,	zx81a,   zx81,	0,		zx81,		zx81,		zx,		zx81,	"Sinclair Research", "ZX-81 (2nd rev)",	GAME_NOT_WORKING)
-COMPX(198?,	zx81b,   zx81,	0,		zx81,		zx81,		zx,		zx81,	"Sinclair Research", "ZX-81 (3rd rev)", GAME_NOT_WORKING)
-COMPX(1982,	ts1000,  zx81,	0,		ts1000,		zx81,		zx,		zx81,	"Timex Sinclair",    "Timex Sinclair 1000",		GAME_NOT_WORKING)
-COMPX(1984,	pc8300,  zx81,	0,		pc8300,		pow3000,	zx,		zx81,	"Your Computer",     "PC8300",		GAME_NOT_WORKING)
-COMPX(1983,	pow3000, zx81,	0,		pow3000,	pow3000,  	zx,		zx81,	"Creon Enterprises", "Power 3000",	GAME_NOT_WORKING)
-COMPX(1982,	lambda,  zx81,	0,		pc8300,		pow3000,	zx,		zx81,	"Lambda Electronics Ltd","Lambda 8300",	GAME_NOT_WORKING)
+/*	YEAR	NAME	 PARENT	COMPAT	MACHINE	INPUT	INIT	CONFIG	COMPANY				FULLNAME */
+COMPX(	1980,	zx80,    0,	0,	zx80,	zx80,	zx,	zx80,	"Sinclair Research",		"ZX-80",		GAME_NOT_WORKING)
+COMPX(	1981,	aszmic,  zx80,	0,	zx80,	zx80,	zx,	zx80,	"Sinclair Research",		"ZX.Aszmic",		GAME_NOT_WORKING)
+COMPX(	1981,	zx81,    0,	0,	zx81,	zx81,   zx,	zx81,	"Sinclair Research",		"ZX-81",		GAME_NOT_WORKING)
+COMPX(	198?,	zx81a,   zx81,	0,	zx81,	zx81,	zx,	zx81,	"Sinclair Research",		"ZX-81 (2nd rev)",	GAME_NOT_WORKING)
+COMPX(	198?,	zx81b,   zx81,	0,	zx81,	zx81,	zx,	zx81,	"Sinclair Research",		"ZX-81 (3rd rev)",	GAME_NOT_WORKING)
+COMPX(	1982,	ts1000,  zx81,	0,	ts1000,	zx81,	zx,	zx81,	"Timex Sinclair",		"Timex Sinclair 1000",	GAME_NOT_WORKING)
+COMPX(	1984,	pc8300,  zx81,	0,	pc8300,	pow3000,zx,	zx81,	"Your Computer",		"PC8300",		GAME_NOT_WORKING)
+COMPX(	1983,	pow3000, zx81,	0,	pow3000,pow3000,zx,	zx81,	"Creon Enterprises",		"Power 3000",		GAME_NOT_WORKING)
+COMPX(	1982,	lambda,  zx81,	0,	pc8300,	pow3000,zx,	zx81,	"Lambda Electronics Ltd",	"Lambda 8300",		GAME_NOT_WORKING)
