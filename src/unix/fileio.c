@@ -34,6 +34,9 @@ static char *rompath = NULL;
 static char *spooldir = NULL; /* directory to store high scores */
 static char *screenshot_dir = NULL;
 static FILE *errorlog = NULL;
+#ifdef MESS
+static char *cheatdir = NULL;
+#endif
 
 /* struct definitions */
 typedef enum
@@ -67,16 +70,23 @@ struct rc_option fileio_opts[] = {
      ".",		0,			0,		NULL,
      "Set dir to store screenshots in" },
 #ifdef MESS
+   { "cheatdir",       NULL,                   rc_string,      &cheatdir,
+     XMAMEROOT"/cheat",        0,              0,              NULL,
+     "Set dir to look for cheat files in" },
    { "crcdir",		NULL,			rc_string,	&crcdir,
-     XMAMEROOT,		0,			0,		NULL,
+     XMAMEROOT"/crc",	0,			0,		NULL,
      "Set dir to look for crc files in" },
+   { "cheatfile",	"cf",			rc_string,	&cheatfile,
+     XMAMEROOT"/cheat.cdb", 0,			0,		NULL,
+     "Set the file to use as cheat database" },
+#else
+   { "cheatfile",	"cf",			rc_string,	&cheatfile,
+     XMAMEROOT"/cheat.dat", 0,			0,		NULL,
+     "Set the file to use as cheat database" },
 #endif
    { "hiscorefile",	"hif",			rc_string,	&db_filename,
      XMAMEROOT"/hiscore.dat",	0,		0,		NULL,
      "Set the file to use as high score database" }, 
-   { "cheatfile",	"cf",			rc_string,	&cheatfile,
-     XMAMEROOT"/cheat.dat", 0,			0,		NULL,
-     "Set the file to use as cheat database" },
    { "historyfile",	"hf",			rc_string,	&history_filename,
      XMAMEROOT"/history.dat", 0,		0,		NULL,
      "Set the file to use as history database" },
@@ -509,11 +519,20 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype,
 		    break;
 		case OSD_FILETYPE_HIGHSCORE_DB:
 		case OSD_FILETYPE_HISTORY:
+                    /* only for reading */
+                    if (write) break;
+ 
+                    f->file = fopen (filename, "r");
+                    break;
 		case OSD_FILETYPE_CHEAT:
 		    /* only for reading */
 		    if (write) break;
-		    
+#ifdef MESS
+		    snprintf(name, MAXPATHL, "%s/%s", cheatdir, filename);
+		    f->file = fopen (name, "r");
+#else
 		    f->file = fopen (filename, "r");
+#endif
 		    break;
 		case OSD_FILETYPE_LANGUAGE:
 		    /* only for reading */
