@@ -521,6 +521,34 @@ TESTDRIVER( herocast )
 	DRIVER( pc_ddrgn )
 	DRIVER( pc_smb3 )	/* (c) 1988 Nintendo */
 
+	/*Nintendo VS Games */
+	DRIVER( btlecity)
+	DRIVER(	cstlevna)
+	DRIVER(	cluclu)
+	DRIVER(	drmario)
+	DRIVER(	duckhunt)
+	DRIVER(	excitebk)
+	DRIVER(	hogalley)
+	DRIVER(	iceclimb)
+	DRIVER(	ladygolf)
+	DRIVER(	machridr)
+	DRIVER(	suprmrio)
+	DRIVER(	vsgolf)
+	DRIVER(	vspinbal)
+	DRIVER(	vsslalom)
+	DRIVER(	vssoccer)
+	DRIVER(	goonies)
+	DRIVER(	vsgradus)
+	DRIVER(	tkoboxng)
+	DRIVER(	rbibb)
+	DRIVER(	topgun)
+	DRIVER(	vsskykid)
+	DRIVER(	vstennis)
+	DRIVER(	platoon)
+	DRIVER( wrecking)
+	DRIVER( mahjong)
+	DRIVER( balonfgt)
+
 	/* Midway 8080 b/w games */
 	DRIVER( seawolf )	/* 596 [1976] */
 	DRIVER( gunfight )	/* 597 [1975] */
