@@ -126,7 +126,7 @@ if (yarbsize) /* using arbitrary Y-scaling (Adam D. Moss <adam@gimp.org>) */
    while (reps-- >1) memcpy((DST)+(reps*(CORRECTED_DEST_WIDTH)), DST, ((END)-(SRC))*DEST_PIXEL_SIZE*SCALE_X(1)); \
 }
 #endif
-//#define COPY_LINE(SRC, END, DST) { COPY_LINE2(SRC, END, DST) }
+/*#define COPY_LINE(SRC, END, DST) { COPY_LINE2(SRC, END, DST) }*/
 #include "blit_core.h"
 break;
 
