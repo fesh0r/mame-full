@@ -11,6 +11,7 @@
 
 #include "driver.h"
 #include "includes/kaypro.h"
+#include "includes/basicdsk.h"
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -299,9 +300,9 @@ static const struct IODevice io_kaypro[] = {
 		4,					/* count */
 		"dsk\0",            /* file extensions */
 		IO_RESET_NONE,		/* reset if file changed */
-        NULL,               /* id */
-		kaypro_floppy_init, /* init */
-		NULL,				/* exit */
+        basicdsk_floppy_id,               /* id */
+                kaypro_floppy_init, /* init */
+                basicdsk_floppy_exit,                           /* exit */
 		NULL,				/* info */
 		NULL,				/* open */
 		NULL,				/* close */
