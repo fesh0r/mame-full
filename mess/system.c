@@ -340,6 +340,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( ts2068 )		/*                                                */
 
 	DRIVER( spec128  )	/* Spectrum                                       */
+	DRIVER( spec128s )	/* Spectrum                                       */
 	DRIVER( specpls2 )	/* Spectrum                                       */
 	DRIVER( specpl2a )	/* Spectrum                                       */
 	DRIVER( specp2fr )	/*                                                */

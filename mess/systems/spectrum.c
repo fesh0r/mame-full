@@ -1750,6 +1750,12 @@ ROM_START(spec128)
 	ROM_LOAD("zx128_1.rom",0x14000,0x4000, 0xb96a36be)
 ROM_END
 
+ROM_START(spec128s)
+        ROM_REGION(0x18000,REGION_CPU1)
+	ROM_LOAD("zx128s0.rom",0x10000,0x4000, 0x453d86b2)
+	ROM_LOAD("zx128s1.rom",0x14000,0x4000, 0x6010e796)
+ROM_END
+
 ROM_START(specpls2)
         ROM_REGION(0x18000,REGION_CPU1)
 	ROM_LOAD("zxp2_0.rom",0x10000,0x4000, 0x5d2e8c66)
@@ -1916,6 +1922,7 @@ static const struct IODevice io_specpls3[] = {
 };
 
 #define io_spec128  io_spectrum
+#define io_spec128s io_spectrum
 #define io_specpls2 io_spectrum
 #define io_specbusy io_spectrum
 #define io_specgrot io_spectrum
@@ -1947,6 +1954,7 @@ COMP ( 198?, tc2048,   spectrum, tc2048,         spectrum, 0,            "Timex 
 COMP ( 1983, ts2068,   spectrum, ts2068,         spectrum, 0,            "Timex Sinclair",       "TS2068" )
 
 COMPX( 1986, spec128,  0,        spectrum_128,   spectrum, 0,            "Sinclair Research",    "ZX Spectrum 128" ,GAME_NOT_WORKING)
+COMPX( 1986, spec128s, 0,        spectrum_128,   spectrum, 0,            "Sinclair Research",    "ZX Spectrum 128 (Spain)" ,GAME_NOT_WORKING)
 COMPX( 1986, specpls2, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "ZX Spectrum +2" ,GAME_NOT_WORKING)
 COMPX( 1987, specpl2a, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "ZX Spectrum +2a" ,GAME_NOT_WORKING)
 COMPX( 1987, specpls3, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "ZX Spectrum +3" ,GAME_NOT_WORKING)
