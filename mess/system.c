@@ -122,9 +122,9 @@ const struct GameDriver *drivers[] =
 	DRIVER( a2600 ) 	/* Atari 2600									  */
 	DRIVER( a5200 ) 	/* Atari 5200									  */
 	DRIVER( a7800 ) 	/* Atari 7800									  */
-TESTDRIVER( lynx )		/* Atari Lynx Handheld							  */
-TESTDRIVER( lynxa )		/* Atari Lynx Handheld alternate rom save		  */
-TESTDRIVER( lynx2 )		/* Atari Lynx II Handheld redesigned, no additions*/
+	DRIVER( lynx )		/* Atari Lynx Handheld							  */
+	DRIVER( lynxa )		/* Atari Lynx Handheld alternate rom save		  */
+	DRIVER( lynx2 )		/* Atari Lynx II Handheld redesigned, no additions*/
 /*	DRIVER( jaguar )*/	/* Atari Jaguar 								  */
 #endif
 
