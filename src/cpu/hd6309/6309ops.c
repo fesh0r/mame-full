@@ -683,269 +683,47 @@ INLINE void lble( void )
 #pragma mark ____3x____
 #endif
 
-#define REG_TO_REG( immediate ) 						\
-{														\
-	switch( immediate ) 								\
-	{													\
-		case 0x00:	MATH16(D,D);				break;	\
-		case 0x01:	MATH16(D,X);				break;	\
-		case 0x02:	MATH16(D,Y);				break;	\
-		case 0x03:	MATH16(D,U);				break;	\
-		case 0x04:	MATH16(D,S);				break;	\
-		case 0x05:	MATH16(D,PC); CHANGE_PC;	break;	\
-		case 0x06:	MATH16(D,W);				break;	\
-		case 0x07:	MATH16(D,V);				break;	\
-		case 0x08:	MATH16(D,D);				break;	\
-		case 0x09:	MATH16(D,D);				break;	\
-		case 0x0a:	MATH16(D,CC);				break;	\
-		case 0x0b:	MATH16(D,DP);				break;	\
-		case 0x0c:	MATH16(D,zero); 			break;	\
-		case 0x0d:	MATH16(D,zero); 			break;	\
-		case 0x0e:	MATH16(D,W);				break;	\
-		case 0x0f:	MATH16(D,W);				break;	\
-		case 0x10:	MATH16(X,D);				break;	\
-		case 0x11:	MATH16(X,X);				break;	\
-		case 0x12:	MATH16(X,Y);				break;	\
-		case 0x13:	MATH16(X,U);				break;	\
-		case 0x14:	MATH16(X,S);				break;	\
-		case 0x15:	MATH16(X,PC); CHANGE_PC;	break;	\
-		case 0x16:	MATH16(X,W);				break;	\
-		case 0x17:	MATH16(X,V);				break;	\
-		case 0x18:	MATH16(X,D);				break;	\
-		case 0x19:	MATH16(X,D);				break;	\
-		case 0x1a:	MATH16(X,CC);				break;	\
-		case 0x1b:	MATH16(X,DP);				break;	\
-		case 0x1c:	MATH16(X,zero); 			break;	\
-		case 0x1d:	MATH16(X,zero); 			break;	\
-		case 0x1e:	MATH16(X,W);				break;	\
-		case 0x1f:	MATH16(X,W);				break;	\
-		case 0x20:	MATH16(Y,D);				break;	\
-		case 0x21:	MATH16(Y,X);				break;	\
-		case 0x22:	MATH16(Y,Y);				break;	\
-		case 0x23:	MATH16(Y,U);				break;	\
-		case 0x24:	MATH16(Y,S);				break;	\
-		case 0x25:	MATH16(Y,PC); CHANGE_PC;	break;	\
-		case 0x26:	MATH16(Y,W);				break;	\
-		case 0x27:	MATH16(Y,V);				break;	\
-		case 0x28:	MATH16(Y,D);				break;	\
-		case 0x29:	MATH16(Y,D);				break;	\
-		case 0x2a:	MATH16(Y,CC);				break;	\
-		case 0x2b:	MATH16(Y,DP);				break;	\
-		case 0x2c:	MATH16(Y,zero); 			break;	\
-		case 0x2d:	MATH16(Y,zero); 			break;	\
-		case 0x2e:	MATH16(Y,W);				break;	\
-		case 0x2f:	MATH16(Y,W);				break;	\
-		case 0x30:	MATH16(U,D);				break;	\
-		case 0x31:	MATH16(U,X);				break;	\
-		case 0x32:	MATH16(U,Y);				break;	\
-		case 0x33:	MATH16(U,U);				break;	\
-		case 0x34:	MATH16(U,S);				break;	\
-		case 0x35:	MATH16(U,PC); CHANGE_PC;	break;	\
-		case 0x36:	MATH16(U,W);				break;	\
-		case 0x37:	MATH16(U,V);				break;	\
-		case 0x38:	MATH16(U,D);				break;	\
-		case 0x39:	MATH16(U,D);				break;	\
-		case 0x3a:	MATH16(U,CC);				break;	\
-		case 0x3b:	MATH16(U,DP);				break;	\
-		case 0x3c:	MATH16(U,zero); 			break;	\
-		case 0x3d:	MATH16(U,zero); 			break;	\
-		case 0x3e:	MATH16(U,W);				break;	\
-		case 0x3f:	MATH16(U,W);				break;	\
-		case 0x40:	MATH16(S,D);				break;	\
-		case 0x41:	MATH16(S,X);				break;	\
-		case 0x42:	MATH16(S,Y);				break;	\
-		case 0x43:	MATH16(S,U);				break;	\
-		case 0x44:	MATH16(S,S);				break;	\
-		case 0x45:	MATH16(S,PC); CHANGE_PC;	break;	\
-		case 0x46:	MATH16(S,W);				break;	\
-		case 0x47:	MATH16(S,V);				break;	\
-		case 0x48:	MATH16(S,D);				break;	\
-		case 0x49:	MATH16(S,D);				break;	\
-		case 0x4a:	MATH16(S,CC);				break;	\
-		case 0x4b:	MATH16(S,DP);				break;	\
-		case 0x4c:	MATH16(S,zero); 			break;	\
-		case 0x4d:	MATH16(S,zero); 			break;	\
-		case 0x4e:	MATH16(S,W);				break;	\
-		case 0x4f:	MATH16(S,W);				break;	\
-		case 0x50:	MATH16(PC,D);				break;	\
-		case 0x51:	MATH16(PC,X);				break;	\
-		case 0x52:	MATH16(PC,Y);				break;	\
-		case 0x53:	MATH16(PC,U);				break;	\
-		case 0x54:	MATH16(PC,S);				break;	\
-		case 0x55:	MATH16(PC,PC); CHANGE_PC;	break;	\
-		case 0x56:	MATH16(PC,W);				break;	\
-		case 0x57:	MATH16(PC,V);				break;	\
-		case 0x58:	MATH16(PC,D);				break;	\
-		case 0x59:	MATH16(PC,D);				break;	\
-		case 0x5a:	MATH16(PC,CC);				break;	\
-		case 0x5b:	MATH16(PC,DP);				break;	\
-		case 0x5c:	MATH16(PC,zero);			break;	\
-		case 0x5d:	MATH16(PC,zero);			break;	\
-		case 0x5e:	MATH16(PC,W);				break;	\
-		case 0x5f:	MATH16(PC,W);				break;	\
-		case 0x60:	MATH16(W,D);				break;	\
-		case 0x61:	MATH16(W,X);				break;	\
-		case 0x62:	MATH16(W,Y);				break;	\
-		case 0x63:	MATH16(W,U);				break;	\
-		case 0x64:	MATH16(W,S);				break;	\
-		case 0x65:	MATH16(W,PC); CHANGE_PC;	break;	\
-		case 0x66:	MATH16(W,W);				break;	\
-		case 0x67:	MATH16(W,V);				break;	\
-		case 0x68:	MATH16(W,D);				break;	\
-		case 0x69:	MATH16(W,D);				break;	\
-		case 0x6a:	MATH16(W,CC);				break;	\
-		case 0x6b:	MATH16(W,DP);				break;	\
-		case 0x6c:	MATH16(W,zero); 			break;	\
-		case 0x6d:	MATH16(W,zero); 			break;	\
-		case 0x6e:	MATH16(W,W);				break;	\
-		case 0x6f:	MATH16(W,W);				break;	\
-		case 0x70:	MATH16(V,D);				break;	\
-		case 0x71:	MATH16(V,X);				break;	\
-		case 0x72:	MATH16(V,Y);				break;	\
-		case 0x73:	MATH16(V,U);				break;	\
-		case 0x74:	MATH16(V,S);				break;	\
-		case 0x75:	MATH16(V,PC); CHANGE_PC;	break;	\
-		case 0x76:	MATH16(V,W);				break;	\
-		case 0x77:	MATH16(V,V);				break;	\
-		case 0x78:	MATH16(V,D);				break;	\
-		case 0x79:	MATH16(V,D);				break;	\
-		case 0x7a:	MATH16(V,CC);				break;	\
-		case 0x7b:	MATH16(V,DP);				break;	\
-		case 0x7c:	MATH16(V,zero); 			break;	\
-		case 0x7d:	MATH16(V,zero); 			break;	\
-		case 0x7e:	MATH16(V,W);				break;	\
-		case 0x7f:	MATH16(V,W);				break;	\
-		case 0x80:	MATH16(D,D);				break;	\
-		case 0x81:	MATH16(D,X);				break;	\
-		case 0x82:	MATH16(D,Y);				break;	\
-		case 0x83:	MATH16(D,U);				break;	\
-		case 0x84:	MATH16(D,S);				break;	\
-		case 0x85:	MATH16(D,PC); CHANGE_PC;	break;	\
-		case 0x86:	MATH16(D,W);				break;	\
-		case 0x87:	MATH16(D,V);				break;	\
-		case 0x88:	MATH8(A,A); 				break;	\
-		case 0x89:	MATH8(A,B); 				break;	\
-		case 0x8a:	MATH8(A,CC);				break;	\
-		case 0x8b:	MATH8(A,DP);				break;	\
-		case 0x8c:	MATH16(A,zero); 			break;	\
-		case 0x8d:	MATH16(A,zero); 			break;	\
-		case 0x8e:	MATH8(A,E); 				break;	\
-		case 0x8f:	MATH8(A,F); 				break;	\
-		case 0x90:	MATH16(D,D);				break;	\
-		case 0x91:	MATH16(D,X);				break;	\
-		case 0x92:	MATH16(D,Y);				break;	\
-		case 0x93:	MATH16(D,U);				break;	\
-		case 0x94:	MATH16(D,S);				break;	\
-		case 0x95:	MATH16(D,PC); CHANGE_PC;	break;	\
-		case 0x96:	MATH16(D,W);				break;	\
-		case 0x97:	MATH16(D,V);				break;	\
-		case 0x98:	MATH8(B,A); 				break;	\
-		case 0x99:	MATH8(B,B); 				break;	\
-		case 0x9a:	MATH8(B,CC);				break;	\
-		case 0x9b:	MATH8(B,DP);				break;	\
-		case 0x9c:	MATH16(B,zero); 			break;	\
-		case 0x9d:	MATH16(B,zero); 			break;	\
-		case 0x9e:	MATH8(B,E); 				break;	\
-		case 0x9f:	MATH8(B,F); 				break;	\
-		case 0xa0:	MATH16(CC,D);				break;	\
-		case 0xa1:	MATH16(CC,X);				break;	\
-		case 0xa2:	MATH16(CC,Y);				break;	\
-		case 0xa3:	MATH16(CC,U);				break;	\
-		case 0xa4:	MATH16(CC,S);				break;	\
-		case 0xa5:	MATH16(CC,PC); CHANGE_PC;	break;	\
-		case 0xa6:	MATH16(CC,W);				break;	\
-		case 0xa7:	MATH16(CC,V);				break;	\
-		case 0xa8:	MATH8(CC,A);				break;	\
-		case 0xa9:	MATH8(CC,B);				break;	\
-		case 0xaa:	MATH8(CC,CC);				break;	\
-		case 0xab:	MATH8(CC,DP);				break;	\
-		case 0xac:	MATH16(CC,zero);			break;	\
-		case 0xad:	MATH16(CC,zero);			break;	\
-		case 0xae:	MATH8(CC,E);				break;	\
-		case 0xaf:	MATH8(CC,F);				break;	\
-		case 0xb0:	MATH16(DP,D);				break;	\
-		case 0xb1:	MATH16(DP,X);				break;	\
-		case 0xb2:	MATH16(DP,Y);				break;	\
-		case 0xb3:	MATH16(DP,U);				break;	\
-		case 0xb4:	MATH16(DP,S);				break;	\
-		case 0xb5:	MATH16(DP,PC); CHANGE_PC;	break;	\
-		case 0xb6:	MATH16(DP,W);				break;	\
-		case 0xb7:	MATH16(DP,V);				break;	\
-		case 0xb8:	MATH8(DP,A);				break;	\
-		case 0xb9:	MATH8(DP,B);				break;	\
-		case 0xba:	MATH8(DP,CC);				break;	\
-		case 0xbb:	MATH8(DP,DP);				break;	\
-		case 0xbc:	MATH16(DP,zero);			break;	\
-		case 0xbd:	MATH16(DP,zero);			break;	\
-		case 0xbe:	MATH8(DP,E);				break;	\
-		case 0xbf:	MATH8(DP,F);				break;	\
-		case 0xc0:	MATH16(0,D);				break;	\
-		case 0xc1:	MATH16(0,X);				break;	\
-		case 0xc2:	MATH16(0,Y);				break;	\
-		case 0xc3:	MATH16(0,U);				break;	\
-		case 0xc4:	MATH16(0,S);				break;	\
-		case 0xc5:	MATH16(0,PC); CHANGE_PC;	break;	\
-		case 0xc6:	MATH16(0,W);				break;	\
-		case 0xc7:	MATH16(0,V);				break;	\
-		case 0xc8:	MATH8(0,A); 				break;	\
-		case 0xc9:	MATH8(0,B); 				break;	\
-		case 0xca:	MATH8(0,CC);				break;	\
-		case 0xcb:	MATH8(0,DP);				break;	\
-		case 0xcc:	MATH16(0,zero); 			break;	\
-		case 0xcd:	MATH16(0,zero); 			break;	\
-		case 0xce:	MATH8(0,E); 				break;	\
-		case 0xcf:	MATH8(0,F); 				break;	\
-		case 0xd0:	MATH16(0,D);				break;	\
-		case 0xd1:	MATH16(0,X);				break;	\
-		case 0xd2:	MATH16(0,Y);				break;	\
-		case 0xd3:	MATH16(0,U);				break;	\
-		case 0xd4:	MATH16(0,S);				break;	\
-		case 0xd5:	MATH16(0,PC); CHANGE_PC;	break;	\
-		case 0xd6:	MATH16(0,W);				break;	\
-		case 0xd7:	MATH16(0,V);				break;	\
-		case 0xd8:	MATH8(0,A); 				break;	\
-		case 0xd9:	MATH8(0,B); 				break;	\
-		case 0xda:	MATH8(0,CC);				break;	\
-		case 0xdb:	MATH8(0,DP);				break;	\
-		case 0xdc:	MATH16(0,zero); 			break;	\
-		case 0xdd:	MATH16(0,zero); 			break;	\
-		case 0xde:	MATH8(0,E); 				break;	\
-		case 0xdf:	MATH8(0,F); 				break;	\
-		case 0xe0:	MATH16(W,D);				break;	\
-		case 0xe1:	MATH16(W,X);				break;	\
-		case 0xe2:	MATH16(W,Y);				break;	\
-		case 0xe3:	MATH16(W,U);				break;	\
-		case 0xe4:	MATH16(W,S);				break;	\
-		case 0xe5:	MATH16(W,PC); CHANGE_PC;	break;	\
-		case 0xe6:	MATH16(W,W);				break;	\
-		case 0xe7:	MATH16(W,V);				break;	\
-		case 0xe8:	MATH8(E,A); 				break;	\
-		case 0xe9:	MATH8(E,B); 				break;	\
-		case 0xea:	MATH8(E,CC);				break;	\
-		case 0xeb:	MATH8(E,DP);				break;	\
-		case 0xec:	MATH16(E,zero); 			break;	\
-		case 0xed:	MATH16(E,zero); 			break;	\
-		case 0xee:	MATH8(E,E); 				break;	\
-		case 0xef:	MATH8(E,F); 				break;	\
-		case 0xf0:	MATH16(W,D);				break;	\
-		case 0xf1:	MATH16(W,X);				break;	\
-		case 0xf2:	MATH16(W,Y);				break;	\
-		case 0xf3:	MATH16(W,U);				break;	\
-		case 0xf4:	MATH16(W,S);				break;	\
-		case 0xf5:	MATH16(W,PC); CHANGE_PC;	break;	\
-		case 0xf6:	MATH16(W,W);				break;	\
-		case 0xf7:	MATH16(W,V);				break;	\
-		case 0xf8:	MATH8(F,A); 				break;	\
-		case 0xf9:	MATH8(F,B); 				break;	\
-		case 0xfa:	MATH8(F,CC);				break;	\
-		case 0xfb:	MATH8(F,DP);				break;	\
-		case 0xfc:	MATH16(F,zero); 			break;	\
-		case 0xfd:	MATH16(F,zero); 			break;	\
-		case 0xfe:	MATH8(F,E); 				break;	\
-		case 0xff:	MATH8(F,F); 				break;	\
-		}												\
-}
-
+#define REGREG_PREAMBLE														\
+	IMMBYTE(tb);															\
+	if( (tb^(tb>>4)) & 0x08 )												\
+		{promote = TRUE;}													\
+	switch(tb>>4) {															\
+		case  0: src16Reg = &D; large = TRUE;  break;						\
+		case  1: src16Reg = &X; large = TRUE;  break;						\
+		case  2: src16Reg = &Y; large = TRUE;  break;						\
+		case  3: src16Reg = &U; large = TRUE;  break;						\
+		case  4: src16Reg = &S; large = TRUE;  break;						\
+		case  5: src16Reg = &PC; large = TRUE; break;						\
+		case  6: src16Reg = &W; large = TRUE;  break;						\
+		case  7: src16Reg = &V; large = TRUE;  break;						\
+		case  8: if (promote) src16Reg = &D; else src8Reg = &A; break;		\
+		case  9: if (promote) src16Reg = &D; else src8Reg = &B; break;		\
+		case 10: if (promote) src16Reg = &z16; else src8Reg = &CC; break;	\
+		case 11: if (promote) src16Reg = &z16; else src8Reg = &DP; break;	\
+		case 12: if (promote) src16Reg = &z16; else src8Reg = &z8; break;	\
+		case 13: if (promote) src16Reg = &z16; else src8Reg = &z8; break;	\
+		case 14: if (promote) src16Reg = &W; else src8Reg = &E; break;		\
+		default: if (promote) src16Reg = &W; else src8Reg = &F; break;		\
+	}																		\
+	switch(tb&15) {															\
+		case  0: dst16Reg = &D; large = TRUE;  break;						\
+		case  1: dst16Reg = &X; large = TRUE;  break;						\
+		case  2: dst16Reg = &Y; large = TRUE;  break;						\
+		case  3: dst16Reg = &U; large = TRUE;  break;						\
+		case  4: dst16Reg = &S; large = TRUE;  break;						\
+		case  5: dst16Reg = &PC; large = TRUE; break;						\
+		case  6: dst16Reg = &W; large = TRUE;  break;						\
+		case  7: dst16Reg = &V; large = TRUE;  break;						\
+		case  8: if (promote) dst16Reg = &D; else dst8Reg = &A; break;		\
+		case  9: if (promote) dst16Reg = &D; else dst8Reg = &B; break;		\
+		case 10: if (promote) dst16Reg = &z16; else dst8Reg = &CC; break;	\
+		case 11: if (promote) dst16Reg = &z16; else dst8Reg = &DP; break;	\
+		case 12: if (promote) dst16Reg = &z16; else dst8Reg = &z8; break;	\
+		case 13: if (promote) dst16Reg = &z16; else dst8Reg = &z8; break;	\
+		case 14: if (promote) dst16Reg = &W; else dst8Reg = &E; break;		\
+		default: if (promote) dst16Reg = &W; else dst8Reg = &F; break;		\
+	}																		\
+	
 /* $1030 addr_r r1 + r2 -> r2 */
 
 INLINE void addr_r( void )
@@ -957,51 +735,7 @@ INLINE void addr_r( void )
 	UINT16	*src16Reg = NULL, *dst16Reg = NULL;
 	int 	promote = FALSE, large = FALSE;
 
-
-	IMMBYTE(tb);
-	if( (tb^(tb>>4)) & 0x08 )	/* HJB 990225: mixed 8/16 bit case? */
-	{
-		promote = TRUE;
-	}
-
-	switch(tb>>4) {
-		case  0: src16Reg = &D; large = TRUE;  break;
-		case  1: src16Reg = &X; large = TRUE;  break;
-		case  2: src16Reg = &Y; large = TRUE;  break;
-		case  3: src16Reg = &U; large = TRUE;  break;
-		case  4: src16Reg = &S; large = TRUE;  break;
-		case  5: src16Reg = &PC; large = TRUE; break;
-		case  6: src16Reg = &W; large = TRUE;  break;
-		case  7: src16Reg = &V; large = TRUE;  break;
-		case  8: if (promote) src16Reg = &D; else src8Reg = &A; break;
-		case  9: if (promote) src16Reg = &D; else src8Reg = &B; break;
-		case 10: if (promote) src16Reg = &z16; else src8Reg = &CC; break; /* I dont know if this is the correct promotion */
-		case 11: if (promote) src16Reg = &z16; else src8Reg = &DP; break; /* I dont know if this is the correct promotion */
-		case 12: if (promote) src16Reg = &z16; else src8Reg = &z8; break;
-		case 13: if (promote) src16Reg = &z16; else src8Reg = &z8; break;
-		case 14: if (promote) src16Reg = &W; else src8Reg = &E; break;
-		default: if (promote) src16Reg = &W; else src8Reg = &F; break;
-	}
-
-	switch(tb&15) {
-		case  0: dst16Reg = &D; large = TRUE;  break;
-		case  1: dst16Reg = &X; large = TRUE;  break;
-		case  2: dst16Reg = &Y; large = TRUE;  break;
-		case  3: dst16Reg = &U; large = TRUE;  break;
-		case  4: dst16Reg = &S; large = TRUE;  break;
-		case  5: dst16Reg = &PC; large = TRUE; break;
-		case  6: dst16Reg = &W; large = TRUE;  break;
-		case  7: dst16Reg = &V; large = TRUE;  break;
-		case  8: if (promote) dst16Reg = &D; else dst8Reg = &A; break;
-		case  9: if (promote) dst16Reg = &D; else dst8Reg = &B; break;
-		case 10: if (promote) dst16Reg = &z16; else dst8Reg = &CC; break; /* I dont know if this is the correct promotion */
-		case 11: if (promote) dst16Reg = &z16; else dst8Reg = &DP; break; /* I dont know if this is the correct promotion */
-		case 12: if (promote) dst16Reg = &z16; else dst8Reg = &z8; break;
-		case 13: if (promote) dst16Reg = &z16; else dst8Reg = &z8; break;
-		case 14: if (promote) dst16Reg = &W; else dst8Reg = &E; break;
-		default: if (promote) dst16Reg = &W; else dst8Reg = &F; break;
-	}
-
+	REGREG_PREAMBLE;
 
 	if ( large )
 	{
@@ -1023,209 +757,231 @@ INLINE void addr_r( void )
 		/* SET_H(*src8Reg,*src8Reg,r8);*/ /*Experimentation prooved this not to be the case */
 		*dst8Reg = r8;
 	}
-
-}
-
-#define MATH16( r1, r2 )			\
-{									\
-	r16 = r1 + r2 + (CC & CC_C);	\
-	CLR_HNZVC;						\
-	SET_FLAGS16(r1,r1,r16); 		\
-	r2 = r16;						\
-}
-
-#define MATH8( r1, r2 ) 			\
-{									\
-	r8 = r1 + r2 + (CC & CC_C); 	\
-	CLR_HNZVC;						\
-	SET_FLAGS8(r1,r2,r8);			\
-	SET_H(r1,r2,r8);				\
-	r2 = r8;						\
 }
 
 INLINE void adcr( void )
 {
-	UINT16 t,r8, zero=0;
+	UINT8	tb, z8 = 0;
+	UINT16	z16 = 0, r8;
 	UINT32	r16;
+	UINT8	*src8Reg = NULL, *dst8Reg = NULL;
+	UINT16	*src16Reg = NULL, *dst16Reg = NULL;
+	int 	promote = FALSE, large = FALSE;
 
-	IMMBYTE(t);
+	REGREG_PREAMBLE;
 
-	REG_TO_REG( t );
+	if ( large )
+	{
+		r16 = *src16Reg + *dst16Reg + (CC & CC_C);
+		CLR_HNZVC;
+		SET_FLAGS16(*src16Reg,*dst16Reg,r16);
+		*dst16Reg = r16;
+
+		if ( (tb&15) == 5 )
+		{
+			CHANGE_PC;
+		}
+	}
+	else
+	{
+		r8 = *src8Reg + *dst8Reg + (CC & CC_C);
+		CLR_HNZVC;
+		SET_FLAGS8(*src8Reg,*dst8Reg,r8);
+		/* SET_H(*src8Reg,*src8Reg,r8);*/ /*Experimentation prooved this not to be the case */
+		*dst8Reg = r8;
+	}
 }
-#undef MATH16
-#undef MATH8
 
 /* $1032 SUBR r1 - r2 -> r2 */
-#define MATH16( r1, r2 )					\
-{											\
-	r16 = (UINT32)r2 - (UINT32)r1;			\
-	CLR_NZVC;								\
-	SET_FLAGS16((UINT32)r2,(UINT32)r1,r16); \
-	r2 = r16;								\
-}
-
-#define MATH8( r1, r2 ) 			\
-{									\
-	r8 = r2 - r1;					\
-	CLR_NZVC;						\
-	SET_FLAGS8(r2,r1,r8);			\
-	r2 = r8;						\
-}
-
 INLINE void subr( void )
 {
-	UINT16 t,r8, zero=0;
+	UINT8	tb, z8 = 0;
+	UINT16	z16 = 0, r8;
 	UINT32	r16;
+	UINT8	*src8Reg = NULL, *dst8Reg = NULL;
+	UINT16	*src16Reg = NULL, *dst16Reg = NULL;
+	int 	promote = FALSE, large = FALSE;
 
-	IMMBYTE(t);
+	REGREG_PREAMBLE;
 
-	REG_TO_REG( t );
+	if ( large )
+	{
+		r16 = (UINT32)*dst16Reg - (UINT32)*src16Reg;
+		CLR_NZVC;
+		SET_FLAGS16((UINT32)*dst16Reg,(UINT32)*src16Reg,r16);
+		*dst16Reg = r16;
+
+		if ( (tb&15) == 5 )
+		{
+			CHANGE_PC;
+		}
+	}
+	else
+	{
+		r8 = *dst8Reg - *src8Reg;
+		CLR_NZVC;
+		SET_FLAGS8(*dst8Reg,*src8Reg,r8);
+		*dst8Reg = r8;
+	}
 }
-#undef MATH16
-#undef MATH8
 
 /* $1033 SBCR r1 - r2 - C -> r2 */
-#define MATH16( r1, r2 )							\
-{													\
-	r16 = (UINT32)r2 - (UINT32)r1 - (CC & CC_C);	\
-	CLR_NZVC;										\
-	SET_FLAGS16((UINT32)r2,(UINT32)r1,r16); 		\
-	r2 = r16;										\
-}
-
-#define MATH8( r1, r2 ) 			\
-{									\
-	r8 = r2 - r1 - (CC & CC_C); 	\
-	CLR_NZVC;						\
-	SET_FLAGS8(r2,r1,r8);			\
-	r2 = r8;						\
-}
-
 INLINE void sbcr( void )
 {
-	UINT16 t,r8, zero=0;
+	UINT8	tb, z8 = 0;
+	UINT16	z16 = 0, r8;
 	UINT32	r16;
+	UINT8	*src8Reg = NULL, *dst8Reg = NULL;
+	UINT16	*src16Reg = NULL, *dst16Reg = NULL;
+	int 	promote = FALSE, large = FALSE;
 
-	IMMBYTE(t);
+	REGREG_PREAMBLE;
 
-	REG_TO_REG( t );
+	if ( large )
+	{
+		r16 = (UINT32)*dst16Reg - (UINT32)*src16Reg - (CC & CC_C);
+		CLR_NZVC;
+		SET_FLAGS16((UINT32)*dst16Reg,(UINT32)*src16Reg,r16);
+		*dst16Reg = r16;
+
+		if ( (tb&15) == 5 )
+		{
+			CHANGE_PC;
+		}
+	}
+	else
+	{
+		r8 = *dst8Reg - *src8Reg - (CC & CC_C);
+		CLR_NZVC;
+		SET_FLAGS8(*dst8Reg,*src8Reg,r8);
+		*dst8Reg = r8;
+	}
 }
-#undef MATH16
-#undef MATH8
 
 /* $1034 ANDR r1 & r2 -> r2 */
-#define MATH16( r1, r2 )			\
-{									\
-	r16 = r1 & r2;					\
-	CLR_NZV;						\
-	SET_NZ16(r16);					\
-	r2 = r16;						\
-}
-
-#define MATH8( r1, r2 ) 			\
-{									\
-	r8 = r1 & r2;					\
-	CLR_NZV;						\
-	SET_NZ8(r8);					\
-	r2 = r8;						\
-}
-
 INLINE void andr( void )
 {
-	UINT16 t,r8, zero=0;
+	UINT8	tb, z8 = 0;
+	UINT16	z16 = 0, r8;
 	UINT32	r16;
+	UINT8	*src8Reg = NULL, *dst8Reg = NULL;
+	UINT16	*src16Reg = NULL, *dst16Reg = NULL;
+	int 	promote = FALSE, large = FALSE;
 
-	IMMBYTE(t);
+	REGREG_PREAMBLE;
 
-	REG_TO_REG( t );
+	if ( large )
+	{
+		r16 = *src16Reg & *dst16Reg;
+		CLR_NZV;
+		SET_NZ16(r16);
+		*dst16Reg = r16;
+
+		if ( (tb&15) == 5 )
+		{
+			CHANGE_PC;
+		}
+	}
+	else
+	{
+		r8 = *src8Reg & *dst8Reg;
+		CLR_NZV;
+		SET_NZ8(r8);
+		*dst8Reg = r8;
+	}
 }
-#undef MATH16
-#undef MATH8
 
 /* $1035 ORR r1 | r2 -> r2 */
-#define MATH16( r1, r2 )			\
-{									\
-	r16 = r1 | r2;					\
-	CLR_NZV;						\
-	SET_NZ16(r16);					\
-	r2 = r16;						\
-}
-
-#define MATH8( r1, r2 ) 			\
-{									\
-	r8 = r1 | r2;					\
-	CLR_NZV;						\
-	SET_NZ8(r8);					\
-	r2 = r8;						\
-}
-
 INLINE void orr( void )
 {
-	UINT16 t,r8, zero=0;
+	UINT8	tb, z8 = 0;
+	UINT16	z16 = 0, r8;
 	UINT32	r16;
+	UINT8	*src8Reg = NULL, *dst8Reg = NULL;
+	UINT16	*src16Reg = NULL, *dst16Reg = NULL;
+	int 	promote = FALSE, large = FALSE;
 
-	IMMBYTE(t);
+	REGREG_PREAMBLE;
 
-	REG_TO_REG( t );
+	if ( large )
+	{
+		r16 = *src16Reg | *dst16Reg;
+		CLR_NZV;
+		SET_NZ16(r16);
+		*dst16Reg = r16;
+
+		if ( (tb&15) == 5 )
+		{
+			CHANGE_PC;
+		}
+	}
+	else
+	{
+		r8 = *src8Reg | *dst8Reg;
+		CLR_NZV;
+		SET_NZ8(r8);
+		*dst8Reg = r8;
+	}
 }
-#undef MATH16
-#undef MATH8
 
 /* $1036 EORR r1 ^ r2 -> r2 */
-#define MATH16( r1, r2 )			\
-{									\
-	r16 = r1 ^ r2;					\
-	CLR_NZV;						\
-	SET_NZ16(r16);					\
-	r2 = r16;						\
-}
-
-#define MATH8( r1, r2 ) 			\
-{									\
-	r8 = r1 ^ r2;					\
-	CLR_NZV;						\
-	SET_NZ8(r8);					\
-	r2 = r8;						\
-}
-
 INLINE void eorr( void )
 {
-	UINT16 t,r8, zero=0;
+	UINT8	tb, z8 = 0;
+	UINT16	z16 = 0, r8;
 	UINT32	r16;
+	UINT8	*src8Reg = NULL, *dst8Reg = NULL;
+	UINT16	*src16Reg = NULL, *dst16Reg = NULL;
+	int 	promote = FALSE, large = FALSE;
 
-	IMMBYTE(t);
+	REGREG_PREAMBLE;
 
-	REG_TO_REG( t );
+	if ( large )
+	{
+		r16 = *src16Reg ^ *dst16Reg;
+		CLR_NZV;
+		SET_NZ16(r16);
+		*dst16Reg = r16;
+
+		if ( (tb&15) == 5 )
+		{
+			CHANGE_PC;
+		}
+	}
+	else
+	{
+		r8 = *src8Reg ^ *dst8Reg;
+		CLR_NZV;
+		SET_NZ8(r8);
+		*dst8Reg = r8;
+	}
 }
-#undef MATH16
-#undef MATH8
 
 /* $1037 CMPR r1 - r2 */
-#define MATH16( r1, r2 )					\
-{											\
-	r16 = (UINT32)r2 - (UINT32)r1;			\
-	CLR_NZVC;								\
-	SET_FLAGS16((UINT32)r2,(UINT32)r1,r16); \
-}
-
-#define MATH8( r1, r2 ) 			\
-{									\
-	r8 = r2 - r1;					\
-	CLR_NZVC;						\
-	SET_FLAGS8(r2,r1,r8);			\
-}
-
 INLINE void cmpr( void )
 {
-	UINT16 t,r8, zero=0;
+	UINT8	tb, z8 = 0;
+	UINT16	z16 = 0, r8;
 	UINT32	r16;
+	UINT8	*src8Reg = NULL, *dst8Reg = NULL;
+	UINT16	*src16Reg = NULL, *dst16Reg = NULL;
+	int 	promote = FALSE, large = FALSE;
 
-	IMMBYTE(t);
+	REGREG_PREAMBLE;
 
-	REG_TO_REG( t );
+	if ( large )
+	{
+		r16 = (UINT32)*dst16Reg - (UINT32)*src16Reg;
+		CLR_NZVC;
+		SET_FLAGS16((UINT32)*dst16Reg,(UINT32)*src16Reg,r16);
+	}
+	else
+	{
+		r8 = *dst8Reg - *src8Reg;
+		CLR_NZVC;
+		SET_FLAGS8(*dst8Reg,*src8Reg,r8);
+	}
 }
-#undef MATH16
-#undef MATH8
 
 /* $1138 TFR R0+,R1+ */
 INLINE void tfmpp( void )

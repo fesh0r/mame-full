@@ -91,8 +91,10 @@
 #define LOG(x)
 #endif
 
+#if MAME_DEBUG
 #undef INLINE
 #define INLINE
+#endif
 
 void CHECK_IRQ_LINES( void );
 
