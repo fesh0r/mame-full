@@ -1548,6 +1548,7 @@ static void dragon64_sam_set_maptype(int val)
 int coco3_mmu_translate(int bank, int offset)
 {
 	int forceram;
+	int block;
 	int result;
 
 	/* Bank 8 is the 0xfe00 block; and it is treated differently */
@@ -1568,37 +1569,38 @@ int coco3_mmu_translate(int bank, int offset)
 	if (coco3_gimereg[0] & 0x40) {
 		if (coco3_gimereg[1] & 1)
 			bank += 8;
-		result = coco3_mmu[bank];
+		block = coco3_mmu[bank];
 	}
 	else {
-		result = bank + 56;
+		block = bank + 56;
 	}
 
 	/* Are we actually in ROM?
 	 *
 	 * In our world, ROM is represented by memory blocks 0x40-0x47
 	 *
-	 * 0x40			Extended Color Basic
-	 * 0x41			Color Basic
-	 * 0x42			Reset Initialization
-	 * 0x43			Super Extended Color Basic
-	 * 0x44-0x47	Cartridge ROM
+	 * 0	Extended Color Basic
+	 * 1	Color Basic
+	 * 2	Reset Initialization
+	 * 3	Super Extended Color Basic
+	 * 4-7	Cartridge ROM
 	 *
 	 * This is the level where ROM is mapped, according to Tepolt (p21)
 	 */
-	if ((result >= 0x3c) && !coco3_enable_64k && !forceram) {
+	if (((block & 0x3f) >= 0x3c) && !coco3_enable_64k && !forceram) {
 		static const int rommap[4][4] = {
-			{ 0x40, 0x41, 0x46, 0x47 },
-			{ 0x40, 0x41, 0x46, 0x47 },
-			{ 0x40, 0x41, 0x42, 0x43 },
-			{ 0x44, 0x45, 0x46, 0x47 }
+			{ 0, 1, 6, 7 },
+			{ 0, 1, 6, 7 },
+			{ 0, 1, 2, 3 },
+			{ 4, 5, 6, 7 }
 		};
-		result = rommap[coco3_gimereg[0] & 3][result - 0x3c];
-		return ((result - 0x40) * 0x2000 + offset) | 0x80000000;
+		block = rommap[coco3_gimereg[0] & 3][(block & 0x3f) - 0x3c];
+		result = (block * 0x2000 + offset) | 0x80000000;
 	}
 	else {
-		return ((result * 0x2000) + offset) % mess_ram_size;
+		result = ((block * 0x2000) + offset) % mess_ram_size;
 	}
+	return result;
 }
 
 static void coco3_mmu_update(int lowblock, int hiblock)
@@ -1634,12 +1636,11 @@ static void coco3_mmu_update(int lowblock, int hiblock)
 
 READ_HANDLER(coco3_mmu_r)
 {
-	return coco3_mmu[offset] & 0x3f;
+	return (coco3_mmu[offset] & 0x3f) | 0x40;
 }
 
 WRITE_HANDLER(coco3_mmu_w)
 {
-	data &= 0x3f;
 	coco3_mmu[offset] = data;
 
 	/* Did we modify the live MMU bank? */

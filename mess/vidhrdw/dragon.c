@@ -707,7 +707,11 @@ static void coco3_rastertrack_newscreen(struct rastertrack_vvars *vvars, struct 
 #endif
 
 	rows = coco3_calculate_rows(&border_top, NULL);
-	coco3_vidbase = (((coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8))) % mess_ram_size;
+	coco3_vidbase = (
+		((coco3_gimevhreg[3] & 0x03) * 0x80000) +
+		(coco3_gimevhreg[5] * 0x800) +
+		(coco3_gimevhreg[6] * 8)
+		) % mess_ram_size;
 
 	internal_m6847_rastertrack_newscreen(vvars, hvars, border_top, rows, coco3_vidbase, !coco3_hires, coco3_rastertrack_getvideomode);
 }
@@ -852,9 +856,10 @@ WRITE_HANDLER(coco3_gimevh_w)
 		rastertrack_touchvideomode();
 		break;
 
+	case 3:
 	case 5:
 	case 6:
-		/*	$FF9D,$FF9E Vertical Offset Registers
+		/*	$FF9B,$FF9D,$FF9E Vertical Offset Registers
 		 *
 		 *	$FF9F Horizontal Offset Register
 		 *		  Bit 7 HVEN Horizontal Virtual Enable
@@ -863,8 +868,11 @@ WRITE_HANDLER(coco3_gimevh_w)
 		 *	According to JK, if an odd value is placed in $FF9E on the 1986
 		 *	GIME, the GIME crashes
 		 *
-		 *  Also, $FF9D and $FF9E are latched at the top of each screen, so
+		 *  Also, $FF9[B|D|E] are latched at the top of each screen, so
 		 *  we schedule a refresh, not touch the video mode
+		 *
+		 *  The reason that $FF9B is not mentioned in offical documentation
+		 *  is because it is only meaninful in CoCo 3's with the 2mb upgrade
 		 */
 		schedule_full_refresh();
 		break;
