@@ -39,8 +39,10 @@ Source Changes:
 	image_strdup()    (uses image_malloc() to allocate strings)
 	image_exists()    (tests for the existance of a loaded image)
 	image_filetype()  (accessor for file extension)
-	
-  [Nate Woods]
+
+  For the most part, there is no longer any reason for MESS drivers to use
+  malloc() and free(), so calls to these should be eliminated over time. [Nate
+  Woods]
   
 - Removed IO_RESET_ALL, as it was broken and an ugly hack to begin with (bug
   #239) [Nate Woods]
