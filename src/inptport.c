@@ -2625,10 +2625,30 @@ struct InputPort* input_port_allocate(const struct InputPortTiny *src)
   			{
 				InputCode or1 =	IP_GET_CODE_OR1(ext);
 				InputCode or2 =	IP_GET_CODE_OR2(ext);
+				InputCode or3;
+
+				switch(or2)
+				{
+					case JOYCODE_1_BUTTON1:		or3 = JOYCODE_MOUSE_1_BUTTON1;	break;
+					case JOYCODE_1_BUTTON2:		or3 = JOYCODE_MOUSE_1_BUTTON2;	break;
+					case JOYCODE_1_BUTTON3:		or3 = JOYCODE_MOUSE_1_BUTTON3;	break;
+					case JOYCODE_2_BUTTON1:		or3 = JOYCODE_MOUSE_2_BUTTON1;	break;
+					case JOYCODE_2_BUTTON2:		or3 = JOYCODE_MOUSE_2_BUTTON2;	break;
+					case JOYCODE_2_BUTTON3:		or3 = JOYCODE_MOUSE_2_BUTTON3;	break;
+					case JOYCODE_3_BUTTON1:		or3 = JOYCODE_MOUSE_3_BUTTON1;	break;
+					case JOYCODE_3_BUTTON2:		or3 = JOYCODE_MOUSE_3_BUTTON2;	break;
+					case JOYCODE_3_BUTTON3:		or3 = JOYCODE_MOUSE_3_BUTTON3;	break;
+					case JOYCODE_4_BUTTON1:		or3 = JOYCODE_MOUSE_4_BUTTON1;	break;
+					case JOYCODE_4_BUTTON2:		or3 = JOYCODE_MOUSE_4_BUTTON2;	break;
+					case JOYCODE_4_BUTTON3:		or3 = JOYCODE_MOUSE_4_BUTTON3;	break;
+					default:					or3 = CODE_NONE;				break;
+				}
 
 				if (or1 < __code_max)
 				{
-					if (or2 < __code_max)
+					if (or3 < __code_max)
+						seq_set_5(&dst->seq, or1, CODE_OR, or2, CODE_OR, or3);
+					else if (or2 < __code_max)
 						seq_set_3(&dst->seq, or1, CODE_OR, or2);
 					else
 						seq_set_1(&dst->seq, or1);

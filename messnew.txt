@@ -6,7 +6,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [COCO] CoCo joystick buttons can now be mapped to the mouse buttons (bug
+  #317).  [Nate Woods]
 
 User Interface Changes:
 -----------------------

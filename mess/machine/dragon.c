@@ -1621,9 +1621,35 @@ static void dragon64_sam_set_maptype(int val)
 	dragon64_sethipage(DRAGON64_SAMMAP, val);
 }
 
-/* Coco 3 */
+/*************************************
+ *
+ *	CoCo 3
+ *
+ *************************************/
 
-/* This function translates a bank into an address within RAM; bank is a zero counted MAME bank */
+
+/*
+ * coco3_mmu_translate() takes a zero counted bank index and an offset and
+ * translates it into a physical RAM address.  The following logical memory
+ * addresses have the following bank indexes:
+ *
+ *	Bank 0		$0000-$1FFF
+ *	Bank 1		$2000-$3FFF
+ *	Bank 2		$4000-$5FFF
+ *	Bank 3		$6000-$7FFF
+ *	Bank 4		$8000-$9FFF
+ *	Bank 5		$A000-$BFFF
+ *	Bank 6		$C000-$DFFF
+ *	Bank 7		$E000-$FDFF
+ *	Bank 8		$FE00-$FEFF
+ *
+ * The result represents a physical RAM address.  Since ROM/Cartidge space is
+ * outside of the standard RAM memory map, ROM addresses get a "physical RAM"
+ * address that has bit 31 set.  For example, ECB would be $80000000-
+ * $80001FFFF, CB would be $80002000-$80003FFFF etc.  It is possible to force
+ * this function to use a RAM address, which is used for video since video can
+ * never reference ROM.
+ */
 int coco3_mmu_translate(int bank, int offset)
 {
 	int forceram;
@@ -1693,7 +1719,8 @@ int coco3_mmu_translate(int bank, int offset)
 
 static void coco3_mmu_update(int lowblock, int hiblock)
 {
-	static mem_write_handler handlers[] = {
+	static mem_write_handler handlers[] =
+	{
 		coco3_ram_b1_w, coco3_ram_b2_w,
 		coco3_ram_b3_w, coco3_ram_b4_w,
 		coco3_ram_b5_w, coco3_ram_b6_w,
