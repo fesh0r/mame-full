@@ -13,8 +13,19 @@ extern "C" {
 #define sntprintf	_sntprintf
 #define tcsrchr		_tcsrchr
 #define snprintf	_snprintf
+#define tcscpy		_tcscpy
 
 char *strdup(const char *s);
+
+// --------------------------------------------------------------------------
+// Malloc redefine
+
+size_t outofmemory_occured(void);
+void *mamece_malloc(size_t sz);
+void *mamece_realloc(void *ptr, size_t sz);
+
+#define malloc	mamece_malloc
+#define realloc	mamece_realloc
 
 // --------------------------------------------------------------------------
 
@@ -92,6 +103,7 @@ void *gx_begin_draw(void);
 int gx_end_draw(void);
 void gx_get_default_keys(struct gx_keylist *keylist);
 void gx_get_display_properties(struct gx_display_properties *properties);
+void gx_blit(struct osd_bitmap *bitmap, int update, const RGBQUAD *palette, int palette_len);
 
 #ifdef __cplusplus
 };

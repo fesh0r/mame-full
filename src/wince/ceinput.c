@@ -109,7 +109,7 @@ static struct KeyboardInfo keylist[] =
 {
 	{ "Button 1",	0,					JOYCODE_1_BUTTON1 },
 	{ "Button 2",	0,					JOYCODE_1_BUTTON2 },
-	{ "Button 3",	0,					KEYCODE_5 },
+	{ "Button 3",	0,					KEYCODE_3 },
 	{ "Button 4",	0,					KEYCODE_1 },
     { "A",          'A',                KEYCODE_A },
     { "B",          'B',                KEYCODE_B },
@@ -226,13 +226,21 @@ static struct KeyboardInfo keylist[] =
 const struct KeyboardInfo* osd_get_key_list(void)
 {
 	struct gx_keylist gxkeylist;
-	
-	gx_get_default_keys(&gxkeylist);
+	static been_executed = 0;
 
-	keylist[0].code = gxkeylist.vkA;
-	keylist[1].code = gxkeylist.vkB;
-	keylist[2].code = gxkeylist.vkC;
-	keylist[3].code = gxkeylist.vkStart;
+	if (!been_executed) {
+		/* first time? */
+		been_executed = 1;
+	
+		gx_get_default_keys(&gxkeylist);
+
+		keylist[0].code = gxkeylist.vkA;
+		keylist[1].code = gxkeylist.vkB;
+		keylist[2].code = gxkeylist.vkC;
+		keylist[3].code = gxkeylist.vkStart;
+
+		logerror("osd_get_key_list(): vkA=0x%02x vkB=0x%02x vkC=0x%02x vkStart=0x%02x\n", gxkeylist.vkA, gxkeylist.vkB, gxkeylist.vkC, gxkeylist.vkStart);
+	}
 
     return keylist;
 }

@@ -1558,20 +1558,8 @@ static UINT32 *prepare_palette(struct blit_params *params)
 #ifdef UNDER_CE
 static void dib_draw_window(HDC dc, struct osd_bitmap *bitmap, int update)
 {
-	/*
-	UINT8 *pvBits;
-	struct gx_display_properties props;
-	int y;
-
-	pvBits = (UINT8 *) gx_begin_draw();
-
-	gx_get_display_properties(&props);
-
-	for (y = 0; y < bitmap->height; y++) {
-		memcpy(pvBits + props.cbyPitch * y, bitmap->line[y], bitmap->width);
-	}
-	gx_end_draw();
-*/
+	gx_blit(bitmap, update, video_dib_info->bmiColors, 256);
+/*
 	HBITMAP hBitmap;
 	HDC hDcBitmap;
 	UINT8 *pvBits;
@@ -1625,6 +1613,7 @@ static void dib_draw_window(HDC dc, struct osd_bitmap *bitmap, int update)
 
 	DeleteDC(hDcBitmap);
 	DeleteObject(hBitmap);
+*/
 }
 #else // !UNDER_CE
 static void dib_draw_window(HDC dc, struct osd_bitmap *bitmap, int update)

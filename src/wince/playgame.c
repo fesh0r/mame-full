@@ -166,9 +166,18 @@ int osd_init(void)
 	int result;
 
 	result = win32_init_window();
-	if (result == 0)
-		result = win32_init_input();
-	return result;
+	if (result) {
+		logerror("win32_init_window() failed!\n");
+		return result;
+	}
+
+	result = win32_init_input();
+	if (result) {
+		logerror("win32_init_input() failed!\n");
+		return result;
+	}
+
+	return 0;
 }
 
 

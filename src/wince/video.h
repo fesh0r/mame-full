@@ -14,8 +14,13 @@
 //============================================================
 
 // maximum video size
+#ifdef UNDER_CE
+#define MAX_VIDEO_WIDTH			240
+#define MAX_VIDEO_HEIGHT		320
+#else
 #define MAX_VIDEO_WIDTH			1600
 #define MAX_VIDEO_HEIGHT		1200
+#endif
 
 // dirty sizes (16x16 grid); keep X size an even power of 2 for speed
 #define DIRTY_H					256

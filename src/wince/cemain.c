@@ -50,13 +50,20 @@ static void SoftwareList_Run(struct SmartListView *pListView)
 	int nGame;
 	int nItem;
 	int nError;
+	size_t nFailedAlloc;
+	TCHAR szBuffer[32];
 
 	nItem = SingleItemSmartListView_GetSelectedItem(s_pGameListView);
 	nGame = pGame_Index[nItem];
 
 	nError = play_game(nGame, &tUI);
 	if (nError) {
-		MessageBox(pListView->hwndListView, TEXT("Failed to run"), NULL, MB_OK);
+		nFailedAlloc = outofmemory_occured();
+		if (nFailedAlloc)
+			wsprintf(szBuffer, TEXT("Out of memory (allocation for %i bytes failed)"), nFailedAlloc);
+		else
+			tcscpy(szBuffer, TEXT("Failed to run"));
+		MessageBox(pListView->hwndListView, szBuffer, NULL, MB_OK);
 	}
 
 	SmartListView_SetVisible(s_pGameListView, TRUE);

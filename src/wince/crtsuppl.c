@@ -124,3 +124,36 @@ int _fail(const char *exp, const char *file, int lineno)
 	return -1;
 }
 #endif
+
+// --------------------------------------------------------------------------
+// Malloc redefine
+
+#undef malloc
+#undef realloc
+
+static size_t outofmemory = 0;
+
+void *mamece_malloc(size_t sz)
+{
+	void *ptr;
+	ptr = malloc(sz);
+	if (!ptr)
+		outofmemory = sz;
+	return ptr;
+}
+
+void *mamece_realloc(void *ptr, size_t sz)
+{
+	ptr = realloc(ptr, sz);
+	if (!ptr)
+		outofmemory = sz;
+	return ptr;
+}
+
+size_t outofmemory_occured(void)
+{
+	size_t o;
+	o = outofmemory;
+	outofmemory = 0;
+	return o;
+}
