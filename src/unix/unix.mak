@@ -375,7 +375,7 @@ imgtool: $(IMGTOOL_OBJS) $(PLATFORM_IMGTOOL_OBJS)
 	$(CC_COMMENT) @echo Compiling $@...
 	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ -lz -o $@
 
-messtest: $(OBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
+messtest: maketree $(OBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 		$(OBJ)/mess/tools/messtest/messtest.o \
 		$(OBJ)/mess/tools/messtest/testexec.o \
 		$(OBJ)/mess/tools/messtest/tststubs.o \
