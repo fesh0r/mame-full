@@ -426,6 +426,7 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( ti86 )
 	MDRV_IMPORT_FROM( ti85 )
+	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(ti86_readmem, ti86_writemem)
 	MDRV_CPU_IO_MAP(ti86_readport, ti86_writeport)
 
