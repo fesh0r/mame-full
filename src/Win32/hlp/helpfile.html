@@ -1,0 +1,211 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<BASE TARGET="_top">
+<meta name="GENERATOR" content="Notepad">
+<meta name="AUTHOR" content="Mike Haaland [mailto: mhaaland@hypertech.com]">
+<meta name="keywords" content="mame,m.a.m.e.,mame32,emulator,help,helpfile,compile,source,code,games,arcade,classic,game,emulation">
+<meta name="description" content="MAME32, MAME, How to compile MAME32 Helpfile!">
+
+<title>Compiling MAME32 Windows Help File</title>
+</head>
+
+<body background="images/bkground.jpg" bgcolor="#26104A" text="#F0F0F0" link="#D0D0FF" vlink="#C0C0FF">
+
+<center>
+<h1>Compiling the MAME32 Windows Help File</h1>
+<hr>
+Current As of MAME32 0.37 Beta 10<br>
+9 December 2000<br>
+<br>
+<!-- ************************************************************************* -->
+<i>The help file source is distributed as part
+of the <a href="http://www.classicgaming.com/mame32/">MAME32 source</a> code package.</i>
+</center>
+<!-- ************************************************************************* -->
+<h2>Index:</h2>
+<dl><dd><dl>
+<table border="0">
+<tr><td>1.</td><td><a href="#needed_files">Files needed to compile Windows Help for MAME32</a></td></tr>
+</table>
+<dl>
+<table border="0">
+<tr><td>1.a</td><td><a href="#source_files">Source Files</a></td></tr>
+<tr><td>1.b</td><td><a href="#shed_graphics">&quot;Shed Graphic&quot; Files</a></td></tr>
+<tr><td>1.c</td><td><a href="#created_files">Files created as part of the compile</a></td></tr>
+</table>
+</dl>
+<table border="0">
+<tr><td>2.</td><td><a href="#distributing">Distributing MAME32 Help Files</a></td></tr>
+<tr><td>3.</td><td><a href="#environment">My help compilation environment</a></td></tr>
+<tr><td>4.</td><td><a href="#assistance">Assistance</a></td></tr>
+</table>
+<br>
+<a href="helpfile.html">Back to the top</a>
+</dl></dd></dl>
+<!-- ************************************************************************* -->
+<a name="needed_files"></a>
+<h2>1. Files needed to compile the Windows Help for MAME32</h2>
+<dl><dd><dl>
+<p>
+To compile the help file, you will need the source files listed
+below as well as the Help Compiler for Windows (HCW.exe) version
+4.x.  The help file sources are distributed as part of the MAME32
+source distribution. Please download them <a href="http://www.classicgaming.com/mame32/">here</a>.
+See &quot;<a href="#environment">My help compilation environment</a>&quot;
+below for more information.<br>
+</p>
+<a href="helpfile.html">Back to the top</a>
+</dl></dd></dl>
+<!-- ************************************************************************* -->
+<a name="source_files"></a>
+<h3>1.a Source Files</h3>
+<dl><dd><dl>
+<p>
+The following source files contain all the project information
+necessary to compile the MAME32 help file.<br>
+</p>
+<table border="0">
+<tr><td><b><u>File name __________</u></b></td><td><b><u>Description __________</u></b></td></tr>
+<tr><td>Game List as of 0.37.xls</td><td>Excel file that holds list of games for each version since 0.33</td></tr>
+<tr><td>MAME32.cnt</td><td> Help Contents File</td></tr>
+<tr><td>MAME32.hpj</td><td> Help Project File</td></tr>
+<tr><td>MAME32.rtf</td><td> MAME32 Help File Source (all topics in Rich Text Format)</td></tr>
+<tr><td>README_HELP.TXT</td><td> This File</td></tr>
+</table>
+<br>
+<a href="helpfile.html">Back to the top</a>
+</dl></dd></dl>
+<!-- ************************************************************************* -->
+<a name="shed_graphics"></a>
+<h3>1.b &quot;Shed Graphic Files&quot;</h3>
+<dl><dd><dl>
+<p>
+The following files are the &quot;shed graphics&quot; that are
+embedded in the help files. These graphics are bitmaps that have
+been stored in .shg format. They all contain &quot;hotspots&quot;
+that contain jumps and popups to various help topics throughout
+the Help Project.<br>
+</p>
+<table border="0">
+<tr><td><b><u>File name __________</u></b></td><td><b><u>Description __________</u></b></td></tr>
+<tr><td>MAMEAUDT.shg</td><td>Audit dialog graphic</td></tr>
+<tr><td>MAMEFILE.shg</td><td>File Menu graphic</td></tr>
+<tr><td>MAMEFILT.shg</td><td> Custom Filter dialog graphic</td></tr>
+<tr><td>MAMEFOLD.shg</td><td> Folder List graphic</td></tr>
+<tr><td>MAMEGAME.shg</td><td> Games Tab graphic</td></tr>
+<tr><td>MAMEHELP.shg</td><td> Help Menu graphic</td></tr>
+<tr><td>MAMELANG.shg</td><td> Language Options graphic</td></tr>
+<tr><td>MAMEMENU.shg</td><td> Menu Options graphic</td></tr>
+<tr><td>MAMEOPT.shg</td><td> Options Menu graphic</td></tr>
+<tr><td>MAMEOPTD.shg</td><td> Options Directories graphic</td></tr>
+<tr><td>MAMEPROP.shg</td><td> Properties Tabs graphic</td></tr>
+<tr><td>MAMERES.shg</td><td> Reset to Default dialog graphic</td></tr>
+<tr><td>MAMETOOL.shg</td><td> Toolbar graphic</td></tr>
+<tr><td>MAMEVERS.shg</td><td> Startup Dialog to Upgrade Versions</td></tr>
+<tr><td>MAMEVIEW.shg</td><td> View Menu graphic</td></tr>
+<tr><td>MAMEVWAI.shg</td><td> View Arrange Icons graphic</td></tr>
+<tr><td>MAMEVWCU.shg</td><td> View Customize Fields graphic</td></tr>
+</table>
+<br>
+<a href="helpfile.html">Back to the top</a>
+</dl></dd></dl>
+<!-- ************************************************************************* -->
+<a name="created_files"></a>
+<h3>1.c Files created as part of the compile</h3>
+<dl><dd><dl>
+<p>
+After you compile and view the Help File, four new files will be
+present in the help file directory:
+</p>
+<table border="0">
+<tr><td><b><u>File name __________</u></b></td><td><b><u>Description __________</u></b></td></tr>
+<tr><td>MAME32.hlp</td><td>Compiled Help File</td></tr>
+<tr><td>MAME32.fts</td><td>MAME32 Full-Text Search File</td></tr>
+<tr><td>MAME32.gid</td><td>MAME32 Glossary File</td></tr>
+<tr><td>MAME32.txt</td><td>Log file from the Help Compiler (can be deleted)</td></tr>
+</table>
+<br>
+<a href="helpfile.html">Back to the top</a>
+</dl></dd></dl>
+<!-- ************************************************************************* -->
+<a name="distributing"></a>
+<h2>2. Distributing MAME32 Help Files</h2>
+<dl><dd><dl>
+Once you have compiled the Help File, you should distribute these
+two files:<br>
+<br>
+<table border="0">
+<tr><td><b><u>File name __________</u></b></td><td><b><u>Description __________</u></b></td></tr>
+<tr><td>MAME32.hlp</td><td>Compiled Help File</td></tr>
+<tr><td>MAME32.cnt</td><td>MAME32 Help Contents File</td></tr>
+</table>
+<br>
+<a href="helpfile.html">Back to the top</a>
+</dl></dd></dl>
+<!-- ************************************************************************* -->
+<a name="environment"></a>
+<h2>3. My help compilation environment</h2>
+<dl><dd><dl>
+To compile this help file, I have the following components on my
+desktop:<br>
+<br>
+<ul>
+<li>Microsoft Word (Office 2000 Version)
+<li>Microsoft Excel (Office 2000 Version) - to store game info
+<li>Microsoft Help Workshop and Microsoft Shed Graphics Editor (distributed as part of the <a href="
+http://download.microsoft.com/download
+/word97win/Utility/4.03/WIN98/EN-US/Hcwsetup.exe">Microsoft's Help Compiler for Windows Suite</a>)<br>
+
+</ul>
+<br>
+You can substitute the following components:<br>
+<br>
+<ul>
+<li>A help workbench package (such as RoboHelp [RoboHelp is a
+    Copyright of Blue Sky Software])
+<li>Microsoft WordPad or any other word processing program that can
+    handle Rich Text, footnotes, endnotes, double-underline, and
+    hidden text
+<li>Microsoft Works or any spreadsheet program capable of reading     Microsoft Excel 2000 files
+<li>Microsoft's Help Compiler for Windows Suite at <a href="
+http://download.microsoft.com/download
+/word97win/Utility/4.03/WIN98/EN-US/Hcwsetup.exe">Microsoft</a><br>
+</ul>
+<br>
+<br>
+<a href="helpfile.html">Back to the top</a>
+</dl></dd></dl>
+<!-- ************************************************************************* -->
+<a name="assistance"></a>
+<h2>4. Assistance</h2>
+<dl><dd><dl>
+<p>
+Still have questions?  Contact Dan Miller
+at <a href="mailto:danmiller@mail.postnet.com">&lt;danmiller@mail.postnet.com&gt;</a>.<br>
+Please keep your questions specific to compiling the MAME32 help file.
+</p>
+<a href="helpfile.html">Back to the top</a>
+</dl></dd></dl>
+<hr>
+<!-- ************************************************************************* -->
+<center>
+  <a href="default.html">Home</a>&nbsp; |&nbsp;
+  <a href="compile.html">Compiling MAME32</a>&nbsp; |&nbsp;
+  <a href="helpfile.html">MAME32 Help file</a>&nbsp; |&nbsp;
+  <a href="http://www.hypertech.com/scripts/aforum.isa?zaq=1101">Message Board</a>
+</center>
+<br>
+<!-- ************************************************************************* -->
+<center>
+Last Updated:  by Dan Miller
+<a href="mailto:danmiller@mail.postnet.com">&lt;danmiller@mail.postnet.com&gt;</a>
+on 7 January 2001
+</center>
+<p align="right">
+<!-- Hit counter -->
+<img src="http://www.hypertech.com/cgi-bin/Countlog.pl?df=helpfile&amp;sh=F" alt="" width=0 height=0>
+<p>
+</body>
+</html>

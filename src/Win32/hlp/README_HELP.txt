@@ -91,16 +91,14 @@ To compile this help file, I have the following components on my desktop:
 
 - Microsoft Word (Office 2000 Version)
 - Microsoft Excel (Office 2000 Version) - to store game info
-- Microsoft Help Workshop (as part of the Office Developer's Edition (ODE))
-- Microsoft Shed Graphics Editor (distributed as part of the ODE)
+- Microsoft Help Workshop and Microsoft Shed Graphics Editor (distributed as part of the Microsoft's Help Compiler for Windows Suite)
 
 You can substitute the following components:
 
 - A help workbench package (such as RoboHelp [RoboHelp is a Copyright of Blue Sky Software])
 - Microsoft WordPad or any other word processing program that can handle Rich Text, footnotes, endnotes, double-underline, and hidden text
 - Microsoft Works or any spreadsheet program capable of reading Microsoft Excel 2000 files
-- Microsoft's Help Compiler for Windows (HCW.exe) version 4.x - you can find this on Microsoft's WWW site
-- Microsoft's Shed Graphics Editor (shed.exe) - you can find this on Microsoft's WWW site
+- Microsoft's Help Compiler for Windows Suite at Microsoft's WWW site
 
 
 4.  Assistance
