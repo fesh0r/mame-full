@@ -16,7 +16,7 @@ COMMON_OBJS  =  \
 	$(OBJDIR)/fileio.o $(OBJDIR)/dirio.o $(OBJDIR)/config.o \
 	$(OBJDIR)/fronthlp.o $(OBJDIR)/ident.o $(OBJDIR)/network.o \
 	$(OBJDIR)/snprintf.o $(OBJDIR)/nec765_dummy.o $(OBJDIR)/effect.o \
-	$(OBJDIR)/ticker.o $(OBJDIR)/parallel.o #$(OBJDIR)/fileio_more.o
+	$(OBJDIR)/ticker.o $(OBJDIR)/parallel.o $(OBJDIR)/fileio_more.o
 
 # sysdep objs
 SYSDEP_OBJS = $(SYSDEP_DIR)/rc.o $(SYSDEP_DIR)/misc.o \
