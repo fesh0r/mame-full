@@ -14,39 +14,39 @@ driver by Nicola Salmoria
 
 static data8_t *sharedram;
 
-static READ_HANDLER( sharedram_r )
+static READ8_HANDLER( sharedram_r )
 {
 	return sharedram[offset];
 }
 
-static WRITE_HANDLER( sharedram_w )
+static WRITE8_HANDLER( sharedram_w )
 {
 	sharedram[offset] = data;
 }
 
 
-static WRITE_HANDLER( subirqtrigger_w )
+static WRITE8_HANDLER( subirqtrigger_w )
 {
 	/* bit 0 used but unknown */
 
 	if (data & 0x04)
-		cpu_set_irq_line(1,0,ASSERT_LINE);
+		cpunum_set_input_line(1,0,ASSERT_LINE);
 }
 
-static WRITE_HANDLER( sub_irqack_w )
+static WRITE8_HANDLER( sub_irqack_w )
 {
-	cpu_set_irq_line(1,0,CLEAR_LINE);
+	cpunum_set_input_line(1,0,CLEAR_LINE);
 }
 
 
 static int soundlatch;
 
-static WRITE_HANDLER( dogfgt_soundlatch_w )
+static WRITE8_HANDLER( dogfgt_soundlatch_w )
 {
 	soundlatch = data;
 }
 
-static WRITE_HANDLER( dogfgt_soundcontrol_w )
+static WRITE8_HANDLER( dogfgt_soundcontrol_w )
 {
 	static int last;
 
@@ -353,4 +353,4 @@ ROM_END
 
 
 GAME( 1984, dogfgt,  0,      dogfgt, dogfgt, 0, ROT0, "Technos", "Acrobatic Dog-Fight" )
-GAME( 1984, dogfgtj, dogfgt, dogfgt, dogfgt, 0, ROT0, "Technos", "Dog-Fight (Japan) " )
+GAME( 1984, dogfgtj, dogfgt, dogfgt, dogfgt, 0, ROT0, "Technos", "Dog-Fight (Japan)" )
