@@ -221,9 +221,9 @@ INPUT_PORTS_END
 
 
 ROM_START( lisa2 )
-	ROM_REGION(0x204000,REGION_CPU1,0)	/* 68k rom and ram */
+	ROM_REGION16_BE(0x204000,REGION_CPU1,0)	/* 68k rom and ram */
 	ROM_LOAD16_BYTE( "booth.hi", 0x000000, 0x2000, 0xadfd4516)
-	ROM_LOAD16_BYTE( "booth.lo", 0x000000, 0x2000, 0x546d6603)
+	ROM_LOAD16_BYTE( "booth.lo", 0x000001, 0x2000, 0x546d6603)
 
 	ROM_REGION(0x2000,REGION_CPU2,0)		/* 6504 RAM and ROM */
 	ROM_LOAD( "ioa8.rom", 0x1000, 0x1000, 0xbc6364f1)
@@ -231,17 +231,31 @@ ROM_START( lisa2 )
 	ROM_REGION(0x100,REGION_GFX1,0)		/* video ROM (includes S/N) */
 	ROM_LOAD( "vidstate.rom", 0x00, 0x100, 0x75904783)
 
-	ROM_REGION(0x040000, REGION_USER1,0)	/* 1 bit per byte of CPU RAM - used for parity check emulation */
+	ROM_REGION(0x040000, REGION_USER1, 0)	/* 1 bit per byte of CPU RAM - used for parity check emulation */
 
 ROM_END
 
+ROM_START( lisa210 )
+	ROM_REGION16_BE(0x204000,REGION_CPU1, 0)	/* 68k rom and ram */
+	ROM_LOAD16_BYTE( "booth.hi", 0x000000, 0x2000, 0xadfd4516)
+	ROM_LOAD16_BYTE( "booth.lo", 0x000001, 0x2000, 0x546d6603)
+
+	ROM_REGION(0x2000,REGION_CPU2, 0)		/* 6504 RAM and ROM */
+	ROM_LOAD( "io88.rom", 0x1000, 0x1000, 0xe343fe74)
+
+	ROM_REGION(0x100,REGION_GFX1, 0)		/* video ROM (includes S/N) */
+	ROM_LOAD( "vidstate.rom", 0x00, 0x100, 0x75904783)
+
+	ROM_REGION(0x040000, REGION_USER1, 0)	/* 1 bit per byte of CPU RAM - used for parity check emulation */
+
+ROM_END
 
 /* Lisa should eventually support floppies, hard disks, etc. */
 static const struct IODevice io_lisa2[] = {
 	{
 		IO_FLOPPY,			/* type */
 		2,					/* count */
-		"img\0",			/* file extensions */
+		"img\0image\0",		/* file extensions */
 		IO_RESET_NONE,		/* reset if file changed */
         NULL,               /* id */
 		lisa_floppy_init,	/* init */
@@ -259,6 +273,9 @@ static const struct IODevice io_lisa2[] = {
 	{ IO_END }
 };
 
+#define io_lisa210 io_lisa2 /* actually, there is an additionnal 10 meg HD, but it is not implemented... */
+
 /*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY	 FULLNAME */
 COMPX( 1983, lisa2,    0,        lisa,     lisa,	 0,        "Apple Computer",  "Lisa2", GAME_NOT_WORKING )
+COMPX( 1983, lisa210,  lisa2,    lisa,     lisa,	 0,        "Apple Computer",  "Lisa2", GAME_NOT_WORKING )
 
