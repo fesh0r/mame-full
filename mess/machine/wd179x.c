@@ -705,10 +705,10 @@ READ_HANDLER ( wd179x_status_r )
 		if (floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_HEAD_AT_TRACK_0))
 			result |= STA_1_TRACK0;
 
-		floppy_drive_set_ready_state(drv, 1,1);
-	//	w->status &= ~STA_1_NOT_READY;
-	//	if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
-	//		w->status |= STA_1_NOT_READY;
+	//	floppy_drive_set_ready_state(drv, 1,1);
+		w->status &= ~STA_1_NOT_READY;
+		if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
+			w->status |= STA_1_NOT_READY;
 
 	}
 	
@@ -775,7 +775,9 @@ READ_HANDLER ( wd179x_data_r )
 				w->status |= STA_2_REC_TYPE;
 			}
 
-			w->sector++;
+			/* not incremented after each sector - only incremented in multi-sector
+			operation. If this remained as it was oric software would not run! */
+		//	w->sector++;
 			wd179x_complete_command(w);
 		}
 		else
@@ -799,7 +801,7 @@ WRITE_HANDLER ( wd179x_command_w )
 	WD179X *w = &wd;
 
 	floppy_drive_set_motor_state(drv, 1);
-
+	floppy_drive_set_ready_state(drv, 1,0);
 	/* also cleared by writing command */
 	if (w->callback)
 			(*w->callback) (WD179X_IRQ_CLR);
