@@ -24,6 +24,8 @@ System Driver Changes:
 ----------------------
 - [A400/A800] Fixed cartridge loading and partial state save support.  [Nate
   Woods]
+ 
+- [AMSTRAD] Added natural keyboard support.  [Nate Woods]
 
 - [GENESIS] Split Genesis driver into gen_usa, gen_eur and gen_jpn drivers
   for different countries.  Also fixed a bug that caused sound to be gone in
@@ -67,17 +69,6 @@ Source Changes:
 
 - It is now possible to specify IP_NAME_DEFAULT in PORT_KEY declarations; the
   name of the key will be derived by the unicode values.  [Nate Woods]
-
-- [A400/A800] Fixed cartridge loading and partial state save support.  [Nate
-  Woods]
-
-- [GENESIS] Split Genesis driver into gen_usa, gen_eur and gen_jpn drivers
-  for different countries.  Also fixed a bug that caused sound to be gone in
-  certain games, and fixed Raiden Trad and Wani Wani World  [Anonymous]
-
-- [VTECH1] Fixed graphics and added printer support.  [Dirk Best]
-
-- [VTECH1] Added natural keyboard support.  [Nate Woods]
 
 
 
