@@ -166,6 +166,13 @@ int jupiter_load_ace(int id)
 	unsigned char jupiter_repeat, jupiter_byte, loop;
 	int done, jupiter_index;
 
+	/* A cartridge isn't strictly mandatory, so warn */
+	if (!device_filename(IO_CARTSLOT,id) || !strlen(device_filename(IO_CARTSLOT,id) ))
+	{
+		logerror("Jupiter - warning: no cartridge specified!\n");
+		return INIT_PASS;
+	}
+
 	if (jupiter_data_type != JUPITER_NONE)
 		return (0);
 	jupiter_exit_ace(id);
@@ -242,6 +249,13 @@ int jupiter_load_tap(int id)
 	UINT8 inpbyt;
 	int loop;
 	UINT16 hdr_len;
+
+	/* Remember, a cassette isn't strictly mandatory, so warn only! */
+	if (!device_filename(IO_CASSETTE,id) || !strlen(device_filename(IO_CASSETTE,id) ))
+	{
+		logerror("Jupiter - warning: no cassette specified!\n");
+		return INIT_PASS;
+	}
 
 	if (jupiter_data_type != JUPITER_NONE)
 		return (0);

@@ -376,6 +376,13 @@ int cgenie_floppy_init(int id)
 {
 		void *file;
 
+	/* A Floppy Isnt manditory, so return if none */
+	if (!device_filename(IO_FLOPPY,id) || !strlen(device_filename(IO_FLOPPY,id) ))
+	{
+		logerror("CGENIE - warning: no floppy specified!\n");
+		return INIT_PASS;
+	}
+
 	if (basicdsk_floppy_init(id) != INIT_PASS)
 		return INIT_FAIL;
 
