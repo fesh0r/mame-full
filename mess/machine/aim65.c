@@ -121,7 +121,7 @@ static int aim65_riot_b_r(int chip)
 		if (KEY_H) data&=~0x10;
 		if (KEY_F) data&=~0x20;
 		if (KEY_S) data&=~0x40;
-		if (KEY_CLOSEBRACE) data&=~0x80;
+		if (KEY_F2) data&=~0x80;
 	}
 	if (!(a&0x80)) {
 		// nothing ?
@@ -131,7 +131,7 @@ static int aim65_riot_b_r(int chip)
 		if (KEY_N) data&=~0x10;
 		if (KEY_V) data&=~0x20;
 		if (KEY_X) data&=~0x40;
-		if (KEY_OPENBRACE) data&=~0x80;
+		if (KEY_F1) data&=~0x80;
 	}
 	return data;
 }
