@@ -146,22 +146,20 @@ static int ti99_2_32_load_rom(void)
 	return 0;
 }
 
-static void ti99_2_init_machine(void)
+static void machine_init_ti99_2(void)
 {
 }
 
-static void ti99_2_stop_machine(void)
+static void machine_stop_ti99_2(void)
 {
 }
 
-static int ti99_2_vblank_interrupt(void)
+static void ti99_2_vblank_interrupt(void)
 {
 	TMS9928A_interrupt();
 
 	/* We trigger a level-4 interrupt.  The PULSE_LINE is a mere guess. */
 	cpu_set_irq_line(0, 1, PULSE_LINE);
-
-	return ignore_interrupt();
 }
 
 
@@ -188,28 +186,25 @@ static unsigned short ti99_2_colortable[] =
 #define TI99_2_PALETTE_SIZE sizeof(ti99_2_palette)/3
 #define TI99_2_COLORTABLE_SIZE sizeof(ti99_2_colortable)/2
 
-static void ti99_2_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+static PALETTE_INIT(ti99_2)
 {
-	memcpy(palette, & ti99_2_palette, sizeof(ti99_2_palette));
+	palette_set_colors(0, ti99_2_palette, TI99_2_PALETTE_SIZE);
 	memcpy(colortable, & ti99_2_colortable, sizeof(ti99_2_colortable));
 }
 
-static int ti99_2_vh_start(void)
+static VIDEO_START(ti99_2)
 {
 	videoram_size = 768;
 
 	return video_start_generic();
 }
 
-#define ti99_2_vh_stop NULL
 #define ti99_2_video_w videoram_w
 
-static void ti99_2_vh_refresh(struct mame_bitmap *bitmap, int full_refresh)
+static VIDEO_UPDATE(ti99_2)
 {
 	int i, sx, sy;
 
-	if (full_refresh)
-		memset(dirtybuffer, 1, videoram_size);
 
 	sx = sy = 0;
 
@@ -220,7 +215,7 @@ static void ti99_2_vh_refresh(struct mame_bitmap *bitmap, int full_refresh)
 			dirtybuffer[i] = 0;
 
 			/* Is the char code masked or not ??? */
-			drawgfx(bitmap, Machine->gfx[0], videoram[i] & 0x7F, 0,
+			drawgfx(tmpbitmap, Machine->gfx[0], videoram[i] & 0x7F, 0,
 			          0, 0, sx, sy, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 		}
 
@@ -231,6 +226,8 @@ static void ti99_2_vh_refresh(struct mame_bitmap *bitmap, int full_refresh)
 			sy += 8;
 		}
 	}
+
+	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 }
 
 static struct GfxLayout ti99_2_charlayout =
@@ -334,7 +331,7 @@ static WRITE_HANDLER ( ti99_2_write_misc_cru )
 	}
 }
 
-static PORT_WRITE_START ( ti99_2_writeport )
+static PORT_WRITE_START ( ti99_2_writecru )
 
 	{0x7000, 0x73ff, ti99_2_write_kbd},
 	{0x7400, 0x77ff, ti99_2_write_misc_cru},
@@ -352,7 +349,7 @@ static READ_HANDLER ( ti99_2_read_misc_cru )
 	return 0;
 }
 
-static PORT_READ_START ( ti99_2_readport )
+static PORT_READ_START ( ti99_2_readcru )
 
 	{0x0E00, 0x0E7f, ti99_2_read_kbd},
 	{0x0E80, 0x0Eff, ti99_2_read_misc_cru},
@@ -444,6 +441,7 @@ static struct tms9995reset_param ti99_2_processor_config =
 	1           /* enable automatic wait state generation */
 };
 
+#if 0
 static struct MachineDriver machine_driver_ti99_2 =
 {
 	/* basic machine hardware */
@@ -486,6 +484,48 @@ static struct MachineDriver machine_driver_ti99_2 =
 	}
 #endif
 };
+#else
+
+static MACHINE_DRIVER_START(ti99_2)
+
+	/* basic machine hardware */
+	/* TMS9995 CPU @ 10.7 MHz */
+	MDRV_CPU_ADD(TMS9995, 10700000)
+	/*MDRV_CPU_FLAGS(0)*/
+	MDRV_CPU_CONFIG(ti99_2_processor_config)
+	MDRV_CPU_MEMORY(ti99_2_readmem, ti99_2_writemem)
+	MDRV_CPU_PORTS(ti99_2_readcru, ti99_2_writecru)
+	MDRV_CPU_VBLANK_INT(ti99_2_vblank_interrupt, 1)
+	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	/*MDRV_INTERLEAVE(interleave)*/
+
+	MDRV_MACHINE_INIT( ti99_2 )
+	MDRV_MACHINE_STOP( ti99_2 )
+	/*MDRV_NVRAM_HANDLER( NULL )*/
+
+	/* video hardware */
+	/*MDRV_TMS9928A( &tms9918_interface )*/
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 192)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 192-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(TI99_2_PALETTE_SIZE)
+	MDRV_COLORTABLE_LENGTH(TI99_2_COLORTABLE_SIZE)
+	MDRV_PALETTE_INIT(ti99_2)
+
+	MDRV_VIDEO_START(ti99_2)
+	MDRV_VIDEO_UPDATE(ti99_2)
+
+	/* no sound ! */
+
+MACHINE_DRIVER_END
+
+
+#endif
+
 
 
 /*
