@@ -12,7 +12,7 @@
 #include "driver.h"
 #include "memory.h"
 #include "cpu/z80/z80.h"
-#include "machine/wd179x.h"
+#include "includes/wd179x.h"
 #include "cpm_bios.h"
 
 #define VERBOSE 		1
@@ -20,7 +20,6 @@
 #define VERBOSE_BIOS	1
 #define VERBOSE_CONIO	0
 
-#define REAL_FDD				((void*)-1) /* using real floppy disk drive */
 
 /* buffer for one physical sector */
 typedef struct {
@@ -34,13 +33,14 @@ typedef struct {
 }	SECBUF;
 
 static int curdisk = 0; 			/* currently selected disk */
+static int cur_track[NDSK];         /* current track for each drive */
 static int num_disks = 0;			/* number of supported disks */
 static int fmt[NDSK] = {0,};		/* index of disk formats */
 static int mode[NDSK] = {0,};		/* 0 read only, !0 read/write */
 static int bdos_trk[NDSK] = {0,};	/* BDOS track number */
 static int bdos_sec[NDSK] = {0,};	/* BDOS sector number */
 static void *fp[NDSK] = {NULL, };	/* image file pointer */
-static int ff[NDSK] = {0, };		/* image filenames specified flags */
+static int ff[NDSK] = {0, };            /* image filenames specified flags */
 static void *lp = NULL; 			/* list file handle (ie. PIP LST:=X:FILE.EXT) */
 //static void *pp = NULL;			/* punch file handle (ie. PIP PUN:=X:FILE.EXT) */
 //static void *rp = NULL;			/* reader file handle (ie. PIP X:FILE.EXE=RDR:) */
@@ -108,16 +108,15 @@ static void fdd_select(void)
  *****************************************************************************/
 static void fdd_set_track(int t)
 {
-	dsk_fmt *f = &formats[fmt[curdisk]];
-	UINT8 pcn;
+    //dsk_fmt *f = &formats[fmt[curdisk]];
+    signed int signed_tracks;
 
 	logerror("DISK #%d settrk %d\n", curdisk, t);
-	osd_fdc_motors(dsk[curdisk].unit);
-	if (t == 0)
-		osd_fdc_recal(&pcn);
-	else
-	if (t < f->cylinders)
-		osd_fdc_seek(t, &pcn);
+    osd_fdc_motors(dsk[curdisk].unit,1);
+
+    signed_tracks = t-cur_track[curdisk];
+
+    osd_fdc_seek(dsk[curdisk].unit, signed_tracks);
 }
 
 /*****************************************************************************
@@ -133,7 +132,8 @@ static void fdd_set_track(int t)
 
 static int fdd_access_sector(int * record_offset)
 {
-	dsk_fmt *f;
+#if 0
+        dsk_fmt *f;
 	UINT8 cyl, head, side, sec, n = 0;
 	int recofs, o;
 
@@ -269,6 +269,8 @@ static int fdd_access_sector(int * record_offset)
 	*record_offset = recofs;
 	/* mask DRQ and BUSY bits */
 	return (n & 0xfc);
+#endif
+        return 0;
 }
 
 #define CP(n) ((n)<32?'.':(n))
