@@ -713,20 +713,22 @@ void Picker_SetSelectedItem(HWND hWnd, int nItem)
 
 
 
-static const TCHAR *Picker_CallGetItemString(struct PickerInfo *pPickerInfo,
+static const TCHAR *Picker_CallGetItemString(HWND hwndPicker,
 	int nItem, int nColumn, TCHAR *pszBuffer, UINT nBufferLength)
 {
 	// this call wraps the pfnGetItemString callback to properly set up the
 	// buffers, and normalize the results
+	struct PickerInfo *pPickerInfo;
 	const TCHAR *s;
 
+	pPickerInfo = GetPickerInfo(hwndPicker);
 	pszBuffer[0] = '\0';
 	s = NULL;
 
 	if (pPickerInfo->pCallbacks->pfnGetItemString)
 	{
-		s = pPickerInfo->pCallbacks->pfnGetItemString(nItem, nColumn,
-			pszBuffer, nBufferLength);
+		s = pPickerInfo->pCallbacks->pfnGetItemString(hwndPicker,
+			nItem, nColumn, pszBuffer, nBufferLength);
 	}
 	if (!s)
 		s = pszBuffer;
@@ -736,16 +738,16 @@ static const TCHAR *Picker_CallGetItemString(struct PickerInfo *pPickerInfo,
 
 
 // put the arrow on the new sort column
-static void Picker_ResetHeaderSortIcon(HWND hWnd)
+static void Picker_ResetHeaderSortIcon(HWND hwndPicker)
 {
 	struct PickerInfo *pPickerInfo;
 	HWND hwndHeader;
 	HD_ITEM hdi;
-	int i;
+	int i, nViewColumn;
 
-	pPickerInfo = GetPickerInfo(hWnd);
+	pPickerInfo = GetPickerInfo(hwndPicker);
 
-	hwndHeader = ListView_GetHeader(hWnd);
+	hwndHeader = ListView_GetHeader(hwndPicker);
 
 	// take arrow off non-current columns
 	hdi.mask = HDI_FORMAT;
@@ -753,7 +755,7 @@ static void Picker_ResetHeaderSortIcon(HWND hWnd)
 	for (i = 0; i < pPickerInfo->nColumnCount; i++)
 	{
 		if (i != pPickerInfo->pCallbacks->pfnGetSortColumn())
-			Header_SetItem(hwndHeader, Picker_GetViewColumnFromRealColumn(hWnd, i), &hdi);
+			Header_SetItem(hwndHeader, Picker_GetViewColumnFromRealColumn(hwndPicker, i), &hdi);
 	}
 
 	if (GetUseXPControl())
@@ -769,18 +771,43 @@ static void Picker_ResetHeaderSortIcon(HWND hWnd)
 		hdi.fmt = HDF_STRING | HDF_IMAGE | HDF_BITMAP_ON_RIGHT;
 		hdi.iImage = pPickerInfo->pCallbacks->pfnGetSortReverse() ? 1 : 0;
 	}
-	Header_SetItem(hwndHeader, Picker_GetViewColumnFromRealColumn(hWnd, pPickerInfo->pCallbacks->pfnGetSortColumn()), &hdi);
+
+	nViewColumn = Picker_GetViewColumnFromRealColumn(hwndPicker, pPickerInfo->pCallbacks->pfnGetSortColumn());
+	Header_SetItem(hwndHeader, nViewColumn, &hdi);
 }
 
 
 
 struct CompareProcParams
 {
+	HWND hwndPicker;
 	struct PickerInfo *pPickerInfo;
 	int nSortColumn;
 	int nViewMode;
 	BOOL bReverse;
 };
+
+
+
+static void Picker_PopulateCompareProcParams(HWND hwndPicker,
+	struct CompareProcParams *pParams)
+{
+	struct PickerInfo *pPickerInfo;
+
+	pPickerInfo = GetPickerInfo(hwndPicker);
+
+	// populate the CompareProcParams structure
+	memset(pParams, 0, sizeof(*pParams));
+	pParams->hwndPicker = hwndPicker;
+	pParams->pPickerInfo = pPickerInfo;
+	pParams->nViewMode = pPickerInfo->pCallbacks->pfnGetViewMode();
+	if (pPickerInfo->pCallbacks->pfnGetSortColumn)
+		pParams->nSortColumn = pPickerInfo->pCallbacks->pfnGetSortColumn();
+	if (pPickerInfo->pCallbacks->pfnGetSortReverse)
+		pParams->bReverse = pPickerInfo->pCallbacks->pfnGetSortReverse();
+}
+
+
 
 static int CALLBACK Picker_CompareProc(LPARAM index1, LPARAM index2, LPARAM nParamSort)
 {
@@ -797,8 +824,8 @@ static int CALLBACK Picker_CompareProc(LPARAM index1, LPARAM index2, LPARAM nPar
 		// first thing we need to do is identify both item's parents
 		if (pPickerInfo->pCallbacks->pfnFindItemParent)
 		{
-			nParent1 = pPickerInfo->pCallbacks->pfnFindItemParent(index1);
-			nParent2 = pPickerInfo->pCallbacks->pfnFindItemParent(index2);
+			nParent1 = pPickerInfo->pCallbacks->pfnFindItemParent(pcpp->hwndPicker, index1);
+			nParent2 = pPickerInfo->pCallbacks->pfnFindItemParent(pcpp->hwndPicker, index2);
 		}
 		else
 		{
@@ -859,14 +886,15 @@ static int CALLBACK Picker_CompareProc(LPARAM index1, LPARAM index2, LPARAM nPar
 	{
 		if (pPickerInfo->pCallbacks->pfnCompare)
 		{
-			nResult = pPickerInfo->pCallbacks->pfnCompare(index1, index2, pcpp->nSortColumn);
+			nResult = pPickerInfo->pCallbacks->pfnCompare(pcpp->hwndPicker,
+				index1, index2, pcpp->nSortColumn);
 		}
 		else
 		{
 			// no default sort proc, just get the string and compare them
-			s1 = Picker_CallGetItemString(pPickerInfo, index1, pcpp->nSortColumn,
+			s1 = Picker_CallGetItemString(pcpp->hwndPicker, index1, pcpp->nSortColumn,
 				szBuffer1, sizeof(szBuffer1) / sizeof(szBuffer1[0]));
-			s2 = Picker_CallGetItemString(pPickerInfo, index2, pcpp->nSortColumn,
+			s2 = Picker_CallGetItemString(pcpp->hwndPicker, index2, pcpp->nSortColumn,
 				szBuffer2, sizeof(szBuffer2) / sizeof(szBuffer2[0]));
 			nResult = _tcsicmp(s1, s2);
 		}
@@ -879,30 +907,79 @@ static int CALLBACK Picker_CompareProc(LPARAM index1, LPARAM index2, LPARAM nPar
 
 
 
-void Picker_Sort(HWND hWnd)
+void Picker_Sort(HWND hwndPicker)
 {
 	LV_FINDINFO lvfi;
 	struct PickerInfo *pPickerInfo;
 	struct CompareProcParams params;
+	int nItem;
 
-	pPickerInfo = GetPickerInfo(hWnd);
+	pPickerInfo = GetPickerInfo(hwndPicker);
 
 	// populate the CompareProcParams structure
-	memset(&params, 0, sizeof(params));
-	params.pPickerInfo = pPickerInfo;
-	params.nViewMode = pPickerInfo->pCallbacks->pfnGetViewMode();
-	if (pPickerInfo->pCallbacks->pfnGetSortColumn)
-		params.nSortColumn = pPickerInfo->pCallbacks->pfnGetSortColumn();
-	if (pPickerInfo->pCallbacks->pfnGetSortReverse)
-		params.bReverse = pPickerInfo->pCallbacks->pfnGetSortReverse();
+	Picker_PopulateCompareProcParams(hwndPicker, &params);
 
-	ListView_SortItems(hWnd, Picker_CompareProc, (LPARAM) &params);
+	ListView_SortItems(hwndPicker, Picker_CompareProc, (LPARAM) &params);
 
-	Picker_ResetHeaderSortIcon(hWnd);
+	Picker_ResetHeaderSortIcon(hwndPicker);
 
+	memset(&lvfi, 0, sizeof(lvfi));
 	lvfi.flags = LVFI_PARAM;
-	lvfi.lParam = Picker_GetSelectedItem(hWnd);
-	ListView_EnsureVisible(hWnd, ListView_FindItem(hWnd, -1, &lvfi), FALSE);
+	lvfi.lParam = Picker_GetSelectedItem(hwndPicker);
+	nItem = ListView_FindItem(hwndPicker, -1, &lvfi);
+
+	ListView_EnsureVisible(hwndPicker, nItem, FALSE);
+}
+
+
+
+int Picker_InsertItemSorted(HWND hwndPicker, int nParam)
+{
+	struct PickerInfo *pPickerInfo;
+	int nCount, nHigh, nLow, nMid;
+	struct CompareProcParams params;
+	int nCompareResult;
+	LVITEM lvi;
+
+	pPickerInfo = GetPickerInfo(hwndPicker);
+
+	nLow = 0;
+	nHigh = ListView_GetItemCount(hwndPicker);
+
+	// populate the CompareProcParams structure
+	Picker_PopulateCompareProcParams(hwndPicker, &params);
+
+	while(nLow < nHigh)
+	{
+		nMid = (nHigh + nLow) / 2;
+
+		memset(&lvi, 0, sizeof(lvi));
+		lvi.mask = LVIF_PARAM;
+		lvi.iItem = nMid;
+		ListView_GetItem(hwndPicker, &lvi);
+
+		nCompareResult = Picker_CompareProc(nParam, lvi.lParam, (LPARAM) &params);
+
+		if (nCompareResult > 0)
+			nLow  = nMid + 1;
+		else if (nCompareResult < 0)
+			nHigh = nMid;
+		else
+		{
+			nLow = nMid;
+			break;
+		}
+	}
+
+	memset(&lvi, 0, sizeof(lvi));
+	lvi.mask     = LVIF_IMAGE | LVIF_TEXT | LVIF_PARAM;
+	lvi.iItem	 = nLow;
+	lvi.iSubItem = 0;
+	lvi.lParam	 = nParam;
+	lvi.pszText  = LPSTR_TEXTCALLBACK;
+	lvi.iImage	 = I_IMAGECALLBACK;
+
+	return ListView_InsertItem(hwndPicker, &lvi);
 }
 
 
@@ -984,7 +1061,7 @@ BOOL Picker_HandleNotify(LPNMHDR lpNmHdr)
 			{
 				// retrieve item image
 				if (pPickerInfo->pCallbacks->pfnGetItemImage)
-					pDispInfo->item.iImage = pPickerInfo->pCallbacks->pfnGetItemImage(nItem);
+					pDispInfo->item.iImage = pPickerInfo->pCallbacks->pfnGetItemImage(hWnd, nItem);
 				else
 					pDispInfo->item.iImage = 0;
 				bResult = TRUE;
@@ -1001,7 +1078,7 @@ BOOL Picker_HandleNotify(LPNMHDR lpNmHdr)
 				// retrieve item text
 				nColumn = Picker_GetRealColumnFromViewColumn(hWnd, pDispInfo->item.iSubItem);
 				
-				s = Picker_CallGetItemString(pPickerInfo, nItem, nColumn,
+				s = Picker_CallGetItemString(hWnd, nItem, nColumn,
 					pDispInfo->item.pszText, pDispInfo->item.cchTextMax);
 
 				pDispInfo->item.pszText = (TCHAR *) s;
@@ -1016,13 +1093,13 @@ BOOL Picker_HandleNotify(LPNMHDR lpNmHdr)
 				if (pnmv->lParam != -1)
 					pPickerInfo->nLastItem = pnmv->lParam;
 				if (pPickerInfo->pCallbacks->pfnLeavingItem)
-					pPickerInfo->pCallbacks->pfnLeavingItem(pnmv->lParam);
+					pPickerInfo->pCallbacks->pfnLeavingItem(hWnd, pnmv->lParam);
 			}
 			if (!(pnmv->uOldState & LVIS_SELECTED)
 				&& (pnmv->uNewState & LVIS_SELECTED))
 			{
 				if (pPickerInfo->pCallbacks->pfnEnteringItem)
-					pPickerInfo->pCallbacks->pfnEnteringItem(pnmv->lParam);
+					pPickerInfo->pCallbacks->pfnEnteringItem(hWnd, pnmv->lParam);
 			}
 			bResult = TRUE;
 			break;
@@ -1199,7 +1276,7 @@ void Picker_HandleDrawItem(HWND hWnd, LPDRAWITEMSTRUCT lpDrawItemStruct)
 
 	/* figure out if we indent and draw grayed */
 	if (pPickerInfo->pCallbacks->pfnFindItemParent)
-		nParent = pPickerInfo->pCallbacks->pfnFindItemParent(lvi.lParam);
+		nParent = pPickerInfo->pCallbacks->pfnFindItemParent(hWnd, lvi.lParam);
 	else
 		nParent = -1;
 	bDrawAsChild = (pPickerInfo->pCallbacks->pfnGetViewMode() == VIEW_GROUPED && (nParent >= 0));

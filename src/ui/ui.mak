@@ -49,7 +49,7 @@ OSOBJS += \
 		$(OBJ)/mess/ui/ms32util.o \
 		$(OBJ)/mess/ui/optionsms.o \
 		$(OBJ)/mess/ui/propertiesms.o \
-		$(OBJ)/mess/ui/softwarelist.o \
+		$(OBJ)/mess/ui/softwarepicker.o \
 		$(OBJ)/mess/ui/devview.o
 
 # add resource file

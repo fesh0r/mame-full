@@ -30,15 +30,15 @@ struct PickerCallbacks
 	void (*pfnGetColumnShown)(int shown[]);
 	BOOL (*pfnGetOffsetChildren)(void);
 
-	int (*pfnCompare)(int nIndex1, int nIndex2, int nSortSubItem);
+	int (*pfnCompare)(HWND hwndPicker, int nIndex1, int nIndex2, int nSortSubItem);
 	void (*pfnDoubleClick)(void);
-	const TCHAR *(*pfnGetItemString)(int nItem, int nColumn,
+	const TCHAR *(*pfnGetItemString)(HWND hwndPicker, int nItem, int nColumn,
 		TCHAR *pszBuffer, UINT nBufferLength);
-	int (*pfnGetItemImage)(int nItem);
-	void (*pfnLeavingItem)(int nItem);
-	void (*pfnEnteringItem)(int nItem);
+	int (*pfnGetItemImage)(HWND hwndPicker, int nItem);
+	void (*pfnLeavingItem)(HWND hwndPicker, int nItem);
+	void (*pfnEnteringItem)(HWND hwndPicker, int nItem);
 	void (*pfnBeginListViewDrag)(NM_LISTVIEW *pnlv);
-	int (*pfnFindItemParent)(int nItem);
+	int (*pfnFindItemParent)(HWND hwndPicker, int nItem);
 	BOOL (*pfnOnIdle)(HWND hwndPicker);
 	void (*pfnOnHeaderContextMenu)(POINT pt, int nColumn);
 	void (*pfnOnBodyContextMenu)(POINT pt);
@@ -80,6 +80,7 @@ int Picker_GetNumColumns(HWND hWnd);
 void Picker_ResetIdle(HWND hwndPicker);
 BOOL Picker_IsIdling(HWND hwndPicker);
 void Picker_SetHeaderImageList(HWND hwndPicker, HIMAGELIST hHeaderImages);
+int Picker_InsertItemSorted(HWND hwndPicker, int nParam);
 
 // These are used to handle events received by the parent regarding
 // picker controls

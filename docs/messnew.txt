@@ -26,6 +26,9 @@ User Interface Changes:
 - [Windows GUI] Added a tab view that provides an alternate way to load and
   unload software images.  [Nate Woods]
 
+- [Windows GUI] Revamped the software picker; file iteration is now
+  asynchronous and multiple files within ZIPs are now supported.  [Nate Woods]
+
 
 
 Imgtool Changes:

@@ -272,7 +272,7 @@ static void             LoadBackgroundBitmap(void);
 static void             PaintBackgroundImage(HWND hWnd, HRGN hRgn, int x, int y);
 
 static int CLIB_DECL DriverDataCompareFunc(const void *arg1,const void *arg2);
-static int              GamePicker_Compare(int index1, int index2, int sort_subitem);
+static int              GamePicker_Compare(HWND hwndPicker, int index1, int index2, int sort_subitem);
 
 static void             DisableSelection(void);
 static void             EnableSelection(int nGame);
@@ -2309,10 +2309,6 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 			/* Save the users current game options and default game */
 			nItem = Picker_GetSelectedItem(hwndList);
 			SetDefaultGame(ModifyThe(drivers[nItem]->name));
-
-#ifdef MESS
-			MessWriteMountedSoftware(nItem);
-#endif /* MESS */
 
 			/* hide window to prevent orphan empty rectangles on the taskbar */
 			/* ShowWindow(hWnd,SW_HIDE); */
@@ -4522,12 +4518,12 @@ static void ResetColumnDisplay(BOOL first_time)
 	Picker_SetSelectedItem(hwndList, driver_index);
 }
 
-int GamePicker_GetItemImage(int nItem)
+int GamePicker_GetItemImage(HWND hwndPicker, int nItem)
 {
 	return GetIconForDriver(nItem);
 }
 
-const TCHAR *GamePicker_GetItemString(int nItem, int nColumn,
+const TCHAR *GamePicker_GetItemString(HWND hwndPicker, int nItem, int nColumn,
 	TCHAR *pszBuffer, UINT nBufferLength)
 {
 	const TCHAR *s = NULL;
@@ -4609,16 +4605,13 @@ const TCHAR *GamePicker_GetItemString(int nItem, int nColumn,
 	return s;
 }
 
-void GamePicker_LeavingItem(int nItem)
+static void GamePicker_LeavingItem(HWND hwndPicker, int nItem)
 {
 	// leaving item
 	// printf("leaving %s\n",drivers[nItem]->name);
-#ifdef MESS
-	MessWriteMountedSoftware(nItem);
-#endif	
 }
 
-void GamePicker_EnteringItem(int nItem)
+static void GamePicker_EnteringItem(HWND hwndPicker, int nItem)
 {
 	// printf("entering %s\n",drivers[nItem]->name);
 	if (g_bDoBroadcast == TRUE)
@@ -4634,7 +4627,7 @@ void GamePicker_EnteringItem(int nItem)
 #endif
 }
 
-static int GamePicker_FindItemParent(int nItem)
+static int GamePicker_FindItemParent(HWND hwndPicker, int nItem)
 {
 	return parent_index[nItem];
 }
@@ -4877,7 +4870,7 @@ static void CreateIcons(void)
 
 
 
-static int GamePicker_Compare(int index1, int index2, int sort_subitem)
+static int GamePicker_Compare(HWND hwndPicker, int index1, int index2, int sort_subitem)
 {
 	int value;
 	const char *name1 = NULL;
@@ -4908,7 +4901,7 @@ static int GamePicker_Compare(int index1, int index2, int sort_subitem)
 		nTemp2 = GetRomAuditResults(index2);
 
 		if (IsAuditResultKnown(nTemp1) == FALSE && IsAuditResultKnown(nTemp2) == FALSE)
-			return GamePicker_Compare(index1, index2, COLUMN_GAMES);
+			return GamePicker_Compare(hwndPicker, index1, index2, COLUMN_GAMES);
 
 		if (IsAuditResultKnown(nTemp1) == FALSE)
 		{
@@ -4925,10 +4918,10 @@ static int GamePicker_Compare(int index1, int index2, int sort_subitem)
 		// ok, both are known
 
 		if (IsAuditResultYes(nTemp1) && IsAuditResultYes(nTemp2))
-			return GamePicker_Compare(index1, index2, COLUMN_GAMES);
+			return GamePicker_Compare(hwndPicker, index1, index2, COLUMN_GAMES);
 		
 		if (IsAuditResultNo(nTemp1) && IsAuditResultNo(nTemp2))
-			return GamePicker_Compare(index1, index2, COLUMN_GAMES);
+			return GamePicker_Compare(hwndPicker, index1, index2, COLUMN_GAMES);
 
 		if (IsAuditResultYes(nTemp1) && IsAuditResultNo(nTemp2))
 			value = -1;
@@ -4968,7 +4961,7 @@ static int GamePicker_Compare(int index1, int index2, int sort_subitem)
 		}
 
 		if (nTemp1 == nTemp2)
-			return GamePicker_Compare(index1, index2, COLUMN_GAMES);
+			return GamePicker_Compare(hwndPicker, index1, index2, COLUMN_GAMES);
 
 		value = nTemp2 - nTemp1;
 		break;
@@ -4979,14 +4972,14 @@ static int GamePicker_Compare(int index1, int index2, int sort_subitem)
 
    	case COLUMN_SRCDRIVERS:
 		if (stricmp(drivers[index1]->source_file+12, drivers[index2]->source_file+12) == 0)
-			return GamePicker_Compare(index1, index2, COLUMN_GAMES);
+			return GamePicker_Compare(hwndPicker, index1, index2, COLUMN_GAMES);
 
 		value = stricmp(drivers[index1]->source_file+12, drivers[index2]->source_file+12);
 		break;
 	case COLUMN_PLAYTIME:
 	   value = GetPlayTime(index1) - GetPlayTime(index2);
 	   if (value == 0)
-		  return GamePicker_Compare(index1, index2, COLUMN_GAMES);
+		  return GamePicker_Compare(hwndPicker, index1, index2, COLUMN_GAMES);
 
 	   break;
 
@@ -4998,7 +4991,7 @@ static int GamePicker_Compare(int index1, int index2, int sort_subitem)
 
 		if ((drv1.video_attributes & VIDEO_TYPE_VECTOR) ==
 			(drv2.video_attributes & VIDEO_TYPE_VECTOR))
-			return GamePicker_Compare(index1, index2, COLUMN_GAMES);
+			return GamePicker_Compare(hwndPicker, index1, index2, COLUMN_GAMES);
 
 		value = (drv1.video_attributes & VIDEO_TYPE_VECTOR) -
 				(drv2.video_attributes & VIDEO_TYPE_VECTOR);
@@ -5006,7 +4999,7 @@ static int GamePicker_Compare(int index1, int index2, int sort_subitem)
     }
 	case COLUMN_TRACKBALL:
 		if (DriverUsesTrackball(index1) == DriverUsesTrackball(index2))
-			return GamePicker_Compare(index1, index2, COLUMN_GAMES);
+			return GamePicker_Compare(hwndPicker, index1, index2, COLUMN_GAMES);
 
 		value = DriverUsesTrackball(index1) - DriverUsesTrackball(index2);
 		break;
@@ -5014,20 +5007,20 @@ static int GamePicker_Compare(int index1, int index2, int sort_subitem)
 	case COLUMN_PLAYED:
 	   value = GetPlayCount(index1) - GetPlayCount(index2);
 	   if (value == 0)
-		  return GamePicker_Compare(index1, index2, COLUMN_GAMES);
+		  return GamePicker_Compare(hwndPicker, index1, index2, COLUMN_GAMES);
 
 	   break;
 
 	case COLUMN_MANUFACTURER:
 		if (stricmp(drivers[index1]->manufacturer, drivers[index2]->manufacturer) == 0)
-			return GamePicker_Compare(index1, index2, COLUMN_GAMES);
+			return GamePicker_Compare(hwndPicker, index1, index2, COLUMN_GAMES);
 
 		value = stricmp(drivers[index1]->manufacturer, drivers[index2]->manufacturer);
 		break;
 
 	case COLUMN_YEAR:
 		if (stricmp(drivers[index1]->year, drivers[index2]->year) == 0)
-			return GamePicker_Compare(index1, index2, COLUMN_GAMES);
+			return GamePicker_Compare(hwndPicker, index1, index2, COLUMN_GAMES);
 
 		value = stricmp(drivers[index1]->year, drivers[index2]->year);
 		break;
@@ -5042,7 +5035,7 @@ static int GamePicker_Compare(int index1, int index2, int sort_subitem)
 			name2 = NULL;
 
 		if (name1 == name2)
-			return GamePicker_Compare(index1, index2, COLUMN_GAMES);
+			return GamePicker_Compare(hwndPicker, index1, index2, COLUMN_GAMES);
 
 		if (name2 == NULL)
 			value = -1;
@@ -5053,7 +5046,7 @@ static int GamePicker_Compare(int index1, int index2, int sort_subitem)
 		break;
 
 	default :
-		return GamePicker_Compare(index1, index2, COLUMN_GAMES);
+		return GamePicker_Compare(hwndPicker, index1, index2, COLUMN_GAMES);
 	}
 
 #ifdef DEBUG
