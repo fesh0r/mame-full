@@ -90,7 +90,7 @@ static void vectrex_screen_update (double time)
 	if (vectrex_refresh_with_T2)
 	{
 		T2_running = 3;
-		vector_vh_screenrefresh(tmpbitmap, 0);
+		vector_vh_screenrefresh(tmpbitmap, vectrex_full_refresh);
 		vector_clear_list();
 	}
 }
@@ -110,8 +110,7 @@ static void vectrex_screen_update_backup (int param)
 void vectrex_vh_update (struct osd_bitmap *bitmap, int full_refresh)
 {
 	vectrex_full_refresh = full_refresh;
-	if (palette_recalc())
-		vectrex_full_refresh = 1;
+	palette_recalc();
 
 	vectrex_configuration();
 	copybitmap(bitmap, tmpbitmap,0,0,0,0,0,TRANSPARENCY_NONE,0);
@@ -356,6 +355,9 @@ int vectrex_start (void)
 	via_config(0, &vectrex_via6522_interface);
 	via_reset();
 	z_factor =  translucency? 1.5: 2;
+
+	artwork_remap(); /* this should be done in the core */
+
 	return 0;
 }
 
