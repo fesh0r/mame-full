@@ -67,7 +67,8 @@ MEMORY_END
 
 static MEMORY_READ_START( d64_readmem )
 	{ 0x0000, 0x7fff, MRA_BANK1 },
-	{ 0x8000, 0xfeff, MRA_BANK2 },
+	{ 0x8000, 0xbfff, MRA_BANK2 },
+	{ 0xc000, 0xfeff, MRA_BANK3 },
 	{ 0xff00, 0xff03, pia_0_r },
 	{ 0xff04, 0xff07, acia_6551_r },
 	{ 0xff08, 0xff0b, pia_0_r },
@@ -84,7 +85,8 @@ MEMORY_END
 
 static MEMORY_WRITE_START( d64_writemem )
 	{ 0x0000, 0x7fff, MWA_BANK1 },
-	{ 0x8000, 0xfeff, MWA_BANK2 },
+	{ 0x8000, 0xbfff, MWA_BANK2 },
+	{ 0xc000, 0xfeff, MWA_BANK3 },
 	{ 0xff00, 0xff03, pia_0_w },
 	{ 0xff04, 0xff07, acia_6551_w },
 	{ 0xff08, 0xff0b, pia_0_w },
@@ -819,7 +821,7 @@ ROM_END
 
 ROM_START(dragon64)
 	ROM_REGION(0xC000,REGION_CPU1,0)
-	ROM_LOAD(           "d64_1.rom",    0x0000,  0x4000, 0x84f68bf9)
+	ROM_LOAD(           "d64_1.rom",    0x0000,  0x4000, 0x60a4634c)
 //	ROM_LOAD_OPTIONAL(  "ddos10.bin",   0x4000,  0x2000, 0xb44536f6)
 	ROM_LOAD(           "d64_2.rom",    0x8000,  0x4000, 0x17893a42)
 ROM_END

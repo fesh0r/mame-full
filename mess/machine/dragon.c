@@ -86,10 +86,11 @@ static READ_HANDLER (  d_pia0_ca1_r );
 static READ_HANDLER (  d_pia0_cb1_r );
 static READ_HANDLER (  d_pia0_pa_r );
 static READ_HANDLER (  d_pia1_pa_r );
-static READ_HANDLER (  d_pia1_pb_r_dragon );
+static READ_HANDLER (  d_pia1_pb_r_coco );
 static READ_HANDLER (  d_pia1_pb_r_coco2 );
 static WRITE_HANDLER ( d_pia0_pa_w );
 static WRITE_HANDLER ( d_pia0_pb_w );
+static WRITE_HANDLER ( dragon64_pia1_pb_w );
 static WRITE_HANDLER ( d_pia1_cb2_w);
 static WRITE_HANDLER ( d_pia0_cb2_w);
 static WRITE_HANDLER ( d_pia1_ca2_w);
@@ -107,6 +108,7 @@ static void d_sam_set_pageonemode(int val);
 static void d_sam_set_mpurate(int val);
 static void d_sam_set_memorysize(int val);
 static void d_sam_set_maptype(int val);
+static void dragon64_sam_set_maptype(int val);
 static void coco3_sam_set_maptype(int val);
 static void coco_setcartline(int data);
 static void coco3_setcartline(int data);
@@ -139,6 +141,7 @@ static void coco3_setcartline(int data);
 #define LOG_TIMER       0
 #define LOG_DEC_TIMER	0
 #define LOG_IRQ_RECALC	0
+#define LOG_D64MEM		0
 #else /* !MAME_DEBUG */
 #define LOG_PAK			0
 #define LOG_CASSETTE	0
@@ -154,13 +157,14 @@ static void coco3_setcartline(int data);
 #define LOG_TIMER       0
 #define LOG_DEC_TIMER	0
 #define LOG_IRQ_RECALC	0
+#define LOG_D64MEM		0
 #endif /* MAME_DEBUG */
 
 static void coco3_timer_hblank(void);
 static int count_bank(void);
 static int is_Orch90(void);
 
-static struct pia6821_interface dragon_pia_intf[] =
+static struct pia6821_interface coco_pia_intf[] =
 {
 	/* PIA 0 */
 	{
@@ -171,7 +175,7 @@ static struct pia6821_interface dragon_pia_intf[] =
 
 	/* PIA 1 */
 	{
-		/*inputs : A/B,CA/B1,CA/B2 */ d_pia1_pa_r, d_pia1_pb_r_dragon, 0, d_pia1_cb1_r, 0, 0,
+		/*inputs : A/B,CA/B1,CA/B2 */ d_pia1_pa_r, d_pia1_pb_r_coco, 0, d_pia1_cb1_r, 0, 0,
 		/*outputs: A/B,CA/B2	   */ d_pia1_pa_w, d_pia1_pb_w, d_pia1_ca2_w, d_pia1_cb2_w,
 		/*irqs	 : A/B			   */ d_pia1_firq_a, d_pia1_firq_b
 	}
@@ -211,6 +215,23 @@ static struct pia6821_interface coco3_pia_intf[] =
 	}
 };
 
+static struct pia6821_interface dragon64_pia_intf[] =
+{
+	/* PIA 0 */
+	{
+		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, d_pia0_ca1_r, d_pia0_cb1_r, 0, 0,
+		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
+		/*irqs	 : A/B			   */ d_pia0_irq_a, d_pia0_irq_b
+	},
+
+	/* PIA 1 */
+	{
+		/*inputs : A/B,CA/B1,CA/B2 */ d_pia1_pa_r, d_pia1_pb_r_coco, 0, d_pia1_cb1_r, 0, 0,
+		/*outputs: A/B,CA/B2	   */ d_pia1_pa_w, dragon64_pia1_pb_w, d_pia1_ca2_w, d_pia1_cb2_w,
+		/*irqs	 : A/B			   */ d_pia1_firq_a, d_pia1_firq_b
+	}
+};
+
 static struct sam6883_interface coco_sam_intf =
 {
 	m6847_set_row_height,
@@ -229,6 +250,16 @@ static struct sam6883_interface coco3_sam_intf =
 	d_sam_set_mpurate,
 	NULL,
 	coco3_sam_set_maptype
+};
+
+static struct sam6883_interface dragon64_sam_intf =
+{
+	m6847_set_row_height,
+	m6847_set_video_offset,
+	d_sam_set_pageonemode,
+	d_sam_set_mpurate,
+	d_sam_set_memorysize,
+	dragon64_sam_set_maptype
 };
 
 static const struct cartridge_slot *coco_cart_interface;
@@ -985,6 +1016,11 @@ static WRITE_HANDLER ( d_pia0_pb_w )
 	pia0_pb = data;
 }
 
+static WRITE_HANDLER ( d_pia0_pb_w_dragon64 )
+{
+	d_pia0_pb_w(offset, data);
+}
+
 /* The following hacks are necessary because a large portion of cartridges
  * tie the Q line to the CART line.  Since Q pulses with every single clock
  * cycle, this would be prohibitively slow to emulate.  Thus we are only
@@ -1087,6 +1123,21 @@ static WRITE_HANDLER( d_pia1_pb_w )
 	 dragon_sound_update();
 }
 
+enum
+{
+	DRAGON64_SAMMAP = 1,
+	DRAGON64_PIAMAP = 2,
+	DRAGON64_ALL = 3
+};
+
+static void dragon64_sethipage(int type, int val);
+
+static WRITE_HANDLER( dragon64_pia1_pb_w )
+{
+	d_pia1_pb_w(0, data);
+	dragon64_sethipage(DRAGON64_PIAMAP, data & 0x04);
+}
+
 static WRITE_HANDLER( coco3_pia1_pb_w )
 {
 	d_pia1_pb_w(0, data);
@@ -1113,7 +1164,7 @@ static READ_HANDLER ( d_pia1_pa_r )
 	return (device_input(IO_CASSETTE, 0) >= 0) ? 1 : 0;
 }
 
-static READ_HANDLER ( d_pia1_pb_r_dragon )
+static READ_HANDLER ( d_pia1_pb_r_coco )
 {
 	/* This handles the reading of the memory sense switch (pb2) for the Dragon and CoCo 1,
 	 * and serial-in (pb0). Serial-in not yet implemented.
@@ -1439,6 +1490,56 @@ static void d_sam_set_maptype(int val)
 		cpu_setbank(2, coco_rom);
 		memory_set_bankhandler_w(2, 0, MWA_ROM);
 	}
+}
+
+static void dragon64_sethipage(int type, int val)
+{
+	static int hipage = 0;
+	UINT8 *bank;
+
+	if (type == DRAGON64_ALL)
+	{
+		/* initial value */
+		hipage = DRAGON64_PIAMAP;
+	}
+	else
+	{
+		if (val)
+			hipage |= type;
+		else
+			hipage &= ~type;
+	}
+
+	if (hipage & DRAGON64_SAMMAP)
+	{
+		cpu_setbank(2, &mess_ram[0x8000]);
+		memory_set_bankhandler_w(2, 0, dragon64_ram_w);
+	}
+	else
+	{
+		/* for some reason, the PIA tries to switch over to the other ROM at
+		 * $BB5D and $BB65, and I don't know how this worked in a real Dragon 64
+		 *
+		 * Perhaps something to do with the PIA original state?
+		 */
+		if ((hipage & DRAGON64_PIAMAP) || ((cpu_getactivecpu() >= 0) && ((activecpu_get_pc() & 0xc000) == 0x8000)))
+			bank = coco_rom;
+		else
+			bank = coco_rom + 0x8000;
+		cpu_setbank(2, bank);
+		memory_set_bankhandler_w(2, 0, MWA_ROM);
+	}
+
+#if LOG_D64MEM
+	logerror("dragon64_sethipage(): hipage=%i\n", hipage);
+#endif
+
+	cpu_setbank(3, &mess_ram[0xc000]);
+}
+
+static void dragon64_sam_set_maptype(int val)
+{
+	dragon64_sethipage(DRAGON64_SAMMAP, val);
 }
 
 /* Coco 3 */
@@ -1988,20 +2089,23 @@ void dragon32_init_machine(void)
 {
 	cpu_setbank(1, &mess_ram[0]);
 	memory_set_bankhandler_w(1, 0, coco_ram_w);
-	generic_init_machine(dragon_pia_intf, &coco_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks);
+	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks);
 }
 
 void dragon64_init_machine(void)
 {
-	dragon32_init_machine();
+	cpu_setbank(1, &mess_ram[0]);
+	memory_set_bankhandler_w(1, 0, coco_ram_w);
+	generic_init_machine(dragon64_pia_intf, &dragon64_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks);
 	acia_6551_init();
+	dragon64_sethipage(DRAGON64_ALL, 0);
 }
 
 void coco_init_machine(void)
 {
 	cpu_setbank(1, &mess_ram[0]);
 	memory_set_bankhandler_w(1, 0, coco_ram_w);
-	generic_init_machine(dragon_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks);
+	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks);
 }
 
 void coco2_init_machine(void)

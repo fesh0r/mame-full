@@ -2,7 +2,7 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
- 
+Dragon 64 [Nate Woods]
 
 System Driver Changes:
 ----------------------
