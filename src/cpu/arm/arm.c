@@ -2647,21 +2647,51 @@ int arm_execute(int cycles)
 		/* conditionally execute _every_ opcode (yes, the ARM is like this) */
 		switch (OP >> 28)
 		{
-		case C_EQ: cond =  PC & Z; break;
-		case C_NE: cond = ~PC & Z; break;
-		case C_CS: cond =  PC & C; break;
-		case C_CC: cond = ~PC & C; break;
-		case C_MI: cond =  PC & N; break;
-		case C_PL: cond = ~PC & N; break;
-		case C_VS: cond =  PC & V; break;
-		case C_VC: cond = ~PC & V; break;
-		case C_HI: cond = ((PC & C) >> 1) & (~PC & Z); break;
-		case C_LS: cond = ((~PC & C) >> 1) | (PC & Z); break;
-		case C_GE: cond = ((~PC & N) >> 3) ^ (PC & V); break;
-		case C_LT: cond = ((PC & N) >> 3) ^ (PC & V); break;
-		case C_GT: cond = (((~PC & N) >> 3) ^ (PC & V)) & ((~PC << 1) & Z); break;
-		case C_LE: cond = (((PC & N) >> 3) ^ (PC & V)) | ((PC << 1) & Z); break;
-		case C_AL: cond = 1; break;
+		case C_EQ:
+			cond =	PSW & Z;
+			break;
+		case C_NE:
+			cond = ~PSW & Z;
+			break;
+		case C_CS:
+			cond =	PSW & C;
+			break;
+		case C_CC:
+			cond = ~PSW & C;
+			break;
+		case C_MI:
+			cond =	PSW & N;
+			break;
+		case C_PL:
+			cond = ~PSW & N;
+			break;
+		case C_VS:
+			cond =	PSW & V;
+			break;
+		case C_VC:
+			cond = ~PSW & V;
+			break;
+		case C_HI:
+			cond = ((PSW & C) >> 1) & (~PSW & Z);
+			break;
+		case C_LS:
+			cond = ((~PSW & C) >> 1) | (PSW & Z);
+			break;
+		case C_GE:
+			cond = ((~PSW & N) >> 3) ^ (PSW & V);
+			break;
+		case C_LT:
+			cond = ((PSW & N) >> 3) ^ (PSW & V);
+			break;
+		case C_GT:
+			cond = (((~PSW & N) >> 3) ^ (PSW & V)) & ((~PSW << 1) & Z);
+			break;
+		case C_LE:
+			cond = (((PSW & N) >> 3) ^ (PSW & V)) | ((PSW << 1) & Z);
+			break;
+		case C_AL:
+			cond = 1;
+			break;
 		case C_NV:
 		default:
 			cond = 0; break;
@@ -2898,4 +2928,3 @@ unsigned arm_dasm(char *buffer, unsigned pc)
 	return 4;
 #endif
 }
-
