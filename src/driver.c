@@ -2869,7 +2869,8 @@ TESTDRIVER( macross )	/* (c) 1992 NMK + Big West */
 
 	/* Comad games */
 	DRIVER( zerozone )	/* (c) 1993 Comad */
-	DRIVER( galspnbl )	/* (c) 1996 Comad */
+	DRIVER( hotpinbl )	/* (c) 1995 Comad */
+    DRIVER( galspnbl )  /* (c) 1996 Comad */
 
 	DRIVER( spacefb )	/* (c) [1980?] Nintendo */
 	DRIVER( spacefbg )	/* 834-0031 (c) 1980 Gremlin */
