@@ -166,6 +166,8 @@ static void set_points(struct mame_bitmap *bitmap)
 		/* some time has elapsed: let's update the screen */
 		for (y=0; y<crt_window_height; y++)
 		{
+			UINT16 *line = (UINT16 *)bitmap->line[y+crt_window_offset_y];
+
 			p_i = -1;
 
 			for (i=list_head[y]; (i != -1); i=list[i].next)
@@ -185,7 +187,8 @@ static void set_points(struct mame_bitmap *bitmap)
 				}
 
 				/* draw pixel on screen */
-				plot_pixel(bitmap, x, y+crt_window_offset_y, Machine->pens[node->intensity]);
+				//plot_pixel(bitmap, x, y+crt_window_offset_y, Machine->pens[node->intensity]);
+				line[x] = Machine->pens[node->intensity];
 
 				if (node->intensity != 0)
 					p_i = i;	/* current node will be next iteration's previous node */
