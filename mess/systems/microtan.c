@@ -301,7 +301,7 @@ static const struct IODevice io_microtan[] = {
         IO_SNAPSHOT,        /* type */
         1,                  /* count */
         "m65\0",            /* file extensions */
-        IO_RESET_ALL,       /* reset if file changed */
+        IO_RESET_CPU,       /* reset if file changed */
 		OSD_FOPEN_DUMMY,	/* open mode */
         0,
         microtan_snapshot_init, /* init */
@@ -321,7 +321,7 @@ static const struct IODevice io_microtan[] = {
         IO_QUICKLOAD,       /* type */
         1,                  /* count */
         "hex\0",            /* file extensions */
-        IO_RESET_ALL,       /* reset if file changed */
+        IO_RESET_CPU,       /* reset if file changed */
 		OSD_FOPEN_DUMMY,	/* open mode */
         0,
         microtan_hexfile_init,  /* init */

@@ -781,7 +781,7 @@ static const struct IODevice io_sms[] = {
 		IO_CARTSLOT,		/* type */
 		1,							/* count */
 		"sms\0",					/* file extensions */
-		IO_RESET_ALL,				/* reset if file changed */
+		IO_RESET_CPU,				/* reset if file changed */
 		OSD_FOPEN_DUMMY,			/* open mode */
 		0,
 		sms_init_cart,				/* init */
@@ -804,7 +804,7 @@ static const struct IODevice io_gamegear[] = {
 		IO_CARTSLOT,		/* type */
 		1,							/* count */
 		"gg\0",						/* file extensions */
-		IO_RESET_ALL,				/* reset if file changed */
+		IO_RESET_CPU,				/* reset if file changed */
 		OSD_FOPEN_DUMMY,			/* open mode */
 		0,
 		sms_init_cart,				/* init */

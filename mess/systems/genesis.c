@@ -342,7 +342,7 @@ static const struct IODevice io_genesis[] = {
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"smd\0bin\0md\0",	/* file extensions */
-		IO_RESET_ALL,		/* reset if file changed */
+		IO_RESET_CPU,		/* reset if file changed */
 		OSD_FOPEN_DUMMY,	/* open mode */
 		0,
 		genesis_init_cart,	/* init */

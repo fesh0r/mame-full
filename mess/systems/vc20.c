@@ -840,7 +840,7 @@ static const struct IODevice io_vc20[] =
 		IO_CARTSLOT,				   /* type */
 		2,							   /* normal 1 *//* count */
 		"a0\00020\00040\00060\0rom\0bin\0",/* file extensions */
-		IO_RESET_ALL,				   /* reset if file changed */
+		IO_RESET_CPU,				   /* reset if file changed */
 		OSD_FOPEN_DUMMY,				/* open mode */
 		0,
 		vc20_rom_load,				   /* init */
@@ -867,7 +867,7 @@ static const struct IODevice io_vc20v[] =
 		IO_CARTSLOT,				   /* type */
 		2,							   /* normal 1 *//* count */
 		"a0\00020\00040\00060\0rom\0bin\0",/* file extensions */
-		IO_RESET_ALL,				   /* reset if file changed */
+		IO_RESET_CPU,				   /* reset if file changed */
 		OSD_FOPEN_DUMMY,				/* open mode */
 		0,
 		vc20_rom_load,				   /* init */
@@ -895,7 +895,7 @@ static const struct IODevice io_vc20i[] =
 		IO_CARTSLOT,				   /* type */
 		2,							   /* normal 1 *//* count */
 		"a0\00020\00040\00060\0rom\0bin\0",/* file extensions */
-		IO_RESET_ALL,				   /* reset if file changed */
+		IO_RESET_CPU,				   /* reset if file changed */
 		0,
 		vc20_rom_load,				   /* init */
 		NULL,						   /* exit */

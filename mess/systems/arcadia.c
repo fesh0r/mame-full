@@ -333,7 +333,7 @@ static const struct IODevice io_arcadia[] = {
 		IO_CARTSLOT,					/* type */
 		1,								/* count */
 		"bin\0",                        /* file extensions */
-		IO_RESET_ALL,					/* reset if file changed */
+		IO_RESET_CPU,					/* reset if file changed */
 		OSD_FOPEN_READ,					/* open mode */
 		0,
 		arcadia_init_cart, 				/* init */

@@ -146,8 +146,7 @@ void *image_fopen_new(int type, int id, int *effective_mode);
 
 enum {
 	IO_RESET_NONE,	/* changing the device file doesn't reset anything 								*/
-	IO_RESET_CPU,	/* only reset the CPU 															*/
-	IO_RESET_ALL	/* restart the driver including audio/video 									*/
+	IO_RESET_CPU	/* only reset the CPU 															*/
 };
 
 #ifdef MAME_DEBUG
@@ -189,15 +188,6 @@ extern const void *device_info(int type, int id);
 const struct IODevice *device_first(const struct GameDriver *gamedrv);
 const struct IODevice *device_next(const struct GameDriver *gamedrv, const struct IODevice *dev);
 const struct IODevice *device_find(const struct GameDriver *gamedrv, int type);
-
-/* This is the dummy GameDriver with flag NOT_A_DRIVER set
-   It allows us to use an empty PARENT field in the macros. */
-
-/* Flag is used to bail out in mame.c/run_game() and cpuintrf.c/run_cpu()
- * but keep the program going. It will be set eg. if the filename for a
- * device which has IO_RESET_ALL flag set is changed
- */
-extern int mess_keep_going;
 
 /* functions to load and save battery backed NVRAM */
 int battery_load(const char *filename, void *buffer, int length);

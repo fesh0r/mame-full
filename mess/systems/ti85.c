@@ -510,7 +510,7 @@ static const struct IODevice io_ti85[] = {
 	IO_SNAPSHOT,		/* type */
 	1,			/* count */
 	"sav\0",        	/* file extensions */
-	IO_RESET_ALL,		/* reset if file changed */
+	IO_RESET_CPU,		/* reset if file changed */
 		OSD_FOPEN_DUMMY,	/* open mode */
         0,               	/* id */
 	ti85_load_snap,		/* load */
@@ -555,7 +555,7 @@ static const struct IODevice io_ti86[] = {
 	IO_SNAPSHOT,		/* type */
 	1,			/* count */
 	"sav\0",        	/* file extensions */
-	IO_RESET_ALL,		/* reset if file changed */
+	IO_RESET_CPU,		/* reset if file changed */
 		OSD_FOPEN_DUMMY,	/* open mode */
         0,               	/* id */
 	ti85_load_snap,		/* init */

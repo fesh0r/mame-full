@@ -601,7 +601,7 @@ static const struct IODevice io_zx80[] =
 		IO_CASSETTE,		/* type */
 		1,					/* count */
 		"80\0o\0",          /* file extensions */
-		IO_RESET_ALL,		/* reset if file changed */
+		IO_RESET_CPU,		/* reset if file changed */
 		OSD_FOPEN_DUMMY,	/* open mode */
         NULL,               /* id */
 		zx_cassette_init,	/* init */
@@ -626,7 +626,7 @@ static const struct IODevice io_zx81[] =
 		IO_CASSETTE,		/* type */
 		1,					/* count */
 		"81\0p\0",          /* file extensions */
-		IO_RESET_ALL,		/* reset if file changed */
+		IO_RESET_CPU,		/* reset if file changed */
 		OSD_FOPEN_DUMMY,	/* open mode */
         NULL,               /* id */
 		zx_cassette_init,	/* init */

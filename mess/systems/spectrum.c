@@ -2451,7 +2451,7 @@ ROM_END
    IO_QUICKLOAD,	   /* type */\
    1,				   /* count */\
    "scr\0",            /* file extensions */\
-   IO_RESET_ALL,	   /* reset if file changed */\
+   IO_RESET_CPU,	   /* reset if file changed */\
 	OSD_FOPEN_DUMMY,	/* open mode */\
    NULL,			   /* id */\
    spec_quick_init,    /* init */\
@@ -2472,7 +2472,7 @@ static const struct IODevice io_spectrum[] = {
 		IO_SNAPSHOT,		/* type */
 		1,					/* count */
 		"sna\0z80\0sp\0",	/* file extensions */
-		IO_RESET_ALL,		/* reset if file changed */
+		IO_RESET_CPU,		/* reset if file changed */
 		OSD_FOPEN_DUMMY,	/* open mode */
 		0,
 		spectrum_snap_load,	/* init */
@@ -2493,7 +2493,7 @@ static const struct IODevice io_spectrum[] = {
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"rom\0",			/* file extensions */
-		IO_RESET_ALL,		/* reset if file changed */
+		IO_RESET_CPU,		/* reset if file changed */
 		OSD_FOPEN_DUMMY,	/* open mode */
 		0,
 		spectrum_cart_load,	/* init */
@@ -2516,7 +2516,7 @@ static const struct IODevice io_specpls3[] = {
 		IO_SNAPSHOT,		/* type */
 		1,					/* count */
 		"sna\0z80\0sp\0",	/* file extensions */
-		IO_RESET_ALL,		/* reset if file changed */
+		IO_RESET_CPU,		/* reset if file changed */
 		OSD_FOPEN_DUMMY,	/* open mode */
 		0,
 		spectrum_snap_load,	/* init */
@@ -2560,7 +2560,7 @@ static const struct IODevice io_ts2068[] = {
 		IO_SNAPSHOT,		/* type */
 		1,					/* count */
 		"sna\0z80\0sp\0",       /* file extensions */
-		IO_RESET_ALL,		/* reset if file changed */
+		IO_RESET_CPU,		/* reset if file changed */
 		OSD_FOPEN_DUMMY,	/* open mode */
 		0,
 		spectrum_snap_load,	/* init */
@@ -2581,7 +2581,7 @@ static const struct IODevice io_ts2068[] = {
 		IO_CARTSLOT,			/* type */
 		1,					/* count */
 		"dck\0",			/* file extensions */
-		IO_RESET_ALL,		/* reset if file changed */
+		IO_RESET_CPU,		/* reset if file changed */
 		OSD_FOPEN_DUMMY,	/* open mode */
 		0,
 		timex_cart_load,	/* init */

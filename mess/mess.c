@@ -20,12 +20,12 @@ extern const char *pcrcfile;
 
 /* Globals */
 const char *mess_path;
-int mess_keep_going;
 char *renamed_image;
 UINT32 mess_ram_size;
 UINT8 *mess_ram;
 
-struct image_info {
+struct image_info
+{
 	char *name;
 	UINT32 crc;
 	UINT32 length;

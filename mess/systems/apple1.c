@@ -213,7 +213,7 @@ static const struct	IODevice io_apple1[] =
 		IO_SNAPSHOT,		/* type 					*/
 		1,					/* count 					*/
 		"snp\0",			/* file extensions 			*/
-		IO_RESET_ALL,		/* reset if file changed	*/
+		IO_RESET_CPU,		/* reset if file changed	*/
 		OSD_FOPEN_READ,		/* open mode */
 		0,					/* id 						*/
 		apple1_load_snap,	/* load 					*/

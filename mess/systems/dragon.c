@@ -677,33 +677,11 @@ ROM_END
 #define rom_coco3h	rom_coco3
 
 static const struct IODevice io_coco[] = {
-	IO_CARTRIDGE_COCO(coco_rom_load),
-	IO_SNAPSHOT_COCOPAK(coco_pak_load),
-	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
-	IO_FLOPPY_COCO,
-    { IO_END }
-};
-
-static const struct IODevice io_dragon32[] = {
-	IO_CARTRIDGE_COCO(coco_rom_load),
-	IO_SNAPSHOT_COCOPAK(coco_pak_load),
-	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
-	IO_FLOPPY_COCO,
-    { IO_END }
-};
-
-static const struct IODevice io_cp400[] = {
-	IO_CARTRIDGE_COCO(coco_rom_load),
-	IO_SNAPSHOT_COCOPAK(coco_pak_load),
-	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	IO_FLOPPY_COCO,
     { IO_END }
 };
 
 static const struct IODevice io_coco3[] = {
-	IO_CARTRIDGE_COCO(coco3_rom_load),
-	IO_SNAPSHOT_COCOPAK(coco3_pak_load),
-	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	IO_FLOPPY_COCO,
 	IO_VHD_PORT,
     { IO_END }
@@ -714,47 +692,59 @@ static const struct IODevice io_coco3[] = {
 #define io_coco2b io_coco
 #define io_coco3p io_coco3
 #define io_coco3h io_coco3
-#define io_dragon64 io_dragon32
+#define io_cp400 io_coco
+#define io_dragon32 io_coco
+#define io_dragon64 io_coco
+
+/* ----------------------------------------------------------------------- */
 
 SYSTEM_CONFIG_START( generic_coco )
 	/* bitbanger port */
-	CONFIG_DEVICE_PRINTER( coco_bitbanger_init, coco_bitbanger_exit, coco_bitbanger_output )
+	CONFIG_DEVICE_PRINTER	( coco_bitbanger_init, coco_bitbanger_exit, coco_bitbanger_output )
+
+	/* cassette */
+	CONFIG_DEVICE_CASSETTE	(1, "cas\0wav\0", coco_cassette_init, coco_cassette_exit)
 SYSTEM_CONFIG_END
 
-SYSTEM_CONFIG_START( coco )
-	CONFIG_IMPORT_FROM( generic_coco )
+SYSTEM_CONFIG_START( generic_coco12 )
+	CONFIG_IMPORT_FROM		( generic_coco )
+	CONFIG_DEVICE_CARTSLOT	( "rom\0", 1, coco_rom_load, NULL )
+	CONFIG_DEVICE_SNAPSHOT	( "pak\0", 1, coco_pak_load, NULL )
+SYSTEM_CONFIG_END
 
-	CONFIG_RAM(4 * 1024)
-	CONFIG_RAM(16 * 1024)
-	CONFIG_RAM(32 * 1024)
-	CONFIG_RAM_DEFAULT(64 * 1024)
+/* ----------------------------------------------------------------------- */
+
+SYSTEM_CONFIG_START( coco )
+	CONFIG_IMPORT_FROM		( generic_coco12 )
+	CONFIG_RAM				(4 * 1024)
+	CONFIG_RAM				(16 * 1024)
+	CONFIG_RAM				(32 * 1024)
+	CONFIG_RAM_DEFAULT		(64 * 1024)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(coco2)
-	CONFIG_IMPORT_FROM( generic_coco )
-
-	CONFIG_RAM(16 * 1024)
-	CONFIG_RAM_DEFAULT(64 * 1024)
+	CONFIG_IMPORT_FROM		( generic_coco12 )
+	CONFIG_RAM				(16 * 1024)
+	CONFIG_RAM_DEFAULT		(64 * 1024)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(coco3)
-	CONFIG_IMPORT_FROM( generic_coco )
-
-	CONFIG_RAM(128 * 1024)
-	CONFIG_RAM_DEFAULT(512 * 1024)
-	CONFIG_RAM(2048 * 1024)
+	CONFIG_IMPORT_FROM		( generic_coco )
+	CONFIG_DEVICE_CARTSLOT	( "rom\0", 1, coco3_rom_load, NULL )
+	CONFIG_DEVICE_SNAPSHOT	( "pak\0", 1, coco3_pak_load, NULL )
+	CONFIG_RAM				(128 * 1024)
+	CONFIG_RAM_DEFAULT		(512 * 1024)
+	CONFIG_RAM				(2048 * 1024)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(dragon32)
-	CONFIG_IMPORT_FROM( generic_coco )
-
-	CONFIG_RAM_DEFAULT(32 * 1024)
+	CONFIG_IMPORT_FROM		( generic_coco12 )
+	CONFIG_RAM_DEFAULT		(32 * 1024)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(dragon64)
-	CONFIG_IMPORT_FROM( generic_coco )
-
-	CONFIG_RAM_DEFAULT(64 * 1024)
+	CONFIG_IMPORT_FROM		( generic_coco12 )
+	CONFIG_RAM_DEFAULT		(64 * 1024)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */

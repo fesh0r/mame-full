@@ -238,7 +238,7 @@ static const struct IODevice io_jupiter[] = {
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"ace\0",            /* file extensions */
-		IO_RESET_ALL,		/* reset if file changed */
+		IO_RESET_CPU,		/* reset if file changed */
 		OSD_FOPEN_DUMMY,	/* open mode */
         NULL,               /* id */
 		jupiter_load_ace,	/* init */
@@ -258,7 +258,7 @@ static const struct IODevice io_jupiter[] = {
 		IO_CASSETTE,		/* type */
 		1,					/* count */
 		"tap\0",            /* file extensions */
-		IO_RESET_ALL,		/* reset if file changed */
+		IO_RESET_CPU,		/* reset if file changed */
 		OSD_FOPEN_DUMMY,	/* open mode */
         NULL,               /* id */
 		jupiter_load_tap,	/* init */

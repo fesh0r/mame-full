@@ -2786,7 +2786,7 @@ ROM_END
 		IO_SNAPSHOT,				/* type */ \
 		1,							/* count */ \
 		"sna\0",                    /* file extensions */ \
-		IO_RESET_ALL,				/* reset if file changed */ \
+		IO_RESET_CPU,				/* reset if file changed */ \
 		OSD_FOPEN_READ,				/* open mode */ \
 		0, \
 		amstrad_snapshot_load,		/* init */ \

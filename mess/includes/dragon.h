@@ -133,7 +133,7 @@ extern int coco3_mmu_translatelogicaladdr(int logicaladdr);
 		IO_FLOPPY,\
 		4,\
 		"dsk\0",\
-		IO_RESET_NONE,\
+		IO_RESET_CPU,\
 		OSD_FOPEN_DUMMY,\
 		0,\
 		dragon_floppy_init,\
@@ -147,48 +147,6 @@ extern int coco3_mmu_translatelogicaladdr(int logicaladdr);
         NULL,\
         NULL,\
         NULL \
-    }
-
-#define IO_CARTRIDGE_COCO(loadproc) \
-	{\
-		IO_CARTSLOT,\
-		1,\
-		"rom\0",\
-		IO_RESET_ALL,\
-		OSD_FOPEN_DUMMY,\
-        NULL,\
-		loadproc,\
-		NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL\
-    }
-
-#define IO_SNAPSHOT_COCOPAK(loadproc) \
-	{\
-		IO_SNAPSHOT,\
-		1,\
-		"pak\0",\
-		IO_RESET_ALL,\
-		OSD_FOPEN_DUMMY,\
-        NULL,\
-		loadproc,\
-		NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL\
     }
 
 #define IO_BITBANGER IO_PRINTER

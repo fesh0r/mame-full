@@ -839,7 +839,7 @@ static const struct IODevice io_apexc[] =
 		IO_CYLINDER,			/* type */
 		1,						/* count */
 		"apc\0",				/* file extensions */
-		IO_RESET_ALL,			/* reset if file changed */
+		IO_RESET_CPU,			/* reset if file changed */
 		OSD_FOPEN_RW_OR_READ,		/* open mode */
 		NULL,					/* id */
 		apexc_cylinder_init,	/* init */

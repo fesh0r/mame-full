@@ -265,7 +265,7 @@ static const struct IODevice io_gameboy[] =
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"gb\0gmb\0cgb\0gbc\0sgb\0",		/* file extensions */
-		IO_RESET_ALL,		/* reset if file changed */
+		IO_RESET_CPU,		/* reset if file changed */
 		OSD_FOPEN_DUMMY,	/* open mode */
 		0,
 		gb_load_rom,		/* init */
