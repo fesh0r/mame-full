@@ -3,7 +3,9 @@
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - [MSX2] Sony HB-F700P (Sean Young)
+- [MSX2] NMS 8245 and NMS 8255 (Sean Young)
 - [MSX] National FS-4000 (Sean Young)
+- [MSX] Sony HB-75P (Sean Young)
 
 
 
@@ -17,7 +19,7 @@ System Driver Changes:
   * Adds support for subslots
   * Proper memory layout for the MSX2 drivers, with the diskrom
     in a subslot of slot 3.
-  * Adds support for Konami's Sound Cartridge (64kb)
+  * Adds support for Konami's Sound Cartridge (128kb)
   * Adds support for Korean 90-in-1 
   * Adds support for Kanji ROM
 
