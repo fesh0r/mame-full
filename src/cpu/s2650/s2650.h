@@ -3,15 +3,6 @@
 
 #include "osd_cpu.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifdef RUNTIME_LOADER
-    extern void s2650_runtime_loader_init(void);
-#endif
-
-
 enum {
 	S2650_PC=1, S2650_PS, S2650_R0, S2650_R1, S2650_R2, S2650_R3,
 	S2650_R1A, S2650_R2A, S2650_R3A,

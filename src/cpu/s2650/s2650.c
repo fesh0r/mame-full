@@ -6,7 +6,6 @@
  *
  *************************************************************************/
 
-#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include "driver.h"
@@ -24,18 +23,6 @@
 #else
 #define LOG(x)
 #endif
-
-#ifdef RUNTIME_LOADER
-struct cpu_interface
-s2650_interface=
-CPU0(S2650,    s2650,	 2,  0,1.00,S2650_INT_NONE,    -1,			   -1,			   8, 16,	  0,15,LE,1, 3	);
-
-extern void s2650_runtime_loader_init(void)
-{
-	cpuintf[CPU_S2650]=s2650_interface;
-}
-#endif
-
 
 /* define this to expand all EA calculations inline */
 #define INLINE_EA	1
@@ -156,6 +143,19 @@ static	UINT8 ccc[0x200] = {
 #define SET_CC_OVF(result,value)                                \
 	S.psl = (S.psl & ~(OVF+CC)) |								\
 		ccc[result + ( ( (result^value) << 1) & 256 )]
+
+#if 1
+#define SET_CC_OVF_ADD(result,value1,value2) SET_CC_OVF(result,value1)
+#define SET_CC_OVF_SUB(result,value1,value2) SET_CC_OVF(result,value1)
+#else
+#define SET_CC_OVF_ADD(result,value1,value2)                    \
+	S.psl = (S.psl & ~(OVF+CC)) |								\
+		ccc[result + ( ( (~(value1^value2) & (result^value1)) << 1) & 256 )]
+
+#define SET_CC_OVF_SUB(result,value1,value2)                    \
+	S.psl = (S.psl & ~(OVF+CC)) |								\
+		ccc[result + ( ( ((value1^value2) & (result^value1)) << 1) & 256 )]
+#endif
 
 /***************************************************************
  * ROP
@@ -545,7 +545,7 @@ static	int 	S2650_relative[0x100] =
 	if(res & 0x100) S.psl |= C; 							    \
     dest = res & 0xff;                                          \
 	if( (dest & 15) < (before & 15) ) S.psl |= IDC; 			\
-	SET_CC_OVF(dest,before);									\
+	SET_CC_OVF_ADD(dest,before,source);							\
 }
 
 /***************************************************************
@@ -561,8 +561,8 @@ static	int 	S2650_relative[0x100] =
 	S.psl &= ~(C | OVF | IDC);									\
 	if((res & 0x100)==0) S.psl |= C; 							\
     dest = res & 0xff;                                          \
-	if( (dest & 15) < (before & 15) ) S.psl |= IDC; 			\
-	SET_CC_OVF(dest,before);									\
+	if( (dest & 15) <= (before & 15) ) S.psl |= IDC; 			\
+	SET_CC_OVF_SUB(dest,before,source);							\
 }
 
 /***************************************************************
@@ -587,15 +587,8 @@ static	int 	S2650_relative[0x100] =
  ***************************************************************/
 #define M_DAR(dest)												\
 {																\
-	if((S.psl & IDC) != 0)										\
-	{															\
-		if((S.psl & C) == 0) dest -= 0x60;						\
-	}															\
-	else														\
-	{															\
-		if( (S.psl & C) != 0 ) dest -= 0x06;					\
-		else dest -= 0x66;										\
-	}															\
+	if ((S.psl & C) == 0) dest += 0xA0;							\
+	if ((S.psl & IDC) == 0) dest = (dest & 0xF0) | ((dest + 0x0A) & 0x0F);\
 }
 
 /***************************************************************
