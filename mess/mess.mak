@@ -201,8 +201,8 @@ DRVLIBS = \
 	$(OBJ)/ssystem3.a \
 	$(OBJ)/hp48.a     \
 	$(OBJ)/cpschngr.a \
+	$(OBJ)/gce.a	  \
 #	$(OBJ)/pdp1.a	  \
-#	$(OBJ)/gce.a	  \
 
 
 

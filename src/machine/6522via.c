@@ -63,8 +63,10 @@ struct via6522
 	UINT8 ifr;
 
 	void *t1;
+	int t1_active;
 	double time1;
 	void *t2;
+	int t2_active;
 	double time2;
 
 	double cycles_to_sec;
@@ -224,12 +226,13 @@ static void via_t1_timeout (int which)
 		if (T1_SET_PB7(v->acr))
 			v->out_b ^= 0x80;
 		timer_adjust (v->t1, V_CYCLES_TO_TIME(TIMER1_VALUE(v) + IFR_DELAY), which, 0);
+		v->t1_active = 1;
     }
 	else
     {
 		if (T1_SET_PB7(v->acr))
 			v->out_b |= 0x80;
-		v->t1 = 0;
+		v->t1_active = 0;
 		v->time1=timer_get_time();
     }
 	if (v->ddr_b)
@@ -255,7 +258,7 @@ static void via_t2_timeout (int which)
 	else
 		logerror("6522VIA chip %d: T2 timout occured but there is no callback.  PC: %08X\n", which, activecpu_get_pc());
 
-	v->t2 = 0;
+	v->t2_active = 0;
 	v->time2=timer_get_time();
 
 	if (!(v->ifr & INT_T2))
@@ -378,7 +381,7 @@ int via_read(int which, int offset)
 
     case VIA_T1CL:
 		via_clear_int (which, INT_T1);
-		if (v->t1)
+		if (v->t1_active)
 			val = V_TIME_TO_CYCLES(timer_timeleft(v->t1)) & 0xff;
 		else
 		{
@@ -398,7 +401,7 @@ int via_read(int which, int offset)
 		break;
 
     case VIA_T1CH:
-		if (v->t1)
+		if (v->t1_active)
 			val = V_TIME_TO_CYCLES(timer_timeleft(v->t1)) >> 8;
 		else
 		{
@@ -427,7 +430,7 @@ int via_read(int which, int offset)
 
     case VIA_T2CL:
 		via_clear_int (which, INT_T2);
-		if (v->t2)
+		if (v->t2_active)
 			val = V_TIME_TO_CYCLES(timer_timeleft(v->t2)) & 0xff;
 		else
 		{
@@ -445,7 +448,7 @@ int via_read(int which, int offset)
 		break;
 
     case VIA_T2CH:
-		if (v->t2)
+		if (v->t2_active)
 			val = V_TIME_TO_CYCLES(timer_timeleft(v->t2)) >> 8;
 		else
 		{
@@ -727,7 +730,7 @@ logerror("6522VIA chip %d: PCR = %02X.  PC: %08X\n", which, data, activecpu_get_
 		v->acr = data;
 		if (T1_SET_PB7(v->acr))
 		{
-			if (v->t1)
+			if (v->t1_active)
 				v->out_b &= ~0x80;
 			else
 				v->out_b |= 0x80;
