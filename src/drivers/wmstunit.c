@@ -515,6 +515,49 @@ static const struct MachineDriver machine_driver_tunit_adpcm =
 	nvram_handler
 };
 
+static const struct MachineDriver machine_driver_tunit_z80 =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_TMS34010,
+			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 MHz */
+			readmem,writemem,0,0,
+			ignore_interrupt,0,
+			0,0,&cpu_config
+		},
+		{
+			CPU_M6809 | CPU_AUDIO_CPU,
+			8000000/4,	/* 2 MHz */
+			williams_adpcm_readmem,williams_adpcm_writemem,0,0,
+			ignore_interrupt,1
+		}
+	},
+	MKLA5_FPS, MKLA5_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,
+	wms_tunit_init_machine,
+
+	/* video hardware */
+	512, 288, { 56, 450, 0, 253 },
+
+	0,
+	65536,65536,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	wms_tunit_vh_start,
+	wms_tunit_vh_stop,
+	wms_tunit_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		SOUND_WILLIAMS_ADPCM(REGION_SOUND1)
+	},
+	nvram_handler
+};
+
 static const struct MachineDriver machine_driver_tunit_dcs =
 {
 	/* basic machine hardware */
@@ -591,6 +634,38 @@ ROM_START( mk )
 	ROM_LOAD ( "mkt-uj19.bin",  0x900000, 0x80000, 0x33b9b7a4 )
 	ROM_LOAD ( "mkt-uj20.bin",  0x980000, 0x80000, 0xeae96df0 )
 	ROM_LOAD ( "mkt-uj22.bin",  0xa00000, 0x80000, 0x5e12523b )
+ROM_END
+
+ROM_START( mkb )
+	ROM_REGION( 0x10, REGION_CPU1 )		/* 34010 dummy region */
+
+	ROM_REGION( 0x50000, REGION_CPU2 )	/* sound CPU */
+	ROM_LOAD (	"mkb-1.rom",    0x00000, 0x10000, 0xb58d229e )
+	ROM_LOAD (	"mkb-2.rom",    0x10000, 0x20000, 0x921c613d )
+
+	ROM_REGION( 0xc0000, REGION_SOUND1 )	/* ADPCM */
+	ROM_LOAD ( "mkb-10.rom",    0x00000, 0x80000, 0xd675d34d )
+
+	ROM_REGION( 0x100000, REGION_USER1 | REGIONFLAG_DISPOSE )	/* 34010 code */
+	ROM_LOAD_ODD ( "mkb-4.rom", 0x00000, 0x80000, 0xb12b3bf2 )
+	ROM_LOAD_EVEN( "mkb-5.rom", 0x00000, 0x80000, 0x7a37dc5c )
+
+	ROM_REGION( 0xc00000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD ( "mkb-15.rom",    0x000000, 0x80000, 0x77e8ea47 )
+	ROM_LOAD ( "mkb-13.rom",    0x080000, 0x80000, 0xa002a155 )
+	ROM_LOAD ( "mkb-6.rom",     0x100000, 0x80000, 0xc909758a )
+
+	ROM_LOAD ( "mkb-14.rom",    0x300000, 0x80000, 0x236d7dc3 )
+	ROM_LOAD ( "mkb-11.rom",    0x380000, 0x80000, 0x56a4ef00 )
+	ROM_LOAD ( "mkb-3.rom",     0x400000, 0x80000, 0xc1fee29e )
+
+	ROM_LOAD ( "mkb-12.rom",    0x600000, 0x80000, 0x2f28d143 )
+	ROM_LOAD ( "mkb-8.rom",     0x680000, 0x80000, 0x2a34e703 )
+	ROM_LOAD ( "mkb-17.rom",    0x700000, 0x80000, 0xb95373f4 )
+
+	ROM_LOAD ( "mkb-16.rom",    0x900000, 0x80000, 0xd35034b9 )
+	ROM_LOAD ( "mkb-9.rom",     0x980000, 0x80000, 0xd17096c4 )
+	ROM_LOAD ( "mkb-7.rom",     0xa00000, 0x80000, 0xde1c310d )
 ROM_END
 
 ROM_START( mk2 )
@@ -976,6 +1051,7 @@ ROM_END
  *************************************/
 
 GAME( 1992, mk,       0,       tunit_adpcm, mk,      mk,       ROT0_16BIT, "Midway",   "Mortal Kombat (rev 5.0 T-Unit 03/19/93)" )
+GAMEX(1992, mkb,	  mk,	   tunit_z80,	mk, 	 mk,	   ROT0_16BIT, "bootleg",  "Mortal Kombat (rev 3.0 T-Unit 31/08/92)", GAME_NOT_WORKING )
 
 GAME( 1993, mk2,      0,       tunit_dcs,   mk2,     mk2,      ROT0_16BIT, "Midway",   "Mortal Kombat II (rev L3.1)" )
 GAME( 1993, mk2r32,   mk2,     tunit_dcs,   mk2,     mk2r32,   ROT0_16BIT, "Midway",   "Mortal Kombat II (rev L3.2 (European))" )
