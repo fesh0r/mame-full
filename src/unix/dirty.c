@@ -79,7 +79,6 @@ void osd_dirty_close(void)
    #endif
 }
 
-/*
 void osd_mark_dirty(int x1, int y1, int x2, int y2)
 {
 	int y,x;
@@ -106,4 +105,3 @@ void osd_mark_dirty(int x1, int y1, int x2, int y2)
            #endif
 	}
 }
-*/

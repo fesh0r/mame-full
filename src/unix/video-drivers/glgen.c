@@ -1021,7 +1021,10 @@ void InitTextures ()
 
   /*raw_line_len = line_2 - line_1;*/
 
-  raw_line_len = ((Machine->drv->screen_width + 7) & ~7) + 2 * BITMAP_SAFETY;
+  if (blit_swapxy)
+    raw_line_len = ((Machine->drv->screen_height + 7) & ~7) + 2 * BITMAP_SAFETY;
+  else
+    raw_line_len = ((Machine->drv->screen_width + 7) & ~7) + 2 * BITMAP_SAFETY;
 
   /* multiply line length by pixel size in bytes */
   if (Machine->color_depth == 15 || Machine->color_depth == 16)
@@ -1556,7 +1559,7 @@ void
 drawTextureDisplay (int useCabinet, int updateTexture)
 {
   struct TexSquare *square;
-  int x, y;
+  int x = 0, y = 0;
   GLenum err;
   static const float z_pos = 0.9f;
 
@@ -1587,11 +1590,12 @@ drawTextureDisplay (int useCabinet, int updateTexture)
 
   disp__glEnable (GL_TEXTURE_2D);
 
-  for (y = 0; y < texnumy; y++)
+//  for (y = 0; y < texnumy; y++)
   {
-    for (x = 0; x < texnumx; x++)
+//    for (x = 0; x < texnumx; x++)
     {
-      square = texgrid + y * texnumx + x;
+//      square = texgrid + y * texnumx + x;
+      square = texgrid;
 
       if(square->isTexture==GL_FALSE)
       {
@@ -1599,7 +1603,7 @@ drawTextureDisplay (int useCabinet, int updateTexture)
 	  fprintf (stderr, "GLINFO ain't a texture(update): texnum x=%d, y=%d, texture=%d\n",
 	  	x, y, square->texobj);
 	#endif
-      	continue;
+        return;
       }
 
       disp__glBindTexture (GL_TEXTURE_2D, square->texobj);
@@ -1643,19 +1647,22 @@ drawTextureDisplay (int useCabinet, int updateTexture)
       /* This is the quickest way I know of to update the texture */
       if (updateTexture && square->isDirty)
       {
-	   disp__glTexSubImage2D (GL_TEXTURE_2D, 0, 
-		 square->dirtyXoff, square->dirtyYoff,
-		 square->dirtyWidth, square->dirtyHeight,
-		 gl_bitmap_format, gl_bitmap_type, square->texture);
+	square->dirtyXoff   = 0;
+	square->dirtyYoff   = 0;
+	square->dirtyWidth  = orig_width;
+	square->dirtyHeight = orig_height;
 
-           square->dirtyXoff=0; square->dirtyYoff=0; 
+	disp__glTexSubImage2D (GL_TEXTURE_2D, 0, 
+		square->dirtyXoff, square->dirtyYoff,
+		square->dirtyWidth, square->dirtyHeight,
+		gl_bitmap_format, gl_bitmap_type, square->texture);
+
 	   /*if (use_dirty)
 	   {
 	      square->isDirty=GL_FALSE;
 	      square->dirtyWidth=-1; square->dirtyHeight=-1;
            } else */{
 	      square->isDirty=GL_TRUE;
-	      square->dirtyWidth=text_width; square->dirtyHeight=text_height;
 	   }
       }
 

@@ -216,7 +216,7 @@ int sysdep_create_display(int depth)
          Vid_width = visual_width*widthscale;
       } else {
          if(*(vid_modes+vid_modes_i)==NULL) 
-            vid_modes_i=vid_modes_i-1;
+            vid_modes_i--;
 
          Vid_width = (*(vid_modes + vid_modes_i))->w;
          Vid_height = (*(vid_modes + vid_modes_i))->h;

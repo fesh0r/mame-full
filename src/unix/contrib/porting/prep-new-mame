@@ -15,6 +15,8 @@
 # Fix the line endings of the included text files, makefiles, and sources.
 if [ -x "`which d2u 2> /dev/null`" ]; then
   d2u `find . -name "*.txt" -print` 2> /dev/null
+  d2u `find . -name "*.htm" -print` 2> /dev/null
+  d2u `find . -name "*.html" -print` 2> /dev/null
   d2u `find . -name "*.mak" -print` 2> /dev/null
   d2u `find . -name "*.ini" -print` 2> /dev/null
   d2u `find . -name "*.[ch]" -print` 2> /dev/null

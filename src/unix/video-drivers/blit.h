@@ -71,27 +71,24 @@ if (yarbsize) /* using arbitrary Y-scaling (Adam D. Moss <adam@gimp.org>) */
       *(dst+2) = (INDIRECT[*(src+2)]>>16) | (INDIRECT[*(src+3)]<< 8); \
    }\
       }
-#elif defined BLIT_XV_YUY2
+#elif defined BLIT_HWSCALE_YUY2
 #define COPY_LINE2(SRC, END, DST) \
    {\
       SRC_PIXEL  *src = SRC; \
       SRC_PIXEL  *end = END; \
-      unsigned char *dst = (unsigned char *)DST; \
-      int r,y,u,v; \
+      unsigned long *dst = (unsigned long *)DST; \
+      unsigned int r,y,y2,u,v; \
       for(;src<end;) \
       { \
          r=INDIRECT[*src++]; \
-         y=r>>24; \
-         u=(r>>16)&255; \
-         v=r&255; \
-         *dst++=y; \
+         y=r&255; \
+         u=(r>>8)&255; \
+         v=(r>>24); \
          r=INDIRECT[*src++]; \
-         u+=(r>>16)&255; \
-         v+=r&255; \
-         *dst++=u/2; \
-         y=r>>24; \
-         *dst++=y; \
-         *dst++=v/2; \
+         u=(u+((r>>8)&255))/2; \
+         v=(v+(r>>24))/2; \
+         y2=r&255; \
+         *dst++=(y&255)|((u&255)<<8)|((y2&255)<<16)|((v&255)<<24); \
       } \
    }
 #else /* normal indirect */
@@ -430,27 +427,23 @@ switch (heightscale | (widthscale << 8) | (use_scanlines << 16))
       *(dst+1) = (INDIRECT[*(src+1)]>> 8) | (INDIRECT[*(src+2)]<<16); \
       *(dst+2) = (INDIRECT[*(src+2)]>>16) | (INDIRECT[*(src+3)]<< 8); \
    }
-#elif defined BLIT_XV_YUY2
+#elif defined BLIT_HWSCALE_YUY2
 #define COPY_LINE2(SRC, END, DST) \
    {\
       SRC_PIXEL  *src = SRC; \
       SRC_PIXEL  *end = END; \
-      unsigned char *dst = (unsigned char *)DST; \
-      int r,y,u,v; \
+      unsigned long *dst = (unsigned long *)DST; \
+      unsigned int r,r2,y,y2,uv1,uv2; \
       for(;src<end;) \
       { \
          r=INDIRECT[*src++]; \
-         y=r>>24; \
-         u=(r>>16)&255; \
-         v=r&255; \
-         *dst++=y; \
-         r=INDIRECT[*src++]; \
-         u+=(r>>16)&255; \
-         v+=r&255; \
-         *dst++=u/2; \
-         y=r>>24; \
-         *dst++=y; \
-         *dst++=v/2; \
+         r2=INDIRECT[*src++]; \
+         y=r&0xff; \
+         y2=r2&0xff0000; \
+         uv1=(r&0xff00ff00)>>1; \
+         uv2=(r2&0xff00ff00)>>1; \
+         uv1=(uv1+uv2)&0xff00ff00; \
+         *dst++=y|y2|uv1; \
       } \
    }
 #else /* normal indirect */
@@ -472,7 +465,7 @@ switch (heightscale | (widthscale << 8) | (use_scanlines << 16))
 #endif /* dga_16bpp_hack / packed / normal indirect */
 
 #else  /* not indirect */
-#ifdef BLIT_XV_YUY2
+#ifdef BLIT_HWSCALE_YUY2
 #define COPY_LINE2(SRC, END, DST) \
    {\
       SRC_PIXEL  *src = SRC; \
@@ -582,23 +575,31 @@ break;
       *(dst+1) = (INDIRECT[*(src  )]>> 8) | (INDIRECT[*(src+1)]<<16); \
       *(dst+2) = (INDIRECT[*(src+1)]>>16) | (INDIRECT[*(src+1)]<<8); \
    }
-#elif defined BLIT_XV_YUY2
+#elif defined BLIT_HWSCALE_YUY2
 #define COPY_LINE2(SRC, END, DST) \
    {\
       SRC_PIXEL  *src = SRC; \
       SRC_PIXEL  *end = END; \
-      unsigned char *dst = (unsigned char *)DST; \
+      unsigned int *dst = (unsigned int *)DST; \
       int r,y,u,v; \
       for(;src<end;) \
       { \
-         r=INDIRECT[*src++]; \
-         y=r>>24; \
-         u=(r>>16); \
-         v=r; \
-         *dst++=y; \
-         *dst++=u; \
-         *dst++=y; \
-         *dst++=v; \
+          r=INDIRECT[*src++]; \
+          *dst++=r; \
+          r=INDIRECT[*src++]; \
+          *dst++=r; \
+          r=INDIRECT[*src++]; \
+          *dst++=r; \
+          r=INDIRECT[*src++]; \
+          *dst++=r; \
+          r=INDIRECT[*src++]; \
+          *dst++=r; \
+          r=INDIRECT[*src++]; \
+          *dst++=r; \
+          r=INDIRECT[*src++]; \
+          *dst++=r; \
+          r=INDIRECT[*src++]; \
+          *dst++=r; \
       } \
    }
 #else /* not pack bits */
@@ -621,7 +622,7 @@ break;
 
 #else /* not indirect */
 
-#ifdef BLIT_XV_YUY2
+#ifdef BLIT_HWSCALE_YUY2
 #define COPY_LINE2(SRC, END, DST) \
    {\
       SRC_PIXEL  *src = SRC; \

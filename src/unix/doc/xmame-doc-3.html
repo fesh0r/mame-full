@@ -843,7 +843,7 @@ settings in the makefile and recompile xmame.</P>
 <P>Besides the x11 and SDL drivers, the FX and GL drivers are also
 capable of playing games full screen. There is a separate chapter
 for these later on.</P>
-<H3>xmame.x11</H3>
+<H3>xmame.x11/DGA</H3>
 
 <P>First, before recompiling, make sure you have an xserver with
 the "xfree-dga&quot; extension enabled (do a "xdpyinfo" and see if you've
@@ -860,7 +860,34 @@ in your xmamerc file.</P>
 <P>During play you can switch between windowed and fullscreen mode.
 See 
 <A HREF="#FAQ: What keys does xmame/xmess use?">What keys does xmame/xmess use?</A></P>
-<H3>xmame.sdl</H3>
+<H3>xmame.x11/Xv</H3>
+
+<P>Xv is the X Window System video extension. Among other things,
+it supports hardware scaling if your graphics card (and X driver)
+is capable of doing so. You can achieve a very nice fullscreen display
+without taxing your cpu very much because the scaling will all be
+done by your video card.</P>
+<P>To determine if your video card supports the Xv extension, you
+may use this command:</P>
+<P>
+<PRE>
+xvinfo
+</PRE>
+</P>
+<P>If you don't see a message indicating "no screens found", then
+the Xv extension is supported by your machine.</P>
+<P>To compile this into xmame, select DISPLAY_METHOD = x11 and uncomment
+the line "X11_XV = 1" in the makefile.</P>
+<P>Build xmame, and use the -fullscreen parameter when loading a
+game to get a nice fullscreen display.</P>
+<P>If the colors seem messed up and/or you only see half of the
+game image, try using "-yuv" or "-yv12". By default, the Xv extension
+attempts to use RGB mode if your driver supports it, but some cards'
+drivers are broken.</P>
+<P>If your screen goes blank or gets full of little green vertical
+lines, then your graphics card does not support the Xv extension
+and you're out of luck.</P>
+<H3>xmame.SDL</H3>
 
 <P>The SDL library was meant to make it easy for programmers to
 make full screen applications. To start SDL in fullscreen mode, just

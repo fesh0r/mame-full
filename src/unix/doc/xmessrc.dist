@@ -12,7 +12,6 @@ bpp                     0
 heightscale             1
 widthscale              1
 autodouble              1
-dirty                   1
 scanlines               0
 artwork                 1
 frameskipper            0
@@ -70,15 +69,16 @@ analogstick             0
 mouse                   1
 
 ### Fileio Related ###
-rompath                 /usr/games/lib/xmess
-spooldir                /usr/games/lib/xmess
-screenshotdir           .
-cheatdir                /usr/games/lib/xmess/cheat
-crcdir                  /usr/games/lib/xmess/crc
+biospath                /usr/games/lib/xmess/bios
+softwarepath            /usr/games/lib/xmess/software
+CRC_directory           /usr/games/lib/xmess/crc
+hiscore_directory       /usr/games/lib/xmess/hiscore
+snapshot_directory      .
+cheat_directory         /usr/games/lib/xmess/cheat
 cheatfile               cheat.cdb
-hiscorefile             /usr/games/lib/xmess/hiscore.dat
-historyfile             /usr/games/lib/xmess/history.dat
-mameinfofile            /usr/games/lib/xmess/mameinfo.dat
+hiscore_file            /usr/games/lib/xmess/hiscore.dat
+history_file            /usr/games/lib/xmess/history.dat
+mameinfo_file           /usr/games/lib/xmess/mameinfo.dat
 
 ### Mess Related ###
 language                english

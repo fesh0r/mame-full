@@ -32,14 +32,12 @@ static int use_fuzzycmp = 1;
 static int loadconfig = 1;
 static char *language = NULL;
 static char *gamename = NULL;
+char *rompath_extra = NULL;
 #ifndef MESS
 static char *defaultgamename;
 #else
-static char crcfilename[BUF_SIZE] = "";
-const char *crcfile = crcfilename;
-static char pcrcfilename[BUF_SIZE] = "";
-const char *pcrcfile = pcrcfilename;
 static const char *mess_opts;
+void build_crc_database_filename(int game_index);
 
 static int specify_ram(struct rc_option *option, const char *arg, int priority)
 {
@@ -193,12 +191,11 @@ static int fuzzycmp (const char *s, const char *l)
    return gaps;
 }
 
-/* for verify roms which is used for the random game selection
+/* for verify roms which is used for the random game selection */
 static int config_printf(const char *fmt, ...)
 {
    return 0;
 }
-*/
 
 static int config_handle_arg(char *arg)
 {
@@ -328,6 +325,9 @@ int config_init (int argc, char *argv[])
    snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "nvram");
    if (rc_check_and_create_dir(buffer))
       return OSD_NOT_OK;
+   snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "diff");
+   if (rc_check_and_create_dir(buffer))
+      return OSD_NOT_OK;
    snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "rc");
    
    /* parse the commandline */
@@ -383,11 +383,6 @@ int config_init (int argc, char *argv[])
       return OSD_OK;
    }
    
-   /* must be done after showconfig, since this modifies the
-      rompath/samplepath/artworkpath rc_strings, but before any of the frontend 
-      options are handled */
-   init_search_paths();
-
    /* handle frontend options */
    if ( (i=frontend_list(gamename)) != 1234)
       return i;
@@ -495,7 +490,8 @@ int config_init (int argc, char *argv[])
             if (begin)
             {
                *begin='\0'; /* dynamic allocation and copying will be better */
-               init_rom_path(gamename);
+	       rompath_extra = malloc(strlen(gamename) + 1);
+	       strcpy(rompath_extra, gamename);
             }
             game_index = i;
             break;
@@ -559,15 +555,7 @@ int config_init (int argc, char *argv[])
    }
    
 #ifdef MESS
-   /* Build the CRC database filename */
-   snprintf(crcfilename, BUF_SIZE, "%s/%s.crc", crcdir, drivers[game_index]->name);
-   if(drivers[game_index]->clone_of &&
-      !(drivers[game_index]->clone_of->flags & NOT_A_DRIVER) &&
-      drivers[game_index]->clone_of->name)
-   {
-      snprintf(pcrcfilename, BUF_SIZE, "%s/%s.crc", crcdir,
-         drivers[game_index]->clone_of->name);
-   }
+   build_crc_database_filename(game_index);
    
    /* set the image type if nescesarry */
    for(i=0; i<options.image_count; i++)

@@ -1,621 +1,509 @@
-#include "xmame.h"
+/*============================================================ */
+/* */
+/*	fileio.c - Unix file access functions */
+/* */
+/*============================================================ */
+
 #include <stdarg.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <zlib.h>
-
-#ifdef BSD43 /* old style directory handling */
-#include <sys/types.h>
-#include <sys/dir.h>
-#define dirent direct
+#include "xmame.h"
+#include "osdutils.h"
+#include "unzip.h"
+#ifdef MESS
+#include "image.h"
 #endif
 
-/* #define FILEIO_DEBUG */
-#define MAXPATHC 20 /* at most 20 path entries */
-#define MAXPATHL BUF_SIZE /* at most BUF_SIZE-1 character path length */
- 
-int load_zipped_file (const char *zipfile,const char *filename, unsigned char **buf, unsigned int *length);
-int checksum_zipped_file (const char *zipfile, const char *filename, unsigned int *length, unsigned int *sum);
-static int config_handle_inputfile(struct rc_option *option, const char *arg,
-   int priority);
+/*============================================================ */
+/*	EXTERNALS */
+/*============================================================ */
 
-/* from ... */
+extern char *rompath_extra;
+
+/* from datafile.c */
+extern const char *db_filename;
+extern const char *history_filename;
+extern const char *mameinfo_filename;
+
+/* from cheat.c */
 extern char *cheatfile;
-extern char *db_filename;
-extern char *history_filename;
-extern char *mameinfo_filename;
 
-/* local vars */
-static char *rompathv[MAXPATHC];
-static int   rompathc = 0;
-static char *rompath = NULL;
-static char *samplepath = NULL;
-static char *diffdir = NULL;
-static char *ctrlrdir = NULL;
-static char *artworkpath = NULL;
-static char *spooldir = NULL; /* directory to store high scores */
-static char *screenshotdir = NULL;
-static FILE *errorlog = NULL;
-static char *cfgname = NULL; /* config sub-folder name */
-#ifdef MESS
-static char *cheatdir = NULL;
-#endif
 
-/* struct definitions */
-typedef enum
-{
-	kPlainFile,
-	kRamFile
-} eFileType;
 
-typedef struct
-{
-	FILE		*file;
-	unsigned char	*data;
-	unsigned int	offset;
-	unsigned int	length;
-	unsigned int	crc;
- 	eFileType	type;
-} FakeFileHandle;
+/*============================================================ */
+/*	DEBUGGING */
+/*============================================================ */
 
-struct rc_option fileio_opts[] = {
-   /* name, shortname, type, dest, deflt, min, max, func, help */
-   { "Fileio Related",	NULL,			rc_seperator,	NULL,
-     NULL,		0,			0,		NULL,
-     NULL },
-   { "rompath",		"rp",			rc_string,	&rompath,
-     XMAMEROOT"/roms",	0,			0,		NULL,
-     "Set the rom search path" },
-   { "samplepath",	"sp",			rc_string,	&samplepath,
-     XMAMEROOT"/samples",	0,		0,		NULL,
-     "Set the search path for sample sets" }, 
-   { "artworkpath",	"ap",			rc_string,	&artworkpath,
-     XMAMEROOT"/artwork",	0,		0,		NULL,
-     "Set the search path for artwork (overlays, etc.)" },
-   { "spooldir",	"sd",			rc_string,	&spooldir,
-     XMAMEROOT"/hi",	0,			0,		NULL,
-     "Set the high score spooldir" },
-   { "screenshotdir",	"ssd",			rc_string,	&screenshotdir,
-     ".",		0,			0,		NULL,
-     "Set dir to store screenshots in" },
-   { "diffdir",		"dfd",			rc_string,	&diffdir,
-     XMAMEROOT"/diff",	0,			0,		NULL,
-     "Set the dir for hard drive image difference files" },
-   { "ctrlrdir",	"ctd",			rc_string,	&ctrlrdir,
-     XMAMEROOT"/ctrlr",	0,			0,		NULL,
-     "Set the dir for saving controller definitions" },
-   { "cfgname",		"cn",			rc_string,	&cfgname,
-     ".",		0,			0,		NULL,
-     "Set the config name in case you use several control panels" },
-#ifdef MESS
-   { "cheatdir",	NULL,			rc_string,	&cheatdir,
-     XMAMEROOT"/cheat",	0,			0,		NULL,
-     "Set dir to look for cheat files in" },
-   { "crcdir",		NULL,			rc_string,	&crcdir,
-     XMAMEROOT"/crc",	0,			0,		NULL,
-     "Set dir to look for crc files in" },
-   { "cheatfile",	"cf",			rc_string,	&cheatfile,
-     "cheat.cdb",	 0,			0,		NULL,
-     "Set the file to use as cheat database" },
+/* Verbose outputs to error.log ? */
+#define VERBOSE 					0
+
+/* enable lots of logging */
+#if VERBOSE
+#define LOG(x)	logerror(x)
 #else
-   { "cheatfile",	"cf",			rc_string,	&cheatfile,
-     XMAMEROOT"/cheat.dat", 0,			0,		NULL,
-     "Set the file to use as cheat database" },
+#define LOG(x)
 #endif
-   { "hiscorefile",	"hif",			rc_string,	&db_filename,
-     XMAMEROOT"/hiscore.dat",	0,		0,		NULL,
-     "Set the file to use as high score database" }, 
-   { "historyfile",	"hf",			rc_string,	&history_filename,
-     XMAMEROOT"/history.dat", 0,		0,		NULL,
-     "Set the file to use as history database" },
-   { "mameinfofile",	"mf",			rc_string,	&mameinfo_filename,
-     XMAMEROOT"/mameinfo.dat", 0,		0,		NULL,
-     "Set the file to use as mameinfo database" },
-   { "record",		"rec",			rc_use_function, &options.record,
-     NULL,		1,			0,		config_handle_inputfile,
-     "Set a file to record keypresses into" },
-   { "playback",	"pb",			rc_use_function, &options.playback,
-     NULL,		0,			0,		config_handle_inputfile,
-     "Set a file to playback keypresses from" },
-   { "stdout-file",	"out",			rc_file,	&stdout_file,
-     NULL,		1,			0,		NULL,
-     "Set a file to redirect stdout to" },
-   { "stderr-file",	"err",			rc_file,	&stderr_file,
-     NULL,		1,			0,		NULL,
-     "Set a file to redirect stderr to" },
-   { "log",		"L",			rc_file,	&errorlog,
-     NULL,		1,			0,		NULL,
-     "Set a file to log debug info to" },
-   { NULL,		NULL,			rc_end,		NULL,
-     NULL,		0,			0,		NULL,
-     NULL }
+
+
+
+/*============================================================ */
+/*	CONSTANTS */
+/*============================================================ */
+
+#define PLAIN_FILE		0
+#define RAM_FILE		1
+#define ZIPPED_FILE		2
+#define UNLOADED_ZIPPED_FILE	3
+
+#define FILEFLAG_OPENREAD	0x01
+#define FILEFLAG_OPENWRITE	0x02
+#define FILEFLAG_CRC		0x04
+#define FILEFLAG_REVERSE_SEARCH	0x08
+#define FILEFLAG_VERIFY_ONLY	0x10
+#ifdef MESS
+#define FILEFLAG_CAN_BE_ABSOLUTE	0x20
+#define FILEFLAG_OPEN_ZIPS		0x40
+#define FILEFLAG_CREATE_GAME_DIR	0x80
+#define FILEFLAG_MUSTEXIST		0x100
+#endif
+
+#define STATCACHE_SIZE		64
+
+
+
+/*============================================================ */
+/*	TYPE DEFINITIONS */
+/*============================================================ */
+
+struct fake_file_handle
+{
+	FILE *file;
+	UINT8 *data;
+	UINT32 offset;
+	UINT32 length;
+	UINT8 type;
+	UINT32 crc;
 };
 
-static int config_handle_inputfile(struct rc_option *option, const char *arg,
-   int priority)
+
+struct stat_cache_entry
 {
-   if (*(void **)option->dest)
-      osd_fclose(*(void **)option->dest);
-   
-   *(void **)option->dest = osd_fopen(NULL, arg, OSD_FILETYPE_INPUTLOG,
-      option->min);
-   if (*(void **)option->dest == NULL)
-   {
-      fprintf(stderr, "error: couldn't open %s\n", arg);
-      return -1;
-   }
-   
-   option->priority = priority;
-   
-   return 0;
-}
+	struct stat stat_buffer;
+	int result;
+	char *file;
+};
 
 
-/* unix helper functions */
 
-/* helper functions which decompose a path list into a vector of paths */
-void init_search_paths(void)
-{
-	init_rom_path(rompath);
-	init_rom_path(samplepath);
-	init_rom_path(artworkpath);
-}
+/*============================================================ */
+/*	GLOBAL VARIABLES */
+/*============================================================ */
 
-void init_rom_path(char *path)
-{
-	char *token = strtok(path, ":");
-	while ((rompathc < MAXPATHC) && token)
-	{
-		rompathv[rompathc] = token;
-		rompathc++;
-		token = strtok(NULL, ":");
-	}
-}
+static const char **rompathv = NULL;
+static int rompathc = 0;
+static int rompath_needs_decomposition = 1;
 
-/*
- * Search file caseinsensitively
- *
- * Arguments: 
- *	char * path - complete pathname to the desired file. The string will
- *	              be modified during search (and contains the final output).
- *
- * Return TRUE if found, FALSE otherwise.
- */
-static int filesearch(char *path)
-{
-    DIR *dirp;
-    struct dirent *de = NULL;
-    char *ep, *dp, *fp;
+static const char **samplepathv = NULL;
+static int samplepathc = 0;
+static int samplepath_needs_decomposition = 1;
 
-    ep = strrchr(path, '/');
-    if (ep) {
-	*ep = '\0';	/* I guess root directory is not supported */
-	dp = path;
-	fp = ep + 1;
-    } else {
-	dp = "."; /* well, what should be the correct name for "current dir" */
-	fp = path;
-    }
-
-    if (*fp == '\0') {
-	return FALSE;
-    }
-
-    /* jamc: code to perform a upper/lowercase rom search */
-    /* try to open directory */
-    if ((dirp = opendir(dp)) == (DIR *) 0) { 
-	return FALSE;
-    }
-
-    /* search entry and upcasecompare to desired file name */
-    for (de = readdir(dirp); de; de = readdir(dirp))
-	if (!strcasecmp(de->d_name, fp)) break;
-    if (de) strcpy(fp, de->d_name);
-    closedir(dirp);
-    
-    if (ep) *ep = '/';
-
-    if (de) return TRUE;
-    return FALSE;
-}
-
-#define GZIP_BLOCK_SIZE 8192
-
-/* Try to load the normal or gzipped file "name" into FakeFileHandle "f",
-   converting it into a ram-file allowing it to be crc'd.
-   return 1 on success 0 otherwise. */
-static int open_gzip_file (FakeFileHandle *f, char *name)
-{
-    int read;
-    
-#ifdef FILEIO_DEBUG
-    fprintf(stderr_file, "Trying to open: %s\n", name);
-#endif
-
-    if(!filesearch(name))
-       return 0;
-       
-    if((f->file = gzopen(name, "r")) == NULL)
-       return 0;
-    
-    f->data   = malloc(GZIP_BLOCK_SIZE);
-    if (!f->data) goto gzip_error;
-    
-    while ((read = gzread(f->file, f->data+f->length, GZIP_BLOCK_SIZE)) == GZIP_BLOCK_SIZE)
-    {
-        unsigned char *tmp;
-        f->length += GZIP_BLOCK_SIZE;
-        if (!(tmp = realloc(f->data, f->length + GZIP_BLOCK_SIZE)))
-            goto gzip_error;
-        f->data = tmp;
-    }
-    if (read == -1) goto gzip_error;
-    f->length += read;
-    f->crc  = crc32(0L, f->data, f->length);
-    f->type = kRamFile;
-    gzclose(f->file);
-    return 1;
-    
-gzip_error:
-    if (f->data) free(f->data);
-    gzclose(f->file);
-    memset(f,0,sizeof(FakeFileHandle));
-    return 0;
-}
-
-/* Try to load "name" from the zipfile "zipname" into FakeFileHandle "f".
-   return 1 on success 0 otherwise. */
-static int open_zip_file (FakeFileHandle *f, char *zipname, const char *name)
-{
-    const char *my_name;
-    
-#ifdef FILEIO_DEBUG
-    fprintf(stderr_file, "Trying to open: %s, in %s\n", name, zipname);
-#endif
-
-    if(!filesearch(zipname))
-       return 0;
-       
-    if ( (my_name=strrchr(name, '/')) )
-       my_name = my_name + 1;
-    else
-       my_name = name;
-       
-    if(load_zipped_file(zipname, my_name, &f->data, &f->length) == 0)
-    {
-	f->crc  = crc32(0L, f->data, f->length);
-	f->type = kRamFile;
-	f->file = (FILE *)-1;
-	return 1;
-    }
-    
-    memset(f,0,sizeof(FakeFileHandle));
-    return 0;
-}
+static const char **inipathv = NULL;
+static int inipathc = 0;
+static int inipath_needs_decomposition = 1;
 
 #ifdef MESS
-/* Try to load the normal file "name" into FakeFileHandle "f".
-   return 1 on success 0 otherwise. */
-static int open_normal_file (FakeFileHandle *f, char *name, int write)
-{
-#ifdef FILEIO_DEBUG
-    fprintf(stderr_file, "Trying to open: %s\n", name);
+static const char **softwarepathv = NULL;
+static int softwarepathc = 0;
+static int softwarepath_needs_decomposition = 1;
 #endif
 
-    switch(write)
-    {
-       case OSD_FOPEN_READ:
-          if (filesearch(name))
-             f->file = fopen(name, "r");
-          break;
-       case OSD_FOPEN_WRITE:
-          /* try to overwrite the same name with a different case,
-             if we're faking case insensitivity, fake it all the way ;) */
-          filesearch(name);
-          f->file = fopen(name, "w");
-          break;
-       case OSD_FOPEN_RW:
-          if (filesearch(name))
-             f->file = fopen(name, "r+");
-          break;
-       case OSD_FOPEN_RW_CREATE:
-          if (filesearch(name))
-             f->file = fopen(name, "r+");
-          else
-             f->file = fopen(name, "w+");
-          break;
-    }
+static const char *rompath;
+static const char *samplepath;
+static const char *inipath;
+static const char *cfgdir, *nvdir, *hidir, *inpdir, *stadir, *diffdir, *ctrlrdir;
+static const char *memcarddir, *artworkdir, *screenshotdir, *cheatdir;
 
-    if(f->file)
-       return 1;
-    
-    return 0;
-}
+static FILE *errorlog = NULL;
+
+static struct stat_cache_entry *stat_cache[STATCACHE_SIZE];
+static struct stat_cache_entry stat_cache_entry[STATCACHE_SIZE];
+
+#ifdef MESS
+static const char *softwarepath;
+const char *crcdir;
+static char crcfilename[256] = "";
+const char *crcfile = crcfilename;
+static char pcrcfilename[256] = "";
+const char *pcrcfile = pcrcfilename;
 #endif
 
 
-/* osd functions */
+/*============================================================ */
+/*	PROTOTYPES */
+/*============================================================ */
 
-/*
- * check if roms/samples for a game exist at all
- * return 1 on success, otherwise 0
- */
-int osd_faccess(const char *filename, int filetype)
+static int config_handle_inputfile(struct rc_option *option, const char *arg,
+		int priority);
+
+extern unsigned int crc32(unsigned int crc, const UINT8 *buf, unsigned int len);
+
+static int cache_stat(const char *path, struct stat *statbuf);
+static void flush_cache(void);
+
+static void *generic_fopen(int pathc, const char **pathv, const char *gamename, const char *filename, const char *extension, UINT32 crc, UINT32 flags);
+static int get_pathlist_for_filetype(int filetype, const char ***pathlist, const char **extension);
+static int checksum_file(const char *file, UINT8 **p, unsigned int *size, unsigned int *crc);
+
+static int request_decompose_rompath(struct rc_option *option, const char *arg, int priority);
+static int request_decompose_samplepath(struct rc_option *option, const char *arg, int priority);
+static int request_decompose_inipath(struct rc_option *option, const char *arg, int priority);
+#ifdef MESS
+static int request_decompose_softwarepath(struct rc_option *option, const char *arg, int priority);
+#endif
+
+static int expand_directory(struct rc_option *option, const char *arg,
+		int priority);
+
+
+/*============================================================ */
+/*	FILE PATH OPTIONS */
+/*============================================================ */
+
+struct rc_option fileio_opts[] =
 {
-	char name[MAXPATHL];
-	int i;
-	
-	switch (filetype)
+	/* name, shortname, type, dest, deflt, min, max, func, help */
+	{ "File I/O-related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
+#ifndef MESS
+	{ "rompath", "rp", rc_string, &rompath, XMAMEROOT"/roms", 0, 0, request_decompose_rompath, "Search path for rom files" },
+#else
+	{ "biospath", "bp", rc_string, &rompath, XMAMEROOT"/bios", 0, 0, request_decompose_rompath, "Search path for BIOS sets" },
+	{ "softwarepath", "swp", rc_string, &softwarepath, XMAMEROOT"/software", 0, 0, request_decompose_softwarepath,  "Search path for software" },
+	{ "CRC_directory", "crc", rc_string, &crcdir, XMAMEROOT"/crc", 0, 0, NULL, "Directory containing CRC files" },
+#endif
+	{ "samplepath", "sp", rc_string, &samplepath, XMAMEROOT"/samples", 0, 0, request_decompose_samplepath, "Search path for sample files" },
+	{ "inipath", NULL, rc_string, &inipath, XMAMEROOT"/ini", 0, 0, request_decompose_inipath, "Search path for ini files" },
+	{ "cfg_directory", NULL, rc_string, &cfgdir, "$HOME/."NAME"/cfg", 0, 0, expand_directory, "Directory to save configurations" },
+	{ "nvram_directory", NULL, rc_string, &nvdir, "$HOME/."NAME"/nvram", 0, 0, expand_directory, "Directory to save nvram contents" },
+	{ "memcard_directory", NULL, rc_string, &memcarddir, "$HOME/."NAME"/memcard", 0, 0, expand_directory, "Directory to save memory card contents" },
+	{ "input_directory", NULL, rc_string, &inpdir, "$HOME/."NAME"/inp", 0, 0, expand_directory, "Directory to save input device logs" },
+	{ "hiscore_directory", NULL, rc_string, &hidir, XMAMEROOT"/hi", 0, 0, expand_directory, "Directory to save hiscores" },
+	{ "state_directory", NULL, rc_string, &stadir, "$HOME/."NAME"/sta", 0, 0, expand_directory, "Directory to save states" },
+	{ "artwork_directory", NULL, rc_string, &artworkdir, XMAMEROOT"/artwork", 0, 0, expand_directory, "Directory for Artwork (Overlays etc.)" },
+	{ "snapshot_directory", NULL, rc_string, &screenshotdir, XMAMEROOT"/snap", 0, 0, expand_directory, "Directory for screenshots (.png format)" },
+	{ "diff_directory", NULL, rc_string, &diffdir, "$HOME/."NAME"/diff", 0, 0, expand_directory, "Directory for hard drive image difference files" },
+	{ "cheat_file", NULL, rc_string, &cheatfile, XMAMEROOT"/cheat.dat", 0, 0, NULL, "Cheat filename" },
+	{ "hiscore_file", NULL, rc_string, &db_filename, XMAMEROOT"/hiscore.dat", 0, 0, NULL, NULL },
+	{ "history_file", NULL, rc_string, &history_filename, XMAMEROOT"/history.dat", 0, 0, NULL, NULL },
+	{ "mameinfo_file", NULL, rc_string, &mameinfo_filename, XMAMEROOT"/mameinfo.dat", 0, 0, NULL, NULL },
+	{ "ctrlr_directory", NULL, rc_string, &ctrlrdir, XMAMEROOT"/ctrlr", 0, 0, expand_directory, "Directory to save controller definitions" },
+	{ "record", "rec", rc_use_function, &options.record, NULL, 1, 0, config_handle_inputfile, "Set a file to record keypresses into" },
+	{ "playback", "pb", rc_use_function, &options.playback, NULL, 0, 0, config_handle_inputfile, "Set a file to playback keypresses from" },
+	{ "stdout-file", "out", rc_file, &stdout_file, NULL, 1,	0, NULL, "Set a file to redirect stdout to" },
+	{ "stderr-file", "err",	rc_file, &stderr_file, NULL, 1, 0, NULL, "Set a file to redirect stderr to" },
+	{ "log", "L", rc_file, &errorlog, NULL, 1, 0, NULL, "Set a file to log debug info to" },
+	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
+};
+
+
+static int config_handle_inputfile(struct rc_option *option, const char *arg,
+		int priority)
+{
+	if (*(void **)option->dest)
+		osd_fclose(*(void **)option->dest);
+   
+	*(void **)option->dest = osd_fopen(NULL, arg, OSD_FILETYPE_INPUTLOG,
+		option->min);
+	if (*(void **)option->dest == NULL)
 	{
-		case OSD_FILETYPE_ROM:
-		case OSD_FILETYPE_SAMPLE:
-		    for(i=0;i<rompathc;i++)
-		    {
-			/* try filename.zip */
-			snprintf(name, MAXPATHL, "%s/%s.zip", rompathv[i], 
-				filename);
-			if (access(name, F_OK) == 0)
-				return 1;
-			
-			/* try filename dir */
-			snprintf(name, MAXPATHL, "%s/%s",rompathv[i],filename);
-			if (access(name, F_OK) == 0)
-				return 1;
-		    }
-		    break;
-
-		case OSD_FILETYPE_SCREENSHOT:
-		    snprintf(name, MAXPATHL, "%s/%s.png", screenshotdir, 
-			    filename);
-		    if (access(name, F_OK) == 0)
-			    return 1;
-		    break;
+		fprintf(stderr, "error: couldn't open %s\n", arg);
+		return -1;
 	}
-	
+   
+	option->priority = priority;
+   
 	return 0;
 }
 
-/*
- * file handling routines
- *
- * gamename holds the driver name, filename is only used for ROMs and samples.
- * if 'write' is not 0, the file is opened for write. Otherwise it is opened
- * for read.
- */
-void *osd_fopen(const char *gamename, const char *filename, int filetype, 
-     int write)
-{
-	char name[MAXPATHL];
-	FakeFileHandle *f;
-	int i;
-	char *pt;
 
-	f = (FakeFileHandle *)calloc(1, sizeof(FakeFileHandle));
-	if (f == NULL) return f;
-	
+
+/*============================================================ */
+/*	osd_fopen */
+/*============================================================ */
+
+void *osd_fopen(const char *gamename, const char *filename, int filetype, int openforwrite)
+{
+	const char **pathv;
+	const char *extension;
+	int pathc = get_pathlist_for_filetype(filetype, &pathv, &extension);
+
+	/* first verify that we aren't trying to open read-only types as writeables */
 	switch (filetype)
 	{
-#ifdef MESS
-		case OSD_FILETYPE_IMAGE:
-		    /* writable images are only supported as normal files */
-		    if (write)
-		    {
-			char *p = strrchr(filename, '.');
-			if (p && (strcasecmp(p + 1, "zip") == 0 ||
-			    strcasecmp(p + 1, "gz") == 0))
-			{
-			    break;
-			}
-			/* try filename.ext */
-			snprintf(name, MAXPATHL, "%s", filename);
-			if (open_normal_file(f, name, write))
-			    break;
-			for(i=0; i < rompathc; i++)
-			{
-			    /* try <rompath>/filename.ext */
-			    snprintf(name, MAXPATHL, "%s/%s", rompathv[i], filename);
-			    if (open_normal_file(f, name, write))
-				break;
-			    
-			    /* try <rompath>/<systemname>/filename.ext */
-			    snprintf(name, MAXPATHL, "%s/%s/%s", rompathv[i], gamename,
-			        filename);
-			    if (open_normal_file(f, name, write))
-				break;;
-			}
-		        break;
-		    }
-		    /* fall through for non writable images */
-
-		    /* try relative and absolute filenames */
-		    
-		    /* try filename.ext */
-		    snprintf(name, MAXPATHL, "%s", filename);
-		    if (open_gzip_file(f, name))
-		        break;
-		    
-		    /* try filename.ext.gz */
-		    snprintf(name, MAXPATHL, "%s.gz", filename);
-		    if (open_gzip_file(f, name))
-		        break;
-		    
-		    /* try filename.zip */
-		    snprintf(name, MAXPATHL, "%s", filename);
-		    if ( (pt=strrchr(name, '.')) ) *pt = 0;
-		    strncat(name, ".zip", (MAXPATHL - 1) - strlen(name));
-		    if (open_zip_file(f, name, filename))
-		        break;
-		    /* fall through */
-#endif
-		case OSD_FILETYPE_ARTWORK:
-		    if (write)
-		    {
-			logerror("Error trying to open ro image %s in write mode\n", filename);
-			break;
-		    }
-		    for(i = 0; i < rompathc; i++)
-		    {
-		        /* try <rompath>/filename.ext */
-			snprintf(name, MAXPATHL, "%s/%s", rompathv[i], filename);
-			if (open_gzip_file(f, name))
-			    break;
-			
-			/* try <rompath>/filename.ext.gz */
-			snprintf(name, MAXPATHL, "%s/%s.gz", rompathv[i], filename);
-			if (open_gzip_file(f, name))
-			    break;
-			
-		        /* try <rompath>/filename.zip */
-		        snprintf(name, MAXPATHL, "%s/%s", rompathv[i], filename);
-		        if ( (pt=strrchr(name, '.')) ) *pt = 0;
-			strncat(name, ".zip", (MAXPATHL - 1) - strlen(name));
-		        if (open_zip_file(f, name, filename))
-		            break;
-		    }
-		    if(f->file)
-			break;
-
-		    /* fall through */
+		/* read-only cases */
 		case OSD_FILETYPE_ROM:
+		case OSD_FILETYPE_ROM_NOCRC:
 		case OSD_FILETYPE_SAMPLE:
-		    if (write)
-		    {
-			logerror("Error trying to open rom/sample %s in write mode\n", filename);
+		case OSD_FILETYPE_HIGHSCORE_DB:
+		case OSD_FILETYPE_ARTWORK:
+		case OSD_FILETYPE_HISTORY:
+		case OSD_FILETYPE_LANGUAGE:
+		case OSD_FILETYPE_INI:
+			if (openforwrite)
+			{
+				logerror("osd_fopen: type %02x write not supported\n", filetype);
+				return NULL;
+			}
 			break;
-		    }
-		    
-		    for (i = 0; i < rompathc; i++)
-		    {
-			/* try <rompath>/gamename.zip */
-			snprintf(name, MAXPATHL, "%s/%s.zip", rompathv[i], gamename);
-			if (open_zip_file(f, name, filename))
-			    break;
-			
-		        /* try <rompath>/<gamename>/filename.ext */
-			snprintf(name, MAXPATHL, "%s/%s/%s", rompathv[i], gamename,
-			    filename);
-			if (open_gzip_file(f, name))
-			    break;
-			
-			/* try <rompath>/<gamename>/filename.ext.gz */
-			snprintf(name, MAXPATHL, "%s/%s/%s.gz", rompathv[i], gamename,
-			    filename);
-			if (open_gzip_file(f, name))
-			    break;
-			
-			/* really only usefull for mess, but to keep
-			   both the src and the docs clean we try it always */
-		        /* try <rompath>/<gamename>/filename.zip */
-		        snprintf(name, MAXPATHL, "%s/%s/%s", rompathv[i], gamename,
-		            filename);
-		        if ( (pt=strrchr(name, '.')) ) *pt = 0;
-			strncat(name, ".zip", (MAXPATHL - 1) - strlen(name));
-		        if (open_zip_file(f, name, filename))
-		            break;
-		    }
-		    break;
+
+		/* write-only cases */
+		case OSD_FILETYPE_SCREENSHOT:
+			if (!openforwrite)
+			{
+				logerror("osd_fopen: type %02x read not supported\n", filetype);
+				return NULL;
+			}
+			break;
+	}
+
+	/* if we're opening for write, invalidate the cache */
+	if (openforwrite)
+		flush_cache();
+
+	/* now open the file appropriately */
+	switch (filetype)
+	{
+		/* ROM files */
+		case OSD_FILETYPE_ROM:
+			return generic_fopen(pathc, pathv, gamename, filename, extension, 0, FILEFLAG_OPENREAD | FILEFLAG_CRC);
+
+		/* ROM files with no CRC */
+		case OSD_FILETYPE_ROM_NOCRC:
+			return generic_fopen(pathc, pathv, gamename, filename, extension, 0, FILEFLAG_OPENREAD);
+
+		/* disk images */
+		case OSD_FILETYPE_IMAGE:
+			{
+#ifndef MESS
+				int flags = FILEFLAG_OPENREAD;
+#else
+				int flags = FILEFLAG_CAN_BE_ABSOLUTE | FILEFLAG_OPEN_ZIPS;
+				switch(openforwrite) {
+				case OSD_FOPEN_READ:
+					flags |= FILEFLAG_OPENREAD | FILEFLAG_CRC;
+					break;
+
+				case OSD_FOPEN_WRITE:
+					flags |= FILEFLAG_OPENWRITE;
+					break;
+
+				case OSD_FOPEN_RW:
+					flags |= FILEFLAG_OPENREAD | FILEFLAG_OPENWRITE | FILEFLAG_MUSTEXIST;
+					break;
+
+				case OSD_FOPEN_RW_CREATE:
+					flags |= FILEFLAG_OPENREAD | FILEFLAG_OPENWRITE;
+					break;
+				}
+#endif
+				return generic_fopen(pathc, pathv, gamename, filename, extension, 0, flags);
+			}
+
+		/* differencing disk images */
 		case OSD_FILETYPE_IMAGE_DIFF:
-		    snprintf(name, MAXPATHL, "%s/%s.dif", diffdir, filename);
-		    f->file = fopen(name, write ? "w" : "r");
-		    break;
-		case OSD_FILETYPE_CTRLR:
-		    snprintf(name, MAXPATHL, "%s/%s.ini", ctrlrdir, filename);
-		    f->file = fopen(name, write ? "w" : "r");
-		    break;
-		case OSD_FILETYPE_CONFIG:
-		    snprintf(name, MAXPATHL, "%s/.%s/cfg/%s", home_dir, NAME, cfgname);
-		    rc_check_and_create_dir(name);
-		    snprintf(name, MAXPATHL, "%s/.%s/cfg/%s/%s.cfg", home_dir, NAME, cfgname, gamename);
-		    f->file = fopen(name,write ? "w" : "r");
-		    break;
-		case OSD_FILETYPE_STATE:
-		    snprintf(name, MAXPATHL, "%s/.%s/sta/%s-%s.sta", home_dir, NAME, gamename, filename);
-		    f->file = fopen(name,write ? "w" : "r");
-		    break;
+			return generic_fopen(pathc, pathv, gamename, filename, extension, 0, FILEFLAG_OPENREAD | FILEFLAG_OPENWRITE);
+
+		/* samples */
+		case OSD_FILETYPE_SAMPLE:
+			return generic_fopen(pathc, pathv, gamename, filename, extension, 0, FILEFLAG_OPENREAD);
+
+		/* artwork files */
+		case OSD_FILETYPE_ARTWORK:
+			return generic_fopen(pathc, pathv, gamename, filename, extension, 0, FILEFLAG_OPENREAD);
+
+		/* NVRAM files */
 		case OSD_FILETYPE_NVRAM:
 #ifdef MESS
-		    if (filename)
-		    {
-		    	if (write)
-		    	{
-		    		sprintf(name, "%s/.%s/nvram/%s", home_dir, NAME, gamename );
-		    		rc_check_and_create_dir(name);
-		    	}
-		    	snprintf(name, MAXPATHL, "%s/.%s/nvram/%s/%s.nv", home_dir, NAME, gamename, filename );
-		    }
-		    else
-#endif /* MESS */
-		    	snprintf(name, MAXPATHL, "%s/.%s/nvram/%s.nv", home_dir, NAME, gamename);
-		    f->file = fopen(name,write ? "w" : "r");
-		    break;
-		case OSD_FILETYPE_MEMCARD:
-		    snprintf(name, MAXPATHL, "%s/.%s/mem/%s.mem", home_dir, NAME, filename);
-		    f->file = fopen(name,write ? "w" : "r");
-		    break;
-		case OSD_FILETYPE_HIGHSCORE:
-		    if (mame_highscore_enabled())
-		    {
-			snprintf(name, MAXPATHL, "%s/%s.hi", spooldir, gamename);
-			f->file = fopen(name,write ? "w" : "r");
-		    }
-		    break;
-		case OSD_FILETYPE_SCREENSHOT:
-		    /* only for writing */
-		    if (!write) break;
-		    
-		    snprintf(name, MAXPATHL, "%s/%s.png", screenshotdir, filename);
-		    f->file = fopen(name, "w");
-		    break;
-		case OSD_FILETYPE_INPUTLOG:
-		    f->file = fopen(filename,write ? "w" : "r");
-		    break;
-		case OSD_FILETYPE_HIGHSCORE_DB:
-		case OSD_FILETYPE_HISTORY:
-		    /* only for reading */
-		    if (write) break;
-
-		    f->file = fopen (filename, "r");
-		    break;
-		case OSD_FILETYPE_CHEAT:
-		    /* only for reading */
-		    if (write) break;
-#ifdef MESS
-		    snprintf(name, MAXPATHL, "%s/%s", cheatdir, filename);
-		    f->file = fopen (name, "r");
+			return generic_fopen(pathc, pathv, filename ? gamename : NULL, filename ? filename : gamename, extension, 0, openforwrite ? FILEFLAG_OPENWRITE|FILEFLAG_CREATE_GAME_DIR : FILEFLAG_OPENREAD);
 #else
-		    f->file = fopen (filename, "r");
+			return generic_fopen(pathc, pathv, NULL, gamename, extension, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD);
 #endif
-		    break;
-		case OSD_FILETYPE_LANGUAGE:
-		    /* only for reading */
-		    if (write) break;
-		    
-		    snprintf(name, MAXPATHL, "%s.lng", filename);
-		    f->file = fopen (name, "r");
-	}
 
-	if (f->file == NULL)
-	{
-		free(f); 
-		return NULL;
+		/* high score files */
+		case OSD_FILETYPE_HIGHSCORE:
+			if (!mame_highscore_enabled())
+				return NULL;
+			return generic_fopen(pathc, pathv, NULL, gamename, extension, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD);
+
+		/* highscore database */
+		case OSD_FILETYPE_HIGHSCORE_DB:
+			return generic_fopen(pathc, pathv, NULL, filename, extension, 0, FILEFLAG_OPENREAD);
+
+		/* config files */
+		case OSD_FILETYPE_CONFIG:
+			return generic_fopen(pathc, pathv, NULL, gamename, extension, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD);
+
+		/* input logs */
+		case OSD_FILETYPE_INPUTLOG:
+			return generic_fopen(pathc, pathv, NULL, gamename, extension, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD);
+
+		/* save state files */
+		case OSD_FILETYPE_STATE:
+		{
+			char temp[256];
+			sprintf(temp, "%s-%s", gamename, filename);
+			return generic_fopen(pathc, pathv, NULL, temp, extension, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD);
+		}
+
+		/* memory card files */
+		case OSD_FILETYPE_MEMCARD:
+			return generic_fopen(pathc, pathv, NULL, filename, extension, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD);
+
+		/* screenshot files */
+		case OSD_FILETYPE_SCREENSHOT:
+			return generic_fopen(pathc, pathv, NULL, filename, extension, 0, FILEFLAG_OPENWRITE);
+
+		/* history files */
+		case OSD_FILETYPE_HISTORY:
+			return generic_fopen(pathc, pathv, NULL, filename, extension, 0, FILEFLAG_OPENREAD);
+
+		/* cheat file */
+		case OSD_FILETYPE_CHEAT:
+			return generic_fopen(pathc, pathv, NULL, filename, extension, 0, FILEFLAG_OPENREAD | (openforwrite ? FILEFLAG_OPENWRITE : 0));
+
+		/* language file */
+		case OSD_FILETYPE_LANGUAGE:
+			return generic_fopen(pathc, pathv, NULL, filename, extension, 0, FILEFLAG_OPENREAD);
+
+		/* ctrlr files */
+		case OSD_FILETYPE_CTRLR:
+			return generic_fopen(pathc, pathv, gamename, filename, extension, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD);
+
+		/* game specific ini files */
+		case OSD_FILETYPE_INI:
+			return generic_fopen(pathc, pathv, NULL, gamename, extension, 0, FILEFLAG_OPENREAD);
+
+		/* anything else */
+		default:
+			logerror("osd_fopen(): unknown filetype %02x\n", filetype);
+			return NULL;
 	}
-	
-	return f;
+	return NULL;
 }
 
-int osd_fread(void *file,void *buffer,int length)
+
+
+/*============================================================ */
+/*	osd_fclose */
+/*============================================================ */
+
+void osd_fclose(void *file)
 {
-	FakeFileHandle *f = (FakeFileHandle *)file;
+	struct fake_file_handle *f = file;
 
 	/* switch off the file type */
 	switch (f->type)
 	{
-		case kPlainFile:
+		case PLAIN_FILE:
+			fclose (f->file);
+			break;
+
+		case ZIPPED_FILE:
+		case RAM_FILE:
+			if (f->data)
+				free(f->data);
+			break;
+	}
+
+	/* free the file data */
+	free(f);
+}
+
+
+
+/*============================================================ */
+/*	osd_faccess */
+/*============================================================ */
+
+int osd_faccess(const char *filename, int filetype)
+{
+	const char **pathv;
+	const char *extension;
+	int pathc = get_pathlist_for_filetype(filetype, &pathv, &extension);
+	char modified_filename[256];
+	int path_index;
+
+	/* copy the filename and add an extension */
+	strcpy(modified_filename, filename);
+	if (extension)
+	{
+		char *p = strchr(modified_filename, '.');
+		if (p)
+			strcpy(p, extension);
+		else
+		{
+			strcat(modified_filename, ".");
+			strcat(modified_filename, extension);
+		}
+	}
+
+	/* loop over all paths */
+	for (path_index = 0; path_index < pathc; path_index++)
+	{
+		const char *dir_name = pathv[path_index];
+		if (dir_name)
+		{
+			struct stat stat_buffer;
+			char name[256];
+
+			/* first check the raw filename, in case we're looking for a directory */
+			sprintf(name, "%s/%s", dir_name, filename);
+			LOG(("osd_faccess: trying %s\n", name));
+			if (cache_stat(name, &stat_buffer) == 0)
+				return 1;
+
+			/* try again with a .zip extension */
+			sprintf(name, "%s/%s.zip", dir_name, filename);
+			LOG(("osd_faccess: trying %s\n", name));
+			if (cache_stat(name, &stat_buffer) == 0)
+				return 1;
+
+#if SUPPORT_AUTOZIP_UTILITIES
+			/* try again with a .zif extension */
+			sprintf(name, "%s/%s.zif", dir_name, filename);
+			LOG(("osd_faccess: trying %s\n", name));
+			if (cache_stat(name, &stat_buffer) == 0)
+				return 1;
+#endif
+
+			/* does such a directory (or file) exist? */
+			sprintf(name, "%s/%s", dir_name, modified_filename);
+			LOG(("osd_faccess: trying %s\n", name));
+			if (cache_stat(name, &stat_buffer) == 0)
+				return 1;
+
+		}
+	}
+
+	/* no match */
+	return 0;
+}
+
+
+
+/*============================================================ */
+/*	osd_fread */
+/*============================================================ */
+
+int osd_fread(void *file, void *buffer, int length)
+{
+	struct fake_file_handle *f = file;
+
+	/* switch off the file type */
+	switch (f->type)
+	{
+		case PLAIN_FILE:
 			return fread(buffer, 1, length, f->file);
 
-		case kRamFile:
+		case ZIPPED_FILE:
+		case RAM_FILE:
 			if (f->data)
 			{
 				if (f->offset + length > f->length)
@@ -630,109 +518,151 @@ int osd_fread(void *file,void *buffer,int length)
 	return 0;
 }
 
-int osd_fread_swap(void *file,void *buffer,int length)
+
+
+/*============================================================ */
+/*	osd_fwrite */
+/*============================================================ */
+
+int osd_fwrite(void *file, const void *buffer, int length)
 {
-	unsigned char *buf;
-	unsigned char temp;
-	int res, i;
-
-	/* standard read first */
-	res = osd_fread(file, buffer, length);
-
-	/* swap the result */
-	buf = buffer;
-	for (i = 0; i < res; i += 2)
-	{
-		temp = buf[i];
-		buf[i] = buf[i + 1];
-		buf[i + 1] = temp;
-	}
-
-	return res;
-}
-
-int osd_fwrite(void *file,const void *buffer,int length)
-{
-	FakeFileHandle *f = (FakeFileHandle *)file;
-
-	switch (f->type)
-	{
-		case kPlainFile:
-			return fwrite(buffer, 1, length, f->file);
-		default:
-			return -1; /* note dos returns 0, but this is incorrect */
-	}
-}
-
-int osd_fwrite_swap(void *file,const void *buffer,int length)
-{
-	unsigned char *buf;
-	unsigned char temp;
-	int res, i;
-
-	/* swap the data first */
-	buf = (unsigned char *)buffer;
-	for (i = 0; i < length; i += 2)
-	{
-		temp = buf[i];
-		buf[i] = buf[i + 1];
-		buf[i + 1] = temp;
-	}
-
-	/* do the write */
-	res = osd_fwrite(file, buffer, length);
-
-	/* swap the data back */
-	for (i = 0; i < length; i += 2)
-	{
-		temp = buf[i];
-		buf[i] = buf[i + 1];
-		buf[i + 1] = temp;
-	}
-
-	return res;
-}
-
-int osd_fseek(void *file,int offset,int whence)
-{
-	FakeFileHandle *f = (FakeFileHandle *)file;
+	struct fake_file_handle *f = file;
 
 	/* switch off the file type */
 	switch (f->type)
 	{
-		case kPlainFile:
+		case PLAIN_FILE:
+			return fwrite(buffer, 1, length, f->file);
+	}
+
+	return 0;
+}
+
+
+
+/*============================================================ */
+/*	osd_fseek */
+/*============================================================ */
+
+int osd_fseek(void *file, int offset, int whence)
+{
+	struct fake_file_handle *f = file;
+	int err = 0;
+
+	/* switch off the file type */
+	switch (f->type)
+	{
+		case PLAIN_FILE:
 			return fseek(f->file, offset, whence);
 
-		case kRamFile:
+		case ZIPPED_FILE:
+		case RAM_FILE:
 			switch (whence)
 			{
 				case SEEK_SET:
 					f->offset = offset;
-					return 0;
+					break;
 				case SEEK_CUR:
 					f->offset += offset;
-					return 0;
+					break;
 				case SEEK_END:
 					f->offset = f->length + offset;
-					return 0;
+					break;
 			}
 			break;
 	}
 
-	return -1;
+	return err;
 }
 
-int osd_fgetc(void *file)
+
+
+/*============================================================ */
+/*	osd_fchecksum */
+/*============================================================ */
+
+int osd_fchecksum(const char *gamename, const char *filename, unsigned int *length, unsigned int *sum)
 {
-	FakeFileHandle *f = (FakeFileHandle *) file;
+	struct fake_file_handle *f;
+	const char **pathv;
+	const char *extension;
+	int pathc = get_pathlist_for_filetype(OSD_FILETYPE_ROM, &pathv, &extension);
+
+	/* first open the file; we get the CRC for free */
+	f = generic_fopen(pathc, pathv, gamename, filename, NULL, *sum, FILEFLAG_OPENREAD | FILEFLAG_CRC | FILEFLAG_VERIFY_ONLY);
+
+	/* if we didn't succeed return -1 */
+	if (!f)
+		return -1;
+
+	/* close the file and save the length & sum */
+	*sum = f->crc;
+	*length = f->length;
+	osd_fclose(f);
+	return 0;
+}
+
+
+
+/*============================================================ */
+/*	osd_fsize */
+/*============================================================ */
+
+int osd_fsize(void *file)
+{
+	struct fake_file_handle *f = file;
 
 	/* switch off the file type */
 	switch (f->type)
 	{
-		case kPlainFile:
+		case PLAIN_FILE:
+		{
+			int size, offs;
+			offs = ftell(f->file);
+			fseek(f->file, 0, SEEK_END);
+			size = ftell(f->file);
+			fseek(f->file, offs, SEEK_SET);
+			return size;
+		}
+
+		case RAM_FILE:
+		case ZIPPED_FILE:
+			return f->length;
+	}
+
+	return 0;
+}
+
+
+
+/*============================================================ */
+/*	osd_fcrc */
+/*============================================================ */
+
+unsigned int osd_fcrc(void *file)
+{
+	struct fake_file_handle *f = file;
+	return f->crc;
+}
+
+
+
+/*============================================================ */
+/*	osd_fgetc */
+/*============================================================ */
+
+int osd_fgetc(void *file)
+{
+	struct fake_file_handle *f = file;
+
+	/* switch off the file type */
+	switch (f->type)
+	{
+		case PLAIN_FILE:
 			return fgetc(f->file);
 
-		case kRamFile:
+		case RAM_FILE:
+		case ZIPPED_FILE:
 			if (f->offset < f->length)
 				return f->data[f->offset++];
 			return EOF;
@@ -740,17 +670,24 @@ int osd_fgetc(void *file)
 	return EOF;
 }
 
+
+
+/*============================================================ */
+/*	osd_ungetc */
+/*============================================================ */
+
 int osd_ungetc(int c, void *file)
 {
-	FakeFileHandle *f = (FakeFileHandle *) file;
+	struct fake_file_handle *f = file;
 
 	/* switch off the file type */
 	switch (f->type)
 	{
-		case kPlainFile:
+		case PLAIN_FILE:
 			return ungetc(c, f->file);
 
-		case kRamFile:
+		case RAM_FILE:
+		case ZIPPED_FILE:
 			if (f->offset > 0)
 			{
 				f->offset--;
@@ -760,6 +697,12 @@ int osd_ungetc(int c, void *file)
 	}
 	return EOF;
 }
+
+
+
+/*============================================================ */
+/*	osd_fgets */
+/*============================================================ */
 
 char *osd_fgets(char *s, int n, void *file)
 {
@@ -806,137 +749,126 @@ char *osd_fgets(char *s, int n, void *file)
 	return s;
 }
 
+
+
+/*============================================================ */
+/*	osd_feof */
+/*============================================================ */
+
 int osd_feof(void *file)
 {
-	FakeFileHandle *f = (FakeFileHandle *) file;
+	struct fake_file_handle *f = file;
 
 	/* switch off the file type */
 	switch (f->type)
 	{
-		case kPlainFile:
+		case PLAIN_FILE:
 			return feof(f->file);
 
-		case kRamFile:
+		case RAM_FILE:
+		case ZIPPED_FILE:
 			return (f->offset >= f->length);
 	}
 
 	return 1;
 }
 
+
+
+/*============================================================ */
+/*	osd_ftell */
+/*============================================================ */
+
 int osd_ftell(void *file)
 {
-	FakeFileHandle *f = (FakeFileHandle *) file;
+	struct fake_file_handle *f = file;
 
 	/* switch off the file type */
 	switch (f->type)
 	{
-		case kPlainFile:
+		case PLAIN_FILE:
 			return ftell(f->file);
 
-		case kRamFile:
+		case RAM_FILE:
+		case ZIPPED_FILE:
 			return f->offset;
 	}
 
 	return -1L;
 }
 
-void osd_fclose(void *file)
+
+
+/*============================================================ */
+/*	osd_fread_swap */
+/*============================================================ */
+
+int osd_fread_swap(void *file, void *buffer, int length)
 {
-	FakeFileHandle *f = (FakeFileHandle *) file;
+	UINT8 *buf;
+	UINT8 temp;
+	int res, i;
 
-	/* switch off the file type */
-	switch(f->type)
+	/* standard read first */
+	res = osd_fread(file, buffer, length);
+
+	/* swap the result */
+	buf = buffer;
+	for (i = 0; i < res; i += 2)
 	{
-		case kPlainFile:
-			fclose(f->file);
-			break;
-
-		case kRamFile:
-			free(f->data);
-			break;
+		temp = buf[i];
+		buf[i] = buf[i + 1];
+		buf[i + 1] = temp;
 	}
 
-	/* free the file data */
-	free(f);
+	return res;
 }
 
-int osd_fsize(void *file)
-{
-	FakeFileHandle *f = (FakeFileHandle *) file;
 
-	/* switch off the file type */
-	switch(f->type)
+
+/*============================================================ */
+/*	osd_fwrite_swap */
+/*============================================================ */
+
+int osd_fwrite_swap(void *file, const void *buffer, int length)
+{
+	UINT8 *buf;
+	UINT8 temp;
+	int res, i;
+
+	/* swap the data first */
+	buf = (UINT8 *)buffer;
+	for (i = 0; i < length; i += 2)
 	{
-		case kPlainFile:
-		{
-			int size, offs;
-			offs = ftell(f->file);
-			fseek(f->file, 0, SEEK_END);
-			size = ftell(f->file);
-			fseek(f->file, offs, SEEK_SET);
-			return size;
-		}
-
-		case kRamFile:
-			return f->length;
+		temp = buf[i];
+		buf[i] = buf[i + 1];
+		buf[i + 1] = temp;
 	}
-	
-	return 0;
+
+	/* do the write */
+	res = osd_fwrite(file, buffer, length);
+
+	/* swap the data back */
+	for (i = 0; i < length; i += 2)
+	{
+		temp = buf[i];
+		buf[i] = buf[i + 1];
+		buf[i + 1] = temp;
+	}
+
+	return res;
 }
 
-unsigned int osd_fcrc (void *file)
-{
-	FakeFileHandle *f = (FakeFileHandle *)file;
-	return f->crc;
-}
 
-int osd_fchecksum (const char *game, const char *filename, unsigned int *length, unsigned int *sum)
-{
-  char name[MAXPATHL];
-  FakeFileHandle *f;
-  int i;
-  
-  for(i=0;i<rompathc;i++)
-  {
-    snprintf(name, MAXPATHL, "%s/%s.zip",rompathv[i], game);
 
-    if (access(name, R_OK)==0)
-    {
-      if (checksum_zipped_file(name, filename, length, sum) == 0)
-        return 0;
-    }
-  }
-
-  f = osd_fopen(game, filename, OSD_FILETYPE_ROM, 0);
-  if (f==NULL) return -1;
-  *sum    = osd_fcrc(f);
-  *length = osd_fsize(f);
-  osd_fclose(f);
-  return 0;
-}
-
-/* called while loading ROMs. It is called a last time with name == 0 to signal */
-/* that the ROM loading process is finished. */
-/* return non-zero to abort loading */
-int osd_display_loading_rom_message(const char *name,int current,int total)
-{
-	static int count = 0;
-	
-	if (name)
-		fprintf(stderr_file,"loading rom %d: %-12s\n", count, name);
-	else
-		fprintf(stderr_file,"done\n");
-	
-	fflush(stderr_file);
-	count++;
-
-	return 0;
-}
+/*============================================================ */
+/*	logerror */
+/*============================================================ */
 
 void logerror(const char *text, ...)
 {
 	va_list arg;
-	
+
 	if (errorlog)
 	{
 		va_start(arg, text);
@@ -946,60 +878,74 @@ void logerror(const char *text, ...)
 	}
 }
 
-char *osd_basename (char *filename)
+
+
+/*============================================================ */
+/*	osd_basename */
+/*============================================================ */
+
+char *osd_basename(char *filename)
 {
 	char *c;
 
+	/* NULL begets NULL */
 	if (!filename)
 		return NULL;
 
-	c = filename + strlen(filename);
-
-	while (c != filename)
-	{
-		c--;
+	/* start at the end and return when we hit a slash or colon */
+	for (c = filename + strlen(filename) - 1; c >= filename; c--)
 		if (*c == '\\' || *c == '/' || *c == ':')
-			return (c+1);
-	}
+			return c + 1;
 
+	/* otherwise, return the whole thing */
 	return filename;
 }
 
-char *osd_dirname (const char *filename)
+
+
+/*============================================================ */
+/*	osd_dirname */
+/*============================================================ */
+
+char *osd_dirname(const char *filename)
 {
-        char *dirname;
-        char *c;
-        int found = 0;
+	char *dirname;
+	char *c;
 
-        if (!filename)
-                return NULL;
+	/* NULL begets NULL */
+	if (!filename)
+		return NULL;
 
-        if ( !( dirname = malloc(strlen(filename)+1) ) )
-        {
-                fprintf(stderr, "error: malloc failed in osd_dirname\n");
-                return 0;
-        }
+	/* allocate space for it */
+	dirname = malloc(strlen(filename) + 1);
+	if (!dirname)
+	{
+		fprintf(stderr, "error: malloc failed in osd_dirname\n");
+		return NULL;
+	}
 
-        strcpy (dirname, filename);
+	/* copy in the name */
+	strcpy(dirname, filename);
 
-        c = dirname + strlen(dirname);
-        while (c != dirname)
-        {
-                --c;
-                if (*c == '\\' || *c == '/' || *c == ':')
-                {
-                        *(c+1)=0;
-                        found = 1;
-                        break;
-                }
-        }
+	/* search backward for a slash or a colon */
+	for (c = dirname + strlen(dirname) - 1; c >= dirname; c--)
+		if (*c == '\\' || *c == '/' || *c == ':')
+		{
+			/* found it: NULL terminate and return */
+			*(c + 1) = 0;
+			return dirname;
+		}
 
-        /* did we find a path seperator? */
-        if (!found)
-                dirname[0]=0;
-
-        return dirname;
+	/* otherwise, return an empty string */
+	dirname[0] = 0;
+	return dirname;
 }
+
+
+
+/*============================================================ */
+/*	osd_strip_extension */
+/*============================================================ */
 
 char *osd_strip_extension(const char *filename)
 {
@@ -1039,7 +985,891 @@ char *osd_strip_extension(const char *filename)
 	return newname;
 }
 
+
+
+/*============================================================ */
+/*	osd_display_loading_rom_message */
+/*============================================================ */
+
+/* called while loading ROMs. It is called a last time with name == 0 to signal */
+/* that the ROM loading process is finished. */
+/* return non-zero to abort loading */
+int osd_display_loading_rom_message(const char *name, int current, int total)
+{
+	static int count = 0;
+	
+	if (name)
+		fprintf(stderr_file,"loading rom %d: %-12s\n", count, name);
+	else
+		fprintf(stderr_file,"done\n");
+	
+	fflush(stderr_file);
+	count++;
+
+	return 0;
+}
+
+
+
+/*============================================================ */
+/*	cache_stat */
+/*============================================================ */
+
+static int cache_stat(const char *path, struct stat *statbuf)
+{
+	struct stat_cache_entry *entry;
+	int i;
+
+	/* if not initialized yet, do it */
+	if (!stat_cache[0])
+		for (i = 0; i < STATCACHE_SIZE; i++)
+			stat_cache[i] = &stat_cache_entry[i];
+
+	/* search in the cache for a matching filename */
+	for (i = 0; i < STATCACHE_SIZE; i++)
+		if (stat_cache[i]->file && strcmp(stat_cache[i]->file, path) == 0)
+		{
+			/* move this entry to the head of the list */
+			entry = stat_cache[i];
+			if (i != 0)
+				memmove(&stat_cache[1], &stat_cache[0], i * sizeof(stat_cache[0]));
+			stat_cache[0] = entry;
+
+			/* return the cached result */
+			if (entry->result == 0)
+				*statbuf = entry->stat_buffer;
+			return entry->result;
+		}
+
+	/* kill off the oldest entry */
+	entry = stat_cache[STATCACHE_SIZE - 1];
+	free(entry->file);
+
+	/* move everyone else up */
+	memmove(&stat_cache[1], &stat_cache[0], (STATCACHE_SIZE - 1) * sizeof(stat_cache[0]));
+
+	/* set the first entry */
+	stat_cache[0] = entry;
+
+	/* file */
+	entry->file = malloc(strlen(path) + 1);
+	if (entry->file)
+		strcpy(entry->file, path);
+
+	/* result and stat */
+	entry->result = stat(path, &entry->stat_buffer);
+	if (entry->result == 0)
+		*statbuf = entry->stat_buffer;
+	return entry->result;
+}
+
+
+
+/*============================================================ */
+/*	flush_cache */
+/*============================================================ */
+
+static void flush_cache(void)
+{
+	int i;
+
+	/* if not initialized yet, do it */
+	if (!stat_cache[0])
+		for (i = 0; i < STATCACHE_SIZE; i++)
+			stat_cache[i] = &stat_cache_entry[i];
+
+	/* search in the cache for a matching filename */
+	for (i = 0; i < STATCACHE_SIZE; i++)
+		if (stat_cache[i]->file)
+		{
+			free(stat_cache[i]->file);
+			stat_cache[i]->file = NULL;
+		}
+}
+
+
+/*============================================================ */
+/*	copy_and_expand_variables */
+/*============================================================ */
+
+static char *copy_and_expand_variables(const char *path, int len)
+{
+	int length = 0;
+	char *var_name;
+	const char *src;
+	char *dst;
+	char *result;
+
+	if (len < 0)
+		len = strlen(path);
+	var_name = malloc(len+1);
+	if (!var_name)
+		goto out_of_memory;
+	src = path;
+	while (src < path+len)
+	{
+		if (*src++ == '$')
+		{
+			char *dst_var = var_name;
+			const char *var_val;
+			while (src < path+len)
+			{
+				char c = *src;
+				if (c != '_' && c != '-' && (c < 'a' || c > 'z') && (c < 'A' || c > 'Z') && (c < '0' || c > '9'))
+					break;
+				*dst_var++ = c;
+				src++;
+			}
+			*dst_var = 0;
+			var_val = getenv(var_name);
+			if (var_val)
+				length += strlen(var_val);
+		}
+		else
+			length++;
+	}
+
+	result = malloc(length+1);
+	if (!result)
+		goto out_of_memory;
+
+	src = path;
+	dst = result;
+	while (src < path+len)
+	{
+		char c = *src++;
+		if (c == '$')
+		{
+			char *dst_var = var_name;
+			const char *var_val;
+			while (src < path+len)
+			{
+				c = *src;
+				if (c != '_' && c != '-' && (c < 'a' || c > 'z') && (c < 'A' || c > 'Z') && (c < '0' || c > '9'))
+					break;
+				*dst_var++ = c;
+				src++;
+			}
+			*dst_var = 0;
+			var_val = getenv(var_name);
+			if (var_val)
+			{
+				strcpy(dst, var_val);
+				dst += strlen(var_val);
+			}
+		}
+		else
+			*dst++ = c;
+	}
+	*dst = 0;
+	free(var_name);
+	return result;
+
+
+out_of_memory:
+	fprintf(stderr, "Out of memory in variable expansion!\n");
+	exit(1);
+}
+
+/*============================================================ */
+/*	decompose_path */
+/*============================================================ */
+
+static void decompose_path(const char *pathlist, const char *extrapath, int *pathcount, const char ***patharray)
+{
+	char **pathv = NULL;
+	const char *token;
+
+	/* log the basic info */
+	LOG(("decomposing path\n"));
+	if (extrapath)
+		LOG(("  extrapath = %s\n", extrapath));
+	LOG(("  pathlist = %s\n", pathlist));
+
+	/* free any existing paths */
+	if (*pathcount != 0)
+	{
+		int path_index;
+
+		for (path_index = 0; path_index < *pathcount; path_index++)
+			free((void *)(*patharray)[path_index]);
+		free(*patharray);
+		*pathcount = 0;
+	}
+
+	/* by default, allocate one entry of the pathlist to start */
+	pathv = malloc(sizeof(char *));
+	if (!pathv)
+		goto out_of_memory;
+
+	/* if we have an extra path, add that to the list first */
+	if (extrapath)
+	{
+		pathv[*pathcount] = copy_and_expand_variables(extrapath, -1);
+		*pathcount += 1;
+	}
+
+	/* look for separators */
+	token = strchr(pathlist, ':');
+	if (!token) token = pathlist + strlen(pathlist);
+
+	/* loop until done */
+	while (1)
+	{
+		/* allocate space for the new pointer */
+		pathv = realloc(pathv, (*pathcount + 1) * sizeof(char *));
+		if (!pathv)
+			goto out_of_memory;
+
+		/* copy the path in */
+		pathv[*pathcount] = copy_and_expand_variables(pathlist, token-pathlist);
+		*pathcount += 1;
+
+		/* if this was the end, break */
+		if (*token == 0)
+			break;
+		pathlist = token + 1;
+
+		/* find the next separator */
+		token = strchr(pathlist, ':');
+		if (!token) token = pathlist + strlen(pathlist);
+	}
+
+	*patharray = (const char **)pathv;
+	return;
+
+out_of_memory:
+	fprintf(stderr, "Out of memory!\n");
+	exit(1);
+}
+
+
+
+/*============================================================ */
+/*	request_decompose_rompath */
+/*============================================================ */
+
+static int request_decompose_rompath(struct rc_option *option, const char *arg, int priority)
+{
+	rompath_needs_decomposition = 1;
+	option->priority = priority;
+	return 0;
+}
+
+
+/*============================================================ */
+/*	request_decompose_samplepath */
+/*============================================================ */
+
+static int request_decompose_samplepath(struct rc_option *option, const char *arg, int priority)
+{
+	samplepath_needs_decomposition = 1;
+	option->priority = priority;
+	return 0;
+}
+
+
+/*============================================================ */
+/*	request_decompose_inipath */
+/*============================================================ */
+
+static int request_decompose_inipath(struct rc_option *option, const char *arg, int priority)
+{
+	inipath_needs_decomposition = 1;
+	option->priority = priority;
+	return 0;
+}
+
+
 #ifdef MESS
+/*============================================================ */
+/*	request_decompose_softwarepath */
+/*============================================================ */
+
+static int request_decompose_softwarepath(struct rc_option *option, const char *arg, int priority)
+{
+	softwarepath_needs_decomposition = 1;
+	option->priority = priority;
+	return 0;
+}
+#endif
+
+
+/*============================================================ */
+/*	expand_directory */
+/*============================================================ */
+
+static int expand_directory(struct rc_option *option,
+		const char *arg, int priority)
+{
+	if (strchr(arg, '$'))
+	{
+		char *expanded = copy_and_expand_variables(arg, strlen(arg));
+		if (rc_set_option2(fileio_opts, option->name, expanded, priority))
+		{
+			free(expanded);
+			return -1;
+		}
+
+		free(expanded);
+	}
+
+	option->priority = priority;
+	return 0;
+}
+
+
+/*============================================================ */
+/*	decompose_paths_if_needed */
+/*============================================================ */
+
+static void decompose_paths_if_needed(void)
+{
+	if (rompath_needs_decomposition)
+	{
+		decompose_path(rompath, rompath_extra, &rompathc, &rompathv);
+		rompath_needs_decomposition = 0;
+	}
+
+	if (samplepath_needs_decomposition)
+	{
+		decompose_path(samplepath, NULL, &samplepathc, &samplepathv);
+		samplepath_needs_decomposition = 0;
+	}
+
+	if (inipath_needs_decomposition)
+	{
+		decompose_path(inipath, NULL, &inipathc, &inipathv);
+		inipath_needs_decomposition = 0;
+	}
+
+#ifdef MESS
+	if (softwarepath_needs_decomposition)
+	{
+		decompose_path(softwarepath, NULL, &softwarepathc, &softwarepathv);
+		softwarepath_needs_decomposition = 0;
+	}
+#endif
+}
+
+
+
+/*============================================================ */
+/*	compose_path */
+/*============================================================ */
+
+INLINE void compose_path(char *output, const char *path, const char *gamename, const char *filename, const char *extension)
+{
+	char *filename_base = output;
+	*output = 0;
+
+	/* if there's a path, add that with a trailing '/' */
+	if (path)
+	{
+		strcat(output, path);
+		if (gamename || filename)
+		{
+			strcat(output, "/");
+			filename_base = &output[strlen(output)];
+		}
+	}
+
+	/* if there's a gamename, add that; only add a '/' if there is a filename as well */
+	if (gamename)
+	{
+		strcat(output, gamename);
+		if (filename)
+		{
+			strcat(output, "/");
+			filename_base = &output[strlen(output)];
+		}
+	}
+
+	/* if there's a filename, add that */
+	if (filename)
+		strcat(output, filename);
+
+	/* if there's no extension in the filename, add the extension */
+	if (extension && !strchr(filename_base, '.'))
+	{
+		strcat(output, ".");
+		strcat(output, extension);
+	}
+}
+
+
+
+/*============================================================ */
+/*	get_pathlist_for_filetype */
+/*============================================================ */
+
+static int get_pathlist_for_filetype(int filetype, const char ***pathlist, const char **extension)
+{
+	static const char *null_pathv = NULL;
+
+	/* update path info */
+	decompose_paths_if_needed();
+
+	/* now open the file appropriately */
+	switch (filetype)
+	{
+		/* ROM files and drive images */
+		case OSD_FILETYPE_ROM:
+		case OSD_FILETYPE_ROM_NOCRC:
+			*pathlist = (const char **)rompathv;
+			*extension = NULL;
+			return rompathc;
+
+		case OSD_FILETYPE_IMAGE:
+#ifdef MESS
+			*pathlist = (const char **)softwarepathv;
+			*extension = NULL;
+#else
+			*pathlist = (const char **)rompathv;
+			*extension = "chd";
+#endif
+			return rompathc;
+
+		/* differencing drive images */
+		case OSD_FILETYPE_IMAGE_DIFF:
+			*pathlist = &diffdir;
+			*extension = "dif";
+			return 1;
+
+		/* samples */
+		case OSD_FILETYPE_SAMPLE:
+			*pathlist = (const char **)samplepathv;
+			*extension = "wav";
+			return samplepathc;
+
+		/* artwork files */
+		case OSD_FILETYPE_ARTWORK:
+			*pathlist = &artworkdir;
+			*extension = "png";
+			return 1;
+
+		/* NVRAM files */
+		case OSD_FILETYPE_NVRAM:
+			*pathlist = &nvdir;
+			*extension = "nv";
+			return 1;
+
+		/* high score files */
+		case OSD_FILETYPE_HIGHSCORE:
+			*pathlist = &hidir;
+			*extension = "hi";
+			return 1;
+
+		/* highscore database/history files */
+		case OSD_FILETYPE_HIGHSCORE_DB:
+		case OSD_FILETYPE_HISTORY:
+			*pathlist = &null_pathv;
+			*extension = NULL;
+			return 1;
+
+		/* language files */
+		case OSD_FILETYPE_LANGUAGE:
+			*pathlist = &null_pathv;
+			*extension = "lng";
+			return 1;
+
+		/* config files */
+		case OSD_FILETYPE_CONFIG:
+			*pathlist = &cfgdir;
+			*extension = "cfg";
+			return 1;
+
+		/* input logs */
+		case OSD_FILETYPE_INPUTLOG:
+			*pathlist = &inpdir;
+			*extension = "inp";
+			return 1;
+
+		/* save state files */
+		case OSD_FILETYPE_STATE:
+			*pathlist = &stadir;
+			*extension = "sta";
+			return 1;
+
+		/* memory card files */
+		case OSD_FILETYPE_MEMCARD:
+			*pathlist = &memcarddir;
+			*extension = "mem";
+			return 1;
+
+		/* screenshot files */
+		case OSD_FILETYPE_SCREENSHOT:
+			*pathlist = &screenshotdir;
+			*extension = "png";
+			return 1;
+
+		/* cheat file */
+		case OSD_FILETYPE_CHEAT:
+			*pathlist = &cheatdir;
+			*extension = NULL;
+			return 1;
+
+		/* config files */
+		case OSD_FILETYPE_CTRLR:
+			*pathlist = &ctrlrdir;
+			*extension = "ini";
+			return 1;
+
+		/* game specific ini files */
+		case OSD_FILETYPE_INI:
+			*pathlist = (const char **)inipathv;
+			*extension = "ini";
+			return inipathc;
+
+		/* anything else */
+		default:
+			logerror("osd_fopen(): unknown filetype %02x\n", filetype);
+			break;
+	}
+
+	/* default to just looking the MAME directory */
+	*pathlist = &null_pathv;
+	*extension = NULL;
+	return 1;
+}
+
+
+
+#ifdef MESS
+/*============================================================ */
+/*	stuff for processing absolute file paths (only applicable */
+/*  in MESS) */
+/*============================================================ */
+static int is_zipfile(const char *filename)
+{
+	const char *extension;
+	extension = strrchr(filename, '.');
+	return extension && !stricmp(extension, ".zip");
+}
+
+static int is_path_separator(char c)
+{
+	return (c == '/') || (c == '\\');
+}
+
+static int is_absolute_path(const char *filename)
+{
+	if ((filename[0] == '.') || (is_path_separator(filename[0])))
+		return 1;
+#ifndef UNDER_CE
+	if (filename[0] && (filename[1] == ':'))
+		return 1;
+#endif
+	return 0;
+}
+#endif
+
+/*============================================================ */
+/*	generic_fopen */
+/*============================================================ */
+
+static void *generic_fopen(int pathc, const char **pathv, const char *gamename, const char *filename, const char *extension, UINT32 crc, UINT32 flags)
+{
+	static const char *access_modes[] = { "rb", "rb", "wb", "r+b" };
+	int path_index, path_start, path_stop, path_inc;
+	struct fake_file_handle file, *newfile;
+	struct stat stat_buffer;
+	char tempname[256];
+
+	LOG(("generic_fopen(%d, %s, %s, %s, %X)\n", pathc, gamename, filename, extension, flags));
+
+	/* reset the file handle */
+	memset(&file, 0, sizeof(file));
+
+	/* check for incompatible flags */
+	if ((flags & FILEFLAG_OPENWRITE) && (flags & FILEFLAG_CRC))
+		fprintf(stderr, "Can't use CRC option with WRITE option in generic_fopen!\n");
+
+	/* determine start/stop based on reverse search flag */
+	if (!(flags & FILEFLAG_REVERSE_SEARCH))
+	{
+		path_start = 0;
+		path_stop = pathc;
+		path_inc = 1;
+	}
+	else
+	{
+		path_start = pathc - 1;
+		path_stop = -1;
+		path_inc = -1;
+	}
+
+#ifdef MESS
+	if ((flags & FILEFLAG_CAN_BE_ABSOLUTE) && is_absolute_path(filename))
+	{
+		static const char *dummypath = NULL;
+		path_start = 0;
+		path_stop = 1;
+		pathv = &dummypath;
+		gamename = NULL;
+	}
+#endif
+
+	/* loop over paths */
+	for (path_index = path_start; path_index != path_stop; path_index += path_inc)
+	{
+		const char *dir_name = pathv[path_index];
+		char name[1024];
+
+		/* ----------------- STEP 1: OPEN THE FILE RAW -------------------- */
+
+		/* first look for path/gamename as a directory */
+		compose_path(name, dir_name, gamename, NULL, NULL);
+		LOG(("Trying %s\n", name));
+
+#ifdef MESS
+		if ((flags & FILEFLAG_CREATE_GAME_DIR) && *name && cache_stat(name, &stat_buffer))
+		{
+			osd_mkdir(name);
+			flush_cache();
+		}
+#endif
+
+		/* if the directory exists, proceed */
+		if (*name == 0 || (cache_stat(name, &stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR)))
+		{
+			/* now look for path/gamename/filename.ext */
+			compose_path(name, dir_name, gamename, filename, extension);
+
+			/* if we need a CRC, load it into RAM and compute it along the way */
+#ifdef MESS
+			if ((flags & FILEFLAG_CRC) && !((flags & FILEFLAG_OPEN_ZIPS) && is_zipfile(name)))
+#else
+			if (flags & FILEFLAG_CRC)
+#endif
+			{
+				if (checksum_file(name, &file.data, &file.length, &file.crc) == 0)
+				{
+					file.type = RAM_FILE;
+					break;
+				}
+			}
+#ifdef MESS
+			else if ((flags & FILEFLAG_OPEN_ZIPS) && is_zipfile(name))
+			{
+				/* a bare zip file was selected; so all we can do here is tranform */
+				/* the name to a full zip name (i.e. a name with a zip path at the end) */
+				/* */
+				/* if this works, the file will be opened in step 5 */
+				if ((flags & FILEFLAG_OPENWRITE) == 0)
+				{
+					ZIP *z = NULL;
+					struct zipent *ent = NULL;
+					const char *first_entry_name;
+					extern char *renamed_image;
+
+					if (((z = openzip(name)) != NULL) && ((ent = readzip(z)) != NULL))
+					{
+						first_entry_name = ent->name;
+
+						/* if the first entry name has a './' in the front of it, remove all occurances */
+						while((first_entry_name[0] == '.') && (first_entry_name[1] == '/'))
+							first_entry_name += 2;
+
+						strcat(name, "/");
+						strcat(name, first_entry_name);
+						renamed_image = strdup(name);
+						LOG(("osd_fopen: opened a raw zip file; renaming as '%s'\n", name));
+						goto step5;
+					}
+					if (z)
+						closezip(z);
+				}
+			}
+			else if ((flags & FILEFLAG_MUSTEXIST) && (cache_stat(name, &stat_buffer) != 0))
+			{
+				/* if FILEFLAG_MUSTEXIST is set and the file isn't there, don't open it */
+			}
+#endif
+			/* otherwise, just open it straight */
+			else
+			{
+				file.type = PLAIN_FILE;
+				file.file = fopen(name, access_modes[flags & 3]);
+				if (file.file == NULL && (flags & 3) == 3)
+					file.file = fopen(name, "w+b");
+				if (file.file != NULL)
+					break;
+			}
+		}
+
+		/* ----------------- STEP 2: OPEN THE FILE IN A ZIP -------------------- */
+
+		/* now look for it within a ZIP file */
+		if (!(flags & FILEFLAG_OPENWRITE))
+		{
+			/* first look for path/gamename.zip */
+			compose_path(name, dir_name, gamename, NULL, "zip");
+			LOG(("Trying %s file\n", name));
+
+			/* if the ZIP file exists, proceed */
+			if (cache_stat(name, &stat_buffer) == 0 && !(stat_buffer.st_mode & S_IFDIR))
+			{
+				/* if the file was able to be extracted from the ZIP, continue */
+				compose_path(tempname, NULL, NULL, filename, extension);
+
+				/* verify-only case */
+				if (flags & FILEFLAG_VERIFY_ONLY)
+				{
+					file.crc = crc;
+					if (checksum_zipped_file(name, tempname, &file.length, &file.crc) == 0)
+					{
+						file.type = UNLOADED_ZIPPED_FILE;
+						break;
+					}
+				}
+
+				/* full load case */
+				else
+				{
+					if (load_zipped_file(name, tempname, &file.data, &file.length) == 0)
+					{
+						LOG(("Using (osd_fopen) zip file for %s\n", filename));
+						file.type = ZIPPED_FILE;
+						file.crc = crc32(0L, file.data, file.length);
+						break;
+					}
+				}
+			}
+		}
+
+#ifdef MESS
+		/* ----------------- STEP 3: CHECK TO SEE IF THE FILE IS IN A ZIP -------------------- */
+		if ((flags & FILEFLAG_OPEN_ZIPS) && !(flags & FILEFLAG_OPENWRITE))
+		{
+			int success;
+			char *s;
+
+			compose_path(name, dir_name, gamename, filename, extension);
+step5:
+			s = name + strlen(name);
+			success = 0;
+
+			while(s >= name)
+			{
+				if (is_path_separator(*s))
+				{
+					*s = '\0';
+					if (is_zipfile(name) && (cache_stat(name, &stat_buffer) == 0))
+					{
+						/* we have something */
+						if (load_zipped_file(name, s + 1, &file.data, &file.length) == 0)
+						{
+							LOG(("Using (osd_fopen) zip file for %s\n", name));
+							file.type = ZIPPED_FILE;
+							file.crc = crc32(0L, file.data, file.length);
+							success = 1;
+							break;
+						}
+						*s = '/';
+					}
+					
+				}
+				s--;
+			}
+			if (success)
+				break;
+		}
+#endif
+	}
+
+	/* if we didn't succeed, just return NULL */
+	if (path_index == path_stop)
+		return NULL;
+
+	/* otherwise, duplicate the file */
+	newfile = malloc(sizeof(file));
+	if (newfile)
+		*newfile = file;
+
+	return newfile;
+}
+
+
+
+/*============================================================ */
+/*	checksum_file */
+/*============================================================ */
+
+static int checksum_file(const char *file, UINT8 **p, unsigned int *size, unsigned int *crc)
+{
+	UINT8 *data;
+	int length;
+	FILE *f;
+
+	/* open the file */
+	f = fopen(file, "rb");
+	if (!f)
+		return -1;
+
+	/* determine length of file */
+	if (fseek(f, 0L, SEEK_END) != 0)
+	{
+		fclose(f);
+		return -1;
+	}
+
+	length = ftell(f);
+	if (length == -1L)
+	{
+		fclose(f);
+		return -1;
+	}
+
+	/* allocate space for entire file */
+	data = malloc(length);
+	if (!data)
+	{
+		fclose(f);
+		return -1;
+	}
+
+	/* read entire file into memory */
+	if (fseek(f, 0L, SEEK_SET) != 0)
+	{
+		free(data);
+		fclose(f);
+		return -1;
+	}
+
+	if (fread(data, sizeof (UINT8), length, f) != length)
+	{
+		free(data);
+		fclose(f);
+		return -1;
+	}
+
+	/* compute the CRC */
+	*size = length;
+	*crc = crc32(0L, data, length);
+
+	/* if the caller wants the data, give it away, otherwise free it */
+	if (p)
+		*p = data;
+	else
+		free(data);
+
+	/* close the file */
+	fclose(f);
+	return 0;
+}
+
+#ifdef MESS
+void build_crc_database_filename(int game_index)
+{
+	/* Build the CRC database filename */
+	sprintf(crcfilename, "%s/%s.crc", crcdir, drivers[game_index]->name);
+	if (drivers[game_index]->clone_of->name)
+		sprintf (pcrcfilename, "%s/%s.crc", crcdir, drivers[game_index]->clone_of->name);
+	else
+		pcrcfilename[0] = 0;
+}
+
 int osd_select_file(int sel, char *filename)
 {
 	return 0;

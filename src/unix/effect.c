@@ -89,9 +89,9 @@
 #define MEAN16(P,Q) ( RMASK16((RMASK16(P)+RMASK16(Q))/2) | GMASK16((GMASK16(P)+GMASK16(Q))/2) | BMASK16((BMASK16(P)+BMASK16(Q))/2) )
 #define MEAN32(P,Q) ( RMASK32((RMASK32(P)+RMASK32(Q))/2) | GMASK32((GMASK32(P)+GMASK32(Q))/2) | BMASK32((BMASK32(P)+BMASK32(Q))/2) )
 
-#ifdef USE_XV
-#define XV_YUY2 0x32595559
-#define XV_YV12 0x32315659
+#ifdef USE_HWSCALE
+#define FOURCC_YUY2 0x32595559
+#define FOURCC_YV12 0x32315659
 #endif
 
 /* called from config.c to set scale parameters */
@@ -138,9 +138,9 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
 		int i,rddepth;
 
 		switch(dst_depth) {
-#ifdef USE_XV
-			case XV_YUY2:
-			case XV_YV12:
+#ifdef USE_HWSCALE
+			case FOURCC_YUY2:
+			case FOURCC_YV12:
 				rddepth=16;
 				break;
 #endif
@@ -204,8 +204,8 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
 						break;
 				}
 				break;
-#ifdef USE_XV
-			case XV_YUY2:
+#ifdef USE_HWSCALE
+			case FOURCC_YUY2:
 				switch(src_depth) {
 					case 16:
 						effect_scale2x_func = effect_scale2x_16_YUY2;
@@ -320,7 +320,7 @@ void effect_scale2x_16_16_direct
 	}
 }
 
-#ifdef USE_XV
+#ifdef USE_HWSCALE
 #define RMASK 0xff0000
 #define GMASK 0xff00
 #define BMASK 0xff
@@ -329,13 +329,13 @@ void effect_scale2x_16_YUY2
 		const void *src0, const void *src1, const void *src2,
 		unsigned count, const void *lookup)
 {
-	unsigned char *u8dst0 = (unsigned char *)dst0;
-	unsigned char *u8dst1 = (unsigned char *)dst1;
+	unsigned int *u32dst0 = (unsigned int *)dst0;
+	unsigned int *u32dst1 = (unsigned int *)dst1;
 	UINT16 *u16src0 = (UINT16 *)src0;
 	UINT16 *u16src1 = (UINT16 *)src1;
 	UINT16 *u16src2 = (UINT16 *)src2;
 	UINT32 *u32lookup = (UINT32 *)lookup;
-	INT32 y,u,v;
+	INT32 y,y2,uv1,uv2;
 	UINT32 p1,p2,p3,p4;
 	while (count) {
 
@@ -359,23 +359,20 @@ void effect_scale2x_16_YUY2
 		++u16src1;
 		++u16src2;
 
-		y=p1>>24;
-		*u8dst0++=y;
-		u=((p1>>16)&255) + ((p2>>16)&255);
-		*u8dst0++=u/2;
-		y=p2>>24;
-		*u8dst0++=y;
-		v=(p1&255) + (p2&255);
-		*u8dst0++=v/2;
+		y=p1&0x000000ff;
+		uv1=(p1&0xff00ff00)>>1;
+		y2=p2&0x00ff0000;
+		uv2=(p2&0xff00ff00)>>1;
+		uv1=(uv1+uv2)&0xff00ff00;
+		*u32dst0++=y|y2|uv1;
 
-		y=p3>>24;
-		*u8dst1++=y;
-		u=((p3>>16)&255) + ((p4>>16)&255);
-		*u8dst1++=u/2;
-		y=p4>>24;
-		*u8dst1++=y;
-		v=(p3&255) + (p4&255);
-		*u8dst1++=v/2;
+		y=p3&0x000000ff;
+		uv1=(p3&0xff00ff00)>>1;
+		y2=p4&0x00ff0000;
+		uv2=(p4&0xff00ff00)>>1;
+		uv1=(uv1+uv2)&0xff00ff00;
+		*u32dst1++=y|y2|uv1;		y=p1>>24;
+
 		--count;
 	}
 }
@@ -390,8 +387,8 @@ void effect_scale2x_32_YUY2_direct
 	UINT32 *u32src0 = (UINT32 *)src0;
 	UINT32 *u32src1 = (UINT32 *)src1;
 	UINT32 *u32src2 = (UINT32 *)src2;
-  INT32 r,g,b,r2,g2,b2,y,y2,u,v;
-  UINT32 p1,p2,p3,p4;
+	INT32 r,g,b,r2,g2,b2,y,y2,u,v;
+	UINT32 p1,p2,p3,p4;
 	while (count) {
 
 		if (u32src1[-1] == u32src0[0] && u32src2[0] != u32src0[0] && u32src1[1] != u32src0[0])

@@ -141,8 +141,8 @@ XInputProcessEvent(XEvent *ev)
       XIdevices[i].previousValue[0]=motion->axis_data[0];
       XIdevices[i].previousValue[1]=motion->axis_data[1];
     }
-    XIdevices[i].deltas[0]=motion->axis_data[0]-XIdevices[i].previousValue[0];
-    XIdevices[i].deltas[1]=motion->axis_data[1]-XIdevices[i].previousValue[1];
+    XIdevices[i].deltas[0]+=motion->axis_data[0]-XIdevices[i].previousValue[0];
+    XIdevices[i].deltas[1]+=motion->axis_data[1]-XIdevices[i].previousValue[1];
     XIdevices[i].previousValue[0]=motion->axis_data[0];
     XIdevices[i].previousValue[1]=motion->axis_data[1];
     return 1;
@@ -158,6 +158,8 @@ XInputPollDevices(int player, int *deltax, int *deltay)
   if (player < MOUSE && XIdevices[player].deviceName) {
     *deltax=XIdevices[player].deltas[0];
     *deltay=XIdevices[player].deltas[1];
+    XIdevices[player].deltas[0] = 0;
+    XIdevices[player].deltas[1] = 0;
   } else {
     *deltax=0;
     *deltay=0;

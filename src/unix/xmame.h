@@ -66,9 +66,16 @@
  * Global variables.
  */
 
-/* dirty stuff */
-EXTERN unsigned char *dirty_lines;
-EXTERN unsigned char **dirty_blocks;
+/* Used for artwork games. */
+EXTERN struct rectangle updatebounds;
+
+/* Orientation */
+EXTERN int		blit_flipx;
+EXTERN int		blit_flipy;
+EXTERN int		blit_swapxy;
+
+/* Aspect ratio */
+EXTERN double		aspect_ratio;
 
 /* global variables and miscellaneous flags */
 
@@ -99,7 +106,7 @@ EXTERN struct sysdep_palette_struct *normal_palette;
 EXTERN struct sysdep_palette_struct *debug_palette;
 EXTERN struct sound_stream_struct *sound_stream;
 #ifdef MESS
-EXTERN char		*crcdir;
+extern const char	*crcdir;
 #endif
 
 /* visual is the visual part of the bitmap */
@@ -150,8 +157,10 @@ int mode_disabled(int width, int height, int depth);
 int mode_match(int width, int height);
 
 /* frameskip functions */
-int dos_skip_next_frame(int show_fps_counter, struct mame_bitmap *bitmap);
-int barath_skip_next_frame(int show_fps_counter, struct mame_bitmap *bitmap);
+int dos_skip_next_frame();
+int dos_show_fps(char *buffer);
+int barath_skip_next_frame();
+int barath_show_fps(char *buffer);
 
 /* miscelaneous */
 int config_init (int argc, char *argv[]);

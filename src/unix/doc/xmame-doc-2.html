@@ -62,13 +62,11 @@ gzip doesn't complain. For example, change <CODE>xmame-0.34b1.1.tgz</CODE> to
 <LI>Use gzip -d to uncompress the archive. For example, type:
 <PRE>
 gzip -d xmame-0.34b1.1.tar.gz
- 
 </PRE>
 </LI>
 <LI>Extract the files with tar. For example, type:
 <PRE>
 tar xvf xmame-0.34b1.1.tar
- 
 </PRE>
 </LI>
 <LI>After extracting the archive, change to the subdirectory created
@@ -85,7 +83,6 @@ Be careful editing this file.
 to see the available Xdevice list:
 <PRE>
 make xlistdev; ./xlistdev
-  
 </PRE>
 </LI>
 <LI>Choose the desired device and re-edit Makefile, setting the option
@@ -95,7 +92,6 @@ X11_JOYNAME to the correct device.</LI>
 <LI>Compile xmame/xmess by typing:
 <PRE>
 make
- 
 </PRE>
 </LI>
 <LI>If the compile fails, report the problem to the author.</LI>
@@ -103,7 +99,6 @@ make
 xmame/xmess, type:
 <PRE>
 make install
- 
 </PRE>
 </LI>
 <LI>If you want you can now build xmame/xmess for another target/display
@@ -115,7 +110,6 @@ command for example:
 <PRE>
 make TARGET=mess
 make install
-  
 </PRE>
 </LI>
 <LI>If you want to also build for another display method repeat the
@@ -124,14 +118,12 @@ to the make command for example:
 <PRE>
 make DISPLAY_METHOD=svgalib
 make install
-  
 </PRE>
 </LI>
 <LI>You can also combine the 2 above for example:
 <PRE>
 make TARGET=mess DISPLAY_METHOD=svgalib
 make install
-  
 </PRE>
 </LI>
 </OL>
@@ -153,7 +145,6 @@ display method in which case you skip this step.)</LI>
 <LI>Start xmame/xmess. For example:
 <PRE>
 /usr/games/xmame.x11 dkong
- 
 </PRE>
 </LI>
 </OL>

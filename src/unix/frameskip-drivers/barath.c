@@ -8,6 +8,10 @@
 #define barath_debug
  */
 
+#ifdef barath_debug
+static int debug_value;
+#endif
+
 static int modframe = 0;
 
 static int barath_skip_this_frame(void)
@@ -15,7 +19,7 @@ static int barath_skip_this_frame(void)
   return (modframe >= FRAMESKIP_LEVELS);
 }
 
-int barath_skip_next_frame(int showfps, struct mame_bitmap *bitmap)
+int barath_skip_next_frame(void)
 {
   static uclock_t curr = 0;
   static uclock_t prev = 0;
@@ -29,7 +33,6 @@ int barath_skip_next_frame(int showfps, struct mame_bitmap *bitmap)
   int skip_this_frame = barath_skip_this_frame();
   int scratch_time = uclock();
 #ifdef barath_debug
-  int debug_value;
   static float slow_speed = 1;
   int uclocks_per_frame = slow_speed * UCLOCKS_PER_SEC / video_fps;
 #else
@@ -113,32 +116,6 @@ int barath_skip_next_frame(int showfps, struct mame_bitmap *bitmap)
     speed = (speed * 5 + (float) uclocks_per_frame / avg_uclocks) / 6.0;
     /* double-forward average  */
 
-    if (showfps) {
-      static char buf[80] = "";
-      static int showme = 0;
-
-      if (showme++ > 5) {
-	int fps = (video_fps * framerate * speed + .5);
-#ifdef barath_debug
-	sprintf(buf, "%2d %d %s%s%s%2d %3d%%(%3d/%3d)", debug_value, sysload,
-		throttle ? "T" : "", (throttle && sleep_idle) ? "S" : "",
-		(throttle && autoframeskip) ? "A" : "F", frameskip,
-		(int) (speed * 100 + .5), (int) (fps / slow_speed),
-		(int) (video_fps / slow_speed));
-
-	/* set game speed based on manual frameskip setting */
-	if (!throttle && !autoframeskip)
-	  slow_speed = (.25 + 3 * frameskip / (float) FRAMESKIP_LEVELS);
-#else
-	sprintf(buf, " %s%s%sfskp%2d %3d%%(%2d/%d fps)",
-	      throttle ? "T " : "", (throttle && sleep_idle) ? "S " : "",
-		(throttle && autoframeskip) ? "auto" : "", frameskip,
-	 (int) (speed * 100 + .5), fps, (int)video_fps);
-#endif
-	showme = 0;
-      }
-      ui_text(bitmap, buf, Machine->uiwidth - strlen(buf) * Machine->uifontwidth, 0);
-    }
     frames_skipped = 0;
   }
 
@@ -154,4 +131,36 @@ int barath_skip_next_frame(int showfps, struct mame_bitmap *bitmap)
   modframe += frameskip;
 
   return barath_skip_this_frame();
+}
+
+int barath_show_fps(char *buffer)
+{
+	int chars_filled = 0;
+
+#ifdef barath_debug
+	static int showme = 0;
+
+	if (showme++ > 5)
+	{
+		int fps = (video_fps * framerate * speed + .5);
+		chars_filled = sprintf(buffer, "%2d %d %s%s%s%2d %3d%%(%3d/%3d)",
+				debug_value,
+				sysload,
+				throttle ? "T" : "",
+				(throttle && sleep_idle) ? "S" : "",
+				(throttle && autoframeskip) ? "A" : "F",
+				frameskip,
+				(int) (speed * 100 + .5),
+				(int) (fps / slow_speed),
+				(int) (video_fps / slow_speed));
+
+		/* set game speed based on manual frameskip setting */
+		if (!throttle && !autoframeskip)
+			slow_speed = (.25 + 3 * frameskip 
+					/ (float) FRAMESKIP_LEVELS);
+		showme = 0;
+	}
+#endif
+
+	return chars_filled;
 }

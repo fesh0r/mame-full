@@ -5,7 +5,7 @@
 
 static int frameskip_counter = 0;
 
-int dos_skip_next_frame(int show_fps_counter, struct mame_bitmap *bitmap)
+int dos_skip_next_frame()
 {
 	static const int skiptable[FRAMESKIP_LEVELS][FRAMESKIP_LEVELS] =
 	{
@@ -95,21 +95,6 @@ int dos_skip_next_frame(int show_fps_counter, struct mame_bitmap *bitmap)
         	for (i = 0;i < waittable[frameskip][frameskip_counter];i++)
         		prev_frames[(frameskip_counter + FRAMESKIP_LEVELS - i) % FRAMESKIP_LEVELS] = curr;
 
-        	if (show_fps_counter)
-        	{
-        		int fps;
-        		char buf[30];
-        		int divdr;
-
-        		divdr = 100 * FRAMESKIP_LEVELS;
-        		fps = (video_fps * (FRAMESKIP_LEVELS - frameskip) * speed + (divdr / 2)) / divdr;
-        		sprintf(buf,"%s%s%s%2d %3d%%(%2d/%d fps)", throttle?"T ":"",
-			(throttle && sleep_idle)?"S ":"",
-			(throttle && autoframeskip)?"autofskp":"fskp",
-			frameskip,speed,fps,(int)video_fps);
-        		ui_text(bitmap, buf, Machine->uiwidth-strlen(buf)*Machine->uifontwidth, 0);
-        	}
-        	
 		if (throttle && autoframeskip && frameskip_counter == 0)
 		{
 			static int frameskipadjust;
@@ -146,4 +131,10 @@ int dos_skip_next_frame(int show_fps_counter, struct mame_bitmap *bitmap)
 	frameskip_counter = (frameskip_counter + 1) % FRAMESKIP_LEVELS;
 	
 	return skiptable[frameskip][frameskip_counter];
+}
+
+int dos_show_fps(char *buffer)
+{
+	/* We'll just let the code in video.c fill in the buffer. */
+	return 0;
 }

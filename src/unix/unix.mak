@@ -80,7 +80,7 @@ ifdef X11_MITSHM
 CFLAGS.x11 += -DUSE_MITSHM
 endif
 ifdef X11_XV
-CFLAGS.x11 += -DUSE_XV
+CFLAGS.x11 += -DUSE_XV -DUSE_HWSCALE
 LIBS.x11   += -lXv
 endif
 ifdef X11_DGA
@@ -187,7 +187,7 @@ ifdef MAME_NET
 MY_CFLAGS += -DMAME_NET
 endif
    
-# CONFIG are the cflags used to build the unix tree, this is were most defines
+# CONFIG are the cflags used to build the unix tree, this is where most defines
 # go
 CONFIG = $(MY_CFLAGS) $(CFLAGS.$(DISPLAY_METHOD)) -DNAME='\"x$(TARGET)\"' \
 	-DDISPLAY_METHOD='\"$(DISPLAY_METHOD)\"' -DXMAMEROOT='\"$(XMAMEROOT)\"'

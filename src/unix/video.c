@@ -42,6 +42,19 @@ static int use_backdrops = -1;
 static int use_overlays = -1;
 static int use_bezels = -1;
 
+static int video_norotate = 0;
+static int video_flipy = 0;
+static int video_flipx = 0;
+static int video_ror = 0;
+static int video_rol = 0;
+
+static int video_width;
+static int video_height;
+static int video_depth;
+
+static struct mame_bitmap *adjusted_bitmap = NULL;
+
+
 /* average FPS calculation */
 static cycles_t start_time = 0;
 static cycles_t end_time;
@@ -70,9 +83,13 @@ static int video_verify_bpp(struct rc_option *option, const char *arg,
    int priority);
 static int video_verify_vectorres(struct rc_option *option, const char *arg,
    int priority);
+
+static void adjust_bitmap_and_update_display(struct mame_bitmap *srcbitmap,
+		struct mame_bitmap *dest_bitmap, struct rectangle bounds);
 static void change_debugger_focus(int new_debugger_focus);
 static void update_debug_display(struct mame_display *display);
 static void osd_free_colors(void);
+static void round_rectangle_to_8(struct rectangle *rect);
 static void update_visible_area(struct mame_display *display);
 static void update_palette(struct mame_display *display, int force_dirty);
 
@@ -113,22 +130,22 @@ struct rc_option video_opts[] = {
      "Enable/disable displaying simulated scanlines" },
    { "artwork",		"art",			rc_bool,	&use_artwork,
      "1",		0,			0,		NULL,
-     "Use additional game artwork (sets default for specific options below)." },
+     "Use additional game artwork (sets default for specific options below)" },
    { "use_backdrops",	"backdrop",		rc_bool,	&use_backdrops,
      "1",		0,			0,		NULL,
-     "Use backdrop artwork." },
+     "Use backdrop artwork" },
    { "use_overlays",	"overlay",		rc_bool,	&use_overlays,
      "1",		0,			0,		NULL,
-     "Use overlay artwork." },
+     "Use overlay artwork" },
    { "use_bezels",	"bezel",		rc_bool,	&use_bezels,
      "1",		0,			0,		NULL,
-     "Use bezel artwork." },
+     "Use bezel artwork" },
    { "artwork_crop",	"artcrop",		rc_bool,	&options.artwork_crop,
      "0",		0,			0,		NULL,
      "Crop artwork to game screen only." },
    { "artwork_resolution","artres",		rc_int,		&options.artwork_res,
      "0",		0,			0,		NULL,
-     "Artwork resolution (0 for auto)." },
+     "Artwork resolution (0 for auto)" },
    { "frameskipper",	"fsr",			rc_int,		&frameskipper,
      "0",		0,			FRAMESKIP_DRIVER_COUNT-1, NULL,
      "Select which autoframeskip and throttle routines to use. Available choices are:\n0 Dos frameskip code\n1 Enhanced frameskip code by William A. Barath" },
@@ -156,21 +173,21 @@ struct rc_option video_opts[] = {
    { "gamma-correction", "gc",			rc_float,	&gamma_correction,
      "1.0",		0.5,			2.0,		NULL,
      "Set the gamma-correction (0.5-2.0)" },
-   { "norotate",	"nr",			rc_set_int,	&options.norotate,
-     NULL,		1,			0,		NULL,
-     "Disable rotation" },
-   { "ror",		"rr",			rc_set_int,	&options.ror,
-     NULL,		1,			0,		NULL,
-     "Rotate display 90 degrees rigth" },
-   { "rol",		"rl",			rc_set_int,	&options.rol,
-     NULL,		1,			0,		NULL,
-     "Rotate display 90 degrees left" },
-   { "flipx",		"fx",			rc_set_int,	&options.flipx,
-     NULL,		1,			0,		NULL,
-     "Flip X axis" },
-   { "flipy",		"fy",			rc_set_int,	&options.flipy,
-     NULL,		1,			0,		NULL,
-     "Flip Y axis" },
+   { "norotate",	"nr",			rc_bool,	&video_norotate,
+     "0",		0,			0,		NULL,
+     "Do not apply rotation" },
+   { "ror",		"rr",			rc_bool,	&video_ror,
+     "0",		0,			0,		NULL,
+     "Rotate screen clockwise" },
+   { "rol",		"rl",			rc_bool,	&video_rol,
+     "0",		0,			0,		NULL,
+     "Rotate screen counter-clockwise" },
+   { "flipx",		"fx",			rc_bool,	&video_flipx,
+     "0",		0,			0,		NULL,
+     "Flip screen left-right" },
+   { "flipy",		"fy",			rc_bool,	&video_flipy,
+     "0",		0,			0,		NULL,
+     "Flip screen upside-down" },
    { "Vector Games Related", NULL,		rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
      NULL },
@@ -277,6 +294,55 @@ static int video_verify_vectorres(struct rc_option *option, const char *arg,
 
 void osd_video_initpre()
 {
+	/* first start with the game's built-in orientation */
+	int orientation = drivers[game_index]->flags & ORIENTATION_MASK;
+	options.ui_orientation = orientation;
+
+	if (options.ui_orientation & ORIENTATION_SWAP_XY)
+	{
+		/* if only one of the components is inverted, switch them */
+		if ((options.ui_orientation & ROT180) == ORIENTATION_FLIP_X ||
+				(options.ui_orientation & ROT180) == ORIENTATION_FLIP_Y)
+			options.ui_orientation ^= ROT180;
+	}
+
+	/* override if no rotation requested */
+	if (video_norotate)
+		orientation = options.ui_orientation = ROT0;
+
+	/* rotate right */
+	if (video_ror)
+	{
+		/* if only one of the components is inverted, switch them */
+		if ((orientation & ROT180) == ORIENTATION_FLIP_X ||
+				(orientation & ROT180) == ORIENTATION_FLIP_Y)
+			orientation ^= ROT180;
+
+		orientation ^= ROT90;
+	}
+
+	/* rotate left */
+	if (video_rol)
+	{
+		/* if only one of the components is inverted, switch them */
+		if ((orientation & ROT180) == ORIENTATION_FLIP_X ||
+				(orientation & ROT180) == ORIENTATION_FLIP_Y)
+			orientation ^= ROT180;
+
+		orientation ^= ROT270;
+	}
+
+	/* flip X/Y */
+	if (video_flipx)
+		orientation ^= ORIENTATION_FLIP_X;
+	if (video_flipy)
+		orientation ^= ORIENTATION_FLIP_Y;
+
+	blit_flipx = ((orientation & ORIENTATION_FLIP_X) != 0);
+	blit_flipy = ((orientation & ORIENTATION_FLIP_Y) != 0);
+	blit_swapxy = ((orientation & ORIENTATION_SWAP_XY) != 0);
+
+
 	/* set the artwork options */
 	options.use_artwork = ARTWORK_USE_ALL;
 	if (use_backdrops == 0)
@@ -287,6 +353,39 @@ void osd_video_initpre()
 		options.use_artwork &= ~ARTWORK_USE_BEZELS;
 	if (!use_artwork)
 		options.use_artwork = ARTWORK_USE_NONE;
+}
+
+void orient_rect(struct rectangle *rect)
+{
+	int temp;
+
+	/* apply X/Y swap first */
+	if (blit_swapxy)
+	{
+		temp = rect->min_x;
+		rect->min_x = rect->min_y;
+		rect->min_y = temp;
+
+		temp = rect->max_x;
+		rect->max_x = rect->max_y;
+		rect->max_y = temp;
+	}
+
+	/* apply X flip */
+	if (blit_flipx)
+	{
+		temp = video_width - rect->min_x - 1;
+		rect->min_x = video_width - rect->max_x - 1;
+		rect->max_x = temp;
+	}
+
+	/* apply Y flip */
+	if (blit_flipy)
+	{
+		temp = video_height - rect->min_y - 1;
+		rect->min_y = video_height - rect->max_y - 1;
+		rect->max_y = temp;
+	}
 }
 
 int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_components)
@@ -322,9 +421,26 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 				normal_widthscale *= 2;
 		}
 	}
-  
-	visual_width		= params->width;
-	visual_height		= params->height;
+
+	if (blit_swapxy)
+	{
+		visual_width	= video_width	= params->height;
+		visual_height	= video_height	= params->width;
+	}
+	else
+	{
+		visual_width	= video_width	= params->width;
+		visual_height	= video_height	= params->height;
+	}
+	video_depth = params->depth;
+
+	if (!blit_swapxy)
+		aspect_ratio = (double)params->aspect_x 
+			/ (double)params->aspect_y;
+	else
+		aspect_ratio = (double)params->aspect_y 
+			/ (double)params->aspect_x;
+
 	widthscale		= normal_widthscale;
 	heightscale		= normal_heightscale;
 	use_aspect_ratio	= normal_use_aspect_ratio;
@@ -332,6 +448,11 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 
 	if (sysdep_create_display(bitmap_depth) != OSD_OK)
 		return -1;
+
+	/* for debugging only */
+	fprintf(stderr_file, "viswidth = %d, visheight = %d, visstartx= %d,"
+			"visstarty= %d\n", visual_width, visual_height,
+			visual.min_x, visual.min_y);
 
 	/* a lot of display_targets need to have the display initialised before
 	   initialising any input devices */
@@ -406,6 +527,14 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 		}
 	}
 
+	if (blit_flipx || blit_flipy || blit_swapxy)
+	{
+		adjusted_bitmap = bitmap_alloc_depth(video_width,
+					video_height, video_depth);
+		if (!adjusted_bitmap)
+			return -1;
+	}
+			
 	return 0;
 }
 
@@ -460,16 +589,13 @@ static void osd_change_display_settings(struct rectangle *new_visual,
       }
 
       /* only realloc the palette if it has been initialised */
-      if (current_palette)
+      if (current_palette && sysdep_display_alloc_palette(video_colors_used))
       {
-         if (sysdep_display_alloc_palette(video_colors_used))
-         {
-            /* better restore the video mode before calling exit() */
-            sysdep_display_close();
-            /* oops this sorta sucks */
-            fprintf(stderr_file, "Argh, (re)allocating the palette failed in osd_set_visible_area, aborting\n");
-            exit(1);
-         }
+         /* better restore the video mode before calling exit() */
+         sysdep_display_close();
+         /* oops this sorta sucks */
+         fprintf(stderr_file, "Argh, (re)allocating the palette failed in osd_set_visible_area, aborting\n");
+         exit(1);
       }
 
       /* to stop keys from getting stuck */
@@ -483,35 +609,68 @@ static void osd_change_display_settings(struct rectangle *new_visual,
    }
 }
 
+static void round_rectangle_to_8(struct rectangle *rect)
+{
+	if (rect->min_x & 7)
+	{
+		if ((rect->min_x - (rect->min_x & ~7)) < 4)
+			rect->min_x &= ~7;
+		else
+			rect->min_x = (rect->min_x + 7) & ~7;
+	}
+
+	if ((rect->max_x + 1) & 7)
+	{
+		if (((rect->max_x + 1) - ((rect->max_x + 1) & ~7)) > 4)
+			rect->max_x = ((rect->max_x + 1 + 7) & ~7) - 1;
+		else
+			rect->max_x = ((rect->max_x + 1) & ~7) - 1;
+	}
+}
+
 static void update_visible_area(struct mame_display *display)
 {
-   normal_visual.min_x = display->game_visible_area.min_x;
-   normal_visual.max_x = display->game_visible_area.max_x;
-   normal_visual.min_y = display->game_visible_area.min_y;
-   normal_visual.max_y = display->game_visible_area.max_y;
+	normal_visual = display->game_visible_area;
 
-   /* round to 8, since the new dirty code works with 8x8 blocks,
-      and we need to round to sizeof(long) for the long copies anyway */
-   if (normal_visual.min_x & 7)
-   {
-      if((normal_visual.min_x - (normal_visual.min_x & ~7)) < 4)
-         normal_visual.min_x &= ~7;
-       else
-         normal_visual.min_x = (normal_visual.min_x + 7) & ~7;
-   }
-   if ((normal_visual.max_x + 1) & 7)
-   {
-      if(((normal_visual.max_x + 1) - ((normal_visual.max_x + 1) & ~7)) > 4)
-         normal_visual.max_x = ((normal_visual.max_x + 1 + 7) & ~7) - 1;
-       else
-         normal_visual.max_x = ((normal_visual.max_x + 1) & ~7) - 1;
-   }
+	if (blit_swapxy)
+	{
+		video_width = display->game_bitmap->height;
+		video_height = display->game_bitmap->width;
+	}
+	else
+	{
+		video_width = display->game_bitmap->width;
+		video_height = display->game_bitmap->height;
+	}
+
+	orient_rect(&normal_visual);
+
+	/* 
+	 * round to 8, since the new dirty code works with 8x8 blocks,
+	 * and we need to round to sizeof(long) for the long copies anyway
+	 */
+	round_rectangle_to_8(&normal_visual);
    
-   if (!debugger_has_focus)
-      osd_change_display_settings(&normal_visual, normal_palette,
-         normal_widthscale, normal_heightscale, normal_use_aspect_ratio);
+	if (!debugger_has_focus)
+		osd_change_display_settings(&normal_visual, normal_palette, 
+				normal_widthscale, normal_heightscale, 
+				normal_use_aspect_ratio);
 
-   set_ui_visarea (normal_visual.min_x, normal_visual.min_y, normal_visual.max_x, normal_visual.max_y);
+	set_ui_visarea(display->game_visible_area.min_x,
+			display->game_visible_area.min_y,
+			display->game_visible_area.max_x,
+			display->game_visible_area.max_y);
+
+	/*
+	 * Allocate a new destination bitmap for the code that handles 
+	 * rotation/flipping.
+	 */
+	if (blit_flipx || blit_flipy || blit_swapxy)
+	{
+		bitmap_free(adjusted_bitmap);
+		adjusted_bitmap = bitmap_alloc_depth(video_width,
+				video_height, video_depth);
+	}	
 }
 
 static void update_palette(struct mame_display *display, int force_dirty)
@@ -590,11 +749,18 @@ static void osd_free_colors(void)
 
 static int skip_next_frame = 0;
 
-typedef int (*skip_next_frame_func)(int show_fps_counter, struct mame_bitmap *bitmap);
+typedef int (*skip_next_frame_func)(void);
 static skip_next_frame_func skip_next_frame_functions[FRAMESKIP_DRIVER_COUNT] =
 {
-   dos_skip_next_frame,
-   barath_skip_next_frame
+	dos_skip_next_frame,
+	barath_skip_next_frame
+};
+
+typedef int (*show_fps_frame_func)(char *buffer);
+static show_fps_frame_func show_fps_frame_functions[FRAMESKIP_DRIVER_COUNT] =
+{
+	dos_show_fps,
+	barath_show_fps
 };
 
 int osd_skip_this_frame(void)
@@ -626,215 +792,304 @@ void change_debugger_focus(int new_debugger_focus)
 /* Update the display. */
 void osd_update_video_and_audio(struct mame_display *display)
 {
-   /* struct rectangle updatebounds = display->game_bitmap_update; */
-   static int showfps = 0, showfpstemp = 0; 
-   int skip_this_frame;
-   cycles_t curr;
-   
-   if (input_ui_pressed(IPT_UI_FRAMESKIP_INC))
-   {
-      if (autoframeskip)
-      {
-	 autoframeskip = 0;
-	 frameskip = 0;
-      }
-      else
-      {
-	 if (frameskip == FRAMESKIP_LEVELS-1)
-	 {
-	    frameskip = 0;
-	    autoframeskip = 1;
-	 }
-	 else frameskip++;
-      }
+	static int showfps = 0, showfpstemp = 0; 
+	int skip_this_frame;
+	cycles_t curr;
 
-      if (showfps == 0)
-         showfpstemp = 2 * Machine->drv->frames_per_second;
+	updatebounds = display->game_bitmap_update;
 
-      /* reset the frame counter so we'll measure the average FPS on a consistent status */
-      frames_displayed = 0;
-   }
+	/* increment frameskip? */
+	if (input_ui_pressed(IPT_UI_FRAMESKIP_INC))
+	{
+		/* if autoframeskip, disable auto and go to 0 */
+		if (autoframeskip)
+		{
+			autoframeskip = 0;
+			frameskip = 0;
+		}
 
-   if (input_ui_pressed(IPT_UI_FRAMESKIP_DEC))
-   {
-      if (autoframeskip)
-      {
-	 autoframeskip = 0;
-	 frameskip = FRAMESKIP_LEVELS-1;
-      }
-      else
-      {
-         if (frameskip == 0)
-            autoframeskip = 1;
-	 else
-            frameskip--;
-      }
-      
-      if (showfps == 0)
-         showfpstemp = 2 * Machine->drv->frames_per_second;
+		/* wrap from maximum to auto */
+		else if (frameskip == FRAMESKIP_LEVELS - 1)
+		{
+			frameskip = 0;
+			autoframeskip = 1;
+		}
 
-      /* reset the frame counter so we'll measure the average FPS on a consistent status */
-      frames_displayed = 0;
-   }
-   
-   if (!keyboard_pressed(KEYCODE_LSHIFT) && !keyboard_pressed(KEYCODE_RSHIFT)
-       && !keyboard_pressed(KEYCODE_LCONTROL) && !keyboard_pressed(KEYCODE_RCONTROL)
-       && input_ui_pressed(IPT_UI_THROTTLE))
-   {
-      throttle ^= 1;
+		/* else just increment */
+		else
+			frameskip++;
 
-      /* reset the frame counter so we'll measure the average FPS on a consistent status */
-      frames_displayed = 0;
-   }
+		/* display the FPS counter for 2 seconds */
+		ui_show_fps_temp(2.0);
+
+		/* reset the frame counter so we'll measure the average FPS on a consistent status */
+		frames_displayed = 0;
+	}
+
+	/* decrement frameskip? */
+	if (input_ui_pressed(IPT_UI_FRAMESKIP_DEC))
+	{
+		/* if autoframeskip, disable auto and go to max */
+		if (autoframeskip)
+		{
+			autoframeskip = 0;
+			frameskip = FRAMESKIP_LEVELS-1;
+		}
+
+		/* wrap from 0 to auto */
+		else if (frameskip == 0)
+			autoframeskip = 1;
+
+		/* else just decrement */
+		else
+			frameskip--;
+
+		/* display the FPS counter for 2 seconds */
+		ui_show_fps_temp(2.0);
+
+		/* reset the frame counter so we'll measure the average FPS on a consistent status */
+		frames_displayed = 0;
+	}
+
+	if (input_ui_pressed(IPT_UI_THROTTLE))
+	{
+		if (!keyboard_pressed(KEYCODE_LSHIFT)
+				&& !keyboard_pressed(KEYCODE_RSHIFT))
+		{
+			throttle ^= 1;
+
+			/*
+			 * reset the frame counter so we'll measure the average
+			 * FPS on a consistent status
+			 */
+			frames_displayed = 0;
+		}
+		else if (keyboard_pressed(KEYCODE_RSHIFT)
+				|| keyboard_pressed(KEYCODE_LSHIFT))
+			sleep_idle ^= 1;
+	}
    
-   if (input_ui_pressed(IPT_UI_THROTTLE) && (keyboard_pressed(KEYCODE_RSHIFT) || keyboard_pressed(KEYCODE_LSHIFT)))
-   {
-      sleep_idle ^= 1;
-   }
+	if (keyboard_pressed(KEYCODE_LCONTROL))
+	{ 
+		if (keyboard_pressed_memory(KEYCODE_INSERT))
+			frameskipper = 0;
+		if (keyboard_pressed_memory(KEYCODE_HOME))
+			frameskipper = 1;
+	}
    
-   if (!keyboard_pressed(KEYCODE_LSHIFT) && !keyboard_pressed(KEYCODE_RSHIFT)
-       && !keyboard_pressed(KEYCODE_LCONTROL) && !keyboard_pressed(KEYCODE_RCONTROL)
-       && input_ui_pressed(IPT_UI_SHOW_FPS))
-   {
-      if (showfpstemp)
-      {
-	 showfpstemp = 0;
-	 schedule_full_refresh();
-      }
-      else
-      {
-	 showfps ^= 1;
-	 if (showfps == 0)
-	    schedule_full_refresh();
-      }
-   }
-   
-   if (keyboard_pressed (KEYCODE_LCONTROL))
-   { 
-      if (keyboard_pressed_memory (KEYCODE_INSERT))
-         frameskipper = 0;
-      if (keyboard_pressed_memory (KEYCODE_HOME))
-         frameskipper = 1;
-   }
-   
-   if (keyboard_pressed (KEYCODE_LSHIFT))
-   {
-      int widthscale_mod  = 0;
-      int heightscale_mod = 0;
-      
-      if (keyboard_pressed_memory (KEYCODE_INSERT))
-         widthscale_mod = 1;
-      if (keyboard_pressed_memory (KEYCODE_DEL))
-         widthscale_mod = -1;
-      if (keyboard_pressed_memory (KEYCODE_HOME))
-         heightscale_mod = 1;
-      if (keyboard_pressed_memory (KEYCODE_END))
-         heightscale_mod = -1;
-      if (keyboard_pressed_memory (KEYCODE_PGUP))
-      {
-         widthscale_mod  = 1;
-         heightscale_mod = 1;
-      }
-      if (keyboard_pressed_memory (KEYCODE_PGDN))
-      {
-         widthscale_mod  = -1;
-         heightscale_mod = -1;
-      }
-      if (widthscale_mod || heightscale_mod)
-      {
-         normal_widthscale  += widthscale_mod;
-         normal_heightscale += heightscale_mod;
+	if (keyboard_pressed(KEYCODE_LSHIFT))
+	{
+		int widthscale_mod  = 0;
+		int heightscale_mod = 0;
+
+		if (keyboard_pressed_memory(KEYCODE_INSERT))
+			widthscale_mod = 1;
+		if (keyboard_pressed_memory(KEYCODE_DEL))
+			widthscale_mod = -1;
+		if (keyboard_pressed_memory(KEYCODE_HOME))
+			heightscale_mod = 1;
+		if (keyboard_pressed_memory(KEYCODE_END))
+			heightscale_mod = -1;
+		if (keyboard_pressed_memory(KEYCODE_PGUP))
+		{
+			widthscale_mod  = 1;
+			heightscale_mod = 1;
+		}
+		if (keyboard_pressed_memory (KEYCODE_PGDN))
+		{
+			widthscale_mod  = -1;
+			heightscale_mod = -1;
+		}
+		if (widthscale_mod || heightscale_mod)
+		{
+			normal_widthscale  += widthscale_mod;
+			normal_heightscale += heightscale_mod;
+ 
+			if (normal_widthscale > 8)
+				normal_widthscale = 8;
+			else if (normal_widthscale < 1)
+				normal_widthscale = 1;
+
+			if (normal_heightscale > 8)
+				normal_heightscale = 8;
+			else if (normal_heightscale < 1)
+				normal_heightscale = 1;
          
-         if (normal_widthscale > 8)
-            normal_widthscale = 8;
-         else if (normal_widthscale < 1)
-            normal_widthscale = 1;
-         if (normal_heightscale > 8)
-            normal_heightscale = 8;
-         else if (normal_heightscale < 1)
-            normal_heightscale = 1;
-         
-         if (!debugger_has_focus)
-            osd_change_display_settings(&normal_visual, normal_palette,
-               normal_widthscale, normal_heightscale, normal_use_aspect_ratio);
-      }
-   }
+			if (!debugger_has_focus)
+				osd_change_display_settings(&normal_visual,
+						normal_palette,
+						normal_widthscale,
+						normal_heightscale,
+						normal_use_aspect_ratio);
+		}
+	}
    
-   if (showfpstemp)         /* MAURY_BEGIN: nuove opzioni */
-   {
-      showfpstemp--;
-      if (showfpstemp == 0)
-         schedule_full_refresh();
-   }
+	skip_this_frame = skip_next_frame;
+	skip_next_frame = (*skip_next_frame_functions[frameskipper])();
 
-   skip_this_frame = skip_next_frame;
-   skip_next_frame =
-      (*skip_next_frame_functions[frameskipper])(showfps || showfpstemp,
-        display->game_bitmap);
+	if (sound_stream && sound_enabled)
+		sound_stream_update(sound_stream);
 
-   if (sound_stream && sound_enabled)
-      sound_stream_update(sound_stream);
+	/* if the visible area has changed, update it */
+	if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
+		update_visible_area(display);
 
-   /* if the visible area has changed, update it */
-   if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
-      update_visible_area(display);
+	/* if the debugger focus changed, update it */
+	if (display->changed_flags & DEBUG_FOCUS_CHANGED)
+		change_debugger_focus(display->debug_focus);
 
-   /* if the debugger focus changed, update it */
-   if (display->changed_flags & DEBUG_FOCUS_CHANGED)
-      change_debugger_focus(display->debug_focus);
+	/*
+	 * If the user presses the F5 key, toggle the debugger's 
+	 * focus.  Eventually I'd like to just display both the 
+	 * debug and regular windows at the same time.
+	 */
+	else if (input_ui_pressed(IPT_UI_TOGGLE_DEBUG) && mame_debug)
+		change_debugger_focus(!debugger_has_focus);
 
-   /*
-    * If the user presses the F5 key, toggle the debugger's 
-    * focus.  Eventually I'd like to just display both the 
-    * debug and regular windows at the same time.
-    */
-   else if (input_ui_pressed(IPT_UI_TOGGLE_DEBUG) && mame_debug)
-      change_debugger_focus(!debugger_has_focus);
+	/* update the debugger */
+	if ((display->changed_flags & DEBUG_BITMAP_CHANGED)
+			&& debugger_has_focus)
+		update_debug_display(display);
 
-   /* update the debugger */
-   if ((display->changed_flags & DEBUG_BITMAP_CHANGED) && debugger_has_focus)
-      update_debug_display(display);
+	/* if the game palette has changed, update it */
+	if (force_dirty_palette)
+	{
+		update_palette(display, 1);
+		force_dirty_palette = 0;
+	}
+	else if (display->changed_flags & GAME_PALETTE_CHANGED)
+		update_palette(display, 0);
 
-   /* if the game palette has changed, update it */
-   if (force_dirty_palette)
-   {
-      update_palette(display, 1);
-      force_dirty_palette = 0;
-   }
-   else if (display->changed_flags & GAME_PALETTE_CHANGED)
-      update_palette(display, 0);
+	if (skip_this_frame == 0
+			&& (display->changed_flags & GAME_BITMAP_CHANGED)
+			&& !debugger_has_focus)
+	{
+		/* at the end, we need the current time */
+		curr = osd_cycles();
 
-   if (skip_this_frame == 0 && display->changed_flags & GAME_BITMAP_CHANGED
-         && !debugger_has_focus)
-   {
-      /* at the end, we need the current time */
-      curr = osd_cycles();
+		/* update stats for the FPS average calculation */
+		if (start_time == 0)
+		{
+			/* start the timer going 1 second into the game */
+			if (timer_get_time() > 1.0)
+				start_time = curr;
+		}
+		else
+		{
+			frames_displayed++;
+			if (frames_displayed + 1 == frames_to_display)
+				trying_to_quit = 1;
+			end_time = curr;
+		}
 
-      /* update stats for the FPS average calculation */
-      if (start_time == 0)
-      {
-         /* start the timer going 1 second into the game */
-         if (timer_get_time() > 1.0)
-            start_time = curr;
-      }
-      else
-      {
-         frames_displayed++;
-         if (frames_displayed + 1 == frames_to_display)
-            trying_to_quit = 1;
-         end_time = curr;
-      }
+		profiler_mark(PROFILER_BLIT);
+		adjust_bitmap_and_update_display(display->game_bitmap,
+				adjusted_bitmap, updatebounds);
+		profiler_mark(PROFILER_END);
+	}
 
-      profiler_mark(PROFILER_BLIT);
-      sysdep_update_display(display->game_bitmap);
-      profiler_mark(PROFILER_END);
-   }
+	/* if the LEDs have changed, update them */
+	if (display->changed_flags & LED_STATE_CHANGED)
+		sysdep_set_leds(display->led_state);
 
-   /* if the LEDs have changed, update them */
-   if (display->changed_flags & LED_STATE_CHANGED)
-      sysdep_set_leds(display->led_state);
+	osd_poll_joysticks();
+}
 
-   osd_poll_joysticks();
+void adjust_bitmap_and_update_display(struct mame_bitmap *srcbitmap,
+		struct mame_bitmap *destbitmap, struct rectangle bounds)
+{
+	int x, y;
+	int bx1, bx2, by1, by2;
+
+	orient_rect(&bounds);
+
+	bx1 = bounds.min_x;
+	bx2 = bounds.max_x;
+	by1 = bounds.min_y;
+	by2 = bounds.max_y;
+
+	if (blit_swapxy)
+	{
+		if (blit_flipx && blit_flipy)
+			if (srcbitmap->depth == 15 || srcbitmap->depth == 16)
+				for (x = bx1; x <= bx2; x++)
+					for (y = by1; y <= by2; y++)
+						((UINT16 *)destbitmap->line[y])[x] = ((UINT16 *)srcbitmap->line[srcbitmap->height - x - 1])[srcbitmap->width - y - 1];
+			else
+				for (x = bx1; x <= bx2; x++)
+					for (y = by1; y <= by2; y++)
+						((UINT32 *)destbitmap->line[y])[x] = ((UINT32 *)srcbitmap->line[srcbitmap->height - x - 1])[srcbitmap->width - y - 1];
+		else if (blit_flipx)
+			if (srcbitmap->depth == 15 || srcbitmap->depth == 16)
+				for (x = bx1; x <= bx2; x++)
+					for (y = by1; y <= by2; y++)
+						((UINT16 *)destbitmap->line[y])[x] = ((UINT16 *)srcbitmap->line[srcbitmap->height - x - 1])[y];
+			else
+				for (x = bx1; x <= bx2; x++)
+					for (y = by1; y <= by2; y++)
+						((UINT32 *)destbitmap->line[y])[x] = ((UINT32 *)srcbitmap->line[srcbitmap->height - x - 1])[y];
+		else if (blit_flipy)
+			if (srcbitmap->depth == 15 || srcbitmap->depth == 16)
+				for (x = bx1; x <= bx2; x++)
+					for (y = by1; y <= by2; y++)
+						((UINT16 *)destbitmap->line[y])[x] = ((UINT16 *)srcbitmap->line[x])[srcbitmap->width - y - 1];
+			else
+				for (x = bx1; x <= bx2; x++)
+					for (y = by1; y <= by2; y++)
+						((UINT32 *)destbitmap->line[y])[x] = ((UINT32 *)srcbitmap->line[x])[srcbitmap->width - y - 1];
+		else
+			if (srcbitmap->depth == 15 || srcbitmap->depth == 16)
+				for (x = bx1; x <= bx2; x++)
+					for (y = by1; y <= by2; y++)
+						((UINT16 *)destbitmap->line[y])[x] = ((UINT16 *)srcbitmap->line[x])[y];
+			else
+				for (x = bx1; x <= bx2; x++)
+					for (y = by1; y <= by2; y++)
+						((UINT32 *)destbitmap->line[y])[x] = ((UINT32 *)srcbitmap->line[x])[y];
+
+		sysdep_update_display(destbitmap);
+	}
+	else if (blit_flipx && blit_flipy)
+	{
+		if (srcbitmap->depth == 15 || srcbitmap->depth == 16)
+			for (x = bx1; x <= bx2; x++)
+				for (y = by1; y <= by2; y++)
+					((UINT16 *)destbitmap->line[y])[x] = ((UINT16 *)srcbitmap->line[srcbitmap->height - y - 1])[srcbitmap->width - x - 1];
+		else
+			for (x = bx1; x <= bx2; x++)
+				for (y = by1; y <= by2; y++)
+					((UINT32 *)destbitmap->line[y])[x] = ((UINT32 *)srcbitmap->line[srcbitmap->height - y - 1])[srcbitmap->width - x - 1];
+
+		sysdep_update_display(destbitmap);
+	}
+	else if (blit_flipx)
+	{
+		if (srcbitmap->depth == 15 || srcbitmap->depth == 16)
+			for (x = bx1; x <= bx2; x++)
+				for (y = by1; y <= by2; y++)
+					((UINT16 *)destbitmap->line[y])[x] = ((UINT16 *)srcbitmap->line[y])[srcbitmap->width - x - 1];
+		else
+			for (x = bx1; x <= bx2; x++)
+				for (y = by1; y <= by2; y++)
+					((UINT32 *)destbitmap->line[y])[x] = ((UINT32 *)srcbitmap->line[y])[srcbitmap->width - x - 1];
+
+		sysdep_update_display(destbitmap);
+	}
+	else if (blit_flipy)
+	{
+		if (srcbitmap->depth == 15 || srcbitmap->depth == 16)
+			for (x = bx1; x <= bx2; x++)
+				for (y = by1; y <= by2; y++)
+					((UINT16 *)destbitmap->line[y])[x] = ((UINT16 *)srcbitmap->line[srcbitmap->height - y - 1])[x];
+		else
+			for (x = bx1; x <= bx2; x++)
+				for (y = by1; y <= by2; y++)
+					((UINT32 *)destbitmap->line[y])[x] = ((UINT32 *)srcbitmap->line[srcbitmap->height - y - 1])[x];
+
+		sysdep_update_display(destbitmap);
+	}
+	else
+		sysdep_update_display(srcbitmap);
 }
 
 void osd_set_gamma(float gamma)
@@ -886,13 +1141,23 @@ const char *osd_get_fps_text(const struct performance_info *performance)
 {
 	static char buffer[1024];
 	char *dest = buffer;
-	
-	/* display the FPS, frameskip, percent, fps and target fps */
-	dest += sprintf(dest, "%s%2d%4d%%%4d/%d fps", 
-			autoframeskip ? "auto" : "fskp", frameskip, 
-			(int)(performance->game_speed_percent + 0.5), 
-			(int)(performance->frames_per_second + 0.5),
-			(int)(Machine->drv->frames_per_second + 0.5));
+
+	int chars_filled
+		= (*show_fps_frame_functions[frameskipper])(dest);
+
+	if (chars_filled)
+		dest += chars_filled;
+	else
+	{
+		/* display the FPS, frameskip, percent, fps and target fps */
+		dest += sprintf(dest, "%s%s%s%2d%4d%%%4d/%d fps", 
+				throttle ? "T " : "",
+				(throttle && sleep_idle) ? "S " : "",
+				autoframeskip ? "auto" : "fskp", frameskip, 
+				(int)(performance->game_speed_percent + 0.5), 
+				(int)(performance->frames_per_second + 0.5),
+				(int)(Machine->drv->frames_per_second + 0.5));
+	}
 
 	/* for vector games, add the number of vector updates */
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)

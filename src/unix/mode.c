@@ -91,16 +91,11 @@ int mode_disabled(int width, int height, int depth)
 
 void mode_perfect(int *width, int *height)
 {
-   float game_aspect_ratio, pixel_aspect_ratio;
+   double pixel_aspect_ratio;
    static int first_time = TRUE;
    
    if (use_aspect_ratio)
    {
-      if (Machine->orientation & ORIENTATION_SWAP_XY)
-         game_aspect_ratio = 0.75; /* 3/4 */
-      else
-         game_aspect_ratio = 1.33; /* 4/3 */
-          
       /* first of all calculate the pixel aspect_ratio the game has */
       if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
       {
@@ -110,12 +105,11 @@ void mode_perfect(int *width, int *height)
       {
          pixel_aspect_ratio = (visual_width * widthscale) / 
 	   (yarbsize ? yarbsize :
-	    (visual_height * heightscale * game_aspect_ratio));
+	    (visual_height * heightscale * aspect_ratio));
       }
       
-       
       /* should we maximize the used height, or the used width? */
-      if (display_aspect_ratio >= game_aspect_ratio)
+      if (display_aspect_ratio >= aspect_ratio)
       {
 	*height = yarbsize ? yarbsize : (visual_height * heightscale);
 	*width  = *height * pixel_aspect_ratio * display_aspect_ratio;
@@ -140,7 +134,7 @@ void mode_perfect(int *width, int *height)
 }
 
 /* match a given mode to the needed width, height and aspect ratio to
-   prefectly display a game.
+   perfectly display a game.
    This function returns 0 for a not usable mode and 100 for the perfect mode.
 */
 

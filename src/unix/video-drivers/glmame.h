@@ -60,6 +60,8 @@ extern int fullscreen_width;
 extern int fullscreen_height;
 extern int winwidth;
 extern int winheight;
+extern int orig_width;
+extern int orig_height;
 extern int doublebuffer;
 extern int bilinear;
 extern int alphablending;

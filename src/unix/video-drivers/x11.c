@@ -16,11 +16,10 @@
 #include "input.h"
 #include "keyboard.h"
 
-#ifdef USE_XV
-int use_xv = 1;  /* use xv extension if available */
-long xv_redmask;
-long xv_greenmask;
-long xv_bluemask;
+#ifdef USE_HWSCALE
+long hwscale_redmask;
+long hwscale_greenmask;
+long hwscale_bluemask;
 #endif
 
 extern int force_dirty_palette;
@@ -34,7 +33,7 @@ struct rc_option display_opts[] = {
      NULL },
    { "x11-mode",	"x11",			rc_int,		&x11_video_mode,
      "0",		0,			X11_MODE_COUNT-1, NULL,
-     "Select x11 video mode: (if compiled in)\n0 Normal window  (hotkey left-alt + insert)\n1 Fullscreen DGA (hotkey left-alt + home)" },
+     "Select x11 video mode: (if compiled in)\n0 Normal window (hotkey left-alt + insert)\n1 Fullscreen DGA (hotkey left-alt + home)" },
    { NULL,		NULL,			rc_link,	x11_window_opts,
      NULL,		0,			0,		NULL,
      NULL },
@@ -137,7 +136,11 @@ int sysdep_display_16bpp_capable(void)
    mouse and keyboard can't be setup before the display has. */
 int sysdep_create_display (int depth)
 {
-   return (*x_func[x11_video_mode].create_display)(depth);
+#ifdef USE_XV
+	if (x11_video_mode != X11_WINDOW)
+		use_xv = 0;
+#endif
+	return (*x_func[x11_video_mode].create_display)(depth);
 }
 
 void sysdep_display_close(void)
@@ -168,12 +171,12 @@ int x11_init_palette_info(void)
             depth);
          return OSD_NOT_OK;
       }
-#ifdef USE_XV
-      if(use_xv)
+#ifdef USE_HWSCALE
+      if(use_hwscale)
       {
-         display_palette_info.red_mask   = xv_redmask;
-         display_palette_info.green_mask = xv_greenmask;
-         display_palette_info.blue_mask  = xv_bluemask;
+         display_palette_info.red_mask   = hwscale_redmask;
+         display_palette_info.green_mask = hwscale_greenmask;
+         display_palette_info.blue_mask  = hwscale_bluemask;
       }
       else
 #endif
@@ -210,9 +213,13 @@ void sysdep_update_display (struct mame_bitmap *bitmap)
 
    if (keyboard_pressed (KEYCODE_LALT))
    {
-      if (keyboard_pressed_memory (KEYCODE_INSERT))
+      if (keyboard_pressed_memory(KEYCODE_INSERT))
          new_video_mode = X11_WINDOW;
-      if (keyboard_pressed_memory (KEYCODE_HOME))
+#ifdef USE_XV
+      if (!use_xv && keyboard_pressed_memory(KEYCODE_HOME))
+#else
+      if (keyboard_pressed_memory(KEYCODE_HOME))
+#endif
          new_video_mode = X11_DGA;
    }
 

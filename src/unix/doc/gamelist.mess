@@ -1,4 +1,4 @@
-This is the complete list of games supported by xmess 0.61.1 (Oct 20 2002).
+This is the complete list of games supported by xmess 0.62.1 (Dec  9 2002).
 
 This list is generated automatically and is not 100% accurate (particularly in
 the Screen Flip column). Please let us know of any errors so we can correct
@@ -155,8 +155,8 @@ Internal Name
 | Game Gear - European/American Maj|  Yes  |  Yes  |  Yes  |  Yes  | gamg     |
 | Game Gear - Japanese             |  Yes  |  Yes  |  Yes  |  Yes  | gamegj   |
 | Game Gear - Japanese Majesco Game|  Yes  |  Yes  |  Yes  |  Yes  | gamgj    |
-| GameBoy                          |  Yes  |  Yes  |Partial|  Yes  | gameboy  |
-| GameBoy Color                    |  Yes  |  Yes  |Partial|  Yes  | gbcolor  |
+| GameBoy                          |  Yes  |  Yes  |  Yes  |  Yes  | gameboy  |
+| GameBoy Color                    |  Yes  |  Yes  |  Yes  |  Yes  | gbcolor  |
 | HB-8000 Hotbit 1.1               |  Yes  |  Yes  |  Yes  |  Yes  | hotbit11 |
 | HB-8000 Hotbit 1.2               |  Yes  |  Yes  |  Yes  |  Yes  | hotbit12 |
 | IBM PC 08/16/82                  |  Yes  |  Yes  |  Yes  |  Yes  | ibmpca   |
@@ -228,6 +228,7 @@ Internal Name
 | Nascom 2 (NasSys 3)              |  Yes  |  Yes  |  Yes  |  Yes  | nascom2a |
 | Nintendo Entertainment System (NT|  Yes  |  Yes  |  Yes  |  Yes  | nes      |
 | Nintendo Entertainment System (PA|  Yes  |  Yes  |  Yes  |  Yes  | nespal   |
+| Odyssey 2                        |   No  |  Yes  |Partial|  Yes  | odyssey2 |
 | Oric 1                           |  Yes  |  Yes  |  Yes  |  Yes  | oric1    |
 | Oric Atmos                       |  Yes  |  Yes  |  Yes  |  Yes  | orica    |
 | Oric Telestrat                   | No(1) |  Yes  |  Yes  |  Yes  | telstrat |
@@ -262,11 +263,10 @@ Internal Name
 | Sam Coupe                        |  Yes  |  Yes  |  Yes  |  Yes  | coupe    |
 | Sanyo / Dick Smith VZ200         |  Yes  |  Yes  |  Yes  |  Yes  | vz200    |
 | Sanyo / Dick Smith VZ300         |  Yes  |  Yes  |  Yes  |  Yes  | vz300    |
-| Saturn                           |   No  |  Yes  |  Yes  |  Yes  | saturn   |
 | Sorcerer                         |   No  |  Yes  |   No  |  Yes  | exidy    |
 | Sord M5                          |  Yes  |  Yes  |  Yes  |  Yes  | sordm5   |
 | Spectrum I+                      |  Yes  |  Yes  |  Yes  |  Yes  | raaspec  |
-| Super GameBoy                    |  Yes  |  Yes  |Partial|  Yes  | supergb  |
+| Super GameBoy                    |  Yes  |  Yes  |  Yes  |  Yes  | supergb  |
 | Super Nintendo Entertainment Syst|   No  |  Yes  |  Yes  |  Yes  | snes     |
 | Super Nintendo Entertainment Syst|   No  |  Yes  |  Yes  |  Yes  | snespal  |
 | Super Vision                     |  Yes  |  Yes  |Partial|  Yes  | svision  |

@@ -24,9 +24,11 @@ fi
 # Fix the line endings of the included text files, makefiles, and sources.
 if [ -x "`which d2u 2> /dev/null`" ]; then
   d2u `find . -name "*.txt" -print` 2> /dev/null
-  d2u `find . -name "*.mak" -print` 2> /dev/null
+  d2u `find . -name "*.htm" -print` 2> /dev/null
   d2u `find . -name "*.html" -print` 2> /dev/null
+  d2u `find . -name "*.mak" -print` 2> /dev/null
   d2u `find . -name "*.crc" -print` 2> /dev/null
+  d2u `find . -name "*.vc" -print` 2> /dev/null
   d2u `find . -path './src/unix' -prune -o -name "*.[ch]" -print` 2> /dev/null
   d2u makefile.mes 2> /dev/null
   d2u makefile.vc 2> /dev/null

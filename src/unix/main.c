@@ -22,12 +22,6 @@ int osd_init(void)
 #endif	
 	if (osd_input_initpre() !=OSD_OK) return OSD_NOT_OK;
 
-	/* 
-	 * Initialize whatever is needed before the display is actually 
-	 * opened, e.g., artwork setup.
-	 */
-	osd_video_initpre();
-	
 	return OSD_OK;
 }
 
@@ -75,6 +69,12 @@ int main (int argc, char **argv)
         /* Check the colordepth we're requesting */
         if (!options.color_depth && !sysdep_display_16bpp_capable())
            options.color_depth = 8;
+
+	/* 
+	 * Initialize whatever is needed before the display is actually 
+	 * opened, e.g., artwork setup.
+	 */
+	osd_video_initpre();
 
 	/* go for it */
 	res = run_game (game_index);

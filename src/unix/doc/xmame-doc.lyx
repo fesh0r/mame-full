@@ -1,5 +1,5 @@
-#LyX 1.1 created this file. For more info see http://www.lyx.org/
-\lyxformat 218
+#LyX 1.2 created this file. For more info see http://www.lyx.org/
+\lyxformat 220
 \textclass linuxdoc
 \language english
 \inputencoding default
@@ -11,6 +11,8 @@
 \paperpackage a4
 \use_geometry 0
 \use_amsmath 0
+\use_natbib 0
+\use_numerical_citations 0
 \paperorientation portrait
 \secnumdepth 3
 \tocdepth 3
@@ -64,7 +66,7 @@ Juan Antonio Martinez
  and David Heremans (minor editing)
 \layout Date
 
-v2.1.16, 5 May 2002
+v2.1.20, 9 December 2002
 \layout Abstract
 
 xmame/xmess documentation with an installation guide, the FAQ (frequently
@@ -2507,7 +2509,7 @@ Besides the x11 and SDL drivers, the FX and GL drivers are also capable
  There is a separate chapter for these later on.
 \layout Subsubsection
 
-xmame.x11
+xmame.x11/DGA
 \layout Standard
 
 First, before recompiling, make sure you have an xserver with the 
@@ -2561,7 +2563,78 @@ During play you can switch between windowed and fullscreen mode.
 
 \layout Subsubsection
 
-xmame.sdl
+xmame.x11/Xv
+\layout Standard
+
+Xv is the X Window System video extension.
+ Among other things, it supports hardware scaling if your graphics card
+ (and X driver) is capable of doing so.
+ You can achieve a very nice fullscreen display without taxing your cpu
+ very much because the scaling will all be done by your video card.
+\layout Standard
+
+To determine if your video card supports the Xv extension, you may use this
+ command:
+\layout Verbatim
+
+xvinfo
+\layout Standard
+
+If you don't see a message indicating 
+\begin_inset Quotes eld
+\end_inset 
+
+no screens found
+\begin_inset Quotes erd
+\end_inset 
+
+, then the Xv extension is supported by your machine.
+\layout Standard
+
+To compile this into xmame, select DISPLAY_METHOD = x11 and uncomment the
+ line 
+\begin_inset Quotes eld
+\end_inset 
+
+X11_XV = 1
+\begin_inset Quotes erd
+\end_inset 
+
+ in the makefile.
+\layout Standard
+
+Build xmame, and use the -fullscreen parameter when loading a game to get
+ a nice fullscreen display.
+\layout Standard
+
+If the colors seem messed up and/or you only see half of the game image,
+ try using 
+\begin_inset Quotes eld
+\end_inset 
+
+-yuv
+\begin_inset Quotes erd
+\end_inset 
+
+ or 
+\begin_inset Quotes eld
+\end_inset 
+
+-yv12
+\begin_inset Quotes erd
+\end_inset 
+
+.
+ By default, the Xv extension attempts to use RGB mode if your driver supports
+ it, but some cards' drivers are broken.
+\layout Standard
+
+If your screen goes blank or gets full of little green vertical lines, then
+ your graphics card does not support the Xv extension and you're out of
+ luck.
+\layout Subsubsection
+
+xmame.SDL
 \layout Standard
 
 The SDL library was meant to make it easy for programmers to make full screen
@@ -4067,7 +4140,7 @@ Hans
  --Lawrence Gold)
 \layout Enumerate
 
-Fathers of the mame-creature (main version)
+Fathers of the MAME-creature (main version)
 \begin_deeper 
 \layout Itemize
 
@@ -4077,11 +4150,11 @@ Nicola Salmoria
 Allard van der Bas
 \layout Itemize
 
-Mirko (Mix) Buffoni (General Mantainer)
+Mirko (Mix) Buffoni (General Mantainer during Nicola's national service)
 \end_deeper 
 \layout Enumerate
 
-Fathers of mess
+Fathers of MESS
 \begin_deeper 
 \layout Itemize
 
@@ -4091,7 +4164,10 @@ Brad Oliver
 Richard Bannister
 \layout Itemize
 
-Ben Bruscella (current coordinator) 
+Ben Bruscella
+\layout Itemize
+
+Nathan Woods (current coordinator)
 \end_deeper 
 \layout Enumerate
 
@@ -4251,6 +4327,30 @@ IRIX Sound code
 \end_deeper 
 \layout Enumerate
 
+PS2 Linux support
+\begin_deeper 
+\layout Itemize
+
+Joan Sarah Touzet
+\end_deeper 
+\layout Enumerate
+
+Xv support
+\begin_deeper 
+\layout Itemize
+
+Alastair Robinson
+\end_deeper 
+\layout Enumerate
+
+NetMAME Support
+\begin_deeper 
+\layout Itemize
+
+Steve Freeland
+\end_deeper 
+\layout Enumerate
+
 German readme
 \begin_deeper 
 \layout Itemize
@@ -4323,15 +4423,7 @@ The xmame/xmess sources
 \layout Standard
 
 
-\begin_inset LatexCommand \url[xmame 0.56.2 sources (xmame & xmess)]{download/xmame-0.56.2.tar.bz2}
-
-\end_inset 
-
-
-\layout Standard
-
-
-\begin_inset LatexCommand \url[xmame 0.60.1 sources (xmame only)]{download/xmame-0.60.1.tar.bz2}
+\begin_inset LatexCommand \url[xmame-0.62.1 sources]{download/xmame-0.62.1.tar.bz2}
 
 \end_inset 
 
@@ -4393,7 +4485,7 @@ Unix binaries
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[AMD-optimized builds for various targets]{http://kwyxz.nerim.net/klinux/xmame.html}
+\begin_inset LatexCommand \url[AMD-optimized builds for various targets]{http://www.kwyxz.org/linux/xmame/index.html}
 
 \end_inset 
 
@@ -4427,7 +4519,7 @@ Xmame/xmess download mirrors
 (US)
 \layout Subsection
 
-(X)Mame frontends
+(X)Mame front-ends
 \layout Itemize
 
 
@@ -4443,7 +4535,7 @@ Xmame/xmess download mirrors
 
 \end_inset 
 
-, the Tcl/TK frontend that works in Linux/Unix and MS Windows
+, the Tcl/TK front-end that works in Linux/Unix and MS Windows
 \layout Itemize
 
 
@@ -4511,7 +4603,7 @@ Xmame/xmess download mirrors
 \series bold 
 very good
 \series default 
- frontend (if you gnome) 
+ GNOME front-end 
 \layout Itemize
 
 
@@ -4527,11 +4619,11 @@ very good
 
 \end_inset 
 
-, another great gnome-based frontend 
+, another great GNOME-based front-end 
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[LANZAMAME]{file:/home/david/tmp/xmame-try/realsite/download/lanzamame.tar.bz2}
+\begin_inset LatexCommand \url[LANZAMAME]{http://lanzamame.mameworld.net/}
 
 \end_inset 
 
@@ -4559,7 +4651,7 @@ very good
 
 \end_inset 
 
-, a KDE frontend with MESS and Stella support
+, a KDE front-end with MESS and Stella support
 \layout Itemize
 
 
@@ -4576,6 +4668,38 @@ very good
 \end_inset 
 
  (perl-based menu makers)
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[jMame]{http://www.voicenet.com/~jceklosk/}
+
+\end_inset 
+
+, a Java-based front-end (requires JDE 1.4.0)
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[GXMame]{http://gxmame.sourceforge.net/}
+
+\end_inset 
+
+, a GTK-based front-end striving for MAME32 compatibility
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[CXmame]{http://yeeking.net/cxmame/}
+
+\end_inset 
+
+, a simple console-based front-end
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[KMameleon]{http://designs.stormspirit.net/kmameleon/}
+
+\end_inset 
+
+, a KDE front-end.
 \layout Subsection
 
 Some other links

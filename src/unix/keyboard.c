@@ -328,6 +328,8 @@ int osd_readkey_unicode(int flush)
       return 0;
 }
 
+extern int ui_active;
+
 int osd_keyboard_disabled()
 {
 	return 0;

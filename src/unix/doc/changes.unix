@@ -2,8 +2,42 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
-Release 0.61.1 (in progress)
-	- Almost everything from MAME 0.61 and MESS 0.61.
+Release 0.62.1
+	- Almost everything from MAME 0.62 and MESS 0.62.
+	- The game window should no longer open twice on startup in most cases.
+	  One known exception is Pac-Man with artwork enabled.
+	- Replaced fileio.c with a slightly modified version from the Win32 
+	  codebase.  Be aware that several command line switches have changed as
+	  a result!
+	- Applied the Xv cleanup patch required for the VIDIX patch.  (Alastair 
+	  Robinson)
+	- The OpenGL target should work much better.  (Stephen Anthony)
+	- The number of games is no longer hard-coded to 3000 in datafile.c.  
+	  This should fix problems with history.dat and "-listinfo".  (Rene 
+	  Single)
+	- Rotation is now handled by the OSD code.  The method used is hardly 
+	  optimal, but it should work for all display targets.  Moving the 
+	  rotation to the blit core is planned for a future release.
+	- The Xv target now uses the game driver's aspect ratio unless the 
+	  "-nokeepaspect" or "-noka" switch is specified.  Inspired by Paul 
+	  Sajecki's patch.
+	- Simplified/unified the FPS on-screen display.  This is now only 
+	  overridden when the Barath frameskipper is in debug mode.
+	- The DGA, GGI, and SVGALIB targets now use the game aspect ratio 
+	  provided by the core rather than a hard-coded 4:3.
+	- Using "-x11-mode" or "-x11" to activate DGA fullscreen mode now 
+	  disables Xv.  Likewise, switching to DGA fullscreen mode via <ALT>-
+	  <HOME> is now disabled while Xv is active.
+	- All path and directory options in fileio.c now support expansion of 
+	  environment variables such as $HOME.
+	- Fixed a warning about snprintf when building for Mac OS X.
+	- Fixed the XInput handling so that spinners no longer show an inertial
+	  effect.  (David Mitchell)
+	- Updated the documentation to include a section about the Xv extension.
+	  (Frank Cox)
+
+Release 0.61.1, 13 November 2002
+	- Almost everything from MAME 0.61 and MESS 0.61.2.
 	- The mouse cursor is now hidden in OpenGL fullscreen mode.  (Craig 
 	  Servin)
 	- Applied a patch for FreeBSD to unix/video-drivers/svgainput.c.  
@@ -57,12 +91,12 @@ Release 0.61.1 (in progress)
 	  the SDL target, you may have to set the SDL_CONFIG flag in the 
 	  makefile.  (Stijn Hoop)
 
-Release 0.561.1 (xmess)
+Release 0.561.1 (xmess), 16 May 2002
 	- Everything from MESS 0.561.
 	- Fixed the register constraints in cpu/i8085/i8085cpu.h so that 
 	  cpu/i8085/i8085.c can build for x86 using gcc-3.1 with -O3.
 
-Release 0.60.1 (xmame only)
+Release 0.60.1 (xmame only), 5 May 2002
 	- Everything from MAME 0.60, except for the new special controllers 
 	  support.
 	- Updated the SNK driver to fix sound for games that couldn't use Y8950
@@ -89,7 +123,7 @@ Release 0.60.1 (xmame only)
 	- Updated drivers/wecleman.c to make the car in wecleman controllable.  
 	  (David Haywood)
 	
-Release 0.59.2 (xmame only)
+Release 0.59.2 (xmame only), 17 April 2002
 	- Updated the included zlib library to 1.1.4, which fixes a "double 
 	  free" security vulnerability.
 	- Applied a fix for the fromance video driver.  (Takahiro Nogi)
@@ -104,7 +138,7 @@ Release 0.59.2 (xmame only)
 	  paclandc059red, ncv1058red, av2mj059red, fromancec058red.  (Aaron 
 	  Giles)
 
-Release 0.59.1 (xmame only)
+Release 0.59.1 (xmame only), 25 March 2002
 	- Everything from MAME 0.59.
 	- Set some more sensible defaults for the various path settings in 
 	  fileio.c (e.g., XMAMEROOT/samples for samplepath).
@@ -117,7 +151,7 @@ Release 0.59.1 (xmame only)
 	- The GLmame driver now compiles and runs on the OpenGL 1.1 shipped 
 	  with IRIX, but still doesn't work as it should.  (Andrea Suatoni)
 
-Release 0.58.3 (xmame only)
+Release 0.58.3 (xmame only), 17 March 2002
 	- Cleaned up src/unix/effect.c a bit.  It should now be able to compile 
 	  better with non-GCC compilers.  (Inspiration by Marcus Herbert.)
 	- Fixed a memory core bug in drivers/btoads.c.  (Aaron Giles)
@@ -140,7 +174,7 @@ Release 0.58.3 (xmame only)
 	  (Gilles Hamel)
 	- 'make xlistdev' should work again.  (Bugzilla #189)
 
-Release 0.58.2 (xmame only)
+Release 0.58.2 (xmame only), 10 February 2002
 	- Applied a tilemap fix needed for Numan Athletics.  (Phil Stroffolino)
 	- Fixed a bug that caused the network code to break in FreeBSD.  (Stijn 
 	  Hoop)
@@ -159,7 +193,7 @@ Release 0.58.2 (xmame only)
 	- The xgl target compiles again, but may have problems with vector 
 	  games.
 
-Release 0.58.1 (xmame only)
+Release 0.58.1 (xmame only), 5 February 2002
 	- Everything from MAME 0.58.
 	- Fixed several C++-style comments.
 	- The problem with compiling src/cpu/v60/v60.c in LinuxPPC should really
@@ -180,7 +214,7 @@ Release 0.58.1 (xmame only)
 	- Updated netmame to version 0.4, which should tolerate latency better.
 	  (Steve Freeland)
 
-Release 0.57.1 (xmame only)
+Release 0.57.1 (xmame only), 5 January 2002
 	- Everything from MAME 0.57.
 	- src/cpu/z80.c now builds with gcc 3.0.x using -O3.  (Andrea Mazzoleni)
 	- Fixed a minor typo in src/cpuintrf.c.  (Quench)
@@ -190,7 +224,7 @@ Release 0.57.1 (xmame only)
 	  MAME_NET=1 in the makefile.  See src/unix/doc/multiplayer-readme.txt. 
 	  (Steve Freeland)
 
-Release 0.56.2
+Release 0.56.2, 1 January 2002
 	- Added the MESS 0.56 core.
 	- Added contrib/kxmame.  This script launches xmame.x11 in builds of KDE
 	  which have problems with the window not opening.  (Sylvain Trosset and
@@ -219,7 +253,7 @@ Release 0.56.2
 	  optimization flags on IA32 platforms.
 	- Added src/unix/doc/AIX-install-notes.  (Greg Peter)
 
-Release 0.56.1 (xmame only)
+Release 0.56.1 (xmame only), 21 November 2001
 	- Everything from MAME 0.56.
 	- The svgafx driver is working again--it was broken by the removal of
 	  8bpp support from the core.  (Henri and Jason)
@@ -241,7 +275,7 @@ Release 0.56.1 (xmame only)
 	  using -warn-common.
 	- Added DGA2 documentation: src/unix/doc/dga2.txt.  (Shyouzou Sugitani)
 
-Release 0.55.2 (xmame only)
+Release 0.55.2 (xmame only), 4 October 2001
 	- Added special-cased fast 2x1 and 3x1 scaling to the blit core.  (Adam
 	  Moss)
 	- Added several AdvanceMAME effects, available via -effect/-ef.  Note
@@ -251,7 +285,7 @@ Release 0.55.2 (xmame only)
 	- Fixed compilation errors reported in snprintf.c on some platforms,
 	  e.g. HP-UX 10.20 with GCC 3.0.  (Stefan Becker)
 
-Release 0.55.1 (xmame only)
+Release 0.55.1 (xmame only), 17 September 2001
         - Everything from MAME 0.55.
 	- Removed the romcheck script until its author considers it far enough
 	  along for public consumption.
@@ -261,7 +295,7 @@ Release 0.55.1 (xmame only)
 	  -alsapcm(-pcm) to -alsa-pcm(-apcm); changed the default value of
 	  -alsa-pcm.  (Shyouzou Sugitani)
 
-Release 0.54.2 (xmame only)
+Release 0.54.2 (xmame only), 4 September 2001
 	- Applied a fix for the Bubble Bobble driver.  (Haze)
 	- Added a couple words to the makefile to indicate that the 68020 asm
 	  core is broken.
@@ -275,13 +309,13 @@ Release 0.54.2 (xmame only)
 	- Added mame-cd to contrib/tools.  (Mario J.Barchéin Molina)
 	- Added romcheck to contrib/tools.  (David Griffith)
 
-Release 0.54.1 (xmame only)
+Release 0.54.1 (xmame only), 26 August 2001
 	- Everything from MAME 0.54.
 	- Fixed a compile error in the xgl target caused by a change in the
 	  core.  (Sven Goethel)
 	- Applied a patch that fixes CPS2 games.  (Aaron Giles)
 
-Release 0.37b15.2
+Release 0.37b15.2, 26 August 2001
 	- Everything from MESS 0.37b15.  Yay!
 	- Changed the short version of -list-display-plugins from -ldp to
 	  -ldisp.  -ldp was already being used for -list-dsp-plugins.  (Shyouzou
@@ -289,7 +323,7 @@ Release 0.37b15.2
 	- Fixed prep-new-mess to account for some of the new text file
 	  names/locations.
 
-Release 0.53.1
+Release 0.53.1, 18 August 2001
 	- Everything from MAME 0.53 except for what was missing before.
 	- GLmame now supports LinuxPPC.  (Sven Goethel)
 	- Fixed a problem that could cause an xmame.xgl build to fail when
@@ -303,7 +337,7 @@ Release 0.53.1
 	  to erroneously run on src/unix when processing .h files; made other
 	  cleanups in this script and prep-new-mame.  (Christopher Stone).
 
-Release 0.37b16.1
+Release 0.37b16.1, 7 July 2001
 	- Everything from MAME 0.37b16 except for steadykey support and the new
 	  RGB blitters.  These may be appearing in a later release.  :-)
 	- Added Matt Lowry's latest README, which has been missing from xmame
@@ -323,7 +357,7 @@ Release 0.37b16.1
 	  the xmame.x11 problem whereby the window never displays without using
 	  a workaround.
 
-Release 0.37b15.1 (xmame only)
+Release 0.37b15.1 (xmame only), 26 May 2001
 	- Everything from MAME 0.37b15 except for 'steadykey' support.
 	- Added an aRts sound server driver.  (Manuel Teira)
 	- Added another aRts sound server driver.  It needs reasonable aRts 
@@ -336,7 +370,8 @@ Release 0.37b15.1 (xmame only)
 	- Added dummy flicker and vector orientation functions to fxvec.c so
 	  that xmame.xfx can link again.
 
-Release 0.37b14.2 (xmame only)
+Release 0.37b14.2 (xmame only), 13 May 2001
+-------------------------------------------
 	- Updated the romulan.pl script in contrib/tools.  (Nathan Hand)
 	- The sound device is now released when the emulation is paused.
 	  (Shyouzou Sugitani)
