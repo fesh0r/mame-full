@@ -145,7 +145,9 @@
 #define STOP_LEVEL_STOP 1
 #define STOP_LEVEL_HALT 2
 
-#define NULL 0
+#ifndef NULL
+#define NULL 0L
+#endif
 
 /* ======================================================================== */
 /* ================================ MACROS ================================ */
