@@ -1,3 +1,62 @@
+0.92
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+(none)
+
+
+
+System Driver Changes:
+----------------------
+- [APPLE2] Changed joystick default key mapping so not conflict with keyboard
+  mappings.  [Nate Woods]
+
+- [APPLE2] Fixed a regression that could cause the screen to flash under
+  certain situations.  (bug #634) [Nate Woods]
+  
+- [APPLE2] Fixed a regression that prevented certain Apple II models from
+  booting introduced in MESS 0.91.  (bug #635) [Nate Woods]
+
+- [APPLE2] Complete rewrite of Apple II banking.  [Nate Woods]
+
+- [APPLE2] Driver will now accept .dsk images with up to eight extraneous
+  bytes.  (bug #638) [Nate Woods]
+
+- [COCO] Added support for The Rat graphics mouse.  (bug #639)  [Tim Lindner]
+
+- [PC200] Fixed driver to successfully boot.  [John Elliott]
+
+
+
+User Interface Changes:
+-----------------------
+- [WINDOWS] Toggling the menu bar will no longer change the window size.
+  [Nate Woods]
+
+
+
+Imgtool Changes:
+----------------
+- Created a new Apple ProDOS Imgtool driver (only reading supported for now.)
+  [Nate Woods]
+
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.92.  This incorporates all features of the
+  update to this core.  [MAME team]
+  
+- Changed core to support multiple devices of the same IO_* enum value.  Note
+  that when this is the case, indexing devices with calls that assume a one
+  to one mapping like image_from_devtype_and_index() are no longer legal.
+  [Nate Woods]
+
+- [Windows GUI] Fixed a regression that could cause INI files to be
+  erroneously written to the main directory.
+
+
+
 0.91
 
 New System Drivers Supported (in no particular order):
