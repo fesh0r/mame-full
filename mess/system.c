@@ -162,6 +162,7 @@ TESTDRIVER( studio2 )	/* Studio II										*/
 	DRIVER( coleco )	/* ColecoVision (Original BIOS)						*/
 	DRIVER( colecoa )	/* ColecoVision (Thick Characters)					*/
 	DRIVER( adam )		/* Coleco Adam										*/
+	DRIVER( fnvision )  /* Coleco FunVision                                 */
 
 	/* NEC */
 	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993		*/

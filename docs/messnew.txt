@@ -2,7 +2,7 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-(none)
+- Coleco FunVision [Curt Coder]
 
 
 
@@ -17,6 +17,8 @@ System Driver Changes:
 - [COCO] Implemented .os9 disk image creation support.  (bug #576) [Nate
   Woods]
 
+- [COLECO] Miscellaneous cleanups.  [Curt Coder]
+
 - [GENESIS] Fixed button input declarations.  [Nate Woods]
 
 - [MICROTAN] Fixed a video hardware crash.  [Curt Coder]
@@ -24,13 +26,16 @@ System Driver Changes:
 - [PC] New PIT8253 implementation; Styx and Digger run better now.  Also fixed
   the PIT8253 frequencies and mades some PIC8259 fixes.  [Andrew Jenner]
 
-- [TI99,GENEVE] Updated the IDE card emulation with the latest changes to the
+- [TI99, GENEVE] Updated the IDE card emulation with the latest changes to the
   prototype.  The latest prototype is incompatible with earlier prototypes
   (IDE bus has been byte-swapped), so you need to download the latest DSRs and
   use a new, blank IDE hard disk image.  Also, the state of the IDE clock chip
   (rtc65271) is now saved to disk, so that you can use a rtc bootstrap loader
   to load IDEAL from the IDE harddisk, as explained in Nouspickel's IDEAL page.
   [Raphael Nabet]
+
+- [ZX80] Added natural keyboard support and iscellaneous cleanups.  [Curt
+  Coder]
 
 
 

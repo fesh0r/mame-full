@@ -276,6 +276,7 @@ $(OBJ)/coleco.a:   \
 	$(OBJ)/mess/machine/adam.o		\
 	$(OBJ)/mess/systems/adam.o		\
 	$(OBJ)/mess/formats/adam_dsk.o	\
+	$(OBJ)/mess/systems/fnvision.o	\
 	
 
 $(OBJ)/arcadia.a:  \

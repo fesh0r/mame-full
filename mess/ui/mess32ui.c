@@ -434,6 +434,9 @@ static void MessReadMountedSoftware(int nGame)
 				{
 					i = MessLookupByFilename(this_software);
 
+#if 0
+					// this technique of adding images doesn't seem to work,
+					// so it is enclosed in '#if 0'
 					if (i < 0)
 					{
 						// if the lookup fails, then introduce the item
@@ -443,6 +446,7 @@ static void MessReadMountedSoftware(int nGame)
 						MessIntroduceItem(GetDlgItem(hMain, IDC_SWLIST), this_software, imagetypes);
 						i = MessLookupByFilename(this_software);
 					}
+#endif
 
 					if (i >= 0)
 					{
