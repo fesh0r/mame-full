@@ -8,6 +8,7 @@
 
 #include "driver.h"
 #include "device.h"
+#include "osdutils.h"
 
 struct Devices
 {
