@@ -1052,7 +1052,8 @@ INT32 EnableDisableCheatMenu (struct osd_bitmap *bitmap, INT32 selected)
 
 	if ((input_ui_pressed_repeat(IPT_UI_LEFT,8)) || (input_ui_pressed_repeat(IPT_UI_RIGHT,8)))
 	{
-		if ((CheatTable[tag[sel]].flags & CHEAT_FLAG_COMMENT) == 0)
+// Cow.. fix the left/right on 'return to main menu' bug
+		if ((sel != (total - 1)) && (CheatTable[tag[sel]].flags & CHEAT_FLAG_COMMENT) == 0)
 		{
 			int active = CheatTable[tag[sel]].flags & CHEAT_FLAG_ACTIVE;
 
