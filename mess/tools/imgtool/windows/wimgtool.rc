@@ -56,9 +56,9 @@ IDR_WIMGTOOL_MENU MENU
 BEGIN
     POPUP "&File"
     BEGIN
-        MENUITEM "&New\tCtrl+N",                ID_IMAGE_DELETE
+        MENUITEM "&New\tCtrl+N",                ID_FILE_NEW
         MENUITEM "&Open\tCtrl+O",               ID_FILE_OPEN
-        MENUITEM "&Close",                      ID_IMAGE_EXTRACT
+        MENUITEM "&Close",                      ID_FILE_CLOSE
     END
     POPUP "&Image"
     BEGIN

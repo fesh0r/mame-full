@@ -275,7 +275,7 @@ static void menu_open(HWND window)
 
 	module = imgtool_library_index(library, ofn.nFilterIndex - 1);
 	err = img_open(module, ofn.lpstrFile, (ofn.Flags & OFN_READONLY)
-		? OSD_FOPEN_READ : OSD_FOPEN_READ, &image);
+		? OSD_FOPEN_READ : OSD_FOPEN_RW, &image);
 	if (err)
 		goto done;
 
@@ -426,7 +426,7 @@ static LRESULT wimgtool_create(HWND window, CREATESTRUCT *pcs)
 	memset(info, 0, sizeof(*info));
 	pile_init(&info->iconlist_extensions);
 
-	SetWindowLong(window, GWL_USERDATA, (LONG) info);
+	SetWindowLongPtr(window, GWLP_USERDATA, (LONG_PTR) info);
 
 	SetWindowText(window, TEXT("MESS Image Tool"));
 
@@ -490,11 +490,11 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 
 		case WM_INITMENU:
 			EnableMenuItem((HMENU) wparam, ID_IMAGE_INSERT,
-				info->image ? MF_ENABLED : MF_DISABLED);
+				MF_BYCOMMAND | (info->image ? MF_ENABLED : MF_GRAYED));
 			EnableMenuItem((HMENU) wparam, ID_IMAGE_EXTRACT,
-				info->image ? MF_ENABLED : MF_DISABLED);
+				MF_BYCOMMAND | (info->image ? MF_ENABLED : MF_GRAYED));
 			EnableMenuItem((HMENU) wparam, ID_IMAGE_DELETE,
-				info->image ? MF_ENABLED : MF_DISABLED);
+				MF_BYCOMMAND | (info->image ? MF_ENABLED : MF_GRAYED));
 			break;
 
 		case WM_COMMAND:
