@@ -9,7 +9,7 @@
 #include "mess/utils.h"
 
 static void SoftwareDirectories_GetList(HWND hDlg, LPSTR lpBuf, UINT iBufLen);
-static void SoftwareDirectories_InitList(HWND hDlg, LPCSTR lpList);
+//static void SoftwareDirectories_InitList(HWND hDlg, LPCSTR lpList);
 static BOOL SoftwareDirectories_OnInsertBrowse(HWND hDlg, BOOL bBrowse, LPCSTR lpItem);
 static BOOL SoftwareDirectories_OnDelete(HWND hDlg);
 static BOOL SoftwareDirectories_OnBeginLabelEdit(HWND hDlg, NMHDR* pNMHDR);
@@ -63,6 +63,7 @@ static void SoftwareDirectories_GetList(HWND hDlg, LPSTR lpBuf, UINT iBufLen)
 	}
 }
 
+/*
 static void SoftwareDirectories_InitList(HWND hDlg, LPCSTR lpList)
 {
 	HWND hList;
@@ -103,7 +104,7 @@ static void SoftwareDirectories_InitList(HWND hDlg, LPCSTR lpList)
 
     ListView_SetItemState(hList, 0, LVIS_SELECTED, LVIS_SELECTED);
 }
-
+*/
 static BOOL SoftwareDirectories_OnInsertBrowse(HWND hDlg, BOOL bBrowse, LPCSTR lpItem)
 {
     int nItem;
@@ -191,7 +192,8 @@ static BOOL SoftwareDirectories_OnBeginLabelEdit(HWND hDlg, NMHDR* pNMHDR)
     /* Last item is placeholder for append */
     if (pItem->iItem == ListView_GetItemCount(GetDlgItem(hDlg, IDC_DIR_LIST)) - 1)
     {
-        Edit_SetText(ListView_GetEditControl(GetDlgItem(hDlg, IDC_DIR_LIST)), "");
+        //FIXME!!!!  I cannot get this to compile under mingw
+        //Edit_SetText(ListView_GetEditControl(GetDlgItem(hDlg, IDC_DIR_LIST)), "");
     }
 
     return bResult;
@@ -234,6 +236,7 @@ static BOOL SoftwareDirectories_OnEndLabelEdit(HWND hDlg, NMHDR* pNMHDR)
     return bResult;
 }
 
+/*
 static void SoftwareDirectories_OnCommand(HWND hDlg, int id, HWND hwndCtl, UINT codeNotify)
 {
     switch (id)
@@ -254,6 +257,7 @@ static void SoftwareDirectories_OnCommand(HWND hDlg, int id, HWND hwndCtl, UINT 
         break;
     }
 }
+*/
 
 static BOOL SoftwareDirectories_OnNotify(HWND hDlg, int id, NMHDR* pNMHDR)
 {
@@ -272,6 +276,7 @@ static BOOL SoftwareDirectories_OnNotify(HWND hDlg, int id, NMHDR* pNMHDR)
     return FALSE;
 }
 
+#ifdef USED
 static INT_PTR CALLBACK GameSoftwareOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 
@@ -301,4 +306,4 @@ static INT_PTR CALLBACK GameSoftwareOptionsProc(HWND hDlg, UINT Msg, WPARAM wPar
 
 	return 0;
 }
-
+#endif
