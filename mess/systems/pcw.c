@@ -861,7 +861,6 @@ void pcw_init_machine(void)
 
 	cpu_0_irq_line_vector_w(0, 0x0ff);
 
-    floppy_drives_init();
     nec765_init(&pcw_nec765_interface,NEC765A);
 
 
@@ -883,15 +882,13 @@ void pcw_init_machine(void)
 	pcw_interrupt_counter = 0;
 
 	floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
-        floppy_drive_set_flag_state(0, FLOPPY_DRIVE_PRESENT, 1);
-
 
 	roller_ram_offset = 0;
 
 	pcw_int_timer = timer_pulse(TIME_IN_HZ(300), 0, pcw_timer_interrupt);
 
-        beep_set_state(0,0);
-        beep_set_frequency(0,3750);
+	beep_set_state(0,0);
+	beep_set_frequency(0,3750);
 }
 
 void pcw_init_memory(int size)

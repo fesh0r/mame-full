@@ -12,6 +12,7 @@
 #include "cpu/z80/z80.h"
 #include "includes/enterp.h"
 #include "includes/basicdsk.h"
+#include "includes/wd179x.h"
 
 extern unsigned char *Enterprise_RAM;
 
@@ -36,6 +37,8 @@ void enterprise_init_machine(void)
 
 void enterprise_shutdown_machine(void)
 {
+	wd179x_exit();
+
 	if (Enterprise_RAM != NULL)
 		free(Enterprise_RAM);
 

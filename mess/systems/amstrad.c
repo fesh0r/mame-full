@@ -2260,44 +2260,41 @@ void amstrad_common_init(void)
 
 	amstrad_cycles_at_frame_end = 0;
 	amstrad_cycles_last_write = 0;
-		time_delta_fraction = 0;
+	time_delta_fraction = 0;
 
 	cpu_0_irq_line_vector_w(0, 0x0ff);
 
 	nec765_init(&amstrad_nec765_interface,NEC765A/*?*/);
 
-	floppy_drives_init();
-	floppy_drive_set_flag_state(0, FLOPPY_DRIVE_PRESENT, 1);
-	floppy_drive_set_flag_state(1, FLOPPY_DRIVE_PRESENT, 1);
 	floppy_drive_set_geometry(0, FLOPPY_DRIVE_SS_40);
 	floppy_drive_set_geometry(1, FLOPPY_DRIVE_SS_40);
 
-		/* Juergen is a cool dude! */
-		cpu_set_irq_callback(0, amstrad_cpu_acknowledge_int);
+	/* Juergen is a cool dude! */
+	cpu_set_irq_callback(0, amstrad_cpu_acknowledge_int);
 
-		/* The opcode timing in the Amstrad is different to the opcode
-		timing in the core for the Z80 CPU.
+	/* The opcode timing in the Amstrad is different to the opcode
+	timing in the core for the Z80 CPU.
 
-		The Amstrad hardware issues a HALT for each memory fetch.
-		This has the effect of stretching the timing for Z80 opcodes,
-		so that they are all multiple of 4 T states long. All opcode
-		timings are a multiple of 1us in length. */
+	The Amstrad hardware issues a HALT for each memory fetch.
+	This has the effect of stretching the timing for Z80 opcodes,
+	so that they are all multiple of 4 T states long. All opcode
+	timings are a multiple of 1us in length. */
 
-		previous_op_table = cpu_get_cycle_table(Z80_TABLE_op);
-		previous_cb_table = cpu_get_cycle_table(Z80_TABLE_cb);
-		previous_ed_table = cpu_get_cycle_table(Z80_TABLE_ed);
-		previous_xy_table = cpu_get_cycle_table(Z80_TABLE_xy);
-		previous_xycb_table = cpu_get_cycle_table(Z80_TABLE_xycb);
-		previous_ex_table = cpu_get_cycle_table(Z80_TABLE_ex);
+	previous_op_table = cpu_get_cycle_table(Z80_TABLE_op);
+	previous_cb_table = cpu_get_cycle_table(Z80_TABLE_cb);
+	previous_ed_table = cpu_get_cycle_table(Z80_TABLE_ed);
+	previous_xy_table = cpu_get_cycle_table(Z80_TABLE_xy);
+	previous_xycb_table = cpu_get_cycle_table(Z80_TABLE_xycb);
+	previous_ex_table = cpu_get_cycle_table(Z80_TABLE_ex);
 
-		/* Using the cool code Juergen has provided, I will override
-		the timing tables with the values for the amstrad */
-		cpu_set_cycle_tbl(Z80_TABLE_op, amstrad_cycle_table_op);
-		cpu_set_cycle_tbl(Z80_TABLE_cb, amstrad_cycle_table_cb);
-		cpu_set_cycle_tbl(Z80_TABLE_ed, amstrad_cycle_table_ed);
-		cpu_set_cycle_tbl(Z80_TABLE_xy, amstrad_cycle_table_xy);
-		cpu_set_cycle_tbl(Z80_TABLE_xycb, amstrad_cycle_table_xycb);
-		cpu_set_cycle_tbl(Z80_TABLE_ex, amstrad_cycle_table_ex);
+	/* Using the cool code Juergen has provided, I will override
+	the timing tables with the values for the amstrad */
+	cpu_set_cycle_tbl(Z80_TABLE_op, amstrad_cycle_table_op);
+	cpu_set_cycle_tbl(Z80_TABLE_cb, amstrad_cycle_table_cb);
+	cpu_set_cycle_tbl(Z80_TABLE_ed, amstrad_cycle_table_ed);
+	cpu_set_cycle_tbl(Z80_TABLE_xy, amstrad_cycle_table_xy);
+	cpu_set_cycle_tbl(Z80_TABLE_xycb, amstrad_cycle_table_xycb);
+	cpu_set_cycle_tbl(Z80_TABLE_ex, amstrad_cycle_table_ex);
 }
 
 void amstrad_shutdown_machine(void)

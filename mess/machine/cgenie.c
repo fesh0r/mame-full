@@ -78,7 +78,6 @@ static PDRIVE pd_list[12] = {
 static UINT8 irq_status = 0;
 
 static UINT8 motor_drive = 0;
-static short motor_count = 0;
 static UINT8 head = 0;
 
 static int cass_specified = 0;
@@ -266,7 +265,6 @@ void cgenie_init_machine(void)
     /* wipe out font RAM */
 	memset(&ROM[0x0f400], 0xff, 0x0400);
 
-    floppy_drives_init();
 	wd179x_init(cgenie_fdc_callback);
 
 	if( readinputport(0) & 0x80 )
@@ -339,6 +337,7 @@ void cgenie_init_machine(void)
 
 void cgenie_stop_machine(void)
 {
+	wd179x_exit();
 	tape_put_close();
 }
 
@@ -1153,9 +1152,6 @@ void cgenie_motor_w(int offset, int data)
 	/* currently selected drive */
 	motor_drive = drive;
 
-	/* let it run about 5 seconds */
-	motor_count = 5 * 60;
-
 	wd179x_set_drive(drive);
 	wd179x_set_side(head);
 }
@@ -1280,12 +1276,6 @@ int cgenie_frame_interrupt(void)
 		port_ff ^= FF_BGD0;
 		cgenie_port_ff_w(0, port_ff ^ FF_BGD0);
     }
-
-	if( motor_count )
-	{
-		if( !-motor_count )
-			wd179x_stop_drive();
-	}
 
 	return 0;
 }

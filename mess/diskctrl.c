@@ -36,87 +36,88 @@ int diskcontrol(struct osd_bitmap *bitmap, int selected)
     total = 0;
     sel = selected - 1;
 
-        if (num_devices!=0)
-        {
+	if (num_devices!=0)
+	{
+		int status;
+
+		status = device_status(IO_FLOPPY, id, -1);
+
+		/**  display device type and number **/
+		device_index[0] = id+'0';
+		device_index[1] = '\0';
+		menu_item[total] = device_typename_id(IO_FLOPPY,id);
+		menu_subitem[total] = device_index;
+		flag[total] = 0;
+		total++;
+
+		/** display connected status **/
+		menu_item[total] = "Device Connected Status";
         
+		/* is drive connected? - some drives can be connected and disconnected.
+			e.g. an external 3.5" drive connected to an Amstrad CPC. */
+		item = "disconnected";
+		if (status & FLOPPY_DRIVE_CONNECTED)
+		{
+			item = "connected";
+		}
+		menu_subitem[total] = item;
+		flag[total] = 0;
+		total++;
         
-                /**  display device type and number **/
-            device_index[0] = id+'0';
-                device_index[1] = '\0';
-                menu_item[total] = device_typename_id(IO_FLOPPY,id);
-                menu_subitem[total] = device_index;
-                flag[total] = 0;
-                total++;
-        
-                /** display connected status **/
-                menu_item[total] = "Device Connected Status";
-        
-                /* is drive connected? - some drives can be connected and disconnected.
-                        e.g. an external 3.5" drive connected to an Amstrad CPC. */
-                item = "disconnected";
-                if (device_status(IO_FLOPPY, id, -1) & FLOPPY_DRIVE_PRESENT)
-                {
-                        item = "connected";
-                }
-                menu_subitem[total] = item;
-                flag[total] = 0;
-                total++;
-        
-                /** display write protect status **/
-                /* is disc write protected? */
-            menu_item[total] = "Write Protect Status";
+		/** display write protect status **/
+		/* is disc write protected? */
+		menu_item[total] = "Write Protect Status";
          
-                /* this is the status if drive is not active, or it is active but there is not a disc in the drive */
-                item = "---";
+		/* this is the status if drive is not active, or it is active but there is not a disc in the drive */
+		item = "---";
+
+		/* drive active? */
+		if (status & FLOPPY_DRIVE_CONNECTED)
+		{
+			/* disk in drive */
+			if (status & FLOPPY_DRIVE_DISK_INSERTED)
+			{
+				/* report status of disc */
+				if (status & FLOPPY_DRIVE_DISK_WRITE_PROTECTED)
+				{
+					item = "write disable";
+				}
+				else
+				{
+					item = "write enable";
+				}
+			}
+		}
         
-                /* drive active? */
-                if (device_status(IO_FLOPPY, id, -1) & FLOPPY_DRIVE_PRESENT)
-                {
-                        /* disk in drive */
-                        if (device_status(IO_FLOPPY, id, -1) & FLOPPY_DRIVE_DISK_PRESENT)
-                        {
-                                /* report status of disc */
-                                if (device_status(IO_FLOPPY, id, -1) & FLOPPY_DRIVE_DISK_WRITE_PROTECTED)
-                                {
-                                        item = "write disable";
-                                }
-                                else
-                                {
-                                        item = "write enable";
-                                }
-                        }
-                }
-        
-                menu_subitem[total] = item;
-                flag[total] = 0;
-                total++;
-        
-        
-                /** display device type **/
-                menu_item[total] = "Device Type";
-        
-                item = "---";
-        
-                /* real fdd or image? */
-                if (device_status(IO_FLOPPY, id, -1) & FLOPPY_DRIVE_REAL_FDD)
-                {
-                        item = "real fdd";
-                }
-                else
-                {
-                        item = "image file";
-                }
-        
-                menu_subitem[total] = item;
-                flag[total] = 0;
-                total++;
+		menu_subitem[total] = item;
+		flag[total] = 0;
+		total++;
+
+		/** display device type **/
+		menu_item[total] = "Device Type";
+
+		item = "---";
+
+		/* real fdd or image? */
+		if (status & FLOPPY_DRIVE_REAL_FDD)
+		{
+			item = "real fdd";
+		}
+		else
+		{
+			item = "image file";
+		}
+
+		menu_subitem[total] = item;
+		flag[total] = 0;
+		total++;
     }
     else
     {
-        menu_item[total] = "System does not have disk drive(s)!";
-        menu_subitem[total] = 0;
-        flag[total] = 0;
-        total++;
+		menu_item[total] = "System does not have disk drive(s)!";
+		menu_subitem[total] = 0;
+		flag[total] = 0;
+		total++;
     }
 
     menu_item[total] = "Return to Main Menu";
@@ -155,64 +156,62 @@ int diskcontrol(struct osd_bitmap *bitmap, int selected)
 
     if (num_devices!=0)
     {
-        
-            if (input_ui_pressed(IPT_UI_LEFT))
-            {
-                        switch (sel)
-                        {
-                        case 0:
-                                id = id--;
-        
-                                if (id<0)
-                                {
-                                  id = num_devices-1;
-                                }
-                                break;
-                        case 1:
-                                disk_control_toggle_bit(id, FLOPPY_DRIVE_PRESENT);
-                                break;
-                        case 2:
-                                disk_control_toggle_bit(id, FLOPPY_DRIVE_DISK_WRITE_PROTECTED);
-                                break;
-                        case 3:
-                                disk_control_toggle_bit(id, FLOPPY_DRIVE_REAL_FDD);
-                                break;
-                        default:
-                                break;
-                        }
-                        /* tell updatescreen() to clean after us (in case the window changes size) */
-                        need_to_clear_bitmap = 1;
-            }
-        
-                if (input_ui_pressed(IPT_UI_RIGHT))
-            {
-                        switch (sel)
-                        {
-                        case 0:
-                                id = id++;
-        
-                                if (id>=num_devices)
-                                {
-                                   id = 0;
-                                }
-        
-                                break;
-                        case 1:
-                                disk_control_toggle_bit(id, FLOPPY_DRIVE_PRESENT);
-                                break;
-                        case 2:
-                                disk_control_toggle_bit(id, FLOPPY_DRIVE_DISK_WRITE_PROTECTED);
-                                break;
-                        case 3:
-                                disk_control_toggle_bit(id, FLOPPY_DRIVE_REAL_FDD);
-                                break;
-                         
-                        default:
-                                break;
-                        }
-                        /* tell updatescreen() to clean after us (in case the window changes size) */
-                        need_to_clear_bitmap = 1;
-            }
+		if (input_ui_pressed(IPT_UI_LEFT))
+		{
+			switch (sel)
+			{
+			case 0:
+				id = id--;
+
+				if (id<0)
+				{
+				  id = num_devices-1;
+				}
+				break;
+			case 1:
+				disk_control_toggle_bit(id, FLOPPY_DRIVE_CONNECTED);
+				break;
+			case 2:
+				disk_control_toggle_bit(id, FLOPPY_DRIVE_DISK_WRITE_PROTECTED);
+				break;
+			case 3:
+				disk_control_toggle_bit(id, FLOPPY_DRIVE_REAL_FDD);
+				break;
+			default:
+				break;
+			}
+			/* tell updatescreen() to clean after us (in case the window changes size) */
+			need_to_clear_bitmap = 1;
+		}
+
+		if (input_ui_pressed(IPT_UI_RIGHT))
+		{
+			switch (sel)
+			{
+			case 0:
+				id = id++;
+
+				if (id>=num_devices)
+				{
+				   id = 0;
+				}
+				break;
+			case 1:
+				disk_control_toggle_bit(id, FLOPPY_DRIVE_CONNECTED);
+				break;
+			case 2:
+				disk_control_toggle_bit(id, FLOPPY_DRIVE_DISK_WRITE_PROTECTED);
+				break;
+			case 3:
+				disk_control_toggle_bit(id, FLOPPY_DRIVE_REAL_FDD);
+				break;
+
+			default:
+				break;
+			}
+		/* tell updatescreen() to clean after us (in case the window changes size) */
+		need_to_clear_bitmap = 1;
+		}
     }
 
     if (input_ui_pressed(IPT_UI_SELECT))
@@ -226,15 +225,15 @@ int diskcontrol(struct osd_bitmap *bitmap, int selected)
 			switch (sel)
 			{
 			case 0:
-                        id = id++;
+				id = id++;
 
-                        if (id>=num_devices)
-                        {
-                           id = num_devices-1;
-                        }
+				if (id>=num_devices)
+				{
+				   id = num_devices-1;
+				}
 				break;
 			case 1:
-                                disk_control_toggle_bit(id, FLOPPY_DRIVE_PRESENT);
+				disk_control_toggle_bit(id, FLOPPY_DRIVE_CONNECTED);
 				break;
 			case 2:
 				disk_control_toggle_bit(id, FLOPPY_DRIVE_DISK_WRITE_PROTECTED);

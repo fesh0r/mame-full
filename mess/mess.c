@@ -6,6 +6,7 @@ This file is a set of function calls and defs required for MESS.
 #include <stdarg.h>
 #include "driver.h"
 #include "config.h"
+#include "includes/flopdrv.h"
 
 extern struct GameOptions options;
 
@@ -288,6 +289,26 @@ static int read_crc_config (const char *file, struct image_info *img, const char
 }
 
 
+/* common init for all IO_FLOPPY devices */
+static void	floppy_device_common_init(int id)
+{
+	logerror("floppy device common init: id: %02x\n",id);
+	/* disk inserted */
+	floppy_drive_set_flag_state(id, FLOPPY_DRIVE_DISK_INSERTED, 1);
+	/* drive connected */
+	floppy_drive_set_flag_state(id, FLOPPY_DRIVE_CONNECTED, 1);
+}
+
+/* common exit for all IO_FLOPPY devices */
+static void floppy_device_common_exit(int id)
+{
+	logerror("floppy device common exit: id: %02x\n",id);
+	/* disk removed */
+	floppy_drive_set_flag_state(id, FLOPPY_DRIVE_DISK_INSERTED, 0);
+	/* drive disconnected */
+	floppy_drive_set_flag_state(id, FLOPPY_DRIVE_CONNECTED, 0);
+}
+
 /*
  * Return a name for the device type (to be used for UI functions)
  */
@@ -564,6 +585,10 @@ int init_devices(const void *game)
 	const struct IODevice *dev = gamedrv->dev;
 	int id;
 
+	/* KT - added floppy drives init here. Drivers can override settings, and
+	settings can change in the UI */
+	floppy_drives_init();
+
 	/* initialize all devices */
 	while( dev->count )
 	{
@@ -615,6 +640,14 @@ int init_devices(const void *game)
 					mess_printf("%s init failed (%s)\n", device_typename_id(dev->type,id), device_filename(dev->type,id) );
 					return 1;
 				}
+
+				/* init succeeded */
+				/* if floppy, perform common init */
+				if ((dev->type == IO_FLOPPY) && (device_filename(dev->type, id)))
+				{
+					floppy_device_common_init(id);
+				}
+
 			}
 		}
 		else
@@ -644,11 +677,27 @@ void exit_devices(void)
 			/* shutdown */
 			for( id = 0; id < device_count(dev->type); id++ )
 				(*dev->exit)(id);
+	
 		}
 		else
 		{
 			logerror("%s does not support exit!\n", device_typename(dev->type));
 		}
+
+		/* The following is always executed for a IO_FLOPPY exit */
+		/* KT: if a image is removed:
+			1. Disconnect drive
+			2. Remove disk from drive */
+		/* This is done here, so if a device doesn't support exit, the status
+		will still be correct */
+		if (dev->type == IO_FLOPPY)
+		{
+			for (id = 0; id< device_count(dev->type); id++)
+			{
+				floppy_device_common_exit(id);
+			}
+		}
+		
 		dev++;
 	}
 	for( type = 0; type < IO_COUNT; type++ )
@@ -666,6 +715,9 @@ void exit_devices(void)
 		images[type] = NULL;
 		count[type] = 0;
 	}
+
+	/* KT: clean up */
+	floppy_drives_exit();
 }
 
 /*
@@ -688,6 +740,12 @@ int device_filename_change(int type, int id, const char *name)
 
 	if( dev->exit )
 		dev->exit(id);
+
+	/* if floppy, perform common exit */
+	if (dev->type == IO_FLOPPY)
+	{
+		floppy_device_common_exit(id);
+	}
 
 	if( dev->init )
 	{
@@ -721,6 +779,14 @@ int device_filename_change(int type, int id, const char *name)
 		result = (*dev->init)(id);
 		if( result != INIT_OK && name )
 			return 1;
+
+		/* init succeeded */
+		/* if floppy, perform common init */
+		if (dev->type == IO_FLOPPY)
+		{
+			floppy_device_common_init(id);
+		}
+	
 	}
 	return 0;
 }
@@ -732,6 +798,7 @@ int device_open(int type, int id, int mode, void *args)
 	{
 		if( type == dev->type && dev->open )
 			return (*dev->open)(id,mode,args);
+
 		dev++;
 	}
 	return 1;

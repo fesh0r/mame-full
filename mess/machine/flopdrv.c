@@ -15,6 +15,9 @@
   Real disk operation:
   - set unit id
 
+  TODO:
+	- Disk change handling.
+	- Override write protect if disk image has been opened in read mode
 */
 
 #include "driver.h"
@@ -22,8 +25,9 @@
 
 #define MAX_DRIVES 4
 
-static floppy_drive	drives[MAX_DRIVES];
+static struct floppy_drive	drives[MAX_DRIVES];
 
+/* this is called once in init_devices */
 /* initialise all floppy drives */
 /* and initialise real disc access */
 void	floppy_drives_init(void)
@@ -41,29 +45,40 @@ void	floppy_drives_init(void)
 	as not present - override in driver if more are to be made available */
 	for (i=0; i<MAX_DRIVES; i++)
 	{
-		floppy_drive *pDrive = &drives[i];
+		struct floppy_drive *pDrive = &drives[i];
 
-		/* not real fdd to start off with */
-		pDrive->flags &= ~FLOPPY_DRIVE_REAL_FDD;
+		/* initialise flags */
+		pDrive->flags = FLOPPY_DRIVE_HEAD_AT_TRACK_0;
 
 		if (i==0)
 		{
-			/* set first drive present */
-			floppy_drive_set_flag_state(i, FLOPPY_DRIVE_PRESENT, 1);
+			/* set first drive connected */
+			floppy_drive_set_flag_state(i, FLOPPY_DRIVE_CONNECTED, 1);
 		}
 		else
 		{
-			floppy_drive_set_flag_state(i, FLOPPY_DRIVE_PRESENT, 0);
+			/* all remaining drives are not connected - can be overriden in driver */
+			floppy_drive_set_flag_state(i, FLOPPY_DRIVE_CONNECTED, 0);
 		}
 
+		/* all drives are double-sided 80 track - can be overriden in driver! */
 		floppy_drive_set_geometry(i, FLOPPY_DRIVE_DS_80);
 
 		pDrive->fdd_unit = i;
+
+		/* initialise id index - not so important */
+		pDrive->id_index = 0;
+		/* initialise track */
+		pDrive->current_track = 0;
 	}
 }
 
 void	floppy_drives_exit(void)
 {
+	/* if no floppies, no point cleaning up*/
+	if (device_count(IO_FLOPPY)==0)
+		return;
+
 	osd_fdc_exit();
 }
 
@@ -79,17 +94,25 @@ void	floppy_drives_exit(void)
 
 int	floppy_status(int id, int new_status)
 {
-	floppy_drive *pDrive = &drives[id];
-
+	struct floppy_drive *pDrive;
+	
 	/* check it's in range */
 	if ((id<0) || (id>=MAX_DRIVES))
 		return 0;
 
+	pDrive = &drives[id];
+
 	/* return current status only? */
 	if (new_status!=-1)
 	{
-		/* no, set status too */
-		pDrive->flags = new_status;
+		/* we don't set the flags directly.
+		The flags are "cooked" when we do a floppy_drive_get_flag_state depending on
+		if drive is connected etc. So if we wrote the flags back it would
+		corrupt this information. Therefore we update the flags depending on new_status */
+
+		floppy_drive_set_flag_state(id, FLOPPY_DRIVE_CONNECTED, (new_status & FLOPPY_DRIVE_CONNECTED));
+		floppy_drive_set_flag_state(id, FLOPPY_DRIVE_DISK_WRITE_PROTECTED, (new_status & FLOPPY_DRIVE_DISK_WRITE_PROTECTED));
+		floppy_drive_set_flag_state(id, FLOPPY_DRIVE_REAL_FDD, (new_status & FLOPPY_DRIVE_REAL_FDD));
 	}
 
 	/* return current status */
@@ -151,10 +174,10 @@ void	floppy_drive_set_ready_state(int drive, int state, int flag)
 		and disk motor is on - for Amstrad, Spectrum and PCW*/
 	
 		/* drive present? */
-		if (floppy_drive_get_flag_state(drive, FLOPPY_DRIVE_PRESENT))
+		if (floppy_drive_get_flag_state(drive, FLOPPY_DRIVE_CONNECTED))
 		{
 			/* disk inserted? */
-			if (floppy_drive_get_flag_state(drive, FLOPPY_DRIVE_DISK_PRESENT))
+			if (floppy_drive_get_flag_state(drive, FLOPPY_DRIVE_DISK_INSERTED))
 			{
 				if (floppy_drive_get_flag_state(drive, FLOPPY_DRIVE_MOTOR_ON))
 				{
@@ -190,7 +213,7 @@ int		floppy_drive_get_flag_state(int id, int flag)
 	drive_flags = drives[id].flags;
 
 	/* these flags are independant of a real drive/disk image */
-    flags |= drive_flags & (FLOPPY_DRIVE_PRESENT | FLOPPY_DRIVE_REAL_FDD | FLOPPY_DRIVE_READY | FLOPPY_DRIVE_MOTOR_ON | FLOPPY_DRIVE_INDEX);
+    flags |= drive_flags & (FLOPPY_DRIVE_CONNECTED | FLOPPY_DRIVE_REAL_FDD | FLOPPY_DRIVE_READY | FLOPPY_DRIVE_MOTOR_ON | FLOPPY_DRIVE_INDEX);
 
 	/* real drive? */
 	if (drive_flags & FLOPPY_DRIVE_REAL_FDD)
@@ -199,7 +222,7 @@ int		floppy_drive_get_flag_state(int id, int flag)
         if (flag & (
             FLOPPY_DRIVE_HEAD_AT_TRACK_0 |
             FLOPPY_DRIVE_DISK_WRITE_PROTECTED |
-            FLOPPY_DRIVE_DISK_PRESENT))
+            FLOPPY_DRIVE_DISK_INSERTED))
         {
     
             /* this assumes that the real fdd has a single read/write head. When the head
@@ -221,9 +244,9 @@ int		floppy_drive_get_flag_state(int id, int flag)
                 flags |= fdd_status & FLOPPY_DRIVE_DISK_WRITE_PROTECTED;
             }
              
-            if (flag & FLOPPY_DRIVE_DISK_PRESENT)
+            if (flag & FLOPPY_DRIVE_DISK_INSERTED)
             {
-                flags |= fdd_status & FLOPPY_DRIVE_DISK_PRESENT;
+                flags |= fdd_status & FLOPPY_DRIVE_DISK_INSERTED;
             }
         }
     }
@@ -241,25 +264,33 @@ int		floppy_drive_get_flag_state(int id, int flag)
 		}
 
 		/* disk image inserted into drive? */
-		if (flag & FLOPPY_DRIVE_DISK_PRESENT)
+		if (flag & FLOPPY_DRIVE_DISK_INSERTED)
 		{
 			flags |= drive_flags & flag;
 		}
 
 		if (flag & FLOPPY_DRIVE_DISK_WRITE_PROTECTED)
 		{
-			/* return real state of write protected flag */
-			flags |= drive_flags & FLOPPY_DRIVE_DISK_WRITE_PROTECTED;
+			/* if disk image is read-only return write protected all the time */
+			if (drive_flags & FLOPPY_DRIVE_DISK_IMAGE_READ_ONLY)
+			{
+				flags |= FLOPPY_DRIVE_DISK_WRITE_PROTECTED;
+			}
+			else
+			{
+				/* return real state of write protected flag */
+				flags |= drive_flags & FLOPPY_DRIVE_DISK_WRITE_PROTECTED;
+			}
 		}
 	}
 
 	/* drive present not */
-	if (!(drive_flags & FLOPPY_DRIVE_PRESENT))
+	if (!(drive_flags & FLOPPY_DRIVE_CONNECTED))
 	{
 		/* adjust some flags if drive is not present */
 		flags &= ~FLOPPY_DRIVE_HEAD_AT_TRACK_0;
 		flags |= FLOPPY_DRIVE_DISK_WRITE_PROTECTED;
-		flags &= ~FLOPPY_DRIVE_DISK_PRESENT;
+		flags &= ~FLOPPY_DRIVE_DISK_INSERTED;
 	}
 
     flags &= flag;
@@ -267,31 +298,6 @@ int		floppy_drive_get_flag_state(int id, int flag)
 	return flags;
 }
 
-
-#if 0
-void	floppy_drive_init(void)
-{
-	int i;
-
-	for (i=0; i<4; i++)
-	{
-		floppy_drive *pDrive = get_floppy_drive_ptr(i);
-
-		pDrive->id_index = 0;
-		pDrive->current_track = 0;
-		pDrive->flags = FLOPPY_DRIVE_HEAD_AT_TRACK_0;
-
-		/* 	When Drive is accessed but not fitted,
-		Drive Ready and Write Protected status signals are false. */
-
-		/* When Drive is  fitted and accessed with no disk inserted,
-		Drive Ready status from Drive is false and Write Protected status
-		from Drive 1 is true. */
-
-		floppy_drive_set_geometry(i, FLOPPY_DRIVE_SS_40);
-	}
-}
-#endif
 
 void	floppy_drive_set_geometry(int id, floppy_type type)
 {
@@ -315,15 +321,11 @@ void	floppy_drive_set_geometry(int id, floppy_type type)
 		}
 		break;
 	}
-
-	drives[id].id_index = 0;
-    drives[id].current_track = 3;
-    floppy_drive_seek(id, -1);
 }
 
 void    floppy_drive_seek(int id, signed int signed_tracks)
 {
-	floppy_drive *pDrive;
+	struct floppy_drive *pDrive;
 
 	if ((id<0) || (id>=MAX_DRIVES))
 		return;
@@ -337,7 +339,6 @@ void    floppy_drive_seek(int id, signed int signed_tracks)
 	}
 	else
 	{
-
 		/* update position */
         pDrive->current_track+=signed_tracks;
 
@@ -443,7 +444,7 @@ void    floppy_drive_read_sector_data(int drive, int side, int index1, char *pBu
 {
 	if (floppy_drive_get_flag_state(drive, FLOPPY_DRIVE_REAL_FDD))
 	{
-		floppy_drive *pDrive = &drives[drive];
+		struct floppy_drive *pDrive = &drives[drive];
 
 		logerror("real floppy read\n");
 
@@ -463,7 +464,7 @@ void    floppy_drive_write_sector_data(int drive, int side, int index1, char *pB
 {
 	if (floppy_drive_get_flag_state(drive, FLOPPY_DRIVE_REAL_FDD))
 	{
-		floppy_drive *pDrive = &drives[drive];
+		struct floppy_drive *pDrive = &drives[drive];
 
         /* track, head, sector */
 		osd_fdc_put_sector(pDrive->fdd_unit,side, pDrive->id_buffer[0],

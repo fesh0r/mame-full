@@ -29,10 +29,6 @@ static	UINT8			irq_status = 0;
 #define MAX_GRANULES	8		/* lumps consisted of granules.. aha */
 #define MAX_SECTORS 	5		/* and granules of sectors */
 
-/* this indicates whether the floppy images geometry shall be calculated */
-static UINT8 motor_drive = 0;				/* currently running drive */
-static short motor_count = 0;				/* time out for motor in frames */
-
 #if USE_TRACK
 static UINT8 track[4] = {0, };				/* current track per drive */
 #endif
@@ -368,13 +364,6 @@ int trs80_floppy_init(int id)
 		/* set deleted data address mark for sector specified */
 		basicdsk_set_ddam(id, track, side, sector_id, 1);
 	}
-
-	floppy_drive_set_flag_state(id, FLOPPY_DRIVE_PRESENT, 1);
-
-	/* KT - These should not be necessary because they are handled in basicdsk_floppy_init */
-	floppy_drive_set_flag_state(id, FLOPPY_DRIVE_DISK_PRESENT, 1);
-    floppy_drive_set_flag_state(id, FLOPPY_DRIVE_READY, 1);
-
     return INIT_OK;
 }
 
@@ -382,7 +371,6 @@ static void trs80_fdc_callback(int);
 
 void trs80_init_machine(void)
 {
-	floppy_drives_init();
 	wd179x_init(trs80_fdc_callback);
 
 	if (cas_size)
@@ -400,8 +388,8 @@ void trs80_init_machine(void)
 
 void trs80_shutdown_machine(void)
 {
+	wd179x_exit();
 	tape_put_close();
-	wd179x_stop_drive();
 }
 
 /*************************************
@@ -721,11 +709,6 @@ void trs80_fdc_callback(int event)
 
 int trs80_frame_interrupt (void)
 {
-	if (motor_count && !--motor_count)
-	{
-		floppy_drive_set_flag_state(motor_drive, FLOPPY_DRIVE_MOTOR_ON, 0);
-        wd179x_stop_drive();
-	}
 	return 0;
 }
 
@@ -804,13 +787,6 @@ WRITE_HANDLER( trs80_motor_w )
 	if (drive > 3)
 		return;
 
-	/* currently selected drive */
-	motor_drive = drive;
-
-	/* let it run about 5 seconds */
-	motor_count = 5 * 60;
-
-	floppy_drive_set_flag_state(drive, FLOPPY_DRIVE_MOTOR_ON, 1);
     wd179x_set_drive(drive);
 	wd179x_set_side(head);
 

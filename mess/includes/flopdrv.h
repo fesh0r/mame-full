@@ -28,9 +28,9 @@ typedef struct chrn_id
 } chrn_id;
 
 /* set if drive is present */
-#define FLOPPY_DRIVE_PRESENT					0x0008
+#define FLOPPY_DRIVE_CONNECTED					0x0008
 /* set if disc is in drive */
-#define FLOPPY_DRIVE_DISK_PRESENT				0x0001
+#define FLOPPY_DRIVE_DISK_INSERTED				0x0001
 /* set if disc is write protected - also set if drive is present but no disc in drive */
 #define FLOPPY_DRIVE_DISK_WRITE_PROTECTED		0x0002
 /* set if drive is connected and head is positioned over track 0 */
@@ -41,8 +41,11 @@ typedef struct chrn_id
 #define FLOPPY_DRIVE_INDEX						0x0020
 /* motor state */
 #define FLOPPY_DRIVE_MOTOR_ON					0x0040
-
+/* set if we are accessing a real fdd for this floppy drive */
 #define FLOPPY_DRIVE_REAL_FDD                                   0x0080
+/* set if disk image is read only */
+#define FLOPPY_DRIVE_DISK_IMAGE_READ_ONLY		0x0100
+
 
 typedef struct floppy_interface
 {
@@ -69,7 +72,7 @@ typedef struct floppy_interface
 } floppy_interface;
 
 
-typedef struct floppy_drive
+struct floppy_drive
 {
 	/* flags */
 	int flags;
@@ -90,7 +93,7 @@ typedef struct floppy_drive
     chrn_id ids[32];
 
 	floppy_interface interface;
-} floppy_drive;
+};
 
 
 /* floppy drive types */

@@ -535,8 +535,7 @@ void init_machine_bbcb(void)
 	via_reset();
 	bbcb_IC32_initialise();
 
-    floppy_drives_init();
-	wd179x_init(bbc_fdc_callback);
+    wd179x_init(bbc_fdc_callback);
 
 	i8271_init(&bbc_i8271_interface);
 	i8271_reset();
@@ -545,7 +544,7 @@ void init_machine_bbcb(void)
 
 void stop_machine_bbcb(void)
 {
-	wd179x_stop_drive();
+	wd179x_exit();
     i8271_stop();
 }
 
@@ -562,12 +561,6 @@ int bbc_floppy_init(int id)
 	}
 
 	return INIT_FAILED;
-}
-
-void check_disc_status(void)
-{
-	if (motor_count && !--motor_count)
-		wd179x_stop_drive();
 }
 
 void bbc_wd179x_status_w(int offset,int data)

@@ -240,11 +240,9 @@ void Enterprise_Initialise()
 
 	cpu_irq_line_vector_w(0,0,0x0ff);
 
-	floppy_drives_init();
 	wd179x_init(enterp_wd177x_callback);
 
 	floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
-	floppy_drive_set_flag_state(0, FLOPPY_DRIVE_PRESENT,1);
 }
 
 int enterprise_frame_interrupt(void)

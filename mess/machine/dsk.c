@@ -98,7 +98,6 @@ int dsk_floppy_load(int id)
 		if (thedrive->data)
 		{
 			dsk_disk_image_init(thedrive); /* initialise dsk */
-			floppy_drive_set_flag_state(id, FLOPPY_DRIVE_DISK_PRESENT, 1);
             floppy_drive_set_disk_image_interface(id,&dsk_floppy_interface);
 			return INIT_OK;
 		}
@@ -184,7 +183,6 @@ void dsk_floppy_exit(int id)
 		dsk_save(IO_FLOPPY,id,&thedrive->data);
 		free(thedrive->data);
 	}
-	floppy_drive_set_flag_state(id, FLOPPY_DRIVE_DISK_PRESENT, 0);
 	thedrive->data = NULL;
 }
 

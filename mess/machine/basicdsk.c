@@ -28,46 +28,6 @@ floppy_interface basicdsk_floppy_interface=
 	NULL
 };
 
-#if 0
-void basicdsk_read_sectormap(basicdsk *w, UINT8 drive, UINT8 * tracks, UINT8 * heads, UINT8 * sec_per_track)
-{
-	SECMAP *p;
-	UINT8 head;
-
-    if (!w->secmap)
-		w->secmap = malloc(0x2200);
-	if (!w->secmap) return;
-	osd_fseek(w->image_file, 0, SEEK_SET);
-	osd_fread(w->image_file, w->secmap, 0x2200);
-	w->offset = 0x2200;
-	w->tracks = 0;
-	w->heads = 0;
-	w->sec_per_track = 0;
-        w->first_sector_id = 0x0ff;
-	for (p = w->secmap; p->track != 0xff; p++)
-	{
-		if (p->track > w->tracks)
-			w->tracks = p->track;
-
-                if (p->sector < w->first_sector_id)
-                        w->first_sector_id = p->sector;
-
-		if (p->sector > w->sec_per_track)
-			w->sec_per_track = p->sector;
-		head = (p->status >> 4) & 1;
-		if (head > w->heads)
-			w->heads = head;
-	}
-	*tracks = w->tracks++;
-	*heads = w->heads++;
-	*sec_per_track = w->sec_per_track++;
-#if VERBOSE
-        logerror("basicdsk geometry for drive #%d is %d tracks, %d heads, %d sec/track\n",
-				drive, w->tracks, w->heads, w->sec_per_track);
-#endif
-}
-#endif
-
 /* attempt to insert a disk into the drive specified with id */
 int basicdsk_floppy_init(int id)
 {
@@ -98,8 +58,6 @@ int basicdsk_floppy_init(int id)
 		/* this will be setup in the set_geometry function */
 		w->ddam_map = NULL;
 
-		/* disk present */
-		floppy_drive_set_flag_state(id, FLOPPY_DRIVE_DISK_PRESENT, 1);
 		floppy_drive_set_disk_image_interface(id,&basicdsk_floppy_interface);
 
 		return  INIT_OK;
@@ -132,9 +90,6 @@ void basicdsk_floppy_exit(int id)
 		free(pDisk->ddam_map);
 		pDisk->ddam_map = NULL;
 	}
-
-	 /* not present */
-	floppy_drive_set_flag_state(id, FLOPPY_DRIVE_DISK_PRESENT, 0);
 }
 
 /* set data mark/deleted data mark for the sector specified. If ddam!=0, the sector will
@@ -288,42 +243,6 @@ void basicdsk_set_geometry(UINT8 drive, UINT8 tracks, UINT8 heads, UINT8 sec_per
 static int basicdsk_seek(basicdsk * w, UINT8 t, UINT8 h, UINT8 s)
 {
 unsigned long offset;
-
-#if 0
-SECMAP *p;
-UINT8 head;
-
-    if (w->secmap)
-	{
-		offset = 0x2200;
-		for (p = w->secmap; p->track != 0xff; p++)
-		{
-			if (p->track == t && p->sector == s)
-			{
-				head = (p->status & 0x10) >> 4;
-				if (head == h)
-				{
-#if VERBOSE
-                                        logerror("basicdsk seek track:%d head:%d sector:%d-> offset #0x%08lX\n",
-                                                                 t, h, s, offset);
-#endif
-					if (osd_fseek(w->image_file, offset, SEEK_SET) < 0)
-					{
-                                                logerror("basicdsk seek failed\n");
-                                                return 0;
-					}
-					return 1;
-				}
-			}
-			offset += 0x100;
-		}
-#if VERBOSE
-                logerror("basicdsk seek track:%d head:%d sector:%d : seek err\n",
-                                         t, h, s);
-#endif
-		return 0;
-	}
-#endif
 	/* allow two additional tracks */
     if (t >= w->tracks + 2)
 	{

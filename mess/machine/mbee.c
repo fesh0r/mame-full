@@ -35,12 +35,12 @@ static void pio_interrupt(int state)
 void mbee_init_machine(void)
 {
 	z80pio_init(&pio_intf);
-    floppy_drives_init();
     wd179x_init(mbee_fdc_callback);
 }
 
 void mbee_shutdown_machine(void)
 {
+	wd179x_exit();
 }
 
 /* PIO B data bits
@@ -116,15 +116,15 @@ WRITE_HANDLER ( mbee_fdc_motor_w )
 	fdc_head = (data >> 2) & 1;
 	fdc_den = (data >> 3) & 1;
 	wd179x_set_drive(fdc_drv);
-        wd179x_set_side(fdc_head);
-        if (data & (1<<3))
-        {
-           wd179x_set_density(DEN_FM_HI);
-        }
-        else
-        {
-           wd179x_set_density(DEN_MFM_LO);
-        }
+	wd179x_set_side(fdc_head);
+	if (data & (1<<3))
+	{
+	   wd179x_set_density(DEN_FM_HI);
+	}
+	else
+	{
+	   wd179x_set_density(DEN_MFM_LO);
+	}
 
 }
 

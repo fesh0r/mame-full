@@ -143,9 +143,6 @@ void coupe_init_machine_common(void)
 
     coupe_update_memory();
 
-    /* KT */
-    /* how are DRQ and IRQ from WD177X handled by Coupe? */
-    floppy_drives_init();
     wd179x_init(NULL);
 }
 
@@ -165,6 +162,7 @@ void coupe_init_machine_512(void)
 
 void coupe_shutdown_machine(void)
 {
+	wd179x_exit();
 }
 
 /*************************************

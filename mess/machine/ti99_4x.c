@@ -440,9 +440,8 @@ void ti99_init_machine(void)
 	 */
 	TMS9928A_int_callback(tms9901_set_int2);
 
-    floppy_drives_init();
 	wd179x_init(ti99_fdc_callback);				/* initialize the floppy disk controller */
-        wd179x_set_density(DEN_FM_LO);
+	wd179x_set_density(DEN_FM_LO);
 
 	tms9901_init(& tms9901reset_param_ti99);
 
@@ -451,8 +450,7 @@ void ti99_init_machine(void)
 
 void ti99_stop_machine(void)
 {
-	wd179x_stop_drive();
-
+	wd179x_exit();
 	tms9901_cleanup();
 }
 

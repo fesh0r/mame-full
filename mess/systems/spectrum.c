@@ -201,8 +201,6 @@ void spectrum_plus3_init_machine(void)
 
 		floppy_drive_set_geometry(0, FLOPPY_DRIVE_SS_40);
 		floppy_drive_set_geometry(1, FLOPPY_DRIVE_SS_40);
-		floppy_drive_set_flag_state(0, FLOPPY_DRIVE_PRESENT, 1);
-		floppy_drive_set_flag_state(1, FLOPPY_DRIVE_PRESENT, 1);
 
 		/* Initial configuration */
 		spectrum_128_port_7ffd_data = 0;
@@ -216,6 +214,14 @@ void  spectrum_128_exit_machine(void)
 {
 		if (spectrum_128_ram!=NULL)
 				free(spectrum_128_ram);
+}
+
+/* KT - added plus3 exit machine. nec765 stop required - otherwise timers would
+still be allocated */
+void	spectrum_plus3_exit_machine(void)
+{
+	nec765_stop();
+	spectrum_128_exit_machine();
 }
 
 
@@ -1489,18 +1495,18 @@ static struct MachineDriver machine_driver_spectrum =
 	/* sound hardware */
 	0,0,0,0,
 		{
-				/* standard spectrum sound */
-				{
-						SOUND_SPEAKER,
-						&spectrum_speaker_interface
-				},
-				/*-----------------27/02/00 10:40-------------------
-				 cassette wave interface
-				--------------------------------------------------*/
-				{
-						SOUND_WAVE,
-						&spectrum_wave_interface,
-				}
+			/* standard spectrum sound */
+			{
+					SOUND_SPEAKER,
+					&spectrum_speaker_interface
+			},
+			/*-----------------27/02/00 10:40-------------------
+			 cassette wave interface
+			--------------------------------------------------*/
+			{
+					SOUND_WAVE,
+					&spectrum_wave_interface,
+			}
 		}
 };
 
@@ -1538,23 +1544,23 @@ static struct MachineDriver machine_driver_spectrum_128 =
 	/* sound hardware */
 	0,0,0,0,
 		{
-				/* +3 Ay-3-8912 sound */
-				{
-						SOUND_AY8910,
-						&spectrum_128_ay_interface,
-				},
-				/* standard spectrum buzzer sound */
-				{
-						SOUND_SPEAKER,
-						&spectrum_speaker_interface,
-				},
-				/*-----------------27/02/00 10:40-------------------
-				 cassette wave interface
-				--------------------------------------------------*/
-				{
-						SOUND_WAVE,
-						&spectrum_wave_interface,
-				}
+			/* +3 Ay-3-8912 sound */
+			{
+					SOUND_AY8910,
+					&spectrum_128_ay_interface,
+			},
+			/* standard spectrum buzzer sound */
+			{
+					SOUND_SPEAKER,
+					&spectrum_speaker_interface,
+			},
+			/*-----------------27/02/00 10:40-------------------
+			 cassette wave interface
+			--------------------------------------------------*/
+			{
+					SOUND_WAVE,
+					&spectrum_wave_interface,
+			}
 		}
 };
 
@@ -1573,7 +1579,7 @@ static struct MachineDriver machine_driver_spectrum_plus3 =
 	50, 2500,		/* frames per second, vblank duration */
 	1,
 		spectrum_plus3_init_machine,
-		spectrum_128_exit_machine,
+		spectrum_plus3_exit_machine,
 
 	/* video hardware */
 		SPEC_SCREEN_WIDTH,				/* screen width */
@@ -1592,23 +1598,23 @@ static struct MachineDriver machine_driver_spectrum_plus3 =
 	/* sound hardware */
 	0,0,0,0,
 		{
-				/* +3 Ay-3-8912 sound */
-				{
-						SOUND_AY8910,
-						&spectrum_128_ay_interface,
-				},
-				/* standard spectrum buzzer sound */
-				{
-						SOUND_SPEAKER,
-						&spectrum_speaker_interface,
-				},
-				/*-----------------27/02/00 10:40-------------------
-				 cassette wave interface
-				--------------------------------------------------*/
-				{
-						SOUND_WAVE,
-						&spectrum_wave_interface,
-				}
+			/* +3 Ay-3-8912 sound */
+			{
+					SOUND_AY8910,
+					&spectrum_128_ay_interface,
+			},
+			/* standard spectrum buzzer sound */
+			{
+					SOUND_SPEAKER,
+					&spectrum_speaker_interface,
+			},
+			/*-----------------27/02/00 10:40-------------------
+			 cassette wave interface
+			--------------------------------------------------*/
+			{
+					SOUND_WAVE,
+					&spectrum_wave_interface,
+			}
 		}
 };
 
@@ -1646,23 +1652,23 @@ static struct MachineDriver machine_driver_ts2068 =
 	/* sound hardware */
 	0,0,0,0,
 		{
-				/* +3 Ay-3-8912 sound */
-				{
-						SOUND_AY8910,
-						&spectrum_128_ay_interface,
-				},
-				/* standard spectrum sound */
-				{
-						SOUND_SPEAKER,
-						&spectrum_speaker_interface
-				},
-				/*-----------------27/02/00 10:40-------------------
-				 cassette wave interface
-				--------------------------------------------------*/
-				{
-						SOUND_WAVE,
-						&spectrum_wave_interface,
-				}
+			/* +3 Ay-3-8912 sound */
+			{
+					SOUND_AY8910,
+					&spectrum_128_ay_interface,
+			},
+			/* standard spectrum sound */
+			{
+					SOUND_SPEAKER,
+					&spectrum_speaker_interface
+			},
+			/*-----------------27/02/00 10:40-------------------
+			 cassette wave interface
+			--------------------------------------------------*/
+			{
+					SOUND_WAVE,
+					&spectrum_wave_interface,
+			}
 		}
 };
 
@@ -1700,18 +1706,18 @@ static struct MachineDriver machine_driver_tc2048 =
 	/* sound hardware */
 	0,0,0,0,
 		{
-				/* standard spectrum sound */
-				{
-						SOUND_SPEAKER,
-						&spectrum_speaker_interface
-				},
-				/*-----------------27/02/00 10:40-------------------
-				 cassette wave interface
-				--------------------------------------------------*/
-				{
-						SOUND_WAVE,
-						&spectrum_wave_interface,
-				}
+			/* standard spectrum sound */
+			{
+					SOUND_SPEAKER,
+					&spectrum_speaker_interface
+			},
+			/*-----------------27/02/00 10:40-------------------
+			 cassette wave interface
+			--------------------------------------------------*/
+			{
+					SOUND_WAVE,
+					&spectrum_wave_interface,
+			}
 		}
 };
 

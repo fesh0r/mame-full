@@ -72,7 +72,6 @@ void atom_init_machine(void)
 	atom_8255.atom_8255_portb = 0xff;
 	atom_8255.atom_8255_portc = 0xff;
 
-	floppy_drives_init();
 	i8271_init(&atom_8271_interface);
 }
 

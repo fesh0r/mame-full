@@ -517,7 +517,6 @@ void nc200_init_machine(void)
 
         nc_common_init_machine();
 
-        floppy_drives_init();
         nec765_init(&nc200_nec765_interface, NEC765A);
         floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
         floppy_drive_set_motor_state(0,1);

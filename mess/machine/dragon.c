@@ -1462,7 +1462,6 @@ enum {
 
 static void coco_fdc_init(void)
 {
-    floppy_drives_init();
     wd179x_init(coco_fdc_callback);
 	dskreg = -1;
 	raise_nmi = 0;
@@ -1574,9 +1573,9 @@ static void set_dskreg(int data, int hardware)
 		wd179x_set_drive(drive);
                 wd179x_set_side(head);
 	}
-	else {
-		wd179x_stop_drive();
-	}
+//	else {
+//		wd179x_stop_drive();
+//	}
 
 }
 
@@ -1778,6 +1777,7 @@ void coco3_init_machine(void)
 
 void dragon_stop_machine(void)
 {
+	wd179x_exit();
 }
 
 /***************************************************************************

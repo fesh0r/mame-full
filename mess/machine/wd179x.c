@@ -295,7 +295,12 @@ static void read_track(WD179X * w)
 #endif
 }
 
+/* currently a empty function - to be completed! */
+void	wd179x_exit(void)
+{
+}
 
+#if 0
 void wd179x_stop_drive(void)
 {
 	WD179X *w = &wd;
@@ -307,7 +312,7 @@ void wd179x_stop_drive(void)
 		(*w->callback) (WD179X_DRQ_CLR);
 	w->status_ipl = 0;
 }
-
+#endif
 
 /* calculate CRC for data address marks or sector data */
 static void calc_crc(UINT16 * crc, UINT8 value)
