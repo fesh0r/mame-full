@@ -123,6 +123,30 @@ static mame_timer *dpy_timer;
 /* light pen config */
 static lightpen_t lightpen;
 
+
+/* MIT parallel drum (mostly similar to type 23) */
+typedef struct parallel_drum_t
+{
+	mame_file *fd;	/* file descriptor of drum image */
+
+	int il;			/* initial location (12-bit) */
+	int wc;			/* word counter (12-bit) */
+	int wcl;		/* word core location counter (16-bit) */
+	int rfb;		/* read field buffer (5-bit) */
+	int wfb;		/* write field buffer (5-bit) */
+
+	int dba;
+
+	mame_timer *rotation_timer;	/* timer called each time dc is 0 */
+	mame_timer *il_timer;		/* timer called each time dc is il */
+} parallel_drum_t;
+
+static parallel_drum_t parallel_drum;
+
+#define PARALLEL_DRUM_WORD_TIME TIME_IN_USEC(8.5)
+#define PARALLEL_DRUM_ROTATION_TIME TIME_IN_USEC(8.5*4096)
+
+
 /*
 	driver init function
 
@@ -970,6 +994,156 @@ void iot_dpy(int op2, int nac, int mb, int *io, int ac)
 		timer_adjust(dpy_timer, TIME_IN_USEC(50), 0, 0.);
 	}
 }
+
+
+
+/*
+	MIT parallel drum (variant of type 23)
+*/
+
+static void parallel_drum_set_il(int il)
+{
+	double il_phase;
+
+	parallel_drum.il = il;
+
+	il_phase = (il * PARALLEL_DRUM_WORD_TIME) - timer_timeelapsed(parallel_drum.rotation_timer);
+	if (il_phase < 0.)
+		il_phase += PARALLEL_DRUM_ROTATION_TIME;
+	timer_adjust(parallel_drum.il_timer, il_phase, 0, PARALLEL_DRUM_ROTATION_TIME);
+}
+
+static void il_timer_callback(int dummy)
+{
+	(void) dummy;
+
+	if (parallel_drum.dba)
+	{
+		/* set break request and status bit 5 */
+		/* ... */
+	}
+}
+
+static void parallel_drum_init(void)
+{
+	parallel_drum.rotation_timer = timer_alloc(NULL);
+	timer_adjust(parallel_drum.rotation_timer, PARALLEL_DRUM_ROTATION_TIME, 0, PARALLEL_DRUM_ROTATION_TIME);
+
+	parallel_drum.il_timer = timer_alloc(il_timer_callback);
+	parallel_drum_set_il(0);
+}
+
+/*
+	Open a file for drum
+*/
+DEVICE_LOAD(pdp1_drum)
+{
+	/* open file */
+	parallel_drum.fd = file;
+
+	return INIT_PASS;
+}
+
+DEVICE_UNLOAD(pdp1_drum)
+{
+	parallel_drum.fd = NULL;
+}
+
+void iot_dia(int op2, int nac, int mb, int *io, int ac)
+{
+	parallel_drum.wfb = ((*io) & 0370000) >> 12;
+	parallel_drum_set_il((*io) & 0007777);
+
+	parallel_drum.dba = 0;	/* right? */
+}
+
+void iot_dba(int op2, int nac, int mb, int *io, int ac)
+{
+	parallel_drum.wfb = ((*io) & 0370000) >> 12;
+	parallel_drum_set_il((*io) & 0007777);
+
+	parallel_drum.dba = 1;
+}
+
+/*
+	Read a word from drum
+*/
+static UINT32 drum_read(int field, int position)
+{
+	int offset = (field*4096+position)*3;
+	UINT8 buf[3];
+
+	if (parallel_drum.fd && (!mame_fseek(parallel_drum.fd, offset, SEEK_SET)) && (mame_fread(parallel_drum.fd, buf, 3) == 3))
+		return ((buf[0] << 16) | (buf[1] << 8) | buf[2]) & 0777777;
+
+	return 0;
+}
+
+/*
+	Write a word to drum
+*/
+static void drum_write(int field, int position, UINT32 data)
+{
+	int offset = (field*4096+position)*3;
+	UINT8 buf[3];
+
+	if (parallel_drum.fd)
+	{
+		buf[0] = data >> 16;
+		buf[1] = data >> 8;
+		buf[2] = data;
+
+		mame_fseek(parallel_drum.fd, offset, SEEK_SET);
+		mame_fwrite(parallel_drum.fd, buf, 3);
+	}
+}
+
+void iot_dcc(int op2, int nac, int mb, int *io, int ac)
+{
+	double delay;
+	int dc;
+
+	parallel_drum.rfb = ((*io) & 0370000) >> 12;
+	parallel_drum.wc = - ((*io) & 0007777);
+
+	parallel_drum.wcl = ac & 0177777/*0007777???*/;
+
+	parallel_drum.dba = 0;	/* right? */
+	/* clear status bit 5... */
+
+	/* do transfer */
+	delay = timer_timeleft(parallel_drum.il_timer);
+	dc = parallel_drum.il;
+	do
+	{
+		if ((parallel_drum.wfb >= 1) && (parallel_drum.wfb <= 22))
+		{
+			drum_write(parallel_drum.wfb-1, dc, READ_PDP_18BIT(parallel_drum.wcl));
+		}
+
+		if ((parallel_drum.rfb >= 1) && (parallel_drum.rfb <= 22))
+		{
+			WRITE_PDP_18BIT(parallel_drum.wcl, drum_read(parallel_drum.rfb-1, dc));
+		}
+
+		parallel_drum.wc = (parallel_drum.wc+1) & 07777;
+		parallel_drum.wcl = (parallel_drum.wcl+1) & 0177777/*0007777???*/;
+		dc = (dc+1) & 07777;
+		if (parallel_drum.wc)
+			delay += PARALLEL_DRUM_WORD_TIME;
+	} while (parallel_drum.wc);
+	activecpu_adjust_icount(-TIME_TO_CYCLES(0, delay));
+	/* if no error, skip */
+	cpunum_set_reg(0, PDP1_PC, cpunum_get_reg(0, PDP1_PC)+1);
+}
+
+void iot_dra(int op2, int nac, int mb, int *io, int ac)
+{
+	(*io) = (int) (timer_timeelapsed(parallel_drum.rotation_timer)/PARALLEL_DRUM_WORD_TIME) & 0007777;
+
+	/* set parity error and timing error... */
+}
+
 
 
 /*

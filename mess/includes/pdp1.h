@@ -137,6 +137,13 @@ void iot_tyi(int op2, int nac, int mb, int *io, int ac);
 
 void iot_dpy(int op2, int nac, int mb, int *io, int ac);
 
+DEVICE_LOAD(pdp1_drum);
+DEVICE_UNLOAD(pdp1_drum);
+void iot_dia(int op2, int nac, int mb, int *io, int ac);
+void iot_dba(int op2, int nac, int mb, int *io, int ac);
+void iot_dcc(int op2, int nac, int mb, int *io, int ac);
+void iot_dra(int op2, int nac, int mb, int *io, int ac);
+
 void iot_011(int op2, int nac, int mb, int *io, int ac);
 
 void iot_cks(int op2, int nac, int mb, int *io, int ac);

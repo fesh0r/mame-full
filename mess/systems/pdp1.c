@@ -382,6 +382,9 @@ pdp1_reset_param_t pdp1_reset_param =
 		/* I put a ? when the source is the handbook, since a) I have used the maintainance manual
 		as the primary source (as it goes more into details) b) the handbook and the maintainance
 		manual occasionnally contradict each other. */
+		/* dia, dba, dcc, dra are documented in MIT PDP-1 COMPUTER MODIFICATION
+		BULLETIN no. 2 (drumInstrWriteup.bin/drumInstrWriteup.txt), and are
+		similar to IOT documented in Parallel Drum Type 23 Instruction Manual. */
 	/*	(iot)		rpa			rpb			tyo			tyi			ppa			ppb			dpy */
 		NULL,		iot_rpa,	iot_rpb,	iot_tyo,	iot_tyi,	iot_ppa,	iot_ppb,	iot_dpy,
 	/*				spacewar																 */
@@ -394,8 +397,8 @@ pdp1_reset_param_t pdp1_reset_param =
 		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,
 	/*	(dsc)		(asc)		(isb)		(cac)		(lsm)		(esm)		(cbs)		 */
 		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,
-	/*	icv?																	mri|rlc?	mrf/inr?/ccr? */
-		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,
+	/*	icv?		dia			dba			dcc			dra						mri|rlc?	mrf/inr?/ccr? */
+		NULL,		iot_dia,	iot_dba,	iot_dcc,	iot_dra,	NULL,		NULL,		NULL,
 	/*	mcb|dur?	mwc|mtf?	mrc|sfc?...	msm|cgo?	(eem/lem)	mic			muf			 */
 		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,
 	},
@@ -471,6 +474,7 @@ SYSTEM_CONFIG_START(pdp1)
 	CONFIG_RAM(64 * 1024)*/
 	CONFIG_DEVICE_LEGACY(IO_PUNCHTAPE, 2, "tap\0rim\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_NONE, device_init_pdp1_tape, NULL, device_load_pdp1_tape, device_unload_pdp1_tape, NULL)
 	CONFIG_DEVICE_LEGACY(IO_PRINTER, 1, "typ\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_WRITE, NULL, NULL, device_load_pdp1_typewriter, device_unload_pdp1_typewriter, NULL)
+	CONFIG_DEVICE_LEGACY(IO_CYLINDER, 1, "drm\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW, NULL, NULL, device_load_pdp1_drum, device_unload_pdp1_drum, NULL)
 SYSTEM_CONFIG_END
 
 
