@@ -8,6 +8,13 @@
 # endif
 #endif
 
+// define this for debugging sessions
+//#define DEBUG
+
+// define this to use digital inputs instead of the slow
+// autocentering analog mame joys
+#define ANALOG_HACK
+
 int vc4000_video_line(void);
 READ_HANDLER(vc4000_vsync_r);
 
@@ -18,7 +25,7 @@ WRITE_HANDLER(vc4000_video_w);
 // space vultures sprites above
 // combat below and invisible
 #define YPOS 8
-#define YBOTTOM_SIZE 24
+#define YBOTTOM_SIZE 40
 // grand slam sprites left and right
 // space vultures left
 // space attack left
