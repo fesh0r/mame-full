@@ -19,6 +19,8 @@ System Driver Changes:
   does make any difference for single-sided images, but you will need to
   convert double-sided image. [Raphael Nabet]
 
+- [SNES] Fixed negative increment in GDMA. [Anthony Kruize]
+
 Source Changes:
 ---------------
 - Modified flopdrv.c to reset pDrive->id_index to zero when head is moved

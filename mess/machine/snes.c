@@ -15,11 +15,6 @@
 #include "cpu/g65816/g65816.h"
 #include "image.h"
 
-/* -- Macros -- */
-/* Handles double-write(16bit) registers */
-#define DOUBLE_WRITE( addr, data )				\
-	addr = ((addr >> 8) & 0xff) + (data << 8);
-
 /* -- Useful Defines -- */
 #define USE_SPCSKIPPER		/* Use the SPCSkipper instead of the SPC700 */
 
@@ -138,6 +133,7 @@ static void snes_save_sram(void)
 MACHINE_INIT( snes )
 {
 	snes_init_ram();
+
 	/* Set STAT78 to NTSC or PAL */
 	if( Machine->drv->frames_per_second == 60 )
 		snes_ram[STAT78] = SNES_NTSC;
@@ -153,6 +149,7 @@ MACHINE_STOP( snes )
 }
 
 /* Handle reading of Mode 20 SRAM */
+/* 0x700000 - 0x77ffff */
 READ_HANDLER( snes_r_sram )
 {
 	UINT8 value = 0xff;
@@ -652,7 +649,7 @@ WRITE_HANDLER( snes_w_io )
 			break;
 		case OAMDATA:	/* Data for OAM write (DW) */
 			{
-				DOUBLE_WRITE(snes_oam[snes_ppu.oam.address], data );
+				snes_oam[snes_ppu.oam.address] = ((snes_oam[snes_ppu.oam.address] >> 8) & 0xff) + (data << 8);
 				snes_ram[OAMDATA] = (snes_ram[OAMDATA] + 1) % 2;
 				if( snes_ram[OAMDATA] == 0 )
 				{
@@ -695,28 +692,28 @@ WRITE_HANDLER( snes_w_io )
 			snes_ppu.layer[3].data = (data & 0xf0) << 9;
 			break;
 		case BG1HOFS:	/* BG1 - horizontal scroll (DW) */
-			DOUBLE_WRITE( snes_ppu.bgd_offset.horizontal[0], data )
+			snes_ppu.bgd_offset.horizontal[0] = ((snes_ppu.bgd_offset.horizontal[0] >> 8) & 0xff) + (data << 8);
 			return;
 		case BG1VOFS:	/* BG1 - vertical scroll (DW) */
-			DOUBLE_WRITE( snes_ppu.bgd_offset.vertical[0], data )
+			snes_ppu.bgd_offset.vertical[0] = ((snes_ppu.bgd_offset.vertical[0] >> 8) & 0xff) + (data << 8);
 			return;
 		case BG2HOFS:	/* BG2 - horizontal scroll (DW) */
-			DOUBLE_WRITE( snes_ppu.bgd_offset.horizontal[1], data )
+			snes_ppu.bgd_offset.horizontal[1] = ((snes_ppu.bgd_offset.horizontal[1] >> 8) & 0xff) + (data << 8);
 			return;
 		case BG2VOFS:	/* BG2 - vertical scroll (DW) */
-			DOUBLE_WRITE( snes_ppu.bgd_offset.vertical[1], data )
+			snes_ppu.bgd_offset.vertical[1] = ((snes_ppu.bgd_offset.vertical[1] >> 8) & 0xff) + (data << 8);
 			return;
 		case BG3HOFS:	/* BG3 - horizontal scroll (DW) */
-			DOUBLE_WRITE( snes_ppu.bgd_offset.horizontal[2], data )
+			snes_ppu.bgd_offset.horizontal[2] = ((snes_ppu.bgd_offset.horizontal[2] >> 8) & 0xff) + (data << 8);
 			return;
 		case BG3VOFS:	/* BG3 - vertical scroll (DW) */
-			DOUBLE_WRITE( snes_ppu.bgd_offset.vertical[2], data )
+			snes_ppu.bgd_offset.vertical[2] = ((snes_ppu.bgd_offset.vertical[2] >> 8) & 0xff) + (data << 8);
 			return;
 		case BG4HOFS:	/* BG4 - horizontal scroll (DW) */
-			DOUBLE_WRITE( snes_ppu.bgd_offset.horizontal[3], data )
+			snes_ppu.bgd_offset.horizontal[3] = ((snes_ppu.bgd_offset.horizontal[3] >> 8) & 0xff) + (data << 8);
 			return;
 		case BG4VOFS:	/* BG4 - vertical scroll (DW) */
-			DOUBLE_WRITE( snes_ppu.bgd_offset.vertical[3], data )
+			snes_ppu.bgd_offset.vertical[3] = ((snes_ppu.bgd_offset.vertical[3] >> 8) & 0xff) + (data << 8);
 			return;
 		case VMAIN:		/* VRAM address increment value designation */
 			{
@@ -834,22 +831,22 @@ WRITE_HANDLER( snes_w_io )
 		case M7SEL:		/* Mode 7 initial settings */
 			break;
 		case M7A:		/* Mode 7 COS angle/x expansion (DW) */
-			DOUBLE_WRITE( snes_ppu.mode7.matrix_a, data )
+			snes_ppu.mode7.matrix_a = ((snes_ppu.mode7.matrix_a >> 8) & 0xff) + (data << 8);
 			break;
 		case M7B:		/* Mode 7 SIN angle/ x expansion (DW) */
-			DOUBLE_WRITE( snes_ppu.mode7.matrix_b, data )
+			snes_ppu.mode7.matrix_b = ((snes_ppu.mode7.matrix_b >> 8) & 0xff) + (data << 8);
 			break;
 		case M7C:		/* Mode 7 SIN angle/y expansion (DW) */
-			DOUBLE_WRITE( snes_ppu.mode7.matrix_c, data )
+			snes_ppu.mode7.matrix_c = ((snes_ppu.mode7.matrix_c >> 8) & 0xff) + (data << 8);
 			break;
 		case M7D:		/* Mode 7 COS angle/y expansion (DW) */
-			DOUBLE_WRITE( snes_ppu.mode7.matrix_d, data )
+			snes_ppu.mode7.matrix_d = ((snes_ppu.mode7.matrix_d >> 8) & 0xff) + (data << 8);
 			break;
 		case M7X:		/* Mode 7 x center position (DW) */
-			DOUBLE_WRITE( snes_ppu.mode7.origin_x, data )
+			snes_ppu.mode7.origin_x = ((snes_ppu.mode7.origin_x >> 8) & 0xff) + (data << 8);
 			break;
 		case M7Y:		/* Mode 7 y center position (DW) */
-			DOUBLE_WRITE( snes_ppu.mode7.origin_y, data )
+			snes_ppu.mode7.origin_y = ((snes_ppu.mode7.origin_y >> 8) & 0xff) + (data << 8);
 			break;
 		case CGADD:		/* Initial address for colour RAM writing */
 			/* CGRAM is 16-bit, but when reading/writing we treat it as
@@ -1507,7 +1504,7 @@ void snes_hdma()
 void snes_gdma( UINT8 channels )
 {
 	UINT8 mask = 1, dma = 0, i;
-	UINT8 increment;
+	INT8 increment;
 	UINT16 bbus;
 	UINT32 abus, length;
 
