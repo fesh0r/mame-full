@@ -284,7 +284,7 @@ static void tms9901_field_interrupts(void)
 
 		int_pending = TRUE;
 
-		cpu_0_irq_line_vector_w(0, level);
+		cpu_irq_line_vector_w(0, 0, level);
 		cpu_set_irq_line(0, 0, ASSERT_LINE);	/* interrupt it, baby */
 	}
 	else
