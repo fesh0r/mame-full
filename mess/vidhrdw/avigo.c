@@ -32,7 +32,7 @@ static int stylus_y;
 
 
 /* colour table filled in from avigo colour table*/
-static unsigned short stylus_color_table[3] = {0,0,0};
+static UINT32 stylus_color_table[3] = {0,0,0};
 
 static struct GfxLayout pointerlayout =
 {
