@@ -64,7 +64,8 @@ struct x_func_struct {
 	int  (*resize_display)(void);
 	void (*update_display)(struct mame_bitmap *bitmap,
 	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
-	  struct sysdep_palette_struct *palette, unsigned int flags);
+	  struct sysdep_palette_struct *palette, unsigned int flags,
+	  const char **status_msg);
         void (*exit)(void);
 };
 
@@ -135,6 +136,14 @@ static struct x_func_struct x_func[X11_MODE_COUNT] = {
 #else
 { NULL, NULL, NULL, NULL, NULL }
 #endif
+};
+
+static const char *x11_mode_names[] = {
+  "Normal",
+  "Xvideo",
+  "OpenGL",
+  "Glide",
+  "XIL"
 };
 
 static int mode_available[X11_MODE_COUNT] = { 1, 0, 0, 0, 0 ,0 };
@@ -305,9 +314,12 @@ int sysdep_display_resize(int width, int height)
 
 int sysdep_display_update(struct mame_bitmap *bitmap,
   struct rectangle *vis_area, struct rectangle *dirty_area,
-  struct sysdep_palette_struct *palette, unsigned int flags)
+  struct sysdep_palette_struct *palette, unsigned int flags,
+  const char **status_msg)
 {
 	int new_video_mode = x11_video_mode;
+	
+	*status_msg = NULL;
 
 	if (flags & SYSDEP_DISPLAY_HOTKEY_VIDMODE0)
 		new_video_mode = X11_WINDOW;
@@ -347,6 +359,8 @@ int sysdep_display_update(struct mame_bitmap *bitmap,
 				exit (1); /* ugly, anyone know a better way ? */
 			}
 		}
+		else
+		        *status_msg = x11_mode_names[x11_video_mode];
 		
 		return 1;
 	}
@@ -358,7 +372,7 @@ int sysdep_display_update(struct mame_bitmap *bitmap,
 	 	x11_exposed = 0;
 	}
    
-	(*x_func[x11_video_mode].update_display) (bitmap, vis_area, dirty_area, palette, flags);
+	(*x_func[x11_video_mode].update_display) (bitmap, vis_area, dirty_area, palette, flags, status_msg);
 	xinput_check_hotkeys(flags);
 	return 0;
 }

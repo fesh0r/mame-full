@@ -337,7 +337,8 @@ int x11_window_resize_display(void)
 /* invoked by main tree code to update bitmap into screen */
 void x11_window_update_display(struct mame_bitmap *bitmap,
   struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
-  struct sysdep_palette_struct *palette, unsigned int flags)
+  struct sysdep_palette_struct *palette, unsigned int flags,
+  const char **status_msg)
 {
    x11_window_update_display_func(bitmap, vis_in_dest_out, dirty_area,
      palette, (unsigned char *)image->data, image->width);

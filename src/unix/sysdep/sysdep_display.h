@@ -24,6 +24,7 @@
 #include "sysdep/sysdep_palette.h"
 #include "begin_code.h"
 
+/* mouse data */
 #ifndef USE_XINPUT_DEVICES
 /* only one mouse for now */
 #	define SYSDEP_DISPLAY_MOUSE_MAX	1
@@ -56,6 +57,19 @@
 #define SYSDEP_DISPLAY_FLIPX  1
 #define SYSDEP_DISPLAY_FLIPY  2
 #define SYSDEP_DISPLAY_SWAPXY 4
+
+/* effect type */
+#define SYSDEP_DISPLAY_EFFECT_NONE      0
+#define SYSDEP_DISPLAY_EFFECT_SCALE2X   1
+#define SYSDEP_DISPLAY_EFFECT_SCAN2     2
+#define SYSDEP_DISPLAY_EFFECT_RGBSTRIPE 3
+#define SYSDEP_DISPLAY_EFFECT_RGBSCAN   4
+#define SYSDEP_DISPLAY_EFFECT_SCAN3     5
+#define SYSDEP_DISPLAY_EFFECT_LQ2X      6
+#define SYSDEP_DISPLAY_EFFECT_HQ2X      7
+#define SYSDEP_DISPLAY_EFFECT_6TAP2X    8
+#define SYSDEP_DISPLAY_EFFECT_FAKESCAN  9
+#define SYSDEP_DISPLAY_EFFECT_LAST      SYSDEP_DISPLAY_EFFECT_FAKESCAN
 
 /* from mame's palette.h */
 #ifndef PALETTE_H
@@ -138,7 +152,6 @@ struct sysdep_display_open_params {
   int widthscale;
   int heightscale;
   int yarbsize;
-  int scanlines;
   int effect;
   int fullscreen;
   /* aspect ratio of the bitmap, or 0 if the aspect ratio should not be taken
@@ -157,6 +170,14 @@ struct sysdep_display_properties_struct {
   int hwscale;
 };
 
+struct sysdep_display_effect_properties_struct {
+  int min_widthscale;
+  int max_widthscale;
+  int min_heightscale;
+  int max_heightscale;
+  int lock_scale;
+};
+
 /* init / exit */
 int sysdep_display_init(void);
 void sysdep_display_exit(void);
@@ -169,16 +190,24 @@ void sysdep_display_close(void);
 int sysdep_display_resize(int width, int height);
 int sysdep_display_update(struct mame_bitmap *bitmap,
   struct rectangle *vis_area, struct rectangle *dirty_area,
-  struct sysdep_palette_struct *palette, unsigned int flags);
+  struct sysdep_palette_struct *palette, unsigned int flags,
+  const char **status_msg);
 
 /* input */
 int  sysdep_display_update_keyboard(void);
 void sysdep_display_update_mouse(void);
 void sysdep_display_set_keybleds(int leds);
 
+/* misc */
+/* check if widthscale, heightscale and yarbsize are compatible with
+   the choisen effect, if not update them so that they are. */
+void sysdep_display_check_effect_params(struct sysdep_display_open_params *params);
+
 extern struct sysdep_display_mousedata sysdep_display_mouse_data[SYSDEP_DISPLAY_MOUSE_MAX];
 extern struct rc_option sysdep_display_opts[];
 extern struct sysdep_display_properties_struct sysdep_display_properties;
+extern const struct sysdep_display_effect_properties_struct sysdep_display_effect_properties[];
+extern const char *sysdep_display_effect_names[];
 
 #include "end_code.h"
 #endif /* ifndef __SYSDEP_DISPLAY_H */

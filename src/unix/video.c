@@ -13,7 +13,6 @@
 #include "vidhrdw/vector.h"
 
 #include "xmame.h"
-#include "effect.h"
 #include "devices.h"
 #include "sysdep/misc.h"
 #include "sysdep/sysdep_display.h"
@@ -22,7 +21,9 @@
 static int frameskipper = 0;
 static int debugger_has_focus = 0;
 static int led_state = 0;
-static int hotkey_effect_or_scale = 0;
+static int show_effect_or_scale = 0;
+static int show_status = 0;
+static const char *status_msg = NULL;
 
 /* options these are initialised through the rc_option struct */
 static float f_beam;
@@ -48,7 +49,7 @@ static struct sysdep_palette_struct *debug_palette  = NULL;
 static struct sysdep_display_open_params current_params;
 static struct sysdep_display_open_params normal_params;
 static struct sysdep_display_open_params debug_params = {
-  0, 0, 16, 0, 0, 0, NAME " debug window", 1, 1, 0, 0, 0, 0, 0.0,
+  0, 0, 16, 0, 0, 0, NAME " debug window", 1, 1, 0, 0, 0, 0.0,
   xmame_keyboard_register_event, NULL, NULL };
 
 static struct rectangle debug_bounds;
@@ -99,7 +100,7 @@ struct rc_option video_opts[] = {
      NULL,		0,			0,		video_handle_scale,
      "Set X- and Y-Scale to the same factor." },
    { "effect",		"ef",			rc_int,		&normal_params.effect,
-     "0",		EFFECT_NONE,		EFFECT_LAST,	NULL,
+     "0",		SYSDEP_DISPLAY_EFFECT_NONE, SYSDEP_DISPLAY_EFFECT_LAST,	NULL,
      "Video effect:\n"
 	     "0 = none (default)\n"
 	     "1 = scale2x (smooth scaling effect)\n"
@@ -109,13 +110,11 @@ struct rc_option video_opts[] = {
 	     "5 = scan3 (3x3 deluxe scanlines)\n"
 	     "6 = lq2x (2x low  quality magnification filter)\n"
 	     "7 = hq2x (2x high quality magnification filter)\n"
-	     "8 = 6tap2x (2x sinc-based 6-tap filter with scanlines\n" },
+	     "8 = 6tap2x (2x sinc-based 6-tap filter with scanlines\n"
+	     "9 = fake scanlines (skip 1 line during heightscaling" },
    { "autodouble",	"adb",			rc_bool,	&use_auto_double,
      "1",		0,			0,		NULL,
      "Enable/disable automatic scale doubling for 1:2 pixel aspect ratio games" },
-   { "scanlines",	"sl",			rc_bool,	&normal_params.scanlines,
-     "0",		0,			0,		NULL,
-     "Enable/disable displaying simulated scanlines" },
    { "artwork",		"art",			rc_bool,	&use_artwork,
      "1",		0,			0,		video_verify_artwork,
      "Use additional game artwork (sets default for specific options below)" },
@@ -424,6 +423,8 @@ int osd_create_display(const struct osd_create_params *params,
 	    }
 	}
 	
+	sysdep_display_check_effect_params(&normal_params);
+	
 	if (sysdep_display_open(&normal_params) != OSD_OK)
 		return -1;
 
@@ -561,6 +562,8 @@ static void update_palette(struct mame_display *display, int force_dirty)
 
 static void update_debug_display(struct mame_display *display)
 {
+	const char *msg = NULL;
+	
 	if (!debug_palette)
 	{
 		int  i, r, g, b;
@@ -587,7 +590,7 @@ static void update_debug_display(struct mame_display *display)
 		}
 	}
 	if(sysdep_display_update(display->debug_bitmap, &debug_bounds,
-	   &debug_bounds, debug_palette, 0))
+	   &debug_bounds, debug_palette, 0, &msg))
 		display_settings_changed();	
 }
 
@@ -651,6 +654,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 	unsigned int flags = 0;
 	static int vis_area_changed = 0;
 	static int palette_changed = 0;
+	const char *msg = NULL;
 	
 	/*** STEP 1: determine if the debugger or the normal game window
 	     should be shown ***/
@@ -711,23 +715,19 @@ void osd_update_video_and_audio(struct mame_display *display)
 		if (code_pressed_memory(KEYCODE_PGUP))
 		{
 		        normal_params.effect++;
-		        if (normal_params.effect > EFFECT_LAST)
+		        if (normal_params.effect > SYSDEP_DISPLAY_EFFECT_LAST)
 		            normal_params.effect = 0;
                         normal_params_changed = 1;
-			hotkey_effect_or_scale = 1;
-			ui_show_fps_temp(2.0);
 		}
 		if (code_pressed_memory(KEYCODE_PGDN))
 		{
 		        normal_params.effect--;
 		        if (normal_params.effect < 0)
-		            normal_params.effect = EFFECT_LAST;
+		            normal_params.effect = SYSDEP_DISPLAY_EFFECT_LAST;
                         normal_params_changed = 1;
-			hotkey_effect_or_scale = 1;
-			ui_show_fps_temp(2.0);
 		}
             }
-            else if (!normal_params.effect && code_pressed(KEYCODE_LSHIFT))
+            else if (code_pressed(KEYCODE_LSHIFT))
             {
 		int widthscale_mod  = 0;
 		int heightscale_mod = 0;
@@ -752,27 +752,27 @@ void osd_update_video_and_audio(struct mame_display *display)
 		}
 		if (widthscale_mod || heightscale_mod)
 		{
+			if (sysdep_display_effect_properties[
+			      normal_params.effect].lock_scale)
+			{
+				if (widthscale_mod)
+					heightscale_mod = widthscale_mod;
+				else
+					widthscale_mod = heightscale_mod;
+			}
 			normal_params.widthscale  += widthscale_mod;
 			normal_params.heightscale += heightscale_mod;
 			normal_params.yarbsize = 0;
-
-			if (normal_params.widthscale > 8)
-				normal_params.widthscale = 8;
-			else if (normal_params.widthscale < 1)
-				normal_params.widthscale = 1;
-
-			if (normal_params.heightscale > 8)
-				normal_params.heightscale = 8;
-			else if (normal_params.heightscale < 1)
-				normal_params.heightscale = 1;
-				
-			normal_params_changed = 1;
-			hotkey_effect_or_scale = 1;
-			ui_show_fps_temp(2.0);
+			normal_params_changed  = 1;
 		}
             }
             if (normal_params_changed)
-                    change_display_settings(&normal_params, 0);
+            {
+		sysdep_display_check_effect_params(&normal_params);
+                change_display_settings(&normal_params, 0);
+		show_effect_or_scale = 2.0 * display->game_refresh_rate;
+		ui_show_fps_temp(2.0);
+	    }
         }
 
 	/*** STEP 3: now the frameskipper is known, handle frameskip ***/
@@ -955,9 +955,15 @@ void osd_update_video_and_audio(struct mame_display *display)
 		if(sysdep_display_update(display->game_bitmap,
 		   &(display->game_visible_area),
 		   &(display->game_bitmap_update),
-		   normal_palette, flags))
+		   normal_palette, flags, &msg))
 			display_settings_changed();
 		profiler_mark(PROFILER_END);
+		if (msg)
+		{
+		  status_msg  = msg;
+		  show_status = 2.0 * display->game_refresh_rate;
+		  ui_show_fps_temp(2.0);
+		}
 	}
 
 	/* this needs to be called every frame, so do this here */
@@ -1048,53 +1054,65 @@ void osd_pause(int paused)
 {
 }
 
+/* Note there are 3 known different variants of snprintf:
+ 1 returns -1 when the buffer was to small
+ 2 returns the length which would have beem written if the
+   buffer was big enough.
+ 3 returns the number of chars written, you can try to detect
+   if the buffer was to small by seeing if that this is one less
+   then the sizeof the buffer. */
 const char *osd_get_fps_text(const struct performance_info *performance)
 {
 	static char buffer[1024];
-	char *dest = buffer;
+	char *dest  = buffer;
+	int bufsize = 1024;
+	int i       = (*show_fps_frame_functions[frameskipper])(dest);
 
-	int chars_filled
-		= (*show_fps_frame_functions[frameskipper])(dest);
-
-	if (chars_filled)
-		dest += chars_filled;
-	else
+	if (!i)
 	{
-		/* display the FPS, frameskip, percent, fps and target fps */
-		dest += sprintf(dest, "%s%s%s%2d%4d%%%4d/%d fps",
-				throttle ? "T " : "",
-				(throttle && sleep_idle) ? "S " : "",
-				autoframeskip ? "auto" : "fskp", frameskip,
-				(int)(performance->game_speed_percent + 0.5),
-				(int)(performance->frames_per_second + 0.5),
-				(int)(Machine->refresh_rate + 0.5));
+	  /* display the FPS, frameskip, percent, fps and target fps */
+	  i = snprintf(dest, bufsize, "%s%s%s%2d%4d%%%4d/%d fps",
+	    throttle ? "T " : "",
+	    (throttle && sleep_idle) ? "S " : "",
+	    autoframeskip ? "auto" : "fskp", frameskip,
+	    (int)(performance->game_speed_percent + 0.5),
+	    (int)(performance->frames_per_second + 0.5),
+	    (int)(Machine->refresh_rate + 0.5));
 	}
+	if ((i < 0) || (i >= (bufsize-1)))
+	  return buffer;
+	dest    += i;
+	bufsize -= i;
 	
-	/* for hotkey choisen effect or scale add effect or scale */
-	if (hotkey_effect_or_scale)
-	{
-            if(normal_params.effect)
-            {
-                dest += sprintf(dest, "\n effect %d", normal_params.effect);
-            }
-            else if((normal_params.widthscale)  != 1 ||
-                    (normal_params.heightscale) != 1)
-            {
-                dest += sprintf(dest, "\n scale %dx%d",
-                          normal_params.widthscale,
-                          normal_params.heightscale);
-            }
+        /* status message? */
+        if (show_status)
+        {
+          show_status--;
+          i = snprintf(dest, bufsize, "\n%s", status_msg);
+	  if ((i < 0) || (i >= (bufsize-1)))
+	    return buffer;
+	  dest    += i;
+	  bufsize -= i;
         }
 
+	/* for hotkey choisen effect or scale add effect or scale */
+	if (show_effect_or_scale)
+	{
+          show_effect_or_scale--;
+          i = snprintf(dest, bufsize, "\n%s (%dx%d)",
+            sysdep_display_effect_names[normal_params.effect],
+            normal_params.widthscale, normal_params.heightscale);
+	  if ((i < 0) || (i >= (bufsize-1)))
+	    return buffer;
+	  dest    += i;
+	  bufsize -= i;
+        }
+        
 	/* for vector games, add the number of vector updates */
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
-	{
-		dest += sprintf(dest, "\n %d vector updates", performance->vector_updates_last_second);
-	}
+	  snprintf(dest, bufsize, "\n %d vector updates", performance->vector_updates_last_second);
 	else if (performance->partial_updates_this_frame > 1)
-	{
-		dest += sprintf(dest, "\n %d partial updates", performance->partial_updates_this_frame);
-	}
+	  snprintf(dest, bufsize, "\n %d partial updates", performance->partial_updates_this_frame);
 
 	/* return a pointer to the static buffer */
 	return buffer;

@@ -94,7 +94,7 @@ int  x11_window_resize_display(void);
 void x11_window_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
-	  unsigned int flags);
+	  unsigned int flags, const char **status_msg);
 #ifdef USE_MITSHM
 int  x11_test_mit_shm (Display * display, XErrorEvent * error);
 #endif
@@ -107,7 +107,7 @@ int  xv_resize_display(void);
 void xv_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
-	  unsigned int flags);
+	  unsigned int flags, const char **status_msg);
 #endif
 /* OpenGL functions */
 #ifdef USE_OPENGL
@@ -118,7 +118,7 @@ int  xgl_resize_display(void);
 void xgl_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
-	  unsigned int flags);
+	  unsigned int flags, const char **status_msg);
 #endif
 /* Glide functions */
 #ifdef USE_GLIDE
@@ -130,7 +130,7 @@ int  xfx_resize_display(void);
 void xfx_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
-	  unsigned int flags);
+	  unsigned int flags, const char **status_msg);
 #endif
 /* XIL functions */
 #ifdef USE_XIL
@@ -141,7 +141,7 @@ int  xil_resize_display(void);
 void xil_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
-	  unsigned int flags);
+	  unsigned int flags, const char **status_msg);
 #endif
 /* Xf86_dga functions */
 #ifdef USE_DGA
@@ -152,7 +152,7 @@ int  xf86_dga_resize_display(void);
 void xf86_dga_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
-	  unsigned int flags);
+	  unsigned int flags, const char **status_msg);
 int  xf86_dga1_init(void);
 int  xf86_dga1_open_display(void);
 void xf86_dga1_close_display(void);
@@ -160,7 +160,7 @@ int  xf86_dga1_resize_display(void);
 void xf86_dga1_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
-	  unsigned int flags);
+	  unsigned int flags, const char **status_msg);
 int  xf86_dga2_init(void);
 int  xf86_dga2_open_display(void);
 void xf86_dga2_close_display(void);
@@ -168,7 +168,7 @@ int  xf86_dga2_resize_display(void);
 void xf86_dga2_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
-	  unsigned int flags);
+	  unsigned int flags, const char **status_msg);
 #endif
 
 #undef EXTERN

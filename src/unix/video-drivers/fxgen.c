@@ -712,7 +712,8 @@ void DrawFlatBitmap(void)
 
 void xfx_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area, struct rectangle *dirty_area,
-	  struct sysdep_palette_struct *palette, unsigned int flags)
+	  struct sysdep_palette_struct *palette, unsigned int flags,
+	  const char **status_msg)
 {
   if(!sysdep_display_params.vec_src_bounds || (flags & SYSDEP_DISPLAY_UI_DIRTY))
     bitmap_dirty=2;
@@ -722,13 +723,19 @@ void xfx_update_display(struct mame_bitmap *bitmap,
     bilinear=1-bilinear;
 
     if(bilinear)
+    {
           grTexFilterMode(GR_TMU0,
                                           GR_TEXTUREFILTER_BILINEAR,
                                           GR_TEXTUREFILTER_BILINEAR);
+          *status_msg = "bilinear filtering on";
+    }
     else
+    {
           grTexFilterMode(GR_TMU0,
                                           GR_TEXTUREFILTER_POINT_SAMPLED,
                                           GR_TEXTUREFILTER_POINT_SAMPLED);
+          *status_msg = "bilinear filtering off";
+    }
   }
   
   if(bitmap_dirty)

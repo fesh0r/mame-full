@@ -116,8 +116,6 @@ void mode_set_aspect_ratio(double _display_resolution_aspect_ratio)
     (sysdep_display_params.width * sysdep_display_params.widthscale) / 
     (sysdep_display_params.aspect_ratio *
       (display_resolution_aspect_ratio/display_aspect_ratio));
-  /* Don't do scanlines with yarbsize! */
-  sysdep_display_params.scanlines = 0;
 }
 
 static int mode_disabled(int width, int height, int depth)

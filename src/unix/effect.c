@@ -49,6 +49,32 @@
 #include "sysdep/sysdep_display_priv.h"
 #include "effect.h"
 
+const struct sysdep_display_effect_properties_struct sysdep_display_effect_properties[] = {
+  { 1, 8, 1, 8, 0 }, /* no effect */
+  { 2, 2, 2, 2, 1 }, /* scale2x */
+  { 2, 2, 2, 2, 1 }, /* scan2 */
+  { 3, 3, 2, 2, 1 }, /* rgbstripe */
+  { 2, 2, 3, 3, 1 }, /* rgbscan */
+  { 3, 3, 3, 3, 1 }, /* scan3 */
+  { 2, 2, 2, 2, 1 }, /* lq2x */
+  { 2, 2, 2, 2, 1 }, /* hq2x */
+  { 2, 2, 2, 2, 1 }, /* 6tap2x */
+  { 1, 8, 2, 8, 0 }  /* fakescan */
+};
+
+const char *sysdep_display_effect_names[] = {
+  "no effect",
+  "smooth scaling",
+  "light scanlines",
+  "rgb vertical stripes",
+  "rgb scanlines",
+  "deluxe scanlines",
+  "low quality filter",
+  "high quality filter",
+  "sinc-based 6-tap filter + scanlines",
+  "black scanlines"
+};
+ 
 char *effect_dbbuf  = NULL;
 char *rotate_dbbuf0 = NULL;
 char *rotate_dbbuf1 = NULL;
@@ -123,42 +149,56 @@ static void init_rgb2yuv(int display_mode)
 }
 
 
-/* called from sysdep_display_open through sysdep_display_check_params to
-   update scale parameters */
-void effect_check_params(void)
+/* check if widthscale, heightscale and yarbsize are compatible with
+   the choisen effect, if not update them so that they are. */
+void sysdep_display_check_effect_params(
+  struct sysdep_display_open_params *params)
 {
   /* warn only once about disabling yarbsize */
   static int firsttime = 1;
-
-  switch (sysdep_display_params.effect) {
-    case EFFECT_SCALE2X:
-    case EFFECT_HQ2X:
-    case EFFECT_LQ2X:
-    case EFFECT_SCAN2:
-    case EFFECT_6TAP2X:
-      sysdep_display_params.widthscale = 2;
-      sysdep_display_params.heightscale = 2;
-      break;
-    case EFFECT_RGBSTRIPE:
-      sysdep_display_params.widthscale = 3;
-      sysdep_display_params.heightscale = 2;
-      break;
-    case EFFECT_RGBSCAN:
-      sysdep_display_params.widthscale = 2;
-      sysdep_display_params.heightscale = 3;
-      break;
-    case EFFECT_SCAN3:
-      sysdep_display_params.widthscale = 3;
-      sysdep_display_params.heightscale = 3;
-      break;
-  }
-
-  if (sysdep_display_params.yarbsize && firsttime)
+  
+  if (params->widthscale <
+      sysdep_display_effect_properties[params->effect].min_widthscale)
   {
-    printf("Using effects -- disabling arbitrary scaling\n");
-    firsttime = 0;
+    params->widthscale =
+      sysdep_display_effect_properties[params->effect].
+        min_widthscale;
   }
-  sysdep_display_params.yarbsize = 0;
+  else if (params->widthscale >
+           sysdep_display_effect_properties[params->effect].max_widthscale)
+  {
+    params->widthscale =
+      sysdep_display_effect_properties[params->effect].max_widthscale;
+  }
+
+  if (params->heightscale <
+      sysdep_display_effect_properties[params->effect].min_heightscale)
+  {
+    params->heightscale =
+      sysdep_display_effect_properties[params->effect].min_heightscale;
+  }
+  else if(params->heightscale >
+          sysdep_display_effect_properties[params->effect].max_heightscale)
+  {
+    params->heightscale =
+      sysdep_display_effect_properties[params->effect].max_heightscale;
+  }
+  
+  if (sysdep_display_effect_properties[params->effect].lock_scale &&
+      (params->heightscale != params->widthscale))
+  {
+    params->heightscale = params->widthscale;
+  }
+
+  if (params->effect && params->yarbsize)
+  {
+    if (firsttime)
+    {
+      printf("Using effects -- disabling arbitrary scaling\n");
+      firsttime = 0;
+    }
+    params->yarbsize = 0;
+  }
 }
 
 /* Generate most effect variants automagicly, do this before
@@ -222,7 +262,7 @@ void effect_check_params(void)
 #undef GETPIXEL
 
 #define DISPLAY_MODES 5 /* 15,16,32,YUY2,YV12 */
-#define EFFECT_MODES (DISPLAY_MODES*3) /* 15,16,32 */
+#define SYSDEP_DISPLAY_EFFECT_MODES (DISPLAY_MODES*3) /* 15,16,32 */
 /* arrays with all the effect functions:
    5x 15 to ... + 5x 16 to ... + 5x 32 to ...
    15
@@ -376,6 +416,7 @@ int effect_open(void)
 {
   int i = -1;
 
+  /* FIXME only allocate if needed and of the right size */
   if (!(effect_dbbuf = malloc(sysdep_display_params.max_width*sysdep_display_params.widthscale*sysdep_display_params.heightscale*4)))
     return 1;
   memset(effect_dbbuf, sysdep_display_params.max_width*sysdep_display_params.widthscale*sysdep_display_params.heightscale*4, 0);
@@ -419,30 +460,30 @@ int effect_open(void)
 
   switch (sysdep_display_params.effect)
   {
-    case EFFECT_SCAN2:
+    case SYSDEP_DISPLAY_EFFECT_SCAN2:
       effect_func = effect_funcs[i];
       break;
-    case EFFECT_RGBSTRIPE:
-      effect_func = effect_funcs[i+EFFECT_MODES];
+    case SYSDEP_DISPLAY_EFFECT_RGBSTRIPE:
+      effect_func = effect_funcs[i+SYSDEP_DISPLAY_EFFECT_MODES];
       break;
-    case EFFECT_SCALE2X:
+    case SYSDEP_DISPLAY_EFFECT_SCALE2X:
       effect_scale2x_func = effect_scale2x_funcs[i];
       break;
-    case EFFECT_LQ2X:
-      effect_scale2x_func = effect_scale2x_funcs[i+EFFECT_MODES];
+    case SYSDEP_DISPLAY_EFFECT_LQ2X:
+      effect_scale2x_func = effect_scale2x_funcs[i+SYSDEP_DISPLAY_EFFECT_MODES];
       break;
-    case EFFECT_HQ2X:
+    case SYSDEP_DISPLAY_EFFECT_HQ2X:
       /* we might need a yuv lookup table */
       init_rgb2yuv(i%DISPLAY_MODES);
-      effect_scale2x_func = effect_scale2x_funcs[i+2*EFFECT_MODES];
+      effect_scale2x_func = effect_scale2x_funcs[i+2*SYSDEP_DISPLAY_EFFECT_MODES];
       break;
-    case EFFECT_RGBSCAN:
+    case SYSDEP_DISPLAY_EFFECT_RGBSCAN:
       effect_scale3x_func = effect_scale3x_funcs[i];
       break;
-    case EFFECT_SCAN3:
-      effect_scale3x_func = effect_scale3x_funcs[i+EFFECT_MODES];
+    case SYSDEP_DISPLAY_EFFECT_SCAN3:
+      effect_scale3x_func = effect_scale3x_funcs[i+SYSDEP_DISPLAY_EFFECT_MODES];
       break;
-    case EFFECT_6TAP2X:
+    case SYSDEP_DISPLAY_EFFECT_6TAP2X:
       effect_6tap_addline_func = effect_6tap_addline_funcs[sysdep_display_params.depth/16];
       effect_6tap_render_func  = effect_6tap_render_funcs[i%DISPLAY_MODES];
       effect_6tap_clear_func   = effect_6tap_clear;
@@ -453,24 +494,27 @@ int effect_open(void)
   i = -1;
   switch(sysdep_display_params.effect)
   {
-    case EFFECT_NONE:
+    case SYSDEP_DISPLAY_EFFECT_NONE:
       i = 0;
       break;
-    case EFFECT_SCAN2:
-    case EFFECT_RGBSTRIPE:
+    case SYSDEP_DISPLAY_EFFECT_SCAN2:
+    case SYSDEP_DISPLAY_EFFECT_RGBSTRIPE:
       if(effect_func) i = 0;
       break;
-    case EFFECT_SCALE2X:
-    case EFFECT_LQ2X:
-    case EFFECT_HQ2X:
+    case SYSDEP_DISPLAY_EFFECT_SCALE2X:
+    case SYSDEP_DISPLAY_EFFECT_LQ2X:
+    case SYSDEP_DISPLAY_EFFECT_HQ2X:
       if (effect_scale2x_func) i = 0;
       break;
-    case EFFECT_RGBSCAN:
-    case EFFECT_SCAN3:
+    case SYSDEP_DISPLAY_EFFECT_RGBSCAN:
+    case SYSDEP_DISPLAY_EFFECT_SCAN3:
       if (effect_scale3x_func) i = 0;
       break;
-    case EFFECT_6TAP2X:
+    case SYSDEP_DISPLAY_EFFECT_6TAP2X:
       if (effect_6tap_render_func) i = 0;
+      break;
+    case SYSDEP_DISPLAY_EFFECT_FAKESCAN:
+      i = 0;
       break;
   }
   if (i == -1)
@@ -497,9 +541,9 @@ int effect_open(void)
       return 1;
     rotate_dbbuf0 += 16;
 
-    if ((sysdep_display_params.effect == EFFECT_SCALE2X) ||
-        (sysdep_display_params.effect == EFFECT_HQ2X)    ||
-        (sysdep_display_params.effect == EFFECT_LQ2X)) {
+    if ((sysdep_display_params.effect == SYSDEP_DISPLAY_EFFECT_SCALE2X) ||
+        (sysdep_display_params.effect == SYSDEP_DISPLAY_EFFECT_HQ2X)    ||
+        (sysdep_display_params.effect == SYSDEP_DISPLAY_EFFECT_LQ2X)) {
       if (!(rotate_dbbuf1 = calloc(sysdep_display_params.max_width*((sysdep_display_params.depth+1)/8) + 32, sizeof(char))))
         return 1;
       if (!(rotate_dbbuf2 = calloc(sysdep_display_params.max_width*((sysdep_display_params.depth+1)/8) + 32, sizeof(char))))
@@ -510,7 +554,7 @@ int effect_open(void)
   }
 
   /* I need these buffers */
-  if (sysdep_display_params.effect == EFFECT_6TAP2X)
+  if (sysdep_display_params.effect == SYSDEP_DISPLAY_EFFECT_6TAP2X)
   {
     if (!(_6tap2x_buf0 = calloc(sysdep_display_params.max_width*8, sizeof(char))))
       return 1;

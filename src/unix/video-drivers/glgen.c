@@ -302,7 +302,6 @@ static int gl_set_beam(float new_value)
         RETURN_IF_GL_ERROR ();
 	disp__glPointSize(gl_beam);
         RETURN_IF_GL_ERROR ();
-	fprintf(stderr, "GLINFO (vec): beamer size %f\n", gl_beam);
 	return 0;
 }
 
@@ -1642,39 +1641,64 @@ static void UpdateGLDisplay (struct mame_bitmap *bitmap,
 void gl_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
-	  unsigned int flags)
+	  unsigned int flags, const char **status_msg)
 {
+  static char msg_buf[32];
+  
   UpdateGLDisplay (bitmap, vis_area, dirty_area, palette, flags);
+
   if (flags & SYSDEP_DISPLAY_HOTKEY_OPTION0)
   {
     gl_set_bilinear (1 - bilinear);
-    fprintf(stderr, "GLINFO: switched bilinear := %d\n", bilinear);
+    if(bilinear)
+      *status_msg = "bilinear filtering on";
+    else
+      *status_msg = "bilinear filtering off";
   }
   if (flags & SYSDEP_DISPLAY_HOTKEY_OPTION1)
   {
     gl_set_cabview (1-cabview);
-    fprintf(stderr, "GLINFO: switched cabinet := %d\n", cabview);
+    if(cabview)
+      *status_msg = "cabinet view on";
+    else
+      *status_msg = "cabinet view off";
   }
   if (flags & SYSDEP_DISPLAY_HOTKEY_OPTION3)
   {
     if (sysdep_display_params.vec_src_bounds)
     {
       antialiasvec = 1 - antialiasvec;
-      fprintf(stderr, "GLINFO: switched vector antialias := %d\n", antialiasvec);
+      if(antialiasvec)
+        *status_msg = "vector antialiasing on";
+      else
+        *status_msg = "vector antialiasing off";
     }
     else
     {
       gl_set_antialias (1-antialias);
-      fprintf(stderr, "GLINFO: switched antialias := %d\n", antialias);
+      if(antialias)
+        *status_msg = "antialiasing on";
+      else
+        *status_msg = "antialiasing off";
     }
   }
   if (flags & SYSDEP_DISPLAY_HOTKEY_OPTION2)
   {
+    if (gl_beam < 16.0)
+    {
       gl_set_beam(gl_beam+0.5);
+      snprintf(msg_buf, 32, "vector beam size %.1f", (double)gl_beam);
+      *status_msg = msg_buf;
+    }
   }
   if (flags & SYSDEP_DISPLAY_HOTKEY_OPTION4)
   {
+    if (gl_beam > 1.0)
+    {
       gl_set_beam(gl_beam-0.5);
+      snprintf(msg_buf, 32, "vector beam size %.1f", (double)gl_beam);
+      *status_msg = msg_buf;
+    }
   }
 }
 

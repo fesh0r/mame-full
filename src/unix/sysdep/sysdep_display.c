@@ -61,11 +61,7 @@ void sysdep_display_set_params(const struct sysdep_display_open_params *params)
   sysdep_display_params.max_width &= ~3;
   
   /* lett the effect code do its magic */
-  effect_check_params();
-  
-  /* Don't do scanlines with yarbsize! */
-  if (sysdep_display_params.yarbsize)
-    sysdep_display_params.scanlines = 0;
+  sysdep_display_check_effect_params(&sysdep_display_params);
 }
 
 void sysdep_display_orient_bounds(struct rectangle *bounds, int width, int height)

@@ -274,7 +274,7 @@ int xgl_resize_display(void)
 void xgl_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
-	  unsigned int flags)
+	  unsigned int flags, const char **status_msg)
 {
   Window _dw;
   int _dint;
@@ -288,7 +288,7 @@ void xgl_update_display(struct mame_bitmap *bitmap,
     gl_set_windowsize();
   }
 
-  gl_update_display(bitmap, vis_area, dirty_area, palette, flags);
+  gl_update_display(bitmap, vis_area, dirty_area, palette, flags, status_msg);
 
   if (glCaps.buffer)
     disp__glXSwapBuffers(display,window);

@@ -76,8 +76,8 @@
 #endif
 
 /* start of actual effect blit code */
-  case EFFECT_SCAN2:
-  case EFFECT_RGBSTRIPE:
+  case SYSDEP_DISPLAY_EFFECT_SCAN2:
+  case SYSDEP_DISPLAY_EFFECT_RGBSTRIPE:
     if (sysdep_display_params.orientation)
     {
       line_src = (SRC_PIXEL *)rotate_dbbuf0;
@@ -94,9 +94,9 @@
     }  
     break;
 
-  case EFFECT_SCALE2X:
-  case EFFECT_HQ2X:
-  case EFFECT_LQ2X:
+  case SYSDEP_DISPLAY_EFFECT_SCALE2X:
+  case SYSDEP_DISPLAY_EFFECT_HQ2X:
+  case SYSDEP_DISPLAY_EFFECT_LQ2X:
     if (sysdep_display_params.orientation)
     {
       char *tmp;
@@ -131,8 +131,8 @@
     }  
     break;
 
-  case EFFECT_RGBSCAN:
-  case EFFECT_SCAN3:
+  case SYSDEP_DISPLAY_EFFECT_RGBSCAN:
+  case SYSDEP_DISPLAY_EFFECT_SCAN3:
     if (sysdep_display_params.orientation)
     {
       line_src = (SRC_PIXEL *)rotate_dbbuf0;
@@ -149,7 +149,7 @@
     }
     break;
 
-  case EFFECT_6TAP2X:
+  case SYSDEP_DISPLAY_EFFECT_6TAP2X:
   {
      effect_6tap_clear_func(bounds_width);
      if (sysdep_display_params.orientation) {

@@ -9,10 +9,6 @@
 #define EXTERN_EFFECT extern
 #endif
 
-/* effect type */
-enum {EFFECT_NONE, EFFECT_SCALE2X, EFFECT_SCAN2, EFFECT_RGBSTRIPE, EFFECT_RGBSCAN, EFFECT_SCAN3, EFFECT_LQ2X, EFFECT_HQ2X, EFFECT_6TAP2X};
-#define EFFECT_LAST EFFECT_6TAP2X
-
 /* buffer for doublebuffering */
 extern char *effect_dbbuf;
 extern char *rotate_dbbuf0;
@@ -25,11 +21,9 @@ extern char *_6tap2x_buf3;
 extern char *_6tap2x_buf4;
 extern char *_6tap2x_buf5;
 
-
 /* called from <driver>_create_display by each video driver;
  * initializes function pointers to correct depths
  * and allocates buffer for doublebuffering */
-void effect_check_params(void);
 int  effect_open(void);
 void effect_close(void);
 

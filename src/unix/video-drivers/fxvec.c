@@ -55,8 +55,8 @@ static void PointConvert(int x,int y,float *sx,float *sy)
   if (sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPY)
     dy = 1.0 - dy;
     
-  *sx=vecvscrntlx + dx*vecvscrnwidth;
-  *sy=fxheight - (vecvscrntly + dy*vecvscrnheight);
+  *sx=(int)vecvscrntlx + dx*(int)vecvscrnwidth;
+  *sy=(int)fxheight - ((int)vecvscrntly + dy*(int)vecvscrnheight);
 }
 
 /*
@@ -109,7 +109,8 @@ int fxvec_renderer(point *pt, int num_points)
       if (pt->status == VCLIP)
       {
         float xmin, ymin, xmax, ymax, tmp;
-        PointConvert(pt->x, pt->x, &xmin, &ymin);
+        /* fprintf(stderr, "Vector Clip: (%d,%d) x (%d,%d)\n", */
+        PointConvert(pt->x, pt->y, &xmin, &ymin);
         PointConvert(pt->arg1, pt->arg2, &xmax, &ymax);
         /* this can be caused by blit_flip* */
         if (xmin > xmax)

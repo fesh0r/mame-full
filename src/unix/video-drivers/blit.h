@@ -55,7 +55,7 @@ These routines assume dirty_params->min_x and DEST_WIDTH are a multiple off 4!
    int reps = REPS_FOR_Y(1, YV, YMAX); \
    if (reps >0) { \
      do { COPY_LINE2(SRC, END, (DST)+(reps*(CORRECTED_DEST_WIDTH))); \
-     } while (--reps > sysdep_display_params.scanlines); \
+     } while (--reps > scanlines); \
    } \
 }
 #else
@@ -64,7 +64,7 @@ These routines assume dirty_params->min_x and DEST_WIDTH are a multiple off 4!
    int reps = REPS_FOR_Y(1, YV, YMAX); \
    if (reps >0) { \
      COPY_LINE2(SRC, END, DST); \
-     while (--reps > sysdep_display_params.scanlines) \
+     while (--reps > scanlines) \
        memcpy((DST)+(reps*(CORRECTED_DEST_WIDTH)), DST, ((END)-(SRC))*DEST_PIXEL_SIZE*sysdep_display_params.widthscale); \
   } \
 }
@@ -115,7 +115,8 @@ if (sysdep_display_params.orientation) { \
   int y, src_width, bounds_width;
   SRC_PIXEL *line_src, *line_end;
   DEST_PIXEL *line_dest;
-  int yarbsize = sysdep_display_params.yarbsize?
+  int scanlines = 0;
+  int yarbsize  = sysdep_display_params.yarbsize?
     sysdep_display_params.yarbsize:
     sysdep_display_params.height*sysdep_display_params.heightscale;
 
@@ -129,7 +130,9 @@ if (sysdep_display_params.orientation) { \
 
   switch(sysdep_display_params.effect)
   {
-    case 0:
+    case SYSDEP_DISPLAY_EFFECT_FAKESCAN:
+      scanlines = 1;
+    case SYSDEP_DISPLAY_EFFECT_NONE:
       switch(sysdep_display_params.widthscale)
       {
 

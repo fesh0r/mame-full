@@ -85,7 +85,7 @@ void gl_close_display(void);
 void gl_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
-	  unsigned int flags);
+	  unsigned int flags, const char **status_msg);
 void CalcCabPointbyViewpoint( 
   GLdouble vx_gscr_view, GLdouble vy_gscr_view, 
   GLdouble *vx_p, GLdouble *vy_p, GLdouble *vz_p);

@@ -189,7 +189,8 @@ int xil_resize_display(void)
 /* invoked by main tree code to update bitmap into screen */
 void xil_update_display(struct mame_bitmap *bitmap,
   struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
-  struct sysdep_palette_struct *palette, unsigned int flags)
+  struct sysdep_palette_struct *palette, unsigned int flags,
+  const char **status_msg)
 {
   Window _dw;
   int _dint;
