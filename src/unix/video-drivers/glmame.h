@@ -81,9 +81,9 @@ int glvec_renderer(point *start, int num_points);
 int LoadCabinet (const char *fname);
 
 /* glgen.c */
-int  InitVScreen(void);
-void CloseVScreen(void);
-void UpdateVScreen(struct mame_bitmap *bitmap,
+int  gl_open_display(void);
+void gl_close_display(void);
+void gl_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  unsigned int flags);

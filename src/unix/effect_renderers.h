@@ -3868,7 +3868,7 @@ void FUNC_NAME(effect_6tap_addline)(const void *src0, unsigned count, unsigned i
 #endif /* DEST_DEPTH != YUY2  */
 
 /* we have a special optimised 32 bpp C-version */
-#if DEST_DEPTH != 32 && !defined(EFFECT_MMX_ASM)
+#if DEST_DEPTH != 32 && (!defined(EFFECT_MMX_ASM) || DEST_DEPTH == YUY2)
 void FUNC_NAME(effect_6tap_render)(void *dst0, void *dst1, unsigned count)
 {
   PIXEL *mydst0 = (PIXEL *) dst0;

@@ -460,7 +460,7 @@ effect_6tap_render_15:
   mov edx, [_6tap2x_buf3]
   mov esi, [_6tap2x_buf4]
   mov edi, [_6tap2x_buf5]
-VFilter_6tap_16_loop1:
+VFilter_6tap_15_loop1:
   movd mm0, [ecx]
   add ecx, 4
   punpcklbw mm0, mm7
@@ -497,7 +497,7 @@ VFilter_6tap_16_loop1:
   movd [ebp], mm0
   add ebp, 4
   sub dword [uCount], 1
-  jne VFilter_6tap_16_loop1
+  jne VFilter_6tap_15_loop1
   pop ebp
 
   ; now convert the filtered pixels from 32 bits to 15

@@ -176,7 +176,7 @@ static int lastpan;
 static int panframe;
 
 /* Misc variables */
-static int do_snapshot = 0;
+static const int do_snapshot = 0; /* disabled for now */
 static unsigned short *colorBlittedMemory = NULL;
 static int cab_loaded = 0;
 static int texture_init = 0;
@@ -292,7 +292,7 @@ static void gl_set_beam(float new_value)
 	printf("GLINFO (vec): beamer size %f\n", gl_beam);
 }
 
-int InitVScreen (void)
+int gl_open_display (void)
 {
   const unsigned char * glVersion;
   double game_aspect ;
@@ -721,7 +721,7 @@ int InitVScreen (void)
 }
 
 /* Close down the virtual screen */
-void CloseVScreen (void)
+void gl_close_display (void)
 {
   if(colorBlittedMemory!=NULL)
   {
@@ -1561,6 +1561,7 @@ static void UpdateCabDisplay (struct mame_bitmap *bitmap,
 
   disp__glPopMatrix ();
 
+#if 0 /* disabled for now */
   if (do_snapshot)
   {
     gl_save_screen_snapshot();
@@ -1568,6 +1569,7 @@ static void UpdateCabDisplay (struct mame_bitmap *bitmap,
     /* reset upside down .. */
     SetupFrustum ();
   }
+#endif  
 }
 
 static void UpdateFlatDisplay (struct mame_bitmap *bitmap,
@@ -1627,6 +1629,7 @@ static void UpdateFlatDisplay (struct mame_bitmap *bitmap,
 
   CHECK_GL_ERROR ();
 
+#if 0 /* disabled for now */
   if (do_snapshot)
   {
     gl_save_screen_snapshot();
@@ -1634,6 +1637,7 @@ static void UpdateFlatDisplay (struct mame_bitmap *bitmap,
     /* reset upside down .. */
     SetupOrtho ();
   }
+#endif
 }
 
 /**
@@ -1680,13 +1684,13 @@ static void UpdateGLDisplay (struct mame_bitmap *bitmap,
  *    - no swapxy, flipx or flipy and no resize !
  *    - shall be Machine->scrbitmap
  */
-void UpdateVScreen(struct mame_bitmap *bitmap,
+void gl_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  unsigned int flags)
 {
   UpdateGLDisplay (bitmap, vis_area, dirty_area, palette, flags);
-/*
+/* FIXME
   if (code_pressed (KEYCODE_RALT))
   {
     if (code_pressed_memory (KEYCODE_A))

@@ -41,13 +41,12 @@ static char *libGLUName;
 
 /* local vars */
 static GLCapabilities glCaps = { BUFFER_DOUBLE, COLOR_RGBA, STEREO_OFF,
+  1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, -1 };
 static XSetWindowAttributes window_attr;
 static GLXContext glContext=NULL;
 static int window_type;
 static const char * xgl_version_str = 
 	"\nGLmame v0.94 - the_peace_version , by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
-
-static int xgl_glres(struct rc_option *option, const char *arg, int priority);
 
 struct rc_option xgl_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -101,7 +100,6 @@ int xgl_open_display(void)
   int ownwin = 1;
   int force_grab;
   XVisualInfo *myvisual;
-  int myscreen=DefaultScreen(display);
   
   mode_set_aspect_ratio((double)screen->width/screen->height);
 
@@ -134,7 +132,7 @@ int xgl_open_display(void)
     winmask       = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
     if(cabview)
     {
-      if(!custom_winsize)
+      if(!custom_windowsize)
       {
         window_width  = 640;
         window_height = 480;
@@ -142,7 +140,7 @@ int xgl_open_display(void)
     }
     else
     {
-      if(!custom_winsize)
+      if(!custom_windowsize)
       {
         window_width  = sysdep_display_params.width * sysdep_display_params.widthscale;
         window_height = sysdep_display_params.yarbsize;
@@ -170,6 +168,8 @@ int xgl_open_display(void)
   if (!loadGLLibrary(libGLName, libGLUName))
     return 1;
 
+  fetch_GL_FUNCS(libGLName, libGLUName, 0);
+  
   if (root_window_id)
     window = root_window_id;
   else
@@ -220,7 +220,7 @@ int xgl_open_display(void)
   
   xinput_open(force_grab, 0);
 
-  return InitVScreen();
+  return gl_open_display();
 }
 
 /*
@@ -228,9 +228,9 @@ int xgl_open_display(void)
  * when creating the display
  */
 
-void xgl_display_close (void)
+void xgl_close_display (void)
 {
-   CloseVScreen();  /* Shut down GL stuff */
+   gl_close_display();  /* Shut down GL stuff */
    xinput_close();
 
    disp__glXMakeCurrent(display, None, NULL);
@@ -268,7 +268,7 @@ void xgl_update_display(struct mame_bitmap *bitmap,
   int _dint;
   unsigned int _duint,w,h;
   
-  xinput_check_hotkeys();
+  xinput_check_hotkeys(flags);
   
   XGetGeometry(display, window, &_dw, &_dint, &_dint, &w, &h, &_duint, &_duint);
   if ( (w != window_width) || (h != window_height) )
@@ -278,5 +278,5 @@ void xgl_update_display(struct mame_bitmap *bitmap,
     gl_resize();
   }
 
-  UpdateVScreen(bitmap, vis_area, dirty_area, palette, flags);
+  gl_update_display(bitmap, vis_area, dirty_area, palette, flags);
 }

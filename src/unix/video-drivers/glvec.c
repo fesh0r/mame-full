@@ -56,7 +56,6 @@ static void PointConvert(int x,int y,GLdouble *sx,GLdouble *sy,GLdouble *sz)
 	                          dy*s__cscr_h_view,
 				  sx, sy, sz );
   }
-
 }
 
 /*

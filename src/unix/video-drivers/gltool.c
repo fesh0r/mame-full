@@ -25,6 +25,7 @@
 #include "glu-disp-var.hc"
 
 #ifdef _X11_
+	#include <string.h>
 	#include "glxtool.h"
 #endif
 
@@ -457,18 +458,20 @@ void * LIBAPIENTRY getGLProcAddressHelper
   }
   __firstAccess = 0;
 
-  if (disp__glXGetProcAddress != NULL)
-    funcPtr = disp__glXGetProcAddress ((const unsigned char *) func);
-
-  if (funcPtr == NULL)
+  if (strncmp(func, "glu", 3))
   {
-    lmethod = 2;
-    funcPtr = dlsym (libHandleGL, func);
+    if (disp__glXGetProcAddress != NULL)
+      funcPtr = disp__glXGetProcAddress ((const unsigned char *) func);
+
+    if (funcPtr == NULL)
+    {
+      lmethod = 2;
+      funcPtr = dlsym (libHandleGL, func);
+    }
+    else
+      lmethod = 1;
   }
   else
-    lmethod = 1;
-
-  if (funcPtr == NULL)
   {
     lmethod = 3;
     funcPtr = dlsym (libHandleGLU, func);
