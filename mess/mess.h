@@ -70,10 +70,14 @@ extern "C" {
 
 int mess_printf(const char *fmt, ...);
 
-extern void showmessinfo(void);
-extern int displayimageinfo(struct mame_bitmap *bitmap, int selected);
-extern int filemanager(struct mame_bitmap *bitmap, int selected);
-extern int tapecontrol(struct mame_bitmap *bitmap, int selected);
+void showmessinfo(void);
+int displayimageinfo(struct mame_bitmap *bitmap, int selected);
+int filemanager(struct mame_bitmap *bitmap, int selected);
+
+#if HAS_WAVE
+int tapecontrol(struct mame_bitmap *bitmap, int selected);
+void tapecontrol_gettime(char *timepos, size_t timepos_size, int id, int *curpos, int *endpos);
+#endif
 
 /* driver.h - begin */
 #define IPT_SELECT1		IPT_COIN1

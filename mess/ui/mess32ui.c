@@ -81,6 +81,8 @@ static void MessTestsDoneIdle(void);
 #undef bool
 #endif
 
+static char s_szSelectedItem[256];
+
 #include "ui/win32ui.c"
 
 struct deviceentry
@@ -542,7 +544,6 @@ static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, BOOL 
 	BOOL bNewScreenShot;
 	const char *name;
 	char *s;
-	char *newname;
 
 	bResult = SoftwareList_ItemChanged(pListView, bWasSelected, bNowSelected, nRow);
 
@@ -551,32 +552,13 @@ static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, BOOL 
 		s = strrchr(name, '\\');
 		if (s)
 			name = s + 1;
-		newname = alloca(strlen(name) + 1);
-		strcpy(newname, name);
-		s = strrchr(newname, '.');
+
+		strncpyz(s_szSelectedItem, name, sizeof(s_szSelectedItem) / sizeof(s_szSelectedItem[0]));
+		s = strrchr(s_szSelectedItem, '.');
 		if (s)
 			*s = '\0';
 
-		bNewScreenShot = LoadScreenShotEx(GetSelectedPickItem(), newname, nPictType);
-		if (bNewScreenShot)
-        {
-            HWND hWnd;
-
-            if (GetShowScreenShot() &&  (hWnd = GetDlgItem(hMain, IDC_SSFRAME)))
-            {
-                RECT    rect;
-                HWND    hParent;
-                POINT   p = {0, 0};
-
-                hParent = GetParent(hWnd);
-
-                GetWindowRect(hWnd,&rect);
-                ClientToScreen(hParent, &p);
-                OffsetRect(&rect, -p.x, -p.y);
-                InvalidateRect(hParent, &rect, FALSE);
-                UpdateWindow(hParent);
-            }
-        }
+		UpdateScreenShot();
     }
 	return bResult;
 }

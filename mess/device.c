@@ -106,7 +106,6 @@ int device_seek(int type, int id, int offset, int whence)
 	{
 		if( type == dev->type && dev->seek )
 			return (*dev->seek)(id,offset,whence);
-		dev++;
 	}
 	return 0;
 }

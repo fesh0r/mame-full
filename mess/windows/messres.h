@@ -26,10 +26,9 @@
 #define ID_DEVICES                      122
 #define ID_HELP_ABOUT                   123
 #define ID_HELP_ABOUTSYSTEM             124
-#define IDD_DIALOG1                     125
 #define IDD_TAPEDIALOG                  125
 #define IDR_RUNTIME_MENU                6000
-#define IDC_SLIDER1                     6000
+#define IDC_SLIDER                      6000
 #define IDC_PLAY                        6001
 #define IDC_STOP                        6002
 #define IDC_PAUSE                       6003

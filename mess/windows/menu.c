@@ -4,12 +4,14 @@
 //
 //============================================================
 
+// standard windows headers
 #include <windows.h>
 #include <commdlg.h>
 #include <winuser.h>
 
+// MAME/MESS headers
 #include "mame.h"
-#include "../../src/windows/window.h"
+#include "windows/window.h"
 #include "menu.h"
 #include "messres.h"
 #include "inputx.h"
@@ -20,6 +22,7 @@
 #include "strconv.h"
 #include "utils.h"
 #include "artwork.h"
+#include "tapedlg.h"
 
 #ifdef UNDER_CE
 #include "invokegx.h"
@@ -47,14 +50,20 @@ extern int showfpstemp;
 
 #define MAX_JOYSTICKS				((IPF_PLAYERMASK / IPF_PLAYER2) + 1)
 
+#define USE_TAPEDLG	0
+
 enum
 {
 	DEVOPTION_MOUNT,
 	DEVOPTION_UNMOUNT,
 	DEVOPTION_CASSETTE_PLAYRECORD,
 	DEVOPTION_CASSETTE_STOPPAUSE,
+#if USE_TAPEDLG
+	DEVOPTION_CASSETTE_DIALOG,
+#else
 	DEVOPTION_CASSETTE_REWIND,
 	DEVOPTION_CASSETTE_FASTFORWARD,
+#endif
 	DEVOPTION_MAX
 };
 
@@ -602,8 +611,12 @@ static void prepare_menus(void)
 				append_menu(sub_menu, MF_SEPARATOR, 0, -1);
 				append_menu(sub_menu, flags_for_exists | (status & WAVE_STATUS_MOTOR_ENABLE) ? 0 : MF_CHECKED,	new_item + DEVOPTION_CASSETTE_STOPPAUSE,	UI_pauseorstop);
 				append_menu(sub_menu, flags_for_exists | (status & WAVE_STATUS_MOTOR_ENABLE) ? MF_CHECKED : 0,	new_item + DEVOPTION_CASSETTE_PLAYRECORD,	(status & WAVE_STATUS_WRITE_ONLY) ? UI_record : UI_play);
+#if USE_TAPEDLG
+				append_menu(sub_menu, flags_for_exists,															new_item + DEVOPTION_CASSETTE_DIALOG,		UI_tapecontrol);
+#else
 				append_menu(sub_menu, flags_for_exists,															new_item + DEVOPTION_CASSETTE_REWIND,		UI_rewind);
 				append_menu(sub_menu, flags_for_exists,															new_item + DEVOPTION_CASSETTE_FASTFORWARD,	UI_fastforward);
+#endif
 			}
 #endif /* HAS_WAVE */
 			s = image_exists(dev->type, i) ? image_filename(dev->type, i) : ui_getstring(UI_emptyslot);
@@ -698,13 +711,19 @@ static void device_command(const struct IODevice *dev, int id, int devoption)
 				device_status(IO_CASSETTE, id, status & ~WAVE_STATUS_MOTOR_ENABLE);
 				break;
 
+#if USE_TAPEDLG
+			case DEVOPTION_CASSETTE_DIALOG:
+				tapedialog_show(id);
+				break;
+#else
 			case DEVOPTION_CASSETTE_REWIND:
-				device_seek(IO_CASSETTE, id, -11025, SEEK_CUR);
+				device_seek(IO_CASSETTE,id,+11025,SEEK_CUR);
 				break;
 
 			case DEVOPTION_CASSETTE_FASTFORWARD:
-				device_seek(IO_CASSETTE, id, +11025, SEEK_CUR);
+				device_seek(IO_CASSETTE,id,+11025,SEEK_CUR);
 				break;
+#endif
 			}
 			break;
 		}

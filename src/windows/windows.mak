@@ -21,6 +21,7 @@ OSOBJS += \
 	$(OBJ)/mess/windows/messopts.o	\
 	$(OBJ)/mess/windows/menu.o		\
 	$(OBJ)/mess/windows/dialog.o	\
+	$(OBJ)/mess/windows/tapedlg.o	\
 	$(OBJ)/mess/windows/parallel.o	\
 	$(OBJ)/mess/windows/strconv.o
 endif 

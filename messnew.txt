@@ -12,3 +12,6 @@ Source Changes:
 ---------------
 - The core is based on MAME 0.65.  This incorporates all features of the 
   update to this core.  [MAME team]
+
+- [Win32 GUI] Fixed a bug that caused software specific screenshots to
+  not show up if clicking between tabs.  [Nate Woods]

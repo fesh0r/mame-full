@@ -1148,8 +1148,13 @@ void UpdateScreenShot(void)
 
 	if (have_selection)
 	{
-		// load and set image, or empty it if we don't have one
-		LoadScreenShot(GetSelectedPickItem(), nPictType);
+#ifdef MESS
+		if (!s_szSelectedItem[0] || !LoadScreenShotEx(GetSelectedPickItem(), s_szSelectedItem, nPictType))
+#endif
+		{
+			// load and set image, or empty it if we don't have one
+			LoadScreenShot(GetSelectedPickItem(), nPictType);
+		}
 	}
 
 	// figure out if we have a history or not, to place our other windows properly

@@ -4,11 +4,29 @@
 
 #if HAS_WAVE
 
+void tapecontrol_gettime(char *timepos, size_t timepos_size, int id, int *curpos, int *endpos)
+{
+	int t0, t1;
+
+	t0 = device_tell(IO_CASSETTE, id);
+	t1 = device_seek(IO_CASSETTE, id, 0, SEEK_END);
+	device_seek(IO_CASSETTE, id, t0, SEEK_SET);
+
+	if (t1)
+		snprintf(timepos, timepos_size, "%04d/%04d", t0/11025, t1/11025);
+	else
+		snprintf(timepos, timepos_size, "%04d/%04d", 0, t1/11025);
+
+	if (curpos)
+		*curpos = t0;
+	if (endpos)
+		*endpos = t1;
+}
+
 int tapecontrol(struct mame_bitmap *bitmap, int selected)
 {
 	static int id = 0;
 	char timepos[32];
-	int t0, t1;
     const char *menu_item[40];
     const char *menu_subitem[40];
 	char flag[40];
@@ -29,16 +47,8 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 	flag[total] = 0;
 	total++;
 
-	t0 = device_tell(IO_CASSETTE,id);
-	/* Using the following trick because device_length() is the file length,
-	 * and might not be valid */
-	t1 = device_seek(IO_CASSETTE,id,0,SEEK_END);
-	device_seek(IO_CASSETTE,id,t0,SEEK_SET);
+	tapecontrol_gettime(timepos, sizeof(timepos) / sizeof(timepos[0]), id, NULL, NULL);
 
-	if( t1 )
-		sprintf(timepos, "%04d/%04d", t0/11025, t1/11025);
-	else
-		sprintf(timepos, "%04d/%04d", 0, t1/11025);
 	status = device_status(IO_CASSETTE,id,-1);
 	menu_item[total] = ui_getstring((status & WAVE_STATUS_MOTOR_ENABLE)
 							? (status & WAVE_STATUS_MOTOR_INHIBIT)
