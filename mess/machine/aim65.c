@@ -213,7 +213,7 @@ void aim65_machine_init(void)
 
 int aim65_frame_int(void)
 {
-	return 0;
+	return ignore_interrupt();
 }
 
 
