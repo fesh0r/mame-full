@@ -30,6 +30,7 @@
 #include "vidhrdw/generic.h"
 #include "includes/snes.h"
 #include "devices/cartslot.h"
+#include "inputx.h"
 
 static MEMORY_READ_START( snes_readmem )
 	{ 0x000000, 0x2fffff, snes_r_bank1 },	/* I/O and ROM (repeats for each bank) */
@@ -130,10 +131,10 @@ INPUT_PORTS_START( snes )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER4 )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER4 )
 
-	PORT_START	/* IN 8 : Internal switches */
-	PORT_DIPNAME( 0x1, 0x1, "Enforce 32 sprites/line" )
-	PORT_DIPSETTING(   0x0, DEF_STR( No )  )
-	PORT_DIPSETTING(   0x1, DEF_STR( Yes ) )
+	PORT_START	/* IN 8 : Configuration */
+	PORT_CONFNAME( 0x1, 0x1, "Enforce 32 sprites/line" )
+	PORT_CONFSETTING(   0x0, DEF_STR( No )  )
+	PORT_CONFSETTING(   0x1, DEF_STR( Yes ) )
 
 #ifdef MAME_DEBUG
 	PORT_START	/* IN 9 : debug switches */
