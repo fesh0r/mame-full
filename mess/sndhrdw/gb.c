@@ -54,11 +54,11 @@ struct SOUNDALL
 	int length;
 };
 
-static struct SOUND1   *snd_1;
-static struct SOUND2   *snd_2;
-static struct SOUND3   *snd_3;
-static struct SOUND4   *snd_4;
-static struct SOUNDALL *snd_all;
+static struct SOUND1   snd_1;
+static struct SOUND2   snd_2;
+static struct SOUND3   snd_3;
+static struct SOUND4   snd_4;
+static struct SOUNDALL snd_all;
 
 
 
@@ -101,11 +101,11 @@ void gameboy_sound_w(int offset, int data)
 
 	/*MODE 3 */
 	case 0x1A: /* NR30 Mode 3 Register - Sound On/Off (R/W) */
-		snd_3->on = (data & 0x80)>>7;
+		snd_3.on = (data & 0x80)>>7;
 		/*logerror ("gameboy_sound_w - SOUND 3 ON/OFF is %x\n",snd_3->on);*/
 		break;
 	case 0x1B: /* NR31 Mode 3 Register - Sound Length (R/W) */
-		snd_3->length = data;
+		snd_3.length = data;
 		break;
 	case 0x1C: /* NR32 Mode 3 Register - Select Output Level */
 		break;
@@ -116,8 +116,8 @@ void gameboy_sound_w(int offset, int data)
 
 	/*MODE 4 */
 	case 0x20: /* NR41 Mode 4 Register - Sound Length (R/W) */
-		snd_4->length = data<<2;
-		logerror("Sound4 Data length changed to %4x\n",snd_4->length);
+		snd_4.length = data<<2;
+		logerror("Sound4 Data length changed to %4x\n",snd_4.length);
 		break;
 	case 0x21: /* NR42 Mode 4 Register - Envelope */
 		break;
@@ -135,16 +135,16 @@ void gameboy_sound_w(int offset, int data)
 
 	case 0x26: /* NR52 Sound On/Off (R/W) */
 		logerror("NR52 - %x\n",data);
-		snd_1->on = (data & 0x01);
+		snd_1.on = (data & 0x01);
 		/* logerror("Sound 1 = %02x\n",snd_1->on); */
-		snd_2->on = (data & 0x02)>>1;
+		snd_2.on = (data & 0x02)>>1;
 		/* logerror("Sound 2 = %02x\n",snd_2->on); */
-		snd_3->on = (data & 0x04)>>2;
+		snd_3.on = (data & 0x04)>>2;
 		/* logerror("Sound 3 = %02x\n",snd_3->on); */
-		snd_4->on = (data & 0x08)>>3;
+		snd_4.on = (data & 0x08)>>3;
 		/* logerror("Sound 4 = %02x\n",snd_4->on); */
-		snd_all->on = (data & 0x80)>>7;
-		logerror("Sound ALL = %02x\n",snd_all->on);
+		snd_all.on = (data & 0x80)>>7;
+		logerror("Sound ALL = %02x\n",snd_all.on);
 		break;
 
  	/*   0xFF30 - 0xFF3F = Wave Pattern RAM for arbitrary sound data */
@@ -157,8 +157,15 @@ void gameboy_sound_w(int offset, int data)
 
 int gameboy_sh_start(const struct MachineSound* driver)
 {
+    memset(&snd_1, 0, sizeof(snd_1));
+    memset(&snd_2, 0, sizeof(snd_2));
+    memset(&snd_3, 0, sizeof(snd_3));
+    memset(&snd_4, 0, sizeof(snd_4));
+    memset(&snd_all, 0, sizeof(snd_all));
 
 	channel = stream_init("Gameboy out", 50, Machine->sample_rate, 0, gameboy_sh_update);
+
+
 
     return 0;
 
@@ -181,7 +188,7 @@ void gameboy_sh_update(int param, INT16 *buffer, int length)
 
 	/* Need to create 4 channels of sound here */
 
-	if (snd_all->on)    /* Produce Sound */
+	if (snd_all.on)    /* Produce Sound */
 		max = 0x7FFF;
 	else
 		max = 0x0000;
