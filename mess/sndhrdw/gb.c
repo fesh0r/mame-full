@@ -35,6 +35,7 @@
 *						 Merged init functions into gameboy_sound_w().
 *	14/5/2002		AK - Removed magic numbers in the fixed point math.
 *	12/6/2002		AK - Merged SOUNDx structs into one SOUND struct.
+*  26/10/2002		AK - Finally fixed channel 3!
 *
 ***************************************************************************************/
 
@@ -453,6 +454,7 @@ void gameboy_update(int param, INT16 **buffer, int length)
 				sample >>= 4;
 			}
 			sample &= 0xF;
+			sample -= 8;
 
 			if( snd_3.level )
 				sample >>= (snd_3.level - 1);
