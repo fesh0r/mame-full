@@ -602,7 +602,7 @@ int osd_input_initpre(void)
 
 	if (joytype != JOY_NONE)
 	{
-		int found = FALSE;
+		int found = 0;
 
 		for (stick = 0; stick < JOY_MAX; stick++)
 		{
@@ -610,7 +610,7 @@ int osd_input_initpre(void)
 			{
 				fprintf(stderr_file, "OSD: Info: Joystick %d, %d axis, %d buttons\n",
 						stick, joy_data[stick].num_axes, joy_data[stick].num_buttons);
-				found = TRUE;
+				found = 1;
 			}
 		}
 
@@ -848,9 +848,7 @@ static void update_joystick_axes(void)
 			
 			/* if the type doesn't match, switch it */
 			if (joystick_type[joynum][axis] != newtype)
-			{
 				joystick_type[joynum][axis] = newtype;
-			}
 		}
 }
 
@@ -1142,20 +1140,20 @@ void joy_evaluate_moves(void)
 				if (joy_data[stick].axis[axis].val > joy_data[stick].axis[axis].max)
 				{
 					joy_data[stick].axis[axis].max = joy_data[stick].axis[axis].val;
-					joy_data[stick].axis[axis].center = (joy_data[stick].axis[axis].max + joy_data[stick].axis[axis].min)/2;
+					joy_data[stick].axis[axis].mid = (joy_data[stick].axis[axis].max + joy_data[stick].axis[axis].min)/2;
 				}
 				else if (joy_data[stick].axis[axis].val < joy_data[stick].axis[axis].min)
 				{
 					joy_data[stick].axis[axis].min = joy_data[stick].axis[axis].val;
-					joy_data[stick].axis[axis].center = (joy_data[stick].axis[axis].max + joy_data[stick].axis[axis].min)/2;
+					joy_data[stick].axis[axis].mid = (joy_data[stick].axis[axis].max + joy_data[stick].axis[axis].min)/2;
 				}
 
-				threshold = (joy_data[stick].axis[axis].max - joy_data[stick].axis[axis].center) >> 1;
+				threshold = (joy_data[stick].axis[axis].max - joy_data[stick].axis[axis].mid) >> 1;
 
-				if (joy_data[stick].axis[axis].val < (joy_data[stick].axis[axis].center - threshold))
-					joy_data[stick].axis[axis].dirs[0] = TRUE;
-				else if (joy_data[stick].axis[axis].val > (joy_data[stick].axis[axis].center + threshold))
-					joy_data[stick].axis[axis].dirs[1] = TRUE;
+				if (joy_data[stick].axis[axis].val < (joy_data[stick].axis[axis].mid - threshold))
+					joy_data[stick].axis[axis].dirs[0] = 1;
+				else if (joy_data[stick].axis[axis].val > (joy_data[stick].axis[axis].mid + threshold))
+					joy_data[stick].axis[axis].dirs[1] = 1;
 			}
 		}
 	}
@@ -1186,17 +1184,17 @@ static INT32 get_joycode_value(os_code_t joycode)
 		case CODETYPE_AXIS_NEG:
 		{
 			int val = joy_data[joynum].axis[joyindex].val;	
-			int top = joy_data[joynum].axis[joyindex].max;	
-			int bottom = joy_data[joynum].axis[joyindex].min;	
-			int middle = joy_data[joynum].axis[joyindex].center;
+			int max = joy_data[joynum].axis[joyindex].max;	
+			int min = joy_data[joynum].axis[joyindex].min;	
+			int mid = joy_data[joynum].axis[joyindex].mid;
 
 			/* watch for movement greater "a2d_deadzone" along either axis */
 			/* FIXME in the two-axis joystick case, we need to find out */
 			/* the angle. Anything else is unprecise. */
 			if (codetype == CODETYPE_AXIS_POS)
-				return (val > middle + ((top - middle) * a2d_deadzone));
+				return (val > mid + ((max - mid) * a2d_deadzone));
 			else
-				return (val < middle - ((middle - bottom) * a2d_deadzone));
+				return (val < mid - ((mid - min) * a2d_deadzone));
 		}
 
 		/* analog joystick axis */
@@ -1207,13 +1205,14 @@ static INT32 get_joycode_value(os_code_t joycode)
 			else
 			{
 				int val = joy_data[joynum].axis[joyindex].val;	
-				int top = joy_data[joynum].axis[joyindex].max;	
-				int bottom = joy_data[joynum].axis[joyindex].min;	
+				int max = joy_data[joynum].axis[joyindex].max;	
+				int min = joy_data[joynum].axis[joyindex].min;	
+				int mid = joy_data[joynum].axis[joyindex].mid;
 
-				val = (INT64)val * (INT64)(ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) / (INT64)(top - bottom);
+				val = (INT64)(val - mid) * (INT64)(ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) / (INT64)(max - min);
 				if (val < ANALOG_VALUE_MIN)
 					val = ANALOG_VALUE_MIN;
-				if (val > ANALOG_VALUE_MAX)
+				else if (val > ANALOG_VALUE_MAX)
 					val = ANALOG_VALUE_MAX; 
 				return val;
 			}
@@ -1235,11 +1234,11 @@ static INT32 get_joycode_value(os_code_t joycode)
 		case CODETYPE_GUNAXIS:
 		{
 #ifdef USE_LIGHTGUN_ABS_EVENT
-			int delta = 0;
+			int val = 0;
 
 			/* return the latest gun info */
-			if (lightgun_event_abs_read(joynum, joyindex, &delta))
-				return delta;
+			if (lightgun_event_abs_read(joynum, joyindex, &val))
+				return val;
 #endif
 			return 0;
 		}
