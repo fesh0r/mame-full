@@ -316,6 +316,8 @@ INPUT_PORTS_START( pdp1 )
 {  074,     0274, KEYCODE_LSHIFT, 0               ,"Upper Case"                ,""             },
 {  000,     0200, KEYCODE_SPACE, KEYCODE_SPACE    ,"Space"                     ,""             },
 
+*/
+
 /*
 52 keys.  The function for the two keys at the top is unknown, I cannot read the caption on the
 picture.
