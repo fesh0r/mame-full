@@ -578,12 +578,12 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	/* TANGERINE */
 	DRIVER( microtan )	/* 1979 Microtan 65 								*/
 
-//	DRIVER( oric1 ) 	/* 1983 Oric 1										*/
-//	DRIVER( orica ) 	/* 1984 Oric Atmos									*/
-//	DRIVER( prav8d )    /* 1985 Pravetz 8D									*/
-//	DRIVER( prav8dd )   /* 1989 Pravetz 8D (Disk ROM)						*/
-//	DRIVER( prav8dda )  /* 1989 Pravetz 8D (Disk ROM, alternate)			*/
-//	DRIVER( telstrat )	/* ??? Oric Telestrat/Stratos						*/
+	DRIVER( oric1 ) 	/* 1983 Oric 1										*/
+	DRIVER( orica ) 	/* 1984 Oric Atmos									*/
+	DRIVER( prav8d )    /* 1985 Pravetz 8D									*/
+	DRIVER( prav8dd )   /* 1989 Pravetz 8D (Disk ROM)						*/
+	DRIVER( prav8dda )  /* 1989 Pravetz 8D (Disk ROM, alternate)			*/
+	DRIVER( telstrat )	/* ??? Oric Telestrat/Stratos						*/
 
 	/* PHILIPS */
 	DRIVER( p2000t )	/* 1980 P2000T										*/
@@ -644,9 +644,9 @@ TESTDRIVER( mekd2 )		/* 1977 Motorola Evaluation Kit						*/
 	DRIVER( galaxy )
 
 	/* PK-01 Lviv */
-//	DRIVER( lviv )		/* PK-01 Lviv										*/
-//	DRIVER( lviva )		/* PK-01 Lviv (alternate)							*/
-//	DRIVER( lvivp )		/* PK-01 Lviv (early)								*/
+	DRIVER( lviv )		/* PK-01 Lviv										*/
+	DRIVER( lviva )		/* PK-01 Lviv (alternate)							*/
+	DRIVER( lvivp )		/* PK-01 Lviv (early)								*/
 
 	/* Tesla */
 TESTDRIVER( pmd85 )		/* PMD-85.1											*/

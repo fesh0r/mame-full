@@ -1712,7 +1712,7 @@ static OPBASE_HANDLER( kc85_3_opbaseoverride )
 
 	kc85_3_update_0x00000();
 
-	return (cpunum_get_pc(0) & 0x0ffff);
+	return (cpunum_get_reg(0, REG_PC) & 0x0ffff);
 }
 
 
@@ -1722,7 +1722,7 @@ static OPBASE_HANDLER( kc85_4_opbaseoverride )
 	
 	kc85_4_update_0x00000();
 
-	return (cpunum_get_pc(0) & 0x0ffff);
+	return (cpunum_get_reg(0, REG_PC) & 0x0ffff);
 }
 #endif
 

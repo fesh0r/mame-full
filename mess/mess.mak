@@ -592,9 +592,9 @@ $(OBJ)/aim65.a :    \
 	$(OBJ)/mess/systems/aim65.o
 
 $(OBJ)/vc4000.a :   \
-	$(OBJ)/mess/sndhrdw/vc4000.o   \
+	$(OBJ)/mess/sndhrdw/vc4000.o	\
 	$(OBJ)/mess/systems/vc4000.o	\
-#	$(OBJ)/mess/vidhrdw/vc4000.o   \
+#	$(OBJ)/mess/vidhrdw/vc4000.o	\
 
 $(OBJ)/tangerin.a :\
 	$(OBJ)/mess/devices/mfmdisk.o	\
@@ -604,7 +604,7 @@ $(OBJ)/tangerin.a :\
 	$(OBJ)/mess/formats/oric_tap.o	\
 	$(OBJ)/mess/systems/oric.o		\
 	$(OBJ)/mess/vidhrdw/oric.o		\
-#	$(OBJ)/mess/machine/oric.o		\
+	$(OBJ)/mess/machine/oric.o		\
 
 $(OBJ)/vtech.a :   \
 	$(OBJ)/mess/vidhrdw/vtech1.o	\
@@ -701,7 +701,7 @@ $(OBJ)/lviv.a:   \
 	$(OBJ)/mess/vidhrdw/lviv.o   \
 	$(OBJ)/mess/systems/lviv.o   \
 	$(OBJ)/mess/formats/lviv_lvt.o	\
-#	$(OBJ)/mess/machine/lviv.o   \
+	$(OBJ)/mess/machine/lviv.o   \
 
 $(OBJ)/pmd85.a:   \
 	$(OBJ)/mess/vidhrdw/pmd85.o   \

@@ -163,15 +163,10 @@ WRITE_HANDLER ( lviv_io_w )
 	{
 		startup_mem_map = 0;
 
-		memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-		memory_set_bankhandler_r(2, 0, MRA8_BANK2);
-		memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-		memory_set_bankhandler_r(4, 0, MRA8_BANK4);
-
-		memory_set_bankhandler_w(1, 0, MWA8_BANK1);
-		memory_set_bankhandler_w(2, 0, MWA8_BANK2);
-		memory_set_bankhandler_w(3, 0, MWA8_BANK3);
-		memory_set_bankhandler_w(4, 0, MWA8_ROM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, MWA8_BANK1);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, MWA8_BANK2);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, MWA8_BANK3);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC000, 0xffff, 0, MWA8_ROM);
 
 		cpu_setbank(1, mess_ram);
 		cpu_setbank(2, mess_ram + 0x4000);
@@ -220,15 +215,10 @@ MACHINE_INIT( lviv )
 
 	startup_mem_map = 1;
 
-	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-	memory_set_bankhandler_r(2, 0, MRA8_BANK2);
-	memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-	memory_set_bankhandler_r(4, 0, MRA8_BANK4);
-
-	memory_set_bankhandler_w(1, 0, MWA8_ROM);
-	memory_set_bankhandler_w(2, 0, MWA8_ROM);
-	memory_set_bankhandler_w(3, 0, MWA8_ROM);
-	memory_set_bankhandler_w(4, 0, MWA8_ROM);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, MWA8_ROM);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, MWA8_ROM);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, MWA8_ROM);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xC000, 0xffff, 0, MWA8_ROM);
 
 	cpu_setbank(1, memory_region(REGION_CPU1) + 0x010000);
 	cpu_setbank(2, memory_region(REGION_CPU1) + 0x010000);
@@ -294,12 +284,12 @@ static void lviv_setup_snapshot (UINT8 * data)
 
 static void dump_registers(void)
 {
-	logerror("PC   = %04x\n", cpunum_get_reg(0, I8080_PC));
-	logerror("SP   = %04x\n", cpunum_get_reg(0, I8080_SP));
-	logerror("AF   = %04x\n", cpunum_get_reg(0, I8080_AF));
-	logerror("BC   = %04x\n", cpunum_get_reg(0, I8080_BC));
-	logerror("DE   = %04x\n", cpunum_get_reg(0, I8080_DE));
-	logerror("HL   = %04x\n", cpunum_get_reg(0, I8080_HL));
+	logerror("PC   = %04x\n", (unsigned) cpunum_get_reg(0, I8080_PC));
+	logerror("SP   = %04x\n", (unsigned) cpunum_get_reg(0, I8080_SP));
+	logerror("AF   = %04x\n", (unsigned) cpunum_get_reg(0, I8080_AF));
+	logerror("BC   = %04x\n", (unsigned) cpunum_get_reg(0, I8080_BC));
+	logerror("DE   = %04x\n", (unsigned) cpunum_get_reg(0, I8080_DE));
+	logerror("HL   = %04x\n", (unsigned) cpunum_get_reg(0, I8080_HL));
 }
 
 static int lviv_verify_snapshot (UINT8 * data, UINT32 size)
