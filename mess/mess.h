@@ -129,7 +129,7 @@ enum
 };
 
 #define is_effective_mode_writable(mode) ((mode) != OSD_FOPEN_READ)
-#define is_effective_mode_create(mode) ((mode) == OSD_FOPEN_RW_CREATE)
+#define is_effective_mode_create(mode) (((mode) == OSD_FOPEN_RW_CREATE) || ((mode) == OSD_FOPEN_WRITE))
 
 /* hack: placeholder used until I determine what the open_mode value should be for an image */
 #define OSD_FOPEN_DUMMY -1

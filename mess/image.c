@@ -337,7 +337,7 @@ void *image_fopen_new(int type, int id, int *effective_mode)
 	case OSD_FOPEN_DUMMY:
 	default:
 		/* unsupported modes */
-		printf(/*stderr,*/ "Internal Error in file \""__FILE__"\", line %d\n", __LINE__);
+		printf("Internal Error in file \""__FILE__"\", line %d\n", __LINE__);
 		fref = NULL;
 		effective_mode_local = OSD_FOPEN_DUMMY;
 		break;
@@ -388,7 +388,7 @@ void *image_fopen_new(int type, int id, int *effective_mode)
 			effective_mode_local = OSD_FOPEN_READ;
 		else
 		{
-			fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_WRITE);
+			fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, /*OSD_FOPEN_WRITE*/OSD_FOPEN_RW_CREATE);
 			effective_mode_local = OSD_FOPEN_WRITE;
 		}
 		break;
