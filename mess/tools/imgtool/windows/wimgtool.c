@@ -107,24 +107,35 @@ static void report_error(HWND window, imgtoolerr_t err)
 static int append_associated_icon(HWND window, const char *extension)
 {
 	HICON icon;
+	HANDLE file;
 	WORD icon_index;
-	TCHAR icon_path[MAX_PATH];
+	TCHAR file_path[MAX_PATH];
 	int index = -1;
 	struct wimgtool_info *info;
 
 	info = get_wimgtool_info(window);
 
-	_tcscpy(icon_path, TEXT("nul"));
+	GetTempPath(sizeof(file_path) / sizeof(file_path[0]), file_path);
+	_tcscat(file_path, "tmp");
 	if (extension)
-		_tcscat(icon_path, A2T(extension));
+		_tcscat(file_path, A2T(extension));
 
-	icon = ExtractAssociatedIcon(NULL, icon_path, &icon_index);
+	file = CreateFile(file_path, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
+
+	icon = ExtractAssociatedIcon(GetModuleHandle(NULL), file_path, &icon_index);
 	if (icon)
 	{
 		index = ImageList_AddIcon(info->iconlist_normal, icon);
 		ImageList_AddIcon(info->iconlist_small, icon);
 		DestroyIcon(icon);
 	}
+
+	if (file != INVALID_HANDLE_VALUE)
+	{
+		CloseHandle(file);
+		DeleteFile(file_path);
+	}
+
 	return index;
 }
 
