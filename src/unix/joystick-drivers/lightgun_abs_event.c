@@ -213,7 +213,7 @@ void lightgun_event_abs_poll(void)
 			} else if (ev->type == EV_KEY && (ev->code == BTN_MIDDLE
 						|| ev->code == BTN_MOUSE
 						|| ev->code == BTN_6)) {
-				sysdep_display_mouse_data[i].buttons[0] = ev->value;
+				joy_data[i].buttons[0] = ev->value;
 			} else if (ev->type == EV_KEY && (ev->code == BTN_SIDE 
 						|| ev->code == BTN_RIGHT
 						|| ev->code == BTN_7)) {
@@ -221,7 +221,7 @@ void lightgun_event_abs_poll(void)
 					lg_devices[i].min[LG_X_AXIS];
 				lg_devices[i].last[LG_Y_AXIS] =
 					lg_devices[i].min[LG_Y_AXIS];
-                                sysdep_display_mouse_data[i].buttons[0] = ev->value;
+                                joy_data[i].buttons[0] = ev->value;
 			}
 		}
 	}
