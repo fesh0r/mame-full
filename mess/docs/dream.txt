@@ -1,0 +1,21 @@
+ETI Dream
+---------
+
+early 6800 based computer
+
+
+Features
+--------
+video connector
+chip8 interpretor
+
+
+Notes
+-----
+seams to be very related to rca cosmac vip.
+emulator source available
+
+
+Emulators
+---------
+Dream for DOS by Paul Robson
