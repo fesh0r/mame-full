@@ -465,7 +465,10 @@ int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const struct N
 
 	/* Does this image module prefer upper case file names? */
 	if (img->module->flags & IMGMODULE_FLAG_FILENAMES_PREFERUCASE) {
-		buf = strdup(fname);
+		/*buf = strdup(fname);*/
+		buf = malloc(strlen(fname)+1);
+		if (buf)
+			strcpy(buf, fname);
 		if (!buf) {
 			err = IMGTOOLERR_OUTOFMEMORY;
 			goto done;
@@ -549,18 +552,13 @@ int img_deletefile(IMAGE *img, const char *fname)
 	return 0;
 }
 
-int img_create(const struct ImageModule *module, const char *fname, const struct NamedOption *nopts)
+int img_create_resolved(const struct ImageModule *module, const char *fname, const ResolvedOption *ropts)
 {
 	int err;
 	STREAM *f;
-	ResolvedOption ropts[MAX_OPTIONS];
 
 	if (!module->create)
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
-
-	err = resolve_options(module->createoptions_template, nopts, ropts, sizeof(ropts) / sizeof(ropts[0]));
-	if (err)
-		return err | IMGTOOLERR_SRC_PARAM_CREATE;
 
 	f = stream_open(fname, OSD_FOPEN_WRITE);
 	if (!f)
@@ -570,6 +568,23 @@ int img_create(const struct ImageModule *module, const char *fname, const struct
 	stream_close(f);
 	if (err)
 		return markerrorsource(err);
+
+	return 0;
+}
+
+int img_create(const struct ImageModule *module, const char *fname, const struct NamedOption *nopts)
+{
+	int err;
+	ResolvedOption ropts[MAX_OPTIONS];
+
+	if (!module->create)
+		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+
+	err = resolve_options(module->createoptions_template, nopts, ropts, sizeof(ropts) / sizeof(ropts[0]));
+	if (err)
+		return err | IMGTOOLERR_SRC_PARAM_CREATE;
+
+	img_create_resolved(module, fname, ropts);
 
 	return 0;
 }

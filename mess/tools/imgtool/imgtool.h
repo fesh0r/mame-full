@@ -108,7 +108,7 @@ struct filter_info {
 	void *internalparam;
 };
 
-struct ImageModule;
+typedef struct ImageModule ImageModule;
 
 struct filter_module {
 	const char *name;
@@ -166,14 +166,14 @@ enum {
 	IMGOPTION_FLAG_HASDEFAULT	= 0x0010
 };
 
-struct OptionTemplate {
+typedef struct OptionTemplate {
 	const char *name;
 	const char *description;
 	int flags;
 	int min;
 	int max;
 	const char *defaultvalue;
-};
+} OptionTemplate;
 
 struct NamedOption {
 	const char *name;
@@ -507,7 +507,8 @@ int img_putfile(IMAGE *img, const char *newfname, const char *source,
  */
 int img_deletefile(IMAGE *img, const char *fname);
 
-/* img_create
+/* img_create_resolved
+ * img_create
  * img_create_byname
  *
  * Description:
@@ -516,9 +517,10 @@ int img_deletefile(IMAGE *img, const char *fname);
  * Parameters:
  *		module/modulename:	The module for this image format
  *		fname:				The native filename for the image
- *		options:			Options that control how the image is created
+ *		options/ropts:		Options that control how the image is created
  *							(tracks, sectors, etc)
  */
+int img_create_resolved(const struct ImageModule *module, const char *fname, const ResolvedOption *ropts);
 int img_create(const struct ImageModule *module, const char *fname, const struct NamedOption *_options);
 int img_create_byname(const char *modulename, const char *fname, const struct NamedOption *_options);
 
