@@ -51,7 +51,7 @@ typedef struct {
 
 #define D64_MAX_TRACKS 40
 
-int d64_sectors_per_track[] =
+static int d64_sectors_per_track[] =
 {
 	21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
 	19, 19, 19, 19, 19, 19, 19,
@@ -167,7 +167,7 @@ void d64_open_helper (void)
 }
 
 /* calculates offset to beginning of d64 file for sector beginning */
-int d64_tracksector2offset (int track, int sector)
+static int d64_tracksector2offset (int track, int sector)
 {
 	return d64_offset[track - 1] + sector * 256;
 }
