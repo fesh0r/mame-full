@@ -1,20 +1,24 @@
 0.37b8 
+---------
+Several drivers may be broken due to the MAME memory handling changes.
+As a result, Genesis and Amiga have been temporarily removed.
+---------
 
 Note: .inp record/playback does still not work currently.
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-
+-N/A
 
 System Driver Changes:
 ----------------------
 
-- [ORIC] Rewrote to use 6522via code in MESS core. Previously it had
-it's own implementation which was not complete. Added floppy disc emulation 
-(emulates a Microdisc interface). Added support for MFM_DISK disk image 
-type as used by Euphoric. This driver uses the IO_CASSETTE device, and can
-be controlled with the "Tape Control" menu. However the Oric cassette emulation
-is not working fully yet. [Kev Thacker]
+- [ORIC] Rewrote to use 6522via code in MESS core. Previously it had it's own 
+  implementation which was not complete. Added floppy disc emulation (emulates a 
+  Microdisc interface). Added support for MFM_DISK disk image type as used by 
+  Euphoric. This driver uses the IO_CASSETTE device, and can be controlled with 
+  the "Tape Control" menu. However the Oric cassette emulation is not working 
+  fully yet. [Kev Thacker]
 
 Other Changes:
 --------------
@@ -30,6 +34,7 @@ Other Changes:
   and imgtool can convert .cas to .wav files. [Sean Young]
 
 
+-------------------------------------------------------------------------------
 0.37b7 
 
 Note: .inp record/playback does still not work currently.
