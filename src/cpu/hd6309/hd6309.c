@@ -73,7 +73,7 @@
 
 000809 TJL:
 	Started converting m6809 into hd6309
-	
+
 001217 TJL:
 	Finished:
 		All opcodes
@@ -844,7 +844,7 @@ int hd6309_execute(int cycles)	/* NS 970908 */
 			pPPC = pPC;
 
 			CALL_MAME_DEBUG;
-			
+
 			hd6309.ireg = ROP(PCD);
 			PC++;
 
@@ -1113,7 +1113,7 @@ int hd6309_execute(int cycles)	/* NS 970908 */
 #endif    /* BIG_SWITCH */
 
 			hd6309_ICount -= cycle_counts_page0[hd6309.ireg];
-				
+
 		} while( hd6309_ICount > 0 );
 
 		hd6309_ICount -= hd6309.extra_cycles;
@@ -1402,7 +1402,7 @@ INLINE void fetch_effective_address( void )
 	case 0xfe: EA=S+W;								EAD=RM16(EAD);		break;
 	case 0xff: IMMWORD(ea); 						EAD=RM16(EAD);		break;
 	}
-	
+
 	hd6309_ICount -= index_cycle[postbyte];
 }
 

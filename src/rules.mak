@@ -869,6 +869,14 @@ else
 SOUNDDEFS += -DHAS_DAC=0
 endif
 
+SOUND=$(strip $(findstring DISCRETE@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_DISCRETE=1
+SOUNDOBJS += $(OBJ)/sound/discrete.o
+else
+SOUNDDEFS += -DHAS_DISCRETE=0
+endif
+
 SOUND=$(strip $(findstring AY8910@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_AY8910=1
@@ -1013,23 +1021,16 @@ else
 SOUNDDEFS += -DHAS_TIA=0
 endif
 
-ifndef MESS
 SOUND=$(strip $(findstring NES@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_NES=1
+ifndef MESS
 SOUNDOBJS += $(OBJ)/sound/nes_apu.o
 else
-SOUNDDEFS += -DHAS_NES=0
-endif
-
-else
-SOUND=$(strip $(findstring NES@,$(SOUNDS)))
-ifneq ($(SOUND),)
-SOUNDDEFS += -DHAS_NES=1
 SOUNDOBJS += $(OBJ)/sound/nes_apu2.o $(OBJ)/sound/nesintf.o
+endif
 else
 SOUNDDEFS += -DHAS_NES=0
-endif
 endif
 
 SOUND=$(strip $(findstring ASTROCADE@,$(SOUNDS)))
@@ -1214,6 +1215,22 @@ SOUNDDEFS += -DHAS_IREMGA20=1
 SOUNDOBJS += $(OBJ)/sound/iremga20.o
 else
 SOUNDDEFS += -DHAS_IREMGA20=0
+endif
+
+SOUND=$(strip $(findstring ES5505@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_ES5505=1
+SOUNDOBJS += $(OBJ)/sound/es5506.o
+else
+SOUNDDEFS += -DHAS_ES5505=0
+endif
+
+SOUND=$(strip $(findstring ES5506@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_ES5506=1
+SOUNDOBJS += $(OBJ)/sound/es5506.o
+else
+SOUNDDEFS += -DHAS_ES5506=0
 endif
 
 SOUND=$(strip $(findstring SPEAKER@,$(SOUNDS)))
