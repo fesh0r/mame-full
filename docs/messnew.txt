@@ -26,7 +26,8 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- [Windows] Fixed the -writeconfig option; was accidently dropped.  (bug #492)
+  [Nate Woods]
 
 
 

@@ -752,6 +752,11 @@ void cli_frontend_exit(void)
 	if (options.playback) mame_fclose(options.playback);
 	if (options.record)   mame_fclose(options.record);
 	if (options.language_file) mame_fclose(options.language_file);
+
+#ifdef MESS
+	if (win_write_config)
+		write_config(NULL, Machine->gamedrv);
+#endif
 }
 
 static int config_handle_arg(char *arg)
