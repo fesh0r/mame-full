@@ -139,6 +139,10 @@ void pc1350_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
     color[0] = Machine->pens[pocketc_colortable[PC1350_CONTRAST][0]];
 	color[1] = Machine->pens[pocketc_colortable[PC1350_CONTRAST][1]];
 
+    if (full_refresh)
+    {
+        osd_mark_dirty (0, 0, bitmap->width, bitmap->height);
+    }
     if (pocketc_backdrop)
 		copybitmap (bitmap, pocketc_backdrop->artwork, 0, 0, 0, 0, NULL,
 					TRANSPARENCY_NONE, 0);
