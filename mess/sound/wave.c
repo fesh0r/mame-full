@@ -599,6 +599,7 @@ int wave_status(int id, int newstatus)
 
 		if( newstatus && !w->timer )
 		{
+			w->timer = timer_alloc(NULL);
 			timer_adjust(w->timer, TIME_NEVER, 0, 0);
 		}
 		else
