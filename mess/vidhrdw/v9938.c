@@ -1062,15 +1062,24 @@ static void v9938_set_mode (void)
 
 static void v9938_refresh_8 (struct osd_bitmap *bmp, int line)
 	{
-	int i;
-	UINT8 col[256], *ln, *ln2;
+	int i, double_lines;
+	UINT8 col[256], *ln, *ln2 = NULL;
+
+	double_lines = 0;
 
 	if (vdp.size == RENDER_HIGH)
-		ln = bmp->line[line*2];
+		{
+		if (vdp.contReg[9] & 0x08)
+			ln = bmp->line[line*2+((vdp.statReg[2]>>1)&1)];
+		else
+			{
+			ln = bmp->line[line*2];
+			ln2 = bmp->line[line*2+1];
+			double_lines = 1;
+			}
+		}
 	else
 		ln = bmp->line[line];
-
-	ln2 = bmp->line[line*2+1];
 
 	if ( !(vdp.contReg[1] & 0x40) || (vdp.statReg[2] & 0x40) )
 		{
@@ -1102,22 +1111,31 @@ static void v9938_refresh_8 (struct osd_bitmap *bmp, int line)
 			}
 		}
 
-	if (vdp.size == RENDER_HIGH)
+	if (double_lines)
 		memcpy (ln2, ln, (512 + 32) );
 	}
 
 static void v9938_refresh_16 (struct osd_bitmap *bmp, int line)
 	{
-	int i;
+	int i, double_lines;
 	UINT8 col[256];
-	UINT16 *ln, *ln2;
+	UINT16 *ln, *ln2 = NULL;
+
+	double_lines = 0;
 
 	if (vdp.size == RENDER_HIGH)
-		ln = (UINT16*)bmp->line[line*2];
+		{
+		if (vdp.contReg[9] & 0x08)
+			ln = (UINT16*)bmp->line[line*2+((vdp.statReg[2]>>1)&1)];
+		else
+			{
+			ln = (UINT16*)bmp->line[line*2];
+			ln2 = (UINT16*)bmp->line[line*2+1];
+			double_lines = 1;
+			}
+		}
 	else
 		ln = (UINT16*)bmp->line[line];
-
-	ln2 = (UINT16*)bmp->line[line*2+1];
 
 	if ( !(vdp.contReg[1] & 0x40) || (vdp.statReg[2] & 0x40) )
 		{
@@ -1149,7 +1167,7 @@ static void v9938_refresh_16 (struct osd_bitmap *bmp, int line)
 			}
 		}
 
-	if (vdp.size == RENDER_HIGH)
+	if (double_lines)
 		memcpy (ln2, ln, (512 + 32) * 2);
 	}
 

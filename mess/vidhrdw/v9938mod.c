@@ -466,7 +466,10 @@ V9938_MODE_FUNC (mode_graphic6)
 	{
     UINT8 colour;
     int line2, linemask, x, xx, nametbl;
-    PEN_TYPE pen_bg;
+    PEN_TYPE pen_bg, fg0;
+#if (V9938_WIDTH > 512)
+	PEN_TYPE fg1;
+#endif
 	
     linemask = ((vdp.contReg[2] & 0x1f) << 3) | 7;
 
@@ -484,15 +487,40 @@ V9938_MODE_FUNC (mode_graphic6)
 #endif
 	while (xx--) *ln++ = pen_bg;
 	
-    for (x=0;x<256;x++)	
-        {	
-		colour = vdp.vram[((nametbl&1) << 16) | (nametbl>>1)];	
-        *ln++ = Machine->pens[pal_ind16[colour>>4]];
-#if (V9938_WIDTH > 512)
-        *ln++ = Machine->pens[pal_ind16[colour&15]];
+	if (vdp.contReg[2] & 0x40)
+		{
+		for (x=0;x<32;x++)
+			{
+			nametbl++;
+			colour = vdp.vram[((nametbl&1) << 16) | (nametbl>>1)];	
+        	fg0 = Machine->pens[pal_ind16[colour>>4]];
+#if (V9938_WIDTH < 512)
+			*ln++ = fg0; *ln++ = fg0; 
+			*ln++ = fg0; *ln++ = fg0;
+			*ln++ = fg0; *ln++ = fg0; 
+			*ln++ = fg0; *ln++ = fg0;
+#else
+        	fg1 = Machine->pens[pal_ind16[colour&15]];
+			*ln++ = fg0; *ln++ = fg1; *ln++ = fg0; *ln++ = fg1; 
+			*ln++ = fg0; *ln++ = fg1; *ln++ = fg0; *ln++ = fg1; 
+			*ln++ = fg0; *ln++ = fg1; *ln++ = fg0; *ln++ = fg1; 
+			*ln++ = fg0; *ln++ = fg1; *ln++ = fg0; *ln++ = fg1; 
 #endif
-		nametbl++;
-        }
+			nametbl += 7;
+			}
+		}
+	else
+		{
+		for (x=0;x<256;x++)	
+			{	
+			colour = vdp.vram[((nametbl&1) << 16) | (nametbl>>1)];	
+        	*ln++ = Machine->pens[pal_ind16[colour>>4]];
+#if (V9938_WIDTH > 512)
+        	*ln++ = Machine->pens[pal_ind16[colour&15]];
+#endif
+			nametbl++;
+        	}
+		}
 	
 	xx = 16 - vdp.offset_x;
 #if (V9938_WIDTH > 512)
@@ -524,16 +552,39 @@ V9938_MODE_FUNC (mode_graphic7)
 #endif
 	while (xx--) *ln++ = pen_bg;
 
-  	for (x=0;x<256;x++)	
-        {	
-		colour = vdp.vram[((nametbl&1) << 16) | (nametbl>>1)];	
-		pen = Machine->pens[pal_ind256[colour]];
-		*ln++ = pen;
+	if (vdp.contReg[2] & 0x40)
+		{
+		for (x=0;x<32;x++)
+			{
+			nametbl++;
+			colour = vdp.vram[((nametbl&1) << 16) | (nametbl>>1)];	
+			pen = Machine->pens[pal_ind256[colour]];
+			*ln++ = pen; *ln++ = pen;
+			*ln++ = pen; *ln++ = pen;
+			*ln++ = pen; *ln++ = pen;
+			*ln++ = pen; *ln++ = pen;
 #if (V9938_WIDTH > 512)
-		 *ln++ = pen;
+			*ln++ = pen; *ln++ = pen;
+			*ln++ = pen; *ln++ = pen;
+			*ln++ = pen; *ln++ = pen;
+			*ln++ = pen; *ln++ = pen;
 #endif
-		nametbl++;	
-       	}
+			nametbl++;
+			}
+		}
+	else
+		{
+  		for (x=0;x<256;x++)	
+        	{	
+			colour = vdp.vram[((nametbl&1) << 16) | (nametbl>>1)];	
+			pen = Machine->pens[pal_ind256[colour]];
+			*ln++ = pen;
+#if (V9938_WIDTH > 512)
+		 	*ln++ = pen;
+#endif
+			nametbl++;	
+       		}
+		}
 
 	xx = 16 - vdp.offset_x;	
 #if (V9938_WIDTH > 512)
