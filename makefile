@@ -1,10 +1,13 @@
 # set this to mame, mess or the destination you want to build
-TARGET = mame
+# TARGET = mame
 # TARGET = mess
 # TARGET = neomame
 # TARGET = cpmame
 # example for a tiny compile
 # TARGET = tiny
+ifeq ($(TARGET),)
+TARGET = mame
+endif
 
 # uncomment next line to include the debugger
 # DEBUG = 1
@@ -12,7 +15,7 @@ TARGET = mame
 # uncomment next line to include the symbols for symify
 # SYMBOLS = 1
 
-# uncomment next line to generate a link map for exception handling in win32
+# uncomment next line to generate a link map for exception handling in windows
 # MAP = 1
 
 # uncomment next line to use Assembler 68000 engine
@@ -22,8 +25,11 @@ X86_ASM_68000 = 1
 # X86_ASM_68020 = 1
 
 # set this the operating system you're building for
+# OS = msdos
+OS = windows
+ifeq ($(OS),)
 OS = msdos
-# OS = win32
+endif
 
 # extension for executables
 EXE = .exe
@@ -42,18 +48,25 @@ MD = -mkdir
 RM = @rm -f
 #PERL = @perl -w
 
+
+ifeq ($(OS),windows)
+SUFFIX = w
+else
+SUFFIX =
+endif
+
 ifdef DEBUG
-NAME = $(TARGET)d
+NAME = $(TARGET)$(SUFFIX)d
 else
 ifdef K6
-NAME = $(TARGET)k6
+NAME = $(TARGET)$(SUFFIX)k6
 ARCH = -march=k6
 else
 ifdef I686
-NAME = $(TARGET)pp
+NAME = $(TARGET)$(SUFFIX)pp
 ARCH = -march=pentiumpro
 else
-NAME = $(TARGET)
+NAME = $(TARGET)$(SUFFIX)
 ARCH = -march=pentium
 endif
 endif
@@ -71,7 +84,7 @@ DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__
 
 ifdef SYMBOLS
 CFLAGS = -Isrc -Isrc/$(OS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
-	-O0 -pedantic -Wall -Werror -Wno-unused -g
+	-O0 -Wall -Werror -Wno-unused -g
 else
 CFLAGS = -Isrc -Isrc/$(OS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
 	-DNDEBUG \

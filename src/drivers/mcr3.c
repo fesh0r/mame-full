@@ -1362,7 +1362,7 @@ static const struct MachineDriver machine_driver_spyhunt =
 	8*16+4, 8*16+4,
 	spyhunt_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_ASPECT_RATIO(62,45),
 	0,
 	spyhunt_vh_start,
 	spyhunt_vh_stop,

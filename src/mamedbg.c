@@ -542,6 +542,10 @@ struct GfxElement *build_debugger_font(void)
 static void toggle_cursor(struct osd_bitmap *bitmap, struct GfxElement *font)
 {
 	int sx, sy, x, y;
+	int saved_depth = Machine->color_depth;
+	
+	/* ASG: this allows the debug bitmap to be a different depth than the screen */
+	Machine->color_depth = bitmap->depth;
 	switch_ui_orientation();
 	sx = cursor_x * font->width;
 	sy = cursor_y * font->height;
@@ -562,6 +566,7 @@ static void toggle_cursor(struct osd_bitmap *bitmap, struct GfxElement *font)
 			plot_pixel(bitmap, sx+x, sy+y, pen);
 		}
 	}
+	Machine->color_depth = saved_depth;
 	switch_true_orientation();
 	cursor_on ^= 1;
 }

@@ -343,7 +343,7 @@ $(OBJ)/capcom.a: \
 $(OBJ)/itech.a: \
 	$(OBJ)/vidhrdw/tms34061.o \
 	$(OBJ)/machine/capbowl.o $(OBJ)/vidhrdw/capbowl.o $(OBJ)/drivers/capbowl.o \
-	$(OBJ)/vidhrdw/itech8.o $(OBJ)/drivers/itech8.o \
+	$(OBJ)/vidhrdw/itech8.o $(OBJ)/drivers/itech8.o $(OBJ)/machine/slikshot.o \
 	$(OBJ)/vidhrdw/itech32.o $(OBJ)/drivers/itech32.o \
 
 $(OBJ)/gremlin.a: \
@@ -782,8 +782,6 @@ TEXTS += gamelist.txt
 
 gamelist.txt: $(EMULATOR)
 	@echo Generating $@...
-	@$(EMULATOR) -gamelistheader -noclones > gamelist.txt
-	@$(EMULATOR) -gamelist -noclones | sort >> gamelist.txt
-	@$(EMULATOR) -gamelistfooter >> gamelist.txt
-
-
+	@$(CURPATH)$(EMULATOR) -gamelistheader -noclones > gamelist.txt
+	@$(CURPATH)$(EMULATOR) -gamelist -noclones -sortname >> gamelist.txt
+	@$(CURPATH)$(EMULATOR) -gamelistfooter >> gamelist.txt
