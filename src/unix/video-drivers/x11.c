@@ -196,6 +196,12 @@ void sysdep_update_display (struct mame_bitmap *bitmap)
 
    if (new_video_mode != x11_video_mode && mode_available[new_video_mode])
    {
+   	/* Close sound, my guess is DGA somehow (perhaps fork/exec?) makes
+	   the filehandle open twice, so closing it here and re-openeing after
+	   the transition should fix that.  Fixed it for me anyways.
+	   -- Steve bpk@hoopajoo.net */
+	osd_sound_enable( 0 );
+
       (*x_func[x11_video_mode].close_display)();
       if ((*x_func[new_video_mode].create_display)(bitmap_depth) != OSD_OK)
       {
@@ -223,7 +229,7 @@ void sysdep_update_display (struct mame_bitmap *bitmap)
       if(sysdep_display_alloc_palette(video_colors_used))
          goto barf;
 
-      keyboard_clear();
+      xmame_keyboard_clear();
       osd_mark_dirty (0, 0, bitmap->width - 1, bitmap->height - 1);
       sysdep_palette_mark_dirty(current_palette);
       /* poll mouse twice to clear internal vars */
@@ -232,6 +238,9 @@ void sysdep_update_display (struct mame_bitmap *bitmap)
          sysdep_mouse_poll ();
          sysdep_mouse_poll ();
       }
+
+      /* Re-enable sound */
+      osd_sound_enable( 1 );
    }
 
    (*x_func[x11_video_mode].update_display) (bitmap);
