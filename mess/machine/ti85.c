@@ -26,27 +26,48 @@ UINT8 keypad_mask;
 
 static void * ti85_timer;
 
+static void ti85_load_nvram(void)
+{
+	FILE *file;
+
+	if ( (file=osd_fopen(Machine->gamedrv->name, 
+						 Machine->gamedrv->name, OSD_FILETYPE_NVRAM, 0))==NULL)
+		return;
+
+	osd_fread(file, memory_region(REGION_CPU1)+0x8000, sizeof(unsigned char)*0x8000);
+	osd_fclose(file);
+}
+
+static void ti85_save_nvram(void)
+{
+	FILE *file;
+	if ( (file=osd_fopen(Machine->gamedrv->name, 
+						 Machine->gamedrv->name, OSD_FILETYPE_NVRAM, 1))==NULL)
+		return;
+	osd_fwrite(file, memory_region(REGION_CPU1)+0x8000, sizeof(unsigned char)*0x8000);
+	osd_fclose(file);
+}
 
 static void ti85_timer_callback (int param)
 {
-	if (timer_int_mask)
-	{
-		cpu_set_irq_line(0,0, HOLD_LINE);
-		timer_int_status = 1;
-	}
 	if (readinputport(8)&0x01)
 	{
 		if (ON_int_mask && !ON_pressed)
 		{
 			cpu_set_irq_line(0,0, HOLD_LINE);
 			ON_int_status = 1;
-			timer_int_mask = !timer_int_mask;
-			logerror ("ON interrupt\n");
+			if (!timer_int_mask) timer_int_mask = 1;
 		}       
 		ON_pressed = 1;
+		return;
 	}
 	else
 		ON_pressed = 0;
+	if (timer_int_mask)
+	{
+		cpu_set_irq_line(0,0, HOLD_LINE);
+		timer_int_status = 1;
+	}
 }
 
 void update_ti85_memory (void)
@@ -107,15 +128,13 @@ READ_HANDLER ( ti85_port_0003_r )
 	int data = 0;
 
 	if (LCD_status)
-		if (LCD_mask)
-			data |= 0x02;
+		data |= LCD_mask;
 	if (ON_int_status)
 		data |= 0x01;
 	if (timer_int_status)
 		data |= 0x04;
 	if (!ON_pressed)
 		data |= 0x08;
-
 	ON_int_status = 0;
 	timer_int_status = 0;
 	return data;
@@ -138,7 +157,6 @@ READ_HANDLER ( ti85_port_0006_r )
 
 READ_HANDLER ( ti85_port_0007_r )
 {
-//	return ti85_hardware_registers[7];
 	return 0xff;
 }
 
@@ -154,11 +172,12 @@ WRITE_HANDLER ( ti85_port_0001_w )
 
 WRITE_HANDLER ( ti85_port_0002_w )
 {
-	LCD_contrast = data;
+	LCD_contrast = data&0x1f;
 }
 
 WRITE_HANDLER ( ti85_port_0003_w )
 {
+	if (LCD_status && !(data&0x08))	timer_int_mask = 0;
 	ON_int_mask = data&0x01;
 //	timer_int_mask = data&0x04;
 	LCD_mask = data&0x02;
@@ -182,5 +201,4 @@ WRITE_HANDLER ( ti85_port_0006_w )
 
 WRITE_HANDLER ( ti85_port_0007_w )
 {
-//	ti85_hardware_registers[7] = data;
 }

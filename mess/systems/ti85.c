@@ -6,6 +6,17 @@ Notes:
    calculator.
 2. Only difference beetwen all TI-85 drivers is ROM version.
 
+Needed:
+1. Info about ports 3 (bit 2 seems to be alwayes 0) and 4.
+2. Info about timer interrupts.
+3. Better artwork.
+
+New:
+18/02/2001 Palette (not perfect).
+	   Contrast control (port 2) implemented.
+	   LCD ON/OFF implemented (port 3).
+	   Interrupts corrected (port 3) - ON/OFF and APD works now.
+	   Artwork added.
 09/02/2001 Keypad added.
 	   200Hz timer interrupts implemented.
 	   ON key and its interrupts implemented.
@@ -13,13 +24,10 @@ Notes:
 02/02/2001 Preliminary driver
 
 To do:
-- LCD on/off
-- pallete and contrast control
 - NVRAM
 - link (port 7)
 - port 4 and 6
-- sound
-- artwork
+- sound (popular hardware hack)
 - snapshot loading
 
 
@@ -89,26 +97,7 @@ MEMORY_WRITE_START( ti85_writemem )
 	{0x4000, 0x7fff, MWA_BANK4},
 	{0x8000, 0xffff, MWA_RAM},
 MEMORY_END
-
-static unsigned char ti85_palette[] =
-{
-	0x00, 0x00, 0x00,	/* Black */
-	0xff, 0xff, 0xff	/* White */
-};
-
-static unsigned short ti85_colortable[] =
-{
-	0, 1
-};
-
-
-static void ti85_init_palette (unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
-{
-	memcpy (sys_palette, ti85_palette, sizeof (ti85_palette));
-	memcpy (sys_colortable, ti85_colortable, sizeof (ti85_colortable));
-}
-
-
+        
 /* keyboard input */
 INPUT_PORTS_START (ti85)
 	PORT_START   /* bit 0 */
@@ -193,12 +182,12 @@ static	struct MachineDriver machine_driver_ti85 =
 	ti85_stop_machine,
 
 	/* video hardware */
-	640,					/* screen width */
-	480,					/* screen height */
-	{0, 640-1, 0, 480-1},			/* visible_area */
+	440,					/* screen width */
+	330,					/* screen height */
+	{0, 440-1, 0, 330-1},			/* visible_area */
 	0,					/* graphics decode info */
-	sizeof (ti85_palette) / 3,
-	sizeof (ti85_colortable),		/* colors used for the characters */
+	256,
+	64,					/* colors used for the characters */
 	ti85_init_palette,			/* initialise palette */
 
 	VIDEO_TYPE_RASTER,
@@ -214,7 +203,7 @@ static	struct MachineDriver machine_driver_ti85 =
 	}
 };
 
-ROM_START (ti85)
+ROM_START (ti85v30a)
 	ROM_REGION (0x30000, REGION_CPU1,0)
 	ROM_LOAD ("ti85v30a.bin", 0x10000, 0x20000, 0xde4c0b1a)
 ROM_END
@@ -254,6 +243,7 @@ static const struct IODevice io_ti85[] = {
     { IO_END }
 };
 
+#define	io_ti85v30a	io_ti85
 #define	io_ti85v40	io_ti85
 #define	io_ti85v50	io_ti85
 #define	io_ti85v60	io_ti85
@@ -262,10 +252,10 @@ static const struct IODevice io_ti85[] = {
 #define	io_ti85v100	io_ti85
                                                        
 /*    YEAR     NAME  PARENT  MACHINE  INPUT  INIT              COMPANY        FULLNAME */
-COMP( 1983, ti85,          0,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 3.0a" )
-COMP( 1983, ti85v40,    ti85,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 4.0" )
-COMP( 1983, ti85v50,    ti85,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 5.0" )
-COMP( 1983, ti85v60,    ti85,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 6.0" )
-COMP( 1983, ti85v80,    ti85,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 8.0" )
-COMP( 1983, ti85v90,    ti85,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 9.0" )
-COMP( 1983, ti85v100,   ti85,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 10.0" )
+COMP( 1983, ti85v30a,      0,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 3.0a" )
+COMP( 1983, ti85v40,       0,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 4.0" )
+COMP( 1983, ti85v50,       0,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 5.0" )
+COMP( 1983, ti85v60,       0,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 6.0" )
+COMP( 1983, ti85v80,       0,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 8.0" )
+COMP( 1983, ti85v90,       0,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 9.0" )
+COMP( 1983, ti85v100,      0,    ti85,  ti85,    0, "Texas Instruments", "TI-85 ver. 10.0" )
