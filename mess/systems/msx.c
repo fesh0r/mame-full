@@ -3,7 +3,6 @@
 **
 ** Todo:
 ** - Add support for other MSX models (br,fr,de,ru etc.)
-** - Make msxhan.rom not ``required'' for msxkr
 */
 
 #include "driver.h"
