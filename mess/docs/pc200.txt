@@ -19,11 +19,11 @@ rs232 serial port
 centronics printer port
 joystick port
 mouse connector (special pc1512 type?)
-
+rtc?
 
 Mess Emulation State
 --------------------
 basically the same as mess ibmpc emulation
 character rom dump missing
-#rough emulation of special graphics adapter
-#work stopped until more info or system software available
+rough emulation of special graphics adapter
+work stopped until more info or system software available

@@ -27,5 +27,6 @@ Mess Emulation State
 basically the same as mess ibmpc emulation
 rtc/setup ram not emulated
 character rom dump missing
+needs i8086 "dirval reset fix" to work
 bios stops without emulation of disketts controller (->you have to start with disk image!)
 

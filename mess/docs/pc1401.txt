@@ -11,6 +11,10 @@ integrated speaker
 connector for printer and tape drive
 2 "build in" batteries
 
+Notes
+-----
+holding CE while hitting reset prevents
+the basic area from being overwritten
 
 Error Codes
 -----------

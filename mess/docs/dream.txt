@@ -7,13 +7,14 @@ early 6800 based computer
 Features
 --------
 video connector
-chip8 interpretor
+chip8 interpreter
 
 
 Notes
 -----
 seams to be very related to rca cosmac vip.
 emulator source available
+documented bios source available
 
 
 Emulators

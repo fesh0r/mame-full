@@ -34,3 +34,4 @@ rough emulation of pic chips
 incomplete emulation of cpu
 no support for high density disks
 no support for at harddisks
+needs i80286 v1.5
