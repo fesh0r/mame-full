@@ -132,11 +132,8 @@ static void beep_callback(int unit);
 */
 void palette_init_vdt911(unsigned short *colortable, const unsigned char *dummy)
 {
-	int i;
-
 	/*memcpy(palette, & vdt911_palette, sizeof(vdt911_palette));*/
-	for (i=0; i<vdt911_palette_size; i++)
-		palette_set_color(i, vdt911_palette[3*i], vdt911_palette[3*i+1], vdt911_palette[3*i+2]);
+	palette_set_colors(0, vdt911_palette, vdt911_palette_size);
 
 	memcpy(colortable, & vdt911_colortable, sizeof(vdt911_colortable));
 }
