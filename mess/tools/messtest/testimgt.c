@@ -8,18 +8,19 @@
 
 #include "testimgt.h"
 #include "../imgtool/imgtool.h"
+#include "../imgtool/modules.h"
 
 #define TEMPFILE	"tempfile.tmp"
 
 struct expected_dirent
 {
-	char buffer[256];
+	char filename[256];
 	int size;
 };
 
 static imgtool_library *library;
 static IMAGE *image;
-static struct expected_dirent entries;
+static struct expected_dirent entries[256];
 static int entry_count;
 
 
@@ -97,10 +98,10 @@ static void checkdirectory_entry_handler(struct messtest_state *state, const cha
 	name = find_attribute(attributes, "name");
 	size = find_attribute(attributes, "size");
 
-	entry = &entry[entry_count++];
+	entry = &entries[entry_count++];
 
 	if (name)
-		snprintf(entry->name, sizeof(entry->name) / sizeof(entry->name[0]), "%s", name);
+		snprintf(entry->filename, sizeof(entry->filename) / sizeof(entry->filename[0]), "%s", name);
 	entry->size = size ? atoi(size) : -1;
 }
 
@@ -108,6 +109,47 @@ static void checkdirectory_entry_handler(struct messtest_state *state, const cha
 
 static void checkdirectory_end_handler(struct messtest_state *state, const void *buffer, size_t size)
 {
+	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
+	IMAGEENUM *imageenum;
+	imgtool_dirent ent;
+	char filename_buffer[1024];
+	int i;
+
+	memset(&ent, 0, sizeof(ent));
+	ent.fname = filename_buffer;
+	ent.fname_len = sizeof(filename_buffer) / sizeof(filename_buffer[0]);
+
+	err = img_beginenum(image, &imageenum);
+	if (err)
+		goto done;
+
+	for (i = 0; i < entry_count; i++)
+	{
+		err = img_nextenum(imageenum, &ent);
+		if (err)
+			goto done; 
+
+		if (ent.eof || strcmp(ent.fname, entries[i].filename))
+		{
+			error_report(state, "Misnamed file entry");
+			goto done;
+		}
+	}
+
+	err = img_nextenum(imageenum, &ent);
+	if (err)
+		goto done;
+	if (!ent.eof)
+	{
+		error_report(state, "Extra file entries");
+		goto done;
+	}
+
+done:
+	if (imageenum)
+		img_closeenum(imageenum);
+	if (err)
+		error_imgtoolerr(state, err);
 }
 
 
@@ -149,7 +191,7 @@ static const struct messtest_tagdispatch checkdirectory_dispatch[] =
 const struct messtest_tagdispatch testimgtool_dispatch[] =
 {
 	{ "createimage",	DATA_NONE,		createimage_handler,	NULL },
-	{ "checkdirectory",	DATA_NONE,		NULL,					checkdirectory_handler, checkdirectory_dispatch },
+	{ "checkdirectory",	DATA_NONE,		NULL,					checkdirectory_end_handler, checkdirectory_dispatch },
 	{ "putfile",		DATA_BINARY,	putfile_start_handler,	putfile_end_handler },
 	{ NULL }
 };
