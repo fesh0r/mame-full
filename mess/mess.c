@@ -930,31 +930,46 @@ int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 			const char *name = device_filename(type,id);
 			if( name )
 			{
+				const char *filename;
+				const char *base_filename;
 				const char *info;
-				char *filename;
+				char *base_filename_noextension;
 
-				filename = (char *) device_filename(type, id);
+				filename = device_filename(type, id);
+				base_filename = osd_basename((char *) filename);
+				base_filename_noextension = osd_strip_extension(base_filename);
 
-				dst += sprintf(dst,"%s: %s\n", device_typename_id(type,id), osd_basename(filename));
+				/* display device type and filename */
+				dst += sprintf(dst,"%s: %s\n", device_typename_id(type,id), base_filename);
+
+				/* display long filename, if present and doesn't correspond to name */
 				info = device_longname(type,id);
-				if( info )
+				if (info && (!base_filename_noextension || strcmpi(info, base_filename_noextension)))
 					dst += sprintf(dst,"%s\n", info);
+
+				/* display manufacturer, if available */
 				info = device_manufacturer(type,id);
-				if( info )
+				if (info)
 				{
 					dst += sprintf(dst,"%s", info);
 					info = stripspace(device_year(type,id));
-					if( info && strlen(info))
+					if (info && *info)
 						dst += sprintf(dst,", %s", info);
 					dst += sprintf(dst,"\n");
 				}
+
+				/* display playable information, if available */
 				info = device_playable(type,id);
-				if( info )
+				if (info)
 					dst += sprintf(dst,"%s\n", info);
+
 // why is extrainfo printed? only MSX and NES use it that i know of ... Cowering
 //				info = device_extrainfo(type,id);
 //				if( info )
 //					dst += sprintf(dst,"%s\n", info);
+
+				if (base_filename_noextension)
+					free(base_filename_noextension);
 			}
 			else
 			{

@@ -33,6 +33,10 @@ Source Changes:
 - Removed IO_RESET_ALL, as it was broken and an ugly hack to begin with (bug
   #239) [Nate Woods]
 
+- In the opening display software info box, if the filename and the goodname
+  (as determined by CRC) match up, the goodname will not be displayed in
+  order to reduce screen clutter. [Nate Woods]
+
 - [Imgtool] Imgtool floppy drivers can now be "templated"; a driver for a
   particular file system format can point at a structure that lists allowable
   disk image formats.  This allows for the addition of new disk image format
