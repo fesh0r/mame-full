@@ -169,7 +169,7 @@ static int imgwave_readsample(IMAGE *img, INT16 *sample)
 	waveimage *wimg = (waveimage *) img;
 
 	union {
-		INT8 buf8[2];
+		UINT8 buf8[2];
 		INT16 buf16[2];
 	} u;
 
@@ -187,7 +187,7 @@ static int imgwave_readsample(IMAGE *img, INT16 *sample)
 		switch(wimg->channels) {
 		case 1:
 			s = ((INT16) u.buf8[0]) - 0x80;
-			s *= 0x101;
+			s *= 0x100;
 			break;
 		case 2:
 			s = ((INT16) u.buf8[0]) - 0x80;
@@ -230,7 +230,12 @@ static int imgwave_readtransition(IMAGE *img, int *frequency)
 		if (err)
 			return err;
 
+		/* Problem - I should be checking for both types of transitions, somehow */
+#if 0
+		transitioned = (wimg->lastsample >= 0) && (sample < 0);
+#else
 		transitioned = (wimg->lastsample < 0) && (sample >= 0);
+#endif
 		wimg->lastsample = sample;
 		count++;
 	}
