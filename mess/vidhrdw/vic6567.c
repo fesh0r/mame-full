@@ -54,6 +54,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "osd_cpu.h"
 #include "driver.h"
@@ -116,7 +117,7 @@
 #define SPRITE_Y_SIZE(nr) (SPRITE_Y_EXPAND(nr)?2*21:21)
 #define SPRITE_X_EXPAND(nr) (vic2.reg[0x1d]&(1<<nr))
 #define SPRITE_X_SIZE(nr) (SPRITE_X_EXPAND(nr)?2*24:24)
-#define SPRITE_X_POS(nr) ( (vic2.reg[(nr)*2]|(vic2.reg[0x10]&(1<<(nr))?0x100:0))-25+XPOS )
+#define SPRITE_X_POS(nr) ( (vic2.reg[(nr)*2]|(vic2.reg[0x10]&(1<<(nr))?0x100:0))-24+XPOS )
 #define SPRITE_Y_POS(nr) (vic2.reg[1+2*(nr)]-50+YPOS)
 #define SPRITE_MULTICOLOR(nr) (vic2.reg[0x1c]&(1<<nr))
 #define SPRITE_PRIORITY(nr) (vic2.reg[0x1b]&(1<<nr))
@@ -211,18 +212,18 @@ static struct {
 
 		/* buffer for currently painted line */
 		int paintedline[8];
-		UINT8 bitmap[8][SPRITE_BASE_X_SIZE * 2 / 8];
+	    UINT8 bitmap[8][SPRITE_BASE_X_SIZE * 2 / 8 + 1/*for simplier sprite collision detection*/];
 	}
 	sprites[8];
 } vic2;
 
-static int vic2_getforeground (register int y, register int x)
+INLINE int vic2_getforeground (register int y, register int x)
 {
-	return ((vic2.screen[y][x >> 3] << 8)
-			| (vic2.screen[y][(x >> 3) + 1])) >> (8 - (x & 7));
+    return ((vic2.screen[y][x >> 3] << 8)
+	    | (vic2.screen[y][(x >> 3) + 1])) >> (8 - (x & 7));
 }
 
-static int vic2_getforeground16 (register int y, register int x)
+INLINE int vic2_getforeground16 (register int y, register int x)
 {
 	return ((vic2.screen[y][x >> 3] << 16)
 			| (vic2.screen[y][(x >> 3) + 1] << 8)
@@ -1001,7 +1002,7 @@ static void vic2_sprite_collision (int nr, int y, int x, int mask)
 		if ((x & 7) == (SPRITE_X_POS (i) & 7))
 			value = vic2.sprites[i].bitmap[y][xdiff >> 3];
 		else if (xdiff < 0)
-			value = vic2.sprites[i].bitmap[y][0] >> (xdiff + 8);
+			value = vic2.sprites[i].bitmap[y][0] >> (-xdiff);
 		else {
 			UINT8 *vp = vic2.sprites[i].bitmap[y]+(xdiff>>3);
 			value = ((vp[1] | (*vp << 8)) >> (8 - (xdiff&7) )) & 0xff;
@@ -1064,6 +1065,7 @@ static void vic2_draw_sprite_multi (int nr, int yoff, int ybegin, int yend)
 					vic2_draw_sprite_code_multi (yoff + y, xbegin + i * 16 + 8, value & 0xff, 0xff);
 				}
 			}
+			vic2.sprites[nr].bitmap[y][i*2]=0; //easier sprite collision detection
 			if (SPRITE_Y_EXPAND (nr))
 			{
 				if (vic2.sprites[nr].repeat)
@@ -1110,6 +1112,7 @@ static void vic2_draw_sprite_multi (int nr, int yoff, int ybegin, int yend)
 					vic2_draw_sprite_code_multi (yoff + y, xbegin + i * 8, value, 0xff);
 				}
 			}
+			vic2.sprites[nr].bitmap[y][i]=0; //easier sprite collision detection
 			if (SPRITE_Y_EXPAND (nr))
 			{
 				if (vic2.sprites[nr].repeat)
@@ -1164,6 +1167,7 @@ static void vic2_draw_sprite (int nr, int yoff, int ybegin, int yend)
 				vic2_draw_sprite_code (yoff + y, xbegin + i * 16, value >> 8, color);
 				vic2_draw_sprite_code (yoff + y, xbegin + i * 16 + 8, value & 0xff, color);
 			}
+			vic2.sprites[nr].bitmap[y][i*2]=0; //easier sprite collision detection
 			if (SPRITE_Y_EXPAND (nr))
 			{
 				if (vic2.sprites[nr].repeat)
@@ -1202,6 +1206,7 @@ static void vic2_draw_sprite (int nr, int yoff, int ybegin, int yend)
 					value &= ~value3;
 				vic2_draw_sprite_code (yoff + y, xbegin + i * 8, value, color);
 			}
+			vic2.sprites[nr].bitmap[y][i]=0; //easier sprite collision detection
 			if (SPRITE_Y_EXPAND (nr))
 			{
 				if (vic2.sprites[nr].repeat)
@@ -1243,6 +1248,7 @@ static void vic2_drawlines (int first, int last)
 	if (osd_skip_this_frame ())
 		return;
 
+	
 	/* top part of display not rastered */
 	first -= VIC2_YPOS - YPOS;
 	last -= VIC2_YPOS - YPOS;
@@ -1299,6 +1305,7 @@ static void vic2_drawlines (int first, int last)
 		end = last;
 	else
 		end = vic2.y_end + YPOS;
+
 	for (; line < end; vline = (vline + 8) & ~7, line = line + 1 + yend - ybegin)
 	{
 		offs = (vline >> 3) * 40;
@@ -1324,7 +1331,7 @@ static void vic2_drawlines (int first, int last)
 				vic2.bitmapmulti[2] = vic2.c64_bitmap[0] = Machine->pens[ch & 0xf];
 				if (MULTICOLORON)
 				{
-					vic2.bitmapmulti[3] = Machine->pens[attr];
+				    vic2.bitmapmulti[3] = Machine->pens[attr];
 					vic2_draw_bitmap_multi (ybegin, yend, offs, yoff, xoff);
 				}
 				else
@@ -1464,6 +1471,19 @@ int vic2_raster_irq (void)
 
 void vic2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
+#if 0
+    char text[40];
+    int i, y;
+    for (y=0, i=0; i<8; i++) {
+	if (SPRITEON(i)) {
+	    sprintf(text,"%d x:%d y:%d",i,
+		    SPRITE_X_POS(i), SPRITE_Y_POS(i) );
+
+	    ui_text(bitmap,text,0,y); 
+	    y+=8;
+	}
+    }
+#endif
 	state_display(bitmap);
 }
 
