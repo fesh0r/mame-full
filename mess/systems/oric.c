@@ -122,6 +122,11 @@ MEMORY_END
 
 INPUT_PORTS_START(oric)
 	INPUT_PORT_ORIC
+	PORT_START
+	/* microdisc interface on/off */
+	PORT_BITX(0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Microdisc Interface", IP_KEY_NONE, IP_JOY_NONE)
+	PORT_DIPSETTING(0x0, DEF_STR( Off) )
+	PORT_DIPSETTING(0x1, DEF_STR( On) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START(telestrat)
@@ -143,11 +148,11 @@ INPUT_PORTS_START(telestrat)
 
 INPUT_PORTS_END
 
-static unsigned char oric_palette[16*3] = {
-	0x00, 0x00, 0x00, 0xcf, 0x00, 0x00,
-	0x00, 0xcf, 0x00, 0xcf, 0xcf, 0x00,
-	0x00, 0x00, 0xcf, 0xcf, 0x00, 0xcf,
-	0x00, 0xcf, 0xcf, 0xcf, 0xcf, 0xcf,
+static unsigned char oric_palette[8*3] = {
+//	0x00, 0x00, 0x00, 0xcf, 0x00, 0x00,
+//	0x00, 0xcf, 0x00, 0xcf, 0xcf, 0x00,
+//	0x00, 0x00, 0xcf, 0xcf, 0x00, 0xcf,
+//	0x00, 0xcf, 0xcf, 0xcf, 0xcf, 0xcf,
 
 	0x00, 0x00, 0x00, 0xff, 0x00, 0x00,
 	0x00, 0xff, 0x00, 0xff, 0xff, 0x00,
@@ -155,8 +160,10 @@ static unsigned char oric_palette[16*3] = {
 	0x00, 0xff, 0xff, 0xff, 0xff, 0xff,
 };
 
-static unsigned short oric_colortable[128*2] = {
-	 0,0,  0,1,  0, 2,	0, 3,  0, 4,  0, 5,  0, 6,	0, 7,
+static unsigned short oric_colortable[8] = {
+	 0,1,2,3,4,5,6,7
+/*
+		 0,0,  0,1,  0, 2,	0, 3,  0, 4,  0, 5,  0, 6,	0, 7,
 	 1,0,  2,1,  2, 2,	1, 3,  1, 4,  1, 5,  1, 6,	1, 7,
 	 2,0,  4,1,  4, 2,	1, 3,  1, 4,  1, 5,  1, 6,	1, 7,
 	 3,0,  6,1,  6, 2,	1, 3,  1, 4,  1, 5,  1, 6,	1, 7,
@@ -173,7 +180,7 @@ static unsigned short oric_colortable[128*2] = {
 	13,8, 13,9, 13,10, 13,11, 13,12, 13,13, 13,14, 13,15,
 	14,8, 14,9, 14,10, 14,11, 14,12, 14,13, 14,14, 14,15,
 	15,8, 15,9, 15,10, 15,11, 15,12, 15,13, 15,14, 15,15
-};
+*/};
 
 /* Initialise the palette */
 static void oric_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
@@ -199,7 +206,7 @@ static struct MachineDriver machine_driver_oric =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M65C02,
+			CPU_M6502,
             1000000,
 			oric_readmem,oric_writemem,0,0,
 			0, 0,
@@ -216,7 +223,7 @@ static struct MachineDriver machine_driver_oric =
 	28*8,								/* screen height */
 	{ 0, 40*6-1, 0, 28*8-1},			/* visible_area */
 	NULL,								/* graphics decode info */
-	16, 256,							/* colors used for the characters */
+	8, 8,							/* colors used for the characters */
 	oric_init_palette,					/* convert color prom */
 
 	VIDEO_TYPE_RASTER,
@@ -243,7 +250,7 @@ static struct MachineDriver machine_driver_telestrat =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M65C02,
+			CPU_M6502,
             1000000,
 			telestrat_readmem,telestrat_writemem,0,0,
 			0, 0,
@@ -260,7 +267,7 @@ static struct MachineDriver machine_driver_telestrat =
 	28*8,								/* screen height */
 	{ 0, 40*6-1, 0, 28*8-1},			/* visible_area */
 	NULL,								/* graphics decode info */
-	16, 256,							/* colors used for the characters */
+	8, 8,							/* colors used for the characters */
 	oric_init_palette,					/* convert color prom */
 
 	VIDEO_TYPE_RASTER,
@@ -283,22 +290,22 @@ static struct MachineDriver machine_driver_telestrat =
 
 ROM_START(oric1)
 	ROM_REGION(0x10000+0x04000+0x02000,REGION_CPU1,0)
-	ROM_LOAD ("oric1.rom", 0x10000, 0x4000, 0xf18710b4)
-	ROM_LOAD ("oricdisk.rom",0x014000, 0x02000, 0x0)
+	ROM_LOAD ("basic10.rom", 0x10000, 0x4000, 0xf18710b4)
+	ROM_LOAD ("microdis.rom",0x014000, 0x02000, 0x0)
 ROM_END
 
 ROM_START(orica)
 	ROM_REGION(0x10000+0x04000+0x02000,REGION_CPU1,0)
-	ROM_LOAD ("orica.rom", 0x10000, 0x4000, 0xc3a92bef)
-	ROM_LOAD ("oricdisk.rom",0x014000, 0x02000, 0x0)
+	ROM_LOAD ("basic11b.rom", 0x10000, 0x4000, 0xc3a92bef)
+	ROM_LOAD ("microdis.rom",0x014000, 0x02000, 0x0)
 ROM_END
 
 ROM_START(telestrat)
 	ROM_REGION(0x010000+(0x04000*4), REGION_CPU1,0)
-	ROM_LOAD ("bank3", 0x010000, 0x04000, 0x0)
-	ROM_LOAD ("bank5", 0x014000, 0x04000, 0x0)
-	ROM_LOAD ("bank6", 0x018000, 0x04000, 0x0)
-	ROM_LOAD ("bank7", 0x01c000, 0x04000, 0x0)
+	ROM_LOAD ("telmatic.rom", 0x010000, 0x04000, 0x0)
+	ROM_LOAD ("teleass.rom", 0x014000, 0x04000, 0x0)
+	ROM_LOAD ("hyperbas.rom", 0x018000, 0x04000, 0x0)
+	ROM_LOAD ("telmon24.rom", 0x01c000, 0x04000, 0x0)
 ROM_END
 
 static const struct IODevice io_oric1[] = {
