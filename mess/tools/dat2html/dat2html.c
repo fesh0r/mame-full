@@ -1,3 +1,11 @@
+/******************************************************************************
+
+  MESS - dat2html.c
+
+  Generates an index and individual system html files from sysinfo.dat
+
+******************************************************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -101,14 +109,15 @@ int CLIB_DECL main(int ac, char **av)
 
 	osd_mkdir(html_directory);
 
-    fprintf(html, "<html>\n");
+	/* Head of the index html file */
+    	fprintf(html, "<html>\n");
 	fprintf(html, "<head>\n");
 	fprintf(html, "<title>Contents of %s</title>\n", dat_filename);
 	fprintf(html, "</head>\n");
 	fprintf(html, "<body>\n");
 	fprintf(html, "<h1>Contents of %s</h1>\n", dat_filename);
 	fprintf(html, "<hr>\n");
-	fprintf(html, "<table width=100%%>\n");
+	fprintf(html, "<p>\n");
 
     while( !feof(dat) )
 	{
@@ -127,47 +136,35 @@ int CLIB_DECL main(int ac, char **av)
 			{
 				if( strncmpi(line + 1, "info", 4) == 0 )
 				{
-					char *eq = strchr(line, '='), *p;
+					char *eq = strchr(line, '=');
 					strcpy(system_name, eq + 1);
-					p = strchr(system_name, '\\');
-					if( p )
-						*p = '\0';
-					/* multiple systems? */
-					p = strchr(system_name, ',');
-					if( systemcount % 3 == 0 )
-						fprintf(html, "<tr>\n");
-					if( p )
-					{
-						*p = '\0';
-						sprintf(system_filename, "%s/%s.htm", html_directory, system_name);
-						fprintf(html, "<td><h5><a href=\"%s\">%s (aka %s)</a></h5></td>\n", system_filename, system_name, p+1);
-                    }
-					else
-					{
-						sprintf(system_filename, "%s/%s.htm", html_directory, system_name);
-						fprintf(html, "<td><h5><a href=\"%s\">%s</a></h5></td>\n", system_filename, system_name);
-					}
-					if( systemcount % 3 == 2 )
-						fprintf(html, "</tr>\n");
+								
+					sprintf(system_filename, "%s/%s.htm", html_directory, system_name);
+					fprintf(html, "&bull;&nbsp;&nbsp;<a href=\"%s\">%s</a>\n", system_filename, system_name);
+					
 					systemcount++;
-                    html_system = fopen(system_filename, "w");
+
+                    			html_system = fopen(system_filename, "w");
+					
 					if( !html_system )
 					{
 						fprintf(stderr, "cannot create system_name file '%s'.\n", system_filename);
 						return 1;
-                    }
+                    			}
+
+					/* Head of the system html code */
 					fprintf(html_system, "<html>\n");
-                    fprintf(html_system, "<head>\n");
+                    			fprintf(html_system, "<head>\n");
 					fprintf(html_system, "<title>Info for %s</title>\n", system_name);
-                    fprintf(html_system, "</head>\n");
-                    fprintf(html_system, "<body>\n");
+			                fprintf(html_system, "</head>\n");
+                    			fprintf(html_system, "<body>\n");
 					fprintf(html_system, "<table width=100%%>\n");
 					fprintf(html_system, "<tr>\n");
 					fprintf(html_system, "<td width=25%%><h4><a href=\"../%s\">Back to index</a></h4></td>\n", html_filename);
 					fprintf(html_system, "<td><h1>Info for %s</h1></td>\n", system_name);
 					fprintf(html_system, "</tr>\n");
 					fprintf(html_system, "</table>\n");
-                    fprintf(html_system, "<hr>\n");
+                    			fprintf(html_system, "<hr>\n");
 					linecount = 0;
 					emptycount = 0;
                 }
@@ -182,7 +179,7 @@ int CLIB_DECL main(int ac, char **av)
 					if (html_system)
 					{
 						fprintf(html_system, "<hr>\n");
-						fprintf(html_system, "<center><font size=-2>created on %s</font></center>\n", ctime(&tm));
+						fprintf(html_system, "<center><font size=-2>Generated on %s</font></center>\n", ctime(&tm));
 						fprintf(html_system, "</body>\n");
 						fprintf(html_system, "</html>\n");
 						fclose(html_system);
@@ -201,7 +198,7 @@ int CLIB_DECL main(int ac, char **av)
 					}
 					else
 					{
-                        replace_lt_gt(line);
+                        			replace_lt_gt(line);
 						a_href_url(line);
 						emptycount = 0;
 						if ( linecount == 0 )
@@ -211,6 +208,8 @@ int CLIB_DECL main(int ac, char **av)
 							ulcount = 0;
 							/* first line is header 4 */
 							fprintf(html_system, "<h4>%s</h4>\n", line);
+							/* Add description to index file */
+							fprintf(html, " - Sysinfo for: <b>%s</b></br>\n", line);
 						}
 						else
 						{
@@ -243,17 +242,12 @@ int CLIB_DECL main(int ac, char **av)
 			}
 		}
 	}
-	if( systemcount % 3 != 0 )
-	{
-		while( systemcount++ %3 != 0 )
-			fprintf(html, "<td>&nbsp;</td>\n");
-		fprintf(html, "</tr>\n");
-	}
-	fprintf(html, "</table>\n");
+
+	fprintf(html, "</p>\n");
     fprintf(html, "<hr>\n");
-	fprintf(html, "<center><font size=-2>created on %s</font></center>\n", ctime(&tm));
-    fprintf(html, "</body>\n");
-    fprintf(html, "</html>\n");
+	fprintf(html, "<center><font size=-2>Generated on %s</font></center>\n", ctime(&tm));
+	fprintf(html, "</body>\n");
+	fprintf(html, "</html>\n");
     fclose(html);
 	fclose(dat);
 	return 0;
