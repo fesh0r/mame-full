@@ -242,9 +242,9 @@ static struct MachineDriver machine_driver_kc85_3 =
 ROM_START(kc85_4)
 	ROM_REGION(0x015000, REGION_CPU1,0)
 
-    ROM_LOAD("basic_c0.854", 0x10000, 0x2000, 0)
-    ROM_LOAD("caos__c0.854", 0x12000, 0x1000, 0)
-    ROM_LOAD("caos__e0.854", 0x13000, 0x2000, 0)
+    ROM_LOAD("basic_c0.854", 0x10000, 0x2000, 0xdfe34b08)
+    ROM_LOAD("caos__c0.854", 0x12000, 0x1000, 0x57d9ab02)
+    ROM_LOAD("caos__e0.854", 0x13000, 0x2000, 0xd64cd50b)
 ROM_END
 
 
