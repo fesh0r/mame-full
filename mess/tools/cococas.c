@@ -30,6 +30,18 @@ typedef struct {
 	UINT8 data[255];
 } casblock;
 
+enum {
+	COCOCAS_FILETYPE_BASIC = 0,
+	COCOCAS_FILETYPE_DATA = 1,
+	COCOCAS_FILETYPE_BIN = 2
+};
+
+enum {
+	COCOCAS_BLOCKTYPE_FILENAME = 0,
+	COCOCAS_BLOCKTYPE_DATA = 1,
+	COCOCAS_BLOCKTYPE_EOF = 0xff
+};
+
 /* from rsdos.c */
 extern void rtrim(char *buf);
 
@@ -69,16 +81,22 @@ static int readblock(IMAGE *img, casblock *blk)
 
 static int cococas_nextfile(IMAGE *img, imgtool_dirent *ent)
 {
-	int err;
+	int err, filesize;
 	casblock blk;
 	char fname[9];
 
-	do {
-		err = readblock(img, &blk);
-		if (err)
-			return err;
+	/* Read directory block */
+	err = readblock(img, &blk);
+	if (err == IMGTOOLERR_INPUTPASTEND) {
+		ent->eof = 1;
+		return 0;
 	}
-	while(blk.type != 0);
+	if (err)
+		return err;
+	
+	/* If block is not a filename block, fail */
+	if (blk.type != COCOCAS_BLOCKTYPE_FILENAME)
+		return IMGTOOLERR_CORRUPTIMAGE;
 
 	fname[8] = '\0';
 	memcpy(fname, blk.data, 8);
@@ -87,6 +105,24 @@ static int cococas_nextfile(IMAGE *img, imgtool_dirent *ent)
 	if (strlen(fname) >= ent->fname_len)
 		return IMGTOOLERR_BUFFERTOOSMALL;
 	strcpy(ent->fname, fname);
+
+	filesize = 0;
+
+	do {
+		err = readblock(img, &blk);
+		if (err)
+			return err;
+
+		if (blk.type == COCOCAS_BLOCKTYPE_DATA) {
+			filesize += blk.length;
+		}
+	}
+	while(blk.type == COCOCAS_BLOCKTYPE_DATA);
+
+	if (blk.type != COCOCAS_BLOCKTYPE_EOF)
+		return IMGTOOLERR_CORRUPTIMAGE;
+	
+	ent->filesize = filesize;
 
 	return 0;
 }

@@ -116,7 +116,8 @@ static const char *msgs[] = {
 	"Missing parameter not found",
 	"Inappropriate parameter",
 	"Bad file name",
-	"Out of space on image"
+	"Out of space on image",
+	"Input past end of file"
 };
 
 const char *imageerror(int err)

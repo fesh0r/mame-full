@@ -142,9 +142,9 @@ static int imgwave_readsample(IMAGE *img, INT16 *sample)
 		INT16 buf16[2];
 	} u;
 
-	if (wimg->curpos > wimg->basepos + wimg->length) {
+	if (wimg->curpos >= wimg->basepos + wimg->length) {
 		*sample = 0;
-		return 0;
+		return IMGTOOLERR_INPUTPASTEND;
 	}
 
 	if (wimg->resolution == 8) {
@@ -203,7 +203,7 @@ static int imgwave_readtransition(IMAGE *img, int *frequency)
 		wimg->lastsample = sample;
 		count++;
 	}
-	while(!transitioned && sample);
+	while(!transitioned);
 
 	*frequency = wimg->frequency / count;
 	return 0;
@@ -219,6 +219,8 @@ static int imgwave_readbit(IMAGE *img, UINT8 *bit)
 	extra = (struct WaveExtra *) wimg->base.module->extra;
 
 	err = imgwave_readtransition(img, &freq);
+	if (err)
+		return err;
 
 	if (extra->zeropulse > extra->onepulse)
 		*bit = extra->threshpulse > freq;

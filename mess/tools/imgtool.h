@@ -28,7 +28,8 @@ enum {
 	IMGTOOLERR_PARAMNEEDED,
 	IMGTOOLERR_PARAMNOTNEEDED,
 	IMGTOOLERR_BADFILENAME,
-	IMGTOOLERR_NOSPACE
+	IMGTOOLERR_NOSPACE,
+	IMGTOOLERR_INPUTPASTEND
 };
 
 /* These error codes are actually modifiers that make it easier to distinguish
