@@ -236,6 +236,8 @@ MACHINE_INIT( lviv )
 	cpu_setbank(3, memory_region(REGION_CPU1) + 0x010000);
 	cpu_setbank(4, memory_region(REGION_CPU1) + 0x010000);
 
+	/*timer_pulse(TIME_IN_NSEC(200), 0, lviv_draw_pixel);*/
+
 	/*memset(mess_ram, 0, sizeof(unsigned char)*0xffff);*/
 }
 
