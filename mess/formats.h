@@ -38,11 +38,8 @@ enum
 	BDFD_ROUNDUP_TRACKS	= 1
 };
 
-enum
-{
-	HEADERSIZE_FLAG_MODULO	= 0x80000000,	/* for when headers are the file size modulo something */
-	HEADERSIZE_FLAGS		= 0x80000000
-};
+#define HEADERSIZE_FLAG_MODULO	0x80000000	/* for when headers are the file size modulo something */
+#define HEADERSIZE_FLAGS		0x80000000
 
 struct InternalBdFormatDriver
 {

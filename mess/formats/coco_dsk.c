@@ -16,7 +16,6 @@
 static int cocojvc_decode_header(const void *header, UINT32 file_size, UINT32 header_size, struct disk_geometry *geometry, int *offset)
 {
 	UINT8 *header_bytes = (UINT8 *) header;
-	UINT8 sectors_per_track;
 	UINT8 sector_attribute_flag;
 	UINT16 physical_bytes_per_sector;
 
@@ -185,6 +184,7 @@ static int cocovdk_decode_header(const void *h, UINT32 file_size, UINT32 header_
 	geometry->heads = hdr->sides;
 	geometry->sectors = 18;
 	geometry->sector_size = 256;
+	geometry->first_sector_id = 1;
 	return INIT_PASS;
 }
 
@@ -196,7 +196,7 @@ static int cocovdk_encode_header(void *h, UINT32 *header_size, const struct disk
 	assert(*header_size == VDK_HEADER_LEN);
 
 	if ((geometry->sectors != 18) || (geometry->sector_size != 256) || (geometry->heads < 1) || (geometry->heads > 2)
-			|| (geometry->first_sector_id != -1))
+			|| (geometry->first_sector_id != 1))
 		return INIT_FAIL;
 
 	hdr = (struct vdk_header *) h;
