@@ -428,6 +428,8 @@ static struct MachineDriver machine_driver_enhanced =
 ROM_START(apple2e)
     ROM_REGION(0x24700,REGION_CPU1,0)
     /* 64k main RAM, 64k aux RAM */
+
+//	ROM_LOAD("apple.rom", 0x21000, 0x3000, 0xf66f9c26 )
     ROM_LOAD ( "a2e.cd", 0x20000, 0x2000, 0xe248835e )
     ROM_LOAD ( "a2e.ef", 0x22000, 0x2000, 0xfc3d59d8 )
     /* 0x700 for individual slot ROMs */
