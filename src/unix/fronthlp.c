@@ -213,6 +213,7 @@ static int myprintf(char *fmt, ...) {
      va_start(args, fmt);
      i = vfprintf(stdout_file, fmt, args);
      va_end(args);
+     fflush(stdout_file);
   }
   return i;
 }
@@ -252,6 +253,7 @@ static void frontend_verify(int driver, int rom)
          incorrect++;
          break;
    }
+   fflush(stdout_file);
 }
 
 static int frontend_uses_roms(int driver)
@@ -883,6 +885,7 @@ int frontend_list(char *gamename)
                      correct++;
                   break;
             }
+	    fflush(stdout_file);
          }
    }
    
