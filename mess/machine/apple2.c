@@ -104,6 +104,10 @@ static void apple2_setvar(UINT32 val, UINT32 mask)
 	if (memory_region_length(REGION_CPU1) < 0x8000)
 		val &= ~VAR_ROMSWITCH;
 
+	/* always internal ROM if no slots exist */
+	if ((memory_region_length(REGION_CPU1) % 0x1000) == 0)
+		val = (val & ~VAR_SLOTC3ROM) | VAR_INTCXROM;
+
 	a2 &= ~mask;
 	a2 |= val;
 
@@ -147,9 +151,9 @@ static void apple2_setvar(UINT32 val, UINT32 mask)
 		cpu_setbank(12,	(a2 & VAR_INTCXROM)		? &apple_rom[0x400] : apple2_slotrom(4));
 	}
 
-	if (mask & (VAR_SLOTC3ROM|VAR_ROMSWITCH))
+	if (mask & (VAR_INTCXROM|VAR_SLOTC3ROM|VAR_ROMSWITCH))
 	{
-		cpu_setbank(11,	(a2 & VAR_SLOTC3ROM)	? apple2_slotrom(3) : &apple_rom[0x300]);
+		cpu_setbank(11,	((a2 & (VAR_INTCXROM|VAR_SLOTC3ROM)) == VAR_SLOTC3ROM) ? apple2_slotrom(3) : &apple_rom[0x300]);
 	}
 
 	if (mask & (VAR_ALTZP))

@@ -502,37 +502,47 @@ MACHINE_DRIVER_END
 
 ***************************************************************************/
 
-ROM_START(apple2e)
-    ROM_REGION(0x4700,REGION_CPU1,0)
-    /* 64k main RAM, 64k aux RAM */
+ROM_START(apple2)
+	ROM_REGION(0x4700,REGION_CPU1,0)
+	ROM_LOAD ( "a2.e0", 0x2000, 0x0800, 0xc0a4ad3b )
+	ROM_LOAD ( "a2.e8", 0x2800, 0x0800, 0xa99c2cf6 )
+	ROM_LOAD ( "a2.f0", 0x3000, 0x0800, 0x62230d38 )
+	ROM_LOAD ( "a2.f8", 0x3800, 0x0800, 0x020a86d0 )
+ROM_END
 
-    ROM_LOAD ( "a2e.cd", 0x0000, 0x2000, 0xe248835e )
-    ROM_LOAD ( "a2e.ef", 0x2000, 0x2000, 0xfc3d59d8 )
-    /* 0x700 for individual slot ROMs */
-    ROM_LOAD ( "disk2_33.rom", 0x4500, 0x0100, 0xce7144f6 ) /* Disk II ROM - DOS 3.3 version */
+ROM_START(apple2p)
+	ROM_REGION(0x4700,REGION_CPU1,0)
+	ROM_LOAD ( "a2p.d0", 0x2000, 0x0800, 0x6f05f949 )
+	ROM_LOAD ( "a2p.d8", 0x2800, 0x0800, 0x1f08087c )
+	ROM_LOAD ( "a2p.e0", 0x2000, 0x0800, 0x2b8d9a89 )
+	ROM_LOAD ( "a2p.e8", 0x2800, 0x0800, 0x5719871a )
+	ROM_LOAD ( "a2p.f0", 0x3000, 0x0800, 0x9a04eecf )
+	ROM_LOAD ( "a2p.f8", 0x3800, 0x0800, 0xecffd453 )
+ROM_END
+
+ROM_START(apple2e)
+	ROM_REGION(0x4700,REGION_CPU1,0)
+	ROM_LOAD ( "a2e.cd", 0x0000, 0x2000, 0xe248835e )
+	ROM_LOAD ( "a2e.ef", 0x2000, 0x2000, 0xfc3d59d8 )
+	ROM_LOAD ( "disk2_33.rom", 0x4500, 0x0100, 0xce7144f6 ) /* Disk II ROM - DOS 3.3 version */
 ROM_END
 
 ROM_START(apple2ee)
     ROM_REGION(0x4700,REGION_CPU1,0)
     ROM_LOAD ( "a2ee.cd", 0x0000, 0x2000, 0x443aa7c4 )
     ROM_LOAD ( "a2ee.ef", 0x2000, 0x2000, 0x95e10034 )
-    /* 0x4000 for bankswitched RAM */
-    /* 0x700 for individual slot ROMs */
     ROM_LOAD ( "disk2_33.rom", 0x4500, 0x0100, 0xce7144f6 ) /* Disk II ROM - DOS 3.3 version */
 ROM_END
 
 ROM_START(apple2ep)
     ROM_REGION(0x4700,REGION_CPU1,0)
     ROM_LOAD ("a2ept.cf", 0x0000, 0x4000, 0x02b648c8)
-    /* 0x4000 for bankswitched RAM */
-    /* 0x700 for individual slot ROMs */
     ROM_LOAD ("disk2_33.rom", 0x4500, 0x0100, 0xce7144f6) /* Disk II ROM - DOS 3.3 version */
 ROM_END
 
 ROM_START(apple2c)
-    ROM_REGION(0x4700,REGION_CPU1,0)
+    ROM_REGION(0x4000,REGION_CPU1,0)
     ROM_LOAD ( "a2c.128", 0x0000, 0x4000, 0xf0edaa1b )
-	ROM_LOAD ("disk2_33.rom", 0x4500, 0x0100, 0xce7144f6) /* Disk II ROM - DOS 3.3 version */
 ROM_END
 
 ROM_START(apple2c0)
@@ -552,6 +562,8 @@ SYSTEM_CONFIG_START(apple2)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG	COMPANY            FULLNAME */
+COMPX( 1977, apple2,   0,        apple2e,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //",	GAME_NOT_WORKING)
+COMPX( 1979, apple2p,  apple2,   apple2e,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //+",	GAME_NOT_WORKING)
 COMP ( 1983, apple2e,  0,        apple2e,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //e" )
 COMP ( 1985, apple2ee, apple2e,  apple2ee, apple2,   apple2,   apple2,	"Apple Computer", "Apple //e (enhanced)" )
 COMP ( 1987, apple2ep, apple2e,  apple2ee, apple2,   apple2,   apple2,	"Apple Computer", "Apple //e (Platinum)" )
