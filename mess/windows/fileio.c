@@ -67,7 +67,7 @@ struct rc_option fileio_opts[] =
 	{ "artwork_directory", NULL, rc_string, &artworkdir, "artwork", 0, 0, NULL, "directory for Artwork (Overlays etc.)" },
 	{ "snapshot_directory", NULL, rc_string, &screenshotdir, "snap", 0, 0, NULL, "directory for screenshots (.png format)" },
 	{ "cheat_file", NULL, rc_string, &cheatfile, "cheat.dat", 0, 0, NULL, "cheat filename" },
-	{ "history_file", NULL, rc_string, &history_filename, "history.dat", 0, 0, NULL, NULL },
+	{ "history_file", NULL, rc_string, &history_filename, "sysinfo.dat", 0, 0, NULL, NULL },
 	{ "mameinfo_file", NULL, rc_string, &mameinfo_filename, "mameinfo.dat", 0, 0, NULL, NULL },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
@@ -89,8 +89,8 @@ typedef struct
 	unsigned int offset;
 	unsigned int length;
 	eFileType type;
-	unsigned int crc;       
-	int		eof;	// for kRamFiles only	
+	unsigned int crc;
+	int		eof;	// for kRamFiles only
 }	FakeFileHandle;
 
 #ifdef _MSC_VER
