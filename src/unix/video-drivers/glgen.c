@@ -21,33 +21,81 @@
 #include <math.h>
 #include "effect.h"
 
+static int use_dirty = 0;
+
 int LoadCabinet (const char *fname);
 void SwapBuffers (void);
 VIDEO_UPDATE(vector);
 void vector_clear_list (void);
 
-
-void DeltaVec (GLfloat x1, GLfloat y1, GLfloat z1,
-	       GLfloat x2, GLfloat y2, GLfloat z2,
-	       GLfloat * dx, GLfloat * dy, GLfloat * dz);
-void CalcFlatPoint (int x, int y, GLfloat * px, GLfloat * py);
-void CalcCabPoint (int x, int y, GLfloat * px, GLfloat * py, GLfloat * pz);
+GLdouble CompareVec (GLdouble i, GLdouble j, GLdouble k,
+	    GLdouble x, GLdouble y, GLdouble z);
+void TranslatePointInPlane   (
+	      GLdouble vx_p1, GLdouble vy_p1, GLdouble vz_p1,
+	      GLdouble vx_nw, GLdouble vy_nw, GLdouble vz_nw,
+	      GLdouble vx_nh, GLdouble vy_nh, GLdouble vz_nh,
+	      GLdouble x_off, GLdouble y_off,
+	      GLdouble *vx_p, GLdouble *vy_p, GLdouble *vz_p );
+void ScaleThisVec (GLdouble i, GLdouble j, GLdouble k,
+	      GLdouble * x, GLdouble * y, GLdouble * z);
+void AddToThisVec (GLdouble i, GLdouble j, GLdouble k,
+	      GLdouble * x, GLdouble * y, GLdouble * z);
+GLdouble LengthOfVec (GLdouble x, GLdouble y, GLdouble z);
+void NormThisVec (GLdouble * x, GLdouble * y, GLdouble * z);
+void DeltaVec (GLdouble x1, GLdouble y1, GLdouble z1,
+	       GLdouble x2, GLdouble y2, GLdouble z2,
+	       GLdouble * dx, GLdouble * dy, GLdouble * dz);
+void CrossVec (GLdouble a1, GLdouble a2, GLdouble a3,
+	  GLdouble b1, GLdouble b2, GLdouble b3,
+	  GLdouble * c1, GLdouble * c2, GLdouble * c3);
+void CopyVec(GLdouble *ax,GLdouble *ay,GLdouble *az,                   /* dest   */
+	     const GLdouble bx,const GLdouble by,const GLdouble bz     /* source */
+                  );
+void SwapVec(GLdouble *ax,GLdouble *ay,GLdouble *az,
+	          GLdouble *bx,GLdouble *by,GLdouble *bz
+                  );
+void CalcFlatTexPoint( int x, int y, GLdouble texwpervw, GLdouble texhpervh, 
+		       GLdouble * px, GLdouble * py);
+void CalcCabPointbyWorldpoint( 
+		   GLdouble vx_gscr, GLdouble vy_gscr, 
+                   GLdouble *vx_p, GLdouble *vy_p, GLdouble *vz_p
+		 );
+void CalcCabPointbyViewpoint( 
+		   GLdouble vx_gscr_view, GLdouble vy_gscr_view, 
+                   GLdouble *vx_p, GLdouble *vy_p, GLdouble *vz_p
+		 );
 
 void SetupFrustum (void);
 void SetupOrtho (void);
 
 
-void WAvg (GLfloat perc, GLfloat x1, GLfloat y1, GLfloat z1,
-	   GLfloat x2, GLfloat y2, GLfloat z2,
-	   GLfloat * ax, GLfloat * ay, GLfloat * az);
-void UpdateCabDisplay (void);
-void UpdateFlatDisplay (void);
+void WAvg (GLdouble perc, GLdouble x1, GLdouble y1, GLdouble z1,
+	   GLdouble x2, GLdouble y2, GLdouble z2,
+	   GLdouble * ax, GLdouble * ay, GLdouble * az);
+void UpdateCabDisplay (struct mame_bitmap *bitmap);
+void UpdateFlatDisplay (struct mame_bitmap *bitmap);
 void UpdateGLDisplayBegin (struct mame_bitmap *bitmap);
 void UpdateGLDisplayEnd   (struct mame_bitmap *bitmap);
 
 int cabspecified;
 
+/**
+ *
+ * Flat-Screen Ratio:
+ *
+ * scrnaspect : orig screen width/height ratio (view-coord)
+ * vscrnaspect: zoomed screen width/height ratio (view-coord)
+ * vscrnwidth : final screen width (view-coord)
+ * vscrnheight: final screen height (view-coord)
+ * vscrndx: 	  final screen dx to start of game-screen (view-coord)
+ * vscrndy: 	  final screen dy to start of game-screen (view-coord)
+ *
+ */
 double scrnaspect, vscrnaspect;
+static GLdouble vscrnwidth;
+static GLdouble vscrnheight;
+static GLdouble vscrndx;
+static GLdouble vscrndy;
 
 int use_mod_ctable;
 GLubyte  *ctable;
@@ -64,7 +112,9 @@ GLsizei text_height;
 
 int force_text_width_height;
 
-static int palette_changed;
+static GLdouble mxModel[16];
+static GLdouble mxProjection[16];
+static GLint    dimView[4];
 
 /* int cabview=0;  .. Do we want a cabinet view or not? */
 int cabload_err;
@@ -85,9 +135,9 @@ struct TexSquare
   GLubyte *texture;
   GLuint texobj;
   int isTexture;
-  GLfloat x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4;
-  GLfloat fx1, fy1, fx2, fy2, fx3, fy3, fx4, fy4;
-  GLfloat xcov, ycov;
+  GLdouble x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4;
+  GLdouble fx1, fy1, fx2, fy2, fx3, fy3, fx4, fy4;
+  GLdouble xcov, ycov;
   int isDirty;
   int dirtyXoff, dirtyYoff, dirtyWidth, dirtyHeight;
 };
@@ -96,13 +146,6 @@ static struct TexSquare *texgrid;
 
 static int texnumx;
 static int texnumy;
-static GLfloat texpercx;
-static GLfloat texpercy;
-static GLfloat vscrntlx;
-static GLfloat vscrntly;
-static GLfloat vscrnwidth;
-static GLfloat vscrnheight;
-static GLfloat xinc, yinc;
 
 static GLint memory_x_len;
 static GLint memory_x_start_offset;
@@ -117,10 +160,99 @@ static int bytes_per_pixel;
 #define BITMAP_SAFETY			16
 static unsigned char *colorBlittedMemory;
 
-GLfloat cscrx1, cscry1, cscrz1, cscrx2, cscry2, cscrz2,
-  cscrx3, cscry3, cscrz3, cscrx4, cscry4, cscrz4;
-GLfloat cscrwdx, cscrwdy, cscrwdz;
-GLfloat cscrhdx, cscrhdy, cscrhdz;
+/**
+ * cscr..: cabinet screen points:
+ * 
+ * are defined within <model>.cab in the following order:
+ *	1.) left  - top
+ *	2.) right - top
+ *	3.) right - bottom
+ *	4.) left  - bottom
+ *
+ * are read in reversed:
+ *	1.) left  - bottom
+ *	2.) right - bottom
+ *	3.) right - top
+ *	4.) left  - top
+ *
+ * so we do have a positiv (Q I) coord system ;-), of course:
+ *	left   < right
+ *	bottom < top
+ */
+GLdouble vx_cscr_p1, vy_cscr_p1, vz_cscr_p1, 
+        vx_cscr_p2, vy_cscr_p2, vz_cscr_p2,
+        vx_cscr_p3, vy_cscr_p3, vz_cscr_p3, 
+	vx_cscr_p4, vy_cscr_p4, vz_cscr_p4;
+
+/**
+ * cscr..: cabinet screen dimension vectors
+ *	
+ * 	these are the cabinet-screen's width/height in the cabinet's world-coord !!
+ */
+GLdouble  vx_cscr_dw, vy_cscr_dw, vz_cscr_dw; // the width (world-coord) , p1-p2
+GLdouble  vx_cscr_dh, vy_cscr_dh, vz_cscr_dh; // the height (world-coord), p1-p4
+
+GLdouble  s__cscr_w,  s__cscr_h;              // scalar width/height (world-coord)
+GLdouble  s__cscr_w_view, s__cscr_h_view;     // scalar width/height (view-coord)
+
+// screen x-axis (world-coord), normalized v__cscr_dw
+GLdouble vx_scr_nx, vy_scr_nx, vz_scr_nx; 
+
+// screen y-axis (world-coord), normalized v__cscr_dh
+GLdouble vx_scr_ny, vy_scr_ny, vz_scr_ny; 
+
+// screen z-axis (world-coord), the normalized cross product of v__cscr_dw,v__cscr_dh
+GLdouble vx_scr_nz, vy_scr_nz, vz_scr_nz; 
+
+// x/y-factor for view/world coord translation
+GLdouble cab_vpw_fx; // s__cscr_w_view / s__cscr_w
+GLdouble cab_vpw_fy; // s__cscr_h_view / s__cscr_h
+
+/**
+ * gscr..: game screen dimension vectors
+ *	
+ * 	these are the game portion of the cabinet-screen's width/height 
+ *      in the cabinet's world-coord !!
+ *
+ *	gscr[wh]d[xyz] <= cscr[wh]d[xyz]
+ */
+
+GLdouble vx_gscr_dw, vy_gscr_dw, vz_gscr_dw; // the width (world-coord)
+GLdouble vx_gscr_dh, vy_gscr_dh, vz_gscr_dh; // the height (world-coord)
+
+GLdouble  s__gscr_w, s__gscr_h;              // scalar width/height (world-coord)
+GLdouble  s__gscr_w_view, s__gscr_h_view;    // scalar width/height (view-coord)
+
+GLdouble  s__gscr_offx, s__gscr_offy;          // delta game start (world-coord)
+
+GLdouble  s__gscr_offx_view, s__gscr_offy_view;// delta game-start (view-coord)
+
+/**
+*
+* ALL GAME SCREEN VECTORS ARE IN FINAL ORIENTATION (e.g. if blit_swapxy)
+*
+* v__gscr_p1 = v__cscr_p1   + 
+*              s__gscr_offx * v__scr_nx + s__gscr_offy * v__scr_ny ;
+*
+* v__gscr_p2  = v__gscr_p1  + 
+*              s__gscr_w    * v__scr_nx + 0.0          * v__scr_ny ;
+*
+* v__gscr_p3  = v__gscr_p2  + 
+*              0.0          * v__scr_nx + s__gscr_h    * v__scr_ny ;
+*
+* v__gscr_p4  = v__gscr_p3  - 
+*              s__gscr_w    * v__scr_nx - 0.0          * v__scr_ny ;
+*
+* v__gscr_p4b = v__gscr_p1  + 
+*              0.0          * v__scr_nx + s__gscr_h    * v__scr_ny ;
+*
+* v__gscr_p4a == v__gscr_p4b
+*/
+GLdouble vx_gscr_p1, vy_gscr_p1, vz_gscr_p1; 
+GLdouble vx_gscr_p2, vy_gscr_p2, vz_gscr_p2; 
+GLdouble vx_gscr_p3, vy_gscr_p3, vz_gscr_p3; 
+GLdouble vx_gscr_p4, vy_gscr_p4, vz_gscr_p4; 
+
 
 extern GLubyte *cabimg[5];
 extern GLuint cabtex[5];
@@ -130,8 +262,6 @@ extern int numpans;
 int currentpan = 0;
 int lastpan = 0;
 int panframe = 0;
-
-extern float gamma_correction;
 
 /* Vector variables */
 
@@ -157,6 +287,8 @@ void gl_bootstrap_resources()
     printf("GLINFO: gl_bootstrap_resources\n");
   #endif
 
+  blit_hardware_rotation=1; // no rotation by the blitter macro, or else !!
+
   cabspecified = 0;
   if(cabname!=NULL) cabname[0]=0;
 
@@ -171,7 +303,6 @@ void gl_bootstrap_resources()
   text_width=0;
   text_height=0;
   force_text_width_height = 0;
-  palette_changed = 0;
   cabload_err=0;
   drawbitmap = 1;
   dopersist = 0;
@@ -183,23 +314,18 @@ void gl_bootstrap_resources()
 
   texnumx=0;
   texnumy=0;
-  texpercx=0;
-  texpercy=0;
-  vscrntlx=0;
-  vscrntly=0;
+  vscrndx=0;
+  vscrndy=0;
   vscrnwidth=0;
   vscrnheight=0;
-  xinc=0; yinc=0;
   
   memory_x_len=0;;
   memory_x_start_offset=0;;
   bytes_per_pixel=0;
   colorBlittedMemory=NULL;
   
-  cscrx1=0; cscry1=0; cscrz1=0; cscrx2=0; cscry2=0; cscrz2=0;
-  cscrx3=0; cscry3=0; cscrz3=0; cscrx4=0; cscry4=0; cscrz4=0;
-  cscrwdx=0; cscrwdy=0; cscrwdz=0;
-  cscrhdx=0; cscrhdy=0; cscrhdz=0;
+  vx_cscr_p1=0; vy_cscr_p1=0; vz_cscr_p1=0; vx_cscr_p2=0; vy_cscr_p2=0; vz_cscr_p2=0;
+  vx_cscr_p3=0; vy_cscr_p3=0; vz_cscr_p3=0; vx_cscr_p4=0; vy_cscr_p4=0; vz_cscr_p4=0;
   
   cabimg[0]=0;
   cabtex[0]=0;
@@ -249,7 +375,6 @@ void gl_reset_resources()
   gl_bitmap_format=0;
   gl_ctable_format=0;
   gl_ctable_type=0;
-  palette_changed = 0;
   cabload_err=0;
   dopersist = 0;
   dodepth = 1;
@@ -259,23 +384,18 @@ void gl_reset_resources()
 
   texnumx=0;
   texnumy=0;
-  texpercx=0;
-  texpercy=0;
-  vscrntlx=0;
-  vscrntly=0;
+  vscrndx=0;
+  vscrndy=0;
   vscrnwidth=0;
   vscrnheight=0;
-  xinc=0; yinc=0;
   
   memory_x_len=0;
   memory_x_start_offset=0;
   bytes_per_pixel=0;
   colorBlittedMemory=NULL;
   
-  cscrx1=0; cscry1=0; cscrz1=0; cscrx2=0; cscry2=0; cscrz2=0;
-  cscrx3=0; cscry3=0; cscrz3=0; cscrx4=0; cscry4=0; cscrz4=0;
-  cscrwdx=0; cscrwdy=0; cscrwdz=0;
-  cscrhdx=0; cscrhdy=0; cscrhdz=0;
+  vx_cscr_p1=0; vy_cscr_p1=0; vz_cscr_p1=0; vx_cscr_p2=0; vy_cscr_p2=0; vz_cscr_p2=0;
+  vx_cscr_p3=0; vy_cscr_p3=0; vz_cscr_p3=0; vx_cscr_p4=0; vy_cscr_p4=0; vz_cscr_p4=0;
   
   cabimg[0]=0;
   cabtex[0]=0;
@@ -386,10 +506,7 @@ void gl_init_cabview ()
   if (glContext == 0)
     return;
 
-        InitCabGlobals();
-
-        currentpan=0;
-	currentpan = 0;
+        currentpan=1;
 	lastpan = 0;
 	panframe = 0;
 
@@ -426,37 +543,12 @@ void gl_set_cabview (int new_value)
 
   if (cabview)
   {
-        currentpan=0;
-	currentpan = 0;
+        currentpan=1;
 	lastpan = 0;
 	panframe = 0;
 
-	#ifdef WIN32
-	  __try
-	  {
-	#endif
-	    if (!cabspecified || !LoadCabinet (cabname))
-	    {
-	      if (cabspecified)
-		printf ("GLERROR: Unable to load cabinet %s\n", cabname);
-	      strcpy (cabname, "glmamejau");
-	      cabspecified = 1;
-	      LoadCabinet (cabname);
-	      cabload_err = 0;
-	    }
-
-	#ifdef WIN32
-	  }
-	  __except (GetExceptionCode ())
-	  {
-	    fprintf (stderr, "\nGLERROR: Cabinet loading is still buggy - sorry !\n");
-	    cabload_err = 1;
-	  }
-	#endif
-
 	SetupFrustum ();
   } else {
-        InitCabGlobals();
 	SetupOrtho ();
   }
 }
@@ -522,7 +614,7 @@ void gl_update_16_to_16bpp (struct mame_bitmap *bitmap)
 {
    if(current_palette->lookup)
    {
-   	if(!blit_notified) printf("GLINFO: 16bpp palette lookup bitblit\n");
+   	if(!blit_notified) printf("GLINFO: 16bpp color palette lookup bitblit\n");
 	#define SRC_PIXEL  unsigned short
 	#define DEST_PIXEL unsigned short
 	#define DEST texgrid->texture
@@ -535,10 +627,18 @@ void gl_update_16_to_16bpp (struct mame_bitmap *bitmap)
 	#undef SRC_PIXEL
 	#undef DEST_PIXEL
    } else {
-   	if(!blit_notified) printf("GLINFO: no 16bpp bitblit needed\n");
-	/**
-	 * nothing must be done here ;-)
-	 */
+   	if(!blit_notified) printf("GLINFO: 16bpp swapping ... !! JAU \n");
+	#define SRC_PIXEL  unsigned short
+	#define DEST_PIXEL unsigned short
+	#define DEST texgrid->texture
+	#define DEST_WIDTH memory_x_len
+	#undef INDIRECT
+	#include "blit.h"
+	#undef INDIRECT
+	#undef DEST
+	#undef DEST_WIDTH
+	#undef SRC_PIXEL
+	#undef DEST_PIXEL
    }
    blit_notified = 1;
 }
@@ -560,10 +660,18 @@ void gl_update_32_to_32bpp(struct mame_bitmap *bitmap)
 	#undef SRC_PIXEL
 	#undef DEST_PIXEL
    } else {
-   	if(!blit_notified) printf("GLINFO: no 32bpp bitblit needed\n");
-	/**
-	 * nothing must be done here ;-)
-	 */
+   	if(!blit_notified) printf("GLINFO: 32bpp swapping ... !! JAU \n");
+	#define SRC_PIXEL  unsigned int
+	#define DEST_PIXEL unsigned int
+	#define DEST texgrid->texture
+	#define DEST_WIDTH memory_x_len
+	#undef  INDIRECT
+	#include "blit.h"
+	#undef INDIRECT
+	#undef DEST
+	#undef DEST_WIDTH
+	#undef SRC_PIXEL
+	#undef DEST_PIXEL
    }
    blit_notified = 1;
 }
@@ -580,6 +688,11 @@ int sysdep_display_16bpp_capable (void)
 void InitVScreen (int depth)
 {
   const unsigned char * glVersion;
+  double game_aspect ;
+  double cabn_aspect ;
+  GLdouble vx_gscr_p4b, vy_gscr_p4b, vz_gscr_p4b; 
+  GLdouble t1x, t1y, t1z;
+  GLdouble t1;
 
   #ifndef NDEBUG
     printf("GLINFO: InitVScreen (glContext=%p)\n", glContext);
@@ -625,7 +738,8 @@ void InitVScreen (int depth)
 
   glSetUseEXT78 (useGLEXT78);
 
-  InitCabGlobals ();
+  printf("GLINFO: swapxy=%d, flipx=%d, flipy=%d\n",
+  	blit_swapxy, blit_flipx, blit_flipy);
 
   disp__glClearColor (0, 0, 0, 1);
   disp__glClear (GL_COLOR_BUFFER_BIT);
@@ -643,12 +757,205 @@ void InitVScreen (int depth)
 
   /* Calulate delta vectors for screen height and width */
 
-  DeltaVec (cscrx1, cscry1, cscrz1, cscrx2, cscry2, cscrz2,
-	    &cscrwdx, &cscrwdy, &cscrwdz);
+  DeltaVec (vx_cscr_p1, vy_cscr_p1, vz_cscr_p1, vx_cscr_p2, vy_cscr_p2, vz_cscr_p2,
+	    &vx_cscr_dw, &vy_cscr_dw, &vz_cscr_dw);
+  DeltaVec (vx_cscr_p1, vy_cscr_p1, vz_cscr_p1, vx_cscr_p4, vy_cscr_p4, vz_cscr_p4,
+	    &vx_cscr_dh, &vy_cscr_dh, &vz_cscr_dh);
 
-  DeltaVec (cscrx1, cscry1, cscrz1, cscrx4, cscry4, cscrz4,
-	    &cscrhdx, &cscrhdy, &cscrhdz);
+  s__cscr_w = LengthOfVec (vx_cscr_dw, vy_cscr_dw, vz_cscr_dw);
+  s__cscr_h = LengthOfVec (vx_cscr_dh, vy_cscr_dh, vz_cscr_dh);
 
+
+	  /*	  
+	  ScaleThisVec ( -1.0,  1.0,  1.0, &vx_cscr_dh, &vy_cscr_dh, &vz_cscr_dh);
+	  ScaleThisVec ( -1.0,  1.0,  1.0, &vx_cscr_dw, &vy_cscr_dw, &vz_cscr_dw);
+	  */
+
+  CopyVec( &vx_scr_nx, &vy_scr_nx, &vz_scr_nx,
+	    vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
+  NormThisVec (&vx_scr_nx, &vy_scr_nx, &vz_scr_nx);
+
+  CopyVec( &vx_scr_ny, &vy_scr_ny, &vz_scr_ny,
+	    vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
+  NormThisVec (&vx_scr_ny, &vy_scr_ny, &vz_scr_ny);
+
+  CrossVec (vx_cscr_dw, vy_cscr_dw, vz_cscr_dw,
+  	    vx_cscr_dh, vy_cscr_dh, vz_cscr_dh,
+	    &vx_scr_nz, &vy_scr_nz, &vz_scr_nz);
+  NormThisVec (&vx_scr_nz, &vy_scr_nz, &vz_scr_nz);
+
+#ifndef NDEBUG
+  /**
+   * assertions ...
+   */
+  CopyVec( &t1x, &t1y, &t1z,
+	   vx_scr_nx, vy_scr_nx, vz_scr_nx);
+  ScaleThisVec (s__cscr_w,s__cscr_w,s__cscr_w,
+                &t1x, &t1y, &t1z);
+  t1 =  CompareVec (t1x, t1y, t1z, vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
+
+  printf("GLINFO: test v__cscr_dw - ( v__scr_nx * s__cscr_w ) = %f\n", t1);
+  printf("\t v__cscr_dw = %f / %f / %f\n", vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
+  printf("\t v__scr_nx = %f / %f / %f\n", vx_scr_nx, vy_scr_nx, vz_scr_nx);
+  printf("\t s__cscr_w  = %f \n", s__cscr_w);
+
+  CopyVec( &t1x, &t1y, &t1z,
+	   vx_scr_ny, vy_scr_ny, vz_scr_ny);
+  ScaleThisVec (s__cscr_h,s__cscr_h,s__cscr_h,
+                &t1x, &t1y, &t1z);
+  t1 =  CompareVec (t1x, t1y, t1z, vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
+
+  printf("GLINFO: test v__cscr_dh - ( v__scr_ny * s__cscr_h ) = %f\n", t1);
+  printf("\t v__cscr_dh = %f / %f / %f\n", vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
+  printf("\t v__scr_ny  = %f / %f / %f\n", vx_scr_ny, vy_scr_ny, vz_scr_ny);
+  printf("\t s__cscr_h   = %f \n", s__cscr_h);
+#endif
+
+  /**
+   *
+   * Cabinet-Screen Ratio:
+   */
+   game_aspect = (double)visual_orientated_width / (double)visual_orientated_height;
+
+   cabn_aspect = (double)s__cscr_w        / (double)s__cscr_h;
+
+   if( game_aspect <= cabn_aspect )
+   {
+   	/**
+	 * cabinet_width  >  game_width
+	 * cabinet_height == game_height 
+	 *
+	 * cabinet_height(view-coord) := visual_orientated_height(view-coord) 
+	 */
+	s__cscr_h_view  = (GLdouble) visual_orientated_height;
+	s__cscr_w_view  = s__cscr_h_view * cabn_aspect;
+
+	s__gscr_h_view  = s__cscr_h_view;
+	s__gscr_w_view  = s__gscr_h_view * game_aspect; 
+
+	s__gscr_offy_view = 0.0;
+	s__gscr_offx_view = ( s__cscr_w_view - s__gscr_w_view ) / 2.0;
+
+   } else {
+   	/**
+	 * cabinet_width  <  game_width
+	 * cabinet_width  == game_width 
+	 *
+	 * cabinet_width(view-coord) := visual_orientated_width(view-coord) 
+	 */
+	s__cscr_w_view  = (GLdouble) visual_orientated_width;
+	s__cscr_h_view  = s__cscr_w_view / cabn_aspect;
+
+	s__gscr_w_view  = s__cscr_w_view;
+	s__gscr_h_view  = s__gscr_w_view / game_aspect; 
+
+	s__gscr_offx_view = 0.0;
+	s__gscr_offy_view = ( s__cscr_h_view - s__gscr_h_view ) / 2.0;
+
+   }
+   cab_vpw_fx = (GLdouble)s__cscr_w_view / (GLdouble)s__cscr_w ;
+   cab_vpw_fy = (GLdouble)s__cscr_h_view / (GLdouble)s__cscr_h ;
+
+   s__gscr_w   = (GLdouble)s__gscr_w_view  / cab_vpw_fx ;
+   s__gscr_h   = (GLdouble)s__gscr_h_view  / cab_vpw_fy ;
+   s__gscr_offx = (GLdouble)s__gscr_offx_view / cab_vpw_fx ;
+   s__gscr_offy = (GLdouble)s__gscr_offy_view / cab_vpw_fy ;
+
+
+   /**
+    * ALL GAME SCREEN VECTORS ARE IN FINAL ORIENTATION (e.g. if blit_swapxy)
+    *
+    * v__gscr_p1 = v__cscr_p1   + 
+    *              s__gscr_offx * v__scr_nx + s__gscr_offy * v__scr_ny ;
+    *
+    * v__gscr_p2  = v__gscr_p1  + 
+    *              s__gscr_w    * v__scr_nx + 0.0          * v__scr_ny ;
+    *
+    * v__gscr_p3  = v__gscr_p2  + 
+    *              0.0          * v__scr_nx + s__gscr_h    * v__scr_ny ;
+    *
+    * v__gscr_p4  = v__gscr_p3  - 
+    *              s__gscr_w    * v__scr_nx - 0.0          * v__scr_ny ;
+    *
+    * v__gscr_p4b = v__gscr_p1  + 
+    *              0.0          * v__scr_nx + s__gscr_h    * v__scr_ny ;
+    *
+    * v__gscr_p4  == v__gscr_p4b
+    */
+   TranslatePointInPlane ( vx_cscr_p1, vy_cscr_p1, vz_cscr_p1,
+                           vx_scr_nx, vy_scr_nx, vz_scr_nx,
+			   vx_scr_ny, vy_scr_ny, vz_scr_ny,
+			   s__gscr_offx, s__gscr_offy,
+			   &vx_gscr_p1, &vy_gscr_p1, &vz_gscr_p1);
+
+   TranslatePointInPlane ( vx_gscr_p1, vy_gscr_p1, vz_gscr_p1,
+                           vx_scr_nx, vy_scr_nx, vz_scr_nx,
+			   vx_scr_ny, vy_scr_ny, vz_scr_ny,
+			   s__gscr_w, 0.0,
+			   &vx_gscr_p2, &vy_gscr_p2, &vz_gscr_p2);
+
+   TranslatePointInPlane ( vx_gscr_p2, vy_gscr_p2, vz_gscr_p2,
+                           vx_scr_nx, vy_scr_nx, vz_scr_nx,
+			   vx_scr_ny, vy_scr_ny, vz_scr_ny,
+			   0.0, s__gscr_h,
+			   &vx_gscr_p3, &vy_gscr_p3, &vz_gscr_p3);
+
+   TranslatePointInPlane ( vx_gscr_p3, vy_gscr_p3, vz_gscr_p3,
+                           vx_scr_nx, vy_scr_nx, vz_scr_nx,
+			   vx_scr_ny, vy_scr_ny, vz_scr_ny,
+			   -s__gscr_w, 0.0,
+			   &vx_gscr_p4, &vy_gscr_p4, &vz_gscr_p4);
+
+   TranslatePointInPlane ( vx_gscr_p1, vy_gscr_p1, vz_gscr_p1,
+                           vx_scr_nx, vy_scr_nx, vz_scr_nx,
+			   vx_scr_ny, vy_scr_ny, vz_scr_ny,
+			   0.0, s__gscr_h,
+			   &vx_gscr_p4b, &vy_gscr_p4b, &vz_gscr_p4b);
+
+   t1 =  CompareVec (vx_gscr_p4,  vy_gscr_p4,  vz_gscr_p4,
+   		     vx_gscr_p4b, vy_gscr_p4b, vz_gscr_p4b);
+
+  DeltaVec (vx_gscr_p1, vy_gscr_p1, vz_gscr_p1, vx_gscr_p2, vy_gscr_p2, vz_gscr_p2,
+	    &vx_gscr_dw, &vy_gscr_dw, &vz_gscr_dw);
+  DeltaVec (vx_gscr_p1, vy_gscr_p1, vz_gscr_p1, vx_gscr_p4, vy_gscr_p4, vz_gscr_p4,
+	    &vx_gscr_dh, &vy_gscr_dh, &vz_gscr_dh);
+
+#ifndef NDEBUG
+  printf("GLINFO: test v__cscr_dh - ( v__scr_ny * s__cscr_h ) = %f\n", t1);
+  printf("GLINFO: cabinet vectors\n");
+  printf("\t cab p1     : %f / %f / %f \n", vx_cscr_p1, vy_cscr_p1, vz_cscr_p1);
+  printf("\t cab p2     : %f / %f / %f \n", vx_cscr_p2, vy_cscr_p2, vz_cscr_p2);
+  printf("\t cab p3     : %f / %f / %f \n", vx_cscr_p3, vy_cscr_p3, vz_cscr_p3);
+  printf("\t cab p4     : %f / %f / %f \n", vx_cscr_p4, vy_cscr_p4, vz_cscr_p4);
+  printf("\n") ;
+  printf("\t cab width  : %f / %f / %f \n", vx_cscr_dw, vy_cscr_dw, vz_cscr_dw);
+  printf("\t cab height : %f / %f / %f \n", vx_cscr_dh, vy_cscr_dh, vz_cscr_dh);
+  printf("\n");
+  printf("\t x axis : %f / %f / %f \n", vx_scr_nx, vy_scr_nx, vz_scr_nx);
+  printf("\t y axis : %f / %f / %f \n", vx_scr_ny, vy_scr_ny, vz_scr_ny);
+  printf("\t z axis : %f / %f / %f \n", vx_scr_nz, vy_scr_nz, vz_scr_nz);
+  printf("\n");
+  printf("\n");
+  printf("\t cab wxh scal wd: %f x %f \n", s__cscr_w, s__cscr_h);
+  printf("\t cab wxh scal vw: %f x %f \n", s__cscr_w_view, s__cscr_h_view);
+  printf("\n");
+  printf("\t gam p1     : %f / %f / %f \n", vx_gscr_p1, vy_gscr_p1, vz_gscr_p1);
+  printf("\t gam p2     : %f / %f / %f \n", vx_gscr_p2, vy_gscr_p2, vz_gscr_p2);
+  printf("\t gam p3     : %f / %f / %f \n", vx_gscr_p3, vy_gscr_p3, vz_gscr_p3);
+  printf("\t gam p4     : %f / %f / %f \n", vx_gscr_p4, vy_gscr_p4, vz_gscr_p4);
+  printf("\t gam p4b    : %f / %f / %f \n", vx_gscr_p4b, vy_gscr_p4b, vz_gscr_p4b);
+  printf("\t gam p4-p4b : %f\n", t1);
+  printf("\n");
+  printf("\t gam width  : %f / %f / %f \n", vx_gscr_dw, vy_gscr_dw, vz_gscr_dw);
+  printf("\t gam height : %f / %f / %f \n", vx_gscr_dh, vy_gscr_dh, vz_gscr_dh);
+  printf("\n");
+  printf("\t gam wxh scal wd: %f x %f \n", s__gscr_w, s__gscr_h);
+  printf("\t gam wxh scal vw: %f x %f \n", s__gscr_w_view, s__gscr_h_view);
+  printf("\n");
+  printf("\t gam off  wd: %f / %f\n", s__gscr_offx, s__gscr_offy);
+  printf("\t gam off  vw: %f / %f\n", s__gscr_offx_view, s__gscr_offy_view);
+  printf("\n");
+#endif
 
   if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
     vecgame = 1;
@@ -658,23 +965,31 @@ void InitVScreen (int depth)
   /* fill the display_palette_info struct */
   memset (&display_palette_info, 0, sizeof (struct sysdep_palette_info));
 
-  if(depth==8 && useColorIndex)
+  if( (depth==8 /* || depth==16 JAU - STILL NOT WORKING */ ) && useColorIndex && !useColorBlitter )
   {
 	  display_palette_info.depth=depth;
-	  display_palette_info.writable_colors = 256;
 
 	  if(useGLEXT78)
+	  {
+	  	if(depth==8)
 		 gl_internal_format=GL_COLOR_INDEX8_EXT;
-	  else
+		else if(depth==16)
+		 gl_internal_format=GL_COLOR_INDEX16_EXT;
+	  } else
 		 gl_internal_format=(alphablending)?GL_RGBA:GL_RGB;
-	  gl_bitmap_format = GL_COLOR_INDEX;
-	  gl_bitmap_type   = GL_UNSIGNED_BYTE;
 
-	  printf("GLINFO: Offering depth=%d, writable colors=%d (color index mode 8)\n",
+	  gl_bitmap_format = GL_COLOR_INDEX;
+
+	  if(depth==8)
+		  gl_bitmap_type   = GL_UNSIGNED_BYTE;
+	  else
+		  gl_bitmap_type   = GL_UNSIGNED_SHORT;
+
+	  printf("GLINFO: Offering depth=%d, writable colors=%d (color index mode 8/16)\n",
 	  	display_palette_info.depth, display_palette_info.writable_colors);
           fflush(NULL);
   } else {
-	  useColorBlitter = useColorIndex;
+	  useColorBlitter = useColorIndex || vecgame; // JAU vecgames ..
 
 	  useColorIndex = 0;
 
@@ -688,69 +1003,82 @@ void InitVScreen (int depth)
 
 	  /* no alpha .. important, because mame has no alpha set ! */
 	  gl_internal_format=GL_RGB;
+  }
 
-	  switch(display_palette_info.depth)
-	  {
-	  	case  8:  /* ... */
-			  printf("GLERROR: blitter mode not supported for 8bpp color map's, use 15bpp, 16bpp or 32bpp instead !\n");
+  switch(display_palette_info.depth)
+  {
+	case  8:  /* ... */
+		  if( ! useColorIndex ) {
+			  printf("GLERROR: color blitter mode not supported for 8bpp color map's, use 15bpp, 16bpp or 32bpp instead !\n");
 			  exit(1);
+		  } else {
+		    display_palette_info.red_mask   = 0x0;
+		    display_palette_info.green_mask = 0x0;
+		    display_palette_info.blue_mask  = 0x0;
+		  }
 		case 15:
-		case 16:
-			  if(!useColorBlitter)
-			  {
-			    /* ARGB1555 */
-			    display_palette_info.red_mask   = 0x00007C00;
-			    display_palette_info.green_mask = 0x000003E0;
-			    display_palette_info.blue_mask  = 0x0000001F;
+	case 16:
+		  if(!useColorBlitter)
+		  {
+		    /* ARGB1555 */
+		    display_palette_info.red_mask   = 0x00007C00;
+		    display_palette_info.green_mask = 0x000003E0;
+		    display_palette_info.blue_mask  = 0x0000001F;
+		    if( ! useColorIndex ) {
 			    gl_bitmap_format = GL_BGRA;
 			    /*                                   A R G B */
 			    gl_bitmap_type   = GL_UNSIGNED_SHORT_1_5_5_5_REV;
-		          } 
-			  else 
-			  {
-			    /* RGBA5551 */
-			    display_palette_info.red_mask   = 0x0000F800;
-			    display_palette_info.green_mask = 0x000007C0;
-			    display_palette_info.blue_mask  = 0x0000003E;
+		    }
+		  } 
+		  else 
+		  {
+		    /* RGBA5551 */
+		    display_palette_info.red_mask   = 0x0000F800;
+		    display_palette_info.green_mask = 0x000007C0;
+		    display_palette_info.blue_mask  = 0x0000003E;
+		    if( ! useColorIndex ) {
 			    gl_bitmap_format = GL_RGBA;
 			    /*                                   R G B A */
 			    gl_bitmap_type   = GL_UNSIGNED_SHORT_5_5_5_1;
-		          }
-			  break;
-		case 24:
-			  /* RGB888 */
-			  display_palette_info.red_mask   = 0xFF000000;
-			  display_palette_info.green_mask = 0x00FF0000;
-			  display_palette_info.blue_mask  = 0x0000FF00;
-			  gl_bitmap_format = GL_RGB;         
-			  gl_bitmap_type   = GL_UNSIGNED_BYTE;
-			  break;
-		case 32:
-			 /**
-			  * skip the D of DRGB 
-			  */
-			  /* ABGR8888 */
-			  display_palette_info.blue_mask   = 0x00FF0000;
-			  display_palette_info.green_mask  = 0x0000FF00;
-			  display_palette_info.red_mask    = 0x000000FF;
-			  if(!useColorBlitter)
-				  gl_bitmap_format = GL_BGRA;
-			  else
-				  gl_bitmap_format = GL_RGBA;
-			  /*                                 A B G R */
-			  gl_bitmap_type   = GL_UNSIGNED_INT_8_8_8_8_REV;
-			  break;
-	  }
+		    }
+		  }
+		  break;
+	case 24:
+		  /* RGB888 */
+		  display_palette_info.red_mask   = 0xFF000000;
+		  display_palette_info.green_mask = 0x00FF0000;
+		  display_palette_info.blue_mask  = 0x0000FF00;
+		  gl_bitmap_format = GL_RGB;         
+		  gl_bitmap_type   = GL_UNSIGNED_BYTE;
+		  break;
+	case 32:
+		 /**
+		  * skip the D of DRGB 
+		  */
+		  /* ABGR8888 */
+		  display_palette_info.blue_mask   = 0x00FF0000;
+		  display_palette_info.green_mask  = 0x0000FF00;
+		  display_palette_info.red_mask    = 0x000000FF;
+		  if(!useColorBlitter)
+			  gl_bitmap_format = GL_BGRA;
+		  else
+			  gl_bitmap_format = GL_RGBA;
+		  /*                                 A B G R */
+		  gl_bitmap_type   = GL_UNSIGNED_INT_8_8_8_8_REV;
+		  break;
+  }
 
-	  printf("GLINFO: Offering colors=%d, depth=%d, rgb 0x%X, 0x%X, 0x%X (true color mode)\n",
+  printf("GLINFO: Offering colors=%d, depth=%d, rgb 0x%X, 0x%X, 0x%X (true color mode)\n",
 		display_palette_info.writable_colors,
 		display_palette_info.depth, 
 		display_palette_info.red_mask, display_palette_info.green_mask, 
 		display_palette_info.blue_mask);
-  }
+
   if(useColorBlitter) {
 	printf("GLINFO: Using bit blit to map color indices !!\n");
 	heightscale =1; widthscale=1; use_scanlines=0;
+  } else {
+	printf("GLINFO: Using true color mode (no color indices, but direct color)!!\n");
   }
 }
 
@@ -780,23 +1108,26 @@ void sysdep_clear_screen (void)
 }
 #endif
 
+static int texture_init = 0;
+
 int sysdep_display_alloc_palette (int writable_colors)
 {
   #ifndef NDEBUG
-    fprintf (stderr, "GLINFO: sysdep_display_alloc_palette(%d);\n",writable_colors);
+    fprintf (stderr, "GLINFO: sysdep_display_alloc_palette:\n\twritable_colors=%d,\n\tMachine->drv->total_colors=%d\n",writable_colors,Machine->drv->total_colors);
   #endif
 
   if (glContext == 0)
     return 1;
 
-  totalcolors = writable_colors;
+  //totalcolors = writable_colors;
+  totalcolors = Machine->drv->total_colors;
 
   if (totalcolors > 256)
   {
     if(useColorIndex)
     {
         printf("GLERROR: OpenGL color index mode not supported for colors == %d / only for depth == 8 (<= 256 colors) !\n", totalcolors);
-        exit(1);
+        exit(1); // JAU
     }
   }
 
@@ -811,7 +1142,14 @@ int sysdep_display_alloc_palette (int writable_colors)
 
   if(useColorIndex)
   {
-      gl_ctable_type   = GL_UNSIGNED_BYTE;
+      switch (bytes_per_pixel)
+      {
+      	case 1: gl_ctable_type   = GL_UNSIGNED_BYTE; break;
+      	case 2: gl_ctable_type   = GL_UNSIGNED_SHORT; break;
+      	default:
+		printf("GLERROR: OpenGL color index mode not supported for index byte-size (%d) > 2\n", bytes_per_pixel);
+		exit(1);
+      }
 
       if (useGLEXT78)
       {
@@ -825,7 +1163,7 @@ int sysdep_display_alloc_palette (int writable_colors)
 	    disp__glColorTableEXT (GL_TEXTURE_2D,
 			       gl_ctable_format,
 			       ctable_size, gl_ctable_format, 
-			       gl_ctable_type, ctable);
+			       gl_ctable_type, ctable); // JAU COLOR
 
 	    err = disp__glGetError ();
 	    if(err!=GL_NO_ERROR) 
@@ -886,24 +1224,32 @@ int sysdep_display_alloc_palette (int writable_colors)
 	      fprintf (stderr, "GLINFO: useGLEXT78 = 0 (BAD & SLOW)\n");
   }
 
-  palette_changed = useColorIndex;
-
-  InitTextures ();
+  texture_init = 0;
 
   return 0;
 }
 
-void InitTextures ()
+/**
+ * the given bitmap MUST be the original mame core bitmap !!!
+ *    - no swapxy, flipx or flipy and no resize !
+ *    - shall be Machine->scrbitmap
+ */
+void InitTextures (struct mame_bitmap *bitmap)
 {
   int e_x, e_y, s, i=0;
-  int x=0, y=0, raw_line_len=0;
+  int x=0, y=0, line_len=0, raw_line_len=0;
   GLint format=0;
+  GLint tidxsize=0;
   GLenum err;
   unsigned char *line_1=0, *line_2=0;
   struct TexSquare *tsq=0;
+  GLdouble texwpervw=0.0;
+  GLdouble texhpervh=0.0;
 
-  if (glContext == 0)
+  if (glContext == 0 || texture_init == 1)
     return;
+
+  texture_init = 1;
 
   text_width  = visual_width;
   text_height = visual_height;
@@ -951,6 +1297,9 @@ void InitTextures ()
     disp__glGetTexLevelParameteriv
       (GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &format);
 
+    disp__glGetTexLevelParameteriv
+      (GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_INDEX_SIZE_EXT, &tidxsize);
+
     CHECK_GL_ERROR ();
 
     if (format == gl_internal_format &&
@@ -963,8 +1312,8 @@ void InitTextures ()
 
     if (format != gl_internal_format)
     {
-      fprintf (stderr, "GLINFO: Needed texture [%dx%d] too big, trying ",
-		text_height, text_width);
+      fprintf (stderr, "GLINFO: Needed texture [%dx%d] too big (format=0x%X,idxsize=%d), trying ",
+		text_height, text_width, format, tidxsize);
 
       if (text_width > text_height)
       {
@@ -1002,43 +1351,51 @@ void InitTextures ()
 
   /* Allocate the texture memory */
 
-  xinc = vscrnwidth * ((double) text_width / (double) visual_width);
-  yinc = vscrnheight * ((double) text_height / (double) visual_height);
+  /**
+   * texwpervw, texhpervh:
+   * 	how much the texture covers the visual,
+   * 	for both components (width/height) (percent).
+   */
+  texwpervw = (GLdouble) text_width / (GLdouble) visual_width;
+  if (texwpervw > 1.0)
+    texwpervw = 1.0;
 
-  texpercx = (GLfloat) text_width / (GLfloat) visual_width;
-  if (texpercx > 1.0)
-    texpercx = 1.0;
-
-  texpercy = (GLfloat) text_height / (GLfloat) visual_height;
-  if (texpercy > 1.0)
-    texpercy = 1.0;
+  texhpervh = (GLdouble) text_height / (GLdouble) visual_height;
+  if (texhpervh > 1.0)
+    texhpervh = 1.0;
 
   texgrid = (struct TexSquare *)
     calloc (texnumx * texnumy, sizeof (struct TexSquare));
 
-  /*line_1 = (unsigned char *) Machine->scrbitmap->line[visual.min_y];*/
-  /*line_2 = (unsigned char *) Machine->scrbitmap->line[visual.min_y + 1];*/
+  line_1 = (unsigned char *) bitmap->line[visual.min_y];
+  line_2 = (unsigned char *) bitmap->line[visual.min_y + 1];
 
-  /*raw_line_len = line_2 - line_1;*/
+  raw_line_len = line_2 - line_1;
 
   if (blit_swapxy)
-    raw_line_len = ((Machine->drv->screen_height + 7) & ~7) + 2 * BITMAP_SAFETY;
+    line_len = ((Machine->drv->screen_height + 7) & ~7) + 2 * BITMAP_SAFETY;
   else
-    raw_line_len = ((Machine->drv->screen_width + 7) & ~7) + 2 * BITMAP_SAFETY;
+    line_len = ((Machine->drv->screen_width + 7) & ~7) + 2 * BITMAP_SAFETY;
 
   /* multiply line length by pixel size in bytes */
   if (Machine->color_depth == 15 || Machine->color_depth == 16)
-    raw_line_len *= 2;
+    line_len *= 2;
   else if (Machine->color_depth == 32)
-    raw_line_len *= 4;
+    line_len *= 4;
 
   memory_x_len = raw_line_len / bytes_per_pixel;
+
+  fprintf (stderr, "GLINFO: line_len = %d, raw_line_len= %d\n",
+  	line_len, raw_line_len);
 
   fprintf (stderr, "GLINFO: texture-usage %d*width=%d, %d*height=%d\n",
 		 (int) texnumx, (int) text_width, (int) texnumy,
 		 (int) text_height);
 
-  if(useColorBlitter)
+  // JAU vecgames: hw-access error, while using Machine bitmap (e.g. tac-scan) !!
+  // vegames only ... ?!?!?!?!
+  //
+  if(useColorBlitter) 
   {
     colorBlittedMemory = malloc( (text_width+2*BITMAP_SAFETY)*texnumx*
                                  (text_height+2*BITMAP_SAFETY)*texnumy*
@@ -1054,25 +1411,36 @@ void InitTextures ()
 
       if (x == texnumx - 1 && visual_width % text_width)
 	tsq->xcov =
-	  (GLfloat) (visual_width % text_width) / (GLfloat) text_width;
+	  (GLdouble) (visual_width % text_width) / (GLdouble) text_width;
       else
 	tsq->xcov = 1.0;
 
       if (y == texnumy - 1 && visual_height % text_height)
 	tsq->ycov =
-	  (GLfloat) (visual_height % text_height) / (GLfloat) text_height;
+	  (GLdouble) (visual_height % text_height) / (GLdouble) text_height;
       else
 	tsq->ycov = 1.0;
 
-      CalcCabPoint (x, y, &(tsq->x1), &(tsq->y1), &(tsq->z1));
-      CalcCabPoint (x + 1, y, &(tsq->x2), &(tsq->y2), &(tsq->z2));
-      CalcCabPoint (x + 1, y + 1, &(tsq->x3), &(tsq->y3), &(tsq->z3));
-      CalcCabPoint (x, y + 1, &(tsq->x4), &(tsq->y4), &(tsq->z4));
+      CalcFlatTexPoint (x, y, texwpervw, texhpervh, &(tsq->fx1), &(tsq->fy1));
+      CalcFlatTexPoint (x + 1, y, texwpervw, texhpervh, &(tsq->fx2), &(tsq->fy2));
+      CalcFlatTexPoint (x + 1, y + 1, texwpervw, texhpervh, &(tsq->fx3), &(tsq->fy3));
+      CalcFlatTexPoint (x, y + 1, texwpervw, texhpervh, &(tsq->fx4), &(tsq->fy4));
 
-      CalcFlatPoint (x, y, &(tsq->fx1), &(tsq->fy1));
-      CalcFlatPoint (x + 1, y, &(tsq->fx2), &(tsq->fy2));
-      CalcFlatPoint (x + 1, y + 1, &(tsq->fx3), &(tsq->fy3));
-      CalcFlatPoint (x, y + 1, &(tsq->fx4), &(tsq->fy4));
+      CalcCabPointbyViewpoint( x*(GLdouble)text_width,
+      		    y*(GLdouble)text_height,
+                   &(tsq->x1), &(tsq->y1), &(tsq->z1));
+
+      CalcCabPointbyViewpoint( x*(GLdouble)text_width  + tsq->xcov*(GLdouble)text_width,
+      		    y*(GLdouble)text_height,
+                   &(tsq->x2), &(tsq->y2), &(tsq->z2));
+
+      CalcCabPointbyViewpoint( x*(GLdouble)text_width  + tsq->xcov*(GLdouble)text_width,
+      		    y*(GLdouble)text_height + tsq->ycov*(GLdouble)text_height,
+                   &(tsq->x3), &(tsq->y3), &(tsq->z3));
+
+      CalcCabPointbyViewpoint( x*(GLdouble)text_width,
+      		    y*(GLdouble)text_height + tsq->ycov*(GLdouble)text_height,
+                   &(tsq->x4), &(tsq->y4), &(tsq->z4));
 
       /* calculate the pixel store data,
          to use the machine-bitmap for our texture 
@@ -1087,15 +1455,16 @@ void InitTextures ()
       #ifndef NDEBUG
       if (x == 0 && y == 0)
       {
-	fprintf(stderr, "bitmap: w=%d, h=%d, d=%d,\n\trowpixels=%d, rowbytes=%d\n",
+	fprintf(stderr, "Machine bitmap: w=%d, h=%d, d=%d,\n\trowpixels=%d, rowbytes=%d\n",
 		Machine->scrbitmap->width,  Machine->scrbitmap->height, 
 		Machine->scrbitmap->depth,
 		Machine->scrbitmap->rowpixels, Machine->scrbitmap->rowbytes);
 
-	fprintf(stderr, "bmsize=%d, mysize=%d,\n\twidthscale=%d, heightscale=%d, use_scanlines=%d\n",
-		Machine->scrbitmap->width*Machine->scrbitmap->height*bytes_per_pixel,
-                text_width*texnumx*text_height*texnumy*bytes_per_pixel,
-		heightscale, widthscale, use_scanlines);
+	fprintf(stderr, "bitmap: w=%d, h=%d, d=%d,\n\trowpixels=%d, rowbytes=%d\n",
+		bitmap->width,  bitmap->height, 
+		bitmap->depth,
+		bitmap->rowpixels, bitmap->rowbytes);
+
 
 	fprintf (stderr, "visual (min_x=%d / min_y=%d)\n",
 		 visual.min_x, visual.min_y);
@@ -1112,7 +1481,7 @@ void InitTextures ()
 		 Machine->drv->default_visible_area.min_y + 1);
 
 	fprintf (stderr, "texture-usage x=%f%% y=%f%%\n",
-		 texpercx, texpercy);
+		 texwpervw, texhpervh);
 
 	fprintf (stderr,
 		 "row_len=%d, x_ofs=%d, bytes_per_pixel=%d\n",
@@ -1130,11 +1499,11 @@ void InitTextures ()
       tsq->texobj=0;
 
       tsq->dirtyXoff=0; tsq->dirtyYoff=0; 
-      /*if (use_dirty)
+      if (use_dirty)
       {
 	      tsq->isDirty=GL_FALSE;
 	      tsq->dirtyWidth=-1; tsq->dirtyHeight=-1;
-      } else */{
+      } else {
 	      tsq->isDirty=GL_TRUE;
 	      tsq->dirtyWidth=text_width; tsq->dirtyHeight=text_height;
       }
@@ -1170,7 +1539,8 @@ void InitTextures ()
 		  disp__glColorTableEXT (GL_TEXTURE_2D,
 				     gl_ctable_format,
 				     ctable_size, gl_ctable_format, 
-				     gl_ctable_type, ctable);
+				     //gl_ctable_type, ctable); JAU COLOR
+				     gl_ctable_type, current_palette->lookup);
 
 		  CHECK_GL_ERROR ();
 	      }
@@ -1224,118 +1594,210 @@ void InitTextures ()
   CHECK_GL_ERROR ();
 }
 
-/* Change the color of a pen */
-int
-sysdep_display_set_pen (int pen, unsigned char red, unsigned char green,
-			unsigned char blue)
+
+/**
+ * returns the length of the |(x,y,z)-(i,j,k)|
+ */
+GLdouble
+CompareVec (GLdouble i, GLdouble j, GLdouble k,
+	    GLdouble x, GLdouble y, GLdouble z)
 {
-    int cofs=pen*(alphablending?4:3);
+  GLdouble dx = x-i;
+  GLdouble dy = y-j;
+  GLdouble dz = z-k;
 
-    printf("trying to set color table: %d (%X/%X/%X)\n",
-    	pen, (int)red, (int)green, (int)blue);
+  return LengthOfVec(dx, dy, dz);
+}
 
-    if(pen>ctable_size)
-    	return 1;
+void
+AddToThisVec (GLdouble i, GLdouble j, GLdouble k,
+	      GLdouble * x, GLdouble * y, GLdouble * z)
+{
+  *x += i ;
+  *y += j ;
+  *z += k ;
+}
 
-    if (useGLEXT78 && pen < ctable_size)
-    {
-      double dAlpha = (double) gl_alpha_value / 255.0;
+/**
+ * TranslatePointInPlane:
+ *
+ * v__p = v__p1 + 
+ *        x_off * v__nw +
+ *        y_off * v__nh;
+ */
+void
+TranslatePointInPlane   (
+	      GLdouble vx_p1, GLdouble vy_p1, GLdouble vz_p1,
+	      GLdouble vx_nw, GLdouble vy_nw, GLdouble vz_nw,
+	      GLdouble vx_nh, GLdouble vy_nh, GLdouble vz_nh,
+	      GLdouble x_off, GLdouble y_off,
+	      GLdouble *vx_p, GLdouble *vy_p, GLdouble *vz_p )
+{
+   GLdouble tx, ty, tz;
 
-      if(!use_mod_ctable)
-      {
-	ctable[cofs] =     red;
-	ctable[cofs + 1] = green;
-	ctable[cofs + 2] = blue;
-        if(alphablending)
-		ctable[cofs + 3] = gl_alpha_value;
-      }
-      else if (alphablending)
-      {
-	ctable[cofs] = 255 * pow (red / 255.0, 1 / gamma_correction);
-	ctable[cofs + 1] = 255 * pow (green / 255.0, 1 / gamma_correction);
-	ctable[cofs + 2] = 255 * pow (blue / 255.0, 1 / gamma_correction);
-	ctable[cofs + 3] = gl_alpha_value;
-      }
-      else
-      {
-	ctable[cofs] =
-	  255 * (dAlpha * pow (red / 255.0, 1 / gamma_correction));
-	ctable[cofs + 1] =
-	  255 * (dAlpha * pow (green / 255.0, 1 / gamma_correction));
-	ctable[cofs + 2] =
-	  255 * (dAlpha * pow (blue / 255.0, 1 / gamma_correction));
-      }
-    }
-    else
-    {
-      if(!use_mod_ctable)
-      {
-	    rcolmap[pen] = 65535 * (red / 255.0);
-	    gcolmap[pen] = 65535 * (green / 255.0);
-	    bcolmap[pen] = 65535 * (blue / 255.0);
-	    if (alphablending)
-		acolmap[pen] = 65535 * (gl_alpha_value / 255.0);
-      }
-      else if (alphablending)
-      {
-	rcolmap[pen] = 65535 * pow (red / 255.0, 1 / gamma_correction);
-	gcolmap[pen] = 65535 * pow (green / 255.0, 1 / gamma_correction);
-	bcolmap[pen] = 65535 * pow (blue / 255.0, 1 / gamma_correction);
-	acolmap[pen] = 65535 * (gl_alpha_value / 255.0);
-      }
-      else
-      {
-	double dAlpha = (double) gl_alpha_value / 255.0;
+   CopyVec( vx_p, vy_p, vz_p,
+            vx_p1, vy_p1, vz_p1); 
 
-	rcolmap[pen] =
-	  65535 * (dAlpha * pow (red / 255.0, 1 / gamma_correction));
-	gcolmap[pen] =
-	  65535 * (dAlpha * pow (green / 255.0, 1 / gamma_correction));
-	bcolmap[pen] =
-	  65535 * (dAlpha * pow (blue / 255.0, 1 / gamma_correction));
-      }
-    }
+   CopyVec( &tx, &ty, &tz,
+	    vx_nw, vy_nw, vz_nw);
 
-    palette_changed = 1;
-    return 0;
+   ScaleThisVec (x_off, x_off, x_off,
+                 &tx, &ty, &tz);
+
+   AddToThisVec (tx, ty, tz,
+                 vx_p, vy_p, vz_p);
+
+   CopyVec( &tx, &ty, &tz,
+	    vx_nh, vy_nh, vz_nh);
+
+   ScaleThisVec (y_off, y_off, y_off,
+                 &tx, &ty, &tz);
+
+   AddToThisVec (tx, ty, tz,
+                 vx_p, vy_p, vz_p);
+}
+
+void
+ScaleThisVec (GLdouble i, GLdouble j, GLdouble k,
+	      GLdouble * x, GLdouble * y, GLdouble * z)
+{
+  *x *= i ;
+  *y *= j ;
+  *z *= k ;
+}
+
+GLdouble
+LengthOfVec (GLdouble x, GLdouble y, GLdouble z)
+{
+  return sqrt(x*x+y*y+z*z);
+}
+
+void
+NormThisVec (GLdouble * x, GLdouble * y, GLdouble * z)
+{
+  double len = LengthOfVec (*x, *y, *z);
+
+  *x /= len ;
+  *y /= len ;
+  *z /= len ;
 }
 
 /* Compute a delta vector between two points */
 
 void
-DeltaVec (GLfloat x1, GLfloat y1, GLfloat z1,
-	  GLfloat x2, GLfloat y2, GLfloat z2,
-	  GLfloat * dx, GLfloat * dy, GLfloat * dz)
+DeltaVec (GLdouble x1, GLdouble y1, GLdouble z1,
+	  GLdouble x2, GLdouble y2, GLdouble z2,
+	  GLdouble * dx, GLdouble * dy, GLdouble * dz)
 {
   *dx = x2 - x1;
   *dy = y2 - y1;
   *dz = z2 - z1;
 }
 
-/* Calculate points for flat screen */
+/* Compute a crossproduct vector of two vectors ( plane ) */
 
-void CalcFlatPoint(int x,int y,GLfloat *px,GLfloat *py)
+void
+CrossVec (GLdouble a1, GLdouble a2, GLdouble a3,
+	  GLdouble b1, GLdouble b2, GLdouble b3,
+	  GLdouble * c1, GLdouble * c2, GLdouble * c3)
 {
-  *px=(float)x*texpercx;
+  *c1 = a2*b3 - a3*b2; 
+  *c2 = a3*b1 - a1*b3;
+  *c3 = a1*b2 - a1*b1;
+}
+
+void CopyVec(GLdouble *ax,GLdouble *ay,GLdouble *az,                   /* dest   */
+	          const GLdouble bx,const GLdouble by,const GLdouble bz     /* source */
+                  )
+{
+	*ax=bx;
+	*ay=by;
+	*az=bz;
+}
+
+void SwapVec(GLdouble *ax,GLdouble *ay,GLdouble *az,
+	          GLdouble *bx,GLdouble *by,GLdouble *bz
+                  )
+{
+	GLdouble t;
+
+	t= *ax; *ax=*bx; *bx=t;
+	t= *ay; *ay=*by; *by=t;
+	t= *az; *ax=*bz; *bz=t;
+}
+
+
+/**
+ * Calculate texture points (world) for flat screen 
+ *
+ * x,y: 
+ * 	texture index (scalar)
+ *	
+ * texwpervw, texhpervh:
+ * 	how much the texture covers the visual,
+ * 	for both components (width/height) (percent).
+ *
+ * px,py,pz:
+ * 	the resulting cabinet point
+ *
+ */
+void CalcFlatTexPoint( int x, int y, GLdouble texwpervw, GLdouble texhpervh, 
+		       GLdouble *px,GLdouble *py)
+{
+  *px=(double)x*texwpervw;
   if(*px>1.0) *px=1.0;
-  *py=(float)y*texpercy;
+  *py=(double)y*texhpervh;
   if(*py>1.0) *py=1.0;
 }
 
-/* Calculate points for cabinet screen */
-
-void CalcCabPoint(int x,int y,GLfloat *px,GLfloat *py,GLfloat *pz)
+/**
+ * vx_gscr,vy_gscr:
+ * 	world-corrd within game-screen
+ *
+ * vx_p,vy_p,vz_p: 
+ * 	world-coord within cab-screen
+ */
+void CalcCabPointbyWorldpoint( 
+		   GLdouble vx_gscr, GLdouble vy_gscr, 
+                   GLdouble *vx_p, GLdouble *vy_p, GLdouble *vz_p
+		 )
 {
-  GLfloat xperc,yperc;
+   /**
+    * v__p  = v__gscr_p1  + vx_gscr * v__scr_nx + vy_gscr * v__scr_ny ;
+    */
 
-  xperc=x*texpercx;
-  yperc=y*texpercy;
-
-  *px=cscrx1+xperc*cscrwdx+yperc*cscrhdx;
-  *py=cscry1+xperc*cscrwdy+yperc*cscrhdy;
-  *pz=cscrz1+xperc*cscrwdz+yperc*cscrhdz;
+   TranslatePointInPlane ( vx_gscr_p1, vy_gscr_p1, vz_gscr_p1,
+                           vx_scr_nx, vy_scr_nx, vz_scr_nx,
+			   vx_scr_ny, vy_scr_ny, vz_scr_ny,
+			   vx_gscr, vy_gscr,
+			   vx_p, vy_p, vz_p);
 }
 
+/**
+ * vx_gscr_view,vy_gscr_view:
+ * 	view-corrd within game-screen
+ *
+ * vx_p,vy_p,vz_p: 
+ * 	world-coord within cab-screen
+ */
+void CalcCabPointbyViewpoint( 
+		   GLdouble vx_gscr_view, GLdouble vy_gscr_view, 
+                   GLdouble *vx_p, GLdouble *vy_p, GLdouble *vz_p
+		 )
+{
+  GLdouble vx_gscr = (GLdouble)vx_gscr_view/cab_vpw_fx;
+  GLdouble vy_gscr = (GLdouble)vy_gscr_view/cab_vpw_fy;
+
+   /**
+    * v__p  = v__gscr_p1  + vx_gscr * v__scr_nx + vy_gscr * v__scr_ny ;
+    */
+
+   TranslatePointInPlane ( vx_gscr_p1, vy_gscr_p1, vz_gscr_p1,
+                           vx_scr_nx, vy_scr_nx, vz_scr_nx,
+			   vx_scr_ny, vy_scr_ny, vz_scr_ny,
+			   vx_gscr, vy_gscr,
+			   vx_p, vy_p, vz_p);
+}
 
 /* Set up a frustum projection */
 
@@ -1353,9 +1815,16 @@ SetupFrustum (void)
 	  disp__glFrustum (-vscrnaspect, vscrnaspect, 1.0, -1.0, 5.0, 100.0);
 
   CHECK_GL_ERROR ();
+
+  disp__glGetDoublev(GL_PROJECTION_MATRIX, mxProjection);
+  CHECK_GL_ERROR ();
+
   disp__glMatrixMode (GL_MODELVIEW);
   disp__glLoadIdentity ();
   disp__glTranslatef (0.0, 0.0, -20.0);
+
+  disp__glGetDoublev(GL_MODELVIEW_MATRIX, mxModel);
+  CHECK_GL_ERROR ();
 }
 
 
@@ -1369,43 +1838,74 @@ void SetupOrtho (void)
   disp__glLoadIdentity ();
 
   if(!do_snapshot)
-	  disp__glOrtho (0, 1, 1, 0, -1.0, 1.0);
-  else
-	  disp__glOrtho (0, 1, 0, 1, -1.0, 1.0);
+  {
+	  disp__glOrtho (-0.5,  0.5, -0.5,  0.5,  1.0,  -1.0); // normal display !
+  } else {
+	  disp__glOrtho (-0.5,  0.5,  0.5, -0.5,  1.0,  -1.0); // normal display !
+  }
 
   disp__glMatrixMode (GL_MODELVIEW);
   disp__glLoadIdentity ();
+
+  disp__glRotated ( 180.0 , 1.0, 0.0, 0.0);
+
+  if ( blit_flipx )
+	disp__glRotated (  180.0 , 0.0, 1.0, 0.0);
+
+  if ( blit_flipy )
+	disp__glRotated ( -180.0 , 1.0, 0.0, 0.0);
+
+  if( blit_swapxy ) {
+	disp__glRotated ( 180.0 , 0.0, 1.0, 0.0);
+  	disp__glRotated (  90.0 , 0.0, 0.0, 1.0 );
+  }
+
+  disp__glTranslated ( -0.5 , -0.5, 0.0 );
+  	
 }
 
 /* Set up the virtual screen */
 
 static void SetWindowRatio()
 {
-  scrnaspect = (double) visual_width / (double) visual_height;
+  /**
+   *
+   * Flat-Screen Ratio:
+   *
+   * scrnaspect : orig screen width/height ratio (view-coord)
+   * vscrnaspect: zoomed screen width/height ratio (view-coord)
+   * vscrnwidth : final screen width (view-coord)
+   * vscrnheight: final screen height (view-coord)
+   * vscrndx: 	  final screen dx to start of game-screen (view-coord)
+   * vscrndy: 	  final screen dy to start of game-screen (view-coord)
+   *
+   */
+
+  scrnaspect = (double) visual_orientated_width / (double) visual_orientated_height;
   vscrnaspect = (double) winwidth / (double) winheight;
 
   if (scrnaspect < vscrnaspect)
   {
-    vscrnheight = (GLfloat) winheight;
+    vscrnheight = (GLdouble) winheight;
     vscrnwidth = vscrnheight * scrnaspect;
-    vscrntlx = ((GLfloat) winwidth - vscrnwidth) / 2.0;
-    vscrntly = 0.0;
+    vscrndx = ((GLdouble) winwidth - vscrnwidth) / 2.0;
+    vscrndy = 0.0;
   }
   else
   {
-    vscrnwidth = (GLfloat) winwidth;
+    vscrnwidth = (GLdouble) winwidth;
     vscrnheight = vscrnwidth / scrnaspect;
-    vscrntlx = 0.0;
-    vscrntly = ((GLfloat) winheight - vscrnheight) / 2.0;
+    vscrndx = 0.0;
+    vscrndy = ((GLdouble) winheight - vscrnheight) / 2.0;
   }
 
 #ifndef NDEBUG
 	fprintf (stderr, "GLINFO: SetWindowRatio: win (%dx%d), visual (%dx%d)\n",
-		winwidth, winheight, visual_width, visual_height);
+		winwidth, winheight, visual_orientated_width, visual_orientated_height);
 	fprintf (stderr, "\t vscrnwidth %f, vscrnheight %f\n",
 		vscrnwidth, vscrnheight);
 	fprintf (stderr, "\t x-diff %f, y-diff %f\n",
-		(float)winwidth - vscrnwidth, (float)winheight - vscrnheight);
+		(double)winwidth - vscrnwidth, (double)winheight - vscrnheight);
 	fprintf (stderr, "\t scrnaspect=%f, vscrnaspect=%f\n",
 		scrnaspect, vscrnaspect);
 	fflush(stderr);
@@ -1444,8 +1944,14 @@ void xgl_resize(int w, int h, int now)
 	if (cabview)
 		disp__glViewport (0, 0, winwidth, winheight);
 	else
-		disp__glViewport ((int)(vscrntlx+0.5), (int)(vscrntly+0.5),
+		disp__glViewport ((int)(vscrndx+0.5), (int)(vscrndy+0.5),
 		            (int)(vscrnwidth+0.5), (int)(vscrnheight+0.5));
+
+/*
+		disp__glViewport (0, 0, winwidth, winheight);
+			    */
+
+        disp__glGetIntegerv(GL_VIEWPORT, dimView);
 
 	if (cabview)
 		SetupFrustum ();
@@ -1460,9 +1966,9 @@ void xgl_resize(int w, int h, int now)
 /* Compute an average between two sets of 3D coordinates */
 
 void
-WAvg (GLfloat perc, GLfloat x1, GLfloat y1, GLfloat z1,
-      GLfloat x2, GLfloat y2, GLfloat z2,
-      GLfloat * ax, GLfloat * ay, GLfloat * az)
+WAvg (GLdouble perc, GLdouble x1, GLdouble y1, GLdouble z1,
+      GLdouble x2, GLdouble y2, GLdouble z2,
+      GLdouble * ax, GLdouble * ay, GLdouble * az)
 {
   *ax = (1.0 - perc) * x1 + perc * x2;
   *ay = (1.0 - perc) * y1 + perc * y2;
@@ -1489,7 +1995,7 @@ void gl_mark_dirty(int x, int y, int x2, int y2)
 
 	screendirty = 1;
 
-	/*if (!use_dirty)*/
+	if (!use_dirty)
 		return;
 
 	wdecr=w; hdecr=h; xh=x; yh=y;
@@ -1555,13 +2061,130 @@ void gl_mark_dirty(int x, int y, int x2, int y2)
        }
 }
 
+
+void drawGameAxis ()
+{
+  GLdouble tx, ty, tz;
+
+	disp__glPushMatrix ();
+
+	disp__glLineWidth(1.5f);
+	disp__glBegin(GL_LINES);
+
+	/** x-axis **/
+	disp__glColor3d (1.0,1.0,1.0);
+	disp__glVertex3d(0,0,0);
+
+	disp__glColor3d (1.0,0.0,0.0);
+        CopyVec( &tx, &ty, &tz,
+	         vx_scr_nx, vy_scr_nx, vz_scr_nx);
+        ScaleThisVec ( 5.0, 5.0, 5.0, &tx, &ty, &tz);
+	disp__glVertex3d( tx, ty, tz );
+
+
+	/** y-axis **/
+	disp__glColor3d (1.0,1.0,1.0);
+	disp__glVertex3d(0,0,0);
+
+	disp__glColor3d (0.0,1.0,0.0);
+        CopyVec( &tx, &ty, &tz,
+	         vx_scr_ny, vy_scr_ny, vz_scr_ny);
+        ScaleThisVec ( 5.0, 5.0, 5.0, &tx, &ty, &tz);
+	disp__glVertex3d( tx, ty, tz );
+
+
+	/** z-axis **/
+	disp__glColor3d (1.0,1.0,1.0);
+	disp__glVertex3d(0,0,0);
+
+	disp__glColor3d (0.0,0.0,1.0);
+        CopyVec( &tx, &ty, &tz,
+	         vx_scr_nz, vy_scr_nz, vz_scr_nz);
+        ScaleThisVec ( 5.0, 5.0, 5.0, &tx, &ty, &tz);
+	disp__glVertex3d( tx, ty, tz );
+
+	disp__glEnd();
+
+	disp__glPopMatrix ();
+	disp__glColor3d (1.0,1.0,1.0);
+        CHECK_GL_ERROR ();
+}
+
+
+void cabinetTextureRotationTranslation ()
+{
+	/**
+	 * Be aware, this matrix is written in reverse logical
+	 * order of GL commands !
+	 *
+	 * This is the way OpenGL stacks does work !
+	 *
+	 * So if you interprete this code,
+	 * you have to start from the bottom from this block !!
+	 *
+	 * !!!!!!!!!!!!!!!!!!!!!!
+	 */
+
+	/** END  READING ... TRANSLATION / ROTATION **/
+
+	// go back on screen
+	disp__glTranslated ( vx_gscr_p1, vy_gscr_p1, vz_gscr_p1); 
+
+	// x-border -> I. Q
+	disp__glTranslated ( vx_gscr_dw/2.0, vy_gscr_dw/2.0, vz_gscr_dw/2.0);
+
+	// y-border -> I. Q
+	disp__glTranslated ( vx_gscr_dh/2.0, vy_gscr_dh/2.0, vz_gscr_dh/2.0);
+
+	/********* CENTERED AT ORIGIN END  ****************/
+
+	if ( blit_flipx )
+		disp__glRotated ( -180.0 , vx_scr_ny, vy_scr_ny, vz_scr_ny);
+
+	if ( blit_flipy )
+		disp__glRotated ( -180.0 , vx_scr_nx, vy_scr_nx, vz_scr_nx);
+
+
+
+	/********* CENTERED AT ORIGIN BEGIN ****************/
+
+	if( blit_swapxy )
+	{
+		disp__glRotated ( -180.0 , vx_scr_ny, vy_scr_ny, vz_scr_ny);
+
+		// x-center
+		disp__glTranslated ( vx_gscr_dw/2.0, vy_gscr_dw/2.0, vz_gscr_dw/2.0);
+
+		// y-center
+		disp__glTranslated ( vx_gscr_dh/2.0, vy_gscr_dh/2.0, vz_gscr_dh/2.0);
+
+		// swap -> III. Q
+		disp__glRotated ( -90.0 , vx_scr_nz, vy_scr_nz, vz_scr_nz);
+	} else {
+		// x-center
+		disp__glTranslated ( -vx_gscr_dw/2.0, -vy_gscr_dw/2.0, -vz_gscr_dw/2.0);
+
+		// y-center
+		disp__glTranslated ( vx_gscr_dh/2.0, vy_gscr_dh/2.0, vz_gscr_dh/2.0);
+	}
+
+	// re-flip -> IV. Q     (normal)
+	disp__glRotated ( 180.0 , vx_scr_nx, vy_scr_nx, vz_scr_nx);
+
+	// go to origin -> I. Q (flipx)
+	disp__glTranslated ( -vx_gscr_p1, -vy_gscr_p1, -vz_gscr_p1); 
+
+	/** START READING ... TRANSLATION / ROTATION **/
+}
+
+
 void
-drawTextureDisplay (int useCabinet, int updateTexture)
+drawTextureDisplay (struct mame_bitmap *bitmap, int useCabinet, int updateTexture)
 {
   struct TexSquare *square;
   int x = 0, y = 0;
   GLenum err;
-  static const float z_pos = 0.9f;
+  static const double z_pos = 0.9f;
 
   if(gl_is_initialized == 0)
   	return;
@@ -1575,12 +2198,12 @@ drawTextureDisplay (int useCabinet, int updateTexture)
     if (!useGLEXT78 && useColorIndex)
     	disp__glPixelTransferi (GL_MAP_COLOR, GL_TRUE);
 
-    if( useColorBlitter )
+    if(useColorBlitter)  // JAU vecgames .. hw_access error ..
     {
 	if(bytes_per_pixel==2)
-		gl_update_16_to_16bpp(Machine->scrbitmap);
+		gl_update_16_to_16bpp(bitmap);
 	else if(bytes_per_pixel==4)
-		gl_update_32_to_32bpp(Machine->scrbitmap);
+		gl_update_32_to_32bpp(bitmap);
 	else {
 		printf("GLERROR: blitter mode only for 8bpp, 16bpp and 32bpp !\n");
 		exit(1);
@@ -1590,12 +2213,11 @@ drawTextureDisplay (int useCabinet, int updateTexture)
 
   disp__glEnable (GL_TEXTURE_2D);
 
-//  for (y = 0; y < texnumy; y++)
+  for (y = 0; y < texnumy; y++)
   {
-//    for (x = 0; x < texnumx; x++)
+    for (x = 0; x < texnumx; x++)
     {
-//      square = texgrid + y * texnumx + x;
-      square = texgrid;
+      square = texgrid + y * texnumx + x;
 
       if(square->isTexture==GL_FALSE)
       {
@@ -1603,7 +2225,7 @@ drawTextureDisplay (int useCabinet, int updateTexture)
 	  fprintf (stderr, "GLINFO ain't a texture(update): texnum x=%d, y=%d, texture=%d\n",
 	  	x, y, square->texobj);
 	#endif
-        return;
+        continue;
       }
 
       disp__glBindTexture (GL_TEXTURE_2D, square->texobj);
@@ -1625,14 +2247,15 @@ drawTextureDisplay (int useCabinet, int updateTexture)
 		x, y, square->texobj);
       }
 
-      if (palette_changed && useColorIndex)
+      if (current_palette->dirty && useColorIndex)
       {
 
 	if (useGLEXT78)
 	{
 	    disp__glColorTableEXT (GL_TEXTURE_2D, gl_ctable_format,
 			       ctable_size, gl_ctable_format, 
-			       gl_ctable_type, ctable);
+			       //gl_ctable_type, ctable); JAU COLOR
+			       gl_ctable_type, current_palette->lookup);
 	}
 	else
 	{
@@ -1647,49 +2270,46 @@ drawTextureDisplay (int useCabinet, int updateTexture)
       /* This is the quickest way I know of to update the texture */
       if (updateTexture && square->isDirty)
       {
-	square->dirtyXoff   = 0;
-	square->dirtyYoff   = 0;
-	square->dirtyWidth  = orig_width;
-	square->dirtyHeight = orig_height;
-
 	disp__glTexSubImage2D (GL_TEXTURE_2D, 0, 
 		square->dirtyXoff, square->dirtyYoff,
 		square->dirtyWidth, square->dirtyHeight,
 		gl_bitmap_format, gl_bitmap_type, square->texture);
 
-	   /*if (use_dirty)
-	   {
+	square->dirtyXoff=0; square->dirtyYoff=0;
+
+	if (use_dirty)
+	{
 	      square->isDirty=GL_FALSE;
 	      square->dirtyWidth=-1; square->dirtyHeight=-1;
-           } else */{
+        } else {
 	      square->isDirty=GL_TRUE;
-	   }
+	}
       }
 
       if (useCabinet)
       {
-	GL_BEGIN(GL_QUADS);
-	disp__glTexCoord2f (0, 0);
-	disp__glVertex3f (square->x1, square->y1, square->z1);
-	disp__glTexCoord2f (square->xcov, 0);
-	disp__glVertex3f (square->x2, square->y2, square->z2);
-	disp__glTexCoord2f (square->xcov, square->ycov);
-	disp__glVertex3f (square->x3, square->y3, square->z3);
-	disp__glTexCoord2f (0, square->ycov);
-	disp__glVertex3f (square->x4, square->y4, square->z4);
+  	GL_BEGIN(GL_QUADS);
+	disp__glTexCoord2d (0, 0);
+	disp__glVertex3d (square->x1, square->y1, square->z1);
+	disp__glTexCoord2d (square->xcov, 0);
+	disp__glVertex3d (square->x2, square->y2, square->z2);
+	disp__glTexCoord2d (square->xcov, square->ycov);
+	disp__glVertex3d (square->x3, square->y3, square->z3);
+	disp__glTexCoord2d (0, square->ycov);
+	disp__glVertex3d (square->x4, square->y4, square->z4);
 	GL_END();
       }
       else
       {
 	GL_BEGIN(GL_QUADS);
-	disp__glTexCoord2f (0, 0);
-	disp__glVertex3f (square->fx1, square->fy1, z_pos);
-	disp__glTexCoord2f (square->xcov, 0);
-	disp__glVertex3f (square->fx2, square->fy2, z_pos);
-	disp__glTexCoord2f (square->xcov, square->ycov);
-	disp__glVertex3f (square->fx3, square->fy3, z_pos);
-	disp__glTexCoord2f (0, square->ycov);
-	disp__glVertex3f (square->fx4, square->fy4, z_pos);
+	disp__glTexCoord2d (0, 0);
+	disp__glVertex3d (square->fx1, square->fy1, z_pos);
+	disp__glTexCoord2d (square->xcov, 0);
+	disp__glVertex3d (square->fx2, square->fy2, z_pos);
+	disp__glTexCoord2d (square->xcov, square->ycov);
+	disp__glVertex3d (square->fx3, square->fy3, z_pos);
+	disp__glTexCoord2d (0, square->ycov);
+	disp__glVertex3d (square->fx4, square->fy4, z_pos);
 	GL_END();
       }
     } /* for all texnumx */
@@ -1704,8 +2324,6 @@ drawTextureDisplay (int useCabinet, int updateTexture)
 
   disp__glDisable (GL_TEXTURE_2D);
 
-  palette_changed = 0;
-
   CHECK_GL_BEGINEND();
 
   /* YES - lets catch this error ... 
@@ -1715,14 +2333,14 @@ drawTextureDisplay (int useCabinet, int updateTexture)
 
 /* Draw a frame in Cabinet mode */
 
-void UpdateCabDisplay (void)
+void UpdateCabDisplay (struct mame_bitmap *bitmap)
 {
   int glerrid;
   int shadeModel;
-  GLfloat camx, camy, camz;
-  GLfloat dirx, diry, dirz;
-  GLfloat normx, normy, normz;
-  GLfloat perc;
+  GLdouble camx, camy, camz;
+  GLdouble dirx, diry, dirz;
+  GLdouble normx, normy, normz;
+  GLdouble perc;
   struct CameraPan *pan, *lpan;
 
   if (gl_is_initialized == 0)
@@ -1743,14 +2361,20 @@ void UpdateCabDisplay (void)
   {
     pan = cpan + currentpan;
 
-    if (panframe > pan->frames)
+/*
+    printf("GLINFO (glcab): pan %d/%d panframe %d/%d\n", 
+    	currentpan, numpans, panframe, pan->frames);
+*/
+
+    if (0 >= panframe || panframe >= pan->frames)
     {
-      /*
-       printf("GLINFO (glcab): finished pan %d/%d\n", currentpan, numpans);
-      */
       lastpan = currentpan;
-      currentpan = (currentpan + 1) % numpans;
+      currentpan += 1;
+      if(currentpan>=numpans) currentpan=1;
       panframe = 0;
+/*
+      printf("GLINFO (glcab): finished pan %d/%d\n", currentpan, numpans);
+*/
     }
 
     switch (pan->type)
@@ -1768,7 +2392,7 @@ void UpdateCabDisplay (void)
       break;
     case pan_moveto:
       lpan = cpan + lastpan;
-      perc = (GLfloat) panframe / (GLfloat) pan->frames;
+      perc = (GLdouble) panframe / (GLdouble) pan->frames;
       WAvg (perc, lpan->lx, lpan->ly, lpan->lz,
 	    pan->lx, pan->ly, pan->lz, &camx, &camy, &camz);
       WAvg (perc, lpan->px, lpan->py, lpan->pz,
@@ -1801,13 +2425,15 @@ void UpdateCabDisplay (void)
 
   /* Draw the screen if in vector mode */
 
+  cabinetTextureRotationTranslation ();
+
   if (vecgame)
   {
     if (drawbitmap)
     {
-      disp__glColor4f (1.0, 1.0, 1.0, 1.0);
+      disp__glColor4d (1.0, 1.0, 1.0, 1.0);
 
-      drawTextureDisplay (1 /*cabinet */ , screendirty);
+      drawTextureDisplay (bitmap, 1 /*cabinet */ , screendirty);
     }
     disp__glDisable (GL_TEXTURE_2D);
     disp__glGetIntegerv(GL_SHADE_MODEL, &shadeModel);
@@ -1833,7 +2459,7 @@ void UpdateCabDisplay (void)
   {				/* Draw the screen of a bitmapped game */
 
     if (drawbitmap)
-	    drawTextureDisplay (1 /*cabinet */ , screendirty);
+	    drawTextureDisplay (bitmap, 1 /*cabinet */ , screendirty);
 
   }
 
@@ -1872,7 +2498,7 @@ void UpdateCabDisplay (void)
 }
 
 void
-UpdateFlatDisplay (void)
+UpdateFlatDisplay (struct mame_bitmap *bitmap)
 {
   int shadeModel;
 
@@ -1890,23 +2516,23 @@ UpdateFlatDisplay (void)
 
   if (dopersist && vecgame)
   {
-    disp__glColor4f (0.0, 0.0, 0.0, 0.2);
+    disp__glColor4d (0.0, 0.0, 0.0, 0.2);
 
     GL_BEGIN(GL_QUADS);
-    disp__glVertex2f (0.0, 0.0);
-    disp__glVertex2f ((GLfloat) winwidth, 0.0);
-    disp__glVertex2f ((GLfloat) winwidth, (GLfloat) winheight);
-    disp__glVertex2f (0.0, (GLfloat) winheight);
+    disp__glVertex2d (0.0, 0.0);
+    disp__glVertex2d ((GLdouble) winwidth, 0.0);
+    disp__glVertex2d ((GLdouble) winwidth, (GLdouble) winheight);
+    disp__glVertex2d (0.0, (GLdouble) winheight);
     GL_END();
   }
 
   CHECK_GL_ERROR ();
 
 
-  disp__glColor4f (1.0, 1.0, 1.0, 1.0);
+  disp__glColor4d (1.0, 1.0, 1.0, 1.0);
 
   if(drawbitmap)
-	  drawTextureDisplay (0, screendirty);
+	  drawTextureDisplay (bitmap, 0, screendirty);
 
   if (vecgame)
   {
@@ -1967,8 +2593,15 @@ UpdateFlatDisplay (void)
     disp__glFlush ();
 }
 
+/**
+ * the given bitmap MUST be the original mame core bitmap !!!
+ *    - no swapxy, flipx or flipy and no resize !
+ *    - shall be Machine->scrbitmap
+ */
 void UpdateGLDisplayBegin (struct mame_bitmap *bitmap)
 {
+  if ( ! texture_init ) InitTextures (bitmap);
+
   if (gl_is_initialized == 0)
     return;
 
@@ -1991,15 +2624,20 @@ void UpdateGLDisplayBegin (struct mame_bitmap *bitmap)
 	xgl_resize(winwidth, winheight, 1);
 
   if (cabview && !cabload_err)
-    UpdateCabDisplay ();
+    UpdateCabDisplay (bitmap);
   else
-    UpdateFlatDisplay ();
+    UpdateFlatDisplay (bitmap);
 
 
   CHECK_GL_BEGINEND();
   CHECK_GL_ERROR ();
 }
 
+/**
+ * the given bitmap MUST be the original mame core bitmap !!!
+ *    - no swapxy, flipx or flipy and no resize !
+ *    - shall be Machine->scrbitmap
+ */
 void UpdateGLDisplayEnd (struct mame_bitmap *bitmap)
 {
   if (vecgame)
@@ -2023,6 +2661,11 @@ osd_refresh_screen (void)
 
 /* invoked by main tree code to update bitmap into screen */
 
+/**
+ * the given bitmap MUST be the original mame core bitmap !!!
+ *    - no swapxy, flipx or flipy and no resize !
+ *    - shall be Machine->scrbitmap
+ */
 void
 sysdep_update_display (struct mame_bitmap *bitmap)
 {
@@ -2086,5 +2729,6 @@ void osd_save_snapshot(struct mame_bitmap *bitmap,
 {
 	do_snapshot = 1;
 }
+
 
 #endif /* ifdef xgl */

@@ -19,7 +19,7 @@ has zip file support through zlib.
 .Nm xmame
 uses a ":" seperated rompath to find out which dirs to search for
 roms/samples. The default rompath is XMAMEROOT as defined in the Makefile
-during the compilation (normaly /usr/local/share/games/xmame). If you put all 
+during the compilation (normaly /usr/local/share/xmame). If you put all 
 the zipped-ROM-Files in this dir everything will work automagicly.
 
 The rompath will be overwritten by any rompath in xmamerc. Which can be
@@ -168,13 +168,13 @@ The config files are parsed in the following order:
 tab (@);
 l l.
 \fBPATH@CONFIG FILE\fR
-/usr/local/share/games/xmame/xmamerc@global configuration
+/usr/local/share/xmame/xmamerc@global configuration
 ${HOME}/.xmame/xmamerc@user configuration
-/usr/local/share/games/xmame/xmame-x11rc@global per display
+/usr/local/share/xmame/xmame-x11rc@global per display
 @method
 ${HOME}/.xmame/xmame-x11rc@user per display
 @method
-/usr/local/share/games/xmame/rc/<game>rc@global per game
+/usr/local/share/xmame/rc/<game>rc@global per game
 ${HOME}/.xmame/rc/<game>rc@user per game
 .TE
 .Sh BUGS

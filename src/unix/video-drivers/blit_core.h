@@ -1,13 +1,12 @@
 /* this file is used by blit.h -- don't use it directly ! */
 
 #ifdef DEST_SCALE
-#define DEST_SCALE_X(X)   (SCALE_X(X)  *DEST_SCALE)
-#define DEST_SCALE_Y(Y)   (SCALE_Y(Y)  *DEST_SCALE)
+#define DEST_SCALE_X(X)   (SCALE_X(X) * DEST_SCALE)
+#define DEST_SCALE_Y(Y)   (SCALE_Y(Y) * DEST_SCALE)
 #else
 #define DEST_SCALE_X(X)   SCALE_X(X)
 #define DEST_SCALE_Y(Y)   SCALE_Y(Y)
 #endif
-
 
 if (effect) {
   switch(effect) {
@@ -184,23 +183,92 @@ if (effect) {
       break;
     }
   }
-
 else /* no effect */
-
-  {
+{
 #ifdef DEST
-     int y = visual.min_y;
-     int src_width = (((SRC_PIXEL *)bitmap->line[1]) -
-		      ((SRC_PIXEL *)bitmap->line[0]));
-     SRC_PIXEL *line_src = (SRC_PIXEL *)bitmap->line[visual.min_y]   + visual.min_x;
-     SRC_PIXEL *line_end = (SRC_PIXEL *)bitmap->line[visual.max_y+1] + visual.min_x;
-     DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
+     if (!blit_hardware_rotation && (blit_flipx || blit_flipy || blit_swapxy)) {
+       int x, y;
+       SRC_PIXEL *line_src;
+       SRC_PIXEL *line_end;
+       DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
+       if (blit_swapxy) {
+	       if (blit_flipx && blit_flipy)
+		       for (y = visual.min_y; y <= visual.max_y; line_dest+=REPS_FOR_Y(DEST_WIDTH,y,visual_height), y++) {
+			       for (x = visual.min_x; x <= visual.max_x; x++)
+				       ((SRC_PIXEL *)rotate_dbbuf)[x-visual.min_x] = ((SRC_PIXEL *)bitmap->line[bitmap->height - x - 1])[bitmap->width - y - 1];
+			       line_src = (SRC_PIXEL *)rotate_dbbuf;
+			       line_end = (SRC_PIXEL *)rotate_dbbuf + visual_width;
+			       COPY_LINE_FOR_Y(y,visual_height,
+					       line_src, line_end, line_dest);
+		       }
+	       else if (blit_flipx)
+		       for (y = visual.min_y; y <= visual.max_y; line_dest+=REPS_FOR_Y(DEST_WIDTH,y,visual_height), y++) {
+			       for (x = visual.min_x; x <= visual.max_x; x++)
+				       ((SRC_PIXEL *)rotate_dbbuf)[x-visual.min_x] = ((SRC_PIXEL *)bitmap->line[bitmap->height - x - 1])[y];
+			       line_src = (SRC_PIXEL *)rotate_dbbuf;
+			       line_end = (SRC_PIXEL *)rotate_dbbuf + visual_width;
+			       COPY_LINE_FOR_Y(y,visual_height,
+					       line_src, line_end, line_dest);
+		       }
+	       else if (blit_flipy)
+		       for (y = visual.min_y; y <= visual.max_y; line_dest+=REPS_FOR_Y(DEST_WIDTH,y,visual_height), y++) {
+			       for (x = visual.min_x; x <= visual.max_x; x++)
+				       ((SRC_PIXEL *)rotate_dbbuf)[x-visual.min_x] = ((SRC_PIXEL *)bitmap->line[x])[bitmap->width - y - 1];
+			       line_src = (SRC_PIXEL *)rotate_dbbuf;
+			       line_end = (SRC_PIXEL *)rotate_dbbuf + visual_width;
+			       COPY_LINE_FOR_Y(y,visual_height,
+					       line_src, line_end, line_dest);
+		       }
+	       else
+		       for (y = visual.min_y; y <= visual.max_y; line_dest+=REPS_FOR_Y(DEST_WIDTH,y,visual_height), y++) {
+			       for (x = visual.min_x; x <= visual.max_x; x++)
+				       ((SRC_PIXEL *)rotate_dbbuf)[x-visual.min_x] = ((SRC_PIXEL *)bitmap->line[x])[y];
+			       line_src = (SRC_PIXEL *)rotate_dbbuf;
+			       line_end = (SRC_PIXEL *)rotate_dbbuf + visual_width;
+			       COPY_LINE_FOR_Y(y,visual_height,
+					       line_src, line_end, line_dest);
+		       }
+       } else if (blit_flipx && blit_flipy)
+	       for (y = visual.min_y; y <= visual.max_y; line_dest+=REPS_FOR_Y(DEST_WIDTH,y,visual_height), y++) {
+		       for (x = visual.min_x; x <= visual.max_x; x++)
+			       ((SRC_PIXEL *)rotate_dbbuf)[x-visual.min_x] = ((SRC_PIXEL *)bitmap->line[bitmap->height - y - 1])[bitmap->width - x - 1];
+		       line_src = (SRC_PIXEL *)rotate_dbbuf;
+		       line_end = (SRC_PIXEL *)rotate_dbbuf + visual_width;
+		       COPY_LINE_FOR_Y(y,visual_height,
+				       line_src, line_end, line_dest);
+	       }
+       else if (blit_flipx)
+	       for (y = visual.min_y; y <= visual.max_y; line_dest+=REPS_FOR_Y(DEST_WIDTH,y,visual_height), y++) {
+		       for (x = visual.min_x; x <= visual.max_x; x++)
+			       ((SRC_PIXEL *)rotate_dbbuf)[x-visual.min_x] = ((SRC_PIXEL *)bitmap->line[y])[bitmap->width - x - 1];
+		       line_src = (SRC_PIXEL *)rotate_dbbuf;
+		       line_end = (SRC_PIXEL *)rotate_dbbuf + visual_width;
+		       COPY_LINE_FOR_Y(y,visual_height,
+				       line_src, line_end, line_dest);
+	       }
+       else if (blit_flipy)
+	       for (y = visual.min_y; y <= visual.max_y; line_dest+=REPS_FOR_Y(DEST_WIDTH,y,visual_height), y++) {
+		       for (x = visual.min_x; x <= visual.max_x; x++)
+			       ((SRC_PIXEL *)rotate_dbbuf)[x-visual.min_x] = ((SRC_PIXEL *)bitmap->line[bitmap->height - y - 1])[x];
+		       line_src = (SRC_PIXEL *)rotate_dbbuf;
+		       line_end = (SRC_PIXEL *)rotate_dbbuf + visual_width;
+		       COPY_LINE_FOR_Y(y,visual_height,
+				       line_src, line_end, line_dest);
+	       }
+     } else {
+       int y = visual.min_y;
+       int src_width = (((SRC_PIXEL *)bitmap->line[1]) -
+			((SRC_PIXEL *)bitmap->line[0]));
+       SRC_PIXEL *line_src = (SRC_PIXEL *)bitmap->line[visual.min_y]   + visual.min_x;
+       SRC_PIXEL *line_end = (SRC_PIXEL *)bitmap->line[visual.max_y+1] + visual.min_x;
+       DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
      
-     for (;line_src < line_end;
-	  line_dest+=REPS_FOR_Y(DEST_WIDTH,y,visual_height),
-	    line_src+=src_width, y++)
-       COPY_LINE_FOR_Y(y,visual_height,
-		       line_src, line_src+visual_width, line_dest);
+       for (;line_src < line_end;
+	    line_dest+=REPS_FOR_Y(DEST_WIDTH,y,visual_height),
+		    line_src+=src_width, y++)
+	       COPY_LINE_FOR_Y(y,visual_height,
+			       line_src, line_src+visual_width, line_dest);
+     }
 #endif
 #ifdef PUT_IMAGE
      PUT_IMAGE(0, 0, SCALE_X(visual_width), SCALE_Y(visual_height))

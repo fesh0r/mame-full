@@ -20,8 +20,8 @@ sleepidle               0
 autoframeskip           1
 maxautoframeskip        8
 frameskip               0
-brightness              100
-gamma-correction        1.000000
+brightness              1.000000
+gamma                   1.000000
 
 ### Vector Games Related ###
 # vectorres             <NULL> (not set)
@@ -69,12 +69,12 @@ analogstick             0
 mouse                   1
 
 ### Fileio Related ###
-rompath                 /usr/local/share/games/xmame/roms
+rompath                 /usr/local/share/xmame/roms
 snapshot_directory      .
-cheat_file              /usr/local/share/games/xmame/cheat.dat
-hiscore_file            /usr/local/share/games/xmame/hiscore.dat
-history_file            /usr/local/share/games/xmame/history.dat
-mameinfo_file           /usr/local/share/games/xmame/mameinfo.dat
+cheat_file              /usr/local/share/xmame/cheat.dat
+hiscore_file            /usr/local/share/xmame/hiscore.dat
+history_file            /usr/local/share/xmame/history.dat
+mameinfo_file           /usr/local/share/xmame/mameinfo.dat
 
 ### Mame Related ###
 defaultgame             pacman

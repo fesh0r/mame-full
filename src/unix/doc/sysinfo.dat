@@ -984,6 +984,37 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=at
+$bio
+AT (1987)
+
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=atom
+$bio
+Acorn Atom (1979)
+
+
+Features:
+
+
+
+MESS Emulation State:
+
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=avigo
 $bio
 TI Avigo
@@ -991,6 +1022,20 @@ TI Avigo
 
 This system does not work properly.
 There is no documentation on the hardware available and more is required.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=bbca
+$bio
+Acorn BBC Micro Model A (1981)
+
+
+Features:
+
+
+MESS Emulation State:
 
 $end
 
@@ -1939,6 +1984,20 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=cbm610
+$bio
+Commodore Business Machines B128-80LP/610 (1983)
+
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=cbm710
 $bio
 Commodore B-128/80 Series
@@ -2245,6 +2304,7 @@ $info=coco3h
 $bio
 Tandy Color Computer 3 (Hitachi)
 
+
 First off, also read the history for the Color Computer, Color Computer 2 and Color Computer 3
 drivers. Much of the information there also applies to this driver.
 
@@ -2317,6 +2377,20 @@ MESS Emulation State:
 
 not working (not even CPU is known)
 stopped until CPU type is recognized or info found
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=coupe
+$bio
+Sam Coupe (1989)
+
+
+Features:
+
+
+MESS Emulation State:
 
 $end
 
@@ -2724,6 +2798,35 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=exidy
+$bio
+Exidy Sorcerer (1979)
+
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=Famicom
+$bio
+Nintendo Famicom (1979)
+
+
+Features:
+
+
+MESS Emulation State:
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=europc
 $bio
 Schneider EUROPC
@@ -2828,7 +2931,7 @@ $end
 
 $info=gameboy
 $bio
-Nintendo GameBoy (1989)
+Nintendo Game Boy (1989)
 
 
 The Game Boy was a huge success for Nintendo. It was the second portable system 
@@ -2840,15 +2943,33 @@ Awakening and Tetris proved that quality games could be developed for portable u
 Nintendo later released the “Play it Loud” Game Boy series in 5 colors, and the redesigned 
 slimmed down Game Boy pocket version was released in 1996.
 
+Features:
 
-Known Issues:
+CPU: 8-bit (Similar to the Z80 processor) at 4.194304MHz
+Main RAM: 8k Byte internal
+Video RAM: 8k Byte internal
+
+Video Display: Reflective LCD 160 x 144 dots (20 x 18 Tiles)
+Video Colors: 4 shades of gray
+Screen Size: 2.6"
+Max # of sprites: 40
+Max # sprites/line: 10
+Max sprite size: 8x16
+Min sprite size: 8x8
+Sound: 4 channels each of which can be mapped either to the left or to the right or to
+both speakers
+
+Communications: Serial port. Up to 4 Game boys can be connected together using this port.
+Baud rate and protocol: (?)
+
+Power: 6 VDC, 0.7 Watts (3 VDC 0.7W for Game Boy Pocket)
+4 AA Batteries ~ 35 hours 
+Rechargeable battery (NAKI) ~ 12 hours
+
+
+MESS Emulation State:
 
 Preliminary sound support only.  
-
-
-History and Trivia:
-
-The best selling video game system of all time.
 
 $end
 
@@ -2945,13 +3066,14 @@ Usage:
 Under the "Options" menu, accessible by hitting TAB, you will find the following option: 
 
 
-"Country" - this allows you to alter the 'flavour' of Genesis, to either European, Japanese 
-or American. Many cartridges compare their country codes with that of the Genesis itself and 
+"Country" - this allows you to alter the 'flavour' of Genesis, to either European, Japanese
+or American. Many cartridges compare their country codes with that of the Genesis itself and
 may behave differently, or lock up if the two types do not match.
 
 
 'Auto' attempts to auto-set the Genesis country code to the value the cartridge will appear
- to be checking for. This may not be 100% accurate, however.
+to be checking for. This may not be 100% accurate, however.
+
 
 Links:
 
@@ -3276,6 +3398,20 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=jupiter
+$bio
+Jupiter Cantab Jupiter Ace (1981)
+
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=kaypro
 $bio
 Kaypro IIx (kaypro)
@@ -3292,6 +3428,20 @@ scroll_lock key.
 As of 37b4, this driver is once again working. 
 
   
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=kc85_3
+$bio
+VEB Mikroelektronik KC 85/3 (1981)
+
+
+Features:
+
+
+MESS Emulation State:
+
 $end
 
 #---------------------------------------------------------------------------------------------#
@@ -3376,6 +3526,19 @@ Known Issues:
 This driver supports the backdrop image of the KIM-1, and code images in .kim format.
 
 
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=laser110
+$bio
+Video Technology Laser 110 (1983)
+
+
+Features:
+
+
+MESS Emulation State:
 
 $end
 
@@ -3411,6 +3574,34 @@ calculators that print out accounts etc. and some joysticks. The trouble with th
 computers was that they tended to die after a couple of years use. But they were cheap and 
 came with a few software titles."
 
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=laser310
+$bio
+Video Technology Laser 310 (1983)
+
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=laser350
+$bio
+Video Technology Laser 350 (1983)
+
+
+Features:
+
+
+MESS Emulation State:
 
 $end
 
@@ -3486,12 +3677,31 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=lviv
+$bio
+PK-01 Lviv (1989)
+
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=lynx
 $bio
 Atari Lynx (1989) and Atari Lynx II (1990)
 
 
-The Lynx was the world's first hand-held color video game system.  Sold by Atari (developed by Epyx a few years earlier), the Lynx offered true multi-player competition, built-in 3D and distortion graphic effects, reversible controls, and fast arcade action.  The system featured some accurate arcade translations such as Joust, Rampart, and Klax.  The Lynx II is a lightweight redesign and features stereo sound and shorter power down timer.  Around 1993 Atari ceased marketing the Lynx and focused on their new console, the Jaguar. (Notes taken from FAQ and Atari Age)
+The Lynx was the world's first hand-held color video game system.  Sold by Atari (developed by 
+Epyx a few years earlier), the Lynx offered true multi-player competition, built-in 3D and 
+distortion graphic effects, reversible controls, and fast arcade action.  The system featured 
+some accurate arcade translations such as Joust, Rampart, and Klax.  The Lynx II is a lightweight
+redesign and features stereo sound and shorter power down timer.  Around 1993 Atari ceased marketing
+the Lynx and focused on their new console, the Jaguar. (Notes taken from FAQ and Atari Age)
 
 
 Features:
@@ -3516,7 +3726,8 @@ Screen: 3.5" diagonal (3.25" x 1.88" approx.)
 
 
 Notes:
-Lynx is flip-able for optimal support of left and right hand players (hold down pause and press option 2 in many games) Some games want to be rotated by 90 degree
+Lynx is flip-able for optimal support of left and right hand players (hold down pause and press 
+option 2 in many games) Some games want to be rotated by 90 degree
 
 
 Links:
@@ -3701,9 +3912,35 @@ $end
 
 $info=mbee
 $bio
-Microbee
+Applied Technologies Microbee
 
 Features:
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=mc10
+$bio
+Tandy Radio Shack MC-10 (1983)
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+#---------------------------------------------------------------------------------------------#
+
+$info=microtan
+$bio
+Tangerine Microtan 65 (1979)
+
+
+Features:
+
 
 MESS Emulation State:
 
@@ -3777,6 +4014,7 @@ Pinout and instructions for reading roms are in messroms.txt
 
 
 MESS Emulation State:
+
 Random number generation is not accurate (rriot6530 emulation)
 led emulation not accurate (noticeable while computer is thinking)
 
@@ -4373,6 +4611,20 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=mz700
+$bio
+Sharp MZ-700 (1982)
+
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=mvision
 $bio
 MB Microvision
@@ -4637,10 +4889,17 @@ $bio
 Nintendo Entertainment System / Famicom (1985 USA)
 
 
-The Nintendo Entertainment System (called Famicom in Japan) was an instant hit with such popular titles as Super Mario Bros., The Legend of Zelda and Excitebike.  It was released to the states in August, 1985. The 8-bit graphics were far superior to any-home based console that had come before it. Strong sales were were driven by the gamers wanting the feeling of real-life arcade games in their homes.
+The Nintendo Entertainment System (called Famicom in Japan) was an instant hit with such popular
+titles as Super Mario Bros., The Legend of Zelda and Excitebike.  It was released to the states
+in August, 1985. The 8-bit graphics were far superior to any-home based console that had come 
+before it. Strong sales were were driven by the gamers wanting the feeling of real-life arcade
+games in their homes.
 
-
-The NES boasts an impressive library of games with over 8000 games (Cowering goodnes), offering a smorgasbord of titles for fans of every genre. The Nintendo continued it's reign with other big hits such as The Mega Man series, Ninja Gaiden, Contra, Castlevania, Double Dragon and of course, Super Mario Bros 3.  The NES continued it's strong sales with over 36 million units sold worldwide by its official cancellation in January 1996 but not before releasing a remodeled NES. 
+The NES boasts an impressive library of games with over 8000 games (Cowering goodnes), offering
+a smorgasbord of titles for fans of every genre. The Nintendo continued it's reign with other 
+big hits such as The Mega Man series, Ninja Gaiden, Contra, Castlevania, Double Dragon and of 
+course, Super Mario Bros 3.  The NES continued it's strong sales with over 36 million units sold
+worldwide by its official cancellation in January 1996 but not before releasing a redesigned NES. 
 
 
 Usage:
@@ -4892,6 +5151,20 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=p2000t
+$bio
+Philips P2000T (1980)
+
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=pc1251
 $bio
 Sharp Pocket Computer 1251
@@ -4943,6 +5216,7 @@ pockemul for win32
 
 
 MESS Emulation State:
+
 look at pc1401
 
 
@@ -5159,6 +5433,7 @@ Some models sold with harddisk controller and 20mb harddisk
 
 
 MESS Emulation State:
+
 basically the same as mess ibmpc emulation
 special keyboard emulated
 special mouse emulated
@@ -5321,8 +5596,21 @@ source clean-up
 printer
 RS-232C
 CD-ROM
-more good English document
+more good English documentation
 
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=pc88srl
+$bio
+NEC PC-8801 (1985)
+
+
+Features:
+
+
+MESS Emulation State:
 
 $end
 
@@ -5381,6 +5669,7 @@ Turbo Station 16 - pcenginefx.com/TS/
 
 
 MESS Emulation State:
+
 Preliminary...  Xevious and Raiden8x work OK.
 
 $end
@@ -5418,6 +5707,7 @@ listed in the files section). Cliff works at Amstrad plc, and has worked on the 
 projects from the Amstrad CPC to the latest e-mail phone.
 
 MESS Emulation State:
+
 All major functions are working and the computer is useable, however there
 are some accuracy problems.
 
@@ -5884,7 +6174,14 @@ Sega Saturn (1994)
 
 
 
-In 1994 Sega launched its new 32-bit console, just a few weeks ahead of its rival Sony Playstation.  The Playstation was much easier to develop for and quickly overtook the Saturn in sales.  While the Saturn was much more successful in Japan than it was in the US or Europe the lack of good software and strong competition from the PlayStation doomed the Sega Saturn to a fate similar to that of the Master System.  The CDROM based system did have some great arcade conversions such as House of The Dead and Virtua Fighter 3.  Despite being the first consoles with Internet capabilities (via the NetLink adapter), Sega was relatively quiet after the slow demise of the Saturn.  Sega turns its focus to the 128-bit Dreamcast a few years later.
+In 1994 Sega launched its new 32-bit console, just a few weeks ahead of its rival Sony Playstation.
+The Playstation was much easier to develop for and quickly overtook the Saturn in sales.  While 
+the Saturn was much more successful in Japan than it was in the US or Europe the lack of good 
+software and strong competition from the PlayStation doomed the Sega Saturn to a fate similar 
+to that of the Master System.  The CDROM based system did have some great arcade conversions such
+as House of The Dead and Virtua Fighter 3.  Despite being the first consoles with Internet 
+capabilities (via the NetLink adapter), Sega was relatively quiet after the slow demise of the 
+Saturn.  Sega turns its focus to the 128-bit Dreamcast a few years later.
 
 
 Features:
@@ -5907,8 +6204,11 @@ CDROM: Max 2x speed - custom interface controlled by Hitachi SH1 processor. (512
 MESS Emulation State:
 
 See source code for more information.
+
 Bios starts requesting pad data so maybe we are now in the time set area ????
-Need to emulate pad system, add more interrupts and get some grafix working so we can see exactly where we are at this current time.  Currently locks up waiting on (i guess) a response from the 68k CPU. Probably need to emulate this shortly.
+Need to emulate pad system, add more interrupts and get some grafix working so we can see exactly 
+where we are at this current time.  Currently locks up waiting on (i guess) a response from the 68k
+CPU. Probably need to emulate this shortly.
 
 $end
 
@@ -5976,7 +6276,12 @@ $bio
 Sega Master System (1987)
 
 
-The Master System (called Mark III in Japan) was Sega´s competitor for the NES. Though Sega constantly developed new (and good) games, the Master System never beat the NES. The MS was most successful in Europe, especially Great Britain, where most of the games were developed in the "final" days in 1993/94. Overall, about 6 million consoles were sold world-wide until the end of 1994. (note taken from www.eidolons-inn.de)
+The Master System (called Mark III in Japan) was Sega´s competitor for the NES. Though Sega 
+constantly developed new (and good) games, the Master System never beat the NES. The MS was 
+most successful in Europe, especially Great Britain, where most of the games were developed in
+the "final" days in 1993/94. Overall, about 6 million consoles were sold world-wide until the 
+end of 1994. (note taken from www.eidolons-inn.de)
+
 
 Features:
 
@@ -5990,9 +6295,11 @@ Sound chip: Generic SN76489 sound chip (PSG) made by Texas Instruments
 Sound output: 3 square-wave sound and white noise/periodic noise channel
 Music: Yamaha YM2413 FM sound chip
 
+
 Links:
 
 EIdolons inn - www.eidolons-inn.de
+
 
 MESS Emulation State:
 
@@ -6008,7 +6315,14 @@ $bio
 Super Nintendo Entertainment System (1989)
 
 
-The Super Nintendo features true stereo sound, multiple scrolling backgrounds and almost twice the internal memory as its competition. The SNES was home to the biggest, baddest games of its day. With player's choice games like The Legend of Zelda: A Link to the Past, Donkey Kong Country and Super Metroid, the Super NES has sold more than 20 million systems in the U.S. and 46 million systems worldwide. (note taken from www.nintendo.com)
+Nintendo released the cartridge based 16-bit Super Nintendo to compete with the already released 
+Sega Genesis and NEC's TurboGraphix 16 (PCEngine in Japan). The Super Nintendo features true 
+stereo sound, multiple scrolling backgrounds and increased internal memory. It was a very popular
+system because people could play continuations of their favorite NES game. The Legend of Zelda: 
+A Link To The Past, The Donkey Kong Country Series, The Final Fantasy Series and Super Mario Kart
+were a few of the top titles for the SNES. In 1997 Nintendo redesigned the case, but never 
+included a CD-ROM expansion.
+
 
 Features:
 
@@ -6529,6 +6843,20 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=svi318
+$bio
+Spectravideo SVI-318 (1983)
+
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=svision
 $bio
 Watara Supervision
@@ -6543,7 +6871,7 @@ Hartung SV-100
 
 There are several designs, but all have the same functionality.
 *(knickable screen)
-*GB2000 (gameboy style, no comm port)
+*GB2000 (game boy style, no comm port)
 
 
 Features:
@@ -6569,6 +6897,7 @@ Pinout of cartridge is in mess/messroms/svision.txt
 
 
 MESS Emulation State:
+
 very preliminary support
 preliminary sound support
 no serial port
@@ -6649,6 +6978,7 @@ to change setup
 
 
 MESS Emulation State:
+
 basically the same as ibmpcjr
 special setup memory emulated
 work stopped until dump of character rom available
@@ -7270,6 +7600,20 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=uk101
+$bio
+Compukit UK101 (1979)
+
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=vc4000
 $bio
 Interton VC4000
@@ -7318,7 +7662,7 @@ look into messroms for a pinout of it
 
 MESS Emulation State:
 
-based on info by Paul Robson, Christian Windler
+Based on info by Paul Robson, Christian Windler
 sponsored by Andreas W.
 
 
@@ -7406,7 +7750,7 @@ in early 1984. The rights to the system reverted to it's developers, Smith Engin
 
 
 Smith Engineering briefly considered designing a handheld version of the device in 1988, 
-though the success of the Nintendo Gameboy made such a project too risky. In the mid-1990s, 
+though the success of the Nintendo Game Boy made such a project too risky. In the mid-1990s, 
 Smith Engineering condoned the duplication of the Vectrex system image and cartridges for 
 non-commercial uses.
 

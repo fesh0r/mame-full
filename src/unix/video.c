@@ -25,8 +25,6 @@ int yarbsize = 0;
 static char *vector_res = NULL;
 static int use_auto_double = 1;
 static int frameskipper = 0;
-static int brightness = 100;
-float brightness_paused_adjust = 1.0;
 static int bitmap_depth;
 static int using_15bpp_rgb_direct;
 static int debugger_has_focus = 0;
@@ -48,13 +46,6 @@ static int video_flipx = 0;
 static int video_ror = 0;
 static int video_rol = 0;
 
-static int video_width;
-static int video_height;
-static int video_depth;
-
-static struct mame_bitmap *adjusted_bitmap = NULL;
-
-
 /* average FPS calculation */
 static cycles_t start_time = 0;
 static cycles_t end_time;
@@ -65,7 +56,6 @@ static int frames_to_display;
 UINT16 *color_values;
 #endif
 
-float gamma_correction = 1.0;
 int force_dirty_palette = 0;
 
 extern UINT8 trying_to_quit;
@@ -84,8 +74,11 @@ static int video_verify_bpp(struct rc_option *option, const char *arg,
 static int video_verify_vectorres(struct rc_option *option, const char *arg,
    int priority);
 
+#ifndef xgl
 static void adjust_bitmap_and_update_display(struct mame_bitmap *srcbitmap,
-		struct mame_bitmap *dest_bitmap, struct rectangle bounds);
+		struct rectangle bounds);
+#endif
+
 static void change_debugger_focus(int new_debugger_focus);
 static void update_debug_display(struct mame_display *display);
 static void osd_free_colors(void);
@@ -147,7 +140,7 @@ struct rc_option video_opts[] = {
      "0",		0,			0,		NULL,
      "Artwork resolution (0 for auto)" },
    { "frameskipper",	"fsr",			rc_int,		&frameskipper,
-     "0",		0,			FRAMESKIP_DRIVER_COUNT-1, NULL,
+     "1",		0,			FRAMESKIP_DRIVER_COUNT-1, NULL,
      "Select which autoframeskip and throttle routines to use. Available choices are:\n0 Dos frameskip code\n1 Enhanced frameskip code by William A. Barath" },
    { "throttle",	"th",			rc_bool,	&throttle,
      "1",		0,			0,		NULL,
@@ -167,15 +160,15 @@ struct rc_option video_opts[] = {
    { "frameskip",	"fs",			rc_int,		&frameskip,
      "0",		0,			FRAMESKIP_LEVELS-1, NULL,
      "Set frameskip when not using autoframeskip" },
-   { "brightness",	"brt",			rc_int,		&brightness,
-     "100",		0,			100,		NULL,
-     "Set the brightness (0-100%%)" },
+   { "brightness",	"brt",			rc_float,	&options.brightness,
+     "1.0",		0.5,			2.0,		NULL,
+     "Set the brightness correction (0.5 - 2.0)" },
    { "pause_brightness","pb",			rc_float,	&options.pause_bright,
      "0.65",		0.5,			2.0,		NULL,
      "Additional pause brightness" },
-   { "gamma-correction", "gc",			rc_float,	&gamma_correction,
+   { "gamma",		"gc",			rc_float,	&options.gamma,
      "1.0",		0.5,			2.0,		NULL,
-     "Set the gamma-correction (0.5-2.0)" },
+     "Set the gamma correction (0.5 - 2.0)" },
    { "norotate",	"nr",			rc_bool,	&video_norotate,
      "0",		0,			0,		NULL,
      "Do not apply rotation" },
@@ -345,6 +338,20 @@ void osd_video_initpre()
 	blit_flipy = ((orientation & ORIENTATION_FLIP_Y) != 0);
 	blit_swapxy = ((orientation & ORIENTATION_SWAP_XY) != 0);
 
+	if (options.vector_width == 0 && options.vector_height == 0)
+	{
+		options.vector_width = 640;
+		options.vector_height = 480;
+	}
+
+	if (blit_swapxy)
+	{
+		int temp;
+		temp = options.vector_width;
+		options.vector_width = options.vector_height;
+		options.vector_height = temp;
+	}
+
 
 	/* set the artwork options */
 	options.use_artwork = ARTWORK_USE_ALL;
@@ -425,6 +432,7 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 		}
 	}
 
+#ifndef xgl
 	if (blit_swapxy)
 	{
 		visual_width	= video_width	= params->height;
@@ -432,10 +440,13 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 	}
 	else
 	{
+#endif
 		visual_width	= video_width	= params->width;
 		visual_height	= video_height	= params->height;
+#ifndef xgl
 	}
-	video_depth = params->depth;
+#endif
+	video_depth = (params->depth == 15) ? 16 : params->depth;
 
 	if (!blit_swapxy)
 		aspect_ratio = (double)params->aspect_x 
@@ -452,10 +463,11 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 	if (sysdep_create_display(bitmap_depth) != OSD_OK)
 		return -1;
 
-	/* for debugging only */
+#if 0 /* DEBUG */
 	fprintf(stderr_file, "viswidth = %d, visheight = %d, visstartx= %d,"
 			"visstarty= %d\n", visual_width, visual_height,
 			visual.min_x, visual.min_y);
+#endif
 
 	/* a lot of display_targets need to have the display initialised before
 	   initialising any input devices */
@@ -474,10 +486,6 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 		osd_free_colors();
 		return 1;
 	}
-
-	sysdep_palette_set_gamma(normal_palette, gamma_correction);
-	sysdep_palette_set_brightness(normal_palette,
-		brightness * brightness_paused_adjust);
 
 	/* initialize the palette to a fixed 5-5-5 mapping */
 	if (using_15bpp_rgb_direct)
@@ -530,14 +538,6 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 		}
 	}
 
-	if (blit_flipx || blit_flipy || blit_swapxy)
-	{
-		adjusted_bitmap = bitmap_alloc_depth(video_width,
-					video_height, video_depth);
-		if (!adjusted_bitmap)
-			return -1;
-	}
-			
 	return 0;
 }
 
@@ -604,11 +604,12 @@ static void osd_change_display_settings(struct rectangle *new_visual,
       /* to stop keys from getting stuck */
       xmame_keyboard_clear();
 
-      /* for debugging only */
+#if 0 /* DEBUG */
       fprintf(stderr_file, "viswidth = %d, visheight = %d,"
               "visstartx= %d, visstarty= %d\n",
                visual_width, visual_height, visual.min_x,
                visual.min_y);
+#endif
    }
 }
 
@@ -635,6 +636,7 @@ static void update_visible_area(struct mame_display *display)
 {
 	normal_visual = display->game_visible_area;
 
+#ifndef xgl
 	if (blit_swapxy)
 	{
 		video_width = display->game_bitmap->height;
@@ -647,6 +649,7 @@ static void update_visible_area(struct mame_display *display)
 	}
 
 	orient_rect(&normal_visual);
+#endif
 
 	/* 
 	 * round to 8, since the new dirty code works with 8x8 blocks,
@@ -664,16 +667,15 @@ static void update_visible_area(struct mame_display *display)
 			display->game_visible_area.max_x,
 			display->game_visible_area.max_y);
 
-	/*
-	 * Allocate a new destination bitmap for the code that handles 
-	 * rotation/flipping.
-	 */
+#ifndef xgl
+	
+	/* Allocate a new buffer for the code that handles rotation/flipping. */
 	if (blit_flipx || blit_flipy || blit_swapxy)
 	{
-		bitmap_free(adjusted_bitmap);
-		adjusted_bitmap = bitmap_alloc_depth(video_width,
-				video_height, video_depth);
-	}	
+		free(rotate_dbbuf);
+		rotate_dbbuf = calloc(video_width*video_depth/8, sizeof(char));
+	}
+#endif
 }
 
 static void update_palette(struct mame_display *display, int force_dirty)
@@ -985,8 +987,12 @@ void osd_update_video_and_audio(struct mame_display *display)
 		}
 
 		profiler_mark(PROFILER_BLIT);
+#ifdef xgl
+		sysdep_update_display(display->game_bitmap);
+#else
 		adjust_bitmap_and_update_display(display->game_bitmap,
-				adjusted_bitmap, updatebounds);
+				updatebounds);
+#endif
 		profiler_mark(PROFILER_END);
 	}
 
@@ -997,129 +1003,15 @@ void osd_update_video_and_audio(struct mame_display *display)
 	osd_poll_joysticks();
 }
 
+#ifndef xgl
 void adjust_bitmap_and_update_display(struct mame_bitmap *srcbitmap,
-		struct mame_bitmap *destbitmap, struct rectangle bounds)
+		struct rectangle bounds)
 {
-	int x, y;
-	int bx1, bx2, by1, by2;
-
 	orient_rect(&bounds);
 
-	bx1 = bounds.min_x;
-	bx2 = bounds.max_x;
-	by1 = bounds.min_y;
-	by2 = bounds.max_y;
-
-	if (blit_swapxy)
-	{
-		if (blit_flipx && blit_flipy)
-			if (srcbitmap->depth == 15 || srcbitmap->depth == 16)
-				for (x = bx1; x <= bx2; x++)
-					for (y = by1; y <= by2; y++)
-						((UINT16 *)destbitmap->line[y])[x] = ((UINT16 *)srcbitmap->line[srcbitmap->height - x - 1])[srcbitmap->width - y - 1];
-			else
-				for (x = bx1; x <= bx2; x++)
-					for (y = by1; y <= by2; y++)
-						((UINT32 *)destbitmap->line[y])[x] = ((UINT32 *)srcbitmap->line[srcbitmap->height - x - 1])[srcbitmap->width - y - 1];
-		else if (blit_flipx)
-			if (srcbitmap->depth == 15 || srcbitmap->depth == 16)
-				for (x = bx1; x <= bx2; x++)
-					for (y = by1; y <= by2; y++)
-						((UINT16 *)destbitmap->line[y])[x] = ((UINT16 *)srcbitmap->line[srcbitmap->height - x - 1])[y];
-			else
-				for (x = bx1; x <= bx2; x++)
-					for (y = by1; y <= by2; y++)
-						((UINT32 *)destbitmap->line[y])[x] = ((UINT32 *)srcbitmap->line[srcbitmap->height - x - 1])[y];
-		else if (blit_flipy)
-			if (srcbitmap->depth == 15 || srcbitmap->depth == 16)
-				for (x = bx1; x <= bx2; x++)
-					for (y = by1; y <= by2; y++)
-						((UINT16 *)destbitmap->line[y])[x] = ((UINT16 *)srcbitmap->line[x])[srcbitmap->width - y - 1];
-			else
-				for (x = bx1; x <= bx2; x++)
-					for (y = by1; y <= by2; y++)
-						((UINT32 *)destbitmap->line[y])[x] = ((UINT32 *)srcbitmap->line[x])[srcbitmap->width - y - 1];
-		else
-			if (srcbitmap->depth == 15 || srcbitmap->depth == 16)
-				for (x = bx1; x <= bx2; x++)
-					for (y = by1; y <= by2; y++)
-						((UINT16 *)destbitmap->line[y])[x] = ((UINT16 *)srcbitmap->line[x])[y];
-			else
-				for (x = bx1; x <= bx2; x++)
-					for (y = by1; y <= by2; y++)
-						((UINT32 *)destbitmap->line[y])[x] = ((UINT32 *)srcbitmap->line[x])[y];
-
-		sysdep_update_display(destbitmap);
-	}
-	else if (blit_flipx && blit_flipy)
-	{
-		if (srcbitmap->depth == 15 || srcbitmap->depth == 16)
-			for (x = bx1; x <= bx2; x++)
-				for (y = by1; y <= by2; y++)
-					((UINT16 *)destbitmap->line[y])[x] = ((UINT16 *)srcbitmap->line[srcbitmap->height - y - 1])[srcbitmap->width - x - 1];
-		else
-			for (x = bx1; x <= bx2; x++)
-				for (y = by1; y <= by2; y++)
-					((UINT32 *)destbitmap->line[y])[x] = ((UINT32 *)srcbitmap->line[srcbitmap->height - y - 1])[srcbitmap->width - x - 1];
-
-		sysdep_update_display(destbitmap);
-	}
-	else if (blit_flipx)
-	{
-		if (srcbitmap->depth == 15 || srcbitmap->depth == 16)
-			for (x = bx1; x <= bx2; x++)
-				for (y = by1; y <= by2; y++)
-					((UINT16 *)destbitmap->line[y])[x] = ((UINT16 *)srcbitmap->line[y])[srcbitmap->width - x - 1];
-		else
-			for (x = bx1; x <= bx2; x++)
-				for (y = by1; y <= by2; y++)
-					((UINT32 *)destbitmap->line[y])[x] = ((UINT32 *)srcbitmap->line[y])[srcbitmap->width - x - 1];
-
-		sysdep_update_display(destbitmap);
-	}
-	else if (blit_flipy)
-	{
-		if (srcbitmap->depth == 15 || srcbitmap->depth == 16)
-			for (x = bx1; x <= bx2; x++)
-				for (y = by1; y <= by2; y++)
-					((UINT16 *)destbitmap->line[y])[x] = ((UINT16 *)srcbitmap->line[srcbitmap->height - y - 1])[x];
-		else
-			for (x = bx1; x <= bx2; x++)
-				for (y = by1; y <= by2; y++)
-					((UINT32 *)destbitmap->line[y])[x] = ((UINT32 *)srcbitmap->line[srcbitmap->height - y - 1])[x];
-
-		sysdep_update_display(destbitmap);
-	}
-	else
-		sysdep_update_display(srcbitmap);
+	sysdep_update_display(srcbitmap);
 }
-
-void osd_set_gamma(float gamma)
-{
-   sysdep_palette_set_gamma(normal_palette, gamma);
-   if (debug_palette)
-      sysdep_palette_set_gamma(debug_palette, gamma);
-}
-
-float osd_get_gamma(void)
-{
-   return sysdep_palette_get_gamma(normal_palette);
-}
-
-/* brightess = percentage 0-100% */
-void osd_set_brightness(int _brightness)
-{
-   brightness = _brightness;
-   sysdep_palette_set_brightness(normal_palette, brightness *
-      brightness_paused_adjust);
-   if (debug_palette)
-      sysdep_palette_set_brightness(debug_palette, brightness);
-}
-
-int osd_get_brightness(void)
-{
-   return brightness;
-}
+#endif
 
 #ifndef xgl
 void osd_save_snapshot(struct mame_bitmap *bitmap, 
@@ -1209,12 +1101,6 @@ void osd_save_snapshot(struct mame_bitmap *bitmap,
 
 void osd_pause(int paused)
 {
-   if (paused) 
-      brightness_paused_adjust = 0.65;
-   else
-      brightness_paused_adjust = 1.0;
-
-   osd_set_brightness(brightness);
 }
 
 const char *osd_get_fps_text(const struct performance_info *performance)
@@ -1251,4 +1137,14 @@ const char *osd_get_fps_text(const struct performance_info *performance)
 	
 	/* return a pointer to the static buffer */
 	return buffer;
+}
+
+/*
+ * We don't want to sleep when idle while the setup menu is 
+ * active, since this causes problems with registering 
+ * keypresses.
+ */
+int should_sleep_idle()
+{
+	return sleep_idle && !setup_active();
 }

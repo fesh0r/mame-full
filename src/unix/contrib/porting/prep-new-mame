@@ -19,6 +19,7 @@ if [ -x "`which d2u 2> /dev/null`" ]; then
   d2u `find . -name "*.html" -print` 2> /dev/null
   d2u `find . -name "*.mak" -print` 2> /dev/null
   d2u `find . -name "*.ini" -print` 2> /dev/null
+  d2u `find . -name "*.pl" -print` 2> /dev/null
   d2u `find . -name "*.[ch]" -print` 2> /dev/null
 else
   echo "Unable to run d2u.  This may cause build problems on some platforms."
@@ -57,6 +58,10 @@ fi
 
 if [ -f docs/mame.txt ]; then
   mv docs/mame.txt doc/readme.mame
+fi
+
+if [ -f docs/gamelist.txt ]; then
+  mv docs/gamelist.txt doc
 fi
 
 if [ -f docs/windows.txt ]; then

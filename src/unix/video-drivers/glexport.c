@@ -14,16 +14,16 @@ void gl_save_screen_snapshot()
         /* avoid overwriting existing files */
         /* first of all try with "gamename.png" */
         sprintf(name,"%.8s", Machine->gamedrv->name);
-        if (mame_faccess(name,OSD_FILETYPE_SCREENSHOT))
+        if (mame_faccess(name,FILETYPE_SCREENSHOT))
         {
                 do
                 {
                         /* otherwise use "nameNNNN.png" */
                         sprintf(name,"%.4s%04d",Machine->gamedrv->name,snapno++);
-                } while (mame_faccess(name, OSD_FILETYPE_SCREENSHOT));
+                } while (mame_faccess(name, FILETYPE_SCREENSHOT));
         }
  
-        if ((fp = mame_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_SCREENSHOT, 1)) != NULL)
+        if ((fp = mame_fopen(Machine->gamedrv->name, name, FILETYPE_SCREENSHOT, 1)) != NULL)
         {
                 gl_png_write_bitmap(fp);
                 mame_fclose(fp);

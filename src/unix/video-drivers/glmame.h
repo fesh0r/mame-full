@@ -40,14 +40,11 @@ typedef enum {pan_goto,pan_moveto,pan_repeat,pan_end,pan_nocab} PanType;
 
 struct CameraPan {
   PanType type;      /* Type of pan */
-  GLfloat lx,ly,lz;  /* Location of camera */
-  GLfloat px,py,pz;  /* Vector to point camera along */
-  GLfloat nx,ny,nz;  /* Normal to camera direction */
+  GLdouble lx,ly,lz;  /* Location of camera */
+  GLdouble px,py,pz;  /* Vector to point camera along */
+  GLdouble nx,ny,nz;  /* Normal to camera direction */
   int frames;        /* Number of frames for transition */
 };
-
-/* video.c */
-extern float gamma_correction;
 
 /* xgl.c */
 extern char * libGLName;
@@ -62,7 +59,8 @@ extern int winwidth;
 extern int winheight;
 extern int orig_width;
 extern int orig_height;
-extern int doublebuffer;
+extern int visual_orientated_width;
+extern int visual_orientated_height;
 extern int bilinear;
 extern int alphablending;
 extern int fullscreen;
@@ -124,7 +122,7 @@ int sysdep_display_16bpp_capable (void);
 void InitVScreen (int depth);
 void gl_reset_resources();
 int sysdep_display_alloc_palette (int writable_colors);
-void InitTextures (void);
+void InitTextures (struct mame_bitmap *bitmap);
 
 extern void gl_dirty_init(void);
 extern void gl_dirty_close(void);

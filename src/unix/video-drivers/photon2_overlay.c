@@ -23,11 +23,6 @@
 #include "photon2.h"
 #include "driver.h"
 //#include "phkeyboard.h"
-static void ph_ovr_update_8_to_8bpp (struct mame_bitmap *bitmap);
-static void ph_ovr_update_8_to_16bpp (struct mame_bitmap *bitmap);
-static void ph_ovr_update_8_to_24bpp (struct mame_bitmap *bitmap);
-static void ph_ovr_update_8_to_32bpp (struct mame_bitmap *bitmap);
-static void ph_ovr_update_8_to_8bpp_direct (struct mame_bitmap *bitmap);
 static void ph_ovr_update_16_to_16bpp (struct mame_bitmap *bitmap);
 static void ph_ovr_update_16_to_24bpp (struct mame_bitmap *bitmap);
 static void ph_ovr_update_16_to_32bpp (struct mame_bitmap *bitmap);
@@ -329,24 +324,6 @@ int ph_ovr_create_display (int bitmap_depth)
 			break;
 		}
 	}
-	else
-	{
-		switch(depth)
-		{
-			case 8:
-				ph_ovr_update_display_func = ph_ovr_update_8_to_8bpp;
-			break;
-			case 16:
-				ph_ovr_update_display_func = ph_ovr_update_8_to_16bpp;
-			break;
-			case 24:
-				ph_ovr_update_display_func = ph_ovr_update_8_to_24bpp;
-			break;
-			case 32:
-				ph_ovr_update_display_func = ph_ovr_update_8_to_32bpp;
-			break;
-		}
-	}
 
 	if (ph_ovr_update_display_func == NULL)
 	{
@@ -464,54 +441,8 @@ INLINE void ph_ovr_put_image (int x, int y, int width, int height)
 
 #define DEST_WIDTH swidth
 #define DEST scaled_buffer_ptr
-#define SRC_PIXEL unsigned char
-#define PUT_IMAGE(X, Y, WIDTH, HEIGHT) ph_ovr_put_image(X, Y, WIDTH, HEIGHT);
-
-#define DEST_PIXEL unsigned char
-
-static void ph_ovr_update_8_to_8bpp_direct (struct mame_bitmap *bitmap)
-{
-#include "blit.h"
-}
-
-static void ph_ovr_update_8_to_8bpp (struct mame_bitmap *bitmap)
-{
-#define INDIRECT pseudo_color_lookup
-#include "blit.h"
-#undef INDIRECT
-}
-
-#undef DEST_PIXEL
-
-#define INDIRECT current_palette->lookup
-
-static void ph_ovr_update_8_to_16bpp (struct mame_bitmap *bitmap)
-{
-#define BLIT_16BPP_HACK
-#define DEST_PIXEL unsigned short
-#include "blit.h"
-#undef DEST_PIXEL
-#undef BLIT_16BPP_HACK
-}
-
-#define DEST_PIXEL unsigned int
-
-static void ph_ovr_update_8_to_24bpp (struct mame_bitmap *bitmap)
-{
-#define PACK_BITS
-#include "blit.h"
-#undef PACK_BITS
-}
-
-static void ph_ovr_update_8_to_32bpp (struct mame_bitmap *bitmap)
-{
-#include "blit.h"
-}
-
-#undef  DEST_PIXEL
-
-#undef  SRC_PIXEL
 #define SRC_PIXEL unsigned short
+#define PUT_IMAGE(X, Y, WIDTH, HEIGHT) ph_ovr_put_image(X, Y, WIDTH, HEIGHT);
 
 static void ph_ovr_update_16_to_16bpp (struct mame_bitmap *bitmap)
 {

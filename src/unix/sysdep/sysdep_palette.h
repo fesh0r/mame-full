@@ -60,10 +60,6 @@ struct sysdep_palette_struct
    int dirty;             /* Used by the Xv patch for updating YUV lookup */
    int *lookup;           /* lookup table to be used for blitters to convert
                              the emulated palette to the physical palette */
-   float gamma;
-   int brightness;        /* brightess = percentage 0-100% */
-   int bright_dirty;
-   unsigned char bright_lookup[256];
 };
 
 /* This function creates a sysdep palette object for the current
@@ -97,16 +93,6 @@ int sysdep_palette_make_pen(struct sysdep_palette_struct *palette,
 /* This function has to be called if the display is changed, it recreates
    the palette object with the settings from the new display */
 int sysdep_palette_change_display(struct sysdep_palette_struct **palette);
-
-int sysdep_palette_set_brightness(struct sysdep_palette_struct *palette,
-   int brightness);
-
-int sysdep_palette_get_brightness(struct sysdep_palette_struct *palette);
-
-int sysdep_palette_set_gamma(struct sysdep_palette_struct *palette,
-   float gamma);
-
-float sysdep_palette_get_gamma(struct sysdep_palette_struct *palette);
 
 /* Added by AMR for Xv patch - used for updating YUV palette */
 void sysdep_palette_mark_dirty(struct sysdep_palette_struct *palette);

@@ -20,8 +20,8 @@ sleepidle               0
 autoframeskip           1
 maxautoframeskip        8
 frameskip               0
-brightness              100
-gamma-correction        1.000000
+brightness              1.000000
+gamma                   1.000000
 
 ### Vector Games Related ###
 # vectorres             <NULL> (not set)
@@ -69,15 +69,15 @@ analogstick             0
 mouse                   1
 
 ### Fileio Related ###
-biospath                /usr/local/share/games/xmess/bios
-softwarepath            /usr/local/share/games/xmess/software
-CRC_directory           /usr/local/share/games/xmess/crc
+biospath                /usr/local/share/xmess/bios
+softwarepath            /usr/local/share/xmess/software
+CRC_directory           /usr/local/share/xmess/crc
 snapshot_directory      .
-cheat_directory         /usr/local/share/games/xmess/cheat
+cheat_directory         /usr/local/share/xmess/cheat
 cheatfile               cheat.cdb
-hiscore_file            /usr/local/share/games/xmess/hiscore.dat
-history_file            /usr/local/share/games/xmess/history.dat
-mameinfo_file           /usr/local/share/games/xmess/mameinfo.dat
+hiscore_file            /usr/local/share/xmess/hiscore.dat
+history_file            /usr/local/share/xmess/history.dat
+mameinfo_file           /usr/local/share/xmess/mameinfo.dat
 
 ### Mess Related ###
 language                english

@@ -51,8 +51,9 @@ int fullscreen_width = 0;
 int fullscreen_height = 0;
 int orig_width = 0;
 int orig_height = 0;
+int visual_orientated_width = 0;
+int visual_orientated_height = 0;
 static int is_fullscreen=0;
-int doublebuffer = 1;
 int bilinear=1; /* Do binlinear filtering? */
 int alphablending=0; /* alphablending */
 
@@ -79,7 +80,7 @@ char * libGLUName=0;
 static char *gl_res = NULL;
 
 static const char * xgl_version_str = 
-	"\nGLmame v0.93, by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
+	"\nGLmame v0.94 - the_peace_version , by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
 
 struct rc_option display_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -250,8 +251,19 @@ int sysdep_create_display(int depth)
   {
   	fullscreen_width = screen->width;
   	fullscreen_height = screen->height;
-	orig_width = visual_width*widthscale;
-	orig_height = visual_height*heightscale;
+
+	if( ! blit_swapxy )
+	{
+		  visual_orientated_width  = visual_width;
+		  visual_orientated_height = visual_height;
+		  orig_width  = visual_width*widthscale;
+		  orig_height = visual_height*heightscale;
+	} else {
+		  visual_orientated_width  = visual_height;
+		  visual_orientated_height = visual_width;
+		  orig_width  = visual_height*heightscale;
+		  orig_height = visual_width*widthscale;
+	}
   }
 
   if(fullscreen)

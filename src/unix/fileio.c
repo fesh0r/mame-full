@@ -69,22 +69,15 @@ static osd_file openfile[MAX_OPEN_FILES];
 static FILE *errorlog = NULL;
 
 #ifdef MESS
-const char *crcdir;
 static char crcfilename[256] = "";
 const char *crcfile = crcfilename;
 static char pcrcfilename[256] = "";
 const char *pcrcfile = pcrcfilename;
+char crcdir[256];
 #endif
 
-
-
-/*============================================================ */
-/*	PROTOTYPES */
-/*============================================================ */
-
-static int config_handle_inputfile(struct rc_option *option, const char *arg,
-		int priority);
-
+char *playbackname;
+char *recordname;
 
 
 /*============================================================ */
@@ -116,35 +109,20 @@ struct rc_option fileio_opts[] =
 	{ "ctrlr_directory", NULL, rc_string, &pathlist[FILETYPE_CTRLR].rawpath, XMAMEROOT"/ctrlr", 0, 0, NULL, "Directory to save controller definitions" },
 	{ "cheat_file", NULL, rc_string, &cheatfile, XMAMEROOT"/cheat.dat", 0, 0, NULL, "Cheat filename" },
 	{ "hiscore_file", NULL, rc_string, &db_filename, XMAMEROOT"/hiscore.dat", 0, 0, NULL, NULL },
+#ifdef MESS
+	{ "sysinfo_file", NULL, rc_string, &history_filename, XMAMEROOT"sysinfo.dat", 0, 0, NULL, NULL },
+	{ "messinfo_file", NULL, rc_string, &mameinfo_filename, XMAMEROOT"messinfo.dat", 0, 0, NULL, NULL },
+#else
 	{ "history_file", NULL, rc_string, &history_filename, XMAMEROOT"/history.dat", 0, 0, NULL, NULL },
 	{ "mameinfo_file", NULL, rc_string, &mameinfo_filename, XMAMEROOT"/mameinfo.dat", 0, 0, NULL, NULL },
-	{ "record", "rec", rc_use_function, &options.record, NULL, 1, 0, config_handle_inputfile, "Set a file to record keypresses into" },
-	{ "playback", "pb", rc_use_function, &options.playback, NULL, 0, 0, config_handle_inputfile, "Set a file to playback keypresses from" },
+#endif
+	{ "record", "rec", rc_string, &recordname, NULL, 0, 0, NULL, "Set a file to record keypresses into" },
+	{ "playback", "pb", rc_string, &playbackname, NULL, 0, 0, NULL, "Set a file to playback keypresses from" },
 	{ "stdout-file", "out", rc_file, &stdout_file, NULL, 1,	0, NULL, "Set a file to redirect stdout to" },
 	{ "stderr-file", "err",	rc_file, &stderr_file, NULL, 1, 0, NULL, "Set a file to redirect stderr to" },
 	{ "log", "L", rc_file, &errorlog, NULL, 1, 0, NULL, "Set a file to log debug info to" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
-
-
-static int config_handle_inputfile(struct rc_option *option, const char *arg,
-		int priority)
-{
-	if (*(void **)option->dest)
-		osd_fclose(*(void **)option->dest);
-   
-	*(void **)option->dest = mame_fopen(NULL, arg, FILETYPE_INPUTLOG,
-		option->min);
-	if (*(void **)option->dest == NULL)
-	{
-		fprintf(stderr, "error: couldn't open %s\n", arg);
-		return -1;
-	}
-   
-	option->priority = priority;
-   
-	return 0;
-}
 
 
 
@@ -224,11 +202,15 @@ static const char *parse_variable(const char **start, const char *end)
 	for (src = *start; src < end && is_variablechar(*src); src++)
 		*dest++ = *src;
 
+	/* an empty variable means "$" and should not be expanded */
+	if (src == *start)
+		return "$";
+
 	/* NULL terminate and return a pointer to the end */
 	*dest = 0;
 	*start = src;
 
-	/* return the actuval variable value */
+	/* return the actual variable value */
 	var = getenv(variable);
 	return (var) ? var : "";
 }

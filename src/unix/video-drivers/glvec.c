@@ -23,12 +23,14 @@
 
 #include "osinline.h"
 
-extern GLfloat cscrx1,cscry1,cscrz1,cscrx2,cscry2,cscrz2,
-  cscrx3,cscry3,cscrz3,cscrx4,cscry4,cscrz4;
-extern GLfloat cscrwdx,cscrwdy,cscrwdz;
-extern GLfloat cscrhdx,cscrhdy,cscrhdz;
+void CalcCabPointbyViewpoint( 
+		   GLdouble vx_gscr_view, GLdouble vy_gscr_view, 
+                   GLdouble *vx_p, GLdouble *vy_p, GLdouble *vz_p
+		 );
 
 extern int winwidth,winheight;
+extern GLdouble  s__cscr_w_view, s__cscr_h_view;
+
 
 unsigned char *vectorram;
 size_t vectorram_size;
@@ -49,7 +51,7 @@ static int vecwidth;
 static int vecheight;
 static int vecshift;
 
-static GLfloat vecoldx,vecoldy;
+static GLdouble vecoldx,vecoldy;
 
 float gl_beam=1.0;
 static int flicker;                              /* beam flicker value     */
@@ -57,14 +59,14 @@ static int flicker;                              /* beam flicker value     */
 static int vector_orientation;
 
 /*
-static float gamma_correction = 1.2;
+static double gamma_correction = 1.2;
 */
-static float flicker_correction = 0.0;
-static float intensity_correction = 1.5;
+static double flicker_correction = 0.0;
+static double intensity_correction = 1.5;
 
 vector_pixel_t *vector_dirty_list;
 
-float osd_get_gamma(void);
+double osd_get_gamma(void);
 
 /*
  * multiply and divide routines for drawing lines
@@ -143,12 +145,12 @@ void vector_set_swap_xy (int swap)
 }
 
 /*
-void vector_set_gamma(float _gamma)
+void vector_set_gamma(double _gamma)
 {
 	gamma_correction = _gamma;
 }
 
-float vector_get_gamma(void)
+double vector_get_gamma(void)
 {
 	return gamma_correction;
 }
@@ -243,37 +245,36 @@ void vector_set_shift (int shift)
 
 /* Convert an xy point to xyz in the 3D scene */
 
-int PointConvert(int x,int y,GLfloat *sx,GLfloat *sy,GLfloat *sz)
+int PointConvert(int x,int y,GLdouble *sx,GLdouble *sy,GLdouble *sz)
 {
   int x1, y1;
-  GLfloat dx,dy,tmp;
+  GLdouble dx,dy,tmp;
 
   x1=x>>vecshift;
   y1=y>>vecshift;
 
-  dx=(GLfloat)x1/(GLfloat)vecwidth;
-  dy=(GLfloat)y1/(GLfloat)vecheight;
+  dx=(GLdouble)x1/(GLdouble)vecwidth;
+  dy=(GLdouble)y1/(GLdouble)vecheight;
 
-  if(Machine->orientation&ORIENTATION_SWAP_XY) {
-    tmp=dx;
-    dx=dy;
-    dy=tmp;
-  }
+  if(!cabview) {
+	  if(Machine->orientation&ORIENTATION_SWAP_XY) {
+	    tmp=dx;
+	    dx=dy;
+	    dy=tmp;
+	  }
 
-  if(Machine->orientation&ORIENTATION_FLIP_X)
-    dx=1.0-dx;
+	  if(Machine->orientation&ORIENTATION_FLIP_X)
+	    dx=1.0-dx;
 
-  if(Machine->orientation&ORIENTATION_FLIP_Y)
-    dy=1.0-dy;
+	  if(Machine->orientation&ORIENTATION_FLIP_Y)
+	    dy=1.0-dy;
 
-  if(cabview) {
-	*sx=cscrx1+dx*cscrwdx+dy*cscrhdx;
-	*sy=cscry1+dx*cscrwdy+dy*cscrhdy;
-	*sz=cscrz1+dx*cscrwdz+dy*cscrhdz;
-  }
-  else {
-	*sx=dx;
-	*sy=dy;
+	  *sx=dx;
+	  *sy=dy;
+  } else {
+	CalcCabPointbyViewpoint ( dx*s__cscr_w_view,
+	                          dy*s__cscr_h_view,
+				  sx, sy, sz );
   }
 
   if( 0<=*sx && *sx<=1.0 &&
@@ -296,7 +297,7 @@ static void vector_begin_list(void)
 
   CHECK_GL_ERROR ();
 
-  disp__glColor4f(1.0,1.0,1.0,1.0);
+  disp__glColor4d(1.0,1.0,1.0,1.0);
 
   GL_BEGIN(GL_LINE_STRIP);
   inbegin=1;
@@ -310,11 +311,11 @@ static void vector_begin_list(void)
 void vector_add_point (int x, int y, rgb_t color, int intensity)
 {
   unsigned char r1,g1,b1;
-  float red=0.0, green=0.0, blue=0.0;
-  GLfloat sx,sy,sz;
+  double red=0.0, green=0.0, blue=0.0;
+  GLdouble sx,sy,sz;
   int ptHack=0;
   int ok;
-  int gamma_correction = osd_get_gamma();
+  double gamma_correction = palette_get_global_gamma();
 
   if(!inlist)
 	vector_begin_list();
@@ -375,10 +376,10 @@ void vector_add_point (int x, int y, rgb_t color, int intensity)
 
   if(use_mod_ctable)
   {
-	  red   = (float)intensity/255.0 * pow (r1 / 255.0, 1 / gamma_correction);
-	  green = (float)intensity/255.0 * pow (g1 / 255.0, 1 / gamma_correction);
-	  blue  = (float)intensity/255.0 * pow (b1 / 255.0, 1 / gamma_correction);
-	  disp__glColor3f(red, green, blue);
+	  red   = (double)intensity/255.0 * pow (r1 / 255.0, 1 / gamma_correction);
+	  green = (double)intensity/255.0 * pow (g1 / 255.0, 1 / gamma_correction);
+	  blue  = (double)intensity/255.0 * pow (b1 / 255.0, 1 / gamma_correction);
+	  disp__glColor3d(red, green, blue);
   } else {
 	  disp__glColor3ub(r1, g1, b1);
   }
@@ -413,8 +414,8 @@ void vector_add_point (int x, int y, rgb_t color, int intensity)
   }
 
   if(cabview)
-    disp__glVertex3f(sx,sy,sz);
-  else disp__glVertex2f(sx,sy);
+    disp__glVertex3d(sx,sy,sz);
+  else disp__glVertex2d(sx,sy);
 
   vecoldx=sx; vecoldy=sy;
 }

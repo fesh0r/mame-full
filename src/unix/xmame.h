@@ -70,9 +70,14 @@
 EXTERN struct rectangle updatebounds;
 
 /* Orientation */
+EXTERN int		blit_hardware_rotation; // e.g. by the xgl driver
 EXTERN int		blit_flipx;
 EXTERN int		blit_flipy;
 EXTERN int		blit_swapxy;
+EXTERN char		*rotate_dbbuf;
+
+EXTERN int		doublebuffer;
+EXTERN void		*indirect;
 
 /* Aspect ratio */
 EXTERN double		aspect_ratio;
@@ -85,6 +90,9 @@ EXTERN int	 	heightscale;       /* Y scale */
 extern int		yarbsize;          /* arbitrary height */
 EXTERN int		video_colors_used; /* max colors used by any palette */
 EXTERN float		video_fps;
+EXTERN int		video_width;
+EXTERN int		video_height;
+EXTERN int		video_depth;
 EXTERN char		*home_dir;
 EXTERN char		title[50];
 EXTERN int		use_mouse;
@@ -106,7 +114,7 @@ EXTERN struct sysdep_palette_struct *normal_palette;
 EXTERN struct sysdep_palette_struct *debug_palette;
 EXTERN struct sound_stream_struct *sound_stream;
 #ifdef MESS
-extern const char	*crcdir;
+extern char		crcdir[];
 #endif
 
 /* visual is the visual part of the bitmap */
@@ -169,6 +177,7 @@ int frontend_list(char *gamename);
 int frontend_ident(char *gamename);
 void init_search_paths(void);
 void init_rom_path(char *path);
+int should_sleep_idle();
 #ifndef HAVE_SNPRINTF
 int snprintf(char *s, size_t maxlen, const char *fmt, ...);
 #endif

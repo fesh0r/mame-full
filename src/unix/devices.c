@@ -389,45 +389,46 @@ void joy_evaluate_moves (void)
 
 /* 
  * return a value in the range -128 .. 128 (yes, 128, not 127)
+ * Updated from windows code.
+ * Sebastien Devaux <sebastien.devaux@laposte.net> 02/2003
  */
 void osd_analogjoy_read(int player, int analog_axis[], InputCode analogjoy_input[])
 {
-/* NEED TO FILL THIS IN */
-/*
-   int i,val;
-   
-   if (player < JOY && analogstick && joy_data[player].num_axis >= 2)
-   {
-      for (i=0; i<2; i++)
-      {
-         if (joy_data[player].axis[i].val > joy_data[player].axis[i].center)
-            val = (128 *
-                   (joy_data[player].axis[i].val - joy_data[player].axis[i].center)) /
-                  (joy_data[player].axis[i].max - joy_data[player].axis[i].center);
-         else
-            val = (128 *
-                   (joy_data[player].axis[i].val - joy_data[player].axis[i].center)) /
-                  (joy_data[player].axis[i].center - joy_data[player].axis[i].min);
-         switch(i)
-         {
-            case 0:
-               *analog_x = val;
-               break;
-            case 1:
-               *analog_y = val;
-               break;
-         }
-      }
-   }
-   else
-      *analog_x = *analog_y = 0;
-*/
+	int i;
+	/* should scan all axis */
+	for (i=0; i<MAX_ANALOG_AXES ; i++)
+	{
+		int middle,val;
+		struct axisdata_struct * axis;
+		analog_axis[i] = 0;
+
+		if (analogjoy_input[i] > JOYTYPE_AXIS_POS || !analogstick)
+			continue;
+
+		axis=&(joy_data[JOYNUM(analogjoy_input[i])].axis[JOYINDEX(analogjoy_input[i])]);
+		middle = (axis->max + axis->min) / 2;
+		analog_axis[i] = (axis->val - middle) * 257 / (axis->max - axis->min);
+		if (analog_axis[i] < -128) analog_axis[i] = -128;
+		if (analog_axis[i] >  128) analog_axis[i] =  128;
+		if (JOYTYPE( analogjoy_input[i] ) == JOYTYPE_AXIS_POS)
+			analog_axis[i] = -analog_axis[i];
+	}
 }
 
+/*
+ * Updated from windows code.
+ * Sebastien Devaux <sebastien.devaux@laposte.net> 02/2003
+ */
 int osd_is_joystick_axis_code(int joycode)
 {
-/* NEED TO FILL THIS IN */
-   return 0;
+	switch (JOYTYPE( joycode ))
+	{
+		case JOYTYPE_AXIS_POS:
+		case JOYTYPE_AXIS_NEG:
+			return 1;
+		default:
+			return 0;
+	}
 }
 
 void osd_lightgun_read(int player, int *deltax, int *deltay)

@@ -54,11 +54,11 @@ int barath_skip_next_frame(void)
     framerate = (framerate * 5 + framerateavg) / 6.0;
   }
   if (throttle) {
-    int leading = ((sysload > 33) && sleep_idle) ? 0 : uclocks_per_frame;
+    int leading = ((sysload > 33) && should_sleep_idle()) ? 0 : uclocks_per_frame;
     int sparetime = target - scratch_time;
 
     /* test for load-induced lags and set sysload */
-    if (autoframeskip && sleep_idle) {
+    if (autoframeskip && should_sleep_idle()) {
       /* if lag is excessive and framerate is low then we have a system hiccup */
       if ((sysload < 100) && (lag_rate > 3) && (frameskip < max_autoframeskip)) {
 	sysload++;
@@ -92,7 +92,7 @@ int barath_skip_next_frame(void)
 	/* idle until we hit frame ETA or leading */
 	profiler_mark(PROFILER_IDLE);
 	while (target - uclock() > leading)
-	  if (sleep_idle)
+	  if (should_sleep_idle())
 	    usleep(100);
 	profiler_mark(PROFILER_END);
       }
@@ -120,7 +120,7 @@ int barath_skip_next_frame(void)
   }
 
   /* give a little grace in case something else sets it off */
-  if (sleep_idle && autoframeskip && (sysload > 33)) {
+  if (should_sleep_idle() && autoframeskip && (sysload > 33)) {
     profiler_mark(PROFILER_IDLE);
     usleep(100);
     profiler_mark(PROFILER_END);
@@ -147,7 +147,7 @@ int barath_show_fps(char *buffer)
 				debug_value,
 				sysload,
 				throttle ? "T" : "",
-				(throttle && sleep_idle) ? "S" : "",
+				(throttle && should_sleep_idle()) ? "S" : "",
 				(throttle && autoframeskip) ? "A" : "F",
 				frameskip,
 				(int) (speed * 100 + .5),

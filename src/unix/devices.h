@@ -52,6 +52,7 @@
 #define JOY_IS_AXIS(code) \
  ((code < JOY_LIST_LEN) && \
   ((code % JOY_LIST_TOTAL_ENTRIES) <  JOY_LIST_AXIS_ENTRIES))
+
   
 /* mouse doesn't support axis */
 
@@ -134,4 +135,25 @@ void joy_x11_init(void);
 void joy_usb_init(void);
 void joy_SDL_init(void);
 #undef EXTERN
+
+/*
+ * JOY macros copied from windows mame source code
+ * Sebastien Devaux <sebastien.devaux@laposte.net> 02/2003
+ */ 
+// macros for building/mapping keycodes
+#define JOYCODE(joy, type, index)	((index) | ((type) << 8) | ((joy) << 12))
+#define JOYINDEX(joycode)			((joycode) & 0xff)
+#define JOYTYPE(joycode)			(((joycode) >> 8) & 0xf)
+#define JOYNUM(joycode)				(((joycode) >> 12) & 0xf)
+
+// joystick types
+#define JOYTYPE_AXIS_NEG			0
+#define JOYTYPE_AXIS_POS			1
+#define JOYTYPE_POV_UP				2
+#define JOYTYPE_POV_DOWN			3
+#define JOYTYPE_POV_LEFT			4
+#define JOYTYPE_POV_RIGHT			5
+#define JOYTYPE_BUTTON				6
+#define JOYTYPE_MOUSEBUTTON			7
+
 #endif

@@ -98,3 +98,11 @@ Contents of directory contrib/tools
 
 			-v	Invert.  Cause listmissing to report roms that
 				you have installed.
+
+11)	Name:		makecd_mame2.pl
+	Author:		Luc Saillard
+	Description:	This script helps with burning ROMs, flyers, cabinets 
+			onto CDs.  All games on a CD can be played without 
+			requiring ROMs from other CDs.
+	Usage:		makecd_mame.pl gamedir burndir gameslist
+			See script for more information.

@@ -31,11 +31,6 @@
 #include "phkeyboard.h"
 #include "devices.h"
 
-static void ph_window_update_8_to_8bpp (struct mame_bitmap *bitmap);
-static void ph_window_update_8_to_16bpp (struct mame_bitmap *bitmap);
-static void ph_window_update_8_to_24bpp (struct mame_bitmap *bitmap);
-static void ph_window_update_8_to_32bpp (struct mame_bitmap *bitmap);
-static void ph_window_update_8_to_8bpp_direct (struct mame_bitmap *bitmap);
 static void ph_window_update_16_to_16bpp (struct mame_bitmap *bitmap);
 static void ph_window_update_16_to_24bpp (struct mame_bitmap *bitmap);
 static void ph_window_update_16_to_32bpp (struct mame_bitmap *bitmap);
@@ -293,24 +288,6 @@ int I_GetEvent(PtWidget_t *widget, void *data, PtCallbackInfo_t *cbinfo, int bit
 							break;
 						}
 					}
-					else
-					{
-						switch(depth)
-						{
-							case 8:
-								ph_window_update_display_func = ph_window_update_8_to_8bpp;
-							break;
-							case 16:
-								ph_window_update_display_func = ph_window_update_8_to_16bpp;
-							break;
-							case 24:
-								ph_window_update_display_func = ph_window_update_8_to_24bpp;
-							break;
-							case 32:
-								ph_window_update_display_func = ph_window_update_8_to_32bpp;
-							break;
-						}
-					}
 
 					if (ph_window_update_display_func == NULL)
 					{
@@ -467,24 +444,6 @@ int ph_window_create_display (int bitmap_depth)
 			break;
 		}
 	}
-	else
-	{
-		switch(depth)
-		{
-			case 8:
-				ph_window_update_display_func = ph_window_update_8_to_8bpp;
-			break;
-			case 16:
-				ph_window_update_display_func = ph_window_update_8_to_16bpp;
-			break;
-			case 24:
-				ph_window_update_display_func = ph_window_update_8_to_24bpp;
-			break;
-			case 32:
-				ph_window_update_display_func = ph_window_update_8_to_32bpp;
-			break;
-		}
-	}
 
 	if (ph_window_update_display_func == NULL)
 	{
@@ -544,12 +503,6 @@ int ph_window_alloc_palette (int writable_colors)
       fprintf (stderr_file, "info: using r/w palette entries to speed up, good\n");
       for (i = 0; i < writable_colors; i++)
          if (pseudo_color_lookup[i] != i) break;
-         
-      if (i == writable_colors)
-      {
-         ph_window_update_display_func = ph_window_update_8_to_8bpp_direct;
-         fprintf (stderr_file, "info: using direct copy to speed up, good\n");
-      }
    }
    else
    {
@@ -736,54 +689,8 @@ INLINE void ph_window_put_image (int x, int y, int width, int height)
 //#define DEST_WIDTH image->dim.w
 #define DEST_WIDTH image_width
 #define DEST scaled_buffer_ptr
-#define SRC_PIXEL unsigned char
-#define PUT_IMAGE(X, Y, WIDTH, HEIGHT) ph_window_put_image(X, Y, WIDTH, HEIGHT);
-
-#define DEST_PIXEL unsigned char
-
-static void ph_window_update_8_to_8bpp_direct (struct mame_bitmap *bitmap)
-{
-#include "blit.h"
-}
-
-static void ph_window_update_8_to_8bpp (struct mame_bitmap *bitmap)
-{
-#define INDIRECT pseudo_color_lookup
-#include "blit.h"
-#undef INDIRECT
-}
-
-#undef DEST_PIXEL
-
-#define INDIRECT current_palette->lookup
-
-static void ph_window_update_8_to_16bpp (struct mame_bitmap *bitmap)
-{
-#define BLIT_16BPP_HACK
-#define DEST_PIXEL unsigned short
-#include "blit.h"
-#undef DEST_PIXEL
-#undef BLIT_16BPP_HACK
-}
-
-#define DEST_PIXEL unsigned int
-
-static void ph_window_update_8_to_24bpp (struct mame_bitmap *bitmap)
-{
-#define PACK_BITS
-#include "blit.h"
-#undef PACK_BITS
-}
-
-static void ph_window_update_8_to_32bpp (struct mame_bitmap *bitmap)
-{
-#include "blit.h"
-}
-
-#undef  DEST_PIXEL
-
-#undef  SRC_PIXEL
 #define SRC_PIXEL unsigned short
+#define PUT_IMAGE(X, Y, WIDTH, HEIGHT) ph_window_put_image(X, Y, WIDTH, HEIGHT);
 
 static void ph_window_update_16_to_16bpp (struct mame_bitmap *bitmap)
 {

@@ -4,7 +4,7 @@ Juan Antonio Martinez [mailto:jantonio@dit.upm.es||jantonio@dit.upm.es] and Hans
 Herrmann (4 doc/sgml) [mailto:rene.herrmann@berlin.de||rene.herrmann@berlin.de] and Lawrence Gold (minor 
 editing) [mailto:gold@aros.net||gold@aros.net] and David Heremans (minor editing)
 
-v2.1.22, 12 January 2003
+v2.1.24, 17 March 2003
 
 Abstract
 
@@ -2688,7 +2688,7 @@ maintainer. --Lawrence Gold)
 
 * The xmame/xmess sources
 
-  [download/xmame-0.62.2.tar.bz2||xmame-0.62.2 sources]
+  [download/xmame-0.66.1.tar.bz2||xmame-0.66.1 sources]
 
 * xmame/xmess FAQ & Installation Guide:
 
@@ -2720,32 +2720,27 @@ maintainer. --Lawrence Gold)
 
 * [http://www.mame.net/frontend.html||The official mame frontend page ]
 
-* [http://tkmame.retrogames.com||TkMame], the Tcl/TK front-end that works in Linux/Unix and 
-  MS Windows
-
-* [http://www.toetag.com/~tom/xmame.html||Xmameload]
-
-* [ftp://ftp.sad.it/pub/kde/local/||Kmamerun]
+* [http://www.voicenet.com/~jceklosk/||Romeo], a Java front-end
 
 * [http://www.mameworld.net/mamecat/||Mamecat]
 
+* [http://gxmame.sourceforge.net/||GXMame], a GTK front-end striving for MAME32 compatibility
+
+* [http://gnomame.sourceforge.net/||GnoMame], a GNOME front-end
+
+* [ftp://ftp.sad.it/pub/kde/local/||Kmamerun]
+
 * [http://user.cs.tu-berlin.de/~gator/mame/||GrokMame]
 
-* [http://members.xoom.com/gmame/||Gmame]
+* [http://www.geocities.com/SiliconValley/Mouse/1570/||StartXmame]
 
-* [http://www.geocities.com/SiliconValley/Mouse/1570/||startxmame]
+* [http://grustibus.sourceforge.net||gRustibus], a GNOME front-end 
 
 * [http://it-mame.sourceforge.net/index2.html||it-mame]
 
-* [http://grustibus.sourceforge.net||gRustibus], the very good GNOME front-end 
-
 * [http://www.sourceforge.net/projects/iqf/||IQF]
 
-* [http://gnomame.sourceforge.net/||GnoMame], another great GNOME-based front-end 
-
 * [http://lanzamame.mameworld.net/||LANZAMAME]
-
-* [http://www.terra.es/personal3/victorote/frontend/index_en.html||Victor Manuel's TCL/TK Frontend]
 
 * [http://ant.eelinux.com/ptkmame/||ptkmame]
 
@@ -2755,13 +2750,13 @@ maintainer. --Lawrence Gold)
 
 * [http://www.swentelomania.be/swentel/module.php?boxcontent=35&page=40||Playmame & Playmess] (perl-based menu makers)
 
-* [http://www.voicenet.com/~jceklosk/||jMame], a Java-based front-end (requires JDE 1.4.0)
-
-* [http://gxmame.sourceforge.net/||GXMame], a GTK-based front-end striving for MAME32 compatibility
+* [http://www.voicenet.com/~jceklosk/||jMame], a Java front-end (requires JDE 1.4.0)
 
 * [http://yeeking.net/cxmame/||CXmame], a simple console-based front-end
 
-* [http://designs.stormspirit.net/kmameleon/||KMameleon], a KDE front-end.
+* [http://designs.stormspirit.net/kmameleon/||KMameleon], a KDE front-end
+
+* [http://tkmame.retrogames.com/icons||Mamu_'s Icons for X]
 
 7.5 Some other links
 

@@ -10,6 +10,12 @@ int numtex;
 GLuint *cabtex=NULL;
 GLubyte **cabimg=NULL;
 
+#ifndef NDEBUG
+static int wirecabinet = 1;
+#else
+static int wirecabinet = 0;
+#endif
+
 struct CameraPan *cpan=NULL;
 int numpans;
 int pannum;
@@ -22,8 +28,8 @@ static int ingeom=0;
 
 static int inbegin=0;
 
-extern GLfloat cscrx1,cscry1,cscrz1,cscrx2,cscry2,cscrz2,
-  cscrx3,cscry3,cscrz3,cscrx4,cscry4,cscrz4;
+extern GLdouble vx_cscr_p1,vy_cscr_p1,vz_cscr_p1,vx_cscr_p2,vy_cscr_p2,vz_cscr_p2,
+  vx_cscr_p3,vy_cscr_p3,vz_cscr_p3,vx_cscr_p4,vy_cscr_p4,vz_cscr_p4;
 
 
 /* Skip until we hit whitespace */
@@ -46,7 +52,7 @@ char *SkipSpace(char *buf)
 
 /* Parse a string for a 4-component vector */
 
-char *ParseVec4(char *buf,GLfloat *x,GLfloat *y,GLfloat *z,GLfloat *a)
+char *ParseVec4(char *buf,GLdouble *x,GLdouble *y,GLdouble *z,GLdouble *a)
 {
   *x=atof(buf);
 
@@ -76,7 +82,7 @@ char *ParseVec4(char *buf,GLfloat *x,GLfloat *y,GLfloat *z,GLfloat *a)
 
 /* Parse a string for a 3-component vector */
 
-char *ParseVec3(char *buf,GLfloat *x,GLfloat *y,GLfloat *z)
+char *ParseVec3(char *buf,GLdouble *x,GLdouble *y,GLdouble *z)
 {
   *x=atof(buf);
 
@@ -100,7 +106,7 @@ char *ParseVec3(char *buf,GLfloat *x,GLfloat *y,GLfloat *z)
 
 /* Parse a string for a 2-component vector */
 
-char  *ParseVec2(char *buf,GLfloat *x,GLfloat *y)
+char  *ParseVec2(char *buf,GLdouble *x,GLdouble *y)
 {
   *x=atof(buf);
 
@@ -116,7 +122,7 @@ char  *ParseVec2(char *buf,GLfloat *x,GLfloat *y)
   return buf;
 }
 
-char  *ParseArg(char *buf,GLfloat *a)
+char  *ParseArg(char *buf,GLdouble *a)
 {
   *a=atof(buf);
 
@@ -158,7 +164,7 @@ void ParsePan(char *buf,PanType type)
 
 void ParseLine(char *buf)
 {
-  GLfloat x,y,z,a;
+  GLdouble x,y,z,a;
   int texnum;
   int xdim,ydim;
 
@@ -223,15 +229,19 @@ void ParseLine(char *buf)
 		  	   texnum,xdim,ydim,buf);
 		  #endif
 		  
-		  disp__glGenTextures(1,&(cabtex[texnum]));
-		  disp__glBindTexture(GL_TEXTURE_2D,cabtex[texnum]);
+		  if(!wirecabinet)
+		  {
+			  disp__glGenTextures(1,&(cabtex[texnum]));
+			  disp__glBindTexture(GL_TEXTURE_2D,cabtex[texnum]);
+		  }
 		  
 		  cabimg[texnum]=read_JPEG_file(buf);
 		  if(!cabimg[texnum])
 			printf("GLError (cab): Unable to read %s\n",buf);
 		  
-		  disp__glTexImage2D(GL_TEXTURE_2D,0,3,xdim,ydim,0,GL_RGB,GL_UNSIGNED_BYTE,
-					   cabimg[texnum]);
+		  if(!wirecabinet)
+		  	disp__glTexImage2D(GL_TEXTURE_2D,0,3,xdim,ydim,0,
+					   GL_RGB,GL_UNSIGNED_BYTE, cabimg[texnum]);
 		  
 		  disp__glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 		  disp__glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
@@ -297,6 +307,10 @@ void ParseLine(char *buf)
 		inbegin=1;
 	  }
 	  else if(!strncasecmp(buf+6,"polygon",7)) {
+	  	if(wirecabinet) {
+			disp__glPolygonMode(GL_BACK , GL_LINE);
+			disp__glPolygonMode(GL_FRONT, GL_LINE);
+		}
 		GL_BEGIN(GL_POLYGON);
 		inbegin=1;
 	  }
@@ -316,26 +330,26 @@ void ParseLine(char *buf)
 	}
 	else if(!strncasecmp(buf,"color3",6)) {
 	  ParseVec3(buf+7,&x,&y,&z);
-	  disp__glColor3f(x,y,z);
+	  disp__glColor3d(x,y,z);
 	}
 	else if(!strncasecmp(buf,"color4",6)) {
 	  ParseVec4(buf+7,&x,&y,&z,&a);
-	  disp__glColor4f(x,y,z,a);
+	  disp__glColor4d(x,y,z,a);
 	}
 	else if(!strncasecmp(buf,"vertex",6)) {
 	  if(inscreen) {
 		switch(scrvert) {
-		case 1:
-		  ParseVec3(buf+7,&cscrx1,&cscry1,&cscrz1);
-		  break;
-		case 2:
-		  ParseVec3(buf+7,&cscrx2,&cscry2,&cscrz2);
+		case 4:
+		  ParseVec3(buf+7,&vx_cscr_p1,&vy_cscr_p1,&vz_cscr_p1);
 		  break;
 		case 3:
-		  ParseVec3(buf+7,&cscrx3,&cscry3,&cscrz3);
+		  ParseVec3(buf+7,&vx_cscr_p2,&vy_cscr_p2,&vz_cscr_p2);
 		  break;
-		case 4:
-		  ParseVec3(buf+7,&cscrx4,&cscry4,&cscrz4);
+		case 2:
+		  ParseVec3(buf+7,&vx_cscr_p3,&vy_cscr_p3,&vz_cscr_p3);
+		  break;
+		case 1:
+		  ParseVec3(buf+7,&vx_cscr_p4,&vy_cscr_p4,&vz_cscr_p4);
 		  break;
 		default:
 		  printf("GLError (cab): Error: Too many vertices in screen definition\n");
@@ -346,7 +360,7 @@ void ParseLine(char *buf)
 	  }
 	  else {
 		ParseVec3(buf+7,&x,&y,&z);
-		disp__glVertex3f(x,y,z);
+		disp__glVertex3d(x,y,z);
 	  }
 	}
 	else if(!strncasecmp(buf,"shading",7)) {
@@ -371,12 +385,12 @@ void ParseLine(char *buf)
 	  
 	  if(texnum>=numtex)
 		printf("GLError (cab): Hightest possible texture number is %d\n",numtex-1);
-	  else
+	  else if(!wirecabinet)
 		disp__glBindTexture(GL_TEXTURE_2D,cabtex[texnum]);
 	}
 	else if(!strncasecmp(buf,"texcoord",8)) {
 	  ParseVec2(buf+9,&x,&y);
-	  disp__glTexCoord2f(x,y);
+	  disp__glTexCoord2d(x,y);
 	}
 	else printf("GLError (cab): Invalid command -- %s",buf);
   }
@@ -461,6 +475,11 @@ int LoadCabinet(char *cabname)
 
   while(fgets(buf,256,cfp)) {
 	ParseLine(buf);
+  }
+
+  if(wirecabinet) {
+	disp__glPolygonMode(GL_BACK , GL_FILL);
+	disp__glPolygonMode(GL_FRONT, GL_FILL);
   }
 
   disp__glEndList();

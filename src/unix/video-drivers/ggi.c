@@ -100,19 +100,10 @@ static void (*oldsigquith)(int) = NULL;
 
 static void ggi_cleanup(void);
 static void (*update_function)(struct mame_bitmap *bitmap);
-static void ggi_update_8_to_8bpp(struct mame_bitmap *bitmap);
-static void ggi_update_8_to_8bpp_scaled(struct mame_bitmap *bitmap);
-static void ggi_update_8_to_16bpp(struct mame_bitmap *bitmap);
-static void ggi_update_8_to_24bpp(struct mame_bitmap *bitmap);
-static void ggi_update_8_to_32bpp(struct mame_bitmap *bitmap);
 static void ggi_update_16_to_16bpp(struct mame_bitmap *bitmap);
 static void ggi_update_16_to_16bpp_scaled(struct mame_bitmap *bitmap);
 static void ggi_update_16_to_24bpp(struct mame_bitmap *bitmap);
 static void ggi_update_16_to_32bpp(struct mame_bitmap *bitmap);
-static void ggi_update_linear_8_to_8bpp(struct mame_bitmap *bitmap);
-static void ggi_update_linear_8_to_16bpp(struct mame_bitmap *bitmap);
-static void ggi_update_linear_8_to_24bpp(struct mame_bitmap *bitmap);
-static void ggi_update_linear_8_to_32bpp(struct mame_bitmap *bitmap);
 static void ggi_update_linear_16_to_16bpp(struct mame_bitmap *bitmap);
 static void ggi_update_linear_16_to_24bpp(struct mame_bitmap *bitmap);
 static void ggi_update_linear_16_to_32bpp(struct mame_bitmap *bitmap);
@@ -248,28 +239,28 @@ static int set_video_mode(int depth)
     typedef void(*updater_t)(struct mame_bitmap *bitmap);
     updater_t updaters[] = {
         /* linear updaters */
-        ggi_update_linear_8_to_8bpp,
-        ggi_update_linear_8_to_16bpp,
-        ggi_update_linear_8_to_24bpp,
-        ggi_update_linear_8_to_32bpp,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
         NULL,
         ggi_update_linear_16_to_16bpp,
         ggi_update_linear_16_to_24bpp,
         ggi_update_linear_16_to_32bpp,
         /* non-linear updaters */
-        ggi_update_8_to_8bpp,
-        ggi_update_8_to_16bpp,
-        ggi_update_8_to_24bpp,
-        ggi_update_8_to_32bpp,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
         NULL,
         ggi_update_16_to_16bpp,
         ggi_update_16_to_24bpp,
         ggi_update_16_to_32bpp,
         /* scaled non-linear updaters */
-        ggi_update_8_to_8bpp_scaled,
-        ggi_update_8_to_16bpp,
-        ggi_update_8_to_24bpp,
-        ggi_update_8_to_32bpp,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
         NULL,
         ggi_update_16_to_16bpp_scaled,
         ggi_update_16_to_24bpp,
@@ -559,128 +550,6 @@ int sysdep_display_set_pen(int pen,unsigned char red, unsigned char green,
  *  e.g. "X+screen_startx" out of the loops...)
  */
 
-/* 8bpp to 8bpp, not scaled */
-static void ggi_update_8_to_8bpp(struct mame_bitmap *bitmap)
-{
-#define PUT_IMAGE(X, Y, WIDTH, HEIGHT) \
-    { \
-        int _i; \
-        for (_i=0; _i<HEIGHT; _i++) { \
-            ggiPutHLine(vis,screen_startx+(X),screen_starty+(Y)+_i, \
-                        WIDTH,bitmap->line[(Y)+visual.min_y+_i]+visual.min_x+(X)); \
-        } \
-    }
-#include "blit.h"
-#undef PUT_IMAGE
-}
-
-/*---------*/
-
-/* 8bpp to 8bpp, scaled */
-static void ggi_update_8_to_8bpp_scaled(struct mame_bitmap *bitmap)
-{
-#define SRC_PIXEL unsigned char
-#define DEST_PIXEL unsigned char
-#define DEST doublebuffer_buffer
-#define DEST_WIDTH scaled_visual_width
-#define PUT_IMAGE(X, Y, WIDTH, HEIGHT) \
-    { \
-        int _i; \
-        for (_i=0; _i<HEIGHT; _i++) { \
-            ggiPutHLine(vis,screen_startx+X,screen_starty+Y+_i, \
-                        WIDTH,DEST + (X) * sizeof(DEST_PIXEL) + DEST_WIDTH * sizeof(DEST_PIXEL) * (_i + Y) ); \
-        } \
-    }
-#include "blit.h"
-#undef PUT_IMAGE
-#undef DEST_WIDTH
-#undef DEST
-#undef DEST_PIXEL
-#undef SRC_PIXEL
-}
-
-/*---------*/
-
-static void ggi_update_8_to_16bpp(struct mame_bitmap *bitmap)
-{
-#define INDIRECT current_palette->lookup
-#define SRC_PIXEL unsigned char
-#define DEST_PIXEL unsigned short
-#define DEST doublebuffer_buffer
-#define DEST_WIDTH scaled_visual_width
-#define PUT_IMAGE(X, Y, WIDTH, HEIGHT) \
-    { \
-        int _i; \
-        for (_i=0; _i<HEIGHT; _i++) { \
-            ggiPutHLine(vis,screen_startx+X,screen_starty+Y+_i, \
-                        WIDTH,DEST + (X) * sizeof(DEST_PIXEL) + DEST_WIDTH * sizeof(DEST_PIXEL) * (_i + Y) ); \
-        } \
-    }
-#include "blit.h"
-#undef DEST_WIDTH
-#undef DEST
-#undef DEST_PIXEL
-#undef SRC_PIXEL
-#undef PUT_IMAGE
-#undef INDIRECT
-}
-
-/*---------*/
-
-static void ggi_update_8_to_24bpp(struct mame_bitmap *bitmap)
-{
-#define INDIRECT current_palette->lookup
-#define SRC_PIXEL unsigned char
-#define DEST_PIXEL unsigned int
-#define DEST doublebuffer_buffer
-#define DEST_WIDTH scaled_visual_width
-#define PACK_BITS
-#define PUT_IMAGE(X, Y, WIDTH, HEIGHT) \
-    { \
-        int _i; \
-        for (_i=0; _i<HEIGHT; _i++) { \
-            ggiPutHLine(vis,screen_startx+X,screen_starty+Y+_i, \
-                        WIDTH,DEST + (X) * 3 + DEST_WIDTH * 3 * (_i + Y) ); \
-        } \
-    }
-#include "blit.h"
-#undef DEST_WIDTH
-#undef DEST
-#undef DEST_PIXEL
-#undef SRC_PIXEL
-#undef PUT_IMAGE
-#undef PACK_BITS
-#undef INDIRECT
-}
-
-/*---------*/
-
-static void ggi_update_8_to_32bpp(struct mame_bitmap *bitmap)
-{
-#define INDIRECT current_palette->lookup
-#define SRC_PIXEL unsigned char
-#define DEST_PIXEL unsigned int
-#define DEST doublebuffer_buffer
-#define DEST_WIDTH scaled_visual_width
-#define PUT_IMAGE(X, Y, WIDTH, HEIGHT) \
-    { \
-        int _i; \
-        for (_i=0; _i<(HEIGHT); _i++) { \
-            ggiPutHLine(vis,screen_startx+(X),screen_starty+(Y)+_i, \
-                        WIDTH,DEST + (X) * sizeof(DEST_PIXEL) + DEST_WIDTH * sizeof(DEST_PIXEL) * (_i + (Y)) ); \
-        } \
-    }
-#include "blit.h"
-#undef DEST_WIDTH
-#undef DEST
-#undef DEST_PIXEL
-#undef SRC_PIXEL
-#undef PUT_IMAGE
-#undef INDIRECT
-}
-
-/*---------*/
-
 static void ggi_update_16_to_16bpp(struct mame_bitmap *bitmap)
 {
    if (current_palette->lookup)
@@ -789,84 +658,6 @@ static void ggi_update_16_to_32bpp(struct mame_bitmap *bitmap)
 #undef DEST_PIXEL
 #undef SRC_PIXEL
 #undef PUT_IMAGE
-#undef INDIRECT
-}
-
-/*---------*/
-
-static void ggi_update_linear_8_to_8bpp(struct mame_bitmap *bitmap)
-{
-#define DEST_PIXEL unsigned char
-#define SRC_PIXEL unsigned char
-#define DEST video_mem
-#define DEST_WIDTH mode.virt.x
-#define DOUBLEBUFFER
-#include "blit.h"
-#undef DEST
-#undef DEST_WIDTH
-#undef DOUBLEBUFFER
-#undef SRC_PIXEL
-#undef DEST_PIXEL
-}
-
-/*---------*/
-
-static void ggi_update_linear_8_to_16bpp(struct mame_bitmap *bitmap)
-{
-#define INDIRECT current_palette->lookup
-#define DEST_PIXEL unsigned short
-#define SRC_PIXEL unsigned char
-#define DEST video_mem
-#define DEST_WIDTH mode.virt.x
-#define DOUBLEBUFFER
-#define BLIT_16BPP_HACK
-#include "blit.h"
-#undef BLIT_16BPP_HACK
-#undef DEST
-#undef DEST_WIDTH
-#undef DOUBLEBUFFER
-#undef SRC_PIXEL
-#undef DEST_PIXEL
-#undef INDIRECT
-}
-
-/*---------*/
-
-static void ggi_update_linear_8_to_24bpp(struct mame_bitmap *bitmap)
-{
-#define INDIRECT current_palette->lookup
-#define DEST_PIXEL unsigned int
-#define SRC_PIXEL unsigned char
-#define PACK_BITS
-#define DEST video_mem
-#define DEST_WIDTH mode.virt.x
-#define DOUBLEBUFFER
-#include "blit.h"
-#undef PACK_BITS
-#undef DEST
-#undef DEST_WIDTH
-#undef DOUBLEBUFFER
-#undef SRC_PIXEL
-#undef DEST_PIXEL
-#undef INDIRECT
-}
-
-/*---------*/
-
-static void ggi_update_linear_8_to_32bpp(struct mame_bitmap *bitmap)
-{
-#define INDIRECT current_palette->lookup
-#define DEST_PIXEL unsigned int
-#define SRC_PIXEL unsigned char
-#define DEST video_mem
-#define DEST_WIDTH mode.virt.x
-#define DOUBLEBUFFER
-#include "blit.h"
-#undef PACK_BITS
-#undef DEST_WIDTH
-#undef DOUBLEBUFFER
-#undef SRC_PIXEL
-#undef DEST_PIXEL
 #undef INDIRECT
 }
 

@@ -1,4 +1,4 @@
-This is the complete list of games supported by xmess 0.62.1 (Dec  9 2002).
+This is the complete list of games supported by xmess 0.66.1 (Mar 17 2003).
 
 This list is generated automatically and is not 100% accurate (particularly in
 the Screen Flip column). Please let us know of any errors so we can correct
@@ -16,7 +16,7 @@ Correct Colors
     YES: Colors should be identical to the original.
   CLOSE: Colors are nearly correct.
      NO: Colors are completely wrong. 
-  
+
   Note: In some cases, the color PROMs for some games are not yet available.
   This causes a NO GOOD DUMP KNOWN message on startup (and, of course, the game
   has wrong colors). The game will still say YES in this column, however,
@@ -99,6 +99,7 @@ Internal Name
 | C65 / C64DX (Prototype, NTSC, 911|   No  |  Yes  |  Yes  |  Yes  | c65      |
 | CBM4064/PET64/Educator64 (NTSC)  |  Yes  |  Yes  |  Yes  |  Yes  | cbm4064  |
 | CP400                            |  Yes  |  Yes  |  Yes  |  Yes  | cp400    |
+| CPS Changer (Street Fighter ZERO)|  Yes  |  Yes  |  Yes  |  Yes  | sfzch    |
 | Channel F                        |  Yes  |  Yes  |  Yes  |  Yes  | channelf |
 | Chess Champion MK II             |  Yes  |  Yes  |  Yes  |  Yes  | mk2      |
 | Colecovision                     |  Yes  |  Yes  |  Yes  |  Yes  | coleco   |
@@ -244,7 +245,7 @@ Internal Name
 | PET2001/CBM20xx Series (Basic 1) |  Yes  |  Yes  |   No  |  Yes  | pet      |
 | PK-01 Lviv                       |  Yes  |  Yes  |  Yes  |  Yes  | lviv     |
 | PK-01 Lviv (alternate)           |  Yes  |  Yes  |  Yes  |  Yes  | lviva    |
-| PK-01 Lviv (early)               |  Yes  |  Yes  |  Yes  |  Yes  | lvive    |
+| PK-01 Lviv (prototype)           |  Yes  |  Yes  |  Yes  |  Yes  | lvivp    |
 | Philips P2000M                   |  Yes  |  Yes  |  Yes  |  Yes  | p2000m   |
 | Philips P2000T                   |  Yes  |  Yes  |  Yes  |  Yes  | p2000t   |
 | Pocket Computer 1251             |   No  |  Yes  |  Yes  |  Yes  | pc1251   |
@@ -267,8 +268,8 @@ Internal Name
 | Sord M5                          |  Yes  |  Yes  |  Yes  |  Yes  | sordm5   |
 | Spectrum I+                      |  Yes  |  Yes  |  Yes  |  Yes  | raaspec  |
 | Super GameBoy                    |  Yes  |  Yes  |  Yes  |  Yes  | supergb  |
-| Super Nintendo Entertainment Syst|   No  |  Yes  |  Yes  |  Yes  | snes     |
-| Super Nintendo Entertainment Syst|   No  |  Yes  |  Yes  |  Yes  | snespal  |
+| Super Nintendo Entertainment Syst|   No  |  Yes  |   No  |  Yes  | snes     |
+| Super Nintendo Entertainment Syst|   No  |  Yes  |   No  |  Yes  | snespal  |
 | Super Vision                     |  Yes  |  Yes  |Partial|  Yes  | svision  |
 | Superboard II                    |  Yes  |  Yes  |  Yes  |  Yes  | superbrd |
 | System-80                        |  Yes  |  Yes  |  Yes  |  Yes  | sys80    |
@@ -336,4 +337,4 @@ Internal Name
 (2) Needs samples provided separately
 
 
-Total Supported: 278
+Total Supported: 279

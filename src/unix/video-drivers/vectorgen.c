@@ -9,12 +9,12 @@ static float intensity_correction = 1.0;
 
 void vector_set_gamma(float gamma)
 {
-	sysdep_palette_set_gamma(normal_palette, gamma);
+	palette_set_global_gamma(gamma);
 }
 
 float vector_get_gamma(void)
 {
-	return sysdep_palette_get_gamma(normal_palette);
+	return palette_get_global_gamma();
 }
 
 void vector_set_intensity(float _intensity)

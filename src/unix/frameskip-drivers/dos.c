@@ -75,7 +75,7 @@ int dos_skip_next_frame()
         		   {
         		      curr = uclock();
         		      if ((target - curr) > (UCLOCKS_PER_SEC / 1000) &&
-        		          sleep_idle)
+        		          should_sleep_idle())
         		         usleep(100);
         		   }
 

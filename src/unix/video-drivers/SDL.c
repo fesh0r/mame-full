@@ -94,10 +94,6 @@ struct rc_option display_opts[] = {
       NULL }
 };
 
-void sdl_update_8_to_8bpp(struct mame_bitmap *bitmap);
-void sdl_update_8_to_16bpp(struct mame_bitmap *bitmap);
-void sdl_update_8_to_24bpp(struct mame_bitmap *bitmap);
-void sdl_update_8_to_32bpp(struct mame_bitmap *bitmap);
 void sdl_update_16_to_16bpp(struct mame_bitmap *bitmap);
 void sdl_update_16_to_24bpp(struct mame_bitmap *bitmap);
 void sdl_update_16_to_32bpp(struct mame_bitmap *bitmap);
@@ -223,28 +219,7 @@ int sysdep_create_display(int depth)
       }
    }
 
-   if( depth == 8 ) {
-      switch( Vid_depth ) {
-      case 32:
-         update_function = &sdl_update_8_to_32bpp;
-         break;
-      case 24:
-         update_function = &sdl_update_8_to_24bpp;
-         break;
-      case 16:
-         update_function = &sdl_update_8_to_16bpp;
-         break;
-      case 8:
-         update_function = &sdl_update_8_to_8bpp;
-         break;
-      default:
-         fprintf (stderr, "SDL: Unsupported Vid_depth=%d in depth=%d\n", Vid_depth,depth);
-         SDL_Quit();
-         exit (OSD_NOT_OK);
-         break;
-      }
-   }
-   else if( depth == 16 )
+   if( depth == 16 )
    {
       switch( Vid_depth ) {
       case 32:
@@ -377,79 +352,6 @@ static int sdl_mapkey(struct rc_option *option, const char *arg, int priority)
 }
 
 /* Update routines */
-void sdl_update_8_to_8bpp (struct mame_bitmap *bitmap)
-{
-#define DEST_WIDTH Vid_width
-#define DEST Offscreen_surface->pixels
-#define SRC_PIXEL unsigned char
-#define DEST_PIXEL unsigned char
-
-#include "blit.h"
-
-#undef DEST_PIXEL
-#undef SRC_PIXEL
-#undef DEST
-#undef DEST_WIDTH
-}
-
-void sdl_update_8_to_16bpp(struct mame_bitmap *bitmap)
-{
-#define BLIT_16BPP_HACK
-#define INDIRECT current_palette->lookup
-#define SRC_PIXEL  unsigned char
-#define DEST_PIXEL unsigned short
-#define DEST Offscreen_surface->pixels
-#define DEST_WIDTH Vid_width
-
-#include "blit.h"
-
-#undef DEST_WIDTH
-#undef DEST
-#undef DEST_PIXEL
-#undef SRC_PIXEL
-#undef INDIRECT
-#undef BLIT_16BPP_HACK
-}
-
-void sdl_update_8_to_24bpp (struct mame_bitmap *bitmap)
-{
-#define SRC_PIXEL  unsigned char
-#define DEST_PIXEL unsigned int
-#define PACK_BITS
-#define DEST Offscreen_surface->pixels
-#define DEST_WIDTH Vid_width
-   if(current_palette->lookup)
-   {
-#define INDIRECT current_palette->lookup
-#include "blit.h"
-#undef INDIRECT
-   }
-   else
-   {
-#include "blit.h"
-   }
-#undef DEST_WIDTH
-#undef DEST
-#undef PACK_BITS
-#undef DEST_PIXEL
-#undef SRC_PIXEL
-}
-
-void sdl_update_8_to_32bpp (struct mame_bitmap *bitmap)
-{
-#define INDIRECT current_palette->lookup
-#define SRC_PIXEL  unsigned char
-#define DEST_PIXEL unsigned int
-#define DEST Offscreen_surface->pixels
-#define DEST_WIDTH Vid_width
-#include "blit.h"
-#undef DEST_WIDTH
-#undef DEST
-#undef DEST_PIXEL
-#undef SRC_PIXEL
-#undef INDIRECT
-}
-
 void sdl_update_16_to_16bpp (struct mame_bitmap *bitmap)
 {
 #define SRC_PIXEL  unsigned short

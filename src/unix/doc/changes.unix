@@ -2,15 +2,56 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
-Release 0.63.1, in progress
-	- Almost everything from MAME 0.63.
+Release 0.66.1, 17 March 2003
+	- Amost everything from MAME 0.66 and MESS CVS.
+	- Enabling X11_DGA in the makefile causes "make install" to set the 
+	  suid bit on the executable.  (Christopher Stone)
+	- The Barath frameskipper is now enabled by default.  (suggested by 
+	  Christopher Stone)
+	- Fixed the use of 'sdl-config' in src/unix/unix.mak on platforms such 
+	  as FreeBSD.  (Stijn Hoop)
+	- Rotation has been moved to the blit core and should be a lot faster. 
+	  (Shyouzou Sugitani)
+	- Updated the GLmame driver to 0.94, which supports hardware bitmap 
+	  rotation and should fix the OpenGL problems that have affected recent
+	  releases.  (Sven Goethel)
+	- Analog controls work again, and the analog code is now synced up with
+	  the Windows code.  (Sebastien Devaux)
+	- The "-joydev" switch now allows a full device name, such as 
+	  /dev/input/js0, to be specified.
+	- Added makecd_mame2.pl to contrib tools; this script aids with burning
+	  CDs with ROMs, flyers, and cabinets.  (Luc Saillard)
+	- Renamed "-gamma-correction" to "-gamma" to be consistent with the 
+	  Win32 version.  It should also work now.
+	- An Xv-enabled build should no longer report 0 bits per pixel and stop
+	  on a display that doesn't support the Xv extension.  (Alexander 
+	  Miller)
+	- The "-brightness" switch now works as in Windows.  Removed obsolete 
+	  brightness and gamma code from sysdep_palette.
+	- Idle sleeping is now disabled while the onscreen configuration menu 
+	  is displayed.  This works around a problem with key and button 
+	  presses not registering when setting input preferences.
+	- The "-record" and "-playback" switches now work as in the Win32 
+	  version.  Also, the "inp" directory is now created on startup if 
+	  it is missing.
+	- MAME's disassemblers are no longer built by default.  This avoids  
+	  having to make some ugly little patches to the core.  (Christopher 
+	  Stone)
+	- Removed the obsolete 8bpp update functions from most of the targets.  
+	  This should speed compilation and produce a smaller binary.
+	- Building on IRIX should again work "out of the box".
+
+Release 0.65.1, 11 February 2003
+	- Almost everything from MAME 0.65 and MESS CVS.
 	- Removed support for the ALSA 0.5 plugin.  (Shyouzou Sugitani)
-	- Fixed a C89 compilation error in vidhrdw/gaelco2.c.  (Andrea 
-	  Mazzoleni)
-	- Fixed the pitch for games using a YMF278B.  (R. Belmont)
 	- The default path for data files in the example rc files, docs, and 
-	  several scripts is now FHS-compliant.  (Reported by anarxia.)
-	- Parsing the history data file is much faster.  (Chris Kirmse)
+	  several scripts is now more FHS-compliant.  (Reported by anarxia.)
+	- Disabled XScreenSaver support because it can cause the game window to
+	  not open when running in KDE.  (Christopher Stone)
+	- Reworked makefile.unix with the intent of making it a bit cleaner and
+	  easier to tweak.
+	- hdcomp now builds via "make -f makefile.unix tools".
+	- Removed most Windows- and MS-DOS-specific files.
 
 Release 0.62.2, 12 January 2003
 	- Fixed a link error that affected xmame but not xmess.
@@ -20,8 +61,8 @@ Release 0.62.1, 12 January 2003
 	- The game window should no longer open twice on startup in most cases.
 	  One known exception is Pac-Man with artwork enabled.
 	- Replaced fileio.c with a slightly modified version from the Win32 
-	  codebase.  Be aware that several command line switches have changed as
-	  a result!
+	  codebase.  Be aware that several command line switches have changed 
+	  as a result!
 	- Applied the Xv cleanup patch required for the VIDIX patch.  (Alastair 
 	  Robinson)
 	- The number of games is no longer hard-coded to 3000 in datafile.c.  

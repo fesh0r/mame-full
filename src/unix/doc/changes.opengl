@@ -1,5 +1,5 @@
-GLMame v 0.92 Mame Display Driver
-=================================
+GLMame v 0.94 - the_peace_version - Mame Display Driver
+=======================================================
 
 Sven Goethel
 http://www.jausoft.com
@@ -10,6 +10,50 @@ MAME License
 Based upon GLmame v0.6 driver for xmame, written by Mike Oliphant
 
 peace, sven
+
+  22/January/2003 GLMame OpenGL-Display-Driver Version 0.94
+  ==========================================================
+  	o affects xmame 0.65.1 + Sugitani's Blit-Patch !
+		- so patch after you have patched the blit-patch on 0.65.1 !
+	
+	o all rotations are done within opengl, 
+	  disabled them in unix/video.c (-> unix/video-drivers/blit*.h)
+	  	- via "#ifndef xgl"
+		- via "int blit_hardware_rotation=1" 
+
+	o all rotations does work now, even in cabinet mode ;-)
+
+	o cabinet screen vector specification:
+		the <model>.cab file contains the screen section for the mame
+		gameplane !
+
+		the vectrices must follow the following order:
+			1.) left  - top
+			2.) right - top
+			3.) right - bottom
+			4.) left  - bottom
+		where:
+			left   < right
+			bottom < top
+
+		this order is because of historical reason,
+		and is reordered, i.e. reversed, within the glcab.c code.
+
+	o complete rearranged cabinet screen calculations
+		- fixes game screen offset and aspect-ratio
+		- float -> double
+		- much better documentation !
+
+	o some cabinet bugfixes ..
+
+	o some other bugfixes ;-)
+
+	o todo:
+		- fix fullscreen bug, while toggling cabinet mode
+
+		- try to find a 16bpp solution for opengl color tables,
+		  so no more blit's are needed ... (nvidia does not allow ..)
+
 
   01/December/2001 GLMame OpenGL-Display-Driver Version 0.92
   =================================================================

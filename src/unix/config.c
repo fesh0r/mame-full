@@ -24,6 +24,9 @@ extern char *db_filename;
 extern char *history_filename;
 extern char *mameinfo_filename;
 
+extern char *playbackname;
+extern char *recordname;
+
 /* some local vars */
 static int showconfig = 0;
 static int showmanusage = 0;
@@ -103,7 +106,7 @@ static struct rc_option opts[] = {
 	{ "quickload", "quik", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to quickload device" },
 	{ "ramsize", "ram", rc_string, &mess_opts, NULL, 0, 0, specify_ram, "Specifies size of RAM (if supported by driver)" },
 #else
-   { "Mame Related",	NULL,			rc_seperator,	NULL,
+   { "MAME Related",	NULL,			rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
      NULL },
    { "defaultgame",	"def",			rc_string,	&defaultgamename,
@@ -200,11 +203,13 @@ static int fuzzycmp (const char *s, const char *l)
    return gaps;
 }
 
+#ifndef MESS
 /* for verify roms which is used for the random game selection */
 static int config_printf(const char *fmt, ...)
 {
    return 0;
 }
+#endif
 
 static int config_handle_arg(char *arg)
 {
@@ -266,7 +271,6 @@ int config_init (int argc, char *argv[])
 {
    char buffer[BUF_SIZE];
    unsigned char lsb_test[2]={0,1};
-   INP_HEADER inp_header;
    int i;
    
    memset(&options,0,sizeof(options));
@@ -319,29 +323,40 @@ int config_init (int argc, char *argv[])
    if(!(home_dir = rc_get_home_dir()))
       return OSD_NOT_OK;
    
-   /* check the nescesarry dirs exist, and create them if nescesarry */
+   /* check that the required dirs exist, and create them if necessary */
    snprintf(buffer, BUF_SIZE, "%s/.%s", home_dir, NAME);
    if (rc_check_and_create_dir(buffer))
       return OSD_NOT_OK;
+
    snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "cfg");
    if (rc_check_and_create_dir(buffer))
       return OSD_NOT_OK;
+
    snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "mem");
    if (rc_check_and_create_dir(buffer))
       return OSD_NOT_OK;
+
    snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "sta");
    if (rc_check_and_create_dir(buffer))
       return OSD_NOT_OK;
+
    snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "nvram");
    if (rc_check_and_create_dir(buffer))
       return OSD_NOT_OK;
+
    snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "diff");
    if (rc_check_and_create_dir(buffer))
       return OSD_NOT_OK;
+
    snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "rc");
    if (rc_check_and_create_dir(buffer))
       return OSD_NOT_OK;
+
    snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "hi");
+   if (rc_check_and_create_dir(buffer))
+      return OSD_NOT_OK;
+
+   snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "inp");
    if (rc_check_and_create_dir(buffer))
       return OSD_NOT_OK;
    
@@ -404,36 +419,43 @@ int config_init (int argc, char *argv[])
    
    if ( (i=frontend_ident(gamename)) != 1234)
       return i;
-   
-   if (options.playback)
-   {
-      /* read the playback header */
-      mame_fread(options.playback, &inp_header, sizeof(INP_HEADER));
-      if (!isalnum(inp_header.name[0]))
-      {
-         /* old .inp file - no header */
-         mame_fseek(options.playback, 0, SEEK_SET); 
-         if(!gamename)
-         {
-            fprintf(stderr_file, "error: old type .inp file and no game specified\n");
-            return OSD_NOT_OK;
-         }
-      }
-      else
-      {
-         if(gamename)
-         {
-            if(strcmp(gamename, inp_header.name))
-            {
-               fprintf(stderr_file, "Error: Input file is for a different game as specified\n");
-               return OSD_NOT_OK;
-            }
-            else
-               fprintf(stderr_file, "Hint: with new .inp files you don't have to specify a game anymore\n");
-         }
-         gamename = inp_header.name;
-      }
-   }
+
+	if (playbackname)
+	{
+		options.playback = mame_fopen(playbackname, 0, FILETYPE_INPUTLOG, 0);
+		if (!options.playback)
+		{
+			fprintf(stderr, "failed to open %s for playback\n", playbackname);
+			exit(1);
+		}
+	}
+
+	/* check for game name embedded in .inp header */
+	if (options.playback)
+	{
+		INP_HEADER inp_header;
+
+		/* read playback header */
+		mame_fread(options.playback, &inp_header, sizeof(INP_HEADER));
+
+		if (!isalnum(inp_header.name[0])) /* If first byte is not alpha-numeric */
+			mame_fseek(options.playback, 0, SEEK_SET); /* old .inp file - no header */
+		else
+		{
+			for (i = 0; (drivers[i] != 0); i++) /* find game and play it */
+			{
+				if (strcmp(drivers[i]->name, inp_header.name) == 0)
+				{
+					game_index = i;
+					gamename = (char *)drivers[i]->name;
+					printf("Playing back previously recorded game %s (%s) [press return]\n",
+							drivers[game_index]->name,drivers[game_index]->description);
+					getchar();
+					break;
+				}
+			}
+		}
+	}
    
    /* handle the game selection */
    game_index = -1;
@@ -630,20 +652,25 @@ int config_init (int argc, char *argv[])
       }
    }
 #endif
-   
-   if (options.record)
-   {
-      memset(&inp_header, '\0', sizeof(INP_HEADER));
-      strcpy(inp_header.name, drivers[game_index]->name);
-      /* MAME32 stores the MAME version numbers at bytes 9 - 11
-       * MAME DOS and xmame keeps this information in a rc_string, the
-       * Windows code defines them in the Makefile.
-      inp_header.version[0] = 0;
-      inp_header.version[1] = VERSION;
-      inp_header.version[2] = BETA_VERSION;
-      */
-      mame_fwrite(options.record, &inp_header, sizeof(INP_HEADER));
-   }
+
+	if (recordname)
+	{
+		options.record = mame_fopen(recordname, 0, FILETYPE_INPUTLOG, 1);
+		if (!options.record)
+		{
+			fprintf(stderr_file, "failed to open %s for recording\n", recordname);
+			exit(1);
+		}
+	}
+	
+	if (options.record)
+	{
+		INP_HEADER inp_header;
+
+		memset(&inp_header, '\0', sizeof(INP_HEADER));
+		strcpy(inp_header.name, drivers[game_index]->name);
+		mame_fwrite(options.record, &inp_header, sizeof(INP_HEADER));
+	}
    
    if(language)
       options.language_file = mame_fopen(0,language,FILETYPE_LANGUAGE,0);

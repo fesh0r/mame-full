@@ -49,16 +49,35 @@ void joy_i386_poll(void);
 void joy_i386new_poll(void);
 static joy_struct my_joy_data;
 
-void joy_i386_init (void)
+void joy_i386_init(void)
 {
-   int i,j;
+   int i, j;
    char devname[20];
 #ifdef I386NEW_JOYSTICK
    int version;
 #endif
 
+   int first_dev = 0;
+   int last_dev = JOY - 1;
+   
+   /* 
+    * If the device name ends with an in-range digit, then don't 
+    * loop through all possible values below.  Just extract the 
+    * device number and use it.
+    */
+   int pos = strlen(joy_dev) - 1;
+   if (pos >= 0 && isdigit(joy_dev[pos]))
+   {
+      int devnum = joy_dev[pos] - '0';
+      if (devnum < JOY)
+      {
+         first_dev = last_dev = devnum;
+         joy_dev[pos] = 0;
+      }
+   }
+
    fprintf (stderr_file, "I386 joystick interface initialization...\n");
-   for (i = 0; i < JOY; i++)
+   for (i = first_dev; i <= last_dev; i++)
    {
       sprintf (devname, "%s%d", joy_dev, i);
       if ((joy_data[i].fd = open (devname, O_RDONLY)) >= 0)

@@ -66,7 +66,7 @@ Juan Antonio Martinez
  and David Heremans (minor editing)
 \layout Date
 
-v2.1.22, 12 January 2003
+v2.1.24, 17 March 2003
 \layout Abstract
 
 xmame/xmess documentation with an installation guide, the FAQ (frequently
@@ -4423,7 +4423,7 @@ The xmame/xmess sources
 \layout Standard
 
 
-\begin_inset LatexCommand \url[xmame-0.62.2 sources]{download/xmame-0.62.2.tar.bz2}
+\begin_inset LatexCommand \url[xmame-0.66.1 sources]{download/xmame-0.66.1.tar.bz2}
 
 \end_inset 
 
@@ -4531,31 +4531,39 @@ Xmame/xmess download mirrors
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[TkMame]{http://tkmame.retrogames.com}
+\begin_inset LatexCommand \url[Romeo]{http://www.voicenet.com/~jceklosk/}
 
 \end_inset 
 
-, the Tcl/TK front-end that works in Linux/Unix and MS Windows
-\layout Itemize
-
-
-\begin_inset LatexCommand \url[Xmameload]{http://www.toetag.com/~tom/xmame.html}
-
-\end_inset 
-
-
-\layout Itemize
-
-
-\begin_inset LatexCommand \url[Kmamerun]{ftp://ftp.sad.it/pub/kde/local/}
-
-\end_inset 
-
-
+, a Java front-end
 \layout Itemize
 
 
 \begin_inset LatexCommand \url[Mamecat]{http://www.mameworld.net/mamecat/}
+
+\end_inset 
+
+
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[GXMame]{http://gxmame.sourceforge.net/}
+
+\end_inset 
+
+, a GTK front-end striving for MAME32 compatibility
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[GnoMame]{http://gnomame.sourceforge.net/}
+
+\end_inset 
+
+, a GNOME front-end
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[Kmamerun]{ftp://ftp.sad.it/pub/kde/local/}
 
 \end_inset 
 
@@ -4571,23 +4579,7 @@ Xmame/xmess download mirrors
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[Gmame]{http://members.xoom.com/gmame/}
-
-\end_inset 
-
-
-\layout Itemize
-
-
-\begin_inset LatexCommand \url[startxmame]{http://www.geocities.com/SiliconValley/Mouse/1570/}
-
-\end_inset 
-
-
-\layout Itemize
-
-
-\begin_inset LatexCommand \url[it-mame]{http://it-mame.sourceforge.net/index2.html}
+\begin_inset LatexCommand \url[StartXmame]{http://www.geocities.com/SiliconValley/Mouse/1570/}
 
 \end_inset 
 
@@ -4599,11 +4591,15 @@ Xmame/xmess download mirrors
 
 \end_inset 
 
-, the 
-\series bold 
-very good
-\series default 
- GNOME front-end 
+, a GNOME front-end 
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[it-mame]{http://it-mame.sourceforge.net/index2.html}
+
+\end_inset 
+
+
 \layout Itemize
 
 
@@ -4615,23 +4611,7 @@ very good
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[GnoMame]{http://gnomame.sourceforge.net/}
-
-\end_inset 
-
-, another great GNOME-based front-end 
-\layout Itemize
-
-
 \begin_inset LatexCommand \url[LANZAMAME]{http://lanzamame.mameworld.net/}
-
-\end_inset 
-
-
-\layout Itemize
-
-
-\begin_inset LatexCommand \url[Victor Manuel's TCL/TK Frontend]{http://www.terra.es/personal3/victorote/frontend/index_en.html}
 
 \end_inset 
 
@@ -4675,15 +4655,7 @@ very good
 
 \end_inset 
 
-, a Java-based front-end (requires JDE 1.4.0)
-\layout Itemize
-
-
-\begin_inset LatexCommand \url[GXMame]{http://gxmame.sourceforge.net/}
-
-\end_inset 
-
-, a GTK-based front-end striving for MAME32 compatibility
+, a Java front-end (requires JDE 1.4.0)
 \layout Itemize
 
 
@@ -4699,7 +4671,15 @@ very good
 
 \end_inset 
 
-, a KDE front-end.
+, a KDE front-end
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[Mamu_'s Icons for X]{http://tkmame.retrogames.com/icons}
+
+\end_inset 
+
+
 \layout Subsection
 
 Some other links

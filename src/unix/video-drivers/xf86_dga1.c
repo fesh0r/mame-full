@@ -17,10 +17,6 @@
 
 #ifdef USE_DGA
 
-static void xf86_dga_update_display_8_to_8bpp(struct mame_bitmap *bitmap);
-static void xf86_dga_update_display_8_to_16bpp(struct mame_bitmap *bitmap);
-static void xf86_dga_update_display_8_to_24bpp(struct mame_bitmap *bitmap);
-static void xf86_dga_update_display_8_to_32bpp(struct mame_bitmap *bitmap);
 static void xf86_dga_update_display_16_to_16bpp(struct mame_bitmap *bitmap);
 static void xf86_dga_update_display_16_to_24bpp(struct mame_bitmap *bitmap);
 static void xf86_dga_update_display_16_to_32bpp(struct mame_bitmap *bitmap);
@@ -267,28 +263,6 @@ static int xf86_dga_setup_graphics(XF86VidModeModeInfo *modeinfo, int bitmap_dep
 			break;
 	    }
 	}
-	else
-	{
-	    switch(depth)
-	    {
-		case 8:
-			xf86ctx.xf86_dga_update_display_func =
-				xf86_dga_update_display_8_to_8bpp;
-			break;
-		case 16:
-			xf86ctx.xf86_dga_update_display_func =
-				xf86_dga_update_display_8_to_16bpp;
-			break;
-		case 24:
-			xf86ctx.xf86_dga_update_display_func =
-				xf86_dga_update_display_8_to_24bpp;
-			break;
-		case 32:
-			xf86ctx.xf86_dga_update_display_func =
-				xf86_dga_update_display_8_to_32bpp;
-			break;
-	    }
-	}
 	
 	if (xf86ctx.xf86_dga_update_display_func == NULL)
 	{
@@ -469,51 +443,11 @@ int xf86_dga1_modify_pen(int pen,
 
 #define DEST xf86ctx.addr
 #define DEST_WIDTH xf86ctx.width
-#define SRC_PIXEL unsigned char
+#define SRC_PIXEL unsigned short
 /* Use double buffering where it speeds things up */
 #define DOUBLEBUFFER
 
-static void xf86_dga_update_display_8_to_8bpp(struct mame_bitmap *bitmap)
-{
-   if (xf86ctx.palette_dirty)
-   {
-      XF86DGAInstallColormap(display,xf86ctx.screen,xf86ctx.cmap);
-      xf86ctx.palette_dirty = FALSE;
-   }
-#define DEST_PIXEL unsigned char
-#include "blit.h"
-#undef DEST_PIXEL
-}
-
 #define INDIRECT current_palette->lookup
-
-static void xf86_dga_update_display_8_to_16bpp(struct mame_bitmap *bitmap)
-{
-#define DEST_PIXEL unsigned short
-#define BLIT_16BPP_HACK
-#include "blit.h"
-#undef DEST_PIXEL
-#undef BLIT_16BPP_HACK
-}
-
-#define DEST_PIXEL unsigned int
-
-static void xf86_dga_update_display_8_to_24bpp(struct mame_bitmap *bitmap)
-{
-#define PACK_BITS
-#include "blit.h"
-#undef PACK_BITS
-}
-
-static void xf86_dga_update_display_8_to_32bpp(struct mame_bitmap *bitmap)
-{
-#include "blit.h"
-}
-
-#undef  DEST_PIXEL
-
-#undef  SRC_PIXEL
-#define SRC_PIXEL unsigned short
 
 static void xf86_dga_update_display_16_to_16bpp(struct mame_bitmap *bitmap)
 {

@@ -28,7 +28,10 @@
 #include "x11.h"
 #include "driver.h"
 /* for xscreensaver support */
-#include "vroot.h"
+/* Commented out for now since it causes problems with some 
+ * versions of KDE.
+ */
+/* #include "vroot.h" */
 
 #ifdef USE_HWSCALE
 static void x11_window_update_16_to_YUY2 (struct mame_bitmap *bitmap);
@@ -39,11 +42,6 @@ static void x11_window_update_32_to_YV12_direct (struct mame_bitmap *bitmap);
 static void x11_window_update_32_to_YV12_direct_perfect (struct mame_bitmap *bitmap);
 static void x11_window_make_yuv_lookup();
 #endif
-static void x11_window_update_8_to_8bpp (struct mame_bitmap *bitmap);
-static void x11_window_update_8_to_16bpp (struct mame_bitmap *bitmap);
-static void x11_window_update_8_to_24bpp (struct mame_bitmap *bitmap);
-static void x11_window_update_8_to_32bpp (struct mame_bitmap *bitmap);
-static void x11_window_update_8_to_8bpp_direct (struct mame_bitmap *bitmap);
 static void x11_window_update_16_to_16bpp (struct mame_bitmap *bitmap);
 static void x11_window_update_16_to_24bpp (struct mame_bitmap *bitmap);
 static void x11_window_update_16_to_32bpp (struct mame_bitmap *bitmap);
@@ -542,6 +540,9 @@ int x11_window_create_display (int bitmap_depth)
       {
          fprintf (stderr_file, "X-Server Doesn't support Xv extension\n");
          use_xv = 0;
+#ifdef USE_HWSCALE
+	 use_hwscale = 0;
+#endif
       }
    }
 #endif
@@ -1039,24 +1040,6 @@ int x11_window_create_display (int bitmap_depth)
             break;
       }
    }
-   else
-   {
-      switch (depth)
-      {
-         case 8:
-            x11_window_update_display_func = x11_window_update_8_to_8bpp;
-            break;
-         case 16:
-            x11_window_update_display_func = x11_window_update_8_to_16bpp;
-            break;
-         case 24:
-            x11_window_update_display_func = x11_window_update_8_to_24bpp;
-            break;
-         case 32:
-            x11_window_update_display_func = x11_window_update_8_to_32bpp;
-            break;
-      }
-   }
 
    if (x11_window_update_display_func == NULL)
    {
@@ -1209,12 +1192,6 @@ int x11_window_alloc_palette (int writable_colors)
       fprintf (stderr_file, "Using r/w palette entries to speed up, good\n");
       for (i = 0; i < writable_colors; i++)
          if (pseudo_color_lookup[i] != i) break;
-
-      if (i == writable_colors)
-      {
-         x11_window_update_display_func = x11_window_update_8_to_8bpp_direct;
-         fprintf (stderr_file, "Using direct copy to speed up, good\n");
-      }
    }
    else
    {
@@ -1752,54 +1729,9 @@ static void x11_window_update_32_to_YV12_direct_perfect(struct mame_bitmap *bitm
 
 #define DEST_WIDTH image_width
 #define DEST scaled_buffer_ptr
-#define SRC_PIXEL unsigned char
-#define PUT_IMAGE(X, Y, WIDTH, HEIGHT) x11_window_put_image(X, Y, WIDTH, HEIGHT);
-
-#define DEST_PIXEL unsigned char
-
-static void x11_window_update_8_to_8bpp_direct (struct mame_bitmap *bitmap)
-{
-#include "blit.h"
-}
-
-static void x11_window_update_8_to_8bpp (struct mame_bitmap *bitmap)
-{
-#define INDIRECT pseudo_color_lookup
-#include "blit.h"
-#undef INDIRECT
-}
-
-#undef DEST_PIXEL
-
-#define INDIRECT current_palette->lookup
-
-static void x11_window_update_8_to_16bpp (struct mame_bitmap *bitmap)
-{
-#define BLIT_16BPP_HACK
-#define DEST_PIXEL unsigned short
-#include "blit.h"
-#undef DEST_PIXEL
-#undef BLIT_16BPP_HACK
-}
-
-#define DEST_PIXEL unsigned int
-
-static void x11_window_update_8_to_24bpp (struct mame_bitmap *bitmap)
-{
-#define PACK_BITS
-#include "blit.h"
-#undef PACK_BITS
-}
-
-static void x11_window_update_8_to_32bpp (struct mame_bitmap *bitmap)
-{
-#include "blit.h"
-}
-
-#undef  DEST_PIXEL
-
-#undef  SRC_PIXEL
 #define SRC_PIXEL unsigned short
+#define PUT_IMAGE(X, Y, WIDTH, HEIGHT) x11_window_put_image(X, Y, WIDTH, HEIGHT);
+#define INDIRECT current_palette->lookup
 
 #ifdef USE_HWSCALE
 static void x11_window_update_16_to_YUY2(struct mame_bitmap *bitmap)

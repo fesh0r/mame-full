@@ -27,7 +27,7 @@
 
 # The xmame executable (needed to read game info). 
 # MUST _NOT_ BE ROOT SETUID!!!
-$XMAME = "/usr/local/games/xmame.x11";
+$XMAME = "/usr/local/bin/xmame.x11";
 
 # Your rompath. Separate components with ':'. List paths with more recent
 # roms before paths with older ones.

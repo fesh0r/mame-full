@@ -98,10 +98,6 @@ struct sysdep_palette_struct *sysdep_palette_create(int depth,
       return NULL;
    }
    
-   palette->brightness   = 100;
-   palette->gamma        = 1.0;
-   palette->bright_dirty = 1;
-   
    lookup_size = writable_colors;
    if (!(palette->lookup = calloc(lookup_size, sizeof(int))))
    {
@@ -194,49 +190,10 @@ int sysdep_palette_change_display(struct sysdep_palette_struct **palette)
       return -1;
    }
    
-   sysdep_palette_set_brightness(new_palette, (*palette)->brightness);
-   sysdep_palette_set_gamma(new_palette, (*palette)->gamma);
-   
    sysdep_palette_destroy(*palette);
    *palette = new_palette;
 
    return 0;
-}
-
-/* brightness = percentage 0-100% */
-int sysdep_palette_set_brightness(struct sysdep_palette_struct *palette,
-   int brightness)
-{
-   if (palette->brightness != brightness)
-   {
-      palette->brightness = brightness;
-      palette->bright_dirty = 1;
-   }
-
-   return 0;
-}
-
-int sysdep_palette_get_brightness(struct sysdep_palette_struct *palette)
-{
-   return palette->brightness;
-}
-
-
-int sysdep_palette_set_gamma(struct sysdep_palette_struct *palette,
-   float gamma)
-{
-   if (palette->gamma != gamma)
-   {
-      palette->gamma = gamma;
-      palette->bright_dirty = 1;
-   }
-
-   return 0;
-}
-
-float sysdep_palette_get_gamma(struct sysdep_palette_struct *palette)
-{
-   return palette->gamma;
 }
 
 /* Added by AMR for the Xv Patch, which needs to be informed

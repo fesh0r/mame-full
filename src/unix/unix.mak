@@ -31,7 +31,7 @@ LIBS.next	   = -framework SoundKit
 LIBS.macosx	   = -framework CoreAudio
 #LIBS.openbsd       = -lossaudio
 LIBS.nto	   = -lsocket -lasound
-LIBS.beos          = `sdl-config --libs`
+LIBS.beos          = `$(SDL_CONFIG) --libs`
 
 ##############################################################################
 # **** Display dependent settings.
@@ -66,7 +66,11 @@ CFLAGS.svgafx   = -I/usr/include/glide
 CFLAGS.SDL      = $(X11INC) `$(SDL_CONFIG) --cflags` -D_REENTRANT
 CFLAGS.photon2	=
 
-INST.x11        = doinstall
+ifdef X11_DGA
+INST.x11        = doinstallsuid
+else
+INST.x11	= doinstall
+endif
 INST.ggi        = doinstall
 INST.svgalib    = doinstallsuid
 INST.xgl        = doinstallsuid copycab
@@ -124,7 +128,7 @@ CORE_OBJDIRS = $(OBJ) \
 	$(OBJ)/mess/sound $(OBJ)/mess/devices $(OBJ)/mess/tools \
 	$(OBJ)/mess/tools/dat2html $(OBJ)/mess/tools/mkhdimg \
 	$(OBJ)/mess/tools/messroms $(OBJ)/mess/tools/imgtool \
-	$(OBJ)/mess/tools/mkimage
+	$(OBJ)/mess/tools/mkimage $(OBJ)/mess/tools/makedep
 
 IMGTOOL_OBJS =  $(OBJ)/unix.$(DISPLAY_METHOD)/dirio.o
 IMGTOOL_LIBS = -lz
@@ -157,6 +161,13 @@ include src/rules.mak
 
 ifeq ($(TARGET), mess)
 include mess/rules_ms.mak
+endif
+
+ifdef DEBUG
+DBGDEFS = -DMAME_DEBUG
+else
+DBGDEFS =
+DBGOBJS =
 endif
 
 # Perhaps one day original mame/mess sources will use POSIX strcasecmp and
@@ -219,8 +230,8 @@ MY_LIBS += `artsc-config --libs`
 endif
 
 ifdef SOUND_SDL
-CONFIG  += -DSYSDEP_DSP_SDL `sdl-config --cflags`
-MY_LIBS += `sdl-config --libs`
+CONFIG  += -DSYSDEP_DSP_SDL `$(SDL_CONFIG) --cflags`
+MY_LIBS += `$(SDL_CONFIG) --libs`
 endif
 
 ifdef SOUND_WAVEOUT
@@ -290,6 +301,10 @@ xlistdev: src/unix/contrib/tools/xlistdev.c
 romcmp: $(OBJ)/romcmp.o $(OBJ)/unzip.o
 	$(CC_COMMENT) @echo Linking $@...
 	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $^ -lz
+
+hdcomp: $(OBJ)/hdcomp.o $(OBJ)/harddisk.o $(OBJ)/md5.o
+	$(CC_COMMENT) @echo Linking $@...
+	$(CC_COMMENT) $(LD) $(LDFLAGS) -o $@ $^ -lz
 
 osdepend:
 	$(CC_COMMENT) @echo 'Compiling in the unix directory...'
