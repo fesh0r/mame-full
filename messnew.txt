@@ -1,3 +1,29 @@
+0.37b8 
+
+Note: .inp record/playback does still not work currently.
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+
+
+System Driver Changes:
+----------------------
+
+- [ORIC] Rewrote to use 6522via code in MESS core. Previously it had
+it's own implementation which was not complete. Added floppy disc emulation 
+(emulates a Microdisc interface). Added support for MFM_DISK disk image 
+type as used by Euphoric. This driver uses the IO_CASSETTE device, and can
+be controlled with the "Tape Control" menu. However the Oric cassette emulation
+is not working fully yet. [Kev Thacker]
+
+Other Changes:
+--------------
+- The core is based on MAME 0.37b8. This incorporates all 
+  features of the update to this core.  [MAME team] 
+
+
+------------------------
+
 0.37b7 
 
 Note: .inp record/playback does still not work currently.
