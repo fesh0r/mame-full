@@ -13,6 +13,11 @@ System Driver Changes:
 
 - [T1000HX] Modified to use character data from the actual BIOS. [Nate Woods]
 
+- [APPLE2] Implemented floating bus emulation. [Nick Westgate]
+
+- [COCO3] Fixed a performance bug that could slow things down in simple cases
+  where not much screen IO is being made. [Nate Woods]
+
 Source Changes:
 ---------------
 - The core is based on MAME 0.66.  This incorporates all features of the 

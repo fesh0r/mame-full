@@ -791,6 +791,7 @@ void videomap_update(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 	{
 		/* writing to buffered bitmap; partial refresh (except on first draw) */
 		full_refresh = (flags & FLAG_FIRST_DRAW) ? 1 : 0;
+		flags &= ~FLAG_FIRST_DRAW;
 		bmp = tmpbitmap;
 	}
 	else

@@ -55,6 +55,150 @@ static double joystick_x_time;
 static double joystick_y_time;
 
 /***************************************************************************
+  apple2_getfloatingbusvalue
+  preliminary floating bus video scanner code - look for comments with FIX:
+***************************************************************************/
+data8_t apple2_getfloatingbusvalue(void)
+{
+	enum
+	{
+		// scanner types
+		kScannerNone = 0, kScannerApple2, kScannerApple2e, 
+
+		// scanner constants
+		kHBurstClock      =    53, // clock when Color Burst starts
+		kHBurstClocks     =     4, // clocks per Color Burst duration
+		kHClock0State     =  0x18, // H[543210] = 011000
+		kHClocks          =    65, // clocks per horizontal scan (including HBL)
+		kHPEClock         =    40, // clock when HPE (horizontal preset enable) goes low
+		kHPresetClock     =    41, // clock when H state presets
+		kHSyncClock       =    49, // clock when HSync starts
+		kHSyncClocks      =     4, // clocks per HSync duration
+		kNTSCScanLines    =   262, // total scan lines including VBL (NTSC)
+		kNTSCVSyncLine    =   224, // line when VSync starts (NTSC)
+		kPALScanLines     =   312, // total scan lines including VBL (PAL)
+		kPALVSyncLine     =   264, // line when VSync starts (PAL)
+		kVLine0State      = 0x100, // V[543210CBA] = 100000000
+		kVPresetLine      =   256, // line when V state presets
+		kVSyncLines       =     4, // lines per VSync duration
+		kClocksPerVSync   = kHClocks * kNTSCScanLines // FIX: NTSC only?
+	};
+
+	// vars
+	//
+	int i, Hires, Mixed, Page2, _80Store, ScanLines, VSyncLine, ScanCycles,
+		h_clock, h_state, h_0, h_1, h_2, h_3, h_4, h_5,
+		v_line, v_state, v_A, v_B, v_C, v_0, v_1, v_2, v_3, v_4, v_5,
+		_hires, addend0, addend1, addend2, sum, address;
+
+	// video scanner data
+	//
+	i = activecpu_gettotalcycles() % kClocksPerVSync; // cycles into this VSync
+
+	// machine state switches
+	//
+	Hires    = (a2.HIRES) ? 1 : 0;
+	Mixed    = (a2.MIXED) ? 1 : 0;
+	Page2    = (a2.PAGE2) ? 1 : 0;
+	_80Store = (a2.STORE80) ? 1 : 0;
+
+	// calculate video parameters according to display standard
+	//
+	ScanLines  = 1 ? kNTSCScanLines : kPALScanLines; // FIX: NTSC only?
+	VSyncLine  = 1 ? kNTSCVSyncLine : kPALVSyncLine; // FIX: NTSC only?
+	ScanCycles = ScanLines * kHClocks;
+
+	// calculate horizontal scanning state
+	//
+	h_clock = (i + kHPEClock) % kHClocks; // which horizontal scanning clock
+	h_state = kHClock0State + h_clock; // H state bits
+	if (h_clock >= kHPresetClock) // check for horizontal preset
+	{
+		h_state -= 1; // correct for state preset (two 0 states)
+	}
+	h_0 = (h_state >> 0) & 1; // get horizontal state bits
+	h_1 = (h_state >> 1) & 1;
+	h_2 = (h_state >> 2) & 1;
+	h_3 = (h_state >> 3) & 1;
+	h_4 = (h_state >> 4) & 1;
+	h_5 = (h_state >> 5) & 1;
+
+	// calculate vertical scanning state
+	//
+	v_line  = i / kHClocks; // which vertical scanning line
+	v_state = kVLine0State + v_line; // V state bits
+	if ((v_line >= kVPresetLine)) // check for previous vertical state preset
+	{
+		v_state -= ScanLines; // compensate for preset
+	}
+	v_A = (v_state >> 0) & 1; // get vertical state bits
+	v_B = (v_state >> 1) & 1;
+	v_C = (v_state >> 2) & 1;
+	v_0 = (v_state >> 3) & 1;
+	v_1 = (v_state >> 4) & 1;
+	v_2 = (v_state >> 5) & 1;
+	v_3 = (v_state >> 6) & 1;
+	v_4 = (v_state >> 7) & 1;
+	v_5 = (v_state >> 8) & 1;
+
+	// calculate scanning memory address
+	//
+	_hires = Hires;
+	if (Hires && Mixed && (v_4 & v_2))
+	{
+		_hires = 0; // (address is in text memory)
+	}
+
+	addend0 = 0x68; // 1            1            0            1
+	addend1 =              (h_5 << 5) | (h_4 << 4) | (h_3 << 3);
+	addend2 = (v_4 << 6) | (v_3 << 5) | (v_4 << 4) | (v_3 << 3);
+	sum     = (addend0 + addend1 + addend2) & (0x0F << 3);
+
+	address = 0;
+	address |= h_0 << 0; // a0
+	address |= h_1 << 1; // a1
+	address |= h_2 << 2; // a2
+	address |= sum;      // a3 - aa6
+	address |= v_0 << 7; // a7
+	address |= v_1 << 8; // a8
+	address |= v_2 << 9; // a9
+	address |= ((_hires) ? v_A : (1 ^ (Page2 & (1 ^ _80Store)))) << 10; // a10
+	address |= ((_hires) ? v_B : (Page2 & (1 ^ _80Store))) << 11; // a11
+	if (_hires) // hires?
+	{
+		// Y: insert hires only address bits
+		//
+		address |= v_C << 12; // a12
+		address |= (1 ^ (Page2 & (1 ^ _80Store))) << 13; // a13
+		address |= (Page2 & (1 ^ _80Store)) << 14; // a14
+	}
+	else
+	{
+		// N: text, so no higher address bits unless Apple ][, not Apple //e
+		//
+		if ((1) && // Apple ][? // FIX: check for Apple ][? (FB is most useful in old games)
+			(kHPEClock <= h_clock) && // Y: HBL?
+			(h_clock <= (kHClocks - 1)))
+		{
+			address |= 1 << 12; // Y: a12 (add $1000 to address!)
+		}
+	}
+
+	// update VBL' state
+	//
+	if (v_4 & v_3) // VBL?
+	{
+		//CMemory::mState &= ~CMemory::kVBLBar; // Y: VBL' is false // FIX: MESS?
+	}
+	else
+	{
+		//CMemory::mState |= CMemory::kVBLBar; // N: VBL' is true // FIX: MESS?
+	}
+
+	return mess_ram[address]; // FIX: this seems to work, but is it right!?
+}
+
+/***************************************************************************
   apple2_init_machine
 ***************************************************************************/
 MACHINE_INIT( apple2e )
@@ -303,29 +447,29 @@ WRITE_HANDLER ( apple2_c00x_w )
 ***************************************************************************/
 READ_HANDLER ( apple2_c01x_r )
 {
-	data8_t result = 0;
+	data8_t result = apple2_getfloatingbusvalue() & 0x7F;
 
 	profiler_mark(PROFILER_C01X);
 
 	LOG(("a2 softswitch_r: %04x\n", offset + 0xc010));
 	switch (offset)
 	{
-		case 0x00:			result = AY3600_anykey_clearstrobe_r();		break;
-		case 0x01:			result = a2.LC_RAM2;						break;
-		case 0x02:			result = a2.LC_RAM;							break;
-		case 0x03:			result = a2.RAMRD;							break;
-		case 0x04:			result = a2.RAMWRT;							break;
-		case 0x05:			result = a2.INTCXROM;						break;
-		case 0x06:			result = a2.ALTZP;							break;
-		case 0x07:			result = a2.SLOTC3ROM;						break;
-		case 0x08:			result = a2.STORE80;						break;
-		case 0x09:			result = input_port_0_r(0);	/* RDVBLBAR */	break;
-		case 0x0A:			result = a2.TEXT;							break;
-		case 0x0B:			result = a2.MIXED;							break;
-		case 0x0C:			result = a2.PAGE2;							break;
-		case 0x0D:			result = a2.HIRES;							break;
-		case 0x0E:			result = a2.ALTCHARSET;						break;
-		case 0x0F:			result = a2.COL80;							break;
+		case 0x00:			result |= AY3600_anykey_clearstrobe_r();		break;
+		case 0x01:			result |= a2.LC_RAM2;						break;
+		case 0x02:			result |= a2.LC_RAM;							break;
+		case 0x03:			result |= a2.RAMRD;							break;
+		case 0x04:			result |= a2.RAMWRT;							break;
+		case 0x05:			result |= a2.INTCXROM;						break;
+		case 0x06:			result |= a2.ALTZP;							break;
+		case 0x07:			result |= a2.SLOTC3ROM;						break;
+		case 0x08:			result |= a2.STORE80;						break;
+		case 0x09:			result |= input_port_0_r(0);	/* RDVBLBAR */	break;
+		case 0x0A:			result |= a2.TEXT;							break;
+		case 0x0B:			result |= a2.MIXED;							break;
+		case 0x0C:			result |= a2.PAGE2;							break;
+		case 0x0D:			result |= a2.HIRES;							break;
+		case 0x0E:			result |= a2.ALTCHARSET;						break;
+		case 0x0F:			result |= a2.COL80;							break;
 	}
 
 	profiler_mark(PROFILER_END);
@@ -353,7 +497,7 @@ READ_HANDLER ( apple2_c03x_r )
 	else
 		a2_speaker_state=0xFF;
 	DAC_data_w(0,a2_speaker_state);
-	return 0;
+	return apple2_getfloatingbusvalue();
 }
 
 /***************************************************************************
@@ -390,7 +534,7 @@ READ_HANDLER ( apple2_c05x_r )
 		case 0x0F:		a2.AN3   = 0x00; break;
 	}
 
-	return ((offset == 0) && (input_port_0_r(0) & 0x40)) ? 0x80 : 0;
+	return apple2_getfloatingbusvalue();
 }
 
 /***************************************************************************
