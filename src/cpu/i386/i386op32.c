@@ -2708,3 +2708,14 @@ static void I386OP(retf_i32)(void)			// Opcode 0xca
 	REG32(ESP) += count;
 	CYCLES(1);	// TODO: deduct proper cycle count
 }
+
+static void I386OP(xlat32)(void)			// Opcode 0xd7
+{
+	UINT32 ea;
+	if( I.segment_prefix ) {
+		ea = i386_translate( I.segment_override, REG32(EBX) + REG8(AL) );
+	} else {
+		ea = i386_translate( DS, REG32(EBX) + REG8(AL) );
+	}
+	REG8(AL) = READ8(ea);
+}

@@ -215,7 +215,7 @@ static void (*i386_opcode_table1_16[256])(void) =
 	I386OP(aam),				/* 0xd4 */
 	I386OP(aad),				/* 0xd5 */
 	I386OP(setalc),				/* 0xd6 */		/* undocumented */
-	I386OP(unimplemented),		/* 0xd7 */		/* TODO: XLAT */
+	I386OP(xlat16),				/* 0xd7 */
 	I386OP(escape),				/* 0xd8 */
 	I386OP(escape),				/* 0xd9 */
 	I386OP(escape),				/* 0xda */

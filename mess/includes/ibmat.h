@@ -7,7 +7,7 @@ typedef enum {
 
 typedef struct {
 	AT8042_TYPE type;
-	void (*set_address_mask)(unsigned mask);
+	void (*set_gate_a20)(int a20);
 } AT8042_CONFIG;
 
 void at_8042_init(AT8042_CONFIG *config);

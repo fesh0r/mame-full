@@ -2634,3 +2634,14 @@ static void I386OP(retf_i16)(void)			// Opcode 0xca
 	CYCLES(1);	// TODO: deduct proper cycle count
 }
 
+static void I386OP(xlat16)(void)			// Opcode 0xd7
+{
+	UINT32 ea;
+	if( I.segment_prefix ) {
+		ea = i386_translate( I.segment_override, REG16(BX) + REG8(AL) );
+	} else {
+		ea = i386_translate( DS, REG16(BX) + REG8(AL) );
+	}
+	REG8(AL) = READ8(ea);
+}
+

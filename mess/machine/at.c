@@ -1,6 +1,11 @@
+/***************************************************************************
+    
+	IBM AT Compatibles
+
+***************************************************************************/
+
 #include "driver.h"
 
-// support for old i86 core, until new one is in mame
 #include "cpu/i86/i286.h"
 
 #include "includes/pic8259.h"
@@ -38,32 +43,21 @@ static struct pit8253_config at_pit8253_config =
 	}
 };
 
-void init_atcga(void)
+
+
+static void at286_set_gate_a20(int a20)
 {
-	AT8042_CONFIG at8042={
-		AT8042_STANDARD, i286_set_address_mask
-	};
-
-	init_pc_common(PCCOMMON_KEYBOARD_AT | PCCOMMON_DMA8237_AT);
-
-	pit8253_config(0, &at_pit8253_config);
-
-	mc146818_init(MC146818_STANDARD);
-
-	soundblaster_config(&soundblaster);
-	at_8042_init(&at8042);
+	i286_set_address_mask(a20 ? 0x00ffffff : 0x000fffff);
 }
 
 
 
-static void at386_set_address_mask(offs_t mask)
+static void at386_set_gate_a20(int a20)
 {
-	mask |= 0x000fffff;
-
-	memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, mask, MRA32_RAM);
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, mask, MWA32_RAM);
-	memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0x080000, 0x09ffff, mask, MRA32_RAM);
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x080000, 0x09ffff, mask, MWA32_RAM);
+	offs_t mask = a20 ? 0x00ffffff : 0x000fffff;
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0xffffff, 0, MWA32_NOP);
+	memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0x000000, 0x09ffff, mask, MRA32_BANK10);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x09ffff, mask, MWA32_BANK10);
 	memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0x0a0000, 0x0affff, mask, MRA32_NOP);
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0a0000, 0x0affff, mask, MWA32_NOP);
 	memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0x0b0000, 0x0b7fff, mask, MRA32_NOP);
@@ -76,61 +70,86 @@ static void at386_set_address_mask(offs_t mask)
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0d0000, 0x0effff, mask, MWA32_ROM);
 	memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0x0f0000, 0x0fffff, mask, MRA32_ROM);
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0f0000, 0x0fffff, mask, MWA32_ROM);
-	if (mask > 0x000fffff)
+	cpu_setbank(10, mess_ram);
+
+	if (a20)
 	{
-		memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0x100000, 0x1fffff, mask, MRA32_RAM);
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x100000, 0x1fffff, mask, MWA32_RAM);
-		memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0x200000, 0xfeffff, mask, MRA32_NOP);
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x200000, 0xfeffff, mask, MWA32_NOP);
-		memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0xff0000, 0xffffff, mask, MRA32_ROM);
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xff0000, 0xffffff, mask, MWA32_ROM);
+		offs_t ram_limit = 0x100000 + mess_ram_size - 0x0a0000;
+		memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0x100000,  ram_limit - 1,	mask, MRA32_BANK1);
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x100000,  ram_limit - 1,	mask, MWA32_BANK1);
+		memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, ram_limit, 0xffffff,		mask, MRA32_NOP);
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, ram_limit, 0xffffff,		mask, MWA32_NOP);
+		memory_install_read32_handler(0,  ADDRESS_SPACE_PROGRAM, 0xff0000,  0xffffff,		mask, MRA32_BANK2);
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xff0000,  0xffffff,		mask, MWA32_ROM);
+		cpu_setbank(1, mess_ram + 0xa0000);
+		cpu_setbank(2, memory_region(REGION_CPU1) + 0x0f0000);
 	}
 }
 
 
 
-void init_at386(void)
+static void init_at_common(AT8042_CONFIG *at8042)
 {
-	AT8042_CONFIG at8042={
-		AT8042_AT386, at386_set_address_mask
-	};
-	init_atcga();
-	at_8042_init(&at8042);
-}
-
-
-
-void init_at_vga(void)
-{
-	AT8042_CONFIG at8042={
-		AT8042_STANDARD, i286_set_address_mask
-	};
-
 	init_pc_common(PCCOMMON_KEYBOARD_AT | PCCOMMON_DMA8237_AT);
-	pc_turbo_setup(0, 3, 0x02, 4.77/12, 1);
-
 	pit8253_config(0, &at_pit8253_config);
-
 	mc146818_init(MC146818_STANDARD);
-
-	vga_init(input_port_0_r);
 	soundblaster_config(&soundblaster);
-	at_8042_init(&at8042);
+	at_8042_init(at8042);
 }
 
-void init_ps2m30286(void)
+
+
+DRIVER_INIT( atcga )
 {
 	AT8042_CONFIG at8042={
-		AT8042_PS2, i286_set_address_mask
+		AT8042_STANDARD, at386_set_gate_a20
 	};
-	init_at_vga();
-	at_8042_init(&at8042);
+	init_at_common(&at8042);
 }
+
+
+
+DRIVER_INIT( at386 )
+{
+	AT8042_CONFIG at8042={
+		AT8042_AT386, at386_set_gate_a20
+	};
+	init_at_common(&at8042);
+}
+
+
+
+DRIVER_INIT( at_vga )
+{
+	AT8042_CONFIG at8042={
+		AT8042_STANDARD, at286_set_gate_a20
+	};
+
+	init_at_common(&at8042);
+	pc_turbo_setup(0, 3, 0x02, 4.77/12, 1);
+	vga_init(input_port_0_r);
+}
+
+
+
+DRIVER_INIT( ps2m30286 )
+{
+	AT8042_CONFIG at8042={
+		AT8042_PS2, at386_set_gate_a20
+	};
+	init_at_common(&at8042);
+	pc_turbo_setup(0, 3, 0x02, 4.77/12, 1);
+	vga_init(input_port_0_r);
+}
+
+
 
 MACHINE_INIT( at )
 {
 	dma8237_reset();
 }
+
+
 
 MACHINE_INIT( at_vga )
 {

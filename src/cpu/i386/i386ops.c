@@ -2241,15 +2241,17 @@ static void I386OP(decimal_adjust)(int direction)
 
 	if (I.AF || ((REG8(AL) & 0xf) > 9))
 	{
-		REG8(AL) = REG8(AL) + (direction * 6);
+		REG8(AL) = REG8(AL) + (direction * 0x06);
 		I.AF = 1;
 		if (REG8(AL) & 0x100)
 			I.CF = 1;
+		if (direction > 0)
+			tmpAL = REG8(AL);
 	}
 
 	if (I.CF || (tmpAL > 0x9f))
 	{
-		REG8(AL) -= 0x60;
+		REG8(AL) += (direction * 0x60);
 		I.CF = 1;
 	}
 

@@ -155,10 +155,14 @@
 		f4c0f
 			Message: "Invalid configuration information - please run SETUP program"
 		f4c5c
-		f86fc
-		f8838
+			f86fc
+			f8838
+		f4c80
+		f4ca2
+		f4d4c
+		f4e15	(int 19h)
 
-		f9a83 output text at return address!, return after text
+		[f9a83 output text at return address!, return after text]
 
 
 		at486
@@ -206,9 +210,10 @@
 
 ***************************************************************************/
 
-static struct {
+static struct
+{
 	AT8042_TYPE type;
-	void (*set_address_mask)(unsigned mask);
+	void (*set_gate_a20)(int a20);
 
 	UINT8 inport, outport, data, command;
 
@@ -242,15 +247,26 @@ static struct {
 
 ***************************************************************************/
 
+static void at_8042_set_outport(UINT8 data, int initial)
+{
+	UINT8 change;
+	change = initial ? 0xFF : (at_8042.outport ^ data);
+	at_8042.outport = data;
+	if (change & 0x02)
+		at_8042.set_gate_a20(data & 0x02 ? 1 : 0);
+}
+
+
+
 void at_8042_init(AT8042_CONFIG *config)
 {
 	memset(&at_8042, 0, sizeof(at_8042));
 	at_8042.type = config->type;
-	at_8042.set_address_mask = config->set_address_mask;
+	at_8042.set_gate_a20 = config->set_gate_a20;
 
 	/* ibmat bios wants 0x20 set! (keyboard locked when not set) 0x80 */
 	at_8042.inport = 0xa0;	
-
+	at_8042_set_outport(0xfe, 1);
 }
 
 static void at_8042_receive(UINT8 data)
@@ -393,8 +409,6 @@ READ8_HANDLER(at_8042_8_r)
 
 WRITE_HANDLER(at_8042_8_w)
 {
-	data8_t change;
-
 	switch (offset) {
 	case 0:
 		at_8042.last_write_to_control = 0;
@@ -408,11 +422,17 @@ WRITE_HANDLER(at_8042_8_w)
 			break;
 
 		case 1:
-			/* preceeded by writing 0xD1 to port 60h */
-			change = at_8042.outport ^ data;
-			at_8042.data = data;
-			if (change & 0x02)
-				at_8042.set_address_mask(data & 0x02 ? 0xffffff : 0xfffff);
+			/* preceeded by writing 0xD1 to port 60h
+			 *	|7|6|5|4|3|2|1|0|  8042 Output Port
+			 *	 | | | | | | | `---- system reset line
+			 *	 | | | | | | `----- gate A20
+			 *	 | | | | `-------- undefined
+			 *	 | | | `--------- output buffer full
+			 *	 | | `---------- input buffer empty
+			 *	 | `----------- keyboard clock (output)
+			 *	 `------------ keyboard data (output)
+			 */
+			at_8042_set_outport(data, 0);
 			break;
 
 		case 2:
@@ -516,8 +536,6 @@ WRITE_HANDLER(at_8042_8_w)
 			at_8042.operation_write_state = 4;
 			break;
 
-			/* 0xf0 .. 0xff bit 0..3 0 means low pulse of 6ms in outputport */
-//		case 0xe0: // ibmat bios
 		case 0xf0:
 		case 0xf2:
 		case 0xf4:
@@ -526,11 +544,16 @@ WRITE_HANDLER(at_8042_8_w)
 		case 0xfa:
 		case 0xfc:
 		case 0xfe:
+			/* Commands 0xF0...0xFF causes certain output lines to be pulsed
+			 * low for six milliseconds.  The bits pulsed low correspond to
+			 * the bits low set in the command byte.  The only pulse that has
+			 * an effect currently is bit 0, which pulses the CPU's reset line
+			 */
 			cpu_set_reset_line(0, PULSE_LINE);
-			at_8042.set_address_mask(0xffffff);
+			at_8042_set_outport(at_8042.outport | 0x02, 0);
 			break;
 		}
-		at_8042.sending=1;
+		at_8042.sending = 1;
 		break;
 	}
 }

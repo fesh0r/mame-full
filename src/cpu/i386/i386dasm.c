@@ -1205,7 +1205,7 @@ static void decode_opcode(char *s, I386_OPCODE *op)
 					return;
 				}
 			}
-			return;
+			goto handle_unknown;
 
 		case MODRM:
 			handle_modrm( modrm_string );
@@ -1228,6 +1228,10 @@ handle_params:
 		s += sprintf( s, ", " );
 		s = handle_param( s, op->param3 );
 	}
+	return;
+
+handle_unknown:
+	sprintf(s, "???");
 }
 
 int i386_dasm_one(char *buffer, UINT32 eip, int addr_size, int op_size)
