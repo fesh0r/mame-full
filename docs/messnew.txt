@@ -28,6 +28,9 @@ Imgtool Changes:
 - [Windows Imgtool] Fixed a bug that prevented read only files from opening.
   (bug #624)  [Nate Woods]
 
+- [Windows Imgtool] Now handles multiple selections better, as well as
+  cosmetic changes and fixups.  [Nate Woods]
+
 
 
 Source Changes:
