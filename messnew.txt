@@ -1,4 +1,7 @@
 0.37b15
+For Lee Ward (lee@the-mothershp.fsnet.co.uk)
+  *If you know Lee, please contact us......
+
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -16,38 +19,41 @@ Einstein TC-01 (preliminary) [Kev Thacker]
 System Driver Changes:
 ----------------------
 
-- [ATARI7800] Fixed a bug in TIA emulation: now the driver doesn't lock anymore
-  with some ports.
+- [ATARI7800] Fixed a bug in TIA emulation: now the driver doesn't lock 
+  anymore with some ports. [Frank]
 
-- [NC200] Keyboard reading and display memory address differences (compared to NC100) 
-  implemented. [Kev Thacker and Russell Marks]
+- [NC200] Keyboard reading and display memory address differences (compared 
+  to NC100) implemented. [Kev Thacker and Russell Marks]
 
-- [NC100/NC200] Changed CPU frequency to be more accurate [Kev Thacker and Russell Marks]
+- [NC100/NC200] Changed CPU frequency to be more accurate 
+  [Kev Thacker and Russell Marks]
 
-- [PRAVETZ] Emulation of Apple2 disc controller interface (low 8D DOS and high 8D DOS 
-  is supported. (DOS1->1.30 for low DOS and DOS 2.10 or better for high DOS)
-  Disk images are ".DSK" and same as used by Apple2 driver. [Kev Thacker]
+- [PRAVETZ] Emulation of Apple2 disc controller interface (low 8D DOS and high 
+  8D DOS is supported. (DOS1->1.30 for low DOS and DOS 2.10 or better for high 
+  DOS) Disk images are ".DSK" and same as used by Apple2 driver. [Kev Thacker]
 
 - [KC COMPACT] colours generated from colour rom [Kev Thacker]
 
 - [TI85] Snapshot loading (VTI 2.0 save state files). Sound added (speaker
-  connected to link port). Video engine totaly rewriten so grayscale works now.
-  NVRAM support added. Link port emulation added (variables, memory backups and
-  screen dumps receiving, variables and memory backups sending). Reset fixed.
-  PCR emulation added.
+  connected to link port). Video engine totaly rewriten so grayscale works 
+  now.  NVRAM support added. Link port emulation added (variables, memory 
+  backups and screen dumps receiving, variables and memory backups sending). 
+  Reset fixed. PCR emulation added.
 
 - [APPLE I] Support for the correct chargen ROM. Character grid has now the 
   correct dimensions [JoJo]
 
 - [AQUARIUS] Added correct palette. [JoJo]
 
-- [ATARI5200] Changed the cart loading strategy. Many more carts work now. [PeT]
+- [ATARI5200] Changed the cart loading strategy. Many more carts work now. 
+  [PeT]
 
 - [COLECO] Changed MEMORY handlers which allows more carts to work (like aqua 
   attack and tutankham). Small fix to input handling which means Defender and 
   Centipede now work. Accurate NMI handling added which fixes remaining carts 
   like Buck Rogers, DragonFire, Zenji, Bump and Jump, etc. Also, keys are 
-  configurable from the OSD for both controllers. Code cleanup.[Ben, Sean Young]
+  configurable from the OSD for both controllers. Code cleanup.
+  [Ben, Sean Young]
 
 - [DRAGON/COCO1-2-3] Completely rewritten midframe video mode rendering, which
   now applies not just to the CoCo 3, but to all systems that use the m6847 and
@@ -81,16 +87,17 @@ System Driver Changes:
   
 - [VIC20] power up strategy changed (RAM is not filled with 0xff 0x00 pattern 
   like in VICE anymore, real SRAM is indeed filled with random pattern). Power 
-  up "support" for jelly monsters. Keyboard polling support for second/alternate 
-  matrix io selection. Some "dipswitch" fixes. [PeT]
+  up "support" for jelly monsters. Keyboard polling support for 
+  second/alternate matrix io selection. Some "dipswitch" fixes. [PeT]
 
 - [C16] TED timer 1 reloading on underrun changed. [PeT]
   ECM and Multicolor mode: cursor and character inversion disabled.
-  TED sound channels simplified to generate only rectangular signals: digisound 
-  working, less static, clearer sound. Now the driver uses MOS 8580. [PeT]
+  TED sound channels simplified to generate only rectangular signals: 
+  digisound working, less static, clearer sound. Now the driver uses MOS 8580. 
+  [PeT]
 
-- [C16/C64/CBM B/C128/C65] SID cleanup, realtime modifications, digisound support
-  (fx sound good now, random number generation ok). [PeT]
+- [C16/C64/CBM B/C128/C65] SID cleanup, realtime modifications, digisound 
+  support (fx sound good now, random number generation ok). [PeT]
 
 - [C16/C64] tape fixed. [PeT]
 
@@ -114,12 +121,13 @@ System Driver Changes:
 
 - [EP128] Some graphics problem fixed [Kev Thacker]
 
-- [LYNX] Preliminary sound support & fix of the stereo allocation. Stereo enabled.
-  Added enhanced blitter modes and multiplier. Added rasterline rendering,
-  screen flipping, fixed reset and added audio/timer connection. [PeT]
+- [LYNX] Preliminary sound support & fix of the stereo allocation. Stereo 
+  enabled.  Added enhanced blitter modes and multiplier. Added rasterline 
+  rendering, screen flipping, fixed reset and added audio/timer connection. 
+  [PeT]
 
-- [VZ200] Video code has been temporarily reverted to Jurgen's code, and doesn't
-  make use of the new M6847 features. [Nate Woods]
+- [VZ200] Video code has been temporarily reverted to Jurgen's code, and 
+  doesn't make use of the new M6847 features. [Nate Woods]
 
 Source:
 -------
@@ -127,10 +135,12 @@ Source:
 - The main binary distribution of MESS is now a completely new win32 console
   port. Some of the benefits are: support for full screen hardware stretching
   (if you have a decent video card), and a much better command line / options
-  file parsing (ported from xmame).
-  To create the mess.ini configuration file on startup, use the -createconfig
-  option. -showusage lists all available options. [Aaron Giles, Bernd Wiebelt]
-                                                  [MESS specific code: Lee Ward]
+  file parsing (ported from xmame).    To create the mess.ini configuration 
+  file on startup, use the -createconfig option. -showusage lists all 
+  available options. [Aaron Giles, Bernd Wiebelt, Lee Ward, Ben Bruscella]
+
+- The core is based on MAME 0.37b15.  This incorporates all features of the 
+  update to this core.  [MAME team] 
 
 - Added support for the SUPPORT_ODD_WORD_SIZES macro, needed by ApexC and PDP 1.
   [Nate Woods]
