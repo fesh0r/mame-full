@@ -98,7 +98,7 @@ registers common to all modes:
 #define TC8521_ALARM_10_DAY_REGISTER 0x018
 
 /* uncomment for verbose debugging information */
-#define VERBOSE
+//#define VERBOSE
 
 /* mask data with these values when writing */
 static unsigned char rtc_write_masks[16*4]=
