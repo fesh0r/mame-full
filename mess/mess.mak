@@ -445,7 +445,7 @@ $(OBJ)/ti85.a: \
 	$(OBJ)/mess/systems/ti85.o		\
 	$(OBJ)/mess/formats/ti85_ser.o	\
 	$(OBJ)/mess/vidhrdw/ti85.o		\
-#	$(OBJ)/mess/machine/ti85.o		\
+	$(OBJ)/mess/machine/ti85.o		\
 
 $(OBJ)/rca.a: \
 	$(OBJ)/mess/systems/studio2.o  \

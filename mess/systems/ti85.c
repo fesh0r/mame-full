@@ -375,8 +375,8 @@ INPUT_PORTS_END
 
 static struct Speaker_interface ti85_speaker_interface=
 {
- 1,
- {50},
+	1,
+	{50},
 };
 
 /* machine definition */
