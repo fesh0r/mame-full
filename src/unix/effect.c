@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "blit/blit.h"
+#include "blit/pixel_defs.h"
+#include "blit/advance/hq2x_yuv.h"
 #include "sysdep/sysdep_display_priv.h"
 #include "effect.h"
 
@@ -26,6 +28,7 @@ char *effect_dbbuf  = NULL;
 char *rotate_dbbuf0 = NULL;
 char *rotate_dbbuf1 = NULL;
 char *rotate_dbbuf2 = NULL;
+void (*rotate_func)(void *dst, struct mame_bitmap *bitamp, int y, struct rectangle *bounds);
 /* for the 6tap filter */
 char *_6tap2x_buf0 = NULL;
 char *_6tap2x_buf1 = NULL;
@@ -33,11 +36,13 @@ char *_6tap2x_buf2 = NULL;
 char *_6tap2x_buf3 = NULL;
 char *_6tap2x_buf4 = NULL;
 char *_6tap2x_buf5 = NULL;
-void (*rotate_func)(void *dst, struct mame_bitmap *bitamp, int y, struct rectangle *bounds);
+/* for hq2x */
+unsigned int effect_rgb2yuv[65536];
 
 const struct sysdep_display_effect_properties_struct sysdep_display_effect_properties[] = {
   { 1, 8, 1, 8, 0,                                  "no effect" },
   { 2, 3, 2, 6, 0,                                  "smooth scaling" },
+  { 2, 2, 2, 2, 0,                                  "high quality filter" },
   { 1, 4, 2, 2, SYSDEP_DISPLAY_Y_SCALE_LOCKED,      "light scanlines (h)" },
   { 1, 6, 3, 3, SYSDEP_DISPLAY_Y_SCALE_LOCKED,      "rgb scanlines (h)" }, 
   { 2, 6, 3, 3, SYSDEP_DISPLAY_Y_SCALE_LOCKED,      "deluxe scanlines (h)" },
@@ -48,7 +53,6 @@ const struct sysdep_display_effect_properties_struct sysdep_display_effect_prope
 
 #if 0  
   { 2, 2, 2, 2, 0, "low quality filter" },   /* lq2x */
-  { 2, 2, 2, 2, 0, "high quality filter" },  /* hq2x */
   { 2, 2, 2, 2, 0, "6-tap filter & scanlines" }, /* 6tap2x */
   { 1, 8, 2, 8, 0, "black scanlines" }       /* fakescan */
 #endif
@@ -106,6 +110,25 @@ static blit_func_p effect_funcs[] = {
    blit_scale2x_32_24_direct,
    blit_scale2x_32_32_direct,
    blit_scale2x_32_YUY2_direct,
+   NULL, /* reserved for 32_YV12_direct */
+   /* hq2x */
+   blit_hq2x_15_15_direct,
+   blit_hq2x_16_16, /* Just use the 16 bpp src versions, since we need */
+   blit_hq2x_16_24, /* to go through the lookup anyways. */
+   blit_hq2x_16_32,
+   blit_hq2x_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   blit_hq2x_16_16, /* We use the lookup and don't do any calculations */
+   blit_hq2x_16_16, /* with the result so these are the same. */
+   blit_hq2x_16_24,
+   blit_hq2x_16_32,
+   blit_hq2x_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   blit_hq2x_32_15_direct,
+   blit_hq2x_32_16_direct,
+   blit_hq2x_32_24_direct,
+   blit_hq2x_32_32_direct,
+   blit_hq2x_32_YUY2_direct,
    NULL, /* reserved for 32_YV12_direct */
    /* scan2 */
    blit_scan2_h_15_15_direct,
@@ -485,6 +508,34 @@ blit_func_p sysdep_display_effect_open(void)
   /* Effect specific initialiasations */
   switch (sysdep_display_params.effect)
   {
+    case SYSDEP_DISPLAY_EFFECT_HQ2X:
+      {
+        int r,g,b,y,u,v; 
+        switch(effect_index%EFFECT_COLOR_FORMATS)
+        {
+          case EFFECT_15:
+            for(r=0; r<32; r++)
+              for(g=0; g<32; g++)
+                for(b=0; b<32; b++)
+                {
+                   RGB2YUV(r*8,g*8,b*8,y,u,v);
+                   effect_rgb2yuv[(r<<10)|(g<<5)|b] = YUV_TO_HQ2X_YUV(
+                     (y<<Y1SHIFT)|(u<<USHIFT)|(y<<Y2SHIFT)|(v<<VSHIFT));
+                }
+            break;
+          case EFFECT_16:
+            for(r=0; r<32; r++)
+              for(g=0; g<64; g++)
+                for(b=0; b<32; b++)
+                {
+                   RGB2YUV(r*8,g*4,b*8,y,u,v);
+                   effect_rgb2yuv[(r<<11)|(g<<5)|b] = YUV_TO_HQ2X_YUV(
+                     (y<<Y1SHIFT)|(u<<USHIFT)|(y<<Y2SHIFT)|(v<<VSHIFT));
+                }
+            break;
+        }
+      }
+      break;
     case SYSDEP_DISPLAY_EFFECT_6TAP2X:
       _6tap2x_buf0 = calloc(sysdep_display_params.max_width*8, sizeof(char));
       _6tap2x_buf1 = calloc(sysdep_display_params.max_width*8, sizeof(char));

@@ -381,6 +381,7 @@ int xv_open_display(int reopen)
                   min_heightscale;
               break;
             case SYSDEP_DISPLAY_EFFECT_SCALE2X:
+            case SYSDEP_DISPLAY_EFFECT_HQ2X:
               sysdep_display_params.heightscale =
                 sysdep_display_params.widthscale;
               break;

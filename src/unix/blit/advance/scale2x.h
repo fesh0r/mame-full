@@ -18,7 +18,7 @@
  *  e2 = (d == h && d != b && h != f) ? d : e;
  *  e3 = (h == f && d != h && b != f) ? f : e;
  *
- * Copyright stuff (only for the scaleXxX algorithms):
+ * Copyright stuff:
  * 
  * 1st According to the copyright header in the original C file this code is
  * DUAL licensed under:
@@ -56,10 +56,10 @@
  * So basicly this code may be distributed under the MAME license, as is
  * xmame
  *
- * 3th AFAIK The person who originaly incorperated the scale2x effect into
- * xmame, got explicited permission from Andrea Mazzoleni.
+ * 3th The person who originaly incorperated this effect into
+ * xmame, got explicited permission, see permession.txt.
  *
- * J.W.R. de Goede, Rotterdam the Netherlands, 5 december 2004.
+ * J.W.R. de Goede, Rotterdam the Netherlands, 17 december 2004.
  */
 
 INLINE void FUNC_NAME(blit_scale2x_border) ( SRC_PIXEL *src0,

@@ -58,8 +58,9 @@ static unsigned int sysdep_palette_make_pen_from_info(struct sysdep_palette_info
 struct sysdep_palette_struct *sysdep_palette_create(
   struct sysdep_palette_info *display_palette, int src_depth)
 {
-   int r,g,b;
+   int r,g,b, need_lookup = 0;
    struct sysdep_palette_struct *palette = NULL;
+   
    
    /* allocate the palette struct */
    if (!(palette = calloc(1, sizeof(struct sysdep_palette_struct))))
@@ -76,30 +77,34 @@ struct sysdep_palette_struct *sysdep_palette_create(
    switch (src_depth)
    {
       case 15:
-         if ((display_palette->fourcc_format == 0) &&
-             (display_palette->red_mask   == (0x1F << 10)) &&
-             (display_palette->green_mask == (0x1F <<  5)) &&
-             (display_palette->blue_mask  == (0x1F      )))
-            break;
-         /* we need to emulate or create a yuyv lookup so fall through */
+         if ((display_palette->fourcc_format != 0) ||
+             (display_palette->red_mask   != (0x1F << 10)) ||
+             (display_palette->green_mask != (0x1F <<  5)) ||
+             (display_palette->blue_mask  != (0x1F      )))
+            need_lookup = 1;
+         break;
       case 16:
-         if (!(palette->lookup = calloc(65536, sizeof(unsigned int))))
-         {
-            fprintf(stderr, "error malloc failed for color lookup table\n");
-            sysdep_palette_destroy(palette);
-            return NULL;
-         }
+         need_lookup = 1;
          break;
       case 32:
+         if (display_palette->fourcc_format == FOURCC_YUY2)
+           need_lookup = 1;
          break;
       default:
       	 fprintf(stderr, "error unknown src_depth: %d\n", src_depth);
          sysdep_palette_destroy(palette);
          return NULL;
    }
+
+   if (need_lookup && !(palette->lookup = calloc(65536, sizeof(unsigned int))))
+   {
+      fprintf(stderr, "error malloc failed for color lookup table\n");
+      sysdep_palette_destroy(palette);
+      return NULL;
+   }
    
    /* do we need to fill the lookup table? */
-   if (src_depth == 15 && palette->lookup)
+   if ((src_depth) == 15 && palette->lookup)
    {
    	for (r = 0; r < 32; r++)
    		for (g = 0; g < 32; g++)
@@ -110,6 +115,21 @@ struct sysdep_palette_struct *sysdep_palette_create(
    						idx,
    						(r << 3) | (r >> 2),
    						(g << 3) | (g >> 2),
+   						(b << 3) | (b >> 2));
+   			}
+   }
+
+   if ((src_depth) == 32 && (display_palette->fourcc_format == FOURCC_YUY2))
+   {
+   	for (r = 0; r < 32; r++)
+   		for (g = 0; g < 64; g++)
+   			for (b = 0; b < 32; b++)
+   			{
+   				int idx = (r << 11) | (g << 5) | b;
+   				sysdep_palette_set_pen(palette,
+   						idx,
+   						(r << 3) | (r >> 2),
+   						(g << 2) | (g >> 4),
    						(b << 3) | (b >> 2));
    			}
    }
@@ -146,11 +166,7 @@ void sysdep_palette_set_pen(struct sysdep_palette_struct *palette, int pen,
 
         /* Storing this data in YUYV order simplifies using the data for
            YUY2, both with and without smoothing... */
-#ifdef LSB_FIRST
-        palette->lookup[pen]=(y    ) | (u<< 8) | (y<<16) | (v<<24);
-#else
-        palette->lookup[pen]=(y<<24) | (u<<16) | (y<< 8) | (v    );
-#endif
+        palette->lookup[pen]=(y<<Y1SHIFT)|(u<<USHIFT)|(y<<Y2SHIFT)|(v<<VSHIFT);
    }
 }
 

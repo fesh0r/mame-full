@@ -7,4 +7,5 @@
 #include "blit_normal.h"
 #include "blit_effect.h"
 #include "advance/scale2x.h"
+#include "advance/hq2x.h"
 #include "blit_undefs.h"

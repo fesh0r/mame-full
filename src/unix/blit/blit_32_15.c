@@ -33,4 +33,5 @@ INLINE void blit_line_32_15(unsigned int *src, unsigned int *end, unsigned short
 #include "blit_defs.h"
 #include "blit_effect.h"
 #include "advance/scale2x.h"
+#include "advance/hq2x.h"
 #include "blit_undefs.h"

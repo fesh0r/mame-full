@@ -8,4 +8,5 @@
 #define DEST_DEPTH 15
 #include "blit_defs.h"
 #include "blit_effect.h"
+#include "advance/hq2x.h"
 #include "blit_undefs.h"

@@ -15,5 +15,6 @@ extern char *_6tap2x_buf3;
 extern char *_6tap2x_buf4;
 extern char *_6tap2x_buf5;
 extern void (*rotate_func)(void *dst, struct mame_bitmap *bitmap, int y, struct rectangle *bounds);
+extern unsigned int effect_rgb2yuv[];
 
 #endif /* __EFFECT_H */
