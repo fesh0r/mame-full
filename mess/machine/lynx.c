@@ -505,102 +505,107 @@ static void lynx_blitter(void)
     blitter.screen=GET_WORD(suzy.u.data, 8);
     blitter.xoff=GET_WORD(suzy.u.data,4);
     blitter.yoff=GET_WORD(suzy.u.data,6);
+
+    // these might be never set by the blitter hardware
+    blitter.width=0x100;
+    blitter.height=0x100;
+    blitter.stretch=0;
+    blitter.tilt=0;
     
-    for (blitter.cmd=GET_WORD(suzy.u.data, 0x10); blitter.cmd; 
-	 blitter.cmd=GET_WORD(blitter.mem, blitter.cmd+3),blitter.memory_accesses+=2 ) {
+    for (blitter.cmd=GET_WORD(suzy.u.data, 0x10); blitter.cmd; ) {
 	
 	blitter.memory_accesses+=3;
-	if (blitter.mem[blitter.cmd+1]&4) continue;
+	if (!(blitter.mem[blitter.cmd+1]&4)) {
 	
-	blitter.colpos=GET_WORD(suzy.u.data, 0x24)+blitter.cmd;
+	    blitter.colpos=GET_WORD(suzy.u.data, 0x24)+blitter.cmd;
 	
-	blitter.bitmap=GET_WORD(blitter.mem,blitter.cmd+5);
-	blitter.x=(INT16)GET_WORD(blitter.mem, blitter.cmd+7)-blitter.xoff;
-	blitter.y=(INT16)GET_WORD(blitter.mem, blitter.cmd+9)-blitter.yoff;
-	blitter.memory_accesses+=6;
-	
-	blitter.mode=blitter.mem[blitter.cmd]&07;
-	if (blitter.mem[blitter.cmd+1]&0x80) {
-	    blitter.line_function=blit_line[blitter.mem[blitter.cmd]>>6];
-	} else {
-	    blitter.line_function=blit_rle_line[blitter.mem[blitter.cmd]>>6];
-	}
-	
-	if (!(blitter.mem[blitter.cmd+2]&0x20) && !( suzy.u.s.SPRSYS&0x20) ) {
-	    switch (blitter.mode) {
-	    case 0: case 2: case 3: case 4: case 6: case 7:
-		blitter.mode|=0x10;
-		blitter.mem[blitter.colpos]=0;
-		blitter.spritenr=blitter.mem[blitter.cmd+2]&0xf;
+	    blitter.bitmap=GET_WORD(blitter.mem,blitter.cmd+5);
+	    blitter.x=(INT16)GET_WORD(blitter.mem, blitter.cmd+7)-blitter.xoff;
+	    blitter.y=(INT16)GET_WORD(blitter.mem, blitter.cmd+9)-blitter.yoff;
+	    blitter.memory_accesses+=6;
+	    
+	    blitter.mode=blitter.mem[blitter.cmd]&07;
+	    if (blitter.mem[blitter.cmd+1]&0x80) {
+		blitter.line_function=blit_line[blitter.mem[blitter.cmd]>>6];
+	    } else {
+		blitter.line_function=blit_rle_line[blitter.mem[blitter.cmd]>>6];
 	    }
-	}
-	
-	o=0xb;
-	blitter.width=0x100;
-	blitter.height=0x100;
-	if (blitter.mem[blitter.cmd+1]&0x30) {
-	    blitter.width=GET_WORD(blitter.mem, blitter.cmd+11);
-	    blitter.height=GET_WORD(blitter.mem, blitter.cmd+13);
-	    blitter.memory_accesses+=4;
-	    o+=4;
-	}
-	
-	blitter.stretch=0;
-	blitter.tilt=0;
-	if (blitter.mem[blitter.cmd+1]&0x20) {
-	    blitter.stretch=GET_WORD(blitter.mem, blitter.cmd+o);
-	    blitter.memory_accesses+=2;
-	    o+=2;
-	    if (blitter.mem[blitter.cmd+1]&0x10) {
-		blitter.tilt=GET_WORD(blitter.mem, blitter.cmd+o);
+	    
+	    if (!(blitter.mem[blitter.cmd+2]&0x20) && !( suzy.u.s.SPRSYS&0x20) ) {
+		switch (blitter.mode) {
+		case 0: case 2: case 3: case 4: case 6: case 7:
+		    blitter.mode|=0x10;
+		    blitter.mem[blitter.colpos]=0;
+		    blitter.spritenr=blitter.mem[blitter.cmd+2]&0xf;
+		}
+	    }
+	    
+	    o=0xb;
+	    if (blitter.mem[blitter.cmd+1]&0x30) {
+		blitter.width=GET_WORD(blitter.mem, blitter.cmd+11);
+		blitter.height=GET_WORD(blitter.mem, blitter.cmd+13);
+		blitter.memory_accesses+=4;
+		o+=4;
+	    }
+	    
+	    if (blitter.mem[blitter.cmd+1]&0x20) {
+		blitter.stretch=GET_WORD(blitter.mem, blitter.cmd+o);
 		blitter.memory_accesses+=2;
 		o+=2;
+		if (blitter.mem[blitter.cmd+1]&0x10) {
+		    blitter.tilt=GET_WORD(blitter.mem, blitter.cmd+o);
+		    blitter.memory_accesses+=2;
+		    o+=2;
+		}
 	    }
-	}
-	colors=lynx_colors[blitter.mem[blitter.cmd]>>6];
-	
-	if (!(blitter.mem[blitter.cmd+1]&8)) {
-	    for (i=0; i<colors/2; i++) {
-		blitter.color[i*2]=blitter.mem[blitter.cmd+o+i]>>4;
-		blitter.color[i*2+1]=blitter.mem[blitter.cmd+o+i]&0xf;
-		blitter.memory_accesses++;
+	    colors=lynx_colors[blitter.mem[blitter.cmd]>>6];
+	    
+	    if (!(blitter.mem[blitter.cmd+1]&8)) {
+		for (i=0; i<colors/2; i++) {
+		    blitter.color[i*2]=blitter.mem[blitter.cmd+o+i]>>4;
+		    blitter.color[i*2+1]=blitter.mem[blitter.cmd+o+i]&0xf;
+		    blitter.memory_accesses++;
+		}
 	    }
-	}
-
+	    
 #if 0
-	if (debug_pos<ARRAY_LENGTH(debug_strings)) {
-	    snprintf(debug_strings[debug_pos],sizeof(debug_strings[0]),
-		     "%.2x%.2x%.2x %.4x %.4x %.4x %.4x",
-		     blitter.mem[blitter.cmd],
-		     blitter.mem[blitter.cmd+1],
-		     blitter.mem[blitter.cmd+2],
-		     blitter.x, blitter.y,
-		     blitter.width, blitter.height
-		);
-	    debug_pos++;
-	}
-#endif	
-
-#if 1
-	logerror("%04x %.2x %.2x %.2x x:%.4x y:%.4x",
-		 blitter.cmd,
-		 blitter.mem[blitter.cmd],blitter.mem[blitter.cmd+1],blitter.mem[blitter.cmd+2],
-		 blitter.x,blitter.y);
-	if (blitter.mem[blitter.cmd+1]&0x30) {
-	    logerror(" w:%.4x h:%.4x", blitter.width,blitter.height);
-	}
-	if (blitter.mem[blitter.cmd+1]&0x20) {
-	    logerror(" s:%.4x t:%.4x", blitter.stretch, blitter.tilt);
-	}
-	if (!(blitter.mem[blitter.cmd+1]&0x8)) {
-	    logerror(" c:");
-	    for (i=0; i<colors/2; i++) {
-		logerror("%.2x", blitter.mem[blitter.cmd+o+i]);
+	    if (debug_pos<ARRAY_LENGTH(debug_strings)) {
+		snprintf(debug_strings[debug_pos],sizeof(debug_strings[0]),
+			 "%.2x%.2x%.2x %.4x %.4x %.4x %.4x",
+			 blitter.mem[blitter.cmd],
+			 blitter.mem[blitter.cmd+1],
+			 blitter.mem[blitter.cmd+2],
+			 blitter.x, blitter.y,
+			 blitter.width, blitter.height
+		    );
+		debug_pos++;
 	    }
-	}
-	logerror(" %.4x\n", blitter.bitmap);
 #endif
-	lynx_blit_lines();
+	    
+#if 0
+	    logerror("%04x %.2x %.2x %.2x x:%.4x y:%.4x",
+		     blitter.cmd,
+		     blitter.mem[blitter.cmd],blitter.mem[blitter.cmd+1],blitter.mem[blitter.cmd+2],
+		     blitter.x,blitter.y);
+	    if (blitter.mem[blitter.cmd+1]&0x30) {
+		logerror(" w:%.4x h:%.4x", blitter.width,blitter.height);
+	    }
+	    if (blitter.mem[blitter.cmd+1]&0x20) {
+		logerror(" s:%.4x t:%.4x", blitter.stretch, blitter.tilt);
+	    }
+	    if (!(blitter.mem[blitter.cmd+1]&0x8)) {
+		logerror(" c:");
+		for (i=0; i<colors/2; i++) {
+		    logerror("%.2x", blitter.mem[blitter.cmd+o+i]);
+		}
+	    }
+	    logerror(" %.4x\n", blitter.bitmap);
+#endif
+	    lynx_blit_lines();
+	}
+	blitter.cmd=GET_WORD(blitter.mem, blitter.cmd+3);
+	blitter.memory_accesses+=2;
+	if (!(blitter.cmd&0xff00)) break;
     }
 //    timer_set(TIME_IN_CYCLES(blitter.memory_accesses*20,0), 0, lynx_blitter_timer);
 }
@@ -682,7 +687,7 @@ READ_HANDLER(suzy_read)
 		break;
 	case 0xb0:
 		input=readinputport(0);
-		switch (readinputport(2)&3) {
+		switch (lynx_rotate) {
 		case 1:
 			data=input;
 			input&=0xf;
