@@ -16,7 +16,7 @@
 
  ***************************************************************************/
 
-#define DIRECTINPUT_VERSION 0x0700
+#define DIRECTINPUT_VERSION 0x0500
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -26,7 +26,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <math.h>
-#include "mame32.h"
+#include "MAME32.h"
 #include "DirectInput.h"
 #include "DIJoystick.h"
 #include "M32Util.h"
@@ -53,6 +53,7 @@
     Joy:    1 for Mouse/track buttons
 
 */
+
 #define JOYCODE(joy, stick, axis_or_button, dir) \
         ((((dir)            & 0x03) << 14) |     \
          (((axis_or_button) & 0x3f) <<  8) |     \
@@ -97,7 +98,6 @@ static BOOL             DIJoystick_OnMessage(HWND hWnd, UINT Msg, WPARAM wParam,
 static BOOL CALLBACK DIJoystick_EnumDeviceProc(LPDIDEVICEINSTANCE pdidi, LPVOID pv);
 static void DIJoystick_InitJoyList(void);
 
-
 /***************************************************************************
     External variables
  ***************************************************************************/
@@ -119,49 +119,45 @@ struct OSDJoystick  DIJoystick =
     Internal structures
  ***************************************************************************/
 
-
-
 #define MAX_PHYSICAL_JOYSTICKS 20
-#define MAX_AXES 20
+#define MAX_AXES               20
 
 typedef struct
 {
-   GUID guid;
-   char *name;
+    GUID guid;
+    char *name;
 
-   int offset; /* offset in dijoystate */
+    int offset; /* offset in dijoystate */
 } axis_type;
 
 typedef struct
 {
-   BOOL use_joystick;
+    BOOL use_joystick;
 
-   GUID guidDevice;
-   char *name;
+    GUID guidDevice;
+    char *name;
 
-   BOOL is_light_gun;
+    BOOL is_light_gun;
 
-   LPDIRECTINPUTDEVICE2 did;
-   
-   DWORD num_axes;
-   axis_type axes[MAX_AXES];
+    LPDIRECTINPUTDEVICE2 did;
 
-   DWORD num_pov;
-   DWORD num_buttons;
+    DWORD num_axes;
+    axis_type axes[MAX_AXES];
 
-   DIJOYSTATE  dijs;
+    DWORD num_pov;
+    DWORD num_buttons;
+
+    DIJOYSTATE  dijs;
 
 } joystick_type;
 
 struct tDIJoystick_private
 {
-    int         use_count; /* the gui and game can both init/exit us, so keep
-                              track */
-    BOOL        m_bCoinSlot;
+    int   use_count; /* the gui and game can both init/exit us, so keep track */
+    BOOL  m_bCoinSlot;
 
     DWORD num_joysticks;
     joystick_type joysticks[MAX_PHYSICAL_JOYSTICKS]; /* actual joystick data! */
-
 };
 
 /* internal functions needing our declarations */
@@ -169,9 +165,9 @@ static BOOL CALLBACK DIJoystick_EnumAxisObjectsProc(LPCDIDEVICEOBJECTINSTANCE lp
                                                     joystick_type *joystick);
 static BOOL CALLBACK DIJoystick_EnumPOVObjectsProc(LPCDIDEVICEOBJECTINSTANCE lpddoi,
                                                    joystick_type *joystick);
-BOOL CALLBACK DIJoystick_EnumButtonObjectsProc(LPCDIDEVICEOBJECTINSTANCE lpddoi,
-                                               joystick_type *joystick);
-void ClearJoyState(DIJOYSTATE *pdijs);
+static BOOL CALLBACK DIJoystick_EnumButtonObjectsProc(LPCDIDEVICEOBJECTINSTANCE lpddoi,
+                                                      joystick_type *joystick);
+static void ClearJoyState(DIJOYSTATE *pdijs);
 
 static void InitJoystick(joystick_type *joystick);
 static void ExitJoystick(joystick_type *joystick);
@@ -183,12 +179,12 @@ static void ExitJoystick(joystick_type *joystick);
 
 static struct tDIJoystick_private   This;
 
-GUID guidNULL = {0, 0, 0, {0, 0, 0, 0, 0, 0, 0, 0}};
+static const GUID guidNULL = {0, 0, 0, {0, 0, 0, 0, 0, 0, 0, 0}};
 
-static struct JoystickInfo      joylist[256] =
+static struct JoystickInfo joylist[256] =
 {
-   /* will be filled later */
-   { 0, 0, 0 }	/* end of table */
+    /* will be filled later */
+    { 0, 0, 0 } /* end of table */
 };
 
 
@@ -199,10 +195,10 @@ static struct JoystickInfo      joylist[256] =
     put here anything you need to do when the program is started. Return 0 if 
     initialization was successful, nonzero otherwise.
 */
-static int DIJoystick_init(options_type *options)
+static int DIJoystick_init(options_type* options)
 {
-    DWORD             i;
-    HRESULT         hr;
+    DWORD   i;
+    HRESULT hr;
 
     This.use_count++;
 
@@ -229,18 +225,18 @@ static int DIJoystick_init(options_type *options)
     }
 
     /* create each joystick device, enumerate each joystick for axes, etc */
-    for (i=0;i<This.num_joysticks;i++)
+    for (i = 0; i < This.num_joysticks; i++)
     {
-       InitJoystick(&This.joysticks[i]);
-       /* User turned off joy option or a joy driver is not installed. */
-       if (!options->use_joystick)
-          This.joysticks[i].use_joystick = FALSE;
+        InitJoystick(&This.joysticks[i]);
+        /* User turned off joy option or a joy driver is not installed. */
+        if (!options->use_joystick)
+            This.joysticks[i].use_joystick = FALSE;
     }
 
     /* Are there any joysticks attached? */
     if (This.num_joysticks < 1)
     {
-        //ErrorMsg("DirectInput EnumDevices didn't find any joysticks");
+        /*ErrorMsg("DirectInput EnumDevices didn't find any joysticks");*/
         return 0;
     }
     
@@ -261,7 +257,7 @@ static void DIJoystick_exit(void)
     if (This.use_count > 0)
         return;
 
-    for (i=0;i<This.num_joysticks;i++)
+    for (i = 0; i < This.num_joysticks; i++)
        ExitJoystick(&This.joysticks[i]);
     
     This.num_joysticks = 0;
@@ -274,35 +270,35 @@ static const struct JoystickInfo *DIJoystick_get_joy_list(void)
 
 static void DIJoystick_poll_joysticks(void)
 {
-    HRESULT     hr;
-    DWORD i;
+    HRESULT hr;
+    DWORD   i;
     
     This.m_bCoinSlot = 0;
 
-    for (i=0;i<This.num_joysticks;i++)
+    for (i = 0; i < This.num_joysticks; i++)
     {
-       /* start by clearing the structure, then fill it in if possible */
+        /* start by clearing the structure, then fill it in if possible */
 
-       ClearJoyState(&This.joysticks[i].dijs);
+        ClearJoyState(&This.joysticks[i].dijs);
 
-       if (This.joysticks[i].did == NULL)
-           continue;
+        if (This.joysticks[i].did == NULL)
+            continue;
 
-       if (This.joysticks[i].use_joystick == FALSE)
-          continue;
+        if (This.joysticks[i].use_joystick == FALSE)
+            continue;
 
-       hr = IDirectInputDevice2_Poll(This.joysticks[i].did);
+        hr = IDirectInputDevice2_Poll(This.joysticks[i].did);
 
-       hr = IDirectInputDevice2_GetDeviceState(This.joysticks[i].did,sizeof(DIJOYSTATE),
-                                               &This.joysticks[i].dijs);
-       if (FAILED(hr))
-       {
-          if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED)
-          {
-             hr = IDirectInputDevice2_Acquire(This.joysticks[i].did);
-          }
-          continue;
-       }
+        hr = IDirectInputDevice2_GetDeviceState(This.joysticks[i].did,sizeof(DIJOYSTATE),
+                                                &This.joysticks[i].dijs);
+        if (FAILED(hr))
+        {
+            if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED)
+            {
+                hr = IDirectInputDevice2_Acquire(This.joysticks[i].did);
+            }
+            continue;
+        }
     }
 }
 
@@ -367,7 +363,7 @@ static int DIJoystick_is_joy_pressed(int joycode)
     joy_num--;
     
     if (This.joysticks[joy_num].use_joystick == FALSE)
-       return 0;
+        return 0;
 
     dijs = This.joysticks[joy_num].dijs;
 
@@ -383,7 +379,7 @@ static int DIJoystick_is_joy_pressed(int joycode)
 
         if (button >= This.joysticks[joy_num].num_buttons
         ||  GET_JOYCODE_DIR(joycode) != JOYCODE_DIR_BTN)
-           return 0;
+            return 0;
 
         return dijs.rgbButtons[button] != 0;
     }
@@ -391,36 +387,36 @@ static int DIJoystick_is_joy_pressed(int joycode)
     if (stick == JOYCODE_STICK_POV)
     {
         /* POV */
-       int pov_value;
-       int angle;
-       int axis_value;
+        int pov_value;
+        int angle;
+        int axis_value;
        
-       int num_pov = GET_JOYCODE_BUTTON(joycode) / 4;
-       int code = GET_JOYCODE_BUTTON(joycode) % 4;
-       axis = code / 2;
-       dir  = code % 2;
+        int num_pov = GET_JOYCODE_BUTTON(joycode) / 4;
+        int code    = GET_JOYCODE_BUTTON(joycode) % 4;
+        axis = code / 2;
+        dir  = code % 2;
 
-       if (num_pov >= This.joysticks[joy_num].num_pov)
-          return 0;
+        if (num_pov >= This.joysticks[joy_num].num_pov)
+            return 0;
 
-       pov_value = dijs.rgdwPOV[num_pov];
-       if (LOWORD(pov_value) == 0xffff)
-          return 0;
+        pov_value = dijs.rgdwPOV[num_pov];
+        if (LOWORD(pov_value) == 0xffff)
+            return 0;
 
-       angle = (pov_value + 27000) % 36000;
-       angle = (36000 - angle) % 36000;
-       angle /= 100;
+        angle = (pov_value + 27000) % 36000;
+        angle = (36000 - angle) % 36000;
+        angle /= 100;
        
-       /* angle is now in degrees counterclockwise from x axis*/
-       if (axis == 1)
-          axis_value = 128 + (int)(127*cos(2*PI*angle/360.0)); // x
-       else
-          axis_value = 128 + (int)(127*sin(2*PI*angle/360.0)); // y
+        /* angle is now in degrees counterclockwise from x axis*/
+        if (axis == 1)
+            axis_value = 128 + (int)(127 * cos(2 * PI * angle / 360.0)); /* x */
+        else
+            axis_value = 128 + (int)(127 * sin(2 * PI * angle / 360.0)); /* y */
 
-       if (dir == 1)
-          return axis_value <= (128 - 128*dz/100);
-       else
-          return axis_value >= (128 + 128*dz/100);
+        if (dir == 1)
+            return axis_value <= (128 - 128 * dz / 100);
+        else
+            return axis_value >= (128 + 128 * dz / 100);
     }
 
     /* sticks */
@@ -429,19 +425,19 @@ static int DIJoystick_is_joy_pressed(int joycode)
     dir  = GET_JOYCODE_DIR(joycode);
     
     if (axis == 0 || This.joysticks[joy_num].num_axes < axis)
-       return 0;
+        return 0;
     axis--;
 
     value = *(int *)(((byte *)&dijs) + This.joysticks[joy_num].axes[axis].offset);
 
     if (dir == JOYCODE_DIR_NEG)
-       return value <= (128 - 128*dz/100);
+        return value <= (128 - 128 * dz / 100);
     else
-       return value >= (128 + 128*dz/100);
+        return value >= (128 + 128 * dz / 100);
 }
 
 /* osd_analog_joyread() returns values from -128 to 128 */
-static void DIJoystick_analogjoy_read(int player, int *analog_x, int *analog_y)
+static void DIJoystick_analogjoy_read(int player, int* analog_x, int* analog_y)
 {
     int i;
     int light_gun_index = -1;
@@ -450,75 +446,78 @@ static void DIJoystick_analogjoy_read(int player, int *analog_x, int *analog_y)
 
     *analog_x = *analog_y = 0;
 
-    for (i=0;i<This.num_joysticks;i++)
+    for (i = 0; i < This.num_joysticks; i++)
+    {
         if (This.joysticks[i].is_light_gun)
         {
             light_gun_index = i;
             break;
         }
+    }
 
     if (light_gun_index == -1)
     {
-       // standard analog joy reading
+        /* standard analog joy reading */
 
-       if (This.num_joysticks <= player || This.joysticks[player].use_joystick == FALSE)
-          return;
+        if (This.num_joysticks <= player || This.joysticks[player].use_joystick == FALSE)
+            return;
        
-       *analog_x = This.joysticks[player].dijs.lX - 128;
-       *analog_y = This.joysticks[player].dijs.lY - 128;
+        *analog_x = This.joysticks[player].dijs.lX - 128;
+        *analog_y = This.joysticks[player].dijs.lY - 128;
        
-       return;
+        return;
     }
 
-    // light gun reading
+    /* light gun reading */
 
     switch (player)
     {
-    case 0 :
+    case 0:
     {
-       static int joe;
-
-        int x,y;
+        int x, y;
         POINT pt = { 0, 0 };
-        ClientToScreen(MAME32App.m_hWnd,&pt);
+        ClientToScreen(MAME32App.m_hWnd, &pt);
         
         x = This.joysticks[light_gun_index].dijs.lX;
         y = This.joysticks[light_gun_index].dijs.lY;
 
-        // need to go from screen pixel x,y to -128 to 128 scale
-        *analog_x = (x - pt.x)*257/Machine->drv->screen_width - 128;
+        /* need to go from screen pixel x,y to -128 to 128 scale */
+        *analog_x = (x - pt.x) * 257 / Machine->drv->screen_width - 128;
         if (*analog_x > 128)
-           *analog_x = 128;
-        *analog_y = (y - pt.y)*257/Machine->drv->screen_height - 128;
+            *analog_x = 128;
+
+        *analog_y = (y - pt.y) * 257 / Machine->drv->screen_height - 128;
         if (*analog_y > 128)
-           *analog_y = 128;
+            *analog_y = 128;
         
         break;
     }
-    case 1 :
+
+    case 1:
     {
-        int x,y;
+        int x, y;
         POINT pt = { 0, 0 };
-        ClientToScreen(MAME32App.m_hWnd,&pt);
+        ClientToScreen(MAME32App.m_hWnd, &pt);
         
         x = This.joysticks[light_gun_index].dijs.lZ;
         y = This.joysticks[light_gun_index].dijs.lRz;
         
-        // need to go from screen pixel x,y to -128 to 128 scale
-        *analog_x = (x - pt.x)*257/Machine->drv->screen_width - 128;
+        /* need to go from screen pixel x,y to -128 to 128 scale */
+        *analog_x = (x - pt.x) * 257 / Machine->drv->screen_width - 128;
         if (*analog_x > 128)
-           *analog_x = 128;
-        *analog_y = (y - pt.y)*257/Machine->drv->screen_height - 128;
+            *analog_x = 128;
+
+        *analog_y = (y - pt.y) * 257 / Machine->drv->screen_height - 128;
         if (*analog_y > 128)
-           *analog_y = 128;
+            *analog_y = 128;
 
        break;
     }
     break;
     
-    default :
-       // only support up to 2 light guns (in one joystick device) right now
-       ;
+    default:
+        /* only support up to 2 light guns (in one joystick device) right now */
+        ;
     }
 
 }
@@ -536,12 +535,13 @@ static int DIJoystick_standard_analog_read(int player, int axis)
     {
     case X_AXIS:
         retval = (This.joysticks[player].dijs.lRz - 128) /
-            (128/(TRAK_MAXX_RES/2));
+                 (128 / (TRAK_MAXX_RES / 2));
         if (retval > TRAK_MAXX_RES)
             retval = TRAK_MAXX_RES;
         if (retval < -TRAK_MAXX_RES)
             retval = -TRAK_MAXX_RES;
         return retval;
+
     case Y_AXIS:
         retval = 0;
         return retval;
@@ -571,9 +571,9 @@ static BOOL DIJoystick_Available(void)
 
     /* enumerate for joystick devices */
     hr = IDirectInput_EnumDevices(di, DIDEVTYPE_JOYSTICK,
-                 (LPDIENUMDEVICESCALLBACK)inputEnumDeviceProc,
-                 &guidDevice,
-                 DIEDFL_ATTACHEDONLY);
+                                  inputEnumDeviceProc,
+                                  &guidDevice,
+                                  DIEDFL_ATTACHEDONLY);
     if (FAILED(hr))
     {
        return FALSE;
@@ -618,151 +618,151 @@ static BOOL DIJoystick_OnMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPar
 
 int DIJoystick_GetNumPhysicalJoysticks()
 {
-   return This.num_joysticks;
+    return This.num_joysticks;
 }
 
-char * DIJoystick_GetPhysicalJoystickName(int num_joystick)
+char* DIJoystick_GetPhysicalJoystickName(int num_joystick)
 {
-   return This.joysticks[num_joystick].name;
+    return This.joysticks[num_joystick].name;
 }
 
 int DIJoystick_GetNumPhysicalJoystickAxes(int num_joystick)
 {
-   return This.joysticks[num_joystick].num_axes;
+    return This.joysticks[num_joystick].num_axes;
 }
 
-char * DIJoystick_GetPhysicalJoystickAxisName(int num_joystick,int num_axis)
+char* DIJoystick_GetPhysicalJoystickAxisName(int num_joystick, int num_axis)
 {
-   return This.joysticks[num_joystick].axes[num_axis].name;
+    return This.joysticks[num_joystick].axes[num_axis].name;
 }
-
 
 /***************************************************************************
     Internal functions
  ***************************************************************************/
+
 BOOL CALLBACK DIJoystick_EnumDeviceProc(LPDIDEVICEINSTANCE pdidi, LPVOID pv)
 {
    char buffer[5000];
 
    This.joysticks[This.num_joysticks].guidDevice = pdidi->guidInstance;
 
-   sprintf(buffer,"%s (%s)",pdidi->tszProductName,pdidi->tszInstanceName);
-   This.joysticks[This.num_joysticks].name = (char *)malloc(strlen(buffer)+1);
-   strcpy(This.joysticks[This.num_joysticks].name,buffer);
+   sprintf(buffer, "%s (%s)", pdidi->tszProductName, pdidi->tszInstanceName);
+   This.joysticks[This.num_joysticks].name = (char *)malloc(strlen(buffer) + 1);
+   strcpy(This.joysticks[This.num_joysticks].name, buffer);
 
    This.num_joysticks++;
-   
 
    return DIENUM_CONTINUE;
 }
 
-BOOL CALLBACK DIJoystick_EnumAxisObjectsProc(LPCDIDEVICEOBJECTINSTANCE lpddoi,
-                                             joystick_type *joystick)
+static BOOL CALLBACK DIJoystick_EnumAxisObjectsProc(LPCDIDEVICEOBJECTINSTANCE lpddoi,
+                                                    joystick_type *joystick)
 {
-   DIPROPRANGE diprg;
-   HRESULT hr;
+    DIPROPRANGE diprg;
+    HRESULT hr;
 
-   joystick->axes[joystick->num_axes].guid = lpddoi->guidType;
+    joystick->axes[joystick->num_axes].guid = lpddoi->guidType;
 
-   joystick->axes[joystick->num_axes].name = (char *)malloc(strlen(lpddoi->tszName)+1);
-   strcpy(joystick->axes[joystick->num_axes].name,lpddoi->tszName);
+    joystick->axes[joystick->num_axes].name = (char *)malloc(strlen(lpddoi->tszName) + 1);
+    strcpy(joystick->axes[joystick->num_axes].name, lpddoi->tszName);
 
-   joystick->axes[joystick->num_axes].offset = lpddoi->dwOfs;
+    joystick->axes[joystick->num_axes].offset = lpddoi->dwOfs;
 
-   //ErrorMsg("got axis %s, offset %i",lpddoi->tszName, lpddoi->dwOfs);
-   
-   diprg.diph.dwSize       = sizeof(diprg);
-   diprg.diph.dwHeaderSize = sizeof(diprg.diph);
-   diprg.diph.dwObj        = lpddoi->dwOfs;
-   diprg.diph.dwHow        = DIPH_BYOFFSET;
-   diprg.lMin              = 0;
-   diprg.lMax              = 255;
-   
-   hr = IDirectInputDevice2_SetProperty(joystick->did,DIPROP_RANGE,&diprg.diph);
-   if (FAILED(hr)) /* if this fails, don't use this axis */
-   {
-       free(joystick->axes[joystick->num_axes].name);
-       joystick->axes[joystick->num_axes].name = NULL;
-       return DIENUM_CONTINUE;
-   }
+    /*ErrorMsg("got axis %s, offset %i",lpddoi->tszName, lpddoi->dwOfs);*/
+
+    diprg.diph.dwSize       = sizeof(diprg);
+    diprg.diph.dwHeaderSize = sizeof(diprg.diph);
+    diprg.diph.dwObj        = lpddoi->dwOfs;
+    diprg.diph.dwHow        = DIPH_BYOFFSET;
+    diprg.lMin              = 0;
+    diprg.lMax              = 255;
+
+    hr = IDirectInputDevice2_SetProperty(joystick->did, DIPROP_RANGE, &diprg.diph);
+    if (FAILED(hr)) /* if this fails, don't use this axis */
+    {
+        free(joystick->axes[joystick->num_axes].name);
+        joystick->axes[joystick->num_axes].name = NULL;
+        return DIENUM_CONTINUE;
+    }
+
 #ifdef JOY_DEBUG
-   if (FAILED(hr))
-   {
-      ErrorMsg("DirectInput SetProperty() joystick axis %s failed - %s\n",
-               joystick->axes[joystick->num_axes].name,
-               DirectXDecodeError(hr));
-   }
+    if (FAILED(hr))
+    {
+        ErrorMsg("DirectInput SetProperty() joystick axis %s failed - %s\n",
+                 joystick->axes[joystick->num_axes].name,
+                 DirectXDecodeError(hr));
+    }
 #endif
     
-   /* Set axis dead zone to 0; we need accurate #'s for analog joystick reading. */
+    /* Set axis dead zone to 0; we need accurate #'s for analog joystick reading. */
    
-   hr = SetDIDwordProperty(joystick->did,DIPROP_DEADZONE,lpddoi->dwOfs,DIPH_BYOFFSET,0);
+    hr = SetDIDwordProperty(joystick->did, DIPROP_DEADZONE, lpddoi->dwOfs, DIPH_BYOFFSET, 0);
+
 #ifdef JOY_DEBUG
-   if (FAILED(hr))
-   {
-      ErrorMsg("DirectInput SetProperty() joystick axis %s dead zone failed - %s\n",
-               joystick->axes[joystick->num_axes].name,
-               DirectXDecodeError(hr));
-
-   }
+    if (FAILED(hr))
+    {
+        ErrorMsg("DirectInput SetProperty() joystick axis %s dead zone failed - %s\n",
+                 joystick->axes[joystick->num_axes].name,
+                 DirectXDecodeError(hr));
+    }
 #endif
-   joystick->num_axes++;
+
+    joystick->num_axes++;
    
-   return DIENUM_CONTINUE;
+    return DIENUM_CONTINUE;
 }
 
-BOOL CALLBACK DIJoystick_EnumPOVObjectsProc(LPCDIDEVICEOBJECTINSTANCE lpddoi,
-                                            joystick_type *joystick)
+static BOOL CALLBACK DIJoystick_EnumPOVObjectsProc(LPCDIDEVICEOBJECTINSTANCE lpddoi,
+                                                   joystick_type *joystick)
 {
-   joystick->num_pov++;
+    joystick->num_pov++;
    
-   return DIENUM_CONTINUE;
+    return DIENUM_CONTINUE;
 }
 
-BOOL CALLBACK DIJoystick_EnumButtonObjectsProc(LPCDIDEVICEOBJECTINSTANCE lpddoi,
-                                               joystick_type *joystick)
+static BOOL CALLBACK DIJoystick_EnumButtonObjectsProc(LPCDIDEVICEOBJECTINSTANCE lpddoi,
+                                                      joystick_type *joystick)
 {
-   joystick->num_buttons++;
-   
-   return DIENUM_CONTINUE;
+    joystick->num_buttons++;
+
+    return DIENUM_CONTINUE;
 }
 
-void ClearJoyState(DIJOYSTATE *pdijs)
+static void ClearJoyState(DIJOYSTATE *pdijs)
 {
-    memset(pdijs,0,sizeof(DIJOYSTATE));
-    pdijs->lX = 128;
-    pdijs->lY = 128;
-    pdijs->lZ = 128;
-    pdijs->lRx = 128;
-    pdijs->lRy = 128;
-    pdijs->lRz = 128;
+    memset(pdijs, 0, sizeof(DIJOYSTATE));
+    pdijs->lX           = 128;
+    pdijs->lY           = 128;
+    pdijs->lZ           = 128;
+    pdijs->lRx          = 128;
+    pdijs->lRy          = 128;
+    pdijs->lRz          = 128;
     pdijs->rglSlider[0] = 128;
     pdijs->rglSlider[1] = 128;
-    pdijs->rgdwPOV[0] = -1;
-    pdijs->rgdwPOV[1] = -1;
-    pdijs->rgdwPOV[2] = -1;
-    pdijs->rgdwPOV[3] = -1;
+    pdijs->rgdwPOV[0]   = -1;
+    pdijs->rgdwPOV[1]   = -1;
+    pdijs->rgdwPOV[2]   = -1;
+    pdijs->rgdwPOV[3]   = -1;
 }
 
-                                        
-void InitJoystick(joystick_type *joystick)
+static void InitJoystick(joystick_type *joystick)
 {
     LPDIRECTINPUTDEVICE didTemp;
     HRESULT hr;
 
     joystick->use_joystick = FALSE;
 
-    joystick->did = NULL;
+    joystick->did      = NULL;
     joystick->num_axes = 0;
 
-    joystick->is_light_gun = (strcmp(joystick->name,"ACT LABS GS (ACT LABS GS)") == 0);
+    joystick->is_light_gun = (strcmp(joystick->name, "ACT LABS GS (ACT LABS GS)") == 0);
 
     /* get a did1 interface first... */
-    hr = IDirectInput_CreateDevice(di,&joystick->guidDevice,&didTemp,NULL);
+    hr = IDirectInput_CreateDevice(di, &joystick->guidDevice, &didTemp, NULL);
     if (FAILED(hr))
     {
-       ErrorMsg("DirectInput CreateDevice() joystick failed: %s\n", DirectXDecodeError(hr));
-       return;
+        ErrorMsg("DirectInput CreateDevice() joystick failed: %s\n", DirectXDecodeError(hr));
+        return;
     }
     
     /* get a did2 interface to work with polling (most) joysticks */
@@ -776,82 +776,87 @@ void InitJoystick(joystick_type *joystick)
     /* check result of getting the did2 */
     if (FAILED(hr))
     {
-       /* no error message because this happens in dx3 */
-       /* ErrorMsg("DirectInput QueryInterface joystick failed\n"); */
-       joystick->did = NULL;
-       return;
+        /* no error message because this happens in dx3 */
+        /* ErrorMsg("DirectInput QueryInterface joystick failed\n"); */
+        joystick->did = NULL;
+        return;
     }
 
     
-    hr = IDirectInputDevice2_SetCooperativeLevel(joystick->did,MAME32App.m_hWnd,
+    hr = IDirectInputDevice2_SetCooperativeLevel(joystick->did, MAME32App.m_hWnd,
                                                  DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
     if (FAILED(hr))
     {
-       ErrorMsg("DirectInput SetCooperativeLevel() joystick failed: %s\n", DirectXDecodeError(hr));
-       return;
+        ErrorMsg("DirectInput SetCooperativeLevel() joystick failed: %s\n", DirectXDecodeError(hr));
+        return;
     }
 
 
-    hr = IDirectInputDevice2_SetDataFormat(joystick->did,&c_dfDIJoystick);
+    hr = IDirectInputDevice2_SetDataFormat(joystick->did, &c_dfDIJoystick);
     if (FAILED(hr))
     {
-       ErrorMsg("DirectInput SetDataFormat() joystick failed: %s\n", DirectXDecodeError(hr));
-       return;
+        ErrorMsg("DirectInput SetDataFormat() joystick failed: %s\n", DirectXDecodeError(hr));
+        return;
     }
 
     if (joystick->is_light_gun)
     {
-       // setup light gun to report raw screen pixel data
+       /* setup light gun to report raw screen pixel data */
 
        DIPROPDWORD diprop;
-       memset(&diprop,0,sizeof(diprop));
+       memset(&diprop, 0, sizeof(diprop));
        diprop.diph.dwSize       = sizeof(DIPROPDWORD);
        diprop.diph.dwHeaderSize = sizeof(DIPROPHEADER);
        diprop.diph.dwObj        = 0;
        diprop.diph.dwHow        = DIPH_DEVICE;
        diprop.dwData            = DIPROPCALIBRATIONMODE_RAW;
        
-       IDirectInputDevice2_SetProperty(joystick->did,DIPROP_CALIBRATIONMODE,&diprop.diph);
+       IDirectInputDevice2_SetProperty(joystick->did, DIPROP_CALIBRATIONMODE, &diprop.diph);
     }
     else
     {
-       /* enumerate our axes */
-       hr = IDirectInputDevice_EnumObjects(joystick->did,(LPDIENUMDEVICEOBJECTSCALLBACK)
-                                           DIJoystick_EnumAxisObjectsProc,joystick,DIDFT_AXIS);
-       if (FAILED(hr))
-       {
-          ErrorMsg("DirectInput EnumObjects() Axes failed: %s\n", DirectXDecodeError(hr));
-          return;
-       }
+        /* enumerate our axes */
+        hr = IDirectInputDevice_EnumObjects(joystick->did,
+                                            DIJoystick_EnumAxisObjectsProc,
+                                            joystick,
+                                            DIDFT_AXIS);
+        if (FAILED(hr))
+        {
+            ErrorMsg("DirectInput EnumObjects() Axes failed: %s\n", DirectXDecodeError(hr));
+            return;
+        }
 
-       /* enumerate our POV hats */
-       joystick->num_pov = 0;
-       hr = IDirectInputDevice_EnumObjects(joystick->did,(LPDIENUMDEVICEOBJECTSCALLBACK)
-                                           DIJoystick_EnumPOVObjectsProc,joystick,DIDFT_POV);
-       if (FAILED(hr))
-       {
-          ErrorMsg("DirectInput EnumObjects() POVs failed: %s\n", DirectXDecodeError(hr));
-          return;
-       }
+        /* enumerate our POV hats */
+        joystick->num_pov = 0;
+        hr = IDirectInputDevice_EnumObjects(joystick->did,
+                                            DIJoystick_EnumPOVObjectsProc,
+                                            joystick,
+                                            DIDFT_POV);
+        if (FAILED(hr))
+        {
+            ErrorMsg("DirectInput EnumObjects() POVs failed: %s\n", DirectXDecodeError(hr));
+            return;
+        }
     }
 
     /* enumerate our buttons */
 
     joystick->num_buttons = 0;
-    hr = IDirectInputDevice_EnumObjects(joystick->did,(LPDIENUMDEVICEOBJECTSCALLBACK)
-                                        DIJoystick_EnumButtonObjectsProc,joystick,DIDFT_BUTTON);
+    hr = IDirectInputDevice_EnumObjects(joystick->did,
+                                        DIJoystick_EnumButtonObjectsProc,
+                                        joystick,
+                                        DIDFT_BUTTON);
     if (FAILED(hr))
     {
         ErrorMsg("DirectInput EnumObjects() Buttons failed: %s\n", DirectXDecodeError(hr));
         return;
     }
 
-
     hr = IDirectInputDevice2_Acquire(joystick->did);
     if (FAILED(hr)) 
     {
-       ErrorMsg("DirectInputDevice Acquire joystick failed!\n");
-       return;
+        ErrorMsg("DirectInputDevice Acquire joystick failed!\n");
+        return;
     }
 
     /* start by clearing the structures */
@@ -859,10 +864,9 @@ void InitJoystick(joystick_type *joystick)
     ClearJoyState(&joystick->dijs);
 
     joystick->use_joystick = TRUE;
-
 }
 
-void ExitJoystick(joystick_type *joystick)
+static void ExitJoystick(joystick_type *joystick)
 {
     DWORD i;
     
@@ -940,9 +944,8 @@ static void DIJoystick_InitJoyList(void)
         { JOYCODE(4,JOYCODE_STICK_BTN,6,JOYCODE_DIR_BTN),  JOYCODE_4_BUTTON6 },
         { 0,0 }
     };
-    static char joynames[MAX_JOY][MAX_JOY_NAME_LEN+1];	/* will be used to store names */
-    static char* JoyPOVName[] = { "Forward", "Backward",
-                                  "Right", "Left"};
+    static char joynames[MAX_JOY][MAX_JOY_NAME_LEN + 1]; /* will be used to store names */
+    static const char* JoyPOVName[] = { "Forward", "Backward", "Right", "Left"};
     int tot, i, j, pov;
     char buf[256];
     
@@ -1000,7 +1003,7 @@ static void DIJoystick_InitJoyList(void)
                 strncpy(joynames[tot], buf, MAX_JOY_NAME_LEN);
                 joynames[tot][MAX_JOY_NAME_LEN] = 0;
                 joylist[tot].name = joynames[tot];
-                joylist[tot].code = JOYCODE(i + 1, JOYCODE_STICK_POV, 4*pov + j, JOYCODE_DIR_BTN);
+                joylist[tot].code = JOYCODE(i + 1, JOYCODE_STICK_POV, 4 * pov + j, JOYCODE_DIR_BTN);
                 tot++;
             }
         }
