@@ -188,22 +188,20 @@ void amstrad_handle_snapshot(unsigned char *pSnapshot)
 }
 
 /* load snapshot */
-int amstrad_snapshot_load(void *fp)
+SNAPSHOT_LOAD(amstrad)
 {
 	UINT8 *snapshot;
-	int datasize;
 
 	/* get file size */
-	datasize = osd_fsize(fp);
-	if (datasize < 8)
+	if (snapshot_size < 8)
 		return INIT_FAIL;
 
-	snapshot = malloc(datasize);
+	snapshot = malloc(snapshot_size);
 	if (!snapshot)
 		return INIT_FAIL;
 
 	/* read whole file */
-	osd_fread(fp, snapshot, datasize);
+	osd_fread(fp, snapshot, snapshot_size);
 
     if (memcmp(snapshot, "MV - SNA", 8))
 	{

@@ -3,6 +3,7 @@
 
 #include "vidhrdw/m6847.h"
 #include "videomap.h"
+#include "snapquik.h"
 
 #define COCO_CPU_SPEED_HZ		894886	/* 0.894886 MHz */
 #define COCO_FRAMES_PER_SECOND	(COCO_CPU_SPEED_HZ / 57.0 / 263)
@@ -88,8 +89,8 @@ extern int coco_cassette_init(int id, void *fp, int open_mode);
 extern int coco3_cassette_init(int id);
 extern int coco_rom_load(int id, void *fp, int open_mode);
 extern int coco3_rom_load(int id, void *fp, int open_mode);
-extern int coco_pak_load(void *fp);
-extern int coco3_pak_load(void *fp);
+extern SNAPSHOT_LOAD ( coco_pak );
+extern SNAPSHOT_LOAD ( coco3_pak );
 extern READ_HANDLER ( dragon_mapped_irq_r );
 extern READ_HANDLER ( coco3_mapped_irq_r );
 extern READ_HANDLER ( coco3_mmu_r );

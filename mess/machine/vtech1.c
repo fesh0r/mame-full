@@ -351,19 +351,17 @@ int vtech1_snapshot_id(int id)
 }
 */
 
-int vtech1_snapshot_load(void *file)
+SNAPSHOT_LOAD(vtech1)
 {
-	int snapshot_size;
 	UINT8 *snapshot_data;
 
 	logerror("VTECH snapshot_init\n");
 
-	snapshot_size = osd_fsize(file);
 	snapshot_data = (UINT8*) malloc(snapshot_size);
 	if (!snapshot_data)
 		return INIT_FAIL;
 
-	osd_fread(file, snapshot_data, snapshot_size);
+	osd_fread(fp, snapshot_data, snapshot_size);
 	vtech1_snapshot_copy(snapshot_data, snapshot_size);
 	free(snapshot_data);
 	return INIT_PASS;

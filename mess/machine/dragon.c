@@ -458,12 +458,12 @@ static int generic_pak_load(void *fp, int rambase_index, int rombase_index, int 
 	return INIT_PASS;
 }
 
-int coco_pak_load(void *fp)
+SNAPSHOT_LOAD ( coco_pak )
 {
 	return generic_pak_load(fp, 0x0000, 0x0000, 0x4000);
 }
 
-int coco3_pak_load(void *fp)
+SNAPSHOT_LOAD ( coco3_pak )
 {
 	return generic_pak_load(fp, (0x70000 % mess_ram_size), 0x0000, 0xc000);
 }

@@ -1,7 +1,7 @@
-extern int  spectrum_snap_load(int id, void *fp, int open_mode);
-extern void spectrum_snap_exit(int id);
+#ifndef SPECTRUM_H
+#define SPECTRUM_H
 
-extern int  load_snap(void);
+#include "snapquik.h"
 
 typedef enum
 {
@@ -24,9 +24,8 @@ extern void ts2068_update_memory(void);
 
 extern MACHINE_INIT( spectrum );
 
-extern int  spec_quick_init (int id, void *fp, int open_mode);
-extern void spec_quick_exit (int id);
-extern int  spec_quick_open (int id, int mode, void *arg);
+extern SNAPSHOT_LOAD( spectrum );
+extern QUICKLOAD_LOAD( spectrum );
 
 /*-----------------27/02/00 10:49-------------------
  code for WAV reading writing
@@ -99,3 +98,5 @@ extern READ_HANDLER  ( spectrum_colorram_r );
 #define TS2068_DISPLAY_XSIZE 512  /* Horizontal screen resolution */
 #define TS2068_RIGHT_BORDER  96   /* Number of right hand border pixels */
 #define TS2068_SCREEN_WIDTH (TS2068_LEFT_BORDER + TS2068_DISPLAY_XSIZE + TS2068_RIGHT_BORDER)
+
+#endif /* SPECTRUM_H */

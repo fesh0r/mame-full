@@ -113,7 +113,7 @@ static int apple1_verify_header (UINT8 *data)
 **	Where xxyy is the hex value to load the Data zzzzzzz to
 **
 *****************************************************************************/
-int apple1_load_snap(void *snapfile)
+SNAPSHOT_LOAD(apple1)
 {
 	UINT8 *memptr;
 	UINT8 snapdata[0x1000];
@@ -122,14 +122,14 @@ int apple1_load_snap(void *snapfile)
 	/* Load the specified Snapshot */
 
 	/* Read the snapshot data into a temporary array */
-	osd_fread (snapfile, snapdata, 0x1000);
-	osd_fclose (snapfile);
+	if (osd_fread(fp, snapdata, 0x1000) != 0x1000)
+		return INIT_FAIL;
 
 	/* Verify the snapshot header */
 	if (apple1_verify_header(snapdata) == IMAGE_VERIFY_FAIL)
 	{
 		logerror("Apple1 - Snapshot Header is in incorrect format - needs to be LOAD:xxyyDATA:\n");
-		return(INIT_FAIL);
+		return INIT_FAIL;
 	}
 
 	/* Extract the starting offset to load the snapshot to! */

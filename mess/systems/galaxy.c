@@ -188,7 +188,7 @@ ROM_START (galaxy)
 ROM_END
 
 SYSTEM_CONFIG_START(galaxy)
-	CONFIG_DEVICE_SNAPSHOT( "gal\0", galaxy_snapshot_load )
+	CONFIG_DEVICE_SNAPSHOT( "gal\0", galaxy )
 SYSTEM_CONFIG_END
 
 

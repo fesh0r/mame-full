@@ -1,3 +1,5 @@
+#include "snapquik.h"
+
 /* machine/ti85.c */
 
 extern UINT8 ti85_LCD_memory_base;
@@ -15,7 +17,8 @@ extern NVRAM_HANDLER( ti81 );
 extern NVRAM_HANDLER( ti85 );
 extern NVRAM_HANDLER( ti86 );
 
-extern int ti8x_snapshot_load (void *fd);
+extern SNAPSHOT_LOAD( ti8x );
+
 extern int ti85_serial_init (int, void *fp, int open_mode);
 extern void ti85_serial_exit (int);
 

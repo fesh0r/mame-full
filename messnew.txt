@@ -6,7 +6,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [SPECTRUM] Fixed snapshot loading. [Nate Woods]
+
 
 Source Changes:
 ---------------

@@ -106,11 +106,11 @@ static void galaxy_setup_snapshot (UINT8 * data)
 		cpu_writemem16(i + 0x2000, data[i+76]);
 }
 
-int galaxy_snapshot_load(void *file)
+SNAPSHOT_LOAD( galaxy )
 {
 	UINT8 *galaxy_snapshot_data;
 
-	if (osd_fsize(file) != GALAXY_SNAPSHOT_SIZE)
+	if (snapshot_size != GALAXY_SNAPSHOT_SIZE)
 	{
 		logerror ("Incomplete snapshot file\n");
 		return INIT_FAIL;
@@ -123,7 +123,7 @@ int galaxy_snapshot_load(void *file)
 		return INIT_FAIL;
 	}
 
-	osd_fread(file, galaxy_snapshot_data, GALAXY_SNAPSHOT_SIZE);
+	osd_fread(fp, galaxy_snapshot_data, GALAXY_SNAPSHOT_SIZE);
 
 	galaxy_setup_snapshot(galaxy_snapshot_data);
 	free(galaxy_snapshot_data);

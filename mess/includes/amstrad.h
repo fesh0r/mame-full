@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "snapquik.h"
 
 //#define AMSTRAD_VIDEO_USE_EVENT_LIST
 
@@ -7,8 +8,7 @@ void amstrad_shutdown_machine(void);
 
 int amstrad_floppy_init(int, void *fp, int open_mode);
 
-
-int amstrad_snapshot_load(void *fp);
+extern SNAPSHOT_LOAD( amstrad );
 
 int amstrad_floppy_load(int);
 void amstrad_floppy_exit(int);

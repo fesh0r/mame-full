@@ -1,8 +1,10 @@
+#include "snapquik.h"
+
 /* machine/apple1.c */
 
 extern MACHINE_INIT( apple1 );
 extern void apple1_interrupt (void);
-extern int apple1_load_snap(void *fp);
+extern SNAPSHOT_LOAD( apple1 );
 extern READ_HANDLER( apple1_pia0_kbdin );
 extern READ_HANDLER( apple1_pia0_dsprdy );
 extern READ_HANDLER( apple1_pia0_kbdrdy );

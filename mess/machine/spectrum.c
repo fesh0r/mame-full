@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  machine.c
+  mess/machine/spectrum.c
 
   Functions to emulate general aspects of the machine (RAM, ROM, interrupts,
   I/O ports)
@@ -37,19 +37,17 @@
 #define MIN(x,y) ((x)<(y)?(x):(y))
 #endif
 
-static unsigned char *pSnapshotData = NULL;
-static unsigned long SnapshotDataSize = 0;
 static unsigned long TapePosition = 0;
 static void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize);
 static void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize);
 static void spectrum_setup_sp(unsigned char *pSnapshot, unsigned long SnapshotSize);
-static OPBASE_HANDLER(spectrum_snapshot_opbaseoverride);
-static OPBASE_HANDLER(spectrum_tape_opbaseoverride);
-OPBASE_HANDLER(spectrum_opbaseoverride);
+static int spectrum_setup_tap(offs_t address, UINT8 *snapshot_data, int snapshot_length);
 
 TIMEX_CART_TYPE timex_cart_type = TIMEX_CART_NONE;
 UINT8 timex_cart_chunks = 0x00;
 UINT8 * timex_cart_data;
+static UINT8 *cassette_snapshot;
+static int cassette_snapshot_size;
 
 typedef enum
 {
@@ -61,18 +59,11 @@ typedef enum
 }
 SPECTRUM_SNAPSHOT_TYPE;
 
-static SPECTRUM_SNAPSHOT_TYPE spectrum_snapshot_type = SPECTRUM_SNAPSHOT_NONE;
-
-static struct
-{
-	const char *name;
-	unsigned short addr;
-	UINT8 *data;
-	int length;
-} quick;
-
 OPBASE_HANDLER(spectrum_opbaseoverride)
 {
+	if (cassette_snapshot_size > 0)
+		return spectrum_setup_tap(address, cassette_snapshot, cassette_snapshot_size);
+
 	/* Execute code in spectrum 48k screen memory */
 	if ((spectrum_128_port_7ffd_data == -1) && (spectrum_plus3_port_1ffd_data == -1))
 	{
@@ -90,9 +81,9 @@ OPBASE_HANDLER(spectrum_opbaseoverride)
 
 	/* Hack for correct handling 0xffff interrupt vector */
 	if (address == 0x0001)
-		if (activecpu_get_reg(REG_PREVIOUSPC)==0xffff)
+		if (cpunum_get_reg(0, REG_PREVIOUSPC)==0xffff)
 		{
-			activecpu_set_reg(Z80_PC, 0xfff4);
+			cpunum_set_reg(0, Z80_PC, 0xfff4);
 			return 0xfff4;
 		}
 	return address;
@@ -101,128 +92,48 @@ OPBASE_HANDLER(spectrum_opbaseoverride)
 MACHINE_INIT( spectrum )
 {
 	memory_set_opbase_handler(0, spectrum_opbaseoverride);
-	if (pSnapshotData != NULL)
-	{
-		if (spectrum_snapshot_type == SPECTRUM_TAPEFILE_TAP)
-		{
-			logerror(".TAP file support enabled\n");
-			memory_set_opbase_handler(0, spectrum_tape_opbaseoverride);
-		}
-		else
-			memory_set_opbase_handler(0, spectrum_snapshot_opbaseoverride);
-	}
 }
 
-int spectrum_snap_load(int id, void *file, int open_mode)
+SNAPSHOT_LOAD(spectrum)
 {
-	if (file)
+	UINT8 *snapshot_data = NULL;
+
+	snapshot_data = malloc(snapshot_size);
+	if (!snapshot_data)
+		goto error;
+
+	osd_fread(fp, snapshot_data, snapshot_size);
+
+	if (!strcmpi(file_type, "sna"))
 	{
-		int datasize;
-		unsigned char *data;
-
-		datasize = osd_fsize(file);
-
-		if (datasize != 0)
+		if ((snapshot_size != 49179) && (snapshot_size != 131103) && (snapshot_size != 14787))
 		{
-			data = image_malloc(IO_SNAPSHOT, id, datasize);
-
-			if (data != NULL)
-			{
-				pSnapshotData = data;
-				SnapshotDataSize = datasize;
-
-				osd_fread(file, data, datasize);
-				osd_fclose(file);
-
-				if (!strcmpi(image_filetype(IO_SNAPSHOT, id), "sna"))
-				{
-					if ((SnapshotDataSize != 49179) && (SnapshotDataSize != 131103) && (SnapshotDataSize != 14787))
-					{
-						logerror("Invalid .SNA file size.\n");
-						return 1;
-					}
-					spectrum_snapshot_type = SPECTRUM_SNAPSHOT_SNA;
-				}
-				else
-				{
-					if (!strcmpi(image_filetype(IO_SNAPSHOT, id), "sp"))
-					{
-						if (data[0]!='S' && data[1]!='P')
-						{
-							logerror("Invalid .SP signature.\n");
-							return 1;
-						}
-						spectrum_snapshot_type = SPECTRUM_SNAPSHOT_SP;
-					}
-					else
-						spectrum_snapshot_type = SPECTRUM_SNAPSHOT_Z80;
-				}
-				logerror("File loaded!\n");
-				return 0;
-			}
-			osd_fclose(file);
+			logerror("Invalid .SNA file size.\n");
+			goto error;
 		}
-		return 1;
+		spectrum_setup_sna(snapshot_data, snapshot_size);
 	}
-	return 0;
-}
-
-void spectrum_snap_exit(int id)
-{
-	if (pSnapshotData != NULL)
+	else if (!strcmpi(file_type, "sp"))
 	{
-		/* free snapshot/tape data */
-		pSnapshotData = NULL;
-
-		/* ensure op base is cleared */
-		memory_set_opbase_handler(0, spectrum_opbaseoverride);
-	}
-
-	/* reset type to none */
-	spectrum_snapshot_type = SPECTRUM_SNAPSHOT_NONE;
-}
-
-
-static OPBASE_HANDLER(spectrum_snapshot_opbaseoverride)
-{
-	/* clear op base override */
-	memory_set_opbase_handler(0, spectrum_opbaseoverride);
-
-	if (pSnapshotData)
-	{
-		/* snapshot loaded setup */
-
-		switch (spectrum_snapshot_type)
+		if (snapshot_data[0]!='S' && snapshot_data[1]!='P')
 		{
-		case SPECTRUM_SNAPSHOT_SNA:
-			{
-				/* .SNA */
-				spectrum_setup_sna(pSnapshotData, SnapshotDataSize);
-			}
-			break;
-
-		case SPECTRUM_SNAPSHOT_Z80:
-			{
-				/* .Z80 */
-				spectrum_setup_z80(pSnapshotData, SnapshotDataSize);
-			}
-			break;
-
-		case SPECTRUM_SNAPSHOT_SP:
-			{
-				/* .SP */
-				spectrum_setup_sp(pSnapshotData, SnapshotDataSize);
-			}
-			break;
-
-		default:
-			/* SPECTRUM_TAPEFILE_TAP is handled by spectrum_tape_opbaseoverride */
-			break;
+			logerror("Invalid .SP signature.\n");
+			goto error;
 		}
+		spectrum_setup_sp(snapshot_data, snapshot_size);
 	}
-	logerror("Snapshot loaded - new PC = %04x\n", activecpu_get_reg(Z80_PC) & 0x0ffff);
+	else
+	{
+		spectrum_setup_z80(snapshot_data, snapshot_size);
+	}
+	free(snapshot_data);
+	logerror("Snapshot loaded - new PC = %04x\n", cpunum_get_reg(0, Z80_PC) & 0x0ffff);
+	return INIT_PASS;
 
-	return (activecpu_get_reg(Z80_PC) & 0x0ffff);
+error:
+	if (snapshot_data)
+		free(snapshot_data);
+	return INIT_FAIL;
 }
 
 /*******************************************************************
@@ -246,7 +157,7 @@ static OPBASE_HANDLER(spectrum_snapshot_opbaseoverride)
  *      load routine so things get rather messy!
  *
  *******************************************************************/
-static OPBASE_HANDLER(spectrum_tape_opbaseoverride)
+static int spectrum_setup_tap(offs_t address, UINT8 *snapshot_data, int snapshot_length)
 {
 	int i, tap_block_length, load_length;
 	unsigned char lo, hi, a_reg;
@@ -273,9 +184,9 @@ static OPBASE_HANDLER(spectrum_tape_opbaseoverride)
 		}
 	}
 	if (address == 0x0001)
-		if (activecpu_get_reg(REG_PREVIOUSPC)==0xffff)
+		if (cpunum_get_reg(0, REG_PREVIOUSPC)==0xffff)
 		{
-			activecpu_set_reg(Z80_PC, 0xfff4);
+			cpunum_set_reg(0, Z80_PC, 0xfff4);
 			return 0xfff4;
 		}
 
@@ -306,20 +217,20 @@ static OPBASE_HANDLER(spectrum_tape_opbaseoverride)
 		if ((address < 0x018d) || (address > 0x01aa))
 			return address;
 	}
-	lo = pSnapshotData[TapePosition] & 0x0ff;
-	hi = pSnapshotData[TapePosition + 1] & 0x0ff;
+	lo = snapshot_data[TapePosition] & 0x0ff;
+	hi = snapshot_data[TapePosition + 1] & 0x0ff;
 	tap_block_length = (hi << 8) | lo;
 
 	/* By the time that load has been trapped the block type and carry
 	 * flags are in the AF' register. */
-	af_reg = activecpu_get_reg(Z80_AF2);
+	af_reg = cpunum_get_reg(0, Z80_AF2);
 	a_reg = (af_reg & 0xff00) >> 8;
 
-	if ((a_reg == pSnapshotData[TapePosition + 2]) && (af_reg & 0x0001))
+	if ((a_reg == snapshot_data[TapePosition + 2]) && (af_reg & 0x0001))
 	{
 		/* Correct flag byte and carry flag set so try loading */
-		load_addr = activecpu_get_reg(Z80_IX);
-		de_reg = activecpu_get_reg(Z80_DE);
+		load_addr = cpunum_get_reg(0, Z80_IX);
+		de_reg = cpunum_get_reg(0, Z80_DE);
 
 		load_length = MIN(de_reg, tap_block_length - 2);
 		load_length = MIN(load_length, 65536 - load_addr);
@@ -327,22 +238,22 @@ static OPBASE_HANDLER(spectrum_tape_opbaseoverride)
 		 * Don't try to load past the end of memory */
 
 		for (i = 0; i < load_length; i++)
-			cpu_writemem16(load_addr + i, pSnapshotData[TapePosition + i + 3]);
-		activecpu_set_reg(Z80_IX, load_addr + load_length);
-		activecpu_set_reg(Z80_DE, de_reg - load_length);
+			cpu_writemem16(load_addr + i, snapshot_data[TapePosition + i + 3]);
+		cpunum_set_reg(0, Z80_IX, load_addr + load_length);
+		cpunum_set_reg(0, Z80_DE, de_reg - load_length);
 		if (de_reg == (tap_block_length - 2))
 		{
 			/* Successful load - Set carry flag and A to 0 */
 			if ((de_reg != 17) || (a_reg))
 				data_loaded = 1;		/* Non-header file loaded */
-			activecpu_set_reg(Z80_AF, (af_reg & 0x00ff) | 0x0001);
+			cpunum_set_reg(0, Z80_AF, (af_reg & 0x00ff) | 0x0001);
 			logerror("Loaded %04x bytes from address %04x onwards (type=%02x) using tape block at offset %ld\n", load_length,
 					 load_addr, a_reg, TapePosition);
 		}
 		else
 		{
 			/* Wrong tape block size - reset carry flag */
-			activecpu_set_reg(Z80_AF, af_reg & 0xfffe);
+			cpunum_set_reg(0, Z80_AF, af_reg & 0xfffe);
 			logerror("Bad block length %04x bytes wanted starting at address %04x (type=%02x) , Data length of tape block at offset %ld is %04x bytes\n",
 					 de_reg, load_addr, a_reg, TapePosition, tap_block_length - 2);
 		}
@@ -350,16 +261,16 @@ static OPBASE_HANDLER(spectrum_tape_opbaseoverride)
 	else
 	{
 		/* Wrong flag byte or verify selected so reset carry flag to indicate failure */
-		activecpu_set_reg(Z80_AF, af_reg & 0xfffe);
+		cpunum_set_reg(0, Z80_AF, af_reg & 0xfffe);
 		if (af_reg & 0x0001)
 			logerror("Failed to load tape block at offset %ld - type wanted %02x, got type %02x\n", TapePosition, a_reg,
-					 pSnapshotData[TapePosition + 2]);
+					 snapshot_data[TapePosition + 2]);
 		else
 			logerror("Failed to load tape block at offset %ld - verify selected\n", TapePosition);
 	}
 
 	TapePosition += (tap_block_length + 2);
-	if (TapePosition >= SnapshotDataSize)
+	if (TapePosition >= snapshot_length)
 	{
 		/* End of tape - either rewind or disable op base override */
 		if (readinputport(16) & 0x40)
@@ -373,14 +284,17 @@ static OPBASE_HANDLER(spectrum_tape_opbaseoverride)
 			else
 			{
 				/* Disable .TAP support if no files were loaded to avoid getting caught in infinite loop */
-				memory_set_opbase_handler(0, spectrum_opbaseoverride);
 				logerror("No valid data loaded! - disabling .TAP support\n");
+				cassette_snapshot = NULL;
+				cassette_snapshot_size = 0;
+				
 			}
 		}
 		else
 		{
-			memory_set_opbase_handler(0, spectrum_opbaseoverride);
 			logerror("All tape blocks used! - disabling .TAP support\n");
+			cassette_snapshot = NULL;
+			cassette_snapshot_size = 0;
 		}
 	}
 
@@ -391,12 +305,12 @@ static OPBASE_HANDLER(spectrum_tape_opbaseoverride)
 	do
 	{
 		return_addr = cpu_geturnpc();
-		activecpu_set_reg(Z80_PC, (return_addr & 0x0ffff));
+		cpunum_set_reg(0, Z80_PC, (return_addr & 0x0ffff));
 
-		sp_reg = activecpu_get_reg(Z80_SP);
+		sp_reg = cpunum_get_reg(0, Z80_SP);
 		sp_reg += 2;
-		activecpu_set_reg(Z80_SP, (sp_reg & 0x0ffff));
-		activecpu_set_sp((sp_reg & 0x0ffff));
+		cpunum_set_reg(0, Z80_SP, (sp_reg & 0x0ffff));
+		cpunum_set_sp(0, (sp_reg & 0x0ffff));
 	}
 	while (((return_addr != 0x053f) && (return_addr < 0x0605) && (ts2068_port_f4_data == -1)) ||
 		   ((return_addr != 0x00e5) && (return_addr < 0x01aa) && (ts2068_port_f4_data != -1)));
@@ -449,25 +363,25 @@ static void spectrum_page_basicrom(void)
 /* Dump the state of registers after loading a snapshot to the log file for debugging */
 static void dump_registers(void)
 {
-	logerror("PC   = %04x\n", activecpu_get_reg(Z80_PC));
-	logerror("SP   = %04x\n", activecpu_get_reg(Z80_SP));
-	logerror("AF   = %04x\n", activecpu_get_reg(Z80_AF));
-	logerror("BC   = %04x\n", activecpu_get_reg(Z80_BC));
-	logerror("DE   = %04x\n", activecpu_get_reg(Z80_DE));
-	logerror("HL   = %04x\n", activecpu_get_reg(Z80_HL));
-	logerror("IX   = %04x\n", activecpu_get_reg(Z80_IX));
-	logerror("IY   = %04x\n", activecpu_get_reg(Z80_IY));
-	logerror("AF'  = %04x\n", activecpu_get_reg(Z80_AF2));
-	logerror("BC'  = %04x\n", activecpu_get_reg(Z80_BC2));
-	logerror("DE'  = %04x\n", activecpu_get_reg(Z80_DE2));
-	logerror("HL'  = %04x\n", activecpu_get_reg(Z80_HL2));
-	logerror("I    = %02x\n", activecpu_get_reg(Z80_I));
-	logerror("R    = %02x\n", activecpu_get_reg(Z80_R));
-	logerror("IFF1 = %02x\n", activecpu_get_reg(Z80_IFF1));
-	logerror("IFF2 = %02x\n", activecpu_get_reg(Z80_IFF2));
-	logerror("IM   = %02x\n", activecpu_get_reg(Z80_IM));
-	logerror("NMI  = %02x\n", activecpu_get_reg(Z80_NMI_STATE));
-	logerror("IRQ  = %02x\n", activecpu_get_reg(Z80_IRQ_STATE));
+	logerror("PC   = %04x\n", cpunum_get_reg(0, Z80_PC));
+	logerror("SP   = %04x\n", cpunum_get_reg(0, Z80_SP));
+	logerror("AF   = %04x\n", cpunum_get_reg(0, Z80_AF));
+	logerror("BC   = %04x\n", cpunum_get_reg(0, Z80_BC));
+	logerror("DE   = %04x\n", cpunum_get_reg(0, Z80_DE));
+	logerror("HL   = %04x\n", cpunum_get_reg(0, Z80_HL));
+	logerror("IX   = %04x\n", cpunum_get_reg(0, Z80_IX));
+	logerror("IY   = %04x\n", cpunum_get_reg(0, Z80_IY));
+	logerror("AF'  = %04x\n", cpunum_get_reg(0, Z80_AF2));
+	logerror("BC'  = %04x\n", cpunum_get_reg(0, Z80_BC2));
+	logerror("DE'  = %04x\n", cpunum_get_reg(0, Z80_DE2));
+	logerror("HL'  = %04x\n", cpunum_get_reg(0, Z80_HL2));
+	logerror("I    = %02x\n", cpunum_get_reg(0, Z80_I));
+	logerror("R    = %02x\n", cpunum_get_reg(0, Z80_R));
+	logerror("IFF1 = %02x\n", cpunum_get_reg(0, Z80_IFF1));
+	logerror("IFF2 = %02x\n", cpunum_get_reg(0, Z80_IFF2));
+	logerror("IM   = %02x\n", cpunum_get_reg(0, Z80_IM));
+	logerror("NMI  = %02x\n", cpunum_get_reg(0, Z80_NMI_STATE));
+	logerror("IRQ  = %02x\n", cpunum_get_reg(0, Z80_IRQ_STATE));
 }
 
 /*******************************************************************
@@ -522,46 +436,46 @@ void spectrum_setup_sp(unsigned char *pSnapshot, unsigned long SnapshotSize)
 
 	lo = pSnapshot[6] & 0x0ff;
 	hi = pSnapshot[7] & 0x0ff;
-	activecpu_set_reg(Z80_BC, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_BC, (hi << 8) | lo);
 	lo = pSnapshot[8] & 0x0ff;
 	hi = pSnapshot[9] & 0x0ff;
-	activecpu_set_reg(Z80_DE, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_DE, (hi << 8) | lo);
 	lo = pSnapshot[10] & 0x0ff;
 	hi = pSnapshot[11] & 0x0ff;
-	activecpu_set_reg(Z80_HL, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_HL, (hi << 8) | lo);
 	lo = pSnapshot[12] & 0x0ff;
 	hi = pSnapshot[13] & 0x0ff;
-	activecpu_set_reg(Z80_AF, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_AF, (hi << 8) | lo);
 
 	lo = pSnapshot[14] & 0x0ff;
 	hi = pSnapshot[15] & 0x0ff;
-	activecpu_set_reg(Z80_IX, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_IX, (hi << 8) | lo);
 	lo = pSnapshot[16] & 0x0ff;
 	hi = pSnapshot[17] & 0x0ff;
-	activecpu_set_reg(Z80_IY, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_IY, (hi << 8) | lo);
 
 	lo = pSnapshot[18] & 0x0ff;
 	hi = pSnapshot[19] & 0x0ff;
-	activecpu_set_reg(Z80_BC2, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_BC2, (hi << 8) | lo);
 	lo = pSnapshot[20] & 0x0ff;
 	hi = pSnapshot[21] & 0x0ff;
-	activecpu_set_reg(Z80_DE2, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_DE2, (hi << 8) | lo);
 	lo = pSnapshot[22] & 0x0ff;
 	hi = pSnapshot[23] & 0x0ff;
-	activecpu_set_reg(Z80_HL2, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_HL2, (hi << 8) | lo);
 	lo = pSnapshot[24] & 0x0ff;
 	hi = pSnapshot[25] & 0x0ff;
-	activecpu_set_reg(Z80_AF2, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_AF2, (hi << 8) | lo);
 
-	activecpu_set_reg(Z80_R, (pSnapshot[26] & 0x0ff));
-	activecpu_set_reg(Z80_I, (pSnapshot[27] & 0x0ff));
+	cpunum_set_reg(0, Z80_R, (pSnapshot[26] & 0x0ff));
+	cpunum_set_reg(0, Z80_I, (pSnapshot[27] & 0x0ff));
 
 	lo = pSnapshot[28] & 0x0ff;
 	hi = pSnapshot[29] & 0x0ff;
-	activecpu_set_reg(Z80_SP, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_SP, (hi << 8) | lo);
 	lo = pSnapshot[30] & 0x0ff;
 	hi = pSnapshot[31] & 0x0ff;
-	activecpu_set_reg(Z80_PC, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_PC, (hi << 8) | lo);
 
 	lo = pSnapshot[32] & 0x0ff;
 	hi = pSnapshot[33] & 0x0ff;
@@ -582,27 +496,27 @@ void spectrum_setup_sp(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	status = (hi << 8) | lo;
 
 	data = (status & 0x01);
-	activecpu_set_reg(Z80_IFF1, data);
+	cpunum_set_reg(0, Z80_IFF1, data);
 	data = (status & 0x04)>>2;
-	activecpu_set_reg(Z80_IFF2, data);
+	cpunum_set_reg(0, Z80_IFF2, data);
 
 	data = (status & 0x08)>>3;
 	if (data)
-		activecpu_set_reg(Z80_IM, 0);
+		cpunum_set_reg(0, Z80_IM, 0);
 	else
 	{
 		data = (status & 0x02)>>1;
 		if (data)
-			activecpu_set_reg(Z80_IM, 2);
+			cpunum_set_reg(0, Z80_IM, 2);
 		else
-			activecpu_set_reg(Z80_IM, 1);
+			cpunum_set_reg(0, Z80_IM, 1);
 	}
 
 	data = (status & 0x10)>>4;
-	activecpu_set_reg(Z80_IRQ_STATE, data);
+	cpunum_set_reg(0, Z80_IRQ_STATE, data);
 
-	activecpu_set_reg(Z80_NMI_STATE, 0);
-	activecpu_set_reg(Z80_HALT, 0);
+	cpunum_set_reg(0, Z80_NMI_STATE, 0);
+	cpunum_set_reg(0, Z80_HALT, 0);
 
 	spectrum_page_basicrom();
 
@@ -651,54 +565,54 @@ void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	unsigned char lo, hi, data;
 	unsigned short addr;
 
-	if ((SnapshotDataSize != 49179) && (spectrum_128_port_7ffd_data == -1))
+	if ((SnapshotSize != 49179) && (spectrum_128_port_7ffd_data == -1))
 	{
 		logerror("Can't load 128K .SNA file into 48K Machine\n");
 		return;
 	}
 
-	activecpu_set_reg(Z80_I, (pSnapshot[0] & 0x0ff));
+	cpunum_set_reg(0, Z80_I, (pSnapshot[0] & 0x0ff));
 	lo = pSnapshot[1] & 0x0ff;
 	hi = pSnapshot[2] & 0x0ff;
-	activecpu_set_reg(Z80_HL2, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_HL2, (hi << 8) | lo);
 	lo = pSnapshot[3] & 0x0ff;
 	hi = pSnapshot[4] & 0x0ff;
-	activecpu_set_reg(Z80_DE2, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_DE2, (hi << 8) | lo);
 	lo = pSnapshot[5] & 0x0ff;
 	hi = pSnapshot[6] & 0x0ff;
-	activecpu_set_reg(Z80_BC2, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_BC2, (hi << 8) | lo);
 	lo = pSnapshot[7] & 0x0ff;
 	hi = pSnapshot[8] & 0x0ff;
-	activecpu_set_reg(Z80_AF2, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_AF2, (hi << 8) | lo);
 	lo = pSnapshot[9] & 0x0ff;
 	hi = pSnapshot[10] & 0x0ff;
-	activecpu_set_reg(Z80_HL, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_HL, (hi << 8) | lo);
 	lo = pSnapshot[11] & 0x0ff;
 	hi = pSnapshot[12] & 0x0ff;
-	activecpu_set_reg(Z80_DE, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_DE, (hi << 8) | lo);
 	lo = pSnapshot[13] & 0x0ff;
 	hi = pSnapshot[14] & 0x0ff;
-	activecpu_set_reg(Z80_BC, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_BC, (hi << 8) | lo);
 	lo = pSnapshot[15] & 0x0ff;
 	hi = pSnapshot[16] & 0x0ff;
-	activecpu_set_reg(Z80_IY, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_IY, (hi << 8) | lo);
 	lo = pSnapshot[17] & 0x0ff;
 	hi = pSnapshot[18] & 0x0ff;
-	activecpu_set_reg(Z80_IX, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_IX, (hi << 8) | lo);
 	data = (pSnapshot[19] & 0x04) >> 2;
-	activecpu_set_reg(Z80_IFF2, data);
-	activecpu_set_reg(Z80_IFF1, data);
+	cpunum_set_reg(0, Z80_IFF2, data);
+	cpunum_set_reg(0, Z80_IFF1, data);
 	data = (pSnapshot[20] & 0x0ff);
-	activecpu_set_reg(Z80_R, data);
+	cpunum_set_reg(0, Z80_R, data);
 	lo = pSnapshot[21] & 0x0ff;
 	hi = pSnapshot[22] & 0x0ff;
-	activecpu_set_reg(Z80_AF, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_AF, (hi << 8) | lo);
 	lo = pSnapshot[23] & 0x0ff;
 	hi = pSnapshot[24] & 0x0ff;
-	activecpu_set_reg(Z80_SP, (hi << 8) | lo);
-	activecpu_set_sp((hi << 8) | lo);
+	cpunum_set_reg(0, Z80_SP, (hi << 8) | lo);
+	cpunum_set_sp(0, (hi << 8) | lo);
 	data = (pSnapshot[25] & 0x0ff);
-	activecpu_set_reg(Z80_IM, data);
+	cpunum_set_reg(0, Z80_IM, data);
 
 	/* Set border colour */
 	PreviousFE = (PreviousFE & 0xf8) | (pSnapshot[26] & 0x07);
@@ -706,11 +620,11 @@ void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	set_last_border_color(pSnapshot[26] & 0x07);
 	force_border_redraw();
 
-	activecpu_set_reg(Z80_NMI_STATE, 0);
-	activecpu_set_reg(Z80_IRQ_STATE, 0);
-	activecpu_set_reg(Z80_HALT, 0);
+	cpunum_set_reg(0, Z80_NMI_STATE, 0);
+	cpunum_set_reg(0, Z80_IRQ_STATE, 0);
+	cpunum_set_reg(0, Z80_HALT, 0);
 
-	if (SnapshotDataSize == 49179)
+	if (SnapshotSize == 49179)
 		/* 48K Snapshot */
 		spectrum_page_basicrom();
 	else
@@ -726,16 +640,16 @@ void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)
 		cpu_writemem16(i + 16384, pSnapshot[27 + i]);
 	}
 
-	if (SnapshotDataSize == 49179)
+	if (SnapshotSize == 49179)
 	{
 		/* get pc from stack */
 		addr = cpu_geturnpc();
-		activecpu_set_reg(Z80_PC, (addr & 0x0ffff));
+		cpunum_set_reg(0, Z80_PC, (addr & 0x0ffff));
 
-		addr = activecpu_get_reg(Z80_SP);
+		addr = cpunum_get_reg(0, Z80_SP);
 		addr += 2;
-		activecpu_set_reg(Z80_SP, (addr & 0x0ffff));
-		activecpu_set_sp((addr & 0x0ffff));
+		cpunum_set_reg(0, Z80_SP, (addr & 0x0ffff));
+		cpunum_set_sp(0, (addr & 0x0ffff));
 	}
 	else
 	{
@@ -769,7 +683,7 @@ void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)
 		/* program counter */
 		lo = pSnapshot[49179] & 0x0ff;
 		hi = pSnapshot[49180] & 0x0ff;
-		activecpu_set_reg(Z80_PC, (hi << 8) | lo);
+		cpunum_set_reg(0, Z80_PC, (hi << 8) | lo);
 	}
 	dump_registers();
 }
@@ -905,7 +819,7 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	unsigned char lo, hi, data;
 	SPECTRUM_Z80_SNAPSHOT_TYPE z80_type;
 
-	z80_type = spectrum_identify_z80(pSnapshotData, SnapshotDataSize);
+	z80_type = spectrum_identify_z80(pSnapshot, SnapshotSize);
 
 	switch (z80_type)
 	{
@@ -944,28 +858,28 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	/* AF */
 	hi = pSnapshot[0] & 0x0ff;
 	lo = pSnapshot[1] & 0x0ff;
-	activecpu_set_reg(Z80_AF, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_AF, (hi << 8) | lo);
 	/* BC */
 	lo = pSnapshot[2] & 0x0ff;
 	hi = pSnapshot[3] & 0x0ff;
-	activecpu_set_reg(Z80_BC, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_BC, (hi << 8) | lo);
 	/* HL */
 	lo = pSnapshot[4] & 0x0ff;
 	hi = pSnapshot[5] & 0x0ff;
-	activecpu_set_reg(Z80_HL, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_HL, (hi << 8) | lo);
 
 	/* SP */
 	lo = pSnapshot[8] & 0x0ff;
 	hi = pSnapshot[9] & 0x0ff;
-	activecpu_set_reg(Z80_SP, (hi << 8) | lo);
-	activecpu_set_sp((hi << 8) | lo);
+	cpunum_set_reg(0, Z80_SP, (hi << 8) | lo);
+	cpunum_set_sp(0, (hi << 8) | lo);
 
 	/* I */
-	activecpu_set_reg(Z80_I, (pSnapshot[10] & 0x0ff));
+	cpunum_set_reg(0, Z80_I, (pSnapshot[10] & 0x0ff));
 
 	/* R */
 	data = (pSnapshot[11] & 0x07f) | ((pSnapshot[12] & 0x01) << 7);
-	activecpu_set_reg(Z80_R, data);
+	cpunum_set_reg(0, Z80_R, data);
 
 	/* Set border colour */
 	PreviousFE = (PreviousFE & 0xf8) | ((pSnapshot[12] & 0x0e) >> 1);
@@ -975,47 +889,47 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 
 	lo = pSnapshot[13] & 0x0ff;
 	hi = pSnapshot[14] & 0x0ff;
-	activecpu_set_reg(Z80_DE, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_DE, (hi << 8) | lo);
 
 	lo = pSnapshot[15] & 0x0ff;
 	hi = pSnapshot[16] & 0x0ff;
-	activecpu_set_reg(Z80_BC2, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_BC2, (hi << 8) | lo);
 
 	lo = pSnapshot[17] & 0x0ff;
 	hi = pSnapshot[18] & 0x0ff;
-	activecpu_set_reg(Z80_DE2, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_DE2, (hi << 8) | lo);
 
 	lo = pSnapshot[19] & 0x0ff;
 	hi = pSnapshot[20] & 0x0ff;
-	activecpu_set_reg(Z80_HL2, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_HL2, (hi << 8) | lo);
 
 	hi = pSnapshot[21] & 0x0ff;
 	lo = pSnapshot[22] & 0x0ff;
-	activecpu_set_reg(Z80_AF2, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_AF2, (hi << 8) | lo);
 
 	lo = pSnapshot[23] & 0x0ff;
 	hi = pSnapshot[24] & 0x0ff;
-	activecpu_set_reg(Z80_IY, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_IY, (hi << 8) | lo);
 
 	lo = pSnapshot[25] & 0x0ff;
 	hi = pSnapshot[26] & 0x0ff;
-	activecpu_set_reg(Z80_IX, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_IX, (hi << 8) | lo);
 
 	/* Interrupt Flip/Flop */
 	if (pSnapshot[27] == 0)
 	{
-		activecpu_set_reg(Z80_IFF1, 0);
-		//activecpu_set_reg(Z80_IRQ_STATE, 0);
+		cpunum_set_reg(0, Z80_IFF1, 0);
+		//cpunum_set_reg(0, Z80_IRQ_STATE, 0);
 	}
 	else
 	{
-		activecpu_set_reg(Z80_IFF1, 1);
-		//activecpu_set_reg(Z80_IRQ_STATE, 1);
+		cpunum_set_reg(0, Z80_IFF1, 1);
+		//cpunum_set_reg(0, Z80_IRQ_STATE, 1);
 	}
 
-	activecpu_set_reg(Z80_NMI_STATE, 0);
-	activecpu_set_reg(Z80_IRQ_STATE, 0);
-	activecpu_set_reg(Z80_HALT, 0);
+	cpunum_set_reg(0, Z80_NMI_STATE, 0);
+	cpunum_set_reg(0, Z80_IRQ_STATE, 0);
+	cpunum_set_reg(0, Z80_HALT, 0);
 
 	/* IFF2 */
 	if (pSnapshot[28] != 0)
@@ -1026,16 +940,16 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	{
 		data = 0;
 	}
-	activecpu_set_reg(Z80_IFF2, data);
+	cpunum_set_reg(0, Z80_IFF2, data);
 
 	/* Interrupt Mode */
-	activecpu_set_reg(Z80_IM, (pSnapshot[29] & 0x03));
+	cpunum_set_reg(0, Z80_IM, (pSnapshot[29] & 0x03));
 
 	if (z80_type == SPECTRUM_Z80_SNAPSHOT_48K_OLD)
 	{
 		lo = pSnapshot[6] & 0x0ff;
 		hi = pSnapshot[7] & 0x0ff;
-		activecpu_set_reg(Z80_PC, (hi << 8) | lo);
+		cpunum_set_reg(0, Z80_PC, (hi << 8) | lo);
 
 		spectrum_page_basicrom();
                 
@@ -1060,7 +974,7 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 
 		lo = pSnapshot[32] & 0x0ff;
 		hi = pSnapshot[33] & 0x0ff;
-		activecpu_set_reg(Z80_PC, (hi << 8) | lo);
+		cpunum_set_reg(0, Z80_PC, (hi << 8) | lo);
 
 		if ((z80_type == SPECTRUM_Z80_SNAPSHOT_128K) || ((z80_type == SPECTRUM_Z80_SNAPSHOT_TS2068) && !strcmp(Machine->gamedrv->name,"ts2068")))
 		{
@@ -1136,7 +1050,7 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 			/* go to next block */
 			pSource += (3 + length);
 		}
-		while (((unsigned long) pSource - (unsigned long) pSnapshot) < SnapshotDataSize);
+		while (((unsigned long) pSource - (unsigned long) pSnapshot) < SnapshotSize);
 
 		if ((spectrum_128_port_7ffd_data != -1) && (z80_type != SPECTRUM_Z80_SNAPSHOT_48K))
 		{
@@ -1168,50 +1082,31 @@ int spectrum_cassette_init(int id, void *fp, int open_mode)
 {
 	struct cassette_args args;
 
-	if (fp && (! is_effective_mode_create(open_mode))
-			&& ! stricmp(image_filetype(IO_CASSETTE, id), "tap"))
+	TapePosition = 0;
+	if (fp && !is_effective_mode_create(open_mode) && !strcmpi(image_filetype(IO_CASSETTE, id), "tap"))
 	{
-		int datasize;
-		unsigned char *data;
-
-		logerror(".TAP file found\n");
-		if (fp)
-			datasize = osd_fsize(fp);
-		else
-			datasize = 0;
-		if (datasize != 0)
-		{
-			data = image_malloc(IO_SNAPSHOT, id, datasize);
-
-			if (data != NULL)
-			{
-				pSnapshotData = data;
-				SnapshotDataSize = datasize;
-
-				osd_fread(fp, data, datasize);
-				osd_fclose(fp);
-
-				/* Always reset tape position when loading new tapes */
-				TapePosition = 0;
-				memory_set_opbase_handler(0, spectrum_tape_opbaseoverride);
-				spectrum_snapshot_type = SPECTRUM_TAPEFILE_TAP;
-				logerror(".TAP file successfully loaded\n");
-				return INIT_PASS;
-			}
-		}
-		osd_fclose(fp);
-		return INIT_FAIL;
+		cassette_snapshot_size = osd_fsize(fp);
+		cassette_snapshot = image_malloc(IO_CASSETTE, id, cassette_snapshot_size);
+		if (!cassette_snapshot)
+			return INIT_FAIL;
+		osd_fread(fp, cassette_snapshot, cassette_snapshot_size);
+		return INIT_PASS;
 	}
-
-	memset(&args, 0, sizeof(args));
-	args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
-	return cassette_init(id, fp, open_mode, &args);
+	else
+	{
+		cassette_snapshot = NULL;
+		cassette_snapshot_size = 0;
+		memset(&args, 0, sizeof(args));
+		args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
+		return cassette_init(id, fp, open_mode, &args);
+	}
 }
 
 void spectrum_cassette_exit(int id)
 {
 	cassette_exit(id);
-	spectrum_snap_exit(id);
+	cassette_snapshot = NULL;
+	cassette_snapshot_size = 0;
 }
 
 /*************************************
@@ -1225,51 +1120,28 @@ static void spectrum_nmi_generate(int param)
 	cpu_set_irq_line(0, 0, IRQ_LINE_NMI);
 }
 
-int spec_quick_init(int id, void *fp, int open_mode)
-{
-	int read_;
-
-	memset(&quick, 0, sizeof (quick));
-
-	if (fp == NULL)
-		return INIT_PASS;
-
-/*	quick.name = name; */
-
-	quick.length = osd_fsize(fp);
-	quick.addr = 0x4000;
-
-	if ((quick.data = malloc(quick.length)) == NULL)
-	{
-		osd_fclose(fp);
-		return INIT_FAIL;
-	}
-	read_ = osd_fread(fp, quick.data, quick.length);
-	osd_fclose(fp);
-	return read_ != quick.length;
-}
-
-void spec_quick_exit(int id)
-{
-	if (quick.data != NULL)
-		free(quick.data);
-}
-
-int spec_quick_open(int id, int mode, void *arg)
+QUICKLOAD_LOAD(spectrum)
 {
 	int i;
+	int quick_addr = 0x4000;
+	int quick_length;
+	UINT8 *quick_data;
+	int read_;
 
-	if (quick.data == NULL)
-		return 1;
+	quick_length = osd_fsize(fp);
+	quick_data = malloc(quick_length);
+	if (!quick_data)
+		return INIT_FAIL;
 
-	for (i = 0; i < quick.length; i++)
-	{
-		cpu_writemem16(i + quick.addr, quick.data[i]);
-	}
-	logerror("quick loading %s at %.4x size:%.4x\n",
-			 image_filename(IO_QUICKLOAD, id), quick.addr, quick.length);
+	read_ = osd_fread(fp, quick_data, quick_length);
+	if (read_ != quick_length)
+		return INIT_FAIL;
 
-	return 0;
+	for (i = 0; i < quick_length; i++)
+		cpu_writemem16(i + quick_addr, quick_data[i]);
+
+	logerror("quick loading at %.4x size:%.4x\n", quick_addr, quick_length);
+	return INIT_PASS;
 }
 
 int spectrum_cart_load(int id, void *file, int open_mode)

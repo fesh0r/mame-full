@@ -634,34 +634,29 @@ static void ti86_setup_snapshot (UINT8 * data)
 	ti85_interrupt_speed = 0x03;
 }
 
-int ti8x_snapshot_load(void *file)
+SNAPSHOT_LOAD( ti8x )
 {
-	int snapshot_size = 0;
+	int expected_snapshot_size = 0;
 	UINT8 *ti8x_snapshot_data;
 
 	switch (ti_calculator_model)
 	{
-		case TI_85: snapshot_size = TI85_SNAPSHOT_SIZE; break;
-		case TI_86: snapshot_size = TI86_SNAPSHOT_SIZE; break;
+		case TI_85: expected_snapshot_size = TI85_SNAPSHOT_SIZE; break;
+		case TI_86: expected_snapshot_size = TI86_SNAPSHOT_SIZE; break;
 	}	
 
 	logerror("Snapshot loading\n");
 
-	if (osd_fsize(file) != snapshot_size)
+	if (snapshot_size != expected_snapshot_size)
 	{
 		logerror ("Incomplete snapshot file\n");
-		osd_fclose(file);
 		return INIT_FAIL;
 	}
 
 	if (!(ti8x_snapshot_data = malloc(snapshot_size)))
-	{
-		osd_fclose(file);
 		return INIT_FAIL;
-	}
 
-	osd_fread(file, ti8x_snapshot_data, snapshot_size);
-	osd_fclose(file);
+	osd_fread(fp, ti8x_snapshot_data, snapshot_size);
 
 	switch (ti_calculator_model)
 	{

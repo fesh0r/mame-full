@@ -15,6 +15,7 @@
 #include "includes/microtan.h"
 #include "cassette.h"
 #include "image.h"
+#include "snapquik.h"
 
 #ifndef VERBOSE
 #define VERBOSE 0
@@ -28,9 +29,6 @@
 
 static UINT8 microtan_keypad_column;
 static UINT8 microtan_keyboard_ascii;
-
-static UINT8 *snapshot_buff;
-static int snapshot_size;
 
 static void *microtan_timer = NULL;
 
@@ -472,44 +470,7 @@ static int microtan_varify_snapshot(UINT8 *data, int size)
     return IMAGE_VERIFY_FAIL;
 }
 
-int microtan_snapshot_init(int id, void *file, int open_mode)
-{
-	/* If no image specified, I guess we should start! */
-	if (file == NULL)
-	{
-		logerror("warning: no sanpshot specified!\n");
-		return INIT_PASS;
-	}
-
-    if (file)
-    {
-        snapshot_size = osd_fsize(file);
-        snapshot_buff = malloc(snapshot_size);
-        if (!snapshot_buff)
-        {
-            LOG(("microtan_snapshot_load: could not allocate %d bytes of buffer\n", snapshot_size));
-            return INIT_FAIL;
-        }
-        osd_fread(file, snapshot_buff, snapshot_size);
-        osd_fclose(file);
-
-//		if (microtan_varify_snapshot(snapshot_buff, snapshot_size)==IMAGE_VERIFY_FAIL)
-//			return INIT_FAIL;
-//		else
-			return INIT_PASS;
-    }
-    return INIT_FAIL;
-}
-
-void microtan_snapshot_exit(int id)
-{
-    if (snapshot_buff)
-        free(snapshot_buff);
-    snapshot_buff = NULL;
-    snapshot_size = 0;
-}
-
-static int parse_intel_hex(char *src)
+static int parse_intel_hex(UINT8 *snapshot_buff, char *src)
 {
     char line[128];
     int row = 0, column = 0, last_addr = 0, last_size = 0;
@@ -590,7 +551,7 @@ static int parse_intel_hex(char *src)
     return INIT_PASS;
 }
 
-static int parse_zillion_hex(char *src)
+static int parse_zillion_hex(UINT8 *snapshot_buff, char *src)
 {
     char line[128];
     int parsing = 0, row = 0, column = 0;
@@ -671,55 +632,6 @@ static int parse_zillion_hex(char *src)
         src++;
     }
     return INIT_PASS;
-}
-
-int microtan_hexfile_init(int id, void *file, int open_mode)
-{
-	/* If no image specified, I guess we should start! */
-	if (file == NULL)
-	{
-		logerror("warning: no quikload specified!\n");
-		return INIT_PASS;
-	}
-
-    if (file)
-    {
-        int size = osd_fsize(file);
-        char *buff;
-
-        snapshot_size = 8263;   /* magic size */
-        snapshot_buff = malloc(snapshot_size);
-        if (!snapshot_buff)
-        {
-            LOG(("microtan_hexfile_load: could not allocate %d bytes of buffer\n", snapshot_size));
-            return INIT_FAIL;
-        }
-        memset(snapshot_buff, 0, snapshot_size);
-
-        buff = malloc(size + 1);
-        if (!buff)
-        {
-            LOG(("microtan_hexfile_load: could not allocate %d bytes of buffer\n", size));
-            return INIT_FAIL;
-        }
-        osd_fread(file, buff, size);
-        osd_fclose(file);
-
-        buff[size] = '\0';
-
-        if (buff[0] == ':')
-            return parse_intel_hex(buff);
-        return parse_zillion_hex(buff);
-    }
-    return INIT_FAIL;
-}
-
-void microtan_hexfile_exit(int id)
-{
-    if (snapshot_buff)
-        free(snapshot_buff);
-    snapshot_buff = NULL;
-    snapshot_size = 0;
 }
 
 static void store_key(int key)
@@ -837,7 +749,7 @@ INTERRUPT_GEN( microtan_interrupt )
     }
 }
 
-static void microtan_set_cpu_regs(int base)
+static void microtan_set_cpu_regs(const UINT8 *snapshot_buff, int base)
 {
     LOG(("microtan_snapshot_copy: PC:%02X%02X P:%02X A:%02X X:%02X Y:%02X SP:1%02X",
         snapshot_buff[base+1], snapshot_buff[base+0], snapshot_buff[base+2], snapshot_buff[base+3],
@@ -850,7 +762,7 @@ static void microtan_set_cpu_regs(int base)
     activecpu_set_reg(M6502_S, snapshot_buff[base+6]);
 }
 
-static void microtan_snapshot_copy(int param)
+static void microtan_snapshot_copy(UINT8 *snapshot_buff, int snapshot_size)
 {
     UINT8 *RAM = memory_region(REGION_CPU1);
 
@@ -876,7 +788,7 @@ static void microtan_snapshot_copy(int param)
             dirtybuffer[i] = 1;
         }
         base += 64;
-        microtan_set_cpu_regs(base);
+        microtan_set_cpu_regs(snapshot_buff, base);
     }
     else
     {
@@ -947,8 +859,62 @@ static void microtan_snapshot_copy(int param)
         }
         base += 64;
 
-        microtan_set_cpu_regs(base);
+        microtan_set_cpu_regs(snapshot_buff, base);
     }
+}
+
+SNAPSHOT_LOAD( microtan )
+{
+	UINT8 *snapshot_buff;
+
+	snapshot_buff = malloc(snapshot_size);
+	osd_fread(fp, snapshot_buff, snapshot_size);
+
+	if (microtan_varify_snapshot(snapshot_buff, snapshot_size)==IMAGE_VERIFY_FAIL)
+	{
+		free(snapshot_buff);
+		return INIT_FAIL;
+	}
+
+	microtan_snapshot_copy(snapshot_buff, snapshot_size);
+	free(snapshot_buff);
+	return INIT_PASS;
+}
+
+QUICKLOAD_LOAD( microtan_hexfile )
+{
+	int snapshot_size;
+	UINT8 *snapshot_buff;
+	char *buff;
+	int rc;
+
+	snapshot_size = 8263;   /* magic size */
+	snapshot_buff = malloc(snapshot_size);
+	if (!snapshot_buff)
+	{
+		LOG(("microtan_hexfile_load: could not allocate %d bytes of buffer\n", snapshot_size));
+		return INIT_FAIL;
+	}
+	memset(snapshot_buff, 0, snapshot_size);
+
+	buff = malloc(quickload_size + 1);
+	if (!buff)
+	{
+		LOG(("microtan_hexfile_load: could not allocate %d bytes of buffer\n", quickload_size));
+		return INIT_FAIL;
+	}
+	osd_fread(fp, buff, quickload_size);
+
+    buff[quickload_size] = '\0';
+
+    if (buff[0] == ':')
+        rc = parse_intel_hex(snapshot_buff, buff);
+	else
+		rc = parse_zillion_hex(snapshot_buff, buff);
+	if (rc == INIT_PASS)
+		microtan_snapshot_copy(snapshot_buff, snapshot_size);
+	free(snapshot_buff);
+	return rc;
 }
 
 void init_microtan(void)
@@ -1018,12 +984,6 @@ MACHINE_INIT( microtan )
     for (i = 1; i < 10;  i++)
         keyrows[i] = readinputport(1+i);
     set_led_status(1, (keyrows[3] & 0x80) ? 0 : 1);
-
-    if (snapshot_size)
-    {
-        /* setup a timer to copy the snapshot data into RAM */
-        timer_set(0.5, 0, microtan_snapshot_copy);
-    }
 
     via_config(0, &via6522[0]);
     via_config(1, &via6522[1]);

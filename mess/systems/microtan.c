@@ -294,9 +294,9 @@ ROM_START(microtan)
 ROM_END
 
 SYSTEM_CONFIG_START(microtan)
-	CONFIG_DEVICE_CASSETTE(1, "tap\0", microtan_cassette_init)
-	CONFIG_DEVICE_SNAPSHOT_LEGACY(   "m65\0", microtan_snapshot_init, microtan_snapshot_exit)
-	CONFIG_DEVICE_QUICKLOAD_LEGACY(  "hex\0", microtan_hexfile_init, microtan_hexfile_exit)
+	CONFIG_DEVICE_CASSETTE(1,		"tap\0", microtan_cassette_init)
+	CONFIG_DEVICE_SNAPSHOT_DELAY(	"m65\0", microtan, 0.5)
+	CONFIG_DEVICE_QUICKLOAD_DELAY(	"hex\0", microtan_hexfile, 0.5)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG    COMPANY      FULLNAME */

@@ -8,6 +8,7 @@ struct snapquick_info
 	const struct IODevice *dev;
 	int id;
 	void *fp;
+	int file_size;
 	struct snapquick_info *next;
 };
 
@@ -17,10 +18,12 @@ static void snapquick_load(int arg)
 {
 	struct snapquick_info *si;
 	snapquick_loadproc loadproc;
+	const char *file_type;
 	
 	si = (struct snapquick_info *) arg;
 	loadproc = (snapquick_loadproc) si->dev->user1;
-	loadproc(si->fp);
+	file_type = image_filetype(si->dev->type, si->id);
+	loadproc(si->fp, file_type, si->file_size);
 	image_unload(si->dev->type, si->id);
 }
 
@@ -29,9 +32,14 @@ static int snapquick_init(int type, int id, void *fp, int open_mode)
 	const struct IODevice *dev;
 	struct snapquick_info *si;
 	double delay;
+	int file_size;
 
 	if (fp)
 	{
+		file_size = osd_fsize(fp);
+		if (file_size <= 0)
+			return INIT_FAIL;
+
 		si = (struct snapquick_info *) image_malloc(type, id, sizeof(struct snapquick_info));
 		if (!si)
 			return INIT_FAIL;
@@ -42,6 +50,7 @@ static int snapquick_init(int type, int id, void *fp, int open_mode)
 		si->dev = dev;
 		si->id = id;
 		si->fp = fp;
+		si->file_size = file_size;
 		si->next = snapquick_infolist;
 		snapquick_infolist = si;
 

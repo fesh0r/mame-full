@@ -18,6 +18,7 @@
 #include "machine/6522via.h"
 #include "sound/ay8910.h"
 #include "includes/6551.h"
+#include "snapquik.h"
 
 /* from src/mess/vidhrdw/microtan.c */
 
@@ -30,11 +31,8 @@ extern MACHINE_INIT( microtan );
 
 extern int microtan_cassette_init(int id, void *fp, int open_mode);
 
-extern int microtan_snapshot_init(int id, void *fp, int open_mode);
-extern void microtan_snapshot_exit(int id);
-
-extern int microtan_hexfile_init(int id, void *fp, int open_mode);
-extern void microtan_hexfile_exit(int id);
+extern SNAPSHOT_LOAD( microtan );
+extern QUICKLOAD_LOAD( microtan_hexfile );
 
 extern INTERRUPT_GEN( microtan_interrupt );
 
