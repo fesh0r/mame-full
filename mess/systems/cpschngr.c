@@ -22,6 +22,9 @@ merged Street Fighter Zero for MESS
 #include "drivers/cps1.h"       /* External CPS1 definitions */
 
 
+READ16_HANDLER( qsound_sharedram1_r );
+WRITE16_HANDLER( qsound_sharedram1_w );
+
 static READ16_HANDLER( cps1_input2_r )
 {
 	int buttons=readinputport(7);
@@ -148,50 +151,7 @@ static int cps1_interrupt(void)
 *
 ********************************************************************/
 
-static struct QSound_interface qsound_interface =
-{
-	QSOUND_CLOCK,
-	REGION_SOUND1,
-	{ 100,100 }
-};
-
 static unsigned char *qsound_sharedram1,*qsound_sharedram2;
-
-int cps1_qsound_interrupt(void)
-{
-#if 0
-I have removed CPU_AUDIO_CPU from the Z(0 so this is no longer necessary
-	/* kludge to pass the sound board test with sound disabled */
-	if (Machine->sample_rate == 0)
-		qsound_sharedram1[0xfff] = 0x77;
-#endif
-
-	return 2;
-}
-
-
-READ16_HANDLER( qsound_rom_r )
-{
-	unsigned char *rom = memory_region(REGION_USER1);
-
-	if (rom) return rom[offset] | 0xff00;
-	else
-	{
-		usrintf_showmessage("%06x: read sound ROM byte %04x",cpu_get_pc(),offset);
-		return 0;
-	}
-}
-
-static READ16_HANDLER( qsound_sharedram1_r )
-{
-	return qsound_sharedram1[offset] | 0xff00;
-}
-
-static WRITE16_HANDLER( qsound_sharedram1_w )
-{
-	if (ACCESSING_LSB)
-		qsound_sharedram1[offset] = data;
-}
 
 static READ16_HANDLER( qsound_sharedram2_r )
 {
@@ -296,7 +256,6 @@ WRITE16_HANDLER( cps1_eeprom_port_w )
 }
 
 
-
 static MEMORY_READ16_START( cps1_readmem )
 	{ 0x000000, 0x1fffff, MRA16_ROM }, /* 68000 ROM */
 	{ 0x800000, 0x800001, input_port_4_word_r }, /* Player input ports */
@@ -309,7 +268,6 @@ static MEMORY_READ16_START( cps1_readmem )
 	{ 0x8001fc, 0x8001fd, cps1_input2_r }, /* Input ports (SF Rev E) */
 	{ 0x800100, 0x8001ff, cps1_output_r },   /* Output ports */
 	{ 0x900000, 0x92ffff, MRA16_RAM },	/* SF2CE executes code from here */
-	{ 0xf00000, 0xf0ffff, qsound_rom_r },		/* Slammasters protection */
 	{ 0xf18000, 0xf19fff, qsound_sharedram1_r },	/* Q RAM */
 	{ 0xf1c000, 0xf1c001, cps1_input2_r },   /* Player 3 controls (later games) */
 	{ 0xf1c002, 0xf1c003, cps1_input3_r },   /* Player 4 controls (later games - muscle bombers) */
@@ -353,24 +311,6 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0xf002, 0xf002, OKIM6295_data_0_w },
 	{ 0xf004, 0xf004, cps1_snd_bankswitch_w },
 //	{ 0xf006, 0xf006, MWA_NOP }, /* ???? Unknown ???? */
-MEMORY_END
-
-static MEMORY_READ_START( qsound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },  /* banked (contains music data) */
-	{ 0xc000, 0xcfff, MRA_RAM },
-	{ 0xd007, 0xd007, qsound_status_r },
-	{ 0xf000, 0xffff, MRA_RAM },
-MEMORY_END
-
-static MEMORY_WRITE_START( qsound_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAM, &qsound_sharedram1 },
-	{ 0xd000, 0xd000, qsound_data_h_w },
-	{ 0xd001, 0xd001, qsound_data_l_w },
-	{ 0xd002, 0xd002, qsound_cmd_w },
-	{ 0xd003, 0xd003, qsound_banksw_w },
-	{ 0xf000, 0xffff, MWA_RAM, &qsound_sharedram2 },
 MEMORY_END
 
 INPUT_PORTS_START( sfzch )
@@ -493,16 +433,6 @@ static struct GfxLayout tilelayout32 =
 	32*32
 };
 
-static struct GfxDecodeInfo cps1_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &tilelayout16, 0x000, 32 },	/* sprites */
-	{ REGION_GFX1, 0, &tilelayout8,  0x200, 32 },	/* tiles 8x8 */
-	{ REGION_GFX1, 0, &tilelayout16, 0x400, 32 },	/* tiles 16x16 */
-	{ REGION_GFX1, 0, &tilelayout32, 0x600, 32 },	/* tiles 32x32 */
-	/* stars use colors 0x800-087ff and 0xa00-0a7ff */
-	{ -1 } /* end of array */
-};
-
 static void cps1_irq_handler_mus(int irq)
 {
 	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
@@ -524,7 +454,32 @@ static struct OKIM6295interface okim6295_interface_7576 =
 	{ 30 }
 };
 
-static struct MachineDriver machine_driver_sfzch =
+
+
+READ16_HANDLER( qsound_sharedram1_r )
+{
+	return qsound_sharedram1[offset] | 0xff00;
+}
+
+
+WRITE16_HANDLER( qsound_sharedram1_w )
+{
+	if (ACCESSING_LSB)
+		qsound_sharedram1[offset] = data;
+}
+
+struct GfxDecodeInfo cps1_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &tilelayout16, 0x000, 32 },	/* sprites */
+	{ REGION_GFX1, 0, &tilelayout8,  0x200, 32 },	/* tiles 8x8 */
+	{ REGION_GFX1, 0, &tilelayout16, 0x400, 32 },	/* tiles 16x16 */
+	{ REGION_GFX1, 0, &tilelayout32, 0x600, 32 },	/* tiles 32x32 */
+	/* stars use colors 0x800-087ff and 0xa00-0a7ff */
+	{ -1 } /* end of array */
+};
+
+
+struct MachineDriver machine_driver_sfzch =
 {
 	/* basic machine hardware */
 	{
@@ -564,7 +519,7 @@ static struct MachineDriver machine_driver_sfzch =
 	{ { SOUND_YM2151,  &ym2151_interface },
 	  { SOUND_OKIM6295,  &okim6295_interface_7576 }
 	},
-	0	
+	0
 };
 
 
