@@ -175,9 +175,7 @@ Atari 7800 ProSystem
 
 Known Issues:
 
-The Reset key "R" and Select key "S" are hard-mapped to the same location as the default 
-Player 2 up and fire two, respectively. You will need to remap these manually to avoid
-control conflicts in some games.
+The Pause key "P" is hard-coded and not able to be re-mapped.
 
 Most games work fine, but a few have graphic and playability issues. See a7800.hsi for a 
 full compatibility list.
