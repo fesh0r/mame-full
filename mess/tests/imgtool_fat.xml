@@ -204,4 +204,63 @@
 	<checkfile name="\FOO\4.TXT">'Delta'</checkfile>
 </imgtooltest>
 
+<imgtooltest name="fat_008">
+	<!-- Testing longer file names -->
+	<createimage driver="pc_dsk_fat"/>
+	<createdirectory path="FOO"/>
+	
+	<putfile name="\FOO\Alpha.Bravo.TXT">'Aaa'</putfile>
+	<putfile name="\FOO\Charlie.Delta.Echo.TXT">'Bbbb'</putfile>
+	<putfile name="\FOO\Foxtrot.Golf.Hotel.India.Juliet.TXT">'Ccccc'</putfile>
+	<deletefile name="\FOO\Charlie.Delta.Echo.TXT"/>
+	<checkdirectory path="\FOO">
+		<entry name="Alpha.Bravo.TXT" size="3"/>
+		<entry name="Foxtrot.Golf.Hotel.India.Juliet.TXT" size="5"/>
+	</checkdirectory>
+
+	<putfile name="\FOO\Kilo.Lima.Mike.November.Oscar.Papa.Quebec.TXT">'Dddddd'</putfile>
+	<putfile name="\FOO\Alpha.Bravo.TXT">'Aaa' * 200</putfile>
+	<checkfile name="\FOO\Alpha.Bravo.TXT">'Aaa' * 200</checkfile>
+	<checkfile name="\FOO\Foxtrot.Golf.Hotel.India.Juliet.TXT">'Ccccc'</checkfile>
+	<checkfile name="\FOO\Kilo.Lima.Mike.November.Oscar.Papa.Quebec.TXT">'Dddddd'</checkfile>
+
+	<putfile name="\FOO\Foxtrot.Golf.Hotel.India.Juliet.TXT">'Ccccc' * 400</putfile>
+	<checkfile name="\FOO\Alpha.Bravo.TXT">'Aaa' * 200</checkfile>
+	<checkfile name="\FOO\Foxtrot.Golf.Hotel.India.Juliet.TXT">'Ccccc' * 400</checkfile>
+	<checkfile name="\FOO\Kilo.Lima.Mike.November.Oscar.Papa.Quebec.TXT">'Dddddd'</checkfile>
+
+	<putfile name="\FOO\Alpha.Bravo.TXT">'Zyx' * 500</putfile>
+	<checkfile name="\FOO\Alpha.Bravo.TXT">'Zyx' * 500</checkfile>
+	<checkfile name="\FOO\Foxtrot.Golf.Hotel.India.Juliet.TXT">'Ccccc' * 400</checkfile>
+	<checkfile name="\FOO\Kilo.Lima.Mike.November.Oscar.Papa.Quebec.TXT">'Dddddd'</checkfile>
+</imgtooltest>
+
+<imgtooltest name="fat_009">
+	<!-- Testing longer file names -->
+	<createimage driver="pc_dsk_fat"/>
+
+	<putfile name="Johnson Alpha.txt">'Alpha'</putfile>
+	<putfile name="Johnson Bravo.txt">'Bravo'</putfile>
+	<putfile name="Johnson Charlie.txt">'Charlie'</putfile>
+	<putfile name="Johnson Delta.txt">'Delta'</putfile>
+	<putfile name="Johnson Echo.txt">'Echo'</putfile>
+	<putfile name="Johnson Foxtrot.txt">'Foxtrot'</putfile>
+	<putfile name="Johnson Golf.txt">'Golf'</putfile>
+	<putfile name="Johnson Hotel.txt">'Hotel'</putfile>
+	<putfile name="Johnson India.txt">'India'</putfile>
+	<putfile name="Johnson Juliett.txt">'Juliett'</putfile>
+	<putfile name="Johnson Kilo.txt">'Kilo'</putfile>
+	<checkfile name="JOHNSO~1.txt">'Alpha'</checkfile>
+	<checkfile name="JOHNSO~2.txt">'Bravo'</checkfile>
+	<checkfile name="JOHNSO~3.txt">'Charlie'</checkfile>
+	<checkfile name="JOHNSO~4.txt">'Delta'</checkfile>
+	<checkfile name="JOHNSO~5.txt">'Echo'</checkfile>
+	<checkfile name="JOHNSO~6.txt">'Foxtrot'</checkfile>
+	<checkfile name="JOHNSO~7.txt">'Golf'</checkfile>
+	<checkfile name="JOHNSO~8.txt">'Hotel'</checkfile>
+	<checkfile name="JOHNSO~9.txt">'India'</checkfile>
+	<checkfile name="JOHNS~10.txt">'Juliett'</checkfile>
+	<checkfile name="JOHNS~11.txt">'Kilo'</checkfile>
+</imgtooltest>
+
 </tests>

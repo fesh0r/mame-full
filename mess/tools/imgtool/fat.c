@@ -256,14 +256,6 @@ static int is_special_cluster(UINT32 fat_bits, UINT32 cluster)
 
 
 
-static char cannonicalize_sfn_char(char ch)
-{
-	/* return the display version of this short file name character */
-	return tolower(ch);
-}
-
-
-
 static imgtoolerr_t fat_diskimage_open(imgtool_image *image)
 {
 	UINT8 header[62];
@@ -1123,6 +1115,36 @@ static void fat_calc_dirent_lfnchecksum(UINT8 *entry, size_t entry_len)
 
 
 
+static char fat_cannonicalize_sfn_char(char ch)
+{
+	/* return the display version of this short file name character */
+	return tolower(ch);
+}
+
+
+
+static void fat_cannonicalize_sfn(char *sfn, const UINT8 *sfn_bytes)
+{
+	/* return the display version of this short file name */
+	int i;
+
+	memset(sfn, '\0', 13);
+	memcpy(sfn, sfn_bytes, 8);
+	rtrim(sfn);
+	if (sfn[0] == 0x05)
+		sfn[0] = (char) 0xE5;
+	if ((sfn_bytes[8] != ' ') || (sfn_bytes[9] != ' ') || (sfn_bytes[10] != ' '))
+	{
+		strcat(sfn, ".");
+		memcpy(sfn + strlen(sfn), &sfn_bytes[8], 3);
+		rtrim(sfn);
+	}
+	for (i = 0; sfn[i]; i++)
+		sfn[i] = fat_cannonicalize_sfn_char(sfn[i]);
+}
+
+
+
 static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file,
 	struct fat_dirent *ent, struct fat_freeentry_info *freeent)
 {
@@ -1211,18 +1233,7 @@ static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file,
 	}
 
 	/* pick apart short filename */
-	memcpy(ent->short_filename, entry, 8);
-	rtrim(ent->short_filename);
-	if (entry[0] == 0x05)
-		entry[0] = 0xE5;
-	if ((entry[8] != ' ') || (entry[9] != ' ') || (entry[10] != ' '))
-	{
-		strcat(ent->short_filename, ".");
-		memcpy(ent->short_filename + strlen(ent->short_filename), &entry[8], 3);
-		rtrim(ent->short_filename);
-	}
-	for (i = 0; ent->short_filename[i]; i++)
-		ent->short_filename[i] = cannonicalize_sfn_char(ent->short_filename[i]);
+	fat_cannonicalize_sfn(ent->short_filename, entry);
 
 	/* and the long filename */
 	if (lfn_lastentry == 1)
@@ -1296,11 +1307,11 @@ static imgtoolerr_t fat_construct_dirent(const char *filename, creation_policy_t
 			short_char = '\0';
 		else if (isalnum((char) ch))
 			short_char = toupper((char) ch);
-		else if (strchr(". !#$%^()-@^_`{}~", (char) ch))
+		else if (strchr(".!#$%^()-@^_`{}~", (char) ch))
 			short_char = (char) ch;
 		else
-			short_char = '\0';
-		if (!short_char || (short_char != cannonicalize_sfn_char((char) ch)))
+			short_char = '\0';	/* illegal SFN char */
+		if (!short_char || (short_char != fat_cannonicalize_sfn_char((char) ch)))
 			sfn_sufficient = 0;
 
 		/* append the short filename char */
@@ -1321,9 +1332,9 @@ static imgtoolerr_t fat_construct_dirent(const char *filename, creation_policy_t
 			/* ran out of characters for short filename */
 			sfn_sufficient = 0;
 		}
-		else
+		else if (short_char != '\0')
 		{
-			created_entry[created_entry_len - FAT_DIRENT_SIZE + sfn_pos++] = ch;
+			created_entry[created_entry_len - FAT_DIRENT_SIZE + sfn_pos++] = short_char;
 		}
 		last_short_char = short_char;
 
@@ -1424,6 +1435,67 @@ done:
 
 
 
+static void fat_bump_dirent(UINT8 *entry, size_t entry_len)
+{
+	UINT8 *sfn_entry;
+	int pos, digit_count, i;
+	UINT32 digit_place, val = 0;
+	
+	sfn_entry = &entry[entry_len - FAT_DIRENT_SIZE];
+
+	digit_place = 1;
+	for (pos = 7; (pos >= 0) && isdigit((char) sfn_entry[pos]); pos--)
+	{
+		val += (sfn_entry[pos] - '0') * digit_place;
+		digit_place *= 10;
+	}
+	val++;
+	pos++;
+
+	/* count the digits */
+	digit_place = 1;
+	digit_count = 1;
+	while(val >= digit_place * 10)
+	{
+		digit_count++;
+		digit_place *= 10;
+	}
+
+	/* give us some more space, if necessary */
+	while ((pos > 0) && ((pos + digit_count) > 8))
+		pos--;
+
+	/* have we actually ran out of digits */
+	if ((pos + digit_count) > 8)
+	{
+		/* extreme degenerate case; simply randomize the filename */
+		for (i = 0; i < 6; i++)
+			sfn_entry[i] = 'A' + (rand() % 26);
+		sfn_entry[6] = '~';
+		sfn_entry[7] = '0';
+	}
+	else
+	{
+		/* write the tilde, if possible */
+		if (pos > 0)
+			sfn_entry[pos - 1] = '~';
+
+		/* write out the number */
+		while(digit_place > 0)
+		{
+			sfn_entry[pos++] = (val / digit_place) + '0';
+			val %= digit_place;
+			digit_place /= 10;
+		}
+	}
+
+	/* since we changed the short file name, we need to recalc the checksums
+	 * in the LFN entries */
+	fat_calc_dirent_lfnchecksum(entry, entry_len);
+}
+
+
+
 static imgtoolerr_t fat_lookup_path(imgtool_image *image, const char *path,
 	creation_policy_t create, struct fat_file *file)
 {
@@ -1436,6 +1508,8 @@ static imgtoolerr_t fat_lookup_path(imgtool_image *image, const char *path,
 	size_t created_entry_len = 0;
 	UINT32 entry_sector_index, entry_sector_offset;
 	UINT32 parent_first_cluster;
+	int bumped_sfn;
+	char sfn[13];
 
 	disk_info = (const struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
 
@@ -1489,7 +1563,33 @@ static imgtoolerr_t fat_lookup_path(imgtool_image *image, const char *path,
 
 			if (created_entry_len > FAT_DIRENT_SIZE)
 			{
-				/* TODO: ensure uniqueness of the short filename */
+				/* must ensure uniqueness of the short filename */
+				do
+				{
+					/* rewind to the beginning of the directory */
+					err = fat_seek_file(image, file, 0);
+					if (err)
+						goto done;
+
+					bumped_sfn = FALSE;
+					fat_cannonicalize_sfn(sfn, &created_entry[created_entry_len - FAT_DIRENT_SIZE]);
+
+					do
+					{
+						err = fat_read_dirent(image, file, &ent, NULL);
+						if (err)
+							goto done;
+
+						if (!stricmp(sfn, ent.short_filename))
+						{
+							bumped_sfn = TRUE;
+							fat_bump_dirent(created_entry, created_entry_len);
+							fat_cannonicalize_sfn(sfn, &created_entry[created_entry_len - FAT_DIRENT_SIZE]);
+						}
+					}
+					while(!ent.eof);
+				}
+				while(bumped_sfn);
 			}
 
 			err = fat_set_file_size(image, file, MAX(file->filesize, freeent.position + created_entry_len));
