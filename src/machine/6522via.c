@@ -629,15 +629,37 @@ void via_write(int which, int offset, int data)
 			v->intf->si_ready_func();
 		break;
 
-    case VIA_IER:
-		if (data & 0x80) v->ier |= data & 0x7f;
-		else v->ier &= ~(data & 0x7f);
-		via_clear_int (v, 0);
-		break;
+case VIA_IER:
+if (data & 0x80)
+v->ier |= data & 0x7f;
+else
+v->ier &= ~(data & 0x7f);
 
-    case VIA_IFR:
-		via_clear_int (v, data);
-		break;
+if (v->ifr & INT_ANY)
+{
+if (((v->ifr & v->ier) & 0x7f) == 0)
+{
+v->ifr &= ~INT_ANY;
+if (v->intf->irq_func)
+(*v->intf->irq_func)(CLEAR_LINE);
+}
+}
+else
+{
+if ((v->ier & v->ifr) & 0x7f)
+{
+v->ifr |= INT_ANY;
+if (v->intf->irq_func)
+(*v->intf->irq_func)(ASSERT_LINE);
+}
+}
+break;
+
+case VIA_IFR:
+if (data & INT_ANY)
+data = 0x7f;
+via_clear_int (v, data);
+break;
     }
 }
 
