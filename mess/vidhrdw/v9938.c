@@ -9,7 +9,6 @@
  todo:
 
  - sprite collision / 5th/8th sprite
- - graphic 5 -- check sprites and transparency
  - vdp engine -- make run at correct speed
  - vr/hr/fh flags: double-check all of that
  - make vdp engine work in exp. ram
@@ -992,8 +991,8 @@ static const V9938_MODE modes[] = {
 		v9938_graphic5_border_8, v9938_graphic5_border_16,
 		v9938_graphic5_border_8s, v9938_graphic5_border_16s,
 		v9938_sprite_mode2, 
-		v9938_default_draw_sprite_8, v9938_default_draw_sprite_16,
-		v9938_default_draw_sprite_8s, v9938_default_draw_sprite_16s },
+		v9938_graphic5_draw_sprite_8, v9938_graphic5_draw_sprite_16,
+		v9938_graphic5_draw_sprite_8s, v9938_graphic5_draw_sprite_16s },
 	{ 0x14,
 		v9938_mode_graphic6_8, v9938_mode_graphic6_16,
 		v9938_mode_graphic6_8s, v9938_mode_graphic6_16s,
