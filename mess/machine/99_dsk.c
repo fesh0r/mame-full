@@ -537,7 +537,7 @@ void ti99_bwg_init(void)
 	wd179x_set_density(DEN_MFM_LO);
 
 
-	mm58274c_init();	/* initialize the RTC */
+	mm58274c_init(1);	/* initialize the RTC */
 
 	use_80_track_drives = FALSE;
 }
@@ -703,7 +703,7 @@ static READ_HANDLER(bwg_mem_r)
 	else if (bwg_rtc_enable)
 	{
 		if (! (offset & 1))
-			reply = mm58274c_r((offset - 0x1FE0) >> 1);
+			reply = mm58274c_r(1, (offset - 0x1FE0) >> 1);
 	}
 	else
 	{
@@ -745,7 +745,7 @@ static WRITE_HANDLER(bwg_mem_w)
 	else if (bwg_rtc_enable)
 	{
 		if (! (offset & 1))
-			mm58274c_w((offset - 0x1FE0) >> 1, data);
+			mm58274c_w(1, (offset - 0x1FE0) >> 1, data);
 	}
 	else
 	{
@@ -932,7 +932,7 @@ void ti99_hfdc_init(void)
 	/* initialize the floppy disk controller */
 	smc92x4_init(0, & hfdc_intf);
 
-	mm58274c_init();	/* initialize the RTC */
+	mm58274c_init(1);	/* initialize the RTC */
 
 	use_80_track_drives = TRUE;
 }
@@ -1092,7 +1092,7 @@ static READ_HANDLER(hfdc_mem_r)
 	{
 		/* rtc */
 		if (! (offset & 1))
-			reply = mm58274c_r((offset - 0x1FE0) >> 1);
+			reply = mm58274c_r(1, (offset - 0x1FE0) >> 1);
 	}
 	else if (offset < 0x1400)
 	{
@@ -1142,7 +1142,7 @@ static WRITE_HANDLER(hfdc_mem_w)
 	{
 		/* rtc */
 		if (! (offset & 1))
-			mm58274c_w((offset - 0x1FE0) >> 1, data);
+			mm58274c_w(1, (offset - 0x1FE0) >> 1, data);
 	}
 	else if (offset < 0x1400)
 	{

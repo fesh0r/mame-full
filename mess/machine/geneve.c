@@ -24,6 +24,7 @@ static void intb_callback(int state);
 /*static READ16_HANDLER ( geneve_rw_rspeech );
 static WRITE16_HANDLER ( geneve_ww_wspeech );*/
 
+static void read_key_if_possible(void);
 static void poll_keyboard(void);
 
 static void tms9901_interrupt_callback(int intreq, int ic);
@@ -111,6 +112,8 @@ static UINT8 KeyQueue[KeyQueueSize];
 int KeyQueueHead;
 int KeyQueueLen;
 int KeyInBuf;
+int KeyReset;
+static UINT32 KeyStateSave[4];
 
 /*
 	GROM support.
@@ -134,11 +137,12 @@ static UINT8 page_lookup[8];
 enum
 {
 	mf_PAL			= 0x001,	/* bit 5 */
+	mf_keycaps		= 0x004,	/* bit 7 - exact meaning unknown */
 	mf_keyclock		= 0x008,	/* bit 8 */
 	mf_keyclear		= 0x010,	/* bit 9 */
 	mf_genevemode	= 0x020,	/* bit 10 */
 	mf_mapmode		= 0x040,	/* bit 11 */
-	mf_waitstate	= 0x400		/* bit 15 */
+	mf_waitstate	= 0x400		/* bit 15 - exact meaning unknown */
 };
 
 /* tms9995_ICount: used to implement memory waitstates (hack) */
@@ -183,11 +187,14 @@ void machine_init_geneve(void)
 
 	v9938_reset();
 
-	mm58274c_init();
+	mm58274c_init(0);
 
 	/* clear keyboard interface state (probably overkill, but can't harm) */
-	/*KeyCol = 0;
-	AlphaLockLine = 0;*/
+	JoySel = 0;
+	KeyQueueHead = KeyQueueLen = 0;
+	memset(KeyStateSave, 0, sizeof(KeyStateSave));
+	KeyInBuf = 0;
+	KeyReset = 1;
 
 	/* read config */
 	has_speech = (readinputport(input_port_config) >> config_speech_bit) & config_speech_mask;
@@ -249,7 +256,7 @@ void machine_stop_geneve(void)
 */
 int video_start_geneve(void)
 {
-	return v9938_init(MODEL_V9938, 0x20000, tms9901_set_int2);	/* v38 with 128 kb of video RAM */
+	return v9938_init(MODEL_V9938, /*0x20000*/0x30000, tms9901_set_int2);	/* v38 with 128 kb of video RAM */
 }
 
 /*
@@ -323,7 +330,7 @@ READ_HANDLER ( geneve_r )
 				return page_lookup[offset-0xf110];
 
 			case 0xf118:
-				return KeyQueueLen ? KeyQueue[KeyQueueHead] : 0;
+				return KeyInBuf ? KeyQueue[KeyQueueHead] : 0;
 
 			case 0xf130:
 			case 0xf131:
@@ -341,7 +348,7 @@ READ_HANDLER ( geneve_r )
 			case 0xf13d:
 			case 0xf13e:
 			case 0xf13f:
-				return mm58274c_r(offset-0xf130);
+				return mm58274c_r(0, offset-0xf130);
 
 			default:
 				logerror("unmapped read offs=%d\n", (int) offset);
@@ -531,7 +538,7 @@ WRITE_HANDLER ( geneve_w )
 			case 0xf13d:
 			case 0xf13e:
 			case 0xf13f:
-				mm58274c_w(offset-0xf130, data);
+				mm58274c_w(0, offset-0xf130, data);
 				return;
 
 			default:
@@ -675,31 +682,40 @@ WRITE_HANDLER ( geneve_peb_mode_CRU_w )
 {
 	if ((offset >= /*0x770*/0x775) && (offset < 0x780))
 	{
-		if ((offset == 0x778) && data && (! (mode_flags & mf_keyclock)))
-		{
-			/* set mf_keyclock */
-			if (KeyQueueLen)
-			{
-				tms9901_set_single_int(0, 8, 1);
-			}
-		}
-		if ((offset == 0x779)  && data && (! (mode_flags & mf_keyclear)))
-		{
-			/* set mf_keyclear */
-			if (KeyQueueLen)
-			{
-				KeyQueueHead = (KeyQueueHead + 1) % KeyQueueSize;
-				KeyQueueLen--;
-			}
-			/* shift in new key immediately if possible, otherwise clear interrupt */
-			tms9901_set_single_int(0, 8, (KeyQueueLen && (mode_flags & mf_keyclock)) ? 1 : 0);
-		}
+		int old_flags = mode_flags;
 
 		/* tms9995 user flags */
 		if (data)
 			mode_flags |= 1 << (offset - 0x775);
 		else
 			mode_flags &= ~(1 << (offset - 0x775));
+
+		if ((offset == 0x778) && data && (! (old_flags & mf_keyclock)))
+		{
+			/* set mf_keyclock */
+			read_key_if_possible();
+		}
+		if (offset == 0x779)
+		{
+			if (data && (! (old_flags & mf_keyclear)))
+			{
+				/* set mf_keyclear: enable key input */
+				/* shift in new key immediately if possible */
+				read_key_if_possible();
+			}
+			else if ((! data) && (old_flags & mf_keyclear))
+			{
+				/* clear mf_keyclear: clear key input */
+				if (KeyQueueLen)
+				{
+					KeyQueueHead = (KeyQueueHead + 1) % KeyQueueSize;
+					KeyQueueLen--;
+				}
+				/* clear keyboard interrupt */
+				tms9901_set_single_int(0, 8, 0);
+				KeyInBuf = 0;
+			}
+		}
 	}
 
 	geneve_peb_CRU_w(offset, data);
@@ -711,7 +727,18 @@ WRITE_HANDLER ( geneve_peb_mode_CRU_w )
 #pragma mark KEYBOARD INTERFACE
 #endif
 
-INLINE void post_in_KeyQueue(int keycode)
+static void read_key_if_possible(void)
+{
+	/* if keyboard reset is not asserted, and key clock is enabled, and key
+	buffer clear is disabled, and key queue is not empty. */
+	if ((! KeyReset) && (mode_flags & mf_keyclock) && (mode_flags & mf_keyclear) && KeyQueueLen)
+	{
+		tms9901_set_single_int(0, 8, 1);
+		KeyInBuf = 1;
+	}
+}
+
+/*INLINE*/static void post_in_KeyQueue(int keycode)
 {
 	KeyQueue[(KeyQueueHead+KeyQueueLen) % KeyQueueSize] = keycode;
 	KeyQueueLen++;
@@ -719,19 +746,20 @@ INLINE void post_in_KeyQueue(int keycode)
 
 static void poll_keyboard(void)
 {
-	static UINT32 old_keystate[4];
 	UINT32 keystate;
 	UINT32 key_transitions;
 	int i, j;
 	int keycode;
 	int pressed;
 
+	if (KeyReset)
+		return;
 
 	for (i=0; (i<4) && (KeyQueueLen <= (KeyQueueSize-MaxKeyMessageLen)); i++)
 	{
 		keystate = readinputport(input_port_keyboard_geneve + i*2)
 					| (readinputport(input_port_keyboard_geneve + i*2 + 1) << 16);
-		key_transitions = keystate ^ old_keystate[i];
+		key_transitions = keystate ^ KeyStateSave[i];
 		if (key_transitions)
 		{
 			for (j=0; (j<32) && (KeyQueueLen <= (KeyQueueSize-MaxKeyMessageLen)); j++)
@@ -741,9 +769,9 @@ static void poll_keyboard(void)
 					keycode = (i << 5) | j;
 					pressed = ((keystate >> j) & 1);
 					if (pressed)
-						old_keystate[i] |= (1 << j);
+						KeyStateSave[i] |= (1 << j);
 					else
-						old_keystate[i] &= ~ (1 << j);
+						KeyStateSave[i] &= ~ (1 << j);
 					if ((keycode >= 0x60) && (keycode < 0x70))
 					{
 						/* these keycodes are emulated */
@@ -821,10 +849,7 @@ static void poll_keyboard(void)
 							keycode |= 0x80;
 						post_in_KeyQueue(keycode);
 					}
-					if (mode_flags & mf_keyclock)
-					{
-						tms9901_set_single_int(0, 8, 1);
-					}
+					read_key_if_possible();
 				}
 			}
 		}
@@ -952,6 +977,15 @@ static void W9901_JoySel(int offset, int data)
 
 static void W9901_KeyboardReset(int offset, int data)
 {
+	KeyReset = ! data;
+	if (KeyReset)
+	{
+		/* reset -> clear keyboard key queue, but not geneve key buffer */
+		KeyQueueLen = KeyInBuf ? 1 : 0;
+		memset(KeyStateSave, 0, sizeof(KeyStateSave));
+	}
+	/*else
+		poll_keyboard();*/
 }
 
 /*

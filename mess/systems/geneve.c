@@ -9,9 +9,9 @@
 	General architecture:
 
 	TMS9995@12MHz (including 256 bytes of on-chip 16-bit RAM and a timer),
-	V9938, TMS9919, TMS9901, MM58274 RTC, 512 kbytes of 1-wait-state CPU RAM
-	(expandable to 1 or 1.5 Mbyte?), 32 kbytes of 0-wait-state CPU RAM
-	(expandable to 64 kbytes), 128 kbytes of VRAM.
+	V9938, SN76496 (compatible with TMS9919), TMS9901, MM58274 RTC, 512 kbytes
+	of 1-wait-state CPU RAM (expandable to almost 2 Mbytes), 32 kbytes of
+	0-wait-state CPU RAM (expandable to 64 kbytes), 128 kbytes of VRAM.
 
 
 	Memory map:
@@ -19,19 +19,32 @@
 	64-kbyte CPU address space is mapped to a 2-Mbyte virtual address space.
 	8 8-kbyte pages are available simultaneously, out of a total of 256.
 
-	Pages:
+	Pages (regular console):
 	>00->3f: 512kbytes of CPU RAM (pages >36 and >37 are used to emulate
-	  cartridge CPU ROMs in 99/4a mode, and pages >38 through >3f are used to
-	  emulate console and cartridge GROMs in 99/4a mode)
-	>40->7f: reserved???
-	>80->b7: PE-bus space using spare address lines??? (i.e. AMA-AMC != 7)
+	  cartridge CPU ROMs in ti99 mode, and pages >38 through >3f are used to
+	  emulate console and cartridge GROMs in ti99 mode)
+	>40->7f: reserved for expansion to 1Mbyte of RAM???
+	>80->b7: PE-bus space using spare address lines (AMA-AMC)???  Used for
+	  extra 512kbytes of RAM???
 	>b8->bf: PE-bus space (most useful pages are >ba: DSR space and >bc: speech
 	  synthesizer page)
 	>e8->ef: 64kbytes of 0-wait-state RAM (with 32kbytes of SRAM installed,
 	  only even pages (>e8, >ea, >ec and >ee) are available)
 	>f0->f1: boot ROM
+	>f2->ff: reserved?
 
-	Unpaged locations (99/4a mode):
+	Pages (genmod console):
+	>00->3f: switch-selectable: 512kbytes of onboard RAM (1-wait-state DRAM) or
+	  first 512kbytes of the Memex Memory board (0-wait-state SRAM).  The
+	  latter setting is incompatible with TI mode.
+	>40->b7: next 448kbytes of the Memex RAM
+	>b8->bf: PE-bus space???
+	>c0->ef: next 384kbytes of the Memex RAM (it is unknown whether >e8->ef is
+	  on the Memex board or the Geneve Console)
+	>f0->f1: boot ROM
+	>f2->ff: reserved?
+
+	Unpaged locations (ti99 mode):
 	>8000->8007: memory page registers (>8000 for page 0, >8001 for page 1,
 	  etc.  register >8003 is ignored (this page is hard-wired to >36->37).
 	>8008->801f: ???
@@ -39,7 +52,8 @@
 	  source, the GROM and sound registers are only available if page >3
 	  is mapped in at location >c000 (register 6).  I am not sure the Speech
 	  registers are implemented, though I guess they are.)
-	Note that >8020->83ff IS paged.
+	Note that >8020->83ff is mapped to regular CPU RAM according to map
+	register 4.
 
 	Unpaged locations (native mode):
 	>f100: VDP data port (read/write)
@@ -63,8 +77,6 @@
 
 
 	CRU map:
-
-	Identical to ti-99/4a??? (with the extra TMS9995 registers)
 
 	Base >0000: tms9901
 	tms9901 pin assignment:
@@ -95,12 +107,13 @@
 	Bits 5-15: tms9995 user flags - overlaps geneve mode, but hopefully the
 	  geneve registers are write-only, so no real conflict happens
 	Bit 5: 0 if NTSC, 1 if PAL video
-	Bit 7: some keyboard-related bit
-	Bit 8: allow keyboard clock
-	Bit 9: clear keyboard input
-	Bit 10: 1 = geneve mode, 0 = 4a mode
+	Bit 7: some keyboard flag, set to 1 if caps is on
+	Bit 8: 1 = allow keyboard clock
+	Bit 9: 0 = clear keyboard input buffer, 1 = allow keyboard buffer to be
+	  loaded
+	Bit 10: 1 = geneve mode, 0 = ti99 mode
 	Bit 11: 1 = ROM mode, 0 = map mode
-	bit 15: 1 = make 0-wait-state SRAM 1-wait-state
+	bit 15: 1 = add 1 extra wait state when accessing 0-wait-state SRAM
 */
 
 #include "driver.h"
@@ -168,7 +181,7 @@ INPUT_PORTS_START(geneve)
 		PORT_BITX( config_speech_mask << config_speech_bit, /*1 << config_speech_bit*/0, IPT_DIPSWITCH_NAME, "Speech synthesis", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
 			PORT_DIPSETTING( 1 << config_speech_bit, DEF_STR( On ) )
-		PORT_BITX( config_fdc_mask << config_fdc_bit, /*fdc_kind_BwG*//*fdc_kind_hfdc*/fdc_kind_TI << config_fdc_bit, IPT_DIPSWITCH_NAME, "Floppy disk controller", KEYCODE_NONE, IP_JOY_NONE )
+		PORT_BITX( config_fdc_mask << config_fdc_bit, /*fdc_kind_BwG*/fdc_kind_hfdc << config_fdc_bit, IPT_DIPSWITCH_NAME, "Floppy disk controller", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( fdc_kind_none << config_fdc_bit, "none" )
 			PORT_DIPSETTING( fdc_kind_TI << config_fdc_bit, "Texas Instruments SD" )
 			PORT_DIPSETTING( fdc_kind_BwG << config_fdc_bit, "SNUG's BwG" )
@@ -414,6 +427,23 @@ ROM_START(geneve)
 	ROM_LOAD_OPTIONAL("spchrom.bin", 0x0000, 0x8000, 0x58b155f7) /* system speech ROM */
 ROM_END
 
+ROM_START(genmod)
+	/*CPU memory space*/
+	ROM_REGION(region_cpu1_len, REGION_CPU1, 0)
+	ROM_LOAD("gnmbt100.bin", offset_rom_geneve, 0x4000, 0x19b89479) /* CPU ROMs */
+
+	/*DSR ROM space*/
+	ROM_REGION(region_dsr_len, region_dsr, 0)
+	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000, 0x8f7df93f) /* TI disk DSR ROM */
+	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000, 0x06f1ec89) /* BwG disk DSR ROM */
+	ROM_LOAD_OPTIONAL("hfdc.bin", offset_hfdc_dsr, 0x4000, 0x66fbe0ed) /* HFDC disk DSR ROM */
+	ROM_LOAD_OPTIONAL("rs232.bin", offset_rs232_dsr, 0x1000, 0xeab382fb) /* TI rs232 DSR ROM */
+
+	/*TMS5220 ROM space*/
+	ROM_REGION(0x8000, region_speech_rom, 0)
+	ROM_LOAD_OPTIONAL("spchrom.bin", 0x0000, 0x8000, 0x58b155f7) /* system speech ROM */
+ROM_END
+
 SYSTEM_CONFIG_START(geneve)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(3,	"dsk\0",										ti99_floppy_load)
 	/*CONFIG_DEVICE_LEGACY			(IO_HARDDISK, 	1, "hd\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_OR_READ, NULL, NULL, ti99_ide_load, ti99_ide_unload, NULL)
@@ -423,3 +453,4 @@ SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT   MACHINE		 INPUT	  INIT		CONFIG	COMPANY		FULLNAME */
 COMP( 1987?,geneve,   0,	   geneve_60hz,  geneve,  geneve,	geneve,	"Myarc",	"Geneve 9640" )
+COMP( 199??,genmod,   geneve,  geneve_60hz,  geneve,  geneve,	geneve,	"Myarc",	"Geneve 9640 (with Genmod)" )
