@@ -13,8 +13,10 @@ New System Drivers Supported (in no particular order):
 System Driver Changes:
 ----------------------
 
-- [NC100/NC200] Implemented serial hardware. Programs can be loaded into emulation
-using the NC's terminal program [Kev Thacker]
+- [NC100,NC100A,NC200] Implemented serial hardware: Programs can be loaded into emulation
+using the NC's built in terminal program. Some characters are dropped, could be synchronisation
+problems. XModem transfer not supported at this time. Implemented printer emulation: Documents 
+can be printed now. [Kev Thacker]
 
 Other Changes:
 --------------
@@ -104,7 +106,7 @@ System Driver Changes:
 
 - [BBC B] Updated to use updated 8271 FDC code. Disk images can be used and games
   can be loaded and played. [Kev Thacker]
-  
+ 
 - [BBC B] Cleaned up the memory accessing a little. This fixed a problem with
   the DNFS rom thinking it found an econet controller. [Gordon Jefferyes]
 
