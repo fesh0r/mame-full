@@ -763,3 +763,17 @@ COMPX( 198?, pc1251,	  0, 		pc1251,  pc1251, 	pc1251,	  "Sharp",  "Pocket Comput
 COMPX( 198?, pc1350,	  0, 		pc1350,  pc1350, 	pc1350,	  "Sharp",  "Pocket Computer 1350", GAME_NOT_WORKING)
 COMPX( 198?, pc1401,	  0, 		pc1401,  pc1401, 	pc1401,	  "Sharp",  "Pocket Computer 1401", GAME_NOT_WORKING)
 COMPX( 198?, pc1402,	  pc1401, 	pc1401,  pc1401, 	pc1401,	  "Sharp",  "Pocket Computer 1402", GAME_ALIAS|GAME_NOT_WORKING)
+
+#ifdef RUNTIME_LOADER
+extern void pocketc_runtime_loader_init(void)
+{
+	int i;
+	for (i=0; drivers[i]; i++) {
+		if ( strcmp(drivers[i]->name,"pc1251")==0) drivers[i]=&driver_pc1251;
+		if ( strcmp(drivers[i]->name,"pc1401")==0) drivers[i]=&driver_pc1401;
+		if ( strcmp(drivers[i]->name,"pc1402")==0) drivers[i]=&driver_pc1402;
+		if ( strcmp(drivers[i]->name,"pc1350")==0) drivers[i]=&driver_pc1350;
+	}
+}
+#endif
+

@@ -268,3 +268,13 @@ void init_mk2(void)
 
 // seams to be developed by mostek (MK)
 CONS( 1979,	mk2,	0, 		mk2,	mk2,	mk2,	  "Quelle International",  "Chess Champion MK II")
+
+#ifdef RUNTIME_LOADER
+extern void mk2_runtime_loader_init(void)
+{
+	int i;
+	for (i=0; drivers[i]; i++) {
+		if ( strcmp(drivers[i]->name,"mk2")==0) drivers[i]=&driver_mk2;
+	}
+}
+#endif

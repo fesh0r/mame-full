@@ -351,3 +351,14 @@ void init_comquest(void)
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR	COMPANY   FULLNAME */
 CONS( 19??, comquest, 0, 		comquest, comquest, comquest, "Data Concepts",  "Comquest Plus German")
+
+#ifdef RUNTIME_LOADER
+extern void comquest_runtime_loader_init(void)
+{
+	int i;
+	for (i=0; drivers[i]; i++) {
+		if ( strcmp(drivers[i]->name,"comquest")==0) drivers[i]=&driver_comquest;
+	}
+}
+#endif
+

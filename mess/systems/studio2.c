@@ -270,3 +270,13 @@ extern const struct GameDriver driver_studio2;
 CONS( 1976, studio2,	  0, 		studio2,  studio2, 	studio2,	  "RCA",  "Studio II")
 // hanimex mpt-02
 // colour studio 2 (m1200) with little color capability
+
+#ifdef RUNTIME_LOADER
+extern void studio2_runtime_loader_init(void)
+{
+	int i;
+	for (i=0; drivers[i]; i++) {
+		if ( strcmp(drivers[i]->name,"studio2")==0) drivers[i]=&driver_studio2;
+	}
+}
+#endif

@@ -2589,3 +2589,29 @@ COMP ( 1987,	pcmda,		ibmpc,	 pcmda,    pcmda,	 pcmda,	   "",  "PC (MDA)" )
 COMPX ( 1987,	xtcga,		ibmpc,	 xtcga,    xtcga,	 pccga,	   "",  "PC/XT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 COMPX ( 1987,	xtvga,		ibmpc,	 xtvga,    xtvga,	 pc_vga,   "",  "PC/XT (VGA, MF2 Keyboard)", GAME_NOT_WORKING )
 COMPX ( 1987,	atvga,		ibmat,	 atvga,    atvga,	 at_vga,   "",  "PC/AT (VGA, MF2 Keyboard)", GAME_NOT_WORKING )
+
+#ifdef RUNTIME_LOADER
+extern void pc_runtime_loader_init(void)
+{
+	int i;
+	for (i=0; drivers[i]; i++) {
+		if ( strcmp(drivers[i]->name,"ibmpc")==0) drivers[i]=&driver_ibmpc;
+		if ( strcmp(drivers[i]->name,"ibmpca")==0) drivers[i]=&driver_ibmpca;
+		if ( strcmp(drivers[i]->name,"pc")==0) drivers[i]=&driver_pc;
+		if ( strcmp(drivers[i]->name,"pcmda")==0) drivers[i]=&driver_pcmda;
+		if ( strcmp(drivers[i]->name,"europc")==0) drivers[i]=&driver_europc;
+		if ( strcmp(drivers[i]->name,"bondwell")==0) drivers[i]=&driver_bondwell;
+		if ( strcmp(drivers[i]->name,"ibmpcjr")==0) drivers[i]=&driver_ibmpcjr;
+		if ( strcmp(drivers[i]->name,"t1000hx")==0) drivers[i]=&driver_t1000hx;
+		if ( strcmp(drivers[i]->name,"ibmxt")==0) drivers[i]=&driver_ibmxt;
+		if ( strcmp(drivers[i]->name,"pc1512")==0) drivers[i]=&driver_pc1512;
+		if ( strcmp(drivers[i]->name,"pc1640")==0) drivers[i]=&driver_pc1640;
+		if ( strcmp(drivers[i]->name,"xtcga")==0) drivers[i]=&driver_xtcga;
+		if ( strcmp(drivers[i]->name,"xtvga")==0) drivers[i]=&driver_xtvga;
+		if ( strcmp(drivers[i]->name,"ibmat")==0) drivers[i]=&driver_ibmat;
+		if ( strcmp(drivers[i]->name,"at")==0) drivers[i]=&driver_at;
+		if ( strcmp(drivers[i]->name,"atvga")==0) drivers[i]=&driver_atvga;
+		if ( strcmp(drivers[i]->name,"neat")==0) drivers[i]=&driver_neat;
+	}
+}
+#endif

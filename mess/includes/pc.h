@@ -4,6 +4,15 @@
 #include "cpu/i86/i86intf.h"
 #include "vidhrdw/generic.h"
 
+
+#ifdef RUNTIME_LOADER
+# ifdef __cplusplus
+	extern "C" void pc_runtime_loader_init(void);
+# else
+	extern void pc_runtime_loader_init(void);
+# endif
+#endif
+
 /* enable and set level for verbosity of the various parts of emulation */
 
 

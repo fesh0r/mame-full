@@ -1,3 +1,12 @@
+#ifdef RUNTIME_LOADER
+# ifdef __cplusplus
+	extern "C" void pocketc_runtime_loader_init(void);
+# else
+	extern void pocketc_runtime_loader_init(void);
+# endif
+#endif
+
+
 /* in vidhrdw/pocketc.c */
 
 extern unsigned char pocketc_palette[248][3];

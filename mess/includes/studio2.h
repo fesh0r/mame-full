@@ -1,3 +1,11 @@
+#ifdef RUNTIME_LOADER
+# ifdef __cplusplus
+	extern "C" void studio2_runtime_loader_init(void);
+# else
+	extern void studio2_runtime_loader_init(void);
+# endif
+#endif
+
 
 int studio2_get_vsync(void);
 void studio2_video_start(void);

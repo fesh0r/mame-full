@@ -146,3 +146,12 @@ static const struct IODevice io_mk1[] = {
 /*    YEAR  NAME    PARENT  MACHINE INPUT   INIT      COMPANY   FULLNAME */
 CONS( 1979,	mk1,	0, 		mk1,	mk1,	0,	"Computer Electronic",  "Chess Champion MK I")
 
+#ifdef RUNTIME_LOADER
+extern void mk1_runtime_loader_init(void)
+{
+	int i;
+	for (i=0; drivers[i]; i++) {
+		if ( strcmp(drivers[i]->name,"mk1")==0) drivers[i]=&driver_mk1;
+	}
+}
+#endif

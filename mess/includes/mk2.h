@@ -1,3 +1,13 @@
+#ifdef RUNTIME_LOADER
+# ifdef __cplusplus
+	extern "C" void mk2_runtime_loader_init(void);
+# else
+	extern void mk2_runtime_loader_init(void);
+# endif
+#endif
+
+
+
 extern UINT8 mk2_led[5];
 extern unsigned short mk2_colortable[1][2];
 extern unsigned char mk2_palette[242][3];
