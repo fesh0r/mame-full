@@ -955,21 +955,21 @@ ROM_END
 
 SYSTEM_CONFIG_START(atari)
 	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 4, "atr\0dsk\0xfd\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_CREATE_OR_READ,
-		NULL, NULL, a800_floppy_load, NULL, NULL)
+		NULL, NULL, device_load_a800_floppy, NULL, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(a400)
 	CONFIG_IMPORT_FROM(atari)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "rom\0bin\0", NULL, NULL, a800_rom_load, a800_rom_unload, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "rom\0bin\0", NULL, NULL, device_load_a800_cart, device_unload_a800_cart, NULL, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(a800)
 	CONFIG_IMPORT_FROM(atari)
-	CONFIG_DEVICE_CARTSLOT_OPT(2, "rom\0bin\0", NULL, NULL, a800_rom_load, a800_rom_unload, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(2, "rom\0bin\0", NULL, NULL, device_load_a800_cart, device_unload_a800_cart, NULL, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(a5200)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "rom\0bin\0a52\0", NULL, NULL, a5200_rom_load, a5200_rom_unload, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "rom\0bin\0a52\0", NULL, NULL, device_load_a5200_cart, device_unload_a5200_cart, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

@@ -100,10 +100,10 @@ const struct GameDriver *test_drivers[] =
 /* for pong style games look into docs/pong.txt */
 
 /* ATARI */
-//	DRIVER( a2600 ) 	/* Atari 2600										*/
-//	DRIVER( a5200 ) 	/* Atari 5200										*/
-//	DRIVER( a7800 ) 	/* Atari 7800 NTSC									*/
-//	DRIVER( a7800p ) 	/* Atari 7800 PAL									*/
+	DRIVER( a2600 ) 	/* Atari 2600										*/
+	DRIVER( a5200 ) 	/* Atari 5200										*/
+	DRIVER( a7800 ) 	/* Atari 7800 NTSC									*/
+	DRIVER( a7800p ) 	/* Atari 7800 PAL									*/
 //	DRIVER( lynx )		/* Atari Lynx Handheld								*/
 //	DRIVER( lynxa )		/* Atari Lynx Handheld alternate rom save			*/
 //	DRIVER( lynx2 )		/* Atari Lynx II Handheld redesigned, no additions	*/
@@ -119,28 +119,28 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( snespal )	/* Nintendo Super Nintendo PAL						*/
 
 	/* SEGA */
-//	DRIVER( gamegear )	/* Sega GameGear									*/
-//	DRIVER( gamegj )	/* Sega GameGear (Japanese)							*/
-//	DRIVER( gamg )		/* Sega GameGear (European/American Majesco)		*/
-//	DRIVER( gamgj )		/* Sega GameGear (Japanese Majesco)					*/
-//	DRIVER( sms )		/* Sega Master System (NTSC)						*/
-//	DRIVER( smspal )	/* Sega Master System (PAL)							*/
-//	DRIVER( smsj21 )	/* Sega Master System (PAL Japanese SMS BIOS v2.1)	*/
-//	DRIVER( smsm3 )		/* Sega Mark III (PAL) Japanese SMS BIOS v2.1		*/
-//	DRIVER( smsss )		/* Sega Master System								*/
-//	DRIVER( smsu13 )	/* Sega Master System								*/
-//	DRIVER( smse13 )	/* Sega Master System								*/
-//	DRIVER( smsu13h )	/* Sega Master System								*/
-//	DRIVER( smse13h )	/* Sega Master System								*/
-//	DRIVER( smsuam )	/* Sega Master System								*/
-//	DRIVER( smseam )	/* Sega Master System								*/
-//	DRIVER( smsesh )	/* Sega Master System								*/
-//	DRIVER( smsbsh )	/* Sega Master System								*/
-//	DRIVER( smsuhs24 )	/* Sega Master System								*/
-//	DRIVER( smsehs24 )	/* Sega Master System								*/
-//	DRIVER( smsuh34 )	/* Sega Master System								*/
-//	DRIVER( smseh34 )	/* Sega Master System								*/
-//	DRIVER( genesis )	/* Sega Genesis/MegaDrive							*/
+	DRIVER( gamegear )	/* Sega GameGear									*/
+	DRIVER( gamegj )	/* Sega GameGear (Japanese)							*/
+	DRIVER( gamg )		/* Sega GameGear (European/American Majesco)		*/
+	DRIVER( gamgj )		/* Sega GameGear (Japanese Majesco)					*/
+	DRIVER( sms )		/* Sega Master System (NTSC)						*/
+	DRIVER( smspal )	/* Sega Master System (PAL)							*/
+	DRIVER( smsj21 )	/* Sega Master System (PAL Japanese SMS BIOS v2.1)	*/
+	DRIVER( smsm3 )		/* Sega Mark III (PAL) Japanese SMS BIOS v2.1		*/
+	DRIVER( smsss )		/* Sega Master System								*/
+	DRIVER( smsu13 )	/* Sega Master System								*/
+	DRIVER( smse13 )	/* Sega Master System								*/
+	DRIVER( smsu13h )	/* Sega Master System								*/
+	DRIVER( smse13h )	/* Sega Master System								*/
+	DRIVER( smsuam )	/* Sega Master System								*/
+	DRIVER( smseam )	/* Sega Master System								*/
+	DRIVER( smsesh )	/* Sega Master System								*/
+	DRIVER( smsbsh )	/* Sega Master System								*/
+	DRIVER( smsuhs24 )	/* Sega Master System								*/
+	DRIVER( smsehs24 )	/* Sega Master System								*/
+	DRIVER( smsuh34 )	/* Sega Master System								*/
+	DRIVER( smseh34 )	/* Sega Master System								*/
+	DRIVER( genesis )	/* Sega Genesis/MegaDrive							*/
 //TESTDRIVER( saturn )	/* Sega Saturn										*/
 
 	/* BALLY */
@@ -189,15 +189,15 @@ const struct GameDriver *test_drivers[] =
 
 /****************COMPUTERS***************************************************/
     /* ACORN */
-//	DRIVER( atom )      /* 1979 Acorn Atom									*/
-//	DRIVER( atomeb )    /* 1979 Acorn Atom									*/
-//	DRIVER( bbca )      /* 1981 BBC Micro Model A							*/
-//	DRIVER( bbcb )      /* 1981 BBC Micro Model B							*/
-//	DRIVER( bbcb1770 )  /* 1981 BBC Micro Model B with WD 1770 disc			*/
-//	DRIVER( bbcbp )     /* 198? BBC Micro Model B+ 64K						*/
-//	DRIVER( bbcbp128 )  /* 198? BBC Micro Model B+ 128K						*/
-//TESTDRIVER( bbcb6502 )  /* 198? BBC B WD1770 with a 6502 second processor	*/
-//TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310						*/
+	DRIVER( atom )      /* 1979 Acorn Atom									*/
+	DRIVER( atomeb )    /* 1979 Acorn Atom									*/
+	DRIVER( bbca )      /* 1981 BBC Micro Model A							*/
+	DRIVER( bbcb )      /* 1981 BBC Micro Model B							*/
+	DRIVER( bbcb1770 )  /* 1981 BBC Micro Model B with WD 1770 disc			*/
+	DRIVER( bbcbp )     /* 198? BBC Micro Model B+ 64K						*/
+	DRIVER( bbcbp128 )  /* 198? BBC Micro Model B+ 128K						*/
+TESTDRIVER( bbcb6502 )  /* 198? BBC B WD1770 with a 6502 second processor	*/
+TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310						*/
 
 	/* CAMBRIDGE COMPUTERS */
 //	DRIVER( z88 )		/*													*/
@@ -286,11 +286,11 @@ XL/XE 16kB OS roms
 4    XEGS    05/07/1987  0x1eaf4002  C101687
 */
 
-//	DRIVER( a400 )		/* 1979 Atari 400									*/
-//	DRIVER( a400pal )	/* 1979 Atari 400 PAL								*/
-//	DRIVER( a800 )		/* 1979 Atari 800									*/
-//	DRIVER( a800pal )	/* 1979 Atari 800 PAL								*/
-//	DRIVER( a800xl )	/* 1983 Atari 800 XL								*/
+	DRIVER( a400 )		/* 1979 Atari 400									*/
+	DRIVER( a400pal )	/* 1979 Atari 400 PAL								*/
+	DRIVER( a800 )		/* 1979 Atari 800									*/
+	DRIVER( a800pal )	/* 1979 Atari 800 PAL								*/
+	DRIVER( a800xl )	/* 1983 Atari 800 XL								*/
 
 	/* COMMODORE */
 //	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975						*/

@@ -48,6 +48,11 @@ static I8271 i8271;
 #define FDC_LOG_COMMAND(x)
 #endif
 
+static mess_image *current_image(void)
+{
+	return image_instance(IO_FLOPPY, i8271.drive);
+}
+
 void i8271_init(i8271_interface *iface)
 {
 	memset(&i8271, 0, sizeof(I8271));
@@ -67,6 +72,8 @@ void i8271_init(i8271_interface *iface)
 	
 static void i8271_seek_to_track(int track)
 {
+	mess_image *img = current_image();
+
 	if (track==0)
 	{
 		/* seek to track 0 */
@@ -76,14 +83,14 @@ static void i8271_seek_to_track(int track)
 
 		while (
 			/* track 0 not set */
-			(!floppy_drive_get_flag_state(i8271.drive,FLOPPY_DRIVE_HEAD_AT_TRACK_0)) &&
+			(!floppy_drive_get_flag_state(img, FLOPPY_DRIVE_HEAD_AT_TRACK_0)) &&
 			/* not seeked more than 255 tracks */
 			(StepCount!=0)
 			)
 		{
 /*            logerror("step\n"); */
 			StepCount--;
-			floppy_drive_seek(i8271.drive, -1);
+			floppy_drive_seek(img, -1);
 		}
 
 		i8271.CurrentTrack[i8271.drive] = 0;
@@ -118,7 +125,7 @@ static void i8271_seek_to_track(int track)
 
 
 		/* seek to track 0 */
-		floppy_drive_seek(i8271.drive, SignedTracks);
+		floppy_drive_seek(img, SignedTracks);
 
 		i8271.CurrentTrack[i8271.drive] = track;
 	}
@@ -449,9 +456,8 @@ static void i8271_command_continue(void)
 		case I8271_COMMAND_WRITE_DATA_MULTI_RECORD:
 		case I8271_COMMAND_WRITE_DATA_SINGLE_RECORD:
 		{
-
 			/* put the buffer to the sector */
-			floppy_drive_write_sector_data(i8271.drive, i8271.side, i8271.data_id, i8271.pExecutionPhaseData, 1<<(i8271.ID_N+7),0);
+			floppy_drive_write_sector_data(current_image(), i8271.side, i8271.data_id, i8271.pExecutionPhaseData, 1<<(i8271.ID_N+7),0);
 
 			/* completed all sectors? */
 			i8271.Counter--;
@@ -495,7 +501,7 @@ static void i8271_do_read(void)
 	if (i8271_find_sector())
 	{
 		/* get the sector into the buffer */
-		floppy_drive_read_sector_data(i8271.drive, i8271.side, i8271.data_id, i8271.pExecutionPhaseData, 1<<(i8271.ID_N+7));
+		floppy_drive_read_sector_data(current_image(), i8271.side, i8271.data_id, i8271.pExecutionPhaseData, 1<<(i8271.ID_N+7));
 			
 		/* initialise for reading */
         i8271_initialise_execution_phase_read(1<<(i8271.ID_N+7));
@@ -516,7 +522,7 @@ static void i8271_do_read_id(void)
 	chrn_id	id;
 
 	/* get next id from disc */
-	floppy_drive_get_next_id(i8271.drive, i8271.side,&id);
+	floppy_drive_get_next_id(current_image(), i8271.side,&id);
 
 	i8271.pExecutionPhaseData[0] = id.C;
 	i8271.pExecutionPhaseData[1] = id.H;
@@ -550,6 +556,7 @@ static void i8271_do_write(void)
 
 static int i8271_find_sector(void)
 {
+	mess_image *img = current_image();
 //	int track_count_attempt;
 
 //	track_count_attempt
@@ -564,7 +571,7 @@ static int i8271_find_sector(void)
 		chrn_id id;
 
 		/* get next id from disc */
-		if (floppy_drive_get_next_id(i8271.drive, i8271.side,&id))
+		if (floppy_drive_get_next_id(img, i8271.side,&id))
 		{
 			/* tested on Amstrad CPC - All bytes must match, otherwise
 			a NO DATA error is reported */
@@ -587,7 +594,7 @@ static int i8271_find_sector(void)
 		}
 
 		 /* index set? */
-		if (floppy_drive_get_flag_state(i8271.drive, FLOPPY_DRIVE_INDEX))
+		if (floppy_drive_get_flag_state(img, FLOPPY_DRIVE_INDEX))
 		{
 			index_count++;
 		}
@@ -604,6 +611,8 @@ static int i8271_find_sector(void)
 
 static void i8271_command_execute(void)
 {
+	mess_image *img = current_image();
+
 	/* clear it = good completion status */
 	/* this will be changed if anything bad happens! */
 	i8271.ResultRegister = 0;
@@ -734,13 +743,13 @@ static void i8271_command_execute(void)
 					i8271.drive_control_input = (1<<6) | (1<<2);
 
 					/* bit 3 = 0 if write protected */
-					if (!floppy_drive_get_flag_state(i8271.drive, FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
+					if (!floppy_drive_get_flag_state(img, FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
 					{
 						i8271.drive_control_input |= (1<<3);
 					}
 
 					/* bit 1 = 0 if head at track 0 */
-					if (!floppy_drive_get_flag_state(i8271.drive, FLOPPY_DRIVE_HEAD_AT_TRACK_0))
+					if (!floppy_drive_get_flag_state(img, FLOPPY_DRIVE_HEAD_AT_TRACK_0))
 					{
 						i8271.drive_control_input |= (1<<1);
 					}
@@ -896,8 +905,8 @@ static void i8271_command_execute(void)
 
 					/* load head - on mini-sized drives this turns on the disc motor,
 					on standard-sized drives this loads the head and turns the motor on */
-					floppy_drive_set_motor_state(i8271.drive, i8271.CommandParameters[1] & 0x08);
-					floppy_drive_set_ready_state(i8271.drive, 1, 1);
+					floppy_drive_set_motor_state(img, i8271.CommandParameters[1] & 0x08);
+					floppy_drive_set_ready_state(img, 1, 1);
 
 					/* step pin changed? if so perform a step in the direction indicated */
 					if (((i8271.drive_control_output^i8271.CommandParameters[1]) & (1<<1))!=0)
@@ -917,7 +926,7 @@ static void i8271_command_execute(void)
 								signed_tracks = -1;
 							}
 
-							floppy_drive_seek(i8271.drive, signed_tracks);
+							floppy_drive_seek(img, signed_tracks);
 						}
 					}
 
@@ -955,24 +964,24 @@ static void i8271_command_execute(void)
 			status |= (1<<2) | (1<<6);
 
 			/* these two do not appear to be set at all! ?? */
-			if (floppy_drive_get_flag_state(0, FLOPPY_DRIVE_READY))
+			if (floppy_drive_get_flag_state(image_instance(IO_FLOPPY, 0), FLOPPY_DRIVE_READY))
 			{
 				status |= (1<<2);
 			}
 
-			if (floppy_drive_get_flag_state(1, FLOPPY_DRIVE_READY))
+			if (floppy_drive_get_flag_state(image_instance(IO_FLOPPY, 1), FLOPPY_DRIVE_READY))
 			{
 				status |= (1<<6);
 			}
 			
 			/* bit 3 = 1 if write protected */
-			if (floppy_drive_get_flag_state(i8271.drive, FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
+			if (floppy_drive_get_flag_state(img, FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
 			{
 				status |= (1<<3);
 			}
 
 			/* bit 1 = 1 if head at track 0 */
-			if (floppy_drive_get_flag_state(i8271.drive, FLOPPY_DRIVE_HEAD_AT_TRACK_0))
+			if (floppy_drive_get_flag_state(img, FLOPPY_DRIVE_HEAD_AT_TRACK_0))
 			{
 				status |= (1<<1);
 			}
@@ -1019,7 +1028,7 @@ static void i8271_command_execute(void)
 
 			i8271_get_drive();
 
-			if (!floppy_drive_get_flag_state(i8271.drive, FLOPPY_DRIVE_READY))
+			if (!floppy_drive_get_flag_state(img, FLOPPY_DRIVE_READY))
 			{
 				/* Completion type: operation intervention probably required for recovery */
 				/* Completion code: Drive not ready */
@@ -1053,7 +1062,7 @@ static void i8271_command_execute(void)
 #endif
 			i8271_get_drive();
 
-			if (!floppy_drive_get_flag_state(i8271.drive, FLOPPY_DRIVE_READY))
+			if (!floppy_drive_get_flag_state(img, FLOPPY_DRIVE_READY))
 			{
 				/* Completion type: operation intervention probably required for recovery */
 				/* Completion code: Drive not ready */
@@ -1094,7 +1103,7 @@ static void i8271_command_execute(void)
 
             i8271.drive_control_output &=~1;
             
-			if (!floppy_drive_get_flag_state(i8271.drive, FLOPPY_DRIVE_READY))
+			if (!floppy_drive_get_flag_state(img, FLOPPY_DRIVE_READY))
 			{
 				/* Completion type: operation intervention probably required for recovery */
 				/* Completion code: Drive not ready */
@@ -1103,7 +1112,7 @@ static void i8271_command_execute(void)
 			}
 			else
 			{
-				if (floppy_drive_get_flag_state(i8271.drive, FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
+				if (floppy_drive_get_flag_state(img, FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
 				{
 					/* Completion type: operation intervention probably required for recovery */
 					/* Completion code: Drive write protected */
@@ -1141,7 +1150,7 @@ static void i8271_command_execute(void)
 
             i8271.drive_control_output &=~1;
 
-			if (!floppy_drive_get_flag_state(i8271.drive, FLOPPY_DRIVE_READY))
+			if (!floppy_drive_get_flag_state(img, FLOPPY_DRIVE_READY))
 			{
 				/* Completion type: operation intervention probably required for recovery */
 				/* Completion code: Drive not ready */
@@ -1150,7 +1159,7 @@ static void i8271_command_execute(void)
 			}
 			else
 			{
-				if (floppy_drive_get_flag_state(i8271.drive, FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
+				if (floppy_drive_get_flag_state(img, FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
 				{
 					/* Completion type: operation intervention probably required for recovery */
 					/* Completion code: Drive write protected */
@@ -1183,7 +1192,7 @@ static void i8271_command_execute(void)
 
 			i8271_get_drive();
 	
-			if (!floppy_drive_get_flag_state(i8271.drive, FLOPPY_DRIVE_READY))
+			if (!floppy_drive_get_flag_state(img, FLOPPY_DRIVE_READY))
 			{
 				/* Completion type: operation intervention probably required for recovery */
 				/* Completion code: Drive not ready */

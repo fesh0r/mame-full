@@ -801,7 +801,7 @@ static MACHINE_DRIVER_START( a2600 )
 MACHINE_DRIVER_END
 
 SYSTEM_CONFIG_START(a2600)
-	CONFIG_DEVICE_CARTSLOT_REQ( 1, "bin\0a26\0", NULL, NULL, a2600_cart_load, NULL, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ( 1, "bin\0a26\0", NULL, NULL, device_load_a2600_cart, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

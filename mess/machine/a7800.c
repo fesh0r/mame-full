@@ -148,7 +148,7 @@ static int a7800_verify_cart(char header[128])
 	return IMAGE_VERIFY_PASS;
 }
 
-static int a7800_load_cart_cmn(int id, mame_file *cartfile)
+static int a7800_load_cart_cmn(mess_image *image, mame_file *cartfile)
 {
 	long len,start;
 	unsigned char header[128];
@@ -165,14 +165,14 @@ static int a7800_load_cart_cmn(int id, mame_file *cartfile)
 	cpu_setbank( 4, ROM + 0xC000 );
 
 	/* Allocate memory for BIOS bank switching */
-	a7800_bios_bkup = (UINT8*) image_malloc(IO_CARTSLOT, id, 0x4000);
+	a7800_bios_bkup = (UINT8*) image_malloc(image, 0x4000);
 	if (!a7800_bios_bkup)
 	{
 		logerror("Could not allocate ROM memory\n");
 		return INIT_FAIL;
 	}
 
-	a7800_cart_bkup = (UINT8*) image_malloc(IO_CARTSLOT, id,  0x4000);
+	a7800_cart_bkup = (UINT8*) image_malloc(image,  0x4000);
 	if (!a7800_cart_bkup)
 	{
 		logerror("Could not allocate ROM memory\n");
@@ -293,16 +293,16 @@ static int a7800_load_cart_cmn(int id, mame_file *cartfile)
 	return 0;
 }
 
-int a7800_cart_load(int id, mame_file *cartfile, int open_mode)
+DEVICE_LOAD( a7800 )
 {
 	a7800_ispal = 0;
-	return a7800_load_cart_cmn(id, cartfile);
+	return a7800_load_cart_cmn(image, file);
 }
 
-int a7800p_cart_load(int id, mame_file *cartfile, int open_mode)
+DEVICE_LOAD( a7800p )
 {
 	a7800_ispal = 1;
-	return a7800_load_cart_cmn(id, cartfile);
+	return a7800_load_cart_cmn(image, file);
 }
 
 

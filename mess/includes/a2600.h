@@ -11,9 +11,11 @@ extern READ_HANDLER  ( a2600_riot_r );
 extern WRITE_HANDLER ( a2600_riot_w );
 extern READ_HANDLER  ( a2600_bs_r );
 
-extern MACHINE_INIT( a2600 );
-extern MACHINE_STOP( a2600 );
-extern int a2600_cart_load(int id, mame_file *cartfile, int open_mode);
-extern READ_HANDLER ( a2600_ROM_r );
+MACHINE_INIT( a2600 );
+MACHINE_STOP( a2600 );
+
+READ_HANDLER ( a2600_ROM_r );
+
+DEVICE_LOAD( a2600_cart );
 
 #endif /* A2600_H */

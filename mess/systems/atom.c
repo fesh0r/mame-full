@@ -304,8 +304,8 @@ ROM_START (atomeb)
 ROM_END
 
 SYSTEM_CONFIG_START(atom)
-	CONFIG_DEVICE_CASSETTE			(1, "",			atom_cassette_init)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "ssd\0",	atom_floppy_init)
+	CONFIG_DEVICE_CASSETTE			(1, "",			device_load_atom_cassette)
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "ssd\0",	device_load_atom_floppy)
 	CONFIG_DEVICE_PRINTER			(1)
 	CONFIG_DEVICE_QUICKLOAD			(	"atm\0",	atom)
 SYSTEM_CONFIG_END

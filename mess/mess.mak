@@ -172,12 +172,12 @@ DRVLIBS = \
 	$(OBJ)/at.a       \
 	$(OBJ)/pc.a       \
 	$(OBJ)/pcshare.a  \
+	$(OBJ)/sega.a     \
+	$(OBJ)/acorn.a    \
+	$(OBJ)/atari.a    \
 #	$(OBJ)/ti99.a     \
 #	$(OBJ)/apexc.a	  \
 #	$(OBJ)/pdp1.a	  \
-#	$(OBJ)/sega.a     \
-#	$(OBJ)/acorn.a    \
-#	$(OBJ)/atari.a    \
 #	$(OBJ)/advision.a \
 #	$(OBJ)/mbee.a	  \
 #	$(OBJ)/vtech.a	  \

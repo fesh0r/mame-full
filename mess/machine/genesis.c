@@ -73,7 +73,7 @@ static int genesis_verify_cart(unsigned char *temp,unsigned int len)
 	return retval;
 }
 
-int genesis_load_cart (int id, mame_file *romfile, int open_mode)
+DEVICE_LOAD(genesis_cart)
 {
 	unsigned char *tmpROMnew, *tmpROM;
 	unsigned char *secondhalf;
@@ -100,13 +100,7 @@ int genesis_load_cart (int id, mame_file *romfile, int open_mode)
     }
 	genesis_soundram = memory_region(REGION_CPU2);
 
-	if (!romfile)
-    {
-        printf("Genesis Requires Cartridge!\n");
-        return INIT_FAIL;
-    }
-
-    length = mame_fread(romfile, rawROM + 0x2000, 0x400200);
+    length = mame_fread(file, rawROM + 0x2000, 0x400200);
 	logerror("image length = 0x%x\n", length);
 
 	if (length < 1024 + 512)

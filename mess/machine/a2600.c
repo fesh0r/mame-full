@@ -1323,7 +1323,7 @@ MACHINE_INIT( a2600 )
   Cartridge Loading
 
 ***************************************************************************/
-int a2600_cart_load(int id, mame_file *cartfile, int open_mode)
+DEVICE_LOAD( a2600_cart )
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
 	UINT32 crc;
@@ -1331,8 +1331,8 @@ int a2600_cart_load(int id, mame_file *cartfile, int open_mode)
 
 	a2600_cartridge_rom = &(ROM[0x10000]);	/* Load the cart outside the cpuspace for b/s purposes */
 
-	cart_size = mame_fsize(cartfile);
-	mame_fread(cartfile, a2600_cartridge_rom, cart_size);		/* testing everything now :) */
+	cart_size = mame_fsize(file);
+	mame_fread(file, a2600_cartridge_rom, cart_size);		/* testing everything now :) */
 	/* copy to mirrorred memory regions */
 	crc = (UINT32) crc32(0L,&ROM[0x10000], cart_size);
 	Bankswitch_Method = 0;

@@ -340,7 +340,7 @@ ROM_START(genesis)
 ROM_END
 
 SYSTEM_CONFIG_START(genesis)
-	CONFIG_DEVICE_CARTSLOT_REQ( 1, "smd\0bin\0md\0", NULL, NULL, genesis_load_cart, NULL, NULL, genesis_partialcrc)
+	CONFIG_DEVICE_CARTSLOT_REQ( 1, "smd\0bin\0md\0", NULL, NULL, device_load_genesis_cart, NULL, NULL, genesis_partialcrc)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

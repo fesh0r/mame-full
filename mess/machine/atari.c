@@ -117,34 +117,34 @@ MACHINE_INIT( a800 )
 	machine_init_atari_generic(ATARI_800, TRUE, TRUE);
 }
 
-int a800_rom_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( a800_cart )
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
 	int size;
 
 	/* load an optional (dual) cartridge (e.g. basic.rom) */
-	if( id > 0 )
+	if( image_index(image) > 0 )
 	{
-		size = mame_fread(fp, &mem[0x12000], 0x2000);
+		size = mame_fread(file, &mem[0x12000], 0x2000);
 		a800_cart_is_16k = (size == 0x2000);
-		logerror("%s loaded right cartridge '%s' size 16K\n", Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) );
+		logerror("%s loaded right cartridge '%s' size 16K\n", Machine->gamedrv->name, image_filename(image) );
 	}
 	else
 	{
-		size = mame_fread(fp, &mem[0x10000], 0x2000);
+		size = mame_fread(file, &mem[0x10000], 0x2000);
 		a800_cart_loaded = size > 0x0000;
-		size = mame_fread(fp, &mem[0x12000], 0x2000);
+		size = mame_fread(file, &mem[0x12000], 0x2000);
 		a800_cart_is_16k = size > 0x2000;
-		logerror("%s loaded left cartridge '%s' size %s\n", Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) , (a800_cart_is_16k) ? "16K":"8K");
+		logerror("%s loaded left cartridge '%s' size %s\n", Machine->gamedrv->name, image_filename(image) , (a800_cart_is_16k) ? "16K":"8K");
 	}
 	if (a800_cart_loaded)
 		a800_setbank(1);
 	return INIT_PASS;
 }
 
-void a800_rom_unload(int id)
+DEVICE_UNLOAD( a800_cart )
 {
-	if( id > 0 )
+	if( image_index(image) > 0 )
 	{
 		a800_cart_is_16k = 0;
 		a800_setbank(1);
@@ -168,8 +168,7 @@ MACHINE_INIT( a800xl)
 	a800xl_mmu(atari_pia.w.pbout, atari_pia.w.pbout);
 }
 
-
-int a800xl_load_rom(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( a800xl_cart )
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
 	const char *filename;
@@ -189,24 +188,19 @@ int a800xl_load_rom(mess_image *img, mame_file *fp, int open_mode)
 	}
 
 	/* load an optional (dual) cartidge (e.g. basic.rom) */
-	if (fp)
+	if (file)
 	{
 		{
-			size = mame_fread(fp, &mem[0x14000], 0x2000);
+			size = mame_fread(file, &mem[0x14000], 0x2000);
 			a800_cart_loaded = size / 0x2000;
-			size = mame_fread(fp, &mem[0x16000], 0x2000);
+			size = mame_fread(file, &mem[0x16000], 0x2000);
 			a800_cart_is_16k = size / 0x2000;
 			logerror("%s loaded cartridge '%s' size %s\n",
-					Machine->gamedrv->name, image_filename(IO_CARTSLOT,id), (a800_cart_is_16k) ? "16K":"8K");
+					Machine->gamedrv->name, image_filename(image), (a800_cart_is_16k) ? "16K":"8K");
 		}
 	}
 
 	return INIT_PASS;
-}
-
-int a800xl_id_rom(int id)
-{
-	return 1;
 }
 
 /**************************************************************
@@ -220,7 +214,7 @@ MACHINE_INIT( a5200 )
 	machine_init_atari_generic(ATARI_5200, FALSE, FALSE);
 }
 
-int a5200_rom_load(int id, mame_file *file, int open_mode)
+DEVICE_LOAD( a5200_cart )
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
 	int size;
@@ -235,18 +229,19 @@ int a5200_rom_load(int id, mame_file *file, int open_mode)
 	{
 		const char *info;
 		memcpy(&mem[0x4000], &mem[0x8000], 0x4000);
-		info = image_extrainfo(IO_CARTSLOT, id);
-		if (info!=NULL && strcmp(info, "A13MIRRORING")==0) {
-		memcpy(&mem[0x8000], &mem[0xa000], 0x2000);
-		memcpy(&mem[0x6000], &mem[0x4000], 0x2000);
+		info = image_extrainfo(image);
+		if (info!=NULL && strcmp(info, "A13MIRRORING")==0)
+		{
+			memcpy(&mem[0x8000], &mem[0xa000], 0x2000);
+			memcpy(&mem[0x6000], &mem[0x4000], 0x2000);
 		}
 	}
 	logerror("%s loaded cartridge '%s' size %dK\n",
-		Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) , size/1024);
+		Machine->gamedrv->name, image_filename(image) , size/1024);
 	return INIT_PASS;
 }
 
-void a5200_rom_unload(int id)
+DEVICE_UNLOAD( a5200_cart )
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
     /* zap the cartridge memory (again) */
@@ -329,19 +324,20 @@ static	xfd_format xfd_formats[] = {
  *****************************************************************************/
 #define MAXSIZE 5760 * 256 + 80
 
-int a800_floppy_load(int id, mame_file *file, int effective_mode)
+DEVICE_LOAD( a800_floppy )
 {
 	int size, i;
 	const char *ext;
+	int id = image_index(image);
 
-	drv[id].image = image_malloc(IO_FLOPPY, id, MAXSIZE);
+	drv[id].image = image_malloc(image, MAXSIZE);
 	if (!drv[id].image)
 		return INIT_FAIL;
 
 	/* tell whether the image is writable */
-	drv[id].mode = (file) && is_effective_mode_writable(effective_mode);
+	drv[id].mode = (file) && is_effective_mode_writable(open_mode);
 	/* set up image if it has been created */
-	if ((file) && is_effective_mode_create(effective_mode))
+	if ((file) && is_effective_mode_create(open_mode))
 	{
 		int sector;
 		char buff[256];
@@ -359,9 +355,9 @@ int a800_floppy_load(int id, mame_file *file, int effective_mode)
 		return INIT_FAIL;
 	}
 	/* re allocate the buffer; we don't want to be too lazy ;) */
-    drv[id].image = image_realloc(IO_FLOPPY, id, drv[id].image, size);
+    drv[id].image = image_realloc(image, drv[id].image, size);
 
-	ext = image_filetype(IO_FLOPPY, id);
+	ext = image_filetype(image);
     /* no extension: assume XFD format (no header) */
     if (!ext)
     {
@@ -500,8 +496,8 @@ int a800_floppy_load(int id, mame_file *file, int effective_mode)
 		}
 		break;
 	}
-	logerror("atari opened floppy #%d '%s', %d sectors (%d %s%s) %d bytes/sector\n",
-			id+1, image_filename(IO_FLOPPY,id),
+	logerror("atari opened floppy '%s', %d sectors (%d %s%s) %d bytes/sector\n",
+			image_filename(image),
 			drv[id].sectors,
 			drv[id].tracks,
 			(drv[id].heads == 1) ? "SS" : "DS",

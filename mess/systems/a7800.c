@@ -375,11 +375,11 @@ ROM_START (a7800p)
 ROM_END
 
 SYSTEM_CONFIG_START(a7800)
-	CONFIG_DEVICE_CARTSLOT_REQ( 1, "a78\0", NULL, NULL, a7800_cart_load, NULL, NULL, a7800_partialcrc)
+	CONFIG_DEVICE_CARTSLOT_REQ( 1, "a78\0", NULL, NULL, device_load_a7800, NULL, NULL, a7800_partialcrc)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(a7800p)
-	CONFIG_DEVICE_CARTSLOT_REQ( 1, "a78\0", NULL, NULL, a7800p_cart_load, NULL, NULL, a7800_partialcrc)
+	CONFIG_DEVICE_CARTSLOT_REQ( 1, "a78\0", NULL, NULL, device_load_a7800p, NULL, NULL, a7800_partialcrc)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

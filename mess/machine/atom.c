@@ -48,6 +48,16 @@ static void atom_via_irq_func(int state)
 
 }
 
+static mess_image *cassette_image(void)
+{
+	return image_instance(IO_CASSETTE, 0);
+}
+
+static mess_image *printer_image(void)
+{
+	return image_instance(IO_PRINTER, 0);
+}
+
 /* printer status */
 static READ_HANDLER(atom_via_in_a_func)
 {
@@ -55,7 +65,7 @@ static READ_HANDLER(atom_via_in_a_func)
 
 	data = atom_printer_data;
 
-	if (!device_status(IO_PRINTER,0,0))
+	if (!device_status(printer_image(),0))
 	{
 		/* offline */
 		data |=0x080;
@@ -85,7 +95,7 @@ static WRITE_HANDLER(atom_via_out_ca2_func)
 		if (data & 0x01)
 		{
 			/* output data to printer */
-			device_output(IO_PRINTER, 0, atom_printer_data);
+			device_output(printer_image(), atom_printer_data);
 		}
 	}
 
@@ -215,7 +225,7 @@ static void atom_timer_callback(int dummy)
 		result = (~(B & atom_8255_portc)) & 0x01;
 
 		/* tape output */
-		device_output(IO_CASSETTE, 0, (result & 0x01) ? -32768 : 32767);
+		device_output(cassette_image(), (result & 0x01) ? -32768 : 32767);
 	}
 }
 
@@ -255,7 +265,7 @@ MACHINE_INIT( atom )
 	timer_pulse(TIME_IN_HZ(2400*2), 0, atom_timer_callback);
 
 	/* cassette motor control */
-	device_status(IO_CASSETTE, 0, 1);
+	device_status(cassette_image(), 1);
 
 	memory_set_opbase_handler(0,atom_opbase_handler);
 }
@@ -336,13 +346,13 @@ QUICKLOAD_LOAD(atom)
 
 
 /* load floppy */
-int atom_floppy_init(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( atom_floppy )
 {
-	if (basicdsk_floppy_load(id, fp, open_mode)==INIT_PASS)
+	if (basicdsk_floppy_load(image, file, open_mode)==INIT_PASS)
 	{
 		/* sector id's 0-9 */
 		/* drive, tracks, heads, sectors per track, sector length, dir_sector, dir_length, first sector id */
-		basicdsk_set_geometry(id, 80, 1, 10, 256, 0, 0, FALSE);
+		basicdsk_set_geometry(image, 80, 1, 10, 256, 0, 0, FALSE);
 
 		return INIT_PASS;
 	}
@@ -373,7 +383,7 @@ READ_HANDLER ( atom_8255_portc_r )
 	atom_8255_portc &= 0x0f;
 
 	/* cassette input */
-	if (device_input(IO_CASSETTE,0)>255)
+	if (device_input(cassette_image())>255)
 	{
 		atom_8255_portc |= (1<<5);
 	}
@@ -475,12 +485,12 @@ WRITE_HANDLER(atom_8271_w)
 }
 
 
-int atom_cassette_init(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( atom_cassette )
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));
 	args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
-	return cassette_init(id, fp, open_mode, &args);
+	return cassette_init(image, file, open_mode, &args);
 }
 
 

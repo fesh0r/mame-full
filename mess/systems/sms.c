@@ -778,19 +778,19 @@ ROM_END
 #define rom_gamgj rom_gamg
 
 SYSTEM_CONFIG_START(sms)
-	CONFIG_DEVICE_CARTSLOT_REQ(1, "sms\0", NULL, NULL, sms_cart_load, NULL, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ(1, "sms\0", NULL, NULL, device_load_sms_cart, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(smso)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "sms\0", NULL, NULL, sms_cart_load, NULL, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "sms\0", NULL, NULL, device_load_sms_cart, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(gamegear)
-	CONFIG_DEVICE_CARTSLOT_REQ(1, "gg\0", NULL, NULL, sms_cart_load, NULL, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ(1, "gg\0", NULL, NULL, device_load_sms_cart, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(gamegearo)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "gg\0", NULL, NULL, sms_cart_load, NULL, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "gg\0", NULL, NULL, device_load_sms_cart, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

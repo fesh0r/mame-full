@@ -18,8 +18,10 @@ extern unsigned char *a7800_cartridge_rom;
 MACHINE_INIT( a7800 );
 MACHINE_INIT( a7800p );
 UINT32 a7800_partialcrc(const unsigned char *, size_t);
-int a7800_cart_load(int id, mame_file *cartfile, int open_mode);
-int a7800p_cart_load(int id, mame_file *cartfile, int open_mode);
+
+DEVICE_LOAD( a7800 );
+DEVICE_LOAD( a7800p );
+
 READ_HANDLER  ( a7800_TIA_r );
 WRITE_HANDLER ( a7800_TIA_w );
 READ_HANDLER  ( a7800_RIOT_r );

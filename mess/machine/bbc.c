@@ -725,19 +725,19 @@ static void bbc_via_user_irq(int level)
 }
 
 
-static struct via6522_interface
-bbcb_user_via= {
-  bbcb_via_user_read_porta,//via_user_read_porta,
-  bbcb_via_user_read_portb,//via_user_read_portb,
-  bbcb_via_user_read_ca1,//via_user_read_ca1,
-  0,//via_user_read_cb1,
-  bbcb_via_user_read_ca2,//via_user_read_ca2,
-  0,//via_user_read_cb2,
-  bbcb_via_user_write_porta,//via_user_write_porta,
-  0,//via_user_write_portb,
-  bbcb_via_user_write_ca2,//via_user_write_ca2,
-  0,//via_user_write_cb2,
-  bbc_via_user_irq //via_user_irq
+static struct via6522_interface bbcb_user_via =
+{
+	bbcb_via_user_read_porta,//via_user_read_porta,
+	bbcb_via_user_read_portb,//via_user_read_portb,
+	bbcb_via_user_read_ca1,//via_user_read_ca1,
+	0,//via_user_read_cb1,
+	bbcb_via_user_read_ca2,//via_user_read_ca2,
+	0,//via_user_read_cb2,
+	bbcb_via_user_write_porta,//via_user_write_porta,
+	0,//via_user_write_portb,
+	bbcb_via_user_write_ca2,//via_user_write_ca2,
+	0,//via_user_write_cb2,
+	bbc_via_user_irq //via_user_irq
 };
 
 
@@ -781,13 +781,13 @@ BBC_uPD7002= {
    load floppy disc
 ***************************************/
 
-int bbc_floppy_init(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( bbc_floppy )
 {
-	if (basicdsk_floppy_load(id, fp, open_mode)==INIT_PASS)
+	if (basicdsk_floppy_load(image, file, open_mode)==INIT_PASS)
 	{
 		/* sector id's 0-9 */
 		/* drive, tracks, heads, sectors per track, sector length, dir_sector, dir_length, first sector id */
-		basicdsk_set_geometry(id, 80, 1, 10, 256, 0, 0, FALSE);
+		basicdsk_set_geometry(image, 80, 1, 10, 256, 0, 0, FALSE);
 
 		return INIT_PASS;
 	}
@@ -1069,31 +1069,27 @@ WRITE_HANDLER ( bbc_wd1770_write )
 /**************************************
    BBC B Rom loading functions
 ***************************************/
-
-int bbcb_load_rom(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( bbcb_cart )
 {
 	UINT8 *mem = memory_region (REGION_USER1);
 	int size, read_;
 	int addr = 0;
 
-	if (fp == NULL)
-		return INIT_PASS;
+	size = mame_fsize (file);
 
-	size = mame_fsize (fp);
-
-    addr= 0x8000+(0x4000*id);
+    addr = 0x8000 + (0x4000 * image_index(image));
 
 
-	logerror("loading rom %s at %.4x size:%.4x\n",image_filename(IO_CARTSLOT,id), addr, size);
+	logerror("loading rom %s at %.4x size:%.4x\n",image_filename(image), addr, size);
 
 
 	switch (size) {
 	case 0x2000:
-		read_ = mame_fread (fp, mem + addr, size);
-		read_ = mame_fread (fp, mem + addr + 0x2000, size);
+		read_ = mame_fread (file, mem + addr, size);
+		read_ = mame_fread (file, mem + addr + 0x2000, size);
 		break;
 	case 0x4000:
-		read_ = mame_fread (fp, mem + addr, size);
+		read_ = mame_fread (file, mem + addr, size);
 		break;
 	default:
 		read_ = 0;

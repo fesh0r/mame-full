@@ -3,8 +3,8 @@ extern int genesis_soundram_size;
 extern unsigned char genesis_sharedram[];
 extern unsigned char * genesis_soundram;
 
-extern MACHINE_INIT( genesis );
-int genesis_load_cart (mess_image *img, mame_file *fp, int open_mode);
+MACHINE_INIT( genesis );
+DEVICE_LOAD( genesis_cart );
 
 void genesis_interrupt (void);
 WRITE16_HANDLER ( genesis_io_w );
