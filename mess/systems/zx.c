@@ -684,7 +684,7 @@ ROM_END
 
 ROM_START(ts1000)
 	ROM_REGION(0x10000, REGION_CPU1,0)
-	ROM_LOAD("ts1000.rom",  0x0000, 0x2000, 0x4b1dd6eb)
+	ROM_LOAD("zx81.rom",  0x0000, 0x2000, 0x4b1dd6eb)
 	ROM_REGION(0x00100, REGION_GFX1,0)
 	/* filled in by zx_init_driver */
 ROM_END
@@ -770,7 +770,7 @@ static const struct IODevice io_zx81[] =
 COMPX (1980,   zx80,    0,		 zx80,	   zx80,	 zx,	   "Sinclair Research", "ZX-80", GAME_NOT_WORKING)
 COMPX (1981,   aszmic,  zx80,	 zx80,	   zx80,	 zx,	   "Sinclair Research", "ZX.Aszmic", GAME_NOT_WORKING)
 COMPX (1981,   zx81,    0,		 zx81,	   zx81,	 zx,	   "Sinclair Research", "ZX-81", GAME_NOT_WORKING)
-COMPX (1981,   ts1000,  zx81,	 ts1000,   zx81,	 zx,	   "Timex Sinclair",    "TS1000", GAME_NOT_WORKING)
+COMPX (1981,   ts1000,  zx81,	 ts1000,   zx81,	 zx,	   "Timex Sinclair",    "TS1000", GAME_NOT_WORKING | GAME_ALIAS)
 COMPX (198?,   pc8300,  zx81,	 pc8300,   zx81,	 zx,	   "Your Computer",     "PC8300", GAME_NOT_WORKING)
 COMPX (198?,   pow3000, zx81,	 pow3000,  pow3000,  zx,	   "Creon Enterprises", "Power 3000", GAME_NOT_WORKING)
 

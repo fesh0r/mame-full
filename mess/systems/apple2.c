@@ -448,7 +448,7 @@ ROM_START(apple2ee)
     ROM_LOAD ( "disk2_33.rom", 0x24500, 0x0100, 0xce7144f6 ) /* Disk II ROM - DOS 3.3 version */
 
     ROM_REGION(0x2000,REGION_GFX1,0)
-    ROM_LOAD ( "a2ee.vid", 0x0000, 0x1000, 0x2651014d)
+    ROM_LOAD ( "a2c.vid", 0x0000, 0x1000, 0x2651014d)
 ROM_END
 
 ROM_START(apple2ep)
@@ -459,7 +459,7 @@ ROM_START(apple2ep)
     ROM_LOAD ("disk2_33.rom", 0x24500, 0x0100, 0xce7144f6) /* Disk II ROM - DOS 3.3 version */
 
     ROM_REGION(0x2000,REGION_GFX1,0)
-    ROM_LOAD("a2ept.vid", 0x0000, 0x1000, 0x2651014d)
+    ROM_LOAD("a2c.vid", 0x0000, 0x1000, 0x2651014d)
 ROM_END
 
 ROM_START(apple2c)
@@ -483,7 +483,7 @@ ROM_START(apple2cp)
     ROM_LOAD("a2cplus.mon", 0x20000, 0x8000, 0x0b996420)
 
     ROM_REGION(0x2000,REGION_GFX1,0)
-    ROM_LOAD("a2cplus.vid", 0x0000, 0x1000, 0x2651014d)
+    ROM_LOAD("a2c.vid", 0x0000, 0x1000, 0x2651014d)
 ROM_END
 
 static const struct IODevice io_apple2[] =

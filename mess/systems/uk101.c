@@ -287,7 +287,7 @@ ROM_END
 ROM_START(superbrd)
 	ROM_REGION(0x10000, REGION_CPU1,0)
 	ROM_LOAD("basus01.rom", 0xa000, 0x0800, 0xf4f5dec0)
-	ROM_LOAD("basus02.rom", 0xa800, 0x0800, 0x0039ef6a)
+	ROM_LOAD("basuk02.rom", 0xa800, 0x0800, 0x0039ef6a)
 	ROM_LOAD("basus03.rom", 0xb000, 0x0800, 0xca25f8c1)
 	ROM_LOAD("basus04.rom", 0xb800, 0x0800, 0x8ee6030e)
 	ROM_LOAD("monus02.rom", 0xf800, 0x0800, 0xe5b7028d)
