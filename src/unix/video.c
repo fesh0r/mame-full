@@ -1049,24 +1049,24 @@ struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, struct rec
 	struct mame_bitmap *copy;
 	int x, y, w, h, t;
 
-	// if we can send it in raw, no need to override anything
+	/* if we can send it in raw, no need to override anything */
 	if (!blit_swapxy && !blit_flipx && !blit_flipy)
 		return NULL;
 
-	// allocate a copy
+	/* allocate a copy */
 	w = blit_swapxy ? bitmap->height : bitmap->width;
 	h = blit_swapxy ? bitmap->width : bitmap->height;
 	copy = bitmap_alloc_depth(w, h, bitmap->depth);
 	if (!copy)
 		return NULL;
 
-	// populate the copy
+	/* populate the copy */
 	for (y = bounds->min_y; y <= bounds->max_y; y++)
 		for (x = bounds->min_x; x <= bounds->max_x; x++)
 		{
 			int tx = x, ty = y;
 
-			// apply the rotation/flipping
+			/* apply the rotation/flipping */
 			if (blit_swapxy)
 			{
 				t = tx; tx = ty; ty = t;
@@ -1076,7 +1076,7 @@ struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, struct rec
 			if (blit_flipy)
 				ty = copy->height - ty - 1;
 
-			// read the old pixel and copy to the new location
+			/* read the old pixel and copy to the new location */
 			switch (copy->depth)
 			{
 				case 15:
@@ -1092,17 +1092,17 @@ struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, struct rec
 			}
 		}
 
-	// compute the oriented bounds
+	/* compute the oriented bounds */
 	newbounds = *bounds;
 
-	// apply X/Y swap first
+	/* apply X/Y swap first */
 	if (blit_swapxy)
 	{
 		t = newbounds.min_x; newbounds.min_x = newbounds.min_y; newbounds.min_y = t;
 		t = newbounds.max_x; newbounds.max_x = newbounds.max_y; newbounds.max_y = t;
 	}
 
-	// apply X flip
+	/* apply X flip */
 	if (blit_flipx)
 	{
 		t = copy->width - newbounds.min_x - 1;
@@ -1110,7 +1110,7 @@ struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, struct rec
 		newbounds.max_x = t;
 	}
 
-	// apply Y flip
+	/* apply Y flip */
 	if (blit_flipy)
 	{
 		t = copy->height - newbounds.min_y - 1;
