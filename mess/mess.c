@@ -8,6 +8,7 @@ This file is a set of function calls and defs required for MESS.
 #include "driver.h"
 #include "config.h"
 #include "includes/flopdrv.h"
+#include "utils.h"
 
 extern struct GameOptions options;
 extern const struct Devices devices[];
