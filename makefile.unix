@@ -633,9 +633,9 @@ CFLAGS += -DNDEBUG
 # Uncomment the next lines to build xmame with a built-in debugger (only
 # supported for X11 and SVGALib). Only enable this if you need it -- if you
 # want to develop drivers, that is, since it slows down xmame considerably.
-# MAME_DEBUG = 1
+# DEBUG = 1
 
-ifdef MAME_DEBUG
+ifdef DEBUG
 NAME=x$(TARGET)d
 else
 NAME=x$(TARGET)
