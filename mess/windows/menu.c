@@ -456,6 +456,9 @@ static void prepare_menus(void)
 	const char *s;
 	HMENU device_menu;
 
+	if (!win_menu_bar)
+		return;
+
 	set_command_state(win_menu_bar, ID_EDIT_PASTE,			inputx_can_post()			? MFS_ENABLED : MFS_GRAYED);
 
 	set_command_state(win_menu_bar, ID_OPTIONS_PAUSE,		is_paused					? MFS_CHECKED : MFS_ENABLED);

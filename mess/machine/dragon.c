@@ -1521,16 +1521,21 @@ static void coco3_timer_set_interval(int interval)
   MMU
 ***************************************************************************/
 
-static WRITE_HANDLER ( dragon64_ram_w )
+static WRITE_HANDLER ( coco_ram8000_w )
 {
 	coco_ram_w(offset + 0x8000, data);
+}
+
+static WRITE_HANDLER ( coco_ramc000_w )
+{
+	coco_ram_w(offset + 0xc000, data);
 }
 
 static void d_sam_set_maptype(int val)
 {
 	if (val && (mess_ram_size > 0x8000)) {
 		cpu_setbank(2, &mess_ram[0x8000]);
-		memory_set_bankhandler_w(2, 0, dragon64_ram_w);
+		memory_set_bankhandler_w(2, 0, coco_ram8000_w);
 	}
 	else {
 		cpu_setbank(2, coco_rom);
@@ -1559,7 +1564,9 @@ static void dragon64_sethipage(int type, int val)
 	if (hipage & DRAGON64_SAMMAP)
 	{
 		cpu_setbank(2, &mess_ram[0x8000]);
-		memory_set_bankhandler_w(2, 0, dragon64_ram_w);
+		memory_set_bankhandler_w(2, 0, coco_ram8000_w);
+		cpu_setbank(3, &mess_ram[0xc000]);
+		memory_set_bankhandler_w(3, 0, coco_ramc000_w);
 	}
 	else
 	{
@@ -1568,19 +1575,19 @@ static void dragon64_sethipage(int type, int val)
 		 *
 		 * Perhaps something to do with the PIA original state?
 		 */
-		if ((hipage & DRAGON64_PIAMAP) || ((cpu_getactivecpu() >= 0) && ((activecpu_get_pc() & 0xc000) == 0x8000)))
+		if ((hipage & DRAGON64_PIAMAP) || ((cpu_getactivecpu() >= 0) && (activecpu_get_pc() >= 0x024D)))
 			bank = coco_rom;
 		else
 			bank = coco_rom + 0x8000;
 		cpu_setbank(2, bank);
 		memory_set_bankhandler_w(2, 0, MWA_ROM);
+		cpu_setbank(3, coco_rom + 0x4000);
+		memory_set_bankhandler_w(3, 0, MWA_ROM);
 	}
 
 #if LOG_D64MEM
 	logerror("dragon64_sethipage(): hipage=%i\n", hipage);
 #endif
-
-	cpu_setbank(3, &mess_ram[0xc000]);
 }
 
 static void dragon64_sam_set_maptype(int val)

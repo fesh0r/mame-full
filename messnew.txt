@@ -36,6 +36,10 @@ System Driver Changes:
 - [DRAGON64] Fixed a bug that prevented the system to run (the dragon64 driver
   was using the coco memory map) [Nate Woods]
 
+- [DRAGON64] Adjusted the memory mapping scheme, enabling the DragonDOS
+  cartridge and 64k mode to coexist.  Thanks to Simon Hardy for tracking down a
+  better algorithm. [Nate Woods]
+
 - [A5200] Fixed a regression in 0.61 that prevented the keypad from working.
   (bug #246) [Nate Woods]
 
