@@ -51,11 +51,12 @@ System Driver Changes:
 
 - [TI99/4A] Added support for BwG clock and floppy controller [Raphael Nabet]
 
-- [SNES] Memory map is more accurate, adding support for HiRom ROMs. Fixed DMA
-  transfers. Fixed missing tiles. Added preliminary mode 7 support. Added
-  subscreens, including colour addition/subtraction. Improved ROM loading with
-  better header and ROM type detection. Improved vertical/horizontal latches.
-  Improved the SPCSkipper so a lot more games actually run now. [Anthony Kruize]
+- [SNES] Memory map is more accurate, adding support for HiRom carts. Fixed
+  DMA transfers. Fixed missing tiles. Added preliminary mode 7 support. Added
+  subscreens, including colour addition/subtraction. Fixed vertical flip for
+  large objects. Improved vertical/horizontal latches. Improved ROM loading
+  with better header and ROM type detection. Improved the SPCSkipper so a lot
+  more games actually run now. [Anthony Kruize]
 
 Source Changes:
 ---------------
