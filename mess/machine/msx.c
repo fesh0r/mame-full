@@ -58,6 +58,9 @@ static int msx_probe_type (UINT8* pmem, int size)
 
     if (size <= 0x10000) return 0;
 
+    if ( (pmem[0x10] == 'Y') && (pmem[0x11] == 'Z') && (size > 0x18000) )
+        return 6;
+
     kon4 = kon5 = asc8 = asc16 = 0;
 
     for (i=0;i<size-3;i++)
