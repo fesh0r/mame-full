@@ -1,15 +1,12 @@
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
-unsigned char *bjtwin_cmdram;
-unsigned char *bjtwin_workram;
-unsigned char *bjtwin_spriteram;
+
 unsigned char *bjtwin_txvideoram;
-unsigned char *bjtwin_videocontrol;
 size_t bjtwin_txvideoram_size;
 
-static unsigned char * dirtybuffer;
-static struct osd_bitmap *tmpbitmap;
 static int flipscreen = 0;
+static int bgbank;
 
 
 int bjtwin_vh_start(void)
@@ -23,8 +20,6 @@ int bjtwin_vh_start(void)
 		if (dirtybuffer) free(dirtybuffer);
 		return 1;
 	}
-
-	bjtwin_spriteram = bjtwin_workram + 0x8000;
 
 	return 0;
 }
@@ -87,72 +82,32 @@ WRITE_HANDLER( bjtwin_flipscreen_w )
 	}
 }
 
-void bjtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+WRITE_HANDLER( bjtwin_videocontrol_w )
 {
-	static int oldbgstart = -1;
-	int offs, bgstart;
-
-	bgstart = 2048 * (READ_WORD(&bjtwin_videocontrol[0]) & 0x0f);
-
-	palette_init_used_colors();
-
-	for (offs = (bjtwin_txvideoram_size/2)-1; offs >= 0; offs--)
+	if ((data & 0x00ff0000) == 0)
 	{
-		int color = (READ_WORD(&bjtwin_txvideoram[offs*2]) >> 12);
-		memset(&palette_used_colors[16 * color],PALETTE_COLOR_USED,16);
-	}
-
-	for (offs = 0; offs < 256*16; offs += 16)
-	{
-		if (READ_WORD(&bjtwin_spriteram[offs]) != 0)
-			memset(&palette_used_colors[256 + 16*READ_WORD(&bjtwin_spriteram[offs+14])],PALETTE_COLOR_USED,16);
-	}
-
-	if (palette_recalc() || (oldbgstart != bgstart))
-	{
-		oldbgstart = bgstart;
-		memset(dirtybuffer, 1, bjtwin_txvideoram_size/2);
-	}
-
-	for (offs = (bjtwin_txvideoram_size/2)-1; offs >= 0; offs--)
-	{
-		if (dirtybuffer[offs])
+		if (bgbank != (data & 0xff))
 		{
-			int sx = offs / 32;
-			int sy = offs % 32;
-
-			int tilecode = READ_WORD(&bjtwin_txvideoram[offs*2]);
-			int bank = (tilecode & 0x800) ? 1 : 0;
-
-			if (flipscreen)
-			{
-				sx = 47-sx;
-				sy = 31-sy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[bank],
-					(tilecode & 0x7ff) + ((bank) ? bgstart : 0),
-					tilecode >> 12,
-					flipscreen, flipscreen,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-
-			dirtybuffer[offs] = 0;
+			bgbank = data & 0xff;
+			memset(dirtybuffer, 1, bjtwin_txvideoram_size/2);
 		}
 	}
+}
 
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
-	for (offs = 0; offs < 256*16; offs += 16)
+static void draw_sprites(struct osd_bitmap *bitmap)
+{
+	int offs;
+
+	for (offs = 0;offs < spriteram_size;offs += 16)
 	{
-		if (READ_WORD(&bjtwin_spriteram[offs]) != 0)
+		if (READ_WORD(&spriteram[offs]) != 0)
 		{
-			int sx = (READ_WORD(&bjtwin_spriteram[offs+8]) & 0x1ff) + 64;
-			int sy = (READ_WORD(&bjtwin_spriteram[offs+12]) & 0x1ff);
-			int tilecode = READ_WORD(&bjtwin_spriteram[offs+6]);
-			int xx = (READ_WORD(&bjtwin_spriteram[offs+2]) & 0x0f) + 1;
-			int yy = (READ_WORD(&bjtwin_spriteram[offs+2]) >> 4) + 1;
+			int sx = (READ_WORD(&spriteram[offs+8]) & 0x1ff) + 64;
+			int sy = (READ_WORD(&spriteram[offs+12]) & 0x1ff);
+			int tilecode = READ_WORD(&spriteram[offs+6]);
+			int xx = (READ_WORD(&spriteram[offs+2]) & 0x0f) + 1;
+			int yy = (READ_WORD(&spriteram[offs+2]) >> 4) + 1;
 			int width = xx;
 			int delta = 16;
 			int startx = sx;
@@ -170,10 +125,10 @@ void bjtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				do
 				{
 					drawgfx(bitmap,Machine->gfx[2],
-							tilecode & 0x1fff,
-							READ_WORD(&bjtwin_spriteram[offs+14]),
+							tilecode,
+							READ_WORD(&spriteram[offs+14]),
 							flipscreen, flipscreen,
-							sx & 0x1ff,sy & 0x1ff,
+							((sx + 16) & 0x1ff) - 16,sy & 0x1ff,
 							&Machine->visible_area,TRANSPARENCY_PEN,15);
 
 					tilecode++;
@@ -186,4 +141,65 @@ void bjtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			} while (--yy);
 		}
 	}
+}
+
+static void mark_sprites_colors(void)
+{
+	int offs;
+
+	for (offs = 0;offs < spriteram_size;offs += 16)
+	{
+		if (READ_WORD(&spriteram[offs]) != 0)
+			memset(&palette_used_colors[256 + 16*READ_WORD(&spriteram[offs+14])],PALETTE_COLOR_USED,16);
+	}
+}
+
+
+void bjtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+
+	palette_init_used_colors();
+
+	for (offs = (bjtwin_txvideoram_size/2)-1; offs >= 0; offs--)
+	{
+		int color = (READ_WORD(&bjtwin_txvideoram[offs*2]) >> 12);
+		memset(&palette_used_colors[16 * color],PALETTE_COLOR_USED,16);
+	}
+	mark_sprites_colors();
+
+	if (palette_recalc())
+		memset(dirtybuffer, 1, bjtwin_txvideoram_size/2);
+
+	for (offs = (bjtwin_txvideoram_size/2)-1; offs >= 0; offs--)
+	{
+		if (dirtybuffer[offs])
+		{
+			int sx = offs / 32;
+			int sy = offs % 32;
+
+			int tilecode = READ_WORD(&bjtwin_txvideoram[offs*2]);
+			int bank = (tilecode & 0x800) ? 1 : 0;
+
+			if (flipscreen)
+			{
+				sx = 31-sx;
+				sy = 31-sy;
+			}
+
+			drawgfx(tmpbitmap,Machine->gfx[bank],
+					(tilecode & 0x7ff) + ((bank) ? (bgbank << 11) : 0),
+					tilecode >> 12,
+					flipscreen, flipscreen,
+					(8*sx + 64) & 0x1ff,8*sy,
+					0,TRANSPARENCY_NONE,0);
+
+			dirtybuffer[offs] = 0;
+		}
+	}
+
+	/* copy the character mapped graphics */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+
+	draw_sprites(bitmap);
 }

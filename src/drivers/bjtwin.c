@@ -15,8 +15,9 @@ Memory layout:
 									    4321|||| 0|
 									    	4321  0
 
-094000-09CDFF	word at 94000 holds background image number
-09CE00-09DDFF	Background ram	(8x8 tiles, 256x512)
+094000			background image number
+09C000-09CFFF	Background ram	(8x8 tiles, 256x512)
+09D000-09DFFF	mirror for the above
 0F0000-0FFFFF	Work ram
 
 ----
@@ -76,13 +77,11 @@ remaps button 2 and 3 to button 1, so you can't enter the above sequence.
 
 ********************************************************************/
 
-
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
-extern unsigned char *bjtwin_workram;
-extern unsigned char *bjtwin_spriteram;
+
 extern unsigned char *bjtwin_txvideoram;
-extern unsigned char *bjtwin_videocontrol;
 extern size_t bjtwin_txvideoram_size;
 
 
@@ -90,6 +89,7 @@ READ_HANDLER( bjtwin_txvideoram_r );
 WRITE_HANDLER( bjtwin_txvideoram_w );
 WRITE_HANDLER( bjtwin_paletteram_w );
 WRITE_HANDLER( bjtwin_flipscreen_w );
+WRITE_HANDLER( bjtwin_videocontrol_w );
 
 int  bjtwin_vh_start(void);
 void bjtwin_vh_stop(void);
@@ -127,9 +127,11 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x084000, 0x084001, OKIM6295_status_0_r },
 	{ 0x084010, 0x084011, OKIM6295_status_1_r },
 	{ 0x088000, 0x0887ff, paletteram_word_r },
-	{ 0x094000, 0x09cdff, MRA_BANK2 },	/* BG RAM */
-	{ 0x09ce00, 0x09ddff, bjtwin_txvideoram_r },
-	{ 0x0f0000, 0x0fffff, MRA_BANK1 },	/* Work RAM */
+	{ 0x09c000, 0x09cfff, bjtwin_txvideoram_r },
+	{ 0x09d000, 0x09dfff, bjtwin_txvideoram_r },	/* mirror */
+	{ 0x0f0000, 0x0f7fff, MRA_BANK1 },
+	{ 0x0f8000, 0x0f8fff, MRA_BANK2 },
+	{ 0x0f9000, 0x0fffff, MRA_BANK3 },
 	{ -1 }
 };
 
@@ -141,23 +143,28 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x084010, 0x084011, OKIM6295_data_1_w },
 	{ 0x084020, 0x08402f, bjtwin_oki6295_bankswitch_w },
 	{ 0x088000, 0x0887ff, bjtwin_paletteram_w, &paletteram },
-	{ 0x094000, 0x09cdff, MWA_BANK2, &bjtwin_videocontrol },	/* BG RAM */
-	{ 0x09ce00, 0x09ddff, bjtwin_txvideoram_w, &bjtwin_txvideoram, &bjtwin_txvideoram_size },
-	{ 0x0f0000, 0x0fffff, MWA_BANK1, &bjtwin_workram },	/* Work RAM */
+	{ 0x094000, 0x094001, bjtwin_videocontrol_w },
+	{ 0x094002, 0x094003, MWA_NOP },	/* IRQ ack? */
+	{ 0x09c000, 0x09cfff, bjtwin_txvideoram_w, &bjtwin_txvideoram, &bjtwin_txvideoram_size },
+	{ 0x09d000, 0x09dfff, bjtwin_txvideoram_w },	/* mirror */
+	{ 0x0f0000, 0x0f7fff, MWA_BANK1 },	/* Work RAM */
+	{ 0x0f8000, 0x0f8fff, MWA_BANK2, &spriteram, &spriteram_size },
+	{ 0x0f9000, 0x0fffff, MWA_BANK3 },	/* Work RAM again */
 	{ -1 }
 };
+
 
 
 INPUT_PORTS_START( bjtwin )
 	PORT_START		/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* shown in service mode, but no effect */
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Maybe unused */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Maybe unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* Maybe unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* Maybe unused */
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
@@ -182,14 +189,14 @@ INPUT_PORTS_START( bjtwin )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0e, 0x0e, "Starting level" )
-	PORT_DIPSETTING(    0x08, "  Germany" )
-	PORT_DIPSETTING(    0x04, " Thailand" )
-	PORT_DIPSETTING(    0x0c, "   Nevada" )
-	PORT_DIPSETTING(    0x0e, "    Japan" )
-	PORT_DIPSETTING(    0x06, "    Korea" )
-	PORT_DIPSETTING(    0x0a, "  England" )
+	PORT_DIPSETTING(    0x08, "Germany" )
+	PORT_DIPSETTING(    0x04, "Thailand" )
+	PORT_DIPSETTING(    0x0c, "Nevada" )
+	PORT_DIPSETTING(    0x0e, "Japan" )
+	PORT_DIPSETTING(    0x06, "Korea" )
+	PORT_DIPSETTING(    0x0a, "England" )
 	PORT_DIPSETTING(    0x02, "Hong Kong" )
-	PORT_DIPSETTING(    0x00, "    China" )
+	PORT_DIPSETTING(    0x00, "China" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x20, "Easy" )
 	PORT_DIPSETTING(    0x30, "Normal" )
@@ -226,62 +233,128 @@ INPUT_PORTS_START( bjtwin )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+INPUT_PORTS_END
 
+INPUT_PORTS_START( nouryoku )
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW A */
+	PORT_DIPNAME( 0x03, 0x03, "Life Decrease Speed" )
+	PORT_DIPSETTING(    0x01, "Slow" )
+	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x02, "Fast" )
+	PORT_DIPSETTING(    0x00, "Very Fast" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x04, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x08, "Hard" )
+	PORT_DIPSETTING(    0x00, "Very Hard" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
+
+	PORT_START	/* DSW B */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 
 
 static struct GfxLayout charlayout =
 {
-	8,8,    /* 8*8 characters */
-	2048,   /* 2048 characters */
-	4,      /* 4 bits per pixel */
-	{ 0, 1, 2, 3 }, /* the bitplanes are packed in one nibble */
+	8,8,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	32*8   /* every char takes 32 consecutive bytes */
-};
-
-static struct GfxLayout tilelayout =
-{
-	8,8,    /* 8*8 characters */
-	32768,  /* 32768 characters */
-	4,      /* 4 bits per pixel */
-	{ 0, 1, 2, 3 }, /* the bitplanes are packed in one nibble */
-	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	32*8   /* every char takes 32 consecutive bytes */
+	32*8
 };
 
 static struct GfxLayout spritelayout =
 {
-	16,16,   /* 16*16 sprites */
-	8192,    /* 8192 sprites */
-	4,       /* 4 bits per pixel */
-	{ 0, 1, 2, 3 }, /* the bitplanes are packed in one nibble */
-	{ 2*4, 3*4, 0*4, 1*4, 6*4, 7*4, 4*4, 5*4,
-		16*32+2*4, 16*32+3*4, 16*32+0*4, 16*32+1*4, 16*32+6*4, 16*32+7*4, 16*32+4*4, 16*32+5*4 },
+	16,16,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
+			16*32+0*4, 16*32+1*4, 16*32+2*4, 16*32+3*4, 16*32+4*4, 16*32+5*4, 16*32+6*4, 16*32+7*4 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
-		8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
-	4*32*8   /* every sprites takes 256 consecutive bytes */
+			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
+	32*32
 };
 
 static struct GfxDecodeInfo bjtwin_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     0, 16 },	/* Chars */
-	{ REGION_GFX2, 0, &tilelayout,     0, 16 },	/* Tiles */
+	{ REGION_GFX2, 0, &charlayout,     0, 16 },	/* Tiles */
 	{ REGION_GFX3, 0, &spritelayout, 256, 16 },	/* Sprites */
 	{ -1 } /* end of array */
 };
 
 
+
 static struct OKIM6295interface okim6295_interface =
 {
-	2,              /* 2 chip */
-	{ 22050, 22050 },         /* 22050Hz frequency? */
-//	{ 24000, 24000 },	/* this fixes pitch but music breaks up */
-	{ REGION_SOUND1, REGION_SOUND2 },        /* memory region 2,3 */
-	{ 50,50 }
+	2,              					/* 2 chips */
+	{ 16000000/4/165, 16000000/4/165 },	/* 24242Hz frequency? */
+	{ REGION_SOUND1, REGION_SOUND2 },	/* memory region */
+	{ 50, 50 }							/* volume */
 };
 
 
@@ -292,10 +365,10 @@ static const struct MachineDriver machine_driver_bjtwin =
 	{
 		{
 			CPU_M68000,
-			16000000, /* ?? MHz ? */
+			10000000, /* 10 MHz? It's a P12, but xtals are 10MHz and 16MHz */
 			readmem,writemem,0,0,
 			m68_level4_irq,1,
-			m68_level1_irq,102
+			m68_level1_irq,112	/* ?? drives music */
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
@@ -327,23 +400,44 @@ static const struct MachineDriver machine_driver_bjtwin =
 
 ROM_START( bjtwin )
 	ROM_REGION( 0x80000, REGION_CPU1 )		/* 68000 code */
-	ROM_LOAD_EVEN( "bjt.77",  0x00000, 0x40000, 0x7830A465 )	/* 68000 code */
-	ROM_LOAD_ODD ( "bjt.76",  0x00000, 0x40000, 0x7CD4E72A )	/* 68000 code */
+	ROM_LOAD_EVEN( "bjt.77",  0x00000, 0x40000, 0x7830a465 )	/* 68000 code */
+	ROM_LOAD_ODD ( "bjt.76",  0x00000, 0x40000, 0x7cd4e72a )	/* 68000 code */
 
 	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "bjt.35",		0x000000, 0x010000, 0xAA13DF7C )	/* 8x8 tiles */
+	ROM_LOAD( "bjt.35",		0x000000, 0x010000, 0xaa13df7c )	/* 8x8 tiles */
 
 	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "bjt.32",		0x000000, 0x100000, 0x8A4F26D0 )	/* 16x16 tiles */
+	ROM_LOAD( "bjt.32",		0x000000, 0x100000, 0x8a4f26d0 )	/* 16x16 tiles */
 
 	ROM_REGION( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "bjt.100",	0x000000, 0x100000, 0xBB06245D )	/* Sprites */
+	ROM_LOAD_GFX_SWAP( "bjt.100",	0x000000, 0x100000, 0xbb06245d )	/* Sprites */
 
 	ROM_REGION( 0x100000, REGION_SOUND1 )	/* 1Mb for ADPCM sounds - sound chip is OKIM6295 */
-	ROM_LOAD( "bjt.130",    0x000000, 0x100000, 0x372D46DD )
+	ROM_LOAD( "bjt.130",    0x000000, 0x100000, 0x372d46dd )
 
 	ROM_REGION( 0x100000, REGION_SOUND2 )	/* 1Mb for ADPCM sounds - sound chip is OKIM6295 */
-	ROM_LOAD( "bjt.127",    0x000000, 0x100000, 0x8DA67808 )
+	ROM_LOAD( "bjt.127",    0x000000, 0x100000, 0x8da67808 )
+ROM_END
+
+ROM_START( nouryoku )
+	ROM_REGION( 0x80000, REGION_CPU1 )		/* 68000 code */
+	ROM_LOAD_EVEN( "ic76.1",  0x00000, 0x40000, 0x26075988 )	/* 68000 code */
+	ROM_LOAD_ODD ( "ic75.2",  0x00000, 0x40000, 0x75ab82cd )	/* 68000 code */
+
+	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic35.3",		0x000000, 0x010000, 0x03d0c3b1 )	/* 8x8 tiles */
+
+	ROM_REGION( 0x200000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic32.4",		0x000000, 0x200000, 0x88d454fd )	/* 16x16 tiles */
+
+	ROM_REGION( 0x200000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_GFX_SWAP( "ic100.5",	0x000000, 0x200000, 0x24d3e24e )	/* Sprites */
+
+	ROM_REGION( 0x100000, REGION_SOUND1 )	/* 1Mb for ADPCM sounds - sound chip is OKIM6295 */
+	ROM_LOAD( "ic30.6",     0x000000, 0x100000, 0xfeea34f4 )
+
+	ROM_REGION( 0x100000, REGION_SOUND2 )	/* 1Mb for ADPCM sounds - sound chip is OKIM6295 */
+	ROM_LOAD( "ic27.7",     0x000000, 0x100000, 0x8a69fded )
 ROM_END
 
 
@@ -379,7 +473,7 @@ static unsigned short decode_word(unsigned short src, unsigned char *bitp)
 
 unsigned long bjtwin_address_map_sprites(unsigned long addr)
 {
-   return ((addr&0x00010)>> 4) | ((addr&0x20000)>>16);
+   return ((addr&0x00010)>> 4) | ((addr&0x20000)>>16) | ((addr&0x100000)>>18);
 }
 
 
@@ -400,12 +494,17 @@ void init_bjtwin(void)
 		{0x3,0x4,0x7,0x6,0x2,0x0,0x5,0x1},
 	};
 
-	static unsigned char decode_data_sprite[4][16] =
+	static unsigned char decode_data_sprite[8][16] =
 	{
-		{0x9,0x3,0x4,0x5,0x7,0x1,0xB,0x8,0x0,0xD,0x2,0xC,0xE,0x6,0xF,0xA},
-		{0x1,0x3,0xC,0x4,0x0,0xF,0xB,0xA,0x8,0x5,0xE,0x6,0xD,0x2,0x7,0x9},
-		{0xF,0xE,0xD,0xC,0xB,0xA,0x9,0x8,0x7,0x6,0x5,0x4,0x3,0x2,0x1,0x0},
-		{0xF,0xE,0xC,0x6,0xA,0xB,0x7,0x8,0x9,0x2,0x3,0x4,0x5,0xD,0x1,0x0},
+		{0x9,0x3,0x4,0x5,0x7,0x1,0xb,0x8,0x0,0xd,0x2,0xc,0xe,0x6,0xf,0xa},
+		{0x1,0x3,0xc,0x4,0x0,0xf,0xb,0xa,0x8,0x5,0xe,0x6,0xd,0x2,0x7,0x9},
+		{0xf,0xe,0xd,0xc,0xb,0xa,0x9,0x8,0x7,0x6,0x5,0x4,0x3,0x2,0x1,0x0},
+		{0xf,0xe,0xc,0x6,0xa,0xb,0x7,0x8,0x9,0x2,0x3,0x4,0x5,0xd,0x1,0x0},
+
+		{0x1,0x6,0x2,0x5,0xf,0x7,0xb,0x9,0xa,0x3,0xd,0xe,0xc,0x4,0x0,0x8}, /* Haze 20/07/00 */
+		{0x7,0x5,0xd,0xe,0xb,0xa,0x0,0x1,0x9,0x6,0xc,0x2,0x3,0x4,0x8,0xf}, /* Haze 20/07/00 */
+		{0x0,0x5,0x6,0x3,0x9,0xb,0xa,0x7,0x1,0xd,0x2,0xe,0x4,0xc,0x8,0xf}, /* Antiriad, Corrected by Haze 20/07/00 */
+		{0x9,0xc,0x4,0x2,0xf,0x0,0xb,0x8,0xa,0xd,0x3,0x6,0x5,0xe,0x1,0x7}, /* Antiriad, Corrected by Haze 20/07/00 */
 	};
 
 
@@ -423,9 +522,9 @@ void init_bjtwin(void)
 	rom = memory_region(REGION_GFX3);
 	for (A = 0;A < memory_region_length(REGION_GFX3);A += 2)
 	{
-		unsigned short tmp = decode_word( rom[A]*256 + rom[A+1], decode_data_sprite[bjtwin_address_map_sprites(A)]);
-		rom[A] = tmp >> 8;
-		rom[A+1] = tmp & 0xff;
+		unsigned short tmp = decode_word( rom[A+1]*256 + rom[A], decode_data_sprite[bjtwin_address_map_sprites(A)]);
+		rom[A+1] = tmp >> 8;
+		rom[A] = tmp & 0xff;
 	}
 
 
@@ -478,4 +577,5 @@ void init_bjtwin(void)
 
 
 
-GAME( 1993, bjtwin, 0, bjtwin, bjtwin, bjtwin, ROT270, "NMK", "Bombjack Twin" )
+GAME( 1993, bjtwin,   0, bjtwin, bjtwin,   bjtwin, ROT270, "NMK", "Bombjack Twin" )
+GAMEX(1995, nouryoku, 0, bjtwin, nouryoku, bjtwin, ROT0, "Tecmo", "Nouryoku Koujou Iinkai", GAME_IMPERFECT_SOUND )
