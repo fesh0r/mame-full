@@ -2,6 +2,12 @@
 
   vidhrdw/oric.c
 
+  TODO:
+	- mid-line changes do not work properly, especially mid-line changing
+		to turn on/off double height
+	- check hi-res line mid-changes
+
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -9,6 +15,8 @@
 #include "includes/oric.h"
 
 static void oric_vh_update_flash(void);
+static void oric_vh_update_attribute(int c);
+static void oric_refresh_charset(void);
 
 /* current state of the display */
 /* some attributes persist until they are turned off.
@@ -27,9 +35,13 @@ struct oric_vh_state
 	/* text attributes */
 	int text_attributes;
 
-	/* current memory address to fetch char data */
-	unsigned char *text_char_data;
-	unsigned char *hires_char_data;
+	int read_addr;
+
+
+	/* current addr to fetch data */
+	unsigned char *char_data;
+	/* base of char data */
+	unsigned char *char_base;
 
 	unsigned char last_text_attribute;
 
@@ -68,6 +80,8 @@ int oric_vh_start(void)
 	vh_state.flash_count = 0;
 	vh_state.flash_state = 0;
 	vh_state.timer = timer_pulse(TIME_IN_HZ(50), 0, oric_vh_timer_callback);
+	/* mode */
+	oric_vh_update_attribute((1<<3)|(1<<4));
     return 0;
 }
 
@@ -105,7 +119,26 @@ static void oric_vh_update_flash(void)
 	vh_state.active_background_colour = vh_state.background_colour;
 }
 
+/* the alternate charset follows from the standard charset.
+Each charset holds 128 chars with 8 bytes for each char.
 
+The start address for the standard charset is dependant on the video mode */
+static void oric_refresh_charset(void)
+{
+	/* alternate char set? */
+	if ((vh_state.text_attributes & (1<<0))==0)
+	{
+		/* no */
+		vh_state.char_data = vh_state.char_base;
+	}
+	else
+	{
+		/* yes */
+		vh_state.char_data = vh_state.char_base + (128*8);
+	}
+}
+
+/* update video hardware state depending on the new attribute */
 static void oric_vh_update_attribute(int c)
 {
 	/* attribute */
@@ -145,20 +178,10 @@ static void oric_vh_update_attribute(int c)
 				vh_state.dbl_line = 0;
 			}
 
-			/* alternate char set? */
-			if ((vh_state.text_attributes & (1<<0))==0)
-			{
-				/* no */
-				vh_state.text_char_data = memory_region(REGION_CPU1) + 0x0b400;
-				vh_state.hires_char_data = memory_region(REGION_CPU1) + 0x09800;
-			}
-			else
-			{
-				vh_state.text_char_data = memory_region(REGION_CPU1) + 0x0b400 + (128*8);
-				vh_state.hires_char_data = memory_region(REGION_CPU1) + 0x09800 + (128*8);
-			}
-
 			vh_state.text_attributes = attribute & 0x07;
+
+			oric_refresh_charset();
+
 			/* text attributes */
 			oric_vh_update_flash();
 		}
@@ -176,6 +199,31 @@ static void oric_vh_update_attribute(int c)
 		{
 			/* set video mode */
 			vh_state.mode = attribute & 0x07;
+
+			/* a different charset base is used depending on the video mode */
+			/* hires takes all the data from 0x0a000 through to about 0x0bf68,
+			so the charset is moved to 0x09800 */
+			/* text mode starts at 0x0bb80 and so the charset is in a different location */
+			if (vh_state.mode & (1<<2))
+			{
+				/* set screen memory base and standard charset location for this mode */
+				vh_state.read_addr = 0x0a000;
+				vh_state.char_base = memory_region(REGION_CPU1) + (unsigned long)0x09800; 
+				
+				/* changing the mode also changes the position of the standard charset
+				and alternative charset */
+				oric_refresh_charset();
+			}
+			else
+			{
+				/* set screen memory base and standard charset location for this mode */
+				vh_state.read_addr = 0x0bb80;
+				vh_state.char_base = memory_region(REGION_CPU1) + (unsigned long)0x0b400;
+			
+				/* changing the mode also changes the position of the standard charset
+				and alternative charset */
+				oric_refresh_charset();
+			}
 		}
 		break;
 
@@ -186,6 +234,7 @@ static void oric_vh_update_attribute(int c)
 
 
 /* render 6-pixels using foreground and background colours specified */
+/* used in hires and text mode */
 static void oric_vh_render_6pixels(struct osd_bitmap *bitmap,int x,int y, int fg, int bg,int data, int invert_flag)
 {
 	int i;
@@ -238,30 +287,23 @@ void oric_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	RAM = memory_region(REGION_CPU1);
 
-	if (vh_state.mode & (1<<3))
-	{
-		read_addr = 0x0a000;
-	}
-	else
-	{
-		read_addr = 0x0bb80;
-	}
-
 	y = 0;
 	char_line = 0;
+	read_addr = vh_state.read_addr;
 	old_read_addr = read_addr;
 
 	for (y = 0; y < 224; y++)
 	{
 		int x = 0;
+		/* is this correct? */
+		/* fabrices document states these are reset at the start of the line,
+		I am not so sure */
 		/* foreground colour 7 */
 		oric_vh_update_attribute(7);
 		/* background colour 0 */
 		oric_vh_update_attribute((1<<3));
 		/* no flash,text */
 		oric_vh_update_attribute((1<<4));
-		/* mode */
-		oric_vh_update_attribute((1<<3)|(1<<4));
 		
 		for (byte_offset=0; byte_offset<40; byte_offset++)
 		{
@@ -277,12 +319,11 @@ void oric_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 				/* display background colour when attribute has been found */
 				oric_vh_render_6pixels(bitmap,x,y,vh_state.active_foreground_colour, vh_state.active_background_colour, 0,(c & 0x080));
-
 			}
 			else
 			{
 				/* hires? */
-				if (vh_state.mode & (1<<3))
+				if ((vh_state.mode & (1<<2)) && (y<200))
 				{
 					int pixel_data = c & 0x03f;
 
@@ -305,7 +346,7 @@ void oric_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 						ch_line = (ch_line>>1) + (vh_state.dbl_line<<2);
 					}
 					
-					char_data = vh_state.text_char_data[(char_index<<3) | ch_line] & 0x03f;
+					char_data = vh_state.char_data[(char_index<<3) | ch_line] & 0x03f;
 
 					oric_vh_render_6pixels(bitmap,x,y,
 						vh_state.active_foreground_colour, 
@@ -317,10 +358,11 @@ void oric_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			x=x+6;	
 		}
 		
-		/* char mode? */
-		if ((vh_state.mode & (1<<3))==0)
+		/* char mode? or after line 200 */
+		if (((vh_state.mode & (1<<2))==0) || (y>=200))
 		{
 			/* if in text mode and char line is not equal to 7, then reset read addr */
+			/* this forces the same line to be re-read 8 times in text mode */
 			if (char_line!=7)
 			{
 				read_addr = old_read_addr;
@@ -332,9 +374,14 @@ void oric_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			}
 		}
 
-		if (y==200)
+		/* after 200 lines have been drawn, force a change of the read address */
+		/* there are 200 lines of hires/text mode, then 24 lines of text mode */
+		/* the mode can't be changed in the last 24 lines. */
+		if (y==199)
 		{
+			/* mode */
 			read_addr = 0x0bf68;
+			old_read_addr = read_addr;
 		}
 
 		char_line++;
