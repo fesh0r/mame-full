@@ -180,11 +180,15 @@ static void saa1099_envelope(int chip, int ch)
 	if (saa->env_enable[ch])
 	{
 		int step, mode;
-		step = saa->env_step[ch] = (saa->env_step[ch] + 1) & 63;
-		mode = saa->env_mode[ch];
-		if (saa->env_bits[ch])
-			step &= ~1; /* 3 bit resolution */
-		saa->channels[ch*3+0].envelope[ LEFT] =
+        mode = saa->env_mode[ch];
+		/* step from 0..63 and then loop in steps 32..63 */
+		step = saa->env_step[ch] =
+			((saa->env_step[ch] + 1) & 0x3f) | (saa->env_step[ch] & 0x20);
+
+        if (saa->env_bits[ch])
+			step &= ~1; 	/* 3 bit resolution, mask LSB */
+
+        saa->channels[ch*3+0].envelope[ LEFT] =
 		saa->channels[ch*3+1].envelope[ LEFT] =
 		saa->channels[ch*3+2].envelope[ LEFT] = envelope[mode][step];
 		if (saa->env_reverse_right[ch] & 0x01)
@@ -202,6 +206,7 @@ static void saa1099_envelope(int chip, int ch)
 	}
 	else
 	{
+		/* envelope mode off, set all envelope factors to 16 */
 		saa->channels[ch*3+0].envelope[ LEFT] =
 		saa->channels[ch*3+1].envelope[ LEFT] =
 		saa->channels[ch*3+2].envelope[ LEFT] =
