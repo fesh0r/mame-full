@@ -125,12 +125,12 @@ DEFS += -DMESS=1 -DMAME32NAME='"MESS"' -DMAMENAME='"MESS"'
 endif
 
 INCLUDES = \
-        -Isrc \
-        -Isrc/includes \
+	-Isrc \
+	-Isrc/includes \
 	-Isrc/windows \
 	-Isrc/ui \
-        -Isrc/cpu/m68000 \
-        -I$(OBJ)/cpu/m68000
+	-Isrc/cpu/m68000 \
+	-I$(OBJ)/cpu/m68000
 
 ifeq "$(TARGET)" "mess"
 INCLUDES += \
@@ -151,7 +151,7 @@ endif
 # C Compiler flags
 #
 
-CFLAGS = -nologo -MT $(INCLUDES)
+CFLAGS = -nologo -MT $(INCLUDES) -DDECL_SPEC=__cdecl -Dsnprintf=_snprintf
 
 ifdef DEBUG
 CFLAGS += -Zi -Od

@@ -274,16 +274,19 @@ static void pic8259_w(PIC8259 *this, offs_t offset, data8_t data )
 
 static int pic8259_r(PIC8259 *this, offs_t offset)
 {
-	int data = 0xff;
+	/* NPW 18-May-2003 - Changing 0xFF to 0x00 as per Ruslan */
+	int data = 0x00;
 
-	switch( offset )
-	{
+	switch( offset ) {
 	case 0: /* PIC acknowledge IRQ */
-        if (this->special) {
+        if (this->special)
+		{
             this->special = 0;
             data = this->input;
             DBG_LOG(1,"PIC_ack_r",("$%02x read special\n", data));
-        } else {
+        }
+		else
+		{
             DBG_LOG(1,"PIC_ack_r",("$%02x\n", data));
         }
         break;

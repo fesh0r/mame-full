@@ -152,7 +152,7 @@ static void				RandomSelectBackground(void);
 static void             LoadBackgroundBitmap(void);
 static void             PaintBackgroundImage(HWND hWnd, HRGN hRgn, int x, int y);
 
-static int DriverDataCompareFunc(const void *arg1,const void *arg2);
+static int DECL_SPEC DriverDataCompareFunc(const void *arg1,const void *arg2);
 static void             ResetTabControl(void);
 static int CALLBACK     ListCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem);
 static int              BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem);
@@ -1395,7 +1395,7 @@ int GetIndexFromSortedIndex(int sorted_index)
  ***************************************************************************/
 
 // used for our sorted array of game names
-int DriverDataCompareFunc(const void *arg1,const void *arg2)
+int DECL_SPEC DriverDataCompareFunc(const void *arg1,const void *arg2)
 {
     return strcmp( ((driver_data_type *)arg1)->name, ((driver_data_type *)arg2)->name );
 }

@@ -434,9 +434,11 @@ $(OBJ)/ti99.a:	   \
 	  $(OBJ)/mess/machine/mm58274c.o \
 	  $(OBJ)/mess/machine/994x_ser.o \
 	  $(OBJ)/mess/systems/ti99_4p.o  \
+	  $(OBJ)/mess/machine/at29040.o  \
 	  $(OBJ)/mess/machine/99_dsk.o   \
 	  $(OBJ)/mess/machine/99_ide.o   \
 	  $(OBJ)/mess/machine/99_peb.o   \
+	  $(OBJ)/mess/machine/99_hsgpl.o \
 	  $(OBJ)/mess/machine/smc92x4.o  \
 	  $(OBJ)/mess/machine/rtc65271.o \
 	  $(OBJ)/mess/systems/geneve.o   \
