@@ -253,7 +253,7 @@ The file date information is not supported at this time.
 The card filesystem reading/writing in imgtool has not been heavily tested.
 
 
-Ti99 floppy disk images (v9t9/pc99fm/pc99mfm/ti99_old)
+TI99 floppy disk images (v9t9/pc99fm/pc99mfm/ti99_old)
 ------------------------------------------------------
 
 These modules enable you to create and catalog ti99 images, to delete
@@ -353,6 +353,13 @@ imgtool create v9t9 test.dsk --sides=2 --tracks=80 --sectors=18
 
 Create a DSHD image compatible with the Geneve with a HFDC controller:
 imgtool create v9t9 test.dsk --sides=2 --tracks=80 --sectors=36
+
+
+TI99 hard disk images (ti99hd)
+------------------------------
+
+This module can catalog ti99 hard disk images, and get files in TIFILE format.
+Only images in HFDC format are supported for now.
 
 
 TI990 disk images (ti990hd)
