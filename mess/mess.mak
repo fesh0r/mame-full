@@ -457,7 +457,7 @@ $(OBJ)/amstrad.a:  \
 	  $(OBJ)/mess/systems/pcw.o	 \
 	  $(OBJ)/mess/systems/amstrad.o  \
 	  $(OBJ)/mess/machine/amstrad.o  \
-#	  $(OBJ)/mess/vidhrdw/amstrad.o  \
+	  $(OBJ)/mess/vidhrdw/amstrad.o  \
 
 $(OBJ)/veb.a:      \
 	  $(OBJ)/mess/vidhrdw/kc.o	 \
