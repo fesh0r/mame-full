@@ -5,6 +5,7 @@
 #include "driver.h"
 #include "artwork.h"
 #include "vidhrdw/generic.h"
+#include "led.h"
 
 #include "includes/mk1.h"
 
@@ -53,79 +54,46 @@ void mk1_vh_stop(void)
 UINT8 mk1_led[4]= {0};
 
 static char led[]={
-	" ii          aaaaaaaaaaaa\r"
-	"iiii    fff aaaaaaaaaaaaa bbb\r"
-	" ii     fff aaaaaaaaaaaaa bbb\r"
-	"        fff               bbb\r"
-	"        fff      jjj      bbb\r"
-	"       fff       jjj     bbb\r"
-	"       fff       jjj     bbb\r"
-	"       fff      jjj      bbb\r"
-	"       fff      jjj      bbb\r"
-	"      fff       jjj     bbb\r"
-	"      fff       jjj     bbb\r"
-	"      fff      jjj      bbb\r"
-	"      fff      jjj      bbb\r"
-	"     fff       jjj     bbb\r"
-	"     fff       jjj     bbb\r"
-	"     fff               bbb\r"
-    "     fff ggggggggggggg bbb\r"
-    "        gggggggggggggg\r"
-    "    eee ggggggggggggg ccc\r"
-	"    eee               ccc\r"
-	"    eee      kkk      ccc\r"
-	"    eee      kkk      ccc\r"
-	"   eee       kkk     ccc\r"
-	"   eee       kkk     ccc\r"
-	"   eee      kkk      ccc\r"
-	"   eee      kkk      ccc\r"
-	"  eee       kkk     ccc\r"
-	"  eee       kkk     ccc\r"
-	"  eee      kkk      ccc\r"
-	"  eee      kkk      ccc\r"
-	" eee       kkk     ccc\r"
-	" eee               ccc\r"
-    " eee ddddddddddddd ccc   hh\r"
-    " eee ddddddddddddd ccc  hhhh\r"
-    "     dddddddddddd        hh"
+	" ii          hhhhhhhhhhhh\r"
+	"iiii    bbb hhhhhhhhhhhhh ggg\r"
+	" ii     bbb hhhhhhhhhhhhh ggg\r"
+	"        bbb               ggg\r"
+	"        bbb      jjj      ggg\r"
+	"       bbb       jjj     ggg\r"
+	"       bbb       jjj     ggg\r"
+	"       bbb      jjj      ggg\r"
+	"       bbb      jjj      ggg\r"
+	"      bbb       jjj     ggg\r"
+	"      bbb       jjj     ggg\r"
+	"      bbb      jjj      ggg\r"
+	"      bbb      jjj      ggg\r"
+	"     bbb       jjj     ggg\r"
+	"     bbb       jjj     ggg\r"
+	"     bbb               ggg\r"
+    "     bbb ccccccccccccc ggg\r"
+    "        cccccccccccccc\r"
+    "    ddd ccccccccccccc fff\r"
+	"    ddd               fff\r"
+	"    ddd      kkk      fff\r"
+	"    ddd      kkk      fff\r"
+	"   ddd       kkk     fff\r"
+	"   ddd       kkk     fff\r"
+	"   ddd      kkk      fff\r"
+	"   ddd      kkk      fff\r"
+	"  ddd       kkk     fff\r"
+	"  ddd       kkk     fff\r"
+	"  ddd      kkk      fff\r"
+	"  ddd      kkk      fff\r"
+	" ddd       kkk     fff\r"
+	" ddd               fff\r"
+    " ddd eeeeeeeeeeeee fff   aa\r"
+    " ddd eeeeeeeeeeeee fff  aaaa\r"
+    "     eeeeeeeeeeee        aa"
 };
 
 static void mk1_draw_9segment(struct mame_bitmap *bitmap,int value, int x, int y)
 {
-	int i, xi, yi, mask, color;
-
-	for (i=0, xi=0, yi=0; led[i]; i++) {
-		mask=0;
-		switch (led[i]) {
-		case 'a': mask=0x80; break;
-		case 'b': mask=0x40; break;
-		case 'c': mask=0x20; break;
-		case 'd': mask=0x10; break;
-		case 'e': mask=0x08; break;
-		case 'f': mask=0x02; break;
-		case 'g': mask=0x04; break;
-		case 'h': 
-			mask=0x01; 
-			break;
-		case 'i': 
-			mask=0x100; 
-			break;
-		case 'j': 
-			mask=0x200; 
-			break;
-		case 'k': 
-			mask=0x400; 
-			break;
-		}
-		
-		if (mask!=0) {
-			color=Machine->pens[(value&mask)?1:0];
-			plot_pixel(bitmap, x+xi, y+yi, color);
-			osd_mark_dirty(x+xi,y,x+yi,y);
-		}
-		if (led[i]!='\r') xi++;
-		else { yi++, xi=0; }
-	}
+	draw_led(bitmap, led, value, x, y);
 }
 
 static struct {

@@ -4,6 +4,7 @@
 #include "driver.h"
 #include "artwork.h"
 #include "vidhrdw/generic.h"
+#include "led.h"
 
 #include "includes/mk2.h"
 
@@ -82,32 +83,7 @@ static const char led[]={
 
 static void mk2_draw_7segment(struct mame_bitmap *bitmap,int value, int x, int y)
 {
-	int i, xi, yi, mask, color;
-
-	for (i=0, xi=0, yi=0; led[i]; i++) {
-		mask=0;
-		switch (led[i]) {
-		case 'a': mask=1; break;
-		case 'b': mask=2; break;
-		case 'c': mask=4; break;
-		case 'd': mask=8; break;
-		case 'e': mask=0x10; break;
-		case 'f': mask=0x20; break;
-		case 'g': mask=0x40; break;
-		case 'h': 
-			// this is more likely wired to the separate leds
-			mask=0x80; 
-			break;
-		}
-		
-		if (mask!=0) {
-			color=Machine->pens[(value&mask)?1:0];
-			plot_pixel(bitmap, x+xi, y+yi, color);
-			osd_mark_dirty(x+xi,y+yi,x+xi,y+yi);
-		}
-		if (led[i]!='\r') xi++;
-		else { yi++, xi=0; }
-	}
+	draw_led(bitmap, led, value, x, y);
 }
 
 static const struct {
@@ -123,33 +99,9 @@ static const struct {
 	{162,223}
 };
 
-static const char* single_led=
-" 111\r"
-"11111\r"
-"11111\r"
-"11111\r"
-" 111"
-;
-
 static void mk2_draw_led(struct mame_bitmap *bitmap,INT16 color, int x, int y)
 {
-	int j, xi=0;
-	for (j=0; single_led[j]; j++) {
-		switch (single_led[j]) {
-		case '1': 
-			plot_pixel(bitmap, x+xi, y, color);
-			osd_mark_dirty(x+xi,y,x+xi,y);
-			xi++;
-			break;
-		case ' ': 
-			xi++;
-			break;
-		case '\r':
-			xi=0;
-			y++;
-			break;				
-		};
-	}
+	draw_led(bitmap, radius_2_led, color, x, y);
 }
 
 void mk2_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)

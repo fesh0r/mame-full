@@ -55,6 +55,9 @@ Source Changes:
   Microtan, Sord, Spectrum, TI99) to use the new cassette loading APIs. [Nate
   Woods]
 
+- Added new core file (led.c) for display of leds and segmented displays.
+  Also converted Chess Champion drivers to use these calls. [Nate Woods]
+
 - On the images screen before emulation starts, only the base name of an image
   will be displayed (bug 34). [Nate Woods]
 
