@@ -43,8 +43,13 @@ JOY_X11_CFLAGS = -DX11_JOYSTICK "-DX11_JOYNAME='$(X11_JOYNAME)'" -DUSE_X11_JOYEV
 JOY_X11_LIBS   = -lXi
 endif
 
+ifdef XINPUT_DEVICES
+XINPUT_DEVICES_CFLAGS = -DUSE_XINPUT_DEVICES
+XINPUT_DEVICES_LIBS = -lXi
+endif
+
 # svga and ggi also use $(X11LIB) since that's where zlib often is
-LIBS.x11        = $(X11LIB) $(JOY_X11_LIBS) -lX11 -lXext 
+LIBS.x11        = $(X11LIB) $(JOY_X11_LIBS) $(XINPUT_DEVICES_LIBS) -lX11 -lXext
 LIBS.svgalib    = $(X11LIB) -lvga -lvgagl
 LIBS.ggi        = $(X11LIB) -lggi
 LIBS.xgl        = $(X11LIB) $(JOY_X11_LIBS) -lX11 -lXext $(GLLIBS) -ljpeg
@@ -54,7 +59,7 @@ LIBS.openstep	= -framework AppKit
 LIBS.SDL	= `sdl-config --libs`
 LIBS.photon2	= -L/usr/lib -lph -lphrender
 
-CFLAGS.x11      = $(X11INC) $(JOY_X11_CFLAGS)
+CFLAGS.x11      = $(X11INC) $(JOY_X11_CFLAGS) $(XINPUT_DEVICES_CFLAGS)
 CFLAGS.xgl      = $(X11INC) $(JOY_X11_CFLAGS) $(GLCFLAGS)
 CFLAGS.xfx      = $(X11INC) $(JOY_X11_CFLAGS) -I/usr/include/glide
 CFLAGS.svgafx   = -I/usr/include/glide
@@ -170,7 +175,7 @@ ifdef MAME_DEBUG
 MY_CFLAGS += -DMAME_DEBUG
 MY_LIBS   += -lcurses
 endif
-   
+
 # CONFIG are the cflags used to build the unix tree, this is were most defines
 # go
 CONFIG = $(MY_CFLAGS) $(CFLAGS.$(DISPLAY_METHOD)) -DNAME='\"x$(TARGET)\"' \
@@ -199,6 +204,11 @@ endif
 ifdef SOUND_ARTS_SMOTEK
 CONFIG  += -DSYSDEP_DSP_ARTS_SMOTEK `artsc-config --cflags`
 MY_LIBS += `artsc-config --libs`
+endif
+
+ifdef SOUND_SDL
+CONFIG  += -DSYSDEP_DSP_SDL `sdl-config --cflags`
+MY_LIBS += `sdl-config --libs`
 endif
 
 # Joystick drivers config
@@ -321,7 +331,7 @@ $(OBJ)/cpu/m68000/68020.o:  $(OBJ)/cpu/m68000/68020.asm
 	$(CC_COMPILE) $(ASM_STRIP) $<
 	$(CC_COMPILE) nasm $(NASM_FMT) -o $@ $(subst -D,-d,$(ASMDEFS)) $<
 
-#some tricks, since vector.o these days is display-method dependent:
+#some tricks, since vector.o these days is display method-dependent:
 $(OBJ)/unix.$(DISPLAY_METHOD)/vector.o: src/vidhrdw/vector.c
 	$(CC_COMMENT) @echo 'Compiling $< ...'
 	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
