@@ -894,8 +894,8 @@ typedef struct mac_l1_imgref
 
 	Open a macintosh disk image
 
-	f (I): imgtool reference of file to open
-	image (O): level-1 image reference
+	f (I): open imgtool file reference
+	image (O): level-1 image reference to open
 
 	Return imgtool error code
 */
@@ -1178,12 +1178,23 @@ typedef struct mac_BTref
 	UINT32 firstLeafNode;	/* node number of first leaf node */
 	UINT32 attributes;		/* persistent attributes about the tree */
 	UINT16 treeDepth;		/* maximum height (usually leaf nodes) */
+	UINT16 maxKeyLength;	/* maximum key lenght */
 
 	/* function to compare keys during tree searches */
 	int (*key_compare_func)(const void *key1, const void *key2);
 
 	void *node_buf;			/* current node buffer */
 } mac_BTref;
+
+/*
+	Constants for BTHeaderRec attributes field
+*/
+enum
+{
+	btha_badCloseMask			= 0x00000001,	/* reserved */
+	btha_bigKeysMask			= 0x00000002,	/* key length field is 16 bits */
+	btha_variableIndexKeysMask	= 0x00000004	/* keys in index nodes are variable length */
+};
 
 /*
 	HFS image ref
@@ -1390,9 +1401,9 @@ static int mfs_dir_update(mac_fileref *fileref);
 /*
 	mac_image_open
 
-	Open a macintosh image.  Image must already be open on level 1.
+	Open a macintosh image.
 
-	l2_img (I/O): level-2 image reference
+	l2_img (I/O): level-2 image reference to open (l1_img field be initialized)
 
 	Return imgtool error code
 */
@@ -1493,7 +1504,7 @@ static int mac_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, UINT32 *p
 		(reserved for MFS volumes)
 	fname (I): name of the file (Mac string)
 	mac_forkID (I): tells which fork should be opened
-	fileref (O): mac open file reference
+	fileref (O): mac file reference to open
 
 	Return imgtool error code
 */
@@ -1805,8 +1816,8 @@ typedef struct mfs_dirref
 	Open a MFS image.  Image must already be open on level 1.  This function
 	should not be called directly: call mac_image_open() instead.
 
-	l2_img (I/O): level-2 image reference (l1_img and format fields must be
-		initialized)
+	l2_img (I/O): level-2 image reference to open (l1_img and format fields
+		must be initialized)
 	img_open_buf (I): buffer with the MDB block
 
 	Return imgtool error code
@@ -2382,7 +2393,7 @@ static int mfs_file_open_internal(mac_l2_imgref *l2_img, const mfs_dir_entry *di
 	l2_img (I/O): level-2 image reference
 	fname (I): name of the file (Mac string)
 	mac_forkID (I): tells which fork should be opened
-	fileref (O): mac open file reference
+	fileref (O): mac file reference to open
 
 	Return imgtool error code
 */
@@ -2472,7 +2483,7 @@ static void mfs_set_ABlink(mac_l2_imgref *l2_img, UINT16 AB_address, UINT16 data
 	Get the disk block address of a given block in an open file on a MFS image.
 	Called by macintosh file code.
 
-	fileref (I/O): mac open file reference
+	fileref (I/O): open mac file reference
 	block_num (I): file block index
 	block_address (O): disk block address for the file block
 
@@ -2519,6 +2530,14 @@ static int mfs_file_get_nth_block_address(mac_fileref *fileref, UINT32 block_num
 	mfs_file_allocABs
 
 	Allocate a chunk of ABs
+
+	fileref (I/O): open mac file reference
+	lastAB (I): AB address on disk of last file AB (only if
+		fileref->u.mfs.stBlk != 1)
+	allocABs (I): number of ABs to allocate in addition to the current file
+		allocation
+
+	Return imgtool error code
 */
 static int mfs_file_allocABs(mac_fileref *fileref, UINT16 lastAB, UINT32 allocABs)
 {
@@ -2642,6 +2661,11 @@ static int mfs_file_allocABs(mac_fileref *fileref, UINT16 lastAB, UINT32 allocAB
 	mfs_file_setABeof
 
 	Set physical file EOF in ABs
+
+	fileref (I/O): open mac file reference
+	newABeof (I): desired number of allocated ABs for this file
+
+	Return imgtool error code
 */
 static int mfs_file_setABeof(mac_fileref *fileref, UINT32 newABeof)
 {
@@ -2890,9 +2914,9 @@ typedef struct BT_leaf_rec_enumerator
 	int cur_rec;
 } BT_leaf_rec_enumerator;
 
-static int BT_open(mac_BTref *BTref, int (*key_compare_func)(const void *key1, const void *key2));
+static int BT_open(mac_BTref *BTref, int (*key_compare_func)(const void *key1, const void *key2), int is_extent);
 static void BT_close(mac_BTref *BTref);
-static int BT_search_leaf_rec(mac_BTref *BTref, void *search_key,
+static int BT_search_leaf_rec(mac_BTref *BTref, const void *search_key,
 								UINT32 *node_ID, int *record_ID,
 								void **record_ptr, int *record_len,
 								int search_exact_match, int *match_found);
@@ -2910,6 +2934,12 @@ typedef struct hfs_cat_enumerator
 	hfs_open_extents_file
 
 	Open the file extents B-tree file
+
+	l2_img (I/O): level-2 image reference
+	mdb (I): copy of the MDB block
+	fileref (O): mac open file reference
+
+	Return imgtool error code
 */
 static int hfs_open_extents_file(mac_l2_imgref *l2_img, const hfs_mdb *mdb, mac_fileref *fileref)
 {
@@ -2934,6 +2964,12 @@ static int hfs_open_extents_file(mac_l2_imgref *l2_img, const hfs_mdb *mdb, mac_
 	hfs_open_cat_file
 
 	Open the disk catalog B-tree file
+
+	l2_img (I/O): level-2 image reference
+	mdb (I): copy of the MDB block
+	fileref (O): mac open file reference
+
+	Return imgtool error code
 */
 static int hfs_open_cat_file(mac_l2_imgref *l2_img, const hfs_mdb *mdb, mac_fileref *fileref)
 {
@@ -2958,6 +2994,13 @@ static int hfs_open_cat_file(mac_l2_imgref *l2_img, const hfs_mdb *mdb, mac_file
 	hfs_extentKey_compare
 
 	key compare function for file extents B-tree
+
+	p1 (I): pointer to first key
+	p2 (I): pointer to second key
+
+	Return a zero the two keys are equal, a negative value if the key pointed
+	to by p1 is less than the key pointed to by p2, and a positive value if the
+	key pointed to by p1 is greater than the key pointed to by p2.
 */
 static int hfs_extentKey_compare(const void *p1, const void *p2)
 {
@@ -2972,6 +3015,13 @@ static int hfs_extentKey_compare(const void *p1, const void *p2)
 	hfs_catKey_compare
 
 	key compare function for disk catalog B-tree
+
+	p1 (I): pointer to first key
+	p2 (I): pointer to second key
+
+	Return a zero the two keys are equal, a negative value if the key pointed
+	to by p1 is less than the key pointed to by p2, and a positive value if the
+	key pointed to by p1 is greater than the key pointed to by p2.
 */
 static int hfs_catKey_compare(const void *p1, const void *p2)
 {
@@ -2988,6 +3038,12 @@ static int hfs_catKey_compare(const void *p1, const void *p2)
 	hfs_image_open
 
 	Open a HFS image.  Image must already be open on level 1.
+
+	l2_img (I/O): level-2 image reference to open (l1_img and format fields
+		must be initialized)
+	img_open_buf (I): buffer with the MDB block
+
+	Return imgtool error code
 */
 static int hfs_image_open(mac_l2_imgref *l2_img, img_open_buf *buf)
 {
@@ -3017,15 +3073,41 @@ static int hfs_image_open(mac_l2_imgref *l2_img, img_open_buf *buf)
 	errorcode = hfs_open_extents_file(l2_img, &buf->hfs_mdb, &l2_img->u.hfs.extents_BT.fileref);
 	if (errorcode)
 		return errorcode;
-	errorcode = BT_open(&l2_img->u.hfs.extents_BT, hfs_extentKey_compare);
+	errorcode = BT_open(&l2_img->u.hfs.extents_BT, hfs_extentKey_compare, TRUE);
 	if (errorcode)
 		return errorcode;
+	if ((l2_img->u.hfs.extents_BT.attributes & btha_bigKeysMask)
+			/*|| (l2_img->u.hfs.extents_BT.attributes & kBTVariableIndexKeysMask)*/
+			|| (l2_img->u.hfs.extents_BT.maxKeyLength != 7))
+	{	/* This is not supported by the HFS format */
+		/* Variable Index keys are not supported either, but hopefully it will
+		not break this imgtool module if it set (though it would probably break
+		a real macintosh) */
+		BT_close(&l2_img->u.hfs.extents_BT);
+		return IMGTOOLERR_CORRUPTIMAGE;
+	}
 	errorcode = hfs_open_cat_file(l2_img, &buf->hfs_mdb, &l2_img->u.hfs.cat_BT.fileref);
 	if (errorcode)
+	{
+		BT_close(&l2_img->u.hfs.extents_BT);
 		return errorcode;
-	errorcode = BT_open(&l2_img->u.hfs.cat_BT, hfs_catKey_compare);
+	}
+	errorcode = BT_open(&l2_img->u.hfs.cat_BT, hfs_catKey_compare, FALSE);
 	if (errorcode)
+	{
 		return errorcode;
+	}
+	if ((l2_img->u.hfs.cat_BT.attributes & btha_bigKeysMask)
+			/*|| (l2_img->u.hfs.cat_BT.attributes & kBTVariableIndexKeysMask)*/
+			|| (l2_img->u.hfs.cat_BT.maxKeyLength != 37))
+	{	/* This is not supported by the HFS format */
+		/* Variable Index keys are not supported either, but hopefully it will
+		not break this imgtool module if it set (though it would probably break
+		a real macintosh) */
+		BT_close(&l2_img->u.hfs.extents_BT);
+		BT_close(&l2_img->u.hfs.cat_BT);
+		return IMGTOOLERR_CORRUPTIMAGE;
+	}
 
 	/* extract volume bitmap */
 	{
@@ -3054,6 +3136,8 @@ static int hfs_image_open(mac_l2_imgref *l2_img, img_open_buf *buf)
 	hfs_image_close
 
 	Close a HFS image.
+
+	l2_img (I/O): level-2 image reference
 */
 static void hfs_image_close(mac_l2_imgref *l2_img)
 {
@@ -3066,7 +3150,17 @@ static void hfs_image_close(mac_l2_imgref *l2_img)
 /*
 	hfs_get_cat_record_data
 
-	extract data from a catalog B-tree record
+	extract data from a catalog B-tree leaf record
+
+	l2_img (I/O): level-2 image reference
+	rec_raw (I): pointer to record key and data, as returned by
+		BT_node_get_keyed_record
+	rec_len (I): total lenght of record, as returned by
+		BT_node_get_keyed_record
+	rec_key (O): set to point to record key
+	rec_data (O): set to point to record data
+
+	Return imgtool error code
 */
 static int hfs_get_cat_record_data(mac_l2_imgref *l2_img, void *rec_raw, int rec_len, hfs_catKey **rec_key, hfs_catData **rec_data)
 {
@@ -3131,6 +3225,11 @@ static int hfs_get_cat_record_data(mac_l2_imgref *l2_img, void *rec_raw, int rec
 	hfs_cat_open
 
 	Open an enumerator on the disk catalog
+
+	l2_img (I/O): level-2 image reference
+	enumerator (O): open catalog enumerator reference
+
+	Return imgtool error code
 */
 static int hfs_cat_open(mac_l2_imgref *l2_img, hfs_cat_enumerator *enumerator)
 {
@@ -3145,6 +3244,12 @@ static int hfs_cat_open(mac_l2_imgref *l2_img, hfs_cat_enumerator *enumerator)
 	hfs_cat_read
 
 	Enumerate the disk catalog
+
+	enumerator (I/O): open catalog enumerator reference
+	rec_key (O): set to point to record key
+	rec_data (O): set to point to record data
+
+	Return imgtool error code
 */
 static int hfs_cat_read(hfs_cat_enumerator *enumerator, hfs_catKey **rec_key, hfs_catData **rec_data)
 {
@@ -3177,6 +3282,14 @@ static int hfs_cat_read(hfs_cat_enumerator *enumerator, hfs_catKey **rec_key, hf
 	hfs_cat_search
 
 	Search the catalog for a given file
+
+	l2_img (I/O): level-2 image reference
+	parID (I): CNID of file parent directory
+	cName (I): file name
+	rec_key (O): set to point to record key
+	rec_data (O): set to point to record data
+
+	Return imgtool error code
 */
 static int hfs_cat_search(mac_l2_imgref *l2_img, UINT32 parID, const mac_str31 cName, hfs_catKey **rec_key, hfs_catData **rec_data)
 {
@@ -3214,6 +3327,17 @@ static int hfs_cat_search(mac_l2_imgref *l2_img, UINT32 parID, const mac_str31 c
 	hfs_resolve_fpath
 
 	Resolve a file path
+
+	l2_img (I/O): level-2 image reference
+	fpath (I): file path (C string)
+	parID (O): set to the CNID of the file parent directory
+	fname (O): set to the actual name of the file, with capitalization matching
+		the one on the volume rather than the one in the fpath parameter (Mac
+		string)
+	cat_info (O): catalog info for this file extracted from the catalog file
+		(may be NULL)
+
+	Return imgtool error code
 */
 static int hfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, UINT32 *parID, mac_str255 fname, mac_cat_info *cat_info)
 {
@@ -3349,7 +3473,16 @@ static int hfs_file_open_internal(mac_l2_imgref *l2_img, const hfs_catFileData *
 /*
 	hfs_file_open
 
-	Open a file located on an HFS image
+	Open a file located on a HFS volume.  This function should not be called
+	directly: call mac_file_open instead.
+
+	l2_img (I/O): level-2 image reference
+	parID (I): CNID of file parent directory
+	fname (I): name of the file (Mac string)
+	mac_forkID (I): tells which fork should be opened
+	fileref (O): mac file reference to open
+
+	Return imgtool error code
 */
 static int hfs_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac_str255 fname, mac_forkID fork, mac_fileref *fileref)
 {
@@ -3382,7 +3515,7 @@ static int hfs_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac_str255 f
 	Get the disk block address of a given block in an open file on a MFS image.
 	Called by macintosh file code.
 
-	fileref (I/O): mac open file reference
+	fileref (I/O): open mac file reference
 	block_num (I): file block index
 	block_address (O): disk block address for the file block
 
@@ -3550,28 +3683,22 @@ typedef struct BTHeaderRecord
 	UINT32BE firstLeafNode;	/* node number of first leaf node */
 	UINT32BE lastLeafNode;	/* node number of last leaf node */
 	UINT16BE nodeSize;		/* size of a node, in bytes */
-	UINT16BE maxKeyLength;	/* reserved */
+	UINT16BE maxKeyLength;	/* maximum lenght of data (index + leaf) record keys;
+								length of all index record keys if
+								btha_variableIndexKeysMask attribute flag is not set */
 	UINT32BE totalNodes;	/* total number of nodes in tree */
 	UINT32BE freeNodes;		/* number of unused (free) nodes in tree */
+
 	UINT16BE reserved1;		/* unused */
-	UINT32BE clumpSize;		/* reserved */
-	UINT8    btreeType;		/* reserved */
+	UINT32BE clumpSize;		/* used in some HFS implementations? (reserved in
+								early HFS implementations, and in HFS Plus) */
+	UINT8    btreeType;		/* reserved - set to 0 */
 	UINT8    reserved2;		/* reserved */
 	UINT32BE attributes;	/* persistent attributes about the tree */
 	UINT32BE reserved3[16];	/* reserved */
 } BTHeaderRecord;
 
-/*
-	Constants for BTHeaderRec attributes field
-*/
-enum
-{
-	btha_badCloseMask			= 0x00000001,	/* reserved */
-	btha_bigKeysMask			= 0x00000002,	/* key length field is 16 bits */
-	btha_variableIndexKeysMask	= 0x00000004	/* keys in index nodes are variable length */
-};
-
-static int BT_check(mac_BTref *BTref);
+static int BT_check(mac_BTref *BTref, int is_extent);
 
 /*
 	BT_open
@@ -3582,10 +3709,15 @@ static int BT_check(mac_BTref *BTref);
 	BTref (I/O): B-tree file handle to open (BTref->fileref must have been
 		open previously)
 	key_compare_func (I): function that compares two keys
+	is_extent (I): TRUE if we are opening the extent B-tree (we want to do
+		extra checks in this case because the extent B-Tree may include extent
+		records for the extent B-tree itself, and if an extent record for the
+		extent B-tree is located in an extent that has not been defined by
+		previous extent records, then we can never retreive this extent record)
 
-	Returns imgtool error code
+	Return imgtool error code
 */
-static int BT_open(mac_BTref *BTref, int (*key_compare_func)(const void *key1, const void *key2))
+static int BT_open(mac_BTref *BTref, int (*key_compare_func)(const void *key1, const void *key2), int is_extent)
 {
 	int errorcode;
 	BTNodeHeader node_header;
@@ -3618,6 +3750,7 @@ static int BT_open(mac_BTref *BTref, int (*key_compare_func)(const void *key1, c
 	BTref->firstLeafNode = get_UINT32BE(header_rec.firstLeafNode);
 	BTref->attributes = get_UINT32BE(header_rec.attributes);
 	BTref->treeDepth = get_UINT16BE(header_rec.treeDepth);
+	BTref->maxKeyLength = get_UINT16BE(header_rec.maxKeyLength);
 
 	BTref->key_compare_func = key_compare_func;
 
@@ -3627,7 +3760,7 @@ static int BT_open(mac_BTref *BTref, int (*key_compare_func)(const void *key1, c
 
 #if 1
 	/* optional: check integrity of B-tree */
-	errorcode = BT_check(BTref);
+	errorcode = BT_check(BTref, is_extent);
 	if (errorcode)
 		return errorcode;
 #endif
@@ -3639,6 +3772,8 @@ static int BT_open(mac_BTref *BTref, int (*key_compare_func)(const void *key1, c
 	BT_close
 
 	Close a B-tree
+
+	BTref (I/O): open B-tree file handle
 */
 static void BT_close(mac_BTref *BTref)
 {
@@ -3649,6 +3784,14 @@ static void BT_close(mac_BTref *BTref)
 	BT_read_node
 
 	Read a node from a B-tree
+
+	BTref (I/O): open B-tree file handle
+	node_ID (I): index of the node to read
+	expected_kind (I): kind of the node to read
+	expected_depth (I): depth of the node to read
+	dest (O): destination buffer
+
+	Return imgtool error code
 */
 static int BT_read_node(mac_BTref *BTref, UINT32 node_ID, int expected_kind, int expected_depth, void *dest)
 {
@@ -3673,7 +3816,17 @@ static int BT_read_node(mac_BTref *BTref, UINT32 node_ID, int expected_kind, int
 }
 
 /*
-	Extract raw record
+	BT_node_get_record
+
+	Extract a raw record from a B-tree node
+
+	BTref (I/O): open B-tree file handle
+	node_buf (I): buffer with the node the record should be extracted from
+	recnum (I): index of record to read
+	rec_ptr (O): set to point to start of record (key + data)
+	rec_len (O): set to total lenght of record (key + data)
+
+	Return imgtool error code
 */
 static int BT_node_get_record(mac_BTref *BTref, void *node_buf, unsigned recnum, void **rec_ptr, int *rec_len)
 {
@@ -3700,11 +3853,21 @@ static int BT_node_get_record(mac_BTref *BTref, void *node_buf, unsigned recnum,
 }
 
 /*
-	Extract keyed record
+	BT_node_get_keyed_record
 
-	Equivalent to BT_node_get_record, only we do extra checks
+	Extract a keyed record from a B-tree node.  Equivalent to
+	BT_node_get_record, only we do extra checks.
+
+	BTref (I/O): open B-tree file handle
+	node_buf (I): buffer with the node the record should be extracted from
+	node_is_index (I): TRUE if node is index node
+	recnum (I): index of record to read
+	rec_ptr (O): set to point to start of record (key + data)
+	rec_len (O): set to total lenght of record (key + data)
+
+	Return imgtool error code
 */
-static int BT_node_get_keyed_record(mac_BTref *BTref, void *node_buf, unsigned recnum, void **rec_ptr, int *rec_len)
+static int BT_node_get_keyed_record(mac_BTref *BTref, void *node_buf, int node_is_index, unsigned recnum, void **rec_ptr, int *rec_len)
 {
 	int errorcode;
 	void *lrec_ptr;
@@ -3726,6 +3889,12 @@ static int BT_node_get_keyed_record(mac_BTref *BTref, void *node_buf, unsigned r
 		/* hurk! */
 		return IMGTOOLERR_CORRUPTIMAGE;
 
+	if (key_len > BTref->maxKeyLength)
+		return IMGTOOLERR_CORRUPTIMAGE;
+
+	if (node_is_index && (! (BTref->attributes & btha_variableIndexKeysMask)) && (key_len != BTref->maxKeyLength))
+		return IMGTOOLERR_CORRUPTIMAGE;
+
 	if (rec_ptr)
 		*rec_ptr = lrec_ptr;
 	if (rec_len)
@@ -3735,7 +3904,17 @@ static int BT_node_get_keyed_record(mac_BTref *BTref, void *node_buf, unsigned r
 }
 
 /*
+	BT_get_keyed_record_data
+
 	extract data from a keyed record
+
+	BTref (I/O): open B-tree file handle
+	rec_ptr (I): point to start of record (key + data)
+	rec_len (I): total lenght of record (key + data)
+	data_ptr (O): set to point to record data
+	data_len (O): set to lenght of record data
+
+	Return imgtool error code
 */
 static int BT_get_keyed_record_data(mac_BTref *BTref, void *rec_ptr, int rec_len, void **data_ptr, int *data_len)
 {
@@ -3768,8 +3947,17 @@ static int BT_get_keyed_record_data(mac_BTref *BTref, void *rec_ptr, int rec_len
 	BT_check
 
 	Check integrity of a complete B-tree
+
+	BTref (I/O): open B-tree file handle
+	is_extent (I): TRUE if we are opening the extent B-tree (we want to do
+		extra checks in this case because the extent B-Tree may include extent
+		records for the extent B-tree itself, and if an extent record for the
+		extent B-tree is located in an extent that has not been defined by
+		previous extent records, then we can never retreive this extent record)
+
+	Return imgtool error code
 */
-static int BT_check(mac_BTref *BTref)
+static int BT_check(mac_BTref *BTref, int is_extent)
 {
 	UINT16 node_numRecords;
 	BTHeaderRecord *header_rec;
@@ -3781,7 +3969,7 @@ static int BT_check(mac_BTref *BTref)
 		UINT32 cur_rec;
 		UINT32 num_recs;
 	} *data_nodes;
-	int i;
+	int i, j;
 	UINT32 cur_node, prev_node;
 	void *rec1, *rec2;
 	int rec1_len, rec2_len;
@@ -3795,10 +3983,32 @@ static int BT_check(mac_BTref *BTref)
 	UINT32 run_bit_len;
 	UINT32 actualFreeNodes;
 	int errorcode;
+	UINT32 maxExtentAB, maxExtentNode, extentEOL;	/* if is_extent is TRUE */
 
+	if (is_extent)
+	{
+		switch (BTref->fileref.l2_img->format)
+		{
+		case L2I_MFS:
+			/* MFS does not feature any extents B-tree! */
+			return IMGTOOLERR_UNEXPECTED;
+
+		case L2I_HFS:
+			maxExtentAB = 0;
+			for (j=0; j<3; j++)
+				maxExtentAB += get_UINT16BE(BTref->fileref.u.hfs.extents[j].numABlks);
+			maxExtentNode = (UINT64)maxExtentAB * 512 * BTref->fileref.l2_img->blocksperAB
+										/ BTref->nodeSize;
+			extentEOL = FALSE;
+			break;
+		}
+	}
 
 	/* read header node */
-	errorcode = BT_read_node(BTref, 0, btnk_headerNode, 0, BTref->node_buf);
+	if ((! is_extent) || (0 < maxExtentNode))
+		errorcode = BT_read_node(BTref, 0, btnk_headerNode, 0, BTref->node_buf);
+	else
+		errorcode = IMGTOOLERR_CORRUPTIMAGE;
 	if (errorcode)
 		return errorcode;
 
@@ -3819,13 +4029,13 @@ static int BT_check(mac_BTref *BTref)
 
 	totalNodes = get_UINT32BE(header_rec->totalNodes);
 	if (totalNodes == 0)
-		/* at least one header node */
+		/* we need at least one header node */
 		return IMGTOOLERR_CORRUPTIMAGE;
 	lastLeafNode = get_UINT32BE(header_rec->lastLeafNode);
 	freeNodes = get_UINT32BE(header_rec->freeNodes);
 
 	/* check file lenght */
-	if ((BTref->nodeSize * totalNodes) != BTref->fileref.pLen)
+	if ((BTref->nodeSize * totalNodes) > BTref->fileref.pLen)
 		return IMGTOOLERR_CORRUPTIMAGE;
 
 	/* initialize for the function postlog ("bail:" tag) */
@@ -3839,46 +4049,6 @@ static int BT_check(mac_BTref *BTref)
 	if (! bitmap)
 		return IMGTOOLERR_OUTOFMEMORY;
 	memset(bitmap, 0, map_len);
-
-	/* check map node chain */
-	cur_node = 0;	/* node 0 is the header node... */
-	bitmap[0] |= 0x80;
-	/* check back linking */
-	if (get_UINT32BE(((BTNodeHeader *) BTref->node_buf)->bLink))
-	{
-		errorcode = IMGTOOLERR_CORRUPTIMAGE;
-		goto bail;
-	}
-	/* get pointer to next node */
-	cur_node = get_UINT32BE(((BTNodeHeader *) BTref->node_buf)->fLink);
-	while (cur_node != 0)
-	{
-		/* save node address */
-		prev_node = cur_node;
-		/* check that node has not been used for another purpose */
-		/* this check is unecessary because the current consistency checks that
-		forward and back linking match and that node height is correct are
-		enough to detect such errors */
-		/*if (bitmap[cur_node >> 3] & (0x80 >> (cur_node & 7)))
-		{
-			errorcode = IMGTOOLERR_CORRUPTIMAGE;
-			goto bail;
-		}*/
-		/* add node in bitmap */
-		bitmap[cur_node >> 3] |= (0x80 >> (cur_node & 7));
-		/* read map node */
-		errorcode = BT_read_node(BTref, cur_node, btnk_mapNode, 0, BTref->node_buf);
-		if (errorcode)
-			goto bail;
-		/* check back linking */
-		if (get_UINT32BE(((BTNodeHeader *) BTref->node_buf)->bLink) != prev_node)
-		{
-			errorcode = IMGTOOLERR_CORRUPTIMAGE;
-			goto bail;
-		}
-		/* get pointer to next node */
-		cur_node = get_UINT32BE(((BTNodeHeader *) BTref->node_buf)->fLink);
-	}
 
 	/* check B-tree data nodes (i.e. index and leaf nodes) */
 	if (BTref->treeDepth == 0)
@@ -3933,7 +4103,10 @@ static int BT_check(mac_BTref *BTref)
 			/* add node in bitmap */
 			bitmap[cur_node >> 3] |= (0x80 >> (cur_node & 7));
 			/* read node */
-			errorcode = BT_read_node(BTref, cur_node, i ? btnk_indexNode : btnk_leafNode, i+1, data_nodes[i].buf);
+			if ((! is_extent) || (cur_node < maxExtentNode))
+				errorcode = BT_read_node(BTref, cur_node, i ? btnk_indexNode : btnk_leafNode, i+1, data_nodes[i].buf);
+			else
+				errorcode = IMGTOOLERR_CORRUPTIMAGE;
 			if (errorcode)
 				goto bail;
 			/* check that it is the first node at this level */
@@ -3957,7 +4130,7 @@ static int BT_check(mac_BTref *BTref)
 			if (i != 0)
 			{
 				/* extract first record */
-				errorcode = BT_node_get_keyed_record(BTref, data_nodes[i].buf, 0, &rec1, &rec1_len);
+				errorcode = BT_node_get_keyed_record(BTref, data_nodes[i].buf, TRUE, 0, &rec1, &rec1_len);
 				if (errorcode)
 					goto bail;
 
@@ -4012,7 +4185,10 @@ static int BT_check(mac_BTref *BTref)
 					/* add node in bitmap */
 					bitmap[cur_node >> 3] |= (0x80 >> (cur_node & 7));
 					/* read node */
-					errorcode = BT_read_node(BTref, cur_node, i ? btnk_indexNode : btnk_leafNode, i+1, data_nodes[i].buf);
+					if ((! is_extent) || (cur_node < maxExtentNode))
+						errorcode = BT_read_node(BTref, cur_node, i ? btnk_indexNode : btnk_leafNode, i+1, data_nodes[i].buf);
+					else
+						errorcode = IMGTOOLERR_CORRUPTIMAGE;
 					if (errorcode)
 						goto bail;
 					/* check that backward linking match forward linking */
@@ -4046,18 +4222,71 @@ static int BT_check(mac_BTref *BTref)
 				i++;
 			}
 
+			if (is_extent && !extentEOL)
+			{
+				/* extract current leaf record and update maxExtentAB and
+				maxExtentNode */
+				hfs_extentKey *extentKey;
+				hfs_extent *extentData;
+
+				/* extract current leaf record */
+				errorcode = BT_node_get_keyed_record(BTref, data_nodes[0].buf, FALSE, data_nodes[0].cur_rec, &rec1, &rec1_len);
+				if (errorcode)
+					goto bail;
+
+				extentKey = rec1;
+				if ((extentKey->keyLength < 7) || (extentKey->forkType != 0) || (get_UINT32BE(extentKey->fileID) != 3)
+						|| (get_UINT16BE(extentKey->startBlock) != maxExtentAB))
+					/* the key is corrupt or does not concern the extent
+					B-tree: set the extentEOL flag so that we stop looking for
+					further extent records for the extent B-tree */
+					extentEOL = TRUE;
+				else
+				{	/* this key concerns the extent B-tree: update maxExtentAB
+					and maxExtentNode */
+					/* extract record data ptr */
+					errorcode = BT_get_keyed_record_data(BTref, rec1, rec1_len, &rec1_data, &rec1_data_len);
+					if (errorcode)
+						goto bail;
+					if (rec1_data_len < sizeof(hfs_extent)*3)
+						/* the record is corrupt: set the extentEOL flag so
+						that we stop looking for further extent records for the
+						extent B-tree */
+						extentEOL = TRUE;
+					else
+					{
+						extentData = rec1_data;
+
+						for (j=0; j<3; j++)
+							maxExtentAB += get_UINT16BE(extentData[j].numABlks);
+						maxExtentNode = (UINT64)maxExtentAB * 512 * BTref->fileref.l2_img->blocksperAB
+												/ BTref->nodeSize;
+					}
+				}
+				if (extentEOL)
+				{
+					/* check that the extent B-Tree has been defined entirely */
+					if (maxExtentNode < totalNodes)
+					{	/* no good */
+						errorcode = IMGTOOLERR_CORRUPTIMAGE;
+						goto bail;
+					}
+				}
+			}
+
 			if (i<BTref->treeDepth)
 			{
 				/* extract current record */
-				errorcode = BT_node_get_keyed_record(BTref, data_nodes[i].buf, data_nodes[i].cur_rec, &rec1, &rec1_len);
+				errorcode = BT_node_get_keyed_record(BTref, data_nodes[i].buf, i > 0, data_nodes[i].cur_rec, &rec1, &rec1_len);
 				if (errorcode)
 					goto bail;
 
 				/* extract previous record */
-				errorcode = BT_node_get_keyed_record(BTref, data_nodes[i].buf, data_nodes[i].cur_rec-1, &rec2, &rec2_len);
+				errorcode = BT_node_get_keyed_record(BTref, data_nodes[i].buf, i > 0, data_nodes[i].cur_rec-1, &rec2, &rec2_len);
 				if (errorcode)
 					goto bail;
 
+				/* check that it is sorted correctly */
 				compare_result = (*BTref->key_compare_func)(rec1, rec2);
 				if (compare_result <= 0)
 				{
@@ -4072,7 +4301,7 @@ static int BT_check(mac_BTref *BTref)
 				i--;
 				if (i>0)
 				{	/* extract first record of root if it is an index node */
-					errorcode = BT_node_get_keyed_record(BTref, data_nodes[i].buf, data_nodes[i].cur_rec, &rec1, &rec1_len);
+					errorcode = BT_node_get_keyed_record(BTref, data_nodes[i].buf, TRUE, data_nodes[i].cur_rec, &rec1, &rec1_len);
 					if (errorcode)
 						goto bail;
 				}
@@ -4082,7 +4311,7 @@ static int BT_check(mac_BTref *BTref)
 			while (i>=0)
 			{
 				/* extract first record of current level */
-				errorcode = BT_node_get_keyed_record(BTref, data_nodes[i].buf, data_nodes[i].cur_rec, &rec2, &rec2_len);
+				errorcode = BT_node_get_keyed_record(BTref, data_nodes[i].buf, i > 0, data_nodes[i].cur_rec, &rec2, &rec2_len);
 				if (errorcode)
 					goto bail;
 
@@ -4140,6 +4369,49 @@ end_of_list:
 			errorcode = IMGTOOLERR_CORRUPTIMAGE;
 			goto bail;
 		}
+	}
+
+	/* check map node chain */
+	cur_node = 0;	/* node 0 is the header node... */
+	bitmap[0] |= 0x80;
+	/* check back linking */
+	if (get_UINT32BE(((BTNodeHeader *) BTref->node_buf)->bLink))
+	{
+		errorcode = IMGTOOLERR_CORRUPTIMAGE;
+		goto bail;
+	}
+	/* get pointer to next node */
+	cur_node = get_UINT32BE(((BTNodeHeader *) BTref->node_buf)->fLink);
+	while (cur_node != 0)
+	{
+		/* save node address */
+		prev_node = cur_node;
+		/* check that node has not been used for another purpose */
+		/* this check is unecessary because the current consistency checks that
+		forward and back linking match and that node height is correct are
+		enough to detect such errors */
+		/*if (bitmap[cur_node >> 3] & (0x80 >> (cur_node & 7)))
+		{
+			errorcode = IMGTOOLERR_CORRUPTIMAGE;
+			goto bail;
+		}*/
+		/* add node in bitmap */
+		bitmap[cur_node >> 3] |= (0x80 >> (cur_node & 7));
+		/* read map node */
+		if ((! is_extent) || (cur_node < maxExtentNode))
+			errorcode = BT_read_node(BTref, cur_node, btnk_mapNode, 0, BTref->node_buf);
+		else
+			errorcode = IMGTOOLERR_CORRUPTIMAGE;
+		if (errorcode)
+			goto bail;
+		/* check back linking */
+		if (get_UINT32BE(((BTNodeHeader *) BTref->node_buf)->bLink) != prev_node)
+		{
+			errorcode = IMGTOOLERR_CORRUPTIMAGE;
+			goto bail;
+		}
+		/* get pointer to next node */
+		cur_node = get_UINT32BE(((BTNodeHeader *) BTref->node_buf)->fLink);
 	}
 
 	/* re-read header node */
@@ -4217,8 +4489,30 @@ bail:
 	return errorcode;
 }
 
+/*
+	BT_search_leaf_rec
 
-static int BT_search_leaf_rec(mac_BTref *BTref, void *search_key,
+	Search for a given key in a B-Tree.  If exact match found, returns
+	corresponding leaf record.  Otherwise, may return the greatest record less
+	than the requested key (of course, this will fail if the key is lower than
+	all keys in the B-Tree).
+
+	BTref (I/O): open B-tree file handle
+	search_key (I): key to search the B-Tree for
+	node_ID (O): set to the node ID of the node the record is located in (may
+		be NULL)
+	record_ID (O): set to the index of the record in the node (may be NULL)
+	record_ptr (O): set to point to record in node buffer (may be NULL)
+	record_len (O): set to total record len (may be NULL)
+	search_exact_match (I): if TRUE, the function will search for a record
+		equal to search_key; if FALSE, the function will search for the
+		greatest record less than or equal to search_key
+	match_found (O): set to TRUE if an exact match for search_key has been
+		found (only makes sense if search_exact_match is FALSE) (may be NULL)
+
+	Return imgtool error code
+*/
+static int BT_search_leaf_rec(mac_BTref *BTref, const void *search_key,
 								UINT32 *node_ID, int *record_ID,
 								void **record_ptr, int *record_len,
 								int search_exact_match, int *match_found)
@@ -4258,7 +4552,7 @@ static int BT_search_leaf_rec(mac_BTref *BTref, void *search_key,
 		last_rec = cur_rec = NULL;
 		for (i=0; i<node_numRecords; i++)
 		{
-			errorcode = BT_node_get_keyed_record(BTref, BTref->node_buf, i, &cur_rec, &cur_rec_len);
+			errorcode = BT_node_get_keyed_record(BTref, BTref->node_buf, depth > 1, i, &cur_rec, &cur_rec_len);
 			if (errorcode)
 				return errorcode;
 
@@ -4331,6 +4625,16 @@ static int BT_search_leaf_rec(mac_BTref *BTref, void *search_key,
 	return 0;
 }
 
+/*
+	BT_leaf_rec_enumerator_open
+
+	Open enumerator for leaf records of a B-Tree
+
+	BTref (I/O): open B-tree file handle
+	enumerator (O): B-Tree enumerator to open
+
+	Return imgtool error code
+*/
 static int BT_leaf_rec_enumerator_open(mac_BTref *BTref, BT_leaf_rec_enumerator *enumerator)
 {
 	enumerator->BTref = BTref;
@@ -4340,6 +4644,15 @@ static int BT_leaf_rec_enumerator_open(mac_BTref *BTref, BT_leaf_rec_enumerator 
 	return 0;
 }
 
+/*
+	BT_leaf_rec_enumerator_read
+
+	Read next leaf record of a B-Tree
+
+	enumerator (I/O): open B-Tree enumerator
+
+	Return imgtool error code
+*/
 static int BT_leaf_rec_enumerator_read(BT_leaf_rec_enumerator *enumerator, void **record_ptr, int *rec_len)
 {
 	UINT16 node_numRecords;
@@ -4372,7 +4685,7 @@ static int BT_leaf_rec_enumerator_read(BT_leaf_rec_enumerator *enumerator, void 
 	}
 
 	/* get current record */
-	errorcode = BT_node_get_keyed_record(enumerator->BTref, enumerator->BTref->node_buf, enumerator->cur_rec, record_ptr, rec_len);
+	errorcode = BT_node_get_keyed_record(enumerator->BTref, enumerator->BTref->node_buf, FALSE, enumerator->cur_rec, record_ptr, rec_len);
 	if (errorcode)
 		return errorcode;
 
@@ -4465,6 +4778,8 @@ static int BT_leaf_rec_enumerator_read(BT_leaf_rec_enumerator *enumerator, void 
 		(try to leave free space split homogeneously???)
 */
 
+/*static void*/
+
 #if 0
 #pragma mark -
 #pragma mark RESOURCE IMPLEMENTATION
@@ -4476,7 +4791,7 @@ static int BT_leaf_rec_enumerator_read(BT_leaf_rec_enumerator *enumerator, void 
 	The resource manager stores arbitrary chunks of data (resource) identified
 	by a type/id pair.  The resource type is a 4-char code, which generally
 	implies the format of the data (e.g. 'PICT' is for a quickdraw picture,
-	'STR ' for a macintosh string, 'CODE' for 68k binary code, etc).  The
+	'STR ' for a macintosh string, 'CODE' for 68k machine code, etc).  The
 	resource id is a signed 16-bit number that uniquely identifies each
 	resource of a given type.  Note that, with most ressource types, resources
 	with id < 128 are system resources that are available to all applications,
@@ -4582,7 +4897,7 @@ typedef struct mac_resfileref
 	resfileref (I/O): ressource file handle to open (resfileref->fileref must
 		have been open previously)
 
-	Returns imgtool error code
+	Return imgtool error code
 */
 static int resfile_open(mac_resfileref *resfileref)
 {
@@ -4629,7 +4944,7 @@ static int resfile_open(mac_resfileref *resfileref)
 	id (I): id of the resource
 	entry (O): resource entry that has been read
 
-	Returns imgtool error code
+	Return imgtool error code
 */
 static int resfile_get_entry(mac_resfileref *resfileref, UINT32 type, UINT16 id, rsrc_ref_entry *entry)
 {
@@ -4696,7 +5011,7 @@ static int resfile_get_entry(mac_resfileref *resfileref, UINT32 type, UINT16 id,
 		resfile_get_entry)
 	string (O): ressource name
 
-	Returns imgtool error code
+	Return imgtool error code
 */
 static int resfile_get_resname(mac_resfileref *resfileref, const rsrc_ref_entry *entry, mac_str255 string)
 {
@@ -4740,7 +5055,7 @@ static int resfile_get_resname(mac_resfileref *resfileref, const rsrc_ref_entry 
 		resfile_get_entry)
 	len (O): ressource lenght
 
-	Returns imgtool error code
+	Return imgtool error code
 */
 static int resfile_get_reslen(mac_resfileref *resfileref, const rsrc_ref_entry *entry, UINT32 *len)
 {
@@ -4778,7 +5093,7 @@ static int resfile_get_reslen(mac_resfileref *resfileref, const rsrc_ref_entry *
 		resfile_get_reslen
 	dest (O): ressource data
 
-	Returns imgtool error code
+	Return imgtool error code
 */
 static int resfile_get_resdata(mac_resfileref *resfileref, const rsrc_ref_entry *entry, UINT32 offset, UINT32 len, void *dest)
 {
@@ -4822,25 +5137,26 @@ static int resfile_get_resdata(mac_resfileref *resfileref, const rsrc_ref_entry 
 #pragma mark DESKTOP FILE IMPLEMENTATION
 #endif
 /*
-	All macintosh volume have a desktop database.
+	All macintosh volumes have information stored in the desktop file or the
+	desktop database.
 
-	The desktop database includes file comments, copy of BNDL and FREF
-	resources that describes supported file types for each application on the
-	volume, copies of icons for each file type registered by each application
-	on the volume, etc.  With MFS volumes, this file also contains the list of
-	folders.
+	Such information include file comments, copy of BNDL and FREF resources
+	that describes supported file types for each application on the volume,
+	copy of icons for each file type registered by each application on the
+	volume, etc.  On MFS volumes, the list of folders is stored in the desktop
+	file as well.
 
 
-	There have been two implementations of the desktop database:
+	There have been two implementations of the desktop metadata:
 
 	* The original desktop file.  The database is stored in the resource fork
 		of a (usually invisible) file called "Desktop" (case may change
-		according to the system version), located at the root of the volume.
-		The desktop file is used by System 6 and earlier for all volumes
-		(unless Appleshare 2 is installed and the volume is shared IIRC), and
-		by System 7 and later for volumes smaller than 2MBytes (to keep floppy
-		disks fully compatible with earlier versions of system).  This file is
-		incompletely documented by Apple technote TB06.
+		according to system versions), located at the root of the volume.  The
+		desktop file is used by System 6 and earlier for all volumes (unless
+		Appleshare 2 is installed and the volume is shared IIRC), and by System
+		7 and later for volumes smaller than 2MBytes (so that floppy disks
+		remain fully compatible with earlier versions of system).  The desktop
+		file is incompletely documented by Apple technote TB06.
 
 	* The desktop database.  The database is stored in the resource fork is
 		stored in the data fork of two (usually invisible) files called
@@ -4852,7 +5168,9 @@ static int resfile_get_resdata(mac_resfileref *resfileref, const rsrc_ref_entry 
 	The reasons for the introduction of the desktop database were:
 	* the macintosh ressource manager cannot share ressource files, which was
 		a problem for Appleshare
-	* the macintosh ressource manager is pretty limited ()
+	* the macintosh ressource manager is pretty limited (+/-16MByte of data and
+		2727 resources at most), which was a problem for large hard disks with
+		many programs/comments
 */
 
 /*
@@ -4864,11 +5182,11 @@ static int resfile_get_resdata(mac_resfileref *resfileref, const rsrc_ref_entry 
 	id (I): comment id (from mfs_hashString())
 	comment (O): comment that has been read
 
-	Returns imgtool error code
+	Return imgtool error code
 */
 static int get_comment(mac_l2_imgref *l2_img, UINT16 id, mac_str255 comment)
 {
-	UINT8 desktop_fname[] = {'\7','D','e','s','k','t','o','p'};
+	static const UINT8 desktop_fname[] = {'\7','D','e','s','k','t','o','p'};
 	#define restype_FCMT (('F' << 24) | ('C' << 16) | ('M' << 8) | 'T')
 	mac_resfileref resfileref;
 	rsrc_ref_entry resentry;
