@@ -430,6 +430,11 @@ void osd_save_snapshot(struct osd_bitmap *bitmap)
     MAME32App.m_pDisplay->save_snapshot(bitmap);
 }
 
+void osd_debugger_focus(int debugger_has_focus)
+{
+	MAME32App.m_pDisplay->set_debugger_focus(debugger_has_focus);
+}
+
 /***************************************************************************
     Sound
  ***************************************************************************/
