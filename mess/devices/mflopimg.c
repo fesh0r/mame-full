@@ -3,7 +3,8 @@
 #include "image.h"
 #include "devices/flopdrv.h"
 
-#define FLOPPY_TAG "floptag"
+#define FLOPPY_TAG		"floptag"
+#define LOG_FLOPPY		0
 
 struct mess_flopimg
 {
@@ -69,11 +70,27 @@ static void flopimg_get_id_callback(mess_image *image, chrn_id *id, int id_index
 
 
 
+#if LOG_FLOPPY
+static void log_readwrite(const char *name, int head, int track, int sector, const char *buf, int length)
+{
+	char membuf[1024];
+	int i;
+	for (i = 0; i < length; i++)
+		sprintf(membuf + i*2, "%02x", (int) (UINT8) buf[i]);
+	logerror("%s:  head=%i track=%i sector=%i buffer='%s'\n", name, head, track, sector, membuf);
+}
+#endif
+
+
+
 static void flopimg_read_sector_data_into_buffer(mess_image *image, int side, int index1, char *ptr, int length)
 {
 	struct mess_flopimg *flopimg;
 	flopimg = get_flopimg(image);
 	floppy_read_sector(flopimg->floppy, side, flopimg->track, index1, 0, ptr, length);
+#if LOG_FLOPPY
+	log_readwrite("sector_read", side, flopimg->track, index1, ptr, length);
+#endif
 }
 
 
@@ -82,6 +99,9 @@ static void flopimg_write_sector_data_from_buffer(mess_image *image, int side, i
 {
 	struct mess_flopimg *flopimg;
 	flopimg = get_flopimg(image);
+#if LOG_FLOPPY
+	log_readwrite("sector_write", side, flopimg->track, index1, ptr, length);
+#endif
 	floppy_write_sector(flopimg->floppy, side, flopimg->track, index1, 0, ptr, length);
 }
 
@@ -219,24 +239,33 @@ static DEVICE_UNLOAD(floppy)
 
 static void specify_extension(char *extbuf, size_t extbuflen, const char *extension)
 {
-	size_t len;
+	char *s;
 
+	/* loop through the extensions that we are adding */
 	while(extension && *extension)
 	{
-		while(*extbuf)
+		/* loop through the already specified extensions; and check for dupes */
+		for (s = extbuf; *s; s += strlen(s) + 1)
 		{
-			/* already have this extension? */
-			if (!strcmpi(extbuf, extension))
-				return;
-
-			len = strlen(extbuf) + 1;
-			extbuf += len;
-			extbuflen -= len;
+			if (!strcmp(extension, s))
+				break;
 		}
 
-		assert(strlen(extension)+1 <= extbuflen);
-		strncpyz(extbuf, extension, extbuflen);
+		/* only write if there are no dupes */
+		if (*s == '\0')
+		{
+			/* out of room?  this should never happen */
+			if ((s - extbuf + strlen(extension) + 1) >= extbuflen)
+			{
+				assert(FALSE);
+				continue;
+			}
+	
+			/* copy the extension */
+			strncpyz(s, extension, extbuflen);
+		}
 
+		/* next extension */
 		extension += strlen(extension) + 1;
 	}
 }

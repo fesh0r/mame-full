@@ -41,6 +41,8 @@ Source Changes:
   Platform specific help now goes in subdirectories like docs/windows and
   so on.  [Nate Woods, Paul Vince]
 
+- Added some consistency code to sanity check drivers' extension lists (bug
+  #470).  [Nate Woods]
 
 
 0.74

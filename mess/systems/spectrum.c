@@ -2432,7 +2432,7 @@ ROM_START(pentagon)
 ROM_END
 
 SYSTEM_CONFIG_START(spectrum_common)
-	CONFIG_DEVICE_CASSETTEX(1,	"wav\0tap\0blk\0",	device_load_spectrum_cassette, device_unload_spectrum_cassette)
+	CONFIG_DEVICE_CASSETTEX(1,	"tap\0blk\0",	device_load_spectrum_cassette, device_unload_spectrum_cassette)
 	CONFIG_DEVICE_SNAPSHOT(		"sna\0z80\0sp\0",	spectrum)
 	CONFIG_DEVICE_QUICKLOAD(	"scr\0",			spectrum)
 SYSTEM_CONFIG_END
