@@ -342,7 +342,7 @@ static void reset_tms9901_timer(void)
 	/* clock interval == 0 -> no timer */
 	if (clockinvl)
 	{
-		tms9901_timer = timer_pulse(clockinvl / (clock_rate / 64.), 0, decrementer_callback);
+		tms9901_timer = timer_pulse((double) clockinvl / (clock_rate / 64.), 0, decrementer_callback);
 	}
 }
 
