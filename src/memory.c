@@ -1970,6 +1970,8 @@ GENERATE_HANDLERS_32BIT_LE(26)
 GENERATE_HANDLERS_32BIT_LE(29)
 GENERATE_HANDLERS_32BIT_LE(32)
 
+GENERATE_HANDLERS_32BIT_BE(18)	/* HACK -- used for pdp-1 */
+
 /* make sure you add an entry to this list whenever you add a set of handlers */
 static const struct memory_address_table readmem_to_bits[] =
 {
@@ -1993,7 +1995,9 @@ static const struct memory_address_table readmem_to_bits[] =
 
 	{ 26, cpu_readmem26ledw },
 	{ 29, cpu_readmem29ledw },
-	{ 32, cpu_readmem32ledw }
+	{ 32, cpu_readmem32ledw },
+
+	{ 18, cpu_readmem18bedw }
 };
 
 
