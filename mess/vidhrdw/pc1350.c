@@ -152,9 +152,9 @@ void pc1350_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	for (k=0, y=DOWN; k<4; y+=16,k++) {
 		for (x=RIGHT, i=pc1350_addr[k]; i<0xa00; i+=0x200) {
 			for (j=0; j<=0x1d; j++, x+=2) {
-				drawgfx(bitmap, Machine->gfx[PC1350_CONTRAST], 
+				drawgfx(bitmap, Machine->gfx[0], 
 						pc1350_lcd.reg[j+i],
-						0,0,0,
+						PC1350_CONTRAST,0,0,
 						x,y,
 						0, TRANSPARENCY_NONE,0);
 			}

@@ -498,7 +498,7 @@ static struct GfxLayout pc1251_charlayout =
 static struct GfxLayout pc1350_charlayout =
 {
         2,16,
-        128,                                    /* 256 characters */
+        256,                                    /* 256 characters */
         1,                      /* 1 bits per pixel */
         { 0,0 },                  /* no bitplanes; 1 bit per pixel */
         /* x offsets */
@@ -511,38 +511,17 @@ static struct GfxLayout pc1350_charlayout =
 };
 
 static struct GfxDecodeInfo pc1401_gfxdecodeinfo[] = {
-	{ REGION_GFX1, 0x0000, &pc1401_charlayout,                     0, 2 },
-	{ REGION_GFX1, 0x0000, &pc1401_charlayout,                     2, 2 },
-	{ REGION_GFX1, 0x0000, &pc1401_charlayout,                     4, 2 },
-	{ REGION_GFX1, 0x0000, &pc1401_charlayout,                     6, 2 },
-	{ REGION_GFX1, 0x0000, &pc1401_charlayout,                     8, 2 },
-	{ REGION_GFX1, 0x0000, &pc1401_charlayout,                     10, 2 },
-	{ REGION_GFX1, 0x0000, &pc1401_charlayout,                     12, 2 },
-	{ REGION_GFX1, 0x0000, &pc1401_charlayout,                     14, 2 },
+	{ REGION_GFX1, 0x0000, &pc1401_charlayout,                     0, 8 },
     { -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo pc1251_gfxdecodeinfo[] = {
-	{ REGION_GFX1, 0x0000, &pc1251_charlayout,                     0, 2 },
-	{ REGION_GFX1, 0x0000, &pc1251_charlayout,                     2, 2 },
-	{ REGION_GFX1, 0x0000, &pc1251_charlayout,                     4, 2 },
-	{ REGION_GFX1, 0x0000, &pc1251_charlayout,                     6, 2 },
-	{ REGION_GFX1, 0x0000, &pc1251_charlayout,                     8, 2 },
-	{ REGION_GFX1, 0x0000, &pc1251_charlayout,                     10, 2 },
-	{ REGION_GFX1, 0x0000, &pc1251_charlayout,                     12, 2 },
-	{ REGION_GFX1, 0x0000, &pc1251_charlayout,                     14, 2 },
+	{ REGION_GFX1, 0x0000, &pc1251_charlayout,                     0, 8 },
     { -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo pc1350_gfxdecodeinfo[] = {
-	{ REGION_GFX1, 0x0000, &pc1350_charlayout,                     0, 2 },
-	{ REGION_GFX1, 0x0000, &pc1350_charlayout,                     2, 2 },
-	{ REGION_GFX1, 0x0000, &pc1350_charlayout,                     4, 2 },
-	{ REGION_GFX1, 0x0000, &pc1350_charlayout,                     6, 2 },
-	{ REGION_GFX1, 0x0000, &pc1350_charlayout,                     8, 2 },
-	{ REGION_GFX1, 0x0000, &pc1350_charlayout,                     10, 2 },
-	{ REGION_GFX1, 0x0000, &pc1350_charlayout,                     12, 2 },
-	{ REGION_GFX1, 0x0000, &pc1350_charlayout,                     14, 2 },
+	{ REGION_GFX1, 0x0000, &pc1350_charlayout,                     0, 8 },
     { -1 } /* end of array */
 };
 

@@ -137,15 +137,15 @@ void pc1251_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 
 	for (x=RIGHT,y=DOWN,i=0; i<60;x+=3) {
 		for (j=0; j<5;j++,i++,x+=3)
-			drawgfx(bitmap, Machine->gfx[PC1251_CONTRAST], pc1251_lcd.reg[i],
-					0,0,0,
+			drawgfx(bitmap, Machine->gfx[0], pc1251_lcd.reg[i],
+					PC1251_CONTRAST,0,0,
 					x,y,
 					0, TRANSPARENCY_NONE,0);
 	}
 	for (i=0x7b; i>=0x40;x+=3) {
 		for (j=0; j<5;j++,i--,x+=3)
-			drawgfx(bitmap, Machine->gfx[PC1251_CONTRAST], pc1251_lcd.reg[i],
-					0,0,0,
+			drawgfx(bitmap, Machine->gfx[0], pc1251_lcd.reg[i],
+					PC1251_CONTRAST,0,0,
 					x,y,
 					0, TRANSPARENCY_NONE,0);
 	}
