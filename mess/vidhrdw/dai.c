@@ -15,20 +15,20 @@
 unsigned char dai_palette[16*3] =
 {
 	0x00, 0x00, 0x00,	/*  0 Black		*/
-	0x00, 0x00, 0x00,	/*  1 Dark Blue		*/
-	0x00, 0x00, 0x00,	/*  2 Purple Red	*/
-	0x00, 0x00, 0x00,	/*  3 Red		*/
-	0x00, 0x00, 0x00,	/*  4 Purple Brown	*/
-	0x00, 0x00, 0x00,	/*  5 Emerald Green	*/
-	0x00, 0x00, 0x00,	/*  6 Kakhi Brown	*/
-	0x00, 0x00, 0x00,	/*  7 Mustard Brown	*/
-	0x00, 0x00, 0x00,	/*  8 Grey		*/
-	0x00, 0x00, 0x00,	/*  9 Middle Blue	*/
-	0x00, 0x00, 0x00,	/* 10 Orange		*/
-	0x00, 0x00, 0x00,	/* 11 Pink		*/
-	0x00, 0x00, 0x00,	/* 12 Light Blue	*/
-	0x00, 0x00, 0x00,	/* 13 Light Green	*/
-	0x00, 0x00, 0x00,	/* 14 Light Yellow	*/
+	0x00, 0x00, 0x8b,	/*  1 Dark Blue		*/
+	0xff, 0x00, 0x80,	/*  2 Purple Red	*/
+	0xff, 0x00, 0x00,	/*  3 Red		*/
+	0xee, 0xff, 0xbb,	/*  4 Purple Brown	*/
+	0x00, 0xc9, 0x57,	/*  5 Emerald Green	*/
+	0x8b, 0x86, 0x4e,	/*  6 Kakhi Brown	*/
+	0xff, 0x88, 0x55,	/*  7 Mustard Brown	*/
+	0x99, 0x99, 0x99,	/*  8 Grey		*/
+	0x00, 0x00, 0xcd,	/*  9 Middle Blue	*/
+	0xff, 0xa5, 0x00,	/* 10 Orange		*/
+	0xff, 0xc0, 0xcb,	/* 11 Pink		*/
+	0x00, 0x00, 0xff,	/* 12 Light Blue	*/
+	0x00, 0xff, 0x00,	/* 13 Light Green	*/
+	0xff, 0xff, 0x00,	/* 14 Light Yellow	*/
 	0xff, 0xff, 0xff,	/* 15 White		*/
 };
 
@@ -127,7 +127,7 @@ VIDEO_UPDATE( dai )
 									{
 										for (k=0; k<8; k++)
 										{
-											plot_pixel(bitmap, i*8+k, current_scan_line/2 + j, Machine->pens[ (current_data>>k) & 0x01 ? 0 : 15 ]);
+											plot_pixel(bitmap, i*8+k, current_scan_line/2 + j, Machine->pens[ (current_data>>k) & 0x01 ? 15 : 5 ]);
 										}
 									}
 								}
@@ -154,9 +154,9 @@ VIDEO_UPDATE( dai )
 							{
 								for (k=0; k<8; k++)
 								{
-									plot_pixel(bitmap, i*8*3+k*3, current_scan_line/2 + j, Machine->pens[ (char_rom[current_data*16+j]>>k) & 0x01 ? 0 : 15 ]);
-									plot_pixel(bitmap, i*8*3+k*3+1, current_scan_line/2 + j, Machine->pens[ (char_rom[current_data*16+j]>>k) & 0x01 ? 0 : 15 ]);
-									plot_pixel(bitmap, i*8*3+k*3+2, current_scan_line/2 + j, Machine->pens[ (char_rom[current_data*16+j]>>k) & 0x01 ? 0 : 15 ]);
+									plot_pixel(bitmap, i*8*3+k*3+0, current_scan_line/2 + j, Machine->pens[ (char_rom[current_data*16+j]>>k) & 0x01 ? 15 : 5 ]);
+									plot_pixel(bitmap, i*8*3+k*3+1, current_scan_line/2 + j, Machine->pens[ (char_rom[current_data*16+j]>>k) & 0x01 ? 15 : 5 ]);
+									plot_pixel(bitmap, i*8*3+k*3+2, current_scan_line/2 + j, Machine->pens[ (char_rom[current_data*16+j]>>k) & 0x01 ? 15 : 5 ]);
 								}
 							}
 						}
@@ -179,7 +179,7 @@ VIDEO_UPDATE( dai )
 									{
 										for (k=0; k<8; k++)
 										{
-											plot_pixel(bitmap, i*8+k, current_scan_line/2 + j, Machine->pens[ (char_rom[current_data*16+j]>>k) & 0x01 ? 0 : 15 ]);
+											plot_pixel(bitmap, i*8+k, current_scan_line/2 + j, Machine->pens[ (char_rom[current_data*16+j]>>k) & 0x01 ? 15 : 5 ]);
 										}
 									}
 								}
@@ -193,7 +193,7 @@ VIDEO_UPDATE( dai )
 									{
 										for (k=0; k<8; k++)
 										{
-											plot_pixel(bitmap, i*8+k, current_scan_line/2 + j, Machine->pens[ (char_rom[current_data*16+j]>>k) & 0x01 ? 0 : 15 ]);
+											plot_pixel(bitmap, i*8+k, current_scan_line/2 + j, Machine->pens[ (char_rom[current_data*16+j]>>k) & 0x01 ? 15 : 5 ]);
 										}
 									}
 								}
