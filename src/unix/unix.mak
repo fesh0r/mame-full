@@ -106,14 +106,15 @@ OBJ     = $(NAME).obj
 CORE_OBJDIRS = $(OBJ) \
 	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw \
 	$(OBJ)/cpu $(OBJ)/sound \
-	$(OBJ)/mess $(OBJ)/mess/formats $(OBJ)/mess/systems $(OBJ)/mess/machine \
-	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/sound $(OBJ)/mess/tools \
-	$(OBJ)/mess/tools/dat2html $(OBJ)/mess/tools/mkhdimg \
-	$(OBJ)/mess/tools/messroms $(OBJ)/mess/tools/imgtool
+	$(OBJ)/mess $(OBJ)/mess/cpu $(OBJ)/mess/formats $(OBJ)/mess/systems \
+	$(OBJ)/mess/machine $(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw \
+	$(OBJ)/mess/sound $(OBJ)/mess/tools $(OBJ)/mess/tools/dat2html \
+	$(OBJ)/mess/tools/mkhdimg $(OBJ)/mess/tools/messroms \
+	$(OBJ)/mess/tools/imgtool
 
 IMGTOOL_OBJS =  $(OBJ)/unix.$(DISPLAY_METHOD)/dirio.o
 IMGTOOL_LIBS = -lz
-INCLUDE_PATH = -Isrc -Imess -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+INCLUDE_PATH = -I. -Isrc -Imess -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 
 ##############################################################################
 # "Calculate" the final CFLAGS, unix CONFIG, LIBS and OBJS
@@ -133,6 +134,9 @@ IMGTOOL_OBJS = $(OBJ)/unix.$(DISPLAY_METHOD)/dirio.o
 include src/core.mak
 include src/$(TARGET).mak
 include src/rules.mak
+ifdef MESS
+include src/rules_ms.mak
+endif
 
 # Perhaps one day original mame/mess sources will use POSIX strcasecmp and
 # M_PI instead MS-DOS counterparts... ( a long and sad history ...)
@@ -141,8 +145,7 @@ MY_CFLAGS = $(CFLAGS) $(IL) $(CFLAGS.$(MY_CPU)) \
 	-Dstricmp=strcasecmp -Dstrnicmp=strncasecmp \
 	-DPI=M_PI -DUNIX -DSIGNED_SAMPLES \
 	$(COREDEFS) $(SOUNDDEFS) $(CPUDEFS) $(ASMDEFS) \
-	$(INCLUDES) -Isrc -Imess -Isrc/unix \
-	-I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+	$(INCLUDES) $(INCLUDE_PATH)
 
 MY_LIBS = $(LIBS) $(LIBS.$(ARCH)) $(LIBS.$(DISPLAY_METHOD)) -lz
 
