@@ -775,7 +775,7 @@ static floperr_t coco_dmk_format_track(floppy_image *floppy, int head, int track
 			physical_sector %= sectors;
 		}
 
-		sector_map[physical_sector] = logical_sector;
+		sector_map[physical_sector] = logical_sector + first_sector_id;
 		physical_sector += interleave + 1;
 		physical_sector %= sectors;
 	}

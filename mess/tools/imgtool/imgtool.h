@@ -381,6 +381,8 @@ struct imgtool_module_features
 	unsigned int supports_deletedir : 1;
 	unsigned int supports_creation_time : 1;
 	unsigned int supports_lastmodified_time : 1;
+	unsigned int supports_readsector : 1;
+	unsigned int supports_writesector : 1;
 };
 
 struct imgtool_module_features img_get_module_features(const struct ImageModule *module);

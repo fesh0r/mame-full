@@ -198,6 +198,7 @@ static void data_handler_binary(const XML_Char *s, int len)
 	size_t j, size;
 	int found;
 	char c;
+	char quote_char;
 
 	while(i < len)
 	{
@@ -251,6 +252,7 @@ static void data_handler_binary(const XML_Char *s, int len)
 				else
 					state->multiple *= 10;
 				state->multiple += s[i] - '0';
+				i++;
 			}
 			else if (isspace(s[i]) && (state->multiple == (size_t) -1))
 			{
@@ -294,14 +296,15 @@ static void data_handler_binary(const XML_Char *s, int len)
 
 		case BLOBSTATE_SINGLEQUOTES:
 		case BLOBSTATE_DOUBLEQUOTES:
-			if (s[i] == (state->blobstate == BLOBSTATE_SINGLEQUOTES ? '\'' : '\"'))
+			quote_char = state->blobstate == BLOBSTATE_SINGLEQUOTES ? '\'' : '\"';
+			if (s[i] == quote_char)
 			{
 				state->blobstate = BLOBSTATE_INITIAL;
 				i++;
 			}
 			else
 			{
-				while(((i + 1) <= len) && (s[i] != '\"'))
+				while(((i + 1) <= len) && (s[i] != quote_char))
 				{
 					pile_putc(&state->blobpile, s[i++]);
 				}

@@ -1262,7 +1262,7 @@ static void drop_files(HWND window, HDROP drop)
 
 		// figure out the file/dir name on the image
 		snprintf(subpath, sizeof(subpath) / sizeof(subpath[0]), "%s%s",
-			info->current_directory, osd_basename(T2U(buffer)));
+			info->current_directory ? info->current_directory : "", osd_basename(T2U(buffer)));
 
 		if (GetFileAttributes(buffer) & FILE_ATTRIBUTE_DIRECTORY)
 			err = put_recursive_directory(info->image, buffer, subpath);
@@ -1459,6 +1459,8 @@ static void init_menu(HWND window, HMENU menu)
 		MF_BYCOMMAND | (can_createdir ? MF_ENABLED : MF_GRAYED));
 	EnableMenuItem(menu, ID_IMAGE_DELETE,
 		MF_BYCOMMAND | (can_delete ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(menu, ID_IMAGE_SECTORVIEW,
+		MF_BYCOMMAND | (features.supports_readsector ? MF_ENABLED : MF_GRAYED));
 
 	lvstyle = GetWindowLong(info->listview, GWL_STYLE) & LVS_TYPEMASK;
 	CheckMenuItem(menu, ID_VIEW_ICONS,

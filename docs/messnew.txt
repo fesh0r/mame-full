@@ -16,6 +16,9 @@ System Driver Changes:
 - [BBC] BBCB1770 merged into BBCB.  Also modernized the driver, added tape
   and split mode support.  [Gordon Jefferyes]
   
+- [COCO] Fixed a bug in DMK image creation that caused MESS and Imgtool to
+  always zero count sectors when created.  (bug #630) [Nate Woods]
+
 - [COCO3] Fixed a regression that prevented cartridges from loading on startup.
   [Nate Woods]
   
@@ -58,6 +61,9 @@ Imgtool Changes:
 
 - [FAT] Fixed a bugs that could cause file truncations or deletions to leak
   clusters.  [Nate Woods]
+
+- [RSDOS] Bytes #16-31 of a directory entry will now be cleared upon creation.
+  [Nate Woods]
 
 - [Windows Imgtool] Fixed a bug that prevented read only files from opening.
   (bug #624)  [Nate Woods]

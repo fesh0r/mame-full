@@ -3,31 +3,58 @@
 <imgtooltest name="coco_rs_jvc">
 	<createimage driver="coco_jvc_rsdos"/>
 	<checkdirectory/>
+
 	<putfile name="FOO.TXT">'Hello World!'</putfile>
 	<checkdirectory>
 		<entry name="FOO.TXT" size="12"/>
 	</checkdirectory>
 	<checkfile name="FOO.TXT">'Hello World!'</checkfile>
+
+	<putfile name="BIG.TXT">'Abcde' * 1500 </putfile>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="12"/>
+		<entry name="BIG.TXT" size="7500"/>
+	</checkdirectory>
+	<checkfile name="FOO.TXT">'Hello World!'</checkfile>
+	<checkfile name="BIG.TXT">'Abcde' * 1500 </checkfile>
 </imgtooltest>
 
 <imgtooltest name="coco_rs_vdk">
 	<createimage driver="coco_vdk_rsdos"/>
 	<checkdirectory/>
+
 	<putfile name="FOO.TXT">'Hello World!'</putfile>
 	<checkdirectory>
 		<entry name="FOO.TXT" size="12"/>
 	</checkdirectory>
 	<checkfile name="FOO.TXT">'Hello World!'</checkfile>
+
+	<putfile name="BIG.TXT">'Abcde' * 1500 </putfile>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="12"/>
+		<entry name="BIG.TXT" size="7500"/>
+	</checkdirectory>
+	<checkfile name="FOO.TXT">'Hello World!'</checkfile>
+	<checkfile name="BIG.TXT">'Abcde' * 1500 </checkfile>
 </imgtooltest>
 
 <imgtooltest name="coco_rs_dmk">
 	<createimage driver="coco_dmk_rsdos"/>
 	<checkdirectory/>
+
 	<putfile name="FOO.TXT">'Hello World!'</putfile>
 	<checkdirectory>
 		<entry name="FOO.TXT" size="12"/>
 	</checkdirectory>
 	<checkfile name="FOO.TXT">'Hello World!'</checkfile>
+
+	<putfile name="BIG.TXT">'Abcde' * 1500 </putfile>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="12"/>
+		<entry name="BIG.TXT" size="7500"/>
+	</checkdirectory>
+	<checkfile name="FOO.TXT">'Hello World!'</checkfile>
+	<checkfile name="BIG.TXT">'Abcde' * 1500 </checkfile>
 </imgtooltest>
 
 <imgtooltest name="coco_rs_001">
