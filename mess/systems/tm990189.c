@@ -732,7 +732,7 @@ static ADDRESS_MAP_START(tm990_189_writecru, ADDRESS_SPACE_IO, 8)
 
 	AM_RANGE(0x000, 0x1ff) AM_WRITE(tms9901_0_cru_w)	/* user I/O tms9901 */
 	AM_RANGE(0x200, 0x3ff) AM_WRITE(tms9901_1_cru_w)	/* system I/O tms9901 */
-//	AM_RANGE(0x400, 0x5ff) AM_WRITE(tms9902_0_cru_w)	/* optional tms9902 */
+	AM_RANGE(0x400, 0x5ff) AM_WRITE(tms9902_0_cru_w)	/* optional tms9902 */
 
 	AM_RANGE(0x0800,0x1fff)AM_WRITE(ext_instr_decode)	/* external instruction decoding (IDLE, RSET, CKON, CKOF, LREX) */
 
@@ -742,7 +742,7 @@ static ADDRESS_MAP_START(tm990_189_readcru, ADDRESS_SPACE_IO, 8)
 
 	AM_RANGE(0x00, 0x3f) AM_READ(tms9901_0_cru_r)		/* user I/O tms9901 */
 	AM_RANGE(0x40, 0x6f) AM_READ(tms9901_1_cru_r)		/* system I/O tms9901 */
-//	AM_RANGE(0x80, 0xcf) AM_READ(tms9902_0_cru_r)		/* optional tms9902 */
+	AM_RANGE(0x80, 0xcf) AM_READ(tms9902_0_cru_r)		/* optional tms9902 */
 
 ADDRESS_MAP_END
 
