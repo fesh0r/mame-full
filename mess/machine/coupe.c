@@ -35,77 +35,81 @@ DEVICE_LOAD( coupe_floppy )
 	return INIT_FAIL;
 }
 
+
+
+static void coupe_update_bank(int bank, data8_t *memory, int is_readonly)
+{
+	read8_handler rh;
+	write8_handler wh;
+
+	if (memory)
+		cpu_setbank(bank, memory);
+
+	rh = !memory ? MRA8_NOP :							(read8_handler) (STATIC_BANK1 + bank - 1);
+	wh = !memory ? MWA8_NOP : (is_readonly ? MWA8_ROM :	(write8_handler) (STATIC_BANK1 + bank - 1));
+
+	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, ((bank-1) * 0x4000), ((bank-1) * 0x4000) + 0x3FFF, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, ((bank-1) * 0x4000), ((bank-1) * 0x4000) + 0x3FFF, 0, wh);
+}
+
+
+
 void coupe_update_memory(void)
 {
 	UINT8 *rom = memory_region(REGION_CPU1);
 	int PAGE_MASK = (mess_ram_size / 0x4000) - 1;
+	data8_t *memory;
+	int is_readonly;
 
+	/* BANK1 */
     if (LMPR & LMPR_RAM0)   /* Is ram paged in at bank 1 */
 	{
 		if ((LMPR & 0x1F) <= PAGE_MASK)
-		{
-			cpu_setbank(1,&mess_ram[(LMPR & PAGE_MASK) * 0x4000]);
-			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-			memory_set_bankhandler_w(1, 0, MWA8_BANK1);
-		}
+			memory = &mess_ram[(LMPR & PAGE_MASK) * 0x4000];
 		else
-		{
-			memory_set_bankhandler_r(1, 0, MRA8_NOP);	/* Attempt to page in non existant ram region */
-			memory_set_bankhandler_w(1, 0, MWA8_NOP);
-		}
+			memory = NULL;	/* Attempt to page in non existant ram region */
+		is_readonly = FALSE;
 	}
 	else
 	{
-		cpu_setbank(1, rom);	/* Rom0 paged in */
-		cpu_setbank(1, rom);
-		memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-		memory_set_bankhandler_w(1, 0, MWA8_ROM);
+		memory = rom;	/* Rom0 paged in */
+		is_readonly = TRUE;
 	}
+	coupe_update_bank(1, memory, is_readonly);
 
+
+	/* BANK2 */
 	if (( (LMPR+1) & 0x1F) <= PAGE_MASK)
-	{
-		cpu_setbank(2,&mess_ram[((LMPR+1) & PAGE_MASK) * 0x4000]);
-		memory_set_bankhandler_r(2, 0, MRA8_BANK2);
-		memory_set_bankhandler_w(2, 0, MWA8_BANK2);
-	}
+		memory = &mess_ram[((LMPR+1) & PAGE_MASK) * 0x4000];
 	else
-	{
-		memory_set_bankhandler_r(2, 0, MRA8_NOP);	/* Attempt to page in non existant ram region */
-		memory_set_bankhandler_w(2, 0, MWA8_NOP);
-	}
+		memory = NULL;	/* Attempt to page in non existant ram region */
+	coupe_update_bank(2, memory, FALSE);
 
+
+	/* BANK3 */
 	if ( (HMPR & 0x1F) <= PAGE_MASK )
-	{
-		cpu_setbank(3,&mess_ram[(HMPR & PAGE_MASK)*0x4000]);
-		memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-		memory_set_bankhandler_w(3, 0, MWA8_BANK3);
-	}
+		memory = &mess_ram[(HMPR & PAGE_MASK)*0x4000];
 	else
-	{
-		memory_set_bankhandler_r(3, 0, MRA8_NOP);	/* Attempt to page in non existant ram region */
-		memory_set_bankhandler_w(3, 0, MWA8_NOP);
-	}
+		memory = NULL;	/* Attempt to page in non existant ram region */
+	coupe_update_bank(3, memory, FALSE);
 
+
+	/* BANK4 */
 	if (LMPR & LMPR_ROM1)	/* Is Rom1 paged in at bank 4 */
 	{
-		cpu_setbank(4, rom + 0x4000);
-		memory_set_bankhandler_r(4, 0, MRA8_BANK4);
-		memory_set_bankhandler_w(4, 0, MWA8_ROM);
+		memory = rom + 0x4000;
+		is_readonly = TRUE;
 	}
 	else
 	{
 		if (( (HMPR+1) & 0x1F) <= PAGE_MASK)
-		{
-			cpu_setbank(4,&mess_ram[((HMPR+1) & PAGE_MASK) * 0x4000]);
-			memory_set_bankhandler_r(4, 0, MRA8_BANK4);
-			memory_set_bankhandler_w(4, 0, MWA8_BANK4);
-		}
+			memory = &mess_ram[((HMPR+1) & PAGE_MASK) * 0x4000];
 		else
-		{
-			memory_set_bankhandler_r(4, 0, MRA8_NOP);	/* Attempt to page in non existant ram region */
-			memory_set_bankhandler_w(4, 0, MWA8_NOP);
-		}
+			memory = NULL;	/* Attempt to page in non existant ram region */
+		is_readonly = FALSE;
 	}
+	coupe_update_bank(4, memory, FALSE);
+
 
 	if (VMPR & 0x40)	/* if bit set in 2 bank screen mode */
 		sam_screen = &mess_ram[((VMPR&0x1E) & PAGE_MASK) * 0x4000];
@@ -115,16 +119,6 @@ void coupe_update_memory(void)
 
 MACHINE_INIT( coupe )
 {
-	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-	memory_set_bankhandler_w(1, 0, MWA8_BANK1);
-    memory_set_bankhandler_r(2, 0, MRA8_BANK2);
-	memory_set_bankhandler_w(2, 0, MWA8_BANK2);
-    memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-	memory_set_bankhandler_w(3, 0, MWA8_BANK3);
-    memory_set_bankhandler_r(4, 0, MRA8_BANK4);
-	memory_set_bankhandler_w(4, 0, MWA8_BANK4);
-
-
     LMPR = 0x0F;            /* ROM0 paged in, ROM1 paged out RAM Banks */
     HMPR = 0x01;
     VMPR = 0x81;

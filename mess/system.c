@@ -102,9 +102,9 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( a5200 ) 	/* Atari 5200										*/
 	DRIVER( a7800 ) 	/* Atari 7800 NTSC									*/
 	DRIVER( a7800p ) 	/* Atari 7800 PAL									*/
-//	DRIVER( lynx )		/* Atari Lynx Handheld								*/
-//	DRIVER( lynxa )		/* Atari Lynx Handheld alternate rom save			*/
-//	DRIVER( lynx2 )		/* Atari Lynx II Handheld redesigned, no additions	*/
+	DRIVER( lynx )		/* Atari Lynx Handheld								*/
+	DRIVER( lynxa )		/* Atari Lynx Handheld alternate rom save			*/
+	DRIVER( lynx2 )		/* Atari Lynx II Handheld redesigned, no additions	*/
 	DRIVER( jaguar )	/* Atari Jaguar										*/
 
 	/* NINTENDO */
@@ -452,9 +452,9 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS			*/
 //	DRIVER( pc1403 )	/* Pocket Computer 1403 							*/
 //	DRIVER( pc1403h )	/* Pocket Computer 1403H 							*/
 
-//	DRIVER( mz700 ) 	/* 1982 Sharp MZ700 								*/
-//	DRIVER( mz700j )	/* 1982 Sharp MZ700 Japan							*/
-//TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 								*/
+	DRIVER( mz700 ) 	/* 1982 Sharp MZ700 								*/
+	DRIVER( mz700j )	/* 1982 Sharp MZ700 Japan							*/
+TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 								*/
 
 	/* TEXAS INSTRUMENTS */
 	DRIVER( ti990_10 )	/* 1975 TI 990/10									*/
@@ -501,26 +501,26 @@ TESTDRIVER( ti99_4p )	/* 1996 SNUG 99/4P (a.k.a. SGCPU)					*/
 //	DRIVER( ti86grom )	/* TI 86 homebrew rom by Daniel Foesch				*/
 
 	/* NEC */
-//	DRIVER( pc88srl )	/* PC-8801mkIISR(Low res display, VSYNC 15KHz)		*/
-//	DRIVER( pc88srh )	/* PC-8801mkIISR(High res display, VSYNC 24KHz)		*/
+	DRIVER( pc88srl )	/* PC-8801mkIISR(Low res display, VSYNC 15KHz)		*/
+	DRIVER( pc88srh )	/* PC-8801mkIISR(High res display, VSYNC 24KHz)		*/
 
 	/* CANTAB */
-//	DRIVER( jupiter )	/* Jupiter Ace										*/
+	DRIVER( jupiter )	/* Jupiter Ace										*/
 
 	/* SORD */
-//	DRIVER( sordm5 )
+	DRIVER( sordm5 )
 
 	/* APF Electronics Inc. */
 	DRIVER( apfm1000 )
 	DRIVER( apfimag )
 
 	/* Tatung */
-//	DRIVER( einstein )
-//TESTDRIVER( einstei2 )
+	DRIVER( einstein )
+TESTDRIVER( einstei2 )
 
 	/* INTELLIGENT SOFTWARE */
-//	DRIVER( ep128 ) 	/* Enterprise 128 k 								*/
-//	DRIVER( ep128a )	/* Enterprise 128 k 								*/
+	DRIVER( ep128 ) 	/* Enterprise 128 k 								*/
+	DRIVER( ep128a )	/* Enterprise 128 k 								*/
 
 	/* NON LINEAR SYSTEMS */
 	DRIVER( kaypro )	/* Kaypro 2X										*/
@@ -577,7 +577,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	/* Creativision console */
 
 	/* TANGERINE */
-//	DRIVER( microtan )	/* 1979 Microtan 65 								*/
+	DRIVER( microtan )	/* 1979 Microtan 65 								*/
 
 //	DRIVER( oric1 ) 	/* 1983 Oric 1										*/
 //	DRIVER( orica ) 	/* 1984 Oric Atmos									*/
@@ -587,15 +587,15 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 //	DRIVER( telstrat )	/* ??? Oric Telestrat/Stratos						*/
 
 	/* PHILIPS */
-//	DRIVER( p2000t )	/* 1980 P2000T										*/
-//	DRIVER( p2000m )	/* 1980 P2000M										*/
+	DRIVER( p2000t )	/* 1980 P2000T										*/
+	DRIVER( p2000m )	/* 1980 P2000M										*/
 	/* philips g7000 odyssey2 compatible */
 
 	/* COMPUKIT */
 	DRIVER( uk101 ) 	/* 1979 UK101										*/
 
 	/* OHIO SCIENTIFIC */
-//	DRIVER( superbrd )	/* 1979 Superboard II								*/
+	DRIVER( superbrd )	/* 1979 Superboard II								*/
 
 	/* ASCII & MICROSOFT */
 //	DRIVER( msx )		/* 1983 MSX 										*/
@@ -621,7 +621,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 
 
 	/* MILES GORDON TECHNOLOGY */
-//	DRIVER( coupe ) 	/* 1989 Sam Coupe									*/
+	DRIVER( coupe ) 	/* 1989 Sam Coupe									*/
 
 	/* MOTOROLA */
 TESTDRIVER( mekd2 )		/* 1977 Motorola Evaluation Kit						*/
@@ -635,10 +635,10 @@ TESTDRIVER( mekd2 )		/* 1977 Motorola Evaluation Kit						*/
 	/* MATTEL */
 //	DRIVER( intvkbd )	/* 1981 - Mattel Intellivision Keyboard Component	*/
 						/* (Test marketed, later recalled )					*/
-//	DRIVER( aquarius )	/* 1983 Aquarius									*/
+	DRIVER( aquarius )	/* 1983 Aquarius									*/
 
 	/*EXIDY INC */
-//	DRIVER( exidy )		/* Sorcerer											*/
+	DRIVER( exidy )		/* Sorcerer											*/
 
 	/* GALAKSIJA */
 	DRIVER( galaxy )
@@ -649,7 +649,7 @@ TESTDRIVER( mekd2 )		/* 1977 Motorola Evaluation Kit						*/
 //	DRIVER( lvivp )		/* PK-01 Lviv (early)								*/
 
 	/* Tesla */
-//TESTDRIVER( pmd85 )		/* PMD-85.1											*/
+TESTDRIVER( pmd85 )		/* PMD-85.1											*/
 
 	/* Team Concepts */
 	/* CPU not known, else should be easy, look into systems/comquest.c */
@@ -685,7 +685,7 @@ TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 	DRIVER(concept)		/* 1982 Corvus Concept								*/
 
 	/* DAI */
-//	DRIVER(dai)			/* DAI												*/
+	DRIVER(dai)			/* DAI												*/
 
 	/* Telenova */
 	DRIVER(compis)		/* 1985 Telenova Compis								*/

@@ -42,7 +42,6 @@ OPBASE_HANDLER( jupiter_opbaseoverride )
 
 	if (address == 0x059d)
 	{
-		memory_set_bankhandler_w(0, 0,0);
 		if (jupiter_data_type == JUPITER_ACE)
 		{
 			for (loop = 0; loop < 0x6000; loop++)

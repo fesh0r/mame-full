@@ -321,7 +321,7 @@ static void end_handler(void *data, const XML_Char *name)
 		if (!append_command(state))
 			goto outofmemory;
 
-		if (run_test(&state->testcase, state->test_flags))
+		if (run_test(&state->testcase, state->test_flags, NULL))
 			state->failure_count++;
 		state->test_count++;
 		state->phase = STATE_ROOT;
@@ -554,9 +554,6 @@ int messtest(const char *script_filename, int flags, int *test_count, int *failu
 	{
 		saved_directory[0] = '\0';
 	}
-
-	/* since the cpuintrf structure is filled dynamically now, we have to init first */
-	cpuintrf_init();
 
 	state.parser = XML_ParserCreate(NULL);
 	if (!state.parser)

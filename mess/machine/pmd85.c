@@ -32,7 +32,7 @@ static OPBASE_HANDLER (pmd85_opbaseoverride)
 				switch ( address & 0x1000 )
 				{
 					case 0x0000:
-						OP_ROM = OP_RAM =  memory_region(REGION_CPU1)+0x010000 - (address & 0xa000);
+						opcode_base = opcode_arg_base =  memory_region(REGION_CPU1)+0x010000 - (address & 0xa000);
 						return -1;
 					case 0x1000:
 						logerror ("Illegal opcode address\n");
@@ -40,7 +40,7 @@ static OPBASE_HANDLER (pmd85_opbaseoverride)
 				}
 				break;
 			case 0x4000:
-				OP_ROM = OP_RAM = mess_ram + 0x8000 - (address & 0xc000);
+				opcode_base = opcode_arg_base = mess_ram + 0x8000 - (address & 0xc000);
 				return -1;
 		}
 	}
@@ -49,7 +49,7 @@ static OPBASE_HANDLER (pmd85_opbaseoverride)
 		switch ( address & 0x8000 )
 		{
 			case 0x0000:
-				OP_ROM = OP_RAM = mess_ram;
+				opcode_base = opcode_arg_base = mess_ram;
 			        return -1;
 			case 0x8000:
 				switch ( address & 0x4000 )
@@ -58,7 +58,7 @@ static OPBASE_HANDLER (pmd85_opbaseoverride)
 						switch ( address & 0x1000 )
 						{
 							case 0x0000:
-								OP_ROM = OP_RAM = memory_region(REGION_CPU1) + 0x010000 - (address & 0xa000);
+								opcode_base = opcode_arg_base = memory_region(REGION_CPU1) + 0x010000 - (address & 0xa000);
 								return -1;
 							case 0x1000:
 								logerror ("Illegal opcode address\n");
@@ -66,7 +66,7 @@ static OPBASE_HANDLER (pmd85_opbaseoverride)
 						}
 						break;
 					case 0x4000:
-						OP_ROM = OP_RAM = mess_ram + 0x8000 - (address & 0xc000);
+						opcode_base = opcode_arg_base = mess_ram + 0x8000 - (address & 0xc000);
 						return -1;
 				}
 				break;
@@ -156,7 +156,7 @@ WRITE_HANDLER( pmd85_mem_w )
 		{
 			case 0x0000:
 				mess_ram[offset&0x7fff] = data;
-			        break;
+				break;
 			case 0x8000:
 				switch ( offset & 0x4000 )
 				{

@@ -53,9 +53,6 @@ static OPBASE_HANDLER(dai_opbaseoverride)
 
 static void dai_update_memory (int dai_rom_bank)
 {
-	memory_set_bankhandler_r(2, 0, MRA8_BANK2);
-	memory_set_bankhandler_w(2, 0, MWA8_ROM);
-
 	cpu_setbank(2, memory_region(REGION_CPU1) + 0x010000 + dai_rom_bank*0x1000);
 }
 
@@ -133,12 +130,6 @@ static PIT8253_CONFIG dai_pit8253_intf =
 MACHINE_INIT( dai )
 {
 	memory_set_opbase_handler(0, dai_opbaseoverride);
-
-	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-	memory_set_bankhandler_r(2, 0, MRA8_BANK2);
-
-	memory_set_bankhandler_w(1, 0, MWA8_BANK1);
-	memory_set_bankhandler_w(2, 0, MWA8_ROM);
 
 	cpu_setbank(1, mess_ram);
 	cpu_setbank(2, memory_region(REGION_CPU1) + 0x010000);

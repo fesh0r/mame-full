@@ -19,9 +19,11 @@ extern struct GameOptions options;
 
 /* Globals */
 const char *mess_path;
-UINT32 mess_ram_size;
-UINT8 *mess_ram;
 int devices_inited;
+
+UINT32 mess_ram_size;
+data8_t *mess_ram;
+data8_t mess_ram_default_value = 0xCD;
 
 int DECL_SPEC mess_printf(const char *fmt, ...)
 {
@@ -139,7 +141,7 @@ static int ram_init(const struct GameDriver *gamedrv)
 		mess_ram = (UINT8 *) auto_malloc(mess_ram_size);
 		if (!mess_ram)
 			return 1;
-		memset(mess_ram, 0xcd, mess_ram_size);
+		memset(mess_ram, mess_ram_default_value, mess_ram_size);
 
 		state_save_register_UINT32("mess", 0, "ramsize", &mess_ram_size, 1);
 		state_save_register_UINT8("mess", 0, "ram", mess_ram, mess_ram_size);
@@ -339,7 +341,7 @@ void ram_dump(const char *filename)
 
 void machine_hard_reset(void)
 {
-	memset(mess_ram, 0xcd, mess_ram_size);
+	memset(mess_ram, mess_ram_default_value, mess_ram_size);
 	machine_reset();
 }
 

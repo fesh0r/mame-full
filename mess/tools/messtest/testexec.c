@@ -26,6 +26,7 @@ static const struct messtest_command *current_command;
 static int abort_test;
 static int test_flags;
 static int screenshot_num;
+static UINT64 runtime_hash;
 
 static void message(enum messtest_messagetype msgtype, const char *fmt, ...);
 
@@ -77,10 +78,10 @@ static void message(enum messtest_messagetype msgtype, const char *fmt, ...)
 
 
 
-enum messtest_result run_test(const struct messtest_testcase *testcase, int flags)
+enum messtest_result run_test(const struct messtest_testcase *testcase, int flags, struct messtest_results *results)
 {
 	int driver_num;
-	enum messtest_result result;
+	enum messtest_result rc;
 	clock_t begin_time;
 	double real_run_time;
 	int done;
@@ -106,6 +107,7 @@ enum messtest_result run_test(const struct messtest_testcase *testcase, int flag
 	state = STATE_READY;
 	test_flags = flags;
 	screenshot_num = 0;
+	runtime_hash = 0;
 
 	/* set up options */
 	memset(&options, 0, sizeof(options));
@@ -134,23 +136,28 @@ enum messtest_result run_test(const struct messtest_testcase *testcase, int flag
 	switch(state) {
 	case STATE_ABORTED:
 		message(MSG_FAILURE, "Test aborted");
-		result = MESSTEST_RESULT_RUNTIMEFAILURE;
+		rc = MESSTEST_RESULT_RUNTIMEFAILURE;
 		break;
 
 	case STATE_DONE:
 		message(MSG_INFO, "Test succeeded (real time %.2f; emu time %.2f [%i%%])",
 			real_run_time, final_time, (int) ((final_time / real_run_time) * 100));
-		result = MESSTEST_RESULT_SUCCESS;
+		rc = MESSTEST_RESULT_SUCCESS;
 		break;
 
 	default:
 		state = STATE_ABORTED;
 		message(MSG_FAILURE, "Abnormal termination");
-		result = MESSTEST_RESULT_STARTFAILURE;
+		rc = MESSTEST_RESULT_STARTFAILURE;
 		break;
 	}
 
-	return result;
+	if (results)
+	{
+		results->rc = rc;
+		results->runtime_hash = runtime_hash;
+	}
+	return rc;
 }
 
 
@@ -217,6 +224,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 	mess_image *image;
 	struct InputPort *switch_name;
 	struct InputPort *switch_setting;
+	int cpunum;
 
 	/* if we have already aborted or completed, our work is done */
 	if ((state == STATE_ABORTED) || (state == STATE_DONE))
@@ -230,6 +238,13 @@ void osd_update_video_and_audio(struct mame_display *display)
 	{
 		message(MSG_FAILURE, "Time limit of %.2f seconds exceeded", time_limit);
 		return;
+	}
+
+	/* update the runtime hash */
+	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
+	{
+		runtime_hash *= 57;
+		runtime_hash ^= cpunum_get_reg(cpunum, REG_PC);	/* TODO - Add more registers? */
 	}
 
 	switch(current_command->command_type) {

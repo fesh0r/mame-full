@@ -224,16 +224,6 @@ void Enterprise_Initialise()
 
 	Dave_SetIFace(&enterprise_dave_interface);
 
-	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-	memory_set_bankhandler_r(2, 0, MRA8_BANK2);
-	memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-	memory_set_bankhandler_r(4, 0, MRA8_BANK4);
-
-	memory_set_bankhandler_w(5, 0, MWA8_BANK5);
-	memory_set_bankhandler_w(6, 0, MWA8_BANK6);
-	memory_set_bankhandler_w(7, 0, MWA8_BANK7);
-	memory_set_bankhandler_w(8, 0, MWA8_BANK8);
-
 	Dave_reg_w(0x010,0);
 	Dave_reg_w(0x011,0);
 	Dave_reg_w(0x012,0);
@@ -241,7 +231,7 @@ void Enterprise_Initialise()
 
 	cpu_irq_line_vector_w(0,0,0x0ff);
 
-	wd179x_init(WD_TYPE_177X,enterp_wd177x_callback);
+	wd179x_init(WD_TYPE_177X, enterp_wd177x_callback);
 
 	floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 0), FLOPPY_DRIVE_DS_80);
 }
@@ -317,27 +307,15 @@ ADDRESS_MAP_END
 
 static int EXDOS_GetDriveSelection(int data)
 {
-	 if (data & 0x01)
-	 {
+	if (data & 0x01)
 		return 0;
-	 }
-
-	 if (data & 0x02)
-	 {
+	if (data & 0x02)
 		return 1;
-	 }
-
-	 if (data & 0x04)
-	 {
+	if (data & 0x04)
 		return 2;
-	 }
-
-	 if (data & 0x08)
-	 {
+	if (data & 0x08)
 		return 3;
-	 }
-
-	 return 0;
+	return 0;
 }
 
 static char EXDOS_CARD_R = 0;

@@ -557,15 +557,15 @@ $(OBJ)/nec.a:	   \
 
 $(OBJ)/necpc.a:	   \
 	$(OBJ)/mess/systems/pc8801.o	 \
-#	$(OBJ)/mess/machine/pc8801.o	 \
-#	$(OBJ)/mess/vidhrdw/pc8801.o	\
+	$(OBJ)/mess/machine/pc8801.o	 \
+	$(OBJ)/mess/vidhrdw/pc8801.o	\
 
 $(OBJ)/ep128.a :   \
 	$(OBJ)/mess/sndhrdw/dave.o	 \
 	$(OBJ)/mess/vidhrdw/epnick.o	 \
 	$(OBJ)/mess/vidhrdw/enterp.o	 \
 	$(OBJ)/mess/machine/enterp.o	 \
-#	$(OBJ)/mess/systems/enterp.o
+	$(OBJ)/mess/systems/enterp.o
 
 $(OBJ)/ascii.a :   \
 	$(OBJ)/mess/formats/fmsx_cas.o \
@@ -615,7 +615,7 @@ $(OBJ)/vtech.a :   \
 $(OBJ)/jupiter.a : \
 	$(OBJ)/mess/systems/jupiter.o	\
 	$(OBJ)/mess/vidhrdw/jupiter.o	\
-#	$(OBJ)/mess/machine/jupiter.o	\
+	$(OBJ)/mess/machine/jupiter.o	\
 
 $(OBJ)/mbee.a :    \
 	$(OBJ)/mess/vidhrdw/mbee.o	 \
@@ -656,7 +656,7 @@ $(OBJ)/acorn.a:    \
 $(OBJ)/samcoupe.a: \
 	$(OBJ)/mess/vidhrdw/coupe.o	 \
 	$(OBJ)/mess/systems/coupe.o	\
-#	$(OBJ)/mess/machine/coupe.o	 \
+	$(OBJ)/mess/machine/coupe.o	 \
 
 $(OBJ)/sharp.a:    \
 	$(OBJ)/mess/vidhrdw/mz700.o		\
@@ -671,8 +671,8 @@ $(OBJ)/sharp.a:    \
 	$(OBJ)/mess/machine/pc1350.o	\
 	$(OBJ)/mess/vidhrdw/pc1251.o	\
 	$(OBJ)/mess/machine/pc1251.o	\
-	$(OBJ)/mess/vidhrdw/pocketc.o  \
-#	$(OBJ)/mess/machine/mz700.o		\
+	$(OBJ)/mess/vidhrdw/pocketc.o	\
+	$(OBJ)/mess/machine/mz700.o		\
 
 $(OBJ)/hp48.a:     \
 	$(OBJ)/mess/machine/hp48.o     \
@@ -682,12 +682,12 @@ $(OBJ)/hp48.a:     \
 $(OBJ)/aquarius.a: \
 	$(OBJ)/mess/systems/aquarius.o	\
 	$(OBJ)/mess/vidhrdw/aquarius.o \
-#	$(OBJ)/mess/machine/aquarius.o \
+	$(OBJ)/mess/machine/aquarius.o \
 
 $(OBJ)/exidy.a:    \
 	$(OBJ)/mess/machine/hd6402.o     \
-#	$(OBJ)/mess/systems/exidy.o		\
-#	$(OBJ)/mess/vidhrdw/exidy.o      \
+	$(OBJ)/mess/systems/exidy.o		\
+	$(OBJ)/mess/vidhrdw/exidy.o      \
 
 $(OBJ)/galaxy.a:   \
 	$(OBJ)/mess/vidhrdw/galaxy.o   \
@@ -703,7 +703,7 @@ $(OBJ)/lviv.a:   \
 $(OBJ)/pmd85.a:   \
 	$(OBJ)/mess/vidhrdw/pmd85.o   \
 	$(OBJ)/mess/systems/pmd85.o   \
-#	$(OBJ)/mess/machine/pmd85.o   \
+	$(OBJ)/mess/machine/pmd85.o   \
 
 $(OBJ)/magnavox.a: \
 	$(OBJ)/mess/machine/odyssey2.o \
@@ -722,7 +722,7 @@ $(OBJ)/svision.a:  \
 $(OBJ)/lynx.a:     \
 	$(OBJ)/mess/systems/lynx.o     \
 	$(OBJ)/mess/sndhrdw/lynx.o     \
-#	$(OBJ)/mess/machine/lynx.o
+	$(OBJ)/mess/machine/lynx.o
 
 $(OBJ)/mk1.a:      \
 	$(OBJ)/mess/cpu/f8/f3853.o	 \
@@ -777,7 +777,7 @@ $(OBJ)/dai.a:     \
 	$(OBJ)/mess/vidhrdw/dai.o     \
 	$(OBJ)/mess/sndhrdw/dai.o     \
 	$(OBJ)/mess/machine/tms5501.o \
-#	$(OBJ)/mess/machine/dai.o     \
+	$(OBJ)/mess/machine/dai.o     \
 
 $(OBJ)/concept.a:  \
 	$(OBJ)/mess/systems/concept.o   \

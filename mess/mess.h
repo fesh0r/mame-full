@@ -175,6 +175,7 @@ const struct IODevice *device_find(const struct GameDriver *gamedrv, int type);
 /* RAM configuration calls */
 extern UINT32 mess_ram_size;
 extern data8_t *mess_ram;
+extern data8_t mess_ram_default_value;
 
 /* RAM parsing options */
 #define RAM_STRING_BUFLEN 16

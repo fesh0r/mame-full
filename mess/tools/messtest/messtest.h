@@ -64,13 +64,19 @@ struct messtest_command
 
 struct messtest_testcase
 {
-	char *name;
-	char *driver;
+	const char *name;
+	const char *driver;
 	double time_limit;	/* 0.0 = default */
 	struct messtest_command *commands;
 
 	/* options */
 	UINT32 ram;
+};
+
+struct messtest_results
+{
+	enum messtest_result rc;
+	UINT64 runtime_hash;	/* A value that is a hash taken from certain runtime parameters; used to detect different execution paths */
 };
 
 
@@ -81,7 +87,7 @@ struct messtest_testcase
 int memory_region_from_string(const char *region_name);
 const char *memory_region_to_string(int region);
 
-enum messtest_result run_test(const struct messtest_testcase *testcase, int flags);
+enum messtest_result run_test(const struct messtest_testcase *testcase, int flags, struct messtest_results *results);
 int messtest(const char *script_filename, int flags, int *test_count, int *failure_count);
 
 #endif /* MESSTEST_H */

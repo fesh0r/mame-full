@@ -1076,104 +1076,100 @@ READ_HANDLER(mikey_read)
 
 WRITE_HANDLER(mikey_write)
 {
-    switch (offset) {
-    case 0: case 1: case 2: case 3:
-    case 4: case 5: case 6: case 7:
-    case 8: case 9: case 0xa: case 0xb:
-    case 0xc: case 0xd: case 0xe: case 0xf:
-    case 0x10: case 0x11: case 0x12: case 0x13:
-    case 0x14: case 0x15: case 0x16: case 0x17:
-    case 0x18: case 0x19: case 0x1a: case 0x1b:
-    case 0x1c: case 0x1d: case 0x1e: case 0x1f:
-	lynx_timer_write(lynx_timer+(offset/4), offset&3, data);
-	return;
-    case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
-    case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
-    case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
-    case 0x38: case 0x39: case 0x3a: case 0x3b: case 0x3c: case 0x3d: case 0x3e: case 0x3f:
-    case 0x40: case 0x41: case 0x42: case 0x43: case 0x44: case 0x50:
-	lynx_audio_write(offset, data);
-	return;
-    case 0x80:
-	mikey.data[0x81]&=~data; // clear interrupt source
-	logerror("mikey write %.2x %.2x\n",offset,data);
-	if (!mikey.data[0x81]) {
-		cpu_set_irq_line(0, M65SC02_IRQ_LINE, CLEAR_LINE);	    
-	}
-	break;
-    case 0x87:
-	mikey.data[offset]=data; //?
-	if (data&2) {
-	    if (data&1) {
-		suzy.high<<=1;
-		if (mikey.data[0x8b]&2) suzy.high|=1;
-		suzy.low=0;
-	    }
-	} else {
-	    suzy.high=0;
-	    suzy.low=0;
-	}
-	break;
-    case 0x8c: case 0x8d:
-	lynx_uart_w(offset, data);
-	break;
-    case 0xa0: case 0xa1: case 0xa2: case 0xa3: case 0xa4: case 0xa5: case 0xa6: case 0xa7:
-    case 0xa8: case 0xa9: case 0xaa: case 0xab: case 0xac: case 0xad: case 0xae: case 0xaf:
-    case 0xb0: case 0xb1: case 0xb2: case 0xb3: case 0xb4: case 0xb5: case 0xb6: case 0xb7:
-    case 0xb8: case 0xb9: case 0xba: case 0xbb: case 0xbc: case 0xbd: case 0xbe: case 0xbf:
-	mikey.data[offset]=data;
-	lynx_draw_lines(lynx_line);
+	switch (offset) {
+	case 0: case 1: case 2: case 3:
+	case 4: case 5: case 6: case 7:
+	case 8: case 9: case 0xa: case 0xb:
+	case 0xc: case 0xd: case 0xe: case 0xf:
+	case 0x10: case 0x11: case 0x12: case 0x13:
+	case 0x14: case 0x15: case 0x16: case 0x17:
+	case 0x18: case 0x19: case 0x1a: case 0x1b:
+	case 0x1c: case 0x1d: case 0x1e: case 0x1f:
+		lynx_timer_write(lynx_timer+(offset/4), offset&3, data);
+		return;
+
+	case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
+	case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
+	case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
+	case 0x38: case 0x39: case 0x3a: case 0x3b: case 0x3c: case 0x3d: case 0x3e: case 0x3f:
+	case 0x40: case 0x41: case 0x42: case 0x43: case 0x44: case 0x50:
+		lynx_audio_write(offset, data);
+		return;
+
+	case 0x80:
+		mikey.data[0x81]&=~data; // clear interrupt source
+		logerror("mikey write %.2x %.2x\n",offset,data);
+		if (!mikey.data[0x81])
+			cpu_set_irq_line(0, M65SC02_IRQ_LINE, CLEAR_LINE);	    
+		break;
+
+	case 0x87:
+		mikey.data[offset]=data; //?
+		if (data&2)
+		{
+			if (data&1)
+			{
+				suzy.high<<=1;
+				if (mikey.data[0x8b]&2)
+					suzy.high|=1;
+				suzy.low=0;
+			}
+		}
+		else
+		{
+			suzy.high=0;
+			suzy.low=0;
+		}
+		break;
+
+	case 0x8c: case 0x8d:
+		lynx_uart_w(offset, data);
+		break;
+
+	case 0xa0: case 0xa1: case 0xa2: case 0xa3: case 0xa4: case 0xa5: case 0xa6: case 0xa7:
+	case 0xa8: case 0xa9: case 0xaa: case 0xab: case 0xac: case 0xad: case 0xae: case 0xaf:
+	case 0xb0: case 0xb1: case 0xb2: case 0xb3: case 0xb4: case 0xb5: case 0xb6: case 0xb7:
+	case 0xb8: case 0xb9: case 0xba: case 0xbb: case 0xbc: case 0xbd: case 0xbe: case 0xbf:
+		mikey.data[offset]=data;
+		lynx_draw_lines(lynx_line);
 #if 0
-	palette_set_color(offset&0xf,
-			     (mikey.data[0xb0+(offset&0xf)]&0xf)<<4,
-			     (mikey.data[0xa0+(offset&0xf)]&0xf)<<4,
-			     mikey.data[0xb0+(offset&0xf)]&0xf0 );
+		palette_set_color(offset&0xf,
+					(mikey.data[0xb0+(offset&0xf)]&0xf)<<4,
+					(mikey.data[0xa0+(offset&0xf)]&0xf)<<4,
+					mikey.data[0xb0+(offset&0xf)]&0xf0 );
 #else
-	lynx_palette[offset&0xf]=Machine->pens[((mikey.data[0xb0+(offset&0xf)]&0xf))
-	    |((mikey.data[0xa0+(offset&0xf)]&0xf)<<4)
-	    |((mikey.data[0xb0+(offset&0xf)]&0xf0)<<4)];
+		lynx_palette[offset&0xf]=Machine->pens[((mikey.data[0xb0+(offset&0xf)]&0xf))
+			|((mikey.data[0xa0+(offset&0xf)]&0xf)<<4)
+			|((mikey.data[0xb0+(offset&0xf)]&0xf0)<<4)];
 #endif
-	break;
+		break;
+
     case 0x8b:case 0x90:case 0x91:
-	mikey.data[offset]=data;
-	break;
+		mikey.data[offset]=data;
+		break;
+
     default:
-	mikey.data[offset]=data;
-	logerror("mikey write %.2x %.2x\n",offset,data);
+		mikey.data[offset]=data;
+		logerror("mikey write %.2x %.2x\n",offset,data);
+		break;
     }
 }
 
 WRITE_HANDLER( lynx_memory_config )
 {
-    // bit 7: hispeed, uses page mode accesses (4 instead of 5 cycles )
-    // when these are safe in the cpu
+    /* bit 7: hispeed, uses page mode accesses (4 instead of 5 cycles )
+     * when these are safe in the cpu */
     memory_region(REGION_CPU1)[0xfff9]=data;
-    if (data&1) {
-	memory_set_bankhandler_r(1, 0, MRA8_RAM);
-	memory_set_bankhandler_w(1, 0, MWA8_RAM);
-    } else {
-	memory_set_bankhandler_r(1, 0, suzy_read);
-	memory_set_bankhandler_w(1, 0, suzy_write);
-    }
-    if (data&2) {
-	memory_set_bankhandler_r(2, 0, MRA8_RAM);
-	memory_set_bankhandler_w(2, 0, MWA8_RAM);
-    } else {
-	memory_set_bankhandler_r(2, 0, mikey_read);
-	memory_set_bankhandler_w(2, 0, mikey_write);
-    }
-    if (data&4) {
-	memory_set_bankhandler_r(3, 0, MRA8_RAM);
-    } else {
-	cpu_setbank(3,memory_region(REGION_CPU1)+0x10000);
-	memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-    }
-    if (data&8) {
-	memory_set_bankhandler_r(4, 0, MRA8_RAM);
-    } else {
-	memory_set_bankhandler_r(4, 0, MRA8_BANK4);
-	cpu_setbank(4,memory_region(REGION_CPU1)+0x101fa);
-    }
+
+	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xfc00, 0xfcff, 0, (data & 1) ? MRA8_RAM : suzy_read);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfc00, 0xfcff, 0, (data & 1) ? MWA8_RAM : suzy_write);
+	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xfd00, 0xfdff, 0, (data & 2) ? MRA8_RAM : mikey_read);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfd00, 0xfdff, 0, (data & 2) ? MWA8_RAM : mikey_write);
+	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xfe00, 0xfff7, 0, (data & 4) ? MRA8_RAM : MRA8_BANK3);
+	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xfffa, 0xffff, 0, (data & 8) ? MRA8_RAM : MRA8_BANK4);
+
+	cpu_setbank(3, memory_region(REGION_CPU1) + 0x10000);
+	cpu_setbank(4, memory_region(REGION_CPU1) + 0x101fa);
 }
 
 MACHINE_INIT( lynx )

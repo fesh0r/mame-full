@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.17 2004/02/04 02:14:38 npwoods Exp $
+  $Id: pc8801.c,v 1.18 2004/02/06 22:51:10 npwoods Exp $
 
 ***************************************************************************/
 
@@ -360,89 +360,102 @@ static void select_extmem(char **r,char **w,UINT8 *ret_ctrl)
 
 void pc8801_update_bank(void)
 {
-  char *ext_r,*ext_w;
+	char *ext_r,*ext_w;
 
-  select_extmem(&ext_r,&ext_w,NULL);
-  if(ext_r!=NULL || ext_w!=NULL) {
-    if(ext_r==NULL) {
-      logerror("set write only mode to extension memory (treat as R/W mode).\n");
-      ext_r=ext_w;
-    }
-    /* extension memory */
-    cpu_setbank(1, ext_r + 0x0000);
-    cpu_setbank(2, ext_r + 0x6000);
-    if(ext_w==NULL) {
-      /* read only mode */
-      memory_set_bankhandler_w(1, 0, MWA8_NOP);
-      memory_set_bankhandler_w(2, 0, MWA8_NOP);
-    } else {
-      /* r/w mode */
-      memory_set_bankhandler_w(1, 0, MWA8_BANK1);
-      memory_set_bankhandler_w(2, 0, MWA8_BANK2);
-      if(ext_w!=ext_r) logerror("differnt between read and write bank of extension memory.\n");
-    }
-  } else {
-    /* 0x0000 to 0x7fff */
-    if(RAMmode) {
-      /* RAM */
-      memory_set_bankhandler_w(1, 0, MWA8_BANK1);
-      memory_set_bankhandler_w(2, 0, MWA8_BANK2);
-      cpu_setbank(1, pc8801_mainRAM + 0x0000);
-      cpu_setbank(2, pc8801_mainRAM + 0x6000);
-    } else {
-      /* ROM */
-      /* write through to main RAM */
-      memory_set_bankhandler_w(1, 0, pc8801_writemem1);
-      memory_set_bankhandler_w(2, 0, pc8801_writemem2);
-      if(ROMmode) {
-	/* N-BASIC */
-	cpu_setbank(1, mainROM + 0x0000);
-	cpu_setbank(2, mainROM + 0x6000);
-      } else {
-	/* N88-BASIC */
-	cpu_setbank(1, mainROM + 0x8000);
-	if(no4throm==1) {
-	  /* 4th ROM 1 */
-	  cpu_setbank(2, mainROM + 0x10000 + 0x2000 * no4throm2);
-	} else {
-	  cpu_setbank(2, mainROM + 0xe000);
+	select_extmem(&ext_r,&ext_w,NULL);
+	if (ext_r!=NULL || ext_w!=NULL)
+	{
+		if (ext_r==NULL)
+		{
+			logerror("set write only mode to extension memory (treat as R/W mode).\n");
+			ext_r=ext_w;
+		}
+
+		/* extension memory */
+		cpu_setbank(1, ext_r + 0x0000);
+		cpu_setbank(2, ext_r + 0x6000);
+		if(ext_w==NULL)
+		{
+			/* read only mode */
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x5fff, 0, MWA8_NOP);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, MWA8_NOP);
+		}
+		else
+		{
+			/* r/w mode */
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x5fff, 0, MWA8_BANK1);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, MWA8_BANK2);
+			if(ext_w!=ext_r) logerror("differnt between read and write bank of extension memory.\n");
+		}
 	}
-      }
-    }
-  }
-  /* 0x8000 to 0xffff */
-  if(!RAMmode && !ROMmode) {
-    /* text window */
-    memory_set_bankhandler_r(3, 0, pc8801_read_textwindow);
-    memory_set_bankhandler_w(3, 0, pc8801_write_textwindow);
-  } else {
-    memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-    memory_set_bankhandler_w(3, 0, MWA8_BANK3);
-    cpu_setbank(3, pc8801_mainRAM + 0x8000);
-  }
-  cpu_setbank(4, pc8801_mainRAM + 0x8400);
-  if(is_pc8801_vram_select()) {
-    /* VRAM */
-    /* already maped */
-  } else {
-    memory_set_bankhandler_r(5, 0, MRA8_BANK5);
-    memory_set_bankhandler_r(6, 0, MRA8_BANK6);
-    memory_set_bankhandler_w(5, 0, MWA8_BANK5);
-    memory_set_bankhandler_w(6, 0, MWA8_BANK6);
-    cpu_setbank(5, pc8801_mainRAM + 0xc000);
-    if(maptvram) {
-      cpu_setbank(6, pc88sr_textRAM);
-    } else {
-      cpu_setbank(6, pc8801_mainRAM + 0xf000);
-    }
-  }
+	else
+	{
+		/* 0x0000 to 0x7fff */
+		if(RAMmode)
+		{
+			/* RAM */
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x5fff, 0, MWA8_BANK1);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, MWA8_BANK2);
+			cpu_setbank(1, pc8801_mainRAM + 0x0000);
+			cpu_setbank(2, pc8801_mainRAM + 0x6000);
+		}
+		else
+		{
+			/* ROM */
+			/* write through to main RAM */
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x5fff, 0, pc8801_writemem1);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, pc8801_writemem2);
+			if(ROMmode)
+			{
+				/* N-BASIC */
+				cpu_setbank(1, mainROM + 0x0000);
+				cpu_setbank(2, mainROM + 0x6000);
+			}
+			else
+			{
+				/* N88-BASIC */
+				cpu_setbank(1, mainROM + 0x8000);
+				if(no4throm==1) {
+					/* 4th ROM 1 */
+					cpu_setbank(2, mainROM + 0x10000 + 0x2000 * no4throm2);
+				} else {
+					cpu_setbank(2, mainROM + 0xe000);
+				}
+			}
+		}
+	}
+
+	/* 0x8000 to 0xffff */
+	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0x8000, 0x83ff, 0, (RAMmode || ROMmode) ? MRA8_BANK3 : pc8801_read_textwindow);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x83ff, 0, (RAMmode || ROMmode) ? MWA8_BANK3 : pc8801_write_textwindow);
+
+	cpu_setbank(4, pc8801_mainRAM + 0x8400);
+
+	if(is_pc8801_vram_select())
+	{
+		/* VRAM */
+		/* already maped */
+	}
+	else
+	{
+		memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xc000, 0xefff, 0, MRA8_BANK5);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xefff, 0, MWA8_BANK5);
+		memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xf000, 0xffff, 0, MRA8_BANK6);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf000, 0xffff, 0, MWA8_BANK6);
+
+		cpu_setbank(5, pc8801_mainRAM + 0xc000);
+		if(maptvram)
+			cpu_setbank(6, pc88sr_textRAM);
+		else
+			cpu_setbank(6, pc8801_mainRAM + 0xf000);
+	}
 }
 
 READ_HANDLER(pc8801_read_extmem)
 {
-  UINT8 ret[2];
-  select_extmem(NULL,NULL,ret);
-  return ret[offset];
+	UINT8 ret[2];
+	select_extmem(NULL,NULL,ret);
+	return ret[offset];
 }
 
 WRITE_HANDLER(pc8801_write_extmem)

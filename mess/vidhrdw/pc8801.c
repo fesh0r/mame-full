@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.10 2004/02/04 02:14:45 npwoods Exp $
+  $Id: pc8801.c,v 1.11 2004/02/06 22:51:13 npwoods Exp $
 
 ***************************************************************************/
 
@@ -143,6 +143,8 @@ static WRITE_HANDLER(write_gvram)
   }
 }
 
+/* NPW 8-Feb-2004 - This pseudo template stuff is an abomination.  Whomever wrote this should be shot */
+
 #define VVV \
 	XXX(0) \
 	XXX(1) \
@@ -230,6 +232,9 @@ ZZZ
 
 int is_pc8801_vram_select(void)
 {
+	read8_handler rh5 = NULL, rh6 = NULL;
+	write8_handler wh5 = NULL, wh6 = NULL;
+
   if(ALUON) {
     /* ALU mode */
     if(ALU2&0x80) {
@@ -237,8 +242,8 @@ int is_pc8801_vram_select(void)
       switch(ALU2&0x07) {
 #define XXX(x) \
       case x: \
-	memory_set_bankhandler_r(5, 0, read_gvram_alu##x##_bank5); \
-	memory_set_bankhandler_r(6, 0, read_gvram_alu##x##_bank6); \
+	rh5 = read_gvram_alu##x##_bank5; \
+	rh6 = read_gvram_alu##x##_bank6; \
 	break;
 
 	YYY
@@ -249,8 +254,8 @@ int is_pc8801_vram_select(void)
       switch(ALU2&0x30) {
 #define XXX(x) \
       case x<<4: \
-	memory_set_bankhandler_w(5, 0, write_gvram_alu##x##_bank5); \
-	memory_set_bankhandler_w(6, 0, write_gvram_alu##x##_bank6); \
+	wh5 = write_gvram_alu##x##_bank5; \
+	wh6 = write_gvram_alu##x##_bank6; \
 	break;
 
 	ZZZ
@@ -267,10 +272,10 @@ int is_pc8801_vram_select(void)
     switch(selected_vram) {
 #define XXX(n) \
     case (n+1): \
-      memory_set_bankhandler_r(5, 0, MRA8_BANK5); \
-      memory_set_bankhandler_r(6, 0, MRA8_BANK6); \
-      memory_set_bankhandler_w(5, 0, write_gvram##n##_bank5); \
-      memory_set_bankhandler_w(6, 0, write_gvram##n##_bank6); \
+      rh5 = MRA8_BANK5; \
+      rh6 = MRA8_BANK6; \
+      wh5 = write_gvram##n##_bank5; \
+      wh6 = write_gvram##n##_bank6; \
       cpu_setbank(5, gVRAM + 0x4000*n ); \
       cpu_setbank(6, gVRAM + 0x4000*n + 0x3000 ); \
       return 1;
@@ -284,6 +289,12 @@ int is_pc8801_vram_select(void)
       return 0; /* MAIN RAM */
     }
   }
+
+  
+	if (rh5) memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xc000, 0xefff, 0, rh5);
+	if (wh5) memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xefff, 0, wh5);
+	if (rh6) memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, 0xf000, 0xffff, 0, rh6);
+	if (wh6) memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf000, 0xffff, 0, wh6);
 }
 
 WRITE_HANDLER(pc88sr_disp_32)
