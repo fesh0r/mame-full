@@ -25,7 +25,7 @@
 ** nes_apu.h
 **
 ** NES APU emulation header file
-** $Id: nes_apu.h,v 1.6 2000/09/12 13:23:37 hjb Exp $
+** $Id: nes_apu.h,v 1.7 2000/09/12 17:56:23 hjb Exp $
 */
 
 #ifndef _NES_APU_H_
@@ -41,6 +41,13 @@ typedef int BOOLEAN;
 
 #ifndef FALSE
 #define FALSE 0
+#endif
+
+/* wrapper for non-MAME use (backwards compatibility only) */
+#ifndef PULSE_LINE
+#define PULSE_LINE	1
+#define cpu_set_irq_line(num,line,state) n2a03_irq()
+#define cpunum_readmem(num,address) cpu_readmem16(address)
 #endif
 
 #ifndef INLINE
@@ -175,7 +182,7 @@ typedef struct dmc_s
 
 	UINT32 address;
 	UINT32 cached_addr;
-	int dma_length;
+	int dmalength;
 	int cached_dmalength;
 	UINT8 cur_byte;
 
@@ -223,7 +230,9 @@ typedef struct apu_s
 	dmc_t dmc;
 	UINT8 enable_reg;
 
-	void *buffer; /* pointer to output buffer */
+	int cpunum; 		/* HJB: added the cpu number for DMC reads */
+
+    void *buffer; /* pointer to output buffer */
 	int num_samples;
 
 	UINT8 mix_enable;	/* HJB: turned into a bit flag */
@@ -249,7 +258,7 @@ extern "C" {
 extern int apu_getcontext(apu_t *dst_apu);
 extern void apu_setcontext(apu_t *src_apu);
 
-extern apu_t *apu_create(double baseclock, int sample_rate, int refresh_rate, int sample_bits);
+extern apu_t *apu_create(int cpunum, double baseclock, int sample_rate, int refresh_rate, int sample_bits);
 extern void apu_destroy(apu_t *apu);
 extern void apu_setparams(int sample_rate, int refresh_rate, int sample_bits);
 
@@ -272,6 +281,14 @@ extern void apu_write(UINT32 address, UINT8 value);
 
 /*
 ** $Log: nes_apu.h,v $
+** Revision 1.7  2000/09/12 17:56:23  hjb
+** - Added functions to read/write memory from a specific cpu to cpuintrf.c/h
+**   data_t cpunum_readmem(int cpunum, offs_t offset);
+**   void cpunum_writemem(int cpunum, offs_t offset, data_t data);
+** Changed the nesintf.c/h to support a per chip cpunum which is then used
+** to generate IRQs and to fetch memory with the new function inside DMC.
+** Added the VSNES drivers from Ernesto again.
+**
 ** Revision 1.6  2000/09/12 13:23:37  hjb
 ** Removed the incorrect handling of triangle linear_length and replaced it
 ** with what was in Matthew's submission (shut off a triangle wave after

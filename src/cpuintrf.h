@@ -608,6 +608,11 @@ unsigned cpunum_align_unit(int cputype);
 /* Return maximum instruction length */
 unsigned cpunum_max_inst_len(int cputype);
 
+/* Read memory from the specified CPU number of the running machine */
+data_t cpunum_readmem(int cpunum, offs_t offset);
+/* Write memory for the specified CPU number of the running machine */
+void cpunum_writemem(int cpunum, offs_t offset, data_t data);
+
 /* Get a register value for the specified CPU number of the running machine */
 unsigned cpunum_get_reg(int cpunum, int regnum);
 /* Set a register value for the specified CPU number of the running machine */

@@ -457,14 +457,10 @@ static int playch10_interrupt( void ) {
 
 static struct NESinterface nes_interface =
 {
-/*
 	1,
-	{ REGION_CPU2 },
-	{ 50 },
-*/
-	1,
-	{ 50 },
-	N2A03_DEFAULTCLOCK,
+    N2A03_DEFAULTCLOCK,
+	{ 50 }, 	/* mixing level */
+	{ 1 },		/* CPU number */
 	{ NULL },
 	{ NULL }
 };

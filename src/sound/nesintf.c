@@ -88,7 +88,7 @@ int NESPSG_sh_start(const struct MachineSound *msound)
 	{
 		apu_t *temp_apu;
 
-		temp_apu = apu_create(intf->baseclock, Machine->sample_rate, Machine->drv->frames_per_second, 16);
+		temp_apu = apu_create(intf->cpunum[i], intf->baseclock, Machine->sample_rate, Machine->drv->frames_per_second, 16);
 		if (NULL == temp_apu)
 			return 1;
 

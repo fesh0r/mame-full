@@ -3024,6 +3024,72 @@ const char *cpunum_win_layout(int cpunum)
 }
 
 /***************************************************************************
+  Write memory for a specific CPU number of the running machine
+***************************************************************************/
+void cpunum_writemem(int cpunum, offs_t offset, data_t data)
+{
+	int oldactive;
+
+	if( cpunum == activecpu )
+	{
+		WRITEMEM( cpunum, offset, data );
+		return;
+	}
+
+	/* swap to the CPU's context */
+	if (activecpu >= 0)
+		if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
+	oldactive = activecpu;
+	activecpu = cpunum;
+	memorycontextswap(activecpu);
+	if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
+
+	WRITEMEM(activecpu, offset, data);
+
+	/* update the CPU's context */
+	if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
+	activecpu = oldactive;
+	if (activecpu >= 0)
+	{
+		memorycontextswap(activecpu);
+		if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
+	}
+}
+
+/***************************************************************************
+  Read memory from a specific CPU number of the running machine
+***************************************************************************/
+data_t cpunum_readmem(int cpunum, offs_t offset)
+{
+	int oldactive;
+	data_t data = 0;
+
+	if( cpunum == activecpu )
+		return READMEM( activecpu, offset );
+
+	/* swap to the CPU's context */
+	if (activecpu >= 0)
+		if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
+	oldactive = activecpu;
+	activecpu = cpunum;
+	memorycontextswap(activecpu);
+	if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
+
+	data = READMEM(activecpu,offset);
+
+	/* update the CPU's context */
+	if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
+	activecpu = oldactive;
+	if (activecpu >= 0)
+	{
+		memorycontextswap(activecpu);
+		if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
+	}
+
+	return data;
+}
+
+/***************************************************************************
   Return a register value for a specific CPU number of the running machine
 ***************************************************************************/
 unsigned cpunum_get_reg(int cpunum, int regnum)

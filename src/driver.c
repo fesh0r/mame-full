@@ -554,7 +554,31 @@ TESTDRIVER( herocast )
 	DRIVER( pc_cshwk )	/* (c) 1989 Rare (Nintendo of America license) */
 	DRIVER( pc_moglf )	/* (c) 1991 Nintendo */
 
-	/* Midway 8080 b/w games */
+	/* Nintendo VS games */
+	DRIVER( btlecity )	/* (c) 1985 Namco */
+	DRIVER( cstlevna )	/* (c) 1987 Konami */
+	DRIVER( cluclu )	/* (c) 1984 Nintendo */
+	DRIVER( drmario )	/* (c) 1990 Nintendo */
+	DRIVER( duckhunt )	/* (c) 1985 Nintendo */
+	DRIVER( excitebk )	/* (c) 1984 Nintendo */
+	DRIVER( hogalley )	/* (c) ???? Nintendo */
+	DRIVER( iceclimb )	/* (c) 1984 Nintendo */
+	DRIVER( ladygolf )	/* (c) ???? Nintendo */
+	DRIVER( machridr )	/* (c) 1985 Nintendo */
+	DRIVER( suprmrio )	/* (c) 1986 Nintendo */
+	DRIVER( vsgolf )	/* (c) ???? Nintendo */
+	DRIVER( vspinbal )	/* (c) ???? Nintendo */
+	DRIVER( vsslalom )	/* (c) ???? Nintendo */
+	DRIVER( vssoccer )	/* (c) 1985 Nintendo */
+	DRIVER( goonies )	/* (c) 1986 Konami */
+	DRIVER( vsgradus )	/* (c) 1987 Nintendo */
+	DRIVER( tkoboxng )	/* (c) ???? Data East */
+	DRIVER( rbibb ) 	/* (c) ???? Nintendo */
+	DRIVER( topgun )	/* (c) ???? Nintendo */
+	DRIVER( vsskykid )	/* (c) ???? Nintendo */
+	DRIVER( vstennis )	/* (c) ???? Nintendo */
+
+    /* Midway 8080 b/w games */
 	DRIVER( seawolf )	/* 596 [1976] */
 	DRIVER( gunfight )	/* 597 [1975] */
 	/* 603 - Top Gun [1976] */

@@ -296,8 +296,9 @@ static struct GfxDecodeInfo nes_gfxdecodeinfo[] =
 static struct NESinterface nes_interface =
 {
 	1,
+    N2A03_DEFAULTCLOCK,
 	{ 100 },
-	N2A03_DEFAULTCLOCK,
+	{ 0 },
 	{ nes_vh_sprite_dma_w },
 	{ NULL }
 };
@@ -305,9 +306,10 @@ static struct NESinterface nes_interface =
 static struct NESinterface nespal_interface =
 {
 	1,
+    26601712/15,
 	{ 100 },
-	26601712/15,
-	{ nes_vh_sprite_dma_w },
+	{ 0 },
+    { nes_vh_sprite_dma_w },
 	{ NULL }
 };
 

@@ -25,7 +25,7 @@
 ** nes_apu.c
 **
 ** NES APU emulation
-** $Id: nes_apu.c,v 1.7 2000/09/12 13:23:37 hjb Exp $
+** $Id: nes_apu.c,v 1.8 2000/09/12 17:56:23 hjb Exp $
 */
 
 #include <string.h>
@@ -43,7 +43,7 @@
 
 
 /* increase triangle volume relative to noise + dmc ? */
-#if 0
+#if 1
 #define APU_MIX_RECTANGLE	256
 #define APU_MIX_TRIANGLE	384
 #define APU_MIX_NOISE		192
@@ -196,11 +196,11 @@ INLINE INT32 apu_rectangle_##ch(void)										  \
 		{																	  \
 			apu.rectangle[ch].env_phase += apu.sample_rate; 				  \
 			if (apu.rectangle[ch].holdnote) 								  \
-				apu.rectangle[ch].env_vol = (apu.rectangle[ch].env_vol + 1) & 0x0F; \
-			else if (apu.rectangle[ch].env_vol > 0) 						  \
-				apu.rectangle[ch].env_vol--;								  \
+				apu.rectangle[ch].env_vol = (apu.rectangle[ch].env_vol - 1) & 0x0F; \
+			else if (apu.rectangle[ch].env_vol < 0x0F)						  \
+				apu.rectangle[ch].env_vol++;								  \
 		}																	  \
-		output = APU_MIX_RECTANGLE * apu.rectangle[ch].env_vol; 			  \
+		output = APU_MIX_RECTANGLE * (apu.rectangle[ch].env_vol ^ 0x0F);	  \
 	}																		  \
 																			  \
 	/* frequency sweeping at a rate of (sweep_delay + 1) / 120 secs */		  \
@@ -279,11 +279,11 @@ INLINE INT32 apu_rectangle_##ch(void)										  \
 		{																	  \
 			apu.rectangle[ch].env_phase += apu.sample_rate; 				  \
 			if (apu.rectangle[ch].holdnote) 								  \
-				apu.rectangle[ch].env_vol = (apu.rectangle[ch].env_vol + 1) & 0x0F; \
-			else if (apu.rectangle[ch].env_vol > 0) 						  \
-				apu.rectangle[ch].env_vol--;								  \
+				apu.rectangle[ch].env_vol = (apu.rectangle[ch].env_vol - 1) & 0x0F; \
+			else if (apu.rectangle[ch].env_vol < 0x0F)						  \
+				apu.rectangle[ch].env_vol++;								  \
 		}																	  \
-		output = APU_MIX_RECTANGLE * apu.rectangle[ch].env_vol; 			  \
+		output = APU_MIX_RECTANGLE * (apu.rectangle[ch].env_vol ^ 0x0F);	  \
 	}																		  \
 																			  \
 	/* frequency sweeping at a rate of (sweep_delay + 1) / 120 secs */		  \
@@ -419,11 +419,11 @@ static INT32 apu_noise(void)
 		{
 			apu.noise.env_phase += apu.sample_rate;
 			if (apu.noise.holdnote)
-				apu.noise.env_vol = (apu.noise.env_vol + 1) & 0x0F;
-			else if (apu.noise.env_vol > 0)
-				apu.noise.env_vol--;
+				apu.noise.env_vol = (apu.noise.env_vol - 1) & 0x0F;
+			else if (apu.noise.env_vol < 0x0F)
+				apu.noise.env_vol++;
 		}
-		output = APU_MIX_NOISE * apu.noise.env_vol;
+		output = APU_MIX_NOISE * (apu.noise.env_vol ^ 0x0F);
 	}
 
 	/* for noise frequencies above the hablf sample rate reduce the output */
@@ -492,11 +492,11 @@ static INT32 apu_noise(void)
 		{
 			apu.noise.env_phase += apu.sample_rate;
 			if (apu.noise.holdnote)
-				apu.noise.env_vol = (apu.rectangle[ch].env_vol + 1) & 0x0F;
-			else if (apu.noise.env_vol > 0)
-				apu.noise.env_vol--;
+				apu.noise.env_vol = (apu.noise.env_vol - 1) & 0x0F;
+			else if (apu.noise.env_vol < 0x0F)
+				apu.noise.env_vol++;
 		}
-		output = APU_MIX_NOISE * apu.noise.env_vol;
+		output = APU_MIX_NOISE * (apu.noise.env_vol ^ 0x0F);
 	}
 
 	/* for noise frequencies above half the sample rate reduce the output */
@@ -529,7 +529,7 @@ static INT32 apu_noise(void)
 INLINE void apu_dmcreload(void)
 {
 	apu.dmc.address = apu.dmc.cached_addr;
-	apu.dmc.dma_length = apu.dmc.cached_dmalength;
+	apu.dmc.dmalength = apu.dmc.cached_dmalength;
 	apu.dmc.irq_occurred = FALSE;
 }
 
@@ -547,66 +547,64 @@ static INT32 apu_dmc(void)
 	APU_VOLUME_DECAY(apu.dmc.output_vol);
 
 	/* only process when channel is alive */
-	if (apu.dmc.dma_length)
+	if (FALSE == apu.dmc.enabled || apu.dmc.dmalength == 0)
+		return apu.dmc.output_vol;
+
+	apu.dmc.accu -= apu.dmc.freq;
+	while (apu.dmc.accu < 0)
 	{
-		apu.dmc.accu -= apu.dmc.freq;
+		apu.dmc.accu += apu.sample_rate;
 
-		while (apu.dmc.accu < 0)
+		delta_bit = (apu.dmc.dmalength & 7) ^ 7;
+
+		if (7 == delta_bit)
 		{
-			apu.dmc.accu += apu.sample_rate;
+			apu.dmc.cur_byte = cpunum_readmem(apu.cpunum, apu.dmc.address);
 
-			delta_bit = (apu.dmc.dma_length & 7) ^ 7;
+			/* steal a cycle from CPU */
+			/* nes6502_burn(1); */
 
-			if (7 == delta_bit)
-			{
-				apu.dmc.cur_byte = cpu_readmem16(apu.dmc.address);
+			if (0xFFFF == apu.dmc.address)
+				apu.dmc.address = 0x8000;
+			else
+				apu.dmc.address++;
+		 }
 
-				/* steal a cycle from CPU */
-				/* nes6502_burn(1); */
-
-				if (0xFFFF == apu.dmc.address)
-					apu.dmc.address = 0x8000;
-				else
-					apu.dmc.address++;
-			 }
-
-			if (--apu.dmc.dma_length == 0)
-			{
-				/* if loop bit set, we're cool to retrigger sample */
-				if (apu.dmc.looping)
-					apu_dmcreload();
-				else
-				{
-					/* check to see if we should generate an irq */
-					if (apu.dmc.irq_gen)
-					{
-						apu.dmc.irq_occurred = TRUE;
-						n2a03_irq();
-					}
-
-					/* bodge for timestamp queue */
-					apu.dmc.enabled = FALSE;
-					break;
-				}
-			}
-
-			/* positive delta */
-			if (apu.dmc.cur_byte & (1 << delta_bit))
-			{
-				if (apu.dmc.regs[1] < 0x7D)
-				{
-					apu.dmc.regs[1] += 2;
-					apu.dmc.output_vol += APU_MIX_DMC;
-				}
-			}
-			/* negative delta */
+		if (--apu.dmc.dmalength == 0)
+		{
+			/* if loop bit set, we're cool to retrigger sample */
+			if (apu.dmc.looping)
+				apu_dmcreload();
 			else
 			{
-				if (apu.dmc.regs[1] > 1)
+				/* check to see if we should generate an irq */
+				if (apu.dmc.irq_gen)
 				{
-					apu.dmc.regs[1] -= 2;
-					apu.dmc.output_vol -= APU_MIX_DMC;
+					apu.dmc.irq_occurred = TRUE;
+					cpu_set_irq_line(apu.cpunum, 0, PULSE_LINE);
 				}
+				/* bodge for timestamp queue */
+				apu.dmc.enabled = FALSE;
+				break;
+			}
+		}
+
+		/* positive delta */
+		if (apu.dmc.cur_byte & (1 << delta_bit))
+		{
+			if (apu.dmc.regs[1] < 0x7D)
+			{
+				apu.dmc.regs[1] += 2;
+				apu.dmc.output_vol += APU_MIX_DMC;
+			}
+		}
+		/* negative delta */
+		else
+		{
+			if (apu.dmc.regs[1] > 1)
+			{
+				apu.dmc.regs[1] -= 2;
+				apu.dmc.output_vol -= APU_MIX_DMC;
 			}
 		}
 	}
@@ -624,59 +622,80 @@ void apu_write(UINT32 address, UINT8 value)
 	/* rectangles */
 	case APU_WRA0:
 	case APU_WRB0:
-		chan = (address & 4) ? 1 : 0;
-		apu.rectangle[chan].regs[0] = value;
+        chan = (address & 4) ? 1 : 0;
+		log_printf("APU #%d WR%c0 $%02x\n", apu.cpunum, 'A'+chan, value);
+        apu.rectangle[chan].regs[0] = value;
 		apu.rectangle[chan].volume = value & 0x0F;
 		apu.rectangle[chan].env_delay = apu.sample_rate / 240;
 		apu.rectangle[chan].holdnote = (value & 0x20) ? TRUE : FALSE;
 		apu.rectangle[chan].fixed_envelope = (value & 0x10) ? TRUE : FALSE;
 		apu.rectangle[chan].duty_flip = duty_flip[value >> 6];
-		break;
+		log_printf("   volume      %d\n", apu.rectangle[chan].volume);
+		log_printf("   env_delay   %d\n", apu.rectangle[chan].env_delay);
+		log_printf("   holdnote    %d\n", apu.rectangle[chan].holdnote);
+		log_printf("   fixed_env   %d\n", apu.rectangle[chan].fixed_envelope);
+		log_printf("   duty_flip   %d\n", apu.rectangle[chan].duty_flip);
+        break;
 
 	case APU_WRA1:
 	case APU_WRB1:
 		chan = (address & 4) ? 1 : 0;
-		apu.rectangle[chan].regs[1] = value;
-		apu.rectangle[chan].sweep_shifts = (value & 7) + 1;
+		log_printf("APU #%d WR%c1 $%02x\n", apu.cpunum, 'A'+chan, value);
+        apu.rectangle[chan].regs[1] = value;
+		apu.rectangle[chan].sweep_shifts = value & 7;
 		apu.rectangle[chan].sweep_on = (value & 0x80) ? TRUE : FALSE;
 		apu.rectangle[chan].sweep_delay = apu.sample_rate * (((value >> 4) & 7) + 1) / 120;
 		apu.rectangle[chan].sweep_inc = (value & 0x08) ? TRUE : FALSE;
-		break;
+		log_printf("   sweep_shift %d\n", apu.rectangle[chan].sweep_shifts);
+		log_printf("   sweep_on    %d\n", apu.rectangle[chan].sweep_on);
+		log_printf("   sweep_delay %d\n", apu.rectangle[chan].sweep_delay);
+		log_printf("   sweep_inc   %d\n", apu.rectangle[chan].sweep_inc);
+        break;
 
 	case APU_WRA2:
 	case APU_WRB2:
 		chan = (address & 4) ? 1 : 0;
-		apu.rectangle[chan].regs[2] = value;
+		log_printf("APU #%d WR%c2 $%02x\n", apu.cpunum, 'A'+chan, value);
+        apu.rectangle[chan].regs[2] = value;
 		apu.rectangle[chan].divisor = 256 * (apu.rectangle[chan].regs[3] & 7) + value + 1;
 		apu.rectangle[chan].freq = apu_baseclock / apu.rectangle[chan].divisor;
-		break;
+		log_printf("   divisor     %d\n", apu.rectangle[chan].divisor);
+		log_printf("   freq        %f\n", apu.rectangle[chan].freq);
+        break;
 
 	case APU_WRA3:
 	case APU_WRB3:
 		chan = (address & 4) ? 1 : 0;
-		apu.rectangle[chan].regs[3] = value;
+		log_printf("APU #%d WR%c3 $%02x\n", apu.cpunum, 'A'+chan, value);
+        apu.rectangle[chan].regs[3] = value;
 		apu.rectangle[chan].divisor = 256 * (value & 7) + apu.rectangle[chan].regs[2] + 1;
 		apu.rectangle[chan].freq = apu_baseclock / apu.rectangle[chan].divisor;
 		apu.rectangle[chan].vbl_length = apu.sample_rate * apu.refresh_rate / vbl_length[value >> 3];
-		apu.rectangle[chan].env_vol = 0x0F; /* reset envelope */
+		apu.rectangle[chan].env_vol = 0;	/* reset envelope */
 		apu.rectangle[chan].adder = 0;
-		break;
+		log_printf("   divisor     %d\n", apu.rectangle[chan].divisor);
+		log_printf("   freq        %f\n", apu.rectangle[chan].freq);
+		log_printf("   vbl_length  %d\n", apu.rectangle[chan].vbl_length);
+        break;
 
 	/* triangle */
 	case APU_WRC0:
-		apu.triangle.regs[0] = value;
+		log_printf("APU #%d WRC0 $%02x\n", apu.cpunum, value);
+        apu.triangle.regs[0] = value;
 		apu.triangle.linear_length = apu.sample_rate * ((value & 0x7f) + 1) / 128 / 4;
 		apu.triangle.holdnote = (value & 0x80) ? TRUE : FALSE;
 		break;
 
 	case APU_WRC2:
-		apu.triangle.regs[1] = value;
+		log_printf("APU #%d WRC2 $%02x\n", apu.cpunum, value);
+        apu.triangle.regs[1] = value;
 		apu.triangle.divisor = 256 * (apu.triangle.regs[2] & 7) + value + 1;
 		apu.triangle.freq = apu_baseclock / apu.triangle.divisor;
 		break;
 
 	case APU_WRC3:
-		apu.triangle.regs[2] = value;
+		log_printf("APU #%d WRC3 $%02x\n", apu.cpunum, value);
+        apu.triangle.regs[2] = value;
 		apu.triangle.divisor = 256 * (value & 7) + apu.triangle.regs[1] + 1;
 		apu.triangle.freq = apu_baseclock / apu.triangle.divisor;
 		apu.triangle.vbl_length = apu.sample_rate * apu.refresh_rate / vbl_length[value >> 3];
@@ -684,7 +703,8 @@ void apu_write(UINT32 address, UINT8 value)
 
 	/* noise */
 	case APU_WRD0:
-		apu.noise.regs[0] = value;
+		log_printf("APU #%d WRD0 $%02x\n", apu.cpunum, value);
+        apu.noise.regs[0] = value;
 		apu.noise.volume = value & 0x0F;
 		apu.noise.env_delay = apu.sample_rate / 240;
 		apu.noise.holdnote = (value & 0x20) ? TRUE : FALSE;
@@ -692,7 +712,8 @@ void apu_write(UINT32 address, UINT8 value)
 		break;
 
 	case APU_WRD2:
-		apu.noise.regs[1] = value;
+		log_printf("APU #%d WRD2 $%02x\n", apu.cpunum, value);
+        apu.noise.regs[1] = value;
 		apu.noise.divisor = noise_divisor[value & 0x0F];
 		apu.noise.freq =  apu_baseclock / apu.noise.divisor;
 		if ((value & 0x80) && FALSE == apu.noise.short_sample)
@@ -701,14 +722,16 @@ void apu_write(UINT32 address, UINT8 value)
 		break;
 
 	case APU_WRD3:
-		apu.noise.regs[2] = value;
+		log_printf("APU #%d WRD3 $%02x\n", apu.cpunum, value);
+        apu.noise.regs[2] = value;
 		apu.noise.vbl_length = apu.sample_rate * apu.refresh_rate / vbl_length[value >> 3];
 		apu.noise.env_vol = 0x0F; /* reset envelope */
 		break;
 
 	/* DMC */
 	case APU_WRE0:
-		apu.dmc.regs[0] = value;
+		log_printf("APU #%d WRE0 $%02x\n", apu.cpunum, value);
+        apu.dmc.regs[0] = value;
 
 		apu.dmc.divisor = dmc_clocks[value & 0x0F];
 		apu.dmc.freq = apu_baseclock / apu.dmc.divisor;
@@ -724,7 +747,8 @@ void apu_write(UINT32 address, UINT8 value)
 		break;
 
 	case APU_WRE1: /* 7-bit DAC */
-		/* add the _delta_ between written value and
+		log_printf("APU #%d WRE1 $%02x\n", apu.cpunum, value);
+        /* add the _delta_ between written value and
 		** current output level of the volume reg
 		*/
 		value &= 0x7F; /* bit 7 ignored */
@@ -733,20 +757,20 @@ void apu_write(UINT32 address, UINT8 value)
 		break;
 
 	case APU_WRE2:
-		apu.dmc.regs[2] = value;
-		apu.dmc.cached_addr = 0xC000 + (UINT16) (value << 6);
+		log_printf("APU #%d WRE2 $%02x\n", apu.cpunum, value);
+        apu.dmc.regs[2] = value & 0xff;
+		apu.dmc.cached_addr = 0xC000 + 64 * (value & 0xff);
 		break;
 
 	case APU_WRE3:
-		apu.dmc.regs[3] = value;
-		apu.dmc.cached_dmalength = ((value << 4) + 1) << 3;
+		log_printf("APU #%d WRE3 $%02x\n", apu.cpunum, value);
+        apu.dmc.regs[3] = value;
+		apu.dmc.cached_dmalength = 8 * ((16 * value) + 1);
 		break;
 
 	case APU_SMASK:
-		apu.enable_reg = value;
-
-		/* bodge for timestamp queue */
-		apu.dmc.enabled = (value & 0x10) ? TRUE : FALSE;
+		log_printf("APU #%d SMASK $%02x\n", apu.cpunum, value);
+        apu.enable_reg = value;
 
 		for (chan = 0; chan < 2; chan++)
 		{
@@ -775,13 +799,16 @@ void apu_write(UINT32 address, UINT8 value)
 			apu.noise.vbl_length = 0;
 		}
 
-		if (value & 0x10)
+		/* bodge for timestamp queue */
+        apu.dmc.enabled = (value & 0x10) ? TRUE : FALSE;
+
+        if (value & 0x10)
 		{
-			if (0 == apu.dmc.dma_length)
+			if (0 == apu.dmc.dmalength)
 				apu_dmcreload();
 		}
 		else
-			apu.dmc.dma_length = 0;
+			apu.dmc.dmalength = 0;
 
 		apu.dmc.irq_occurred = FALSE;
 		break;
@@ -947,7 +974,7 @@ void apu_setparams(int sample_rate, int refresh_rate, int sample_bits)
 }
 
 /* Initializes emulated sound hardware, creates waveforms/voices */
-apu_t *apu_create(double baseclock, int sample_rate, int refresh_rate, int sample_bits)
+apu_t *apu_create(int cpunum, double baseclock, int sample_rate, int refresh_rate, int sample_bits)
 {
 	apu_t *temp_apu;
 	int channel;
@@ -973,7 +1000,10 @@ apu_t *apu_create(double baseclock, int sample_rate, int refresh_rate, int sampl
 	/* store pointer to this apu */
 	temp_apu->apu_p = temp_apu;
 
-	/* set the update routine */
+	/* set the CPU number for interrupts */
+    temp_apu->cpunum = cpunum;
+
+    /* set the update routine */
 	temp_apu->process = apu_process;
 	temp_apu->ext = NULL;
 
@@ -1014,6 +1044,14 @@ void apu_setext(apu_t *src_apu, apuext_t *ext)
 
 /*
 ** $Log: nes_apu.c,v $
+** Revision 1.8  2000/09/12 17:56:23  hjb
+** - Added functions to read/write memory from a specific cpu to cpuintrf.c/h
+**   data_t cpunum_readmem(int cpunum, offs_t offset);
+**   void cpunum_writemem(int cpunum, offs_t offset, data_t data);
+** Changed the nesintf.c/h to support a per chip cpunum which is then used
+** to generate IRQs and to fetch memory with the new function inside DMC.
+** Added the VSNES drivers from Ernesto again.
+**
 ** Revision 1.7  2000/09/12 13:23:37  hjb
 ** Removed the incorrect handling of triangle linear_length and replaced it
 ** with what was in Matthew's submission (shut off a triangle wave after

@@ -785,14 +785,10 @@ static struct GfxDecodeInfo armwrest_gfxdecodeinfo[] =
 
 static struct NESinterface nes_interface =
 {
-/*
-	1,
-	{ REGION_CPU2 },
-	{ 50 },
-*/
-	1,
-	{ 50 },
-	N2A03_DEFAULTCLOCK,
+    1,
+    N2A03_DEFAULTCLOCK,
+	{ 50 }, 			/* mixing level */
+	{ 1 },				/* CPU number */
 	{ NULL },
 	{ NULL }
 };
