@@ -54,7 +54,6 @@ void ted7360_soundport_w (int offset, int data)
 			ted7360[offset] = (ted7360[offset] & ~3) | (data & 3);
 		else
 			ted7360[offset] = data;
-		tone1pos = 0;
 		tone1samples = options.samplerate / TONE_FREQUENCY (TONE1_VALUE);
 		DBG_LOG (1, "ted7360", ("tone1 %d %d sample:%d\n",
 					TONE1_VALUE, TONE_FREQUENCY(TONE1_VALUE), tone1samples));
@@ -63,7 +62,6 @@ void ted7360_soundport_w (int offset, int data)
 	case 0xf:
 	case 0x10:
 		ted7360[offset] = data;
-		tone2pos = 0;
 		tone2samples = options.samplerate / TONE_FREQUENCY (TONE2_VALUE);
 		DBG_LOG (1, "ted7360", ("tone2 %d %d sample:%d\n",
 					TONE2_VALUE, TONE_FREQUENCY(TONE2_VALUE), tone2samples));
@@ -134,6 +132,7 @@ static void ted7360_update (int param, INT16 *buffer, int length)
 		a=8;
 	v = v * a;
 	buffer[i] = v;
+
     }
 }
 
