@@ -143,7 +143,7 @@ PALETTE_INIT( v9958 )
 	int r,g,b,y,j,k,i,k0,j0,n;
 	unsigned char pal[19268*3];
 
-	/* init v9938 256-color palette */
+	/* init v9938 512-color palette */
 	palette_init_v9938(colortable, color_prom);
 
 	/* set up YJK table */
@@ -346,7 +346,7 @@ WRITE_HANDLER (v9938_vram_w)
         }
 
 	vdp.address_latch = (vdp.address_latch + 1) & 0x3fff;
-	if (!vdp.address_latch && (vdp.contReg[0] & 0x0c) ) /* correct ??? */
+	if ((!vdp.address_latch) && (vdp.contReg[0] & 0x0c) ) /* correct ??? */
 		{
 		vdp.contReg[14] = (vdp.contReg[14] + 1) & 7;
 		}
@@ -377,7 +377,7 @@ READ_HANDLER (v9938_vram_r)
 		}
 
 	vdp.address_latch = (vdp.address_latch + 1) & 0x3fff;
-	if (!vdp.address_latch && (vdp.contReg[0] & 0x0c) ) /* correct ??? */
+	if ((!vdp.address_latch) && (vdp.contReg[0] & 0x0c) ) /* correct ??? */
 		{
 		vdp.contReg[14] = (vdp.contReg[14] + 1) & 7;
 		}
@@ -390,7 +390,10 @@ WRITE_HANDLER (v9938_command_w)
 	if (vdp.cmd_write_first)
 		{
 		if (data & 0x80)
+		{
+			if (!(data & 0x40))
 			v9938_register_write (data & 0x3f, vdp.cmd_write);
+		}
 		else
 			{
 			vdp.address_latch =
@@ -1410,6 +1413,7 @@ void v9938_update_mouse_state(int mx_delta, int my_delta, int button_state)
 #define VDP vdp.contReg
 #define VDPStatus vdp.statReg
 #define VRAM vdp.vram
+#define VRAM_EXP vdp.vram_exp
 #define ScrMode vdp.mode
 
 /*************************************************************/
@@ -1430,16 +1434,16 @@ void v9938_update_mouse_state(int mx_delta, int my_delta, int button_state)
 /** Public release 1.0: 20-04-2000                          **/
 /*************************************************************/
 
-#define VDP_VRMP5(X, Y) (VRAM + ((Y&1023)<<7) + ((X&255)>>1))
-#define VDP_VRMP6(X, Y) (VRAM + ((Y&1023)<<7) + ((X&511)>>2))
-//#define VDP_VRMP7(X, Y) (VRAM + ((Y&511)<<8) + ((X&511)>>1))
-#define VDP_VRMP7(X, Y) (VRAM + ((X&2)<<15) + ((Y&511)<<7) + ((X&511)>>2))
-//#define VDP_VRMP8(X, Y) (VRAM + ((Y&511)<<8) + (X&255))
-#define VDP_VRMP8(X, Y) (VRAM + ((X&1)<<16) + ((Y&511)<<7) + ((X>>1)&127))
+#define VDP_VRMP5(MX, X, Y) ((!MX) ? (VRAM + ((Y&1023)<<7) + ((X&255)>>1)) : (VRAM_EXP + ((Y&511)<<7) + ((X&255)>>1)))
+#define VDP_VRMP6(MX, X, Y) ((!MX) ? (VRAM + ((Y&1023)<<7) + ((X&511)>>2)) : (VRAM_EXP + ((Y&511)<<7) + ((X&511)>>2)))
+//#define VDP_VRMP7(MX, X, Y) ((!MX) ? (VRAM + ((Y&511)<<8) + ((X&511)>>1)) : (VRAM_EXP + ((Y&255)<<8) + ((X&511)>>1)))
+#define VDP_VRMP7(MX, X, Y) ((!MX) ? (VRAM + ((X&2)<<15) + ((Y&511)<<7) + ((X&511)>>2)) : /*(VRAM_EXP + ((Y&511)<<7) + ((X&511)>>2))*/(VRAM_EXP + ((Y&255)<<8) + ((X&511)>>1)))
+//#define VDP_VRMP8(MX, X, Y) ((!MX) ? (VRAM + ((Y&511)<<8) + (X&255)) : (VRAM_EXP + ((Y&255)<<8) + (X&255)))
+#define VDP_VRMP8(MX, X, Y) ((!MX) ? (VRAM + ((X&1)<<16) + ((Y&511)<<7) + ((X>>1)&127)) : /*(VRAM_EXP + ((X&1)<<16) + ((Y&511)<<7) + ((X>>1)&127))*/(VRAM_EXP + ((Y&255)<<8) + (X&255)))
 
-#define VDP_VRMP(M, X, Y) VDPVRMP(M, X, Y)
-#define VDP_POINT(M, X, Y) VDPpoint(M, X, Y)
-#define VDP_PSET(M, X, Y, C, O) VDPpset(M, X, Y, C, O)
+#define VDP_VRMP(M, MX, X, Y) VDPVRMP(M, MX, X, Y)
+#define VDP_POINT(M, MX, X, Y) VDPpoint(M, MX, X, Y)
+#define VDP_PSET(M, MX, X, Y, C, O) VDPpset(M, MX, X, Y, C, O)
 
 #define CM_ABRT  0x0
 #define CM_POINT 0x4
@@ -1513,34 +1517,35 @@ static struct {
   UINT8 CL;
   UINT8 LO;
   UINT8 CM;
+  UINT8 MXS, MXD;
 } MMC;
 
 /*************************************************************/
 /** Function prototypes                                     **/
 /*************************************************************/
-static UINT8 *VDPVRMP(register UINT8 M, register int X, register int Y);
+static UINT8 *VDPVRMP(register UINT8 M, register int MX, register int X, register int Y);
 
-static UINT8 VDPpoint5(register int SX, register int SY);
-static UINT8 VDPpoint6(register int SX, register int SY);
-static UINT8 VDPpoint7(register int SX, register int SY);
-static UINT8 VDPpoint8(register int SX, register int SY);
+static UINT8 VDPpoint5(register int MXS, register int SX, register int SY);
+static UINT8 VDPpoint6(register int MXS, register int SX, register int SY);
+static UINT8 VDPpoint7(register int MXS, register int SX, register int SY);
+static UINT8 VDPpoint8(register int MXS, register int SX, register int SY);
 
-static UINT8 VDPpoint(register UINT8 SM,
+static UINT8 VDPpoint(register UINT8 SM, register int MXS,
                      register int SX, register int SY);
 
 static void VDPpsetlowlevel(register UINT8 *P, register UINT8 CL,
                             register UINT8 M, register UINT8 OP);
 
-static void VDPpset5(register int DX, register int DY,
+static void VDPpset5(register int MXD, register int DX, register int DY,
                      register UINT8 CL, register UINT8 OP);
-static void VDPpset6(register int DX, register int DY,
+static void VDPpset6(register int MXD, register int DX, register int DY,
                      register UINT8 CL, register UINT8 OP);
-static void VDPpset7(register int DX, register int DY,
+static void VDPpset7(register int MXD, register int DX, register int DY,
                      register UINT8 CL, register UINT8 OP);
-static void VDPpset8(register int DX, register int DY,
+static void VDPpset8(register int MXD, register int DX, register int DY,
                      register UINT8 CL, register UINT8 OP);
 
-static void VDPpset(register UINT8 SM,
+static void VDPpset(register UINT8 SM, register int MXD,
                     register int DX, register int DY,
                     register UINT8 CL, register UINT8 OP);
 
@@ -1589,14 +1594,14 @@ static int lmmm_timing[8]={ 1160, 1599, 1160, 1172,
 /** VDPVRMP() **********************************************/
 /** Calculate addr of a pixel in vram                       **/
 /*************************************************************/
-INLINE UINT8 *VDPVRMP(UINT8 M,int X,int Y)
+INLINE UINT8 *VDPVRMP(UINT8 M,int MX,int X,int Y)
 {
   switch(M)
   {
-    case 0: return VDP_VRMP5(X,Y);
-    case 1: return VDP_VRMP6(X,Y);
-    case 2: return VDP_VRMP7(X,Y);
-    case 3: return VDP_VRMP8(X,Y);
+    case 0: return VDP_VRMP5(MX,X,Y);
+    case 1: return VDP_VRMP6(MX,X,Y);
+    case 2: return VDP_VRMP7(MX,X,Y);
+    case 3: return VDP_VRMP8(MX,X,Y);
   }
 
   return(VRAM);
@@ -1605,9 +1610,9 @@ INLINE UINT8 *VDPVRMP(UINT8 M,int X,int Y)
 /** VDPpoint5() ***********************************************/
 /** Get a pixel on screen 5                                 **/
 /*************************************************************/
-INLINE UINT8 VDPpoint5(int SX, int SY)
+INLINE UINT8 VDPpoint5(int MXS, int SX, int SY)
 {
-  return (*VDP_VRMP5(SX, SY) >>
+  return (*VDP_VRMP5(MXS, SX, SY) >>
           (((~SX)&1)<<2)
          )&15;
 }
@@ -1615,9 +1620,9 @@ INLINE UINT8 VDPpoint5(int SX, int SY)
 /** VDPpoint6() ***********************************************/
 /** Get a pixel on screen 6                                 **/
 /*************************************************************/
-INLINE UINT8 VDPpoint6(int SX, int SY)
+INLINE UINT8 VDPpoint6(int MXS, int SX, int SY)
 {
-  return (*VDP_VRMP6(SX, SY) >>
+  return (*VDP_VRMP6(MXS, SX, SY) >>
           (((~SX)&3)<<1)
          )&3;
 }
@@ -1625,9 +1630,9 @@ INLINE UINT8 VDPpoint6(int SX, int SY)
 /** VDPpoint7() ***********************************************/
 /** Get a pixel on screen 7                                 **/
 /*************************************************************/
-INLINE UINT8 VDPpoint7(int SX, int SY)
+INLINE UINT8 VDPpoint7(int MXS, int SX, int SY)
 {
-  return (*VDP_VRMP7(SX, SY) >>
+  return (*VDP_VRMP7(MXS, SX, SY) >>
           (((~SX)&1)<<2)
          )&15;
 }
@@ -1635,22 +1640,22 @@ INLINE UINT8 VDPpoint7(int SX, int SY)
 /** VDPpoint8() ***********************************************/
 /** Get a pixel on screen 8                                 **/
 /*************************************************************/
-INLINE UINT8 VDPpoint8(int SX, int SY)
+INLINE UINT8 VDPpoint8(int MXS, int SX, int SY)
 {
-  return *VDP_VRMP8(SX, SY);
+  return *VDP_VRMP8(MXS, SX, SY);
 }
 
 /** VDPpoint() ************************************************/
 /** Get a pixel on a screen                                 **/
 /*************************************************************/
-INLINE UINT8 VDPpoint(UINT8 SM, int SX, int SY)
+INLINE UINT8 VDPpoint(UINT8 SM, int MXS, int SX, int SY)
 {
   switch(SM)
   {
-    case 0: return VDPpoint5(SX,SY);
-    case 1: return VDPpoint6(SX,SY);
-    case 2: return VDPpoint7(SX,SY);
-    case 3: return VDPpoint8(SX,SY);
+    case 0: return VDPpoint5(MXS,SX,SY);
+    case 1: return VDPpoint6(MXS,SX,SY);
+    case 2: return VDPpoint7(MXS,SX,SY);
+    case 3: return VDPpoint8(MXS,SX,SY);
   }
 
   return(0);
@@ -1680,55 +1685,55 @@ INLINE void VDPpsetlowlevel(UINT8 *P, UINT8 CL, UINT8 M, UINT8 OP)
 /** VDPpset5() ***********************************************/
 /** Set a pixel on screen 5                                 **/
 /*************************************************************/
-INLINE void VDPpset5(int DX, int DY, UINT8 CL, UINT8 OP)
+INLINE void VDPpset5(int MXD, int DX, int DY, UINT8 CL, UINT8 OP)
 {
   register UINT8 SH = ((~DX)&1)<<2;
 
-  VDPpsetlowlevel(VDP_VRMP5(DX, DY),
+  VDPpsetlowlevel(VDP_VRMP5(MXD, DX, DY),
                   CL << SH, ~(15<<SH), OP);
 }
 
 /** VDPpset6() ***********************************************/
 /** Set a pixel on screen 6                                 **/
 /*************************************************************/
-INLINE void VDPpset6(int DX, int DY, UINT8 CL, UINT8 OP)
+INLINE void VDPpset6(int MXD, int DX, int DY, UINT8 CL, UINT8 OP)
 {
   register UINT8 SH = ((~DX)&3)<<1;
 
-  VDPpsetlowlevel(VDP_VRMP6(DX, DY),
+  VDPpsetlowlevel(VDP_VRMP6(MXD, DX, DY),
                   CL << SH, ~(3<<SH), OP);
 }
 
 /** VDPpset7() ***********************************************/
 /** Set a pixel on screen 7                                 **/
 /*************************************************************/
-INLINE void VDPpset7(int DX, int DY, UINT8 CL, UINT8 OP)
+INLINE void VDPpset7(int MXD, int DX, int DY, UINT8 CL, UINT8 OP)
 {
   register UINT8 SH = ((~DX)&1)<<2;
 
-  VDPpsetlowlevel(VDP_VRMP7(DX, DY),
+  VDPpsetlowlevel(VDP_VRMP7(MXD, DX, DY),
                   CL << SH, ~(15<<SH), OP);
 }
 
 /** VDPpset8() ***********************************************/
 /** Set a pixel on screen 8                                 **/
 /*************************************************************/
-INLINE void VDPpset8(int DX, int DY, UINT8 CL, UINT8 OP)
+INLINE void VDPpset8(int MXD, int DX, int DY, UINT8 CL, UINT8 OP)
 {
-  VDPpsetlowlevel(VDP_VRMP8(DX, DY),
+  VDPpsetlowlevel(VDP_VRMP8(MXD, DX, DY),
                   CL, 0, OP);
 }
 
 /** VDPpset() ************************************************/
 /** Set a pixel on a screen                                 **/
 /*************************************************************/
-INLINE void VDPpset(UINT8 SM, int DX, int DY, UINT8 CL, UINT8 OP)
+INLINE void VDPpset(UINT8 SM, int MXD, int DX, int DY, UINT8 CL, UINT8 OP)
 {
   switch (SM) {
-    case 0: VDPpset5(DX, DY, CL, OP); break;
-    case 1: VDPpset6(DX, DY, CL, OP); break;
-    case 2: VDPpset7(DX, DY, CL, OP); break;
-    case 3: VDPpset8(DX, DY, CL, OP); break;
+    case 0: VDPpset5(MXD, DX, DY, CL, OP); break;
+    case 1: VDPpset6(MXD, DX, DY, CL, OP); break;
+    case 2: VDPpset7(MXD, DX, DY, CL, OP); break;
+    case 3: VDPpset8(MXD, DX, DY, CL, OP); break;
   }
 }
 
@@ -1750,6 +1755,7 @@ void SrchEngine(void)
   register int TX=MMC.TX;
   register int ANX=MMC.ANX;
   register UINT8 CL=MMC.CL;
+  register int MXD = MMC.MXD;
   register int cnt;
   register int delta;
 
@@ -1771,13 +1777,14 @@ void SrchEngine(void)
   }
 
   switch (ScrMode) {
-    case 5: pre_srch VDPpoint5(SX, SY) post_srch(256)
+    default:
+    case 5: pre_srch VDPpoint5(MXD, SX, SY) post_srch(256)
             break;
-    case 6: pre_srch VDPpoint6(SX, SY) post_srch(512)
+    case 6: pre_srch VDPpoint6(MXD, SX, SY) post_srch(512)
             break;
-    case 7: pre_srch VDPpoint7(SX, SY) post_srch(512)
+    case 7: pre_srch VDPpoint7(MXD, SX, SY) post_srch(512)
             break;
-    case 8: pre_srch VDPpoint8(SX, SY) post_srch(256)
+    case 8: pre_srch VDPpoint8(MXD, SX, SY) post_srch(256)
             break;
   }
 
@@ -1809,6 +1816,7 @@ void LineEngine(void)
   register int ADX=MMC.ADX;
   register UINT8 CL=MMC.CL;
   register UINT8 LO=MMC.LO;
+  register int MXD = MMC.MXD;
   register int cnt;
   register int delta;
 
@@ -1839,25 +1847,27 @@ void LineEngine(void)
   if ((VDP[45]&0x01)==0)
     /* X-Axis is major direction */
     switch (ScrMode) {
-      case 5: pre_loop VDPpset5(DX, DY, CL, LO); post_linexmaj(256)
+      default:
+      case 5: pre_loop VDPpset5(MXD, DX, DY, CL, LO); post_linexmaj(256)
               break;
-      case 6: pre_loop VDPpset6(DX, DY, CL, LO); post_linexmaj(512)
+      case 6: pre_loop VDPpset6(MXD, DX, DY, CL, LO); post_linexmaj(512)
               break;
-      case 7: pre_loop VDPpset7(DX, DY, CL, LO); post_linexmaj(512)
+      case 7: pre_loop VDPpset7(MXD, DX, DY, CL, LO); post_linexmaj(512)
               break;
-      case 8: pre_loop VDPpset8(DX, DY, CL, LO); post_linexmaj(256)
+      case 8: pre_loop VDPpset8(MXD, DX, DY, CL, LO); post_linexmaj(256)
               break;
     }
   else
     /* Y-Axis is major direction */
     switch (ScrMode) {
-      case 5: pre_loop VDPpset5(DX, DY, CL, LO); post_lineymaj(256)
+      default:
+      case 5: pre_loop VDPpset5(MXD, DX, DY, CL, LO); post_lineymaj(256)
               break;
-      case 6: pre_loop VDPpset6(DX, DY, CL, LO); post_lineymaj(512)
+      case 6: pre_loop VDPpset6(MXD, DX, DY, CL, LO); post_lineymaj(512)
               break;
-      case 7: pre_loop VDPpset7(DX, DY, CL, LO); post_lineymaj(512)
+      case 7: pre_loop VDPpset7(MXD, DX, DY, CL, LO); post_lineymaj(512)
               break;
-      case 8: pre_loop VDPpset8(DX, DY, CL, LO); post_lineymaj(256)
+      case 8: pre_loop VDPpset8(MXD, DX, DY, CL, LO); post_lineymaj(256)
               break;
     }
 
@@ -1891,6 +1901,7 @@ void LmmvEngine(void)
   register int ANX=MMC.ANX;
   register UINT8 CL=MMC.CL;
   register UINT8 LO=MMC.LO;
+  register int MXD = MMC.MXD;
   register int cnt;
   register int delta;
 
@@ -1898,13 +1909,14 @@ void LmmvEngine(void)
   cnt = VdpOpsCnt;
 
   switch (ScrMode) {
-    case 5: pre_loop VDPpset5(ADX, DY, CL, LO); post__x_y(256)
+    default:
+    case 5: pre_loop VDPpset5(MXD, ADX, DY, CL, LO); post__x_y(256)
             break;
-    case 6: pre_loop VDPpset6(ADX, DY, CL, LO); post__x_y(512)
+    case 6: pre_loop VDPpset6(MXD, ADX, DY, CL, LO); post__x_y(512)
             break;
-    case 7: pre_loop VDPpset7(ADX, DY, CL, LO); post__x_y(512)
+    case 7: pre_loop VDPpset7(MXD, ADX, DY, CL, LO); post__x_y(512)
             break;
-    case 8: pre_loop VDPpset8(ADX, DY, CL, LO); post__x_y(256)
+    case 8: pre_loop VDPpset8(MXD, ADX, DY, CL, LO); post__x_y(256)
             break;
   }
 
@@ -1944,6 +1956,8 @@ void LmmmEngine(void)
   register int ADX=MMC.ADX;
   register int ANX=MMC.ANX;
   register UINT8 LO=MMC.LO;
+  register int MXS = MMC.MXS;
+  register int MXD = MMC.MXD;
   register int cnt;
   register int delta;
 
@@ -1951,13 +1965,14 @@ void LmmmEngine(void)
   cnt = VdpOpsCnt;
 
   switch (ScrMode) {
-    case 5: pre_loop VDPpset5(ADX, DY, VDPpoint5(ASX, SY), LO); post_xxyy(256)
+    default:
+    case 5: pre_loop VDPpset5(MXD, ADX, DY, VDPpoint5(MXS, ASX, SY), LO); post_xxyy(256)
             break;
-    case 6: pre_loop VDPpset6(ADX, DY, VDPpoint6(ASX, SY), LO); post_xxyy(512)
+    case 6: pre_loop VDPpset6(MXD, ADX, DY, VDPpoint6(MXS, ASX, SY), LO); post_xxyy(512)
             break;
-    case 7: pre_loop VDPpset7(ADX, DY, VDPpoint7(ASX, SY), LO); post_xxyy(512)
+    case 7: pre_loop VDPpset7(MXD, ADX, DY, VDPpoint7(MXS, ASX, SY), LO); post_xxyy(512)
             break;
-    case 8: pre_loop VDPpset8(ADX, DY, VDPpoint8(ASX, SY), LO); post_xxyy(256)
+    case 8: pre_loop VDPpset8(MXD, ADX, DY, VDPpoint8(MXS, ASX, SY), LO); post_xxyy(256)
             break;
   }
 
@@ -1996,7 +2011,7 @@ void LmcmEngine()
 {
   if ((VDPStatus[2]&0x80)!=0x80) {
 
-    VDPStatus[7]=VDP[44]=VDP_POINT(ScrMode-5, MMC.ASX, MMC.SY);
+    VDPStatus[7]=VDP[44]=VDP_POINT(((ScrMode >= 5) && (ScrMode <= 8)) ? (ScrMode-5) : 0, MMC.MXS, MMC.ASX, MMC.SY);
     VdpOpsCnt-=GetVdpTimingValue(lmmv_timing);
     VDPStatus[2]|=0x80;
 
@@ -2025,10 +2040,10 @@ void LmcmEngine()
 void LmmcEngine(void)
 {
   if ((VDPStatus[2]&0x80)!=0x80) {
-    register UINT8 SM=ScrMode-5;
+    register UINT8 SM=((ScrMode >= 5) && (ScrMode <= 8)) ? (ScrMode-5) : 0;
 
     VDPStatus[7]=VDP[44]&=Mask[SM];
-    VDP_PSET(SM, MMC.ADX, MMC.DY, VDP[44], MMC.LO);
+    VDP_PSET(SM, MMC.MXD, MMC.ADX, MMC.DY, VDP[44], MMC.LO);
     VdpOpsCnt-=GetVdpTimingValue(lmmv_timing);
     VDPStatus[2]|=0x80;
 
@@ -2065,6 +2080,7 @@ void HmmvEngine(void)
   register int ADX=MMC.ADX;
   register int ANX=MMC.ANX;
   register UINT8 CL=MMC.CL;
+  register int MXD = MMC.MXD;
   register int cnt;
   register int delta;
 
@@ -2072,13 +2088,14 @@ void HmmvEngine(void)
   cnt = VdpOpsCnt;
 
   switch (ScrMode) {
-    case 5: pre_loop *VDP_VRMP5(ADX, DY) = CL; post__x_y(256)
+    default:
+    case 5: pre_loop *VDP_VRMP5(MXD, ADX, DY) = CL; post__x_y(256)
             break;
-    case 6: pre_loop *VDP_VRMP6(ADX, DY) = CL; post__x_y(512)
+    case 6: pre_loop *VDP_VRMP6(MXD, ADX, DY) = CL; post__x_y(512)
             break;
-    case 7: pre_loop *VDP_VRMP7(ADX, DY) = CL; post__x_y(512)
+    case 7: pre_loop *VDP_VRMP7(MXD, ADX, DY) = CL; post__x_y(512)
             break;
-    case 8: pre_loop *VDP_VRMP8(ADX, DY) = CL; post__x_y(256)
+    case 8: pre_loop *VDP_VRMP8(MXD, ADX, DY) = CL; post__x_y(256)
             break;
   }
 
@@ -2117,6 +2134,8 @@ void HmmmEngine(void)
   register int ASX=MMC.ASX;
   register int ADX=MMC.ADX;
   register int ANX=MMC.ANX;
+  register int MXS = MMC.MXS;
+  register int MXD = MMC.MXD;
   register int cnt;
   register int delta;
 
@@ -2124,13 +2143,14 @@ void HmmmEngine(void)
   cnt = VdpOpsCnt;
 
   switch (ScrMode) {
-    case 5: pre_loop *VDP_VRMP5(ADX, DY) = *VDP_VRMP5(ASX, SY); post_xxyy(256)
+    default:
+    case 5: pre_loop *VDP_VRMP5(MXD, ADX, DY) = *VDP_VRMP5(MXS, ASX, SY); post_xxyy(256)
             break;
-    case 6: pre_loop *VDP_VRMP6(ADX, DY) = *VDP_VRMP6(ASX, SY); post_xxyy(512)
+    case 6: pre_loop *VDP_VRMP6(MXD, ADX, DY) = *VDP_VRMP6(MXS, ASX, SY); post_xxyy(512)
             break;
-    case 7: pre_loop *VDP_VRMP7(ADX, DY) = *VDP_VRMP7(ASX, SY); post_xxyy(512)
+    case 7: pre_loop *VDP_VRMP7(MXD, ADX, DY) = *VDP_VRMP7(MXS, ASX, SY); post_xxyy(512)
             break;
-    case 8: pre_loop *VDP_VRMP8(ADX, DY) = *VDP_VRMP8(ASX, SY); post_xxyy(256)
+    case 8: pre_loop *VDP_VRMP8(MXD, ADX, DY) = *VDP_VRMP8(MXS, ASX, SY); post_xxyy(256)
             break;
   }
 
@@ -2174,6 +2194,7 @@ void YmmmEngine(void)
   register int TY=MMC.TY;
   register int NY=MMC.NY;
   register int ADX=MMC.ADX;
+  register int MXD = MMC.MXD;
   register int cnt;
   register int delta;
 
@@ -2181,13 +2202,14 @@ void YmmmEngine(void)
   cnt = VdpOpsCnt;
 
   switch (ScrMode) {
-    case 5: pre_loop *VDP_VRMP5(ADX, DY) = *VDP_VRMP5(ADX, SY); post__xyy(256)
+    default:
+    case 5: pre_loop *VDP_VRMP5(MXD, ADX, DY) = *VDP_VRMP5(MXD, ADX, SY); post__xyy(256)
             break;
-    case 6: pre_loop *VDP_VRMP6(ADX, DY) = *VDP_VRMP6(ADX, SY); post__xyy(512)
+    case 6: pre_loop *VDP_VRMP6(MXD, ADX, DY) = *VDP_VRMP6(MXD, ADX, SY); post__xyy(512)
             break;
-    case 7: pre_loop *VDP_VRMP7(ADX, DY) = *VDP_VRMP7(ADX, SY); post__xyy(512)
+    case 7: pre_loop *VDP_VRMP7(MXD, ADX, DY) = *VDP_VRMP7(MXD, ADX, SY); post__xyy(512)
             break;
-    case 8: pre_loop *VDP_VRMP8(ADX, DY) = *VDP_VRMP8(ADX, SY); post__xyy(256)
+    case 8: pre_loop *VDP_VRMP8(MXD, ADX, DY) = *VDP_VRMP8(MXD, ADX, SY); post__xyy(256)
             break;
   }
 
@@ -2224,7 +2246,7 @@ void HmmcEngine(void)
 {
   if ((VDPStatus[2]&0x80)!=0x80) {
 
-    *VDP_VRMP(ScrMode-5, MMC.ADX, MMC.DY)=VDP[44];
+    *VDP_VRMP(((ScrMode >= 5) && (ScrMode <= 8)) ? (ScrMode-5) : 0, MMC.MXD, MMC.ADX, MMC.DY)=VDP[44];
     VdpOpsCnt-=GetVdpTimingValue(hmmv_timing);
     VDPStatus[2]|=0x80;
 
@@ -2335,13 +2357,14 @@ static UINT8 v9938_command_unit_w (UINT8 Op)
       VDPStatus[2]&=0xFE;
       VdpEngine=0;
       VDPStatus[7]=VDP[44]=
-                   VDP_POINT(SM, VDP[32]+((int)VDP[33]<<8),
+                   VDP_POINT(SM, (VDP[45] & 0x10) != 0,
+                                 VDP[32]+((int)VDP[33]<<8),
                                  VDP[34]+((int)VDP[35]<<8));
       return 1;
     case CM_PSET:
       VDPStatus[2]&=0xFE;
       VdpEngine=0;
-      VDP_PSET(SM,
+      VDP_PSET(SM, (VDP[45] & 0x20) != 0,
                VDP[36]+((int)VDP[37]<<8),
                VDP[38]+((int)VDP[39]<<8),
                VDP[44],
@@ -2392,6 +2415,8 @@ static UINT8 v9938_command_unit_w (UINT8 Op)
   MMC.MX = PPL[SM];
   MMC.CL = VDP[44];
   MMC.LO = Op&0x0F;
+  MMC.MXS = (VDP[45] & 0x10) != 0;
+  MMC.MXD = (VDP[45] & 0x20) != 0;
 
   /* Argument depends on UINT8 or dot operation */
   if ((MMC.CM & 0x0C) == 0x0C) {
