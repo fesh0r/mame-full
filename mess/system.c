@@ -761,6 +761,7 @@ TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 	DRIVER(mpf1b)		/* 1979 Multitech Micro Professor 1B				*/
 
 	/* Telmac */
+	DRIVER(tmc600)		/* 1982 Telmac TMC-600 (Series I)					*/
 	DRIVER(tmc600a)		/* 1982 Telmac TMC-600 (Series II)					*/
 
 

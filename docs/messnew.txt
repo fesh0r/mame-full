@@ -14,7 +14,7 @@ New System Drivers Supported (in no particular order):
 	- WAVY PHC-70FD
 	- WAVY PHC-70FD2
 
-- Telmac TMC-600 (Series I) [Curt Coder]
+- Telmac TMC-600 (Series I/II) [Curt Coder]
 
 
 
