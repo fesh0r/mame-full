@@ -355,7 +355,7 @@ void blitgraphics4(struct osd_bitmap *bitmap, UINT8 *vrambase, int vrampos,
 	int x, y;
 	int c[4];
 	int p, b;
-	int crunlen, crunc, thisx, thisy;
+	int crunlen, crunc =0, thisx =0, thisy;
 	UINT8 *vidram;
 
 	if (metapalette) {
@@ -472,7 +472,7 @@ static void blitgraphics4artifact(struct osd_bitmap *bitmap, UINT8 *vrambase,
 	int c[4];
 	int b;
 	int c1, c2;
-	int crunc, crunlen;
+	int crunc =0, crunlen;
 	int drunlen;
 	int thisx, thisy;
 	UINT8 *vidram;
@@ -581,8 +581,8 @@ void blitgraphics16(struct osd_bitmap *bitmap, UINT8 *vrambase,
 	int basey, int scalex, int scaley, int additionalrowbytes)
 {
 	int x, y;
-	int thisx, thisy;
-	int crunlen, crunc;
+	int thisx =0, thisy;
+	int crunlen, crunc =0;
 	UINT8 *vidram;
 	UINT8 b;
 
