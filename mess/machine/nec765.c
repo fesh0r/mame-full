@@ -15,7 +15,8 @@
 		read a track etc
         - end of cylinder condition - almost working, needs fixing  with
                 PCW and PC drivers
-
+	- resolve "ready" state stuff (ready state when reset for PC, ready state change while processing command AND
+	while idle)
 ***************************************************************************/
 #include "driver.h"
 #include "includes/nec765.h"
@@ -30,7 +31,7 @@ typedef enum
 } NEC765_PHASE;
 
 /* uncomment the following line for verbose information */
-#define VERBOSE
+//#define VERBOSE
 
 /* uncomment this to not allow end of cylinder "error" */
 #define NO_END_OF_CYLINDER
@@ -449,7 +450,6 @@ static void nec765_seek_setup(int is_recalibrate)
 	int signed_tracks;
 	
 	fdc.nec765_flags |= NEC765_SEEK_ACTIVE;
-	fdc.FDC_main |= (1<<fdc.drive);
 
 	if (is_recalibrate)
 	{
@@ -458,6 +458,8 @@ static void nec765_seek_setup(int is_recalibrate)
 	}
 
 	nec765_setup_drive_and_side();
+
+	fdc.FDC_main |= (1<<fdc.drive);
 
 	/* recalibrate command? */
 	if (is_recalibrate)
@@ -493,6 +495,7 @@ static void nec765_seek_setup(int is_recalibrate)
 			else
 			{
 				/* no, seek 77 tracks and then stop */
+				/* true for NEC765A, but not for other variants */
 				signed_tracks = -77;
 			}
 
@@ -616,6 +619,52 @@ void	nec765_set_dma_drq(int state)
 		nec765_iface.dma_drq((fdc.nec765_flags & NEC765_DMA_DRQ), (fdc.FDC_main & (1<<6)));
 }
 
+/* Drive ready */
+
+/* 
+
+A drive will report ready if:
+- drive is selected
+- disc is in the drive
+- disk is rotating at a constant speed (normally 300rpm)
+
+On more modern PCs, a ready signal is not provided by the drive.
+This signal is not used in the PC design and was eliminated to save costs 
+If you look at the datasheets for the modern NEC765 variants, you will see the Ready
+signal is not mentioned.
+
+On the original NEC765A, ready signal is required, and some commands will fail if the drive
+is not ready.
+
+
+
+
+*/
+
+
+
+
+/* done when ready state of drive changes */
+/* this ignores if command is active, in which case command should terminate immediatly
+with error */
+void nec765_set_ready_change_callback(int drive, int state)
+{
+	logerror("nec765: ready state change\n");
+
+	/* drive that changed state */
+	fdc.nec765_status[0] = 0x0c0 | drive;
+
+	/* not ready */
+	if (state==0)
+		fdc.nec765_status[0] |= 8;
+
+	/* trigger an int */
+	nec765_set_int(1);
+}
+
+
+
+
 void    nec765_init(nec765_interface *iface, int version)
 {
 	fdc.version = version;
@@ -628,9 +677,14 @@ void    nec765_init(nec765_interface *iface, int version)
 		memcpy(&nec765_iface, iface, sizeof(nec765_interface));
 	}
 
-		fdc.nec765_flags &= NEC765_FDD_READY;
+	fdc.nec765_flags &= NEC765_FDD_READY;
 
-		nec765_reset(0);
+	nec765_reset(0);
+
+	floppy_drive_set_ready_state_change_callback(0, nec765_set_ready_change_callback);
+	floppy_drive_set_ready_state_change_callback(1, nec765_set_ready_change_callback);
+	floppy_drive_set_ready_state_change_callback(2, nec765_set_ready_change_callback);
+	floppy_drive_set_ready_state_change_callback(3, nec765_set_ready_change_callback);
 }
 
 void	nec765_stop(void)
@@ -692,6 +746,9 @@ void	nec765_set_tc_state(int state)
 
 READ_HANDLER(nec765_status_r)
 {
+#ifdef SUPER_VERBOSE
+	logerror("nec765 status r: %02x\n",fdc.FDC_main);
+#endif
 	return fdc.FDC_main;
 }
 
