@@ -1706,9 +1706,6 @@ void init_mac128k(void)
 	via_config(0, &mac_via6522_intf);
 	via_set_clock(0, 1000000);	/* 6522 = 1 Mhz, 6522a = 2 Mhz */
 
-	/* setup videoram */
-	mac_set_screen_buffer(1);
-
 	/* setup keyboard */
 	keyboard_init();
 }
@@ -1726,9 +1723,6 @@ void init_mac512k(void)
 	/* configure via */
 	via_config(0, &mac_via6522_intf);
 	via_set_clock(0, 1000000);	/* 6522 = 1 Mhz, 6522a = 2 Mhz */
-
-	/* setup videoram */
-	mac_set_screen_buffer(1);
 
 	/* setup keyboard */
 	keyboard_init();
@@ -1749,9 +1743,6 @@ void init_mac512ke(void)
 	via_config(0, &mac_via6522_intf);
 	via_set_clock(0, 1000000);	/* 6522 = 1 Mhz, 6522a = 2 Mhz */
 
-	/* setup videoram */
-	mac_set_screen_buffer(1);
-
 	/* setup keyboard */
 	keyboard_init();
 }
@@ -1770,9 +1761,6 @@ void init_macplus(void)
 	/* configure via */
 	via_config(0, &mac_via6522_intf);
 	via_set_clock(0, 1000000);	/* 6522 = 1 Mhz, 6522a = 2 Mhz */
-
-	/* setup videoram */
-	mac_set_screen_buffer(1);
 
 	/* setup keyboard */
 	keyboard_init();
@@ -1899,6 +1887,9 @@ MACHINE_INIT(mac)
 
 	/* reset video */
 	current_scanline = 0;
+
+	/* setup videoram */
+	mac_set_screen_buffer(1);
 
 	inquiry_timeout = timer_alloc(inquiry_timeout_func);
 }
