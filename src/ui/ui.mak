@@ -85,7 +85,7 @@ RC = windres --use-temp-file
 
 RCDEFS = -DMESS -DNDEBUG -D_WIN32_IE=0x0400
 
-RCFLAGS = -O coff --include-dir src --include-dir mess/ui --include-dir src/ui
+RCFLAGS = -O coff --include-dir src --include-dir mess/ui --include-dir src/ui --include-dir mess/tools/imgtool/windows
 
 ifdef DEBUG
 RCFLAGS += -DMAME_DEBUG

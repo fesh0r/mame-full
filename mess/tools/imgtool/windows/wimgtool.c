@@ -190,6 +190,8 @@ static imgtoolerr_t append_dirent(HWND window, const imgtool_dirent *entry)
 		TEXT("%d"), entry->filesize);
 	ListView_SetItemText(info->listview, new_index, 1, buffer);
 
+	if (entry->attr)
+		ListView_SetItemText(info->listview, new_index, 2, U2T(entry->attr));
 	return 0;
 }
 
@@ -199,7 +201,8 @@ static imgtoolerr_t refresh_image(HWND window)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	imgtool_imageenum *imageenum = NULL;
-	char buf[256];
+	char filename_buf[256];
+	char attributes_buf[256];
 	imgtool_dirent entry;
 	struct wimgtool_info *info;
 
@@ -214,8 +217,11 @@ static imgtoolerr_t refresh_image(HWND window)
 			goto done;
 
 		memset(&entry, 0, sizeof(entry));
-		entry.filename = buf;
-		entry.filename_len = sizeof(buf) / sizeof(buf[0]);
+		entry.filename = filename_buf;
+		entry.filename_len = sizeof(filename_buf) / sizeof(filename_buf[0]);
+		entry.attr = attributes_buf;
+		entry.attr_len = sizeof(attributes_buf) / sizeof(attributes_buf[0]);
+
 		do
 		{
 			err = img_nextenum(imageenum, &entry);
@@ -242,64 +248,61 @@ done:
 
 static imgtoolerr_t full_refresh_image(HWND window)
 {
+	imgtoolerr_t err;
 	struct wimgtool_info *info;
 	LVCOLUMN col;
-	const struct OptionGuide *guide;
 	const struct ImageModule *module;
 	int column_index = 0;
+	int i;
+	const char *window_text;
+	const char *statusbar_text[3];
 	char buf[256];
+	UINT64 filesize;
 
 	info = get_wimgtool_info(window);
 
 	module = info->image ? img_module(info->image) : NULL;
 	if (info->filename)
 	{
-		SetWindowText(window, U2T(info->filename));
-		snprintf(buf, sizeof(buf) / sizeof(buf[0]),
-			"%s: %s", osd_basename((char *) info->filename), module->description);
-		SetWindowText(info->statusbar, U2T(buf));
+		window_text = U2T(info->filename);
+		statusbar_text[0] = osd_basename((char *) info->filename);
+		statusbar_text[1] = module->description;
+
+		err = img_freespace(info->image, &filesize);
+		if (err)
+			buf[0] = '\0';
+		else
+			snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%u bytes free", (unsigned) filesize);
+		statusbar_text[2] = buf;
 	}
 	else
 	{
 		snprintf(buf, sizeof(buf) / sizeof(buf[0]),
 			"%s %s", wimgtool_producttext, build_version);
-		SetWindowText(window, U2T(buf));
-		SetWindowText(info->statusbar, TEXT(""));
+		window_text = buf;
+		statusbar_text[0] = NULL;
+		statusbar_text[1] = NULL;
+		statusbar_text[2] = NULL;
 	}
+	SetWindowText(window, U2T(window_text));
+	for (i = 0; i < sizeof(statusbar_text) / sizeof(statusbar_text[0]); i++)
+		SendMessage(info->statusbar, SB_SETTEXT, i, (LPARAM) U2T(statusbar_text[i]));
 	DragAcceptFiles(window, info->filename != NULL);
 
 	// create the listview columns
 	col.mask = LVCF_TEXT | LVCF_WIDTH;
-	col.cx = 100;
+	col.cx = 200;
 	col.pszText = (LPTSTR) TEXT("Filename");
 	if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
 		return IMGTOOLERR_OUTOFMEMORY;
+	col.cx = 60;
 	col.pszText = (LPTSTR) TEXT("Size");
 	if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
 		return IMGTOOLERR_OUTOFMEMORY;
-
-	// create module specific listview columns
-	guide = module ? module->writefile_optguide : NULL;
-	if (guide)
-	{
-		while(guide->option_type != OPTIONTYPE_END)
-		{
-			switch(guide->option_type)
-			{
-				case OPTIONTYPE_INT:
-				case OPTIONTYPE_STRING:
-				case OPTIONTYPE_ENUM_BEGIN:
-					col.pszText = (LPTSTR) U2T(guide->display_name);
-					if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
-						return -1;
-					break;
-
-				default:
-					break;
-			}
-			guide++;
-		}
-	}
+	col.cx = 60;
+	col.pszText = (LPTSTR) TEXT("Attributes");
+	if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
+		return IMGTOOLERR_OUTOFMEMORY;
 
 	// delete extraneous columns
 	while(ListView_DeleteColumn(info->listview, column_index))
@@ -939,6 +942,7 @@ static void set_listview_style(HWND window, DWORD style)
 static LRESULT wimgtool_create(HWND window, CREATESTRUCT *pcs)
 {
 	struct wimgtool_info *info;
+	static int status_widths[3] = { 200, 400, -1 };
 
 	info = malloc(sizeof(*info));
 	if (!info)
@@ -960,6 +964,8 @@ static LRESULT wimgtool_create(HWND window, CREATESTRUCT *pcs)
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, window, NULL, NULL, NULL);
 	if (!info->statusbar)
 		return -1;
+	SendMessage(info->statusbar, SB_SETPARTS, sizeof(status_widths) / sizeof(status_widths[0]),
+		(LPARAM) status_widths);
 
 	// create imagelists
 	info->iconlist_normal = ImageList_Create(32, 32, ILC_COLOR, 0, 0);

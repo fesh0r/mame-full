@@ -377,8 +377,7 @@ eof:
 			return IMGTOOLERR_BUFFERTOOSMALL;
 		strcpy(ent->filename, fname);
 
-		if (ent->attr_len)
-			sprintf(ent->attr, "%d %c", (int) rsent.ftype, (char) (rsent.asciiflag + 'B'));
+		snprintf(ent->attr, ent->attr_len, "%d %c", (int) rsent.ftype, (char) (rsent.asciiflag + 'B'));
 	}
 	return 0;
 }
