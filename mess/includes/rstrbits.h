@@ -14,15 +14,16 @@ struct rasterbits_source {
 enum {
 	RASTERBITS_FLAG_GRAPHICS		= 0x00,
 	RASTERBITS_FLAG_TEXT			= 0x01,	/* 0=graphics 1=text */
+	RASTERBITS_FLAG_WRAPINROW		= 0x02, /* if on, we wrap around within the row */
 
 	/* graphics flags */
-	RASTERBITS_FLAG_ARTIFACT		= 0x02,	/* this is a graphical video mode that artifacts, in which case the
+	RASTERBITS_FLAG_ARTIFACT		= 0x04,	/* this is a graphical video mode that artifacts, in which case the
 											 * metapalette is of a size twice the size the depth would imply */
 
 	/* text flags */
-	RASTERBITS_FLAG_BLINKNOW		= 0x02, /* this frame represents a transition frame (blinking <==> non-blinking) */
-	RASTERBITS_FLAG_BLINKING		= 0x04,	/* we are currently blinking (i.e. - blinking out) */
-	RASTERBITS_FLAG_TEXTMODULO		= 0x08, /* bits from the font are displayed modulo the line, as opposed to from the beginning */
+	RASTERBITS_FLAG_BLINKNOW		= 0x04, /* this frame represents a transition frame (blinking <==> non-blinking) */
+	RASTERBITS_FLAG_BLINKING		= 0x08,	/* we are currently blinking (i.e. - blinking out) */
+	RASTERBITS_FLAG_TEXTMODULO		= 0x10, /* bits from the font are displayed modulo the line, as opposed to from the beginning */
 };
 
 enum {
@@ -37,6 +38,7 @@ struct rasterbits_videomode {
 	int height;						/* in pixels/chars */
 	int depth;						/* bits per pixel/char */
 	int bytesperrow;				/* number of bytes per row */
+	int offset;						/* only meaningful if used in conjunction with RASTERBITS_FLAG_WRAPINROW */
 	const int *metapalette;			/* color translation layer; can be NULL */
 	union {
 		artifactproc artifact;

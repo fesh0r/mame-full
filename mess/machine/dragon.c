@@ -1721,6 +1721,7 @@ int coco3_hblank(void)
 		scanline = 0;
 	}
 
+	/* HACK HACK of the 1st degree; this makes the SockMaster Moon demo look much better */
 	scanline += 8;
 
 	inborder = (scanline < bordertop) || (scanline >= (bordertop + rows));

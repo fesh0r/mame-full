@@ -17,7 +17,7 @@
  * Note that 'sizex' is in bytes, and 'sizey' is in pixels
  */
 static void blitgraphics2(struct osd_bitmap *bitmap, struct rasterbits_clip *clip,
-	UINT8 *vrambase, int vrampos,
+	UINT8 *vrambase, int vrampos, int offset, int loopbackpos, int loopbackadj,
 	int vramsize, UINT8 *db, const int *metapalette, int sizex, int sizey,
 	int basex, int basey, int scalex, int scaley, int additionalrowbytes)
 {
@@ -37,6 +37,12 @@ static void blitgraphics2(struct osd_bitmap *bitmap, struct rasterbits_clip *cli
 	}
 
 	vidram = vrambase + vrampos;
+
+	if (offset) {
+		vidram += offset;
+		if (db)
+			db += offset;
+	}
 
 	for (y = 0; y < sizey; y++) {
 		pixtop = basey + y * scaley;
@@ -58,8 +64,21 @@ static void blitgraphics2(struct osd_bitmap *bitmap, struct rasterbits_clip *cli
 					db++;
 				}
 				vidram++;
+
+				/* Check loopback; this is used to support $FF9F in the CoCo 3 */
+				if (x == loopbackpos) {
+					vidram += loopbackadj;
+					if (db)
+						db += loopbackadj;
+				}
 			}
 		}
+		else {
+			vidram += sizex + loopbackadj;
+			if (db)
+				db += sizex + loopbackadj;
+		}
+
 		vidram += additionalrowbytes;
 		if (db)
 			db += additionalrowbytes;
@@ -71,7 +90,7 @@ static void blitgraphics2(struct osd_bitmap *bitmap, struct rasterbits_clip *cli
 }
 
 static void blitgraphics4(struct osd_bitmap *bitmap, struct rasterbits_clip *clip,
-	UINT8 *vrambase, int vrampos,
+	UINT8 *vrambase, int vrampos, int offset, int loopbackpos, int loopbackadj,
 	int vramsize, UINT8 *db, const int *metapalette, int sizex, int sizey,
 	int basex, int basey, int scalex, int scaley, int additionalrowbytes)
 {
@@ -96,6 +115,12 @@ static void blitgraphics4(struct osd_bitmap *bitmap, struct rasterbits_clip *cli
 	}
 
 	vidram = vrambase + vrampos;
+
+	if (offset) {
+		vidram += offset;
+		if (db)
+			db += offset;
+	}
 
 	for (y = 0; y < sizey; y++) {
 		crunlen = 0;
@@ -137,6 +162,13 @@ static void blitgraphics4(struct osd_bitmap *bitmap, struct rasterbits_clip *cli
 					db++;
 				}
 				vidram++;
+
+				/* Check loopback; this is used to support $FF9F in the CoCo 3 */
+				if (x == loopbackpos) {
+					vidram += loopbackadj;
+					if (db)
+						db += loopbackadj;
+				}
 			}
 			if (crunlen) {
 				plot_box(bitmap, thisx, pixtop, scalex * crunlen, (pixbottom - pixtop + 1), c[crunc]);
@@ -144,9 +176,9 @@ static void blitgraphics4(struct osd_bitmap *bitmap, struct rasterbits_clip *cli
 			}
 		}
 		else {
-			vidram += sizex;
+			vidram += sizex + loopbackadj;
 			if (db)
-				db += sizex;
+				db += sizex + loopbackadj;
 		}
 
 		vidram += additionalrowbytes;
@@ -161,7 +193,8 @@ static void blitgraphics4(struct osd_bitmap *bitmap, struct rasterbits_clip *cli
 
 static void blitgraphics4artifact(struct osd_bitmap *bitmap, struct rasterbits_clip *clip,
 	UINT8 *vrambase,
-	int vrampos, int vramsize, UINT8 *db, const int *metapalette, int sizex,
+	int vrampos, int offset, int loopbackpos, int loopbackadj,
+	int vramsize, UINT8 *db, const int *metapalette, int sizex,
 	int sizey, int basex, int basey, int scalex, int scaley)
 {
 	/* Arifacting isn't truely the same resolution as PMODE 3
@@ -222,6 +255,14 @@ static void blitgraphics4artifact(struct osd_bitmap *bitmap, struct rasterbits_c
 	c[3] = Machine->pens[metapalette[3]];
 
 	vidram = vrambase + vrampos;
+
+	if (offset) {
+		vidram += offset;
+		if (db)
+			db += offset;
+	}
+
+	/* NYI - Note! We are not supporting loopback yet!!! */
 
 	for (y = 0; y < sizey; y++) {
 		pixtop = basey + y * scaley;
@@ -319,9 +360,9 @@ static void blitgraphics4artifact(struct osd_bitmap *bitmap, struct rasterbits_c
 			}
 		}
 		else {
-			vidram += sizex;
+			vidram += sizex + loopbackadj;
 			if (db)
-				db += sizex;
+				db += sizex + loopbackadj;
 		}
 
 		/* Check to see if the video RAM has wrapped around */
@@ -332,7 +373,8 @@ static void blitgraphics4artifact(struct osd_bitmap *bitmap, struct rasterbits_c
 
 static void blitgraphics16(struct osd_bitmap *bitmap, struct rasterbits_clip *clip,
 	UINT8 *vrambase,
-	int vrampos, int vramsize, UINT8 *db, int sizex, int sizey, int basex,
+	int vrampos, int offset, int loopbackpos, int loopbackadj,
+	int vramsize, UINT8 *db, int sizex, int sizey, int basex,
 	int basey, int scalex, int scaley, int additionalrowbytes)
 {
 	int x, y;
@@ -343,6 +385,12 @@ static void blitgraphics16(struct osd_bitmap *bitmap, struct rasterbits_clip *cl
 	UINT8 b;
 
 	vidram = vrambase + vrampos;
+
+	if (offset) {
+		vidram += offset;
+		if (db)
+			db += offset;
+	}
 
 	for (y = 0; y < sizey; y++) {
 		crunlen = 0;
@@ -394,6 +442,13 @@ static void blitgraphics16(struct osd_bitmap *bitmap, struct rasterbits_clip *cl
 					}
 				}
 				vidram++;
+
+				/* Check loopback; this is used to support $FF9F in the CoCo 3 */
+				if (x == loopbackpos) {
+					vidram += loopbackadj;
+					if (db)
+						db += loopbackadj;
+				}
 			}
 
 			if (crunlen > 0) {
@@ -402,9 +457,9 @@ static void blitgraphics16(struct osd_bitmap *bitmap, struct rasterbits_clip *cl
 			}
 		}
 		else {
-			vidram += sizex;
+			vidram += sizex + loopbackadj;
 			if (db)
-				db += sizex;
+				db += sizex + loopbackadj;
 		}
 
 		vidram += additionalrowbytes;
@@ -439,6 +494,7 @@ static void raster_text(struct osd_bitmap *bitmap, struct rasterbits_source *src
 	int fg, bg, fgc, bgc, attr;
 	int additionalrowbytes;
 	int underlinepos;
+	int loopbackpos, loopbackadj;
 	int c[16];
 
 #if COUNTDIRTYCHARS
@@ -478,6 +534,23 @@ static void raster_text(struct osd_bitmap *bitmap, struct rasterbits_source *src
 	additionalrowbytes = mode->bytesperrow - (mode->width * bytesperchar);
 
 	charbottom = basey - 1;
+
+	if (mode->offset) {
+		vram += mode->offset;
+		if (db)
+			db += mode->offset;
+	}
+
+	/* Do we need loopback? */
+	if ((mode->flags & RASTERBITS_FLAG_WRAPINROW) && ((mode->width * bytesperchar + mode->offset) > mode->bytesperrow)) {
+		loopbackpos = (mode->bytesperrow - mode->offset + (bytesperchar - 1)) / bytesperchar;
+		loopbackadj = -mode->bytesperrow;
+		additionalrowbytes += mode->bytesperrow;
+	}
+	else {
+		loopbackpos = -1;
+		loopbackadj = 0;
+	}
 
 	for (y = 0; y < mode->height; y++) {
 		chartop = basey + y * scaley;
@@ -564,6 +637,13 @@ drawchar:
 				vram += bytesperchar;
 				if (db)
 					db += bytesperchar;
+
+				/* Check loopback; this is used to support $FF9F in the CoCo 3 */
+				if (x == loopbackpos) {
+					vram += loopbackadj;
+					if (db)
+						db += loopbackadj;
+				}
 			}
 		}
 		else {
@@ -600,6 +680,8 @@ void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struc
 	int bitmapwidth;
 	int bitmapheight;
 	int drawingbody;
+	int additionalrowbytes;
+	int loopbackpos, loopbackadj;
 	int artifactpalette[4];
 	struct rasterbits_clip myclip;
 
@@ -719,6 +801,19 @@ void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struc
 			if (mode->flags & RASTERBITS_FLAG_ARTIFACT)
 				assert(mode->depth == 1);
 
+			additionalrowbytes = mode->bytesperrow - (mode->width * mode->depth / 8);
+
+			/* Do we need loopback? */
+			if ((mode->flags & RASTERBITS_FLAG_WRAPINROW) && ((mode->width * mode->depth / 8 + mode->offset) > mode->bytesperrow)) {
+				loopbackpos = mode->bytesperrow - mode->offset;
+				loopbackadj = -mode->bytesperrow;
+				additionalrowbytes += mode->bytesperrow;
+			}
+			else {
+				loopbackpos = -1;
+				loopbackadj = 0;
+			}
+
 			switch(mode->depth) {
 			case 1:
 				if (mode->flags & RASTERBITS_FLAG_ARTIFACT) {
@@ -728,24 +823,24 @@ void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struc
 					artifactpalette[0] = mode->metapalette[0];
 					artifactpalette[3] = mode->metapalette[1];
 					mode->u.artifact(artifactpalette);
-					blitgraphics4artifact(bitmap, &myclip, src->videoram, src->position, src->size, src->db, artifactpalette,
+					blitgraphics4artifact(bitmap, &myclip, src->videoram, src->position, mode->offset, loopbackpos, loopbackadj, src->size, src->db, artifactpalette,
 						mode->width / 8, mode->height, basex, basey, scalex, scaley);
 				}
 				else {
-					blitgraphics2(bitmap, &myclip, src->videoram, src->position, src->size, src->db, mode->metapalette,
-						mode->width / 8, mode->height, basex, basey, scalex, scaley, mode->bytesperrow - (mode->width / 8));
+					blitgraphics2(bitmap, &myclip, src->videoram, src->position, mode->offset, loopbackpos, loopbackadj, src->size, src->db, mode->metapalette,
+						mode->width / 8, mode->height, basex, basey, scalex, scaley, additionalrowbytes);
 				}
 				break;
 
 			case 2:
-				blitgraphics4(bitmap, &myclip, src->videoram, src->position, src->size, src->db, mode->metapalette,
-					mode->width / 4, mode->height, basex, basey, scalex, scaley, mode->bytesperrow - (mode->width / 4));
+				blitgraphics4(bitmap, &myclip, src->videoram, src->position, mode->offset, loopbackpos, loopbackadj, src->size, src->db, mode->metapalette,
+					mode->width / 4, mode->height, basex, basey, scalex, scaley, additionalrowbytes);
 				break;
 
 			case 4:
 				assert(!mode->metapalette);
-				blitgraphics16(bitmap, &myclip, src->videoram, src->position, src->size, src->db,
-					mode->width / 2, mode->height, basex, basey, scalex, scaley, mode->bytesperrow - (mode->width / 2));
+				blitgraphics16(bitmap, &myclip, src->videoram, src->position, mode->offset, loopbackpos, loopbackadj, src->size, src->db,
+					mode->width / 2, mode->height, basex, basey, scalex, scaley, additionalrowbytes);
 				break;
 
 			default:

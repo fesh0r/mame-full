@@ -395,6 +395,7 @@ void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 	rs->position = currentstate->video_offset;
 	rs->db = full_refresh ? NULL : dirtybuffer;
 	rvm->height = 192 / rowheights[currentstate->video_vmode >> 1];
+	rvm->offset = 0;
 	rf->width = 256 * wf;
 	rf->height = 192;
 	rf->total_scanlines = -1;

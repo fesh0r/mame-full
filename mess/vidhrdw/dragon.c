@@ -443,7 +443,7 @@ static int coco3_hires_linesperrow(void)
 
 static int coco3_hires_vidbase(void)
 {
-	return (((coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8)) | ((coco3_gimevhreg[7] & 0x7f) * 2));
+	return (((coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8)));
 
 }
 
@@ -602,6 +602,13 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 		rvm->height = (rows + linesperrow - 1) / linesperrow;
 		rvm->metapalette = NULL;
 		rvm->flags = (coco3_gimevhreg[0] & 0x80) ? RASTERBITS_FLAG_GRAPHICS : RASTERBITS_FLAG_TEXT;
+		if (coco3_gimevhreg[7] & 0x80) {
+			rvm->offset = ((coco3_gimevhreg[7] & 0x7f) * 2);
+			rvm->flags |= RASTERBITS_FLAG_WRAPINROW;
+		}
+		else {
+			rvm->offset = 0;
+		}
 		rf->width = (coco3_gimevhreg[1] & 0x04) ? 640 : 512;
 		rf->height = rows;
 		rf->border_pen = full_refresh ? Machine->pens[16] : -1;
@@ -610,7 +617,6 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 
 		if (coco3_gimevhreg[0] & 0x80) {
 			/* Graphics */
-			rvm->flags = RASTERBITS_FLAG_GRAPHICS;
 			switch(coco3_gimevhreg[1] & 3) {
 			case 0:
 				/* Two colors */
@@ -634,7 +640,6 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 		}
 		else {
 			/* Text */
-			rvm->flags = RASTERBITS_FLAG_TEXT;
 			visualbytesperrow = (coco3_gimevhreg[1] & 0x10) ? 64 : 32;
 
 			if (coco3_gimevhreg[1] & 1) {
