@@ -60,3 +60,7 @@ Source Changes:
   IPT_SELECT1-4, and IPT_START1-4 should no longer be used by MESS. 
   [Nate Woods]
 
+- Tripled the delay in which wd179x errors are reported.  This manifested
+  itself in the CoCo driver by an emulated crash on some versions of NitrOS-9
+  when run on a write protected image. [Nate Woods]
+

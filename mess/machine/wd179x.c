@@ -15,12 +15,32 @@
 	   (e.g. unformatted disc)
 ***************************************************************************/
 
+
 #include "driver.h"
 #include "includes/wd179x.h"
 #include "devices/flopdrv.h"
 
-#define VERBOSE 0
-#define VERBOSE_DATA 0		/* This turns on and off the recording of each byte during read and write */
+
+/***************************************************************************
+
+	Parameters
+
+***************************************************************************/
+
+#define VERBOSE			0	/* General logging */
+#define VERBOSE_DATA	0	/* Logging of each byte during read and write */
+
+#define DELAY_ERROR		3
+#define DELAY_NOTREADY	1
+#define DELAY_DATADONE	3
+
+
+
+/***************************************************************************
+
+	Read track stuff
+
+***************************************************************************/
 
 /* structure describing a double density track */
 #define TRKSIZE_DD		6144
@@ -66,12 +86,20 @@ static UINT8 track_SD[][2] = {
 };
 #endif
 
-static void wd179x_complete_command(WD179X *, int);
+
+
+/***************************************************************************
+
+	Prototypes
+
+***************************************************************************/
+
+static void wd179x_complete_command(WD179X *, int delay);
 static void wd179x_clear_data_request(void);
 static void wd179x_set_data_request(void);
 static void wd179x_timed_data_request(void);
 static void wd179x_set_irq(WD179X *);
-static void *busy_timer = NULL;
+static mame_timer *busy_timer = NULL;
 
 /* one wd controlling multiple drives */
 static WD179X wd;
@@ -81,6 +109,8 @@ static UINT8 current_drive;
 
 /* this is the head currently selected */
 static UINT8 hd = 0;
+
+/**************************************************************************/
 
 static mess_image *wd179x_current_image(void)
 {
@@ -474,7 +504,7 @@ static void wd179x_read_id(WD179X * w)
 		//w->sector = w->track_reg;
 		logerror("read id failed\n");
 
-		wd179x_complete_command(w, 1);
+		wd179x_complete_command(w, DELAY_ERROR);
 	}
 }
 
@@ -525,7 +555,7 @@ static int wd179x_find_sector(WD179X *w)
 #if VERBOSE
 	logerror("track %d sector %d not found!\n", w->track_reg, w->sector);
 #endif
-	wd179x_complete_command(w, 1);
+	wd179x_complete_command(w, DELAY_ERROR);
 
 	return 0;
 }
@@ -706,7 +736,7 @@ static void	wd179x_read_sector_callback(int code)
 #endif
 
 	if (!floppy_drive_get_flag_state(wd179x_current_image(), FLOPPY_DRIVE_READY))
-		wd179x_complete_command(w, 1);
+		wd179x_complete_command(w, DELAY_NOTREADY);
 	else
 		wd179x_read_sector(w);
 
@@ -727,7 +757,7 @@ static void	wd179x_write_sector_callback(int code)
 #endif
 
 	if (!floppy_drive_get_flag_state(wd179x_current_image(), FLOPPY_DRIVE_READY))
-		wd179x_complete_command(w, 1);
+		wd179x_complete_command(w, DELAY_NOTREADY);
 	else
 	{
 
@@ -736,7 +766,7 @@ static void	wd179x_write_sector_callback(int code)
 		{
 			w->status |= STA_2_WRITE_PRO;
 
-			wd179x_complete_command(w, 1);
+			wd179x_complete_command(w, DELAY_ERROR);
 		}
 		else
 		{
@@ -911,7 +941,7 @@ READ_HANDLER ( wd179x_data_r )
 		//	w->sector++;
 			/* Delay the INTRQ 3 byte times becuase we need to read two CRC bytes and
 			   compare them with a calculated CRC */
-			wd179x_complete_command(w, 3);
+			wd179x_complete_command(w, DELAY_DATADONE);
 		}
 		else
 		{
@@ -1031,7 +1061,7 @@ WRITE_HANDLER ( wd179x_command_w )
 
 			if (!floppy_drive_get_flag_state(wd179x_current_image(), FLOPPY_DRIVE_READY))
             {
-				wd179x_complete_command(w, 1);
+				wd179x_complete_command(w, DELAY_NOTREADY);
             }
             else
             {
@@ -1042,7 +1072,7 @@ WRITE_HANDLER ( wd179x_command_w )
                     /* yes */
                     w->status |= STA_2_WRITE_PRO;
                     /* quit command */
-                    wd179x_complete_command(w, 1);
+                    wd179x_complete_command(w, DELAY_ERROR);
                 }
                 else
                 {
@@ -1069,7 +1099,7 @@ WRITE_HANDLER ( wd179x_command_w )
 
 			if (!floppy_drive_get_flag_state(wd179x_current_image(), FLOPPY_DRIVE_READY))
             {
-				wd179x_complete_command(w, 1);
+				wd179x_complete_command(w, DELAY_NOTREADY);
             }
             else
             {
@@ -1281,7 +1311,7 @@ WRITE_HANDLER ( wd179x_data_w )
 			else
 				wd179x_write_sector(w);
 
-			wd179x_complete_command(w, 3);
+			wd179x_complete_command(w, DELAY_DATADONE);
 		}
 		else
 		{
