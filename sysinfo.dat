@@ -1082,7 +1082,7 @@ $end
 
 $info=c128
 $bio
-commodore c128
+Commodore c128
 
 
 Sequel of to the c64.
@@ -2943,6 +2943,7 @@ Awakening and Tetris proved that quality games could be developed for portable u
 Nintendo later released the “Play it Loud” Game Boy series in 5 colors, and the redesigned 
 slimmed down Game Boy pocket version was released in 1996.
 
+
 Features:
 
 CPU: 8-bit (Similar to the Z80 processor) at 4.194304MHz
@@ -3914,7 +3915,9 @@ $info=mbee
 $bio
 Applied Technologies Microbee
 
+
 Features:
+
 
 MESS Emulation State:
 
@@ -3925,6 +3928,7 @@ $end
 $info=mc10
 $bio
 Tandy Radio Shack MC-10 (1983)
+
 
 Features:
 
@@ -4960,9 +4964,10 @@ $bio
 Magnavox(?) Odyssey2
 
 
-Console for tv connection
+Console for TV connection
 
 Philips G7000 videopac
+
 
 Features:
 
@@ -4977,7 +4982,7 @@ Dan Boris o2em for DOS
 
 MESS Emulation State:
 
-based on info by Dan Boris
+Based on info by Dan Boris.
 
 
 $end
@@ -5618,10 +5623,11 @@ $end
 
 $info=pcd85
 $bio
-PMD-85
+Tesla PMD-85 (1985)
 
 
-homecomputer for tv connection in czechoslovakia?
+homecomputer for TV connection in Czechoslovakia.
+
 
 Features:
 
@@ -5629,7 +5635,7 @@ Features:
 288x256 dots resolution
 (version 1 and 2 mono)
 (version 3 with 4 colors)
-integrated beeper or beep generation for tv
+integrated beeper or beep generation for TV
 centronics port?
 something like user port?
 
@@ -5643,8 +5649,12 @@ $bio
 NEC PC Engine/TurboGrafx-16 (1987)
 
 
-
-The PC Engine (called TurboGrafx - 16 in the US)  was the first 16-Bit graphics home entertainment system to be released. The PC Engine was created by NEC of Japan. Supporting over 1000 software titles with such popular titles as Bonk's Adventure, Bomberman, Dracula X and Ys IV . The PC Engine was embraced by millions of Japanese gamers, and because of this, the system will be remembered as the starting of a legacy. This system was the first of it's kind to use credit card size game cartridges and later supported CD-ROMs and portable models with built in TV tuners.
+The PC Engine (called TurboGrafx - 16 in the US)  was the first 16-Bit graphics home entertainment 
+system to be released. The PC Engine was created by NEC of Japan. Supporting over 1000 software 
+titles with such popular titles as Bonk's Adventure, Bomberman, Dracula X and Ys IV . The PC Engine
+was embraced by millions of Japanese gamers, and because of this, the system will be remembered as
+the starting of a legacy. This system was the first of it's kind to use credit card size game cartridges
+and later supported CD-ROMs and portable models with built in TV tuners.
 
 
 Features:
@@ -6890,7 +6900,7 @@ Connector for external power supply
 
 Optional features:
 
-tv adapter
+TV adapter
 
 
 Notes:
@@ -6904,7 +6914,7 @@ MESS Emulation State:
 very preliminary support
 preliminary sound support
 no serial port
-no tv adapter support
+no TV adapter support
 work stopped until more cartridges are available
 
 
@@ -7000,7 +7010,7 @@ This system is a update to the Atmos.
 
 Known Issues:
 
-- disc emulation is not correct so it fails to boot! 
+Disc emulation is not correct so it fails to boot! 
 
 
 $end
@@ -7095,10 +7105,10 @@ Notes:
 
 To do:
 
-- port 3 and 4
-- nvram
-- better artworks
-- drivers for other rom versions
+port 3 and 4
+nvram
+better artworks
+drivers for other rom versions
 
 Needed:
 
@@ -7178,9 +7188,9 @@ Notes:
 
 To do:
 
-- port 3 and 4
-- better artworks
-- drivers for rom versions: 1.0, 2.0, 7.0
+port 3 and 4
+better artworks
+drivers for rom versions: 1.0, 2.0, 7.0
 
 
 Needed:
@@ -7261,10 +7271,10 @@ Notes:
 
 To do:
 
-- many corrections of existing code
-- port 3 and 4
-- better artworks
-- driver for rom version 1.2
+many corrections of existing code
+port 3 and 4
+better artworks
+driver for rom version 1.2
 
 
 Needed:
@@ -7646,7 +7656,7 @@ $bio
 Interton VC4000
 
 
-Console for tv connection (PAL only?)
+Console for TV connection (PAL only?)
 
 seams to be prequel of the arcadia 2001
 technical something between channel f and odyssey2
@@ -7946,16 +7956,16 @@ $end
 
 $info=vip
 $bio
-RCA Cosmac VIP
+RCA Cosmac VIP (1977)
 
 
-very early computer for tv connection
+very early home computer for TV connection
 
 
 Features:
 
 tape interface
-tv output
+TV output
 integrated speaker
 
 
@@ -7983,7 +7993,10 @@ $end
 
 $info=zx80
 $bio
-Sinclair ZX 80
+Sinclair ZX 80 (1980)
+
+
+A home computer built in the United Kingdom.
 
 
 History and Trivia:
@@ -7998,7 +8011,10 @@ $end
 
 $info=zx81
 $bio
-Sinclair ZX 81 / Timex Sinclair 1000
+Sinclair ZX 81 / Timex Sinclair 1000 (1981)
+
+
+A home computer built in the United Kingdom.
 
 
 History and Trivia:
