@@ -58,7 +58,8 @@ enum
 	ORIC_FLOPPY_INTERFACE_NONE = 0,
 	ORIC_FLOPPY_INTERFACE_MICRODISC = 1,
 	ORIC_FLOPPY_INTERFACE_JASMIN = 2,
-	ORIC_FLOPPY_INTERFACE_APPLE2 = 3
+	ORIC_FLOPPY_INTERFACE_APPLE2 = 3,
+	ORIC_FLOPPY_INTERFACE_APPLE2_V2 = 4
 };
 
 /* called when ints are changed - cleared/set */
@@ -70,7 +71,7 @@ static void oric_refresh_ints(void)
 		/* oric 1 or oric atmos */
 
 		/* if floppy disc hardware is disabled, do not allow interrupts from it */
-		if ((readinputport(9) & 0x03)==ORIC_FLOPPY_INTERFACE_NONE)
+		if ((readinputport(9) & 0x07)==ORIC_FLOPPY_INTERFACE_NONE)
 		{
 			oric_irqs &=~(1<<1);
 		}
@@ -302,10 +303,10 @@ static void    oric_refresh_tape(int dummy)
 
 	input_port_9 = readinputport(9);
 	/* cable is enabled? */
-	if ((input_port_9 & 0x04)!=0)
+	if ((input_port_9 & 0x08)!=0)
 	{
 		/* return state of vsync */
-		data = input_port_9>>3;
+		data = input_port_9>>4;
 	}
 
     via_set_input_cb1(0, data);
@@ -495,17 +496,18 @@ struct via6522_interface oric_6522_interface=
 	NULL
 };
 
-/******************************************************************************************/
+
+
+
+/*********************/
 /* APPLE 2 INTERFACE */
-/* Apple2 disk interface:
 
-oric via accessed through 0x0300-0x030f,
-apple2 disc drive accessed through 0x0310-0x031f,
-disk interface rom accessed through 0x0320-0x03ff
+/* 
+apple2 disc drive accessed through 0x0310-0x031f (read/write)
+oric via accessed through 0x0300-0x030f. (read/write)
+disk interface rom accessed through 0x0320-0x03ff (read only)
 
-call &320 to start, or use "Boby" ROM (automatically detects disc interface)
-
-disk interface rom is a boot-rom and loads DOS from disc in the drive.
+CALL &320 to start, or use BOBY rom.
 */
 
 extern READ_HANDLER ( apple2_c0xx_slot6_r );
@@ -515,14 +517,14 @@ extern void apple2_slot6_stop(void);
 
 static READ_HANDLER(apple2_interface_r)
 {
-	//logerror("apple 2 interface r: %04x\n",offset);
+	/*logerror("apple 2 interface r: %04x\n",offset); */
 
 	return apple2_c0xx_slot6_r(offset & 0x0f);
 }
 
 static WRITE_HANDLER(apple2_interface_w)
 {
-	//logerror("apple 2 interface w: %04x %02x\n",offset,data);
+	/*logerror("apple 2 interface w: %04x %02x\n",offset,data); */
 
 	apple2_c0xx_slot6_w(offset & 0x0f, data);
 }
@@ -539,13 +541,103 @@ static void oric_install_apple2_interface(void)
 
 }
 
+#if 0
 static void oric_uninstall_apple2_interface(void)
 {
 
 
 }
+#endif
+
+/************************/
+/* APPLE 2 INTERFACE V2 */
+
+/* 
+apple2 disc drive accessed through 0x0310-0x031f (read/write)
+oric via accessed through 0x0300-0x030f. (read/write)
+disk interface rom accessed through 0x0320-0x03ff (read only)
+v2 registers accessed through 0x0380-0x0383 (write only)
+
+CALL &320 to start, or use BOBY rom.
+*/
+
+static WRITE_HANDLER(apple2_v2_interface_w)
+{
+	/* data is ignored, address is used to decode operation */
+
+/*	logerror("apple 2 interface v2 rom page: %01x\n",(offset & 0x02)>>1); */
+
+	/* bit 0 is 0 for page 0, 1 for page 1 */
+	cpu_setbank(4, memory_region(REGION_CPU1) + 0x014000 + 0x0100 + (((offset & 0x02)>>1)<<8));
+
+	/* bit 1 is 0, rom enabled, bit 1 is 1 ram enabled */
+	if ((offset & 0x01)==0)
+	{
+		unsigned char *rom_ptr;
+
+		/* logerror("apple 2 interface v2: rom enabled\n"); */
+
+		/* enable rom */
+		memory_set_bankhandler_r(1, 0, MRA_BANK1);
+		memory_set_bankhandler_r(2, 0, MRA_BANK2);
+		memory_set_bankhandler_r(3, 0, MRA_BANK3);
+		memory_set_bankhandler_w(5, 0, MWA_BANK5);
+		memory_set_bankhandler_w(6, 0, MWA_BANK6);
+		memory_set_bankhandler_w(7, 0, MWA_BANK7);
+
+		rom_ptr = memory_region(REGION_CPU1) + 0x010000;
+		cpu_setbank(1, rom_ptr);
+		cpu_setbank(2, rom_ptr+0x02000);
+		cpu_setbank(3, rom_ptr+0x03800);
+		cpu_setbank(5, oric_ram_0x0c000);
+		cpu_setbank(6, oric_ram_0x0c000+0x02000);
+		cpu_setbank(7, oric_ram_0x0c000+0x03800);	
+	}
+	else
+	{
+		/*logerror("apple 2 interface v2: ram enabled\n"); */
+
+		/* enable ram */
+		memory_set_bankhandler_r(1, 0, MRA_BANK1);
+		memory_set_bankhandler_r(2, 0, MRA_BANK2);
+		memory_set_bankhandler_r(3, 0, MRA_BANK3);
+		memory_set_bankhandler_w(5, 0, MWA_BANK5);
+		memory_set_bankhandler_w(6, 0, MWA_BANK6);
+		memory_set_bankhandler_w(7, 0, MWA_BANK7);
+
+		cpu_setbank(1, oric_ram_0x0c000);
+		cpu_setbank(2, oric_ram_0x0c000+0x02000);
+		cpu_setbank(3, oric_ram_0x0c000+0x03800);
+		cpu_setbank(5, oric_ram_0x0c000);
+		cpu_setbank(6, oric_ram_0x0c000+0x02000);
+		cpu_setbank(7, oric_ram_0x0c000+0x03800);
+	}
+}
 
 
+/* APPLE 2 INTERFACE V2 */
+static void oric_install_apple2_v2_interface(void)
+{
+	install_mem_read_handler(0, 0x0300, 0x030f, oric_IO_r);
+	install_mem_read_handler(0, 0x0310, 0x031f, apple2_interface_r);
+	install_mem_read_handler(0, 0x0320, 0x03ff, MRA_BANK4);
+
+	install_mem_write_handler(0, 0x0300, 0x030f, oric_IO_w);
+	install_mem_write_handler(0, 0x0310, 0x031f, apple2_interface_w);
+	install_mem_write_handler(0, 0x0380, 0x0383, apple2_v2_interface_w);
+
+	apple2_v2_interface_w(0,0);
+}
+
+#if 0
+static void oric_uninstall_apple2_v2_interface(void)
+{
+
+
+}
+#endif
+
+/********************/
 /* JASMIN INTERFACE */
 
 
@@ -1042,7 +1134,7 @@ static void oric_install_microdisc_interface(void)
 
 static void oric_wd179x_callback(int State)
 {
-	switch (readinputport(9) &  0x03)
+	switch (readinputport(9) &  0x07)
 	{
 		default:
 		case ORIC_FLOPPY_INTERFACE_NONE:
@@ -1147,14 +1239,17 @@ void oric_common_init_machine(void)
 
 void oric_init_machine (void)
 {
+	int disc_interface_id;
+
 	oric_common_init_machine();
 
 	oric_is_telestrat = 0;
 
 	oric_ram_0x0c000 = malloc(16384);
 
+	disc_interface_id = readinputport(9) & 0x07;
 
-	switch (readinputport(9) & 0x03)
+	switch (disc_interface_id)
 	{
 		default:
 
@@ -1179,16 +1274,25 @@ void oric_init_machine (void)
 			cpu_setbank(6, rom_ptr+0x02000);			
 			cpu_setbank(7, rom_ptr+0x03800);			
 
-			install_mem_read_handler(0,0x0300, 0x03ff, oric_IO_r);
-
-			install_mem_write_handler(0,0x0300, 0x03ff, oric_IO_w);
 			
-			if ((readinputport(9) & 0x03)==ORIC_FLOPPY_INTERFACE_APPLE2)
+			if (disc_interface_id==ORIC_FLOPPY_INTERFACE_APPLE2)
 			{
 				oric_install_apple2_interface();
 			}
+			else
+			{
+				install_mem_read_handler(0,0x0300, 0x03ff, oric_IO_r);
+				install_mem_write_handler(0,0x0300, 0x03ff, oric_IO_w);
+			}
 		}
 		break;
+
+		case ORIC_FLOPPY_INTERFACE_APPLE2_V2:
+		{
+			oric_install_apple2_v2_interface();
+		}
+		break;
+
 		
 		case ORIC_FLOPPY_INTERFACE_MICRODISC:
 		{
@@ -1230,7 +1334,7 @@ void oric_shutdown_machine (void)
 READ_HANDLER ( oric_IO_r )
 {
 #if 0
-	switch (readinputport(9) & 0x03)
+	switch (readinputport(9) & 0x07)
 	{
 		default:
 		case ORIC_FLOPPY_INTERFACE_NONE:
@@ -1255,7 +1359,7 @@ READ_HANDLER ( oric_IO_r )
 		break;
 	}
 #endif
-	//logerror("via 0 r: %04x\n",offset);
+	/*logerror("via 0 r: %04x\n",offset); */
 
 	/* it is repeated */
 	return via_0_r(offset & 0x0f);
@@ -1264,7 +1368,7 @@ READ_HANDLER ( oric_IO_r )
 WRITE_HANDLER ( oric_IO_w )
 {
 #if 0
-	switch (readinputport(9) & 0x03)
+	switch (readinputport(9) & 0x07)
 	{
 		default:
 		case ORIC_FLOPPY_INTERFACE_NONE:
@@ -1292,7 +1396,7 @@ WRITE_HANDLER ( oric_IO_w )
 		break;
 	}
 #endif
-	//logerror("via 0 w: %04x %02x\n",offset,data);
+	/*logerror("via 0 w: %04x %02x\n",offset,data); */
 
 	via_0_w(offset & 0x0f,data);
 }
@@ -1384,7 +1488,7 @@ int oric_cassette_init(int id)
             return INIT_FAILED;
 
 		/* immediately inhibit/mute/play the output */
-     //   device_status(IO_CASSETTE,id, WAVE_STATUS_MOTOR_ENABLE|WAVE_STATUS_MUTED|WAVE_STATUS_MOTOR_INHIBIT);
+     /*   device_status(IO_CASSETTE,id, WAVE_STATUS_MOTOR_ENABLE|WAVE_STATUS_MUTED|WAVE_STATUS_MOTOR_INHIBIT); */
 		return INIT_OK;
     }
 

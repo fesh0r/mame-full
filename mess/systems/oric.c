@@ -1,5 +1,5 @@
 
-/*
+/* 
 	Systems supported by this driver:
 
 	Oric 1,
@@ -8,7 +8,7 @@
 	Pravetz 8D
 
 	Pravetz is a Bulgarian copy of the Oric Atmos and uses
-	Apple 2 disc drives for storage
+	Apple 2 disc drives for storage. 
 
 	This driver originally by Paul Cook, rewritten by Kevin Thacker.
 */
@@ -24,8 +24,7 @@
 extern int apple2_floppy_init(int id);
 extern void apple2_floppy_exit(int id);
 
-
-/*
+/* 
 	Explaination of memory regions:
 
 	I have split the memory region &c000-&ffff in this way because:
@@ -37,7 +36,7 @@ extern void apple2_floppy_exit(int id);
 	There is also 16k of ram at &c000-&ffff which is normally masked
 	by the os rom, but when the microdisc or jasmin interfaces are used,
 	this ram can be accessed. For the microdisc and jasmin, the ram not
-	covered by the roms for these interfaces, can be accessed
+	covered by the roms for these interfaces, can be accessed 
 	if it is enabled.
 
 	MRA_BANK1,MRA_BANK2 and MRA_BANK3 are used for a 16k rom.
@@ -46,7 +45,7 @@ extern void apple2_floppy_exit(int id);
 
 	0x0300-0x03ff is I/O access. It is not defined below because the
 	memory is setup dynamically depending on hardware that has been selected (microdisc, jasmin, apple2) etc.
-
+	
 */
 
 
@@ -57,8 +56,8 @@ static MEMORY_READ_START(oric_readmem)
     { 0x0400, 0xBFFF, MRA_RAM },
 
     { 0xc000, 0xdFFF, MRA_BANK1 },
-	{ 0xe000, 0xf7ff, MRA_BANK2 },
-	{ 0xf800, 0xffff, MRA_BANK3 },
+	{ 0xe000, 0xf7ff, MRA_BANK2 },	
+	{ 0xf800, 0xffff, MRA_BANK3 },	
 MEMORY_END
 
 static MEMORY_WRITE_START(oric_writemem)
@@ -70,7 +69,7 @@ static MEMORY_WRITE_START(oric_writemem)
 	{ 0xf800, 0xffff, MWA_BANK7 },
 MEMORY_END
 
-/*
+/* 
 The telestrat has the memory regions split into 16k blocks.
 Memory region &c000-&ffff can be ram or rom. */
 static MEMORY_READ_START(telestrat_readmem)
@@ -176,18 +175,20 @@ INPUT_PORTS_START(oric)
 	INPUT_PORT_ORIC
 	PORT_START
 	/* floppy interface  */
-	PORT_DIPNAME( 0x03, 0x00, "Floppy disc interface" )
+	PORT_DIPNAME( 0x07, 0x00, "Floppy disc interface" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPSETTING(    0x01, "Microdisc" )
 	PORT_DIPSETTING(    0x02, "Jasmin" )
-/*	PORT_DIPSETTING(    0x03, "Apple2" ) */
+/*	PORT_DIPSETTING(    0x03, "Low 8D DOS" ) */
+/*	PORT_DIPSETTING(    0x04, "High 8D DOS" ) */
+
 	/* vsync cable hardware. This is a simple cable connected to the video output
 	to the monitor/television. The sync signal is connected to the cassette input
 	allowing interrupts to be generated from the vsync signal. */
-    PORT_BITX(0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Vsync cable hardware", IP_KEY_NONE, IP_JOY_NONE)
+    PORT_BITX(0x08, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Vsync cable hardware", IP_KEY_NONE, IP_JOY_NONE)
 	PORT_DIPSETTING(0x0, DEF_STR( Off) )
-	PORT_DIPSETTING(0x4, DEF_STR( On) )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK)
+	PORT_DIPSETTING(0x8, DEF_STR( On) )
+	PORT_BIT( 0x010, IP_ACTIVE_HIGH, IPT_VBLANK)
 INPUT_PORTS_END
 
 
@@ -195,7 +196,14 @@ INPUT_PORTS_START(prav8d)
 	INPUT_PORT_ORIC
 	/* force apple2 disc interface for pravetz */
 	PORT_START
-	PORT_BIT (0x0f, 0x03, IPT_UNUSED)
+	PORT_DIPNAME( 0x07, 0x00, "Floppy disc interface" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x03, "Low 8D DOS" )
+	PORT_DIPSETTING(    0x04, "High 8D DOS" )
+	PORT_BITX(0x08, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Vsync cable hardware", IP_KEY_NONE, IP_JOY_NONE)
+	PORT_DIPSETTING(0x0, DEF_STR( Off) )
+	PORT_DIPSETTING(0x8, DEF_STR( On) )
+	PORT_BIT( 0x010, IP_ACTIVE_HIGH, IPT_VBLANK)
 INPUT_PORTS_END
 
 
@@ -205,11 +213,11 @@ INPUT_PORTS_START(telstrat)
 	/* vsync cable hardware. This is a simple cable connected to the video output
 	to the monitor/television. The sync signal is connected to the cassette input
 	allowing interrupts to be generated from the vsync signal. */
-	PORT_BIT (0x03, 0x00, IPT_UNUSED)
-	PORT_BITX(0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Vsync cable hardware", IP_KEY_NONE, IP_JOY_NONE)
+	PORT_BIT (0x07, 0x00, IPT_UNUSED)
+	PORT_BITX(0x08, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Vsync cable hardware", IP_KEY_NONE, IP_JOY_NONE)
 	PORT_DIPSETTING(0x0, DEF_STR( Off) )
-	PORT_DIPSETTING(0x4, DEF_STR( On) )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK)
+	PORT_DIPSETTING(0x8, DEF_STR( On) )
+	PORT_BIT( 0x010, IP_ACTIVE_HIGH, IPT_VBLANK)
 	/* left joystick port */
 	PORT_START
 	PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 UP", IP_KEY_NONE, JOYCODE_1_RIGHT)
@@ -382,21 +390,24 @@ ROM_START(telstrat)
 ROM_END
 
 ROM_START(prav8d)
-    ROM_REGION (0x10000+0x4000+0x0100,REGION_CPU1,0)
+    ROM_REGION (0x10000+0x4000+0x0100+0x200,REGION_CPU1,0)
     ROM_LOAD ("pravetzt.rom", 0x10000, 0x4000, 0x58079502)
-	ROM_LOAD_OPTIONAL ("eprom8d.rom", 0x014000, 0x0100, 0x0c82f636)
+	ROM_LOAD_OPTIONAL ("8ddoslo.rom", 0x014000, 0x0100, 0x0c82f636)
+    ROM_LOAD_OPTIONAL ("8ddoshi.rom",0x014100, 0x0200, 0x66309641)
 ROM_END
 
 ROM_START(prav8dd)
-    ROM_REGION (0x10000+0x4000+0x0100,REGION_CPU1,0)
+    ROM_REGION (0x10000+0x4000+0x0100+0x0200,REGION_CPU1,0)
     ROM_LOAD ("8d.rom", 0x10000, 0x4000, 0xb48973ef)
-	ROM_LOAD_OPTIONAL ("eprom8d.rom", 0x014000, 0x0100, 0x0c82f636)
+    ROM_LOAD_OPTIONAL ("8ddoslo.rom", 0x014000, 0x0100, 0x0c82f636)
+    ROM_LOAD_OPTIONAL ("8ddoshi.rom",0x014100, 0x0200, 0x66309641)
 ROM_END
 
 ROM_START(prav8dda)
-    ROM_REGION (0x10000+0x4000+0x0100,REGION_CPU1,0)
+    ROM_REGION (0x10000+0x4000+0x0100+0x200,REGION_CPU1,0)
     ROM_LOAD ("pravetzd.rom", 0x10000, 0x4000, 0xf8d23821)
-	ROM_LOAD_OPTIONAL ("eprom8d.rom", 0x014000, 0x0100, 0x0c82f636)
+	ROM_LOAD_OPTIONAL ("8ddoslo.rom", 0x014000, 0x0100, 0x0c82f636)
+    ROM_LOAD_OPTIONAL ("8ddoshi.rom",0x014100, 0x0200, 0x66309641)
 ROM_END
 
 static const struct IODevice io_oric1[] =
