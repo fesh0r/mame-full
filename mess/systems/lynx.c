@@ -1,7 +1,7 @@
 /******************************************************************************
- Peter.Trauner@jk.uni-linz.ac.at May 2000
+ Peter.Trauner@jk.uni-linz.ac.at December 2000
 
- info found in bastian schicks bll
+ info found in bastian schick's bll
  and in cc65 for lynx
 
 ******************************************************************************/
@@ -10,29 +10,6 @@
 #include "cpu/m6502/m6502.h"
 
 #include "includes/lynx.h"
-
-/*
-  cartridges have 1 MB address space
-  accessed through byte window 
-
-  0xfff9 mikey enable?
-
- 0xfc00-f w 
-
- 0xfc08/9 screen base address
- 0xfc10/1 blitter info
-
- 0xfcb0 r keys (no key 0)
-  7 up
-  6 down
-  5 left
-  4 right
-  3 opt1
-  2 opt2
-  1 b
-  0 a
- 0xfcb2 w cartridge data in  
- */
 
 static MEMORY_READ_START( lynx_readmem )
 	{ 0x0000, 0xfbff, MRA_RAM },
@@ -61,6 +38,10 @@ INPUT_PORTS_START( lynx )
     PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
     PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
     PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP   )
+	PORT_START
+	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Pause",  KEYCODE_3, IP_JOY_DEFAULT )
+
+	// power on and power off buttons
 INPUT_PORTS_END
 
 static struct GfxLayout lynx_charlayout =
@@ -92,10 +73,6 @@ static struct GfxDecodeInfo lynx_gfxdecodeinfo[] = {
 
 static int lynx_frame_int(void)
 {
-	if (mikey.data[9]&0x80) {
-		cpu_set_irq_line(0, M65SC02_INT_IRQ, PULSE_LINE);
-		mikey.data[0x81]=4; // vertical
-	}
 	return 0;
 }
 
@@ -189,28 +166,17 @@ static struct MachineDriver machine_driver_lynx =
 // roms could be swapped!
 ROM_START(lynx)
 	ROM_REGION(0x10200,REGION_CPU1, 0)
-	ROM_LOAD("lynxboot.img", 0x10000, 0x200, 0xe1ffecb6)
+	ROM_LOAD("lynx.bin", 0x10000, 0x200, 0xe1ffecb6)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 	ROM_REGION(0x100000, REGION_USER1, 0)
 ROM_END
 
 ROM_START(lynx2)
 	ROM_REGION(0x10200,REGION_CPU1, 0)
-	ROM_LOAD("lynxboot.img", 0x10000, 0x200, 0x0d973c9d)
+	ROM_LOAD("lynx2.bin", 0x10000, 0x200, 0x0d973c9d)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 	ROM_REGION(0x100000, REGION_USER1, 0)
 ROM_END
-/* raycast.o 
-initirq
-89c 
-setrgb
-8d4
-
-334 push a 0
-336 push a x
-34d pop a x to 82 83
-666 coprocessor
-*/
 
 static int lynx_id_rom(int id)
 {
@@ -222,7 +188,15 @@ static int lynx_load_rom(int id)
 {
 	FILE *cartfile;
 	UINT8 *rom = memory_region(REGION_USER1);
-	int size;
+	int size, i;
+/* 64 byte header
+   LYNX
+   intelword lower counter size
+   0 0 1 0
+   32 chars name
+   22 chars manufacturer
+*/
+
 
 	if (device_filename(IO_CARTSLOT, id) == NULL)
 	{
@@ -245,6 +219,15 @@ static int lynx_load_rom(int id)
 		return 1;
 	}
 	osd_fclose(cartfile);
+	switch (size) {
+	case 0x40000:
+		// rom is accessed with 2 counters,
+		// the lower one has 11 bits, but some 256kbyte cartridges uses only 10 bits
+		for (i=size-0x400; i>=0; i-=0x400) {
+			memcpy(rom+i*2, rom+i, 0x400);
+		}
+		break;
+	}
 	return 0;
 }
 
