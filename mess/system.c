@@ -176,7 +176,7 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( advision )	/* Adventurevision									*/
 
 	/* CAPCOM */
-//	DRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)				*/
+	DRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)				*/
 
 	/* MAGNAVOX */
 //	DRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983					*/
@@ -493,19 +493,19 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS			*/
 	DRIVER( jupiter )	/* Jupiter Ace										*/
 
 	/* SORD */
-//	DRIVER( sordm5 )
+	DRIVER( sordm5 )
 
 	/* APF Electronics Inc. */
 //	DRIVER( apfm1000 )
 //	DRIVER( apfimag )
 
 	/* Tatung */
-//	DRIVER( einstein )
-//TESTDRIVER( einstei2 )
+	DRIVER( einstein )
+TESTDRIVER( einstei2 )
 
 	/* INTELLIGENT SOFTWARE */
-//	DRIVER( ep128 ) 	/* Enterprise 128 k 								*/
-//	DRIVER( ep128a )	/* Enterprise 128 k 								*/
+	DRIVER( ep128 ) 	/* Enterprise 128 k 								*/
+	DRIVER( ep128a )	/* Enterprise 128 k 								*/
 
 	/* NON LINEAR SYSTEMS */
 	DRIVER( kaypro )	/* Kaypro 2X										*/
@@ -572,12 +572,12 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( telstrat )	/* ??? Oric Telestrat/Stratos						*/
 
 	/* PHILIPS */
-//	DRIVER( p2000t )	/* 1980 P2000T										*/
-//	DRIVER( p2000m )	/* 1980 P2000M										*/
+	DRIVER( p2000t )	/* 1980 P2000T										*/
+	DRIVER( p2000m )	/* 1980 P2000M										*/
 	/* philips g7000 odyssey2 compatible */
 
 	/* COMPUKIT */
-//	DRIVER( uk101 ) 	/* 1979 UK101										*/
+	DRIVER( uk101 ) 	/* 1979 UK101										*/
 
 	/* OHIO SCIENTIFIC */
 //	DRIVER( superbrd )	/* 1979 Superboard II								*/
@@ -604,7 +604,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 
 
 	/* MILES GORDON TECHNOLOGY */
-//	DRIVER( coupe ) 	/* 1989 Sam Coupe									*/
+	DRIVER( coupe ) 	/* 1989 Sam Coupe									*/
 
 	/* MOTOROLA */
 //TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit						*/
@@ -621,7 +621,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( aquarius )	/* 1983 Aquarius									*/
 
 	/*EXIDY INC */
-//	DRIVER( exidy )  /* Sorcerer											*/
+	DRIVER( exidy )  /* Sorcerer											*/
 
 	/* GALAKSIJA */
 //	DRIVER( galaxy )

@@ -6,8 +6,8 @@
 #define EXIDY_SCREEN_WIDTH        (64*8)
 #define EXIDY_SCREEN_HEIGHT       (30*8)
 
-extern VIDEO_START( exidy );
-extern VIDEO_UPDATE( exidy );
-extern PALETTE_INIT( exidy );
+VIDEO_START( exidy );
+VIDEO_UPDATE( exidy );
+PALETTE_INIT( exidy );
 
-int exidy_cassette_init(mess_image *img, mame_file *fp, int open_mode);
+DEVICE_LOAD( exidy_cassette );

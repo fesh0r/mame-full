@@ -71,15 +71,12 @@
 #include "devices/basicdsk.h"
 #include "image.h"
 
-static int exidy_floppy_init(mess_image *img, mame_file *fp, int open_mode)
+static DEVICE_LOAD( exidy_floppy )
 {
-	if (!image_exists(IO_FLOPPY, id))
-		return INIT_PASS;
-
-	if (basicdsk_floppy_load(id, fp, open_mode)==INIT_PASS)
+	if (basicdsk_floppy_load(image, file, open_mode)==INIT_PASS)
 	{
 		/* not correct */
-		basicdsk_set_geometry(id, 80, 2, 9, 512, 1, 0, FALSE);
+		basicdsk_set_geometry(image, 80, 2, 9, 512, 1, 0, FALSE);
 		return INIT_PASS;
 	}
 
@@ -176,12 +173,12 @@ static void exidy_cassette_timer_callback(int dummy)
 
 			/* detect level */
 			bit = 1;
-			if (device_input(IO_CASSETTE,0) > 255)
+			if (device_input(image_instance(IO_CASSETTE, 0)) > 255)
 				bit = 0;
 			cassette_input_ff[0] = bit;
 			/* detect level */
 			bit = 1;
-			if (device_input(IO_CASSETTE,1) > 255)
+			if (device_input(image_instance(IO_CASSETTE, 1)) > 255)
 				bit = 0;
 
 			cassette_input_ff[1] = bit;
@@ -445,9 +442,9 @@ static WRITE_HANDLER(exidy_fe_port_w)
 	if ((changed_bits & EXIDY_CASSETTE_MOTOR_MASK)!=0)
 	{
 		/* cassette 1 motor */
-		device_status(IO_CASSETTE, 0, ((data>>4) & 0x01));
+		device_status(image_instance(IO_CASSETTE, 0), ((data>>4) & 0x01));
 		/* cassette 2 motor */
-		device_status(IO_CASSETTE, 1, ((data>>5) & 0x01));
+		device_status(image_instance(IO_CASSETTE, 1), ((data>>5) & 0x01));
 
 		if ((data & EXIDY_CASSETTE_MOTOR_MASK)==0)
 		{
@@ -604,7 +601,7 @@ static READ_HANDLER(exidy_ff_port_r)
 	/* bit 7 = printer busy */
 	/* 0 = printer is not busy */
 
-	if (device_status (IO_PRINTER, 0, 0)==0 )
+	if (device_status(image_instance(IO_PRINTER, 0), 0)==0 )
 		data |= 0x080;
 	
 	logerror("exidy ff r: %04x %02x\n",offset,data);
@@ -819,8 +816,8 @@ ROM_END
 
 SYSTEM_CONFIG_START(exidy)
 	CONFIG_DEVICE_PRINTER			(1)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	exidy_floppy_init)
-	//CONFIG_DEVICE_CASSETTE		(2,	"",			exidy_cassette_init)
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	device_load_exidy_floppy)
+	//CONFIG_DEVICE_CASSETTE		(2,	"",			device_load_exidy_cassette)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	PARENT	MACHINE	INPUT	INIT	CONFIG	COMPANY        FULLNAME */

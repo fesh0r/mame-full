@@ -469,7 +469,7 @@ SYSTEM_CONFIG_START(coupe)
 	CONFIG_RAM_DEFAULT(256 * 1024)
 	CONFIG_RAM(512 * 1024)
 
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "dsk\0", coupe_floppy_init)
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "dsk\0", device_load_coupe_floppy)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE         INPUT     INIT  CONFIG  COMPANY                 		  FULLNAME */

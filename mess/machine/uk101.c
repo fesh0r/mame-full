@@ -77,10 +77,10 @@ READ_HANDLER (uk101_acia0_statin )
 
 /* || */
 
-int	uk101_cassette_load(int id, mame_file *file, int open_mode)
+DEVICE_LOAD( uk101_cassette )
 {
 	uk101_tape_size = mame_fsize(file);
-	uk101_tape_image = (UINT8 *) image_malloc(IO_CASSETTE, id, uk101_tape_size);
+	uk101_tape_image = (UINT8 *) image_malloc(image, uk101_tape_size);
 	if (!uk101_tape_image || (mame_fread(file, uk101_tape_image, uk101_tape_size) != uk101_tape_size))
 		return INIT_FAIL;
 
@@ -88,7 +88,7 @@ int	uk101_cassette_load(int id, mame_file *file, int open_mode)
 	return INIT_PASS;
 }
 
-void uk101_cassette_unload(int id)
+DEVICE_UNLOAD( uk101_cassette )
 {
 	uk101_tape_image = NULL;
 	uk101_tape_size = uk101_tape_index = 0;

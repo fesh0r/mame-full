@@ -131,10 +131,10 @@ static WRITE_HANDLER(fd5_drive_control_w)
 	logerror("fd5 drive state w: %02x\n",state);
 #endif
 	
-	floppy_drive_set_motor_state(0,state);
-	floppy_drive_set_motor_state(1,state);
-	floppy_drive_set_ready_state(0,1,1);
-	floppy_drive_set_ready_state(1,1,1);
+	floppy_drive_set_motor_state(image_instance(IO_FLOPPY, 0), state);
+	floppy_drive_set_motor_state(image_instance(IO_FLOPPY, 0), state);
+	floppy_drive_set_ready_state(image_instance(IO_FLOPPY, 1), 1,1);
+	floppy_drive_set_ready_state(image_instance(IO_FLOPPY, 1), 1,1);
 }
 
 static WRITE_HANDLER(fd5_tc_w)
@@ -190,15 +190,19 @@ static void sord_fd5_init(void)
 
 static MACHINE_INIT( sord_m5_fd5 )
 {
-
-	floppy_drive_set_geometry(0, FLOPPY_DRIVE_SS_40);
-	floppy_drive_set_geometry(1, FLOPPY_DRIVE_SS_40);
+	floppy_drive_set_geometry(image_instance(IO_FLOPPY, 0), FLOPPY_DRIVE_SS_40);
+	floppy_drive_set_geometry(image_instance(IO_FLOPPY, 1), FLOPPY_DRIVE_SS_40);
 	sord_fd5_init();
 	machine_init_sord_m5();
 	ppi8255_set_input_acka(0,1);
 	ppi8255_set_input_stba(0,1);
 }
 
+
+static mess_image *cassette_image(void)
+{
+	return image_instance(IO_CASSETTE, 0);
+}
 
 /*********************************************************************************************/
 /* PI-5 */
@@ -337,7 +341,7 @@ static ppi8255_interface sord_ppi8255_interface =
 
 static char cart_data[0x06fff-0x02000];
 
-static int sord_cartslot_load(int id, mame_file *file, int open_mode)
+static DEVICE_LOAD( sord_cartslot )
 {
 	int datasize;
 
@@ -352,15 +356,12 @@ static int sord_cartslot_load(int id, mame_file *file, int open_mode)
 	return INIT_PASS;
 }
 
-static int sord_floppy_init(mess_image *img, mame_file *fp, int open_mode)
+static DEVICE_LOAD( sord_floppy )
 {
-	if (!image_exists(IO_FLOPPY, id))
-		return INIT_PASS;
-
-	if (basicdsk_floppy_load(id, fp, open_mode)==INIT_PASS)
+	if (basicdsk_floppy_load(image, file, open_mode)==INIT_PASS)
 	{
 		/* 40 tracks, single sided, 256 bytes per sector, 18 sectors */
-		basicdsk_set_geometry(id, 40, 1, 18, 256, 1, 0, FALSE);
+		basicdsk_set_geometry(image, 40, 1, 18, 256, 1, 0, FALSE);
 		return INIT_PASS;
 	}
 
@@ -369,12 +370,12 @@ static int sord_floppy_init(mess_image *img, mame_file *fp, int open_mode)
 
 
 
-static int sord_cassette_init(mess_image *img, mame_file *fp, int open_mode)
+static DEVICE_LOAD( sord_cassette )
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));
 	args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
-	return cassette_init(id, fp, open_mode, &args);
+	return cassette_init(image, file, open_mode, &args);
 }
 
 static void sord_m5_ctc_interrupt(int state)
@@ -461,7 +462,7 @@ static READ_HANDLER(sord_sys_r)
 	data = 0;
 
 	/* cassette read */
-	if (device_input(IO_CASSETTE,0) >=0)
+	if (device_input(cassette_image()) >=0)
 		data |=(1<<0);
 
 	printer_handshake = centronics_read_handshake(0);
@@ -498,10 +499,10 @@ static WRITE_HANDLER(sord_sys_w)
 	}
 
 	/* cassette remote */
-	device_status(IO_CASSETTE, 0, ((data>>1) & 0x01));
+	device_status(cassette_image(), ((data>>1) & 0x01));
 
 	/* cassette data */
-	device_output(IO_CASSETTE, 0, (data & (1<<0)) ? -32768 : 32767);
+	device_output(cassette_image(), (data & (1<<0)) ? -32768 : 32767);
 
 	/* assumption: select is tied low */
 	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
@@ -555,7 +556,7 @@ PORT_END
 //
 //	data = 0;
 //	/* cassette read */
-//	if (device_input(IO_CASSETTE,0) > 255)
+//	if (device_input(cassette_image()) > 255)
 //		data |=(1<<0);
 //
 //	z80ctc_0_trg2_w(0,data);
@@ -857,13 +858,13 @@ ROM_END
 SYSTEM_CONFIG_START(sordm5)
 	CONFIG_RAM_DEFAULT(64 * 1024)
 	CONFIG_DEVICE_PRINTER			(1)
-	CONFIG_DEVICE_CASSETTE			(1, "",			sord_cassette_init)
-	CONFIG_DEVICE_CARTSLOT_REQ		(1, "rom\0",	NULL, NULL, sord_cartslot_load, NULL, NULL, NULL)
+	CONFIG_DEVICE_CASSETTE			(1, "",			device_load_sord_cassette)
+	CONFIG_DEVICE_CARTSLOT_REQ		(1, "rom\0",	NULL, NULL, device_load_sord_cartslot, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(srdm5fd5)
 	CONFIG_IMPORT_FROM(sordm5)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	sord_floppy_init)
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	device_load_sord_floppy)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME		PARENT  MACHINE			INPUT		INIT	CONFIG		COMPANY		FULLNAME */

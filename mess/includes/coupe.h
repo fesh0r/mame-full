@@ -33,9 +33,9 @@ extern UINT8 CURLINE;		/* Current scanline */
 extern UINT8 STAT;			/* returned when port 249 read */
 
 void coupe_update_memory(void);
-int coupe_floppy_init(int, mame_file *fp, int open_mode);
 
-extern MACHINE_INIT( coupe );
+DEVICE_LOAD( coupe_floppy );
+MACHINE_INIT( coupe );
 
 void coupe_eof_callback(void);
 

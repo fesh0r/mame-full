@@ -1,11 +1,12 @@
-extern MACHINE_INIT( enterprise );
-int enterprise_floppy_init(int, mame_file *fp, int open_mode);
+MACHINE_INIT( enterprise );
+DEVICE_LOAD( enterprise_floppy );
+
 int enterprise_rom_load(int);
 int enterprise_rom_id(int);
 
 void Enterprise_Initialise(void);
 
-extern VIDEO_START( enterprise );
-extern VIDEO_UPDATE( enterprise );
+VIDEO_START( enterprise );
+VIDEO_UPDATE( enterprise );
 
 

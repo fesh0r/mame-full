@@ -7,8 +7,8 @@ READ_HANDLER( uk101_acia0_casin );
 READ_HANDLER( uk101_acia0_statin );
 READ_HANDLER( uk101_keyb_r );
 WRITE_HANDLER( uk101_keyb_w );
-int uk101_cassette_load(mess_image *img, mame_file *fp, int open_mode);
-void uk101_cassette_unload(int id);
+DEVICE_LOAD( uk101_cassette );
+DEVICE_UNLOAD( uk101_cassette );
 
 /* vidhrdw/uk101.c */
 VIDEO_UPDATE( uk101 );

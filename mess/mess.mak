@@ -188,24 +188,25 @@ DRVLIBS = \
 	$(OBJ)/kim1.a     \
 	$(OBJ)/sym1.a     \
 	$(OBJ)/tangerin.a \
+	$(OBJ)/sord.a     \
+	$(OBJ)/exidy.a    \
+	$(OBJ)/samcoupe.a \
+	$(OBJ)/p2000.a	  \
+	$(OBJ)/tatung.a   \
+	$(OBJ)/ep128.a	  \
+	$(OBJ)/cpschngr.a \
 #	$(OBJ)/ti99.a     \
 #	$(OBJ)/apexc.a	  \
 #	$(OBJ)/pdp1.a	  \
-#	$(OBJ)/p2000.a	  \
 #	$(OBJ)/veb.a	  \
 #	$(OBJ)/amstrad.a  \
-#	$(OBJ)/tatung.a   \
-#	$(OBJ)/sord.a     \
-#	$(OBJ)/exidy.a    \
 #	$(OBJ)/necpc.a	  \
 #	$(OBJ)/nec.a	  \
 #	$(OBJ)/fairch.a   \
 #	$(OBJ)/ascii.a	  \
 #	$(OBJ)/nascom1.a  \
-#	$(OBJ)/samcoupe.a \
 #	$(OBJ)/magnavox.a \
 #	$(OBJ)/mtx.a	  \
-#	$(OBJ)/ep128.a	  \
 #	$(OBJ)/mk1.a      \
 #	$(OBJ)/mk2.a      \
 #	$(OBJ)/ti85.a     \
@@ -216,7 +217,6 @@ DRVLIBS = \
 #	$(OBJ)/sinclair.a \
 #	$(OBJ)/lynx.a     \
 #	$(OBJ)/intv.a     \
-#	$(OBJ)/cpschngr.a \
 #	$(OBJ)/bally.a	  \
 #	$(OBJ)/svision.a  \
 #	$(OBJ)/coleco.a   \
