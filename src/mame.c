@@ -981,12 +981,12 @@ static int decode_graphics(const struct GfxDecodeInfo *gfxdecodeinfo)
 		/* an example is the games in metro.c */
 		if (glcopy.planeoffset[0] == GFX_RAW)
 		{
-			UINT8 *base = region_base + gfxdecodeinfo[i].start;
-			UINT8 *end = region_base + region_length;
+			int base = gfxdecodeinfo[i].start;
+			int end = region_length/8;
 			while (glcopy.total > 0)
 			{
-				UINT8 *elementbase = base + (glcopy.total - 1) * glcopy.charincrement / 8;
-				UINT8 *lastpixelbase = elementbase + glcopy.height * glcopy.yoffset[0] / 8 - 1;
+				int elementbase = base + (glcopy.total - 1) * glcopy.charincrement / 8;
+				int lastpixelbase = elementbase + glcopy.height * glcopy.yoffset[0] / 8 - 1;
 				if (lastpixelbase < end)
 					break;
 				glcopy.total--;
