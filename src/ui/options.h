@@ -58,6 +58,7 @@ enum
 	VIEW_MAX
 };
 
+// can't be the same as the VerifyRomSet() results, listed in audit.h
 enum
 {
 	UNKNOWN	= -1
@@ -564,9 +565,6 @@ void SetRomAuditResults(int driver_index, int audit_results);
 
 int GetSampleAuditResults(int driver_index);
 void SetSampleAuditResults(int driver_index, int audit_results);
-
-int GetHasRoms(int driver_index);
-int GetHasSamples(int driver_index);
 
 void IncrementPlayCount(int driver_index);
 int GetPlayCount(int driver_index);

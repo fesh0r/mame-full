@@ -524,8 +524,6 @@ folder_filter_type *folder_filters;
 int size_folder_filters;
 int num_folder_filters;
 
-extern const char g_szDefaultGame[];
-
 /***************************************************************************
     External functions  
  ***************************************************************************/
@@ -533,6 +531,8 @@ extern const char g_szDefaultGame[];
 BOOL OptionsInit()
 {
 	int i;
+
+	extern const char g_szDefaultGame[];
 
 	num_games = GetNumGames();
 
@@ -1798,41 +1798,6 @@ void SetSampleAuditResults(int driver_index, int audit_results)
 	assert(0 <= driver_index && driver_index < num_games);
 
 	game_variables[driver_index].samples_audit_results = audit_results;
-}
-
-static int TristateFromAuditResults(int audit_results)
-{
-	int result;
-	switch(audit_results) {
-	case CORRECT:
-	case BEST_AVAILABLE:
-	case MISSING_OPTIONAL:
-		result = 1;
-		break;
-
-	case NOTFOUND:
-	case INCORRECT:
-	case CLONE_NOTFOUND:
-		result = 0;
-		break;
-
-	default:
-		result = 2;
-		break;
-	}
-	return result;
-}
-
-// Deprecated
-int GetHasRoms(int driver_index)
-{
-	return TristateFromAuditResults(GetRomAuditResults(driver_index));
-}
-
-// Deprecated
-int GetHasSamples(int driver_index)
-{
-	return TristateFromAuditResults(GetSampleAuditResults(driver_index));
 }
 
 void IncrementPlayCount(int driver_index)

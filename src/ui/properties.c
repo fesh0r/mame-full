@@ -568,16 +568,15 @@ static char *GameInfoColors(UINT nIndex)
 /* Build game status string */
 const char *GameInfoStatus(int driver_index)
 {
-	switch (GetHasRoms(driver_index))
-	{
-	case 0:
-#ifdef MESS
-		return "BIOS missing";
-#else
-		return "ROMs missing";
-#endif
+	int audit_result = GetRomAuditResults(driver_index);
 
-	case 1:
+	if (IsAuditResultKnown(audit_result) == FALSE)
+	{
+		return "Unknown";
+	}
+
+	if (IsAuditResultYes(audit_result))
+	{
 		if (DriverIsBroken(driver_index))
 			return "Not working";
 		if (drivers[driver_index]->flags & GAME_WRONG_COLORS)
@@ -586,11 +585,15 @@ const char *GameInfoStatus(int driver_index)
 			return "Imperfect Colors";
 		else
 			return "Working";
-
-	default:
-	case 2:
-		return "Unknown";
 	}
+
+	// audit result is no
+
+#ifdef MESS
+		return "BIOS missing";
+#else
+		return "ROMs missing";
+#endif
 }
 
 /* Build game manufacturer string */

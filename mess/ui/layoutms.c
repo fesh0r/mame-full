@@ -153,9 +153,9 @@ const ICONDATA g_iconData[] =
 const char g_szDefaultGame[] = "nes";
 const char g_szPlayGameString[] = "&Run %s";
 const char g_szGameCountString[] = "%d systems";
+const char g_szHistoryFileName[] = "sysinfo.dat";
 
 static BOOL FilterAvailable(int driver_index)
 {
-	// GetHasRoms() returns FALSE, TRUE, UNKNOWN... sigh.
-	return GetHasRoms(driver_index) == TRUE;
+	return IsAuditResultYes(GetRomAuditResults(driver_index));
 }

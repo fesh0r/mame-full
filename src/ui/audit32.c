@@ -98,6 +98,48 @@ void InitGameAudit(int gameIndex)
 	rom_index = gameIndex;
 }
 
+const char * GetAuditString(int audit_result)
+{
+	switch (audit_result)
+	{
+	case CORRECT :
+	case BEST_AVAILABLE :
+	case MISSING_OPTIONAL :
+		return "yes";
+
+	case NOTFOUND :
+	case INCORRECT :
+	case CLONE_NOTFOUND :
+		return "no";
+		break;
+
+	case UNKNOWN :
+		return "?";
+
+	default:
+		dprintf("unknown audit value %i",audit_result);
+	}
+
+	return "?";
+}
+
+BOOL IsAuditResultKnown(int audit_result)
+{
+	return audit_result != UNKNOWN;
+}
+
+BOOL IsAuditResultYes(int audit_result)
+{
+	return audit_result == CORRECT || audit_result == BEST_AVAILABLE || 
+		audit_result == MISSING_OPTIONAL;
+}
+
+BOOL IsAuditResultNo(int audit_result)
+{
+	return audit_result == NOTFOUND || audit_result == INCORRECT || audit_result == CLONE_NOTFOUND;
+}
+
+
 /***************************************************************************
     Internal functions
  ***************************************************************************/

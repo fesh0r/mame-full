@@ -148,9 +148,9 @@ const ICONDATA g_iconData[] =
 const char g_szDefaultGame[] = "pacman";
 const char g_szPlayGameString[] = "&Play %s";
 const char g_szGameCountString[] = "%d games";
+const char g_szHistoryFileName[] = "history.dat";
 
 static BOOL FilterAvailable(int driver_index)
 {
-	// GetHasRoms() returns FALSE, TRUE, UNKNOWN... sigh.
-	return GetHasRoms(driver_index) == TRUE;
+	return IsAuditResultYes(GetRomAuditResults(driver_index));
 }

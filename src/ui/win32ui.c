@@ -238,6 +238,7 @@ static LRESULT          Statusbar_MenuSelect (HWND hwnd, WPARAM wParam, LPARAM l
 
 static void             UpdateHistory(void);
 
+
 INT_PTR CALLBACK AddCustomFileDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 void RemoveCurrentGameCustomFolder(void);
 void RemoveGameCustomFolder(int driver_index);
@@ -1545,6 +1546,8 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	int i, nSplitterCount;
 	extern FOLDERDATA g_folderData[];
 	extern FILTER_ITEM g_filterList[];
+	extern const char g_szHistoryFileName[];
+	extern const char *history_filename;
 
 #ifdef MESS
 	HWND hwndSoftware;
@@ -1665,12 +1668,9 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 #ifdef MESS
 	hwndSoftware	= GetDlgItem(hMain, IDC_LIST2);
 	assert(hwndSoftware);
-
-	{
-		extern const char *history_filename;
-		history_filename = "sysinfo.dat";
-	}
 #endif
+
+	history_filename = g_szHistoryFileName;
 
 	if (!InitSplitters())
 		return FALSE;
@@ -2824,17 +2824,6 @@ static void PaintBackgroundImage(HWND hWnd, HRGN hRgn, int x, int y)
 	ReleaseDC(hWnd, hDC);
 }
 
-static const char* TriStateToText(int nState)
-{
-	if (nState == TRUE)
-		return "Yes";
-
-	if (nState == FALSE)
-		return "No";
-
-	return "?";
-}
-
 static LPCSTR GetCloneParentName(int nItem)
 {
 	if (DriverIsClone(nItem) == TRUE)
@@ -2914,14 +2903,15 @@ static BOOL MamePickerNotify(NMHDR *nm)
 
 				case COLUMN_ROMS:
 					/* Has Roms */
-					pDispInfo->item.pszText = (char *)TriStateToText(GetHasRoms(nItem));
+					pDispInfo->item.pszText = (char *)GetAuditString(GetRomAuditResults(nItem));
 					break;
 
 				case COLUMN_SAMPLES:
 					/* Samples */
 					if (DriverUsesSamples(nItem))
 					{
-						pDispInfo->item.pszText = (char *)TriStateToText(GetHasSamples(nItem));
+						pDispInfo->item.pszText = 
+							(char *)GetAuditString(GetSampleAuditResults(nItem));
 					}
 					else
 					{
@@ -4471,12 +4461,33 @@ static int BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem)
 		break;
 
 	case COLUMN_ROMS:
-		nTemp1 = GetHasRoms(index1);
-		nTemp2 = GetHasRoms(index2);
-		if (nTemp1 == nTemp2)
+		nTemp1 = GetRomAuditResults(index1);
+		nTemp2 = GetRomAuditResults(index2);
+
+		if (IsAuditResultKnown(nTemp1) == FALSE && IsAuditResultKnown(nTemp2) == FALSE)
 			return BasicCompareFunc(index1, index2, COLUMN_GAMES);
 
-		if (nTemp1 == TRUE || nTemp2 == FALSE)
+		if (IsAuditResultKnown(nTemp1) == FALSE)
+		{
+			value = 1;
+			break;
+		}
+
+		if (IsAuditResultKnown(nTemp2) == FALSE)
+		{
+			value = -1;
+			break;
+		}
+
+		// ok, both are known
+
+		if (IsAuditResultYes(nTemp1) && IsAuditResultYes(nTemp2))
+			return BasicCompareFunc(index1, index2, COLUMN_GAMES);
+		
+		if (IsAuditResultNo(nTemp1) && IsAuditResultNo(nTemp2))
+			return BasicCompareFunc(index1, index2, COLUMN_GAMES);
+
+		if (IsAuditResultYes(nTemp1) && IsAuditResultNo(nTemp2))
 			value = -1;
 		else
 			value = 1;
@@ -4485,11 +4496,33 @@ static int BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem)
 	case COLUMN_SAMPLES:
 		nTemp1 = -1;
 		if (DriverUsesSamples(index1))
-			nTemp1 = GetHasSamples(index1);
+		{
+			int audit_result = GetSampleAuditResults(index1);
+			if (IsAuditResultKnown(audit_result))
+			{
+				if (IsAuditResultYes(audit_result))
+					nTemp1 = 1;
+				else 
+					nTemp1 = 0;
+			}
+			else
+				nTemp1 = 2;
+		}
 
 		nTemp2 = -1;
 		if (DriverUsesSamples(index2))
-			nTemp2 = GetHasSamples(index2);
+		{
+			int audit_result = GetSampleAuditResults(index1);
+			if (IsAuditResultKnown(audit_result))
+			{
+				if (IsAuditResultYes(audit_result))
+					nTemp2 = 1;
+				else 
+					nTemp2 = 0;
+			}
+			else
+				nTemp2 = 2;
+		}
 
 		if (nTemp1 == nTemp2)
 			return BasicCompareFunc(index1, index2, COLUMN_GAMES);
@@ -5107,9 +5140,21 @@ static int GetIconForDriver(int nItem)
 {
 	int iconRoms;
 
-	iconRoms = DriverUsesRoms(nItem) ? GetHasRoms(nItem) : 1;
+	if (DriverUsesRoms(nItem))
+	{
+		int audit_result = GetRomAuditResults(nItem);
+		if (IsAuditResultKnown(audit_result) == FALSE)
+			return 2;
 
-	/* iconRoms is now either 0 (no roms), 1 (roms), or 2 (unknown) */
+		if (IsAuditResultYes(audit_result))
+			iconRoms = 1;
+		else
+			iconRoms = 0;
+	}
+	else
+		iconRoms = 1;
+
+	// iconRoms is now either 0 (no roms), 1 (roms), or 2 (unknown)
 
 	/* these are indices into icon_names, which maps into our image list
 	 * also must match IDI_WIN_NOROMS + iconRoms
