@@ -477,6 +477,7 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 	DRIVER( ti99_4e )	/* 1980 TI 99/4E								  */
 	DRIVER( ti99_4a )	/* 1981 TI 99/4A								  */
 	DRIVER( ti99_4ae )	/* 1981 TI 99/4AE								  */
+TESTDRIVER( ti99_4p )	/* 199x 99/4P									  */
 
     DRIVER( avigo )     /*                                                */
 
