@@ -180,8 +180,24 @@ static void mfm_init_crc(unsigned short *crc)
 
 static void mfm_update_crc(unsigned short *crc, unsigned char byte)
 {
+	UINT8 l, h;
 
-
+	l = value ^ (*crc >> 8);
+	*crc = (*crc & 0xff) | (l << 8);
+	l >>= 4;
+	l ^= (*crc >> 8);
+	*crc <<= 8;
+	*crc = (*crc & 0xff00) | l;
+	l = (l << 4) | (l >> 4);
+	h = l;
+	l = (l << 2) | (l >> 6);
+	l &= 0x1f;
+	*crc = *crc ^ (l << 8);
+	l = h & 0xf0;
+	*crc = *crc ^ (l << 8);
+	l = (h << 1) | (h >> 7);
+	l &= 0xe0;
+	*crc = *crc ^ l;
 }
 
 static unsigned char mfm_get_byte(int drive_id)
