@@ -14,26 +14,6 @@
 #include "includes/c16.h"
 #include "includes/ted7360.h"
 
-/*
- * assumed model:
- * each write to a ton/noise generated starts it new
- * 1 integrated samples: one for tone (sinus)
- * each generator behaves like an timer
- * when it reaches 0, the next samplevalue is given out
- */
-
-/*
- * implemented model:
- * each write resets generator, amount of samples to give out for one
- * period.
- *
- * the appropriate value is fetched from the sample
- * fast turning off of channel
- * changing note, when previous note finished
- *
- * i hope streambuffer value are sign integer and the
- * DAC behaves like this
- */
 /* noise channel: look into vic6560.c */
 #define NOISE_BUFFER_SIZE_SEC 5
 
@@ -54,19 +34,17 @@
 #define NOISE_FREQUENCY (TED7360_CLOCK/8/(1024-TONE2_VALUE))
 #define NOISE_FREQUENCY_MAX (TED7360_CLOCK/8)
 
-static int channel, tonesize, noisesize,	/* number of samples */
+static int channel, noisesize,	/* number of samples */
 	tone1pos = 0, tone2pos = 0,		   /* pos of tone */
 	tone1samples = 1, tone2samples = 1,   /* count of samples to give out per tone */
 	noisepos = 0, noisesamples = 1;
 
-static INT8 *tone;
-static INT8 *noise;
+static UINT8 *noise;
 
 void ted7360_soundport_w (int offset, int data)
 {
 	stream_update(channel,0);
 	/*    int old=ted7360[offset]; */
-	DBG_LOG (1, "sound", ("write %.2x %.2x\n", offset, data));
 	switch (offset)
 	{
 	case 0xe:
@@ -77,20 +55,22 @@ void ted7360_soundport_w (int offset, int data)
 			ted7360[offset] = data;
 		tone1pos = 0;
 		tone1samples = options.samplerate / TONE_FREQUENCY (TONE1_VALUE);
-		if (tone1samples == 0)
-			tone1samples = 1;		   /* plays more than complete tone in 1 outputsample */
+		DBG_LOG (1, "ted7360", ("tone1 %d %d sample:%d\n",
+					TONE1_VALUE, TONE_FREQUENCY(TONE1_VALUE), tone1samples));
+
 		break;
 	case 0xf:
 	case 0x10:
 		ted7360[offset] = data;
 		tone2pos = 0;
 		tone2samples = options.samplerate / TONE_FREQUENCY (TONE2_VALUE);
-		if (tone2samples == 0)
-			tone2samples = 1;
+		DBG_LOG (1, "ted7360", ("tone2 %d %d sample:%d\n",
+					TONE2_VALUE, TONE_FREQUENCY(TONE2_VALUE), tone2samples));
+
 		noisesamples = (int) ((double) NOISE_FREQUENCY_MAX * options.samplerate
 							  * NOISE_BUFFER_SIZE_SEC / NOISE_FREQUENCY);
-		DBG_LOG (1, "ted7360", ("noise %.2x %d sample:%d\n",
-								data, NOISE_FREQUENCY, noisesamples));
+		DBG_LOG (1, "ted7360", ("noise %d sample:%d\n",
+					NOISE_FREQUENCY, noisesamples));
 		if (!NOISE_ON || ((double) noisepos / noisesamples >= 1.0))
 		{
 			noisepos = 0;
@@ -98,8 +78,13 @@ void ted7360_soundport_w (int offset, int data)
 		break;
 	case 0x11:
 		ted7360[offset] = data;
-		if (!NOISE_ON)
-			noisepos = 0;
+		DBG_LOG(1, "ted7360", ("%s volume %d, %s %s %s\n",
+				       TONE_ON?"on":"off",
+				       VOLUME, TONE1_ON?"tone1":"", TONE2_ON?"tone2":"",
+				       NOISE_ON?"noise":""));
+		if (!TONE_ON||!TONE1_ON) tone1pos=0;
+		if (!TONE_ON||!TONE2_ON) tone2pos=0;
+		if (!TONE_ON||!NOISE_ON) noisepos=0;
 		break;
 	}
 }
@@ -109,72 +94,50 @@ void ted7360_soundport_w (int offset, int data)
 /************************************/
 void ted7360_update (int param, INT16 *buffer, int length)
 {
-	int i, v;
-
-	for (i = 0; i < length; i++)
+    int i, v;
+    
+    for (i = 0; i < length; i++)
+    {
+	v = 0;
+	if (TONE1_ON)
 	{
-		v = 0;
-		if (TONE1_ON /*||(tone1pos!=0) */ )
-		{
-			v += tone[tone1pos * tonesize / tone1samples];
-			tone1pos++;
-#if 0
-			tone1pos %= tone1samples;
-#else
-			if (tone1pos >= tone1samples)
-			{
-				tone1pos = 0;
-				tone1samples = options.samplerate / TONE_FREQUENCY (TONE1_VALUE);
-				if (tone1samples == 0)
-					tone1samples = 1;
-			}
-#endif
-		}
-		if (TONE2_ON || NOISE_ON /*||(tone2pos!=0) */ )
-		{
-			if (TONE2_ON)
-			{						   /*higher priority ?! */
-				v += tone[tone2pos * tonesize / tone2samples];
-				tone2pos++;
-#if 0
-				tone2pos %= tone2samples;
-#else
-				if (tone2pos >= tone2samples)
-				{
-					tone2pos = 0;
-					tone2samples = options.samplerate / TONE_FREQUENCY (TONE2_VALUE);
-					if (tone2samples == 0)
-						tone2samples = 1;
-				}
-#endif
-			}
-			else
-			{
-				v += noise[(int) ((double) noisepos * noisesize / noisesamples)];
-				noisepos++;
-				if ((double) noisepos / noisesamples >= 1.0)
-				{
-					noisepos = 0;
-				}
-			}
-		}
-
-
-
-
-		if (TONE_ON)
-		{
-			v = (v * VOLUME) << 2;
-			if (v > 32767)
-				buffer[i] = 32767;
-			else if (v < -32767)
-				buffer[i] = -32767;
-			else
-				buffer[i] = v;
-		}
-		else
-			((char *) buffer)[i] = 0;
+	    if (tone1pos<=tone1samples/2) {
+		v += 0x2ff; // depends on the volume between sound and noise
+	    }
+	    tone1pos++;
+	    if (tone1pos>tone1samples) tone1pos=0;
 	}
+	if (TONE2_ON || NOISE_ON )
+	{
+	    if (TONE2_ON)
+	    {						   /*higher priority ?! */
+		if (tone2pos<=tone2samples/2) {
+		    v += 0x2ff;
+		}
+		tone2pos++;
+		if (tone2pos>tone2samples) tone2pos=0;
+	    }
+	    else
+	    {
+		v += noise[(int) ((double) noisepos * noisesize / noisesamples)];
+		noisepos++;
+		if ((double) noisepos / noisesamples >= 1.0)
+		{
+		    noisepos = 0;
+		}
+	    }
+	}
+	
+	if (TONE_ON)
+	{
+	    int a=VOLUME;
+	    if (a>8) a=8;
+	    v = v * a;
+	    buffer[i] = v;
+	}
+	else
+	    buffer[i] = 0;
+    }
 }
 
 /************************************/
@@ -186,33 +149,20 @@ int ted7360_custom_start (const struct MachineSound *driver)
 
 	if (!options.samplerate) return 0;
 
-	/* slowest played sample */
-	tonesize = options.samplerate / TONE_FREQUENCY_MIN;
-
 	channel = stream_init ("ted7360", 50, options.samplerate, 0, ted7360_update);
-
-	tone = (INT8*)malloc (tonesize * sizeof (tone[0]));
-	if (!tone)
-		return 1;
 
 	/* buffer for fastest played sample for 5 second
 	 * so we have enough data for min 5 second */
 	noisesize = NOISE_FREQUENCY_MAX * NOISE_BUFFER_SIZE_SEC;
-	noise = (INT8*)malloc (noisesize * sizeof (noise[0]));
+	noise = (UINT8*)malloc (noisesize * sizeof (noise[0]));
 	if (!noise)
 	{
-		free (tone);
 		return 1;
-	}
-
-	for (i = 0; i < tonesize; i++)
-	{
-		tone[i] = (INT16)(sin (2 * M_PI * i / tonesize) * 127 + 0.5);
 	}
 
 	{
 		int noiseshift = 0x7ffff8;
-		char data;
+		UINT8 data;
 
 		for (i = 0; i < noisesize; i++)
 		{
@@ -248,7 +198,6 @@ int ted7360_custom_start (const struct MachineSound *driver)
 /************************************/
 void ted7360_custom_stop (void)
 {
-	free (tone);
 	free (noise);
 }
 
