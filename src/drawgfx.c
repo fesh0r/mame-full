@@ -246,7 +246,7 @@ struct GfxElement *decodegfx(const UINT8 *src,const struct GfxLayout *gl)
 	else
 	{
 		if (0 && gl->planes <= 4 && !(gfx->width & 1))
-//		if (gl->planes <= 4 && !(gfx->width & 1))
+/*		if (gl->planes <= 4 && !(gfx->width & 1)) */
 		{
 			gfx->flags |= GFX_PACKED;
 			gfx->line_modulo = gfx->width/2;
@@ -361,7 +361,7 @@ INLINE void blockmove_NtoN_transpen_noremap_flipx8(
 
 	srcmodulo += srcwidth;
 	dstmodulo -= srcwidth;
-	//srcdata += srcwidth-1;
+	/* srcdata += srcwidth-1; */
 	srcdata -= 3;
 
 	trans4 = transpen * 0x01010101;
@@ -450,7 +450,7 @@ INLINE void blockmove_NtoN_transpen_noremap_flipx16(
 
 	srcmodulo += srcwidth;
 	dstmodulo -= srcwidth;
-	//srcdata += srcwidth-1;
+	/* srcdata += srcwidth-1; */
 
 	while (srcheight)
 	{
@@ -507,7 +507,7 @@ INLINE void blockmove_NtoN_transpen_noremap_flipx32(
 
 	srcmodulo += srcwidth;
 	dstmodulo -= srcwidth;
-	//srcdata += srcwidth-1;
+	/* srcdata += srcwidth-1; */
 
 	while (srcheight)
 	{
@@ -4736,7 +4736,7 @@ DECLARE(blockmove_NtoN_opaque_noremap_flipx,(
 
 	srcmodulo += srcwidth;
 	dstmodulo -= srcwidth;
-	//srcdata += srcwidth-1;
+	/* srcdata += srcwidth-1; */
 
 	while (srcheight)
 	{
@@ -4807,7 +4807,7 @@ DECLARE(blockmove_NtoN_opaque_remap_flipx,(
 
 	srcmodulo += srcwidth;
 	dstmodulo -= srcwidth;
-	//srcdata += srcwidth-1;
+	/* srcdata += srcwidth-1; */
 
 	while (srcheight)
 	{
@@ -4879,7 +4879,7 @@ DECLARE(blockmove_NtoN_blend_noremap_flipx,(
 
 	srcmodulo += srcwidth;
 	dstmodulo -= srcwidth;
-	//srcdata += srcwidth-1;
+	/* srcdata += srcwidth-1; */
 
 	while (srcheight)
 	{
@@ -4953,7 +4953,7 @@ DECLARE(blockmove_NtoN_blend_remap_flipx,(
 
 	srcmodulo += srcwidth;
 	dstmodulo -= srcwidth;
-	//srcdata += srcwidth-1;
+	/* srcdata += srcwidth-1; */
 
 	while (srcheight)
 	{
@@ -5033,7 +5033,7 @@ DECLARE(drawgfx_core,(
 
 
 		/* optimizations for 1:1 mapping */
-//		if (Machine->drv->color_table_len == 0 && gfx != Machine->uifont)
+/*		if (Machine->drv->color_table_len == 0 && gfx != Machine->uifont) */
 		if (Machine->drv->color_table_len == 0 &&
 				!(Machine->drv->video_attributes & VIDEO_RGB_DIRECT) &&
 				paldata >= Machine->remapped_colortable && paldata < Machine->remapped_colortable + Machine->drv->total_colors)
@@ -5251,7 +5251,7 @@ DECLARE(copybitmap_core,(
 
 		if (flipx)
 		{
-			//if ((sx-ox) == 0) sd += gfx->width - sw;
+			/* if ((sx-ox) == 0) sd += gfx->width - sw; */
 			sd += src->width -1 -(sx-ox);
 		}
 		else
@@ -5259,9 +5259,9 @@ DECLARE(copybitmap_core,(
 
 		if (flipy)
 		{
-			//if ((sy-oy) == 0) sd += sm * (gfx->height - sh);
-			//dd += dm * (sh - 1);
-			//dm = -dm;
+			/* if ((sy-oy) == 0) sd += sm * (gfx->height - sh); */
+			/* dd += dm * (sh - 1); */
+			/* dm = -dm; */
 			sd += sm * (src->height -1 -(sy-oy));
 			sm = -sm;
 		}

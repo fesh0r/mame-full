@@ -1534,7 +1534,7 @@ void tilemap_nb_draw( struct mame_bitmap *dest, UINT32 number, UINT32 scrollx, U
 
 /***********************************************************************************/
 
-#endif // !DECLARE && !TRANSP
+#endif /* !DECLARE && !TRANSP */
 
 #ifdef DECLARE
 
@@ -2506,5 +2506,5 @@ static UINT8 TRANSP(HandleTransparencyNone)(struct tilemap *tilemap, UINT32 x0, 
 #undef TRANSP
 #undef PAL_INIT
 #undef PAL_GET
-#endif // TRANSP
+#endif /* TRANSP */
 

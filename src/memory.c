@@ -23,8 +23,8 @@
 #include <stdarg.h>
 
 
-//#define MEM_DUMP
-//#define CHECK_MASKS
+/* #define MEM_DUMP */
+/* #define CHECK_MASKS */
 
 
 
@@ -1581,7 +1581,7 @@ void register_banks(void)
 		const struct Memory_ReadAddress *mra, *mra_start = Machine->drv->cpu[cpunum].memory_read;
 		const struct Memory_WriteAddress *mwa, *mwa_start = Machine->drv->cpu[cpunum].memory_write;
 		int bits = cpudata[cpunum].mem.abits;
-//		int width = cpunum_databus_width(cpunum);
+		/* int width = cpunum_databus_width(cpunum); */
 
 		if (!IS_SPARSE(bits))
 		{

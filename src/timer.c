@@ -187,7 +187,7 @@ INLINE void timer_list_insert(timer_entry *timer)
 	double expire = timer->enabled ? timer->expire : TIME_NEVER;
 	timer_entry *t, *lt = NULL;
 
-#ifdef MAME_DEBUG // LBO - new code in this block
+#ifdef MAME_DEBUG /* LBO - new code in this block */
 {
 	int tnum = 0;
 	/* loop over the timer list */
@@ -245,7 +245,7 @@ INLINE void timer_list_insert(timer_entry *timer)
 
 INLINE void timer_list_remove(timer_entry *timer)
 {
-#ifdef MAME_DEBUG // LBO - new code in this block
+#ifdef MAME_DEBUG /* LBO - new code in this block */
 {
 	int tnum = 0;
 	timer_entry *t;

@@ -691,7 +691,7 @@ static int vh_open(void)
 		goto cant_create_scrbitmap;
 
 	/* set the default visible area */
-	set_visible_area(0,1,0,1);	// make sure everything is recalculated on multiple runs
+	set_visible_area(0,1,0,1);	/* make sure everything is recalculated on multiple runs */
 	set_visible_area(
 			Machine->drv->default_visible_area.min_x,
 			Machine->drv->default_visible_area.max_x,

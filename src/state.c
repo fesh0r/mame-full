@@ -23,7 +23,7 @@ enum {
 	SS_MSB_FIRST = 0x02
 };
 
-//#define VERBOSE
+/* #define VERBOSE */
 
 #ifdef VERBOSE
 #define TRACE(x) do {x;} while(0)
@@ -99,7 +99,7 @@ static UINT32 ss_get_signature(void)
 	char *info;
 	UINT32 signature;
 
-	// Pass 1 : compute size
+	/* Pass 1 : compute size */
 
 	for(m = ss_registry; m; m=m->next) {
 		int i;
@@ -114,7 +114,7 @@ static UINT32 ss_get_signature(void)
 
 	info = malloc(size);
 
-	// Pass 2 : write signature info
+	/* Pass 2 : write signature info */
 
 	for(m = ss_registry; m; m=m->next) {
 		int i;
@@ -135,7 +135,7 @@ static UINT32 ss_get_signature(void)
 		}
 	}
 
-	// Pass 3 : Compute the crc32
+	/* Pass 3 : Compute the crc32 */
 	signature = crc32(0, (unsigned char *)info, size);
 
 	free(info);

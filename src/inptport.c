@@ -1723,9 +1723,9 @@ void update_analog_port(int port)
 			{
 				new  = -new;
 				prev = -prev;
-				if (in->type & IPF_REVERSE)		// a reversed pedal is diff than normal reverse
-				{								// 128 = no gas, 0 = all gas
-					new  = 128-new;				// the default "new=-new" doesn't handle this
+				if (in->type & IPF_REVERSE)		/* a reversed pedal is diff than normal reverse */
+				{								/* 128 = no gas, 0 = all gas */
+					new  = 128-new;				/* the default "new=-new" doesn't handle this */
 					prev = 128-prev;
 				}
 			}
@@ -2448,10 +2448,10 @@ void seq_set_string(InputSeq* a, const char *buf)
 	struct ik *pik;
 	int found;
 
-	// create a locale buffer to be parsed by strtok
+	/* create a locale buffer to be parsed by strtok */
 	lbuf = malloc (strlen(buf)+1);
 
-	// copy the input string
+	/* copy the input string */
 	strcpy (lbuf, buf);
 
 	for(j=0;j<SEQ_MAX;++j)
@@ -2469,7 +2469,7 @@ void seq_set_string(InputSeq* a, const char *buf)
 		{
 			if (strcmp(pik->name,arg) == 0)
 			{
-				// this entry is only valid if it is a KEYCODE
+				/* this entry is only valid if it is a KEYCODE */
 				if (pik->type == IKT_STD)
 				{
 					(*a)[j] = pik->val;

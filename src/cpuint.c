@@ -315,7 +315,7 @@ void cpu_set_irq_line(int cpunum, int irqline, int state)
 
 	/* set a timer to go off */
 	param = (cpunum & 0x0f) | ((state & 0x0f) << 4) | ((irqline & 0x7f) << 8) | (1 << 15) | (vector << 16);
-//	param = (cpunum & 0x0f) | ((state & 0x0f) << 4) | ((irqline & 0x7f) << 8);
+  	/* param = (cpunum & 0x0f) | ((state & 0x0f) << 4) | ((irqline & 0x7f) << 8); */
 	timer_set(TIME_NOW, param, cpu_manualirqcallback);
 }
 
