@@ -672,7 +672,7 @@ static void MessRetrievePickerDefaults(void)
 		if (i >= 0) {
 			if (this_software == default_software) {
 				ListView_SetItemState(hwndSoftware, i, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
-				ListView_EnsureVisible(hwndList, i, FALSE);
+				ListView_EnsureVisible(hwndSoftware, i, FALSE);
 			}
 			else {
 				ListView_SetItemState(hwndSoftware, i, LVIS_SELECTED, LVIS_SELECTED);
