@@ -1,4 +1,4 @@
-#include "messfmts.h"
+#include "devices/messfmts.h"
 #include "osdepend.h"
 #include "mess.h"
 #include "includes/flopdrv.h"
@@ -248,7 +248,7 @@ const struct IODevice *bdf_device_specify(struct IODevice *iodev, char *extbuf, 
 		iodev->type = IO_FLOPPY;
 		iodev->count = count;
 		iodev->file_extensions = extbuf;
-		iodev->reset_depth = IO_RESET_NONE;
+		iodev->flags = DEVICE_LOAD_RESETS_NONE;
 		iodev->open_mode = create_format ? OSD_FOPEN_RW_CREATE_OR_READ : OSD_FOPEN_RW_OR_READ;
 		iodev->init = bdf_floppy_init;
 		iodev->exit = bdf_floppy_exit;

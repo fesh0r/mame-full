@@ -1,4 +1,4 @@
-#include "snapquik.h"
+#include "devices/snapquik.h"
 
 /* machine/atom.c */
 extern MACHINE_INIT( atom );

@@ -1,4 +1,4 @@
-#include "snapquik.h"
+#include "devices/snapquik.h"
 #include "mess.h"
 
 /* ----------------------------------------------------------------------- */
@@ -100,7 +100,7 @@ const struct IODevice *snapquick_specify(struct IODevice *iodev, int type,
 	iodev->type = type;
 	iodev->count = 1;
 	iodev->file_extensions = file_extensions;
-	iodev->reset_depth = IO_RESET_NONE;
+	iodev->flags = DEVICE_LOAD_RESETS_NONE;
 	iodev->open_mode = OSD_FOPEN_READ;
 	iodev->init = (type == IO_SNAPSHOT) ? snapshot_init : quickload_init;
 	iodev->exit = (type == IO_SNAPSHOT) ? snapshot_exit : quickload_exit;

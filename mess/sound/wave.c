@@ -1050,7 +1050,7 @@ void wave_specify(struct IODevice *iodev, int count, char *actualext, const char
 	iodev->type = IO_CASSETTE;
 	iodev->count = count;
 	iodev->file_extensions = actualext;
-	iodev->reset_depth = IO_RESET_NONE;
+	iodev->flags = DEVICE_LOAD_RESETS_NONE;
 	iodev->open_mode = OSD_FOPEN_READ_OR_WRITE;
 	iodev->init = init;
 	iodev->exit = exit_;

@@ -20,11 +20,11 @@
 #include "includes/basicdsk.h"
 #include "includes/6551.h"
 #include "printer.h"
-#include "messfmts.h"
+#include "devices/messfmts.h"
 #include "formats/coco_dsk.h"
-#include "cassette.h"
-#include "bitbngr.h"
-#include "snapquik.h"
+#include "devices/cassette.h"
+#include "devices/bitbngr.h"
+#include "devices/snapquik.h"
 #include "inputx.h"
 #include "snprintf.h"
 
@@ -785,7 +785,7 @@ SYSTEM_CONFIG_START(coco3)
 	CONFIG_IMPORT_FROM		( generic_coco )
 	CONFIG_DEVICE_CARTSLOT	( 1, "rom\0", coco3_rom_load, NULL, NULL )
 	CONFIG_DEVICE_SNAPSHOT	(    "pak\0", coco3_pak )
-	CONFIG_DEVICE_LEGACY	(IO_VHD, 1, "vhd\0", IO_RESET_NONE, OSD_FOPEN_RW_CREATE, coco_vhd_init, NULL, NULL)
+	CONFIG_DEVICE_LEGACY	(IO_VHD, 1, "vhd\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_CREATE, coco_vhd_init, NULL, NULL)
 	CONFIG_RAM				(128 * 1024)
 	CONFIG_RAM_DEFAULT		(512 * 1024)
 	CONFIG_RAM				(2048 * 1024)

@@ -1,7 +1,7 @@
 #ifndef SPECTRUM_H
 #define SPECTRUM_H
 
-#include "snapquik.h"
+#include "devices/snapquik.h"
 
 typedef enum
 {

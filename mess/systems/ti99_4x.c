@@ -688,8 +688,8 @@ SYSTEM_CONFIG_START(ti99_4)
 	CONFIG_DEVICE_CASSETTE			(2, "",												ti99_cassette_init)
 	CONFIG_DEVICE_CARTSLOT			(3,	"bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0",	ti99_load_rom, ti99_rom_cleanup, NULL)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(3,	"dsk\0",										ti99_floppy_init)
-	CONFIG_DEVICE_LEGACY			(IO_PARALLEL,	1, "",	IO_RESET_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	ti99_4_pio_device_init,		ti99_4_pio_device_exit,	NULL)
-	CONFIG_DEVICE_LEGACY			(IO_SERIAL,		1, "",	IO_RESET_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	ti99_4_rs232_device_init,	ti99_4_rs232_device_exit,	NULL)
+	CONFIG_DEVICE_LEGACY			(IO_PARALLEL,	1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	ti99_4_pio_device_init,		ti99_4_pio_device_exit,	NULL)
+	CONFIG_DEVICE_LEGACY			(IO_SERIAL,		1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	ti99_4_rs232_device_init,	ti99_4_rs232_device_exit,	NULL)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT   MACHINE		 INPUT	  INIT		CONFIG	COMPANY				FULLNAME */

@@ -10,7 +10,7 @@
  *****************************************************************************/
 
 #include "includes/mz700.h"
-#include "cassette.h"
+#include "devices/cassette.h"
 
 #ifndef VERBOSE
 #define VERBOSE 0

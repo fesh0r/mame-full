@@ -2,7 +2,7 @@
 #include "cpu/m6800/m6800.h"
 #include "vidhrdw/m6847.h"
 #include "includes/mc10.h"
-#include "cassette.h"
+#include "devices/cassette.h"
 #include "includes/dragon.h"		/* for coco_cassette_init() */
 #include "inputx.h"
 

@@ -2,6 +2,7 @@
 #define _STATE_H
 
 #include "osd_cpu.h"
+#include "fileio.h"
 
 /* Initializes the save state registrations */
 void state_save_reset(void);

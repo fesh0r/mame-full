@@ -62,8 +62,8 @@
 #include "vidhrdw/m6847.h"
 #include "formats/cocopak.h"
 #include "formats/cococas.h"
-#include "cassette.h"
-#include "bitbngr.h"
+#include "devices/cassette.h"
+#include "devices/bitbngr.h"
 #include "printer.h"
 #include "image.h"
 

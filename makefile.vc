@@ -250,6 +250,7 @@ OBJDIRS += \
         $(OBJ)/mess/tools/messroms \
         $(OBJ)/mess/tools/mkimage \
         $(OBJ)/mess/formats \
+        $(OBJ)/mess/devices \
         $(OBJ)/mess/windows \
         $(OBJ)/mess/ui
 endif

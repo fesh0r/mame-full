@@ -23,7 +23,7 @@
 #include "sound/sn76496.h"
 #include "cpu/z80/z80.h"
 #include "includes/basicdsk.h"
-#include "cassette.h"
+#include "devices/cassette.h"
 #include "includes/centroni.h"
 #include "printer.h"
 #include "machine/8255ppi.h"

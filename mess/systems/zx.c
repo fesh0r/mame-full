@@ -596,11 +596,11 @@ ROM_START(lambda)
 ROM_END                                                                                                                                       
 
 SYSTEM_CONFIG_START(zx80)
-	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "80\0o\0", IO_RESET_CPU, OSD_FOPEN_READ, zx_cassette_init, zx_cassette_exit, NULL)
+	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "80\0o\0", DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_READ, zx_cassette_init, zx_cassette_exit, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(zx81)
-	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "81\0p\0", IO_RESET_CPU, OSD_FOPEN_READ, zx_cassette_init, zx_cassette_exit, NULL)
+	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "81\0p\0", DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_READ, zx_cassette_init, zx_cassette_exit, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

@@ -286,7 +286,7 @@ Timings:
 #include "machine/8255ppi.h"
 #include "vidhrdw/generic.h"
 #include "includes/lviv.h"
-#include "snapquik.h"
+#include "devices/snapquik.h"
 
 /* I/O ports */
 

@@ -53,7 +53,7 @@ TODO:
 #include "vidhrdw/v9938.h"
 #include "sndhrdw/spchroms.h"
 #include "includes/basicdsk.h"
-#include "cassette.h"
+#include "devices/cassette.h"
 #include "ti99_4x.h"
 #include "994x_ser.h"
 

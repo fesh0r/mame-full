@@ -13,7 +13,7 @@ void dsk_write_sector_data_from_buffer(int drive, int sector_index, int side, ch
 void dsk_read_sector_data_into_buffer(int drive, int sector_index, int side, char *ptr, int length);
 
 #define CONFIG_DEVICE_LEGACY_DSK(count) \
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, (count), "dsk\0", IO_RESET_NONE, OSD_FOPEN_RW_OR_READ, dsk_floppy_load, dsk_floppy_exit, floppy_status)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, (count), "dsk\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_OR_READ, dsk_floppy_load, dsk_floppy_exit, floppy_status)
 
 
 #endif /* DSK_H */

@@ -463,7 +463,7 @@ SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(intvkbd)
 	CONFIG_DEVICE_CARTSLOT( 2, "rom\0bin\0", intvkbd_load_rom, NULL, NULL)
-	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "tap\0", IO_RESET_CPU, 0, NULL, NULL, NULL)
+	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "tap\0", DEVICE_LOAD_RESETS_CPU, 0, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

@@ -5,7 +5,7 @@
 extern struct DACinterface vc20tape_sound_interface;
 
 #define CONFIG_DEVICE_VC20TAPE	\
-	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "wav\0", IO_RESET_NONE, OSD_FOPEN_NONE, vc20_tape_attach_image, vc20_tape_detach_image, NULL)
+	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "wav\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_NONE, vc20_tape_attach_image, vc20_tape_detach_image, NULL)
 
 /* the function which should be called by change on readline */
 extern void vc20_tape_open (void (*read_callback) (UINT32, UINT8));

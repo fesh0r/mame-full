@@ -1,4 +1,4 @@
-#include "snapquik.h"
+#include "devices/snapquik.h"
 
 #define KC85_4_CLOCK 1750000
 #define KC85_3_CLOCK 1750000

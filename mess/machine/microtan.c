@@ -13,9 +13,9 @@
  *****************************************************************************/
 
 #include "includes/microtan.h"
-#include "cassette.h"
+#include "devices/cassette.h"
 #include "image.h"
-#include "snapquik.h"
+#include "devices/snapquik.h"
 
 #ifndef VERBOSE
 #define VERBOSE 0

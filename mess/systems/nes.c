@@ -380,7 +380,7 @@ SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(famicom)
 	CONFIG_IMPORT_FROM(nes)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 1, "dsk\0fds\0", IO_RESET_NONE, OSD_FOPEN_READ, nes_load_disk, nes_exit_disk, NULL)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 1, "dsk\0fds\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, nes_load_disk, nes_exit_disk, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

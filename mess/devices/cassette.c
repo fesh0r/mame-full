@@ -1,5 +1,5 @@
 /* */
-#include "cassette.h"
+#include "devices/cassette.h"
 #include "image.h"
 
 #if HAS_WAVE

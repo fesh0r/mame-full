@@ -1,5 +1,5 @@
 #include "driver.h"
-#include "snapquik.h"
+#include "devices/snapquik.h"
 
 //#define AMSTRAD_VIDEO_USE_EVENT_LIST
 

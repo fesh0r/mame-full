@@ -11,7 +11,7 @@
 
 #include <stdarg.h>
 #include "driver.h"
-#include "cassette.h"
+#include "devices/cassette.h"
 #include "cpu/i8085/i8085.h"
 #include "includes/pmd85.h"
 #include "machine/8255ppi.h"

@@ -29,7 +29,7 @@
 #include "includes/spectrum.h"
 #include "eventlst.h"
 #include "vidhrdw/border.h"
-#include "cassette.h"
+#include "devices/cassette.h"
 #include "image.h"
 #include "utils.h"
 

@@ -1,4 +1,4 @@
-#include "snapquik.h"
+#include "devices/snapquik.h"
 
 /* machine/lviv.c */
 extern unsigned char * lviv_video_ram;

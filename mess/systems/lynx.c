@@ -11,7 +11,7 @@
 
 #include "includes/lynx.h"
 #include "image.h"
-#include "snapquik.h"
+#include "devices/snapquik.h"
 #include <zlib.h>
 
 static int rotate=0;

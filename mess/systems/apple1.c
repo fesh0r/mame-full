@@ -45,7 +45,7 @@ $F000-$FFFF:	PROM (programmable read-only memory) used by the Apple Monitor prog
 #include "machine/6821pia.h"
 #include "vidhrdw/generic.h"
 #include "includes/apple1.h"
-#include "snapquik.h"
+#include "devices/snapquik.h"
 
 /* port i/o functions */
 

@@ -388,9 +388,9 @@ static int init_machine(void)
 
 #ifdef MESS
 	/* initialize the devices */
-	if (init_devices(gamedrv))
+	if (devices_init(gamedrv))
 	{
-		logerror("init_devices failed\n");
+		logerror("devices_init failed\n");
 		goto cant_load_roms;
 	}
 #endif
@@ -573,7 +573,7 @@ static void shutdown_machine(void)
 
 #ifdef MESS
 	/* close down any devices */
-	exit_devices();
+	devices_exit();
 #endif
 
 	/* release any allocated memory */

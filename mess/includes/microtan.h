@@ -18,7 +18,7 @@
 #include "machine/6522via.h"
 #include "sound/ay8910.h"
 #include "includes/6551.h"
-#include "snapquik.h"
+#include "devices/snapquik.h"
 
 /* from src/mess/vidhrdw/microtan.c */
 

@@ -1689,8 +1689,8 @@ ROM_END
 
 SYSTEM_CONFIG_START(ibmpc)
 	CONFIG_DEVICE_PRINTER(3)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0", IO_RESET_NONE, OSD_FOPEN_RW_CREATE_OR_READ, pc_floppy_init, pc_floppy_exit, floppy_status)
-	CONFIG_DEVICE_LEGACY(IO_HARDDISK, 4, "img\0", IO_RESET_CPU, OSD_FOPEN_RW, pc_harddisk_init, pc_harddisk_exit, NULL)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_CREATE_OR_READ, pc_floppy_init, pc_floppy_exit, floppy_status)
+	CONFIG_DEVICE_LEGACY(IO_HARDDISK, 4, "img\0", DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_RW, pc_harddisk_init, pc_harddisk_exit, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

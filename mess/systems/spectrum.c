@@ -144,7 +144,7 @@ http://www.z88forever.org.uk/zxplus3e/
 #include "vidhrdw/generic.h"
 #include "includes/spectrum.h"
 #include "eventlst.h"
-#include "snapquik.h"
+#include "devices/snapquik.h"
 
 /* +3 hardware */
 #include "includes/nec765.h"

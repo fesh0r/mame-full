@@ -121,7 +121,7 @@ int image_load(int type, int id, const char *name)
 	img->name = newname;
 	img->dir = NULL;
 
-	if (images_is_running && (dev->reset_depth >= IO_RESET_CPU))
+	if (images_is_running && (dev->flags & DEVICE_LOAD_RESETS_CPU))
 		machine_reset();
 
 	if (dev->init)

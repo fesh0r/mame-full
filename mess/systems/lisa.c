@@ -301,7 +301,7 @@ ROM_END
 
 SYSTEM_CONFIG_START(lisa)
 	/* Lisa should eventually support floppies, hard disks, etc. */
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 1, "img\0image\0", IO_RESET_NONE, OSD_FOPEN_RW_OR_READ, lisa_floppy_init, lisa_floppy_exit, NULL)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 1, "img\0image\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_OR_READ, lisa_floppy_init, lisa_floppy_exit, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(lisa210)

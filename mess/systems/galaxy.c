@@ -51,7 +51,7 @@ Ports:
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
 #include "includes/galaxy.h"
-#include "snapquik.h"
+#include "devices/snapquik.h"
 
 PORT_READ_START( galaxy_readport )
 PORT_END

@@ -1,7 +1,7 @@
 #ifndef AP2_DISK_H
 #define AP2_DISK_H
 
-#include "messfmts.h"
+#include "devices/messfmts.h"
 
 BLOCKDEVICE_FORMATDRIVER_EXTERN( apple2_dsk );
 

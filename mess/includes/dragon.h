@@ -3,7 +3,7 @@
 
 #include "vidhrdw/m6847.h"
 #include "videomap.h"
-#include "snapquik.h"
+#include "devices/snapquik.h"
 
 #define COCO_CPU_SPEED_HZ		894886	/* 0.894886 MHz */
 #define COCO_FRAMES_PER_SECOND	(COCO_CPU_SPEED_HZ / 57.0 / 263)

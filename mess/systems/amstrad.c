@@ -34,7 +34,7 @@
 #include "includes/nec765.h"
 /* for CPCEMU style disk images */
 #include "includes/dsk.h"
-#include "snapquik.h"
+#include "devices/snapquik.h"
 
 #ifdef AMSTRAD_VIDEO_EVENT_LIST
 /* for event list */

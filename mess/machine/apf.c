@@ -9,7 +9,7 @@
 
 #include "driver.h"
 #include "includes/apf.h"
-#include "cassette.h"
+#include "devices/cassette.h"
 #include "formats/apfapt.h"
 #include "includes/basicdsk.h"
 #include "image.h"

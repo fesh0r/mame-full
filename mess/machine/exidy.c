@@ -8,7 +8,7 @@
 #include <stdarg.h>
 #include "driver.h"
 #include "includes/exidy.h"
-#include "cassette.h"
+#include "devices/cassette.h"
 
 int exidy_cassette_init(int id, mame_file *fp, int open_mode)
 {

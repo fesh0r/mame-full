@@ -1,4 +1,4 @@
-#include "snapquik.h"
+#include "devices/snapquik.h"
 
 /* machine/galaxy.c */
 extern MACHINE_INIT( galaxy );

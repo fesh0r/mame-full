@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.15 2003/01/23 04:31:51 npwoods Exp $
+  $Id: pc8801.c,v 1.16 2003/03/05 12:23:02 npwoods Exp $
 
 ***************************************************************************/
 
@@ -641,7 +641,7 @@ static MACHINE_DRIVER_START( pc88srh )
 MACHINE_DRIVER_END
 
 SYSTEM_CONFIG_START(pc88)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "d88\0", IO_RESET_NONE, OSD_FOPEN_RW_CREATE_OR_READ, d88image_floppy_init, d88image_floppy_exit, floppy_status)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "d88\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_CREATE_OR_READ, d88image_floppy_init, d88image_floppy_exit, floppy_status)
 SYSTEM_CONFIG_END
 
 

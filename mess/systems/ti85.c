@@ -136,7 +136,7 @@ TI-86 ports:
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
 #include "includes/ti85.h"
-#include "snapquik.h"
+#include "devices/snapquik.h"
 
 /* port i/o functions */
 
@@ -507,17 +507,17 @@ ROM_START (ti86grom)
 ROM_END
 
 SYSTEM_CONFIG_START(ti85)
-	CONFIG_DEVICE ( IO_SERIAL, 1,
+	CONFIG_DEVICE_BASE ( IO_SERIAL, 1,
 			"85p\085s\085i\085n\085c\085l\085k\085m\085v\085d\085e\085r\085g\085b\0",
-			IO_RESET_NONE, OSD_FOPEN_READ, ti85_serial_init, ti85_serial_exit,
+			DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, ti85_serial_init, ti85_serial_exit,
 			NULL, NULL, NULL, NULL,	NULL, NULL, NULL, NULL,	NULL, NULL )
 	CONFIG_DEVICE_SNAPSHOT( "sav\0", ti8x )
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(ti86)
-	CONFIG_DEVICE ( IO_SERIAL, 1,
+	CONFIG_DEVICE_BASE ( IO_SERIAL, 1,
 			"86p\086s\086i\086n\086c\086l\086k\086m\086v\086d\086e\086r\086g\0",
-			IO_RESET_NONE, OSD_FOPEN_READ, ti85_serial_init, ti85_serial_exit,
+			DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, ti85_serial_init, ti85_serial_exit,
 			NULL, NULL, NULL, NULL,	NULL, NULL, NULL, NULL,	NULL, NULL )
 	CONFIG_DEVICE_SNAPSHOT( "sav\0", ti8x )
 SYSTEM_CONFIG_END

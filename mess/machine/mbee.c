@@ -11,7 +11,7 @@
 #include "vidhrdw/generic.h"
 #include "includes/wd179x.h"
 #include "includes/mbee.h"
-#include "cassette.h"
+#include "devices/cassette.h"
 #include "cpu/z80/z80.h"
 #include "image.h"
 

@@ -11,13 +11,13 @@
 
 #include <stdarg.h>
 #include "driver.h"
-#include "cassette.h"
+#include "devices/cassette.h"
 #include "cpu/i8085/i8085.h"
 #include "includes/lviv.h"
 #include "machine/8255ppi.h"
 #include "formats/lviv_lvt.h"
 #include "image.h"
-#include "snapquik.h"
+#include "devices/snapquik.h"
 
 #define LVIV_SNAPSHOT_SIZE	82219
 

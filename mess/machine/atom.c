@@ -22,7 +22,7 @@
 #include "includes/basicdsk.h"
 #include "includes/flopdrv.h"
 #include "machine/6522via.h"
-#include "cassette.h"
+#include "devices/cassette.h"
 
 static UINT8	atom_8255_porta;
 static UINT8	atom_8255_portb;

@@ -148,9 +148,12 @@ enum
 #endif
 
 
-enum {
-	IO_RESET_NONE,	/* changing the device file doesn't reset anything 								*/
-	IO_RESET_CPU	/* only reset the CPU 															*/
+enum
+{
+	DEVICE_LOAD_RESETS_NONE	= 0,	/* changing the device file doesn't reset anything */
+	DEVICE_LOAD_RESETS_CPU	= 1,	/* changing the device file resets the CPU */
+	DEVICE_MUST_BE_LOADED	= 2,
+	DEVICE_LOAD_AT_INIT		= 4
 };
 
 #ifdef MAME_DEBUG
@@ -164,10 +167,9 @@ void messtestdriver(const struct GameDriver *gamedrv, const char *(*getfodderima
 #endif
 
 /* these are called from mame.c*/
-extern int get_filenames(void);
-extern int init_devices(const struct GameDriver *gamedrv);
-extern void exit_devices(void);
-extern int system_supports_cassette_device (void);
+int devices_init(const struct GameDriver *gamedrv);
+int devices_initialload(void);
+void devices_exit(void);
 
 /* access mess.c internal fields for a device type (instance id) */
 extern int			device_count(int type);

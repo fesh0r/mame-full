@@ -26,7 +26,7 @@ rom/ram selection
 #include "machine/8255ppi.h"
 #include "includes/nec765.h"
 #include "includes/dsk.h"
-#include "cassette.h"
+#include "devices/cassette.h"
 #include "image.h"
 
 void amstrad_setup_machine(void)

@@ -38,15 +38,6 @@ int DECL_SPEC mess_printf(const char *fmt, ...)
 	return length;
 }
 
-/*
- * Does the system support cassette (for tapecontrol)
- * TRUE, FALSE return
- */
-int system_supports_cassette_device (void)
-{
-	return device_find(Machine->gamedrv, IO_CASSETTE) ? TRUE : FALSE;
-}
-
 struct distributed_images
 {
 	const char *names[IO_COUNT][MAX_DEV_INSTANCES];
@@ -198,7 +189,7 @@ static int ram_init(const struct GameDriver *gamedrv)
  *  Call the init() functions for all devices of a driver
  *  ith all user specified image names.
  ****************************************************************************/
-int init_devices(const struct GameDriver *gamedrv)
+int devices_init(const struct GameDriver *gamedrv)
 {
 	const struct IODevice *dev;
 	int i,id;
@@ -276,7 +267,7 @@ int init_devices(const struct GameDriver *gamedrv)
  * Call the exit() functions for all devices of a
  * driver for all images.
  */
-void exit_devices(void)
+void devices_exit(void)
 {
 	/* shutdown all devices */
 	image_unload_all();
@@ -673,10 +664,10 @@ static int try_driver(const struct GameDriver *gamedrv)
 	}
 	else
 	{
-		if (init_devices(gamedrv) != 0)
+		if (device_init(gamedrv) != 0)
 			error = TESTERROR_INITDEVICESFAILED;
 		else
-			exit_devices();
+			devices_exit();
 		for (i = 0;i < MAX_MEMORY_REGIONS;i++)
 			free_memory_region(i);
 	}

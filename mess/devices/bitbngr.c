@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include "mame.h"
-#include "bitbngr.h"
+#include "devices/bitbngr.h"
 #include "printer.h"
 #include "mess.h"
 
@@ -150,7 +150,7 @@ void bitbanger_specify(struct IODevice *iodev, int count, const struct bitbanger
 	iodev->type = IO_BITBANGER;
 	iodev->count = count;
 	iodev->file_extensions = "prn\0";
-	iodev->reset_depth = IO_RESET_NONE;
+	iodev->flags = DEVICE_LOAD_RESETS_NONE;
 	iodev->open_mode = OSD_FOPEN_WRITE;
 	iodev->init = bitbanger_init;
 	iodev->exit = printer_exit;
