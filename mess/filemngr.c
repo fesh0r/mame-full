@@ -1,14 +1,13 @@
 #include "driver.h"
 #include <signal.h>
-//#include <unistd.h>
+#include "utils.h"
 
 static int count_chars_entered;
 static char *enter_string;
 static int enter_string_size;
 static int enter_filename_mode;
 
-#define MAX_ENTER_FILENAME_LENGTH 256
-static char entered_filename[MAX_ENTER_FILENAME_LENGTH];
+static char entered_filename[512];
 
 static void start_enter_string(char *string_buffer, int max_string_size, int filename_mode)
 {
@@ -595,8 +594,8 @@ int fileselect(struct osd_bitmap *bitmap, int selected)
 
 				case FILESELECT_FILE:
 					/* copy filename */
-					strncpy(entered_filename, fs_item[sel],MAX_ENTER_FILENAME_LENGTH-1);
-					entered_filename[MAX_ENTER_FILENAME_LENGTH-1]='\0';
+					strncpyz(entered_filename, osd_get_cwd(), sizeof(entered_filename) / sizeof(entered_filename[0]));
+					strncatz(entered_filename, fs_item[sel], sizeof(entered_filename) / sizeof(entered_filename[0]));
 
 					fs_free();
 					sel = -3;
@@ -794,7 +793,7 @@ int filemanager(struct osd_bitmap *bitmap, int selected)
 					entered_filename[0] = '\0';
 				else
 					strcpy(entered_filename, menu_subitem[sel]);
-				start_enter_string(entered_filename, MAX_ENTER_FILENAME_LENGTH-1, 1);
+				start_enter_string(entered_filename, (sizeof(entered_filename) / sizeof(entered_filename[0])) - 1, 1);
 
 				sel |= 1 << SEL_BITS;	/* we'll ask for a key */
 

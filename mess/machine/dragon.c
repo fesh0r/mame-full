@@ -123,16 +123,16 @@ static void coco3_setcartline(int data);
 #define LOG_INT_MASKING	1	/* [Sparse]   Logging on changing GIME interrupt masks */
 #define LOG_CASSETTE	1	/* [Sparse]   Logging when cassette motor changes state */
 #define LOG_TIMER_SET	1	/* [Sparse]   Logging when setting the timer */
-#define LOG_INT_TMR		1	/* [Frequent] Logging when timer interrupt is invoked */
+#define LOG_INT_TMR		0	/* [Frequent] Logging when timer interrupt is invoked */
 #define LOG_FLOPPY		0	/* [Frequent] Set when floppy interrupts occur */
-#define LOG_INT_COCO3	1
+#define LOG_INT_COCO3	0
 #define LOG_GIME		0
 #define LOG_MMU			0
-#define LOG_VBORD		1   /* [Frequent] Occurs when VBORD is changed */
+#define LOG_VBORD		0   /* [Frequent] Occurs when VBORD is changed */
 #define LOG_OS9         0
 #define LOG_TIMER       0
 #define LOG_DEC_TIMER	0
-#define LOG_IRQ_RECALC	1
+#define LOG_IRQ_RECALC	0
 #else /* !MAME_DEBUG */
 #define LOG_PAK			0
 #define LOG_CASSETTE	0
