@@ -341,13 +341,16 @@ static void AY3600_poll(int dummy)
 		if (pressed_specialkey(SPECIALKEY_RESET)) {
 			if (!reset_flag) {
 				reset_flag = 1;
-				machine_reset();
+				cpunum_set_input_line(0, INPUT_LINE_RESET, ASSERT_LINE);
 			}
 			return;
 		}
 	}
 
-	reset_flag = 0;
+	if (reset_flag) {
+		reset_flag = 0;
+		cpunum_set_input_line(0, INPUT_LINE_RESET, CLEAR_LINE);
+	}
 
 	/* run through real keys and see what's being pressed */
 	num_ports = keyboard_type == AP2_KEYBOARD_2GS ? 9 : 7;
