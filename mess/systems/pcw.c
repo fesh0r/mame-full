@@ -195,6 +195,8 @@ void pcw_timer_interrupt(int dummy)
 	pcw_interrupt_handle();
 }
 
+static int previous_fdc_int_state;
+
 /* set/clear fdc interrupt */
 void	pcw_trigger_fdc_int(void)
 {
@@ -207,19 +209,20 @@ void	pcw_trigger_fdc_int(void)
 		/* attach fdc to nmi */
 		case 0:
 		{
-			if (state)
+			/* I'm assuming that the nmi is edge triggered */
+			/* a interrupt from the fdc will cause a change in line state, and
+			the nmi will be triggered, but when the state changes because the int
+			is cleared this will not cause another nmi */
+			/* I'll emulate it like this to be sure */
+		
+			if (state!=previous_fdc_int_state)
 			{
-#ifdef VERBOSE
-				logerror("asserting nmi\r\n");
-#endif
-				cpu_set_nmi_line(0, ASSERT_LINE);
-			}
-			else
-			{
-#ifdef VERBOSE
-				logerror("clearing nmi\r\n");
-#endif
-				cpu_set_nmi_line(0, CLEAR_LINE);
+				if (state)
+				{
+					/* I'll pulse it because if I used hold-line I'm not sure
+					it would clear - to be checked */
+					cpu_set_nmi_line(0, PULSE_LINE);
+				}
 			}
 		}
 		break;
@@ -236,6 +239,8 @@ void	pcw_trigger_fdc_int(void)
 		default:
 			break;
 	}
+
+	previous_fdc_int_state = state;
 }
 
 /* fdc interrupt callback. set/clear fdc int */
