@@ -1076,7 +1076,7 @@ static void draw_commands(void)
 {
     UINT8 *cmd = &mem[SATURN_VDP1_RAM_BASE];
 	UINT32 offs = 0;
-	UINT32 link = 0;
+/*	UINT32 link = 0; */
 	UINT32 back = 0;
 	UINT16 scx = 0, scy = 0;
 	UINT16 lx = 0, ly = 0;
