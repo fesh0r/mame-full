@@ -27,8 +27,6 @@
 static int requested_device_type(char *tchar);
 static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const struct GameDriver *gamedrv);
 
-static const TCHAR *SoftwarePicker_GetItemString(int nItem, int nColumn,
-	TCHAR *pszBuffer, UINT nBufferLength);
 static int SoftwarePicker_GetItemImage(int nItem);
 static void SoftwarePicker_LeavingItem(int nItem);
 static void SoftwarePicker_EnteringItem(int nItem);
@@ -408,12 +406,10 @@ static void InitMessPicker(void)
 {
 	static const struct PickerCallbacks s_softwareListCallbacks =
 	{
-		NULL,							/* pfnCompare */
-
-		NULL,							/* pfnSetSortColumn */
-		NULL,							/* pfnGetSortColumn */
-		NULL,							/* pfnSetSortReverse */
-		NULL,							/* pfnGetSortReverse */
+		SetMessSortColumn,				/* pfnSetSortColumn */
+		GetMessSortColumn,				/* pfnGetSortColumn */
+		SetMessSortReverse,				/* pfnSetSortReverse */
+		GetMessSortReverse,				/* pfnGetSortReverse */
 		NULL,							/* pfnSetViewMode */
 		GetViewMode,					/* pfnGetViewMode */
 		SetMessColumnWidths,			/* pfnSetColumnWidths */
@@ -424,6 +420,7 @@ static void InitMessPicker(void)
 		GetMessColumnShown,				/* pfnGetColumnShown */
 		NULL,							/* pfnGetOffsetChildren */
 
+		NULL,							/* pfnCompare */
 		MamePlayGame,					/* pfnDoubleClick */
 		SoftwarePicker_GetItemString,	/* pfnGetItemString */
 		SoftwarePicker_GetItemImage,	/* pfnGetItemImage */
@@ -668,14 +665,6 @@ static void SoftwarePicker_EnteringItem(int nItem)
 		*s = '\0';
 
 	UpdateScreenShot();
-}
-
-
-
-static const TCHAR *SoftwarePicker_GetItemString(int nItem, int nColumn,
-	TCHAR *pszBuffer, UINT nBufferLength)
-{
-	return SoftwareList_GetText(GetDlgItem(hMain, IDC_LIST2), nItem, nColumn);
 }
 
 

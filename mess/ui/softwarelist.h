@@ -18,8 +18,9 @@ typedef struct
     const char *ext;
 } mess_image_type;
 
-/* SoftwareListView Class calls */
-LPCTSTR SoftwareList_GetText(HWND hwndSoftware, int nRow, int nColumn);
+/* Software picker calls; note still transitioning to src/ui/picker.c conventions */
+const TCHAR *SoftwarePicker_GetItemString(int nItem, int nColumn,
+	TCHAR *pszBuffer, UINT nBufferLength);
 BOOL SoftwareList_ItemChanged(HWND hwndSoftware, BOOL bWasSelected, BOOL bNowSelected, int nRow);
 BOOL SoftwareList_IsItemSelected(HWND hwndSoftware, int nItem);
 

@@ -190,8 +190,7 @@ static void             PaintBackgroundImage(HWND hWnd, HRGN hRgn, int x, int y)
 
 static int CLIB_DECL DriverDataCompareFunc(const void *arg1,const void *arg2);
 static void             ResetTabControl(void);
-static int CALLBACK     ListCompareFunc(LPARAM index1, LPARAM index2, LPARAM sort_subitem);
-static int              BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem);
+static int              GamePicker_Compare(int index1, int index2, int sort_subitem);
 
 static void             DisableSelection(void);
 static void             EnableSelection(int nGame);
@@ -4684,8 +4683,6 @@ static void InitListView()
 {
 	static const struct PickerCallbacks s_gameListCallbacks =
 	{
-		ListCompareFunc,			/* pfnCompare */
-
 		SetSortColumn,				/* pfnSetSortColumn */
 		GetSortColumn,				/* pfnGetSortColumn */
 		SetSortReverse,				/* pfnSetSortReverse */
@@ -4700,6 +4697,7 @@ static void InitListView()
 		GetColumnShown,				/* pfnGetColumnShown */
 		GetOffsetClones,			/* pfnGetOffsetChildren */
 
+		GamePicker_Compare,			/* pfnCompare */
 		MamePlayGame,				/* pfnDoubleClick */
 		GamePicker_GetItemString,	/* pfnGetItemString */
 		GamePicker_GetItemImage,	/* pfnGetItemImage */
@@ -4901,58 +4899,9 @@ static void CreateIcons(void)
 #endif
 }
 
-/* Sort subroutine to sort the list control */
-static int CALLBACK ListCompareFunc(LPARAM index1, LPARAM index2, LPARAM sort_subitem)
-{
-	if (GetViewMode() != VIEW_GROUPED)
-		return BasicCompareFunc(index1,index2,sort_subitem);
 
-	/* do our fancy compare, with clones grouped under parents
-	 * if games are both parents, basic sort on that
-     */
-	if (DriverIsClone(index1) == FALSE && DriverIsClone(index2) == FALSE)
-	{
-		return BasicCompareFunc(index1,index2,sort_subitem);
-	}
 
-	/* if both are clones */
-	if (DriverIsClone(index1) && DriverIsClone(index2))
-	{
-		/* same parent? sort on children */
-		if (drivers[index1]->clone_of == drivers[index2]->clone_of)
-		{
-			return BasicCompareFunc(index1,index2,sort_subitem);
-		}
-
-		/* different parents, so sort on parents */
-		return BasicCompareFunc(GetDriverIndex(drivers[index1]->clone_of),
-								GetDriverIndex(drivers[index2]->clone_of),sort_subitem);
-	}
-
-	/* one clone, one non-clone */
-	if (DriverIsClone(index1))
-	{
-		/* first one is the clone */
-
-		/* if this is a clone and its parent, put clone after */
-		if (drivers[index1]->clone_of == drivers[index2])
-			return 1;
-		
-		/* otherwise, compare clone's parent with #2 */
-		return BasicCompareFunc(GetDriverIndex(drivers[index1]->clone_of),index2,sort_subitem);
-	}
-
-	/* second one is the clone */
-
-	/* if this is a clone and its parent, put clone after */
-	if (drivers[index1] == drivers[index2]->clone_of)
-		return -1;
-		
-	/* otherwise, compare clone's parent with #1 */
-	return BasicCompareFunc(index1,GetDriverIndex(drivers[index2]->clone_of),sort_subitem);
-}
-
-static int BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem)
+static int GamePicker_Compare(int index1, int index2, int sort_subitem)
 {
 	int value;
 	const char *name1 = NULL;
@@ -4983,7 +4932,7 @@ static int BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem)
 		nTemp2 = GetRomAuditResults(index2);
 
 		if (IsAuditResultKnown(nTemp1) == FALSE && IsAuditResultKnown(nTemp2) == FALSE)
-			return BasicCompareFunc(index1, index2, COLUMN_GAMES);
+			return GamePicker_Compare(index1, index2, COLUMN_GAMES);
 
 		if (IsAuditResultKnown(nTemp1) == FALSE)
 		{
@@ -5000,10 +4949,10 @@ static int BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem)
 		// ok, both are known
 
 		if (IsAuditResultYes(nTemp1) && IsAuditResultYes(nTemp2))
-			return BasicCompareFunc(index1, index2, COLUMN_GAMES);
+			return GamePicker_Compare(index1, index2, COLUMN_GAMES);
 		
 		if (IsAuditResultNo(nTemp1) && IsAuditResultNo(nTemp2))
-			return BasicCompareFunc(index1, index2, COLUMN_GAMES);
+			return GamePicker_Compare(index1, index2, COLUMN_GAMES);
 
 		if (IsAuditResultYes(nTemp1) && IsAuditResultNo(nTemp2))
 			value = -1;
@@ -5043,7 +4992,7 @@ static int BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem)
 		}
 
 		if (nTemp1 == nTemp2)
-			return BasicCompareFunc(index1, index2, COLUMN_GAMES);
+			return GamePicker_Compare(index1, index2, COLUMN_GAMES);
 
 		value = nTemp2 - nTemp1;
 		break;
@@ -5054,14 +5003,14 @@ static int BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem)
 
    	case COLUMN_SRCDRIVERS:
 		if (stricmp(drivers[index1]->source_file+12, drivers[index2]->source_file+12) == 0)
-			return BasicCompareFunc(index1, index2, COLUMN_GAMES);
+			return GamePicker_Compare(index1, index2, COLUMN_GAMES);
 
 		value = stricmp(drivers[index1]->source_file+12, drivers[index2]->source_file+12);
 		break;
 	case COLUMN_PLAYTIME:
 	   value = GetPlayTime(index1) - GetPlayTime(index2);
 	   if (value == 0)
-		  return BasicCompareFunc(index1, index2, COLUMN_GAMES);
+		  return GamePicker_Compare(index1, index2, COLUMN_GAMES);
 
 	   break;
 
@@ -5073,7 +5022,7 @@ static int BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem)
 
 		if ((drv1.video_attributes & VIDEO_TYPE_VECTOR) ==
 			(drv2.video_attributes & VIDEO_TYPE_VECTOR))
-			return BasicCompareFunc(index1, index2, COLUMN_GAMES);
+			return GamePicker_Compare(index1, index2, COLUMN_GAMES);
 
 		value = (drv1.video_attributes & VIDEO_TYPE_VECTOR) -
 				(drv2.video_attributes & VIDEO_TYPE_VECTOR);
@@ -5081,7 +5030,7 @@ static int BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem)
     }
 	case COLUMN_TRACKBALL:
 		if (DriverUsesTrackball(index1) == DriverUsesTrackball(index2))
-			return BasicCompareFunc(index1, index2, COLUMN_GAMES);
+			return GamePicker_Compare(index1, index2, COLUMN_GAMES);
 
 		value = DriverUsesTrackball(index1) - DriverUsesTrackball(index2);
 		break;
@@ -5089,20 +5038,20 @@ static int BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem)
 	case COLUMN_PLAYED:
 	   value = GetPlayCount(index1) - GetPlayCount(index2);
 	   if (value == 0)
-		  return BasicCompareFunc(index1, index2, COLUMN_GAMES);
+		  return GamePicker_Compare(index1, index2, COLUMN_GAMES);
 
 	   break;
 
 	case COLUMN_MANUFACTURER:
 		if (stricmp(drivers[index1]->manufacturer, drivers[index2]->manufacturer) == 0)
-			return BasicCompareFunc(index1, index2, COLUMN_GAMES);
+			return GamePicker_Compare(index1, index2, COLUMN_GAMES);
 
 		value = stricmp(drivers[index1]->manufacturer, drivers[index2]->manufacturer);
 		break;
 
 	case COLUMN_YEAR:
 		if (stricmp(drivers[index1]->year, drivers[index2]->year) == 0)
-			return BasicCompareFunc(index1, index2, COLUMN_GAMES);
+			return GamePicker_Compare(index1, index2, COLUMN_GAMES);
 
 		value = stricmp(drivers[index1]->year, drivers[index2]->year);
 		break;
@@ -5117,7 +5066,7 @@ static int BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem)
 			name2 = NULL;
 
 		if (name1 == name2)
-			return BasicCompareFunc(index1, index2, COLUMN_GAMES);
+			return GamePicker_Compare(index1, index2, COLUMN_GAMES);
 
 		if (name2 == NULL)
 			value = -1;
@@ -5128,11 +5077,8 @@ static int BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem)
 		break;
 
 	default :
-		return BasicCompareFunc(index1, index2, COLUMN_GAMES);
+		return GamePicker_Compare(index1, index2, COLUMN_GAMES);
 	}
-
-	if (GetSortReverse())
-		value = -value;
 
 #ifdef DEBUG
 	if ((strcmp(drivers[index1]->name,"1941") == 0 && strcmp(drivers[index2]->name,"1942") == 0) ||

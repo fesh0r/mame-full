@@ -35,8 +35,11 @@ struct mess_specific_settings
 	int      mess_column_order[MESS_COLUMN_MAX];
 	int      mess_column_shown[MESS_COLUMN_MAX];
 
+	int      mess_sort_column;
+	BOOL     mess_sort_reverse;
+
 	char*    softwaredirs;
-	char*    hashdir;	
+	char*    hashdir;
 };
 
 void SetMessColumnWidths(int widths[]);
@@ -47,6 +50,12 @@ void GetMessColumnOrder(int order[]);
 
 void SetMessColumnShown(int shown[]);
 void GetMessColumnShown(int shown[]);
+
+void SetMessSortColumn(int column);
+int  GetMessSortColumn(void);
+
+void SetMessSortReverse(BOOL reverse);
+BOOL GetMessSortReverse(void);
 
 const char* GetSoftwareDirs(void);
 void  SetSoftwareDirs(const char* paths);

@@ -15,8 +15,6 @@
 
 struct PickerCallbacks
 {
-	PFNLVCOMPARE pfnCompare;
-
 	// Options retrieval
 	void (*pfnSetSortColumn)(int column);
 	int (*pfnGetSortColumn)(void);
@@ -32,6 +30,7 @@ struct PickerCallbacks
 	void (*pfnGetColumnShown)(int shown[]);
 	BOOL (*pfnGetOffsetChildren)(void);
 
+	int (*pfnCompare)(int nIndex1, int nIndex2, int nSortSubItem);
 	void (*pfnDoubleClick)(void);
 	const TCHAR *(*pfnGetItemString)(int nItem, int nColumn,
 		TCHAR *pszBuffer, UINT nBufferLength);

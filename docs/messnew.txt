@@ -33,7 +33,8 @@ User Interface Changes:
 - Fixed the input device categorization feature so that it was accesible from
   the classic UI.  (bug #556)  [Nate Woods]
 
-- [Windows GUI] Refactored picker code to better modularize it.  [Nate Woods]
+- [Windows GUI] Refactored picker code to be more modular and used better in
+  both MESS and MAME32.  Also fixed a sorting bug.  (bug #543)  [Nate Woods]
 
 
 

@@ -70,6 +70,26 @@ void GetMessColumnShown(int shown[])
         shown[i] = settings.mess.mess_column_shown[i];
 }
 
+void SetMessSortColumn(int column)
+{
+	settings.mess.mess_sort_column = column;
+}
+
+int GetMessSortColumn(void)
+{
+	return settings.mess.mess_sort_column;
+}
+
+void SetMessSortReverse(BOOL reverse)
+{
+	settings.mess.mess_sort_reverse = reverse;
+}
+
+BOOL GetMessSortReverse(void)
+{
+	return settings.mess.mess_sort_reverse;
+}
+
 const char* GetSoftwareDirs(void)
 {
     return settings.mess.softwaredirs;

@@ -896,15 +896,15 @@ static void TstringFromUtf8(TCHAR *buf, size_t bufsize, const char *utf8string)
 
 
 /* ************************************************************************ *
- * SoftwareListView class code                                              *
+ * Software picker class code                                               *
  * ************************************************************************ */
 
-LPCTSTR SoftwareList_GetText(HWND hwndSoftware, int nRow, int nColumn)
+const TCHAR *SoftwarePicker_GetItemString(int nRow, int nColumn,
+	TCHAR *pszBuffer, UINT nBufferLength)
 {
 	LPCTSTR s = NULL;
 	ImageData *imgd;
 #if HAS_HASH
-	static TCHAR buf[128];
 	unsigned int hash_function = 0;
 #endif /* HAS_HASH */
 
@@ -917,23 +917,19 @@ LPCTSTR SoftwareList_GetText(HWND hwndSoftware, int nRow, int nColumn)
 
 #if HAS_HASH
 	case MESS_COLUMN_GOODNAME:
-		TstringFromUtf8(buf, sizeof(buf) / sizeof(buf[0]), imgd->hashinfo ? imgd->hashinfo->longname : NULL);
-		s = buf[0] ? buf : NULL;
+		TstringFromUtf8(pszBuffer, nBufferLength, imgd->hashinfo ? imgd->hashinfo->longname : NULL);
 		break;
 
 	case MESS_COLUMN_MANUFACTURER:
-		TstringFromUtf8(buf, sizeof(buf) / sizeof(buf[0]), imgd->hashinfo ? imgd->hashinfo->manufacturer : NULL);
-		s = buf[0] ? buf : NULL;
+		TstringFromUtf8(pszBuffer, nBufferLength, imgd->hashinfo ? imgd->hashinfo->manufacturer : NULL);
 		break;
 
 	case MESS_COLUMN_YEAR:
-		TstringFromUtf8(buf, sizeof(buf) / sizeof(buf[0]), imgd->hashinfo ? imgd->hashinfo->year : NULL);
-		s = buf[0] ? buf : NULL;
+		TstringFromUtf8(pszBuffer, nBufferLength, imgd->hashinfo ? imgd->hashinfo->year : NULL);
 		break;
 
 	case MESS_COLUMN_PLAYABLE:
-		TstringFromUtf8(buf, sizeof(buf) / sizeof(buf[0]), imgd->hashinfo ? imgd->hashinfo->playable : NULL);
-		s = buf[0] ? buf : NULL;
+		TstringFromUtf8(pszBuffer, nBufferLength, imgd->hashinfo ? imgd->hashinfo->playable : NULL);
 		break;
 
 	case MESS_COLUMN_CRC:
@@ -946,10 +942,8 @@ LPCTSTR SoftwareList_GetText(HWND hwndSoftware, int nRow, int nColumn)
 			case MESS_COLUMN_SHA1:	hash_function = HASH_SHA1;	break;
 		}
 
-		buf[0] = '\0';
 		if (imgd->hashinfo)
-			hash_data_extract_printable_checksum(imgd->hashinfo->hash, hash_function, buf);
-		s = buf;
+			hash_data_extract_printable_checksum(imgd->hashinfo->hash, hash_function, pszBuffer);
 		break;
 
 #endif /* HAS_HASH */

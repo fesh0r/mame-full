@@ -266,6 +266,9 @@ static REG_OPTION regSettings[] =
 	{ "mess_column_widths",         RO_ENCODE,  &settings.mess.mess_column_width, "186, 230, 88, 84, 84, 68, 248, 248",	FALSE, MessColumnEncodeString, MessColumnDecodeWidths},
 	{ "mess_column_order",          RO_ENCODE,  &settings.mess.mess_column_order,   "0,   1,  2,  3,  4,  5,   6,   7",	FALSE, MessColumnEncodeString, MessColumnDecodeString},
 	{ "mess_column_shown",          RO_ENCODE,  &settings.mess.mess_column_shown,   "1,   1,  1,  1,  1,  0,   0,   0",	FALSE, MessColumnEncodeString, MessColumnDecodeString},
+
+	{ "mess_sort_column",           RO_INT,     &settings.mess.mess_sort_column,    "0" },
+	{ "mess_sort_reversed",         RO_BOOL,    &settings.mess.mess_sort_reverse,   "0" },
 #endif
 	{ "" }
 };
