@@ -8,10 +8,6 @@
 
 	http://falabella.lf2.cuni.cz/~naidr/sord/
 
-	- some discs to test FD-5 
-	- details on accessing cassette required
-	- testing required
-
 	Kevin Thacker [MESS driver]
 
  ******************************************************************************/
@@ -21,10 +17,10 @@
 #include "vidhrdw/tms9928a.h"
 #include "sound/sn76496.h"
 #include "cpu/z80/z80.h"
-#include "includes/wd179x.h"
 #include "includes/basicdsk.h"
 #include "cassette.h"
-
+#include "includes/centroni.h"
+#include "printer.h"
 
 /*********************************************************************************************/
 /* FD5 disk interface */
@@ -32,14 +28,14 @@
 /* - 27128 ROM (16K) */
 /* - 2x6116 RAM */
 /* - Intel8272/NEC765 */
+/* - IRQ of NEC765 is connected to INT of Z80 */
 
 #include "includes/nec765.h"
 
 static void sord_m5_init_machine(void);
 static void sord_m5_shutdown_machine(void);
 
-static unsigned char fd5_input;
-static unsigned char fd5_output;
+static unsigned char fd5_communication = 0x0f0;
 static unsigned char fd5_databus;
 
 MEMORY_READ_START( readmem_sord_fd5 )
@@ -54,56 +50,87 @@ MEMORY_WRITE_START( writemem_sord_fd5 )
 MEMORY_END
 
 /* bit 0 = 1: ready to receive data? */
-/* 0x07 */
+/* 0x06 */
+/* 0110 */
+
 WRITE_HANDLER(fd5_communication_w)
 {
-	logerror("fd5 write to m5: %02x\n",data);
-	fd5_output = 0;
-	if (data & 0x01)
+	logerror("fd5 write to m5: %02x %04x\n",data,activecpu_get_pc());
+
+	/* clear top 4 bits */
+	fd5_communication&=0x0f;
+
+	if (data & (1<<0))
 	{
-		fd5_output |= (1<<7);
+		fd5_communication|=(1<<7);
 	}
-	if (data & 0x02)
+
+	if (data & (1<<1))
 	{
-		fd5_output |= (1<<6);
+		fd5_communication|=(1<<6);
 	}
-	if (data & 0x04)
+
+	if (data & (1<<2))
 	{
-		fd5_output |= (1<<5);
+		fd5_communication|=(1<<5);
 	}
-	if (data & 0x08)
+
+	if (data & (1<<3))
 	{
-		fd5_output |= (1<<4);
+		fd5_communication|=(1<<4);
 	}
+
+
+
 	cpu_yield();
 }
 
-/* bit 0 = 0 & bit 1 = 1, start transfer? */
+
+
+/* FD5 side */
+
+/* 0x07 to port 0x020 */
+/* 1,1,1 */
+
+/* port 0x010: read/write data to m5 */
+/* port 0x030: read */
+/* bit 0 = 0, bit 2 = 0 write to m5  */
+/* bit 0 = 0. bit 2 = 0 fd5 toggles bit 0 of port 0x020 */
+/* bit 3 = 0, read from m5 */
+
+/* bit 2 = 0: */
 /* bit 0 = 0 & bit 2 = 0, write to m5 */ 
 /* bit 0 = 0 & bit 3 = 0, read from m5 */
+
+/* M5 side */
+/* port 0x071 */
+/* 00, ff, 40  11111111 01000000 */
+/* port 0x072 */
+/* bit 7 = 1: fd5 wants data to be written to it or acknowledges it is ready for data write? */
+/* bit 5 = 1: fd5 wants data to be read from it, or acknowledges it is ready for data read? */
+/* bit 2 = 1: fd5 signalling data ready */
+/* port 0x070: read/write data to fd5 */
+
 READ_HANDLER(fd5_communication_r)
 {
-	logerror("fd5 read from m5\n");
+	logerror("fd5 read from m5 %04x\n",activecpu_get_pc());
 	cpu_yield();
-	return fd5_input;
+	return fd5_communication;
 }
 
 READ_HANDLER(fd5_data_r)
 {
 	cpu_yield();
-	logerror("fd5 read from fd5 databus %02x\n",fd5_databus);
+	logerror("fd5 read from m5 databus %02x %04x\n",fd5_databus,activecpu_get_pc());
 	return fd5_databus;
 }
 
 WRITE_HANDLER(fd5_data_w)
 {
-	logerror("fd5 write to fd5 databus: %02x\n",data);
+	logerror("fd5 write to m5 databus: %02x %04x\n",data,activecpu_get_pc());
 	fd5_databus = data;
 	cpu_yield();
 }
-
-
-
 /* 0x020 fd5 writes to this port to communicate with m5 */
 /* 0x010 data bus to read/write from m5 */
 /* 0x030 fd5 reads from this port to communicate with m5 */
@@ -122,9 +149,23 @@ PORT_WRITE_START( writeport_sord_fd5 )
 	{ 0x020, 0x020, fd5_communication_w},
 PORT_END
 
+/* nec765 data request is connected to interrupt of z80 inside fd5 interface */
+static void sord_fd5_fdc_interrupt(int state)
+{
+	if (state)
+	{
+		cpu_set_irq_line(1,0, HOLD_LINE);
+	}
+	else
+	{
+		cpu_set_irq_line(1,0,CLEAR_LINE);
+
+	}
+}
+
 static struct nec765_interface sord_fd5_nec765_interface=
 {
-	NULL,
+	sord_fd5_fdc_interrupt,
 	NULL
 };
 
@@ -142,26 +183,29 @@ static void sord_m5_fd5_init_machine(void)
 {
 	sord_fd5_init();
 	sord_m5_init_machine();
-	fd5_input = 0x0ff;
-	fd5_output = 0x0ff;
 }
 
 static void sord_m5_fd5_shutdown_machine(void)
 {
 	sord_fd5_exit();
 	sord_m5_shutdown_machine();
+#ifdef SORD_DUMP_RAM
+	sordfd5_dump_ram();
+#endif
 }
 
+/* read data from fd5 */
 READ_HANDLER(sord_fd5_data_r)
 {
 	cpu_yield();
-	logerror("m5 read from fd5 databus %02x\n",fd5_databus);
+	logerror("m5 read from fd5 databus %02x %04x\n",fd5_databus,activecpu_get_pc());
 	return fd5_databus;
 }
 
+/* write data to fd5 */
 WRITE_HANDLER(sord_fd5_data_w)
 {
-	logerror("m5 write to fd5 databus: %02x\n",data);
+	logerror("m5 write to fd5 databus: %02x %04x\n",data,activecpu_get_pc());
 	fd5_databus = data;
 	cpu_yield();
 }
@@ -169,43 +213,52 @@ WRITE_HANDLER(sord_fd5_data_w)
 
 READ_HANDLER(sord_fd5_communication_r)
 {
-	logerror("read from fd5: %02x\n",fd5_output);
+	logerror("read from fd5: %02x %04x\n",fd5_communication,activecpu_get_pc());
 	cpu_yield();
-	return fd5_output;
+	return fd5_communication;
 }
 
-/* 111 */
 
-/* port 0x071 */
-/* 00, ff, 40  11111111 01000000 */
-/* port 0x072 */
-/* bit 7 = 1: fd5 is ready for data to be written to it */
-/* bit 5 = 1: fd5 is ready for data to be read from it */
-/* bit 2 = ?? */
+/* 0, f0, 40 */
+/* 00000000 */
+/* 11110000 */
+/* 01000000 */
+/* bit 0 = 0 */
+/* bit 1 = 1 */
+/* bit 2 = 0 */
 WRITE_HANDLER(sord_fd5_communication_w)
 {
-	logerror("write to fd5: %02x\n",data);
+	logerror("write to fd5: %02x %04x\n",data,activecpu_get_pc());
+
+	/* bit 0 = 0, bit 2 = 0 write to m5  */
+/* bit 0 = 0. bit 2 = 0 fd5 toggles bit 0 of port 0x020 */
+/* bit 3 = 0, read from m5 */
+
+/* bit 2 = 0: */
+/* bit 0 = 0 & bit 2 = 0, write to m5 */ 
+/* bit 0 = 0 & bit 3 = 0, read from m5 */
+
+	fd5_communication &=0x0f0;
 	
-	fd5_input = data;
-
-	fd5_input = 0;
-	if ((data & 0x010)==0)
+	if (data & (1<<7))
 	{
-		fd5_input |= (1<<3);
-	}
-	if ((data & 0x020)==0)
-	{
-		fd5_input |= (1<<2);
-	}
-	if ((data & 0x040)==0)
-	{
-		fd5_input |= (1<<1);
-	}
-	if ((data & 0x080)==0)
-	{
-		fd5_input |= (1<<0);
+		fd5_communication |= 1;
 	}
 
+	if (data & (1<<6))
+	{
+		fd5_communication |= 2;
+	}
+
+	if (data & (1<<5))
+	{
+		fd5_communication |=4;
+	}
+
+	if (data & (1<<4))
+	{
+		fd5_communication |=8;
+	}
 
 	cpu_yield();
 }
@@ -261,7 +314,8 @@ int sord_floppy_init(int id)
 
 	if (basicdsk_floppy_init(id)==INIT_PASS)
 	{
-		basicdsk_set_geometry(id, 80, 2, 9, 512, 1,0);
+		/* 40 tracks, single sided, 256 bytes per sector, 18 sectors */
+		basicdsk_set_geometry(id, 40, 1, 18, 256, 1,0);
 		return INIT_PASS;
 	}
 
@@ -360,28 +414,6 @@ static WRITE_HANDLER(sord_video_w)
 	TMS9928A_vram_w(offset,data);
 }
 
-static WRITE_HANDLER(sord_diskhw_w)
-{
-/*
-7 -  HI/NOR	- high / normal
-6 - OFF/ON	- LED lamp, select
-5 -  ON/OFF	- wait
-4 -  ON/OFF	- motor
-3 -  FM/MFM	- density
-2 -  8"/5.25"	- drive
-1 -   1/0	- not used ( pozdeji se pouzije pro prepinani drajvru 0 a 1 )
-0 -   2/1	- frequency MHz
-*/
-	if (data & (1<<3))
-	{
-		wd179x_set_density(DEN_FM_HI);
-	}
-	else
-	{
-		wd179x_set_density(DEN_MFM_LO);
-	}
-}
-
 /* 3,2 written */
 /*
 +----------+--------------------+-------------------------------+
@@ -393,18 +425,81 @@ static WRITE_HANDLER(sord_diskhw_w)
 | 10000000 | klavesa <RESET>	| ---				|
 +----------+--------------------+-------------------------------+
 */
+
+
+/* when bit 1 of $50 is 1, can write to $40 */
+
 static READ_HANDLER(sord_sys_r)
 {
-	return 0x0ff;
+	unsigned char data;
+	int printer_handshake;
 
-//	return ((readinputport(16) & 0x01)<<7);
+	data = 0;
+
+	printer_handshake = centronics_read_handshake(0);
+
+	/* if printer is not online, it is busy */
+	if ((printer_handshake & CENTRONICS_ONLINE)!=0)
+	{
+		data|=(1<<1);
+	}
+
+	/* cassette read */
+	if (device_input(IO_CASSETTE,0) > 255)
+		data |=(1<<0);
+
+
+	/* reset from keyboard */
+	data |= ((readinputport(16) & 0x01)<<7);
+
+	//	logerror("sys read: %02x\n",data);
+
+	return data;
 }
+
+/* write */
+/* bit 0 is strobe to printer or cassette write data */
+/* bit 1 is cassette remote */
+
+/* read */
+/* bit 0 is cassette data */
+/* bit 1 is printer busy */
 
 static WRITE_HANDLER(sord_sys_w)
 {
+	int handshake;
 
+	handshake = 0;
+	if (data & (1<<0))
+	{
+		handshake = CENTRONICS_STROBE;
+	}
+
+	/* cassette remote */
+	device_status(IO_CASSETTE, 0, ((data>>1) & 0x01));
+
+	/* cassette data */
+	device_output(IO_CASSETTE, 0, (data & (1<<0)) ? -32768 : 32767);
+
+	/* assumption: select is tied low */
+	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
+	centronics_write_handshake(0, handshake, CENTRONICS_STROBE);
+
+//	logerror("sys write: %02x\n",data);
 }
 
+static WRITE_HANDLER(sord_printer_w)
+{
+//	logerror("centronics w: %02x\n",data);
+	centronics_write_data(0,data);
+}
+
+static WRITE_HANDLER(sord_fd5_reset)
+{
+//	cpu_set_reset_line(1,1);
+//	cpu_set_reset_line(1,0);
+	cpu_yield();
+}
 
 
 PORT_READ_START( readport_sord_m5 )
@@ -414,25 +509,19 @@ PORT_READ_START( readport_sord_m5 )
 	{ 0x050, 0x050, sord_sys_r},
 	{ 0x070, 0x070, sord_fd5_data_r},
 	{ 0x072, 0x072, sord_fd5_communication_r},
-
-//	{ 0x078, 0x078, wd179x_status_r},
-//	{ 0x079, 0x079, wd179x_track_r},
-//	{ 0x07a, 0x07a, wd179x_sector_r},
-//	{ 0x07b, 0x07b, wd179x_data_r},
 PORT_END
 
 PORT_WRITE_START( writeport_sord_m5 )
 	{ 0x000, 0x00f, sord_ctc_w},
 	{ 0x010, 0x01f, sord_video_w},
 	{ 0x020, 0x02f, SN76496_0_w},
+	{ 0x040, 0x040, sord_printer_w}, 
+	{ 0x050, 0x050, sord_sys_w},
 	{ 0x070, 0x070, sord_fd5_data_w},
 	{ 0x071, 0x071, sord_fd5_communication_w},	
-	//	{ 0x050, 0x050, sord_sys_w},
-//	{ 0x078, 0x078, wd179x_command_w},
-//	{ 0x079, 0x079, wd179x_track_w},
-//	{ 0x07a, 0x07a, wd179x_sector_w},
-//	{ 0x07b, 0x07b, wd179x_data_w},
-//	{ 0x07c, 0x07c, sord_diskhw_w},
+
+	/* ???? */
+{ 0x073, 0x073, sord_fd5_reset},
 PORT_END
 
 
@@ -448,21 +537,29 @@ static void video_timer_callback(int dummy)
 	z80ctc_0_trg3_w(0,0);
 }
 
+
+static CENTRONICS_CONFIG sordm5_cent_config[1]={
+	{
+		PRINTER_CENTRONICS,
+		NULL
+	},
+};
+
 void sord_m5_init_machine(void)
 {
 	z80ctc_init(&sord_m5_ctc_intf);
 	
 	video_timer = timer_pulse(TIME_IN_MSEC(16.7), 0, video_timer_callback);
 
-	wd179x_init(WD_TYPE_179X,NULL);
 	TMS9928A_reset ();
 	z80ctc_reset(0);
-
-	wd179x_reset();
 
 	/* should be done in a special callback to work properly! */
 	cpu_setbank(1, cart_data);
 
+	centronics_config(0, sordm5_cent_config);
+	/* assumption: select is tied low */
+	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
 }
 
 #define SORD_DUMP_RAM
@@ -491,6 +588,30 @@ void sord_dump_ram(void)
 		osd_fclose(file);
 	}
 }
+
+void sordfd5_dump_ram(void)
+{
+	void *file;
+
+	file = osd_fopen(Machine->gamedrv->name, "sordfd5bin", OSD_FILETYPE_NVRAM,OSD_FOPEN_WRITE);
+ 
+	if (file)
+	{
+		int i;
+
+		for (i=0; i<65536; i++)
+		{
+			unsigned char data[1];
+
+			data[0] = cpunum_read_byte(1,i);
+			
+			osd_fwrite(file, data, 1);
+		}
+
+		/* close file */
+		osd_fclose(file);
+	}
+}
 #endif
 
 
@@ -504,7 +625,9 @@ void sord_m5_shutdown_machine(void)
 		video_timer = NULL;
 	}
 
-	wd179x_exit();
+	centronics_exit(0);
+
+/*	wd179x_exit(); */
 }
 
 INPUT_PORTS_START(sord_m5)
@@ -771,16 +894,25 @@ ROM_END
 		NULL					/* output_chunk */\
 	}
 
+#define sord_m5_printer \
+	IO_PRINTER_PORT(1,"prn\0")
+
+#define sord_m5_cassette \
+	IO_CASSETTE_WAVE(1,"wav\0",NULL,sord_cassette_init,sord_cassette_exit)
 
 static const struct IODevice io_sordm5[] =
 {
 	sord_m5_cart_device,
+	sord_m5_printer,
+	sord_m5_cassette,
 	{IO_END},
 };
 
 static const struct IODevice io_sordm5fd5[] = 
 {
 	sord_m5_cart_device,
+	sord_m5_printer,
+	sord_m5_cassette,
 	{
 		IO_FLOPPY,				/* type */
 		4,						/* count */
@@ -800,7 +932,6 @@ static const struct IODevice io_sordm5fd5[] =
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
 	},
-	IO_CASSETTE_WAVE(1,"wav\0",NULL,sord_cassette_init,sord_cassette_exit),
 	{IO_END}
 };
 
