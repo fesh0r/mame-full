@@ -45,7 +45,7 @@ int c1551_config(int id, int mode, C1551_CONFIG*config);
    IO_FLOPPY,          /* type */\
    1,                                      /* count */\
    "d64\0",            /* G64 later *//*file extensions */\
-   NULL,               /* private */\
+   IO_RESET_CPU,       /* reset if file changed */\
    NULL,               /* id */\
    vc1541_init,        /* init */\
    vc1541_exit,        /* exit */\
@@ -67,7 +67,7 @@ int c1551_config(int id, int mode, C1551_CONFIG*config);
    IO_FLOPPY,          /* type */\
    1,                                      /* count */\
    "d64\0",            /* G64 later *//*file extensions */\
-   NULL,               /* private */\
+   IO_RESET_CPU,       /* reset if file changed */\
    NULL,               /* id */\
    vc1541_init,        /* init */\
    vc1541_exit,        /* exit */\
@@ -87,7 +87,7 @@ int c1551_config(int id, int mode, C1551_CONFIG*config);
    IO_FLOPPY,          /* type */\
    1,                                      /* count */\
    "d64\0",            /* G64 later *//*file extensions */\
-   NULL,               /* private */\
+   IO_RESET_CPU,       /* reset if file changed */\
    NULL,               /* id */\
    vc1541_init,        /* init */\
    vc1541_exit,        /* exit */\
