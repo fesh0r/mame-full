@@ -116,7 +116,12 @@ System Driver Changes:
 - AMSTRAD: Changed video hardware code to use 6845 CRTC code.  Also added Eventlist code to 
   the Amstrad video hardware code. It will record colour changes, mode changes and crtc 
   register writes.  This means support for multi-modes on the same screen, colour changing 
-  effects, and demos. [Kev Thacker]
+  effects, and demos. There is a second method which updates between I/O writes that
+  would affect the screen. The rendering method can be chosen with a compile switch.
+  Also added correct opcode timings for Amstrad using new cpu_setcycletable, this
+  means raster effects are now correct. Also added emulation of the Multiface hardware.
+  It requires a rom (optionally loaded). You must enable it in the dipswitches. When
+  enabled F1 will be the "stop" button. [Kev Thacker]
 
 - ZX: Fixed ZX80 palette: it's black on white, and not viceversa. [Stefano Priore]
 
@@ -130,7 +135,9 @@ Other Changes:
 - The core is based on MAME 0.37b5. This incorporates all 
   features of the update to this core.  [MAME team] 
 
-- NEC765: improved and more commands added, supports DMA access [Kev Thacker]
+- NEC765: improved and more commands added, supports DMA access. Can handle
+  images with copyprotection. A lot more software should now run on the 
+  systems that use it (PCW,Spectrum, Amstrad,PC and PCW16). [Kev Thacker]
 
 - 6522via Bug fix [Gordon Jefferyes]
 
