@@ -8,434 +8,134 @@
 #define DEST_SCALE_Y(Y)   SCALE_Y(Y)
 #endif
 
+#ifdef INDIRECT
+#  ifdef DOUBLEBUFFER
+#    define EFFECT(FUNC) \
+       effect_##FUNC##_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, line_src, visual_width, INDIRECT); \
+       memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2)
+#    define EFFECT2X(FUNC) \
+       effect_##FUNC##_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, visual_width, INDIRECT); \
+       memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2)
+#    define EFFECT3X(FUNC) \
+       effect_##FUNC##_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE*2, line_src, visual_width, INDIRECT); \
+       memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*3)
+#  else
+#    define EFFECT(FUNC) \
+       effect_##FUNC##_func(line_dest, line_dest+DEST_WIDTH, line_src, visual_width, INDIRECT)
+#    define EFFECT2X(FUNC) \
+       effect_##FUNC##_func(line_dest, line_dest+DEST_WIDTH, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, visual_width, INDIRECT)
+#    define EFFECT3X(FUNC) \
+       effect_##FUNC##_func(line_dest, line_dest+DEST_WIDTH, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE*2, line_src, visual_width, INDIRECT)
+#  endif
+#else
+#  ifdef DOUBLEBUFFER
+#    define EFFECT(FUNC) \
+       effect_##FUNC##_direct_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, line_src, visual_width); \
+       memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2)
+#    define EFFECT2X(FUNC) \
+       effect_##FUNC##_direct_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, visual_width); \
+       memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2)
+#    define EFFECT3X(FUNC) \
+       effect_##FUNC##_direct_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE*2, line_src, visual_width); \
+       memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*3)
+#  else
+#    define EFFECT(FUNC) \
+       effect_##FUNC##_direct_func(line_dest, line_dest+DEST_WIDTH, line_src, visual_width)
+#    define EFFECT2X(FUNC) \
+       effect_##FUNC##_direct_func(line_dest, line_dest+DEST_WIDTH, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, visual_width)
+#    define EFFECT3X(FUNC) \
+       effect_##FUNC##_direct_func(line_dest, line_dest+DEST_WIDTH, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE*2, line_src, visual_width)
+#  endif
+#endif
+
+#define LOOP(FUNC) \
+if (!blit_hardware_rotation && (blit_flipx || blit_flipy || blit_swapxy)) \
+{ \
+  line_src = (SRC_PIXEL *)rotate_dbbuf; \
+  for (y = visual.min_y; y <= visual.max_y; line_dest+=DEST_SCALE_Y(DEST_WIDTH), y++) { \
+    rotate_func(rotate_dbbuf, bitmap, y); \
+    FUNC; \
+  } \
+} \
+else \
+{ \
+  for (;line_src < line_end; line_dest+=DEST_SCALE_Y(DEST_WIDTH), line_src+=src_width) { \
+    FUNC; \
+  } \
+}  
+
+#define LOOP2X(FUNC) \
+if (!blit_hardware_rotation && (blit_flipx || blit_flipy || blit_swapxy)) \
+{ \
+  char *tmp; \
+  \
+  /* preload the first lines for 2x effects */ \
+  rotate_func(rotate_dbbuf1, bitmap, visual.min_y); \
+  rotate_func(rotate_dbbuf2, bitmap, visual.min_y); \
+  \
+  for (y = visual.min_y; y <= visual.max_y; line_dest+=DEST_SCALE_Y(DEST_WIDTH), y++) { \
+    /* shift lines up */ \
+    tmp = rotate_dbbuf0; \
+    rotate_dbbuf0=rotate_dbbuf1; \
+    rotate_dbbuf1=rotate_dbbuf2; \
+    rotate_dbbuf2=tmp; \
+    rotate_func(rotate_dbbuf2, bitmap, y+1); \
+    EFFECT2X(FUNC); \
+  } \
+} \
+else \
+{ \
+  /* use rotate_dbbufX for the inputs to the effect_func, to keep the EFFECT2x \
+     macro ident, this should be safe since these shouldn't be allocated \
+     when not rotating and effect != 6fac2x */ \
+  for (;line_src < line_end; line_dest+=DEST_SCALE_Y(DEST_WIDTH), line_src+=src_width) { \
+    rotate_dbbuf0=(char *)(line_src-src_width); \
+    rotate_dbbuf1=(char *)line_src; \
+    rotate_dbbuf2=(char *)(line_src+src_width); \
+    EFFECT2X(FUNC); \
+  } \
+  rotate_dbbuf0=NULL; \
+  rotate_dbbuf1=NULL; \
+  rotate_dbbuf2=NULL; \
+}  
+
+{
+  int y;
+  int src_width = (((SRC_PIXEL *)bitmap->line[1]) - ((SRC_PIXEL *)bitmap->line[0]));
+  SRC_PIXEL *line_src = (SRC_PIXEL *)bitmap->line[visual.min_y] + visual.min_x;
+  SRC_PIXEL *line_end = (SRC_PIXEL *)bitmap->line[visual.max_y+1] + visual.min_x;
+  DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
+
 if (effect) {
   switch(effect) {
 
   default:
   case EFFECT_SCALE2X:
-    {
-#  ifdef DEST
-     if (!blit_hardware_rotation && (blit_flipx || blit_flipy || blit_swapxy)) {
-       int y;
-       SRC_PIXEL *line_src;
-       DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
-       for (y = visual.min_y; y <= visual.max_y; line_dest+=DEST_SCALE_Y(DEST_WIDTH), y++) {
-	       rotate_func(rotate_dbbuf0, bitmap, y-1);
-	       rotate_func(rotate_dbbuf1, bitmap, y);
-	       rotate_func(rotate_dbbuf2, bitmap, y+1);
-	       line_src = (SRC_PIXEL *)rotate_dbbuf;
-
-#	ifdef INDIRECT
-#		ifdef DOUBLEBUFFER
-		  effect_scale2x_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, visual_width, INDIRECT);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
-#		else
-		  effect_scale2x_func(line_dest, line_dest+DEST_WIDTH, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, visual_width, INDIRECT);
-#		endif
-#	else
-#		ifdef DOUBLEBUFFER
-		  effect_scale2x_direct_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, visual_width);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
-#		else
-		  effect_scale2x_direct_func(line_dest, line_dest+DEST_WIDTH, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, visual_width);
-#		endif
-#	endif
-       }
-     } else {
-	int src_width = (((SRC_PIXEL *)bitmap->line[1]) - ((SRC_PIXEL *)bitmap->line[0]));
-	SRC_PIXEL *line_src = (SRC_PIXEL *)bitmap->line[visual.min_y]   + visual.min_x;
-	SRC_PIXEL *line_end = (SRC_PIXEL *)bitmap->line[visual.max_y+1] + visual.min_x;
-	DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
-
-	for (;line_src < line_end; line_dest+=DEST_SCALE_Y(DEST_WIDTH), line_src+=src_width) {
-
-#	ifdef INDIRECT
-#		ifdef DOUBLEBUFFER
-		  effect_scale2x_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, line_src-src_width, line_src, line_src+src_width, visual_width, INDIRECT);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
-#		else
-		  effect_scale2x_func(line_dest, line_dest+DEST_WIDTH, line_src-src_width, line_src, line_src+src_width, visual_width, INDIRECT);
-#		endif
-#	else
-#		ifdef DOUBLEBUFFER
-		  effect_scale2x_direct_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, line_src-src_width, line_src, line_src+src_width, visual_width);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
-#		else
-		  effect_scale2x_direct_func(line_dest, line_dest+DEST_WIDTH, line_src-src_width, line_src, line_src+src_width, visual_width);
-#		endif
-#	endif
-	}
-     }
-#  endif
-#  ifdef PUT_IMAGE
-      PUT_IMAGE(0, 0, SCALE_X(visual_width), SCALE_Y(visual_height))
-#  endif
-  }
-  break;
+	LOOP2X(scale2x)
+        break;
 
   case EFFECT_HQ2X:
-    {
-#  ifdef DEST
-     if (!blit_hardware_rotation && (blit_flipx || blit_flipy || blit_swapxy)) {
-       int y;
-       SRC_PIXEL *line_src;
-       DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
-       for (y = visual.min_y; y <= visual.max_y; line_dest+=DEST_SCALE_Y(DEST_WIDTH), y++) {
-	       rotate_func(rotate_dbbuf0, bitmap, y-1);
-	       rotate_func(rotate_dbbuf1, bitmap, y);
-	       rotate_func(rotate_dbbuf2, bitmap, y+1);
-	       line_src = (SRC_PIXEL *)rotate_dbbuf;
-
-#	ifdef INDIRECT
-#		ifdef DOUBLEBUFFER
-		  effect_hq2x_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, visual_width, INDIRECT);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
-#		else
-		  effect_hq2x_func(line_dest, line_dest+DEST_WIDTH, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, visual_width, INDIRECT);
-#		endif
-#	else
-#		ifdef DOUBLEBUFFER
-		  effect_hq2x_direct_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, visual_width);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
-#		else
-		  effect_hq2x_direct_func(line_dest, line_dest+DEST_WIDTH, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, visual_width);
-#		endif
-#	endif
-       }
-     } else {
-	int src_width = (((SRC_PIXEL *)bitmap->line[1]) - ((SRC_PIXEL *)bitmap->line[0]));
-	SRC_PIXEL *line_src = (SRC_PIXEL *)bitmap->line[visual.min_y]   + visual.min_x;
-	SRC_PIXEL *line_end = (SRC_PIXEL *)bitmap->line[visual.max_y+1] + visual.min_x;
-	DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
-
-	for (;line_src < line_end; line_dest+=DEST_SCALE_Y(DEST_WIDTH), line_src+=src_width) {
-
-#	ifdef INDIRECT
-#		ifdef DOUBLEBUFFER
-		  effect_hq2x_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, line_src-src_width, line_src, line_src+src_width, visual_width, INDIRECT);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
-#		else
-		  effect_hq2x_func(line_dest, line_dest+DEST_WIDTH, line_src-src_width, line_src, line_src+src_width, visual_width, INDIRECT);
-#		endif
-#	else
-#		ifdef DOUBLEBUFFER
-		  effect_hq2x_direct_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, line_src-src_width, line_src, line_src+src_width, visual_width);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
-#		else
-		  effect_hq2x_direct_func(line_dest, line_dest+DEST_WIDTH, line_src-src_width, line_src, line_src+src_width, visual_width);
-#		endif
-#	endif
-	}
-     }
-#  endif
-#  ifdef PUT_IMAGE
-      PUT_IMAGE(0, 0, SCALE_X(visual_width), SCALE_Y(visual_height))
-#  endif
-  }
-  break;
+        LOOP2X(hq2x)
+        break;
 
   case EFFECT_LQ2X:
-    {
-#  ifdef DEST
-     if (!blit_hardware_rotation && (blit_flipx || blit_flipy || blit_swapxy)) {
-       int y;
-       SRC_PIXEL *line_src;
-       DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
-       for (y = visual.min_y; y <= visual.max_y; line_dest+=DEST_SCALE_Y(DEST_WIDTH), y++) {
-	       rotate_func(rotate_dbbuf0, bitmap, y-1);
-	       rotate_func(rotate_dbbuf1, bitmap, y);
-	       rotate_func(rotate_dbbuf2, bitmap, y+1);
-	       line_src = (SRC_PIXEL *)rotate_dbbuf;
+	LOOP2X(lq2x)
+        break;
 
-#	ifdef INDIRECT
-#		ifdef DOUBLEBUFFER
-		  effect_lq2x_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, visual_width, INDIRECT);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
-#		else
-		  effect_lq2x_func(line_dest, line_dest+DEST_WIDTH, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, visual_width, INDIRECT);
-#		endif
-#	else
-#		ifdef DOUBLEBUFFER
-		  effect_lq2x_direct_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, visual_width);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
-#		else
-		  effect_lq2x_direct_func(line_dest, line_dest+DEST_WIDTH, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, visual_width);
-#		endif
-#	endif
-       }
-     } else {
-	int src_width = (((SRC_PIXEL *)bitmap->line[1]) - ((SRC_PIXEL *)bitmap->line[0]));
-	SRC_PIXEL *line_src = (SRC_PIXEL *)bitmap->line[visual.min_y]   + visual.min_x;
-	SRC_PIXEL *line_end = (SRC_PIXEL *)bitmap->line[visual.max_y+1] + visual.min_x;
-	DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
+  case EFFECT_SCAN2:
+	LOOP(EFFECT(scan2))
+        break;
 
-	for (;line_src < line_end; line_dest+=DEST_SCALE_Y(DEST_WIDTH), line_src+=src_width) {
+  case EFFECT_RGBSTRIPE:
+	LOOP(EFFECT(rgbstripe))
+        break;
 
-#	ifdef INDIRECT
-#		ifdef DOUBLEBUFFER
-		  effect_lq2x_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, line_src-src_width, line_src, line_src+src_width, visual_width, INDIRECT);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
-#		else
-		  effect_lq2x_func(line_dest, line_dest+DEST_WIDTH, line_src-src_width, line_src, line_src+src_width, visual_width, INDIRECT);
-#		endif
-#	else
-#		ifdef DOUBLEBUFFER
-		  effect_lq2x_direct_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, line_src-src_width, line_src, line_src+src_width, visual_width);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
-#		else
-		  effect_lq2x_direct_func(line_dest, line_dest+DEST_WIDTH, line_src-src_width, line_src, line_src+src_width, visual_width);
-#		endif
-#	endif
-	}
-     }
-#  endif
-#  ifdef PUT_IMAGE
-      PUT_IMAGE(0, 0, SCALE_X(visual_width), SCALE_Y(visual_height))
-#  endif
-  }
-  break;
-
-    case EFFECT_SCAN2:
-      {
-#  ifdef DEST
-     if (!blit_hardware_rotation && (blit_flipx || blit_flipy || blit_swapxy)) {
-       int y;
-       SRC_PIXEL *line_src;
-       DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
-       for (y = visual.min_y; y <= visual.max_y; line_dest+=DEST_SCALE_Y(DEST_WIDTH), y++) {
-	       rotate_func(rotate_dbbuf, bitmap, y);
-	       line_src = (SRC_PIXEL *)rotate_dbbuf;
-
-#	ifdef INDIRECT
-#		ifdef DOUBLEBUFFER
-		  effect_scan2_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, line_src, visual_width, INDIRECT);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
-#		else
-		  effect_scan2_func(line_dest, line_dest+DEST_WIDTH, line_src, visual_width, INDIRECT);
-#		endif
-#	else
-#		ifdef DOUBLEBUFFER
-		  effect_scan2_direct_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, line_src, visual_width);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
-#		else
-		  effect_scan2_direct_func(line_dest, line_dest+DEST_WIDTH, line_src, visual_width);
-#		endif
-#	endif
-       }
-     } else {
-	int src_width = (((SRC_PIXEL *)bitmap->line[1]) - ((SRC_PIXEL *)bitmap->line[0]));
-	SRC_PIXEL *line_src = (SRC_PIXEL *)bitmap->line[visual.min_y]   + visual.min_x;
-	SRC_PIXEL *line_end = (SRC_PIXEL *)bitmap->line[visual.max_y+1] + visual.min_x;
-	DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
-
-	for (;line_src < line_end; line_dest+=DEST_SCALE_Y(DEST_WIDTH), line_src+=src_width) {
-
-#	ifdef INDIRECT
-#		ifdef DOUBLEBUFFER
-		  effect_scan2_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, line_src, visual_width, INDIRECT);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
-#		else
-		  effect_scan2_func(line_dest, line_dest+DEST_WIDTH, line_src, visual_width, INDIRECT);
-#		endif
-#	else
-#		ifdef DOUBLEBUFFER
-		  effect_scan2_direct_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, line_src, visual_width);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
-#		else
-		  effect_scan2_direct_func(line_dest, line_dest+DEST_WIDTH, line_src, visual_width);
-#		endif
-#	endif
-	}
-     }
-#  endif
-#  ifdef PUT_IMAGE
-      PUT_IMAGE(0, 0, SCALE_X(visual_width), SCALE_Y(visual_height))
-#  endif
-  }
-  break;
-
-    case EFFECT_RGBSTRIPE:
-      {
-#  ifdef DEST
-     if (!blit_hardware_rotation && (blit_flipx || blit_flipy || blit_swapxy)) {
-       int y;
-       SRC_PIXEL *line_src;
-       DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
-       for (y = visual.min_y; y <= visual.max_y; line_dest+=DEST_SCALE_Y(DEST_WIDTH), y++) {
-	       rotate_func(rotate_dbbuf, bitmap, y);
-	       line_src = (SRC_PIXEL *)rotate_dbbuf;
-
-#	ifdef INDIRECT
-#		ifdef DOUBLEBUFFER
-		  effect_rgbstripe_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, line_src, visual_width, INDIRECT);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
-#		else
-		  effect_rgbstripe_func(line_dest, line_dest+DEST_WIDTH, line_src, visual_width, INDIRECT);
-#		endif
-#	else
-#		ifdef DOUBLEBUFFER
-		  effect_rgbstripe_direct_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, line_src, visual_width);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
-#		else
-		  effect_rgbstripe_direct_func(line_dest, line_dest+DEST_WIDTH, line_src, visual_width);
-#		endif
-#	endif
-       }
-     } else {
-	int src_width = (((SRC_PIXEL *)bitmap->line[1]) - ((SRC_PIXEL *)bitmap->line[0]));
-	SRC_PIXEL *line_src = (SRC_PIXEL *)bitmap->line[visual.min_y]   + visual.min_x;
-	SRC_PIXEL *line_end = (SRC_PIXEL *)bitmap->line[visual.max_y+1] + visual.min_x;
-	DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
-
-	for (;line_src < line_end; line_dest+=DEST_SCALE_Y(DEST_WIDTH), line_src+=src_width) {
-
-#	ifdef INDIRECT
-#		ifdef DOUBLEBUFFER
-		  effect_rgbstripe_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, line_src, visual_width, INDIRECT);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
-#		else
-		  effect_rgbstripe_func(line_dest, line_dest+DEST_WIDTH, line_src, visual_width, INDIRECT);
-#		endif
-#	else
-#		ifdef DOUBLEBUFFER
-		  effect_rgbstripe_direct_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, line_src, visual_width);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
-#		else
-		  effect_rgbstripe_direct_func(line_dest, line_dest+DEST_WIDTH, line_src, visual_width);
-#		endif
-#	endif
-	}
-     }
-#  endif
-#  ifdef PUT_IMAGE
-      PUT_IMAGE(0, 0, SCALE_X(visual_width), SCALE_Y(visual_height))
-#  endif
-  }
-  break;
-
-    case EFFECT_RGBSCAN:
-      {
-#  ifdef DEST
-     if (!blit_hardware_rotation && (blit_flipx || blit_flipy || blit_swapxy)) {
-       int y;
-       SRC_PIXEL *line_src;
-       DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
-       for (y = visual.min_y; y <= visual.max_y; line_dest+=DEST_SCALE_Y(DEST_WIDTH), y++) {
-	       rotate_func(rotate_dbbuf, bitmap, y);
-	       line_src = (SRC_PIXEL *)rotate_dbbuf;
-
-#	ifdef INDIRECT
-#		ifdef DOUBLEBUFFER
-		  effect_rgbscan_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE*2, line_src, visual_width, INDIRECT);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*3);
-#		else
-		  effect_rgbscan_func(line_dest, line_dest+DEST_WIDTH, line_dest+DEST_WIDTH*2, line_src, visual_width, INDIRECT);
-#		endif
-#	else
-#		ifdef DOUBLEBUFFER
-		  effect_rgbscan_direct_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE*2, line_src, visual_width);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*3);
-#		else
-		  effect_rgbscan_direct_func(line_dest, line_dest+DEST_WIDTH, line_dest+DEST_WIDTH*2, line_src, visual_width);
-#		endif
-#	endif
-       }
-     } else {
-	int src_width = (((SRC_PIXEL *)bitmap->line[1]) - ((SRC_PIXEL *)bitmap->line[0]));
-	SRC_PIXEL *line_src = (SRC_PIXEL *)bitmap->line[visual.min_y]   + visual.min_x;
-	SRC_PIXEL *line_end = (SRC_PIXEL *)bitmap->line[visual.max_y+1] + visual.min_x;
-	DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
-
-	for (;line_src < line_end; line_dest+=DEST_SCALE_Y(DEST_WIDTH), line_src+=src_width) {
-
-#	ifdef INDIRECT
-#		ifdef DOUBLEBUFFER
-		  effect_rgbscan_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE*2, line_src, visual_width, INDIRECT);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*3);
-#		else
-		  effect_rgbscan_func(line_dest, line_dest+DEST_WIDTH, line_dest+DEST_WIDTH*2, line_src, visual_width, INDIRECT);
-#		endif
-#	else
-#		ifdef DOUBLEBUFFER
-		  effect_rgbscan_direct_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE*2, line_src, visual_width);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*3);
-#		else
-		  effect_rgbscan_direct_func(line_dest, line_dest+DEST_WIDTH, line_dest+DEST_WIDTH*2, line_src, visual_width);
-#		endif
-#	endif
-	}
-     }
-#  endif
-#  ifdef PUT_IMAGE
-      PUT_IMAGE(0, 0, SCALE_X(visual_width), SCALE_Y(visual_height))
-#  endif
-  }
-  break;
+  case EFFECT_RGBSCAN:
+        LOOP(EFFECT3X(rgbscan))
+        break;
 
   case EFFECT_6TAP2X:
-    {
-#  ifdef DEST
-     if (!blit_hardware_rotation && (blit_flipx || blit_flipy || blit_swapxy)) {
-       int y;
-       SRC_PIXEL *line_src;
-       DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
        effect_6tap_clear_func(visual_width);
-       /* put in the first three lines */
-#	ifdef INDIRECT
-       rotate_func(rotate_dbbuf, bitmap, visual.min_y);
-       effect_6tap_addline_func(rotate_dbbuf, visual_width, INDIRECT);
-       rotate_func(rotate_dbbuf, bitmap, visual.min_y+1);
-       effect_6tap_addline_func(rotate_dbbuf, visual_width, INDIRECT);
-       rotate_func(rotate_dbbuf, bitmap, visual.min_y+2);
-       effect_6tap_addline_func(rotate_dbbuf, visual_width, INDIRECT);
-#	else
-       rotate_func(rotate_dbbuf, bitmap, visual.min_y);
-       effect_6tap_addline_direct_func(rotate_dbbuf, visual_width);
-       rotate_func(rotate_dbbuf, bitmap, visual.min_y+1);
-       effect_6tap_addline_direct_func(rotate_dbbuf, visual_width);
-       rotate_func(rotate_dbbuf, bitmap, visual.min_y+2);
-       effect_6tap_addline_direct_func(rotate_dbbuf, visual_width);
-#	endif
-
-       for (y = visual.min_y; y <= visual.max_y; line_dest+=DEST_SCALE_Y(DEST_WIDTH), y++) {
-
-#	ifdef INDIRECT
-           if (y <= visual.max_y - 3)
-             {
-             rotate_func(rotate_dbbuf, bitmap, y+3);
-             effect_6tap_addline_func(rotate_dbbuf, visual_width, INDIRECT);
-             }
-		   else
-             {
-             effect_6tap_addline_func(NULL, visual_width, INDIRECT);
-             }
-#	else
-           if (y <= visual.max_y - 3)
-             {
-             rotate_func(rotate_dbbuf, bitmap, y+3);
-             effect_6tap_addline_direct_func(rotate_dbbuf, visual_width);
-             }
-		   else
-             {
-             effect_6tap_addline_direct_func(NULL, visual_width);
-             }
-#	endif
-
-#		ifdef DOUBLEBUFFER
-		  effect_6tap_render_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, visual_width);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*2);
-#		else
-		  effect_6tap_render_func(line_dest, line_dest+DEST_WIDTH, visual_width);
-#		endif
-       }
-     } else {
-    int y;
-	int src_width = (((SRC_PIXEL *)bitmap->line[1]) - ((SRC_PIXEL *)bitmap->line[0]));
-	SRC_PIXEL *line_src = (SRC_PIXEL *)bitmap->line[visual.min_y]   + visual.min_x;
-	SRC_PIXEL *line_end = (SRC_PIXEL *)bitmap->line[visual.max_y+1] + visual.min_x;
-	DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
-
-    effect_6tap_clear_func(visual_width);
 #	ifdef INDIRECT
        effect_6tap_addline_func(line_src, visual_width, INDIRECT);
        effect_6tap_addline_func(line_src+=src_width, visual_width, INDIRECT);
@@ -474,83 +174,17 @@ if (effect) {
 		  effect_6tap_render_func(line_dest, line_dest+DEST_WIDTH, visual_width);
 #		endif
 	}
-     }
-#  endif
-#  ifdef PUT_IMAGE
-      PUT_IMAGE(0, 0, SCALE_X(visual_width), SCALE_Y(visual_height))
-#  endif
+        break;
+
+  case EFFECT_SCAN3:
+        LOOP(EFFECT3X(scan3))
+        break;
   }
-  break;
-
- case EFFECT_SCAN3:
-  {
-#  ifdef DEST
-     if (!blit_hardware_rotation && (blit_flipx || blit_flipy || blit_swapxy)) {
-       int y;
-       SRC_PIXEL *line_src;
-       DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
-       for (y = visual.min_y; y <= visual.max_y; line_dest+=DEST_SCALE_Y(DEST_WIDTH), y++) {
-	       rotate_func(rotate_dbbuf, bitmap, y);
-	       line_src = (SRC_PIXEL *)rotate_dbbuf;
-
-#	ifdef INDIRECT
-#		ifdef DOUBLEBUFFER
-		  effect_scan3_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE*2, line_src, visual_width, INDIRECT);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*3);
-#		else
-		  effect_scan3_func(line_dest, line_dest+DEST_WIDTH, line_dest+DEST_WIDTH*2, line_src, visual_width, INDIRECT);
-#		endif
-#	else
-#		ifdef DOUBLEBUFFER
-		  effect_scan3_direct_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE*2, line_src, visual_width);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*3);
-#		else
-		  effect_scan3_direct_func(line_dest, line_dest+DEST_WIDTH, line_dest+DEST_WIDTH*2, line_src, visual_width);
-#		endif
-#	endif
-       }
-     } else {
-	int src_width = (((SRC_PIXEL *)bitmap->line[1]) - ((SRC_PIXEL *)bitmap->line[0]));
-	SRC_PIXEL *line_src = (SRC_PIXEL *)bitmap->line[visual.min_y]   + visual.min_x;
-	SRC_PIXEL *line_end = (SRC_PIXEL *)bitmap->line[visual.max_y+1] + visual.min_x;
-	DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
-
-	for (;line_src < line_end; line_dest+=DEST_SCALE_Y(DEST_WIDTH), line_src+=src_width) {
-
-#	ifdef INDIRECT
-#		ifdef DOUBLEBUFFER
-		  effect_scan3_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE*2, line_src, visual_width, INDIRECT);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*3);
-#		else
-		  effect_scan3_func(line_dest, line_dest+DEST_WIDTH, line_dest+DEST_WIDTH*2, line_src, visual_width, INDIRECT);
-#		endif
-#	else
-#		ifdef DOUBLEBUFFER
-		  effect_scan3_direct_func(effect_dbbuf, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE, effect_dbbuf+DEST_WIDTH*DEST_PIXEL_SIZE*2, line_src, visual_width);
-		  memcpy(line_dest, effect_dbbuf, DEST_WIDTH*DEST_PIXEL_SIZE*3);
-#		else
-		  effect_scan3_direct_func(line_dest, line_dest+DEST_WIDTH, line_dest+DEST_WIDTH*2, line_src, visual_width);
-#		endif
-#	endif
-	}
-     }
-#  endif
-#  ifdef PUT_IMAGE
-      PUT_IMAGE(0, 0, SCALE_X(visual_width), SCALE_Y(visual_height))
-#  endif
-	}
-      break;
-    }
-  }
+}
 else /* no effect */
 {
-#ifdef DEST
      if (!blit_hardware_rotation && current_palette != debug_palette
 		     && (blit_flipx || blit_flipy || blit_swapxy)) {
-       int y;
-       SRC_PIXEL *line_src;
-       SRC_PIXEL *line_end;
-       DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
        for (y = visual.min_y; y <= visual.max_y; line_dest+=REPS_FOR_Y(DEST_WIDTH,y,visual_height), y++) {
 	       rotate_func(rotate_dbbuf, bitmap, y);
 	       line_src = (SRC_PIXEL *)rotate_dbbuf;
@@ -558,12 +192,7 @@ else /* no effect */
 	       COPY_LINE_FOR_Y(y, visual_height, line_src, line_end, line_dest);
        }
      } else {
-       int y = visual.min_y;
-       int src_width = (((SRC_PIXEL *)bitmap->line[1]) -
-			((SRC_PIXEL *)bitmap->line[0]));
-       SRC_PIXEL *line_src = (SRC_PIXEL *)bitmap->line[visual.min_y]   + visual.min_x;
-       SRC_PIXEL *line_end = (SRC_PIXEL *)bitmap->line[visual.max_y+1] + visual.min_x;
-       DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
+       y = visual.min_y;
 
        for (;line_src < line_end;
 	    line_dest+=REPS_FOR_Y(DEST_WIDTH,y,visual_height),
@@ -571,11 +200,18 @@ else /* no effect */
 	       COPY_LINE_FOR_Y(y,visual_height,
 			       line_src, line_src+visual_width, line_dest);
      }
-#endif
+}
+
 #ifdef PUT_IMAGE
      PUT_IMAGE(0, 0, SCALE_X(visual_width), SCALE_Y(visual_height))
 #endif
-  }
+
+}
 
 #undef DEST_SCALE_X
 #undef DEST_SCALE_Y
+#undef EFFECT
+#undef EFFECT2X
+#undef EFFECT3X
+#undef LOOP
+#undef LOOP2X
