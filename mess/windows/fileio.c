@@ -512,7 +512,7 @@ static int is_path_separator(char c)
 
 static int is_absolute_path(const char *filename)
 {
-	if (is_path_separator(filename[0]))
+	if ((filename[0] == '.') || (is_path_separator(filename[0])))
 		return 1;
 #ifndef UNDER_CE
 	if (filename[0] && (filename[1] == ':'))
@@ -701,7 +701,7 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int openf
 			for (indx = 0; indx < pathc && !found; indx++)
 			{
 				if (pathv)
-					sprintf(name, "%s/%s/%s", pathv[indx], game, filename);
+					sprintf(name, "%s%s/%s/%s", is_absolute_path(pathv[indx]) ? "" : "./", pathv[indx], game, filename);
 				else
 					strcpy(name, filename);
 

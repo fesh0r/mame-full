@@ -12,6 +12,11 @@
 #define myMIN(a, b) ((a) < (b) ? (a) : (b))
 #define myMAX(a, b) ((a) > (b) ? (a) : (b))
 
+#define PROFILER_RASTERBITS_MAIN			PROFILER_USER1
+#define PROFILER_RASTERBITS_INNERLOOP		PROFILER_USER2
+#define PROFILER_RASTERBITS_BUILDSCANLINE	PROFILER_USER3
+#define PROFILER_RASTERBITS_DRAWSCANLINE	PROFILER_USER4
+
 /* -------------------------------------------------------------------------
  * New raster_graphic call
  * ------------------------------------------------------------------------- */
@@ -431,13 +436,15 @@ static void raster_graphics(struct osd_bitmap *bitmap, struct rasterbits_source 
 			goto done; /* PANIC */
 
 		for (i = 0; i < num_colors; i++)
-			mappedpens[i] = pens[i];
+			mappedpens[i] = Machine->pens[pens[i]];
 		pens = mappedpens;
 	}
 	else {
 		/* Use default */
 		pens = Machine->pens;
 	}
+
+	profiler_mark(PROFILER_RASTERBITS_INNERLOOP);
 
 	for (y = firstrow; y <= lastrow; y++) {
 		pixtop = basey + y * scaley;
@@ -447,6 +454,7 @@ static void raster_graphics(struct osd_bitmap *bitmap, struct rasterbits_source 
 		if ((pixbottom >= pixtop) && isrowdirty(db, mode->bytesperrow)) {
 			/* We have to draw this scanline */
 
+			profiler_mark(PROFILER_RASTERBITS_BUILDSCANLINE);
 			if (loopbackpos >= 0) {
 				build_scanline(scanline,				  vram + mode->offset, loopbackpos, 			  scalex, pens);
 				build_scanline(scanline + loopbackpixels, vram, 			   visualbytes - loopbackpos, scalex, pens);
@@ -454,11 +462,14 @@ static void raster_graphics(struct osd_bitmap *bitmap, struct rasterbits_source 
 			else {
 				build_scanline(scanline,				  vram + mode->offset, visualbytes, 			  scalex, pens);
 			}
+			profiler_mark(PROFILER_END);
 
 			/* We have the scanline, now draw it */
+			profiler_mark(PROFILER_RASTERBITS_DRAWSCANLINE);
 			for (r = pixtop; r <= pixbottom; r++) {
 				draw_scanline8(bitmap, basex, r, mode->width * scalex, scanline, NULL, -1);
 			}
+			profiler_mark(PROFILER_END);
 
 			mark_dirty(basex, pixtop, basex + mode->width * scalex - 1, pixbottom);
 		}
@@ -467,7 +478,7 @@ static void raster_graphics(struct osd_bitmap *bitmap, struct rasterbits_source 
 			db += mode->bytesperrow;
 	}
 
-
+	profiler_mark(PROFILER_END);
 
 done:
 	if (scanline)
@@ -557,6 +568,8 @@ static void raster_text(struct osd_bitmap *bitmap, struct rasterbits_source *src
 		loopbackpos = -1;
 		loopbackadj = 0;
 	}
+
+	profiler_mark(PROFILER_RASTERBITS_INNERLOOP);
 
 	for (y = firstrow; y <= lastrow; y++) {
 		chartop = basey + y * scaley;
@@ -665,6 +678,8 @@ drawchar:
 			vram -= src->size;
 	}
 
+	profiler_mark(PROFILER_END);
+
 #if COUNTDIRTYCHARS
 	logerror("%i / %i chars dirty\n", dirtychars, mode->height * mode->width);
 #endif
@@ -690,6 +705,8 @@ int raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struct
 	int drawingbody;
 	int totalcoverage;
 	struct rasterbits_clip myclip;
+
+	profiler_mark(PROFILER_RASTERBITS_MAIN);
 
 	assert(bitmap);
 	assert(src);
@@ -825,6 +842,9 @@ int raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struct
 	else {
 		totalcoverage = 0;
 	}
+
+	profiler_mark(PROFILER_END);
+
 	return totalcoverage;
 }
 
