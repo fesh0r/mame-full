@@ -356,7 +356,7 @@ static void init_palette_monochrome(unsigned char *sys_palette, unsigned short *
     for (i = 0; i < sizeof(palette)/sizeof(palette[0])/3; i++)
     {
         int mono;
-        mono = palette[i*3+0] * 0.299 + palette[i*3+1] * 0.587 + palette[i*3+2] * 0.114;
+        mono = (int)(palette[i*3+0] * 0.299 + palette[i*3+1] * 0.587 + palette[i*3+2] * 0.114);
         sys_palette[i*3+0] = mono;
         sys_palette[i*3+1] = mono;
         sys_palette[i*3+2] = mono;
