@@ -435,5 +435,5 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT	CONFIG	COMPANY   FULLNAME */
-CONS( 1986, a7800,    0,        a7800,    a7800,    0,		a7800,	"Atari",  "Atari 7800" )
-CONS( 1986, a7800p,   0,        a7800p,   a7800,    0,		a7800,	"Atari",  "Atari 7800 PAL" )
+CONS( 1986, a7800,    0,        a7800,    a7800,    0,		a7800,	"Atari",  "Atari 7800 NTSC" )
+CONS( 1986, a7800p,   a7800,    a7800p,   a7800,    0,		a7800,	"Atari",  "Atari 7800 PAL" )
