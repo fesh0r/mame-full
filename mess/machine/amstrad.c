@@ -86,12 +86,12 @@ void amstrad_handle_snapshot(unsigned char *pSnapshot)
 
 	RegData = (pSnapshot[0x021] & 0x0ff) | ((pSnapshot[0x022] & 0x0ff)<<8);
 	cpunum_set_reg(0,Z80_SP, RegData);
-	cpunum_set_sp(0,RegData);
+	cpunum_set_reg(0,REG_SP,RegData);
 
 	RegData = (pSnapshot[0x023] & 0x0ff) | ((pSnapshot[0x024] & 0x0ff)<<8);
 
 	cpunum_set_reg(0,Z80_PC, RegData);
-//	cpu_set_pc(RegData);
+//	cpunum_set_reg(0,REG_SP,RegData);
 
 	RegData = (pSnapshot[0x025] & 0x0ff);
 	cpunum_set_reg(0,Z80_IM, RegData);

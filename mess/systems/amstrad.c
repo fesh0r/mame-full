@@ -2286,23 +2286,23 @@ static void amstrad_common_init(void)
 	amstrad_52_divider = 0;
 	amstrad_52_divider_vsync_reset = 0;
 
-	memory_set_bankhandler_r(1, 0, MRA_BANK1);
-	memory_set_bankhandler_r(2, 0, MRA_BANK2);
-	memory_set_bankhandler_r(3, 0, MRA_BANK3);
-	memory_set_bankhandler_r(4, 0, MRA_BANK4);
-	memory_set_bankhandler_r(5, 0, MRA_BANK5);
-	memory_set_bankhandler_r(6, 0, MRA_BANK6);
-	memory_set_bankhandler_r(7, 0, MRA_BANK7);
-	memory_set_bankhandler_r(8, 0, MRA_BANK8);
+	install_mem_read_handler(0, 0x0000, 0x1fff, MRA8_BANK1);
+	install_mem_read_handler(0, 0x2000, 0x3fff, MRA8_BANK2);
+	install_mem_read_handler(0, 0x4000, 0x5fff, MRA8_BANK3);
+	install_mem_read_handler(0, 0x6000, 0x7fff, MRA8_BANK4);
+	install_mem_read_handler(0, 0x8000, 0x9fff, MRA8_BANK5);
+	install_mem_read_handler(0, 0xa000, 0xbfff, MRA8_BANK6);
+	install_mem_read_handler(0, 0xc000, 0xdfff, MRA8_BANK7);
+	install_mem_read_handler(0, 0xe000, 0xffff, MRA8_BANK8);
 
-	memory_set_bankhandler_w(9, 0, MWA_BANK9);
-	memory_set_bankhandler_w(10, 0, MWA_BANK10);
-	memory_set_bankhandler_w(11, 0, MWA_BANK11);
-	memory_set_bankhandler_w(12, 0, MWA_BANK12);
-	memory_set_bankhandler_w(13, 0, MWA_BANK13);
-	memory_set_bankhandler_w(14, 0, MWA_BANK14);
-	memory_set_bankhandler_w(15, 0, MWA_BANK15);
-	memory_set_bankhandler_w(16, 0, MWA_BANK16);
+	install_mem_write_handler(0, 0x0000, 0x1fff, MWA8_BANK9);
+	install_mem_write_handler(0, 0x2000, 0x3fff, MWA8_BANK10);
+	install_mem_write_handler(0, 0x4000, 0x5fff, MWA8_BANK11);
+	install_mem_write_handler(0, 0x6000, 0x7fff, MWA8_BANK12);
+	install_mem_write_handler(0, 0x8000, 0x9fff, MWA8_BANK13);
+	install_mem_write_handler(0, 0xa000, 0xbfff, MWA8_BANK14);
+	install_mem_write_handler(0, 0xc000, 0xdfff, MWA8_BANK15);
+	install_mem_write_handler(0, 0xe000, 0xffff, MWA8_BANK16);
 
 	amstrad_cycles_at_frame_end = 0;
 	amstrad_cycles_last_write = 0;
@@ -2326,32 +2326,32 @@ static void amstrad_common_init(void)
 	so that they are all multiple of 4 T states long. All opcode
 	timings are a multiple of 1us in length. */
 
-	previous_op_table = cpunum_get_cycle_table(0,Z80_TABLE_op);
-	previous_cb_table = cpunum_get_cycle_table(0,Z80_TABLE_cb);
-	previous_ed_table = cpunum_get_cycle_table(0,Z80_TABLE_ed);
-	previous_xy_table = cpunum_get_cycle_table(0,Z80_TABLE_xy);
-	previous_xycb_table = cpunum_get_cycle_table(0,Z80_TABLE_xycb);
-	previous_ex_table = cpunum_get_cycle_table(0,Z80_TABLE_ex);
+	previous_op_table = cpunum_get_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_op);
+	previous_cb_table = cpunum_get_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_cb);
+	previous_ed_table = cpunum_get_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_ed);
+	previous_xy_table = cpunum_get_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_xy);
+	previous_xycb_table = cpunum_get_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_xycb);
+	previous_ex_table = cpunum_get_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_ex);
 
 	/* Using the cool code Juergen has provided, I will override
 	the timing tables with the values for the amstrad */
-	cpunum_set_cycle_tbl(0,Z80_TABLE_op, amstrad_cycle_table_op);
-	cpunum_set_cycle_tbl(0,Z80_TABLE_cb, amstrad_cycle_table_cb);
-	cpunum_set_cycle_tbl(0,Z80_TABLE_ed, amstrad_cycle_table_ed);
-	cpunum_set_cycle_tbl(0,Z80_TABLE_xy, amstrad_cycle_table_xy);
-	cpunum_set_cycle_tbl(0,Z80_TABLE_xycb, amstrad_cycle_table_xycb);
-	cpunum_set_cycle_tbl(0,Z80_TABLE_ex, amstrad_cycle_table_ex);
+	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_op, amstrad_cycle_table_op);
+	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_cb, amstrad_cycle_table_cb);
+	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_ed, amstrad_cycle_table_ed);
+	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_xy, amstrad_cycle_table_xy);
+	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_xycb, amstrad_cycle_table_xycb);
+	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_ex, amstrad_cycle_table_ex);
 }
 
 static MACHINE_STOP( amstrad )
 {
 	/* restore previous tables */
-	cpunum_set_cycle_tbl(0,Z80_TABLE_op, (void *) previous_op_table);
-	cpunum_set_cycle_tbl(0,Z80_TABLE_cb, (void *) previous_cb_table);
-	cpunum_set_cycle_tbl(0,Z80_TABLE_ed, (void *) previous_ed_table);
-	cpunum_set_cycle_tbl(0,Z80_TABLE_xy, (void *) previous_xy_table);
-	cpunum_set_cycle_tbl(0,Z80_TABLE_xycb, (void *) previous_xycb_table);
-	cpunum_set_cycle_tbl(0,Z80_TABLE_ex, (void *) previous_ex_table);
+	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_op, (void *) previous_op_table);
+	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_cb, (void *) previous_cb_table);
+	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_ed, (void *) previous_ed_table);
+	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_xy, (void *) previous_xy_table);
+	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_xycb, (void *) previous_xycb_table);
+	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_ex, (void *) previous_ex_table);
 
 	cpu_set_irq_callback(0, NULL);
 
@@ -2417,38 +2417,38 @@ void Amstrad_Reset(void)
 /* Memory is banked in 16k blocks. However, the multiface
 pages the memory in 8k blocks! The ROM can
 be paged into bank 0 and bank 3. */
-static MEMORY_READ_START (readmem_amstrad)
-	{0x00000, 0x01fff, MRA_BANK1},
-	{0x02000, 0x03fff, MRA_BANK2},
-	{0x04000, 0x05fff, MRA_BANK3},
-	{0x06000, 0x07fff, MRA_BANK4},
-	{0x08000, 0x09fff, MRA_BANK5},
-	{0x0a000, 0x0bfff, MRA_BANK6},
-	{0x0c000, 0x0dfff, MRA_BANK7},
-	{0x0e000, 0x0ffff, MRA_BANK8},
-MEMORY_END
+static ADDRESS_MAP_START(readmem_amstrad, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x00000, 0x01fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x02000, 0x03fff) AM_READ(MRA8_BANK2)
+	AM_RANGE(0x04000, 0x05fff) AM_READ(MRA8_BANK3)
+	AM_RANGE(0x06000, 0x07fff) AM_READ(MRA8_BANK4)
+	AM_RANGE(0x08000, 0x09fff) AM_READ(MRA8_BANK5)
+	AM_RANGE(0x0a000, 0x0bfff) AM_READ(MRA8_BANK6)
+	AM_RANGE(0x0c000, 0x0dfff) AM_READ(MRA8_BANK7)
+	AM_RANGE(0x0e000, 0x0ffff) AM_READ(MRA8_BANK8)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START (writemem_amstrad)
-	{0x00000, 0x01fff, MWA_BANK9},
-	{0x02000, 0x03fff, MWA_BANK10},
-	{0x04000, 0x05fff, MWA_BANK11},
-	{0x06000, 0x07fff, MWA_BANK12},
-	{0x08000, 0x09fff, MWA_BANK13},
-	{0x0a000, 0x0bfff, MWA_BANK14},
-	{0x0c000, 0x0dfff, MWA_BANK15},
-	{0x0e000, 0x0ffff, MWA_BANK16},
-MEMORY_END
+static ADDRESS_MAP_START(writemem_amstrad, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x00000, 0x01fff) AM_WRITE(MWA8_BANK9)
+	AM_RANGE(0x02000, 0x03fff) AM_WRITE(MWA8_BANK10)
+	AM_RANGE(0x04000, 0x05fff) AM_WRITE(MWA8_BANK11)
+	AM_RANGE(0x06000, 0x07fff) AM_WRITE(MWA8_BANK12)
+	AM_RANGE(0x08000, 0x09fff) AM_WRITE(MWA8_BANK13)
+	AM_RANGE(0x0a000, 0x0bfff) AM_WRITE(MWA8_BANK14)
+	AM_RANGE(0x0c000, 0x0dfff) AM_WRITE(MWA8_BANK15)
+	AM_RANGE(0x0e000, 0x0ffff) AM_WRITE(MWA8_BANK16)
+ADDRESS_MAP_END
 
 /* I've handled the I/O ports in this way, because the ports
 are not fully decoded by the CPC h/w. Doing it this way means
 I can decode it myself and a lot of  software should work */
-static PORT_READ_START (readport_amstrad)
-	{0x0000, 0x0ffff, AmstradCPC_ReadPortHandler},
-PORT_END
+static ADDRESS_MAP_START(readport_amstrad, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000, 0x0ffff) AM_READ(AmstradCPC_ReadPortHandler)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START (writeport_amstrad)
-	{0x0000, 0x0ffff, AmstradCPC_WritePortHandler},
-PORT_END
+static ADDRESS_MAP_START(writeport_amstrad, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000, 0x0ffff) AM_WRITE(AmstradCPC_WritePortHandler)
+ADDRESS_MAP_END
 
 /* read PSG port A */
 static READ_HANDLER ( amstrad_psg_porta_read )
@@ -2660,8 +2660,8 @@ static MACHINE_DRIVER_START( amstrad )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)        /*((AMSTRAD_US_PER_FRAME*AMSTRAD_FPS)*4)*/ /* clock: See Note Above */
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
-	MDRV_CPU_MEMORY(readmem_amstrad,writemem_amstrad)
-	MDRV_CPU_PORTS(readport_amstrad,writeport_amstrad)
+	MDRV_CPU_PROGRAM_MAP(readmem_amstrad,writemem_amstrad)
+	MDRV_CPU_IO_MAP(readport_amstrad,writeport_amstrad)
 	MDRV_FRAMES_PER_SECOND(50)	/*50.08*/
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
