@@ -5,10 +5,10 @@
   Machine file to handle emulation of the AY-3600 keyboard controller.
 
   TODO:
-    Make the caps lock functional, remove dependency on input_port_1.
-    Rename variables from a2 to AY3600
-    Find the correct MAGIC_KEY_REPEAT_NUMBER
-    Use the keyboard ROM for building a remapping table?
+	Make the caps lock functional, remove dependency on input_port_1.
+	Rename variables from a2 to AY3600
+	Find the correct MAGIC_KEY_REPEAT_NUMBER
+	Use the keyboard ROM for building a remapping table?
 
 ***************************************************************************/
 
@@ -92,7 +92,7 @@ static int anykey_clearstrobe;
 void AY3600_init(void)
 {
 	/* Set Caps Lock light to ON, since that's how we default it. */
-	osd_led_w(1,1);
+	led_set_status(1,1);
 
 	/* Init the key remapping table */
 	memset(a2_keys,0,sizeof(a2_keys));
@@ -109,7 +109,7 @@ void AY3600_interrupt(void)
 	int caps_lock = 0;
 	int curkey;
 
-	static int last_key = 0xff;		/* Necessary for special repeat key behaviour */
+	static int last_key = 0xff; 	/* Necessary for special repeat key behaviour */
 	static unsigned int last_time = 65001;	/* Necessary for special repeat key behaviour */
 
 	static unsigned int time_until_repeat = MAGIC_KEY_REPEAT_NUMBER;
@@ -120,12 +120,12 @@ void AY3600_interrupt(void)
 	if (readinputport(8) & 0x01)
 	{
 		caps_lock = 1;
-		osd_led_w(1,1);
+		led_set_status(1,1);
 	}
 	else
-		osd_led_w(1,0);
+		led_set_status(1,0);
 
-    switchkey = A2_KEY_NORMAL;
+	switchkey = A2_KEY_NORMAL;
 
 	/* Shift key check */
 	if( keyboard_pressed(KEYCODE_LSHIFT) ||
@@ -199,7 +199,7 @@ void AY3600_interrupt(void)
 int AY3600_keydata_strobe_r(void)
 {
 	logerror("AY3600_keydata_strobe_r $%02X\n", keydata_strobe);
-    return keydata_strobe;
+	return keydata_strobe;
 }
 
 
@@ -209,8 +209,8 @@ int AY3600_keydata_strobe_r(void)
 int AY3600_anykey_clearstrobe_r(void)
 {
 	logerror("AY3600_clearstrobe_r $%02X (keydata_strobe $%02X)\n", anykey_clearstrobe, keydata_strobe);
-    keydata_strobe &= 0x7F;
-    return anykey_clearstrobe;
+	keydata_strobe &= 0x7F;
+	return anykey_clearstrobe;
 }
 
 
