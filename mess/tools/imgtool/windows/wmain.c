@@ -8,6 +8,7 @@
 #include <commctrl.h>
 
 #include "wimgtool.h"
+#include "wimgres.h"
 #include "../modules.h"
 
 imgtool_library *library;
@@ -18,8 +19,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance,
 {
 	MSG msg;
 	HWND window;
+	BOOL b;
 	int rc = -1;
 	imgtoolerr_t err;
+	HACCEL accel = NULL;
+	
 
 	// Initialize Windows classes
 	InitCommonControls();
@@ -36,16 +40,28 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance,
 	if (!window)
 		goto done;
 
+	accel = LoadAccelerators(NULL, MAKEINTRESOURCE(IDA_WIMGTOOL_MENU));
+
 	// pump messages until the window is gone
-	while(IsWindow(window) && GetMessage(&msg, NULL, 0, 0))
+	while(IsWindow(window))
 	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+		b = GetMessage(&msg, NULL, 0, 0);
+		if (b <= 0)
+		{
+			window = NULL;
+		}
+		else if (!TranslateAccelerator(window, accel, &msg))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
 	}
 	rc = 0;
 
 done:
 	if (library)
 		imgtool_library_close(library);
+	if (accel)
+		DestroyAcceleratorTable(accel);
 	return rc;
 }

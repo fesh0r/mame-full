@@ -58,13 +58,13 @@ BEGIN
     BEGIN
         MENUITEM "&New\tCtrl+N",                ID_FILE_NEW
         MENUITEM "&Open\tCtrl+O",               ID_FILE_OPEN
-        MENUITEM "&Close",                      ID_FILE_CLOSE
+        MENUITEM "&Close\tCtrl+W",              ID_FILE_CLOSE
     END
     POPUP "&Image"
     BEGIN
-        MENUITEM "&Insert File...",             ID_IMAGE_INSERT
-        MENUITEM "&Extract File...",            ID_IMAGE_EXTRACT
-        MENUITEM "&Delete",                     ID_IMAGE_DELETE
+        MENUITEM "&Insert File...\tCtrl+I",     ID_IMAGE_INSERT
+        MENUITEM "&Extract File...\tCtrl+E",    ID_IMAGE_EXTRACT
+        MENUITEM "&Delete\tDel",                ID_IMAGE_DELETE
     END
     POPUP "&View"
     BEGIN
@@ -72,6 +72,21 @@ BEGIN
         MENUITEM "List",                        ID_VIEW_LIST
         MENUITEM "Details",                     ID_VIEW_DETAILS
     END
+END
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDA_WIMGTOOL_MENU ACCELERATORS DISCARDABLE
+BEGIN
+    "N",            ID_FILE_NEW, VIRTKEY, CONTROL, NOINVERT
+    "O",            ID_FILE_OPEN, VIRTKEY, CONTROL, NOINVERT
+    "W",            ID_FILE_CLOSE, VIRTKEY, CONTROL, NOINVERT
+    "I",            ID_IMAGE_INSERT, VIRTKEY, CONTROL, NOINVERT
+    "E",            ID_IMAGE_EXTRACT, VIRTKEY, CONTROL, NOINVERT
+    VK_DELETE,      ID_IMAGE_DELETE, VIRTKEY, NOINVERT
 END
 
 #endif    // English (U.S.) resources
