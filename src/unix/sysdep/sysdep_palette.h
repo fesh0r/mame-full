@@ -25,7 +25,7 @@
 /* This struct is used to describe both the emulated palette and the
    display's palette.
    
-   The following modes are concidered valid for the display's palette
+   The following modes are considered valid for the display's palette
    (depth, writable_colors) :
    8,  256
    16, 0
