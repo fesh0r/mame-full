@@ -1330,32 +1330,48 @@ static struct {
 	{ 0xe6ea96dc ,0x1000, "ZRT80" },
 	{ 0x4dbdc60f ,0x800, "ZRT80 char" },
 
+
 /* Palm OS PDA *****************************************************************/
 	/* some of this roms may be modified */
-	/* most of them is probably hacked to turn off flash support */
-	/* size of clear dumps should be 2 or 4 MB */
+	/* most of them are probably hacked to turn off flash support */
+	/* only USR Pilot and Palm Pilot have ROMS */
+	/* the rest have flash memory, which can be mmodified by user */
 
+	{ 0x82030062 , 0x080000, "USR Pilot 1000/5000 OS v1.0" },
+	{ 0xbaa5b36a , 0x100000, "Palm Pilot Professional OS v2.0 Pro" },
+	{ 0x467ff0de , 0x148000, "Palm III OS v3.3" },
 	{ 0xedb269d8 , 0x180000, "Palm III OS v3.5" },
 	{ 0x50961ee6 , 0x180000, "Palm III OS v3.5 (debug)" },
 	{ 0x280f1090 , 0x198000, "Palm III OS v4.0" },
 	{ 0x70bedb7e , 0x180000, "Palm IIIc OS v3.5" },
 	{ 0x38a191e2 , 0x180000, "Palm IIIc OS v3.5 (debug)" },
+	{ 0x922dd0fa , 0x180000, "Palm IIIc OS v3.5 beta" },
 	{ 0xefb05a31 , 0x198000, "Palm IIIc OS v4.0" },
 	{ 0xc3ea0bb7 , 0x258000, "Palm IIIc OS v4.0 (EFIGS)" },
 	{ 0xd5e03642 , 0x278000, "Palm IIIc OS v4.0 (EFIGS) (debug)" },
 	{ 0x695f379e , 0x258000, "Palm IIIc OS v4.0 (EFIGS) (alt)" },
+	{ 0x006a977f , 0x268000, "Palm IIIc OS v4.0 (japanese)" },
+	{ 0x53cb10a2 , 0x280000, "Palm IIIc OS v4.0 (japanese) (debug)" },
+	{ 0xdc560ed1 , 0x138000, "Palm IIIx/V/Vx OS v3.3" },
 	{ 0xb9fdb1ce , 0x178000, "Palm IIIx/V/Vx OS v3.5" },
 	{ 0x4c700386 , 0x178000, "Palm IIIx/V/Vx OS v3.5 (debug)" },
+	{ 0x9531c50c , 0x118000, "Palm IIIx/V/Vx OS v3.5.2 (modified)" },
 	{ 0xcfbdef34 , 0x198000, "Palm IIIx/V/Vx OS v4.0" },
 	{ 0xb7b0eb15 , 0x258000, "Palm IIIx/V/Vx OS v4.0 (EFIGS)" },
+	{ 0xe06cfa55 , 0x1b8000, "Palm V/Vx OS v4.0 (debug)" },
+	{ 0x0c53d604 , 0x238000, "Palm V/Vx OS v4.0 (full) (debug)" },
 	{ 0x39f24dc0 , 0x358000, "Palm V/Vx OS v4.0 (EFIGS)" },
 	{ 0x80b78ab7 , 0x338000, "Palm V/Vx OS v4.0 (EFIGS) (debug)" },
+	{ 0x0fe71ec1 , 0x350000, "Palm V/Vx OS v4.0 (japanese) (full) (debug)" },
 	{ 0x9bd7c6fe , 0x178000, "Palm m100 OS v3.5.1" },
+	{ 0xdd93b80f , 0x1f0000, "Palm m505 OS v4.0" },
+	{ 0xd1f37309 , 0x210000, "Palm m505 OS v4.0 (debug)" },
 
 	{ 0xb47295a8 , 0x200000, "Handspring Visor OS v3.1" },
 	{ 0xc9e55271 , 0x200000, "Handspring Visor Platinum/Prism/Edge OS v3.5.2" },
 
 	{ 0xa0b059f9 , 0x119000, "BAD Dump PalmOs" },
+
 
 /* Hewlett Packard Calculators *************************************************/
 	{ 0x3f2d9469 , 0x400000, "Hewlett Packard HP-39G (1 nibble stored in byte)" },
