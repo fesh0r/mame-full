@@ -14,6 +14,64 @@
 #include "mess/machine/tia.h"
 #include "drawgfx.h"
 
+static union {
+		UINT8 pf[4];
+		UINT32 shiftreg;
+	} TIA_playfield;
+
+static union {
+		UINT8 pf[4];
+		UINT32 shiftreg;
+	} TIA_pf_mask;
+
+UINT8 TIA_pixel_clock = 0;
+UINT8 TIA_player_0_finished = 0;
+UINT8 TIA_player_1_finished = 0;
+/* to make the shift regs easier to deal with */
+/*         have fun Mac guys.....;)           */
+#define SHIFT_LEFT20(x) { unsigned char b = (x.pf[2] & 0x08) >> 3; x.shiftreg = (x.shiftreg << 1) | b; x.pf[2] = x.pf[2] & 0x0f; }
+#define SHIFT_RIGHT20(x) { unsigned char b = (x.pf[0] & 0x01) << 3; x.shiftreg = x.shiftreg >> 1; x.pf[2] = (x.pf[2] | b) & 0x0f; }
+#define SHIFT_LEFT8(x) { unsigned char b = (x & 0x80) >> 7; x = (x << 1) | b; }
+#define SHIFT_RIGHT8(x) { unsigned char b = (x & 0x01) << 7; x = (x >> 1) | b; }
+#define SHIFT_RIGHT10(x) { UINT16 b = (x & 0x01) << 9; x = (x >> 1) | b; }
+UINT8 TIA_player_0_block = 0;
+UINT8 TIA_player_1_block = 0;
+UINT8 bit_flip_table[] = {
+		0x00,0x80,0x40,0xc0,0x20,0xa0,0x60,0xe0,
+		0x10,0x90,0x50,0xd0,0x30,0xb0,0x70,0xf0,
+		0x08,0x88,0x48,0xc8,0x28,0xa8,0x68,0xe8,
+		0x18,0x98,0x58,0xd8,0x38,0xb8,0x78,0xf8,
+		0x04,0x84,0x44,0xc4,0x24,0xa4,0x64,0xe4,
+		0x14,0x94,0x54,0xd4,0x34,0xb4,0x74,0xf4,
+		0x0c,0x8c,0x4c,0xcc,0x2c,0xac,0x6c,0xec,
+		0x1c,0x9c,0x5c,0xdc,0x3c,0xbc,0x7c,0xfc,
+		0x02,0x82,0x42,0xc2,0x22,0xa2,0x62,0xe2,
+		0x12,0x92,0x52,0xd2,0x32,0xb2,0x72,0xf2,
+		0x0a,0x8a,0x4a,0xca,0x2a,0xaa,0x6a,0xea,
+		0x1a,0x9a,0x5a,0xda,0x3a,0xba,0x7a,0xfa,
+		0x06,0x86,0x46,0xc6,0x26,0xa6,0x66,0xe6,
+		0x16,0x96,0x56,0xd6,0x36,0xb6,0x76,0xf6,
+		0x0e,0x8e,0x4e,0xce,0x2e,0xae,0x6e,0xee,
+		0x1e,0x9e,0x5e,0xde,0x3e,0xbe,0x7e,0xfe,
+		0x01,0x81,0x41,0xc1,0x21,0xa1,0x61,0xe1,
+		0x11,0x91,0x51,0xd1,0x31,0xb1,0x71,0xf1,
+		0x09,0x89,0x49,0xc9,0x29,0xa9,0x69,0xe9,
+		0x19,0x99,0x59,0xd9,0x39,0xb9,0x79,0xf9,
+		0x05,0x85,0x45,0xc5,0x25,0xa5,0x65,0xe5,
+		0x15,0x95,0x55,0xd5,0x35,0xb5,0x75,0xf5,
+		0x0d,0x8d,0x4d,0xcd,0x2d,0xad,0x6d,0xed,
+		0x1d,0x9d,0x5d,0xdd,0x3d,0xbd,0x7d,0xfd,
+		0x03,0x83,0x43,0xc3,0x23,0xa3,0x63,0xe3,
+		0x13,0x93,0x53,0xd3,0x33,0xb3,0x73,0xf3,
+		0x0b,0x8b,0x4b,0xcb,0x2b,0xab,0x6b,0xeb,
+		0x1b,0x9b,0x5b,0xdb,0x3b,0xbb,0x7b,0xfb,
+		0x07,0x87,0x47,0xc7,0x27,0xa7,0x67,0xe7,
+		0x17,0x97,0x57,0xd7,0x37,0xb7,0x77,0xf7,
+		0x0f,0x8f,0x4f,0xcf,0x2f,0xaf,0x6f,0xef,
+		0x1f,0x9f,0x5f,0xdf,0x3f,0xbf,0x7f,0xff
+};
+
+
 struct rectangle stella_size = {0, 227, 0, 281};
 
 /* for detailed logging */
@@ -53,13 +111,37 @@ UINT8 halted = 0;
 UINT32 global_tia_cycle = 0;
 UINT32 previous_tia_cycle = 0;
 
+/* player graphics shift registers */
+UINT8 TIA_player_0_mask_bit = 10;
+UINT8 TIA_player_1_mask_bit = 10;
+UINT16 TIA_player_mask[] = { 0x0001, 0x0005, 0x0011, 0x0015, 0x1001, 0x0003, 0x1011, 0x000f };
+UINT8 TIA_player_pixel_delay[] = { 1, 1, 1, 1, 1, 2, 1, 4 };
+
+UINT16 TIA_player_0_mask = 0;
+UINT8 TIA_player_0_pixel_delay = 0;
+
+UINT16 TIA_player_1_mask = 0;
+UINT8 TIA_player_1_pixel_delay = 0;
+
+UINT16 TIA_player_0_mask_tmp = 0;
+UINT8 TIA_player_0_pixel_delay_tmp = 0;
+
+UINT16 TIA_player_1_mask_tmp = 0;
+UINT8 TIA_player_1_pixel_delay_tmp = 0;
+
+UINT8 TIA_player_0_offset = 0;
+UINT8 TIA_player_1_offset = 0;
 UINT16 HSYNC_Period = 0;
 UINT16 TIA_reset_player_0 = 0;
 UINT16 TIA_reset_player_1 = 0;
 UINT8 TIA_player_pattern_0 = 0;
+UINT8 TIA_player_pattern_0_delayed = 0;
 UINT8 TIA_player_pattern_0_tmp = 0;
+UINT8 TIA_player_delay_0 = 0;
 UINT8 TIA_player_pattern_1 = 0;
+UINT8 TIA_player_pattern_1_delayed = 0;
 UINT8 TIA_player_pattern_1_tmp = 0;
+UINT8 TIA_player_delay_1 = 0;
 
 UINT8 HSYNC_colour_clock = 3;
 int flashycolour = 0;
@@ -156,6 +238,7 @@ int a2600_riot_r(int offset)
 	/* resync the riot timer */
 	previous_tia_cycle = global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer));
 	riotdiff *= 3;
+	//riotdiff++;
 	for (; riotdiff > 0; riotdiff--)
 	{
 		//  logerror("diff 0x%04x\n", riotdiff);
@@ -207,6 +290,7 @@ void a2600_riot_w(int offset, int data)
 		/* resync the riot timer */
 		previous_tia_cycle = global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer));
 		riotdiff *= 3;
+		//riotdiff++;
 		for (; riotdiff > 0; riotdiff--)
 		{
 			//  logerror("diff 0x%04x\n", riotdiff);
@@ -288,6 +372,7 @@ int a2600_TIA_r(int offset)
 		/* resync the riot timer */
 		previous_tia_cycle = global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer));
 		riotdiff *= 3;
+		//riotdiff++;
 		for (; riotdiff > 0; riotdiff--)
 		{
 			//  logerror("diff 0x%04x\n", riotdiff);
@@ -375,6 +460,7 @@ void a2600_TIA_w(int offset, int data)
 		/* resync the riot timer */
 		previous_tia_cycle = global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer));
 		riotdiff *= 3;
+		//riotdiff++;
 		for (; riotdiff > 0; riotdiff--)
 		{
 			//  logerror("diff 0x%04x\n", riotdiff);
@@ -467,6 +553,12 @@ void a2600_TIA_w(int offset, int data)
 
 	case NUSIZ0:						/* offset 0x04 */
 		msize0 = 2 ^ ((data & 0x30) >> 4);
+		TIA_player_0_mask = TIA_player_mask[data & 0x07];
+		TIA_player_0_pixel_delay = TIA_player_pixel_delay[data & 0x07];
+
+		TIA_player_0_mask_tmp = TIA_player_0_mask;
+		TIA_player_0_pixel_delay_tmp = TIA_player_0_pixel_delay;
+
 		/* must implement player size checking! */
 
 		break;
@@ -474,6 +566,11 @@ void a2600_TIA_w(int offset, int data)
 
 	case NUSIZ1:						/* offset 0x05 */
 		msize1 = 2 ^ ((data * 0x30) >> 4);
+		TIA_player_1_mask = TIA_player_mask[data & 0x07];
+		TIA_player_1_pixel_delay = TIA_player_pixel_delay[data & 0x07];
+
+		TIA_player_1_mask_tmp = TIA_player_1_mask;
+		TIA_player_1_pixel_delay_tmp = TIA_player_1_pixel_delay;
 		/* must implement player size checking! */
 
 		break;
@@ -562,19 +659,21 @@ void a2600_TIA_w(int offset, int data)
 		break;
 
 	case PF0:							/* 0x0D Playfield Register Byte 0 */
-
+		TIA_playfield.pf[2] = bit_flip_table[data & 0xf0];
 		tia.pfreg.B0 = data;
 		PF0_Rendered = 1;
 
 		break;
 
 	case PF1:							/* 0x0E Playfield Register Byte 1 */
+		TIA_playfield.pf[1] = data;
 		tia.pfreg.B1 = data;
 		PF1_Rendered = 1;
 
 		break;
 
 	case PF2:							/* 0x0F Playfield Register Byte 2 */
+		TIA_playfield.pf[0] = bit_flip_table[data];
 		tia.pfreg.B2 = data;
 		PF2_Rendered = 1;
 
@@ -586,11 +685,11 @@ void a2600_TIA_w(int offset, int data)
 
 	case RESP0:						/* 0x10 Reset Player 0 */
 		logerror("Reset Player 0 0x%02x\n", HSYNC_Period);
-		TIA_reset_player_0 = HSYNC_Period;
+		TIA_reset_player_0 = HSYNC_Period + 1;
 		break;
 
 	case RESP1:						/* 0x11 Reset Player 1 */
-		TIA_reset_player_1 = HSYNC_Period;
+		TIA_reset_player_1 = HSYNC_Period + 1;
 		break;
 
 	case RESM0:						/* 0x12 Reset Missle 0 */
@@ -640,16 +739,14 @@ void a2600_TIA_w(int offset, int data)
 		break;
 
 	case HMP0:							/* 0x20 Horizontal Motion Player 0 */
-		logerror("Horizontal move write %02x\n", data);
-		TIA_hmp0 = (data & 0xe0) >> 4;
+		TIA_hmp0 = (data & 0xf0) >> 4;
 		TIA_motion_player_0 = TIA_movement_table[TIA_hmp0];
 		break;
 
 	case HMP1:							/* 0x21 Horizontal Motion Player 1 */
 		logerror("Horizontal move write %02x\n", data);
-		TIA_hmp1 = (data & 0xe0) >> 4;
+		TIA_hmp1 = (data & 0xf0) >> 4;
 		TIA_motion_player_1 = TIA_movement_table[TIA_hmp1];
-
 		break;
 
 	case HMM0:							/* 0x22 Horizontal Motion Missle 0 */
@@ -662,9 +759,13 @@ void a2600_TIA_w(int offset, int data)
 		break;
 
 	case VDELP0:						/* 0x25 Vertical Delay Player 0 */
+		TIA_player_delay_0 = data & 0x01;
+		logerror("Delay 0 = 0x%02x", TIA_player_delay_0);
 		break;
 
 	case VDELP1:						/* 0x26 Vertical Delay Player 1 */
+		TIA_player_delay_1 = data & 0x01;
+		logerror("Delay 1 = 0x%02x", TIA_player_delay_1);
 		break;
 
 	case VDELBL:						/* 0x27 Vertical Delay Ball */
@@ -803,7 +904,7 @@ static void a2600_scanline_cb(void)
 	/* set color to background */
 	backcolor = tia.colreg.BK % Machine->drv->color_table_len;
 
-	if (((currentline + yys) <= 299))	/*  && (TIA_vblank == 0) */
+	if (((currentline + yys) <= 299) && (TIA_vblank == 0))
 	{
 		//  UINT8 pfpos = 0;
 		/* now we have color, plot for 4 color cycles */
@@ -841,13 +942,27 @@ static void a2600_main_cb(int param)
 	/* resync the riot timer */
 	previous_tia_cycle = global_tia_cycle + 76;
 	riotdiff *= 3;
+	//riotdiff++;
 	for (; riotdiff > 0; riotdiff--)
 	{
 		//  logerror("diff 0x%04x\n", riotdiff);
 		a2600_Cycle_cb(0);
 		//  logerror("tmr temp = 0x%04x\n", TMR_tmp);
 	}
-
+	TIA_pixel_clock = 0;
+	TIA_pf_mask.shiftreg = 0x080000;
+	TIA_player_pattern_0_delayed = TIA_player_pattern_0;
+	TIA_player_pattern_1_delayed = TIA_player_pattern_1;
+	TIA_player_0_offset=0;
+	TIA_player_1_offset=0;
+	TIA_player_0_mask_tmp = TIA_player_0_mask;
+	TIA_player_1_mask_tmp = TIA_player_1_mask;
+	TIA_player_0_mask_bit = 10;
+	TIA_player_1_mask_bit = 10;
+	TIA_player_0_block = 0;
+	TIA_player_1_block = 0;
+	TIA_player_0_finished = 0;
+	TIA_player_1_finished = 0;
 	a2600_scanline_cb();
 	global_tia_cycle += 76;
 
@@ -856,6 +971,7 @@ static void a2600_main_cb(int param)
 static void a2600_Cycle_cb(int param)
 {
 	int forecolour;
+	int plyr0 = TIA_reset_player_0 + TIA_motion_player_0 + TIA_player_0_offset;
 
 	//logerror("counting Cycles 0x%08x....\n", a2600_Cycle_Count);
 	a2600_Cycle_Count++;
@@ -864,8 +980,90 @@ static void a2600_Cycle_cb(int param)
 
 	HSYNC_Period++;
 	HSYNC_colour_clock--;
+
+	if(HSYNC_Period >= 68)
+	{
+		if(HSYNC_Period <= 147)
+		{
+			UINT8 pix = (TIA_playfield.shiftreg & TIA_pf_mask.shiftreg)? 1:0;
+
+			if (PF_Score)
+			{
+				forecolour = tia.colreg.P0;
+			}
+			else
+			{
+				forecolour = tia.colreg.PF;
+			}
+
+			PF_Data[HSYNC_Period - 68] = forecolour * pix;
+
+			TIA_pixel_clock++;
+
+			if(TIA_pixel_clock == 4)
+			{
+				SHIFT_RIGHT20(TIA_pf_mask)
+
+				TIA_pixel_clock = 0;
+			}
+		}
+		else
+		{
+			if(HSYNC_Period == 148 && PF_Ref) TIA_pf_mask.shiftreg = 0x000001;
+
+			if(!PF_Ref)
+			{
+				UINT8 pix = (TIA_playfield.shiftreg & TIA_pf_mask.shiftreg)? 1:0;
+
+				if (PF_Score)
+				{
+					forecolour = tia.colreg.P1;
+				}
+				else
+				{
+					forecolour = tia.colreg.PF;
+				}
+
+
+				PF_Data[HSYNC_Period - 68] = forecolour * pix;
+
+				TIA_pixel_clock++;
+
+				if(TIA_pixel_clock == 4)
+				{
+					SHIFT_RIGHT20(TIA_pf_mask)
+					TIA_pixel_clock = 0;
+				}
+			}
+			else
+			{
+				UINT8 pix = (TIA_playfield.shiftreg & TIA_pf_mask.shiftreg)? 1:0;
+
+				if (PF_Score)
+				{
+					forecolour = tia.colreg.P1;
+				}
+				else
+				{
+					forecolour = tia.colreg.PF;
+				}
+
+				PF_Data[HSYNC_Period - 68] = forecolour * pix;
+
+				TIA_pixel_clock++;
+
+				if(TIA_pixel_clock == 4)
+				{
+					SHIFT_LEFT20(TIA_pf_mask)
+					TIA_pixel_clock = 0;
+				}
+			}
+		}
+	}
+
 	/* raster stuff. it should hopefully be in sync :) */
-	if (PF_Score)
+
+/*	if (PF_Score)
 	{
 		forecolour = tia.colreg.P0;
 	}
@@ -874,409 +1072,6 @@ static void a2600_Cycle_cb(int param)
 		forecolour = tia.colreg.PF;
 	}
 
-	if (HSYNC_Period == 68)
-	{
-		PF_Data[0] = forecolour * ((tia.pfreg.B0 & 0x10) >> 4);
-	}
-
-	if (HSYNC_Period == 69)
-	{
-		PF_Data[1] = forecolour * ((tia.pfreg.B0 & 0x10) >> 4);
-	}
-
-	if (HSYNC_Period == 70)
-	{
-		PF_Data[2] = forecolour * ((tia.pfreg.B0 & 0x10) >> 4);
-	}
-
-	if (HSYNC_Period == 71)
-	{
-		PF_Data[3] = forecolour * ((tia.pfreg.B0 & 0x10) >> 4);
-	}
-
-	if (HSYNC_Period == 72)
-	{
-		PF_Data[4] = forecolour * ((tia.pfreg.B0 & 0x20) >> 5);
-	}
-
-	if (HSYNC_Period == 73)
-	{
-		PF_Data[5] = forecolour * ((tia.pfreg.B0 & 0x20) >> 5);
-	}
-
-	if (HSYNC_Period == 74)
-	{
-		PF_Data[6] = forecolour * ((tia.pfreg.B0 & 0x20) >> 5);
-	}
-
-	if (HSYNC_Period == 75)
-	{
-		PF_Data[7] = forecolour * ((tia.pfreg.B0 & 0x20) >> 5);
-	}
-
-	if (HSYNC_Period == 76)
-	{
-		PF_Data[8] = forecolour * ((tia.pfreg.B0 & 0x40) >> 6);
-	}
-
-	if (HSYNC_Period == 77)
-	{
-		PF_Data[9] = forecolour * ((tia.pfreg.B0 & 0x40) >> 6);
-	}
-
-	if (HSYNC_Period == 78)
-	{
-		PF_Data[10] = forecolour * ((tia.pfreg.B0 & 0x40) >> 6);
-	}
-
-	if (HSYNC_Period == 79)
-	{
-		PF_Data[11] = forecolour * ((tia.pfreg.B0 & 0x40) >> 6);
-	}
-
-	if (HSYNC_Period == 80)
-	{
-		PF_Data[12] = forecolour * ((tia.pfreg.B0 & 0x80) >> 7);
-	}
-
-	if (HSYNC_Period == 81)
-	{
-		PF_Data[13] = forecolour * ((tia.pfreg.B0 & 0x80) >> 7);
-	}
-
-	if (HSYNC_Period == 82)
-	{
-		PF_Data[14] = forecolour * ((tia.pfreg.B0 & 0x80) >> 7);
-	}
-
-	if (HSYNC_Period == 83)
-	{
-		PF_Data[15] = forecolour * ((tia.pfreg.B0 & 0x80) >> 7);
-	}
-
-	if (HSYNC_Period == 84)
-	{
-		PF_Data[16] = forecolour * ((tia.pfreg.B1 & 0x80) >> 7);
-	}
-
-	if (HSYNC_Period == 85)
-	{
-		PF_Data[17] = forecolour * ((tia.pfreg.B1 & 0x80) >> 7);
-	}
-
-	if (HSYNC_Period == 86)
-	{
-		PF_Data[18] = forecolour * ((tia.pfreg.B1 & 0x80) >> 7);
-	}
-
-	if (HSYNC_Period == 87)
-	{
-		PF_Data[19] = forecolour * ((tia.pfreg.B1 & 0x80) >> 7);
-	}
-
-	if (HSYNC_Period == 88)
-	{
-		PF_Data[20] = forecolour * ((tia.pfreg.B1 & 0x40) >> 6);
-	}
-
-	if (HSYNC_Period == 89)
-	{
-		PF_Data[21] = forecolour * ((tia.pfreg.B1 & 0x40) >> 6);
-	}
-
-	if (HSYNC_Period == 90)
-	{
-		PF_Data[22] = forecolour * ((tia.pfreg.B1 & 0x40) >> 6);
-	}
-
-	if (HSYNC_Period == 91)
-	{
-		PF_Data[23] = forecolour * ((tia.pfreg.B1 & 0x40) >> 6);
-	}
-
-	if (HSYNC_Period == 92)
-	{
-		PF_Data[24] = forecolour * ((tia.pfreg.B1 & 0x20) >> 5);
-	}
-
-	if (HSYNC_Period == 93)
-	{
-		PF_Data[25] = forecolour * ((tia.pfreg.B1 & 0x20) >> 5);
-	}
-
-	if (HSYNC_Period == 94)
-	{
-		PF_Data[26] = forecolour * ((tia.pfreg.B1 & 0x20) >> 5);
-	}
-
-	if (HSYNC_Period == 95)
-	{
-		PF_Data[27] = forecolour * ((tia.pfreg.B1 & 0x20) >> 5);
-	}
-
-	if (HSYNC_Period == 96)
-	{
-		PF_Data[28] = forecolour * ((tia.pfreg.B1 & 0x10) >> 4);
-	}
-
-	if (HSYNC_Period == 97)
-	{
-		PF_Data[29] = forecolour * ((tia.pfreg.B1 & 0x10) >> 4);
-	}
-
-	if (HSYNC_Period == 98)
-	{
-		PF_Data[30] = forecolour * ((tia.pfreg.B1 & 0x10) >> 4);
-	}
-
-	if (HSYNC_Period == 99)
-	{
-		PF_Data[31] = forecolour * ((tia.pfreg.B1 & 0x10) >> 4);
-	}
-
-	if (HSYNC_Period == 100)
-	{
-		PF_Data[32] = forecolour * ((tia.pfreg.B1 & 0x08) >> 3);
-	}
-
-	if (HSYNC_Period == 101)
-	{
-		PF_Data[33] = forecolour * ((tia.pfreg.B1 & 0x08) >> 3);
-	}
-
-	if (HSYNC_Period == 102)
-	{
-		PF_Data[34] = forecolour * ((tia.pfreg.B1 & 0x08) >> 3);
-	}
-
-	if (HSYNC_Period == 103)
-	{
-		PF_Data[35] = forecolour * ((tia.pfreg.B1 & 0x08) >> 3);
-	}
-
-	if (HSYNC_Period == 104)
-	{
-		PF_Data[36] = forecolour * ((tia.pfreg.B1 & 0x04) >> 2);
-	}
-
-	if (HSYNC_Period == 105)
-	{
-		PF_Data[37] = forecolour * ((tia.pfreg.B1 & 0x04) >> 2);
-	}
-
-	if (HSYNC_Period == 106)
-	{
-		PF_Data[38] = forecolour * ((tia.pfreg.B1 & 0x04) >> 2);
-	}
-
-	if (HSYNC_Period == 107)
-	{
-		PF_Data[39] = forecolour * ((tia.pfreg.B1 & 0x04) >> 2);
-	}
-
-	if (HSYNC_Period == 108)
-	{
-		PF_Data[40] = forecolour * ((tia.pfreg.B1 & 0x02) >> 1);
-	}
-
-	if (HSYNC_Period == 109)
-	{
-		PF_Data[41] = forecolour * ((tia.pfreg.B1 & 0x02) >> 1);
-	}
-
-	if (HSYNC_Period == 110)
-	{
-		PF_Data[42] = forecolour * ((tia.pfreg.B1 & 0x02) >> 1);
-	}
-
-	if (HSYNC_Period == 111)
-	{
-		PF_Data[43] = forecolour * ((tia.pfreg.B1 & 0x02) >> 1);
-	}
-
-	if (HSYNC_Period == 112)
-	{
-		PF_Data[44] = forecolour * (tia.pfreg.B1 & 0x01);
-	}
-
-	if (HSYNC_Period == 113)
-	{
-		PF_Data[45] = forecolour * (tia.pfreg.B1 & 0x01);
-	}
-
-	if (HSYNC_Period == 114)
-	{
-		PF_Data[46] = forecolour * (tia.pfreg.B1 & 0x01);
-	}
-
-	if (HSYNC_Period == 115)
-	{
-		PF_Data[47] = forecolour * (tia.pfreg.B1 & 0x01);
-	}
-
-	if (HSYNC_Period == 116)
-	{
-		PF_Data[48] = forecolour * (tia.pfreg.B2 & 0x01);
-	}
-
-	if (HSYNC_Period == 117)
-	{
-		PF_Data[49] = forecolour * (tia.pfreg.B2 & 0x01);
-	}
-
-	if (HSYNC_Period == 118)
-	{
-		PF_Data[50] = forecolour * (tia.pfreg.B2 & 0x01);
-	}
-
-	if (HSYNC_Period == 119)
-	{
-		PF_Data[51] = forecolour * (tia.pfreg.B2 & 0x01);
-	}
-
-	if (HSYNC_Period == 120)
-	{
-		PF_Data[52] = forecolour * ((tia.pfreg.B2 & 0x02) >> 1);
-	}
-
-	if (HSYNC_Period == 121)
-	{
-		PF_Data[53] = forecolour * ((tia.pfreg.B2 & 0x02) >> 1);
-	}
-
-	if (HSYNC_Period == 122)
-	{
-		PF_Data[54] = forecolour * ((tia.pfreg.B2 & 0x02) >> 1);
-	}
-
-	if (HSYNC_Period == 123)
-	{
-		PF_Data[55] = forecolour * ((tia.pfreg.B2 & 0x02) >> 1);
-	}
-
-	if (HSYNC_Period == 124)
-	{
-		PF_Data[56] = forecolour * ((tia.pfreg.B2 & 0x04) >> 2);
-	}
-
-	if (HSYNC_Period == 125)
-	{
-		PF_Data[57] = forecolour * ((tia.pfreg.B2 & 0x04) >> 2);
-	}
-
-	if (HSYNC_Period == 126)
-	{
-		PF_Data[58] = forecolour * ((tia.pfreg.B2 & 0x04) >> 2);
-	}
-
-	if (HSYNC_Period == 127)
-	{
-		PF_Data[59] = forecolour * ((tia.pfreg.B2 & 0x04) >> 2);
-	}
-
-	if (HSYNC_Period == 128)
-	{
-		PF_Data[60] = forecolour * ((tia.pfreg.B2 & 0x08) >> 3);
-	}
-
-	if (HSYNC_Period == 129)
-	{
-		PF_Data[61] = forecolour * ((tia.pfreg.B2 & 0x08) >> 3);
-	}
-
-	if (HSYNC_Period == 130)
-	{
-		PF_Data[62] = forecolour * ((tia.pfreg.B2 & 0x08) >> 3);
-	}
-
-	if (HSYNC_Period == 131)
-	{
-		PF_Data[63] = forecolour * ((tia.pfreg.B2 & 0x08) >> 3);
-	}
-
-	if (HSYNC_Period == 132)
-	{
-		PF_Data[64] = forecolour * ((tia.pfreg.B2 & 0x10) >> 4);
-	}
-
-	if (HSYNC_Period == 133)
-	{
-		PF_Data[65] = forecolour * ((tia.pfreg.B2 & 0x10) >> 4);
-	}
-
-	if (HSYNC_Period == 134)
-	{
-		PF_Data[66] = forecolour * ((tia.pfreg.B2 & 0x10) >> 4);
-	}
-
-	if (HSYNC_Period == 135)
-	{
-		PF_Data[67] = forecolour * ((tia.pfreg.B2 & 0x10) >> 4);
-	}
-
-	if (HSYNC_Period == 136)
-	{
-		PF_Data[68] = forecolour * ((tia.pfreg.B2 & 0x20) >> 5);
-	}
-
-	if (HSYNC_Period == 137)
-	{
-		PF_Data[69] = forecolour * ((tia.pfreg.B2 & 0x20) >> 5);
-
-	}
-
-	if (HSYNC_Period == 138)
-	{
-		PF_Data[70] = forecolour * ((tia.pfreg.B2 & 0x20) >> 5);
-
-	}
-
-	if (HSYNC_Period == 139)
-	{
-		PF_Data[71] = forecolour * ((tia.pfreg.B2 & 0x20) >> 5);
-
-	}
-
-	if (HSYNC_Period == 140)
-	{
-		PF_Data[72] = forecolour * ((tia.pfreg.B2 & 0x40) >> 6);
-
-	}
-
-	if (HSYNC_Period == 141)
-	{
-		PF_Data[73] = forecolour * ((tia.pfreg.B2 & 0x40) >> 6);
-	}
-
-	if (HSYNC_Period == 142)
-	{
-		PF_Data[74] = forecolour * ((tia.pfreg.B2 & 0x40) >> 6);
-	}
-
-	if (HSYNC_Period == 143)
-	{
-		PF_Data[75] = forecolour * ((tia.pfreg.B2 & 0x40) >> 6);
-	}
-
-	if (HSYNC_Period == 144)
-	{
-		PF_Data[76] = forecolour * ((tia.pfreg.B2 & 0x80) >> 7);
-	}
-
-	if (HSYNC_Period == 145)
-	{
-		PF_Data[77] = forecolour * ((tia.pfreg.B2 & 0x80) >> 7);
-	}
-
-	if (HSYNC_Period == 146)
-	{
-		PF_Data[78] = forecolour * ((tia.pfreg.B2 & 0x80) >> 7);
-	}
-
-	if (HSYNC_Period == 147)
-	{
-		PF_Data[79] = forecolour * ((tia.pfreg.B2 & 0x80) >> 7);
-	}
 
 	if (PF_Score)
 	{
@@ -1289,1052 +1084,213 @@ static void a2600_Cycle_cb(int param)
 
 
 
-	if (HSYNC_Period == 148)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[80] = forecolour * ((tia.pfreg.B2 & 0x80) >> 7);
-		}
-		else
-		{
-			PF_Data[80] = forecolour * ((tia.pfreg.B0 & 0x10) >> 4);
-		}
-	}
-
-	if (HSYNC_Period == 149)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[81] = forecolour * ((tia.pfreg.B2 & 0x80) >> 7);
-		}
-		else
-		{
-			PF_Data[81] = forecolour * ((tia.pfreg.B0 & 0x10) >> 4);
-		}
-
-	}
-
-	if (HSYNC_Period == 150)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[82] = forecolour * ((tia.pfreg.B2 & 0x80) >> 7);
-		}
-		else
-		{
-			PF_Data[82] = forecolour * ((tia.pfreg.B0 & 0x10) >> 4);
-		}
-
-	}
-
-	if (HSYNC_Period == 151)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[83] = forecolour * ((tia.pfreg.B2 & 0x80) >> 7);
-		}
-		else
-		{
-			PF_Data[83] = forecolour * ((tia.pfreg.B0 & 0x10) >> 4);
-		}
-
-	}
-
-	if (HSYNC_Period == 152)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[84] = forecolour * ((tia.pfreg.B2 & 0x40) >> 6);
-		}
-		else
-		{
-			PF_Data[84] = forecolour * ((tia.pfreg.B0 & 0x20) >> 5);
-		}
-
-	}
-
-	if (HSYNC_Period == 153)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[85] = forecolour * ((tia.pfreg.B2 & 0x40) >> 6);
-		}
-		else
-		{
-			PF_Data[85] = forecolour * ((tia.pfreg.B0 & 0x20) >> 5);
-		}
-	}
-
-	if (HSYNC_Period == 154)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[86] = forecolour * ((tia.pfreg.B2 & 0x40) >> 6);
-		}
-		else
-		{
-			PF_Data[86] = forecolour * ((tia.pfreg.B0 & 0x20) >> 5);
-		}
-	}
-
-	if (HSYNC_Period == 155)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[87] = forecolour * ((tia.pfreg.B2 & 0x40) >> 6);
-		}
-		else
-		{
-			PF_Data[87] = forecolour * ((tia.pfreg.B0 & 0x20) >> 5);
-		}
-	}
-
-	if (HSYNC_Period == 156)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[88] = forecolour * ((tia.pfreg.B2 & 0x20) >> 5);
-		}
-		else
-		{
-			PF_Data[88] = forecolour * ((tia.pfreg.B0 & 0x40) >> 6);
-		}
-	}
-
-	if (HSYNC_Period == 157)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[89] = forecolour * ((tia.pfreg.B2 & 0x20) >> 5);
-		}
-		else
-		{
-			PF_Data[89] = forecolour * ((tia.pfreg.B0 & 0x40) >> 6);
-		}
-	}
-
-	if (HSYNC_Period == 158)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[90] = forecolour * ((tia.pfreg.B2 & 0x20) >> 5);
-		}
-		else
-		{
-			PF_Data[90] = forecolour * ((tia.pfreg.B0 & 0x40) >> 6);
-		}
-	}
-
-	if (HSYNC_Period == 159)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[91] = forecolour * ((tia.pfreg.B2 & 0x20) >> 5);
-		}
-		else
-		{
-			PF_Data[91] = forecolour * ((tia.pfreg.B0 & 0x40) >> 6);
-		}
-	}
-
-	if (HSYNC_Period == 160)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[92] = forecolour * ((tia.pfreg.B2 & 0x10) >> 4);
-		}
-		else
-		{
-			PF_Data[92] = forecolour * ((tia.pfreg.B0 & 0x80) >> 7);
-		}
-	}
-
-	if (HSYNC_Period == 161)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[93] = forecolour * ((tia.pfreg.B2 & 0x10) >> 4);
-		}
-		else
-		{
-			PF_Data[93] = forecolour * ((tia.pfreg.B0 & 0x80) >> 7);
-		}
-	}
-
-	if (HSYNC_Period == 162)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[94] = forecolour * ((tia.pfreg.B2 & 0x10) >> 4);
-		}
-		else
-		{
-			PF_Data[94] = forecolour * ((tia.pfreg.B0 & 0x80) >> 7);
-		}
-	}
-
-	if (HSYNC_Period == 163)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[95] = forecolour * ((tia.pfreg.B2 & 0x10) >> 4);
-		}
-		else
-		{
-			PF_Data[95] = forecolour * ((tia.pfreg.B0 & 0x80) >> 7);
-		}
-	}
-
-	if (HSYNC_Period == 164)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[96] = forecolour * ((tia.pfreg.B2 & 0x08) >> 3);
-		}
-		else
-		{
-			PF_Data[96] = forecolour * ((tia.pfreg.B1 & 0x80) >> 7);
-		}
-	}
-
-	if (HSYNC_Period == 165)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[97] = forecolour * ((tia.pfreg.B2 & 0x08) >> 3);
-		}
-		else
-		{
-			PF_Data[97] = forecolour * ((tia.pfreg.B1 & 0x80) >> 7);
-		}
-	}
-
-	if (HSYNC_Period == 166)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[98] = forecolour * ((tia.pfreg.B2 & 0x08) >> 3);
-		}
-		else
-		{
-			PF_Data[98] = forecolour * ((tia.pfreg.B1 & 0x80) >> 7);
-		}
-	}
-
-	if (HSYNC_Period == 167)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[99] = forecolour * ((tia.pfreg.B2 & 0x08) >> 3);
-		}
-		else
-		{
-			PF_Data[99] = forecolour * ((tia.pfreg.B1 & 0x80) >> 7);
-		}
-	}
-
-	if (HSYNC_Period == 168)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[100] = forecolour * ((tia.pfreg.B2 & 0x04) >> 2);
-		}
-		else
-		{
-			PF_Data[100] = forecolour * ((tia.pfreg.B1 & 0x40) >> 6);
-		}
-	}
-
-	if (HSYNC_Period == 169)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[101] = forecolour * ((tia.pfreg.B2 & 0x04) >> 2);
-		}
-		else
-		{
-			PF_Data[101] = forecolour * ((tia.pfreg.B1 & 0x40) >> 6);
-		}
-	}
-
-	if (HSYNC_Period == 170)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[102] = forecolour * ((tia.pfreg.B2 & 0x04) >> 2);
-		}
-		else
-		{
-			PF_Data[102] = forecolour * ((tia.pfreg.B1 & 0x40) >> 6);
-		}
-	}
-
-	if (HSYNC_Period == 171)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[103] = forecolour * ((tia.pfreg.B2 & 0x04) >> 2);
-		}
-		else
-		{
-			PF_Data[103] = forecolour * ((tia.pfreg.B1 & 0x40) >> 6);
-		}
-	}
-
-	if (HSYNC_Period == 172)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[104] = forecolour * ((tia.pfreg.B2 & 0x02) >> 1);
-		}
-		else
-		{
-			PF_Data[104] = forecolour * ((tia.pfreg.B1 & 0x20) >> 5);
-		}
-	}
-
-	if (HSYNC_Period == 173)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[105] = forecolour * ((tia.pfreg.B2 & 0x02) >> 1);
-		}
-		else
-		{
-			PF_Data[105] = forecolour * ((tia.pfreg.B1 & 0x20) >> 5);
-		}
-	}
-
-	if (HSYNC_Period == 174)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[106] = forecolour * ((tia.pfreg.B2 & 0x02) >> 1);
-		}
-		else
-		{
-			PF_Data[106] = forecolour * ((tia.pfreg.B1 & 0x20) >> 5);
-		}
-	}
-
-	if (HSYNC_Period == 175)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[107] = forecolour * ((tia.pfreg.B2 & 0x02) >> 1);
-		}
-		else
-		{
-			PF_Data[107] = forecolour * ((tia.pfreg.B1 & 0x20) >> 5);
-		}
-	}
-
-	if (HSYNC_Period == 176)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[108] = forecolour * (tia.pfreg.B2 & 0x01);
-		}
-		else
-		{
-			PF_Data[108] = forecolour * ((tia.pfreg.B1 & 0x10) >> 4);
-		}
-	}
-
-	if (HSYNC_Period == 177)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[109] = forecolour * (tia.pfreg.B2 & 0x01);
-		}
-		else
-		{
-			PF_Data[109] = forecolour * ((tia.pfreg.B1 & 0x10) >> 4);
-		}
-	}
-
-	if (HSYNC_Period == 178)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[110] = forecolour * (tia.pfreg.B2 & 0x01);
-		}
-		else
-		{
-			PF_Data[110] = forecolour * ((tia.pfreg.B1 & 0x10) >> 4);
-		}
-	}
-
-	if (HSYNC_Period == 179)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[111] = forecolour * (tia.pfreg.B2 & 0x01);
-		}
-		else
-		{
-			PF_Data[111] = forecolour * ((tia.pfreg.B1 & 0x10) >> 4);
-		}
-	}
-
-	if (HSYNC_Period == 180)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[112] = forecolour * (tia.pfreg.B1 & 0x01);
-		}
-		else
-		{
-			PF_Data[112] = forecolour * ((tia.pfreg.B1 & 0x08) >> 3);
-		}
-	}
-
-	if (HSYNC_Period == 181)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[113] = forecolour * (tia.pfreg.B1 & 0x01);
-		}
-		else
-		{
-			PF_Data[113] = forecolour * ((tia.pfreg.B1 & 0x08) >> 3);
-		}
-	}
-
-	if (HSYNC_Period == 182)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[114] = forecolour * (tia.pfreg.B1 & 0x01);
-		}
-		else
-		{
-			PF_Data[114] = forecolour * ((tia.pfreg.B1 & 0x08) >> 3);
-		}
-	}
-
-	if (HSYNC_Period == 183)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[115] = forecolour * (tia.pfreg.B1 & 0x01);
-		}
-		else
-		{
-			PF_Data[115] = forecolour * ((tia.pfreg.B1 & 0x08) >> 3);
-		}
-	}
-
-	if (HSYNC_Period == 184)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[116] = forecolour * ((tia.pfreg.B1 & 0x02) >> 1);
-		}
-		else
-		{
-			PF_Data[116] = forecolour * ((tia.pfreg.B1 & 0x04) >> 2);
-		}
-	}
-
-	if (HSYNC_Period == 185)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[117] = forecolour * ((tia.pfreg.B1 & 0x02) >> 1);
-		}
-		else
-		{
-			PF_Data[117] = forecolour * ((tia.pfreg.B1 & 0x04) >> 2);
-		}
-	}
-
-	if (HSYNC_Period == 186)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[118] = forecolour * ((tia.pfreg.B1 & 0x02) >> 1);
-		}
-		else
-		{
-			PF_Data[118] = forecolour * ((tia.pfreg.B1 & 0x04) >> 2);
-		}
-	}
-
-	if (HSYNC_Period == 187)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[119] = forecolour * ((tia.pfreg.B1 & 0x02) >> 1);
-		}
-		else
-		{
-			PF_Data[119] = forecolour * ((tia.pfreg.B1 & 0x04) >> 2);
-		}
-	}
-
-	if (HSYNC_Period == 188)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[120] = forecolour * ((tia.pfreg.B1 & 0x04) >> 2);
-		}
-		else
-		{
-			PF_Data[120] = forecolour * ((tia.pfreg.B1 & 0x02) >> 1);
-		}
-	}
-
-	if (HSYNC_Period == 189)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[121] = forecolour * ((tia.pfreg.B1 & 0x04) >> 2);
-		}
-		else
-		{
-			PF_Data[121] = forecolour * ((tia.pfreg.B1 & 0x02) >> 1);
-		}
-	}
-
-	if (HSYNC_Period == 190)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[122] = forecolour * ((tia.pfreg.B1 & 0x04) >> 2);
-		}
-		else
-		{
-			PF_Data[122] = forecolour * ((tia.pfreg.B1 & 0x02) >> 1);
-		}
-	}
-
-	if (HSYNC_Period == 191)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[123] = forecolour * ((tia.pfreg.B1 & 0x04) >> 2);
-		}
-		else
-		{
-			PF_Data[123] = forecolour * ((tia.pfreg.B1 & 0x02) >> 1);
-		}
-	}
-
-	if (HSYNC_Period == 192)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[124] = forecolour * ((tia.pfreg.B1 & 0x08) >> 3);
-		}
-		else
-		{
-			PF_Data[124] = forecolour * (tia.pfreg.B1 & 0x01);
-		}
-	}
-
-	if (HSYNC_Period == 193)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[125] = forecolour * ((tia.pfreg.B1 & 0x08) >> 3);
-		}
-		else
-		{
-			PF_Data[125] = forecolour * (tia.pfreg.B1 & 0x01);
-		}
-	}
-
-	if (HSYNC_Period == 194)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[126] = forecolour * ((tia.pfreg.B1 & 0x08) >> 3);
-		}
-		else
-		{
-			PF_Data[126] = forecolour * (tia.pfreg.B1 & 0x01);
-		}
-	}
-
-	if (HSYNC_Period == 195)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[127] = forecolour * ((tia.pfreg.B1 & 0x08) >> 3);
-		}
-		else
-		{
-			PF_Data[127] = forecolour * (tia.pfreg.B1 & 0x01);
-		}
-	}
-
-	if (HSYNC_Period == 196)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[128] = forecolour * ((tia.pfreg.B1 & 0x10) >> 4);
-		}
-		else
-		{
-			PF_Data[128] = forecolour * (tia.pfreg.B2 & 0x01);
-		}
-	}
-
-	if (HSYNC_Period == 197)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[129] = forecolour * ((tia.pfreg.B1 & 0x10) >> 4);
-		}
-		else
-		{
-			PF_Data[129] = forecolour * (tia.pfreg.B2 & 0x01);
-		}
-	}
-
-	if (HSYNC_Period == 198)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[130] = forecolour * ((tia.pfreg.B1 & 0x10) >> 4);
-		}
-		else
-		{
-			PF_Data[130] = forecolour * (tia.pfreg.B2 & 0x01);
-		}
-	}
-
-	if (HSYNC_Period == 199)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[131] = forecolour * ((tia.pfreg.B1 & 0x10) >> 4);
-		}
-		else
-		{
-			PF_Data[131] = forecolour * (tia.pfreg.B2 & 0x01);
-		}
-	}
-
-	if (HSYNC_Period == 200)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[132] = forecolour * ((tia.pfreg.B1 & 0x20) >> 5);
-		}
-		else
-		{
-			PF_Data[132] = forecolour * ((tia.pfreg.B2 & 0x02) >> 1);
-		}
-	}
-
-	if (HSYNC_Period == 201)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[133] = forecolour * ((tia.pfreg.B1 & 0x20) >> 5);
-		}
-		else
-		{
-			PF_Data[133] = forecolour * ((tia.pfreg.B2 & 0x02) >> 1);
-		}
-	}
-
-	if (HSYNC_Period == 202)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[134] = forecolour * ((tia.pfreg.B1 & 0x20) >> 5);
-		}
-		else
-		{
-			PF_Data[134] = forecolour * ((tia.pfreg.B2 & 0x02) >> 1);
-		}
-	}
-
-	if (HSYNC_Period == 203)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[135] = forecolour * ((tia.pfreg.B1 & 0x20) >> 5);
-		}
-		else
-		{
-			PF_Data[135] = forecolour * ((tia.pfreg.B2 & 0x02) >> 1);
-		}
-	}
-
-	if (HSYNC_Period == 204)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[136] = forecolour * ((tia.pfreg.B1 & 0x40) >> 6);
-		}
-		else
-		{
-			PF_Data[136] = forecolour * ((tia.pfreg.B2 & 0x04) >> 2);
-		}
-	}
-
-	if (HSYNC_Period == 205)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[137] = forecolour * ((tia.pfreg.B1 & 0x40) >> 6);
-		}
-		else
-		{
-			PF_Data[137] = forecolour * ((tia.pfreg.B2 & 0x04) >> 2);
-		}
-	}
-
-	if (HSYNC_Period == 206)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[138] = forecolour * ((tia.pfreg.B1 & 0x40) >> 6);
-		}
-		else
-		{
-			PF_Data[138] = forecolour * ((tia.pfreg.B2 & 0x04) >> 2);
-		}
-	}
-
-	if (HSYNC_Period == 207)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[139] = forecolour * ((tia.pfreg.B1 & 0x40) >> 6);
-		}
-		else
-		{
-			PF_Data[139] = forecolour * ((tia.pfreg.B2 & 0x04) >> 2);
-		}
-	}
-
-	if (HSYNC_Period == 208)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[140] = forecolour * ((tia.pfreg.B1 & 0x80) >> 7);
-		}
-		else
-		{
-			PF_Data[140] = forecolour * ((tia.pfreg.B2 & 0x08) >> 3);
-		}
-	}
-
-	if (HSYNC_Period == 209)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[141] = forecolour * ((tia.pfreg.B1 & 0x80) >> 7);
-		}
-		else
-		{
-			PF_Data[141] = forecolour * ((tia.pfreg.B2 & 0x08) >> 3);
-		}
-	}
-
-	if (HSYNC_Period == 210)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[142] = forecolour * ((tia.pfreg.B1 & 0x80) >> 7);
-		}
-		else
-		{
-			PF_Data[142] = forecolour * ((tia.pfreg.B2 & 0x08) >> 3);
-		}
-	}
-
-	if (HSYNC_Period == 211)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[143] = forecolour * ((tia.pfreg.B1 & 0x80) >> 7);
-		}
-		else
-		{
-			PF_Data[143] = forecolour * ((tia.pfreg.B2 & 0x08) >> 3);
-		}
-	}
-
-	if (HSYNC_Period == 212)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[144] = forecolour * ((tia.pfreg.B0 & 0x80) >> 7);
-		}
-		else
-		{
-			PF_Data[144] = forecolour * ((tia.pfreg.B2 & 0x10) >> 4);
-		}
-	}
-
-	if (HSYNC_Period == 213)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[145] = forecolour * ((tia.pfreg.B0 & 0x80) >> 7);
-		}
-		else
-		{
-			PF_Data[145] = forecolour * ((tia.pfreg.B2 & 0x10) >> 4);
-		}
-	}
-
-	if (HSYNC_Period == 214)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[146] = forecolour * ((tia.pfreg.B0 & 0x80) >> 7);
-		}
-		else
-		{
-			PF_Data[146] = forecolour * ((tia.pfreg.B2 & 0x10) >> 4);
-		}
-	}
-
-	if (HSYNC_Period == 215)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[147] = forecolour * ((tia.pfreg.B0 & 0x80) >> 7);
-		}
-		else
-		{
-			PF_Data[147] = forecolour * ((tia.pfreg.B2 & 0x10) >> 4);
-		}
-	}
-
-	if (HSYNC_Period == 216)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[148] = forecolour * ((tia.pfreg.B0 & 0x40) >> 6);
-		}
-		else
-		{
-			PF_Data[148] = forecolour * ((tia.pfreg.B2 & 0x20) >> 5);
-		}
-	}
-
-	if (HSYNC_Period == 217)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[149] = forecolour * ((tia.pfreg.B0 & 0x40) >> 6);
-		}
-		else
-		{
-			PF_Data[149] = forecolour * ((tia.pfreg.B2 & 0x20) >> 5);
-		}
-	}
-
-	if (HSYNC_Period == 218)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[150] = forecolour * ((tia.pfreg.B0 & 0x40) >> 6);
-		}
-		else
-		{
-			PF_Data[150] = forecolour * ((tia.pfreg.B2 & 0x20) >> 5);
-		}
-	}
-
-	if (HSYNC_Period == 219)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[151] = forecolour * ((tia.pfreg.B0 & 0x40) >> 6);
-		}
-		else
-		{
-			PF_Data[151] = forecolour * ((tia.pfreg.B2 & 0x20) >> 5);
-		}
-	}
-
-	if (HSYNC_Period == 220)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[152] = forecolour * ((tia.pfreg.B0 & 0x20) >> 5);
-		}
-		else
-		{
-			PF_Data[152] = forecolour * ((tia.pfreg.B2 & 0x40) >> 6);
-		}
-	}
-
-
-	if (HSYNC_Period == 221)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[153] = forecolour * ((tia.pfreg.B0 & 0x20) >> 5);
-		}
-		else
-		{
-			PF_Data[153] = forecolour * ((tia.pfreg.B2 & 0x40) >> 6);
-		}
-	}
-
-	if (HSYNC_Period == 222)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[154] = forecolour * ((tia.pfreg.B0 & 0x20) >> 5);
-		}
-		else
-		{
-			PF_Data[154] = forecolour * ((tia.pfreg.B2 & 0x40) >> 6);
-		}
-	}
-
-
-	if (HSYNC_Period == 223)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[155] = forecolour * ((tia.pfreg.B0 & 0x20) >> 5);
-		}
-		else
-		{
-			PF_Data[155] = forecolour * ((tia.pfreg.B2 & 0x40) >> 6);
-		}
-	}
-
-
-	if (HSYNC_Period == 224)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[156] = forecolour * ((tia.pfreg.B0 & 0x10) >> 4);
-		}
-		else
-		{
-			PF_Data[156] = forecolour * ((tia.pfreg.B2 & 0x80) >> 7);
-		}
-	}
-
-	if (HSYNC_Period == 225)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[157] = forecolour * ((tia.pfreg.B0 & 0x10) >> 4);
-		}
-		else
-		{
-			PF_Data[157] = forecolour * ((tia.pfreg.B2 & 0x80) >> 7);
-		}
-	}
-
-	if (HSYNC_Period == 226)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[158] = forecolour * ((tia.pfreg.B0 & 0x10) >> 4);
-		}
-		else
-		{
-			PF_Data[158] = forecolour * ((tia.pfreg.B2 & 0x80) >> 7);
-		}
-	}
-
-	if (HSYNC_Period == 227)
-	{
-		if (PF_Ref)
-		{
-			PF_Data[159] = forecolour * ((tia.pfreg.B0 & 0x10) >> 4);
-		}
-		else
-		{
-			PF_Data[159] = forecolour * ((tia.pfreg.B2 & 0x80) >> 7);
-		}
-	}
-
+*/
 	if ((HSYNC_Period - 1) == 0)
 	{
 		TIA_player_pattern_0_tmp = TIA_player_pattern_0;
+		TIA_player_0_tick = 8;
 		TIA_player_pattern_1_tmp = TIA_player_pattern_1;
+		TIA_player_1_tick = 8;
 
 
 	}
 /* Player 0 stuff */
-	if ((TIA_reset_player_0) && (((HSYNC_Period - 1) >= (TIA_reset_player_0 + TIA_motion_player_0)) && ((HSYNC_Period - 1) <=
-																															   ((TIA_reset_player_0
-																																+
-																															   7)
-																															   + TIA_motion_player_0))))
+	if ((TIA_player_0_mask_tmp & 0x01) && (TIA_reset_player_0) && (((HSYNC_Period - 1) >= (plyr0)) && ((HSYNC_Period - 1) <= ((TIA_reset_player_0 + 7) + TIA_motion_player_0 + TIA_player_0_offset))) && (!TIA_player_0_finished))
 	{
 		logerror("motion player 0 %d \n", TIA_motion_player_0);
 		if (!TIA_player_0_reflect)
 		{
-			if ((TIA_player_pattern_0_tmp & 0x80))
-				PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P0;
+			UINT8 tmpbit = 0;
+			if (!TIA_player_delay_0)
+			{
+				if ((TIA_player_pattern_0_tmp & 0x80))
+				{
+					PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P0;
+					tmpbit = 0x01;
+				}
+			}
+			else
+			{
+				if ((TIA_player_pattern_0_delayed & 0x80))
+				{
+					PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P0;
+					tmpbit = 0x01;
+				}
+			}
 			//  TIA_reset_player_0 = 0;
 			logerror("Hsync Period = %02x\n", HSYNC_Period);
-			TIA_player_pattern_0_tmp = TIA_player_pattern_0_tmp << 1;
-			if (!TIA_player_0_tick)
+			TIA_player_0_pixel_delay_tmp--;
+			if(!TIA_player_0_pixel_delay_tmp)
 			{
-				TIA_player_pattern_0_tmp = TIA_player_pattern_0;
+				TIA_player_0_pixel_delay_tmp = TIA_player_0_pixel_delay;
+				//TIA_player_pattern_0_tmp = TIA_player_pattern_0_tmp << 1;
+				//TIA_player_pattern_0_delayed = TIA_player_pattern_0_delayed << 1;
+				SHIFT_LEFT8(TIA_player_pattern_0_tmp)
+				SHIFT_LEFT8(TIA_player_pattern_0_delayed)
+				TIA_player_0_tick--;
+				if (!TIA_player_0_tick)
+				{
+				//TIA_player_pattern_0_tmp = TIA_player_pattern_0;
 				TIA_player_0_tick = 8;
+				}
 			}
 		}
 		else
 		{
-			if ((TIA_player_pattern_0_tmp & 0x01))
-				PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P0;
+			UINT8 tmpbit = 0;
+			if (!TIA_player_delay_0)
+			{
+				if ((TIA_player_pattern_0_tmp & 0x01))
+				{
+					PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P0;
+					tmpbit = 0x80;
+				}
+			}
+			else
+			{
+				if ((TIA_player_pattern_0_delayed & 0x01))
+				{
+					PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P0;
+					tmpbit = 0x80;
+				}
+			}
 			//  TIA_reset_player_0 = 0;
 			logerror("Hsync Period = %02x\n", HSYNC_Period);
-			TIA_player_pattern_0_tmp = TIA_player_pattern_0_tmp >> 1;
-			if (!TIA_player_0_tick)
+			TIA_player_0_pixel_delay_tmp--;
+			if(!TIA_player_0_pixel_delay_tmp)
 			{
-				TIA_player_pattern_0_tmp = TIA_player_pattern_0;
-				TIA_player_0_tick = 8;
+				TIA_player_0_pixel_delay_tmp = TIA_player_0_pixel_delay;
+				//TIA_player_pattern_0_tmp = TIA_player_pattern_0_tmp >> 1;
+				//TIA_player_pattern_0_delayed = TIA_player_pattern_0_delayed >> 1;
+				SHIFT_RIGHT8(TIA_player_pattern_0_tmp)
+				SHIFT_RIGHT8(TIA_player_pattern_0_delayed)
+				TIA_player_0_tick--;
+				if (!TIA_player_0_tick)
+				{
+					//TIA_player_pattern_0_tmp = TIA_player_pattern_0;
+					TIA_player_0_tick = 8;
+				}
 			}
 		}
 	}
 
 /* Player 1 stuff */
-	if ((TIA_reset_player_1) && (((HSYNC_Period - 1) >= (TIA_reset_player_1 + TIA_motion_player_1)) && ((HSYNC_Period - 1) <=
-																															   ((TIA_reset_player_1
-																																+
-																															   7)
-																															   + TIA_motion_player_1))))
+	if ((TIA_player_1_mask_tmp & 0x01) && (TIA_reset_player_1) && (((HSYNC_Period - 1) >= (TIA_reset_player_1 + TIA_motion_player_1 + TIA_player_1_offset)) && ((HSYNC_Period - 1) <= ((TIA_reset_player_1 + 7) + TIA_motion_player_1 + TIA_player_1_offset))) && (!TIA_player_1_finished))
 	{
 		logerror("motion player 1 %d \n", TIA_motion_player_1);
 		if (!TIA_player_1_reflect)
 		{
-			if ((TIA_player_pattern_1_tmp & 0x80))
-				PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P1;
+			UINT8 tmpbit = 0;
+			if (!TIA_player_delay_1)
+			{
+				if ((TIA_player_pattern_1_tmp & 0x80))
+				{
+					PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P1;
+					tmpbit = 0x01;
+				}
+			}
+			else
+			{
+				if ((TIA_player_pattern_1_delayed & 0x80))
+				{
+					PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P1;
+					tmpbit = 0x01;
+				}
+			}
 			//  TIA_reset_player_1 = 0;
 			logerror("Hsync Period = %02x\n", HSYNC_Period);
-			TIA_player_pattern_1_tmp = TIA_player_pattern_1_tmp << 1;
-			if (!TIA_player_1_tick)
+			TIA_player_1_pixel_delay_tmp--;
+			if(!TIA_player_1_pixel_delay_tmp)
 			{
-				TIA_player_pattern_1_tmp = TIA_player_pattern_1;
+				TIA_player_1_pixel_delay_tmp = TIA_player_1_pixel_delay;
+				//TIA_player_pattern_1_tmp = TIA_player_pattern_1_tmp << 1;
+				//TIA_player_pattern_1_delayed = TIA_player_pattern_1_delayed << 1;
+				SHIFT_LEFT8(TIA_player_pattern_1_tmp)
+				SHIFT_LEFT8(TIA_player_pattern_1_delayed)
+				TIA_player_1_tick--;
+				if (!TIA_player_1_tick)
+				{
+				//TIA_player_pattern_1_tmp = TIA_player_pattern_1;
 				TIA_player_1_tick = 8;
+				}
 			}
 		}
 		else
 		{
-			if ((TIA_player_pattern_1_tmp & 0x01))
-				PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P1;
+			UINT8 tmpbit = 0;
+			if (!TIA_player_delay_1)
+			{
+				if ((TIA_player_pattern_1_tmp & 0x01))
+				{
+					PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P1;
+					tmpbit = 0x80;
+				}
+			}
+			else
+			{
+				if ((TIA_player_pattern_1_delayed & 0x01))
+				{
+					PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P1;
+					tmpbit = 0x80;
+				}
+			}
 			//  TIA_reset_player_1 = 0;
 			logerror("Hsync Period = %02x\n", HSYNC_Period);
-			TIA_player_pattern_1_tmp = TIA_player_pattern_1_tmp >> 1;
-			if (!TIA_player_1_tick)
+			TIA_player_1_pixel_delay_tmp--;
+			if(!TIA_player_1_pixel_delay_tmp)
 			{
-				TIA_player_pattern_1_tmp = TIA_player_pattern_1;
-				TIA_player_1_tick = 8;
+				TIA_player_1_pixel_delay_tmp = TIA_player_1_pixel_delay;
+				//TIA_player_pattern_1_tmp = TIA_player_pattern_1_tmp >> 1;
+				//TIA_player_pattern_1_delayed = TIA_player_pattern_1_delayed >> 1;
+				SHIFT_RIGHT8(TIA_player_pattern_1_tmp)
+				SHIFT_RIGHT8(TIA_player_pattern_1_delayed)
+				TIA_player_1_tick--;
+				if (!TIA_player_1_tick)
+				{
+					//TIA_player_pattern_1_tmp = TIA_player_pattern_1;
+					TIA_player_1_tick = 8;
+				}
 			}
 		}
 	}
+	if((HSYNC_Period >= 68) && ((HSYNC_Period - 1)>=TIA_reset_player_0 + TIA_motion_player_0))
+	{
+		TIA_player_0_block++;
 
+		if(TIA_player_0_block == 8)
+		{
+			TIA_player_0_offset+=8;
+			//TIA_player_0_mask_tmp = (TIA_player_0_mask_tmp >> 1) & 0x7f;
+			SHIFT_RIGHT10(TIA_player_0_mask_tmp)
+			TIA_player_0_mask_bit--;
+			TIA_player_0_block = 0;
+			if(!TIA_player_0_mask_bit)
+			{
+				TIA_player_0_mask_bit = 10;
+				TIA_player_0_finished = 1;
+			}
+
+		}
+	}
+	if((HSYNC_Period >= 68) && ((HSYNC_Period - 1)>=TIA_reset_player_1 + TIA_motion_player_1))
+	{
+		TIA_player_1_block++;
+
+		if(TIA_player_1_block == 8)
+		{
+			TIA_player_1_offset+=8;
+
+			SHIFT_RIGHT10(TIA_player_1_mask_tmp)
+			TIA_player_1_mask_bit--;
+			TIA_player_1_block = 0;
+			if(!TIA_player_1_mask_bit)
+			{
+				TIA_player_1_mask_bit = 10;
+				TIA_player_1_finished = 1;
+			}
+
+		}
+	}
 	if (HSYNC_Period >= 228)
 	{
 		HSYNC_Period = 0;
@@ -2369,6 +1325,7 @@ void a2600_init_machine(void)
 	cpu_current_state = 1;
 	currentline = 0;
 	HSYNC_timer = timer_pulse(TIME_IN_CYCLES(76, 0), 0, a2600_main_cb);
+	TIA_pf_mask.shiftreg = 0x080000;
 	return;
 
 }
