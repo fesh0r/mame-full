@@ -45,7 +45,8 @@ Historical notes: TI made several last minute design changes.
 #include "machine/994x_ser.h"
 #include "machine/99_dsk.h"
 #include "machine/99_ide.h"
-#include "devices/cartslot.h"
+#include "machine/99_hsgpl.h"
+/*#include "devices/cartslot.h"*/
 #include "devices/basicdsk.h"
 
 /*
@@ -186,6 +187,9 @@ INPUT_PORTS_START(ti99_4a)
 		PORT_BITX( config_rs232_mask << config_rs232_bit, 1 << config_rs232_bit, IPT_DIPSWITCH_NAME, "TI RS232 card", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
 			PORT_DIPSETTING( 1 << config_rs232_bit, DEF_STR( On ) )
+		PORT_BITX( config_hsgpl_mask << config_hsgpl_bit, /*0*/1 << config_hsgpl_bit, IPT_DIPSWITCH_NAME, "SNUG HSGPL card", KEYCODE_NONE, IP_JOY_NONE )
+			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
+			PORT_DIPSETTING( 1 << config_hsgpl_bit, DEF_STR( On ) )
 
 	PORT_START	/* col 0 */
 		PORT_BITX(0x0088, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
@@ -302,6 +306,9 @@ INPUT_PORTS_START(ti99_4)
 		PORT_BITX( config_handsets_mask << config_handsets_bit, /*1 << config_handsets_bit*/0, IPT_DIPSWITCH_NAME, "I/R remote handset", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
 			PORT_DIPSETTING( 1 << config_handsets_bit, DEF_STR( On ) )
+		PORT_BITX( config_hsgpl_mask << config_hsgpl_bit, 0/*1 << config_hsgpl_bit*/, IPT_DIPSWITCH_NAME, "SNUG HSGPL card", KEYCODE_NONE, IP_JOY_NONE )
+			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
+			PORT_DIPSETTING( 1 << config_hsgpl_bit, DEF_STR( On ) )
 
 	PORT_START	/* col 0 */
 		PORT_KEY2(0x0080, IP_ACTIVE_LOW, "1 !", KEYCODE_1, IP_JOY_NONE,			'1',	'!')
@@ -747,68 +754,77 @@ MACHINE_DRIVER_END
 ROM_START(ti99_4)
 	/*CPU memory space*/
 	ROM_REGION16_BE(region_cpu1_len, REGION_CPU1, 0)
-	ROM_LOAD16_BYTE("u610.bin", 0x0000, 0x1000,CRC(6fcf4b15)) /* CPU ROMs high */
-	ROM_LOAD16_BYTE("u611.bin", 0x0001, 0x1000,CRC(491c21d1)) /* CPU ROMs low */
+	ROM_LOAD16_BYTE("u610.bin", 0x0000, 0x1000, CRC(6fcf4b15)) /* CPU ROMs high */
+	ROM_LOAD16_BYTE("u611.bin", 0x0001, 0x1000, CRC(491c21d1)) /* CPU ROMs low */
 
 	/*GROM memory space*/
 	ROM_REGION(0x10000, region_grom, 0)
-	ROM_LOAD("u500.bin", 0x0000, 0x1800,CRC(aa757e13)) /* system GROM 0 */
-	ROM_LOAD("u501.bin", 0x2000, 0x1800,CRC(c863e460)) /* system GROM 1 */
-	ROM_LOAD("u502.bin", 0x4000, 0x1800,CRC(b0eda548)) /* system GROM 1 */
+	ROM_LOAD("u500.bin", 0x0000, 0x1800, CRC(aa757e13)) /* system GROM 0 */
+	ROM_LOAD("u501.bin", 0x2000, 0x1800, CRC(c863e460)) /* system GROM 1 */
+	ROM_LOAD("u502.bin", 0x4000, 0x1800, CRC(b0eda548)) /* system GROM 1 */
 
 	/*DSR ROM space*/
 	ROM_REGION(region_dsr_len, region_dsr, 0)
-	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000,CRC(8f7df93f)) /* TI disk DSR ROM */
-	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000,CRC(06f1ec89)) /* BwG disk DSR ROM */
-	ROM_LOAD_OPTIONAL("hfdc.bin", offset_hfdc_dsr, 0x4000,CRC(66fbe0ed)) /* HFDC disk DSR ROM */
-	ROM_LOAD_OPTIONAL("rs232.bin", offset_rs232_dsr, 0x1000,CRC(eab382fb)) /* TI rs232 DSR ROM */
+	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000, CRC(8f7df93f)) /* TI disk DSR ROM */
+	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000, CRC(06f1ec89)) /* BwG disk DSR ROM */
+	ROM_LOAD_OPTIONAL("hfdc.bin", offset_hfdc_dsr, 0x4000, CRC(66fbe0ed)) /* HFDC disk DSR ROM */
+	ROM_LOAD_OPTIONAL("rs232.bin", offset_rs232_dsr, 0x1000, CRC(eab382fb)) /* TI rs232 DSR ROM */
+
+	/* HSGPL memory space */
+	ROM_REGION(region_hsgpl_len, region_hsgpl, 0)
 
 	/*TMS5220 ROM space*/
 	ROM_REGION(0x8000, region_speech_rom, 0)
-	ROM_LOAD_OPTIONAL("spchrom.bin", 0x0000, 0x8000,CRC(58b155f7)) /* system speech ROM */
+	ROM_LOAD_OPTIONAL("spchrom.bin", 0x0000, 0x8000, CRC(58b155f7)) /* system speech ROM */
 ROM_END
 
 ROM_START(ti99_4a)
 	/*CPU memory space*/
 	ROM_REGION16_BE(region_cpu1_len, REGION_CPU1, 0)
-	ROM_LOAD16_WORD("994arom.bin", 0x0000, 0x2000,CRC(db8f33e5)) /* system ROMs */
+	ROM_LOAD16_WORD("994arom.bin", 0x0000, 0x2000, CRC(db8f33e5)) /* system ROMs */
 
 	/*GROM memory space*/
 	ROM_REGION(0x10000, region_grom, 0)
-	ROM_LOAD("994agrom.bin", 0x0000, 0x6000,CRC(af5c2449)) /* system GROMs */
+	ROM_LOAD("994agrom.bin", 0x0000, 0x6000, CRC(af5c2449)) /* system GROMs */
 
 	/*DSR ROM space*/
 	ROM_REGION(region_dsr_len, region_dsr, 0)
-	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000,CRC(8f7df93f)) /* TI disk DSR ROM */
-	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000,CRC(06f1ec89)) /* BwG disk DSR ROM */
-	ROM_LOAD_OPTIONAL("hfdc.bin", offset_hfdc_dsr, 0x4000,CRC(66fbe0ed)) /* HFDC disk DSR ROM */
-	ROM_LOAD_OPTIONAL("rs232.bin", offset_rs232_dsr, 0x1000,CRC(eab382fb)) /* TI rs232 DSR ROM */
+	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000, CRC(8f7df93f)) /* TI disk DSR ROM */
+	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000, CRC(06f1ec89)) /* BwG disk DSR ROM */
+	ROM_LOAD_OPTIONAL("hfdc.bin", offset_hfdc_dsr, 0x4000, CRC(66fbe0ed)) /* HFDC disk DSR ROM */
+	ROM_LOAD_OPTIONAL("rs232.bin", offset_rs232_dsr, 0x1000, CRC(eab382fb)) /* TI rs232 DSR ROM */
+
+	/* HSGPL memory space */
+	ROM_REGION(region_hsgpl_len, region_hsgpl, 0)
 
 	/*TMS5220 ROM space*/
 	ROM_REGION(0x8000, region_speech_rom, 0)
-	ROM_LOAD_OPTIONAL("spchrom.bin", 0x0000, 0x8000,CRC(58b155f7)) /* system speech ROM */
+	ROM_LOAD_OPTIONAL("spchrom.bin", 0x0000, 0x8000, CRC(58b155f7)) /* system speech ROM */
 ROM_END
 
 ROM_START(ti99_4ev)
 	/*CPU memory space*/
 	ROM_REGION16_BE(region_cpu1_len, REGION_CPU1, 0)
-	ROM_LOAD16_WORD("994arom.bin", 0x0000, 0x2000,CRC(db8f33e5)) /* system ROMs */
+	ROM_LOAD16_WORD("994arom.bin", 0x0000, 0x2000, CRC(db8f33e5)) /* system ROMs */
 
 	/*GROM memory space*/
 	ROM_REGION(0x10000, region_grom, 0)
-	ROM_LOAD("994agr38.bin", 0x0000, 0x6000,CRC(bdd9f09b)) /* system GROMs */
+	ROM_LOAD("994agr38.bin", 0x0000, 0x6000, CRC(bdd9f09b)) /* system GROMs */
 
 	/*DSR ROM space*/
 	ROM_REGION(region_dsr_len, region_dsr, 0)
-	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000,CRC(8f7df93f)) /* TI disk DSR ROM */
-	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000,CRC(06f1ec89)) /* BwG disk DSR ROM */
-	ROM_LOAD_OPTIONAL("hfdc.bin", offset_hfdc_dsr, 0x4000,CRC(66fbe0ed)) /* HFDC disk DSR ROM */
-	ROM_LOAD_OPTIONAL("rs232.bin", offset_rs232_dsr, 0x1000,CRC(eab382fb)) /* TI rs232 DSR ROM */
-	ROM_LOAD("evpcdsr.bin", offset_evpc_dsr, 0x10000,CRC(a062b75d)) /* evpc DSR ROM */
+	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000, CRC(8f7df93f)) /* TI disk DSR ROM */
+	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000, CRC(06f1ec89)) /* BwG disk DSR ROM */
+	ROM_LOAD_OPTIONAL("hfdc.bin", offset_hfdc_dsr, 0x4000, CRC(66fbe0ed)) /* HFDC disk DSR ROM */
+	ROM_LOAD_OPTIONAL("rs232.bin", offset_rs232_dsr, 0x1000, CRC(eab382fb)) /* TI rs232 DSR ROM */
+	ROM_LOAD("evpcdsr.bin", offset_evpc_dsr, 0x10000, CRC(a062b75d)) /* evpc DSR ROM */
+
+	/* HSGPL memory space */
+	ROM_REGION(region_hsgpl_len, region_hsgpl, 0)
 
 	/*TMS5220 ROM space*/
 	ROM_REGION(0x8000, region_speech_rom, 0)
-	ROM_LOAD_OPTIONAL("spchrom.bin", 0x0000, 0x8000,CRC(58b155f7)) /* system speech ROM */
+	ROM_LOAD_OPTIONAL("spchrom.bin", 0x0000, 0x8000, CRC(58b155f7)) /* system speech ROM */
 ROM_END
 
 /* a TI99 console only had one cartridge slot, but cutting the ROMs
@@ -827,8 +843,9 @@ SYSTEM_CONFIG_START(ti99_4)
 	CONFIG_DEVICE_LEGACY			(IO_CARTSLOT,	3,	"bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_READ,	NULL,	NULL,	device_load_ti99_cart,	device_unload_ti99_cart,	NULL)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",										device_load_ti99_floppy)
 	CONFIG_DEVICE_LEGACY			(IO_HARDDISK, 	1, "hd\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_OR_READ, NULL, NULL, device_load_ti99_ide, device_unload_ti99_ide, NULL)
-	CONFIG_DEVICE_LEGACY			(IO_PARALLEL,	1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_pio,	device_unload_ti99_4_pio,		NULL)
-	CONFIG_DEVICE_LEGACY			(IO_SERIAL,		1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_rs232,	device_unload_ti99_4_rs232,	NULL)
+	CONFIG_DEVICE_LEGACY			(IO_PARALLEL,	1, "\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_pio,	device_unload_ti99_4_pio,		NULL)
+	CONFIG_DEVICE_LEGACY			(IO_SERIAL,		1, "\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_rs232,	device_unload_ti99_4_rs232,	NULL)
+	/*CONFIG_DEVICE_LEGACY			(IO_CYLINDER,	1, "\0",	DEVICE_LOAD_RESETS_CPU,		OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_hsgpl,		device_unload_ti99_hsgpl,	NULL)*/
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT   COMPAT	MACHINE		 INPUT	  INIT		CONFIG	COMPANY				FULLNAME */

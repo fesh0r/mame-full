@@ -57,6 +57,7 @@ TODO:
 #include "994x_ser.h"
 #include "99_dsk.h"
 #include "99_ide.h"
+#include "99_hsgpl.h"
 
 
 /* prototypes */
@@ -120,6 +121,8 @@ static char has_evpc;
 static char has_rs232;
 /* TRUE if ti99/4 IR remote handset present */
 static char has_handset;
+/* TRUE if hsgpl card present */
+static char has_hsgpl;
 
 
 /* tms9901 setup */
@@ -249,20 +252,11 @@ GPL ports:
 	in the range recognized by the TI ROMs (0-15), and therefore it is used by the p-code DSR ROMs
 	as custom data.  Additionally, some hackers used the extra ports to implement "GRAM" devices.
 */
-/* defines for GROM_flags */
-enum
-{
-	gf_has_look_ahead = 0x01,	/* has a look-ahead buffer - true with original GROMs */
-	gf_is_GRAM = 0x02			/* is a GRAM - false with original GROMs */
-};
-
 /* GROM_port_t: descriptor for a port of 8 GROMs */
 typedef struct GROM_port_t
 {
 	/* pointer to GROM data */
 	UINT8 *data_ptr;
-	/* active GROM in port (3 bits: 0-7) */
-	//int active_GROM;
 	/* current address pointer for the active GROM in port (16 bits) */
 	unsigned int addr;
 	/* GROM data buffer */
@@ -271,18 +265,14 @@ typedef struct GROM_port_t
 	address so that next access is mapped to the LSB, and cleared after each
 	data access */
 	char raddr_LSB, waddr_LSB;
-	/* flags for active GROM */
-	char cur_flags;
-	/* flags for each GROM chip */
-	char GROM_flags[8];
 } GROM_port_t;
-
-/* GPL_port_lookup[n]: points to specific GROM_port_t structure when console GROMs are overriden
-	by another GROM in port n, NULL otherwise */
-static GROM_port_t *GPL_port_lookup[256];
 
 /* descriptor for console GROMs */
 GROM_port_t console_GROMs;
+
+/* true if hsgpl is enabled (i.e. has_hsgpl is true and hsgpl cru bit crdena is
+set) */
+static char hsgpl_crdena;
 
 /*
 	Cartridge support
@@ -293,10 +283,12 @@ static UINT16 *cartridge_pages[2] = {NULL, NULL};
 static char cartridge_minimemory = FALSE;
 /* flag: TRUE if the cartridge is paged */
 static char cartridge_paged = FALSE;
+/* flag: TRUE if the cartridge is MBX-style */
+static char cartridge_mbx = FALSE;
 /* flag on the data for the current page (cartridge_pages[0] if cartridge is not paged) */
 static UINT16 *current_page_ptr;
 /* keep track of cart file types - required for cleanup... */
-typedef enum slot_type_t { SLOT_EMPTY = -1, SLOT_GROM = 0, SLOT_CROM = 1, SLOT_DROM = 2, SLOT_MINIMEM = 3 } slot_type_t;
+typedef enum slot_type_t { SLOT_EMPTY = -1, SLOT_GROM = 0, SLOT_CROM = 1, SLOT_DROM = 2, SLOT_MINIMEM = 3, SLOT_MBX = 4 } slot_type_t;
 static slot_type_t slot_type[3] = { SLOT_EMPTY, SLOT_EMPTY, SLOT_EMPTY};
 
 
@@ -435,6 +427,11 @@ DEVICE_LOAD( ti99_cart )
 			/* rom minimemory  */
 			type = SLOT_MINIMEM;
 		}
+		else if ((! stricmp(ch2, "b.bin")) || (! stricmp(ch, ".brom")) || (! stricmp(ch, ".b")))
+		{
+			/* rom MBX  */
+			type = SLOT_MBX;
+		}
 	}
 
 	slot_type[id] = type;
@@ -450,6 +447,9 @@ DEVICE_LOAD( ti99_cart )
 
 	case SLOT_MINIMEM:
 		cartridge_minimemory = TRUE;
+	case SLOT_MBX:
+		if (type == SLOT_MBX)
+			cartridge_mbx = TRUE;
 	case SLOT_CROM:
 		mame_fread_msbfirst(file, cartridge_pages[0], 0x2000);
 		current_page_ptr = cartridge_pages[0];
@@ -491,6 +491,10 @@ DEVICE_UNLOAD( ti99_cart )
 	case SLOT_MINIMEM:
 		cartridge_minimemory = FALSE;
 		/* we should insert some code to save the minimem contents... */
+	case SLOT_MBX:
+		if (slot_type[id] == SLOT_MBX)
+			cartridge_mbx = FALSE;
+			/* maybe we should insert some code to save the memory contents... */
 	case SLOT_CROM:
 		memset(cartridge_pages[0], 0, 0x2000);
 		break;
@@ -510,18 +514,8 @@ DEVICE_UNLOAD( ti99_cart )
 */
 void machine_init_ti99(void)
 {
-	int i;
-
-
-	/* erase GPL_port_lookup, so that only console_GROMs are installed by default */
-	memset(GPL_port_lookup, 0, sizeof(GPL_port_lookup));
-
-	for (i=0; i<8;i++)
-		console_GROMs.GROM_flags[i] = gf_has_look_ahead;
-
 	console_GROMs.data_ptr = memory_region(region_grom);
 	console_GROMs.addr = 0;
-	console_GROMs.cur_flags = console_GROMs.GROM_flags[0];
 
 	if (ti99_model == model_99_4p)
 	{
@@ -570,6 +564,7 @@ void machine_init_ti99(void)
 	has_ide = (readinputport(input_port_config) >> config_ide_bit) & config_ide_mask;
 	has_rs232 = (readinputport(input_port_config) >> config_rs232_bit) & config_rs232_mask;
 	has_handset = (ti99_model == model_99_4) && ((readinputport(input_port_config) >> config_handsets_bit) & config_handsets_mask);
+	has_hsgpl = (ti99_model == model_99_4p) || ((readinputport(input_port_config) >> config_hsgpl_bit) & config_hsgpl_mask);
 
 	/* set up optional expansion hardware */
 	ti99_peb_init(ti99_model == model_99_4p, tms9901_set_int1, NULL);
@@ -640,12 +635,23 @@ void machine_init_ti99(void)
 	if (has_rs232)
 		ti99_rs232_init();
 
+	if (has_hsgpl)
+	{
+		ti99_hsgpl_init();
+		ti99_hsgpl_load_memcard();
+	}
+	else
+		hsgpl_crdena = 0;
+
 	if (has_evpc)
 		ti99_evpc_init();
 }
 
 void machine_stop_ti99(void)
 {
+	if (has_hsgpl)
+		ti99_hsgpl_save_memcard();
+
 	if (has_rs232)
 		ti99_rs232_cleanup();
 
@@ -677,6 +683,14 @@ void ti99_4ev_hblank_interrupt(void)
 	v9938_interrupt();
 }
 
+/*
+	Backdoor function that is called by hsgpl, so that the machine code knows
+	whether hsgpl or console GROMs are active
+*/
+void set_hsgpl_crdena(int data)
+{
+	hsgpl_crdena = (data != 0);
+}
 
 /*===========================================================================*/
 #if 0
@@ -713,6 +727,13 @@ READ16_HANDLER ( ti99_rw_cartmem )
 {
 	tms9900_ICount -= 4;
 
+	if (hsgpl_crdena)
+		/* hsgpl is enabled */
+		return ti99_hsgpl_rom6_r(offset, mem_mask);
+
+	if (cartridge_mbx && (offset >= 0x0600) && (offset <= 0x07fe))
+		return (cartridge_pages[0])[offset];
+
 	return current_page_ptr[offset];
 }
 
@@ -723,9 +744,21 @@ WRITE16_HANDLER ( ti99_ww_cartmem )
 {
 	tms9900_ICount -= 4;
 
-	if (cartridge_minimemory && offset >= 0x800)
+	if (hsgpl_crdena)
+		/* hsgpl is enabled */
+		ti99_hsgpl_rom6_w(offset, data, mem_mask);
+	else if (cartridge_minimemory && offset >= 0x800)
 		/* handle minimem RAM */
 		COMBINE_DATA(current_page_ptr+offset);
+	else if (cartridge_mbx)
+	{	/* handle MBX cart */
+		/* RAM in 0x6c00-0x6ffd (presumably non-paged) */
+		/* mapper at 0x6ffe */
+		if ((offset >= 0x0600) && (offset <= 0x07fe))
+			COMBINE_DATA(cartridge_pages[0]+offset);
+		else if ((offset == 0x07ff) && ACCESSING_MSB16)
+			current_page_ptr = cartridge_paged ? cartridge_pages[(data >> 8) & 1] : 0;
+	}
 	else if (cartridge_paged)
 		/* handle pager */
 		current_page_ptr = cartridge_pages[offset & 1];
@@ -911,7 +944,6 @@ static WRITE16_HANDLER ( ti99_ww_wspeech )
 */
 READ16_HANDLER ( ti99_rw_rgpl )
 {
-	GROM_port_t *port = GPL_port_lookup[(offset & 0x1FE) >> 1];	/* GROM/GRAM can be paged */
 	int reply;
 
 
@@ -932,22 +964,6 @@ READ16_HANDLER ( ti99_rw_rgpl )
 			reply = console_GROMs.addr & 0xff00;
 			console_GROMs.raddr_LSB = TRUE;
 		}
-
-		if (port)
-		{
-			port->waddr_LSB = FALSE;
-
-			if (port->raddr_LSB)
-			{
-				reply = (port->addr << 8) & 0xff00;
-				port->raddr_LSB = FALSE;
-			}
-			else
-			{
-				reply = port->addr & 0xff00;
-				port->raddr_LSB = TRUE;
-			}
-		}
 	}
 	else
 	{	/* read GPL data */
@@ -958,17 +974,11 @@ READ16_HANDLER ( ti99_rw_rgpl )
 		console_GROMs.buf = console_GROMs.data_ptr[console_GROMs.addr];
 		console_GROMs.addr = ((console_GROMs.addr + 1) & 0x1FFF) | (console_GROMs.addr & 0xE000);
 		console_GROMs.raddr_LSB = console_GROMs.waddr_LSB = FALSE;
-
-		if (port)
-		{
-			reply = ((int) port->buf) << 8;	/* retreive buffer */
-
-			/* read ahead */
-			port->buf = port->data_ptr[port->addr];
-			port->addr = ((port->addr + 1) & 0x1FFF) | (port->addr & 0xE000);
-			port->raddr_LSB = port->waddr_LSB = FALSE;
-		}
 	}
+
+	if (hsgpl_crdena)
+		/* hsgpl buffers are stronger than console GROM buffers */
+		reply = ti99_hsgpl_gpl_r(offset, mem_mask);
 
 	return reply;
 }
@@ -978,13 +988,10 @@ READ16_HANDLER ( ti99_rw_rgpl )
 */
 WRITE16_HANDLER ( ti99_ww_wgpl )
 {
-	GROM_port_t *port = GPL_port_lookup[(offset & 0x1FE) >> 1];	/* GROM/GRAM can be paged */
-
-
 	tms9900_ICount -= 4/*16*/;		/* from 4 to 16? */
 
 	if (offset & 1)
-	{	/* write GPL adress */
+	{	/* write GPL address */
 		/* the console GROMs are always affected */
 		console_GROMs.raddr_LSB = FALSE;
 
@@ -1001,55 +1008,25 @@ WRITE16_HANDLER ( ti99_ww_wgpl )
 		else
 		{
 			console_GROMs.addr = (data & 0xFF00) | (console_GROMs.addr & 0xFF);
-			console_GROMs.cur_flags = console_GROMs.GROM_flags[data >> 13];
 
 			console_GROMs.waddr_LSB = TRUE;
 		}
 
-		if (port)
-		{
-			port->raddr_LSB = FALSE;
-
-			if (port->waddr_LSB)
-			{
-				port->addr = (port->addr & 0xFF00) | ((data >> 8) & 0xFF);
-
-				/* read ahead */
-				port->buf = port->data_ptr[port->addr];
-				port->addr = ((port->addr + 1) & 0x1FFF) | (port->addr & 0xE000);
-
-				port->waddr_LSB = FALSE;
-			}
-			else
-			{
-				port->addr = (data & 0xFF00) | (port->addr & 0xFF);
-				port->cur_flags = port->GROM_flags[data >> 13];
-
-				port->waddr_LSB = TRUE;
-			}
-		}
 	}
 	else
-	{	/* write GPL byte */
+	{	/* write GPL data */
 		/* the console GROMs are always affected */
-		/* BTW, console GROMs are never GRAMs, therefore there is no need to check */
+		/* BTW, console GROMs are never GRAMs, therefore there is no need to
+		actually write anything */
 		/* read ahead */
 		console_GROMs.buf = console_GROMs.data_ptr[console_GROMs.addr];
 		console_GROMs.addr = ((console_GROMs.addr + 1) & 0x1FFF) | (console_GROMs.addr & 0xE000);
 		console_GROMs.raddr_LSB = console_GROMs.waddr_LSB = FALSE;
 
-		if (port)
-		{
-			/* GRAM support is almost ready, but we need to support imitation "GROMs" with no read-ahead */
-			if (port->GROM_flags[port->addr >> 13])
-				port->data_ptr[port->addr] = ((data >> 8) & 0xFF);
-
-			/* read ahead */
-			port->buf = port->data_ptr[port->addr];
-			port->addr = ((port->addr + 1) & 0x1FFF) | (port->addr & 0xE000);
-			port->raddr_LSB = port->waddr_LSB = FALSE;
-		}
 	}
+
+	if (hsgpl_crdena)
+		ti99_hsgpl_gpl_w(offset, data, mem_mask);
 }
 
 

@@ -9,6 +9,7 @@ enum
 {
 	region_grom = REGION_USER1,
 	region_dsr = REGION_USER2,
+	region_hsgpl = REGION_USER3,
 	region_speech_rom = REGION_SOUND1
 };
 
@@ -29,7 +30,7 @@ enum
 	offset_rom6b_4p= 0xe000,
 	offset_sram_4p = 0x10000,		/* scratch RAM (1kbyte) */
 	offset_cart_4p = 0x10400,		/* cartridge ROM/RAM (2*8 kbytes) */
-	offset_xram_4p = 0x12400,		/* extended RAM (32 kbytes - 512kb with myarc-like mapper, 1Mb with super AMS) */
+	offset_xram_4p = 0x12400,		/* extended RAM (1Mb with super AMS compatible mapper) */
 	region_cpu1_len_4p = 0x112400	/* total len */
 };
 
@@ -45,9 +46,21 @@ enum
 	offset_rs232_dsr = offset_hfdc_ram  + 0x08000,	/* TI RS232 DSR (4kbytes) */
 	offset_evpc_dsr  = offset_rs232_dsr + 0x01000,	/* EVPC DSR (64kbytes) */
 	offset_ide_ram   = offset_evpc_dsr  + 0x10000,	/* IDE card RAM (32 to 2Mbytes, we settled for 512kbytes) */
-	offset_ide_ram2   = offset_ide_ram  + 0x80000,	/* IDE RTC RAM (4kbytes) */
+	offset_ide_ram2  = offset_ide_ram   + 0x80000,	/* IDE RTC RAM (4kbytes) */
 
-	region_dsr_len =   offset_ide_ram2  + 0x01000
+	region_dsr_len   = offset_ide_ram2  + 0x01000
+};
+
+/* offsets for region_hsgpl */
+enum
+{
+	offset_hsgpl_dsr  = 0x000000,					/* DSR (512kbytes) */
+	offset_hsgpl_grom = 0x080000,					/* GROM (1Mbytes) */
+	offset_hsgpl_rom6 = 0x180000,					/* ROM6 (512kbytes) */
+	offset_hsgpl_gram = 0x200000,					/* GRAM (128kbytes) */
+	offset_hsgpl_ram6 = 0x220000,					/* RAM6 (128kbytes, but only 64kbytes are used) */
+
+	region_hsgpl_len  = /*0x240000*/0x230000
 };
 
 /* enum for RAM config */
@@ -99,7 +112,9 @@ enum
 	config_rs232_mask	= 0x1,
 	/* next option only makes sense for ti99/4 */
 	config_handsets_bit	= 7,
-	config_handsets_mask= 0x1
+	config_handsets_mask= 0x1,
+	config_hsgpl_bit	= 8,
+	config_hsgpl_mask	= 0x1
 };
 
 
@@ -123,6 +138,8 @@ int video_start_ti99_4a(void);
 int video_start_ti99_4ev(void);
 void ti99_vblank_interrupt(void);
 void ti99_4ev_hblank_interrupt(void);
+
+void set_hsgpl_crdena(int data);
 
 READ16_HANDLER ( ti99_rw_null8bits );
 WRITE16_HANDLER ( ti99_ww_null8bits );
