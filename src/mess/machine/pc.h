@@ -133,60 +133,60 @@ extern void pc_cga_init_machine(void);
 extern void pc_t1t_init_machine(void);
 extern void pc_shutdown_machine(void);
 
-extern void pc_DMA_w(int offset, int data);
-extern int	pc_DMA_r(int offset);
-extern void pc_DMA_page_w(int offset, int data);
-extern int	pc_DMA_page_r(int offset);
+extern WRITE_HANDLER ( pc_DMA_w );
+extern READ_HANDLER ( pc_DMA_r );
+extern WRITE_HANDLER ( pc_DMA_page_w );
+extern READ_HANDLER ( pc_DMA_page_r );
 
-extern void pc_PIC_w(int offset, int data);
-extern int	pc_PIC_r(int offset);
+extern WRITE_HANDLER ( pc_PIC_w );
+extern READ_HANDLER ( pc_PIC_r );
 
-extern void pc_PIT_w(int offset, int data);
-extern int	pc_PIT_r(int offset);
+extern WRITE_HANDLER ( pc_PIT_w );
+extern READ_HANDLER ( pc_PIT_r );
 
-extern void pc_PIO_w(int offset, int data);
-extern int	pc_PIO_r(int offset);
+extern WRITE_HANDLER ( pc_PIO_w );
+extern READ_HANDLER ( pc_PIO_r );
 
-extern void pc_EXP_w(int offset, int data);
-extern int	pc_EXP_r(int offset);
+extern WRITE_HANDLER ( pc_EXP_w );
+extern READ_HANDLER ( pc_EXP_r );
 
-extern void pc_LPT1_w(int offset, int data);
-extern int	pc_LPT1_r(int offset);
-extern void pc_LPT2_w(int offset, int data);
-extern int	pc_LPT2_r(int offset);
-extern void pc_LPT3_w(int offset, int data);
-extern int	pc_LPT3_r(int offset);
+extern WRITE_HANDLER ( pc_LPT1_w );
+extern READ_HANDLER ( pc_LPT1_r );
+extern WRITE_HANDLER ( pc_LPT2_w );
+extern READ_HANDLER ( pc_LPT2_r );
+extern WRITE_HANDLER ( pc_LPT3_w );
+extern READ_HANDLER ( pc_LPT3_r );
 
-extern void pc_COM1_w(int offset, int data);
-extern int	pc_COM1_r(int offset);
-extern void pc_COM2_w(int offset, int data);
-extern int	pc_COM2_r(int offset);
-extern void pc_COM3_w(int offset, int data);
-extern int	pc_COM3_r(int offset);
-extern void pc_COM4_w(int offset, int data);
-extern int	pc_COM4_r(int offset);
+extern WRITE_HANDLER ( pc_COM1_w );
+extern READ_HANDLER ( pc_COM1_r );
+extern WRITE_HANDLER ( pc_COM2_w );
+extern READ_HANDLER ( pc_COM2_r );
+extern WRITE_HANDLER ( pc_COM3_w );
+extern READ_HANDLER ( pc_COM3_r );
+extern WRITE_HANDLER ( pc_COM4_w );
+extern READ_HANDLER ( pc_COM4_r );
 
-extern void pc_JOY_w(int offset, int data);
-extern int	pc_JOY_r(int offset);
+extern WRITE_HANDLER ( pc_JOY_w );
+extern READ_HANDLER ( pc_JOY_r );
 
-extern void pc_FDC_w(int offset, int data);
-extern int	pc_FDC_r(int offset);
+extern WRITE_HANDLER ( pc_FDC_w );
+extern READ_HANDLER ( pc_FDC_r );
 
-extern void pc_HDC1_w(int offset, int data);
-extern int	pc_HDC1_r(int offset);
-extern void pc_HDC2_w(int offset, int data);
-extern int	pc_HDC2_r(int offset);
+extern WRITE_HANDLER ( pc_HDC1_w );
+extern READ_HANDLER (	pc_HDC1_r );
+extern WRITE_HANDLER ( pc_HDC2_w );
+extern READ_HANDLER ( pc_HDC2_r );
 
-extern void pc_MDA_w(int offset, int data);
-extern int	pc_MDA_r(int offset);
+extern WRITE_HANDLER ( pc_MDA_w );
+extern READ_HANDLER ( pc_MDA_r );
 
-extern void pc_CGA_w(int offset, int data);
-extern int	pc_CGA_r(int offset);
+extern WRITE_HANDLER ( pc_CGA_w );
+extern READ_HANDLER ( pc_CGA_r );
 
-extern void pc_t1t_p37x_w(int offset, int data);
-extern int	pc_t1t_p37x_r(int offset);
-extern void pc_T1T_w(int offset, int data);
-extern int	pc_T1T_r(int offset);
+extern WRITE_HANDLER ( pc_t1t_p37x_w );
+extern READ_HANDLER ( pc_t1t_p37x_r );
+extern WRITE_HANDLER ( pc_T1T_w );
+extern READ_HANDLER (	pc_T1T_r );
 
 extern int  pc_frame_interrupt(void);
 
@@ -215,7 +215,7 @@ extern void pc_PIC_issue_irq(int irq);
 extern int  pc_mda_vh_start(void);
 extern void pc_mda_vh_stop(void);
 extern void pc_mda_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-extern void pc_mda_videoram_w(int offset, int data);
+extern WRITE_HANDLER ( pc_mda_videoram_w );
 extern void pc_mda_blink_textcolors(int on);
 extern void pc_mda_index_w(int data);
 extern int	pc_mda_index_r(void);
@@ -233,7 +233,7 @@ extern int	pc_hgc_config_r(void);
 
 extern int	pc_cga_vh_start(void);
 extern void pc_cga_vh_stop(void);
-extern void pc_cga_videoram_w(int offset, int data);
+extern WRITE_HANDLER ( pc_cga_videoram_w );
 extern void pc_cga_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 extern void pc_cga_blink_textcolors(int on);
@@ -252,8 +252,8 @@ extern void pc_cga_lightpen_strobe_w(int data);
 extern int	pc_t1t_vh_start(void);
 extern void pc_t1t_vh_stop(void);
 extern void pc_t1t_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-extern void pc_t1t_videoram_w(int offset, int data);
-extern int	pc_t1t_videoram_r(int offset);
+extern WRITE_HANDLER ( pc_t1t_videoram_w );
+extern READ_HANDLER ( pc_t1t_videoram_r );
 
 extern void pc_t1t_blink_textcolors(int on);
 extern void pc_t1t_index_w(int data);

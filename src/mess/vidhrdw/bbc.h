@@ -14,10 +14,10 @@ void bbc_vh_stop(void);
 void bbc_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 
-void crtc6845_w(int offset, int data);
-void videoULA_w(int offset, int data);
-int crtc6845_r(int offset);
-int videoULA_r(int offset);
+WRITE_HANDLER ( crtc6845_w );
+WRITE_HANDLER ( videoULA_w );
+READ_HANDLER ( crtc6845_r );
+READ_HANDLER ( videoULA_r );
 void setscreenstart(int b4,int b5);
 
 

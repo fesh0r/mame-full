@@ -33,17 +33,17 @@ UINT8 *pet_videoram;
     4
     3..0 keyboard line select
 */
-static int pet_pia0_port_a_read(int offset)
+static READ_HANDLER ( pet_pia0_port_a_read )
 {
 	return 0xff;
 }
 
-static void pet_keyboard_line_select(int offset, int line)
+static WRITE_HANDLER ( pet_keyboard_line_select )
 {
-	pet_keyline_select=line;
+	pet_keyline_select=data;  //data is actually line here!
 }
 
-static int pet_keyboard_line(int offset)
+static READ_HANDLER ( pet_keyboard_line )
 {
 	int data=0;
 	switch(pet_keyline_select) {
@@ -123,7 +123,7 @@ static struct via6522_interface pet_via={
 	void (*out_ca2_func)(int offset, int val);
 	void (*out_cb2_func)(int offset, int val);
 	void (*irq_func)(int state);
-	
+
     /* kludges for the Vectrex */
 	void (*out_shift_func)(int val);
 	void (*t2_callback)(double time);
@@ -296,7 +296,7 @@ void pet_keyboard_business(void)
 
 	value = 0;
 	if (KEY_B_PAD_2) value |= 0x80;
-	if (KEY_B_REPEAT) value |= 0x40; 
+	if (KEY_B_REPEAT) value |= 0x40;
 	//if (KEY_REVERSE) value |= 0x20; // blocking
 	if (KEY_B_0) value |= 0x10;
 	if (KEY_B_COMMA) value |= 8;
@@ -318,7 +318,7 @@ void pet_keyboard_business(void)
 
 	value = 0;
 	//if (KEY_ESCAPE) value |= 0x80; // blocking
-	//if (KEY_REVERSE) value |= 0x40; // blocking 
+	//if (KEY_REVERSE) value |= 0x40; // blocking
 	if (KEY_B_COLON) value |= 0x20;
 	if (KEY_B_STOP) value |= 0x10;
 	if (KEY_B_9) value |= 8;
@@ -513,7 +513,7 @@ void pet_state(PRASTER *this)
 #if VERBOSE_DBG
 	int y;
 	char text[70];
-	
+
 	y = Machine->gamedrv->drv->visible_area.max_y + 1 - Machine->uifont->height;
 
 #if 0

@@ -47,7 +47,7 @@ extern unsigned char *Amstrad_Memory;
 static int snapshot_loaded;
 
 /* used to setup computer if a snapshot was specified */
-int amstrad_opbaseoverride(int pc)
+int amstrad_opbaseoverride(UINT32 pc)
 {
 	/* clear op base override */
 	cpu_setOPbaseoverride(0,0);
@@ -73,6 +73,7 @@ void amstrad_setup_machine(void)
 	/* allocate ram - I control how it is accessed so I must
 	allocate it somewhere - here will do */
 	Amstrad_Memory = malloc(128*1024);
+	if(!Amstrad_Memory) return;
 
 	if (snapshot_loaded)
 	{

@@ -6,7 +6,7 @@
  *		- Support palette rotation at HBLANK time, and maybe get a SockMaster
  *		  demo working...
  */
-
+#include "driver.h"
 #include "machine/6821pia.h"
 #include "mess/vidhrdw/m6847.h"
 #include "vidhrdw/generic.h"
@@ -45,7 +45,7 @@ int dragon_vh_start(void)
 
 	m6847_set_vram(memory_region(REGION_CPU1), 0xffff);
 	m6847_set_vblank_proc(dragon_vblank);
-	m6847_set_artifact_dipswitch(10);
+	m6847_set_artifact_dipswitch(12);
 	sam_videomode = 0;
 	return 0;
 }
@@ -203,7 +203,7 @@ int coco3_vh_start(void)
 	}
 
 	m6847_set_vram(memory_region(REGION_CPU1) + 0x70000, 0xffff);
-	m6847_set_artifact_dipswitch(10);
+	m6847_set_artifact_dipswitch(12);
 
 	if ((coco3font = build_coco3_font())==NULL) {
 		paletteram = NULL;
@@ -234,7 +234,7 @@ void coco3_vh_stop(void)
 
 static void coco3_compute_color(int color, int *red, int *green, int *blue)
 {
-	if (!input_port_11_r(0)) {
+	if ((readinputport(12) & 0x08) == 0) {
 		/* CMP colors
 		 *
 		 * These colors are of the format IICCCC, where II is the intensity and
@@ -462,7 +462,7 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int use_mark_dirty;
 
 	/* Did the user change between CMP and RGB? */
-	cmprgb = input_port_11_r(0);
+	cmprgb = readinputport(12) & 0x08;
 	if (cmprgb != old_cmprgb) {
 		old_cmprgb = cmprgb;
 
@@ -724,7 +724,7 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			m6847_full_refresh = 1;
 		if (m6847_full_refresh)
 			coco3_vh_drawborder(bitmap, 512, 192);
-		internal_m6847_vh_screenrefresh(bitmap, coco3_metapalette, &RAM[0x70000 + m6847_get_video_offset()], TRUE, 64, 16, 2, artifacts[input_port_10_r(0) & 3]);
+		internal_m6847_vh_screenrefresh(bitmap, coco3_metapalette, &RAM[0x70000 + m6847_get_video_offset()], TRUE, 64, 16, 2, artifacts[readinputport(12) & 3]);
 	}
 }
 

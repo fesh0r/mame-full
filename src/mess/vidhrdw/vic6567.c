@@ -6,7 +6,7 @@
 /* mos videochips
   vic (6560 NTSC, 6561 PAL)
   used in commodore vic20
-  
+
   vic II
    6566 NTSC
     no dram refresh?
@@ -19,7 +19,7 @@
   used in commodore c64
   complete different to vic
 
-  ted 
+  ted
    7360/8360 (NTSC-M, PAL-B by same chip ?)
    8365 PAL-N
    8366 PAL-M
@@ -36,11 +36,11 @@
   used in commodore c128
   vic II with some additional features
    3 programmable output pins k0 k1 k2
-     
+
   vic III
    4567
   used in commodore c65 prototype
-  vic II compatible (mode only?) 
+  vic II compatible (mode only?)
   several additional features
    different resolutions, more colors, ...
    (maybe like in the amiga graphic chip docu)
@@ -182,7 +182,7 @@ static struct {
 	int x_begin, x_end;
 	int y_begin, y_end;
 
-	UINT16 c64_bitmap[2], bitmapmulti[4], mono[2], 
+	UINT16 c64_bitmap[2], bitmapmulti[4], mono[2],
 		multi[4], ecmcolor[2], colors[4], spritemulti[4];
 
 	int lastline, rasterline;
@@ -343,7 +343,7 @@ int vic2_frame_interrupt (void)
 	return ignore_interrupt ();
 }
 
-void vic2_port_w (int offset, int data)
+WRITE_HANDLER ( vic2_port_w )
 {
 	DBG_LOG (2, "vic write", (errorlog, "%.2x:%.2x\n", offset, data));
 	if (vic2.vic3)
@@ -469,7 +469,7 @@ void vic2_port_w (int offset, int data)
 	case 0x16:
 		if (vic2.reg[offset] != data)
 		{
-			if (vic2.on) 
+			if (vic2.on)
 				vic2_drawlines (vic2.lastline, vic2.rasterline);
 			vic2.reg[offset] = data;
 			if (COLUMNS40)
@@ -498,7 +498,7 @@ void vic2_port_w (int offset, int data)
 		{
 			if (vic2.on) vic2_drawlines (vic2.lastline, vic2.rasterline);
 			vic2.reg[offset] = data;
-			vic2.mono[0] = vic2.bitmapmulti[0] = vic2.multi[0] = 
+			vic2.mono[0] = vic2.bitmapmulti[0] = vic2.multi[0] =
 				vic2.colors[0] = Machine->pens[BACKGROUNDCOLOR];
 		}
 		break;
@@ -585,7 +585,7 @@ void vic2_port_w (int offset, int data)
 	}
 }
 
-int vic2_port_r (int offset)
+READ_HANDLER ( vic2_port_r )
 {
 	int val = 0;
 	if (vic2.vic3)
@@ -1085,7 +1085,7 @@ static void vic2_draw_sprite_multi (int nr, int yoff, int ybegin, int yend)
 			vic2.sprites[nr].paintedline[y] = 1;
 			for (i = 0; i < 3; i++)
 			{
-				value = vic2.expandx_multi[bg = vic2.dma_read (addr + vic2.sprites[nr].line * 3 + i)];   
+				value = vic2.expandx_multi[bg = vic2.dma_read (addr + vic2.sprites[nr].line * 3 + i)];
 				value2 = vic2.expandx[vic2.multi_collision[bg]];
 				vic2.sprites[nr].bitmap[y][i*2] = value2>>8;
 				vic2.sprites[nr].bitmap[y][i*2+1] = value2&0xff;

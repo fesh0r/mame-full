@@ -72,9 +72,9 @@ static void sid6581_port_w (SID6581 *this, int offset, int data)
 	default:
 		//stream_update(channel,0);
 		this->reg[offset] = data;
-		if (data&1) 
+		if (data&1)
 			this->sidKeysOn[offset]=1;
-		else 
+		else
 			this->sidKeysOff[offset]=1;
 	}
 }
@@ -141,22 +141,22 @@ void sid6581_1_reset (void)
 	sid6581_reset(sid6581+1);
 }
 
-int sid6581_0_port_r (int offset)
+READ_HANDLER ( sid6581_0_port_r )
 {
 	return sid6581_port_r(sid6581, offset);
 }
 
-int sid6581_1_port_r (int offset)
+READ_HANDLER ( sid6581_1_port_r )
 {
 	return sid6581_port_r(sid6581+1, offset);
 }
 
-void sid6581_0_port_w (int offset, int data)
+WRITE_HANDLER ( sid6581_0_port_w )
 {
 	sid6581_port_w(sid6581, offset, data);
 }
 
-void sid6581_1_port_w (int offset, int data)
+WRITE_HANDLER ( sid6581_1_port_w )
 {
 	sid6581_port_w(sid6581+1, offset, data);
 }

@@ -7,22 +7,22 @@ unsigned char sms_page_count;
 unsigned char sms_fm_detect;
 unsigned char sms_version;
 
-void sms_fm_detect_w(int offset, int data)
+WRITE_HANDLER ( sms_fm_detect_w )
 {
     sms_fm_detect = (data & 1);
 }
 
-int sms_fm_detect_r(int offset)
+READ_HANDLER ( sms_fm_detect_r )
 {
     return ( readinputport(3) & 1 ? sms_fm_detect : 0x00 );
 }
 
-void sms_version_w(int offset, int data)
+WRITE_HANDLER ( sms_version_w )
 {
     sms_version = (data & 0xA0);
 }
 
-int sms_version_r(int offset)
+READ_HANDLER ( sms_version_r )
 {
     unsigned char temp;
 
@@ -38,7 +38,7 @@ int sms_version_r(int offset)
     return (temp);
 }
 
-void sms_mapper_w(int offset, int data)
+WRITE_HANDLER ( sms_mapper_w )
 {
     unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -67,18 +67,18 @@ void sms_mapper_w(int offset, int data)
     }
 }
 
-void sms_cartram_w(int offset, int data)
+WRITE_HANDLER ( sms_cartram_w )
 {
 }
 
-void sms_ram_w(int offset, int data)
+WRITE_HANDLER ( sms_ram_w )
 {
     unsigned char *RAM = memory_region(REGION_CPU1);
     RAM[0xC000 + (offset & 0x1FFF)] = data;
     RAM[0xE000 + (offset & 0x1FFF)] = data;
 }
 
-void gg_sio_w(int offset, int data)
+WRITE_HANDLER ( gg_sio_w )
 {
     if(errorlog) fprintf(errorlog, "*** write %02X to SIO register #%d\n", data, offset);
 
@@ -101,7 +101,7 @@ void gg_sio_w(int offset, int data)
     }
 }
 
-int gg_sio_r(int offset)
+READ_HANDLER ( gg_sio_r )
 {
     if(errorlog) fprintf(errorlog, "*** read SIO register #%d\n", offset);
 
@@ -126,7 +126,7 @@ int gg_sio_r(int offset)
     return (0x00);
 }
 
-void gg_psg_w(int offset, int data)
+WRITE_HANDLER ( gg_psg_w )
 {
     /* D7 = Noise Left */
     /* D6 = Tone3 Left */

@@ -2,7 +2,7 @@
 	commodore c65 home computer
 	peter.trauner@jk.uni-linz.ac.at
     documention
-     www.funet.fi				    
+     www.funet.fi
  ***************************************************************************/
 
 #include <ctype.h>
@@ -23,7 +23,7 @@ unsigned char c65_keyline[2] = { 0xff, 0xff };
 int c65=0;
 UINT8 c65_6511_port=0xff;
 
-static int c64mode=0, c65_dosmode=1, 
+static int c64mode=0, c65_dosmode=1,
 	c65_monitormode=0, c65_write_io, c65_write_io_dc00;
 
 UINT8 *c65_basic;
@@ -37,7 +37,7 @@ UINT8 *c65_graphics;
 /* dma chip at 0xd700
   used:
    writing banknumber to offset 2
-   writing hibyte to offset 1 
+   writing hibyte to offset 1
    writing lobyte to offset 0
     cpu holded, dma transfer (data at address) executed, cpu activated
 
@@ -63,8 +63,8 @@ static void c65_dma_port_w(int offset, int value)
 	int i;
 
 	switch (offset&3) {
-	case 2: 
-	case 1: 
+	case 2:
+	case 1:
 		c65_dma[offset&3]=value;
 		break;
 	case 0:
@@ -80,7 +80,7 @@ static void c65_dma_port_w(int offset, int value)
 		switch (addr[0]) {
 		case 0:
 			if ( (src.d+len.w.l>=0x100000)||(dst.d+len.w.l>=0x100000)) {
-				if (errorlog) 
+				if (errorlog)
 					fprintf(errorlog,
 							"dma copy job len:%.4x src:%.6x "
 							"dst:%.6x sub:%.2x modrm:%.2x\n",
@@ -92,7 +92,7 @@ static void c65_dma_port_w(int offset, int value)
 						 len.w.l, src.d, dst.d, addr[9], addr[10]));
 			}
 			if (C65_MAIN_MEMORY==C65_512KB) {
-				for (i=0; (i<len.w.l)&&(dst.d<0x100000)&&(src.d<0x100000); i++) { 
+				for (i=0; (i<len.w.l)&&(dst.d<0x100000)&&(src.d<0x100000); i++) {
 					if ((dst.d<0x20000)||(dst.d>=0x80000))
 						c64_memory[dst.d++]=c64_memory[src.d++];
 				}
@@ -105,7 +105,7 @@ static void c65_dma_port_w(int offset, int value)
 			break;
 		case 3:
 			if (dst.d+len.w.l>=0x100000) {
-				if (errorlog) 
+				if (errorlog)
 					fprintf(errorlog,
 							"dma fill job len:%.4x value:%.2x "
 							"dst:%.6x sub:%.2x modrm:%.2x\n",
@@ -174,69 +174,69 @@ static int wd1770_port_r(int offset)
 	return 0;
 }
 
-void c65_write_d000 (int offset, int value)
+WRITE_HANDLER ( c65_write_d000 )
 {
 	if (!c65_write_io) {
-		c64_memory[0xd000 + offset] = value;
+		c64_memory[0xd000 + offset] = data;
 	} else {
 		switch(offset&0xf00) {
 		case 0x000:
 			if (offset < 0x80)
-				vic2_port_w (offset & 0x7f, value);
+				vic2_port_w (offset & 0x7f, data);
 			else if (offset < 0xa0) {
-				wd1770_port_w(offset&0x1f,value);
+				wd1770_port_w(offset&0x1f,data);
 			} else {
-				DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
+				DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, data));
 				/*ram expansion crtl optional */
 			}
 			break;
 		case 0x100:case 0x200: case 0x300:
-			DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
+			DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, data));
 			/*ramdac ((offset&0x3ff)-0x100); */
 			break;
 		case 0x400:
 			if (offset<0x440) /* maybe 0x20 */
-				sid6581_0_port_w (offset & 0x3f, value);
+				sid6581_0_port_w (offset & 0x3f, data);
 			else if (offset<0x480)
-				sid6581_1_port_w(offset&0x3f, value);
-			else 
-				DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
+				sid6581_1_port_w(offset&0x3f, data);
+			else
+				DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, data));
 			break;
 		case 0x500:
-			DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
+			DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, data));
 			break;
 		case 0x600:
-			c65_6511_port_w(offset&0xff,value);
+			c65_6511_port_w(offset&0xff,data);
 			break;
 		case 0x700:
-			c65_dma_port_w(offset&0xff, value);
+			c65_dma_port_w(offset&0xff, data);
 			break;
 		case 0x800:case 0x900:case 0xa00:case 0xb00:
-			c64_colorram[offset & 0x3ff] = value/* | 0xf0*/;
+			c64_colorram[offset & 0x3ff] = data/* | 0xf0*/;
 		case 0xc00:
 			if (!c65_write_io_dc00)
-				c64_memory[0xd000 + offset] = value;
-			else 
-				cia6526_0_port_w (offset & 0xff, value);
+				c64_memory[0xd000 + offset] = data;
+			else
+				cia6526_0_port_w (offset & 0xff, data);
 			break;
 		case 0xd00:
 			if (!c65_write_io_dc00)
-				c64_memory[0xd000 + offset] = value;
-			else 
-				cia6526_1_port_w (offset & 0xff, value);
+				c64_memory[0xd000 + offset] = data;
+			else
+				cia6526_1_port_w (offset & 0xff, data);
 			break;
 		case 0xe00:
 		case 0xf00:
 			if (!c65_write_io_dc00)
-				c64_memory[0xd000 + offset] = value;
-			else 
-				DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
+				c64_memory[0xd000 + offset] = data;
+			else
+				DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, data));
 			break;
 		}
 	}
 }
 
-static int c65_read_io (int offset)
+static READ_HANDLER ( c65_read_io )
 {
 	switch(offset&0xf00) {
 	case 0x000:
@@ -273,7 +273,7 @@ static int c65_read_io (int offset)
 	return 0xff;
 }
 
-static int c65_read_io_dc00(int offset)
+static READ_HANDLER ( c65_read_io_dc00 )
 {
 	switch(offset&0x300) {
 	case 0x000:
@@ -290,30 +290,30 @@ static int c65_read_io_dc00(int offset)
 
 static void c65_bankswitch_interface(int value)
 {
-	if (value&0x01) { 
+	if (value&0x01) {
 		c65_write_io_dc00=0;
 		cpu_setbankhandler_r (10, MRA_RAM);
-		cpu_setbank (10, c64_memory+0xdc00); 
-	} else { 
+		cpu_setbank (10, c64_memory+0xdc00);
+	} else {
 		c65_write_io_dc00=1;
 		cpu_setbankhandler_r (10, c65_read_io_dc00);
 	}
 #if 0
-	if (value&0x08) { cpu_setbank (6, c65_interface); } 
+	if (value&0x08) { cpu_setbank (6, c65_interface); }
 	else { cpu_setbank (4, c64_memory + 0x8000); }
-	if (value&0x10) { cpu_setbank (6, c65_interface); } 
+	if (value&0x10) { cpu_setbank (6, c65_interface); }
 	else { cpu_setbank (5, c64_memory + 0xa000); }
 #endif
-	if (value&0x20) { cpu_setbank (6, c65_interface); } 
+	if (value&0x20) { cpu_setbank (6, c65_interface); }
 	else { cpu_setbank (6, c64_memory + 0xc000); }
 #if 0
-	if (value&0x40) { cpu_setbank (6, c65_interface); } 
+	if (value&0x40) { cpu_setbank (6, c65_interface); }
 	else { cpu_setbank (6, c64_memory + 0x9000); }
-	if (value&0x80) { cpu_setbank (6, c65_interface); } 
+	if (value&0x80) { cpu_setbank (6, c65_interface); }
 	else { cpu_setbank (8, c64_memory + 0xe000); }
 #endif
 }
-/* 
+/*
  8 Megabyte entire system space
 
  bank register values in basic and monitor
@@ -330,7 +330,7 @@ static void c65_bankswitch_interface(int value)
 */
 void c65_bankswitch (void)
 {
-	DBG_LOG (1, "bankswitch", (errorlog, "%.2x\n", c64_port6510));	
+	DBG_LOG (1, "bankswitch", (errorlog, "%.2x\n", c64_port6510));
 	if (!c64mode) {
 		if (c65_dosmode) {
             /* ram in cpu port position!*/
@@ -383,13 +383,13 @@ void c65_bankswitch (void)
 		}
 	} else {
 		static int old = -1, data, loram, hiram, charen;
-		
+
 		cpu_setbankhandler_r(9, c64_m6510_port_r);
 		cpu_setbankhandler_w(9, c64_m6510_port_w);
 		data = ((c64_port6510 & c64_ddr6510) | (c64_ddr6510 ^ 0xff)) & 7;
 		if (data == old)
 			return;
-		
+
 		DBG_LOG (1, "bankswitch", (errorlog, "%d\n", data & 7));
 		loram = (data & 1) ? 1 : 0;
 		hiram = (data & 2) ? 1 : 0;
@@ -398,7 +398,7 @@ void c65_bankswitch (void)
 		cpu_setbank (1, c64_memory+2);
 		cpu_setbank (2, c64_memory + 0x2000);
 		cpu_setbank (3, c64_memory + 0x6000);
-		
+
 		if ((!c64_game && c64_exrom)
 			|| (loram && hiram && !c64_exrom))
 			{
@@ -408,7 +408,7 @@ void c65_bankswitch (void)
 			{
 				cpu_setbank (4, c64_memory + 0x8000);
 			}
-		
+
 		if ((!c64_game && c64_exrom && hiram)
 			|| (!c64_exrom))
 			{
@@ -441,7 +441,7 @@ void c65_bankswitch (void)
 						cpu_setbank (7, c64_memory + 0xd000);
 					}
 			}
-		
+
 		if (!c64_game && c64_exrom)
 			{
 				cpu_setbank (8, c64_romh);
@@ -482,29 +482,29 @@ void c65_map(int a, int x, int y, int z)
 }
 
 
-void c65_write_0002 (int offset, int value)
+void c65_write_0002 (int offset, int data)
 {
-	c64_memory[2 + offset] = value;
+	c64_memory[2 + offset] = data;
 }
 
-void c65_write_2000 (int offset, int value)
+WRITE_HANDLER ( c65_write_2000 )
 {
-	c64_memory[0x2000 + offset] = value;
+	c64_memory[0x2000 + offset] = data;
 }
 
-void c65_write_8000 (int offset, int value)
+WRITE_HANDLER ( c65_write_8000 )
 {
-	c64_memory[0x8000 + offset] = value;
+	c64_memory[0x8000 + offset] = data;
 }
 
-void c65_write_a000 (int offset, int value)
+WRITE_HANDLER ( c65_write_a000 )
 {
-	c64_memory[0xa000 + offset] = value;
+	c64_memory[0xa000 + offset] = data;
 }
 
-void c65_write_e000 (int offset, int value)
+WRITE_HANDLER ( c65_write_e000 )
 {
-	c64_memory[0xe000 + offset] = value;
+	c64_memory[0xe000 + offset] = data;
 }
 
 void c65_colorram_write (int offset, int value)
@@ -557,7 +557,7 @@ static void c65_common_driver_init (void)
 	c64_cia0.todin50hz = c64_cia1.todin50hz = c64_pal;
 	cia6526_config (0, &c64_cia0);
 	cia6526_config (1, &c64_cia1);
-	vic4567_init (c64_pal, c65_dma_read, c65_dma_read_color, 
+	vic4567_init (c64_pal, c65_dma_read, c65_dma_read_color,
 				  c64_vic_interrupt, c65_bankswitch_interface);
 	raster1.display_state=c65_state;
 }
@@ -615,7 +615,7 @@ void c65_status (char *text, int size)
 	snprintf (text, size, "c65 vic:%.4x m6510:%d c64:%d dos:%d",
 			  c64_vicaddr - c64_memory, c64_port6510 & 7, c64mode, c65_dosmode);
 #endif
-	snprintf (text, size, 
+	snprintf (text, size,
 			  "c65 %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x",
 			  c64_keyline[0],
 			  c64_keyline[1],
@@ -636,10 +636,10 @@ void c65_state (PRASTER *this)
 #if VERBOSE_DBG
 	int y;
 	char text[70];
-	
-	y = Machine->gamedrv->drv->visible_area.max_y + 1 
+
+	y = Machine->gamedrv->drv->visible_area.max_y + 1
 		- Machine->uifont->height;
-	
+
 #if 0
 	cia6526_status (text, sizeof (text));
 	praster_draw_text (this, text, &y);
@@ -647,7 +647,7 @@ void c65_state (PRASTER *this)
 	snprintf (text, size, "c65 vic:%.4x m6510:%d c64:%d dos:%d",
 			  c64_vicaddr - c64_memory, c64_port6510 & 7, c64mode, c65_dosmode);
 #endif
-	snprintf (text, sizeof(text), 
+	snprintf (text, sizeof(text),
 			  "c65 %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x",
 			  c64_keyline[0],
 			  c64_keyline[1],

@@ -36,7 +36,7 @@ int coleco_id_rom (int id)
 	}
 
 	/* If no file was specified, don't bother */
-	if (strlen(gamename)==0)
+	if (!gamename || !gamename[0])
 		return 1;
 
 	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
@@ -71,7 +71,7 @@ int coleco_load_rom (int id)
 
 	/* A cartridge isn't strictly mandatory, but it's recommended */
 	cartfile = NULL;
-	if (strlen(rom_name)==0)
+	if (!rom_name || !rom_name[0])
 	{
 		if (errorlog) fprintf(errorlog,"Coleco - warning: no cartridge specified!\n");
 	}

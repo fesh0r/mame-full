@@ -148,8 +148,8 @@ extern int cpm_floppy_init(int id);
 extern int  cpm_init(int n, const char *ids[]);
 extern void cpm_exit(void);
 
-extern int	cpm_bios_command_r(int offset);
-extern void cpm_bios_command_w(int offset, int data);
+extern READ_HANDLER ( cpm_bios_command_r );
+extern WRITE_HANDLER ( cpm_bios_command_w );
 
 /* these are in cpm_disk.c */
 extern int	cpm_disk_select_format(int disk, const char *disk_id);

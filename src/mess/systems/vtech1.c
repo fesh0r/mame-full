@@ -101,12 +101,12 @@ extern int vtech1_floppy_id(int id);
 extern int vtech1_floppy_init(int id);
 extern void vtech1_floppy_exit(int id);
 
-extern int vtech1_fdc_r(int offset);
-extern void vtech1_fdc_w(int offset, int data);
+extern READ_HANDLER ( vtech1_fdc_r );
+extern WRITE_HANDLER ( vtech1_fdc_w );
 
-extern int vtech1_joystick_r(int offset);
-extern int vtech1_keyboard_r(int offset);
-extern void vtech1_latch_w(int offset, int data);
+extern READ_HANDLER ( vtech1_joystick_r );
+extern READ_HANDLER ( vtech1_keyboard_r );
+extern WRITE_HANDLER ( vtech1_latch_w );
 
 extern int vtech1_interrupt(void);
 
@@ -576,13 +576,14 @@ static struct MachineDriver machine_driver_laser310 =
 
 ROM_START( laser110 )
 	ROM_REGION(0x10000,REGION_CPU1)
-	ROM_LOAD("vtechv20.lo",  0x0000, 0x2000, 0xcc854fe9)
-	ROM_LOAD("vtechv20.hi",  0x2000, 0x2000, 0x7060f91a)
+	ROM_LOAD("vtechv12.lo",  0x0000, 0x2000, 0x99412d43)
+	ROM_LOAD("vtechv12.hi",  0x2000, 0x2000, 0xe4c24e8b)
 
 	ROM_REGION(0x0d00,REGION_GFX1)
 	ROM_LOAD("vtech1.chr",   0x0000, 0x0c00, 0xead006a1)
 ROM_END
-
+#define rom_laser200	rom_laser110
+#define rom_tx8000		rom_laser110
 
 ROM_START( laser210 )
 	ROM_REGION(0x10000,REGION_CPU1)
@@ -592,10 +593,8 @@ ROM_START( laser210 )
 	ROM_REGION(0x0d00,REGION_GFX1)
 	ROM_LOAD("vtech1.chr",   0x0000, 0x0c00, 0xead006a1)
 ROM_END
-#define rom_laser200	rom_laser210
 #define rom_vz200		rom_laser210
 #define rom_fellow		rom_laser210
-#define rom_tx8000		rom_laser210
 
 ROM_START( laser310 )
 	ROM_REGION(0x10000,REGION_CPU1)
@@ -660,7 +659,7 @@ static const struct IODevice io_laser[] = {
 #define io_laser200 io_laser
 #define io_vz200	io_laser
 #define io_fellow	io_laser
-#define io_tx8000	io_laser
+#define io_tx8000   io_laser
 #define io_laser310 io_laser
 #define io_vz300	io_laser
 

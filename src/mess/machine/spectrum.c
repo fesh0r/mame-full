@@ -13,6 +13,7 @@
 /*-----------------27/02/00 10:54-------------------
  KT 27/2/00 - Added my changes for the WAV support
 --------------------------------------------------*/
+/* DJR 14/3/00 - Fixed +3 tape loading and added option to 'rewind' tapes when end reached */
 #include <stdarg.h>
 #include "driver.h"
 #include "cpu/z80/z80.h"
@@ -27,9 +28,11 @@ static unsigned long TapePosition = 0;
 static void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize);
 static void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize);
 static int is48k_z80snapshot(unsigned char *pSnapshot, unsigned long SnapshotSize);
-static int spectrum_opbaseoverride(int);
-static int spectrum_tape_opbaseoverride(int);
+static int spectrum_opbaseoverride(UINT32);
+static int spectrum_tape_opbaseoverride(UINT32);
 
+extern int spectrum_128_port_7ffd_data;
+extern int spectrum_plus3_port_1ffd_data;
 
 typedef enum
 {
@@ -64,7 +67,7 @@ int spectrum_rom_load(int id)
 {
 	void *file;
 
-        file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+        file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 
 
 	if (file)
@@ -89,7 +92,7 @@ int spectrum_rom_load(int id)
 
 				osd_fclose(file);
 
-                                filename = device_filename(IO_CARTSLOT, id);
+                                filename = device_filename(IO_SNAPSHOT, id);
 
                                 if (!stricmp (filename+strlen(filename)-4,".tap"))
                                 {
@@ -143,7 +146,7 @@ void    spectrum_rom_exit(int id)
 }
 
 
-int spectrum_opbaseoverride(int pc)
+int spectrum_opbaseoverride(UINT32 pc)
 {
 	/* clear op base override */
 	cpu_setOPbaseoverride(0, 0);
@@ -173,12 +176,14 @@ int spectrum_opbaseoverride(int pc)
                         break;
                 }
         }
+if (errorlog) fprintf(errorlog, "Snapshot loaded - new PC = %04x\n", cpu_get_reg(Z80_PC) & 0x0ffff);
+
 	return (cpu_get_reg(Z80_PC) & 0x0ffff);
 }
 
 /*******************************************************************
  *
- *      Override load routine (0x0556 in ROM) if loading .TAP files
+ *      Override load routine (0x0556 in 48K ROM) if loading .TAP files
  *      Tape blocks are as follows.
  *      2 bytes length of block excluding these 2 bytes (LSB first)
  *      1 byte  flag byte (0x00 for headers, 0xff for data)
@@ -197,11 +202,12 @@ int spectrum_opbaseoverride(int pc)
  *      load routine so things get rather messy!
  *
  *******************************************************************/
-int spectrum_tape_opbaseoverride(int pc)
+int spectrum_tape_opbaseoverride(UINT32 pc)
 {
         int i, tap_block_length, load_length;
         unsigned char lo, hi, a_reg;
         unsigned short addr, af_reg, de_reg, sp_reg;
+        static int data_loaded=0; /* Whether any data files (not headers) were loaded */
 
 //        if (errorlog) fprintf(errorlog, "PC=%02x\n", pc);
 
@@ -211,6 +217,18 @@ int spectrum_tape_opbaseoverride(int pc)
            check the earphone socket.
         */
         {
+                /* For Spectrum 128/+2/+3 check which rom is paged */
+                if ((spectrum_128_port_7ffd_data != -1) || (spectrum_plus3_port_1ffd_data != -1))
+                {
+                        if (spectrum_plus3_port_1ffd_data != -1)
+                        {
+                                if (!spectrum_plus3_port_1ffd_data & 0x04)
+                                        return pc;
+                        }
+                        if (!spectrum_128_port_7ffd_data & 0x10)
+                                return pc;
+                }
+
                 lo = pSnapshotData[TapePosition] & 0x0ff;
                 hi = pSnapshotData[TapePosition+1] & 0x0ff;
                 tap_block_length = (hi << 8) | lo;
@@ -229,7 +247,8 @@ int spectrum_tape_opbaseoverride(int pc)
 
                         load_length = MIN(de_reg, tap_block_length-2);
                         load_length = MIN(load_length, 65536-addr);
-						/* Actual number of bytes of block that can be loaded */
+                        /* Actual number of bytes of block that can be loaded -
+                           Don't try to load past the end of memory */
 
                         for (i = 0; i < load_length; i++)
                                 cpu_writemem16(addr+i, pSnapshotData[TapePosition+i+3]);
@@ -238,12 +257,14 @@ int spectrum_tape_opbaseoverride(int pc)
                         if (de_reg == (tap_block_length-2))
                         {
                                 /* Successful load - Set carry flag and A to 0 */
+                                if ((de_reg != 17) || (a_reg))
+                                        data_loaded = 1; // Non-header file loaded
                                 cpu_set_reg(Z80_AF, (af_reg & 0x00ff) | 0x0001);
                                 if (errorlog) fprintf(errorlog, "Loaded %04x bytes from address %04x onwards (type=%02x) using tape block at offset %ld\n", load_length, addr, a_reg, TapePosition);
                         }
                         else
                         {
-                                /* Wrong tape block size */
+                                /* Wrong tape block size - reset carry flag */
                                 cpu_set_reg(Z80_AF, af_reg & 0xfffe);
                                 if (errorlog) fprintf(errorlog, "Bad block length %04x bytes wanted starting at address %04x (type=%02x) , Data length of tape block at offset %ld is %04x bytes\n", de_reg, addr, a_reg, TapePosition, tap_block_length-2);
                         }
@@ -252,15 +273,39 @@ int spectrum_tape_opbaseoverride(int pc)
                 {
                         /* Wrong flag byte or verify selected so reset carry flag to indicate failure */
                         cpu_set_reg(Z80_AF, af_reg & 0xfffe);
-                        if (errorlog) fprintf(errorlog, "Failed to load tape block at offset %ld - type wanted %02x, got type %02x\n", TapePosition, a_reg, pSnapshotData[TapePosition+2]);
+                        if (errorlog)
+                        {
+                                if (af_reg & 0x0001)
+                                        fprintf(errorlog, "Failed to load tape block at offset %ld - type wanted %02x, got type %02x\n", TapePosition, a_reg, pSnapshotData[TapePosition+2]);
+                                else
+                                        fprintf(errorlog, "Failed to load tape block at offset %ld - verify selected\n", TapePosition);
+                        }
                 }
 
                 TapePosition+= (tap_block_length+2);
                 if (TapePosition >= SnapshotDataSize)
                 {
-                        /* Tape loaded so clear op base override */
-                        cpu_setOPbaseoverride(0, 0);
-                        if (errorlog) fprintf(errorlog, "All tape blocks used!\n");
+                        /* End of tape - either rewind or disable op base override*/
+                        if (readinputport(16) & 0x40)
+                        {
+                                if (data_loaded)
+                                {
+                                        TapePosition = 0;
+                                        data_loaded = 0;
+                                        if (errorlog) fprintf(errorlog, "All tape blocks used! - rewinding tape to start\n");
+                                }
+                                else
+                                {
+                                        /* Disable .TAP support if no files were loaded to avoid getting caught in infinite loop */
+                                        cpu_setOPbaseoverride(0, 0);
+                                        if (errorlog) fprintf(errorlog, "No valid data loaded! - disabling .TAP support\n");
+                                }
+                        }
+                        else
+                        {
+                                cpu_setOPbaseoverride(0, 0);
+                                if (errorlog) fprintf(errorlog, "All tape blocks used! - disabling .TAP support\n");
+                        }
                 }
 
                 /* Leave the load routine by removing addresses from the stack
@@ -277,10 +322,11 @@ int spectrum_tape_opbaseoverride(int pc)
                         cpu_set_reg(Z80_SP, (sp_reg & 0x0ffff));
                         cpu_set_sp((sp_reg & 0x0ffff));
                 } while ((addr != 0x053f) && (addr < 0x0605));
+                if (errorlog) fprintf(errorlog, "Load return address=%04x, SP=%04x\n", addr, sp_reg);
                 return addr;
         }
         else
-                return -1;
+                return pc;
 }
 
 void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)

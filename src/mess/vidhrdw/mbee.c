@@ -494,7 +494,7 @@ void m6545_data_w(int offs, int data)
 
 int mbee_vh_start(void)
 {
-    if( generic_bitmapped_vh_start() )
+    if( generic_vh_start() )
 		return 1;
 	pcgram = memory_region(REGION_CPU1)+0xf000;
 	videoram = memory_region(REGION_GFX1)+0x0000;

@@ -255,6 +255,7 @@ UINT8 head;
 
     if (!w->secmap)
 		w->secmap = malloc(0x2200);
+	if (!w->secmap) return;
 	osd_fseek(w->image_file, 0, SEEK_SET);
 	osd_fread(w->image_file, w->secmap, 0x2200);
 	w->offset = 0x2200;
@@ -853,7 +854,7 @@ int cnt;
 
 
 /* read the FDC status register. This clears IRQ line too */
-int wd179x_status_r(int offset)
+READ_HANDLER ( wd179x_status_r )
 {
 WD179X *w = wd[drv];
 int result = w->status;
@@ -879,7 +880,7 @@ int result = w->status;
 }
 
 /* read the FDC track register */
-int wd179x_track_r(int offset)
+READ_HANDLER ( wd179x_track_r )
 {
 WD179X *w = wd[drv];
 
@@ -891,7 +892,7 @@ WD179X *w = wd[drv];
 }
 
 /* read the FDC sector register */
-int wd179x_sector_r(int offset)
+READ_HANDLER ( wd179x_sector_r )
 {
 WD179X *w = wd[drv];
 
@@ -903,7 +904,7 @@ WD179X *w = wd[drv];
 }
 
 /* read the FDC data register */
-int wd179x_data_r(int offset)
+READ_HANDLER ( wd179x_data_r )
 {
 WD179X *w = wd[drv];
 
@@ -940,7 +941,7 @@ WD179X *w = wd[drv];
 }
 
 /* write the FDC command register */
-void wd179x_command_w(int offset, int data)
+WRITE_HANDLER ( wd179x_command_w )
 {
 WD179X *w = wd[drv];
 
@@ -1170,7 +1171,7 @@ WD179X *w = wd[drv];
 }
 
 /* write the FDC track register */
-void wd179x_track_w(int offset, int data)
+WRITE_HANDLER ( wd179x_track_w )
 {
 WD179X *w = wd[drv];
 	w->track = w->track_reg = data;
@@ -1181,7 +1182,7 @@ WD179X *w = wd[drv];
 }
 
 /* write the FDC sector register */
-void wd179x_sector_w(int offset, int data)
+WRITE_HANDLER ( wd179x_sector_w )
 {
 WD179X *w = wd[drv];
 
@@ -1193,7 +1194,7 @@ WD179X *w = wd[drv];
 }
 
 /* write the FDC data register */
-void wd179x_data_w(int offset, int data)
+WRITE_HANDLER ( wd179x_data_w )
 {
 WD179X *w = wd[drv];
 

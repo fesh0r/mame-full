@@ -149,7 +149,7 @@ struct cia6526_interface cbmb_cia =
 	0xff, 0xff, 0
 };
 
-void cbmb_colorram_w(int offset, int data)
+WRITE_HANDLER ( cbmb_colorram_w )
 {
 	cbmb_colorram[offset]=data|0xf0;
 }

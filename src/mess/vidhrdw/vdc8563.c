@@ -49,7 +49,7 @@
 /* x128
  commodore assignment!?
  black gray orange yellow dardgrey vio red lgreen
- lred lgray brown blue white green cyan lblue 
+ lred lgray brown blue white green cyan lblue
 */
 unsigned char vdc8563_palette[] =
 {
@@ -70,7 +70,7 @@ unsigned char vdc8563_palette[] =
 	0xdf, 0xf6, 0x0a, /* yellow */
 	0xa4, 0xa7, 0xa2, /* light gray */
 	0xfd, 0xfe, 0xfc /* white */
-#else 
+#else
 	/* vice */
 	0,0,0, /* black */
 	0x20,0x20,0x20, /* gray */
@@ -163,7 +163,7 @@ int vdc8563_vh_start (void)
 
 #define BLOCK_COPY (vdc.reg[0x18]&0x80)
 
-void vdc8563_port_w (int offset, int data)
+WRITE_HANDLER ( vdc8563_port_w )
 {
 	UINT8 i;
 
@@ -268,15 +268,15 @@ void vdc8563_port_w (int offset, int data)
 				vdc.reg[vdc.index]=data;
 				if (BLOCK_COPY) {
 					DBG_LOG (2, "vdc block copy",
-							 (errorlog, "src:%.4x dst:%.4x size:%.2x\n", 
+							 (errorlog, "src:%.4x dst:%.4x size:%.2x\n",
 							  vdc.src, vdc.addr, data));
 					i=data;do {
-						praster_2_videoram_w(vdc.addr++, 
+						praster_2_videoram_w(vdc.addr++,
 											 praster_2_videoram_r(vdc.src++));
 					} while (--i!=0);
 				} else {
 					DBG_LOG (2, "vdc block set",
-							 (errorlog, "dest:%.4x value:%.2x size:%.2x\n", 
+							 (errorlog, "dest:%.4x value:%.2x size:%.2x\n",
 							  vdc.addr, vdc.reg[0x1f], data));
 					i=data;do {
 						praster_2_videoram_w(vdc.addr++, vdc.reg[0x1f]);
@@ -285,7 +285,7 @@ void vdc8563_port_w (int offset, int data)
 				break;
 			case 0x1f:
 				DBG_LOG (2, "vdc written",
-						 (errorlog, "dest:%.4x size:%.2x\n", 
+						 (errorlog, "dest:%.4x size:%.2x\n",
 						  vdc.addr, data));
 				vdc.reg[vdc.index]=data;
 				praster_2_videoram_w(vdc.addr++, data);
@@ -310,12 +310,12 @@ void vdc8563_port_w (int offset, int data)
 				break;
 			default:
 				vdc.reg[vdc.index]=data;
-				DBG_LOG (2, "vdc8563_port_w", 
+				DBG_LOG (2, "vdc8563_port_w",
 						 (errorlog, "%.2x:%.2x\n", vdc.index, data));
 				break;
 			}
 		}
-		DBG_LOG (3, "vdc8563_port_w", 
+		DBG_LOG (3, "vdc8563_port_w",
 				 (errorlog, "%.2x:%.2x\n", vdc.index, data));
 	}
 	else
@@ -324,7 +324,7 @@ void vdc8563_port_w (int offset, int data)
 	}
 }
 
-int vdc8563_port_r (int offset)
+READ_HANDLER ( vdc8563_port_r )
 {
 	int val;
 

@@ -82,7 +82,7 @@ int gamegear_vdp_start(void)
     return SMSVDP_start(1);
 }
 
-int sms_vdp_curline_r (int offset)
+READ_HANDLER ( sms_vdp_curline_r )
 {
     return (curline);
 }
@@ -167,7 +167,7 @@ int sms_vdp_interrupt(void)
 
 
 
-int sms_vdp_data_r(int offset)
+READ_HANDLER ( sms_vdp_data_r )
 {
     int temp;
 
@@ -185,7 +185,7 @@ int sms_vdp_data_r(int offset)
     return (temp);
 }
 
-int sms_vdp_ctrl_r(int offset)
+READ_HANDLER ( sms_vdp_ctrl_r )
 {
     int temp = status;
     pending = 0;
@@ -195,7 +195,7 @@ int sms_vdp_ctrl_r(int offset)
 }
 
 
-void sms_vdp_data_w(int offset, int data)
+WRITE_HANDLER ( sms_vdp_data_w )
 {
     if (mode == MODE_CRAM)
 	{
@@ -222,7 +222,7 @@ void sms_vdp_data_w(int offset, int data)
 
 
 
-void sms_vdp_ctrl_w(int offset, int data)
+WRITE_HANDLER ( sms_vdp_ctrl_w )
 {
     if (pending == 0)
 	{

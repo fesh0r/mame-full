@@ -85,13 +85,13 @@ extern void kim1_cassette_exit(int id);
 
 extern int kim1_interrupt(void);
 
-extern int m6530_003_r(int offset);
-extern int m6530_002_r(int offset);
-extern int kim1_mirror_r(int offset);
+extern READ_HANDLER ( m6530_003_r );
+extern READ_HANDLER ( m6530_002_r );
+extern READ_HANDLER ( kim1_mirror_r );
 
-extern void m6530_003_w(int offset, int data);
-extern void m6530_002_w(int offset, int data);
-extern void kim1_mirror_w(int offset, int data);
+extern WRITE_HANDLER ( m6530_003_w );
+extern WRITE_HANDLER ( m6530_002_w );
+extern WRITE_HANDLER ( kim1_mirror_w );
 
 /* from src/mess/vidhrdw/kim1.c */
 extern void kim1_init_colors (unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);

@@ -183,7 +183,7 @@ UINT8 pc_DMA_compressed_timing = 0;
 UINT8 pc_DMA_enable_controller = 0;
 UINT8 pc_DMA_channel = 0;
 
-void pc_DMA_w(int offset, int data)
+WRITE_HANDLER ( pc_DMA_w )
 {
 	switch( offset )
 	{
@@ -268,7 +268,7 @@ void pc_DMA_w(int offset, int data)
     }
 }
 
-void pc_DMA_page_w(int offset, int data)
+WRITE_HANDLER ( pc_DMA_page_w )
 {
 	switch( offset )
 	{
@@ -291,7 +291,7 @@ void pc_DMA_page_w(int offset, int data)
     }
 }
 
-int pc_DMA_r(int offset)
+READ_HANDLER ( pc_DMA_r )
 {
 	int data = 0xff;
 	switch( offset )
@@ -347,7 +347,7 @@ int pc_DMA_r(int offset)
 	return data;
 }
 
-int pc_DMA_page_r(int offset)
+READ_HANDLER ( pc_DMA_page_r )
 {
 	int data = 0xff;
 	switch( offset )
@@ -468,7 +468,7 @@ int pc_PIC_irq_pending(int irq)
 	return (PIC_pending & mask) ? 1 : 0;
 }
 
-void pc_PIC_w(int offset, int data)
+WRITE_HANDLER ( pc_PIC_w )
 {
 	switch( offset )
 	{
@@ -632,7 +632,7 @@ void pc_PIC_w(int offset, int data)
     if (PIC_pending & 0x80) pc_PIC_issue_irq(7);
 }
 
-int pc_PIC_r(int offset)
+READ_HANDLER ( pc_PIC_r )
 {
 	int data = 0xff;
 
@@ -691,7 +691,7 @@ static void pc_PIT_timer_pulse(void)
 		PIT_timer = timer_pulse(rate, 0, pc_PIC_issue_irq);
 }
 
-void pc_PIT_w(int offset, int data)
+WRITE_HANDLER ( pc_PIT_w )
 {
 	switch( offset )
 	{
@@ -770,7 +770,7 @@ void pc_PIT_w(int offset, int data)
 	}
 }
 
-int pc_PIT_r(int offset)
+READ_HANDLER ( pc_PIT_r )
 {
 	int data = 0xff;
 	switch( offset )
@@ -826,7 +826,7 @@ int pc_PIT_r(int offset)
  *		parallel input output
  *
  *************************************************************************/
-void pc_PIO_w(int offset, int data)
+WRITE_HANDLER ( pc_PIO_w )
 {
 	switch( offset )
 	{
@@ -859,7 +859,7 @@ void pc_PIO_w(int offset, int data)
     }
 }
 
-int pc_PIO_r(int offset)
+READ_HANDLER ( pc_PIO_r )
 {
 	int data = 0xff;
 	switch( offset )
@@ -923,9 +923,9 @@ static void pc_LPT_w(int n, int offset, int data)
     }
 }
 
-void pc_LPT1_w(int offset, int data) { pc_LPT_w(0,offset,data); }
-void pc_LPT2_w(int offset, int data) { pc_LPT_w(1,offset,data); }
-void pc_LPT3_w(int offset, int data) { pc_LPT_w(2,offset,data); }
+WRITE_HANDLER ( pc_LPT1_w ) { pc_LPT_w(0,offset,data); }
+WRITE_HANDLER ( pc_LPT2_w ) { pc_LPT_w(1,offset,data); }
+WRITE_HANDLER ( pc_LPT3_w ) { pc_LPT_w(2,offset,data); }
 
 static int pc_LPT_r(int n, int offset)
 {
@@ -951,9 +951,9 @@ static int pc_LPT_r(int n, int offset)
     }
 	return data;
 }
-int pc_LPT1_r(int offset) { return pc_LPT_r(0, offset); }
-int pc_LPT2_r(int offset) { return pc_LPT_r(1, offset); }
-int pc_LPT3_r(int offset) { return pc_LPT_r(2, offset); }
+READ_HANDLER ( pc_LPT1_r) { return pc_LPT_r(0, offset); }
+READ_HANDLER ( pc_LPT2_r) { return pc_LPT_r(1, offset); }
+READ_HANDLER ( pc_LPT3_r) { return pc_LPT_r(2, offset); }
 
 /*************************************************************************
  *
@@ -1040,10 +1040,10 @@ static void pc_COM_w(int n, int idx, int data)
 	}
 }
 
-void pc_COM1_w(int offset, int data) { pc_COM_w(0, offset, data); }
-void pc_COM2_w(int offset, int data) { pc_COM_w(1, offset, data); }
-void pc_COM3_w(int offset, int data) { pc_COM_w(2, offset, data); }
-void pc_COM4_w(int offset, int data) { pc_COM_w(3, offset, data); }
+WRITE_HANDLER ( pc_COM1_w ) { pc_COM_w(0, offset, data); }
+WRITE_HANDLER ( pc_COM2_w ) { pc_COM_w(1, offset, data); }
+WRITE_HANDLER ( pc_COM3_w ) { pc_COM_w(2, offset, data); }
+WRITE_HANDLER ( pc_COM4_w ) { pc_COM_w(3, offset, data); }
 
 static int pc_COM_r(int n, int idx)
 {
@@ -1130,10 +1130,10 @@ static int pc_COM_r(int n, int idx)
 
     return data;
 }
-int pc_COM1_r(int offset) { return pc_COM_r(0, offset); }
-int pc_COM2_r(int offset) { return pc_COM_r(1, offset); }
-int pc_COM3_r(int offset) { return pc_COM_r(2, offset); }
-int pc_COM4_r(int offset) { return pc_COM_r(3, offset); }
+READ_HANDLER ( pc_COM1_r ) { return pc_COM_r(0, offset); }
+READ_HANDLER ( pc_COM2_r ) { return pc_COM_r(1, offset); }
+READ_HANDLER ( pc_COM3_r ) { return pc_COM_r(2, offset); }
+READ_HANDLER ( pc_COM4_r ) { return pc_COM_r(3, offset); }
 
 
 /*************************************************************************
@@ -1146,12 +1146,12 @@ int pc_COM4_r(int offset) { return pc_COM_r(3, offset); }
 static double JOY_time = 0.0;
 static int JOY_x = 0, JOY_y = 0;
 
-void pc_JOY_w(int offset, int data)
+WRITE_HANDLER ( pc_JOY_w )
 {
 	JOY_time = timer_get_time();
 }
 
-int pc_JOY_r(int offset)
+READ_HANDLER ( pc_JOY_r )
 {
 	int data = 0xff, x, y, delta;
 	double new_time = timer_get_time();
@@ -1192,7 +1192,7 @@ int pc_JOY_r(int offset)
  *
  *************************************************************************/
 
-void pc_FDC_w(int offset, int data)
+WRITE_HANDLER ( pc_FDC_w )
 {
 	switch( offset )
 	{
@@ -1207,7 +1207,7 @@ void pc_FDC_w(int offset, int data)
 	}
 }
 
-int pc_FDC_r(int offset)
+READ_HANDLER ( pc_FDC_r )
 {
 	int data = 0xff;
 	switch( offset )
@@ -1270,8 +1270,8 @@ void pc_HDC_w(int chip, int offset, int data)
 		case 3: pc_hdc_control_w(chip,data); break;
 	}
 }
-void pc_HDC1_w(int offset, int data) { pc_HDC_w(0, offset, data); }
-void pc_HDC2_w(int offset, int data) { pc_HDC_w(1, offset, data); }
+WRITE_HANDLER ( pc_HDC1_w ) { pc_HDC_w(0, offset, data); }
+WRITE_HANDLER ( pc_HDC2_w ) { pc_HDC_w(1, offset, data); }
 
 int pc_HDC_r(int chip, int offset)
 {
@@ -1287,8 +1287,8 @@ int pc_HDC_r(int chip, int offset)
 	}
 	return data;
 }
-int pc_HDC1_r(int offset) { return pc_HDC_r(0, offset); }
-int pc_HDC2_r(int offset) { return pc_HDC_r(1, offset); }
+READ_HANDLER ( pc_HDC1_r ) { return pc_HDC_r(0, offset); }
+READ_HANDLER ( pc_HDC2_r ) { return pc_HDC_r(1, offset); }
 
 /*************************************************************************
  *
@@ -1296,7 +1296,7 @@ int pc_HDC2_r(int offset) { return pc_HDC_r(1, offset); }
  *		monochrome display adapter
  *
  *************************************************************************/
-void pc_MDA_w(int offset, int data)
+WRITE_HANDLER ( pc_MDA_w )
 {
 	switch( offset )
 	{
@@ -1324,7 +1324,7 @@ void pc_MDA_w(int offset, int data)
 	}
 }
 
-int pc_MDA_r(int offset)
+READ_HANDLER ( pc_MDA_r )
 {
 	int data = 0xff;
 	switch( offset )
@@ -1361,7 +1361,7 @@ int pc_MDA_r(int offset)
  *		color graphics adapter
  *
  *************************************************************************/
-void pc_CGA_w(int offset, int data)
+WRITE_HANDLER ( pc_CGA_w )
 {
 	switch( offset )
 	{
@@ -1386,7 +1386,7 @@ void pc_CGA_w(int offset, int data)
 	}
 }
 
-int pc_CGA_r(int offset)
+READ_HANDLER ( pc_CGA_r )
 {
 	int data = 0xff;
 	switch( offset )
@@ -1419,13 +1419,13 @@ int pc_CGA_r(int offset)
  *		expansion port
  *
  *************************************************************************/
-void pc_EXP_w(int offset, int data)
+WRITE_HANDLER ( pc_EXP_w )
 {
 	DBG_LOG(1,"EXP_unit_w",(errorlog, "$%02x\n", data));
 	pc_port[0x213] = data;
 }
 
-int pc_EXP_r(int offset)
+READ_HANDLER ( pc_EXP_r )
 {
     int data = pc_port[0x213];
     DBG_LOG(1,"EXP_unit_r",(errorlog, "$%02x\n", data));
@@ -1438,7 +1438,7 @@ int pc_EXP_r(int offset)
  *		Tandy 1000 / PCjr
  *
  *************************************************************************/
-void pc_t1t_p37x_w(int offset, int data)
+WRITE_HANDLER ( pc_t1t_p37x_w )
 {
 	DBG_LOG(1,"T1T_p37x_w",(errorlog, "#%d $%02x\n", offset, data));
 	switch( offset )
@@ -1454,7 +1454,7 @@ void pc_t1t_p37x_w(int offset, int data)
 	}
 }
 
-int pc_t1t_p37x_r(int offset)
+READ_HANDLER ( pc_t1t_p37x_r )
 {
 	int data = 0xff;
 	switch( offset )
@@ -1472,7 +1472,7 @@ int pc_t1t_p37x_r(int offset)
     return data;
 }
 
-void pc_T1T_w(int offset, int data)
+WRITE_HANDLER ( pc_T1T_w )
 {
 	switch( offset )
 	{
@@ -1507,7 +1507,7 @@ void pc_T1T_w(int offset, int data)
     }
 }
 
-int pc_T1T_r(int offset)
+READ_HANDLER ( pc_T1T_r )
 {
 	int data = 0xff;
 	switch( offset )
@@ -1648,7 +1648,7 @@ static void pc_mouse_scan(int n)
 	nb = readinputport(12);
 
 	/* check if there is any delta or mouse buttons changed */
-	if( dx || dy || nb != mb )
+	if ( (m_head==m_tail) &&( dx || dy || nb != mb ) )
 	{
 		ox = readinputport(13);
 		oy = readinputport(14);

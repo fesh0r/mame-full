@@ -98,16 +98,16 @@ extern int laser_cassette_id(int id);
 extern int laser_cassette_init(int id);
 extern void laser_cassette_exit(int id);
 
-extern int laser_fdc_r(int offset);
-extern void laser_fdc_w(int offset, int data);
-extern void laser_bank_select_w(int offset, int data);
+extern READ_HANDLER ( laser_fdc_r );
+extern WRITE_HANDLER ( laser_fdc_w );
+extern WRITE_HANDLER ( laser_bank_select_w );
 
 /* from vidhrdw/laser350.c */
 extern int laser_vh_start(void);
 extern void laser_vh_stop(void);
 extern void laser_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-extern void laser_bg_mode_w(int offs, int data);
-extern void laser_two_color_w(int offs, int data);
+extern WRITE_HANDLER ( laser_bg_mode_w );
+extern WRITE_HANDLER ( laser_two_color_w );
 
 static struct MemoryReadAddress readmem[] =
 {

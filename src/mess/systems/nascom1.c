@@ -46,7 +46,7 @@ static	struct
 
 /* port i/o functions */
 
-int		nascom1_port_00_r (int offset)
+READ_HANDLER ( nascom1_port_00_r )
 
 {
 
@@ -57,7 +57,7 @@ return (readinputport (nascom1_keyb.key_count) | ~0x3f);
 
 }
 
-int		nascom1_port_01_r (int offset)
+READ_HANDLER ( nascom1_port_01_r )
 
 {
 
@@ -65,7 +65,7 @@ return (0xff);
 
 }
 
-int		nascom1_port_02_r (int offset)
+READ_HANDLER ( nascom1_port_02_r )
 
 {
 
@@ -73,7 +73,7 @@ return (0x00);
 
 }
 
-void	nascom1_port_00_w (int offset, int data)
+WRITE_HANDLER (	nascom1_port_00_w )
 
 {
 

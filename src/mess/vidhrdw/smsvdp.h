@@ -17,14 +17,14 @@
 
 int sms_vdp_start(void);
 int gamegear_vdp_start(void);
-int sms_vdp_curline_r (int offset);
+READ_HANDLER  ( sms_vdp_curline_r );
 int SMSVDP_start (int vdp_type);
 void sms_vdp_stop(void);
 int sms_vdp_interrupt(void);
-int sms_vdp_data_r(int offset);
-void sms_vdp_data_w(int offset, int data);
-int sms_vdp_ctrl_r(int offset);
-void sms_vdp_ctrl_w(int offset, int data);
+READ_HANDLER  ( sms_vdp_data_r );
+WRITE_HANDLER ( sms_vdp_data_w );
+READ_HANDLER  ( sms_vdp_ctrl_r );
+WRITE_HANDLER ( sms_vdp_ctrl_w );
 void sms_refresh_line(struct osd_bitmap *bitmap, int line);
 void sms_update_palette(void);
 void sms_cache_tiles(void);

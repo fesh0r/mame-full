@@ -82,20 +82,21 @@ int riot_r(int chip, int offset)
 		LOG((errorlog, "riot(%d) DDRB  read : $%02x\n", chip, data));
 		break;
 	case 0x4: case 0xc: /* Timer count read (not supported?) */
-		LOG((errorlog, "riot(%d) TIMR  read : $%02x%s\n", chip, data, (char*)((offset & 8) ? " (IRQ)":"    ")));
+		LOG((errorlog, "riot(%d) TIMR1  timeleft = %f other is %f\n", chip, timer_timeleft(riot[chip].timer), TIME_IN_HZ(riot[chip].clock)));
 		data = (int)(256 * timer_timeleft(riot[chip].timer) / TIME_IN_HZ(riot[chip].clock));
+		LOG((errorlog, "riot(%d) TIMR1  read data is $%02x\n", chip, data));
 		riot[chip].irqen = (offset & 8) ? 1 : 0;
-		LOG((errorlog, "riot(%d) TIMR  read : $%02x%s\n", chip, data, (char*)((offset & 8) ? " (IRQ)":"    ")));
+		LOG((errorlog, "riot(%d) TIMR1  read : $%02x%s\n", chip, data, (char*)((offset & 8) ? " (IRQ)":"    ")));
 		break;
 	case 0x5: case 0xd: /* Timer count read (not supported?) */
 		data = (int)(256 * timer_timeleft(riot[chip].timer) / TIME_IN_HZ(riot[chip].clock));
 		riot[chip].irqen = (offset & 8) ? 1 : 0;
-		LOG((errorlog, "riot(%d) TIMR  read : $%02x%s\n", chip, data, (char*)((offset & 8) ? " (IRQ)":"    ")));
+		LOG((errorlog, "riot(%d) TIMR2  read : $%02x%s\n", chip, data, (char*)((offset & 8) ? " (IRQ)":"    ")));
 		break;
 	case 0x6: case 0xe: /* Timer count read */
 		data = (int)(256 * timer_timeleft(riot[chip].timer) / TIME_IN_HZ(riot[chip].clock));
 		riot[chip].irqen = (offset & 8) ? 1 : 0;
-		LOG((errorlog, "riot(%d) TIMR  read : $%02x%s\n", chip, data, (char*)((offset & 8) ? " (IRQ)":"    ")));
+		LOG((errorlog, "riot(%d) TIMR3  read : $%02x%s\n", chip, data, (char*)((offset & 8) ? " (IRQ)":"    ")));
 		break;
 	case 0x7: case 0xf: /* Timer status read */
 		data = riot[chip].state;
@@ -121,7 +122,7 @@ static void riot_timer_cb(int chip)
 
 void riot_w(int chip, int offset, int data)
 {
-	LOG((errorlog, "RIOT write - offset is $%02x\n", offset));
+	//LOG((errorlog, "RIOT write - offset is $%02x\n", offset));
 	switch( offset )
     {
 	case 0x0: case 0x8: /* Data register A */
@@ -169,6 +170,7 @@ void riot_w(int chip, int offset, int data)
 		if( riot[chip].timer )
 			timer_remove(riot[chip].timer);
 		riot[chip].clock = (double)riot[chip].baseclock / 64;
+		if(errorlog) fprintf(errorlog, "Period is %f\n", TIME_IN_HZ((data+1) * riot[chip].clock / 256 / 256));
 		riot[chip].timer = timer_pulse(TIME_IN_HZ((data+1) * riot[chip].clock / 256 / 256), chip, riot_timer_cb);
         break;
 	case 0x7: case 0xf: /* Timer 1024 start */
@@ -184,13 +186,13 @@ void riot_w(int chip, int offset, int data)
 }
 
 
-int riot_0_r(int offs) { return riot_r(0,offs); }
-void riot_0_w(int offs, int data) { riot_w(0,offs,data); }
-int riot_1_r(int offs) { return riot_r(1,offs); }
-void riot_1_w(int offs, int data) { riot_w(1,offs,data); }
-int riot_2_r(int offs) { return riot_r(2,offs); }
-void riot_2_w(int offs, int data) { riot_w(2,offs,data); }
-int riot_3_r(int offs) { return riot_r(3,offs); }
-void riot_3_w(int offs, int data) { riot_w(3,offs,data); }
+READ_HANDLER ( riot_0_r ) { return riot_r(0,offset); }
+WRITE_HANDLER ( riot_0_w ) { riot_w(0,offset,data); }
+READ_HANDLER ( riot_1_r ) { return riot_r(1,offset); }
+WRITE_HANDLER ( riot_1_w ) { riot_w(1,offset,data); }
+READ_HANDLER ( riot_2_r ) { return riot_r(2,offset); }
+WRITE_HANDLER ( riot_2_w ) { riot_w(2,offset,data); }
+READ_HANDLER ( riot_3_r ) { return riot_r(3,offset); }
+WRITE_HANDLER ( riot_3_w ) { riot_w(3,offset,data); }
 
 

@@ -91,7 +91,7 @@ static unsigned int crct6845reg[17];
 static unsigned int crct6845reg_mask[16]={ 0xff,0xff,0xff,0xff,0x7f,0x1f,0x7f,0x7f,0xff,0x1f,0x7f,0x1f,0x3f,0xff,0x3f,0xff };
 static unsigned int crct6845reg_no;
 
-void crtc6845_w(int offset, int data)
+WRITE_HANDLER ( crtc6845_w )
 {
 	if (errorlog) { fprintf(errorlog, "crct6845 write register %d = %d\n",offset,data); };
 	switch (offset&0x01)
@@ -109,7 +109,7 @@ void crtc6845_w(int offset, int data)
 	};
 }
 
-int crtc6845_r(int offset)
+READ_HANDLER ( crtc6845_r )
 {
 	int result=0;
 	switch (offset&0x01)
@@ -138,7 +138,7 @@ int crtc6845_r(int offset)
 static int VideoULAReg;
 static int VideoULAPallet[16];
 
-void videoULA_w(int offset, int data)
+WRITE_HANDLER ( videoULA_w )
 {
 	//if (errorlog) { fprintf(errorlog, "video ULA write register %d = %d\n",offset,data); };
 	switch (offset&0x01)
@@ -160,7 +160,7 @@ void videoULA_w(int offset, int data)
 	};
 }
 
-int videoULA_r(int offset)
+READ_HANDLER ( videoULA_r )
 {
 	//if (errorlog) { fprintf(errorlog, "video ULA read register %02x\n",offset); }
 	return 0;

@@ -88,6 +88,7 @@ void oric_init_machine (void)
 	unsigned char *RAM;
 
 	oric_IO = malloc (0x10);
+	if (!oric_IO) return;
 	memset (oric_IO, 0, sizeof (oric_IO));
 	RAM = memory_region(REGION_CPU1);
 	/*

@@ -249,7 +249,7 @@ extern UINT8 *cbmb_memory;
 extern UINT8 *cbmb_videoram;
 extern UINT8 *cbmb_colorram;
 
-void cbmb_colorram_w(int offset, int data);
+WRITE_HANDLER ( cbmb_colorram_w );
 
 extern void cbm500_driver_init (void);
 extern void cbm600_driver_init (void);

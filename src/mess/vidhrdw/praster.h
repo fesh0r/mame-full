@@ -23,7 +23,7 @@ int praster_raster_irq (void);
 int praster_vretrace_irq (void);
 
 
-typedef enum { 
+typedef enum {
 	PRASTER_MONOTEXT, PRASTER_TEXT, PRASTER_GRAPHIC,
 	PRASTER_GFXTEXT
 } PRASTER_MODE;
@@ -107,10 +107,10 @@ extern void praster_2_update(void);
 extern void praster_1_cursor_update(void);
 extern void praster_2_cursor_update(void);
 
-extern void praster_1_videoram_w(int offset, int data);
-extern void praster_2_videoram_w(int offset, int data);
-extern int praster_1_videoram_r(int offset);
-extern int praster_2_videoram_r(int offset);
+extern WRITE_HANDLER ( praster_1_videoram_w );
+extern WRITE_HANDLER ( praster_2_videoram_w );
+extern READ_HANDLER  ( praster_1_videoram_r );
+extern READ_HANDLER  ( praster_2_videoram_r );
 
 
 /* use to draw text in display_state function */

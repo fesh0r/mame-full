@@ -32,7 +32,7 @@ static struct
 
 	int data;
 	int motor;
-	void (*read_callback) (int, int);
+	void (*read_callback) (UINT32, UINT32);
 
 #define TAPE_WAV 1
 #define TAPE_PRG 2
@@ -1106,7 +1106,7 @@ static void vc20_zip_timer (int data)
 	vc20_prg_state ();
 }
 
-void vc20_tape_open (void (*read_callback) (int, int))
+void vc20_tape_open (void (*read_callback) (UINT32, UINT32))
 {
 	tape.read_callback = read_callback;
 #ifndef NEW_GAMEDRIVER

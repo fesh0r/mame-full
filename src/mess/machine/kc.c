@@ -81,7 +81,7 @@ static int kc85_86_data;
 
 //static int opbase_reset_done = 0;
 
-int     kc85_opbaseoverride(int PC)
+int     kc85_opbaseoverride(UINT32 PC)
 {
         //if (!opbase_reset_done)
         //{
@@ -99,20 +99,20 @@ int     kc85_opbaseoverride(int PC)
 }
 
 
-static int kc85_4_pio_data_r(int offset)
+static READ_HANDLER ( kc85_4_pio_data_r )
 {
 
         return z80pio_d_r(0,offset);
 }
 
-static int kc85_4_pio_control_r(int offset)
+static READ_HANDLER ( kc85_4_pio_control_r )
 {
 
         return z80pio_c_r(0,offset);
 }
 
 
-static void kc85_4_pio_data_w(int offset, int data)
+static WRITE_HANDLER ( kc85_4_pio_data_w )
 {
 
    if (errorlog)
@@ -139,25 +139,25 @@ static void kc85_4_pio_data_w(int offset, int data)
    //}
 }
 
-static void kc85_4_pio_control_w(int offset, int data)
+static WRITE_HANDLER ( kc85_4_pio_control_w )
 {
    z80pio_c_w(0, offset, data);
 }
 
 
-static int kc85_4_ctc_r(int offset)
+static READ_HANDLER ( kc85_4_ctc_r )
 {
 	return z80ctc_0_r(offset);
 }
 
-static void kc85_4_ctc_w(int offset,int data)
+static WRITE_HANDLER ( kc85_4_ctc_w )
 {
         if (errorlog) fprintf(errorlog, "CTC W: %02x\r\n",data);
 
         z80ctc_0_w(offset,data);
 }
 
-static void kc85_4_84_w(int offset, int data)
+static WRITE_HANDLER ( kc85_4_84_w )
 {
         if (errorlog) fprintf(errorlog, "0x084 W: %02x\r\n",data);
 
@@ -183,7 +183,7 @@ static void kc85_4_84_w(int offset, int data)
 
 }
 
-static int kc85_4_84_r(int offset)
+static READ_HANDLER ( kc85_4_84_r )
 {
 	return kc85_84_data;
 }
@@ -290,7 +290,7 @@ static void kc85_4_update_0x08000(void)
         }
 }
 
-static void kc85_4_86_w(int offset, int data)
+static WRITE_HANDLER ( kc85_4_86_w )
 {
         if (errorlog) fprintf(errorlog, "0x086 W: %02x\r\n",data);
 
@@ -299,7 +299,7 @@ static void kc85_4_86_w(int offset, int data)
         kc85_4_update_0x0c000();
 }
 
-static int kc85_4_86_r(int offset)
+static READ_HANDLER ( kc85_4_86_r )
 {
 	return kc85_86_data;
 }
@@ -325,7 +325,7 @@ static z80pio_interface kc85_4_pio_intf =
 
 int keyboard_data = 0;
 
-static void kc85_4_zc2_callback(int offset, int data)
+static WRITE_HANDLER ( kc85_4_zc2_callback )
 {
 z80ctc_trg_w(0, 3, 0,keyboard_data);
 z80ctc_trg_w(0, 3, 1,keyboard_data);
@@ -345,7 +345,7 @@ static z80ctc_interface	kc85_4_ctc_intf =
         {kc85_4_ctc_interrupt},
 	{0},
 	{0},
-        {kc85_4_zc2_callback}
+    {kc85_4_zc2_callback}
 };
 
 static Z80_DaisyChain kc85_4_daisy_chain[] =
@@ -438,10 +438,12 @@ void kc85_4_init_machine(void)
         cpu_setbankhandler_w(3, MWA_BANK3);
 
         kc85_ram = malloc(64*1024);
+		if (!kc85_ram) return;
 
         kc85_4_video_ram = malloc(
         (KC85_4_SCREEN_COLOUR_RAM_SIZE*2) +
         (KC85_4_SCREEN_PIXEL_RAM_SIZE*2));
+		if (!kc85_4_video_ram) return;
 
         kc85_4_display_video_ram = kc85_4_video_ram;
 

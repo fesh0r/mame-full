@@ -9,8 +9,8 @@ void oric_init_machine (void);
 void oric_shutdown_machine (void);
 int oric_load_rom (int id);
 int oric_interrupt(void);
-int oric_IO_r (int offset);
-void oric_IO_w (int offset, int data);
+READ_HANDLER ( oric_IO_r );
+WRITE_HANDLER ( oric_IO_w );
 
 /* from vidhrdw/oric.c */
 void oric_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
@@ -169,7 +169,7 @@ static void oric_init_palette(unsigned char *sys_palette, unsigned short *sys_co
 }
 
 /* read PSG port A */
-int oric_psg_porta_read(int offset)
+READ_HANDLER ( oric_psg_porta_read )
 {
 	return 0;
 }

@@ -57,16 +57,16 @@ extern void a5200_rom_exit(int id);
 
 extern void a800_close_floppy(void);
 
-extern int MRA_GTIA(int offset);
-extern int MRA_PIA(int offset);
-extern int MRA_ANTIC(int offset);
+extern READ_HANDLER ( MRA_GTIA );
+extern READ_HANDLER ( MRA_PIA );
+extern READ_HANDLER ( MRA_ANTIC );
 
-extern void MWA_GTIA(int offset, int data);
-extern void MWA_PIA(int offset, int data);
-extern void MWA_ANTIC(int offset, int data);
+extern WRITE_HANDLER ( MWA_GTIA );
+extern WRITE_HANDLER ( MWA_PIA  );
+extern WRITE_HANDLER ( MWA_ANTIC );
 
-extern int atari_serin_r(int offset);
-extern void atari_serout_w(int offset, int data);
+extern READ_HANDLER ( atari_serin_r );
+extern WRITE_HANDLER ( atari_serout_w );
 extern void atari_interrupt_cb(int mask);
 
 extern void a800_handle_keyboard(void);

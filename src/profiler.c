@@ -150,9 +150,12 @@ void profiler_show(void)
 		if (computed)
 		{
 			if (i < PROFILER_PROFILER)
-				sprintf(buf,"%s%3d%%%3d%%",names[i],(computed + total/200) / (total/100),(computed + normalize/200) / (normalize/100));
+				sprintf(buf,"%s%3d%%%3d%%",names[i],
+									(int)((computed + total/200) / (total/100.0)),
+									(int)((computed + normalize/200) / (normalize/100.0)));
 			else
-				sprintf(buf,"%s%3d%%",names[i],(computed + total/200) / (total/100));
+				sprintf(buf,"%s%3d%%",names[i],
+									(int)((computed + total/200) / (total/100.0)));
 			ui_text(buf,0,(line++)*Machine->uifontheight);
 		}
 	}

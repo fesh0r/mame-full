@@ -24,7 +24,7 @@ ANTIC antic;
 /**************************************************************
  *
  * Reset ANTIC
- * 
+ *
  **************************************************************/
 
 void antic_reset(void)
@@ -52,9 +52,9 @@ void antic_reset(void)
 /**************************************************************
  *
  * Read ANTIC hardware registers
- * 
+ *
  **************************************************************/
-int MRA_ANTIC(int offset)
+READ_HANDLER ( MRA_ANTIC )
 {
 	int data = 0xff;
 
@@ -117,10 +117,10 @@ int MRA_ANTIC(int offset)
 /**************************************************************
  *
  * Write ANTIC hardware registers
- * 
+ *
  **************************************************************/
 
-void MWA_ANTIC(int offset, int data)
+WRITE_HANDLER ( MWA_ANTIC )
 {
 	switch (offset & 15)
 	{

@@ -53,7 +53,7 @@
 #define FDC_MASK_TYPE_II        (FDC_MULTI_REC|FDC_SIDE_CMP_S|FDC_15MS_DELAY|FDC_SIDE_CMP_T|FDC_DELETED_AM)
 
 /* Type II commands status */
-#define STA_2_BUSY      0x01    
+#define STA_2_BUSY      0x01
 #define STA_2_DRQ       0x02
 #define STA_2_LOST_DAT  0x04
 #define STA_2_CRC_ERR   0x08
@@ -142,14 +142,14 @@ extern void wd179x_stop_drive(void);
 extern void wd179x_read_sectormap(UINT8 drive, UINT8 *tracks, UINT8 *heads, UINT8 *sec_per_track);
 extern void wd179x_set_geometry(UINT8 drive, UINT8 tracks, UINT8 heads, UINT8 sec_per_track, UINT16 sector_length, UINT16 dir_sector, UINT16 dir_length, UINT8 first_sector_id);
 
-extern void wd179x_command_w(int offset, int data);
-extern void wd179x_track_w(int offset, int data);
-extern void wd179x_sector_w(int offset, int data);
-extern void wd179x_data_w(int offset, int data);
+extern WRITE_HANDLER ( wd179x_command_w );
+extern WRITE_HANDLER ( wd179x_track_w );
+extern WRITE_HANDLER ( wd179x_sector_w );
+extern WRITE_HANDLER ( wd179x_data_w );
 
-extern int wd179x_status_r(int offset);
-extern int wd179x_track_r(int offset);
-extern int wd179x_sector_r(int offset);
-extern int wd179x_data_r(int offset);
+extern READ_HANDLER ( wd179x_status_r );
+extern READ_HANDLER ( wd179x_track_r );
+extern READ_HANDLER ( wd179x_sector_r );
+extern READ_HANDLER ( wd179x_data_r );
 
 #endif

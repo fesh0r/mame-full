@@ -30,7 +30,7 @@ extern void crtc6845_set_rastering(int on);
 #define crtc6845_videoram_w praster_2_videoram_w
 
 /* to be called when writting to port */
-extern void crtc6845_port_w (int offset, int data);
+extern WRITE_HANDLER ( crtc6845_port_w );
 
 /* special level of address line 11 for the cbm pet series */
 extern void crtc6845_address_line_11(int level);
@@ -38,10 +38,10 @@ extern void crtc6845_address_line_11(int level);
 extern void crtc6845_address_line_12(int level);
 
 /* special port write for the 80 column hardware of the commodore pet */
-extern void crtc6845_pet_port_w (int offset, int data);
+extern WRITE_HANDLER ( crtc6845_pet_port_w );
 
 /* to be called when reading from port */
-extern int crtc6845_port_r (int offset);
+extern READ_HANDLER ( crtc6845_port_r );
 
 extern void crtc6845_status (char *text, int size);
 #endif

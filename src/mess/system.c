@@ -75,7 +75,7 @@ const struct GameDriver *drivers[] =
   /****************CONSOLES****************************************************/
 
       /* ATARI */
-  TESTDRIVER( a2600 )       /* Atari 2600                                     */
+      DRIVER( a2600 )       /* Atari 2600                                     */
       DRIVER( a5200 )       /* Atari 5200                                     */
       DRIVER( a7800 )       /* Atari 7800                                     */
 
@@ -279,6 +279,8 @@ const struct GameDriver *drivers[] =
 	  DRIVER( pow3000 ) 	/* Creon Enterprises - Power 3000				  */
 
 	  DRIVER( spectrum )	/* Sinclair ZX Spectrum 48k 					  */
+      DRIVER( spec128  )    /* Spectrum                                       */
+      DRIVER( specpls2 )    /* Spectrum                                       */
       DRIVER( specpls3 )    /* Spectrum Plus 3                                */
 
 	  /* ASCII & Microsoft */

@@ -60,7 +60,7 @@ void pc_t1t_vh_stop(void)
     generic_vh_stop();
 }
 
-void pc_t1t_videoram_w(int offset, int data)
+WRITE_HANDLER ( pc_t1t_videoram_w )
 {
 	if( !videoram )
 		return;
@@ -70,7 +70,7 @@ void pc_t1t_videoram_w(int offset, int data)
 	dirtybuffer[offset] = 1;
 }
 
-int pc_t1t_videoram_r(int offset)
+READ_HANDLER ( pc_t1t_videoram_r )
 {
 	int data = 0xff;
 	if( videoram )
@@ -517,7 +517,7 @@ INLINE int DOCLIP(struct rectangle *r1)
     if (r1->max_x < r2->min_x) return 0;
     if (r1->min_y > r2->max_y) return 0;
     if (r1->max_y < r2->min_y) return 0;
-    if (r1->min_x < r2->min_x) r1->min_x = r2->min_x; 
+    if (r1->min_x < r2->min_x) r1->min_x = r2->min_x;
     if (r1->max_x > r2->max_x) r1->max_x = r2->max_x;
     if (r1->min_y < r2->min_y) r1->min_y = r2->min_y;
     if (r1->max_y > r2->max_y) r1->max_y = r2->max_y;

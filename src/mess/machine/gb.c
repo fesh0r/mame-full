@@ -67,7 +67,7 @@ void gb_init_machine (void)
 	gb_w_io (0x07, gb_ram [0xFF07]);
 }
 
-void gb_rom_bank_select (int offset, int data)
+WRITE_HANDLER ( gb_rom_bank_select )
 {
 	if (MBCType && ((offset & 0x0100) == 0))
 		return;
@@ -83,7 +83,7 @@ void gb_rom_bank_select (int offset, int data)
 	}
 }
 
-void gb_ram_bank_select (int offset, int data)
+WRITE_HANDLER ( gb_ram_bank_select )
 {
 	data &= RAMMask;
 	if (RAMMask && !MBCType && (RAMBank != data))
@@ -95,7 +95,7 @@ void gb_ram_bank_select (int offset, int data)
 	}
 }
 
-void gb_w_io (int offset, int data)
+WRITE_HANDLER ( gb_w_io )
 {
 	static UINT8 timer_shifts[4] =
 	{10, 4, 6, 8};
@@ -282,12 +282,12 @@ void gb_w_io (int offset, int data)
 	gb_ram [offset] = data;
 }
 
-int gb_r_divreg (int offset)
+READ_HANDLER ( gb_r_divreg )
 {
 	return ((gb_divcount >> 8) & 0xFF);
 }
 
-int gb_r_timer_cnt (int offset)
+READ_HANDLER ( gb_r_timer_cnt )
 {
 	return (gb_timer_count >> gb_timer_shift);
 }

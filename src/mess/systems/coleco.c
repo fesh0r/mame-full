@@ -32,13 +32,13 @@ extern unsigned char *coleco_cartridge_rom;
 
 extern int coleco_id_rom (int id);
 extern int coleco_load_rom (int id);
-extern int coleco_ram_r(int offset);
-extern void coleco_ram_w(int offset, int data);
-extern int coleco_paddle_r(int offset);
-extern void coleco_paddle_toggle_1_w(int offset, int data);
-extern void coleco_paddle_toggle_2_w(int offset, int data);
-extern int coleco_VDP_r(int offset);
-extern void coleco_VDP_w(int offset, int data);
+extern READ_HANDLER  ( coleco_ram_r );
+extern WRITE_HANDLER ( coleco_ram_w );
+extern READ_HANDLER  ( coleco_paddle_r );
+extern WRITE_HANDLER ( coleco_paddle_toggle_1_w );
+extern WRITE_HANDLER ( coleco_paddle_toggle_2_w );
+extern READ_HANDLER  ( coleco_VDP_r );
+extern WRITE_HANDLER ( coleco_VDP_w );
 
 
 static struct MemoryReadAddress readmem[] =

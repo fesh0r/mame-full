@@ -13,7 +13,7 @@ typedef struct {
     char *sramfile;
     int pacsram;
 } MSX_CART;
- 
+
 typedef struct {
     int run; /* set after init_msx () */
     /* PSG */
@@ -33,23 +33,23 @@ int msx_id_rom (int id);
 void msx_exit_rom (int id);
 
 /* I/O functions */
-void msx_printer_w (int offset, int data);
-int msx_printer_r (int offset);
-void msx_vdp_w (int offset, int data);
-int msx_vdp_r (int offset);
-void msx_psg_w (int offset, int data);
-int msx_psg_r (int offset);
-void msx_psg_port_a_w (int offset, int data);
-int msx_psg_port_a_r (int offset);
-void msx_psg_port_b_w (int offset, int data);
-int msx_psg_port_b_r (int offset);
-void msx_fmpac_w (int offset, int data);
+WRITE_HANDLER ( msx_printer_w );
+READ_HANDLER ( msx_printer_r );
+WRITE_HANDLER ( msx_vdp_w );
+READ_HANDLER ( msx_vdp_r );
+WRITE_HANDLER ( msx_psg_w );
+READ_HANDLER ( msx_psg_r );
+WRITE_HANDLER ( msx_psg_port_a_w );
+READ_HANDLER ( msx_psg_port_a_r );
+WRITE_HANDLER ( msx_psg_port_b_w );
+READ_HANDLER ( msx_psg_port_b_r );
+WRITE_HANDLER ( msx_fmpac_w );
 
 /* memory functions */
-void msx_writemem0 (int offset, int data);
-void msx_writemem1 (int offset, int data);
-void msx_writemem2 (int offset, int data);
-void msx_writemem3 (int offset, int data);
+WRITE_HANDLER ( msx_writemem0 );
+WRITE_HANDLER ( msx_writemem1 );
+WRITE_HANDLER ( msx_writemem2 );
+WRITE_HANDLER ( msx_writemem3 );
 
 /* cassette functions */
 int msx_cassette_init (int id);

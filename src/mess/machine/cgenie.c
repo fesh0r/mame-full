@@ -133,7 +133,7 @@ static int get_cycles = 0;
 static void tape_put_close(void);
 
 
-static int opbaseoverride(int PC)
+static int opbaseoverride(UINT32 PC)
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
 	/* check if the BASIC prompt is visible on the screen */

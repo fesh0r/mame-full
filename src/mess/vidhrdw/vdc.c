@@ -61,7 +61,7 @@ void pce_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 }
 
 
-void vdc_w(int offset, int data)
+WRITE_HANDLER ( vdc_w )
 {
     switch(offset)
     {
@@ -145,7 +145,7 @@ void vdc_w(int offset, int data)
 }
 
 
-int vdc_r(int offset)
+READ_HANDLER ( vdc_r )
 {
     int temp = 0;
     switch(offset)
@@ -177,7 +177,7 @@ int vdc_r(int offset)
 }
 
 
-int vce_r(int offset)
+READ_HANDLER ( vce_r )
 {
     int temp = 0;
     switch(offset & 7)
@@ -195,7 +195,7 @@ int vce_r(int offset)
 }
 
 
-void vce_w(int offset, int data)
+WRITE_HANDLER ( vce_w )
 {
     switch(offset & 7)
     {

@@ -77,49 +77,49 @@ static int c128_dma8726_port_r(int offset)
 	return 0xff;
 }
 
-void c128_mmu8722_port_w (int offset, int data);
-int c128_mmu8722_port_r (int offset);
-void c128_write_d000 (int offset, int value)
+WRITE_HANDLER ( c128_mmu8722_port_w );
+READ_HANDLER ( c128_mmu8722_port_r );
+WRITE_HANDLER ( c128_write_d000 )
 {
 	if (!c128_write_io) {
 		if (offset + 0xd000 >= c128_ram_top)
-			c64_memory[0xd000 + offset] = value;
+			c64_memory[0xd000 + offset] = data;
 		else
-			c128_ram[0xd000 + offset] = value;
+			c128_ram[0xd000 + offset] = data;
 	} else {
 		switch ((offset&0xf00)>>8) {
 		case 0:case 1: case 2: case 3:
-			vic2_port_w (offset & 0x3ff, value);
+			vic2_port_w (offset & 0x3ff, data);
 			break;
 		case 4:
-			sid6581_0_port_w (offset & 0x3f, value);
+			sid6581_0_port_w (offset & 0x3f, data);
 			break;
 		case 5:
-			c128_mmu8722_port_w (offset & 0xff, value);
+			c128_mmu8722_port_w (offset & 0xff, data);
 			break;
 		case 6:case 7:
-			vdc8563_port_w (offset & 0xff, value);
+			vdc8563_port_w (offset & 0xff, data);
 			break;
 		case 8: case 9: case 0xa: case 0xb:
-			c64_colorram[offset & 0x3ff] = value | 0xf0;
+			c64_colorram[offset & 0x3ff] = data | 0xf0;
 			break;
 		case 0xc:
-			cia6526_0_port_w (offset & 0xff, value);
+			cia6526_0_port_w (offset & 0xff, data);
 			break;
 		case 0xd:
-			cia6526_1_port_w (offset & 0xff, value);
+			cia6526_1_port_w (offset & 0xff, data);
 			break;
 		case 0xf:
-			c128_dma8726_port_w(offset&0xff,value);
+			c128_dma8726_port_w(offset&0xff,data);
 			break;
 		case 0xe:
-			DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
+			DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, data));
 			break;
 		}
 	}
 }
 
-static int c128_read_io (int offset)
+static READ_HANDLER ( c128_read_io )
 {
 	switch ((offset&0xf00)>>8) {
 	case 0:case 1: case 2: case 3:
@@ -544,7 +544,7 @@ void c128_mmu8722_reset (void)
 	c128_bankswitch ();
 }
 
-void c128_mmu8722_port_w (int offset, int data)
+WRITE_HANDLER ( c128_mmu8722_port_w )
 {
 	offset &= 0xf;
 	switch (offset)
@@ -582,7 +582,7 @@ void c128_mmu8722_port_w (int offset, int data)
 	}
 }
 
-int c128_mmu8722_port_r (int offset)
+READ_HANDLER ( c128_mmu8722_port_r )
 {
 	int data;
 
@@ -640,63 +640,63 @@ void c128_mmu8722_ff00_w (int offset, int data)
 	}
 }
 
-int c128_mmu8722_ff00_r (int offset)
+READ_HANDLER ( c128_mmu8722_ff00_r )
 {
 	return c128_mmu[offset];
 }
 
-void c128_write_0000 (int offset, int value)
+WRITE_HANDLER ( c128_write_0000 )
 {
 	if (c128_ram!=NULL)
-		c128_ram[0x0000 + offset] = value;
+		c128_ram[0x0000 + offset] = data;
 }
 
-void c128_write_1000 (int offset, int value)
+WRITE_HANDLER ( c128_write_1000 )
 {
 	if (c128_ram!=NULL)
-		c128_ram[0x1000 + offset] = value;
+		c128_ram[0x1000 + offset] = data;
 }
 
-void c128_write_4000 (int offset, int value)
+WRITE_HANDLER ( c128_write_4000 )
 {
 	if (c128_ram!=NULL)
-		c128_ram[0x4000 + offset] = value;
+		c128_ram[0x4000 + offset] = data;
 }
 
-void c128_write_8000 (int offset, int value)
+WRITE_HANDLER ( c128_write_8000 )
 {
 	if (c128_ram!=NULL)
-		c128_ram[0x8000 + offset] = value;
+		c128_ram[0x8000 + offset] = data;
 }
 
-void c128_write_a000 (int offset, int value)
+WRITE_HANDLER ( c128_write_a000 )
 {
 	if (c128_ram!=NULL)
-		c128_ram[0xa000 + offset] = value;
+		c128_ram[0xa000 + offset] = data;
 }
 
-void c128_write_e000 (int offset, int value)
+WRITE_HANDLER ( c128_write_e000 )
 {
 	if (offset + 0xe000 >= c128_ram_top)
-		c64_memory[0xe000 + offset] = value;
+		c64_memory[0xe000 + offset] = data;
 	else if (c128_ram!=NULL)
-		c128_ram[0xe000 + offset] = value;
+		c128_ram[0xe000 + offset] = data;
 }
 
-void c128_write_ff00 (int offset, int value)
+WRITE_HANDLER ( c128_write_ff00 )
 {
 	if (!c64mode)
-		c128_mmu8722_ff00_w (offset, value);
+		c128_mmu8722_ff00_w (offset, data);
 	else if (c128_ram!=NULL)
-		c64_memory[0xff00 + offset] = value;
+		c64_memory[0xff00 + offset] = data;
 }
 
-void c128_write_ff05 (int offset, int value)
+WRITE_HANDLER ( c128_write_ff05 )
 {
 	if (offset + 0xff05 >= c128_ram_top)
-		c64_memory[0xff05 + offset] = value;
+		c64_memory[0xff05 + offset] = data;
 	else if (c128_ram!=NULL)
-		c128_ram[0xff05 + offset] = value;
+		c128_ram[0xff05 + offset] = data;
 }
 
 /*

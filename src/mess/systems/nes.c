@@ -23,39 +23,39 @@ int nes_load_rom (int id);
 int nes_id_rom (int id);
 void nes_init_machine (void);
 int nes_interrupt (void);
-int nes_ppu_r (int offset);
-int nes_IN0_r (int offset);
-int nes_IN1_r (int offset);
-void nes_IN0_w (int offset, int data);
-void nes_IN1_w (int offset, int data);
-void nes_ppu_w (int offset, int data);
+READ_HANDLER  ( nes_ppu_r );
+READ_HANDLER  ( nes_IN0_r );
+READ_HANDLER  ( nes_IN1_r );
+WRITE_HANDLER ( nes_IN0_w );
+WRITE_HANDLER ( nes_IN1_w );
+WRITE_HANDLER ( nes_ppu_w );
 
-void nes_mapper_w (int offset, int data);
-void nes_strange_mapper_w (int offset, int data);
-int nes_strange_mapper_r (int offset);
+WRITE_HANDLER ( nes_mapper_w );
+WRITE_HANDLER ( nes_strange_mapper_w );
+READ_HANDLER  ( nes_strange_mapper_r );
 
 /* vidhrdw/nes.c */
 int nes_vh_start (void);
 void nes_vh_stop (void);
 void nes_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
-void nes_vh_sprite_dma_w (int offset, int data);
+WRITE_HANDLER ( nes_vh_sprite_dma_w );
 
 unsigned char *battery_ram;
 unsigned char *main_ram;
 unsigned char *nes_io_0;
 unsigned char *nes_io_1;
 
-int nes_mirrorram_r (int offset)
+READ_HANDLER ( nes_mirrorram_r )
 {
 	return main_ram[offset & 0x7ff];
 }
 
-void nes_mirrorram_w (int offset, int data)
+WRITE_HANDLER ( nes_mirrorram_w )
 {
 	main_ram[offset & 0x7ff] = data;
 }
 
-void battery_ram_w (int offset, int data)
+WRITE_HANDLER ( battery_ram_w )
 {
 	extern int Mapper;
 	int i;
@@ -108,7 +108,7 @@ void battery_ram_w (int offset, int data)
 	}
 }
 
-int nes_bogus_r (int offset)
+READ_HANDLER ( nes_bogus_r )
 {
 	static int val = 0xff;
 
@@ -143,7 +143,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x4016, 0x4016, nes_IN0_w, &nes_io_0 },	/* IN0 - gamepad 1 */
 	{ 0x4017, 0x4017, nes_IN1_w, &nes_io_1 },	/* IN1 - gamepad 2 */
 	{ 0x4014, 0x4014, nes_vh_sprite_dma_w }, /* transfer 0x100 of data to sprite ram */
-	{ 0x4011, 0x4011, DAC_data_w },
+	{ 0x4011, 0x4011, DAC_0_data_w },
 	{ 0x4000, 0x4015, NESPSG_0_w },
 	{ 0x0800, 0x1fff, nes_mirrorram_w },   /* mirrors of RAM */
 	{ -1 }	/* end of table */

@@ -5,7 +5,7 @@
                     Official Page at: http://mess.emuverse.com
                    ==========================================
 
-This document is generated for MESS 0.36 (Apr  5 2000)
+This document is generated for MESS 0.37 BETA 1 (Apr 15 2000)
 
 Please note that many people helped with this project, either directly or by
 releasing source code which was used to write the drivers. We are not trying to
@@ -53,7 +53,7 @@ we are perfectly capable of finding it ourselves, thank you.
 
 Complete Emulated System List
 =============================
-Here is the list of systems supported by MESS 0.36 (Apr  5 2000)
+Here is the list of systems supported by MESS 0.37 BETA 1 (Apr 15 2000)
 
 The meanings of the columns are as follows:
 Working - "No" means that the emulation has shortcomings that cause the system
@@ -82,6 +82,7 @@ dat2html.exe.
 |                                         |       |Correct|       | Internal |
 | System Name                             |Working|Colors | Sound |   Name   |
 +-----------------------------------------+-------+-------+-------+----------+
+| Atari 2600 - VCS                        |   No  |   No  |   No  | a2600    |
 | Atari 5200                              |  Yes  |  Yes  |  Yes  | a5200    |
 | Atari 7800                              |  Yes  |  Yes  |  Yes  | a7800    |
 | Bally Arcade/Astrocade                  |  Yes  |  Yes  |  Yes  | astrocde |
@@ -187,8 +188,10 @@ dat2html.exe.
 | ZX.Aszmic                               |   No  |  Yes  |  Yes  | aszmic   |
 | PC8300                                  |   No  |  Yes  |  Yes  | pc8300   |
 | Power 3000                              |   No  |  Yes  |  Yes  | pow3000  |
-| ZX-Spectrum 48k                         |  Yes  |  Yes  |  Yes  | spectrum |
-| Spectrum +3                             |  Yes  |  Yes  |  Yes  | specpls3 |
+| ZX Spectrum                             |  Yes  |  Yes  |  Yes  | spectrum |
+| ZX Spectrum 128                         |  Yes  |  Yes  |  Yes  | spec128  |
+| ZX Spectrum 128 +2                      |  Yes  |  Yes  |  Yes  | specpls2 |
+| ZX Spectrum 128 +3                      |  Yes  |  Yes  |  Yes  | specpls3 |
 | MSX1                                    |  Yes  |  Yes  |  Yes  | msx      |
 | MSX1 (Japan)                            |  Yes  |  Yes  |  Yes  | msxj     |
 | MSX1 (Korean)                           |  Yes  |  Yes  |  Yes  | msxkr    |
@@ -296,6 +299,7 @@ system devices.  Use the UI (TAB key) to access.
 
  SYSTEM      DEVICE NAME (brief)   IMAGE FILE EXTENSIONS SUPPORTED    
 ----------  --------------------  ------------------------------------
+a2600        Cartridge   (Cart)   .bin  
 a5200        Cartridge   (Cart)   .rom  .bin  
 a7800        Cartridge   (Cart)   .a78  
 astrocde     Cartridge   (Cart)   .bin  
@@ -497,9 +501,13 @@ ts1000       Cassette    (Cass)   .81   .p
 aszmic       Cassette    (Cass)   .80   .o    
 pc8300       Cassette    (Cass)   .81   .p    
 pow3000      Cassette    (Cass)   .81   .p    
-spectrum     Cartridge   (Cart)   .sna  .z80  .tap  
+spectrum     Snapshot    (Snap)   .sna  .z80  .tap  
              Cassette    (Cass)   .wav  
-specpls3     Cartridge   (Cart)   .sna  .z80  .tap  
+spec128      Snapshot    (Snap)   .sna  .z80  .tap  
+             Cassette    (Cass)   .wav  
+specpls2     Snapshot    (Snap)   .sna  .z80  .tap  
+             Cassette    (Cass)   .wav  
+specpls3     Snapshot    (Snap)   .sna  .z80  .tap  
              Cassette    (Cass)   .wav  
              Floppydisk  (Flop)   .dsk  
 msx          Cartridge   (Cart)   .rom  

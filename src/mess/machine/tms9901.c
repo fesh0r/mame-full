@@ -19,7 +19,7 @@ Overview :
 	TMS9901 is a support chip for TMS9900.  It handles interrupts, provides several I/O pins, and
 	a timer (a.k.a. clock : it is merely a register which decrements regularily and can generate
 	an interrupt when it reaches 0).
-	
+
 	It communicates with the TMS9900 with the CRU bus, and with the rest of the world with
 	a number of parallel I/O pins.
 
@@ -41,7 +41,7 @@ Pins :
 Interrupt handling :
 	After each clock cycle, TMS9901 reads the state of INT1*-INT15* (except pins which are set as
 	output pins).  If the clock is enabled, it replaces INT3* with an internal timer int pending
-	register.  Then it inverts the value and performs a bit-wise AND with the interrupt mask.  
+	register.  Then it inverts the value and performs a bit-wise AND with the interrupt mask.
 
 	If some bits are set, TMS9901 set the INTREQ* pin and present the number of the first bit set
 	on the IC0-IC3 pins.  If the tms9900 is connected to these pins, the result is that asserting
@@ -363,7 +363,7 @@ static void reset_tms9901_timer(void)
 
 	bit 16-31 : current status of the P0-P15 pins (quits timer mode, too...)
 */
-int tms9901_CRU_read(int offset)
+READ_HANDLER ( tms9901_CRU_read )
 {
 	int answer;
 
@@ -454,7 +454,7 @@ int tms9901_CRU_read(int offset)
 
 	bit 16-31 : set output state of P0-P15 (and set them as output pin) (quits timer mode, too...)
 */
-void tms9901_CRU_write(int offset, int data)
+WRITE_HANDLER ( tms9901_CRU_write )
 {
 	data &= 1;	/* clear extra bits */
 	offset &= 0x01F;

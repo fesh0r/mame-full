@@ -184,7 +184,7 @@ void genesis_vh_convert_color_prom (unsigned char *palette, unsigned char *color
 }
 
 
-void genesis_videoram1_w (int offset, int data)
+WRITE_HANDLER ( genesis_videoram1_w )
 {
 	if (errorlog) fprintf(errorlog, "what is this doing? %x, %x\n", offset, data);
 	offset = data;
@@ -376,7 +376,7 @@ unsigned char *get_dma_dest_address(int id)
 	return NULL;
 }
 
-int genesis_vdp_data_r (int offset)
+READ_HANDLER ( genesis_vdp_data_r )
 {
 	int data = 0;		 /* don't worry about this for now, really doesn't happen */
 
@@ -403,7 +403,7 @@ int genesis_vdp_data_r (int offset)
 	return data;
 }
 
-void genesis_vdp_data_w (int offset, int data)
+WRITE_HANDLER ( genesis_vdp_data_w )
 {
   	int tempsource = 0;
   	int temp_vdp_address = vdp_address;
@@ -521,7 +521,7 @@ void genesis_vdp_data_w (int offset, int data)
 
 
 
-int genesis_vdp_ctrl_r (int offset)
+READ_HANDLER ( genesis_vdp_ctrl_r )
 {
 static int  fake_dma_mode = 0;
 fake_dma_mode ^=8;
@@ -537,7 +537,7 @@ fake_dma_mode ^=8;
 	return vdp_ctrl_status;
 }
 
-void genesis_vdp_ctrl_w (int offset, int data)
+WRITE_HANDLER ( genesis_vdp_ctrl_w )
 {
 	static int first_read = 1;
 	static int vdp_register, full_vdp_data;
@@ -741,12 +741,12 @@ void genesis_vdp_ctrl_w (int offset, int data)
 	}
 }
 
-int genesis_vdp_hv_r (int offset)
+READ_HANDLER ( genesis_vdp_hv_r )
 {
    			return vdp_hv_status;
 }
 
-void genesis_vdp_hv_w (int offset, int data)
+WRITE_HANDLER ( genesis_vdp_hv_w )
 {
 }
 

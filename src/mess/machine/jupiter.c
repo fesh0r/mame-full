@@ -34,7 +34,7 @@ jupiter_tape;
 static UINT8 *jupiter_data = NULL;
 static int jupiter_data_type = JUPITER_NONE;
 
-int jupiter_opbaseoverride(int pc)
+int jupiter_opbaseoverride(UINT32 pc)
 {
 
 	int loop;

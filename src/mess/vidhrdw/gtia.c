@@ -51,7 +51,7 @@ GTIA    gtia;
 /**************************************************************
  *
  * Reset GTIA
- * 
+ *
  **************************************************************/
 
 void gtia_reset(void)
@@ -83,10 +83,10 @@ void gtia_reset(void)
 /**************************************************************
  *
  * Read GTIA hardware registers
- * 
+ *
  **************************************************************/
 
-int MRA_GTIA(int offset)
+READ_HANDLER ( MRA_GTIA )
 {
     switch (offset & 31)
     {
@@ -133,7 +133,7 @@ int MRA_GTIA(int offset)
 /**************************************************************
  *
  * Write GTIA hardware registers
- * 
+ *
  **************************************************************/
 
 static void recalc_p0(void)
@@ -280,7 +280,7 @@ static void recalc_m3(void)
     }
 }
 
-void MWA_GTIA(int offset, int data)
+WRITE_HANDLER ( MWA_GTIA )
 {
 	/* used for mixing hue/lum of different colors */
 	static UINT8 lumpm0=0,lumpm1=0,lumpm2=0,lumpm3=0,lumpm4=0;

@@ -85,10 +85,10 @@ int nes_vh_start(void)
 		free (videoram);
 		osd_free_bitmap (tmpbitmap);
 		free (spriteram);
-		free (dirtybuffer);
-		free (dirtybuffer2);
-		free (dirtybuffer3);
-		free (dirtybuffer4);
+		if (dirtybuffer)  free (dirtybuffer);
+		if (dirtybuffer2) free (dirtybuffer2);
+		if (dirtybuffer3) free (dirtybuffer3);
+		if (dirtybuffer4) free (dirtybuffer4);
 		return 1;
 	}
 

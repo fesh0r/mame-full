@@ -49,10 +49,10 @@ extern void	Dave_sh_stop(void);
 extern void	Dave_sh_update(void);
 
 extern int	Dave_getreg(int);
-extern void	Dave_setreg(int,int);
+extern WRITE_HANDLER ( Dave_setreg );
 
-extern int 	Dave_reg_r(int);
-extern void	Dave_reg_w(int, int);
+extern READ_HANDLER ( 	Dave_reg_r );
+extern WRITE_HANDLER (	Dave_reg_w );
 
 extern void	Dave_SetInt(int);
 

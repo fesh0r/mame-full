@@ -5,7 +5,7 @@
 ***************************************************************************/
 /*
 Metal Oxid Semicontuctor MOS
-Commodore Business Machine CBM 
+Commodore Business Machine CBM
 Textured Display Ted7360
 ------------------------
 
@@ -87,7 +87,7 @@ registers:
   2: lightpen
   1: rasterline
   0: irq rasterline bit 8
- 0xff0b 
+ 0xff0b
   7-0: irq rasterline 7-0
  0xff0c
   7-2: 1?
@@ -101,8 +101,8 @@ registers:
  0xff11
   7: sound reload
   6: tone 2 noise on (tone 2 must be off for noise)
-  5: tone 2 tone on 
-  4: tone 1 on  
+  5: tone 2 tone on
+  4: tone 1 on
   3-0: volume 8?-0
  0xff12
   7,6: ?
@@ -120,16 +120,16 @@ registers:
  0xff15
   7: ?
   6-0: backgroundcolor
- 0xff16 
+ 0xff16
   7: ?
   6-0: color1
- 0xff17 
+ 0xff17
   7: ?
   6-0: color2
- 0xff18 
+ 0xff18
   7: ?
   6-0: color3
- 0xff19 
+ 0xff19
   7: ?
   6-0: framecolor
  0xff1a
@@ -175,7 +175,7 @@ sound generator
 
 timer
  timer count down
- when reaching 0 
+ when reaching 0
   they restart from 0xffff
   set the interrupt request flag
  writing to low byte stops timer
@@ -188,7 +188,7 @@ interrupt controller
  interrupt is generated when rising edge on request and enable
  quitting of interrupt is done via writing 1 to the request bit
  what happens with request interrupts when the are enabled?
- 
+
 Video part
  colors
   bit 3-0 color
@@ -203,14 +203,14 @@ Video part
    0x57,0x00,0x6d, 0x00,0x4e,0x00, 0x19,0x1c,0x94, 0x38,0x38,0x00,
    0x56,0x20,0x00, 0x4b,0x28,0x00, 0x16,0x48,0x00, 0x69,0x07,0x2f,
    0x00,0x46,0x26, 0x06,0x2a,0x80, 0x2a,0x14,0x9b, 0x0b,0x49,0x00,
- 
+
    0x00,0x03,0x02, 0x3d,0x3d,0x3d, 0x75,0x1e,0x20, 0x00,0x50,0x4f,
    0x6a,0x10,0x78, 0x04,0x5c,0x00, 0x2a,0x2a,0xa3, 0x4c,0x47,0x00,
    0x69,0x2f,0x00, 0x59,0x38,0x00, 0x26,0x56,0x00, 0x75,0x15,0x41,
    0x00,0x58,0x3d, 0x15,0x3d,0x8f, 0x39,0x22,0xae, 0x19,0x59,0x00,
 
    0x00,0x03,0x04, 0x42,0x42,0x42, 0x7b,0x28,0x20, 0x02,0x56,0x59,
-   0x6f,0x1a,0x82, 0x0a,0x65,0x09, 0x30,0x34,0xa7, 0x50,0x51,0x00, 
+   0x6f,0x1a,0x82, 0x0a,0x65,0x09, 0x30,0x34,0xa7, 0x50,0x51,0x00,
    0x6e,0x36,0x00, 0x65,0x40,0x00, 0x2c,0x5c,0x00, 0x7d,0x1e,0x45,
    0x01,0x61,0x45, 0x1c,0x45,0x99, 0x42,0x2d,0xad, 0x1d,0x62,0x00,
 
@@ -260,12 +260,12 @@ Video part
   blinking (synchron to cursor) (color&0x80)
  reverse text mode (reverse on, ecm off, multicolor off, hires off)
   character pointer &0x7f
-  character pointer bit 7 
+  character pointer bit 7
    set
     pixel off color attribut &0x7f
     pixel on color backgroundcolor
    clear
-    like normal text mode  
+    like normal text mode
   blinking (synchron to cursor) (color&0x80)
  multicolor text mode (ecm off, multicolor on, hires off)
   reverse ?
@@ -296,16 +296,16 @@ Video part
    3-0: (color) bit 7-4
   pixel off color
    6-4: (color luminance) bit 6-4
-   3-0: (color) bit 3-0  
+   3-0: (color) bit 3-0
   (color) bit 7?
   (color luminance) bit 7?
  hires multicolor (ecm off, multicolor on, hires on)
   reverse ?
   0 backgroundcolor
-  1 
+  1
    6-4: (color luminance) bit 2-0
    3-0: (color) bit 7-4
-  2 
+  2
    6-4: (color luminance) bit 6-4
    3-0: (color) bit 3-0
   3 color1
@@ -315,7 +315,7 @@ Video part
   visible part of the display in fixed position
   columns 38 mode left 7 and right 9 pixel less displayed
    but line generation start at the same position as in columns 40 mode
-  lines25 flag top and bottom 4 pixel less displayed ?   
+  lines25 flag top and bottom 4 pixel less displayed ?
   horicontal scrolling support
    in columns 38 mode
     horicontal position 1-7: pixel later started line generation
@@ -336,13 +336,13 @@ Video part
 
  rasterline/rastercolumn
   values in registers begin visible area 0
-  vic 6567 
-   pal line 0 beginning of vertical refresh   
+  vic 6567
+   pal line 0 beginning of vertical refresh
    ntsc line 0 in bottom frame
     beginning of 25 lines screen 0x33 (24 lines screen 0x37)
     beginning of 40 columns line 0x18 (38 columns 0x1f)
 
- lightpen 
+ lightpen
   (where to store values?)
   i found a lightpen hardware description with a demo and drawing program
   lightpen must be connected to joy0 (button)
@@ -598,7 +598,7 @@ int ted7360_frame_interrupt (void)
 	return ignore_interrupt ();
 }
 
-void ted7360_port_w (int offset, int data)
+WRITE_HANDLER ( ted7360_port_w )
 {
 	int old;
 
@@ -834,7 +834,7 @@ void ted7360_port_w (int offset, int data)
 	}
 }
 
-int ted7360_port_r (int offset)
+READ_HANDLER ( ted7360_port_r )
 {
 	int val = 0;
 

@@ -18,10 +18,10 @@ ernesto@imagina.com
 ***************************************************************************/
 
 /* from machine/amiga.c */
-extern int amiga_cia_r( int offs );
-extern void amiga_cia_w( int offs, int data );
-extern int amiga_custom_r( int offs );
-extern void amiga_custom_w( int offs, int data );
+extern READ_HANDLER  ( amiga_cia_r );
+extern WRITE_HANDLER ( amiga_cia_w );
+extern READ_HANDLER  ( amiga_custom_r );
+extern WRITE_HANDLER ( amiga_custom_w );
 extern void amiga_init_machine( void );
 extern int amiga_vblank_irq( void );
 extern int amiga_fdc_init( int id );

@@ -1621,8 +1621,11 @@ void initMixerEngine(void)
 	filterAmpl = 0.7;
 
 	ampMod1x8=malloc(256*256);
+	if(!ampMod1x8) return;
 	signedPanMix8=malloc(256*256);
+	if(!signedPanMix8) return;
 	signedPanMix16=malloc(256*256*2);
+	if(!signedPanMix16) return;
 
 	uk = 0;
 	for ( si = 0; si < 256; si++ )

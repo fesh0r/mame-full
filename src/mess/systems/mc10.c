@@ -4,18 +4,18 @@
 
 extern void mc10_init_machine(void);
 extern void mc10_stop_machine(void);
-extern int mc10_bfff_r(int offset);
-extern void mc10_bfff_w(int offset, int data);
-extern int mc10_port1_r(int offset);
-extern int mc10_port2_r(int offset);
-extern void mc10_port1_w(int offset, int data);
-extern void mc10_port2_w(int offset, int data);
+extern READ_HANDLER ( mc10_bfff_r );
+extern WRITE_HANDLER ( mc10_bfff_w );
+extern READ_HANDLER ( mc10_port1_r );
+extern READ_HANDLER ( mc10_port2_r );
+extern WRITE_HANDLER ( mc10_port1_w );
+extern WRITE_HANDLER ( mc10_port2_w );
 
 extern int mc10_vh_start(void);
 extern void mc10_vh_stop(void);
 extern int mc10_interrupt(void);
 extern void mc10_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-extern void mc10_ram_w (int offset, int data);
+extern WRITE_HANDLER ( mc10_ram_w );
 
 extern int coco_cassette_init(int id);
 extern void coco_cassette_exit(int id);

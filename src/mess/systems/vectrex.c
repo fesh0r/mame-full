@@ -14,8 +14,8 @@ Bruce Tomlin (hardware info)
 
 /* From machine/vectrex.c */
 extern unsigned char *vectrex_ram;
-extern int vectrex_ram_r (int offset);
-extern void vectrex_ram_w (int offset, int data);
+extern READ_HANDLER  ( vectrex_ram_r );
+extern WRITE_HANDLER ( vectrex_ram_w );
 extern int vectrex_load_rom (int id);
 extern int vectrex_id_rom (int id);
 
@@ -26,7 +26,7 @@ extern void vectrex_init_colors (unsigned char *palette, unsigned short *colorta
 extern void vectrex_vh_update (struct osd_bitmap *bitmap, int full_refresh);
 
 extern int raaspec_start(void);
-extern void raaspec_led_w (int offset, int data);
+extern WRITE_HANDLER  ( raaspec_led_w );
 extern void raaspec_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 extern void raaspec_vh_update (struct osd_bitmap *bitmap, int full_refresh);
 

@@ -17,8 +17,10 @@ struct DisplayText
 	int y;
 };
 
+#ifdef MESS
 #define SEL_BITS    12
 #define SEL_MASK	((1<<SEL_BITS)-1)
+#endif
 
 #define DT_COLOR_WHITE 0
 #define DT_COLOR_YELLOW 1

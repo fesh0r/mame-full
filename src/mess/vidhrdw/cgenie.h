@@ -26,11 +26,11 @@ extern	int 	cgenie_font_offset[4];
 extern	int 	cgenie_vh_start(void);
 extern	void	cgenie_vh_stop(void);
 
-extern	int 	cgenie_index_r(int offset);
-extern	int 	cgenie_register_r(int offset);
+extern	READ_HANDLER ( cgenie_index_r );
+extern	READ_HANDLER ( cgenie_register_r );
 
-extern	void	cgenie_index_w(int offset, int data);
-extern	void	cgenie_register_w(int offset, int data);
+extern	WRITE_HANDLER ( cgenie_index_w );
+extern	WRITE_HANDLER (	cgenie_register_w );
 
 extern	int 	cgenie_get_register(int indx);
 

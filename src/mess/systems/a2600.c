@@ -113,13 +113,13 @@ extern void a2600_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 
 /* machine/a2600.c */
-extern int a2600_TIA_r(int offset);
-extern void a2600_TIA_w(int offset, int data);
+extern READ_HANDLER  ( a2600_TIA_r );
+extern WRITE_HANDLER ( a2600_TIA_w );
 extern void a2600_init_machine(void);
 extern void a2600_stop_machine(void);
 extern int	a2600_id_rom (int id);
 extern int	a2600_load_rom(int id);
-extern int  a2600_ROM_r (int offset);
+extern READ_HANDLER ( a2600_ROM_r );
 
 
 /* horrid memory mirroring ahead */

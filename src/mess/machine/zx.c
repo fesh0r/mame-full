@@ -65,7 +65,7 @@ void init_zx(void)
 		gfx[i] = i;
 }
 
-static int zx_setopbase(int pc)
+static int zx_setopbase(UINT32 pc)
 {
 	if (pc & 0x8000)
 		return zx_ula_r(pc, REGION_CPU1);
@@ -84,7 +84,7 @@ static int zx_setopbase(int pc)
 	return pc;
 }
 
-static int pc8300_setopbase(int pc)
+static int pc8300_setopbase(UINT32 pc)
 {
 	if (pc & 0x8000)
 		return zx_ula_r(pc, REGION_GFX2);
@@ -102,7 +102,7 @@ static int pc8300_setopbase(int pc)
 	return pc;
 }
 
-static int pow3000_setopbase(int pc)
+static int pow3000_setopbase(UINT32 pc)
 {
 	if (pc & 0x8000)
 		return zx_ula_r(pc, REGION_GFX2);

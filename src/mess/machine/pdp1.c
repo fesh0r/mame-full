@@ -93,7 +93,7 @@ int pdp1_id_rom (int id)
 	/* This driver doesn't ID images yet */
 	return 0;
 }
-static int setOPbasefunc(int i)
+static int setOPbasefunc(UINT32 i)
 {
 	/* just to get rid of the warnings */
 	return -1;

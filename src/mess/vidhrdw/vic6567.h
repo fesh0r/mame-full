@@ -62,10 +62,10 @@ extern unsigned char vic2_palette[16 * 3];
 /* to be inserted in GameDriver-Structure */
 
 /* to be called when writting to port */
-extern void vic2_port_w (int offset, int data);
+extern WRITE_HANDLER ( vic2_port_w );
 
 /* to be called when reading from port */
-extern int vic2_port_r (int offset);
+extern READ_HANDLER ( vic2_port_r );
 
 extern void vic2_lightpen_write (int level);
 

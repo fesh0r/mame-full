@@ -885,7 +885,7 @@ static const struct IODevice io_c64gs[] =
 
 #ifdef PET_TEST_CODE
 /*	  YEAR	NAME		PARENT	MACHINE 		INPUT	INIT	COMPANY 						   FULLNAME */
-COMP (1982, max,		0,		ultimax,		ultimax,ultimax,"Commodore Business Machines Co.", "Commodore Max (VIC10/Ultimax/Vickie)")
+COMPX (1982, max,		0,		ultimax,		ultimax,ultimax,"Commodore Business Machines Co.", "Commodore Max (VIC10/Ultimax/Vickie)", GAME_ALIAS)
 COMP (1982, c64,        0,      c64,            c64,    c64,    "Commodore Business Machines Co.", "Commodore C64 (NTSC)")
 COMP (1982, cbm4064,	c64,	pet64,			c64,	c64,	"Commodore Business Machines Co.", "Commodore CBM4064/Pet64/Educator64 (NTSC)")
 COMP (1982, c64pal, 	c64,	c64pal, 		c64,	c64pal, "Commodore Business Machines Co.", "Commodore C64/VC64/VIC64 (PAL)")
@@ -893,7 +893,7 @@ COMP (1983, sx64,		c64,	sx64,			sx64,	sx64,	"Commodore Business Machines Co.", "
 CONS (1990, c64gs,		c64,	c64gs,			c64gs,	c64gs,	"Commodore Business Machines Co.", "Commodore C64GS (NTSC)")
 #else
 /*	  YEAR	NAME		PARENT	MACHINE 		INPUT	INIT	COMPANY 						   FULLNAME */
-COMPX(1982, max,		0,		ultimax,		ultimax,ultimax,"Commodore Business Machines Co.", "Commodore Max (VIC10/Ultimax/Vickie)",      GAME_IMPERFECT_SOUND)
+COMPX(1982, max,		0,		ultimax,		ultimax,ultimax,"Commodore Business Machines Co.", "Commodore Max (VIC10/Ultimax/Vickie)",      GAME_IMPERFECT_SOUND | GAME_ALIAS)
 COMPX(1982, c64,		0,		c64,			c64,	c64,	"Commodore Business Machines Co.", "Commodore C64 (NTSC)",                      GAME_IMPERFECT_SOUND)
 COMPX(1982, cbm4064,	c64,	pet64,			c64,	c64,	"Commodore Business Machines Co.", "Commodore CBM4064/Pet64/Educator64 (NTSC)", GAME_IMPERFECT_SOUND)
 COMPX(1982, c64pal, 	c64,	c64pal, 		c64,	c64pal, "Commodore Business Machines Co.", "Commodore C64/VC64/VIC64 (PAL)",            GAME_IMPERFECT_SOUND)

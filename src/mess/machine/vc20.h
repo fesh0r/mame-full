@@ -75,7 +75,7 @@
 extern UINT8 *vc20_memory;
 extern UINT8 *vc20_memory_9400;
 
-extern void vc20_write_9400 (int offset, int data);
+extern WRITE_HANDLER ( vc20_write_9400 );
 
 /* split for more performance */
 /* VIC reads bits 8 till 11 */

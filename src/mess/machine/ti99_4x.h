@@ -30,36 +30,36 @@ int ti99_4_vh_start(void);
 int ti99_4a_vh_start(void);
 int ti99_vblank_interrupt(void);
 
-int ti99_rw_null8bits(int offset);
-void ti99_ww_null8bits(int offset, int data);
+READ_HANDLER ( ti99_rw_null8bits );
+WRITE_HANDLER ( ti99_ww_null8bits );
 
-int ti99_rw_xramlow(int offset);
-void ti99_ww_xramlow(int offset, int data);
-int ti99_rw_xramhigh(int offset);
-void ti99_ww_xramhigh(int offset, int data);
+READ_HANDLER ( ti99_rw_xramlow );
+WRITE_HANDLER ( ti99_ww_xramlow );
+READ_HANDLER ( ti99_rw_xramhigh );
+WRITE_HANDLER ( ti99_ww_xramhigh );
 
-int ti99_rw_cartmem(int offset);
-void ti99_ww_cartmem(int offset, int data);
+READ_HANDLER ( ti99_rw_cartmem );
+WRITE_HANDLER ( ti99_ww_cartmem );
 
-int ti99_rw_scratchpad(int offset);
-void ti99_ww_scratchpad(int offset, int data);
+READ_HANDLER ( ti99_rw_scratchpad );
+WRITE_HANDLER ( ti99_ww_scratchpad );
 
-void ti99_ww_wsnd(int offset, int data);
-int ti99_rw_rvdp(int offset);
-void ti99_ww_wvdp(int offset, int data);
-int ti99_rw_rspeech(int offset);
-void ti99_ww_wspeech(int offset, int data);
-int ti99_rw_rgpl(int addr);
-void ti99_ww_wgpl(int offset, int data);
+WRITE_HANDLER( ti99_ww_wsnd );
+READ_HANDLER ( ti99_rw_rvdp );
+WRITE_HANDLER ( ti99_ww_wvdp );
+READ_HANDLER ( ti99_rw_rspeech );
+WRITE_HANDLER ( ti99_ww_wspeech );
+READ_HANDLER ( ti99_rw_rgpl );
+WRITE_HANDLER( ti99_ww_wgpl );
 
-int ti99_rw_disk(int offset);
-void ti99_ww_disk(int offset, int data);
-int ti99_DSKget(int offset);
-void ti99_DSKROM(int offset, int data);
-void ti99_DSKhold(int offset, int data);
-void ti99_DSKheads(int offset, int data);
-void ti99_DSKsel(int offset, int data);
-void ti99_DSKside(int offset, int data);
+READ_HANDLER ( ti99_rw_disk );
+WRITE_HANDLER ( ti99_ww_disk );
+READ_HANDLER ( ti99_DSKget );
+WRITE_HANDLER ( ti99_DSKROM );
+WRITE_HANDLER ( ti99_DSKhold);
+WRITE_HANDLER ( ti99_DSKheads );
+WRITE_HANDLER ( ti99_DSKsel );
+WRITE_HANDLER ( ti99_DSKside );
 
 
 

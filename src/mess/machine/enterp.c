@@ -29,6 +29,7 @@ void enterprise_init_machine(void)
 	 * where memory bank is not defined
 	 */
 	Enterprise_RAM = malloc((128*1024)+32768);
+	if (!Enterprise_RAM) return;
 
 	/* initialise the hardware */
 	Enterprise_Initialise();

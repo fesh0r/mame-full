@@ -1,6 +1,6 @@
 /*
  *	MacPlus emulation
- *	
+ *
  *	Nate Woods
  *
  *
@@ -41,16 +41,16 @@
 extern void macplus_init_machine( void );
 extern void init_macplus( void );
 extern int macplus_vblank_irq( void );
-extern int macplus_via_r(int offset);
-extern void macplus_via_w(int offset, int data);
-extern int macplus_autovector_r(int offset);
-extern void macplus_autovector_w(int offset, int data);
-extern int macplus_iwm_r(int offset);
-extern void macplus_iwm_w(int offset, int data);
-extern int macplus_scc_r(int offset);
-extern void macplus_scc_w(int offset, int data);
-extern int macplus_scsi_r(int offset);
-extern void macplus_scsi_w(int offset, int data);
+extern READ_HANDLER ( macplus_via_r );
+extern WRITE_HANDLER ( macplus_via_w );
+extern READ_HANDLER ( macplus_autovector_r );
+extern WRITE_HANDLER ( macplus_autovector_w );
+extern READ_HANDLER ( macplus_iwm_r );
+extern WRITE_HANDLER ( macplus_iwm_w );
+extern READ_HANDLER ( macplus_scc_r );
+extern WRITE_HANDLER ( macplus_scc_w );
+extern READ_HANDLER ( macplus_scsi_r );
+extern WRITE_HANDLER ( macplus_scsi_w );
 extern int macplus_floppy_init(int id);
 extern void macplus_floppy_exit(int id);
 
@@ -159,7 +159,7 @@ INPUT_PORTS_START( macplus )
 	PORT_START /* 0 */
 	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1, "right button", KEYCODE_RALT, IP_JOY_DEFAULT)
 	/* Not yet implemented */
-	
+
 	PORT_START /* Mouse - X AXIS */
 	PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
 

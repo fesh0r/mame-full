@@ -46,8 +46,8 @@ static int a2_speaker_state;
 static void mockingboard_init (int slot);
 static int mockingboard_r (int offset);
 static void mockingboard_w (int offset, int data);
-void apple2_mainram_w(int offset, int data);
-void apple2_auxram_w(int offset, int data);
+WRITE_HANDLER ( apple2_mainram_w );
+WRITE_HANDLER ( apple2_auxram_w );
 
 /***************************************************************************
   apple2_init_machine
@@ -159,7 +159,7 @@ int apple2_interrupt(void)
 /***************************************************************************
   apple2_LC_ram1_w
 ***************************************************************************/
-void apple2_LC_ram1_w(int offset, int data)
+WRITE_HANDLER ( apple2_LC_ram1_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	/* If the aux switch is set, use the aux language card bank as well */
@@ -171,7 +171,7 @@ void apple2_LC_ram1_w(int offset, int data)
 /***************************************************************************
   apple2_LC_ram2_w
 ***************************************************************************/
-void apple2_LC_ram2_w(int offset, int data)
+WRITE_HANDLER ( apple2_LC_ram2_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	/* If the aux switch is set, use the aux language card bank as well */
@@ -183,7 +183,7 @@ void apple2_LC_ram2_w(int offset, int data)
 /***************************************************************************
   apple2_LC_ram_w
 ***************************************************************************/
-void apple2_LC_ram_w(int offset, int data)
+WRITE_HANDLER ( apple2_LC_ram_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	/* If the aux switch is set, use the aux language card bank as well */
@@ -195,7 +195,7 @@ void apple2_LC_ram_w(int offset, int data)
 /***************************************************************************
   apple2_mainram_w
 ***************************************************************************/
-void apple2_mainram_w(int offset, int data)
+WRITE_HANDLER ( apple2_mainram_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -205,7 +205,7 @@ void apple2_mainram_w(int offset, int data)
 /***************************************************************************
   apple2_auxram_w
 ***************************************************************************/
-void apple2_auxram_w(int offset, int data)
+WRITE_HANDLER ( apple2_auxram_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

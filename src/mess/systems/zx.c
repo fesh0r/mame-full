@@ -35,11 +35,11 @@ extern void zx_shutdown_machine(void);
 extern int zx_cassette_init(int id);
 extern void zx_cassette_exit(int id);
 
-extern int zx_io_r(int offs);
-extern void zx_io_w(int offs, int data);
+extern READ_HANDLER ( zx_io_r );
+extern WRITE_HANDLER ( zx_io_w );
 
-extern int pow3000_io_r(int offs);
-extern void pow3000_io_w(int offs, int data);
+extern READ_HANDLER ( pow3000_io_r );
+extern WRITE_HANDLER ( pow3000_io_w );
 
 /* from vidhrdw/zx80.c */
 extern int zx_ula_scanline(void);

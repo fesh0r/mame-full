@@ -15,10 +15,10 @@
 #include "machine/6821pia.h"
 #include "inptport.h"
 
-int apple1_pia0_kbdin(int);
-int apple1_pia0_dsprdy(int);
-int apple1_pia0_kbdrdy(int);
-void apple1_pia0_dspout(int, int);
+int apple1_pia0_kbdin(UINT32);
+int apple1_pia0_dsprdy(UINT32);
+int apple1_pia0_kbdrdy(UINT32);
+void apple1_pia0_dspout(UINT32, UINT32);
 void apple1_vh_dsp_w(int);
 void apple1_vh_dsp_clr(void);
 
@@ -126,21 +126,21 @@ void init_apple1(void)
 
 /* || */
 
-int apple1_pia0_kbdin(int offset)
+int apple1_pia0_kbdin(UINT32 offset)
 {
 
 	return (apple1_kbd_data | 0x80);
 
 }
 
-int apple1_pia0_dsprdy(int offset)
+int apple1_pia0_dsprdy(UINT32 offset)
 {
 
 	return (0x00);					   /* Screen always ready */
 
 }
 
-int apple1_pia0_kbdrdy(int offset)
+int apple1_pia0_kbdrdy(UINT32 offset)
 {
 
 	if (apple1_kbd_data)
@@ -150,7 +150,7 @@ int apple1_pia0_kbdrdy(int offset)
 
 }
 
-void apple1_pia0_dspout(int offset, int val)
+void apple1_pia0_dspout(UINT32 offset, UINT32 val)
 {
 
 	apple1_vh_dsp_w(val);

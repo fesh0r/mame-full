@@ -52,10 +52,10 @@ extern unsigned char ted7360_palette[16 * 8 * 3];
 extern struct CustomSound_interface ted7360_sound_interface;
 
 /* to be called when writting to port */
-extern void ted7360_port_w (int offset, int data);
+extern WRITE_HANDLER ( ted7360_port_w );
 
 /* to be called when reading from port */
-extern int ted7360_port_r (int offset);
+extern READ_HANDLER  ( ted7360_port_r );
 
 /* to be called each vertical retrace */
 extern int ted7360_frame_interrupt (void);

@@ -2,10 +2,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-void vdc_w(int offset, int data);
-int vdc_r(int offset);
-int vce_r(int offset);
-void vce_w(int offset, int data);
+WRITE_HANDLER ( vdc_w );
+READ_HANDLER ( vdc_r );
+READ_HANDLER ( vce_r );
+WRITE_HANDLER ( vce_w );
 int pce_vh_start(void);
 void pce_vh_stop(void);
 void pce_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
@@ -72,10 +72,10 @@ typedef struct
     int curline;                /* the current scanline we're on */
     UINT8 *vram;
     UINT8   inc;
-    UINT8 vdc_register;       
-    UINT8 vdc_latch;           
+    UINT8 vdc_register;
+    UINT8 vdc_latch;
     pair vdc_data[32];
     int status;
-    struct osd_bitmap *bmp;         
+    struct osd_bitmap *bmp;
 }VDC;
 

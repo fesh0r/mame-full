@@ -81,7 +81,7 @@ static UINT8 *c16_memory_2c000;
   p6 serial clock in
   p7 serial data in, serial bus 5
  */
-void c16_m7501_port_w (int offset, int data)
+WRITE_HANDLER ( c16_m7501_port_w )
 {
 	int dat, atn, clk;
 
@@ -104,7 +104,7 @@ void c16_m7501_port_w (int offset, int data)
 	vc20_tape_motor (data & 8);
 }
 
-int c16_m7501_port_r (int offset)
+READ_HANDLER ( c16_m7501_port_r )
 {
 	if (offset)
 	{
@@ -166,7 +166,7 @@ static void c16_bankswitch (void)
 	cpu_setbank (4, c16_memory + 0x17c00);
 }
 
-void c16_switch_to_rom (int offset, int data)
+WRITE_HANDLER ( c16_switch_to_rom )
 {
 	ted7360_rom = 1;
 	c16_bankswitch ();
@@ -185,7 +185,7 @@ void c16_switch_to_rom (int offset, int data)
  * 0  1  plus4 hi
  * 1  0  c1 high
  * 1  1  c2 high */
-extern void c16_select_roms (int offset, int data)
+extern WRITE_HANDLER ( c16_select_roms )
 {
 	lowrom = offset & 3;
 	highrom = (offset & 0xc) >> 2;
@@ -193,7 +193,7 @@ extern void c16_select_roms (int offset, int data)
 		c16_bankswitch ();
 }
 
-void c16_switch_to_ram (int offset, int data)
+WRITE_HANDLER ( c16_switch_to_ram )
 {
 	ted7360_rom = 0;
 	switch (DIPMEMORY)
@@ -219,7 +219,7 @@ void c16_switch_to_ram (int offset, int data)
 	}
 }
 
-void plus4_switch_to_ram (int offset, int data)
+WRITE_HANDLER ( plus4_switch_to_ram )
 {
 	ted7360_rom = 0;
 	cpu_setbank (2, c16_memory + 0x8000);
@@ -272,12 +272,12 @@ int c16_read_keyboard (int databus)
  * output low means keyboard line selected
  * keyboard line is then read into the ted7360 latch
  */
-void c16_6529_port_w (int offset, int data)
+WRITE_HANDLER ( c16_6529_port_w )
 {
 	port6529 = data;
 }
 
-int c16_6529_port_r (int offset)
+READ_HANDLER ( c16_6529_port_r )
 {
 	return port6529 & (c16_read_keyboard (0xff /*databus */ ) | (port6529 ^ 0xff));
 }
@@ -292,11 +292,11 @@ int c16_6529_port_r (int offset)
  * p6 Userport j
  * p7 Userport f
  */
-void plus4_6529_port_w (int offset, int data)
+WRITE_HANDLER ( plus4_6529_port_w )
 {
 }
 
-int plus4_6529_port_r (int offset)
+READ_HANDLER ( plus4_6529_port_r )
 {
 	int data = 0;
 
@@ -305,7 +305,7 @@ int plus4_6529_port_r (int offset)
 	return data;
 }
 
-int c16_fd1x_r (int offset)
+READ_HANDLER ( c16_fd1x_r )
 {
 	int data = 0;
 
@@ -351,14 +351,14 @@ int c16_fd1x_r (int offset)
    1111 19200
  control register
   */
-void c16_6551_port_w (int offset, int data)
+WRITE_HANDLER ( c16_6551_port_w )
 {
 	offset &= 3;
 	DBG_LOG (3, "6551", (errorlog, "port write %.2x %.2x\n", offset, data));
 	port6529 = data;
 }
 
-int c16_6551_port_r (int offset)
+READ_HANDLER ( c16_6551_port_r )
 {
 	int data = 0;
 
@@ -367,32 +367,32 @@ int c16_6551_port_r (int offset)
 	return data;
 }
 
-static void c16_write_3f20 (int offset, int data)
+static WRITE_HANDLER ( c16_write_3f20 )
 {
 	c16_memory[0x3f20 + offset] = data;
 }
 
-static void c16_write_3f40 (int offset, int data)
+static WRITE_HANDLER ( c16_write_3f40 )
 {
 	c16_memory[0x3f40 + offset] = data;
 }
 
-static void c16_write_7f20 (int offset, int data)
+static WRITE_HANDLER ( c16_write_7f20 )
 {
 	c16_memory[0x7f20 + offset] = data;
 }
 
-static void c16_write_7f40 (int offset, int data)
+static WRITE_HANDLER ( c16_write_7f40 )
 {
 	c16_memory[0x7f40 + offset] = data;
 }
 
-static int ted7360_dma_read_16k (int offset)
+static int ted7360_dma_read_16k (int offset )
 {
 	return c16_memory[offset & 0x3fff];
 }
 
-static int ted7360_dma_read_32k (int offset)
+static int ted7360_dma_read_32k (int offset )
 {
 	return c16_memory[offset & 0x7fff];
 }
@@ -402,7 +402,7 @@ static int ted7360_dma_read (int offset)
 	return c16_memory[offset];
 }
 
-static int ted7360_dma_read_rom (int offset)
+static int ted7360_dma_read_rom (int offset )
 {
 	/* should read real c16 system bus from 0xfd00 -ff1f */
 	if (offset >= 0xc000)
@@ -610,7 +610,7 @@ void c16_init_machine (void)
 		install_mem_write_handler (0, 0xfee0, 0xfeff, tpi6525_2_port_w);
 		install_mem_read_handler (0, 0xfee0, 0xfeff, tpi6525_2_port_r);
 	}
-	else 
+	else
 	{
 		install_mem_write_handler (0, 0xfee0, 0xfeff, MWA_NOP);
 		install_mem_read_handler (0, 0xfee0, 0xfeff, MRA_NOP);

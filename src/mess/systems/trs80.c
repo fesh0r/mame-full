@@ -45,33 +45,33 @@ extern void init_trs80(void);
 extern void trs80_init_machine(void);
 extern void trs80_shutdown_machine(void);
 
-extern void trs80_port_ff_w(int offset, int data);
-extern int trs80_port_ff_r(int offset);
-extern int trs80_port_xx_r(int offset);
+extern WRITE_HANDLER ( trs80_port_ff_w );
+extern READ_HANDLER ( trs80_port_ff_r );
+extern READ_HANDLER ( trs80_port_xx_r );
 
 extern int trs80_timer_interrupt(void);
 extern int trs80_frame_interrupt(void);
 
-extern int trs80_irq_status_r(int offset);
-extern void trs80_irq_mask_w(int offset, int data);
+extern READ_HANDLER ( trs80_irq_status_r );
+extern WRITE_HANDLER ( trs80_irq_mask_w );
 
-extern int trs80_printer_r(int offset);
-extern void trs80_printer_w(int offset, int data);
+extern READ_HANDLER ( trs80_printer_r );
+extern WRITE_HANDLER ( trs80_printer_w );
 
-extern int trs80_status_r(int offset);
-extern int trs80_track_r(int offset);
-extern int trs80_sector_r(int offset);
-extern int trs80_data_r(int offset);
+extern READ_HANDLER ( trs80_status_r );
+extern READ_HANDLER ( trs80_track_r );
+extern READ_HANDLER ( trs80_sector_r );
+extern READ_HANDLER ( trs80_data_r );
 
-extern void trs80_command_w(int offset, int data);
-extern void trs80_track_w(int offset, int data);
-extern void trs80_sector_w(int offset, int data);
-extern void trs80_data_w(int offset, int data);
+extern WRITE_HANDLER ( trs80_command_w );
+extern WRITE_HANDLER ( trs80_track_w );
+extern WRITE_HANDLER ( trs80_sector_w );
+extern WRITE_HANDLER ( trs80_data_w );
 
-extern void trs80_motor_w(int offset, int data);
+extern WRITE_HANDLER ( trs80_motor_w );
 
-extern int trs80_keyboard_r(int offset);
-extern void trs80_videoram_w(int offset, int data);
+extern READ_HANDLER ( trs80_keyboard_r );
+extern WRITE_HANDLER ( trs80_videoram_w );
 
 static struct MemoryReadAddress readmem_model1[] =
 {

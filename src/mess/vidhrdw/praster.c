@@ -20,21 +20,21 @@ PRASTER raster1= { 0 } , raster2= { 0 };
 
 /* struct to be initialised with the functions for the colordepth */
 static struct {
-	void (*draw_character)(struct osd_bitmap *bitmap,int ybegin, int yend, 
+	void (*draw_character)(struct osd_bitmap *bitmap,int ybegin, int yend,
 							UINT8 *font, int y, int x, UINT16 *color);
-	void (*draw_bytecode)(struct osd_bitmap *bitmap, UINT8 code, 
+	void (*draw_bytecode)(struct osd_bitmap *bitmap, UINT8 code,
 						  int y, int x, UINT16 *color);
 	void (*draw_pixel)(struct osd_bitmap *bitmap, int y, int x, UINT16 color);
 } praster = { NULL };
 
 static void praster_videoram_w(PRASTER *this, int offset, int data)
-{	
+{
 	offset&=this->memory.mask;
 	if (this->memory.ram[offset]!=data) {
 	   this->memory.ram[offset] = data;
 	   if ((offset>=this->memory.videoram.offset)
 		   &&(offset<this->memory.videoram.offset+this->memory.videoram.size) )
-		   this->text.dirtybuffer[offset] = 1;	   
+		   this->text.dirtybuffer[offset] = 1;
 	   if ( (offset>=this->memory.colorram.offset)
 			&&(offset<this->memory.colorram.offset+this->memory.colorram.size))
 		   this->text.dirtybuffer[offset-this->memory.colorram.offset] = 1;
@@ -80,7 +80,7 @@ static void praster_draw_bytecode16(struct osd_bitmap *bitmap, UINT8 code, int y
 	*((short *) bitmap->line[y] + 7 + x) = color[code & 1];
 }
 
-static void praster_draw_character8(struct osd_bitmap *bitmap, int ybegin, int yend, 
+static void praster_draw_character8(struct osd_bitmap *bitmap, int ybegin, int yend,
 									UINT8 *font, int y, int x, UINT16 *color)
 {
 	int i, code;
@@ -98,7 +98,7 @@ static void praster_draw_character8(struct osd_bitmap *bitmap, int ybegin, int y
 		}
 }
 
-static void praster_draw_character16(struct osd_bitmap *bitmap, int ybegin, int yend, 
+static void praster_draw_character16(struct osd_bitmap *bitmap, int ybegin, int yend,
 									 UINT8 *font, int y, int x, UINT16 *color)
 {
 	int i, code;
@@ -132,7 +132,7 @@ void praster_draw_text (PRASTER *this, char *text, int *y)
 {
 	int x, x0, y2, width = (Machine->gamedrv->drv->visible_area.max_x -
 							Machine->gamedrv->drv->visible_area.min_x) / Machine->uifont->width;
-   
+
 	if (text[0] != 0)
 	{
 		x = strlen (text);
@@ -146,7 +146,7 @@ void praster_draw_text (PRASTER *this, char *text, int *y)
 							 Machine->uifont->width);
 				 x++, x0 += Machine->uifont->width)
 			{
-				drawgfx (this->display.bitmap, Machine->uifont, 
+				drawgfx (this->display.bitmap, Machine->uifont,
 						 text[x], 0, 0, 0, x0, y2, 0,
 						 TRANSPARENCY_NONE, 0);
 				/* i hope its enough to mark the chars under the four edge as
@@ -182,8 +182,8 @@ static void praster_init (PRASTER *this)
 
 static void praster_update(PRASTER *this)
 {
-	memset(raster2.text.dirtybuffer, 1, 
-		   raster2.text.size.x*raster2.text.size.y);	
+	memset(raster2.text.dirtybuffer, 1,
+		   raster2.text.size.x*raster2.text.size.y);
 }
 
 static void praster_cursor_update(PRASTER *this)
@@ -213,26 +213,26 @@ static void praster_raster_monotext (PRASTER *this)
 {
 	int i, j, k, sy, sx, ty, tx, code;
 
-	for (i = 0, ty=0, sy = this->raytube.screenpos.y; 
-		 (ty<this->text.size.y)&&(sy<this->display.pos.y+this->display.size.y); 
+	for (i = 0, ty=0, sy = this->raytube.screenpos.y;
+		 (ty<this->text.size.y)&&(sy<this->display.pos.y+this->display.size.y);
 		 ty++, sy+=this->text.charsize.y, i+=this->linediff+this->text.size.x) {
-		for (sx = this->raytube.screenpos.x, tx=0, j=i; 
-			 (tx<this->text.size.x)&&(sx<this->display.pos.x+this->display.size.x); 
+		for (sx = this->raytube.screenpos.x, tx=0, j=i;
+			 (tx<this->text.size.x)&&(sx<this->display.pos.x+this->display.size.x);
 			 tx++, sx+=this->text.charsize.x, j++ ) {
 			if (this->text.dirtybuffer[j]) {
 				code=this->memory.ram[(this->memory.videoram.offset+j)
 									 &this->memory.videoram.mask];
-				praster.draw_character 
-					(this->display.bitmap,0, this->text.visiblesize.y-1, 
+				praster.draw_character
+					(this->display.bitmap,0, this->text.visiblesize.y-1,
 					 this->memory.ram+((this->memory.fontram.offset+
 										code*this->text.fontsize.y)
-									   & this->memory.fontram.mask), 
+									   & this->memory.fontram.mask),
 					 sy, sx, this->monocolor);
 				if (this->cursor.on&&(this->cursor.pos==j)
 					&&(!this->cursor.blinking||this->cursor.displayed) ) {
-					for (k=this->cursor.ybegin; 
+					for (k=this->cursor.ybegin;
 						 (k<this->text.charsize.y)&&(k<=this->cursor.yend); k++) {
-						praster.draw_bytecode(this->display.bitmap, 0xff, sy+k, sx, 
+						praster.draw_bytecode(this->display.bitmap, 0xff, sy+k, sx,
 											  this->monocolor);
 					}
 				}
@@ -248,11 +248,11 @@ static void praster_raster_text (PRASTER *this)
 	int i, j, k, sy, sx, tx, ty, code, attr;
 	UINT16 color[2];
 
-	for (i = 0, ty=0, sy = this->raytube.screenpos.y; 
-		 (ty<this->text.size.y)&&(sy<this->display.pos.y+this->display.size.y); 
+	for (i = 0, ty=0, sy = this->raytube.screenpos.y;
+		 (ty<this->text.size.y)&&(sy<this->display.pos.y+this->display.size.y);
 		 ty++, sy+=this->text.charsize.y, i+=this->linediff+this->text.size.x) {
-		for (sx = this->raytube.screenpos.x, tx=0, j=i; 
-			 (tx<this->text.size.x)&&(sx<this->display.pos.x+this->display.size.x); 
+		for (sx = this->raytube.screenpos.x, tx=0, j=i;
+			 (tx<this->text.size.x)&&(sx<this->display.pos.x+this->display.size.x);
 			 tx++, sx+=this->text.charsize.x, j++ ) {
 			if (1||this->text.dirtybuffer[j]) {
 				code=this->memory.ram[(this->memory.videoram.offset+j)
@@ -262,17 +262,17 @@ static void praster_raster_text (PRASTER *this)
 				color[0]=this->display.pens[(attr>>4)&7];
 				color[1]=this->display.pens[attr&0x0f];
 				if (attr&0x80) code|=0x100;
-				praster.draw_character 
-					(this->display.bitmap,0, this->text.visiblesize.y-1, 
+				praster.draw_character
+					(this->display.bitmap,0, this->text.visiblesize.y-1,
 					 this->memory.ram+((this->memory.fontram.offset+
 										code*this->text.fontsize.y)
-									   & this->memory.fontram.mask), 
+									   & this->memory.fontram.mask),
 					 sy, sx, color);
 				if (this->cursor.on&&(this->cursor.pos==j)
 					&&(!this->cursor.blinking||this->cursor.displayed) ) {
-					for (k=this->cursor.ybegin; 
+					for (k=this->cursor.ybegin;
 						 (k<this->text.charsize.y)&&(k<=this->cursor.yend); k++) {
-						praster.draw_bytecode(this->display.bitmap, 0xff, sy+k, sx, 
+						praster.draw_bytecode(this->display.bitmap, 0xff, sy+k, sx,
 											  color);
 					}
 				}
@@ -287,33 +287,33 @@ static void praster_raster_gfxtext (PRASTER *this)
 {
 	int i, j, k, l, sy, sx, tx, ty, code;
 
-	for (i = 0, ty=0, sy = this->raytube.screenpos.y; 
-		 (ty<this->text.size.y)&&(sy<this->display.pos.y+this->display.size.y); 
+	for (i = 0, ty=0, sy = this->raytube.screenpos.y;
+		 (ty<this->text.size.y)&&(sy<this->display.pos.y+this->display.size.y);
 		 ty++, sy+=this->text.charsize.y, i+=this->linediff+this->text.size.x) {
-		for (sx = this->raytube.screenpos.x, tx=0, j=i; 
-			 (tx<this->text.size.x)&&(sx<this->display.pos.x+this->display.size.x); 
+		for (sx = this->raytube.screenpos.x, tx=0, j=i;
+			 (tx<this->text.size.x)&&(sx<this->display.pos.x+this->display.size.x);
 			 tx++, sx+=this->text.charsize.x, j++ ) {
 			if (this->text.dirtybuffer[j]) {
 				code=this->memory.ram[(this->memory.videoram.offset+j)
 									 &this->memory.videoram.mask]
 					+this->memory.fontram.offset/this->text.fontsize.y;
-				
-				drawgfx (this->display.bitmap, Machine->gfx[0], code, 
+
+				drawgfx (this->display.bitmap, Machine->gfx[0], code,
 						 0, 0, 0, sx, sy, 0, TRANSPARENCY_NONE, 0);
-				
+
 #if 0
-				praster.draw_character 
-					(this->display.bitmap,0, this->text.visiblesize.y-1, 
+				praster.draw_character
+					(this->display.bitmap,0, this->text.visiblesize.y-1,
 					 this->memory.ram+((this->memory.fontram.offset+
 										code*this->text.fontsize.y)
-									   & this->memory.fontram.mask), 
+									   & this->memory.fontram.mask),
 					 sy, sx, this->display.pens);
 #endif
 				if (this->cursor.on&&(this->cursor.pos==j)
 					&&(!this->cursor.blinking||this->cursor.displayed) ) {
-					for (k=this->cursor.ybegin; 
+					for (k=this->cursor.ybegin;
 						 (k<this->text.charsize.y)&&(k<=this->cursor.yend); k++) {
-						praster.draw_bytecode(this->display.bitmap, 0xff, sy+k, sx, 
+						praster.draw_bytecode(this->display.bitmap, 0xff, sy+k, sx,
 											  this->display.pens);
 					}
 				}
@@ -337,7 +337,7 @@ static void praster_raster_gfxtext (PRASTER *this)
 					}
 				}
 				osd_mark_dirty (sx, sy,
-								sx+this->text.charsize.x-1, 
+								sx+this->text.charsize.x-1,
 								sy+this->text.charsize.y-1, 0);
 				this->text.dirtybuffer[j]=0;
 			}
@@ -349,23 +349,23 @@ static void praster_raster_graphic (PRASTER *this)
 {
 	int i, sy, sx, tx, ty, code;
 
-	for (i = 0, ty = 0, sy=this->raytube.screenpos.y; 
-		 ty<this->graphic.size.y; 
+	for (i = 0, ty = 0, sy=this->raytube.screenpos.y;
+		 ty<this->graphic.size.y;
 		 sy++, ty++, i+=this->linediff ) {
-		for (sx = this->raytube.screenpos.x, tx = 0; 
-			 tx<this->graphic.size.x; 
+		for (sx = this->raytube.screenpos.x, tx = 0;
+			 tx<this->graphic.size.x;
 			 tx+=8, sx+=8) {
 			if (this->text.dirtybuffer[i]) {
 				code=this->memory.ram[(this->memory.videoram.offset+i)
 									 &this->memory.videoram.mask];
-				praster.draw_bytecode (this->display.bitmap, 
+				praster.draw_bytecode (this->display.bitmap,
 									   code, sy, sx, this->monocolor);
 				this->text.dirtybuffer[i]=0;
 			}
 		}
 	}
 }
-	
+
 int praster_vh_start (void)
 {
 	if ((raster2.text.dirtybuffer=malloc(0x10000))==0) return 1;
@@ -404,7 +404,7 @@ void praster_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 		full_refresh = 1;
 
 	if( full_refresh ) {
-		memset(raster2.text.dirtybuffer, 1, 
+		memset(raster2.text.dirtybuffer, 1,
 			   raster2.text.size.x*raster2.text.size.y);
     }
 
@@ -448,14 +448,14 @@ void praster_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 extern void praster_1_init (void) { praster_init(&raster1); }
 extern void praster_2_init (void) { praster_init(&raster2); }
 
-extern void praster_1_videoram_w(int offset, int data) 
+extern WRITE_HANDLER ( praster_1_videoram_w )
 { praster_videoram_w(&raster1, offset, data); }
-extern void praster_2_videoram_w(int offset, int data)
+extern WRITE_HANDLER ( praster_2_videoram_w )
 { praster_videoram_w(&raster2, offset, data); }
 
-extern int praster_1_videoram_r(int offset) 
+extern READ_HANDLER ( praster_1_videoram_r )
 { return praster_videoram_r(&raster1, offset); }
-extern int praster_2_videoram_r(int offset)
+extern READ_HANDLER ( praster_2_videoram_r )
 { return praster_videoram_r(&raster2, offset); }
 
 extern void praster_1_update(void)

@@ -32,41 +32,41 @@ void	Dave_sh_update(void)
 {
 }
 
-void	Dave_reg_w(int RegIndex, int Data)
+WRITE_HANDLER (	Dave_reg_w )
 {
-	dave.Regs[RegIndex & 0x01f] = Data;
+	dave.Regs[offset & 0x01f] = data;
 
-	if (RegIndex == 0x014)
+	if (offset == 0x014)
 	{
-		Dave_IntRegWrite(Data);
+		Dave_IntRegWrite(data);
 	}
 
 	if (dave_iface!=NULL)
 	{
-		dave_iface->reg_w(RegIndex,Data);
+		dave_iface->reg_w(offset, data);
 	}
 }
 
 
-void Dave_setreg(int RegIndex, int Data)
+WRITE_HANDLER ( Dave_setreg )
 {
-	dave.Regs[RegIndex & 0x01f] = Data;
+	dave.Regs[offset & 0x01f] = data;
 }
 
-int	Dave_reg_r(int RegIndex)
+READ_HANDLER (	Dave_reg_r )
 {
 	if (dave_iface!=NULL)
 	{
-		dave_iface->reg_r(RegIndex);
+		dave_iface->reg_r(offset);
 	}
 
-	if (RegIndex==0x14)
+	if (offset==0x14)
 	{
 
-               dave.Regs[RegIndex & 0x01f] = Dave_IntRegRead();
+               dave.Regs[offset & 0x01f] = Dave_IntRegRead();
 	}
 
-	return dave.Regs[RegIndex & 0x01f];
+	return dave.Regs[offset & 0x01f];
 }
 
 int	Dave_getreg(int RegIndex)

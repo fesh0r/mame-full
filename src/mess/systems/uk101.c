@@ -47,7 +47,7 @@ extern	void	superbrd_vh_screenrefresh (struct osd_bitmap *bitmap,
 
 static	INT8	uk101_keyb;
 
-int	uk101_keyb_r (int offset)
+READ_HANDLER (	uk101_keyb_r )
 {
 	int	rpl = 0xff;
 	if (!(uk101_keyb & 0x80))
@@ -69,7 +69,7 @@ int	uk101_keyb_r (int offset)
 	return (rpl);
 }
 
-void uk101_keyb_w (int offset, int data)
+WRITE_HANDLER ( uk101_keyb_w )
 {
 	uk101_keyb = data;
 }

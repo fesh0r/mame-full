@@ -14,7 +14,7 @@
 
 /*
  * tia6523
- * 
+ *
  * only some lines of port b and c are in the pinout !
  *
  * connector to floppy c1551 (delivered with c1551 as c16 expansion)
@@ -30,7 +30,7 @@
 /* fill in the callback functions */
 typedef struct {
 	int number;
-	struct { 
+	struct {
 		int (*read)(void);
 		void (*output)(int data);
 		int port, ddr, in;
@@ -66,44 +66,44 @@ void tpi6525_1_irq2_level(int level);
 void tpi6525_1_irq3_level(int level);
 void tpi6525_1_irq4_level(int level);
 
-int tpi6525_0_port_r(int offset);
-int tpi6525_1_port_r(int offset);
-int tpi6525_2_port_r(int offset);
-int tpi6525_3_port_r(int offset);
+READ_HANDLER  ( tpi6525_0_port_r );
+READ_HANDLER  ( tpi6525_1_port_r );
+READ_HANDLER  ( tpi6525_2_port_r );
+READ_HANDLER  ( tpi6525_3_port_r );
 
-void tpi6525_0_port_w(int offset, int data);
-void tpi6525_1_port_w(int offset, int data);
-void tpi6525_2_port_w(int offset, int data);
-void tpi6525_3_port_w(int offset, int data);
+WRITE_HANDLER ( tpi6525_0_port_w );
+WRITE_HANDLER ( tpi6525_1_port_w );
+WRITE_HANDLER ( tpi6525_2_port_w );
+WRITE_HANDLER ( tpi6525_3_port_w );
 
-int tpi6525_0_port_a_r(int offset);
-int tpi6525_1_port_a_r(int offset);
-int tpi6525_2_port_a_r(int offset);
-int tpi6525_3_port_a_r(int offset);
+READ_HANDLER  ( tpi6525_0_port_a_r );
+READ_HANDLER  ( tpi6525_1_port_a_r );
+READ_HANDLER  ( tpi6525_2_port_a_r );
+READ_HANDLER  ( tpi6525_3_port_a_r );
 
-void tpi6525_0_port_a_w(int offset, int data);
-void tpi6525_1_port_a_w(int offset, int data);
-void tpi6525_2_port_a_w(int offset, int data);
-void tpi6525_3_port_a_w(int offset, int data);
+WRITE_HANDLER ( tpi6525_0_port_a_w );
+WRITE_HANDLER ( tpi6525_1_port_a_w );
+WRITE_HANDLER ( tpi6525_2_port_a_w );
+WRITE_HANDLER ( tpi6525_3_port_a_w );
 
-int tpi6525_0_port_b_r(int offset);
-int tpi6525_1_port_b_r(int offset);
-int tpi6525_2_port_b_r(int offset);
-int tpi6525_3_port_b_r(int offset);
+READ_HANDLER  ( tpi6525_0_port_b_r );
+READ_HANDLER  ( tpi6525_1_port_b_r );
+READ_HANDLER  ( tpi6525_2_port_b_r );
+READ_HANDLER  ( tpi6525_3_port_b_r );
 
-void tpi6525_0_port_b_w(int offset, int data);
-void tpi6525_1_port_b_w(int offset, int data);
-void tpi6525_2_port_b_w(int offset, int data);
-void tpi6525_3_port_b_w(int offset, int data);
+WRITE_HANDLER ( tpi6525_0_port_b_w );
+WRITE_HANDLER ( tpi6525_1_port_b_w );
+WRITE_HANDLER ( tpi6525_2_port_b_w );
+WRITE_HANDLER ( tpi6525_3_port_b_w );
 
-int tpi6525_0_port_c_r(int offset);
-int tpi6525_1_port_c_r(int offset);
-int tpi6525_2_port_c_r(int offset);
-int tpi6525_3_port_c_r(int offset);
+READ_HANDLER  ( tpi6525_0_port_c_r );
+READ_HANDLER  ( tpi6525_1_port_c_r );
+READ_HANDLER  ( tpi6525_2_port_c_r );
+READ_HANDLER  ( tpi6525_3_port_c_r );
 
-void tpi6525_0_port_c_w(int offset, int data);
-void tpi6525_1_port_c_w(int offset, int data);
-void tpi6525_2_port_c_w(int offset, int data);
-void tpi6525_3_port_c_w(int offset, int data);
+WRITE_HANDLER ( tpi6525_0_port_c_w );
+WRITE_HANDLER ( tpi6525_1_port_c_w );
+WRITE_HANDLER ( tpi6525_2_port_c_w );
+WRITE_HANDLER ( tpi6525_3_port_c_w );
 
 #endif

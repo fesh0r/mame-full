@@ -25,10 +25,10 @@ extern int vdc8563_vh_start (void);
 extern unsigned char vdc8563_palette[16 * 3];
 
 /* to be called when writting to port */
-extern void vdc8563_port_w (int offset, int data);
+extern WRITE_HANDLER ( vdc8563_port_w );
 
 /* to be called when reading from port */
-extern int vdc8563_port_r (int offset);
+extern READ_HANDLER ( vdc8563_port_r );
 
 extern void vdc8563_status (char *text, int size);
 #endif

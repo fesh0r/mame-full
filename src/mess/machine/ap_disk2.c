@@ -92,6 +92,8 @@ int apple2_floppy_init(int id)
 		return INIT_OK;
 
     a2_drives[id].data = malloc (NIBBLE_SIZE*16*TOTAL_TRACKS);
+	if (!a2_drives[id].data) return INIT_FAILED;
+
 	/* Default everything to sync byte 0xFF */
 	memset(a2_drives[id].data, 0xff, NIBBLE_SIZE*16*TOTAL_TRACKS);
 

@@ -11,8 +11,10 @@
  *	 03-Aug-98	GSL	   Tidied.. at last!
  *
  */
-#include "osd_cpu.h"
-#include "sndintrf.h"
+//#include "osd_cpu.h"
+//#include "sndintrf.h"
+#include "driver.h"
+#include "sound/2612intf.h"
 #include "mess/machine/genesis.h"
 //#include "sound/psgintf.h"
 
@@ -23,7 +25,7 @@ int genesis_s_interrupt(void)
 
 }
 
-void YM2612_68000_w(int offset, int data)
+WRITE_HANDLER ( YM2612_68000_w )
 {
 	switch (offset)
 	{
@@ -37,7 +39,7 @@ void YM2612_68000_w(int offset, int data)
 	}
 }
 
-int YM2612_68000_r(int offset)
+READ_HANDLER ( YM2612_68000_r )
 {
 	switch (offset)
 	{

@@ -65,7 +65,7 @@ unsigned int	z80_latch_bitcount		= 0;
 
 unsigned char cartridge_ram[0x1000]; /* any cartridge RAM */
 
-void genesis_videoram1_w(int offset,int data);
+WRITE_HANDLER ( genesis_videoram1_w );
 
 /* machine/genesis.c */
 void genesis_init_machine (void);
@@ -79,8 +79,8 @@ void genesis_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 int genesis_s_interrupt(void);
 
-void YM2612_68000_w(int offset, int data);
-int YM2612_68000_r(int offset);
+WRITE_HANDLER ( YM2612_68000_w );
+READ_HANDLER  ( YM2612_68000_r );
 
 
 extern int z80running;
@@ -94,16 +94,16 @@ extern int z80running;
 #endif
 
 
-int genesis_vdp_76489_r(int offset)
+READ_HANDLER ( genesis_vdp_76489_r )
 {
   return 0;
 }
-void genesis_vdp_76489_w(int offset, int data)
+WRITE_HANDLER (genesis_vdp_76489_w )
 {
   SN76496_0_w(0, data);
 }
 
-void genesis_ramlatch_w(int offset, int data) /* note value will be meaningless unless all bits are correctly set in */
+WRITE_HANDLER ( genesis_ramlatch_w ) /* note value will be meaningless unless all bits are correctly set in */
 {
   	if (offset !=0 ) return;
 	if (errorlog && !z80running) fprintf(errorlog, "undead Z80 latch write!\n");
@@ -120,7 +120,8 @@ void genesis_ramlatch_w(int offset, int data) /* note value will be meaningless 
 		if (errorlog) fprintf (errorlog, "latch set, value %x\n", z80_68000_latch);
 	}
 }
-void genesis_s_68000_ram_w (int offset, int data)
+
+WRITE_HANDLER ( genesis_s_68000_ram_w )
 {
 	unsigned int address = (z80_68000_latch) + (offset & 0x7fff);
 	if (errorlog && !z80running) fprintf(errorlog, "undead Z80->68000 write!\n");
@@ -129,7 +130,8 @@ void genesis_s_68000_ram_w (int offset, int data)
   	if (address > 0xff0000) genesis_sharedram[BYTE_XOR(offset)] = data;
 	if (errorlog) fprintf (errorlog, "z80 poke to address %x\n", address);
 }
-int genesis_s_68000_ram_r (int offset)
+
+READ_HANDLER ( genesis_s_68000_ram_r )
 {
 	int address = (z80_68000_latch) + (offset & 0x7fff);
 
@@ -147,7 +149,7 @@ if (errorlog && !z80running) fprintf(errorlog, "undead Z80->68000 read!\n");
 	return -1;
 }
 
-void genesis_soundram_w (int offset,int data)
+WRITE_HANDLER ( genesis_soundram_w )
 {
 	if (z80running && errorlog) fprintf(errorlog, "Z80 written whilst running!\n");
 	if (errorlog) fprintf(errorlog,"68000->z80 sound write, %x to %x\n", data, offset);
@@ -156,7 +158,7 @@ void genesis_soundram_w (int offset,int data)
 	if (UPPER_BYTE_ACCESS(data)) genesis_soundram[offset] = (data >> 8) & 0xff;
 }
 
-int genesis_soundram_r (int offset)
+READ_HANDLER ( genesis_soundram_r )
 {
 	if (z80running && errorlog) fprintf(errorlog, "Z80 read whilst running!\n");
 	if (errorlog) fprintf(errorlog, "soundram_r returning %x\n",(genesis_soundram[offset] << 8) + genesis_soundram[offset+1]);

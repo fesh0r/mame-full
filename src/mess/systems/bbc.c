@@ -65,24 +65,24 @@ and then started using WD1770 which may be like the WD1790 in mess (May need a b
 
 ******************************************************************************/
 
-void page_select_w(int offset, int data)
+WRITE_HANDLER ( page_select_w )
 {
 	cpu_setbank(1,memory_region(REGION_CPU1)+0x10000+((data&0x0f)<<14));
 }
 
-void memory_w(int offset, int data)
+WRITE_HANDLER ( memory_w )
 {
 	memory_region(REGION_CPU1)[offset]=data;
 	vidmem[offset]=1;
 }
 
-void via_0_write(int offset, int data)
+WRITE_HANDLER ( via_0_write )
 {
 	/*if (errorlog) { fprintf(errorlog, "system VIA write %d = %d\n",offset,data); }; */
 	via_0_w(offset,data);
 }
 
-int via_0_read(int offset)
+READ_HANDLER ( via_0_read )
 {
 	int data;
 	data=via_0_r(offset);
@@ -90,13 +90,13 @@ int via_0_read(int offset)
 	return data;
 }
 
-void via_1_write(int offset, int data)
+WRITE_HANDLER ( via_1_write )
 {
 	/*if (errorlog) { fprintf(errorlog, "user VIA write %d = %d\n",offset,data); }; */
 	via_1_w(offset,data);
 }
 
-int via_1_read(int offset)
+READ_HANDLER ( via_1_read )
 {
 	int data;
 	data=via_1_r(offset);

@@ -3,10 +3,10 @@
 
 #include "driver.h"
 
-/* c64 / c128 sound interface 
+/* c64 / c128 sound interface
    cbmb series interface
    c16 sound card
-   c64 hardware modification for second sid 
+   c64 hardware modification for second sid
    c65 has 2 inside
 
    selection between two type 6581 8580 would be nice */
@@ -21,10 +21,10 @@ extern void sid6581_1_configure (SIDTYPE type);
 extern void sid6581_0_reset (void);
 extern void sid6581_1_reset (void);
 
-extern void sid6581_0_port_w (int offset, int data);
-extern void sid6581_1_port_w (int offset, int data);
-extern int sid6581_0_port_r (int offset);
-extern int sid6581_1_port_r (int offset);
+extern WRITE_HANDLER ( sid6581_0_port_w );
+extern WRITE_HANDLER ( sid6581_1_port_w );
+extern READ_HANDLER  ( sid6581_0_port_r );
+extern READ_HANDLER  ( sid6581_1_port_r );
 
 extern void sid6581_update(void);
 
@@ -32,7 +32,7 @@ extern struct CustomSound_interface sid6581_sound_interface;
 
 /* private area */
 typedef struct {
-	int (*paddle_read) (int offset); 
+	int (*paddle_read) (int offset);
 	int reg[0x20];
 	bool sidKeysOn[0x20], sidKeysOff[0x20];
 } SID6581;

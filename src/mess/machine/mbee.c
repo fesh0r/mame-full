@@ -68,7 +68,7 @@ void mbee_shutdown_machine(void)
  * 6	speaker
  * 7	network interrupt
  */
-int mbee_pio_r(int offset)
+READ_HANDLER ( mbee_pio_r )
 {
     int data = z80pio_0_r(offset);
 	if( offset != 2 )
@@ -81,7 +81,7 @@ int mbee_pio_r(int offset)
     return data;
 }
 
-void mbee_pio_w(int offset, int data)
+WRITE_HANDLER ( mbee_pio_w )
 {
     z80pio_0_w(offset,data);
 	if( offset == 2 )
@@ -112,13 +112,13 @@ static void mbee_fdc_callback(int param)
     }
 }
 
-int mbee_fdc_status_r(int offset)
+READ_HANDLER ( mbee_fdc_status_r )
 {
 	if( errorlog ) fprintf(errorlog,"mbee fdc_motor_r $%02X\n", fdc_status);
 	return fdc_status;
 }
 
-void mbee_fdc_motor_w(int offset, int data)
+WRITE_HANDLER ( mbee_fdc_motor_w )
 {
 	if( errorlog ) fprintf(errorlog,"mbee fdc_motor_w $%02X\n", data);
 	/* Controller latch bits

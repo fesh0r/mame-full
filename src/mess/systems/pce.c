@@ -21,8 +21,8 @@ extern int pce_load_rom(int id);
 extern int pce_id_rom (int id);
 extern void pce_init_machine(void);
 extern void pce_stop_machine(void);
-extern void pce_joystick_w(int offset, int data);
-extern int pce_joystick_r(int offset);
+extern WRITE_HANDLER ( pce_joystick_w );
+extern READ_HANDLER ( pce_joystick_r );
 
 /* from vidhrdw\vdc.c */
 
@@ -30,10 +30,10 @@ extern VDC vdc;
 extern int pce_vh_start(void);
 extern void pce_vh_stop(void);
 extern void pce_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-extern void vdc_w(int offset, int data);
-extern int vdc_r(int offset);
-extern void vce_w(int offset, int data);
-extern int vce_r(int offset);
+extern WRITE_HANDLER ( vdc_w );
+extern READ_HANDLER ( vdc_r );
+extern WRITE_HANDLER ( vce_w );
+extern READ_HANDLER ( vce_r );
 extern void pce_refresh_line(int line);
 
 int pce_interrupt(void)
@@ -86,29 +86,29 @@ int pce_interrupt(void)
 
 /* stubs for the irq/psg/timer code */
 
-void pce_irq_w(int offset, int data)
+WRITE_HANDLER ( pce_irq_w)
 {
 }
 
-int pce_irq_r(int offset)
-{
-    return 0x00;
-}
-
-void pce_timer_w(int offset, int data)
-{
-}
-
-int pce_timer_r(int offset)
+READ_HANDLER ( pce_irq_r )
 {
     return 0x00;
 }
 
-void pce_psg_w(int offset, int data)
+WRITE_HANDLER ( pce_timer_w )
 {
 }
 
-int pce_psg_r(int offset)
+READ_HANDLER ( pce_timer_r )
+{
+    return 0x00;
+}
+
+WRITE_HANDLER ( pce_psg_w )
+{
+}
+
+READ_HANDLER ( pce_psg_r )
 {
     return 0x00;
 }

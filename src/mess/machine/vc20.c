@@ -215,7 +215,7 @@ static struct via6522_interface via0 =
 	vc20_via1_irq
 };
 
-void vc20_write_9400 (int offset, int data)
+WRITE_HANDLER ( vc20_write_9400 )
 {
 	vc20_memory_9400[offset] = data | 0xf0;
 }

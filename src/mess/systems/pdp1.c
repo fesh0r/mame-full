@@ -103,8 +103,8 @@ binary form plus a makro assembler for PDP1 programs.
 int pdp1_load_rom (int id);
 int pdp1_id_rom (int id);
 void pdp1_init_machine(void);
-int pdp1_read_mem(int offset);
-void pdp1_write_mem(int offset, int data);
+READ_HANDLER ( pdp1_read_mem );
+WRITE_HANDLER ( pdp1_write_mem );
 
 /* every memory handler is the same for now */
 

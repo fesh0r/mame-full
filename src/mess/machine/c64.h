@@ -251,10 +251,10 @@ extern UINT8 *c64_kernal;
 extern UINT8 *c64_chargen;
 extern UINT8 *c64_memory;
 
-extern void c64_m6510_port_w (int offset, int data);
-extern int c64_m6510_port_r (int offset);
-int c64_colorram_read (int offset);
-void c64_colorram_write (int offset, int value);
+extern WRITE_HANDLER ( c64_m6510_port_w );
+extern READ_HANDLER  ( c64_m6510_port_r );
+READ_HANDLER ( c64_colorram_read );
+WRITE_HANDLER ( c64_colorram_write );
 
 extern void c64_driver_init (void);
 extern void c64pal_driver_init (void);
@@ -275,12 +275,12 @@ void c64_state(PRASTER *this);
 
 /* private area */
 
-void c64_write_io (int offset, int value);
-int c64_read_io (int offset);
+WRITE_HANDLER ( c64_write_io );
+READ_HANDLER ( c64_read_io );
 int c64_cia0_port_a_r (int offset);
 int c64_cia0_port_b_r (int offset);
 void c64_cia0_port_a_w (int offset, int data);
-void c64_tape_read (int offset, int data);
+WRITE_HANDLER ( c64_tape_read );
 int c64_cia1_port_a_r (int offset);
 int c64_paddle_read (int which);
 void c64_vic_interrupt (int level);

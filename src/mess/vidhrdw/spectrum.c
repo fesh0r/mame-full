@@ -18,7 +18,7 @@ static int frame_number;    /* Used for handling FLASH 1 */
 static int flash_invert;
 
 
-extern unsigned char *spectrum_plus3_screen_location;
+extern unsigned char *spectrum_128_screen_location;
 
 /***************************************************************************
   Start the video hardware emulation.
@@ -182,33 +182,33 @@ void spectrum_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh) {
 }
 
 
-int spectrum_plus3_vh_start(void)
+int spectrum_128_vh_start(void)
 {
         return 0;
 }
 
-void    spectrum_plus3_vh_stop(void)
+void    spectrum_128_vh_stop(void)
 {
 }
 
-void spectrum_plus3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh) {
+void spectrum_128_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh) {
 	int count;
 
-        /* for now plus 3 will do a full-refresh */
-        unsigned char *spectrum_plus3_colorram;
-        unsigned char *spectrum_plus3_charram;
+        /* for now 128K / plus 2 / plus 3 will do a full-refresh */
+        unsigned char *spectrum_128_colorram;
+        unsigned char *spectrum_128_charram;
 
-        spectrum_plus3_charram = spectrum_plus3_screen_location;
-        spectrum_plus3_colorram = spectrum_plus3_screen_location + 0x01800;
+        spectrum_128_charram = spectrum_128_screen_location;
+        spectrum_128_colorram = spectrum_128_screen_location + 0x01800;
 
 	for (count=0;count<32*8;count++) {
-                decodechar( Machine->gfx[0],count,spectrum_plus3_charram,
+                decodechar( Machine->gfx[0],count,spectrum_128_charram,
 				    Machine->drv->gfxdecodeinfo[0].gfxlayout );
 
-                decodechar( Machine->gfx[1],count,&spectrum_plus3_charram[0x800],
+                decodechar( Machine->gfx[1],count,&spectrum_128_charram[0x800],
 				    Machine->drv->gfxdecodeinfo[0].gfxlayout );
 
-                decodechar( Machine->gfx[2],count,&spectrum_plus3_charram[0x1000],
+                decodechar( Machine->gfx[2],count,&spectrum_128_charram[0x1000],
 				    Machine->drv->gfxdecodeinfo[0].gfxlayout );
 	}
 
@@ -217,7 +217,7 @@ void spectrum_plus3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 		int sy=count/32;
 		unsigned char color;
 
-                color=get_display_color(spectrum_plus3_colorram[count],
+                color=get_display_color(spectrum_128_colorram[count],
                                         flash_invert);
                 drawgfx(bitmap,Machine->gfx[0],
 				count,
@@ -226,7 +226,7 @@ void spectrum_plus3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 				sx*8,sy*8,
 				0,TRANSPARENCY_NONE,0);
 
-                color=get_display_color(spectrum_plus3_colorram[count+0x100],
+                color=get_display_color(spectrum_128_colorram[count+0x100],
                                         flash_invert);
                 drawgfx(bitmap,Machine->gfx[1],
 				count,
@@ -235,7 +235,7 @@ void spectrum_plus3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 				sx*8,(sy+8)*8,
 				0,TRANSPARENCY_NONE,0);
 
-                color=get_display_color(spectrum_plus3_colorram[count+0x200],
+                color=get_display_color(spectrum_128_colorram[count+0x200],
                                         flash_invert);
                 drawgfx(bitmap,Machine->gfx[2],
 				count,

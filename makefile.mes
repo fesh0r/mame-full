@@ -24,13 +24,17 @@ endif
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
-TINY_NAME = driver_labyrunr
-TINY_OBJS = obj/drivers/labyrunr.o obj/vidhrdw/labyrunr.o obj/vidhrdw/konamiic.o
+TINY_NAME = driver_spinlbrk
+TINY_OBJS = obj/drivers/aerofgt.o obj/vidhrdw/aerofgt.o
 
 # uncomment one of the two next lines to not compile the NeoGeo games or to
 # compile only the NeoGeo games
 NEOFREE = 1
 # NEOMAME = 1
+
+ifdef NEOMAME
+EMULATOR_EXE = neomame.exe
+endif
 
 # uncomment next line to include the symbols for symify
 # SYMBOLS = 1
@@ -42,6 +46,7 @@ ifdef NEOMAME
 CPUS+=Z80@
 CPUS+=M68000@
 SOUNDS+=YM2610@
+SOUNDS+=SAMPLES@
 else
 # uncomment the following lines to include a CPU core
 CPUS+=Z80@
@@ -842,6 +847,7 @@ CFLAGS = -Isrc -Isrc/msdos -Iobj/cpu/m68000 -Isrc/cpu/m68000 \
 	-O0 -pedantic -Wall -Werror -Wno-unused -g
 else
 CFLAGS = -Isrc -Isrc/msdos -Iobj/cpu/m68000 -Isrc/cpu/m68000 \
+	-DNDEBUG \
 	$(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing \
 	-Werror -Wall -Wno-sign-compare -Wunused \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align -Waggregate-return \
@@ -890,9 +896,10 @@ COREOBJS = obj/version.o obj/mess/system.o obj/mame.o obj/mess/mess.o \
 	obj/profiler.o \
 	$(sort $(DBGOBJS)) \
 
+
 DRVLIBS = obj/advision.a  \
-	  obj/coleco.a	 \
           obj/sega.a     \
+          obj/coleco.a   \
           obj/atari.a    \
           obj/gce.a      \
           obj/nintendo.a \
@@ -909,11 +916,11 @@ DRVLIBS = obj/advision.a  \
           obj/ti99.a     \
           obj/bally.a    \
           obj/pc.a       \
-	  obj/p2000.a	 \
+          obj/p2000.a	 \
           obj/amstrad.a  \
           obj/nec.a      \
           obj/ep128.a    \
-	  obj/ascii.a    \
+          obj/ascii.a    \
           obj/kim1.a     \
           obj/oric.a     \
           obj/vtech.a    \
@@ -923,6 +930,7 @@ DRVLIBS = obj/advision.a  \
           obj/bbc.a      \
           obj/cpschngr.a \
           #obj/motorola.a  \
+
 
 NEOLIBS = obj/neogeo.a \
 
@@ -951,7 +959,7 @@ else
 	endif
 endif
 
-all: $(EMULATOR_EXE) romcmp.exe	dat2html.exe
+all: $(EMULATOR_EXE) romcmp.exe dat2html.exe
 
 $(EMULATOR_EXE):  $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS)
 # always recompile the version string
@@ -992,7 +1000,7 @@ obj/cpu/m68000/68kem.asm:  src/cpu/m68000/make68k.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -O0 -DDOS -o obj/cpu/m68000/make68k.exe $<
 	@echo Generating $@...
-	obj/cpu/m68000/make68k $@ obj/cpu/m68000/comptab.asm
+	@obj/cpu/m68000/make68k $@ obj/cpu/m68000/comptab.asm
 
 # generated asm files for the 68000 emulator
 obj/cpu/m68000/68kem.oa:  obj/cpu/m68000/68kem.asm
@@ -1026,8 +1034,8 @@ obj/sega.a:     \
                 obj/mess/systems/sms.o      \
                 obj/mess/vidhrdw/genesis.o  \
                 obj/mess/machine/genesis.o  \
-		obj/mess/sndhrdw/genesis.o  \
-                obj/mess/systems/genesis.o  
+                obj/mess/sndhrdw/genesis.o  \
+                obj/mess/systems/genesis.o
 
 obj/atari.a:    \
                 obj/mess/machine/atari.o    \
@@ -1410,4 +1418,5 @@ messdir:
 	@md obj\mess\systems
 	@md obj\mess\vidhrdw
 	@md obj\mess\sndhrdw
+
 

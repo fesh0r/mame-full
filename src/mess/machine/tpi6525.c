@@ -29,7 +29,7 @@
   6 ca handshake line (read handshake answer on I3 prefered)
   7 cb handshake line (write handshake clear on I4 prefered)
  5 port c ddr
-  
+
  6 cr configuration register
   0 mc
     0 port c normal input output mode like port a and b
@@ -54,7 +54,7 @@
       1 microsecond low after write b operation
    10 manual output low
    11 manual output high
- 7 air active interrupt register 
+ 7 air active interrupt register
    0 I0 occured
    1 I1 occured
    2 I2 occured
@@ -80,9 +80,9 @@
 #include "tpi6525.h"
 
 TPI6525 tpi6525[4]={
-	{ 0 }, 
+	{ 0 },
 	{ 1 },
-	{ 2 }, 
+	{ 2 },
 	{ 3 }
 };
 
@@ -266,7 +266,7 @@ static int tpi6525_port_r(TPI6525 *this, int offset)
 			if (this->c.read) data&=this->c.read();
 			data=(data&~this->c.ddr)|(this->c.ddr&this->c.port);
 		}
-		DBG_LOG (2, "tpi6525", 
+		DBG_LOG (2, "tpi6525",
 				 (errorlog, "%d read %.2x %.2x\n",this->number, offset,data));
 		break;
 	case 3:
@@ -306,14 +306,14 @@ static int tpi6525_port_r(TPI6525 *this, int offset)
 		tpi6525_clear_interrupt(this);
 		break;
 	}
-	DBG_LOG (3, "tpi6525", 
+	DBG_LOG (3, "tpi6525",
 			 (errorlog, "%d read %.2x %.2x\n",this->number, offset,data));
 	return data;
 }
 
 static void tpi6525_port_w(TPI6525 *this, int offset, int data)
 {
-	DBG_LOG (2, "tpi6525", 
+	DBG_LOG (2, "tpi6525",
 			 (errorlog, "%d write %.2x %.2x\n",this->number, offset,data));
 
 	switch (offset&7) {
@@ -447,162 +447,162 @@ void tpi6525_1_irq4_level(int level)
 	tpi6525_irq4_level(tpi6525+1, level);
 }
 
-int tpi6525_0_port_r(int offset)
+READ_HANDLER ( tpi6525_0_port_r )
 {
 	return tpi6525_port_r(tpi6525, offset);
 }
 
-int tpi6525_1_port_r(int offset)
+READ_HANDLER ( tpi6525_1_port_r )
 {
 	return tpi6525_port_r(tpi6525+1, offset);
 }
 
-int tpi6525_2_port_r(int offset)
+READ_HANDLER ( tpi6525_2_port_r )
 {
 	return tpi6525_port_r(tpi6525+2, offset);
 }
 
-int tpi6525_3_port_r(int offset)
+READ_HANDLER ( tpi6525_3_port_r )
 {
 	return tpi6525_port_r(tpi6525+3, offset);
 }
 
-void tpi6525_0_port_w(int offset, int data)
+WRITE_HANDLER ( tpi6525_0_port_w )
 {
 	tpi6525_port_w(tpi6525, offset, data);
 }
 
-void tpi6525_1_port_w(int offset, int data)
+WRITE_HANDLER ( tpi6525_1_port_w )
 {
 	tpi6525_port_w(tpi6525+1, offset, data);
 }
 
-void tpi6525_2_port_w(int offset, int data)
+WRITE_HANDLER ( tpi6525_2_port_w )
 {
 	tpi6525_port_w(tpi6525+2, offset, data);
 }
 
-void tpi6525_3_port_w(int offset, int data)
+WRITE_HANDLER ( tpi6525_3_port_w )
 {
 	tpi6525_port_w(tpi6525+3, offset, data);
 }
 
-int tpi6525_0_port_a_r(int offset)
+READ_HANDLER ( tpi6525_0_port_a_r )
 {
 	return tpi6525_port_a_r(tpi6525, offset);
 }
 
-int tpi6525_1_port_a_r(int offset)
+READ_HANDLER ( tpi6525_1_port_a_r )
 {
 	return tpi6525_port_a_r(tpi6525+1, offset);
 }
 
-int tpi6525_2_port_a_r(int offset)
+READ_HANDLER ( tpi6525_2_port_a_r )
 {
 	return tpi6525_port_a_r(tpi6525+2, offset);
 }
 
-int tpi6525_3_port_a_r(int offset)
+READ_HANDLER ( tpi6525_3_port_a_r )
 {
 	return tpi6525_port_a_r(tpi6525+3, offset);
 }
 
-void tpi6525_0_port_a_w(int offset, int data)
+WRITE_HANDLER ( tpi6525_0_port_a_w )
 {
 	tpi6525_port_a_w(tpi6525, offset, data);
 }
 
-void tpi6525_1_port_a_w(int offset, int data)
+WRITE_HANDLER ( tpi6525_1_port_a_w )
 {
 	tpi6525_port_a_w(tpi6525+1, offset, data);
 }
 
-void tpi6525_2_port_a_w(int offset, int data)
+WRITE_HANDLER ( tpi6525_2_port_a_w )
 {
 	tpi6525_port_a_w(tpi6525+2, offset, data);
 }
 
-void tpi6525_3_port_a_w(int offset, int data)
+WRITE_HANDLER ( tpi6525_3_port_a_w )
 {
 	tpi6525_port_a_w(tpi6525+3, offset, data);
 }
 
-int tpi6525_0_port_b_r(int offset)
+READ_HANDLER ( tpi6525_0_port_b_r )
 {
 	return tpi6525_port_b_r(tpi6525, offset);
 }
 
-int tpi6525_1_port_b_r(int offset)
+READ_HANDLER ( tpi6525_1_port_b_r )
 {
 	return tpi6525_port_b_r(tpi6525+1, offset);
 }
 
-int tpi6525_2_port_b_r(int offset)
+READ_HANDLER ( tpi6525_2_port_b_r )
 {
 	return tpi6525_port_b_r(tpi6525+2, offset);
 }
 
-int tpi6525_3_port_b_r(int offset)
+READ_HANDLER ( tpi6525_3_port_b_r )
 {
 	return tpi6525_port_b_r(tpi6525+3, offset);
 }
 
-void tpi6525_0_port_b_w(int offset, int data)
+WRITE_HANDLER ( tpi6525_0_port_b_w )
 {
 	tpi6525_port_b_w(tpi6525, offset, data);
 }
 
-void tpi6525_1_port_b_w(int offset, int data)
+WRITE_HANDLER ( tpi6525_1_port_b_w )
 {
 	tpi6525_port_b_w(tpi6525+1, offset, data);
 }
 
-void tpi6525_2_port_b_w(int offset, int data)
+WRITE_HANDLER ( tpi6525_2_port_b_w )
 {
 	tpi6525_port_b_w(tpi6525+2, offset, data);
 }
 
-void tpi6525_3_port_b_w(int offset, int data)
+WRITE_HANDLER ( tpi6525_3_port_b_w )
 {
 	tpi6525_port_b_w(tpi6525+3, offset, data);
 }
 
-int tpi6525_0_port_c_r(int offset)
+READ_HANDLER ( tpi6525_0_port_c_r )
 {
 	return tpi6525_port_c_r(tpi6525, offset);
 }
 
-int tpi6525_1_port_c_r(int offset)
+READ_HANDLER ( tpi6525_1_port_c_r )
 {
 	return tpi6525_port_c_r(tpi6525+1, offset);
 }
 
-int tpi6525_2_port_c_r(int offset)
+READ_HANDLER ( tpi6525_2_port_c_r )
 {
 	return tpi6525_port_c_r(tpi6525+2, offset);
 }
 
-int tpi6525_3_port_c_r(int offset)
+READ_HANDLER ( tpi6525_3_port_c_r )
 {
 	return tpi6525_port_c_r(tpi6525+3, offset);
 }
 
-void tpi6525_0_port_c_w(int offset, int data)
+WRITE_HANDLER ( tpi6525_0_port_c_w )
 {
 	tpi6525_port_c_w(tpi6525, offset, data);
 }
 
-void tpi6525_1_port_c_w(int offset, int data)
+WRITE_HANDLER ( tpi6525_1_port_c_w )
 {
 	tpi6525_port_c_w(tpi6525+1, offset, data);
 }
 
-void tpi6525_2_port_c_w(int offset, int data)
+WRITE_HANDLER ( tpi6525_2_port_c_w )
 {
 	tpi6525_port_c_w(tpi6525+2, offset, data);
 }
 
-void tpi6525_3_port_c_w(int offset, int data)
+WRITE_HANDLER ( tpi6525_3_port_c_w )
 {
 	tpi6525_port_c_w(tpi6525+3, offset, data);
 }

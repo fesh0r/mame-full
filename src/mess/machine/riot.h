@@ -22,13 +22,13 @@ void riot_init(struct RIOTinterface *riot);
 int riot_r(int chip, int offs);
 void riot_w(int chip, int offs, int data);
 
-int riot_0_r(int offs);
-void riot_0_w(int offs, int data);
-int riot_1_r(int offs);
-void riot_1_w(int offs, int data);
-int riot_2_r(int offs);
-void riot_2_w(int offs, int data);
-int riot_3_r(int offs);
-void riot_3_w(int offs, int data);
+READ_HANDLER  ( riot_0_r );
+WRITE_HANDLER ( riot_0_w );
+READ_HANDLER  ( riot_1_r );
+WRITE_HANDLER ( riot_1_w );
+READ_HANDLER  ( riot_2_r );
+WRITE_HANDLER ( riot_2_w );
+READ_HANDLER  ( riot_3_r );
+WRITE_HANDLER ( riot_3_w );
 
 #endif

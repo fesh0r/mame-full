@@ -273,7 +273,7 @@ int load_image(int argc, char **argv, int j, int game_index)
 						{
 							if(type!=IO_END)
 							{
-                                res = detect_image_type(game_index, type, alias_argv[i]);
+                                res = detect_image_type(game_index, type, alias_argv[k]);
                                 type = IO_END; /* image detected, reset type */
 							}
 						}

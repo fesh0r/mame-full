@@ -139,7 +139,7 @@ void crtc6845_set_rastering(int on)
 #define CHARHEIGHT (crtc.reg[9]%0x1f)
 
 
-void crtc6845_port_w (int offset, int data)
+WRITE_HANDLER ( crtc6845_port_w )
 {
 	if (offset & 1)
 	{
@@ -194,12 +194,12 @@ void crtc6845_port_w (int offset, int data)
 				break;
 			default:
 				crtc.reg[crtc.index]=data;
-				DBG_LOG (2, "crtc_port_w", 
+				DBG_LOG (2, "crtc_port_w",
 						 (errorlog, "%.2x:%.2x\n", crtc.index, data));
 				break;
 			}
 		}
-		DBG_LOG (1, "crtc6845_port_w", 
+		DBG_LOG (1, "crtc6845_port_w",
 				 (errorlog, "%.2x:%.2x\n", crtc.index, data));
 	}
 	else
@@ -210,7 +210,7 @@ void crtc6845_port_w (int offset, int data)
 
 /* internal flipflop for doubling horizontal
    value */
-void crtc6845_pet_port_w (int offset, int data)
+WRITE_HANDLER ( crtc6845_pet_port_w )
 {
 	if (offset & 1)
 	{
@@ -229,7 +229,7 @@ void crtc6845_pet_port_w (int offset, int data)
 				crtc6845_port_w(offset,data);
 				break;
 			}
-		} else 
+		} else
 			crtc6845_port_w(offset,data);
 	}
 	else
@@ -238,7 +238,7 @@ void crtc6845_pet_port_w (int offset, int data)
 	}
 }
 
-int crtc6845_port_r (int offset)
+READ_HANDLER ( crtc6845_port_r )
 {
 	int val;
 
@@ -277,7 +277,7 @@ extern void crtc6845_status (char *text, int size)
 {
 	text[0]=0;
 #if VERBOSE_DBG
-		snprintf (text, sizeof (text), "crtc6845 %.2x %.2x %.2x %.2x", 
+		snprintf (text, sizeof (text), "crtc6845 %.2x %.2x %.2x %.2x",
 				  crtc.reg[0xc], crtc.reg[0xd], crtc.reg[0xe],crtc.reg[0xf]);
 #endif
 }

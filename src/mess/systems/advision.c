@@ -34,14 +34,14 @@ extern void advision_vh_init_palette(unsigned char *game_palette, unsigned short
 extern void advision_init_machine(void);
 extern int advision_id_rom (int id);
 extern int advision_load_rom (int id);
-extern int advision_MAINRAM_r(int offset);
-extern void advision_MAINRAM_w(int offset, int data);
-extern void advision_putp1(int offset, int data);
-extern void advision_putp2(int offset, int data);
-extern int  advision_getp1(int offset);
-extern int  advision_getp2(int offset);
-extern int  advision_gett0(int offset);
-extern int  advision_gett1(int offset);
+extern READ_HANDLER ( advision_MAINRAM_r);
+extern WRITE_HANDLER( advision_MAINRAM_w );
+extern WRITE_HANDLER( advision_putp1 );
+extern WRITE_HANDLER( advision_putp2 );
+extern READ_HANDLER ( advision_getp1 );
+extern READ_HANDLER ( advision_getp2 );
+extern READ_HANDLER ( advision_gett0 );
+extern READ_HANDLER ( advision_gett1 );
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -60,7 +60,7 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct IOReadPort readport[] =
 {
-    { 0x00,     0xff,     advision_MAINRAM_r },
+    { 0x00,     0xff,     advision_MAINRAM_r},
     { I8039_p1, I8039_p1, advision_getp1 },
     { I8039_p2, I8039_p2, advision_getp2 },
     { I8039_t0, I8039_t0, advision_gett0 },

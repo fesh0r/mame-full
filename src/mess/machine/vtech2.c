@@ -64,22 +64,22 @@ static int laser_fdc_latch = 0;
 static void mwa_bank(int bank, int offs, int data);
 
 /* wrappers for bank #1 to #4 */
-static void mwa_bank1(int offs, int data) { mwa_bank(0,offs,data); }
-static void mwa_bank2(int offs, int data) { mwa_bank(1,offs,data); }
-static void mwa_bank3(int offs, int data) { mwa_bank(2,offs,data); }
-static void mwa_bank4(int offs, int data) { mwa_bank(3,offs,data); }
+static WRITE_HANDLER ( mwa_bank1 ) { mwa_bank(0,offset,data); }
+static WRITE_HANDLER ( mwa_bank2 ) { mwa_bank(1,offset,data); }
+static WRITE_HANDLER ( mwa_bank3 ) { mwa_bank(2,offset,data); }
+static WRITE_HANDLER ( mwa_bank4 ) { mwa_bank(3,offset,data); }
 
 /* read from banked memory (handle memory mapped i/o) */
 static int mra_bank(int bank, int offs);
 
 /* wrappers for bank #1 to #4 */
-static int mra_bank1(int offs) { return mra_bank(0,offs); }
-static int mra_bank2(int offs) { return mra_bank(1,offs); }
-static int mra_bank3(int offs) { return mra_bank(2,offs); }
-static int mra_bank4(int offs) { return mra_bank(3,offs); }
+static READ_HANDLER ( mra_bank1) { return mra_bank(0,offset); }
+static READ_HANDLER ( mra_bank2) { return mra_bank(1,offset); }
+static READ_HANDLER ( mra_bank3) { return mra_bank(2,offset); }
+static READ_HANDLER ( mra_bank4) { return mra_bank(3,offset); }
 
 /* read banked memory (handle memory mapped i/o) */
-static int (*mra_bank_soft[4])(int) =
+static int (*mra_bank_soft[4])(UINT32) =
 {
     mra_bank1,  /* mapped in 0000-3fff */
     mra_bank2,  /* mapped in 4000-7fff */
@@ -88,7 +88,7 @@ static int (*mra_bank_soft[4])(int) =
 };
 
 /* write banked memory (handle memory mapped i/o and videoram) */
-static void (*mwa_bank_soft[4])(int,int) =
+static void (*mwa_bank_soft[4])(UINT32,UINT32) =
 {
     mwa_bank1,  /* mapped in 0000-3fff */
     mwa_bank2,  /* mapped in 4000-7fff */
@@ -97,7 +97,7 @@ static void (*mwa_bank_soft[4])(int,int) =
 };
 
 /* read banked memory (plain ROM/RAM) */
-static int (*mra_bank_hard[4])(int) =
+static int (*mra_bank_hard[4])(UINT32) =
 {
     MRA_BANK1,  /* mapped in 0000-3fff */
     MRA_BANK2,  /* mapped in 4000-7fff */
@@ -106,7 +106,7 @@ static int (*mra_bank_hard[4])(int) =
 };
 
 /* write banked memory (plain ROM/RAM) */
-static void (*mwa_bank_hard[4])(int,int) =
+static void (*mwa_bank_hard[4])(UINT32,UINT32) =
 {
     MWA_BANK1,  /* mapped in 0000-3fff */
     MWA_BANK2,  /* mapped in 4000-7fff */
@@ -163,12 +163,12 @@ void laser_shutdown_machine(void)
     }
 }
 
-static void mwa_empty(int offs, int data)
+static WRITE_HANDLER ( mwa_empty )
 {
 	/* empty */
 }
 
-static int mra_empty(int offs)
+static READ_HANDLER ( mra_empty )
 {
 	return 0xff;
 }

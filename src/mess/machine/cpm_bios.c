@@ -904,12 +904,12 @@ int cpm_disk_write_sector(void)
 	return result;
 }
 
-int  cpm_bios_command_r(int offset)
+READ_HANDLER (  cpm_bios_command_r )
 {
 	return 0xff;
 }
 
-void cpm_bios_command_w(int offset, int data)
+WRITE_HANDLER ( cpm_bios_command_w )
 {
 	dsk_fmt *f;
 	char buff[256];

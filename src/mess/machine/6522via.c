@@ -481,7 +481,7 @@ void via_write(int which, int offset, int data)
     	/* EHC 03/04/2000 - If data direction changed, present output on the lines */
     	if ( data != v->ddr_b ) {
 			v->ddr_b = data;
-			
+
 			if (v->intf->out_b_func && v->ddr_b)
 				v->intf->out_b_func(0, v->out_b & v->ddr_b);
 		}
@@ -491,7 +491,7 @@ void via_write(int which, int offset, int data)
     	/* EHC 03/04/2000 - If data direction changed, present output on the lines */
     	if ( data != v->ddr_a ) {
 			v->ddr_a = data;
-			
+
 			if (v->intf->out_a_func && v->ddr_a)
 				v->intf->out_a_func(0, v->out_a & v->ddr_a);
 		}
@@ -759,128 +759,128 @@ void via_set_input_cb2(int which, int data)
 
 /******************* Standard 8-bit CPU interfaces, D0-D7 *******************/
 
-int via_0_r(int offset) { return via_read(0, offset); }
-int via_1_r(int offset) { return via_read(1, offset); }
-int via_2_r(int offset) { return via_read(2, offset); }
-int via_3_r(int offset) { return via_read(3, offset); }
-int via_4_r(int offset) { return via_read(4, offset); }
-int via_5_r(int offset) { return via_read(5, offset); }
-int via_6_r(int offset) { return via_read(6, offset); }
-int via_7_r(int offset) { return via_read(7, offset); }
+READ_HANDLER ( via_0_r) { return via_read(0, offset); }
+READ_HANDLER ( via_1_r) { return via_read(1, offset); }
+READ_HANDLER ( via_2_r) { return via_read(2, offset); }
+READ_HANDLER ( via_3_r) { return via_read(3, offset); }
+READ_HANDLER ( via_4_r) { return via_read(4, offset); }
+READ_HANDLER ( via_5_r) { return via_read(5, offset); }
+READ_HANDLER ( via_6_r) { return via_read(6, offset); }
+READ_HANDLER ( via_7_r) { return via_read(7, offset); }
 
-void via_0_w(int offset, int data) { via_write(0, offset, data); }
-void via_1_w(int offset, int data) { via_write(1, offset, data); }
-void via_2_w(int offset, int data) { via_write(2, offset, data); }
-void via_3_w(int offset, int data) { via_write(3, offset, data); }
-void via_4_w(int offset, int data) { via_write(4, offset, data); }
-void via_5_w(int offset, int data) { via_write(5, offset, data); }
-void via_6_w(int offset, int data) { via_write(6, offset, data); }
-void via_7_w(int offset, int data) { via_write(7, offset, data); }
+WRITE_HANDLER ( via_0_w) { via_write(0, offset, data); }
+WRITE_HANDLER ( via_1_w) { via_write(1, offset, data); }
+WRITE_HANDLER ( via_2_w) { via_write(2, offset, data); }
+WRITE_HANDLER ( via_3_w) { via_write(3, offset, data); }
+WRITE_HANDLER ( via_4_w) { via_write(4, offset, data); }
+WRITE_HANDLER ( via_5_w) { via_write(5, offset, data); }
+WRITE_HANDLER ( via_6_w) { via_write(6, offset, data); }
+WRITE_HANDLER ( via_7_w) { via_write(7, offset, data); }
 
 /******************* 8-bit A/B port interfaces *******************/
 
-void via_0_porta_w(int offset, int data) { via_set_input_a(0, data); }
-void via_1_porta_w(int offset, int data) { via_set_input_a(1, data); }
-void via_2_porta_w(int offset, int data) { via_set_input_a(2, data); }
-void via_3_porta_w(int offset, int data) { via_set_input_a(3, data); }
-void via_4_porta_w(int offset, int data) { via_set_input_a(4, data); }
-void via_5_porta_w(int offset, int data) { via_set_input_a(5, data); }
-void via_6_porta_w(int offset, int data) { via_set_input_a(6, data); }
-void via_7_porta_w(int offset, int data) { via_set_input_a(7, data); }
+WRITE_HANDLER ( via_0_porta_w) { via_set_input_a(0, data); }
+WRITE_HANDLER ( via_1_porta_w) { via_set_input_a(1, data); }
+WRITE_HANDLER ( via_2_porta_w) { via_set_input_a(2, data); }
+WRITE_HANDLER ( via_3_porta_w) { via_set_input_a(3, data); }
+WRITE_HANDLER ( via_4_porta_w) { via_set_input_a(4, data); }
+WRITE_HANDLER ( via_5_porta_w) { via_set_input_a(5, data); }
+WRITE_HANDLER ( via_6_porta_w) { via_set_input_a(6, data); }
+WRITE_HANDLER ( via_7_porta_w) { via_set_input_a(7, data); }
 
-void via_0_portb_w(int offset, int data) { via_set_input_b(0, data); }
-void via_1_portb_w(int offset, int data) { via_set_input_b(1, data); }
-void via_2_portb_w(int offset, int data) { via_set_input_b(2, data); }
-void via_3_portb_w(int offset, int data) { via_set_input_b(3, data); }
-void via_4_portb_w(int offset, int data) { via_set_input_b(4, data); }
-void via_5_portb_w(int offset, int data) { via_set_input_b(5, data); }
-void via_6_portb_w(int offset, int data) { via_set_input_b(6, data); }
-void via_7_portb_w(int offset, int data) { via_set_input_b(7, data); }
+WRITE_HANDLER ( via_0_portb_w) { via_set_input_b(0, data); }
+WRITE_HANDLER ( via_1_portb_w) { via_set_input_b(1, data); }
+WRITE_HANDLER ( via_2_portb_w) { via_set_input_b(2, data); }
+WRITE_HANDLER ( via_3_portb_w) { via_set_input_b(3, data); }
+WRITE_HANDLER ( via_4_portb_w) { via_set_input_b(4, data); }
+WRITE_HANDLER ( via_5_portb_w) { via_set_input_b(5, data); }
+WRITE_HANDLER ( via_6_portb_w) { via_set_input_b(6, data); }
+WRITE_HANDLER ( via_7_portb_w) { via_set_input_b(7, data); }
 
-int via_0_porta_r(int offset) { return via[0].in_a; }
-int via_1_porta_r(int offset) { return via[1].in_a; }
-int via_2_porta_r(int offset) { return via[2].in_a; }
-int via_3_porta_r(int offset) { return via[3].in_a; }
-int via_4_porta_r(int offset) { return via[4].in_a; }
-int via_5_porta_r(int offset) { return via[5].in_a; }
-int via_6_porta_r(int offset) { return via[6].in_a; }
-int via_7_porta_r(int offset) { return via[7].in_a; }
+READ_HANDLER ( via_0_porta_r) { return via[0].in_a; }
+READ_HANDLER ( via_1_porta_r) { return via[1].in_a; }
+READ_HANDLER ( via_2_porta_r) { return via[2].in_a; }
+READ_HANDLER ( via_3_porta_r) { return via[3].in_a; }
+READ_HANDLER ( via_4_porta_r) { return via[4].in_a; }
+READ_HANDLER ( via_5_porta_r) { return via[5].in_a; }
+READ_HANDLER ( via_6_porta_r) { return via[6].in_a; }
+READ_HANDLER ( via_7_porta_r) { return via[7].in_a; }
 
-int via_0_portb_r(int offset) { return via[0].in_b; }
-int via_1_portb_r(int offset) { return via[1].in_b; }
-int via_2_portb_r(int offset) { return via[2].in_b; }
-int via_3_portb_r(int offset) { return via[3].in_b; }
-int via_4_portb_r(int offset) { return via[4].in_b; }
-int via_5_portb_r(int offset) { return via[5].in_b; }
-int via_6_portb_r(int offset) { return via[6].in_b; }
-int via_7_portb_r(int offset) { return via[7].in_b; }
+READ_HANDLER ( via_0_portb_r) { return via[0].in_b; }
+READ_HANDLER ( via_1_portb_r) { return via[1].in_b; }
+READ_HANDLER ( via_2_portb_r) { return via[2].in_b; }
+READ_HANDLER ( via_3_portb_r) { return via[3].in_b; }
+READ_HANDLER ( via_4_portb_r) { return via[4].in_b; }
+READ_HANDLER ( via_5_portb_r) { return via[5].in_b; }
+READ_HANDLER ( via_6_portb_r) { return via[6].in_b; }
+READ_HANDLER ( via_7_portb_r) { return via[7].in_b; }
 
 /******************* 1-bit CA1/CA2/CB1/CB2 port interfaces *******************/
 
-void via_0_ca1_w(int offset, int data) { via_set_input_ca1(0, data); }
-void via_1_ca1_w(int offset, int data) { via_set_input_ca1(1, data); }
-void via_2_ca1_w(int offset, int data) { via_set_input_ca1(2, data); }
-void via_3_ca1_w(int offset, int data) { via_set_input_ca1(3, data); }
-void via_4_ca1_w(int offset, int data) { via_set_input_ca1(4, data); }
-void via_5_ca1_w(int offset, int data) { via_set_input_ca1(5, data); }
-void via_6_ca1_w(int offset, int data) { via_set_input_ca1(6, data); }
-void via_7_ca1_w(int offset, int data) { via_set_input_ca1(7, data); }
-void via_0_ca2_w(int offset, int data) { via_set_input_ca2(0, data); }
-void via_1_ca2_w(int offset, int data) { via_set_input_ca2(1, data); }
-void via_2_ca2_w(int offset, int data) { via_set_input_ca2(2, data); }
-void via_3_ca2_w(int offset, int data) { via_set_input_ca2(3, data); }
-void via_4_ca2_w(int offset, int data) { via_set_input_ca2(4, data); }
-void via_5_ca2_w(int offset, int data) { via_set_input_ca2(5, data); }
-void via_6_ca2_w(int offset, int data) { via_set_input_ca2(6, data); }
-void via_7_ca2_w(int offset, int data) { via_set_input_ca2(7, data); }
+WRITE_HANDLER ( via_0_ca1_w) { via_set_input_ca1(0, data); }
+WRITE_HANDLER ( via_1_ca1_w) { via_set_input_ca1(1, data); }
+WRITE_HANDLER ( via_2_ca1_w) { via_set_input_ca1(2, data); }
+WRITE_HANDLER ( via_3_ca1_w) { via_set_input_ca1(3, data); }
+WRITE_HANDLER ( via_4_ca1_w) { via_set_input_ca1(4, data); }
+WRITE_HANDLER ( via_5_ca1_w) { via_set_input_ca1(5, data); }
+WRITE_HANDLER ( via_6_ca1_w) { via_set_input_ca1(6, data); }
+WRITE_HANDLER ( via_7_ca1_w) { via_set_input_ca1(7, data); }
+WRITE_HANDLER ( via_0_ca2_w) { via_set_input_ca2(0, data); }
+WRITE_HANDLER ( via_1_ca2_w) { via_set_input_ca2(1, data); }
+WRITE_HANDLER ( via_2_ca2_w) { via_set_input_ca2(2, data); }
+WRITE_HANDLER ( via_3_ca2_w) { via_set_input_ca2(3, data); }
+WRITE_HANDLER ( via_4_ca2_w) { via_set_input_ca2(4, data); }
+WRITE_HANDLER ( via_5_ca2_w) { via_set_input_ca2(5, data); }
+WRITE_HANDLER ( via_6_ca2_w) { via_set_input_ca2(6, data); }
+WRITE_HANDLER ( via_7_ca2_w) { via_set_input_ca2(7, data); }
 
-void via_0_cb1_w(int offset, int data) { via_set_input_cb1(0, data); }
-void via_1_cb1_w(int offset, int data) { via_set_input_cb1(1, data); }
-void via_2_cb1_w(int offset, int data) { via_set_input_cb1(2, data); }
-void via_3_cb1_w(int offset, int data) { via_set_input_cb1(3, data); }
-void via_4_cb1_w(int offset, int data) { via_set_input_cb1(4, data); }
-void via_5_cb1_w(int offset, int data) { via_set_input_cb1(5, data); }
-void via_6_cb1_w(int offset, int data) { via_set_input_cb1(6, data); }
-void via_7_cb1_w(int offset, int data) { via_set_input_cb1(7, data); }
-void via_0_cb2_w(int offset, int data) { via_set_input_cb2(0, data); }
-void via_1_cb2_w(int offset, int data) { via_set_input_cb2(1, data); }
-void via_2_cb2_w(int offset, int data) { via_set_input_cb2(2, data); }
-void via_3_cb2_w(int offset, int data) { via_set_input_cb2(3, data); }
-void via_4_cb2_w(int offset, int data) { via_set_input_cb2(4, data); }
-void via_5_cb2_w(int offset, int data) { via_set_input_cb2(5, data); }
-void via_6_cb2_w(int offset, int data) { via_set_input_cb2(6, data); }
-void via_7_cb2_w(int offset, int data) { via_set_input_cb2(7, data); }
+WRITE_HANDLER ( via_0_cb1_w) { via_set_input_cb1(0, data); }
+WRITE_HANDLER ( via_1_cb1_w) { via_set_input_cb1(1, data); }
+WRITE_HANDLER ( via_2_cb1_w) { via_set_input_cb1(2, data); }
+WRITE_HANDLER ( via_3_cb1_w) { via_set_input_cb1(3, data); }
+WRITE_HANDLER ( via_4_cb1_w) { via_set_input_cb1(4, data); }
+WRITE_HANDLER ( via_5_cb1_w) { via_set_input_cb1(5, data); }
+WRITE_HANDLER ( via_6_cb1_w) { via_set_input_cb1(6, data); }
+WRITE_HANDLER ( via_7_cb1_w) { via_set_input_cb1(7, data); }
+WRITE_HANDLER ( via_0_cb2_w) { via_set_input_cb2(0, data); }
+WRITE_HANDLER ( via_1_cb2_w) { via_set_input_cb2(1, data); }
+WRITE_HANDLER ( via_2_cb2_w) { via_set_input_cb2(2, data); }
+WRITE_HANDLER ( via_3_cb2_w) { via_set_input_cb2(3, data); }
+WRITE_HANDLER ( via_4_cb2_w) { via_set_input_cb2(4, data); }
+WRITE_HANDLER ( via_5_cb2_w) { via_set_input_cb2(5, data); }
+WRITE_HANDLER ( via_6_cb2_w) { via_set_input_cb2(6, data); }
+WRITE_HANDLER ( via_7_cb2_w) { via_set_input_cb2(7, data); }
 
-int via_0_ca1_r(int offset) { return via[0].in_ca1; }
-int via_1_ca1_r(int offset) { return via[1].in_ca1; }
-int via_2_ca1_r(int offset) { return via[2].in_ca1; }
-int via_3_ca1_r(int offset) { return via[3].in_ca1; }
-int via_4_ca1_r(int offset) { return via[4].in_ca1; }
-int via_5_ca1_r(int offset) { return via[5].in_ca1; }
-int via_6_ca1_r(int offset) { return via[6].in_ca1; }
-int via_7_ca1_r(int offset) { return via[7].in_ca1; }
-int via_0_ca2_r(int offset) { return via[0].in_ca2; }
-int via_1_ca2_r(int offset) { return via[1].in_ca2; }
-int via_2_ca2_r(int offset) { return via[2].in_ca2; }
-int via_3_ca2_r(int offset) { return via[3].in_ca2; }
-int via_4_ca2_r(int offset) { return via[4].in_ca2; }
-int via_5_ca2_r(int offset) { return via[5].in_ca2; }
-int via_6_ca2_r(int offset) { return via[6].in_ca2; }
-int via_7_ca2_r(int offset) { return via[7].in_ca2; }
+READ_HANDLER ( via_0_ca1_r) { return via[0].in_ca1; }
+READ_HANDLER ( via_1_ca1_r) { return via[1].in_ca1; }
+READ_HANDLER ( via_2_ca1_r) { return via[2].in_ca1; }
+READ_HANDLER ( via_3_ca1_r) { return via[3].in_ca1; }
+READ_HANDLER ( via_4_ca1_r) { return via[4].in_ca1; }
+READ_HANDLER ( via_5_ca1_r) { return via[5].in_ca1; }
+READ_HANDLER ( via_6_ca1_r) { return via[6].in_ca1; }
+READ_HANDLER ( via_7_ca1_r) { return via[7].in_ca1; }
+READ_HANDLER ( via_0_ca2_r) { return via[0].in_ca2; }
+READ_HANDLER ( via_1_ca2_r) { return via[1].in_ca2; }
+READ_HANDLER ( via_2_ca2_r) { return via[2].in_ca2; }
+READ_HANDLER ( via_3_ca2_r) { return via[3].in_ca2; }
+READ_HANDLER ( via_4_ca2_r) { return via[4].in_ca2; }
+READ_HANDLER ( via_5_ca2_r) { return via[5].in_ca2; }
+READ_HANDLER ( via_6_ca2_r) { return via[6].in_ca2; }
+READ_HANDLER ( via_7_ca2_r) { return via[7].in_ca2; }
 
-int via_0_cb1_r(int offset) { return via[0].in_cb1; }
-int via_1_cb1_r(int offset) { return via[1].in_cb1; }
-int via_2_cb1_r(int offset) { return via[2].in_cb1; }
-int via_3_cb1_r(int offset) { return via[3].in_cb1; }
-int via_4_cb1_r(int offset) { return via[4].in_cb1; }
-int via_5_cb1_r(int offset) { return via[5].in_cb1; }
-int via_6_cb1_r(int offset) { return via[6].in_cb1; }
-int via_7_cb1_r(int offset) { return via[7].in_cb1; }
-int via_0_cb2_r(int offset) { return via[0].in_cb2; }
-int via_1_cb2_r(int offset) { return via[1].in_cb2; }
-int via_2_cb2_r(int offset) { return via[2].in_cb2; }
-int via_3_cb2_r(int offset) { return via[3].in_cb2; }
-int via_4_cb2_r(int offset) { return via[4].in_cb2; }
-int via_5_cb2_r(int offset) { return via[5].in_cb2; }
-int via_6_cb2_r(int offset) { return via[6].in_cb2; }
-int via_7_cb2_r(int offset) { return via[7].in_cb2; }
+READ_HANDLER ( via_0_cb1_r) { return via[0].in_cb1; }
+READ_HANDLER ( via_1_cb1_r) { return via[1].in_cb1; }
+READ_HANDLER ( via_2_cb1_r) { return via[2].in_cb1; }
+READ_HANDLER ( via_3_cb1_r) { return via[3].in_cb1; }
+READ_HANDLER ( via_4_cb1_r) { return via[4].in_cb1; }
+READ_HANDLER ( via_5_cb1_r) { return via[5].in_cb1; }
+READ_HANDLER ( via_6_cb1_r) { return via[6].in_cb1; }
+READ_HANDLER ( via_7_cb1_r) { return via[7].in_cb1; }
+READ_HANDLER ( via_0_cb2_r) { return via[0].in_cb2; }
+READ_HANDLER ( via_1_cb2_r) { return via[1].in_cb2; }
+READ_HANDLER ( via_2_cb2_r) { return via[2].in_cb2; }
+READ_HANDLER ( via_3_cb2_r) { return via[3].in_cb2; }
+READ_HANDLER ( via_4_cb2_r) { return via[4].in_cb2; }
+READ_HANDLER ( via_5_cb2_r) { return via[5].in_cb2; }
+READ_HANDLER ( via_6_cb2_r) { return via[6].in_cb2; }
+READ_HANDLER ( via_7_cb2_r) { return via[7].in_cb2; }

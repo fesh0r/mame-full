@@ -18,10 +18,10 @@ extern int	kaypro_vh_start(void);
 extern void kaypro_vh_stop(void);
 extern void kaypro_vh_screenrefresh(struct osd_bitmap * bitmap, int full_refresh);
 
-extern int	kaypro_const_r(int offset);
-extern void kaypro_const_w(int offset, int data);
-extern int	kaypro_conin_r(int offset);
-extern void kaypro_conin_w(int offset, int data);
-extern int	kaypro_conout_r(int offset);
-extern void kaypro_conout_w(int offset, int data);
+extern READ_HANDLER ( kaypro_const_r );
+extern WRITE_HANDLER ( kaypro_const_w );
+extern READ_HANDLER ( kaypro_conin_r );
+extern WRITE_HANDLER ( kaypro_conin_w );
+extern READ_HANDLER ( kaypro_conout_r );
+extern WRITE_HANDLER ( kaypro_conout_w );
 

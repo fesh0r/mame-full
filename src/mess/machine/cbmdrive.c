@@ -17,17 +17,17 @@
  * sector 0:
  * 0: track# of directory begin (this linkage of sector often used)
  * 1: sector# of directory begin
- * 
+ *
  * BAM entries (one per track)
  * offset 0: # of free sectors
  * offset 1: sector 0 (lsb) free to sector 7
  * offset 2: sector 8 to 15
  * offset 3: sector 16 to whatever the number to sectors in track is
- * 
+ *
  * directory sector:
  * 0,1: track sector of next directory sector
  * 2, 34, 66, ... : 8 directory entries
- * 
+ *
  * directory entry:
  * 0: file type
  * (0x = scratched/splat, 8x = alive, Cx = locked
@@ -141,6 +141,7 @@ static void d64_readprg (CBM_Drive * c1551, int pos)
 	DBG_LOG (3, "d64 readprg", (errorlog, "size %d\n", c1551->size));
 
 	c1551->buffer = malloc (c1551->size);
+	if (!c1551->buffer) return;
 
 	c1551->size--;
 
@@ -177,6 +178,7 @@ static void d64_read_sector (CBM_Drive * c1551, int track, int sector)
 	pos = d64_tracksector2offset (track, sector);
 
 	c1551->buffer = malloc (256);
+	if (!c1551->buffer) return;
 
 	if (errorlog)
 		fprintf (errorlog, "d64 read track %d sector %d\n", track, sector);
@@ -192,6 +194,8 @@ static void d64_read_directory (CBM_Drive * c1551)
 	int pos, track, sector, i, j, blocksfree, addr = 0x1001;
 
 	c1551->buffer = malloc (8 * 18 * 25);
+	if (!c1551->buffer) return;
+
 	c1551->size = 0;
 
 	pos = d64_tracksector2offset (18, 0);
@@ -349,6 +353,7 @@ static int c1551_fs_command (CBM_Drive * c1551, unsigned char *name)
 		{
 			c1551->size = osd_fsize (fp);
 			c1551->buffer = malloc (c1551->size);
+			if (!c1551->buffer) return 1;
 			read = osd_fread (fp, c1551->buffer, 26);
 			strncpy (c1551->d.fs.filename, (char *) c1551->buffer + 8, 16);
 			c1551->size -= 26;
@@ -358,6 +363,7 @@ static int c1551_fs_command (CBM_Drive * c1551, unsigned char *name)
 		{
 			c1551->size = osd_fsize (fp);
 			c1551->buffer = malloc (c1551->size);
+			if (!c1551->buffer) return 1;
 			read = osd_fread (fp, c1551->buffer, c1551->size);
 			osd_fclose (fp);
 			if (errorlog)
@@ -547,7 +553,7 @@ static void cbm_command (CBM_Drive * drive)
 
  /*
   * 0x55 begin of command
-  * 
+  *
   * frame
   * selector
   * 0x81 device id
@@ -555,9 +561,9 @@ static void cbm_command (CBM_Drive * drive)
   * 0x83 data
   * 0x84 read byte
   * handshake low
-  * 
+  *
   * byte (like in serial bus!)
-  * 
+  *
   * floppy drive delivers
   * status 3 for file not found
   * or filedata ended with status 3

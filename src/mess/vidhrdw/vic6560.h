@@ -40,7 +40,7 @@
  * advance to next character in videorram until line is full
  * repeat this 8 or 16 lines, before moving to next line in videoram
  * screen ratio ntsc, pal 4/3
- * 
+ *
  * pal version:
  * can contain greater visible areas
  * expects other sync position (so ntsc modules may be displayed at
@@ -117,10 +117,10 @@ extern struct CustomSound_interface vic6560_sound_interface;
 int vic656x_raster_interrupt (void);
 
 /* to be called when writting to port */
-extern void vic6560_port_w (int offset, int data);
+extern WRITE_HANDLER ( vic6560_port_w );
 
 /* to be called when reading from port */
-extern int vic6560_port_r (int offset);
+extern READ_HANDLER ( vic6560_port_r );
 
 /* private area */
 

@@ -57,7 +57,7 @@ extern const char *ep128_floppy_name[4];
 unsigned char *Enterprise_RAM;
 
 
-void Nick_reg_w(int RegIndex, int Data);
+WRITE_HANDLER ( Nick_reg_w );
 
 
 /* The Page index for each 16k page is programmed into
@@ -253,18 +253,18 @@ int enterprise_frame_interrupt(void)
         return ignore_interrupt();
 }
 
-static int	enterprise_wd177x_read(int Offset)
+static READ_HANDLER ( enterprise_wd177x_read )
 {
-	switch (Offset & 0x03)
+	switch (offset & 0x03)
 	{
 	case 0:
-		return wd179x_status_r(Offset);
+		return wd179x_status_r(offset);
 	case 1:
-		return wd179x_track_r(Offset);
+		return wd179x_track_r(offset);
 	case 2:
-		return wd179x_sector_r(Offset);
+		return wd179x_sector_r(offset);
 	case 3:
-		return wd179x_data_r(Offset);
+		return wd179x_data_r(offset);
 	default:
 		break;
 	}
@@ -272,21 +272,21 @@ static int	enterprise_wd177x_read(int Offset)
 	return 0x0ff;
 }
 
-static void	enterprise_wd177x_write(int Offset, int Data)
+static WRITE_HANDLER (	enterprise_wd177x_write )
 {
-	switch (Offset & 0x03)
+	switch (offset & 0x03)
 	{
 	case 0:
-		wd179x_command_w(Offset, Data);
+		wd179x_command_w(offset, data);
 		return;
 	case 1:
-		wd179x_track_w(Offset, Data);
+		wd179x_track_w(offset, data);
 		return;
 	case 2:
-		wd179x_sector_w(Offset, Data);
+		wd179x_sector_w(offset, data);
 		return;
 	case 3:
-		wd179x_data_w(Offset, Data);
+		wd179x_data_w(offset, data);
 		return;
 	default:
 		break;
@@ -378,7 +378,7 @@ static void wd177x_callback(int State)
 
 
 
-static void exdos_card_w(int offset, int data)
+static WRITE_HANDLER ( exdos_card_w )
 {
 	/* drive side */
 	int head = (data>>4) & 0x01;
@@ -403,7 +403,7 @@ static void exdos_card_w(int offset, int data)
 */
 
 
-static int exdos_card_r(int offset)
+static READ_HANDLER ( exdos_card_r )
 {
 	return EXDOS_CARD_R;
 }

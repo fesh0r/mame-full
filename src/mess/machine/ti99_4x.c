@@ -496,14 +496,14 @@ int ti99_vblank_interrupt(void)
 /*
 	Same as MRA_NOP, but with an additionnal delay.
 */
-int ti99_rw_null8bits(int offset)
+READ_HANDLER ( ti99_rw_null8bits )
 {
 	tms9900_ICount -= 4;
 
 	return (0);
 }
 
-void ti99_ww_null8bits(int offset, int data)
+WRITE_HANDLER ( ti99_ww_null8bits )
 {
 	tms9900_ICount -= 4;
 }
@@ -512,14 +512,14 @@ void ti99_ww_null8bits(int offset, int data)
 	Memory extension : same as MRA_RAM, but with an additionnal delay.
 */
 /* low 8 kb : 0x2000-0x3fff */
-int ti99_rw_xramlow(int offset)
+READ_HANDLER ( ti99_rw_xramlow )
 {
 	tms9900_ICount -= 4;
 
 	return READ_WORD(ti99_xRAM_low + offset);
 }
 
-void ti99_ww_xramlow(int offset, int data)
+WRITE_HANDLER ( ti99_ww_xramlow )
 {
 	tms9900_ICount -= 4;
 
@@ -527,14 +527,14 @@ void ti99_ww_xramlow(int offset, int data)
 }
 
 /* high 24 kb : 0xa000-0xffff */
-int ti99_rw_xramhigh(int offset)
+READ_HANDLER ( ti99_rw_xramhigh )
 {
 	tms9900_ICount -= 4;
 
 	return READ_WORD(ti99_xRAM_high + offset);
 }
 
-void ti99_ww_xramhigh(int offset, int data)
+WRITE_HANDLER ( ti99_ww_xramhigh )
 {
 	tms9900_ICount -= 4;
 
@@ -544,7 +544,7 @@ void ti99_ww_xramhigh(int offset, int data)
 /*
 	Cartidge read : same as MRA_ROM, but with an additionnal delay.
 */
-int ti99_rw_cartmem(int offset)
+READ_HANDLER ( ti99_rw_cartmem )
 {
 	tms9900_ICount -= 4;
 
@@ -554,7 +554,7 @@ int ti99_rw_cartmem(int offset)
 /*
 	this handler handles ROM switching in cartidges
 */
-void ti99_ww_cartmem(int offset, int data)
+WRITE_HANDLER ( ti99_ww_cartmem )
 {
 	tms9900_ICount -= 4;
 
@@ -579,7 +579,7 @@ void ti99_ww_cartmem(int offset, int data)
 /*
 	PAD read
 */
-int ti99_rw_scratchpad(int offset)
+READ_HANDLER ( ti99_rw_scratchpad )
 {
 	return READ_WORD(&ti99_scratch_RAM[0x8300 | offset]);
 }
@@ -587,7 +587,7 @@ int ti99_rw_scratchpad(int offset)
 /*
 	PAD write
 */
-void ti99_ww_scratchpad(int offset, int data)
+WRITE_HANDLER ( ti99_ww_scratchpad )
 {
 	WRITE_WORD(ti99_scratch_RAM + offset,
 				data | (READ_WORD(ti99_scratch_RAM + offset) & (data >> 16)));
@@ -626,7 +626,7 @@ void ti99_ww_scratchpad(int offset, int data)
 /*
 	TMS9919 sound chip write
 */
-void ti99_ww_wsnd(int offset, int data)
+WRITE_HANDLER ( ti99_ww_wsnd )
 {
 	tms9900_ICount -= 4;
 
@@ -636,7 +636,7 @@ void ti99_ww_wsnd(int offset, int data)
 /*
 	TMS9918A VDP read
 */
-int ti99_rw_rvdp(int offset)
+READ_HANDLER ( ti99_rw_rvdp )
 {
 	tms9900_ICount -= 4;
 
@@ -653,7 +653,7 @@ int ti99_rw_rvdp(int offset)
 /*
 	TMS9918A vdp write
 */
-void ti99_ww_wvdp(int offset, int data)
+WRITE_HANDLER ( ti99_ww_wvdp )
 {
 	tms9900_ICount -= 4;
 
@@ -670,7 +670,7 @@ void ti99_ww_wvdp(int offset, int data)
 /*
 	TMS5200 speech chip read
 */
-int ti99_rw_rspeech(int offset)
+READ_HANDLER ( ti99_rw_rspeech )
 {
 	tms9900_ICount -= 4;				/* much more, actually */
 
@@ -680,7 +680,7 @@ int ti99_rw_rspeech(int offset)
 /*
 	TMS5200 speech chip write
 */
-void ti99_ww_wspeech(int offset, int data)
+WRITE_HANDLER ( ti99_ww_wspeech )
 {
 	tms9900_ICount -= 4;				/* much more, actually */
 
@@ -693,7 +693,7 @@ static int gpl_addr = 0;
 /*
 	GPL read
 */
-int ti99_rw_rgpl(int offset)
+READ_HANDLER ( ti99_rw_rgpl )
 {
 	tms9900_ICount -= 4;
 
@@ -722,7 +722,7 @@ int ti99_rw_rgpl(int offset)
 /*
 	GPL write
 */
-void ti99_ww_wgpl(int offset, int data)
+WRITE_HANDLER ( ti99_ww_wgpl )
 {
 	tms9900_ICount -= 4;
 
@@ -761,7 +761,7 @@ int diskromon = 0;
 /*
 	read a byte in disk DSR.
 */
-int ti99_rw_disk(int offset)
+READ_HANDLER ( ti99_rw_disk )
 {
 	tms9900_ICount -= 4;
 
@@ -791,7 +791,7 @@ int ti99_rw_disk(int offset)
 /*
 	write a byte in disk DSR.
 */
-void ti99_ww_disk(int offset, int data)
+WRITE_HANDLER ( ti99_ww_disk )
 {
 	tms9900_ICount -= 4;
 
@@ -1033,7 +1033,7 @@ static void ti99_CS_output(int offset, int data)
 	bit 6 : always 1
 	bit 7 : selected side
 */
-int ti99_DSKget(int offset)
+READ_HANDLER ( ti99_DSKget )
 {
 	return (0x40);
 }
@@ -1041,7 +1041,7 @@ int ti99_DSKget(int offset)
 /*
 	WRITE to DISK DSR ROM bit (bit 0)
 */
-void ti99_DSKROM(int offset, int data)
+WRITE_HANDLER ( ti99_DSKROM )
 {
 	if (data & 1)
 	{
@@ -1101,7 +1101,7 @@ static void ti99_fdc_callback(int event)
 	    4.23s after write to revelant CRU bit, this is not emulated and could cause the TI99
 	    to lock...)
 */
-void ti99_DSKhold(int offset, int data)
+WRITE_HANDLER ( ti99_DSKhold )
 {
 	DSKhold = data & 1;
 
@@ -1112,7 +1112,7 @@ void ti99_DSKhold(int offset, int data)
 /*
 	Load disk heads (HLT pin) (bit 3)
 */
-void ti99_DSKheads(int offset, int data)
+WRITE_HANDLER ( ti99_DSKheads )
 {
 }
 
@@ -1125,7 +1125,7 @@ static int DSKside = 0;
 /*
 	Select drive X (bits 4-6)
 */
-void ti99_DSKsel(int offset, int data)
+WRITE_HANDLER ( ti99_DSKsel )
 {
 	int drive = offset;					/* drive # (0-2) */
 
@@ -1149,7 +1149,7 @@ void ti99_DSKsel(int offset, int data)
 /*
 	Select side of disk (bit 7)
 */
-void ti99_DSKside(int offset, int data)
+WRITE_HANDLER ( ti99_DSKside )
 {
 	DSKside = data & 1;
 

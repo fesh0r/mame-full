@@ -8,13 +8,13 @@ int genesis_load_rom (int id);
 int genesis_id_rom (int id);
 
 int genesis_interrupt (void);
-void genesis_io_w (int offset, int data);
-int genesis_io_r (int offset);
-int genesis_ctrl_r (int offset);
-void genesis_ctrl_w (int offset, int data);
+WRITE_HANDLER ( genesis_io_w );
+READ_HANDLER  ( genesis_io_r );
+READ_HANDLER  ( genesis_ctrl_r );
+WRITE_HANDLER ( genesis_ctrl_w );
 
-int cartridge_ram_r (int offset);
-void cartridge_ram_w (int offset, int data);
+READ_HANDLER  ( cartridge_ram_r );
+WRITE_HANDLER ( cartridge_ram_w );
 
 #define SINGLE_BYTE_ACCESS(d) (((d & 0xffff0000) == 0xff000000) || \
 			       ((d & 0xffff0000) == 0x00ff0000))

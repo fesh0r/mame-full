@@ -26,7 +26,7 @@ extern struct DACinterface vc20tape_sound_interface;
 }
 
 /* the function which should be called by change on readline */
-extern void vc20_tape_open (void (*read_callback) (int, int));
+extern void vc20_tape_open (void (*read_callback) (UINT32, UINT32));
 extern void c16_tape_open (void);
 extern void vc20_tape_close (void);
 

@@ -44,26 +44,26 @@ int astrocade_load_rom(int id);
 int astrocade_id_rom(int id);
 
 void astrocade_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-int  astrocade_intercept_r(int offset);
-void astrocade_videoram_w(int offset,int data);
-void astrocade_magic_expand_color_w(int offset,int data);
-void astrocade_magic_control_w(int offset,int data);
-void astrocade_magicram_w(int offset,int data);
+READ_HANDLER ( astrocade_intercept_r );
+WRITE_HANDLER ( astrocade_videoram_w );
+WRITE_HANDLER ( astrocade_magic_expand_color_w );
+WRITE_HANDLER ( astrocade_magic_control_w );
+WRITE_HANDLER ( astrocade_magicram_w );
 
 void astrocade_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-int  astrocade_video_retrace_r(int offset);
-void astrocade_vertical_blank_w(int offset, int data);
-void astrocade_interrupt_enable_w(int offset, int data);
-void astrocade_interrupt_w(int offset, int data);
+READ_HANDLER ( astrocade_video_retrace_r );
+WRITE_HANDLER ( astrocade_vertical_blank_w );
+WRITE_HANDLER ( astrocade_interrupt_enable_w );
+WRITE_HANDLER ( astrocade_interrupt_w );
 int  astrocade_interrupt(void);
 
-void astrocade_mode_w(int offset, int data);
+WRITE_HANDLER ( astrocade_mode_w );
 
 int  astrocade_vh_start(void);
 
-void astrocade_colour_register_w(int offset, int data);
-void astrocade_colour_block_w(int offset, int data);
-void astrocade_colour_split_w(int offset, int data);
+WRITE_HANDLER ( astrocade_colour_register_w );
+WRITE_HANDLER ( astrocade_colour_block_w );
+WRITE_HANDLER ( astrocade_colour_split_w );
 
 
 /****************************************************************************

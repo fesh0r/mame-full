@@ -392,7 +392,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ -1 } /* end of array */
 };
-extern int msx_psg_read_port_a (int offset);
+extern READ_HANDLER ( msx_psg_read_port_a );
 
 static struct AY8910interface ay8910_interface =
 {

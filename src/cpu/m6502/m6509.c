@@ -107,26 +107,26 @@ static m6509_Regs m6509;
 
 #include "t6509.c"
 
-int m6509_read_00000(int offset)
+READ_HANDLER ( m6509_read_00000 )
 {
 	return m6509.pc_bank.b.h2;
 }
 
-int m6509_read_00001(int offset)
+READ_HANDLER ( m6509_read_00001 )
 {
 	return m6509.ind_bank.b.h2;
 }
 
-void m6509_write_00000(int offset, int value)
+WRITE_HANDLER ( m6509_write_00000 )
 {
-	m6509.pc_bank.b.h2=value&0xf;
+	m6509.pc_bank.b.h2=data&0xf;
 	m6509.pc.w.h=m6509.pc_bank.w.h;
 	change_pc(PCD);
 }
 
-void m6509_write_00001(int offset, int value)
+WRITE_HANDLER ( m6509_write_00001 )
 {
-	m6509.ind_bank.b.h2=value&0xf;
+	m6509.ind_bank.b.h2=data&0xf;
 }
 
 void m6509_reset (void *param)

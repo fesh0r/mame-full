@@ -210,7 +210,7 @@ if (inter == 0)
 }
 return 0;
 }
-void genesis_io_w (int offset, int data)
+WRITE_HANDLER ( genesis_io_w )
 {
   	data = COMBINE_WORD(0, data);
   //	if (errorlog) fprintf(errorlog, "genesis_io_w %x, %x\n", offset, data);
@@ -231,7 +231,7 @@ void genesis_io_w (int offset, int data)
 				break;
  		}
 }
-int genesis_io_r (int offset)
+READ_HANDLER ( genesis_io_r )
 {
 
 	int returnval = 0x80;
@@ -313,7 +313,7 @@ int genesis_io_r (int offset)
  		}
  	return 0x00;
 }
-int genesis_ctrl_r (int offset)
+READ_HANDLER ( genesis_ctrl_r )
 {
 	//int returnval;
    //	if (errorlog) fprintf(errorlog, "genesis_ctrl_r %x\n", offset);
@@ -335,7 +335,7 @@ int genesis_ctrl_r (int offset)
 		return 0x00;
 
 }
-void genesis_ctrl_w (int offset, int data)
+WRITE_HANDLER ( genesis_ctrl_w )
 {
   data = COMBINE_WORD(0, data);
 
@@ -384,12 +384,12 @@ void genesis_ctrl_w (int offset, int data)
 		}
 }
 #if 0
-int cartridge_ram_r (int offset)
+READ_HANDLER ( cartridge_ram_r )
 {
 /*  if (errorlog) fprintf(errorlog, "cartridge ram read.. %x\n", offset);*/
 	return cartridge_ram[offset];
 }
-void cartridge_ram_w (int offset, int data)
+WRITE_HANDLER ( cartridge_ram_w )
 {
 /*  if (errorlog) fprintf(errorlog, "cartridge ram write.. %x to %x\n", data, offset);*/
 	cartridge_ram[offset] = data;

@@ -41,52 +41,52 @@ extern int cgenie_vh_start(void);
 extern void cgenie_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 extern void cgenie_sh_sound_init(const char * gamename);
-extern void cgenie_sh_control_port_w(int offset, int data);
-extern void cgenie_sh_data_port_w(int offset, int data);
-extern int cgenie_sh_control_port_r(int offset);
-extern int cgenie_sh_data_port_r(int offset);
+extern WRITE_HANDLER ( cgenie_sh_control_port_w );
+extern WRITE_HANDLER ( cgenie_sh_data_port_w );
+extern READ_HANDLER ( cgenie_sh_control_port_r );
+extern READ_HANDLER ( cgenie_sh_data_port_r );
 
-extern int cgenie_psg_port_a_r(int port);
-extern int cgenie_psg_port_b_r(int port);
-extern void cgenie_psg_port_a_w(int port, int val);
-extern void cgenie_psg_port_b_w(int port, int val);
+extern READ_HANDLER ( cgenie_psg_port_a_r);
+extern READ_HANDLER ( cgenie_psg_port_b_r );
+extern WRITE_HANDLER ( cgenie_psg_port_a_w );
+extern WRITE_HANDLER ( cgenie_psg_port_b_w );
 
 extern void init_cgenie(void);
 extern void cgenie_init_machine(void);
 extern void cgenie_stop_machine(void);
 
-extern int cgenie_colorram_r(int offset);
-extern int cgenie_fontram_r(int offset);
+extern READ_HANDLER ( cgenie_colorram_r );
+extern READ_HANDLER ( cgenie_fontram_r );
 
 extern void cgenie_dos_rom_w(int offset, int data);
 extern void cgenie_ext_rom_w(int offset, int data);
-extern void cgenie_colorram_w(int offset, int data);
-extern void cgenie_fontram_w(int offset, int data);
+extern WRITE_HANDLER ( cgenie_colorram_w );
+extern WRITE_HANDLER ( cgenie_fontram_w );
 
-extern void cgenie_port_ff_w(int offset, int data);
-extern int cgenie_port_ff_r(int offset);
+extern WRITE_HANDLER ( cgenie_port_ff_w );
+extern READ_HANDLER ( cgenie_port_ff_r );
 extern int cgenie_port_xx_r(int offset);
 
 extern int cgenie_timer_interrupt(void);
 extern int cgenie_frame_interrupt(void);
 
-extern int cgenie_status_r(int offset);
-extern int cgenie_track_r(int offset);
-extern int cgenie_sector_r(int offset);
-extern int cgenie_data_r(int offset);
+extern READ_HANDLER ( cgenie_status_r );
+extern READ_HANDLER ( cgenie_track_r );
+extern READ_HANDLER ( cgenie_sector_r );
+extern READ_HANDLER ( cgenie_data_r );
 
-extern void cgenie_command_w(int offset, int data);
-extern void cgenie_track_w(int offset, int data);
-extern void cgenie_sector_w(int offset, int data);
-extern void cgenie_data_w(int offset, int data);
+extern WRITE_HANDLER ( cgenie_command_w );
+extern WRITE_HANDLER ( cgenie_track_w );
+extern WRITE_HANDLER ( cgenie_sector_w );
+extern WRITE_HANDLER ( cgenie_data_w );
 
-extern int cgenie_irq_status_r(int offset);
+extern READ_HANDLER ( cgenie_irq_status_r );
 
-extern void cgenie_motor_w(int offset, int data);
+extern WRITE_HANDLER ( cgenie_motor_w );
 
-extern int cgenie_keyboard_r(int offset);
+extern READ_HANDLER ( cgenie_keyboard_r );
 extern int cgenie_videoram_r(int offset);
-extern void cgenie_videoram_w(int offset, int data);
+extern WRITE_HANDLER ( cgenie_videoram_w );
 
 static struct MemoryReadAddress readmem[] =
 {

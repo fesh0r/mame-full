@@ -46,11 +46,11 @@ void c65_map(int a, int x, int y, int z);
 void c65_bankswitch (void);
 void c65_colorram_write (int offset, int value);
 void c65_write_0002 (int offset, int value);
-void c65_write_2000 (int offset, int value);
-void c65_write_8000 (int offset, int value);
-void c65_write_a000 (int offset, int value);
-void c65_write_d000 (int offset, int value);
-void c65_write_e000 (int offset, int value);
+WRITE_HANDLER ( c65_write_2000 );
+WRITE_HANDLER ( c65_write_8000 );
+WRITE_HANDLER ( c65_write_a000 );
+WRITE_HANDLER ( c65_write_d000 );
+WRITE_HANDLER ( c65_write_e000 );
 
 extern void c65_driver_init (void);
 extern void c65pal_driver_init (void);

@@ -119,7 +119,7 @@ void tms9928A_init_palette(unsigned char *palette, unsigned short *colortable,co
 {
     memcpy(palette, & TMS9928A_palette, sizeof(TMS9928A_palette));
 	memcpy(colortable, & TMS9928A_colortable, sizeof(TMS9928A_colortable));
-	color_prom=malloc(0*sizeof(char));
+	color_prom=malloc(1*sizeof(char));
 }
 
 
@@ -322,7 +322,7 @@ static void _TMS9928A_change_register (int reg, UINT8 val) {
                 tms.colour = ((tms.Regs[3] & 0x80) * 64) & (tms.vramsize - 1);
                 tms.colourmask = (tms.Regs[3] & 0x7f) * 8 | 7;
                 tms.pattern = ((tms.Regs[4] & 4) * 2048) & (tms.vramsize - 1);
-                tms.patternmask = (tms.Regs[4] & 3) * 256 | 
+                tms.patternmask = (tms.Regs[4] & 3) * 256 |
 		    (tms.colourmask & 255);
             } else {
                 tms.colour = (tms.Regs[3] * 64) & (tms.vramsize - 1);
@@ -496,7 +496,7 @@ static void _TMS9928A_mode1 (struct osd_bitmap *bmp) {
             for (yy=0;yy<8;yy++) {
                 pattern = *patternptr++;
                 for (xx=0;xx<6;xx++) {
-		    plot_pixel (bmp, 8+x*6+xx, y*8+yy, 
+		    plot_pixel (bmp, 8+x*6+xx, y*8+yy,
 			(pattern & 0x80) ? fg : bg);
                     pattern *= 2;
                 }
@@ -535,7 +535,7 @@ static void _TMS9928A_mode12 (struct osd_bitmap *bmp) {
             for (yy=0;yy<8;yy++) {
                 pattern = *patternptr++;
                 for (xx=0;xx<6;xx++) {
-		    plot_pixel (bmp, 8+x*6+xx, y*8+yy, 
+		    plot_pixel (bmp, 8+x*6+xx, y*8+yy,
                         (pattern & 0x80) ? fg : bg);
                     pattern *= 2;
                 }
@@ -563,7 +563,7 @@ static void _TMS9928A_mode0 (struct osd_bitmap *bmp) {
             for (yy=0;yy<8;yy++) {
                 pattern=*patternptr++;
                 for (xx=0;xx<8;xx++) {
-		    plot_pixel (bmp, x*8+xx, y*8+yy, 
+		    plot_pixel (bmp, x*8+xx, y*8+yy,
 			(pattern & 0x80) ? fg : bg);
                     pattern *= 2;
                 }
@@ -598,7 +598,7 @@ static void _TMS9928A_mode2 (struct osd_bitmap *bmp) {
                 fg = Machine->pens[colour / 16];
                 bg = Machine->pens[colour & 15];
                 for (xx=0;xx<8;xx++) {
-		    plot_pixel (bmp, x*8+xx, y*8+yy, 
+		    plot_pixel (bmp, x*8+xx, y*8+yy,
 			(pattern & 0x80) ? fg : bg);
                     pattern *= 2;
                 }

@@ -10,7 +10,7 @@
  vc1541
   (also build in in sx64)
   used with commodore vc20, c64, c16, c128
-  floppy disk drive 5 1/4 inch, single sided, double density, 
+  floppy disk drive 5 1/4 inch, single sided, double density,
    40 tracks (tone head to big to use 80 tracks?)
   gcr encoding
 
@@ -30,9 +30,9 @@
 
  c1551
   used with commodore c16
-  m6510t? processor (4 MHz???), 
+  m6510t? processor (4 MHz???),
   (m6510t internal 4mhz clock?, 8 port pins?)
-  VIA6522 ?, CIA6526 ?, 
+  VIA6522 ?, CIA6526 ?,
   2 KByte RAM, 16 KByte ROM
   connector commodore C16 expansion cartridge
   parallel protocoll
@@ -78,7 +78,7 @@ FF00-FFFF       Jump table, vectors
   maybe like in pet series?
    port a data in/out?
    port b ce port, ddr 31
- 
+
  2040/3040
  ieee488 interface
  2 drives
@@ -122,7 +122,7 @@ static struct
 }
 serial;
 
-/* G64 or D64 image 
+/* G64 or D64 image
  implementation as writeback system
  */
 typedef struct
@@ -171,14 +171,14 @@ typedef struct
 CBM_Drive_Emu vc1541_static= { 0 }, *vc1541 = &vc1541_static;
 
 /* four different frequencies for the 4 different zones on the disk */
-static double vc1541_times[4]= { 
+static double vc1541_times[4]= {
 	13/16e6, 14/16e6, 15/16e6, 16/16e6
 };
 
 /*
  * gcr encoding 4 bits to 5 bits
  * 1 change, 0 none
- * 
+ *
  * physical encoding of the data on a track
  * sector header
  *  sync (5x 0xff not gcr encoded)
@@ -197,7 +197,7 @@ static double vc1541_times[4]= {
  *  256 bytes
  *  checksum (256 bytes xored)
  * cap
- * 
+ *
  * max 42 tracks, stepper resolution 84 tracks
  */
 static int bin_2_gcr[] =
@@ -208,7 +208,7 @@ static int bin_2_gcr[] =
 
 #if 0
 static int gcr_2_bin[] = {
-	-1, -1, -1, -1, 
+	-1, -1, -1, -1,
 	-1, -1, -1, -1,
 	-1, 8, 0, 1,
 	-1, 0xc, 4, 5,
@@ -251,8 +251,8 @@ static void vc1541_sector_data(UINT8 data, int *pos)
 {
 	gcr_helper.data[gcr_helper.count++]=data;
 	if (gcr_helper.count==4) {
-		gcr_double_2_gcr(gcr_helper.data[0], gcr_helper.data[1], 
-						 gcr_helper.data[2], gcr_helper.data[3], 
+		gcr_double_2_gcr(gcr_helper.data[0], gcr_helper.data[1],
+						 gcr_helper.data[2], gcr_helper.data[3],
 						 vc1541->head.data+*pos);
 		*pos=*pos+5;
 		gcr_helper.count=0;
@@ -261,7 +261,7 @@ static void vc1541_sector_data(UINT8 data, int *pos)
 
 static void vc1541_sector_end(int *pos)
 {
-	assert(gcr_helper.count==0);	
+	assert(gcr_helper.count==0);
 }
 
 static void vc1541_sector_to_gcr(int track, int sector)
@@ -401,7 +401,7 @@ static void vc1541_timer(int param)
 
 /*
  * via 6522 at 0x1800
- * port b 
+ * port b
  * 0 inverted serial data in
  * 1 inverted serial data out
  * 2 inverted serial clock in
@@ -418,7 +418,7 @@ static void vc1541_via0_irq (int level)
 {
 	vc1541->via0irq = level;
 	DBG_LOG(2, "vc1541 via0 irq",(errorlog, "level %d %d\n",vc1541->via0irq,vc1541->via1irq));
-	cpu_set_irq_line (vc1541->cpunumber, 
+	cpu_set_irq_line (vc1541->cpunumber,
 					  M6502_INT_IRQ, vc1541->via1irq || vc1541->via0irq);
 }
 
@@ -448,12 +448,12 @@ static int vc1541_via0_read_portb (int offset)
 		break;
 	}
 	if (value!=old) {
-		DBG_LOG(2, "vc1541 serial read",(errorlog, "%s %s %s\n", 
+		DBG_LOG(2, "vc1541 serial read",(errorlog, "%s %s %s\n",
 										 serial.atn[0]?"ATN":"atn",
 										 serial.clock[0]?"CLOCK":"clock",
 										 serial.data[0]?"DATA":"data"));
-		
-		DBG_LOG(2, "vc1541 serial read",(errorlog, "%s %s %s\n", 
+
+		DBG_LOG(2, "vc1541 serial read",(errorlog, "%s %s %s\n",
 										 value&0x80?"ATN":"atn",
 										 value&4?"CLOCK":"clock",
 										 value&1?"DATA":"data"));
@@ -477,7 +477,7 @@ static void vc1541_acka(void)
 
 static void vc1541_via0_write_portb (int offset, int data)
 {
-	DBG_LOG(2, "vc1541 serial write",(errorlog, "%s %s %s\n", 
+	DBG_LOG(2, "vc1541 serial write",(errorlog, "%s %s %s\n",
 									 data&0x10?"ATN":"atn",
 									 data&8?"CLOCK":"clock",
 									 data&2?"DATA":"data"));
@@ -499,13 +499,13 @@ static void vc1541_via0_write_portb (int offset, int data)
 	vc1541_serial_atn_write (1, vc1541->drive.serial.serial_atn = 1);
 }
 
-/* 
+/*
  * via 6522 at 0x1c00
  * port a
     byte in gcr format from or to floppy
 
  * port b
- * 0 output steppermotor 
+ * 0 output steppermotor
  * 1 output steppermotor
      10: 00->01->10->11->00 move head to higher tracks
  * 2 output motor (rotation) (300 revolutions per minute)
@@ -523,14 +523,14 @@ static void vc1541_via0_write_portb (int offset, int data)
 
  * ca2 set overflow enable for 6502
  * ca3 read/write
- * 
+ *
  * irq to m6502 irq connected
  */
 static void vc1541_via1_irq (int level)
 {
 	vc1541->via1irq = level;
 	DBG_LOG(2, "vc1541 via1 irq",(errorlog, "level %d %d\n",vc1541->via0irq,vc1541->via1irq));
-	cpu_set_irq_line (vc1541->cpunumber, 
+	cpu_set_irq_line (vc1541->cpunumber,
 					  M6502_INT_IRQ, vc1541->via1irq || vc1541->via0irq);
 }
 
@@ -643,11 +643,11 @@ int vc1541_init (int id)
 	const char *imagename=device_filename(IO_FLOPPY, id);
 	FILE *in;
 	int size;
-	
+
 	//memset (&(drive->d64), 0, sizeof (drive->d64));
 	in = image_fopen (IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!in)
-		return INIT_FAILED;	
+		return INIT_FAILED;
 
 	size = osd_fsize (in);
 	if (!(vc1541->d64.data = malloc (size)))
@@ -662,10 +662,10 @@ int vc1541_init (int id)
 		return 1;
 	}
 	osd_fclose (in);
-	
+
 	if (errorlog)
 		fprintf (errorlog, "floppy image %s loaded\n", imagename);
-	
+
 	//vc1541->drive = ;
 	vc1541->d64.name = imagename;
 	return 0;
@@ -675,7 +675,7 @@ void vc1541_exit(int id)
 {
 	/* writeback of image data */
 	free(vc1541->d64.data);vc1541->d64.data=NULL;
-}	
+}
 
 int vc1541_config (int id, int mode, VC1541_CONFIG *config)
 {
@@ -720,9 +720,9 @@ extern void vc1541_drive_status (char *text, int size)
 				  serial.clock[0]?"CLOCK":"clock",
 				  serial.data[0]?"DATA":"data");
 	} else if (vc1541->type==TypeC1551) {
-		snprintf (text, size, "%s %4.1f %s %.2x", 
+		snprintf (text, size, "%s %4.1f %s %.2x",
 				  vc1541->led ? "LED" : "led",
-				  vc1541->track, 
+				  vc1541->track,
 				  vc1541->motor ? "MOTOR" : "motor",
 				  vc1541->frequency);
 	}
@@ -760,7 +760,7 @@ void vc1541_serial_atn_write (int which, int level)
 			serial.atn[0] = serial.atn[1] && serial.atn[2];
 			if (serial.atn[0] == level)
 			{
-				DBG_LOG(1, "vc1541",(errorlog, "%d:%.4x atn %s\n", 
+				DBG_LOG(1, "vc1541",(errorlog, "%d:%.4x atn %s\n",
 									 cpu_getactivecpu (),
 									 cpu_get_pc(),
 									 serial.atn[0]?"ATN":"atn"));
@@ -801,7 +801,7 @@ void vc1541_serial_data_write (int which, int level)
 			serial.data[0] = serial.data[1] && serial.data[2];
 			if (serial.data[0] == level)
 			{
-				DBG_LOG(1, "vc1541",(errorlog, "%d:%.4x data %s\n", 
+				DBG_LOG(1, "vc1541",(errorlog, "%d:%.4x data %s\n",
 									 cpu_getactivecpu (),
 									 cpu_get_pc(),
 									 serial.data[0]?"DATA":"data"));
@@ -831,7 +831,7 @@ void vc1541_serial_clock_write (int which, int level)
 			serial.clock[0] = serial.clock[1] && serial.clock[2];
 			if (serial.clock[0] == level)
 			{
-				DBG_LOG(1, "vc1541",(errorlog, "%d:%.4x clock %s\n", 
+				DBG_LOG(1, "vc1541",(errorlog, "%d:%.4x clock %s\n",
 									 cpu_getactivecpu (),
 									 cpu_get_pc(),
 									 serial.clock[0]?"CLOCK":"clock"));
@@ -867,11 +867,11 @@ static void c1551_timer(int param)
   5,6: output frequency select
   7: input byte ready
  */
-static void c1551_port_w(int offset, int data)
+static WRITE_HANDLER ( c1551_port_w )
 {
 	static int old=0;
 	if (offset) {
-		DBG_LOG(1, "c1551 port",(errorlog, "write %.2x\n",data));	
+		DBG_LOG(1, "c1551 port",(errorlog, "write %.2x\n",data));
 		vc1541->drive.c1551.cpu_port=data;
 
 		if (data!=old) {
@@ -920,11 +920,11 @@ static void c1551_port_w(int offset, int data)
 		vc1541->led = data & 8;
 	} else {
 		vc1541->drive.c1551.cpu_ddr=data;
-		DBG_LOG(1, "c1551 ddr",(errorlog, "write %.2x\n",data));	
+		DBG_LOG(1, "c1551 ddr",(errorlog, "write %.2x\n",data));
 	}
 }
 
-static int c1551_port_r(int offset)
+static READ_HANDLER ( c1551_port_r )
 {
 	int data;
 
@@ -943,12 +943,12 @@ static int c1551_port_r(int offset)
 		DBG_LOG(3, "c1551 port",(errorlog, "read %.2x\n", data));
 	} else {
 		data=vc1541->drive.c1551.cpu_ddr;
-		DBG_LOG(3, "c1551 ddr",(errorlog, "read %.2x\n", data));	
+		DBG_LOG(3, "c1551 ddr",(errorlog, "read %.2x\n", data));
 	}
 	return data;
 }
 
-/* 
+/*
    tia6523
    port a
     c16 communication in/out
@@ -1013,7 +1013,7 @@ struct MemoryWriteAddress c1551_writemem[] =
 
 void c1551x_write_data (TPI6525 *this, int data)
 {
-	DBG_LOG(1, "c1551 cpu",(errorlog, "%d write data %.2x\n", 
+	DBG_LOG(1, "c1551 cpu",(errorlog, "%d write data %.2x\n",
 						 cpu_getactivecpu (), data));
 #ifdef CPU_SYNC
 	cpu_sync();
@@ -1028,14 +1028,14 @@ int c1551x_read_data (TPI6525 *this)
 	cpu_sync ();
 #endif
 	data=tpi6525_0_port_a_r(0);
-	DBG_LOG(2, "c1551 cpu",(errorlog, "%d read data %.2x\n", 
+	DBG_LOG(2, "c1551 cpu",(errorlog, "%d read data %.2x\n",
 						 cpu_getactivecpu (), data));
 	return data;
 }
 
 void c1551x_write_handshake (TPI6525 *this, int data)
 {
-	DBG_LOG(1, "c1551 cpu",(errorlog, "%d write handshake %.2x\n", 
+	DBG_LOG(1, "c1551 cpu",(errorlog, "%d write handshake %.2x\n",
 						 cpu_getactivecpu (), data));
 #ifdef CPU_SYNC
 	cpu_sync();
@@ -1050,7 +1050,7 @@ int c1551x_read_handshake (TPI6525 *this)
 	cpu_sync();
 #endif
 	data=tpi6525_0_port_c_r(0)&8?0x80:0;
-	DBG_LOG(2, "c1551 cpu",(errorlog, "%d read handshake %.2x\n", 
+	DBG_LOG(2, "c1551 cpu",(errorlog, "%d read handshake %.2x\n",
 						 cpu_getactivecpu (), data));
 	return data;
 }
@@ -1062,7 +1062,7 @@ int c1551x_read_status (TPI6525 *this)
 	cpu_sync();
 #endif
 	data=tpi6525_0_port_c_r(0)&3;
-	DBG_LOG(1, "c1551 cpu",(errorlog, "%d read status %.2x\n", 
+	DBG_LOG(1, "c1551 cpu",(errorlog, "%d read status %.2x\n",
 						 cpu_getactivecpu (), data));
 	return data;
 }

@@ -41,54 +41,54 @@ extern int jupiter_load_tap(int id);
 extern int jupiter_vh_start (void);
 extern void jupiter_vh_stop (void);
 extern void jupiter_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
-extern void jupiter_vh_charram_w (int offset, int data);
+extern WRITE_HANDLER ( jupiter_vh_charram_w );
 extern unsigned char *jupiter_charram;
 extern int jupiter_charram_size;
 
 /* functions */
 
-int jupiter_port_fefe_r (int offset)
+READ_HANDLER ( jupiter_port_fefe_r )
 {
 	return (readinputport (0));
 }
 
-int jupiter_port_fdfe_r (int offset)
+READ_HANDLER ( jupiter_port_fdfe_r )
 {
 	return (readinputport (1));
 }
 
-int jupiter_port_fbfe_r (int offset)
+READ_HANDLER ( jupiter_port_fbfe_r )
 {
 	return (readinputport (2));
 }
 
-int jupiter_port_f7fe_r (int offset)
+READ_HANDLER ( jupiter_port_f7fe_r )
 {
 	return (readinputport (3));
 }
 
-int jupiter_port_effe_r (int offset)
+READ_HANDLER ( jupiter_port_effe_r )
 {
 	return (readinputport (4));
 }
 
-int jupiter_port_dffe_r (int offset)
+READ_HANDLER ( jupiter_port_dffe_r )
 {
 	return (readinputport (5));
 }
 
-int jupiter_port_bffe_r (int offset)
+READ_HANDLER ( jupiter_port_bffe_r )
 {
 	return (readinputport (6));
 }
 
-int jupiter_port_7ffe_r (int offset)
+READ_HANDLER ( jupiter_port_7ffe_r )
 {
 	speaker_level_w(0,0);
 	return (readinputport (7));
 }
 
-void jupiter_port_fe_w (int offset, int data)
+WRITE_HANDLER ( jupiter_port_fe_w )
 {
 	speaker_level_w(0,1);
 }

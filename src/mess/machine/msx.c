@@ -28,8 +28,7 @@ static ppi8255_interface msx_ppi8255_interface = {
     NULL,
     msx_ppi_port_b_r,
     NULL,
-    msx_ppi_port_a_w,
-    NULL,
+    msx_ppi_port_a_w,            NULL,
     msx_ppi_port_c_w
 };
 
@@ -49,6 +48,53 @@ int msx_id_rom (int id)
 
     /* first to bytes must be 'AB' */
     return ( (magic[0] == 'A') && (magic[1] == 'B') );
+}
+
+static int msx_probe_type (UINT8* pmem, int size)
+{
+    int kon4, kon5, asc8, asc16, i;
+
+    if (size <= 0x10000) return 0;
+
+    kon4 = kon5 = asc8 = asc16 = 0;
+
+    for (i=0;i<size-3;i++)
+    {
+	if (pmem[i] == 0x32 && pmem[i+1] == 0)
+ 	{
+	    switch (pmem[i+2]) {
+	    case 0x60:
+	    case 0x70:
+	 	asc16++;
+		asc8++;
+		break;
+	    case 0x68:
+	    case 0x78:
+	 	asc8++;
+		asc16--;
+	    }
+
+ 	    switch (pmem[i+2]) {
+	    case 0x60:
+	    case 0x80:
+	    case 0xa0:
+		kon4++;
+	        break;
+	    case 0x50:
+	    case 0x70:
+	    case 0x90:
+	    case 0xb0:
+	   	kon5++;
+	    }
+   	}
+    }
+
+#define MAX(x, y) ((x) < (y) ? (y) : (x) )
+
+    if (MAX (kon4, kon5) > MAX (asc8, asc16) )
+	return (kon5 > kon4) ? 2 : 3;
+    else
+	return (asc8 > asc16) ? 4 : 5;
 }
 
 int msx_load_rom (int id)
@@ -95,18 +141,11 @@ int msx_load_rom (int id)
 	    fprintf (errorlog, "Cart %d extra info: %s\n", id, pext);
     }
 
-    /* mapper type 0 always needs 64kB */
-    if (!type || type == -1)
-    {
-	size_aligned = 0x10000;
-	if (size > 0x10000) size = 0x10000;
-    }
-    else
-    {
-        /* calculate aligned size (8, 16, 32, 64, 128, 256, etc. (kB) ) */
-        size_aligned = 0x2000;
-    	while (size_aligned < size) size_aligned *= 2;
-    }
+
+    /* calculate aligned size (8, 16, 32, 64, 128, 256, etc. (kB) ) */
+    size_aligned = 0x2000;
+    while (size_aligned < size) size_aligned *= 2;
+
     pmem = (UINT8*)malloc (size_aligned);
     if (!pmem)
     {
@@ -127,14 +166,32 @@ int msx_load_rom (int id)
     /* check type */
     if (type < 0)
     {
+	type = msx_probe_type (pmem, size);
+
 	if ( !( (pmem[0] == 'A') && (pmem[1] == 'B') ) )
 	{
-	    if (errorlog) fprintf (errorlog, "%s: Not a valid ROM file\n",
+	    if (errorlog) fprintf (errorlog,
+		"%s: May not be a valid ROM file\n",
 		device_filename (IO_CARTSLOT, id) );
+	}
+
+        if (errorlog) fprintf (errorlog,
+	    "Probed cartridge mapper %s\n", mapper_types[type]);
+    }
+
+    /* mapper type 0 always needs 64kB */
+    if (!type)
+    {
+	size_aligned = 0x10000;
+	pmem = realloc (pmem, 0x10000);
+	if (!pmem)
+	{
+	    if (errorlog) fprintf (errorlog, "Realloc failed!\n");
             free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
 	    return 1;
 	}
-	type = 0;
+	if (size < 0x10000) memset (pmem + size, 0xff, 0x10000 - size);
+	if (size > 0x10000) size = 0x10000;
     }
 
     /* set mapper specific stuff */
@@ -466,7 +523,7 @@ void msx_ch_stop (void) {
 ** The I/O funtions
 */
 
-int msx_vdp_r(int offset)
+READ_HANDLER ( msx_vdp_r )
 {
     if (offset & 0x01)
 	return TMS9928A_register_r();
@@ -474,7 +531,7 @@ int msx_vdp_r(int offset)
 	return TMS9928A_vram_r();
 }
 
-void msx_vdp_w(int offset, int data)
+WRITE_HANDLER ( msx_vdp_w )
 {
     if (offset & 0x01)
 	TMS9928A_register_w(data);
@@ -482,12 +539,12 @@ void msx_vdp_w(int offset, int data)
 	TMS9928A_vram_w(data);
 }
 
-int msx_psg_r (int offset)
+READ_HANDLER ( msx_psg_r )
 {
     return AY8910_read_port_0_r (offset);
 }
 
-void msx_psg_w (int offset, int data)
+WRITE_HANDLER ( msx_psg_w )
 {
     if (offset & 0x01)
 	AY8910_write_port_0_w (offset, data);
@@ -495,7 +552,7 @@ void msx_psg_w (int offset, int data)
 	AY8910_control_port_0_w (offset, data);
 }
 
-int msx_psg_port_a_r (int offset)
+READ_HANDLER ( msx_psg_port_a_r )
 {
     int data;
 
@@ -509,19 +566,24 @@ int msx_psg_port_a_r (int offset)
     return data;
 }
 
-int msx_psg_port_b_r (int offset) {
+READ_HANDLER ( msx_psg_port_b_r )
+{
     return msx1.psg_b;
 }
 
-void msx_psg_port_a_w (int offset, int data) { }
+WRITE_HANDLER ( msx_psg_port_a_w )
+{
 
-void msx_psg_port_b_w (int offset, int data) {
+}
+
+WRITE_HANDLER ( msx_psg_port_b_w )
+{
     /* Arabic or kana mode led */
     if ( (data ^ msx1.psg_b) & 0x80) osd_led_w (1, !(data & 0x80) );
 	msx1.psg_b = data;
 }
 
-void msx_printer_w (int offset, int data)
+WRITE_HANDLER ( msx_printer_w )
 {
      if (offset == 1) {
         /* SIMPL emulation */
@@ -529,11 +591,12 @@ void msx_printer_w (int offset, int data)
      }
 }
 
-int msx_printer_r (int offset) {
+READ_HANDLER ( msx_printer_r )
+{
     return 0xff;
 }
 
-void msx_fmpac_w (int offset, int data)
+WRITE_HANDLER ( msx_fmpac_w )
 {
     if (msx1.opll_active & 1)
     {
@@ -663,7 +726,7 @@ static void msx_set_all_mem_banks (void)
 	msx_set_slot[(ppi8255_0_r(0)>>(i*2))&3](i);
 }
 
-void msx_writemem0 (int offset, int data)
+WRITE_HANDLER ( msx_writemem0 )
 {
      if ( (ppi8255_0_r(0) & 0x03) == 0x03 )
 	msx1.ram[offset] = data;
@@ -929,7 +992,7 @@ static void msx_cart_write (int cart, int offset, int data)
     }
 }
 
-void msx_writemem1 (int offset, int data)
+WRITE_HANDLER ( msx_writemem1 )
 {
     switch (ppi8255_0_r(0) & 0x0c)
     {
@@ -944,7 +1007,7 @@ void msx_writemem1 (int offset, int data)
     }
 }
 
-void msx_writemem2 (int offset, int data)
+WRITE_HANDLER ( msx_writemem2 )
 {
     switch (ppi8255_0_r(0) & 0x30)
     {
@@ -959,7 +1022,7 @@ void msx_writemem2 (int offset, int data)
     }
 }
 
-void msx_writemem3 (int offset, int data)
+WRITE_HANDLER ( msx_writemem3 )
 {
     if ( (ppi8255_0_r(0) & 0xc0) == 0xc0)
 	msx1.ram[0xc000+offset] = data;

@@ -110,7 +110,7 @@ void init_trs80(void)
     }
 }
 
-static int opbaseoverride(int PC)
+static int opbaseoverride(UINT32 PC)
 {
 	UINT8 *ram = memory_region(REGION_CPU1);
 	if( trs80_load_cas && ram[0x3c00+3*64] == 0x3e )

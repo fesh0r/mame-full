@@ -21,7 +21,7 @@ Philips P2000 1 Memory map
 		88-8B		CTC
 		8C-90		Floppy ctrl
 		94			RAM Bank select
-	
+
 	Display: SAA5050
 
 ************************************************************************/
@@ -72,7 +72,7 @@ static	struct
 
 /* functions */
 
-int	p2000t_port_000f_r (int offset)
+READ_HANDLER (	p2000t_port_000f_r )
 {
 	if (p2000t_ports.port_101f & P2000M_101F_KEYINT) {
 		return (readinputport (0) & readinputport (1) &
@@ -86,31 +86,31 @@ int	p2000t_port_000f_r (int offset)
 	return (0xff);
 }
 
-int	p2000t_port_202f_r (int offset) { return (0xff); }
+READ_HANDLER (	p2000t_port_202f_r ) { return (0xff); }
 
-void	p2000t_port_101f_w (int offset, int data)
+WRITE_HANDLER (	p2000t_port_101f_w )
 {
 	p2000t_ports.port_101f = data;
 }
 
-void	p2000t_port_303f_w (int offset, int data)
+WRITE_HANDLER (	p2000t_port_303f_w )
 {
 	p2000t_ports.port_303f = data;
 }
 
-void	p2000t_port_505f_w (int offset, int data)
+WRITE_HANDLER (	p2000t_port_505f_w )
 {
 	speaker_level_w(0, data & 0x01);
 }
 
-void	p2000t_port_707f_w (int offset, int data)
+WRITE_HANDLER (	p2000t_port_707f_w )
 {
 	p2000t_ports.port_707f = data;
 }
 
-void	p2000t_port_888b_w (int offset, int data) {}
-void	p2000t_port_8c90_w (int offset, int data) {}
-void	p2000t_port_9494_w (int offset, int data) {}
+WRITE_HANDLER (	p2000t_port_888b_w ) {}
+WRITE_HANDLER (	p2000t_port_8c90_w ) {}
+WRITE_HANDLER (	p2000t_port_9494_w ) {}
 
 /* port i/o functions */
 
@@ -409,6 +409,6 @@ static	const	struct	IODevice	io_p2000m[] =
 };
 
 /*		YEAR	NAME		PARENT	MACHINE		INPUT		INIT	COMPANY		FULLNAME */
-COMP(	1980,	p2000t,		0,		p2000t,		p2000t,		0,		"Philips",	"Philips P2000T" )
-COMP(	1980,	p2000m,		p2000t,	p2000m,		p2000t,		0,		"Philips",	"Philips P2000M" )
+COMP (	1980,	p2000t,		0,		p2000t,		p2000t,		0,		"Philips",	"Philips P2000T" )
+COMPX(	1980,	p2000m,		p2000t,	p2000m,		p2000t,		0,		"Philips",	"Philips P2000M", GAME_ALIAS )
 

@@ -96,7 +96,9 @@ int a7800_load_rom (int id)
 	ROM = memory_region(REGION_CPU1);
 
 	a7800_bios_f000 = malloc(0x1000);
+	if(!a7800_bios_f000) return 1;
     a7800_cart_f000 = malloc(0x1000);
+	if(!a7800_cart_f000) return 1;
 
     /* save the BIOS so we can switch it in and out */
     memcpy(a7800_bios_f000,&(ROM[0xF000]),0x1000);

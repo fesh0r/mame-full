@@ -160,7 +160,7 @@ static void c64_irq (int level)
 	}
 }
 
-void c64_tape_read (int offset, int data)
+WRITE_HANDLER ( c64_tape_read )
 {
 	cia6526_0_set_input_flag (data);
 }
@@ -324,46 +324,46 @@ static void c64_supergames_w(int offset, int value)
 		c64_bankswitch ();
 }
 
-void c64_write_io (int offset, int value)
+WRITE_HANDLER ( c64_write_io )
 {
 	if (offset < 0x400)
-		vic2_port_w (offset & 0x3ff, value);
+		vic2_port_w (offset & 0x3ff, data);
 	else if (offset < 0x800)
-		sid6581_0_port_w (offset & 0x3ff, value);
+		sid6581_0_port_w (offset & 0x3ff, data);
 	else if (offset < 0xc00)
-		c64_colorram[offset & 0x3ff] = value | 0xf0;
+		c64_colorram[offset & 0x3ff] = data | 0xf0;
 	else if (offset < 0xd00)
-		cia6526_0_port_w (offset & 0xff, value);
+		cia6526_0_port_w (offset & 0xff, data);
 	else if (offset < 0xe00)
 	{
 		if (c64_cia1_on)
-			cia6526_1_port_w (offset & 0xff, value);
+			cia6526_1_port_w (offset & 0xff, data);
 		else
-			DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
+			DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, data));
 	}
 	else if (offset < 0xf00)
 	{
 		/* i/o 1 */
 		if (cartridge && (cartridgetype == CartridgeRobocop2))
 		{
-			c64_robocop2_w(offset&0xff, value);
+			c64_robocop2_w(offset&0xff, data);
 		}
 		else
-			DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
+			DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, data));
 	}
 	else
 	{
 		/* i/o 2 */
 		if (cartridge && (cartridgetype == CartridgeSuperGames))
 		{
-			c64_supergames_w(offset&0xff, value);
+			c64_supergames_w(offset&0xff, data);
 		}
 		else
-			DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
+			DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, data));
 	}
 }
 
-int c64_read_io (int offset)
+READ_HANDLER ( c64_read_io )
 {
 	if (offset < 0x400)
 		return vic2_port_r (offset & 0x3ff);
@@ -529,7 +529,7 @@ static void c64_bankswitch (void)
   p5 output cassette motor
   p6,7 not available on M6510
  */
-void c64_m6510_port_w (int offset, int data)
+WRITE_HANDLER ( c64_m6510_port_w )
 {
 	if (offset)
 	{
@@ -554,7 +554,7 @@ void c64_m6510_port_w (int offset, int data)
 		c64_bankswitch ();
 }
 
-int c64_m6510_port_r (int offset)
+READ_HANDLER ( c64_m6510_port_r )
 {
 	if (offset)
 	{
@@ -613,14 +613,14 @@ int c64_paddle_read (int which)
 	}
 }
 
-int c64_colorram_read (int offset)
+READ_HANDLER ( c64_colorram_read )
 {
 	return c64_colorram[offset & 0x3ff];
 }
 
-void c64_colorram_write (int offset, int value)
+WRITE_HANDLER ( c64_colorram_write )
 {
-	c64_colorram[offset & 0x3ff] = value | 0xf0;
+	c64_colorram[offset & 0x3ff] = data | 0xf0;
 }
 
 /*
@@ -928,6 +928,7 @@ void c64_rom_load(void)
 		} else /*if ((cartridgetype == CartridgeC64)||
 				 (cartridgetype == CartridgeUltimax) )*/{
 			c64_roml=malloc(0x4000);
+			if(!c64_roml) return;
 			c64_romh=c64_roml+0x2000;
 			for (i=0; (i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))
 					 &&(cbm_rom[i].size!=0); i++) {

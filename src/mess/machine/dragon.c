@@ -23,30 +23,30 @@ static int coco3_mmu[16];
 static int coco3_gimereg[8];
 
 /* from vidhrdw/dragon.c */
-extern void coco3_ram_b1_w (int offset, int data);
-extern void coco3_ram_b2_w (int offset, int data);
-extern void coco3_ram_b3_w (int offset, int data);
-extern void coco3_ram_b4_w (int offset, int data);
-extern void coco3_ram_b5_w (int offset, int data);
-extern void coco3_ram_b6_w (int offset, int data);
-extern void coco3_ram_b7_w (int offset, int data);
-extern void coco3_ram_b8_w (int offset, int data);
+extern WRITE_HANDLER ( coco3_ram_b1_w );
+extern WRITE_HANDLER ( coco3_ram_b2_w );
+extern WRITE_HANDLER ( coco3_ram_b3_w );
+extern WRITE_HANDLER ( coco3_ram_b4_w );
+extern WRITE_HANDLER ( coco3_ram_b5_w );
+extern WRITE_HANDLER ( coco3_ram_b6_w );
+extern WRITE_HANDLER ( coco3_ram_b7_w );
+extern WRITE_HANDLER ( coco3_ram_b8_w );
 extern void coco3_vh_sethires(int hires);
 
-extern void d_pia1_pb_w(int offset, int data);
-extern void coco3_pia1_pb_w(int offset, int data);
+extern WRITE_HANDLER ( d_pia1_pb_w );
+extern WRITE_HANDLER ( coco3_pia1_pb_w );
 
 static void coco3_set_irq_line(int mask, int state);
-static void d_pia1_pa_w(int offset, int data);
-static int  d_pia1_cb1_r(int offset);
-static int  d_pia0_ca1_r(int offset);
-static int  d_pia0_pa_r(int offset);
-static int  d_pia1_pa_r(int offset);
-static void d_pia0_pb_w(int offset, int data);
-static void d_pia1_cb2_w(int offset, int data);
-static void d_pia0_cb2_w(int offset, int data);
-static void d_pia1_ca2_w(int offset, int data);
-static void d_pia0_ca2_w(int offset, int data);
+static WRITE_HANDLER ( d_pia1_pa_w );
+static READ_HANDLER (  d_pia1_cb1_r );
+static READ_HANDLER (  d_pia0_ca1_r );
+static READ_HANDLER (  d_pia0_pa_r );
+static READ_HANDLER (  d_pia1_pa_r );
+static WRITE_HANDLER ( d_pia0_pb_w );
+static WRITE_HANDLER ( d_pia1_cb2_w);
+static WRITE_HANDLER ( d_pia0_cb2_w);
+static WRITE_HANDLER ( d_pia1_ca2_w);
+static WRITE_HANDLER ( d_pia0_ca2_w);
 static void d_pia0_irq_a(int state);
 static void d_pia0_irq_b(int state);
 static void coco3_pia0_irq_a(int state);
@@ -872,7 +872,7 @@ static void coco3_timer_set_interval(int interval)
 /* from vidhrdw/dragon.c */
 extern void coco_ram_w(int offset, int data);
 
-void dragon64_ram_w(int offset, int data)
+WRITE_HANDLER ( dragon64_ram_w )
 {
 	coco_ram_w(offset + 0x8000, data);
 }
@@ -918,7 +918,7 @@ int coco3_mmu_translate(int block, int offset)
 static void coco3_mmu_update(int lowblock, int hiblock)
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
-	typedef void (*writehandler)(int wh_offset, int data);
+	typedef void (*writehandler)(UINT32 wh_offset, UINT32 data);
 	static writehandler handlers[] = {
 		coco3_ram_b1_w, coco3_ram_b2_w,
 		coco3_ram_b3_w, coco3_ram_b4_w,
@@ -1073,34 +1073,34 @@ int dragon_interrupt(void)
 	return ignore_interrupt();
 }
 
-static void d_pia1_pa_w(int offset, int data)
+static WRITE_HANDLER ( d_pia1_pa_w )
 {
 	d_dac = data & 0xfa;
 	if (sound_mux)
 		DAC_data_w(0,d_dac);
 }
 
-static int d_pia0_ca1_r(int offset)
+static READ_HANDLER ( d_pia0_ca1_r )
 {
 	return 0;
 }
 
-static int d_pia1_cb1_r(int offset)
+static READ_HANDLER ( d_pia1_cb1_r )
 {
 	return cart_inserted;
 }
 
-static void d_pia1_cb2_w(int offset, int data)
+static WRITE_HANDLER ( d_pia1_cb2_w )
 {
 	sound_mux = data;
 }
 
-static void d_pia0_cb2_w(int offset, int data)
+static WRITE_HANDLER ( d_pia0_cb2_w )
 {
 	joystick = data;
 }
 
-static void d_pia1_ca2_w(int offset, int data)
+static WRITE_HANDLER ( d_pia1_ca2_w )
 {
 	if (tape_motor ^ data)
 	{
@@ -1109,12 +1109,12 @@ static void d_pia1_ca2_w(int offset, int data)
 	}
 }
 
-static void d_pia0_ca2_w(int offset, int data)
+static WRITE_HANDLER ( d_pia0_ca2_w )
 {
 	joystick_axis = data;
 }
 
-static int d_pia0_pa_r(int offset)
+static READ_HANDLER ( d_pia0_pa_r )
 {
 	int porta=0x7f;
 
@@ -1125,19 +1125,19 @@ static int d_pia0_pa_r(int offset)
 	if ((input_port_4_r(0) | pia0_pb) != 0xff) porta &= ~0x10;
 	if ((input_port_5_r(0) | pia0_pb) != 0xff) porta &= ~0x20;
 	if ((input_port_6_r(0) | pia0_pb) != 0xff) porta &= ~0x40;
-	if (d_dac <= (joystick_axis? input_port_8_r(0): input_port_7_r(0)))
+	if (d_dac <= readinputport(joystick ? (joystick_axis ? 10 : 9) : (joystick_axis ? 8 : 7)))
 		porta |= 0x80;
-	porta &= ~input_port_9_r(0);
+	porta &= ~readinputport(11);
 
 	return porta;
 }
 
-static int d_pia1_pa_r(int offset)
+static READ_HANDLER ( d_pia1_pa_r )
 {
 	return (device_input(IO_CASSETTE, 0) >= 0) ? 1 : 0;
 }
 
-static void d_pia0_pb_w(int offset, int data)
+static WRITE_HANDLER ( d_pia0_pb_w )
 {
 	pia0_pb = data;
 }
@@ -1174,11 +1174,11 @@ static void autocenter_timer_proc(int data)
 {
 	struct InputPort *in;
 	int dipport, dipmask, portval;
-	
+
 	dipport = (data & 0xff00) >> 8;
 	dipmask = data & 0x00ff;
 	portval = readinputport(dipport) & dipmask;
-	
+
 	if (autocenter_val != portval) {
 		/* Now go through all inputs, and set or reset IPF_CENTER on all
 		 * joysticks
@@ -1218,7 +1218,7 @@ static void generic_init_machine(struct pia6821_interface *piaintf)
 		timer_set(0, 0, pak_load_trailer_callback);
 	}
 
-	autocenter_init(10, 0x04);
+	autocenter_init(12, 0x04);
 }
 
 void dragon32_init_machine(void)

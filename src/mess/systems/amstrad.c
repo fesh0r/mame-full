@@ -394,16 +394,16 @@ Port decoding:
 
 
 /* port handler */
-int AmstradCPC_ReadPortHandler(int Offset)
+READ_HANDLER ( AmstradCPC_ReadPortHandler )
 {
 	unsigned char data = 0x0ff;
 
-	if ((Offset & 0x04000) == 0)
+	if ((offset & 0x04000) == 0)
 	{
 		/* CRTC */
 		unsigned int Index;
 
-		Index = (Offset & 0x0300) >> 8;
+		Index = (offset & 0x0300) >> 8;
 
 		if (Index == 3)
 		{
@@ -412,24 +412,24 @@ int AmstradCPC_ReadPortHandler(int Offset)
 		}
 	}
 
-	if ((Offset & 0x0800) == 0)
+	if ((offset & 0x0800) == 0)
 	{
 		/* 8255 PPI */
 
 		unsigned int Index;
 
-		Index = (Offset & 0x0300) >> 8;
+		Index = (offset & 0x0300) >> 8;
 
 		data = ppi8255_r(0, Index);
 	}
 
-	if ((Offset & 0x0400) == 0)
+	if ((offset & 0x0400) == 0)
 	{
-		if ((Offset & 0x080) == 0)
+		if ((offset & 0x080) == 0)
 		{
 			unsigned int Index;
 
-			Index = ((Offset & 0x0100) >> (8 - 1)) | (Offset & 0x01);
+			Index = ((offset & 0x0100) >> (8 - 1)) | (offset & 0x01);
 
 			switch (Index)
 			{
@@ -460,37 +460,37 @@ int AmstradCPC_ReadPortHandler(int Offset)
 
 
 /* Offset handler for write */
-void AmstradCPC_WritePortHandler(int Offset, int Data)
+WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 {
 #ifdef AMSTRAD_DEBUG
-	printf("Write port Offs: %04x Data: %04x\r\n", Offset, Data);
+	printf("Write port Offs: %04x Data: %04x\r\n", offset, data);
 #endif
-	if ((Offset & 0x0c000) == 0x04000)
+	if ((offset & 0x0c000) == 0x04000)
 	{
 		/* GA */
-		AmstradCPC_GA_Write(Data);
+		AmstradCPC_GA_Write(data);
 	}
 
-	if ((Offset & 0x04000) == 0)
+	if ((offset & 0x04000) == 0)
 	{
 		/* CRTC */
 		unsigned int Index;
 
-		Index = (Offset & 0x0300) >> 8;
+		Index = (offset & 0x0300) >> 8;
 
 		switch (Index)
 		{
 		case 0:
 			{
 				/* register select */
-				hd6845s_index_w(Data);
+				hd6845s_index_w(data);
 			}
 			break;
 
 		case 1:
 			{
 				/* write data */
-				hd6845s_register_w(Data);
+				hd6845s_register_w(data);
 			}
 			break;
 
@@ -499,27 +499,27 @@ void AmstradCPC_WritePortHandler(int Offset, int Data)
 		}
 	}
 
-	if ((Offset & 0x02000) == 0)
+	if ((offset & 0x02000) == 0)
 	{
-		AmstradCPC_SetUpperRom(Data);
+		AmstradCPC_SetUpperRom(data);
 	}
 
-	if ((Offset & 0x0800) == 0)
+	if ((offset & 0x0800) == 0)
 	{
 		unsigned int Index;
 
-		Index = (Offset & 0x0300) >> 8;
+		Index = (offset & 0x0300) >> 8;
 
-		ppi8255_w(0, Index, Data);
+		ppi8255_w(0, Index, data);
 	}
 
-	if ((Offset & 0x0400) == 0)
+	if ((offset & 0x0400) == 0)
 	{
-		if ((Offset & 0x080) == 0)
+		if ((offset & 0x080) == 0)
 		{
 			unsigned int Index;
 
-			Index = ((Offset & 0x0100) >> (8 - 1)) | (Offset & 0x01);
+			Index = ((offset & 0x0100) >> (8 - 1)) | (offset & 0x01);
 
 			switch (Index)
 			{
@@ -532,7 +532,7 @@ void AmstradCPC_WritePortHandler(int Offset, int Data)
 
 			case 3:
 				{
-					nec765_data_w(Data);
+					nec765_data_w(data);
 				}
 				break;
 
@@ -806,7 +806,7 @@ static struct IOWritePort writeport_amstrad[] =
 };
 
 /* read PSG port A */
-int amstrad_psg_porta_read(int offset)
+READ_HANDLER ( amstrad_psg_porta_read )
 {
 	/* read cpc keyboard */
 	return AmstradCPC_ReadKeyboard();
