@@ -1172,15 +1172,6 @@ static int ti99_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **out
 		return IMGTOOLERR_CORRUPTIMAGE;
 	}
 
-#if 0
-	if (image->AUformat.physrecsperAU != 1)
-	{	/* We only support 1 record per AU - for now */
-		free(image);
-		*outimg = NULL;
-		return IMGTOOLERR_UNIMPLEMENTED;
-	}
-#endif
-
 	/* read catalog */
 	reply = read_absolute_physrec(f, 1, & image->geometry, buf);
 	if (reply)
