@@ -527,6 +527,7 @@ TESTDRIVER( kc85_4d )   /* VEB KC 85/4 with disk interface                */
 	DRIVER( trs80l2 ) 	/* TRS-80 Model I	- Radio Shack Level II BASIC  */
 	DRIVER( trs80l2a )	/* TRS-80 Model I	- R/S L2 BASIC				  */
 	DRIVER( sys80 ) 	/* EACA System 80								  */
+	DRIVER( lnw80 ) 	/* LNW Research LNW-80							  */	
 /*	DRIVER( trs80m2 )*/	/* TRS-80 Model II -							  */
 TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 

@@ -492,6 +492,18 @@ ROM_START(sys80)
 	ROM_LOAD("trs80m1.chr", 0x0800, 0x0400, 0x0033f2b9)
 ROM_END
 
+ROM_START(lnw80)
+	ROM_REGION(0x10000, REGION_CPU1,0)
+	ROM_LOAD("lnw80.1",  0x0000, 0x0800, 0xade91df3)
+	ROM_LOAD("lnw80.2",  0x0800, 0x0800, 0xf94b094a)
+	ROM_LOAD("lnw80.3",  0x1000, 0x0800, 0x5ebe7fa7)
+	ROM_LOAD("lnw80.4",  0x1800, 0x0800, 0xf97391f5)
+	ROM_LOAD("lnw80.5",  0x2000, 0x0800, 0x3f7fe632)	
+	ROM_LOAD("lnw80.6",  0x2800, 0x0800, 0x70772471)	
+	
+	ROM_REGION(0x00c00, REGION_GFX1,0)
+	ROM_LOAD("trs80m1.chr", 0x0800, 0x0400, BADCRC(0x0033f2b9))
+ROM_END
 
 ROM_START(trs80m3)
 	ROM_REGION(0x10000, REGION_CPU1,0)
@@ -608,6 +620,7 @@ static const struct IODevice io_trs80l2[] = {
 
 #define io_trs80l2a io_trs80l2
 #define io_sys80	io_trs80l2
+#define io_lnw80	io_trs80l2
 #define io_trs80m3	io_trs80l2
 
 /*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY	 FULLNAME */
@@ -615,5 +628,6 @@ COMP ( 1977, trs80,    0,		 level1,   trs80,	 trs80,    "Tandy Radio Shack",  "T
 COMP ( 1978, trs80l2,  trs80,	 model1,   trs80,	 trs80,    "Tandy Radio Shack",  "TRS-80 Model I (Radio Shack Level II Basic)" )
 COMP ( 1978, trs80l2a, trs80,	 model1,   trs80,	 trs80,    "Tandy Radio Shack",  "TRS-80 Model I (R/S L2 Basic)" )
 COMP ( 1980, sys80,    trs80,	 model1,   trs80,	 trs80,    "EACA Computers Ltd.","System-80" )
+COMPX( 1981, lnw80,    trs80,	 model1,   trs80,	 trs80,    "LNW Research","LNW-80", GAME_NOT_WORKING )
 COMPX( 19??, trs80m3,  trs80,	 model3,   trs80,	 trs80,    "Tandy Radio Shack",  "TRS-80 Model III", GAME_NOT_WORKING )
 
