@@ -315,8 +315,8 @@ extern WRITE_HANDLER( snes_w_io );
 extern int snes_load_rom(int id);
 extern void snes_scanline_interrupt(void);
 extern void snes_gdma( UINT8 channels );
-extern void snes_hdma_init();
-extern void snes_hdma();
+extern void snes_hdma_init(void);
+extern void snes_hdma(void);
 extern void snes_refresh_scanline( UINT16 curline );
 
 /* Video related */
@@ -327,8 +327,6 @@ extern UINT8  *snes_ram;		/* Main memory */
 extern UINT16 bg_hoffset[4];	/* Background horizontal scroll offsets */
 extern UINT16 bg_voffset[4];	/* Background vertical scroll offsets */
 extern UINT16 mode7_data[6];	/* Data for mode7 matrix calculation */
-extern UINT16 cur_vline;		/* Current vertical scanline */
-extern UINT16 cur_hline;		/* Current horizontal scanline */
 
 /* Sound related */
 extern UINT8 *spc_ram;			/* SPC main memory */

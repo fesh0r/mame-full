@@ -325,7 +325,7 @@ READ_HANDLER( snes_r_io )
 WRITE_HANDLER( snes_w_io )
 {
 	static UINT8 vwrite = 0, bg1hw = 0, bg1vw = 0, bg2hw = 0, bg2vw = 0;
-	static UINT8 bg3hw = 0, bg3vw = 0, bg4hw = 0, bg4vw = 0;
+/*	static UINT8 bg3hw = 0, bg3vw = 0, bg4hw = 0, bg4vw = 0; */
 
 	/* offset is from 0x000000 */
 	switch( offset )
@@ -675,16 +675,16 @@ WRITE_HANDLER( snes_w_io )
 			break;
 		case WRDVDD:	/* Divisor */
 			{
-				UINT16 value, div, rem;
-				div = rem = 0;
+				UINT16 value, div_, rem;
+				div_ = rem = 0;
 				if( data > 0 )
 				{
 					value = (snes_ram[WRDIVH] << 8) + snes_ram[WRDIVL];
-					div = value / data;
+					div_ = value / data;
 					rem = value % data;
 				}
-				snes_ram[RDDIVL] = div & 0xff;
-				snes_ram[RDDIVH] = (div >> 8) & 0xff;
+				snes_ram[RDDIVL] = div_ & 0xff;
+				snes_ram[RDDIVH] = (div_ >> 8) & 0xff;
 				snes_ram[RDMPYL] = rem & 0xff;
 				snes_ram[RDMPYH] = (rem >> 8) & 0xff;
 			} break;

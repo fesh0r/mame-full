@@ -58,7 +58,7 @@ struct DSP_CONTROL
 	UINT8 echo_coeff[8];
 };
 
-static struct DSP_VOICE   snd_voice[8];
+/*static struct DSP_VOICE   snd_voice[8];*/
 static struct DSP_CONTROL snd_control;
 
 void snes_sh_update( int param, INT16 **buffer, int length )

@@ -358,7 +358,7 @@ void snes_update_line_2( UINT8 layer, UINT16 curline, UINT8 bg3_pty )
 	/* scrolling */
 	UINT32 basevmap;
 	UINT16 vscroll, hscroll;
-	UINT8 vshift, hshift, map[2], map_size;
+	UINT8 vshift, hshift, /*map[2],*/ map_size;
 
 #ifdef MAME_DEBUG
 	if( !(readinputport( 10 ) & (1 << layer)) )
@@ -453,7 +453,7 @@ void snes_update_line_4( UINT8 layer, UINT16 curline )
 	/* scrolling */
 	UINT32 basevmap;
 	UINT16 vscroll, hscroll;
-	UINT8 vshift, hshift, map[2], map_size;
+	UINT8 vshift, hshift, /*map[2],*/ map_size;
 
 #ifdef MAME_DEBUG
 	if( !(readinputport( 10 ) & (1 << layer)) )
@@ -543,7 +543,7 @@ void snes_update_line_8( UINT8 layer, UINT16 curline )
 	/* scrolling */
 	UINT32 basevmap;
 	UINT16 vscroll, hscroll;
-	UINT8 vshift, hshift, map[2], map_size;
+	UINT8 vshift, hshift, /*map[2],*/ map_size;
 
 #ifdef MAME_DEBUG
 	if( !(readinputport( 10 ) & (1 << layer)) )
@@ -935,7 +935,7 @@ void snes_dbg_draw_all_tiles( struct mame_bitmap *bitmap, UINT32 tileaddr, UINT8
 void snes_refresh_scanline( UINT16 curline )
 {
 	UINT16 ii;
-	INT8 jj, kk;
+	INT8 jj/*, kk*/;
 	struct mame_bitmap *bitmap = Machine->scrbitmap;
 	struct rectangle r = Machine->visible_area;
 	r.min_y = r.max_y = curline;
