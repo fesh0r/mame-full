@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "osdepend.h"
 #include "utils.h"
 
 #define SECTORS     17

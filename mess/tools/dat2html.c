@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <time.h>
 
+#include "osdepend.h"
 #include "utils.h"
 
 void replace_lt_gt(char *line)
