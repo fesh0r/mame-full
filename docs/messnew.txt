@@ -33,6 +33,10 @@ System Driver Changes:
 - [TELMAC] Improved the accuracy of the cpu emulation and added some tmc2000t
   code.  [Curt Coder]
 
+- [TI99,GENEVE] Fixed various bugs in HSGPL ROM6 support.  Enabled the IDE card
+  for the Geneve and ti99/8 drivers (this involved fixing a design flaw in the
+  original IDE card prorotype).
+
 - [ZX81] Tape loading added [Krzysztof Strzecha]
 
 
