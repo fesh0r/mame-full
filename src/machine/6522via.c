@@ -253,11 +253,6 @@ static void via_t2_timeout (int which)
 {
 	struct via6522 *v = via + which;
 
-	if (v->intf->t2_callback)
-		v->intf->t2_callback(timer_timeelapsed(v->t2));
-	else
-		logerror("6522VIA chip %d: T2 timout occured but there is no callback.  PC: %08X\n", which, activecpu_get_pc());
-
 	v->t2_active = 0;
 	v->time2=timer_get_time();
 
