@@ -107,13 +107,13 @@ int vectrex_init_cart (int id)
 	/* slightly prettier than having to hardcode CRCs */
 
 	/* handle 3D Narrow Escape but skip the 2-d hack of it from Fred Taft */
-	if (!strncmp((char*)memory_region(REGION_CPU1)+0x11,"NARROW",6) && (char*)memory_region(REGION_CPU1)+0x39 == 0x0c)
+	if (!memcmp(memory_region(REGION_CPU1)+0x11,"NARROW",6) && (((char*)memory_region(REGION_CPU1))[0x39] == 0x0c))
 		vectrex_imager_angles = narrow_escape_angles;
 
-	if (!strncmp((char*)memory_region(REGION_CPU1)+0x11,"CRAZY COASTER",13))
+	if (!memcmp(memory_region(REGION_CPU1)+0x11,"CRAZY COASTER",13))
 		vectrex_imager_angles = crazy_coaster_angles;
 
-	if (!strncmp((char*)memory_region(REGION_CPU1)+0x11,"3D MINE STORM",13))
+	if (!memcmp(memory_region(REGION_CPU1)+0x11,"3D MINE STORM",13))
 		vectrex_imager_angles = minestorm_3d_angles;
 
 	if (Machine->scrbitmap)
