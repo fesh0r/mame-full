@@ -14,11 +14,18 @@ merged Street Fighter Zero for MESS
 
 ***************************************************************************/
 
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 
 #include "drivers/cps1.h"       /* External CPS1 definitions */
+
+/* in machine/kabuki.c */
+void wof_decode(void);
+void dino_decode(void);
+void punisher_decode(void);
+void slammast_decode(void);
 
 
 
@@ -28,16 +35,16 @@ static READ16_HANDLER( cps1_input2_r )
 	return buttons << 8 | buttons;
 }
 
-static READ16_HANDLER ( cps1_input3_r )
+static READ16_HANDLER( cps1_input3_r )
 {
-    int buttons=readinputport(7);
+    int buttons=readinputport(6);
 	return buttons << 8 | buttons;
 }
 
 
 static int cps1_sound_fade_timer;
 
-static WRITE_HANDLER ( cps1_snd_bankswitch_w )
+static WRITE_HANDLER( cps1_snd_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int length = memory_region_length(REGION_CPU2) - 0x10000;
@@ -46,15 +53,16 @@ static WRITE_HANDLER ( cps1_snd_bankswitch_w )
 	bankaddr = (data * 0x4000) & (length-1);
 	cpu_setbank(1,&RAM[0x10000 + bankaddr]);
 
-if ((data & 0xfe)) logerror("%04x: write %02x to f004\n",cpu_get_pc(),data);
+	if (data & 0xfe) logerror("%04x: write %02x to f004\n",cpu_get_pc(),data);
 }
 
-static WRITE16_HANDLER ( cps1_sound_fade_w )
+static WRITE16_HANDLER( cps1_sound_fade_w )
 {
-	cps1_sound_fade_timer=data;
+	if (ACCESSING_LSB)
+		cps1_sound_fade_timer = data & 0xff;
 }
 
-static READ_HANDLER ( cps1_snd_fade_timer_r )
+static READ_HANDLER( cps1_snd_fade_timer_r )
 {
 	return cps1_sound_fade_timer;
 }
@@ -65,65 +73,63 @@ static WRITE16_HANDLER( cps1_sound_command_w )
 		soundlatch_w(0,data & 0xff);
 }
 
-static READ16_HANDLER ( cps1_input_r )
+static READ16_HANDLER( cps1_input_r )
 {
-	int control=readinputport (offset/2);
+	int control=readinputport(offset);
 	return (control<<8) | control;
-}
-
-static READ16_HANDLER ( cps1_player_input_r )
-{
-	return (readinputport(offset + 4) + (readinputport(offset+1 + 4)<<8));
 }
 
 static int dial[2];
 
-static READ16_HANDLER ( forgottn_dial_0_r )
+static READ16_HANDLER( forgottn_dial_0_r )
 {
-	return ((readinputport(6) - dial[0]) >> (4*offset)) & 0xff;
+	return ((readinputport(5) - dial[0]) >> (8*offset)) & 0xff;
 }
 
-static READ16_HANDLER ( forgottn_dial_1_r )
+static READ16_HANDLER( forgottn_dial_1_r )
 {
-	return ((readinputport(7) - dial[1]) >> (4*offset)) & 0xff;
+	return ((readinputport(6) - dial[1]) >> (8*offset)) & 0xff;
 }
 
-static WRITE16_HANDLER ( forgottn_dial_0_reset_w )
+static WRITE16_HANDLER( forgottn_dial_0_reset_w )
 {
-	dial[0] = readinputport(6);
+	dial[0] = readinputport(5);
 }
 
-static WRITE16_HANDLER ( forgottn_dial_1_reset_w )
+static WRITE16_HANDLER( forgottn_dial_1_reset_w )
 {
-	dial[1] = readinputport(7);
+	dial[1] = readinputport(6);
 }
 
-static WRITE16_HANDLER ( cps1_coinctrl_w )
+static WRITE16_HANDLER( cps1_coinctrl_w )
 {
-	if ((data & 0xff000000) == 0)
+//	usrintf_showmessage("coinctrl %04x",data);
+
+	if (ACCESSING_MSB)
 	{
-/*
-{
-	char baf[40];
-	sprintf(baf,"%04x",data);
-    usrintf_showmessage(baf);
-}
-*/
-		coin_lockout_w(0,~data & 0x0400);
-		coin_lockout_w(1,~data & 0x0800);
 		coin_counter_w(0,data & 0x0100);
 		coin_counter_w(1,data & 0x0200);
+		coin_lockout_w(0,~data & 0x0400);
+		coin_lockout_w(1,~data & 0x0800);
+	}
+
+	if (ACCESSING_LSB)
+	{
+		/* mercs sets bit 0 */
+		set_led_status(0,data & 0x02);
+		set_led_status(1,data & 0x04);
+		set_led_status(2,data & 0x08);
 	}
 }
 
-WRITE16_HANDLER ( cpsq_coinctrl2_w )
+static WRITE16_HANDLER( cpsq_coinctrl2_w )
 {
-	if ((data & 0xff000000) == 0)
+	if (ACCESSING_LSB)
 	{
-		coin_lockout_w(2,~data & 0x0002);
-		coin_lockout_w(3,~data & 0x0008);
-		coin_counter_w(2,data & 0x0001);
-		coin_counter_w(3,data & 0x0004);
+		coin_counter_w(2,data & 0x01);
+		coin_lockout_w(2,~data & 0x02);
+		coin_counter_w(3,data & 0x04);
+		coin_lockout_w(3,~data & 0x08);
 /*
   	{
        char baf[40];
@@ -132,40 +138,6 @@ WRITE16_HANDLER ( cpsq_coinctrl2_w )
        }
 */
     }
-}
-
-READ16_HANDLER ( cps1_protection_ram_r )
-{
-	/*
-	   Protection (slammasters):
-
-	   The code does a checksum on an area of memory. I have no idea what
-	   this memory is. I have no idea whether it is RAM based or hard-wired.
-
-	   The code adds the low bytes of 0x415 words starting at 0xf0e000
-
-	   The result is ANDed with 0xffffff00 and then multiplied by 2. This
-	   value is stored and used throughout the game to calculate the
-	   base offset of the source scroll ROM data.
-
-	   The sum of the low bytes of the first 0x415 words starting at
-	   address 0xf0e000 should be 0x1df00
-
-	   In the absence of any real data, a rough calculation will do the
-	   job.
-	*/
-
-	if (offset < (0x411*2))
-	{
-		/*
-			0x411 * 0x76 = 0x1dfd6  (which is close enough)
-		*/
-		return 0x76;
-	}
-	else
-	{
-		return 0;
-	}
 }
 
 static int cps1_interrupt(void)
@@ -192,7 +164,6 @@ static struct QSound_interface qsound_interface =
 
 static unsigned char *qsound_sharedram1,*qsound_sharedram2;
 
-
 int cps1_qsound_interrupt(void)
 {
 #if 0
@@ -205,6 +176,7 @@ I have removed CPU_AUDIO_CPU from the Z(0 so this is no longer necessary
 	return 2;
 }
 
+
 READ16_HANDLER( qsound_rom_r )
 {
 	unsigned char *rom = memory_region(REGION_USER1);
@@ -216,7 +188,6 @@ READ16_HANDLER( qsound_rom_r )
 		return 0;
 	}
 }
-
 
 static READ16_HANDLER( qsound_sharedram1_r )
 {
@@ -240,7 +211,7 @@ static WRITE16_HANDLER( qsound_sharedram2_w )
 		qsound_sharedram2[offset] = data;
 }
 
-static WRITE_HANDLER ( qsound_banksw_w )
+static WRITE_HANDLER( qsound_banksw_w )
 {
 	/*
 	Z80 bank register for music note data. It's odd that it isn't encrypted
@@ -250,10 +221,7 @@ static WRITE_HANDLER ( qsound_banksw_w )
 	int bankaddress=0x10000+((data&0x0f)*0x4000);
 	if (bankaddress >= memory_region_length(REGION_CPU2))
 	{
-
-		{
-			logerror("WARNING: Q sound bank overflow (%02x)\n", data);
-		}
+		logerror("WARNING: Q sound bank overflow (%02x)\n", data);
 		bankaddress=0x10000;
 	}
 	cpu_setbank(1, &RAM[bankaddress]);
@@ -319,7 +287,6 @@ READ16_HANDLER( cps1_eeprom_port_r )
 	return EEPROM_read_bit();
 }
 
-
 WRITE16_HANDLER( cps1_eeprom_port_w )
 {
 	if (ACCESSING_LSB)
@@ -334,6 +301,8 @@ WRITE16_HANDLER( cps1_eeprom_port_w )
 		EEPROM_set_clock_line((data & 0x40) ? ASSERT_LINE : CLEAR_LINE);
 	}
 }
+
+
 
 static MEMORY_READ16_START( cps1_readmem )
 	{ 0x000000, 0x1fffff, MRA16_ROM }, /* 68000 ROM */
@@ -356,7 +325,6 @@ static MEMORY_READ16_START( cps1_readmem )
 	{ 0xff0000, 0xffffff, MRA16_RAM },   /* RAM */
 MEMORY_END
 
-
 static MEMORY_WRITE16_START( cps1_writemem )
 	{ 0x000000, 0x1fffff, MWA16_ROM },      /* ROM */
 	{ 0x800030, 0x800031, cps1_coinctrl_w },
@@ -374,7 +342,6 @@ static MEMORY_WRITE16_START( cps1_writemem )
 MEMORY_END
 
 
-
 static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
@@ -384,7 +351,6 @@ static MEMORY_READ_START( sound_readmem )
 	{ 0xf008, 0xf008, soundlatch_r },
 	{ 0xf00a, 0xf00a, cps1_snd_fade_timer_r }, /* Sound timer fade */
 MEMORY_END
-
 
 static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
@@ -413,9 +379,6 @@ static MEMORY_WRITE_START( qsound_writemem )
 	{ 0xd003, 0xd003, qsound_banksw_w },
 	{ 0xf000, 0xffff, MWA_RAM, &qsound_sharedram2 },
 MEMORY_END
-
-
-
 
 INPUT_PORTS_START( sfzch )
 	PORT_START      /* IN0 */
@@ -474,79 +437,78 @@ INPUT_PORTS_END
 
 ********************************************************************/
 
-#define SPRITE_LAYOUT(LAYOUT, SPRITES, SPRITE_SEP2, PLANE_SEP) \
-static struct GfxLayout LAYOUT = \
-{                                               \
-	16,16,   /* 16*16 sprites */             \
-	SPRITES,  /* ???? sprites */            \
-	4,       /* 4 bits per pixel */            \
-	{ PLANE_SEP+8,PLANE_SEP,8,0 },            \
-	{ SPRITE_SEP2+0,SPRITE_SEP2+1,SPRITE_SEP2+2,SPRITE_SEP2+3, \
-	  SPRITE_SEP2+4,SPRITE_SEP2+5,SPRITE_SEP2+6,SPRITE_SEP2+7,  \
-	  0,1,2,3,4,5,6,7, },\
-	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8, \
-	   16*8, 18*8, 20*8, 22*8, 24*8, 26*8, 28*8, 30*8, }, \
-	32*8    /* every sprite takes 32*8*2 consecutive bytes */ \
+
+#define DECODE_GFX 0
+
+static struct GfxLayout tilelayout8 =
+{
+	8,8,
+#if DECODE_GFX
+	RGN_FRAC(1,2),
+#else
+	0,
+#endif
+	4,
+	{ RGN_FRAC(1,2)+8, RGN_FRAC(1,2)+0, 8, 0 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
+	16*8
 };
 
-#define CHAR_LAYOUT(LAYOUT, CHARS, PLANE_SEP) \
-static struct GfxLayout LAYOUT =        \
-{                                        \
-	8,8,    /* 8*8 chars */             \
-	CHARS,  /* ???? chars */        \
-	4,       /* 4 bits per pixel */     \
-	{ PLANE_SEP+8,PLANE_SEP,8,0 },     \
-	{ 0,1,2,3,4,5,6,7, },                         \
-	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8,}, \
-	16*8    /* every sprite takes 32*8*2 consecutive bytes */\
+static struct GfxLayout tilelayout16 =
+{
+	16,16,
+#if DECODE_GFX
+	RGN_FRAC(1,4),
+#else
+	0,
+#endif
+	4,
+	{ RGN_FRAC(1,2)+8, RGN_FRAC(1,2)+0, 8, 0 },
+	{ RGN_FRAC(1,4)+0, RGN_FRAC(1,4)+1, RGN_FRAC(1,4)+2, RGN_FRAC(1,4)+3,
+	  RGN_FRAC(1,4)+4, RGN_FRAC(1,4)+5, RGN_FRAC(1,4)+6, RGN_FRAC(1,4)+7,
+	  0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
+			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
+	16*16
 };
 
-#define TILE32_LAYOUT(LAYOUT, TILES, SEP, PLANE_SEP) \
-static struct GfxLayout LAYOUT =                                   \
-{                                                                  \
-	32,32,   /* 32*32 tiles */                                 \
-	TILES,   /* ????  tiles */                                 \
-	4,       /* 4 bits per pixel */                            \
-	{ PLANE_SEP+8,PLANE_SEP,8,0},                                        \
-	{                                                          \
-	   SEP+0,SEP+1,SEP+2,SEP+3, SEP+4,SEP+5,SEP+6,SEP+7,       \
-	   0,1,2,3,4,5,6,7,                                        \
-	   16+SEP+0,16+SEP+1,16+SEP+2,                             \
-	   16+SEP+3,16+SEP+4,16+SEP+5,                             \
-	   16+SEP+6,16+SEP+7,                                      \
-	   16+0,16+1,16+2,16+3,16+4,16+5,16+6,16+7                 \
-	},                                                         \
-	{                                                          \
-	   0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,         \
-	   8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32,   \
-	   16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32, \
-	   24*32, 25*32, 26*32, 27*32, 28*32, 29*32, 30*32, 31*32  \
-	},                                                         \
-	4*32*8    /* every sprite takes 32*8*4 consecutive bytes */\
+static struct GfxLayout tilelayout32 =
+{
+	32,32,
+#if DECODE_GFX
+	RGN_FRAC(1,4),
+#else
+	0,
+#endif
+	4,
+	{ RGN_FRAC(1,2)+8, RGN_FRAC(1,2)+0, 8, 0 },
+	{
+		RGN_FRAC(1,4)+0, RGN_FRAC(1,4)+1, RGN_FRAC(1,4)+2, RGN_FRAC(1,4)+3,
+		RGN_FRAC(1,4)+4, RGN_FRAC(1,4)+5, RGN_FRAC(1,4)+6, RGN_FRAC(1,4)+7,
+		0, 1, 2, 3, 4, 5, 6, 7,
+		16+RGN_FRAC(1,4)+0, 16+RGN_FRAC(1,4)+1, 16+RGN_FRAC(1,4)+2, 16+RGN_FRAC(1,4)+3,
+		16+RGN_FRAC(1,4)+4, 16+RGN_FRAC(1,4)+5, 16+RGN_FRAC(1,4)+6, 16+RGN_FRAC(1,4)+7,
+		16+0, 16+1, 16+2, 16+3, 16+4, 16+5, 16+6, 16+7
+	},
+	{
+		 0*32,  1*32,  2*32,  3*32,  4*32,  5*32,  6*32,  7*32,
+		 8*32,  9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32,
+		16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32,
+		24*32, 25*32, 26*32, 27*32, 28*32, 29*32, 30*32, 31*32
+	},
+	32*32
 };
-
-/* Generic layout, no longer needed, but very useful for testing
-   Will need to change this constant to reflect the gfx region size
-   for the game.
-   Also change the number of characters
- */
-#define CPS1_ROM_SIZE 0x00000
-#define CPS1_CHARS (CPS1_ROM_SIZE/32)
-CHAR_LAYOUT(cps1_charlayout,     CPS1_CHARS, CPS1_ROM_SIZE/4*16)
-SPRITE_LAYOUT(cps1_spritelayout, CPS1_CHARS/4, CPS1_ROM_SIZE/4*8, CPS1_ROM_SIZE/4*16)
-SPRITE_LAYOUT(cps1_tilelayout,   CPS1_CHARS/4, CPS1_ROM_SIZE/4*8, CPS1_ROM_SIZE/4*16)
-TILE32_LAYOUT(cps1_tilelayout32, CPS1_CHARS/16, CPS1_ROM_SIZE/4*8, CPS1_ROM_SIZE/4*16)
 
 static struct GfxDecodeInfo cps1_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &cps1_charlayout,    32*16,             32 },
-	{ REGION_GFX1, 0, &cps1_spritelayout,  0,                 32 },
-	{ REGION_GFX1, 0, &cps1_tilelayout,    32*16+32*16,       32 },
-	{ REGION_GFX1, 0, &cps1_tilelayout32,  32*16+32*16+32*16, 32 },
+	{ REGION_GFX1, 0, &tilelayout16, 0x000, 32 },	/* sprites */
+	{ REGION_GFX1, 0, &tilelayout8,  0x200, 32 },	/* tiles 8x8 */
+	{ REGION_GFX1, 0, &tilelayout16, 0x400, 32 },	/* tiles 16x16 */
+	{ REGION_GFX1, 0, &tilelayout32, 0x600, 32 },	/* tiles 32x32 */
+	/* stars use colors 0x800-087ff and 0xa00-0a7ff */
 	{ -1 } /* end of array */
 };
-
-
 
 static void cps1_irq_handler_mus(int irq)
 {
@@ -557,20 +519,25 @@ static struct YM2151interface ym2151_interface =
 {
 	1,  /* 1 chip */
 	3579580,    /* 3.579580 MHz ? */
-	{ YM3012_VOL(40,MIXER_PAN_LEFT,40,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(35,MIXER_PAN_LEFT,35,MIXER_PAN_RIGHT) },
 	{ cps1_irq_handler_mus }
 };
 
+static struct OKIM6295interface okim6295_interface_6061 =
+{
+	1,  /* 1 chip */
+	{ 6061 },
+	{ REGION_SOUND1 },
+	{ 30 }
+};
 
 static struct OKIM6295interface okim6295_interface_7576 =
 {
 	1,  /* 1 chip */
 	{ 7576 },
 	{ REGION_SOUND1 },
-	{ 25 }
+	{ 30 }
 };
-
-
 
 static struct MachineDriver machine_driver_sfzch =
 {
@@ -598,8 +565,7 @@ static struct MachineDriver machine_driver_sfzch =
 	0x30*8+32*2, 0x1c*8+32*3, { 32, 32+0x30*8-1, 32+16, 32+16+0x1c*8-1 },
 
 	cps1_gfxdecodeinfo,
-	32*16+32*16+32*16+32*16,   /* lotsa colours */
-	32*16+32*16+32*16+32*16,   /* Colour table length */
+	4096, 4096,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -613,7 +579,7 @@ static struct MachineDriver machine_driver_sfzch =
 	{ { SOUND_YM2151,  &ym2151_interface },
 	  { SOUND_OKIM6295,  &okim6295_interface_7576 }
 	},
-	0
+	0	
 };
 
 
