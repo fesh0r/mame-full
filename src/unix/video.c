@@ -43,12 +43,20 @@ static int use_backdrops = -1;
 static int use_overlays = -1;
 static int use_bezels = -1;
 
+/* average FPS calculation */
+static cycles_t start_time = 0;
+static cycles_t end_time;
+static int frames_displayed;
+static int frames_to_display;
+
 #if (defined svgafx) || (defined xfx) 
 UINT16 *color_values;
 #endif
 
-
 float gamma_correction = 1.0;
+int force_dirty_palette = 0;
+
+extern UINT8 trying_to_quit;
 
 /* some prototypes */
 static int video_handle_scale(struct rc_option *option, const char *arg,
@@ -65,6 +73,7 @@ static int video_verify_vectorres(struct rc_option *option, const char *arg,
    int priority);
 static void osd_free_colors(void);
 static void update_visible_area(struct mame_display *display);
+static void update_palette(struct mame_display *display, int force_dirty);
 
 struct rc_option video_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -101,18 +110,33 @@ struct rc_option video_opts[] = {
    { "scanlines",	"sl",			rc_bool,	&use_scanlines,
      "0",		0,			0,		NULL,
      "Enable/disable displaying simulated scanlines" },
-	{ "artwork", "art", rc_bool, &use_artwork, "1", 0, 0, NULL, "Use additional game artwork (sets default for specific options below)." },
-	{ "use_backdrops", "backdrop", rc_bool, &use_backdrops, "1", 0, 0, NULL, "Use backdrop artwork." },
-	{ "use_overlays", "overlay", rc_bool, &use_overlays, "1", 0, 0, NULL, "Use overlay artwork." },
-	{ "use_bezels", "bezel", rc_bool, &use_bezels, "1", 0, 0, NULL, "Use bezel artwork." },
-	{ "artwork_crop", "artcrop", rc_bool, &options.artwork_crop, "0", 0, 0, NULL, "Crop artwork to game screen only." },
-	{ "artwork_resolution", "artres", rc_int, &options.artwork_res, "0", 0, 0, NULL, "Artwork resolution (0 for auto)." },
+   { "artwork",		"art",			rc_bool,	&use_artwork,
+     "1",		0,			0,		NULL,
+     "Use additional game artwork (sets default for specific options below)." },
+   { "use_backdrops",	"backdrop",		rc_bool,	&use_backdrops,
+     "1",		0,			0,		NULL,
+     "Use backdrop artwork." },
+   { "use_overlays",	"overlay",		rc_bool,	&use_overlays,
+     "1",		0,			0,		NULL,
+     "Use overlay artwork." },
+   { "use_bezels",	"bezel",		rc_bool,	&use_bezels,
+     "1",		0,			0,		NULL,
+     "Use bezel artwork." },
+   { "artwork_crop",	"artcrop",		rc_bool,	&options.artwork_crop,
+     "0",		0,			0,		NULL,
+     "Crop artwork to game screen only." },
+   { "artwork_resolution","artres",		rc_int,		&options.artwork_res,
+     "0",		0,			0,		NULL,
+     "Artwork resolution (0 for auto)." },
    { "frameskipper",	"fsr",			rc_int,		&frameskipper,
      "0",		0,			FRAMESKIP_DRIVER_COUNT-1, NULL,
      "Select which autoframeskip and throttle routines to use. Available choices are:\n0 Dos frameskip code\n1 Enhanced frameskip code by William A. Barath" },
    { "throttle",	"th",			rc_bool,	&throttle,
      "1",		0,			0,		NULL,
      "Enable/disable throttle" },
+   { "frames_to_run",	"ftr",			rc_int,		&frames_to_display,
+     "0",		0,			0,		NULL,
+     "Sets the number of frames to run within the game" },
    { "sleepidle",	"si",			rc_bool,	&sleep_idle,
      "0",		0,			0,		NULL,
      "Enable/disable sleep during idle" },
@@ -327,7 +351,7 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 	}
 
 	sysdep_palette_set_gamma(normal_palette, gamma_correction);
-	sysdep_palette_set_brightness(normal_palette, 
+	sysdep_palette_set_brightness(normal_palette,
 		brightness * brightness_paused_adjust);
 
 	/* initialize the palette to a fixed 5-5-5 mapping */
@@ -338,7 +362,7 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 				for (b = 0; b < 32; b++)
 				{
 					int idx = (r << 10) | (g << 5) | b;
-					sysdep_palette_set_pen(normal_palette, 
+					sysdep_palette_set_pen(normal_palette,
 						idx,
 						(r << 3) | (r >> 2),
 						(g << 3) | (g >> 2),
@@ -377,12 +401,19 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 	}
 
 	return 0;
-}   
+}
 
-void osd_close_display (void)
+void osd_close_display(void)
 {
-   osd_free_colors();
-   sysdep_display_close();
+	osd_free_colors();
+	sysdep_display_close();
+
+	/* print a final result to the stdout */
+	if (frames_displayed != 0)
+	{
+		cycles_t cps = osd_cycles_per_second();
+		fprintf(stderr_file, "Average FPS: %f (%d frames)\n", (double)cps / (end_time - start_time) * frames_displayed, frames_displayed);
+	}
 }
 
 static void osd_change_display_settings(struct rectangle *new_visual,
@@ -398,30 +429,30 @@ static void osd_change_display_settings(struct rectangle *new_visual,
    new_visual_width  = visual.max_x - visual.min_x + 1;
    new_visual_height = visual.max_y - visual.min_y + 1;
    
-   if( current_palette != new_palette )
+   if (current_palette != new_palette)
       current_palette = new_palette;
    
-   if( (visual_width     != new_visual_width    ) ||
+   if ((visual_width     != new_visual_width    ) ||
        (visual_height    != new_visual_height   ) ||
        (widthscale       != new_widthscale      ) ||
        (heightscale      != new_heightscale     ) ||
-       (use_aspect_ratio != new_use_aspect_ratio) )
+       (use_aspect_ratio != new_use_aspect_ratio))
    {
       sysdep_display_close();
-      
+
       visual_width     = new_visual_width;
       visual_height    = new_visual_height;
       widthscale       = new_widthscale;
       heightscale      = new_heightscale;
       use_aspect_ratio = new_use_aspect_ratio;
-      
+
       if (sysdep_create_display(bitmap_depth) != OSD_OK)
       {
          /* oops this sorta sucks */
          fprintf(stderr_file, "Argh, resizing the display failed in osd_set_visible_area, aborting\n");
          exit(1);
       }
-      
+
       /* only realloc the palette if it has been initialised */
       if (current_palette)
       {
@@ -434,10 +465,10 @@ static void osd_change_display_settings(struct rectangle *new_visual,
             exit(1);
          }
       }
-      
+
       /* to stop keys from getting stuck */
       xmame_keyboard_clear();
-         
+
       /* for debugging only */
       fprintf(stderr_file, "viswidth = %d, visheight = %d,"
               "visstartx= %d, visstarty= %d\n",
@@ -470,28 +501,29 @@ static void update_visible_area(struct mame_display *display)
          normal_visual.max_x = ((normal_visual.max_x + 1) & ~7) - 1;
    }
    
-   if(!debugger_has_focus)
+   if (!debugger_has_focus)
       osd_change_display_settings(&normal_visual, normal_palette,
          normal_widthscale, normal_heightscale, normal_use_aspect_ratio);
-   
+
    set_ui_visarea (normal_visual.min_x, normal_visual.min_y, normal_visual.max_x, normal_visual.max_y);
 }
 
-static void update_palette(struct mame_display *display)
+static void update_palette(struct mame_display *display, int force_dirty)
 {
 	int i, j;
 
+	sysdep_palette_clear_dirty(current_palette);
 	/* loop over dirty colors in batches of 32 */
 	for (i = 0; i < display->game_palette_entries; i += 32)
 	{
 		UINT32 dirtyflags = display->game_palette_dirty[i / 32];
-		if (dirtyflags)
+		if (dirtyflags || force_dirty)
 		{
 			display->game_palette_dirty[i / 32] = 0;
-			
+
 			/* loop over all 32 bits and update dirty entries */
 			for (j = 0; j < 32; j++, dirtyflags >>= 1)
-				if ((dirtyflags & 1) && (i + j < display->game_palette_entries))
+				if (((dirtyflags & 1) || force_dirty) && (i + j < display->game_palette_entries))
 				{
 					/* extract the RGB values */
 					rgb_t rgbvalue = display->game_palette[i + j];
@@ -499,8 +531,9 @@ static void update_palette(struct mame_display *display)
 					int g = RGB_GREEN(rgbvalue);
 					int b = RGB_BLUE(rgbvalue);
 
-					sysdep_palette_set_pen(current_palette, 
+					sysdep_palette_set_pen(current_palette,
 						i + j, r, g, b);
+					sysdep_palette_mark_dirty(current_palette);
 				}
 		}
 	}
@@ -530,7 +563,7 @@ static skip_next_frame_func skip_next_frame_functions[FRAMESKIP_DRIVER_COUNT] =
 };
 
 int osd_skip_this_frame(void)
-{   
+{
    return skip_next_frame;
 }
 
@@ -541,7 +574,7 @@ int osd_get_frameskip(void)
 
 void osd_debugger_focus(int new_debugger_focus)
 {
-   if( (!debugger_has_focus &&  new_debugger_focus) || 
+   if( (!debugger_has_focus &&  new_debugger_focus) ||
        ( debugger_has_focus && !new_debugger_focus))
    {
       if(new_debugger_focus)
@@ -550,7 +583,7 @@ void osd_debugger_focus(int new_debugger_focus)
       else
          osd_change_display_settings(&normal_visual, normal_palette,
             normal_widthscale, normal_heightscale, normal_use_aspect_ratio);
-      
+
       debugger_has_focus = new_debugger_focus;
    }
 }
@@ -562,6 +595,7 @@ void osd_update_video_and_audio(struct mame_display *display)
    static int showfps = 0, showfpstemp = 0; 
    int skip_this_frame;
    struct mame_bitmap *current_bitmap = display->game_bitmap;
+   cycles_t curr;
    
 /* save the active bitmap for use in osd_clearbitmap, I know this
       sucks blame the core ! */
@@ -584,7 +618,11 @@ void osd_update_video_and_audio(struct mame_display *display)
 	 else frameskip++;
       }
 
-      if (showfps == 0) showfpstemp = 2 * Machine->drv->frames_per_second;
+      if (showfps == 0)
+         showfpstemp = 2 * Machine->drv->frames_per_second;
+
+      /* reset the frame counter so we'll measure the average FPS on a consistent status */
+      frames_displayed = 0;
    }
 
    if (input_ui_pressed(IPT_UI_FRAMESKIP_DEC))
@@ -596,11 +634,17 @@ void osd_update_video_and_audio(struct mame_display *display)
       }
       else
       {
-	 if (frameskip == 0) autoframeskip = 1;
-	 else frameskip--;
+         if (frameskip == 0)
+            autoframeskip = 1;
+	 else
+            frameskip--;
       }
       
-      if (showfps == 0)	showfpstemp = 2 * Machine->drv->frames_per_second;
+      if (showfps == 0)
+         showfpstemp = 2 * Machine->drv->frames_per_second;
+
+      /* reset the frame counter so we'll measure the average FPS on a consistent status */
+      frames_displayed = 0;
    }
    
    if (!keyboard_pressed(KEYCODE_LSHIFT) && !keyboard_pressed(KEYCODE_RSHIFT)
@@ -608,6 +652,9 @@ void osd_update_video_and_audio(struct mame_display *display)
        && input_ui_pressed(IPT_UI_THROTTLE))
    {
       throttle ^= 1;
+
+      /* reset the frame counter so we'll measure the average FPS on a consistent status */
+      frames_displayed = 0;
    }
    
    if (input_ui_pressed(IPT_UI_THROTTLE) && (keyboard_pressed(KEYCODE_RSHIFT) || keyboard_pressed(KEYCODE_LSHIFT)))
@@ -628,9 +675,7 @@ void osd_update_video_and_audio(struct mame_display *display)
       {
 	 showfps ^= 1;
 	 if (showfps == 0)
-	 {
 	    schedule_full_refresh();
-	 }
       }
    }
    
@@ -699,14 +744,15 @@ void osd_update_video_and_audio(struct mame_display *display)
    if (showfpstemp)         /* MAURY_BEGIN: nuove opzioni */
    {
       showfpstemp--;
-      if (showfpstemp == 0) schedule_full_refresh();
+      if (showfpstemp == 0)
+         schedule_full_refresh();
    }
 
    skip_this_frame = skip_next_frame;
    skip_next_frame =
       (*skip_next_frame_functions[frameskipper])(showfps || showfpstemp,
         display->game_bitmap);
-   
+
    if (sound_stream && sound_enabled)
       sound_stream_update(sound_stream);
 
@@ -719,11 +765,34 @@ void osd_update_video_and_audio(struct mame_display *display)
       win_set_debugger_focus(display->debug_focus); */
 
    /* if the game palette has changed, update it */
-   if (display->changed_flags & GAME_PALETTE_CHANGED)
-      update_palette(display);
-
-   if (skip_this_frame == 0)
+   if (force_dirty_palette)
    {
+      update_palette(display, 1);
+      force_dirty_palette = 0;
+   }
+   else if (display->changed_flags & GAME_PALETTE_CHANGED)
+      update_palette(display, 0);
+
+   if (skip_this_frame == 0 && display->changed_flags & GAME_BITMAP_CHANGED)
+   {
+      /* at the end, we need the current time */
+      curr = osd_cycles();
+
+      /* update stats for the FPS average calculation */
+      if (start_time == 0)
+      {
+         /* start the timer going 1 second into the game */
+         if (timer_get_time() > 1.0)
+            start_time = curr;
+      }
+      else
+      {
+         frames_displayed++;
+         if (frames_displayed + 1 == frames_to_display)
+            trying_to_quit = 1;
+         end_time = curr;
+      }
+
       profiler_mark(PROFILER_BLIT);
       sysdep_update_display(current_bitmap);
       profiler_mark(PROFILER_END);
@@ -739,7 +808,7 @@ void osd_update_video_and_audio(struct mame_display *display)
    /* if the LEDs have changed, update them */
    if (display->changed_flags & LED_STATE_CHANGED)
       sysdep_set_leds(display->led_state);
-   
+
    osd_poll_joysticks();
 }
 
