@@ -458,11 +458,12 @@ ifndef PREFIX
 PREFIX = /usr/local
 endif
 BINDIR = $(PREFIX)/bin
-MANDIR = $(PREFIX)/share/man/man6
+MANDIR = $(PREFIX)/man/man6
 
 # This is the default path for ROMs and other data files.
 XMAMEROOT = $(PREFIX)/share/x$(TARGET)
-
+# This is the default path for system-wide configuration files.
+SYSCONFDIR = $(XMAMEROOT)
 
 ###########################################################################
 # Architecture; choose your CPU (only one!!) 
@@ -517,7 +518,8 @@ ARCH  = linux
 
 # Solaris/SunOS
 # ARCH  = solaris
-# For Solaris, add paths where other stuff is; libjpeg and so on...
+# For Solaris, you MIGHT need to add paths where other stuff is; libjpeg and 
+# so on...  If so, uncomment the next two lines.
 # CFLAGS += -I/usr/local/include -I/usr/sfw/include 
 # LDFLAGS += -L/usr/local/lib -L/usr/sfw/lib
 
