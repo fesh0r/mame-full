@@ -58,11 +58,26 @@ int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,
 	int bytes_to_write, len, err;
 	UINT32 header_size;
 	formatdriver_ctor formats[2];
+	struct disk_geometry local_geometry;
 	
-	if( drv.header_encode == NULL )
-		return BLOCKDEVICE_ERROR_CANTENCODEFORMAT;
+	if (!geometry)
+	{
+		/* HACKHACK - the default geometry is hardcoded! This should be specified by
+		 * the FormatDriver
+		 */
+		memset(&local_geometry, 0, sizeof(local_geometry));
+		local_geometry.tracks = 35;
+		local_geometry.heads = 1;
+		local_geometry.sectors = 18;
+		local_geometry.first_sector_id = 1;
+		local_geometry.sector_size = 256;
+		geometry = &local_geometry;
+	}
 
 	format(&drv);
+
+	if( drv.header_encode == NULL )
+		return BLOCKDEVICE_ERROR_CANTENCODEFORMAT;
 
 	/* do we have a header size specified? */
 	header_size = drv.header_size & ~HEADERSIZE_FLAGS;

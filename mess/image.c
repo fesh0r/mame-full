@@ -326,32 +326,14 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 void *image_fopen_new(int type, int id, int *effective_mode)
 {
 	void *fref;
-	int requested_mode;
 	int effective_mode_local;
+	const struct IODevice *dev;
 
-	if( type >= IO_COUNT )
-	{
-		logerror("image_fopen: type out of range (%d)\n", type);
-		return NULL;
-	}
+	dev = device_find(Machine->gamedrv, type);
+	assert(dev);
+	assert(id < dev->count);
 
-	{	/* look for open_mode */
-		const struct IODevice *dev;
-
-		requested_mode = OSD_FOPEN_DUMMY;
-
-		for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
-		{
-			if (dev->type == type)
-			{
-				requested_mode = dev->open_mode;
-				break;
-			}
-		}
-	}
-
-	switch (requested_mode)
-	{
+	switch (dev->open_mode) {
 	case OSD_FOPEN_DUMMY:
 	default:
 		/* unsupported modes */
@@ -365,8 +347,8 @@ void *image_fopen_new(int type, int id, int *effective_mode)
 	case OSD_FOPEN_RW:
 	case OSD_FOPEN_RW_CREATE:
 		/* supported modes */
-		fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, requested_mode);
-		effective_mode_local = requested_mode;
+		fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, dev->open_mode);
+		effective_mode_local = dev->open_mode;
 		break;
 
 	case OSD_FOPEN_RW_OR_READ:

@@ -65,6 +65,7 @@ extern char *cheatfile;
 #define FILEFLAG_CAN_BE_ABSOLUTE	0x20
 #define FILEFLAG_OPEN_ZIPS			0x40
 #define FILEFLAG_CREATE_GAME_DIR	0x80
+#define FILEFLAG_MUSTEXIST			0x100
 #endif
 
 #define STATCACHE_SIZE			64
@@ -275,6 +276,9 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype, int op
 					break;
 
 				case OSD_FOPEN_RW:
+					flags |= FILEFLAG_OPENREAD | FILEFLAG_OPENWRITE | FILEFLAG_MUSTEXIST;
+					break;
+
 				case OSD_FOPEN_RW_CREATE:
 					flags |= FILEFLAG_OPENREAD | FILEFLAG_OPENWRITE;
 					break;
@@ -1542,6 +1546,10 @@ static void *generic_fopen(int pathc, const char **pathv, const char *gamename, 
 					if (z)
 						closezip(z);
 				}
+			}
+			else if ((flags & FILEFLAG_MUSTEXIST) && (cache_stat(name, &stat_buffer) != 0))
+			{
+				// if FILEFLAG_MUSTEXIST is set and the file isn't there, don't open it
 			}
 #endif
 			// otherwise, just open it straight

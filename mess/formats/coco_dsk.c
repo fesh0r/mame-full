@@ -79,7 +79,7 @@ static int cocojvc_encode_header(void *buffer, UINT32 *header_size, const struct
 		*header_size = 1;
 	if (geometry->heads != 1)
 		*header_size = 2;
-	if (geometry->sector_size != 128)
+	if (geometry->sector_size != 256)
 		*header_size = 3;
 	return 0;
 }

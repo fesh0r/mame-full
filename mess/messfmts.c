@@ -47,7 +47,7 @@ static void bdf_get_id_callback(int drive, chrn_id *id, int id_index, int side)
 	const struct disk_geometry *geo;
 	
 	messbdf = get_messbdf(drive);
-	geo = bdf_get_geometry(messbdf);
+	geo = bdf_get_geometry(messbdf->bdf);
 
 	id->C = messbdf->track;
 	id->H = side;
@@ -127,25 +127,12 @@ static int bdf_floppy_init_internal(int id, const formatdriver_ctor *open_format
 	assert(id < (sizeof(bdfs) / sizeof(bdfs[0])));
 	memset(&bdfs[id], 0, sizeof(bdfs[id]));
 
-	name = image_filename(device_type, id);
-	if (name)
+	if (image_exists(device_type, id))
 	{
-		mode = OSD_FOPEN_RW;
-		file = image_fopen(device_type, id, OSD_FILETYPE_IMAGE, mode);
+		file = image_fopen_new(device_type, id, &mode);
 		if (!file)
-		{
-			mode = OSD_FOPEN_READ;
-			file = image_fopen(device_type, id, OSD_FILETYPE_IMAGE, mode);
-			if (!file)
-			{
-				mode = OSD_FOPEN_RW_CREATE;
-				file = image_fopen(device_type, id, OSD_FILETYPE_IMAGE, mode);
-				if (!file)
-					return INIT_FAIL;
-			}
-		}
+			return INIT_FAIL;
 
-		/* its lame that I have to do this */
 		name = image_filename(device_type, id);
 
 		if (mode == OSD_FOPEN_RW_CREATE)
@@ -160,7 +147,7 @@ static int bdf_floppy_init_internal(int id, const formatdriver_ctor *open_format
 				fmts[1] = NULL;
 				open_formats = fmts;				
 			}
-			ext = strrchr(name, '.');
+			ext = image_filetype(device_type, id);
 			err = bdf_open(&mess_bdf_procs, open_formats, file, (mode == OSD_FOPEN_READ), ext, &bdfs[id].bdf);
 		}
 		if (err)
@@ -180,8 +167,8 @@ int bdf_floppy_init(int id)
 	dev = device_find(Machine->gamedrv, IO_FLOPPY);
 	assert(dev);
 
-	open_formats = (const formatdriver_ctor *) dev->input_chunk;
-	create_format = (formatdriver_ctor) dev->output_chunk;
+	open_formats = (const formatdriver_ctor *) dev->input;
+	create_format = (formatdriver_ctor) dev->output;
 
 	return bdf_floppy_init_internal(id, open_formats, create_format);
 }
