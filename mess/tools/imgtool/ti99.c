@@ -4,6 +4,10 @@
 	Disk images are in v9t9/MESS format.  Files are extracted in TIFILES format.
 
 	Raphael Nabet, 2002-2003
+
+	TODO:
+	- support subdirectories
+	- test support for V9T9 image format
 */
 
 #include <limits.h>
@@ -35,8 +39,8 @@
 
 	Sector 0: Volume Information Block (VIB): see below
 	Sector 1: File Descriptor Index Record (FDIR):
-		array of 0 through 128 words, sector (physical record?) address of the fdr sector
-		for each file.  Sorted by ascending file name.
+		array of 0 through 128 words, sector (physical record?) address of the
+		fdr sector for each file.  Sorted by ascending file name.
 	Remaining physical records are used for fdr and data.  Each file has one
 	FDR (File Descriptor Record) descriptor which provides the file information
 	(name, format, lenght, pointers to data sectors/AUs, etc).
@@ -216,6 +220,332 @@ typedef struct ti99_vib
 								/* of byte 1, etc.) */
 } ti99_vib;
 
+typedef enum
+{
+	if_mess,
+	if_v9t9,
+	if_pc99_fm,
+	if_pc99_mfm
+} ti99_img_format;
+
+/*
+	level-1 disk image descriptor
+*/
+typedef struct ti99_lvl1_ref
+{
+	ti99_img_format img_format;	/* tells the image format */
+	STREAM *file_handle;		/* imgtool file handle */
+	ti99_geometry geometry;		/* geometry */
+	UINT32 *pc99_data_offset_array;	/* offset for each sector (pc99 format) */
+} ti99_lvl1_ref;
+
+/*
+	calculate CRC for data address marks or sector data
+
+	crc: current CRC value to be updated (initialize to 0xffff)
+	value: new byte of data to update the CRC with
+*/
+static void calc_crc(UINT16 *crc, UINT8 value)
+{
+	UINT8 l, h;
+
+	l = value ^ (*crc >> 8);
+	*crc = (*crc & 0xff) | (l << 8);
+	l >>= 4;
+	l ^= (*crc >> 8);
+	*crc <<= 8;
+	*crc = (*crc & 0xff00) | l;
+	l = (l << 4) | (l >> 4);
+	h = l;
+	l = (l << 2) | (l >> 6);
+	l &= 0x1f;
+	*crc = *crc ^ (l << 8);
+	l = h & 0xf0;
+	*crc = *crc ^ (l << 8);
+	l = (h << 1) | (h >> 7);
+	l &= 0xe0;
+	*crc = *crc ^ l;
+}
+
+/*
+	Parse a PC99 disk image
+
+	file_handle: imgtool file handle
+	fm_format: if true, the image is in FM format, otherwise it is in MFM
+		format
+	pass: 0 for first pass, 1 for second pass
+	vib: buffer where the vib should be stored (first pass)
+	geometry: disk image geometry (second pass)
+	data_offset_array: array of data offset to generate (second pass)
+*/
+#define MAX_SECTOR_LEN 2048
+#define DATA_OFFSET_NONE 0xffffffff
+static int parse_pc99_image(STREAM *file_handle, int fm_format, int pass, ti99_vib *vib, const ti99_geometry *geometry, UINT32 *data_offset_array)
+{
+	int bytes_read;
+	UINT8 c;
+	UINT8 cylinder, head, sector;
+	int seclen;
+	UINT8 crc1, crc2;
+	UINT16 crc;
+	long save_pos;
+	long data_offset;
+	UINT8 buf[MAX_SECTOR_LEN];
+	int i;
+
+
+	if (pass == 1)
+	{
+		/* initialize offset map */
+		for (cylinder = 0; cylinder < geometry->tracksperside; cylinder++)
+			for (head = 0; head < geometry->sides; head++)
+				for (sector = 0; sector < geometry->secspertrack; sector++)
+					data_offset_array[(cylinder*geometry->sides + head)*geometry->secspertrack + sector] = DATA_OFFSET_NONE;
+	}
+	/* rewind to start of file */
+	stream_seek(file_handle, 0, SEEK_SET);
+
+	bytes_read = stream_read(file_handle, &c, 1);
+	while (bytes_read)
+	{
+		if (fm_format)
+		{
+			while ((c != 0xfe) && bytes_read)
+				bytes_read = stream_read(file_handle, &c, 1);
+
+			if (! bytes_read)
+				break;
+
+			save_pos = stream_tell(file_handle);
+
+			crc = 0xffff;
+			calc_crc(& crc, c);
+		}
+		else
+		{
+			while ((c != 0xa1) && bytes_read)
+				bytes_read = stream_read(file_handle, &c, 1);
+
+			if (! bytes_read)
+				break;
+
+			save_pos = stream_tell(file_handle);
+
+			bytes_read = stream_read(file_handle, &c, 1);
+			if (! bytes_read)
+				break;
+
+			if (c != 0xa1)
+			{
+				stream_seek(file_handle, save_pos, SEEK_SET);
+				bytes_read = stream_read(file_handle, &c, 1);
+				continue;
+			}
+
+			bytes_read = stream_read(file_handle, &c, 1);
+			if (! bytes_read)
+				break;
+
+			if (c != 0xa1)
+			{
+				stream_seek(file_handle, save_pos, SEEK_SET);
+				bytes_read = stream_read(file_handle, &c, 1);
+				continue;
+			}
+
+			crc = 0xffff;
+			calc_crc(& crc, c);
+
+			bytes_read = stream_read(file_handle, &c, 1);
+			if (! bytes_read)
+				break;
+
+			if (c != 0xfe)
+			{
+				stream_seek(file_handle, save_pos, SEEK_SET);
+				bytes_read = stream_read(file_handle, &c, 1);
+				continue;
+			}
+		}
+
+		bytes_read = stream_read(file_handle, &c, 1);
+		if (! bytes_read)
+			break;
+		cylinder = c;
+		calc_crc(& crc, c);
+
+		bytes_read = stream_read(file_handle, &c, 1);
+		if (! bytes_read)
+			break;
+		head = c;
+		calc_crc(& crc, c);
+
+		bytes_read = stream_read(file_handle, &c, 1);
+		if (! bytes_read)
+			break;
+		sector = c;
+		calc_crc(& crc, c);
+
+		bytes_read = stream_read(file_handle, &c, 1);
+		if (! bytes_read)
+			break;
+		seclen = 128 << c;
+		calc_crc(& crc, c);
+
+		bytes_read = stream_read(file_handle, &c, 1);
+		if (! bytes_read)
+			break;
+		crc1 = c;
+		calc_crc(& crc, c);
+
+		bytes_read = stream_read(file_handle, &c, 1);
+		if (! bytes_read)
+			break;
+		crc2 = c;
+		calc_crc(& crc, c);
+
+		/* CRC seems to be completely hosed */
+		/*if (crc)
+			printf("aargh!");*/
+		if ((seclen != 256) || (crc1 != 0xf7) || (crc2 != 0xf7)
+				|| (pass == 1) && ((cylinder >= geometry->tracksperside)
+									|| (head >= geometry->sides)
+									|| (sector >= geometry->secspertrack)))
+		{
+			stream_seek(file_handle, save_pos, SEEK_SET);
+			bytes_read = stream_read(file_handle, &c, 1);
+			continue;
+		}
+
+		bytes_read = stream_read(file_handle, &c, 1);
+
+		while (bytes_read && (c == (fm_format ? 0xff : 0x4e)))
+			bytes_read = stream_read(file_handle, &c, 1);
+
+		while (bytes_read && (c == 0x00))
+			bytes_read = stream_read(file_handle, &c, 1);
+
+		if (! bytes_read)
+			break;
+
+		if (fm_format)
+		{
+			if (c != 0xfb)
+			{
+				stream_seek(file_handle, save_pos, SEEK_SET);
+				bytes_read = stream_read(file_handle, &c, 1);
+				continue;
+			}
+			crc = 0xffff;
+			calc_crc(& crc, c);
+		}
+		else
+		{
+			if (c != 0xa1)
+			{
+				stream_seek(file_handle, save_pos, SEEK_SET);
+				bytes_read = stream_read(file_handle, &c, 1);
+				continue;
+			}
+
+			bytes_read = stream_read(file_handle, &c, 1);
+			if (! bytes_read)
+				break;
+
+			if (c != 0xa1)
+			{
+				stream_seek(file_handle, save_pos, SEEK_SET);
+				bytes_read = stream_read(file_handle, &c, 1);
+				continue;
+			}
+
+			bytes_read = stream_read(file_handle, &c, 1);
+			if (! bytes_read)
+				break;
+
+			if (c != 0xa1)
+			{
+				stream_seek(file_handle, save_pos, SEEK_SET);
+				bytes_read = stream_read(file_handle, &c, 1);
+				continue;
+			}
+
+			crc = 0xffff;
+			calc_crc(& crc, c);
+
+			bytes_read = stream_read(file_handle, &c, 1);
+			if (! bytes_read)
+				break;
+
+			if (c != 0xfb)
+			{
+				stream_seek(file_handle, save_pos, SEEK_SET);
+				bytes_read = stream_read(file_handle, &c, 1);
+				continue;
+			}
+		}
+		data_offset = stream_tell(file_handle);
+		if (stream_read(file_handle, buf, seclen) != seclen)
+			break;
+		for (i=0; i<seclen; i++)
+			calc_crc(& crc, buf[i]);
+
+		bytes_read = stream_read(file_handle, &c, 1);
+		if (! bytes_read)
+			break;
+		crc1 = c;
+		calc_crc(& crc, c);
+
+		bytes_read = stream_read(file_handle, &c, 1);
+		if (! bytes_read)
+			break;
+		crc2 = c;
+		calc_crc(& crc, c);
+
+		/* CRC seems to be completely hosed */
+		/*if (crc)
+			printf("aargh!");*/
+		if ((crc1 != 0xf7) || (crc2 != 0xf7))
+		{
+			stream_seek(file_handle, save_pos, SEEK_SET);
+			bytes_read = stream_read(file_handle, &c, 1);
+			continue;
+		}
+
+		switch (pass)
+		{
+		case 0:
+			if ((cylinder == 0) && (head == 0) && (sector == 0))
+			{
+				/* return vib */
+				memcpy(vib, buf, 256);
+				return 0;
+			}
+			break;
+
+		case 1:
+			/* set up offset map */
+			data_offset_array[(cylinder*geometry->sides + head)*geometry->secspertrack + sector] = data_offset;
+			break;
+		}
+	}
+
+	if (pass == 0)
+		return IMGTOOLERR_CORRUPTIMAGE;
+
+	if (pass == 1)
+	{
+		/* check offset map */
+		for (cylinder = 0; cylinder < geometry->tracksperside; cylinder++)
+			for (head = 0; head < geometry->sides; head++)
+				for (sector = 0; sector < geometry->secspertrack; sector++)
+					if (data_offset_array[(cylinder*geometry->sides + head)*geometry->secspertrack + sector] == DATA_OFFSET_NONE)
+						return IMGTOOLERR_CORRUPTIMAGE;
+	}
+
+	return 0;
+}
+
 /*
 	Read the volume information block (sector 0) assuming no geometry
 	information.  (Called when an image is opened to figure out the
@@ -224,18 +554,97 @@ typedef struct ti99_vib
 	file_handle: imgtool file handle
 	dest: pointer to 256-byte destination buffer
 */
-static int read_image_vib_no_geometry(STREAM *file_handle, ti99_vib *dest)
+static int read_image_vib_no_geometry(STREAM *file_handle, ti99_img_format img_format, ti99_vib *dest)
 {
 	int reply;
 
-	/* seek to sector */
-	reply = stream_seek(file_handle, 0, SEEK_SET);
+	switch (img_format)
+	{
+	case if_mess:
+	case if_v9t9:
+		/* seek to sector */
+		reply = stream_seek(file_handle, 0, SEEK_SET);
+		if (reply)
+			return IMGTOOLERR_READERROR;
+		/* read it */
+		reply = stream_read(file_handle, dest, 256);
+		if (reply != 256)
+			return IMGTOOLERR_READERROR;
+		return 0;
+		break;
+
+	case if_pc99_fm:
+	case if_pc99_mfm:
+		return parse_pc99_image(file_handle, img_format == if_pc99_fm, 0, dest, NULL, NULL);
+		break;
+	}
+
+	return IMGTOOLERR_UNIMPLEMENTED;
+}
+
+/*
+	Open a disk image at level 1
+
+	file_handle: imgtool file handle
+	img_format: image format (MESS, V9T9 or PC99)
+	lvl1_ref: level-1 image handle (output)
+	vib: buffer where the vib should be stored
+
+	returns the imgtool error code
+*/
+static int open_image_lvl1(STREAM *file_handle, ti99_img_format img_format, ti99_lvl1_ref *lvl1_ref, ti99_vib *vib)
+{
+	int reply;
+	int totphysrecs;
+
+
+	lvl1_ref->img_format = img_format;
+	lvl1_ref->file_handle = file_handle;
+
+	/* read vib */
+	reply = read_image_vib_no_geometry(file_handle, img_format, vib);
 	if (reply)
-		return 1;
-	/* read it */
-	reply = stream_read(file_handle, dest, 256);
-	if (reply != 256)
-		return 1;
+		return reply;
+
+	/* extract geometry information */
+	totphysrecs = get_UINT16BE(vib->totphysrecs);
+
+	lvl1_ref->geometry.secspertrack = vib->secspertrack;
+	if (lvl1_ref->geometry.secspertrack == 0)
+		/* Some images might be like this, because the original SSSD TI
+		controller always assumes 9. */
+		lvl1_ref->geometry.secspertrack = 9;
+	lvl1_ref->geometry.tracksperside = vib->tracksperside;
+	if (lvl1_ref->geometry.tracksperside == 0)
+		/* Some images are like this, because the original SSSD TI controller
+		always assumes 40. */
+		lvl1_ref->geometry.tracksperside = 40;
+	lvl1_ref->geometry.sides = vib->sides;
+	if (lvl1_ref->geometry.sides == 0)
+		/* Some images are like this, because the original SSSD TI controller
+		always assumes that tracks beyond 40 are on side 2. */
+		lvl1_ref->geometry.sides = totphysrecs / (lvl1_ref->geometry.secspertrack * lvl1_ref->geometry.tracksperside);
+
+	/* check information */
+	if ((totphysrecs != (lvl1_ref->geometry.secspertrack * lvl1_ref->geometry.tracksperside * lvl1_ref->geometry.sides))
+			|| (totphysrecs < 2)
+			|| memcmp(vib->id, "DSK", 3) || (! strchr(" P", vib->id[3]))
+			|| (((img_format == if_mess) || (img_format == if_v9t9))
+				&& (stream_size(file_handle) != totphysrecs*256)))
+		return IMGTOOLERR_CORRUPTIMAGE;
+
+	if ((img_format == if_pc99_fm) || (img_format == if_pc99_mfm))
+	{
+		lvl1_ref->pc99_data_offset_array = malloc(sizeof(*lvl1_ref->pc99_data_offset_array)*totphysrecs);
+		if (! lvl1_ref->pc99_data_offset_array)
+			return IMGTOOLERR_OUTOFMEMORY;
+		reply = parse_pc99_image(file_handle, img_format == if_pc99_fm, 1, NULL, & lvl1_ref->geometry, lvl1_ref->pc99_data_offset_array);
+		if (reply)
+		{
+			free(lvl1_ref->pc99_data_offset_array);
+			return reply;
+		}
+	}
 
 	return 0;
 }
@@ -243,17 +652,32 @@ static int read_image_vib_no_geometry(STREAM *file_handle, ti99_vib *dest)
 /*
 	Convert physical sector address to offset in disk image
 */
-INLINE int sector_address_to_image_offset(const ti99_sector_address *address, const ti99_geometry *geometry)
+INLINE int sector_address_to_image_offset(const ti99_lvl1_ref *lvl1_ref, const ti99_sector_address *address)
 {
 	int offset;
 
-#if 1
-	/* current MESS format */
-	offset = (((address->cylinder*geometry->sides) + address->side)*geometry->secspertrack + address->sector)*256;
-#else
-	/* V9T9 format */
-	offset = (((address->side*geometry->tracksperside) + address->cylinder)*geometry->secspertrack + address->sector)*256;
-#endif
+	switch (lvl1_ref->img_format)
+	{
+	case if_mess:
+		/* current MESS format */
+		offset = (((address->cylinder*lvl1_ref->geometry.sides) + address->side)*lvl1_ref->geometry.secspertrack + address->sector)*256;
+		break;
+
+	case if_v9t9:
+		/* V9T9 format */
+		if (address->side & 1)
+			/* on side 1, tracks are stored in the reverse order */
+			offset = (((address->side*lvl1_ref->geometry.tracksperside) + (lvl1_ref->geometry.tracksperside-1 - address->cylinder))*lvl1_ref->geometry.secspertrack + address->sector)*256;
+		else
+			offset = (((address->side*lvl1_ref->geometry.tracksperside) + address->cylinder)*lvl1_ref->geometry.secspertrack + address->sector)*256;
+		break;
+
+	case if_pc99_fm:
+	case if_pc99_mfm:
+		/* pc99 format */
+		offset = lvl1_ref->pc99_data_offset_array[(address->cylinder*lvl1_ref->geometry.sides + address->side)*lvl1_ref->geometry.secspertrack + address->sector];
+		break;
+	}
 
 	return offset;
 }
@@ -266,16 +690,16 @@ INLINE int sector_address_to_image_offset(const ti99_sector_address *address, co
 	geometry: disk geometry (sectors per track, tracks per side, sides)
 	dest: pointer to 256-byte destination buffer
 */
-static int read_sector(STREAM *file_handle, const ti99_sector_address *address, const ti99_geometry *geometry, void *dest)
+static int read_sector(ti99_lvl1_ref *lvl1_ref, const ti99_sector_address *address, void *dest)
 {
 	int reply;
 
 	/* seek to sector */
-	reply = stream_seek(file_handle, sector_address_to_image_offset(address, geometry), SEEK_SET);
+	reply = stream_seek(lvl1_ref->file_handle, sector_address_to_image_offset(lvl1_ref, address), SEEK_SET);
 	if (reply)
 		return 1;
 	/* read it */
-	reply = stream_read(file_handle, dest, 256);
+	reply = stream_read(lvl1_ref->file_handle, dest, 256);
 	if (reply != 256)
 		return 1;
 
@@ -290,16 +714,16 @@ static int read_sector(STREAM *file_handle, const ti99_sector_address *address, 
 	geometry: disk geometry (sectors per track, tracks per side, sides)
 	src: pointer to 256-byte source buffer
 */
-static int write_sector(STREAM *file_handle, const ti99_sector_address *address, const ti99_geometry *geometry, const void *src)
+static int write_sector(ti99_lvl1_ref *lvl1_ref, const ti99_sector_address *address, const void *src)
 {
 	int reply;
 
 	/* seek to sector */
-	reply = stream_seek(file_handle, sector_address_to_image_offset(address, geometry), SEEK_SET);
+	reply = stream_seek(lvl1_ref->file_handle, sector_address_to_image_offset(lvl1_ref, address), SEEK_SET);
 	if (reply)
 		return 1;
 	/* write it */
-	reply = stream_write(file_handle, src, 256);
+	reply = stream_write(lvl1_ref->file_handle, src, 256);
 	if (reply != 256)
 		return 1;
 
@@ -328,14 +752,14 @@ static void physrec_to_sector_address(int physrec, const ti99_geometry *geometry
 	geometry: disk geometry (sectors per track, tracks per side, sides)
 	dest: pointer to 256-byte destination buffer
 */
-static int read_absolute_physrec(STREAM *file_handle, int physrec, const ti99_geometry *geometry, void *dest)
+static int read_absolute_physrec(ti99_lvl1_ref *lvl1_ref, int physrec, void *dest)
 {
 	ti99_sector_address address;
 
 
-	physrec_to_sector_address(physrec, geometry, &address);
+	physrec_to_sector_address(physrec, & lvl1_ref->geometry, & address);
 
-	return read_sector(file_handle, &address, geometry, dest);
+	return read_sector(lvl1_ref, & address, dest);
 }
 
 /*
@@ -346,14 +770,14 @@ static int read_absolute_physrec(STREAM *file_handle, int physrec, const ti99_ge
 	geometry: disk geometry (sectors per track, tracks per side, sides)
 	src: pointer to 256-byte source buffer
 */
-static int write_absolute_physrec(STREAM *file_handle, int physrec, const ti99_geometry *geometry, const void *src)
+static int write_absolute_physrec(ti99_lvl1_ref *lvl1_ref, int physrec, const void *src)
 {
 	ti99_sector_address address;
 
 
-	physrec_to_sector_address(physrec, geometry, &address);
+	physrec_to_sector_address(physrec, & lvl1_ref->geometry, & address);
 
-	return write_sector(file_handle, &address, geometry, src);
+	return write_sector(lvl1_ref, & address, src);
 }
 
 #if 0
@@ -391,8 +815,7 @@ typedef struct catalog_entry
 typedef struct ti99_image
 {
 	IMAGE base;
-	STREAM *file_handle;		/* imgtool file handle */
-	ti99_geometry geometry;		/* geometry */
+	ti99_lvl1_ref lvl1_ref;		/* image format, imgtool image handle, image geometry */
 	ti99_vib vib;				/* cached copy of volume information block record in sector 0 */
 	ti99_AUformat AUformat;		/* AU format */
 	catalog_entry catalog[128];	/* catalog (fdr AU address from sector 1, and file names from fdrs) */
@@ -550,7 +973,7 @@ static int find_fdr(ti99_image *image, char fname[10], ti99_fdr *fdr, int *catal
 				*catalog_index = i;
 
 			if (fdr)
-				if (read_absolute_physrec(image->file_handle, fdr_physrec, & image->geometry, fdr))
+				if (read_absolute_physrec(& image->lvl1_ref, fdr_physrec, fdr))
 					return IMGTOOLERR_READERROR;
 
 			return 0;
@@ -873,7 +1296,7 @@ static int read_file_physrec(ti99_image *image, ti99_fdr *fdr, int physrecnum, v
 	if (errorcode)
 		return errorcode;
 	/* read sector */
-	if (read_absolute_physrec(image->file_handle, physrec, & image->geometry, dest))
+	if (read_absolute_physrec(& image->lvl1_ref, physrec, dest))
 		return IMGTOOLERR_READERROR;
 
 	return 0;
@@ -892,7 +1315,7 @@ static int write_file_physrec(ti99_image *image, ti99_fdr *fdr, int physrecnum, 
 	if (errorcode)
 		return errorcode;
 	/* write sector */
-	if (write_absolute_physrec(image->file_handle, physrec, & image->geometry, src))
+	if (write_absolute_physrec(& image->lvl1_ref, physrec, src))
 		return IMGTOOLERR_READERROR;
 
 	return 0;
@@ -919,6 +1342,11 @@ typedef struct ti99_file_pos
 	int cur_pos_in_phys_rec;
 } ti99_file_pos;
 
+/*
+	Initialize a record of type ti99_file_pos.  To open a file on level 3, you
+	must get the fdr record for the file (which is equivalent to opening the
+	file on level 2), then initialize the file_pos record.
+*/
 INLINE void initialize_file_pos(ti99_file_pos *file_pos)
 {
 	memset(file_pos, 0, sizeof(*file_pos));
@@ -926,6 +1354,9 @@ INLINE void initialize_file_pos(ti99_file_pos *file_pos)
 	/*if ()*/
 }
 
+/*
+	Test a file for EOF
+*/
 static int is_eof(/*ti99_image *image,*/ ti99_fdr *fdr, ti99_file_pos *file_pos)
 {
 	int secsused = get_UINT16BE(fdr->secsused);
@@ -942,6 +1373,9 @@ static int is_eof(/*ti99_image *image,*/ ti99_fdr *fdr, ti99_file_pos *file_pos)
 	}
 }
 
+/*
+	Read next record from a file
+*/
 static int read_next_record(ti99_image *image, ti99_fdr *fdr, ti99_file_pos *file_pos, void *dest, int *out_reclen)
 {
 	int errorcode;
@@ -1026,7 +1460,10 @@ typedef struct ti99_iterator
 } ti99_iterator;
 
 
-static int ti99_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
+static int ti99_image_init_mess(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
+static int ti99_image_init_v9t9(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
+static int ti99_image_init_pc99_fm(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
+static int ti99_image_init_pc99_mfm(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
 static void ti99_image_exit(IMAGE *img);
 static void ti99_image_info(IMAGE *img, char *string, const int len);
 static int ti99_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
@@ -1036,7 +1473,8 @@ static size_t ti99_image_freespace(IMAGE *img);
 static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
 static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_);
 static int ti99_image_deletefile(IMAGE *img, const char *fname);
-static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
+static int ti99_image_create_mess(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
+static int ti99_image_create_v9t9(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
 
 static int ti99_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length);
 static int ti99_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length);
@@ -1064,13 +1502,13 @@ enum
 
 IMAGEMODULE(
 	ti99,
-	"TI99 Diskette",				/* human readable name */
+	"TI99 Diskette (MESS format)",	/* human readable name */
 	"dsk",							/* file extension */
 	NULL,							/* crcfile */
 	NULL,							/* crc system name */
 	/*EOLN_CR*/0,					/* eoln */
 	0,								/* flags */
-	ti99_image_init,				/* init function */
+	ti99_image_init_mess,			/* init function */
 	ti99_image_exit,				/* exit function */
 	ti99_image_info,				/* info function */
 	ti99_image_beginenum,			/* begin enumeration */
@@ -1080,13 +1518,87 @@ IMAGEMODULE(
 	ti99_image_readfile,			/* read file */
 	ti99_image_writefile,			/* write file */
 	ti99_image_deletefile,			/* delete file */
-	ti99_image_create,				/* create image */
+	ti99_image_create_mess,			/* create image */
 	ti99_read_sector,
 	ti99_write_sector,
 	NULL,							/* file options */
 	ti99_createopts					/* create options */
 )
 
+IMAGEMODULE(
+	v9t9,
+	"TI99 Diskette (V9T9 format)",	/* human readable name */
+	"dsk",							/* file extension */
+	NULL,							/* crcfile */
+	NULL,							/* crc system name */
+	/*EOLN_CR*/0,					/* eoln */
+	0,								/* flags */
+	ti99_image_init_v9t9,			/* init function */
+	ti99_image_exit,				/* exit function */
+	ti99_image_info,				/* info function */
+	ti99_image_beginenum,			/* begin enumeration */
+	ti99_image_nextenum,			/* enumerate next */
+	ti99_image_closeenum,			/* close enumeration */
+	ti99_image_freespace,			/* free space on image */
+	ti99_image_readfile,			/* read file */
+	ti99_image_writefile,			/* write file */
+	ti99_image_deletefile,			/* delete file */
+	ti99_image_create_v9t9,			/* create image */
+	ti99_read_sector,
+	ti99_write_sector,
+	NULL,							/* file options */
+	ti99_createopts					/* create options */
+)
+
+IMAGEMODULE(
+	pc99fm,
+	"TI99 Diskette (PC99 FM format)",	/* human readable name */
+	"dsk",							/* file extension */
+	NULL,							/* crcfile */
+	NULL,							/* crc system name */
+	/*EOLN_CR*/0,					/* eoln */
+	0,								/* flags */
+	ti99_image_init_pc99_fm,		/* init function */
+	ti99_image_exit,				/* exit function */
+	ti99_image_info,				/* info function */
+	ti99_image_beginenum,			/* begin enumeration */
+	ti99_image_nextenum,			/* enumerate next */
+	ti99_image_closeenum,			/* close enumeration */
+	ti99_image_freespace,			/* free space on image */
+	ti99_image_readfile,			/* read file */
+	ti99_image_writefile,			/* write file */
+	ti99_image_deletefile,			/* delete file */
+	/*ti99_image_create_pc99_fm*/NULL,	/* create image */
+	ti99_read_sector,
+	ti99_write_sector,
+	NULL,							/* file options */
+	ti99_createopts					/* create options */
+)
+
+IMAGEMODULE(
+	pc99mfm,
+	"TI99 Diskette (PC99 MFM format)",	/* human readable name */
+	"dsk",							/* file extension */
+	NULL,							/* crcfile */
+	NULL,							/* crc system name */
+	/*EOLN_CR*/0,					/* eoln */
+	0,								/* flags */
+	ti99_image_init_pc99_mfm,		/* init function */
+	ti99_image_exit,				/* exit function */
+	ti99_image_info,				/* info function */
+	ti99_image_beginenum,			/* begin enumeration */
+	ti99_image_nextenum,			/* enumerate next */
+	ti99_image_closeenum,			/* close enumeration */
+	ti99_image_freespace,			/* free space on image */
+	ti99_image_readfile,			/* read file */
+	ti99_image_writefile,			/* write file */
+	ti99_image_deletefile,			/* delete file */
+	/*ti99_image_create_pc99_mfm*/NULL,	/* create image */
+	ti99_read_sector,
+	ti99_write_sector,
+	NULL,							/* file options */
+	ti99_createopts					/* create options */
+)
 
 /*
 	Compare two (possibly empty) catalog entry for qsort
@@ -1107,9 +1619,9 @@ static int qsort_catalog_compare(const void *p1, const void *p2)
 }
 
 /*
-	Open a file as a ti99_image.
+	Open a file as a ti99_image (common code).
 */
-static int ti99_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static int ti99_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg, ti99_img_format img_format)
 {
 	ti99_image *image;
 	int reply;
@@ -1126,34 +1638,19 @@ static int ti99_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **out
 
 	memset(image, 0, sizeof(ti99_image));
 	image->base.module = mod;
-	image->file_handle = f;
 
-	/* read vib */
-	reply = read_image_vib_no_geometry(f, & image->vib);
+	/* open disk image at level 1 */
+	reply = open_image_lvl1(f, img_format, & image->lvl1_ref, & image->vib);
 	if (reply)
 	{
 		free(image);
-		*outimg=NULL;
-		return IMGTOOLERR_READERROR;
+		*outimg = NULL;
+		return reply;
 	}
 
+	/* open disk image at level 2 */
+	/* first compute AU size and number of AUs */
 	totphysrecs = get_UINT16BE(image->vib.totphysrecs);
-
-	image->geometry.secspertrack = image->vib.secspertrack;
-	if (image->geometry.secspertrack == 0)
-		/* Some images might be like this, because the original SSSD TI
-		controller always assumes 9. */
-		image->geometry.secspertrack = 9;
-	image->geometry.tracksperside = image->vib.tracksperside;
-	if (image->geometry.tracksperside == 0)
-		/* Some images are like this, because the original SSSD TI controller
-		always assumes 40. */
-		image->geometry.tracksperside = 40;
-	image->geometry.sides = image->vib.sides;
-	if (image->geometry.sides == 0)
-		/* Some images are like this, because the original SSSD TI controller
-		always assumes that tracks beyond 40 are on side 2. */
-		image->geometry.sides = totphysrecs / (image->geometry.secspertrack * image->geometry.tracksperside);
 
 	image->AUformat.physrecsperAU = (totphysrecs + 1599) / 1600;
 	/* round to next larger power of 2 */
@@ -1162,18 +1659,8 @@ static int ti99_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **out
 	image->AUformat.physrecsperAU = i;
 	image->AUformat.totAUs = totphysrecs / image->AUformat.physrecsperAU;
 
-	if ((totphysrecs != (image->geometry.secspertrack * image->geometry.tracksperside * image->geometry.sides))
-		|| (totphysrecs < 2)
-		|| memcmp(image->vib.id, "DSK", 3) || (! strchr(" P", image->vib.id[3]))
-		|| (stream_size(f) != totphysrecs*256))
-	{
-		free(image);
-		*outimg = NULL;
-		return IMGTOOLERR_CORRUPTIMAGE;
-	}
-
 	/* read catalog */
-	reply = read_absolute_physrec(f, 1, & image->geometry, buf);
+	reply = read_absolute_physrec(& image->lvl1_ref, 1, buf);
 	if (reply)
 	{
 		free(image);
@@ -1194,7 +1681,7 @@ static int ti99_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **out
 		}
 		else if (image->catalog[i].fdr_physrec)
 		{
-			reply = read_absolute_physrec(f, image->catalog[i].fdr_physrec, & image->geometry, &fdr);
+			reply = read_absolute_physrec(& image->lvl1_ref, image->catalog[i].fdr_physrec, &fdr);
 			if (reply)
 			{
 				free(image);
@@ -1224,13 +1711,47 @@ static int ti99_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **out
 }
 
 /*
+	Open a file as a ti99_image (MESS format).
+*/
+static int ti99_image_init_mess(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+{
+	return ti99_image_init(mod, f, outimg, if_mess);
+}
+
+/*
+	Open a file as a ti99_image (V9T9 format).
+*/
+static int ti99_image_init_v9t9(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+{
+	return ti99_image_init(mod, f, outimg, if_v9t9);
+}
+
+/*
+	Open a file as a ti99_image (PC99 FM format).
+*/
+static int ti99_image_init_pc99_fm(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+{
+	return ti99_image_init(mod, f, outimg, if_pc99_fm);
+}
+
+/*
+	Open a file as a ti99_image (PC99 MFM format).
+*/
+static int ti99_image_init_pc99_mfm(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+{
+	return ti99_image_init(mod, f, outimg, if_pc99_mfm);
+}
+
+/*
 	close a ti99_image
 */
 static void ti99_image_exit(IMAGE *img)
 {
 	ti99_image *image = (ti99_image *) img;
 
-	stream_close(image->file_handle);
+	stream_close(image->lvl1_ref.file_handle);
+	if ((image->lvl1_ref.img_format == if_pc99_fm) || (image->lvl1_ref.img_format == if_pc99_mfm))
+		free(image->lvl1_ref.pc99_data_offset_array);
 	free(image);
 }
 
@@ -1295,7 +1816,7 @@ static int ti99_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 		}
 		else
 		{
-			reply = read_absolute_physrec(iter->image->file_handle, fdr_physrec, & iter->image->geometry, & fdr);
+			reply = read_absolute_physrec(& iter->image->lvl1_ref, fdr_physrec, & fdr);
 			if (reply)
 				return IMGTOOLERR_READERROR;
 			fname_to_str(ent->fname, fdr.name, ent->fname_len);
@@ -1510,7 +2031,7 @@ static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, 
 	}
 
 	/* write fdr */
-	if (write_absolute_physrec(image->file_handle, fdr_physrec, & image->geometry, &fdr))
+	if (write_absolute_physrec(& image->lvl1_ref, fdr_physrec, &fdr))
 		return IMGTOOLERR_WRITEERROR;
 
 	/* update catalog */
@@ -1519,11 +2040,11 @@ static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, 
 		buf[2*i] = image->catalog[i].fdr_physrec >> 8;
 		buf[2*i+1] = image->catalog[i].fdr_physrec & 0xff;
 	}
-	if (write_absolute_physrec(image->file_handle, 1, & image->geometry, buf))
+	if (write_absolute_physrec(& image->lvl1_ref, 1, buf))
 		return IMGTOOLERR_WRITEERROR;
 
 	/* update bitmap */
-	if (write_absolute_physrec(image->file_handle, 0, & image->geometry, &image->vib))
+	if (write_absolute_physrec(& image->lvl1_ref, 0, &image->vib))
 		return IMGTOOLERR_WRITEERROR;
 
 
@@ -1593,11 +2114,11 @@ static int ti99_image_deletefile(IMAGE *img, const char *fname)
 		buf[2*i] = image->catalog[i].fdr_physrec >> 8;
 		buf[2*i+1] = image->catalog[i].fdr_physrec & 0xff;
 	}
-	if (write_absolute_physrec(image->file_handle, 1, & image->geometry, buf))
+	if (write_absolute_physrec(& image->lvl1_ref, 1, buf))
 		return IMGTOOLERR_WRITEERROR;
 
 	/* update bitmap */
-	if (write_absolute_physrec(image->file_handle, 0, & image->geometry, &image->vib))
+	if (write_absolute_physrec(& image->lvl1_ref, 0, &image->vib))
 		return IMGTOOLERR_WRITEERROR;
 
 
@@ -1605,13 +2126,13 @@ static int ti99_image_deletefile(IMAGE *img, const char *fname)
 }
 
 /*
-	Create a blank ti99_image.
+	Create a blank ti99_image (common code).
 */
-static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *in_options)
+static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *in_options, ti99_img_format img_format)
 {
 	const char *volname;
 	int density;
-	ti99_geometry geometry;
+	ti99_lvl1_ref lvl1_ref;
 	int protected;
 
 	int totphysrecs, physrecsperAU, totAUs;
@@ -1624,15 +2145,18 @@ static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const Res
 
 	(void) mod;
 
+	lvl1_ref.img_format = img_format;
+	lvl1_ref.file_handle = f;
+
 	/* read options */
 	volname = in_options[ti99_createopts_volname].s;
 	density = in_options[ti99_createopts_density].i;
-	geometry.sides = in_options[ti99_createopts_sides].i;
-	geometry.tracksperside = in_options[ti99_createopts_tracks].i;
-	geometry.secspertrack = in_options[ti99_createopts_sectors].i;
+	lvl1_ref.geometry.sides = in_options[ti99_createopts_sides].i;
+	lvl1_ref.geometry.tracksperside = in_options[ti99_createopts_tracks].i;
+	lvl1_ref.geometry.secspertrack = in_options[ti99_createopts_sectors].i;
 	protected = in_options[ti99_createopts_protection].i;
 
-	totphysrecs = geometry.secspertrack * geometry.tracksperside * geometry.sides;
+	totphysrecs = lvl1_ref.geometry.secspertrack * lvl1_ref.geometry.tracksperside * lvl1_ref.geometry.sides;
 	physrecsperAU = (totphysrecs + 1599) / 1600;
 	/* round to next larger power of 2 */
 	for (i = 1; i < physrecsperAU; i <<= 1)
@@ -1641,15 +2165,15 @@ static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const Res
 	totAUs = totphysrecs / physrecsperAU;
 
 	/* check number of tracks if 40-track image */
-	if ((density < 3) && (geometry.tracksperside > 40))
+	if ((density < 3) && (lvl1_ref.geometry.tracksperside > 40))
 		return IMGTOOLERR_PARAMTOOLARGE;
 
 	/* FM disks can hold fewer sector per track than MFM disks */
-	if ((density == 1) && (geometry.secspertrack > 9))
+	if ((density == 1) && (lvl1_ref.geometry.secspertrack > 9))
 		return IMGTOOLERR_PARAMTOOLARGE;
 
 	/* DD disks can hold fewer sector per track than HD disks */
-	if ((density == 2) && (geometry.secspertrack > 18))
+	if ((density == 2) && (lvl1_ref.geometry.secspertrack > 18))
 		return IMGTOOLERR_PARAMTOOLARGE;
 
 	/* check total disk size */
@@ -1663,13 +2187,13 @@ static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const Res
 
 	/* set every header field */
 	set_UINT16BE(& vib.totphysrecs, totphysrecs);
-	vib.secspertrack = geometry.secspertrack;
+	vib.secspertrack = lvl1_ref.geometry.secspertrack;
 	vib.id[0] = 'D';
 	vib.id[1] = 'S';
 	vib.id[2] = 'K';
 	vib.protection = protected ? 'P' : ' ';
-	vib.tracksperside = geometry.tracksperside;
-	vib.sides = geometry.sides;
+	vib.tracksperside = lvl1_ref.geometry.tracksperside;
+	vib.sides = lvl1_ref.geometry.sides;
 	vib.density = density;
 	for (i=0; i<3; i++)
 	{
@@ -1694,7 +2218,7 @@ static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const Res
 	vib.abm[0] |= (physrecsperAU == 1) ? 3 : 1;
 
 	/* write sector 0 */
-	if (write_absolute_physrec(f, 0, & geometry, &vib))
+	if (write_absolute_physrec(& lvl1_ref, 0, &vib))
 		return IMGTOOLERR_WRITEERROR;
 
 
@@ -1702,11 +2226,27 @@ static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const Res
 	memset(empty_sec, 0, 256);
 
 	for (i=1; i<totphysrecs; i++)
-		if (write_absolute_physrec(f, i, & geometry, empty_sec))
+		if (write_absolute_physrec(& lvl1_ref, i, empty_sec))
 			return IMGTOOLERR_WRITEERROR;
 
 
 	return 0;
+}
+
+/*
+	Create a blank ti99_image (MESS format).
+*/
+static int ti99_image_create_mess(const struct ImageModule *mod, STREAM *f, const ResolvedOption *in_options)
+{
+	return ti99_image_create(mod, f, in_options, if_mess);
+}
+
+/*
+	Create a blank ti99_image (V9T9 format).
+*/
+static int ti99_image_create_v9t9(const struct ImageModule *mod, STREAM *f, const ResolvedOption *in_options)
+{
+	return ti99_image_create(mod, f, in_options, if_v9t9);
 }
 
 /*

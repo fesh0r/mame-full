@@ -368,6 +368,27 @@ int stream_seek(STREAM *s, size_t pos, int where)
 	return result;
 }
 
+size_t stream_tell(STREAM *s)
+{
+	int result = 0;
+	struct stream_internal *si = (struct stream_internal *) s;
+
+	switch(si->imgtype) {
+	case IMG_FILE:
+		result = ftell(si->u.f);
+		break;
+
+	case IMG_MEM:
+		result = si->u.m.pos;
+		break;
+
+	default:
+		assert(0);
+		break;
+	}
+	return result;
+}
+
 size_t stream_transfer(STREAM *dest, STREAM *source, size_t sz)
 {
 	size_t result = 0;

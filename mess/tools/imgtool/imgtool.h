@@ -86,6 +86,7 @@ size_t stream_read(STREAM *f, void *buf, size_t sz);
 size_t stream_write(STREAM *f, const void *buf, size_t sz);
 size_t stream_size(STREAM *f);
 int stream_seek(STREAM *f, size_t pos, int where);
+size_t stream_tell(STREAM *s);
 /* works currently only for IMG_FILE
    clears FILE on harddisk! */
 void stream_clear(STREAM *f);

@@ -83,7 +83,10 @@ IMAGEMODULE_EXTERN(ti86e);		/* TI-86 equation file */
 IMAGEMODULE_EXTERN(ti86r);		/* TI-86 range settings file */
 IMAGEMODULE_EXTERN(ti86g);		/* TI-86 grouped file */
 IMAGEMODULE_EXTERN(ti86);		/* TI-86 file */
-IMAGEMODULE_EXTERN(ti99);		/* TI99 floppy */
+IMAGEMODULE_EXTERN(ti99);		/* TI99 floppy (MESS format) */
+IMAGEMODULE_EXTERN(v9t9);		/* TI99 floppy (V9T9 format) */
+IMAGEMODULE_EXTERN(pc99fm);		/* TI99 floppy (PC99 FM format) */
+IMAGEMODULE_EXTERN(pc99mfm);	/* TI99 floppy (PC99 MFM format) */
 IMAGEMODULE_EXTERN(ti990dsk);	/* TI990 disk */
 
 static const ImageModule_ctor module_ctors[] =
@@ -159,6 +162,9 @@ static const ImageModule_ctor module_ctors[] =
 	IMAGEMODULE_DECL(ti86g),
 	IMAGEMODULE_DECL(ti86),
 	IMAGEMODULE_DECL(ti99),
+	IMAGEMODULE_DECL(v9t9),
+	IMAGEMODULE_DECL(pc99fm),
+	IMAGEMODULE_DECL(pc99mfm),
 	IMAGEMODULE_DECL(ti990dsk)
 };
 
