@@ -1,9 +1,9 @@
 # set this to mame, mess or the destination you want to build
-# TARGET = mame
+TARGET = mame
 # TARGET = mess
 # TARGET = neomame
 # example for a tiny compile
-TARGET = tiny
+# TARGET = tiny
 
 # uncomment next line to include the debugger
 DEBUG = 1
@@ -32,7 +32,7 @@ LD = @gcc
 #ASM = @nasm
 ASM = @nasmw
 ASMFLAGS = -f coff
-MD = @mkdir
+MD = -mkdir
 RM = @rm -f
 
 ifdef DEBUG
@@ -107,12 +107,14 @@ nozlib:
 	@echo Missing zlib library! Get it from http://www.cdrom.com/pub/infozip/zlib/
 endif
 
-#if obj subdirectory doesn't exist, create the tree before proceeding
-ifeq ($(wildcard $(OBJ)),)
-noobj: maketree all
+OBJDIRS = $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/msdos \
+	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw
+ifdef MESS
+OBJDIRS += $(OBJ)/mess $(OBJ)/mess/systems $(OBJ)/mess/machine \
+	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/tools
 endif
 
-all:	$(EMULATOR) extra
+all:	maketree $(EMULATOR) extra
 
 # include the various .mak files
 include src/core.mak
@@ -184,26 +186,10 @@ $(OBJ)/%.a:
 makedir:
 	@echo make makedir is no longer necessary, just type make
 
-maketree:
-	@echo Making MAME object tree in $(OBJ)...
-	@md $(OBJ)
-	@md $(OBJ)\cpu
-	@md $(OBJ)\sound
-	@md $(OBJ)\msdos
-	@md $(OBJ)\drivers
-	@md $(OBJ)\machine
-	@md $(OBJ)\vidhrdw
-	@md $(OBJ)\sndhrdw
-ifdef MESS
-	@echo Making MESS object tree in $(OBJ)\mess...
-	@md $(OBJ)\mess
-	@md $(OBJ)\mess\systems
-	@md $(OBJ)\mess\machine
-	@md $(OBJ)\mess\vidhrdw
-	@md $(OBJ)\mess\sndhrdw
-	@md $(OBJ)\mess\tools
-endif
-	$(MD) $(sort $(OBJDIRS))
+$(sort $(OBJDIRS)):
+	$(MD) $@
+
+maketree: $(sort $(OBJDIRS))
 
 clean:
 	@echo Deleting object tree $(OBJ)...
