@@ -326,11 +326,9 @@ INPUT_PORTS_START( pcmda )
 	PORT_BIT( 0x02, 0x02,	IPT_UNUSED ) /* no turbo switch */
 	PORT_BIT( 0x01, 0x01,	IPT_UNUSED )
 
-	PC_KEYBOARD
-
-	INPUT_MICROSOFT_MOUSE
-
-	PC_JOYSTICK
+	PORT_INCLUDE( at_keyboard )		/* IN4 - IN11 */
+	PORT_INCLUDE( pc_mouse_microsoft )	/* IN12 - IN14 */
+	PORT_INCLUDE( pc_joystick )			/* IN15 - IN19 */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( pccga )
@@ -403,11 +401,9 @@ INPUT_PORTS_START( pccga )
 	PORT_BIT( 0x02, 0x02,	IPT_UNUSED ) /* no turbo switch */
 	PORT_BIT( 0x01, 0x01,	IPT_UNUSED )
 
-	PC_KEYBOARD		/* IN4 - IN11 */
-
-	INPUT_MICROSOFT_MOUSE	/* IN12 - IN14 */
-
-	PC_JOYSTICK		/* IN15 - IN19 */
+	PORT_INCLUDE( pc_keyboard )		/* IN4 - IN11 */
+	PORT_INCLUDE( pc_mouse_microsoft )	/* IN12 - IN14 */
+	PORT_INCLUDE( pc_joystick )			/* IN15 - IN19 */
 
     PORT_START /* IN20 */
 	PORT_CONFNAME( 0x03, 0x00, "CGA character set")
@@ -479,9 +475,8 @@ INPUT_PORTS_START( europc )
 
 	EUROPC_KEYBOARD
 
-	INPUT_MICROSOFT_MOUSE
-
-	PC_JOYSTICK
+	PORT_INCLUDE( pc_mouse_microsoft )	/* IN12 - IN14 */
+	PORT_INCLUDE( pc_joystick )			/* IN15 - IN19 */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( bondwell )
@@ -556,11 +551,9 @@ INPUT_PORTS_START( bondwell )
 	PORT_DIPSETTING(	0x02, "On (12 MHz)" )
 	PORT_BIT( 0x01, 0x01,	IPT_UNUSED )
 
-	AT_KEYBOARD
-
-	INPUT_MICROSOFT_MOUSE
-
-	PC_JOYSTICK
+	PORT_INCLUDE( at_keyboard )		/* IN4 - IN11 */
+	PORT_INCLUDE( pc_mouse_microsoft )	/* IN12 - IN14 */
+	PORT_INCLUDE( pc_joystick )			/* IN15 - IN19 */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( xtcga )
@@ -635,11 +628,10 @@ INPUT_PORTS_START( xtcga )
 	PORT_DIPSETTING(	0x02, "On (12 MHz)" )
 	PORT_BIT( 0x01, 0x01,	IPT_UNUSED )
 
-	PC_KEYBOARD
+	PORT_INCLUDE( pc_keyboard )		/* IN4 - IN11 */
+	PORT_INCLUDE( pc_mouse_microsoft )	/* IN12 - IN14 */
+	PORT_INCLUDE( pc_joystick )			/* IN15 - IN19 */
 
-	INPUT_MICROSOFT_MOUSE
-
-	PC_JOYSTICK
     PORT_START /* IN20 */
 	PORT_CONFNAME( 0x03, 0x00, "CGA character set")
 	PORT_CONFSETTING(0x00, "Normal")
@@ -699,11 +691,9 @@ INPUT_PORTS_START( tandy1t )
 	PORT_BIT( 0x02, 0x02,	IPT_UNUSED ) /* no turbo switch */
 	PORT_BIT( 0x01, 0x01,	IPT_UNUSED )
 
-	TANDY1000_KEYB
-
-	INPUT_MICROSOFT_MOUSE
-
-	PC_JOYSTICK
+	PORT_INCLUDE( t1000_keyboard )
+	PORT_INCLUDE( pc_mouse_microsoft )	/* IN12 - IN14 */
+	PORT_INCLUDE( pc_joystick )			/* IN15 - IN19 */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( pc200 )
@@ -776,11 +766,9 @@ PORT_BIT ( 0x04, 0x04,	 IPT_UNUSED ) // lpt 1 on motherboard
 	PORT_BIT( 0x02, 0x02,	IPT_UNUSED ) /* no turbo switch */
 	PORT_BIT( 0x01, 0x01,	IPT_UNUSED )
 
-	AT_KEYBOARD
-
-	INPUT_MICROSOFT_MOUSE
-
-	PC_JOYSTICK
+	PORT_INCLUDE( at_keyboard )		/* IN4 - IN11 */
+	PORT_INCLUDE( pc_mouse_microsoft )	/* IN12 - IN14 */
+	PORT_INCLUDE( pc_joystick )			/* IN15 - IN19 */
 
     PORT_START /* IN20 */
 	PORT_CONFNAME( 0x03, 0x03, "IDA character set")
@@ -856,7 +844,7 @@ PORT_BIT ( 0x04, 0x04,	 IPT_UNUSED ) // lpt 1 on motherboard
 
 	AMSTRAD_KEYBOARD
 
-	PC_NO_JOYSTICK
+	PORT_INCLUDE( pc_joystick_none )
 
     PORT_START /* IN20 */
 	PORT_CONFNAME( 0x03, 0x03, "CGA character set")
@@ -868,8 +856,6 @@ PORT_BIT ( 0x04, 0x04,	 IPT_UNUSED ) // lpt 1 on motherboard
 	PORT_CONFSETTING(0x00, "Colour RGB")
     PORT_CONFSETTING(0x04, "Mono RGB")
     PORT_BIT ( 0xE0, 0x20, IPT_UNUSED )	/* Chipset is always PC1512 */
-
-//	PC_JOYSTICK
 INPUT_PORTS_END
 
 INPUT_PORTS_START( pc1640 )
@@ -989,7 +975,7 @@ PORT_BIT ( 0x04, 0x04,	 IPT_UNUSED ) // lpt 1 on motherboard
 
 	AMSTRAD_KEYBOARD
 
-//	INPUT_MICROSOFT_MOUSE
+//	PORT_INCLUDE( pc_mouse_microsoft )	/* IN12 - IN14 */
 
 INPUT_PORTS_END
 
@@ -1074,11 +1060,9 @@ INPUT_PORTS_START( xtvga )
 	PORT_DIPSETTING(	0x02, "On (12 MHz)" )
 	PORT_BIT( 0x01, 0x01,	IPT_UNUSED )
 
-	AT_KEYBOARD
-
-	INPUT_MICROSOFT_MOUSE
-
-	PC_JOYSTICK
+	PORT_INCLUDE( at_keyboard )		/* IN4 - IN11 */
+	PORT_INCLUDE( pc_mouse_microsoft )	/* IN12 - IN14 */
+	PORT_INCLUDE( pc_joystick )			/* IN15 - IN19 */
 INPUT_PORTS_END
 
 static unsigned i86_address_mask = 0x000fffff;

@@ -271,11 +271,9 @@ INPUT_PORTS_START( atcga )
 	PORT_BIT( 0x02, 0x02,	IPT_UNUSED ) /* no turbo switch */
 	PORT_BIT( 0x01, 0x01,	IPT_UNUSED )
 
-	AT_KEYBOARD
-
-	INPUT_MICROSOFT_MOUSE
-
-	PC_JOYSTICK
+	PORT_INCLUDE( at_keyboard )		/* IN4 - IN11 */
+	PORT_INCLUDE( pc_mouse_microsoft )	/* IN12 - IN14 */
+	PORT_INCLUDE( pc_joystick )			/* IN15 - IN19 */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( atvga )
@@ -358,11 +356,9 @@ INPUT_PORTS_START( atvga )
 	PORT_BIT( 0x02, 0x02,	IPT_UNUSED ) /* no turbo switch */
 	PORT_BIT( 0x01, 0x01,	IPT_UNUSED )
 
-	AT_KEYBOARD
-
-	INPUT_MICROSOFT_MOUSE
-
-	PC_JOYSTICK
+	PORT_INCLUDE( at_keyboard )		/* IN4 - IN11 */
+	PORT_INCLUDE( pc_mouse_microsoft )	/* IN12 - IN14 */
+	PORT_INCLUDE( pc_joystick )			/* IN15 - IN19 */
 INPUT_PORTS_END
 
 static unsigned i286_address_mask = 0x00ffffff;

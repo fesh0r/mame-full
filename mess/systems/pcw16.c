@@ -1404,9 +1404,9 @@ INPUT_PORTS_START(pcw16)
 	PORT_DIPSETTING(0x0, DEF_STR( Off) )
 	PORT_DIPSETTING(0x40, DEF_STR( On) )
 
-	INPUT_MOUSE_SYSTEMS
+	PORT_INCLUDE( pc_mouse_mousesystems )	/* IN12 - IN14 */
 
-	AT_KEYBOARD
+	PORT_INCLUDE( at_keyboard )		/* IN4 - IN11 */
 INPUT_PORTS_END
 
 static struct beep_interface pcw16_beep_interface =

@@ -186,6 +186,7 @@ static void pc_mouse_scan(int n)
 /**************************************************************************
  *	Check for mouse control line changes and (de-)install timer
  **************************************************************************/
+
 void pc_mouse_handshake_in(int n, int outputs)
 {
     int new_msr = 0x00;
@@ -226,3 +227,47 @@ void pc_mouse_handshake_in(int n, int outputs)
 	pc_mouse.inputs=new_msr;
 	uart8250_handshake_in(pc_mouse.serial_port, new_msr);
 }
+
+
+
+/**************************************************************************
+ *	Mouse INPUT_PORT declarations
+ **************************************************************************/
+
+INPUT_PORTS_START( pc_mouse_mousesystems )
+	PORT_START	/* IN12 */
+	PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "Mouse Left Button", KEYCODE_Q, JOYCODE_1_BUTTON1)
+	PORT_BITX( 0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "Mouse Middle Button", KEYCODE_W, JOYCODE_1_BUTTON2)
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "Mouse Right Button", KEYCODE_E, JOYCODE_1_BUTTON3)
+
+	PORT_START /* Mouse - X AXIS */
+	PORT_ANALOGX( 0xfff, 0x00, IPT_MOUSE_X | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+
+	PORT_START /* Mouse - Y AXIS */
+	PORT_ANALOGX( 0xfff, 0x00, IPT_MOUSE_Y | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+INPUT_PORTS_END
+
+
+
+INPUT_PORTS_START( pc_mouse_microsoft )
+	PORT_START	/* IN12 */
+	PORT_BITX( 0x0002, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"Mouse Button Left",	CODE_NONE,		JOYCODE_1_BUTTON1)
+	PORT_BITX( 0x0001, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"Mouse Button Right",	CODE_NONE,		JOYCODE_1_BUTTON2)
+
+	PORT_START /* IN13 mouse X */
+	PORT_ANALOGX(0xfff,0,IPT_MOUSE_X,100,0,0,0xfff,KEYCODE_LEFT,KEYCODE_RIGHT,JOYCODE_1_LEFT,JOYCODE_1_RIGHT)
+
+	PORT_START /* IN14 mouse Y */
+	PORT_ANALOGX(0xfff,0,IPT_MOUSE_Y,100,0,0,0xfff,KEYCODE_UP,KEYCODE_DOWN,JOYCODE_1_UP,JOYCODE_1_DOWN)
+INPUT_PORTS_END
+
+
+
+INPUT_PORTS_START( pc_mouse_none )
+	PORT_START      /* IN12 */
+	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
+	PORT_START      /* IN13 */
+	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
+	PORT_START      /* IN14 */
+	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
+INPUT_PORTS_END

@@ -14,6 +14,9 @@ System Driver Changes:
   better now.  Also changed default joystick input definitions.  [Yoann
   Courtois]
  
+- [IBMAT] Fixed a regression that prevented AT 286 drivers from loading [Nate
+  Woods]
+  
 - [PC1512] Video fixes [Andrew Jenner]
 
 

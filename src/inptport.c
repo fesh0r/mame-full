@@ -2533,6 +2533,8 @@ struct InputPort *input_port_initialize(void *param, UINT32 type)
 	port->player	= (type >> 16) % 0x08;			
 	port->toggle	= (type & IPF_TOGGLE)	? 1 : 0;
 	port->reset_cpu = (type & IPF_RESETCPU)	? 1 : 0;
+	if (port->type > IPT_ANALOG_START && port->type < IPT_ANALOG_END)
+		port->u.analog.reverse = (type & IPF_REVERSE) ? 1 : 0;
 
 	/* sets up default port codes */
 	switch(port->type)

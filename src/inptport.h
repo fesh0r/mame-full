@@ -244,6 +244,9 @@ enum { IPT_END=1,IPT_PORT,
  		construct_ipt_##base(param);					\
 	}													\
 
+#define INPUT_PORTS_EXTERN(name)						\
+	extern void construct_ipt_##name(void *param)		\
+
 /* including */
 #define PORT_INCLUDE(name)								\
  		construct_ipt_##name(param);					\

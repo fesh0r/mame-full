@@ -2077,6 +2077,15 @@ static int validitychecks(void)
 							error = 1;
 						}
 					}
+					
+					if (inp->type > IPT_ANALOG_START && inp->type < IPT_ANALOG_END)
+					{
+						if (inp->u.analog.sensitivity == 0)
+						{
+							printf("%s: %s has an analog port with zero sensitivity\n",drivers[i]->source_file,drivers[i]->name);
+							error = 1;
+						}
+					}
 
 					if (!my_stricmp(inp->name,"table"))
 					{

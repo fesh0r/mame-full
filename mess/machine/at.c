@@ -101,7 +101,7 @@ static void init_at_common(AT8042_CONFIG *at8042)
 DRIVER_INIT( atcga )
 {
 	AT8042_CONFIG at8042={
-		AT8042_STANDARD, at386_set_gate_a20
+		AT8042_STANDARD, at286_set_gate_a20
 	};
 	init_at_common(&at8042);
 }
