@@ -34,6 +34,7 @@
 #include "xmame.h"
 #include "devices.h"
 
+#include <linux/version.h>
 #include <linux/input.h>
 
 #include "lightgun_abs_event.h"
@@ -44,6 +45,7 @@ enum { LG_X_AXIS, LG_Y_AXIS, LG_MAX_AXIS };
 
 #define test_bit(bit, array)	(array[bit/8] & (1<<(bit%8)))
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
 struct input_absinfo {
 	int abs;
 	int min_value;
@@ -51,6 +53,7 @@ struct input_absinfo {
 	int fuzz;
 	int flat;
 };
+#endif
 
 struct lg_dev {
 	char *device;
@@ -132,8 +135,8 @@ void lightgun_event_abs_init(void)
 			continue;
 		}
 
-		lg_devices[i].min[LG_X_AXIS] = abs_features.min_value;
-		lg_devices[i].range[LG_X_AXIS] = abs_features.max_value - abs_features.min_value;
+		lg_devices[i].min[LG_X_AXIS] = abs_features.minimum;
+		lg_devices[i].range[LG_X_AXIS] = abs_features.maximum - abs_features.minimum;
 
 		if (ioctl(lg_devices[i].fd, EVIOCGABS(ABS_Y), &abs_features)) {
 			fprintf(stderr_file, "Lightgun%d: %s[ioctl/EVIOCGABS(ABX_Y)]: %m\n",
@@ -142,8 +145,8 @@ void lightgun_event_abs_init(void)
 			continue;
 		}
 
-		lg_devices[i].min[LG_Y_AXIS] = abs_features.min_value;
-		lg_devices[i].range[LG_Y_AXIS] = abs_features.max_value - abs_features.min_value;
+		lg_devices[i].min[LG_Y_AXIS] = abs_features.minimum;
+		lg_devices[i].range[LG_Y_AXIS] = abs_features.maximum - abs_features.minimum;
 
 		fprintf(stderr_file, "Lightgun%d: %s\n", i + 1, name);
 		fprintf(stderr_file, "           X axis:  min[%d]  range[%d]\n",
