@@ -882,11 +882,19 @@ int x11_window_create_display (int bitmap_depth)
                                 {
                                   if (hwscale_yuv)
                                   {
+                                    int orig_fullscreen = hwscale_fullscreen;
+                                    
                                     if (hwscale_yv12)
                                       ClearYV12();
                                     else
                                       ClearYUY2();
+                                    
+                                    /* set fullscreen to stop refresh_screen
+                                       resizing the window */
+                                    hwscale_fullscreen = 1;
                                     x11_window_refresh_screen();
+                                    hwscale_fullscreen = orig_fullscreen;
+                                    
                                     XSync (display, False);  /* be sure to get request processed */
                                     /* sleep (1);          enought time to notify error if any */
                                   }

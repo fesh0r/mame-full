@@ -117,13 +117,10 @@ int mode_match(int width, int height)
    
   if (use_aspect_ratio)
   {
-    if (blit_swapxy)
-      perfect_width = (visheight / aspect_ratio) /
-        (aspect/display_aspect_ratio);
-    else
-      perfect_width = (visheight * aspect_ratio) /
-        (aspect/display_aspect_ratio);
-    
+    /* first of all calculate the pixel aspect_ratio the game has */
+    double pixel_aspect_ratio = viswidth / (visheight * aspect_ratio);
+
+    perfect_width  = display_aspect_ratio * pixel_aspect_ratio * visheight;
     perfect_height = visheight;
          
     if (perfect_width < viswidth)
@@ -149,8 +146,8 @@ int mode_match(int width, int height)
 
   return ( 100 *
     (perfect_width  / (fabs(width -perfect_width )+perfect_width )) *
-    (perfect_height / (fabs(height-perfect_height)+perfect_height)));
-/*  (perfect_aspect / (fabs(aspect-perfect_aspect)+perfect_aspect))); */
+    (perfect_height / (fabs(height-perfect_height)+perfect_height)) *
+    (perfect_aspect / (fabs(aspect-perfect_aspect)+perfect_aspect)));
 }
 
 /* calculate a virtual screen contained within the given dimensions
@@ -174,7 +171,7 @@ void mode_clip_aspect(int width, int height, int *corr_width, int *corr_height,
   }
   else
     cw = width;
-  
+    
   *corr_width  = cw + 0.5;
   *corr_height = ch + 0.5;
 }
@@ -192,9 +189,9 @@ void mode_stretch_aspect(int width, int height, int *corr_width, int *corr_heigh
   {
     cw = height * aspect_ratio *
       (display_resolution_aspect_ratio/display_aspect_ratio);
-    if ((int)(cw+0.5) < width )
+    if ((int)(cw+0.5) < width)
     {
-      ch *= (double)width / cw;
+      ch *= width / cw;
       cw  = width;
     }
   }
