@@ -28,7 +28,7 @@ System Driver Changes:
 User Interface Changes:
 -----------------------
 - [Windows GUI] Fixed some miscellaneous bugs having to do with the software
-  picker settings.  (bug #568, bug #569)  [Nate Woods]
+  picker settings.  (bug #568, bug #571)  [Nate Woods]
 
 
 
