@@ -24,9 +24,10 @@
 #endif
 
 
-struct CustomSound_interface pc_sound_interface = {
+struct CustomSound_interface pc_sound_interface =
+{
 	pc_sh_custom_start,
-	pc_sh_stop,
+	NULL,
 	pc_sh_custom_update
 };
 
@@ -48,14 +49,6 @@ static int pc_sh_start(void)
 int pc_sh_custom_start(const struct MachineSound* driver)
 {
 	return pc_sh_start();
-}
-
-/************************************/
-/* Sound handler stop				*/
-/************************************/
-void pc_sh_stop(void)
-{
-	logerror("pc_sh_stop\n");
 }
 
 void pc_sh_speaker(int data)

@@ -134,27 +134,29 @@ extern void pc_aga_timer(void)
 	}
 }
 
-static void pc_aga_cursor(CRTC6845_CURSOR *cursor)
+static void pc_aga_cursor(struct crtc6845_cursor *cursor)
 {
 	switch (aga.mode) {
-	case AGA_COLOR: pc_cga_cursor(cursor);break;
-	case AGA_MONO: pc_mda_cursor(cursor);break;
-	case AGA_OFF: break;
+	case AGA_COLOR:
+		pc_cga_cursor(cursor);
+		break;
+
+	case AGA_MONO:
+		pc_mda_cursor(cursor);
+		break;
+
+	case AGA_OFF:
+		break;
 	}
 }
 
 
-static CRTC6845_CONFIG config= { 14318180 /*?*/, pc_aga_cursor };
+static struct crtc6845_config config= { 14318180 /*?*/, pc_aga_cursor };
 
 VIDEO_START( pc_aga )
 {
-	crtc6845_init(crtc6845, &config);
-	pc_mda_europc_init(crtc6845);
-	pc_cga_init_video(crtc6845);
-
-	return pc_video_start(crtc6845, &config, pc_aga_choosevideomode);
-
-	return video_start_generic();
+	pc_mda_europc_init();
+	return pc_video_start(&config, pc_aga_choosevideomode) ? INIT_PASS : INIT_FAIL;
 }
 
 /***************************************************************************

@@ -6,7 +6,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [IBMPC] Fixed a bug in keyboard handling that caused a 'stuck key' keyboard
+  error to be displayed (bug #427). [Colin Howell, Nate Woods]
 
 User Interface Changes:
 -----------------------

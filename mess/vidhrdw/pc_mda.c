@@ -99,8 +99,6 @@ PALETTE_INIT( pc_mda )
 }
 
 static struct { 
-	struct _CRTC6845 *crtc;
-
 	UINT8 status;
 
 	int pc_blink;
@@ -128,8 +126,8 @@ static void pc_mda_blink_textcolors(int on)
 	if (mda.pc_blink == on) return;
 
     mda.pc_blink = on;
-	offs = (crtc6845_get_start(mda.crtc)*2)% videoram_size;
-	size = crtc6845_get_char_lines(mda.crtc)*crtc6845_get_char_columns(mda.crtc);
+	offs = (crtc6845_get_start(crtc6845)*2)% videoram_size;
+	size = crtc6845_get_char_lines(crtc6845)*crtc6845_get_char_columns(crtc6845);
 
 	if (dirtybuffer)
 	{
@@ -150,15 +148,15 @@ extern void pc_mda_timer(void)
 	}
 }
 
-void pc_mda_cursor(CRTC6845_CURSOR *cursor)
+void pc_mda_cursor(struct crtc6845_cursor *cursor)
 {
 	if (dirtybuffer)
 		dirtybuffer[cursor->pos*2]=1;
 }
 
-static CRTC6845_CONFIG config= { 14318180 /*?*/, pc_mda_cursor };
+static struct crtc6845_config config= { 14318180 /*?*/, pc_mda_cursor };
 
-static void pc_mda_init_video_internal(struct _CRTC6845 *crtc, int gfx_char, int gfx_graphic)
+static void pc_mda_init_video_internal(int gfx_char, int gfx_graphic)
 {
 	int i, y;
 
@@ -174,23 +172,22 @@ static void pc_mda_init_video_internal(struct _CRTC6845 *crtc, int gfx_char, int
 				Machine->gfx[gfx_char]->gfxdata[(i * Machine->gfx[gfx_char]->height + y) * Machine->gfx[gfx_char]->width + 8] = 0;
 		}
 	}
-	mda.crtc = crtc6845;
 }
 
-void pc_mda_init_video(struct _CRTC6845 *crtc)
+void pc_mda_init_video(void)
 {
-	pc_mda_init_video_internal(crtc, 0, 1);
+	pc_mda_init_video_internal(0, 1);
 }
 
-void pc_mda_europc_init(struct _CRTC6845 *crtc)
+void pc_mda_europc_init(void)
 {
-	pc_mda_init_video_internal(crtc, 3, 4);
+	pc_mda_init_video_internal(3, 4);
 }
 
 VIDEO_START( pc_mda )
 {
-	pc_mda_init_video(crtc6845);
-	return pc_video_start(mda.crtc, &config, pc_mda_choosevideomode);
+	pc_mda_init_video();
+	return pc_video_start(&config, pc_mda_choosevideomode) ? INIT_PASS : INIT_FAIL;
 }
 
 /*
@@ -240,10 +237,10 @@ WRITE_HANDLER ( pc_MDA_w )
 	switch( offset )
 	{
 		case 0: case 2: case 4: case 6:
-			crtc6845_port_w(mda.crtc, 0, data);
+			crtc6845_port_w(crtc6845, 0, data);
 			break;
 		case 1: case 3: case 5: case 7:
-			crtc6845_port_w(mda.crtc, 1, data);
+			crtc6845_port_w(crtc6845, 1, data);
 			break;
 		case 8:
 			hercules_mode_control_w(data);
@@ -260,10 +257,10 @@ READ_HANDLER ( pc_MDA_r )
 	switch( offset )
 	{
 		case 0: case 2: case 4: case 6:
-			data = crtc6845_port_r(mda.crtc,0);
+			data = crtc6845_port_r(crtc6845,0);
 			break;
 		case 1: case 3: case 5: case 7:
-			data = crtc6845_port_r(mda.crtc,1);
+			data = crtc6845_port_r(crtc6845,1);
 			break;
 		case 10:
 			data = pc_mda_status_r();
@@ -278,21 +275,21 @@ READ_HANDLER ( pc_MDA_r )
   The character cell size is 9x15. Column 9 is column 8 repeated for
   character codes 176 to 223.
 ***************************************************************************/
-static void mda_text_inten(struct mame_bitmap *bitmap)
+static void mda_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int sx, sy;
-	int	offs = crtc6845_get_start(mda.crtc)*2;
-	int lines = crtc6845_get_char_lines(mda.crtc);
-	int height = crtc6845_get_char_height(mda.crtc);
-	int columns = crtc6845_get_char_columns(mda.crtc);
+	int	offs = crtc6845_get_start(crtc)*2;
+	int lines = crtc6845_get_char_lines(crtc);
+	int height = crtc6845_get_char_height(crtc);
+	int columns = crtc6845_get_char_columns(crtc);
 	int char_width;
 	struct rectangle r;
-	CRTC6845_CURSOR cursor;
+	struct crtc6845_cursor cursor;
 
 	char_width = Machine->scrbitmap->width / 80;
 
-	crtc6845_time(mda.crtc);
-	crtc6845_get_cursor(mda.crtc, &cursor);
+	crtc6845_time(crtc);
+	crtc6845_get_cursor(crtc, &cursor);
 
 	for (sy=0, r.min_y=0, r.max_y=height-1; sy<lines; sy++, r.min_y+=height,r.max_y+=height) {
 
@@ -329,21 +326,21 @@ static void mda_text_inten(struct mame_bitmap *bitmap)
   The character cell size is 9x15. Column 9 is column 8 repeated for
   character codes 176 to 223.
 ***************************************************************************/
-static void mda_text_blink(struct mame_bitmap *bitmap)
+static void mda_text_blink(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int sx, sy;
-	int	offs = crtc6845_get_start(mda.crtc)*2;
-	int lines = crtc6845_get_char_lines(mda.crtc);
-	int height = crtc6845_get_char_height(mda.crtc);
-	int columns = crtc6845_get_char_columns(mda.crtc);
+	int	offs = crtc6845_get_start(crtc)*2;
+	int lines = crtc6845_get_char_lines(crtc);
+	int height = crtc6845_get_char_height(crtc);
+	int columns = crtc6845_get_char_columns(crtc);
 	struct rectangle r;
-	CRTC6845_CURSOR cursor;
+	struct crtc6845_cursor cursor;
 	int char_width;
 
 	char_width = Machine->scrbitmap->width / 80;
 
-	crtc6845_time(mda.crtc);
-	crtc6845_get_cursor(mda.crtc, &cursor);
+	crtc6845_time(crtc);
+	crtc6845_get_cursor(crtc, &cursor);
 
 	for (sy=0, r.min_y=0, r.max_y=height-1; sy<lines; sy++, r.min_y+=height,r.max_y+=height) {
 
@@ -391,53 +388,73 @@ static void mda_text_blink(struct mame_bitmap *bitmap)
   Every bank holds data for every n'th scanline, 8 pixels per byte,
   bit 7 being the leftmost.
 ***************************************************************************/
-static void hercules_gfx(struct mame_bitmap *bitmap)
+static void hercules_gfx(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int i, sx, sy, sh;
-	int	offs = crtc6845_get_start(mda.crtc)*2;
-	int lines = crtc6845_get_char_lines(mda.crtc);
-	int height = crtc6845_get_char_height(mda.crtc);
-	int columns = crtc6845_get_char_columns(mda.crtc)*2;
+	int	offs = crtc6845_get_start(crtc)*2;
+	int lines = crtc6845_get_char_lines(crtc);
+	int height = crtc6845_get_char_height(crtc);
+	int columns = crtc6845_get_char_columns(crtc)*2;
 	UINT8 *vram=videoram, *dbuffer=dirtybuffer;
-	if (mda.mode_control&0x80) { vram+=0x8000, dbuffer+=0x8000; }
 
-	for (sy=0; sy<lines; sy++,offs=(offs+columns)&0x1fff) {
+	if (mda.mode_control&0x80)
+	{
+		vram+=0x8000;
+		if (dbuffer)
+			dbuffer += 0x8000;
+	}
 
-		for (sh=0; sh<height; sh++) { // char line 0 used as a12 line in graphic mode
+	for (sy=0; sy<lines; sy++,offs=(offs+columns)&0x1fff)
+	{
+		for (sh=0; sh<height; sh++)
+		{
+			/* char line 0 used as a12 line in graphic mode */
 			switch(sh&3) { // char line 0 used as a12 line in graphic mode
 			case 0:
-				for (i=offs, sx=0; sx<columns; sx++, i=(i+1)&0x1fff) {
-					if (dbuffer[i]) {
+				for (i=offs, sx=0; sx<columns; sx++, i=(i+1)&0x1fff)
+				{
+					if (!dbuffer || dbuffer[i])
+					{
 						drawgfx(bitmap, mda.gfx_graphic, vram[i], 0, 0,0,sx*8,sy*height+sh,
 								0,TRANSPARENCY_NONE,0);
-						dbuffer[i]=0;
+						if (dbuffer)
+							dbuffer[i] = 0;
 					}
 				}
 				break;
 			case 1:
-				for (i=offs|0x2000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x2000) {
-					if (dbuffer[i]) {
+				for (i=offs|0x2000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x2000)
+				{
+					if (!dbuffer || dbuffer[i])
+					{
 						drawgfx(bitmap, mda.gfx_graphic, vram[i], 0, 0,0,sx*8,sy*height+sh,
 								0,TRANSPARENCY_NONE,0);
-						dbuffer[i]=0;
+						if (dbuffer)
+							dbuffer[i] = 0;
 					}
 				}
 				break;
 			case 2:
-				for (i=offs|0x4000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x4000) {
-					if (dbuffer[i]) {
+				for (i=offs|0x4000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x4000)
+				{
+					if (!dbuffer || dbuffer[i])
+					{
 						drawgfx(bitmap, mda.gfx_graphic, vram[i], 0, 0,0,sx*8,sy*height+sh,
 								0,TRANSPARENCY_NONE,0);
-						dbuffer[i]=0;
+						if (dbuffer)
+							dbuffer[i] = 0;
 					}
 				}
 				break;
 			case 3:
-				for (i=offs|0x6000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x6000) {
-					if (dbuffer[i]) {
+				for (i=offs|0x6000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x6000)
+				{
+					if (!dbuffer || dbuffer[i])
+					{
 						drawgfx(bitmap, mda.gfx_graphic, vram[i], 0, 0,0,sx*8,sy*height+sh,
 								0,TRANSPARENCY_NONE,0);
-						dbuffer[i]=0;
+						if (dbuffer)
+							dbuffer[i] = 0;
 					}
 				}
 				break;

@@ -11,9 +11,10 @@
 
 #include "includes/crtc6845.h"
 
-typedef void (*pc_video_update_proc)(struct mame_bitmap *bitmap);
+typedef void (*pc_video_update_proc)(struct mame_bitmap *bitmap,
+	struct crtc6845 *crtc);
 
-int pc_video_start(struct _CRTC6845 *crtc, CRTC6845_CONFIG *config,
+struct crtc6845 *pc_video_start(struct crtc6845_config *config,
 	pc_video_update_proc (*choosevideomode)(int *xfactor, int *yfactor));
 
 VIDEO_UPDATE( pc_video );

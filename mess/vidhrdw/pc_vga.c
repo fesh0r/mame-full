@@ -71,96 +71,72 @@ static VIDEO_UPDATE( vga );
 ***************************************************************************/
 
 /* grabbed from dac inited by et4000 bios */
-unsigned char ega_palette[0x40][3] =
+static unsigned char ega_palette[] =
 {
-	{ 0x00, 0x00, 0x00 },
-	{ 0x00, 0x00, 0xa8 },
-	{ 0x00, 0xa8, 0x00 },
-	{ 0x00, 0xa8, 0xa8 },
-	{ 0xa8, 0x00, 0x00 },
-	{ 0xa8, 0x00, 0xa8 },
-	{ 0xa8, 0x54, 0x00 },
-	{ 0xa8, 0xa8, 0xa8 },
-	{ 0x00, 0x00, 0x00 },
-	{ 0x00, 0x00, 0xa8 },
-	{ 0x00, 0xa8, 0x00 },
-	{ 0x00, 0xa8, 0xa8 },
-	{ 0xa8, 0x00, 0x00 },
-	{ 0xa8, 0x00, 0xa8 },
-	{ 0xa8, 0x54, 0x00 },
-	{ 0xa8, 0xa8, 0xa8 },
-	{ 0x54, 0x54, 0x54 },
-	{ 0x54, 0x54, 0xfc },
-	{ 0x54, 0xfc, 0x54 },
-	{ 0x54, 0xfc, 0xfc },
-	{ 0xfc, 0x54, 0x54 },
-	{ 0xfc, 0x54, 0xfc },
-	{ 0xfc, 0xfc, 0x54 },
-	{ 0xfc, 0xfc, 0xfc },
-	{ 0x54, 0x54, 0x54 },
-	{ 0x54, 0x54, 0xfc },
-	{ 0x54, 0xfc, 0x54 },
-	{ 0x54, 0xfc, 0xfc },
-	{ 0xfc, 0x54, 0x54 },
-	{ 0xfc, 0x54, 0xfc },
-	{ 0xfc, 0xfc, 0x54 },
-	{ 0xfc, 0xfc, 0xfc },
-	{ 0x00, 0x00, 0x00 },
-	{ 0x00, 0x00, 0xa8 },
-	{ 0x00, 0xa8, 0x00 },
-	{ 0x00, 0xa8, 0xa8 },
-	{ 0xa8, 0x00, 0x00 },
-	{ 0xa8, 0x00, 0xa8 },
-	{ 0xa8, 0x54, 0x00 },
-	{ 0xa8, 0xa8, 0xa8 },
-	{ 0x00, 0x00, 0x00 },
-	{ 0x00, 0x00, 0xa8 },
-	{ 0x00, 0xa8, 0x00 },
-	{ 0x00, 0xa8, 0xa8 },
-	{ 0xa8, 0x00, 0x00 },
-	{ 0xa8, 0x00, 0xa8 },
-	{ 0xa8, 0x54, 0x00 },
-	{ 0xa8, 0xa8, 0xa8 },
-	{ 0x54, 0x54, 0x54 },
-	{ 0x54, 0x54, 0xfc },
-	{ 0x54, 0xfc, 0x54 },
-	{ 0x54, 0xfc, 0xfc },
-	{ 0xfc, 0x54, 0x54 },
-	{ 0xfc, 0x54, 0xfc },
-	{ 0xfc, 0xfc, 0x54 },
-	{ 0xfc, 0xfc, 0xfc },
-	{ 0x54, 0x54, 0x54 },
-	{ 0x54, 0x54, 0xfc },
-	{ 0x54, 0xfc, 0x54 },
-	{ 0x54, 0xfc, 0xfc },
-	{ 0xfc, 0x54, 0x54 },
-	{ 0xfc, 0x54, 0xfc },
-	{ 0xfc, 0xfc, 0x54 },
-	{ 0xfc, 0xfc, 0xfc }
-};
-
-static struct GfxLayout vga_charlayout =
-{
-	9,32,					/* 9 x 32 characters (9 x 15 is the default, but..) */
-	256,					/* 256 characters */
-	1,                      /* 1 bits per pixel */
-	{ 0 },                  /* no bitplanes; 1 bit per pixel */
-	/* x offsets */
-	{ 0,1,2,3,4,5,6,7,7 },	/* pixel 7 repeated only for char code 176 to 223 */
-	/* y offsets */
-	{
-		2*8, 6*8, 10*8, 14*8, 18*8, 22*8, 26*8, 30*8,
-		34*8, 38*8, 42*8, 46*8, 50*8, 54*8, 58*8, 62*8,
-		66*8, 70*8, 74*8, 78*8, 82*8, 86*8, 90*8, 94*8,
-		98*8, 102*8, 106*8, 110*8, 114*8, 118*8, 122*8, 126*8
-	},
-	128*8
-};
-
-static struct GfxDecodeInfo vga_gfxdecodeinfo[] =
-{
-	{ 0, 0x0000, &vga_charlayout,			  0, 256 },   /* single width */
-    { -1 } /* end of array */
+	0x00, 0x00, 0x00,
+	0x00, 0x00, 0xa8,
+	0x00, 0xa8, 0x00,
+	0x00, 0xa8, 0xa8,
+	0xa8, 0x00, 0x00,
+	0xa8, 0x00, 0xa8,
+	0xa8, 0x54, 0x00,
+	0xa8, 0xa8, 0xa8,
+	0x00, 0x00, 0x00,
+	0x00, 0x00, 0xa8,
+	0x00, 0xa8, 0x00,
+	0x00, 0xa8, 0xa8,
+	0xa8, 0x00, 0x00,
+	0xa8, 0x00, 0xa8,
+	0xa8, 0x54, 0x00,
+	0xa8, 0xa8, 0xa8,
+	0x54, 0x54, 0x54,
+	0x54, 0x54, 0xfc,
+	0x54, 0xfc, 0x54,
+	0x54, 0xfc, 0xfc,
+	0xfc, 0x54, 0x54,
+	0xfc, 0x54, 0xfc,
+	0xfc, 0xfc, 0x54,
+	0xfc, 0xfc, 0xfc,
+	0x54, 0x54, 0x54,
+	0x54, 0x54, 0xfc,
+	0x54, 0xfc, 0x54,
+	0x54, 0xfc, 0xfc,
+	0xfc, 0x54, 0x54,
+	0xfc, 0x54, 0xfc,
+	0xfc, 0xfc, 0x54,
+	0xfc, 0xfc, 0xfc,
+	0x00, 0x00, 0x00,
+	0x00, 0x00, 0xa8,
+	0x00, 0xa8, 0x00,
+	0x00, 0xa8, 0xa8,
+	0xa8, 0x00, 0x00,
+	0xa8, 0x00, 0xa8,
+	0xa8, 0x54, 0x00,
+	0xa8, 0xa8, 0xa8,
+	0x00, 0x00, 0x00,
+	0x00, 0x00, 0xa8,
+	0x00, 0xa8, 0x00,
+	0x00, 0xa8, 0xa8,
+	0xa8, 0x00, 0x00,
+	0xa8, 0x00, 0xa8,
+	0xa8, 0x54, 0x00,
+	0xa8, 0xa8, 0xa8,
+	0x54, 0x54, 0x54,
+	0x54, 0x54, 0xfc,
+	0x54, 0xfc, 0x54,
+	0x54, 0xfc, 0xfc,
+	0xfc, 0x54, 0x54,
+	0xfc, 0x54, 0xfc,
+	0xfc, 0xfc, 0x54,
+	0xfc, 0xfc, 0xfc,
+	0x54, 0x54, 0x54,
+	0x54, 0x54, 0xfc,
+	0x54, 0xfc, 0x54,
+	0x54, 0xfc, 0xfc,
+	0xfc, 0x54, 0x54,
+	0xfc, 0x54, 0xfc,
+	0xfc, 0xfc, 0x54,
+	0xfc, 0xfc, 0xfc
 };
 
 static unsigned short vga_colortable[] =
@@ -188,7 +164,6 @@ MACHINE_DRIVER_START( pcvideo_vga )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(720, 480)
 	MDRV_VISIBLE_AREA(0,720-1, 0,480-1)
-	MDRV_GFXDECODE(vga_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(0x100)
 	MDRV_COLORTABLE_LENGTH(0x100*2 /*sizeof(vga_colortable) / sizeof(vga_colortable[0])*/)
 	MDRV_PALETTE_INIT(vga)
@@ -201,8 +176,7 @@ MACHINE_DRIVER_START( pcvideo_pc1640 )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(720, 350)
 	MDRV_VISIBLE_AREA(0,720-1, 0,350-1)
-	MDRV_GFXDECODE(vga_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(ega_palette) / sizeof(ega_palette[0]))
+	MDRV_PALETTE_LENGTH(sizeof(ega_palette) / 3)
 	MDRV_COLORTABLE_LENGTH(0x100*2 /*sizeof(vga_colortable) / sizeof(vga_colortable[0])*/)
 	MDRV_PALETTE_INIT(ega)
 
@@ -214,17 +188,14 @@ MACHINE_DRIVER_END
 
 static PALETTE_INIT( ega )
 {
-	int i;
-	for(i = 0; i < (sizeof(ega_palette) / 3); i++)
-		palette_set_color(i, ega_palette[i][0], ega_palette[i][1], ega_palette[i][2]);
-
+	palette_set_colors(0, ega_palette, sizeof(ega_palette) / 3);
 	memcpy(colortable, vga_colortable,0x200);
 }
 
 static PALETTE_INIT( vga )
 {
 	int i;
-	for(i = 0; i < 0x100; i++)
+	for (i = 0; i < 0x100; i++)
 		palette_set_color(i, 0, 0, 0);
 
 	memcpy(colortable, vga_colortable,0x200);
@@ -373,13 +344,12 @@ static int vga_get_crtc_columns(void) /* in clocks! */
 {
 	int columns=vga.crtc.data[0]+5;
 
-	if (!GRAPHIC_MODE) {
-		columns*=CHAR_WIDTH;
-	} else if (vga.gc.data[5]&0x40) {
-		columns*=4;
-	} else {
-		columns*=8;
-	}
+	if (!GRAPHIC_MODE)
+		columns *= CHAR_WIDTH;
+	else if (vga.gc.data[5]&0x40)
+		columns *= 4;
+	else
+		columns *= 8;
 
 	return columns;
 }
@@ -405,7 +375,8 @@ static int vga_get_crtc_sync_columns(void)
 
 INLINE WRITE_HANDLER(vga_dirty_w)
 {
-	if (vga.memory[offset]!=data) {
+	if (vga.memory[offset]!=data)
+	{
 		vga.memory[offset]=data;
 		vga.dirty[offset]=1;
 	}
@@ -413,7 +384,8 @@ INLINE WRITE_HANDLER(vga_dirty_w)
 
 INLINE WRITE_HANDLER(vga_dirty_font_w)
 {
-	if (vga.memory[offset]!=data) {
+	if (vga.memory[offset]!=data)
+	{
 		vga.memory[offset]=data;
 		vga.dirty[offset]=1;
 		if ((offset&3)==2)
@@ -1051,7 +1023,7 @@ VIDEO_START( vga )
 #define myMIN(a, b) ((a) < (b) ? (a) : (b))
 #define myMAX(a, b) ((a) > (b) ? (a) : (b))
 
-static void vga_vh_text(struct mame_bitmap *bitmap, int full_refresh)
+static void vga_vh_text(struct mame_bitmap *bitmap)
 {
 	UINT8 ch, attr;
 	UINT8 bits;
@@ -1118,7 +1090,7 @@ static void vga_vh_text(struct mame_bitmap *bitmap, int full_refresh)
 	}
 }
 
-static void vga_vh_ega(struct mame_bitmap *bitmap, int full_refresh)
+static void vga_vh_ega(struct mame_bitmap *bitmap)
 {
 	int pos, line, column, c, addr, i;
 	int height = CRTC6845_CHAR_HEIGHT;
@@ -1163,7 +1135,7 @@ static void vga_vh_ega(struct mame_bitmap *bitmap, int full_refresh)
 	}
 }
 
-static void vga_vh_vga(struct mame_bitmap *bitmap, int full_refresh)
+static void vga_vh_vga(struct mame_bitmap *bitmap)
 {
 	int pos, line, column, c, addr;
 	UINT16 *bitmapline;
@@ -1181,7 +1153,7 @@ static void vga_vh_vga(struct mame_bitmap *bitmap, int full_refresh)
 				bitmapline[c+3] = vga.memory[pos+3];
 				//*(UINT32*)(vga.dirty+pos)=0;
 			}
-			//if (*(UINT32*)(vga.dirty+pos+0x10)||full_refresh)
+			//if (*(UINT32*)(vga.dirty+pos+0x10))
 			{
 				bitmapline[c+4] = vga.memory[pos+0x10];
 				bitmapline[c+5] = vga.memory[pos+0x11];
@@ -1207,13 +1179,13 @@ VIDEO_UPDATE( ega )
 		}
 		if (!GRAPHIC_MODE)
 		{
-			vga_vh_text(bitmap, 1);
+			vga_vh_text(bitmap);
 			new_rows=TEXT_LINES;
 			new_columns=TEXT_COLUMNS*CHAR_WIDTH;
 		}
 		else
 		{
-			vga_vh_ega(bitmap, 1);
+			vga_vh_ega(bitmap);
 			new_rows=LINES;
 			new_columns=EGA_COLUMNS*8;
 		}
@@ -1266,19 +1238,19 @@ VIDEO_UPDATE( vga )
 
 		if (!GRAPHIC_MODE)
 		{
-			vga_vh_text(bitmap, 1);
+			vga_vh_text(bitmap);
 			new_rows=TEXT_LINES;
 			new_columns=TEXT_COLUMNS*CHAR_WIDTH;
 		}
 		else if (vga.gc.data[5]&0x40)
 		{
-			vga_vh_vga(bitmap, 1);
+			vga_vh_vga(bitmap);
 			new_rows=LINES;
 			new_columns=VGA_COLUMNS*8;
 		}
 		else
 		{
-			vga_vh_ega(bitmap, 1);
+			vga_vh_ega(bitmap);
 			new_rows=LINES;
 			new_columns=EGA_COLUMNS*8;
 		}

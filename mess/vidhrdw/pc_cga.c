@@ -202,7 +202,6 @@ typedef enum { TYPE_CGA, TYPE_PC1512 } TYPE;
 
 static struct { 
 	TYPE type;
-	struct _CRTC6845 *crtc;
 
 	UINT8 mode_control,  // wo 0x3d8
 		color_select, //wo 0x3d9
@@ -212,23 +211,17 @@ static struct {
 	int pc_framecnt;
 } cga= { TYPE_CGA };
 
-void pc_cga_cursor(CRTC6845_CURSOR *cursor)
+void pc_cga_cursor(struct crtc6845_cursor *cursor)
 {
 	if (dirtybuffer && (videoram_size > cursor->pos*2))
 		dirtybuffer[cursor->pos*2]=1;
 }
 
-static CRTC6845_CONFIG config= { 14318180 /*?*/, pc_cga_cursor };
-
-void pc_cga_init_video(struct _CRTC6845 *crtc)
-{
-	cga.crtc = crtc;
-}
+static struct crtc6845_config config= { 14318180 /*?*/, pc_cga_cursor };
 
 VIDEO_START( pc_cga )
 {
-	cga.crtc = crtc6845;
-	return pc_video_start(cga.crtc, &config, pc_cga_choosevideomode);
+	return pc_video_start(&config, pc_cga_choosevideomode) ? INIT_PASS : INIT_FAIL;
 }
 
 /*
@@ -290,10 +283,10 @@ WRITE_HANDLER ( pc_CGA_w )
 	switch( offset )
 	{
 		case 0: case 2: case 4: case 6:
-			crtc6845_port_w(cga.crtc,0,data);
+			crtc6845_port_w(crtc6845, 0, data);
 			break;
 		case 1: case 3: case 5: case 7:
-			crtc6845_port_w(cga.crtc,1,data);
+			crtc6845_port_w(crtc6845, 1, data);
 			break;
 		case 8:
 			pc_cga_mode_control_w(data);
@@ -310,10 +303,10 @@ READ_HANDLER ( pc_CGA_r )
 	switch( offset )
 	{
 		case 0: case 2: case 4: case 6:
-			data = crtc6845_port_r(cga.crtc,0);
+			data = crtc6845_port_r(crtc6845, 0);
 			break;
 		case 1: case 3: case 5: case 7:
-			data = crtc6845_port_r(cga.crtc,1);
+			data = crtc6845_port_r(crtc6845, 1);
 			break;
 		case 10:
 			data = pc_cga_status_r();
@@ -326,18 +319,18 @@ READ_HANDLER ( pc_CGA_r )
   Draw text mode with 40x25 characters (default) with high intensity bg.
   The character cell size is 16x8
 ***************************************************************************/
-static void cga_text_inten(struct mame_bitmap *bitmap)
+static void cga_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int sx, sy;
-	int	offs = crtc6845_get_start(cga.crtc)*2;
-	int lines = crtc6845_get_char_lines(cga.crtc);
-	int height = crtc6845_get_char_height(cga.crtc);
-	int columns = crtc6845_get_char_columns(cga.crtc);
+	int	offs = crtc6845_get_start(crtc) * 2;
+	int lines = crtc6845_get_char_lines(crtc);
+	int height = crtc6845_get_char_height(crtc);
+	int columns = crtc6845_get_char_columns(crtc);
 	struct rectangle r;
-	CRTC6845_CURSOR cursor;
+	struct crtc6845_cursor cursor;
 
-	crtc6845_time(cga.crtc);
-	crtc6845_get_cursor(cga.crtc, &cursor);
+	crtc6845_time(crtc);
+	crtc6845_get_cursor(crtc, &cursor);
 
 	for (sy=0, r.min_y=0, r.max_y=height-1; sy<lines; sy++, r.min_y+=height,r.max_y+=height)
 	{
@@ -372,18 +365,18 @@ static void cga_text_inten(struct mame_bitmap *bitmap)
   Draw text mode with 40x25 characters (default) and blinking colors.
   The character cell size is 16x8
 ***************************************************************************/
-static void cga_text_blink(struct mame_bitmap *bitmap)
+static void cga_text_blink(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int sx, sy;
-	int	offs = crtc6845_get_start(cga.crtc)*2;
-	int lines = crtc6845_get_char_lines(cga.crtc);
-	int height = crtc6845_get_char_height(cga.crtc);
-	int columns = crtc6845_get_char_columns(cga.crtc);
+	int	offs = crtc6845_get_start(crtc)*2;
+	int lines = crtc6845_get_char_lines(crtc);
+	int height = crtc6845_get_char_height(crtc);
+	int columns = crtc6845_get_char_columns(crtc);
 	struct rectangle r;
-	CRTC6845_CURSOR cursor;
+	struct crtc6845_cursor cursor;
 
-	crtc6845_time(cga.crtc);
-	crtc6845_get_cursor(cga.crtc, &cursor);
+	crtc6845_time(crtc);
+	crtc6845_get_cursor(crtc, &cursor);
 
 	for (sy=0, r.min_y=0, r.max_y=height-1; sy<lines; sy++, r.min_y+=height,r.max_y+=height)
 	{
@@ -434,13 +427,13 @@ static void cga_text_blink(struct mame_bitmap *bitmap)
   Even scanlines are from CGA_base + 0x0000, odd from CGA_base + 0x2000
   cga fetches 2 byte per crtc6845 access (not modeled here)!
 ***************************************************************************/
-static void cga_gfx_2bpp(struct mame_bitmap *bitmap)
+static void cga_gfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int i, sx, sy, sh;
-	int	offs = crtc6845_get_start(cga.crtc)*2;
-	int lines = crtc6845_get_char_lines(cga.crtc);
-	int height = crtc6845_get_char_height(cga.crtc);
-	int columns = crtc6845_get_char_columns(cga.crtc)*2;
+	int	offs = crtc6845_get_start(crtc)*2;
+	int lines = crtc6845_get_char_lines(crtc);
+	int height = crtc6845_get_char_height(crtc);
+	int columns = crtc6845_get_char_columns(crtc)*2;
 
 	for (sy=0; sy<lines; sy++,offs=(offs+columns)&0x1fff) {
 
@@ -480,13 +473,13 @@ static void cga_gfx_2bpp(struct mame_bitmap *bitmap)
   The cell size is 1x1 (1 scanline is the real default)
   Even scanlines are from CGA_base + 0x0000, odd from CGA_base + 0x2000
 ***************************************************************************/
-static void cga_gfx_1bpp(struct mame_bitmap *bitmap)
+static void cga_gfx_1bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int i, sx, sy, sh;
-	int	offs = crtc6845_get_start(cga.crtc)*2;
-	int lines = crtc6845_get_char_lines(cga.crtc);
-	int height = crtc6845_get_char_height(cga.crtc);
-	int columns = crtc6845_get_char_columns(cga.crtc)*2;
+	int	offs = crtc6845_get_start(crtc)*2;
+	int lines = crtc6845_get_char_lines(crtc);
+	int height = crtc6845_get_char_height(crtc);
+	int columns = crtc6845_get_char_columns(crtc)*2;
 
 	for (sy=0; sy<lines; sy++,offs=(offs+columns)&0x1fff)
 	{
@@ -527,23 +520,9 @@ static void cga_gfx_1bpp(struct mame_bitmap *bitmap)
 /***************************************************************************
   Black and white versions not yet implemented
 ***************************************************************************/
-static void cga_text_inten_bw(struct mame_bitmap *bitmap)
-{
-	/* NYI */
-	cga_text_inten(bitmap);
-}
-
-static void cga_text_blink_bw(struct mame_bitmap *bitmap)
-{
-	/* NYI */
-	cga_text_blink(bitmap);
-}
-
-static void cga_gfx_2bpp_bw(struct mame_bitmap *bitmap)
-{
-	/* NYI */
-	cga_gfx_2bpp(bitmap);
-}
+#define cga_text_inten_bw		cga_text_inten
+#define cga_text_blink_bw		cga_text_blink
+#define cga_gfx_2bpp_bw			cga_gfx_2bpp
 
 // amstrad pc1512 video hardware
 // mapping of the 4 planes into videoram
@@ -576,13 +555,13 @@ INLINE void pc1512_plot_unit(struct mame_bitmap *bitmap,
   The cell size is 1x1 (1 scanline is the real default)
   Even scanlines are from CGA_base + 0x0000, odd from CGA_base + 0x2000
 ***************************************************************************/
-static void pc1512_gfx_4bpp(struct mame_bitmap *bitmap)
+static void pc1512_gfx_4bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int i, sx, sy, sh;
-	int	offs = crtc6845_get_start(cga.crtc);
-	int lines = crtc6845_get_char_lines(cga.crtc);
-	int height = crtc6845_get_char_height(cga.crtc);
-	int columns = crtc6845_get_char_columns(cga.crtc);
+	int	offs = crtc6845_get_start(crtc);
+	int lines = crtc6845_get_char_lines(crtc);
+	int height = crtc6845_get_char_height(crtc);
+	int columns = crtc6845_get_char_columns(crtc);
 
 	for (sy=0; sy<lines; sy++,offs=(offs+columns)&0x1fff) {
 
@@ -609,8 +588,8 @@ static void pc_cga_blink_textcolors(int on)
 	if (cga.pc_blink == on) return;
 
     cga.pc_blink = on;
-	offs = (crtc6845_get_start(cga.crtc)*2) & 0x3fff;
-	size = crtc6845_get_char_lines(cga.crtc)*crtc6845_get_char_columns(cga.crtc);
+	offs = (crtc6845_get_start(crtc6845)*2) & 0x3fff;
+	size = crtc6845_get_char_lines(crtc6845)*crtc6845_get_char_columns(crtc6845);
 
 	if (dirtybuffer)
 	{
@@ -636,10 +615,10 @@ extern void pc_cga_timer(void)
 pc_video_update_proc pc_cga_choosevideomode(int *xfactor, int *yfactor)
 {
 	pc_video_update_proc proc = NULL;
-	void (**procarray)(struct mame_bitmap *);
+	pc_video_update_proc *procarray;
 	UINT8 mode;
 
-	static void (*videoprocs_cga[])(struct mame_bitmap *) =
+	pc_video_update_proc videoprocs_cga[] =
 	{
 		/* 0x08 - 0x0f */
 		cga_text_inten,		cga_text_inten,		cga_gfx_2bpp,		cga_gfx_2bpp,
@@ -658,7 +637,7 @@ pc_video_update_proc pc_cga_choosevideomode(int *xfactor, int *yfactor)
 		cga_gfx_1bpp,		cga_gfx_1bpp,		cga_gfx_1bpp,		cga_gfx_1bpp
 	};
 
-	static void (*videoprocs_pc1512[])(struct mame_bitmap *) =
+	pc_video_update_proc videoprocs_pc1512[] =
 	{
 		/* 0x08 - 0x0f */
 		cga_text_inten,		cga_text_inten,		cga_gfx_2bpp,		cga_gfx_2bpp,

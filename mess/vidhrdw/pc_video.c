@@ -2,16 +2,14 @@
 #include "vidhrdw/generic.h"
 
 static pc_video_update_proc (*pc_choosevideomode)(int *xfactor, int *yfactor);
-static struct _CRTC6845 *pc_crtc;
+static struct crtc6845 *pc_crtc;
 
-int pc_video_start(struct _CRTC6845 *crtc, CRTC6845_CONFIG *config,
+struct crtc6845 *pc_video_start(struct crtc6845_config *config,
 	pc_video_update_proc (*choosevideomode)(int *xfactor, int *yfactor))
 {
 	pc_choosevideomode = choosevideomode;
-	pc_crtc = crtc;
-
-	crtc6845_init(crtc, config);
-	return 0;
+	pc_crtc = crtc6845_init(config);
+	return pc_crtc;
 }
 
 VIDEO_UPDATE( pc_video )
@@ -37,7 +35,7 @@ VIDEO_UPDATE( pc_video )
 
 	if (video_update)
 	{
-		video_update(bitmap);
+		video_update(bitmap, pc_crtc);
 
 		w *= xfactor;
 		h *= yfactor;
@@ -62,7 +60,7 @@ VIDEO_UPDATE( pc_video )
 
 WRITE_HANDLER ( pc_video_videoram_w )
 {
-	if (videoram[offset] != data)
+	if (videoram && videoram[offset] != data)
 	{
 		videoram[offset] = data;
 		if (dirtybuffer)

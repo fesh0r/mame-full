@@ -258,21 +258,20 @@ extern UINT8 *cbmb_colorram;
 
 WRITE_HANDLER ( cbmb_colorram_w );
 
-extern void cbm500_driver_init (void);
-extern void cbm600_driver_init (void);
-extern void cbm600pal_driver_init (void);
-extern void cbm600hu_driver_init (void);
-extern void cbm700_driver_init (void);
-extern void cbmb_driver_shutdown (void);
-extern void cbmb_common_init_machine (void);
-extern void cbmb_frame_interrupt (int param);
-extern MACHINE_INIT( cbmb );
+void cbm500_driver_init (void);
+void cbm600_driver_init (void);
+void cbm600pal_driver_init (void);
+void cbm600hu_driver_init (void);
+void cbm700_driver_init (void);
+void cbmb_common_init_machine (void);
+void cbmb_frame_interrupt (int param);
+MACHINE_INIT( cbmb );
 
 void cbmb_rom_load(void);
 
 void cbm600_vh_init(void);
 void cbm700_vh_init(void);
-void cbmb_vh_cursor(CRTC6845_CURSOR *cursor);
+void cbmb_vh_cursor(struct crtc6845_cursor *cursor);
 extern VIDEO_START( cbm700 );
 extern VIDEO_UPDATE( cbmb );
 

@@ -177,11 +177,13 @@ WRITE_HANDLER ( pc_ppi_porta_w )
 WRITE_HANDLER ( pc_ppi_portb_w )
 {
 	/* KB controller port B */
-	PIO_LOG(1,"PIO_B_w",("$%02x\n", data));
-	pc_ppi.portc_switch_high=data&0x8;
-	pc_ppi.keyboard_disabled=data&0x80;
-	pc_sh_speaker(data&3);
-	pc_keyb_set_clock(data&0x40);
+	pc_ppi.portc_switch_high = data & 0x08;
+	pc_ppi.keyboard_disabled = data & 0x80;
+	pc_sh_speaker(data & 0x03);
+	pc_keyb_set_clock(data & 0x40);
+
+	if (data & 0x80)
+		pc_keyb_clear();
 }
 
 WRITE_HANDLER ( pc_ppi_portc_w )

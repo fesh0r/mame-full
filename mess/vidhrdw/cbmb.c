@@ -57,7 +57,7 @@ VIDEO_START( cbm700 )
     return video_start_generic();
 }
 
-void cbmb_vh_cursor(CRTC6845_CURSOR *cursor)
+void cbmb_vh_cursor(struct crtc6845_cursor *cursor)
 {
 	dirtybuffer[cursor->pos]=1;
 }
@@ -75,7 +75,7 @@ VIDEO_UPDATE( cbmb )
 	int h=crtc6845_get_char_lines(crtc6845);
 	int height=crtc6845_get_char_height(crtc6845);
 	int start=crtc6845_get_start(crtc6845)&0x7ff;
-	CRTC6845_CURSOR cursor;
+	struct crtc6845_cursor cursor;
 	int full_refresh = 1;
 
 	rect.min_x=Machine->visible_area.min_x;

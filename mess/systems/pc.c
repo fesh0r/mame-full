@@ -261,7 +261,7 @@ static MEMORY_WRITE_START( t1t_writemem )
 	{ 0x80000, 0x9ffff, MWA_RAM },
 	{ 0xa0000, 0xaffff, MWA_RAM },
     { 0xb0000, 0xb7fff, MWA_NOP },
-	{ 0xb8000, 0xbffff, pc_t1t_videoram_w },
+	{ 0xb8000, 0xbffff, pc_video_videoram_w },
 	{ 0xc0000, 0xc7fff, MWA_NOP },
 	{ 0xc8000, 0xc9fff, MWA_ROM },
 	{ 0xca000, 0xcffff, MWA_NOP },
@@ -1413,16 +1413,7 @@ static MACHINE_DRIVER_START( t1000hx )
 
 	MDRV_MACHINE_INIT(pc_t1t)
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(80*8, 25*9)
-	MDRV_VISIBLE_AREA(0,80*8-1, 0,25*9-1)
-	MDRV_GFXDECODE(t1000hx_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(cga_palette) / sizeof(cga_palette[0]))
-	MDRV_COLORTABLE_LENGTH(sizeof(pcjr_colortable) / sizeof(pcjr_colortable[0]))
-	MDRV_PALETTE_INIT(pcjr)
-
-	MDRV_VIDEO_START(pc_t1t)
-	MDRV_VIDEO_UPDATE(pc_t1t)
+	MDRV_IMPORT_FROM( pcvideo_t1000hx )
 
     /* sound hardware */
 	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
@@ -1432,8 +1423,8 @@ static MACHINE_DRIVER_START( t1000hx )
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( t1000sx )
-	MDRV_IMPORT_FROM(t1000hx)
-	MDRV_GFXDECODE(t1000sx_gfxdecodeinfo)
+	MDRV_IMPORT_FROM( t1000hx )
+	MDRV_IMPORT_FROM( pcvideo_t1000sx )
 MACHINE_DRIVER_END
 
 #if 0

@@ -452,12 +452,13 @@ void pet_basic1_driver_init (void)
 	pet_vh_init();
 }
 
-static CRTC6845_CONFIG crtc_pet= { 800000 /*?*/};
+static struct crtc6845_config crtc_pet= { 800000 /*?*/};
+
 void pet40_driver_init (void)
 {
 	pet_common_driver_init ();
 	pet_vh_init();
-	crtc6845_init(crtc6845, &crtc_pet);
+	crtc6845_init(&crtc_pet);
 }
 
 void cbm80_driver_init (void)
@@ -466,7 +467,7 @@ void cbm80_driver_init (void)
 	pet_common_driver_init ();
 	videoram_size=0x800;
 	pet80_vh_init();
-	crtc6845_init(crtc6845, &crtc_pet);
+	crtc6845_init(&crtc_pet);
 }
 
 void superpet_driver_init(void)
@@ -484,7 +485,7 @@ void superpet_driver_init(void)
 	memory_set_context(0);
 
 	superpet_vh_init();
-	crtc6845_init(crtc6845, &crtc_pet);
+	crtc6845_init(&crtc_pet);
 }
 
 MACHINE_INIT( pet )

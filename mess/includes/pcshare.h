@@ -16,24 +16,24 @@ void pc_vga_init(void);
 void pc_keyboard(void);
 UINT8 pc_keyb_read(void);
 void pc_keyb_set_clock(int on);
+void pc_keyb_clear(void);
 
-extern WRITE_HANDLER ( pc_COM1_w );
-extern READ_HANDLER ( pc_COM1_r );
-extern WRITE_HANDLER ( pc_COM2_w );
-extern READ_HANDLER ( pc_COM2_r );
-extern WRITE_HANDLER ( pc_COM3_w );
-extern READ_HANDLER ( pc_COM3_r );
-extern WRITE_HANDLER ( pc_COM4_w );
-extern READ_HANDLER ( pc_COM4_r );
+WRITE_HANDLER ( pc_COM1_w );
+READ_HANDLER ( pc_COM1_r );
+WRITE_HANDLER ( pc_COM2_w );
+READ_HANDLER ( pc_COM2_r );
+WRITE_HANDLER ( pc_COM3_w );
+READ_HANDLER ( pc_COM3_r );
+WRITE_HANDLER ( pc_COM4_w );
+READ_HANDLER ( pc_COM4_r );
 
 /* from sndhrdw/pc.c */
 extern struct CustomSound_interface pc_sound_interface;
-extern int  pc_sh_init(const char *name);
 extern int  pc_sh_custom_start(const struct MachineSound *driver);
 extern void pc_sh_custom_update(void);
-extern void pc_sh_stop(void);
 extern void pc_sh_update(int param, INT16 *buff, int length);
 extern void pc_sh_speaker(int mode);
+
 void pc_sh_speaker_change_clock(double pc_clock);
 
 extern WRITE_HANDLER ( pc_JOY_w );

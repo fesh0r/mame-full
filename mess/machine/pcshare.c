@@ -811,6 +811,11 @@ void pc_keyb_set_clock(int on)
 	//pc_keyboard();
 }
 
+void pc_keyb_clear(void)
+{
+	pc_keyb.data = 0;
+}
+
 void pc_keyboard(void)
 {
 	int data;

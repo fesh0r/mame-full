@@ -251,13 +251,14 @@ static void cbmb_common_driver_init (void)
 	cbm_ieee_open();
 }
 
-static CRTC6845_CONFIG cbm600_crtc= { 1600000 /*?*/, cbmb_vh_cursor };
+static struct crtc6845_config cbm600_crtc= { 1600000 /*?*/, cbmb_vh_cursor };
+
 void cbm600_driver_init (void)
 {
 	cbmb_common_driver_init ();
 	statetext_add_function(cbmb_state);
 	cbm600_vh_init();
-	crtc6845_init(crtc6845, &cbm600_crtc);
+	crtc6845_init(&cbm600_crtc);
 }
 
 void cbm600pal_driver_init (void)
@@ -265,23 +266,24 @@ void cbm600pal_driver_init (void)
 	cbmb_common_driver_init ();
 	statetext_add_function(cbmb_state);
 	cbm600_vh_init();
-	crtc6845_init(crtc6845, &cbm600_crtc);
+	crtc6845_init(&cbm600_crtc);
 }
 
 void cbm600hu_driver_init (void)
 {
 	cbmb_common_driver_init ();
 	statetext_add_function(cbmb_state);
-	crtc6845_init(crtc6845, &cbm600_crtc);
+	crtc6845_init(&cbm600_crtc);
 }
 
-static CRTC6845_CONFIG cbm700_crtc= { 2000000 /*?*/, cbmb_vh_cursor };
+static struct crtc6845_config cbm700_crtc= { 2000000 /*?*/, cbmb_vh_cursor };
+
 void cbm700_driver_init (void)
 {
 	cbmb_common_driver_init ();
 	statetext_add_function(cbmb_state);
 	cbm700_vh_init();
-	crtc6845_init(crtc6845, &cbm700_crtc);
+	crtc6845_init(&cbm700_crtc);
 }
 
 void cbm500_driver_init (void)
@@ -290,10 +292,6 @@ void cbm500_driver_init (void)
 	cbm500=1;
 	statetext_add_function(cbmb_state);
 	vic6567_init (0, 0, cbmb_dma_read, cbmb_dma_read_color, NULL);
-}
-
-void cbmb_driver_shutdown (void)
-{
 }
 
 MACHINE_INIT( cbmb )

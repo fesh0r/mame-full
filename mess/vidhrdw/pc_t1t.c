@@ -3,6 +3,9 @@
   IBM PC junior
   Tandy 1000 Graphics Adapter (T1T) section
 
+  Note that in the IBM PC Junior world, the term 'vga' is not the 'vga' that
+  most people think of
+
 ***************************************************************************/
 #include "vidhrdw/generic.h"
 
@@ -21,13 +24,24 @@
 #define T1T_LOG(n,m,a)
 #endif
 
-/*
-  vga is used in this document for a special video gate array
-  not identical to the famous graphics adapter!
-*/
+/***************************************************************************
 
+	Static declarations
 
-unsigned short pcjr_colortable[] = {
+***************************************************************************/
+
+static PALETTE_INIT( pcjr );
+static VIDEO_START( pc_t1t );
+static pc_video_update_proc pc_t1t_choosevideomode(int *xfactor, int *yfactor);
+
+/***************************************************************************
+
+	MachineDriver stuff
+
+**************************************************************************/
+
+static unsigned short pcjr_colortable[] =
+{
      0, 0, 0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0, 9, 0,10, 0,11, 0,12, 0,13, 0,14, 0,15,
      1, 0, 1, 1, 1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7, 1, 8, 1, 9, 1,10, 1,11, 1,12, 1,13, 1,14, 1,15,
      2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 2, 6, 2, 7, 2, 8, 2, 9, 2,10, 2,11, 2,12, 2,13, 2,14, 2,15,
@@ -68,8 +82,7 @@ static struct GfxLayout t1t_gfxlayout_4bpp =
 	1*8 					/* every code takes 1 byte */
 };
 
-
-struct GfxLayout t1t_charlayout =
+static struct GfxLayout t1t_charlayout =
 {
 	8,8,					/* 8 x 8 characters */
     128,                    /* 128 characters */
@@ -83,7 +96,7 @@ struct GfxLayout t1t_charlayout =
     8*8                     /* every char takes 8 bytes */
 };
 
-struct GfxDecodeInfo t1000hx_gfxdecodeinfo[] =
+static struct GfxDecodeInfo t1000hx_gfxdecodeinfo[] =
 {
 	{ 0, 0xffa6e, &t1t_charlayout,			0,				128 },	/* single width */
 	{ 0, 0xfc0a8, &t1t_charlayout,			0,				128 },	/* single width */
@@ -93,7 +106,7 @@ struct GfxDecodeInfo t1000hx_gfxdecodeinfo[] =
     { -1 } /* end of array */
 };
 
-struct GfxDecodeInfo t1000sx_gfxdecodeinfo[] =
+static struct GfxDecodeInfo t1000sx_gfxdecodeinfo[] =
 {
 	{ 0, 0xffa6e, &t1t_charlayout,			0,				128 },	/* single width */
 	{ 0, 0xf40a3, &t1t_charlayout,			0,				128 },	/* single width */
@@ -103,8 +116,32 @@ struct GfxDecodeInfo t1000sx_gfxdecodeinfo[] =
     { -1 } /* end of array */
 };
 
+MACHINE_DRIVER_START( pcvideo_t1000hx )
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(80*8, 25*9)
+	MDRV_VISIBLE_AREA(0,80*8-1, 0,25*9-1)
+	MDRV_GFXDECODE(t1000hx_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(sizeof(cga_palette) / sizeof(cga_palette[0]))
+	MDRV_COLORTABLE_LENGTH(sizeof(pcjr_colortable) / sizeof(pcjr_colortable[0]))
+	MDRV_PALETTE_INIT(pcjr)
+
+	MDRV_VIDEO_START(pc_t1t)
+	MDRV_VIDEO_UPDATE(pc_video)
+MACHINE_DRIVER_END
+
+MACHINE_DRIVER_START( pcvideo_t1000sx )
+	MDRV_IMPORT_FROM( pcvideo_t1000hx )
+	MDRV_GFXDECODE( t1000sx_gfxdecodeinfo )
+MACHINE_DRIVER_END
+
+/***************************************************************************
+
+	Methods
+
+***************************************************************************/
+
 /* Initialise the cga palette */
-PALETTE_INIT( pcjr )
+static PALETTE_INIT( pcjr )
 {
 	int i;
 	for(i = 0; i < (sizeof(cga_palette) / 3); i++)
@@ -113,8 +150,6 @@ PALETTE_INIT( pcjr )
 }
 
 static struct { 
-	struct _CRTC6845 *crtc;
-
 	UINT8 mode_control, color_select;
 	UINT8 status;
 
@@ -146,7 +181,7 @@ static struct {
    so are in graphics mode 2 or 4 of such banks distinquished
    by line */
 
-extern void pc_t1t_reset(void)
+void pc_t1t_reset(void)
 {
 	videoram=NULL;
 	pcjr.bank=0;
@@ -164,51 +199,42 @@ static void pc_t1t_blink_textcolors(int on)
 	if (pcjr.pc_blink == on) return;
 
     pcjr.pc_blink = on;
-	offs = (crtc6845_get_start(pcjr.crtc)* 2) % videoram_size;
-	size = crtc6845_get_char_columns(pcjr.crtc)*crtc6845_get_char_lines(pcjr.crtc);
+	offs = (crtc6845_get_start(crtc6845)* 2) % videoram_size;
+	size = crtc6845_get_char_columns(crtc6845) * crtc6845_get_char_lines(crtc6845);
 
-	for (i = 0; i < size; i++)
+	if (dirtybuffer)
 	{
-		if (videoram[offs+1] & 0x80)
-			dirtybuffer[offs+1] = 1;
-		if( (offs += 2) == videoram_size )
-			offs = 0;
-    }
+		for (i = 0; i < size; i++)
+		{
+			if (videoram[offs+1] & 0x80)
+				dirtybuffer[offs+1] = 1;
+			if( (offs += 2) == videoram_size )
+				offs = 0;
+		}
+	}
 }
 
-extern void pc_t1t_timer(void)
+void pc_t1t_timer(void)
 {
-	if( ((++pcjr.pc_framecnt & 63) == 63) ) {
+	if( ((++pcjr.pc_framecnt & 63) == 63) )
+	{
 		pc_t1t_blink_textcolors(pcjr.pc_framecnt&64);
 	}
 }
 
-static void pc_t1t_cursor(CRTC6845_CURSOR *cursor)
+static void pc_t1t_cursor(struct crtc6845_cursor *cursor)
 {
-	dirtybuffer[cursor->pos*2]=1;
+	if (dirtybuffer)
+		dirtybuffer[cursor->pos*2] = 1;
 }
 
-static CRTC6845_CONFIG config= { 14318180 /*?*/, pc_t1t_cursor };
+static struct crtc6845_config config= { 14318180 /*?*/, pc_t1t_cursor };
 
 
-VIDEO_START( pc_t1t )
+static VIDEO_START( pc_t1t )
 {
 	videoram_size = 0x8000;
-
-	pcjr.crtc=crtc6845;
-	crtc6845_init(pcjr.crtc, &config);
-
-    return video_start_generic();
-}
-
-WRITE_HANDLER ( pc_t1t_videoram_w )
-{
-	if( !videoram )
-		return;
-	if( videoram[offset] == data )
-		return;
-	videoram[offset] = data;
-	dirtybuffer[offset] = 1;
+	return pc_video_start(&config, pc_t1t_choosevideomode) ? INIT_PASS : INIT_FAIL;
 }
 
 READ_HANDLER ( pc_t1t_videoram_r )
@@ -397,7 +423,8 @@ static void pc_t1t_bank_w(int data)
 #endif
         videoram = &memory_region(REGION_CPU1)[vram];
 		pcjr.displayram = &memory_region(REGION_CPU1)[dram];
-        memset(dirtybuffer, 1, videoram_size);
+        if (dirtybuffer)
+			memset(dirtybuffer, 1, videoram_size);
 		T1T_LOG(1,"t1t_bank_w",("$%02x: display ram $%05x, video ram $%05x\n", data, dram, vram));
 	}
 }
@@ -421,10 +448,10 @@ WRITE_HANDLER ( pc_T1T_w )
 	switch( offset )
 	{
 		case 0: case 2: case 4: case 6:
-			crtc6845_port_w(pcjr.crtc,0,data);
+			crtc6845_port_w(crtc6845,0,data);
 			break;
 		case 1: case 3: case 5: case 7:
-			crtc6845_port_w(pcjr.crtc,1,data);
+			crtc6845_port_w(crtc6845,1,data);
 			break;
 		case 8:
 			pc_t1t_mode_control_w(data);
@@ -457,10 +484,10 @@ READ_HANDLER ( pc_T1T_r )
 	switch( offset )
 	{
 		case 0: case 2: case 4: case 6:
-			data=crtc6845_port_r(pcjr.crtc,0);
+			data=crtc6845_port_r(crtc6845,0);
 			break;
 		case 1: case 3: case 5: case 7:
-			data=crtc6845_port_r(pcjr.crtc,1);
+			data=crtc6845_port_r(crtc6845,1);
 			break;
 		case 8:
 			data = pc_t1t_mode_control_r();
@@ -515,25 +542,25 @@ static void t1t_plot_char(struct mame_bitmap *bitmap, const struct
 /***************************************************************************
   Draw text mode with 40x25 characters (default) with high intensity bg.
 ***************************************************************************/
-static void t1t_text_inten(struct mame_bitmap *bitmap)
+static void t1t_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int sx, sy;
-	int	offs = crtc6845_get_start(pcjr.crtc)*2;
-	int lines = crtc6845_get_char_lines(pcjr.crtc);
-	int height = crtc6845_get_char_height(pcjr.crtc);
-	int columns = crtc6845_get_char_columns(pcjr.crtc);
+	int	offs = crtc6845_get_start(crtc)*2;
+	int lines = crtc6845_get_char_lines(crtc);
+	int height = crtc6845_get_char_height(crtc);
+	int columns = crtc6845_get_char_columns(crtc);
 	struct rectangle r;
-	CRTC6845_CURSOR cursor;
+	struct crtc6845_cursor cursor;
 
-	crtc6845_time(pcjr.crtc);
-	crtc6845_get_cursor(pcjr.crtc, &cursor);
+	crtc6845_time(crtc);
+	crtc6845_get_cursor(crtc, &cursor);
 
 	for (sy=0, r.min_y=0, r.max_y=height-1; sy<lines; sy++, r.min_y+=height,r.max_y+=height) {
 
 		for (sx=0, r.min_x=0, r.max_x=7; sx<columns; 
 			 sx++, offs=(offs+2)&0x3fff, r.min_x+=8, r.max_x+=8)
 		{
-			if (dirtybuffer[offs] || dirtybuffer[offs+1])
+			if (!dirtybuffer || dirtybuffer[offs] || dirtybuffer[offs+1])
 			{
 				UINT8 ch = pcjr.displayram[offs];
 				UINT8 attr = pcjr.displayram[offs + 1];
@@ -554,7 +581,8 @@ static void t1t_text_inten(struct mame_bitmap *bitmap)
 									8, k, Machine->pens[7]);
 				}
 
-				dirtybuffer[offs] = dirtybuffer[offs + 1] = 0;
+				if (dirtybuffer)
+					dirtybuffer[offs] = dirtybuffer[offs + 1] = 0;
 			}
 		}
 	}
@@ -563,25 +591,25 @@ static void t1t_text_inten(struct mame_bitmap *bitmap)
 /***************************************************************************
   Draw text mode with 40x25 characters (default) and blinking colors.
 ***************************************************************************/
-static void t1t_text_blink(struct mame_bitmap *bitmap)
+static void t1t_text_blink(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int sx, sy;
-	int	offs = crtc6845_get_start(pcjr.crtc)*2;
-	int lines = crtc6845_get_char_lines(pcjr.crtc);
-	int height = crtc6845_get_char_height(pcjr.crtc);
-	int columns = crtc6845_get_char_columns(pcjr.crtc);
+	int	offs = crtc6845_get_start(crtc)*2;
+	int lines = crtc6845_get_char_lines(crtc);
+	int height = crtc6845_get_char_height(crtc);
+	int columns = crtc6845_get_char_columns(crtc);
 	struct rectangle r;
-	CRTC6845_CURSOR cursor;
+	struct crtc6845_cursor cursor;
 
-	crtc6845_time(pcjr.crtc);
-	crtc6845_get_cursor(pcjr.crtc, &cursor);
+	crtc6845_time(crtc);
+	crtc6845_get_cursor(crtc, &cursor);
 
 	for (sy=0, r.min_y=0, r.max_y=height-1; sy<lines; sy++, r.min_y+=height,r.max_y+=height)
 	{
 		for (sx=0, r.min_x=0, r.max_x=7; sx<columns; 
-			sx++, offs=(offs+2)&0x3fff, r.min_x+=8, r.max_x+=8) {
-
-			if (dirtybuffer[offs] || dirtybuffer[offs+1])
+			sx++, offs=(offs+2)&0x3fff, r.min_x+=8, r.max_x+=8)
+		{
+			if (!dirtybuffer || dirtybuffer[offs] || dirtybuffer[offs+1])
 			{
 				UINT8 ch = pcjr.displayram[offs + 0];
 				UINT8 attr = pcjr.displayram[offs + 1];
@@ -611,7 +639,8 @@ static void t1t_text_blink(struct mame_bitmap *bitmap)
 							8, k, Machine->pens[7]);
 				}
 
-				dirtybuffer[offs] = dirtybuffer[offs + 1] = 0;
+				if (dirtybuffer)
+					dirtybuffer[offs] = dirtybuffer[offs + 1] = 0;
 			}
 		}
 	}
@@ -623,51 +652,64 @@ static void t1t_text_blink(struct mame_bitmap *bitmap)
   default but up to 32 are possible).
   Even scanlines are from T1T_base + 0x0000, odd from T1T_base + 0x2000
 ***************************************************************************/
-static void t1t_gfx_2bpp(struct mame_bitmap *bitmap)
+static void t1t_gfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int i, sx, sy, sh;
-	int	offs = crtc6845_get_start(pcjr.crtc)*2;
-	int lines = crtc6845_get_char_lines(pcjr.crtc);
-	int height = crtc6845_get_char_height(pcjr.crtc);
-	int columns = crtc6845_get_char_columns(pcjr.crtc)*2;
+	int	offs = crtc6845_get_start(crtc)*2;
+	int lines = crtc6845_get_char_lines(crtc);
+	int height = crtc6845_get_char_height(crtc);
+	int columns = crtc6845_get_char_columns(crtc)*2;
 
-	for (sy=0; sy<lines; sy++,offs=(offs+columns)&0x1fff) {
-
-		for (sh=0; sh<height; sh++) { 
+	for (sy=0; sy<lines; sy++,offs=(offs+columns)&0x1fff)
+	{
+		for (sh=0; sh<height; sh++)
+		{ 
 			switch (sh&3) {
 			case 0: // char line 0 used as a12 line in graphic mode
-				for (i=offs, sx=0; sx<columns; sx++, i=(i+1)&0x1fff) {
-					if (dirtybuffer[i]) {
+				for (i=offs, sx=0; sx<columns; sx++, i=(i+1)&0x1fff)
+				{
+					if (!dirtybuffer || dirtybuffer[i])
+					{
 						drawgfx(bitmap, Machine->gfx[3], pcjr.displayram[i], (pcjr.color_select&0x20?1:0),
 								0,0,sx*4,sy*height+sh, 0,TRANSPARENCY_NONE,0);
-						dirtybuffer[i]=0;
+						if (dirtybuffer)
+							dirtybuffer[i]=0;
 					}
 				}
 				break;
 			case 1:
-				for (i=offs|0x2000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x2000) {
-					if (dirtybuffer[i]) {
+				for (i=offs|0x2000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x2000)
+				{
+					if (!dirtybuffer || dirtybuffer[i])
+					{
 						drawgfx(bitmap, Machine->gfx[3], pcjr.displayram[i], (pcjr.color_select&0x20?1:0),
 								0,0,sx*4,sy*height+sh, 0,TRANSPARENCY_NONE,0);
-						dirtybuffer[i]=0;
+						if (dirtybuffer)
+							dirtybuffer[i] = 0;
 					}
 				}
 				break;
 			case 2:
-				for (i=offs|0x4000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x4000) {
-					if (dirtybuffer[i]) {
+				for (i=offs|0x4000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x4000)
+				{
+					if (!dirtybuffer || dirtybuffer[i])
+					{
 						drawgfx(bitmap, Machine->gfx[3], pcjr.displayram[i], (pcjr.color_select&0x20?1:0),
 								0,0,sx*4,sy*height+sh, 0,TRANSPARENCY_NONE,0);
-						dirtybuffer[i]=0;
+						if (dirtybuffer)
+							dirtybuffer[i] = 0;
 					}
 				}
 				break;
 			case 3:
-				for (i=offs|0x6000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x6000) {
-					if (dirtybuffer[i]) {
+				for (i=offs|0x6000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x6000)
+				{
+					if (!dirtybuffer || dirtybuffer[i])
+					{
 						drawgfx(bitmap, Machine->gfx[3], pcjr.displayram[i], (pcjr.color_select&0x20?1:0),
 								0,0,sx*4,sy*height+sh, 0,TRANSPARENCY_NONE,0);
-						dirtybuffer[i]=0;
+						if (dirtybuffer)
+							dirtybuffer[i] = 0;
 					}
 				}
 				break;
@@ -681,13 +723,13 @@ static void t1t_gfx_2bpp(struct mame_bitmap *bitmap)
   The cell size is 1x1 (1 scanline is the real default)
   Even scanlines are from T1T_base + 0x0000, odd from T1T_base + 0x2000
 ***************************************************************************/
-static void t1t_gfx_1bpp(struct mame_bitmap *bitmap)
+static void t1t_gfx_1bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int i, sx, sy, sh;
-	int	offs = crtc6845_get_start(pcjr.crtc)*2;
-	int lines = crtc6845_get_char_lines(pcjr.crtc);
-	int height = crtc6845_get_char_height(pcjr.crtc);
-	int columns = crtc6845_get_char_columns(pcjr.crtc)*2;
+	int	offs = crtc6845_get_start(crtc)*2;
+	int lines = crtc6845_get_char_lines(crtc);
+	int height = crtc6845_get_char_height(crtc);
+	int columns = crtc6845_get_char_columns(crtc)*2;
 
 	for (sy=0; sy<lines; sy++,offs=(offs+columns)&0x1fff) {
 
@@ -720,51 +762,63 @@ static void t1t_gfx_1bpp(struct mame_bitmap *bitmap)
   Scanlines (scanline % 4) are from CGA_base + 0x0000,
   CGA_base + 0x2000
 ***************************************************************************/
-static void t1t_gfx_4bpp(struct mame_bitmap *bitmap)
+static void t1t_gfx_4bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int i, sx, sy, sh;
-	int	offs = crtc6845_get_start(pcjr.crtc)*2;
-	int lines = crtc6845_get_char_lines(pcjr.crtc);
-	int height = crtc6845_get_char_height(pcjr.crtc);
-	int columns = crtc6845_get_char_columns(pcjr.crtc)*2;
+	int	offs = crtc6845_get_start(crtc)*2;
+	int lines = crtc6845_get_char_lines(crtc);
+	int height = crtc6845_get_char_height(crtc);
+	int columns = crtc6845_get_char_columns(crtc)*2;
 
 	for (sy=0; sy<lines; sy++,offs=(offs+columns)&0x1fff) {
 
 		for (sh=0; sh<height; sh++) { 
 			switch (sh&3) {
 			case 0: // char line 0 used as a12 line in graphic mode
-				for (i=offs, sx=0; sx<columns; sx++, i=(i+1)&0x1fff) {
-					if (dirtybuffer[i]) {
+				for (i=offs, sx=0; sx<columns; sx++, i=(i+1)&0x1fff)
+				{
+					if (!dirtybuffer || dirtybuffer[i])
+					{
 						drawgfx(bitmap, Machine->gfx[4], pcjr.displayram[i], 0,
 								0,0,sx*2,sy*height+sh, 0,TRANSPARENCY_NONE,0);
-						dirtybuffer[i]=0;
+						if (dirtybuffer)
+							dirtybuffer[i] = 0;
 					}
 				}
 				break;
 			case 1:
-				for (i=offs|0x2000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x2000) {
-					if (dirtybuffer[i]) {
+				for (i=offs|0x2000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x2000)
+				{
+					if (!dirtybuffer || dirtybuffer[i])
+					{
 						drawgfx(bitmap, Machine->gfx[4], pcjr.displayram[i], 0,
 								0,0,sx*2,sy*height+sh, 0,TRANSPARENCY_NONE,0);
-						dirtybuffer[i]=0;
+						if (dirtybuffer)
+							dirtybuffer[i] = 0;
 					}
 				}
 				break;
 			case 2:
-				for (i=offs|0x4000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x4000) {
-					if (dirtybuffer[i]) {
+				for (i=offs|0x4000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x4000)
+				{
+					if (!dirtybuffer || dirtybuffer[i])
+					{
 						drawgfx(bitmap, Machine->gfx[4], pcjr.displayram[i], 0,
 								0,0,sx*2,sy*height+sh, 0,TRANSPARENCY_NONE,0);
-						dirtybuffer[i]=0;
+						if (dirtybuffer)
+							dirtybuffer[i] = 0;
 					}
 				}
 				break;
 			case 3:
-				for (i=offs|0x6000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x6000) {
-					if (dirtybuffer[i]) {
+				for (i=offs|0x6000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x6000)
+				{
+					if (!dirtybuffer || dirtybuffer[i])
+					{
 						drawgfx(bitmap, Machine->gfx[4], pcjr.displayram[i], 0,
 								0,0,sx*2,sy*height+sh, 0,TRANSPARENCY_NONE,0);
-						dirtybuffer[i]=0;
+						if (dirtybuffer)
+							dirtybuffer[i] = 0;
 					}
 				}
 				break;
@@ -774,84 +828,61 @@ static void t1t_gfx_4bpp(struct mame_bitmap *bitmap)
 }
 
 /***************************************************************************
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function,
-  it will be called by the main emulation engine.
+  Choose the appropriate video mode
 ***************************************************************************/
-VIDEO_UPDATE( pc_t1t )
+
+static pc_video_update_proc pc_t1t_choosevideomode(int *xfactor, int *yfactor)
 {
-	static int video_active = 0;
-	int w,h;
+	pc_video_update_proc proc = NULL;
 
-	if (!pcjr.displayram) return;
+	*xfactor = 8;
+	*yfactor = 1;
 
-    /* draw entire scrbitmap because of usrintrf functions
-	   called osd_clearbitmap or attr change / scanline change */
-	if (1)
-	{
-		pcjr.full_refresh = 0;
-		memset(dirtybuffer, 1, videoram_size);
-		fillbitmap(tmpbitmap, Machine->pens[0], &Machine->visible_area);
-		video_active = 0;
+	switch( pcjr.mode_control & 0x3b ) {
+	case 0x08:
+	case 0x09:
+		proc = t1t_text_inten;
+		break;
+
+	case 0x28:
+	case 0x29:
+		proc = t1t_text_blink;
+		break;
+
+    case 0x0a: case 0x0b: case 0x2a: case 0x2b:
+		switch (pcjr.bank & 0xc0) {
+		case 0x00:	/* hmm.. text in graphics? */
+		case 0x40:
+			proc = t1t_gfx_2bpp;
+			break;
+
+		case 0x80:
+			proc = t1t_gfx_4bpp;
+			*xfactor = 4;
+			break;
+
+		case 0xc0:
+			proc = t1t_gfx_4bpp;
+			*xfactor = 4;
+			break;
+		}
+		break;
+
+	case 0x18: case 0x19: case 0x1a: case 0x1b:
+	case 0x38: case 0x39: case 0x3a: case 0x3b:
+		switch (pcjr.bank & 0xc0) {
+		case 0x00:	/* hmm.. text in graphics? */
+		case 0x40:
+			proc = t1t_gfx_1bpp;
+			*xfactor = 16;
+			break;
+
+		case 0x80:
+		case 0xc0:
+			proc = t1t_gfx_2bpp;
+			break;
+        }
+		break;
     }
-
-	w = crtc6845_get_char_columns(pcjr.crtc)*8;
-	h = crtc6845_get_char_height(pcjr.crtc)*crtc6845_get_char_lines(pcjr.crtc);
-	switch( pcjr.mode_control & 0x3b )	/* text and gfx modes */
-	{
-		case 0x08:
-			video_active = 10;
-			t1t_text_inten(tmpbitmap); // column
-			break;
-		case 0x09:
-			video_active = 10;
-			t1t_text_inten(tmpbitmap);
-			break;
-		case 0x28:
-			video_active = 10;
-			t1t_text_blink(tmpbitmap); // 40 column
-			break;
-		case 0x29:
-			video_active = 10;
-			t1t_text_blink(tmpbitmap);
-			break;
-        case 0x0a: case 0x0b: case 0x2a: case 0x2b:
-			video_active = 10;
-			switch (pcjr.bank & 0xc0)
-			{
-			case 0x00:	/* hmm.. text in graphics? */
-			case 0x40: t1t_gfx_2bpp(tmpbitmap); break;
-			case 0x80: t1t_gfx_4bpp(tmpbitmap); w/=2; break; //160
-			case 0xc0: t1t_gfx_4bpp(tmpbitmap); w/=2; break; //320
-			}
-			break;
-		case 0x18: case 0x19: case 0x1a: case 0x1b:
-		case 0x38: case 0x39: case 0x3a: case 0x3b:
-			video_active = 10;
-			switch (pcjr.bank & 0xc0)
-			{
-			case 0x00:	/* hmm.. text in graphics? */
-			case 0x40: t1t_gfx_1bpp(tmpbitmap);w*=2; break;
-			case 0x80:
-			case 0xc0: t1t_gfx_2bpp(tmpbitmap); break; //640
-            }
-			break;
-
-        default:
-			if( video_active && --video_active == 0 )
-				fillbitmap(tmpbitmap, Machine->pens[0], &Machine->visible_area);
-    }
-
-	if (w > Machine->scrbitmap->width)
-		w = Machine->scrbitmap->width;
-	if (h > Machine->scrbitmap->height)
-		h = Machine->scrbitmap->height;
-
-	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, cliprect, 0, -1);
-
-	if ((w > 100) && (h > 100))
-	{
-		if ((w != Machine->visible_area.max_x+1) || (h != Machine->visible_area.max_y+1))
-			set_visible_area(0, w-1, 0, h-1);
-	}
+	return proc;
 }

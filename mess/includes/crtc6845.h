@@ -1,5 +1,6 @@
-#ifndef __CRTC6845_H_
-#define __CRTC6845_H_
+#ifndef CRTC6845_H
+#define CRTC6845_H
+
 /***************************************************************************
 
   motorola cathode ray tube controller 6845
@@ -16,44 +17,44 @@
 extern "C" {
 #endif
 
-/* 14 address lines, 
-	5 character line address lines */
+/* opaque structure representing a crtc8645 chip */
+struct crtc6845;
 
-// support for more chips
-// cga and mda could be in a PC at the same time
-struct _CRTC6845;
-// static instance used by standard handlers, use it to call functions
-extern struct _CRTC6845 *crtc6845;
+/* generic crtc6845 instance */
+extern struct crtc6845 *crtc6845;
 
-typedef struct {
+struct crtc6845_cursor
+{
 	int on;
 	int pos;
 	int top;
 	int bottom;
-} CRTC6845_CURSOR;
+};
 
-typedef struct {
+struct crtc6845_config
+{
 	int freq;
-	void (*cursor_changed)(CRTC6845_CURSOR *old);
-} CRTC6845_CONFIG;
+	void (*cursor_changed)(struct crtc6845_cursor *old);
+};
 
-void crtc6845_init(struct _CRTC6845 *crtc, CRTC6845_CONFIG *config);
-void crtc6845_set_clock(struct _CRTC6845 *crtc, int freq);
+struct crtc6845 *crtc6845_init(struct crtc6845_config *config);
+
+void crtc6845_set_clock(struct crtc6845 *crtc, int freq);
 
 // to be called before drawing screen
-void crtc6845_time(struct _CRTC6845 *crtc);
+void crtc6845_time(struct crtc6845 *crtc);
 
-int crtc6845_get_char_columns(struct _CRTC6845 *crtc);
-int crtc6845_get_char_height(struct _CRTC6845 *crtc);
-int crtc6845_get_char_lines(struct _CRTC6845 *crtc);
-int crtc6845_get_start(struct _CRTC6845 *crtc);
+int crtc6845_get_char_columns(struct crtc6845 *crtc);
+int crtc6845_get_char_height(struct crtc6845 *crtc);
+int crtc6845_get_char_lines(struct crtc6845 *crtc);
+int crtc6845_get_start(struct crtc6845 *crtc);
 
 /* cursor off, cursor on, cursor 16 frames on/off, cursor 32 frames on/off 
 	start line, end line */
-void crtc6845_get_cursor(struct _CRTC6845 *crtc, CRTC6845_CURSOR *cursor);
+void crtc6845_get_cursor(struct crtc6845 *crtc, struct crtc6845_cursor *cursor);
 
-data8_t crtc6845_port_r(struct _CRTC6845 *crtc, int offset);
-void crtc6845_port_w(struct _CRTC6845 *crtc, int offset, data8_t data);
+data8_t crtc6845_port_r(struct crtc6845 *crtc, int offset);
+void crtc6845_port_w(struct crtc6845 *crtc, int offset, data8_t data);
 
 // functions for 
 // querying more videodata 
@@ -64,15 +65,11 @@ void crtc6845_port_w(struct _CRTC6845 *crtc, int offset, data8_t data);
 
 
 /* to be called when writting to port */
-extern WRITE_HANDLER ( crtc6845_0_port_w );
+WRITE_HANDLER ( crtc6845_0_port_w );
 
 /* to be called when reading from port */
-extern READ_HANDLER ( crtc6845_0_port_r );
+READ_HANDLER ( crtc6845_0_port_r );
 	
-// for displaying of debug info
-void crtc6845_state(void);
-
-
 /* use these only in emulations of 6845 variants */
 
 #define CRTC6845_COLUMNS (REG(0)+1)
@@ -108,4 +105,4 @@ void crtc6845_state(void);
 }
 #endif
 
-#endif
+#endif /* CRTC6845_H */
