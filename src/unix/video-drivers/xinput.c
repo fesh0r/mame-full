@@ -43,6 +43,11 @@ struct rc_option x11_input_opts[] = {
      NULL }
 };
 
+#if defined(__sgi) && !defined(MESS)
+/* Under Xmame, track if the game is paused due to window iconification */
+static unsigned char game_paused_by_unmap = FALSE;
+#endif
+
 /*
  * Parse keyboard events
  */
@@ -220,6 +225,33 @@ void sysdep_update_keyboard (void)
 #ifdef USE_XINPUT_DEVICES
 	if (XInputProcessEvent(&E)) break;
 #endif
+
+#if defined(__sgi) && ! defined(MESS)
+      /*
+       * Push the pause keycode in the Xmame keyboard queue, accordingly to
+       * to the three rules explained below. This should pause/run the game if
+       * Xmame window is unmapped/mapped.
+       *
+       * Rules:
+       * - mapped with game paused by unmap -> restart the game
+       * - unmapped with game running -> pause the game and flag the condition
+       * - unmapped with game paused  -> no action (already paused by the user)
+       */
+      case MapNotify:
+        if (game_paused_by_unmap) {
+          input_ui_post(IPT_UI_PAUSE);
+        }
+        game_paused_by_unmap = FALSE;
+        break;
+
+      case UnmapNotify:
+        if (! is_game_paused()) {
+          input_ui_post(IPT_UI_PAUSE);
+          game_paused_by_unmap = TRUE;
+        }
+        break;
+#endif
+
 #ifdef X11_JOYSTICK
       /* grrr we can't use case here since the event types for XInput devices
          aren't hardcoded, since we should have caught anything else above,
