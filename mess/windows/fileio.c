@@ -826,6 +826,20 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int openf
 
 
 	case OSD_FILETYPE_NVRAM:
+#ifdef MESS
+		if (filename)
+		{
+			if (openforwrite)
+			{
+				sprintf(name, "%s/%s", nvdir, gamename);
+				CreateDirectory(name, NULL);
+			}
+			scratch1 = alloca(strlen(gamename) + strlen(filename) + 2);
+			sprintf(scratch1, "%s/%s", gamename, filename);
+			gamename = scratch1;
+			
+		}
+#endif /* MESS */
 		if( !found )
 		{
 			sprintf (name, "%s/%s.nv", nvdir, gamename);

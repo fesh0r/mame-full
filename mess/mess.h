@@ -78,7 +78,6 @@ extern int tapecontrol(struct mame_bitmap *bitmap, int selected);
 #define IPT_KEYBOARD	IPT_TILT
 /* driver.h - end */
 
-
 /* The wrapper for osd_fopen() */
 void *image_fopen(int type, int id, int filetype, int read_or_write);
 
@@ -158,17 +157,20 @@ extern const char  *device_file_extension(int type, int extnum);
 extern int          device_filename_change(int type, int id, const char *name);
 
 /* access functions from the struct IODevice arrays of a driver */
-
 extern const void *device_info(int type, int id);
 
 /* This is the dummy GameDriver with flag NOT_A_DRIVER set
    It allows us to use an empty PARENT field in the macros. */
 
- /* Flag is used to bail out in mame.c/run_game() and cpuintrf.c/run_cpu()
+/* Flag is used to bail out in mame.c/run_game() and cpuintrf.c/run_cpu()
  * but keep the program going. It will be set eg. if the filename for a
  * device which has IO_RESET_ALL flag set is changed
  */
 extern int mess_keep_going;
+
+/* functions to load and save battery backed NVRAM */
+int battery_load(const char *filename, void *buffer, int length);
+int battery_save(const char *filename, void *buffer, int length);
 
 /* RAM configuration calls */
 #define RAM_STRING_BUFLEN 16

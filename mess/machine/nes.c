@@ -188,16 +188,7 @@ void nes_stop_machine (void)
 {
 	/* Write out the battery file if necessary */
 	if (nes.battery)
-	{
-		void *f;
-
-		f = osd_fopen(battery_name,0,OSD_FILETYPE_NVRAM,1);
-		if (f)
-		{
-			osd_fwrite(f,battery_ram,BATTERY_SIZE);
-			osd_fclose (f);
-		}
-	}
+		battery_save(battery_name, battery_ram, BATTERY_SIZE);
 }
 
 static void ppu_reset (struct ppu_struct *_ppu)
@@ -1281,18 +1272,7 @@ int nes_init_cart (int id)
 	/* Attempt to load a battery file for this ROM. If successful, we */
 	/* must wait until later to move it to the system memory. */
 	if (nes.battery)
-	{
-		void *f;
-
-		f = osd_fopen (battery_name, 0, OSD_FILETYPE_NVRAM, 0);
-		if (f)
-		{
-			osd_fread (f, battery_data, BATTERY_SIZE);
-			osd_fclose (f);
-		}
-		else
-			memset (battery_data, 0, BATTERY_SIZE);
-	}
+		battery_load(battery_name, battery_data, BATTERY_SIZE);
 
 	osd_fclose (romfile);
 	famicom_image_registered = 1;

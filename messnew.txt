@@ -68,7 +68,9 @@ System Driver Changes:
   format - "LOAD:xxyyDATA:".  This header enables the emulation to load the 
   data to the correct location.  [Ben Bruscella, Stefano Priore]
 
-
+- [NES] Now uses battery_save() and battery_load() to save and load battery
+  backed NVRAM. [Nate Woods]
+  
 Source Changes:
 ---------------
 - The core is based on MAME 0.56.  This incorporates all features of the 
@@ -86,6 +88,13 @@ Source Changes:
 
 - Fixed a bug in tape handling that would cause rewind and fast forward to not
   work if the system was stopping the tape (bug #168). [Nate Woods]
+
+- Added battery_save() and battery_load() functions to abstract handling of
+  battery-backed NVRAM on cartridges. [Nate Woods]
+  
+- Modified osd_fopen() with OSD_FILETYPE_NVRAM so that the filename parameter
+  can specify subdirectories (for use by battery_save() and battery_load().
+  [Anthony Kruize, Nate Woods]
 
 - [Windows] Fixed a bug in the core that caused the MESS process to not die if
   the close box was pressed, and the UI was disabled (bug #170). [Nate Woods]
