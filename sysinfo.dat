@@ -2245,6 +2245,7 @@ $info=coco3h
 $bio
 Tandy Color Computer 3 (Hitachi)
 
+
 First off, also read the history for the Color Computer, Color Computer 2 and Color Computer 3
 drivers. Much of the information there also applies to this driver.
 
@@ -2828,7 +2829,7 @@ $end
 
 $info=gameboy
 $bio
-Nintendo GameBoy (1989)
+Nintendo Game Boy (1989)
 
 
 The Game Boy was a huge success for Nintendo. It was the second portable system 
@@ -2840,15 +2841,33 @@ Awakening and Tetris proved that quality games could be developed for portable u
 Nintendo later released the “Play it Loud” Game Boy series in 5 colors, and the redesigned 
 slimmed down Game Boy pocket version was released in 1996.
 
+Features:
 
-Known Issues:
+CPU: 8-bit (Similar to the Z80 processor) at 4.194304MHz
+Main RAM: 8k Byte internal
+Video RAM: 8k Byte internal
+
+Video Display: Reflective LCD 160 x 144 dots (20 x 18 Tiles)
+Video Colors: 4 shades of gray
+Screen Size: 2.6"
+Max # of sprites: 40
+Max # sprites/line: 10
+Max sprite size: 8x16
+Min sprite size: 8x8
+Sound: 4 channels each of which can be mapped either to the left or to the right or to
+both speakers
+
+Communications: Serial port. Up to 4 Game boys can be connected together using this port.
+Baud rate and protocol: (?)
+
+Power: 6 VDC, 0.7 Watts (3 VDC 0.7W for Game Boy Pocket)
+4 AA Batteries ~ 35 hours 
+Rechargeable battery (NAKI) ~ 12 hours
+
+
+MESS Emulation State:
 
 Preliminary sound support only.  
-
-
-History and Trivia:
-
-The best selling video game system of all time.
 
 $end
 
@@ -3702,7 +3721,7 @@ $end
 
 $info=mbee
 $bio
-Microbee
+Applied Technologies Microbee
 
 Features:
 
@@ -4639,10 +4658,17 @@ $bio
 Nintendo Entertainment System / Famicom (1985 USA)
 
 
-The Nintendo Entertainment System (called Famicom in Japan) was an instant hit with such popular titles as Super Mario Bros., The Legend of Zelda and Excitebike.  It was released to the states in August, 1985. The 8-bit graphics were far superior to any-home based console that had come before it. Strong sales were were driven by the gamers wanting the feeling of real-life arcade games in their homes.
+The Nintendo Entertainment System (called Famicom in Japan) was an instant hit with such popular
+titles as Super Mario Bros., The Legend of Zelda and Excitebike.  It was released to the states
+in August, 1985. The 8-bit graphics were far superior to any-home based console that had come 
+before it. Strong sales were were driven by the gamers wanting the feeling of real-life arcade
+games in their homes.
 
-
-The NES boasts an impressive library of games with over 8000 games (Cowering goodnes), offering a smorgasbord of titles for fans of every genre. The Nintendo continued it's reign with other big hits such as The Mega Man series, Ninja Gaiden, Contra, Castlevania, Double Dragon and of course, Super Mario Bros 3.  The NES continued it's strong sales with over 36 million units sold worldwide by its official cancellation in January 1996 but not before releasing a remodeled NES. 
+The NES boasts an impressive library of games with over 8000 games (Cowering goodnes), offering
+a smorgasbord of titles for fans of every genre. The Nintendo continued it's reign with other 
+big hits such as The Mega Man series, Ninja Gaiden, Contra, Castlevania, Double Dragon and of 
+course, Super Mario Bros 3.  The NES continued it's strong sales with over 36 million units sold
+worldwide by its official cancellation in January 1996 but not before releasing a redesigned NES. 
 
 
 Usage:
@@ -5982,7 +6008,12 @@ $bio
 Sega Master System (1987)
 
 
-The Master System (called Mark III in Japan) was Sega´s competitor for the NES. Though Sega constantly developed new (and good) games, the Master System never beat the NES. The MS was most successful in Europe, especially Great Britain, where most of the games were developed in the "final" days in 1993/94. Overall, about 6 million consoles were sold world-wide until the end of 1994. (note taken from www.eidolons-inn.de)
+The Master System (called Mark III in Japan) was Sega´s competitor for the NES. Though Sega 
+constantly developed new (and good) games, the Master System never beat the NES. The MS was 
+most successful in Europe, especially Great Britain, where most of the games were developed in
+the "final" days in 1993/94. Overall, about 6 million consoles were sold world-wide until the 
+end of 1994. (note taken from www.eidolons-inn.de)
+
 
 Features:
 
@@ -5996,9 +6027,11 @@ Sound chip: Generic SN76489 sound chip (PSG) made by Texas Instruments
 Sound output: 3 square-wave sound and white noise/periodic noise channel
 Music: Yamaha YM2413 FM sound chip
 
+
 Links:
 
 EIdolons inn - www.eidolons-inn.de
+
 
 MESS Emulation State:
 
@@ -6014,7 +6047,14 @@ $bio
 Super Nintendo Entertainment System (1989)
 
 
-The Super Nintendo features true stereo sound, multiple scrolling backgrounds and almost twice the internal memory as its competition. The SNES was home to the biggest, baddest games of its day. With player's choice games like The Legend of Zelda: A Link to the Past, Donkey Kong Country and Super Metroid, the Super NES has sold more than 20 million systems in the U.S. and 46 million systems worldwide. (note taken from www.nintendo.com)
+Nintendo released the cartridge based 16-bit Super Nintendo to compete with the already released 
+Sega Genesis and NEC's TurboGraphix 16 (PCEngine in Japan). The Super Nintendo features true 
+stereo sound, multiple scrolling backgrounds and increased internal memory. It was a very popular
+system because people could play continuations of their favorite NES game. The Legend of Zelda: 
+A Link To The Past, The Donkey Kong Country Series, The Final Fantasy Series and Super Mario Kart
+were a few of the top titles for the SNES. In 1997 Nintendo redesigned the case, but never 
+included a CD-ROM expansion.
+
 
 Features:
 
@@ -6549,7 +6589,7 @@ Hartung SV-100
 
 There are several designs, but all have the same functionality.
 *(knickable screen)
-*GB2000 (gameboy style, no comm port)
+*GB2000 (game boy style, no comm port)
 
 
 Features:
@@ -7414,7 +7454,7 @@ in early 1984. The rights to the system reverted to it's developers, Smith Engin
 
 
 Smith Engineering briefly considered designing a handheld version of the device in 1988, 
-though the success of the Nintendo Gameboy made such a project too risky. In the mid-1990s, 
+though the success of the Nintendo Game Boy made such a project too risky. In the mid-1990s, 
 Smith Engineering condoned the duplication of the Vectrex system image and cartridges for 
 non-commercial uses.
 
