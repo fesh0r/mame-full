@@ -747,12 +747,12 @@ static data8_t pit8253_read(int which, offs_t offset)
 			if (p->timer[timer].msb)
 			{
 				data = (p->timer[timer].latch >> 8) & 0xff;
-				LOG1(("pit8253_read(): latch #%d MSB $%02x\n", timer, data));
+				LOG2(("pit8253_read(): latch #%d MSB $%02x\n", timer, data));
 			}
 			else
 			{
 				data = (p->timer[timer].latch >> 0) & 0xff;
-				LOG1(("pit8253_read(): latch #%d LSB $%02x\n", timer, data));
+				LOG2(("pit8253_read(): latch #%d LSB $%02x\n", timer, data));
 			}
 			p->timer[timer].msb ^= 1;
 			break;
@@ -760,13 +760,13 @@ static data8_t pit8253_read(int which, offs_t offset)
 		case 1:
 			/* read/write counter bits 0-7 only */
 			data = (counter >> 0) & 0xff;
-			LOG1(("pit8253_read(): counter #%d LSB only $%02x\n", timer, data));
+			LOG2(("pit8253_read(): counter #%d LSB only $%02x\n", timer, data));
 			break;
 
 		case 2:
 			/* read/write counter bits 8-15 only */
 			data = (counter >> 8) & 0xff;
-			LOG1(("pit8253_read(): counter #%d MSB only $%02x\n", timer, data));
+			LOG2(("pit8253_read(): counter #%d MSB only $%02x\n", timer, data));
 			break;
 
 		case 3:
@@ -794,7 +794,7 @@ static void pit8253_write(int which, offs_t offset, int data)
 
 	offset %= 4;
 
-	LOG1(("pit8253_write(): PIT #d offset=%d data=0x%02x\n", (int) offset, (unsigned) data));
+	LOG2(("pit8253_write(): PIT #%d offset=%d data=0x%02x\n", which, (int) offset, (unsigned) data));
 
 	switch( offset ) {
 	case 0:
