@@ -369,6 +369,9 @@ void coco3_vh_blink(void)
 WRITE_HANDLER(coco3_palette_w)
 {
 	rastertrack_touchvideomode();
+
+	data &= 0x3f;
+
 	paletteram[offset] = data;
 
 #if LOG_PALETTE
