@@ -509,60 +509,60 @@ TESTDRIVER( herocast )
 
 	/* Nintendo Playchoice 10 games */
 	/* Standard Games */
-	DRIVER( pc_tenis )	/* 1983 Nintendo */
-	DRIVER( pc_bball )	/* 1984 Nintendo */
-	DRIVER( pc_bfght )	/* 1984 Nintendo */
-	DRIVER( pc_ebike )	/* 1984 Nintendo */
-	DRIVER( pc_golf )	/* 1984 Nintendo */
-	DRIVER( pc_kngfu )	/* 1984 Irem (Nintendo License) */
-	DRIVER( pc_1942 )	/* 1985 Capcom */
-	DRIVER( pc_smb )	/* 1985 Nintendo */
-	DRIVER( pc_vball )	/* 1986 Nintendo */
+	DRIVER( pc_tenis )	/* (c) 1983 Nintendo */
+	DRIVER( pc_bball )	/* (c) 1984 Nintendo of America */
+	DRIVER( pc_bfght )	/* (c) 1984 Nintendo */
+	DRIVER( pc_ebike )	/* (c) 1984 Nintendo */
+	DRIVER( pc_golf )	/* (c) 1984 Nintendo */
+	DRIVER( pc_kngfu )	/* (c) 1984 Irem (Nintendo license) */
+	DRIVER( pc_1942 )	/* (c) 1985 Capcom */
+	DRIVER( pc_smb )	/* (c) 1985 Nintendo */
+	DRIVER( pc_vball )	/* (c) 1986 Nintendo */
 	/* Gun Games */
-	DRIVER( pc_duckh )	/* 1984 Nintendo */
-	DRIVER( pc_hgaly )	/* 1984 Nintendo */
-	DRIVER( pc_wgnmn )	/* 1984 Nintendo */
+	DRIVER( pc_duckh )	/* (c) 1984 Nintendo */
+	DRIVER( pc_hgaly )	/* (c) 1984 Nintendo */
+	DRIVER( pc_wgnmn )	/* (c) 1984 Nintendo */
 	/* A-Board Games */
-	DRIVER( pc_grdus )	/* 1986 Konami */
-	DRIVER( pc_tkfld )	/* 1987 Konami (Nintendo of America License) */
+	DRIVER( pc_grdus )	/* (c) 1986 Konami */
+	DRIVER( pc_tkfld )	/* (c) 1987 Konami (Nintendo of America license) */
 	/* B-Board Games */
-	DRIVER( pc_pwrst )	/* 1986 Nintendo */
-	DRIVER( pc_cvnia )	/* 1987 Konami (Nintendo of America License) */
-	DRIVER( pc_dbldr )	/* 1987 Konami (Nintendo of America License) */
-	DRIVER( pc_rnatk )	/* 1987 Konami (Nintendo of America License) */
-	DRIVER( pc_rygar )	/* 1987 Tecmo (Nintendo of America License) */
-	DRIVER( pc_cntra )	/* 1988 Konami (Nintendo of America License) */
+	DRIVER( pc_pwrst )	/* (c) 1986 Nintendo */
+	DRIVER( pc_cvnia )	/* (c) 1987 Konami (Nintendo of America license) */
+	DRIVER( pc_dbldr )	/* (c) 1987 Konami (Nintendo of America license) */
+	DRIVER( pc_rnatk )	/* (c) 1987 Konami (Nintendo of America license) */
+	DRIVER( pc_rygar )	/* (c) 1987 Tecmo (Nintendo of America license) */
+	DRIVER( pc_cntra )	/* (c) 1988 Konami (Nintendo of America license) */
 	/* C-Board Games */
-	DRIVER( pc_goons )	/* 1986 Konami */
+	DRIVER( pc_goons )	/* (c) 1986 Konami */
 	/* D-Board Games */
-	DRIVER( pc_radrc )	/* 1987 Square */
+	DRIVER( pc_radrc )	/* (c) 1987 Square */
 	/* E-Board Games */
-	DRIVER(pc_miket )	/* 1987 Nintendo */
+	DRIVER(pc_miket )	/* (c) 1987 Nintendo */
 	/* F-Board Games */
-	DRIVER( pc_rcpam )	/* 1987 Rare */
-	DRIVER( pc_ngaid )	/* 1989 Tecmo (Nintendo of America License) */
-	DRIVER( pc_tmnt )	/* 1989 Konami (Nintendo of America License) */
-	DRIVER( pc_drmro )	/* 1990 Nintendo */
-	DRIVER( pc_ynoid )	/* 1990 Capcom USA (Nintendo of America License) */
-	DRIVER( pc_ddrgn )	/* 19?? Technos? */
-	DRIVER( pc_ftqst )	/* 19?? Nintendo */
-	DRIVER( pc_rrngr )	/* 19?? Capcom USA (Nintendo of America License) */
+	DRIVER( pc_rcpam )	/* (c) 1987 Rare */
+	DRIVER( pc_ngaid )	/* (c) 1989 Tecmo (Nintendo of America license) */
+	DRIVER( pc_tmnt )	/* (c) 1989 Konami (Nintendo of America license) */
+	DRIVER( pc_drmro )	/* (c) 1990 Nintendo */
+	DRIVER( pc_ynoid )	/* (c) 1990 Capcom USA (Nintendo of America license) */
+	DRIVER( pc_ddrgn )	/* (c) 19?? Technos? */
+	DRIVER( pc_ftqst )	/* (c) 19?? Sunsoft (Nintendo of America lisense)*/
+	DRIVER( pc_rrngr )	/* (c) 19?? Capcom USA (Nintendo of America license) */
 	/* G-Board Games */
-	DRIVER( pc_gntlt )	/* 1985 Atari/Tengen (Nintendo of America License) */
-	DRIVER( pc_smb2 )	/* 1988 Nintendo */
-	DRIVER( pc_smb3 )	/* 1988 Nintendo */
-	DRIVER( pc_mman3 )	/* 1990 Capcom USA (Nintendo of America License) */
-	DRIVER( pc_radr2 )	/* 1990 Square (Nintendo of America License) */
-	DRIVER( pc_suprc )	/* 1990 Konami (Nintendo of America License) */
-	DRIVER( pc_tmnt2 )	/* 1990 Konami (Nintendo of America License) */
-	DRIVER( pc_wcup )	/* 1990 Technos (Nintendo License) */
-	DRIVER( pc_ngai3 )	/* 1991 Tecmo (Nintendo of America License) */
-	DRIVER( pc_pwbld )	/* 1991 Taito (Nintendo of America License) */
-	DRIVER( pc_rkats )	/* 1991 Atlus (Nintendo of America License) */
+	DRIVER( pc_gntlt )	/* (c) 1985 Atari/Tengen (Nintendo of America license) */
+	DRIVER( pc_smb2 )	/* (c) 1988 Nintendo */
+	DRIVER( pc_smb3 )	/* (c) 1988 Nintendo */
+	DRIVER( pc_mman3 )	/* (c) 1990 Capcom USA (Nintendo of America license) */
+	DRIVER( pc_radr2 )	/* (c) 1990 Square (Nintendo of America license) */
+	DRIVER( pc_suprc )	/* (c) 1990 Konami (Nintendo of America license) */
+	DRIVER( pc_tmnt2 )	/* (c) 1990 Konami (Nintendo of America license) */
+	DRIVER( pc_wcup )	/* (c) 1990 Technos (Nintendo license) */
+	DRIVER( pc_ngai3 )	/* (c) 1991 Tecmo (Nintendo of America license) */
+	DRIVER( pc_pwbld )	/* (c) 1991 Taito (Nintendo of America license) */
+	DRIVER( pc_rkats )	/* (c) 1991 Atlus (Nintendo of America license) */
 	/* i-Board Games */
-	DRIVER( pc_cshwk )	/* 1989 Rare (Nintendo of America License) */
+	DRIVER( pc_cshwk )	/* (c) 1989 Rare (Nintendo of America license) */
 	/* K-Board Games */
-	DRIVER( pc_moglf )	/* 1991 Nintendo */
+	DRIVER( pc_moglf )	/* (c) 1991 Nintendo */
 
 	/* Nintendo VS Games */
 	DRIVER( btlecity)
