@@ -963,22 +963,33 @@ void showmessinfo(void)
 
 }
 
+static char *battery_nvramfilename(const char *filename)
+{
+	return osd_strip_extension(osd_basename(filename));
+}
+
 /* load battery backed nvram from a driver subdir. in the nvram dir. */
-int battery_load( const char *filename, void *buffer, int length )
+int battery_load(const char *filename, void *buffer, int length)
 {
 	void *f;
 	int bytes_read = 0;
 	int result = FALSE;
+	char *nvram_filename;
 
 	/* some sanity checking */
 	if( buffer != NULL && length > 0 )
 	{
-		f = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_NVRAM, 0);
-		if (f)
+		nvram_filename = battery_nvramfilename(filename);
+		if (nvram_filename)
 		{
-			bytes_read = osd_fread(f, buffer, length);
-			osd_fclose(f);
-			result = TRUE;
+			f = osd_fopen(Machine->gamedrv->name, nvram_filename, OSD_FILETYPE_NVRAM, 0);
+			if (f)
+			{
+				bytes_read = osd_fread(f, buffer, length);
+				osd_fclose(f);
+				result = TRUE;
+			}
+			free(nvram_filename);
 		}
 
 		/* fill remaining bytes (if necessary) */
@@ -988,19 +999,25 @@ int battery_load( const char *filename, void *buffer, int length )
 }
 
 /* save battery backed nvram to a driver subdir. in the nvram dir. */
-int battery_save( const char *filename, void *buffer, int length )
+int battery_save(const char *filename, void *buffer, int length)
 {
 	void *f;
+	char *nvram_filename;
 
 	/* some sanity checking */
 	if( buffer != NULL && length > 0 )
 	{
-		f = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_NVRAM, 1);
-		if (f)
+		nvram_filename = battery_nvramfilename(filename);
+		if (nvram_filename)
 		{
-			osd_fwrite(f, buffer, length);
-			osd_fclose(f);
-			return TRUE;
+			f = osd_fopen(Machine->gamedrv->name, nvram_filename, OSD_FILETYPE_NVRAM, 1);
+			if (f)
+			{
+				osd_fwrite(f, buffer, length);
+				osd_fclose(f);
+				return TRUE;
+			}
+			free(nvram_filename);
 		}
 	}
 	return FALSE;

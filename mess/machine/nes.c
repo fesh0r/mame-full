@@ -17,7 +17,6 @@
 //#define SPLIT_PRG
 
 #define BATTERY_SIZE 0x2000
-char battery_name[1024];
 UINT8 battery_data[BATTERY_SIZE];
 
 static int famicom_image_registered = 0;
@@ -188,7 +187,7 @@ MACHINE_STOP( nes )
 {
 	/* Write out the battery file if necessary */
 	if (nes.battery)
-		battery_save(battery_name, battery_ram, BATTERY_SIZE);
+		battery_save(device_filename(IO_CARTSLOT, 0), battery_ram, BATTERY_SIZE);
 }
 
 static void ppu_reset (struct ppu_struct *_ppu)
@@ -1102,23 +1101,6 @@ int nes_init_cart (int id)
 		else
 			return INIT_FAIL;
 	}
-	else
-	{
-		strcpy (battery_name, device_filename(IO_CARTSLOT,id));
-
-		/* Strip off file extension if it exists */
-		for (i = strlen(battery_name) - 1; i > 0; i --)
-		{
-			/* If we found a period, terminate the string here and jump out */
-			if (battery_name[i] == '.')
-			{
-				battery_name[i] = 0x00;
-				break;
-			}
-		}
-
-		logerror ("battery name (minus extension): %s\n", battery_name);
-	}
 
 	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0)))
 	{
@@ -1284,7 +1266,7 @@ int nes_init_cart (int id)
 	/* Attempt to load a battery file for this ROM. If successful, we */
 	/* must wait until later to move it to the system memory. */
 	if (nes.battery)
-		battery_load(battery_name, battery_data, BATTERY_SIZE);
+		battery_load(device_filename(IO_CARTSLOT,id), battery_data, BATTERY_SIZE);
 
 	osd_fclose (romfile);
 	famicom_image_registered = 1;

@@ -31,6 +31,9 @@ Source Changes:
 - The file manager will now default to the directory that a preexisting image
   resides in. [Nate Woods]
 
+- Fixed some bugs that caused the battery backups in the NES and GB systems to
+  be placed in odd directories. [Nate Woods]
+
 - Fixed bugs #192 and #200 - remember that:
 
   1) In File Manager you can press SHIFT+ENTER to manually edit a filename

@@ -44,7 +44,6 @@ static UINT32 SIOCount;				   /* Serial I/O counter                          */
 static UINT8 MBC1Mode;				   /* MBC1 ROM/RAM mode                           */
 static UINT8 MBC3RTCMap[5];			   /* MBC3 Real-Time-Clock banks                  */
 static UINT8 MBC3RTCBank;			   /* Number of RTC bank for MBC3                 */
-char nvram_name[1024];				   /* Name to store NVRAM under                   */
 UINT8 *gb_ram;
 
 #define Verbose 0x00
@@ -122,7 +121,7 @@ MACHINE_STOP( gb )
 			memcpy( ptr, RAMMap[I], 0x2000 );
 			ptr += 0x2000;
 		}
-		battery_save( nvram_name, battery_ram, RAMBanks * 0x2000 );
+		battery_save( device_filename(IO_CARTSLOT, 0), battery_ram, RAMBanks * 0x2000 );
 
 		free( battery_ram );
 	}
@@ -645,19 +644,6 @@ int gb_load_rom (int id)
 		return INIT_FAIL;
 	}
 
-	/* Grabbed this from the NES driver */
-	strcpy (nvram_name, device_filename(IO_CARTSLOT,id));
-	/* Strip off file extension if it exists */
-	for (I = strlen(nvram_name) - 1; I > 0; I--)
-	{
-		/* If we found a period, terminate the string here and jump out */
-		if (nvram_name[I] == '.')
-		{
-			nvram_name[I] = 0x00;
-			break;
-		}
-	}
-
 	if( new_memory_region(REGION_CPU1, 0x10000,0) )
 	{
 		logerror("Memory allocation failed reading roms!\n");
@@ -898,7 +884,7 @@ int gb_load_rom (int id)
 		battery_ram = (UINT8 *)malloc( RAMBanks * 0x2000 );
 		if( battery_ram )
 		{
-			battery_load( nvram_name, battery_ram, RAMBanks * 0x2000 );
+			battery_load( device_filename(IO_CARTSLOT,id), battery_ram, RAMBanks * 0x2000 );
 			ptr = battery_ram;
 			for( I = 0; I < RAMBanks; I++ )
 			{

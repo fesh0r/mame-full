@@ -61,6 +61,7 @@ extern char *cheatfile;
 #ifdef MESS
 #define FILEFLAG_CAN_BE_ABSOLUTE	0x20
 #define FILEFLAG_OPEN_ZIPS			0x40
+#define FILEFLAG_CREATE_GAME_DIR	0x80
 #endif
 
 #define STATCACHE_SIZE			64
@@ -278,7 +279,11 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype, int op
 
 		// NVRAM files
 		case OSD_FILETYPE_NVRAM:
+#ifdef MESS
+			return generic_fopen(pathc, pathv, gamename, filename, extension, 0, openforwrite ? FILEFLAG_OPENWRITE|FILEFLAG_CREATE_GAME_DIR : FILEFLAG_OPENREAD);
+#else
 			return generic_fopen(pathc, pathv, NULL, gamename, extension, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD);
+#endif
 
 		// high score files
 		case OSD_FILETYPE_HIGHSCORE:
@@ -1433,6 +1438,11 @@ static void *generic_fopen(int pathc, const char **pathv, const char *gamename, 
 		// first look for path/gamename as a directory
 		compose_path(name, dir_name, gamename, NULL, NULL);
 		LOG(("Trying %s\n", name));
+
+#ifdef MESS
+		if ((flags & FILEFLAG_CREATE_GAME_DIR) && *name && cache_stat(name, &stat_buffer))
+			mkdir(name);
+#endif
 
 		// if the directory exists, proceed
 		if (*name == 0 || (cache_stat(name, &stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR)))
