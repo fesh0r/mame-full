@@ -1,12 +1,12 @@
 /***************************************************************************
 
-    M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-2000 Michael Soderstrom and Chris Kirmse
-    
-    This file is part of MAME32, and may only be used, modified and
-    distributed under the terms of the MAME license, in "readme.txt".
-    By continuing to use, modify or distribute this file you indicate
-    that you have read the license and understand and accept it fully.
+  M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+  
+  This file is part of MAME32, and may only be used, modified and
+  distributed under the terms of the MAME license, in "readme.txt".
+  By continuing to use, modify or distribute this file you indicate
+  that you have read the license and understand and accept it fully.
 
  ***************************************************************************/
 
@@ -32,13 +32,13 @@
     function prototypes
  ***************************************************************************/
 
-static LRESULT CALLBACK     MAME32Debug_MessageProc(HWND, UINT, WPARAM, LPARAM);
+static LRESULT CALLBACK MAME32Debug_MessageProc(HWND, UINT, WPARAM, LPARAM);
 
-static void             OnPaint(HWND hWnd);
-static void             OnPaletteChanged(HWND hWnd, HWND hWndPaletteChange);
-static BOOL             OnQueryNewPalette(HWND hWnd);
-static void             OnGetMinMaxInfo(HWND hWnd, MINMAXINFO* pMinMaxInfo);
-static void             OnClose(HWND hWnd);
+static void OnPaint(HWND hWnd);
+static void OnPaletteChanged(HWND hWnd, HWND hWndPaletteChange);
+static BOOL OnQueryNewPalette(HWND hWnd);
+static void OnGetMinMaxInfo(HWND hWnd, MINMAXINFO* pMinMaxInfo);
+static void OnClose(HWND hWnd);
 
 /***************************************************************************
     External variables
@@ -71,8 +71,8 @@ struct tDisplay_private
     Internal variables
  ***************************************************************************/
 
-static struct tDisplay_private      This;
-static const int                    safety = 16;
+static struct tDisplay_private This;
+static const int               safety = 16;
 
 /***************************************************************************
     External functions  
@@ -236,16 +236,38 @@ int MAME32Debug_allocate_colors(int          modifiable,
     if (!debug_pens)
         return 1;
 
-    for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
+    if (Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
     {
-		debug_pens[i] = i;
-        This.m_PalEntries[i].peRed    = debug_palette[3 * i + 0];
-        This.m_PalEntries[i].peGreen  = debug_palette[3 * i + 1];
-        This.m_PalEntries[i].peBlue   = debug_palette[3 * i + 2];
-        This.m_PalEntries[i].peFlags  = PC_NOCOLLAPSE;
+        for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
+        {
+            if (This.m_nDepth == 16) /* 555 */
+            {
+                *debug_pens++ = debug_palette[3 * i + 0] * 0x7c00 / 0xff 
+                              + debug_palette[3 * i + 1] * 0x03e0 / 0xff
+                              + debug_palette[3 * i + 2] * 0x001f / 0xff;
+            }
+            else
+            if (This.m_nDepth == 32)
+            {
+                *debug_pens++ = debug_palette[3 * i + 0] * 0x7c00 / 0xff 
+                              + debug_palette[3 * i + 1] * 0x03e0 / 0xff
+                              + debug_palette[3 * i + 2] * 0x001f / 0xff;
+            }
+        }
     }
+    else
+    {
+        for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
+        {
+            debug_pens[i] = i;
+            This.m_PalEntries[i].peRed    = debug_palette[3 * i + 0];
+            This.m_PalEntries[i].peGreen  = debug_palette[3 * i + 1];
+            This.m_PalEntries[i].peBlue   = debug_palette[3 * i + 2];
+            This.m_PalEntries[i].peFlags  = PC_NOCOLLAPSE;
+        }
 
-    SetPaletteEntries(This.m_hPalette, 0, DEBUGGER_TOTAL_COLORS, This.m_PalEntries);
+        SetPaletteEntries(This.m_hPalette, 0, DEBUGGER_TOTAL_COLORS, This.m_PalEntries);
+    }
 
     return 0;
 }
@@ -311,6 +333,22 @@ static void OnPaint(HWND hWnd)
 
         if (hOldPalette != NULL)
             SelectPalette(ps.hdc, hOldPalette, FALSE);
+    }
+    else
+    if (This.m_nDepth == 16 || This.m_nDepth == 32)
+    {
+        StretchDIBits(ps.hdc,
+                      0, 0,
+                      This.m_nClientWidth,
+                      This.m_nClientHeight,
+                      0,
+                      0,
+                      This.m_nClientWidth,
+                      This.m_nClientHeight,
+                      This.m_pBitmap->line[0],
+                      This.m_pInfo,
+                      DIB_RGB_COLORS,
+                      SRCCOPY);
     }
 
     EndPaint(hWnd, &ps); 

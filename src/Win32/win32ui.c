@@ -1369,7 +1369,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
     }
 #endif
 
-    // Init DirectInput
+    /* Init DirectInput */
     if (!DirectInputInitialize())
     {
        DialogBox(GetModuleHandle(NULL),MAKEINTRESOURCE(IDD_DIRECTX), NULL, DirectXDialogProc);
@@ -4089,16 +4089,12 @@ static BOOL ParseCommandLine(char *command_line)
             if (argc <= ++i)
                 break;
 
+            o->depth = atoi(argv[i]);
+            if (o->depth != 8
+            &&  o->depth != 15
+            &&  o->depth != 16
+            &&  o->depth != 32)
             o->depth = 0; /* auto */
-            if (stricmp(argv[i], "8") == 0)
-            {
-                o->depth = 8;
-            }
-            else
-            if (stricmp(argv[i], "16") == 0)
-            {
-                o->depth = 16;
-            }
             continue;
         }
 
@@ -5098,6 +5094,7 @@ static void MamePlayGameWithOptions()
     options.translucency   = playing_game_options.translucency;
     options.antialias      = playing_game_options.antialias;
     options.use_artwork    = playing_game_options.use_artwork;
+    options.savegame       = 0;
 
     if (joygui != NULL)
         KillTimer(hMain,0);
