@@ -658,27 +658,6 @@ void kim1_cassette_exit(int id)
 	/* nothing yet */
 }
 
-#ifdef IMAGE_VERIFY
-int kim1_cassette_id(int id)
-{
-	const char magic[] = "KIM1";
-	char buff[4];
-	void *file;
-
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, 0);
-	if (file)
-	{
-		osd_fread(file, buff, sizeof (buff));
-		if (memcmp(buff, magic, sizeof (buff)) == 0)
-		{
-			logerror("kim1_rom_id: magic '%s' found\n", magic);
-			return 1;
-		}
-	}
-	return 0;
-}
-#endif
-
 static void m6530_timer_cb(int chip)
 {
 	logerror("m6530(%d) timer expired\n", chip);
