@@ -171,8 +171,8 @@ int amstrad_ppi_porta_r( int chip)
 /* ppi port b read
  Bit 7 = Cassette tape input
  bit 6 = printer busy/online
- bit 5 =
- bit 4 =
+ bit 5 = /exp on expansion port
+ bit 4 = 50/60hz
  bit 3,2,1 = PCB links to define computer name.
 In MESS I have used the dipswitch feature.
  Bit 0 = VSYNC from CRTC */
@@ -198,7 +198,7 @@ int amstrad_ppi_portb_r (int chip)
 	/* vsync state from CRTC */
 	data |= amstrad_vsync;
 
-	data |= ppi_port_inputs[1] & 0x03e;
+	data |= ppi_port_inputs[1] & 0x01e;
 	return data;
 }
 
@@ -2362,6 +2362,8 @@ void amstrad_shutdown_machine(void)
 
 void amstrad_init_machine(void)
 {
+	unsigned char machine_name_and_refresh_rate;
+
 	amstrad_common_init();
 
 	amstrad_setup_machine();
@@ -2381,7 +2383,9 @@ void amstrad_init_machine(void)
 	bit 4 is connected to a link on the PCB used to define screen
 	refresh rate. 1 = 50Hz, 0 = 60Hz */
 
-	ppi_port_inputs[1] = readinputport(10) & 0x01e;
+	
+	machine_name_and_refresh_rate = readinputport(10);
+	ppi_port_inputs[1] = ((machine_name_and_refresh_rate & 0x07)<<1) | (machine_name_and_refresh_rate & 0x010);
 
 	multiface_init();
 }
@@ -2411,7 +2415,7 @@ void Amstrad_Reset(void)
 	/* set ram config 0 */
 	AmstradCPC_GA_Write(0x0c0);
 
-		multiface_reset();
+	multiface_reset();
 }
 
 
@@ -2656,7 +2660,7 @@ INPUT_PORTS_START(amstrad)
 	/* the following are defined as dipswitches, but are in fact solder links on the
 	 * curcuit board. The links are open or closed when the PCB is made, and are set depending on which country
 	 * the Amstrad system was to go to */
-
+	PORT_START
 	PORT_DIPNAME( 0x07, 0x07, "Machine Name" )
 	PORT_DIPSETTING(    0x00, "Isp" )
 	PORT_DIPSETTING(    0x01, "Triumph" )
