@@ -53,7 +53,7 @@ inline const char *basename(const char *name)
 	{
 	int len = strlen (name);
 
-	while (len-- >= 0)
+	while (len-- > 0)
 		{
 		if ((name[len] == '\\') || (name[len] == '/'))
 			return name + len + 1;
