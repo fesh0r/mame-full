@@ -40,12 +40,6 @@ extern int mz700_vh_start (void);
 extern void mz700_vh_stop (void);
 extern void mz700_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
 
-/* from src/mess/sndhrdw/mz700.c */
-extern int mz700_sh_start(const struct MachineSound *msound);
-extern void mz700_sh_stop(void);
-extern void mz700_sh_update(void);
-extern void mz700_sh_set_clock(int clock);
-
 /******************************************************************************
  *	Sharp MZ800
  *

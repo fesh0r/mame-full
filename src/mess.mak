@@ -521,7 +521,6 @@ $(OBJ)/samcoupe.a: \
 	  $(OBJ)/mess/systems/coupe.o
 
 $(OBJ)/sharp.a:    \
-	  $(OBJ)/mess/sndhrdw/mz700.o	 \
 	  $(OBJ)/mess/machine/mz700.o	 \
 	  $(OBJ)/mess/vidhrdw/mz700.o	 \
 	  $(OBJ)/mess/systems/mz700.o	 \
