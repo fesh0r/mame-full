@@ -10,6 +10,7 @@
 #include "cpu/m6502/m6502.h"
 
 #include "includes/lynx.h"
+#include <zlib.h>
 
 static MEMORY_READ_START( lynx_readmem )
 	{ 0x0000, 0xfbff, MRA_RAM },
@@ -188,7 +189,7 @@ static struct MachineDriver machine_driver_lynx =
 
 /* these 2 dumps are saved from an running machine,
    and therefor the rom byte at 0xff09 is not readable!
-   (memory configuration) 
+   (memory configuration)
    these 2 dumps differ only in this byte!
 */
 ROM_START(lynx)
@@ -212,10 +213,45 @@ ROM_START(lynx2)
 	ROM_REGION(0x100000, REGION_USER1, 0)
 ROM_END
 
-static int lynx_id_rom(int id)
-{
-	return ID_OK;	/* no id possible */
+// extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
 
+UINT32 lynx_partialcrc(const unsigned char *buf,unsigned int size)
+{
+	unsigned int crc;
+
+	if (size < 65) return 0;
+	crc = (UINT32) crc32(0L,&buf[64],size-64);
+	logerror("Lynx Partial CRC: %08lx %ld\n",crc,size);
+	/* printf("Lynx Partial CRC: %08x %d\n",crc,size); */
+	return (UINT32)crc;
+}
+
+int lynx_id_rom (int id)
+{
+	FILE *romfile;
+
+	char header[64];
+
+	logerror("Lynx IDROM\n");
+	/* If no file was specified, don't bother */
+	if (device_filename(IO_CARTSLOT,id) == NULL ||
+		strlen(device_filename(IO_CARTSLOT,id)) == 0)
+		return ID_FAILED;
+
+	if (!(romfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0))) {
+		logerror("returning ID_FAILED\n");
+		return ID_FAILED;
+	}
+	osd_fread(romfile,header,sizeof(header));
+	osd_fclose (romfile);
+	logerror("Trying Header Compare\n");
+
+	if (strncmp("LYNX",&header[0],4) && strncmp("BS9",&header[6],3)) {
+		logerror("Not an valid Lynx image\n");
+		return ID_FAILED;
+	}
+	logerror("returning ID_OK\n");
+	return ID_OK;
 }
 
 static int lynx_load_rom(int id)
@@ -236,7 +272,7 @@ static int lynx_load_rom(int id)
 	{
 		return 0;
 	}
-	
+
 	if (!(cartfile = (FILE*)image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		logerror("%s not found\n",device_filename(IO_CARTSLOT,id));
@@ -250,7 +286,7 @@ static int lynx_load_rom(int id)
 	}
 	size-=0x40;
 	lynx_granularity=header[4]|(header[5]<<8);
-	
+
 	logerror ("%s %dkb cartridge with %dbyte granularity from %s\n",
 			  header+10,size/1024,lynx_granularity, header+42);
 
@@ -276,7 +312,7 @@ static int lynx_quickload(int id)
 	{
 		return 0;
 	}
-	
+
 	if (!(cartfile = (FILE*)image_fopen(IO_QUICKLOAD, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		logerror("%s not found\n",device_filename(IO_QUICKLOAD,id));
@@ -322,7 +358,8 @@ static const struct IODevice io_lynx[] = {
 		NULL,							/* input */
 		NULL,							/* output */
 		NULL,							/* input_chunk */
-		NULL							/* output_chunk */
+		NULL,							/* output_chunk */
+		lynx_partialcrc,				/* partial crc */
 	},
 	{
 		IO_QUICKLOAD,					/* type */
@@ -341,7 +378,8 @@ static const struct IODevice io_lynx[] = {
 		NULL,							/* input */
 		NULL,							/* output */
 		NULL,							/* input_chunk */
-		NULL							/* output_chunk */
+		NULL,							/* output_chunk */
+		lynx_partialcrc,				/* partial crc */
 	},
     { IO_END }
 };

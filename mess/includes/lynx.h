@@ -5,6 +5,8 @@
 int lynx_vh_start(void);
 void lynx_vh_stop(void);
 void lynx_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+extern UINT32 lynx_partialcrc(const unsigned char *,unsigned int);
+
 
 #define PAD_UP 0x80
 #define PAD_DOWN 0x40
