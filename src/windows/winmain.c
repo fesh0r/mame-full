@@ -17,6 +17,10 @@
 #include "driver.h"
 #include "window.h"
 
+#ifdef MESS
+#include "messwin.h"
+#endif
+
 // from config.c
 int  cli_frontend_init (int argc, char **argv);
 void cli_frontend_exit (void);
@@ -38,9 +42,12 @@ int _CRT_glob = 0;
 //	LOCAL VARIABLES
 //============================================================
 
-static char mapfile_name[MAX_PATH];
-static LPTOP_LEVEL_EXCEPTION_FILTER pass_thru_filter;
 
+
+static char mapfile_name[MAX_PATH];
+#ifndef USE_DRMINGW
+static LPTOP_LEVEL_EXCEPTION_FILTER pass_thru_filter;
+#endif
 static int original_leds;
 
 
@@ -48,10 +55,10 @@ static int original_leds;
 //============================================================
 //	PROTOTYPES
 //============================================================
-
+#ifndef USE_DRMINGW
 static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info);
 static const char *lookup_symbol(UINT32 address);
-
+#endif
 
 
 //============================================================
@@ -127,7 +134,7 @@ void osd_exit(void)
 //============================================================
 //	exception_filter
 //============================================================
-
+#ifndef USE_DRMINGW
 static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info)
 {
 	static const struct
@@ -204,13 +211,13 @@ fprintf(stderr, "esp = %08x  ebp = %08x\n", esp, ebp);
 	// exit
 	return EXCEPTION_EXECUTE_HANDLER;
 }
-
+#endif
 
 
 //============================================================
 //	lookup_symbol
 //============================================================
-
+#ifndef USE_DRMINGW
 static const char *lookup_symbol(UINT32 address)
 {
 	static char buffer[1024];
@@ -243,3 +250,5 @@ static const char *lookup_symbol(UINT32 address)
 	sprintf(buffer, " (%s+0x%04x)", best_symbol, address - best_addr);
 	return buffer;
 }
+#endif
+

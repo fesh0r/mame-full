@@ -17,11 +17,12 @@ enum { LIST_SHORT = 1, LIST_INFO, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLE
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_DUPCRC, LIST_WRONGMERGE,
 		LIST_ROMSIZE, LIST_PALETTESIZE, LIST_CPU, LIST_SOURCEFILE };
 #else
+#include "messwin.h"
 enum { LIST_SHORT = 1, LIST_INFO, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
 		LIST_LMR, LIST_DETAILS, LIST_GAMELIST,
 		LIST_GAMES, LIST_CLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_DUPCRC, LIST_WRONGMERGE,
-		LIST_ROMSIZE, LIST_PALETTESIZE, LIST_CPU, LIST_SOURCEFILE, LIST_MESSINFO };
+		LIST_ROMSIZE, LIST_PALETTESIZE, LIST_CPU, LIST_SOURCEFILE, LIST_MESSTEXT, LIST_MESSDEVICES, LIST_MESSCREATEDIR };
 #endif
 
 #define VERIFY_ROMS		0x00000001
@@ -70,9 +71,9 @@ struct rc_option frontend_opts[] = {
 	{ "wrongfps", NULL, rc_set_int, &list, NULL, LIST_WRONGFPS, 0, NULL, "wrong fps" },
 	{ "clones", NULL, rc_bool, &listclones, "1", 0, 0, NULL, "enable/disable clones" },
 #ifdef MESS
-	{ "listdevices", NULL, rc_set_int, &list, NULL, LIST_MESSINFO, 0, NULL, NULL },
-	{ "listtext", NULL, rc_set_int, &list, NULL, LIST_MESSINFO, 0, NULL, NULL },
-	{ "createdir", NULL, rc_set_int, &list, NULL, LIST_MESSINFO, 0, NULL, NULL },
+	{ "listdevices", NULL, rc_set_int, &list, NULL, LIST_MESSDEVICES, 0, NULL, NULL },
+	{ "listtext", NULL, rc_set_int, &list, NULL, LIST_MESSTEXT, 0, NULL, NULL },
+	{ "createdir", NULL, rc_set_int, &list, NULL, LIST_MESSCREATEDIR, 0, NULL, NULL },
 #endif
 	{ "listroms", NULL, rc_set_int, &list, NULL, LIST_ROMS, 0, NULL, NULL },
 	{ "listsamples", NULL, rc_set_int, &list, NULL, LIST_SAMPLES, 0, NULL, NULL },
@@ -483,21 +484,25 @@ int frontend_help (char *gamename)
 	{
 
         #ifdef MESS
-		case LIST_MESSINFO: /* all mess specific calls here */
+		//#if 0
+		case LIST_MESSTEXT: /* all mess specific calls here */
 		{
-			for (i=1;i<argc;i++)
-			{
-				/* list all mess info options here */
-				if (
-					!stricmp(argv[i],"-listdevices") |
-					!stricmp(argv[i],"-listtext")    |
-					!stricmp(argv[i],"-createdir")
-				   )
-			 	{
 					/* send the gamename and arg to mess.c */
-					list_mess_info(gamename, argv[i], listclones);
-				}
-			}
+			list_mess_info(gamename, "-listtext", listclones);
+			return 0;
+			break;
+		}
+		case LIST_MESSDEVICES:
+		{
+					/* send the gamename and arg to mess.c */
+			list_mess_info(gamename, "-listdevices", listclones);
+			return 0;
+			break;
+		}
+		case LIST_MESSCREATEDIR:
+		{
+					/* send the gamename and arg to mess.c */
+			list_mess_info(gamename, "-createdir", listclones);
 			return 0;
 			break;
 		}
