@@ -1045,9 +1045,7 @@ int input_classify_port(const struct InputPort *port)
 
 int input_player_number(const struct InputPort *port)
 {
-	if ((port->type & ~IPF_MASK) == IPT_EXTENSION)
-		port--;
-	return (port->type & IPF_PLAYERMASK) / IPF_PLAYER2;
+	return port->player;
 }
 
 

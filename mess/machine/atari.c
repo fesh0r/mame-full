@@ -1354,7 +1354,7 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 #define ACSH_A			0xff
 
 static UINT8 keys[64][4] = {
-{AKEY_NONE		 ,AKEY_NONE 	  ,AKEY_NONE	   ,AKEY_NONE		}, /* ""       IP_KEY_NONE             */
+{AKEY_NONE		 ,AKEY_NONE 	  ,AKEY_NONE	   ,AKEY_NONE		}, /* ""       CODE_NONE             */
 {AKEY_ESC		 ,ASHF_ESC		  ,ACTL_ESC 	   ,ACSH_ESC		}, /*"Escape" KEYCODE_ESC              */
 {AKEY_1 		 ,ASHF_EXCLAM	  ,ACTL_1		   ,ACSH_EXCLAM 	}, /* "1 !"    KEYCODE_1               */
 {AKEY_2 		 ,ASHF_DQUOTE	  ,ACTL_2		   ,ACSH_DQUOTE 	}, /* "2 \""   KEYCODE_2               */

@@ -1400,7 +1400,7 @@ INPUT_PORTS_START(pcw16)
 	/* vblank */
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_VBLANK)
 	/* power switch - default is on */
-	PORT_BITX(0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Power Switch/Suspend", IP_KEY_NONE, IP_JOY_NONE)
+	PORT_DIPNAME(0x40, 0x40, "Power Switch/Suspend")
 	PORT_DIPSETTING(0x0, DEF_STR( Off) )
 	PORT_DIPSETTING(0x40, DEF_STR( On) )
 

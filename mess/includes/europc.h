@@ -13,7 +13,7 @@ void europc_rtc_set_time(void);
 void europc_rtc_init(void);
 
 #define EUROPC_HELPER(bit,text,key1,key2) \
-	PORT_BITX( bit, 0x0000, IPT_KEYBOARD, text, key1, key2 )
+	PORT_BIT( bit, 0x0000, IPT_KEYBOARD) PORT_NAME(text) PORT_CODE(key1) PORT_CODE(key2)
 
 /*
 layout of an uk europc

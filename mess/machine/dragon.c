@@ -1993,19 +1993,19 @@ static void autocenter_timer_proc(int data)
 
 	if (info->old_value != portval)
 	{
-		/* Now go through all inputs, and set or reset IPF_CENTER on all
+		/* Now go through all inputs, and set or reset u.analog.center on all
 		 * joysticks
 		 */
 		for (in = Machine->input_ports; in->type != IPT_END; in++)
 		{
-			if (((in->type & ~IPF_MASK) > IPT_ANALOG_START)
-					&& ((in->type & ~IPF_MASK) < IPT_ANALOG_END))
+			if (((in->type) > IPT_ANALOG_START)
+					&& ((in->type) < IPT_ANALOG_END))
 			{
 				/* We found a joystick */
 				if (portval)
-					in->type |= IPF_CENTER;
+					in->u.analog.center = 1;
 				else
-					in->type &= ~IPF_CENTER;
+					in->u.analog.center = 0;
 			}
 		}
 		info->old_value = portval;

@@ -970,7 +970,7 @@ QUEUE_CHARS( at_keyboard )
 ***************************************************************************/
 
 #define PC_KEYB_HELPER(bit,text,key1,key2) \
-	PORT_BITX( bit, 0x0000, IPT_KEYBOARD, text, key1, key2 )
+	PORT_BIT( bit, 0x0000, IPT_KEYBOARD) PORT_NAME(text) PORT_CODE(key1) PORT_CODE(key2)
 
 INPUT_PORTS_START( pc_keyboard )
     PORT_START  /* IN4 */
@@ -1082,7 +1082,7 @@ INPUT_PORTS_END
 
 
 #define AT_KEYB_HELPER(bit, text, key1) \
-	PORT_BITX( bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, text, key1, CODE_NONE )
+	PORT_BIT( bit, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME(text) PORT_CODE(key1)
 
 INPUT_PORTS_START( at_keyboard )
 	PORT_START	/* IN4 */

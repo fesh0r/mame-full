@@ -217,7 +217,7 @@ WRITE8_HANDLER ( tandy1000_pio_w )
 
 
 #define T1000_HELPER(bit,text,key1,key2) \
-	PORT_BITX( bit, 0x0000, IPT_KEYBOARD, text, key1, key2 )
+	PORT_BIT( bit, 0x0000, IPT_KEYBOARD) PORT_NAME(text) PORT_CODE(key1) PORT_CODE(key2)
 
 INPUT_PORTS_START( t1000_keyboard )
 	PORT_START	/* IN4 */

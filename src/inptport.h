@@ -95,7 +95,7 @@ struct InputPort
 #define IP_ACTIVE_HIGH 0x0000
 #define IP_ACTIVE_LOW 0xffff
 
-enum { IPT_END=1,IPT_PORT,
+enum { IPT_UNUSED=0, IPT_END=1,IPT_PORT,
 	/* use IPT_JOYSTICK for panels where the player has one single joystick */
 	IPT_JOYSTICK_UP, IPT_JOYSTICK_DOWN, IPT_JOYSTICK_LEFT, IPT_JOYSTICK_RIGHT,
 	/* use IPT_JOYSTICKLEFT and IPT_JOYSTICKRIGHT for dual joystick panels */
@@ -128,8 +128,7 @@ enum { IPT_END=1,IPT_PORT,
 	IPT_KEYBOARD,
 	IPT_CONFIG_NAME, IPT_CONFIG_SETTING,
 	IPT_START, IPT_SELECT,
-	IPT_CATEGORY_NAME, IPT_CATEGORY_SETTING,
-#endif /* MESS */
+#endif
 /* Many games poll an input bit to check for vertical blanks instead of using */
 /* interrupts. This special value allows you to handle that. If you set one of the */
 /* input bits to this, the bit will be inverted while a vertical blank is happening. */
@@ -183,7 +182,6 @@ enum { IPT_END=1,IPT_PORT,
 	__ipt_max
 };
 
-#define IPT_UNUSED     IPF_UNUSED
 #define IPT_SPECIAL    IPT_UNUSED	/* special meaning handled by custom functions */
 
 
@@ -228,9 +226,8 @@ enum { IPT_END=1,IPT_PORT,
  	void construct_ipt_##name(void *param)				\
 	{													\
  		struct InputPort *port;							\
-		int seq = 0;									\
-		int seq_code = 0;								\
- 		(void) port; (void) seq; (void) seq_code;		\
+		int seq_index[2] = {0,0};						\
+ 		(void) port; (void)seq_index;					\
 
 /* end of table */
 #define INPUT_PORTS_END \
@@ -261,38 +258,38 @@ enum { IPT_END=1,IPT_PORT,
 		port->u.start.tag = (tag_);						\
 
 /* input bit definition */
-#define PORT_BIT_NAME(mask_,default_,type_,name_) 		\
+#define PORT_BIT(mask_,default_,type_) 					\
 		port = input_port_initialize(param, (type_));	\
 		port->mask = (mask_);							\
 		port->default_value = (default_);				\
-		port->name = (name_);							\
-		seq = 0;										\
-		seq_code = 0;									\
+		seq_index[0] = seq_index[1] = 0;				\
 
-#define PORT_BIT(mask,default,type) \
-	PORT_BIT_NAME(mask, default, type, IP_NAME_DEFAULT)
-
-/* impulse input bit definition */
-#define PORT_BIT_IMPULSE_NAME(mask,default,type,duration,name) \
-	PORT_BIT_NAME(mask, default, type, name)	port->impulse = (duration);
-#define PORT_BIT_IMPULSE(mask,default,type,duration) \
-	PORT_BIT_IMPULSE_NAME(mask, default, type, duration, IP_NAME_DEFAULT)
+/* input bit definition with extended fields */
+#define PORT_BIT_NAME(mask,default,type,name) \
+	PORT_BIT(mask, default, type) \
+	PORT_NAME(name)
 
 /* new technique to append a code */
-#define PORT_CODE(code)												\
+#define PORT_CODE_SEQ(code,seq_)									\
 		if ((code) < __code_max)									\
 		{															\
-			if (seq_code > 0)										\
-				port->seq[seq][seq_code++] = CODE_OR;				\
-			port->seq[seq][seq_code++] = (code);					\
+			if (seq_index[seq_] > 0)								\
+				port->seq[seq_][seq_index[seq_]++] = CODE_OR;		\
+			port->seq[seq_][seq_index[seq_]++] = (code);			\
 		}															\
 
-#define PORT_NEXTSEQ												\
-		seq++;														\
-		seq_code = 0;												\
+#define PORT_CODE(code) PORT_CODE_SEQ(code,0)
+#define PORT_CODE_DEC(code)	PORT_CODE_SEQ(code,0)
+#define PORT_CODE_INC(code)	PORT_CODE_SEQ(code,1)
+
+#define PORT_2WAY													\
+		port->four_way = 0;											\
 
 #define PORT_4WAY													\
 		port->four_way = 1;											\
+
+#define PORT_8WAY													\
+		port->four_way = 0;											\
 
 #define PORT_PLAYER(player_)										\
 		port->player = (player_) - 1;								\
@@ -304,30 +301,33 @@ enum { IPT_END=1,IPT_PORT,
 #define PORT_TOGGLE													\
 		port->toggle = 1;											\
 
+#define PORT_NAME(name_)											\
+		port->name = (name_);										\
+
+#define PORT_IMPULSE(duration_)										\
+		port->impulse = (duration_);								\
+
+#define PORT_REVERSE												\
+		port->u.analog.reverse = 1;									\
+
+#define PORT_CENTER													\
+		port->u.analog.center = 1;									\
+
+#define PORT_MINMAX(min_,max_)										\
+	port->u.analog.min = (min_);									\
+	port->u.analog.max = (max_);									\
+
+#define PORT_SENSITIVITY(sensitivity_)								\
+	port->u.analog.sensitivity = (sensitivity_);					\
+
+#define PORT_KEYDELTA(delta_)										\
+	port->u.analog.delta = (delta_);								\
+
 /* key/joy code specification */
 #define PORT_CODELEGACY(key,joy) \
 	{																		\
-		InputCode or3;														\
 		PORT_CODE(key);														\
 		PORT_CODE(joy);														\
-		switch(joy)															\
-		{																	\
-			case JOYCODE_1_BUTTON1:	or3 = JOYCODE_MOUSE_1_BUTTON1;	break;	\
-			case JOYCODE_1_BUTTON2:	or3 = JOYCODE_MOUSE_1_BUTTON2;	break;	\
-			case JOYCODE_1_BUTTON3:	or3 = JOYCODE_MOUSE_1_BUTTON3;	break;	\
-			case JOYCODE_2_BUTTON1:	or3 = JOYCODE_MOUSE_2_BUTTON1;	break;	\
-			case JOYCODE_2_BUTTON2:	or3 = JOYCODE_MOUSE_2_BUTTON2;	break;	\
-			case JOYCODE_2_BUTTON3:	or3 = JOYCODE_MOUSE_2_BUTTON3;	break;	\
-			case JOYCODE_3_BUTTON1:	or3 = JOYCODE_MOUSE_3_BUTTON1;	break;	\
-			case JOYCODE_3_BUTTON2:	or3 = JOYCODE_MOUSE_3_BUTTON2;	break;	\
-			case JOYCODE_3_BUTTON3:	or3 = JOYCODE_MOUSE_3_BUTTON3;	break;	\
-			case JOYCODE_4_BUTTON1:	or3 = JOYCODE_MOUSE_4_BUTTON1;	break;	\
-			case JOYCODE_4_BUTTON2:	or3 = JOYCODE_MOUSE_4_BUTTON2;	break;	\
-			case JOYCODE_4_BUTTON3:	or3 = JOYCODE_MOUSE_4_BUTTON3;	break;	\
-			default:				or3 = CODE_NONE;				break;	\
-		}																	\
-		PORT_CODE(or3);														\
-		PORT_NEXTSEQ														\
 	}																		\
 			
 
@@ -350,8 +350,10 @@ enum { IPT_END=1,IPT_PORT,
 	port->u.analog.max = (max_);								\
 	port->u.analog.sensitivity = (sensitivity_);				\
 	port->u.analog.delta = (delta_);							\
-	PORT_CODELEGACY(keydec,joydec)									\
-	PORT_CODELEGACY(keyinc,joyinc)
+	PORT_CODE_DEC(keydec)										\
+	PORT_CODE_INC(keyinc)										\
+	PORT_CODE_DEC(joydec)										\
+	PORT_CODE_INC(joyinc)										\
 
 /* dip switch definition */
 #define PORT_DIPNAME(mask,default,name) \
@@ -366,12 +368,12 @@ enum { IPT_END=1,IPT_PORT,
 
 
 #define PORT_SERVICE(mask,default)	\
-	PORT_BITX(    mask, mask & default, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )	\
+	PORT_BITX(    mask, mask & default, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, CODE_NONE )	\
 	PORT_DIPSETTING(    mask & default, DEF_STR( Off ) )	\
 	PORT_DIPSETTING(    mask &~default, DEF_STR( On ) )
 
 #define PORT_SERVICE_NO_TOGGLE(mask,default)	\
-	PORT_BITX(    mask, mask & default, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BITX(    mask, mask & default, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, CODE_NONE )
 
 #define MAX_DEFSTR_LEN 20
 extern const char ipdn_defaultstrings[][MAX_DEFSTR_LEN];

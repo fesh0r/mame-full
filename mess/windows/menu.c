@@ -57,7 +57,7 @@ extern void win_timer_enable(int enabled);
 #define ID_JOYSTICK_0				12000
 #define ID_INPUT_0					13000
 
-#define MAX_JOYSTICKS				((IPF_PLAYERMASK / IPF_PLAYER2) + 1)
+#define MAX_JOYSTICKS				(8)
 
 #define USE_TAPEDLG	0
 
@@ -180,7 +180,7 @@ static void customize_input(const char *title, int cust_type, int player, int in
 				pr = NULL;
 				for (i = 0; customizations[i].ipt != IPT_END; i++)
 				{
-					if ((in->type & ~IPF_MASK) == customizations[i].ipt)
+					if (in->type == customizations[i].ipt)
 					{
 						pr = (RECT *) alloca(sizeof(*pr));
 						pr->left = customizations[i].x;
@@ -306,11 +306,11 @@ static void customize_switches(int title_string_num, UINT32 ipt_name, UINT32 ipt
 
 	for (in = Machine->input_ports; in->type != IPT_END; in++)
 	{
-		type = in->type & ~IPF_MASK;
+		type = in->type;
 
 		if (type == ipt_name)
 		{
-			if ((in->type & IPF_UNUSED) == 0 && !(!options.cheat && (in->type & IPF_CHEAT)))
+			if (input_port_active(in))
 			{
 				switch_name = input_port_name(in);
 				if (win_dialog_add_combobox(dlg, switch_name, in->default_value, storeval_inputport, in))
@@ -996,14 +996,14 @@ static void append_category_menus(HMENU menu)
 	for (i = 0; Machine->input_ports[i].type != IPT_END; i++)
 	{
 		in = &Machine->input_ports[i];
-		if ((in->type & ~IPF_MASK) == IPT_CATEGORY_NAME)
+		if (in->type == IPT_CATEGORY_NAME)
 		{
 			submenu = CreateMenu();
 			if (!submenu)
 				return;
 
 			// append all of the category settings
-			for (j = i + 1; (Machine->input_ports[j].type & ~IPF_MASK) == IPT_CATEGORY_SETTING; j++)
+			for (j = i + 1; (Machine->input_ports[j].type) == IPT_CATEGORY_SETTING; j++)
 			{
 				in_setting = &Machine->input_ports[j];
 				flags = MF_STRING;
@@ -1051,7 +1051,7 @@ static void setup_joystick_menu(void)
 	use_input_categories = 0;
 	while(in->type != IPT_END)
 	{
-		if ((in->type & ~IPF_MASK) == IPT_CATEGORY_NAME)
+		if (in->type == IPT_CATEGORY_NAME)
 		{
 			use_input_categories = 1;
 			break;
@@ -1069,14 +1069,14 @@ static void setup_joystick_menu(void)
 		for (i = 0; Machine->input_ports[i].type != IPT_END; i++)
 		{
 			in = &Machine->input_ports[i];
-			if ((in->type & ~IPF_MASK) == IPT_CATEGORY_NAME)
+			if ((in->type) == IPT_CATEGORY_NAME)
 			{
 				submenu = CreateMenu();
 				if (!submenu)
 					return;
 
 				// append all of the category settings
-				for (j = i + 1; (Machine->input_ports[j].type & ~IPF_MASK) == IPT_CATEGORY_SETTING; j++)
+				for (j = i + 1; (Machine->input_ports[j].type) == IPT_CATEGORY_SETTING; j++)
 				{
 					in_setting = &Machine->input_ports[j];
 					AppendMenu(submenu, MF_STRING, ID_INPUT_0 + j, A2T(in_setting->name));
@@ -1180,7 +1180,7 @@ static void prepare_menus(void)
 		for (i = 0; Machine->input_ports[i].type != IPT_END; i++)
 		{
 			in = &Machine->input_ports[i];
-			switch(in->type & ~IPF_MASK) {
+			switch(in->type) {
 			case IPT_CATEGORY_NAME:
 				in_cat_value = in->default_value;
 				break;
@@ -1564,12 +1564,12 @@ static int invoke_command(UINT command)
 		{
 			// customize categorized input
 			in = &Machine->input_ports[command - ID_INPUT_0];
-			switch(in->type & ~IPF_MASK) {
+			switch(in->type) {
 			case IPT_CATEGORY_NAME:
 				// customize the input type
 				category = 0;
 				section = NULL;
-				for (i = 1; (in[i].type & ~IPF_MASK) == IPT_CATEGORY_SETTING; i++)
+				for (i = 1; (in[i].type) == IPT_CATEGORY_SETTING; i++)
 				{
 					if (in[i].default_value == in[0].default_value)
 					{
@@ -1583,7 +1583,7 @@ static int invoke_command(UINT command)
 			case IPT_CATEGORY_SETTING:
 				// change the input type for this category
 				setting = in->default_value;
-				while((in->type & ~IPF_MASK) != IPT_CATEGORY_NAME)
+				while((in->type) != IPT_CATEGORY_NAME)
 					in--;
 				in->default_value = setting;
 				break;

@@ -67,7 +67,7 @@ static ADDRESS_MAP_START( comquest_writemem , ADDRESS_SPACE_PROGRAM, 8)
 ADDRESS_MAP_END
 
 #define DIPS_HELPER(bit, name, keycode, r) \
-   PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, r)
+   PORT_BIT(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME(name) PORT_CODE(keycode) PORT_CODE(r)
 
 INPUT_PORTS_START( comquest )
 	PORT_START

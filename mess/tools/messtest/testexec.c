@@ -190,7 +190,7 @@ static void find_switch(const char *switch_name, const char *switch_setting,
 	in = Machine->input_ports;
 	while(in->type != IPT_END)
 	{
-		if ((in->type & ~IPF_MASK) == switch_type && (in->type & IPF_UNUSED) == 0
+		if (in->type == switch_type && input_port_active(in)
 			&& input_port_name(in) && !stricmp(input_port_name(in), switch_name))
 			break;
 		in++;
@@ -201,13 +201,13 @@ static void find_switch(const char *switch_name, const char *switch_setting,
 
 	/* find the setting */
 	in++;
-	while((in->type & ~IPF_MASK) == switch_setting_type)
+	while(in->type == switch_setting_type)
 	{
-		if ((in->type & IPF_UNUSED) == 0 && input_port_name(in) && !stricmp(input_port_name(in), switch_setting))
+		if (input_port_active(in) && input_port_name(in) && !stricmp(input_port_name(in), switch_setting))
 			break;
 		in++;
 	}
-	if ((in->type & ~IPF_MASK) != switch_setting_type)
+	if (in->type != switch_setting_type)
 		return;
 	*in_switch_setting = in;
 }

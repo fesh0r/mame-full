@@ -110,7 +110,7 @@ static struct KEYLAYOUT keylayout[] =
 	{KEYCODE_0_PAD, 	76,21, 8,4},	// Numpad 0
 	{KEYCODE_DEL_PAD,	84,21, 4,4},	// Numpad ,
 	{KEYCODE_ENTER_PAD, 88,17, 4,8},	// NumPad Enter
-	{KEYCODE_NONE,		 0, 0, 0,0}
+	{CODE_NONE,		 0, 0, 0,0}
 };
 
 #define XM	92
@@ -131,7 +131,7 @@ int displaykeyboard(int select)
 	int white = Machine->uifont->colortable[1];
 
 	osd_clearbitmap(Machine->scrbitmap);
-    while (k->code != KEYCODE_NONE)
+    while (k->code != CODE_NONE)
 	{
 		struct InputPortTiny *in = (struct InputPortTiny *)Machine->input_ports;
 		int i,x,y,w,h;
