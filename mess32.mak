@@ -309,8 +309,10 @@ COREOBJS = \
 		$(OBJ)/mess/config.o           \
 		$(OBJ)/mess/filemngr.o         \
 		$(OBJ)/mess/tapectrl.o         \
-		$(OBJ)/mess/utils.o \
 		$(OBJ)/mess/printer.o \
+		$(OBJ)/mess/menuentr.o \
+		$(OBJ)/mess/utils.o \
+		$(OBJ)/mess/vidhrdw/state.o \
 		$(OBJ)/mess/machine/rriot.o	 \
 		$(OBJ)/mess/machine/mc146818.o \
 		$(OBJ)/mess/machine/pc_mouse.o \
@@ -380,6 +382,7 @@ DRV_OBJS = \
           $(OBJ)/mess/machine/pet.o      \
           $(OBJ)/mess/systems/cbmb.o     \
           $(OBJ)/mess/machine/cbmb.o     \
+          $(OBJ)/mess/vidhrdw/cbmb.o     \
           $(OBJ)/mess/vidhrdw/vic6560.o  \
           $(OBJ)/mess/sndhrdw/vic6560.o  \
           $(OBJ)/mess/machine/vc20.o     \
