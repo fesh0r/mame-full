@@ -174,6 +174,7 @@ DRVLIBS = \
 	$(OBJ)/atari.a    \
 	$(OBJ)/ascii.a	  \
 	$(OBJ)/kaypro.a   \
+	$(OBJ)/svi.a      \
 #	$(OBJ)/necpc.a	  \
 #	$(OBJ)/nec.a	  \
 #	$(OBJ)/sharp.a    \
@@ -190,7 +191,6 @@ DRVLIBS = \
 #	$(OBJ)/mbee.a	  \
 #	$(OBJ)/mtx.a	  \
 #	$(OBJ)/motorola.a \
-#	$(OBJ)/svi.a      \
 #	$(OBJ)/mk1.a      \
 #	$(OBJ)/mk2.a      \
 #	$(OBJ)/ssystem3.a \
