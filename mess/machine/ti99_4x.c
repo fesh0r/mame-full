@@ -67,6 +67,7 @@ New (020327):
 */
 
 #include <math.h>
+#include <time.h>
 #include "driver.h"
 #include "includes/wd179x.h"
 #include "tms9901.h"
@@ -76,6 +77,7 @@ New (020327):
 #include "includes/basicdsk.h"
 #include "cassette.h"
 #include "image.h"
+#include "gregoria.h"
 #include "ti99_4x.h"
 
 
@@ -104,6 +106,7 @@ static void ti99_sAMSxram_init(void);
 static void ti99_4p_mapper_init(void);
 static void ti99_myarcxram_init(void);
 static void ti99_fdc_init(void);
+static void ti99_bwg_init(void);
 static void ti99_evpc_init(void);
 
 /*
@@ -129,7 +132,7 @@ static xRAM_kind_t xRAM_kind;
 /* TRUE if speech synthesizer present */
 static char has_speech;
 /* TRUE if floppy disk controller present */
-static char has_fdc;
+static fdc_kind_t fdc_kind;
 /* TRUE if evpc card present */
 static char has_evpc;
 
@@ -549,7 +552,7 @@ void machine_init_ti99(void)
 	else
 		xRAM_kind = (readinputport(input_port_config) >> config_xRAM_bit) & config_xRAM_mask;
 	has_speech = (readinputport(input_port_config) >> config_speech_bit) & config_speech_mask;
-	has_fdc = (readinputport(input_port_config) >> config_fdc_bit) & config_fdc_mask;
+	fdc_kind = (readinputport(input_port_config) >> config_fdc_bit) & config_fdc_mask;
 
 	/* set up optional expansion hardware */
 	ti99_expansion_card_init();
@@ -599,9 +602,14 @@ void machine_init_ti99(void)
 		break;
 	}
 
-	if (has_fdc)
+	switch (fdc_kind)
 	{
+	case fdc_kind_TI:
 		ti99_fdc_init();
+		break;
+	case fdc_kind_BwG:
+		ti99_bwg_init();
+		break;
 	}
 
 	if (has_evpc)
@@ -2272,7 +2280,6 @@ static void ti99_fdc_init(void)
 
 	DVENA = 0;
 	motor_on = 0;
-	//motor_on_timer = NULL;
 	motor_on_timer = timer_alloc(motor_on_timer_callback);
 
 	ti99_set_expansion_card_handlers(0x1100, & fdc_handlers);
@@ -2492,6 +2499,478 @@ static WRITE_HANDLER(fdc_mem_w)
 	}
 }
 
+/*
+	Alternate fdc: BwG card from SNUG
+
+	Advantages:
+	* this card supports Double Density.
+	* as this card includes its own RAM, it does not need to allocate a portion
+	of VDP RAM to store I/O buffers.
+	* this card includes an RTC.
+
+	TODO:
+	* Finish RTC support (need the datasheet)
+*/
+
+/* prototypes */
+static int bwg_cru_r(int offset);
+static void bwg_cru_w(int offset, int data);
+static READ_HANDLER(bwg_mem_r);
+static WRITE_HANDLER(bwg_mem_w);
+static void increment_rtc(int dummy);
+
+static const expansion_port_t bwg_handlers =
+{
+	bwg_cru_r,
+	bwg_cru_w,
+	bwg_mem_r,
+	bwg_mem_w
+};
+
+static int bwg_rtc_enable;
+static int bwg_ram_offset;
+static int bwg_rom_offset;
+static UINT8 *bwg_ram;
+static struct
+{
+	int wday;		/* day of the week (1-7 (1=monday, 7=sunday)) */
+	int years1;		/* years (BCD: 0-99) */
+	int years2;
+	int months1;	/* months (BCD: 1-12) */
+	int months2;
+	int days1;		/* days (BCD: 1-31) */
+	int days2;
+	int hours1;		/* hours (BCD : 0-23) */
+	int hours2;
+	int minutes1;	/* minutes (BCD : 0-59) */
+	int minutes2;
+	int seconds1;	/* seconds (BCD : 0-59) */
+	int seconds2;
+	int tenths;		/* tenths of second (BCD : 0-9) */
+} rtc_regs;
+
+
+/*
+	Reset fdc card, set up handlers
+*/
+static void ti99_bwg_init(void)
+{
+	ti99_disk_DSR = memory_region(region_dsr) + offset_bwg_dsr;
+	bwg_ram = memory_region(region_dsr) + offset_bwg_ram;
+	bwg_ram_offset = 0;
+	bwg_rom_offset = 0;
+	bwg_rtc_enable = 0;
+
+	DSEL = 0;
+	DSKnum = -1;
+	DSKside = 0;
+
+	DVENA = 0;
+	motor_on = 0;
+	motor_on_timer = timer_alloc(motor_on_timer_callback);
+
+	ti99_set_expansion_card_handlers(0x1100, & bwg_handlers);
+
+	wd179x_init(WD_TYPE_179X, fdc_callback);		/* initialize the floppy disk controller */
+	wd179x_set_density(DEN_FM_LO);
+
+
+
+	{
+		/* Now we copy the host clock into the rtc */
+		/* All these functions should be ANSI */
+		time_t cur_time = time(NULL);
+		struct tm expanded_time = *localtime(& cur_time);
+
+		/* The clock count starts on 1st January 1900 */
+		rtc_regs.wday = expanded_time.tm_wday ? expanded_time.tm_wday : 7;
+		rtc_regs.years1 = (expanded_time.tm_year / 10) % 10;
+		rtc_regs.years2 = expanded_time.tm_year % 10;
+		rtc_regs.months1 = (expanded_time.tm_mon + 1) / 10;
+		rtc_regs.months2 = (expanded_time.tm_mon + 1) % 10;
+		rtc_regs.days1 = expanded_time.tm_mday / 10;
+		rtc_regs.days2 = expanded_time.tm_mday % 10;
+		rtc_regs.hours1 = expanded_time.tm_hour / 10;
+		rtc_regs.hours2 = expanded_time.tm_hour % 10;
+		rtc_regs.minutes1 = expanded_time.tm_min / 10;
+		rtc_regs.minutes2 = expanded_time.tm_min % 10;
+		rtc_regs.seconds1 = expanded_time.tm_sec / 10;
+		rtc_regs.seconds2 = expanded_time.tm_sec % 10;
+		rtc_regs.tenths = 0;
+	}
+	timer_pulse(TIME_IN_SEC(.1), 0, increment_rtc);
+}
+
+
+/*
+	Increment RTC clock (timed interrupt every 1/10s)
+*/
+static void increment_rtc(int dummy)
+{
+	(void) dummy;
+
+	if ((++rtc_regs.tenths) == 10)
+	{
+		rtc_regs.tenths = 0;
+
+		if ((++rtc_regs.seconds2) == 10)
+		{
+			rtc_regs.seconds2 = 0;
+
+			if ((++rtc_regs.seconds1) == 6)
+			{
+				rtc_regs.seconds1 = 0;
+
+				if ((++rtc_regs.minutes2) == 10)
+				{
+					rtc_regs.minutes2 = 0;
+
+					if ((++rtc_regs.minutes1) == 6)
+					{
+						rtc_regs.minutes1 = 0;
+
+						if ((++rtc_regs.hours2) == 10)
+						{
+							rtc_regs.hours2 = 0;
+
+							rtc_regs.hours1++;
+						}
+
+						if ((rtc_regs.hours1*10 + rtc_regs.hours2) == 24)
+						{
+							int days_in_month;
+
+							rtc_regs.hours1 = rtc_regs.hours2 = 0;
+
+							if ((++rtc_regs.days2) == 10)
+							{
+								rtc_regs.days2 = 0;
+
+								rtc_regs.days1++;
+							}
+
+							if ((++rtc_regs.wday) == 8)
+								rtc_regs.wday = 1;
+
+							days_in_month = gregorian_days_in_month(rtc_regs.months1*10 + rtc_regs.months2,
+																	1900 + rtc_regs.years1*10 + rtc_regs.years2);
+
+							if ((rtc_regs.days1*10 + rtc_regs.days2) == days_in_month+1)
+							{
+								rtc_regs.days1 = 0;
+								rtc_regs.days2 = 1;
+
+								if ((++rtc_regs.months2) == 10)
+								{
+									rtc_regs.months2 = 0;
+
+									rtc_regs.months1++;
+								}
+
+								if ((rtc_regs.months1*10 + rtc_regs.months2) == 13)
+								{
+									rtc_regs.months1 = 0;
+									rtc_regs.months2 = 1;
+
+									if ((++rtc_regs.years2) == 10)
+									{
+										rtc_regs.years2 = 0;
+
+										if ((++rtc_regs.years1) == 10)
+											rtc_regs.years1 = 0;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+
+/*
+	Read disk CRU interface
+
+	bit 0: drive 4 active (not emulated)
+	bit 1-3: drive n active
+	bit 4-7: dip switches 1-4
+*/
+static int bwg_cru_r(int offset)
+{
+	int reply;
+
+	switch (offset)
+	{
+	case 0:
+		/* CRU bits: beware, logic levels of DIP-switches are inverted  */
+		reply = 0x50;
+		if (DVENA)
+			reply |= ((DSEL << 1) | (DSEL >> 3)) & 0x0f;
+		break;
+
+	default:
+		reply = 0;
+		break;
+	}
+
+	return reply;
+}
+
+/*
+	Write disk CRU interface
+*/
+static void bwg_cru_w(int offset, int data)
+{
+	switch (offset)
+	{
+	case 0:
+		/* WRITE to DISK DSR ROM bit (bit 0) */
+		/* handled in ti99_expansion_CRU_w() */
+		break;
+
+	case 1:
+		/* Strobe motor (motor is on for 4.23 sec) */
+		if (data && !motor_on)
+		{	/* on rising edge, set DVENA for 4.23s */
+			DVENA = 1;
+			fdc_handle_hold();
+			timer_adjust(motor_on_timer, 4.23, 0, 0.);
+		}
+		motor_on = data;
+		break;
+
+	case 2:
+		/* Set disk ready/hold (bit 2)
+			0: ignore IRQ and DRQ
+			1: TMS9900 is stopped until IRQ or DRQ are set (OR the motor stops rotating - rotates
+			  for 4.23s after write to revelant CRU bit, this is not emulated and could cause
+			  the TI99 to lock...) */
+		DSKhold = data;
+		fdc_handle_hold();
+		break;
+
+	case 4:
+	case 5:
+	case 6:
+		/* Select drive X (bits 4-6) */
+		{
+			int drive = offset-4;					/* drive # (0-2) */
+
+			if (data)
+			{
+				DSEL |= 1 << drive;
+
+				if (drive != DSKnum)			/* turn on drive... already on ? */
+				{
+					DSKnum = drive;
+
+					wd179x_set_drive(DSKnum);
+					wd179x_set_side(DSKside);
+				}
+			}
+			else
+			{
+				DSEL &= ~ (1 << drive);
+
+				if (drive == DSKnum)			/* geez... who cares? */
+				{
+					DSKnum = -1;				/* no drive selected */
+				}
+			}
+		}
+		break;
+
+	case 7:
+		/* Select side of disk (bit 7) */
+		DSKside = data;
+		wd179x_set_side(DSKside);
+		break;
+
+	case 8:
+		/* Select drive 3 (DSK4) */
+		break;
+
+	case 10:
+		/* double density enable (active low) */
+		break;
+
+	case 11:
+		/* EPROM A13 */
+		if (data)
+			bwg_rom_offset |= 0x2000;
+		else
+			bwg_rom_offset &= ~0x2000;
+		break;
+
+	case 13:
+		/* RAM A10 */
+		if (data)
+			bwg_ram_offset = 0x0400;
+		else
+			bwg_ram_offset = 0x0000;
+		break;
+
+	case 14:
+		/* override FDC with RTC (active high) */
+		bwg_rtc_enable = data;
+		break;
+
+	case 15:
+		/* EPROM A14 */
+		if (data)
+			bwg_rom_offset |= 0x4000;
+		else
+			bwg_rom_offset &= ~0x4000;
+		break;
+
+	case 3:
+	case 9:
+	case 12:
+		/* Unused (bit 3, 9 & 12) */
+		break;
+	}
+}
+
+
+/*
+	read a byte in disk DSR space
+*/
+static READ_HANDLER(bwg_mem_r)
+{
+	int reply;
+
+	if (offset < 0x1c00)
+		reply = ti99_disk_DSR[bwg_rom_offset+offset];
+	else if (offset < 0x1fe0)
+		reply = bwg_ram[bwg_ram_offset+(offset-0x1c00)];
+	else if (bwg_rtc_enable)
+	{
+		switch (offset)
+		{
+		case 0x1FE2:	/*Zehntel Sekunden*/
+			reply = rtc_regs.tenths;
+			break;
+		case 0x1FE4:	/*Einer Sekunden*/
+			reply = rtc_regs.seconds2;
+			break;
+		case 0x1FE6:	/*Zehner Sekunden*/
+			reply = rtc_regs.seconds1;
+			break;
+		case 0x1FE8:	/*Einer Minuten*/
+			reply = rtc_regs.minutes2;
+			break;
+		case 0x1FEA:	/*Zehner Minuten*/
+			reply = rtc_regs.minutes1;
+			break;
+		case 0x1FEC:	/*Einer Stunden*/
+			reply = rtc_regs.hours2;
+			break;
+		case 0x1FEE:	/*Zehner Stunden*/
+			reply = rtc_regs.hours1;
+			break;
+		case 0x1FF0:	/*Einer Tag*/
+			reply = rtc_regs.days2;
+			break;
+		case 0x1FF2:	/*Zehner Tag*/
+			reply = rtc_regs.days1;
+			break;
+		case 0x1FF4:	/*Einer Monat*/
+			reply = rtc_regs.months2;
+			break;
+		case 0x1FF6:	/*Zehner Monat*/
+			reply = rtc_regs.months1;
+			break;
+		case 0x1FF8:	/*Einer Jahr*/
+			reply = rtc_regs.years2;
+			break;
+		case 0x1FFA:	/*Zehner Jahr*/
+			reply = rtc_regs.years1;
+			break;
+		case 0x1FFC:	/*Wochentag*/
+			reply = rtc_regs.wday;
+			break;
+
+		case 0x1FE0:	/* Control Register */
+		case 0x1FFE:	/* Clock Set & Interrupt Control Register */
+		default:
+			reply = 0;
+			break;
+		}
+	}
+	else
+	{
+		if (offset < 0x1ff0)
+			reply = bwg_ram[bwg_ram_offset+(offset-0x1c00)];
+		else
+			switch (offset)
+			{
+			case 0x1FF0:					/* Status register */
+				reply = wd179x_status_r(offset);
+				break;
+			case 0x1FF2:					/* Track register */
+				reply = wd179x_track_r(offset);
+				break;
+			case 0x1FF4:					/* Sector register */
+				reply = wd179x_sector_r(offset);
+				break;
+			case 0x1FF6:					/* Data register */
+				reply = wd179x_data_r(offset);
+				break;
+			default:
+				reply = 0;
+				break;
+			}
+	}
+
+	return reply;
+}
+
+/*
+	write a byte in disk DSR space
+*/
+static WRITE_HANDLER(bwg_mem_w)
+{
+	if (offset < 0x1c00)
+		;
+	else if (offset < 0x1fe0)
+		bwg_ram[bwg_ram_offset+(offset-0x1c00)] = data;
+	else if (bwg_rtc_enable)
+	{
+		switch (offset)
+		{
+		default:
+			logerror("unemulated write to bwg offset=%d, data=%d", (int)offset, (int)data);
+			break;
+		}
+	}
+	else
+	{
+		if (offset < 0x1ff0)
+		{
+			bwg_ram[bwg_ram_offset+(offset-0x1c00)] = data;
+		}
+		else
+		{
+			switch (offset)
+			{
+			case 0x1FF8:					/* Command register */
+				wd179x_command_w(offset, data);
+				break;
+			case 0x1FFA:					/* Track register */
+				wd179x_track_w(offset, data);
+				break;
+			case 0x1FFC:					/* Sector register */
+				wd179x_sector_w(offset, data);
+				break;
+			case 0x1FFE:					/* Data register */
+				wd179x_data_w(offset, data);
+				break;
+			}
+		}
+	}
+}
 
 /*===========================================================================*/
 /*

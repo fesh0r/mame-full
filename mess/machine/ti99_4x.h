@@ -39,8 +39,10 @@ enum
 enum
 {
 	offset_fdc_dsr = 0x0000,
-	offset_evpc_dsr= 0x2000,
-	region_dsr_len = 0x12000
+	offset_bwg_dsr = 0x2000,
+	offset_bwg_ram = 0xa000,
+	offset_evpc_dsr= 0xa800,
+	region_dsr_len = 0x1a800
 };
 
 /* enum for RAM config */
@@ -55,6 +57,14 @@ typedef enum
 	xRAM_kind_myarc_512k,		/* 512kb myarc clone (no ROM) */
 	xRAM_kind_99_4p_1Mb			/* ti99/4p super AMS clone */
 } xRAM_kind_t;
+
+/* enum for fdc config */
+typedef enum
+{
+	fdc_kind_none = 0,
+	fdc_kind_TI,				/* TI fdc */
+	fdc_kind_BwG				/* SNUG's BwG fdc */
+} fdc_kind_t;
 
 /* defines for input ports */
 enum
@@ -72,7 +82,7 @@ enum
 	config_speech_bit	= 3,
 	config_speech_mask	= 0x1,
 	config_fdc_bit		= 4,
-	config_fdc_mask		= 0x1
+	config_fdc_mask		= 0x3	/* 2 bits */
 };
 
 
