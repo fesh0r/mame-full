@@ -47,6 +47,7 @@ extern struct ImageModule imgmod_fs;
 
 static const struct ImageModule *images[] = {
 	&imgmod_rsdos,
+	&imgmod_cococas,
 	&imgmod_pchd,
 	&imgmod_msdos,
 	&imgmod_msdoshd,
@@ -196,6 +197,8 @@ void img_close(IMAGE *img)
 int img_beginenum(IMAGE *img, IMAGEENUM **outenum)
 {
 	int err;
+
+	assert(img);
 
 	if (!img->module->beginenum)
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;

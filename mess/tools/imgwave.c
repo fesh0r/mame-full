@@ -2,18 +2,20 @@
 #include "imgtool.h"
 
 typedef struct {
-	struct ImageModule *mod;
+	IMAGE base;
 	STREAM *f;
-	int base;
+	int basepos;
 	int length;
 	int curpos;
 
 	int channels;
 	int resolution;
 	int frequency;
+	INT16 lastsample;
 } waveimage;
 
 typedef struct {
+	IMAGEENUM base;
 	waveimage *wimg;
 	int pos;
 } waveimageenum;
@@ -25,11 +27,11 @@ static int find_wavtag(STREAM *f, int filelen, const char *tag, int *offset, UIN
 	while(1) {
 		*offset += stream_read(f, buf, sizeof(buf));
 		*offset += stream_read(f, blocklen, sizeof(*blocklen));
+		*blocklen = LITTLE_ENDIANIZE_INT32(*blocklen);
 
-		if (!memcmp(buf, "fmt ", 4))
+		if (!memcmp(buf, tag, 4))
 			break;
 
-		*blocklen = LITTLE_ENDIANIZE_INT32(*blocklen);
 		stream_seek(f, *blocklen, SEEK_CUR);
 		*offset += *blocklen;
 
@@ -71,6 +73,8 @@ int imgwave_init(struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 
 	offset += stream_read(f, &format, sizeof(format));
 	format = LITTLE_ENDIANIZE_INT16(format);
+	if (format != 1)
+		return IMGTOOLERR_CORRUPTIMAGE;
 
 	offset += stream_read(f, &channels, sizeof(channels));
 	channels = LITTLE_ENDIANIZE_INT16(channels);
@@ -84,10 +88,10 @@ int imgwave_init(struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 
 	offset += stream_read(f, &resolution, sizeof(resolution));
 	resolution = LITTLE_ENDIANIZE_INT16(resolution);
-	if ((resolution != 8) || (resolution != 16))
+	if ((resolution != 8) && (resolution != 16))
 		return IMGTOOLERR_CORRUPTIMAGE;
 
-	stream_seek(f, 16 - blocklen, SEEK_CUR);
+	stream_seek(f, blocklen - 16, SEEK_CUR);
 
 	err = find_wavtag(f, filelen, "data", &offset, &blocklen);
 	if (err)
@@ -97,15 +101,16 @@ int imgwave_init(struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 	if (!wimg)
 		return IMGTOOLERR_OUTOFMEMORY;
 
-	wimg->mod = mod;
+	wimg->base.module = mod;
 	wimg->f = f;
-	wimg->base = wimg->curpos = offset;
+	wimg->basepos = wimg->curpos = offset;
 	wimg->length = blocklen;
 	wimg->channels = channels;
 	wimg->frequency = frequency;
 	wimg->resolution = resolution;
-
-	return IMGTOOLERR_UNIMPLEMENTED;
+	wimg->lastsample = 0;
+	*outimg = &wimg->base;
+	return 0;
 }
 
 void imgwave_exit(IMAGE *img)
@@ -126,7 +131,7 @@ int imgwave_seek(IMAGE *img, int pos)
 	return 0;
 }
 
-int imgwave_readsample(IMAGE *img, INT16 *sample)
+static int imgwave_readsample(IMAGE *img, INT16 *sample)
 {
 	int len;
 	INT16 s;
@@ -174,11 +179,105 @@ int imgwave_readsample(IMAGE *img, INT16 *sample)
 	return 0;
 }
 
+static int imgwave_readtransition(IMAGE *img, int *frequency)
+{
+	int err;
+	int count = 0;
+	int transitioned;
+	INT16 sample;
+	waveimage *wimg;
+	
+	wimg = (waveimage *) img;
+
+	do {
+		err = imgwave_readsample(img, &sample);
+		if (err)
+			return err;
+
+		transitioned = (wimg->lastsample < 0) && (sample >= 0);
+		wimg->lastsample = sample;
+		count++;
+	}
+	while(!transitioned);
+
+	*frequency = wimg->frequency / count;
+	return 0;
+}
+
+static int imgwave_readbit(IMAGE *img, UINT8 *bit)
+{
+	int err, freq;
+	waveimage *wimg;
+	struct WaveExtra *extra;
+
+	wimg = (waveimage *) img;
+	extra = (struct WaveExtra *) wimg->base.module->extra;
+
+	err = imgwave_readtransition(img, &freq);
+
+	if (extra->zeropulse > extra->onepulse)
+		*bit = extra->threshpulse > freq;
+	else
+		*bit = extra->threshpulse <= freq;
+	return 0;
+}
+
+int imgwave_forward(IMAGE *img)
+{
+	int err;
+	int i;
+	UINT8 carry, newcarry;
+	UINT8 *buffer;
+	waveimage *wimg;
+	struct WaveExtra *extra;
+	
+	wimg = (waveimage *) img;
+	extra = (struct WaveExtra *) wimg->base.module->extra;
+
+	buffer = malloc(extra->blockheadersize);
+	if (!buffer)
+		return IMGTOOLERR_OUTOFMEMORY;
+
+	memset(buffer, 0, extra->blockheadersize);
+
+	do {
+		err = imgwave_readbit(img, &carry);
+		if (err) {
+			free(buffer);
+			return err;
+		}
+		
+		for (i = extra->blockheadersize-1; i >= 0; i--) {
+			newcarry = buffer[i] & 0x80;
+			buffer[i] <<= 1;
+			if (carry)
+				buffer[i] |= 1;
+			carry = newcarry;
+		}
+	}
+	while(memcmp(buffer, extra->blockheader, extra->blockheadersize));
+
+	free(buffer);
+	return 0;
+}
+
 int imgwave_read(IMAGE *img, UINT8 *buf, int bufsize)
 {
-	int i;
+	int err;
+	int i, j;
+	UINT8 b, bit;
+
 	for (i = 0; i < bufsize; i++) {
-		
+		b = 0;
+		for (j = 0; j < 8; j++) {
+			err = imgwave_readbit(img, &bit);
+			if (err)
+				return err;
+			b <<= 1;
+			if (bit)
+				b |= 1;
+		}
+		*(buf++) = b;
 	}
 	return IMGTOOLERR_UNIMPLEMENTED;
 }
@@ -192,8 +291,9 @@ int imgwave_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	if (!wenum)
 		return IMGTOOLERR_OUTOFMEMORY;
 
+	wenum->base.module = img->module;
 	wenum->wimg = wimg;
-	wenum->pos = wimg->base;
+	wenum->pos = wimg->basepos;
 	*outenum = (IMAGEENUM *) wenum;
 	return 0;
 }
@@ -209,7 +309,7 @@ int imgwave_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	if (err)
 		return err;
 
-	err = ((struct WaveExtra *) wenum->wimg->mod->extra)->nextfile((IMAGE *) wenum->wimg, ent);
+	err = ((struct WaveExtra *) wenum->wimg->base.module->extra)->nextfile((IMAGE *) wenum->wimg, ent);
 	if (err)
 		return err;
 

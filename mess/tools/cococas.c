@@ -26,8 +26,68 @@ WAVEMODULE(
 	cococas_deletefile,				/* delete file */
 )
 
+typedef struct {
+	UINT8 type;
+	UINT8 length;
+	UINT8 data[255];
+} casblock;
+
+/* from rsdos.c */
+extern void rtrim(char *buf);
+
+static int readblock(IMAGE *img, casblock *blk)
+{
+	int err;
+	int i;
+	UINT8 sum = 0;
+	UINT8 actualsum;
+
+	err = imgwave_forward(img);
+	if (err)
+		return err;
+
+	err = imgwave_read(img, &blk->type, 2);
+	if (err)
+		return err;
+	sum += blk->type;
+	sum += blk->length;
+
+	err = imgwave_read(img, blk->data, blk->length);
+	if (err)
+		return err;
+
+	for (i = 0; i < blk->length; i++)
+		sum += blk->data[i];
+
+	err = imgwave_read(img, &actualsum, 1);
+	if (err)
+		return err;
+
+	if (sum != actualsum)
+		return IMGTOOLERR_CORRUPTIMAGE;
+
+	return 0;
+}
+
 static int cococas_nextfile(IMAGE *img, imgtool_dirent *ent)
 {
+	int err;
+	casblock blk;
+	char fname[9];
+
+	do {
+		err = readblock(img, &blk);
+		if (err)
+			return err;
+	}
+	while(blk.type != 0);
+
+	fname[8] = '\0';
+	memcpy(fname, blk.data, 8);
+	rtrim(fname);
+
+
+
 	return IMGTOOLERR_UNIMPLEMENTED;
 }
 

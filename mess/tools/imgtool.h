@@ -533,8 +533,8 @@ struct WaveExtra
 {
 	int (*nextfile)(IMAGE *img, imgtool_dirent *ent);
 	int zeropulse;
-	int onepulse;
 	int threshpulse;
+	int onepulse;
 	int waveflags;
 	const UINT8 *blockheader;
 	int blockheadersize;
@@ -591,7 +591,7 @@ int imgwave_beginenum(IMAGE *img, IMAGEENUM **outenum);
 int imgwave_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 void imgwave_closeenum(IMAGEENUM *enumeration);
 int imgwave_seek(IMAGE *img, int pos);
-int imgwave_readsample(IMAGE *img, INT16 *sample);
+int imgwave_forward(IMAGE *img);
 int imgwave_read(IMAGE *img, UINT8 *buf, int bufsize);
 
 

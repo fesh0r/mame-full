@@ -69,7 +69,7 @@ IMAGEMODULE(
 	NULL
 )
 
-static void rtrim(char *buf)
+void rtrim(char *buf)
 {
 	size_t buflen;
 	char *s;
