@@ -312,14 +312,14 @@ void m6847_set_artifact_dipswitch(int sw)
 
 #define MARK_DIRTY(x1, y1, x2, y2) \
 	{ if (!use_plotpixel) \
-		osd_mark_dirty((x1), (y1), (x2), (y2), 0); }
+		osd_mark_dirty((x1), (y1), (x2), (y2)); }
 
 
 #define MARK_DIRTY_PIX(x, y, w, h) \
 	{ if (!use_plotpixel) { \
 		int xx, yy; \
 		xx = (x); yy = (y); \
-		osd_mark_dirty(xx, yy, xx+(w)-1, yy+(h)-1, 0); \
+		osd_mark_dirty(xx, yy, xx+(w)-1, yy+(h)-1); \
 	} }
 
 /*

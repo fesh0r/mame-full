@@ -684,7 +684,7 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 							if (underlined)
 								drawgfx_wf(bitmap, coco3font, 128, x*8*wf+basex, y*8+basey, 0, TRANSPARENCY_PEN, 0, wf);
 							if (use_mark_dirty)
-								osd_mark_dirty(x*8*wf+basex, y*8+basey, (x+1)*8*wf-1+basex, y*8+7+basey, 0);
+								osd_mark_dirty(x*8*wf+basex, y*8+basey, (x+1)*8*wf-1+basex, y*8+7+basey);
 
 							db[0] = 0;
 							if (use_attr)
