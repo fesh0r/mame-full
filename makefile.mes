@@ -9,6 +9,9 @@ ifeq ($(TARGET),)
 TARGET = mame
 endif
 
+# uncomment next line to use Dr Mingw for exception handling
+USE_DRMINGW = 1
+
 # uncomment next line to include the debugger
 # DEBUG = 1
 
@@ -25,11 +28,7 @@ X86_ASM_68000 = 1
 # X86_ASM_68020 = 1
 
 # set this the operating system you're building for
-# MAMEOS = msdos
 MAMEOS = windows
-ifeq ($(MAMEOS),)
-MAMEOS = msdos
-endif
 
 # extension for executables
 EXE = .exe
@@ -49,11 +48,7 @@ RM = @rm -f
 #PERL = @perl -w
 
 
-ifeq ($(MAMEOS),windows)
-SUFFIX = w
-else
 SUFFIX =
-endif
 
 ifdef DEBUG
 NAME = $(TARGET)$(SUFFIX)d

@@ -149,16 +149,9 @@ int dragon_floppy_init(int id)
 			int tracks;
 			int heads;
 
-			if (floppy_drive_get_flag_state(id, FLOPPY_DRIVE_REAL_FDD)) {
-				/* For now, assume that real floppies are always 35 tracks, 1 head */
-				tracks = 35;
-				heads = 1;
-			}
-			else {
-				tracks = osd_fsize(file) / (18*256);
-				heads = (tracks > 80) ? 2 : 1;
-				tracks /= heads;
-			}
+			tracks = osd_fsize(file) / (18*256);
+			heads = (tracks > 80) ? 2 : 1;
+			tracks /= heads;
 
 			basicdsk_set_geometry(id, tracks, heads, 18, 256, 1);
 

@@ -702,7 +702,6 @@ COREOBJS += \
 	$(OBJ)/mess/machine/basicdsk.o \
 	$(OBJ)/mess/machine/d88.o      \
 	$(OBJ)/mess/machine/wd179x.o   \
-	$(OBJ)/mess/diskctrl.o	       \
 	$(OBJ)/mess/machine/dsk.o      \
 	$(OBJ)/mess/machine/flopdrv.o  \
 	$(OBJ)/mess/machine/nec765.o   \

@@ -61,7 +61,6 @@ extern void showmessinfo(void);
 extern int displayimageinfo(struct osd_bitmap *bitmap, int selected);
 extern int filemanager(struct osd_bitmap *bitmap, int selected);
 extern int tapecontrol(struct osd_bitmap *bitmap, int selected);
-extern int diskcontrol(struct osd_bitmap *bitmap, int selected);
 
 /* driver.h - begin */
 #define IPT_SELECT1		IPT_COIN1
@@ -108,65 +107,10 @@ enum { ID_FAILED, ID_OK, ID_UNKNOWN };
 enum { OSD_FOPEN_READ, OSD_FOPEN_WRITE, OSD_FOPEN_RW, OSD_FOPEN_RW_CREATE };
 
 
-/******************************************************************************
- *	floppy disc controller direct access
- *	osd_fdc_init
- *		initialize the needed hardware & structures;
- *		returns 0 on success
- *	osd_fdc_exit
- *		shut down
- *	osd_fdc_motors
- *              start/stop motors for <unit> number (0 = A:, 1 = B:)
- *	osd_fdc_density
- *		set type of drive from bios info (1: 360K, 2: 1.2M, 3: 720K, 4: 1.44M)
- *		set density (0:FM,LO 1:FM,HI 2:MFM,LO 3:MFM,HI) ( FM doesn't work )
- *		tracks, sectors per track and sector length code are given to
- *		calculate the appropriate double step and GAP II, GAP III values
- *	osd_fdc_format
- *		format track t, head h, spt sectors per track
- *		sector map at *fmt
- *	osd_fdc_put_sector
- *		put a sector from memory *buff to track 'track', side 'side',
- *		head number 'head', sector number 'sector';
- *		write deleted data address mark if ddam is non zero
- *	osd_fdc_get_sector
- *		read a sector to memory *buff from track 'track', side 'side',
- *		head number 'head', sector number 'sector'
- *
- * NOTE: side and head
- * the terms are used here in the following way:
- * side = physical side of the floppy disk
- * head = logical head number (can be 0 though side 1 is to be accessed)
- *****************************************************************************/
-
-int  osd_fdc_init(void);
-void osd_fdc_exit(void);
-void osd_fdc_motors(int unit, int state);
-void osd_fdc_density(int unit, int density, int tracks, int spt, int eot, int secl);
-
-void osd_fdc_format(int t, int h, int spt, UINT8 *fmt);
-void osd_fdc_put_sector(int unit, int side, int C, int H, int R, int N, UINT8 *buff, int ddam);
-void osd_fdc_get_sector(int unit, int side, int C, int H, int R, int N, UINT8 *buff, int ddma);
-
-void osd_fdc_read_id(int unit, int side, unsigned char *pBuffer);
-
-/* perform a seek on physical drive 'unit'. dir will be -ve or +ve.
-For a single step this will be -1 or +1. */
-void osd_fdc_seek(int unit, int dir);
-
-/* get status of physical drive 'unit' */
-int osd_fdc_get_status(int unit);
-
 #ifdef MAX_KEYS
  #undef MAX_KEYS
  #define MAX_KEYS	128 /* for MESS but already done in INPUT.C*/
 #endif
-
-
-
-
-
-
 
 
 enum {

@@ -77,7 +77,10 @@ int main(int argc, char **argv)
 		strcpy(ext, ".map");
 	else
 		strcat(mapfile_name, ".map");
+
+	#ifndef USE_DRMINGW
 	pass_thru_filter = SetUnhandledExceptionFilter(exception_filter);
+	#endif
 
 	// remember the initial LED states
 	original_leds = osd_get_leds();

@@ -48,8 +48,6 @@ typedef struct chrn_id
 #define FLOPPY_DRIVE_INDEX						0x0020
 /* motor state */
 #define FLOPPY_DRIVE_MOTOR_ON					0x0040
-/* set if we are accessing a real fdd for this floppy drive */
-#define FLOPPY_DRIVE_REAL_FDD                                   0x0080
 /* set if disk image is read only */
 #define FLOPPY_DRIVE_DISK_IMAGE_READ_ONLY		0x0100
 
@@ -62,9 +60,9 @@ typedef struct floppy_interface
 	/* the following are not strictly floppy drive operations, but are used by the
 	nec765 to get data from the track - really the whole track should be constructed
 	into the raw format the nec765 would normally see and this would be totally accurate */
-	/* the disc image would then have to re-interpret this back and update the image 
+	/* the disc image would then have to re-interpret this back and update the image
 	with the data */
-	
+
 	/* get number of sectors per track on side specified */
 	int (*get_sectors_per_track)(int drive, int physical_side);
 	/* get id from current track and specified side */

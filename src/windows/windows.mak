@@ -11,7 +11,7 @@ ifndef MESS
 OSOBJS += $(OBJ)/windows/fileio.o 
 else
 OSOBJS += $(OBJ)/mess/windows/fileio.o	$(OBJ)/mess/windows/dirio.o \
-	  $(OBJ)/mess/windows/fdc.o 	$(OBJ)/mess/windows/messwin.o 
+	  $(OBJ)/mess/windows/messwin.o 
 endif
 
 # video blitting functions

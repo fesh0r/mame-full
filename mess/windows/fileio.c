@@ -5,10 +5,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-#ifdef MESS
-#include "mess/msdos.h"
-#endif
-
 /* Verbose outputs to error.log ? */
 #define VERBOSE 	0
 
