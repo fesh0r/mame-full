@@ -18,10 +18,10 @@
 #include "machine/tms5501.h"
 
 #if DAI_DEBUG
-#define LOG_SOUND	1
-#define LOG_PADDLE	1
-#define LOG_TAPE	1
-#define LOG_MEMORY	1
+#define LOG_SOUND	0
+#define LOG_PADDLE	0
+#define LOG_TAPE	0
+#define LOG_MEMORY	0
 #define LOG_IO_ERRORS	1
 #else /* !DAI_DEBUG */
 #define LOG_SOUND	0
@@ -66,9 +66,24 @@ static UINT8 dai_keyboard_handler (UINT8 scan)
 	return data;
 }
 
+static void dai_interrupt_callback(int intreq, UINT8 vector)
+{
+	if (intreq)
+	{
+		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, vector);
+//		cpu_set_irq_line_and_vector(0, 0, ASSERT_LINE, vector);
+	}
+	else
+	{
+		cpu_set_irq_line(0, 0, CLEAR_LINE);
+	}
+}
+
 static const tms5501_init_param tms5501_init_param_dai =
 {
-	dai_keyboard_handler
+	dai_keyboard_handler,
+	dai_interrupt_callback,
+	2000000.
 };
 
 static ppi8255_interface ppi82555_intf =
@@ -138,7 +153,7 @@ READ_HANDLER( dai_io_discrete_devices_r )
 	switch(offset & 0x000f) {
 	case 0x00:
 		data = readinputport(7);
-		data |= 0x08;
+		data |= 0x08;	// serial ready
 		logerror ("Discrete devices read 0xfd00: %02x\n", data);
 		break;
 
@@ -207,6 +222,7 @@ WRITE_HANDLER( dai_io_discrete_devices_w )
 
 READ_HANDLER( amd9511_r )
 {
+	/* optional and no present at this moment */
 	return 0xff;
 }
 

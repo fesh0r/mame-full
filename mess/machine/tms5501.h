@@ -6,6 +6,8 @@
 typedef struct tms5501_init_param
 {
 	UINT8 (*keyboard_read_handler)(UINT8);
+	void (*interrupt_callback)(int intreq, UINT8 vector);
+	double clock_rate;
 } tms5501_init_param;
 
 
