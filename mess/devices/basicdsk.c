@@ -43,7 +43,7 @@ int basicdsk_floppy_load(int id, mame_file *fp, int open_mode)
 	assert(id < basicdsk_MAX_DRIVES);
 
 	w->image_file = fp;
-	w->mode = (w->image_file) && is_effective_mode_writable(open_mode);
+	w->mode = is_effective_mode_writable(open_mode);
 
 	/* this will be setup in the set_geometry function */
 	w->ddam_map = NULL;
@@ -55,6 +55,16 @@ int basicdsk_floppy_load(int id, mame_file *fp, int open_mode)
 	floppy_drive_set_disk_image_interface(id, &basicdsk_floppy_interface);
 
 	return INIT_PASS;
+}
+
+void basicdsk_floppy_unload(int id)
+{
+	basicdsk *w = &basicdsk_drives[id];
+
+	assert(id < basicdsk_MAX_DRIVES);
+
+	w->image_file = NULL;
+	w->mode = 0;
 }
 
 /* set data mark/deleted data mark for the sector specified. If ddam!=0, the sector will

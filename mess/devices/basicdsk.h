@@ -49,6 +49,7 @@ typedef struct
 /* init */
 int basicdsk_floppy_init(int id);
 int basicdsk_floppy_load(int id, mame_file *fp, int open_mode);
+void basicdsk_floppy_unload(int id);
 
 /* set the disk image geometry for the specified drive */
 /* this is required to read the disc image correct */
@@ -81,7 +82,7 @@ void basicdsk_set_ddam(UINT8 physical_drive, UINT8 physical_track, UINT8 physica
 
 #define CONFIG_DEVICE_FLOPPY_BASICDSK(count, file_extensions, load)		\
 	CONFIG_DEVICE_BASE(IO_FLOPPY, (count), (file_extensions), DEVICE_LOAD_RESETS_NONE,	\
-		OSD_FOPEN_RW_CREATE_OR_READ, basicdsk_floppy_init, NULL, (load), NULL, NULL, NULL,\
+		OSD_FOPEN_RW_CREATE_OR_READ, basicdsk_floppy_init, NULL, (load), basicdsk_floppy_unload, NULL, NULL,\
 		NULL, NULL, floppy_status, NULL, NULL, NULL, NULL, NULL, NULL)	\
 
 #ifdef __cplusplus
