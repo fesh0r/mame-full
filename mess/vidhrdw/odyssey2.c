@@ -20,18 +20,18 @@
 
 UINT8 odyssey2_colors[24][3]={
   /* Background,Grid Dim */
-  { 0x00,0x00,0x00 }, 
+  { 0x00,0x00,0x00 },
   { 0x00,0x00,0xFF },   /* Blue */
   { 0x00,0x80,0x00 },   /* DK Green */
   { 0xff,0x9b,0x60 },
   { 0xCC,0x00,0x00 },   /* Red */
-  { 0xa9,0x80,0xff }, 
-  { 0x82,0xfd,0xdb }, 
+  { 0xa9,0x80,0xff },
+  { 0x82,0xfd,0xdb },
   { 0xFF,0xFF,0xFF },
 
   /* Background,Grid Bright */
 
-  { 0x80,0x80,0x80 }, 
+  { 0x80,0x80,0x80 },
   { 0x50,0xAE,0xFF },   /* Blue */
   { 0x00,0xFF,0x00 },   /* Dk Green */
   { 0x82,0xfb,0xdb },   /* Lt Grey */
@@ -202,7 +202,7 @@ extern WRITE_HANDLER ( odyssey2_video_w )
 
 extern READ_HANDLER ( odyssey2_t1_r )
 {
-    static bool t=FALSE;
+    static int t=FALSE;
     t=!t;
     return t;
 }
@@ -233,8 +233,8 @@ void odyssey2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	color|=(o2_vdc.s.color>>3)&8;
 	for (i=0, x=0; x<WIDTH*9; x+=WIDTH, i++) {
 	    for (j=1, y=0; y<HEIGHT*9; y+=HEIGHT, j<<=1) {
-	    if ( (j<=0x80)&&(o2_vdc.s.hgrid[0][i]&j)
-		 ||(j>0x80)&&(o2_vdc.s.hgrid[1][i]&1) )
+	    if ( ((j<=0x80)&&(o2_vdc.s.hgrid[0][i]&j))
+		 ||((j>0x80)&&(o2_vdc.s.hgrid[1][i]&1) ))
 		plot_box(bitmap,x,y,WIDTH+THICK,w,Machine->pens[color]);
 	    }
 	}
@@ -255,7 +255,7 @@ void odyssey2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	    for (j=0; j<8; j++) {
 		drawgfx(bitmap, Machine->gfx[0], ((char*)o2_shape)[offset],0,
 			0,0,o2_vdc.s.foreground[i].x,o2_vdc.s.foreground[i].y+j,
-			0, TRANSPARENCY_PEN,0);	
+			0, TRANSPARENCY_PEN,0);
 		offset=(offset+1)&0x1ff;
 	    }
 	}
@@ -271,7 +271,7 @@ void odyssey2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		for (k=0; k<8; k++) {
 		    drawgfx(bitmap, Machine->gfx[0], ((char*)o2_shape)[offset],0,
 			    0,0,x,y+k,
-			    0, TRANSPARENCY_PEN,0);	
+			    0, TRANSPARENCY_PEN,0);
 		    offset=(offset+1)&0x1ff;
 		}
 	    }
@@ -281,7 +281,7 @@ void odyssey2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	for (i=0; i<ARRAY_LENGTH(o2_vdc.s.sprites); i++) {
 	    Machine->gfx[0]->colortable[1]=Machine->pens[16+((o2_vdc.s.sprites[i].color>>3)&7)];
 	    y=o2_vdc.s.sprites[i].y;
-	    for (j=0; j<8; j++) {		
+	    for (j=0; j<8; j++) {
 		if (o2_vdc.s.sprites[i].color&4) {
 		    if (y+2*j>=bitmap->height) break;
 		    drawgfxzoom(bitmap, Machine->gfx[0], o2_vdc.s.shape[i][j],0,
