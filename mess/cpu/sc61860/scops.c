@@ -253,12 +253,10 @@ INLINE void sc61860_push(void)
 	PUSH(sc61860.ram[A]);
 }
 
-static UINT8 h;
 INLINE void sc61860_prepare_table_call(void)
 {
 	int adr;
-//	sc61860.ram[H]=READ_OP();
-	h=READ_OP();
+	sc61860.h=READ_OP();
 	adr=READ_OP_ARG_WORD();
 	PUSH(adr>>8);
 	PUSH(adr&0xff);
@@ -267,8 +265,7 @@ INLINE void sc61860_prepare_table_call(void)
 INLINE void sc61860_execute_table_call(void)
 {
 	int i, v, adr;
-//	for (i=0; i<sc61860.ram[H]; i++) {
-	for (i=0; i<h; i++) {
+	for (i=0; i<sc61860.h; i++) {
 		v=READ_OP();
 		adr=READ_OP_ARG_WORD();
 		sc61860.zero=v==sc61860.ram[A];
@@ -666,6 +663,8 @@ INLINE void sc61860_exchange_ext(int count)
 }
 
 // undocumented
+// only 1 opcode working in pc1403
+// both opcodes working in pc1350
 INLINE void sc61860_wait_x(bool level)
 {
     int c;

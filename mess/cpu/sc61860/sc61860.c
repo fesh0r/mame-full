@@ -85,16 +85,17 @@ static UINT8 sc61860_win_layout[] = {
  ****************************************************************************/
 typedef struct
 {
-	SC61860_CONFIG *config;
-	UINT8 ram[0x60]; // internal special ram
-	UINT8 p, q, r; //7 bits only?
-
-	UINT16 oldpc, pc, dp;
-
-	bool carry, zero;
-
-	struct { bool t2ms, t512ms; int count;} timer;
-}	SC61860_Regs;
+    SC61860_CONFIG *config;
+    UINT8 ram[0x60]; // internal special ram
+    UINT8 p, q, r; //7 bits only?
+    
+    UINT8 d, h;
+    UINT16 oldpc, pc, dp;
+    
+    bool carry, zero;
+    
+    struct { bool t2ms, t512ms; int count;} timer;
+}   SC61860_Regs;
 
 int sc61860_icount = 0;
 
@@ -299,7 +300,7 @@ const char *sc61860_info(void *context, int regnum)
 	case CPU_INFO_REG+SC61860_L: sprintf(buffer[which],"L:%.2x",r->ram[L]);break;
 	case CPU_INFO_REG+SC61860_V: sprintf(buffer[which],"V:%.2x",r->ram[V]);break;
 	case CPU_INFO_REG+SC61860_W: sprintf(buffer[which],"W:%.2x",r->ram[W]);break;
-	case CPU_INFO_REG+SC61860_H: sprintf(buffer[which],"H:%.2x",r->ram[H]);break;
+	case CPU_INFO_REG+SC61860_H: sprintf(buffer[which],"W:%.2x",r->h);break;
 	case CPU_INFO_REG+SC61860_BA:
 		sprintf(buffer[which],"BA:%.2x%.2x",r->ram[B],r->ram[A]);break;
 	case CPU_INFO_REG+SC61860_X:

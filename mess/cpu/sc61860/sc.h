@@ -15,9 +15,6 @@
 #define F0 94
 #define C 95
 
-#define H 12 //???used in table call, but not mentioned in registers
-
-
 enum {
 	SC61860_PC=1, SC61860_DP,
 	SC61860_P, SC61860_Q, SC61860_R,
