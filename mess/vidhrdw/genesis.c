@@ -17,8 +17,6 @@
 #include "machine/genesis.h"
 #include "vidhrdw/genesis.h"
 
-extern int z80running;
-
 /* skeleton code included from closet.h */
 #ifdef GARETHS_LITTLE_SECRET
 #define DIM >>3
@@ -169,7 +167,7 @@ typedef struct
 
 
 
-void genesis_vh_convert_color_prom (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void genesis_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 
@@ -187,7 +185,7 @@ void genesis_vh_convert_color_prom (unsigned char *palette, unsigned char *color
 WRITE16_HANDLER ( genesis_videoram1_w )
 {
 	logerror("what is this doing? %x, %x\n", offset, data);
-	offset = data;
+	//offset = data;
 }
 
 int genesis_vh_start (void)
@@ -351,7 +349,7 @@ void genesis_vh_stop (void)
 	generic_vh_stop ();
 }
 
-unsigned char *get_dma_dest_address(int id)
+static unsigned char *get_dma_dest_address(int id)
 {
 	switch (id)
 	{
@@ -397,7 +395,7 @@ READ16_HANDLER ( genesis_vdp_data_r )
 			logerror("unknown vdp port read type %x\n", vdp_id);
 	}
 
-   /*	if ((offset == 1) || (offset == 3))	  */
+   /*	if ((offset == .5) || (offset == 1.5))	  */
 		vdp_address += vdp_auto_increment;
 
 	return data;
@@ -413,10 +411,10 @@ WRITE16_HANDLER ( genesis_vdp_data_w )
 
 	if (vdp_dma_enable && (vdp_id & 0x20))
 	{
-		if (offset == 0 || offset == 2)
+		if (offset == 0 || offset == 1)
 		{
 
-		 vdp_vram_fill = COMBINE_WORD(vdp_vram_fill, data);
+			COMBINE_DATA(&vdp_vram_fill);
 			temp_vdp_address = vdp_address;
 //			logerror("DMA VRAM FILL, dest %x, fill %x, length %x, real dest %x, id %x, inc %x\n", vdp_address, vdp_vram_fill, vdp_dma_length, get_dma_dest_address(vdp_id)+vdp_address, vdp_id, vdp_auto_increment);
 			/* now do the rest of the DMA fill */
@@ -475,9 +473,9 @@ WRITE16_HANDLER ( genesis_vdp_data_w )
 	}
 	  /*	logerror("%x",vdp_vram_fill);*/
 
-	/*  if (first_access && (offset == 1 || offset == 3))
+	/*  if (first_access && (offset == .0 || offset == 1.5))
 		logerror("misaligned\n"); */
-		 /*  	logerror("would write %x to... %x\n", data, ((vdp_address+ 0*//*(int)&vdp_vram[0]*//*) +(  (offset & 0x01))) );*/
+		 /*  	logerror("would write %x to... %x\n", data, ((vdp_address+ 0*//*(int)&vdp_vram[0]*//*) +(  (offset & 0.5))) );*/
 	if ((vdp_address & 1)) logerror("!");
 
 	switch (vdp_id)
@@ -486,9 +484,9 @@ WRITE16_HANDLER ( genesis_vdp_data_w )
 			{
 			int sx, sy;
 
-			sy = ((vdp_address+(offset & 1))<<1) >> 3;
-			sx = ((vdp_address+(offset & 1))<<1) & 7;
-		  	COMBINE_WORD_MEM(vdp_address+(int)vdp_vram, data);
+			sy = ((vdp_address/*+(offset & 0.5)*/)<<1) >> 3;
+			sx = ((vdp_address/*+(offset & 0.5)*/)<<1) & 7;
+		  	COMBINE_DATA((UINT16*)(vdp_address+(int)vdp_vram));
 
 	 		//bitmap_vram->line[sy][sx]     = (data >> 12) & 0x0f;
 	 		//bitmap_vram->line[sy][sx + 1] = (data >>  8) & 0x0f;
@@ -499,11 +497,11 @@ WRITE16_HANDLER ( genesis_vdp_data_w )
 			}
 			break;
 		case MODE_VSRAM_WRITE:
-			COMBINE_WORD_MEM(vdp_address+(int)vdp_vsram,data);
+			COMBINE_DATA((UINT16*)(vdp_address+(int)vdp_vsram));
 			break;
 
 		case MODE_CRAM_WRITE:
-			COMBINE_WORD_MEM(vdp_address+(int)vdp_cram, data);
+			COMBINE_DATA((UINT16*)(vdp_address+(int)vdp_cram));
 			dirty_colour[vdp_address>>1] = 1;
 			//logerror("%x\n", vdp_address);
 			break;
@@ -512,7 +510,7 @@ WRITE16_HANDLER ( genesis_vdp_data_w )
 			logerror("unknown vdp port write type %x\n", vdp_id);
 	}
 
-   //	if ((offset == 1 || offset == 3) /*|| (data_width == 1)*/)
+   //	if ((offset == .5 || offset == 1.5) /*|| (data_width == 1)*/)
 		vdp_address += vdp_auto_increment;
 
 	if (vdp_auto_increment == 1) logerror("1");
@@ -541,12 +539,12 @@ WRITE16_HANDLER ( genesis_vdp_ctrl_w )
 {
 	static int first_read = 1;
 	static int vdp_register, full_vdp_data;
-	int vdp_data = full_vdp_data = COMBINE_WORD(full_vdp_data, data);
+	int vdp_data = COMBINE_DATA(&full_vdp_data);
 	//cpu_yield();
 	switch (offset)
 	{
 		case 0:
-	  	case 2:
+	  	case 1:
 	  	  	 /* logerror("genesis_vdp_ctrl_w %x, %x, %x, %x\n", offset, data, vdp_data, data >>16);*/
 
 
@@ -743,7 +741,7 @@ WRITE16_HANDLER ( genesis_vdp_ctrl_w )
 
 READ16_HANDLER ( genesis_vdp_hv_r )
 {
-   			return vdp_hv_status;
+	return vdp_hv_status;
 }
 
 WRITE16_HANDLER ( genesis_vdp_hv_w )
@@ -885,7 +883,7 @@ const unsigned int priorities[8] =
 
 /* this function is subject to serious change! */
 
-void combinelayers(struct osd_bitmap *dest, int startline, int endline)
+static void combinelayers(struct osd_bitmap *dest, int startline, int endline)
 {
 	int x;
 	unsigned char y;
@@ -1284,7 +1282,7 @@ INLINE void genesis_plot_tile(struct osd_bitmap *dest, int tilenum, int attribut
 	}
 }
 
-void plot_sprites(int priority)
+static void plot_sprites(int priority)
 {
 	#ifdef LSB_FIRST
 	#define SIZE 3
@@ -1554,6 +1552,10 @@ void genesis_modify_display(int inter)
 
 
 }
+
+
+
+
 
 #else
 #ifdef macintosh

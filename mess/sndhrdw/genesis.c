@@ -25,28 +25,28 @@ int genesis_s_interrupt(void)
 
 }
 
-WRITE_HANDLER ( YM2612_68000_w )
+WRITE16_HANDLER ( YM2612_68000_w )
 {
 	switch (offset)
 	{
 		case 0:
-			if (LOWER_BYTE_ACCESS(data)) YM2612_data_port_0_A_w(offset, data 	   & 0xff);
-			if (UPPER_BYTE_ACCESS(data)) YM2612_control_port_0_A_w(offset, (data >> 8) & 0xff);
+			if (ACCESSING_LSB) YM2612_data_port_0_A_w(offset, data 	   & 0xff);
+			if (ACCESSING_MSB) YM2612_control_port_0_A_w(offset, (data >> 8) & 0xff);
 			break;
-		case 2:
-			if (LOWER_BYTE_ACCESS(data)) YM2612_data_port_0_B_w(offset, data 		& 0xff);
-			if (UPPER_BYTE_ACCESS(data)) YM2612_control_port_0_B_w(offset, (data >> 8) & 0xff);
+		case 1:
+			if (ACCESSING_LSB) YM2612_data_port_0_B_w(offset, data 		& 0xff);
+			if (ACCESSING_MSB) YM2612_control_port_0_B_w(offset, (data >> 8) & 0xff);
 	}
 }
 
-READ_HANDLER ( YM2612_68000_r )
+READ16_HANDLER ( YM2612_68000_r )
 {
 	switch (offset)
 	{
 		case 0:
 			return ((YM2612_status_port_0_A_r(offset) << 8) + YM2612_status_port_0_B_r(offset) );
 			break;
-		case 2:
+		case 1:
 			return (YM2612_read_port_0_r(offset) << 8);
 			break;
 	}

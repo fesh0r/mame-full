@@ -125,7 +125,7 @@ const struct GameDriver *drivers[] =
 	/* SEGA */
 	DRIVER( gamegear )	/* Sega Game Gear Handheld						  */
 	DRIVER( sms )		/* Sega Sega Master System						  */
-//!!	DRIVER( genesis )	/* Sega Genesis/MegaDrive						  */
+	DRIVER( genesis )	/* Sega Genesis/MegaDrive						  */
 //!!TESTDRIVER( saturn )	/* Sega Saturn									  */
 
 	/* GCE */

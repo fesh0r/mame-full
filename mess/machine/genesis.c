@@ -18,9 +18,7 @@ int port_b_io = 0;
 
 #define HALT		0
 #define RESUME		1
-void genesis_modify_display(int);
-int genesis_isfunkySMD(unsigned char *);
-int genesis_isSMD(unsigned char *);
+static int genesis_isSMD(unsigned char *);
 int genesis_sharedram_size = 0x10000;
 int genesis_soundram_size = 0x10000;
 
@@ -172,7 +170,7 @@ bad:
 
 /* code taken directly from GoodGEN by Cowering */
 
-int genesis_isfunkySMD(unsigned char *buf)
+static int genesis_isfunkySMD(unsigned char *buf)
 {
 
 	/* aq quiz */
@@ -240,7 +238,7 @@ int genesis_isSMD(unsigned char *buf)
 	return genesis_isfunkySMD(buf);
 }
 
-int genesis_isfunkyBIN(unsigned char *buf)
+static int genesis_isfunkyBIN(unsigned char *buf)
 {
 	/* all the special cases for crappy headered roms */
 	/* aq quiz */
@@ -300,7 +298,7 @@ int genesis_isfunkyBIN(unsigned char *buf)
     return 0;
 }
 
-int genesis_isBIN(unsigned char *buf)
+static int genesis_isBIN(unsigned char *buf)
 {
 	if (buf[0x0100] == 'S' && buf[0x0101] == 'E' && buf[0x0102] == 'G' && buf[0x0103] == 'A')
 		return 1;
@@ -312,7 +310,7 @@ int genesis_isBIN(unsigned char *buf)
  * where (size % 16384) != 0
  */
 
-int genesis_smd2bin(unsigned char *inbuf, unsigned int len)
+static int genesis_smd2bin(unsigned char *inbuf, unsigned int len)
 {
 	unsigned long i, j, offset = 0;
 	unsigned char *tbuf = NULL;
@@ -344,7 +342,7 @@ int genesis_smd2bin(unsigned char *inbuf, unsigned int len)
 	}
 }
 
-int genesis_md2bin(unsigned char *inbuf, unsigned long len)
+static int genesis_md2bin(unsigned char *inbuf, unsigned long len)
 {
 	unsigned long i, j, offset = 0;
 	unsigned char *tbuf = NULL;
@@ -468,27 +466,27 @@ int genesis_interrupt(void)
 	return 0;
 }
 
-WRITE_HANDLER(genesis_io_w)
+WRITE16_HANDLER(genesis_io_w)
 {
-	data = COMBINE_WORD(0, data);
+	data &= ~mem_mask;
 /*	logerror("genesis_io_w %x, %x\n", offset, data); */
 	switch (offset)
 	{
-	case 2:							/* joystick port a IO bit set */
+	case 1:							/* joystick port a IO bit set */
 		/* logerror("port a set to %x\n", port_a_io); */
 		port_a_io = data & 0xff;
 		break;
-	case 4:							/* joystick port b IO bit set */
+	case 2:							/* joystick port b IO bit set */
 		port_b_io = data & 0xff;
 		break;
-	case 8:
+	case 4:
 		/* logerror("port a dir set to %x\n", data & 0xff); */
 		break;
-	case 0x0a:
+	case 5:
 		break;
 	}
 }
-READ_HANDLER(genesis_io_r)
+READ16_HANDLER(genesis_io_r)
 {
 
 	int returnval = 0x80;
@@ -543,13 +541,13 @@ READ_HANDLER(genesis_io_r)
 /*		logerror("coo!\n"); */
 		return returnval;				/* was just NTSC, overseas (USA) no FDD, now auto */
 		break;
-	case 2:							/* joystick port a */
+	case 1:							/* joystick port a */
 		if (port_a_io == 0x00)
 			return readinputport(1);
 		else
 			return readinputport(0);
 		break;
-	case 4:							/* joystick port b */
+	case 2:							/* joystick port b */
 		if (port_b_io == 0x00)
 			return readinputport(3);
 		else
@@ -569,13 +567,13 @@ READ16_HANDLER(genesis_ctrl_r)
 	case 0:							/* DRAM mode is write only */
 		return 0xffff;
 		break;
-	case 0x100:						/* return Z80 CPU Function Stop Accessible or not */
+	case 0x80:						/* return Z80 CPU Function Stop Accessible or not */
 		/* logerror("Returning z80 state\n"); */
 		return (z80running ? 0x0100 : 0x0);
 		/* docs comflict here, page 91 says 0 == z80 has access */
 		/* page 76 says 0 means you can access the space */
 		break;
-	case 0x200:						/* Z80 CPU Reset - write only */
+	case 0x100:						/* Z80 CPU Reset - write only */
 		return 0xffff;
 		break;
 	}
@@ -585,7 +583,7 @@ READ16_HANDLER(genesis_ctrl_r)
 
 WRITE16_HANDLER(genesis_ctrl_w)
 {
-	data = COMBINE_WORD(0, data);
+	data &= ~mem_mask;
 
 /*	logerror("genesis_ctrl_w %x, %x\n", offset, data); */
 
@@ -594,7 +592,7 @@ WRITE16_HANDLER(genesis_ctrl_w)
 	case 0:							/* set DRAM mode... we have to ignore this for production cartridges */
 		return;
 		break;
-	case 0x100:						/* Z80 BusReq */
+	case 0x80:						/* Z80 BusReq */
 		if (data == 0x100)
 		{
 			z80running = 0;
@@ -611,7 +609,7 @@ WRITE16_HANDLER(genesis_ctrl_w)
 		}
 		return;
 		break;
-	case 0x200:						/* Z80 CPU Reset */
+	case 0x100:						/* Z80 CPU Reset */
 		if (data == 0x00)
 		{
 			cpu_set_halt_line(1, ASSERT_LINE);
