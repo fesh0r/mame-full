@@ -66,7 +66,7 @@ Juan Antonio Martinez
  and David Heremans (minor editing)
 \layout Date
 
-v2.1.36, 13 January 2004
+v2.1.37, 19 February 2004
 \layout Abstract
 
 xmame/xmess documentation with an installation guide, the FAQ (frequently
@@ -4432,7 +4432,7 @@ The xmame/xmess sources
 \layout Standard
 
 
-\begin_inset LatexCommand \url[xmame/xmess-0.78.1 sources]{download/xmame-0.78.1.tar.bz2}
+\begin_inset LatexCommand \url[xmame/xmess-0.79.1 sources]{download/xmame-0.79.1.tar.bz2}
 
 \end_inset 
 
@@ -4700,6 +4700,14 @@ Xmame/xmess download mirrors
 \layout Itemize
 
 
+\begin_inset LatexCommand \url[Qtmame]{http://qtmame.sourceforge.net/}
+
+\end_inset 
+
+, a Qt-based front-end
+\layout Itemize
+
+
 \begin_inset LatexCommand \url[xmame-fe]{http://gradbert.home.comcast.net/}
 
 \end_inset 
@@ -4821,7 +4829,7 @@ ChangeLogs
 The MAME/MESS ChangeLogs
 \layout Standard
 
-These are the changelogs of the offical MAME and MESS release, the core
+These are the changelogs of the offical MAME and MESS releases, the core
  of xmame/xmess.
 \layout Itemize
 

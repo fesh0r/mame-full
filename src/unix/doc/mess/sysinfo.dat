@@ -255,6 +255,17 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=adam
+$bio
+ColecoAdam (1982)
+
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=advision
 $bio
 Entex Adventurevision
@@ -706,6 +717,7 @@ $info=apple1
 $bio
 Apple 1
 
+
 Known issues:
 
 Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by 
@@ -774,6 +786,7 @@ $info=apple2
 $bio
 Apple ][
 
+
 Known issues:
 
 Optional cassette drive not yet supported; in fact, no peripherals are supported
@@ -838,6 +851,23 @@ Apple ][ History -- http://apple2history.org/history/ah03.html
 
 $end
 
+#---------------------------------------------------------------------------------------------#
+
+$info=apple2c
+$bio
+Apple //c
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=apple2e
+$bio
+Apple //e
+
+
+$end
 
 #---------------------------------------------------------------------------------------------#
 
@@ -1264,6 +1294,21 @@ $end
 $info=at
 $bio
 AT (1987)
+
+
+Features:
+
+
+MESS Emulation State:
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=atvga
+$bio
+PC/AT (VGA, MF2 Keyboard)
 
 
 Features:
@@ -2706,6 +2751,14 @@ $end
 
 $info=concept
 $bio
+Telenova Compis (1985)
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=concept
+$bio
 Corvus Concept
 
 
@@ -3332,7 +3385,7 @@ $end
 
 $info=galaxy
 $bio
-Galaksija
+Galaksija (1983)
 
 
 ZX81 class kit built computer from Yugoslavia (Serbia) invented by Voja Antonic.
@@ -3360,13 +3413,17 @@ Galaksija emulator by Miodrag Jevremovic
 
 MESS Emulation State:
 
+Needs correct palette
+
 Tape not emulated
 
 Video hardware not emulated (hack used)
 
 Sound not emulated (if any)
 
-Work stopped until info about Galaksija hardware is available
+Needs Hi-res graphic (if any)
+
+Work stopped until info about Galaksija hardware is available.
 
 
 $end
@@ -5241,6 +5298,14 @@ not found'', which results in ``Disk I/O error'' in MSX-BASIC.
 Also not that memory emulation isn't complete so MSX2 memory mappers
 don't work yet.
 
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=msx2
+$bio
+MSX 2 (1985)
 
 $end
 
@@ -8894,6 +8959,15 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=ti990_4
+$bio
+Texas Instruments Model 990/4 Minicomputer System (1976)
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=990189
 $bio
 Texas Instruments TM 990/189 Microcomputer
@@ -8951,14 +9025,27 @@ you must edit the source code to run the programs interactively: for instance,
 to play the brick-wall game, you must type 'LOAD 2', then enter '5 SP=0' to
 disable demonstration mode, then 'RUN'.
 
-There is one undocumented built-in Basic function that can be used if you have
-the demonstration EPROMs installed: JOY.  This instruction is not fully
-implemented in University Basic, and it relies on an assembly language
-subroutine located on the Demonstration EPROMs.  "JOY 0" reads the analog
+There are two undocumented built-in Basic instructions that can be used if you
+have the demonstration EPROMs installed: PLOT and JOY.  These instructions are
+not fully implemented in University Basic, and they rely on assembly language
+subroutines located on the Demonstration EPROMs.
+
+The PLOT instruction draws lines in multicolor mode (which is entered by "MODE
+8" through "MODE 15").  "PLOT 0,n" sets up the screen for multicolor mode, and
+must be executed before any other PLOT instruction (n is ignored).  "PLOT
+1,c[,x,y]" sets the pen color to c, and sets the coordinates of the lower left
+corner to (x,y).  "PLOT 5,x,y" sets the pen position absolutely, and "PLOT
+3,x,y" sets the pen position relatively to the current pen position.  "PLOT
+6,x,y" draws a line from the current pen position to a new pen position
+expressed absolutely, and "PLOT 4,x,y" draws a line from the current pen
+position to a new pen position expressed relatively to the current pen
+position.  "PLOT 2,x,y" and "PLOT 7,x,y" do not do anything.
+
+The JOY function reads the state of either joystick.  "JOY 0" reads the analog
 X-axis for joystick 1, "JOY 1" reads the analog Y-axis for joystick 1, "JOY 2"
-reads the button state for joystick 1, "JOY 2" reads the analog X-axis for
-joystick 2, "JOY 3" reads the analog Y-axis for joystick 2, "JOY 4" reads the
-button state for joystick 2.
+reads the button state for joystick 1, "JOY 3" reads the analog X-axis for
+joystick 2, "JOY 4" reads the analog Y-axis for joystick 2, and "JOY 5" reads
+the button state for joystick 2.
 
 
 History and Trivia:

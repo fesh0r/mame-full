@@ -426,7 +426,7 @@ through 5-28, 946250-9701B pp. 2-1 through 2-3, 2540219A-0001 pp. 4-2 and 4-3,
 126-Plus Product Reference Manual" by Cipher P/N 8500055 revision A4 page 2-8.)
 
 Disk Type       Units   Size (MB)   Cylinders   Heads   Sectors/Track   Bytes/Sector
-FD800 (min)     1          .244?      77         1       26             128
+FD800 (min)     1          .244       77         1       26             128
 FD800 (max)     1          .978???    77         2???    26???          256???
 FD1000          1         1.15        77         2       26             288
 DS31/DS32       1         2.81       203         2       24             288
@@ -434,10 +434,12 @@ DS10            2         4.70       408         2(*2)   20             288
 DS25            1        22.3        408         5       38             288
 DS50            1        44.6        815         5       38             288
 DS200           1       169.5        815        19       38             288
-CD1400-32       2        13.5        821         1       64             256
-CD1400-96 (rem) 1        13.5        821         1       64             256
-CD1400-96 (fix) 1        67.3        821         5       64             256
-DS80            1        62.7        803(c)      5       61             256
+CD1400-32       2        13.5        821(h)      1       64             256
+CD1400-64 (rem) 1        13.5        821(h)      1       64             256
+CD1400-64 (fix) 1        38.5        821(h)      3       64             256
+CD1400-96 (rem) 1        13.5        821(h)      1       64             256
+CD1400-96 (fix) 1        67.3        821(h)      5       64             256
+DS80            1        62.7        803(g)      5       61             256
 DS300           1       238.3        803(c)     19       61             256
 WD800-18        1        18.5        651(b)      3       37             256
 WD800-43        1        43.2        651(b)      7       37             256
@@ -463,6 +465,9 @@ d) 4 extra cylinders are reserved for storage system use (including 2 for
 e) 16 extra cylinders are reserved for bad track relocation
 f) there are extra cylinders, and the way logical addresses relates to physical
   address is so complex I don't even want to talk about it
+g) 2 extra cylinders are reserved for diagnostics, and 10 extra cylinders are
+  reserved to replace bad tracks
+h) 2 extra cylinders are reserved for diagnostics
 
 Note that 2270512-9701 and 946250-9703 describe more disk units (namely CMD 16,
 CMD 80, WD800A-43 and WD800A-100 for the former, and WD500-10 for the later).

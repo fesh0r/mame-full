@@ -8,26 +8,28 @@
 		<h1>Compiling MESS</h1>
 		<p>
 			(This document is based on <a href="http://www.mame.net/compilewin.html">"How to 
-				compile MAME (Win32)"</a>. Since the procedure for compiling MAME and MESS 
-			are virtually identical, these two documents are virtually identical)
+				compile MAME (Win32)"</a>. Since the procedure for compiling <a href="http://www.mame.net/">
+				MAME</a> and <a href="http://www.mess.org/">MESS</a> are virtually 
+			identical, these two documents are virtually identical)
 		</p>
 		<p>
 			<b>Compiling means</b> rebuilding the actual executable program from its source 
-			code. MESS is almost fully written in C, with some assembler hacks in 
-			speed-critical places. The Win32 version of MESS is compiled with <a href="http://www.mingw.org/">
-				MinGW</a>, which is the minimalist Win32 port of a C compiler called <a href="http://gcc.gnu.org/">
-				GCC</a> and its libraries.
+			code. <a href="http://www.mess.org/">MESS</a> is almost fully written in C, 
+			with some assembler hacks in speed-critical places. The Win32 version of <a href="http://www.mess.org/">
+				MESS</a> is compiled with <a href="http://www.mingw.org/">MinGW</a>, which 
+			is the minimalist Win32 port of a C compiler called <a href="http://gcc.gnu.org/">GCC</a>
+			and its libraries.
 		</p>
 		<p>
-			This particular how-to is written for MESS 0.78, but with a bit of luck you can 
-			compile other versions with the help of this page. This how-to tells how to 
-			compile the Win32 version of MESS, which includes both the command line and GUI 
-			versions.
+			This particular how-to is written for <a href="http://www.mess.org/">MESS</a> 0.78, 
+			but with a bit of luck you can compile other versions with the help of this 
+			page. This how-to tells how to compile the Win32 version of <a href="http://www.mess.org/">
+				MESS</a>, which includes both the command line and GUI versions.
 		</p>
 		<p>
 			The MinGW development environment will be installed to
 			<span class="filename">C:\MINGW</span>
-			and MESS sources will be placed into
+			and <a href="http://www.mess.org/">MESS</a> sources will be placed into
 			<span class="filename">C:\MINGW\MESS</span>. Before beginning, you should make 
 			sure that you do not have the directories
 			<span class="filename">c:\mingw\</span>
@@ -52,9 +54,9 @@
 		<p>
 			First of all, most files that are transferred over the Internet are compressed, 
 			to minimize download times and bandwidth costs. You might already have a 
-			Windows-based uncompressing utility, but since compiling MESS is done in a 
-			command prompt, a different kind of utility is necessary. Download the 
-			following file into the directory
+			Windows-based uncompressing utility, but since compiling <a href="http://www.mess.org/">
+				MESS</a> is done in a command prompt, a different kind of utility is 
+			necessary. Download the following file into the directory
 			<span class="filename">
 					c:\windows\command\</span>
 		so that the utility is accessible from any directory.
@@ -97,9 +99,9 @@
 			Then you need the MinGW files. Make a new directory, for example
 			<span class="filename">
 					c:\download\</span>
-		and download the following files into that directory. Note that there may be 
-		newer versions of these files, but MESS is not verified to compile with any 
-		other versions of the following files.
+			and download the following files into that directory. Note that there may be 
+			newer versions of these files, but <a href="http://www.mess.org/">MESS</a>
+		is not verified to compile with any other versions of the following files.
 		<p>
 			<Table width="100%" border="2" cellspacing="1" cellpadding="5">
 				<TR>
@@ -115,17 +117,17 @@
 				<TR>
 					<td><span><A href="http://www.mame.net/downmain.html">mingw-over.zip</A></span></td>
 					<td><span>549 kB</span></td>
-					<td><span>Other files needed to compile MESS in the MinGW compile environment. Uncompress this over the MinGW directory and add <span class="filename">c:\mingw\bin</span> to your PATH. Compile the Win32 version by typing make.</span></td>
+					<td><span>Other files needed to compile <a href="http://www.mess.org/">MESS</a> in the MinGW compile environment. Uncompress this over the MinGW directory and add <span class="filename">c:\mingw\bin</span> to your PATH. Compile the Win32 version by typing make.</span></td>
 				</TR>
 				<TR>
 					<td><span><A href="http://prdownloads.sf.net/mingw/gcc-3.2.2-20030208-1.tar.gz">gcc-3.2.2-20030208-1.tar.gz</A></span></td>
 					<td><span>7148 kB</span></td>
-					<td><span><a href="http://gcc.gnu.org/">GCC</a> 3.2.2, required for MESS 0.78. Uncompress this over the MinGW directory.</span></td>
+					<td><span><a href="http://gcc.gnu.org/">GCC</a> 3.2.2, required for <a href="http://www.mess.org/">MESS</a> 0.78. Uncompress this over the MinGW directory.</span></td>
 				</TR>
 				<TR>
 					<td><span><A href="http://www.mame.net/zips/dx70_mgw.zip">dx70_mgw.zip</A></span></td>
 					<td><span>240 kB</span></td>
-					<td><span>DirectX 7.0 headers, required for MESS 0.78. Uncompress this over the MinGW directory.</span></td>
+					<td><span>DirectX 7.0 headers, required for <a href="http://www.mess.org/">MESS</a> 0.78. Uncompress this over the MinGW directory.</span></td>
 				</TR>
 			</Table>
 			<hr>
@@ -204,7 +206,10 @@
 			<hr>
 			<h2>6. Compile MESS</h2>
 		<p>
-			Now you can compile MESS. Download the source ZIP into
+			Now you can compile <a href="http://www.mess.org/">MESS</a>. The <a href="http://www.mess.org/">
+				MESS</a> source is distributed as a source override on the <a href="http://www.mame.net/">
+				MAME</a> source.&nbsp; Therefore you will need to download both the <a href="http://www.mame.net/">
+				MAME</a> and <a href="http://www.mess.org/">MESS</a> source ZIPs into&nbsp;
 			<span class="filename">
 					c:\download\</span>
 		<p>
@@ -218,30 +223,35 @@
 					<td><a href="http://mirrors.xmission.com/mame/main/mame078s.zip"><b>mame078s.zip</b></a>
 					</td>
 					<td>9208 kB</td>
-					<td>This is the source archive of MAME 0.78.</td>
+					<td>This is the source archive of <a href="http://www.mame.net/">MAME</a> 0.78.</td>
 				</TR>
 				<TR>
 					<td><a href="http://www.retrogames.com/mess/mess078s.zip"><b>mess078s.zip</b></a>
 					</td>
 					<td>2717 kB</td>
-					<td>This is the source archive of MESS 0.78.</td>
+					<td>This is the source archive of <a href="http://www.mess.org/">MESS</a> 0.78.</td>
 				</TR>
 			</Table>
 		<p>
 			Go to the download directory by typing
 			<span class="command">
 					cd \download</span>
-			and uncompress the MAME and MESS sources by typing
-			<span class="command">
-					unzip mame078s.zip -d c:\mingw\mess\</span>
-			<span class="command">
-					unzip mess078s.zip -d c:\mingw\mess\</span>
-		.
+			and uncompress the <a href="http://www.mame.net/">MAME</a> and <a href="http://www.mess.org/">
+				MESS</a> sources by typing the following commands
+			<UL>
+				<LI>
+					<span class="command"> unzip mame078s.zip</span></LI>
+				<LI>
+					<SPAN class="command">unzip mame.zip -d c:\mingw\mess\</SPAN></LI>
+				<LI>
+					<SPAN class="command"></SPAN><SPAN class="command">unzip </SPAN></SPAN>
+					<span class="command"> mess078s.zip -d c:\mingw\mess\</span>
+					.</LI></UL>
 		<p>
-			Then you can compile MESS. Type
+			Then you can compile <a href="http://www.mess.org/">MESS</a>. Type
 			<span class="command">make -f makefile.mes</span>
-			and hit enter. This will finally compile MESS itself. If you want to compile 
-			the CPU optimized versions, type
+			and hit enter. This will finally compile <a href="http://www.mess.org/">MESS</a>
+			itself. If you want to compile the CPU optimized versions, type
 			<span class="command">make -f makefile.mes 
 					I686=1</span>
 			or
@@ -267,8 +277,9 @@
 			<hr>
 			<h2>7. A new MESS appeared</h2>
 		<p>
-			To successfully compile a new version of MESS, you should NOT uncompress a new 
-			set of sources over an old version of MESS. Instead, rename the MESS directory 
+			To successfully compile a new version of <a href="http://www.mess.org/">MESS</a>, 
+			you should NOT uncompress a new set of sources over an old version of <a href="http://www.mess.org/">
+				MESS</a>. Instead, rename the <a href="http://www.mess.org/">MESS</a> directory 
 			to another name or simply delete it totally (if you are sure that nothing 
 			important is there), and then uncompress the new set of sources to an empty 
 			directory.
@@ -291,13 +302,15 @@
 		it easy for everybody to build their own binaries.
 		<p>
 			You might notice that the executables created by the build are much larger than 
-			the ones released by the MESS team.&nbsp; This is because the MESS releases are 
+			the ones released by the <a href="http://www.mess.org/">MESS</a> team.&nbsp; 
+			This is because the <a href="http://www.mess.org/">MESS</a> releases are 
 			archived with <a href="http://upx.sourceforge.net/">UPX</a> to make them 
 			smaller.
 			<hr>
 			<h2>9. Debug modes</h2>
 		<p>
-			To include the debugger functionality in your MESS executable, edit
+			To include the debugger functionality in your <a href="http://www.mess.org/">MESS</a>
+			executable, edit
 			<span class="filename">
 					makefile.mes</span>. Near the top you will see a text like "uncomment 
 			next line to include the debugger". Remove the
@@ -320,8 +333,8 @@
 			<span class="filename">
 					debug 
 					= yes </span>
-			and save the file. In MESS, hit tilde (&nbsp;<span>~</span>&nbsp;) or key to 
-			the left of the key &nbsp;<span>1</span>
+			and save the file. In <a href="http://www.mess.org/">MESS</a>, hit tilde 
+			(&nbsp;<span>~</span>&nbsp;) or key to the left of the key &nbsp;<span>1</span>
 			&nbsp; to enter the debugger.</p>
 	</body>
 </html>

@@ -1,3 +1,70 @@
+0.79
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- [MSX2] Sony HB-F700P (Sean Young)
+- [MSX2] NMS 8245 and NMS 8255 (Sean Young)
+- [MSX] National FS-4000 (Sean Young)
+- [MSX] Sony HB-75P (Sean Young)
+
+
+
+System Driver Changes:
+----------------------
+- [APPLE2] Fixed a regression in caching disk data that would cause data to
+  be lost when switching disks, or for switching disks to not be acknowledged.
+  [Nate Woods]
+
+- [MSX] Rewrote memory emulation.
+  * Adds support for subslots
+  * Proper memory layout for the MSX2 drivers, with the diskrom
+    in a subslot of slot 3.
+  * Adds support for Konami's Sound Cartridge (128kb)
+  * Adds support for Korean 90-in-1 
+  * Adds support for Kanji ROM
+
+  If no cartridges are supplied, it sets the Sound Cartridge in slot 1
+  and the FM-PAC in slot 2. The Snatcher, SD-Snatcher and the Konami
+  Game Collections now work. Note that Sound Cartridge also behaves as a 
+  normal SCC.
+
+  With one cartridge supplied the FM-PAC is still set in slot 2 so 
+  R-Type and other ROM cartridges can still use it. [Sean Young]
+
+- [SUPERBRD] Updated driver with a better BIOS set and keyboard layout and
+  added sound.  [Claudio Nieder]
+
+
+
+User Interface Changes:
+-----------------------
+- [Windows GUI] Minor bug fixes regarding software listing and CRC
+  calculations with respect to clone and compatible drivers. [Nate Woods]
+
+
+
+Imgtool Changes:
+----------------
+(none)
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.79.  This incorporates all features of the
+  update to this core.  [MAME team]
+
+- As a consequence of the MAME 0.79 core, which has massive changes
+  to the memory system, there is a greater likelyhood of regressions
+  in this MESS release (as with MAME.)
+
+- Introduced automated messtest testing facility, in order to prevent
+  regressions in the future.  [Nate Woods]
+
+- Internal error reporting enhancements for image loading; still some work to
+  do.  [Nate Woods]
+  
+
+
 0.78
 
 New System Drivers Supported (in no particular order):
