@@ -1488,12 +1488,29 @@ int TMS99XX_EXECUTE(int cycles)
 				#if 0		/* Trace */
 				logerror("> PC %4.4x :%4.4x %4.4x : R=%4.4x %4.4x %4.4x %4.4x %4.4x %4.4x %4.4x %4.4x %4.4x %4.4x%4.4x %4.4x %4.4x %4.4x %4.4x %4.4x :T=%d\n",I.PC,I.STATUS,I.WP,I.FR[0],I.FR[1],I.FR[2],I.FR[3],I.FR[4],I.FR[5],I.FR[6],I.FR[7],I.FR[8],I.FR[9],I.FR[10],I.FR[11],I.FR[12],I.FR[13],I.FR[14],I.FR[15],TMS99XX_ICOUNT);
 					#if 0	/* useful with TI99/4a driver */
+					#ifdef MESS
+					if (I.PC == 0x0078)
 					{
-						extern int gpl_addr;
-						logerror("> GPL pointer %4.4x\n", gpl_addr);
+						extern struct
+						{
+							/* pointer to GROM data */
+							UINT8 *data_ptr;
+							/* current address pointer for the active GROM in port (16 bits) */
+							unsigned int addr;
+							/* GROM data buffer */
+							UINT8 buf;
+							/* internal flip-flops that are set after the first access to the GROM
+							address so that next access is mapped to the LSB, and cleared after each
+							data access */
+							char raddr_LSB, waddr_LSB;
+						} console_GROMs;
+						logerror("> GPL pointer %4.4X\n", console_GROMs.addr);
 					}
 					#endif
+					#endif
 				#endif
+
+				TMS99XX_ICOUNT = icount_save;
 
 				MAME_Debug();
 
@@ -1687,10 +1704,10 @@ void TMS99XX_SET_REG(int regnum, unsigned val)
 #else
 		case REG_PC:
 #endif
-		case TMS9900_PC: I.PC = val; break;
+		case TMS9900_PC: I.PC = val & 0xfffe; break;
 		case TMS9900_IR: I.IR = val; break;
 		case REG_SP:
-		case TMS9900_WP: I.WP = val; break;
+		case TMS9900_WP: I.WP = val & 0xfffe; break;
 		case TMS9900_STATUS: I.STATUS = val; getstat(); break;
 #ifdef MAME_DEBUG
 		case TMS9900_R0: I.FR[0]= val; break;
@@ -3043,7 +3060,7 @@ static void h0040(UINT16 opcode)
 	case 9:   /* LWP */
 		/* LWP --- Load Workspace Pointer */
 		/* WP = *Reg */
-		I.WP = readword(addr);
+		I.WP = readword(addr) & ~1;
 		break;
 
 #if 0	/* 990/12 opcodes */
@@ -3107,7 +3124,7 @@ static void h0100(UINT16 opcode)
 #if HAS_BIND_OPCODE
 	case 1:   /* BIND */
 		/* BIND -- Branch INDirect */
-		I.PC = readwordX(src, src_map);
+		I.PC = readwordX(src, src_map) & ~1;
 		CYCLES(Mooof!, Mooof!, 4 /*don't know*/);
 		break;
 #endif
@@ -3230,11 +3247,14 @@ static void h0200(UINT16 opcode)
 		/* full instruction decoding on tms9995 */
 		if (((opcode < 0x2E0) && (opcode & 0x10)) || ((opcode >= 0x2E0) && (opcode & 0x1F)))
 		{
-		#if 0	/* Origin unknown */
+		#if 0
+			/* tms99110 opcode (not supported by 990/12) */
 			if (opcode == 0x0301)
 			{	/* CR ---- Compare Reals */
 			}
-			else if (opcode == 0x0302)
+			else
+			/* tms99105+tms99110 opcode (not supported by 990/12) */
+			if (opcode == 0x0302)
 			{	/* MM ---- Multiply Multiple */
 			}
 			else
@@ -3316,7 +3336,7 @@ static void h0200(UINT16 opcode)
 	case 7:   /* LWPI */
 		/* LWPI -- Load Workspace Pointer Immediate */
 		/* WP = *PC+ */
-		I.WP = fetch();
+		I.WP = fetch() & ~1;
 		CYCLES(3, 10, 4);
 		break;
 
@@ -3366,9 +3386,9 @@ static void h0200(UINT16 opcode)
 		/* RTWP -- Return with Workspace Pointer */
 		/* WP = R13, PC = R14, ST = R15 */
 		addr = (I.WP + R13) & ~1;
-		I.WP = readword(addr);
+		I.WP = readword(addr) & ~1;
 		addr += 2;
-		I.PC = readword(addr);
+		I.PC = readword(addr) & ~1;
 		addr += 2;
 		#if HAS_PRIVILEGE
 			if (I.STATUS & ST_PR)
@@ -3556,6 +3576,9 @@ static void h0400(UINT16 opcode)
 	case 1:   /* B */
 		/* B ----- Branch */
 		/* PC = S */
+#if ((TMS99XX_MODEL == TMS9900_ID) || (TMS99XX_MODEL == TMS9980_ID))
+		(void) readwordX(addr, src_map);
+#endif
 		I.PC = addr;
 		CYCLES(2, 8, 3);
 		break;
@@ -3563,13 +3586,16 @@ static void h0400(UINT16 opcode)
 		/* X ----- eXecute */
 		/* Executes instruction *S */
 		execute(readwordX(addr, src_map));
-		/* On tms9900, the X instruction actually takes 8 cycles, but we gain 4 cycles on the next
+		/* On tms9900, the X instruction actually takes 8 cycles, but we gain 2 cycles on the next
 		instruction, as we don't need to fetch it. */
-		CYCLES(1, 4, 2);
+		CYCLES(1, 6, 2);
 		break;
 	case 3:   /* CLR */
 		/* CLR --- CLeaR */
 		/* *S = 0 */
+#if ((TMS99XX_MODEL == TMS9900_ID) || (TMS99XX_MODEL == TMS9980_ID))
+		(void) readwordX(addr, src_map);
+#endif
 		writewordX(addr, 0, src_map);
 		CYCLES(2, 10, 3);
 		break;
@@ -3632,6 +3658,9 @@ static void h0400(UINT16 opcode)
 	case 10:  /* BL */
 		/* BL ---- Branch and Link */
 		/* IP=S, R11=old IP */
+#if ((TMS99XX_MODEL == TMS9900_ID) || (TMS99XX_MODEL == TMS9980_ID))
+		(void) readwordX(addr, src_map);
+#endif
 		WRITEREG(R11, I.PC);
 		I.PC = addr;
 		CYCLES(3, 12, 5);
@@ -3647,6 +3676,9 @@ static void h0400(UINT16 opcode)
 	case 12:  /* SETO */
 		/* SETO -- SET to Ones */
 		/* *S = #$FFFF */
+#if ((TMS99XX_MODEL == TMS9900_ID) || (TMS99XX_MODEL == TMS9980_ID))
+		(void) readwordX(addr, src_map);
+#endif
 		writewordX(addr, 0xFFFF, src_map);
 		CYCLES(2, 10, 3);
 		break;
