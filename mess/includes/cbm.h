@@ -21,7 +21,7 @@ extern "C" {
 
 #if 0
 #include "snprintf.h"
-#else
+//#else
 /* quick (and unsafe as sprintf) snprintf */
 #define snprintf cbm_snprintf
 int DECL_SPEC cbm_snprintf (char *str, size_t size, const char *format,...);
