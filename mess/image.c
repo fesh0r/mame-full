@@ -139,7 +139,8 @@ int image_load(int type, int id, const char *name)
 			err = err0;
 		if (err != INIT_PASS)
 		{
-			osd_fclose(fp);
+			if (fp)
+				osd_fclose(fp);
 			return err;
 		}
 	}
