@@ -47,17 +47,23 @@ void	pc_fdc_init(pc_fdc_hw_interface *iface)
 
 	pc_fdc_reset();
 
-        floppy_drives_init();
-        floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
-        floppy_drive_set_geometry(1, FLOPPY_DRIVE_DS_80);
-        floppy_drive_set_geometry(2, FLOPPY_DRIVE_DS_80);
-        floppy_drive_set_geometry(3, FLOPPY_DRIVE_DS_80);
-        floppy_drive_set_flag_state(0, FLOPPY_DRIVE_PRESENT,1);
-        floppy_drive_set_flag_state(1, FLOPPY_DRIVE_PRESENT,1);
-        floppy_drive_set_flag_state(2, FLOPPY_DRIVE_PRESENT,1);
-        floppy_drive_set_flag_state(3, FLOPPY_DRIVE_PRESENT,1);
+	floppy_drives_init();
+	floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
+	floppy_drive_set_geometry(1, FLOPPY_DRIVE_DS_80);
+	floppy_drive_set_geometry(2, FLOPPY_DRIVE_DS_80);
+	floppy_drive_set_geometry(3, FLOPPY_DRIVE_DS_80);
+	floppy_drive_set_flag_state(0, FLOPPY_DRIVE_PRESENT,1);
+	floppy_drive_set_flag_state(1, FLOPPY_DRIVE_PRESENT,1);
+	floppy_drive_set_flag_state(2, FLOPPY_DRIVE_PRESENT,1);
+	floppy_drive_set_flag_state(3, FLOPPY_DRIVE_PRESENT,1);
 
 }
+
+void	pc_fdc_exit(void)
+{
+	nec765_stop();
+}
+
 
 void	pc_fdc_set_tc_state(int state)
 {
