@@ -61,6 +61,7 @@
 	Kevin Thacker [MESS driver]
 
  ******************************************************************************/
+
 #include "driver.h"
 #include "../includes/exidy.h"
 #include "includes/centroni.h"
@@ -70,6 +71,7 @@
 #include "devices/basicdsk.h"
 #include "devices/cassette.h"
 #include "devices/printer.h"
+#include "devices/z80bin.h"
 #include "image.h"
 
 static DEVICE_LOAD( exidy_floppy )
@@ -829,6 +831,7 @@ SYSTEM_CONFIG_START(exidy)
 	CONFIG_DEVICE(exidy_printer_getinfo)
 	CONFIG_DEVICE(exidy_floppy_getinfo)
 	/*CONFIG_DEVICE(exidy_cassette_getinfo)*/
+	CONFIG_DEVICE(z80bin_quickload_getinfo)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	PARENT	COMPAT	MACHINE	INPUT	INIT	CONFIG	COMPANY        FULLNAME */

@@ -865,6 +865,7 @@ COREOBJS +=							\
 	$(OBJ)/mess/devices/harddriv.o	\
 	$(OBJ)/mess/devices/idedrive.o	\
 	$(OBJ)/mess/devices/dsk.o		\
+	$(OBJ)/mess/devices/z80bin.o	\
 	$(OBJ)/mess/machine/6551.o		\
 	$(OBJ)/mess/machine/smartmed.o	\
 	$(OBJ)/mess/vidhrdw/m6847.o		\

@@ -95,6 +95,7 @@ Todo:
 #include "devices/snapquik.h"
 #include "devices/cassette.h"
 #include "devices/printer.h"
+#include "devices/z80bin.h"
 #include "formats/vt_cas.h"
 #include "inputx.h"
 
@@ -481,6 +482,7 @@ SYSTEM_CONFIG_START(vtech1)
     CONFIG_DEVICE(vtech1_cassette_getinfo)
     CONFIG_DEVICE(vtech1_snapshot_getinfo)
     CONFIG_DEVICE(vtech1_floppy_getinfo)
+	CONFIG_DEVICE(z80bin_quickload_getinfo)
 SYSTEM_CONFIG_END
 
 

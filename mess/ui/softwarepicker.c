@@ -323,8 +323,8 @@ static void SoftwarePicker_RealizeHash(HWND hwndPicker, int nIndex)
 {
 	struct SoftwarePickerInfo *pPickerInfo;
 	struct FileInfo *pFileInfo;
-	unsigned int nHashFunctionsUsed;
-	unsigned int nCalculatedHashes;
+	unsigned int nHashFunctionsUsed = 0;
+	unsigned int nCalculatedHashes = 0;
 
 	pPickerInfo = GetSoftwarePickerInfo(hwndPicker);
 	assert((nIndex >= 0) && (nIndex < pPickerInfo->nIndexLength));
@@ -332,13 +332,9 @@ static void SoftwarePicker_RealizeHash(HWND hwndPicker, int nIndex)
 
 	if (pPickerInfo->pHashFile)
 	{
-        nHashFunctionsUsed = hashfile_functions_used(pPickerInfo->pHashFile, pFileInfo->pDevice->type);
+		if (pFileInfo->pDevice->type < IO_COUNT)
+	        nHashFunctionsUsed = hashfile_functions_used(pPickerInfo->pHashFile, pFileInfo->pDevice->type);
 		nCalculatedHashes = hash_data_used_functions(pFileInfo->szHash);
-	}
-	else
-	{
-		nHashFunctionsUsed = 0;
-		nCalculatedHashes = 0;
 	}
 
 	if ((nHashFunctionsUsed & ~nCalculatedHashes) == 0)
@@ -461,6 +457,15 @@ static BOOL SoftwarePicker_AddZipEntFile(HWND hwndPicker, LPCTSTR pszZipPath,
 	int nZipEntryNameLength;
 
 	pszZipSubPath = A2T(pZipEnt->name);
+
+	// special case; skip first two characters if they are './'
+	if ((pszZipSubPath[0] == '.') && (pszZipSubPath[1] == '/'))
+	{
+		while(*(++pszZipSubPath) == '/')
+			;
+	}
+
+
 	nZipEntryNameLength = _tcslen(pszZipSubPath);
 	nLength = _tcslen(pszZipPath) + 1 + nZipEntryNameLength + 1;
 	s = (LPTSTR) alloca(nLength * sizeof(TCHAR));
