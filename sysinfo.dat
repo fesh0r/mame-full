@@ -2632,28 +2632,6 @@ the Oric Atmos.
 $end
 
 #---------------------------------------------------------------------------------------------#
-
-$info=orica
-$bio
-Oric Atmos
-
-Known issues:
-- The disc controller emulation is not exact and some programs may fail to load.
-- The cassette emulation is not exact and some programs may fail to load
-- Screen display should be accurate, but there might be some small bugs.
-
-History and Trivia:
-
-The Oric Atmos was the successor of the Oric 1 and had almost the same characteristics. Its 
-main difference with the Oric 1 was it's enhanced RAM (48 KB instead of 16 KB), the keyboard 
-and the debugged ROM (the ORIC 1 had several bugs). Several peripherals were availables: 
-3" floppy disk drive, a small 4 colour plotter, a speech synthesiser and a Digital/Analogue 
-converter. An external interface was needed to use joysticks. 
-
-
-$end
-
-#---------------------------------------------------------------------------------------------#
 $info=telstrat
 $bio
 Oric Telestrat
@@ -2675,12 +2653,163 @@ $bio
 Pravetz 8D
 ----------
 
-The Pravetz 8D is a Hungarian clone of the Oric Atmos.
+The emulation is the same as the Oric Atmos. (I don't know if there are any hardware
+differences compared to an original Oric Atmos, if there are please tell me and I will
+implement them).
 
-The Pravetz 8D has a disc interface that connects to Apple2 disc drives, and these
-are emulated in the driver (a optional disk rom is required).
+
+Disk:
+-----
+
+The disk drive interface has a boot-rom which loads the DOS from the disc
+in the drive. 
+
+The driver supports 2 versions of the disc interface:
+- "low dos 8d" has a 256 byte boot rom and supports DOS v1.0 to v1.30 ("Apple 2" on dipswitch)
+- "high dos 8d" has a 512 byte boot rom and supports DOS v2.10 and higher. ("Apple 2 v2" on dipswitch)
+
+If you are using the standard prav8d driver you will need to type:
+
+CALL #320
+
+to start the boot procedure.
+
+If you are using prav8dd (with the "BOBY" rom), then the disc is booted
+automatically.
+
+The Pravetz 8D uses Apple 2 compatible disk drives only and these
+are supported by the driver. 
+
+Here is a brief listing of DOS commands provided by George:
+
+options:
+f - FileName (1-30 signs)
+d - drive (one or two)
+v - volume
+a - beginning address
+e - end adress
+l - record length
+r - record number
+b - number of byte in the record
+
+
+filetypes:
+B - Basic program
+C - Bynary file
+T - Text file
+M - Text file, created with Make command ( batch file:) )
+
+commands:
+DIR [1] [2] - not comment
+INIT [,Vv] [,Dd] - formatting Disk (in first or second Disk Drive)
+DOS [f] [,Dd], [,Vv] - writing Dos on the disk without formatting It. File f authomatically starts after booting
+MAP [1] [2] - show chart of the disk.
+SAVE f [,A,a] [,Ee] [,Vv] [,Dd] - Saves file on the disk. If missing parameter of the addresses A,E - saving Basic file in Memory
+LOAD f [,Aa] [,Dd] [,Vv] - loads file in memory
+MERGE - adding program in Basic to already exists in Memory
+- -only for files B or C types. Loads file in Memory and start It. (RUN and BRUN together in Apple ][)
+DELETE f [,Dd] [,Vv] - deleting file f
+RENAME f1, f2 [,Vv] [,Dd] - ranaming last name of the file f1 with f2
+* f [,Dd] [,Vv] - lock/unlock file
+
+MAXFILES m - alowing up to m open files
+VERIFY f [,Dd] [,Vv] - checks surface integrity of file
+EXIT - leaving Dos
+
+OPEN f [,Vv] [,Dd] - open file for read/write
+CLOSE [f] - closing f. If there's no f pointed - closes all open files
+READ f [,Bb] - points that will be reading of the file with command INPUT
+WRITE f [,Bb] - writes in Text file
+APPEND f [,Vv] [,Dd] - adding information in Text file. Always there's WRITE after It
+POSITION f [,Rr] - allow writing or reading in Text file from r position
+in Program mode using of the commands is:
+
+10LPRINT CHR$(2); "MAXFILES 5"
+
+e.g.
+
+To load a program called "MONITOR" type:
+
+LOAD MONITOR
+
+often you will see a load address (it is the first number with # prefix).
+Now type CALL #<number> to execute the program.
+
+
+History and Trivia:
+-------------------
+
+The Pravetz 8D is a Bulgarian clone of the Oric Atmos.
+It was produced between 1986 and 1989.
+
+Thankyou to:
+------------
+
+George Dramcheff for the Pravetz information,
+Fabrice Frances for the Oric information,
 
 $end
+
+$info=orica
+$bio
+Oric Atmos
+----------
+
+The emulation supports Microdisc and Jasmin floppy disc controller emulation, this
+can be chosen using a Dipswitch. 
+
+Oric Atmos
+
+Known issues:
+- The disc controller emulation is not exact and some programs may fail to load.
+- The cassette emulation is not exact and some programs may fail to load
+- Screen display should be accurate, but there might be some small bugs.
+- Tape programs are found but not loaded.
+- there are bugs in the Microdisc and Jasmin floppy disc controller emulation so some
+programs will not boot.
+
+History and Trivia:
+
+The Oric Atmos was the successor of the Oric 1 and had almost the same characteristics. Its 
+main difference with the Oric 1 was it's enhanced RAM (48 KB instead of 16 KB), the keyboard 
+and the debugged ROM (the ORIC 1 had several bugs). Several peripherals were availables: 
+3" floppy disk drive, a small 4 colour plotter, a speech synthesiser and a Digital/Analogue 
+converter. An external interface was needed to use joysticks. 
+$end
+#---------------------------------------------------------------------------------------------#
+$info=z88
+$bio
+Acorn Z88
+---------
+
+The Z88 is a portable system, with a LCD screen display and good sized keyboard.
+
+
+
+
+$end
+#---------------------------------------------------------------------------------------------#
+$info=apfimag
+$bio
+APF Imagination Machine
+-----------------------
+
+The APF Imagination is the same as an APF-M1000 with the additional keyboard unit attached.
+
+
+
+$end
+#---------------------------------------------------------------------------------------------#
+$info=apfm1000
+$bio
+APF M-1000
+----------
+
+The APF M-1000 is a console.
+
+
+
+
 #---------------------------------------------------------------------------------------------#
 
 
