@@ -71,7 +71,8 @@ Or use these cheats:
 #define DUAL_SCREEN 1 /* Display both screens simultaneously if 1, change in vidhrdw too */
 #define ROMTEST 0 /* Does necessary stuff to perform rom test, uses RAM as it doesn't dispose of GFX after decoding */
 
-data32_t *psikyo4_vidregs, *psh_ram, *ps4_io_select;
+data32_t *psikyo4_vidregs, *ps4_io_select;
+static data32_t *psh_ram;
 data32_t *bgpen_1, *bgpen_2, *screen1_brt, *screen2_brt;
 
 #define MASTER_CLOCK 57272700	// main oscillator frequency
