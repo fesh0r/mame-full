@@ -334,7 +334,6 @@ void sysdep_palette_update(struct sysdep_palette_struct *palette)
    sysdep_palette_marked dirty should be used,
    and display_alloc_palette palette must be called every time a dispay is
    created. So also on recreation! */
-#if 0 
 int sysdep_palette_change_display(struct sysdep_palette_struct **palette)
 {
    int i;
@@ -383,7 +382,6 @@ int sysdep_palette_change_display(struct sysdep_palette_struct **palette)
    *palette = new_palette;
    return 0;
 }
-#endif
 
 void sysdep_palette_mark_dirty(struct sysdep_palette_struct *palette)
 {
