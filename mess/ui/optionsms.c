@@ -133,4 +133,3 @@ BOOL GetUseNewUI(int num_game)
 
     return game_options[num_game].use_new_ui;
 }
-

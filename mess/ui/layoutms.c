@@ -21,7 +21,7 @@
 #include "ui/resourcems.h"
 #include "ui/ms32util.h"
 #include "ui/directories.h"
-#include "ui/options.h"
+#include "ui/optionsms.h"
 #include "ui/splitters.h"
 #include "ui/help.h"
 #include "ui/properties.h"

@@ -44,4 +44,6 @@ void FlushFileCaches(void);
 
 void FreeIfAllocated(char **s);
 
+BOOL StringIsSuffixedBy(const char *s, const char *suffix);
+
 #endif /* MAME32UTIL_H */

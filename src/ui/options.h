@@ -184,9 +184,9 @@ typedef struct
 
 #ifdef MESS
 	BOOL   use_new_ui;
+	UINT32 ram_size;
 	char   *extra_software_paths;
 	char   *printer;
-	UINT32 ram_size;
 #endif
 } options_type;
 
@@ -199,7 +199,6 @@ typedef struct
 
 	BOOL options_loaded; // whether or not we've loaded the game options yet
 	BOOL use_default; // whether or not we should just use default options
-
 } game_variables_type;
 
 typedef struct
@@ -339,14 +338,6 @@ int  GetShowPictType(void);
 
 void SetDefaultGame(const char *name);
 const char *GetDefaultGame(void);
-
-#ifdef MESS
-void SetDefaultSoftware(const char *name);
-const char *GetDefaultSoftware(void);
-
-void SetCrcDir(const char *dir);
-const char *GetCrcDir(void);
-#endif
 
 void SetWindowArea(AREA *area);
 void GetWindowArea(AREA *area);

@@ -294,8 +294,6 @@ static REG_OPTION regGameOpts[] =
 #ifdef MESS
 	/* mess options */
 	,
-	{ "extra_software",	"extra_software",             RO_STRING,  &gOpts.extra_software_paths,	0, 0},
-	{ "printer",		"printer",                    RO_STRING,  &gOpts.printer,			0, 0},
 	{ "use_new_ui",		"newui",                      RO_BOOL,    &gOpts.use_new_ui,		0, 0},
 	{ "ram_size",		"ramsize",                    RO_INT,     &gOpts.ram_size,			0, 0}
 #endif
@@ -558,7 +556,6 @@ void OptionsInit()
 	global.leds				 = FALSE;
 #ifdef MESS
 	global.extra_software_paths = strdup("");
-	global.printer = strdup("");
 	global.use_new_ui = TRUE;
 #endif
 
@@ -1711,98 +1708,108 @@ static BOOL LoadGameVariableOrFolderFilter(char *key,const char *value)
 	const char *suffix;
 
 	suffix = "_play_count";
-	if (strlen(key) > strlen(suffix))
+	if (StringIsSuffixedBy(key, suffix))
 	{
-		if (strcmp(key + strlen(key) - strlen(suffix),suffix) == 0)
+		int driver_index;
+
+		key[strlen(key) - strlen(suffix)] = '\0';
+		driver_index = GetGameNameIndex(key);
+		if (driver_index < 0)
 		{
-			int driver_index;
-
-			key[strlen(key) - strlen(suffix)] = '\0';
-			driver_index = GetGameNameIndex(key);
-			if (driver_index < 0)
-			{
-				dprintf("error loading game variable for invalid game %s",key);
-				return TRUE;
-			}
-
-			strcpy(fake_option.ini_name,"drivername_play_count");
-			fake_option.m_iType = RO_INT;
-			fake_option.m_vpData = &game_variables[driver_index].play_count;
-			LoadOption(&fake_option,value);
+			dprintf("error loading game variable for invalid game %s",key);
 			return TRUE;
 		}
+
+		strcpy(fake_option.ini_name,"drivername_play_count");
+		fake_option.m_iType = RO_INT;
+		fake_option.m_vpData = &game_variables[driver_index].play_count;
+		LoadOption(&fake_option,value);
+		return TRUE;
 	}
 
 	suffix = "_have_roms";
-	if (strlen(key) > strlen(suffix))
+	if (StringIsSuffixedBy(key, suffix))
 	{
-		if (strcmp(key + strlen(key) - strlen(suffix),suffix) == 0)
+		int driver_index;
+
+		key[strlen(key) - strlen(suffix)] = '\0';
+		driver_index = GetGameNameIndex(key);
+		if (driver_index < 0)
 		{
-			int driver_index;
-
-			key[strlen(key) - strlen(suffix)] = '\0';
-			driver_index = GetGameNameIndex(key);
-			if (driver_index < 0)
-			{
-				dprintf("error loading game variable for invalid game %s",key);
-				return TRUE;
-			}
-
-			strcpy(fake_option.ini_name,"drivername_have_roms");
-			fake_option.m_iType = RO_BOOL;
-			fake_option.m_vpData = &game_variables[driver_index].has_roms;
-			LoadOption(&fake_option,value);
+			dprintf("error loading game variable for invalid game %s",key);
 			return TRUE;
 		}
+
+		strcpy(fake_option.ini_name,"drivername_have_roms");
+		fake_option.m_iType = RO_BOOL;
+		fake_option.m_vpData = &game_variables[driver_index].has_roms;
+		LoadOption(&fake_option,value);
+		return TRUE;
 	}
 
 	suffix = "_have_samples";
-	if (strlen(key) > strlen(suffix))
+	if (StringIsSuffixedBy(key, suffix))
 	{
-		if (strcmp(key + strlen(key) - strlen(suffix),suffix) == 0)
+		int driver_index;
+
+		key[strlen(key) - strlen(suffix)] = '\0';
+		driver_index = GetGameNameIndex(key);
+		if (driver_index < 0)
 		{
-			int driver_index;
-
-			key[strlen(key) - strlen(suffix)] = '\0';
-			driver_index = GetGameNameIndex(key);
-			if (driver_index < 0)
-			{
-				dprintf("error loading game variable for invalid game %s",key);
-				return TRUE;
-			}
-
-			strcpy(fake_option.ini_name,"drivername_have_samples");
-			fake_option.m_iType = RO_BOOL;
-			fake_option.m_vpData = &game_variables[driver_index].has_samples;
-			LoadOption(&fake_option,value);
+			dprintf("error loading game variable for invalid game %s",key);
 			return TRUE;
 		}
+
+		strcpy(fake_option.ini_name,"drivername_have_samples");
+		fake_option.m_iType = RO_BOOL;
+		fake_option.m_vpData = &game_variables[driver_index].has_samples;
+		LoadOption(&fake_option,value);
+		return TRUE;
 	}
 
 	suffix = "_filters";
-	if (strlen(key) > strlen(suffix))
+	if (StringIsSuffixedBy(key, suffix))
 	{
-		if (strcmp(key + strlen(key) - strlen(suffix),suffix) == 0)
+		int folder_index;
+		int filters;
+
+		key[strlen(key) - strlen(suffix)] = '\0';
+		if (sscanf(key,"%i",&folder_index) != 1)
 		{
-			int folder_index;
-			int filters;
-
-			key[strlen(key) - strlen(suffix)] = '\0';
-			if (sscanf(key,"%i",&folder_index) != 1)
-			{
-				dprintf("error loading game variable for invalid game %s",key);
-				return TRUE;
-			}
-			if (folder_index < 0)
-				return TRUE;
-
-			if (sscanf(value,"%i",&filters) != 1)
-				return TRUE;
-
-			LoadFolderFilter(folder_index,filters);
+			dprintf("error loading game variable for invalid game %s",key);
 			return TRUE;
 		}
+		if (folder_index < 0)
+			return TRUE;
+
+		if (sscanf(value,"%i",&filters) != 1)
+			return TRUE;
+
+		LoadFolderFilter(folder_index,filters);
+		return TRUE;
 	}
+
+#ifdef MESS
+	suffix = "_extra_software";
+	if (StringIsSuffixedBy(key, suffix))
+	{
+		int driver_index;
+
+		key[strlen(key) - strlen(suffix)] = '\0';
+		driver_index = GetGameNameIndex(key);
+		if (driver_index < 0)
+		{
+			dprintf("error loading game variable for invalid game %s",key);
+			return TRUE;
+		}
+
+		strcpy(fake_option.ini_name,"drivername_extra_software");
+		fake_option.m_iType = RO_STRING;
+		fake_option.m_vpData = &game_options[driver_index].extra_software_paths;
+		LoadOption(&fake_option,value);
+		return TRUE;
+	}
+#endif
 
 	return FALSE;
 }
@@ -2452,6 +2459,13 @@ static void SaveSettings(void)
 				fprintf(fptr,"%s_have_samples %i\n",
 						drivers[driver_index]->name,game_variables[driver_index].has_samples);
 			}
+#ifdef MESS
+			if (game_options[driver_index].extra_software_paths && game_options[driver_index].extra_software_paths[0])
+			{
+				fprintf(fptr,"%s_extra_software %s\n",
+						drivers[driver_index]->name,game_options[driver_index].extra_software_paths);
+			}
+#endif
 		}
 		fclose(fptr);
 	}

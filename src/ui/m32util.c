@@ -425,6 +425,11 @@ void FreeIfAllocated(char **s)
 	*s = NULL;
 }
 
+BOOL StringIsSuffixedBy(const char *s, const char *suffix)
+{
+	return (strlen(s) > strlen(suffix)) && (strcmp(s + strlen(s) - strlen(suffix), suffix) == 0);
+}
+
 /***************************************************************************
 	Internal functions
  ***************************************************************************/

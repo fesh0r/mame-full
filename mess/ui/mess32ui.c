@@ -16,6 +16,7 @@
 #include "messwin.h"
 #include "rc.h"
 #include "utils.h"
+#include "optionsms.h"
 
 #ifdef _MSC_VER
 #define alloca _alloca
