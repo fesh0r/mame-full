@@ -228,15 +228,6 @@ unsigned cdp1802_get_reg (int regnum)
 	case CDP1802_Q: return cdp1802.q;
 	case REG_PREVIOUSPC: return cdp1802.oldpc;
 	case CDP1802_IRQ_STATE: return cdp1802.irq_state;
-#if 0
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0x1ff )
-					return RDMEM( offset ) | ( RDMEM( offset + 1 ) << 8 );
-			}
-#endif
 	}
 	return 0;
 }
@@ -273,18 +264,6 @@ void cdp1802_set_reg (int regnum, unsigned val)
 	case CDP1802_Q: cdp1802.q=val;break;
 	case REG_PREVIOUSPC: cdp1802.oldpc=val;break;
 	case CDP1802_IRQ_STATE: cdp1802.irq_state=val;break;
-#if 0
-	default:
-		if( regnum <= REG_SP_CONTENTS )
-		{
-			unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-			if( offset < 0x1ff )
-			{
-				WRMEM( offset, val & 0xfff );
-				WRMEM( offset + 1, (val >> 8) & 0xff );
-			}
-		}
-#endif
 	}
 }
 

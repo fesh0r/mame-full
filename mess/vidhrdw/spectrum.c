@@ -355,7 +355,7 @@ static void ts2068_hires_scanline(struct mame_bitmap *bitmap, int y, int borderl
         scrx=TS2068_LEFT_BORDER;
 	scry=((y&7) * 8) + ((y&0x38)>>3) + (y&0xC0);
 
-        scr=ts2068_ram + y*32;
+        scr=mess_ram + y*32;
         attr=scr + 0x2000;
 
         for (x=0;x<32;x++)
@@ -399,7 +399,7 @@ static void ts2068_64col_scanline(struct mame_bitmap *bitmap, int y, int borderl
         scrx=TS2068_LEFT_BORDER;
 	scry=((y&7) * 8) + ((y&0x38)>>3) + (y&0xC0);
 
-        scr1=ts2068_ram + y*32;
+        scr1=mess_ram + y*32;
         scr2=scr1 + 0x2000;
 
         for (x=0;x<32;x++)
@@ -434,8 +434,8 @@ static void ts2068_lores_scanline(struct mame_bitmap *bitmap, int y, int borderl
         scrx=TS2068_LEFT_BORDER;
 	scry=((y&7) * 8) + ((y&0x38)>>3) + (y&0xC0);
 
-        scr=ts2068_ram + y*32 + screen*0x2000;
-        attr=ts2068_ram + ((scry>>3)*32) + screen*0x2000 + 0x1800;
+        scr=mess_ram + y*32 + screen*0x2000;
+        attr=mess_ram + ((scry>>3)*32) + screen*0x2000 + 0x1800;
 
         for (x=0;x<32;x++)
 	{

@@ -38,7 +38,6 @@ extern int ts2068_port_ff_data;
 extern int ts2068_port_f4_data;
 extern int PreviousFE;
 extern unsigned char *spectrum_128_screen_location;
-extern unsigned char *ts2068_ram;
 
 extern void spectrum_128_update_memory(void);
 extern void spectrum_plus3_update_memory(void);

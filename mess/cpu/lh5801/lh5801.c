@@ -193,15 +193,6 @@ unsigned lh5801_get_reg (int regnum)
 	case LH5801_DP: return lh5801.dp;
 	case REG_PREVIOUSPC: return lh5801.oldpc;
 	case LH5801_IRQ_STATE: return lh5801.irq_state;
-#if 0
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0x1ff )
-					return RDMEM( offset ) | ( RDMEM( offset + 1 ) << 8 );
-			}
-#endif
 	}
 	return 0;
 }
@@ -226,18 +217,6 @@ void lh5801_set_reg (int regnum, unsigned val)
 	case LH5801_DP: lh5801.dp=val;break;
 	case REG_PREVIOUSPC: lh5801.oldpc=val;break;
 	case LH5801_IRQ_STATE: lh5801.irq_state=val;break;
-#if 0
-	default:
-		if( regnum <= REG_SP_CONTENTS )
-		{
-			unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-			if( offset < 0x1ff )
-			{
-				WRMEM( offset, val & 0xfff );
-				WRMEM( offset + 1, (val >> 8) & 0xff );
-			}
-		}
-#endif
 	}
 }
 

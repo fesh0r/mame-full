@@ -333,12 +333,12 @@ static READ_HANDLER ( spectrum_port_r )
 
 static WRITE_HANDLER ( spectrum_port_w )
 {
-		if ((offset & 1)==0)
-			spectrum_port_fe_w(offset,data);
-		else
-		{
-			logerror("Write %02x to Port: %04x\n", data, offset);
-		}
+	if ((offset & 1)==0)
+		spectrum_port_fe_w(offset,data);
+	else
+	{
+		logerror("Write %02x to Port: %04x\n", data, offset);
+	}
 }
 
 /* ports are not decoded full.
@@ -545,17 +545,7 @@ static MACHINE_INIT( spectrum_128 )
 {
 	if (spectrum_alloc_ram(128)!=0)
 	{
-		memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-		memory_set_bankhandler_r(2, 0, MRA8_BANK2);
-		memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-		memory_set_bankhandler_r(4, 0, MRA8_BANK4);
-
 		/* 0x0000-0x3fff always holds ROM */
-		memory_set_bankhandler_w(5, 0, MWA8_ROM);
-		memory_set_bankhandler_w(6, 0, MWA8_BANK6);
-		memory_set_bankhandler_w(7, 0, MWA8_BANK7);
-		memory_set_bankhandler_w(8, 0, MWA8_BANK8);
-
 
 		/* Bank 5 is always in 0x4000 - 0x7fff */
 		cpu_setbank(2, spectrum_ram + (5<<14));
@@ -620,91 +610,91 @@ static READ_HANDLER(spectrum_plus3_port_2ffd_r)
 }
 
 
-extern void spectrum_plus3_update_memory(void)
+void spectrum_plus3_update_memory(void)
 {
-		if (spectrum_128_port_7ffd_data & 8)
-		{
-				logerror("+3 SCREEN 1: BLOCK 7\n");
-				spectrum_128_screen_location = spectrum_ram + (7<<14);
+	if (spectrum_128_port_7ffd_data & 8)
+	{
+			logerror("+3 SCREEN 1: BLOCK 7\n");
+			spectrum_128_screen_location = spectrum_ram + (7<<14);
+	}
+	else
+	{
+			logerror("+3 SCREEN 0: BLOCK 5\n");
+			spectrum_128_screen_location = spectrum_ram + (5<<14);
+	}
+
+	if ((spectrum_plus3_port_1ffd_data & 0x01)==0)
+	{
+			int ram_page;
+			unsigned char *ram_data;
+
+			/* ROM switching */
+			unsigned char *ChosenROM;
+			int ROMSelection;
+
+			/* select ram at 0x0c000-0x0ffff */
+			ram_page = spectrum_128_port_7ffd_data & 0x07;
+			ram_data = spectrum_ram + (ram_page<<14);
+
+			cpu_setbank(4, ram_data);
+			cpu_setbank(8, ram_data);
+
+			logerror("RAM at 0xc000: %02x\n",ram_page);
+
+			/* Reset memory between 0x4000 - 0xbfff in case extended paging was being used */
+			/* Bank 5 in 0x4000 - 0x7fff */
+			cpu_setbank(2, spectrum_ram + (5<<14));
+			cpu_setbank(6, spectrum_ram + (5<<14));
+
+			/* Bank 2 in 0x8000 - 0xbfff */
+			cpu_setbank(3, spectrum_ram + (2<<14));
+			cpu_setbank(7, spectrum_ram + (2<<14));
+
+
+			ROMSelection = ((spectrum_128_port_7ffd_data>>4) & 0x01) |
+				((spectrum_plus3_port_1ffd_data>>1) & 0x02);
+
+			/* rom 0 is editor, rom 1 is syntax, rom 2 is DOS, rom 3 is 48 BASIC */
+
+			ChosenROM = memory_region(REGION_CPU1) + 0x010000 + (ROMSelection<<14);
+
+			cpu_setbank(1, ChosenROM);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, MWA8_ROM);
+
+			logerror("rom switch: %02x\n", ROMSelection);
+	}
+	else
+	{
+			/* Extended memory paging */
+
+			int *memory_selection;
+			int MemorySelection;
+			unsigned char *ram_data;
+
+			MemorySelection = (spectrum_plus3_port_1ffd_data>>1) & 0x03;
+
+			memory_selection = &spectrum_plus3_memory_selections[(MemorySelection<<2)];
+
+			ram_data = spectrum_ram + (memory_selection[0]<<14);
+			cpu_setbank(1, ram_data);
+			cpu_setbank(5, ram_data);
+			/* allow writes to 0x0000-0x03fff */
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, MWA8_BANK5);
+
+			ram_data = spectrum_ram + (memory_selection[1]<<14);
+			cpu_setbank(2, ram_data);
+			cpu_setbank(6, ram_data);
+
+			ram_data = spectrum_ram + (memory_selection[2]<<14);
+			cpu_setbank(3, ram_data);
+			cpu_setbank(7, ram_data);
+
+			ram_data = spectrum_ram + (memory_selection[3]<<14);
+			cpu_setbank(4, ram_data);
+			cpu_setbank(8, ram_data);
+
+			logerror("extended memory paging: %02x\n",MemorySelection);
 		}
-		else
-		{
-				logerror("+3 SCREEN 0: BLOCK 5\n");
-				spectrum_128_screen_location = spectrum_ram + (5<<14);
-		}
-
-		if ((spectrum_plus3_port_1ffd_data & 0x01)==0)
-		{
-				int ram_page;
-				unsigned char *ram_data;
-
-				/* ROM switching */
-				unsigned char *ChosenROM;
-				int ROMSelection;
-
-				/* select ram at 0x0c000-0x0ffff */
-				ram_page = spectrum_128_port_7ffd_data & 0x07;
-				ram_data = spectrum_ram + (ram_page<<14);
-
-				cpu_setbank(4, ram_data);
-				cpu_setbank(8, ram_data);
-
-				logerror("RAM at 0xc000: %02x\n",ram_page);
-
-				/* Reset memory between 0x4000 - 0xbfff in case extended paging was being used */
-				/* Bank 5 in 0x4000 - 0x7fff */
-				cpu_setbank(2, spectrum_ram + (5<<14));
-				cpu_setbank(6, spectrum_ram + (5<<14));
-
-				/* Bank 2 in 0x8000 - 0xbfff */
-				cpu_setbank(3, spectrum_ram + (2<<14));
-				cpu_setbank(7, spectrum_ram + (2<<14));
-
-
-				ROMSelection = ((spectrum_128_port_7ffd_data>>4) & 0x01) |
-					((spectrum_plus3_port_1ffd_data>>1) & 0x02);
-
-				/* rom 0 is editor, rom 1 is syntax, rom 2 is DOS, rom 3 is 48 BASIC */
-
-				ChosenROM = memory_region(REGION_CPU1) + 0x010000 + (ROMSelection<<14);
-
-				cpu_setbank(1, ChosenROM);
-				memory_set_bankhandler_w(5, 0, MWA8_ROM);
-
-				logerror("rom switch: %02x\n", ROMSelection);
-		}
-		else
-		{
-				/* Extended memory paging */
-
-				int *memory_selection;
-				int MemorySelection;
-				unsigned char *ram_data;
-
-				MemorySelection = (spectrum_plus3_port_1ffd_data>>1) & 0x03;
-
-				memory_selection = &spectrum_plus3_memory_selections[(MemorySelection<<2)];
-
-				ram_data = spectrum_ram + (memory_selection[0]<<14);
-				cpu_setbank(1, ram_data);
-				cpu_setbank(5, ram_data);
-				/* allow writes to 0x0000-0x03fff */
-				memory_set_bankhandler_w(5, 0, MWA8_BANK5);
-
-				ram_data = spectrum_ram + (memory_selection[1]<<14);
-				cpu_setbank(2, ram_data);
-				cpu_setbank(6, ram_data);
-
-				ram_data = spectrum_ram + (memory_selection[2]<<14);
-				cpu_setbank(3, ram_data);
-				cpu_setbank(7, ram_data);
-
-				ram_data = spectrum_ram + (memory_selection[3]<<14);
-				cpu_setbank(4, ram_data);
-				cpu_setbank(8, ram_data);
-
-				logerror("extended memory paging: %02x\n",MemorySelection);
-		 }
 }
 
 
@@ -876,17 +866,6 @@ static MACHINE_INIT( spectrum_plus3 )
 {
 	if (spectrum_alloc_ram(128))
 	{
-
-		memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-		memory_set_bankhandler_r(2, 0, MRA8_BANK2);
-		memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-		memory_set_bankhandler_r(4, 0, MRA8_BANK4);
-
-		memory_set_bankhandler_w(5, 0, MWA8_BANK5);
-		memory_set_bankhandler_w(6, 0, MWA8_BANK6);
-		memory_set_bankhandler_w(7, 0, MWA8_BANK7);
-		memory_set_bankhandler_w(8, 0, MWA8_BANK8);
-
 		nec765_init(&spectrum_plus3_nec765_interface, NEC765A);
 
 		floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 0), FLOPPY_DRIVE_SS_40);
@@ -908,7 +887,6 @@ static MACHINE_INIT( spectrum_plus3 )
 
 int ts2068_port_ff_data = -1; /* Display enhancement control */
 int ts2068_port_f4_data = -1; /* Horizontal Select Register */
-unsigned char *ts2068_ram = NULL;
 
 static READ_HANDLER(ts2068_port_f4_r)
 {
@@ -1020,309 +998,327 @@ static WRITE_HANDLER ( ts2068_port_w )
  *		at the same time.
  *
  *******************************************************************/
-extern void ts2068_update_memory(void)
+void ts2068_update_memory(void)
 {
-		unsigned char *ChosenROM, *ExROM, *DOCK;
+	unsigned char *ChosenROM, *ExROM, *DOCK;
+	read8_handler rh;
+	write8_handler wh;
 
-		DOCK = timex_cart_data;
+	DOCK = timex_cart_data;
 
-		ExROM = memory_region(REGION_CPU1) + 0x014000;
+	ExROM = memory_region(REGION_CPU1) + 0x014000;
 
-		if (ts2068_port_f4_data & 0x01)
+	if (ts2068_port_f4_data & 0x01)
+	{
+		if (ts2068_port_ff_data & 0x80)
 		{
-				if (ts2068_port_ff_data & 0x80)
-				{
-						cpu_setbank(1, ExROM);
-						memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-						memory_set_bankhandler_w(9, 0, MWA8_ROM);
-						logerror("0000-1fff EXROM\n");
-				}
-				else
-				{
-						if (timex_cart_type == TIMEX_CART_DOCK)
-						{
-							cpu_setbank(1, DOCK);
-							memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-							if (timex_cart_chunks&0x01)
-								memory_set_bankhandler_w(9, 0, MWA8_BANK9);
-							else
-								memory_set_bankhandler_w(9, 0, MWA8_ROM);
-						}
-						else
-						{
-							memory_set_bankhandler_r(1, 0, MRA8_NOP);
-							memory_set_bankhandler_w(9, 0, MWA8_ROM);
-						}
-						logerror("0000-1fff Cartridge\n");
-				}
+				rh = MRA8_BANK1;
+				wh = MWA8_ROM;
+				cpu_setbank(1, ExROM);
+				logerror("0000-1fff EXROM\n");
 		}
 		else
 		{
-				ChosenROM = memory_region(REGION_CPU1) + 0x010000;
-				cpu_setbank(1, ChosenROM);
-				memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-				memory_set_bankhandler_w(9, 0, MWA8_ROM);
-				logerror("0000-1fff HOME\n");
-		}
-
-		if (ts2068_port_f4_data & 0x02)
-		{
-				if (ts2068_port_ff_data & 0x80)
-				{
-						cpu_setbank(2, ExROM);
-						memory_set_bankhandler_r(2, 0, MRA8_BANK2);
-						memory_set_bankhandler_w(10, 0, MWA8_ROM);
-						logerror("2000-3fff EXROM\n");
-				}
+			if (timex_cart_type == TIMEX_CART_DOCK)
+			{
+				cpu_setbank(1, DOCK);
+				rh = MRA8_BANK1;
+				if (timex_cart_chunks&0x01)
+					wh = MWA8_BANK9;
 				else
-				{
-						if (timex_cart_type == TIMEX_CART_DOCK)
-						{
-							cpu_setbank(2, DOCK+0x2000);
-							memory_set_bankhandler_r(2, 0, MRA8_BANK2);
-							if (timex_cart_chunks&0x02)
-								memory_set_bankhandler_w(10, 0, MWA8_BANK10);
-							else
-								memory_set_bankhandler_w(10, 0, MWA8_ROM);
-						}
-						else
-						{
-							memory_set_bankhandler_r(2, 0, MRA8_NOP);
-							memory_set_bankhandler_w(10, 0, MWA8_ROM);
-						}
-						logerror("2000-3fff Cartridge\n");
-				}
+					wh = MWA8_ROM;
+			}
+			else
+			{
+				rh = MRA8_NOP;
+				wh = MWA8_ROM;
+			}
+			logerror("0000-1fff Cartridge\n");
+		}
+	}
+	else
+	{
+		ChosenROM = memory_region(REGION_CPU1) + 0x010000;
+		cpu_setbank(1, ChosenROM);
+		rh = MRA8_BANK1;
+		wh = MWA8_ROM;
+		logerror("0000-1fff HOME\n");
+	}
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, wh);
+
+	if (ts2068_port_f4_data & 0x02)
+	{
+		if (ts2068_port_ff_data & 0x80)
+		{
+			cpu_setbank(2, ExROM);
+			rh = MRA8_BANK2;
+			wh = MWA8_ROM;
+			logerror("2000-3fff EXROM\n");
 		}
 		else
 		{
-				ChosenROM = memory_region(REGION_CPU1) + 0x012000;
-				cpu_setbank(2, ChosenROM);
-				memory_set_bankhandler_r(2, 0, MRA8_BANK2);
-				memory_set_bankhandler_w(10, 0, MWA8_ROM);
-				logerror("2000-3fff HOME\n");
-		}
-
-		if (ts2068_port_f4_data & 0x04)
-		{
-				if (ts2068_port_ff_data & 0x80)
-				{
-						cpu_setbank(3, ExROM);
-						memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-						memory_set_bankhandler_w(11, 0, MWA8_ROM);
-						logerror("4000-5fff EXROM\n");
-				}
+			if (timex_cart_type == TIMEX_CART_DOCK)
+			{
+				cpu_setbank(2, DOCK+0x2000);
+				rh = MRA8_BANK2;
+				if (timex_cart_chunks&0x02)
+					wh = MWA8_BANK10;
 				else
-				{
-						if (timex_cart_type == TIMEX_CART_DOCK)
-						{
-							cpu_setbank(3, DOCK+0x4000);
-							memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-							if (timex_cart_chunks&0x04)
-								memory_set_bankhandler_w(11, 0, MWA8_BANK11);
-							else
-								memory_set_bankhandler_w(11, 0, MWA8_ROM);
-						}
-						else
-						{
-							memory_set_bankhandler_r(3, 0, MRA8_NOP);
-							memory_set_bankhandler_w(11, 0, MWA8_ROM);
-						}
-						logerror("4000-5fff Cartridge\n");
-				}
+					wh = MWA8_ROM;
+			}
+			else
+			{
+				rh = MRA8_NOP;
+				wh = MWA8_ROM;
+			}
+			logerror("2000-3fff Cartridge\n");
+		}
+	}
+	else
+	{
+		ChosenROM = memory_region(REGION_CPU1) + 0x012000;
+		cpu_setbank(2, ChosenROM);
+		rh = MRA8_BANK2;
+		wh = MWA8_ROM;
+		logerror("2000-3fff HOME\n");
+	}
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x3fff, 0, wh);
+
+	if (ts2068_port_f4_data & 0x04)
+	{
+		if (ts2068_port_ff_data & 0x80)
+		{
+			cpu_setbank(3, ExROM);
+			rh = MRA8_BANK3;
+			wh = MWA8_ROM;
+			logerror("4000-5fff EXROM\n");
 		}
 		else
 		{
-				cpu_setbank(3, ts2068_ram);
-				cpu_setbank(11, ts2068_ram);
-				memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-				memory_set_bankhandler_w(11, 0, MWA8_BANK11);
-				logerror("4000-5fff RAM\n");
-		}
-
-		if (ts2068_port_f4_data & 0x08)
-		{
-				if (ts2068_port_ff_data & 0x80)
-				{
-						cpu_setbank(4, ExROM);
-						memory_set_bankhandler_r(4, 0, MRA8_BANK4);
-						memory_set_bankhandler_w(12, 0, MWA8_ROM);
-						logerror("6000-7fff EXROM\n");
-				}
+			if (timex_cart_type == TIMEX_CART_DOCK)
+			{
+				cpu_setbank(3, DOCK+0x4000);
+				rh = MRA8_BANK3;
+				if (timex_cart_chunks&0x04)
+					wh = MWA8_BANK11;
 				else
-				{
-						if (timex_cart_type == TIMEX_CART_DOCK)
-						{
-							cpu_setbank(4, DOCK+0x6000);
-							memory_set_bankhandler_r(4, 0, MRA8_BANK4);
-							if (timex_cart_chunks&0x08)
-								memory_set_bankhandler_w(12, 0, MWA8_BANK12);
-							else
-								memory_set_bankhandler_w(12, 0, MWA8_ROM);
-						}
-						else
-						{
-							memory_set_bankhandler_r(4, 0, MRA8_NOP);
-							memory_set_bankhandler_w(12, 0, MWA8_ROM);
-						}
-						logerror("6000-7fff Cartridge\n");
-				}
+					wh = MWA8_ROM;
+			}
+			else
+			{
+				rh = MRA8_NOP;
+				wh = MWA8_ROM;
+			}
+			logerror("4000-5fff Cartridge\n");
+		}
+	}
+	else
+	{
+		cpu_setbank(3, mess_ram);
+		cpu_setbank(11, mess_ram);
+		rh = MRA8_BANK3;
+		wh = MWA8_BANK11;
+		logerror("4000-5fff RAM\n");
+	}
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, wh);
+
+	if (ts2068_port_f4_data & 0x08)
+	{
+		if (ts2068_port_ff_data & 0x80)
+		{
+			cpu_setbank(4, ExROM);
+			rh = MRA8_BANK4;
+			wh = MWA8_ROM;
+			logerror("6000-7fff EXROM\n");
 		}
 		else
 		{
-				cpu_setbank(4, ts2068_ram + 0x2000);
-				cpu_setbank(12, ts2068_ram + 0x2000);
-				memory_set_bankhandler_r(4, 0, MRA8_BANK4);
-				memory_set_bankhandler_w(12, 0, MWA8_BANK12);
-				logerror("6000-7fff RAM\n");
-		}
-
-		if (ts2068_port_f4_data & 0x10)
-		{
-				if (ts2068_port_ff_data & 0x80)
+				if (timex_cart_type == TIMEX_CART_DOCK)
 				{
-						cpu_setbank(5, ExROM);
-						memory_set_bankhandler_r(5, 0, MRA8_BANK5);
-						memory_set_bankhandler_w(13, 0, MWA8_ROM);
-						logerror("8000-9fff EXROM\n");
+					cpu_setbank(4, DOCK+0x6000);
+					rh = MRA8_BANK4;
+					if (timex_cart_chunks&0x08)
+						wh = MWA8_BANK12;
+					else
+						wh = MWA8_ROM;
 				}
 				else
 				{
-						if (timex_cart_type == TIMEX_CART_DOCK)
-						{
-							cpu_setbank(5, DOCK+0x8000);
-							memory_set_bankhandler_r(5, 0, MRA8_BANK5);
-							if (timex_cart_chunks&0x10)
-								memory_set_bankhandler_w(13, 0, MWA8_BANK13);
-							else
-								memory_set_bankhandler_w(13, 0, MWA8_ROM);
-						}
-						else
-						{
-							memory_set_bankhandler_r(5, 0, MRA8_NOP);
-							memory_set_bankhandler_w(13, 0, MWA8_ROM);
-						}
-						logerror("8000-9fff Cartridge\n");
+					rh = MRA8_NOP;
+					wh = MWA8_ROM;
 				}
+				logerror("6000-7fff Cartridge\n");
 		}
-		else
-		{
-				cpu_setbank(5, ts2068_ram + 0x4000);
-				cpu_setbank(13, ts2068_ram + 0x4000);
-				memory_set_bankhandler_r(5, 0, MRA8_BANK5);
-				memory_set_bankhandler_w(13, 0, MWA8_BANK13);
-				logerror("8000-9fff RAM\n");
-		}
+	}
+	else
+	{
+		cpu_setbank(4, mess_ram + 0x2000);
+		cpu_setbank(12, mess_ram + 0x2000);
+		rh = MRA8_BANK4;
+		wh = MWA8_BANK12;
+		logerror("6000-7fff RAM\n");
+	}
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, wh);
 
-		if (ts2068_port_f4_data & 0x20)
+	if (ts2068_port_f4_data & 0x10)
+	{
+		if (ts2068_port_ff_data & 0x80)
 		{
-				if (ts2068_port_ff_data & 0x80)
-				{
-						cpu_setbank(6, ExROM);
-						memory_set_bankhandler_r(6, 0, MRA8_BANK6);
-						memory_set_bankhandler_w(14, 0, MWA8_ROM);
-						logerror("a000-bfff EXROM\n");
-				}
-				else
-				{
-						if (timex_cart_type == TIMEX_CART_DOCK)
-						{
-							cpu_setbank(6, DOCK+0xa000);
-							memory_set_bankhandler_r(6, 0, MRA8_BANK6);
-							if (timex_cart_chunks&0x20)
-								memory_set_bankhandler_w(14, 0, MWA8_BANK14);
-							else
-								memory_set_bankhandler_w(14, 0, MWA8_ROM);
-						}
-						else
-						{
-							memory_set_bankhandler_r(6, 0, MRA8_NOP);
-							memory_set_bankhandler_w(14, 0, MWA8_ROM);
-						}
-						logerror("a000-bfff Cartridge\n");
-				}
+			cpu_setbank(5, ExROM);
+			rh = MRA8_BANK5;
+			wh = MWA8_ROM;
+			logerror("8000-9fff EXROM\n");
 		}
 		else
 		{
-				cpu_setbank(6, ts2068_ram + 0x6000);
-				cpu_setbank(14, ts2068_ram + 0x6000);
-				memory_set_bankhandler_r(6, 0, MRA8_BANK6);
-				memory_set_bankhandler_w(14, 0, MWA8_BANK14);
-				logerror("a000-bfff RAM\n");
+			if (timex_cart_type == TIMEX_CART_DOCK)
+			{
+				cpu_setbank(5, DOCK+0x8000);
+				rh = MRA8_BANK5;
+				if (timex_cart_chunks&0x10)
+					wh = MWA8_BANK13;
+				else
+					wh = MWA8_ROM;
+			}
+			else
+			{
+				rh = MRA8_NOP;
+				wh = MWA8_ROM;
+			}
+			logerror("8000-9fff Cartridge\n");
 		}
+	}
+	else
+	{
+		cpu_setbank(5, mess_ram + 0x4000);
+		cpu_setbank(13, mess_ram + 0x4000);
+		rh = MRA8_BANK5;
+		wh = MWA8_BANK13;
+		logerror("8000-9fff RAM\n");
+	}
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, wh);
 
-		if (ts2068_port_f4_data & 0x40)
+	if (ts2068_port_f4_data & 0x20)
+	{
+		if (ts2068_port_ff_data & 0x80)
 		{
-				if (ts2068_port_ff_data & 0x80)
-				{
-						cpu_setbank(7, ExROM);
-						memory_set_bankhandler_r(7, 0, MRA8_BANK7);
-						memory_set_bankhandler_w(15, 0, MWA8_ROM);
-						logerror("c000-dfff EXROM\n");
-				}
-				else
-				{
-						if (timex_cart_type == TIMEX_CART_DOCK)
-						{
-							cpu_setbank(7, DOCK+0xc000);
-							memory_set_bankhandler_r(7, 0, MRA8_BANK7);
-							if (timex_cart_chunks&0x40)
-								memory_set_bankhandler_w(15, 0, MWA8_BANK15);
-							else
-								memory_set_bankhandler_w(15, 0, MWA8_ROM);
-						}
-						else
-						{
-							memory_set_bankhandler_r(7, 0, MRA8_NOP);
-							memory_set_bankhandler_w(15, 0, MWA8_ROM);
-						}
-						logerror("c000-dfff Cartridge\n");
-				}
+			cpu_setbank(6, ExROM);
+			rh = MRA8_BANK6;
+			wh = MWA8_ROM;
+			logerror("a000-bfff EXROM\n");
 		}
 		else
 		{
-				cpu_setbank(7, ts2068_ram + 0x8000);
-				cpu_setbank(15, ts2068_ram + 0x8000);
-				memory_set_bankhandler_r(7, 0, MRA8_BANK7);
-				memory_set_bankhandler_w(15, 0, MWA8_BANK15);
-				logerror("c000-dfff RAM\n");
+			if (timex_cart_type == TIMEX_CART_DOCK)
+			{
+				cpu_setbank(6, DOCK+0xa000);
+				rh = MRA8_BANK6;
+				if (timex_cart_chunks&0x20)
+					wh = MWA8_BANK14;
+				else
+					wh = MWA8_ROM;
+			}
+			else
+			{
+				rh = MRA8_NOP;
+				wh = MWA8_ROM;
+			}
+			logerror("a000-bfff Cartridge\n");
 		}
+	}
+	else
+	{
+		cpu_setbank(6, mess_ram + 0x6000);
+		cpu_setbank(14, mess_ram + 0x6000);
+		rh = MRA8_BANK6;
+		wh = MWA8_BANK14;
+		logerror("a000-bfff RAM\n");
+	}
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xbfff, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xbfff, 0, wh);
 
-		if (ts2068_port_f4_data & 0x80)
+	if (ts2068_port_f4_data & 0x40)
+	{
+		if (ts2068_port_ff_data & 0x80)
 		{
-				if (ts2068_port_ff_data & 0x80)
-				{
-						cpu_setbank(8, ExROM);
-						memory_set_bankhandler_r(8, 0, MRA8_BANK8);
-						memory_set_bankhandler_w(16, 0, MWA8_ROM);
-						logerror("e000-ffff EXROM\n");
-				}
-				else
-				{
-						if (timex_cart_type == TIMEX_CART_DOCK)
-						{
-							cpu_setbank(8, DOCK+0xe000);
-							memory_set_bankhandler_r(8, 0, MRA8_BANK8);
-							if (timex_cart_chunks&0x80)
-								memory_set_bankhandler_w(16, 0, MWA8_BANK16);
-							else
-								memory_set_bankhandler_w(16, 0, MWA8_ROM);
-						}
-						else
-						{
-							memory_set_bankhandler_r(8, 0, MRA8_NOP);
-							memory_set_bankhandler_w(16, 0, MWA8_ROM);
-						}
-						logerror("e000-ffff Cartridge\n");
-				}
+			cpu_setbank(7, ExROM);
+			rh = MRA8_BANK7;
+			wh = MWA8_ROM;
+			logerror("c000-dfff EXROM\n");
 		}
 		else
 		{
-				cpu_setbank(8, ts2068_ram + 0xa000);
-				cpu_setbank(16, ts2068_ram + 0xa000);
-				memory_set_bankhandler_r(8, 0, MRA8_BANK8);
-				memory_set_bankhandler_w(16, 0, MWA8_BANK16);
-				logerror("e000-ffff RAM\n");
+			if (timex_cart_type == TIMEX_CART_DOCK)
+			{
+				cpu_setbank(7, DOCK+0xc000);
+				rh = MRA8_BANK7;
+				if (timex_cart_chunks&0x40)
+					wh = MWA8_BANK15;
+				else
+					wh = MWA8_ROM;
+			}
+			else
+			{
+				rh = MRA8_NOP;
+				wh = MWA8_ROM;
+			}
+			logerror("c000-dfff Cartridge\n");
 		}
+	}
+	else
+	{
+		cpu_setbank(7, mess_ram + 0x8000);
+		cpu_setbank(15, mess_ram + 0x8000);
+		rh = MRA8_BANK7;
+		wh = MWA8_BANK15;
+		logerror("c000-dfff RAM\n");
+	}
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, wh);
+
+	if (ts2068_port_f4_data & 0x80)
+	{
+		if (ts2068_port_ff_data & 0x80)
+		{
+			cpu_setbank(8, ExROM);
+			rh = MRA8_BANK8;
+			wh = MWA8_ROM;
+			logerror("e000-ffff EXROM\n");
+		}
+		else
+		{
+			if (timex_cart_type == TIMEX_CART_DOCK)
+			{
+				cpu_setbank(8, DOCK+0xe000);
+				rh = MRA8_BANK8;
+				if (timex_cart_chunks&0x80)
+					wh = MWA8_BANK16;
+				else
+					wh = MWA8_ROM;
+			}
+			else
+			{
+				rh = MRA8_NOP;
+				wh = MWA8_ROM;
+			}
+			logerror("e000-ffff Cartridge\n");
+		}
+	}
+	else
+	{
+		cpu_setbank(8, mess_ram + 0xa000);
+		cpu_setbank(16, mess_ram + 0xa000);
+		rh = MRA8_BANK8;
+		wh = MWA8_BANK16;
+		logerror("e000-ffff RAM\n");
+	}
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, wh);
 }
 
 
@@ -1334,56 +1330,20 @@ static ADDRESS_MAP_START (ts2068_writeport, ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0x0000, 0x0ffff) AM_WRITE( ts2068_port_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START (ts2068_readmem, ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x1fff) AM_READ( MRA8_BANK1 )
-	AM_RANGE( 0x2000, 0x3fff) AM_READ( MRA8_BANK2 )
-	AM_RANGE( 0x4000, 0x5fff) AM_READ( MRA8_BANK3 )
-	AM_RANGE( 0x6000, 0x7fff) AM_READ( MRA8_BANK4 )
-	AM_RANGE( 0x8000, 0x9fff) AM_READ( MRA8_BANK5 )
-	AM_RANGE( 0xa000, 0xbfff) AM_READ( MRA8_BANK6 )
-	AM_RANGE( 0xc000, 0xdfff) AM_READ( MRA8_BANK7 )
-	AM_RANGE( 0xe000, 0xffff) AM_READ( MRA8_BANK8 )
+static ADDRESS_MAP_START (ts2068_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x1fff) AM_READWRITE( MRA8_BANK1, MWA8_BANK9 )
+	AM_RANGE(0x2000, 0x3fff) AM_READWRITE( MRA8_BANK2, MWA8_BANK10 )
+	AM_RANGE(0x4000, 0x5fff) AM_READWRITE( MRA8_BANK3, MWA8_BANK11 )
+	AM_RANGE(0x6000, 0x7fff) AM_READWRITE( MRA8_BANK4, MWA8_BANK12 )
+	AM_RANGE(0x8000, 0x9fff) AM_READWRITE( MRA8_BANK5, MWA8_BANK13 )
+	AM_RANGE(0xa000, 0xbfff) AM_READWRITE( MRA8_BANK6, MWA8_BANK14 )
+	AM_RANGE(0xc000, 0xdfff) AM_READWRITE( MRA8_BANK7, MWA8_BANK15 )
+	AM_RANGE(0xe000, 0xffff) AM_READWRITE( MRA8_BANK8, MWA8_BANK16 )
 ADDRESS_MAP_END
-
-static ADDRESS_MAP_START (ts2068_writemem, ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x1fff) AM_WRITE( MWA8_BANK9 )
-	AM_RANGE( 0x2000, 0x3fff) AM_WRITE( MWA8_BANK10 )
-	AM_RANGE( 0x4000, 0x5fff) AM_WRITE( MWA8_BANK11 )
-	AM_RANGE( 0x6000, 0x7fff) AM_WRITE( MWA8_BANK12 )
-	AM_RANGE( 0x8000, 0x9fff) AM_WRITE( MWA8_BANK13 )
-	AM_RANGE( 0xa000, 0xbfff) AM_WRITE( MWA8_BANK14 )
-	AM_RANGE( 0xc000, 0xdfff) AM_WRITE( MWA8_BANK15 )
-	AM_RANGE( 0xe000, 0xffff) AM_WRITE( MWA8_BANK16 )
-ADDRESS_MAP_END
-
 
 
 static MACHINE_INIT( ts2068 )
 {
-	ts2068_ram = (unsigned char *)auto_malloc(48*1024);
-	if(!ts2068_ram)
-		return;
-	memset(ts2068_ram, 0, 48*1024);
-
-	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-	memory_set_bankhandler_r(2, 0, MRA8_BANK2);
-	memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-	memory_set_bankhandler_r(4, 0, MRA8_BANK4);
-	memory_set_bankhandler_r(5, 0, MRA8_BANK5);
-	memory_set_bankhandler_r(6, 0, MRA8_BANK6);
-	memory_set_bankhandler_r(7, 0, MRA8_BANK7);
-	memory_set_bankhandler_r(8, 0, MRA8_BANK8);
-
-	/* 0x0000-0x3fff always holds ROM */
-	memory_set_bankhandler_w(9, 0, MWA8_BANK9);
-	memory_set_bankhandler_w(10, 0, MWA8_BANK10);
-	memory_set_bankhandler_w(11, 0, MWA8_BANK11);
-	memory_set_bankhandler_w(12, 0, MWA8_BANK12);
-	memory_set_bankhandler_w(13, 0, MWA8_BANK13);
-	memory_set_bankhandler_w(14, 0, MWA8_BANK14);
-	memory_set_bankhandler_w(15, 0, MWA8_BANK15);
-	memory_set_bankhandler_w(16, 0, MWA8_BANK16);
-
 	ts2068_port_ff_data = 0;
 	ts2068_port_f4_data = 0;
 	ts2068_update_memory();
@@ -1455,15 +1415,8 @@ ADDRESS_MAP_END
 
 static MACHINE_INIT( tc2048 )
 {
-	ts2068_ram = (unsigned char *)auto_malloc(48*1024);
-	if(!ts2068_ram)
-		return;
-	memset(ts2068_ram, 0, 48*1024);
-
-	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-	memory_set_bankhandler_w(2, 0, MWA8_BANK2);
-	cpu_setbank(1, ts2068_ram);
-	cpu_setbank(2, ts2068_ram);
+	cpu_setbank(1, mess_ram);
+	cpu_setbank(2, mess_ram);
 	ts2068_port_ff_data = 0;
 
 	machine_init_spectrum();
@@ -1610,72 +1563,76 @@ static int scorpion_256_port_1ffd_data = 0;
 
 static void scorpion_update_memory(void)
 {
-		unsigned char *ChosenROM;
-		int ROMSelection;
+	unsigned char *ChosenROM;
+	int ROMSelection;
+	read8_handler rh;
+	write8_handler wh;
 
-		if (spectrum_128_port_7ffd_data & 8)
+	if (spectrum_128_port_7ffd_data & 8)
+	{
+		logerror("SCREEN 1: BLOCK 7\n");
+		spectrum_128_screen_location = spectrum_ram + (7<<14);
+	}
+	else
+	{
+		logerror("SCREEN 0: BLOCK 5\n");
+		spectrum_128_screen_location = spectrum_ram + (5<<14);
+	}
+
+	/* select ram at 0x0c000-0x0ffff */
+	{
+		int ram_page;
+		unsigned char *ram_data;
+
+		ram_page = (spectrum_128_port_7ffd_data & 0x07) | ((scorpion_256_port_1ffd_data & (1<<4))>>1);
+		ram_data = spectrum_ram + (ram_page<<14);
+
+		cpu_setbank(4, ram_data);
+		cpu_setbank(8, ram_data);
+
+		logerror("RAM at 0xc000: %02x\n",ram_page);
+	}
+
+	if (scorpion_256_port_1ffd_data & (1<<0))
+	{
+		/* ram at 0x0000 */
+		logerror("RAM at 0x0000\n");
+
+		/* connect page 0 of ram to 0x0000 */
+		rh = MRA8_BANK1;
+		wh = MWA8_BANK5;
+		cpu_setbank(1, spectrum_ram+(8<<14));
+		cpu_setbank(5, spectrum_ram+(8<<14));
+	}
+	else
+	{
+		/* rom at 0x0000 */
+		logerror("ROM at 0x0000\n");
+
+		/* connect page 0 of rom to 0x0000 */
+		rh = MRA8_BANK1;
+		wh = MWA8_NOP;
+
+		if (scorpion_256_port_1ffd_data & (1<<1))
 		{
-				logerror("SCREEN 1: BLOCK 7\n");
-				spectrum_128_screen_location = spectrum_ram + (7<<14);
+			ROMSelection = 2;
 		}
 		else
 		{
-				logerror("SCREEN 0: BLOCK 5\n");
-				spectrum_128_screen_location = spectrum_ram + (5<<14);
+
+			/* ROM switching */
+			ROMSelection = ((spectrum_128_port_7ffd_data>>4) & 0x01);
 		}
 
-		/* select ram at 0x0c000-0x0ffff */
-		{
-				int ram_page;
-				unsigned char *ram_data;
+		/* rom 0 is 128K rom, rom 1 is 48 BASIC */
+		ChosenROM = memory_region(REGION_CPU1) + 0x010000 + (ROMSelection<<14);
 
-				ram_page = (spectrum_128_port_7ffd_data & 0x07) | ((scorpion_256_port_1ffd_data & (1<<4))>>1);
-				ram_data = spectrum_ram + (ram_page<<14);
+		cpu_setbank(1, ChosenROM);
 
-				cpu_setbank(4, ram_data);
-				cpu_setbank(8, ram_data);
-
-				logerror("RAM at 0xc000: %02x\n",ram_page);
-		}
-
-		if (scorpion_256_port_1ffd_data & (1<<0))
-		{
-			/* ram at 0x0000 */
-			logerror("RAM at 0x0000\n");
-
-			/* connect page 0 of ram to 0x0000 */
-			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-			memory_set_bankhandler_w(5, 0, MWA8_BANK5);
-			cpu_setbank(1, spectrum_ram+(8<<14));
-			cpu_setbank(5, spectrum_ram+(8<<14));
-		}
-		else
-		{
-			/* rom at 0x0000 */
-			logerror("ROM at 0x0000\n");
-
-			/* connect page 0 of rom to 0x0000 */
-			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-			memory_set_bankhandler_w(5, 0, MWA8_NOP);
-
-			if (scorpion_256_port_1ffd_data & (1<<1))
-			{
-				ROMSelection = 2;
-			}
-			else
-			{
-
-				/* ROM switching */
-				ROMSelection = ((spectrum_128_port_7ffd_data>>4) & 0x01);
-			}
-
-			/* rom 0 is 128K rom, rom 1 is 48 BASIC */
-			ChosenROM = memory_region(REGION_CPU1) + 0x010000 + (ROMSelection<<14);
-
-			cpu_setbank(1, ChosenROM);
-
-			logerror("rom switch: %02x\n", ROMSelection);
-		}
+		logerror("rom switch: %02x\n", ROMSelection);
+	}
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, rh);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, wh);
 }
 
 
@@ -1754,106 +1711,33 @@ static READ_HANDLER(scorpion_port_r)
 /* TO BE CHECKED! */
 static WRITE_HANDLER(scorpion_port_w)
 {
-		if ((offset & 1)==0)
-			spectrum_port_fe_w(offset,data);
+	if ((offset & 1)==0)
+		spectrum_port_fe_w(offset,data);
 
-		else if ((offset & 2)==0)
-		{
-				switch ((offset>>8) & 0xf0)
-				{
-					case 0x70:
-							scorpion_port_7ffd_w(offset, data);
-							break;
-					case 0xb0:
-							spectrum_128_port_bffd_w(offset, data);
-							break;
-					case 0xf0:
-							spectrum_128_port_fffd_w(offset, data);
-							break;
-					case 0x10:
-							scorpion_port_1ffd_w(offset, data);
-							break;
-					default:
-							logerror("Write %02x to scorpion port: %04x\n", data, offset);
-				}
-		}
-		else
-		{
-			logerror("Write %02x to scorpion port: %04x\n", data, offset);
-		}
-#if 0
-		/* decoding of these ports might be wrong - to be checked! */
-			switch (offset & 0x0ff)
+	else if ((offset & 2)==0)
+	{
+			switch ((offset>>8) & 0xf0)
 			{
-				case 0x01f:
-				{
-					wd179x_command_w(offset,data);
-				}
-				break;
-
-				case 0x03f:
-				{
-					wd179x_track_w(offset,data);
-				}
-				break;
-
-				case 0x05f:
-				{
-					wd179x_sector_w(offset,data);
-				}
-				break;
-
-				case 0x07f:
-				{
-					wd179x_data_w(offset,data);
-				}
-				break;
-
-				case 0x0ff:
-				{
-					int density;
-
-					/*
-						D0, D1 - diskdrive select. 00 for drive A, 01 for drive B
-									   10 for drive C, 11 for drive D
-						D2     - hardware microcontroller reset. by resetting and then setting this bit
-							 again, we can form impulse of microcontroller reset. usually this reset
-							 happenes in very begin of TR-DOS session.
-
-						D3     - this digit blocks signal HLT of microcontroller. For normal work must
-							 contain '1'.
-
-						D4     - Diskdrive head select. contents of this digit translates directly to
-							 diskdrive. 0 means first head or 'bottom' side of disk, 1 - second
-							 head/'top' side of disk.
-
-						D5     - Density select. reset of this digit makes microcontroller works in FM
-							 mode, seted digit - MFM.
-					*/
-
-					wd179x_set_drive(data & 0x03);
-
-			//		if (data & (1<<2))
-			//		{
-			//			wd179x_reset();
-			//		}
-
-					wd179x_set_side((data>>4) & 0x01);
-
-					if (data & (1<<5))
-					{
-						density = DEN_FM_HI;
-					}
-					else
-					{
-						density = DEN_MFM_LO;
-					}
-
-
-					wd179x_set_density(data>>5);
-				}
+				case 0x70:
+						scorpion_port_7ffd_w(offset, data);
+						break;
+				case 0xb0:
+						spectrum_128_port_bffd_w(offset, data);
+						break;
+				case 0xf0:
+						spectrum_128_port_fffd_w(offset, data);
+						break;
+				case 0x10:
+						scorpion_port_1ffd_w(offset, data);
+						break;
+				default:
+						logerror("Write %02x to scorpion port: %04x\n", data, offset);
 			}
-#endif
+	}
+	else
+	{
+		logerror("Write %02x to scorpion port: %04x\n", data, offset);
+	}
 }
 
 
@@ -1867,7 +1751,7 @@ ADDRESS_MAP_END
 /* KT: Changed it to this because the ports are not decoded fully.
 The function decodes the ports appropriately */
 static ADDRESS_MAP_START (scorpion_writeport, ADDRESS_SPACE_IO, 8)
-		AM_RANGE(0x0000, 0xffff) AM_WRITE( scorpion_port_w)
+	AM_RANGE(0x0000, 0xffff) AM_WRITE( scorpion_port_w)
 ADDRESS_MAP_END
 
 
@@ -1875,21 +1759,13 @@ static MACHINE_INIT( scorpion )
 {
 	if (spectrum_alloc_ram(256))
 	{
-		memory_set_bankhandler_r(4, 0, MRA8_BANK4);
-		memory_set_bankhandler_w(8, 0, MWA8_BANK8);
-
 		/* Bank 5 is always in 0x4000 - 0x7fff */
-		memory_set_bankhandler_r(2, 0, MRA8_BANK2);
-		memory_set_bankhandler_w(6, 0, MWA8_BANK6);
 		cpu_setbank(2, spectrum_ram + (5<<14));
 		cpu_setbank(6, spectrum_ram + (5<<14));
 
 		/* Bank 2 is always in 0x8000 - 0xbfff */
-		memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-		memory_set_bankhandler_w(7, 0, MWA8_BANK7);
 		cpu_setbank(3, spectrum_ram + (2<<14));
 		cpu_setbank(7, spectrum_ram + (2<<14));
-
 
 		spectrum_128_port_7ffd_data = 0;
 		scorpion_256_port_1ffd_data = 0;
@@ -1932,19 +1808,11 @@ static MACHINE_INIT( pentagon )
 {
 	if (spectrum_alloc_ram(128))
 	{
-		memory_set_bankhandler_r(4, 0, MRA8_BANK4);
-
-		memory_set_bankhandler_w(8, 0, MWA8_BANK8);
-
 		/* Bank 5 is always in 0x4000 - 0x7fff */
-		memory_set_bankhandler_r(2, 0, MRA8_BANK2);
-		memory_set_bankhandler_w(6, 0, MWA8_BANK6);
 		cpu_setbank(2, spectrum_ram + (5<<14));
 		cpu_setbank(6, spectrum_ram + (5<<14));
 
 		/* Bank 2 is always in 0x8000 - 0xbfff */
-		memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-		memory_set_bankhandler_w(7, 0, MWA8_BANK7);
 		cpu_setbank(3, spectrum_ram + (2<<14));
 		cpu_setbank(7, spectrum_ram + (2<<14));
 
@@ -2224,7 +2092,7 @@ static MACHINE_DRIVER_START( ts2068 )
 	MDRV_IMPORT_FROM( spectrum_128 )
 	MDRV_CPU_REPLACE("main", Z80, 3580000)        /* 3.58 Mhz */
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
-	MDRV_CPU_PROGRAM_MAP(ts2068_readmem,ts2068_writemem)
+	MDRV_CPU_PROGRAM_MAP(ts2068_mem, 0)
 	MDRV_CPU_IO_MAP(ts2068_readport,ts2068_writeport)
 	MDRV_FRAMES_PER_SECOND(60)
 
@@ -2451,6 +2319,7 @@ SYSTEM_CONFIG_END
 SYSTEM_CONFIG_START(ts2068)
 	CONFIG_IMPORT_FROM(spectrum_common)
 	CONFIG_DEVICE_CARTSLOT_OPT(1, "dck\0", NULL, NULL, device_load_timex_cart, device_unload_timex_cart, NULL, NULL)
+	CONFIG_RAM_DEFAULT(48 * 1024)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT    COMPAT	MACHINE		INPUT		INIT	CONFIG		COMPANY		FULLNAME */

@@ -70,12 +70,12 @@ static OPBASE_HANDLER(spectrum_opbaseoverride)
 	{
 		if (address>=0x4000 && address<=0x57ff)
 		{
-			OP_ROM = OP_RAM = spectrum_characterram-0x4000;
+			opcode_base = opcode_arg_base = spectrum_characterram-0x4000;
 			return -1;
 		}
 		if (address>=0x5800 && address<=0x5aff)
 		{
-			OP_ROM = OP_RAM = spectrum_colorram-0x5800;
+			opcode_base = opcode_arg_base = spectrum_colorram-0x5800;
 			return -1;
 		}
 	}
@@ -128,7 +128,7 @@ SNAPSHOT_LOAD(spectrum)
 		spectrum_setup_z80(snapshot_data, snapshot_size);
 	}
 	free(snapshot_data);
-	logerror("Snapshot loaded - new PC = %04x\n", cpunum_get_reg(0, Z80_PC) & 0x0ffff);
+	logerror("Snapshot loaded - new PC = %04x\n", (unsigned) cpunum_get_reg(0, Z80_PC) & 0x0ffff);
 	return INIT_PASS;
 
 error:
@@ -175,12 +175,12 @@ static int spectrum_setup_tap(offs_t address, UINT8 *snapshot_data, int snapshot
 	{
 		if (address>=0x4000 && address<=0x57ff)
 		{
-			OP_ROM = OP_RAM = spectrum_characterram-0x4000;
+			opcode_base = opcode_arg_base = spectrum_characterram-0x4000;
 			return -1;
 		}
 		if (address>=0x5800 && address<=0x5aff)
 		{
-			OP_ROM = OP_RAM = spectrum_colorram-0x5800;
+			opcode_base = opcode_arg_base = spectrum_colorram-0x5800;
 			return -1;
 		}
 	}
@@ -305,13 +305,14 @@ static int spectrum_setup_tap(offs_t address, UINT8 *snapshot_data, int snapshot
 	 */
 	do
 	{
-		return_addr = cpunum_get_reg(0, REG_SP_CONTENTS);
-		cpunum_set_reg(0, Z80_PC, (return_addr & 0x0ffff));
-
 		sp_reg = cpunum_get_reg(0, Z80_SP);
+		return_addr =
+			((UINT16) program_read_byte_8(sp_reg + 0) ) >> 8 |
+			((UINT16) program_read_byte_8(sp_reg + 1) ) >> 0;
+
 		sp_reg += 2;
 		cpunum_set_reg(0, Z80_SP, (sp_reg & 0x0ffff));
-		cpunum_set_sp(0, (sp_reg & 0x0ffff));
+		cpunum_set_reg(0, Z80_PC, (return_addr & 0x0ffff));
 	}
 	while (((return_addr != 0x053f) && (return_addr < 0x0605) && (ts2068_port_f4_data == -1)) ||
 		   ((return_addr != 0x00e5) && (return_addr < 0x01aa) && (ts2068_port_f4_data != -1)));
@@ -492,7 +493,7 @@ void spectrum_setup_sp(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	data = (status & 0x10)>>4;
 	activecpu_set_irq_line(0, data);
 	activecpu_set_irq_line(IRQ_LINE_NMI, data);
-	activecpu_set_halt_line(0);
+	cpunum_set_halt_line(0, 0);
 
 	spectrum_page_basicrom();
 
@@ -584,7 +585,6 @@ void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	lo = pSnapshot[23] & 0x0ff;
 	hi = pSnapshot[24] & 0x0ff;
 	cpunum_set_reg(0, Z80_SP, (hi << 8) | lo);
-	cpunum_set_sp(0, (hi << 8) | lo);
 	data = (pSnapshot[25] & 0x0ff);
 	cpunum_set_reg(0, Z80_IM, data);
 
@@ -596,7 +596,7 @@ void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)
 
 	activecpu_set_irq_line(0, data);
 	activecpu_set_irq_line(IRQ_LINE_NMI, data);
-	activecpu_set_halt_line(0);
+	cpunum_set_halt_line(0, 0);
 
 	if (SnapshotSize == 49179)
 		/* 48K Snapshot */
@@ -617,13 +617,16 @@ void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	if (SnapshotSize == 49179)
 	{
 		/* get pc from stack */
-		addr = cpunum_get_reg(0, REG_SP_CONTENTS);
-		cpunum_set_reg(0, Z80_PC, (addr & 0x0ffff));
+		addr = cpunum_get_reg(0, Z80_SP) & 0xFFFF;
 
-		addr = cpunum_get_reg(0, Z80_SP);
+		cpunum_set_reg(0, Z80_PC,
+			((UINT16) program_read_byte_8(addr + 0) ) >> 8 |
+			((UINT16) program_read_byte_8(addr + 1) ) >> 0);
+
 		addr += 2;
 		cpunum_set_reg(0, Z80_SP, (addr & 0x0ffff));
-		cpunum_set_sp(0, (addr & 0x0ffff));
+
+
 	}
 	else
 	{
@@ -659,7 +662,6 @@ void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)
 		hi = pSnapshot[49180] & 0x0ff;
 		cpunum_set_reg(0, Z80_PC, (hi << 8) | lo);
 	}
-	dump_registers();
 }
 
 
@@ -846,7 +848,6 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	lo = pSnapshot[8] & 0x0ff;
 	hi = pSnapshot[9] & 0x0ff;
 	cpunum_set_reg(0, Z80_SP, (hi << 8) | lo);
-	cpunum_set_sp(0, (hi << 8) | lo);
 
 	/* I */
 	cpunum_set_reg(0, Z80_I, (pSnapshot[10] & 0x0ff));
@@ -903,7 +904,7 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 
 	activecpu_set_irq_line(0, data);
 	activecpu_set_irq_line(IRQ_LINE_NMI, data);
-	activecpu_set_halt_line(0);
+	cpu_set_halt_line(0, 0);
 
 	/* IFF2 */
 	if (pSnapshot[28] != 0)
@@ -1045,7 +1046,6 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 			ts2068_update_memory();
 		}
 	}
-	dump_registers();
 }
 
 /*-----------------27/02/00 10:54-------------------

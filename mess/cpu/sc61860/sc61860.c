@@ -187,13 +187,6 @@ unsigned sc61860_get_reg (int regnum)
 #if 0
 	case SATURN_NMI_STATE: return saturn.nmi_state;
 	case SATURN_IRQ_STATE: return saturn.irq_state;
-		default:
-			if( regnum <= REG_SP_CONTENTS )
-			{
-				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < 0x1ff )
-					return RDMEM( offset ) | ( RDMEM( offset + 1 ) << 8 );
-			}
 #endif
 	}
 	return 0;
@@ -215,16 +208,6 @@ void sc61860_set_reg (int regnum, unsigned val)
 #if 0
 	case SATURN_NMI_STATE: saturn.nmi_state=val;break;
 	case SATURN_IRQ_STATE: saturn.irq_state=val;break;
-	default:
-		if( regnum <= REG_SP_CONTENTS )
-		{
-			unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
-			if( offset < 0x1ff )
-			{
-				WRMEM( offset, val & 0xfff );
-				WRMEM( offset + 1, (val >> 8) & 0xff );
-			}
-		}
 #endif
 	}
 }

@@ -408,13 +408,13 @@ $(OBJ)/kaypro.a:   \
 	$(OBJ)/mess/machine/kaypro.o	 \
 
 $(OBJ)/sinclair.a: \
-	$(OBJ)/mess/vidhrdw/border.o	 \
-	$(OBJ)/mess/vidhrdw/spectrum.o \
-	$(OBJ)/mess/vidhrdw/zx.o	     \
-	$(OBJ)/mess/systems/zx.o		\
-#	$(OBJ)/mess/machine/zx.o	     \
-#	$(OBJ)/mess/systems/spectrum.o	\
-#	$(OBJ)/mess/machine/spectrum.o	\
+	$(OBJ)/mess/vidhrdw/border.o		\
+	$(OBJ)/mess/vidhrdw/spectrum.o		\
+	$(OBJ)/mess/vidhrdw/zx.o			\
+	$(OBJ)/mess/systems/zx.o			\
+	$(OBJ)/mess/machine/zx.o			\
+	$(OBJ)/mess/systems/spectrum.o		\
+	$(OBJ)/mess/machine/spectrum.o		\
 
 $(OBJ)/apple.a:   \
 	$(OBJ)/mess/vidhrdw/apple2.o		\
