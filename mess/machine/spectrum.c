@@ -634,17 +634,108 @@ static void spectrum_z80_decompress_block(unsigned char *pSource, int Dest, int 
 	while (size > 0);
 }
 
+typedef enum {
+	SPECTRUM_Z80_SNAPSHOT_INVALID,
+	SPECTRUM_Z80_SNAPSHOT_48K_OLD,
+	SPECTRUM_Z80_SNAPSHOT_48K,
+	SPECTRUM_Z80_SNAPSHOT_SAMRAM,
+	SPECTRUM_Z80_SNAPSHOT_128K,
+	SPECTRUM_Z80_SNAPSHOT_TS2068
+}
+SPECTRUM_Z80_SNAPSHOT_TYPE;
+
+SPECTRUM_Z80_SNAPSHOT_TYPE spectrum_identify_z80 (unsigned char *pSnapshot, unsigned long SnapshotSize)
+{
+	unsigned char lo, hi, data;
+
+	if (SnapshotSize < 30)
+		return SPECTRUM_Z80_SNAPSHOT_INVALID;	/* Invalid file */
+
+	lo = pSnapshot[6] & 0x0ff;
+	hi = pSnapshot[7] & 0x0ff;
+	if (hi || lo)
+		return SPECTRUM_Z80_SNAPSHOT_48K_OLD;	/* V1.45 - 48K only */
+
+	lo = pSnapshot[30] & 0x0ff;
+	hi = pSnapshot[31] & 0x0ff;
+	data = pSnapshot[34] & 0x0ff;			/* Hardware mode */
+
+	if ((hi == 0) && (lo == 23))
+	{						/* V2.01 */							/* V2.01 format */
+		switch (data)
+		{
+			case 0:
+			case 1:	return SPECTRUM_Z80_SNAPSHOT_48K;
+			case 2:	return SPECTRUM_Z80_SNAPSHOT_SAMRAM;
+			case 3:	
+			case 4:	return SPECTRUM_Z80_SNAPSHOT_128K;
+			case 128: return SPECTRUM_Z80_SNAPSHOT_TS2068;
+		}
+	}
+
+	if ((hi == 0) && (lo == 54))
+	{						/* V3.0x */							/* V2.01 format */
+		switch (data)
+		{
+			case 0:
+			case 1:
+			case 3:	return SPECTRUM_Z80_SNAPSHOT_48K;
+			case 2:	return SPECTRUM_Z80_SNAPSHOT_SAMRAM;
+			case 4:
+			case 5:
+			case 6:	return SPECTRUM_Z80_SNAPSHOT_128K;
+			case 128: return SPECTRUM_Z80_SNAPSHOT_TS2068;
+		}
+	}
+
+	return SPECTRUM_Z80_SNAPSHOT_INVALID;
+}
+
 /* now supports 48k & 128k .Z80 files */
 void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 {
-	int i, is48ksnap;
+	int i;
 	unsigned char lo, hi, data;
+	SPECTRUM_Z80_SNAPSHOT_TYPE z80_type;
 
-	is48ksnap = is48k_z80snapshot(pSnapshotData, SnapshotDataSize);
-	if ((spectrum_128_port_7ffd_data == -1) && !is48ksnap)
+	z80_type = spectrum_identify_z80(pSnapshotData, SnapshotDataSize);
+
+	switch (z80_type)
 	{
-		logerror("Not a 48K .Z80 file\n");
-		return;
+		case SPECTRUM_Z80_SNAPSHOT_INVALID:
+				logerror("Invalid .Z80 file\n");
+				return;
+		case SPECTRUM_Z80_SNAPSHOT_48K_OLD:
+		case SPECTRUM_Z80_SNAPSHOT_48K:
+				logerror("48K .Z80 file\n");
+				if (!strcmp(Machine->gamedrv->name,"ts2068"))
+				{
+					logerror("48K .Z80 file in TS2068\n");
+				}
+				break;
+		case SPECTRUM_Z80_SNAPSHOT_128K:
+				logerror("128K .Z80 file\n");
+				if (spectrum_128_port_7ffd_data == -1)
+				{
+					logerror("Not a 48K .Z80 file\n");
+					return;
+				}
+				if (!strcmp(Machine->gamedrv->name,"ts2068"))
+				{
+					logerror("Not a TS2068 .Z80 file\n");
+					return;
+				}
+				break;
+		case SPECTRUM_Z80_SNAPSHOT_TS2068:
+				logerror("TS2068 .Z80 file\n");				if (strcmp(Machine->gamedrv->name,"ts2068"))
+				{
+					logerror("Not a TS2068 machine\n");
+					return;
+				}
+				break;
+		case SPECTRUM_Z80_SNAPSHOT_SAMRAM:
+				logerror("Hardware not supported - .Z80 file\n");
+				return;
 	}
 
 	/* AF */
@@ -659,8 +750,6 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	lo = pSnapshot[4] & 0x0ff;
 	hi = pSnapshot[5] & 0x0ff;
 	cpu_set_reg(Z80_HL, (hi << 8) | lo);
-
-	/* program counter - 0 if not version 1.45 */
 
 	/* SP */
 	lo = pSnapshot[8] & 0x0ff;
@@ -725,7 +814,6 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	cpu_set_reg(Z80_IRQ_STATE, 0);
 	cpu_set_reg(Z80_HALT, 0);
 
-
 	/* IFF2 */
 	if (pSnapshot[28] != 0)
 	{
@@ -740,32 +828,23 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	/* Interrupt Mode */
 	cpu_set_reg(Z80_IM, (pSnapshot[29] & 0x03));
 
-	if ((pSnapshot[6] | pSnapshot[7]) != 0)
+	if (z80_type == SPECTRUM_Z80_SNAPSHOT_48K_OLD)
 	{
-		logerror("Old 1.45 V of Z80 snapshot found!\n");
-
-		/* program counter is specified. Old 1.45 */
 		lo = pSnapshot[6] & 0x0ff;
 		hi = pSnapshot[7] & 0x0ff;
 		cpu_set_reg(Z80_PC, (hi << 8) | lo);
 
 		spectrum_page_basicrom();
-
+                
 		if ((pSnapshot[12] & 0x020) == 0)
 		{
-			logerror("Not compressed\n");
-
-			/* not compressed */
+			logerror("Not compressed\n");	/* not compressed */
 			for (i = 0; i < 49152; i++)
-			{
 				cpu_writemem16(i + 16384, pSnapshot[30 + i]);
-			}
 		}
 		else
 		{
-			logerror("Compressed\n");
-
-			/* compressed */
+			logerror("Compressed\n");	/* compressed */
 			spectrum_z80_decompress_block(pSnapshot + 30, 16384, 49152);
 		}
 	}
@@ -774,17 +853,15 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 		unsigned char *pSource;
 		int header_size;
 
-		logerror("v2.0+ V of Z80 snapshot found!\n");
-
 		header_size = 30 + 2 + ((pSnapshot[30] & 0x0ff) | ((pSnapshot[31] & 0x0ff) << 8));
 
 		lo = pSnapshot[32] & 0x0ff;
 		hi = pSnapshot[33] & 0x0ff;
 		cpu_set_reg(Z80_PC, (hi << 8) | lo);
 
-		if (spectrum_128_port_7ffd_data != -1)
+		if (z80_type == SPECTRUM_Z80_SNAPSHOT_128K || z80_type == SPECTRUM_Z80_SNAPSHOT_TS2068)
 		{
-			/* Only set up sound registers for 128K machine! */
+			/* Only set up sound registers for 128K machine or TS2068! */
 			for (i = 0; i < 16; i++)
 			{
 				AY8910_control_port_0_w(0, i);
@@ -795,7 +872,7 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 
 		pSource = pSnapshot + header_size;
 
-		if (is48ksnap)
+		if (z80_type == SPECTRUM_Z80_SNAPSHOT_48K)
 			/* Ensure 48K Basic ROM is used */
 			spectrum_page_basicrom();
 
@@ -808,25 +885,14 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 			length = (pSource[0] & 0x0ff) | ((pSource[1] & 0x0ff) << 8);
 			page = pSource[2];
 
-			if (is48ksnap)
+			if (z80_type == SPECTRUM_Z80_SNAPSHOT_48K || z80_type == SPECTRUM_Z80_SNAPSHOT_TS2068)
 			{
 				switch (page)
 				{
-				case 4:
-					Dest = 0x08000;
-					break;
-
-				case 5:
-					Dest = 0x0c000;
-					break;
-
-				case 8:
-					Dest = 0x04000;
-					break;
-
-				default:
-					Dest = 0;
-					break;
+					case 4:	Dest = 0x08000;	break;
+					case 5:	Dest = 0x0c000;	break;
+					case 8:	Dest = 0x04000;	break;
+					default: Dest = 0; break;
 				}
 			}
 			else
@@ -853,11 +919,7 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 
 					/* not compressed */
 					for (i = 0; i < 16384; i++)
-					{
 						cpu_writemem16(i + Dest, pSource[i]);
-					}
-
-
 				}
 				else
 				{
@@ -873,11 +935,17 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 		}
 		while (((unsigned long) pSource - (unsigned long) pSnapshot) < SnapshotDataSize);
 
-		if ((spectrum_128_port_7ffd_data != -1) && !is48ksnap)
+		if ((spectrum_128_port_7ffd_data != -1) && z80_type != SPECTRUM_Z80_SNAPSHOT_48K)
 		{
 			/* Set up paging */
 			spectrum_128_port_7ffd_data = (pSnapshot[35] & 0x0ff);
 			spectrum_update_paging();
+		}
+		if (z80_type == SPECTRUM_Z80_SNAPSHOT_TS2068)
+		{
+			ts2068_port_f4_data = pSnapshot[35];
+			ts2068_port_ff_data = pSnapshot[36];
+			ts2068_update_memory();
 		}
 	}
 	dump_registers();

@@ -106,7 +106,6 @@ thus is not emulated.
 
 extern void spectrum_128_update_memory(void);
 extern void spectrum_plus3_update_memory(void);
-extern void ts2068_update_memory(void);
 
 
 static struct AY8910interface spectrum_ay_interface =
@@ -861,7 +860,7 @@ static WRITE_HANDLER(ts2068_port_f4_w)
 
 static WRITE_HANDLER(ts2068_port_f5_w)
 {
-		AY8910_write_port_0_w(0, data);
+		AY8910_control_port_0_w(0, data);
 }
 
 static READ_HANDLER(ts2068_port_f6_r)
@@ -877,7 +876,7 @@ static READ_HANDLER(ts2068_port_f6_r)
 
 static WRITE_HANDLER(ts2068_port_f6_w)
 {
-		AY8910_control_port_0_w(0, data);
+		AY8910_write_port_0_w(0, data);
 }
 
 static READ_HANDLER(ts2068_port_ff_r)
@@ -2596,9 +2595,9 @@ ROM_START(ts2068)
 		ROM_LOAD("ts2068_x.rom",0x14000,0x2000, 0xae16233a)
 ROM_END
 
-ROM_START(uk2068)
+ROM_START(uk2086)
 		ROM_REGION(0x16000,REGION_CPU1,0)
-		ROM_LOAD("uk2068_h.rom",0x10000,0x4000, 0x5ddc0ca2)
+		ROM_LOAD("uk2086_h.rom",0x10000,0x4000, 0x5ddc0ca2)
 		ROM_LOAD("ts2068_x.rom",0x14000,0x2000, 0xae16233a)
 ROM_END
 
@@ -2799,7 +2798,7 @@ static const struct IODevice io_ts2068[] = {
 #define io_tk90x	io_spectrum
 #define io_tk95 	io_spectrum
 #define io_tc2048	io_spectrum
-#define io_uk2068	io_ts2068
+#define io_uk2086	io_ts2068
 #define io_specpl2a	io_specpls3
 #define io_specp2fr	io_spectrum
 #define io_specp2sp	io_spectrum
@@ -2821,7 +2820,7 @@ COMP ( 1985, tk90x,    spectrum, spectrum, spectrum,	0, "Micro Digital",	"TK-90x
 COMP ( 1986, tk95,     spectrum, spectrum, spectrum,	0, "Micro Digital",	"TK-95 Color Computer" )
 COMP ( 198?, tc2048,   spectrum, tc2048,   spectrum,	0, "Timex of Portugal",	"TC-2048" )
 COMP ( 1983, ts2068,   spectrum, ts2068,   spectrum,	0, "Timex Sinclair",	"TS-2068" )
-COMP ( 1986, uk2068,   spectrum, ts2068,   spectrum,	0, "Unipolbrit",	"UK-2068 ver. 1.2" )
+COMP ( 1986, uk2086,   spectrum, ts2068,   spectrum,	0, "Unipolbrit",	"UK-2086 ver. 1.2" )
 
 COMPX( 1986, spec128,  0,		 spectrum_128,	 spectrum, 0,			 "Sinclair Research",    "ZX Spectrum 128" ,GAME_NOT_WORKING)
 COMPX( 1985, spec128s, spec128,  spectrum_128,	 spectrum, 0,			 "Sinclair Research",    "ZX Spectrum 128 (Spain)" ,GAME_NOT_WORKING)

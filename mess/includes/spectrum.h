@@ -20,6 +20,7 @@ extern void spectrum_cart_exit(int id);
 
 extern int  timex_cart_load(int id);
 extern void timex_cart_exit(int id);
+extern void ts2068_update_memory(void);
 
 extern void spectrum_init_machine(void);
 extern void spectrum_shutdown_machine(void);
