@@ -93,7 +93,7 @@ void FUNC_NAME(effect_scale2x)
  * scan2: light 2x2 scanlines
  **********************************/
 
-#if !defined(EFFECT_MMX_ASM) || (DEST_DEPTH != 16 && DEST_DEPTH != 32)
+#ifndef EFFECT_MMX_ASM
 void FUNC_NAME(effect_scan2) (void *dst0, void *dst1, const void *src, unsigned count, unsigned int *u32lookup)
 {
   DEST_PIXEL *mydst0 = (DEST_PIXEL *)dst0;
