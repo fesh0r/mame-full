@@ -680,7 +680,7 @@ READ_HANDLER (v9938_status_r)
 
 ***************************************************************************/
 
-#define V9938_SECOND_FIELD ( !(vdp.contReg[9] & 0x04) || (!vdp.blink && (vdp.statReg[2] & 2) ) )
+#define V9938_SECOND_FIELD ( !(((vdp.contReg[9] & 0x04) && !(vdp.statReg[2] & 2)) || vdp.blink)) 
 
 #define V9938_WIDTH	(512 + 32)
 #define V9938_BPP	(8)
@@ -1346,9 +1346,9 @@ static void v9938_interrupt_bottom (void)
 	v9938_update_command ();
 
 	/* color blinking */
-	if (!(vdp.contReg[12] & 0xf0))
+	if (!(vdp.contReg[13] & 0xf0))
 		vdp.blink = 0;
-	else if (!(vdp.contReg[12] & 0x0f))
+	else if (!(vdp.contReg[13] & 0x0f))
 		vdp.blink = 1;
 	else
 		{
@@ -1359,9 +1359,9 @@ static void v9938_interrupt_bottom (void)
 			{
 			vdp.blink = !vdp.blink;
 			if (vdp.blink)
-				vdp.blink_count = (vdp.contReg[12] >> 4) * 10;
+				vdp.blink_count = (vdp.contReg[13] >> 4) * 10;
 			else
-				vdp.blink_count = (vdp.contReg[12] & 0x0f) * 10;
+				vdp.blink_count = (vdp.contReg[13] & 0x0f) * 10;
 			}
 		}
 

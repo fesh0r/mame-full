@@ -18,7 +18,7 @@ typedef struct {
     /* PSG */
     int psg_b,opll_active;
     /* memory */
-    UINT8 *empty, *ram;
+    UINT8 *empty, *ram, ramp[4];
     /* memory status */
     MSX_CART cart[MSX_MAX_CARTS];
 	/* printer */
@@ -61,6 +61,8 @@ WRITE_HANDLER ( msx_fmpac_w );
 READ_HANDLER ( msx_rtc_reg_r );
 WRITE_HANDLER ( msx_rtc_reg_w );
 WRITE_HANDLER ( msx_rtc_latch_w );
+WRITE_HANDLER ( msx_mapper_w );
+READ_HANDLER ( msx_mapper_r );
 
 /* memory functions */
 WRITE_HANDLER ( msx_writemem0 );

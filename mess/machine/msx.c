@@ -353,6 +353,7 @@ int msx_load_rom (int id)
             memset (pmem + size_aligned + i * 0x100 + 0x1880, 0xff, 0x80);
         }
         msx1.cart[id].mem = pmem;
+        msx1.cart[id].banks[0] = 0x1;
         break;
    case 7: /* ASCII/8kB with SRAM */
         pmem = realloc (msx1.cart[id].mem, size_aligned + 0x2000);
@@ -532,6 +533,8 @@ void msx_vdp_interrupt(int i) {
 }
 
 static void msx_ch_reset_core (void) {
+	int i;
+
     /* set interrupt stuff */
     cpu_irq_line_vector_w(0,0,0xff);
     /* setup PPI */
@@ -541,7 +544,9 @@ static void msx_ch_reset_core (void) {
     if (!msx1.empty || !msx1.ram)
     {
         msx1.empty = (UINT8*)malloc (0x4000);
-        msx1.ram = (UINT8*)malloc (0x10000);
+        msx1.ram = (UINT8*)malloc (0x20000);
+		for (i=0;i<4;i++) msx1.ramp[i] = 3 - i;
+	
         if (!msx1.ram || !msx1.empty)
         {
             logerror("malloc () in msx_ch_reset () failed!\n");
@@ -549,7 +554,7 @@ static void msx_ch_reset_core (void) {
         }
 
         memset (msx1.empty, 0xff, 0x4000);
-        memset (msx1.ram, 0, 0x10000);
+        memset (msx1.ram, 0, 0x20000);
     }
     msx1.run = 1;
 
@@ -685,10 +690,13 @@ READ_HANDLER ( msx_psg_port_a_r )
 		{
 		/* game port 2 */
         inp = input_port_7_r (0) & 0x7f;
+#if 0
 		if ( !(inp & 0x80) )
 			{
+#endif
 			/* joystick */
 			return (inp & 0x7f) | data;
+#if 0
 			}
 		else
 			{
@@ -701,15 +709,19 @@ READ_HANDLER ( msx_psg_port_a_r )
 
 			return data | inp;
 			}
+#endif
 		}
     else
 		{
 		/* game port 1 */
         inp = input_port_6_r (0) & 0x7f;
+#if 0
 		if ( !(inp & 0x80) )
 			{
+#endif
 			/* joystick */
 			return (inp & 0x7f) | data;
+#if 0
 			}
 		else
 			{
@@ -722,6 +734,7 @@ READ_HANDLER ( msx_psg_port_a_r )
 
 			return data | inp;
 			}
+#endif
 		}
 
     return 0;
@@ -1122,8 +1135,8 @@ static void msx_set_slot_2 (int page)
 
 static void msx_set_slot_3 (int page)
 {
-    cpu_setbank (1 + page * 2, msx1.ram + page * 0x4000);
-    cpu_setbank (2 + page * 2, msx1.ram + page * 0x4000 + 0x2000);
+    cpu_setbank (1 + page * 2, msx1.ram + (7 - msx1.ramp[page]) * 0x4000);
+    cpu_setbank (2 + page * 2, msx1.ram + (7 - msx1.ramp[page]) * 0x4000 + 0x2000);
 }
 
 static void (*msx_set_slot[])(int) = {
@@ -1160,7 +1173,7 @@ WRITE_HANDLER ( msx_writemem0 )
 		}
 	
     if ( (ppi8255_0_r(0) & 0x03) == 0x03 )
-        msx1.ram[offset] = data;
+        msx1.ram[(7 - msx1.ramp[0]) * 0x4000 + offset] = data;
 	}
 
 static int msx_cart_page_2 (int cart)
@@ -1508,7 +1521,7 @@ WRITE_HANDLER ( msx_writemem1 )
         msx_cart_write (1, offset, data);
         break;
     case 0x0c:
-        msx1.ram[0x4000+offset] = data;
+        msx1.ram[(7 - msx1.ramp[1]) * 0x4000 + offset] = data;
     }
 }
 
@@ -1523,14 +1536,25 @@ WRITE_HANDLER ( msx_writemem2 )
         msx_cart_write (1, 0x4000 + offset, data);
         break;
     case 0x30:
-        msx1.ram[0x8000+offset] = data;
+        msx1.ram[(7 - msx1.ramp[2]) * 0x4000 + offset] = data;
     }
 }
 
 WRITE_HANDLER ( msx_writemem3 )
 {
     if ( (ppi8255_0_r(0) & 0xc0) == 0xc0)
-        msx1.ram[0xc000+offset] = data;
+        msx1.ram[(7 - msx1.ramp[7]) * 0x4000 + offset] = data;
+}
+
+WRITE_HANDLER (msx_mapper_w)
+{
+	msx1.ramp[offset] = data & 7;
+	msx_set_all_mem_banks ();
+}
+
+READ_HANDLER (msx_mapper_r)
+{
+	return msx1.ramp[offset];
 }
 
 /*

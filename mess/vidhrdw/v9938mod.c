@@ -135,8 +135,8 @@ V9938_MODE_FUNC (mode_text2)
 	
     fg = Machine->pens[pal_ind16[vdp.contReg[7] >> 4]];	
     bg = Machine->pens[pal_ind16[vdp.contReg[7] & 15]];	
-    fg0 = Machine->pens[pal_ind16[vdp.contReg[13] >> 4]];	
-    bg0 = Machine->pens[pal_ind16[vdp.contReg[13] & 15]];
+    fg0 = Machine->pens[pal_ind16[vdp.contReg[14] >> 4]];	
+    bg0 = Machine->pens[pal_ind16[vdp.contReg[14] & 15]];
 	
 	name = (line/8)*80;	
 	

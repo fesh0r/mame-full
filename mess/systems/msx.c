@@ -57,6 +57,7 @@ static PORT_READ_START (readport2)
     { 0x98, 0x98, v9938_vram_r },
     { 0x99, 0x99, v9938_status_r },
 	{ 0xb5, 0xb5, msx_rtc_reg_r },
+	{ 0xfc, 0xff, msx_mapper_r },
 PORT_END
 
 static PORT_WRITE_START (writeport2)
@@ -70,6 +71,7 @@ static PORT_WRITE_START (writeport2)
     { 0x9b, 0x9b, v9938_register_w },
 	{ 0xb4, 0xb4, msx_rtc_latch_w },
 	{ 0xb5, 0xb5, msx_rtc_reg_w },
+	{ 0xfc, 0xff, msx_mapper_w },
 PORT_END
 
 /* start define for the special ports (DIPS, joystick, mouse) */
