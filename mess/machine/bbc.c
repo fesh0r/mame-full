@@ -19,7 +19,7 @@
 #include "includes/basicdsk.h"
 
 
-
+int startbank;
 
 /*************************
 memory handleing functions

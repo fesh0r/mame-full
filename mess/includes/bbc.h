@@ -9,7 +9,7 @@
 ******************************************************************************/
 
 int bbcb_keyscan(void);
-int startbank;
+extern int startbank;
 
 WRITE_HANDLER ( page_selecta_w );
 WRITE_HANDLER ( page_selectb_w );

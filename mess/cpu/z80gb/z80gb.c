@@ -375,7 +375,7 @@ const char *z80gb_info(void *context, int regnum)
 	static int which = 0;
 	z80gb_regs *r = context;
 
-	which = ++which % 8;
+	which = (which + 1) % 8;
     buffer[which][0] = '\0';
 	if( !context )
 		r = &Regs;

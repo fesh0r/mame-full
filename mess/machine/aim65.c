@@ -75,7 +75,7 @@ static int aim65_riot_b_r(int chip)
 	}
 	if (!(a&4)) {
 		//right?
-		if (KEY_PRINT) data&=~2; // \ 
+		if (KEY_PRINT) data&=~2; // backslash 
 		if (KEY_P) data&=~4;
 		if (KEY_I) data&=~8;
 		if (KEY_Y) data&=~0x10;

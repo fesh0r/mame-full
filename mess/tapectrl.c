@@ -131,7 +131,7 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 			switch (sel)
 			{
 			case 0:
-                id = ++id % device_count(IO_CASSETTE);
+                id = (id + 1) % device_count(IO_CASSETTE);
 				break;
 			case 2:
 				if ((status & 1) == 0)

@@ -331,7 +331,7 @@ READ_HANDLER (	kaypro_conin_r )
 	if (kbd_tail != kbd_head)
 	{
 		data = kbd_buff[kbd_tail];
-		kbd_tail = ++kbd_tail % sizeof(kbd_buff);
+		kbd_tail = (kbd_tail + 1) % sizeof(kbd_buff);
 	}
 	return data;
 }
@@ -350,7 +350,7 @@ WRITE_HANDLER ( kaypro_conin_w )
 
 	kbd_head_old = kbd_head;
 	kbd_buff[kbd_head] = data;
-	kbd_head = ++kbd_head % sizeof(kbd_buff);
+	kbd_head = (kbd_head + 1) % sizeof(kbd_buff);
 	/* will the buffer overflow ? */
 	if (kbd_head == kbd_tail)
 	{

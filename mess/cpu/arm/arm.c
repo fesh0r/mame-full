@@ -2845,7 +2845,7 @@ const char *arm_info(void *context, int regnum)
 	static int which = 0;
 	struct ARMCPU *r = context;
 
-	which = ++which % 32;
+	which = (which + 1) % 32;
 	buffer[which][0] = '\0';
 	if (!context)
 	{

@@ -195,11 +195,13 @@ unsigned sc61860_dasm(char *dst, unsigned oldpc)
 				sprintf(dst,"%-6s%.4x",table[oper].mnemonic, adr);
 				break;
 			case RelM:
-				adr=pc-PEEK_OP(pc++);
+				adr=pc-PEEK_OP(pc);
+				pc++;
 				sprintf(dst,"%-6s%.4x",table[oper].mnemonic, adr&0xffff);
 				break;
 			case RelP:
-				adr=pc+PEEK_OP(pc++);
+				adr=pc+PEEK_OP(pc);
+				pc++;
 				sprintf(dst,"%-6s%.4x",table[oper].mnemonic, adr&0xffff);
 				break;
 			case Ptc:

@@ -1127,8 +1127,8 @@ static void combinelayers(struct mame_bitmap *dest, int startline, int endline)
 				//if (*output_ptr != output) *output_ptr = output;
 
 				/* increment our X position within the layers accounting for wraparound */
-			 	scroll_a_x = ((++scroll_a_x) & h_mask);
-			 	scroll_b_x = ((++scroll_b_x) & h_mask);
+			 	scroll_a_x = ((scroll_a_x + 1) & h_mask);
+			 	scroll_b_x = ((scroll_b_x + 1) & h_mask);
 
 				//sprite_ptr++;
 

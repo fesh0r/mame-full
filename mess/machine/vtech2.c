@@ -657,7 +657,7 @@ READ_HANDLER( laser_fdc_r )
             if( laser_fdc_status & 0x80 )
             {
                 laser_fdc_bits = 8;
-                laser_fdc_offs = ++laser_fdc_offs % TRKSIZE_FM;
+                laser_fdc_offs = (laser_fdc_offs + 1) % TRKSIZE_FM;
             }
             laser_fdc_status &= ~0x80;
         }
@@ -737,7 +737,7 @@ WRITE_HANDLER( laser_fdc_w )
                         if( laser_data & 0x0001 ) value |= 0x01;
                         logerror("laser_fdc_w(%d) data($%04X) $%02X <- $%02X ($%04X)\n", offset, laser_fdc_offs, laser_fdc_data[laser_fdc_offs], value, laser_data);
                         laser_fdc_data[laser_fdc_offs] = value;
-                        laser_fdc_offs = ++laser_fdc_offs % TRKSIZE_FM;
+                        laser_fdc_offs = (laser_fdc_offs + 1) % TRKSIZE_FM;
                         laser_fdc_write++;
                         laser_fdc_bits = 8;
                     }

@@ -412,7 +412,7 @@ INLINE void init_update_regs( void ) {
 
 ***********************************************************************************/
 #define BEGIN_UPDATE( name ) \
-static void name##(struct mame_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x ) { \
+static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x ) { \
 	int i; \
 	if ( x < update_regs.ddf_start_pixel ) { /* see if we need to start fetching */ \
 		dst[x] = update_regs.back_color; /* fill the pixel with color 0 */ \
@@ -444,7 +444,7 @@ static void name##(struct mame_bitmap *bitmap, unsigned short *dst, int planes, 
 #endif
 
 #define BEGIN_UPDATE_WITH_SPRITES( name ) \
-static void name##(struct mame_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x ) { \
+static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x ) { \
 	int i; \
 	if ( x < update_regs.ddf_start_pixel ) { /* see if we need to start fetching */ \
 		dst[x] = update_regs.back_color; /* fill the pixel with color 0 */ \
@@ -490,7 +490,7 @@ static void name##(struct mame_bitmap *bitmap, unsigned short *dst, int planes, 
 }
 
 #define UNIMPLEMENTED( name ) \
-	static void name##(struct mame_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x ) { \
+	static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x ) { \
 		amiga_display_msg(bitmap,  "Unimplemented screen mode: ##name## " ); \
 	}
 

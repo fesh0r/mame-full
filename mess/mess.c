@@ -283,7 +283,7 @@ const char *device_typename_id(int type, int id)
 	static int which = 0;
 	if (type < IO_COUNT)
 	{
-		which = ++which % 40;
+		which = (which + 1) % 40;
 		/* for the average user counting starts at #1 ;-) */
 		sprintf(typename_id[which], "%s #%d", devices[type].name, id+1);
 		return typename_id[which];

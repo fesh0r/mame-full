@@ -518,7 +518,7 @@ READ_HANDLER( vtech1_fdc_r )
 			if( vtech1_fdc_status & 0x80 )
             {
 				vtech1_fdc_bits = 8;
-				vtech1_fdc_offs = ++vtech1_fdc_offs % TRKSIZE_FM;
+				vtech1_fdc_offs = (vtech1_fdc_offs + 1) % TRKSIZE_FM;
             }
 			vtech1_fdc_status &= ~0x80;
         }
@@ -598,7 +598,7 @@ WRITE_HANDLER( vtech1_fdc_w )
 						if( vtech1_data & 0x0001 ) value |= 0x01;
 						logerror("vtech1_fdc_w(%d) data($%04X) $%02X <- $%02X ($%04X)\n", offset, vtech1_fdc_offs, vtech1_fdc_data[vtech1_fdc_offs], value, vtech1_data);
 						vtech1_fdc_data[vtech1_fdc_offs] = value;
-						vtech1_fdc_offs = ++vtech1_fdc_offs % TRKSIZE_FM;
+						vtech1_fdc_offs = (vtech1_fdc_offs + 1) % TRKSIZE_FM;
 						vtech1_fdc_write++;
 						vtech1_fdc_bits = 8;
 					}

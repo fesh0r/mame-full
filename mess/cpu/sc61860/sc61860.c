@@ -305,7 +305,7 @@ const char *sc61860_info(void *context, int regnum)
 	static int which = 0;
 	SC61860_Regs *r = context;
 
-	which = ++which % 16;
+	which = (which + 1) % 16;
 	buffer[which][0] = '\0';
 	if( !context )
 		r = &sc61860;
