@@ -316,6 +316,12 @@ int vectrex_start (void)
 {
 	int width, height;
 
+	/* Set the whole cart ROM area to 1. This is needed to work around a bug (?)
+	 * in Minestorm where the exec-rom attempts to access a vector list here.
+	 * 1 signals the end of the vector list.
+	 */
+	memset (memory_region(REGION_CPU1), 1, 0x8000);
+
 	vectrex_set_palette ();
 
 	if (vector_vh_start())
