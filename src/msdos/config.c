@@ -176,10 +176,10 @@ static int get_bool (char *section, char *option, char *shortcut, int def)
 	yesnoauto = get_config_string((char *)drivers[game]->name, option, yesnoauto);
 
 	/* also take numerical values instead of "yes", "no" and "auto" */
-	if      (stricmp(yesnoauto, "no"  ) == 0) res = 0;
+	if		(stricmp(yesnoauto, "no"  ) == 0) res = 0;
 	else if (stricmp(yesnoauto, "yes" ) == 0) res = 1;
 	else if (stricmp(yesnoauto, "auto") == 0) res = -1;
-	else    res = atoi (yesnoauto);
+	else	res = atoi (yesnoauto);
 
 cmdline:
 	/* check the commandline */
@@ -353,7 +353,7 @@ void get_rom_sample_path (int argc, char **argv, int game_index)
 /* for playback of .inp files */
 void init_inpdir(void)
 {
-    inpdir = get_string ("directory", "inp",     NULL, "INP");
+	inpdir = get_string ("directory", "inp",     NULL, "INP");
 }
 
 void parse_cmdline (int argc, char **argv, int game_index)
@@ -376,40 +376,40 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	set_config_string(0,"emulate_three","no");
 
 	/* read graphic configuration */
-	scanlines   = get_bool   ("config", "scanlines",    NULL,  1);
-	stretch     = get_bool   ("config", "stretch",		NULL,  1);
-	options.use_artwork = get_bool   ("config", "artwork",	NULL,  1);
-	options.use_samples = get_bool   ("config", "samples",	NULL,  1);
-	video_sync  = get_bool   ("config", "vsync",        NULL,  0);
-	wait_vsync  = get_bool   ("config", "waitvsync",    NULL,  0);
-	use_triplebuf = get_bool ("config", "triplebuffer",	NULL,  0);
-	use_tweaked = get_bool   ("config", "tweak",		NULL,  0);
-	vesamode    = get_string ("config", "vesamode",	NULL,	"vesa3");
-	use_mmx		= get_bool   ("config", "mmx", 		NULL,	-1);
-	use_dirty	= get_bool	 ("config", "dirty",	NULL,	-1);
-	options.antialias   = get_bool   ("config", "antialias",    NULL,  1);
+	scanlines	= get_bool	 ("config", "scanlines",    NULL,  1);
+	stretch 	= get_bool	 ("config", "stretch",      NULL,  1);
+	options.use_artwork = get_bool	 ("config", "artwork",  NULL,  1);
+	options.use_samples = get_bool	 ("config", "samples",  NULL,  1);
+	video_sync	= get_bool	 ("config", "vsync",        NULL,  0);
+	wait_vsync	= get_bool	 ("config", "waitvsync",    NULL,  0);
+	use_triplebuf = get_bool ("config", "triplebuffer", NULL,  0);
+	use_tweaked = get_bool	 ("config", "tweak",        NULL,  0);
+	vesamode	= get_string ("config", "vesamode", NULL,   "vesa3");
+	use_mmx 	= get_bool	 ("config", "mmx",      NULL,   -1);
+	use_dirty	= get_bool	 ("config", "dirty",    NULL,   -1);
+	options.antialias	= get_bool	 ("config", "antialias",    NULL,  1);
 	options.translucency = get_bool    ("config", "translucency", NULL, 1);
 
-	vgafreq     = get_int    ("config", "vgafreq",      NULL,  -1);
+	vgafreq 	= get_int	 ("config", "vgafreq",      NULL,  -1);
 	always_synced = get_bool ("config", "alwayssynced", NULL, 0);
 
-	tmpstr             = get_string ("config", "depth", NULL, "auto");
+	tmpstr			   = get_string ("config", "depth", NULL, "auto");
 	options.color_depth = atoi(tmpstr);
-	if (options.color_depth != 8 && options.color_depth != 16) options.color_depth = 0;	/* auto */
+	if (options.color_depth != 8 && options.color_depth != 16) options.color_depth = 0; /* auto */
 
-	skiplines   = get_int    ("config", "skiplines",    NULL, 0);
-	skipcolumns = get_int    ("config", "skipcolumns",  NULL, 0);
-	f_beam      = get_float  ("config", "beam",         NULL, 1.0);
+	skiplines	= get_int	 ("config", "skiplines",    NULL, 0);
+	skipcolumns = get_int	 ("config", "skipcolumns",  NULL, 0);
+	f_beam		= get_float  ("config", "beam",         NULL, 1.0);
 	if (f_beam < 1.0) f_beam = 1.0;
 	if (f_beam > 16.0) f_beam = 16.0;
-	f_flicker   = get_float  ("config", "flicker",      NULL, 0.0);
+	f_flicker	= get_float  ("config", "flicker",      NULL, 0.0);
 	if (f_flicker < 0.0) f_flicker = 0.0;
 	if (f_flicker > 100.0) f_flicker = 100.0;
 	osd_gamma_correction = get_float ("config", "gamma",   NULL, 1.0);
 	if (osd_gamma_correction < 0.5) osd_gamma_correction = 0.5;
 	if (osd_gamma_correction > 2.0) osd_gamma_correction = 2.0;
 
-	tmpstr             = get_string ("config", "frameskip", "fs", "auto");
+	tmpstr			   = get_string ("config", "frameskip", "fs", "auto");
 	if (!stricmp(tmpstr,"auto"))
 	{
 		frameskip = 0;
@@ -421,20 +421,20 @@ void parse_cmdline (int argc, char **argv, int game_index)
 		autoframeskip = 0;
 	}
 	options.norotate  = get_bool ("config", "norotate",  NULL, 0);
-	options.ror       = get_bool ("config", "ror",       NULL, 0);
-	options.rol       = get_bool ("config", "rol",       NULL, 0);
-	options.flipx     = get_bool ("config", "flipx",     NULL, 0);
-	options.flipy     = get_bool ("config", "flipy",     NULL, 0);
+	options.ror 	  = get_bool ("config", "ror",       NULL, 0);
+	options.rol 	  = get_bool ("config", "rol",       NULL, 0);
+	options.flipx	  = get_bool ("config", "flipx",     NULL, 0);
+	options.flipy	  = get_bool ("config", "flipy",     NULL, 0);
 
 	/* read sound configuration */
 
-	soundcard           = get_int  ("config", "soundcard",  NULL, -1);
+	soundcard			= get_int  ("config", "soundcard",  NULL, -1);
 	options.use_emulated_ym3812 = !get_bool ("config", "ym3812opl",  NULL,  0);
 	options.samplerate = get_int  ("config", "samplerate", "sr", 22050);
 	if (options.samplerate < 5000) options.samplerate = 5000;
 	if (options.samplerate > 50000) options.samplerate = 50000;
-	usestereo           = get_bool ("config", "stereo",  NULL,  1);
-	attenuation         = get_int  ("config", "volume",  NULL,  0);
+	usestereo			= get_bool ("config", "stereo",  NULL,  1);
+	attenuation 		= get_int  ("config", "volume",  NULL,  0);
 	if (attenuation < -32) attenuation = -32;
 	if (attenuation > 0) attenuation = 0;
 
@@ -446,7 +446,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	if (get_bool  ("config", "hotrodse",   NULL,  0)) use_hotrod = 2;
 
 	/* misc configuration */
-	options.cheat      = get_bool ("config", "cheat", NULL, 0);
+	options.cheat	   = get_bool ("config", "cheat", NULL, 0);
 	options.mame_debug = get_bool ("config", "debug", NULL, 0);
 
 	tmpstr = get_string ("config", "cheatfile", "cf", CHEAT_NAME );
@@ -457,7 +457,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	mameinfo_filename  = get_string ("config", "mameinfofile", NULL, "MAMEINFO.DAT");    /* JCK 980917 */
 
 	/* get resolution */
-	resolution  = get_string ("config", "resolution", NULL, "auto");
+	resolution	= get_string ("config", "resolution", NULL, "auto");
 
 	/* set default subdirectories */
 #ifndef MESS
@@ -636,25 +636,22 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	}
 
 	if (options.mame_debug)
-    {
-        options.debug_width = gfx_width = 640;
-        options.debug_height = gfx_height = 480;
-        options.vector_width = gfx_width;
-        options.vector_height = gfx_height;
-        use_dirty = 0;
-        stretch = 0;
-    }
+	{
+		options.debug_width = gfx_width = 640;
+		options.debug_height = gfx_height = 480;
+		options.vector_width = gfx_width;
+		options.vector_height = gfx_height;
+		use_dirty = 0;
+	}
 
 #ifdef MESS
 	/* Is there an override for softwarepath= for this driver? */
-	tmpstr = get_string ((char*)drivers[game]->name,  "softwarepath", NULL, NULL);
+	tmpstr = get_string ((char*)drivers[game]->name, "softwarepath", NULL, NULL);
 	if (tmpstr)
 		softwarepath = tmpstr;
-    logerror("Using Software Path %s for %s\n", softwarepath, drivers[game]->name);
-    decompose_software_path(softwarepath);
+	logerror("Using Software Path %s for %s\n", softwarepath, drivers[game]->name);
+	decompose_software_path(softwarepath);
 #endif
 
 }
-
-
 

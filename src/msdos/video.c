@@ -158,6 +158,7 @@ void blitscreen_dirty0_vesa_4x_2xs_16bpp_palettized(struct osd_bitmap *bitmap);
 
 static void update_screen_dummy(struct osd_bitmap *bitmap);
 void (*update_screen)(struct osd_bitmap *bitmap) = update_screen_dummy;
+void (*update_screen_debugger)(struct osd_bitmap *bitmap) = update_screen_dummy;
 
 #define MAX_X_MULTIPLY 4
 #define MAX_Y_MULTIPLY 3
@@ -1814,12 +1815,12 @@ int osd_allocate_colors(unsigned int totalcolors,
 		{
 			if (unchained)
 			{
-				update_screen = blitscreen_dirty1_unchained_vga;
+				update_screen = update_screen_debugger = blitscreen_dirty1_unchained_vga;
 				logerror("blitscreen_dirty1_unchained_vga\n");
 			}
 			else
 			{
-				update_screen = blitscreen_dirty1_vga;
+				update_screen = update_screen_debugger = blitscreen_dirty1_vga;
 				logerror("blitscreen_dirty1_vga\n");
 			}
 		}
@@ -1828,12 +1829,12 @@ int osd_allocate_colors(unsigned int totalcolors,
 			/* check for unchained modes */
 			if (unchained)
 			{
-				update_screen = blitscreen_dirty0_unchained_vga;
+				update_screen = update_screen_debugger = blitscreen_dirty0_unchained_vga;
 				logerror("blitscreen_dirty0_unchained_vga\n");
 			}
 			else
 			{
-				update_screen = blitscreen_dirty0_vga;
+				update_screen = update_screen_debugger = blitscreen_dirty0_vga;
 				logerror("blitscreen_dirty0_vga\n");
 			}
 		}
@@ -1859,14 +1860,21 @@ int osd_allocate_colors(unsigned int totalcolors,
 		if (video_depth == 16)
 		{
 			if (modifiable_palette)
+			{
 				update_screen = updaters16_palettized[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
+				update_screen_debugger = updaters16_palettized[0][0][0][0];
+			}
 			else
+			{
 				update_screen = updaters16[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
+				update_screen_debugger = updaters16[0][0][0][0];
+            }
 		}
 		else
 		{
 			update_screen = updaters8[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
-		}
+			update_screen_debugger = updaters8[0][0][0][0];
+        }
 	}
 
 	return 0;
@@ -2301,10 +2309,17 @@ void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,struct osd_bitmap
 			}
 		}
 
-		/* copy the bitmap to screen memory */
-		profiler_mark(PROFILER_BLIT);
-		update_screen(bitmap);
-		profiler_mark(PROFILER_END);
+		if (show_debugger)
+		{
+			update_screen_debugger(bitmap);
+        }
+		else
+		{
+			/* copy the bitmap to screen memory */
+			profiler_mark(PROFILER_BLIT);
+			update_screen(bitmap);
+			profiler_mark(PROFILER_END);
+		}
 
 		/* see if we need to give the card enough time to draw both odd/even fields of the interlaced display
 			(req. for 15.75KHz Arcade Monitor Modes */
