@@ -43,6 +43,9 @@ struct messtest_testcase
 	char *driver;
 	double time_limit;	/* 0.0 = default */
 	struct messtest_command *commands;
+
+	/* options */
+	UINT32 ram;
 };
 
 

@@ -30,7 +30,12 @@
 
 <test name="coco3_000" driver="coco3">
 	<wait time="2"/>
-	<memverify start="0x400" end="0x40C">"DISK&#96;EXTENDED"</memverify>
+	<memverify start="0x70400" end="0x7040C">"DISK&#96;EXTENDED"</memverify>
+</test>
+
+<test name="coco3_001" driver="coco3" ramsize="128k">
+	<wait time="2"/>
+	<memverify start="0x10400" end="0x1040C">"DISK&#96;EXTENDED"</memverify>
 </test>
 
 <test name="dragon64_000" driver="dragon64">

@@ -29,6 +29,14 @@ enum messtest_phase
 	STATE_ABORTED
 };
 
+enum blobparse_state
+{
+	BLOBSTATE_INITIAL,
+	BLOBSTATE_AFTER_0,
+	BLOBSTATE_HEX,
+	BLOBSTATE_INQUOTES
+};
+
 struct messtest_state
 {
 	XML_Parser parser;
@@ -40,6 +48,8 @@ struct messtest_state
 	int command_count;
 
 	struct messtest_command current_command;
+
+	enum blobparse_state blobstate;
 
 	int test_count;
 	int failure_count;
@@ -125,6 +135,7 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 
 			memset(&state->testcase, 0, sizeof(state->testcase));
 
+			/* 'name' attribute */
 			attr_name = "name";
 			s = find_attribute(attributes, attr_name);
 			if (!s)
@@ -133,6 +144,7 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 			if (!state->testcase.name)
 				goto outofmemory;
 
+			/* 'driver' attribute */
 			attr_name = "driver";
 			s = find_attribute(attributes, attr_name);
 			if (!s)
@@ -140,6 +152,10 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 			state->testcase.driver = pool_strdup(&state->pool, s);
 			if (!state->testcase.driver)
 				goto outofmemory;
+
+			/* 'ramsize' attribute */
+			s = find_attribute(attributes, "ramsize");
+			state->testcase.ram = s ? ram_parse_string(s) : 0;
 
 			state->phase = STATE_TEST;
 			state->testcase.commands = NULL;
@@ -180,6 +196,7 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 			s3 = find_attribute(attributes, "region");
 
 			state->current_command.command_type = MESSTEST_COMMAND_VERIFY_MEMORY;
+			state->blobstate = BLOBSTATE_INITIAL;
 			parse_offset(s1, &state->current_command.u.verify_args.start);
 			parse_offset(s2, &state->current_command.u.verify_args.end);
 
@@ -280,43 +297,114 @@ static void get_blob(struct messtest_state *state, const XML_Char *s, int len,
 {
 	UINT8 *bytes = NULL;
 	int bytes_len = 0;
-	int i;
+	int i = 0;
+	int j, k;
 
-	if ((len >= 2) && (s[0] == '0') && (tolower(s[1]) == 'x'))
+	while(i < len)
 	{
-		/* hex data in the form 0x... */
-		s += 2;
-		len -= 2;
+		switch(state->blobstate) {
+		case BLOBSTATE_INITIAL:
+			if (isspace(s[i]))
+			{
+				/* ignore whitespace */
+				i++;
+			}
+			else if (s[i] == '0')
+			{
+				state->blobstate = BLOBSTATE_AFTER_0;
+				i++;
+			}
+			else if (s[i] == '\"')
+			{
+				state->blobstate = BLOBSTATE_INQUOTES;
+				i++;
+			}
+			else
+				goto parseerror;
+			break;
 
-		for (i = 0; (i < len) && isxdigit(s[i]); i++)
-			;
-		bytes_len = i / 2;
+		case BLOBSTATE_AFTER_0:
+			if (tolower(s[i]) == 'x')
+			{
+				state->blobstate = BLOBSTATE_HEX;
+				i++;
+			}
+			else
+				goto parseerror;
+			break;
 
-		bytes = pool_realloc(&state->pool, *blob, *blob_len + bytes_len);
-		for (i = 0; i < bytes_len; i++)
-			bytes[i + *blob_len] = (hexdigit(s[i*2+0]) << 4) + hexdigit(s[i*2+1]);
-	}
-	else if ((len >= 2) && (s[0] == '\"'))
-	{
-		/* escaped ascii data in the form "...." */
-		s++;
-		len--;
+		case BLOBSTATE_HEX:
+			if (isspace(s[i]))
+			{
+				state->blobstate = BLOBSTATE_INITIAL;
+				i++;
+			}
+			else if (isxdigit(s[i]))
+			{
+				/* count the number of hex digits available */
+				for (j = i; (j < len) && isxdigit(s[j+0]) && isxdigit(s[j+1]); j += 2)
+					;
+				bytes_len = (j - i) / 2;
+				
+				/* allocate the memory */
+				bytes = pool_realloc(&state->pool, *blob, *blob_len + bytes_len);
+				if (!bytes)
+					goto outofmemory;
 
-		bytes_len = len;
-		for (i = 0; i < len; i++)
-		{
+				/* build the byte array */
+				for (k = 0; k < bytes_len; k++)
+				{
+					bytes[k + *blob_len] =
+						(hexdigit(s[i+k*2+0]) << 4) + hexdigit(s[i+k*2+1]);
+				}
+
+				i = j;
+				*blob = bytes;
+				*blob_len += bytes_len;
+			}
+			else
+				goto parseerror;
+			break;
+
+		case BLOBSTATE_INQUOTES:
 			if (s[i] == '\"')
 			{
-				bytes_len = i;
-				break;
+				state->blobstate = BLOBSTATE_INITIAL;
+				i++;
 			}
-		}
+			else
+			{
+				/* count the number of quoted chars available */
+				for (j = i; (j < len) && (s[j] != '\"'); j++)
+					;
+				bytes_len = j - i;
+				
+				/* allocate the memory */
+				bytes = pool_realloc(&state->pool, *blob, *blob_len + bytes_len);
+				if (!bytes)
+					goto outofmemory;
 
-		bytes = pool_realloc(&state->pool, *blob, *blob_len + bytes_len);
-		memcpy(bytes + *blob_len, s, bytes_len);
+				/* build the byte array */
+				memcpy(&bytes[*blob_len], &s[i], bytes_len);
+
+				i = j;
+				*blob = bytes;
+				*blob_len += bytes_len;
+			}
+			break;
+		}
 	}
-	*blob = bytes;
-	*blob_len += bytes_len;
+	return;
+
+outofmemory:
+	fprintf(stderr, "Out of memory\n");
+	state->phase = STATE_ABORTED;
+	return;
+
+parseerror:
+	fprintf(stderr, "Invalid blob string specifier\n");
+	state->phase = STATE_ABORTED;
+	return;
 }
 
 
@@ -362,7 +450,7 @@ outofmemory:
 int messtest(const char *script_filename, int *test_count, int *failure_count)
 {
 	struct messtest_state state;
-	char buf[2048];
+	char buf[1024];
 	FILE *in;
 	int len, done;
 	int result = -1;

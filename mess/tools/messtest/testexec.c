@@ -95,12 +95,13 @@ enum messtest_result run_test(const struct messtest_testcase *testcase)
 	options.skip_gameinfo = 1;
 	options.skip_warnings = 1;
 	options.disable_normal_ui = 1;
+	options.ram = testcase->ram;
 
 	/* perform the test */
 	message(MSG_INFO, "Beginning test (driver '%s')", testcase->driver);
 	begin_time = clock();
 	run_game(driver_num);
-	real_run_time = ((double) clock()) / CLOCKS_PER_SEC;
+	real_run_time = ((double) (clock() - begin_time)) / CLOCKS_PER_SEC;
 
 	/* what happened? */
 	switch(state) {
