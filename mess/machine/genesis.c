@@ -7,6 +7,7 @@
 #include "machine/genesis.h"
 #include "vidhrdw/genesis.h"
 #include "cpu/z80/z80.h"
+#include <zlib.h>
 
 int z80running;
 int port_a_io = 0;
