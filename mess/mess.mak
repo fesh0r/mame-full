@@ -705,13 +705,14 @@ $(OBJ)/galaxy.a:   \
 $(OBJ)/lviv.a:   \
 	$(OBJ)/mess/vidhrdw/lviv.o   \
 	$(OBJ)/mess/systems/lviv.o   \
-	$(OBJ)/mess/formats/lviv_lvt.o	\
 	$(OBJ)/mess/machine/lviv.o   \
+	$(OBJ)/mess/formats/lviv_lvt.o
 
 $(OBJ)/pmd85.a:   \
 	$(OBJ)/mess/vidhrdw/pmd85.o   \
 	$(OBJ)/mess/systems/pmd85.o   \
 	$(OBJ)/mess/machine/pmd85.o   \
+	$(OBJ)/mess/formats/pmd_pmd.o
 
 $(OBJ)/magnavox.a: \
 	$(OBJ)/mess/machine/odyssey2.o \

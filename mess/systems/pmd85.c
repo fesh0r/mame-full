@@ -5,6 +5,10 @@ PMD-85 driver by Krzysztof Strzecha
 What's new:
 -----------
 
+25.04.2004	PMD-85.1 tape emulation with support for .pmd format files added.
+19.04.2004	Verified PMD-85.1 and PMD-85.2 monitor roms and replaced with
+		unmodified ones.
+		Memory system cleanups.
 03.04.2004	PMD-85.3 and Mato (PMD-85.2 clone) drivers.
 		Preliminary and not working tape support.
 		Reset key fixed. PMD-85.1 fixed.
@@ -18,17 +22,18 @@ What's new:
 Notes on emulation status and to do list:
 -----------------------------------------
 
-1. Tape and V.24 (8251)
-2. Support for .pmd tape
-3. Flash video attribute
-4. External interfaces connectors (K2-K5)
-5. Speaker
-6. Clean up and fix memory banking/mapping in all drivers
-7. ROM dumps are not verified
-8. 8251 in Didaktik Alfa
-9. Colors (if any)
-10. PMD-85, Didaktik Alfa 2 and Didaktik Beta (ROMs and documentation needed)
-11. FDD interface (ROMs and disk images needed)
+1. Tape/V.24 (8251) selection.
+2. Tape emulation for other machines than PMD-85.1.
+3. Flash video attribute.
+4. External interfaces connectors (K2-K5).
+5. Speaker.
+6. Verify PMD-85.2A, PMD-85.3, Didaktik Alfa and Mato monitor roms.
+7. Verify all Basic roms.
+8. 8251 in Didaktik Alfa.
+9. Colors (if any).
+10. PMD-85, Didaktik Alfa 2 and Didaktik Beta (ROMs and documentation needed).
+11. FDD interface (ROMs and disk images needed).
+12. "Duch & Pampuch" Mato game displays scores with incorrect characters.
 
 PMD-85 technical information
 ============================
@@ -168,6 +173,7 @@ I/O ports
 #include "vidhrdw/generic.h"
 #include "devices/cassette.h"
 #include "includes/pmd85.h"
+#include "formats/pmd_pmd.h"
 
 /* I/O ports */
 
@@ -202,6 +208,19 @@ ADDRESS_MAP_START( pmd85_mem , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xc000, 0xffff) AM_READWRITE(MRA8_BANK8, MWA8_BANK8)
 ADDRESS_MAP_END
 
+ADDRESS_MAP_START( pmd852a_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0fff) AM_READWRITE(MRA8_BANK1, MWA8_BANK1)
+	AM_RANGE(0x1000, 0x1fff) AM_READWRITE(MRA8_BANK2, MWA8_BANK2)
+	AM_RANGE(0x2000, 0x2fff) AM_READWRITE(MRA8_BANK3, MWA8_BANK3)
+	AM_RANGE(0x3000, 0x3fff) AM_READWRITE(MRA8_BANK4, MWA8_BANK4)
+	AM_RANGE(0x4000, 0x7fff) AM_READWRITE(MRA8_BANK5, MWA8_BANK5)
+	AM_RANGE(0x8000, 0x8fff) AM_READWRITE(MRA8_BANK6, MWA8_ROM)
+	AM_RANGE(0x9000, 0x9fff) AM_READWRITE(MRA8_BANK7, MWA8_BANK7)
+	AM_RANGE(0xa000, 0xafff) AM_READWRITE(MRA8_BANK8, MWA8_ROM)
+	AM_RANGE(0xb000, 0xbfff) AM_READWRITE(MRA8_BANK9, MWA8_BANK9)
+	AM_RANGE(0xc000, 0xffff) AM_READWRITE(MRA8_BANK10, MWA8_BANK10)
+ADDRESS_MAP_END
+
 ADDRESS_MAP_START( pmd853_mem , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x0000, 0x1fff) AM_READWRITE(MRA8_BANK1, MWA8_BANK9)
 	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(MRA8_BANK2, MWA8_BANK10)
@@ -218,16 +237,16 @@ ADDRESS_MAP_START( alfa_mem , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x1000, 0x33ff) AM_READWRITE(MRA8_BANK2, MWA8_BANK2)
 	AM_RANGE(0x3400, 0x3fff) AM_READWRITE(MRA8_BANK3, MWA8_BANK3)
 	AM_RANGE(0x4000, 0x7fff) AM_READWRITE(MRA8_BANK4, MWA8_BANK4)
-	AM_RANGE(0x8000, 0x8fff) AM_READWRITE(MRA8_BANK5, MWA8_BANK5)
-	AM_RANGE(0x9000, 0xb3ff) AM_READWRITE(MRA8_BANK6, MWA8_BANK6)
-	AM_RANGE(0xb400, 0xbfff) AM_READWRITE(MRA8_BANK7, MWA8_BANK7)
-	AM_RANGE(0xc000, 0xffff) AM_READWRITE(MRA8_BANK8, MWA8_BANK8)
+	AM_RANGE(0x8000, 0x8fff) AM_READWRITE(MRA8_BANK5, MWA8_ROM)
+	AM_RANGE(0x9000, 0xb3ff) AM_READWRITE(MRA8_BANK6, MWA8_ROM)
+	AM_RANGE(0xb400, 0xbfff) AM_READWRITE(MRA8_NOP,   MWA8_NOP)
+	AM_RANGE(0xc000, 0xffff) AM_READWRITE(MRA8_BANK7, MWA8_BANK7)
 ADDRESS_MAP_END
 
 ADDRESS_MAP_START( mato_mem , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x0000, 0x3fff) AM_READWRITE(MRA8_BANK1, MWA8_BANK1)
 	AM_RANGE(0x4000, 0x7fff) AM_READWRITE(MRA8_BANK2, MWA8_BANK2)
-	AM_RANGE(0x8000, 0xbfff) AM_READWRITE(MRA8_BANK3, MWA8_BANK3)
+	AM_RANGE(0x8000, 0xbfff) AM_READWRITE(MRA8_BANK3, MWA8_ROM)
 	AM_RANGE(0xc000, 0xffff) AM_READWRITE(MRA8_BANK4, MWA8_BANK4)
 ADDRESS_MAP_END
 
@@ -531,6 +550,12 @@ static MACHINE_DRIVER_START( pmd85 )
 	MDRV_SOUND_ADD(WAVE, pmd85_wave_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( pmd852a )
+	MDRV_IMPORT_FROM( pmd85 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(pmd852a_mem, 0)
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( pmd853 )
 	MDRV_IMPORT_FROM( pmd85 )
 	MDRV_CPU_MODIFY("main")
@@ -552,14 +577,14 @@ MACHINE_DRIVER_END
 
 ROM_START(pmd851)
 	ROM_REGION(0x11000,REGION_CPU1,0)
-	ROM_LOAD("pmd85-1.bin", 0x10000, 0x1000, CRC(9bc5e6ec))
+	ROM_LOAD("pmd85-1.bin", 0x10000, 0x1000, CRC(ef50b416))
 	ROM_REGION(0x2400,REGION_USER1,0)
 	ROM_LOAD_OPTIONAL("pmd85-1.bas", 0x0000, 0x2400, CRC(4fc37d45))
 ROM_END
 
 ROM_START(pmd852)
 	ROM_REGION(0x11000,REGION_CPU1,0)
-	ROM_LOAD("pmd85-2.bin", 0x10000, 0x1000, CRC(c093474a))
+	ROM_LOAD("pmd85-2.bin", 0x10000, 0x1000, CRC(d4786f63))
 	ROM_REGION(0x2400,REGION_USER1,0)
 	ROM_LOAD_OPTIONAL("pmd85-2.bas", 0x0000, 0x2400, CRC(fc4a3ebf))
 ROM_END
@@ -603,21 +628,21 @@ ROM_END
 
 static struct CassetteOptions pmd85_cassette_options = {
 	1,		/* channels */
-	8,		/* bits per sample */
+	16,		/* bits per sample */
 	7200		/* sample frequency */
 };
 
 SYSTEM_CONFIG_START(pmd85)
 	CONFIG_RAM_DEFAULT(64 * 1024)
-	CONFIG_DEVICE_CASSETTEX(1, NULL, &pmd85_cassette_options, CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED)
+	CONFIG_DEVICE_CASSETTEX(1, pmd85_pmd_format, &pmd85_cassette_options, CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED)
 SYSTEM_CONFIG_END
 
 
 /*    YEAR  NAME     PARENT  COMPAT	MACHINE  INPUT  INIT      CONFIG COMPANY  FULLNAME */
 COMP( 1985, pmd851,  0,      0,		pmd85,   pmd85, pmd851,   pmd85, "Tesla", "PMD-85.1" )
 COMP( 1985, pmd852,  pmd851, 0,		pmd85,   pmd85, pmd851,   pmd85, "Tesla", "PMD-85.2" )
-COMP( 1985, pmd852a, pmd851, 0,		pmd85,   pmd85, pmd852a,  pmd85, "Tesla", "PMD-85.2A" )
-COMP( 1985, pmd852b, pmd851, 0,		pmd85,   pmd85, pmd852a,  pmd85, "Tesla", "PMD-85.2B" )
+COMP( 1985, pmd852a, pmd851, 0,		pmd852a, pmd85, pmd852a,  pmd85, "Tesla", "PMD-85.2A" )
+COMP( 1985, pmd852b, pmd851, 0,		pmd852a, pmd85, pmd852a,  pmd85, "Tesla", "PMD-85.2B" )
 COMP( 1988, pmd853,  pmd851, 0,		pmd853,  pmd85, pmd853,   pmd85, "Tesla", "PMD-85.3" )
 COMP( 1986, alfa,    pmd851, 0,		alfa,    alfa,  alfa,     pmd85, "Didaktik", "Alfa" )
 COMP( 1985, mato,    pmd851, 0,		mato,    mato,  mato,     pmd85, "Statny", "Mato (Basic ROM)" )

@@ -33,6 +33,8 @@ System Driver Changes:
   registers enum to cdp1802.h for access needed by a future driver, and changed
   studio2/vip drivers to work on the modified core.  [Curt Coder]
 
+- [PMD85.1] Tape emulation with support for .pmd format files added. [Krzysztof
+  Strzecha]
 
 
 User Interface Changes:

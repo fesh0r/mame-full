@@ -77,16 +77,9 @@ static void pmd852a_update_memory (void)
 {
 	if (pmd85_startup_mem_map)
 	{
+
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x0fff, 0, MWA8_ROM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, MWA8_BANK2);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x2fff, 0, MWA8_ROM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x3000, 0x3fff, 0, MWA8_BANK4);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, MWA8_BANK5);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x8fff, 0, MWA8_ROM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0x9fff, 0, MWA8_BANK7);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xafff, 0, MWA8_ROM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb000, 0xbfff, 0, MWA8_BANK9);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xffff, 0, MWA8_BANK10);
 
 		cpu_setbank(1, memory_region(REGION_CPU1) + 0x010000);
 		cpu_setbank(2, mess_ram + 0x9000);
@@ -98,30 +91,18 @@ static void pmd852a_update_memory (void)
 		cpu_setbank(8, memory_region(REGION_CPU1) + 0x010000);
 		cpu_setbank(9, mess_ram + 0xb000);
 		cpu_setbank(10, mess_ram + 0xc000);
+
 	}
 	else
 	{
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x0fff, 0, MWA8_BANK1);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1fff, 0, MWA8_BANK2);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x2fff, 0, MWA8_BANK3);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x3000, 0x3fff, 0, MWA8_BANK4);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, MWA8_BANK5);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x8fff, 0, MWA8_ROM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0x9fff, 0, MWA8_BANK7);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xafff, 0, MWA8_ROM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb000, 0xbfff, 0, MWA8_BANK9);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xffff, 0, MWA8_BANK10);
 
 		cpu_setbank(1, mess_ram);
 		cpu_setbank(2, mess_ram + 0x1000);
 		cpu_setbank(3, mess_ram + 0x2000);
 		cpu_setbank(4, mess_ram + 0x5000);
 		cpu_setbank(5, mess_ram + 0x4000);
-		cpu_setbank(6, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank(7, mess_ram + 0x9000);
-		cpu_setbank(8, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank(9, mess_ram + 0xb000);
-		cpu_setbank(10, mess_ram + 0xc000);
 	}
 }
 
@@ -156,14 +137,6 @@ static void pmd853_update_memory (void)
 		cpu_setbank( 6, mess_ram + 0xa000);
 		cpu_setbank( 7, mess_ram + 0xc000);
 		cpu_setbank( 8, pmd853_memory_mapping ? memory_region(REGION_CPU1) + 0x010000 : mess_ram + 0xe000);
-		cpu_setbank( 9, mess_ram);
-		cpu_setbank(10, mess_ram + 0x2000);
-		cpu_setbank(11, mess_ram + 0x4000);
-		cpu_setbank(12, mess_ram + 0x6000);
-		cpu_setbank(13, mess_ram + 0x8000);
-		cpu_setbank(14, mess_ram + 0xa000);
-		cpu_setbank(15, mess_ram + 0xc000);
-		cpu_setbank(16, mess_ram + 0xe000);
 	}
 }
 
@@ -174,37 +147,24 @@ static void alfa_update_memory (void)
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x0fff, 0, MWA8_ROM);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x33ff, 0, MWA8_ROM);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x3400, 0x3fff, 0, MWA8_NOP);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, MWA8_BANK4);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x8fff, 0, MWA8_ROM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0xb3ff, 0, MWA8_ROM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb400, 0xbfff, 0, MWA8_NOP);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xffff, 0, MWA8_BANK8);
 
 		cpu_setbank(1, memory_region(REGION_CPU1) + 0x010000);
 		cpu_setbank(2, memory_region(REGION_CPU1) + 0x011000);
 		cpu_setbank(4, mess_ram + 0xc000);
 		cpu_setbank(5, memory_region(REGION_CPU1) + 0x010000);
 		cpu_setbank(6, memory_region(REGION_CPU1) + 0x011000);
-		cpu_setbank(8, mess_ram + 0xc000);
+		cpu_setbank(7, mess_ram + 0xc000);
 	}
 	else
 	{
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x0fff, 0, MWA8_BANK1);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x33ff, 0, MWA8_BANK2);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x3400, 0x3fff, 0, MWA8_BANK3);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, MWA8_BANK4);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x8fff, 0, MWA8_ROM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0xb3ff, 0, MWA8_ROM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb400, 0xbfff, 0, MWA8_NOP);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xffff, 0, MWA8_BANK8);
 
 		cpu_setbank(1, mess_ram);
 		cpu_setbank(2, mess_ram + 0x1000);
 		cpu_setbank(3, mess_ram + 0x3400);
 		cpu_setbank(4, mess_ram + 0x4000);
-		cpu_setbank(5, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank(6, memory_region(REGION_CPU1) + 0x011000);
-		cpu_setbank(8, mess_ram + 0xc000);
 	}
 }
 
@@ -213,9 +173,6 @@ static void mato_update_memory (void)
 	if (pmd85_startup_mem_map)
 	{
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, MWA8_ROM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, MWA8_BANK2);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, MWA8_ROM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xffff, 0, MWA8_BANK4);
 
 		cpu_setbank(1, memory_region(REGION_CPU1) + 0x010000);
 		cpu_setbank(2, mess_ram + 0xc000);
@@ -225,14 +182,9 @@ static void mato_update_memory (void)
 	else
 	{
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, MWA8_BANK1);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, MWA8_BANK2);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, MWA8_ROM);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xffff, 0, MWA8_BANK4);
 
 		cpu_setbank(1, mess_ram);
 		cpu_setbank(2, mess_ram + 0x4000);
-		cpu_setbank(3, memory_region(REGION_CPU1) + 0x010000);
-		cpu_setbank(4, mess_ram + 0xc000);
 	}
 }
 
@@ -738,39 +690,70 @@ static void pmd85_cassette_write(int id, unsigned long state)
 	pmd85_cassette_serial_connection.input_state = state;
 }
 
-static int clk_signal = 1;
-
 static void pmd85_cassette_timer_callback(int dummy)
 {
 	int data;
+	int current_level;
+	static int previous_level = 0;
+	static int clk_level = 1;
+	static int clk_level_tape = 1;
+
 	/* tape reading */
-	/* doesnt work */
 	if (cassette_get_state(image_from_devtype_and_index(IO_CASSETTE, 0))&CASSETTE_PLAY)
 	{
-		data = (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0.038) ? 1 : 0;
-		data ^= clk_signal;
-		set_out_data_bit(pmd85_cassette_serial_connection.State, data);
-		serial_connection_out(&pmd85_cassette_serial_connection);
-		logerror ("cassette is playing\n");
-		msm8251_receive_clock();
+		switch (pmd85_model)
+		{
+			case PMD85_1:
+				if (clk_level_tape)
+				{
+					previous_level = (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0.038) ? 1 : 0;
+					clk_level_tape = 0;
+				}
+				else
+				{
+					current_level = (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0.038) ? 1 : 0;
+
+					if (previous_level!=current_level)
+					{			
+						data = (!previous_level && current_level) ? 1 : 0;
+
+						set_out_data_bit(pmd85_cassette_serial_connection.State, data);
+						serial_connection_out(&pmd85_cassette_serial_connection);
+						msm8251_receive_clock();
+
+						clk_level_tape = 1;
+					}
+				}
+				return;
+			case PMD85_2:
+			case PMD85_2A:
+			case PMD85_3:
+			case ALFA:
+				/* not hardware data decoding */
+				return;
+		}
 	}
 
 	/* tape writing */
-	/* seems to work but not verified */
 	if (cassette_get_state(image_from_devtype_and_index(IO_CASSETTE, 0))&CASSETTE_RECORD)
 	{
 		data = get_in_data_bit(pmd85_cassette_serial_connection.input_state);
-		data ^= clk_signal;
+		data ^= clk_level_tape;
 		cassette_output(image_from_devtype_and_index(IO_CASSETTE, 0), data&0x01 ? 1 : -1);
 
-		if (clk_signal==1)
-			clk_signal = 0;
-		else
-		{
+		if (!clk_level_tape)
 			msm8251_transmit_clock();
-			clk_signal = 1;
-		}
+
+		clk_level_tape = clk_level_tape ? 0 : 1;
+
+		return;
 	}
+
+	clk_level_tape = 1;
+
+	if (!clk_level)
+		msm8251_transmit_clock();
+	clk_level = clk_level ? 0 : 1;
 }
 
 static OPBASE_HANDLER(pmd85_opbaseoverride)
@@ -861,8 +844,11 @@ MACHINE_INIT( pmd85 )
 		case MATO:
 			break;
 	}
-
+	
 	memset(mess_ram, 0, sizeof(unsigned char)*0xffff);
 	pmd85_startup_mem_map = 1;
 	pmd85_update_memory();
+
+	msm8251_reset();
+	pit8253_reset(0);
 }
