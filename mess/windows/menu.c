@@ -13,6 +13,7 @@
 #include "inputx.h"
 #include "video.h"
 #include "snprintf.h"
+#include "dialog.h"
 
 //============================================================
 //	IMPORTS
@@ -45,6 +46,23 @@ char *win_state_hack;
 static HMENU win_menu_bar;
 static int is_paused;
 
+
+//============================================================
+//	dipswitches
+//============================================================
+
+static void dipswitches(void)
+{
+	void *dlg;
+	
+	dlg = win_dialog_init(L"DIP Switches");
+	if (dlg)
+	{
+		win_dialog_add_label(dlg, L"Foo");
+		win_dialog_runmodal(dlg);
+		win_dialog_exit(dlg);
+	}
+}
 
 //============================================================
 //	loadsave
@@ -371,6 +389,10 @@ static int invoke_command(UINT command)
 
 	case ID_OPTIONS_THROTTLE:
 		throttle = !throttle;
+		break;
+
+	case ID_OPTIONS_DIPSWITCHES:
+		dipswitches();
 		break;
 
 	case ID_FRAMESKIP_AUTO:

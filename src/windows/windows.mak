@@ -15,6 +15,7 @@ OSOBJS += $(OBJ)/mess/windows/dirio.o	\
 	$(OBJ)/mess/windows/messwin.o		\
 	$(OBJ)/mess/windows/messopts.o		\
 	$(OBJ)/mess/windows/menu.o			\
+	$(OBJ)/mess/windows/dialog.o		\
 	$(OBJ)/mess/windows/parallel.o
 endif 
 
