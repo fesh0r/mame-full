@@ -1004,7 +1004,7 @@ static void coco3_timer_reset(void)
 	/* This resets the timer back to the original value
 	 *
 	 * JK tells me that when the timer resets, it gets reset to a value that
-	 * is 1 (with the 1986 GIME) above or 2 (with the 1987 GIME) above the
+	 * is 2 (with the 1986 GIME) above or 1 (with the 1987 GIME) above the
 	 * value written into the timer.  coco3_timer_base keeps track of the value
 	 * placed into the variable, so we increment that here
 	 *
@@ -1015,7 +1015,7 @@ static void coco3_timer_reset(void)
 		counter_remove(coco3_timer_counter);
 
 	if (coco3_timer_base)
-		coco3_timer_counter = counter_set(coco3_timer_base + 1, coco3_timer_interval_time(), 0, coco3_timer_callback);
+		coco3_timer_counter = counter_set(coco3_timer_base + 2, coco3_timer_interval_time(), 0, coco3_timer_callback);
 	else
 		coco3_timer_counter = NULL;
 }

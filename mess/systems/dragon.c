@@ -3,6 +3,13 @@
  Mathis Rosenhauer
  Nate Woods
 
+ TODO:
+   - Support configurable RAM sizes:
+     - coco & cocoe should allow 4k/16k/32k/64k
+	 - coco2 & coco2b should allow 16k/64k
+	 - coco3 & coco3h should allow 128k/512k (or even 2mb/8mb to show the hacks)
+   - All systems capable of disk support (i.e. - not original coco) should also
+     support DECB 1.0
  ******************************************************************************/
 #include "driver.h"
 #include "machine/6821pia.h"
