@@ -1002,25 +1002,33 @@ BOOL SoftwareList_ItemChanged(HWND hwndSoftware, BOOL bWasSelected, BOOL bNowSel
 #if HAS_IDLING
 BOOL SoftwarePicker_OnIdle(HWND hwndSoftware)
 {
-    static mess_image_type imagetypes[64];
-    ImageData *pImageData;
+	static mess_image_type imagetypes[64];
+	ImageData *pImageData;
+	LVFINDINFO lvfi;
+	int nIndex;
 
 	if (!mess_images_index)
 		return FALSE;
 
-    if (s_nIdleImageNum == 0)
-        SetupImageTypes(s_nGame, imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_COUNT);
+	if (s_nIdleImageNum == 0)
+		SetupImageTypes(s_nGame, imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_COUNT);
 
-    pImageData = mess_images_index[s_nIdleImageNum];
+	pImageData = mess_images_index[s_nIdleImageNum];
 
 	/* Realize one image */
-    if (ImageData_Realize(pImageData, s_eRealizeLevel, imagetypes))
-        ListView_RedrawItems(hwndSoftware, s_nIdleImageNum, s_nIdleImageNum);
-    s_nIdleImageNum++;
-
-    if (s_nIdleImageNum >= mess_images_count)
+	if (ImageData_Realize(pImageData, s_eRealizeLevel, imagetypes))
 	{
-        s_nIdleImageNum = 0;
+		lvfi.flags = LVFI_PARAM;
+		lvfi.lParam = s_nIdleImageNum;
+		nIndex = ListView_FindItem(hwndSoftware, -1, &lvfi);
+		if (nIndex >= 0)
+			ListView_RedrawItems(hwndSoftware, nIndex, nIndex);
+	}
+	s_nIdleImageNum++;
+
+	if (s_nIdleImageNum >= mess_images_count)
+	{
+		s_nIdleImageNum = 0;
 
 		switch(s_eRealizeLevel) {
 		case REALIZE_ZIPS:
@@ -1040,7 +1048,7 @@ BOOL SoftwarePicker_OnIdle(HWND hwndSoftware)
 			break;
 		}
 		mess_idle_work = (s_eRealizeLevel != REALIZE_DONE);
-    }
+	}
 	return mess_idle_work;
 }
 #endif /* HAS_IDLING */
