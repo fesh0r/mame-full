@@ -89,12 +89,6 @@ int sysdep_create_display(int depth)
   MotifWmHints mwmhints;
   Atom mwmatom;
   
-  if(depth == 16)
-  {
-     fprintf(stderr_file, "%s doesn't support 16bpp video modes\n", title);
-     return OSD_NOT_OK;
-  }
-
   screen=DefaultScreenOfDisplay(display);
   myscreen=DefaultScreen(display);
   cursor=XCreateFontCursor(display,XC_trek);
