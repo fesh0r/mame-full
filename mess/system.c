@@ -203,21 +203,21 @@ TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310						*/
 //	DRIVER( z88 )		/*													*/
 
 	/* AMSTRAD */
-//	DRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984				*/
-//	DRIVER( cpc664 )	/* Amstrad (Schneider in Germany) 1985				*/
-//	DRIVER( cpc6128 )	/* Amstrad (Schneider in Germany) 1985				*/
-//	DRIVER( cpc464p )	/* Amstrad CPC464  Plus - 1987						*/
-//	DRIVER( cpc6128p )	/* Amstrad CPC6128 Plus - 1987						*/
-//	DRIVER( kccomp )	/* VEB KC compact									*/
-//TESTDRIVER( pcw8256 )	/* 198? PCW8256 									*/
-//TESTDRIVER( pcw8512 )	/* 198? PCW8512 									*/
-//TESTDRIVER( pcw9256 )	/* 198? PCW9256 									*/
-//TESTDRIVER( pcw9512 )	/* 198? PCW9512 (+) 								*/
-//TESTDRIVER( pcw10 ) 	/* 198? PCW10										*/
-//TESTDRIVER( pcw16 )     /* 1995 PCW16										*/
-//TESTDRIVER( nc100 ) 	/* 19?? NC100										*/
-//TESTDRIVER( nc100a ) 	/* 19?? NC100										*/
-//TESTDRIVER( nc200 )     /* 19?? NC200										*/
+	DRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984				*/
+	DRIVER( cpc664 )	/* Amstrad (Schneider in Germany) 1985				*/
+	DRIVER( cpc6128 )	/* Amstrad (Schneider in Germany) 1985				*/
+	DRIVER( cpc464p )	/* Amstrad CPC464  Plus - 1987						*/
+	DRIVER( cpc6128p )	/* Amstrad CPC6128 Plus - 1987						*/
+	DRIVER( kccomp )	/* VEB KC compact									*/
+TESTDRIVER( pcw8256 )	/* 198? PCW8256 									*/
+TESTDRIVER( pcw8512 )	/* 198? PCW8512 									*/
+TESTDRIVER( pcw9256 )	/* 198? PCW9256 									*/
+TESTDRIVER( pcw9512 )	/* 198? PCW9512 (+) 								*/
+TESTDRIVER( pcw10 ) 	/* 198? PCW10										*/
+TESTDRIVER( pcw16 )     /* 1995 PCW16										*/
+TESTDRIVER( nc100 ) 	/* 19?? NC100										*/
+TESTDRIVER( nc100a ) 	/* 19?? NC100										*/
+TESTDRIVER( nc200 )     /* 19?? NC200										*/
 
 	/* APPLE */
 /*
@@ -512,9 +512,9 @@ TESTDRIVER( einstei2 )
 
 	/* VEB MIKROELEKTRONIK */
 	/* KC compact is partial CPC compatible */
-//	DRIVER( kc85_4 )	/* VEB KC 85/4										*/
-//	DRIVER( kc85_3 )    /* VEB KC 85/3										*/
-//TESTDRIVER( kc85_4d )   /* VEB KC 85/4 with disk interface					*/
+	DRIVER( kc85_4 )	/* VEB KC 85/4										*/
+	DRIVER( kc85_3 )    /* VEB KC 85/3										*/
+TESTDRIVER( kc85_4d )   /* VEB KC 85/4 with disk interface					*/
 
 	/* MICROBEE SYSTEMS */
 	DRIVER( mbee )		/* Microbee 32 IC									*/

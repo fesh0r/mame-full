@@ -649,20 +649,20 @@ static WRITE_HANDLER(pcw_system_control_w)
 		/* disc motor on */
 		case 9:
 		{
-			floppy_drive_set_motor_state(0,1);
-			floppy_drive_set_motor_state(1,1);
-			floppy_drive_set_ready_state(0,1,1);
-			floppy_drive_set_ready_state(1,1,1);
+			floppy_drive_set_motor_state(image_instance(IO_FLOPPY, 0), 1);
+			floppy_drive_set_motor_state(image_instance(IO_FLOPPY, 1), 1);
+			floppy_drive_set_ready_state(image_instance(IO_FLOPPY, 0), 1,1);
+			floppy_drive_set_ready_state(image_instance(IO_FLOPPY, 1), 1,1);
 		}
 		break;
 
 		/* disc motor off */
 		case 10:
 		{
-			floppy_drive_set_motor_state(0,0);
-			floppy_drive_set_motor_state(1,0);
-			floppy_drive_set_ready_state(0,1,1);
-			floppy_drive_set_ready_state(1,1,1);
+			floppy_drive_set_motor_state(image_instance(IO_FLOPPY, 0), 0);
+			floppy_drive_set_motor_state(image_instance(IO_FLOPPY, 1), 0);
+			floppy_drive_set_ready_state(image_instance(IO_FLOPPY, 0), 1,1);
+			floppy_drive_set_ready_state(image_instance(IO_FLOPPY, 1), 1,1);
 		}
 		break;
 

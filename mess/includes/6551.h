@@ -8,5 +8,5 @@ READ_HANDLER(acia_6551_r);
 void acia_6551_init(void);
 void acia_6551_set_irq_callback(void (*callback)(int));
 
-void acia_6551_connect_to_serial_device(int id);
+void acia_6551_connect_to_serial_device(mess_image *image);
 

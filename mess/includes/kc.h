@@ -14,7 +14,7 @@ extern QUICKLOAD_LOAD( kc );
 
 extern PALETTE_INIT( kc85 );
 
-void	kc85_video_set_blink_state(int data);
+void kc85_video_set_blink_state(int data);
 
 extern VIDEO_START( kc85_3 );
 extern VIDEO_START( kc85_4 );
@@ -25,7 +25,8 @@ extern MACHINE_INIT( kc85_4 );
 extern MACHINE_INIT( kc85_4d );
 
 /* cassette */
-int kc_cassette_device_init(mess_image *img, mame_file *fp, int open_mode);
+DEVICE_LOAD( kc85_floppy );
+DEVICE_LOAD( kc_cassette );
 
 READ_HANDLER(kc85_4_84_r);
 WRITE_HANDLER(kc85_4_84_w);

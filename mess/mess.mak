@@ -195,11 +195,11 @@ DRVLIBS = \
 	$(OBJ)/tatung.a   \
 	$(OBJ)/ep128.a	  \
 	$(OBJ)/cpschngr.a \
+	$(OBJ)/veb.a	  \
+	$(OBJ)/amstrad.a  \
 #	$(OBJ)/ti99.a     \
 #	$(OBJ)/apexc.a	  \
 #	$(OBJ)/pdp1.a	  \
-#	$(OBJ)/veb.a	  \
-#	$(OBJ)/amstrad.a  \
 #	$(OBJ)/necpc.a	  \
 #	$(OBJ)/nec.a	  \
 #	$(OBJ)/fairch.a   \

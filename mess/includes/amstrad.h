@@ -8,8 +8,7 @@ void amstrad_shutdown_machine(void);
 
 extern SNAPSHOT_LOAD( amstrad );
 
-int amstrad_floppy_load(int);
-void amstrad_floppy_exit(int);
+DEVICE_LOAD( amstrad_cassette );
 
 void Amstrad_Reset(void);
 

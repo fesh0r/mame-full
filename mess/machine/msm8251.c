@@ -590,7 +590,7 @@ READ_HANDLER(msm8251_data_r)
 
 /* initialise transfer using serial device - set the callback which will
 be called when serial device has updated it's state */
-void	msm8251_connect_to_serial_device(int id)
+void msm8251_connect_to_serial_device(mess_image *image)
 {
-	serial_device_connect(id,&uart.connection);
+	serial_device_connect(image, &uart.connection);
 }

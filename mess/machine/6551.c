@@ -481,7 +481,7 @@ WRITE_HANDLER(acia_6551_w)
 }
 
 
-void	acia_6551_connect_to_serial_device(int id)
+void acia_6551_connect_to_serial_device(mess_image *image)
 {
-	serial_device_connect(id,&acia.connection);
+	serial_device_connect(image, &acia.connection);
 }

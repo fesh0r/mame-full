@@ -23,7 +23,7 @@ extern unsigned char *nc_card_ram;
 extern int nc_membank_card_ram_mask;
 
 /* save card data back */
-static void	nc_card_save(int id)
+static void	nc_card_save(mess_image *image)
 {
 	mame_file *file;
 
@@ -36,7 +36,7 @@ static void	nc_card_save(int id)
 	logerror("attempting card save\n");
 
 	/* open file for writing */
-	file = image_fopen_custom(IO_CARTSLOT, id, FILETYPE_IMAGE, OSD_FOPEN_WRITE);
+	file = image_fopen_custom(image, FILETYPE_IMAGE, OSD_FOPEN_WRITE);
 
 	if (file)
 	{
@@ -71,7 +71,7 @@ static int nc_card_calculate_mask(int size)
 
 
 /* load card image */
-static int nc_card_load(int id, mame_file *file, unsigned char **ptr)
+static int nc_card_load(mess_image *image, mame_file *file, unsigned char **ptr)
 {
 	if (file)
 	{
@@ -110,7 +110,7 @@ static int nc_card_load(int id, mame_file *file, unsigned char **ptr)
 	return 0;
 }
 
-int nc_pcmcia_card_init(int id)
+DEVICE_INIT( nc_pcmcia_card )
 {
 	/* card not present */
 	nc_set_card_present_state(0);
@@ -121,12 +121,12 @@ int nc_pcmcia_card_init(int id)
 }
 
 /* load pcmcia card */
-int nc_pcmcia_card_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( nc_pcmcia_card )
 {
 	/* filename specified */
 
 	/* attempt to load file */
-	if (nc_card_load(id, fp, &nc_card_ram))
+	if (nc_card_load(image, file, &nc_card_ram))
 	{
 		if (nc_card_ram!=NULL)
 		{
@@ -143,10 +143,10 @@ int nc_pcmcia_card_load(mess_image *img, mame_file *fp, int open_mode)
 	return INIT_FAIL;
 }
 
-void nc_pcmcia_card_exit(int id)
+DEVICE_UNLOAD( nc_pcmcia_card )
 {
 	/* save card data if there is any */
-	nc_card_save(id);
+	nc_card_save(image);
 
 	/* free ram allocated to card */
 	if (nc_card_ram!=NULL)
@@ -164,21 +164,21 @@ void nc_pcmcia_card_exit(int id)
 /*************************************************************************************************/
 /* Serial */
 
-int	nc_serial_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( nc_serial )
 {
 	/* filename specified */
-	if (serial_device_load(id, fp)==INIT_PASS)
+	if (serial_device_load(image)==INIT_PASS)
 	{
 		/* setup transmit parameters */
-		serial_device_setup(id, 9600, 8, 1,SERIAL_PARITY_NONE);
+		serial_device_setup(image, 9600, 8, 1,SERIAL_PARITY_NONE);
 
 		/* connect serial chip to serial device */
-		msm8251_connect_to_serial_device(id);
+		msm8251_connect_to_serial_device(image);
 
-		serial_device_set_protocol(id, SERIAL_PROTOCOL_NONE);
+		serial_device_set_protocol(image, SERIAL_PROTOCOL_NONE);
 
 		/* and start transmit */
-		serial_device_set_transmit_state(id,1);
+		serial_device_set_transmit_state(image,1);
 
 		return INIT_PASS;
 	}

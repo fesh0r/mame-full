@@ -132,19 +132,19 @@ struct serial_connection
 };
 
 /* setup out and in callbacks */
-void	serial_connection_init(struct serial_connection *connection);
+void serial_connection_init(struct serial_connection *connection);
 
 /* set callback which will be executed when out status has changed */
-void	serial_connection_set_out_callback(struct serial_connection *connection, void (*out_cb)(int id, unsigned long state));
+void serial_connection_set_out_callback(struct serial_connection *connection, void (*out_cb)(int id, unsigned long state));
 
 /* set callback which will be executed when in status has changed */
-void	serial_connection_set_in_callback(struct serial_connection *connection, void (*in_cb)(int id, unsigned long state));
+void serial_connection_set_in_callback(struct serial_connection *connection, void (*in_cb)(int id, unsigned long state));
 
 /* output status, if callback is setup it will be executed with the new status */
-void	serial_connection_out(struct serial_connection *connection);
+void serial_connection_out(struct serial_connection *connection);
 
 /* join two serial connections */
-void	serial_connection_link(struct serial_connection *connection_a, struct serial_connection *connection_b);
+void serial_connection_link(struct serial_connection *connection_a, struct serial_connection *connection_b);
 
 
 /*******************************************************************************/
@@ -296,22 +296,22 @@ unsigned long serial_device_get_state(int id);
 /* connect this device to the emulated serial chip */
 /* id is the serial device to connect to */
 /* connection is the serial connection to connect to the serial device */
-void	serial_device_connect(int id, struct serial_connection *connection);
+void serial_device_connect(mess_image *image, struct serial_connection *connection);
 
 /* init this device */
-int serial_device_init(int id);
-int serial_device_load(int id, mame_file *fp);
-void serial_device_unload(int id);
+int serial_device_init(mess_image *image);
+int serial_device_load(mess_image *image);
+void serial_device_unload(mess_image *image);
 
-void serial_device_setup(int id, int baud_rate, int num_data_bits, int stop_bit_count, int parity_code);
+void serial_device_setup(mess_image *image, int baud_rate, int num_data_bits, int stop_bit_count, int parity_code);
 
 /* get name of protocol identified by specified id */
 const char *serial_device_get_protocol_name(int protocol_id);
 
 /* set the protocol to be used by the serial device */
-void	serial_device_set_protocol(int id,int protocol_id);
+void serial_device_set_protocol(mess_image *image, int protocol_id);
 /* set the transmit state of the serial device */
-void	serial_device_set_transmit_state(int id, int state);
+void serial_device_set_transmit_state(mess_image *image, int state);
 
 /***********************************************************************************************/
 /* XModem protocol */

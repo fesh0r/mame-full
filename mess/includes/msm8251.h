@@ -87,5 +87,5 @@ void msm8251_transmit_clock(void);
 void msm8251_receive_clock(void);
 
 
-void	msm8251_connect_to_serial_device(int id);
+void msm8251_connect_to_serial_device(mess_image *image);
 #endif
