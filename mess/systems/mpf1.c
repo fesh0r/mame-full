@@ -12,14 +12,26 @@
 * TODO:                                          *
 *    Cassette storage emulation                  *
 *    Sound                                       *
-*    BASIC ROM expansion                         *
 *    I/O board                                   *
+*	 MONI/INTR key interrupts					 *
+*	 PIO/CTC + interrupt daisy chain			 *
 \************************************************/
+
+/*
+
+	Artwork picture downloaded from:
+
+	http://members.lycos.co.uk/leeedavison/z80/mpf1/
+
+*/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/8255ppi.h"
 #include "cpu/z80/z80.h"
+#include "machine/z80fmly.h"
 #include "mscommon.h"
+#include "inputx.h"
 
 #define VERBOSE_LEVEL ( 0 )
 
@@ -36,36 +48,47 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 	}
 }
 
-const char leddisplay[] = {
-	"  aaaaaaaaaaaa          \r"
-	"   aaaaaaaaaa           \r"
-	"f   aaaaaaaa   b        \r"
-	"ff            bb        \r"
-	"fff          bbb        \r"
-	"fff          bbb        \r"
-	"fff          bbb        \r"
-	"fff          bbb        \r"
-	"fff          bbb        \r"
-	"fff          bbb        \r"
-	"fff          bbb        \r"
-	"fff          bbb        \r"
-	"ff  gggggggg  bb        \r"
-	"f  gggggggggg  b        \r"
-	"  gggggggggggg          \r"
-	"e  gggggggggg  c        \r"
-	"ee  gggggggg  cc        \r"
-	"eee          ccc        \r"
-	"eee          ccc        \r"
-	"eee          ccc        \r"
-	"eee          ccc        \r"
-	"eee          ccc        \r"
-	"eee          ccc        \r"
-	"eee          ccc        \r"
-	"eee          ccc        \r"
-	"ee            cc    hhhh\r"
-	"e   dddddddd   c    hhhh\r"
-	"   dddddddddd       hhhh\r"
-	"  dddddddddddd      hhhh" };
+static const char leddisplay[] =
+{
+	"         aaaaaaaaaaaaaaaaa   \r"
+	"        aaaaaaaaaaaaaaaaaaa  \r"
+	"        aaaaaaaaaaaaaaaaaa   \r"
+	"      ff aaaaaaaaaaaaaaaa bb \r"
+	"      fff                bbb \r"
+	"     ffff               bbbb \r"
+	"     ffff               bbbb \r"
+	"     ffff              bbbbb \r"
+	"     ffff              bbbb  \r"
+	"    fffff              bbbb  \r"
+	"    ffff               bbbb  \r"
+	"    ffff               bbbb  \r"
+	"    ffff               bbb   \r"
+	"    ffff              bbbb   \r"
+	"    ffff              bbbb   \r"
+	"   fffff              bbbb   \r"
+	"   ffff               bbbb   \r"
+	"    ff ggggggggggggggg bb    \r"
+	"      ggggggggggggggggg      \r"
+	"      gggggggggggggggg       \r"
+	"    e  gggggggggggggg cc     \r"
+	"   eee               cccc    \r"
+	"  eeee              ccccc    \r"
+	"  eeee              ccccc    \r"
+	"  eeee              ccccc    \r"
+	" eeee               ccccc    \r"
+	" eeee               cccc     \r"
+	" eeee               cccc     \r"
+	" eeee              ccccc     \r"
+	" eeee              ccccc     \r"
+	"eeeee              cccc      \r"
+	"eeee               cccc      \r"
+	"eeee               cccc  hh  \r"
+	"eee                cccc hhhh \r"
+	"ee dddddddddddddddd cc  hhhh \r"
+	"  dddddddddddddddddd    hhhh \r"
+	"  dddddddddddddddddd     hh  \r"
+	"   dddddddddddddddd          \r"
+};
 
 static UINT32 leddigit[6];
 static INT8 lednum;
@@ -102,12 +125,12 @@ static void logleds(void)
 	logerror( "\n" );
 }
 
-
+/* vidhrdw */
 
 static PALETTE_INIT( mpf1 )
 {
 	palette_set_color(0, 0x00, 0x00, 0x00);
-	palette_set_color(1, 0xFF, 0xFF, 0xFF);
+	palette_set_color(1, 0xff, 0x00, 0x00);
 }
 
 
@@ -129,32 +152,207 @@ static VIDEO_START( mpf1 )
 
 VIDEO_UPDATE( mpf1 )
 {
-    int x;
+	int x;
+	static UINT8 xpositions[] = { 20, 59, 97, 135, 185, 223 };
 
 	fillbitmap(Machine->scrbitmap, get_black_pen(), NULL);
 
 	for(x = 0; x < 6; x++)
-	{
-		draw_led(Machine->scrbitmap, leddisplay, leddigit[x], x * 32, 16);
-	}
+		draw_led(Machine->scrbitmap, leddisplay, leddigit[x], xpositions[x], 16);
 }
 
-
+/* Memory Maps */
 
 static ADDRESS_MAP_START( mpf1_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x0fff) AM_ROM
 	AM_RANGE(0x1000, 0x1fff) AM_RAM
+	AM_RANGE(0x2000, 0x2fff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( mpf1_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x03) AM_READ(ppi8255_0_r)
+static ADDRESS_MAP_START( mpf1_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x03) AM_READWRITE(ppi8255_0_r, ppi8255_0_w)
+//	AM_RANGE(0x40, 0x40) AM_WRITE(ctc_enable_w)
+//	AM_RANGE(0x80, 0x83) AM_READWRITE(pio_r, pio_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( mpf1_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x03) AM_WRITE(ppi8255_0_w)
-ADDRESS_MAP_END
+/* Input Ports */
 
+#define KEY_UNUSED( bit ) \
+	PORT_BIT( bit, IP_ACTIVE_LOW, IPT_UNUSED )
 
+INPUT_PORTS_START( mpf1 )
+	PORT_START	// column 0
+	PORT_KEY0( 0x01, IP_ACTIVE_LOW, "3 HL",		KEYCODE_3, CODE_NONE )
+	PORT_KEY0( 0x02, IP_ACTIVE_LOW, "7 HL'",		KEYCODE_7, CODE_NONE )
+	PORT_KEY0( 0x04, IP_ACTIVE_LOW, "B I*IF",		KEYCODE_B, CODE_NONE )
+	PORT_KEY0( 0x08, IP_ACTIVE_LOW, "F *PNC'",	KEYCODE_F, CODE_NONE )
+	KEY_UNUSED( 0x10 )
+	KEY_UNUSED( 0x20 )
+	KEY_UNUSED( 0x40 )
+	KEY_UNUSED( 0x80 )
+
+	PORT_START	// column 1
+	PORT_KEY0( 0x01, IP_ACTIVE_LOW, "2 DE",		KEYCODE_2, CODE_NONE )
+	PORT_KEY0( 0x02, IP_ACTIVE_LOW, "6 DE'",		KEYCODE_6, CODE_NONE )
+	PORT_KEY0( 0x04, IP_ACTIVE_LOW, "A SP",		KEYCODE_A, CODE_NONE )
+	PORT_KEY0( 0x08, IP_ACTIVE_LOW, "E SZ*H'",	KEYCODE_E, CODE_NONE )
+	KEY_UNUSED( 0x10 )
+	KEY_UNUSED( 0x20 )
+	KEY_UNUSED( 0x40 )
+	KEY_UNUSED( 0x80 )
+
+	PORT_START	// column 2
+	PORT_KEY0( 0x01, IP_ACTIVE_LOW, "1 BC",		KEYCODE_1, CODE_NONE )
+	PORT_KEY0( 0x02, IP_ACTIVE_LOW, "5 BC'",		KEYCODE_5, CODE_NONE )
+	PORT_KEY0( 0x04, IP_ACTIVE_LOW, "9 IY",		KEYCODE_9, CODE_NONE )
+	PORT_KEY0( 0x08, IP_ACTIVE_LOW, "D *PNC",		KEYCODE_D, CODE_NONE )
+	PORT_KEY0( 0x10, IP_ACTIVE_LOW, "STEP",		KEYCODE_F1, CODE_NONE )
+	PORT_KEY0( 0x20, IP_ACTIVE_LOW, "TAPE RD",	KEYCODE_F5, CODE_NONE )
+	KEY_UNUSED( 0x40 )
+	KEY_UNUSED( 0x80 )
+
+	PORT_START	// column 3
+	PORT_KEY0( 0x01, IP_ACTIVE_LOW, "0 AF",		KEYCODE_0, CODE_NONE )
+	PORT_KEY0( 0x02, IP_ACTIVE_LOW, "4 AF'",		KEYCODE_4, CODE_NONE )
+	PORT_KEY0( 0x04, IP_ACTIVE_LOW, "8 IX",		KEYCODE_8, CODE_NONE )
+	PORT_KEY0( 0x08, IP_ACTIVE_LOW, "C SZ*H",		KEYCODE_C, CODE_NONE )
+	PORT_KEY0( 0x10, IP_ACTIVE_LOW, "GO",			KEYCODE_F2, CODE_NONE )
+	PORT_KEY0( 0x20, IP_ACTIVE_LOW, "TAPE WR",	KEYCODE_F6, CODE_NONE )
+	KEY_UNUSED( 0x40 )
+	KEY_UNUSED( 0x80 )
+
+	PORT_START	// column 4
+	PORT_KEY0( 0x01, IP_ACTIVE_LOW, "CBR",		KEYCODE_N, CODE_NONE )
+	PORT_KEY0( 0x02, IP_ACTIVE_LOW, "PC",			KEYCODE_M, CODE_NONE )
+	PORT_KEY0( 0x04, IP_ACTIVE_LOW, "REG",		KEYCODE_COMMA, CODE_NONE )
+	PORT_KEY0( 0x08, IP_ACTIVE_LOW, "ADR",		KEYCODE_STOP, CODE_NONE )
+	PORT_KEY0( 0x10, IP_ACTIVE_LOW, "DEL",		KEYCODE_SLASH, CODE_NONE )
+	PORT_KEY0( 0x20, IP_ACTIVE_LOW, "RELA",		KEYCODE_RCONTROL, CODE_NONE )
+	KEY_UNUSED( 0x40 )
+	KEY_UNUSED( 0x80 )
+
+	PORT_START	// column 5
+	PORT_KEY0( 0x01, IP_ACTIVE_LOW, "SBR",		KEYCODE_H, CODE_NONE )
+	PORT_KEY0( 0x02, IP_ACTIVE_LOW, "-",			KEYCODE_J, CODE_NONE )
+	PORT_KEY0( 0x04, IP_ACTIVE_LOW, "DATA",		KEYCODE_K, CODE_NONE )
+	PORT_KEY0( 0x08, IP_ACTIVE_LOW, "+",			KEYCODE_L, CODE_NONE )
+	PORT_KEY0( 0x10, IP_ACTIVE_LOW, "INS",		KEYCODE_COLON, CODE_NONE )
+	PORT_KEY0( 0x20, IP_ACTIVE_LOW, "MOVE",		KEYCODE_QUOTE, CODE_NONE )
+	KEY_UNUSED( 0x40 )
+	KEY_UNUSED( 0x80 )
+
+	PORT_START	// column 6
+	KEY_UNUSED( 0x01 )
+	KEY_UNUSED( 0x02 )
+	KEY_UNUSED( 0x04 )
+	KEY_UNUSED( 0x08 )
+	KEY_UNUSED( 0x10 )
+	KEY_UNUSED( 0x20 )
+	PORT_KEY0( 0x40, IP_ACTIVE_LOW, "USER KEY",	KEYCODE_U, CODE_NONE )
+	KEY_UNUSED( 0x80 )
+
+	PORT_START	// interrupt keys
+	PORT_KEY0( 0x01, IP_ACTIVE_LOW, "MONI",		KEYCODE_M, CODE_NONE )	// causes NMI ?
+	PORT_KEY0( 0x02, IP_ACTIVE_LOW, "INTR",		KEYCODE_I, CODE_NONE )	// causes INT
+INPUT_PORTS_END
+
+INPUT_PORTS_START( mpf1b )
+	PORT_START	// column 0
+	PORT_KEY0( 0x01, IP_ACTIVE_LOW, "3 /",		KEYCODE_3, CODE_NONE )
+	PORT_KEY0( 0x02, IP_ACTIVE_LOW, "7 >",		KEYCODE_7, CODE_NONE )
+	PORT_KEY0( 0x04, IP_ACTIVE_LOW, "B STOP",		KEYCODE_B, CODE_NONE )
+	PORT_KEY0( 0x08, IP_ACTIVE_LOW, "F LET",		KEYCODE_F, CODE_NONE )
+	KEY_UNUSED( 0x10 )
+	KEY_UNUSED( 0x20 )
+	KEY_UNUSED( 0x40 )
+	KEY_UNUSED( 0x80 )
+
+	PORT_START	// column 1
+	PORT_KEY0( 0x01, IP_ACTIVE_LOW, "2 *",		KEYCODE_2, CODE_NONE )
+	PORT_KEY0( 0x02, IP_ACTIVE_LOW, "6 <",		KEYCODE_6, CODE_NONE )
+	PORT_KEY0( 0x04, IP_ACTIVE_LOW, "A CALL",		KEYCODE_A, CODE_NONE )
+	PORT_KEY0( 0x08, IP_ACTIVE_LOW, "E INPUT",	KEYCODE_E, CODE_NONE )
+	KEY_UNUSED( 0x10 )
+	KEY_UNUSED( 0x20 )
+	KEY_UNUSED( 0x40 )
+	KEY_UNUSED( 0x80 )
+
+	PORT_START	// column 2
+	PORT_KEY0( 0x01, IP_ACTIVE_LOW, "1 -",		KEYCODE_1, CODE_NONE )
+	PORT_KEY0( 0x02, IP_ACTIVE_LOW, "5 =",		KEYCODE_5, CODE_NONE )
+	PORT_KEY0( 0x04, IP_ACTIVE_LOW, "9 P",		KEYCODE_9, CODE_NONE )
+	PORT_KEY0( 0x08, IP_ACTIVE_LOW, "D PRINT",	KEYCODE_D, CODE_NONE )
+	PORT_KEY0( 0x10, IP_ACTIVE_LOW, "CONT",		KEYCODE_F1, CODE_NONE )
+	PORT_KEY0( 0x20, IP_ACTIVE_LOW, "LOAD",		KEYCODE_F5, CODE_NONE )
+	KEY_UNUSED( 0x40 )
+	KEY_UNUSED( 0x80 )
+
+	PORT_START	// column 3
+	PORT_KEY0( 0x01, IP_ACTIVE_LOW, "0 +",		KEYCODE_0, CODE_NONE )
+	PORT_KEY0( 0x02, IP_ACTIVE_LOW, "4 * *",		KEYCODE_4, CODE_NONE )
+	PORT_KEY0( 0x04, IP_ACTIVE_LOW, "8 M",		KEYCODE_8, CODE_NONE )
+	PORT_KEY0( 0x08, IP_ACTIVE_LOW, "C NEXT",		KEYCODE_C, CODE_NONE )
+	PORT_KEY0( 0x10, IP_ACTIVE_LOW, "RUN",		KEYCODE_F2, CODE_NONE )
+	PORT_KEY0( 0x20, IP_ACTIVE_LOW, "SAVE",		KEYCODE_F6, CODE_NONE )
+	KEY_UNUSED( 0x40 )
+	KEY_UNUSED( 0x80 )
+
+	PORT_START	// column 4
+	PORT_KEY0( 0x01, IP_ACTIVE_LOW, "IF/pgup",	KEYCODE_PGUP, CODE_NONE )
+	PORT_KEY0( 0x02, IP_ACTIVE_LOW, "TO/down",	KEYCODE_T, KEYCODE_DOWN )
+	PORT_KEY0( 0x04, IP_ACTIVE_LOW, "THEN/pgdn",	KEYCODE_PGDN, CODE_NONE )
+	PORT_KEY0( 0x08, IP_ACTIVE_LOW, "GOTO",		KEYCODE_G, CODE_NONE )
+	PORT_KEY0( 0x10, IP_ACTIVE_LOW, "RET/~",		KEYCODE_R, CODE_NONE )
+	PORT_KEY0( 0x20, IP_ACTIVE_LOW, "GOSUB",		KEYCODE_O, CODE_NONE )
+	KEY_UNUSED( 0x40 )
+	KEY_UNUSED( 0x80 )
+
+	PORT_START	// column 5
+	PORT_KEY0( 0x01, IP_ACTIVE_LOW, "FOR/up",		KEYCODE_H, KEYCODE_UP )
+	PORT_KEY0( 0x02, IP_ACTIVE_LOW, "LIST",		KEYCODE_L, CODE_NONE )
+	PORT_KEY0( 0x04, IP_ACTIVE_LOW, "NEW",		KEYCODE_N, CODE_NONE )
+	PORT_KEY0( 0x08, IP_ACTIVE_LOW, "ENTER",		KEYCODE_ENTER, CODE_NONE )
+	PORT_KEY0( 0x10, IP_ACTIVE_LOW, "CLR/right",	KEYCODE_INSERT, KEYCODE_RIGHT )
+	PORT_KEY0( 0x20, IP_ACTIVE_LOW, "DEL/left",	KEYCODE_DEL, KEYCODE_LEFT )
+	KEY_UNUSED( 0x40 )
+	KEY_UNUSED( 0x80 )
+
+	PORT_START	// column 6
+	KEY_UNUSED( 0x01 )
+	KEY_UNUSED( 0x02 )
+	KEY_UNUSED( 0x04 )
+	KEY_UNUSED( 0x08 )
+	KEY_UNUSED( 0x10 )
+	KEY_UNUSED( 0x20 )
+	PORT_KEY0( 0x40, IP_ACTIVE_LOW, "SHIFT",		KEYCODE_LSHIFT, KEYCODE_RSHIFT )
+	KEY_UNUSED( 0x80 )
+
+	PORT_START	// interrupt keys
+	PORT_KEY0( 0x01, IP_ACTIVE_LOW, "MONI",		KEYCODE_M, CODE_NONE )	// causes NMI ?
+	PORT_KEY0( 0x02, IP_ACTIVE_LOW, "INTR",		KEYCODE_I, CODE_NONE )	// causes INT
+INPUT_PORTS_END
+
+/* Z80 PIO Interface */
+
+static void mpf1_pio_interrupt( int state )
+{
+	logerror("pio irq state: %02x\n",state);
+}
+
+static z80pio_interface pio_intf = 
+{
+	1,
+	{ mpf1_pio_interrupt },
+	{ NULL },
+	{ NULL }
+};
+
+/* Z80 CTC Interface */
+
+/* PPI8255 Interface */
+
+// PA7 = tape EAR
+// PC7 = tape MIC
 
 static READ_HANDLER( mpf1_porta_r )
 {
@@ -232,7 +430,8 @@ static WRITE_HANDLER( mpf1_portb_w )
 static WRITE_HANDLER( mpf1_portc_w )
 {
 	kbdlatch = ~data;
-	if( data & 0x3F )
+
+	if (data & 0x3f)
 	{
 		for(lednum = 0; lednum < 6; lednum++)
 		{
@@ -242,6 +441,13 @@ static WRITE_HANDLER( mpf1_portc_w )
 		if( lednum == 6 ) lednum = 0;
 		lednum = 5 - lednum;
 	}
+
+	// watchdog reset
+	watchdog_reset_w(0, ~data & 0x40);
+
+	// TONE led & speaker
+	set_led_status(0, ~data & 0x80);
+
 	verboselog( 1, "PPI port C (LED/Kbd Col select) write: %02x\n", data );
 }
 
@@ -258,128 +464,76 @@ static ppi8255_interface ppi8255_intf =
 	{ mpf1_portc_w },	/* Port C write */
 };
 
-
-
-INPUT_PORTS_START( mpf1 )
-	PORT_START			/* Column 0 */
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "3",        KEYCODE_3,      IP_JOY_NONE )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "7",        KEYCODE_7,      IP_JOY_NONE )
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "B",        KEYCODE_B,      IP_JOY_NONE )
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "F",        KEYCODE_F,      IP_JOY_NONE )
-	PORT_BIT (0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT (0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT (0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT (0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START			/* Column 1 */
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "2",        KEYCODE_2,      IP_JOY_NONE )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "6",        KEYCODE_6,      IP_JOY_NONE )
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "A",        KEYCODE_A,      IP_JOY_NONE )
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "E",        KEYCODE_E,      IP_JOY_NONE )
-	PORT_BIT (0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT (0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT (0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT (0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START			/* Column 2 */
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "1",        KEYCODE_1,      	IP_JOY_NONE )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "5",        KEYCODE_5,      	IP_JOY_NONE )
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "9",        KEYCODE_9,      	IP_JOY_NONE )
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "D",        KEYCODE_D,      	IP_JOY_NONE )
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "STP (F1)", KEYCODE_F1,     	IP_JOY_NONE )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "T-R (F5)", KEYCODE_F5,     	IP_JOY_NONE )
-	PORT_BIT (0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT (0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START			/* Column 3 */
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "0",        KEYCODE_0,      	IP_JOY_NONE )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "4",        KEYCODE_4,      	IP_JOY_NONE )
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "8",        KEYCODE_8,      	IP_JOY_NONE )
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "C",        KEYCODE_C,      	IP_JOY_NONE )
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "GO  (F2)", KEYCODE_F2,     	IP_JOY_NONE )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "T-W (F6)", KEYCODE_F6,     	IP_JOY_NONE )
-	PORT_BIT (0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT (0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START			/* Column 4 */
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "CBR",      KEYCODE_N,      	IP_JOY_NONE )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "PC",       KEYCODE_M,      	IP_JOY_NONE )
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "REG",      KEYCODE_COMMA,  	IP_JOY_NONE )
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "ADR",      KEYCODE_STOP,   	IP_JOY_NONE )
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "DEL",      KEYCODE_SLASH,  	IP_JOY_NONE )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "REL",      KEYCODE_RCONTROL,	IP_JOY_NONE )
-	PORT_BIT (0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT (0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START			/* Column 5 */
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "SBR",      KEYCODE_H,      	IP_JOY_NONE )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "--",       KEYCODE_J,      	IP_JOY_NONE )
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "DATA",     KEYCODE_K,      	IP_JOY_NONE )
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "+",        KEYCODE_L,      	IP_JOY_NONE )
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "INS",      KEYCODE_COLON,  	IP_JOY_NONE )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "MOVE",     KEYCODE_QUOTE,   	IP_JOY_NONE )
-	PORT_BIT (0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT (0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START			/* User Key */
-	PORT_BIT (0x01, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT (0x02, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT (0x04, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT (0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT (0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT (0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "USER KEY", KEYCODE_U,       	IP_JOY_NONE )
-	PORT_BIT (0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-INPUT_PORTS_END
-
-
+/* Machine Initialization */
 
 static MACHINE_INIT( mpf1 )
 {
+	// PIO
+	z80pio_init(&pio_intf);
+	z80pio_reset(0);
+
+	// CTC
+/*	z80ctc_init(&ctc_intf);
+	z80ctc_reset(0);*/
+
+	// 8255
 	ppi8255_init(&ppi8255_intf);
-	for(lednum = 0; lednum < 6; lednum++)
+
+	// leds
+	for (lednum = 0; lednum < 6; lednum++)
 		leddigit[lednum] = 0;
+
 	lednum = 0;
 }
 
-
-
-static INTERRUPT_GEN( mpf1_interrupt )
-{
-	cpu_set_irq_line(0, 0, PULSE_LINE);
-}
-
-
+/* Machine Drivers */
 
 static MACHINE_DRIVER_START( mpf1 )
-	MDRV_CPU_ADD(Z80,3580000)
+	// basic machine hardware
+	MDRV_CPU_ADD(Z80, 3580000/2)	// 1.79 MHz
 	MDRV_CPU_PROGRAM_MAP(mpf1_map, 0)
-	MDRV_CPU_IO_MAP(mpf1_readport,mpf1_writeport)
-	MDRV_CPU_VBLANK_INT(mpf1_interrupt, 1)
+	MDRV_CPU_IO_MAP(mpf1_io_map, 0)
+	MDRV_CPU_VBLANK_INT(irq0_line_pulse, 1)
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(1)
 
 	MDRV_MACHINE_INIT( mpf1 )
 
+	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(256, 256)
-	MDRV_VISIBLE_AREA(0, 255, 0, 255)
+	MDRV_SCREEN_SIZE(462, 661)
+	MDRV_VISIBLE_AREA(0, 461, 0, 660)
 	MDRV_PALETTE_LENGTH(2)
-	MDRV_PALETTE_INIT( mpf1 )
 
+	MDRV_PALETTE_INIT( mpf1 )
 	MDRV_VIDEO_START(mpf1)
 	MDRV_VIDEO_UPDATE(mpf1)
+
+	// sound hardware
+
 MACHINE_DRIVER_END
+
+/* ROMs */
 
 ROM_START( mpf1 )
 	ROM_REGION(0x10000, REGION_CPU1, 0)
-	ROM_LOAD("mpf_u6.bin", 0x0000, 0x1000, CRC(b60249ce) SHA1(78e0e8874d1497fabfdd6378266d041175e3797f) )
+	ROM_LOAD( "c55167.u6", 0x0000, 0x1000, CRC(28b06dac) SHA1(99cfbab739d71a914c39302d384d77bddc4b705b) )
 ROM_END
+
+ROM_START( mpf1b )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "c55167.u6", 0x0000, 0x1000, CRC(28b06dac) SHA1(99cfbab739d71a914c39302d384d77bddc4b705b) )
+	ROM_LOAD( "basic.u7",  0x2000, 0x1000, CRC(d276ed6b) SHA1(a45fb98961be5e5396988498c6ed589a35398dcf) )
+ROM_END
+
+/* System Configuration */
 
 SYSTEM_CONFIG_START(mpf1)
 	CONFIG_RAM_DEFAULT(4 * 1024)
 SYSTEM_CONFIG_END
 
-COMP( 1979, mpf1, 0, 0, mpf1, mpf1, 0, mpf1, "Multitech", "Micro Professor 1" )
+/* System Drivers */
 
+COMP( 1979, mpf1,  0,    0, mpf1, mpf1,  0, mpf1, "Multitech", "Micro Professor 1" )
+COMP( 1979, mpf1b, mpf1, 0, mpf1, mpf1b, 0, mpf1, "Multitech", "Micro Professor 1B" )

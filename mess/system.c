@@ -704,7 +704,8 @@ TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 	DRIVER(compis)		/* 1985 Telenova Compis								*/
 
 	/* Multitech */
-	DRIVER(mpf1)		/* 1979 Multitech MPF-1								*/
+	DRIVER(mpf1)		/* 1979 Multitech Micro Professor 1					*/
+	DRIVER(mpf1b)		/* 1979 Multitech Micro Professor 1B				*/
 
 /****************Games*******************************************************/
 	/* Computer Electronic */
