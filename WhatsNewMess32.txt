@@ -5,7 +5,9 @@ Whats new:
 ------------
 
 - Updated MESS32 to properly recognize the new device types (cylinders, punch
-  cards and punch tapes) introduced with the ApexC driver.
+  cards and punch tapes) introduced with the ApexC driver. [Nate Woods]
+- Fixed a minor bug that caused crashes when opening images without file
+  extensions, as well as causing crashes with the C128 driver. [Nate Woods]
 
 ----------
 0.37 BETA 11

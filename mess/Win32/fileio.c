@@ -107,13 +107,17 @@ int MessImageFopen(const char *filename, mame_file *mf, int write, int (*checksu
 
 		/* Real file */
 		if (checksum_file(filename, NULL, &dummy, &mf->crc)) {
+			size_t iExtLen;
+
+			iExtLen = lpExt ? strlen(lpExt) : 0;
+
 			/* Try renaming the file */
-			s = malloc(strlen(filename) - strlen(lpExt) + sizeof(zipext));
+			s = malloc(strlen(filename) - iExtLen + sizeof(zipext));
 			if (!s)
 				return 0;
 			strcpy(s, filename);
 			if (lpExt)
-				strcpy(s + (strlen(filename) - strlen(lpExt)), zipext);
+				strcpy(s + (strlen(filename) - iExtLen), zipext);
 			else
 				strcat(s, zipext);
 
