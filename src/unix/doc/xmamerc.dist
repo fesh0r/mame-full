@@ -37,7 +37,6 @@ x11-mode                0
 cursor                  1
 mitshm                  1
 xsync                   1
-privatecmap             0
 #xil                     1
 #mtxil                   0
 run-in-root-window      0
@@ -48,16 +47,15 @@ geometry                640x480
 
 ### Video Mode Selection Related ###
 keepaspect              1
-displayaspectratio      1.330000
+displayaspectratio      1.3333333333333
 
 ### X11-input related ###
 grabmouse               0
 winkeys                 0
 
 ### Sound Related ###
-sound                   1
 samples                 1
-samplefreq              22050
+samplefreq              44100
 bufsize                 3.000000
 volume                  -3
 # audiodevice           <NULL> (not set)
@@ -66,7 +64,6 @@ volume                  -3
 ### Input Related ###
 joytype                 0
 analogstick             0
-mouse                   1
 
 ### Fileio Related ###
 rompath                 /usr/local/share/xmame/roms
