@@ -697,9 +697,14 @@ TESTDRIVER( mekd2 )		/* 1977 Motorola Evaluation Kit						*/
 	DRIVER( pmd852 )	/* PMD-85.2											*/
 	DRIVER( pmd852a )	/* PMD-85.2A											*/
 	DRIVER( pmd852b )	/* PMD-85.2B											*/
+	DRIVER( pmd853 )	/* PMD-85.3											*/
 
 	/* Didaktik */
-	DRIVER( alfa )		/* Alfa (PMD-85.1 clone)											*/
+	DRIVER( alfa )		/* Alfa (PMD-85.1 clone)									*/
+
+	/* Statny */
+	DRIVER( mato )		/* Mato (Basic ROM) (PMD-85.2 clone)								*/
+	DRIVER( matoh )		/* Mato (Games ROM) (PMD-85.2 clone)								*/
 
 	/* Team Concepts */
 	/* CPU not known, else should be easy, look into systems/comquest.c */
