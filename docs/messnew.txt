@@ -28,6 +28,11 @@ Source Changes:
 - The core is based on MAME 0.75.  This incorporates all features of the
   update to this core.  [MAME team]
 
+- The documentation was gutted and integrated with Paul Vince's easyEmu
+  guide.  All of the documentation is now under docs/ in the source tree.
+  Platform specific help now goes in subdirectories like docs/windows and
+  so on.  [Nate Woods, Paul Vince]
+
 
 
 0.74
