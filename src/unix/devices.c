@@ -1151,7 +1151,7 @@ static int ipdef_custom_rc_func(struct rc_option *option, const char *arg,
 			/* was a sequence was assigned to a keycode? - not valid! */
 			if (is[1] != CODE_NONE)
 			{
-				fprintf(stderr, "error: can't map \"%s\" to \"%s\"\n",pinput_keywords->name,arg);
+				fprintf(stderr_file, "error: can't map \"%s\" to \"%s\"\n",pinput_keywords->name,arg);
 			}
 
 			/* for all definitions */
@@ -1287,7 +1287,7 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 	/* create a structure for the input port options */
 	if (!(ctrlr_input_opts = calloc (num_ik+num_osd_ik+1, sizeof(struct rc_option))))
 	{
-		fprintf(stderr, "error on ctrlr_input_opts creation\n");
+		fprintf(stderr_file, "error on ctrlr_input_opts creation\n");
 		exit(1);
 	}
 
@@ -1321,13 +1321,13 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 
 	if (rc_register(rc, ctrlr_input_opts))
 	{
-		fprintf (stderr, "error on registering ctrlr_input_opts\n");
+		fprintf (stderr_file, "error on registering ctrlr_input_opts\n");
 		exit(1);
 	}
 
 	if (rc_register(rc, ctrlr_input_opts2))
 	{
-		fprintf (stderr, "error on registering ctrlr_input_opts2\n");
+		fprintf (stderr_file, "error on registering ctrlr_input_opts2\n");
 		exit(1);
 	}
 
