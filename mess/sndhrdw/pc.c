@@ -45,7 +45,7 @@ void pc_sh_stop(void)
 
 void pc_sh_speaker(int data)
 {
-	int mode;
+	int mode = 0;
 	switch( data )
 	{
 		case 0: mode=0; break;

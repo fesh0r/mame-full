@@ -1,4 +1,4 @@
-/* direct memory access controller 
+/* direct memory access controller
    intel 8237
 
    page register for bigger than 16 bit address buses are done in separate discrete hardware
@@ -18,8 +18,8 @@
 #define DMA_LOG(level, text, print)
 #endif
 
-DMA8237 dma8237[2]= { 
-	{ { DMA8237_PC } } 
+DMA8237 dma8237[2]= {
+	{ { DMA8237_PC } }
 };
 
 void dma8237_config(DMA8237 *This, DMA8237_CONFIG *config)
@@ -138,13 +138,13 @@ static int dma8237_r(DMA8237 *this, offs_t offset)
 		case 0: case 2: case 4: case 6:
 			if (this->msb)
 				data = (this->chan[offset>>1].address >> 8) & 0xff;
-			else 
+			else
 				data = this->chan[offset>>1].address & 0xff;
-			
+
 			DMA_LOG(1,"DMA_address_r",("chan #%d $%02x ($%04x)\n", offset>>1, data, this->address[offset>>1]));
 			this->msb ^= 1;
 
-			if ( (this->chan[0].operation==2)&&(offset==0) ) { 
+			if ( (this->chan[0].operation==2)&&(offset==0) ) {
 				// hack simulating refresh activity for ibmxt bios
 				this->chan[0].address++;
 				this->chan[0].count--;
@@ -199,10 +199,10 @@ static int dma8237_r(DMA8237 *this, offs_t offset)
 
 UINT8 dma8237_write(DMA8237 *this, int channel)
 {
-	int data;
+	int data = 0;
 
 	/* read byte from pc mem and update address */
-	if (this->chan[channel].operation == 2) 
+	if (this->chan[channel].operation == 2)
 	{
 		switch (this->config.type) {
 		case DMA8237_PC:
@@ -235,7 +235,7 @@ void dma8237_read(DMA8237 *this, int channel, UINT8 data)
 {
 
 	/* write byte to pc mem and update mem address */
-	if (this->chan[channel].operation == 1) 
+	if (this->chan[channel].operation == 1)
 	{
 		switch (this->config.type) {
 		case DMA8237_PC:
