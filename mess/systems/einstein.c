@@ -16,12 +16,12 @@
 		trigger for channel 3 is the terminal count of channel 2
 
 	Intel 8251 Serial (2Mhz clock?)
-
+	
 	WD1770 Floppy Disc controller
 		density is fixed, 4 drives and double sided supported
 
 	AY-3-8910 PSG (2Mhz)
-		port A and port B are connected to the keyboard. Port A is keyboard
+		port A and port B are connected to the keyboard. Port A is keyboard 
 		line select, Port B is data.
 
 	printer connected to port A of PIO
@@ -94,6 +94,7 @@ static void *einstein_keyboard_timer = NULL;
 static int einstein_keyboard_line = 0;
 static int einstein_keyboard_data = 0x0ff;
 
+
 /* refresh keyboard data. It is refreshed when the keyboard line is written */
 void einstein_scan_keyboard(void)
 {
@@ -114,12 +115,18 @@ void einstein_scan_keyboard(void)
 
 void	einstein_keyboard_timer_callback(int dummy)
 {
+	einstein_scan_keyboard();
+
 	/* keyboard data changed? */
 	if (einstein_keyboard_data!=0x0ff)
 	{
 		/* generate interrupt */
-
-
+		einstein_int |= EINSTEIN_KEY_INT;
+		
+//		if (einstein_int & einstein_int_mask)
+//		{
+//			cpu_cause_interrupt(0, 0x0ff);
+//		}
 	}
 }
 
@@ -151,7 +158,7 @@ static z80ctc_interface	einstein_ctc_intf =
 };
 
 
-static z80pio_interface einstein_pio_intf =
+static z80pio_interface einstein_pio_intf = 
 {
 	1,
 	{einstein_z80fmly_interrupt},
@@ -166,7 +173,7 @@ void einstein_int_reset(int code)
 
 int	einstein_interrupt(int code)
 {
-	return 0;
+
 }
 #endif
 
@@ -212,7 +219,7 @@ static WRITE_HANDLER(einstein_fdc_w)
 {
 	int reg = offset & 0x03;
 
-	logerror("fdc w: PC: %04x %04x %02x\n",cpu_get_pc(),offset,data);
+	logerror("fdc w: PC: %04x %04x %02x\n",cpu_get_pc(),offset,data); 
 
 	switch (reg)
 	{
@@ -221,13 +228,13 @@ static WRITE_HANDLER(einstein_fdc_w)
 			wd179x_command_w(reg, data);
 		}
 		break;
-
+	
 		case 1:
 		{
 			wd179x_track_w(reg, data);
 		}
 		break;
-
+	
 		case 2:
 		{
 			wd179x_sector_w(reg, data);
@@ -247,7 +254,7 @@ static READ_HANDLER(einstein_fdc_r)
 {
 	int reg = offset & 0x03;
 
-	logerror("fdc r: PC: %04x %04x\n",cpu_get_pc(),offset);
+	logerror("fdc r: PC: %04x %04x\n",cpu_get_pc(),offset); 
 
 	switch (reg)
 	{
@@ -256,13 +263,13 @@ static READ_HANDLER(einstein_fdc_r)
 			return wd179x_status_r(reg);
 		}
 		break;
-
+	
 		case 1:
 		{
 			return wd179x_track_r(reg);
 		}
 		break;
-
+	
 		case 2:
 		{
 			return wd179x_sector_r(reg);
@@ -306,14 +313,14 @@ static READ_HANDLER(einstein_pio_r)
 
 static READ_HANDLER(einstein_ctc_r)
 {
-	logerror("ctc r: %04x\n",offset);
-
+	logerror("ctc r: %04x\n",offset); 
+	
 	return z80ctc_0_r(offset & 0x03);
 }
 
 static WRITE_HANDLER(einstein_ctc_w)
 {
-	logerror("ctc w: %04x %02x\n",offset,data);
+	logerror("ctc w: %04x %02x\n",offset,data); 
 
 	z80ctc_0_w(offset & 0x03,data);
 }
@@ -329,7 +336,7 @@ static WRITE_HANDLER(einstein_serial_w)
 		msm8251_data_w(reg,data);
 		return;
 	}
-
+	
 	msm8251_control_w(reg,data);
 }
 
@@ -344,11 +351,11 @@ static READ_HANDLER(einstein_serial_r)
 	{
 		return msm8251_data_r(reg);
 	}
-
+	
 	return msm8251_status_r(reg);
 }
 
-/*
+/* 
 
 	AY-3-8912 PSG:
 
@@ -408,14 +415,14 @@ static READ_HANDLER(einstein_psg_r)
 		/* case 0 and 1 are not handled */
 		case 2:
 			return AY8910_read_port_0_r(0);
-
+	
 		default:
 			break;
 	}
 
 	return 0x0ff;
 }
-
+	
 
 /* int priority */
 /* keyboard int->ctc/adc->pio */
@@ -452,10 +459,10 @@ static WRITE_HANDLER(einstein_drive_w)
 	/* bit 1: select drive 1 */
 	/* bit 0: select drive 0 */
 
-	logerror("drive w: PC: %04x %04x %02x\n",cpu_get_pc(),offset,data);
+	logerror("drive w: PC: %04x %04x %02x\n",cpu_get_pc(),offset,data); 
 
 	wd179x_set_side((data>>4) & 0x01);
-
+	
 	if (data & 0x01)
 	{
 		wd179x_set_drive(0);
@@ -496,6 +503,8 @@ static WRITE_HANDLER(einstein_rom_w)
 
 static READ_HANDLER(einstein_key_int_r)
 {
+	logerror("mask r\n");
+
 	/* clear key int */
 	einstein_int &= ~EINSTEIN_KEY_INT;
 
@@ -507,12 +516,14 @@ static READ_HANDLER(einstein_key_int_r)
 	/* bit 2: 1=printer busy */
 	/* bit 1: fire 1 */
 	/* bit 0: fire 0 */
-	return ((readinputport(8) & 0x07)<<5);
+	return ((readinputport(8) & 0x07)<<5) | 0x01f;
 }
 
 
 static WRITE_HANDLER(einstein_key_int_w)
 {
+	logerror("mask: %02x\n",data);
+
 	/* set mask from bit 0 */
 	if (data & 0x01)
 	{
@@ -531,7 +542,7 @@ PORT_READ_START( readport_einstein )
 	{0x008, 0x00f, einstein_vdp_r},
 	{0x010, 0x017, einstein_serial_r},
 	{0x018, 0x01f, einstein_fdc_r},
-	{0x020, 0x020, einstein_key_int_r},
+	{0x020, 0x020, einstein_key_int_r},	
 	{0x028, 0x02f, einstein_ctc_r},
 	{0x030, 0x037, einstein_pio_r},
 	{0x040, 0x0ff, einstein_unmapped_r},
@@ -560,7 +571,7 @@ void einstein_dump_ram(void)
 	void *file;
 
 	file = osd_fopen(Machine->gamedrv->name, "einstein.bin", OSD_FILETYPE_NVRAM,OSD_FOPEN_WRITE);
-
+ 
 	if (file)
 	{
 		osd_fwrite(file, einstein_ram, 0x10000);
@@ -618,21 +629,21 @@ void einstein_shutdown_machine(void)
 		timer_remove(einstein_keyboard_timer);
 		einstein_keyboard_timer = NULL;
 	}
-
+	
 	wd179x_exit();
 }
 
 INPUT_PORTS_START(einstein)
 	/* line 0 */
 	PORT_START
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "BREAK", KEYCODE_LALT, IP_JOY_NONE)
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "?", KEYCODE_1_PAD, IP_JOY_NONE)
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "?", KEYCODE_2_PAD, IP_JOY_NONE)
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "?", KEYCODE_3_PAD, IP_JOY_NONE)
-	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "CAPS LOCK", KEYCODE_CAPSLOCK, IP_JOY_NONE)
-	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "ENTER", KEYCODE_ENTER, IP_JOY_NONE)
-	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "SPACE", KEYCODE_SPACE, IP_JOY_NONE)
-	PORT_BIT(0x080, 0x080, IPT_UNUSED)
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "BREAK", KEYCODE_LALT, IP_JOY_NONE) 
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "?", KEYCODE_1_PAD, IP_JOY_NONE) 
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "F0", KEYCODE_F1, IP_JOY_NONE) 
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "?", KEYCODE_3_PAD, IP_JOY_NONE) 
+	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "CAPS LOCK", KEYCODE_CAPSLOCK, IP_JOY_NONE) 
+	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "ENTER", KEYCODE_ENTER, IP_JOY_NONE) 
+	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "SPACE", KEYCODE_SPACE, IP_JOY_NONE) 
+	PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "ESC", KEYCODE_ESC, IP_JOY_NONE) 
 	/* line 1 */
 	PORT_START
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "I", KEYCODE_I, IP_JOY_NONE) 
@@ -645,64 +656,64 @@ INPUT_PORTS_START(einstein)
 	PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "0", KEYCODE_0, IP_JOY_NONE) 
 	/* line 2 */
 	PORT_START
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "K", KEYCODE_K, IP_JOY_NONE)
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "L", KEYCODE_L, IP_JOY_NONE)
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, ";", KEYCODE_COLON, IP_JOY_NONE)
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, ":", KEYCODE_QUOTE, IP_JOY_NONE)
-	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "RIGHT", KEYCODE_RIGHT, IP_JOY_NONE)
-	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "TAB", KEYCODE_TAB, IP_JOY_NONE)
-	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "9", KEYCODE_9, IP_JOY_NONE)
-	PORT_BIT(0x080, 0x080, IPT_UNUSED)
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "K", KEYCODE_K, IP_JOY_NONE) 
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "L", KEYCODE_L, IP_JOY_NONE) 
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, ";", KEYCODE_COLON, IP_JOY_NONE) 
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, ":", KEYCODE_QUOTE, IP_JOY_NONE) 
+	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "RIGHT", KEYCODE_RIGHT, IP_JOY_NONE) 
+	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "TAB", KEYCODE_TAB, IP_JOY_NONE) 
+	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "9", KEYCODE_9, IP_JOY_NONE) 
+	PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "F5", KEYCODE_F6, IP_JOY_NONE) 
 	/* line 3 */
 	PORT_START
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, ",", KEYCODE_COMMA, IP_JOY_NONE)
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, ".", KEYCODE_STOP, IP_JOY_NONE)
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "/", KEYCODE_SLASH, IP_JOY_NONE)
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "8", KEYCODE_8, IP_JOY_NONE)
-	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "DELETE", KEYCODE_BACKSPACE, IP_JOY_NONE)
-	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "=", KEYCODE_EQUALS, IP_JOY_NONE)
-	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "UP", KEYCODE_UP, IP_JOY_NONE)
-	PORT_BIT(0x080, 0x080, IPT_UNUSED)
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, ",", KEYCODE_COMMA, IP_JOY_NONE) 
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, ".", KEYCODE_STOP, IP_JOY_NONE) 
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "/", KEYCODE_SLASH, IP_JOY_NONE) 
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "8", KEYCODE_8, IP_JOY_NONE) 
+	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "DELETE", KEYCODE_BACKSPACE, IP_JOY_NONE) 
+	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "=", KEYCODE_EQUALS, IP_JOY_NONE) 
+	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "UP", KEYCODE_UP, IP_JOY_NONE) 
+	PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "F4", KEYCODE_F5, IP_JOY_NONE) 
 	/* line 4 */
 	PORT_START
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "7", KEYCODE_7, IP_JOY_NONE)
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "6", KEYCODE_6, IP_JOY_NONE)
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "5", KEYCODE_5, IP_JOY_NONE)
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "4", KEYCODE_4, IP_JOY_NONE)
-	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "3", KEYCODE_3, IP_JOY_NONE)
-	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "2", KEYCODE_2, IP_JOY_NONE)
-	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "1", KEYCODE_1, IP_JOY_NONE)
-	PORT_BIT(0x080, 0x080, IPT_UNUSED)
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "7", KEYCODE_7, IP_JOY_NONE) 
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "6", KEYCODE_6, IP_JOY_NONE) 
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "5", KEYCODE_5, IP_JOY_NONE) 
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "4", KEYCODE_4, IP_JOY_NONE) 
+	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "3", KEYCODE_3, IP_JOY_NONE) 
+	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "2", KEYCODE_2, IP_JOY_NONE) 
+	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "1", KEYCODE_1, IP_JOY_NONE) 
+	PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "F3", KEYCODE_F4, IP_JOY_NONE) 
 	/* line 5 */
 	PORT_START
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "U", KEYCODE_U, IP_JOY_NONE)
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "Y", KEYCODE_Y, IP_JOY_NONE)
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "T", KEYCODE_T, IP_JOY_NONE)
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "R", KEYCODE_R, IP_JOY_NONE)
-	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "E", KEYCODE_E, IP_JOY_NONE)
-	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "W", KEYCODE_W, IP_JOY_NONE)
-	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "Q", KEYCODE_Q, IP_JOY_NONE)
-	PORT_BIT(0x080, 0x080, IPT_UNUSED)
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "U", KEYCODE_U, IP_JOY_NONE) 
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "Y", KEYCODE_Y, IP_JOY_NONE) 
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "T", KEYCODE_T, IP_JOY_NONE) 
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "R", KEYCODE_R, IP_JOY_NONE) 
+	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "E", KEYCODE_E, IP_JOY_NONE) 
+	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "W", KEYCODE_W, IP_JOY_NONE) 
+	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "Q", KEYCODE_Q, IP_JOY_NONE) 
+	PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "F2", KEYCODE_F3, IP_JOY_NONE) 
 	/* line 6 */
 	PORT_START
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "J", KEYCODE_J, IP_JOY_NONE)
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "H", KEYCODE_H, IP_JOY_NONE)
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "G", KEYCODE_G, IP_JOY_NONE)
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "F", KEYCODE_F, IP_JOY_NONE)
-	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "D", KEYCODE_D, IP_JOY_NONE)
-	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "S", KEYCODE_S, IP_JOY_NONE)
-	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "A", KEYCODE_A, IP_JOY_NONE)
-	PORT_BIT(0x080, 0x080, IPT_UNUSED)
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "J", KEYCODE_J, IP_JOY_NONE) 
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "H", KEYCODE_H, IP_JOY_NONE) 
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "G", KEYCODE_G, IP_JOY_NONE) 
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "F", KEYCODE_F, IP_JOY_NONE) 
+	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "D", KEYCODE_D, IP_JOY_NONE) 
+	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "S", KEYCODE_S, IP_JOY_NONE) 
+	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "A", KEYCODE_A, IP_JOY_NONE) 
+	PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "F1", KEYCODE_F2, IP_JOY_NONE) 
 	/* line 7 */
 	PORT_START
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "M", KEYCODE_M, IP_JOY_NONE)
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "N", KEYCODE_N, IP_JOY_NONE)
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "B", KEYCODE_B, IP_JOY_NONE)
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "V", KEYCODE_V, IP_JOY_NONE)
-	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "C", KEYCODE_C, IP_JOY_NONE)
-	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "X", KEYCODE_X, IP_JOY_NONE)
-	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "Z", KEYCODE_Z, IP_JOY_NONE)
-	PORT_BIT(0x080, 0x080, IPT_UNUSED)
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "M", KEYCODE_M, IP_JOY_NONE) 
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "N", KEYCODE_N, IP_JOY_NONE) 
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "B", KEYCODE_B, IP_JOY_NONE) 
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "V", KEYCODE_V, IP_JOY_NONE) 
+	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "C", KEYCODE_C, IP_JOY_NONE) 
+	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "X", KEYCODE_X, IP_JOY_NONE) 
+	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "Z", KEYCODE_Z, IP_JOY_NONE) 
+	PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "F6", KEYCODE_F7, IP_JOY_NONE) 
 	/* extra */
 	PORT_START
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "GRPH", KEYCODE_F1, IP_JOY_NONE)
@@ -729,7 +740,7 @@ static READ_HANDLER(einstein_port_b_read)
 
 	logerror("key: %02x\n",einstein_keyboard_data);
 
-	return einstein_keyboard_data;
+	return einstein_keyboard_data;	
 }
 
 static struct AY8910interface einstein_ay_interface =
@@ -757,7 +768,7 @@ static struct MachineDriver machine_driver_einstein =
 			readport_einstein,		   /* IOReadPort */
 			writeport_einstein,		   /* IOWritePort */
             0, 0,
-			0, 0,
+			0, 0,	
 			einstein_daisy_chain
 		},
 	},
@@ -768,7 +779,7 @@ static struct MachineDriver machine_driver_einstein =
 	einstein_shutdown_machine,
 	/* video hardware */
 	32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
-	0,
+	0,								
 	TMS9928A_PALETTE_SIZE, TMS9928A_COLORTABLE_SIZE,
 	tms9928A_init_palette,
 	VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER,
@@ -802,27 +813,27 @@ ROM_END
 
 static const struct IODevice io_einstein[] =
 {
-	{
-		IO_FLOPPY,					/* type */
-		4,							/* count */
-		"dsk\0",                    /* file extensions */
-		IO_RESET_NONE,				/* reset if file changed */
+	{ 
+		IO_FLOPPY,					/* type */ 
+		4,							/* count */ 
+		"dsk\0",                    /* file extensions */ 
+		IO_RESET_NONE,				/* reset if file changed */ 
 		0,
-		einstein_floppy_init,			/* init */
-		dsk_floppy_exit,			/* exit */
-		NULL,						/* info */
-		NULL,						/* open */
-		NULL,						/* close */
-		floppy_status,              /* status */
-		NULL,                       /* seek */
-		NULL,						/* tell */
-		NULL,						/* input */
-		NULL,						/* output */
-		NULL,						/* input_chunk */
-		NULL						/* output_chunk */
+		einstein_floppy_init,			/* init */ 
+		dsk_floppy_exit,			/* exit */ 
+		NULL,						/* info */ 
+		NULL,						/* open */ 
+		NULL,						/* close */ 
+		floppy_status,              /* status */ 
+		NULL,                       /* seek */ 
+		NULL,						/* tell */ 
+		NULL,						/* input */ 
+		NULL,						/* output */ 
+		NULL,						/* input_chunk */ 
+		NULL						/* output_chunk */ 
 	},
 	{IO_END}
 };
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY		FULLNAME */
-COMP( 1984, einstein,      0,            einstein,          einstein,      0,       "Tatung", "Einstein TC-01")
+COMP( 19??, einstein,      0,            einstein,          einstein,      0,       "Tatung", "Tatung Einstein TC-01")
