@@ -51,7 +51,6 @@ void	msm8251_init(struct msm8251_interface *iface)
 	serial_connection_init(&uart.connection);
 	serial_connection_set_in_callback(&uart.connection, msm8251_in_callback);
 	uart.connection.input_state = 0;	
-	uart.baud_rate = -1;
 	/* reset chip */
 	msm8251_reset();
 
@@ -60,11 +59,6 @@ void	msm8251_init(struct msm8251_interface *iface)
 /* stop */
 void	msm8251_stop(void)
 {
-	if (uart.timer!=NULL)
-	{
-		timer_remove(uart.timer);
-		uart.timer = NULL;
-	}
 }
 
 static void msm8251_update_rx_ready(void)
@@ -84,7 +78,7 @@ static void msm8251_update_rx_ready(void)
 	
 }
 
-static void uart_timer_callback(int id)
+void msm8251_receive_clock(void)
 {
 	/* receive enable? */
 	if (uart.command & (1<<2))
@@ -99,8 +93,10 @@ static void uart_timer_callback(int id)
 			msm8251_receive_character(uart.receive_reg.byte_received);
 		}
 	}
+}
 
-
+void msm8251_transmit_clock(void)
+{
 	/* transmit enable? */
 	if (uart.command & (1<<0))
 	{
@@ -205,24 +201,6 @@ static void msm8251_update_tx_empty(void)
 	
 }
 
-/* set baud rate */
-void	msm8251_set_baud_rate(unsigned long rate)
-{
-#ifdef VERBOSE
-	logerror("msm8251 set baud rate %d\n", rate);
-#endif
-	if (rate!=uart.baud_rate)
-	{
-		if (uart.timer!=NULL)
-		{
-			timer_remove(uart.timer);
-		}
-		uart.timer = NULL;
-	}
-
-	uart.timer = timer_pulse(TIME_IN_HZ(rate), 0, uart_timer_callback);
-}
-
 void	msm8251_reset(void)
 {
 	LOG("MSM8251 Reset\n");
@@ -234,7 +212,7 @@ void	msm8251_reset(void)
 	set_out_data_bit(uart.connection.State,1);
 
 	/* assumption, rts is set to 1 */
-	uart.connection.State |= SERIAL_STATE_RTS;
+	uart.connection.State &= ~SERIAL_STATE_RTS;
 	serial_connection_out(&uart.connection);
 
 	transmit_register_reset(&uart.transmit_reg);

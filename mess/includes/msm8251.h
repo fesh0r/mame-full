@@ -25,7 +25,6 @@ struct msm8251_interface
 	void	(*rx_ready_callback)(int state);
 };
 
-
 struct msm8251
 {
 	/* flags controlling how msm8251_control_w operates */
@@ -51,12 +50,6 @@ struct msm8251
 	struct serial_transmit_register transmit_reg;
 
 	struct data_form data_form;
-
-	/* current baud rate */
-	unsigned long baud_rate;
-
-	/* baud rate timer */
-	void *timer;
 
 	/* contains callback for txrdy, rxrdy and tx empty which connect
 	to host system */
@@ -87,8 +80,13 @@ void msm8251_reset(void);
 /* stop the emulation and clean up */
 void msm8251_stop(void);
 
-/* this chip doesn't have an internal baud rate generator, so it must be set externally */
-void msm8251_set_baud_rate(unsigned long);
+
+/* The 8251 has seperate transmit and receive clocks */
+/* use these two functions to update the msm8251 for each clock */
+/* on NC100 system, the clocks are the same */
+
+void msm8251_transmit_clock(void);
+void msm8251_receive_clock(void);
 
 
 void	msm8251_connect_to_serial_device(int id);
