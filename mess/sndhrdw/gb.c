@@ -1,139 +1,261 @@
 /**************************************************************************************
 * Gameboy sound emulation (c) Ben Bruscella (ben@mame.net) <--- what shit!
+*                           + Anthony Kruize (trandor@labyrinth.net.au)
 *
 * Anyways, sound on the gameboy consists of 4 separate 'channels'
 *   Sound1 = Quadrangular waves with SWEEP and ENVELOPE functions  (NR10,11,12,13,14)
-*   Sound2 = Quadrangular waves with ENVELOPE functions
-*   Sound3 = Wave patterns from WaveRAM
-*   Sound4 = White noise with an envelope
+*   Sound2 = Quadrangular waves with ENVELOPE functions (NR21,22,23,24)
+*   Sound3 = Wave patterns from WaveRAM (NR30,31,32,33,34)
+*   Sound4 = White noise with an envelope (NR41,42,43,44)
 *
 * Each sound channel has 2 modes, namely ON and OFF...  whoa
 *
-
-
+* These tend to be the two most important equations in
+* converting between Hertz and GB frequency registers:
+* (Sounds will have a 2.4% higher frequency on Super GB.)
+*       gb = 2048 - (131072 / Hz)
+*       Hz  = 131072 / (2048 - gb)
+*
 ***************************************************************************************/
 
-#include <math.h>
 #include "driver.h"
 #include "includes/gb.h"
 
-/*UINT8 *gb_ram;*/
+#define NR10 0xFF10
+#define NR11 0xFF11
+#define NR12 0xFF12
+#define NR13 0xFF13
+#define NR14 0xFF14
+#define NR21 0xFF16
+#define NR22 0xFF17
+#define NR23 0xFF18
+#define NR24 0xFF19
+#define NR30 0xFF1A
+#define NR31 0xFF1B
+#define NR32 0xFF1C
+#define NR33 0xFF1D
+#define NR34 0xFF1E
+#define NR41 0xFF20
+#define NR42 0xFF21
+#define NR43 0xFF22
+#define NR44 0xFF23
+#define NR50 0xFF24
+#define NR51 0xFF25
+#define NR52 0xFF26
+
+#define GB_TO_HZ(x) (131072 / (2048 - x))
 
 static int channel = 1;
-static int sound_register;
-static int register_value;
-
+static int rate;
 
 struct SOUND1
 {
-	int on;
-	int length;
+	UINT8 on;
+	INT32 length;
+	INT32 pos;
+	INT32 frequency;
+	INT32 count;
+	INT8 signal;
+	INT8 mode;
+	INT8 duty;
+	INT32 env_value;
+	INT8 env_direction;
+	INT32 env_length;
+	INT32 env_count;
+	INT32 swp_shift;
+	INT32 swp_direction;
+	INT32 swp_time;
 };
 
 struct SOUND2
 {
-	int on;
-	int length;
+	UINT8 on;
+	INT32 length;
+	INT32 pos;
+	INT32 frequency;
+	INT32 count;
+	INT8 signal;
+	INT8 mode;
+	INT8 duty;
+	INT32 env_value;
+	INT8 env_direction;
+	INT32 env_length;
+	INT32 env_count;
 };
 
 struct SOUND3
 {
-	int on;
-	int length;
+	UINT8 on;
+	INT32 length;
+	INT32 pos;
+	INT32 frequency;
+	INT32 count;
+	INT8 signal;
+	INT8 mode;
 };
 
 struct SOUND4
 {
-	int on;
-	int length;
+	UINT8 on;
+	INT32 length;
+	INT32 pos;
+	INT32 frequency;
+	INT32 count;
+	INT16 signal;
+	INT8 mode;
+	INT32 env_value;
+	INT8 env_direction;
+	INT32 env_length;
+	INT32 env_count;
+	INT32 ply_count;
+	INT32 ply_step;
+	INT32 ply_ratio;
 };
 
-struct SOUNDALL
+static struct SOUND1 snd_1;
+static struct SOUND2 snd_2;
+static struct SOUND3 snd_3;
+static struct SOUND4 snd_4;
+
+void gameboy_init_1(void)
 {
-	int on;
-	int length;
-};
+	if( !snd_1.on )
+		snd_1.pos = 0;
+	snd_1.on = 1;
+	snd_1.count = 0;
+	snd_1.env_count = 0;
+	snd_1.signal = (UINT8)0xff;
+}
 
-static struct SOUND1   snd_1;
-static struct SOUND2   snd_2;
-static struct SOUND3   snd_3;
-static struct SOUND4   snd_4;
-static struct SOUNDALL snd_all;
+void gameboy_init_2(void)
+{
+	if( !snd_2.on )
+		snd_2.pos = 0;
+	snd_2.on = 1;
+	snd_2.count = 0;
+	snd_2.env_count = 0;
+	snd_2.signal = (UINT8)0xff;
+}
 
+void snd_3_init(void)
+{
+	if( !snd_3.on )
+		snd_3.pos = 0;
+	snd_3.on = 1;
+	snd_3.count = 0;
 
+}
 
-void gameboy_sh_update(int param, INT16 *buffer, int length);
+void snd_4_init(void)
+{
+	snd_4.on = 1;
+	snd_4.pos = 0;
+	snd_4.count = 0;
+	snd_4.env_count = 0;
+}
+
+void gameboy_update(int param, INT16 **buffer, int length);
 
 void gameboy_sound_w(int offset, int data)
 {
+	/* change in registers so update first */
+	stream_update(channel,0);
 
-    /* change in registers so update first */
-    stream_update(channel,0);
-	sound_register = offset ^ 0xFF00;
-	register_value = data;
+	/* copy the data to ram */
+	gb_ram[offset] = data;
 
-	/*
-	logerror ("gameboy_sound_w - SOUND Register = %x Value = %x\n",sound_register,register_value);
-	*/
-	switch( sound_register )
+	switch( offset )
 	{
 	/*MODE 1 */
-	case 0x10: /* NR10 Mode 1 Register - Sweep Register (R/W) */
+	case NR10: /* Sweep (R/W) */
+		snd_1.swp_shift = data & 0x7;
+		snd_1.swp_direction = (data & 0x8) >> 3;
+		snd_1.swp_direction |= snd_1.swp_direction - 1;
+		snd_1.swp_time = (data & 0x70) >> 4;
 		break;
-	case 0x11: /* NR11 Mode 1 Register - Sound length/Wave pattern duty (R/W) */
+	case NR11: /* Sound length/Wave pattern duty (R/W) */
+		snd_1.duty = (data & 0xc0) >> 6;
+		snd_1.length = (data & 0x3f) << 15;
 		break;
-	case 0x12: /* NR12 Mode 1 Register - Envelope (R/W) */
+	case NR12: /* Envelope (R/W) */
+		snd_1.env_value = data >> 4;
+		snd_1.env_direction = (data & 0x8) >> 3;
+		snd_1.env_direction |= snd_1.env_direction - 1;
+		snd_1.env_length = (data & 0x7) << 15;
 		break;
-	case 0x13: /* NR13 Mode 1 Register - Frequency lo (R/W) */
+	case NR13: /* Frequency lo (R/W) */
+		snd_1.frequency = GB_TO_HZ((((gb_ram[NR14]&7)<<8) | gb_ram[NR13]));
 		break;
-	case 0x14: /* NR14 Mode 1 Register - Frequency hi (R/W) */
+	case NR14: /* Frequency hi / Initialize (R/W) */
+		snd_1.frequency = GB_TO_HZ((((gb_ram[NR14]&7)<<8) | gb_ram[NR13]));
+		if( data & 0x80 )
+			gameboy_init_1();
 		break;
 
 	/*MODE 2 */
-	case 0x16: /* NR21 Mode 2 Register - Sound length/Wave pattern duty (R/W) */
+	case NR21: /* Sound length/Wave pattern duty (R/W) */
+		snd_2.duty = (data & 0xc0) >> 6;
+		snd_2.length = (data & 0x3f) << 15;
 		break;
-	case 0x17: /* NR22 Mode 2 Register - Envelope (R/W) */
+	case NR22: /* Envelope (R/W) */
+		snd_2.env_value = data >> 4;
+		snd_2.env_direction = (data & 0x8 ) >> 3;
+		snd_2.env_direction |= snd_2.env_direction - 1;
+		snd_2.env_length = (data & 0x7) << 15;
 		break;
-	case 0x18: /* NR23 Mode 2 Register - Frequency lo (R/W) */
+	case NR23: /* Frequency lo (R/W) */
+		snd_2.frequency = GB_TO_HZ((((gb_ram[NR24]&7)<<8) | gb_ram[NR23]));
 		break;
-	case 0x19: /* NR24 Mode 2 Register - Frequency hi (R/W) */
+	case NR24: /* Frequency hi / Initialize (R/W) */
+		snd_2.mode = (data & 0x40) >> 6;
+		snd_2.frequency = GB_TO_HZ((((gb_ram[NR24]&7)<<8) | gb_ram[NR23]));
+		if( data & 0x80 )
+			gameboy_init_2();
 		break;
 
 	/*MODE 3 */
-	case 0x1A: /* NR30 Mode 3 Register - Sound On/Off (R/W) */
+	case NR30: /* Sound On/Off (R/W) */
 		snd_3.on = (data & 0x80)>>7;
-		/*logerror ("gameboy_sound_w - SOUND 3 ON/OFF is %x\n",snd_3->on);*/
 		break;
-	case 0x1B: /* NR31 Mode 3 Register - Sound Length (R/W) */
+	case NR31: /* Sound Length (R/W) */
 		snd_3.length = data;
 		break;
-	case 0x1C: /* NR32 Mode 3 Register - Select Output Level */
+	case NR32: /* Select Output Level */
+		/* NEED TO FILL THIS IN */
 		break;
-	case 0x1D: /* NR33 Mode 3 Register - Frequency lo (R/W) */
+	case NR33: /* Frequency lo (W) */
+		snd_3.frequency = GB_TO_HZ(((gb_ram[NR34]&7)<<8) + gb_ram[NR33]);
 		break;
-	case 0x1E: /* NR34 Mode 3 Register - Frequency hi (R/W) */
+	case NR34: /* Frequency hi / Initialize (W) */
+		snd_3.frequency = GB_TO_HZ(((gb_ram[NR34]&7)<<8) + gb_ram[NR33]);
+		if( data & 0x80 )
+			snd_3_init();
 		break;
 
 	/*MODE 4 */
-	case 0x20: /* NR41 Mode 4 Register - Sound Length (R/W) */
-		snd_4.length = data<<2;
-		logerror("Sound4 Data length changed to %4x\n",snd_4.length);
+	case NR41: /* Sound Length (R/W) */
+		snd_4.length = (data & 0x3f) << 2;
 		break;
-	case 0x21: /* NR42 Mode 4 Register - Envelope */
+	case NR42: /* Envelope (R/W) */
+		snd_4.env_value = data >> 4;
+		snd_4.env_direction = (data & 0x8 ) >> 3;
+		snd_4.env_direction |= snd_4.env_direction - 1;
+		snd_4.env_length = (data & 0x7) << 15;
 		break;
-	case 0x22: /* NR43 Mode 4 Register - Polynomial Counter */
+	case NR43: /* Polynomial Counter/Frequency */
+		/* NEED TO SET POLYNOMIAL STUFF HERE */
 		break;
-	case 0x23: /* NR44 Mode 4 Register - Counter/Consecutive; Initial (R/W)  */
+	case NR44: /* Counter/Consecutive / Initialize (R/W)  */
+		if( data & 0x80 )
+			snd_4_init();
 		break;
 
 	/*GENERAL */
-	case 0x24: /* NR50 Channel Control / On/Off / Volume (R/W)  */
+	case NR50: /* Channel Control / On/Off / Volume (R/W)  */
 		break;
-
-	case 0x25: /* NR51 Selection of Sound Output Terminal */
+	case NR51: /* Selection of Sound Output Terminal */
 		break;
-
-	case 0x26: /* NR52 Sound On/Off (R/W) */
+	case NR52: /* Sound On/Off (R/W) */
 		logerror("NR52 - %x\n",data);
 		snd_1.on = (data & 0x01);
 		/* logerror("Sound 1 = %02x\n",snd_1->on); */
@@ -143,61 +265,168 @@ void gameboy_sound_w(int offset, int data)
 		/* logerror("Sound 3 = %02x\n",snd_3->on); */
 		snd_4.on = (data & 0x08)>>3;
 		/* logerror("Sound 4 = %02x\n",snd_4->on); */
-		snd_all.on = (data & 0x80)>>7;
-		logerror("Sound ALL = %02x\n",snd_all.on);
 		break;
 
  	/*   0xFF30 - 0xFF3F = Wave Pattern RAM for arbitrary sound data */
-
 	}
-
 }
 
+void gameboy_update(int param, INT16 **buffer, int length)
+{
+	INT16 sample, left, right;
+	INT32 clock;
 
+	while( length-- > 0 )
+	{
+		left = right = 0;
+
+		/* Mode 1 - Wave with Envelope and Sweep */
+		if( snd_1.on )
+		{
+			/* TODO: Handle wave duty, counter/consecutive mode and sweep mode */
+			clock = snd_1.frequency;
+			sample = snd_1.signal & snd_1.env_value;
+			snd_1.pos -= clock;
+			while( snd_1.pos < 0 )
+			{
+				snd_1.pos += rate;
+				snd_1.signal = -snd_1.signal;
+			}
+
+			if( snd_1.length )
+			{
+				snd_1.count++;
+				if( snd_1.count >= snd_1.length )
+				{
+					snd_1.on = 0;
+				}
+			}
+
+			if( snd_1.env_length )
+			{
+				snd_1.env_count++;
+				if( snd_1.env_count >= snd_1.env_length )
+				{
+					snd_1.env_value += snd_1.env_direction;
+					if( snd_1.env_value < 0 )
+						snd_1.env_value = 0;
+					if( snd_1.env_value > 15 )
+						snd_1.env_value = 15;
+				}
+			}
+
+			if( gb_ram[NR51] & 0x1 )
+				right += sample;
+			if( gb_ram[NR51] & 0x10 )
+				left += sample;
+		}
+
+		/* Mode 2 - Wave with Envelope */
+		if( snd_2.on )
+		{
+			/* TODO: Handle wave duty, counter/consecutive mode */
+			clock = snd_2.frequency;
+			sample = snd_2.signal & snd_2.env_value;
+			snd_2.pos -= clock;
+			while( snd_2.pos < 0 )
+			{
+				snd_2.pos += rate;
+				snd_2.signal = -snd_2.signal;
+			}
+
+			if( snd_2.length )
+			{
+				snd_2.count++;
+				if( snd_2.count >= snd_2.length )
+				{
+					snd_2.on = 0;
+				}
+			}
+
+			if( snd_2.env_length )
+			{
+				snd_2.env_count++;
+				if( snd_2.env_count >= snd_2.env_length )
+				{
+					snd_2.env_value += snd_2.env_direction;
+					if( snd_2.env_value < 0 )
+						snd_2.env_value = 0;
+					if( snd_2.env_value > 15 )
+						snd_2.env_value = 15;
+				}
+			}
+
+			if( gb_ram[NR51] & 0x2 )
+				right += sample;
+			if( gb_ram[NR51] & 0x20 )
+				left += sample;
+		}
+
+		/* Mode 3 - Wave patterns from WaveRAM */
+		if( snd_3.on )
+		{
+			/* TODO: Figure out how to use wave ram samples */
+			sample = 0;
+
+			if( gb_ram[NR51] & 0x4 )
+				right += sample;
+			if( gb_ram[NR51] & 0x40 )
+				left += sample;
+		}
+
+		/* Mode 4 - Noise with Envelope */
+		if( snd_4.on )
+		{
+			/* TODO: Figure out how to do noise samples */
+			sample = 0;
+
+			if( snd_4.env_length )
+			{
+				snd_4.env_count++;
+				if( snd_4.env_count >= snd_4.env_length )
+				{
+					snd_4.env_value += snd_4.env_direction;
+					if( snd_4.env_value < 0 )
+						snd_4.env_value = 0;
+					if( snd_4.env_value > 15 )
+						snd_4.env_value = 15;
+				}
+			}
+
+			if( gb_ram[NR51] & 0x8 )
+				right += sample;
+			if( gb_ram[NR51] & 0x80 )
+				left += sample;
+		}
+
+		/* Adjust for volume */
+		left *= (gb_ram[NR50] & 0x7);
+		right *= ((gb_ram[NR50] & 0x70)>>4);
+
+		left <<= 4;
+		right <<= 4;
+
+		/* Update the buffers */
+		*(buffer[0]++) = left;
+		*(buffer[1]++) = right;
+	}
+
+	gb_ram[NR52] = (gb_ram[NR52]&0xf0) | snd_1.on | (snd_2.on<<1) | (snd_3.on<<2) | (snd_4.on<<3);
+}
 
 int gameboy_sh_start(const struct MachineSound* driver)
 {
-    memset(&snd_1, 0, sizeof(snd_1));
-    memset(&snd_2, 0, sizeof(snd_2));
-    memset(&snd_3, 0, sizeof(snd_3));
-    memset(&snd_4, 0, sizeof(snd_4));
-    memset(&snd_all, 0, sizeof(snd_all));
+	const char *names[2] = { "Gameboy left", "Gameboy right" };
+	const int volume[2] = { MIXER( 100, MIXER_PAN_LEFT ), MIXER( 100, MIXER_PAN_RIGHT ) };
 
-	channel = stream_init("Gameboy out", 50, Machine->sample_rate, 0, gameboy_sh_update);
+	memset(&snd_1, 0, sizeof(snd_1));
+	memset(&snd_2, 0, sizeof(snd_2));
+	memset(&snd_3, 0, sizeof(snd_3));
+	memset(&snd_4, 0, sizeof(snd_4));
 
+	channel = stream_init_multi(2, names, volume, Machine->sample_rate, 0, gameboy_update);
 
+	rate = Machine->sample_rate / 2;
 
-    return 0;
-
-}
-
-
-
-void gameboy_sh_update(int param, INT16 *buffer, int length)
-{
-	static INT16 max = 0x7FFF;
-	int i;
-
-/*
-  These tend to be the two most important equations in
- converting between Hertz and GB frequency registers:
- (Sounds will have a 2.4% higher frequency on Super GB.)
-     gb = 2048 - (131072 / Hz)
-     Hz  = 131072 / (2048 - gb)
-*/
-
-	/* Need to create 4 channels of sound here */
-
-	if (snd_all.on)    /* Produce Sound */
-		max = 0x7FFF;
-	else
-		max = 0x0000;
-
-
-	for (i = 0; i < length; i++)
-	{
-
-		buffer[i] = 0;
-	}
-
+	return 0;
 }
