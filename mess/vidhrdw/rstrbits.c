@@ -1,6 +1,7 @@
 #include <assert.h>
 #include "includes/rstrbits.h"
 #include "mame.h"
+#include "driver.h"
 
 /* -------------------------------------------------------------------------
  * These functions were taken out of the CoCo/M6847 support, currently what
@@ -494,6 +495,8 @@ void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struc
 {
 	int scalex, scaley;
 	int basex, basey;
+	int bitmapwidth;
+	int bitmapheight;
 
 	assert(!clip);
 	assert(bitmap);
@@ -501,10 +504,20 @@ void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struc
 	assert(mode);
 	assert(frame);
 
+	if (Machine->orientation & ORIENTATION_SWAP_XY) {
+		bitmapwidth = bitmap->height;
+		bitmapheight = bitmap->width;
+	}
+	else {
+		bitmapwidth = bitmap->width;
+		bitmapheight = bitmap->height;
+	}
+
+
 	scalex = frame->width / mode->width;
 	scaley = frame->height / mode->height;
-	basex = (bitmap->width - frame->width) / 2;
-	basey = (bitmap->height - frame->height) / 2;
+	basex = (bitmapwidth - frame->width) / 2;
+	basey = (bitmapheight - frame->height) / 2;
 
 	assert(scalex > 0);
 	assert(scaley > 0);
@@ -516,13 +529,13 @@ void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struc
 		struct rectangle r;
 		r.min_x = 0;
 		r.min_y = 0;
-		r.max_x = bitmap->width - 1;
+		r.max_x = bitmapwidth - 1;
 		r.max_y = basey - 1;
 		fillbitmap(bitmap, frame->border_pen, &r);
 		r.min_x = 0;
 		r.min_y = basey + frame->height;
-		r.max_x = bitmap->width - 1;
-		r.max_y = bitmap->height - 1;
+		r.max_x = bitmapwidth - 1;
+		r.max_y = bitmapheight - 1;
 		fillbitmap(bitmap, frame->border_pen, &r);
 		r.min_x = 0;
 		r.min_y = basey;
@@ -531,7 +544,7 @@ void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struc
 		fillbitmap(bitmap, frame->border_pen, &r);
 		r.min_x = basex + frame->width;
 		r.min_y = basey;
-		r.max_x = bitmap->width - 1;
+		r.max_x = bitmapwidth - 1;
 		r.max_y = basey + frame->height - 1;
 		fillbitmap(bitmap, frame->border_pen, &r);
 	}
