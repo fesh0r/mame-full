@@ -398,7 +398,7 @@ void osd_analogjoy_read(int player, int analog_axis[], InputCode analogjoy_input
 	/* should scan all axis */
 	for (i=0; i<MAX_ANALOG_AXES ; i++)
 	{
-		int middle,val;
+		int middle;
 		struct axisdata_struct * axis;
 		analog_axis[i] = 0;
 
