@@ -1206,8 +1206,8 @@ static const struct IODevice io_bbcbp128[] = {
 COMP (1981,bbca,	0,		bbca,	 bbca,	0,	"Acorn","BBC Micro Model A" )
 COMP (1981,bbcb,	bbca,	bbcb,	 bbca,	0,	"Acorn","BBC Micro Model B" )
 COMP (1981,bbcb1770,bbca,	bbcb1770,bbca,	0,	"Acorn","BBC Micro Model B with WD1770 disc controller" )
-COMP (198?,bbcbp,   bbca,	bbcbp   ,bbca,	0,	"Acorn","BBC Micro Model B plus 64K" )
-COMP (198?,bbcbp128,bbca,   bbcbp128,bbca,  0,  "Acorn","BBC Micro Model B Plus 128k" )
+COMP (1985,bbcbp,   bbca,	bbcbp   ,bbca,  0,  "Acorn","BBC Micro Model B+ 64K" )
+COMP (1985,bbcbp128,bbca,   bbcbp128,bbca,  0,  "Acorn","BBC Micro Model B+ 128k" )
 /*
 COMP (198?,bbcm,    0,      bbcm    ,bbcm,  0,  "Acorn","BBC Master" )
 */
