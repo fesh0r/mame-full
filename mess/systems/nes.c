@@ -411,7 +411,8 @@ static const struct IODevice io_famicom[] = {
         NULL,               /* input */
         NULL,               /* output */
         NULL,               /* input_chunk */
-        NULL                /* output_chunk */
+        NULL,               /* output_chunk */
+	nes_partialcrc
     },
     {
         IO_FLOPPY,          /* type */
