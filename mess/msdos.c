@@ -610,6 +610,11 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 			   "and both cartridges will be attached to the TI99_4a.\n\n\n");
 
 
+		printf("To EXIT the emulator, press ESC.  If the emulated system is a computer, \n"
+		       "you may need to toggle the UI mode (use the SCR_LOCK key).\n"
+		       "The on-screen display shows the current UI mode when SCR_LOCK is pressed.\n\n\n\n\n\n");
+
+
 		printf("To automatically create the individual system directories in the \n"
 		       "SOFTWARE folder, use:\n"
 		       "MESS -createdir\n\n\n\n\n\n");
