@@ -801,8 +801,13 @@ static struct {
 	{ 0x7e215313 , 0x400, "MICROTAN" },
 	{ 0xc8221d9e , 0x400, "MICROTAN" },
 	{ 0x3b3c5360 , 0x800, "MICROTAN character" },
-	{ 0xf18710b4 , 0x4000, "ORIC1" },
-	{ 0xc3a92bef , 0x4000, "ORICA" },
+
+	{ 0xf18710b4 , 0x4000, "ORIC1 basic 10" },
+	{ 0xc3a92bef , 0x4000, "ORICA basic 11b" },
+	{ 0xa9664a9c , 0x2000, "ORIC microdisk" },
+	{ 0x58079502 , 0x4000, "PRAVETZ8D" },
+	{ 0xb48973ef , 0x4000, "PRAVETZ8Dd" },
+	{ 0xf8d23821 , 0x4000, "PRAVETZ8Dda" },
 
 	{ 0x32f0d1ef , 0x4000, "MODIFIED? Einstein" },
 
