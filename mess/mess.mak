@@ -402,10 +402,10 @@ $(OBJ)/ti99.a:	   \
 	  $(OBJ)/mess/systems/ti99_4x.o  \
 	  $(OBJ)/mess/systems/ti99_2.o	 \
 	  $(OBJ)/mess/systems/ti990_4.o  \
-	  $(OBJ)/mess/systems/ti990_10.c \
-	  $(OBJ)/mess/machine/990_hd.c	 \
-	  $(OBJ)/mess/machine/990_tap.c	 \
-	  $(OBJ)/mess/vidhrdw/911_vdt.c
+	  $(OBJ)/mess/systems/ti990_10.o \
+	  $(OBJ)/mess/machine/990_hd.o	 \
+	  $(OBJ)/mess/machine/990_tap.o	 \
+	  $(OBJ)/mess/vidhrdw/911_vdt.o
 
 $(OBJ)/bally.a:    \
 	  $(OBJ)/sound/astrocde.o	 \

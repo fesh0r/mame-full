@@ -651,12 +651,12 @@ endif
 CPU=$(strip $(findstring TMS99010@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/tms9900
-CPUDEFS += -DHAS_TMS99010=1
+CPUDEFS += -DHAS_TI990_10=1
 CPUOBJS += $(OBJ)/cpu/tms9900/ti990_10.o
 DBGOBJS += $(OBJ)/cpu/tms9900/9900dasm.o
 $(OBJ)/cpu/tms9900/ti990_10.o: ti990_10.c tms9900.h 99xxcore.h 99xxstat.h
 else
-CPUDEFS += -DHAS_TMS99010=0
+CPUDEFS += -DHAS_TI990_10=0
 endif                                                                                                                                         
 
 CPU=$(strip $(findstring TMS99105A@,$(CPUS)))
