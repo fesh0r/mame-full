@@ -522,7 +522,7 @@ makedep/makedep$(EXE):
 
 depend $(NAME).dep: makedep/makedep$(EXE)
 	echo "#" $(TARGET) dependencies >$(NAME).dep
-	makedep/makedep$(EXE) -f$(NAME).dep -p$(TARGET).obj/ -Imess -- $(CFLAGS) -- src/*.c \
+	makedep/makedep$(EXE) -f$(NAME).dep -p$(TARGET).obj/ -Imess -- $(CFLAGS) $(INCLUDES) -- src/*.c \
 	src/cpu/*/*.c src/sound/*.c mess/systems/*.c mess/machine/*.c mess/vidhrdw/*.c mess/sndhrdw/*.c \
 	mess/tools/*.c mess/formats/*.c
 
