@@ -1,3 +1,34 @@
+/*****************************************************************************
+ *
+ *	 pc1403.c
+ *	 portable sharp pc1403 video emulator interface
+ *   (sharp pocket computers)
+ *
+ *	 Copyright (c) 2001 Peter Trauner, all rights reserved.
+ *
+ *	 - This source code is released as freeware for non-commercial purposes.
+ *	 - You are free to use and redistribute this code in modified or
+ *	   unmodified form, provided you list me in the credits.
+ *	 - If you modify this source code, you must add a notice to each modified
+ *	   source file that it has been changed.  If you're a nice person, you
+ *	   will clearly mark each change too.  :)
+ *	 - If you wish to use this for commercial purposes, please contact me at
+ *	   peter.trauner@jk.uni-linz.ac.at
+ *	 - The author of this copywritten work reserves the right to change the
+ *	   terms of its usage and license at any time, including retroactively
+ *	 - This entire notice must remain in the source code.
+ *
+ * History of changes:
+ * 21.07.2001 Several changes listed below were made by Mario Konegger
+ *            (konegger@itp.tu-graz.ac.at)
+ *	      Placed the grafical symbols onto the right place and added
+ *	      some symbols, so the display is correct rebuit.
+ *	      Added a strange behaviour of the display concerning the on/off
+ *	      state and the BUSY-symbol, which I found out with experiments
+ *	      with my own pc1403.
+ *****************************************************************************/
+
+
 #include "driver.h"
 #include "artwork.h"
 #include "vidhrdw/generic.h"
@@ -103,18 +134,6 @@ static const POCKETC_FIGURE busy={
 	"111",
 	"1",
 	"111e" 
-}, run={ 
-	"11  1 1 1  1",
-	"1 1 1 1 11 1",
-	"11  1 1 1 11",
-	"1 1 1 1 1  1",
-	"1 1  1  1  1e" 
-}, pro={ 
-	"11  11   1",
-	"1 1 1 1 1 1",
-	"11  11  1 1",
-	"1   1 1 1 1",
-	"1   1 1  1e" 
 }, kana={ // katakana charset
 	"  1     1 ",
 	" 11111 111",
@@ -133,21 +152,17 @@ static const POCKETC_FIGURE busy={
 	" 1  1 1 1",
 	"  1 1 1 1",
 	"11  1 1 111e" 
-}, rsv={ 
-	"11   11 1   1",
-	"1 1 1   1   1",
-	"11   1   1 1",
-	"1 1   1  1 1",
-	"1 1 11    1e" 
 };
+
 
 void pc1403_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
     int x, y, i, j;
-    int color[2];
+    int color[3];
     /* HJB: we cannot initialize array with values from other arrays, thus... */
     color[0] = Machine->pens[pocketc_colortable[CONTRAST][0]];
-    color[1] = Machine->pens[pocketc_colortable[CONTRAST][1]];
+    color[2] = Machine->pens[pocketc_colortable[CONTRAST][1]];
+    color[1] = (pc1403_portc&1) ? color[2] : color[0];
     
     if (full_refresh)
     {
@@ -198,22 +213,30 @@ void pc1403_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	}
     } else {
 	osd_mark_dirty(RIGHT, DOWN, RIGHT+(24*(5+1)-1)*2-1, DOWN+7*3-1);
-    }
 
-    pocketc_draw_special(bitmap,RIGHT,DOWN-13,busy,
-			 pc1403_lcd.reg[0x3d]&1?color[1]:color[0]);
+    }
+    /* if display is off, busy is always visible? it seems to behave like 
+that. */
+    /* But if computer is off, busy is hidden. */
+    if(!(pc1403_portc&8))
+    {if (pc1403_portc&1) pocketc_draw_special(bitmap,RIGHT,DOWN-13,busy,
+			 pc1403_lcd.reg[0x3d]&1?color[2]:color[0]);
+     else pocketc_draw_special(bitmap,RIGHT,DOWN-13,busy,color[2]);
+    }
+    else pocketc_draw_special(bitmap,RIGHT,DOWN-13,busy,color[0]);
+    
     pocketc_draw_special(bitmap,RIGHT+18,DOWN-13,def,
 			 pc1403_lcd.reg[0x3d]&2?color[1]:color[0]);
     pocketc_draw_special(bitmap,RIGHT+43,DOWN-13,shift,
 			 pc1403_lcd.reg[0x3d]&4?color[1]:color[0]);
     pocketc_draw_special(bitmap,RIGHT+63,DOWN-13,hyp,
 			 pc1403_lcd.reg[0x3d]&8?color[1]:color[0]);
-    
-    pocketc_draw_special(bitmap,RIGHT+100,DOWN-13,kana,
+
+    pocketc_draw_special(bitmap,RIGHT+155,DOWN-13,kana,
 			 pc1403_lcd.reg[0x3c]&1?color[1]:color[0]);
-    pocketc_draw_special(bitmap,RIGHT+120,DOWN-13,shoo,
+    pocketc_draw_special(bitmap,RIGHT+167,DOWN-13,shoo,
 			 pc1403_lcd.reg[0x3c]&2?color[1]:color[0]);
-    pocketc_draw_special(bitmap,RIGHT+160,DOWN-13,sml,
+    pocketc_draw_special(bitmap,RIGHT+178,DOWN-13,sml,
 			 pc1403_lcd.reg[0x3c]&4?color[1]:color[0]);
 
     pocketc_draw_special(bitmap,RIGHT+191,DOWN-13,de,
@@ -230,18 +253,24 @@ void pc1403_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
     pocketc_draw_special(bitmap,RIGHT+281,DOWN-13,e,
 			 pc1403_lcd.reg[0x7c]&1?color[1]:color[0]);
     
-    pocketc_draw_special(bitmap,RIGHT+31,DOWN+27,line/*calc*/,
-			 pc1403_lcd.reg[0x3d]&0x40?color[1]:color[0]);
+    pocketc_draw_special(bitmap, RIGHT+10,DOWN+27,line /* empty */,
+			 (pc1403_lcd.reg[0x3c]&0x40) ?color[1]:color[0]);
+    pocketc_draw_special(bitmap,RIGHT+31,DOWN+27,line /*calc*/,
+			 (pc1403_lcd.reg[0x3d]&0x40) ?color[1]:color[0]);
     pocketc_draw_special(bitmap,RIGHT+52,DOWN+27,line/*run*/,
-			 pc1403_lcd.reg[0x3d]&0x20?color[1]:color[0]);
+			 (pc1403_lcd.reg[0x3d]&0x20) ?color[1]:color[0]);
     pocketc_draw_special(bitmap,RIGHT+73,DOWN+27,line/*prog*/,
-			 pc1403_lcd.reg[0x3d]&0x10?color[1]:color[0]);
-
+			 (pc1403_lcd.reg[0x3d]&0x10) ? color[1]:color[0]);
+    pocketc_draw_special(bitmap, RIGHT+94,DOWN+27,line /* empty */,
+			 (pc1403_lcd.reg[0x3c]&0x20) ? color[1]:color[0]);
+			 
     pocketc_draw_special(bitmap,RIGHT+232,DOWN+27,line/*matrix*/, 
 			 pc1403_lcd.reg[0x3c]&0x10?color[1]:color[0]);
     pocketc_draw_special(bitmap,RIGHT+253,DOWN+27,line/*stat*/,
 			 pc1403_lcd.reg[0x3c]&8?color[1]:color[0]);
     pocketc_draw_special(bitmap,RIGHT+274,DOWN+27,line/*print*/,
-			 pc1403_lcd.reg[0x7c]&0x40/*not tested*/?color[1]:color[0]);    
+			 pc1403_lcd.reg[0x7c]&0x40?color[1]:color[0]);
+    
 }
+
 
