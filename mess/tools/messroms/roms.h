@@ -35,6 +35,8 @@ static struct {
 	{ 0xcbce86f7, 0x2000, "INTV" },
 	{ 0x683a4158, 0x800, "INTV" },
 
+	{ 0xe6ef1ee1, 0x800, "TV-Spielcomputer" },
+
 	{ 0x05602697, 0x800, "FUNVISION/CREATIVISION" },
 
 /* Sony Playstation ***********************************************************/
@@ -1133,8 +1135,8 @@ static struct {
 	{ 0x878396a5 , 0x4000, "CP400 basic" },
 	{ 0xe9ad60a0 , 0x2000, "CP400 disk" },
 	{ 0x11fda97e , 0x2000, "MC10" },
-	{ 0x17893a42 , 0x4000, "Dragon64? d64rom2" },
-	{ 0x84f68bf9 , 0x4000, "Dragon64? dragrom" },
+	{ 0x17893a42 , 0x4000, "Dragon64? d64rom2 1.0 1983" },
+	{ 0x84f68bf9 , 0x4000, "Dragon64? dragrom 1.0 1982" },
 	{ 0xcedc6a52 , 0x4010, "Overdump Dragon64? (remove first 16bytes)=0x17893a42" },
 	{ 0x615236cc , 0x4010, "Overdump Dragon64? (remove first 16bytes)=0x84f68bf9" },
 
