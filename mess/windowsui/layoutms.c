@@ -20,6 +20,8 @@
 #include "windowsui/resource.h"
 #include "windowsui/MessResource.h"
 #include "windowsui/ms32util.h"
+#include "windowsui/directories.h"
+#include "windowsui/options.h"
 
 FOLDERDATA g_folderData[] =
 {
@@ -62,4 +64,29 @@ FILTER_ITEM g_filterList[] =
 	{ F_WORKING,      IDC_FILTER_WORKING,     DriverIsBroken, FALSE },
 	{ F_AVAILABLE,    IDC_FILTER_AVAILABLE,   GetHasRoms, TRUE },
 	{ 0 }
+};
+
+DIRECTORYINFO g_directoryInfo[] =
+{
+	{ "BIOSes",                GetRomDirs,      SetRomDirs,      TRUE,  DIRDLG_ROMS },
+	{ "Software",              GetSoftwareDirs, SetSoftwareDirs, TRUE,  DIRDLG_SOFTWARE },
+	{ "Ini Files",             GetIniDirs,      SetIniDirs,      TRUE,  DIRDLG_INI },
+	{ "CRC",                   GetCrcDir,       SetCrcDir,       FALSE, 0 },
+	{ "Config",                GetCfgDir,       SetCfgDir,       FALSE, DIRDLG_CFG },
+	{ "High Scores",           GetHiDir,        SetHiDir,        FALSE, DIRDLG_HI },
+	{ "Snapshots",             GetImgDir,       SetImgDir,       FALSE, DIRDLG_IMG },
+	{ "Input files (*.inp)",   GetInpDir,       SetInpDir,       FALSE, DIRDLG_INP },
+	{ "State",                 GetStateDir,     SetStateDir,     FALSE, 0 },
+	{ "Artwork",               GetArtDir,       SetArtDir,       FALSE, 0 },
+	{ "Memory Card",           GetMemcardDir,   SetMemcardDir,   FALSE, 0 },
+	{ "Flyers",                GetFlyerDir,     SetFlyerDir,     FALSE, 0 },
+	{ "Cabinets",              GetCabinetDir,   SetCabinetDir,   FALSE, 0 },
+	{ "Marquees",              GetMarqueeDir,   SetMarqueeDir,   FALSE, 0 },
+	{ "Titles",                GetTitlesDir,    SetTitlesDir,    FALSE, 0 },
+	{ "NVRAM",                 GetNvramDir,     SetNvramDir,     FALSE, 0 },
+	{ "Controller Files",      GetCtrlrDir,     SetCtrlrDir,     FALSE, DIRDLG_CTRLR },
+	{ "Hard Drive Difference", GetDiffDir,      SetDiffDir,      FALSE, 0 },
+	{ "Icons",                 GetIconsDir,     SetIconsDir,     FALSE, 0 },
+	{ "Background Images",     GetBgDir,        SetBgDir,        FALSE, 0 },
+	{ NULL }
 };

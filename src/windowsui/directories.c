@@ -22,83 +22,12 @@
 #include <windowsx.h>
 #include <shlobj.h>
 #include <sys/stat.h>
+#include <assert.h>
 #include "MAME32.h"
 #include "Directories.h"
 #include "resource.h"
-#include "options.h"
 
 #define MAX_DIRS 20
-
-enum
-{
-	ROM = 0,
-#if HASDIR_SAMPLE
-	SAMPLE,
-#endif
-#if HASDIR_SOFTWARE
-	SOFTWARE,
-#endif
-	INI,
-#ifdef MESS
-	CRC,
-#endif
-	CFG,
-	HI,
-	IMG,
-	INP,
-	STATE,
-	ART,
-	MEMCARD,
-	FLYER,
-	CABINET,
-	MARQUEE,
-	TITLES,
-	NVRAM,
-	CTRLR,
-	DIFF,
-	ICONS,
-	BKGROUND,
-	LASTDIR
-};
-
-
-#define NUMPATHS 2
-#define NUMDIRS  (LASTDIR - NUMPATHS)
-
-const char *dir_names[LASTDIR] =
-{
-#ifdef MESS
-	"BIOSes",  /* path */
-#else
-	"ROMs",    /* path */
-#endif
-#if HASDIR_SAMPLE
-	"Samples", /* path */
-#endif
-	"Ini Files",	/* path */
-#if HASDIR_SOFTWARE
-    "Software",/* path */
-#endif
-#ifdef MESS
-	"CRC",
-#endif
-	"Config",
-	"High Scores",
-	"Snapshots",
-	"Input files (*.inp)",
-	"State",
-	"Artwork",
-	"Memory Card",
-	"Flyers",
-	"Cabinets",
-	"Marquees",
-	"Titles",
-	"NVRAM",
-	"Controller Files",
-	"Hard Drive Difference",
-	"Icons",
-	"Background Images"
-};
 
 /***************************************************************************
     Internal structures
@@ -111,13 +40,12 @@ typedef struct
 	BOOL    m_bModified;
 } tPath;
 
-typedef char tDirectory[MAX_PATH];
-
-struct tDirInfo
+typedef union
 {
-	tPath     m_Paths[NUMPATHS];
-	char      m_Directories[NUMDIRS][MAX_PATH];
-};
+	tPath	*m_Path;
+	char	*m_Directory;
+	void    *m_Ptr;
+} tDirInfo;
 
 /***************************************************************************
     Function prototypes
@@ -130,9 +58,11 @@ BOOL BrowseForDirectory(HWND hwnd, const char* pStartDir, char* pResult);
 static BOOL         BrowseForDirectory(HWND hwnd, const char* pStartDir, char* pResult);
 #endif
 
-static void     DirInfo_SetDir(struct tDirInfo* pInfo, int nType, int nItem, const char* pText);
-static char*    DirInfo_Dir(struct tDirInfo* pInfo, int nType);
-static char*    DirInfo_Path(struct tDirInfo* pInfo, int nType, int nItem);
+static void     DirInfo_SetDir(tDirInfo *pInfo, int nType, int nItem, const char* pText);
+static char*    DirInfo_Dir(tDirInfo *pInfo, int nType);
+static char*    DirInfo_Path(tDirInfo *pInfo, int nType, int nItem);
+static void     DirInfo_SetModified(tDirInfo *pInfo, int nType, BOOL bModified);
+static BOOL     DirInfo_Modified(tDirInfo *pInfo, int nType);
 static char*    FixSlash(char *s);
 
 static void     UpdateDirectoryList(HWND hDlg);
@@ -159,7 +89,7 @@ static BOOL     Directories_OnNotify(HWND hDlg, int id, NMHDR* pNMHDR);
     Internal variables
  ***************************************************************************/
 
-struct tDirInfo* pDirInfo;
+static tDirInfo *g_pDirInfo;
 
 /***************************************************************************
     External function definitions
@@ -203,45 +133,57 @@ INT_PTR CALLBACK DirectoriesDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARA
 
 static BOOL IsMultiDir(int nType)
 {
-	switch (nType)
-	{
-	case ROM:
-#if HASDIR_SOFTWARE
-    case SOFTWARE:
-#endif
-#if HASDIR_SAMPLE
-	case SAMPLE:
-#endif
-		return TRUE;
-	}
-	return FALSE;
+	return g_directoryInfo[nType].bMulti;
 }
 
-static void DirInfo_SetDir(struct tDirInfo* pInfo, int nType, int nItem, const char* pText)
+static void DirInfo_SetDir(tDirInfo *pInfo, int nType, int nItem, const char* pText)
 {
+	char *s;
+	char *pOldText;
+
 	if (IsMultiDir(nType))
 	{
+		assert(nItem >= 0);
 		strcpy(DirInfo_Path(pInfo, nType, nItem), pText);
-		pInfo->m_Paths[nType].m_bModified = TRUE;
+		DirInfo_SetModified(pInfo, nType, TRUE);
 	}
 	else
 	{
-		if (nType < LASTDIR)
-			strcpy(DirInfo_Dir(pInfo, nType), pText);
+		s = strdup(pText);
+		if (!s)
+			return;
+		pOldText = pInfo[nType].m_Directory;
+		if (pOldText)
+			free(pOldText);
+		pInfo[nType].m_Directory = s;
 	}
 }
 
-static char* DirInfo_Dir(struct tDirInfo* pInfo, int nType)
+static char* DirInfo_Dir(tDirInfo *pInfo, int nType)
 {
-	return pInfo->m_Directories[nType - NUMPATHS];
+	assert(!IsMultiDir(nType));
+	return pInfo[nType].m_Directory;
 }
 
-static char* DirInfo_Path(struct tDirInfo* pInfo, int nType, int nItem)
+static char* DirInfo_Path(tDirInfo *pInfo, int nType, int nItem)
 {
-	return pInfo->m_Paths[nType].m_Directories[nItem];
+	return pInfo[nType].m_Path->m_Directories[nItem];
 }
 
-#define DirInfo_NumDir(info, t) ((info)->m_Paths[(t)].m_NumDirectories)
+static void DirInfo_SetModified(tDirInfo *pInfo, int nType, BOOL bModified)
+{
+	assert(IsMultiDir(nType));
+	pInfo[nType].m_Path->m_bModified = bModified;
+}
+
+static BOOL DirInfo_Modified(tDirInfo *pInfo, int nType)
+{
+	assert(IsMultiDir(nType));
+	return pInfo[nType].m_Path->m_bModified;
+}
+
+#define DirInfo_NumDir(pInfo, path) \
+	((pInfo)[(path)].m_Path->m_NumDirectories)
 
 /* lop off trailing backslash if it exists */
 static char * FixSlash(char *s)
@@ -277,21 +219,18 @@ static void UpdateDirectoryList(HWND hDlg)
 	nType = ComboBox_GetCurSel(hCombo);
 	if (IsMultiDir(nType))
 	{
-		Item.pszText = (char *)"<               >";
+		Item.pszText = (char *) DIRLIST_NEWENTRYTEXT;
 		ListView_InsertItem(hList, &Item);
-		for (i = DirInfo_NumDir(pDirInfo, nType) - 1; 0 <= i; i--)
+		for (i = DirInfo_NumDir(g_pDirInfo, nType) - 1; 0 <= i; i--)
 		{
-			Item.pszText = DirInfo_Path(pDirInfo, nType, i);
+			Item.pszText = DirInfo_Path(g_pDirInfo, nType, i);
 			ListView_InsertItem(hList, &Item);
 		}
-		}
+	}
 	else
 	{
-		if (nType < LASTDIR)
-		{
-			Item.pszText = DirInfo_Dir(pDirInfo, nType);
-			ListView_InsertItem(hList, &Item);
-		}
+		Item.pszText = (char *) DirInfo_Dir(g_pDirInfo, nType);
+		ListView_InsertItem(hList, &Item);
 	}
 
 	/* select first one */
@@ -316,40 +255,29 @@ static void Directories_OnSelChange(HWND hDlg)
 	}
 }
 
-static void PopulateDirInfo(int nDir, const char *(*GetTheseDirs)(void))
-{
-	char *token;
-	char buf[MAX_PATH * MAX_DIRS];
-
-	strcpy(buf, GetTheseDirs());
-
-	pDirInfo->m_Paths[nDir].m_NumDirectories = 0;
-	token = strtok(buf, ";");
-	while ((DirInfo_NumDir(pDirInfo, nDir) < MAX_DIRS) && token)
-	{
-		strcpy(DirInfo_Path(pDirInfo, nDir, DirInfo_NumDir(pDirInfo, nDir)), token);
-		DirInfo_NumDir(pDirInfo, nDir)++;
-		token = strtok(NULL, ";");
-	}
-	pDirInfo->m_Paths[nDir].m_bModified = FALSE;
-}
-
 static BOOL Directories_OnInitDialog(HWND hDlg, HWND hwndFocus, LPARAM lParam)
 {
 	RECT		rectClient;
 	LVCOLUMN	LVCol;
 	int 		i;
+	int			nDirInfoCount;
+	LPCSTR		s;
+	char *token;
+	char buf[MAX_PATH * MAX_DIRS];
 
-	pDirInfo = (struct tDirInfo*) malloc(sizeof(struct tDirInfo));
-	if (pDirInfo == NULL) /* bummer */
-	{
-		EndDialog(hDlg, -1);
-		return FALSE;
-	}
+	/* count how many dirinfos there are */
+	nDirInfoCount = 0;
+	while(g_directoryInfo[nDirInfoCount].lpName)
+		nDirInfoCount++;
 
-	for (i = LASTDIR - 1; i >= 0; i--)
+	g_pDirInfo = (tDirInfo *) malloc(sizeof(tDirInfo) * nDirInfoCount);
+	if (!g_pDirInfo) /* bummer */
+		goto error;
+	memset(g_pDirInfo, 0, sizeof(tDirInfo) * nDirInfoCount);
+
+	for (i = nDirInfoCount - 1; i >= 0; i--)
 	{
-		ComboBox_InsertString(GetDlgItem(hDlg, IDC_DIR_COMBO), 0, dir_names[i]);
+		ComboBox_InsertString(GetDlgItem(hDlg, IDC_DIR_COMBO), 0, g_directoryInfo[i].lpName);
 	}
 
 	ComboBox_SetCurSel(GetDlgItem(hDlg, IDC_DIR_COMBO), 0);
@@ -362,47 +290,62 @@ static BOOL Directories_OnInitDialog(HWND hDlg, HWND hwndFocus, LPARAM lParam)
 	
 	ListView_InsertColumn(GetDlgItem(hDlg, IDC_DIR_LIST), 0, &LVCol);
 
+	/* Keep a temporary copy of the directory strings in g_pDirInfo. */
+	for (i = 0; i < nDirInfoCount; i++)
+	{
+		s = g_directoryInfo[i].pfnGetTheseDirs();
+		if (g_directoryInfo[i].bMulti)
+		{
+			/* Copy the string to our own buffer so that we can mutilate it */
+			strcpy(buf, s);
 
-	/* Keep a temporary copy of the directory strings in pDirInfo. */
-	memset(pDirInfo, 0, sizeof(struct tDirInfo));
+			g_pDirInfo[i].m_Path = malloc(sizeof(tPath));
+			if (!g_pDirInfo[i].m_Path)
+				goto error;
 
-	PopulateDirInfo(ROM, GetRomDirs);
-#if HASDIR_SOFTWARE
-	PopulateDirInfo(SOFTWARE, GetSoftwareDirs);
-#endif
-#if HASDIR_SAMPLE
-	PopulateDirInfo(SAMPLE, GetSampleDirs);
-#endif
-#ifdef MESS
-	strcpy(DirInfo_Dir(pDirInfo, CRC),		GetCrcDir());
-#endif
-
-	strcpy(DirInfo_Dir(pDirInfo, CFG),		GetCfgDir());
-	strcpy(DirInfo_Dir(pDirInfo, HI),		GetHiDir());
-	strcpy(DirInfo_Dir(pDirInfo, IMG),		GetImgDir());
-	strcpy(DirInfo_Dir(pDirInfo, INP),		GetInpDir());
-	strcpy(DirInfo_Dir(pDirInfo, STATE),	GetStateDir());
-	strcpy(DirInfo_Dir(pDirInfo, ART),		GetArtDir());
-	strcpy(DirInfo_Dir(pDirInfo, MEMCARD),	GetMemcardDir());
-	strcpy(DirInfo_Dir(pDirInfo, FLYER),	GetFlyerDir());
-	strcpy(DirInfo_Dir(pDirInfo, CABINET),	GetCabinetDir());
-	strcpy(DirInfo_Dir(pDirInfo, MARQUEE),	GetMarqueeDir());
-	strcpy(DirInfo_Dir(pDirInfo, NVRAM),	GetNvramDir());
-	strcpy(DirInfo_Dir(pDirInfo, CTRLR),	GetCtrlrDir());
-	strcpy(DirInfo_Dir(pDirInfo, DIFF),	GetDiffDir());
-	strcpy(DirInfo_Dir(pDirInfo, ICONS),	GetIconsDir());
+			g_pDirInfo[i].m_Path->m_NumDirectories = 0;
+			token = strtok(buf, ";");
+			while ((DirInfo_NumDir(g_pDirInfo, i) < MAX_DIRS) && token)
+			{
+				strcpy(DirInfo_Path(g_pDirInfo, i, DirInfo_NumDir(g_pDirInfo, i)), token);
+				DirInfo_NumDir(g_pDirInfo, i)++;
+				token = strtok(NULL, ";");
+			}
+			DirInfo_SetModified(g_pDirInfo, i, FALSE);
+		}
+		else
+		{
+			DirInfo_SetDir(g_pDirInfo, i, -1, s);
+		}
+	}
 
 	UpdateDirectoryList(hDlg);
-
 	return TRUE;
+
+error:
+	Directories_OnDestroy(hDlg);
+	EndDialog(hDlg, -1);
+	return FALSE;
 }
 
 static void Directories_OnDestroy(HWND hDlg)
 {
-	if (pDirInfo != NULL)
+	int nDirInfoCount, i;
+
+	if (g_pDirInfo)
 	{
-		free(pDirInfo);
-		pDirInfo = NULL;
+		/* count how many dirinfos there are */
+		nDirInfoCount = 0;
+		while(g_directoryInfo[nDirInfoCount].lpName)
+			nDirInfoCount++;
+
+		for (i = 0; i < nDirInfoCount; i++)
+		{
+			if (g_pDirInfo[i].m_Ptr)
+				free(g_pDirInfo[i].m_Ptr);
+		}
+		free(g_pDirInfo);
+		g_pDirInfo = NULL;
 	}
 }
 
@@ -418,14 +361,14 @@ static int RetrieveDirList(int nDir, int nFlagResult, void (*SetTheseDirs)(const
 	int nPaths;
 	char buf[MAX_PATH * MAX_DIRS];
 
-	if (pDirInfo->m_Paths[nDir].m_bModified == TRUE)
+	if (DirInfo_Modified(g_pDirInfo, nDir))
 	{
-		memset(buf, 0, MAX_PATH * MAX_DIRS);
-		nPaths = DirInfo_NumDir(pDirInfo, nDir);
+		memset(buf, 0, sizeof(buf));
+		nPaths = DirInfo_NumDir(g_pDirInfo, nDir);
 		for (i = 0; i < nPaths; i++)
 		{
 
-			strcat(buf, FixSlash(DirInfo_Path(pDirInfo, nDir, i)));
+			strcat(buf, FixSlash(DirInfo_Path(g_pDirInfo, nDir, i)));
 
 			if (i < nPaths - 1)
 				strcat(buf, ";");
@@ -439,34 +382,22 @@ static int RetrieveDirList(int nDir, int nFlagResult, void (*SetTheseDirs)(const
 
 static void Directories_OnOk(HWND hDlg)
 {
-	int 	nResult = 0;
+	int i;
+	int nResult = 0;
+	LPSTR s;
 
-	/* set path options */
-	nResult |= RetrieveDirList(ROM, DIRDLG_ROMS, SetRomDirs);
-#if HASDIR_SOFTWARE
-	nResult |= RetrieveDirList(SOFTWARE, DIRDLG_SOFTWARE, SetSoftwareDirs);
-#endif
-#if HASDIR_SAMPLE
-	nResult |= RetrieveDirList(SAMPLE, DIRDLG_SAMPLES, SetSampleDirs);
-#endif
-#ifdef MESS
-	SetCrcDir(	  FixSlash(DirInfo_Dir(pDirInfo, CRC)));
-#endif
-	SetCfgDir(	  FixSlash(DirInfo_Dir(pDirInfo, CFG)));
-	SetHiDir(	  FixSlash(DirInfo_Dir(pDirInfo, HI)));
-	SetImgDir(	  FixSlash(DirInfo_Dir(pDirInfo, IMG)));
-	SetInpDir(	  FixSlash(DirInfo_Dir(pDirInfo, INP)));
-	SetStateDir(  FixSlash(DirInfo_Dir(pDirInfo, STATE)));
-	SetArtDir(	  FixSlash(DirInfo_Dir(pDirInfo, ART)));
-	SetMemcardDir(FixSlash(DirInfo_Dir(pDirInfo, MEMCARD)));
-	SetFlyerDir(  FixSlash(DirInfo_Dir(pDirInfo, FLYER)));
-	SetCabinetDir(FixSlash(DirInfo_Dir(pDirInfo, CABINET)));
-	SetMarqueeDir(FixSlash(DirInfo_Dir(pDirInfo, MARQUEE)));
-	SetNvramDir(  FixSlash(DirInfo_Dir(pDirInfo, NVRAM)));
-	SetCtrlrDir(  FixSlash(DirInfo_Dir(pDirInfo, CTRLR)));
-	SetDiffDir(   FixSlash(DirInfo_Dir(pDirInfo, DIFF)));
-	SetIconsDir(  FixSlash(DirInfo_Dir(pDirInfo, ICONS)));
-
+	for (i = 0; g_directoryInfo[i].lpName; i++)
+	{
+		if (g_directoryInfo[i].bMulti)
+		{
+			nResult |= RetrieveDirList(i, g_directoryInfo[i].nDirDlgFlags, g_directoryInfo[i].pfnSetTheseDirs);
+		}
+		else
+		{
+			s = FixSlash(DirInfo_Dir(g_pDirInfo, i));
+			g_directoryInfo[i].pfnSetTheseDirs(s);
+		}
+	}
 	EndDialog(hDlg, nResult);
 }
 
@@ -496,17 +427,16 @@ static void Directories_OnInsert(HWND hDlg)
 		nType = ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_DIR_COMBO));
 		if (IsMultiDir(nType))
 		{
-			if (MAX_DIRS <= DirInfo_NumDir(pDirInfo, nType))
+			if (MAX_DIRS <= DirInfo_NumDir(g_pDirInfo, nType))
 				return;
 
-			for (i = DirInfo_NumDir(pDirInfo, nType); nItem < i; i--)
-				strcpy(DirInfo_Path(pDirInfo, nType, i),
-					   DirInfo_Path(pDirInfo, nType, i - 1));
+			for (i = DirInfo_NumDir(g_pDirInfo, nType); nItem < i; i--)
+				strcpy(DirInfo_Path(g_pDirInfo, nType, i),
+					   DirInfo_Path(g_pDirInfo, nType, i - 1));
 
-			strcpy(DirInfo_Path(pDirInfo, nType, nItem), buf);
-			DirInfo_NumDir(pDirInfo, nType)++;
-
-			pDirInfo->m_Paths[nType].m_bModified = TRUE;
+			strcpy(DirInfo_Path(g_pDirInfo, nType, nItem), buf);
+			DirInfo_NumDir(g_pDirInfo, nType)++;
+			DirInfo_SetModified(g_pDirInfo, nType, TRUE);
 		}
 
 		UpdateDirectoryList(hDlg);
@@ -545,7 +475,7 @@ static void Directories_OnBrowse(HWND hDlg)
 	if (BrowseForDirectory(hDlg, inbuf, outbuf) == TRUE)
 	{
 		nType = ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_DIR_COMBO));
-		DirInfo_SetDir(pDirInfo, nType, nItem, outbuf);
+		DirInfo_SetDir(g_pDirInfo, nType, nItem, outbuf);
 		UpdateDirectoryList(hDlg);
 	}
 }
@@ -571,14 +501,14 @@ static void Directories_OnDelete(HWND hDlg)
 	nType = ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_DIR_COMBO));
 	if (IsMultiDir(nType))
 	{
-		for (i = nItem; i < DirInfo_NumDir(pDirInfo, nType) - 1; i++)
-			strcpy(DirInfo_Path(pDirInfo, nType, i),
-				   DirInfo_Path(pDirInfo, nType, i + 1));
+		for (i = nItem; i < DirInfo_NumDir(g_pDirInfo, nType) - 1; i++)
+			strcpy(DirInfo_Path(g_pDirInfo, nType, i),
+				   DirInfo_Path(g_pDirInfo, nType, i + 1));
 
-		strcpy(DirInfo_Path(pDirInfo, nType, DirInfo_NumDir(pDirInfo, nType) - 1), "");
-		DirInfo_NumDir(pDirInfo, nType)--;
+		strcpy(DirInfo_Path(g_pDirInfo, nType, DirInfo_NumDir(g_pDirInfo, nType) - 1), "");
+		DirInfo_NumDir(g_pDirInfo, nType)--;
 
-		pDirInfo->m_Paths[nType].m_bModified = TRUE;
+		DirInfo_SetModified(g_pDirInfo, nType, TRUE);
 	}
 
 	UpdateDirectoryList(hDlg);
@@ -612,7 +542,7 @@ static BOOL Directories_OnBeginLabelEdit(HWND hDlg, NMHDR* pNMHDR)
 		{
 			HWND hEdit;
 
-			if (MAX_DIRS <= DirInfo_NumDir(pDirInfo, nType))
+			if (MAX_DIRS <= DirInfo_NumDir(g_pDirInfo, nType))
 				return TRUE; /* don't edit */
 
 			hEdit = (HWND)(LRESULT)(int)SendMessage(GetDlgItem(hDlg, IDC_DIR_LIST), LVM_GETEDITCONTROL, 0, 0);
@@ -663,46 +593,24 @@ static BOOL Directories_OnEndLabelEdit(HWND hDlg, NMHDR* pNMHDR)
 			/* Last item is placeholder for append */
 			if (pItem->iItem == ListView_GetItemCount(GetDlgItem(hDlg, IDC_DIR_LIST)) - 1)
 			{
-				if (MAX_DIRS <= DirInfo_NumDir(pDirInfo, nType))
+				if (MAX_DIRS <= DirInfo_NumDir(g_pDirInfo, nType))
 					return FALSE;
 
-				for (i = DirInfo_NumDir(pDirInfo, nType); pItem->iItem < i; i--)
-					strcpy(DirInfo_Path(pDirInfo, nType, i),
-						   DirInfo_Path(pDirInfo, nType, i - 1));
+				for (i = DirInfo_NumDir(g_pDirInfo, nType); pItem->iItem < i; i--)
+					strcpy(DirInfo_Path(g_pDirInfo, nType, i),
+						   DirInfo_Path(g_pDirInfo, nType, i - 1));
 
-				strcpy(DirInfo_Path(pDirInfo, nType, pItem->iItem), pItem->pszText);
-				pDirInfo->m_Paths[nType].m_bModified = TRUE;
+				strcpy(DirInfo_Path(g_pDirInfo, nType, pItem->iItem), pItem->pszText);
 
-				DirInfo_NumDir(pDirInfo, nType)++;
+				DirInfo_SetModified(g_pDirInfo, nType, TRUE);
+				DirInfo_NumDir(g_pDirInfo, nType)++;
 			}
 			else
-				DirInfo_SetDir(pDirInfo, nType, pItem->iItem, pItem->pszText);
+				DirInfo_SetDir(g_pDirInfo, nType, pItem->iItem, pItem->pszText);
 		}
 		else
 		{
-			switch (nType)
-			{
-#ifdef MESS
-			case CRC:
-#endif
-		case CFG:
-		case HI:
-		case IMG:
-		case INP:
-		case STATE:
-		case ART:
-		case MEMCARD:
-		case FLYER:
-		case CABINET:
-		case MARQUEE:
-		case TITLES:
-		case NVRAM:
-		case CTRLR:
-		case DIFF:
-		case ICONS:
-				DirInfo_SetDir(pDirInfo, nType, pItem->iItem, pItem->pszText);
-				break;
-			}
+			DirInfo_SetDir(g_pDirInfo, nType, pItem->iItem, pItem->pszText);
 		}
 
 		UpdateDirectoryList(hDlg);

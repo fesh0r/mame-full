@@ -13,14 +13,6 @@
 #ifndef DIRECTORIES_H
 #define DIRECTORIES_H
 
-#ifdef MESS
-#define HASDIR_SAMPLE	0
-#define HASDIR_SOFTWARE	1
-#else
-#define HASDIR_SAMPLE	1
-#define HASDIR_SOFTWARE	0
-#endif
-
 /* Dialog return codes */
 #define DIRDLG_ROMS         0x0010
 #define DIRDLG_SAMPLES      0x0020
@@ -30,13 +22,25 @@
 #define DIRDLG_IMG          0x0400
 #define DIRDLG_INP          0x0800
 #define DIRDLG_CTRLR        0x1000
-
-#if HASDIR_SOFTWARE
-#define DIRDLG_SOFTWARE		0x0800
-#endif
+#define DIRDLG_SOFTWARE		0x2000
 
 #define DIRLIST_NEWENTRYTEXT "<               >"
 
+typedef struct
+{
+	LPCSTR   lpName;
+	LPCSTR   (*pfnGetTheseDirs)(void);
+	void     (*pfnSetTheseDirs)(LPCSTR lpDirs);
+	BOOL     bMulti;
+	int      nDirDlgFlags;
+}
+DIRECTORYINFO;
+
+/* in layout[ms].c */
+extern DIRECTORYINFO g_directoryInfo[];
+
 INT_PTR CALLBACK DirectoriesDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 
-#endif
+#endif /* DIRECTORIES_H */
+
+
