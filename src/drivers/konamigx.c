@@ -2779,6 +2779,7 @@ static DRIVER_INIT(konamigx)
 #define BPP6  2
 #define BPP66 3
 
+	int i;
 	int readback = 0;
 
 	konamigx_cfgport = -1;
@@ -2848,7 +2849,6 @@ static DRIVER_INIT(konamigx)
 	else if (!strcmp(Machine->gamedrv->name, "tkmmpzdm"))
 	{
 		data32_t *rom = (data32_t*)memory_region(REGION_CPU1);
-		int i;
 
 		// The display is initialized after POST but the copyright screen disabled
 		// planes B,C,D and didn't bother restoring them. I've spent a good
@@ -2872,8 +2872,6 @@ static DRIVER_INIT(konamigx)
 
 	else if (!strcmp(Machine->gamedrv->name, "dragoonj"))
 	{
-		int i;
-
 		#if GX_SKIPIDLE
 			ADD_SKIPPER32(0x202f48, 0xc00000, 0x1020, 0x1020, 0xff00, 0x0000ff00)
 		#endif

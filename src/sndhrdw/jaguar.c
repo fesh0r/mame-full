@@ -143,7 +143,7 @@
 ****************************************************************************/
 
 #include "driver.h"
-#include "includes/jaguar.h"
+#include "jaguar.h"
 #include "cpu/jaguar/jaguar.h"
 #include <math.h>
 

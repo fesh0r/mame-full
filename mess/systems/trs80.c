@@ -42,7 +42,7 @@ MEMORY_WRITE_START( writemem_level1 )
 MEMORY_END
 
 PORT_READ_START( readport_level1 )
-	{ 0xff, 0xfe, trs80_port_xx_r },
+	{ 0xfe, 0xfe, trs80_port_xx_r },
 	{ 0xff, 0xff, trs80_port_ff_r },
 PORT_END
 
@@ -84,7 +84,7 @@ MEMORY_WRITE_START( writemem_model1 )
 MEMORY_END
 
 PORT_READ_START( readport_model1 )
-	{ 0xff, 0xfe, trs80_port_xx_r },
+	{ 0xfe, 0xfe, trs80_port_xx_r },
 	{ 0xff, 0xff, trs80_port_ff_r },
 PORT_END
 

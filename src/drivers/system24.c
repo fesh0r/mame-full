@@ -34,10 +34,10 @@ saving them time etc.
 #include "sound/ym2151.h"
 
 
-/*#include <sys/types.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>*/
+#include <unistd.h>
 
 VIDEO_START(system24);
 VIDEO_UPDATE(system24);

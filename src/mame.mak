@@ -1036,6 +1036,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/lethalj.o $(OBJ)/drivers/lethalj.o \
 	$(OBJ)/vidhrdw/sbugger.o $(OBJ)/drivers/sbugger.o \
 	$(OBJ)/vidhrdw/portrait.o $(OBJ)/drivers/portrait.o \
+	$(OBJ)/drivers/enigma2.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

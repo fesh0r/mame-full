@@ -4629,7 +4629,7 @@ TESTDRIVER( hanakanz )	/* "507" 1996 Dynax */
 
 	/* IGS games ( www.igs.com.tw ) */
 	DRIVER( iqblock )	/* (c) 1993 */
-TESTDRIVER( grndtour )	/* (c) 1993 */
+	DRIVER( grndtour )	/* (c) 1993 */
 TESTDRIVER( cabaret )
 TESTDRIVER( chindrag )
 TESTDRIVER( grtwall )
@@ -4826,6 +4826,9 @@ TESTDRIVER( 9ballsh3 )	/* (c) 1993 E-Scape EnterMedia + "marketed by Bundra Game
 	DRIVER( rotaryf )
 TESTDRIVER( sbugger )	/* (c) 1981 Game-A-Tron */
 TESTDRIVER( portrait )	/* (c) 1983 Olympia */
+	DRIVER( enigma2 )	/* (c) 1984 Zilec Electronics */
+	DRIVER( enigma2a )	/* (c) 1981 Game Plan (Zilec Electronics license) */
+
 #endif /* CPSMAME */
 #endif /* NEOMAME */
 #ifndef CPSMAME

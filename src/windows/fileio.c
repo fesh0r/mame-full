@@ -19,6 +19,14 @@
 #include "image.h"
 #endif
 
+/* Older versions of Platform SDK don't define these */
+#ifndef INVALID_FILE_ATTRIBUTES
+#define INVALID_FILE_ATTRIBUTES 0xffffffff
+#endif
+
+#ifndef INVALID_SET_FILE_POINTER
+#define INVALID_SET_FILE_POINTER 0xffffffff
+#endif
 
 #define VERBOSE				0
 

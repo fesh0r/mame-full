@@ -33,6 +33,8 @@
 
 #define END_OF_LIST_COOKIE	"EndOfListCookie"
 
+#define HARD_DISK_V1_SECTOR_SIZE	512
+
 
 
 /*************************************
@@ -220,9 +222,7 @@ int hard_disk_create(const char *filename, const struct hard_disk_header *_heade
 		SET_ERROR_AND_CLEANUP(HDERR_FILE_NOT_FOUND);
 
 	/* sanity check the header, filling in missing info */
-	header = *_header;
-	/*header.length = HARD_DISK_HEADER_SIZE;
-	header.version = HARD_DISK_HEADER_VERSION;*/
+ 	header = *_header;
 	switch (header.version)
 	{
 	case 1:
@@ -1115,8 +1115,7 @@ static int read_header(void *file, struct hard_disk_header *header)
 	header->sectors       = get_bigendian_uint32(&rawheader[40]);
 	memcpy(header->md5, &rawheader[44], 16);
 	memcpy(header->parentmd5, &rawheader[60], 16);
-	header->seclen        = (header->version == 1) ? HARD_DISK_V1_SECTOR_SIZE
-													: get_bigendian_uint32(&rawheader[76]);
+	header->seclen        = (header->version == 1) ? HARD_DISK_V1_SECTOR_SIZE : get_bigendian_uint32(&rawheader[76]);
 	return HDERR_NONE;
 }
 
