@@ -144,12 +144,8 @@ static void d64_readprg (CBM_Drive * c1551, int pos)
 	DBG_LOG (3, "d64 readprg", ("size %d\n", c1551->size));
 
 	c1551->buffer = (UINT8*)realloc (c1551->buffer, c1551->size);
-	if (!c1551->buffer) {
-		logerror("out of memory %s %d\n",
-				__FILE__, __LINE__);
-		osd_exit();
-		exit(1);
-	}
+	if (!c1551->buffer)
+		osd_die("out of memory %s %d\n", __FILE__, __LINE__);
 
 	c1551->size--;
 

@@ -2407,6 +2407,14 @@ static void I386OP(group0F01_16)(void)		// Opcode 0x0f 01
 				CYCLES(11);
 				break;
 			}
+		case 6:			/* LMSW */
+			{
+				// TODO: Check for protection fault
+				UINT8 b = LOAD_RM16(modrm);
+				I.cr[0] &= ~0x03;
+				I.cr[0]= b & 0x03;
+				break;
+			}
 		default:
 			osd_die("i386: unimplemented opcode 0x0f 01 /%d at %08X\n", (modrm >> 3) & 0x7, I.eip - 2);
 			break;

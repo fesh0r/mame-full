@@ -11,10 +11,15 @@
 
 int pic8259_init(int count);
 
-WRITE_HANDLER ( pic8259_0_w );
-READ_HANDLER ( pic8259_0_r );
-WRITE_HANDLER ( pic8259_1_w );
-READ_HANDLER ( pic8259_1_r );
+READ8_HANDLER ( pic8259_0_r );
+READ8_HANDLER ( pic8259_1_r );
+WRITE8_HANDLER ( pic8259_0_w );
+WRITE8_HANDLER ( pic8259_1_w );
+
+READ32_HANDLER ( pic8259_32_0_r );
+READ32_HANDLER ( pic8259_32_1_r );
+WRITE32_HANDLER ( pic8259_32_0_w );
+WRITE32_HANDLER ( pic8259_32_1_w );
 
 void pic8259_0_issue_irq(int irq);
 void pic8259_1_issue_irq(int irq);

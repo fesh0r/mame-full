@@ -212,16 +212,10 @@ static struct {
 
 
 
-static void dummy_set_address_mask(unsigned mask)
-{
-}
-
-
-
 void at_8042_init(AT8042_CONFIG *config)
 {
 	at_8042.type = config->type;
-	at_8042.set_address_mask = config->set_address_mask ? config->set_address_mask : dummy_set_address_mask;
+	at_8042.set_address_mask = config->set_address_mask;
 
 	/* ibmat bios wants 0x20 set! (keyboard locked when not set) 0x80 */
 	at_8042.inport = 0xa0;	

@@ -16,12 +16,15 @@ static void vc1541_reset_write (CBM_Drive * vc1541, int level);
 
 CBM_Drive cbm_drive[2];
 
-CBM_Serial cbm_serial = {0};
+CBM_Serial cbm_serial;
 
 /* must be called before other functions */
 void cbm_drive_open (void)
 {
 	int i;
+
+	memset(cbm_drive, 0, sizeof(cbm_drive));
+	memset(&cbm_serial, 0, sizeof(cbm_serial));
 
 	cbm_drive_open_helper ();
 
@@ -45,13 +48,12 @@ void cbm_drive_close (void)
 		cbm_drive[i].interface = 0;
 
 		if (cbm_drive[i].drive == D64_IMAGE)
-		{
-			if (cbm_drive[i].image)
-				free (cbm_drive[i].image);
-		}
+			cbm_drive[i].image = NULL;
 		cbm_drive[i].drive = 0;
 	}
 }
+
+
 
 static void cbm_drive_config (CBM_Drive * drive, int interface, int serialnr)
 {
@@ -100,10 +102,13 @@ void cbm_drive_1_config (int interface, int serialnr)
 	cbm_drive_config (cbm_drive + 1, interface, serialnr);
 }
 
-static int d64_open (mess_image *img, mame_file *in)
+
+
+/* open an d64 image */
+DEVICE_LOAD(cbm_drive)
 {
 	int size;
-	int id = image_index_in_device(img);
+	int id = image_index_in_device(image);
 
 	cbm_drive[id].drive = 0;
 	cbm_drive[id].image = NULL;
@@ -113,29 +118,19 @@ static int d64_open (mess_image *img, mame_file *in)
 
 	cbm_drive[id].image_type = IO_FLOPPY;
 	cbm_drive[id].image_id = id;
-	size = mame_fsize (in);
+	size = mame_fsize(file);
 
-	cbm_drive[id].image = (UINT8*) malloc (size);
+	cbm_drive[id].image = (UINT8*) auto_malloc (size);
 	if (!cbm_drive[id].image)
 		return INIT_FAIL;
 
-	if (size != mame_fread (in, cbm_drive[id].image, size))
-	{
-		free (cbm_drive[id].image);
+	if (size != mame_fread (file, cbm_drive[id].image, size))
 		return INIT_FAIL;
-	}
-
-	logerror("floppy image %s loaded\n", image_filename(img));
 
 	cbm_drive[id].drive = D64_IMAGE;
 	return 0;
 }
 
-/* open an d64 image */
-DEVICE_LOAD(cbm_drive)
-{
-	return d64_open(image, file);
-}
 
 
 static void c1551_write_data (CBM_Drive * c1551, int data)

@@ -145,12 +145,12 @@ static int pic8259_irq_pending(int which, int irq)
 
 
 
-static int pic8259_read(int which, offs_t offset)
+static data8_t pic8259_read(int which, offs_t offset)
 {
 	struct pic8259 *this = &pic[which];
 
 	/* NPW 18-May-2003 - Changing 0xFF to 0x00 as per Ruslan */
-	int data = 0x00;
+	data8_t data = 0x00;
 
 	switch( offset ) {
 	case 0: /* PIC acknowledge IRQ */
@@ -337,10 +337,47 @@ static void pic8259_write(int which, offs_t offset, data8_t data )
 
 /* ----------------------------------------------------------------------- */
 
-READ_HANDLER ( pic8259_0_r )	{ return pic8259_read(0, offset); }
-READ_HANDLER ( pic8259_1_r )	{ return pic8259_read(1, offset); }
-WRITE_HANDLER ( pic8259_0_w )	{ pic8259_write(0, offset, data); }
-WRITE_HANDLER ( pic8259_1_w )	{ pic8259_write(1, offset, data); }
+READ8_HANDLER ( pic8259_0_r )	{ return pic8259_read(0, offset); }
+READ8_HANDLER ( pic8259_1_r )	{ return pic8259_read(1, offset); }
+WRITE8_HANDLER ( pic8259_0_w )	{ pic8259_write(0, offset, data); }
+WRITE8_HANDLER ( pic8259_1_w )	{ pic8259_write(1, offset, data); }
+
+
+
+/* ----------------------------------------------------------------------- */
+
+static data8_t pic8259_read32(int which, offs_t offset)
+{
+	return (((data32_t) pic8259_read(which, offset * 4 + 0)) << 0)
+		|  (((data32_t) pic8259_read(which, offset * 4 + 1)) << 8)
+		|  (((data32_t) pic8259_read(which, offset * 4 + 2)) << 16)
+		|  (((data32_t) pic8259_read(which, offset * 4 + 3)) << 24);
+}
+
+
+
+static void pic8259_write32(int which, offs_t offset, data32_t data, data32_t mem_mask)
+{
+	if ((mem_mask & 0x000000FF) == 0)
+		pic8259_write(which, offset * 4 + 0, data >> 0);
+	if ((mem_mask & 0x0000FF00) == 0)
+		pic8259_write(which, offset * 4 + 1, data >> 8);
+	if ((mem_mask & 0x00FF0000) == 0)
+		pic8259_write(which, offset * 4 + 2, data >> 16);
+	if ((mem_mask & 0xFF000000) == 0)
+		pic8259_write(which, offset * 4 + 3, data >> 24);
+}
+
+
+
+READ32_HANDLER ( pic8259_32_0_r )	{ return pic8259_read32(0, offset); }
+READ32_HANDLER ( pic8259_32_1_r )	{ return pic8259_read32(1, offset); }
+WRITE32_HANDLER ( pic8259_32_0_w )	{ pic8259_write32(0, offset, data, mem_mask); }
+WRITE32_HANDLER ( pic8259_32_1_w )	{ pic8259_write32(1, offset, data, mem_mask); }
+
+
+
+/* ----------------------------------------------------------------------- */
 
 void pic8259_0_issue_irq(int irq)
 {

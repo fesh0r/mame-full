@@ -216,14 +216,14 @@ static void (*i386_opcode_table1_16[256])(void) =
 	I386OP(invalid),			/* 0xd5 */		/* TODO: AAD */
 	I386OP(invalid),			/* 0xd6 */
 	I386OP(invalid),			/* 0xd7 */		/* TODO: XLAT */
-	I386OP(invalid),			/* 0xd8 */		/* TODO: Escape to coprocessor */
-	I386OP(invalid),			/* 0xd9 */		/* TODO: Escape to coprocessor */
-	I386OP(invalid),			/* 0xda */		/* TODO: Escape to coprocessor */
-	I386OP(invalid),			/* 0xdb */		/* TODO: Escape to coprocessor */
-	I386OP(invalid),			/* 0xdc */		/* TODO: Escape to coprocessor */
-	I386OP(invalid),			/* 0xdd */		/* TODO: Escape to coprocessor */
-	I386OP(invalid),			/* 0xde */		/* TODO: Escape to coprocessor */
-	I386OP(invalid),			/* 0xdf */		/* TODO: Escape to coprocessor */
+	I386OP(escape),				/* 0xd8 */
+	I386OP(escape),				/* 0xd9 */
+	I386OP(escape),				/* 0xda */
+	I386OP(escape),				/* 0xdb */
+	I386OP(escape),				/* 0xdc */
+	I386OP(escape),				/* 0xdd */
+	I386OP(escape),				/* 0xde */
+	I386OP(escape),				/* 0xdf */
 	I386OP(loopne16),			/* 0xe0 */
 	I386OP(loopz16),			/* 0xe1 */
 	I386OP(loop16),				/* 0xe2 */
