@@ -1728,9 +1728,8 @@ static void LoadOption(REG_OPTION *option,const char *value_str)
 	case RO_COLOR :
 	{
 		unsigned int r,g,b;
-		if (sscanf(value_str,"%ui,%ui,%ui",&r,&g,&b) == 3)
+		if (sscanf(value_str,"%u,%u,%u",&r,&g,&b) == 3)
 			*((COLORREF *)option->m_vpData) = RGB(r,g,b);
-
 		break;
 	}
 
