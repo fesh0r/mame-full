@@ -708,21 +708,25 @@ COREOBJS += \
 TOOLS +=  dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE) messroms$(EXE)
 #TOOLS +=  dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE) 
 
-ifneq "$(OS)" "win32"
+ifeq ($(OS),win32)
+OUTOPT = $(OBJ)/Win32/dirent.o -out:$@
+else
+OUTOPT = -o $@
+endif
+
 dat2html$(EXE): $(OBJ)/mess/tools/dat2html.o $(OBJ)/mess/utils.o
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(LD) $(LDFLAGS) $^ $(LIBS) $(OUTOPT)
 
 mkhdimg$(EXE):	$(OBJ)/mess/tools/mkhdimg.o
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(LD) $(LDFLAGS) $^ $(LIBS) $(OUTOPT)
 
 OBJDIRS += $(OBJ)/mess/messroms
 
 messroms$(EXE):	$(OBJ)/mess/messroms/main.o $(OBJ)/unzip.o
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) -o $@
-
+	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) $(OUTOPT)
 
 imgtool$(EXE):	     \
 	  $(IMGTOOL_OBJS) \
@@ -751,8 +755,7 @@ imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/fat.o     \
 	  $(OBJ)/mess/tools/rom16.o
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) -o $@
-endif
+	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) $(OUTOPT)
 
 # text files
 ifeq ($(OS),msdos)
