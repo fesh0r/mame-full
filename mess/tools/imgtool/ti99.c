@@ -428,7 +428,7 @@ typedef struct ti99_fdr
 	char name[10];			/* file name (10 characters, pad with spaces) */
 	UINT16BE xreclen;		/* extended record len: if record len is >= 256, */
 								/* reclen is set to 0 and the actual reclen is */
-								/* stored here (Myarc HFDC only).  TI reserved
+								/* stored here (Myarc HFDC only).  TI reserved */
 								/* this  field for data chain pointer extension, */
 								/* but this was never implemented. */
 	UINT8 flags;			/* file status flags (see enum above) */
@@ -445,7 +445,7 @@ typedef struct ti99_fdr
 								/* files (set to 0).  Set to 0 if reclen >=256 */
 								/* (HFDC only). */
 	UINT16LE fixrecs;		/* file length in logical records */
-								/* For variable length record files, number of
+								/* For variable length record files, number of */
 								/* 256-byte records actually used. */
 	ti99_date_time creation;/* date and time of creation (HFDC and BwG only; */
 								/*reserved in TI) */
@@ -1250,7 +1250,7 @@ static size_t ti99_image_freespace(IMAGE *img)
 static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 {
 	ti99_image *image = (ti99_image*) img;
-	int totphysrecs = get_UINT16BE(image->vib.totphysrecs);
+	int totphysrecs;
 	char ti_fname[10];
 	ti99_fdr fdr;
 	tifile_header dst_header;
@@ -1258,6 +1258,8 @@ static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	int secsused;
 	UINT8 buf[256];
 	int errorcode;
+
+	totphysrecs = get_UINT16BE(image->vib.totphysrecs);
 
 	str_to_fname(ti_fname, fname);
 
@@ -1309,7 +1311,7 @@ static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *in_options)
 {
 	ti99_image *image = (ti99_image*) img;
-	int totphysrecs = get_UINT16BE(image->vib.totphysrecs);
+	int totphysrecs;
 	char ti_fname[10];
 	ti99_fdr fdr;
 	tifile_header src_header;
@@ -1318,6 +1320,8 @@ static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, 
 	UINT8 buf[256];
 	int errorcode;
 	int fdr_physrec;
+
+	totphysrecs = get_UINT16BE(image->vib.totphysrecs);
 
 	if (strchr(fname, '.') || strchr(fname, ' ') || (strlen(fname) > 10))
 		return IMGTOOLERR_BADFILENAME;
