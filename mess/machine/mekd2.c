@@ -586,7 +586,7 @@ int mekd2_rom_load(int id)
 			osd_fread(file, buff, sizeof (buff));
 			if (memcmp(buff, magic, sizeof (buff)))
 			{
-				LOG(( "mekd2_rom_load: magic '%s' not found\n", magic));
+				logerror( "mekd2_rom_load: magic '%s' not found\n", magic);
 				return 1;
 			}
 			osd_fread_lsbfirst(file, &addr, 2);
@@ -614,7 +614,7 @@ int mekd2_rom_id(int id)
 		osd_fread(file, buff, sizeof (buff));
 		if (memcmp(buff, magic, sizeof (buff)) == 0)
 		{
-			LOG(( "mekd2_rom_id: magic '%s' found\n", magic));
+			logerror( "mekd2_rom_id: magic '%s' found\n", magic);
 			return 1;
 		}
 	}

@@ -75,12 +75,12 @@ void mekd2_init_colors (unsigned char *palette, unsigned short *colortable, cons
 	backdrop_load (backdrop_name, nextfree, Machine->drv->total_colors - nextfree);
 	if (artwork_backdrop)
     {
-        LOG (("backdrop %s successfully loaded\n", backdrop_name));
+        logerror("backdrop %s successfully loaded\n", backdrop_name);
 		memcpy (&palette[nextfree * 3], artwork_backdrop->orig_palette, artwork_backdrop->num_pens_used * 3 * sizeof (unsigned char));
     }
     else
     {
-        LOG (( "no backdrop loaded\n"));
+        logerror( "no backdrop loaded\n");
     }
 }
 
