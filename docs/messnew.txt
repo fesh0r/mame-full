@@ -20,7 +20,9 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-(none)
+- Fixed SEXW in hd6309 core. It really is a signed extension of W into Q.
+  Also, it is 4 cycles long. Thanks to David Keil and Sockmaster for pointing
+  this out.
 
 
 
