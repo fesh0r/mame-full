@@ -489,6 +489,7 @@ static const char *dragonbas_functions[] =
 	"MKN$"		/* 0xffa6 */
 };
 
+#ifdef BASIC_
 /* ----------------------------------------------------------------------- *
  * CBM machines                                                            *
  * ----------------------------------------------------------------------- */
@@ -1098,33 +1099,33 @@ static const char *basic_20_speech_basic_27[] = /* "BASIC 2.0 with Speech BASIC 
 	"RIGHT$",         /* 0xc9 */
 	"MID$",           /* 0xca */
 	"GO",             /* 0xcb */
-	"RESET",          /* 0xcc */	
-	"BASIC",	      /* 0xcd */	
-	"HELP",	          /* 0xce */	
-	"KEY",		      /* 0xcf */	
-	"HIMEM",	      /* 0xd0 */	
-	"DISK",	          /* 0xd1 */	
-	"DIR",		      /* 0xd2 */	
-	"BLOAD",	      /* 0xd3 */	
-	"BSAVE",	      /* 0xd4 */	
-	"MAP",		      /* 0xd5 */	
-	"MEM",		      /* 0xd6 */	
-	"PAUSE",	      /* 0xd7 */	
-	"BLOCK",	      /* 0xd8 */	
-	"HEAR",	          /* 0xd9 */	
-	"RECORD",	      /* 0xda */	
-	"PLAY",	          /* 0xdb */	
-	"VOLDEF",	      /* 0xdc */	
-	"COLDEF",	      /* 0xdd */	
-	"HEX",		      /* 0xde */	
-	"DEZ",		      /* 0xdf */	
-	"SCREEN",	      /* 0xe0 */	
-	"EXEC",	          /* 0xe1 */	
-	"MON",		      /* 0xe2 */	
-	"{LEFT ARROW}",   /* 0xe3 - A single character shaped as a left pointing arrow */	
-	"FROM",	          /* 0xe4 */	
-	"SPEED",	      /* 0xe5 */	
-	"OFF",		      /* 0xe6 */	
+	"RESET",          /* 0xcc */
+	"BASIC",	      /* 0xcd */
+	"HELP",	          /* 0xce */
+	"KEY",		      /* 0xcf */
+	"HIMEM",	      /* 0xd0 */
+	"DISK",	          /* 0xd1 */
+	"DIR",		      /* 0xd2 */
+	"BLOAD",	      /* 0xd3 */
+	"BSAVE",	      /* 0xd4 */
+	"MAP",		      /* 0xd5 */
+	"MEM",		      /* 0xd6 */
+	"PAUSE",	      /* 0xd7 */
+	"BLOCK",	      /* 0xd8 */
+	"HEAR",	          /* 0xd9 */
+	"RECORD",	      /* 0xda */
+	"PLAY",	          /* 0xdb */
+	"VOLDEF",	      /* 0xdc */
+	"COLDEF",	      /* 0xdd */
+	"HEX",		      /* 0xde */
+	"DEZ",		      /* 0xdf */
+	"SCREEN",	      /* 0xe0 */
+	"EXEC",	          /* 0xe1 */
+	"MON",		      /* 0xe2 */
+	"{LEFT ARROW}",   /* 0xe3 - A single character shaped as a left pointing arrow */
+	"FROM",	          /* 0xe4 */
+	"SPEED",	      /* 0xe5 */
+	"OFF",		      /* 0xe6 */
 	NULL,               /* 0xe7 */
 	NULL,               /* 0xe8 */
 	NULL,               /* 0xe9 */
@@ -1230,49 +1231,49 @@ static const char *basic_20_at_basic[] = /* "BASIC 2.0 with @BASIC" - supported 
 	"RIGHT$",         /* 0xc9 */
 	"MID$",           /* 0xca */
 	"GO",             /* 0xcb */
-	"TRACE",          /* 0xcc */	
-	"DELETE",         /* 0xcd */	
-	"AUTO",           /* 0xce */	
-	"OLD",            /* 0xcf */	
-	"DUMP",           /* 0xd0 */	
-	"FIND",           /* 0xd1 */	
-	"RENUMBER",       /* 0xd2 */	
-	"DLOAD",          /* 0xd3 */	
-	"DSAVE",          /* 0xd4 */	
-	"DVERIFY",        /* 0xd5 */	
-	"DIRECTORY"       /* 0xd6 */	
-	"CATALOG",        /* 0xd7 */	
-	"SCRATCH",        /* 0xd8 */	
-	"COLLECT",        /* 0xd9 */	
-	"RENAME",         /* 0xda */	
-	"COPY",           /* 0xdb */	
-	"BACKUP",         /* 0xdc */	
-	"DISK",           /* 0xdd */	
-	"HEADER",         /* 0xde */	
-	"APPEND",         /* 0xdf */	
-	"MERGE",          /* 0xe0 */	
-	"MLOAD",          /* 0xe1 */	
-	"MVERIFY",        /* 0xe2 */	
-	"MSAVE",          /* 0xe3 */	
-	"KEY",            /* 0xe4 */	
-	"BASIC",          /* 0xe5 */	
-	"RESET",          /* 0xe6 */	
-	"EXIT",           /* 0xe7 */	
-	"ENTER",          /* 0xe8 */	
-	"DOKE",           /* 0xe9 */	
-	"SET",            /* 0xea */	
-	"HELP",           /* 0xeb */	
-	"SCREEN",         /* 0xec */	
-	"LOMEM",          /* 0xed */	
-	"HIMEM",          /* 0xee */	
-	"COLOUR",         /* 0xef */	
-	"TYPE",           /* 0xf0 */	
-	"TIME",           /* 0xf1 */	
-	"DEEK",           /* 0xf2 */	
-	"HEX$",           /* 0xf3 */	
-	"BIN$",           /* 0xf4 */	
-	"OFF",            /* 0xf5 */	
-	"ALARM",          /* 0xf6 */	
+	"TRACE",          /* 0xcc */
+	"DELETE",         /* 0xcd */
+	"AUTO",           /* 0xce */
+	"OLD",            /* 0xcf */
+	"DUMP",           /* 0xd0 */
+	"FIND",           /* 0xd1 */
+	"RENUMBER",       /* 0xd2 */
+	"DLOAD",          /* 0xd3 */
+	"DSAVE",          /* 0xd4 */
+	"DVERIFY",        /* 0xd5 */
+	"DIRECTORY"       /* 0xd6 */
+	"CATALOG",        /* 0xd7 */
+	"SCRATCH",        /* 0xd8 */
+	"COLLECT",        /* 0xd9 */
+	"RENAME",         /* 0xda */
+	"COPY",           /* 0xdb */
+	"BACKUP",         /* 0xdc */
+	"DISK",           /* 0xdd */
+	"HEADER",         /* 0xde */
+	"APPEND",         /* 0xdf */
+	"MERGE",          /* 0xe0 */
+	"MLOAD",          /* 0xe1 */
+	"MVERIFY",        /* 0xe2 */
+	"MSAVE",          /* 0xe3 */
+	"KEY",            /* 0xe4 */
+	"BASIC",          /* 0xe5 */
+	"RESET",          /* 0xe6 */
+	"EXIT",           /* 0xe7 */
+	"ENTER",          /* 0xe8 */
+	"DOKE",           /* 0xe9 */
+	"SET",            /* 0xea */
+	"HELP",           /* 0xeb */
+	"SCREEN",         /* 0xec */
+	"LOMEM",          /* 0xed */
+	"HIMEM",          /* 0xee */
+	"COLOUR",         /* 0xef */
+	"TYPE",           /* 0xf0 */
+	"TIME",           /* 0xf1 */
+	"DEEK",           /* 0xf2 */
+	"HEX$",           /* 0xf3 */
+	"BIN$",           /* 0xf4 */
+	"OFF",            /* 0xf5 */
+	"ALARM",          /* 0xf6 */
 	NULL,               /* 0xf7 */
 	NULL,               /* 0xf8 */
 	NULL,               /* 0xf9 */
@@ -2470,6 +2471,7 @@ static const char *basic_100[] = /* "BASIC 10.0" - supported by c65 & clones */
 	"HIGHLIGHT"       /* 0xfe3d */
 };
 
+#endif
 /*
 		int8     $ff
 		int16    <TOTAL LENGTH>
