@@ -3,23 +3,30 @@
 
 	We define the character matrix for each character.
 
-	The US terminal uses the standard 7-bit ASCII character set, with additional
-	graphic characters in the 32 first positions.
+	The US terminal uses the standard 7-bit ASCII character set, with
+	additional graphic characters in the 32 first positions.
 
-	The various European terminals use variants of the 7-bit ASCII character set
-	with national characters instead of various punctuation characters.  I think
-	these national character sets were normalized at a point, but I don't know
-	how close to this norm the character sets used by the 991 VDT are.
+	The various European terminals use variants of the 7-bit ASCII character
+	set with national characters instead of various punctuation characters.
+	I think these national character sets were standardized at a point, but
+	I don't know how close to this standard the character sets used by the
+	911 VDT are.
 
-	The japanese terminal uses 8-bit character codes.  The 128 first characters are
-	identical to the US character set (except that '\' is replaced by the Yen symbol),
-	and the next 128 characters include the katakana syllabus.  Kanji ideograms are not
-	supported in this scheme.
+	The japanese terminal uses 8-bit character codes.  The 128 first characters
+	are identical to the US character set (except that '\' is replaced by the
+	Yen symbol), and the next 128 characters include the katakana syllabus.
+	Kanji ideograms are not supported in this scheme.
 
-	The arabic terminal uses 8-bit character codes, too.
+	The arabic terminal uses 8-bit character codes, too.  It requires
+	additional code in the TI990 OS for correct operation, as the keyboard
+	returns codes for isolated characters (i.e. without ligatures), which need
+	to be substituted with codes with correct context-dependent ligatures.
+	And both OS and application programs need to support the fact that the
+	writing direction can be either right-to-left or left-to-right, according
+	to whether the characters are latin or arabic.
 
-	As the original ROMs have not yet been dumped, I recreated the matrices from various
-	matrix printouts in TI documentation.
+	As the original ROMs have not been dumped yet, I recreated the matrices
+	from various matrix printouts in TI documentation.
 */
 /*
 	The arabic character set is not implemented, because documentation is ambiguous
@@ -28,19 +35,124 @@
 */
 
 
+/*
+	Offsets in the char_defs array
+*/
+enum
+{
+	/* US ASCII: 128 characters (32 symbols + 95 ASCII + 1 blank (delete character)) */
+	char_defs_US_base = 0,
+	/* additionnal katakana set (128 characters, including JIS set) */
+	char_defs_katakana_base = char_defs_US_base+128,
+	/* extra symbols for national character sets */
+	char_defs_pound = char_defs_katakana_base+128,	/* pound sign (UK 0x23, French WP 0x23) */
+	char_defs_yen,		/* yen sign (Japan 0x5C) */
+	char_defs_auml,		/* latin small letter a with diaeresis (Swedish/Finish 0x7B, German 0x7B) */
+	char_defs_Auml,		/* latin capital letter A with diaeresis (Swedish/Finish 0x5B, German 0x5B) */
+	char_defs_Aring,	/* latin capital letter A with ring above (Swedish/Finish 0x5D, Norwegian/Danish 0x5D) */
+	char_defs_uuml,		/* latin small letter u with diaeresis (Swedish/Finish 0x7E, German 0x7D) */
+	char_defs_aring,	/* latin small letter a with ring above (Swedish/Finish 0x7D, Norwegian/Danish 0x7D) */
+	char_defs_Uuml,		/* latin capital letter U with diaeresis (German 0x5D) */
+	char_defs_ouml,		/* latin small letter o with diaeresis (German 0x7C) */
+	char_defs_Ouml,		/* latin capital letter O with diaeresis (German 0x5C) */
+	char_defs_szlig,	/* latin small letter sharp s (German 0x7E) */
+	char_defs_aelig,	/* latin small letter ae (Norwegian/Danish 0x7B) */
+	char_defs_AElig,	/* latin capital letter AE (Norwegian/Danish 0x5B) */
+	char_defs_oslash,	/* latin small letter o with stroke (Norwegian/Danish 0x7C) */
+	char_defs_Oslash,	/* latin capital letter O with stroke (Norwegian/Danish 0x5C) */
+	char_defs_agrave,	/* latin small letter a with grave (French WP 0x40) */
+	char_defs_deg,		/* degree sign (French WP 0x5B) */
+	char_defs_ccedil,	/* latin small letter c with cedilla (French WP 0x5C) */
+	char_defs_sect,		/* section sign (French WP 0x5D) */
+	char_defs_egrave,	/* latin small letter e with grave (French WP 0x7B) */
+	char_defs_ugrave,	/* latin small letter u with grave (French WP 0x7C) */
+	char_defs_eacute,	/* latin small letter e with acute (French WP 0x7D) */
+	char_defs_uml,		/* diaeresis (French WP 0x7E) */
+
+	char_defs_count		/* total character count */
+};
+
 /* structure used to describe differences between national character sets and
 US character set */
 /* much more compact than defining the complete 128-char vector */
 typedef struct char_override_t
 {
-	unsigned char index;
-	UINT8 character_bitmap[10];
+	unsigned char char_index;		/* char to replace */
+	unsigned short symbol_index;	/* replacement symbol */
 } char_override_t;
 
+/* One UK-specific character */
+static const char_override_t UK_overrides[1] =
+{
+	{	0x23,	char_defs_pound	}
+};
+
+/* One japan-specific character (see below for the 128 additionnal characters) */
+static const char_override_t japanese_overrides[1] =
+{
+	{	0x5C,	char_defs_yen	}
+};
+
+/* 5 sweden/finland-specific characters */
+static const char_override_t swedish_overrides[/*5*/7] =
+{
+	{	0x7B,	char_defs_auml	},
+	{	0x5B,	char_defs_Auml	},
+	{	0x5D,	char_defs_Aring	},
+	{	0x7E,	char_defs_uuml	},
+	{	0x7D,	char_defs_aring	},
+	/* next characters described in D-4 but not 1-10 */
+	{	0x5C,	char_defs_Ouml	},
+	{	0x7C,	char_defs_ouml	}
+};
+
+/* 7 german-specific characters */
+static const char_override_t german_overrides[7] =
+{
+	{	0x5D,	char_defs_Uuml	},
+	{	0x7D,	char_defs_uuml	},
+	{	0x7C,	char_defs_ouml	},
+	{	0x5C,	char_defs_Ouml	},
+	{	0x7B,	char_defs_auml	},
+	{	0x7E,	char_defs_szlig	},
+	{	0x5B,	char_defs_Auml	}	/* 945423-9701 rev. B p. 1-10 says 0x5D, but it must be a mistake */
+};
+
+/* 6 norway/denmark-specific characters */
+static const char_override_t norwegian_overrides[6] =
+{
+	{	0x5D,	char_defs_Aring	},
+	{	0x7B,	char_defs_aelig	},
+	{	0x5B,	char_defs_AElig	},
+	{	0x7D,	char_defs_aring	},
+	{	0x7C,	char_defs_oslash},
+	{	0x5C,	char_defs_Oslash}
+};
+
+/* 9 french-specific characters (word-processing model only: the data-processing model uses
+the US character set, although the keyboard mapping is different from the US model) */
+/* WARNING: I have created the character matrices from scratch, as I have no printout of
+the original matrices. */
+static const char_override_t frenchWP_overrides[9] =
+{
+	{	0x23,	char_defs_pound	},
+	{	0x40,	char_defs_agrave},
+	{	0x5B,	char_defs_deg	},
+	{	0x5C,	char_defs_ccedil},
+	{	0x5D,	char_defs_sect	},
+	{	0x7B,	char_defs_eacute},	/* 945423-9701 rev. B says char_defs_egrave, but it must be a mistake */
+	{	0x7C,	char_defs_ugrave},
+	{	0x7D,	char_defs_egrave},	/* 945423-9701 rev. B says char_defs_eacute, but it must be a mistake */
+	{	0x7E,	char_defs_uml	}
+};
+
+/*
+	char_defs array: character matrices for each character
+*/
+static const UINT8 char_defs[char_defs_count][10] =
+{
 
 /* US character set: 128 7*10 character matrix */
-static const UINT8 US_character_set[128][10] =
-{
 	{	/* 0x00 */
 		0x00,
 		0x00,
@@ -1366,7 +1478,7 @@ static const UINT8 US_character_set[128][10] =
 		0x00,
 		0x00,
 		0x22,
-		0x36,
+		0x32,
 		0x2a,
 		0x26,
 		0x22,
@@ -1576,480 +1688,10 @@ static const UINT8 US_character_set[128][10] =
 		0x00,
 		0x00,
 		0x00
-	}
-};
+	},
 
-/* One UK-specific character */
-static const char_override_t UK_overrides[1] =
-{
-	{
-		0x23,
-		{
-			0x00,
-			0x0c,
-			0x12,
-			0x10,
-			0x38,
-			0x10,
-			0x3a,
-			0x34,
-			0x00,
-			0x00
-		}
-	}
-};
-
-/* One japan-specific character (see below for the 128 additionnal characters) */
-static const char_override_t japanese_overrides[1] =
-{
-	{
-		0x5C,
-		{
-			0x00,
-			0x22,
-			0x14,
-			0x08,
-			0x3e,
-			0x08,
-			0x3e,
-			0x08,
-			0x00,
-			0x00
-		}
-	}
-};
-
-/* 5 sweden/finland-specific characters */
-static const char_override_t swedish_overrides[5] =
-{
-	{
-		0x7B,
-		{
-			0x00,
-			0x00,
-			0x22,
-			0x00,
-			0x1c,
-			0x22,
-			0x3e,
-			0x22,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x5B,
-		{
-			0x00,
-			0x22,
-			0x00,
-			0x1c,
-			0x22,
-			0x3e,
-			0x22,
-			0x22,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x5D,
-		{
-			0x00,
-			0x08,
-			0x00,
-			0x1c,
-			0x22,
-			0x3e,
-			0x22,
-			0x22,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x7E,
-		{
-			0x00,
-			0x00,
-			0x22,
-			0x00,
-			0x22,
-			0x22,
-			0x22,
-			0x1c,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x7D,
-		{
-			0x00,
-			0x00,
-			0x08,
-			0x00,
-			0x1c,
-			0x22,
-			0x3e,
-			0x22,
-			0x00,
-			0x00
-		}
-	}
-};
-
-/* 7 german-specific characters */
-static const char_override_t german_overrides[7] =
-{
-	{
-		0x5D,
-		{
-			0x00,
-			0x22,
-			0x00,
-			0x22,
-			0x22,
-			0x22,
-			0x22,
-			0x1c,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x7D,
-		{
-			0x00,
-			0x00,
-			0x22,
-			0x00,
-			0x22,
-			0x22,
-			0x22,
-			0x1c,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x7C,
-		{
-			0x00,
-			0x00,
-			0x22,
-			0x00,
-			0x3e,
-			0x22,
-			0x22,
-			0x3e,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x5C,
-		{
-			0x00,
-			0x22,
-			0x00,
-			0x3e,
-			0x22,
-			0x22,
-			0x22,
-			0x3e,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x7B,
-		{
-			0x00,
-			0x00,
-			0x22,
-			0x00,
-			0x1c,
-			0x22,
-			0x3e,
-			0x22,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x7E,
-		{
-			0x00,
-			0x18,
-			0x24,
-			0x24,
-			0x2c,
-			0x22,
-			0x22,
-			0x2c,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x5D,
-		{
-			0x00,
-			0x22,
-			0x00,
-			0x1c,
-			0x22,
-			0x3e,
-			0x22,
-			0x22,
-			0x00,
-			0x00
-		}
-	}
-};
-
-/* 6 norway/denmark-specific characters */
-static const char_override_t norwegian_overrides[6] =
-{
-	{
-		0x5D,
-		{
-			0x00,
-			0x08,
-			0x00,
-			0x1c,
-			0x22,
-			0x3e,
-			0x22,
-			0x22,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x7B,
-		{
-			0x00,
-			0x00,
-			0x00,
-			0x3e,
-			0x28,
-			0x3e,
-			0x28,
-			0x2e,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x5B,
-		{
-			0x00,
-			0x3e,
-			0x28,
-			0x28,
-			0x3e,
-			0x28,
-			0x28,
-			0x2e,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x7D,
-		{
-			0x00,
-			0x00,
-			0x08,
-			0x00,
-			0x1c,
-			0x22,
-			0x3e,
-			0x22,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x7C,
-		{
-			0x00,
-			0x00,
-			0x00,
-			0x3e,
-			0x26,
-			0x2a,
-			0x32,
-			0x3e,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x5C,
-		{
-			0x00,
-			0x3e,
-			0x22,
-			0x26,
-			0x2a,
-			0x32,
-			0x22,
-			0x3e,
-			0x00,
-			0x00
-		}
-	}
-};
-
-/* 9 french-specific characters (word-processing model only: the data-processing model uses
-the US character set, although the keyboard mapping is different from the US model) */
-/* WARNING: I have created the character matrices from scratch, as I have no printout of
-the original matrices. */
-static const char_override_t frenchWP_overrides[9] =
-{
-	{
-		0x23,
-		{
-			0x00,
-			0x0c,
-			0x12,
-			0x10,
-			0x38,
-			0x10,
-			0x3a,
-			0x34,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x40,
-		{
-			0x00,
-			0x10,
-			0x08,
-			0x00,
-			0x1c,
-			0x22,
-			0x3e,
-			0x22,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x5B,
-		{
-			0x00,
-			0x38,
-			0x28,
-			0x38,
-			0x00,
-			0x00,
-			0x00,
-			0x00,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x5C,
-		{
-			0x00,
-			0x00,
-			0x00,
-			0x1e,
-			0x20,
-			0x20,
-			0x20,
-			0x1e,
-			0x08,
-			0x04
-		}
-	},
-	{
-		0x5D,
-		{
-			0x00,
-			0x1c,
-			0x20,
-			0x1c,
-			0x22,
-			0x1c,
-			0x02,
-			0x1c,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x7B,
-		{
-			0x00,
-			0x10,
-			0x08,
-			0x3e,
-			0x20,
-			0x3c,
-			0x20,
-			0x3e,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x7C,
-		{
-			0x00,
-			0x10,
-			0x08,
-			0x22,
-			0x22,
-			0x22,
-			0x22,
-			0x1c,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x7D,
-		{
-			0x00,
-			0x04,
-			0x08,
-			0x3e,
-			0x20,
-			0x3c,
-			0x20,
-			0x3e,
-			0x00,
-			0x00
-		}
-	},
-	{
-		0x7E,
-		{
-			0x00,
-			0x22,
-			0x00,
-			0x00,
-			0x00,
-			0x00,
-			0x00,
-			0x00,
-			0x00,
-			0x00
-		}
-	}
-};
 
 /* 128 additional characters for japanese terminals */
-static const UINT8 katakana_character_set[128][10] =
-{
 	{	/* 0x80 */
 		0x00,
 		0x00,
@@ -3585,5 +3227,290 @@ static const UINT8 katakana_character_set[128][10] =
 		0x00,
 		0x00,
 		0x00
+	},
+
+
+/* extra symbols for various national terminals, which use slightly modified
+variants of the US character set */
+	{	/* pound */
+		0x00,
+		0x0c,
+		0x12,
+		0x10,
+		0x38,
+		0x10,
+		0x3a,
+		0x34,
+		0x00,
+		0x00
+	},
+	{	/* yen */
+		0x00,
+		0x22,
+		0x14,
+		0x08,
+		0x3e,
+		0x08,
+		0x3e,
+		0x08,
+		0x00,
+		0x00
+	},
+	{	/* auml */
+		0x00,
+		0x00,
+		0x22,
+		0x00,
+		0x1c,
+		0x22,
+		0x3e,
+		0x22,
+		0x00,
+		0x00
+	},
+	{	/* Auml */
+		0x00,
+		0x22,
+		0x00,
+		0x1c,
+		0x22,
+		0x3e,
+		0x22,
+		0x22,
+		0x00,
+		0x00
+	},
+	{	/* Aring */
+		0x00,
+		0x08,
+		0x00,
+		0x1c,
+		0x22,
+		0x3e,
+		0x22,
+		0x22,
+		0x00,
+		0x00
+	},
+	{	/* uuml */
+		0x00,
+		0x00,
+		0x22,
+		0x00,
+		0x22,
+		0x22,
+		0x22,
+		0x1c,
+		0x00,
+		0x00
+	},
+	{	/* aring */
+		0x00,
+		0x00,
+		0x08,
+		0x00,
+		0x1c,
+		0x22,
+		0x3e,
+		0x22,
+		0x00,
+		0x00
+	},
+
+	{	/* Uuml */
+		0x00,
+		0x22,
+		0x00,
+		0x22,
+		0x22,
+		0x22,
+		0x22,
+		0x1c,
+		0x00,
+		0x00
+	},
+
+	{	/* ouml */
+		0x00,
+		0x00,
+		0x22,
+		0x00,
+		0x3e,
+		0x22,
+		0x22,
+		0x3e,
+		0x00,
+		0x00
+	},
+	{	/* Ouml */
+		0x00,
+		0x22,
+		0x00,
+		0x3e,
+		0x22,
+		0x22,
+		0x22,
+		0x3e,
+		0x00,
+		0x00
+	},
+	{	/* szlig */
+		0x00,
+		0x18,
+		0x24,
+		0x24,
+		0x2c,
+		0x22,
+		0x22,
+		0x2c,
+		0x00,
+		0x00
+	},
+	{	/* aelig */
+		0x00,
+		0x00,
+		0x00,
+		0x3e,
+		0x28,
+		0x3e,
+		0x28,
+		0x2e,
+		0x00,
+		0x00
+	},
+	{	/* AElig */
+		0x00,
+		0x3e,
+		0x28,
+		0x28,
+		0x3e,
+		0x28,
+		0x28,
+		0x2e,
+		0x00,
+		0x00
+	},
+	{	/* Oslash */
+		0x00,
+		0x00,
+		0x00,
+		0x3e,
+		0x26,
+		0x2a,
+		0x32,
+		0x3e,
+		0x00,
+		0x00
+	},
+	{	/* oslash */
+		0x00,
+		0x3e,
+		0x22,
+		0x26,
+		0x2a,
+		0x32,
+		0x22,
+		0x3e,
+		0x00,
+		0x00
+	},
+/* WARNING: I have created the next 8 French character matrices from scratch,
+as I have no printout of the original matrices. */
+	{	/* agrave */
+		0x00,
+		0x10,
+		0x08,
+		0x00,
+		0x1c,
+		0x22,
+		0x3e,
+		0x22,
+		0x00,
+		0x00
+	},
+	{	/* deg */
+		0x00,
+		0x38,
+		0x28,
+		0x38,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00
+	},
+	{	/* ccedil */
+		0x00,
+		0x00,
+		0x00,
+		0x1e,
+		0x20,
+		0x20,
+		0x20,
+		0x1e,
+		0x08,
+		0x04
+	},
+	{	/* sect */
+		0x00,
+		0x1c,
+		0x20,
+		0x1c,
+		0x22,
+		0x1c,
+		0x02,
+		0x1c,
+		0x00,
+		0x00
+	},
+	{	/* egrave */
+		0x00,
+		0x10,
+		0x08,
+		0x3e,
+		0x20,
+		0x3c,
+		0x20,
+		0x3e,
+		0x00,
+		0x00
+	},
+	{	/* ugrave */
+		0x00,
+		0x10,
+		0x08,
+		0x22,
+		0x22,
+		0x22,
+		0x22,
+		0x1c,
+		0x00,
+		0x00
+	},
+	{	/* eacute */
+		0x00,
+		0x04,
+		0x08,
+		0x3e,
+		0x20,
+		0x3c,
+		0x20,
+		0x3e,
+		0x00,
+		0x00
+	},
+	{	/* uml */
+		0x00,
+		0x22,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00
 	}
 };
+

@@ -28,7 +28,7 @@ static struct GfxLayout fontlayout_7bit =
 	128,			/* 128 characters */
 	1,				/* 1 bit per pixel */
 	{ 0 },
-	{ /*0,*/ 1, 2, 3, 4, 5, 6, 7 }, 			/* straightforward layout */
+	{ 1, 2, 3, 4, 5, 6, 7 }, 			/* straightforward layout */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
 	10*8 			/* every char takes 10 consecutive bytes */
 };
@@ -84,34 +84,46 @@ unsigned short vdt911_colortable[vdt911_colortable_size] =
 
 typedef struct vdt_t
 {
-	vdt911_screen_size_t screen_size;
-	vdt911_model_t model;
-	void (*int_callback)(int state);
+	vdt911_screen_size_t screen_size;	/* char_960 for 960-char, 12-line model; char_1920 for 1920-char, 24-line model */
+	vdt911_model_t model;				/* country code */
+	void (*int_callback)(int state);	/* interrupt callback, called when the state of irq changes */
 
-	UINT8 data_reg;
-	UINT8 display_RAM[2048];
+	UINT8 data_reg;						/* vdt911 write buffer */
+	UINT8 display_RAM[2048];			/* vdt911 char buffer (1kbyte for 960-char model, 2kbytes for 1920-char model) */
 
-	unsigned int cursor_address;
-	unsigned int cursor_address_mask; /* 1023 for 960-char model, 2047 for 1920-char model */
+	unsigned int cursor_address;		/* current cursor address (controlled by the computer, affects both display and I/O protocol) */
+	unsigned int cursor_address_mask;	/* 1023 for 960-char model, 2047 for 1920-char model */
 
-	void *beep_timer;
-	/*void *blink_clock;*/
+	void *beep_timer;					/* beep clock (beeps ends when timer times out) */
+	/*void *blink_clock;*/				/* cursor blink clock */
 
-	UINT8 keyboard_data;
-	unsigned int keyboard_data_ready : 1;
-	unsigned int keyboard_interrupt_enable : 1;
+	UINT8 keyboard_data;				/* last code pressed on keyboard */
+	unsigned int keyboard_data_ready : 1;		/* true if there is a new code in keyboard_data */
+	unsigned int keyboard_interrupt_enable : 1;	/* true when keybord interrupts are enabled */
 
-	unsigned int display_enable : 1;
-	unsigned int dual_intensity_enable : 1;
-	unsigned int display_cursor : 1;
-	unsigned int blinking_cursor_enable : 1;
-	unsigned int blink_state : 1;
+	unsigned int display_enable : 1;		/* screen is black when false */
+	unsigned int dual_intensity_enable : 1;	/* if true, MSBit of ASCII codes controls character highlight */
+	unsigned int display_cursor : 1;		/* if true, the current cursor location is displayed on screen */
+	unsigned int blinking_cursor_enable : 1;/* if true, the cursor will blink when displayed */
+	unsigned int blink_state : 1;			/* current cursor blink state */
 
-	unsigned int word_select : 1;
-	unsigned int previous_word_select : 1;
+	unsigned int word_select : 1;			/* CRU interface mode */
+	unsigned int previous_word_select : 1;	/* value of word_select is saved here */
 } vdt_t;
 
 static vdt_t vdt[MAX_VDT];
+
+/*
+	Macros for model features
+*/
+/* TRUE for japanese and arabic terminals, which use 8-bit charcodes and keyboard shift modes */
+#define USES_8BIT_CHARCODES(unit) ((vdt[unit].model == vdt911_model_Japanese) /*|| (vdt[unit].model == vdt911_model_Arabic)*/)
+/* TRUE for keyboards which have this extra key (on the left of TAB/SKIP)
+	(Most localized keyboards have it) */
+#define HAS_EXTRA_KEY_67(unit) (! ((vdt[unit].model == vdt911_model_US) || (vdt[unit].model == vdt911_model_UK) || (vdt[unit].model == vdt911_model_French)))
+/* TRUE for keyboards which have this extra key (on the right of space),
+	AND do not use it as a modifier */
+#define HAS_EXTRA_KEY_91(unit) ((vdt[unit].model == vdt911_model_German) || (vdt[unit].model == vdt911_model_Swedish) || (vdt[unit].model == vdt911_model_Norwegian))
 
 static void blink_callback(int unit);
 static void beep_callback(int unit);
@@ -152,10 +164,9 @@ static void apply_char_overrides(int nb_char_overrides, const char_override_t ch
 	for (i=0; i<nb_char_overrides; i++)
 	{
 		for (j=0; j<10; j++)
-			dest[char_overrides[i].index*10+j] = char_overrides[i].character_bitmap[j];
+			dest[char_overrides[i].char_index*10+j] = char_defs[char_overrides[i].symbol_index][j];
 	}
 }
-
 
 /*
 	Initialize the 911 vdt core
@@ -168,43 +179,47 @@ void vdt911_init(void)
 
 	/* set up US character definitions */
 	base = memory_region(vdt911_chr_region)+vdt911_US_chr_offset;
-	copy_character_matrix_array(US_character_set, base);
+	copy_character_matrix_array(char_defs+char_defs_US_base, base);
 
 	/* set up UK character definitions */
 	base = memory_region(vdt911_chr_region)+vdt911_UK_chr_offset;
-	copy_character_matrix_array(US_character_set, base);
+	copy_character_matrix_array(char_defs+char_defs_US_base, base);
 	apply_char_overrides(sizeof(UK_overrides)/sizeof(char_override_t), UK_overrides, base);
 
 	/* French character set is identical to US character set */
 
 	/* set up German character definitions */
 	base = memory_region(vdt911_chr_region)+vdt911_german_chr_offset;
-	copy_character_matrix_array(US_character_set, base);
+	copy_character_matrix_array(char_defs+char_defs_US_base, base);
 	apply_char_overrides(sizeof(german_overrides)/sizeof(char_override_t), german_overrides, base);
 
 	/* set up Swedish/Finnish character definitions */
 	base = memory_region(vdt911_chr_region)+vdt911_swedish_chr_offset;
-	copy_character_matrix_array(US_character_set, base);
+	copy_character_matrix_array(char_defs+char_defs_US_base, base);
 	apply_char_overrides(sizeof(swedish_overrides)/sizeof(char_override_t), swedish_overrides, base);
 
 	/* set up Norwegian/Danish character definitions */
 	base = memory_region(vdt911_chr_region)+vdt911_norwegian_chr_offset;
-	copy_character_matrix_array(US_character_set, base);
+	copy_character_matrix_array(char_defs+char_defs_US_base, base);
 	apply_char_overrides(sizeof(norwegian_overrides)/sizeof(char_override_t), norwegian_overrides, base);
 
 	/* set up Katakana Japanese character definitions */
 	base = memory_region(vdt911_chr_region)+vdt911_japanese_chr_offset;
-	copy_character_matrix_array(US_character_set, base);
+	copy_character_matrix_array(char_defs+char_defs_US_base, base);
 	apply_char_overrides(sizeof(japanese_overrides)/sizeof(char_override_t), japanese_overrides, base);
+	base = memory_region(vdt911_chr_region)+vdt911_japanese_chr_offset+128*vdt911_single_char_len;
+	copy_character_matrix_array(char_defs+char_defs_katakana_base, base);
 
 	/* set up Arabic character definitions */
 	/*base = memory_region(vdt911_chr_region)+vdt911_arabic_chr_offset;
-	copy_character_matrix_array(US_character_set, base);
-	apply_char_overrides(sizeof(arabic_overrides)/sizeof(char_override_t), arabic_overrides, base);*/
+	copy_character_matrix_array(char_defs+char_defs_US_base, base);
+	apply_char_overrides(sizeof(arabic_overrides)/sizeof(char_override_t), arabic_overrides, base);
+	base = memory_region(vdt911_chr_region)+vdt911_arabic_chr_offset+128*vdt911_single_char_len;
+	copy_character_matrix_array(char_defs+char_defs_arabic_base, base);*/
 
 	/* set up French word processing character definitions */
 	base = memory_region(vdt911_chr_region)+vdt911_frenchWP_chr_offset;
-	copy_character_matrix_array(US_character_set, base);
+	copy_character_matrix_array(char_defs+char_defs_US_base, base);
 	apply_char_overrides(sizeof(frenchWP_overrides)/sizeof(char_override_t), frenchWP_overrides, base);
 }
 
@@ -456,15 +471,15 @@ WRITE16_HANDLER(vdt911_0_cru_w)
 
 void vdt911_refresh(struct mame_bitmap *bitmap, int unit, int x, int y)
 {
-	const struct GfxElement *gfx = Machine->gfx[unit];
+	const struct GfxElement *gfx = Machine->gfx[vdt[unit].model];
 	int height = (vdt[unit].screen_size == char_960) ? 12 : /*25*/24;
-	int use_8bit_charcode = (vdt[unit].model == vdt911_model_Japanese) /*|| (vdt[unit].model == vdt911_model_Arabic)*/;
+	int use_8bit_charcodes = USES_8BIT_CHARCODES(unit);
 	int address = 0;
 	int i, j;
 	int cur_char;
 	int color;
 
-	/*if (use_8bit_charcode)
+	/*if (use_8bit_charcodes)
 		color = vdt[unit].dual_intensity_enable ? 1 : 0;*/
 
 	if (! vdt[unit].display_enable)
@@ -487,7 +502,7 @@ void vdt911_refresh(struct mame_bitmap *bitmap, int unit, int x, int y)
 				cur_char = vdt[unit].display_RAM[address];
 				/* does dual intensity work with 8-bit character set? */
 				color = (vdt[unit].dual_intensity_enable && (cur_char & 0x80)) ? 1 : 0;
-				if (! use_8bit_charcode)
+				if (! use_8bit_charcodes)
 					cur_char &= 0x7f;
 
 				/* display cursor in reverse video */
@@ -503,15 +518,46 @@ void vdt911_refresh(struct mame_bitmap *bitmap, int unit, int x, int y)
 		}
 }
 
+static unsigned char (*key_translate[])[91] =
+{	/* array must use same order as vdt911_model_t!!! */
+	/* US */
+	US_key_translate,
+	/* UK */
+	US_key_translate,
+	/* French */
+	French_key_translate,
+	/* German */
+	German_key_translate,
+	/* Swedish */
+	Swedish_key_translate,
+	/* Norwegian */
+	Norwegian_key_translate,
+	/* Japanese */
+	Japanese_key_translate,
+	/* Arabic */
+	/*Arabic_key_translate,*/
+	/* FrenchWP */
+	FrenchWP_key_translate
+};
+
 
 void vdt911_keyboard(int unit)
 {
-	typedef enum { lower_case = 0, upper_case, shift, control, special_debounce = -1 } modifier_state_t;
+	typedef enum
+	{
+		/* states for western keyboards and katakana/arabic keyboards in romaji/latin mode */
+		lower_case = 0, upper_case, shift, control,
+		/* states for katakana/arabic keyboards in katakana/arabic mode */
+		foreign, foreign_shift,
+		/* special value to stop repeat if the modifier state changes */
+		special_debounce = -1
+	} modifier_state_t;
 
 	static unsigned char repeat_timer;
 	enum { repeat_delay = 5 /* approx. 1/10s */ };
 	static char last_key_pressed = -1;
 	static modifier_state_t last_modifier_state;
+	static char foreign_mode;
 
 	UINT16 key_buf[6];
 	int i, j;
@@ -525,14 +571,31 @@ void vdt911_keyboard(int unit)
 
 
 	/* parse modifier keys */
-	if (key_buf[3] & 0x0040)
-		modifier_state = control;
-	else if ((key_buf[4] & 0x0400) || (key_buf[5] & 0x0020))
-		modifier_state = shift;
-	else if ((key_buf[0] & 0x2000))
-		modifier_state = upper_case;
+	if ((USES_8BIT_CHARCODES(unit))
+		&& ((key_buf[5] & 0x0400) || ((! (key_buf[5] & 0x0100)) && foreign_mode)))
+	{	/* we are in katakana/arabic mode */
+		foreign_mode = TRUE;
+
+		if ((key_buf[4] & 0x0400) || (key_buf[5] & 0x0020))
+			modifier_state = foreign_shift;
+		else
+			modifier_state = foreign;
+	}
 	else
-		modifier_state = lower_case;
+	{	/* we are using a western keyboard, or a katakana/arabic keyboard in
+		romaji/latin mode */
+		foreign_mode = FALSE;
+
+		if (key_buf[3] & 0x0040)
+			modifier_state = control;
+		else if ((key_buf[4] & 0x0400) || (key_buf[5] & 0x0020))
+			modifier_state = shift;
+		else if ((key_buf[0] & 0x2000))
+			modifier_state = upper_case;
+		else
+			modifier_state = lower_case;
+	}
+
 
 	/* test repeat key */
 	repeat_mode = key_buf[2] & 0x0002;
@@ -543,10 +606,13 @@ void vdt911_keyboard(int unit)
 	key_buf[2] &= ~0x0002;
 	key_buf[3] &= ~0x0040;
 	key_buf[4] &= ~0x0400;
-	key_buf[5] &= ~0x0520;
+	key_buf[5] &= ~0x0120;
 
 	/* remove unused keys */
-	if ((vdt[unit].model == vdt911_model_US) || (vdt[unit].model == vdt911_model_UK) || (vdt[unit].model == vdt911_model_French))
+	if (! HAS_EXTRA_KEY_91(unit))
+		key_buf[5] &= ~0x0400;
+
+	if (! HAS_EXTRA_KEY_67(unit))
 		key_buf[4] &= ~0x0004;
 
 
@@ -598,7 +664,7 @@ void vdt911_keyboard(int unit)
 						last_key_pressed = (i << 4) | j;
 						last_modifier_state = modifier_state;
 
-						vdt[unit].keyboard_data = (int)US_key_translate[modifier_state][(int)last_key_pressed];
+						vdt[unit].keyboard_data = (int)key_translate[vdt[unit].model][modifier_state][(int)last_key_pressed];
 						vdt[unit].keyboard_data_ready = 1;
 						if (vdt[unit].keyboard_interrupt_enable)
 							(*vdt[unit].int_callback)(1);
