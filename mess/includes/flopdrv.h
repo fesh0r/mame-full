@@ -1,6 +1,9 @@
 #ifndef __FLOP_DRIVE_HEADER_INCLUDED__
 #define __FLOP_DRIVE_HEADER_INCLUDED__
 
+/* flopdrv provides simple emulation of a disc drive */
+/* the 8271, nec765 and wd179x use this */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -75,7 +78,6 @@ typedef struct floppy_interface
 	void (*format_sector)(int drive, int side, int sector_index,int c, int h, int r, int n, int filler);
 } floppy_interface;
 
-
 struct floppy_drive
 {
 	/* flags */
@@ -87,6 +89,11 @@ struct floppy_drive
 	/* current track - this may or may not relate to the present cylinder number
 	stored by the fdc */
 	int current_track;
+
+	/* index pulse timer */
+	void	*index_timer;
+	/* index pulse callback */
+	void	(*index_pulse_callback)(int id);
 
     /* physical real drive unit */
     int fdd_unit;
@@ -107,6 +114,7 @@ typedef enum
 	FLOPPY_DRIVE_DS_80
 } floppy_type;
 
+void	floppy_drive_set_index_pulse_callback(int drive, void (*callback)(int id));
 
 /* set flag state */
 int floppy_drive_get_flag_state(int drive, int flag);
