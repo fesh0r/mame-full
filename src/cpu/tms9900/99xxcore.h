@@ -545,9 +545,15 @@ typedef struct
 	int cur_src_map;		/* set to 2 by LDS */
 	int cur_dst_map;		/* set to 2 by LDD */
 
+#if (TMS99XX_MODEL == TI990_10_ID)
 	int reset_maperr;		/* reset mapper error flag line (reset flags in 945417-9701 p. 3-90) */
 
 	UINT32 mapper_address_latch;	/* used to load the map file and for diagnostic purpose */
+	int mapper_cru_read_register;	/* read register select code for mapper cru interface */
+	int diaglat;					/* set when diagnostic address latch is done */
+	int latch_control[3];			/* latch control */
+
+#endif
 #endif
 
 #if (TMS99XX_MODEL == TI990_10_ID)
@@ -686,6 +692,8 @@ WRITE_HANDLER(tms9995_internal2_w)
 				map_index = 2;
 			else
 			{	/* mapping error */
+				if ((! (I.error_interrupt_register & EIR_MAPERR)) && ! (I.diaglat))
+					I.mapper_address_latch = addr;
 				if ((! I.reset_maperr) && ! (I.error_interrupt_register & EIR_MAPERR))
 				{
 					I.error_interrupt_register |= EIR_MAPERR;
@@ -693,6 +701,10 @@ WRITE_HANDLER(tms9995_internal2_w)
 				}
 				return cpu_readmem24bew_word(addr);
 			}
+			if ((! (I.error_interrupt_register & EIR_MAPERR)) && ! (I.diaglat))
+				I.mapper_address_latch = I.map_files[map_file].bias[map_index]+addr;
+			if ((I.latch_control[map_index]) && (! I.reset_maperr))
+				I.diaglat = 1;
 			return cpu_readmem24bew_word(I.map_files[map_file].bias[map_index]+addr);
 		}
 	}
@@ -725,6 +737,8 @@ WRITE_HANDLER(tms9995_internal2_w)
 				map_index = 2;
 			else
 			{	/* mapping error */
+				if ((! (I.error_interrupt_register & EIR_MAPERR)) && ! (I.diaglat))
+					I.mapper_address_latch = addr;
 				if ((! I.reset_maperr) && ! (I.error_interrupt_register & EIR_MAPERR))
 				{
 					I.error_interrupt_register |= EIR_MAPERR;
@@ -736,6 +750,10 @@ WRITE_HANDLER(tms9995_internal2_w)
 					cpu_writemem24bew_word(addr, data);
 				return;
 			}
+			if ((! (I.error_interrupt_register & EIR_MAPERR)) && ! (I.diaglat))
+				I.mapper_address_latch = I.map_files[map_file].bias[map_index]+addr;
+			if ((I.latch_control[map_index]) && (! I.reset_maperr))
+				I.diaglat = 1;
 			cpu_writemem24bew_word(I.map_files[map_file].bias[map_index]+addr, data);
 		}
 	}
@@ -768,6 +786,8 @@ WRITE_HANDLER(tms9995_internal2_w)
 				map_index = 2;
 			else
 			{	/* mapping error */
+				if ((! (I.error_interrupt_register & EIR_MAPERR)) && ! (I.diaglat))
+					I.mapper_address_latch = addr;
 				if ((! I.reset_maperr) && ! (I.error_interrupt_register & EIR_MAPERR))
 				{
 					I.error_interrupt_register |= EIR_MAPERR;
@@ -775,6 +795,10 @@ WRITE_HANDLER(tms9995_internal2_w)
 				}
 				return cpu_readmem24bew(addr);
 			}
+			if ((! (I.error_interrupt_register & EIR_MAPERR)) && ! (I.diaglat))
+				I.mapper_address_latch = I.map_files[map_file].bias[map_index]+addr;
+			if ((I.latch_control[map_index]) && (! I.reset_maperr))
+				I.diaglat = 1;
 			return cpu_readmem24bew(I.map_files[map_file].bias[map_index]+addr);
 		}
 	}
@@ -807,6 +831,8 @@ WRITE_HANDLER(tms9995_internal2_w)
 				map_index = 2;
 			else
 			{	/* mapping error */
+				if ((! (I.error_interrupt_register & EIR_MAPERR)) && ! (I.diaglat))
+					I.mapper_address_latch = addr;
 				if ((! I.reset_maperr) && ! (I.error_interrupt_register & EIR_MAPERR))
 				{
 					I.error_interrupt_register |= EIR_MAPERR;
@@ -818,6 +844,10 @@ WRITE_HANDLER(tms9995_internal2_w)
 					cpu_writemem24bew(addr, data);
 				return;
 			}
+			if ((! (I.error_interrupt_register & EIR_MAPERR)) && ! (I.diaglat))
+				I.mapper_address_latch = I.map_files[map_file].bias[map_index]+addr;
+			if ((I.latch_control[map_index]) && (! I.reset_maperr))
+				I.diaglat = 1;
 			cpu_writemem24bew(I.map_files[map_file].bias[map_index]+addr, data);
 		}
 	}
@@ -1120,10 +1150,42 @@ WRITE_HANDLER(tms9995_internal2_w)
 #define WRITEREG(reg, data)  writeword((I.WP+(reg)) & 0xffff, (data))
 
 #if (TMS99XX_MODEL == TI990_10_ID)
-	#warning "Todo..."
 	READ16_HANDLER(ti990_10_mapper_cru_r)
 	{
-		return 0;
+		int reply;
+
+		switch(I.mapper_cru_read_register)
+		{
+		case 0b000:
+			reply = I.map_files[I.cur_map].B[0];
+			break;
+		case 0b001:
+			reply = I.map_files[I.cur_map].B[1];
+			break;
+		case 0b010:
+			reply = I.map_files[I.cur_map].B[2];
+			break;
+		case 0b011:
+			reply = I.map_files[I.cur_map].L[0];
+			break;
+		case 0b100:
+			reply = I.map_files[I.cur_map].L[1];
+			break;
+		case 0b101:
+			reply = I.map_files[I.cur_map].L[2];
+			break;
+		case 0b110:
+			reply = I.mapper_address_latch;
+			break;
+		case 0b111:
+			reply = I.mapper_address_latch >> 16;
+			break;
+		}
+
+		if (offset)
+			return (reply >> 8) & 0xff;
+		else
+			return reply & 0xff;
 	}
 
 	WRITE16_HANDLER(ti990_10_mapper_cru_w)
@@ -1134,7 +1196,10 @@ WRITE_HANDLER(tms9995_internal2_w)
 		case 1:
 		case 2:
 			/* read register select */
-			/* ... */
+			if (data)
+				I.mapper_cru_read_register |= (1 << offset);
+			else
+				I.mapper_cru_read_register &= ~ (1 << offset);
 			break;
 		case 3:
 			/* enable mapping */
@@ -1144,13 +1209,16 @@ WRITE_HANDLER(tms9995_internal2_w)
 			/* reset flags */
 			I.reset_maperr = data;
 			if (data)
+			{
 				I.error_interrupt_register &= ~ EIR_MAPERR;
+				I.diaglat = 0;
+			}
 			break;
 		case 5:
 		case 6:
 		case 7:
 			/* latch control */
-			/* ... */
+			I.latch_control[7-offset] = data;
 			break;
 		}
 	}
