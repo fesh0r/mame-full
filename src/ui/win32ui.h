@@ -62,5 +62,8 @@ int GetDriverIndex(const struct GameDriver *driver);
 int GetGameNameIndex(const char *name);
 int GetIndexFromSortedIndex(int sorted_index);
 
+int Mame32Main(HINSTANCE    hInstance,
+                   LPSTR        lpCmdLine,
+                   int          nCmdShow);
 
 #endif

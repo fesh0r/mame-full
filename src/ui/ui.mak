@@ -36,7 +36,8 @@ OSOBJS += \
 		$(OBJ)/ui/help.o \
 		$(OBJ)/ui/history.o \
 		$(OBJ)/ui/properties.o \
-		$(OBJ)/mess/ui/layoutms.o \
+ 		$(OBJ)/mess/ui/ms32main.o \
+ 		$(OBJ)/mess/ui/layoutms.o \
 		$(OBJ)/mess/ui/mess32ui.o \
 		$(OBJ)/mess/ui/ms32util.o \
 		$(OBJ)/mess/ui/optionsms.o \

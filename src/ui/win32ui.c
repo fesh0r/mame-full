@@ -789,8 +789,7 @@ static int RunMAME(int nGameIndex)
 	return dwExitCode;
 }
 
-int __declspec(dllexport) WINAPI GuiMain(HINSTANCE    hInstance,
-                   HINSTANCE    hPrevInstance,
+int Mame32Main(HINSTANCE    hInstance,
                    LPSTR        lpCmdLine,
                    int          nCmdShow)
 {
