@@ -491,7 +491,6 @@ mkhdimg$(EXE):  $(OBJ)/mess/tools/mkhdimg.o
 imgtool$(EXE):       \
 	  $(IMGTOOL_OBJS) \
           $(OBJ)/mess/tools/stubs.o   \
-	  $(OBJ)/mess/$(OS)/dirio.o   \
           $(OBJ)/mess/config.o        \
           $(OBJ)/unzip.o              \
           $(OBJ)/mess/tools/main.o    \
@@ -520,10 +519,10 @@ mess.txt: $(EMULATOR)
 makedep/makedep$(EXE):
 	make -Cmakedep
 
-depend $(NAME).dep: makedep/makedep$(EXE)
-	makedep/makedep$(EXE) -f - -p$(TARGET).obj/ -Imess -- $(CFLAGS) $(INCLUDES) -- src/*.c \
+depend $(TARGET).obj/$(TARGET).dep: makedep/makedep$(EXE)
+	makedep/makedep$(EXE) -f - -p$(TARGET).obj/ -Y. -- $(INCLUDE_PATH) -- src/*.c \
 	src/cpu/*/*.c src/sound/*.c mess/systems/*.c mess/machine/*.c mess/vidhrdw/*.c mess/sndhrdw/*.c \
-	mess/tools/*.c mess/formats/*.c >$(NAME).dep
+	mess/tools/*.c mess/formats/*.c >$(TARGET).obj/$(TARGET).dep
 
 ## uncomment the following line to include dependencies
-include $(NAME).dep
+include $(TARGET).obj/$(TARGET).dep
