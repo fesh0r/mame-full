@@ -318,7 +318,7 @@ int trs80_floppy_init(int id)
 	dir_length = 5 * pdrive[id*16+9];
 
     /* set geometry so disk image can be read */
-	basicdsk_set_geometry(id, tracks, heads, spt, 256, 0);
+	basicdsk_set_geometry(id, tracks, heads, spt, 256, 0, 0);
 
 	/* mark directory sectors with deleted data address mark */
 	/* assumption dir_sector is a sector offset */

@@ -62,7 +62,7 @@ int pc_floppy_init(int id)
 				osd_fread(file, &heads, 1);
 			}
 
-			basicdsk_set_geometry(id, 80, heads, spt, 512, 01);
+			basicdsk_set_geometry(id, 80, heads, spt, 512, 01, 0);
 
 			return INIT_PASS;
 		}

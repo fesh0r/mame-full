@@ -58,7 +58,7 @@ int enterprise_floppy_init(int id)
 
 	if (basicdsk_floppy_init(id)==INIT_PASS)
 	{
-		basicdsk_set_geometry(id, 80, 2, 9, 512, 1);
+		basicdsk_set_geometry(id, 80, 2, 9, 512, 1, 0);
 		return INIT_PASS;
 	}
 

@@ -179,7 +179,7 @@ int dragon_floppy_init(int id)
 			heads = (tracks > 80) ? 2 : 1;
 			tracks /= heads;
 
-			basicdsk_set_geometry(id, tracks, heads, 18, 256, 1);
+			basicdsk_set_geometry(id, tracks, heads, 18, 256, 1, 0);
 
 			osd_fclose(file);
 		}

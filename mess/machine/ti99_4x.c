@@ -209,7 +209,7 @@ int ti99_floppy_init(int id)
 {
 	if (basicdsk_floppy_init(id)==INIT_PASS)
 	{
-		basicdsk_set_geometry(id, 40, 1, 9, 256,0);
+		basicdsk_set_geometry(id, 40, 1, 9, 256, 0, 0);
 
 		return INIT_PASS;
 	}

@@ -174,7 +174,7 @@ static int basicdsk_get_ddam(UINT8 id, UINT8 physical_track, UINT8 physical_side
 
 /* dir_sector is a relative offset from the start of the disc,
 dir_length is a relative offset from the start of the disc */
-void basicdsk_set_geometry(UINT8 drive, UINT8 tracks, UINT8 heads, UINT8 sec_per_track, UINT16 sector_length, UINT8 first_sector_id)
+void basicdsk_set_geometry(UINT8 drive, UINT8 tracks, UINT8 heads, UINT8 sec_per_track, UINT16 sector_length, UINT8 first_sector_id, UINT16 offset_track_zero)
 {
 	basicdsk *pDisk;
 	unsigned long N;
@@ -200,7 +200,8 @@ void basicdsk_set_geometry(UINT8 drive, UINT8 tracks, UINT8 heads, UINT8 sec_per
 	pDisk->first_sector_id = first_sector_id;
 	pDisk->sec_per_track = sec_per_track;
 	pDisk->sector_length = sector_length;
-
+	pDisk->offset = offset_track_zero;
+	
 	pDisk->image_size = pDisk->tracks * pDisk->heads * pDisk->sec_per_track * pDisk->sector_length;
 
 	/* if a ddam map was already set up clear it */
@@ -267,7 +268,8 @@ unsigned long offset;
 		return 0;
 	}
 
-	offset = t;
+	offset = w->offset;					/* First, offset to track zero */
+	offset += t;
 	offset *= w->heads;
 	offset += h;
 	offset *= w->sec_per_track;

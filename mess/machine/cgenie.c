@@ -428,7 +428,7 @@ int cgenie_floppy_init(int id)
 
 			logerror("cgenie: geometry %d tracks, %d heads, %d sec/track\n", tracks, heads, spt);
 			/* set geometry so disk image can be read */
-			basicdsk_set_geometry(id, tracks, heads, spt, 256, 0);
+			basicdsk_set_geometry(id, tracks, heads, spt, 256, 0, 0);
 
 			logerror("cgenie: directory sectors %d - %d (%d sectors)\n", dir_sector, dir_sector + dir_length - 1, dir_length);
 			/* mark directory sectors with deleted data address mark */

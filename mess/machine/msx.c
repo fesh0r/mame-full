@@ -960,7 +960,7 @@ int msx_floppy_init (int id)
 	if (basicdsk_floppy_init (id) != INIT_PASS)
 		return INIT_FAIL;
 
-	basicdsk_set_geometry (id, 80, heads, 9, 512, 1);
+	basicdsk_set_geometry (id, 80, heads, 9, 512, 1, 0);
 
 	return INIT_PASS;
 	}
