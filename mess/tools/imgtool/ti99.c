@@ -3866,10 +3866,10 @@ OPTION_GUIDE_START( dsk_create_optionguide )
 	OPTION_INT(dsk_createopts_sectors, "sectors",	"Sectors (1->9 for SD, 1->18 for DD, 1->36 for HD)" )
 	OPTION_INT(dsk_createopts_protection, "protection", "Protection (0 for normal, 1 for protected)" )
 	OPTION_ENUM_START(dsk_createopts_density, "density", "Density" )
-		OPTION_ENUM(	0,		"Auto",				NULL )
-		OPTION_ENUM(	1,		"SD",				NULL )
-		OPTION_ENUM(	2,		"DD",				NULL )
-		OPTION_ENUM(	3,		"HD",				NULL )
+		OPTION_ENUM(	0,		"Auto",				"Auto" )
+		OPTION_ENUM(	1,		"SD",				"Single Density" )
+		OPTION_ENUM(	2,		"DD",				"Double Density" )
+		OPTION_ENUM(	3,		"HD",				"High Density" )
 	OPTION_ENUM_END
 OPTION_GUIDE_END
 

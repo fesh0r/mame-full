@@ -1,3 +1,11 @@
+/***************************************************************************
+
+	imgtool.c
+
+	Miscellaneous stuff in the Imgtool core
+
+***************************************************************************/
+
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
@@ -47,6 +55,21 @@ int imgtool_validitychecks(void)
 	{
 		if (module->createimage_optguide || module->createimage_optspec)
 		{
+			if (!module->name)
+			{
+				printf("imgtool module %s has null 'name'\n", module->name);
+				error = 1;
+			}
+			if (!module->description)
+			{
+				printf("imgtool module %s has null 'description'\n", module->description);
+				error = 1;
+			}
+			if (!module->extensions)
+			{
+				printf("imgtool module %s has null 'extensions'\n", module->extensions);
+				error = 1;
+			}
 			if (!module->create)
 			{
 				printf("imgtool module %s has creation options without supporting create\n", module->name);
@@ -57,6 +80,7 @@ int imgtool_validitychecks(void)
 				printf("imgtool module %s does has partially incomplete creation options\n", module->name);
 				error = 1;
 			}
+
 			if (module->createimage_optguide && module->createimage_optspec)
 			{
 				guide_entry = module->createimage_optguide;
@@ -72,17 +96,22 @@ int imgtool_validitychecks(void)
 									guide_entry->parameter, &val);
 								if (err)
 									goto done;
-
-								if (val <= 0)
-								{
-//									printf("imgtool module %s creation option %s has no default\n",
-//										module->name, guide_entry->display_name);
-//									error = 1;
-								}
 								break;
 
 							default:
 								break;
+						}
+						if (!guide_entry->identifier)
+						{
+							printf("imgtool module %s creation option %d has null identifier\n",
+								module->name, guide_entry - module->createimage_optguide);
+							error = 1;
+						}
+						if (!guide_entry->display_name)
+						{
+							printf("imgtool module %s creation option %d has null display_name\n",
+								module->name, guide_entry - module->createimage_optguide);
+							error = 1;
 						}
 					}
 					guide_entry++;

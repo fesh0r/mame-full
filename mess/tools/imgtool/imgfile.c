@@ -352,17 +352,15 @@ imgtoolerr_t img_writefile(imgtool_image *img, const char *fname, imgtool_stream
 	}
 
 	/* Does this image module prefer upper case file names? */
-	if (img->module->flags & IMGMODULE_FLAG_FILENAMES_PREFERUCASE)
+	if (img->module->prefer_ucase)
 	{
-		/*buf = strdup(fname);*/
-		buf = malloc(strlen(fname)+1);
-		if (buf)
-			strcpy(buf, fname);
+		buf = malloc(strlen(fname) + 1);
 		if (!buf)
 		{
 			err = IMGTOOLERR_OUTOFMEMORY;
 			goto done;
 		}
+		strcpy(buf, fname);
 		for (s = buf; *s; s++)
 			*s = toupper(*s);
 		fname = buf;

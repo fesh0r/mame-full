@@ -70,11 +70,6 @@ imgtool_stream *stream_open_filter(imgtool_stream *s, imgtool_filter *f);
 #define EOLN_LF		"\x0a"
 #define EOLN_CRLF	"\x0d\x0a"
 
-enum
-{
-	IMGMODULE_FLAG_FILENAMES_PREFERUCASE	= 0x0001	/* this means that all filenames are normally upper case */
-};
-
 struct tagIMAGE
 {
 	const struct ImageModule *module;

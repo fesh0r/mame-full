@@ -62,7 +62,7 @@ OPTION_GUIDE_END
 
 static imgtoolerr_t coco_rsdos_module_populate(imgtool_library *library, struct ImageModule *module)
 {
-	module->flags				|= IMGMODULE_FLAG_FILENAMES_PREFERUCASE;
+	module->prefer_ucase		= 1;
 	module->eoln				= EOLN_CR;
 	module->begin_enum			= rsdos_diskimage_beginenum;
 	module->next_enum			= rsdos_diskimage_nextenum;

@@ -413,10 +413,10 @@ enum
 
 OPTION_GUIDE_START( ti990_create_optionguide )
 	/*OPTION_STRING(ti990_createopts_volname, "label",	"Volume name" )*/
-	OPTION_INT(ti990_createopts_cylinders, "cylinders", NULL )
-	OPTION_INT(ti990_createopts_heads, "heads", NULL )
-	OPTION_INT(ti990_createopts_sectors, "sectors", NULL )
-	OPTION_INT(ti990_createopts_sectorsize, "bytes per sector (typically 256)", NULL )
+	OPTION_INT(ti990_createopts_cylinders, "cylinders", "Cylinders" )
+	OPTION_INT(ti990_createopts_heads, "heads", "Heads" )
+	OPTION_INT(ti990_createopts_sectors, "sectors", "Sectors" )
+	OPTION_INT(ti990_createopts_sectorsize, "bytes per sector (typically 256)", "Bytes Per Sector" )
 OPTION_GUIDE_END
 
 #define symb2str2(a) #a

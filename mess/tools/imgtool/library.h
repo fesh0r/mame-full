@@ -55,7 +55,9 @@ struct ImageModule
 	const char *description;
 	const char *extensions;
 	const char *eoln;
-	int flags;
+	
+	/* flags */
+	unsigned int prefer_ucase : 1;
 
 	imgtoolerr_t	(*open)			(const struct ImageModule *mod, imgtool_stream *f, struct tagIMAGE **outimg);
 	void			(*close)		(struct tagIMAGE *img);
