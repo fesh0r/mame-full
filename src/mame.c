@@ -1098,6 +1098,11 @@ void set_visible_area(int min_x, int max_x, int min_y, int max_y)
 
 	/* recompute scanline timing */
 	cpu_compute_scanline_timing();
+	
+	/* some vidhrdw only draw part of the visible are and expect the
+	   rest to be black for example PSX. This fixes the white bar to
+	   the left of the Raystorm logo during the teaser. */
+	schedule_full_refresh();
 }
 
 
