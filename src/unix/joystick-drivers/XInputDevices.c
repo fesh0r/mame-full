@@ -43,8 +43,6 @@ static int           button_press_type = INVALID_EVENT_TYPE;
 static int           button_release_type = INVALID_EVENT_TYPE;
 static int           key_press_type = INVALID_EVENT_TYPE;
 static int           key_release_type = INVALID_EVENT_TYPE;
-static int           proximity_in_type = INVALID_EVENT_TYPE;
-static int           proximity_out_type = INVALID_EVENT_TYPE;
 
 /* reset XInput-struct */
 void
@@ -73,7 +71,6 @@ void
 XInputDevices_init(void)
 {
 	int i,j,k;
-	XDeviceInfoPtr list;
 
 	fprintf(stderr_file, "XInput: Initialization...\n");
 
