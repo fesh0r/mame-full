@@ -2119,7 +2119,7 @@ INT32 ViewSearchResults (struct osd_bitmap *bitmap, INT32 selected)
 
 void RestoreSearch (void)
 {
-	int restoreString = NULL;	/* Steph */
+	int restoreString = 0;	 /* Juergen :) */
 
 	switch (restoreStatus)
 	{
