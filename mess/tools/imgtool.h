@@ -191,9 +191,9 @@ struct ImageModule {
 	void (*closeenum)(IMAGEENUM *enumeration);
 	size_t (*freespace)(IMAGE *img);
 	int (*readfile)(IMAGE *img, const char *fname, STREAM *destf);
-	int (*writefile)(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *options);
+	int (*writefile)(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *_options);
 	int (*deletefile)(IMAGE *img, const char *fname);
-	int (*create)(STREAM *f, const geometry_options *options);
+	int (*create)(STREAM *f, const geometry_options *_options);
 	int (*extract)(IMAGE *img, STREAM *f);
 	/* size must be set with the size of the buffer,
 	   if the buffer is too small it will be relocated with realloc */
@@ -282,7 +282,7 @@ struct ImageModule imgmod_##name = \
  *
  * Description:
  *		Looks up the ImageModule with a certain name
- *		
+ *
  * Parameters:
  *		name:				The name of the module
  *
@@ -294,8 +294,8 @@ const struct ImageModule *findimagemodule(const char *name);
 /* getmodules
  *
  * Description:
- *		Retrieves the list of modules 
- *		
+ *		Retrieves the list of modules
+ *
  * Parameters:
  *		len:				Place to receive the length of the list
  *
@@ -307,8 +307,8 @@ const struct ImageModule **getmodules(size_t *len);
 /* imageerror
  *
  * Description:
- *		Returns a human readable string 
- *		
+ *		Returns a human readable string
+ *
  * Parameters:
  *		err:				The error return code
  */
@@ -319,7 +319,7 @@ const char *imageerror(int err);
  *
  * Description:
  *		Opens an image
- *		
+ *
  * Parameters:
  *		module/modulename:	The module for this image format
  *		fname:				The native filename for the image
@@ -428,7 +428,7 @@ int img_readfile(IMAGE *img, const char *fname, STREAM *destf);
  *		destf:				Place to receive the stream
  *		options:			Options to specify on the new file
  */
-int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *options);
+int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *_options);
 
 /* img_getfile
  *
@@ -454,7 +454,7 @@ int img_getfile(IMAGE *img, const char *fname, const char *dest);
  *		source:				Native filename for source
  *		options:			Options to specify on the new file
  */
-int img_putfile(IMAGE *img, const char *newfname, const char *source, const file_options *options);
+int img_putfile(IMAGE *img, const char *newfname, const char *source, const file_options *_options);
 
 /* img_deletefile
  *
@@ -472,15 +472,15 @@ int img_deletefile(IMAGE *img, const char *fname);
  *
  * Description:
  *		Creates an image
- *		
+ *
  * Parameters:
  *		module/modulename:	The module for this image format
  *		fname:				The native filename for the image
  *		options:			Options that control how the image is created
  *							(tracks, sectors, etc)
  */
-int img_create(const struct ImageModule *module, const char *fname, const geometry_options *options);
-int img_create_byname(const char *modulename, const char *fname, const geometry_options *options);
+int img_create(const struct ImageModule *module, const char *fname, const geometry_options *_options);
+int img_create_byname(const char *modulename, const char *fname, const geometry_options *_options);
 
 typedef struct {
 	unsigned long crc;
@@ -497,7 +497,7 @@ typedef struct {
  *
  * Description:
  *		Retrieves information about an image from the CRC databases
- *		
+ *
  * Parameters:
  *		module/modulename:	The module for this image format
  *		fname:				The native filename for the image
@@ -511,7 +511,7 @@ int img_getinfo_byname(const char *modulename, const char *fname, imageinfo *inf
  *
  * Description:
  *		Figures out what the "Good" name of a particular image is
- *		
+ *
  * Parameters:
  *		module/modulename:	The module for this image format
  *		fname:				The native filename for the image

@@ -4,12 +4,12 @@
 #include "osdepend.h"
 #include "formats/fmsx_cas.h"
 #include "imgtool.h"
-
+#include "osdtools.h"
 /*
 	MSX module
 
 	fMSX style .cas for the MSX. Converts them to .wav files. Uses the
-	mess/formats/fmsx_cas.[ch] files, for the actual conversion. 
+	mess/formats/fmsx_cas.[ch] files, for the actual conversion.
 */
 
 #ifdef LSB_FIRST
@@ -116,7 +116,7 @@ static int fmsx_cas_image_init(STREAM *f, IMAGE **outimg)
 
     if (f->name) pbase = basename (f->name);
 	else pbase = NULL;
-    if (pbase) len = strlen (pbase); 
+    if (pbase) len = strlen (pbase);
     else len = strlen (default_name);
 
     image->file_name = malloc (len + 5);
@@ -137,7 +137,7 @@ static int fmsx_cas_image_init(STREAM *f, IMAGE **outimg)
 			if (!strncasecmp (".cas", image->file_name + len - 4, 4) ) len -= 4;
 
 		strcpy (image->file_name + len, ".wav");
-		}	
+		}
 
 	return 0;
 	}
@@ -203,7 +203,7 @@ static int fmsx_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		return IMGTOOLERR_OUTOFMEMORY;
 	else if (rc)
 		return IMGTOOLERR_CORRUPTIMAGE;
-	
+
 	if (wavlen != image->count)
 		{
 		free (wavdata);
@@ -234,7 +234,7 @@ static int fmsx_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		free(wavdata);
 		return IMGTOOLERR_WRITEERROR;
 		}
-    
+
     /* size of the following 'fmt ' fields */
     offset += stream_write(destf, "\x10\x00\x00\x00", 4);
 	if( offset < 20 )
@@ -280,7 +280,7 @@ static int fmsx_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		}
 
 	/* block align (size of one `sample') */
-	temp16 = intelLong (2); 
+	temp16 = intelLong (2);
 	offset += stream_write(destf, &temp16, 2);
 	if( offset < 30 )
     	{
@@ -289,7 +289,7 @@ static int fmsx_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		}
 
 	/* block align */
-	temp16 = intelLong (16); 
+	temp16 = intelLong (16);
 	offset += stream_write(destf, &temp16, 2);
 	if( offset < 32 )
     	{
@@ -304,7 +304,7 @@ static int fmsx_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		free(wavdata);
 		return IMGTOOLERR_WRITEERROR;
 		}
-	
+
 	/* data size */
 	temp32 = intelLong(image->count * 2);
 	offset += stream_write(destf, &temp32, 4);
