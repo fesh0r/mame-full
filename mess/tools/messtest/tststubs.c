@@ -11,6 +11,9 @@ void osd_exit(void)
 
 int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_components)
 {
+	rgb_components[0] = 0x7c00;
+	rgb_components[1] = 0x03e0;
+	rgb_components[2] = 0x001f;
 	return 0;
 }
 

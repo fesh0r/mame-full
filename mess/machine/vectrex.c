@@ -68,9 +68,6 @@ DEVICE_LOAD( vectrex_cart )
 	 */
 	memset (memory_region(REGION_CPU1), 1, 0x8000);
 
-	if (image_index_in_device(image) == 0)
-		artwork_use_device_art(image, "mine");
-
 	if (file)
 	{
 		mame_fread (file, memory_region(REGION_CPU1), 0x8000);
@@ -322,4 +319,9 @@ WRITE_HANDLER ( vectrex_psg_port_w )
 		state = mcontrol;
 		pwl = timer_get_time() - sl;
 	}
+}
+
+DRIVER_INIT( vectrex )
+{
+	artwork_use_device_art(image_from_devtype_and_index(IO_CARTSLOT, 0), "mine");
 }
