@@ -20,6 +20,7 @@ Source Changes:
 
 - [Windows] SSE optimizations to the blitter. [Nate Woods]
 
+- [Windows UI] Fixed bug #348. [Nate Woods]
 
 0.66
 

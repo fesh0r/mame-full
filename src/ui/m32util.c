@@ -263,15 +263,17 @@ char * ConvertToWindowsNewlines(const char *source)
  */
 const char * GetDriverFilename(int nIndex)
 {
-    static char tmp[40];
-    char *ptmp;
+	static char tmp[40];
+	char *ptmp;
 
 	const char *s = drivers[nIndex]->source_file;
 
-    tmp[0] = '\0';
+	tmp[0] = '\0';
 
-    ptmp = strrchr(s, PATH_SEPARATOR);
-    if (ptmp == NULL)
+	ptmp = strrchr(s, '\\');
+	if (ptmp == NULL)
+		ptmp = strrchr(s, '/');
+	if (ptmp == NULL)
 		return s;
 
 	ptmp++;
