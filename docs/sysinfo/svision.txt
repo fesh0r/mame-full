@@ -9,7 +9,8 @@ Hartung SV-100
 ...
 
 There are several designs, but all have the same functionality.
-
+(knickable screen)
+GB2000 (gameboy style)
 
 Features
 --------
