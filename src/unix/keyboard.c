@@ -132,7 +132,7 @@ struct KeyboardInfo keylist[] =
 
 struct kbd_fifo_struct;
 static struct kbd_fifo_struct *kbd_fifo = NULL;
-static char key[128];
+static char key[KEY_MAX];
 
 int use_hotrod;
 
@@ -142,7 +142,7 @@ FIFO(INLINE, kbd, struct keyboard_event)
 /* public methods (in keyboard.h / osdepend.h) */
 int keyboard_init(void)
 {
-   memset(key, 0, 128);
+   memset(key, 0, KEY_MAX);
 
    kbd_fifo = kbd_fifo_create(256);
    if(!kbd_fifo)
@@ -169,7 +169,7 @@ void keyboard_register_event(struct keyboard_event *event)
 void keyboard_clear(void)
 {
    kbd_fifo_empty(kbd_fifo);
-   memset(key, 0, 128);
+   memset(key, 0, KEY_MAX);
 }
 
 /* return a list of all available keys */
