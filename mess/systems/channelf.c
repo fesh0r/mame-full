@@ -159,37 +159,29 @@ WRITE_HANDLER( channelf_port_5_w )
     latch[3] = data;
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START (readmem)
 	{ 0x0000, 0x07ff, MRA_ROM },
 	{ 0x0800, 0x0fff, MRA_ROM },
-    {-1}
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START (writemem)
 	{ 0x0000, 0x03ff, MWA_ROM },
 	{ 0x0400, 0x07ff, MWA_ROM },
-    {-1}
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START (readport)
 	{ 0x00, 0x00,	channelf_port_0_r }, /* Front panel switches */
 	{ 0x01, 0x01,	channelf_port_1_r }, /* Right controller     */
 	{ 0x04, 0x04,	channelf_port_4_r }, /* Left controller      */
 	{ 0x05, 0x05,	channelf_port_5_r },
-    {-1}
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START (writeport)
 	{ 0x00, 0x00,	channelf_port_0_w }, /* Enable Controllers & ARM WRT */
 	{ 0x01, 0x01,	channelf_port_1_w }, /* Video Write Data */
 	{ 0x04, 0x04,	channelf_port_4_w }, /* Video Horiz */
 	{ 0x05, 0x05,	channelf_port_5_w }, /* Video Vert & Sound */
-    {-1}
-};
+PORT_END
 
 INPUT_PORTS_START( channelf )
 	PORT_START /* Front panel buttons */
