@@ -33,13 +33,6 @@ enum
 	JOY_SDL
 };
 
-enum
-{
-	AXIS_TYPE_INVALID = 0,
-	AXIS_TYPE_DIGITAL,
-	AXIS_TYPE_ANALOG
-};
-
 int xmame_keyboard_init(void);
 void xmame_keyboard_exit();
 void xmame_keyboard_register_event(struct sysdep_display_keyboard_event *event);

@@ -32,6 +32,13 @@
 	#include <lirc/lirc_client.h>
 #endif
 
+enum
+{
+	AXIS_TYPE_INVALID = 0,
+	AXIS_TYPE_DIGITAL,
+	AXIS_TYPE_ANALOG
+};
+
 /*============================================================ */
 /*	MACROS */
 /*============================================================ */
@@ -520,7 +527,7 @@ int osd_input_initpre(void)
 
 	joy_poll_func = NULL;
 
-	memset(joy_data,   0, sizeof(joy_data));
+	memset(joy_data, 0, sizeof(joy_data));
 
 	if(rapidfire_enable)
 	{
@@ -689,7 +696,7 @@ int osd_input_initpost(void)
 
 void osd_input_close(void)
 {
-	int stick;
+	int stick, i;
 
 	xmame_keyboard_exit();
 
@@ -704,12 +711,19 @@ void osd_input_close(void)
 			break;
 	}
 
-	for(stick = 0; stick < JOY_MAX; stick++)
+	for (stick = 0; stick < JOY_MAX; stick++)
 		if (joy_data[stick].fd >= 0)
 			close(joy_data[stick].fd);
 
 	if (rapidfire_enable)
 		save_rapidfire_settings();
+
+	/* free allocated strings */
+	for (i = 0; i < total_codes; i++)
+	{
+		free(codelist[i].name);
+		codelist[i].name = NULL;
+	}
 }
 
 

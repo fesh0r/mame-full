@@ -31,6 +31,7 @@ void osd_exit(void)
 #ifdef XMAME_NET
 	osd_net_close();
 #endif
+	free_pathlists();
 	osd_input_close();
 }
 

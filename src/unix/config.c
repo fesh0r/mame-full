@@ -650,23 +650,35 @@ int config_init (int argc, char *argv[])
 
 void config_exit(void)
 {
+	gamename = NULL;
+
 	if(rc)
 	{
 		sysdep_mixer_exit();
 		sysdep_dsp_exit();
 		rc_destroy(rc);
+		rc = NULL;
 	}
 
-	if(home_dir)
-		free(home_dir);
+	free(home_dir);
+	home_dir = NULL;
 
 	/* close open files */
 	if (options.playback)
+	{
 		mame_fclose(options.playback);
+		options.playback = NULL;
+	}
 	if (options.record)
+	{
 		mame_fclose(options.record);
+		options.record = NULL;
+	}
 	if (options.language_file)
+	{
 		mame_fclose(options.language_file);
+		options.language_file = NULL;
+	}
 }
 
 /* 
@@ -706,10 +718,10 @@ void show_usage(void)
 	fprintf(stdout, "\n"
 #ifdef MESS
 			"M.E.S.S. - Multi-Emulator Super System\n"
-			"Copyright (C) 1998-2004 by the MESS team\n"
+			"Copyright (C) 1998-2005 by the MESS team\n"
 #else
 			"M.A.M.E. - Multiple Arcade Machine Emulator\n"
-			"Copyright (C) 1997-2004 by Nicola Salmoria and the MAME Team\n"
+			"Copyright (C) 1997-2005 by Nicola Salmoria and the MAME Team\n"
 #endif
 			"%s port maintained by Lawrence Gold\n", NAME);
 }
