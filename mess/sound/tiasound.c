@@ -486,9 +486,12 @@ void tia_sound_init(int clock, int sample_rate, int gain)
 //    Samp_n_cnt = Samp_n_max;                     /* initialize all bits of the sample counter */
 
 	/* FIXME */
-	Samp_n_max = 256; /* assume 44100 SR */
-	Samp_n_cnt = 0;
-
+	if (Samp_n_max < 256) /* Sample rate is > TIA Clock, just generate samples */
+	                      /* at the Machine->sample_rate for now */
+	{
+		Samp_n_max = 256; /* No aliasing, but pitch is off */
+		Samp_n_cnt = 0;
+	}
 
     /* initialize the local globals */
     for (chan = CHAN1; chan <= CHAN2; chan++)
