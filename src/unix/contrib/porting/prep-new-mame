@@ -40,11 +40,25 @@ ln -s src/unix/doc .
 ln -s src/unix/install-sh .
 
 # Move the MAME text files to the doc directory.
-mv mame.txt doc/readme.mame
-mv whatsnew.txt doc/changes.mame
-# mv gamelist.txt doc/gamelist.mame
-mv msdos.txt doc
-mv windows.txt doc
+if [ -f mame.txt ]; then
+  mv mame.txt doc/readme.mame
+fi
+
+if [ -f whatsnew.txt ]; then
+  mv whatsnew.txt doc/changes.mame
+fi
+
+if [ -f gamelist.txt ]; then
+  mv gamelist.txt doc/gamelist.mame
+fi
+
+if [ -f msdos.txt ]; then
+  mv msdos.txt doc
+fi
+
+if [ -f windows.txt ]; then
+  mv windows.txt doc
+fi
 
 # Rename the MAME makefile and fix its line endings.
 mv makefile makefile.mame

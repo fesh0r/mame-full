@@ -57,6 +57,10 @@ if [ -f credits.txt ]; then
   mv credits.txt doc/credits.mess
 fi
 
+if [ -f windows.txt ]; then
+  mv windows.txt doc/
+fi
+
 if [ -f sysinfo.dat ]; then
   mv sysinfo.dat doc/
 fi
