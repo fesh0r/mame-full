@@ -9,11 +9,12 @@ System Driver Changes:
 ----------------------
 - [GAMEBOY] Added sound emulation(Bug #75).  Added support for MBC2, MBC3 and
   MBC5 carts. Most GBC games now show a "this game only works on GBC" screen.
-  MBC3 still needs the RTC emulated. Added support for battery backed ram.
-  (Bug #133) Sprites no longer have inverted colours in some games(Bug #26).
-  Fixed window layer positioning(Bug #39). Changed the palette to closer
-  resemble the LCD screen(Bug #87). Games which originally have no sound
-  don't produce bass sound at start up (Bug #195) [Anthony Kruize]
+  MBC1 can now switch modes. MBC3 has partial RTC emulation. Added support for
+  battery backed ram(Bug #133). Sprites no longer have inverted colours in some
+  games(Bug #26). Fixed window layer positioning(Bug #39). Changed the palette
+  to closer resemble the LCD screen(Bug #87). Games which originally have no
+  sound don't produce bass sound at start up(Bug #195). Improved LCD status
+  timing and interrupts(Bug #117). [Anthony Kruize]
 
 - [CGENIE] Floppy initialization fixed for when no floppy attached 
   (Bug #95) [Ben Bruscella]
