@@ -54,6 +54,35 @@ extern struct ImageModule imgmod_msx_msx;	/* bogus MSX images */
 extern struct ImageModule imgmod_msx_mul;	/* bogus MSX images */
 extern struct ImageModule imgmod_rom16;
 extern struct ImageModule imgmod_nccard;	/* NC100/NC150/NC200 PCMCIA Card ram image */
+extern struct ImageModule imgmod_ti85p;		/* TI-85 program file */
+extern struct ImageModule imgmod_ti85s;		/* TI-85 string file */
+extern struct ImageModule imgmod_ti85i;		/* TI-85 picture file */
+extern struct ImageModule imgmod_ti85n;		/* TI-85 real number file */
+extern struct ImageModule imgmod_ti85c;		/* TI-85 complex number file */
+extern struct ImageModule imgmod_ti85l;		/* TI-85 list file */
+extern struct ImageModule imgmod_ti85k;		/* TI-85 constant file */
+extern struct ImageModule imgmod_ti85m;		/* TI-85 matrix file */
+extern struct ImageModule imgmod_ti85v;		/* TI-85 vector file */
+extern struct ImageModule imgmod_ti85d;		/* TI-85 graphics database file */
+extern struct ImageModule imgmod_ti85e;		/* TI-85 equation file */
+extern struct ImageModule imgmod_ti85r;		/* TI-85 range settings file */
+extern struct ImageModule imgmod_ti85g;		/* TI-85 grouped file */
+extern struct ImageModule imgmod_ti85;		/* TI-85 file */
+extern struct ImageModule imgmod_ti85b;		/* TI-85 memory backup file */
+extern struct ImageModule imgmod_ti86p;		/* TI-86 program file */
+extern struct ImageModule imgmod_ti86s;		/* TI-86 string file */
+extern struct ImageModule imgmod_ti86i;		/* TI-86 picture file */
+extern struct ImageModule imgmod_ti86n;		/* TI-86 real number file */
+extern struct ImageModule imgmod_ti86c;		/* TI-86 complex number file */
+extern struct ImageModule imgmod_ti86l;		/* TI-86 list file */
+extern struct ImageModule imgmod_ti86k;		/* TI-86 constant file */
+extern struct ImageModule imgmod_ti86m;		/* TI-86 matrix file */
+extern struct ImageModule imgmod_ti86v;		/* TI-86 vector file */
+extern struct ImageModule imgmod_ti86d;		/* TI-86 graphics database file */
+extern struct ImageModule imgmod_ti86e;		/* TI-86 equation file */
+extern struct ImageModule imgmod_ti86r;		/* TI-86 range settings file */
+extern struct ImageModule imgmod_ti86g;		/* TI-86 grouped file */
+extern struct ImageModule imgmod_ti86;		/* TI-86 file */
 
 static const struct ImageModule *images[] = {
 	&imgmod_rsdos,
@@ -96,7 +125,36 @@ static const struct ImageModule *images[] = {
 	&imgmod_xsa,
 /*	&imgmod_svi_cas,  -- doesn't work yet! */
 	&imgmod_rom16,
-	&imgmod_nccard
+	&imgmod_nccard,
+	&imgmod_ti85p,
+	&imgmod_ti85s,
+	&imgmod_ti85i,
+	&imgmod_ti85n,
+	&imgmod_ti85c,
+	&imgmod_ti85l,
+	&imgmod_ti85k,
+	&imgmod_ti85m,
+	&imgmod_ti85v,
+	&imgmod_ti85d,
+	&imgmod_ti85e,
+	&imgmod_ti85r,
+	&imgmod_ti85g,
+	&imgmod_ti85,
+	&imgmod_ti85b,
+	&imgmod_ti86p,
+	&imgmod_ti86s,
+	&imgmod_ti86i,
+	&imgmod_ti86n,
+	&imgmod_ti86c,
+	&imgmod_ti86l,
+	&imgmod_ti86k,
+	&imgmod_ti86m,
+	&imgmod_ti86v,
+	&imgmod_ti86d,
+	&imgmod_ti86e,
+	&imgmod_ti86r,
+	&imgmod_ti86g,
+	&imgmod_ti86
 };
 
 /* ----------------------------------------------------------------------- */
