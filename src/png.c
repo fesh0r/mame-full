@@ -168,6 +168,8 @@ int png_read_file(void *fp, struct png_info *p)
 	p->num_trans = 0;
 	p->trans = NULL;
 	p->palette = NULL;
+	p->x_offset = 0;
+	p->y_offset = 0;
 
 	if (png_verify_signature(fp)==0)
 		return 0;
@@ -261,11 +263,16 @@ int png_read_file(void *fp, struct png_info *p)
 
 		case PNG_CN_tEXt:
 			{
-				UINT8 *text=chunk_data;
+				char *text = (char *)chunk_data;
 
 				while(*text++);
 				chunk_data[chunk_length]=0;
-				logerror("Keyword: %s\n", chunk_data);
+				if (strcmp ((const char *)chunk_data, "x_offset") == 0)
+					p->x_offset = atoi(text);
+				if (strcmp ((const char *)chunk_data, "y_offset") == 0)
+					p->y_offset = atoi(text);
+                                                       
+ 				logerror("Keyword: %s\n", chunk_data);
 				logerror("Text: %s\n", text);
 			}
 			free(chunk_data);
@@ -675,8 +682,10 @@ int png_write_bitmap(void *fp, struct osd_bitmap *bitmap)
 		return 0;
 
 	if (png_write_file(fp, &p)==0)
+	{
+		printf ("error\n");
 		return 0;
-
+	}
 	if (p.palette) free (p.palette);
 	if (p.image) free (p.image);
 	if (p.zimage) free (p.zimage);

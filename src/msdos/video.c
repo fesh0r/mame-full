@@ -594,7 +594,7 @@ void osd_clearbitmap(struct osd_bitmap *bitmap)
 	}
 
 
-	if (bitmap == Machine->scrbitmap || bitmap == overlay_real_scrbitmap)
+	if (bitmap == Machine->scrbitmap || bitmap == artwork_real_scrbitmap)
 	{
 		extern int bitmap_dirty;        /* in mame.c */
 

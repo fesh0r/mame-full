@@ -114,6 +114,7 @@ void init_desertgu(void);
 void init_spcenctr(void);
 void init_helifire(void);
 void init_phantom2(void);
+void init_boothill(void);
 
 WRITE_HANDLER( invaders_videoram_w );
 WRITE_HANDLER( schaser_colorram_w );
@@ -4205,7 +4206,7 @@ ROM_END
 /* 605 */ GAMEX(1976, tornbase, 0,        tornbase, tornbase, 8080bw,	ROT0,   	"Midway", "Tornado Baseball", GAME_NO_SOUND )
 /* 610 */ GAMEX(1976, 280zzzap, 0,        280zzzap, 280zzzap, 8080bw,	ROT0,   	"Midway", "Datsun 280 Zzzap", GAME_NO_SOUND )
 /* 611 */ GAMEX(1976, maze,     0,        tornbase, maze,     8080bw,	ROT0,   	"Midway", "Amazing Maze", GAME_NO_SOUND )
-/* 612 */ GAME( 1977, boothill, 0,        boothill, boothill, 8080bw,   ROT0,   	"Midway", "Boot Hill" )
+/* 612 */ GAME( 1977, boothill, 0,        boothill, boothill, boothill, ROT0,   	"Midway", "Boot Hill" )
 /* 615 */ GAMEX(1977, checkmat, 0,        checkmat, checkmat, 8080bw,	ROT0,   	"Midway", "Checkmate", GAME_NO_SOUND )
 /* 618 */ GAMEX(1977, desertgu, 0,        desertgu, desertgu, desertgu,	ROT0,   	"Midway", "Desert Gun", GAME_NO_SOUND )
 /* 619 */ GAMEX(1977, dplay,    einnings, m4,       einnings, 8080bw,	ROT0,   	"Midway", "Double Play", GAME_NO_SOUND )

@@ -43,7 +43,7 @@ int palette_transparent_color;
 
 UINT16 *palette_shadow_table;
 
-void overlay_remap(void);
+void artwork_remap(void);
 
 
 
@@ -1225,7 +1225,7 @@ const UINT8 *palette_recalc(void)
 		}
 	}
 
-	if (ret) overlay_remap();
+	if (ret) artwork_remap();
 
 	return ret;
 }

@@ -34,11 +34,8 @@ int init_machine(void);
 void shutdown_machine(void);
 int run_machine(void);
 
-void overlay_free(void);
-void backdrop_free(void);
-void overlay_remap(void);
-void overlay_draw(struct osd_bitmap *dest,struct osd_bitmap *source);
-
+void artwork_kill(void);
+void artwork_draw(struct osd_bitmap *dest,struct osd_bitmap *source, int _bitmap_dirty);
 
 #ifdef MAME_DEBUG
 
@@ -915,26 +912,22 @@ int updatescreen(void)
 
 /***************************************************************************
 
-  Draw screen with overlays and backdrops (not yet)
+  Draw screen with overlays and backdrops
 
 ***************************************************************************/
 
 void draw_screen(int _bitmap_dirty)
 {
-	if (_bitmap_dirty)	overlay_remap();
-
 	(*Machine->drv->vh_update)(Machine->scrbitmap,_bitmap_dirty);  /* update screen */
 
-	if (artwork_overlay)
-	{
-		overlay_draw(overlay_real_scrbitmap, Machine->scrbitmap);
-	}
+	if (artwork_backdrop || artwork_overlay)
+		artwork_draw(artwork_real_scrbitmap, Machine->scrbitmap, _bitmap_dirty);
 }
 
 
 /***************************************************************************
 
-  Calls OSD layer handling overlays and backdrops (not yet)
+  Calls OSD layer handling overlays and backdrops
 
 ***************************************************************************/
 void update_video_and_audio(void)
@@ -968,7 +961,7 @@ int run_machine(void)
 			{
 				int region;
 
-				real_scrbitmap = artwork_overlay ? overlay_real_scrbitmap : Machine->scrbitmap;
+				real_scrbitmap = (artwork_overlay || artwork_backdrop) ? artwork_real_scrbitmap : Machine->scrbitmap;
 
 				/* free memory regions allocated with REGIONFLAG_DISPOSE (typically gfx roms) */
 				for (region = 0; region < MAX_MEMORY_REGIONS; region++)
@@ -1044,8 +1037,7 @@ userquit:
 				/* some 68000 games will not work */
 				sound_stop();
 				if (drv->vh_stop) (*drv->vh_stop)();
-				overlay_free();
-				backdrop_free();
+				artwork_kill();
 
 				res = 0;
 			}
