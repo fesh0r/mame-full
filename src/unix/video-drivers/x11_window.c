@@ -159,7 +159,7 @@ struct rc_option x11_window_opts[] = {
 	{ "privatecmap", "p", rc_bool, &use_private_cmap, "0", 0, 0, NULL, "Enable/disable use of private color map" },
 	{ "run-in-root-window", "root", rc_bool, &run_in_root_window, "0", 0, 0, NULL, "Enable/disable running in root window" },
 	{ "root_window_id", "rid", rc_int, &root_window_id,
- "0", 0, 0, NULL, "Create the xmame-window in an alternate root-window, mostly usefull for frontends!" },
+ "0", 0, 0, NULL, "Create the xmame window in an alternate root window; mostly useful for front-ends!" },
 	{ "geometry", "geo", rc_string, &geometry, "640x480", 0, 0, NULL, "Specify the location of the window" },
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
