@@ -12,17 +12,26 @@ System Driver Changes:
 
 - [PDP1] Added support for lightpen with variable tip size. [Raphael Nabet]
 
-- [COCO] Scaled the joystick port to 64 quanta rather than 256 (bug #340).
-  [tim lindner]
+- [COCO] Scaled the joystick port to 64 quanta rather than 256. (bug #340)
+  [Tim Lindner]
 
 - [MAC] Improved mouse emulation when moving diagonally. [Raphael Nabet]
 
 - [A2600/A5200/COLECO/COCO/INTV/MSX/SNES/VECTREX] Added support for new
-  GoodTools file extensions (bugs #277, #278, #279, #350). [Nate Woods]
+  GoodTools file extensions. (bugs #277, #278, #279, #350) [Nate Woods]
 
 - [TI99] Added support for new disk geometries (9 sec/trk DSSD, 16 sec/trk SSDD,
-  16 sec/trk DSDD) [Raphael Nabet]
+  16 sec/trk DSDD). [Raphael Nabet]
 
+- [TOOLS] Added CGAFont, a tool to help people reconstructing PC character ROMs
+  without using an EPROM reader. [John Elliott]
+
+- [PC200] Replaced generic character ROM with one reconstructed using CGAFont.
+  [John Elliott]
+
+- [PC1512] Replaced generic character ROM with one reconstructed using CGAFont.
+  [John Elliott]
+  
 Source Changes:
 ---------------
 - The core is based on MAME 0.67.  This incorporates all features of the 
@@ -42,4 +51,4 @@ Source Changes:
 - [Windows UI] Fixed bug #348. [Nate Woods]
 
 - [Windows UI] Changes made to mounted devices at runtime will now be persist
-  between emulation sessions (bug #228). [Nate Woods]
+  between emulation sessions. (bug #228) [Nate Woods]
