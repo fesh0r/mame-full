@@ -932,10 +932,10 @@ static int ti99_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, 
 static struct OptionTemplate ti99_createopts[] =
 {
 	{ "label",	"Volume name", IMGOPTION_FLAG_TYPE_STRING | IMGOPTION_FLAG_HASDEFAULT,	0,	0,	NULL},
-	{ "density",	"1 for single (FM), 2 for double (MFM)", IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	2,	"2" },
+	{ "density",	"1 for SD, 2 for 40-track DD, 3 for 80-track DD and HD", IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	3,	"2" },
 	{ "sides",	NULL, IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	2,	"2" },
-	{ "tracks",	NULL, IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	40,	"40" },
-	{ "sectors",	"1->9 for FM, 1->18 for MFM", IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	18,	"18" },
+	{ "tracks",	NULL, IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	80,	"40" },
+	{ "sectors",	"1->9 for SD, 1->18 for DD, 1->36 for HD", IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	36,	"18" },
 	{ "protection",	"0 for normal, 1 for protected", IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	0,	1,	"0" },
 	{ NULL, NULL, 0, 0, 0, 0 }
 };
@@ -1516,15 +1516,21 @@ static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const Res
 	physrecsperAU = i;
 	totAUs = totphysrecs / physrecsperAU;
 
+	/* check number of tracks if 40-track image */
+	if ((density < 3) && (geometry.tracksperside > 40))
+		return IMGTOOLERR_PARAMTOOLARGE;
+
 	/* FM disks can hold fewer sector per track than MFM disks */
 	if ((density == 1) && (geometry.secspertrack > 9))
+		return IMGTOOLERR_PARAMTOOLARGE;
+
+	/* DD disks can hold fewer sector per track than HD disks */
+	if ((density == 2) && (geometry.secspertrack > 18))
 		return IMGTOOLERR_PARAMTOOLARGE;
 
 	/* check total disk size */
 	if (totphysrecs < 2)
 		return IMGTOOLERR_PARAMTOOSMALL;
-	if (physrecsperAU != 1)
-		return IMGTOOLERR_UNIMPLEMENTED;
 
 	/* initialize sector 0 */
 
