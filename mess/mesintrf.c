@@ -4,10 +4,16 @@
 #include "input.h"
 
 int mess_pause_for_ui = 0;
+static int ui_active = 0;
+
+int mess_ui_active()
+{
+	return ui_active;
+}
 
 int handle_mess_user_interface(struct mame_bitmap *bitmap)
 {
-	static int ui_active = 0, ui_toggle_key = 0;
+	static int ui_toggle_key = 0;
 	static int ui_display_count = 30;
 
 	char buf[2048];
