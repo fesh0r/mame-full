@@ -1394,7 +1394,7 @@ static const struct IODevice io_bbcb[] = {
 		NULL					/* output_chunk */
 	},    {
         IO_CARTSLOT,            /* type */
-        8,                      /* count */
+        4,                      /* count */
         "rom\0",                /* file extensions */
         IO_RESET_NONE,          /* reset if file changed */
         0,
@@ -1436,7 +1436,7 @@ static const struct IODevice io_bbcb1770[] = {
 		NULL					/* output_chunk */
 	},    {
         IO_CARTSLOT,            /* type */
-        8,                      /* count */
+        4,                      /* count */
         "rom\0",                /* file extensions */
         IO_RESET_NONE,          /* reset if file changed */
         0,
@@ -1478,7 +1478,7 @@ static const struct IODevice io_bbcbp[] = {
 		NULL					/* output_chunk */
 	},    {
         IO_CARTSLOT,            /* type */
-        8,                      /* count */
+        4,                      /* count */
         "rom\0",                /* file extensions */
         IO_RESET_NONE,          /* reset if file changed */
         0,
@@ -1519,7 +1519,7 @@ static const struct IODevice io_bbcbp128[] = {
 		NULL					/* output_chunk */
 	},    {
         IO_CARTSLOT,            /* type */
-        8,                      /* count */
+        4,                      /* count */
         "rom\0",                /* file extensions */
         IO_RESET_NONE,          /* reset if file changed */
         0,
