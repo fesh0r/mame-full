@@ -134,7 +134,7 @@ struct {
 
 static void svision_timer(int param)
 {
-    svision.timer1_shot=true;
+    svision.timer1_shot=TRUE;
     svision.timer1=NULL;
     cpu_set_irq_line(0, M65C02_INT_IRQ, ASSERT_LINE);
 }
@@ -168,7 +168,7 @@ static WRITE_HANDLER(svision_w)
 	break;
     case 0x23: //delta hero irq routine write
 	cpu_set_irq_line(0, M65C02_INT_IRQ, CLEAR_LINE);
-	svision.timer1_shot=false;
+	svision.timer1_shot=FALSE;
 	if (svision.timer1)
 	    timer_reset(svision.timer1, TIME_IN_CYCLES(data*256, 0));
 	else
@@ -295,7 +295,7 @@ static void init_svision(void)
 static void svision_reset(void)
 {
     svision.timer1=NULL;
-    svision.timer1_shot=false;
+    svision.timer1_shot=FALSE;
 }
 
 struct CustomSound_interface svision_sound_interface =
