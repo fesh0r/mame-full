@@ -24,7 +24,10 @@
 		port A and port B are connected to the keyboard. Port A is keyboard 
 		line select, Port B is data.
 
-	printer connected to port A of PIO
+	printer connected to port A of PIO. /ACK from printer is connected to /ASTB.
+	D7-D0 of PIO port A is printer data lines.
+	ARDY of PIO is connected to /STROBE on printer.
+
 	user port is port B of PIO
 	keyboard connected to port A and port B of PSG
 
@@ -80,6 +83,8 @@
 #include "includes/basicdsk.h"
 #include "includes/msm8251.h"
 #include "includes/dsk.h"
+#include "includes/centroni.h"
+#include "printer.h"
 
 #define EINSTEIN_SYSTEM_CLOCK 4000000
 
@@ -283,8 +288,8 @@ void einstein_ctc_trigger_callback(int dummy)
 	einstein_ctc_trigger^=1;
 
 	/* channel 0 and 1 have a 2Mhz input clock for triggering */
-	z80ctc_0_trg0_w(0,einstein_ctc_trigger);
-	z80ctc_0_trg1_w(0,einstein_ctc_trigger);
+//	z80ctc_0_trg0_w(0,einstein_ctc_trigger);
+//	z80ctc_0_trg1_w(0,einstein_ctc_trigger);
 }
 
 /* refresh keyboard data. It is refreshed when the keyboard line is written */
@@ -316,6 +321,7 @@ void	einstein_keyboard_timer_callback(int dummy)
 {
 	einstein_scan_keyboard();
 
+	/* if /fire1 or /fire2 is 0, then trigger a fire interrupt if the interrupt is enabled */
 	if ((readinputport(9) & 0x03)!=0)
 	{
 		einstein_int |= EINSTEIN_FIRE_INT;
@@ -383,12 +389,26 @@ static z80ctc_interface	einstein_ctc_intf =
     {einstein_ctc_ch2_zc0}
 };
 
+static void einstein_pio_ardy(int data)
+{
+	int handshake;
+
+	handshake = 0;
+
+	/* strobe is inverted state of ardy */
+	if (data!=0)
+		handshake = CENTRONICS_STROBE;
+
+	/* ardy is connected to strobe */
+	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
+	centronics_write_handshake(0, handshake, CENTRONICS_STROBE);
+}
 
 static z80pio_interface einstein_pio_intf = 
 {
 	1,
 	{einstein_z80fmly_interrupt},
-	{0},
+	{einstein_pio_ardy},
 	{NULL}
 };
 
@@ -518,6 +538,20 @@ static WRITE_HANDLER(einstein_pio_w)
 
 	if ((offset & 0x01)==0)
 	{
+		switch ((offset>>1) & 0x01)
+		{
+			/* port A */
+			case 0:
+			{
+				/* printer is connected to port A */
+				centronics_write_data(0,data);
+			}
+			break;
+
+			default:
+				break;
+		}
+
 		z80pio_d_w( 0, (offset>>1) & 0x01,data);
 		return;
 	}
@@ -729,20 +763,54 @@ static WRITE_HANDLER(einstein_rom_w)
 
 static READ_HANDLER(einstein_key_int_r)
 {
+	int centronics_handshake;
+	int data;
+
 	logerror("mask r\n");
 
 	/* clear key int */
 	einstein_int &= ~EINSTEIN_KEY_INT;
 
+	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
+	centronics_handshake = centronics_read_handshake(0);
+
 	/* bit 7: 0=shift pressed */
 	/* bit 6: 0=control pressed */
 	/* bit 5: 0=graph pressed */
 	/* bit 4: 0=error from printer? */
-	/* bit 3: pe? */
+	/* bit 3: 0=paper empty */
 	/* bit 2: 1=printer busy */
 	/* bit 1: fire 1 */
 	/* bit 0: fire 0 */
-	return ((readinputport(8) & 0x07)<<5) | (readinputport(9) & 0x03) | 0x01c;
+	data = ((readinputport(8) & 0x07)<<5) | (readinputport(9) & 0x03) | 0x01c;
+
+	/* error? */
+	if (centronics_handshake & CENTRONICS_NO_ERROR)
+	{
+		/* if CENTRONICS_NO_ERROR flag set there is no error */
+
+		/* no error */
+		data |= (1<<4);
+	}
+
+	/* no paper? */
+	if ((centronics_handshake & CENTRONICS_NO_PAPER)==0)
+	{
+		/* if CENTRONICS_NO_PAPER flag set there is no paper */
+
+		/* has paper */
+		data |= (1<<3);
+	}
+
+	if ((centronics_handshake & CENTRONICS_NOT_BUSY)==0)
+	{
+		/*  if CENTRONICS_NOT_BUSY flag set then not busy */
+	
+		/* busy */
+		data |= (1<<2);
+	}
+
+	return data;
 }
 
 
@@ -761,7 +829,7 @@ static WRITE_HANDLER(einstein_key_int_w)
 	}
 }
 
-READ_HANDLER(einstein_port_r)
+READ_HANDLER(einstein2_port_r)
 {
 	switch (offset & 0x0ff)
 	{
@@ -842,7 +910,172 @@ READ_HANDLER(einstein_port_r)
 		default:
 			break;
 	}
-	return 0x00;
+	return 0xff;
+}
+
+WRITE_HANDLER(einstein2_port_w)
+{
+	switch (offset & 0x0ff)
+	{
+		case 0x00:
+		case 0x01:
+		case 0x02:
+		case 0x03:
+		case 0x04:
+		case 0x05:
+		case 0x06:
+		case 0x07:
+			einstein_psg_w(offset,data);
+			break;
+		case 0x08:
+		case 0x09:
+		case 0x0a:
+		case 0x0b:
+		case 0x0c:
+		case 0x0d:
+		case 0x0e:
+		case 0x0f:
+			einstein_vdp_w(offset,data);
+			break;
+		case 0x10:
+		case 0x11:
+		case 0x12:
+		case 0x13:
+		case 0x14:
+		case 0x15:
+		case 0x16:
+		case 0x17:
+			einstein_serial_w(offset,data);
+			break;
+		case 0x18:
+		case 0x19:
+		case 0x1a:
+		case 0x1b:
+		case 0x1c:
+		case 0x1d:
+		case 0x1e:
+		case 0x1f:
+			einstein_fdc_w(offset,data);
+			break;
+		case 0x20:
+			einstein_key_int_w(offset,data);
+			break;
+		case 0x23:
+			einstein_drive_w(offset,data);
+			break;
+		case 0x24:
+			einstein_rom_w(offset,data);
+			break;
+		case 0x28:
+		case 0x29:
+		case 0x2a:
+		case 0x2b:
+		case 0x2c:
+		case 0x2d:
+		case 0x2e:
+		case 0x2f:
+			einstein_ctc_w(offset,data);
+			break;
+		case 0x30:
+		case 0x31:
+		case 0x32:
+		case 0x33:
+		case 0x34:
+		case 0x35:
+		case 0x36:
+		case 0x37:
+			einstein_pio_w(offset,data);
+			break;
+		case 0x40:
+		case 0x41:
+		case 0x42:
+		case 0x43:
+		case 0x44:
+		case 0x45:
+		case 0x46:
+		case 0x47:
+		case 0x48:
+		case 0x49:
+		case 0x4a:
+		case 0x4b:
+		case 0x4c:
+		case 0x4d:
+		case 0x4e:
+		case 0x4f:
+			einstein_80col_w(offset,data);
+			break;
+
+		default:
+			break;
+	}
+}
+
+
+READ_HANDLER(einstein_port_r)
+{
+	switch (offset & 0x0ff)
+	{
+		case 0x00:
+		case 0x01:
+		case 0x02:
+		case 0x03:
+		case 0x04:
+		case 0x05:
+		case 0x06:
+		case 0x07:
+			return einstein_psg_r(offset);
+		case 0x08:
+		case 0x09:
+		case 0x0a:
+		case 0x0b:
+		case 0x0c:
+		case 0x0d:
+		case 0x0e:
+		case 0x0f:
+			return einstein_vdp_r(offset);
+		case 0x10:
+		case 0x11:
+		case 0x12:
+		case 0x13:
+		case 0x14:
+		case 0x15:
+		case 0x16:
+		case 0x17:
+			return einstein_serial_r(offset);
+		case 0x18:
+		case 0x19:
+		case 0x1a:
+		case 0x1b:
+		case 0x1c:
+		case 0x1d:
+		case 0x1e:
+		case 0x1f:
+			return einstein_fdc_r(offset);
+		case 0x20:
+			return einstein_key_int_r(offset);
+		case 0x28:
+		case 0x29:
+		case 0x2a:
+		case 0x2b:
+		case 0x2c:
+		case 0x2d:
+		case 0x2e:
+		case 0x2f:
+			return einstein_ctc_r(offset);
+		case 0x30:
+		case 0x31:
+		case 0x32:
+		case 0x33:
+		case 0x34:
+		case 0x35:
+		case 0x36:
+		case 0x37:
+			return einstein_pio_r(offset);
+
+		default:
+			break;
+	}
+	return 0xff;
 }
 
 WRITE_HANDLER(einstein_port_w)
@@ -892,6 +1125,12 @@ WRITE_HANDLER(einstein_port_w)
 		case 0x20:
 			einstein_key_int_w(offset,data);
 			break;
+		case 0x23:
+			einstein_drive_w(offset,data);
+			break;
+		case 0x24:
+			einstein_rom_w(offset,data);
+			break;
 		case 0x28:
 		case 0x29:
 		case 0x2a:
@@ -912,29 +1151,20 @@ WRITE_HANDLER(einstein_port_w)
 		case 0x37:
 			einstein_pio_w(offset,data);
 			break;
-		case 0x40:
-		case 0x41:
-		case 0x42:
-		case 0x43:
-		case 0x44:
-		case 0x45:
-		case 0x46:
-		case 0x47:
-		case 0x48:
-		case 0x49:
-		case 0x4a:
-		case 0x4b:
-		case 0x4c:
-		case 0x4d:
-		case 0x4e:
-		case 0x4f:
-			einstein_80col_w(offset,data);
-			break;
 
 		default:
 			break;
 	}
 }
+
+
+PORT_READ_START( readport_einstein2 )
+	{0x0000,0x0ffff, einstein2_port_r},
+PORT_END
+
+PORT_WRITE_START( writeport_einstein2 )
+	{0x0000,0x0ffff, einstein2_port_w},
+PORT_END
 
 PORT_READ_START( readport_einstein )
 	{0x0000,0x0ffff, einstein_port_r},
@@ -943,7 +1173,6 @@ PORT_END
 PORT_WRITE_START( writeport_einstein )
 	{0x0000,0x0ffff, einstein_port_w},
 PORT_END
-
 #if 0
 PORT_READ_START( readport_einstein )
 	{0x000, 0x007, einstein_psg_r},
@@ -991,6 +1220,38 @@ void einstein_dump_ram(void)
 }
 #endif
 
+
+struct msm8251_interface einstein_msm8251_intf=
+{
+	NULL,
+	NULL,
+	NULL
+};
+
+
+static void einstein_printer_handshake_in(int number, int data, int mask)
+{
+	if (mask & CENTRONICS_ACKNOWLEDGE)
+	{
+		if (data & CENTRONICS_ACKNOWLEDGE)
+		{
+			/* /ack into /astb */
+			z80pio_astb_w(0, 0);
+		}
+		else
+		{
+			z80pio_astb_w(0, 1);
+		}
+	}
+}
+
+static CENTRONICS_CONFIG einstein_cent_config[1]={
+	{
+		PRINTER_CENTRONICS,
+		einstein_printer_handshake_in
+	},
+};
+
 void einstein_init_machine(void)
 {
 	einstein_ram = malloc(65536);
@@ -1000,6 +1261,7 @@ void einstein_init_machine(void)
 
 	z80ctc_init(&einstein_ctc_intf);
 	z80pio_init(&einstein_pio_intf);
+	msm8251_init(&einstein_msm8251_intf);
 
 	z80ctc_reset(0);
 	z80pio_reset(0);
@@ -1024,6 +1286,11 @@ void einstein_init_machine(void)
 	/* the input to channel 0 and 1 of the ctc is a 2mhz clock */
 	einstein_ctc_trigger = 0;
 	einstein_ctc_trigger_timer = timer_pulse(TIME_IN_HZ(1000000), 0, einstein_ctc_trigger_callback);
+
+	centronics_config(0, einstein_cent_config);
+	/* assumption: select is tied low */
+	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
+
 }
 
 void einstein2_init_machine(void)
@@ -1057,7 +1324,9 @@ void einstein_shutdown_machine(void)
 		einstein_keyboard_timer = NULL;
 	}
 	
+	centronics_exit(0);
 	wd179x_exit();
+	msm8251_stop();
 }
 
 void einstein2_shutdown_machine(void)
@@ -1183,7 +1452,7 @@ static WRITE_HANDLER(einstein_port_a_write)
 {
 	einstein_keyboard_line = data;
 
-	logerror("line: %02x\n",einstein_keyboard_line);
+//	logerror("line: %02x\n",einstein_keyboard_line);
 
 	/* re-scan the keyboard */
 	einstein_scan_keyboard();
@@ -1193,7 +1462,7 @@ static READ_HANDLER(einstein_port_b_read)
 {
 	einstein_scan_keyboard();
 
-	logerror("key: %02x\n",einstein_keyboard_data);
+//	logerror("key: %02x\n",einstein_keyboard_data);
 
 	return einstein_keyboard_data;	
 }
@@ -1318,20 +1587,13 @@ void einstein2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 	einstein_80col_refresh(bitmap,full_refresh);
 }
 
-void einstein_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
-{
-	TMS9928A_refresh(bitmap,full_refresh);
-}
-
-
-
 static struct MachineDriver machine_driver_einstein =
 {
 	/* basic machine hardware */
 	{
 		/* MachineCPU */
 		{
-			CPU_Z80 | CPU_16BIT_PORT,  /* type */
+			CPU_Z80_MSX | CPU_16BIT_PORT,  /* type */
 			EINSTEIN_SYSTEM_CLOCK,
 			readmem_einstein,		   /* MemoryReadAddress */
 			writemem_einstein,		   /* MemoryWriteAddress */
@@ -1356,7 +1618,7 @@ static struct MachineDriver machine_driver_einstein =
 	0,								   /* MachineLayer */
 	einstein_vh_init,
 	TMS9928A_stop,
-	einstein_vh_screenrefresh,
+	TMS9928A_refresh,
 
 		/* sound hardware */
 	0,0,0,0,
@@ -1368,18 +1630,18 @@ static struct MachineDriver machine_driver_einstein =
 	}
 };
 
-static struct MachineDriver machine_driver_einstein2 =
+static struct MachineDriver machine_driver_einstei2 =
 {
 	/* basic machine hardware */
 	{
 		/* MachineCPU */
 		{
-			CPU_Z80 | CPU_16BIT_PORT,  /* type */
+			CPU_Z80_MSX | CPU_16BIT_PORT,  /* type */
 			EINSTEIN_SYSTEM_CLOCK,
 			readmem_einstein,		   /* MemoryReadAddress */
 			writemem_einstein,		   /* MemoryWriteAddress */
-			readport_einstein,		   /* IOReadPort */
-			writeport_einstein,		   /* IOWritePort */
+			readport_einstein2,		   /* IOReadPort */
+			writeport_einstein2,		   /* IOWritePort */
             0, 0,
 			0, 0,	
 			einstein_daisy_chain
@@ -1388,8 +1650,8 @@ static struct MachineDriver machine_driver_einstein2 =
 	50, 							   /* frames per second */
 	DEFAULT_REAL_60HZ_VBLANK_DURATION,	   /* vblank duration */
 	1,								   /* cpu slices per frame */
-	einstein_init_machine,			   /* init machine */
-	einstein_shutdown_machine,
+	einstein2_init_machine,			   /* init machine */
+	einstein2_shutdown_machine,
 	/* video hardware */
 //	32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
 	640,400, {0,640-1, 0, 400-1},
@@ -1400,7 +1662,7 @@ static struct MachineDriver machine_driver_einstein2 =
 	0,								   /* MachineLayer */
 	einstein_vh_init,
 	TMS9928A_stop,
-	einstein_vh_screenrefresh,
+	einstein2_vh_screenrefresh,
 
 		/* sound hardware */
 	0,0,0,0,
@@ -1425,7 +1687,7 @@ ROM_START(einstein)
 	ROM_LOAD("einstein.rom",0x10000, 0x02000, 0x0ec134953)
 ROM_END
 
-ROM_START(einstein2)
+ROM_START(einstei2)
 	ROM_REGION(0x010000+0x02000+0x0800, REGION_CPU1,0)
 	ROM_LOAD("einstein.rom",0x10000, 0x02000, 0x0ec134953)
 	ROM_LOAD("charrom.rom",0x012000, 0x0800, 0x0)
@@ -1452,12 +1714,13 @@ static const struct IODevice io_einstein[] =
 		NULL,						/* input_chunk */ 
 		NULL						/* output_chunk */ 
 	},
+	IO_PRINTER_PORT(1,"prn\0"),
 	{IO_END}
 };
 
-#define io_einstein2 io_einstein
+#define io_einstei2 io_einstein
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY		FULLNAME */
 COMP( 19??, einstein,      0,            einstein,          einstein,      0,       "Tatung", "Tatung Einstein TC-01")
-COMP( 19??, einstein2,      0,            einstein2,          einstein,      0,       "Tatung", "Tatung Einstein TC-01 + 80 column device")
+COMP( 19??, einstei2,      0,            einstei2,          einstein,      0,       "Tatung", "Tatung Einstein TC-01 + 80 column device")
 
