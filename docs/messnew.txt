@@ -15,7 +15,8 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- [Windows GUI] Fixed a stupid error in which one of the help menu items
+  failed. (bug #529) [Nate Woods]
 
 
 
