@@ -106,8 +106,8 @@ static int studio2_in_ef(void)
 	int a=0;
 	if (studio2_get_vsync()) a|=1;
 
-	if (input_port_0_r(0)&(1<<studio2_keyboard_select)) a|=4;
-	if (input_port_1_r(0)&(1<<studio2_keyboard_select)) a|=8;
+	if (readinputport(0)&(1<<studio2_keyboard_select)) a|=4;
+	if (readinputport(1)&(1<<studio2_keyboard_select)) a|=8;
 	
 	return a;
 }
