@@ -13,6 +13,7 @@ Features
 24 digit (5x7 pixel) lcd display
 integrated speaker
 connector for printer and disk drive
+no contrast adjustment
 
 
 Mess Emulation State
