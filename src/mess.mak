@@ -203,7 +203,6 @@ DRVLIBS = \
 
 $(OBJ)/coleco.a:   \
 	  $(OBJ)/mess/machine/coleco.o	 \
-	  $(OBJ)/mess/vidhrdw/coleco.o	 \
 	  $(OBJ)/mess/systems/coleco.o
 
 $(OBJ)/arcadia.a:  \
