@@ -52,9 +52,39 @@ TODO :
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/tms9900/tms9900.h"
 #include "machine/mt3200.h"
+#include "vidhrdw/911_vdt.h"
+
+static UINT16 intlines;
+
+/*
+	Interrupt priority encoder.  Actually part of the CPU board.
+*/
+static void set_int_line(int line, int state)
+{
+	int level;
+
+
+	if (state)
+		intlines |= (1 << line);
+	else
+		intlines &= ~ (1 << line);
+
+	if (intlines)
+	{
+		for (level = 0; ! (intlines & (1 << level)); level++)
+			;
+		cpu_set_irq_line_and_vector(0, 0, ASSERT_LINE, level);	/* interrupt it, baby */
+	}
+	else
+		cpu_set_irq_line(0, 0, CLEAR_LINE);
+}
+
+static void set_int10(int state)
+{
+	set_int_line(10, state);
+}
 
 static void clear_load(int dummy)
 {
@@ -66,6 +96,8 @@ static void ti990_10_init_machine(void)
 	cpu_set_nmi_line(0, ASSERT_LINE);
 	timer_set(TIME_IN_MSEC(100), 0, clear_load);
 
+	intlines = 0;
+
 	mt3200_reset();
 }
 
@@ -76,7 +108,7 @@ static void ti990_10_stop_machine(void)
 
 static int ti990_10_vblank_interrupt(void)
 {
-
+	vdt911_keyboard(0);
 
 	return ignore_interrupt();
 }
@@ -138,37 +170,31 @@ static WRITE16_HANDLER ( ti990_10_panel_write )
 /*
   TI990/10 video emulation.
 
-  I guess there was text terminal and CRT terminals.
+  Emulate a single VDT911 terminal
 */
 
 
-static void ti990_10_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *dummy)
-{
-/*	memcpy(palette, & ti990_10_palette, sizeof(ti990_10_palette));
-	memcpy(colortable, & ti990_10_colortable, sizeof(ti990_10_colortable));*/
-}
-
 static int ti990_10_vh_start(void)
 {
-	return 0; /*generic_vh_start();*/
-}
+	const vdt911_init_params_t params =
+	{
+		char_1920,
+		vdt911_model_US,
+		set_int10
+	};
 
-/*#define ti990_10_vh_stop generic_vh_stop*/
+	return vdt911_init_term(0, & params);
+}
 
 static void ti990_10_vh_stop(void)
 {
+	/* ... */
 }
 
 static void ti990_10_vh_refresh(struct mame_bitmap *bitmap, int full_refresh)
 {
-
+	vdt911_refresh(bitmap, full_refresh, 0, 0, 0);
 }
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ -1 }	/* end of array */
-};
-
 
 /*
   Memory map - see description above
@@ -205,6 +231,8 @@ MEMORY_END
 
 static PORT_WRITE16_START ( ti990_10_writeport )
 
+	{ 0x80 << 1, 0x8f << 1, vdt911_0_cru_w },
+
 	{ 0xfd0 << 1, 0xfdf << 1, ti990_10_mapper_cru_w },
 
 	{ 0xff0 << 1, 0xfff << 1, ti990_10_panel_write },
@@ -212,6 +240,8 @@ static PORT_WRITE16_START ( ti990_10_writeport )
 PORT_END
 
 static PORT_READ16_START ( ti990_10_readport )
+
+	{ 0x10 << 1, 0x11 << 1, vdt911_0_cru_r },
 
 	{ 0x1fa << 1, 0x1fb << 1, ti990_10_mapper_cru_r },
 
@@ -237,14 +267,14 @@ static struct MachineDriver machine_driver_ti990_10 =
 	ti990_10_init_machine,
 	ti990_10_stop_machine,
 
-	/* video hardware - no screen emulated */
-	200,						/* screen width */
-	200,						/* screen height */
-	{ 0, 200-1, 0, 200-1},		/* visible_area */
-	gfxdecodeinfo,				/* graphics decode info (???)*/
-	0/*TI990_10_PALETTE_SIZE*/,		/* palette is 3*total_colors bytes long */
-	0/*TI990_10_COLORTABLE_SIZE*/,	/* length in shorts of the color lookup table */
-	ti990_10_init_palette,		/* palette init */
+	/* video hardware - single 911 vdt display */
+	560,						/* screen width */
+	420,						/* screen height */
+	{ 0, 560-1, 0, 250-1},		/* visible_area */
+	vdt911_gfxdecodeinfo,		/* graphics decode info */
+	vdt911_palette_size,		/* palette is 3*total_colors bytes long */
+	vdt911_colortable_size,		/* length in shorts of the color lookup table */
+	vdt911_init_palette,		/* palette init */
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -301,6 +331,8 @@ ROM_START(ti990_10)
 
 #endif
 
+	ROM_REGION(vdt911_chr_region_len, vdt911_chr_region, 0)
+
 ROM_END
 
 static void init_ti990_10(void)
@@ -311,6 +343,7 @@ static void init_ti990_10(void)
 
 	memmove(memory_region(REGION_CPU1)+0x1FFC00, memory_region(REGION_CPU1)+0x1FFC00+(page*0x400), 0x400);
 #endif
+	vdt911_init();
 }
 
 static const struct IODevice io_ti990_10[] =
@@ -339,6 +372,9 @@ static const struct IODevice io_ti990_10[] =
 };
 
 INPUT_PORTS_START(ti990_10)
+
+	VDT911_KEY_PORTS
+
 INPUT_PORTS_END
 
 /*		YEAR			NAME			PARENT	MACHINE		INPUT	INIT	COMPANY	FULLNAME */
