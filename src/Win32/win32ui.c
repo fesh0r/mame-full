@@ -2354,7 +2354,7 @@ static void EnableSelection(int nGame)
     options_type    *o = GetGameOptions(nGame);
     
 #ifdef MESS
-	FillSoftwareList(nGame);
+	MyFillSoftwareList(nGame);
 #endif
 
     sprintf(buf, "&Play %s", ConvertAmpersandString(ModifyThe(drivers[nGame]->description)));

@@ -127,7 +127,9 @@ struct SmartListView *SmartListView_Init(struct SmartListViewOptions *pOptions)
 	pListView->nSortCondition = 0;
 	pListView->nNumRows = 0;
 	pListView->rowMapping = NULL;
+#if HAS_EXTRACOLUMNTEXT
 	pListView->lpExtraColumnText = NULL;
+#endif /* HAS_EXTRACOLUMNTEXT */
 
 	/* Do we automatically center on our parent? */
 	if (pOptions->bCenterOnParent) {

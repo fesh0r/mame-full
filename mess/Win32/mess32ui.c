@@ -10,10 +10,13 @@
 #include "mess/mess.h"
 #include "config.h"
 #include "SmartListView.h"
+#include "SoftwareList.h"
 
 /* from src/mess/win32.c */
+/*
 char *strncatz(char *dest, const char *source, size_t len);
 char *strncpyz(char *dest, const char *source, size_t len);
+*/
 
 static char crcfilename[MAX_PATH] = "";
 static char pcrcfilename[MAX_PATH] = "";
@@ -27,42 +30,11 @@ int GetMessSoftwarePathCount(void);
 static int requested_device_type(char *tchar);
 static void MessSetupCrc(int game_index);
 
-typedef struct {
-    int type;
-    const char *ext;
-} mess_image_type;
-
-typedef struct tagImageData {
-    struct tagImageData *next;
-    const char *name;
-    char *fullname;
-    int type;
-
-	/* CRC info */
-	char *crcline;
-	int crc;
-	const char *longname;
-	const char *manufacturer;
-	const char *year;
-	const char *playable;
-	const char *extrainfo;
-} ImageData;
-
-static ImageData *mess_images;
-static ImageData **mess_images_index;
-static int mess_images_count;
-
-static int mess_image_nums[MAX_IMAGES];
-
-static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, BOOL bWasSelected, BOOL bNowSelected, int nRow);
 static int SoftwareListClass_WhichIcon(struct SmartListView *pListView, int nItem);
-static LPCSTR SoftwareListClass_GetText(struct SmartListView *pListView, int nRow, int nColumn);
 static void SoftwareListClass_GetColumnInfo(struct SmartListView *pListView, int *pShown, int *pOrder, int *pWidths);
 static void SoftwareListClass_SetColumnInfo(struct SmartListView *pListView, int *pShown, int *pOrder, int *pWidths);
 static void SoftwareListClass_Run(struct SmartListView *pListView);
-static BOOL SoftwareListClass_IsItemSelected(struct SmartListView *pListView, int nItem);
-static BOOL SoftwareListClass_CanIdle(struct SmartListView *pListView);
-static void SoftwareListClass_Idle(struct SmartListView *pListView);
+static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, BOOL bWasSelected, BOOL bNowSelected, int nRow);
 
 static char *mess_column_names[] = {
     "Software",
@@ -79,39 +51,22 @@ static struct SmartListViewClass s_softwareListClass =
 	SoftwareListClass_Run,
 	SoftwareListClass_ItemChanged,
 	SoftwareListClass_WhichIcon,
-	SoftwareListClass_GetText,
+	SoftwareList_GetText,
 	SoftwareListClass_GetColumnInfo,
 	SoftwareListClass_SetColumnInfo,
-	SoftwareListClass_IsItemSelected,
+	SoftwareList_IsItemSelected,
 	Compare_TextCaseInsensitive,
-	SoftwareListClass_CanIdle,
-	SoftwareListClass_Idle,
+	SoftwareList_CanIdle,
+	SoftwareList_Idle,
 	sizeof(mess_column_names) / sizeof(mess_column_names[0]),
 	mess_column_names
 };
 
-enum RealizeLevel {
-	REALIZE_IMMEDIATE,	/* Calculate the file type when the extension is known */
-	REALIZE_ZIPS,		/* Open up ZIPs, and calculate their extensions and CRCs */
-	REALIZE_ALL			/* Open up all files, and calculate their CRCs */
-};
-
 static struct SmartListView *s_pSoftwareListView;
-static BOOL mess_idle_work;
-static UINT s_nIdleImageNum;
-static enum RealizeLevel s_eRealizeLevel;
-static int nTheCurrentGame;
 static int *mess_icon_index;
 
-static void *mess_crc_file;
-static char mess_crc_category[16];
-
-extern const char *osd_get_cwd(void);
-extern void resetdir(void);
-extern void osd_change_directory(const char *);
-
 static void InitMessPicker(void);
-static void FillSoftwareList(int nGame);
+static void MyFillSoftwareList(int nGame);
 static void MessUpdateSoftwareList(void);
 static void MessSetPickerDefaults(void);
 static void MessOpenOtherSoftware(int iDevice);
@@ -213,151 +168,6 @@ static void MessSetupCrc(int game_index)
 }
 
 /* ************************************************************************ */
-/* Code for manipulation of image list                                      */
-/* ************************************************************************ */
-
-/* Specify IO_END for type if you want all types */
-static void SetupImageTypes(mess_image_type *types, int count, BOOL bZip, int type)
-{
-    const struct IODevice *dev;
-    int num_extensions = 0;
-    int i;
-
-    count--;
-    dev = drivers[GetSelectedPickItem()]->dev;
-
-    if (bZip) {
-        types[num_extensions].type = 0;
-        types[num_extensions].ext = "zip";
-        num_extensions++;
-    }
-
-    for (i = 0; dev[i].type != IO_END; i++) {
-        const char *ext = dev[i].file_extensions;
-        while(*ext) {
-            if ((type == 0) || (type == dev[i].type)) {
-                if (num_extensions < count) {
-                    types[num_extensions].type = dev[i].type;
-                    types[num_extensions].ext = ext;
-                    num_extensions++;
-                }
-            }
-            ext += strlen(ext) + 1;
-        }
-    }
-    types[num_extensions].type = 0;
-    types[num_extensions].ext = NULL;
-}
-
-static int MessDiscoverImageType(const char *filename, mess_image_type *imagetypes, BOOL bReadZip, UINT32 *crc32)
-{
-    int type, i;
-    char *lpExt;
-    ZIP *pZip = NULL;
-	UINT32 dummy;
-
-	if (!crc32)
-		crc32 = &dummy;
-    
-	*crc32 = 0;
-    lpExt = strrchr(filename, '.');
-    type = IO_COUNT;
-
-    if (lpExt) {
-        /* Are we a ZIP file? */
-        if (!stricmp(lpExt, ".ZIP")) {
-            if (bReadZip) {
-                pZip = openzip(filename);
-                if (pZip) {
-                    struct zipent *pZipEnt = readzip(pZip);
-                    if (pZipEnt) {
-                        lpExt = strrchr(pZipEnt->name, '.');
-						*crc32 = pZipEnt->crc32;
-                    }
-                }
-            }
-            else {
-                /* IO_UNKNOWN represents uncalculated zips */
-                type = IO_UNKNOWN;
-            }
-        }
-
-        if (lpExt && stricmp(lpExt, ".ZIP")) {
-            lpExt++;
-            for (i = 0; imagetypes[i].ext; i++) {
-                if (!stricmp(lpExt, imagetypes[i].ext)) {
-                    type = imagetypes[i].type;
-                    break;
-                }
-            }
-        }
-
-        if (pZip)
-            closezip(pZip);
-    }
-
-	if ((type != IO_UNKNOWN) && (type != IO_ZIP))
-		AssertValidDevice(type);
-    return type;
-}
-
-static void MessRemoveImage(int imagenum)
-{
-    int i, j;
-    
-    for (i = 0, j = 0; i < options.image_count; i++) {
-        if ((imagenum >= 0) && (imagenum != mess_image_nums[i])) {
-            if (i != j) {
-                options.image_files[j] = options.image_files[i];
-                mess_image_nums[j] = mess_image_nums[i];
-            }
-            j++;
-        }
-        else {
-            free((char *) options.image_files[i].name);
-			options.image_files[i].name = NULL;
-        }
-    }
-    options.image_count = j;
-}
-
-static BOOL MessSetImage(int imagenum, int entry)
-{
-    char *filename;
-    mess_image_type imagetypes[64];
-
-    if (!mess_images_index || (imagenum >= mess_images_count))
-        return FALSE;		/* Invalid image index */
-    filename = strdup(mess_images_index[imagenum]->fullname);
-    if (!filename)
-        return FALSE;		/* Out of memory */
-
-    SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_END);
-
-	if (options.image_files[entry].name)
-		free((void *) options.image_files[entry].name);
-    options.image_files[entry].type = MessDiscoverImageType(filename, imagetypes, TRUE, NULL);
-    options.image_files[entry].name = filename;
-
-    mess_image_nums[entry] = imagenum;
-	return TRUE;
-}
-
-static BOOL MessAddImage(int imagenum)
-{
-	if (options.image_count >= MAX_IMAGES)
-		return FALSE;		/* Too many images */
-
-	MessRemoveImage(imagenum);
-
-	if (!MessSetImage(imagenum, options.image_count))
-		return FALSE;
-
-	options.image_count++;
-	return TRUE;
-}
-
-/* ************************************************************************ */
 /* UI                                                                       */
 /* ************************************************************************ */
 
@@ -412,267 +222,29 @@ static int GetMessIcon(int nGame, int nSoftwareType)
     return nIconPos;
 }
 
-static ImageData *ImageData_Alloc(const char *fullname)
+static void MyFillSoftwareList(int nGame)
 {
-	ImageData *newimg;
-    char *separator_pos;
+	int nBasePaths;
+	int i;
+	LPCSTR *plpBasePaths;
+	LPCSTR lpExtraPath;
+	const struct GameDriver *drv;
+	
+	drv = drivers[nGame];
 
-	newimg = malloc(sizeof(ImageData) + strlen(fullname) + 1);
-	if (!newimg)
-		return NULL;
-	memset(newimg, 0, sizeof(ImageData));
+	nBasePaths = GetMessSoftwarePathCount();
+	plpBasePaths = _alloca(sizeof(LPCSTR) * nBasePaths);
+	for (i = 0; i < nBasePaths; i++)
+		plpBasePaths[i] = GetMessSoftwarePath(i);
 
-	newimg->fullname = ((char *) newimg) + sizeof(ImageData);
-	strcpy(newimg->fullname, fullname);
+	lpExtraPath = GetGameOptions(nGame)->extra_software_paths;
 
-    separator_pos = strrchr(newimg->fullname, '\\');
-    newimg->name = separator_pos ? (separator_pos+1) : newimg->fullname;
-	newimg->type = IO_UNKNOWN;
-	return newimg;
-}
-
-static void ImageData_Free(ImageData *img)
-{
-	if (img->crcline)
-		free(img->crcline);
-	free((void *) img);
-}
-
-static BOOL ImageData_IsBad(ImageData *img)
-{
-	return img->type == IO_COUNT;
-}
-
-static BOOL ImageData_SetCrcLine(ImageData *img, UINT32 crc, const char *crcline)
-{
-	char *newcrcline;
-
-	newcrcline = strdup(crcline);
-	if (!newcrcline)
-		return FALSE;
-
-	if (img->crcline)
-		free(img->crcline);
-	img->crcline = newcrcline;
-	img->crc = crc;
-	img->longname = strtok(newcrcline, "|");
-	img->year = strtok(NULL, "|");
-	img->manufacturer = strtok(NULL, "|");
-	img->playable = strtok(NULL, "|");
-	img->extrainfo = strtok(NULL, "|");
-	return TRUE;
-}
-
-static BOOL ImageData_Realize(ImageData *img, enum RealizeLevel eRealize, mess_image_type *imagetypes)
-{
-	/* from src/Win32/file.c */
-	int checksum_file(const char* file, unsigned char **p, unsigned int *size, unsigned int *crc);
-
-	UINT32 crc32 = 0;
-	char crcstr[9];
-	char line[1024];
-	unsigned int dummy;
-	BOOL bLearnedSomething = FALSE;
-
-	/* Calculate image type */
-	if (img->type == IO_UNKNOWN) {
-		img->type = MessDiscoverImageType(img->fullname, imagetypes, eRealize > REALIZE_IMMEDIATE, &crc32);
-		if (img->type != IO_UNKNOWN)
-			bLearnedSomething = TRUE;
-	}
-
-	if ((eRealize >= REALIZE_ALL) && !crc32 && !img->crc) {
-		checksum_file(img->fullname, NULL, &dummy, &crc32);
-		bLearnedSomething = TRUE;
-	}
-
-	if (mess_crc_file && crc32 && !img->crc) {
-		sprintf(crcstr, "%08x", crc32);
-		config_load_string(mess_crc_file, mess_crc_category, 0, crcstr, line, sizeof(line));
-		ImageData_SetCrcLine(img, crc32, line);
-	}
-	return bLearnedSomething;
-}
-
-static BOOL AppendNewImage(const char *fullname, enum RealizeLevel eRealize, ImageData ***listend, mess_image_type *imagetypes)
-{
-    ImageData *newimg;
-
-	newimg = ImageData_Alloc(fullname);
-    if (!newimg)
-        return FALSE;
-
-	ImageData_Realize(newimg, eRealize, imagetypes);
-
-	if (ImageData_IsBad(newimg)) {
-		/* Unknown type of software */
-		ImageData_Free(newimg);
-		return FALSE;
-	}
-
-    **listend = newimg;
-    *listend = &newimg->next;
-    return TRUE;
-}
-
-static void AddImagesFromDirectory(const char *dir, BOOL bRecurse, char *buffer, size_t buffersz, ImageData ***listend)
-{
-    void *d;
-    int is_dir;
-    size_t pathlen;
-    mess_image_type imagetypes[64];
-
-    SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), FALSE, IO_END);
-
-    d = osd_dir_open(dir, "*.*");   
-    if (d) {
-        osd_change_directory(dir);
-
-        strncpyz(buffer, osd_get_cwd(), buffersz);
-        pathlen = strlen(buffer);
-
-        while(osd_dir_get_entry(d, buffer + pathlen, buffersz - pathlen, &is_dir)) {
-            if (!is_dir) {
-                /* Not a directory */
-                if (AppendNewImage(buffer, REALIZE_IMMEDIATE, listend, imagetypes))
-                    mess_images_count++;
-            }
-            else if (bRecurse && strcmp(buffer + pathlen, ".") && strcmp(buffer + pathlen, "..")) {
-                AddImagesFromDirectory(buffer + pathlen, bRecurse, buffer, buffersz, listend);
-                osd_change_directory("..");
-
-                strncpyz(buffer, osd_get_cwd(), buffersz);
-                pathlen = strlen(buffer);
-            }
-        }
-        osd_dir_close(d);
-    }
-}
-
-static void *OpenCrcFile(const struct GameDriver *drv, char *outname)
-{
-	char buffer[32];
-	strcpy(outname, drv->name);
-	_snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), "crc\\%s.crc", drv->name);
-	return config_open(buffer);
-}
-
-static void FillSoftwareList(int nGame)
-{
-    int i;
-    ImageData *imgd;
-    ImageData **pimgd;
-    const char *extrapaths;
-    char *olddir;
-    char *s;
-    char buffer[2000];
-
-	/* Update the CRC file */
-	if (mess_crc_file)
-		config_close(mess_crc_file);
-	mess_crc_file = OpenCrcFile(drivers[nGame], mess_crc_category);
-	if (!mess_crc_file)
-		mess_crc_file = OpenCrcFile(drivers[nGame]->clone_of, mess_crc_category);
-
-    /* This fixes any changes the file manager may have introduced */
-    resetdir();
-
-    nTheCurrentGame = nGame;
-
-    /* Remove any currently selected images */
-    MessRemoveImage(-1);
-
-    /* Free the list */
-    if (mess_images_index)
-        free(mess_images_index);
-    imgd = mess_images;
-    while(imgd) {
-        ImageData *next = imgd->next;
-		ImageData_Free(imgd);
-        imgd = next;
-    }
-    mess_images = NULL;
-
-    /* Now build the linked list */
-    mess_images_count = 0;
-    pimgd = &mess_images;
-    olddir = strdup(osd_get_cwd());
-    if (olddir) {
-        /* Global paths */
-        for (i = 0; i < GetMessSoftwarePathCount(); i++) {
-            const char *dir = GetMessSoftwarePath(i);
-            const struct GameDriver *drv = drivers[nGame];
-
-            while(drv) {
-                osd_change_directory(dir);
-                AddImagesFromDirectory(drv->name, TRUE, buffer, sizeof(buffer), &pimgd);
-                osd_change_directory(olddir);
-                drv = drv->clone_of;
-            }
-        }
-
-        /* Game-specific paths */
-        extrapaths = GetGameOptions(nGame)->extra_software_paths;
-        while(extrapaths && *extrapaths) {
-            s = strchr(extrapaths, ';');
-            if (s)
-                *s = '\0';
-
-            AddImagesFromDirectory(extrapaths, TRUE, buffer, sizeof(buffer), &pimgd);
-
-            if (s) {
-                *s = ';';
-                extrapaths = s + 1;
-            }
-            else {
-                extrapaths = NULL;
-            }
-        }
-
-        free(olddir);
-    }
-
-    if (mess_images_count) {
-        mess_images_index = (ImageData **) malloc(sizeof(ImageData *) * mess_images_count);
-        if (mess_images_index) {
-            imgd = mess_images;
-            for (i = 0; i < mess_images_count; i++) {
-                mess_images_index[i] = imgd;
-                imgd = imgd->next;
-            }
-        }
-        else {
-            mess_images_count = 0;
-        }
-    }
-    else {
-        mess_images_index = NULL;
-    }
-
-	if (s_pSoftwareListView) {
-		SmartListView_SetTotalItems(s_pSoftwareListView, mess_images_count);
-		SmartListView_SetSorting(s_pSoftwareListView, MESS_COLUMN_IMAGES, FALSE);
-	}
-
-    mess_idle_work = TRUE;
-    s_nIdleImageNum = 0;
-	s_eRealizeLevel = REALIZE_ZIPS;
+	FillSoftwareList(s_pSoftwareListView, nGame, nBasePaths, plpBasePaths, lpExtraPath);
 }
 
 static void MessUpdateSoftwareList(void)
 {
-    FillSoftwareList(nTheCurrentGame);
-}
-
-static int MessLookupByFilename(const char *filename)
-{
-    int i;
-
-    for (i = 0; i < mess_images_count; i++) {
-        if (!strcmp(filename, mess_images_index[i]->fullname))
-            return i;
-    }
-    return -1;
+	MyFillSoftwareList(GetSelectedPickItem());
 }
 
 static void MessSetPickerDefaults(void)
@@ -727,7 +299,7 @@ static void InitMessPicker(void)
 	opts.bOldControl = oldControl;
 	s_pSoftwareListView = SmartListView_Init(&opts);
 
-	SmartListView_SetTotalItems(s_pSoftwareListView, mess_images_count);
+	SmartListView_SetTotalItems(s_pSoftwareListView, MessImageCount());
 	SmartListView_SetSorting(s_pSoftwareListView, MESS_COLUMN_IMAGES, FALSE);
 	Header_Initialize(s_pSoftwareListView->hwndListView);
 
@@ -842,54 +414,15 @@ static BOOL CommonFileImageDialog(char *last_directory, common_file_dialog_proc 
     return success;
 }
 
-static void MessIntroduceItem(const char *filename, mess_image_type *imagetypes)
-{
-    ImageData       **pLastImageNext;
-    ImageData       **pOldLastImageNext;
-    ImageData       **pNewIndex;
-    int i;
-
-	assert(filename);
-	assert(imagetypes);
-
-    pLastImageNext = &mess_images;
-    while(*pLastImageNext)
-        pLastImageNext = &(*pLastImageNext)->next;
-    pOldLastImageNext = pLastImageNext;
-
-    if (!AppendNewImage(filename, REALIZE_ALL, &pLastImageNext, imagetypes))
-        goto unknownsoftware;
-
-    pNewIndex = (ImageData **) realloc(mess_images_index, (mess_images_count+1) * sizeof(ImageData *));
-    if (!pNewIndex)
-        goto outofmemory;
-    i = mess_images_count++;
-    pNewIndex[i] = (*pOldLastImageNext);
-    mess_images_index = pNewIndex;
-
-	if (!SmartListView_AppendItem(s_pSoftwareListView))
-		goto outofmemory;
-	SmartListView_SelectItem(s_pSoftwareListView, i, TRUE);
-    return;
-
-unknownsoftware:
-    MessageBoxA(NULL, "Unknown type of software", MAME32NAME, MB_OK);
-    return;
-
-outofmemory:
-    MessageBoxA(NULL, "Out of memory", MAME32NAME, MB_OK);
-    return;
-}
-
 static void MessSetupDevice(common_file_dialog_proc cfd, int iDevice)
 {
     char filename[MAX_PATH];
     mess_image_type imagetypes[64];
 
-    SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, iDevice);
+    SetupImageTypes(GetSelectedPickItem(), imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, iDevice);
 
     if (CommonFileImageDialog(last_directory, cfd, filename, imagetypes))
-        MessIntroduceItem(filename, imagetypes);
+        MessIntroduceItem(s_pSoftwareListView, filename, imagetypes);
 }
 
 static void MessOpenOtherSoftware(int iDevice)
@@ -911,27 +444,14 @@ static void SoftwareListClass_Run(struct SmartListView *pListView)
 	MamePlayGame();
 }
 
-static BOOL SoftwareListClass_IsItemSelected(struct SmartListView *pListView, int nItem)
-{
-    int i;
-
-	if (mess_images_count) {
-		for (i = 0; i < options.image_count; i++) {
-			if (nItem == mess_image_nums[i])
-				return TRUE;
-		}
-	}
-    return FALSE;
-}
-
 static int SoftwareListClass_WhichIcon(struct SmartListView *pListView, int nItem)
 {
     int nType;
     int nIcon;
 
-    nType = mess_images_index[nItem]->type;
+    nType = GetImageType(nItem);
     
-    nIcon = GetMessIcon(nTheCurrentGame, nType);
+    nIcon = GetMessIcon(GetSelectedPickItem(), nType);
     if (!nIcon) {
 		switch(nType) {
 		case IO_UNKNOWN:
@@ -950,45 +470,6 @@ static int SoftwareListClass_WhichIcon(struct SmartListView *pListView, int nIte
 		}
     }
     return nIcon;
-}
-
-static LPCSTR SoftwareListClass_GetText(struct SmartListView *pListView, int nRow, int nColumn)
-{
-	ImageData *imgd;
-	LPCSTR s = NULL;
-	static char crcstr[32];
-
-	imgd = mess_images_index[nRow];
-    switch (nColumn) {
-	case MESS_COLUMN_IMAGES:
-	    s = imgd->name;
-		break;
-
-	case MESS_COLUMN_GOODNAME:
-		s = imgd->longname;
-		break;
-
-	case MESS_COLUMN_MANUFACTURER:
-		s = imgd->manufacturer;
-		break;
-
-	case MESS_COLUMN_YEAR:
-		s = imgd->year;
-		break;
-
-	case MESS_COLUMN_PLAYABLE:
-		s = imgd->playable;
-		break;
-
-	case MESS_COLUMN_CRC:
-		if (imgd->crc)
-			_snprintf(crcstr, sizeof(crcstr) / sizeof(crcstr[0]), "%08x", imgd->crc);
-		else
-			crcstr[0] = '\0';
-		s = crcstr;
-		break;
-	}
-	return s;
 }
 
 static void SoftwareListClass_GetColumnInfo(struct SmartListView *pListView, int *pShown, int *pOrder, int *pWidths)
@@ -1013,116 +494,48 @@ static void SoftwareListClass_SetColumnInfo(struct SmartListView *pListView, int
 
 static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, BOOL bWasSelected, BOOL bNowSelected, int nRow)
 {
-	int i;
+	BOOL bResult;
+    BOOL bNewScreenShot;
+	const char *name;
+	char *s;
+	char *newname;
 
-    if (bWasSelected && !bNowSelected)
-    {
-        if (nRow >= 0) {
-            if ((GetKeyState(VK_SHIFT) & 0xff00) == 0) {
-                /* We are about to clear all images.  We have to go through
-                 * and tell the other items to update */
-                for (i = 0; i < options.image_count; i++) {
-                    int imagenum = mess_image_nums[i];
-                    mess_image_nums[i] = -1;
-                    SmartListView_Update(pListView, imagenum);
-                }
-                MessRemoveImage(-1);
-            }
+	bResult = SoftwareList_ItemChanged(pListView, bWasSelected, bNowSelected, nRow);
 
-        }
-        /* leaving item */
-        /* printf("leaving %s\n",drivers[pnmv->lParam]->name); */
-    }
+    if (!bWasSelected && bNowSelected) {
+		name = GetImageName(nRow);
+		s = strrchr(name, '\\');
+		if (s)
+			name = s + 1;
+		newname = _alloca(strlen(name) + 1);
+		strcpy(newname, name);
+		s = strrchr(newname, '.');
+		if (s)
+			*s = '\0';
 
-    if (!bWasSelected && bNowSelected)
-    {
-        /* entering item */
-        MessAddImage(nRow);
+		bNewScreenShot = LoadScreenShot(GetSelectedPickItem(), newname, nPictType);
+		if (bNewScreenShot || bScreenShotAvailable)
+        {
+            HWND hWnd;
 
-		{
-            BOOL bNewScreenShot;
-			const char *name;
-			char *s;
-			char *newname;
-
-			name = mess_images_index[nRow]->name;
-			s = strrchr(name, '\\');
-			if (s)
-				name = s + 1;
-			newname = _alloca(strlen(name) + 1);
-			strcpy(newname, name);
-			s = strrchr(newname, '.');
-			if (s)
-				*s = '\0';
-
-			bNewScreenShot = LoadScreenShot(GetSelectedPickItem(), newname, nPictType);
-			if (bNewScreenShot || bScreenShotAvailable)
+            if (GetShowScreenShot() &&  (hWnd = GetDlgItem(hPicker, IDC_SSFRAME)))
             {
-                HWND hWnd;
+                RECT    rect;
+                HWND    hParent;
+                POINT   p = {0, 0};
 
-                if (GetShowScreenShot()
-                &&  (hWnd = GetDlgItem(hPicker, IDC_SSFRAME)))
-                {
-                    RECT    rect;
-                    HWND    hParent;
-                    POINT   p = {0, 0};
+                hParent = GetParent(hWnd);
 
-                    hParent = GetParent(hWnd);
-
-                    GetWindowRect(hWnd,&rect);
-                    ClientToScreen(hParent, &p);
-                    OffsetRect(&rect, -p.x, -p.y);
-                    InvalidateRect(hParent, &rect, FALSE);
-                    UpdateWindow(hParent);
-                }
+                GetWindowRect(hWnd,&rect);
+                ClientToScreen(hParent, &p);
+                OffsetRect(&rect, -p.x, -p.y);
+                InvalidateRect(hParent, &rect, FALSE);
+                UpdateWindow(hParent);
             }
-            bScreenShotAvailable = bNewScreenShot;
-		}
-
+        }
+        bScreenShotAvailable = bNewScreenShot;
     }
-	return TRUE;
-}
-
-static BOOL SoftwareListClass_CanIdle(struct SmartListView *pListView)
-{
-	return mess_idle_work;
-}
-
-static void SoftwareListClass_Idle(struct SmartListView *pListView)
-{
-    static mess_image_type imagetypes[64];
-    ImageData *pImageData;
-    int i;
-
-    if (s_nIdleImageNum == 0)
-        SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_END);
-
-    for (i = 0; (i < 10) && (s_nIdleImageNum < mess_images_count); i++) {
-        pImageData = mess_images_index[s_nIdleImageNum];
-
-        if (ImageData_Realize(pImageData, s_eRealizeLevel, imagetypes))
-            SmartListView_RedrawItem(pListView, s_nIdleImageNum);
-        s_nIdleImageNum++;
-    }
-
-    if (s_nIdleImageNum >= mess_images_count) {
-        s_nIdleImageNum = 0;
-
-		switch(s_eRealizeLevel) {
-		case REALIZE_ZIPS:
-			s_eRealizeLevel = REALIZE_ALL;
-			break;
-
-		case REALIZE_ALL:
-			s_eRealizeLevel = REALIZE_ZIPS;
-			mess_idle_work = FALSE;
-			break;
-
-		default:
-			assert(0);
-			break;
-		}
-    }
+	return bResult;
 }
 
 /* ------------------------------------------------------------------------ *
@@ -1148,13 +561,13 @@ static struct SmartListViewClass s_filemgrListClass =
 	FileMgrListClass_Run,
 	SingleItemSmartListViewClass_ItemChanged,
 	SoftwareListClass_WhichIcon,
-	SoftwareListClass_GetText,
+	SoftwareList_GetText,
 	SoftwareListClass_GetColumnInfo,
 	SoftwareListClass_SetColumnInfo,
 	SingleItemSmartListViewClass_IsItemSelected,
 	Compare_TextCaseInsensitive,
-	SoftwareListClass_CanIdle,
-	SoftwareListClass_Idle,
+	SoftwareList_CanIdle,
+	SoftwareList_Idle,
 	sizeof(mess_column_names) / sizeof(mess_column_names[0]),
 	mess_column_names
 };
@@ -1209,7 +622,7 @@ static INT_PTR CALLBACK FileManagerProc(HWND hDlg, UINT message, WPARAM wParam, 
 			return FALSE;
 		}
 
-		SmartListView_SetTotalItems(s_pFileMgrListView, mess_images_count);
+		SmartListView_SetTotalItems(s_pFileMgrListView, MessImageCount());
 
 		if (s_pInitialFileName && *s_pInitialFileName) {
 			i = MessLookupByFilename(s_pInitialFileName);
@@ -1296,7 +709,7 @@ int osd_select_file(int sel, char *filename)
 
 		result = -1;
 		if (nSelectedItem > -1) {
-			strcpy(filename, mess_images_index[nSelectedItem]->fullname);
+			strcpy(filename, GetImageFullName(nSelectedItem));
 			result = 1;
 		}
 		else {
@@ -1366,33 +779,6 @@ static void MessTestsCompleted(void)
 	MessageBoxA(hPicker, "Tests successfully completed!", MAME32NAME, MB_OK);
 }
 
-static void MessTestsFlex(void)
-{
-	/* We get called here when we are done idling */
-	int i;
-	int nItem;
-	int nItemsToAdd = 5;		/* Arbitrary constant */
-	int nItemsToAddSkip = 10;	/* Arbitrary constant */
-	ImageData *img;
-	mess_image_type imagetypes[64];
-
-	SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_END);
-
-	/* Try appending an item to the list */
-	for (i = 0; i < nItemsToAdd; i++) {
-		nItem = i * nItemsToAddSkip;
-		if ((nItem < mess_images_count) && (mess_images_index[nItem]->type != IO_COUNT)) {
-			MessIntroduceItem(mess_images_index[nItem]->fullname, imagetypes);
-		}
-	}
-
-	/* Assert that we have resolved all the types */
-	for (i = 0; i < mess_images_count; i++) {
-		img = mess_images_index[i];
-		assert(img->type != IO_UNKNOWN);
-	}
-}
-
 static void MessTestsDoneIdle(void)
 {
 	int nNewGame;
@@ -1403,7 +789,7 @@ static void MessTestsDoneIdle(void)
 			MessTestsCompleted();
 		}
 		else {
-			MessTestsFlex();
+			MessTestsFlex(s_pSoftwareListView);
 			SetSelectedPick(nNewGame);
 		}
 	}
