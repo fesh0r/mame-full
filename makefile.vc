@@ -1,7 +1,7 @@
 #####################################################################
 
 MAME_VERSION = -DMAME_VERSION=37
-BETA_VERSION = -DBETA_VERSION=12
+BETA_VERSION = -DBETA_VERSION=13
 
 # set this to mame, mess or the destination you want to build
 # TARGET = mame
@@ -245,11 +245,17 @@ ifeq "$(TARGET)" "mess"
 # MESS object directories
 OBJDIRS += \
         $(OBJ)/mess \
+		$(OBJ)/mess/cpu \
+		$(OBJ)/mess/sound \
         $(OBJ)/mess/systems \
         $(OBJ)/mess/machine \
         $(OBJ)/mess/vidhrdw \
         $(OBJ)/mess/sndhrdw \
         $(OBJ)/mess/tools \
+        $(OBJ)/mess/tools\dat2html \
+        $(OBJ)/mess/tools\imgtool \
+        $(OBJ)/mess/tools\mkhdimg \
+        $(OBJ)/mess/tools\messroms \
         $(OBJ)/mess/formats \
         $(OBJ)/mess/messroms \
         $(OBJ)/mess/Win32
@@ -263,6 +269,10 @@ all: maketree $(EMULATOR) extra
 include src/core.mak
 include src/$(TARGET).mak
 include src/rules.mak
+ifdef MESS
+include src/rules_ms.mak
+else
+endif
 include src/$(OS)/$(OS).mak
 
 ifdef MAME_DEBUG
