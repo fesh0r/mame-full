@@ -37,7 +37,7 @@ static void machine_stop_apexc(void)
 
 typedef struct cylinder
 {
-	void *fd;
+	mame_file *fd;
 	int writable;
 } cylinder;
 
@@ -146,7 +146,7 @@ static void apexc_cylinder_exit(int id)
 
 typedef struct tape
 {
-	void *fd;
+	mame_file *fd;
 } tape;
 
 tape apexc_tapes[2];

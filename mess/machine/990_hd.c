@@ -54,7 +54,7 @@ enum
 /* disk drive unit descriptor */
 typedef struct hd_unit_t
 {
-	void *fd;			/* file descriptor */
+	mame_file *fd;				/* file descriptor */
 	unsigned int wp : 1;		/* TRUE if disk is write-protected */
 	unsigned int unsafe : 1;	/* TRUE when a disk has just been connected */
 

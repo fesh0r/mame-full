@@ -76,7 +76,7 @@ enum
 /* tape reader registers */
 typedef struct tape_reader_t
 {
-	void *fd;		/* file descriptor of tape image */
+	mame_file *fd;	/* file descriptor of tape image */
 
 	int motor_on;	/* 1-bit reader motor on */
 
@@ -95,7 +95,7 @@ static tape_reader_t tape_reader;
 /* tape puncher registers */
 typedef struct tape_puncher_t
 {
-	void *fd;		/* file descriptor of tape image */
+	mame_file *fd;	/* file descriptor of tape image */
 
 	void *timer;	/* timer to generate completion pulses */
 } tape_puncher_t;
@@ -106,7 +106,7 @@ static tape_puncher_t tape_puncher;
 /* typewriter registers */
 typedef struct typewriter_t
 {
-	void *fd;		/* file descriptor of output image */
+	mame_file *fd;	/* file descriptor of output image */
 
 	int tb;			/* typewriter buffer */
 

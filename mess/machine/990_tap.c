@@ -39,7 +39,7 @@ static void update_interrupt(void);
 
 typedef struct tape_unit_t
 {
-	void *fd;		/* file descriptor */
+	mame_file *fd;			/* file descriptor */
 	unsigned int bot : 1;	/* TRUE if we are at the beginning of tape */
 	unsigned int eot : 1;	/* TRUE if we are at the end of tape */
 	unsigned int wp : 1;	/* TRUE if tape is write-protected */
@@ -620,7 +620,7 @@ static void cmd_record_skip_reverse(void)
 
 	while (record_count > 0)
 	{
-		if (osd_ftell(tpc.t[tap_sel].fd) == 0)
+		if (mame_ftell(tpc.t[tap_sel].fd) == 0)
 		{	/* bot */
 			tpc.t[tap_sel].bot = 1;
 			tpc.w[0] |= w0_BOT;

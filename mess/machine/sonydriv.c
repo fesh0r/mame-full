@@ -71,7 +71,7 @@ static unsigned int rotation_speed;		/* drive rotation speed - ignored if ext_sp
 */
 typedef struct
 {
-	void *fd;
+	mame_file *fd;
 	enum { bare, apple_diskcopy } image_format;
 	union
 	{
