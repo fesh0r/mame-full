@@ -2634,6 +2634,8 @@ static BOOL OnIdle(HWND hWnd)
 	UpdateStatusBar();
 	bFirstTime = TRUE;
 
+	if (!idle_work)
+		PostMessage(GetMainWindow(),WM_COMMAND, MAKEWPARAM(ID_VIEW_LINEUPICONS, TRUE),(LPARAM)NULL);
 	return idle_work;
 }
 
@@ -4723,6 +4725,9 @@ static int GamePicker_FindItemParent(int nItem)
 /* Initialize the Picker and List controls */
 static void InitListView()
 {
+	LVBKIMAGE bki;
+	char path[MAX_PATH];
+
 	static const struct PickerCallbacks s_gameListCallbacks =
 	{
 		SetSortColumn,					/* pfnSetSortColumn */
@@ -4760,6 +4765,14 @@ static void InitListView()
 	opts.nColumnCount = COLUMN_MAX;
 	opts.ppszColumnNames = column_names;
 	SetupPicker(hwndList, &opts);
+
+	ListView_SetTextBkColor(hwndList, CLR_NONE);
+	ListView_SetBkColor(hwndList, CLR_NONE);
+	sprintf(path, "%s\\bkground.png", GetBgDir() );
+	bki.ulFlags = LVBKIF_SOURCE_URL | LVBKIF_STYLE_TILE;
+	bki.pszImage = path;
+	if( hBackground )	
+		ListView_SetBkImage(hwndList, &bki);
 
 	CreateIcons();
 

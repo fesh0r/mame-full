@@ -107,160 +107,6 @@ static LRESULT CallParentWndProc(WNDPROC pfnParentWndProc,
 	return rc;
 }
 
-
-
-static BOOL ListCtrlOnPaint(HWND hWnd, UINT uMsg)
-{
-	PAINTSTRUCT ps;
-	HDC 		hDC;
-	RECT		rcClip, rcClient;
-	HDC 		memDC;
-	HBITMAP 	bitmap;
-	HBITMAP 	hOldBitmap;
-	HBITMAP		hBackground = GetBackgroundBitmap();
-	HPALETTE	hPALbg = GetBackgroundPalette();
-	struct PickerInfo *pPickerInfo;
-
-	if (!hBackground)
-		return 1;
-
-	pPickerInfo = GetPickerInfo(hWnd);
-
-	hDC = BeginPaint(hWnd, &ps);
-	rcClient = ps.rcPaint;
-	GetClipBox(hDC, &rcClip);
-	GetClientRect(hWnd, &rcClient);
-	// Create a compatible memory DC
-	memDC = CreateCompatibleDC(hDC);
-
-	// Select a compatible bitmap into the memory DC
-	bitmap = CreateCompatibleBitmap(hDC, rcClient.right - rcClient.left,
-									rcClient.bottom - rcClient.top );
-	hOldBitmap = SelectObject(memDC, bitmap);
-
-	BitBlt(memDC, rcClip.left, rcClip.top,
-		   rcClip.right - rcClip.left, rcClip.bottom - rcClip.top,
-		   hDC, rcClip.left, rcClip.top, SRCCOPY);
-
-	// First let the control do its default drawing.
-	CallParentWndProc(pPickerInfo->pfnParentWndProc, hWnd, uMsg, (WPARAM)memDC, 0);
-
-	// Draw bitmap in the background
-	if( hBackground )
-	{
-		HPALETTE	hPAL;
-		HDC maskDC;
-		HBITMAP maskBitmap;
-		HDC tempDC;
-		HDC imageDC;
-		HBITMAP bmpImage;
-		HBITMAP hOldBmpImage;
-		HBITMAP hOldMaskBitmap;
-		HBITMAP hOldHBitmap;
-		MYBITMAPINFO *pbmDesc;
-		int i, j;
-		POINT ptOrigin;
-		POINT pt = {0,0};
-
-		pbmDesc = GetBackgroundInfo();
-
-		// Now create a mask
-		maskDC = CreateCompatibleDC(hDC);
-
-		// Create monochrome bitmap for the mask
-		maskBitmap = CreateBitmap(rcClient.right  - rcClient.left,
-								  rcClient.bottom - rcClient.top,
-								  1, 1, NULL );
-
-		hOldMaskBitmap = SelectObject(maskDC, maskBitmap);
-		SetBkColor(memDC, GetSysColor(COLOR_WINDOW));
-
-		// Create the mask from the memory DC
-		BitBlt(maskDC, 0, 0, rcClient.right - rcClient.left,
-			   rcClient.bottom - rcClient.top, memDC,
-			   rcClient.left, rcClient.top, SRCCOPY);
-
-		tempDC = CreateCompatibleDC(hDC);
-		hOldHBitmap = SelectObject(tempDC, hBackground);
-
-		imageDC = CreateCompatibleDC(hDC);
-		bmpImage = CreateCompatibleBitmap(hDC,
-										  rcClient.right  - rcClient.left,
-										  rcClient.bottom - rcClient.top);
-		hOldBmpImage = SelectObject(imageDC, bmpImage);
-
-		hPAL = (! hPALbg) ? CreateHalftonePalette(hDC) : hPALbg;
-
-		if (GetDeviceCaps(hDC, RASTERCAPS) & RC_PALETTE && hPAL != NULL)
-		{
-			SelectPalette(hDC, hPAL, FALSE);
-			RealizePalette(hDC);
-			SelectPalette(imageDC, hPAL, FALSE);
-		}
-
-		// Get x and y offset
-		ClientToScreen(hWnd, &pt);
-		GetDCOrgEx(hDC, &ptOrigin);
-		ptOrigin.x -= pt.x;
-		ptOrigin.y -= pt.y;
-		ptOrigin.x = -GetScrollPos(hWnd, SB_HORZ);
-		ptOrigin.y = -GetScrollPos(hWnd, SB_VERT);
-
-		// Draw bitmap in tiled manner to imageDC
-		for (i = ptOrigin.x; i < rcClient.right; i += pbmDesc->bmWidth)
-			for (j = ptOrigin.y; j < rcClient.bottom; j += pbmDesc->bmHeight)
-				BitBlt(imageDC,  i, j, pbmDesc->bmWidth, pbmDesc->bmHeight,
-					   tempDC, 0, 0, SRCCOPY);
-
-		// Set the background in memDC to black. Using SRCPAINT with black
-		// and any other color results in the other color, thus making black
-		// the transparent color
-		SetBkColor(memDC, RGB(0, 0, 0));
-		SetTextColor(memDC, RGB(255, 255, 255));
-		BitBlt(memDC, rcClip.left, rcClip.top, rcClip.right - rcClip.left,
-			   rcClip.bottom - rcClip.top,
-			   maskDC, rcClip.left, rcClip.top, SRCAND);
-
-		// Set the foreground to black. See comment above.
-		SetBkColor(imageDC, RGB(255, 255, 255));
-		SetTextColor(imageDC, RGB(0, 0, 0));
-		BitBlt(imageDC, rcClip.left, rcClip.top, rcClip.right - rcClip.left,
-			   rcClip.bottom - rcClip.top,
-			   maskDC, rcClip.left, rcClip.top, SRCAND);
-
-		// Combine the foreground with the background
-		BitBlt(imageDC, rcClip.left, rcClip.top, rcClip.right - rcClip.left,
-			   rcClip.bottom - rcClip.top,
-			   memDC, rcClip.left, rcClip.top, SRCPAINT);
-
-		// Draw the final image to the screen
-		BitBlt(hDC, rcClip.left, rcClip.top, rcClip.right - rcClip.left,
-			   rcClip.bottom - rcClip.top,
-			   imageDC, rcClip.left, rcClip.top, SRCCOPY);
-
-		SelectObject(maskDC, hOldMaskBitmap);
-		SelectObject(tempDC, hOldHBitmap);
-		SelectObject(imageDC, hOldBmpImage);
-
-		DeleteDC(maskDC);
-		DeleteDC(imageDC);
-		DeleteDC(tempDC);
-		DeleteObject(bmpImage);
-		DeleteObject(maskBitmap);
-		if (!hPALbg)
-		{
-			DeleteObject(hPAL);
-		}
-	}
-	SelectObject(memDC, hOldBitmap);
-	DeleteObject(bitmap);
-	DeleteDC(memDC);
-	EndPaint(hWnd, &ps);
-	return 0;
-}
-
-
-
 static BOOL ListViewOnErase(HWND hWnd, HDC hDC)
 {
 	RECT		rcClient;
@@ -428,15 +274,6 @@ static LRESULT CALLBACK ListViewWndProc(HWND hWnd, UINT message, WPARAM wParam, 
 	    case WM_MOUSEMOVE:
 			if (MouseHasBeenMoved())
 				ShowCursor(TRUE);
-			break;
-
-		case WM_PAINT:
-			if (pPickerInfo->nCurrentViewID != VIEW_REPORT && pPickerInfo->nCurrentViewID != VIEW_GROUPED)
-			{
-				rc = ListCtrlOnPaint(hWnd, message);
-				if (rc == 0)
-					bHandled = TRUE;
-			}
 			break;
 
 		case WM_ERASEBKGND:
@@ -783,8 +620,10 @@ void Picker_SetViewID(HWND hwndPicker, int nViewID)
 			if( nViewID == VIEW_SMALL_ICONS )
 			{
 				// to properly get them to arrange, otherwise the entries might overlap
-				dwStyle &= ~LVS_TYPEMASK;
-				dwStyle |= LVS_ICON;
+				// we have to call SetWindowLong to get it into effect !!
+				// It's no use just setting the Style, as it's changed again further down...
+				SetWindowLong(hwndPicker, GWL_STYLE, (GetWindowLong(hwndPicker, GWL_STYLE)
+					& ~LVS_TYPEMASK) | LVS_ICON);
 			}
 		}
 		else
