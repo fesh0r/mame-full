@@ -24,9 +24,9 @@
 #define TRACK_HOTSPOTS		0
 
 /* swap core[0] with core[1] in place instead of always dereferencing core-> ? */
-#define SWAPCORE			1
+#define SWAPCORE			0
 /* (read) access registers via an array of pointers instead of function pointers returning the values */
-#define REGPOINTERS 		1
+#define REGPOINTERS 		0
 
 /* stack depths */
 #define	PC_STACK_DEPTH		16
