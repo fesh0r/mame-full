@@ -222,7 +222,7 @@ READ_HANDLER( saturn_smpc_r )	/* SMPC */
 
 WRITE_HANDLER( saturn_smpc_w )	/* SMPC */
 {
-	if ((data & 0xffff0000) == 0xffff0000)
+	if ((data & 0xffff0000) == 0)
 		logerror("saturn_smpc_w   %07x <- %04x\n", offset, data & 0x0000ffff);
 	else
 	if ((data & 0xffff0000) == 0xff000000)
@@ -240,7 +240,7 @@ READ_HANDLER( saturn_cs0_r )	/* CS0 */
 
 WRITE_HANDLER( saturn_cs0_w )	/* CS0 */
 {
-	if ((data & 0xffff0000) == 0xffff0000)
+	if ((data & 0xffff0000) == 0)
 		logerror("saturn_cs0_w    %07x <- %04x\n", offset, data & 0x0000ffff);
 	else
 	if ((data & 0xffff0000) == 0xff000000)
@@ -258,7 +258,7 @@ READ_HANDLER( saturn_cs1_r )	/* CS1 */
 
 WRITE_HANDLER( saturn_cs1_w )	/* CS1 */
 {
-	if ((data & 0xffff0000) == 0xffff0000)
+	if ((data & 0xffff0000) == 0)
 		logerror("saturn_cs1_w    %07x <- %04x\n", offset, data & 0x0000ffff);
 	else
 	if ((data & 0xffff0000) == 0xff000000)
@@ -276,7 +276,7 @@ READ_HANDLER( saturn_cs2_r )	/* CS2 */
 
 WRITE_HANDLER( saturn_cs2_w )	/* CS2 */
 {
-	if ((data & 0xffff0000) == 0xffff0000)
+	if ((data & 0xffff0000) == 0)
 		logerror("saturn_cs2_w    %07x <- %04x\n", offset, data & 0x0000ffff);
 	else
 	if ((data & 0xffff0000) == 0xff000000)
@@ -289,34 +289,113 @@ WRITE_HANDLER( saturn_cs2_w )	/* CS2 */
  *	SCU
  ********************************************************/
 
+enum
+{
+/* 00 */	SCU_DMA0RADR,
+/* 04 */	SCU_DMA0WADR,
+/* 08 */	SCU_DMA0COUNT,
+/* 0c */	SCU_DMA0INC,
+/* 10 */	SCU_DMA0START,
+/* 14 */	SCU_DMA0CTRL,
+/* 18 */	SCU_X18,
+/* 1c */	SCU_X1C,
+/* 20 */	SCU_DMA1RADR,
+/* 24 */	SCU_DMA1WADR,
+/* 28 */	SCU_DMA1COUNT,
+/* 2c */	SCU_DMA1INC,
+/* 30 */	SCU_DMA1START,
+/* 34 */	SCU_DMA1CTRL,
+/* 38 */	SCU_X38,
+/* 3c */	SCU_X3C,
+/* 40 */	SCU_DMA2RADR,
+/* 44 */	SCU_DMA2WADR,
+/* 48 */	SCU_DMA2COUNT,
+/* 4c */	SCU_DMA2INC,
+/* 50 */	SCU_DMA2START,
+/* 54 */	SCU_DMA2CTRL,
+/* 58 */	SCU_X58,
+/* 5c */	SCU_X5C,
+/* 60 */	SCU_DMAFSTOP,
+/* 64 */	SCU_X64,
+/* 68 */	SCU_X68,
+/* 6c */	SCU_X6C,
+/* 70 */	SCU_DMASTAT,
+/* 74 */	SCU_X74,
+/* 78 */	SCU_X78,
+/* 7c */	SCU_X7C,
+/* 80 */	SCU_DSPPCTRL,
+/* 84 */	SCU_DSPPDATA,
+/* 88 */	SCU_DSPDCTRL,
+/* 8c */	SCU_DSPDDATA,
+/* 90 */	SCU_TIMER0CMP,
+/* 94 */	SCU_TIMER1SET,
+/* 98 */	SCU_TIMER1MODE,
+/* 9c */	SCU_X9C,
+/* a0 */	SCU_IRQMASK,
+/* a4 */	SCU_IRQSTAT,
+/* a8 */	SCU_ABUSIACK,
+/* ac */	SCU_XAC,
+/* b0 */	SCU_ABUSSET0,
+/* b4 */	SCU_ABUSSET1,
+/* b8 */	SCU_ABUSREFRESH,
+/* bc */	SCU_XBC,
+/* c0 */	SCU_XC0,
+/* c4 */	SCU_SCURAMSEL,
+/* c8 */	SCU_SCUVERS,
+/* cc */	SCU_XCC,
+			SCU_REGS
+};
+
 struct dma_s
 {
-	PAIR radr;
-	PAIR wadr;
-	PAIR bytes;
-	PAIR add;
-	PAIR enable;
-	PAIR mode;
+    PAIR radr;
+    PAIR wadr;
+	PAIR count;
+	PAIR inc;
+	PAIR start;
+    PAIR mode;
+	PAIR x18;
+    PAIR x1c;
 };
 
-struct scu_s
+union scu_u
 {
-	struct dma_s dma[3];
-
-	PAIR pctrl;
-
-	PAIR imask;
-	PAIR istat;
-	PAIR aiack;
-
-	PAIR dsp_pc;
-
-	PAIR t0cmp;
-	PAIR t1data;
-	PAIR t1mode;
+    struct
+	{
+		struct dma_s dma[3];
+		PAIR dmafstop;
+		PAIR x64;
+		PAIR x68;
+		PAIR x6c;
+        PAIR dmastat;
+		PAIR x74;
+		PAIR x78;
+		PAIR x7c;
+		PAIR dsppctrl;
+		PAIR dsppdata;
+		PAIR dspdctrl;
+		PAIR dspddata;
+		PAIR timer0cmp;
+		PAIR timer1set;
+		PAIR timer1mode;
+		PAIR x9c;
+		PAIR irqmask;
+		PAIR irqstat;
+		PAIR abusiack;
+		PAIR xac;
+		PAIR abusset0;
+		PAIR abusset1;
+		PAIR abusrefresh;
+		PAIR xbc;
+		PAIR xc0;
+		PAIR scuramsel;
+		PAIR scuvers;
+		PAIR xcc;
+	} s;
+    UINT32 reg[SCU_REGS];
 };
 
-struct scu_s scu;
+union scu_u scu;
 
 static const char *irq_names[16] =
 {
@@ -341,12 +420,12 @@ static void scu_set_imask(void)
 	LOG(("saturn_scu_w    interrupt mask change:"));
 	for (irq = 0; irq < 16; irq++)
 	{
-		if ((scu.imask.d & (1 <<irq)) == 0)
+		if ((scu.s.irqmask.d & (1 <<irq)) == 0)
 			LOG((" %s", irq_names[irq]));
 		else
 			cpu_set_irq_line(0, scu_irq_levels[irq], CLEAR_LINE);
 	}
-	if ((scu.imask.d & 0xbfff) == 0xbfff)
+	if ((scu.s.irqmask.d & 0xbfff) == 0xbfff)
 		logerror(" <none>");
 	LOG(("\n"));
 	/* ### irqs */
@@ -362,7 +441,7 @@ void scu_pulse_interrupt(int irq)
 	else
 	{
 		LOG(("saturn_scu_w    IRQ #%d", irq));
-		if ((scu.imask.d & (1 << irq)) == 0)
+		if ((scu.s.irqmask.d & (1 << irq)) == 0)
 		{
 			LOG((" - pulsed"));
 			cpu_irq_line_vector_w(0, scu_irq_levels[irq], 0x40 + irq);
@@ -378,28 +457,28 @@ void scu_pulse_interrupt(int irq)
 
 static void dma_run(int dma)
 {
-	if (scu.dma[dma].mode.d & 0x1000000)
+	if (scu.s.dma[dma].mode.d & 0x1000000)
 	{
 		logerror("saturn_scu_w    DMA %d indirect mode activated\n", dma);
 	}
 	else
 	{
 		static int itab[8] = {0, 2, 4, 8, 16, 32, 64, 128};
-		UINT32 radr = scu.dma[dma].radr.d & 0x1fffffff;
-		UINT32 wadr = scu.dma[dma].wadr.d & 0x1fffffff;
-		UINT32 bytes = scu.dma[dma].bytes.d;
-		int addr = scu.dma[dma].add.d & 0x100 ? 4 : 0;
-		int addw = itab[scu.dma[dma].add.d & 7];
+		UINT32 radr = scu.s.dma[dma].radr.d & 0x1fffffff;
+		UINT32 wadr = scu.s.dma[dma].wadr.d & 0x1fffffff;
+		UINT32 count = scu.s.dma[dma].count.d;
+		int addr = scu.s.dma[dma].inc.d & 0x100 ? 4 : 0;
+		int addw = itab[scu.s.dma[dma].inc.d & 7];
 		int bbw = (wadr >= 0x5a00000) && (wadr < 0x5fe0000);
 
 		if (bbw && addr == 4 && addw == 2)
 		{
-			while (bytes > 0)
+			while (count > 0)
 			{
 				cpu_writemem27bew(wadr, cpu_readmem27bew(radr));
 				wadr++;
 				radr++;
-				bytes--;
+				count--;
 			}
 		}
 		else
@@ -407,7 +486,7 @@ static void dma_run(int dma)
 			logerror("SCU: DMA %d direct mode activated\n", dma);
 			logerror("       read  = %08x\n", radr);
 			logerror("       write = %08x\n", wadr);
-			logerror("       bytes = %08x\n", bytes);
+			logerror("       count = %08x\n", count);
 			logerror("       add   = %d, %d\n", addr, addw);
 			logerror("       bbw   = %d\n", bbw);
 		}
@@ -417,14 +496,14 @@ static void dma_run(int dma)
 
 static void dma_enable(int dma)
 {
-	if (((scu.dma[dma].mode.d & 7) == 7) && ((scu.dma[dma].enable.d & 0x101) == 0x101))
+	if (((scu.s.dma[dma].mode.d & 7) == 7) && ((scu.s.dma[dma].start.d & 0x101) == 0x101))
 		dma_run(dma);
 }
 
 static void dma_mode(int dma)
 {
-	if ((scu.dma[dma].enable.d & 7) != 7)
-		logerror("saturn_scu_w    DMA %d in mode %d\n", dma, scu.dma[dma].enable.d & 7);
+	if ((scu.s.dma[dma].start.d & 7) != 7)
+		logerror("saturn_scu_w    DMA %d in mode %d\n", dma, scu.s.dma[dma].start.d & 7);
 }
 
 static void dsp_run(int step)
@@ -443,7 +522,7 @@ static const char *scu_reg_names[] =
 	"-",        "scuramsel", "scuvers",   "-"
 };
 
-#define SCU_REG_NAME(adr) scu_reg_names[(adr)>>2]
+#define SCU_REG_NAME(adr) (((adr) < (SCU_REGS*4)) ? scu_reg_names[(adr)/4] : "n/a")
 
 READ_HANDLER( saturn_scu_r )	/* SCU, DMA/DSP */
 {
@@ -452,130 +531,147 @@ READ_HANDLER( saturn_scu_r )	/* SCU, DMA/DSP */
 	return data;
 }
 
-WRITE_HANDLER( saturn_scu_w )	/* SCU, DMA/DSP */
+#ifdef	LSB_FIRST
+#define BE_DWORD_XOR(p,o) ((UINT8 *)(p) + ((o)^2))
+#else
+#define BE_DWORD_XOR(p,o) ((UINT8 *)(p) + (o))
+#endif
+
+WRITE_HANDLER( saturn_scu_w )   /* SCU, DMA/DSP */
 {
-	data_t oldword = READ_WORD((UINT8 *)&scu + offset);
+	data_t oldword = READ_WORD(BE_DWORD_XOR(&scu.reg[offset/4],(offset&2)));
 	data_t newword = COMBINE_WORD(oldword, data);
+	WRITE_WORD(BE_DWORD_XOR(&scu.reg[offset/4],(offset&2)), newword);
 
-	switch (offset & 0x1fffe)
+	if ((data & 0xffff0000) == 0)
+		LOG(("saturn_scu_w    %07x <- %04x (%s, PC=%08x)\n", offset, data & 0x0000ffff, SCU_REG_NAME(offset & 0x1ffff), cpu_get_reg(SH2_PC)));
+	else
+	if ((data & 0xffff0000) == 0xff000000)
+		LOG(("saturn_scu_w    %07x <- xx%02x (%s, PC=%08x)\n", offset, data & 0x000000ff, SCU_REG_NAME(offset & 0x1ffff), cpu_get_reg(SH2_PC)));
+	else
+		LOG(("saturn_scu_w    %07x <- %02xxx (%s, PC=%08x)\n", offset, (data & 0x0000ff00) >> 8, SCU_REG_NAME(offset & 0x1ffff), cpu_get_reg(SH2_PC)));
+
+    switch ((offset & 0x1ffff) / 4)
 	{
-	case 0x00: scu.dma[0].radr.w.h = newword; break;
-	case 0x02: scu.dma[0].radr.w.l = newword; break;
-
-	case 0x04: scu.dma[0].wadr.w.h = newword; break;
-	case 0x06: scu.dma[0].wadr.w.l = newword; break;
-
-	case 0x08: scu.dma[0].bytes.w.h = newword; break;
-	case 0x0a: scu.dma[0].bytes.w.l = newword; break;
-
-	case 0x0c: scu.dma[0].add.w.h = newword; break;
-	case 0x0e: scu.dma[0].add.w.l = newword; break;
-
-	case 0x10: scu.dma[0].enable.w.h = newword; break;
-	case 0x12: scu.dma[0].enable.w.l = newword; dma_enable(0); break;
-
-	case 0x14: scu.dma[0].mode.w.h = newword; break;
-	case 0x16: scu.dma[0].mode.w.l = newword; dma_mode(0); break;
-
-	case 0x20: scu.dma[1].radr.w.h = newword; break;
-	case 0x22: scu.dma[1].radr.w.l = newword; break;
-
-	case 0x24: scu.dma[1].wadr.w.h = newword; break;
-	case 0x26: scu.dma[1].wadr.w.l = newword; break;
-
-	case 0x28: scu.dma[1].bytes.w.h = newword; break;
-	case 0x2a: scu.dma[1].bytes.w.l = newword; break;
-
-	case 0x2c: scu.dma[1].add.w.h = newword; break;
-	case 0x2e: scu.dma[1].add.w.l = newword; break;
-
-	case 0x30: scu.dma[1].enable.w.h = newword; break;
-	case 0x32: scu.dma[1].enable.w.l = newword; dma_enable(1); break;
-
-	case 0x34: scu.dma[1].mode.w.h = newword; break;
-	case 0x36: scu.dma[1].mode.w.l = newword; dma_mode(1); break;
-
-	case 0x40: scu.dma[2].radr.w.h = newword; break;
-	case 0x42: scu.dma[2].radr.w.l = newword; break;
-
-	case 0x44: scu.dma[2].wadr.w.h = newword; break;
-	case 0x46: scu.dma[2].wadr.w.h = newword; break;
-
-	case 0x48: scu.dma[2].bytes.w.h = newword; break;
-	case 0x4a: scu.dma[2].bytes.w.l = newword; break;
-
-	case 0x4c: scu.dma[2].add.w.h = newword; break;
-	case 0x4e: scu.dma[2].add.w.l = newword; break;
-
-	case 0x50: scu.dma[2].enable.w.h = newword; break;
-	case 0x52: scu.dma[2].enable.w.l = newword; dma_enable(2); break;
-
-	case 0x54: scu.dma[2].mode.w.h = newword; break;
-	case 0x56: scu.dma[2].mode.w.l = newword; dma_mode(2); break;
-
-	case 0x60: break;
-	case 0x62:
-		if (newword & 1)
-			logerror("saturn_scu_w    DMA forced stop\n");
+	case SCU_DMA0RADR:
+		logerror("saturn_scu_w    dma0radr %08x\n", scu.s.dma[0].radr.d);
 		break;
 
-	case 0x80: scu.pctrl.w.h = newword; break;
-	case 0x82: scu.pctrl.w.l = newword;
-		logerror("saturn_scu_w    pctrl %08x\n", scu.pctrl.d);
-		if (scu.pctrl.d & 0x100)
+	case SCU_DMA0WADR:
+		logerror("saturn_scu_w    dma0wadr %08x\n", scu.s.dma[0].wadr.d);
+		break;
+
+	case SCU_DMA0COUNT:
+		logerror("saturn_scu_w    dma0count %08x\n", scu.s.dma[0].count.d);
+		break;
+
+	case SCU_DMA0INC:
+		logerror("saturn_scu_w    dma0inc %08x\n", scu.s.dma[0].inc.d);
+		break;
+
+	case SCU_DMA0START:
+		logerror("saturn_scu_w    dma0start %08x\n", scu.s.dma[0].start.d);
+		dma_enable(0);
+        break;
+
+	case SCU_DMA0CTRL:
+		logerror("saturn_scu_w    dma0ctrl %08x\n", scu.s.dma[0].mode.d);
+        dma_mode(0);
+		break;
+
+	case SCU_DMA1RADR:
+		logerror("saturn_scu_w    dma1radr %08x\n", scu.s.dma[1].radr.d);
+		break;
+
+	case SCU_DMA1WADR:
+		logerror("saturn_scu_w    dma1wadr %08x\n", scu.s.dma[1].wadr.d);
+		break;
+
+	case SCU_DMA1COUNT:
+		logerror("saturn_scu_w    dma1count %08x\n", scu.s.dma[1].count.d);
+		break;
+
+	case SCU_DMA1INC:
+		logerror("saturn_scu_w    dma1inc %08x\n", scu.s.dma[1].inc.d);
+		break;
+
+	case SCU_DMA1START:
+		logerror("saturn_scu_w    dma1start %08x\n", scu.s.dma[1].start.d);
+		dma_enable(1);
+        break;
+
+	case SCU_DMA1CTRL:
+		logerror("saturn_scu_w    dma1ctrl %08x\n", scu.s.dma[1].mode.d);
+		dma_mode(1);
+		break;
+
+	case SCU_DMA2RADR:
+		logerror("saturn_scu_w    dma2radr %08x\n", scu.s.dma[2].radr.d);
+		break;
+
+	case SCU_DMA2WADR:
+		logerror("saturn_scu_w    dma2wadr %08x\n", scu.s.dma[2].wadr.d);
+		break;
+
+	case SCU_DMA2COUNT:
+		logerror("saturn_scu_w    dma2count %08x\n", scu.s.dma[2].count.d);
+		break;
+
+	case SCU_DMA2INC:
+		logerror("saturn_scu_w    dma2inc %08x\n", scu.s.dma[2].inc.d);
+		break;
+
+	case SCU_DMA2START:
+		logerror("saturn_scu_w    dma2start %08x\n", scu.s.dma[2].start.d);
+		dma_enable(2);
+        break;
+
+	case SCU_DMA2CTRL:
+		logerror("saturn_scu_w    dsppctrl %08x\n", scu.s.dma[2].mode.d);
+		dma_mode(2);
+		break;
+
+	case SCU_DMAFSTOP:
+		if (scu.s.dmafstop.d & 1)
+			logerror("saturn_scu_w    DMA forced stop (%08x)\n", scu.s.dmafstop.d);
+		break;
+
+	case SCU_DSPPCTRL:
+		logerror("saturn_scu_w    dsppctrl %08x\n", scu.s.dsppctrl.d);
+		if (scu.s.dsppctrl.d & 0x100)
 		{
-			scu.dsp_pc.d = scu.pctrl.d & 255;
-			logerror("saturn_scu_w    DSP PC=%x\n", scu.dsp_pc);
+			UINT32 dsp_pc = scu.s.dsppctrl.d & 255;
+			logerror("saturn_scu_w    DSP PC=%x\n", dsp_pc);
 		}
-		if (scu.pctrl.d & 0x10000)
+		if (scu.s.dsppctrl.d & 0x10000)
 			dsp_run(0);
 		else
-		if (scu.pctrl.d & 0x20000)
+		if (scu.s.dsppctrl.d & 0x20000)
 			dsp_run(1);
 		break;
 
-	case 0x90: scu.t0cmp.w.h = newword; break;
-	case 0x92: scu.t0cmp.w.l = newword;
-		if (scu.t0cmp.d < 720)
-			logerror("saturn_scu_w    timer 0 activated on pixel %d\n", scu.t0cmp.d);
+	case SCU_TIMER0CMP:
+		if (scu.s.timer0cmp.d < 720)
+			logerror("saturn_scu_w    timer 0 activated on pixel %d\n", scu.s.timer0cmp.d);
 		break;
 
-	case 0x94: scu.t1data.w.h = newword; break;
-	case 0x96: scu.t1data.w.l = newword; break;
+	case SCU_TIMER1SET:
+		logerror("saturn_scu_w    timer 1 set %d\n", scu.s.timer1set.d);
+		break;
 
-	case 0x98: scu.t1mode.w.h = newword; break;
-	case 0x99: scu.t1mode.b.l = newword;
-		if (scu.t1mode.d & 1)
+	case SCU_TIMER1MODE:
+		if (scu.s.timer1mode.d & 1)
 			logerror("saturn_scu_w    timer 1 activated\n");
 		break;
 
-	case 0xa0: scu.imask.w.h = newword; break;
-	case 0xa2: scu.imask.w.l = newword; scu_set_imask(); break;
-
-	case 0xa4: scu.istat.w.h &= ~newword; break;
-	case 0xa6: scu.istat.w.l &= ~newword; break;
-
-	case 0xa8: scu.aiack.w.h = newword; break;
-	case 0xaa: scu.aiack.w.l = newword; break;
-
-	case 0xb0:
-		break;
-	case 0xb4:
-		break;
-	case 0xb8:
+	case SCU_IRQMASK:
+		scu_set_imask();
 		break;
 
-	case 0xc4:
+	case SCU_IRQSTAT:
 		break;
 
-	default:
-		if ((data & 0xffff0000) == 0xffff0000)
-			logerror("saturn_scu_w    %07x <- %04x (%s, PC=%08x)\n", offset, data & 0x0000ffff, SCU_REG_NAME(offset & 0x1ffff), cpu_get_reg(SH2_PC));
-		else
-		if ((data & 0xffff0000) == 0xff000000)
-			logerror("saturn_scu_w    %07x <- xx%02x (%s, PC=%08x)\n", offset, data & 0x000000ff, SCU_REG_NAME(offset & 0x1ffff), cpu_get_reg(SH2_PC));
-		else
-			logerror("saturn_scu_w    %07x <- %02xxx (%s, PC=%08x)\n", offset, (data & 0x0000ff00) >> 8, SCU_REG_NAME(offset & 0x1ffff), cpu_get_reg(SH2_PC));
+	case SCU_ABUSIACK:
 		break;
 	}
 }
@@ -842,7 +938,7 @@ WRITE_HANDLER( saturn_cd_w )   /* CD */
 		do_command();
 		break;
 	default:
-		if ((data & 0xffff0000) == 0xffff0000)
+		if ((data & 0xffff0000) == 0)
 			logerror("saturn_cd_w     %07x <- %04x (PC=%08x)\n", offset, data & 0x0000ffff, cpu_get_reg(SH2_PC));
 		else
 		if ((data & 0xffff0000) == 0xff000000)
@@ -864,7 +960,7 @@ READ_HANDLER( saturn_minit_r )	/* MINIT */
 
 WRITE_HANDLER( saturn_minit_w )  /* MINIT */
 {
-	if ((data & 0xffff0000) == 0xffff0000)
+	if ((data & 0xffff0000) == 0)
 		logerror("saturn_minit_w  %07x <- %04x\n", offset, data & 0x0000ffff);
 	else
 	if ((data & 0xffff0000) == 0xff000000)
@@ -886,7 +982,7 @@ READ_HANDLER( saturn_sinit_r )	/* SINIT */
 
 WRITE_HANDLER( saturn_sinit_w )  /* SINIT */
 {
-	if ((data & 0xffff0000) == 0xffff0000)
+	if ((data & 0xffff0000) == 0)
 		logerror("saturn_sinit_w  %07x <- %04x\n", offset, data & 0x0000ffff);
 	else
 	if ((data & 0xffff0000) == 0xff000000)
@@ -908,7 +1004,7 @@ READ_HANDLER( saturn_dsp_r )   /* DSP */
 
 WRITE_HANDLER( saturn_dsp_w )  /* DSP */
 {
-	if ((data & 0xffff0000) == 0xffff0000)
+	if ((data & 0xffff0000) == 0)
 		logerror("saturn_dsp_w    %07x <- %04x\n", offset, data & 0x0000ffff);
 	else
 	if ((data & 0xffff0000) == 0xff000000)
@@ -1281,7 +1377,7 @@ WRITE_HANDLER( saturn_vdp1_w )	/* VDP1 registers */
 	data_t newword = COMBINE_WORD(oldword, data);
 	vdp1.reg[offset >> 1] = newword;
 
-	if ((data & 0xffff0000) == 0xffff0000)
+	if ((data & 0xffff0000) == 0)
 		LOG(("saturn_vdp1_w   %07x <- %04x (%s, PC=%08x)\n", offset, data & 0x0000ffff, VDP1_REG_NAME(offset&0x1ffff), cpu_get_reg(SH2_PC)));
 	else
 	if ((data & 0xffff0000) == 0xff000000)
@@ -1641,9 +1737,17 @@ static void vdp2_vblout_draw(struct osd_bitmap * bitmap)
 	}
 }
 
-static void vdp2_vblout_clean(struct osd_bitmap *bitmap)
+static void vdp2_vblout_clean(int which)
 {
+	struct osd_bitmap *bitmap = saturn_bitmap[which];
 	fillbitmap(bitmap, Machine->pens[0], NULL);
+	if (which)
+	{
+		int x, y;
+		for (y = 0; y < 16; y++)
+			for (x = 0; x < 16; x++)
+				plot_pixel(bitmap, x, y, Machine->pens[0x7fff]);
+	}
 }
 
 void *vbl_out;
@@ -1675,7 +1779,7 @@ void f_vbl_out(int param)
 		{
 			if (!blank)
 			{
-				vdp2_vblout_clean(bitmap);
+				vdp2_vblout_clean(video_w);
 				video_w ^= 1;
 				blank = 1;
 			}
@@ -1781,7 +1885,7 @@ WRITE_HANDLER( saturn_vdp2_w )	/* VDP2 registers */
 	vdp2.reg[offset >> 1] = newword;
 
 #if VERBOSE
-	if ((data & 0xffff0000) == 0xffff0000)
+	if ((data & 0xffff0000) == 0)
 		LOG(("saturn_vdp2_w   %07x <- %04x (%s, PC=%08x)\n", offset, data & 0x0000ffff, VDP2_REG_NAME(offset), cpu_get_reg(SH2_PC)));
 	else
 	if ((data & 0xffff0000) == 0xff000000)

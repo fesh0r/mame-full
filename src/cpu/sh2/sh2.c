@@ -179,44 +179,61 @@ INLINE void WL(offs_t A, data_t V)
 	cpu_writemem27bew_dword(A & AM,V);
 }
 
-static void sh2_exception(char *message, int irqline)
+INLINE void sh2_exception(char *message, int irqline)
 {
 	int vector;
 
-	vector = (*sh2.irq_callback)(irqline) * 4;
-	LOG(("SH-2 #%d take irq #%d (VBR+vector %x) after [%s]\n", cpu_getactivecpu(), irqline, sh2.vbr + vector, message));
+	if (irqline <= ((sh2.sr >> 4) & 15))
+		return;
+
+    vector = (*sh2.irq_callback)(irqline);
+	if (sh2.m[(SH2_ICR+1) & 0x1ff] & 1)
+	{
+        vector = 0x40 + irqline / 2;
+		LOG(("SH-2 #%d exception #%d (autovector: $%x) after [%s]\n", cpu_getactivecpu(), irqline, vector, message));
+    }
+	else
+	{
+		LOG(("SH-2 #%d exception #%d (scu vector: $%x) after [%s]\n", cpu_getactivecpu(), irqline, vector, message));
+	}
 	sh2.r[15] -= 4;
 	WL( sh2.r[15], sh2.sr );		/* push SR onto stack */
 	sh2.r[15] -= 4;
 	WL( sh2.r[15], sh2.pc );		/* push PC onto stack */
-	/* set I flags in SR */
-	sh2.sr = (sh2.sr & ~I) | (irqline << 4);
-	/* fetch PC */
-	sh2.pc = RL( sh2.vbr + vector );
+
+    /* set I flags in SR */
+	if (irqline > SH2_INT_15)
+		sh2.sr = sh2.sr | I;
+	else
+		sh2.sr = (sh2.sr & ~I) | (irqline << 4);
+
+    /* fetch PC */
+	sh2.pc = RL( sh2.vbr + vector * 4 );
 	change_pc27bew(sh2.pc & AM);
 }
 
-#define CHECK_PENDING_IRQ(m)										\
-	switch ((sh2.sr >> 4) & 15) 									\
-	{																\
-	case  0: if (sh2.pending_irq & (1 <<  0)) sh2_exception(m, 0);	\
-	case  1: if (sh2.pending_irq & (1 <<  1)) sh2_exception(m, 1);	\
-	case  2: if (sh2.pending_irq & (1 <<  2)) sh2_exception(m, 2);	\
-	case  3: if (sh2.pending_irq & (1 <<  3)) sh2_exception(m, 3);	\
-	case  4: if (sh2.pending_irq & (1 <<  4)) sh2_exception(m, 4);	\
-	case  5: if (sh2.pending_irq & (1 <<  5)) sh2_exception(m, 5);	\
-	case  6: if (sh2.pending_irq & (1 <<  6)) sh2_exception(m, 6);	\
-	case  7: if (sh2.pending_irq & (1 <<  7)) sh2_exception(m, 7);	\
-	case  8: if (sh2.pending_irq & (1 <<  8)) sh2_exception(m, 8);	\
-	case  9: if (sh2.pending_irq & (1 <<  9)) sh2_exception(m, 9);	\
-	case 10: if (sh2.pending_irq & (1 << 10)) sh2_exception(m,10);	\
-	case 11: if (sh2.pending_irq & (1 << 11)) sh2_exception(m,11);	\
-	case 12: if (sh2.pending_irq & (1 << 12)) sh2_exception(m,12);	\
-	case 13: if (sh2.pending_irq & (1 << 13)) sh2_exception(m,13);	\
-	case 14: if (sh2.pending_irq & (1 << 14)) sh2_exception(m,14);	\
-			 if (sh2.pending_irq & (1 << 15)) sh2_exception(m,15);	\
-	}																\
-
+#define CHECK_PENDING_IRQ(message)				\
+{												\
+	int irq = -1;								\
+	if (sh2.pending_irq & (1 <<  0)) irq =	0;	\
+	if (sh2.pending_irq & (1 <<  1)) irq =	1;	\
+	if (sh2.pending_irq & (1 <<  2)) irq =	2;	\
+	if (sh2.pending_irq & (1 <<  3)) irq =	3;	\
+	if (sh2.pending_irq & (1 <<  4)) irq =	4;	\
+	if (sh2.pending_irq & (1 <<  5)) irq =	5;	\
+	if (sh2.pending_irq & (1 <<  6)) irq =	6;	\
+	if (sh2.pending_irq & (1 <<  7)) irq =	7;	\
+	if (sh2.pending_irq & (1 <<  8)) irq =	8;	\
+	if (sh2.pending_irq & (1 <<  9)) irq =	9;	\
+	if (sh2.pending_irq & (1 << 10)) irq = 10;	\
+	if (sh2.pending_irq & (1 << 11)) irq = 11;	\
+	if (sh2.pending_irq & (1 << 12)) irq = 12;	\
+	if (sh2.pending_irq & (1 << 13)) irq = 13;	\
+	if (sh2.pending_irq & (1 << 14)) irq = 14;	\
+	if (sh2.pending_irq & (1 << 15)) irq = 15;	\
+	if (irq >= 0)								\
+		sh2_exception(message,irq); 			\
+}
 
 /* Layout of the registers in the debugger */
 static UINT8 sh2_reg_layout[] = {
