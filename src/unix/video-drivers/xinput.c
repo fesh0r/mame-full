@@ -24,7 +24,9 @@ static int xinput_old_mouse_grab = 0;
 static int xinput_keyboard_grabbed = 0;
 static int xinput_mouse_grabbed = 0;
 static int xinput_cursors_allocated = 0;
-static int xinput_current_mouse[MOUSE_AXES] = {0,0,0,0,0,0,0,0};
+/* 2 should be MOUSE_AXES but we don't support more than 2 axes at the moment */
+static int xinput_current_mouse[2];
+static int xinput_mouse_motion[2];
 static Cursor xinput_normal_cursor;
 static Cursor xinput_invisible_cursor;
 
@@ -135,8 +137,8 @@ void sysdep_update_keyboard (void)
 #endif
 				/* input events */
 				case MotionNotify:
-					xinput_current_mouse[0] += E.xmotion.x_root;
-					xinput_current_mouse[1] += E.xmotion.y_root;
+					xinput_mouse_motion[0] += E.xmotion.x_root;
+					xinput_mouse_motion[1] += E.xmotion.y_root;
 					break;
 				case ButtonPress:
 					mask = TRUE;
@@ -225,8 +227,8 @@ void sysdep_mouse_poll(void)
 		   than 2 axes at the moment so this is faster */
 		for (i=0; i<2; i++)
 		{
-			mouse_data[0].deltas[i] = xinput_current_mouse[i];
-			xinput_current_mouse[i] = 0;
+			mouse_data[0].deltas[i] = xinput_mouse_motion[i];
+			xinput_mouse_motion[i] = 0;
 		}
 	}
 	else
@@ -254,9 +256,9 @@ void sysdep_mouse_poll(void)
 		{
 			mouse_data[0].deltas[0] = pos_x - xinput_current_mouse[0];
 			mouse_data[0].deltas[1] = pos_y - xinput_current_mouse[1];
-			xinput_current_mouse[0] = pos_x;
-			xinput_current_mouse[1] = pos_y;
 		}
+		xinput_current_mouse[0] = pos_x;
+		xinput_current_mouse[1] = pos_y;
 	}
 }
 
@@ -324,7 +326,12 @@ int xinput_open(int force_grab, int event_mask)
     else
       xinput_mouse_grabbed = 1;
   }
-
+  
+  /* Call sysdep_mouse_poll to get the current mouse position.
+     Do this twice to make the mouse[0].deltas[x] == 0 */
+  sysdep_mouse_poll();
+  sysdep_mouse_poll();
+  
   if (window != DefaultRootWindow(display))
   {
     /* setup the cursor */
