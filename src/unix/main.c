@@ -82,7 +82,7 @@ int main(int argc, char **argv)
 		goto leave;
 
 	/* the effect code might want to change the scaling options
-	   to match the choisen effect */
+	   to match the chosen effect */
 	effect_init();
 
 	/* 
