@@ -208,7 +208,13 @@ static const FIGURE busy={
 	"1   111 1",
 	" 1  1 1 1",
 	"  1 1 1 1",
-	"11  1 1 111 e" 
+	"11  1 1 111e" 
+}, rsv={ 
+	"11   11 1   1",
+	"1 1 1   1   1",
+	"11   1   1 1",
+	"1 1   1  1 1",
+	"1 1 11    1e" 
 };
 
 /* size in reality
@@ -254,14 +260,14 @@ void pc1401_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 
 	for (x=RIGHT,y=DOWN,i=0; i<0x28;x+=2) {
 		for (j=0; j<5;j++,i++,x+=2)
-			drawgfx(bitmap, Machine->gfx[0], pc1401_lcd.reg[i],
-					CONTRAST,
+			drawgfx(bitmap, Machine->gfx[CONTRAST], pc1401_lcd.reg[i],
+					0,
 					x,y,x+2,y+21,
 					0, TRANSPARENCY_NONE,0);
 	}
 	for (i=0x67; i>=0x40;x+=2) {
 		for (j=0; j<5;j++,i--,x+=2)
-			drawgfx(bitmap, Machine->gfx[0], pc1401_lcd.reg[i],CONTRAST,
+			drawgfx(bitmap, Machine->gfx[CONTRAST], pc1401_lcd.reg[i],0,
 					x,y,x+2,y+21,
 					0, TRANSPARENCY_NONE,0);
 	}
@@ -301,6 +307,78 @@ void pc1401_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
   603d: 0 BUSY, 1 DEF, 2 SHIFT, 3 HYP, 4 PRO, 5 RUN, 6 CAL
   607c: 0 E, 1 M, 2 (), 3 RAD, 4 G, 5 DE, 6 PRINT
 */
+}
+
+static struct {
+	UINT8 reg[0x100];
+} pc1251_lcd;
+
+READ_HANDLER(pc1251_lcd_read)
+{
+	int data;
+	data=pc1251_lcd.reg[offset&0xff];
+	logerror("pc1251 read %.3x %.2x\n",offset,data);
+	return data;
+}
+
+WRITE_HANDLER(pc1251_lcd_write)
+{
+	logerror("pc1251 write %.3x %.2x\n",offset,data);
+	pc1251_lcd.reg[offset&0xff]=data;
+}
+
+#undef DOWN
+#define DOWN 41
+#undef RIGHT
+#define RIGHT 65
+void pc1251_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+{
+	int x, y, i, j;
+	int color[2];
+	/* HJB: we cannot initialize array with values from other arrays, thus... */
+    color[0] = Machine->pens[pc1401_colortable[PC1251_CONTRAST][0]];
+	color[1] = Machine->pens[pc1401_colortable[PC1251_CONTRAST][1]];
+
+    if (backdrop)
+        copybitmap (bitmap, backdrop->artwork, 0, 0, 0, 0, NULL, 
+					TRANSPARENCY_NONE, 0);
+	else
+		fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);
+
+	for (x=RIGHT,y=DOWN,i=0; i<60;x+=3) {
+		for (j=0; j<5;j++,i++,x+=3)
+			drawgfx(bitmap, Machine->gfx[PC1251_CONTRAST], pc1251_lcd.reg[i],
+					0,
+					x,y,x+3,y+21,
+					0, TRANSPARENCY_NONE,0);
+	}
+	for (i=0x7b; i>=0x40;x+=3) {
+		for (j=0; j<5;j++,i--,x+=3)
+			drawgfx(bitmap, Machine->gfx[PC1251_CONTRAST], pc1251_lcd.reg[i],
+					0,
+					x,y,x+3,y+21,
+					0, TRANSPARENCY_NONE,0);
+	}
+	pc1401_draw_special(bitmap,RIGHT+136,DOWN+10,de,
+						pc1251_lcd.reg[0x3c]&8?color[1]:color[0]);
+	pc1401_draw_special(bitmap,RIGHT+144,DOWN+10,g,
+						pc1251_lcd.reg[0x3c]&4?color[1]:color[0]);
+	pc1401_draw_special(bitmap,RIGHT+148,DOWN+10,rad,
+						pc1251_lcd.reg[0x3d]&4?color[1]:color[0]);
+	pc1401_draw_special(bitmap,RIGHT+20,DOWN+10,def,
+						pc1251_lcd.reg[0x3c]&1?color[1]:color[0]);
+	pc1401_draw_special(bitmap,RIGHT,DOWN+10,shift,
+						pc1251_lcd.reg[0x3d]&2?color[1]:color[0]);
+	pc1401_draw_special(bitmap,RIGHT+40,DOWN+10,pro,
+						pc1251_lcd.reg[0x3e]&1?color[1]:color[0]);
+	pc1401_draw_special(bitmap,RIGHT+55,DOWN+10,run,
+						pc1251_lcd.reg[0x3e]&2?color[1]:color[0]);
+	pc1401_draw_special(bitmap,RIGHT+70,DOWN+10,rsv,
+						pc1251_lcd.reg[0x3e]&4?color[1]:color[0]);
+
+	/* 0x3c 1 def?, 4 g, 8 de
+	   0x3d 2 shift, 4 rad, 8 error
+	   0x3e 1 pro?, 2 run?, 4rsv?*/
 }
 
 static struct {
@@ -356,8 +434,9 @@ void pc1350_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	for (k=0, y=DOWN; k<4; y+=16,k++) {
 		for (x=RIGHT, i=pc1350_addr[k]; i<0xa00; i+=0x200) {
 			for (j=0; j<=0x1d; j++, x+=2) {
-				drawgfx(bitmap, Machine->gfx[0], pc1350_lcd.reg[j+i],
-						PC1350_CONTRAST,
+				drawgfx(bitmap, Machine->gfx[PC1350_CONTRAST], 
+						pc1350_lcd.reg[j+i],
+						0,
 						x,y,x+2,y+16,
 						0, TRANSPARENCY_NONE,0);
 			}
