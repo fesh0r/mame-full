@@ -719,6 +719,8 @@ ROM_START(pc1251)
 	ROM_REGION(0x80,REGION_GFX1,0)
 ROM_END
 
+#define rom_trs80pc3 rom_pc1251
+
 ROM_START(pc1350)
 	ROM_REGION(0x10000,REGION_CPU1,0)
 	/* sc61860a13 6c 13 ld */
@@ -736,6 +738,7 @@ static const struct IODevice io_pc1401[] = {
 #define io_pc1402 io_pc1401
 #define io_pc1350 io_pc1401
 #define io_pc1251 io_pc1401
+#define io_trs80pc3 io_pc1401
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR	COMPANY   FULLNAME */
 
@@ -753,7 +756,7 @@ static const struct IODevice io_pc1401[] = {
 
 /* cpu sc61860 */
 COMPX( 198?, pc1251,	  0, 		pc1251,  pc1251, 	pc1251,	  "Sharp",  "Pocket Computer 1251", GAME_NOT_WORKING)
-// clone tandy trs80 pc-3
+COMPX( 198?, trs80pc3,	  pc1251, 	pc1251,  pc1251, 	pc1251,	  "Tandy",  "TRS80 PC-3", GAME_ALIAS|GAME_NOT_WORKING)
 
 // pc1261/pc1262
 
@@ -781,6 +784,7 @@ extern void pocketc_runtime_loader_init(void)
 	int i;
 	for (i=0; drivers[i]; i++) {
 		if ( strcmp(drivers[i]->name,"pc1251")==0) drivers[i]=&driver_pc1251;
+		if ( strcmp(drivers[i]->name,"trs80pc3")==0) drivers[i]=&driver_trs80pc3;
 		if ( strcmp(drivers[i]->name,"pc1401")==0) drivers[i]=&driver_pc1401;
 		if ( strcmp(drivers[i]->name,"pc1402")==0) drivers[i]=&driver_pc1402;
 		if ( strcmp(drivers[i]->name,"pc1350")==0) drivers[i]=&driver_pc1350;
