@@ -9,6 +9,13 @@
 		<entry name="FOO.TXT" size="0"/>
 	</checkdirectory>
 	<checkfile name="FOO.TXT"/>
+	
+	<putfile name="BAR.TXT">'test'</putfile>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="0"/>
+		<entry name="BAR.TXT" size="4"/>
+	</checkdirectory>
+	<checkfile name="BAR.TXT">'test'</checkfile>
 </imgtooltest>
 
 <imgtooltest name="prodos_525_po">

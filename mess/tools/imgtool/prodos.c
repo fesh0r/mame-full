@@ -522,7 +522,7 @@ static imgtoolerr_t prodos_save_volume_bitmap(imgtool_image *image, const UINT8 
 
 
 
-static void prodos_set_volume_bitmap_bit(UINT8 *buffer, UINT32 block, int value)
+static void prodos_set_volume_bitmap_bit(UINT8 *buffer, UINT16 block, int value)
 {
 	UINT8 mask;
 	buffer += block / 8;
@@ -535,7 +535,7 @@ static void prodos_set_volume_bitmap_bit(UINT8 *buffer, UINT32 block, int value)
 
 
 
-static int prodos_get_volume_bitmap_bit(const UINT8 *buffer, UINT32 block)
+static int prodos_get_volume_bitmap_bit(const UINT8 *buffer, UINT16 block)
 {
 	UINT8 mask;
 	buffer += block / 8;
@@ -546,11 +546,11 @@ static int prodos_get_volume_bitmap_bit(const UINT8 *buffer, UINT32 block)
 
 
 static imgtoolerr_t prodos_alloc_block(imgtool_image *image, UINT8 *bitmap,
-	UINT32 *block)
+	UINT16 *block)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	struct prodos_diskinfo *di;
-	UINT32 bitmap_blocks, i;
+	UINT16 bitmap_blocks, i;
 	UINT8 *alloc_bitmap = NULL;
 
 	di = get_prodos_info(image);
@@ -762,6 +762,8 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 	struct prodos_direnum my_direnum;
 	UINT32 block = ROOTDIR_BLOCK;
 	const char *old_path;
+	UINT32 this_block;
+	UINT32 this_index;
 	UINT32 free_block = 0;
 	UINT32 free_index = 0;
 
@@ -777,6 +779,9 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 
 		do
 		{
+			this_block = direnum->block;
+			this_index = direnum->index;
+
 			err = prodos_get_next_dirent(image, direnum, ent);
 			if (err)
 				return err;
@@ -784,8 +789,8 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 			/* if we need to create a file entry and this is free, track it */
 			if (create && direnum->block && !free_block && !ent->storage_type)
 			{
-				free_block = direnum->block;
-				free_index = direnum->index;
+				free_block = this_block;
+				free_index = this_index;
 			}
 		}
 		while(direnum->block && (strcmp(path, ent->filename) || (
@@ -833,19 +838,83 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 
 
 
-static imgtoolerr_t prodos_grow_file(imgtool_image *image, struct prodos_direnum *direnum,
+static imgtoolerr_t prodos_fill_file(imgtool_image *image, UINT8 *bitmap,
+	UINT16 key_block, int depth, UINT32 blockcount, UINT32 block_index)
+{
+	imgtoolerr_t err;
+	int dirty = FALSE;
+	UINT16 i, sub_block, new_sub_block;
+	UINT8 buffer[BLOCK_SIZE];
+
+	err = prodos_load_block(image, key_block, buffer);
+	if (err)
+		return err;
+
+	for (i = 0; i < 256; i++)
+	{		
+		sub_block = buffer[i + 256];
+		sub_block <<= 8;
+		sub_block += buffer[i + 0];
+
+		/* call depth first */
+		if (depth > 1)
+		{
+			err = prodos_fill_file(image, bitmap, sub_block, depth - 1, blockcount, block_index);
+			if (err)
+				return err;
+		}
+
+		new_sub_block = sub_block;
+		if ((block_index < blockcount) && (sub_block == 0))
+		{
+			err = prodos_alloc_block(image, bitmap, &new_sub_block);
+			if (err)
+				return err;
+		}
+		else if ((block_index >= blockcount) && (sub_block != 0))
+		{
+			new_sub_block = 0;
+			prodos_set_volume_bitmap_bit(bitmap, sub_block, 0);
+		}
+
+		if (new_sub_block != sub_block)
+		{
+			dirty = TRUE;
+			buffer[i + 0] = new_sub_block >> 0;
+			buffer[i + 256] = new_sub_block >> 8;
+		}
+
+		/* increment index */
+		block_index += 1 << ((depth - 1) * 8);
+	}
+
+	/* if we changed anything, then save the block */
+	if (dirty)
+	{
+		err = prodos_save_block(image, key_block, buffer);
+		if (err)
+			return err;
+	}
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t prodos_set_file_block_count(imgtool_image *image, struct prodos_direnum *direnum,
 	struct prodos_dirent *ent, UINT8 *bitmap, UINT32 new_blockcount)
 {
 	imgtoolerr_t err;
 	int depth, new_depth;
-	UINT32 new_block;
+	UINT16 new_block;
 	UINT8 buffer[BLOCK_SIZE];
 
+	/* determine the current tree depth */
 	if (ent->key_pointer == 0)
 		depth = 0;
 	else
 		depth = ent->storage_type / 0x10;
 
+	/* determine the new tree depth */
 	if (new_blockcount == 0)
 		new_depth = 0;
 	else if (new_blockcount <= 1)
@@ -855,6 +924,7 @@ static imgtoolerr_t prodos_grow_file(imgtool_image *image, struct prodos_direnum
 	else
 		new_depth = 3;
 
+	/* do we have to grow the tree? */
 	while(new_depth > depth)
 	{
 		err = prodos_alloc_block(image, bitmap, &new_block);
@@ -874,13 +944,20 @@ static imgtoolerr_t prodos_grow_file(imgtool_image *image, struct prodos_direnum
 		ent->storage_type |= depth * 0x10;
 	}
 
+	/* do we have to shrink the tree? */
+	while(new_depth < depth)
+	{
+		return IMGTOOLERR_UNEXPECTED;
+	}
+
+	/* fill out the file tree */
 	if (ent->key_pointer)
 	{
-/*		err = prodos_fill_file(image, ent->key_pointer, depth, new_blockcount);
+		err = prodos_fill_file(image, bitmap, ent->key_pointer, depth, new_blockcount, 0);
 		if (err)
 			return err;
-*/	}
-	return IMGTOOLERR_UNIMPLEMENTED;
+	}
+	return IMGTOOLERR_SUCCESS;
 }
 
 
@@ -904,10 +981,7 @@ static imgtoolerr_t prodos_set_file_size(imgtool_image *image, struct prodos_dir
 			if (err)
 				goto done;
 
-			if (new_blockcount > blockcount)
-				err = prodos_grow_file(image, direnum, ent, bitmap, new_blockcount);
-			else
-				err = IMGTOOLERR_UNIMPLEMENTED;
+			err = prodos_set_file_block_count(image, direnum, ent, bitmap, new_blockcount);
 			if (err)
 				goto done;
 
@@ -1022,12 +1096,12 @@ static imgtoolerr_t prodos_diskimage_nextenum(imgtool_imageenum *enumeration, im
 
 
 
-static imgtoolerr_t prodos_send_file(imgtool_image *image, UINT32 *filesize,
+static imgtoolerr_t prodos_read_file_tree(imgtool_image *image, UINT32 *filesize,
 	UINT32 block, int nest_level, imgtool_stream *destf)
 {
 	imgtoolerr_t err;
 	UINT8 buffer[BLOCK_SIZE];
-	UINT16 subblock;
+	UINT16 sub_block;
 	size_t bytes_to_write;
 	int i;
 
@@ -1042,13 +1116,13 @@ static imgtoolerr_t prodos_send_file(imgtool_image *image, UINT32 *filesize,
 		{
 			/* retrieve the block pointer; the two bytes are on either half
 			 * of the block */
-			subblock = buffer[i + 256];
-			subblock <<= 8;
-			subblock |= buffer[i + 0];
+			sub_block = buffer[i + 256];
+			sub_block <<= 8;
+			sub_block |= buffer[i + 0];
 
-			if (subblock != 0)
+			if (sub_block != 0)
 			{
-				err = prodos_send_file(image, filesize, subblock, nest_level - 1, destf);
+				err = prodos_read_file_tree(image, filesize, sub_block, nest_level - 1, destf);
 				if (err)
 					return err;
 			}
@@ -1060,6 +1134,55 @@ static imgtoolerr_t prodos_send_file(imgtool_image *image, UINT32 *filesize,
 		bytes_to_write = MIN(*filesize, sizeof(buffer));
 		stream_write(destf, buffer, bytes_to_write);
 		*filesize -= bytes_to_write;
+	}
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t prodos_write_file_tree(imgtool_image *image, UINT32 *filesize,
+	UINT32 block, int nest_level, imgtool_stream *sourcef)
+{
+	imgtoolerr_t err;
+	UINT8 buffer[BLOCK_SIZE];
+	UINT16 sub_block;
+	size_t bytes_to_read;
+	int i;
+
+	/* nothing more to read? bail */
+	if (*filesize == 0)
+		return IMGTOOLERR_SUCCESS;
+
+	err = prodos_load_block(image, block, buffer);
+	if (err)
+		return err;
+
+	if (nest_level > 0)
+	{
+		for (i = 0; i < 256; i++)
+		{
+			sub_block = buffer[i + 256];
+			sub_block <<= 8;
+			sub_block |= buffer[i + 0];
+
+			if (sub_block != 0)
+			{
+				err = prodos_write_file_tree(image, filesize, block, nest_level - 1, sourcef);
+				if (err)
+					return err;
+			}
+		}
+	}
+	else
+	{
+		/* this is a leaf block */
+		bytes_to_read = MIN(*filesize, sizeof(buffer));
+		stream_read(sourcef, buffer, bytes_to_read);
+		*filesize -= bytes_to_read;
+
+		err = prodos_save_block(image, block, buffer);
+		if (err)
+			return err;
 	}
 	return IMGTOOLERR_SUCCESS;
 }
@@ -1078,7 +1201,7 @@ static imgtoolerr_t prodos_diskimage_readfile(imgtool_image *image, const char *
 	if (is_dir_storagetype(ent.storage_type))
 		return IMGTOOLERR_FILENOTFOUND;
 
-	err = prodos_send_file(image, &ent.filesize, ent.key_pointer, 
+	err = prodos_read_file_tree(image, &ent.filesize, ent.key_pointer, 
 		(ent.storage_type >> 4) - 1, destf);
 	if (err)
 		return err;
@@ -1093,15 +1216,28 @@ static imgtoolerr_t prodos_diskimage_writefile(imgtool_image *image, const char 
 	imgtoolerr_t err;
 	struct prodos_dirent ent;
 	struct prodos_direnum direnum;
+	UINT64 file_size;
+
+	file_size = stream_size(sourcef);
 
 	err = prodos_lookup_path(image, filename, CREATE_FILE, &direnum, &ent);
 	if (err)
 		return err;
 
+	/* only work on files */
 	if (is_dir_storagetype(ent.storage_type))
 		return IMGTOOLERR_FILENOTFOUND;
 
-	err = prodos_set_file_size(image, &direnum, &ent, stream_size(sourcef));
+	/* we cannot shrink files yet */
+	if ((ent.filesize / BLOCK_SIZE) > (file_size / BLOCK_SIZE))
+		return IMGTOOLERR_UNIMPLEMENTED;
+
+	err = prodos_set_file_size(image, &direnum, &ent, file_size);
+	if (err)
+		return err;
+
+	err = prodos_write_file_tree(image, &ent.filesize, ent.key_pointer,
+		(ent.storage_type >> 4) - 1, sourcef);
 	if (err)
 		return err;
 
