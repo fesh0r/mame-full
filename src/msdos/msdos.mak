@@ -14,5 +14,4 @@ ifdef MESS
 # additional OS specific object files
 OSOBJS += $(OBJ)/mess/msdos.o $(OBJ)/mess/msdos/nec765.o $(OBJ)/mess/msdos/dirio.o
 
-IMGTOOL_OBJS = $(OBJ)/mess/msdos/dirio.o
 endif

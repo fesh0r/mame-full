@@ -111,6 +111,8 @@ endif
 
 all:	$(EMULATOR) extra
 
+IMGTOOL_OBJS = $(OBJ)/mess/$(OS)/dirio.o
+
 # include the various .mak files
 include src/core.mak
 include src/$(TARGET).mak
