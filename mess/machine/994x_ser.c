@@ -25,8 +25,11 @@
 #include "tms9902.h"
 #include "994x_ser.h"
 
+#define MAX_RS232_CARDS 1/*2*/
+
 /* prototypes */
 static void int_callback(int which, int INT);
+static void xmit_callback(int which, int data);
 static int rs232_cru_r(int offset);
 static void rs232_cru_w(int offset, int data);
 static READ_HANDLER(rs232_mem_r);
@@ -35,11 +38,24 @@ static WRITE_HANDLER(rs232_mem_w);
 /* pointer to the rs232 ROM data */
 static UINT8 *rs232_DSR;
 
-static int pio_direction;
+static int pio_direction;	// a.k.a. PIOOC pio in output mode if 0
+static int pio_handshakeout;
+static int pio_handshakein;
+static int pio_spareout;
+static int pio_sparein;
 static int flag0;	// spare
 static int cts1;	// a.k.a. flag1
 static int cts2;	// a.k.a. flag2
 static int led;		// a.k.a. flag3
+static int pio_out_buffer;
+static int pio_in_buffer;
+
+static mame_file *pio_fp;
+static int pio_readable;
+static int pio_writable;
+static int pio_write = 1/*0*/;	// 1 if image is to be written to
+
+static mame_file *rs232_fp;
 
 static const ti99_exp_card_handlers_t rs232_handlers =
 {
@@ -52,11 +68,87 @@ static const ti99_exp_card_handlers_t rs232_handlers =
 static const tms9902reset_param tms9902_params =
 {
 	3000000.,				/* clock rate (3MHz) */
-	int_callback			/* called when interrupt pin state changes */
-	//rts_callback,			/* called when Request To Send pin state changes */
-	//brk_callback,			/* called when BReaK state changes */
-	//xmit_callback			/* called when a character is transmitted */
+	int_callback,			/* called when interrupt pin state changes */
+	NULL,//rts_callback,			/* called when Request To Send pin state changes */
+	NULL,//brk_callback,			/* called when BReaK state changes */
+	xmit_callback			/* called when a character is transmitted */
 };
+
+
+
+/*
+	Initialize hard disk unit and open a hard disk image
+*/
+int ti99_4_pio_device_init(int id, mame_file *fp, int open_mode)
+{
+	if ((id < 0) || (id >= MAX_RS232_CARDS))
+		return INIT_FAIL;
+
+	pio_fp = fp;
+	/* tell whether the image is writable */
+	pio_readable = (pio_fp && !is_effective_mode_create(open_mode));
+	/* tell whether the image is writable */
+	pio_writable = (pio_fp && is_effective_mode_writable(open_mode));
+	if (pio_write && pio_writable)
+		pio_handshakein = 0;	/* receiver ready */
+	else
+		pio_handshakein = 1;
+
+	return INIT_PASS;
+}
+
+/*
+	close a hard disk image
+*/
+void ti99_4_pio_device_exit(int id)
+{
+	if ((id < 0) || (id >= MAX_RS232_CARDS))
+		return;
+
+	pio_fp = NULL;
+	pio_writable = 0;
+	pio_handshakein = 1;	/* receiver not ready */
+	pio_sparein = 0;
+}
+
+/*
+	Initialize hard disk unit and open a hard disk image
+*/
+int ti99_4_rs232_device_init(int id, mame_file *fp, int open_mode)
+{
+	/*if ((id < 0) || (id >= 2*MAX_RS232_CARDS))
+		return INIT_FAIL;*/
+	if (id != 0)
+		return INIT_FAIL;
+
+	rs232_fp = fp;
+
+	if (rs232_fp)
+	{
+		tms9902_set_cts(id, 1);
+		tms9902_set_dsr(id, 1);
+	}
+	else
+	{
+		tms9902_set_cts(id, 0);
+		tms9902_set_dsr(id, 0);
+	}
+
+	return INIT_PASS;
+}
+
+/*
+	close a hard disk image
+*/
+void ti99_4_rs232_device_exit(int id)
+{
+	/*if ((id < 0) || (id >= 2*MAX_RS232_CARDS))
+		return;*/
+	if (id != 0)
+		return;
+
+	rs232_fp = NULL;
+}
 
 /*
 	Reset rs232 card, set up handlers
@@ -68,6 +160,12 @@ void ti99_rs232_init(void)
 	ti99_exp_set_card_handlers(0x1300, & rs232_handlers);
 
 	pio_direction = 0;
+	pio_handshakeout = 0;
+	pio_spareout = 0;
+	flag0 = 0;
+	cts1 = 0;
+	cts2 = 0;
+	led = 0;
 
 	tms9902_init(0, &tms9902_params);
 	tms9902_init(1, &tms9902_params);
@@ -107,6 +205,14 @@ static void int_callback(int which, int INT)
 	}
 }
 
+static void xmit_callback(int which, int data)
+{
+	UINT8 buf = data;
+
+	if (rs232_fp)
+		mame_fwrite(rs232_fp, &buf, 1);
+}
+
 /*
 	Read rs232 card CRU interface
 
@@ -117,7 +223,7 @@ static int rs232_cru_r(int offset)
 {
 	int reply;
 
-	switch (offset >> 5)
+	switch (offset >> 2)
 	{
 	case 0:
 		/* custom buffer */
@@ -127,6 +233,10 @@ static int rs232_cru_r(int offset)
 			reply = 0x00;
 			if (pio_direction)
 				reply |= 0x02;
+			if (pio_handshakein)
+				reply |= 0x04;
+			if (pio_sparein)
+				reply |= 0x08;
 			if (flag0)
 				reply |= 0x10;
 			if (cts1)
@@ -183,9 +293,47 @@ static void rs232_cru_w(int offset, int data)
 			break;
 
 		case 2:
+			if (data != pio_handshakeout)
+			{
+				pio_handshakeout = data;
+				if (pio_write && pio_writable && (! pio_direction))
+				{	/* PIO in output mode */
+					if (!pio_handshakeout)
+					{	/* write data strobe */
+						/* write data and acknowledge */
+						UINT8 buf = pio_out_buffer;
+						if (mame_fwrite(pio_fp, &buf, 1))
+							pio_handshakein = 1;
+					}
+					else
+					{
+						/* end strobe */
+						/* we can write some data: set receiver ready */
+						pio_handshakein = 0;
+					}
+				}
+				if ((!pio_write) && pio_readable /*&& pio_direction*/)
+				{	/* PIO in input mode */
+					if (!pio_handshakeout)
+					{	/* receiver ready */
+						/* send data and strobe */
+						UINT8 buf;
+						if (mame_fread(pio_fp, &buf, 1))
+							pio_in_buffer = buf;
+						pio_handshakein = 0;
+					}
+					else
+					{
+						/* data acknowledge */
+						/* we can send some data: set transmitter ready */
+						pio_handshakein = 1;
+					}
+				}
+			}
 			break;
 
 		case 3:
+			pio_spareout = data;
 			break;
 
 		case 4:
@@ -238,8 +386,7 @@ static READ_HANDLER(rs232_mem_r)
 	else
 	{
 		/* PIO */
-		/*...*/
-		reply = 0;
+		reply = pio_direction ? pio_in_buffer : pio_out_buffer;
 	}
 
 	return reply;
@@ -253,7 +400,7 @@ static WRITE_HANDLER(rs232_mem_w)
 	if (offset >= 0x1000)
 	{
 		/* PIO */
-		/*...*/
+		pio_out_buffer = data;
 	}
 	else
 	{
