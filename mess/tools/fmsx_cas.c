@@ -5,6 +5,8 @@
 #include "formats/fmsx_cas.h"
 #include "imgtool.h"
 #include "osdtools.h"
+#include "mess/utils.h"
+
 /*
 	MSX module
 
@@ -134,7 +136,7 @@ static int fmsx_cas_image_init(STREAM *f, IMAGE **outimg)
 		{
 		strcpy (image->file_name, pbase);
         if (len > 4)
-			if (!strncasecmp (".cas", image->file_name + len - 4, 4) ) len -= 4;
+			if (!strncmpi (".cas", image->file_name + len - 4, 4) ) len -= 4;
 
 		strcpy (image->file_name + len, ".wav");
 		}
