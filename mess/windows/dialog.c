@@ -11,6 +11,7 @@
 #include "../windows/window.h"
 #include "ui_text.h"
 #include "inputx.h"
+#include "utils.h"
 
 //============================================================
 //	These defines are necessary because the MinGW headers do
@@ -615,16 +616,47 @@ static int dialog_add_single_seqselect(struct dialog_info *di, short x, short y,
 //	win_dialog_add_seqselect
 //============================================================
 
-int win_dialog_add_portselect(void *dialog, const char *item_label, struct InputPort *port, int *span)
+int win_dialog_add_portselect(void *dialog, struct InputPort *port, int *span)
 {
 	struct dialog_info *di = (struct dialog_info *) dialog;
 	short x;
 	short y;
 	struct InputPort *arranged_ports[4];
+	char buf[256];
+	int i;
 	int rows;
+	const char *port_name;
+	const char *last_port_name = NULL;
 
-	assert(item_label);
 	*span = inputx_orient_ports(port, arranged_ports);
+
+	// Come up with 
+	if (*span == 1)
+	{
+		port_name = input_port_name(port);
+	}
+	else
+	{
+		for (i = 0; i < sizeof(arranged_ports) / sizeof(arranged_ports[0]); i++)
+		{
+			if (arranged_ports[i])
+			{
+				port_name = input_port_name(arranged_ports[i]);
+				if (i == 0)
+				{
+					strncpyz(buf, port_name, sizeof(buf) / sizeof(buf[0]));
+					last_port_name = port_name;
+				}
+				else if (strcmp(port_name, last_port_name))
+				{
+					strncatz(buf, " / ", sizeof(buf) / sizeof(buf[0]));
+					strncatz(buf, port_name, sizeof(buf) / sizeof(buf[0]));
+					last_port_name = port_name;
+				}
+			}
+		}
+		port_name = buf;
+	}
 
 	rows = arranged_ports[2] ? (arranged_ports[0] ? 3 : 2) : 1;
 
@@ -633,7 +665,7 @@ int win_dialog_add_portselect(void *dialog, const char *item_label, struct Input
 
 	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
 			x, y + (rows - 1) * (DIM_NORMAL_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2)/2,
-			DIM_LABEL_WIDTH, DIM_NORMAL_ROW_HEIGHT, item_label, DLGITEM_STATIC))
+			DIM_LABEL_WIDTH, DIM_NORMAL_ROW_HEIGHT, port_name, DLGITEM_STATIC))
 		return 1;
 	x += DIM_LABEL_WIDTH + DIM_HORIZONTAL_SPACING;
 

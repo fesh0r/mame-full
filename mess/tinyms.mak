@@ -25,9 +25,7 @@ COREOBJS += \
 	$(OBJ)/mess/config.o	       \
 	$(OBJ)/mess/filemngr.o	       \
 	$(OBJ)/mess/tapectrl.o	       \
-	$(OBJ)/mess/menu.o	       \
 	$(OBJ)/mess/printer.o	       \
-	$(OBJ)/mess/menuentr.o	       \
 	$(OBJ)/mess/utils.o	       \
 	$(OBJ)/mess/bcd.o	       \
 	$(OBJ)/mess/gregoria.o	       \

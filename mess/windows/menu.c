@@ -101,7 +101,6 @@ static void setjoystick(int joystick_num)
 	void *dlg;
 	int player;
 	struct InputPort *in;
-	const char *input_name;
 	int increment;
 
 	player = joystick_num * IPF_PLAYER2;
@@ -116,8 +115,7 @@ static void setjoystick(int joystick_num)
 		increment = 1;
 		if (((in->type & IPF_PLAYERMASK) == player) && is_controller_input_type(in->type))
 		{
-			input_name = input_port_name(in);
-			if (win_dialog_add_portselect(dlg, input_name, in, &increment))
+			if (win_dialog_add_portselect(dlg, in, &increment))
 				goto done;
 		}
 		in += increment;
