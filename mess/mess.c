@@ -1060,6 +1060,18 @@ int messvaliditychecks(void)
 	i = 0;
 	while(drivers[i])
 	{
+		/* check device array */
+		if (drivers[i]->dev)
+		{
+			const struct IODevice *dev = drivers[i]->dev;
+			while(dev->type != IO_END)
+			{
+				assert(dev->type < IO_COUNT);
+				dev++;
+			}
+		}
+
+		/* check computer config, if present */
 		if (drivers[i]->compcfg)
 		{
 			const struct ComputerConfigEntry *entry = drivers[i]->compcfg;

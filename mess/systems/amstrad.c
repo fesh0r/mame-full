@@ -2865,6 +2865,7 @@ static const struct IODevice io_cpcplus[] =
 		NULL,						/* input_chunk */
 		NULL						/* output_chunk */
 	},
+	{ IO_END }
 };
 
 #define io_cpc6128p io_cpcplus

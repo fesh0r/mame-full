@@ -3534,17 +3534,15 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 	case ID_HELP_TROUBLE:
 		Help_HtmlHelp(hMain, MAME32HELP "::/html/mame32_support.htm", HH_DISPLAY_TOPIC, 0);
 		break;
+#endif /* HAS_HELP */
 
 	case ID_HELP_RELEASE:
 		DisplayTextFile(hMain, HELPTEXT_RELEASE);
-		//Help_HtmlHelp(hMain, MAME32HELP "::/html/mame_windows.htm", HH_DISPLAY_TOPIC, 0);
 		break;
 
 	case ID_HELP_WHATS_NEW:
-//		DisplayTextFile(hMain, HELPTEXT_WHATS_NEW);
-		Help_HtmlHelp(hMain, MAME32HELP "::/docs/whatsnew.txt", HH_DISPLAY_TOPIC, 0);
+		DisplayTextFile(hMain, HELPTEXT_WHATS_NEW);
 		break;
-#endif /* HAS_HELP */
 
 	case ID_HELP_ABOUT:
 		DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_ABOUT),
