@@ -12,7 +12,7 @@ struct rc_option mode_opts[] = {
      "1",		0,			0,		NULL,
      "Try / don't try to keep the aspect ratio of a game when selecting the best videomode" },
    { "displayaspectratio", "dar",		rc_float,	&display_aspect_ratio,
-     "1.33",		0.75,			1.33,		NULL,
+     "1.33",		0.5,			2.0,		NULL,
      "Set the display aspect ratio of your monitor. This is used for -keepaspect The default = 1.33 (4/3). Use 0.75 (3/4) for a portrait monitor" },
    { "disablemode",	"dm",			rc_use_function, NULL,
      NULL,		0,			0,		mode_disable,
@@ -104,8 +104,8 @@ void mode_perfect(int *width, int *height)
       else
       {
          pixel_aspect_ratio = (visual_width * widthscale) / 
-	   (yarbsize ? yarbsize :
-	    (visual_height * heightscale * aspect_ratio));
+	   ( (yarbsize ? yarbsize : (visual_height * heightscale)) *
+             aspect_ratio);
       }
       
       /* should we maximize the used height, or the used width? */

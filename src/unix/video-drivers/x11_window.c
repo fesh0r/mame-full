@@ -87,8 +87,8 @@ static unsigned int *hwscale_yuvlookup=NULL;
 static char *hwscale_yv12_rotate_buf0=NULL;
 static char *hwscale_yv12_rotate_buf1=NULL;
 static int hwscale_perfect_yv12=0;
+static float hwscale_resolution_aspect=0.0;
 int hwscale_fullscreen = 0;
-int hwscale_widescreen = 0;
 #define FOURCC_YUY2 0x32595559
 #define FOURCC_YV12 0x32315659
 #define FOURCC_I420 0x30323449
@@ -152,7 +152,6 @@ struct rc_option x11_window_opts[] = {
 #ifdef USE_HWSCALE
 	{ "yuv", NULL, rc_bool, &hwscale_yuv, "0", 0, 0, NULL, "Force YUV mode (for video cards with broken RGB hwscales)" },
 	{ "yv12", NULL, rc_bool, &hwscale_yv12, "0", 0, 0, NULL, "Force YV12 mode (for video cards with broken RGB hwscales)" },
-	{ "widescreen", NULL, rc_bool, &hwscale_widescreen, "0", 0, 0, NULL, "Screen scales to 16:9" },
 	{ "perfect-yv12", NULL, rc_bool, &hwscale_perfect_yv12, "0", 0, 0, NULL, "Use perfect (slower) blitting code for XV YV12 blits" },
 #endif
 	{ "xsync", "xs", rc_bool, &use_xsync, "1", 0, 0, NULL, "Use/don't use XSync instead of XFlush as screen refresh method" },
@@ -883,6 +882,9 @@ int x11_window_create_display (int bitmap_depth)
                                 {
                                         fprintf (stderr_file, "Success.\nUsing Xv & Shared Memory Features to speed up\n");
                                         XSetErrorHandler (None);  /* Restore error handler to default */
+                                        hwscale_resolution_aspect = (float)
+                                          DisplayWidth(display, screen_no) /
+                                          DisplayHeight(display, screen_no);
                                         mit_shm_attached = 1;
                                         use_hwscale = 1;
                                         break;
@@ -1262,6 +1264,9 @@ void x11_window_close_display (void)
    heightscale = orig_heightscale;
    yarbsize    = orig_yarbsize;
 
+   /* Restore error handler to default */
+   XSetErrorHandler (None);
+
    /* better free any allocated colors before freeing the colormap */
    if (pseudo_color_lookup)
    {
@@ -1575,20 +1580,57 @@ void x11_window_refresh_screen (void)
             long pw,ph;
             XGetGeometry(display, window, &_dw, &_dint, &_dint, &_w, &_h, &_duint, &_duint);
 
-		if (normal_use_aspect_ratio)
-			pw = aspect_ratio * _h;
-		else
-			pw = ((double)HWSCALE_WIDTH / (double)HWSCALE_HEIGHT) * _h;
-		ph = _h;
+            if (use_aspect_ratio)
+            {
+                double pixel_aspect_ratio;
 
-		if (hwscale_widescreen)
-			pw *= (double)0.75;
+                /* first of all calculate the pixel aspect_ratio the game has */
+                if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
+                {
+                   pixel_aspect_ratio = 1.0;
+                }
+                else
+                {
+                   pixel_aspect_ratio = visual_width /
+                                          (visual_height * aspect_ratio);
+                                          
+                   if ((Machine->drv->video_attributes &
+                        VIDEO_PIXEL_ASPECT_RATIO_MASK) ==
+                       VIDEO_PIXEL_ASPECT_RATIO_1_2)
+                   {
+                      if (blit_swapxy)
+                         pixel_aspect_ratio *= 2.0;
+                      else
+                         pixel_aspect_ratio *= 0.5;
+                   }
 
-		if (pw > _w)
-		{
-			ph *= ((double)_w / (double)pw);
-			pw = _w;
-		}
+                   if ((Machine->drv->video_attributes &
+                        VIDEO_PIXEL_ASPECT_RATIO_MASK) ==
+                       VIDEO_PIXEL_ASPECT_RATIO_2_1)
+                   {
+                      if (blit_swapxy)
+                         pixel_aspect_ratio *= 0.5;
+                      else
+                         pixel_aspect_ratio *= 2.0;
+                   }
+                }
+/*              printf("aspect: %f, pixel: %f, res:%f, disp: %f\n",
+                  aspect_ratio, pixel_aspect_ratio,
+                  (double)hwscale_resolution_aspect,
+                  (double)display_aspect_ratio); */
+                pw = aspect_ratio * pixel_aspect_ratio * _h *
+                     (hwscale_resolution_aspect/display_aspect_ratio);
+            }
+            else
+		pw = ((double)HWSCALE_WIDTH / (double)HWSCALE_HEIGHT) * _h;
+                
+            ph = _h;
+
+            if (pw > _w)
+            {
+                    ph *= ((double)_w / (double)pw);
+                    pw = _w;
+            }
 
             XvShmPutImage (display, xv_port, window, gc, xvimage,
             0, 0, HWSCALE_WIDTH, HWSCALE_HEIGHT,

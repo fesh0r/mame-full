@@ -491,7 +491,7 @@ int osd_create_display(const struct osd_create_params *params,
 		if ((params->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
 				== VIDEO_PIXEL_ASPECT_RATIO_1_2)
 		{
-			if (params->orientation & ORIENTATION_SWAP_XY)
+			if (blit_swapxy)
 				normal_widthscale *= 2;
 			else
 				normal_heightscale *= 2;
@@ -500,7 +500,7 @@ int osd_create_display(const struct osd_create_params *params,
 		if ((params->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
 				== VIDEO_PIXEL_ASPECT_RATIO_2_1)
 		{
-			if (params->orientation & ORIENTATION_SWAP_XY)
+			if (blit_swapxy)
 				normal_heightscale *= 2;
 			else
 				normal_widthscale *= 2;
