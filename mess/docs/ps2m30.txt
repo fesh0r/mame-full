@@ -1,0 +1,23 @@
+IBM Personal System 2 Model 30
+------------------------------
+
+concret IBM AT model
+
+
+Features
+--------
+integrated vga adapter
+ps2 keyboard and mouse plugins
+3 1/2 high density (1.44mb) inch floppy disk drive
+1 parallel port
+1 serial port (pc dsub)
+ethernet adapter with bnc (coax) and rj45 (twisted pair) connectors
+mf2 keyboard with 101 keys
+greyscale vga monitor
+
+
+Mess Emulation State
+--------------------
+basically the same as ibmat emulation
+vga emulation incomplete
+needs i286 core v1.5
