@@ -11,7 +11,7 @@
  * - Halnote
  *   writes to page 0?
  * - Playball
- *   Has sample ROM.
+ *   Unemulated D7756C, same as src/drivers/homerun.c
  * - Some ascii8 w/ sram need 32kb sram?
  * - MegaRAM
  * - fmsx painter.rom
