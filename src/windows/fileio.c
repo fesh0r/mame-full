@@ -261,7 +261,7 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype, int op
 #ifndef MESS
 				int flags = FILEFLAG_OPENREAD;
 #else
-				int flags = FILEFLAG_CAN_BE_ABSOLUTE | FILEFLAG_OPEN_ZIPS;
+				int flags = FILEFLAG_CAN_BE_ABSOLUTE | FILEFLAG_CRC | FILEFLAG_OPEN_ZIPS;
 				switch(openforwrite) {
 				case OSD_FOPEN_READ:
 					flags |= FILEFLAG_OPENREAD;

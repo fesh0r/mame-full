@@ -114,6 +114,19 @@ Source Changes:
 - With help from SockMaster, fixed some very subtle timer bugs in the m6809
   and hd6309 CPU cores [Nate Woods, tim lindner, John Kowalski]
   
+- New OSD function:
+
+		void osd_device_eject(int type, int id);
+
+  It sets a device image to NULL, as would a device_filename_change(type, id,
+  NULL), but enables osd code to update its osd structures.  The mac and lisa
+  drivers will use this function instead of device_filename_change to eject
+  floppy disks.
+
+  This function is needed because the mac osd code keeps track of each
+  selected file, and the data went out of sync when device_filename_change
+  was called. [Raphael Nabet]
+
 - [GUI] Fixed a very minor bug that caused the software list view background
   to not be updated at the same time as the system list if the snap directory
   was changed. [Nate Woods]
