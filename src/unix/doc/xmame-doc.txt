@@ -7,7 +7,7 @@ and Hans de Goede [mailto:hans@highrise.nl||hans@highrise.nl]
 and Rene' Herrmann (4 doc/sgml) [mailto:rene.herrmann@berlin.de||rene.herrmann@berlin.de]
 and Lawrence Gold (minor editing) [mailto:gold@aros.net||gold@aros.net]
 
-v2.1.1, xx. January 2001
+v2.1.4, 29 March 2001
 
 Abstract
 
@@ -90,7 +90,7 @@ Table of Contents
         4.1.7 License
         4.1.8 Version History
         4.1.9 Author
-    4.2 GL-Mame, an OPENGL driver for xmame
+    4.2 GLmame, an OpenGL driver for xmame
         4.2.1 Requirements
         4.2.2 Compiling and Installing
         4.2.3 Running
@@ -100,7 +100,7 @@ Table of Contents
         4.2.7 Future Work
         4.2.8 License
         4.2.9 Version History
-        4.2.10 Author
+        4.2.10 Authors
 5 contact information and credits
     5.1 Mail 
     5.2 Credits
@@ -754,7 +754,7 @@ for generic (e.g., X11) problems.
 
 * i386/linux/svgalib	 -> Lawrence [mailto:gold@aros.net||<gold@aros.net>]
 
-* i386/linux/xgl	 -> Lawrence [mailto:gold@aros.net||<gold@aros.net>]
+* i386/linux/xgl	 -> Sven Goethel [mailto:sgoethel@jausoft.com||<sgoethel@jausoft.com>]
 
 * i386/linux/xfx	 -> Lawrence [mailto:gold@aros.net||<gold@aros.net>]
 
@@ -1543,7 +1543,7 @@ want to find out the frame rate...).
 
 Q: When I run FXmame, it just dumps core.
 
-A: Make sure you are running FXmame as root. Root priviliges
+A: Make sure you are running FXmame as root. Root privileges
 are required to access the 3Dfx hardware
 
 Q: When I run xmame.xfx, it just hangs at the initial game
@@ -1608,9 +1608,9 @@ v0.1 -- October 27th, 1998 --------------------------
 
 Mike Oliphant [mailto:oliphant@ling.ed.ac.uk||(oliphant@ling.ed.ac.uk)] [http://glmame.linuxgames.com||http://glmame.linuxgames.com]
 
-4.2 GL-Mame, an OPENGL driver for xmame
+4.2 GLmame, an OpenGL driver for xmame
 
-The latest version of this driver can be obtained at: [http://glmame.linuxgames.com||http://glmame.linuxgames.com]
+The latest version of this driver can be obtained at: [http://www.jausoft.com/glmame.html||http://www.jausoft.com/glmame.html]
 
 4.2.1 Requirements
 
@@ -1629,14 +1629,12 @@ To run GLmame you must have:
 Follow the general instructions for installing xmame. To
 specify the OpenGL driver, do the following in the Makefile:
 
-* Select "xgl" as your display method
+* Select "xgl" as your display method.
 
-* Configure the OpenGL variables to correspond to your OpenGL
-  implementation
+* For runtime printed debug info, add "-DGLDEBUG" to the
+  "CFLAGS" variable.
 
-* Configure the CABDIR variable
-
-The GLmame executable is called "xmame.xgl"
+The GLmame executable is called "xmame.xgl".
 
 4.2.3 Running
 
@@ -1650,40 +1648,127 @@ mode.
 A few extra keyboard commands have been added in the OpenGL
 driver:
 
-* RIGHTCTRL-B -- toggle bilinear filtering
+* RIGHT_ALT-A -- toggle antialias filtering (vector)
 
-* RIGHTCTRL-C -- toggle cabinet/fullscreen display
+* RIGHT_ALT-B -- toggle bilinear filtering (raster)
 
-* RIGHTCTRL-T -- toggle phosphor trails --use at your own
-  risk! -- it works best if double buffering is disabled
-  (see below)
+* RIGHT_ALT-C -- toggle cabinet/fullscreen display (both)
+
+* RIGHT_ALT-F -- toggle between fullscreen (max window size)
+  and startup window size (both)
+
+* RIGHT_ALT-O -- toggle draw-bitmap (both; nonsense for raster
+  games, speedup for vector games)
+
+* RIGHT_ALT-T -- toggle phosphor trails (vector)
+
+* RIGHT_ALT-PLUS_PAD -- incr. beam size (vector)
+
+* RIGHT_ALT-MINUS_PAD -- decr. beam size (vector)
 
 The OpenGL driver also adds several command-line options:
 
-    -[no]dblbuffer          Disable/enable double buffering
+    -[no]fullscreen         Start in fullscreen mode
 
-    -cabview                Start in cabinet view mode
+                            (default: disabled)
 
-    -nocabview              Start in fullscreen view mode
+    -[no]gldblbuffer        Disable/enable double buffering
 
-    -cabinet <cabname>      Use the cabinet model <cabname>
+                            (default: enabled)
 
-    -fxgama <value>         3Dfx gamma correction value
+    -gltexture_size <int>   Force the max width and height
+of one 
 
-Two cabinet models are provided. The default, "glmame", is
-designed to look like a standard arcade cabinet. The other,
-"trans", is a box with a transparent games screen that you
-can see through.
+                            texture segment (default: autosize)
+
+    -[no]glforceblitmode /  Force blitter for true color
+modes 15/32bpp
+
+    -[no]glblit             (default: enabled)
+
+    -[no]glext78 /          Force the usage of GL extension
+number 78,
+
+    -[no]glext              if available (palletted texture)
+
+                            (default: enabled)
+
+    -[no]glbilinear /       Disable/enable bilinear filtering
+
+    -[no]glbilin            (default: enabled)
+
+    -[no]gldrawbitmap /     Disable/enable drawing the bitmap;
+e.g., 
+
+    -[no]glbitmap           disable within vector games for
+a speedup
+
+                            (default: enabled)
+
+    -[no]glcolormod         Disable/enable color modulation
+(intensity,
+
+    -[no]glcmod             gamma)
+
+                            (default: enabled)
+
+    -glbeam <float>         Set the beam size for vector
+games
+
+                            (default: 1.0)
+
+    -[no]glalphablending /  Disable/enable alpha blending
+if available
+
+    -[no]glalpha            (default: enabled)
+
+    -[no]glantialias /      Disable/enable antialiasing
+
+    -[no]glaa               (default: enabled)
+
+    -gllibname /            Choose the dynamically loaded
+OpenGL
+
+    -gllib <string>         library
+
+                            (default: libGL.so)
+
+    -glulibname /           Choose the dynamically loaded
+GLU library
+
+    -glulib <string>        (default: libGLU.so)
+
+    -[no]cabview            Don't start/start in cabinet
+view mode
+
+                            (default: don't start in this
+mode)
+
+    -cabinet <cabname>      Specify which cabinet model to
+use
+
+                            (default: glmamejau)
+
+Three cabinet models are provided. The default, "glmamejau",
+is designed to look like a standard arcade cabinet, like
+"glmame". The last one, "trans", is a box with a transparent
+game screen.
 
 Note that in order to display the game options or the fps
-display in vector games, I have to overlay the game bitmap
-over the vector display. This is because I circumvent the
-bitmap entirely in vector games. Drawing the bitmap is a
-big cpu hog, so you'll notice that the game slows down when
-you turn on the fps display (I know, not ideal when you
-want to find out the frame rate...) This overlaying seems
-to have some glitches in cabinet mode. I don't know what
-causes them.
+display in vector games, the game's bitmap is overlaid above
+the vector display. Drawing the bitmap is a big cpu hog
+for some low-end hardware accelerated OpenGL implementations,
+so you'll notice that the game slows down when the bitmap
+is overlaid.
+
+Because bitmap overlaying is the default, you can toggle
+it on and off by pressing the "RIGHT_ALT-O" key, or turn
+it off at startup by using the command line option "-noglbitmap".
+
+A problem with vector games and the cabinet mode is that
+some vector points do not reside within the screen coordinates,
+so you may see some vectors outside of the cabinet's mame
+display.
 
 *** IMPORTANT! ***
 
@@ -1709,7 +1794,7 @@ of the .cab file will be familiar if you have ever programmed
 using OpenGL -- it looks much like an OpenGL display list.
 The format is as follows:
 
-    cabv1.0
+    cabv1.1
 
 This header must be the first 7 characters of the file.
 
@@ -1719,7 +1804,7 @@ Comment lines begin with '#'
 
     begin <type>
 
-Begins a geometry object, where type is one of (polygon,
+Begins a geometry object, where type is one of (points, polygon,
 quads, quad_strip, screen). Each "begin" must be paired
 with an "end" statement. A "polygon" is specified using
 one vertex per, well... vertex. "quads" are four-sided polygons,
@@ -1734,6 +1819,13 @@ description of OpenGL geometry.
     end
 
 Ends the geometry object begun with "begin".
+
+    pointsize <s>
+
+Changes the current pointsize to the corresponding size value
+(specified as a floating point number between 0.0 and, e.g.,
+20.0). Note: You cannot use this statement between begin
+and end!
 
     color4 <r> <g> <b>
 
@@ -1807,59 +1899,130 @@ Moves the camera to a new location (specified as in "goto").
 The transition occurs over <frames> frames.
 
 All commands must be on separate lines. Use the (somewhat)
-commented glmame cabinet as an example to work from.
+commented glmamejau cabinet as an example to work from.
 
 4.2.5 Common Questions (FAQ)
 
 Q: I am only getting a few frames-per-second. This sucks!
-What gives?
+What gives? 
 
 A1: You're probably running Mesa in software mode. You should
 read the "README.3Dfx" file in the Mesa distro. Specifically,
-you need to "setenv MESA_GLX_FX fullscreen"
+you need to "setenv MESA_GLX_FX fullscreen".
 
-A2: You don't have a 3D graphics card. Go buy one!
+A2: You don't have a 3D graphics card. Go buy one (see below)!
 
 Q: When I run xmame.xgl, it just dumps core. That's not as
 much fun as 3D Pacman, now is it?
 
 A1: If you are using a 3Dfx card, make sure you are running
-xmame.xgl as root. Root priviledges are required to access
-the 3Dfx hardware
+xmame.xgl as root. Root privileges are required to access
+the 3Dfx hardware.
 
 A2: If you're using Mesa and haven't upgraded to v3.0, do
-so.
+so. 
 
 Q: When I run xmame.xgl, it just hangs at the initial game
-screen
+screen.
 
 A: Are you running KDE? For some reason, I can't get keyboard
 input under KDE. If you have this problem, switch window
-managers
+managers.
+
+Q: Which graphics cards are usable with xmame.xgl? 
+
+A: We have the following experiences (date 20010327):
+
+* Vodoo3 + DRI OpenGL driver (XFree86 4.0.2), with command
+  line options "-noglaa" and 16bpp X11 server color depth.
+
+* GeForce + NVIDIA OpenGL driver + XFree86 4.0.2 with default
+  command line options and 16/24bpp X11 server color depth.
+
+* NVIDIA TNT2 + NVIDIA OpenGL driver + XFree86 4.0.2 with
+  command line options "-bpp 16" and 16bpp (may be 24bpp
+  also ???) X11 server color depth (OpenGL colortable mapping
+  is buggy).
+
+* NVIDIA TNT + NVIDIA OpenGL driver + XFree86 4.0.2 with
+  command line options "-bpp 16" and 16bpp (may be 24bpp
+  also ???) X11 server color depth (OpenGL colortable mapping
+  is buggy).
+
+* Matrox MGA 400 + DRI OpenGL driver (XFree86 4.0.2) with
+  command line options "-bpp 16", "-noglaa" (???) and 16bpp
+  (may be 24bpp also ???) X11 server color depth (OpenGL
+  colortable mapping is buggy).
+
+All of the above drivers work with the option "-bpp 16" and/or
+"-noglext78", the latter of which is very slow, of course!
+So it looks like an OpenGL implementation bug is causing
+these driver/hardware combinations to only work with these
+command line options. The bug may lie within these OpenGL
+functions:
+
+* glColorTableEXT 
+
+* glColorSubTableEXT
+
+Currently fast and funny driver/hardware combinations are:
+
+* NVIDIA GeForce + NVIDIA OpenGL driver + XFree86 4.0.2;
+  I have tested the GeForce256 (AGP) hardware. 
+
+* Vodoo + DRI OpenGL driver (XFree86 4.0.2); I have tested
+  the Vodoo3 hardware.
+
+Q: When I run xmame.xgl, everything is messed up.
+
+A: Read the above experiences ... and try
+
+* switching your X server's bpp value, e.g. switch from 32bpp
+  or 24bpp to 16bpp; 
+
+* the command line option "-bpp 16";
+
+* the command line option "-noglaa";
+
+* the command line option "-noglext".
 
 4.2.6 Present Limitations/Bugs
 
 * No clipping of vector games (most noticeable in cabinet
-  mode) o No preservation of game aspect ratio in cabinet
-  mode o The phosphor trail stuff is *very* experimental
-  at this point :-)
+  mode).
 
-* There's some weirdness when overlaying the configuration
-  screen or fps display in cabinet mode for vector games
+* No preservation of game aspect ratio in cabinet mode.
 
 4.2.7 Future Work
 
-* Fixing existing bugs
+* Fixing existing bugs .. are there any ? Or are there some
+  unknown features only ;-) ? 
 
 * Optimize the drawing code to update only the changed portions
-  of the game bitmap.
+  of the game bitmap. Optimizing the dirty code ..
 
 4.2.8 License
 
-The GLmame code is Copyright 1998 by Mike Oliphant. It may
-be used and distributed under the terms of the MAME license.
+The GLmame code is based upon Mike Oliphant's GLmame code
+version 0.6. 
+
+The GLMame code is Copyright 1998 by Mike Oliphant. It may
+be used and distributed under the terms of the MAME license. 
+
+Since GLmame version 0.7, the code has been changed and improved
+heavily by Sven Goethel --- no license change, of course!
 
 4.2.9 Version History
+
+v0.83 -- March 29th, 2001 ---------------------------
+
+* Changed the code heavily to improve compatibility and speed.
+  The new code is a re-merge of the GLMame32 code, which
+  is a branch of Mike Oliphant's GLmame code version 0.6. 
+
+* For a detailed list, please consult the file changes.opengl
+  within the distribution's documentation directory! You
+  can also view the current changes.opengl here: [http://www.jausoft.com/glmame.html||http://www.jausoft.com/glmame.html]
 
 v0.6 -- December 14th, 1998 ---------------------------
 
@@ -1897,9 +2060,11 @@ v0.1 -- October 5th, 1998 -------------------------
 
 * first public release
 
-4.2.10 Author
+4.2.10 Authors
 
-Mike Oliphant [mailto:oliphant@ling.ed.ac.uk||(oliphant@ling.ed.ac.uk)] [http://glmame.linuxgames.com||http://glmame.linuxgames.com]
+Since GLmame version 0.7: Sven Goethel [mailto:sgoethel@jausoft.com||(sgoethel@jausoft.com)] [http://www.jausoft.com/glmame.html||http://www.jausoft.com/glmame.html]
+
+Till GLmame version 0.6: Mike Oliphant [mailto:oliphant@ling.ed.ac.uk||(oliphant@ling.ed.ac.uk)] [http://glmame.linuxgames.com||http://glmame.linuxgames.com]
 
 5 contact information and credits
 
@@ -2027,7 +2192,9 @@ Gold)
 
 9. OpenGL code & maintainance
 
-  * Mike Oliphant
+  * Mike Oliphant (original creator)
+
+  * Sven Goethel (from GLmame 0.7 to the present)
 
 10. Network code
 
@@ -2100,7 +2267,7 @@ the core of xmame / xmess.
 
 * [changes.mame||The mame changelog (changes.mame)]
 
-* [changes.mess||The mess changelog (changes.mame)]
+* [changes.mess||The mess changelog (changes.mess)]
 
 7.2 The Unix ChangeLog
 
@@ -2108,3 +2275,6 @@ And now here is the HISTORY of the xmame project (of course
 that's why you are here :;-)) ... René
 
 * [changes.unix||The Unix port changelog (changes.unix)]
+
+* The OpenGL display driver changelog: [changes.opengl||changes.opengl]
+  or [http://www.jausoft.com/glmame.html||http://www.jausoft.com/glmame.html]

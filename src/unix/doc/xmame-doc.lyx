@@ -64,8 +64,7 @@ Juan Antonio Martinez
 
 \layout Date
 
-v2.1.1, xx.
- January 2001
+v2.1.4, 29 March 2001
 \layout Abstract
 
 xmame/xmess documentation with an installation guide, the FAQ (frequently
@@ -1289,10 +1288,10 @@ i386/linux/svgalib
 
 i386/linux/xgl
 \hfill 
- -> Lawrence 
+ -> Sven Goethel 
 \family typewriter 
 
-\begin_inset LatexCommand \url[<gold@aros.net>]{mailto:gold@aros.net}
+\begin_inset LatexCommand \url[<sgoethel@jausoft.com>]{mailto:sgoethel@jausoft.com}
 
 \end_inset 
 
@@ -2686,7 +2685,7 @@ Q: When I run FXmame, it just dumps core.
 \layout Standard
 
 A: Make sure you are running FXmame as root.
- Root priviliges are required to access the 3Dfx hardware
+ Root privileges are required to access the 3Dfx hardware
 \layout Standard
 
 Q: When I run xmame.xfx, it just hangs at the initial game screen.
@@ -2786,11 +2785,11 @@ Mike Oliphant
 
 \layout Subsection
 
-GL-Mame, an OPENGL driver for xmame
+GLmame, an OpenGL driver for xmame
 \layout Standard
 
 The latest version of this driver can be obtained at: 
-\begin_inset LatexCommand \url[http://glmame.linuxgames.com]{http://glmame.linuxgames.com}
+\begin_inset LatexCommand \url[http://www.jausoft.com/glmame.html]{http://www.jausoft.com/glmame.html}
 
 \end_inset 
 
@@ -2822,16 +2821,13 @@ Follow the general instructions for installing xmame.
  To specify the OpenGL driver, do the following in the Makefile:
 \layout Itemize
 
-Select "xgl" as your display method
+Select "xgl" as your display method.
 \layout Itemize
 
-Configure the OpenGL variables to correspond to your OpenGL implementation
-\layout Itemize
-
-Configure the CABDIR variable
+For runtime printed debug info, add "-DGLDEBUG" to the "CFLAGS" variable.
 \layout Standard
 
-The GLmame executable is called "xmame.xgl"
+The GLmame executable is called "xmame.xgl".
 \layout Subsubsection
 
 Running
@@ -2849,48 +2845,190 @@ The program starts up in cabinet mode.
 A few extra keyboard commands have been added in the OpenGL driver:
 \layout Itemize
 
-RIGHTCTRL-B -- toggle bilinear filtering
+RIGHT_ALT-A -- toggle antialias filtering (vector)
 \layout Itemize
 
-RIGHTCTRL-C -- toggle cabinet/fullscreen display
+RIGHT_ALT-B -- toggle bilinear filtering (raster)
 \layout Itemize
 
-RIGHTCTRL-T -- toggle phosphor trails --use at your own risk! -- it works
- best if double buffering is disabled (see below)
+RIGHT_ALT-C -- toggle cabinet/fullscreen display (both)
+\layout Itemize
+
+RIGHT_ALT-F -- toggle between fullscreen (max window size) and startup window
+ size (both)
+\layout Itemize
+
+RIGHT_ALT-O -- toggle draw-bitmap (both; nonsense for raster games, speedup
+ for vector games)
+\layout Itemize
+
+RIGHT_ALT-T -- toggle phosphor trails (vector)
+\layout Itemize
+
+RIGHT_ALT-PLUS_PAD -- incr.
+ beam size (vector)
+\layout Itemize
+
+RIGHT_ALT-MINUS_PAD -- decr.
+ beam size (vector)
 \layout Standard
 
 The OpenGL driver also adds several command-line options:
 \layout Verbatim
 
-    -[no]dblbuffer          Disable/enable double buffering
+    -[no]fullscreen         Start in fullscreen mode
 \layout Verbatim
 
-    -cabview                Start in cabinet view mode
+                            (default: disabled)
 \layout Verbatim
 
-    -nocabview              Start in fullscreen view mode
 \layout Verbatim
 
-    -cabinet <cabname>      Use the cabinet model <cabname>
+    -[no]gldblbuffer        Disable/enable double buffering
 \layout Verbatim
 
-    -fxgama <value>         3Dfx gamma correction value
+                            (default: enabled)
+\layout Verbatim
+
+\layout Verbatim
+
+    -gltexture_size <int>   Force the max width and height of one 
+\layout Verbatim
+
+                            texture segment (default: autosize)
+\layout Verbatim
+
+\layout Verbatim
+
+    -[no]glforceblitmode /  Force blitter for true color modes 15/32bpp
+\layout Verbatim
+
+    -[no]glblit             (default: enabled)
+\layout Verbatim
+
+\layout Verbatim
+
+    -[no]glext78 /          Force the usage of GL extension number 78,
+\layout Verbatim
+
+    -[no]glext              if available (palletted texture)
+\layout Verbatim
+
+                            (default: enabled)
+\layout Verbatim
+
+\layout Verbatim
+
+    -[no]glbilinear /       Disable/enable bilinear filtering
+\layout Verbatim
+
+    -[no]glbilin            (default: enabled)
+\layout Verbatim
+
+\layout Verbatim
+
+    -[no]gldrawbitmap /     Disable/enable drawing the bitmap; e.g., 
+\layout Verbatim
+
+    -[no]glbitmap           disable within vector games for a speedup
+\layout Verbatim
+
+                            (default: enabled)
+\layout Verbatim
+
+\layout Verbatim
+
+    -[no]glcolormod         Disable/enable color modulation (intensity,
+\layout Verbatim
+
+    -[no]glcmod             gamma)
+\layout Verbatim
+
+                            (default: enabled)
+\layout Verbatim
+
+\layout Verbatim
+
+    -glbeam <float>         Set the beam size for vector games
+\layout Verbatim
+
+                            (default: 1.0)
+\layout Verbatim
+
+\layout Verbatim
+
+    -[no]glalphablending /  Disable/enable alpha blending if available
+\layout Verbatim
+
+    -[no]glalpha            (default: enabled)
+\layout Verbatim
+
+\layout Verbatim
+
+    -[no]glantialias /      Disable/enable antialiasing
+\layout Verbatim
+
+    -[no]glaa               (default: enabled)
+\layout Verbatim
+
+\layout Verbatim
+
+    -gllibname /            Choose the dynamically loaded OpenGL
+\layout Verbatim
+
+    -gllib <string>         library
+\layout Verbatim
+
+                            (default: libGL.so)
+\layout Verbatim
+
+\layout Verbatim
+
+    -glulibname /           Choose the dynamically loaded GLU library
+\layout Verbatim
+
+    -glulib <string>        (default: libGLU.so)
+\layout Verbatim
+
+\layout Verbatim
+
+    -[no]cabview            Don't start/start in cabinet view mode
+\layout Verbatim
+
+                            (default: don't start in this mode)
+\layout Verbatim
+
+\layout Verbatim
+
+    -cabinet <cabname>      Specify which cabinet model to use
+\layout Verbatim
+
+                            (default: glmamejau)
+\layout Verbatim
+
 \layout Standard
 
-Two cabinet models are provided.
- The default, "glmame", is designed to look like a standard arcade cabinet.
- The other, "trans", is a box with a transparent games screen that you can
- see through.
+Three cabinet models are provided.
+ The default, "glmamejau", is designed to look like a standard arcade cabinet,
+ like "glmame".
+ The last one, "trans", is a box with a transparent game screen.
 \layout Standard
 
 Note that in order to display the game options or the fps display in vector
- games, I have to overlay the game bitmap over the vector display.
- This is because I circumvent the bitmap entirely in vector games.
- Drawing the bitmap is a big cpu hog, so you'll notice that the game slows
- down when you turn on the fps display (I know, not ideal when you want
- to find out the frame rate...) This overlaying seems to have some glitches
- in cabinet mode.
- I don't know what causes them.
+ games, the game's bitmap is overlaid above the vector display.
+ Drawing the bitmap is a big cpu hog for some low-end hardware accelerated
+ OpenGL implementations, so you'll notice that the game slows down when
+ the bitmap is overlaid.
+\layout Standard
+
+Because bitmap overlaying is the default, you can toggle it on and off by
+ pressing the "RIGHT_ALT-O" key, or turn it off at startup by using the
+ command line option "-noglbitmap".
+\layout Standard
+
+A problem with vector games and the cabinet mode is that some vector points
+ do not reside within the screen coordinates, so you may see some vectors
+ outside of the cabinet's mame display.
 \layout Standard
 
 
@@ -2924,7 +3062,7 @@ A cabinet model directory must contain a geometry file <modelname>.cab, and
  The format is as follows:
 \layout Verbatim
 
-    cabv1.0
+    cabv1.1
 \layout Standard
 
 This header must be the first 7 characters of the file.
@@ -2939,8 +3077,8 @@ Comment lines begin with '#'
     begin <type>
 \layout Standard
 
-Begins a geometry object, where type is one of (polygon, quads, quad_strip,
- screen).
+Begins a geometry object, where type is one of (points, polygon, quads,
+ quad_strip, screen).
  Each "begin" must be paired with an "end" statement.
  A "polygon" is specified using one vertex per, well...
  vertex.
@@ -2958,6 +3096,14 @@ Begins a geometry object, where type is one of (polygon, quads, quad_strip,
 \layout Standard
 
 Ends the geometry object begun with "begin".
+\layout Verbatim
+
+    pointsize <s>
+\layout Standard
+
+Changes the current pointsize to the corresponding size value (specified
+ as a floating point number between 0.0 and, e.g., 20.0).
+ Note: You cannot use this statement between begin and end!
 \layout Verbatim
 
     color4 <r> <g> <b>
@@ -3056,23 +3202,23 @@ Moves the camera to a new location (specified as in "goto").
 \layout Standard
 
 All commands must be on separate lines.
- Use the (somewhat) commented glmame cabinet as an example to work from.
+ Use the (somewhat) commented glmamejau cabinet as an example to work from.
 \layout Subsubsection
 
 Common Questions (FAQ)
 \layout Standard
 
 Q: I am only getting a few frames-per-second.
- This sucks! What gives?
+ This sucks! What gives? 
 \layout Standard
 
 A1: You're probably running Mesa in software mode.
  You should read the "README.3Dfx" file in the Mesa distro.
- Specifically, you need to "setenv MESA_GLX_FX fullscreen"
+ Specifically, you need to "setenv MESA_GLX_FX fullscreen".
 \layout Standard
 
 A2: You don't have a 3D graphics card.
- Go buy one!
+ Go buy one (see below)!
 \layout Standard
 
 Q: When I run xmame.xgl, it just dumps core.
@@ -3081,50 +3227,151 @@ Q: When I run xmame.xgl, it just dumps core.
 
 A1: If you are using a 3Dfx card, make sure you are running xmame.xgl as
  root.
- Root priviledges are required to access the 3Dfx hardware
+ Root privileges are required to access the 3Dfx hardware.
 \layout Standard
 
 A2: If you're using Mesa and haven't upgraded to v3.0, do so.
+ 
 \layout Standard
 
-Q: When I run xmame.xgl, it just hangs at the initial game screen
+Q: When I run xmame.xgl, it just hangs at the initial game screen.
 \layout Standard
 
 A: Are you running KDE? For some reason, I can't get keyboard input under
  KDE.
- If you have this problem, switch window managers
+ If you have this problem, switch window managers.
+\layout Standard
+
+Q: Which graphics cards are usable with xmame.xgl? 
+\layout Standard
+
+A: We have the following experiences (date 20010327):
+\layout Itemize
+
+Vodoo3 + DRI OpenGL driver (XFree86 4.0.2), with command line options "-noglaa"
+ and 16bpp X11 server color depth.
+\layout Itemize
+
+GeForce + NVIDIA OpenGL driver + XFree86 4.0.2 with default command line options
+ and 16/24bpp X11 server color depth.
+\layout Itemize
+
+NVIDIA TNT2 + NVIDIA OpenGL driver + XFree86 4.0.2 with command line options
+ "-bpp 16" and 16bpp (may be 24bpp also ???) X11 server color depth (OpenGL
+ colortable mapping is buggy).
+\layout Itemize
+
+NVIDIA TNT + NVIDIA OpenGL driver + XFree86 4.0.2 with command line options
+ "-bpp 16" and 16bpp (may be 24bpp also ???) X11 server color depth (OpenGL
+ colortable mapping is buggy).
+\layout Itemize
+
+Matrox MGA 400 + DRI OpenGL driver (XFree86 4.0.2) with command line options
+ "-bpp 16", "-noglaa" (???) and 16bpp (may be 24bpp also ???) X11 server
+ color depth (OpenGL colortable mapping is buggy).
+\layout Standard
+
+All of the above drivers work with the option "-bpp 16" and/or "-noglext78",
+ the latter of which is very slow, of course! So it looks like an OpenGL
+ implementation bug is causing these driver/hardware combinations to only
+ work with these command line options.
+ The bug may lie within these OpenGL functions:
+\layout Itemize
+
+glColorTableEXT 
+\layout Itemize
+
+glColorSubTableEXT
+\layout Standard
+
+Currently fast and funny driver/hardware combinations are:
+\layout Itemize
+
+NVIDIA GeForce + NVIDIA OpenGL driver + XFree86 4.0.2; I have tested the GeForce25
+6 (AGP) hardware.
+ 
+\layout Itemize
+
+Vodoo + DRI OpenGL driver (XFree86 4.0.2); I have tested the Vodoo3 hardware.
+\layout Standard
+
+Q: When I run xmame.xgl, everything is messed up.
+\layout Standard
+
+A: Read the above experiences ...
+ and try
+\layout Itemize
+
+switching your X server's bpp value, e.g.
+ switch from 32bpp or 24bpp to 16bpp; 
+\layout Itemize
+
+the command line option "-bpp 16";
+\layout Itemize
+
+the command line option "-noglaa";
+\layout Itemize
+
+the command line option "-noglext".
 \layout Subsubsection
 
 Present Limitations/Bugs
 \layout Itemize
 
-No clipping of vector games (most noticeable in cabinet mode) o No preservation
- of game aspect ratio in cabinet mode o The phosphor trail stuff is *very*
- experimental at this point :-)
+No clipping of vector games (most noticeable in cabinet mode).
 \layout Itemize
 
-There's some weirdness when overlaying the configuration screen or fps display
- in cabinet mode for vector games
+No preservation of game aspect ratio in cabinet mode.
 \layout Subsubsection
 
 Future Work
 \layout Itemize
 
-Fixing existing bugs
+Fixing existing bugs ..
+ are there any ? Or are there some unknown features only ;-) ? 
 \layout Itemize
 
 Optimize the drawing code to update only the changed portions of the game
  bitmap.
+ Optimizing the dirty code ..
 \layout Subsubsection
 
 License
 \layout Standard
 
-The GLmame code is Copyright 1998 by Mike Oliphant.
+The GLmame code is based upon Mike Oliphant's GLmame code version 0.6.
+ 
+\layout Standard
+
+The GLMame code is Copyright 1998 by Mike Oliphant.
  It may be used and distributed under the terms of the MAME license.
+ 
+\layout Standard
+
+Since GLmame version 0.7, the code has been changed and improved heavily
+ by Sven Goethel --- no license change, of course!
 \layout Subsubsection
 
 Version History
+\layout Standard
+
+v0.83 -- March 29th, 2001 ---------------------------
+\layout Itemize
+
+Changed the code heavily to improve compatibility and speed.
+ The new code is a re-merge of the GLMame32 code, which is a branch of Mike
+ Oliphant's GLmame code version 0.6.
+ 
+\layout Itemize
+
+For a detailed list, please consult the file changes.opengl within the distributi
+on's documentation directory! You can also view the current changes.opengl
+ here: 
+\begin_inset LatexCommand \url[http://www.jausoft.com/glmame.html]{http://www.jausoft.com/glmame.html}
+
+\end_inset 
+
+
 \layout Standard
 
 v0.6 -- December 14th, 1998 ---------------------------
@@ -3178,10 +3425,23 @@ v0.1 -- October 5th, 1998 -------------------------
 first public release
 \layout Subsubsection
 
-Author
+Authors
 \layout Standard
 
-Mike Oliphant 
+Since GLmame version 0.7: Sven Goethel 
+\begin_inset LatexCommand \url[(sgoethel@jausoft.com)]{mailto:sgoethel@jausoft.com}
+
+\end_inset 
+
+ 
+\begin_inset LatexCommand \url[http://www.jausoft.com/glmame.html]{http://www.jausoft.com/glmame.html}
+
+\end_inset 
+
+
+\layout Standard
+
+Till GLmame version 0.6: Mike Oliphant 
 \family typewriter 
 
 \begin_inset LatexCommand \url[(oliphant@ling.ed.ac.uk)]{mailto:oliphant@ling.ed.ac.uk}
@@ -3443,7 +3703,10 @@ OpenGL code & maintainance
 \begin_deeper 
 \layout Itemize
 
-Mike Oliphant
+Mike Oliphant (original creator)
+\layout Itemize
+
+Sven Goethel (from GLmame 0.7 to the present)
 \end_deeper 
 \layout Enumerate
 
@@ -3598,7 +3861,7 @@ These are the changelogs of the offical mame and mess release, the core
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[The mess changelog (changes.mame)]{changes.mess}
+\begin_inset LatexCommand \url[The mess changelog (changes.mess)]{changes.mess}
 
 \end_inset 
 
@@ -3615,6 +3878,19 @@ And now here is the HISTORY of the xmame project (of course that's why you
 
 
 \begin_inset LatexCommand \url[The Unix port changelog (changes.unix)]{changes.unix}
+
+\end_inset 
+
+
+\layout Itemize
+
+The OpenGL display driver changelog: 
+\begin_inset LatexCommand \url[changes.opengl]{changes.opengl}
+
+\end_inset 
+
+ or 
+\begin_inset LatexCommand \url[http://www.jausoft.com/glmame.html]{http://www.jausoft.com/glmame.html}
 
 \end_inset 
 

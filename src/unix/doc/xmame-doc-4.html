@@ -68,7 +68,7 @@ ideal when you want to find out the frame rate...).
 <H3>Common Questions (FAQ)</H3>
 
 <P>Q: When I run FXmame, it just dumps core.
-<P>A: Make sure you are running FXmame as root. Root priviliges
+<P>A: Make sure you are running FXmame as root. Root privileges
 are required to access the 3Dfx hardware
 <P>Q: When I run xmame.xfx, it just hangs at the initial game screen.
 <P>A: Are you running KDE? For some reason, I can't get keyboard
@@ -133,11 +133,11 @@ acceleration of vector games (still buggy)</LI>
 <P>Mike Oliphant <CODE>
 <A HREF="mailto:oliphant@ling.ed.ac.uk">(oliphant@ling.ed.ac.uk)</A></CODE> 
 <A HREF="http://glmame.linuxgames.com">http://glmame.linuxgames.com</A><P>
-<H2><A NAME="ss4.2">4.2 GL-Mame, an OPENGL driver for xmame</A>
+<H2><A NAME="ss4.2">4.2 GLmame, an OpenGL driver for xmame</A>
 </H2>
 
 <P>The latest version of this driver can be obtained at: 
-<A HREF="http://glmame.linuxgames.com">http://glmame.linuxgames.com</A><P>
+<A HREF="http://www.jausoft.com/glmame.html">http://www.jausoft.com/glmame.html</A><P>
 <H3>Requirements</H3>
 
 <P>To run GLmame you must have:
@@ -154,11 +154,11 @@ acceleration of vector games (still buggy)</LI>
 the OpenGL driver, do the following in the Makefile:
 <P>
 <UL>
-<LI>Select &quot;xgl&quot; as your display method</LI>
-<LI>Configure the OpenGL variables to correspond to your OpenGL implementation</LI>
-<LI>Configure the CABDIR variable</LI>
+<LI>Select &quot;xgl&quot; as your display method.</LI>
+<LI>For runtime printed debug info, add &quot;-DGLDEBUG&quot; to
+the &quot;CFLAGS&quot; variable.</LI>
 </UL>
-<P>The GLmame executable is called &quot;xmame.xgl&quot;
+<P>The GLmame executable is called &quot;xmame.xgl&quot;.
 <H3>Running</H3>
 
 <P>xmame.xgl runs with the same parameters and uses the same keyboard
@@ -168,31 +168,84 @@ and cool, you'll probably want to actually play in fullscreen mode.
 <P>A few extra keyboard commands have been added in the OpenGL driver:
 <P>
 <UL>
-<LI>RIGHTCTRL-B -- toggle bilinear filtering</LI>
-<LI>RIGHTCTRL-C -- toggle cabinet/fullscreen display</LI>
-<LI>RIGHTCTRL-T -- toggle phosphor trails --use at your own risk!
--- it works best if double buffering is disabled (see below)</LI>
+<LI>RIGHT_ALT-A -- toggle antialias filtering (vector)</LI>
+<LI>RIGHT_ALT-B -- toggle bilinear filtering (raster)</LI>
+<LI>RIGHT_ALT-C -- toggle cabinet/fullscreen display (both)</LI>
+<LI>RIGHT_ALT-F -- toggle between fullscreen (max window size) and
+startup window size (both)</LI>
+<LI>RIGHT_ALT-O -- toggle draw-bitmap (both; nonsense for raster
+games, speedup for vector games)</LI>
+<LI>RIGHT_ALT-T -- toggle phosphor trails (vector)</LI>
+<LI>RIGHT_ALT-PLUS_PAD -- incr. beam size (vector)</LI>
+<LI>RIGHT_ALT-MINUS_PAD -- decr. beam size (vector)</LI>
 </UL>
 <P>The OpenGL driver also adds several command-line options:
 <P>
 <PRE>
-    -[no]dblbuffer          Disable/enable double buffering
-    -cabview                Start in cabinet view mode
-    -nocabview              Start in fullscreen view mode
-    -cabinet &lt;cabname&gt;      Use the cabinet model &lt;cabname&gt;
-    -fxgama &lt;value&gt;         3Dfx gamma correction value
+    -[no]fullscreen         Start in fullscreen mode
+                            (default: disabled)
+
+    -[no]gldblbuffer        Disable/enable double buffering
+                            (default: enabled)
+
+    -gltexture_size &lt;int&gt;   Force the max width and height of one 
+                            texture segment (default: autosize)
+
+    -[no]glforceblitmode /  Force blitter for true color modes 15/32bpp
+    -[no]glblit             (default: enabled)
+
+    -[no]glext78 /          Force the usage of GL extension number 78,
+    -[no]glext              if available (palletted texture)
+                            (default: enabled)
+
+    -[no]glbilinear /       Disable/enable bilinear filtering
+    -[no]glbilin            (default: enabled)
+
+    -[no]gldrawbitmap /     Disable/enable drawing the bitmap; e.g., 
+    -[no]glbitmap           disable within vector games for a speedup
+                            (default: enabled)
+
+    -[no]glcolormod         Disable/enable color modulation (intensity,
+    -[no]glcmod             gamma)
+                            (default: enabled)
+
+    -glbeam &lt;float&gt;         Set the beam size for vector games
+                            (default: 1.0)
+
+    -[no]glalphablending /  Disable/enable alpha blending if available
+    -[no]glalpha            (default: enabled)
+
+    -[no]glantialias /      Disable/enable antialiasing
+    -[no]glaa               (default: enabled)
+
+    -gllibname /            Choose the dynamically loaded OpenGL
+    -gllib &lt;string&gt;         library
+                            (default: libGL.so)
+
+    -glulibname /           Choose the dynamically loaded GLU library
+    -glulib &lt;string&gt;        (default: libGLU.so)
+
+    -[no]cabview            Don't start/start in cabinet view mode
+                            (default: don't start in this mode)
+
+    -cabinet &lt;cabname&gt;      Specify which cabinet model to use
+                            (default: glmamejau)
 </PRE>
-<P>Two cabinet models are provided. The default, &quot;glmame&quot;,
-is designed to look like a standard arcade cabinet. The other, &quot;trans&quot;,
-is a box with a transparent games screen that you can see through.
+<P>Three cabinet models are provided. The default, &quot;glmamejau&quot;,
+is designed to look like a standard arcade cabinet, like &quot;glmame&quot;.
+The last one, &quot;trans&quot;, is a box with a transparent game
+screen.
 <P>Note that in order to display the game options or the fps display
-in vector games, I have to overlay the game bitmap over the vector
-display. This is because I circumvent the bitmap entirely in vector
-games. Drawing the bitmap is a big cpu hog, so you'll notice that
-the game slows down when you turn on the fps display (I know, not
-ideal when you want to find out the frame rate...) This overlaying
-seems to have some glitches in cabinet mode. I don't know what causes
-them.
+in vector games, the game's bitmap is overlaid above the vector display.
+Drawing the bitmap is a big cpu hog for some low-end hardware accelerated
+OpenGL implementations, so you'll notice that the game slows down
+when the bitmap is overlaid.
+<P>Because bitmap overlaying is the default, you can toggle it on
+and off by pressing the &quot;RIGHT_ALT-O&quot; key, or turn it off
+at startup by using the command line option &quot;-noglbitmap&quot;.
+<P>A problem with vector games and the cabinet mode is that some
+vector points do not reside within the screen coordinates, so you
+may see some vectors outside of the cabinet's mame display.
 <P><B>*** IMPORTANT! ***</B>
 <P>If you have trouble with GLmame, or it is slow, read the &quot;Common
 Questions&quot; section. Most of the questions people email me are
@@ -214,7 +267,7 @@ OpenGL -- it looks much like an OpenGL display list. The format is
 as follows:
 <P>
 <PRE>
-    cabv1.0
+    cabv1.1
 </PRE>
 <P>This header must be the first 7 characters of the file.
 <P>
@@ -226,10 +279,10 @@ as follows:
 <PRE>
     begin &lt;type&gt;
 </PRE>
-<P>Begins a geometry object, where type is one of (polygon, quads,
-quad_strip, screen). Each &quot;begin&quot; must be paired with an
-&quot;end&quot; statement. A &quot;polygon&quot; is specified using
-one vertex per, well... vertex. &quot;quads&quot; are four-sided
+<P>Begins a geometry object, where type is one of (points, polygon,
+quads, quad_strip, screen). Each &quot;begin&quot; must be paired
+with an &quot;end&quot; statement. A &quot;polygon&quot; is specified
+using one vertex per, well... vertex. &quot;quads&quot; are four-sided
 polygons, each specified by four vertices in order around the polygon.
 A &quot;quad_strip&quot; is a series of four-sided polygons, each
 of which shares an edge with the polygons before and after it in
@@ -242,6 +295,13 @@ geometry.
     end
 </PRE>
 <P>Ends the geometry object begun with &quot;begin&quot;.
+<P>
+<PRE>
+    pointsize &lt;s&gt;
+</PRE>
+<P>Changes the current pointsize to the corresponding size value
+(specified as a floating point number between 0.0 and, e.g., 20.0).
+Note: You cannot use this statement between begin and end!
 <P>
 <PRE>
     color4 &lt;r&gt; &lt;g&gt; &lt;b&gt;
@@ -327,47 +387,109 @@ for the camera) &lt;nx,ny,nz&gt;.
 <P>Moves the camera to a new location (specified as in &quot;goto&quot;).
 The transition occurs over &lt;frames&gt; frames.
 <P>All commands must be on separate lines. Use the (somewhat) commented
-glmame cabinet as an example to work from.
+glmamejau cabinet as an example to work from.
 <H3>Common Questions (FAQ)</H3>
 
 <P>Q: I am only getting a few frames-per-second. This sucks! What
-gives?
+gives? 
 <P>A1: You're probably running Mesa in software mode. You should
 read the &quot;README.3Dfx&quot; file in the Mesa distro. Specifically,
-you need to &quot;setenv MESA_GLX_FX fullscreen&quot;
-<P>A2: You don't have a 3D graphics card. Go buy one!
+you need to &quot;setenv MESA_GLX_FX fullscreen&quot;.
+<P>A2: You don't have a 3D graphics card. Go buy one (see below)!
 <P>Q: When I run xmame.xgl, it just dumps core. That's not as much
 fun as 3D Pacman, now is it?
 <P>A1: If you are using a 3Dfx card, make sure you are running xmame.xgl
-as root. Root priviledges are required to access the 3Dfx hardware
+as root. Root privileges are required to access the 3Dfx hardware.
 <P>A2: If you're using Mesa and haven't upgraded to v3.0, do so.
-<P>Q: When I run xmame.xgl, it just hangs at the initial game screen
+<P>
+<P>Q: When I run xmame.xgl, it just hangs at the initial game screen.
 <P>A: Are you running KDE? For some reason, I can't get keyboard
-input under KDE. If you have this problem, switch window managers
+input under KDE. If you have this problem, switch window managers.
+<P>Q: Which graphics cards are usable with xmame.xgl? 
+<P>A: We have the following experiences (date 20010327):
+<P>
+<UL>
+<LI>Vodoo3 + DRI OpenGL driver (XFree86 4.0.2), with command line
+options &quot;-noglaa&quot; and 16bpp X11 server color depth.</LI>
+<LI>GeForce + NVIDIA OpenGL driver + XFree86 4.0.2 with default command
+line options and 16/24bpp X11 server color depth.</LI>
+<LI>NVIDIA TNT2 + NVIDIA OpenGL driver + XFree86 4.0.2 with command
+line options &quot;-bpp 16&quot; and 16bpp (may be 24bpp also ???)
+X11 server color depth (OpenGL colortable mapping is buggy).</LI>
+<LI>NVIDIA TNT + NVIDIA OpenGL driver + XFree86 4.0.2 with command
+line options &quot;-bpp 16&quot; and 16bpp (may be 24bpp also ???)
+X11 server color depth (OpenGL colortable mapping is buggy).</LI>
+<LI>Matrox MGA 400 + DRI OpenGL driver (XFree86 4.0.2) with command
+line options &quot;-bpp 16&quot;, &quot;-noglaa&quot; (???) and 16bpp
+(may be 24bpp also ???) X11 server color depth (OpenGL colortable
+mapping is buggy).</LI>
+</UL>
+<P>All of the above drivers work with the option &quot;-bpp 16&quot;
+and/or &quot;-noglext78&quot;, the latter of which is very slow,
+of course! So it looks like an OpenGL implementation bug is causing
+these driver/hardware combinations to only work with these command
+line options. The bug may lie within these OpenGL functions:
+<P>
+<UL>
+<LI>glColorTableEXT </LI>
+<LI>glColorSubTableEXT</LI>
+</UL>
+<P>Currently fast and funny driver/hardware combinations are:
+<P>
+<UL>
+<LI>NVIDIA GeForce + NVIDIA OpenGL driver + XFree86 4.0.2; I have
+tested the GeForce256 (AGP) hardware. </LI>
+<LI>Vodoo + DRI OpenGL driver (XFree86 4.0.2); I have tested the
+Vodoo3 hardware.</LI>
+</UL>
+<P>Q: When I run xmame.xgl, everything is messed up.
+<P>A: Read the above experiences ... and try
+<P>
+<UL>
+<LI>switching your X server's bpp value, e.g. switch from 32bpp or
+24bpp to 16bpp; </LI>
+<LI>the command line option &quot;-bpp 16&quot;;</LI>
+<LI>the command line option &quot;-noglaa&quot;;</LI>
+<LI>the command line option &quot;-noglext&quot;.</LI>
+</UL>
 <H3>Present Limitations/Bugs</H3>
 
 <P>
 <UL>
-<LI>No clipping of vector games (most noticeable in cabinet mode)
-o No preservation of game aspect ratio in cabinet mode o The phosphor
-trail stuff is *very* experimental at this point :-)</LI>
-<LI>There's some weirdness when overlaying the configuration screen
-or fps display in cabinet mode for vector games</LI>
+<LI>No clipping of vector games (most noticeable in cabinet mode).</LI>
+<LI>No preservation of game aspect ratio in cabinet mode.</LI>
 </UL>
 <H3>Future Work</H3>
 
 <P>
 <UL>
-<LI>Fixing existing bugs</LI>
+<LI>Fixing existing bugs .. are there any ? Or are there some unknown
+features only ;-) ? </LI>
 <LI>Optimize the drawing code to update only the changed portions
-of the game bitmap.</LI>
+of the game bitmap. Optimizing the dirty code ..</LI>
 </UL>
 <H3>License</H3>
 
-<P>The GLmame code is Copyright 1998 by Mike Oliphant. It may be
-used and distributed under the terms of the MAME license.
+<P>The GLmame code is based upon Mike Oliphant's GLmame code version
+0.6. 
+<P>The GLMame code is Copyright 1998 by Mike Oliphant. It may be
+used and distributed under the terms of the MAME license. 
+<P>Since GLmame version 0.7, the code has been changed and improved
+heavily by Sven Goethel --- no license change, of course!
 <H3>Version History</H3>
 
+<P>v0.83 -- March 29th, 2001 ---------------------------
+<P>
+<UL>
+<LI>Changed the code heavily to improve compatibility and speed.
+The new code is a re-merge of the GLMame32 code, which is a branch
+of Mike Oliphant's GLmame code version 0.6. </LI>
+<LI>For a detailed list, please consult the file changes.opengl within
+the distribution's documentation directory! You can also view the
+current changes.opengl here: 
+<A HREF="http://www.jausoft.com/glmame.html">http://www.jausoft.com/glmame.html</A>
+</LI>
+</UL>
 <P>v0.6 -- December 14th, 1998 ---------------------------
 <P>
 <UL>
@@ -405,9 +527,12 @@ and cabinet selection command-line options</LI>
 <UL>
 <LI>first public release</LI>
 </UL>
-<H3>Author</H3>
+<H3>Authors</H3>
 
-<P>Mike Oliphant <CODE>
+<P>Since GLmame version 0.7: Sven Goethel 
+<A HREF="mailto:sgoethel@jausoft.com">(sgoethel@jausoft.com)</A>
+<A HREF="http://www.jausoft.com/glmame.html">http://www.jausoft.com/glmame.html</A><P>
+<P>Till GLmame version 0.6: Mike Oliphant <CODE>
 <A HREF="mailto:oliphant@ling.ed.ac.uk">(oliphant@ling.ed.ac.uk)</A></CODE> 
 <A HREF="http://glmame.linuxgames.com">http://glmame.linuxgames.com</A><P>
 <HR>

@@ -2,6 +2,81 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.37b13.2
+	- Added an updated romulan.pl to contrib/tools.  (Nathan Hand)
+	- Added an updated romalizer to contrib/tools.  (Christopher Stone)
+
+Release 0.37b13.1 (xmame only)
+	- Everything from MAME 0.37b13.
+	- Numerous updates to the OpenGL target.  (Sven Goethel)
+	- Added Photon2 display support for the QNX target.  (Travis Coady)
+	- You can now run "make clean68k" before building with a different 68k
+	  core.  (Mike Coates)
+	- Applied a patch from StretchMAME that prevents a bunch of games from
+	  segfaulting on startup.  (Shyouzou Sugitani)
+	- A fix for the sprites in CVS games.  (Nicola Salmoria)
+
+Release 0.37b12.1
+	- Everything from MAME and MESS 0.37b12.
+	- The SDL install no longer sets SUID root on the binary.  (Torbjörn
+	  Andersson)
+	- Updated mame_perl to 1.3.  (Stefan Becker)
+	- Added support for the RGB 555 mode for targets which support 16bpp
+	  displays.
+	- Added support for the RGB 888 mode to the x11_window, DGA, and SDL
+	  targets.  (Shyouzou Sugitani, Lawrence Gold)
+	- Added -sdlmapkey/-sdlmk to the SDL target to allow the remapping of
+	  keys.  This should help users with non-U.S. keyboards.
+	- Revised the example key remappings in doc/xmamerc.dist and
+	  src/unix/xmamerc-keybinding-notes.txt to match the current keycodes.
+	  Also added SDL examples.
+	- Added the beginnings of QNX 6/QNX 4 support.  The X11 display driver
+	  should at least work.  (Travis Coady)
+	- The semicolon/colon and period keys should now work for the SDL target
+	  in xmess (tested with the a800 driver). 
+	- Updated/added a couple of key mappings (\", :, and <) to match the
+	  MS-DOS version.
+	- Improved OpenGL support, including better performance, dynamic
+	  checking of OpenGL extensions, and dynamic fetching of the max texture
+	  size.  (Sven Goethel)
+
+Release 0.37b11.2
+	- MESS 0.37b11 is now included.
+	- Full DGA 2.0 support, with automatic depth-switching.  A build on an
+	  XFree86 4.0.x system will automatically use the DGA 2.0 calls; if the
+	  binary with 2.0 support is run on an XFree86 3.3.x system, it will
+	  fall back on DGA 1.0 calls.  (Shyouzou Sugitani, Stea Greene, Matt
+	  Lowry)
+	- Support for either NetBSD or OSS sound under OpenBSD.  The default is
+	  the NetBSD sound interface, which reportedly works better.  (Claudio
+	  Castiglia)
+	- Cleaner install mechanism in the makefiles; included install-sh script
+	  from X11R5 for platforms which lack the install command; the default
+	  install prefix is now "/usr/local".  (Claudio Castiglia) 
+	- SDL mouse support has been added.  (riq)
+	- SDL target should now have all previously missing update routines.
+	  (riq)
+	- Added -joydevname/-jdev option to select the device prefix for the
+	  i386 joystick.  Defaults to "/dev/js" for Linux and "/dev/joy" *BSD.
+	  (Thanks to Laurent Simon for the suggestion.)
+
+Release 0.37b11.1 (xmame only)
+	- Everything from MAME 0.37b11.
+	- Merged in changes from the src/unix tree that were in the MESS CVS;
+	  one of which is that if MAME_DEBUG is enabled, the binary will be
+	  called xmamed.<target> or xmessd.<target>.  (Christopher Stone)
+	- Commented out the call to osd_dirty_merge() in SDL.c.  The SDL target
+	  has its own dirty handling.  (Hans de Goede)
+	- The menu colors no longer fade when you pause a game.  (Sean Young)
+	- xmess compiles again without having to uncomment VLM5030 in
+	  src/mess.mak. (Christopher Stone, Lawrence Gold)
+	- make -f <makefile> tools should work again for xmess.
+	- Possible fix for a problem with the DGA target on ATI Rage Mobility
+	  which caused a switch to fullscreen mode to not change the resolution.
+	  (Lawrence Gold)
+	- -listgamelist no longer prints the column headers (they are shown by
+	  -listgamelistheader).  (Lawrence Gold)
+
 Release 0.37b10.1
 	- Everything from mame 0.37b10 and mess 0.37b10
 	- ALSA sound driver uses stream mode; this fixes the problem of
