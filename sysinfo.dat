@@ -3474,6 +3474,20 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=sms
+$bio
+Sega Master System
+
+
+Usage Notes/Known Issues:
+
+This driver runs just about everything!.
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=snes
 $bio
 Super Nintendo Entertainment System
