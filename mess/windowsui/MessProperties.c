@@ -193,7 +193,7 @@ static BOOL SoftwareDirectories_OnBeginLabelEdit(HWND hDlg, NMHDR* pNMHDR)
     if (pItem->iItem == ListView_GetItemCount(GetDlgItem(hDlg, IDC_DIR_LIST)) - 1)
     {
         //FIXME!!!!  I cannot get this to compile under mingw
-        //Edit_SetText(ListView_GetEditControl(GetDlgItem(hDlg, IDC_DIR_LIST)), "");
+        Edit_SetText(ListView_GetEditControl(GetDlgItem(hDlg, IDC_DIR_LIST)), "");
     }
 
     return bResult;
