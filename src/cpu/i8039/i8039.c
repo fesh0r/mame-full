@@ -14,6 +14,22 @@
 #include "mamedbg.h"
 #include "i8039.h"
 
+#ifdef RUNTIME_LOADER
+#define i8048_icount i8048_ICount
+struct cpu_interface
+i8035_interface=
+    CPU0(I8035,    i8035,    1,  0,1.00,I8035_IGNORE_INT,  I8035_EXT_INT,  -1,             8, 16,     0,16,LE,1, 2), i8039_interface=
+    CPU0(I8039,    i8039,    1,  0,1.00,I8039_IGNORE_INT,  I8039_EXT_INT,  -1,             8, 16,     0,16,LE,1, 2), i8048_interface=
+    CPU4(I8048,    i8048,    1,  0,1.00,I8048_IGNORE_INT,  I8048_EXT_INT,  -1,             8, 16,     0,16,LE,1, 2);
+
+extern void i8039_runtime_loader_init(void)
+{
+        cpuintf[CPU_I8035]=i8035_interface;
+        cpuintf[CPU_I8039]=i8039_interface;
+        cpuintf[CPU_I8048]=i8048_interface;
+}
+#endif
+
 
 /* Layout of the registers in the debugger */
 static UINT8 i8039_reg_layout[] = {
@@ -573,6 +589,9 @@ static int Ext_IRQ(void)
 		push(R.PC.b.l);
 		push((R.PC.b.h & 0x0f) | (R.PSW & 0xf0));
 		R.PC.w.l = 0x03;
+		#ifdef MESS
+			change_pc16(0x03);
+		#endif
 		R.A11ff = R.A11;
 		R.A11   = 0;
 		return 2;		/* 2 clock cycles used */
@@ -1014,6 +1033,18 @@ const char *i8048_info(void *context, int regnum)
 	}
 	return i8039_info(context,regnum);
 }
+
+/* add these in the memory region for better usage of mame debugger */
+READ_HANDLER(i8048_internal_r)
+{
+    return R.RAM[offset&0x7f];
+}
+
+WRITE_HANDLER(i8048_internal_w)
+{
+    R.RAM[offset&0x7f]=data;
+}
+
 
 unsigned i8048_dasm(char *buffer, unsigned pc)
 {
