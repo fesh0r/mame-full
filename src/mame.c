@@ -463,23 +463,40 @@ int run_game(int game)
 
 	if (osd_init() == 0)
 	{
-		if (init_machine() == 0)
+#ifdef MESS
+		if (init_devices(gamedrv))
+        {
+			if (!bailing)
+			{
+				bailing = 1;
+				printf("Unable to start device emulation\n");
+			}
+        }
+		else
+		do
 		{
-			if (run_machine() == 0)
-				err = 0;
+			mess_keep_going = 0;
+#endif
+			if (init_machine() == 0)
+			{
+				if (run_machine() == 0)
+					err = 0;
+				else if (!bailing)
+				{
+					bailing = 1;
+					printf("Unable to start machine emulation\n");
+				}
+
+				shutdown_machine();
+			}
 			else if (!bailing)
 			{
 				bailing = 1;
-				printf("Unable to start machine emulation\n");
+				printf("Unable to initialize machine emulation\n");
 			}
-
-			shutdown_machine();
-		}
-		else if (!bailing)
-		{
-			bailing = 1;
-			printf("Unable to initialize machine emulation\n");
-		}
+#ifdef MESS
+		} while (mess_keep_going);
+#endif
 
 		osd_exit();
 	}
@@ -546,8 +563,6 @@ int init_machine(void)
 
 	#ifdef MESS
 	load_next:
-		if (init_devices(gamedrv))
-			goto out_free;
 	#endif
 
 	/* Mish:  Multi-session safety - set spriteram size to zero before memory map is set up */
@@ -895,7 +910,13 @@ int updatescreen(void)
 
 	if (drv->vh_eof_callback) (*drv->vh_eof_callback)();
 
-	return 0;
+#ifdef MESS
+	/* leave the driver and start over if mess_keep_going is set */
+	if (mess_keep_going)
+		return 1;
+#endif
+
+    return 0;
 }
 
 
