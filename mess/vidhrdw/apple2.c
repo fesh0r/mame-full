@@ -19,6 +19,7 @@ static int text_videobase;
 static int dbltext_videobase;
 static int lores_videobase;
 static int fgcolor, bgcolor, flash;
+static int alt_charset_value;
 static UINT16 *hires_artifact_map;
 static UINT16 *dhires_artifact_map;
 static UINT8 *lores_tiledata;
@@ -92,7 +93,7 @@ static void apple2_generaltext_gettileinfo(int gfxset, int videobase, int memory
 
 	if (effective_a2() & VAR_ALTCHARSET)
 	{
-		character |= 0x200;
+		character |= alt_charset_value;
 	}
 	else if (flash && (character >= 0x40) && (character <= 0x7f))
 	{
@@ -341,6 +342,7 @@ static int internal_apple2_video_start(UINT32 ignored_softswitches, int hires_mo
 	bgcolor = 0;
 	flash = 0;
 	apple2_font = memory_region(REGION_GFX1);
+	alt_charset_value = memory_region_length(REGION_GFX1) / 16;
 
 	text_tilemap = tilemap_create(
 		apple2_text_gettileinfo,
