@@ -604,10 +604,10 @@ WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 					
 					EventList_AddItemOffset((EVENT_LIST_CODE_CRTC_WRITE<<6), data, cpu_getcurrentcycles());
 				}
-
+#if 0	/* HJB disabled, because it is not in mess/vidhrdw/m6845.c */
                                 /* recalc time */
                                 crtc6845_recalc(0, time_delta);
-                                  
+#endif
                               /* write data */
                               crtc6845_register_w(0,data);
 
@@ -1011,7 +1011,8 @@ void    amstrad_interrupt_timer_callback(int dummy)
 	/* update counter */
 	amstrad_52_divider++;
 
-	/* vsync synchronisation active? */
+#if 0
+    /* vsync synchronisation active? */
 	if (amstrad_52_divider_vsync_reset!=0)
 	{
 		amstrad_52_divider_vsync_reset--;
@@ -1031,7 +1032,7 @@ void    amstrad_interrupt_timer_callback(int dummy)
 			return;
 		}
 	}
-
+#endif
 	/* counter==52? */
     if (amstrad_52_divider == 52)
     {
