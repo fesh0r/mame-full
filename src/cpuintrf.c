@@ -136,6 +136,9 @@ void adsp2105_get_info(UINT32 state, union cpuinfo *info);
 #if (HAS_ADSP2115)
 void adsp2115_get_info(UINT32 state, union cpuinfo *info);
 #endif
+#if (HAS_ADSP2181)
+void adsp2181_get_info(UINT32 state, union cpuinfo *info);
+#endif
 #if (HAS_PSXCPU)
 #include "cpu/mips/psx.h"
 #endif
@@ -556,6 +559,9 @@ const struct
 #endif
 #if (HAS_ADSP2115)
 	{ CPU_ADSP2115, adsp2115_get_info },
+#endif
+#if (HAS_ADSP2181)
+	{ CPU_ADSP2181, adsp2181_get_info },
 #endif
 #if (HAS_PSXCPU)
 	{ CPU_PSXCPU, psxcpu_get_info },

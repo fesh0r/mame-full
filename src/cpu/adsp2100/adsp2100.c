@@ -35,6 +35,7 @@
 #define CHIP_TYPE_ADSP2104	2
 #define CHIP_TYPE_ADSP2105	3
 #define CHIP_TYPE_ADSP2115	4
+#define CHIP_TYPE_ADSP2181	5
 
 
 /*###################################################################################################
@@ -145,6 +146,9 @@ typedef struct
 	UINT8		fl0;
 	UINT8		fl1;
 	UINT8		fl2;
+	UINT16		idma_addr;
+	UINT16		idma_cache;
+	UINT8		idma_offs;
 
 	/* interrupt handling */
 	UINT8		imask;
@@ -271,6 +275,15 @@ INLINE void set_core_2105(void)
 INLINE void set_core_2115(void)
 {
 	chip_type = CHIP_TYPE_ADSP2115;
+	mstat_mask = 0x7f;
+	imask_mask = 0x3f;
+}
+#endif
+
+#if (HAS_ADSP2181)
+INLINE void set_core_2181(void)
+{
+	chip_type = CHIP_TYPE_ADSP2181;
 	mstat_mask = 0x7f;
 	imask_mask = 0x3f;
 }
@@ -475,6 +488,7 @@ static void adsp2100_reset(void *param)
 		case CHIP_TYPE_ADSP2104:
 		case CHIP_TYPE_ADSP2105:
 		case CHIP_TYPE_ADSP2115:
+		case CHIP_TYPE_ADSP2181:
 			adsp2100.pc = 0;
 			break;
 
@@ -2165,4 +2179,146 @@ void adsp2115_get_info(UINT32 state, union cpuinfo *info)
 			break;
 	}
 }
+#endif
+
+
+#if (HAS_ADSP2181)
+/**************************************************************************
+ * ADSP2181 section
+ **************************************************************************/
+
+static void adsp2181_reset(void *param)
+{
+	set_core_2181();
+	adsp2100_reset(param);
+}
+
+static void adsp2181_set_context(void *src)
+{
+	/* copy the context */
+	if (src)
+		adsp2100 = *(adsp2100_Regs *)src;
+
+	/* reset the chip type */
+	set_core_2181();
+
+	/* check for IRQs */
+	check_irqs();
+}
+
+void adsp2181_load_boot_data(data8_t *srcdata, data32_t *dstdata)
+{
+	adsp2104_load_boot_data(srcdata, dstdata);
+}
+
+static void adsp2181_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_INPUT_STATE + ADSP2181_IRQ0:	set_irq_line(ADSP2181_IRQ0, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + ADSP2181_IRQ1:	set_irq_line(ADSP2181_IRQ1, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + ADSP2181_IRQ2:	set_irq_line(ADSP2181_IRQ2, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + ADSP2181_SPORT0_RX:set_irq_line(ADSP2181_SPORT0_RX, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + ADSP2181_SPORT0_TX:set_irq_line(ADSP2181_SPORT0_TX, info->i); break;
+
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_ADSP2100_RX_HANDLER:			adsp2100.sport_rx_callback = (RX_CALLBACK)info->p;	break;
+		case CPUINFO_PTR_ADSP2100_TX_HANDLER:			adsp2100.sport_tx_callback = (TX_CALLBACK)info->p;	break;
+
+		default:
+			adsp21xx_set_info(state, info);
+			break;
+	}
+}
+
+void adsp2181_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_INPUT_LINES:					info->i = 4;							break;
+		case CPUINFO_INT_INPUT_STATE + ADSP2181_IRQ0:	info->i = adsp2100.irq_state[ADSP2181_IRQ0]; break;
+		case CPUINFO_INT_INPUT_STATE + ADSP2181_IRQ1:	info->i = adsp2100.irq_state[ADSP2181_IRQ1]; break;
+		case CPUINFO_INT_INPUT_STATE + ADSP2181_IRQ2:	info->i = adsp2100.irq_state[ADSP2181_IRQ2]; break;
+		case CPUINFO_INT_INPUT_STATE + ADSP2181_SPORT0_RX:info->i = adsp2100.irq_state[ADSP2181_SPORT0_RX]; break;
+		case CPUINFO_INT_INPUT_STATE + ADSP2181_SPORT0_TX:info->i = adsp2100.irq_state[ADSP2181_SPORT0_TX]; break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = adsp2181_set_info;		break;
+		case CPUINFO_PTR_RESET:							info->reset = adsp2181_reset;			break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = adsp2181_set_context; break;
+
+		case CPUINFO_PTR_ADSP2100_RX_HANDLER:			info->p = (void *)adsp2100.sport_rx_callback;	break;
+		case CPUINFO_PTR_ADSP2100_TX_HANDLER:			info->p = (void *)adsp2100.sport_tx_callback;	break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "ADSP2181"); break;
+
+		default:
+			adsp21xx_get_info(state, info);
+			break;
+	}
+}
+
+void adsp2181_idma_addr_w(data16_t data)
+{
+	adsp2100.idma_addr = data;
+	adsp2100.idma_offs = 0;
+}
+
+void adsp2181_idma_data_w(data16_t data)
+{
+	/* program memory? */
+	if (!(adsp2100.idma_addr & 0x4000))
+	{
+		/* upper 16 bits */
+		if (adsp2100.idma_offs == 0)
+		{
+			adsp2100.idma_cache = data;
+			adsp2100.idma_offs = 1;
+		}
+		
+		/* lower 8 bits */
+		else
+		{
+			WWORD_PGM(adsp2100.idma_addr++ & 0x3fff, (adsp2100.idma_cache << 8) | (data & 0xff));
+			adsp2100.idma_offs = 0;
+		}
+	}
+	
+	/* data memory */
+	else
+		WWORD_DATA(adsp2100.idma_addr++ & 0x3fff, data);
+}
+
+data16_t adsp2181_idma_data_r(data16_t data)
+{
+	data16_t result = 0xffff;
+	
+	/* program memory? */
+	if (!(adsp2100.idma_addr & 0x4000))
+	{
+		/* upper 16 bits */
+		if (adsp2100.idma_offs == 0)
+		{
+			result = RWORD_PGM(adsp2100.idma_addr & 0x3fff) >> 8;
+			adsp2100.idma_offs = 1;
+		}
+		
+		/* lower 8 bits */
+		else
+		{
+			result = RWORD_PGM(adsp2100.idma_addr++ & 0x3fff) & 0xff;
+			adsp2100.idma_offs = 0;
+		}
+	}
+	
+	/* data memory */
+	else
+		result = RWORD_DATA(adsp2100.idma_addr++ & 0x3fff);
+	
+	return result;
+}
+
 #endif
