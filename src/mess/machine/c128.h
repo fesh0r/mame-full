@@ -19,8 +19,8 @@
 #define RAM256KB (0x100)
 #define RAM1MB (0x200)
 
-#define VDC_RAM_64KBYTE		(input_port_8_r(0)&0x80) /* else 16KB */
-#define MONITOR_TV		(input_port_8_r(0)&0x40) /* else RGBI */
+#define VDC_RAM_64KBYTE		(input_port_8_r(0)&0x40) /* else 16KB */
+#define MONITOR_TV		(input_port_8_r(0)&0x20) /* else RGBI */
 
 #define C128_KEY_RIGHT_SHIFT ((input_port_12_r(0)&0x20)\
 			 ||C128_KEY_CURSOR_UP||C128_KEY_CURSOR_LEFT)

@@ -1,5 +1,5 @@
 # Atari 5200 SuperSystem Cartridge CRC List
-
+# Compiled by Chris Henry
 # Note: This list is provided as a record of known dumps for this system.  
 #   These checksums have not been validated and cannot be assumed correct.  
 #   They are provided here as a database to help the emulation of this system.  
@@ -20,7 +20,7 @@ def2a207 = Ballblazer | 1984 | Atari/Lucasfilm Games
 b3b8e314 = Battlezone | 1983 | Atari | NOT PLAYABLE
 71fa5a79 = Beamrider (PAL) | 1984 | Activision
 02d9b87a = Beamrider | 1984 | Activision
-be3cd348 = Berzerk | 1983 | Atari
+be3cd348 = Berzerk | 1983 | Atari | NOT PLAYABLE
 cc740e26 = Berzerk [32k] | 1983 | Atari
 40d08988 = Blueprint | 1982 | CBS
 613b9379 = Blueprint (PAL) | 1982 | CBS
@@ -39,7 +39,7 @@ ebad58ba = Defender | 1982 | Atari
 6a687f9c = Dig Dug | 1983 | Atari
 d29bb9a9 = Dig Dug [32k] | 1983 | Atari
 7226fee6 = The Dreadnaught Factor | 1984 | Activision
-7a182f89 = Football
+7a182f89 = Football | 1982 | Atari
 0b7e77fc = Frogger (PAL) | 198? | Parker Brothers
 7936aa92 = Frogger (PAL) [32k] | 198? | Parker Brothers
 1418c44a = Frogger 2 - Threedeep! [32k] | 198? | Parker Brothers
@@ -47,8 +47,8 @@ d29bb9a9 = Dig Dug [32k] | 1983 | Atari
 0fe438b3 = Frogger 2 - Threeedeep! (PAL) | 198? | Parker Brothers
 110d6fbc = Frogger 2 - Threeedeep! (PAL) [32k] | 198? | Parker Brothers
 1062ef6a = Frogger | 198? | Parker Brothers
-d4977e3b = Galaxian | 1982 | Atari | NOT PLAYABLE
-a6dfa355 = Galaxian [32k] | 1982 | Atari | NOT PLAYABLE
+d4977e3b = Galaxian | 1982 | Atari
+a6dfa355 = Galaxian [32k] | 1982 | Atari
 97b15243 = Gorf | 1982 | CBS
 063ec2c4 = Gremlins (PAL) | 1984 | Atari
 15d0cfc2 = Gremlins | 1984 | Atari
@@ -74,10 +74,10 @@ b1cec23f = Looney Tunes Hotel | 1983 | Atari
 57761b66 = Looney Tunes Hotel | 1983 | Atari | NOT PLAYABLE
 6b3f1179 = Mario Bros. (PAL) | 1983 | Atari
 873742f1 = Mario Bros. | 1983 | Atari
-9fb13411 = Meebzork
+9fb13411 = Meebzork | 1983 | Atari
 74163d4b = Megamania | 1984 | Activision
-6287fd9b = Meteorites
-960ce5e2 = Microgammon SB
+6287fd9b = Meteorites 
+960ce5e2 = Microgammon SB | 1983 | Atari
 fcb208a3 = Millipede | 1984 | Atari
 f03d6b06 = Miner 2049'er | 
 621f8e89 = Minature Golf | 1983 | Atari

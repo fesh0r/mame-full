@@ -1301,13 +1301,3 @@ int osd_display_loading_rom_message (const char *name, int current, int total)
 	return 0;
 }
 
-#ifdef MESS
-/* Function to handle aliases in the MESS.CFG file */
-char *get_alias(const char *driver_name, char *alias)
-{
-	char driver[8+1];
-	/* Allegro's get_config_string() first argument is not a 'const char*' */
-    strcpy(driver, driver_name);
-	return get_config_string(driver,alias,"");
-}
-#endif

@@ -1,9 +1,16 @@
+# Commodore PET series image CRC List
+# Compiled by Peter Trauner
+# Note: This list is provided as a record of known dumps for this system.  
+#       These checksums have not been validated and cannot be assumed correct.  
+#       They are provided here as a database to help the emulation of this system.  
+# Send corrections/submissions to: battlepriest@hotmail.com
+
 [pet]
 #pet series testlog
 # programs
 4beaba9c   17und4.prg
 954bf1a9   fluglandung.prg
-7fd98d6d   miner.prg           
+7fd98d6d   Miner! (.prg) | 1980 | Ron Longfellow | 
 ########   microchess.prg basic1? hanging
 
 # programs better in standard/graphic system

@@ -6,7 +6,7 @@
 #include "cbm.h"
 
 /* safer replacement str[0]=0; */
-int cbm_snprintf (char *str, size_t size, const char *format,...)
+int DECL_SPEC cbm_snprintf (char *str, size_t size, const char *format,...)
 {
 	va_list list;
 
@@ -225,7 +225,7 @@ static const struct IODevice *cbm_rom_find_device(void)
 {
 	int i;
 	for (i=0; (Machine->gamedrv->dev[i].count)
-			 &&(Machine->gamedrv->dev[i].type!=IO_CARTSLOT); 
+			 &&(Machine->gamedrv->dev[i].type!=IO_CARTSLOT);
 		 i++) ;
 	return Machine->gamedrv->dev[i].count!=0?Machine->gamedrv->dev+i:NULL;
 }
@@ -368,7 +368,7 @@ int cbm_rom_init(int id)
 			cbm_rom[i].addr=adr;
 			cbm_rom[i].size=size;
 			read = osd_fread (fp, cbm_rom[i].chip, size);
-			
+
 			addr += size;
 			osd_fclose (fp);
 			if (read != size)

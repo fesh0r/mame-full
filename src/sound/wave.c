@@ -280,9 +280,8 @@ static int wave_write(int id)
     filesize =
 		4 + 	/* 'RIFF' */
 		4 + 	/* size of entire file */
-		4 + 	/* 'WAVE' */
-		4 + 	/* size of WAVE tag */
-		16 +	/* WAVE tag (including 'fmt ' tag) */
+		8 + 	/* 'WAVEfmt ' */
+		20 +	/* WAVE tag  (including size -- 0x10 in dword) */
 		4 + 	/* 'data' */
 		4 + 	/* size of data */
 		w->length;
@@ -295,7 +294,7 @@ static int wave_write(int id)
 		return WAVE_ERR;
     }
 
-	temp32 = intelLong(filesize);
+	temp32 = intelLong(filesize) - 8;
 	offset += osd_fwrite(w->file, &temp32, 4);
 
 	/* read the RIFF file type and make sure it's a WAVE file */
@@ -357,8 +356,8 @@ static int wave_write(int id)
 		return WAVE_ERR;
     }
 
-	/* block align */
-	temp16 = 1;
+	/* block align (size of one `sample') */
+	temp16 = w->resolution / 8;
 	offset += osd_fwrite_lsbfirst(w->file, &temp16, 2);
 	if( offset < 30 )
 	{

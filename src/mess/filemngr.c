@@ -317,7 +317,7 @@ int fs_alloc(void)
 	return (fs_total += 1) - 1;
 }
 
-static int fs_compare(const void *p1, const void *p2)
+static int DECL_SPEC fs_compare(const void *p1, const void *p2)
 {
 	const int i1 = *(int *)p1;
 	const int i2 = *(int *)p2;

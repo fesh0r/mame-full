@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+#include "driver.h"
+
 /* must be defined until some driver init problems are solved */
 #define NEW_GAMEDRIVER
 
@@ -17,7 +19,7 @@
 /* quick (and unsafe as sprintf) snprintf */
 #define snprintf cbm_snprintf
 #endif
-int cbm_snprintf (char *str, size_t size, const char *format,...);
+int DECL_SPEC cbm_snprintf (char *str, size_t size, const char *format,...);
 
 #define memset16 cbm_memset16
 void *cbm_memset16 (void *dest, int value, size_t size);

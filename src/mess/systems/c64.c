@@ -18,7 +18,7 @@ sx64    commodore sx64 (pal version)
 
 if the game runs to fast with the ntsc version, try the pal version!
 
-c64 
+c64
  design like the vic20
  better videochip with sprites
  famous sid6581 sound chip
@@ -58,7 +58,7 @@ c64gs
  no keyboard connector
  no tapeport
 cbm4064/pet64/educator64-2
- build in green monitor 
+ build in green monitor
  other case
  differences, versions???
 (sx100 sx64 like prototype with build in black/white monitor)
@@ -69,7 +69,7 @@ sx64
  no tape connector
 dx64 prototype
  two build in vc1541 (or 2 drives driven by one vc1541 circuit)
- 
+
 state
 -----
 rasterline based video system
@@ -166,7 +166,7 @@ most games rely on starting own programs in the floppy drive
 
 Roms
 ----
-.prg 
+.prg
 .crt
 .80 .90 .a0 .b0 .e0 .f0
 files with boot-sign in it
@@ -319,8 +319,10 @@ static struct MemoryWriteAddress c64_writemem[] =
         DIPS_HELPER( 0x0002, "RESTORE", KEYCODE_PRTSCR)\
 	DIPS_HELPER( 0x0001, "STOP RUN", KEYCODE_TAB)\
 	PORT_START \
-	PORT_BITX( 0x8000, IP_ACTIVE_HIGH, IPF_TOGGLE,\
+	PORT_BITX( 0x8000, IP_ACTIVE_HIGH, IPT_DIPSWITCH_NAME|IPF_TOGGLE,\
 		     "SHIFT-LOCK (switch)", KEYCODE_CAPSLOCK, IP_JOY_NONE)\
+	PORT_DIPSETTING(  0, DEF_STR( Off ) )\
+	PORT_DIPSETTING(	0x8000, DEF_STR( On ) )\
 	DIPS_HELPER( 0x4000, "A", KEYCODE_A)\
 	DIPS_HELPER( 0x2000, "S", KEYCODE_S)\
 	DIPS_HELPER( 0x1000, "D", KEYCODE_D)\
@@ -374,6 +376,9 @@ INPUT_PORTS_START (ultimax)
 	DIPS_HELPER( 0x1000, "Tape Drive Play",       KEYCODE_F5)\
 	DIPS_HELPER( 0x0800, "Tape Drive Record",     KEYCODE_F6)\
 	DIPS_HELPER( 0x0400, "Tape Drive Stop",       KEYCODE_F7)\
+	PORT_DIPNAME   ( 0x80, 0x00, "Sid Chip Type")
+	PORT_DIPSETTING(  0, "MOS6581" )
+	PORT_DIPSETTING(0x80, "MOS8580" )
 	 PORT_BIT (0x1c, 0x4, IPT_UNUSED)	   /* only ultimax cartridges */
 	 PORT_BIT (0x2, 0x0, IPT_UNUSED)		   /* no serial bus */
 	 PORT_BIT (0x1, 0x0, IPT_UNUSED)
@@ -384,6 +389,9 @@ INPUT_PORTS_START (c64gs)
 	 C64_DIPS
 	 PORT_START
 	 PORT_BIT (0xff00, 0x0, IPT_UNUSED)
+	PORT_DIPNAME   ( 0x80, 0x00, "Sid Chip Type")
+	PORT_DIPSETTING(  0, "MOS6581" )
+	PORT_DIPSETTING(0x80, "MOS8580" )
 	 PORT_DIPNAME (0x1c, 0x00, "Cartridge Type")
 	 PORT_DIPSETTING (0, "Automatic")
 	 PORT_DIPSETTING (4, "Ultimax (GAME)")
@@ -419,6 +427,9 @@ INPUT_PORTS_START (c64)
 	 DIPS_HELPER( 0x1000, "Tape Drive Play",       KEYCODE_F5)
 	 DIPS_HELPER( 0x0800, "Tape Drive Record",     KEYCODE_F6)
 	 DIPS_HELPER( 0x0400, "Tape Drive Stop",       KEYCODE_F7)
+	PORT_DIPNAME   ( 0x80, 0x00, "Sid Chip Type")
+	PORT_DIPSETTING(  0, "MOS6581" )
+	PORT_DIPSETTING(0x80, "MOS8580" )
 	 PORT_DIPNAME (0x1c, 0x00, "Cartridge Type")
 	 PORT_DIPSETTING (0, "Automatic")
 	 PORT_DIPSETTING (4, "Ultimax (GAME)")
@@ -441,6 +452,9 @@ INPUT_PORTS_START (sx64)
 	 PORT_START
 	 DIPS_HELPER( 0x8000, "Quickload", KEYCODE_F8)
 	 PORT_BIT (0x7f00, 0x0, IPT_UNUSED) /* no tape */
+	PORT_DIPNAME   ( 0x80, 0x00, "Sid Chip Type")
+	PORT_DIPSETTING(  0, "MOS6581" )
+	PORT_DIPSETTING(0x80, "MOS8580" )
 	 PORT_DIPNAME (0x1c, 0x00, "Cartridge Type")
 	 PORT_DIPSETTING (0, "Automatic")
 	 PORT_DIPSETTING (4, "Ultimax (GAME)")
@@ -468,7 +482,7 @@ static void pet64_init_palette (unsigned char *sys_palette, unsigned short *sys_
 {
 	int i;
 	memcpy (sys_palette, vic2_palette, sizeof (vic2_palette));
-	for (i=0; i<16; i++) 
+	for (i=0; i<16; i++)
 		*(sys_palette+i*3)=*(sys_palette+i*3+2)=0;
 }
 
@@ -500,15 +514,15 @@ ROM_END
 ROM_START (sx64)
 	 ROM_REGION (0x15400, REGION_CPU1)
 	 ROM_LOAD ("basic.a0", 0x10000, 0x2000, 0xf833d117)
-	 ROM_LOAD( "sx64.e0",     0x12000, 0x2000, 0x2c5965d4 )   
+	 ROM_LOAD( "sx64.e0",     0x12000, 0x2000, 0x2c5965d4 )
 	 ROM_LOAD ("char.do", 0x14000, 0x1000, 0xec4272ee)
-	 VC1541_ROM (REGION_CPU2)
+	VC1541_ROM (REGION_CPU2)
 ROM_END
 
 ROM_START (pet64)
 	 ROM_REGION (0x15400, REGION_CPU1)
 	 ROM_LOAD ("basic.a0", 0x10000, 0x2000, 0xf833d117)
-	 ROM_LOAD( "4064.e0",     0x12000, 0x2000, 0x789c8cc5 )   
+	 ROM_LOAD( "4064.e0",     0x12000, 0x2000, 0x789c8cc5 )
 	 ROM_LOAD ("char.do", 0x14000, 0x1000, 0xec4272ee)
 ROM_END
 
@@ -521,55 +535,55 @@ ROM_END
      /* modified for alec 64, not booting */
 	 ROM_LOAD( "alec64.e0",   0x12000, 0x2000, 0x2b1b7381 )
      /* unique copyright, else speeddos? */
-	 ROM_LOAD( "a.e0", 0x12000, 0x2000, 0xb8f49365 )   
+	 ROM_LOAD( "a.e0", 0x12000, 0x2000, 0xb8f49365 )
 	 /* ? */
-	 ROM_LOAD( "kernelx.e0",  0x12000, 0x2000, 0xbeed6d49 )   
-	 ROM_LOAD( "kernelx2.e0",  0x12000, 0x2000, 0xcfb58230 )   	 
+	 ROM_LOAD( "kernelx.e0",  0x12000, 0x2000, 0xbeed6d49 )
+	 ROM_LOAD( "kernelx2.e0",  0x12000, 0x2000, 0xcfb58230 )
 	 /* basic x 2 */
-	 ROM_LOAD( "frodo.e0",    0x12000, 0x2000, 0x6ec94629 )   
+	 ROM_LOAD( "frodo.e0",    0x12000, 0x2000, 0x6ec94629 )
 
      /* commodore versions */
      /* 901227-01 */
-	 ROM_LOAD( "kernel1.e0",  0x12000, 0x2000, 0xdce782fa )   
+	 ROM_LOAD( "kernel1.e0",  0x12000, 0x2000, 0xdce782fa )
      /* 901227-02 */
 	 ROM_LOAD( "kernel2.e0", 0x12000, 0x2000, 0xa5c687b3 )
      /* 901227-03 */
-	 ROM_LOAD( "kernel3.e0",   0x12000, 0x2000, 0xdbe3e7c7 )   
+	 ROM_LOAD( "kernel3.e0",   0x12000, 0x2000, 0xdbe3e7c7 )
 	 /* basic and 901227-03 */
 	 ROM_LOAD ("64c.251913-01.bin", 0x10000, 0x4000, 0x0010ec31)
 	 /* sx64 251104-04 */
-	 ROM_LOAD( "sx64.e0",     0x12000, 0x2000, 0x2c5965d4 )   
+	 ROM_LOAD( "sx64.e0",     0x12000, 0x2000, 0x2c5965d4 )
 	 /* 4064, Pet64, Educator 64 */
-	 ROM_LOAD( "4064.e0",     0x12000, 0x2000, 0x789c8cc5 )   
-	 
-	 /* not few differences to above versions */
-	 ROM_LOAD( "kernel2b.e0",  0x12000, 0x2000, 0xf80eb87b )   
-	 ROM_LOAD( "kernel3b.e0",  0x12000, 0x2000, 0x8e5c500d )
-	 ROM_LOAD( "kernel3c.e0",  0x12000, 0x2000, 0xc13310c2 )   
+	 ROM_LOAD( "4064.e0",     0x12000, 0x2000, 0x789c8cc5 )
 
-     /* 64er system v1 
+	 /* not few differences to above versions */
+	 ROM_LOAD( "kernel2b.e0",  0x12000, 0x2000, 0xf80eb87b )
+	 ROM_LOAD( "kernel3b.e0",  0x12000, 0x2000, 0x8e5c500d )
+	 ROM_LOAD( "kernel3c.e0",  0x12000, 0x2000, 0xc13310c2 )
+
+     /* 64er system v1
         ieee interface extension for c64 and vc1541!? */
      ROM_LOAD( "64ersys1.e0", 0x12000, 0x2000, 0x97d9a4df )
 	 /* 64er system v3 */
-	 ROM_LOAD( "64ersys3.e0", 0x12000, 0x2000, 0x5096b3bd )   
+	 ROM_LOAD( "64ersys3.e0", 0x12000, 0x2000, 0x5096b3bd )
 
 	 /* exos v3 */
-	 ROM_LOAD( "exosv3.e0",   0x12000, 0x2000, 0x4e54d020 )   
+	 ROM_LOAD( "exosv3.e0",   0x12000, 0x2000, 0x4e54d020 )
      /* 2 bytes different */
-	 ROM_LOAD( "exosv3.e0",   0x12000, 0x2000, 0x26f3339e )   
+	 ROM_LOAD( "exosv3.e0",   0x12000, 0x2000, 0x26f3339e )
 
 	 /* jiffydos v6.01 by cmd */
-	 ROM_LOAD( "jiffy.e0",    0x12000, 0x2000, 0x2f79984c )   
+	 ROM_LOAD( "jiffy.e0",    0x12000, 0x2000, 0x2f79984c )
 
 	 /* dolphin with dolphin vc1541 */
-	 ROM_LOAD( "mager.e0",    0x12000, 0x2000, 0xc9bb21bc )   
-	 ROM_LOAD( "dos20.e0",    0x12000, 0x2000, 0xffaeb9bc )   
+	 ROM_LOAD( "mager.e0",    0x12000, 0x2000, 0xc9bb21bc )
+	 ROM_LOAD( "dos20.e0",    0x12000, 0x2000, 0xffaeb9bc )
 
 	 /* speeddos plus
 		parallel interface on userport to modified vc1541 !? */
 	 ROM_LOAD( "speeddos.e0", 0x12000, 0x2000, 0x8438e77b )
 	 /* speeddos plus + */
-	 ROM_LOAD( "speeddos.e0", 0x12000, 0x2000, 0x10aee0ae )   
+	 ROM_LOAD( "speeddos.e0", 0x12000, 0x2000, 0x10aee0ae )
 	 /* speeddos plus and 80 column text */
 	 ROM_LOAD( "rom80.e0",    0x12000, 0x2000, 0xe801dadc )
 #endif
@@ -609,7 +623,7 @@ static struct MachineDriver machine_driver_c64 =
   /* sound hardware */
 	0, 0, 0, 0,
 	{
-/*    { SOUND_CUSTOM, &sid6581_sound_interface }, */
+		{ SOUND_CUSTOM, &sid6581_sound_interface },
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -649,7 +663,7 @@ static struct MachineDriver machine_driver_pet64 =
   /* sound hardware */
 	0, 0, 0, 0,
 	{
-/*    { SOUND_CUSTOM, &sid6581_sound_interface }, */
+		{ SOUND_CUSTOM, &sid6581_sound_interface },
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -690,7 +704,7 @@ static struct MachineDriver machine_driver_c64pal =
   /* sound hardware */
 	0, 0, 0, 0,
 	{
-/*    { SOUND_CUSTOM, &sid6581_sound_interface }, */
+		{ SOUND_CUSTOM, &sid6581_sound_interface },
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -730,7 +744,7 @@ static struct MachineDriver machine_driver_c64gs =
   /* sound hardware */
 	0, 0, 0, 0,
 	{
-/*    { SOUND_CUSTOM, &sid6581_sound_interface }, */
+		{ SOUND_CUSTOM, &sid6581_sound_interface },
 		{ 0 }
 	}
 };
@@ -751,7 +765,11 @@ static struct MachineDriver machine_driver_sx64 =
 	},
 	VIC6569_VRETRACERATE,
 	DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	0,
+#ifdef CPU_SYNC
+	1,
+#else
+	3000,
+#endif
 	c64_init_machine,
 	c64_shutdown_machine,
 
@@ -772,7 +790,7 @@ static struct MachineDriver machine_driver_sx64 =
   /* sound hardware */
 	0, 0, 0, 0,
 	{
-/*    { SOUND_CUSTOM, &sid6581_sound_interface }, */
+		{ SOUND_CUSTOM, &sid6581_sound_interface },
 		{ 0 }
 	}
 };
@@ -812,7 +830,7 @@ static struct MachineDriver machine_driver_ultimax =
   /* sound hardware */
 	0, 0, 0, 0,
 	{
-/*    { SOUND_CUSTOM, &sid6581_sound_interface }, */
+		{ SOUND_CUSTOM, &sid6581_sound_interface },
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -872,13 +890,13 @@ COMP (1982, c64,        0,      c64,            c64,    c64,    "Commodore Busin
 COMP (1982, cbm4064,	c64,	pet64,			c64,	c64,	"Commodore Business Machines Co.", "Commodore CBM4064/Pet64/Educator64 (NTSC)")
 COMP (1982, c64pal, 	c64,	c64pal, 		c64,	c64pal, "Commodore Business Machines Co.", "Commodore C64/VC64/VIC64 (PAL)")
 COMP (1983, sx64,		c64,	sx64,			sx64,	sx64,	"Commodore Business Machines Co.", "Commodore SX64/VIP64 (PAL)")
-CONS (1987, c64gs,		c64,	c64gs,			c64gs,	c64gs,	"Commodore Business Machines Co.", "Commodore C64GS (NTSC)")
+CONS (1990, c64gs,		c64,	c64gs,			c64gs,	c64gs,	"Commodore Business Machines Co.", "Commodore C64GS (NTSC)")
 #else
 /*	  YEAR	NAME		PARENT	MACHINE 		INPUT	INIT	COMPANY 						   FULLNAME */
-COMPX(1982, max,		0,		ultimax,		ultimax,ultimax,"Commodore Business Machines Co.", "Commodore Max (VIC10/Ultimax/Vickie)",      GAME_NO_SOUND)
-COMPX(1982, c64,		0,		c64,			c64,	c64,	"Commodore Business Machines Co.", "Commodore C64 (NTSC)",                      GAME_NO_SOUND)
-COMPX(1982, cbm4064,	c64,	pet64,			c64,	c64,	"Commodore Business Machines Co.", "Commodore CBM4064/Pet64/Educator64 (NTSC)", GAME_NO_SOUND)
-COMPX(1982, c64pal, 	c64,	c64pal, 		c64,	c64pal, "Commodore Business Machines Co.", "Commodore C64/VC64/VIC64 (PAL)",            GAME_NO_SOUND)
-COMPX(1983, sx64,		c64,	sx64,			sx64,	sx64,	"Commodore Business Machines Co.", "Commodore SX64/VIP64 (PAL)",                GAME_NOT_WORKING|GAME_NO_SOUND)
-CONSX(1987, c64gs,		c64,	c64gs,			c64gs,	c64gs,	"Commodore Business Machines Co.", "Commodore C64GS (NTSC)",                    GAME_NO_SOUND)
+COMPX(1982, max,		0,		ultimax,		ultimax,ultimax,"Commodore Business Machines Co.", "Commodore Max (VIC10/Ultimax/Vickie)",      GAME_IMPERFECT_SOUND)
+COMPX(1982, c64,		0,		c64,			c64,	c64,	"Commodore Business Machines Co.", "Commodore C64 (NTSC)",                      GAME_IMPERFECT_SOUND)
+COMPX(1982, cbm4064,	c64,	pet64,			c64,	c64,	"Commodore Business Machines Co.", "Commodore CBM4064/Pet64/Educator64 (NTSC)", GAME_IMPERFECT_SOUND)
+COMPX(1982, c64pal, 	c64,	c64pal, 		c64,	c64pal, "Commodore Business Machines Co.", "Commodore C64/VC64/VIC64 (PAL)",            GAME_IMPERFECT_SOUND)
+COMPX(1983, sx64,		c64,	sx64,			sx64,	sx64,	"Commodore Business Machines Co.", "Commodore SX64/VIP64 (PAL)",                GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+CONSX(1990, c64gs,		c64,	c64gs,			c64gs,	c64gs,	"Commodore Business Machines Co.", "Commodore C64GS (NTSC)",                    GAME_IMPERFECT_SOUND)
 #endif

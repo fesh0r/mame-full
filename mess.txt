@@ -5,7 +5,7 @@
                     Official Page at: http://mess.emuverse.com
                    ==========================================
 
-This document is generated for MESS 0.36 RELEASE CANDIDATE 2 (Mar 25 2000)
+This document is generated for MESS 0.36 (Apr  5 2000)
 
 Please note that many people helped with this project, either directly or by
 releasing source code which was used to write the drivers. We are not trying to
@@ -53,7 +53,7 @@ we are perfectly capable of finding it ourselves, thank you.
 
 Complete Emulated System List
 =============================
-Here is the list of systems supported by MESS 0.36 RELEASE CANDIDATE 2 (Mar 25 2000)
+Here is the list of systems supported by MESS 0.36 (Apr  5 2000)
 
 The meanings of the columns are as follows:
 Working - "No" means that the emulation has shortcomings that cause the system
@@ -113,16 +113,16 @@ dat2html.exe.
 | Commodore +4 (NTSC)                     |  Yes  | Close |Partial| plus4    |
 | Commodore +4 (NTSC), C1551              | No(1) | Close |Partial| plus4c   |
 | Commodore 364 (Prototype)               |  Yes  | Close |Partial| c364     |
-| Commodore C64 (NTSC)                    |  Yes  |  Yes  |   No  | c64      |
-| Commodore C64/VC64/VIC64 (PAL)          |  Yes  |  Yes  |   No  | c64pal   |
-| Commodore C64GS (NTSC)                  |  Yes  |  Yes  |   No  | c64gs    |
-| Commodore CBM4064/Pet64/Educator64 (NTSC|  Yes  |  Yes  |   No  | cbm4064  |
-| Commodore Max (VIC10/Ultimax/Vickie)    |  Yes  |  Yes  |   No  | max      |
-| Commodore C65/C64DX (Prototype) NTSC    |   No  |  Yes  |   No  | c65      |
-| Commodore C65/C64DX (Prototype) German (|   No  |  Yes  |   No  | c65ger   |
-| Commodore C128 NTSC 656x216             |  Yes  |  Yes  |   No  | c128     |
-| Commodore C128 German (PAL) 336x216     |  Yes  |  Yes  |   No  | c128ger  |
-| Commodore C128 French (PAL) 656x432     |  Yes  |  Yes  |   No  | c128fra  |
+| Commodore C64 (NTSC)                    |  Yes  |  Yes  |Partial| c64      |
+| Commodore C64/VC64/VIC64 (PAL)          |  Yes  |  Yes  |Partial| c64pal   |
+| Commodore C64GS (NTSC)                  |  Yes  |  Yes  |Partial| c64gs    |
+| Commodore CBM4064/Pet64/Educator64 (NTSC|  Yes  |  Yes  |Partial| cbm4064  |
+| Commodore Max (VIC10/Ultimax/Vickie)    |  Yes  |  Yes  |Partial| max      |
+| Commodore C65/C64DX (Prototype) NTSC    |   No  |  Yes  |Partial| c65      |
+| Commodore C65/C64DX (Prototype) German (|   No  |  Yes  |Partial| c65ger   |
+| Commodore C128 NTSC 656x216             |  Yes  |  Yes  |Partial| c128     |
+| Commodore C128 German (PAL) 336x216     |  Yes  |  Yes  |Partial| c128ger  |
+| Commodore C128 French (PAL) 656x432     |  Yes  |  Yes  |Partial| c128fra  |
 | Commodore VIC20 (NTSC)                  |  Yes  |  Yes  |Partial| vic20    |
 | Commodore VC20 (PAL)                    |  Yes  |  Yes  |Partial| vc20     |
 | Commodore PET2001/CBM2000 Series (Basic |  Yes  |  Yes  |   No  | pet      |
@@ -133,11 +133,11 @@ dat2html.exe.
 | Commodore CBM8000 60Hz                  |  Yes  |  Yes  |   No  | cbm80    |
 | Commodore CBM8000 German (50Hz)         |  Yes  |  Yes  |   No  | cbm80ger |
 | Commodore CBM8000 Swedish (50Hz)        |  Yes  |  Yes  |   No  | cbm80swe |
-| Commodore B128-80HP/710                 |   No  |  Yes  |   No  | cbm710   |
-| Commodore B256-80HP/720                 |   No  |  Yes  |   No  | cbm720   |
-| Commodore B128-80LP/610 60Hz            |   No  |  Yes  |   No  | cbm610   |
-| Commodore B256-80LP/620 Hungarian 50Hz  |   No  |  Yes  |   No  | cbm620   |
-| Commodore B128-40/Pet-II/P500 60Hz      |   No  |  Yes  |   No  | cbm500   |
+| Commodore B128-80HP/710                 |   No  |  Yes  |Partial| cbm710   |
+| Commodore B256-80HP/720                 |   No  |  Yes  |Partial| cbm720   |
+| Commodore B128-80LP/610 60Hz            |   No  |  Yes  |Partial| cbm610   |
+| Commodore B256-80LP/620 Hungarian 50Hz  |   No  |  Yes  |Partial| cbm620   |
+| Commodore B128-40/Pet-II/P500 60Hz      |   No  |  Yes  |Partial| cbm500   |
 | Amiga (NTSC)                            |   No  |  Yes  |  Yes  | amiga    |
 | Amstrad/Schneider CPC464                |  Yes  |  Yes  |  Yes  | cpc464   |
 | Amstrad/Schneider CPC664                |  Yes  |  Yes  |  Yes  | cpc664   |
@@ -176,7 +176,7 @@ dat2html.exe.
 | TI99/4A Home Computer (50 Hz)           |  Yes  |  Yes  |  Yes  | ti99_4ae |
 | IBM PC-XT MDA                           |  Yes  |  Yes  |  Yes  | pcmda    |
 | IBM PC-XT CGA                           |  Yes  |  Yes  |  Yes  | pccga    |
-| Tandy 1000TX                            | No(1) | Close |  Yes  | tandy1t  |
+| Tandy 1000TX                            |  Yes  | Close |  Yes  | tandy1t  |
 | Philips P2000T                          |  Yes  |  Yes  |  Yes  | p2000t   |
 | Philips P2000M                          |  Yes  |  Yes  |  Yes  | p2000m   |
 | Compukit UK101                          |  Yes  |  Yes  |  Yes  | uk101    |
@@ -254,14 +254,27 @@ Examples:
         will run MESS in the following way:
         <system>      = trs80           (TRs-80 model 1)
         <device1>     = FLOPPYDISK
-		<image_name1> = boot.dsk        (The Trs80 boot floppy diskl)
+        <image_name1> = boot.dsk        (The Trs80 boot floppy diskl)
         <device1>     = FLOPPYDISK
         <image_name2> = arcade1.dsk     (floppy Disk which contains games)
         <options>     = default options (all listed in mess.cfg)
 
-    MESS cgenie -fd games1
+    MESS cgenie -flop games1
         will run the system Colour Genie with one disk image loaded,
         automatically appending the file extension .dsk.
+
+
+If you dont want to type out device/image combinations, MESS supports 
+ALIASed command lines from MESS.cfg.  An example entry is:
+
+    [ti99_4a]
+    parsec = -cart parsecg.bin -cart parsecc.bin 
+
+So to load these images, you would simply then type:
+
+    MESS ti99_4a -alias parsec
+
+and both cartridges will be attached to the TI99_4a.
 
 
 

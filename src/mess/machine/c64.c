@@ -60,6 +60,7 @@ cartridgetype = CartridgeAuto;
 static UINT8 cia0porta;
 static UINT8 serial_clock, serial_data, serial_atn;
 static UINT8 vicirq = 0, cia0irq = 0;
+int c64_bank_old;
 
 /*
  * cia 0
@@ -106,7 +107,7 @@ int c64_cia0_port_b_r (int offset)
 		value &= c64_keyline[1];
 	if (!(cia0porta & 1))
 		value &= c64_keyline[0];
-	
+
 	if (JOYSTICK_SWAP) value &= c64_keyline[9];
 	else value &= c64_keyline[8];
 
@@ -151,7 +152,7 @@ static void c64_irq (int level)
 				cpu_set_irq_line (0, Z80_IRQ_INT, level);
 			} else {
 				cpu_set_irq_line (1, M6510_INT_IRQ, level);
-			}			
+			}
 		} else {
 			cpu_set_irq_line (0, M6510_INT_IRQ, level);
 		}
@@ -194,7 +195,7 @@ void c64_vic_interrupt (int level)
  * 3 serial bus atn output
  * 2 rs232 data output
  * 1-0 vic-chip system memory bank select
- * 
+ *
  * port b
  * 7 user rs232 data set ready
  * 6 user rs232 clear to send
@@ -276,8 +277,8 @@ static void c64_bankswitch (void);
 static void c64_robocop2_w(int offset, int value)
 {
 	/* robocop2 0xe00
-	 * 80 94 80 94 80 
-	 * 80 81 80 82 83 80 
+	 * 80 94 80 94 80
+	 * 80 81 80 82 83 80
 	 */
 	c64_roml=cbm_rom[value&0xf].chip;
 	c64_romh=cbm_rom[(value&0xf)+0x10].chip;
@@ -293,7 +294,7 @@ static void c64_robocop2_w(int offset, int value)
 	if (c128)
 		c128_bankswitch_64 ();
 	else
-		c64_bankswitch ();	
+		c64_bankswitch ();
 }
 
 static void c64_supergames_w(int offset, int value)
@@ -380,42 +381,42 @@ int c64_read_io (int offset)
 
 /*
  * two devices access bus, cpu and vic
- * 
+ *
  * romh, roml chip select lines on expansion bus
  * loram, hiram, charen bankswitching select by cpu
  * exrom, game bankswitching select by cartridge
  * va15, va14 bank select by cpu for vic
- * 
+ *
  * exrom, game: normal c64 mode
  * exrom, !game: ultimax mode
- * 
+ *
  * romh: 8k rom at 0xa000 (hiram && !game && exrom)
  * or 8k ram at 0xe000 (!game exrom)
  * roml: 8k rom at 0x8000 (loram hiram !exrom)
  * or 8k ram at 0x8000 (!game exrom)
  * roml vic: upper 4k rom at 0x3000, 0x7000, 0xb000, 0xd000 (!game exrom)
- * 
+ *
  * basic rom: 8k rom at 0xa000 (loram hiram game)
  * kernal rom: 8k rom at 0xe000 (hiram !exrom, hiram game)
  * char rom: 4k rom at 0xd000 (!exrom charen hiram
  * game charen !hiram loram
  * game charen hiram)
  * cpu
- * 
+ *
  * (write colorram)
  * gr_w = !read&&!cas&&((address&0xf000)==0xd000)
- * 
+ *
  * i_o = !game exrom !read ((address&0xf000)==0xd000)
  * !game exrom ((address&0xf000)==0xd000)
  * charen !hiram loram !read ((address&0xf000)==0xd000)
  * charen !hiram loram ((address&0xf000)==0xd000)
  * charen hiram !read ((address&0xf000)==0xd000)
  * charen hiram ((address&0xf000)==0xd000)
- * 
+ *
  * vic
  * char rom: x101 (game, !exrom)
  * romh: 0011 (!game, exrom)
- * 
+ *
  * exrom !game (ultimax mode)
  * addr    CPU     VIC-II
  * ----    ---     ------
@@ -438,10 +439,10 @@ int c64_read_io (int offset)
  */
 static void c64_bankswitch (void)
 {
-	static int old = -1, data, loram, hiram, charen;
+	static int data, loram, hiram, charen;
 
 	data = ((c64_port6510 & c64_ddr6510) | (c64_ddr6510 ^ 0xff)) & 7;
-	if (data == old)
+	if (data == c64_bank_old)
 		return;
 
 	DBG_LOG (1, "bankswitch", (errorlog, "%d\n", data & 7));
@@ -513,7 +514,7 @@ static void c64_bankswitch (void)
 			cpu_setbank (7, c64_memory + 0xe000);
 		}
 	}
-	old = data;
+	c64_bank_old = data;
 }
 
 /**
@@ -667,7 +668,7 @@ static void c64_common_driver_init (void)
 		cbm_drive_attach_fs (1);
 	}
 
-	sid6581_0_init (c64_paddle_read);
+	sid6581_0_init (c64_paddle_read, c64_pal);
 	c64_cia0.todin50hz = c64_pal;
 	cia6526_config (0, &c64_cia0);
 	if (c64_cia1_on)
@@ -681,7 +682,7 @@ static void c64_common_driver_init (void)
 		vic6567_init (0, c64_pal, c64_dma_read_ultimax, c64_dma_read_color,
 					  c64_vic_interrupt);
 	}
-	else 
+	else
 	{
 		vic6567_init (0, c64_pal, c64_dma_read, c64_dma_read_color,
 					  c64_vic_interrupt);
@@ -742,6 +743,7 @@ void c64_common_init_machine (void)
 #ifdef VC1541
 	vc1541_reset ();
 #endif
+	sid6581_0_configure(SID8580);
 	if (c64_cia1_on)
 	{
 		cbm_serial_reset_write (0);
@@ -754,6 +756,7 @@ void c64_common_init_machine (void)
 	vicirq = cia0irq = 0;
 	c64_port6510 = 0xff;
 	c64_ddr6510 = 0;
+	c64_bank_old = -1;
 }
 
 void c64_init_machine (void)
@@ -836,7 +839,7 @@ void c64_rom_recognition (void)
 	for (i=0; (i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))
 			 &&(cbm_rom[i].size!=0); i++) {
 		cartridge=1;
-		if ( BETWEEN(0xa000, 0xbfff, cbm_rom[i].addr, 
+		if ( BETWEEN(0xa000, 0xbfff, cbm_rom[i].addr,
 					 cbm_rom[i].addr+cbm_rom[i].size) ) {
 			cartridgetype=CartridgeC64;
 		} else if ( BETWEEN(0xe000, 0xffff, cbm_rom[i].addr,
@@ -888,14 +891,14 @@ void c64_rom_load(void)
 			for (i=0; (i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))
 					 &&(cbm_rom[i].size!=0); i++) {
 				if (cbm_rom[i].addr==CBM_ROM_ADDR_LO) {
-					memcpy(c64_memory+0x8000+0x2000-cbm_rom[i].size, 
+					memcpy(c64_memory+0x8000+0x2000-cbm_rom[i].size,
 						   cbm_rom[i].chip, cbm_rom[i].size);
 				} else if ((cbm_rom[i].addr==CBM_ROM_ADDR_HI)
 						   ||(cbm_rom[i].addr==CBM_ROM_ADDR_UNKNOWN)) {
-					memcpy(c64_memory+0xe000+0x2000-cbm_rom[i].size, 
+					memcpy(c64_memory+0xe000+0x2000-cbm_rom[i].size,
 						   cbm_rom[i].chip, cbm_rom[i].size);
 				} else {
-					memcpy(c64_memory+cbm_rom[i].addr, cbm_rom[i].chip, 
+					memcpy(c64_memory+cbm_rom[i].addr, cbm_rom[i].chip,
 						   cbm_rom[i].size);
 				}
 			}
@@ -905,18 +908,18 @@ void c64_rom_load(void)
 			c64_romh=0;
 			for (i=0; (i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))
 					 &&(cbm_rom[i].size!=0); i++) {
-				if (!c64_roml 
+				if (!c64_roml
 					&& ((cbm_rom[i].addr==CBM_ROM_ADDR_UNKNOWN)
 						||(cbm_rom[i].addr==CBM_ROM_ADDR_LO)
 						||(cbm_rom[i].addr==0x8000)) ) {
 					c64_roml=cbm_rom[i].chip;
 				}
-				if (!c64_romh 
+				if (!c64_romh
 					&& ((cbm_rom[i].addr==CBM_ROM_ADDR_HI)
 						||(cbm_rom[i].addr==0xa000) ) ){
 					c64_romh=cbm_rom[i].chip;
 				}
-				if (!c64_romh 
+				if (!c64_romh
 					&& (cbm_rom[i].addr==0x8000)
 					&&(cbm_rom[i].size=0x4000) ){
 					c64_romh=cbm_rom[i].chip+0x2000;
@@ -930,19 +933,19 @@ void c64_rom_load(void)
 					 &&(cbm_rom[i].size!=0); i++) {
 				if ((cbm_rom[i].addr==CBM_ROM_ADDR_UNKNOWN)
 					||(cbm_rom[i].addr==CBM_ROM_ADDR_LO) ) {
-					memcpy(c64_roml+0x2000-cbm_rom[i].size, 
+					memcpy(c64_roml+0x2000-cbm_rom[i].size,
 						   cbm_rom[i].chip, cbm_rom[i].size);
 				} else if ( ((cartridgetype == CartridgeC64)
 					  &&(cbm_rom[i].addr==CBM_ROM_ADDR_HI))
 					 ||((cartridgetype==CartridgeUltimax)
 						&&(cbm_rom[i].addr==CBM_ROM_ADDR_HI)) ) {
-					memcpy(c64_romh+0x2000-cbm_rom[i].size, 
+					memcpy(c64_romh+0x2000-cbm_rom[i].size,
 						   cbm_rom[i].chip, cbm_rom[i].size);
 				} else if (cbm_rom[i].addr<0xc000) {
 					memcpy(c64_roml+cbm_rom[i].addr-0x8000, cbm_rom[i].chip,
 						   cbm_rom[i].size);
 				} else {
-					memcpy(c64_romh+cbm_rom[i].addr-0xe000, 
+					memcpy(c64_romh+cbm_rom[i].addr-0xe000,
 						   cbm_rom[i].chip, cbm_rom[i].size);
 				}
 			}
@@ -957,6 +960,7 @@ int c64_frame_interrupt (void)
 	static int monitor=0;
 	int value, value2;
 
+	sid6581_update();
 	if (nmilevel != KEY_RESTORE)
 	{
 		if (c128) {
@@ -974,7 +978,7 @@ int c64_frame_interrupt (void)
 	if (!quickload && QUICKLOAD) {
 		if (c65) {
 			cbm_c65_quick_open (0, 0, c64_memory);
-		} else 
+		} else
 			cbm_quick_open (0, 0, c64_memory);
 	}
 	quickload = QUICKLOAD;
@@ -1135,7 +1139,7 @@ int c64_frame_interrupt (void)
 		value &= ~1;
 	c64_keyline[5] = value;
 
-	
+
 	value = 0xff;
 	if (KEY_SLASH)
 		value &= ~0x80;
@@ -1258,7 +1262,7 @@ int c64_frame_interrupt (void)
 		if (KEY_HELP)
 			value &= ~1;
 		c128_keyline[0] = value;
-		
+
 		value = 0xff;
 		if (KEY_NUM3)
 			value &= ~0x80;
@@ -1277,7 +1281,7 @@ int c64_frame_interrupt (void)
 		if (KEY_ESCAPE)
 			value &= ~1;
 		c128_keyline[1] = value;
-		
+
 		value = 0xff;
 		if (KEY_NOSCRL)
 			value &= ~0x80;
@@ -1340,9 +1344,9 @@ void c64_state(PRASTER *this)
 {
 	int y;
 	char text[70];
-	
+
 	y = Machine->gamedrv->drv->visible_area.max_y + 1 - Machine->uifont->height;
-	
+
 #if VERBOSE_DBG
 #if 0
 	cia6526_status (text, sizeof (text));
@@ -1357,7 +1361,7 @@ void c64_state(PRASTER *this)
 	vdc8563_status(text, sizeof(text));
 	praster_draw_text (this, text, &y);
 #endif
-	
+
 	vc20_tape_status (text, sizeof (text));
 	praster_draw_text (this, text, &y);
 #ifdef VC1541
@@ -1366,7 +1370,7 @@ void c64_state(PRASTER *this)
 	cbm_drive_0_status (text, sizeof (text));
 #endif
 	praster_draw_text (this, text, &y);
-	
+
 	cbm_drive_1_status (text, sizeof (text));
 	praster_draw_text (this, text, &y);
 }

@@ -161,6 +161,7 @@ when problems start with -log and look into error.log file
 #include "mess/machine/vc1541.h"
 #include "mess/machine/vc20tape.h"
 #include "mess/vidhrdw/ted7360.h"
+#include "mess/sndhrdw/sid6581.h"
 
 /*
  * commodore c16/c116/plus 4
@@ -206,11 +207,8 @@ static struct MemoryReadAddress c16_readmem[] =
 	{0xfc00, 0xfcff, MRA_BANK4},
 	{0xfd10, 0xfd1f, c16_fd1x_r},
 	{0xfd30, 0xfd3f, c16_6529_port_r}, /* 6529 keyboard matrix */
-/* some games uses a sid audio chip (the c64 audio chip) */
-/* at this address !? */
-/* eoroid pro */
-/* { 0xfd40, 0xfd5f, sid6581_port_r }, */
 #if 0
+	{ 0xfd40, 0xfd5f, sid6581_0_port_r }, /* sidcard, eoroidpro ... */
 	{0xfec0, 0xfedf, c16_iec9_port_r}, /* configured in c16_common_init */
 	{0xfee0, 0xfeff, c16_iec8_port_r}, /* configured in c16_common_init */
 #endif
@@ -236,7 +234,7 @@ static struct MemoryWriteAddress c16_writemem[] =
 #endif
 	{0xfd30, 0xfd3f, c16_6529_port_w}, /* 6529 keyboard matrix */
 #if 0
-	{0xfd40, 0xfd5f, sid6581_port_w},
+	{0xfd40, 0xfd5f, sid6581_0_port_w},
 #endif
 	{0xfdd0, 0xfddf, c16_select_roms}, /* rom chips selection */
 #if 0
@@ -265,11 +263,8 @@ static struct MemoryReadAddress plus4_readmem[] =
 	{0xfd00, 0xfd0f, c16_6551_port_r},
 	{0xfd10, 0xfd1f, plus4_6529_port_r},
 	{0xfd30, 0xfd3f, c16_6529_port_r}, /* 6529 keyboard matrix */
-/* some games uses a sid audio chip (the c64 audio chip) */
-/* at this address !? */
-/* eoroid pro */
-/* { 0xfd40, 0xfd5f, sid6581_port_r }, */
 #if 0
+	{ 0xfd40, 0xfd5f, sid6581_0_port_r }, /* sidcard, eoroidpro ... */
 	{0xfec0, 0xfedf, c16_iec9_port_r}, /* configured in c16_common_init */
 	{0xfee0, 0xfeff, c16_iec8_port_r}, /* configured in c16_common_init */
 #endif
@@ -287,7 +282,7 @@ static struct MemoryWriteAddress plus4_writemem[] =
 	{0xfd10, 0xfd1f, plus4_6529_port_w},
 	{0xfd30, 0xfd3f, c16_6529_port_w}, /* 6529 keyboard matrix */
 #if 0
-	{0xfd40, 0xfd5f, sid6581_port_w},
+	{0xfd40, 0xfd5f, sid6581_0_port_w},
 #endif
 	{0xfdd0, 0xfddf, c16_select_roms}, /* rom chips selection */
 #if 0
@@ -365,8 +360,12 @@ static struct MemoryWriteAddress plus4_writemem[] =
 	DIPS_HELPER( 0x0002, "HOME CLEAR", KEYCODE_EQUALS)\
 	DIPS_HELPER( 0x0001, "STOP RUN", KEYCODE_TAB)\
 	PORT_START\
-	PORT_BITX( 0x8000, IP_ACTIVE_HIGH, IPF_TOGGLE,\
-		     "SHIFT-LOCK (switch)", KEYCODE_CAPSLOCK, IP_JOY_NONE)\
+	PORT_BITX ( 0x8000, 0, IPT_DIPSWITCH_NAME | IPF_TOGGLE, \
+				"SHIFT-Lock (switch)", KEYCODE_CAPSLOCK, CODE_NONE)\
+	PORT_DIPSETTING(  0, DEF_STR(Off) )\
+	PORT_DIPSETTING( 0x8000, DEF_STR(On) )\
+	/*PORT_BITX( 0x8000, IP_ACTIVE_HIGH, IPF_TOGGLE,*/\
+		     /*"SHIFT-LOCK (switch)", KEYCODE_CAPSLOCK, IP_JOY_NONE)*/\
 	DIPS_HELPER( 0x4000, "A", KEYCODE_A)\
 	DIPS_HELPER( 0x2000, "S", KEYCODE_S)\
 	DIPS_HELPER( 0x1000, "D", KEYCODE_D)\
@@ -402,8 +401,12 @@ static struct MemoryWriteAddress plus4_writemem[] =
 	PORT_START \
 	DIPS_HELPER( 0x8000, "f3 f6", KEYCODE_F3)\
 	DIPS_HELPER( 0x4000, "HELP f7", KEYCODE_F4)\
-	PORT_BITX( 0x2000, IP_ACTIVE_HIGH, IPF_TOGGLE,\
-		     "Swap Gameport 1 and 2", KEYCODE_NUMLOCK, IP_JOY_NONE)\
+	PORT_BITX ( 0x2000, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,\
+				"Swap Gameport 1 and 2", KEYCODE_NUMLOCK, CODE_NONE)\
+	PORT_DIPSETTING(  0, DEF_STR(No) )\
+	PORT_DIPSETTING( 0x2000, DEF_STR(Yes) )\
+/*PORT_BITX( 0x2000, IP_ACTIVE_HIGH, IPF_TOGGLE,*/\
+/*"Swap Gameport 1 and 2", KEYCODE_NUMLOCK, IP_JOY_NONE)*/\
 	DIPS_HELPER( 0x08, "Quickload", KEYCODE_F8)\
 	DIPS_HELPER( 0x04, "Tape Drive Play",       KEYCODE_F5)\
 	DIPS_HELPER( 0x02, "Tape Drive Record",     KEYCODE_F6)\
@@ -435,6 +438,12 @@ INPUT_PORTS_START (c16)
 	PORT_DIPSETTING(  1, "C1551 Floppy Drive Simulation" )\
 	PORT_DIPSETTING(  3, "Serial Bus/VC1541 Floppy Drive Simulation" )\
 	PORT_START
+	PORT_DIPNAME ( 0x80, 0x80, "Sidcard")
+	PORT_DIPSETTING(  0, DEF_STR(Off) )
+	PORT_DIPSETTING( 0x80, "at $fd40-fd5f" )
+	PORT_DIPNAME ( 0x40, 0, " Sidcard Chip")
+	PORT_DIPSETTING(  0, "MOS6581" )
+	PORT_DIPSETTING( 0x40, "MOS8580" )
 	PORT_BIT (0x10, 0x0, IPT_UNUSED)		   /* pal */
 	PORT_BIT (0xc, 0x0, IPT_UNUSED)		   /* c16 */
 	PORT_DIPNAME (3, 3, "Memory")
@@ -450,6 +459,12 @@ INPUT_PORTS_START (c16c)
 	PORT_BIT (0x38, 0x10, IPT_UNUSED)
 	PORT_BIT (0x7, 0x0, IPT_UNUSED)
 	PORT_START
+	PORT_DIPNAME ( 0x80, 0x80, "Sidcard")
+	PORT_DIPSETTING(  0, DEF_STR(Off) )
+	PORT_DIPSETTING( 0x80, "at $fd40-fd5f" )
+	PORT_DIPNAME ( 0x40, 0, " Sidcard Chip")
+	PORT_DIPSETTING(  0, "MOS6581" )
+	PORT_DIPSETTING( 0x40, "MOS8580" )
 	PORT_BIT (0x10, 0x0, IPT_UNUSED)		   /* pal */
 	PORT_BIT (0xc, 0x0, IPT_UNUSED)		   /* c16 */
 	PORT_DIPNAME (3, 3, "Memory")
@@ -463,16 +478,15 @@ INPUT_PORTS_START (c16v)
 	DIPS_BOTH
 	PORT_START
 	PORT_BIT (0xc0, 0x80, IPT_UNUSED)		   /* vc1541 floppy */
-	PORT_DIPNAME ( 0x38, 0x10, "Device 8")\
-	PORT_DIPSETTING(  0, "None" )\
-	PORT_DIPSETTING(  8, "C1551 Floppy Drive Simulation" )\
-	PORT_DIPSETTING(  0x18, "Serial Bus/VC1541 Floppy Drive Simulation" )\
-	PORT_DIPSETTING(  0x20, "VC1541 Floppy Drive" )\
-	PORT_DIPNAME ( 0x07, 0x01, "Device 9")\
-	PORT_DIPSETTING(  0, "None" )\
-	PORT_DIPSETTING(  1, "C1551 Floppy Drive Simulation" )\
-	PORT_DIPSETTING(  3, "Serial Bus/VC1541 Floppy Drive Simulation" )\
+	PORT_BIT (0x38, 0x20, IPT_UNUSED)
+	PORT_BIT (0x7, 0x0, IPT_UNUSED)
 	PORT_START
+	PORT_DIPNAME ( 0x80, 0x80, "Sidcard")
+	PORT_DIPSETTING(  0, DEF_STR(Off) )
+	PORT_DIPSETTING( 0x80, "at $fd40-fd5f" )
+	PORT_DIPNAME ( 0x40, 0, " Sidcard Chip")
+	PORT_DIPSETTING(  0, "MOS6581" )
+	PORT_DIPSETTING( 0x40, "MOS8580" )
 	PORT_BIT (0x10, 0x0, IPT_UNUSED)		   /* pal */
 	PORT_BIT (0xc, 0x0, IPT_UNUSED)		   /* c16 */
 	PORT_DIPNAME (3, 3, "Memory")
@@ -495,6 +509,12 @@ INPUT_PORTS_START (plus4)
 	PORT_DIPSETTING(  1, "C1551 Floppy Drive Simulation" )\
 	PORT_DIPSETTING(  3, "Serial Bus/VC1541 Floppy Drive Simulation" )\
 	PORT_START
+	PORT_DIPNAME ( 0x80, 0x80, "Sidcard")
+	PORT_DIPSETTING(  0, DEF_STR(Off) )
+	PORT_DIPSETTING( 0x80, "at $fd40-fd5f" )
+	PORT_DIPNAME ( 0x40, 0, " Sidcard Chip")
+	PORT_DIPSETTING(  0, "MOS6581" )
+	PORT_DIPSETTING( 0x40, "MOS8580" )
 	PORT_BIT (0x10, 0x10, IPT_UNUSED)		   /* ntsc */
 	PORT_BIT (0xc, 0x4, IPT_UNUSED)		   /* plus4 */
 	PORT_BIT (0x3, 0x3, IPT_UNUSED)		   /* 64K Memory */
@@ -507,6 +527,12 @@ INPUT_PORTS_START (plus4c)
 	PORT_BIT (0x38, 0x10, IPT_UNUSED)
 	PORT_BIT (0x7, 0x0, IPT_UNUSED)
 	PORT_START
+	PORT_DIPNAME ( 0x80, 0x80, "Sidcard")
+	PORT_DIPSETTING(  0, DEF_STR(Off) )
+	PORT_DIPSETTING( 0x80, "at $fd40-fd5f" )
+	PORT_DIPNAME ( 0x40, 0, " Sidcard Chip")
+	PORT_DIPSETTING(  0, "MOS6581" )
+	PORT_DIPSETTING( 0x40, "MOS8580" )
 	PORT_BIT (0x10, 0x10, IPT_UNUSED)		   /* ntsc */
 	PORT_BIT (0xc, 0x4, IPT_UNUSED)		   /* plus4 */
 	PORT_BIT (0x3, 0x3, IPT_UNUSED)		   /* 64K Memory */
@@ -517,16 +543,15 @@ INPUT_PORTS_START (plus4v)
 	DIPS_BOTH
 	PORT_START
 	PORT_BIT (0xc0, 0x80, IPT_UNUSED)		   /* vc1541 floppy */
-	PORT_DIPNAME ( 0x38, 0x10, "Device 8")\
-	PORT_DIPSETTING(  0, "None" )\
-	PORT_DIPSETTING(  8, "C1551 Floppy Drive Simulation" )\
-	PORT_DIPSETTING(  0x18, "Serial Bus/VC1541 Floppy Drive Simulation" )\
-	PORT_DIPSETTING(  0x20, "VC1541 Floppy Drive" )\
-	PORT_DIPNAME ( 0x07, 0x01, "Device 9")\
-	PORT_DIPSETTING(  0, "None" )\
-	PORT_DIPSETTING(  1, "C1551 Floppy Drive Simulation" )\
-	PORT_DIPSETTING(  3, "Serial Bus/VC1541 Floppy Drive Simulation" )\
+	PORT_BIT (0x38, 0x20, IPT_UNUSED)
+	PORT_BIT (0x7, 0x0, IPT_UNUSED)
 	PORT_START
+	PORT_DIPNAME ( 0x80, 0x80, "Sidcard")
+	PORT_DIPSETTING(  0, DEF_STR(Off) )
+	PORT_DIPSETTING( 0x80, "at $fd40-fd5f" )
+	PORT_DIPNAME ( 0x40, 0, " Sidcard Chip")
+	PORT_DIPSETTING(  0, "MOS6581" )
+	PORT_DIPSETTING( 0x40, "MOS8580" )
 	PORT_BIT (0x10, 0x10, IPT_UNUSED)		   /* ntsc */
 	PORT_BIT (0xc, 0x4, IPT_UNUSED)		   /* plus4 */
 	PORT_BIT (0x3, 0x3, IPT_UNUSED)		   /* 64K Memory */
@@ -547,6 +572,13 @@ INPUT_PORTS_START (c364)
 	PORT_DIPSETTING(  1, "C1551 Floppy Drive Simulation" )\
 	PORT_DIPSETTING(  3, "Serial Bus/VC1541 Floppy Drive Simulation" )\
 	PORT_START
+	PORT_DIPNAME ( 0x80, 0x80, "Sidcard")
+	PORT_DIPSETTING(  0, DEF_STR(Off) )
+	PORT_DIPSETTING( 0x80, "at $fd40-fd5f" )
+	PORT_DIPNAME ( 0x40, 0, " Sidcard Chip")
+	PORT_DIPSETTING(  0, "MOS6581" )
+	PORT_DIPSETTING( 0x40, "MOS8580" )
+	PORT_BIT (0x10, 0x10, IPT_UNUSED)		   /* ntsc */
 	PORT_BIT (0xc, 0x8, IPT_UNUSED)		   /* 364 */
 	PORT_BIT (0x3, 0x3, IPT_UNUSED)		   /* 64K Memory */
 	 /* numeric block
@@ -688,6 +720,7 @@ static struct MachineDriver machine_driver_c16 =
 	0, 0, 0, 0,
 	{
 		{SOUND_CUSTOM, &ted7360_sound_interface},
+		{SOUND_CUSTOM, &sid6581_sound_interface},
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -733,6 +766,7 @@ static struct MachineDriver machine_driver_c16c =
 	0, 0, 0, 0,
 	{
 		{SOUND_CUSTOM, &ted7360_sound_interface},
+		{SOUND_CUSTOM, &sid6581_sound_interface},
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -756,7 +790,7 @@ static struct MachineDriver machine_driver_c16v =
 #ifdef CPU_SYNC
 	1,
 #else
-	3000,
+	5000,
 #endif
 	c16_init_machine,
 	c16_shutdown_machine,
@@ -779,6 +813,7 @@ static struct MachineDriver machine_driver_c16v =
 	0, 0, 0, 0,
 	{
 		{SOUND_CUSTOM, &ted7360_sound_interface},
+		{SOUND_CUSTOM, &sid6581_sound_interface},
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -820,6 +855,7 @@ static struct MachineDriver machine_driver_plus4 =
 	0, 0, 0, 0,
 	{
 		{SOUND_CUSTOM, &ted7360_sound_interface},
+		{SOUND_CUSTOM, &sid6581_sound_interface},
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -866,6 +902,7 @@ static struct MachineDriver machine_driver_plus4c =
 	0, 0, 0, 0,
 	{
 		{SOUND_CUSTOM, &ted7360_sound_interface},
+		{SOUND_CUSTOM, &sid6581_sound_interface},
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -890,7 +927,7 @@ static struct MachineDriver machine_driver_plus4v =
 #ifdef CPU_SYNC
 	1,
 #else
-	3000,
+	5000,
 #endif
 	c16_init_machine,
 	c16_shutdown_machine,
@@ -913,6 +950,7 @@ static struct MachineDriver machine_driver_plus4v =
 	0, 0, 0, 0,
 	{
 		{SOUND_CUSTOM, &ted7360_sound_interface},
+		{SOUND_CUSTOM, &sid6581_sound_interface},
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -955,6 +993,7 @@ static struct MachineDriver machine_driver_c364 =
 	0, 0, 0, 0,
 	{
 		{SOUND_CUSTOM, &ted7360_sound_interface},
+		{SOUND_CUSTOM, &sid6581_sound_interface},
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };

@@ -374,7 +374,7 @@ int frontend_help (int argc, char **argv)
 		if (!stricmp(argv[i],"-listromsize")) list = LIST_LISTROMSIZE;
 		if (!stricmp(argv[i],"-listcpu")) list = LIST_LISTCPU;
 
-#ifndef MAME_DEBUG /* do not put this into a public release! */
+#ifdef MAME_DEBUG /* do not put this into a public release! */
 		if (!stricmp(argv[i],"-lmr")) list = LIST_LMR;
 #endif
 		if (!stricmp(argv[i],"-wrongorientation")) list = LIST_WRONGORIENTATION;

@@ -1,8 +1,8 @@
-AR = ar
-CC = gcc
-LD = gcc
-#ASM = nasm
-ASM = nasmw
+AR = @ar
+CC = @gcc
+LD = @gcc
+#ASM = @nasm
+ASM = @nasmw
 ASMFLAGS = -f coff
 VPATH=src $(wildcard src/cpu/*)
 
@@ -411,8 +411,8 @@ CPUOBJS += obj/cpu/m68000/asmintf.o obj/cpu/m68000/68kem.oa
 ASMDEFS += -DA68KEM
 else
 CPUOBJS += obj/cpu/m68000/m68kops.og obj/cpu/m68000/m68kopac.og \
-           obj/cpu/m68000/m68kopdm.og obj/cpu/m68000/m68kopnz.og \
-           obj/cpu/m68000/m68kcpu.o obj/cpu/m68000/m68kmame.o
+	obj/cpu/m68000/m68kopdm.og obj/cpu/m68000/m68kopnz.og \
+	obj/cpu/m68000/m68kcpu.o obj/cpu/m68000/m68kmame.o
 endif
 DBGOBJS += obj/cpu/m68000/d68k.o
 endif
@@ -425,8 +425,8 @@ CPUOBJS += obj/cpu/m68000/asmintf.o obj/cpu/m68000/68kem.oa
 ASMDEFS += -DA68KEM
 else
 CPUOBJS += obj/cpu/m68000/m68kops.og obj/cpu/m68000/m68kopac.og \
-           obj/cpu/m68000/m68kopdm.og obj/cpu/m68000/m68kopnz.og \
-           obj/cpu/m68000/m68kcpu.o obj/cpu/m68000/m68kmame.o
+	obj/cpu/m68000/m68kopdm.og obj/cpu/m68000/m68kopnz.og \
+	obj/cpu/m68000/m68kcpu.o obj/cpu/m68000/m68kmame.o
 endif
 DBGOBJS += obj/cpu/m68000/d68k.o
 endif
@@ -439,8 +439,8 @@ CPUOBJS += obj/cpu/m68000/asmintf.o obj/cpu/m68000/68kem.oa
 ASMDEFS += -DA68KEM
 else
 CPUOBJS += obj/cpu/m68000/m68kops.og obj/cpu/m68000/m68kopac.og \
-           obj/cpu/m68000/m68kopdm.og obj/cpu/m68000/m68kopnz.og \
-           obj/cpu/m68000/m68kcpu.o obj/cpu/m68000/m68kmame.o
+	obj/cpu/m68000/m68kopdm.og obj/cpu/m68000/m68kopnz.og \
+	obj/cpu/m68000/m68kcpu.o obj/cpu/m68000/m68kmame.o
 endif
 DBGOBJS += obj/cpu/m68000/d68k.o
 endif
@@ -453,8 +453,8 @@ CPUOBJS += obj/cpu/m68000/asmintf.o obj/cpu/m68000/68kem.oa
 ASMDEFS += -DA68KEM
 else
 CPUOBJS += obj/cpu/m68000/m68kops.og obj/cpu/m68000/m68kopac.og \
-           obj/cpu/m68000/m68kopdm.og obj/cpu/m68000/m68kopnz.og \
-           obj/cpu/m68000/m68kcpu.o obj/cpu/m68000/m68kmame.o
+	obj/cpu/m68000/m68kopdm.og obj/cpu/m68000/m68kopnz.og \
+	obj/cpu/m68000/m68kcpu.o obj/cpu/m68000/m68kmame.o
 endif
 DBGOBJS += obj/cpu/m68000/d68k.o
 endif
@@ -848,7 +848,7 @@ CFLAGS = -Isrc -Isrc/msdos -Iobj/cpu/m68000 -Isrc/cpu/m68000 \
 	-pedantic \
 	-Wshadow \
 	-Wstrict-prototypes
-#   -W had to remove because of the "missing initializer" warning
+#	-W had to remove because of the "missing initializer" warning
 #	-Wredundant-decls \
 #	-Wlarger-than-27648 \
 #	-Wcast-qual \
@@ -865,30 +865,30 @@ else
 LDFLAGS = -s
 endif
 
-LIBS   = -lalleg -laudio -lz \
+LIBS = -lalleg -laudio -lz \
 
 COREOBJS = obj/version.o obj/mess/system.o obj/mame.o obj/mess/mess.o \
-         obj/mess/config.o obj/mess/filemngr.o obj/mess/tapectrl.o \
-         obj/mess/machine/6522via.o  obj/mess/machine/nec765.o   \
-         obj/drawgfx.o obj/common.o obj/usrintrf.o \
-         obj/cpuintrf.o obj/memory.o obj/timer.o obj/palette.o \
-         obj/input.o obj/inptport.o obj/cheat.o obj/unzip.o \
-         obj/audit.o obj/info.o obj/png.o obj/artwork.o \
-         obj/tilemap.o obj/sprite.o obj/gfxobj.o \
-         obj/state.o obj/datafile.o obj/hiscore.o \
-         $(sort $(CPUOBJS)) \
-         obj/sndintrf.o \
-         obj/sound/streams.o obj/sound/mixer.o \
-         $(sort $(SOUNDOBJS)) \
-         obj/sound/votrax.o \
-         obj/machine/z80fmly.o obj/machine/6821pia.o \
-         obj/machine/8255ppi.o \
-         obj/vidhrdw/generic.o obj/vidhrdw/vector.o \
-         obj/vidhrdw/avgdvg.o obj/machine/mathbox.o \
-         obj/machine/ticket.o obj/machine/eeprom.o \
-         obj/mamedbg.o obj/window.o \
-         obj/profiler.o \
-         $(sort $(DBGOBJS)) \
+        obj/mess/config.o obj/mess/filemngr.o obj/mess/tapectrl.o \
+        obj/mess/machine/6522via.o  obj/mess/machine/nec765.o   \
+	obj/drawgfx.o obj/common.o obj/usrintrf.o \
+	obj/cpuintrf.o obj/memory.o obj/timer.o obj/palette.o \
+	obj/input.o obj/inptport.o obj/cheat.o obj/unzip.o \
+	obj/audit.o obj/info.o obj/png.o obj/artwork.o \
+	obj/tilemap.o obj/sprite.o obj/gfxobj.o \
+	obj/state.o obj/datafile.o obj/hiscore.o \
+	$(sort $(CPUOBJS)) \
+	obj/sndintrf.o \
+	obj/sound/streams.o obj/sound/mixer.o \
+	$(sort $(SOUNDOBJS)) \
+	obj/sound/votrax.o \
+	obj/machine/z80fmly.o obj/machine/6821pia.o \
+	obj/machine/8255ppi.o \
+	obj/vidhrdw/generic.o obj/vidhrdw/vector.o \
+	obj/vidhrdw/avgdvg.o obj/machine/mathbox.o \
+	obj/machine/ticket.o obj/machine/eeprom.o \
+	obj/mamedbg.o obj/window.o \
+	obj/profiler.o \
+	$(sort $(DBGOBJS)) \
 
 DRVLIBS = obj/advision.a  \
 	  obj/coleco.a	 \
@@ -927,9 +927,9 @@ DRVLIBS = obj/advision.a  \
 NEOLIBS = obj/neogeo.a \
 
 MSDOSOBJS = obj/msdos/msdos.o obj/msdos/video.o obj/msdos/blit.o obj/msdos/asmblit.o \
-         obj/msdos/vector.o obj/msdos/gen15khz.o obj/msdos/ati15khz.o \
-         obj/msdos/sound.o obj/msdos/input.o obj/msdos/fileio.o \
-         obj/msdos/ticker.o obj/msdos/config.o obj/msdos/fronthlp.o \
+	obj/msdos/vector.o obj/msdos/gen15khz.o obj/msdos/ati15khz.o \
+	obj/msdos/sound.o obj/msdos/input.o obj/msdos/fileio.o \
+	obj/msdos/ticker.o obj/msdos/config.o obj/msdos/fronthlp.o \
 
 MSDOSOBJS += obj/mess/msdos.o obj/msdos/nec765.o 
 
@@ -956,50 +956,62 @@ all: $(EMULATOR_EXE) romcmp.exe	dat2html.exe
 $(EMULATOR_EXE):  $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS)
 # always recompile the version string
 	$(CC) $(CDEFS) $(CFLAGS) $(TINYFLAGS) -DMESS -c src/version.c -o obj/version.o
+	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS) -o $@
 ifndef DEBUG
 	$(EMULATOR_EXE) -listtext > mess.txt
 	$(EMULATOR_EXE) -listdevices >> mess.txt
 	upx $(EMULATOR_EXE)
-
 endif
 
 romcmp.exe: obj/romcmp.o obj/unzip.o
+	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ -lz -o $@
 
 dat2html.exe: obj/mess/dat2html.o 
+	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ -lz -o $@
 
 obj/%.o: src/%.c
+	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) $(TINYFLAGS) -DMESS -c $< -o $@
 
 # generate C source files for the 68000 emulator
 obj/cpu/m68000/%.c obj/cpu/m68000/%.h: src/cpu/m68000/m68kmake.c src/cpu/m68000/m68k_in.c
+	@echo M68K make $<...
 	$(CC) $(CDEFS) $(CFLAGS) -DDOS -o obj/cpu/m68000/m68kmake.exe $<
 	obj/cpu/m68000/m68kmake obj/cpu/m68000 src/cpu/m68000/m68k_in.c
 
 # generated C files for the 68000 emulator
 obj/%.og: obj/%.c
+	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) $(TINYFLAGS) -c $< -o $@
 
 # generate asm source files for the 68000 emulator
 obj/cpu/m68000/68kem.asm:  src/cpu/m68000/make68k.c
+	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -O0 -DDOS -o obj/cpu/m68000/make68k.exe $<
+	@echo Generating $@...
 	obj/cpu/m68000/make68k $@ obj/cpu/m68000/comptab.asm
 
 # generated asm files for the 68000 emulator
 obj/cpu/m68000/68kem.oa:  obj/cpu/m68000/68kem.asm
+	@echo Assembling $<...
 	$(ASM) -o $@ $(ASMFLAGS) $(subst -D,-d,$(ASMDEFS)) $<
 
 # video blitting functions
 obj/msdos/asmblit.o: src/msdos/asmblit.asm
+	@echo Assembling $<...
 	$(ASM) -o $@ $(ASMFLAGS) $(subst -D,-d,$(ASMDEFS)) $<
 
 obj/cpu/z80/z80.asm:  src/cpu/z80/makez80.c
-	$(CC) $(CDEFS) $(CFLAGS) -DDOS -o obj/cpu/z80/makez80.exe $<
+	@echo Compiling $<...
+	@$(CC) $(CDEFS) $(CFLAGS) -DDOS -o obj/cpu/z80/makez80.exe $<
+	@echo Generating $@...
 	obj/cpu/z80/makez80 $(Z80DEF) $(CDEFS) $(CFLAGS) $@
 
 obj/%.a:
+	@echo Archiving $@...
 	$(AR) cr $@ $^
 
 obj/coleco.a:   \
@@ -1080,6 +1092,11 @@ obj/cbm.a:      \
 		obj/mess/vidhrdw/vdc8563.o  \
 		obj/mess/vidhrdw/praster.o  \
 		obj/mess/machine/c128.o     \
+		obj/mess/sndhrdw/mixing.o   \
+		obj/mess/sndhrdw/envelope.o \
+		obj/mess/sndhrdw/samples.o  \
+		obj/mess/sndhrdw/6581_.o    \
+
 
 
 obj/dragon.a:   \
@@ -1270,6 +1287,7 @@ obj/motorola.a: \
 		obj/mess/machine/mekd2.o    \
                 obj/mess/systems/mekd2.o
 
+
 # dependencies
 obj/cpu/z80/z80.o: z80.c z80.h z80daa.h
 obj/cpu/z8000/z8000.o: z8000.c z8000.h z8000cpu.h z8000dab.h z8000ops.c z8000tbl.c
@@ -1297,95 +1315,99 @@ makedir:
 	@echo make makedir is no longer necessary, just type make
 
 maketree:
-	md obj
-	md obj\cpu
-	md obj\cpu\z80
-	md obj\cpu\z80gb
-	md obj\cpu\m6502
-	md obj\cpu\h6280
-	md obj\cpu\i86
-	md obj\cpu\nec
-	md obj\cpu\i8039
-	md obj\cpu\i8085
-	md obj\cpu\m6800
-	md obj\cpu\m6805
-	md obj\cpu\m6809
-	md obj\cpu\konami
-	md obj\cpu\m68000
-	md obj\cpu\s2650
-	md obj\cpu\t11
-	md obj\cpu\tms34010
-	md obj\cpu\tms9900
-	md obj\cpu\z8000
-	md obj\cpu\tms32010
-	md obj\cpu\ccpu
-	md obj\cpu\adsp2100
-	md obj\cpu\pdp1
-	md obj\sound
-	md obj\drivers
-	md obj\machine
-	md obj\vidhrdw
-	md obj\sndhrdw
-	md obj\msdos
+	@echo Making object tree...
+	@md obj
+	@md obj\cpu
+	@md obj\cpu\z80
+	@md obj\cpu\z80gb
+	@md obj\cpu\m6502
+	@md obj\cpu\h6280
+	@md obj\cpu\i86
+	@md obj\cpu\nec
+	@md obj\cpu\i8039
+	@md obj\cpu\i8085
+	@md obj\cpu\m6800
+	@md obj\cpu\m6805
+	@md obj\cpu\m6809
+	@md obj\cpu\konami
+	@md obj\cpu\m68000
+	@md obj\cpu\s2650
+	@md obj\cpu\t11
+	@md obj\cpu\tms34010
+	@md obj\cpu\tms9900
+	@md obj\cpu\z8000
+	@md obj\cpu\tms32010
+	@md obj\cpu\ccpu
+	@md obj\cpu\adsp2100
+	@md obj\cpu\pdp1
+	@md obj\sound
+	@md obj\drivers
+	@md obj\machine
+	@md obj\vidhrdw
+	@md obj\sndhrdw
+	@md obj\msdos
 	make messdir
 
 clean:
+	@echo Deleting object tree...
 	deltree /Y obj
-	del $(EMULATOR_EXE)
-	del romcmp.exe
-	del dat2html.exe
+	@echo Deleting $(EMULATOR_EXE)...
+	@del $(EMULATOR_EXE)
+	@echo Deleting romcmp.exe...
+	@del romcmp.exe
+	@del dat2html.exe
 
 cleandebug:
-	del obj\*.o
-	del obj\cpu\z80\*.o
-	del obj\cpu\z80\*.oa
-	del obj\cpu\z80\*.asm
-	del obj\cpu\z80\*.exe
-	del obj\cpu\z80gb\*.o
-	del obj\cpu\m6502\*.o
-	del obj\cpu\h6280\*.o
-	del obj\cpu\i86\*.o
-	del obj\cpu\nec\*.o
-	del obj\cpu\i8039\*.o
-	del obj\cpu\i8085\*.o
-	del obj\cpu\m6800\*.o
-	del obj\cpu\m6800\*.oa
-	del obj\cpu\m6800\*.exe
-	del obj\cpu\m6805\*.o
-	del obj\cpu\m6809\*.o
-	del obj\cpu\konami\*.o
-	del obj\cpu\m68000\*.o
-	del obj\cpu\m68000\*.c
-	del obj\cpu\m68000\*.h
-	del obj\cpu\m68000\*.oa
-	del obj\cpu\m68000\*.og
-	del obj\cpu\m68000\*.asm
-	del obj\cpu\m68000\*.exe
-	del obj\cpu\s2650\*.o
-	del obj\cpu\t11\*.o
-	del obj\cpu\tms34010\*.o
-	del obj\cpu\tms9900\*.o
-	del obj\cpu\z8000\*.o
-	del obj\cpu\tms32010\*.o
-	del obj\cpu\ccpu\*.o
-	del obj\cpu\adsp2100\*.o
-	del obj\cpu\pdp1\*.o
-	del $(EMULATOR_EXE)
+	@echo Deleting debug obj tree...
+	@del obj\*.o
+	@del obj\cpu\z80\*.o
+	@del obj\cpu\z80\*.oa
+	@del obj\cpu\z80\*.asm
+	@del obj\cpu\z80\*.exe
+	@del obj\cpu\z80gb\*.o
+	@del obj\cpu\m6502\*.o
+	@del obj\cpu\h6280\*.o
+	@del obj\cpu\i86\*.o
+	@del obj\cpu\nec\*.o
+	@del obj\cpu\i8039\*.o
+	@del obj\cpu\i8085\*.o
+	@del obj\cpu\m6800\*.o
+	@del obj\cpu\m6800\*.oa
+	@del obj\cpu\m6800\*.exe
+	@del obj\cpu\m6805\*.o
+	@del obj\cpu\m6809\*.o
+	@del obj\cpu\konami\*.o
+	@del obj\cpu\m68000\*.o
+	@del obj\cpu\m68000\*.c
+	@del obj\cpu\m68000\*.h
+	@del obj\cpu\m68000\*.oa
+	@del obj\cpu\m68000\*.og
+	@del obj\cpu\m68000\*.asm
+	@del obj\cpu\m68000\*.exe
+	@del obj\cpu\s2650\*.o
+	@del obj\cpu\t11\*.o
+	@del obj\cpu\tms34010\*.o
+	@del obj\cpu\tms9900\*.o
+	@del obj\cpu\z8000\*.o
+	@del obj\cpu\tms32010\*.o
+	@del obj\cpu\ccpu\*.o
+	@del obj\cpu\adsp2100\*.o
+	@del obj\cpu\pdp1\*.o
+	@del $(EMULATOR_EXE)
 
 cleantiny:
-	del obj\driver.o
-	del obj\usrintrf.o
-	del obj\cheat.o
-	del obj\vidhrdw\konamiic.o
-	del obj\msdos\input.o
-
-
+	@echo Deleting tiny obj tree...
+	@del obj\driver.o
+	@del obj\usrintrf.o
+	@del obj\cheat.o
+	@del obj\vidhrdw\konamiic.o
+	@del obj\msdos\input.o
 
 messdir:
-	md obj\mess
-	md obj\mess\machine
-	md obj\mess\systems
-	md obj\mess\vidhrdw
-	md obj\mess\sndhrdw
-
+	@echo Creating MESS dir tree...
+	@md obj\mess
+	@md obj\mess\machine
+	@md obj\mess\systems
+	@md obj\mess\vidhrdw
+	@md obj\mess\sndhrdw
 

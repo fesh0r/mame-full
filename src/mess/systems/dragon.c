@@ -257,6 +257,9 @@ INPUT_PORTS_START( dragon32 )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, "Red" )
 	PORT_DIPSETTING(    0x02, "Blue" )
+	PORT_DIPNAME( 0x04, 0x00, "Autocenter Joysticks" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /* CoCo keyboard
@@ -356,6 +359,9 @@ INPUT_PORTS_START( coco )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, "Red" )
 	PORT_DIPSETTING(    0x02, "Blue" )
+	PORT_DIPNAME( 0x04, 0x00, "Autocenter Joysticks" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
 
 INPUT_PORTS_END
 
@@ -459,6 +465,9 @@ INPUT_PORTS_START( coco3 )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, "Red" )
 	PORT_DIPSETTING(    0x02, "Blue" )
+	PORT_DIPNAME( 0x04, 0x00, "Autocenter Joysticks" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
 
 	PORT_START /* 11 */
 	PORT_DIPNAME( 0x01, 0x00, "Video type" )
@@ -614,13 +623,13 @@ ROM_END
 
 ROM_START(coco)
      ROM_REGION(0x18000,REGION_CPU1)
-     ROM_LOAD("coco.rom",  0x10000, 0x6000, 0x5fb295a7)
+     ROM_LOAD("coco.rom",  0x10000, 0x6000, 0x2a848551)
 ROM_END
 
 ROM_START(coco3)
      ROM_REGION(0x90000,REGION_CPU1)
 	 ROM_LOAD("coco3.rom", 0x80000, 0x7e00, 0x31aec822)
-     ROM_LOAD("disk.rom",  0x8C000, 0x2000, 0x7eaa44e3)
+     ROM_LOAD("disk.rom",  0x8C000, 0x2000, 0x0b9c5415)
 ROM_END
 
 ROM_START(cp400)

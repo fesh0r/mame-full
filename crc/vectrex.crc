@@ -1,5 +1,5 @@
 # Vectrex Cartridge and Demo CRC List
-
+# Compiled by Ben Bruscella and Chris Henry
 # Note: This list is provided as a record of known dumps for this system.  
 #       These checksums have not been validated and cannot be assumed correct.  
 #       They are provided here as a database to help the emulation of this system.  
@@ -26,7 +26,7 @@ f1b1de78 = Clean Sweep | 1982 | GCE
 e818c1cd = Curved Lines Test
 3947506a = Daisy (earlier)
 ba7be9d3 = Daisy
-9dcfd5b7 = Dark Tower | 1982 | GCE | NOT PLAYABLE/CRASHES
+9dcfd5b7 = Dark Tower | 1982 | GCE | NOT PLAYABLE (Crashes)
 c99abda6 = Digitized Sound Test
 2e54332e = Disc Duel Demo
 2fe6d308 = Dual Vectrex Test (Ver. 1)
@@ -37,6 +37,7 @@ c99abda6 = Digitized Sound Test
 13a35c8a = Fortress Of Narzod | 1982 | GCE
 e61a7de3 = Heads Up | 1983 | GCE
 4bb13472 = Hyper Chase | 1982 | GCE
+05d5ea98 = Labyrinth Demo | 2000 | Chris Salomon
 59181c32 = Line Demo
 01cd710b = Loader Test
 67ed5845 = Lunar Lander
@@ -68,6 +69,7 @@ a3be5aff = Space Wars | 1982 | GCE
 62a61843 = Spike | 1983 | GCE
 d17ddc97 = Spike Goes Skiing | 1998
 1c6b030e = Spike Hoppin' | 1997 | John Dondzilla
+95188f66 = Spike's Water Baloons (Analogue Version)| 2000 | John Dondzilla | NOT PLAYABLE (No analogue support)
 02f41733 = Spin Ball | 1983 | GCE
 c9039623 = Star Castle | 1983 | GCE
 4de1f06b = Star Hawk | 1982 | GCE
@@ -99,6 +101,7 @@ e8e6fe06 = YM Sound: Star Wars
 # These were removed from circulation by the authors, and replaced with newer versions.
 
 bd447845 = 3D Demo | 2000 | Chris Salomon
+7525e02a = Labyrinth Demo (first version) | 2000 | Chris Salomon
 6c327889 = Vectrace | 1999 | Rohen Habot
 
 

@@ -862,9 +862,9 @@ void showmessinfo(void)
 {
 	mess_printf(
 		"M.E.S.S. v%s %s\n"
-		"Multiple Emulation Super System - Copyright (C) 1997-98 by the MESS Team\n"
+		"Multiple Emulation Super System - Copyright (C) 1997-2000 by the MESS Team\n"
 		"M.E.S.S. is based on the excellent M.A.M.E. Source code\n"
-		"Copyright (C) 1997-99 by Nicola Salmoria and the MAME Team\n\n",
+		"Copyright (C) 1997-2000 by Nicola Salmoria and the MAME Team\n\n",
 		build_version, mess_alpha);
 	showmessdisclaimer();
 	mess_printf(

@@ -71,21 +71,6 @@ $bio
 Atari 7800 ProSystem
 
 
-Usage:
-
-The following console buttons are currently mapped as follows:
-
-"R"  = Reset
-
-"S"  = Select
-
-
-Known Issues:
-
-The Select key 'S' is currently mapped to the same key as player 2's button 2. For a quick 
-fix, remap player 2's button 2 under "Keys (This Machine)" in the Tab/Options menu.
-
-
 History and Trivia:
 
 Originally developed in 1984 as the Atari 3600, the Atari 7800 Prosystem was released to the 
@@ -194,7 +179,7 @@ $bio
 Commodore Amiga
 
 
-Known Issues: 
+Known Issues:
 
 Sound is not currently supported.
 
@@ -232,6 +217,7 @@ $end
 $info=apple1
 $bio
 Apple 1
+
 
 History and Trivia:
 
@@ -382,16 +368,14 @@ $bio
 Commodore C16, Plus 4, and C364
 
 
-Usage:
-
-CASSETTES: 
+Cassette Usage:
 
 Cassette images can have the .wav or .prg extensions, and multiple .prg files 
 can be contained within a zip file. Zip files must be placed in the current directory, and 
 the contained prg files are played in sequential order.
 
 
-The format for WAVs are:
+The format for WAVs are: 
 8 bit (16 bit may work, but this hasn't been tested), mono, 12500 Hz minimum. This has the 
 same problems as an original Datasette tape drive (the tone head must be adjusted to get 
 working (no load error...) wav-files)
@@ -405,21 +389,26 @@ Within the emulation, use LOAD or LOAD"" or LOAD"",1 for loading normal programs
 LOAD"",1,1 for loading programs to a special address.
 
 
-DISKETTES: 
+Diskette Usage:
 
 Disk drives are simulated at the moment, and only file loads from drive 8 and 9 
 are implemented. You can load a program file from the rom directory (*.prg,*.p00)
 (This must NOT be specified on commandline, start the c16 emulation with no images specified)
- 
+
+
 The directory command LOAD"$",8 is supported when using d64 images.
 
 
-Within the emulation, basic programs can be loaded with:
+
+Within the emulation, basic programs can be loaded with: 
+
 
 DLOAD"filename" or LOAD"filename",8 
 
 
-Machine language programs can be loaded to their address with:
+
+Machine language programs can be loaded to their address with: 
+
 
 DLOAD"filename" or LOAD"filename",8,1
 
@@ -432,25 +421,28 @@ loading other file types, writing...) Some games also rely on starting programs 
 floppy drive's proccessor (and therefore cpu level emulation of the 1541 is needed).
 
 
-CARTRIDGES: 
+Cartridge Usage:
 
 Cartridges may have any of the following extensions: .bin .rom .lo .hi .prg
 Files with boot-sign in it are recognised as roms. Some cartridges require more than one 
 image to load (e.g., tutor.lo tutor.hi).
 
+
+ 
 .prg files loaded at address in its first two bytes
 
 
+ 
 .bin, .rom, .lo , .hi roms are loaded to cs1 low, cs1 high, cs2 low, cs2 high addresses 
 accordingly to their order in the command line.
 
 
+ 
 Note that .prg and .p00 files are assigned to the quickloader (so you have to use 
-the -rom switch when loading rom images) The quickloader is currently assigned as a 
-harddisk device.
+the -cart switch when loading rom images).
 
 
-QUICKLOADER: 
+Quickloader Usage:
 
 A quickloader is available via the f8 key. It supports program image files 
 with the .prg extension. This loads the program into memory and sets the program end 
@@ -458,16 +450,17 @@ pointer. It works with most programs. The program can be started by entering "RU
 the emulation.
 
 
-If you run into difficulty, be sure to start the emulation with the -log switch, and look into
-the error.log file that is created in your mess directory.
+Miscellaneous Usage Notes:
 
-
-MISCELLANEOUS: See "Keys (This Machine)" for key assignments.
+See "Keys (This Machine)" for key assignments.
 
 Shift-cbm switches between upper-only and normal character set (if wrong characters are on 
 screen this may help).
 
 Run (shift-stop) loads the first program from device 8 (dload"*) and starts it.
+
+If you run into difficulty, be sure to start the emulation with the -log switch, and look into
+the error.log file that is created in your mess directory.
 
 
 Known Issues:
@@ -493,25 +486,26 @@ The Plus 4's userport is not supported.
 
 Note if a game runs too fast with the ntsc version, try the pal version!
 
+
 The following features are emulated:
 
-rasterline based video system
+	- rasterline based video system
 
-keyboard, joystick 1 and 2
+	- keyboard, joystick 1 and 2
 
-simple tape support
+	- simple tape support
 
-serial bus
+	- serial bus
 
-simple disk drives
+	- simple disk drives
 
-expansion modules
+	- expansion modules
 
-rom cartridges
+	- rom cartridges
 
-simple ieee488 floppy support (c1551 floppy disk drive)
+	- simple ieee488 floppy support (c1551 floppy disk drive)
 
-quickloader
+	- quickloader
 
 
 History and Trivia:
@@ -521,52 +515,57 @@ Electronics Show (CES) in January (?) 1984, the developers had obviously not yet
 about the keyboard layout; some keys are unlabelled, the right shift key was missing, 
 instead having a key which seems to be meant as a line feed key.
 
-It was planned that when buying a C264, you could have chosen between these programs:
+ 
+It was planned that when buying a C264, you could have chosen between these programs: 
+
+	- 3 plus 1 (word processor, data base, spread sheet, windowing) 
+
+	- Superscript (professional word processor) 
+
+	- Magic Desk (word processor, data base, spread sheet, calculator) 
+
+	- Logo 
+
+	- Pilot 
+
+	- Easycalc 264 (spread sheet) 
+
+	- COM 264 
+
+	- Financial Advisor 
 
 
-3 plus 1 (word processor, data base, spread sheet, windowing) 
-
-Superscript (professional word processor) 
-
-Magic Desk (word processor, data base, spread sheet, calculator) 
-
-Logo 
-
-Pilot 
-
-Easycalc 264 (spread sheet) 
-
-COM 264 
-
-Financial Advisor 
-
-
+ 
 The C264 should then be delivered with the selected program built in. The remaining programs 
 could only be used with cartridges for the expansion port.
 
 
+ 
 The official presentation of the C264 series took place on the Hannover fair in 1984. 
 Luckily, the developers didn't eliminate the right shift key in the final keyboard layout. 
-The formerly unlabelled keys bear a label now: the key that used to be the '<-' (left arrow) 
+The formerly unlabelled keys bear a label now: the key that used to be the left arrow 
 key on the C64 and the VC20 says 'Esc', the key between '@' and '*' bears the English pound 
 sign, and the key that was labelled 'SHIFT LOCK' on all 8-bit computers Commodore ever 
 produced now says - guess what - 'SHIFT LOCK' :-) (must have been a hard decision between 
 SHIFT and CAPS lock).
 
 
+ 
 A word about the C364 : This prototype was a C264 with a bigger keyboard (86 keys incl. a 
 numeric keypad) and with a builtin speech synthesizer with a vocabulary of 250 words (which 
 could be expanded by either diskettes or modules). Commodore dropped this model and decided 
 to sell a separate speech module (Magic Voice) for the C64.
 
 
+ 
 Among the Commodore news from the Summer CES 1984 was the renaming of the C264 to Plus/4. 
 This renaming came along with a slight change in the builtin software: you could not choose 
 between many different programs anymore, but each Plus/4 was delivered with the 3-plus-1 
 software.
 
 
-The builtin software was really limited: a word processing (only with 40 columns and can 
+ 
+The built-in software was really limited: a word processing (only with 40 columns and can 
 manage documents with only 99 lines of 77 columns), a very small spreadsheet (only 17 
 columns and 50 lines), a poor graphic software (which can display graphically datas from 
 the sheets but only in text mode) and a small database (999 record with 17 fields each 
@@ -578,22 +577,27 @@ in relation to the C64 one with graphic and sound instructions and a built-in as
 but has lost lots of interesting C64 features like great soundchip or hardware sprites. 
 
 
+ 
 The Commodore 16/116 belongs to the Commodore 264 series (with the Commodore Plus/4). It was 
-designed to replace the Commodore VIC 20, but it was not compatible with the VIC-20, nor with 
+designed to replace the Commodore VIC-20, but was not compatible with it, nor with 
 the C64. It had the same characteristics as the Commodore Plus/4 : same graphic resolution, 
 same sound system, same CPU and speed, just less memory. It has a powerful basic language 
 (contrary to the VIC-20 or the C64) which makes graphics and sounds easy to program. 
 The C16, like the Commodore Plus/4 was a commercial failure.
 
 
-The C116 is the prototype version of the C16 and has a (horrible) rubber keyboard.
+ 
+The C116 was an earlier version of the C16 and had a rubber keyboard. It was sold in Austria, 
+at least, and perhaps in other countries as well.
 
 
+ 
 It seems that the first C16s had the two control ports labelled JOY 0 and JOY 1 instead of 
 JOY 1 and JOY 2, just as a hint for collectors :-)
 
 
-Note that as well as the C116, the C16 lacks a user port.
+ 
+Note that like the C116, the C16 lacks a user port.
 
 
 $end
@@ -605,75 +609,95 @@ $bio
 Commodore 64
 
 
-Usage:
+Diskette Usage:
 
-DISKETTES: Disk drives are simulated at the moment, and only file loads from drive 8 and 9 
+Disk drives are simulated at the moment, and only file loads from drive 8 and 9 
 are implemented. You can load a program file from the rom directory (*.prg,*.p00)
 You can also load a file from a d64 image (The directory command LOAD"$",8 is supported when 
 using d64 images).
 
 
-Within the emulation, basic programs can be loaded with:
-
-LOAD"filename",8 
-
-
-Machine language programs can be loaded to their address with:
-
-LOAD"filename",8,1
+ 
+Within the emulation, basic programs can be loaded with:  LOAD"filename",8 
 
 
+ 
+Machine language programs can be loaded to their address with:  LOAD"filename",8,1
+
+
+ 
 When a program is loaded, type RUN or the appropriate SYS call to start it. 
 
 
+ 
 Note that several programs rely on more features not currently emulated (such as 
 loading other file types, writing...) Some games also rely on starting programs in the 
 floppy drive's proccessor (and therefore cpu level emulation of the 1541 is needed).
 
-CARTRIDGES: Cartridges may have any of the following extensions: .prg .crt .80 .90 .a0 .b0 
+
+Cartridge Usage:
+
+Cartridges may have any of the following extensions: .prg .crt .80 .90 .a0 .b0 
 .e0 .f0   Files with boot-sign in it are recognised as roms. Some cartridges may require more 
 than one image.
 
+ 
 .prg files loaded at address in its first two bytes
 
+ 
 .?0 files are loaded to the address specified in the extension.
 
+ 
 .crt roms are loaded to the addresses specified in crt file.
 
 
+ 
 Note that .prg files are assigned to the quickloader (so you have to use 
-the -rom switch when loading rom images) The quickloader is currently assigned as a 
-harddisk device.
+the -cart switch when loading rom images).
 
 
+Cassette Usage:
 
-CASSETTES: Cassette images with the .wav or .prg extensions as well as multiple .prg files 
+Cassette images with the .wav or .prg extensions as well as multiple .prg files 
 contained within a zip file can be loaded. Zip files must be placed in the current directory, 
 and the contained prg files are played in sequential order.
 
 
-The format for WAVs are:
+ 
+The format for WAVs are: 
 8 bit (16 bit may work, but hasn't been tested), mono, 12500 Hz minimum. This has the same 
 problems as an original Datasette tape drive (the tone head must be adjusted to get working 
 (no load error...) wav-files)
 
 
+ 
 Note that tape volume is DAC1 volume within the MESS UI On Screen Display Options (accessed
 with the tilde (~) key in the DOS version.
 
 
+ 
 Within the emulation, use LOAD or LOAD"" or LOAD"",1 for loading normal programs. Use 
 LOAD"",1,1 for loading programs to a special address.
 
 
-QUICKLOADER: A quickloader is available via the f8 key. It supports program image files with 
+Quickloader Usage:
+
+A quickloader is available via the f8 key. It supports program image files with 
 the .prg and .p00 extensions. This loads the program into memory and sets the program end 
 pointer. It works with most programs. The program can be started by entering "RUN" in the 
 emulation.
 
 
+Miscellaneous Usage Notes:
+
+Gameport A supports paddles 1 & 2,  joystick 1, lightpen (implementation not finished).
+
+Gameport B supports paddles 3 & 4, joystick 2
+
 If you run into difficulty, be sure to start the emulation with the -log switch, and look into
 the error.log file that is created in your mess directory.
+
+If the game runs to fast with the ntsc version, try the pal version! (c64pal)
 
 
 Known Issues:
@@ -684,29 +708,11 @@ finished.
 
 Sound is not currently supported
 
-Some issues with the cia6526:
-
- port a,b
-
- handshake support, flag input, not pc output
-
- no serial in/out, cnt
-
- timer a,b
-
-  not counting of external clocks
-
-  not switching port b pins
-
-
 The restore key is not currently working.
-
 
 NTSC/PAL select not correct.
 
-
 The Gameports do not suport the mouse (Serial Protocol?).
-
 
 No printer or other devices support in the serial bus (apart from simple disk drives).
 
@@ -718,20 +724,30 @@ no ieee488 support nor support for other expansion modules.
 
 No userport support and no rs232/v.24 interface.
 
-Gameport A supports paddles 1 & 2,  joystick 1, lightpen (implementation not finished).
+ 
+Some issues with the cia6526: 
 
-Gameport B supports paddles 3 & 4, joystick 2
+	- port a,b
 
-If the game runs to fast with the ntsc version, try the pal version! (c64pal)
+	- handshake support, flag input, not pc output
+
+	- no serial in/out, cnt
+
+	- timer a,b
+
+	- not counting of external clocks
+
+	- not switching port b pins
 
 
 History and Trivia:
-
+ 
 Designed similar to the Vic-20, the Commodore 64 featured a better video chip supporting 
 sprites, as well as the famous sid6581 sound chip, two "Atari-compatible" joystick ports,
 and 64 kilobytes of RAM.
 
 
+ 
 The Commodore 64 is, along with the Apple II and the Atari 8-Bit computers, one of the 
 most famous home computers of it's era. During its production from 1982 to 1993 (!) 17 
 to 22 million (!) of these computer would sell, to put in perspective, that's more than 
@@ -740,18 +756,21 @@ chip and graphic resolution with many colors and sprites. A great range of perip
 was developped for this computer and can use several of the Vic 20 peripherals. 
 
 
+ 
 Several versions of the Commodore 64 were launched : The first one (C64-1) uses the VIC 20 
 case, it will be quiclky replaced with the C64-2 which uses the famous brown case and by 
 the C64-3 with small cosmetic changes in the keyboard. A special version called Educator 64 
 or PET64 or CBM 4064 was proposed for schools and uses the PET case.
 
 
+ 
 Commodore produced the first generation of C64s until May 1986, then it was discontinued 
 and they introduced the C64C. According to the 64'er magazine, this version has been 
 planned since the Hannover mass in 1985, but as the old version sold so well during 
 Christmas '85, its release date was pushed back.
 
 
+ 
 The new model does not differ much from its predecessor, the only innovation is the 
 flatter case, which makes the keyboard (which has off-white keys now) more ergonomical 
 (it looks like the C128 case), as it is less higher than the old one. But the new case 
@@ -761,6 +780,7 @@ the C64G. The 64'er staff noticed that VIC-II as well as the two CIAs have new v
 numbers; they didn't write which, though (these are probably just bugfixed chips). 
 
 
+ 
 The official name for this model was "C=64 C", but nevertheless the German 64'er magazine 
 decided to call it "C64-II" (because the first units didn't have the new name on the label 
 at the bottom), the badges on all the 64 C's just says "Commodore 64". They pointed out 
@@ -769,12 +789,14 @@ magazine for the C64 for a long time, the name was widely accepted and so this m
 is mostly known as "C64-II" in Germany.
 
 
+ 
 The C64C appeared again after (or concurrently with?) the C64G, this time with the new, 
 short board. So, although the case might look the same and the label says "Commodore 64", 
 the boards may be completely different.
 
 
-Commodore realised too a "laptop version" (though hardly portable) of the C64, called SX64. 
+ 
+Commodore also released a "laptop version" (though hardly portable) of the C64, called SX64. 
 This computer has a built-in 5" color screen, one detachable keyboard, one 5.25" floppy 
 disk drive (the famous 1541) and a second one can be installed as well. A version called 
 DX-64 was launched (in very limited quantities) at the same time, it has same 
@@ -782,6 +804,7 @@ characteristics as the SX64 except its two 5.25" floppy disk drives. The SX64 an
 computers never had success, but it is known as the world's first color portable.
 
 
+ 
 The C64GS was released in 1990. Basically it was a re-boxed C64, without a keyboard or any 
 other interfaces, except for the cartridge slot on top. It didn't have much success as you 
 could buy a C64 for not much extra, and the C64GS games would still work on the C64.
@@ -819,16 +842,16 @@ $bio
 Amstrad/Schneider CPC 6128
 
 
-Usage: 
+Usage:
 
 With a disk image loaded, the emulation starts from the BASIC "Ready" prompt. 
-From here you can enter commands to access the disk image:
+From here you can enter commands to access the disk image: 
  
 
 A directory listing can be obtained with: "CAT"
 
 
-A program can be run with: RUN"<filename>"
+A program can be run with: RUN"filename"
 
 
 The common programs to run are those with a .BIN or .BAS extension and usually the smaller 
@@ -852,9 +875,9 @@ The |CPM works by loading and executing the first sector on the first track of t
 
 
 Snapshots, which contain a memory dump, cpu state and hardware state, can be run from a 
-command line interface with the following command:
+command line interface with the following command: 
 
-mess cpc6128 <snapshot name>
+mess cpc6128 -snap "snapshot name"
 
 
 The snapshot will start automatically.
@@ -893,60 +916,6 @@ in 4 colours (medium res), 160x200 in 16 colours (lo-res).
 
 $end
 
-#---------------------------------------------------------------------------------------------#
-
-$info=sfzch
-$bio
-Capcom CPS Changer
-
-
-Perhaps inspired by SNK's Neo-Geo, Capcom released the Capcom Power System Changer (CPS in 
-this case NOT referring to Capcom Play System) in 1994, as an attempt to sell their arcade 
-games in console format.  The console basically served as an encased SuperGun (Television 
-JAMMA adapter) but was wired up so coin inputs could not be added by hackers, and only the
-special CPS Changer cartridge boards would work. The CPS Changer had outputs for Composite
-video, S-Video and 8 channel mono audio. It's joystick (named the "CPS Fighter") had the
-same connection as the Super Famicom, and was even marketed seperately for that console.
-
-
-The games came as PCBs in plastic casing, and were virtually identical to their CPS-1 arcade
-counterparts, though they often contained extra debugging features.  The CPS Changer was
-sold as a package deal of the console itself, one CPS Fighter controller, and the Street
-Fighter II Turbo game for 39,800 yen. Additional games were sold for about 20,000 yen.
-
-
-The CPS Changer sold poorly though, and support was dropped in March 1996 after releasing 
-the console's only unique (as in non-CPS1) title: Street Fighter Zero, for 35,000 yen.
-Street Fighter Zero was a downscaled version of the CPS2 arcade version from the year prior.
-It ran somewhat choppier, had a reduced colour depth, and the sounds were at a lower sample
-rate.
-
-
-Ten other games were released for the CPS Changer, though none have been dumped at present
-(to the best of my knowledge). If/when these are dumped, support will be added for them:
-
-Captain Commando (1995)
-
-Final Fight  (1994)
-
-The King of Dragons (1995)
-
-Knights of the Round (1995)
-
-Muscle Bomber:The Body Explosion (1994)
-
-Muscle Bomber Duo: Burn Up Warriors (1995)
-
-Quiz Capcom World 2 (1994)
-
-Street Fighter II' Champion Edition (1994)
-
-Street Fighter II Turbo (1994, Pack-in)
-
-Tenchi O Kurau II (1995)
-
-
-$end
 
 #---------------------------------------------------------------------------------------------#
 
@@ -955,11 +924,9 @@ $bio
 EACA Colour Genie 2000
 
 
-Usage:
+Cassette Usage:
 
-Cassettes:
-
-From within the emulation you can use SYSTEM or CLOAD commands to read images:
+From within the emulation you can use SYSTEM or CLOAD commands to read images: 
 
 SYSTEM supports 6 character filenames.
 
@@ -974,14 +941,14 @@ see a file basicA.cas later and you can CLOAD"A it again.
 
 To load a binary image there was a different command: SYSTEM
 
-You'll see a prompt looking like this:
+You'll see a prompt looking like this: 
 
 *?
 
 
 and there you can enter a name of up to six (wow!) characters.
 
-*?chop16<ENTER>
+*?chop16 [ENTER]
 
 This will start loading a file named chop16.cas if it is in your rompath. If you don't have 
 it... well, wait and see (nothing ;)  If you have it, you'll see two stars (**) in the upper 
@@ -994,25 +961,25 @@ After several minutes you'll see the prompt again
 
 
 now type / (slash) and ENTER and the program will be started at it's defined run address. If 
-a program does not have a run address, you could also specify /<decimal value> to run from a 
+a program does not have a run address, you could also specify /[decimal value] to run from a 
 specific value...
 
 
+ 
+Diskette Usage:
 
-Diskettes:
-
-When the emulation starts, tap <ENTER> and also confirm the following 
+When the emulation starts, tap [ENTER] and also confirm the following 
 	
 MEM SIZE?
 
-with <ENTER>.
+with [ENTER].
 
 After that you're in BASIC (DISK BASIC, to be exact, unless you disable cgdos.rom via the 
 dip switches).
 
 Now you can use the DISK BASIC extensions to issue commands.  Most important
 
-CMD"I<disk#> 
+CMD"I[disk#] 
 
 Display inventory, disk# is optional and can be from 0 to 3
 
@@ -1041,7 +1008,9 @@ The optional newe000.rom is loaded if the corresponding "dip switch" is set from
 driver itself. There is no need to specify this rom on the commandline.
 
 
-Under the "Options" menu, accessible by hitting TAB, there are three settings:
+Miscellaneous Usage Notes:
+ 
+Under the "Options" menu, accessible by hitting TAB, there are three settings: 
 
 "Floppy Disc Drives"  - enable or disable floppy disc controller.
 
@@ -1057,8 +1026,6 @@ to read cassette image files, or use the Colour Genie DOS ROM with floppy disc i
 programs. The driver does not yet emulate the printer port mode for AY-3-8910. Right now it 
 always uses the AY-3-8910 ports for joystick emulation.
 
-
-Known Issues:
 
 Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by 
 default.  Whilst in full keyboard emulation mode, some key associated functionality may be 
@@ -1094,8 +1061,7 @@ $end
 
 $info=coco
 $bio
-Tandy/Radio Shack Color Computer
-Dragon Data Ltd. Dragon 32
+Tandy/Radio Shack Color Computer / Dragon Data Ltd. Dragon 32
 
 
 Known Issues:
@@ -1183,27 +1149,28 @@ $info=ep128
 $bio
 Enterprise 128
 
+
 Usage:
 
 This computer has a built in word processor, from BASIC enter "type" to enter it.
 
-to load programs:
+To load programs:
 
 You can type ":EXDOS" to enter a CLI interface where you can type EXDOS commands.
 If typing from BASIC you must enter ":" in front of EXDOS commands.
 
 The following EXDOS commands are allowed:
 
-CHDIR	<dir name>
-		- Change Dir.<dir name> does not need to be enclosed in quotes.
+CHDIR	[dir name]
+		- Change Dir.[dir name] does not need to be enclosed in quotes.
 DIR		
 		- show directory listing
 
 To run a program, enter from BASIC:
 
-RUN"<filename>" or
+RUN"filename" or
 
-LOAD"<filename>"
+LOAD"filename"
 
 
 Known Issues:
@@ -1272,7 +1239,7 @@ Sega Megadrive/Genesis
 
 Usage:
 
-Under the "Options" menu, accessible by hitting TAB, you will find the following option:
+Under the "Options" menu, accessible by hitting TAB, you will find the following option: 
 
 
 "Country" - this allows you to alter the 'flavour' of Genesis, to either European, Japanese 
@@ -1557,8 +1524,9 @@ $end
 #---------------------------------------------------------------------------------------------#
 $info=msx
 $bio
+MSX 1 Class Computers
 
-The MSX driver currently emulates the MSX1, international, korean and Japanese models.
+The MSX driver currently emulates the MSX1, international, UK, korean and Japanese models.
 
 
 Not emulated:
@@ -1652,7 +1620,7 @@ The NES driver should run 99% of the images currently out there with very little
 It doesn't yet support a lot of the obscure mappers used in fwNES, but this is being 
 worked on. For the record, it supports mappers 1, 2, 3, 4, 5 (incomplete), 7, 8, 9 & 10 
 (incomplete), 11, 15, 16, 18 (vrom probs), 25 (vrom probs), 33, 34, 64, 65, 66, 
-68 (incomplete), 69 (incomplete), 71, 78, 79. Some of the mappers > 63 haven't been fully 
+68 (incomplete), 69 (incomplete), 71, 78, 79. Some of the mappers over 63 haven't been fully 
 tested yet. See nes.crc for a partial compatibility list.
 
 The NES driver has quite accurate sound and sample playback. For example, you can hear speech 
@@ -1775,7 +1743,6 @@ Commodore PET series
 
 History and Trivia:
 
-
 The Commodore PET 2001 was a great success. Three models were made : the PET 2001-8N with 8 KB 
 RAM, PET 2001-16N with 16 KB RAM and the PET 2001-32N. They were conceived by Chuck Peddle who 
 later founded Tandon.
@@ -1850,6 +1817,62 @@ scroll_lock key.
 
 $end
 
+#---------------------------------------------------------------------------------------------#
+
+$info=sfzch
+$bio
+Capcom CPS Changer
+
+
+History and Trivia:
+
+Perhaps inspired by SNK's Neo-Geo, Capcom released the Capcom Power System Changer (CPS in 
+this case NOT referring to Capcom Play System) in 1994, as an attempt to sell their arcade 
+games in console format.  The console basically served as an encased SuperGun (Television 
+JAMMA adapter) but was wired up so coin inputs could not be added by hackers, and only the
+special CPS Changer cartridge boards would work. The CPS Changer had outputs for Composite
+video, S-Video and 8 channel mono audio. It's joystick (named the "CPS Fighter") had the
+same connection as the Super Famicom, and was even marketed seperately for that console.
+
+
+The games came as PCBs in plastic casing, and were virtually identical to their CPS-1 arcade
+counterparts, though they often contained extra debugging features.  The CPS Changer was
+sold as a package deal of the console itself, one CPS Fighter controller, and the Street
+Fighter II Turbo game for 39,800 yen. Additional games were sold for about 20,000 yen.
+
+
+The CPS Changer sold poorly though, and support was dropped in March 1996 after releasing 
+the console's only unique (as in non-CPS1) title: Street Fighter Zero, for 35,000 yen.
+Street Fighter Zero was a downscaled version of the CPS2 arcade version from the year prior.
+It ran somewhat choppier, had a reduced colour depth, and the sounds were at a lower sample
+rate.
+
+
+Ten other games were released for the CPS Changer, though none have been dumped at present
+(to the best of my knowledge). If/when these are dumped, support will be added for them: 
+
+Captain Commando (1995)
+
+Final Fight  (1994)
+
+The King of Dragons (1995)
+
+Knights of the Round (1995)
+
+Muscle Bomber:The Body Explosion (1994)
+
+Muscle Bomber Duo: Burn Up Warriors (1995)
+
+Quiz Capcom World 2 (1994)
+
+Street Fighter II' Champion Edition (1994)
+
+Street Fighter II Turbo (1994, Pack-in)
+
+Tenchi O Kurau II (1995)
+
+
+$end
 
 #---------------------------------------------------------------------------------------------#
 
@@ -2084,7 +2107,8 @@ No light pen support.
 
 Almost every cartridge is playable, except those requiring the light pen. See vectrex.crc for 
 a current compatibility list. Overlays are supported in .png format, using the same name as 
-the cartridge image being loaded. Place overlays in the artwork directory.
+the cartridge image being loaded. Place overlays in the artwork directory. The overlay for
+the built in minestorm game must be named "mine.png" to load when no image is selected.
 
 
 History and Trivia:
@@ -2120,9 +2144,7 @@ $bio
 Commodore VIC20 and VC20
 
 
-Usage:
-
-CARTRIDGES: 
+Cartridge Usage:
 
 Cartridges may have any of the following extensions: .bin .rom .a0 .20 .40 .60 .prg
 Files with boot-sign in it are recognised as roms. Some cartridges require more than one 
@@ -2143,17 +2165,17 @@ image (for example, defender.60 defender.a0).
 otherwise they are loaded at 0xa000
 
 Note that .prg files are assigned to the quickloader (so you have to use 
-the -rom switch when loading rom images) The quickloader is currently assigned as a 
-harddisk device.
+the -cart switch when loading rom images).
 
 
+Cassette Usage:
 
-CASSETTES: Cassette images with the .wav or .prg extensions as well as multiple .prg files 
+Cassette images with the .wav or .prg extensions as well as multiple .prg files 
 contained within a zip file can be loaded. Zip files must be placed in the current directory, 
 and the contained prg files are played in sequential order.
 
 
-The format for WAVs are:
+The format for WAVs are: 
 8 bit (16 bit may work, but hasn't been tested), mono, 12500 Hz minimum. This has the same 
 problems as an original Datasette tape drive (the tone head must be adjusted to get working 
 (no load error...) wav-files)
@@ -2167,7 +2189,9 @@ Within the emulation, use LOAD or LOAD"" or LOAD"",1 for loading normal programs
 LOAD"",1,1 for loading programs to a special address.
 
 
-DISKETTES: Disk drives are simulated at the moment, and only file loads from drive 8 and 9 
+Diskette Usage:
+
+Disk drives are simulated at the moment, and only file loads from drive 8 and 9 
 are implemented. You can load a program file from the rom directory (*.prg,*.p00)
 (This must NOT be specified on commandline, start the vc20 emulation with no images specified)
  
@@ -2176,12 +2200,12 @@ You can also load a file from a d64 image (The directory command LOAD"$",8 is su
 using d64 images).
 
 
-Within the emulation, basic programs can be loaded with:
+Within the emulation, basic programs can be loaded with: 
 
 LOAD"filename",8 
 
 
-Machine language programs can be loaded to their address with:
+Machine language programs can be loaded to their address with: 
 
 LOAD"filename",8,1
 
@@ -2194,25 +2218,29 @@ loading other file types, writing...) Some games also rely on starting programs 
 floppy drive's proccessor (and therefore cpu level emulation of the 1541 is needed).
 
 
-QUICKLOADER: A quickloader is available via the f8 key. It supports program image files 
+Quickloader Usage:
+
+A quickloader is available via the f8 key. It supports program image files 
 with the .prg extension. This loads the program into memory and sets the program end 
 pointer. It works with most programs. The program can be started by entering "RUN" in 
 the emulation.
+
+
+Miscellaneous Usage Notes:
+
+Note that the pixel ratio for the PAL version is about 13/10 ! Resolution 1024x768 is good, 
+but only part of the screen is filled. 800x600 is acceptable. Better to define own display 
+mode (when the graphic driver supports this). For an acceptable display under XMESS, you can 
+use the following switches: 
+
+-scalewidth 3 -scaleheight 2
 
 
 If you run into difficulty, be sure to start the emulation with the -log switch, and look into
 the error.log file that is created in your mess directory.
 
 
-MISCELLANEOUS: Note that the pixel ratio for the PAL version is about 13/10 ! Resolution 1024x768 is good, 
-but only part of the screen is filled. 800x600 is acceptable. Better to define own display 
-mode (when the graphic driver supports this). For an acceptable display under XMESS, you can 
-use the following switches:
-
--scalewidth 3 -scaleheight 2
-
-
-See "Keys (This Machine)" in the TAB/Options menu for key assignments. Some key usages of note:
+See "Keys (This Machine)" in the TAB/Options menu for key assignments. Some key usages of note: 
 
 stop-restore in many cases will cause the prompt to reappear.
 

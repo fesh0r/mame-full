@@ -93,8 +93,15 @@
 	PORT_DIPSETTING(	0x0400, "Paddles 3, 4" )\
 	PORT_DIPSETTING(	0x0600, "Mouse Joystick Emulation/2 Button Joystick" )\
 	PORT_DIPSETTING(	0x0800, "Mouse" )\
+	PORT_BITX( 0x100, IP_ACTIVE_HIGH, IPT_DIPSWITCH_NAME|IPF_TOGGLE,\
+		     "Swap Gameport 1 and 2", KEYCODE_NUMLOCK, IP_JOY_NONE)\
+	PORT_DIPSETTING(  0, DEF_STR( No ) )\
+	PORT_DIPSETTING(	0x100, DEF_STR( Yes ) )
+
+#if 0
     PORT_BITX( 0x100, IP_ACTIVE_HIGH, IPF_TOGGLE,\
 		   "Swap Gameport 1 and 2", KEYCODE_NUMLOCK, IP_JOY_NONE)
+#endif
 
 #define LIGHTPEN ((input_port_7_r(0)&0xe000)==0xa000)
 #define MOUSE1 ((input_port_7_r(0)&0xe000)==0x8000)
@@ -151,6 +158,8 @@
 #define DATASSETTE_PLAY		(input_port_8_r(0)&0x1000)
 #define DATASSETTE_RECORD	(input_port_8_r(0)&0x800)
 #define DATASSETTE_STOP		(input_port_8_r(0)&0x400)
+
+#define SID8580		(input_port_8_r(0)&0x80)
 
 #define AUTO_MODULE ((input_port_8_r(0)&0x1c)==0)
 #define ULTIMAX_MODULE ((input_port_8_r(0)&0x1c)==4)

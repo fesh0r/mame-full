@@ -425,8 +425,8 @@ void pc_PIC_issue_irq(int irq)
 	if( PIC_enable & mask )
 	{
 		PIC_LOG(1,0,(errorlog,"is not enabled\n"));
-//		PIC_pending &= ~mask;
-//		PIC_in_service &= ~mask;
+/*		PIC_pending &= ~mask; */
+/*		PIC_in_service &= ~mask; */
         return;
 	}
 
@@ -1166,7 +1166,7 @@ int pc_JOY_r(int offset)
 	else
 	{
 		delta = 2048 * 100 * (new_time - JOY_time) - 1024;
-//		osd_analogjoy_read(&x, &y);
+/*		osd_analogjoy_read(&x, &y); */
 		osd_trak_read(0,&x, &y);
 		if (JOY_x + x < -1024) JOY_x = -1024;
 		else if (JOY_x + x > 1023) JOY_x = 1023;
@@ -1557,7 +1557,7 @@ static void pc_keyboard(void)
 	int i;
 
 	update_input_ports();
-    for( i = 0x01; i < 0x54; i++  )
+    for( i = 0x01; i < 0x80; i++  )
 	{
 		if( readinputport(i/16 + 4) & (1 << (i & 15)) )
 		{
@@ -1639,15 +1639,19 @@ static void pc_mouse_scan(int n)
 	static int ox = 0, oy = 0;
     int dx, dy, nb;
 
-	dx = readinputport(10) - ox;
-	dy = readinputport(11) - oy;
-	nb = readinputport(6);
+	dx = readinputport(13) - ox;
+	if (dx>=0x800) dx-=0x1000;
+	else if (dx<=-0x800) dx+=0x1000;
+	dy = readinputport(14) - oy;
+	if (dy>=0x800) dy-=0x1000;
+	else if (dy<=-0x800) dy+=0x1000;
+	nb = readinputport(12);
 
 	/* check if there is any delta or mouse buttons changed */
 	if( dx || dy || nb != mb )
 	{
-		ox += dx;
-		oy += dy;
+		ox = readinputport(13);
+		oy = readinputport(14);
 		mb = nb;
 		/* split deltas into packtes of -128..+127 max */
 		do

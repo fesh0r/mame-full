@@ -362,19 +362,24 @@ static struct MemoryWriteAddress c128_writemem[] =
 	 PORT_DIPNAME   ( 0x2000, 0x00, " Tape Sound")\
 	 PORT_DIPSETTING(  0, DEF_STR( Off ) )\
 	 PORT_DIPSETTING(0x2000, DEF_STR( On ) )\
-	 DIPS_HELPER( 0x1000, "Tape Drive Play",       KEYCODE_NONE)\
-	 DIPS_HELPER( 0x0800, "Tape Drive Record",     KEYCODE_NONE)\
-	 DIPS_HELPER( 0x0400, "Tape Drive Stop",       KEYCODE_NONE)\
+	 DIPS_HELPER( 0x1000, "Tape Drive Play",       CODE_DEFAULT)\
+	 DIPS_HELPER( 0x0800, "Tape Drive Record",     CODE_DEFAULT)\
+	 DIPS_HELPER( 0x0400, "Tape Drive Stop",       CODE_DEFAULT)\
 	 PORT_DIPNAME   ( 0x300, 0x00, "Main Memory/MMU Version")\
 	 PORT_DIPSETTING(  0, "128 KByte" )\
 	 PORT_DIPSETTING(0x100, "256 KByte" )\
 	 PORT_DIPSETTING(0x200, "1024 KByte" )\
-	 PORT_DIPNAME   ( 0x80, 0x80, "VDC Memory (RGBI)")\
+	PORT_DIPNAME   ( 0x80, 0x80, "Sid Chip Type")\
+	PORT_DIPSETTING(  0, "MOS6581" )\
+	PORT_DIPSETTING(0x80, "MOS8580" )\
+	 PORT_DIPNAME   ( 0x40, 0x40, "VDC Memory (RGBI)")\
 	 PORT_DIPSETTING(  0, "16 KByte" )\
-	 PORT_DIPSETTING(  0x80, "64 KByte" )\
-	 PORT_BITX (0x40, IP_ACTIVE_LOW, IPF_TOGGLE,\
+	 PORT_DIPSETTING(  0x40, "64 KByte" )\
+	 PORT_BITX (0x20, 0x20, IPT_DIPSWITCH_NAME|IPF_TOGGLE,\
 				"DIN,TV/RGBI Monitor (switch)",\
 				KEYCODE_ENTER_PAD, IP_JOY_NONE)\
+	 PORT_DIPSETTING(  0, "DIN,TV" )\
+	 PORT_DIPSETTING(  0x20, "RGBI" )\
 	 PORT_DIPNAME (0x1c, 0x00, "Cartridge Type")\
 	 PORT_DIPSETTING (0, "Automatic")\
 	 PORT_DIPSETTING (4, "Ultimax (GAME)")\
@@ -391,20 +396,20 @@ static struct MemoryWriteAddress c128_writemem[] =
 
 #define DIPS_KEYS_BOTH \
 	PORT_START \
-    DIPS_HELPER( 0x8000, "Numericblock 7", KEYCODE_NONE)\
-	DIPS_HELPER( 0x4000, "Numericblock 8", KEYCODE_NONE)\
-	DIPS_HELPER( 0x2000, "Numericblock 9", KEYCODE_NONE)\
-	DIPS_HELPER( 0x1000, "Numericblock +", KEYCODE_NONE)\
-	DIPS_HELPER( 0x0800, "Numericblock 4", KEYCODE_NONE)\
-	DIPS_HELPER( 0x0400, "Numericblock 5", KEYCODE_NONE)\
-	DIPS_HELPER( 0x0200, "Numericblock 6", KEYCODE_NONE)\
-	DIPS_HELPER( 0x0100, "Numericblock -", KEYCODE_NONE)\
-	DIPS_HELPER( 0x0080, "Numericblock 1", KEYCODE_NONE)\
-	DIPS_HELPER( 0x0040, "Numericblock 2", KEYCODE_NONE)\
-	DIPS_HELPER( 0x0020, "Numericblock 3", KEYCODE_NONE)\
-	DIPS_HELPER( 0x0010, "Numericblock 0", KEYCODE_NONE)\
-	DIPS_HELPER( 0x0008, "Numericblock .", KEYCODE_NONE)\
-	DIPS_HELPER( 0x0004, "Numericblock Enter", KEYCODE_NONE)\
+    DIPS_HELPER( 0x8000, "Numericblock 7", CODE_DEFAULT)\
+	DIPS_HELPER( 0x4000, "Numericblock 8", CODE_DEFAULT)\
+	DIPS_HELPER( 0x2000, "Numericblock 9", CODE_DEFAULT)\
+	DIPS_HELPER( 0x1000, "Numericblock +", CODE_DEFAULT)\
+	DIPS_HELPER( 0x0800, "Numericblock 4", CODE_DEFAULT)\
+	DIPS_HELPER( 0x0400, "Numericblock 5", CODE_DEFAULT)\
+	DIPS_HELPER( 0x0200, "Numericblock 6", CODE_DEFAULT)\
+	DIPS_HELPER( 0x0100, "Numericblock -", CODE_DEFAULT)\
+	DIPS_HELPER( 0x0080, "Numericblock 1", CODE_DEFAULT)\
+	DIPS_HELPER( 0x0040, "Numericblock 2", CODE_DEFAULT)\
+	DIPS_HELPER( 0x0020, "Numericblock 3", CODE_DEFAULT)\
+	DIPS_HELPER( 0x0010, "Numericblock 0", CODE_DEFAULT)\
+	DIPS_HELPER( 0x0008, "Numericblock .", CODE_DEFAULT)\
+	DIPS_HELPER( 0x0004, "Numericblock Enter", CODE_DEFAULT)\
 	DIPS_HELPER( 0x0002, "Special (Right-Shift CRSR-DOWN) CRSR-UP", \
 			 KEYCODE_8_PAD)\
 	DIPS_HELPER( 0x0001, "Special (Right-Shift CRSR-RIGHT) CRSR-LEFT", \
@@ -448,9 +453,11 @@ INPUT_PORTS_START (c128)
 	 DIPS_HELPER (0x0002, "(64)RESTORE", KEYCODE_PRTSCR)
 	 DIPS_HELPER (0x0001, "(64)STOP RUN", KEYCODE_TAB)
 	 PORT_START
-     PORT_BITX (0x8000, IP_ACTIVE_HIGH, IPF_TOGGLE,
+     PORT_BITX (0x8000, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
 				"(64)(Left-Shift)SHIFT-LOCK (switch)",
 				KEYCODE_CAPSLOCK, IP_JOY_NONE)
+	 PORT_DIPSETTING (0, DEF_STR( Off ) )
+	 PORT_DIPSETTING (0x8000, DEF_STR( On ) )
 	 DIPS_HELPER (0x4000, "(64)A", KEYCODE_A)
 	 DIPS_HELPER (0x2000, "(64)S", KEYCODE_S)
 	 DIPS_HELPER (0x1000, "(64)D", KEYCODE_D)
@@ -485,31 +492,25 @@ INPUT_PORTS_START (c128)
 	 DIPS_HELPER (0x8000, "ESC", KEYCODE_ESC)
 	 DIPS_HELPER (0x4000, "TAB", KEYCODE_F5)
 	 DIPS_HELPER (0x2000, "ALT", KEYCODE_F6)
-#if 1
-	 PORT_DIPNAME (0x1000, 0x0000, "CAPSLOCK")
-	 PORT_DIPSETTING (0x1000, DEF_STR( Off ) )
-	 PORT_DIPSETTING (0, DEF_STR( On ) )
-#else
-	 PORT_BITX (0x1000, IP_ACTIVE_HIGH, IPF_TOGGLE,
-				"CAPSLOCK (switch)", KEYCODE_NONE, IP_JOY_NONE)
-#endif
+	 PORT_BITX (0x1000, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
+				"CAPSLOCK (switch)", CODE_DEFAULT, IP_JOY_NONE)
+	 PORT_DIPSETTING (0, DEF_STR( Off ) )
+	 PORT_DIPSETTING (0x1000, DEF_STR( On ) )
 	 DIPS_HELPER (0x0800, "HELP", KEYCODE_F7)
 	 DIPS_HELPER (0x0400, "LINE FEED", KEYCODE_F8)
-#if 1
-	 PORT_DIPNAME (0x0200, 0x0200, "Display Select (not C64 Mode)(booting)")
+	 PORT_BITX (0x0200, 0x200, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
+				"40 80 Display (switch)(booting)",
+				CODE_DEFAULT, IP_JOY_NONE)
 	 PORT_DIPSETTING (0, "40 Columns (DIN/TV)")
 	 PORT_DIPSETTING (0x0200, "80 Columns (RGBI)")
-#else
-	 PORT_BITX (0x0200, IP_ACTIVE_HIGH, IPF_TOGGLE,
-				"40 80 Display (switch)(booting)",
-				KEYCODE_NONE, IP_JOY_NONE)
-#endif
-	 PORT_BITX (0x0100, IP_ACTIVE_HIGH, IPF_TOGGLE,
+	 PORT_BITX (0x0100, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
 				"NO SCROLL (switch)", KEYCODE_F9, IP_JOY_NONE)
-	 DIPS_HELPER (0x0080, "Up", KEYCODE_NONE)
-	 DIPS_HELPER (0x0040, "Down", KEYCODE_NONE)
-	 DIPS_HELPER (0x0020, "Left", KEYCODE_NONE)
-	 DIPS_HELPER (0x0010, "Right", KEYCODE_NONE)
+	 PORT_DIPSETTING (0, DEF_STR( Off ) )
+	 PORT_DIPSETTING (0x100, DEF_STR( On ) )
+	 DIPS_HELPER (0x0080, "Up", CODE_DEFAULT)
+	 DIPS_HELPER (0x0040, "Down", CODE_DEFAULT)
+	 DIPS_HELPER (0x0020, "Left", CODE_DEFAULT)
+	 DIPS_HELPER (0x0010, "Right", CODE_DEFAULT)
 	 DIPS_HELPER (0x0008, "f1 f2", KEYCODE_F1)
 	 DIPS_HELPER (0x0004, "f3 f4", KEYCODE_F2)
 	 DIPS_HELPER (0x0002, "f5 f6", KEYCODE_F3)
@@ -535,12 +536,17 @@ INPUT_PORTS_START (c128ger)
 	 PORT_DIPSETTING(  0, "128 KByte" )
 	 PORT_DIPSETTING(0x100, "256 KByte" )
 	 PORT_DIPSETTING(0x200, "1024 KByte" )
-	 PORT_DIPNAME   ( 0x80, 0x80, "VDC Memory (RGBI)")
-	 PORT_DIPSETTING(  0, "16 KByte" )
-	 PORT_DIPSETTING(  0x80, "64 KByte" )
-	 PORT_BITX (0x40, IP_ACTIVE_HIGH, IPF_TOGGLE,
-				"DIN,TV/RGBI Monitor (switch)",
-				KEYCODE_ENTER_PAD, IP_JOY_NONE)
+	PORT_DIPNAME   ( 0x80, 0x80, "Sid Chip Type")\
+	PORT_DIPSETTING(  0, "MOS6581" )\
+	PORT_DIPSETTING(0x80, "MOS8580" )\
+	 PORT_DIPNAME   ( 0x40, 0x40, "VDC Memory (RGBI)")\
+	 PORT_DIPSETTING(  0, "16 KByte" )\
+	 PORT_DIPSETTING(  0x40, "64 KByte" )\
+	 PORT_BITX (0x20, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,\
+				"DIN,TV/RGBI Monitor (switch)",\
+				KEYCODE_ENTER_PAD, IP_JOY_NONE)\
+	 PORT_DIPSETTING(  0, "DIN,TV" )\
+	 PORT_DIPSETTING(  0x20, "RGBI" )\
 	 PORT_DIPNAME (0x1c, 0x00, "Cartridge Type")
 	 PORT_DIPSETTING (0, "Automatic")
 	 PORT_DIPSETTING (4, "Ultimax (GAME)")
@@ -600,9 +606,11 @@ INPUT_PORTS_START (c128ger)
 	 DIPS_HELPER (0x0002, "(64)RESTORE", KEYCODE_PRTSCR)
 	 DIPS_HELPER (0x0001, "(64)STOP RUN", KEYCODE_TAB)
 	 PORT_START
-     PORT_BITX (0x8000, IP_ACTIVE_HIGH, IPF_TOGGLE,
+     PORT_BITX (0x8000, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
 				"(64)(Left-Shift)SHIFT-LOCK (switch)",
 				KEYCODE_CAPSLOCK, IP_JOY_NONE)
+	 PORT_DIPSETTING(  0, DEF_STR( Off ) )
+	 PORT_DIPSETTING(0x8000, DEF_STR( On ) )
 	 DIPS_HELPER (0x4000, "(64)A", KEYCODE_A)
 	 DIPS_HELPER (0x2000, "(64)S", KEYCODE_S)
 	 DIPS_HELPER (0x1000, "(64)D", KEYCODE_D)
@@ -640,31 +648,25 @@ INPUT_PORTS_START (c128ger)
 	 DIPS_HELPER (0x8000, "ESC", KEYCODE_ESC)
 	 DIPS_HELPER (0x4000, "TAB", KEYCODE_F5)
 	 DIPS_HELPER (0x2000, "ALT", KEYCODE_F6)
-#if 1
-	 PORT_DIPNAME (0x1000, 0x0000, "Keyboard Mode")
+	 PORT_BITX (0x1000, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
+				"ASCII DIN (switch)", CODE_DEFAULT, IP_JOY_NONE)
 	 PORT_DIPSETTING (0, "ASCII")
 	 PORT_DIPSETTING (0x1000, "DIN")
-#else
-	 PORT_BITX (0x1000, IP_ACTIVE_HIGH, IPF_TOGGLE,
-				"ASCII DIN (switch)", KEYCODE_NONE, IP_JOY_NONE)
-#endif
 	 DIPS_HELPER (0x0800, "HELP", KEYCODE_F7)
 	 DIPS_HELPER (0x0400, "LINE FEED", KEYCODE_F8)
-#if 1
-	 PORT_DIPNAME (0x0200, 0x0000, "Display Select (not C64 Mode)(booting)")
+	 PORT_BITX (0x0200, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
+				"40 80 Display (switch)(booting)",
+				CODE_DEFAULT, IP_JOY_NONE)
 	 PORT_DIPSETTING (0, "40 Columns (DIN/TV)")
 	 PORT_DIPSETTING (0x0200, "80 Columns (RGBI)")
-#else
-	 PORT_BITX (0x0200, IP_ACTIVE_HIGH, IPF_TOGGLE,
-				"40 80 Display (switch)(booting)",
-				KEYCODE_NONE, IP_JOY_NONE)
-#endif
 	 PORT_BITX (0x0100, IP_ACTIVE_HIGH, IPF_TOGGLE,
 				"NO SCROLL (switch)", KEYCODE_F9, IP_JOY_NONE)
-	 DIPS_HELPER (0x0080, "Up", KEYCODE_NONE)
-	 DIPS_HELPER (0x0040, "Down", KEYCODE_NONE)
-	 DIPS_HELPER (0x0020, "Left", KEYCODE_NONE)
-	 DIPS_HELPER (0x0010, "Right", KEYCODE_NONE)
+	 PORT_DIPSETTING(  0, DEF_STR( Off ) )
+	 PORT_DIPSETTING(0x100, DEF_STR( On ) )
+	 DIPS_HELPER (0x0080, "Up", CODE_DEFAULT)
+	 DIPS_HELPER (0x0040, "Down", CODE_DEFAULT)
+	 DIPS_HELPER (0x0020, "Left", CODE_DEFAULT)
+	 DIPS_HELPER (0x0010, "Right", CODE_DEFAULT)
 	 DIPS_HELPER (0x0008, "f1 f2", KEYCODE_F1)
 	 DIPS_HELPER (0x0004, "f3 f4", KEYCODE_F2)
 	 DIPS_HELPER (0x0002, "f5 f6", KEYCODE_F3)
@@ -829,7 +831,7 @@ static struct MachineDriver machine_driver_c128 =
 	/* sound hardware */
 	0, 0, 0, 0,
 	{
-		/*    { SOUND_CUSTOM, &sid6581_sound_interface }, */
+		{ SOUND_CUSTOM, &sid6581_sound_interface },
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -880,7 +882,7 @@ static struct MachineDriver machine_driver_c128d =
 	/* sound hardware */
 	0, 0, 0, 0,
 	{
-		/*    { SOUND_CUSTOM, &sid6581_sound_interface }, */
+		{ SOUND_CUSTOM, &sid6581_sound_interface },
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -931,7 +933,7 @@ static struct MachineDriver machine_driver_c128pal =
 	/* sound hardware */
 	0, 0, 0, 0,
 	{
-		/*    { SOUND_CUSTOM, &sid6581_sound_interface }, */
+		{ SOUND_CUSTOM, &sid6581_sound_interface },
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -980,7 +982,7 @@ static struct MachineDriver machine_driver_c128pal2 =
 	/* sound hardware */
 	0, 0, 0, 0,
 	{
-		/*    { SOUND_CUSTOM, &sid6581_sound_interface }, */
+		{ SOUND_CUSTOM, &sid6581_sound_interface },
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -1022,9 +1024,9 @@ COMP (1985, c128d,		0,		c128d,		c128,		c128,		"Commodore Business Machines Co.",
 COMP (1985, c128ger,	c128,	c128pal,	c128ger,	c128pal,	"Commodore Business Machines Co.","Commodore C128 German (PAL) 336x216")
 COMP (1985, c128fra,	c128,	c128pal2,	c128,		c128pal2,	"Commodore Business Machines Co.","Commodore C128 French (PAL) 656x432")
 #else
-COMPX (1985, c128,		0,		c128,		c128,		c128,		"Commodore Business Machines Co.","Commodore C128 NTSC 656x216",      GAME_NO_SOUND)
-COMPX (1985, c128ger,	c128,	c128pal,	c128ger,	c128pal,	"Commodore Business Machines Co.","Commodore C128 German (PAL) 336x216",GAME_NO_SOUND)
+COMPX (1985, c128,		0,		c128,		c128,		c128,		"Commodore Business Machines Co.","Commodore C128 NTSC 656x216",      GAME_IMPERFECT_SOUND)
+COMPX (1985, c128ger,	c128,	c128pal,	c128ger,	c128pal,	"Commodore Business Machines Co.","Commodore C128 German (PAL) 336x216",GAME_IMPERFECT_SOUND)
 /* someone to add french keyboard inputports !? */
-COMPX (1985, c128fra,	c128,	c128pal2,	c128,		c128pal2,	"Commodore Business Machines Co.","Commodore C128 French (PAL) 656x432",GAME_NO_SOUND)
+COMPX (1985, c128fra,	c128,	c128pal2,	c128,		c128pal2,	"Commodore Business Machines Co.","Commodore C128 French (PAL) 656x432",GAME_IMPERFECT_SOUND)
 /* other countries spanish, belgium, italian, finnish, swedish, norwegian */
 #endif

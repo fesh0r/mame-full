@@ -2,6 +2,8 @@
 *			  real mode i286 emulator v1.4 by Fabrice Frances				*
 *				(initial work based on David Hedley's pcemu)                *
 ****************************************************************************/
+/* 26.March 2000 PeT changed set_irq_line */
+
 
 #include <stdio.h>
 #include <string.h>
@@ -3244,12 +3246,12 @@ void i86_set_irq_line(int irqline, int state)
 	I.irq_state = state;
 	if (state == CLEAR_LINE)
 	{
-		if (!I.IF)
+		//if (!I.IF)
 			I.pending_irq &= ~INT_IRQ;
 	}
 	else
 	{
-		if (I.IF)
+		//if (I.IF)
 			I.pending_irq |= INT_IRQ;
 	}
 }

@@ -218,6 +218,9 @@ static struct MemoryWriteAddress c65_writemem[] =
      PORT_DIPNAME (0x300, 0x0, "Memory Expansion")\
 	 PORT_DIPSETTING (0, "None")\
 	 PORT_DIPSETTING (0x300, "512 KByte")\
+	PORT_DIPNAME   ( 0x80, 0x80, "Sid Chip Type")\
+	PORT_DIPSETTING(  0, "MOS6581" )\
+	PORT_DIPSETTING(0x80, "MOS8580" )\
 	 /*PORT_DIPNAME (0x1c, 0x00, "Cartridge Type")*/\
 	 /*PORT_DIPSETTING (0, "Automatic")*/\
 	 /*PORT_DIPSETTING (4, "Ultimax (GAME)")*/\
@@ -270,9 +273,11 @@ INPUT_PORTS_START (c65)
 	 DIPS_HELPER (0x0002, "RESTORE", KEYCODE_PRTSCR)
 	 DIPS_HELPER (0x0001, "CTRL", KEYCODE_RCONTROL)
 	 PORT_START
-     PORT_BITX (0x8000, IP_ACTIVE_HIGH, IPF_TOGGLE,
+     PORT_BITX (0x8000, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
 				"(Left-Shift) SHIFT-LOCK (switch)",
 				KEYCODE_CAPSLOCK, IP_JOY_NONE)
+	PORT_DIPSETTING(  0, DEF_STR(Off) )
+	PORT_DIPSETTING(0x8000, DEF_STR(On) )
 	 DIPS_HELPER (0x4000, "A", KEYCODE_A)
 	 DIPS_HELPER (0x2000, "S", KEYCODE_S)
 	 DIPS_HELPER (0x1000, "D", KEYCODE_D)
@@ -311,12 +316,16 @@ INPUT_PORTS_START (c65)
      DIPS_HELPER (0x8000, "STOP RUN", KEYCODE_ESC)
 	 DIPS_HELPER (0x4000, "(C65)ESC", KEYCODE_F1)
 	 DIPS_HELPER (0x2000, "(C65)ALT", KEYCODE_F2)
-	 PORT_BITX (0x1000, IP_ACTIVE_HIGH, IPF_TOGGLE,
+	 PORT_BITX (0x1000, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
 				"(C65)CAPSLOCK(switch)",
 				KEYCODE_F3, IP_JOY_NONE)
-	 PORT_BITX (0x0800, IP_ACTIVE_HIGH, IPF_TOGGLE,
+	PORT_DIPSETTING(  0, DEF_STR(Off) )\
+	PORT_DIPSETTING(0x1000, DEF_STR(On) )\
+	 PORT_BITX (0x0800, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
 				"(C65)NO SCRL(switch)",
 				KEYCODE_F4, IP_JOY_NONE)
+	PORT_DIPSETTING(  0, DEF_STR(Off) )\
+	PORT_DIPSETTING(0x800, DEF_STR(On) )\
 	 DIPS_HELPER (0x0400, "f1 f2", KEYCODE_F5)
 	 DIPS_HELPER (0x0200, "f3 f4", KEYCODE_F6)
 	 DIPS_HELPER (0x0100, "f5 f6", KEYCODE_F7)
@@ -365,9 +374,11 @@ INPUT_PORTS_START (c65ger)
 	 DIPS_HELPER (0x0002, "RESTORE", KEYCODE_PRTSCR)
 	 DIPS_HELPER (0x0001, "CTRL", KEYCODE_RCONTROL)
 	 PORT_START
-     PORT_BITX (0x8000, IP_ACTIVE_HIGH, IPF_TOGGLE,
+     PORT_BITX (0x8000, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
 				"(Left-Shift)SHIFT-LOCK (switch)",
 				KEYCODE_CAPSLOCK, IP_JOY_NONE)
+	PORT_DIPSETTING(  0, DEF_STR(Off) )\
+	PORT_DIPSETTING(0x8000, DEF_STR(On) )\
 	 DIPS_HELPER (0x4000, "A", KEYCODE_A)
 	 DIPS_HELPER (0x2000, "S", KEYCODE_S)
 	 DIPS_HELPER (0x1000, "D", KEYCODE_D)
@@ -409,12 +420,16 @@ INPUT_PORTS_START (c65ger)
      DIPS_HELPER (0x8000, "STOP RUN", KEYCODE_ESC)
 	 DIPS_HELPER (0x4000, "(C65)ESC", KEYCODE_F1)
 	 DIPS_HELPER (0x2000, "(C65)ALT", KEYCODE_F2)
-	 PORT_BITX (0x1000, IP_ACTIVE_HIGH, IPF_TOGGLE,
+	 PORT_BITX (0x1000, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
 				"(C65)DIN ASC(switch)",
 				KEYCODE_F3, IP_JOY_NONE)
-	 PORT_BITX (0x0800, IP_ACTIVE_HIGH, IPF_TOGGLE,
+	PORT_DIPSETTING(  0, "ASC" )\
+	PORT_DIPSETTING(0x1000, "DIN" )\
+	 PORT_BITX (0x0800, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
 				"(C65)NO SCRL(switch)",
 				KEYCODE_F4, IP_JOY_NONE)
+	PORT_DIPSETTING(  0, DEF_STR(Off) )\
+	PORT_DIPSETTING(0x800, DEF_STR(On) )\
 	 DIPS_HELPER (0x0400, "f1 f2", KEYCODE_F5)
 	 DIPS_HELPER (0x0200, "f3 f4", KEYCODE_F6)
 	 DIPS_HELPER (0x0100, "f5 f6", KEYCODE_F7)
@@ -491,7 +506,7 @@ static struct MachineDriver machine_driver_c65 =
   /* sound hardware */
 	0, 0, 0, 0,
 	{
-/*    { SOUND_CUSTOM, &sid6581_sound_interface }, */
+		{ SOUND_CUSTOM, &sid6581_sound_interface },
 		{ 0 }
 	}
 };
@@ -537,7 +552,7 @@ static struct MachineDriver machine_driver_c65pal =
   /* sound hardware */
 	0, 0, 0, 0,
 	{
-/*    { SOUND_CUSTOM, &sid6581_sound_interface }, */
+		{ SOUND_CUSTOM, &sid6581_sound_interface },
 		{ 0 }
 	}
 };
@@ -562,6 +577,6 @@ static const struct IODevice io_c65[] =
 COMP (	199?,	c65,	0,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"Commodore C65/C64DX (Prototype) NTSC")
 COMP (	199?,	c65ger,	c65,	c65pal,	c65ger,	c65,	"Commodore Business Machines Co.",	"Commodore C65/C64DX (Prototype) German (PAL)")
 #else
-COMPX (	199?, 	c65,	0,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"Commodore C65/C64DX (Prototype) NTSC", 		GAME_NOT_WORKING | GAME_NO_SOUND)
-COMPX (	199?, 	c65ger,	c65,	c65pal,	c65ger,	c65,	"Commodore Business Machines Co.",	"Commodore C65/C64DX (Prototype) German (PAL)",	GAME_NOT_WORKING | GAME_NO_SOUND)
+COMPX (	199?, 	c65,	0,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"Commodore C65/C64DX (Prototype) NTSC", 		GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
+COMPX (	199?, 	c65ger,	c65,	c65pal,	c65ger,	c65,	"Commodore Business Machines Co.",	"Commodore C65/C64DX (Prototype) German (PAL)",	GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
 #endif

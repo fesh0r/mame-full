@@ -353,10 +353,38 @@ static void coco3_vh_palette_recompute(void)
 		coco3_vh_palette_change_color(i, paletteram[i]);
 }
 
-static int coco3_vh_setborder(struct osd_bitmap *bitmap, int red, int green, int blue, int screenx, int screeny)
+static void coco3_vh_drawborder(struct osd_bitmap *bitmap, int screenx, int screeny)
 {
-	int left, right, top, bottom, x, y;
+	int left, right, top, bottom;
 	int borderpen;
+	struct rectangle r;
+
+	borderpen = Machine->pens[16];
+
+	left = (640 - screenx) / 2;
+	right = left + screenx;
+	top = (225 - screeny) / 2;
+	bottom = top + screeny;
+
+	r.min_x = 0;
+	r.min_y = 0;
+	r.max_x = 639;
+	r.max_y = top-1;
+	fillbitmap(bitmap, borderpen, &r);
+	r.min_y = bottom;
+	r.max_y = 224;
+	fillbitmap(bitmap, borderpen, &r);
+	r.min_y = top;
+	r.max_x = left-1;
+	r.max_y = bottom-1;
+	fillbitmap(bitmap, borderpen, &r);
+	r.min_x = right;
+	r.max_x = 639;
+	fillbitmap(bitmap, borderpen, &r);
+}
+
+static int coco3_vh_setborder(int red, int green, int blue)
+{
 	int full_refresh = 0;
 
 	if ((coco3_borderred != red) || (coco3_bordergreen != green) || (coco3_borderblue != blue)) {
@@ -366,30 +394,6 @@ static int coco3_vh_setborder(struct osd_bitmap *bitmap, int red, int green, int
 		palette_change_color(16, red, green, blue);
 
 		full_refresh = palette_recalc() ? 1 : 0;
-
-		borderpen = Machine->pens[16];
-
-		left = (640 - screenx) / 2;
-		right = left + screenx;
-		top = (225 - screeny) / 2;
-		bottom = top + screeny;
-
-		for (y = 0; y < 225; y++) {
-			for (x = 0; x < left; x++)
-				bitmap->line[y][x] = borderpen;
-			for (x = right; x < 640; x++)
-				bitmap->line[y][x] = borderpen;
-		}
-		for (x = left; x < right; x++) {
-			for (y = 0; y < top; y++)
-				bitmap->line[y][x] = borderpen;
-			for (y = bottom; y < 225; y++)
-				bitmap->line[y][x] = borderpen;
-		}
-        osd_mark_dirty(0, 0, 639, top-1, 0);
-        osd_mark_dirty(0, bottom, 639, 224, 0);
-        osd_mark_dirty(0, top, left-1, bottom-1, 0);
-        osd_mark_dirty(right, top, 639, bottom-1, 0);
 	}
 	return full_refresh;
 }
@@ -509,7 +513,10 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 		/* check border */
 		coco3_compute_color(coco3_gimevhreg[2] & 0x3f, &borderred, &bordergreen, &borderblue);
-		full_refresh += coco3_vh_setborder(bitmap, borderred, bordergreen, borderblue, coco3_gimevhreg[1] & 0x04 ? 640 : 512, rows);
+		full_refresh += coco3_vh_setborder(borderred, bordergreen, borderblue);
+
+		if (full_refresh)
+			coco3_vh_drawborder(bitmap, coco3_gimevhreg[1] & 0x04 ? 640 : 512, rows);
 
 		/* check palette recalc */
 		if (palette_recalc() || full_refresh || m6847_full_refresh) {
@@ -712,9 +719,11 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	else {
 		int borderred, bordergreen, borderblue;
 		m6847_get_bordercolor_rgb(&borderred, &bordergreen, &borderblue);
-		full_refresh += coco3_vh_setborder(bitmap, borderred, bordergreen, borderblue, 512, 192);
+		full_refresh += coco3_vh_setborder(borderred, bordergreen, borderblue);
 		if (palette_recalc() || full_refresh)
 			m6847_full_refresh = 1;
+		if (m6847_full_refresh)
+			coco3_vh_drawborder(bitmap, 512, 192);
 		internal_m6847_vh_screenrefresh(bitmap, coco3_metapalette, &RAM[0x70000 + m6847_get_video_offset()], TRUE, 64, 16, 2, artifacts[input_port_10_r(0) & 3]);
 	}
 }

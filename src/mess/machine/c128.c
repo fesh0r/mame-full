@@ -27,12 +27,12 @@
 /*
  two cpus share 1 memory system, only 1 cpu can run
  controller is the mmu
- 
+
  mame has different memory subsystems for each cpu
 */
 
 
-/* m8502 port 
+/* m8502 port
  in c128 mode
  bit 0 color
  bit 1 lores
@@ -146,13 +146,14 @@ static int c128_read_io (int offset)
 
 void c128_bankswitch_64 (void)
 {
-	static int old = -1, data, loram, hiram, charen;
+	extern int c64_bank_old;
+	static int data, loram, hiram, charen;
 
 	if (!c64mode)
 		return;
 
 	data = ((c64_port6510 & c64_ddr6510) | (c64_ddr6510 ^ 0xff)) & 7;
-	if (data == old)
+	if (data == c64_bank_old)
 		return;
 
 	DBG_LOG (1, "bankswitch", (errorlog, "%d\n", data & 7));
@@ -225,7 +226,7 @@ void c128_bankswitch_64 (void)
 			cpu_setbank (16, c64_memory + 0xff05);
 		}
 	}
-	old = data;
+	c64_bank_old = data;
 }
 
 UINT8 c128_mmu[0x0b];
@@ -263,7 +264,7 @@ static int mmu_page0, mmu_page1;
 
 #define MMU_RAM_ADDR (MMU_RAM_RCR_ADDR|MMU_RAM_CR_ADDR)
 
-/* typical z80 configuration 
+/* typical z80 configuration
    0x3f 0x3f 0x7f 0x3e 0x7e 0xb0 0x0b 0x00 0x00 0x01 0x00 */
  static void c128_bankswitch_z80 (void)
  {
@@ -272,8 +273,8 @@ static int mmu_page0, mmu_page1;
 #if 1
 	 cpu_setbank (10, c128_z80);
 	 cpu_setbank (11, c128_ram+0x1000);
-	 if ( ((C128_MAIN_MEMORY==RAM256KB)&&(MMU_RAM_ADDR>=0x40000)) 
-		  ||((C128_MAIN_MEMORY==RAM128KB)&&(MMU_RAM_ADDR>=0x20000)) ) 
+	 if ( ((C128_MAIN_MEMORY==RAM256KB)&&(MMU_RAM_ADDR>=0x40000))
+		  ||((C128_MAIN_MEMORY==RAM128KB)&&(MMU_RAM_ADDR>=0x20000)) )
 		 c128_ram=NULL;
 #else
 	 if (MMU_BOTTOM)
@@ -290,11 +291,11 @@ static int mmu_page0, mmu_page1;
 	 }
 	 cpu_setbank (1, (c128_ram_bottom > 0 ? c64_memory : c128_ram));
 	 cpu_setbank (2, (c128_ram_bottom > 0x400 ? c64_memory : c128_ram) + 0x400);
-	 
+
 	 cpu_setbank (3, (c128_ram_bottom > 0x1000 ? c64_memory : c128_ram) + 0x1000);
 	 cpu_setbank (4, (c128_ram_bottom > 0x2000 ? c64_memory : c128_ram) + 0x2000);
 	 cpu_setbank (5, c128_ram + 0x4000);
-		
+
 	 if (MMU_TOP)
 		 c128_ram_top = 0x10000 - MMU_SIZE;
 	 else
@@ -309,8 +310,8 @@ static int mmu_page0, mmu_page1;
 	 if (c128_ram_top > 0xff05) { cpu_setbank (9, c128_ram + 0xff05); }
 	 else { cpu_setbank (9, c64_memory + 0xff05); }
 
-	 if ( ((C128_MAIN_MEMORY==RAM256KB)&&(MMU_RAM_ADDR>=0x40000)) 
-		  ||((C128_MAIN_MEMORY==RAM128KB)&&(MMU_RAM_ADDR>=0x20000)) ) 
+	 if ( ((C128_MAIN_MEMORY==RAM256KB)&&(MMU_RAM_ADDR>=0x40000))
+		  ||((C128_MAIN_MEMORY==RAM128KB)&&(MMU_RAM_ADDR>=0x20000)) )
 		 c128_ram=NULL;
 #endif
  }
@@ -356,7 +357,7 @@ static int mmu_page0, mmu_page1;
 		cpu_setbank (4, (c128_ram_bottom > 0x400 ? c64_memory : c128_ram) + 0x400);
 		cpu_setbank (5, (c128_ram_bottom > 0x1000 ? c64_memory : c128_ram) + 0x1000);
 		cpu_setbank (6, (c128_ram_bottom > 0x2000 ? c64_memory : c128_ram) + 0x2000);
-		
+
 		if (MMU_RAM_LO)
 			{
 				cpu_setbank (7, c128_ram + 0x4000);
@@ -365,7 +366,7 @@ static int mmu_page0, mmu_page1;
 			{
 				cpu_setbank (7, c128_basic);
 			}
-		
+
 		if (MMU_RAM_MID)
 			{
 				cpu_setbank (8, c128_ram + 0x8000);
@@ -386,7 +387,7 @@ static int mmu_page0, mmu_page1;
 				cpu_setbank (8, c128_external_function);
 				cpu_setbank (9, c128_external_function + 0x2000);
 			}
-		
+
 		if (MMU_TOP)
 			{
 				c128_ram_top = 0x10000 - MMU_SIZE;
@@ -471,10 +472,10 @@ static int mmu_page0, mmu_page1;
 				cpu_setbank (14, c128_external_function + 0x2000);
 				cpu_setbank (16, c128_external_function + 0x3f05);
 			}
-		if ( ((C128_MAIN_MEMORY==RAM256KB)&&(MMU_RAM_ADDR>=0x40000)) 
+		if ( ((C128_MAIN_MEMORY==RAM256KB)&&(MMU_RAM_ADDR>=0x40000))
 			 ||((C128_MAIN_MEMORY==RAM128KB)&&(MMU_RAM_ADDR>=0x20000)) ) c128_ram=NULL;
 	}
-	 
+
  }
 
 
@@ -484,7 +485,7 @@ static void c128_bankswitch (void)
 		if (!MMU_CPU8502)
 			{
 				{
-					DBG_LOG (1, "switching to z80", 
+					DBG_LOG (1, "switching to z80",
 							 (errorlog, "active %d\n",cpu_getactivecpu()) );
 					memorycontextswap(0);
 					c128_bankswitch_z80();
@@ -492,10 +493,10 @@ static void c128_bankswitch (void)
 					cpu_set_halt_line (0, 0);
 					cpu_set_halt_line (1, 1);
 				}
-			} 
-		else 
+			}
+		else
 			{
-				DBG_LOG (1, "switching to m6502", 
+				DBG_LOG (1, "switching to m6502",
 						 (errorlog, "active %d\n",cpu_getactivecpu()) );
 				memorycontextswap(1);
 				c128_bankswitch_128();
@@ -740,7 +741,7 @@ static void c128_common_driver_init (void)
 	cbm_drive_attach_fs (0);
 	cbm_drive_attach_fs (1);
 
-	sid6581_0_init (c64_paddle_read);
+	sid6581_0_init (c64_paddle_read, c64_pal);
 	c64_cia0.todin50hz = c64_pal;
 	cia6526_config (0, &c64_cia0);
 	c64_cia1.todin50hz = c64_pal;
@@ -750,7 +751,7 @@ static void c128_common_driver_init (void)
 void c128_driver_init (void)
 {
 	c128_common_driver_init ();
-	vic6567_init (1, c64_pal, 
+	vic6567_init (1, c64_pal,
 				  c128_dma_read, c128_dma_read_color, c64_vic_interrupt);
 	vic2_set_rastering(0);
 	vdc8563_init(c128_vdcram, 0);
@@ -763,7 +764,7 @@ void c128pal_driver_init (void)
 {
 	c64_pal = 1;
 	c128_common_driver_init ();
-	vic6567_init (1, c64_pal, 
+	vic6567_init (1, c64_pal,
 				  c128_dma_read, c128_dma_read_color, c64_vic_interrupt);
 	vic2_set_rastering(1);
 	vdc8563_init(c128_vdcram, 0);
@@ -775,7 +776,7 @@ void c128pal_driver_init (void)
 void c128pal2_driver_init (void)
 {
 	c128_common_driver_init ();
-	vic6567_init (1, c64_pal, 
+	vic6567_init (1, c64_pal,
 				  c128_dma_read, c128_dma_read_color, c64_vic_interrupt);
 	vic2_set_rastering(0);
 	vdc8563_init(c128_vdcram, 0);
@@ -795,6 +796,9 @@ void c128_init_machine (void)
 	if (errorlog) fprintf(errorlog, "reset\n");
 	c64_common_init_machine ();
 	c128_vicaddr = c64_vicaddr = c64_memory;
+
+	sid6581_0_reset();
+	sid6581_0_configure(SID8580);
 
 	c64_rom_recognition ();
 	c64_rom_load();
@@ -839,9 +843,9 @@ void c128_state(PRASTER *this)
 {
 	int y;
 	char text[70];
-	
+
 	y = Machine->gamedrv->drv->visible_area.max_y + 1 - Machine->uifont->height;
-	
+
 #if VERBOSE_DBG
 # if 0
 	cia6526_status (text, sizeof (text));
@@ -862,7 +866,7 @@ void c128_state(PRASTER *this)
 	vdc8563_status(text, sizeof(text));
 	praster_draw_text (this, text, &y);
 #endif
-	
+
 	vc20_tape_status (text, sizeof (text));
 	praster_draw_text (this, text, &y);
 #ifdef VC1541
@@ -871,7 +875,7 @@ void c128_state(PRASTER *this)
 	cbm_drive_0_status (text, sizeof (text));
 #endif
 	praster_draw_text (this, text, &y);
-	
+
 	cbm_drive_1_status (text, sizeof (text));
 	praster_draw_text (this, text, &y);
 }

@@ -17,7 +17,8 @@ COREOBJS = obj/version.o obj/mess/system.o obj/mame.o obj/mess/mess.o \
 8.  version....  after $(TINYFLAGS) -DMESS
 9.  all: $(EMULATOR_EXE) romcmp.exe dat2html.exe
 10. add dat2html definition after romcmp.exe:
-        dat2html.exe: obj/mess/dat2html.o 
+dat2html.exe: obj/mess/dat2html.o 
+	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ -lz -o $@
 11. replace MAME's ifndef DEBUG section to:
     ifndef DEBUG
@@ -60,6 +61,7 @@ CPUS+=PDP1@
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@
+SOUNDS+=SAMPLES@
 SOUNDS+=DAC@
 SOUNDS+=AY8910@
 SOUNDS+=YM2151_ALT@

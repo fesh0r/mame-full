@@ -552,8 +552,8 @@ static void c65_common_driver_init (void)
 	cbm_drive_attach_fs (0);
 	cbm_drive_attach_fs (1);
 
-	sid6581_0_init (c64_paddle_read);
-	sid6581_1_init (NULL);
+	sid6581_0_init (c64_paddle_read,c64_pal);
+	sid6581_1_init (NULL,c64_pal);
 	c64_cia0.todin50hz = c64_cia1.todin50hz = c64_pal;
 	cia6526_config (0, &c64_cia0);
 	cia6526_config (1, &c64_cia1);
@@ -581,6 +581,11 @@ void c65_driver_shutdown (void)
 void c65_init_machine (void)
 {
 	memset(c64_memory+0x40000, 0xff, 0xc0000);
+
+	sid6581_0_reset();
+	sid6581_1_reset();
+	sid6581_0_configure(SID8580);
+	sid6581_1_configure(SID8580);
 
 	cbm_serial_reset_write (0);
 	cbm_drive_0_config (SERIAL8ON ? SERIAL : 0);

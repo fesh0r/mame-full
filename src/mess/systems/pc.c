@@ -284,65 +284,65 @@ INPUT_PORTS_START( pcmda )
 	PORT_BIT ( 0x7f, 0x7f,	 IPT_UNUSED )
 
     PORT_START /* IN1 */
-	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Number of floppy drives", 0, IP_JOY_NONE )
+	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Number of floppy drives", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, "1" )
 	PORT_DIPSETTING(	0x40, "2" )
 	PORT_DIPSETTING(	0x80, "3" )
 	PORT_DIPSETTING(	0xc0, "4" )
-	PORT_BITX( 0x30, 0x30, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Graphics adapter", 0, IP_JOY_NONE )
+	PORT_BITX( 0x30, 0x30, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Graphics adapter", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, "EGA/VGA" )
 	PORT_DIPSETTING(	0x10, "Color 40x25" )
 	PORT_DIPSETTING(	0x20, "Color 80x25" )
 	PORT_DIPSETTING(	0x30, "Monochrome" )
-	PORT_BITX( 0x0c, 0x0c, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM banks", 0, IP_JOY_NONE )
+	PORT_BITX( 0x0c, 0x0c, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM banks", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, "1 - 16/ 64/256K" )
 	PORT_DIPSETTING(	0x04, "2 - 32/128/512K" )
 	PORT_DIPSETTING(	0x08, "3 - 48/192/576K" )
 	PORT_DIPSETTING(	0x0c, "4 - 64/256/640K" )
-	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", 0, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR(No) )
 	PORT_DIPSETTING(	0x02, DEF_STR(Yes) )
-	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Any floppy drive installed", 0, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Any floppy drive installed", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR(No) )
 	PORT_DIPSETTING(	0x01, DEF_STR(Yes) )
 
     PORT_START /* IN2 */
-	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", 0, IP_JOY_NONE )
+	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR(No) )
 	PORT_DIPSETTING(	0x80, DEF_STR(Yes) )
-	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", 0, IP_JOY_NONE )
+	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR(No) )
 	PORT_DIPSETTING(	0x40, DEF_STR(Yes) )
-	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", 0, IP_JOY_NONE )
+	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR(No) )
 	PORT_DIPSETTING(	0x20, DEF_STR(Yes) )
-	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", 0, IP_JOY_NONE )
+	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Yes ) )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", 0, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
-	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT2: enable", 0, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT2: enable", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
-	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", 0, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
-	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", 0, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Yes ) )
 
 	PORT_START /* IN3 */
-	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", 0, IP_JOY_NONE )
+	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x80, "COM1" )
 	PORT_DIPSETTING(	0x40, "COM2" )
 	PORT_DIPSETTING(	0x20, "COM3" )
 	PORT_DIPSETTING(	0x10, "COM4" )
     PORT_DIPSETTING(    0x00, "none" )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", 0, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
-	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", 0, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
 	PORT_BIT( 0x03, 0x03,	IPT_UNUSED )
@@ -427,27 +427,42 @@ INPUT_PORTS_START( pcmda )
 	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"F10",          KEYCODE_F10,        IP_JOY_NONE ) /* F10                         44  C4 */
 	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"NumLock",      KEYCODE_NUMLOCK,    IP_JOY_NONE ) /* Num Lock                    45  C5 */
 	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"ScrLock",      KEYCODE_SCRLOCK,    IP_JOY_NONE ) /* Scroll Lock                 46  C6 */
-	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"KP 7 (Home)",  KEYCODE_HOME,       IP_JOY_NONE ) /* Keypad 7  (Home)            47  C7 */
-	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"KP 8 (Up)",    KEYCODE_UP,         IP_JOY_NONE ) /* Keypad 8  (Up arrow)        48  C8 */
-	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"KP 9 (PgUp)",  KEYCODE_PGUP,       IP_JOY_NONE ) /* Keypad 9  (PgUp)            49  C9 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"KP 7 (Home)",  KEYCODE_7_PAD,      KEYCODE_HOME )/* Keypad 7  (Home)            47  C7 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"KP 8 (Up)",    KEYCODE_8_PAD,      KEYCODE_UP )  /* Keypad 8  (Up arrow)        48  C8 */
+	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"KP 9 (PgUp)",  KEYCODE_9_PAD,      KEYCODE_PGUP) /* Keypad 9  (PgUp)            49  C9 */
 	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"KP -",         KEYCODE_MINUS_PAD,  IP_JOY_NONE ) /* Keypad -                    4A  CA */
-	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"KP 4 (Left)",  KEYCODE_LEFT,       IP_JOY_NONE ) /* Keypad 4  (Left arrow)      4B  CB */
+	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"KP 4 (Left)",  KEYCODE_4_PAD,      KEYCODE_LEFT )/* Keypad 4  (Left arrow)      4B  CB */
 	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"KP 5",         KEYCODE_5_PAD,      IP_JOY_NONE ) /* Keypad 5                    4C  CC */
-	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"KP 6 (Right)", KEYCODE_RIGHT,      IP_JOY_NONE ) /* Keypad 6  (Right arrow)     4D  CD */
+	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"KP 6 (Right)", KEYCODE_6_PAD,      KEYCODE_RIGHT )/* Keypad 6  (Right arrow)     4D  CD */
 	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"KP +",         KEYCODE_PLUS_PAD,   IP_JOY_NONE ) /* Keypad +                    4E  CE */
-	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"KP 1 (End)",   KEYCODE_END,        IP_JOY_NONE ) /* Keypad 1  (End)             4F  CF */
+	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"KP 1 (End)",   KEYCODE_1_PAD,      KEYCODE_END ) /* Keypad 1  (End)             4F  CF */
 
 	PORT_START	/* IN9 */
-	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"KP 2 (Down)",  KEYCODE_DOWN,       IP_JOY_NONE ) /* Keypad 2  (Down arrow)      50  D0 */
-	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"KP 3 (PgDn)",  KEYCODE_PGDN,       IP_JOY_NONE ) /* Keypad 3  (PgDn)            51  D1 */
-	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"KP 0 (Ins)",   KEYCODE_INSERT,     IP_JOY_NONE ) /* Keypad 0  (Ins)             52  D2 */
-	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"KP . (Del)",   KEYCODE_DEL,        IP_JOY_NONE ) /* Keypad .  (Del)             53  D3 */
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"KP 2 (Down)",  KEYCODE_2_PAD,      KEYCODE_DOWN ) /* Keypad 2  (Down arrow)      50  D0 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"KP 3 (PgDn)",  KEYCODE_3_PAD,      KEYCODE_PGDN ) /* Keypad 3  (PgDn)            51  D1 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"KP 0 (Ins)",   KEYCODE_0_PAD,      KEYCODE_INSERT ) /* Keypad 0  (Ins)             52  D2 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"KP . (Del)",   KEYCODE_DEL_PAD,    KEYCODE_DEL ) /* Keypad .  (Del)             53  D3 */
+	PORT_BIT ( 0x0030, 0x0000, IPT_UNUSED )
+	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"(84/102)\\",   KEYCODE_BACKSLASH2, IP_JOY_NONE ) /* Backslash 2                 56  D6 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"(101)F11",		KEYCODE_F11,        IP_JOY_NONE ) /* F11                         57  D7 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"(101)F12",		KEYCODE_F12,        IP_JOY_NONE ) /* F12                         58  D8 */
+	PORT_BIT ( 0xfe00, 0x0000, IPT_UNUSED )
 
-	PORT_START /* IN10 mouse X */
-	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_X,30,2,0,640-1,KEYCODE_LEFT,KEYCODE_RIGHT,JOYCODE_1_LEFT,JOYCODE_1_RIGHT)
+	PORT_START	/* IN10 */
+	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
 
-	PORT_START /* IN11 mouse Y */
-	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_Y,30,2,0,480-1,KEYCODE_UP,KEYCODE_DOWN,JOYCODE_1_UP,JOYCODE_1_DOWN)
+	PORT_START	/* IN11 */
+	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
+
+	PORT_START	/* IN12 */
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"Mouse Button Right",	CODE_NONE,		JOYCODE_1_BUTTON2)
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"Mouse Button Left",	CODE_NONE,		JOYCODE_1_BUTTON1)
+
+	PORT_START /* IN13 mouse X */
+	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_X,30,2,0,0xfff,KEYCODE_LEFT,KEYCODE_RIGHT,JOYCODE_1_LEFT,JOYCODE_1_RIGHT)
+
+	PORT_START /* IN14 mouse Y */
+	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_Y,30,2,0,0xfff,KEYCODE_UP,KEYCODE_DOWN,JOYCODE_1_UP,JOYCODE_1_DOWN)
 
 INPUT_PORTS_END
 
@@ -458,64 +473,64 @@ INPUT_PORTS_START( pccga )
 	PORT_BIT ( 0x07, 0x07,	 IPT_UNUSED )
 
     PORT_START /* IN1 */
-	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Number of floppy drives", 0, IP_JOY_NONE )
+	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Number of floppy drives", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, "1" )
 	PORT_DIPSETTING(	0x40, "2" )
 	PORT_DIPSETTING(	0x80, "3" )
 	PORT_DIPSETTING(	0xc0, "4" )
-	PORT_BITX( 0x30, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Graphics adapter", 0, IP_JOY_NONE )
+	PORT_BITX( 0x30, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Graphics adapter", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, "EGA/VGA" )
 	PORT_DIPSETTING(	0x10, "Color 40x25" )
 	PORT_DIPSETTING(	0x20, "Color 80x25" )
 	PORT_DIPSETTING(	0x30, "Monochrome" )
-	PORT_BITX( 0x0c, 0x0c, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM banks", 0, IP_JOY_NONE )
+	PORT_BITX( 0x0c, 0x0c, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM banks", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, "1 - 16  64 256K" )
 	PORT_DIPSETTING(	0x04, "2 - 32 128 512K" )
 	PORT_DIPSETTING(	0x08, "3 - 48 192 576K" )
 	PORT_DIPSETTING(	0x0c, "4 - 64 256 640K" )
-	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", 0, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
-	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy installed", 0, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy installed", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Yes ) )
 	PORT_START /* IN2 */
-	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", 0, IP_JOY_NONE )
+	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
-	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", 0, IP_JOY_NONE )
+	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
-	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", 0, IP_JOY_NONE )
+	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x20, DEF_STR( Yes ) )
-	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", 0, IP_JOY_NONE )
+	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Yes ) )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", 0, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
-	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT2: enable", 0, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT2: enable", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
-	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", 0, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
-	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", 0, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
     PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 
     PORT_START /* IN3 */
-	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", 0, IP_JOY_NONE )
+	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x80, "COM1" )
 	PORT_DIPSETTING(	0x40, "COM2" )
 	PORT_DIPSETTING(	0x20, "COM3" )
 	PORT_DIPSETTING(	0x10, "COM4" )
     PORT_DIPSETTING(    0x00, "none" )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", 0, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
-	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", 0, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, IP_JOY_NONE )
     PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
 	PORT_BIT( 0x03, 0x03,	IPT_UNUSED )
@@ -602,27 +617,65 @@ INPUT_PORTS_START( pccga )
 	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"F10",          KEYCODE_F10,        IP_JOY_NONE ) /* F10                         44  C4 */
 	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"NumLock",      KEYCODE_NUMLOCK,    IP_JOY_NONE ) /* Num Lock                    45  C5 */
 	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"ScrLock",      KEYCODE_SCRLOCK,    IP_JOY_NONE ) /* Scroll Lock                 46  C6 */
-	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"KP 7 (Home)",  KEYCODE_HOME,       IP_JOY_NONE ) /* Keypad 7  (Home)            47  C7 */
-	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"KP 8 (Up)",    KEYCODE_UP,         IP_JOY_NONE ) /* Keypad 8  (Up arrow)        48  C8 */
-	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"KP 9 (PgUp)",  KEYCODE_PGUP,       IP_JOY_NONE ) /* Keypad 9  (PgUp)            49  C9 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"KP 7 (Home)",  KEYCODE_7_PAD,      KEYCODE_HOME )/* Keypad 7  (Home)            47  C7 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"KP 8 (Up)",    KEYCODE_8_PAD,      KEYCODE_UP )  /* Keypad 8  (Up arrow)        48  C8 */
+	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"KP 9 (PgUp)",  KEYCODE_9_PAD,      KEYCODE_PGUP) /* Keypad 9  (PgUp)            49  C9 */
 	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"KP -",         KEYCODE_MINUS_PAD,  IP_JOY_NONE ) /* Keypad -                    4A  CA */
-	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"KP 4 (Left)",  KEYCODE_LEFT,       IP_JOY_NONE ) /* Keypad 4  (Left arrow)      4B  CB */
+	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"KP 4 (Left)",  KEYCODE_4_PAD,      KEYCODE_LEFT )/* Keypad 4  (Left arrow)      4B  CB */
 	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"KP 5",         KEYCODE_5_PAD,      IP_JOY_NONE ) /* Keypad 5                    4C  CC */
-	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"KP 6 (Right)", KEYCODE_RIGHT,      IP_JOY_NONE ) /* Keypad 6  (Right arrow)     4D  CD */
+	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"KP 6 (Right)", KEYCODE_6_PAD,      KEYCODE_RIGHT )/* Keypad 6  (Right arrow)     4D  CD */
 	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"KP +",         KEYCODE_PLUS_PAD,   IP_JOY_NONE ) /* Keypad +                    4E  CE */
-	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"KP 1 (End)",   KEYCODE_END,        IP_JOY_NONE ) /* Keypad 1  (End)             4F  CF */
+	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"KP 1 (End)",   KEYCODE_1_PAD,      KEYCODE_END ) /* Keypad 1  (End)             4F  CF */
 
 	PORT_START	/* IN9 */
-	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"KP 2 (Down)",  KEYCODE_DOWN,       IP_JOY_NONE ) /* Keypad 2  (Down arrow)      50  D0 */
-	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"KP 3 (PgDn)",  KEYCODE_PGDN,       IP_JOY_NONE ) /* Keypad 3  (PgDn)            51  D1 */
-	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"KP 0 (Ins)",   KEYCODE_INSERT,     IP_JOY_NONE ) /* Keypad 0  (Ins)             52  D2 */
-	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"KP . (Del)",   KEYCODE_DEL,        IP_JOY_NONE ) /* Keypad .  (Del)             53  D3 */
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"KP 2 (Down)",  KEYCODE_2_PAD,      KEYCODE_DOWN ) /* Keypad 2  (Down arrow)      50  D0 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"KP 3 (PgDn)",  KEYCODE_3_PAD,      KEYCODE_PGDN ) /* Keypad 3  (PgDn)            51  D1 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"KP 0 (Ins)",   KEYCODE_0_PAD,      KEYCODE_INSERT ) /* Keypad 0  (Ins)             52  D2 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"KP . (Del)",   KEYCODE_DEL_PAD,    KEYCODE_DEL ) /* Keypad .  (Del)             53  D3 */
+	PORT_BIT ( 0x0030, 0x0000, IPT_UNUSED )
+	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"(84/102)\\",   KEYCODE_BACKSLASH2, IP_JOY_NONE ) /* Backslash 2                 56  D6 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"(101)F11",		KEYCODE_F11,        IP_JOY_NONE ) /* F11                         57  D7 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"(101)F12",		KEYCODE_F12,        IP_JOY_NONE ) /* F12                         58  D8 */
+	PORT_BIT ( 0xfe00, 0x0000, IPT_UNUSED )
 
-	PORT_START /* IN10 mouse X */
-	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_X,30,2,0,640-1,KEYCODE_LEFT,KEYCODE_RIGHT,JOYCODE_1_LEFT,JOYCODE_1_RIGHT)
+	PORT_START	/* IN10 */
+#if 0
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"KP Enter",     KEYCODE_ENTER_PAD,  IP_JOY_NONE ) /* PAD Enter                   60  e0 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"Right Control",KEYCODE_RCONTROL,   IP_JOY_NONE ) /* Right Control               61  e1 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"KP /",         KEYCODE_SLASH_PAD,  IP_JOY_NONE ) /* PAD Slash                   62  e2 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"PRTSCR",       KEYCODE_PRTSCR,     IP_JOY_NONE ) /* Print Screen                63  e3 */
+	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"ALTGR",        KEYCODE_RALT,       IP_JOY_NONE ) /* ALTGR                       64  e4 */
+	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"Pause",        KEYCODE_PAUSE,      IP_JOY_NONE ) /* Pause                       65  e5 */
+	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"Home",         KEYCODE_HOME,       IP_JOY_NONE ) /* Home                        66  e6 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"Cursor Up",    KEYCODE_UP,         IP_JOY_NONE ) /* Up                          67  e7 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"Page Up",      KEYCODE_PGUP,       IP_JOY_NONE ) /* Page Up                     68  e8 */
+	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"Cursor Left",  KEYCODE_LEFT,       IP_JOY_NONE ) /* Left                        69  e9 */
+	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"Cursor Right", KEYCODE_RIGHT,      IP_JOY_NONE ) /* Right                       6a  ea */
+	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"End",          KEYCODE_END,        IP_JOY_NONE ) /* End                         6b  eb */
+	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"Cursor Down",  KEYCODE_DOWN,       IP_JOY_NONE ) /* Down                        6c  ec */
+	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"Page Down",    KEYCODE_PGDN,       IP_JOY_NONE ) /* Page Down                   6d  ed */
+	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"Insert",       KEYCODE_INSERT,     IP_JOY_NONE ) /* Insert                      6e  ee */
+	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"Delete",       KEYCODE_DEL,        IP_JOY_NONE ) /* Delete                      6f  ef */
+#endif
+	PORT_START	/* IN11 */
+#if 0
+	PORT_BIT ( 0x007f, 0x0000, IPT_UNUSED )
+	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"Print Screen", CODE_NONE,          IP_JOY_NONE ) /* Print Screen alternate      77  f7 */
+	PORT_BIT ( 0x1f00, 0x0000, IPT_UNUSED )
+	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"Left Win",     CODE_NONE,          IP_JOY_NONE ) /* Left Win                    7d  fd */
+	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"Right Win",    CODE_NONE,          IP_JOY_NONE ) /* Right Win                   7e  fe */
+	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"Menu",         CODE_NONE,          IP_JOY_NONE ) /* Menu                        7f  ff */
+#endif
 
-	PORT_START /* IN11 mouse Y */
-	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_Y,30,2,0,480-1,KEYCODE_UP,KEYCODE_DOWN,JOYCODE_1_UP,JOYCODE_1_DOWN)
+	PORT_START	/* IN12 */
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"Mouse Button Right",	CODE_NONE,		JOYCODE_1_BUTTON2)
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"Mouse Button Left",	CODE_NONE,		JOYCODE_1_BUTTON1)
+
+	PORT_START /* IN13 mouse X */
+	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_X,100,0,0,0xfff,KEYCODE_LEFT,KEYCODE_RIGHT,JOYCODE_1_LEFT,JOYCODE_1_RIGHT)
+
+	PORT_START /* IN14 mouse Y */
+	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_Y,100,0,0,0xfff,KEYCODE_UP,KEYCODE_DOWN,JOYCODE_1_UP,JOYCODE_1_DOWN)
 
 INPUT_PORTS_END
 
@@ -633,55 +686,55 @@ INPUT_PORTS_START( tandy1t )
 	PORT_BIT ( 0x07, 0x07,	 IPT_UNUSED )
 
     PORT_START /* IN1 */
-	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Number of floppy drives", 0, IP_JOY_NONE )
+	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Number of floppy drives", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, "1" )
 	PORT_DIPSETTING(	0x40, "2" )
 	PORT_DIPSETTING(	0x80, "3" )
 	PORT_DIPSETTING(	0xc0, "4" )
-	PORT_BITX( 0x30, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Graphics adapter", 0, IP_JOY_NONE )
+	PORT_BITX( 0x30, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Graphics adapter", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, "EGA/VGA" )
 	PORT_DIPSETTING(	0x10, "Color 40x25" )
 	PORT_DIPSETTING(	0x20, "Color 80x25" )
 	PORT_DIPSETTING(	0x30, "Monochrome" )
-	PORT_BITX( 0x0c, 0x0c, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM banks", 0, IP_JOY_NONE )
+	PORT_BITX( 0x0c, 0x0c, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM banks", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, "1 - 16  64 256K" )
 	PORT_DIPSETTING(	0x04, "2 - 32 128 512K" )
 	PORT_DIPSETTING(	0x08, "3 - 48 192 576K" )
 	PORT_DIPSETTING(	0x0c, "4 - 64 256 640K" )
-	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", 0, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
-	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy installed", 0, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy installed", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Yes ) )
 
     PORT_START /* IN2 */
-	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", 0, IP_JOY_NONE )
+	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
-	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", 0, IP_JOY_NONE )
+	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
 	PORT_BIT ( 0x30, 0x00,	 IPT_UNUSED )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", 0, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
 	PORT_BIT ( 0x06, 0x00,	 IPT_UNUSED )
-	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", 0, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
     PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 
     PORT_START /* IN3 */
-	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", 0, IP_JOY_NONE )
+	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x80, "COM1" )
 	PORT_DIPSETTING(	0x40, "COM2" )
 	PORT_DIPSETTING(	0x20, "COM3" )
 	PORT_DIPSETTING(	0x10, "COM4" )
     PORT_DIPSETTING(    0x00, "none" )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", 0, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
-	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", 0, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, IP_JOY_NONE )
     PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
 	PORT_BIT( 0x03, 0x03,	IPT_UNUSED )
@@ -734,9 +787,9 @@ INPUT_PORTS_START( tandy1t )
 	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"L",            KEYCODE_L,          IP_JOY_NONE ) /* L                           26  A6 */
 	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"; :",          KEYCODE_COLON,      IP_JOY_NONE ) /* ;                           27  A7 */
 	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"' \"",         KEYCODE_QUOTE,      IP_JOY_NONE ) /* '                           28  A8 */
-	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"` ~",          KEYCODE_TILDE,      IP_JOY_NONE ) /* `                           29  A9 */
+	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"Cursor Up",    KEYCODE_UP,			IP_JOY_NONE ) /*                             29  A9 */
 	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"L-Shift",      KEYCODE_LSHIFT,     IP_JOY_NONE ) /* Left Shift                  2A  AA */
-	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"\\ |",         KEYCODE_BACKSLASH,  IP_JOY_NONE ) /* \                           2B  AB */
+	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"Cursor Left",  KEYCODE_LEFT,		IP_JOY_NONE ) /*                             2B  AB */
 	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"Z",            KEYCODE_Z,          IP_JOY_NONE ) /* Z                           2C  AC */
 	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"X",            KEYCODE_X,          IP_JOY_NONE ) /* X                           2D  AD */
 	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"C",            KEYCODE_C,          IP_JOY_NONE ) /* C                           2E  AE */
@@ -750,7 +803,7 @@ INPUT_PORTS_START( tandy1t )
 	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	". >",          KEYCODE_STOP,       IP_JOY_NONE ) /* .                           34  B4 */
 	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"/ ?",          KEYCODE_SLASH,      IP_JOY_NONE ) /* /                           35  B5 */
 	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"R-Shift",      KEYCODE_RSHIFT,     IP_JOY_NONE ) /* Right Shift                 36  B6 */
-	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"KP * (PrtScr)",KEYCODE_ASTERISK,   IP_JOY_NONE ) /* Keypad *  (PrtSc)           37  B7 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"Print",		CODE_NONE,			IP_JOY_NONE ) /*                             37  B7 */
 	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"Alt",          KEYCODE_LALT,       IP_JOY_NONE ) /* Left Alt                    38  B8 */
 	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"Space",        KEYCODE_SPACE,      IP_JOY_NONE ) /* Space                       39  B9 */
 	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"Caps",         KEYCODE_CAPSLOCK,   IP_JOY_NONE ) /* Caps Lock                   3A  BA */
@@ -767,28 +820,45 @@ INPUT_PORTS_START( tandy1t )
 	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"F9",           KEYCODE_F9,         IP_JOY_NONE ) /* F9                          43  C3 */
 	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"F10",          KEYCODE_F10,        IP_JOY_NONE ) /* F10                         44  C4 */
 	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"NumLock",      KEYCODE_NUMLOCK,    IP_JOY_NONE ) /* Num Lock                    45  C5 */
-	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"ScrLock",      KEYCODE_SCRLOCK,    IP_JOY_NONE ) /* Scroll Lock                 46  C6 */
-	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"KP 7 (Home)",  KEYCODE_HOME,       IP_JOY_NONE ) /* Keypad 7  (Home)            47  C7 */
-	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"KP 8 (Up)",    KEYCODE_UP,         IP_JOY_NONE ) /* Keypad 8  (Up arrow)        48  C8 */
-	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"KP 9 (PgUp)",  KEYCODE_PGUP,       IP_JOY_NONE ) /* Keypad 9  (PgUp)            49  C9 */
-	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"KP -",         KEYCODE_MINUS_PAD,  IP_JOY_NONE ) /* Keypad -                    4A  CA */
-	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"KP 4 (Left)",  KEYCODE_LEFT,       IP_JOY_NONE ) /* Keypad 4  (Left arrow)      4B  CB */
+	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"Hold",			KEYCODE_SCRLOCK,    IP_JOY_NONE ) /*		                     46  C6 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"KP 7 /",		KEYCODE_7_PAD,      IP_JOY_NONE ) /* Keypad 7                    47  C7 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"KP 8 ~",		KEYCODE_8_PAD,      IP_JOY_NONE ) /* Keypad 8                    48  C8 */
+	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"KP 9 (PgUp)",  KEYCODE_9_PAD,      IP_JOY_NONE ) /* Keypad 9  (PgUp)            49  C9 */
+	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"Cursor Down",  KEYCODE_DOWN,		IP_JOY_NONE ) /*                             4A  CA */
+	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"KP 4 |",		KEYCODE_4_PAD,		IP_JOY_NONE ) /* Keypad 4                    4B  CB */
 	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"KP 5",         KEYCODE_5_PAD,      IP_JOY_NONE ) /* Keypad 5                    4C  CC */
-	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"KP 6 (Right)", KEYCODE_RIGHT,      IP_JOY_NONE ) /* Keypad 6  (Right arrow)     4D  CD */
-	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"KP +",         KEYCODE_PLUS_PAD,   IP_JOY_NONE ) /* Keypad +                    4E  CE */
-	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"KP 1 (End)",   KEYCODE_END,        IP_JOY_NONE ) /* Keypad 1  (End)             4F  CF */
+	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"KP 6",			KEYCODE_6_PAD,		IP_JOY_NONE ) /* Keypad 6                    4D  CD */
+	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"Cursor Right", KEYCODE_RIGHT,		IP_JOY_NONE ) /*                             4E  CE */
+	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"KP 1 (End)",   KEYCODE_1_PAD,      IP_JOY_NONE ) /* Keypad 1  (End)             4F  CF */
 
 	PORT_START	/* IN9 */
-	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"KP 2 (Down)",  KEYCODE_DOWN,       IP_JOY_NONE ) /* Keypad 2  (Down arrow)      50  D0 */
-	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"KP 3 (PgDn)",  KEYCODE_PGDN,       IP_JOY_NONE ) /* Keypad 3  (PgDn)            51  D1 */
-	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"KP 0 (Ins)",   KEYCODE_INSERT,     IP_JOY_NONE ) /* Keypad 0  (Ins)             52  D2 */
-	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"KP . (Del)",   KEYCODE_DEL,        IP_JOY_NONE ) /* Keypad .  (Del)             53  D3 */
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"KP 2 `",		KEYCODE_2_PAD,		IP_JOY_NONE ) /* Keypad 2                    50  D0 */
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"KP 3 (PgDn)",  KEYCODE_3_PAD,      IP_JOY_NONE ) /* Keypad 3  (PgDn)            51  D1 */
+	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"KP 0",			KEYCODE_0_PAD,      IP_JOY_NONE ) /* Keypad 0                    52  D2 */
+	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"KP - (Del)",   KEYCODE_MINUS_PAD,  IP_JOY_NONE ) /* - Delete                    53  D3 */
+	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"Break",		KEYCODE_STOP,       IP_JOY_NONE ) /* Break                       54  D4 */
+	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"+ Insert",		KEYCODE_PLUS_PAD,	IP_JOY_NONE ) /* + Insert                    55  D5 */
+	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	".",			KEYCODE_DEL_PAD,    IP_JOY_NONE ) /* .                           56  D6 */
+	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"Enter",		KEYCODE_ENTER_PAD,  IP_JOY_NONE ) /* Enter                       57  D7 */
+	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"Home",			KEYCODE_HOME,       IP_JOY_NONE ) /* HOME                        58  D8 */
+	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"F11",			KEYCODE_F11,        IP_JOY_NONE ) /* F11                         59  D9 */
+	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"F12",			KEYCODE_F12,        IP_JOY_NONE ) /* F12                         5a  Da */
 
-	PORT_START /* IN10 mouse X */
-	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_X,30,2,0,640-1,KEYCODE_LEFT,KEYCODE_RIGHT,JOYCODE_1_LEFT,JOYCODE_1_RIGHT)
+	PORT_START	/* IN10 */
+	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
 
-	PORT_START /* IN11 mouse Y */
-	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_Y,30,2,0,480-1,KEYCODE_UP,KEYCODE_DOWN,JOYCODE_1_UP,JOYCODE_1_DOWN)
+	PORT_START	/* IN11 */
+	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
+
+	PORT_START	/* IN12 */
+	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"Mouse Button Right",	CODE_NONE,		JOYCODE_1_BUTTON2)
+	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"Mouse Button Left",	CODE_NONE,		JOYCODE_1_BUTTON1)
+
+	PORT_START /* IN13 mouse X */
+	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_X,30,2,0,0xfff,KEYCODE_LEFT,KEYCODE_RIGHT,JOYCODE_1_LEFT,JOYCODE_1_RIGHT)
+
+	PORT_START /* IN14 mouse Y */
+	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_Y,30,2,0,0xfff,KEYCODE_UP,KEYCODE_DOWN,JOYCODE_1_UP,JOYCODE_1_DOWN)
 
 INPUT_PORTS_END
 
@@ -802,13 +872,13 @@ static struct CustomSound_interface pc_sound_interface = {
 };
 
 #if defined(ADLIB)
-// irq line not connected to pc on adlib cards (and compatibles)
+/* irq line not connected to pc on adlib cards (and compatibles) */
 static void irqhandler(int linestate) {}
 
 static struct YM3812interface ym3812_interface = {
 	1,
-	ym3812_StdClock, // I hope this is the clock used on the original Adlib Sound card
-	{255}, // volume adjustment in relation to speaker and tandy1000 sound neccessary
+	ym3812_StdClock, /* I hope this is the clock used on the original Adlib Sound card */
+	{255}, /* volume adjustment in relation to speaker and tandy1000 sound neccessary */
 	{irqhandler}
 };
 #endif
@@ -1203,13 +1273,50 @@ static struct MachineDriver machine_driver_tandy1t =
 	/* sound hardware */
 	0,0,0,0,
 	{
-		{ SOUND_CUSTOM, &pc_sound_interface }, // is this available on a Tandy ?
+		{ SOUND_CUSTOM, &pc_sound_interface }, /* is this available on a Tandy ? */
 		{ SOUND_SN76496, &t1t_sound_interface },
 #if defined(ADLIB)
 		{ SOUND_YM3812, &ym3812_interface },
 #endif
 	}
 };
+
+#if 0
+	//pcjr roms?
+	// basic c1.20
+    ROM_LOAD("basic.rom", 0xf6000, 0x8000, 0x0c19c1a8)
+	// ???
+    ROM_LOAD("bios.rom", 0x??000, 0x2000, 0x98463f95)
+
+	/* pc xt */
+	/* basic c1.10 */
+    ROM_LOAD("rom05.bin", 0xf6000, 0x2000, 0x80d3cf5d)
+    ROM_LOAD("rom04.bin", 0xf8000, 0x2000, 0x673a4acc)
+    ROM_LOAD("rom03.bin", 0xfa000, 0x2000, 0xaac3fc37)
+    ROM_LOAD("rom02.bin", 0xfc000, 0x2000, 0x3062b3fc)
+	/* write 101 to screen */
+    ROM_LOAD("rom01.bin", 0xfe000, 0x2000, 0x5c3f0256)
+	/* works nice */
+    ROM_LOAD("pcxt.rom",    0xfe000, 0x02000, 0x031aafad)
+
+	/* pc at, nice peek code */
+    ROM_LOAD_EVEN("rom01.bin", 0xf0000, 0x8000, 0x679296a7)
+    ROM_LOAD_ODD("rom02.bin", 0xf0000, 0x8000, 0x65ae1f97)
+
+    ROM_LOAD("", 0x??000, 0x2000, 0x)
+
+	/* tandy 1000 hx */
+    ROM_LOAD("tandy1t.rom", 0xf0000, 0x10000, 0xd37a1d5f)
+
+	/* pc xt mfm controller
+	   2 harddisks 17 sectors, 4 head, 613 tracks
+	   serves 2 controllers? 0x320-3, 0x324-7, dma1?, irq7? */
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
+
+    ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
+
+    ROM_LOAD("mda.chr",     0x00000, 0x01000, 0xac1686f3)
+#endif
 
 ROM_START( pc )
 	ROM_REGION(0x100000,REGION_CPU1)
@@ -1234,7 +1341,6 @@ ROM_START( pccga )
 	ROM_REGION(0x01100,REGION_GFX1)
     ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
 ROM_END
-
 
 ROM_START( tandy1t )
     ROM_REGION(0x100000,REGION_CPU1)
@@ -1302,6 +1408,6 @@ static const struct IODevice io_pc[] = {
 COMP ( 1983, pc,	   0,		 pcmda,    pcmda,	 pc,	   "International Business Machines",  "IBM PC" )
 COMP ( 1983, pcmda,    pc,		 pcmda,    pcmda,	 pc,	   "International Business Machines",  "IBM PC-XT MDA" )
 COMP ( 1983, pccga,    pc,		 pccga,    pccga,	 pc,	   "International Business Machines",  "IBM PC-XT CGA" )
-COMPX( 1987, tandy1t,  pc,		 tandy1t,  tandy1t,  pc,	   "Tandy Radio Shack",  "Tandy 1000TX", GAME_NOT_WORKING | GAME_IMPERFECT_COLORS )
+COMPX( 1987, tandy1t,  pc,		 tandy1t,  tandy1t,  pc,	   "Tandy Radio Shack",  "Tandy 1000TX", GAME_IMPERFECT_COLORS )
 
 

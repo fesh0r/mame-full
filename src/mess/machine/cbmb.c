@@ -53,7 +53,7 @@ UINT8 *cbmb_colorram;
    port c7 low
    port c6 ntsc 1, 0 pal
   cbm 700
-   port c7 high 
+   port c7 high
    port c6 ?
   port c5 .. c0 keyboard line select
   port a7..a0 b7..b0 keyboard input */
@@ -102,17 +102,17 @@ static int cbmb_keyboard_line_c(void)
 {
 	int data=0;
 
-	if ( (cbmb_keyline[0]&~cbmb_keyline_a)|| 
+	if ( (cbmb_keyline[0]&~cbmb_keyline_a)||
 		 (cbmb_keyline[1]&~cbmb_keyline_b)) data|=1;
-	if ( (cbmb_keyline[2]&~cbmb_keyline_a)|| 
+	if ( (cbmb_keyline[2]&~cbmb_keyline_a)||
 		 (cbmb_keyline[3]&~cbmb_keyline_b)) data|=2;
-	if ( (cbmb_keyline[4]&~cbmb_keyline_a)|| 
+	if ( (cbmb_keyline[4]&~cbmb_keyline_a)||
 		 (cbmb_keyline[5]&~cbmb_keyline_b)) data|=4;
-	if ( (cbmb_keyline[6]&~cbmb_keyline_a)|| 
+	if ( (cbmb_keyline[6]&~cbmb_keyline_a)||
 		 (cbmb_keyline[7]&~cbmb_keyline_b)) data|=8;
-	if ( (cbmb_keyline[8]&~cbmb_keyline_a)|| 
+	if ( (cbmb_keyline[8]&~cbmb_keyline_a)||
 		 (cbmb_keyline[9]&~cbmb_keyline_b)) data|=0x10;
-	if ( (cbmb_keyline[10]&~cbmb_keyline_a)|| 
+	if ( (cbmb_keyline[10]&~cbmb_keyline_a)||
 		 (cbmb_keyline[11]&~cbmb_keyline_b)) data|=0x20;
 
 	if (!cbm500) {
@@ -154,7 +154,7 @@ void cbmb_colorram_w(int offset, int data)
 	cbmb_colorram[offset]=data|0xf0;
 }
 
-static int cbmb_dma_read(int offset) 
+static int cbmb_dma_read(int offset)
 {
 	if (offset>=0x1000)
 		return cbmb_videoram[offset&0x3ff];
@@ -162,7 +162,7 @@ static int cbmb_dma_read(int offset)
 		return cbmb_chargen[offset&0xfff];
 }
 
-static int cbmb_dma_read_color(int offset) 
+static int cbmb_dma_read_color(int offset)
 {
 	return cbmb_colorram[offset&0x3ff];
 }
@@ -174,7 +174,7 @@ static void cbmb_common_driver_init (void)
 #if 0
 	sid6581_0_init (c64_paddle_read);
 #else
-	sid6581_0_init (NULL);
+	sid6581_0_init (NULL, 1);
 #endif
 	cbmb_cia.todin50hz = 0;
 	cia6526_config (0, &cbmb_cia);
@@ -225,6 +225,7 @@ void cbmb_driver_shutdown (void)
 
 void cbmb_init_machine (void)
 {
+	sid6581_0_reset();
 	cia6526_reset ();
 	tpi6525_0_reset();
 	tpi6525_1_reset();
@@ -244,6 +245,7 @@ void cbmb_frame_interrupt (int param)
 	level=!level;
 	if (level) return ;
 
+	sid6581_update();
 	if (!quickload && QUICKLOAD) {
 		if (cbm500) cbm500_quick_open(0, 0, cbmb_memory);
 		else cbmb_quick_open (0, 0, cbmb_memory);
@@ -535,9 +537,9 @@ void cbmb_state(PRASTER *this)
 #if VERBOSE_DBG
 	int y;
 	char text[70];
-	
+
 	y = Machine->gamedrv->drv->visible_area.max_y + 1 - Machine->uifont->height;
-	
+
 	snprintf(text, sizeof(text),
 			 "%.2x %.2x",
 			 MODELL_700, VIDEO_NTSC);

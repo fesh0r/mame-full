@@ -4,6 +4,7 @@ It doesnt do much at the moment, but its here in case anyone
 needs it ;-)
 */
 
+#include "mamalleg.h"
 #include "driver.h"
 #include "mess/msdos.h"
 #include <ctype.h>
@@ -114,14 +115,101 @@ int system_supports_device(int game_index, int type)
 }
 
 
+
+/* Function to handle aliases in the MESS.CFG file */
+char *get_alias(const char *driver_name, char *alias)
+{
+        char *alias_copy;
+		// the string will be worked on, so duplicate it.
+        alias_copy =strdup(get_config_string((char*)driver_name,alias,NULL));
+        return alias_copy;
+
+}
+
+
 /*
- * Load images from the command line.
- * Detect aliases and substitute the list of images for them.
+ * Parse the alias command line
  */
+void parse_alias(char *src, int *argc, char **argv)
+{
+    int argnum = 0;
+	char *arg;
+
+	while (*src)
+	{
+        while( *src && isspace(*src) )
+            src++;
+
+        arg = src;
+
+        if(*src =='"')
+		{
+			if(*src++==NULL)
+				break;
+			else
+				arg=src;
+
+			while(*src)
+            {
+				if (*src=='"')
+					*src='\0';
+				if (*src++ == NULL)
+					break;
+			}
+		}
+
+		else
+		{
+			while(*src)
+            {
+				if (*src==' ')
+					*src='\0';
+				if (*src++ == NULL)
+					break;
+			}
+		}
+		argv[argnum++]=arg;
+	}
+	*argc=argnum;
+
+}
+
+
+int requested_device_type(char *tchar)
+{
+
+	if (errorlog) fprintf(errorlog, "Requested device is %s\n", tchar);
+
+	if      (!stricmp(tchar, "-cartridge")  || !stricmp(tchar, "-cart"))
+			return(IO_CARTSLOT);
+	else if (!stricmp(tchar, "-floppydisk") || !stricmp(tchar, "-flop"))
+			return(IO_FLOPPY);
+	else if (!stricmp(tchar, "-harddisk")   || !stricmp(tchar, "-hard"))
+			return(IO_HARDDISK);
+	else if (!stricmp(tchar, "-cassette")   || !stricmp(tchar, "-cass"))
+			return(IO_CASSETTE);
+	else if (!stricmp(tchar, "-printer")    || !stricmp(tchar, "-prin"))
+			return(IO_PRINTER);
+	else if (!stricmp(tchar, "-serial")     || !stricmp(tchar, "-serl"))
+			return(IO_SERIAL);
+	else if (!stricmp(tchar, "-snapshot")   || !stricmp(tchar, "-snap"))
+			return(IO_SNAPSHOT);
+	else if (!stricmp(tchar, "-quickload")  || !stricmp(tchar, "-quik"))
+			return(IO_QUICKLOAD);
+	else if (!stricmp(tchar, "-alias"))
+			return(IO_ALIAS);
+	/* all other switches set type to -1 */
+	else
+	{
+        if(errorlog) fprintf(errorlog,"Requested Device not supported!!\n");
+        return -1;
+	}
+}
+
 int load_image(int argc, char **argv, int j, int game_index)
 {
 	const char *driver = drivers[game_index]->name;
-	int i;
+	int i, k;
 	int res = 0;
 	int type = IO_END;
 
@@ -136,57 +224,73 @@ int load_image(int argc, char **argv, int j, int game_index)
 		/* this should really look up the structure values for easy maintenance */
 		if (argv[i][0] == '-')
 		{
-			if      (!stricmp(argv[i], "-cartridge")  || !stricmp(argv[i], "-cart"))
-				type = IO_CARTSLOT;
-			else if (!stricmp(argv[i], "-floppydisk") || !stricmp(argv[i], "-flop"))
-				type = IO_FLOPPY;
-			else if (!stricmp(argv[i], "-harddisk")   || !stricmp(argv[i], "-hard"))
-				type = IO_HARDDISK;
-			else if (!stricmp(argv[i], "-cassette")   || !stricmp(argv[i], "-cass"))
-				type = IO_CASSETTE;
-			else if (!stricmp(argv[i], "-printer")    || !stricmp(argv[i], "-prin"))
-				type = IO_PRINTER;
-			else if (!stricmp(argv[i], "-serial")     || !stricmp(argv[i], "-serl"))
-				type = IO_SERIAL;
-			else if (!stricmp(argv[i], "-snapshot")   || !stricmp(argv[i], "-snap"))
-				type = IO_SNAPSHOT;
-			else if (!stricmp(argv[i], "-quickload")  || !stricmp(argv[i], "-quik"))
-				type = IO_QUICKLOAD;
-			/* all other switches set type to -1 */
-			else type = -1;
+			type = requested_device_type(argv[i]);
 
-			if (type>IO_END && !system_supports_device(game_index, type))
+			if (type!=IO_ALIAS)
 			{
-				if (errorlog)
-					fprintf(errorlog,"Specified Device (%s) not supported by this system\n", argv[i]);
-				type = -1; /* strip device if systems doesnt support it */
-			}
 
-
-		}
-		else if (type != -1) /* only enter when valid option, otherwise get next */
-		{
-			/* check if this is an alias for a set of images */
-			char *alias = get_alias(driver, argv[i]);
-
-			if (alias && strlen(alias))
-			{
-				char *arg;
-
-				if (errorlog)
-					fprintf(errorlog, "Using alias %s (%s) for driver %s\n", argv[i], alias, driver);
-				arg = strtok(alias, ",");
-				while (arg)
+				if (type>IO_END && !system_supports_device(game_index, type))
 				{
-					res = detect_image_type(game_index, type, arg);
-					arg = strtok(0, ",");
-					type = IO_END; /* image detected, reset type */
+					if (errorlog)
+						fprintf(errorlog,"Specified Device (%s) not supported by this system\n", argv[i]);
+					type = -1; /* strip device if systems doesnt support it */
 				}
 			}
+
+		}
+
+		else if (type != -1) /* only enter when valid option, otherwise get next */
+		{
+
+			if (type == IO_ALIAS)
+			{
+				/* check if this is an alias for a set of images */
+				char *alias = get_alias(driver, argv[i]);
+
+				if (alias && strlen(alias))
+				{
+					int alias_argc;
+					char *alias_argv[32];  /* more than 32 arguments per alias?? */
+
+    				if (errorlog)
+						fprintf(errorlog, "Using alias %s (%s) for driver %s\n", argv[i], alias, driver);
+					parse_alias(alias, &alias_argc, alias_argv);
+					type = IO_END;
+
+					for(k=0;k<alias_argc;k++)
+					{
+						if (alias_argv[k][0] == '-')
+						{
+							type = requested_device_type(alias_argv[k]);
+							if (type>IO_END && !system_supports_device(game_index, type))
+							{
+								if (errorlog)
+									fprintf(errorlog,"Specified Device (%s) not supported by this system\n", argv[i]);
+								type = -1; /* strip device if systems doesnt support it */
+							}
+						}
+						else if (type!=-1 ) /* only when valid option */
+						{
+							if(type!=IO_END)
+							{
+                                res = detect_image_type(game_index, type, alias_argv[i]);
+                                type = IO_END; /* image detected, reset type */
+							}
+						}
+
+					}
+
+
+				}
+
+			}
+
+
+			/* use normal command line argument! */
 			else if (type != IO_END)
 			{
 				if (errorlog)
-					fprintf(errorlog, "NOTE: No alias found\n");
+					fprintf(errorlog, "Loading image - No alias used\n");
 				res = detect_image_type(game_index, type, argv[i]);
 				type = IO_END; /* image detected, reset type */
 			}
@@ -204,7 +308,8 @@ int load_image(int argc, char **argv, int j, int game_index)
 
 /* This function contains all the -list calls from fronthlp.c for MESS */
 /* Currently Supported: */
-/*   -listdevices    */
+/*   -listdevices       */
+/*   -listtext       	*/
 
 void list_mess_info(char *gamename, char *arg, int listclones)
 {
@@ -508,13 +613,20 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 			   "        will run MESS in the following way:\n"
 			   "        <system>      = trs80           (TRs-80 model 1)\n"
 			   "        <device1>     = FLOPPYDISK\n"
-			   "		<image_name1> = boot.dsk        (The Trs80 boot floppy diskl)\n"
+			   "        <image_name1> = boot.dsk        (The Trs80 boot floppy diskl)\n"
 			   "        <device1>     = FLOPPYDISK\n"
 			   "        <image_name2> = arcade1.dsk     (floppy Disk which contains games)\n"
 			   "        <options>     = default options (all listed in mess.cfg)\n\n"
-			   "    MESS cgenie -fd games1\n"
+			   "    MESS cgenie -flop games1\n"
 			   "        will run the system Colour Genie with one disk image loaded,\n"
-			   "        automatically appending the file extension .dsk.\n\n\n\n\n");
+			   "        automatically appending the file extension .dsk.\n\n\n"
+			   "If you dont want to type out device/image combinations, MESS supports \n"
+			   "ALIASed command lines from MESS.cfg.  An example entry is:\n\n"
+			   "    [ti99_4a]\n"
+			   "    parsec = -cart parsecg.bin -cart parsecc.bin \n\n"
+			   "So to load these images, you would simply then type:\n\n"
+			   "    MESS ti99_4a -alias parsec\n\n"
+			   "and both cartridges will be attached to the TI99_4a.\n\n\n\n\n");
 
 
 

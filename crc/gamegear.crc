@@ -8,18 +8,18 @@
 # crc = Game Name/Version | Year | Manufacturer | Emulation Status
 
 [gamegear]
-f85a8ce8 = 5 in 1 Funpack
-1d17d2a0 = A A Harimanada
-bb4f23ff = Adventures of Batman and Robin
-899515d0 = Aerial Assault
+f85a8ce8 = 5 in 1 Funpack | 1994 | Interplay
+1d17d2a0 = A A Harimanada | 1993 | Sega | Press Button B to Start Game
+bb4f23ff = Adventures of Batman and Robin | 1993 | Sega | NOT PLAYABLE (No Sprite Collision)
+899515d0 = Aerial Assault | 1992 | Sega | NOT PLAYABLE
 3e549b7a = Aerial Assault | 1992 | Sega | NOT PLAYABLE
-770e95e1 = Aladdin (Japan)
+770e95e1 = Aladdin (Japan) | 1994 | Sega | NOT PLAYABLE
 7a41c1dc = Aladdin | 1994 | Sega | NOT PLAYABLE
-1d80a75b = Aleste GG
+1b80a75b = Aleste GG | 1991 | Compile
 11a68c08 = Alien 3 | 1992 | Acclaim
-ffe43d47 = Alien Syndrome | 1992 | Sims Co. Ltd.
-3deca813 = Arcade Classics | 199? | Sega
-f0204191 = Arch Rivals
+ffe4ed47 = Alien Syndrome | 1992 | Sims Co. Ltd.
+3deca813 = Arcade Classics | 1996 | Sega
+f0204191 = Arch Rivals | 1992 | Acclaim | NOT PLAYABLE (Game Freezes upon Start)
 7cb3facf = Arena - Maze of Death | 1995 | Sega/Eden Software
 78208b40 = Asterix and the Great Rescue
 1023ff26 = Ax Battler - A Legend of Golden Axe (Japan)

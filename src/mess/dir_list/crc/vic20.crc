@@ -1,3 +1,9 @@
+# Commodore VIC-20 Cartridge CRC List
+# Compiled by Peter Trauner and Chris Henry
+# Note: This list is provided as a record of known dumps for this system.  
+#       These checksums have not been validated and cannot be assumed correct.  
+#       They are provided here as a database to help the emulation of this system.  
+# Send corrections/submissions to: battlepriest@hotmail.com
 
 # problem with file formats
 # prg are images, but startet with 2 bytes for its load address
@@ -5,84 +11,98 @@
 # no leading 0
 
 [VIC20]
-# autostart moduls
+# autostart modules
 # work also in pal version
-5b8f0411 =  AE.60
-05ae8278 =  AE.A0 (rastereffect)
-ad217e63 =  ARACH.60
-ec43f977 =  ARACH.A0 (how to play?)
-980ee881 =  BUCK.60
-03bbef66 =  BUCK.A0
-c5e2f1a0 =  DEFENDER.60
-be501a8a =  DEFENDER.A0
-320149be =  LODERUNN.60
-38b757cd =  LODERUNN.A0
-be701896 =  ROBOTRON.60
-3710f99e =  ROBOTRON.A0
-8817b702 =  SUBMARIN.60
-e402fb1d =  SUBMARIN.A0 (how to play?)
-18d44576 =  cosmiccr.prg
-e5878f34 =  cbmartis.prg (lightpen)
+5b8f0411 =  AE (.60) | 198? | Br0derbund | Part 1 of 2 files | 
+05ae8278 =  AE (.a0) | 198? | Br0derbund | Part 2 of 2 files | 
+ad217e63 =  Arachnoid (.60) | 1982 | Umi | Part 1 of 2 files | 
+ec43f977 =  Arachnoid (.a0) | 1982 | Umi | Part 2 of 2 files | 
+980ee881 =  Buck Rogers Planet of Zoom (.60) | 1983 | Sega | Part 1 of 2 files | 
+03bbef66 =  Buck Rogers Planet of Zoom (.a0) | 1983 | Sega | Part 2 of 2 files | 
+18d44576 =  Cosmic Cruncher (.prg) | 1982 | Commodore | 
+e5878f34 =  Commodore Artist (.prg) | 1982 | Bubblesoft | Lightpen supported | 
+c5e2f1a0 =  Defender (.60) | 1983 | Atari | Part 1 of 2 files | 
+be501a8a =  Defender (.a0) | 1983 | Atari | Part 2 of 2 files | 
+320149be =  Loderunner (.60) | 1983 | Br0derbund | Part 1 of 2 files | 
+38b757cd =  Loderunner (.a0) | 1983 | Br0derbund | Part 1 of 2 files | 
+be701896 =  Robotron 2084 (.60) | 1983 | Atari | Part 1 of 2 files | 
+3710f99e =  Robotron 2084 (.a0) | 1983 | Atari | Part 2 of 2 files | 
+8817b702 =  Submarine Commander (.60) | 1983 | Thorn EMI | Part 1 of 2 files | 
+e402fb1d =  Submarine Commander (.a0) | 1983 | Thorn EMI | Part 2 of 2 files | 
+
 
 # MODULES not booting
-5acb7ab = AD1.40 (sys32592)
+05acb7ab = Adventure #1 (.40) | 1981 | Scott Adams | Use sys 32592 to start | 
 
-# autostart moduls ntsc required/better
-80439200 =  MINER.A0
-55cdfa8d =  APPLE_PA.A0
-8a7c3a97 =  AVENGER.A0
-a6d0ebd5 =  CLOWNS.A0 (joystick version)
-16b696e8 =  CLOWNS-P.PRG (paddles version)
-276857e9 =  FINANCE.A0
-da01a054 =  GARDENWA.PRG
-00167fcb =  GORF.PRG
-aa0a7efd =  JAILBREA.PRG
-18e177f1 =  JUPITER.A0
-a002f34c =  MATH.A0
-9c2d1185 =  MOLE.A0
-2c20505c =  MONEYWAR.A0
-a3761fd8 =  NUMBERSN.PRG
-f2d3cddc =  OMEGARAC.PRG
-32fd3657 =  RADARRAT.PRG
-76fd9286 =  ROADRACE.PRG
-c8b92a7e =  SARGON2.PRG
-6770e9bb =  SEAWOLF.A0 (paddles)
-c4967f23 =  SOLARSYS.A0
-9f122010 =  SPEEDBIN.PRG
-34e894f9 =  STARPOST.A0 (paddles)
-20991751 =  THESKYIS.PRG (paddles)
-8364dbbd =  TOOTH.A0
+# autostart modules ntsc required/better
+55cdfa8d =  Apple Panic (.a0) | 1982 | Creative Software | 
+54cc4e6e =  Artillery Duel (.60) | 1983 | Xonox | Part 1 of 2 files | 
+53c08b56 =  Artillery Duel (.a0) | 1983 | Xonox | Part 2 of 2 files | 
+4e071227 =  Battlezone (.60) | 1983 | Atari | Part 1 of 2 files | 
+1c5ad2c3 =  Battlezone (.a0) | 1983 | Atari | Part 2 of 2 files | 
+b1befa8a =  Cannonball Blitz (.20) | 1982 | Sierra On-Line | Part 1 of 2 files | 
+0007facf =  Cannonball Blitz (.a0) | 1982 | Sierra On-Line | Part 2 of 2 files | 
+76c930ed =  Centipede (.20) | 1983 | Atari | Part 1 of 2 files | 
+845a3e3c =  Centipede (.a0) | 1983 | Atari | Part 2 of 2 files | 
+a6d0ebd5 =  Clowns (.a0)(joystick version) | 1982 | Commodore | 
+16b696e8 =  Clowns (.prg)(paddles version) | 1982 | Commodore | 
+aa0a7efd =  Cosmic Jailbreak (.prg) | 1982 | Commodore UK | 
+c41beb1f =  Dig Dug (.20) | 1983 | Atari | Part 1 of 2 files | 
+fb8d109a =  Dig Dug (.a0) | 1983 | Atari | Part 2 of 2 files | 
+471c04e4 =  Donkey Kong (.20) | 1983 | Atari | Part 1 of 2 files | 
+982523cc =  Donkey Kong (.a0) | 1983 | Atari | Part 2 of 2 files | 
+da01a054 =  Garden Wars (.prg) | 1982 | Commodore | 
+00167fcb =  Gorf (.prg) | 1982 | Commodore | 
+52cf382e =  Jungle Hunt (.60) | 1984 | Atari | Part 1 of 2 files | 
+c1114c57 =  Jungle Hunt (.a0) | 1984 | Atari | Part 2 of 2 files | 
+18e177f1 =  Jupiter Lander (.a0) | 198? | Commodore | 
+80439200 =  Miner 2049'er (.a0) | 1983 | Reston Publishing | 
+9c2d1185 =  Mole Attack (.a0) | 198? | Commodore | 
+2c20505c =  Money War (.a0) | 1982 | Commodore & Hal Labs. | 
+5a0b7e5d =  Moon Patrol (.60) | 1983 | Atari | Part 1 of 2 files | 
+b47f9971 =  Moon Patrol (.a0) | 1983 | Atari | Part 2 of 2 files | 
+62efe05d =  Mountain King (.60) | 1983 | E.F. Dreyer Inc. | Part 1 of 2 files; Issue: Flickering | 
+ad3ff0a4 =  Mountain King (.a0) | 1983 | E.F. Dreyer Inc. | Part 2 of 2 files | 
+45af030c =  Ms. PacMan (.60) | 1983 | Atari | Part 1 of 2 files | 
+ffd1ab54 =  Ms. PacMan (.a0) | 1983 | Atari | Part 2 of 2 files | 
+a3761fd8 =  Number Nabber / Shape Grabber (.prg) | 1982 | Commodore | 
+f2d3cddc =  Omega Race (.prg) | 1982 | Commodore | 
+5a8ae3e6 =  PacMan (.prg) | 1983 | Atari | 
+276857e9 =  Personal Finance (.a0) | 1982 | Creative Software | 
+5a6d36e0 =  Pinball 2 (.60) (Use Paddles) | 1982 | Commodore | Part 1 of 2 files | 
+46cc3836 =  Pinball 2 (.a0) (Use Paddles) | 1982 | Commodore | Part 2 of 2 files | 
+e0c6b380 =  Pole Position (.60) | 1983 | Atari | Part 1 of 2 files | 
+548c1ef9 =  Pole Position (.a0) | 1983 | Atari | Part 2 of 2 files | 
+32fd3657 =  Radar Rat Race (.prg) | 1981 | Commodore | 
+76fd9286 =  Road Race (.prg) | 1981 | Commodore | 
+c8b92a7e =  Sargon II (.prg) | 1979 | Hayden Book Co. | 
+6770e9bb =  Seawolf (.a0) | 1982 | Commodore | Uses Paddles | 
+07cbdd86 =  Sky Blazer (.60) | 1983 | Br0derbund | Part 1 of 2 files | 
+c9c0b743 =  Sky Blazer (.a0) | 1983 | Br0derbund | Part 2 of 2 files | 
+20991751 =  The Sky is Falling (.prg) | 1981 | Commodore | Uses Paddles | 
+c4967f23 =  Solar System Simulator (.a0) | 1982 | Commodore | 
+a002f34c =  Speed Math / Bingo Math (.a0) | 1982 | Commodore | 
+9f122010 =  Speed Math / Bingo Math (.prg) | 1982 | Commodore | 
+34e894f9 =  Star Post (.a0) | 198? | Commodore | Uses Paddles | 
+8364dbbd =  Tooth Invaders (.a0) | 1983 | Commodore | 
+8a7c3a97 =  Vic Avenger (.a0) | 1981 | Commodore | 
 e72d1852 =  RAIDONFO.PRG
-54cc4e6e =  ARTILLER.60
-53c08b56 =  ARTILLER.A0
-4e071227 =  BATTLE_Z.60
-1c5ad2c3 =  BATTLE_Z.A0
-b1befa8a =  CANNONBA.20
-a72e825a =  CANNONBA.20K
-0007facf =  CANNONBA.A0
-76c930ed =  CENTIPED.20
-845a3e3c =  CENTIPED.A0
-c41beb1f =  DIG-DUG.20
-fb8d109a =  DIG-DUG.A0
-471c04e4 =  DONKEY_K.20
-982523cc =  DONKEY_K.A0
-52cf382e =  JUNGLE.60
-c1114c57 =  JUNGLE.A0
-5a0b7e5d =  MOON_PAT.60
-b47f9971 =  MOON_PAT.A0
-62efe05d =  MOUNTAIN.60
-ad3ff0a4 =  MOUNTAIN.A0 flickers, I think this is right
-45af030c =  MS_PAC.60
-ffd1ab54 =  MS_PAC.A0
-5a6d36e0 =  PINBALL2.60
-46cc3836 =  PINBALL2.A0 (paddles)
-e0c6b380 =  POLE_POS.60
-548c1ef9 =  POLE_POS.A0
-07cbdd86 =  SKY_BLAZ.60
-c9c0b743 =  SKY_BLAZ.A0
+
+#autostart modules pal required/better
+9eac9fab =  Arcardia (.a0) | 198? | Unknown | Modulised version | 
+2bc4b231 =  Frantic (.prg) | 198? | Unknown | 
+963b2cae =  Jaw Breaker 2 (.prg) | 1983 | Sierra On-Line | 
+a92bfff2 =  Jaw Breaker 2 (.a0) | 1983 | Sierra On-Line | 
+72ee00db =  K-Razy Antiks (.60) | 1982 | CBS | Part 1 of 2 files | 
+324e2a30 =  K-Razy Antiks (.a0) | 1982 | CBS | Part 2 of 2 files | 
+2ffd2894 =  K-Star Patrol (.60) | 1982 | CBS | Part 1 of 2 files | 
+2fe93f44 =  K-Star Patrol (.a0) | 1982 | CBS | Part 2 of 2 files | 
+
 
 #[bad dumps/conversion]
 # converted to modules (without init of video chip)  
 b5ce2d3a =  FLIPPER1.PRG load program at 0xa000 ram, press restore
 43e45c34 =  SCRAM20.PRG load program at 0xa000 ram, press restore
 
+#??
+a72e825a =  CANNONBA.20K

@@ -491,8 +491,10 @@ static struct MemoryWriteAddress cbm500_writemem[] =
 	DIPS_HELPER( 0x0020, "[", KEYCODE_OPENBRACE)\
         DIPS_HELPER( 0x0010, "]", KEYCODE_CLOSEBRACE)\
         DIPS_HELPER( 0x0008, "RETURN",KEYCODE_ENTER)\
-	PORT_BITX( 0x0004, IP_ACTIVE_HIGH, IPF_TOGGLE,\
+	PORT_BITX( 0x0004, 0, IPT_DIPSWITCH_NAME|IPF_TOGGLE,\
 		     "(shift)SHIFT-LOCK (switch)", KEYCODE_CAPSLOCK, IP_JOY_NONE)\
+	 PORT_DIPSETTING(  0, DEF_STR( Off ) )\
+	 PORT_DIPSETTING(4, DEF_STR( On ) )\
 	DIPS_HELPER( 0x0002, "A", KEYCODE_A)\
 	DIPS_HELPER( 0x0001, "S", KEYCODE_S)\
 	PORT_START \
@@ -871,7 +873,7 @@ static struct MachineDriver machine_driver_cbm600 =
   /* sound hardware */
 	0, 0, 0, 0,
 	{
-/*    { SOUND_CUSTOM, &sid6581_sound_interface }, */
+		{ SOUND_CUSTOM, &sid6581_sound_interface },
 		{ 0 }
 	}
 };
@@ -915,7 +917,7 @@ static struct MachineDriver machine_driver_cbm600pal =
   /* sound hardware */
 	0, 0, 0, 0,
 	{
-/*    { SOUND_CUSTOM, &sid6581_sound_interface }, */
+		{ SOUND_CUSTOM, &sid6581_sound_interface },
 		{ 0 }
 	}
 };
@@ -955,7 +957,7 @@ static struct MachineDriver machine_driver_cbm700 =
   /* sound hardware */
 	0, 0, 0, 0,
 	{
-/*    { SOUND_CUSTOM, &sid6581_sound_interface }, */
+		{ SOUND_CUSTOM, &sid6581_sound_interface },
 		{ 0 }
 	}
 };
@@ -995,7 +997,7 @@ static struct MachineDriver machine_driver_cbm500 =
 	/* sound hardware */
 	0, 0, 0, 0,
 	{
-/*    { SOUND_CUSTOM, &sid6581_sound_interface }, */
+		{ SOUND_CUSTOM, &sid6581_sound_interface },
 		{ 0 }
 	}
 };
@@ -1039,9 +1041,9 @@ COMP (1983,	cbm730, cbm710, cbmbx, 		cbmb, 		cbmb, 		"Commodore Business Machine
 #endif
 #else
 /*     YEAR		NAME	PARENT	MACHINE		INPUT		INIT		COMPANY								FULLNAME */
-COMPX (1983,	cbm710,	0,		cbm700,		cbm700,		cbm700,		"Commodore Business Machines Co.",	"Commodore B128-80HP/710",					GAME_NOT_WORKING|GAME_NO_SOUND)
-COMPX (1983,	cbm720,	cbm710,	cbm700,		cbm700,		cbm700,		"Commodore Business Machines Co.",	"Commodore B256-80HP/720",					GAME_NOT_WORKING|GAME_NO_SOUND)
-COMPX (1983,	cbm610,	cbm710,	cbm600,		cbm600,		cbm600,		"Commodore Business Machines Co.",	"Commodore B128-80LP/610 60Hz",				GAME_NOT_WORKING|GAME_NO_SOUND)
-COMPX (1983,	cbm620,	cbm710,	cbm600pal,	cbm600pal,	cbm600pal,	"Commodore Business Machines Co.",	"Commodore B256-80LP/620 Hungarian 50Hz",	GAME_NOT_WORKING|GAME_NO_SOUND)
-COMPX (1983,	cbm500,	0,		cbm500,		cbm500,		cbm500,		"Commodore Business Machines Co.",	"Commodore B128-40/Pet-II/P500 60Hz",		GAME_NOT_WORKING|GAME_NO_SOUND)
+COMPX (1983,	cbm710,	0,		cbm700,		cbm700,		cbm700,		"Commodore Business Machines Co.",	"Commodore B128-80HP/710",					GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+COMPX (1983,	cbm720,	cbm710,	cbm700,		cbm700,		cbm700,		"Commodore Business Machines Co.",	"Commodore B256-80HP/720",					GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+COMPX (1983,	cbm610,	cbm710,	cbm600,		cbm600,		cbm600,		"Commodore Business Machines Co.",	"Commodore B128-80LP/610 60Hz",				GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+COMPX (1983,	cbm620,	cbm710,	cbm600pal,	cbm600pal,	cbm600pal,	"Commodore Business Machines Co.",	"Commodore B256-80LP/620 Hungarian 50Hz",	GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+COMPX (1983,	cbm500,	0,		cbm500,		cbm500,		cbm500,		"Commodore Business Machines Co.",	"Commodore B128-40/Pet-II/P500 60Hz",		GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
 #endif

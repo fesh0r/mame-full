@@ -162,6 +162,7 @@ enum {
 	IO_SERIAL,
 	IO_SNAPSHOT,
 	IO_QUICKLOAD,
+	IO_ALIAS,  /* dummy type for alias names from mess.cfg */
 	IO_COUNT
 };
 

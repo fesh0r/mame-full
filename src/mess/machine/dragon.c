@@ -285,14 +285,8 @@ typedef struct {
 /* All versions */
 typedef struct {
 	UINT8 writeprotect;
-	union {
-		char disk_directory[66];
-		pcd_info1 pcd1;
-	} u1;
-	union {
-		char disk_name[4][32];
-		pcd_info2 pcd2;
-	} u2;
+	char disk_directory[66];
+	char disk_name[4][32];
 	char pak_directory[66];
 	UINT8 crlf;
 	UINT8 keyboard_mode;
@@ -564,6 +558,7 @@ static int generic_rom_load(int id, UINT8 *rambase, UINT8 *rombase, UINT8 *pakba
 
 		if (osd_fread(fp, &header, sizeof(header)) < sizeof(header)) {
 			if (errorlog) fprintf(errorlog,"Could not fully read PAK.\n");
+			osd_fclose(fp);
 			return 1;
 		}
 
@@ -577,6 +572,7 @@ static int generic_rom_load(int id, UINT8 *rambase, UINT8 *rombase, UINT8 *pakba
 
 		if (osd_fseek(fp, paklength, SEEK_CUR)) {
 			if (errorlog) fprintf(errorlog,"Could not fully read PAK.\n");
+			osd_fclose(fp);
 			return 1;
 		}
 
@@ -584,6 +580,7 @@ static int generic_rom_load(int id, UINT8 *rambase, UINT8 *rombase, UINT8 *pakba
 		if (trailerlen) {
 			if (pak_decode_trailer(trailerraw, trailerlen, &trailer)) {
 				if (errorlog) fprintf(errorlog,"Invalid or unknown PAK trailer.\n");
+				osd_fclose(fp);
 				return 1;
 			}
 
@@ -592,6 +589,7 @@ static int generic_rom_load(int id, UINT8 *rambase, UINT8 *rombase, UINT8 *pakba
 
 		if (osd_fseek(fp, sizeof(pak_header), SEEK_SET)) {
 			if (errorlog) fprintf(errorlog,"Unexpected error while reading PAK.\n");
+			osd_fclose(fp);
 			return 1;
 		}
 
@@ -1167,8 +1165,47 @@ static void coco3_pia0_irq_b(int state)
 }
 
 /***************************************************************************
+  Joystick autocenter
+***************************************************************************/
+
+static int autocenter_val;
+
+static void autocenter_timer_proc(int data)
+{
+	struct InputPort *in;
+	int dipport, dipmask, portval;
+	
+	dipport = (data & 0xff00) >> 8;
+	dipmask = data & 0x00ff;
+	portval = readinputport(dipport) & dipmask;
+	
+	if (autocenter_val != portval) {
+		/* Now go through all inputs, and set or reset IPF_CENTER on all
+		 * joysticks
+		 */
+		for (in = Machine->input_ports; in->type != IPT_END; in++) {
+			if (((in->type & ~IPF_MASK) > IPT_ANALOG_START)
+					&& ((in->type & ~IPF_MASK) < IPT_ANALOG_END)) {
+				/* We found a joystick */
+				if (portval)
+					in->type |= IPF_CENTER;
+				else
+					in->type &= ~IPF_CENTER;
+			}
+		}
+	}
+}
+
+static void autocenter_init(int dipport, int dipmask)
+{
+	autocenter_val = -1;
+	timer_pulse(TIME_IN_HZ(10), (dipport << 8) | dipmask, autocenter_timer_proc);
+}
+
+/***************************************************************************
   Machine Initialization
 ***************************************************************************/
+
 
 static void generic_init_machine(struct pia6821_interface *piaintf)
 {
@@ -1180,6 +1217,8 @@ static void generic_init_machine(struct pia6821_interface *piaintf)
 		trailer_load = 0;
 		timer_set(0, 0, pak_load_trailer_callback);
 	}
+
+	autocenter_init(10, 0x04);
 }
 
 void dragon32_init_machine(void)

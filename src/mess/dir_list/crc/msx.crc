@@ -1,7 +1,12 @@
-# msx crc thingies
-#
+# MSX-1 Cartridge CRC List
+# Compiled by Sean Young
+# Note: This list is provided as a record of known dumps for this system.  
+#       These checksums have not been validated and cannot be assumed correct.  
+#       They are provided here as a database to help the emulation of this system.  
+# Send corrections/submissions to: battlepriest@hotmail.com
+
+
 # The last parameter (after the last '|') is the mapper type. Values:
-#
 #  0 standard (no mapper)
 #  1 msx-dos 2
 #  2 konami5 with SCC

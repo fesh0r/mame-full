@@ -18,6 +18,7 @@
 #include "vc1541.h"
 #include "vc20tape.h"
 #include "mess/vidhrdw/ted7360.h"
+#include "mess/sndhrdw/sid6581.h"
 
 #include "c16.h"
 
@@ -460,6 +461,9 @@ void c16_interrupt (int level)
 
 static void c16_common_driver_init (void)
 {
+#ifdef VC1541
+	VC1541_CONFIG vc1541= { 1, 8 };
+#endif
 	C1551_CONFIG config= { 1 };
 
 	c16_select_roms (0, 0);
@@ -498,6 +502,9 @@ static void c16_common_driver_init (void)
 	/* need to recognice non available tia6523's (iec8/9) */
 	memset (c16_memory + 0xfdc0, 0xff, 0x40);
 
+
+	memset (c16_memory + 0xfd40, 0xff, 0x20);
+
 	c16_tape_open ();
 
 	cbm_drive_open ();
@@ -506,6 +513,12 @@ static void c16_common_driver_init (void)
 
 	if (REAL_C1551)
 		c1551_config (0, 0, &config);
+
+#ifdef VC1541
+	if (REAL_VC1541)
+		vc1541_config (0, 0, &vc1541);
+#endif
+	sid6581_0_init(NULL, C16_PAL);
 }
 
 void c16_driver_init (void)
@@ -527,6 +540,16 @@ void c16_init_machine (void)
 
 	tpi6525_2_reset();
 	tpi6525_3_reset();
+
+	sid6581_0_reset();
+	if (SIDCARD) {
+		sid6581_0_configure(SIDCARD_8580);
+		install_mem_read_handler (0, 0xfd40, 0xfd5f, sid6581_0_port_r);
+		install_mem_write_handler (0, 0xfd40, 0xfd5f, sid6581_0_port_w);
+	} else {
+		install_mem_read_handler (0, 0xfd40, 0xfd5f, MRA_NOP);
+		install_mem_write_handler (0, 0xfd40, 0xfd5f, MWA_NOP);
+	}
 
 #if 0
 	c16_switch_to_rom (0, 0);
@@ -620,6 +643,11 @@ void c16_init_machine (void)
 
 	if (REAL_C1551)
 		c1551_reset ();
+
+#ifdef VC1541
+	if (REAL_VC1541)
+		vc1541_reset ();
+#endif
 
 	cbm_serial_reset_write (0);
 
@@ -740,6 +768,8 @@ int c16_frame_interrupt (void)
 {
 	static int quickload = 0;
 	int value;
+
+	sid6581_update();
 
 	if (!quickload && QUICKLOAD)
 		cbm_quick_open (0, 0, c16_memory);

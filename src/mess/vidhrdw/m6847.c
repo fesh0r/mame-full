@@ -388,15 +388,7 @@ static void blitgraphics4artifact(struct osd_bitmap *bitmap, UINT8 *vidram, UINT
 	 * Special thanks to Derek Snider for coming up with the
 	 * basis for the values in this table
 	 */
-	static int blurcorrection[4][4][4][2] = {
-		/* pixel color 0 */
-		{
-			{{0, 0}, {0, 0}, {0, 0}, {0, 0}},
-			{{0, 0}, {0, 0}, {0, 0}, {0, 0}},
-			{{0, 0}, {0, 0}, {0, 0}, {0, 0}},
-			{{0, 0}, {0, 0}, {0, 0}, {0, 0}}
-		},
-
+	static int blurcorrection[2][4][4][2] = {
 		/* pixel color 1 */
 		{
 			{{0, 1}, {0, 1}, {0, 3}, {0, 3}},
@@ -411,14 +403,6 @@ static void blitgraphics4artifact(struct osd_bitmap *bitmap, UINT8 *vidram, UINT
 			{{3, 0}, {3, 0}, {3, 2}, {3, 2}},
 			{{2, 0}, {2, 0}, {2, 2}, {2, 2}},
 			{{3, 0}, {3, 0}, {3, 2}, {3, 2}}
-		},
-
-		/* pixel color 3 */
-		{
-			{{3, 3}, {3, 3}, {3, 3}, {3, 3}},
-			{{3, 3}, {3, 3}, {3, 3}, {3, 3}},
-			{{3, 3}, {3, 3}, {3, 3}, {3, 3}},
-			{{3, 3}, {3, 3}, {3, 3}, {3, 3}}
 		}
 	};
 
@@ -428,15 +412,20 @@ static void blitgraphics4artifact(struct osd_bitmap *bitmap, UINT8 *vidram, UINT
 	int p, b;
 	int lastp, nextp;
 	int c1, c2;
+	int nextdirty;
+	int xp, yp;
 
 	c[0] = Machine->pens[metapalette[0]];
 	c[1] = Machine->pens[metapalette[1]];
 	c[2] = Machine->pens[metapalette[2]];
 	c[3] = Machine->pens[metapalette[3]];
 
+	yp = basey;
 	for (y = 0; y < sizey; y++) {
+		nextdirty = 0;
+		xp = basex;
 		for (x = 0; x < sizex; x++) {
-			if (*db) {
+			if (db[0] || ((x < (sizex-1)) && db[1]) || nextdirty) {
 				nextp = (vidram[0] >> 6) & 3;
 				lastp = (x == 0) ? nextp : (vidram[-1] & 3);
 
@@ -448,23 +437,42 @@ static void blitgraphics4artifact(struct osd_bitmap *bitmap, UINT8 *vidram, UINT
 					else if (x < (sizex-1))
 						nextp = (vidram[1] >> 6) & 3;
 
-					c1 = c[blurcorrection[p][lastp][nextp][0]];
-					c2 = c[blurcorrection[p][lastp][nextp][1]];
+					switch(p) {
+					case 0:
+						c1 = c2 = c[0];
+						break;
+					case 3:
+						c1 = c2 = c[3];
+						break;
+					default:
+						c1 = c[blurcorrection[p-1][lastp][nextp][0]];
+						c2 = c[blurcorrection[p-1][lastp][nextp][1]];
+						break;
+					}
 
 					for (py = 0; py < scaley; py++) {
 						for (px = 0; px < scalex; px++) {
-							plot_pixel(bitmap, (x * 8 + b * 2 + 0) * scalex + px + basex, y * scaley + py + basey, c1);
-							plot_pixel(bitmap, (x * 8 + b * 2 + 1) * scalex + px + basex, y * scaley + py + basey, c2);
+							plot_pixel(bitmap, xp + (scalex * 0) + px, yp + py, c1);
+							plot_pixel(bitmap, xp + (scalex * 1) + px, yp + py, c2);
 						}
 					}
 
 					lastp = p;
+					xp += scalex * 2;
 				}
-				*db = 0;
+				
+				if (*db) {
+					nextdirty = 1;
+					*db = 0;
+				}
+			}
+			else {
+				xp += (scalex * 8);
 			}
 			db++;
 			vidram++;
 		}
+		yp += scaley;
 	}
 }
 

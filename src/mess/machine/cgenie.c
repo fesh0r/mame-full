@@ -140,7 +140,7 @@ static int opbaseoverride(int PC)
 	if( cgenie_load_cas && RAM[0x4400+3*40] == 0x3e )
     {
 		cgenie_load_cas = 0;
-		if( cassette_name[0] )
+		if( cassette_name && cassette_name[0] )
 		{
 			UINT8 *buff = malloc(65536), *s, data;
 			UINT16 size, entry = 0, block_len, block_ofs = 0;
@@ -283,13 +283,13 @@ void cgenie_init_machine(void)
 	if( readinputport(0) & 0x80 )
 	{
 		LOG((errorlog, "cgenie floppy discs enabled\n"));
-		if( floppy_name[0][0] )
+		if( floppy_name[0] && floppy_name[0][0] )
 		{
             wd179x_init(1);
-			first_fdc_access[0] = (floppy_name[0][0]) ? 1 : 0;
-			first_fdc_access[1] = (floppy_name[1][0]) ? 1 : 0;
-			first_fdc_access[2] = (floppy_name[2][0]) ? 1 : 0;
-			first_fdc_access[3] = (floppy_name[3][0]) ? 1 : 0;
+			first_fdc_access[0] = (floppy_name[0]&&floppy_name[0][0]) ? 1 : 0;
+			first_fdc_access[1] = (floppy_name[1]&&floppy_name[1][0]) ? 1 : 0;
+			first_fdc_access[2] = (floppy_name[2]&&floppy_name[2][0]) ? 1 : 0;
+			first_fdc_access[3] = (floppy_name[3]&&floppy_name[3][0]) ? 1 : 0;
 		}
 		else
 		{
@@ -306,7 +306,7 @@ void cgenie_init_machine(void)
 	/* copy DOS ROM, if enabled or wipe out that memory area */
 	if( readinputport(0) & 0x40 )
 	{
-		if( floppy_name[0][0] )
+		if( floppy_name[0] && floppy_name[0][0] )
 		{
             install_mem_read_handler(0, 0xc000, 0xdfff, MRA_ROM);
             install_mem_write_handler(0, 0xc000, 0xdfff, MWA_ROM);
