@@ -23,9 +23,12 @@ static struct mess_flopimg *get_flopimg(mess_image *image)
 static void flopimg_seek_callback(mess_image *image, int physical_track)
 {
 	struct mess_flopimg *flopimg;
+
 	flopimg = get_flopimg(image);
-	if (flopimg)
-		flopimg->track = physical_track;
+	if (!flopimg || !flopimg->floppy)
+		return;
+
+	flopimg->track = physical_track;
 }
 
 
@@ -37,7 +40,7 @@ static int flopimg_get_sectors_per_track(mess_image *image, int side)
 	int sector_count;
 
 	flopimg = get_flopimg(image);
-	if (!flopimg)
+	if (!flopimg || !flopimg->floppy)
 		return 0;
 
 	err = floppy_get_sector_count(flopimg->floppy, side, flopimg->track, &sector_count);
@@ -55,6 +58,8 @@ static void flopimg_get_id_callback(mess_image *image, chrn_id *id, int id_index
 	UINT32 sector_length;
 	
 	flopimg = get_flopimg(image);
+	if (!flopimg || !flopimg->floppy)
+		return;
 
 	floppy_get_indexed_sector_info(flopimg->floppy, side, flopimg->track, id_index, &sector, &sector_length);
 
@@ -86,7 +91,11 @@ static void log_readwrite(const char *name, int head, int track, int sector, con
 static void flopimg_read_sector_data_into_buffer(mess_image *image, int side, int index1, char *ptr, int length)
 {
 	struct mess_flopimg *flopimg;
+
 	flopimg = get_flopimg(image);
+	if (!flopimg || !flopimg->floppy)
+		return;
+
 	floppy_read_sector(flopimg->floppy, side, flopimg->track, index1, 0, ptr, length);
 #if LOG_FLOPPY
 	log_readwrite("sector_read", side, flopimg->track, index1, ptr, length);
@@ -98,7 +107,11 @@ static void flopimg_read_sector_data_into_buffer(mess_image *image, int side, in
 static void flopimg_write_sector_data_from_buffer(mess_image *image, int side, int index1, const char *ptr, int length,int ddam)
 {
 	struct mess_flopimg *flopimg;
+
 	flopimg = get_flopimg(image);
+	if (!flopimg || !flopimg->floppy)
+		return;
+
 #if LOG_FLOPPY
 	log_readwrite("sector_write", side, flopimg->track, index1, ptr, length);
 #endif
@@ -110,7 +123,11 @@ static void flopimg_write_sector_data_from_buffer(mess_image *image, int side, i
 static void flopimg_read_track_data_info_buffer(mess_image *image, int side, void *ptr, int *length)
 {
 	struct mess_flopimg *flopimg;
+
 	flopimg = get_flopimg(image);
+	if (!flopimg || !flopimg->floppy)
+		return;
+
 	floppy_read_track_data(flopimg->floppy, side, flopimg->track, ptr, *length);
 }
 
@@ -119,7 +136,11 @@ static void flopimg_read_track_data_info_buffer(mess_image *image, int side, voi
 static void flopimg_write_track_data_info_buffer(mess_image *image, int side, const void *ptr, int *length)
 {
 	struct mess_flopimg *flopimg;
+
 	flopimg = get_flopimg(image);
+	if (!flopimg || !flopimg->floppy)
+		return;
+
 	floppy_write_track_data(flopimg->floppy, side, flopimg->track, ptr, *length);
 }
 

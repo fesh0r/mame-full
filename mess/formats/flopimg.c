@@ -314,6 +314,7 @@ void floppy_close(floppy_image *floppy)
 
 struct FloppyCallbacks *floppy_callbacks(floppy_image *floppy)
 {
+	assert(floppy);
 	return &floppy->format;
 }
 
@@ -321,6 +322,7 @@ struct FloppyCallbacks *floppy_callbacks(floppy_image *floppy)
 
 void *floppy_tag(floppy_image *floppy, const char *tagname)
 {
+	assert(floppy);
 	return tagpool_lookup(&floppy->tags, tagname);
 }
 
