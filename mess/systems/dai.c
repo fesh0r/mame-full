@@ -212,6 +212,7 @@ static MACHINE_DRIVER_START( dai )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(WAVE, dai_wave_interface)
+	MDRV_SOUND_ADD(CUSTOM, dai_sound_interface)
 MACHINE_DRIVER_END
 
 #define io_dai		io_NULL

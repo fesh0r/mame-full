@@ -19,8 +19,10 @@
 #include "machine/8255ppi.h"
 #include "machine/tms5501.h"
 
+#define DAI_DEBUG	1
+
 #if DAI_DEBUG
-#define LOG_SOUND	0
+#define LOG_SOUND	1
 #define LOG_PADDLE	0
 #define LOG_TAPE	0
 #define LOG_MEMORY	0
@@ -34,8 +36,8 @@
 #endif /* DAI_DEBUG */
 
 /* Discrete I/O devices */
-static UINT8 dai_noise_volume;
-static UINT8 dai_osc_volume[3];
+UINT8 dai_noise_volume;
+UINT8 dai_osc_volume[3];
 static UINT8 dai_paddle_select;
 static UINT8 dai_paddle_enable;
 static UINT8 dai_cassette_motor[2];
@@ -90,7 +92,7 @@ static void dai_interrupt_callback(int intreq, UINT8 vector)
 		cpu_set_irq_line(0, 0, CLEAR_LINE);
 }
 
-static const tms5501_init_param tms5501_init_param_dai =
+static const tms5501_init_param dai_tms5501_init_param =
 {
 	dai_keyboard_read,
 	dai_keyboard_write,
@@ -98,7 +100,7 @@ static const tms5501_init_param tms5501_init_param_dai =
 	2000000.
 };
 
-static ppi8255_interface ppi82555_intf =
+static ppi8255_interface dai_ppi82555_intf =
 {
 	1, 					/* 1 chip */
 	{ NULL, NULL },		/* Port A read */
@@ -106,11 +108,25 @@ static ppi8255_interface ppi82555_intf =
 	{ NULL, NULL },		/* Port C read */
 };
 
-static PIT8253_CONFIG pit8253_intf =
+static PIT8253_CONFIG dai_pit8253_intf =
 {
 	TYPE8253,
 	{
-		{ 0.0, NULL, NULL }
+		{
+			2000000,
+			NULL,
+			dai_sh_change_clock
+		},
+		{
+			2000000,
+			NULL,
+			dai_sh_change_clock
+		},
+		{
+			2000000,
+			NULL,
+			dai_sh_change_clock
+		}
 	}
 };
 
@@ -127,9 +143,9 @@ MACHINE_INIT( dai )
 	cpu_setbank(1, mess_ram);
 	cpu_setbank(2, memory_region(REGION_CPU1) + 0x010000);
 
-	tms5501_init(0, &tms5501_init_param_dai);
-	ppi8255_init(&ppi82555_intf);
-	pit8253_config(0, &pit8253_intf);
+	tms5501_init(0, &dai_tms5501_init_param);
+	ppi8255_init(&dai_ppi82555_intf);
+	pit8253_config(0, &dai_pit8253_intf);
 
 	timer_set(0, 0, dai_bootstrap_callback);
 }

@@ -760,6 +760,7 @@ $(OBJ)/dai.a:     \
 	$(OBJ)/mess/systems/dai.o     \
 	$(OBJ)/mess/machine/dai.o     \
 	$(OBJ)/mess/vidhrdw/dai.o     \
+	$(OBJ)/mess/sndhrdw/dai.o     \
 	$(OBJ)/mess/machine/tms5501.o \
 
 $(OBJ)/concept.a:  \
