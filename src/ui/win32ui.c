@@ -332,6 +332,7 @@ typedef struct
 		int     id;         /* Window control id */
 		HWND    hwnd;       /* Window handle */
 	} u;
+	BOOL		setfont;	/* Do we set this item's font? */
 	int         action;     /* What to do when control is resized */
 	void        *subwindow; /* Points to a Resize structure for this subwindow; NULL if none */
 } ResizeItem;
@@ -342,7 +343,8 @@ typedef struct
 	ResizeItem* items;      /* Array of subitems to be resized */
 } Resize;
 
-static void             ResizeWindow(HWND hParent, Resize *r);
+static void ResizeWindow(HWND hParent, Resize *r);
+static void SetAllWindowsFont(HWND hParent, const Resize *r, HFONT hFont, BOOL bRedraw);
 
 /* List view Icon defines */
 #define LG_ICONMAP_WIDTH    GetSystemMetrics(SM_CXICON)
@@ -664,22 +666,22 @@ static int CommandToString[] =
 /* How to resize main window */
 static ResizeItem main_resize_items[] =
 {
-	{ RA_HWND, { 0 },            RA_LEFT  | RA_RIGHT  | RA_TOP,     NULL },
-	{ RA_HWND, { 0 },            RA_LEFT  | RA_RIGHT  | RA_BOTTOM,  NULL },
-	{ RA_ID,   { IDC_DIVIDER },  RA_LEFT  | RA_RIGHT  | RA_TOP,     NULL },
-	{ RA_ID,   { IDC_TREE },     RA_LEFT  | RA_BOTTOM | RA_TOP,     NULL },
-	{ RA_ID,   { IDC_LIST },     RA_ALL,                            NULL },
-	{ RA_ID,   { IDC_SPLITTER }, RA_LEFT  | RA_BOTTOM | RA_TOP,     NULL },
-	{ RA_ID,   { IDC_SPLITTER2 },RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
-	{ RA_ID,   { IDC_SSFRAME },  RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
-	{ RA_ID,   { IDC_SSPICTURE },RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
-	{ RA_ID,   { IDC_HISTORY },  RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
-	{ RA_ID,   { IDC_SSTAB },    RA_RIGHT | RA_TOP,                 NULL },
+	{ RA_HWND, { 0 },            FALSE, RA_LEFT  | RA_RIGHT  | RA_TOP,     NULL },
+	{ RA_HWND, { 0 },            FALSE, RA_LEFT  | RA_RIGHT  | RA_BOTTOM,  NULL },
+	{ RA_ID,   { IDC_DIVIDER },  FALSE, RA_LEFT  | RA_RIGHT  | RA_TOP,     NULL },
+	{ RA_ID,   { IDC_TREE },     TRUE,	RA_LEFT  | RA_BOTTOM | RA_TOP,     NULL },
+	{ RA_ID,   { IDC_LIST },     TRUE,	RA_ALL,                            NULL },
+	{ RA_ID,   { IDC_SPLITTER }, FALSE,	RA_LEFT  | RA_BOTTOM | RA_TOP,     NULL },
+	{ RA_ID,   { IDC_SPLITTER2 },FALSE,	RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
+	{ RA_ID,   { IDC_SSFRAME },  FALSE,	RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
+	{ RA_ID,   { IDC_SSPICTURE },FALSE,	RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
+	{ RA_ID,   { IDC_HISTORY },  TRUE,	RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
+	{ RA_ID,   { IDC_SSTAB },    FALSE,	RA_RIGHT | RA_TOP,                 NULL },
 #ifdef MESS
-	{ RA_ID,   { IDC_LIST2 },    RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
-	{ RA_ID,   { IDC_SPLITTER3 },RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
+	{ RA_ID,   { IDC_LIST2 },    TRUE,	RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
+	{ RA_ID,   { IDC_SPLITTER3 },FALSE,	RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
 #endif /* MESS */
-	{ RA_END,  { 0 },            0,                                 NULL }
+	{ RA_END,  { 0 },            FALSE, 0,                                 NULL }
 };
 
 static Resize main_resize = { {0, 0, 0, 0}, main_resize_items };
@@ -1740,10 +1742,6 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	extern const char *mameinfo_filename;
 	LONG common_control_version = GetCommonControlVersion();
 
-#ifdef MESS
-	HWND hwndSoftware;
-#endif /* MESS */
-
 	srand((unsigned)time(NULL));
 
 	begin_resource_tracking();
@@ -1862,11 +1860,6 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	hTreeView = GetDlgItem(hMain, IDC_TREE);
 	hwndList  = GetDlgItem(hMain, IDC_LIST);
 
-#ifdef MESS
-	hwndSoftware	= GetDlgItem(hMain, IDC_LIST2);
-	assert(hwndSoftware);
-#endif
-
 	history_filename = g_szHistoryFileName;
 	mameinfo_filename = g_szMameInfoFileName;
 
@@ -1889,48 +1882,6 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 
 	/* Initial adjustment of controls on the Picker window */
 	ResizePickerControls(hMain);
-
-	/* Reset the font */
-	{
-		LOGFONT logfont;
-
-		GetListFont(&logfont);
-		hFont = CreateFontIndirect(&logfont);
-		if (hFont != NULL)
-		{
-			if (hwndList != NULL)
-            {
-                HWND    hwndHeaderCtrl  = NULL;
-                HFONT   hHeaderCtrlFont = NULL;
-
-				hwndHeaderCtrl = GetDlgItem(hwndList, 0);
-				if (hwndHeaderCtrl)
-				{
-					hHeaderCtrlFont = GetWindowFont( hwndHeaderCtrl);
-                }
-
-    		    SetWindowFont(hwndList, hFont, FALSE);
-
-                /* Reset header ctrl font back to original font */
-
-				if (hHeaderCtrlFont)
-				{
-					SetWindowFont(hwndHeaderCtrl, hHeaderCtrlFont, TRUE);
-                }
-            }
-
-			if (hTreeView != NULL)
-			{
-				SetWindowFont(hTreeView, hFont, FALSE);
-			}
-
-#ifdef MESS
-			if (hwndSoftware != NULL)
-				SetWindowFont(hwndSoftware, hFont, FALSE);
-#endif
-			SetWindowFont(GetDlgItem(hMain, IDC_HISTORY), hFont, FALSE);
-		}
-	}
 
 	TabCtrl_SetCurSel(hTabCtrl, CalculateCurrentTabIndex());
 
@@ -1983,6 +1934,16 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 #endif
 	InitListView();
 	SetFocus(hwndList);
+
+	/* Reset the font */
+	{
+		LOGFONT logfont;
+
+		GetListFont(&logfont);
+		hFont = CreateFontIndirect(&logfont);
+		if (hFont != NULL)
+			SetAllWindowsFont(hMain, &main_resize, hFont, FALSE);
+	}
 
 	/* Init DirectInput */
 	if (!DirectInputInitialize())
@@ -2128,14 +2089,6 @@ static void Win32UI_exit()
 	DestroyIcons();
 
 	DestroyAcceleratorTable(hAccel);
-
-#ifdef MESS
-	if (mess_icon_index != NULL)
-	{
-		free(mess_icon_index);
-		mess_icon_index = NULL;
-	}
-#endif
 
 	DirectInputClose();
 	DirectDraw_Close();
@@ -2660,6 +2613,37 @@ static void OnSize(HWND hWnd, UINT nState, int nWidth, int nHeight)
 	firstTime = FALSE;
 	UpdateScreenShot();
 }
+
+
+
+static HWND GetResizeItemWindow(HWND hParent, const ResizeItem *ri)
+{
+	HWND hControl;
+	if (ri->type == RA_ID)
+		hControl = GetDlgItem(hParent, ri->u.id);
+	else
+		hControl = ri->u.hwnd;
+	return hControl;
+}
+
+
+
+static void SetAllWindowsFont(HWND hParent, const Resize *r, HFONT hTheFont, BOOL bRedraw)
+{
+	int i;
+	HWND hControl;
+
+	for (i = 0; r->items[i].type != RA_END; i++)
+	{
+		if (r->items[i].setfont)
+		{
+			hControl = GetResizeItemWindow(hParent, &r->items[i]);
+			SetWindowFont(hControl, hTheFont, bRedraw);
+		}
+	}
+}
+
+
 
 static void ResizeWindow(HWND hParent, Resize *r)
 {
@@ -3874,31 +3858,14 @@ static void PickFont(void)
 	hFont = CreateFontIndirect(&font);
 	if (hFont != NULL)
 	{
-        HWND    hwndHeaderCtrl = NULL;
-        HFONT   hHeaderCtrlFont = NULL;
-
 		COLORREF textColor = cf.rgbColors;
 
 		if (textColor == RGB(255,255,255))
-        {
+		{
 			textColor = RGB(240, 240, 240);
-        }
+		}
 
-        hwndHeaderCtrl = GetDlgItem( hwndList, 0 );
-        if ( hwndHeaderCtrl )
-        {
-            hHeaderCtrlFont = GetWindowFont( hwndHeaderCtrl );
-        }
-
-		SetWindowFont(hwndList, hFont, TRUE);
-		SetWindowFont(hTreeView, hFont, TRUE);
-
-        /* Reset header ctrl font back to original font */
-
-        if ( hHeaderCtrlFont )
-        {
-            SetWindowFont( hwndHeaderCtrl, hHeaderCtrlFont, TRUE );
-        }
+		SetAllWindowsFont(hMain, &main_resize, hFont, TRUE);
 
 		hWnd = GetWindow(hMain, GW_CHILD);
 		while(hWnd)
@@ -3908,7 +3875,6 @@ static void PickFont(void)
 				if (!strcmp(szClass, "SysListView32"))
 				{
 					ListView_SetTextColor(hWnd, textColor);
-					SetWindowFont(hWnd, hFont, TRUE);
 				}
 				else if (!strcmp(szClass, "SysTreeView32"))
 				{
@@ -3919,7 +3885,6 @@ static void PickFont(void)
 		}
 
 		SetListFontColor(cf.rgbColors);
-		SetWindowFont(GetDlgItem(hMain, IDC_HISTORY), hFont, FALSE);
 		ResetListView();
 	}
 }

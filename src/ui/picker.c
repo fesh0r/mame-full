@@ -358,6 +358,8 @@ static LRESULT CALLBACK ListViewWndProc(HWND hWnd, UINT message, WPARAM wParam, 
 	LRESULT rc = 0;
 	BOOL bHandled = FALSE;
 	WNDPROC pfnParentWndProc;
+	HWND hwndHeaderCtrl  = NULL;
+	HFONT hHeaderCtrlFont = NULL;
 
 	pPickerInfo = GetPickerInfo(hWnd);
 	pfnParentWndProc = pPickerInfo->pfnParentWndProc;
@@ -390,6 +392,12 @@ static LRESULT CALLBACK ListViewWndProc(HWND hWnd, UINT message, WPARAM wParam, 
 			bHandled = ListViewNotify(hWnd, (LPNMHDR) lParam);
 			break;
 
+		case WM_SETFONT:
+			hwndHeaderCtrl = ListView_GetHeader(hWnd);
+			if (hwndHeaderCtrl)
+				hHeaderCtrlFont = GetWindowFont(hwndHeaderCtrl);
+			break;
+
 		case WM_DESTROY:
 			// Received WM_DESTROY; time to clean up
 			if (pPickerInfo->pCallbacks->pfnSetViewMode)
@@ -402,6 +410,11 @@ static LRESULT CALLBACK ListViewWndProc(HWND hWnd, UINT message, WPARAM wParam, 
 
 	if (!bHandled)
 		rc = CallParentWndProc(pfnParentWndProc, hWnd, message, wParam, lParam);
+
+	 // If we received WM_SETFONT, reset header ctrl font back to original font
+	if (hwndHeaderCtrl)
+		SetWindowFont(hwndHeaderCtrl, hHeaderCtrlFont, TRUE);
+
 	return rc;
 }
 

@@ -1005,6 +1005,9 @@ BOOL SoftwareList_Idle(HWND hwndSoftware)
     static mess_image_type imagetypes[64];
     ImageData *pImageData;
 
+	if (!mess_images_index)
+		return mess_idle_work;
+
     if (s_nIdleImageNum == 0)
         SetupImageTypes(s_nGame, imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_COUNT);
 
