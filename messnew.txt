@@ -5,11 +5,20 @@ New System Drivers Supported (in no particular order):
 - Tomy Tutor [Raphael Nabet]
 
 System Driver Changes:
----------------------- 
+----------------------
+- [A2600] Fixed bug #405 and corrected some dipswitches. [Stefano Priore]
+
+- [A7800] Reset and Start buttons now appear in the Input menu. Added
+  console's own Pause button. [Stefano Priore]
+
+- [ASTROCADE] Fixed some Input menu descriptions and corrected paddles'
+  sensitivities. [Stefano Priore]
+
 - [COCO] Implemented cocodmk_sector_count() and cocodmk_sector_info() in
   coco_dsk.c (bug #378). [tim lindner]
 
-- [TI99] Fixed some bugs that had been introduced in IDE emulation. [Raphael Nabet]
+- [TI99] Fixed some bugs that had been introduced in IDE emulation. [Raphael
+ Nabet]
 
 - [TI99 EVPC card] Implemented missing VDP ports.
 
