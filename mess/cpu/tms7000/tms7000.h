@@ -27,6 +27,8 @@ enum { TMS7000_PC=1, TMS7000_SP, TMS7000_ST };
 
 enum { TMS7000_VCC, TMS7000_VSS };
 
+enum { TMS7000_NMOS, TMS7000_CMOS };
+
 extern int tms7000_ICount;
 
 enum {

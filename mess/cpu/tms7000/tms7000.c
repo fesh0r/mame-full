@@ -117,7 +117,7 @@ typedef struct
 	UINT8		irq_state[3];	/* State of the three IRQs */
 	UINT8		pf[0x100];		/* Perpherial file */
 	int 		(*irq_callback)(int irqline);
-	UINT8		idle_state;
+	UINT8		idle_state;		/* Set after the execution of an idle instruction */
 } tms7000_Regs;
 
 static tms7000_Regs tms7000;
@@ -211,16 +211,36 @@ void tms7000_init(void)
 
 void tms7000_reset(void *param)
 {
+//	tms7000.architecture = (int)param;
+	
 	tms7000.idle_state = 0;
 	tms7000.irq_state[ TMS7000_IRQ1_LINE ] = CLEAR_LINE;
 	tms7000.irq_state[ TMS7000_IRQ2_LINE ] = CLEAR_LINE;
 	tms7000.irq_state[ TMS7000_IRQ3_LINE ] = CLEAR_LINE;
 	
-	pSP = 0x01;
-	pSR = 0x00;
-	WRA( tms7000.pc.b.h );
+	WM( 0x100 + 9, 0 );		/* Data direction regs are cleared */
+	WM( 0x100 + 11, 0 );
+	
+//	if( tms7000.architecture == TMS7000_NMOS )
+//	{
+		WM( 0x100 + 4, 0xff );		/* Output 0xff on port A */
+		WM( 0x100 + 8, 0xff );		/* Output 0xff on port C */
+		WM( 0x100 + 10, 0xff );		/* Output 0xff on port D */
+//	}
+//	else
+//	{
+//		WM( 0x100 + 4, 0xff );		/* Output 0xff on port A */
+//	}
+		
+	pSP = 0x01;				/* Set stack pointer to r1 */
+	pSR = 0x00;				/* Clear status register (disabling interrupts */
+	WM( 0x100 + 0, 0 );		/* Write a zero to IOCNT0 */
+	
+	/* On TMS70x2 and TMS70Cx2 IOCNT1 is zero */
+	
+	WRA( tms7000.pc.b.h );	/* Write previous PC to A:B */
 	WRB( tms7000.pc.b.l );
-	pPC = RM16(0xfffe);
+	pPC = RM16(0xfffe);		/* Load reset vector */
 	CHANGE_PC;
 }
 

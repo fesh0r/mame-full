@@ -510,7 +510,7 @@ void br_inx( void )
 	PAIR p;
 	
 	IMMWORD( p );
-	pPC = p.d + RDB;
+	pPC = p.w.l + RDB;
 	CHANGE_PC;
 	tms7000_ICount -= 12;
 }
@@ -1117,7 +1117,7 @@ void call_inx( void )
 	
 	IMMWORD( tPC );
 	PUSHWORD( PC );
-	pPC = tPC.d + RDB;
+	pPC = tPC.w.l + RDB;
 	CHANGE_PC;
 	tms7000_ICount -= 16;
 }
@@ -2004,6 +2004,7 @@ void jc( void )
 		
 		SIMMBYTE( s );
 		pPC += s;
+		CHANGE_PC;
 		tms7000_ICount -= 7;
 	}
 	else
@@ -2011,7 +2012,6 @@ void jc( void )
 		pPC++;
 		tms7000_ICount -= 5;
 	}
-	CHANGE_PC;
 }
 		
 void jeq( void );
@@ -2023,6 +2023,7 @@ void jeq( void )
 		
 		SIMMBYTE( s );
 		pPC += s;
+		CHANGE_PC;
 		tms7000_ICount -= 7;
 	}
 	else
@@ -2030,7 +2031,6 @@ void jeq( void )
 		pPC++;
 		tms7000_ICount -= 5;
 	}
-	CHANGE_PC;
 }
 
 void jl( void );
@@ -2047,9 +2047,9 @@ void jl( void )
 		
 		SIMMBYTE( s );
 		pPC += s;
+		CHANGE_PC;
 		tms7000_ICount -= 7;
 	}
-	CHANGE_PC;
 }
 		
 void jmp( void );
@@ -2060,7 +2060,6 @@ void jmp( void )
 	SIMMBYTE( s );
 	pPC += s;
 	CHANGE_PC;
-	
 	tms7000_ICount -= 7;
 }
 
@@ -2069,18 +2068,18 @@ void jn( void )
 {
 	if( pSR & SR_N )
 	{
-		pPC++;
-		tms7000_ICount -= 5;
-	}
-	else
-	{
 		INT8 s;
 		
 		SIMMBYTE( s );
 		pPC += s;
+		CHANGE_PC;
 		tms7000_ICount -= 7;
 	}
-	CHANGE_PC;
+	else
+	{
+		pPC++;
+		tms7000_ICount -= 5;
+	}
 	
 }
 
@@ -2098,9 +2097,9 @@ void jne( void )
 		
 		SIMMBYTE( s );
 		pPC += s;
+		CHANGE_PC;
 		tms7000_ICount -= 7;
 	}
-	CHANGE_PC;
 }
 
 void jp( void );
@@ -2117,28 +2116,28 @@ void jp( void )
 		
 		SIMMBYTE( s );
 		pPC += s;
+		CHANGE_PC;
 		tms7000_ICount -= 7;
 	}
-	CHANGE_PC;
 }
 
 void jpz( void );
 void jpz( void )
 {
-	if( pSR & SR_N )
-	{
-		pPC++;
-		tms7000_ICount -= 5;
-	}
-	else
+	if( (pSR & SR_N == 0 ) && (pSR & SR_Z != 0) )
 	{
 		INT8 s;
 		
 		SIMMBYTE( s );
 		pPC += s;
+		CHANGE_PC;
 		tms7000_ICount -= 7;
 	}
-	CHANGE_PC;
+	else
+	{
+		pPC++;
+		tms7000_ICount -= 5;
+	}
 }
 
 void lda_dir( void );
