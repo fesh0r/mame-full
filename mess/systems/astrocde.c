@@ -212,6 +212,11 @@ ROM_START( astrocde )
     ROM_LOAD( "astro.bin",  0x0000, 0x2000, CRC(ebc77f3a ))
 ROM_END
 
+ROM_START( astrocdw )
+    ROM_REGION( 0x10000, REGION_CPU1, 0 )
+    ROM_LOAD( "bioswhit.bin",  0x0000, 0x2000, CRC(6eb53e79 ))
+ROM_END
+
 SYSTEM_CONFIG_START(astrocde)
 	CONFIG_DEVICE_CARTSLOT_OPT( 1, "bin\0", NULL, NULL, astrocade_load_rom, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
@@ -222,6 +227,6 @@ SYSTEM_CONFIG_END
 
 ***************************************************************************/
 
-/*	  YEAR	NAME	  PARENT	COMPAT	MACHINE   INPUT 	INIT	CONFIG		COMPANY	FULLNAME */
-CONS( 1978, astrocde, 0,		0,		astrocde, astrocde, 0,		astrocde,	"Bally Manufacturing", "Bally Pro Arcade/Astrocade")
-
+/*    YEAR  NAME      PARENT	COMPAT	  MACHINE   INPUT     INIT	CONFIG		COMPANY			FULLNAME */
+CONS( 1978, astrocde, 0,	0,	  astrocde, astrocde, 0,	astrocde,	"Bally Manufacturing", "Bally Pro Arcade/Astrocade")
+CONS( 1978, astrocdw, astrocde, astrocde, astrocde, astrocde, 0,        astrocde,       "Bally Manufacturing", "Bally Pro Arcade/Astrocade (white case")

@@ -147,6 +147,7 @@ TESTDRIVER( saturn )	/* Sega Saturn										*/
 
 	/* BALLY */
 	DRIVER( astrocde )	/* Bally Astrocade									*/
+	DRIVER( astrocdw )	/* Bally Astrocade (white case)									*/
 
 	/* RCA */
 TESTDRIVER( vip )		/* Cosmac VIP										*/
