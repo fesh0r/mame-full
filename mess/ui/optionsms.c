@@ -111,13 +111,18 @@ BOOL GetUseNewUI(int num_game)
 
 void SetSelectedSoftware(int driver_index, int devtype, const char *software)
 {
+	char *newsoftware;
+	newsoftware = strdup(software ? software : "");
+	if (!newsoftware)
+		return;
 	FreeIfAllocated(&game_options[driver_index].software[devtype]);
-	if (software != NULL)
-		game_options[driver_index].software[devtype] = strdup(software);
+	game_options[driver_index].software[devtype] = newsoftware;
 }
 
 const char *GetSelectedSoftware(int driver_index, int devtype)
 {
-	return game_options[driver_index].software[devtype];
+	const char *software;
+	software = game_options[driver_index].software[devtype];
+	return software ? software : "";
 }
 

@@ -430,7 +430,6 @@ static BOOL Printer_ComponentProc(enum component_msg msg, HWND hWnd, const struc
 	options_type *o = params->o;
 	char buf[MAX_PATH];
 	const char *s;
-	int i;
 
 	hPrinterText = GetDlgItem(hWnd, IDC_PRINTER_EDITTEXT);
 	hPrinterCaption = GetDlgItem(hWnd, IDC_PRINTER_CAPTION);
@@ -444,14 +443,7 @@ static BOOL Printer_ComponentProc(enum component_msg msg, HWND hWnd, const struc
 		if (!gamedrv || device_find(gamedrv, IO_PRINTER))
 		{
 			/* we have printer options */
-			for (i = 0; i < options.image_count; i++)
-			{
-				if (options.image_files[i].type == IO_PRINTER)
-				{
-					SetWindowText(hPrinterText, options.image_files[i].name);
-					break;
-				}
-			}
+			SetWindowText(hPrinterText, o->software[IO_PRINTER]);
 		}
 		else
 		{

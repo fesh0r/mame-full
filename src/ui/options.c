@@ -563,6 +563,11 @@ void OptionsInit()
 #ifdef MESS
 	global.extra_software_paths = NULL;
 	global.use_new_ui = TRUE;
+	for (i = 0; i < IO_COUNT; i++)
+	{
+		if (i == IO_END) continue;
+		global.software[i] = strdup("");
+	}
 #endif
 
 	// game_options[x] is valid iff game_variables[i].options_loaded == true

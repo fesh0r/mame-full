@@ -587,10 +587,8 @@ static void InternalFillSoftwareList(struct SmartListView *pSoftwareListView, in
         mess_images_index = NULL;
     }
 
-	if (pSoftwareListView) {
-		SmartListView_SetTotalItems(pSoftwareListView, mess_images_count);
-		SmartListView_SetSorting(pSoftwareListView, 0, FALSE);
-	}
+	SmartListView_SetTotalItems(pSoftwareListView, mess_images_count);
+	SmartListView_SetSorting(pSoftwareListView, 0, FALSE);
 
 #if HAS_IDLING
     mess_idle_work = TRUE;
@@ -610,6 +608,8 @@ void FillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nB
 	const char *system_dir;
 	const char *parent_dir;
 	char buffer[MAX_PATH];
+
+	assert(pSoftwareListView);
 
 	/* Count the number of extra paths */
 	if (lpExtraPath && *lpExtraPath) {

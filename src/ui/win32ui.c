@@ -1719,10 +1719,10 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	dprintf("did init tree");
 
 	/* Initialize listview columns */
-	InitListView();
 #ifdef MESS
 	InitMessPicker();
 #endif
+	InitListView();
 	SetFocus(hwndList);
 
 	/* Init DirectInput */
@@ -2015,6 +2015,8 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 			SetDefaultGame(ModifyThe(drivers[nItem]->name));
 
 #ifdef MESS
+			MessWriteMountedSoftware(nItem);
+
 			/* Set the default software in the pane */
 			SmartListView_Free(s_pSoftwareListView);
 			s_pSoftwareListView = NULL;
@@ -2884,6 +2886,9 @@ static BOOL MamePickerNotify(NMHDR *nm)
 				nLastItem = pnmv->lParam;
 			/* leaving item */
 			/* printf("leaving %s\n",drivers[pnmv->lParam]->name); */
+#ifdef MESS
+			MessWriteMountedSoftware(pnmv->lParam);
+#endif
 		}
 
 		if (!(pnmv->uOldState & LVIS_SELECTED)
@@ -2898,6 +2903,9 @@ static BOOL MamePickerNotify(NMHDR *nm)
 			}
 
 			EnableSelection(pnmv->lParam);
+#ifdef MESS
+			MessReadMountedSoftware(pnmv->lParam);
+#endif
 		}
 		return TRUE;
 

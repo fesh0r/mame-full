@@ -65,6 +65,8 @@ static void MyFillSoftwareList(int nGame);
 static void MessUpdateSoftwareList(void);
 static void MessOpenOtherSoftware(int iDevice);
 static void MessCreateDevice(int iDevice);
+static void MessReadMountedSoftware(int nGame);
+static void MessWriteMountedSoftware(int nGame);
 static BOOL CreateMessIcons(void);
 
 static BOOL MessCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify);
@@ -219,14 +221,9 @@ static void MyFillSoftwareList(int nGame)
 	const struct GameDriver *drv;
 	const char *software_dirs;
 	const char *extra_path;
-/*	const char *selected_software_const;
-	char *this_software;
-	char *selected_software;
-	char *s; */
 	char *paths;
 	int software_dirs_length;
 	int path_count;
-/*	int devtype; */
 	LPCSTR *pathsv;
 
 	if (nGame == s_nCurrentGame)
@@ -261,43 +258,107 @@ static void MyFillSoftwareList(int nGame)
 	}
 
 	FillSoftwareList(s_pSoftwareListView, nGame, path_count, pathsv, extra_path);
-/*
-	if (s_pSoftwareListView)
-	{
-		for (devtype = 0; devtype < IO_COUNT; devtype++)
-		{
-			if (devtype == IO_PRINTER)
-				continue;
-			selected_software_const = GetSelectedSoftware(nGame, devtype);
-			if (selected_software_const && selected_software_const[0])
-			{
-				selected_software = alloca(strlen(selected_software_const) + 1);
-				strcpy(selected_software, selected_software_const);
-
-				this_software = selected_software;
-				while(this_software && *this_software)
-				{
-					s = strchr(this_software, ',');
-					if (s)
-						*(s++) = '\0';
-					else
-						s = NULL;
-
-					i = MessLookupByFilename(this_software);
-					if (i >= 0)
-						SmartListView_SelectItem(s_pSoftwareListView, i, this_software == selected_software);
-
-					this_software = s;
-				}
-			}
-		}
-	}
-*/
 }
 
 static void MessUpdateSoftwareList(void)
 {
 	MyFillSoftwareList(GetSelectedPickItem());
+}
+
+static void MessReadMountedSoftware(int nGame)
+{
+	const char *selected_software_const;
+	char *this_software;
+	char *selected_software;
+	char *s;
+	int devtype;
+	int i;
+
+	for (devtype = 0; devtype < IO_COUNT; devtype++)
+	{
+		if (devtype == IO_PRINTER)
+			continue;
+		selected_software_const = GetSelectedSoftware(nGame, devtype);
+		if (selected_software_const && selected_software_const[0])
+		{
+			selected_software = alloca(strlen(selected_software_const) + 1);
+			strcpy(selected_software, selected_software_const);
+
+			this_software = selected_software;
+			while(this_software && *this_software)
+			{
+				s = strchr(this_software, ',');
+				if (s)
+					*(s++) = '\0';
+				else
+					s = NULL;
+
+				i = MessLookupByFilename(this_software);
+				if (i >= 0)
+					SmartListView_SelectItem(s_pSoftwareListView, i, this_software == selected_software);
+
+				this_software = s;
+			}
+		}
+	}
+}
+
+static void MessWriteMountedSoftware(int nGame)
+{
+	int i;
+	int devtype;
+	BOOL dirty = FALSE;
+	const char *softwarename;
+	char *newsoftware[IO_COUNT];
+	char *s;
+	size_t pos;
+
+	memset(newsoftware, 0, sizeof(newsoftware));
+
+    for (i = 0; i < options.image_count; i++)
+	{
+		softwarename = options.image_files[i].name;
+		devtype = options.image_files[i].type;
+
+		assert(softwarename);
+		assert(devtype >= 0);
+		assert(devtype < IO_COUNT);
+
+		if (newsoftware[devtype])
+		{
+			pos = strlen(newsoftware[devtype]);
+			s = realloc(newsoftware[devtype], pos + 1 + strlen(softwarename) + 1);
+		}
+		else
+		{
+			pos = 0;
+			s = malloc(strlen(softwarename) + 1);
+		}
+		if (!s)
+			continue;
+
+		if (pos > 0)
+			s[pos++] = ',';
+
+		strcpy(&s[pos], softwarename);
+		newsoftware[devtype] = s;
+	}
+
+	for (devtype = 0; devtype < IO_COUNT; devtype++)
+	{
+		softwarename = newsoftware[devtype] ? newsoftware[devtype] : "";
+		if (strcmp(GetSelectedSoftware(nGame, devtype), softwarename))
+		{
+			SetSelectedSoftware(nGame, devtype, newsoftware[devtype]);
+			dirty = TRUE;
+		}
+
+		if (newsoftware[devtype])
+			free(newsoftware[devtype]);
+	}
+
+	if (dirty)
+		SaveGameOptions(nGame);
 }
 
 /*static void MessSetPickerDefaults(void)
@@ -387,11 +448,14 @@ static void InitMessPicker(void)
 static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const struct GameDriver *gamedrv)
 {
 	int i;
+	const char *optname;
+	const char *software;
 
 	for (i = 0; i < options.image_count; i++)
 	{
-		const char *optname = device_brieftypename(options.image_files[i].type);
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%s \"%s\"", optname, options.image_files[i].name);
+		optname = device_brieftypename(options.image_files[i].type);
+		software = options.image_files[i].name;
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%s \"%s\"", optname, software);
 	}
 
 	if ((pOpts->ram_size != 0) && ram_is_valid_option(gamedrv, pOpts->ram_size))
@@ -674,148 +738,6 @@ static void EndFileManager(HWND hDlg, long lSelectedItem)
 	}
 }
 
-#ifdef __NOT_USED__
-static INT_PTR CALLBACK FileManagerProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	struct SmartListViewOptions opts;
-	int i;
-
-	if (s_pFileMgrListView && SmartListView_IsEvent(s_pFileMgrListView, message, wParam, lParam)) {
-		return SmartListView_HandleEvent(s_pFileMgrListView, message, wParam, lParam);
-	}
-
-	switch(message) {
-	case WM_INITDIALOG:
-		/* Initialize */
-		CenterSubDialog(win_video_window, hDlg, FALSE); /* FIXME */
-
-		s_bChosen = FALSE;
-		s_lSelectedItem = -1;
-
-		assert((sizeof(mess_column_names) / sizeof(mess_column_names[0])) == MESS_COLUMN_MAX);
-
-		memset(&opts, 0, sizeof(opts));
-		opts.pClass = &s_filemgrListClass;
-		opts.hwndParent = hDlg;
-		opts.nIDDlgItem = IDC_LIST2;
-		opts.hBackground = NULL;
-		opts.hPALbg = hPALbg;
-		opts.hSmall = hSmall;
-		opts.hLarge = hLarge;
-		opts.rgbListFontColor = GetListFontColor();
-		opts.bOldControl = oldControl;
-		opts.bCenterOnParent = TRUE;
-		opts.nInsetPixels = 10;
-
-		s_pFileMgrListView = SmartListView_Init(&opts);
-		if (!s_pFileMgrListView) {
-			/* PANIC */
-			EndFileManager(hDlg, -1);
-			return FALSE;
-		}
-
-		SmartListView_SetTotalItems(s_pFileMgrListView, MessImageCount());
-
-		if (s_pInitialFileName && *s_pInitialFileName) {
-			i = MessLookupByFilename(s_pInitialFileName);
-			if (i >= 0)
-				SmartListView_SelectItem(s_pFileMgrListView, i, TRUE);
-		}
-
-		ShowWindow(hDlg, TRUE);
-		break;
-
-    case WM_COMMAND:
-		switch(wParam) {
-		case IDOK:
-			EndFileManager(hDlg, SingleItemSmartListView_GetSelectedItem(s_pFileMgrListView));
-			break;
-
-		case IDCANCEL:
-			EndFileManager(hDlg, -1);
-			break;
-
-		default:
-			return FALSE;
-		}
-		break;
-
-	default:
-		return FALSE;
-	}
-	return TRUE;
-}
-#endif
-
-/* osd_select_file allows MESS32 to override the default file manager
- *
- * sel indexes an entry in options.image_files[]
- *
- * Returns:
- *	0 if the core should handle it
- *  1 if we successfully selected a file
- * -1 if we cancelled
- */
-/*
-int osd_select_file(int sel, char *filename)
-{
-	MSG msg;
-	HWND hDlg;
-	int nSelectedItem;
-	int result;
-	BOOL bDialogDone;
-
-	if (GetUseNewFileMgr(GetSelectedPickItem())) {
-		s_pInitialFileName = filename;
-
-		ShowCursor(TRUE);
-
-		if (MAME32App.m_pDisplay->AllowModalDialog)
-			MAME32App.m_pDisplay->AllowModalDialog(TRUE);
-
-		hDlg = CreateDialog(hInst, MAKEINTRESOURCE(IDD_FILEMGR), win_video_window, FileManagerProc);
-
-		bDialogDone = FALSE;
-		while(!bDialogDone) {
-			SmartListView_IdleUntilMsg(s_pFileMgrListView);
-
-			do {
-				if (GetMessage(&msg, NULL, 0, 0) && msg.message != WM_CLOSE) {
-					if (!IsDialogMessage(hDlg, &msg)) {
-						TranslateMessage(&msg);
-						DispatchMessage(&msg);
-					}
-				}
-				else {
-					bDialogDone = TRUE;
-				}
-			}
-			while(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE));
-		}
-
-		DestroyWindow(hDlg);
-		nSelectedItem = s_lSelectedItem; //DialogBox(hInst, MAKEINTRESOURCE(IDD_FILEMGR), MAME32App.m_hWnd, FileManagerProc);
-
-		if (MAME32App.m_pDisplay->AllowModalDialog)
-			MAME32App.m_pDisplay->AllowModalDialog(FALSE);
-
-		ShowCursor(FALSE);
-
-		result = -1;
-		if (nSelectedItem > -1) {
-			strcpy(filename, GetImageFullName(nSelectedItem));
-			result = 1;
-		}
-		else {
-			result = -1;
-		}
-	}
-	else {
-		result = 0;
-	}
-	return result;
-}
-*/
 /* ------------------------------------------------------------------------ *
  * Mess32 Diagnostics                                                       *
  * ------------------------------------------------------------------------ */
