@@ -1,16 +1,16 @@
 #ifndef __KEYBOARD_H
 #define __KEYBOARD_H
 
-struct keyboard_event {
+struct xmame_keyboard_event {
    unsigned char press;
    unsigned char scancode;
    unsigned short unicode;
 };
 
-int keyboard_init(void);
-void keyboard_exit(void);
-void keyboard_register_event(struct keyboard_event *event);
-void keyboard_clear(void);
+int xmame_keyboard_init(void);
+void xmame_keyboard_exit(void);
+void xmame_keyboard_register_event(struct xmame_keyboard_event *event);
+void xmame_keyboard_clear(void);
 
 /* Defines for the standard pc-scancodes which xmame uses as keysyms.
    The names of the defines have been kept the same as used in

@@ -136,10 +136,10 @@ static struct kbd_fifo_struct *kbd_fifo = NULL;
 static char key[KEY_MAX];
 
 /* private methods */
-FIFO(INLINE, kbd, struct keyboard_event)
+FIFO(INLINE, kbd, struct xmame_keyboard_event)
 
 /* public methods (in keyboard.h / osdepend.h) */
-int keyboard_init(void)
+int xmame_keyboard_init(void)
 {
    memset(key, 0, KEY_MAX);
 
@@ -150,13 +150,13 @@ int keyboard_init(void)
    return 0;
 }
 
-void keyboard_exit()
+void xmame_keyboard_exit()
 {
    if(kbd_fifo)
       kbd_fifo_destroy(kbd_fifo);
 }
 
-void keyboard_register_event(struct keyboard_event *event)
+void xmame_keyboard_register_event(struct xmame_keyboard_event *event)
 {
    /* register the event in our event fifo */
    kbd_fifo_put(kbd_fifo, *event);
@@ -165,7 +165,7 @@ void keyboard_register_event(struct keyboard_event *event)
    key[event->scancode] = event->press;
 }
 
-void keyboard_clear(void)
+void xmame_keyboard_clear(void)
 {
    kbd_fifo_empty(kbd_fifo);
    memset(key, 0, KEY_MAX);
@@ -299,7 +299,7 @@ int osd_is_key_pressed(int keycode)
 
 int osd_readkey_unicode(int flush)
 {
-   struct keyboard_event event;
+   struct xmame_keyboard_event event;
    
    /* blames to the dos-people who want to check key states before
       the display (and under X thus the keyboard) is initialised */
@@ -307,7 +307,7 @@ int osd_readkey_unicode(int flush)
       return 0;
    
    if (flush)
-      keyboard_clear();
+      xmame_keyboard_clear();
    
    sysdep_update_keyboard();
    
