@@ -5,6 +5,7 @@ New System Drivers Supported (in no particular order):
 - Dragon 64 [Nate Woods]
 - PK-01 Lviv (three ROM revisions) [Krzysztof Strzecha]
 - Microbee 32 PC [Stefano Priore]
+- ZX Spectrum +3e (Spain)
 
 System Driver Changes:
 ----------------------
@@ -40,6 +41,9 @@ System Driver Changes:
   Remaped some Spectrum+ keys. Added support to load .SP snapshots. Added .BLK
   tape images support. #FF port emulation added (Arkanoid works now but is still
   not playable due to wrong timings) (Bug #47). [Krzysztof Strzecha]
+
+- [SPECPL3E] Updated BIOS to the 1.10 version and added support for the spanish
+  romset [Stefano Priore]
 
 - [TI99/4A] xtensive rewrite: The code should be more flexible and more readable.
   * Updated tms9901 code.

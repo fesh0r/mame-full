@@ -134,6 +134,10 @@ Notes:
 12. The purpose of this port is unknown (probably display mode as TS2068) and
     thus is not emulated.
 
+Very detailed infos about the ZX Spectrum +3e can be found at
+
+http://www.z88forever.org.uk/zxplus3e/
+
 *******************************************************************************/
 
 #include "driver.h"
@@ -2757,8 +2761,14 @@ ROM_END
 
 ROM_START(specpl3e)
 		ROM_REGION(0x20000,REGION_CPU1,0)
-		ROM_LOAD("roma.bin",0x10000,0x8000, 0x7c20e2c9)
-		ROM_LOAD("romb.bin",0x18000,0x8000, 0x4a700c7e)
+		ROM_LOAD("roma-en.rom",0x10000,0x8000, 0x14fddc04)
+		ROM_LOAD("romb-en.rom",0x18000,0x8000, 0xba488ccd)
+ROM_END
+
+ROM_START(specp3es)
+	        ROM_REGION(0x20000,REGION_CPU1,0)
+	        ROM_LOAD("roma-es.rom",0x10000,0x8000, 0x932f1801)
+	        ROM_LOAD("romb-es.rom",0x18000,0x8000, 0xf0a12485)
 ROM_END
 
 ROM_START(scorpion)
@@ -2938,6 +2948,7 @@ static const struct IODevice io_ts2068[] = {
 #define io_specp2sp	io_spectrum
 #define io_specp3sp	io_specpls3
 #define io_specpl3e	io_specpls3
+#define io_specp3es	io_specpls3
 #define io_scorpion	io_specpls3
 #define io_pentagon	io_specpls3
 
@@ -2966,6 +2977,7 @@ COMPX( 1986, specp2fr, spec128,  spectrum_128,	 spectrum, 0,			 "Amstrad plc",  
 COMPX( 1986, specp2sp, spec128,  spectrum_128,	 spectrum, 0,			 "Amstrad plc",          "ZX Spectrum +2 (Spain)" ,GAME_NOT_WORKING)
 COMPX( 1987, specp3sp, spec128,  spectrum_plus3, spectrum, 0,			 "Amstrad plc",          "ZX Spectrum +3 (Spain)" ,GAME_NOT_WORKING)
 COMPX( 2000, specpl3e, spec128,  spectrum_plus3, spectrum, 0,			 "Amstrad plc",          "ZX Spectrum +3e" , GAME_NOT_WORKING|GAME_COMPUTER_MODIFIED )
+COMPX( 2000, specp3es, spec128,  spectrum_plus3, spectrum, 0,                    "Amstrad plc",          "ZX Spectrum +3e (Spain)" , GAME_NOT_WORKING|GAME_COMPUTER_MODIFIED )
 
 COMPX( ????, scorpion, 0, scorpion,	spectrum, 0,			"Zonov and Co.",		"Zs Scorpion 256", GAME_NOT_WORKING)
 COMPX( ????, pentagon, spectrum, pentagon,	spectrum, 0,			"???",		"Pentagon", GAME_NOT_WORKING)
