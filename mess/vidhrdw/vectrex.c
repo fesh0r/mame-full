@@ -75,6 +75,7 @@ static float z_factor;
 
 static int T2_running; /* This turns zero if VIA timer 2 (the refresh timer) isn't running */
 static void *backup_timer = NULL;
+static int vectrex_full_refresh;
 
 void (*vector_add_point_function) (int, int, int, int) = vector_add_point;
 
@@ -101,20 +102,19 @@ static void vectrex_screen_update_backup (int param)
 			       * for a longer time. */
 	else
 	{
-		vector_vh_screenrefresh(tmpbitmap, 0);
+		vector_vh_screenrefresh(tmpbitmap, vectrex_full_refresh);
 		vector_clear_list();
 	}
 }
 
 void vectrex_vh_update (struct osd_bitmap *bitmap, int full_refresh)
 {
-	palette_recalc();
+	vectrex_full_refresh = full_refresh;
+	if (palette_recalc())
+		vectrex_full_refresh = 1;
 
 	vectrex_configuration();
 	copybitmap(bitmap, tmpbitmap,0,0,0,0,0,TRANSPARENCY_NONE,0);
-
-	if (full_refresh)
-		osd_mark_dirty (0, 0, bitmap->width, bitmap->height);
 }
 
 /*********************************************************************
@@ -315,12 +315,6 @@ void vectrex_set_palette (void)
 int vectrex_start (void)
 {
 	int width, height;
-
-	/* Set the whole cart ROM area to 1. This is needed to work around a bug (?)
-	 * in Minestorm where the exec-rom attempts to access a vector list here.
-	 * 1 signals the end of the vector list.
-	 */
-	memset (memory_region(REGION_CPU1), 1, 0x8000);
 
 	vectrex_set_palette ();
 
