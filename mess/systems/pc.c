@@ -1584,7 +1584,7 @@ ROM_START( t1000sx )
 	ROM_LOAD("t1000sx.f0", 0xf0000, 0x10000, CRC(0e016ecf))
 	ROM_REGION(0x02000,REGION_GFX1, 0)
 	// expects 8x9 charset!
-	ROM_LOAD("50146", 0x00000, 0x02000, CRC(BADCRC(1305dcf5))) //taken from europc, 9th blank
+	ROM_LOAD("50146", 0x00000, 0x02000, BAD_DUMP CRC(1305dcf5)) //taken from europc, 9th blank
 ROM_END
 
 ROM_START( ibmxt )
