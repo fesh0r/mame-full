@@ -58,13 +58,13 @@ CPUS+=F8@
 CPUS+=CP1600@
 #CPUS+=TMS34010@
 #CPUS+=TMS34020@
-CPUS+=TMS9900@
+#CPUS+=TMS9900@
 #CPUS+=TMS9940@
 #CPUS+=TMS9980@
 #CPUS+=TMS9985@
 #CPUS+=TMS9989@
-CPUS+=TMS9995@
-CPUS+=TMS99010@
+#CPUS+=TMS9995@
+#CPUS+=TMS99010@
 #CPUS+=TMS99105A@
 #CPUS+=TMS99110A@
 #CPUS+=Z8000@
@@ -141,6 +141,7 @@ DRVLIBS = \
 	$(OBJ)/at.a       \
 	$(OBJ)/pc.a       \
 	$(OBJ)/pcshare.a  \
+#	$(OBJ)/apple.a    \
 #	$(OBJ)/advision.a \
 #	$(OBJ)/arcadia.a  \
 #	$(OBJ)/coleco.a   \
@@ -167,7 +168,6 @@ DRVLIBS = \
 #	$(OBJ)/exidy.a    \
 #	$(OBJ)/acorn.a    \
 #	$(OBJ)/amstrad.a  \
-#	$(OBJ)/apple.a    \
 #	$(OBJ)/lynx.a     \
 #	$(OBJ)/amiga.a    \
 #	$(OBJ)/apf.a      \

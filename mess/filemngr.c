@@ -318,7 +318,7 @@ static int DECL_SPEC fs_compare(const void *p1, const void *p2)
 
 #define MAX_ENTRIES_IN_MENU (SEL_MASK-1)
 
-void fs_generate_filelist(void)
+static void fs_generate_filelist(void)
 {
 	void *dir;
 	int qsort_start, count, i, n;

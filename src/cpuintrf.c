@@ -541,9 +541,9 @@ const struct cpu_interface cpuintrf[] =
 #if (HAS_TMS9995)
 	/*CPU4*/CPU0(TMS9995,  tms9995,  1,  0,1.00,			    8, 16,	  0,16,BE,1, 6	),
 #endif
-#if (HAS_TMS99000)
-	CPU0(TMS99000,tms99000,1,  0,1.00,			   16,16bew,  0,16,BE,2, 6	),
-#endif
+//#if (HAS_TMS99000)
+//	CPU0(TMS99000,tms99000,1,  0,1.00,			   16,16bew,  0,16,BE,2, 6	),
+//#endif
 #if (HAS_Z8000)
 	CPU0(Z8000,    z8000,	 2,  0,1.00,16,16bew,  0,16,BE,2, 6	),
 #endif

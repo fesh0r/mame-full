@@ -2,7 +2,7 @@
 #include "cocovdk.h"
 #include "includes/basicdsk.h"
 
-#if MAME_DEBUG
+#ifdef MAME_DEBUG
 #define LOG_VDK 1
 #else
 #define LOG_VDK 0

@@ -29,7 +29,7 @@ static unsigned char any_dirty_hires[2];
 /***************************************************************************
   apple2_vh_start
 ***************************************************************************/
-int apple2_vh_start(void)
+VIDEO_START( apple2 )
 {
 	int i;
 
@@ -43,41 +43,18 @@ int apple2_vh_start(void)
 
 	for (i=0; i<2; i++)
 	{
-		if ((apple2_text[i] = bitmap_alloc(280*2,192*2)) == 0)
-		{
-			apple2_vh_stop();
+		if ((apple2_text[i] = auto_bitmap_alloc(280*2,192*2)) == 0)
 			return 1;
-		}
-
-		if ((apple2_lores[i] = bitmap_alloc(280*2,192*2)) == 0)
-		{
-			apple2_vh_stop();
+		if ((apple2_lores[i] = auto_bitmap_alloc(280*2,192*2)) == 0)
 			return 1;
-		}
-
-		if ((apple2_hires[i] = bitmap_alloc(280*2,192*2)) == 0)
-		{
-			apple2_vh_stop();
+		if ((apple2_hires[i] = auto_bitmap_alloc(280*2,192*2)) == 0)
 			return 1;
-		}
-
 		if ((dirty_text[i] = auto_malloc(0x400)) == 0)
-		{
-			apple2_vh_stop();
 			return 1;
-		}
-
 		if ((dirty_lores[i] = auto_malloc(0x400)) == 0)
-		{
-			apple2_vh_stop();
 			return 1;
-		}
-
 		if ((dirty_hires[i] = auto_malloc(0x2000)) == 0)
-		{
-			apple2_vh_stop();
 			return 1;
-		}
 
 		memset(dirty_text[i],1,0x400);
 		memset(dirty_lores[i],1,0x400);
@@ -368,7 +345,7 @@ void apple2_hires2_w(int offset, int data)
 /***************************************************************************
   apple2_vh_screenrefresh
 ***************************************************************************/
-void apple2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( apple2 )
 {
     struct rectangle mixed_rect;
 	int page;
@@ -413,7 +390,5 @@ void apple2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 		apple2_lores_draw(page);
 		copybitmap(bitmap,apple2_lores[page],0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
-
-	return;
 }
 

@@ -88,14 +88,14 @@ extern UINT8 *apple2_slot7;
 extern APPLE2_STRUCT a2;
 
 
-extern void apple2e_init_machine(void);
+extern MACHINE_INIT( apple2e );
 
 extern int  apple2_id_rom(const char *name, const char * gamename);
 
 extern int	apple2e_load_rom(int id);
 extern int	apple2ee_load_rom(int id);
 
-extern int  apple2_interrupt(void);
+extern void apple2_interrupt(void);
 extern void apple2_slotrom_disable(int offset, int data);
 
 extern READ_HANDLER ( apple2_c00x_r );
@@ -159,11 +159,8 @@ extern UINT8 *apple2_lores_text2_ram;
 extern UINT8 *apple2_hires1_ram;
 extern UINT8 *apple2_hires2_ram;
 
-
-extern int	apple2_vh_start(void);
-extern void apple2_vh_stop(void);
-extern void apple2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
+extern VIDEO_START( apple2 );
+extern VIDEO_UPDATE( apple2 );
 
 extern void apple2_lores_text1_w(int offset, int data);
 extern void apple2_lores_text2_w(int offset, int data);

@@ -344,6 +344,10 @@
 #define LOG 0
 #define LOG_EXTRA 0
 
+#ifndef LOG_IOT_EXTRA
+#define LOG_IOT_EXTRA 0
+#endif
+
 /* Layout of the registers in the debugger */
 static UINT8 pdp1_reg_layout[] =
 {

@@ -21,7 +21,7 @@
 
 //#define VERBOSE 2
 
-#if VERBOSE
+#ifdef VERBOSE
 #define LOG(N,M,A)	\
 	if(VERBOSE>=N){ if( M )logerror("%11.6f: %-24s",timer_get_time(),(char*)M ); logerror A; }
 #else

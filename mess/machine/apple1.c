@@ -170,7 +170,7 @@ int apple1_load_snap (int id)
 /*****************************************************************************
 **	apple1_interrupt
 *****************************************************************************/
-int apple1_interrupt(void)
+void apple1_interrupt(void)
 {
 	int loop;
 
@@ -206,8 +206,6 @@ int apple1_interrupt(void)
 			}
 		}
 	}
-
-	return ignore_interrupt();
 }
 
 

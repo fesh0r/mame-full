@@ -460,7 +460,7 @@ static void pc_hdc_command(int n)
 			ecc[idx] = buffer[13];
 			HDC_LOG(1,"hdc set param",("INDEX #%d D:%d C:%d H:%d RW:%d WP:%d ECC:%d\n",
 				idx, drv, cylinders[idx], heads[idx], rwc[idx], wp[idx], ecc[idx]));
-#if NEVERDEF
+#if 0
 			if (pc_hdc_file[idx])
 			{
                 /* write the drive geometry to the image */

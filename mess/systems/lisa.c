@@ -65,18 +65,13 @@ static MEMORY_WRITE_START (lisa210_fdc_writemem)
 MEMORY_END
 
 /* init with simple, fixed, B/W palette */
-static void lisa_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+static PALETTE_INIT( lisa )
 {
-	palette[0*3 + 0] = 0xff;
-	palette[0*3 + 1] = 0xff;
-	palette[0*3 + 2] = 0xff;
-	palette[1*3 + 0] = 0x00;
-	palette[1*3 + 1] = 0x00;
-	palette[1*3 + 2] = 0x00;
+	palette_set_color(0, 0xff, 0xff, 0xff);
+	palette_set_color(1, 0x00, 0x00, 0x00);
 }
 
 /* sound output */
-
 static	struct	Speaker_interface lisa_sh_interface =
 {
 	1,
@@ -86,151 +81,49 @@ static	struct	Speaker_interface lisa_sh_interface =
 };
 
 /* Lisa1 and Lisa 2 machine */
-static struct MachineDriver machine_driver_lisa =
-{
+static MACHINE_DRIVER_START( lisa )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			5093760,			/* 20.37504 Mhz / 4 */
-			lisa_readmem,lisa_writemem,0,0,
-			lisa_interrupt,1,
-		},
-		{
-			/*CPU_M6504*/CPU_M6502,
-			2000000,			/* 16.000 Mhz / 8 in when DIS asserted, 16.000 Mhz / 9 otherwise (?) */
-			lisa_fdc_readmem,lisa_fdc_writemem,0,0,
-			0,0,
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,		/* frames per second, vblank duration */
-	1,
-	lisa_init_machine,
-	lisa_exit_machine,
+	MDRV_CPU_ADD_TAG("main", M68000, 5093760)        /* 20.37504 Mhz / 4 */
+	MDRV_CPU_MEMORY(lisa_readmem,lisa_writemem)
+	MDRV_CPU_VBLANK_INT(lisa_interrupt,1)
 
-	/* video hardware */
-	880, 380/* ??? */,	/* screen width, screen height (including Hblank and Vblank) */
-	{ 0, 720-1, 0, 364-1 },			/* visible_area */
+	MDRV_CPU_ADD_TAG("fdc", M6502, 2000000)        /* 16.000 Mhz / 8 in when DIS asserted, 16.000 Mhz / 9 otherwise (?) */
+	MDRV_CPU_MEMORY(lisa_fdc_readmem,lisa_fdc_writemem)
 
-	0,					/* graphics decode info */
-	2, 2,						/* number of colors, colortable size */
-	lisa_init_palette,				/* convert color prom */
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
+	MDRV_MACHINE_INIT( lisa )
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	lisa_vh_start,
-	lisa_vh_stop,
-	lisa_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(880, 380)
+	MDRV_VISIBLE_AREA(0, 720-1, 0, 364-1)
+	MDRV_PALETTE_LENGTH(2)
+	MDRV_COLORTABLE_LENGTH(2)
+	MDRV_PALETTE_INIT(lisa)
+
+	MDRV_VIDEO_START(lisa)
+	MDRV_VIDEO_UPDATE(lisa)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SPEAKER,
-			& lisa_sh_interface
-		}
-	},
+	MDRV_SOUND_ADD(SPEAKER, lisa_sh_interface)
 
-	lisa_nvram_handler
-};
+	MDRV_NVRAM_HANDLER(lisa)
+MACHINE_DRIVER_END
 
-/* Lisa 210 machine (different fdc map) */
-static struct MachineDriver machine_driver_lisa210 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			5093760,			/* 20.37504 Mhz / 4 */
-			lisa_readmem,lisa_writemem,0,0,
-			lisa_interrupt,1,
-		},
-		{
-			/*CPU_M6504*/CPU_M6502,
-			2000000,			/* 16.000 Mhz / 8 in when DIS asserted, 16.000 Mhz / 9 otherwise (?) */
-			lisa210_fdc_readmem,lisa210_fdc_writemem,0,0,
-			0,0,
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,		/* frames per second, vblank duration */
-	1,
-	lisa_init_machine,
-	lisa_exit_machine,
 
-	/* video hardware */
-	880, 380/* ??? */,	/* screen width, screen height (including Hblank and Vblank) */
-	{ 0, 720-1, 0, 364-1 },			/* visible_area */
+static MACHINE_DRIVER_START( lisa210 )
+	MDRV_IMPORT_FROM( lisa )
+	MDRV_CPU_MODIFY( "fdc" )
+	MDRV_CPU_MEMORY( lisa210_fdc_readmem,lisa210_fdc_writemem )
+MACHINE_DRIVER_END
 
-	0,					/* graphics decode info */
-	2, 2,						/* number of colors, colortable size */
-	lisa_init_palette,				/* convert color prom */
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	lisa_vh_start,
-	lisa_vh_stop,
-	lisa_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SPEAKER,
-			& lisa_sh_interface
-		}
-	},
-
-	lisa_nvram_handler
-};
-
-/* Mac XL machine (different video resolution) */
-static struct MachineDriver machine_driver_macxl =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			5093760,			/* 20.37504 Mhz / 4 */
-			lisa_readmem,lisa_writemem,0,0,
-			lisa_interrupt,1,
-		},
-		{
-			/*CPU_M6504*/CPU_M6502,
-			2000000,			/* 16.000 Mhz / 8 in when DIS asserted, 16.000 Mhz / 9 otherwise (?) */
-			lisa210_fdc_readmem,lisa210_fdc_writemem,0,0,
-			0,0,
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,		/* frames per second, vblank duration */
-	1,
-	lisa_init_machine,
-	lisa_exit_machine,
-
-	/* video hardware */
-	768/* ???? */, 447/* ???? */,	/* screen width, screen height (including Hblank and Vblank) */
-	{ 0, 608-1, 0, 431-1 },			/* visible_area */
-
-	0,					/* graphics decode info */
-	2, 2,						/* number of colors, colortable size */
-	lisa_init_palette,				/* convert color prom */
-
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	lisa_vh_start,
-	lisa_vh_stop,
-	lisa_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SPEAKER,
-			& lisa_sh_interface
-		}
-	},
-
-	lisa_nvram_handler
-};
+static MACHINE_DRIVER_START( macxl )
+	MDRV_IMPORT_FROM( lisa210 )
+	MDRV_SCREEN_SIZE(	768/* ???? */, 447/* ???? */)
+	MDRV_VISIBLE_AREA(0, 608-1, 0, 431-1)
+MACHINE_DRIVER_END
 
 
 INPUT_PORTS_START( lisa )

@@ -97,12 +97,12 @@ static unsigned short apple1_colortable[] =
 	0, 1
 };
 
-static void apple1_init_palette (unsigned char *sys_palette,
-					unsigned short *sys_colortable,
-					const unsigned char *color_prom)
+static PALETTE_INIT( apple1 )
 {
-	memcpy (sys_palette, apple1_palette, sizeof (apple1_palette));
-	memcpy (sys_colortable, apple1_colortable, sizeof (apple1_colortable));
+	int i;
+	for (i = 0; i < (sizeof(apple1_palette) / 3); i++)
+		palette_set_color(i, apple1_palette[i*3+0], apple1_palette[i*3+1], apple1_palette[i*3+2]);
+	memcpy(colortable, apple1_colortable, sizeof (apple1_colortable));
 }
 
 /* keyboard input */
@@ -176,36 +176,29 @@ INPUT_PORTS_END
 /* sound output */
 
 /* machine definition */
+static MACHINE_DRIVER_START( apple1 )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M6502, 960000)        /* 1.023 Mhz */
+	MDRV_CPU_MEMORY(apple1_readmem, apple1_writemem)
+	MDRV_CPU_VBLANK_INT(apple1_interrupt, 1)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-static struct MachineDriver machine_driver_apple1 =
-{
-	{
-		{
-			CPU_M6502,
-			960000,
-			apple1_readmem, apple1_writemem,
-			0, 0,
-			apple1_interrupt, 1,
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	apple1_init_machine,
-	apple1_stop_machine,
-	40 * 7,
-	24 * 8,
-	{ 0, 40 * 7 - 1, 0, 24 * 8 - 1 },
-	apple1_gfxdecodeinfo,
-	sizeof (apple1_palette) / 3,
-	sizeof (apple1_colortable),
-	apple1_init_palette,
-	VIDEO_TYPE_RASTER,
-	0,
-	apple1_vh_start,
-	apple1_vh_stop,
-	apple1_vh_screenrefresh,
-	0, 0, 0, 0,
-};
+	MDRV_MACHINE_INIT(apple1)
+
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40 * 7, 24 * 8)
+	MDRV_VISIBLE_AREA(0, 40 * 7 - 1, 0, 24 * 8 - 1)
+	MDRV_GFXDECODE(apple1_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(sizeof (apple1_palette) / 3)
+	MDRV_COLORTABLE_LENGTH(sizeof(apple1_colortable)/sizeof(unsigned short))
+	MDRV_PALETTE_INIT(apple1)
+
+	MDRV_VIDEO_START(apple1)
+	MDRV_VIDEO_UPDATE(apple1)
+MACHINE_DRIVER_END
+
 
 ROM_START(apple1)
 	ROM_REGION(0x10000, REGION_CPU1,0)

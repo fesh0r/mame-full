@@ -661,16 +661,10 @@ static void read_COPS_command(int unused)
 			break;
 
 		case 0x7:	/* send mouse command */
-			if (mouse_timer)
-			{
-				/* disable mouse timer -> disable mouse */
-				timer_remove(mouse_timer);
-				mouse_timer = NULL;
-			}
-
 			if (immediate & 0x8)
-				/* enable mouse */
-				mouse_timer = timer_pulse(TIME_IN_MSEC((immediate & 0x7)*4), 0, handle_mouse);
+				timer_adjust(mouse_timer, 0, 0, TIME_IN_MSEC((immediate & 0x7)*4)); /* enable mouse */
+			else
+				timer_reset(mouse_timer, TIME_NEVER);
 			break;
 		}
 	}
@@ -728,12 +722,7 @@ static void reset_COPS(void)
 	for (i=0; i<8; i++)
 		key_matrix[i] = 0;
 
-	if (mouse_timer)
-	{
-		/* disable mouse timer -> disable mouse */
-		timer_remove(mouse_timer);
-		mouse_timer = NULL;
-	}
+	timer_reset(mouse_timer, TIME_NEVER);
 }
 
 static void unplug_keyboard(void)
@@ -918,11 +907,11 @@ static READ_HANDLER(parallel_via_in_b)
 	LISA video emulation
 */
 
-int lisa_vh_start(void)
+VIDEO_START( lisa )
 {
 	size_t videoram_size = 32760;	/*max(720*364, 608*431)/8*/
 
-	old_display = (UINT16 *) malloc(videoram_size);
+	old_display = (UINT16 *) auto_malloc(videoram_size);
 	if (! old_display)
 	{
 		return 1;
@@ -932,16 +921,11 @@ int lisa_vh_start(void)
 	return 0;
 }
 
-void lisa_vh_stop(void)
-{
-	free(old_display);
-}
-
 /*
 	TODO : use draw_scanline()...
 	"draw_scanline(bitmap, 0, y, (lisa_features.has_mac_xl_video) ? 608 : 720, buf, NULL, -1)"
 */
-void lisa_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( lisa )
 {
 	UINT16	data;
 	UINT16	*old;
@@ -960,7 +944,7 @@ void lisa_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 	for (y = 0; y < resy; y++) {
 		for ( x = 0; x < resx; x++ ) {
 			data = READ_WORD( v );
-			if (full_refresh || (data != *old)) {
+			if (1 || (data != *old)) {
 				plot_pixel( bitmap, ( x << 4 ) + 0x00, y, ( data & 0x8000 ) ? fg : bg );
 				plot_pixel( bitmap, ( x << 4 ) + 0x01, y, ( data & 0x4000 ) ? fg : bg );
 				plot_pixel( bitmap, ( x << 4 ) + 0x02, y, ( data & 0x2000 ) ? fg : bg );
@@ -1089,7 +1073,7 @@ void lisa_floppy_exit(int id)
 
 /* should save PRAM to file */
 /* TODO : save time difference with host clock, set default date, etc */
-void lisa_nvram_handler(void *file, int read_or_write)
+NVRAM_HANDLER(lisa)
 {
 	UINT8 *l_fdc_ram = memory_region(REGION_CPU2) + FDC_RAM_OFFSET;	/* fdc_ram is not necessarily set yet */
 
@@ -1211,7 +1195,7 @@ static void lisa210_set_iwm_enable_lines(int enable_mask)
 	sony_set_enable_lines(enable_mask >> 1);
 }
 
-void lisa_init_machine(void)
+MACHINE_INIT( lisa )
 {
 	lisa_ram_ptr = memory_region(REGION_CPU1) + RAM_OFFSET;
 	lisa_rom_ptr = memory_region(REGION_CPU1) + ROM_OFFSET;
@@ -1286,19 +1270,11 @@ void lisa_init_machine(void)
 		if (lisa_features.floppy_hardware == sony_lisa2)
 			sony_set_enable_lines(1);	/* on lisa2, drive unit 1 is always selected (?) */
 	}
+
+	mouse_timer = timer_alloc(handle_mouse);
 }
 
-void lisa_exit_machine(void)
-{
-	if (mouse_timer)
-	{
-		/* disable mouse timer -> disable mouse */
-		timer_remove(mouse_timer);
-		mouse_timer = NULL;
-	}
-}
-
-int lisa_interrupt(void)
+void lisa_interrupt(void)
 {
 	static int frame_count = 0;
 
@@ -1393,8 +1369,6 @@ int lisa_interrupt(void)
 
 	/* do keyboard scan */
 	scan_keyboard();
-
-	return 0;
 }
 
 /*

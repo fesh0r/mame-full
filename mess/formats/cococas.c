@@ -1,5 +1,9 @@
 #include "cococas.h"
 
+#ifndef LOG_WAVE
+#define LOG_WAVE 0
+#endif
+
 #define WAVEENTRY_LOW  32767
 #define WAVEENTRY_HIGH   -32768
 #define WAVEENTRY_NULL  0

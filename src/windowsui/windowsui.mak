@@ -26,7 +26,7 @@ OSOBJS += \
 	$(OBJ)/windowsui/DIJoystick.o \
 	$(OBJ)/windowsui/DirectDraw.o \
 	$(OBJ)/windowsui/file.o \
-	$(OBJ)/windowsui/Directories.o \
+	$(OBJ)/windowsui/directories.o \
 	$(OBJ)/windowsui/mzip.o \
 	$(OBJ)/windowsui/audit32.o \
 	$(OBJ)/windowsui/ColumnEdit.o \

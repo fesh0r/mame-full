@@ -16,7 +16,7 @@ USE_DRMINGW = 1
 # SYMBOLS = 1
 
 # uncomment next line to generate a link map for exception handling in windows
-MAP = 1
+# MAP = 1
 
 # command to invoke UPX (Ultimate Packer for eXecutables)
 UPX = upx.exe -9 --compress-icons=0
@@ -26,6 +26,9 @@ X86_ASM_68000 = 1
 
 # uncomment next line to use Assembler 68020 engine
 # X86_ASM_68020 = 1
+
+# uncomment next line to use cygwin compiler
+# COMPILESYSTEM_CYGWIN	= 1
 
 # set this the operating system you're building for
 MAMEOS = windows
@@ -93,11 +96,10 @@ CFLAGS = -I. -Isrc -Imess -Isrc/$(MAMEOS) -Imess/$(MAMEOS) -I$(OBJ)/cpu/m68000 -
 	$(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing \
 	-Werror -Wall -Wno-sign-compare -Wunused \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align -Waggregate-return \
-	-Wshadow \
-	-Wstrict-prototypes
+	-Wshadow -Wstrict-prototypes -Wundef \
+#	try with gcc 3.0 -Wpadded -Wunreachable-code -Wdisabled-optimization
 #	-W had to remove because of the "missing initializer" warning
-#	-Wredundant-decls \
-#	-Wlarger-than-27648 \
+#	-Wlarger-than-262144  \
 #	-Wcast-qual \
 #	-Wwrite-strings \
 #	-Wconversion \
@@ -198,7 +200,11 @@ endif
 
 romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $^ -lz -o $@
+	$(LD) $(LDFLAGS) $^ -lz -o $@
+
+hdcomp$(EXE): $(OBJ)/hdcomp.o $(OBJ)/harddisk.o $(OBJ)/md5.o
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $^ -lz -o $@
 
 ifdef PERL
 $(OBJ)/cpuintrf.o: src/cpuintrf.c rules.mak
@@ -279,7 +285,6 @@ $(sort $(OBJDIRS)):
 
 maketree: $(sort $(OBJDIRS))
 
-
 clean: cleantools cleantexts
 	@echo Deleting object tree $(OBJ)...
 	$(RM) -r $(OBJ) lib$(NAME).a
@@ -298,12 +303,8 @@ cleantexts:
 	@echo Removing Sysinfo directory contents
 	$(RM) -r sysinfo
 	
-
-
 clean68k:
 	@echo Deleting 68k files...
 	$(RM) -r $(OBJ)/cpuintrf.o
 	$(RM) -r $(OBJ)/drivers/cps2.o
-	$(RM) -r $(OBJ)/cpu/m68000
-
-	
+	$(RM) -r $(OBJ)/cpu/m68000	

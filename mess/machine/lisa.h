@@ -1,19 +1,17 @@
-int lisa_vh_start(void);
-void lisa_vh_stop(void);
-void lisa_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_START( lisa );
+extern VIDEO_UPDATE( lisa );
 
 int lisa_floppy_init(int id);
 void lisa_floppy_exit(int id);
-extern void lisa_nvram_handler(void *file, int read_or_write);
+extern NVRAM_HANDLER(lisa);
 
 void init_lisa2(void);
 void init_lisa210(void);
 void init_mac_xl(void);
 
-void lisa_init_machine(void);
-void lisa_exit_machine(void);
+extern MACHINE_INIT( lisa );
 
-int lisa_interrupt(void);
+extern void lisa_interrupt(void);
 
 READ_HANDLER ( lisa_fdc_io_r );
 WRITE_HANDLER ( lisa_fdc_io_w );

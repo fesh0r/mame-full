@@ -103,7 +103,7 @@ void beep_sh_update(void )
 {
      int i;
 
-#if MAME_DEBUG
+#ifdef MAME_DEBUG
 	if (intf == NULL)
 	{
 		logerror("beep_sh_update: sound driver not initialized\n");
@@ -119,7 +119,7 @@ void beep_sh_update(void )
 /***************************************************/
 void beep_set_state( int num, int on )
 {
-#if MAME_DEBUG
+#ifdef MAME_DEBUG
 	if (intf == NULL)
 	{
 		logerror("beep_set_state: sound driver not initialized\n");
@@ -148,7 +148,7 @@ void beep_set_state( int num, int on )
 /***************************************************/
 void beep_set_frequency(int num,int frequency)
 {
-#if MAME_DEBUG
+#ifdef MAME_DEBUG
 	if (intf == NULL)
 	{
 		logerror("beep_set_frequency: sound driver not initialized\n");
@@ -174,7 +174,7 @@ void beep_set_frequency(int num,int frequency)
 /***************************************************/
 void beep_set_volume(int num, int volume)
 {
-#if MAME_DEBUG
+#ifdef MAME_DEBUG
 	if (intf == NULL)
 	{
 		logerror("beep_set_volume: sound driver not initialized\n");

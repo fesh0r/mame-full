@@ -461,7 +461,6 @@ static BOOL g_bDoBroadcast   = FALSE;
 #endif /* IsValidListControl */
 
 static BOOL use_gui_romloading = FALSE;
-
 /***************************************************************************
     Global variables
  ***************************************************************************/
@@ -601,7 +600,7 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%skeepaspect",              pOpts->keepaspect      ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%smatchrefresh",            pOpts->matchrefresh    ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssyncrefresh",             pOpts->syncrefresh     ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sdirty",                   pOpts->use_dirty       ? "" : "no");
+//	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sdirty",                   pOpts->use_dirty       ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sthrottle",                pOpts->throttle        ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -full_screen_brightness %f", pOpts->gfx_brightness);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -frames_to_run %d",          pOpts->frames_to_display);

@@ -261,7 +261,7 @@ static struct GfxDecodeInfo apple2_gfxdecodeinfo[] =
     { 1, 0x0800, &apple2_dbl_hires_layout, 0, 16 },
 MEMORY_END   /* end of array */
 
-static unsigned char palette[] =
+static unsigned char apple2_palette[] =
 {
     0x00, 0x00, 0x00, /* Black */
     0xD0, 0x00, 0x30, /* Dark Red */
@@ -281,7 +281,7 @@ static unsigned char palette[] =
     0xF0, 0xF0, 0xF0, /* White */
 };
 
-static unsigned short colortable[] =
+static unsigned short apple2_colortable[] =
 {
     0,0,
     1,0,
@@ -303,10 +303,12 @@ static unsigned short colortable[] =
 
 
 /* Initialise the palette */
-static void apple_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( apple2 )
 {
-    memcpy(sys_palette,palette,sizeof(palette));
-    memcpy(sys_colortable,colortable,sizeof(colortable));
+	int i;
+	for (i = 0; i < (sizeof(apple2_palette) / 3); i++)
+		palette_set_color(i, apple2_palette[i*3+0], apple2_palette[i*3+1], apple2_palette[i*3+2]);
+    memcpy(colortable,apple2_colortable,sizeof(apple2_colortable));
 }
 
 
@@ -327,97 +329,38 @@ static struct AY8910interface ay8910_interface =
     { 0 }
 };
 
-static struct MachineDriver machine_driver_standard =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_M6502,
-            1022727,            /* 1.023 Mhz */
-            readmem_apple2,writemem_apple2,
-            0,0,                /* no readport, writeport for 6502 */
-            apple2_interrupt,1,
-        },
-    },
-    60, DEFAULT_REAL_60HZ_VBLANK_DURATION,      /* frames per second, vblank duration */
-    1,
-    apple2e_init_machine,
-    0,
+static MACHINE_DRIVER_START( standard )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M6502, 1022727)        /* 1.023 Mhz */
+	MDRV_CPU_MEMORY(readmem_apple2, writemem_apple2)
+	MDRV_CPU_VBLANK_INT(apple2_interrupt, 1)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-    /* video hardware */
-    280*2,                          /* screen width */
-    192,                            /* screen height */
-    { 0, (280*2)-1,0,192-1},        /* visible_area */
-    apple2_gfxdecodeinfo,           /* graphics decode info */
-    sizeof(palette)/3,                          /* 2 colors used for the characters */
-    sizeof(colortable)/sizeof(unsigned short),  /* 2 colors used for the characters */
-    apple_init_palette,                         /* init palette */
+	MDRV_MACHINE_INIT( apple2e )
 
-    VIDEO_TYPE_RASTER,
-    0,
-    apple2_vh_start,
-    apple2_vh_stop,
-    apple2_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(280*2, 192)
+	MDRV_VISIBLE_AREA(0, (280*2)-1,0,192-1)
+	MDRV_GFXDECODE(apple2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(sizeof(apple2_palette)/3)
+	MDRV_COLORTABLE_LENGTH(sizeof(apple2_colortable)/sizeof(unsigned short))
+	MDRV_PALETTE_INIT(apple2)
 
-    /* sound hardware */
-    0,0,0,0,
-    {
-        {
-            SOUND_DAC,
-            &apple2_DAC_interface
-        },
-        {
-            SOUND_AY8910,
-            &ay8910_interface
-        }
-    }
-};
+	MDRV_VIDEO_START(apple2)
+	MDRV_VIDEO_UPDATE(apple2)
 
-static struct MachineDriver machine_driver_enhanced =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_M65C02,
-            1022727,            /* 1.023 Mhz */
-            readmem_apple2,writemem_apple2,
-            0,0,                /* no readport, writeport for 6502 */
-            apple2_interrupt,1,
-        },
-    },
-    60, DEFAULT_REAL_60HZ_VBLANK_DURATION,      /* frames per second, vblank duration */
-    1,
-    apple2e_init_machine,
-    0,
+	/* sound hardware */
+	MDRV_SOUND_ADD(DAC, apple2_DAC_interface)
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
-    /* video hardware */
-    280*2,                          /* screen width */
-    192,                            /* screen height */
-    { 0, (280*2)-1,0,192-1},        /* visible_area */
-    apple2_gfxdecodeinfo,           /* graphics decode info */
-    sizeof(palette)/3,                          /* 2 colors used for the characters */
-    sizeof(colortable)/sizeof(unsigned short),  /* 2 colors used for the characters */
-    apple_init_palette,                         /* init palette */
 
-    VIDEO_TYPE_RASTER,
-    0,
-    apple2_vh_start,
-    apple2_vh_stop,
-    apple2_vh_screenrefresh,
-
-    /* sound hardware */
-    0,0,0,0,
-    {
-        {
-            SOUND_DAC,
-            &apple2_DAC_interface
-        },
-        {
-            SOUND_AY8910,
-            &ay8910_interface
-        }
-    }
-};
+static MACHINE_DRIVER_START( enhanced )
+	MDRV_IMPORT_FROM( standard )
+	MDRV_CPU_REPLACE( "main", M65C02, 1022727)	/* 1.023 Mhz */
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

@@ -216,7 +216,7 @@ extern READ_HANDLER(tms9995_internal2_r);
 extern WRITE_HANDLER(tms9995_internal2_w);
 
 #endif
-
+/*
 #if (HAS_TMS99000)
 
 extern	int tms99000_ICount;
@@ -235,7 +235,7 @@ extern const char *tms99000_info(void *context, int regnum);
 extern unsigned tms99000_dasm(char *buffer, unsigned pc);
 
 #endif
-
+*/
 #ifdef MAME_DEBUG
 extern unsigned Dasm9900 (char *buffer, unsigned pc, int model_id);
 #endif

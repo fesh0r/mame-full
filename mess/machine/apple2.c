@@ -45,7 +45,7 @@ static WRITE_HANDLER ( apple2_auxram_w );
 /***************************************************************************
   apple2_init_machine
 ***************************************************************************/
-void apple2e_init_machine(void)
+MACHINE_INIT( apple2e )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -131,7 +131,7 @@ int apple2ee_load_rom (int id)
 /***************************************************************************
   apple2_interrupt
 ***************************************************************************/
-int apple2_interrupt(void)
+void apple2_interrupt(void)
 {
 	int irq_freq = 1;
 
@@ -144,17 +144,9 @@ int apple2_interrupt(void)
 
 	/* control-reset mapped to control-delete */
 	if (osd_is_key_pressed (KEYCODE_LCONTROL) && osd_is_key_pressed (KEYCODE_BACKSPACE))
-	{
 		cpu_set_reset_line (0,PULSE_LINE);
-		return 0;
-	}
-	else
-	{
-		if (irq_freq)
-			return interrupt ();
-		else
-			return 0;
-	}
+	else if (irq_freq)
+		cpu_set_irq_line(0, M6502_IRQ_LINE, PULSE_LINE);
 }
 
 /***************************************************************************

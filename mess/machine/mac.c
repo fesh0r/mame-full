@@ -593,8 +593,7 @@ static void keyboard_receive(int val)
 	if (inquiry_in_progress)
 	{	/* new command aborts last inquiry */
 		inquiry_in_progress = FALSE;
-		timer_remove(inquiry_timeout);
-		inquiry_timeout = NULL;
+		timer_reset(inquiry_timeout, TIME_NEVER);
 	}
 
 	switch (val)
@@ -608,7 +607,7 @@ static void keyboard_receive(int val)
 		if (keyboard_reply == 0x7B)
 		{	/* if NULL, wait until key pressed or timeout */
 			inquiry_in_progress = TRUE;
-			inquiry_timeout = timer_set(.25, 0, inquiry_timeout_func);
+			timer_adjust(inquiry_timeout, .25, 0, 0);
 		}
 		break;
 
@@ -1431,7 +1430,7 @@ static void rtc_execute_cmd(int data)
 
 /* should save PRAM to file */
 /* TODO : save write_protect flag, save time difference with host clock */
-void mac_nvram_handler(void *file, int read_or_write)
+NVRAM_HANDLER( mac )
 {
 	if (read_or_write)
 	{
@@ -1816,7 +1815,7 @@ static READ16_HANDLER (mac_ROM_r)
 
 static int current_scanline;
 
-void mac_init_machine(void)
+MACHINE_INIT(mac)
 {
 	mac_ram_ptr = memory_region(REGION_CPU1);
 	rom_ptr = memory_region(REGION_CPU1) + 0x400000;
@@ -1872,6 +1871,8 @@ void mac_init_machine(void)
 
 	/* reset video */
 	current_scanline = 0;
+
+	inquiry_timeout = timer_alloc(inquiry_timeout_func);
 }
 
 int mac_vblank_irq(void)
@@ -1890,8 +1891,7 @@ int mac_vblank_irq(void)
 			logerror("keyboard enquiry successful, keycode %X\n", keycode);
 
 			inquiry_in_progress = FALSE;
-			timer_remove(inquiry_timeout);
-			inquiry_timeout = NULL;
+			timer_reset(inquiry_timeout, TIME_NEVER);
 
 			if (hold_keyboard_reply)
 				keyboard_reply = keycode;
@@ -1918,7 +1918,7 @@ int mac_vblank_irq(void)
 	return 0;
 }
 
-int mac_interrupt(void)
+void mac_interrupt(void)
 {
 	mac_sh_data_w(current_scanline);
 
@@ -1932,6 +1932,4 @@ int mac_interrupt(void)
 	current_scanline++;
 	if (current_scanline == 370)
 		current_scanline = 0;
-
-	return 0;
 }

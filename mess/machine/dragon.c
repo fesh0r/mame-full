@@ -142,6 +142,7 @@ static void coco3_setcartline(int data);
 #define LOG_DEC_TIMER	0
 #define LOG_IRQ_RECALC	0
 #define LOG_D64MEM		0
+#define LOG_VBORD		0
 #else /* !MAME_DEBUG */
 #define LOG_PAK			0
 #define LOG_CASSETTE	0
@@ -157,6 +158,7 @@ static void coco3_setcartline(int data);
 #define LOG_DEC_TIMER	0
 #define LOG_IRQ_RECALC	0
 #define LOG_D64MEM		0
+#define LOG_VBORD		0
 #endif /* MAME_DEBUG */
 
 static void coco3_timer_hblank(void);
