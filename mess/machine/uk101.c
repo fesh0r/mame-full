@@ -26,8 +26,6 @@ struct acia6850_interface uk101_acia0 =
 	0
 };
 
-static	int	uk101_ramsize = 2;	/* 40Kb */
-
 MACHINE_INIT( uk101 )
 {
 	logerror("uk101_init\r\n");

@@ -153,7 +153,7 @@ static void apple2_setvar(UINT32 val, UINT32 mask)
 		memory_set_bankhandler_w(7,  0, (a2 & othermask) ? apple2_auxram0400_w : apple2_mainram0400_w);
 
 		othermask = ((a2 & (VAR_80STORE|VAR_HIRES)) == (VAR_80STORE|VAR_HIRES)) ? VAR_PAGE2 : VAR_RAMWRT;
-		memory_set_bankhandler_w(9,  0, (a2 & VAR_RAMWRT) ? apple2_auxram2000_w : apple2_mainram2000_w);
+		memory_set_bankhandler_w(9,  0, (a2 & othermask) ? apple2_auxram2000_w : apple2_mainram2000_w);
 	}
 
 	if (mask & (VAR_INTCXROM|VAR_ROMSWITCH))

@@ -6,8 +6,8 @@
 
 ***************************************************************************/
 
-#ifndef APPLE2H
-#define APPLE2H 1
+#ifndef APPLE2_H
+#define APPLE2_H
 
 #define VAR_80STORE		0x000001
 #define VAR_RAMRD		0x000002
@@ -120,4 +120,4 @@ void apple2_video_touch(offs_t offset);
 #define SPECIALKEY_BUTTON2		0x40
 #define SPECIALKEY_RESET		0x80
 
-#endif
+#endif /* APPLE2_H */
