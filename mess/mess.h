@@ -3,6 +3,11 @@
 
 #include "osdepend.h"
 
+#define ARRAY_LENGTH(x) (sizeof(x)/sizeof(x[0]))
+
+// must be defined in the root makefile
+//#define MESS_DEBUG
+
 #ifdef __cplusplus
 extern "C" {
 #endif
