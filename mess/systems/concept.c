@@ -10,8 +10,8 @@
 	* two serial ports, keyboard, bitmapped display, simple sound, omninet
 	  LAN port (seems more or less similar to AppleTalk)
 	* 4 expansion ports enable to add expansion cards, namely floppy disk
-	and hard disk controllers (the expansion ports are partially compatible
-	with Apple 2 expansion ports)
+	  and hard disk controllers (the expansion ports are partially compatible
+	  with Apple 2 expansion ports)
 
 	Video: monochrome bitmapped display, 720*560 visible area (bitmaps are 768
 	  pixels wide in memory).  One interesting feature is the fact that the
@@ -20,7 +20,7 @@
 	  into account, though).  One oddity is that the video hardware scans the
 	  display from the lower-left corner to the upper-left corner (or from the
 	  upper-right corner to the lower-left if the screen is flipped).
-	Sound: simpler buzzer connected to the via via serial shift output
+	Sound: simpler buzzer connected to the via shift register
 	Keyboard: intelligent controller, connected through an ACIA.  See CCOS
 	  manual pp. 76 through 78. and User Guide p. 2-1 through 2-9.
 	Clock: mm58174 RTC
@@ -58,6 +58,7 @@ static MEMORY_WRITE16_START (concept_writemem)
 MEMORY_END
 
 /* init with simple, fixed, B/W palette */
+/* Is the palette black on white or white on black??? */
 static PALETTE_INIT( concept )
 {
 	palette_set_color(0, 0xff, 0xff, 0xff);
@@ -198,22 +199,37 @@ INPUT_PORTS_START( concept )
 		PORT_BITX(0x4000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "???",      KEYCODE_SLASH_PAD, IP_JOY_NONE)
 		PORT_BITX(0x8000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "BREAK",    KEYCODE_NUMLOCK,   IP_JOY_NONE)
 
-
 INPUT_PORTS_END
 
 
 ROM_START( concept )
 	ROM_REGION16_BE(0x100000,REGION_CPU1,0)	/* 68k rom and ram */
-#if 0
-	// variant for which I have the source code
-	ROM_LOAD16_WORD( "cc.prm", 0x010000, 0x2000, CRC(b5a87dab))
-#else
-	ROM_LOAD16_BYTE( "u706", 0x010000, 0x1000, CRC(ee479f51))
-	ROM_LOAD16_BYTE( "u711", 0x010001, 0x1000, CRC(acaefd07))
 
-	ROM_LOAD16_BYTE( "u708", 0x020001, 0x1000, CRC(b4b59de9))
-	ROM_LOAD16_BYTE( "u709", 0x020000, 0x1000, CRC(aa357112))
+	// concept boot ROM
+#if 0
+	// version 0 level 6 release
+	ROM_LOAD16_BYTE("bootl06h", 0x010000, 0x1000, CRC(66b6b259))
+	ROM_LOAD16_BYTE("bootl06l", 0x010001, 0x1000, CRC(600940d3))
+#elif 0
+	// version 1 lvl 7 release
+	ROM_LOAD16_BYTE("bootl17h", 0x010000, 0x1000, CRC(6dd9718f))
+	ROM_LOAD16_BYTE("bootl17l", 0x010001, 0x1000, CRC(107a3830))
+#elif 1
+	// version 0 lvl 8 release
+	ROM_LOAD16_BYTE("bootl08h", 0x010000, 0x1000, CRC(ee479f51))
+	ROM_LOAD16_BYTE("bootl08l", 0x010001, 0x1000, CRC(acaefd07))
+#else
+	// version $F lvl 8 (development version found on a floppy disk along with
+	// the source code)
+	ROM_LOAD16_WORD("cc.prm", 0x010000, 0x2000, CRC(b5a87dab))
 #endif
+
+	// only known macsbugs release for the concept, with reset vector and
+	// entry point (the reset vector seems to be bogus: is the ROM dump bad,
+	// or were the ROMs originally loaded with buggy code?)
+	ROM_LOAD16_BYTE("macsbgsh", 0x020000, 0x1000, CRC(aa357112))
+	ROM_LOAD16_BYTE("macsbgsl", 0x020001, 0x1000, CRC(b4b59de9))
+
 ROM_END
 
 
@@ -222,5 +238,5 @@ SYSTEM_CONFIG_START(concept)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	device_load_corvus_floppy)
 SYSTEM_CONFIG_END
 
-/*	  YEAR   NAME	   PARENT	COMPAT	MACHINE   INPUT	   INIT	 CONFIG   COMPANY   FULLNAME */
-COMP( 1983?, concept,  0,		0,		concept,  concept, 0,    concept, "Corvus Systems", "Concept" )
+/*	  YEAR  NAME	  PARENT	COMPAT	MACHINE   INPUT	   INIT	 CONFIG   COMPANY           FULLNAME */
+COMP( 1982, concept,  0,		0,		concept,  concept, 0,    concept, "Corvus Systems", "Concept" )

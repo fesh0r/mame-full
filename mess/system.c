@@ -670,7 +670,7 @@ TESTDRIVER( psxa41 )
 TESTDRIVER( psxe41 )
 
 	/* Corvus */
-	DRIVER(concept)		/* 1983? Corvus Concept */
+	DRIVER(concept)		/* 1982 Corvus Concept							*/
 
 /****************Games*******************************************************/
 	/* Computer Electronic */
