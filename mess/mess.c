@@ -25,7 +25,6 @@ struct image_info {
 	char *year;
 	char *playable;
 	char *extrainfo;
-	UINT32 (*partialcrc)(char *buf, UINT32 size);
 };
 
 static struct image_info *images[IO_COUNT] = {NULL,};
@@ -209,15 +208,36 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
     if( file )
     {
         void *config;
+	const struct IODevice *pc_dev = Machine->gamedrv->dev;
 
 		logerror("image_fopen: found image %s for system %s\n", img->name, sysname);
-        img->length = osd_fsize(file);
-		/* malloc(img->length); fread(wholefile); */
-		img->crc = img->partialcrc ? (*img->partialcrc)(0 /* a malloced buffer */,img->length) : osd_fcrc(file);
+		img->length = osd_fsize(file);
+/* Cowering, partial crcs for NES/A7800/others */
+		img->crc = 0;
+		while( pc_dev && pc_dev->count && !img->crc)
+		{
+			logerror("partialcrc() -> %08lx\n",pc_dev->partialcrc);
+			if( type == pc_dev->type && pc_dev->partialcrc)
+			{
+				unsigned char *pc_buf;
+				logerror("Calling partialcrc()\n");
+				pc_buf = (unsigned char *)malloc(img->length);
+				if (pc_buf) {
+					osd_fseek(file,0,SEEK_SET);
+					osd_fread(file,pc_buf,img->length);
+					osd_fseek(file,0,SEEK_SET);
+					img->crc = (*pc_dev->partialcrc)(pc_buf,img->length);
+					free(pc_buf);
+				}
+			}
+		pc_dev++;
+		}
+
+		if (!img->crc) img->crc = osd_fcrc(file);
 		if( img->crc == 0 && img->length < 0x100000 )
 		{
 			logerror("image_fopen: calling osd_fchecksum() for %d bytes\n", img->length);
-            osd_fchecksum(sysname, img->name, &img->length, &img->crc);
+			osd_fchecksum(sysname, img->name, &img->length, &img->crc);
 			logerror("image_fopen: CRC is %08x\n", img->crc);
         }
 		free_image_info(img);

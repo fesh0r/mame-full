@@ -189,6 +189,8 @@ struct IODevice {
 	void (*output)(int id, int data);
 	int (*input_chunk)(int id, void *dst, int chunks);
 	int (*output_chunk)(int id, void *src, int chunks);
+	UINT32 (*partialcrc)(const unsigned char *buf, unsigned int size);
+
 };
 
 /* these are called from mame.c run_game() */
