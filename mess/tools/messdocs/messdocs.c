@@ -25,6 +25,10 @@
 struct messdocs_state
 {
 	const char *dest_dir;
+
+	const char *title;
+	const char *default_topic;
+
 	memory_pool pool;
 	XML_Parser parser;
 	int depth;
@@ -161,9 +165,45 @@ done:
 
 
 
-static void html_encode(char *buf, size_t len)
+static void html_encode(char *buf, size_t buflen)
 {
-	/* NYI */
+	size_t i, slen;
+	size_t offset;
+	const char *entity;
+
+	for (i = 0; buf[i]; i++)
+	{
+		switch(buf[i])
+		{
+			case '<':	entity = "&lt;";	break;
+			case '>':	entity = "&gt;";	break;
+			case '&':	entity = "&amp;";	break;
+			default:	entity = NULL;		break;
+		}
+
+		if (entity)
+		{
+			slen = strlen(&buf[i]) + 1;
+			offset = MIN(slen, buflen - i);
+			memmove(&buf[i + strlen(entity) - 1], &buf[i], offset);
+			memcpy(&buf[i], entity, MIN(strlen(entity), buflen - i));
+		}
+	}
+}
+
+
+
+struct system_info
+{
+	const char *name;
+	const char *desc;
+};
+
+static int CLIB_DECL str_compare(const void *p1, const void *p2)
+{
+	const struct system_info *si1 = (const struct system_info *) p1;
+	const struct system_info *si2 = (const struct system_info *) p2;
+	return strcoll(si1->desc ? si1->desc : "", si2->desc ? si2->desc : "");
 }
 
 
@@ -175,14 +215,19 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 	const char *filepath;
 	const char *srcpath;
 	const char *destpath;
+	const char *datfile_foldername;
+	struct system_info *sysinfo_array;
+	int sys_count;
 	char buf[512];
-	char sysname[512];
+	const char *sysname;
+	const char *sysdesc;
 	char sysfilename[512];
 	char *datfile_path = NULL;
 	char *s;
 	FILE *datfile = NULL;
 	FILE *sysfile = NULL;
 	int lineno = 0;
+	int i;
 
 	struct messdocs_state *state = (struct messdocs_state *) data;
 
@@ -196,17 +241,26 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 		}
 
 		title = find_attribute(attributes, "title");
+		if (title)
+			state->title = pool_strdup(&state->pool, title);
 	}
 	else if (!strcmp(tagname, "topic"))
 	{
 		/* topic tag */
 		name = find_attribute(attributes, "text");
 		filepath = find_attribute(attributes, "filepath");
+
+		/* output TOC info */
 		fprintf(state->chm_toc, "\t<LI> <OBJECT type=\"text/sitemap\">\n");
 		fprintf(state->chm_toc, "\t\t<param name=\"Name\"  value=\"%s\">\n", name);
 		fprintf(state->chm_toc, "\t\t<param name=\"Local\" value=\"%s\">\n", filepath);	
 		fprintf(state->chm_toc, "\t\t</OBJECT>\n");
+
+		/* copy file */
 		copy_file_to_dest(state->dest_dir, state->toc_dir, filepath);
+
+		if (!state->default_topic)
+			state->default_topic = pool_strdup(&state->pool, filepath);
 	}
 	else if (!strcmp(tagname, "folder"))
 	{
@@ -228,6 +282,7 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 		/* datfile tag */
 		srcpath = find_attribute(attributes, "srcpath");
 		destpath = find_attribute(attributes, "destpath");
+		datfile_foldername = find_attribute(attributes, "text");
 
 		datfile_path = make_path(state->toc_dir, srcpath);
 		datfile = fopen(datfile_path, "r");
@@ -240,7 +295,10 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 		snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%s", state->dest_dir);
 		combine_path(buf, sizeof(buf) / sizeof(buf[0]), destpath);
 		osd_mkdir(buf);
-		sysname[0] = '\0';
+
+		sysinfo_array = NULL;
+		sys_count = 0;
+		sysname = NULL;
 
 		while(!feof(datfile))
 		{
@@ -257,8 +315,17 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 					/* $info */
 					s = strchr(buf, '=');
 					s = s ? s + 1 : &buf[strlen(buf)];
-					_snprintf(sysname, sizeof(sysname), "%s", s);
-					_snprintf(sysfilename, sizeof(sysfilename), "%s%c%s%c%s.htm", state->dest_dir, PATH_SEPARATOR, destpath, PATH_SEPARATOR, s);
+
+					sysinfo_array = pool_realloc(&state->pool, sysinfo_array, sizeof(*sysinfo_array) * (sys_count + 1));
+					if (!sysinfo_array)
+						goto outofmemory;
+					sysinfo_array[sys_count].name = pool_strdup(&state->pool, s);
+					sysinfo_array[sys_count].desc = NULL;
+
+					sysname = sysinfo_array[sys_count].name;
+					sys_count++;
+
+					snprintf(sysfilename, sizeof(sysfilename), "%s%c%s%c%s.htm", state->dest_dir, PATH_SEPARATOR, destpath, PATH_SEPARATOR, s);
 
 					if (sysfile)
 						fclose(sysfile);
@@ -288,6 +355,9 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 				{
 					fprintf(sysfile, "<h2>%s</h2>\n", buf);
 					fprintf(sysfile, "<p><i>(directory: %s)</i></p>\n", sysname);
+
+					if (!sysinfo_array[sys_count-1].desc)
+						sysinfo_array[sys_count-1].desc = pool_strdup(&state->pool, buf);
 				}
 				else if (buf[strlen(buf)-1] == ':')
 				{
@@ -301,10 +371,29 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 				break;
 			}
 		}
+
+		/* now write out all toc */
+		qsort(sysinfo_array, sys_count, sizeof(*sysinfo_array), str_compare);
+
+		fprintf(state->chm_toc, "\t<LI> <OBJECT type=\"text/sitemap\">\n");
+		fprintf(state->chm_toc, "\t\t<param name=\"Name\" value=\"%s\">\n", datfile_foldername);
+		fprintf(state->chm_toc, "\t\t</OBJECT>\n");
+		fprintf(state->chm_toc, "\t\t<UL>\n");
+
+		for (i = 0; i < sys_count; i++)
+		{
+			fprintf(state->chm_toc, "\t<LI> <OBJECT type=\"text/sitemap\">\n");
+			fprintf(state->chm_toc, "\t\t<param name=\"Name\" value=\"%s\">\n", sysinfo_array[i].desc);
+			fprintf(state->chm_toc, "\t\t<param name=\"Local\" value=\"%s%c%s.htm\">\n", destpath, PATH_SEPARATOR, sysinfo_array[i].name);
+			fprintf(state->chm_toc, "\t\t</OBJECT>\n");
+		}
+
+		fprintf(state->chm_toc, "\t\t</UL>\n");
 	}
 
 	state->depth++;
 
+outofmemory:
 	if (datfile_path)
 		free(datfile_path);
 	if (datfile)
@@ -323,7 +412,7 @@ static void end_handler(void *data, const XML_Char *name)
 
 	if (!strcmp(name, "folder"))
 	{
-		fprintf(state->chm_toc, "\t<UL>\n");
+		fprintf(state->chm_toc, "\t</UL>\n");
 	}
 }
 
@@ -378,7 +467,8 @@ static int rmdir_recursive(const char *dir_path)
 
 
 
-int messdocs(const char *toc_filename, const char *dest_dir)
+int messdocs(const char *toc_filename, const char *dest_dir, const char *help_project_filename,
+	const char *help_contents_filename, const char *help_filename)
 {
 	char buf[4096];
 	struct messdocs_state state;
@@ -387,8 +477,6 @@ int messdocs(const char *toc_filename, const char *dest_dir)
 	FILE *in;
 	FILE *chm_hhp;
 	int i;
-	const char *help_project_filename = "help.hhp";
-	const char *help_contents_filename = "help.hhc";
 	char *s;
 	char path_sep[2];
 
@@ -416,29 +504,6 @@ int messdocs(const char *toc_filename, const char *dest_dir)
 	/* clean the target directory */
 	rmdir_recursive(dest_dir);
 	osd_mkdir(dest_dir);
-
-	/* create the help project file */
-	s = pool_malloc(&state.pool, strlen(dest_dir) + 1 + strlen(help_project_filename) + 1);
-	if (!s)
-		goto outofmemory;
-	strcpy(s, dest_dir);
-	strcat(s, path_sep);
-	strcat(s, help_project_filename);
-	chm_hhp = fopen(s, "w");
-	if (!chm_hhp)
-	{
-		fprintf(stderr, "Cannot open file %s\n", s);
-		goto error;
-	}
-
-	fprintf(chm_hhp, "[OPTIONS]\n");
-	fprintf(chm_hhp, "Compiled file=NYI.chm\n");
-	fprintf(chm_hhp, "Contents file=%s\n", help_contents_filename);
-	fprintf(chm_hhp, "Default topic=NYI\n");
-	fprintf(chm_hhp, "Language=0x409 English (United States)\n");
-	fprintf(chm_hhp, "Title=NYI\n");
-	fprintf(chm_hhp, "\n");
-	fclose(chm_hhp);
 
 	/* create the help contents file */
 	s = pool_malloc(&state.pool, strlen(dest_dir) + 1 + strlen(help_project_filename) + 1);
@@ -491,8 +556,33 @@ int messdocs(const char *toc_filename, const char *dest_dir)
 	fprintf(state.chm_toc, "</UL>\n");
 	fprintf(state.chm_toc, "</BODY></HTML>");
 	fclose(state.chm_toc);
-	pool_exit(&state.pool);
 
+
+	/* create the help project file */
+	s = pool_malloc(&state.pool, strlen(dest_dir) + 1 + strlen(help_project_filename) + 1);
+	if (!s)
+		goto outofmemory;
+	strcpy(s, dest_dir);
+	strcat(s, path_sep);
+	strcat(s, help_project_filename);
+	chm_hhp = fopen(s, "w");
+	if (!chm_hhp)
+	{
+		fprintf(stderr, "Cannot open file %s\n", s);
+		goto error;
+	}
+
+	fprintf(chm_hhp, "[OPTIONS]\n");
+	fprintf(chm_hhp, "Compiled file=%s\n", help_filename);
+	fprintf(chm_hhp, "Contents file=%s\n", help_contents_filename);
+	fprintf(chm_hhp, "Default topic=%s\n", state.default_topic);
+	fprintf(chm_hhp, "Language=0x409 English (United States)\n");
+	fprintf(chm_hhp, "Title=%s\n", state.title);
+	fprintf(chm_hhp, "\n");
+	fclose(chm_hhp);
+
+	/* finish up */
+	pool_exit(&state.pool);
 	return state.error ? -1 : 0;
 
 outofmemory:
@@ -511,7 +601,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	return messdocs(argv[1], argv[2]);
+	return messdocs(argv[1], argv[2], "mess.hhp", "mess.hhc", "mess.chm");
 }
 
 
