@@ -325,6 +325,21 @@ WRITE18_HANDLER(pdp1_write_mem)
 	perforated tape handling
 */
 
+static int pdp1_get_open_mode(mess_image *image)
+{
+	return image_index_in_device(image) ? OSD_FOPEN_WRITE : OSD_FOPEN_READ;
+}
+
+
+
+DEVICE_INIT( pdp1_tape )
+{
+	image_set_open_mode_callback(image, pdp1_get_open_mode);
+	return INIT_PASS;
+}
+
+
+
 /*
 	Open a perforated tape image
 
@@ -333,12 +348,12 @@ WRITE18_HANDLER(pdp1_write_mem)
 DEVICE_LOAD( pdp1_tape )
 {
 	int id = image_index_in_device(image);
+
+	tape_puncher.fd = file;
 	switch (id)
 	{
 	case 0:
 		/* reader unit */
-		/* open file */
-		tape_reader.fd = image_fopen_custom(image, FILETYPE_IMAGE, OSD_FOPEN_READ);
 
 		/* start motor if image actually inserted */
 		tape_reader.motor_on = tape_reader.fd ? 1 : 0;
@@ -363,7 +378,6 @@ DEVICE_LOAD( pdp1_tape )
 
 	case 1:
 		/* punch unit */
-		tape_puncher.fd = image_fopen_custom(image, FILETYPE_IMAGE, OSD_FOPEN_WRITE);
 		break;
 	}
 

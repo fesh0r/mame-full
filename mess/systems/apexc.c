@@ -151,6 +151,24 @@ typedef struct tape
 
 tape apexc_tapes[2];
 
+
+
+static int apexc_get_open_mode(mess_image *image)
+{
+	/* unit 0 is read-only, unit 1 is write-only */
+	return image_index_in_device(image) ? OSD_FOPEN_WRITE : OSD_FOPEN_READ;
+}
+
+
+
+static DEVICE_INIT(apexc_tape)
+{
+	image_set_open_mode_callback(image, apexc_get_open_mode);
+	return INIT_PASS;
+}
+
+
+
 /*
 	Open a tape image
 */
@@ -160,9 +178,7 @@ static DEVICE_LOAD(apexc_tape)
 	tape *t = &apexc_tapes[id];
 
 	/* open file */
-	/* unit 0 is read-only, unit 1 is write-only */
-	t->fd = image_fopen_custom(image, FILETYPE_IMAGE,
-								(id==0) ? OSD_FOPEN_READ : OSD_FOPEN_WRITE);
+	t->fd = file;
 
 	return INIT_PASS;
 }
@@ -836,7 +852,7 @@ ROM_END
 
 SYSTEM_CONFIG_START(apexc)
 	CONFIG_DEVICE_LEGACY(IO_CYLINDER, 1, "apc\0", DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_RW_OR_READ, NULL, NULL, device_load_apexc_cylinder, device_unload_apexc_cylinder, NULL)
-	CONFIG_DEVICE_LEGACY(IO_PUNCHTAPE, 2, "tap\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_NONE, NULL, NULL, device_load_apexc_tape, NULL, NULL)
+	CONFIG_DEVICE_LEGACY(IO_PUNCHTAPE, 2, "tap\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_NONE, device_init_apexc_tape, NULL, device_load_apexc_tape, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /*		   YEAR		NAME		PARENT			COMPAT	MACHINE		INPUT	INIT	CONFIG	COMPANY		FULLNAME */

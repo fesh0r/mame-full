@@ -19,6 +19,7 @@ struct _mess_image
 {
 	/* variables that persist across image mounts */
 	tag_pool tagpool;
+	int (*get_open_mode)(mess_image *);
 
 	/* variables that are only non-zero when an image is mounted */
 	mame_file *fp;
@@ -37,6 +38,8 @@ struct _mess_image
 };
 
 static struct _mess_image images[IO_COUNT][MAX_DEV_INSTANCES];
+
+static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_write);
 
 #ifdef _MSC_VER
 #define ZEXPORT __stdcall
@@ -78,6 +81,8 @@ void image_exit(mess_image *img)
 	tagpool_exit(&img->tagpool);
 }
 
+
+
 /****************************************************************************
   Device loading and unloading functions
 
@@ -95,6 +100,7 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 	UINT8 *buffer = NULL;
 	UINT64 size;
 	int i;
+	int open_mode;
 
 	static INT8 file_modes[2][7][4] =
 	{
@@ -150,13 +156,14 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 	if ((timer_get_time() > 0) && (dev->flags & DEVICE_LOAD_RESETS_CPU))
 		machine_reset();
 
-	if ((dev->open_mode >= 0) && (dev->open_mode < (sizeof(file_modes[0]) / sizeof(file_modes[0][0]))))
+	open_mode = image_get_open_mode(img);
+	if ((open_mode >= 0) && (open_mode < (sizeof(file_modes[0]) / sizeof(file_modes[0][0]))))
 	{
 		/* attempt to open the file with the various modes */
 		i = 0;
-		while(!file && (file_modes[is_create][dev->open_mode][i] >= 0))
+		while(!file && (file_modes[is_create][open_mode][i] >= 0))
 		{
-			img->effective_mode = file_modes[is_create][dev->open_mode][i++];
+			img->effective_mode = file_modes[is_create][open_mode][i++];
 			file = image_fopen_custom(img, FILETYPE_IMAGE, img->effective_mode);
 		}
 		if (!file)
@@ -305,6 +312,20 @@ void image_unload_all(int ispreload)
 			}
 		}
 	}
+}
+
+
+
+/****************************************************************************
+  Device callback installation functions
+
+  Called during DEVICE_INIT() to install callbacks to customize certain
+  behavior
+****************************************************************************/
+
+void image_set_open_mode_callback(mess_image *img, int (*get_open_mode)(mess_image *))
+{
+	img->get_open_mode = get_open_mode;
 }
 
 
@@ -526,10 +547,14 @@ const char *image_filedir(mess_image *img)
 	return img->dir;
 }
 
+
+
 unsigned int image_length(mess_image *img)
 {
 	return img->length;
 }
+
+
 
 unsigned int image_crc(mess_image *img)
 {
@@ -537,15 +562,33 @@ unsigned int image_crc(mess_image *img)
 	return img->crc;
 }
 
+
+
 int image_is_writable(mess_image *img)
 {
 	return is_effective_mode_writable(img->effective_mode);
 }
 
+
+
 int image_has_been_created(mess_image *img)
 {
 	return is_effective_mode_create(img->effective_mode);
 }
+
+
+
+int image_get_open_mode(mess_image *img)
+{
+	int open_mode;
+	if (img->get_open_mode)
+		open_mode = img->get_open_mode(img);
+	else
+		open_mode = image_device(img)->open_mode;
+	return open_mode;
+}
+
+
 
 void image_make_readonly(mess_image *img)
 {
@@ -735,13 +778,17 @@ int image_devtype(mess_image *img)
 	return (img - &images[0][0]) / MAX_DEV_INSTANCES;
 }
 
+
+
 int image_index_in_devtype(mess_image *img)
 {
 	assert(img);
 	return (img - &images[0][0]) % MAX_DEV_INSTANCES;
 }
 
-mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_write)
+
+
+static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_write)
 {
 	const char *sysname;
 	mame_file *file;

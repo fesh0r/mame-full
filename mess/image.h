@@ -38,6 +38,18 @@
 int image_init(mess_image *img);
 void image_exit(mess_image *img);
 
+
+/****************************************************************************
+  Device callback installation functions
+
+  Called during DEVICE_INIT() to install callbacks to customize certain
+  behavior
+****************************************************************************/
+
+void image_set_open_mode_callback(mess_image *img, int (*get_open_mode)(mess_image *));
+
+
+
 /****************************************************************************
   Device loading and unloading functions
 
@@ -54,6 +66,8 @@ void image_unload(mess_image *img);
 /* used for driver init and machine init */
 int image_load_all(const struct GameDriver *gamedrv, int ispreload);
 void image_unload_all(int ispreload);
+
+
 
 /****************************************************************************
   Tag management functions.
@@ -93,6 +107,7 @@ unsigned int image_crc(mess_image *img);
 
 int image_is_writable(mess_image *img);
 int image_has_been_created(mess_image *img);
+int image_get_open_mode(mess_image *img);
 void image_make_readonly(mess_image *img);
 
 /****************************************************************************
@@ -158,8 +173,6 @@ mess_image *image_from_device_and_index(const struct IODevice *dev, int id);
 int image_devtype(mess_image *img);
 int image_index_in_devtype(mess_image *img);
 mess_image *image_from_devtype_and_index(int type, int id);
-
-mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_write);
 
 /****************************************************************************
   Macros for declaring device callbacks
