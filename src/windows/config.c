@@ -33,7 +33,8 @@
 
 #ifdef MESS
 #include "messwin.h"
-char crcdir[256] = "";
+static char crcdirbuf[256] = "";
+const char *crcdir = crcdirbuf;
 static char crcfilename[256] = "";
 const char *crcfile = crcfilename;
 extern char *pcrcdir;
@@ -82,7 +83,8 @@ static struct rc_option fileio_opts[] =
 	{ "Windows path and directory options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 #ifdef MESS
 	{ "biospath", "rp", rc_string, &rompath, "bios", 0, 0, NULL, "path to BIOS files" },
-	{ "softwarepath", "swp", rc_string, &swpath, "software", 0, 0, NULL, "path to software" },
+	{ "softwarepath", "swp",  rc_string, &swpath,    "software", 0, 0, NULL, "path to software" },
+	{ "CRC_directory", "crc", rc_string, &crcdir, "crc"     , 0, 0, NULL, "path to CRC files" },
 #else
 	{ "rompath", "rp", rc_string, &rompath, "roms", 0, 0, NULL, "path to romsets" },
 #endif
