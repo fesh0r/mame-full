@@ -616,6 +616,7 @@ $(OBJ)/orca.a: \
 
 $(OBJ)/gaelco.a: \
 	$(OBJ)/vidhrdw/gaelco.o $(OBJ)/drivers/gaelco.o \
+	$(OBJ)/vidhrdw/splash.o $(OBJ)/drivers/splash.o \
 
 $(OBJ)/kaneko.a: \
 	$(OBJ)/vidhrdw/kaneko16.o $(OBJ)/drivers/kaneko16.o \
