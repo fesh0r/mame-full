@@ -647,8 +647,8 @@ romcmp: $(OBJ)/romcmp.o $(OBJ)/unzip.o $(OBJ)/Win32/dirent.o
 	$(LD) $(LDFLAGS) -out:romcmp.exe $(CONSOLE_PROGRAM) $(OBJ)/romcmp.o $(OBJ)/unzip.o $(OBJ)/Win32/dirent.o $(LIBS)
 
 
-dat2html.exe:	$(OBJ)/mess/tools/dat2html.o
-	$(LD) $(LDFLAGS) -out:dat2html.exe $(CONSOLE_PROGRAM) $(OBJ)/mess/tools/mkhdimg.o
+dat2html.exe:	$(OBJ)/mess/tools/dat2html.o $(OBJ)/mess/utils.o
+	$(LD) $(LDFLAGS) -out:dat2html.exe $(CONSOLE_PROGRAM) $(OBJ)/mess/tools/dat2html.o $(OBJ)/mess/utils.o
 
 
 mkhdimg.exe:	$(OBJ)/mess/tools/mkhdimg.o

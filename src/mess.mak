@@ -584,7 +584,7 @@ endif
 # additional tools
 TOOLS +=  dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE) 
 
-dat2html$(EXE): $(OBJ)/mess/tools/dat2html.o
+dat2html$(EXE): $(OBJ)/mess/tools/dat2html.o $(OBJ)/mess/utils.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(LIBS) $^ -o $@
 

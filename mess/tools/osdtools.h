@@ -13,7 +13,6 @@
 #include <direct.h>
 #define osd_mkdir(dir)	mkdir(dir)
 #define PATH_SEPARATOR	"\\"
-#define strncasecmp	strnicmp
 
 inline const char *basename(const char *name)
 {

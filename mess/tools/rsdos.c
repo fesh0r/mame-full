@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "osdepend.h"
 #include "imgtool.h"
+#include "utils.h"
 
 #define GRANULE_COUNT	68
 

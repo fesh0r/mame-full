@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include "utils.h"
 
 char *strncpyz(char *dest, const char *source, size_t len)
@@ -37,3 +38,34 @@ void rtrim(char *buf)
 	}
 }
 
+#ifndef strcmpi
+int strcmpi(const char *dst, const char *src)
+{
+	int result = 0;
+
+	while( !result && *src && *dst )
+	{
+		result = tolower(*dst) - tolower(*src);
+		src++;
+		dst++;
+	}
+	return result;
+}
+#endif /* strcmpi */
+
+
+#ifndef strncmpi
+int strncmpi(const char *dst, const char *src, size_t n)
+{
+	int result = 0;
+
+	while( !result && *src && *dst && n)
+	{
+		result = tolower(*dst) - tolower(*src);
+		src++;
+		dst++;
+		n--;
+	}
+	return result;
+}
+#endif /* strncmpi */
