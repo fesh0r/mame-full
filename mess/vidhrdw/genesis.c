@@ -984,8 +984,9 @@ static void combinelayers(struct osd_bitmap *dest, int startline, int endline)
 			  for layers A & B, for the given set of pixels on the screen we're about to render */
 		  	  /* the sprite layer position is about to be set too */
 
-   			sprite_ptr = &spritelayer->line[y+128][x+128];
-			output_ptr = &dest->line[y][x];
+   			// sprite_ptr = &spritelayer->line[y+128][x+128];
+			sprite_ptr = &((UINT8**)spritelayer->line)[y+128][x+128];
+			output_ptr = &((UINT8**)dest->line)[y][x];
 			/* base + (y/8) * (number of width attributes * size of attributes, which is 2 bytes) */
 		   	scroll_a_attribute_linebase= (unsigned short *)(vdp_pattern_scroll_a+((scroll_a_y>>3)*(vdp_h_scrollsize<<1)));
 		   	scroll_b_attribute_linebase= (unsigned short *)(vdp_pattern_scroll_b+((scroll_b_y>>3)*(vdp_h_scrollsize<<1)));
@@ -1168,7 +1169,7 @@ INLINE void genesis_plot_tile(struct osd_bitmap *dest, int tilenum, int attribut
 		c=&vdp_vram[tilenum<<5];
 		for (line = 0; line < 8; line++)
 		{
-			bm = &dest->line[sy+line][sx];
+			bm = &((UINT8**)dest->line)[sy+line][sx];
 		//	c  = &bitmap_vram->line[(tilenum<<3)+line][0];
 		  		if (!bm[0]) bm[0]=colours2[(c[OF0]>>4) | code];
 				if (!bm[1]) bm[1]=colours2[(c[OF0]&0xf) | code];
@@ -1196,7 +1197,7 @@ INLINE void genesis_plot_tile(struct osd_bitmap *dest, int tilenum, int attribut
 		c=&vdp_vram[tilenum<<5];
 		for (line = 0; line < 8; line++)
 		{
-			bm = &dest->line[sy+line][sx];
+			bm = &((UINT8**)dest->line)[sy+line][sx];
 		//	c  = &bitmap_vram->line[(tilenum<<3)+line][0];
 
 		   		if (!bm[1]) bm[1]=colours2[(c[OF3]>>4) | code];
@@ -1225,7 +1226,7 @@ INLINE void genesis_plot_tile(struct osd_bitmap *dest, int tilenum, int attribut
 		c=&vdp_vram[tilenum<<5]+28;
 		for (line = 0; line < 8; line++)
 		{
-			bm = &dest->line[sy+line][sx];
+			bm = &((UINT8**)dest->line)[sy+line][sx];
 		//	c  = &bitmap_vram->line[(tilenum<<3)+(7-line)][0];
 
 				if (!bm[0]) bm[0]=colours2[(c[OF0]>>4) | code];
@@ -1255,7 +1256,7 @@ INLINE void genesis_plot_tile(struct osd_bitmap *dest, int tilenum, int attribut
 		c=&vdp_vram[tilenum<<5]+28;
 		for (line = 0; line < 8; line++)
 		{
-			bm = &dest->line[sy+line][sx];
+			bm = &((UINT8**)dest->line)[sy+line][sx];
 		//	c  = &bitmap_vram->line[(tilenum<<3)+(7-line)][0];
 
 		   		if (!bm[1]) bm[1]=colours2[(c[OF3]>>4) | code];

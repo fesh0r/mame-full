@@ -337,7 +337,7 @@ static struct MachineDriver machine_driver_genesis =
 	64,64/sizeof(unsigned short), /* genesis uses 4 color schemes of 16 colors each, 0 of each bank is transparent*/
 	genesis_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER /*| VIDEO_MODIFIES_PALETTE*/,
 	0,
 	genesis_vh_start,
 	genesis_vh_stop,
