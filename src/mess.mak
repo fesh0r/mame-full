@@ -668,6 +668,7 @@ COREOBJS += \
 		$(OBJ)/mess/menuentr.o         \
 		$(OBJ)/mess/utils.o            \
 		$(OBJ)/mess/bcd.o              \
+		$(OBJ)/mess/julian.o			\
 		$(OBJ)/mess/vidhrdw/state.o    \
 		$(OBJ)/mess/vidhrdw/m6847.o    \
 		$(OBJ)/mess/vidhrdw/m6845.o    \
