@@ -643,7 +643,7 @@ static void lynx_divide(void)
 	    res=left/right;
 	    mod=left%right;
 	}
-	logerror("coprocessor %8x / %8x = %4x\n", left, right, res);
+//	logerror("coprocessor %8x / %8x = %4x\n", left, right, res);
 	suzy.u.s.D=res&0xff;
 	suzy.u.s.C=res>>8;
 	suzy.u.s.B=res>>16;
