@@ -243,7 +243,9 @@ PB7
 
  */
 
-READ_HANDLER ( oric_via_in_cb1_func )
+/* not called yet - this will update the via with the state of the tape data.
+This allows the via to trigger on bit changes and issue interrupts */
+void    oric_refresh_tape(void)
 {
 	int data;
 
@@ -252,10 +254,8 @@ READ_HANDLER ( oric_via_in_cb1_func )
 	if (device_input(IO_CASSETTE,0) > 255)
 		data |=1;
 
-	return data;
+    via_set_input_cb1(0, data);
 }
-
-
 
 WRITE_HANDLER ( oric_via_out_b_func )
 {
@@ -365,7 +365,7 @@ struct via6522_interface oric_6522_interface=
 	oric_via_in_a_func,
 	oric_via_in_b_func,
 	NULL,				/* printer acknowledge */
-	oric_via_in_cb1_func,
+	NULL,				/* tape input */
 	oric_via_in_ca2_func,
 	oric_via_in_cb2_func,
 	oric_via_out_a_func,
