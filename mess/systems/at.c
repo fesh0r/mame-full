@@ -673,4 +673,4 @@ COMPX ( 1988,	at386,		ibmat,	0,		at386,      atcga,		at386,	    ibmat,   "MITAC 
 COMPX ( 1990,	at486,		ibmat,	0,		at386,      atcga,		at386,	    ibmat,   "",  "PC/AT 486(CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 #endif
 
-COMP  ( 1987,	atvga,		ibmat,	0,		atvga,      atvga,		at_vga,     ibmat,   "",  "PC/AT (VGA, MF2 Keyboard)" )
+COMP  ( 1987,	atvga,		0,		0,		atvga,      atvga,		at_vga,     ibmat,   "",  "PC/AT (VGA, MF2 Keyboard)" )

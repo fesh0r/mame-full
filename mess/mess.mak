@@ -227,10 +227,10 @@ DRVLIBS = \
 	$(OBJ)/motorola.a \
 	$(OBJ)/ssystem3.a \
 	$(OBJ)/hp48.a     \
-#	$(OBJ)/cbm.a      \
-#	$(OBJ)/cbmshare.a \
-#	$(OBJ)/kim1.a     \
-#	$(OBJ)/sym1.a     \
+	$(OBJ)/cbm.a      \
+	$(OBJ)/cbmshare.a \
+	$(OBJ)/kim1.a     \
+	$(OBJ)/sym1.a     \
 
 
 

@@ -298,7 +298,7 @@ ROM_START (atomeb)
 	ROM_LOAD ("werom.rom",0x013000,0x1000, CRC(dfcb3bf8))
 	ROM_LOAD ("unknown.rom",0x014000,0x1000, CRC(013b8f93))
 	ROM_LOAD ("combox.rom",0x015000,0x1000, CRC(9c8210ab))
-	ROM_LOAD ("salfaa.rom",0x016000,0x1000, CRC(0ef857b25))
+	ROM_LOAD ("salfaa.rom",0x016000,0x1000, CRC(ef857b25))
 	ROM_LOAD ("mousebox.rom",0x017000,0x01000, CRC(0dff30e4))
 	ROM_LOAD ("atomicw.rom",0x018000,0x1000, CRC(a3fd737d))
 ROM_END

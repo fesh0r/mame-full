@@ -348,7 +348,8 @@ static HRESULT WINAPI enum2_callback(LPDDSURFACEDESC2 desc, LPVOID context)
 #ifdef _MSC_VER
 	int depth = desc->DUMMYUNIONNAMEN(4).ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
 #else
-	int depth = desc->ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
+	int depth = desc->DUMMYUNIONNAMEN(4).ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
+//	int depth = desc->ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
 #endif
 	double score;
 

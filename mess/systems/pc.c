@@ -1573,7 +1573,7 @@ ROM_START( t1000hx )
 	ROM_LOAD("tandy1t.rom", 0xf0000, 0x10000, CRC(d37a1d5f))
 	ROM_REGION(0x02000,REGION_GFX1, 0)
 	// expects 8x9 charset!
-	ROM_LOAD("50146", 0x00000, 0x02000, CRC(BADCRC(1305dcf5))) //taken from europc, 9th blank
+	ROM_LOAD("50146", 0x00000, 0x02000, BAD_DUMP CRC(1305dcf5)) //taken from europc, 9th blank
 ROM_END
 
 ROM_START( t1000sx )

@@ -147,6 +147,7 @@ extern MACHINE_DRIVER_EXTERN( cpu_c1571 );
 	ROM_LOAD("1581-rom.318045-01.bin",  0x8000, 0x8000, CRC(113af078))
 	ROM_LOAD("1581-rom.318045-02.bin",  0x8000, 0x8000, CRC(a9011b84))
 	ROM_LOAD("1581-rom.beta.bin",  0x8000, 0x8000, CRC(ecc223cd))
+
 	/* modified drive 0x2000-0x3ffe ram, 0x3fff 6529 */
 	ROM_LOAD("1581rom5.bin",  0x8000, 0x8000, CRC(e08801d7))
 

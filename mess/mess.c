@@ -366,9 +366,43 @@ void ram_dump(const char *filename)
 }
 
 #ifdef MAME_DEBUG
+static int hash_verify_string(const char *hash)
+{
+	int len, i;
+
+	if (!hash)
+		return FALSE;
+
+	switch(*hash){
+	case '$':
+		if (memcmp(hash, NO_DUMP, 4) && memcmp(hash, BAD_DUMP, 4))
+			return FALSE;
+		hash += 4;
+		break;
+
+	case 'c':
+	case 's':
+		if (hash[1] != ':')
+			return FALSE;
+		len = (*hash == 'c') ? 8 : 40;
+		hash += 2;
+		
+		for (i = 0; (hash[i] != '#') && (i < len); i++)
+		{
+			if (!strchr("0123456789abcdefABCDEF", hash[i]))
+				return FALSE;
+		}
+		if (hash[i] != '#')
+			return FALSE;
+		hash += i+1;
+		break;
+	}
+	return TRUE;
+}
+
 int messvaliditychecks(void)
 {
-	int i;
+	int i, j;
 	int error = 0;
 	const struct RomModule *region, *rom;
 	const struct IODevice *dev;
@@ -379,6 +413,42 @@ int messvaliditychecks(void)
 	/* MESS specific driver validity checks */
 	for(i = 0; drivers[i]; i++)
 	{
+		/* make sure that there are no clones that reference nonexistant drivers */
+		if (drivers[i]->clone_of && !(drivers[i]->clone_of->flags & NOT_A_DRIVER))
+		{
+			if (drivers[i]->compatible_with && !(drivers[i]->compatible_with->flags & NOT_A_DRIVER))
+			{
+				printf("%s: both compatbile_with and clone_of are specified\n", drivers[i]->name);
+				error = 1;
+			}
+
+			for (j = 0; drivers[j]; j++)
+			{
+				if (drivers[i]->clone_of == drivers[j])
+					break;
+			}
+			if (!drivers[j])
+			{
+				printf("%s: is a clone of %s, which is not in drivers[]\n", drivers[i]->name, drivers[i]->clone_of->name);
+				error = 1;
+			}
+		}
+
+		/* make sure that there are no clones that reference nonexistant drivers */
+		if (drivers[i]->compatible_with && !(drivers[i]->compatible_with->flags & NOT_A_DRIVER))
+		{
+			for (j = 0; drivers[j]; j++)
+			{
+				if (drivers[i]->compatible_with == drivers[j])
+					break;
+			}
+			if (!drivers[j])
+			{
+				printf("%s: is compatible with %s, which is not in drivers[]\n", drivers[i]->name, drivers[i]->compatible_with->name);
+				error = 1;
+			}
+		}
+
 		/* check device array */
 		used_devices = 0;
 		for(dev = device_first(drivers[i]); dev; dev = device_next(drivers[i], dev))
@@ -428,8 +498,17 @@ int messvaliditychecks(void)
 		{
 			for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
 			{
+				const char *hash;
 				char name[100];
 				snprintf(name, sizeof(name) / sizeof(name[0]), "%s", ROM_GETNAME(rom));
+
+				hash = ROM_GETHASHDATA(rom);
+
+				if (!hash_verify_string(hash))
+				{
+					printf("%s: rom '%s' has an invalid hash string '%s'\n", drivers[i]->name, ROM_GETNAME(rom), hash);
+					error = 1;
+				}
 			}
 		}
 

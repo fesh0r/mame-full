@@ -2730,7 +2730,7 @@ ROM_START(cpc464)
 	/* this defines the total memory size - 64k ram, 16k OS, 16k BASIC, 16k DOS */
 	ROM_REGION(0x01c000, REGION_CPU1,0)
 	/* load the os to offset 0x01000 from memory base */
-	ROM_LOAD("cpc464.rom", 0x10000, 0x8000, CRC(040852f25))
+	ROM_LOAD("cpc464.rom", 0x10000, 0x8000, CRC(40852f25))
 	ROM_LOAD("cpcados.rom", 0x18000, 0x4000, CRC(1fe22ecd))
 
 	/* fake region - required by graphics decode structure */
@@ -2741,7 +2741,7 @@ ROM_START(cpc664)
 	/* this defines the total memory size - 64k ram, 16k OS, 16k BASIC, 16k DOS */
 	ROM_REGION(0x01c000, REGION_CPU1,0)
 	/* load the os to offset 0x01000 from memory base */
-	ROM_LOAD("cpc664.rom", 0x10000, 0x8000, CRC(09AB5A036))
+	ROM_LOAD("cpc664.rom", 0x10000, 0x8000, CRC(9AB5A036))
 	ROM_LOAD("cpcados.rom", 0x18000, 0x4000, CRC(1fe22ecd))
 
 	/* fake region - required by graphics decode structure */
