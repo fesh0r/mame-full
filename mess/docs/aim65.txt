@@ -1,0 +1,29 @@
+Rockwell AIM-65
+---------------
+
+very early computer 
+
+
+Features
+--------
+integrated 20 digit (16segment) display 
+full size keyboard
+integrated printer
+connector for tty input/output
+type interface
+
+
+Mess Emulation State
+--------------------
+display, keyboard working
+Useable picture of the the display with its white frame as artwork would be nice.
+Would suffer from support for intelligent terminals as tty equipment.
+Stopped. For me it is much to cryptic to operate, and therefor not interesting
+for me anymore.
+
+
+Contributors
+------------
+Richard A. Cini: provided help and pictures
+
+
