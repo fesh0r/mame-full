@@ -602,8 +602,13 @@ all: $(EXENAME) $(TOOLS)
 
 # workaround for a compiler optimization bug:
 !ifndef DEBUG
+
 $(OBJ)/input.o: src/input.c
-	$(CC) $(DEFS) $(CFLAGSGLOBAL) -Oi -Ot -Oy -Ob1 -Gs -G5 -Gr -DCLIB_DECL=__cdecl -DDECL_SPEC=__cdecl -Fo$@ -c src/input.c
+	$(CC) $(DEFS) $(CFLAGSGLOBAL) -Oi -Ot -Oy -Ob1 -Gs -G5 -Gr -DCLIB_DECL=__cdecl -DDECL_SPEC=__cdecl -Fo$@ -c src/$(*B).c
+
+$(OBJ)/cpu/g65816/g65816o0.o: src/cpu/g65816/g65816o0.c
+	$(CC) $(DEFS) $(CFLAGSGLOBAL) -Oi -Ot -Oy -Gs -G5 -Gr -DCLIB_DECL=__cdecl -DDECL_SPEC=__cdecl -Fo$@ -c src/cpu/g65816/$(*B).c
+
 !endif
 
 $(EXENAME): $(COREOBJS) $(WIN32_OBJS) $(OBJS) $(RES)
