@@ -32,9 +32,16 @@ static unsigned char *ROM;
 
 void genesis_init_machine(void)
 {
-	/* the following ensures that the Z80 begins without running away from 0 */
+    genesis_soundram = memory_region(REGION_CPU2);
+	if( !genesis_soundram )
+	{
+		logerror("REGION_CPU2 not initialized\n");
+		return;
+    }
+
+    /* the following ensures that the Z80 begins without running away from 0 */
 	/* 0x76 is just a forced 'halt' as soon as the CPU is initially run */
-	genesis_soundram[0] = 0x76;
+    genesis_soundram[0] = 0x76;
 	genesis_soundram[0x38] = 0x76;
 	cpu_setbank(1, &genesis_soundram[0]);
 	cpu_setbank(2, &genesis_sharedram[0]);
@@ -48,7 +55,7 @@ void genesis_init_machine(void)
 
 int genesis_load_rom(int id)
 {
-	FILE *romfile;
+	FILE *romfile = NULL;
 	unsigned char *tmpROMnew, *tmpROM;
 	unsigned char *secondhalf;
 	unsigned char *rawROM;
@@ -58,16 +65,6 @@ int genesis_load_rom(int id)
 
 	logerror("ROM load/init regions\n");
 
-
-	genesis_soundram = memory_region(REGION_CPU2);
-
-
-    if (!(romfile = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
-	{
-		printf("Genesis Requires Cartridge!\n");
-		return INIT_FAILED;
-	}
-
     /* Allocate memory and set up memory regions */
 	if (new_memory_region(REGION_CPU1, 0x405000))
 	{
@@ -75,9 +72,23 @@ int genesis_load_rom(int id)
 		return INIT_FAILED;
 	}
 	rawROM = memory_region(REGION_CPU1);
-	ROM = rawROM /*+ 512 */ ;
+    ROM = rawROM /*+ 512 */;
 
-	length = osd_fread(romfile, rawROM + 0x2000, 0x400200);
+    if (new_memory_region(REGION_CPU2, 0x10000))    /* Z80 region */
+    {
+        logerror("Memory allocation failed creating Z80 RAM region!\n");
+        goto bad;
+    }
+	genesis_soundram = memory_region(REGION_CPU2);
+
+	romfile = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
+	if (!romfile)
+    {
+        printf("Genesis Requires Cartridge!\n");
+        return INIT_FAILED;
+    }
+
+    length = osd_fread(romfile, rawROM + 0x2000, 0x400200);
 	logerror("image length = 0x%x", length);
 	if (length < 1024 + 512)
 		goto bad;						/* smallest known rom is 1.7K */
@@ -136,13 +147,6 @@ int genesis_load_rom(int id)
 
 	ROM = memory_region(REGION_CPU1);	/* 68000 ROM region */
 
-	if (new_memory_region(REGION_CPU2, 0x10000))	/* Z80 region */
-	{
-		logerror("Memory allocation failed creating Z80 RAM region!\n");
-		goto bad;
-	}
-
-
 	for (ptr = 0; ptr < 0x402000; ptr += 2)		/* mangle bytes for littleendian machines */
 	{
 #ifdef LSB_FIRST
@@ -161,7 +165,8 @@ int genesis_load_rom(int id)
 	return INIT_OK;
 
 bad:
-	osd_fclose(romfile);
+	if (romfile)
+		osd_fclose(romfile);
 	return INIT_FAILED;
 }
 
@@ -170,45 +175,57 @@ bad:
 int genesis_isfunkySMD(unsigned char *buf)
 {
 
-/* aq quiz */
+	/* aq quiz */
 	if (!strncmp("UZ(-01  ", (const char *) &buf[0xf0], 8))
 		return 1;
-/* Phelios USA redump */
-/* target earth */
-/* klax (namcot) */
+
+    /* Phelios USA redump */
+	/* target earth */
+	/* klax (namcot) */
 	if (buf[0x2080] == ' ' && buf[0x0080] == 'S' && buf[0x2081] == 'E' && buf[0x0081] == 'G')
 		return 1;
-/* jap baseball 94 */
+
+    /* jap baseball 94 */
 	if (!strncmp("OL R-AEAL", (const char *) &buf[0xf0], 9))
 		return 1;
-/* devilish Mahjonng Tower */
-	if (!strncmp("optrEtranet", (const char *) &buf[0xf3], 11))
+
+    /* devilish Mahjonng Tower */
+    if (!strncmp("optrEtranet", (const char *) &buf[0xf3], 11))
 		return 1;
-/* golden axe 2 beta */
+
+	/* golden axe 2 beta */
 	if (buf[0x0100] == 0x3c && buf[0x0101] == 0 && buf[0x0102] == 0 && buf[0x0103] == 0x3c)
 		return 1;
-/* omega race */
+
+    /* omega race */
 	if (!strncmp("OEARC   ", (const char *) &buf[0x90], 8))
 		return 1;
-/* budokan beta */
+
+    /* budokan beta */
 	if (!strncmp(" NTEBDKN", (const char *) &buf[0x6708], 8))
 		return 1;
-/* cdx pro 1.8 bios */
+
+    /* cdx pro 1.8 bios */
 	if (!strncmp("so fCXP", (const char *) &buf[0x2c0], 7))
 		return 1;
-/* ishido (hacked) */
+
+    /* ishido (hacked) */
 	if (!strncmp("sio-Wyo ", (const char *) &buf[0x0090], 8))
 		return 1;
-/* onslaught */
+
+    /* onslaught */
 	if (!strncmp("SS  CAL ", (const char *) &buf[0x0088], 8))
 		return 1;
-/* tram terror pirate */
+
+    /* tram terror pirate */
 	if (!strncmp("SG NEPIE", (const char *) &buf[0x3648], 8))
 		return 1;
-/* breath of fire 3 chinese */
+
+    /* breath of fire 3 chinese */
 	if (buf[0x0007] == 0x1c && buf[0x0008] == 0x0a && buf[0x0009] == 0xb8 && buf[0x000a] == 0x0a)
 		return 1;
-/*tetris pirate */
+
+    /*tetris pirate */
 	if (!strncmp("@TTI>", (const char *) &buf[0x1cbe], 5))
 		return 1;
 
@@ -216,7 +233,6 @@ int genesis_isfunkySMD(unsigned char *buf)
 }
 
 /* code taken directly from GoodGEN by Cowering */
-
 int genesis_isSMD(unsigned char *buf)
 {
 	if (buf[0x2080] == 'S' && buf[0x80] == 'E' && buf[0x2081] == 'G' && buf[0x81] == 'A')
@@ -226,49 +242,62 @@ int genesis_isSMD(unsigned char *buf)
 
 int genesis_isfunkyBIN(unsigned char *buf)
 {
-/* all the special cases for crappy headered roms */
-/* aq quiz */
+	/* all the special cases for crappy headered roms */
+	/* aq quiz */
 	if (!strncmp("QUIZ (G-3051", (const char *) &buf[0x1e0], 12))
 		return 1;
-/* phelios USA redump */
-/* target earth */
-/* klax namcot */
+
+	/* phelios USA redump */
+	/* target earth */
+	/* klax namcot */
 	if (buf[0x0104] == 'A' && buf[0x0101] == 'S' && buf[0x0102] == 'E' && buf[0x0103] == 'G')
 		return 1;
-/* jap baseball 94 */
+
+    /* jap baseball 94 */
 	if (!strncmp("WORLD PRO-B", (const char *) &buf[0x1e0], 11))
 		return 1;
-/* devlish mahj tower */
+
+    /* devlish mahj tower */
 	if (!strncmp("DEVILISH MAH", (const char *) &buf[0x120], 12))
 		return 1;
-/* golden axe 2 beta */
+
+    /* golden axe 2 beta */
 	if (!strncmp("SEGA", (const char *) &buf[0xe40a], 4))
 		return 1;
-/* omega race */
+
+    /* omega race */
 	if (!strncmp(" OMEGA RAC", (const char *) &buf[0x120], 10))
 		return 1;
-/* budokan beta */
+
+    /* budokan beta */
 	if (!strncmp("BUDOKAN.", (const char *) &buf[0x4e18], 8))
 		return 1;
-/* cdx 1.8 bios */
+
+    /* cdx 1.8 bios */
 	if (!strncmp(" CDX PRO", (const char *) &buf[0x588], 8))
 		return 1;
-/* ishido (hacked) */
+
+    /* ishido (hacked) */
 	if (!strncmp("Ishido - ", (const char *) &buf[0x120], 9))
 		return 1;
-/* onslaught */
+
+    /* onslaught */
 	if (!strncmp("(C)ACLD 1991", (const char *) &buf[0x118], 12))
 		return 1;
-/* tram terror pirate */
+
+    /* tram terror pirate */
 	if (!strncmp("DREAMWORK", (const char *) &buf[0x2c70], 9))
 		return 1;
-/* breath of fire 3 chinese */
+
+    /* breath of fire 3 chinese */
 	if (buf[0x000f] == 0x1c && buf[0x0010] == 0x00 && buf[0x0011] == 0x0a && buf[0x0012] == 0x5c)
 		return 1;
-/* tetris pirate */
+
+    /* tetris pirate */
 	if (!strncmp("TETRIS", (const char *) &buf[0x397f], 6))
 		return 1;
-	return 0;
+
+    return 0;
 }
 
 int genesis_isBIN(unsigned char *buf)
@@ -427,13 +456,18 @@ int genesis_interrupt(void)
 			logerror("H Interrupt\n");
 			return 4;					/*Interrupt vector 6 is V interrupt, 4 is H interrupt and 2 is ext */
 		}
-/*	else
-		return 4;*/
-		/*printf("denied\n"); */
+/*
+	else
+	{
+        printf("denied\n");
+		return 4;
+	}
+*/
 		return 0;
 	}
 	return 0;
 }
+
 WRITE_HANDLER(genesis_io_w)
 {
 	data = COMBINE_WORD(0, data);
@@ -472,21 +506,15 @@ READ_HANDLER(genesis_io_r)
 		{
 
 		case 'J':
-
 			returnval = 0x00;
-
 			break;
 
 		case 'E':
-
 			returnval = 0xc0;
-
 			break;
 
 		case 'U':
-
 			returnval = 0x80;
-
 			break;
 
 		}
@@ -494,21 +522,15 @@ READ_HANDLER(genesis_io_r)
 		break;
 
 	case 1:							/* USA */
-
 		returnval = 0x80;
-
 		break;
 
 	case 2:							/* Japan */
-
 		returnval = 0x00;
-
 		break;
 
 	case 3:							/* Europe */
-
 		returnval = 0xc0;
-
 		break;
 
 	}
@@ -536,6 +558,7 @@ READ_HANDLER(genesis_io_r)
 	}
 	return 0x00;
 }
+
 READ_HANDLER(genesis_ctrl_r)
 {
 /*	int returnval; */
@@ -559,6 +582,7 @@ READ_HANDLER(genesis_ctrl_r)
 	return 0x00;
 
 }
+
 WRITE_HANDLER(genesis_ctrl_w)
 {
 	data = COMBINE_WORD(0, data);
