@@ -719,6 +719,7 @@ static void menu_open(HWND window)
 	const struct ImageModule *module;
 	const char *filename;
 	struct wimgtool_info *info;
+	int read_or_write;
 
 	pool_init(&pool);
 
@@ -732,11 +733,15 @@ static void menu_open(HWND window)
 		goto done;
 
 	filename = T2A(ofn.lpstrFile);
-
 	module = find_filter_module(ofn.nFilterIndex, FALSE);
 
-	err = wimgtool_open_image(window, module, filename, (ofn.Flags & OFN_READONLY)
-		? OSD_FOPEN_READ : OSD_FOPEN_RW);
+	// is this file read only?
+	if ((ofn.Flags & OFN_READONLY) || (GetFileAttributes(ofn.lpstrFile) & FILE_ATTRIBUTE_READONLY))
+		read_or_write = OSD_FOPEN_READ;
+	else
+		read_or_write = OSD_FOPEN_RW;
+
+	err = wimgtool_open_image(window, module, filename, read_or_write);
 	if (err)
 		goto done;
 

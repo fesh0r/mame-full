@@ -22,6 +22,9 @@ Imgtool Changes:
 ----------------
 - Creation and last modified dates are now supported by the core.  [Nate Woods]
 
+- [Windows Imgtool] Fixed a bug that prevented read only files from opening.
+  (bug #624)  [Nate Woods]
+
 
 
 Source Changes:
