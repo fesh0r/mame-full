@@ -1,5 +1,10 @@
 #include "includes/pic8259.h"
 
+/* NPW 22-Nov-2002 - fun with Microsoft... */
+#ifdef x86
+#undef x86
+#endif
+
 #if 0
 #define DBG_LOG(level, text, print) \
 		if (level>0) { \
