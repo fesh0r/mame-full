@@ -315,7 +315,12 @@ void OptionsInit(int total_games)
 	settings.splitter[0] = 150;
 	settings.splitter[1] = 362;
 #ifdef MESS
-    settings.splitter[2] = 406;
+	/* an algorithm to adjust for the fact that we need a larger window for the
+	 * software picker
+	 */
+	settings.splitter[1] -= (settings.splitter[1] - settings.splitter[0]) / 4;
+	settings.area.width += settings.splitter[1] - settings.splitter[0];
+    settings.splitter[2] = settings.splitter[1] + (settings.splitter[1] - settings.splitter[0]);
 #endif
 
 	settings.language          = strdup("english");
