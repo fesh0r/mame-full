@@ -86,7 +86,10 @@ const struct GameDriver *drivers[] =
 	/* BALLY */
 	DRIVER( astrocde )	/* Bally Astrocade								  */
 
-	/* COLECO */
+	/* FAIRCHILD */
+	DRIVER( channelf )	/* Channel F									  */
+
+    /* COLECO */
 	DRIVER( coleco )	/* ColecoVision (Original BIOS )				  */
 #if 0						/* Please dont include these next 2 in a distribution, they are Hacks	*/
 	DRIVER( colecofb )	/* ColecoVision (Fast BIOS load)				  */
@@ -154,7 +157,7 @@ const struct GameDriver *drivers[] =
     DRIVER( mac512ke )  /* 1986 Apple Macintosh 512ke                     */
 	DRIVER( macplus )	/* 1986 Apple Macintosh Plus					  */
 /*	DRIVER( mac2 )*/	/* 1987 Apple Macintosh II						  */
-	DRIVER( lisa2 )
+	DRIVER( lisa2 ) 	/*												  */
 
 	/* ATARI */
 	DRIVER( a400 )		/* 1979 Atari 400								  */
@@ -238,8 +241,8 @@ TESTDRIVER( plus4v )	/* Commodore +4 								  */
 	DRIVER( nc100 ) 	/* 19?? NC100									  */
 #endif
 #ifndef MESS_EXCLUDE_ACORN
-	DRIVER( z88 )
-	DRIVER( avigo )
+	DRIVER( z88 )		/*												  */
+	DRIVER( avigo ) 	/*												  */
 #endif
 #ifndef MESS_EXCLUDE_AMSTRAD
 	/* VEB MIKROELEKTRONIK */

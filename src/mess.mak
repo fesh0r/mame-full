@@ -125,7 +125,8 @@ DRVLIBS = $(OBJ)/advision.a \
           $(OBJ)/kim1.a     \
           $(OBJ)/lisa.a     \
           $(OBJ)/aquarius.a \
-          $(OBJ)/avigo.a \
+	  $(OBJ)/avigo.a    \
+	  $(OBJ)/fairch.a   \
           #$(OBJ)/motorola.a \
 
 ifndef MESS_EXCLUDE_AMSTRAD
@@ -314,6 +315,9 @@ $(OBJ)/avigo.a: \
           $(OBJ)/mess/systems/avigo.o    \
           $(OBJ)/mess/vidhrdw/avigo.o    \
           $(OBJ)/mess/machine/28f008sa.o
+
+$(OBJ)/fairch.a: \
+	  $(OBJ)/mess/systems/channelf.o
 
 $(OBJ)/ti99.a:     \
           $(OBJ)/mess/machine/tms9901.o  \
