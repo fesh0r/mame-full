@@ -5,7 +5,7 @@
 	This core will emulate the common feature set found in every disk controller.
 	Most controllers support additional features, but are still compatible with
 	the basic feature set.  I have a little documentation on two specific
-	disk controllers (MT3200 and WD800/WD800A), but I have not tried to emulate
+	disk controllers (WD900 and WD800/WD800A), but I have not tried to emulate
 	controller-specific features.
 
 
