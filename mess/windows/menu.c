@@ -693,7 +693,7 @@ static void prepare_menus(void)
 			if (dev->type == IO_CASSETTE)
 			{
 				cassette_state state;
-				state = cassette_get_state(img) & CASSETTE_MASK_UISTATE;
+				state = image_exists(img) ? (cassette_get_state(img) & CASSETTE_MASK_UISTATE) : CASSETTE_STOPPED;
 				append_menu(sub_menu, MF_SEPARATOR, 0, -1);
 				append_menu(sub_menu, flags_for_exists	| ((state == CASSETTE_STOPPED)	? MF_CHECKED : 0),	new_item + DEVOPTION_CASSETTE_STOPPAUSE,	UI_pauseorstop);
 				append_menu(sub_menu, flags_for_exists	| ((state == CASSETTE_PLAY)		? MF_CHECKED : 0),	new_item + DEVOPTION_CASSETTE_PLAY,			UI_play);

@@ -12,6 +12,8 @@ System Driver Changes:
 
 - [COLECO] Yolks Revenge fully playable now.  [JMoya]
 
+- [UK101] Minor enhancements, switched to MESS managed RAM.  [Nate Woods]
+
 
 
 User Interface Changes:

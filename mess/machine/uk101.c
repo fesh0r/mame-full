@@ -34,31 +34,16 @@ MACHINE_INIT( uk101 )
 
 	acia6850_config (0, &uk101_acia0);
 
-	if (readinputport(8) != uk101_ramsize)
-	{
-		uk101_ramsize = readinputport(8);
-		switch (uk101_ramsize)
-		{
-			case 2:
-				install_mem_write_handler(0, 0x2000, 0x9fff, MWA_RAM);
-				install_mem_read_handler(0, 0x2000, 0x9fff, MRA_RAM);
-				install_mem_write_handler(0, 0x1000, 0x1fff, MWA_RAM);
-				install_mem_read_handler(0, 0x1000, 0x1fff, MRA_RAM);
-				break;
-			case 1:
-				install_mem_write_handler(0, 0x2000, 0x9fff, MWA_NOP);
-				install_mem_read_handler(0, 0x2000, 0x9fff, MRA_NOP);
-				install_mem_write_handler(0, 0x1000, 0x1fff, MWA_RAM);
-				install_mem_read_handler(0, 0x1000, 0x1fff, MRA_RAM);
-				break;
-			case 0:
-				install_mem_write_handler(0, 0x2000, 0x9fff, MWA_NOP);
-				install_mem_read_handler(0, 0x2000, 0x9fff, MRA_NOP);
-				install_mem_write_handler(0, 0x1000, 0x1fff, MWA_NOP);
-				install_mem_read_handler(0, 0x1000, 0x1fff, MRA_NOP);
-				break;
-		}
-	}
+	cpu_setbank(1, &mess_ram[0x0000]);
+	cpu_setbank(2, &mess_ram[0x1000]);
+	cpu_setbank(3, &mess_ram[0x2000]);
+
+	memory_set_bankhandler_r(1, 0, (mess_ram_size > 0x0000) ? MRA_BANK1 : MRA_ROM);
+	memory_set_bankhandler_w(1, 0, (mess_ram_size > 0x0000) ? MWA_BANK1 : MWA_ROM);
+	memory_set_bankhandler_r(2, 0, (mess_ram_size > 0x1000) ? MRA_BANK2 : MRA_ROM);
+	memory_set_bankhandler_w(2, 0, (mess_ram_size > 0x1000) ? MWA_BANK2 : MWA_ROM);
+	memory_set_bankhandler_r(3, 0, (mess_ram_size > 0x2000) ? MRA_BANK3 : MRA_ROM);
+	memory_set_bankhandler_w(3, 0, (mess_ram_size > 0x2000) ? MWA_BANK3 : MWA_ROM);
 }
 
 READ_HANDLER( uk101_acia0_casin )

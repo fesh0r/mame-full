@@ -33,9 +33,9 @@ Hardware:	MC6850
 /* memory w/r functions */
 
 MEMORY_READ_START( uk101_readmem )
-	{0x0000, 0x0fff, MRA_RAM},
-	{0x1000, 0x1fff, MRA_RAM},
-	{0x2000, 0x9fff, MRA_RAM},
+	{0x0000, 0x0fff, MRA_BANK1 },
+	{0x1000, 0x1fff, MRA_BANK2 },
+	{0x2000, 0x9fff, MRA_BANK3 },
 	{0xa000, 0xbfff, MRA_ROM},
 	{0xc000, 0xcfff, MRA_NOP},
 	{0xd000, 0xd3ff, videoram_r},
@@ -48,9 +48,9 @@ MEMORY_READ_START( uk101_readmem )
 MEMORY_END
 
 MEMORY_WRITE_START( uk101_writemem )
-	{0x0000, 0x0fff, MWA_RAM},
-	{0x1000, 0x1fff, MWA_RAM},
-	{0x2000, 0x9fff, MWA_RAM},
+	{0x0000, 0x0fff, MWA_BANK1 },
+	{0x1000, 0x1fff, MWA_BANK2 },
+	{0x2000, 0x9fff, MWA_BANK3 },
 	{0xa000, 0xbfff, MWA_ROM},
 	{0xc000, 0xcfff, MWA_NOP},
 	{0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size},
@@ -63,9 +63,9 @@ MEMORY_WRITE_START( uk101_writemem )
 MEMORY_END
 
 MEMORY_READ_START( superbrd_readmem )
-	{0x0000, 0x0fff, MRA_RAM},
-	{0x1000, 0x1fff, MRA_RAM},
-	{0x2000, 0x9fff, MRA_RAM},
+	{0x0000, 0x0fff, MRA_BANK1 },
+	{0x1000, 0x1fff, MRA_BANK2 },
+	{0x2000, 0x9fff, MRA_BANK3 },
 	{0xa000, 0xbfff, MRA_ROM},
 	{0xc000, 0xcfff, MRA_NOP},
 	{0xd000, 0xd7ff, videoram_r},
@@ -78,9 +78,9 @@ MEMORY_READ_START( superbrd_readmem )
 MEMORY_END
 
 MEMORY_WRITE_START( superbrd_writemem )
-	{0x0000, 0x0fff, MWA_RAM},
-	{0x1000, 0x1fff, MWA_RAM},
-	{0x2000, 0x9fff, MWA_RAM},
+	{0x0000, 0x0fff, MWA_BANK1 },
+	{0x1000, 0x1fff, MWA_BANK2 },
+	{0x2000, 0x9fff, MWA_BANK3 },
 	{0xa000, 0xbfff, MWA_ROM},
 	{0xc000, 0xcfff, MWA_NOP},
 	{0xd000, 0xd7ff, videoram_w, &videoram, &videoram_size},
@@ -199,11 +199,6 @@ INPUT_PORTS_START( uk101 )
 	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "Control", KEYCODE_LCONTROL, IP_JOY_NONE )
 	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "Control", KEYCODE_RCONTROL, IP_JOY_NONE )
 	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "~", KEYCODE_TILDE, IP_JOY_NONE )
-	PORT_START	/* 8: Machine config */
-	PORT_DIPNAME( 0x03, 0, "RAM Size" )
-	PORT_DIPSETTING( 0, "4Kb" )
-	PORT_DIPSETTING( 1, "8Kb" )
-	PORT_DIPSETTING( 2, "40Kb" )
 INPUT_PORTS_END
 
 static INTERRUPT_GEN( uk101_interrupt )
@@ -270,6 +265,9 @@ ROM_END
 
 SYSTEM_CONFIG_START(uk101)
 	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "bas\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, device_load_uk101_cassette, device_unload_uk101_cassette, NULL)
+	CONFIG_RAM_DEFAULT(4 * 1024)
+	CONFIG_RAM(8 * 1024)
+	CONFIG_RAM(40 * 1024)
 SYSTEM_CONFIG_END
 
 /*    YEAR	NAME		PARENT	COMPAT	MACHINE		INPUT	INIT	CONFIG  COMPANY				FULLNAME */
