@@ -505,6 +505,7 @@ $(OBJ)/amstrad.a:  \
 	  $(OBJ)/mess/machine/msm8251.o  \
 	  $(OBJ)/mess/vidhrdw/pcw16.o    \
 	  $(OBJ)/mess/systems/amstrad.o  \
+    $(OBJ)/mess/machine/serial.o
 
 $(OBJ)/veb.a: \
 	  $(OBJ)/mess/vidhrdw/kc.o	 \
