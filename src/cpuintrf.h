@@ -36,9 +36,6 @@ enum
 #if (HAS_Z80)
 	CPU_Z80,
 #endif
-#if (HAS_SH2)
-	CPU_SH2,
-#endif
 #if (HAS_Z80GB)
 	CPU_Z80GB,
 #endif
@@ -122,6 +119,9 @@ enum
 #endif
 #if (HAS_N7751)
 	CPU_N7751,
+#endif
+#if (HAS_I8X41)
+	CPU_I8X41,
 #endif
 #if (HAS_M6800)
 	CPU_M6800,
@@ -237,6 +237,9 @@ enum
 #if (HAS_PSXCPU)
 	CPU_PSXCPU,
 #endif
+#if (HAS_SH2)
+    CPU_SH2,
+#endif
 #if (HAS_SC61860)
 	CPU_SC61860,
 #endif
@@ -252,7 +255,16 @@ enum
 #if (HAS_ASAP)
 	CPU_ASAP,
 #endif
-	CPU_COUNT
+#if (HAS_LH5801)
+	CPU_LH5801,
+#endif
+#if (HAS_SATURN)
+	CPU_SATURN,
+#endif
+#if (HAS_APEXC)
+	CPU_APEXC,
+#endif
+    CPU_COUNT
 };
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */

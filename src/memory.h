@@ -658,10 +658,12 @@ void     cpu_setopbase##abits##ledw     (offs_t pc);					\
 
 /* ----- declare 8-bit handlers ----- */
 DECLARE_HANDLERS_8BIT(16)
+DECLARE_HANDLERS_8BIT(17)
 DECLARE_HANDLERS_8BIT(20)
 DECLARE_HANDLERS_8BIT(21)
 DECLARE_HANDLERS_8BIT(24)
 #define change_pc16(pc)			change_pc_generic(pc, 16, 0, cpu_setopbase16)
+#define change_pc17(pc) 		change_pc_generic(pc, 17, 0, cpu_setopbase17)
 #define change_pc20(pc)			change_pc_generic(pc, 20, 0, cpu_setopbase20)
 #define change_pc21(pc)			change_pc_generic(pc, 21, 0, cpu_setopbase21)
 #define change_pc24(pc)			change_pc_generic(pc, 24, 0, cpu_setopbase24)

@@ -1960,6 +1960,7 @@ void name(offs_t pc)																	\
 -------------------------------------------------*/
 
 GENERATE_HANDLERS_8BIT(16)
+GENERATE_HANDLERS_8BIT(17)
 GENERATE_HANDLERS_8BIT(20)
 GENERATE_HANDLERS_8BIT(21)
 GENERATE_HANDLERS_8BIT(24)
@@ -1987,6 +1988,7 @@ GENERATE_HANDLERS_32BIT_BE(18)	/* HACK -- used for pdp-1 */
 static const struct memory_address_table readmem_to_bits[] =
 {
 	{ 16, cpu_readmem16 },
+	{ 17, cpu_readmem17 },
 	{ 20, cpu_readmem20 },
 	{ 21, cpu_readmem21 },
 	{ 24, cpu_readmem24 },
