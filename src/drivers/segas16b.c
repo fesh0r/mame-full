@@ -2318,6 +2318,42 @@ static INPUT_PORTS_START( hwchamp )
 INPUT_PORTS_END
 
 
+static INPUT_PORTS_START( mvp )
+	PORT_INCLUDE( system16b_generic )
+
+	PORT_MODIFY("P1")
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 )
+
+	PORT_MODIFY("P2")
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
+
+	PORT_MODIFY("DSW")
+	PORT_DIPNAME( 0x01, 0x01, "Credits needed" )
+	PORT_DIPSETTING(    0x01, "1 to start, 1 to continue" )
+	PORT_DIPSETTING(    0x00, "2 to start, 1 to continue" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "Innings" )
+	PORT_DIPSETTING(    0x04, "1 Credit 1 Inning Only" )
+	PORT_DIPSETTING(    0x00, "+2 Credits 3 Innings" )
+	PORT_DIPNAME( 0x38, 0x38, "Time Limits" )
+	PORT_DIPSETTING(    0x18, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x28, "Easy 2" )
+	PORT_DIPSETTING(    0x08, "Easy 3" )
+	PORT_DIPSETTING(    0x38, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x10, "Hard 2" )
+	PORT_DIPSETTING(    0x20, "Hard 3" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, "Easy 2" )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
+INPUT_PORTS_END
+
+
 static INPUT_PORTS_START( passsht )
 	PORT_INCLUDE( system16b_generic )
 
@@ -3551,6 +3587,25 @@ ROM_START( cotton )
 ROM_END
 
 /**************************************************************************************************************************
+ **************************************************************************************************************************
+ **************************************************************************************************************************
+	Cotton, Sega System 16B
+	CPU: FD1094 (317-0180T) // T could be wrong, it was handwritten
+	ROM Board: 171-5704
+*/
+
+/* just a placeholder for key */
+ROM_START( cottona )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_REGION( 0x2000, REGION_USER1, 0 ) /* decryption key */
+	ROM_LOAD( "317-0180.key", 0x0000, 0x2000, CRC(a236b915) SHA1(374f2b23f0822891aadb86b779434ae2a1194932) )
+	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_REGION16_BE( 0x200000, REGION_GFX2, 0 ) /* sprites */
+	ROM_REGION( 0x30000, REGION_CPU2, 0 ) /* sound CPU */
+ROM_END
+
+
+/**************************************************************************************************************************
 	Cotton (Japan), Sega System 16B
 	CPU: FD1094 (317-0179A)
 	ROM Board: 171-5704
@@ -4639,7 +4694,7 @@ ROM_END
 	CPU: FD1094 (317-0092)
 	ROM Board: 171-5704
 */
-ROM_START( tetrisa )
+ROM_START( tetrisb )
 	ROM_REGION( 0x020000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "epr12193.rom", 0x000000, 0x10000, CRC(9ce15ac9) SHA1(0fdbd3ca37e4c0efa7c66415714bfc10637ced6c) )
 	ROM_LOAD16_BYTE( "epr12192.rom", 0x000001, 0x10000, CRC(98d590ca) SHA1(4d18409c0b5734d0adcea5646d13f65b687dd05d) )
@@ -4678,7 +4733,7 @@ ROM_END
 	A10    Unused                  Z80 sample data     B10    EPR-12166   27C512      Tile data
 	A11    Unused                  Z80 sample data     B11    EPR-12167   27C512      Tile data
  */
-ROM_START( tetrisb )
+ROM_START( tetrisba )
 	ROM_REGION( 0x010000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "epr12163.a1", 0x000001, 0x08000, CRC(d372d3f3) SHA1(e88fa5e66cc2d3cb9eb6d0f60d81c537e4642500) )
 	ROM_LOAD16_BYTE( "epr12164.a4", 0x000000, 0x08000, CRC(b329cd6f) SHA1(409322f32ee676dc72a3b007e3f8d691ca991e60) )
@@ -5059,6 +5114,47 @@ ROM_START( wrestwra )
 	ROM_LOAD( "mpr12149.a12", 0x30000, 0x20000, CRC(d6617b19) SHA1(aa36d257eaa52c8c871a39aaa2f29c203525dbaf) )
 ROM_END
 
+/**************************************************************************************************************************
+	Wrestle War, Sega System 16B
+	CPU: FD1094 (317-0102)
+	ROM Board: 171-5704
+*/
+ROM_START( wrestwrb )
+	ROM_REGION( 0xc0000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr12370.a7", 0x00000, 0x20000, CRC(cb5dbb76) SHA1(c6d8599020b2ce311d1d1cdbdac1f4830327ec9a) )
+	ROM_LOAD16_BYTE( "epr12369.a5", 0x00001, 0x20000, CRC(6f47dd2f) SHA1(f970e5e0aad6b4199616eeb60461590817395688) )
+	/* empty 0x40000 - 0x80000 */
+	ROM_LOAD16_BYTE( "epr12146.a8", 0x80000, 0x20000, CRC(b77ba665) SHA1(b6a01ca857b5127ebb763f18cd4123185a7765a6) )
+	ROM_LOAD16_BYTE( "epr12144.a6", 0x80001, 0x20000, CRC(ddf075cb) SHA1(5d887f0d5786fa62757c593d937bba6f150c1b12) )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0102.key", 0x0000, 0x2000, CRC(28ba1bf0) SHA1(09de5e764866083a388a239904f16b90fbcba106) )
+
+	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "mpr12150.a14", 0x00000, 0x20000, CRC(6a821ab9) SHA1(e69f7e534835d4c820746ffc3ad76c3b7bb9b02e) )
+	ROM_LOAD( "mpr12151.a15", 0x20000, 0x20000, CRC(2b1a0751) SHA1(8cb1027ef3728f5bdfdb5e2df0f0421f743cdc0a) )
+	ROM_LOAD( "mpr12152.a16", 0x40000, 0x20000, CRC(f6e190fe) SHA1(4c8b334fb22c449d8d00c8f49f5eccbe008e244f) )
+
+	ROM_REGION16_BE( 0x180000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD16_BYTE( "mpr12153.b1",  0x000001, 0x20000, CRC(ffa7d368) SHA1(e5663ef1cbe8ab27be0919a3cd78d9a7747bbac6) )
+	ROM_LOAD16_BYTE( "mpr12157.b5",  0x000000, 0x20000, CRC(8d7794c1) SHA1(ace87970cfa02ab8200173622633d0d70ef7aa9e) )
+	ROM_LOAD16_BYTE( "mpr12154.b2",  0x040001, 0x20000, CRC(0ed343f2) SHA1(951bd616e63c5fe0aa3f387c9c12153b4f29675f) )
+	ROM_LOAD16_BYTE( "mpr12158.b6",  0x040000, 0x20000, CRC(99458d58) SHA1(87020267610c5784e066bb4e3551852d27b4cf61) )
+	ROM_LOAD16_BYTE( "mpr12155.b3",  0x080001, 0x20000, CRC(3087104d) SHA1(9ad0ea2b580820443c576cbb95d57467e32ea7b5) )
+	ROM_LOAD16_BYTE( "mpr12159.b7",  0x080000, 0x20000, CRC(abcf9bed) SHA1(4f755cfd0304e877b798c31de50e15995f8c4edf) )
+	ROM_LOAD16_BYTE( "opr12156.b4",  0x0c0001, 0x20000, CRC(41b6068b) SHA1(c1f1f51c4e0f4320cef7821bccac5b0c9e915d9b) )
+	ROM_LOAD16_BYTE( "opr12160.b8",  0x0c0000, 0x20000, CRC(97eac164) SHA1(2bb62e6d8b2d662e9b31aa8d238a51af7c7905e8) )
+	ROM_LOAD16_BYTE( "opr12141.a1",  0x100001, 0x20000, CRC(260311c5) SHA1(6b52b671252aef992c0546468c44b722bdb6a649) )
+	ROM_LOAD16_BYTE( "opr12161.b10", 0x100000, 0x20000, CRC(35a4b1b1) SHA1(c3b8ba708f9f2822e48e52ea74d7e96f08182ac4) )
+	ROM_LOAD16_BYTE( "opr12142.a2",  0x140001, 0x10000, CRC(12e38a5c) SHA1(05558a370b4e8100d2fa5e700a5ab76771ff7729) )
+	ROM_LOAD16_BYTE( "opr12162.b11", 0x140000, 0x10000, CRC(fa06fd24) SHA1(20a578b82a75fe96a230c91645108fdc8b5bae21) )
+
+	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "epr12147.a10", 0x00000, 0x08000, CRC(c3609607) SHA1(2e0acb775c60851bf0b2037b91b07ead061d5862) )
+	ROM_LOAD( "mpr12148.a11", 0x10000, 0x20000, CRC(fb9a7f29) SHA1(7ba79c18ab4e586be2deccd78e4479d55eb75a7e) )
+	ROM_LOAD( "mpr12149.a12", 0x30000, 0x20000, CRC(d6617b19) SHA1(aa36d257eaa52c8c871a39aaa2f29c203525dbaf) )
+ROM_END
+
 
 
 /*************************************
@@ -5257,6 +5353,7 @@ GAMEX(1989, bayroutb, bayroute, system16b,      bayroute, generic_5704,  ROT0,  
 GAMEX(198?, bullet,   0,        system16b,      generic,  generic_5358,  ROT0,   "Sega",           "Bullet (FD1094 317-0041)", GAME_NOT_WORKING )
 /* Charon */
 GAME( 1991, cotton,   0,        system16b,      cotton,   generic_5704,  ROT0,   "Sega / Success", "Cotton (FD1094 317-0181a)" )
+GAMEX(1991, cottona,  cotton,   system16b,      cotton,   generic_5704,  ROT0,   "Sega / Success", "Cotton (FD1094 317-0180T?)",GAME_NOT_WORKING ) // not fully dumped
 GAME( 1991, cottonj,  cotton,   system16b,      cotton,   generic_5704,  ROT0,   "Sega / Success", "Cotton (Japan, FD1094 317-0179a)" )
 GAME( 1989, ddux,     0,        system16b,      ddux,     generic_5521,  ROT0,   "Sega",           "Dynamite Dux (FD1094 317-0096)" )
 GAMEX(19??, dunkshot, 0,        system16b,      generic,  generic_5358,  ROT0,   "Sega",           "Dunk Shot (FD1089? 317-0022?)", GAME_NOT_WORKING )
@@ -5272,8 +5369,8 @@ GAME( 1989, goldnaxa, goldnaxe, system16b_8751, goldnaxe, goldnaxe_5797, ROT0,  
 GAMEX(1989, goldnaxb, goldnaxe, system16b,      goldnaxe, generic_5797,  ROT0,   "Sega",           "Golden Axe (Version 2, World, FD1094 317-0110)", GAME_NOT_WORKING )
 GAMEX(1989, goldnaxc, goldnaxe, system16b,      goldnaxe, generic_5797,  ROT0,   "Sega",           "Golden Axe (Version 2, US, FD1094 317-0122)", GAME_NOT_WORKING )
 GAME( 1987, hwchamp,  0,        system16b,      hwchamp,  hwchamp,       ROT0,   "Sega",           "Heavyweight Champ" )
-GAME( 1989, mvp,      0,        system16b,      generic,  generic_5797,  ROT0,   "Sega",           "MVP (US, FD1094 317-0143)" )
-GAME( 1989, mvpj,     mvp,      system16b,      generic,  generic_5704,  ROT0,   "Sega",           "MVP (Japan, FD1094 317-0142)" )
+GAME( 1989, mvp,      0,        system16b,      mvp,      generic_5797,  ROT0,   "Sega",           "MVP (US, FD1094 317-0143)" )
+GAME( 1989, mvpj,     mvp,      system16b,      mvp,      generic_5704,  ROT0,   "Sega",           "MVP (Japan, FD1094 317-0142)" )
 GAME( 1988, passsht,  0,        system16b,      passsht,  generic_5358,  ROT270, "Sega",           "Passing Shot (2 Players, FD1094 317-0080)" )
 GAME( 1991, riotcity, 0,        system16b,      riotcity, generic_5704,  ROT0,   "Sega / Westone", "Riot City (Japan)" )
 GAME( 1990, ryukyu,   0,        system16b,      ryukyu,   generic_5704,  ROT0,   "Success / Sega", "RyuKyu (Japan, FD1094 317-5023)" )
@@ -5281,10 +5378,10 @@ GAME( 1987, sdi,      0,        system16b,      sdi,      sdi,           ROT0,  
 GAME( 1987, shinobi,  0,        system16b,      shinobi,  generic_5358,  ROT0,   "Sega",           "Shinobi (set 1, System 16B, unprotected)" )
 GAME( 1987, shinobib, shinobi,  system16b,      shinobi,  generic_5358,  ROT0,   "Sega",           "Shinobi (set 3, System 16B, FD1094 317-0049)" )
 GAME( 1987, sonicbom, 0,        system16b,      sonicbom, generic_5358,  ROT270, "Sega",           "Sonic Boom (FD1094 317-0053)" )
-GAMEX(198?, sjryuko,  0,        system16b,      sonicbom, generic_5358,  ROT0,   "White Board",    "Sukeban Jansi Ryuko (System 16B, FD1094 317-5021)",GAME_NOT_WORKING )
+GAMEX(198?, sjryuko,  0,        system16b,      sonicbom, generic_5358,  ROT0,   "White Board",    "Sukeban Jansi Ryuko (System 16B, FD1089 317-5021)",GAME_NOT_WORKING )
 GAMEX(19??, suprleag, 0,        system16b,      generic,  generic_5358,  ROT0,   "Sega",           "Super League (FD1094 317-0045?)", GAME_NOT_WORKING )
-GAME( 1988, tetrisa,  tetris,   system16b,      tetris,   generic_5704,  ROT0,   "Sega",           "Tetris (Japan, set 1, System 16B, FD1094 317-0092)" )
-GAME( 1988, tetrisb,  tetris,   system16b,      tetris,   generic_5358,  ROT0,   "Sega",           "Tetris (Japan, set 2, System 16B, FD1094 317-0091)" )
+GAME( 1988, tetrisb,  tetris,   system16b,      tetris,   generic_5704,  ROT0,   "Sega",           "Tetris (Japan, set 1, System 16B, FD1094 317-0092)" )
+GAME( 1988, tetrisba, tetris,   system16b,      tetris,   generic_5358,  ROT0,   "Sega",           "Tetris (Japan, set 2, System 16B, FD1094 317-0091)" )
 GAME( 1987, timescn,  0,        timescn,        timescn,  generic_5358,  ROT270, "Sega",           "Time Scanner (System 16B)" )
 GAME( 1994, toryumon, 0,        system16b,      toryumon, generic_5797,  ROT0,   "Sega",           "Toryumon" )
 GAME( 1989, tturf,    0,        system16b_8751, tturf,    tturf_5704,    ROT0,   "Sega / Sunsoft", "Tough Turf (Japan, 8751, 317-0104)")
@@ -5294,3 +5391,5 @@ GAME( 1988, wb3ba,    wb3b,     system16b,      wb3b,     generic_5704,  ROT0,  
 GAME( 1988, wb3bb,    wb3b,     system16b,      wb3b,     generic_5358,  ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (Japan, System 16B, FD1094 317-0085)" )
 GAME( 1989, wrestwar, 0,        system16b_8751, wrestwar, wrestwar_8751, ROT270, "Sega",           "Wrestle War (8751, 317-0103)" )
 GAMEX(1989, wrestwra, wrestwar, system16b,      wrestwar, generic_5704,  ROT270, "Sega",           "Wrestle War (FD1094, 317-unknown)",GAME_NOT_WORKING )
+GAME( 1989, wrestwrb, wrestwar, system16b,      wrestwar, generic_5704,  ROT270, "Sega",           "Wrestle War (FD1094, 317-0102)" )
+

@@ -563,16 +563,16 @@ static READ64_HANDLER(scsi_r)
 {
 	int reg = offset*8;
 	UINT64 r = 0;
-	if (!(mem_mask & 0xff00000000000000)) {
+	if (!(mem_mask & U64(0xff00000000000000))) {
 		r |= (UINT64)lsi53c810_reg_r(reg+0) << 56;
 	}
-	if (!(mem_mask & 0x00ff000000000000)) {
+	if (!(mem_mask & U64(0x00ff000000000000))) {
 		r |= (UINT64)lsi53c810_reg_r(reg+1) << 48;
 	}
-	if (!(mem_mask & 0x0000ff0000000000)) {
+	if (!(mem_mask & U64(0x0000ff0000000000))) {
 		r |= (UINT64)lsi53c810_reg_r(reg+2) << 40;
 	}
-	if (!(mem_mask & 0x000000ff00000000)) {
+	if (!(mem_mask & U64(0x000000ff00000000))) {
 		r |= (UINT64)lsi53c810_reg_r(reg+3) << 32;
 	}
 	if (!(mem_mask & 0x00000000ff000000)) {
@@ -594,16 +594,16 @@ static READ64_HANDLER(scsi_r)
 static WRITE64_HANDLER(scsi_w)
 {
 	int reg = offset*8;
-	if (!(mem_mask & 0xff00000000000000)) {
+	if (!(mem_mask & U64(0xff00000000000000))) {
 		lsi53c810_reg_w(reg+0, data >> 56);
 	}
-	if (!(mem_mask & 0x00ff000000000000)) {
+	if (!(mem_mask & U64(0x00ff000000000000))) {
 		lsi53c810_reg_w(reg+1, data >> 48);
 	}
-	if (!(mem_mask & 0x0000ff0000000000)) {
+	if (!(mem_mask & U64(0x0000ff0000000000))) {
 		lsi53c810_reg_w(reg+2, data >> 40);
 	}
-	if (!(mem_mask & 0x000000ff00000000)) {
+	if (!(mem_mask & U64(0x000000ff00000000))) {
 		lsi53c810_reg_w(reg+3, data >> 32);
 	}
 	if (!(mem_mask & 0x00000000ff000000)) {
@@ -812,18 +812,18 @@ static WRITE64_HANDLER( model3_sys_w )
 static data32_t real3d_status = 0;
 static READ64_HANDLER(real3d_status_r)
 {
-	if (offset == 0 && !(mem_mask & 0xffffffff00000000))
+	if (offset == 0 && !(mem_mask & U64(0xffffffff00000000)))
 	{
 		real3d_status ^= 0xffffffff;
 		return (UINT64)real3d_status << 32;
 	}
-	return 0xffffffffffffffff;
+	return U64(0xffffffffffffffff);
 }
 
 /* SCSP interface */
 static READ64_HANDLER(model3_sound_r)
 {
-	return 0xffffffffffffffff;
+	return U64(0xffffffffffffffff);
 }
 
 static WRITE64_HANDLER(model3_sound_w)

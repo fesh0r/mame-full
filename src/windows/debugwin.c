@@ -1368,8 +1368,10 @@ static LRESULT CALLBACK debug_edit_proc(HWND wnd, UINT message, WPARAM wparam, L
 				case VK_DOWN:
 					if (info->last_history > 0)
 						info->last_history--;
-					else
+					else if (info->history_count > 0)
 						info->last_history = info->history_count - 1;
+					else
+						info->last_history = 0;
 					SendMessage(wnd, WM_SETTEXT, (WPARAM)0, (LPARAM)&info->history[info->last_history][0]);
 					SendMessage(wnd, EM_SETSEL, (WPARAM)MAX_EDIT_STRING, (LPARAM)MAX_EDIT_STRING);
 					break;

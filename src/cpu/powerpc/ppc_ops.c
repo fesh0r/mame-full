@@ -1413,9 +1413,9 @@ static void ppc_invalid(UINT32 op)
 // !here are the 6xx ops! //
 ////////////////////////////
 
-#define DOUBLE_SIGN		(0x8000000000000000)
-#define DOUBLE_EXP		(0x7ff0000000000000)
-#define DOUBLE_FRAC		(0x000fffffffffffff)
+#define DOUBLE_SIGN		(U64(0x8000000000000000))
+#define DOUBLE_EXP		(U64(0x7ff0000000000000))
+#define DOUBLE_FRAC		(U64(0x000fffffffffffff))
 #define DOUBLE_ZERO		(0)
 
 /*
@@ -1431,15 +1431,15 @@ INLINE int is_nan_double(double x)
 INLINE int is_qnan_double(double x)
 {
 	return( ((*(UINT64 *)&(x) & DOUBLE_EXP) == DOUBLE_EXP) &&
-			((*(UINT64 *)&(x) & 0x0007fffffffffff) == 0x000000000000000) &&
-			((*(UINT64 *)&(x) & 0x000800000000000) == 0x000800000000000) );
+			((*(UINT64 *)&(x) & U64(0x0007fffffffffff)) == 0x000000000000000) &&
+			((*(UINT64 *)&(x) & U64(0x000800000000000)) == U64(0x000800000000000)) );
 }
 
 INLINE int is_snan_double(double x)
 {
 	return( ((*(UINT64 *)&(x) & DOUBLE_EXP) == DOUBLE_EXP) &&
 			((*(UINT64 *)&(x) & DOUBLE_FRAC) != DOUBLE_ZERO) &&
-			((*(UINT64 *)&(x) & 0x0008000000000000) == DOUBLE_ZERO) );
+			((*(UINT64 *)&(x) & U64(0x0008000000000000)) == DOUBLE_ZERO) );
 }
 
 INLINE int is_infinity_double(double x)

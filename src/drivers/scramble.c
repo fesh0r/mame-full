@@ -379,6 +379,21 @@ static ADDRESS_MAP_START( hotshock_sound_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x80, 0x80) AM_WRITE(AY8910_control_port_1_w)
 ADDRESS_MAP_END
 
+static WRITE8_HANDLER( scorpion_extra_sound_w )
+{
+	if(data != 0xff)
+		usrintf_showmessage("Played sample/speech %02X",data);
+}
+
+static WRITE8_HANDLER( scorpion_sound_cmd_w )
+{
+	// data == 0xfc -> don't play anything
+	if(data == 0xf8)
+	{
+		/* play the sample/speech */
+	}
+}
+
 static ADDRESS_MAP_START( scorpion_sound_io, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x04, 0x04) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x08, 0x08) AM_READWRITE(AY8910_read_port_0_r, AY8910_write_port_0_w)
@@ -1322,13 +1337,12 @@ INPUT_PORTS_START( scorpion )
 	PORT_DIPSETTING(    0x08, "A 1/1  B 1/1" )
 	PORT_DIPSETTING(    0x00, "A 1/1  B 1/3" )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xa0, 0xa0, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Very_Hard ) )
 INPUT_PORTS_END
 
 
@@ -1492,10 +1506,10 @@ struct AY8910interface scorpion_ay8910_interface =
 	14318000/8,	/* 1.78975 MHz */
 	/* Ant Eater clips if the volume is set higher than this */
 	{ MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER), MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER), MIXERG(16,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
-	{ 0, 0, soundlatch_r },
-	{ 0, 0, scramble_portB_r },
-	{ 0, 0, 0 },
-	{ 0, 0, 0 }
+	{ 0,					  0, soundlatch_r },
+	{ 0,					  0, scramble_portB_r },
+	{ scorpion_extra_sound_w, 0, 0 },
+	{ scorpion_sound_cmd_w,   0, 0 }
 };
 
 static struct DACinterface sfx_dac_interface =
@@ -2454,10 +2468,10 @@ ROM_START( scorpion )
 	ROM_LOAD( "32_f5.5f",     0x0000, 0x1000, CRC(1e5da9d6) SHA1(ca8b27e6dd40e4ca13e7e6b5f813bafca78b62f4) )
 	ROM_LOAD( "32_h5.5h",     0x1000, 0x1000, CRC(a57adb0a) SHA1(d97c7dc4a6c5efb59cc0148e2498156c682c6714) )
 
-	ROM_REGION( 0x3000, REGION_SOUND1, 0 ) /* Samples? */
-	ROM_LOAD( "32_a1.6c",     0x0000, 0x1000, CRC(3bf2452d) SHA1(7a163e0ef108dd40d3beab5e9805886e45be744b) )
+	ROM_REGION( 0x3000, REGION_SOUND1, 0 ) /* Samples? / Speech? */
+	ROM_LOAD( "32_a3.6e",     0x0000, 0x1000, CRC(279ae6f9) SHA1(a93b1d68c9f4b6ad62fdb8816285e61bd3b4b884) )
 	ROM_LOAD( "32_a2.6d",     0x1000, 0x1000, CRC(90352dd4) SHA1(62c261a2f2fbd8eff31d5c72cf532d5e43d86dd3) )
-	ROM_LOAD( "32_a3.6e",     0x2000, 0x1000, CRC(279ae6f9) SHA1(a93b1d68c9f4b6ad62fdb8816285e61bd3b4b884) )
+	ROM_LOAD( "32_a1.6c",     0x2000, 0x1000, CRC(3bf2452d) SHA1(7a163e0ef108dd40d3beab5e9805886e45be744b) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "prom.6e",      0x0000, 0x0020, CRC(4e3caeab) SHA1(a25083c3e36d28afdefe4af6e6d4f3155e303625) )
@@ -2481,10 +2495,10 @@ ROM_START( scrpiona )
 	ROM_LOAD( "scor_f5.bin",  0x0000, 0x1000, CRC(60180a38) SHA1(518c1267523139aa4e27860012a722b67fe25b6d) )
 	ROM_LOAD( "32_h5.5h",     0x1000, 0x1000, CRC(a57adb0a) SHA1(d97c7dc4a6c5efb59cc0148e2498156c682c6714) )
 
-	ROM_REGION( 0x3000, REGION_SOUND1, 0 ) /* Samples? */
-	ROM_LOAD( "32_a1.6c",     0x0000, 0x1000, CRC(3bf2452d) SHA1(7a163e0ef108dd40d3beab5e9805886e45be744b) )
+	ROM_REGION( 0x3000, REGION_SOUND1, 0 ) /* Samples? / Speech? */
+	ROM_LOAD( "scor_a3.bin",  0x0000, 0x1000, CRC(04abf178) SHA1(2e7f231413d9ec461ca21840f31d1d6b8b17c4d5) )
 	ROM_LOAD( "scor_a2.bin",  0x1000, 0x1000, CRC(452d6354) SHA1(3d5397fddcc17b4d03b9cdc53a6439f159d1bfcc) )
-	ROM_LOAD( "scor_a3.bin",  0x2000, 0x1000, CRC(04abf178) SHA1(2e7f231413d9ec461ca21840f31d1d6b8b17c4d5) )
+	ROM_LOAD( "32_a1.6c",     0x2000, 0x1000, CRC(3bf2452d) SHA1(7a163e0ef108dd40d3beab5e9805886e45be744b) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "prom.6e",      0x0000, 0x0020, CRC(4e3caeab) SHA1(a25083c3e36d28afdefe4af6e6d4f3155e303625) )
@@ -2520,5 +2534,5 @@ GAME( 1983, cavelon,  0,        cavelon,  cavelon,  cavelon,      ROT90, "Jetsof
 GAME( 1983, sfx,      0,        sfx,      sfx,      sfx,          ORIENTATION_FLIP_X, "Nichibutsu", "SF-X" )
 GAMEX(1983, skelagon, sfx,      sfx,      sfx,      sfx,          ORIENTATION_FLIP_X, "Nichibutsu USA", "Skelagon", GAME_NOT_WORKING )
 GAME( 198?, mimonscr, mimonkey, mimonscr, mimonscr, mimonscr,     ROT90, "bootleg", "Mighty Monkey (bootleg on Scramble hardware)" )
-GAMEX(1982, scorpion, 0,		scorpion, scorpion, scorpion,	  ROT90, "Zaccaria", "Scoprion (set 1)", GAME_IMPERFECT_SOUND )
-GAMEX(1982, scrpiona, scorpion, scorpion, scorpion, scorpion,	  ROT90, "Zaccaria", "Scoprion (set 2)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
+GAMEX(1982, scorpion, 0,		scorpion, scorpion, scorpion,	  ROT90, "Zaccaria", "Scorpion (set 1)", GAME_IMPERFECT_SOUND )
+GAMEX(1982, scrpiona, scorpion, scorpion, scorpion, scorpion,	  ROT90, "Zaccaria", "Scorpion (set 2)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )

@@ -116,3 +116,5 @@ extern size_t decocass_bgvideoram_size;
 extern size_t decocass_tileram_size;
 extern size_t decocass_objectram_size;
 
+void decocass_machine_state_save_init(void);
+void decocass_video_state_save_init(void);

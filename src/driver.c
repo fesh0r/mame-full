@@ -308,6 +308,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( flyboyb )	/* bootleg */
 	DRIVER( fastfred ) /* 136009   (c) 1982 Atari */
 	DRIVER( jumpcoas )	/* (c) 1983 Kaneko */
+	DRIVER( jumpcoat )	/* (c) 1983 Taito */
 	DRIVER( boggy84 )	/* bootleg, original is (c)1983 Taito/Kaneko */
 	DRIVER( redrobin )	/* (c) 1986 Elettronolo */
 	DRIVER( imago )
@@ -2861,122 +2862,136 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( hangon )	/* (c) 1985 */
 	DRIVER( sharrier )	/* (c) 1985 */
 
-	/* Pre-System 16 */
+
+	/* Pre-16 */
+	DRIVER( aliensyj )	/* (c) 1987 (protected. Japan) */
+	DRIVER( aliensya )	/* (c) 1987 (protected) */
+	DRIVER( bodyslam )	/* (c) 1986 */
+	DRIVER( dumpmtmt )	/* (c) 1986 (Japan) */
+	DRIVER( mjleague )	/* (c) 1985 */
 	DRIVER( quartet )	/* (c) 1986 */
+	DRIVER( quartetj )	/* (c) 1986 */
 	DRIVER( quartet2 )	/* (c) 1986 */
 	DRIVER( quartt2j )	/* (c) 1986 */
-	DRIVER( quartetj )	/* (c) 1986 */
 
-	/* System 16 */
-	DRIVER( aceattac )	/* (protected) */
+	/* System16A */
 	DRIVER( afighter )	/* (protected) */
-	DRIVER( bullet )	/* (protected) */
-	DRIVER( cotton )	/* (protected) */
-	DRIVER( cottonj )	/* (protected) */
-	DRIVER( dunkshot )	/* (protected) */
-	DRIVER( exctleag )  /* (protected) */
-	DRIVER( mvp )		/* (protected) */
-	DRIVER( mvpj )		/* (protected) */
-	DRIVER( ryukyu )	/* (protected) */
-	DRIVER( suprleag )  /* (protected) */
 	DRIVER( alexkidd )	/* (c) 1986 (protected) */
 	DRIVER( alexkida )	/* (c) 1986 */
+	DRIVER( fantzone )	/* (c) 1986 */
+	DRIVER( fantzono )	/* (c) 1986 */
+	DRIVER( sdioj )		/* (c) 1987 (protected. Japan) */
+	DRIVER( shinobia )	/* (c) 1987 (protected) */
+	DRIVER( shinobaa )
+	DRIVER( sjryukoa )	/* (c) 1988 White Board */
+	DRIVER( tetris )	/* (c) 1988 (FD1094, decrypted) S16A */
+	DRIVER( tetrisaa )	/* (c) 1988 (FD1094, decrypted) S16A */
+	DRIVER( timescna )	/* (c) 1987 */
+	DRIVER( wb3a )		/* (c) 1988 Sega / Westone (FD1094, decrypted) */
+
+	/* System 16B */
+	DRIVER( aceattac )	/* (protected) */
 	DRIVER( aliensyn )	/* (c) 1987 */
-	DRIVER( aliensya )	/* (c) 1987 (protected) */
 	DRIVER( aliensyb )	/* (c) 1987 (protected) */
-	DRIVER( aliensyj )	/* (c) 1987 (protected. Japan) */
 	DRIVER( altbeast )	/* (c) 1988 */
 	DRIVER( altbeasa )	/* (c) 1988 */
 	DRIVER( altbeas2 )	/* (c) 1988 */
 	DRIVER( altb8751 )	/* (c) 1988 */
+	DRIVER( jyuo8751 )	/* (c) 1988 */
 	DRIVER( jyuohki )	/* (c) 1988 (protected. Altered Beast Japan) */
 	DRIVER( jyuohki2 )
-	DRIVER( jyuo8751 )	/* (c) 1988 */
-	DRIVER( atomicp )	/* (c) 1990 Philko - korean clone board */
 	DRIVER( aurail )	/* (c) 1990 Sega / Westone */
 	DRIVER( auraila )	/* (c) 1990 Sega / Westone (protected) */
+	DRIVER( atomicp )	/* (c) 1990 Philko - korean clone board */
 	DRIVER( bayroute )	/* (c) 1989 Sunsoft / Sega */
 	DRIVER( bayrouta )	/* (c) 1989 (protected) */
 	DRIVER( bayroutb )	/* (c) 1989 */
-	DRIVER( bayrtbl1 )	/* (c) 1989 (protected) (bootleg) */
-	DRIVER( bayrtbl2 )	/* (c) 1989 (protected) (bootleg) */
-	DRIVER( bodyslam )	/* (c) 1986 */
+	DRIVER( bullet )	/* (protected) */
+	DRIVER( cotton )	/* (protected) */
+	DRIVER( cottona )
+	DRIVER( cottonj )	/* (protected) */
 	DRIVER( ddux )		/* (c) 1989 (FD1094, decrypted) */
-	DRIVER( dduxbl )	/* (c) 1989 (Datsu bootleg) */
-	DRIVER( dumpmtmt )	/* (c) 1986 (Japan) */
+	DRIVER( dunkshot )	/* (protected) */
 	DRIVER( eswat )		/* (c) 1989 (FD1094, decrypted) */
 	DRIVER( eswatu )	/* (c) 1989 (FD1094, decrypted) */
 	DRIVER( eswatj )	/* (c) 1989 (FD1094, decrypted) */
-	DRIVER( eswatbl )	/* BOOTLEG */
-	DRIVER( fantzone )	/* (c) 1986 */
-	DRIVER( fantzono )	/* (c) 1986 */
-	DRIVER( sonicbom )	/* (c) 1987 (FD1094, decrypted) */
-	DRIVER( sjryuko )	/* (c) 1988 White Board */
-	DRIVER( sjryukoa )	/* (c) 1988 White Board */
+	DRIVER( exctleag )  /* (protected) */
 	DRIVER( fpoint )	/* (c) 1989 (Japan, FD1094, decrypted) */
-	DRIVER( fpointbl )	/* (c) 1989 (Datsu bootleg) */
-	DRIVER( fpointbj )	/* (c) 1989 (Datsu bootleg, Japan) */
-	DRIVER( tetris )	/* (c) 1988 (FD1094, decrypted) */
-	DRIVER( tetrisa )	/* (c) 1988 (FD1094, decrypted) */
-	DRIVER( tetrisb )	/* (c) 1988 (FD1094, decrypted) */
 	DRIVER( goldnaxe )	/* (c) 1989 */
-	DRIVER( goldnaxa )	/* (c) 1989 */
-	DRIVER( goldnaxc )	/* (c) 1989 (FD1094, decrypted) */
-	DRIVER( goldnabl )	/* BOOTLEG  */
-	DRIVER( goldnaxb )	/* (c) 1989 (protected) */
 	DRIVER( goldnaxj )	/* (c) 1989 (protected. Japan) */
 	DRIVER( goldnxj2 )
+	DRIVER( goldnaxa )	/* (c) 1989 */
+	DRIVER( goldnaxb )	/* (c) 1989 (protected) */
+	DRIVER( goldnaxc )	/* (c) 1989 (FD1094, decrypted) */
 	DRIVER( hwchamp )	/* (c) 1987 */
-	DRIVER( mjleague )	/* (c) 1985 */
+	DRIVER( mvp )		/* (protected) */
+	DRIVER( mvpj )		/* (protected) */
 	DRIVER( passsht )	/* (protected) */
-	DRIVER( passht4b )	/* bootleg */
-	DRIVER( passshtb )	/* bootleg */
 	DRIVER( riotcity )	/* (c) 1991 Sega / Westone */
+	DRIVER( ryukyu )	/* (protected) */
 	DRIVER( sdi )		/* (c) 1987 */
-	DRIVER( sdioj )		/* (c) 1987 (protected. Japan) */
 	DRIVER( shinobi )	/* (c) 1987 */
-	DRIVER( shinobia )	/* (c) 1987 (protected) */
 	DRIVER( shinobib )	/* (c) 1987 (protected) */
-	DRIVER( shinobl )	/* (c) 1987 (but bootleg) */
-	DRIVER( tetrisbl )	/* (c) 1988 (but bootleg) */
+	DRIVER( sonicbom )	/* (c) 1987 (FD1094, decrypted) */
+	DRIVER( sjryuko )	/* (c) 1988 White Board */
+	DRIVER( suprleag )  /* (protected) */
+	DRIVER( tetrisb )	/* (c) 1988 (FD1094, decrypted) S16B */
+	DRIVER( tetrisba )	/* (c) 1988 (FD1094, decrypted) S16B */
 	DRIVER( timescn )	/* (c) 1987 */
-	DRIVER( timescna )	/* (c) 1987 */
 	DRIVER( toryumon )	/* (c) 1995 */
 	DRIVER( tturf )		/* (c) 1989 Sega / Sunsoft */
-	DRIVER( tturfbl )	/* (c) 1989 (Datsu bootleg) */
 	DRIVER( tturfu )	/* (c) 1989 Sega / Sunsoft */
 	DRIVER( wb3b )		/* (c) 1988 Sega / Westone */
 	DRIVER( wb3ba )		/* (c) 1988 Sega / Westone (FD1094, decrypted) */
 	DRIVER( wb3bb )		/* (c) 1988 Sega / Westone (FD1094, decrypted) */
-	DRIVER( wb3bbl )		/* BOOTLEG */
-	DRIVER( wb3a )		/* (c) 1988 Sega / Westone (FD1094, decrypted) */
 	DRIVER( wrestwar )	/* (c) 1989 */
 	DRIVER( wrestwra )	/* (c) 1989 */
+	DRIVER( wrestwrb )	/* (c) 1989 Sega (FD1094, decrypted) */
+
+	/* S16 Bootlegs */
+	DRIVER( bayrtbl1 )	/* (c) 1989 (protected) (bootleg) */
+	DRIVER( bayrtbl2 )	/* (c) 1989 (protected) (bootleg) */
+	DRIVER( dduxbl )	/* (c) 1989 (Datsu bootleg) */
+	DRIVER( eswatbl )	/* BOOTLEG */
+	DRIVER( fpointbl )	/* (c) 1989 (Datsu bootleg) */
+	DRIVER( fpointbj )	/* (c) 1989 (Datsu bootleg, Japan) */
+	DRIVER( goldnabl )	/* BOOTLEG  */
+	DRIVER( passht4b )	/* bootleg */
+	DRIVER( passshtb )	/* bootleg */
+	DRIVER( shinobl )	/* (c) 1987 (but bootleg) */
+	DRIVER( tetrisbl )	/* (c) 1988 (but bootleg) */
+	DRIVER( tturfbl )	/* (c) 1989 (Datsu bootleg) */
+	DRIVER( wb3bbl )		/* BOOTLEG */
 
 	/* System 18 */
 	DRIVER( astorm )	/* (c) 1990 (FD1094, decrypted) */
 	DRIVER( astorma )	/* (c) 1990 */
+	DRIVER( astormb )	/* (c) 1990 */
 	DRIVER( astorm2p )	/* (c) 1990 (protected 2 Players) */
-	DRIVER( astormbl )	/* BOOTLEG */
 	DRIVER( bloxeed )	/* (protected) */
 	DRIVER( shdancer )	/* (c) 1989 */
 	DRIVER( shdancrb )	/* (c) 1989 */
 	DRIVER( shdancrj )	/* (c) 1989 */
-	DRIVER( shdancbl )	/* BOOTLEG */
 	DRIVER( ddcrew )	/* (c) 1991 (FD1094, decrypted) */
 	DRIVER( ddcrewa )	/* (protected) */
 	DRIVER( ddcrewb )	/* (protected) */
 	DRIVER( ddcrewc )	/* (protected) */
 	DRIVER( cltchitr )	/* (c) 1991 (FD1094, decrypted) */
 	DRIVER( cltchtrj )	/* (protected) */
+	DRIVER( dbrkr )
 	DRIVER( mwalk )		/* (c) 1990 (protected) */
 	DRIVER( mwalka )	/* (c) 1990 (protected) */
 	DRIVER( mwalkb )	/* (c) 1990 (protected) */
-	DRIVER( mwalkbl )	/* BOOTLEG */
 	DRIVER( lghost )	/* (protected) */
 	DRIVER( lghosta )   /* (protected) */
 	DRIVER( wwally )	/* (protected) */
 	DRIVER( wwallyb )	/* (protected) */
+
+	/* System18 Bootlegs */
+	DRIVER( astormbl )	/* BOOTLEG */
+	DRIVER( shdancbl )	/* BOOTLEG */
+	DRIVER( mwalkbl )	/* BOOTLEG */
+
 
 	/* Outrun Hardware */
 	DRIVER( outrun )	/* (c) 1986 (bootleg)*/
@@ -5304,6 +5319,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( galpani2 )	/* (c) 1993 Kaneko */
 	DRIVER( gpan2qiz )	/* (c) 1993 Kaneko */
 	DRIVER( jchan )		/* (c) 1995 Kaneko */
+	DRIVER( jchan2 )	/* (c) 1995 Kaneko */
 	DRIVER( galpani3 )	/* (c) 1995 Kaneko */
 
 	/* Kaneko "AX System" games */
@@ -5936,7 +5952,8 @@ Other Sun games
 	DRIVER( gt103a2 )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt103a3 )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt103asx )	/* (c) 1984 Greyhound Electronics */
-	DRIVER( gt103asa )	/* (c) 1984 Greyhound Electronics */
+	DRIVER( gt103aa )	/* (c) 1984 Greyhound Electronics */
+	DRIVER( gt103ab )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( findout )	/* (c) 1987 [Elettronolo] */
 	DRIVER( gs4002 )	/* (c) 1982 G.E.I. */
 	DRIVER( gt102c )	/* (c) 1984 Greyhound Electronics */

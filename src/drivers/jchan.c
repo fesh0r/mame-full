@@ -421,7 +421,7 @@ VIDEO_UPDATE(jchan)
 /*
 	controls handling routine is $21e2a, part of IT 1
 	player 1/2 controls are read from $f00000/$f00002 resp.
-	$f00006 is read and impacts controls 'decoding' 
+	$f00006 is read and impacts controls 'decoding'
 	$f00000 is the only location also written
 */
 static data16_t *jchan_ctrl;
@@ -597,9 +597,9 @@ static ADDRESS_MAP_START( jchan_main, ADDRESS_SPACE_PROGRAM, 16 )
 	/* (0x500000, 0x503fff) = spriteram as a hole ? makes sense: 1024 sprites, each sprite being 16 bytes long */
 //	AM_RANGE(0x500000, 0x5005ff) AM_RAM //     grid tested ($924-$97c), cleared ($982-$9a4) until $503fff
 //	AM_RANGE(0x500600, 0x503fff) AM_RAM // [B] grid tested, cleared ($b68-$be6)
-	AM_RANGE(0x500000, 0x503fff) AM_RAM AM_WRITE(jchan_suprnova_sprite32_w) AM_BASE(&jchan_spriteram) 
+	AM_RANGE(0x500000, 0x503fff) AM_RAM AM_WRITE(jchan_suprnova_sprite32_w) AM_BASE(&jchan_spriteram)
 
-	AM_RANGE(0x600000, 0x60003f) AM_RAM AM_WRITE(jchan_suprnova_sprite32regs_w) AM_BASE(&jchan_sprregs) 
+	AM_RANGE(0x600000, 0x60003f) AM_RAM AM_WRITE(jchan_suprnova_sprite32regs_w) AM_BASE(&jchan_sprregs)
 
 	/* (0x700000, 0x707fff) = palette zone  - but there seems to be 'sub-zones' used differently */
 //	AM_RANGE(0x700000, 0x707fff) AM_RAM //     grid tested, cleared ($dbc-$e3a), $2000 bytes (8Kb) copied from $aae40 ($e40-$e56)
@@ -879,6 +879,51 @@ ROM_END
 /* the program code of gurus set is the same, the graphic roms were split up, and might be bad but they should be the same since
 the code was, decoding the gfx on the second set they appear to be partly bad. */
 
+/* some kind of semi-sequel? mask roms not dumped but might be the same */
+ROM_START( jchan2 )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "j2p1x1.u67", 0x000001, 0x080000, CRC(5448c4bc) SHA1(447835275d5454f86a51879490a6b22b06a23e81) )
+	ROM_LOAD16_BYTE( "j2p1x2.u68", 0x000000, 0x080000, CRC(52104ab9) SHA1(d6647e628662bdb832270540ece18b265b7ce62d) )
+	ROM_LOAD16_BYTE( "j2p1x3.u69", 0x100001, 0x080000, CRC(8763ebca) SHA1(daf6af42a34802ef9aa996e340e218779bad695f) )
+	ROM_LOAD16_BYTE( "j2p1x4.u70", 0x100000, 0x080000, CRC(0f8e5e69) SHA1(1f71042458f76b7d99382db6412fb6c362cd3ded) )
+
+	ROM_REGION( 0x100000, REGION_CPU2, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "j2p1x5.u86", 0x000001, 0x080000, CRC(dc897725) SHA1(d3e94bac96497deb2f79996c2d4a349f6da5b1d6) ) // 1xxxxxxxxxxxxxxxxxx = 0xFF
+	ROM_LOAD16_BYTE( "j2p1x6.u87", 0x000000, 0x080000, CRC(594224f9) SHA1(bc546a98c5f3c5b08f521c54a4b0e9e2cdf83ced) ) // 1xxxxxxxxxxxxxxxxxx = 0xFF
+
+	ROM_REGION( 0x2000000, REGION_GFX1, 0 ) /* SPA GFX? */
+	#if 1 // NOT verified as being the same yet
+	ROM_LOAD( "jc-100-00.179", 0x0000000, 0x0400000, CRC(578d928c) SHA1(1cfe04f9b02c04f95a85d6fe7c4306a535ff969f) ) // SPA0 kaneko logo
+	ROM_LOAD( "jc-101-00.180", 0x0400000, 0x0400000, CRC(7f5e1aca) SHA1(66ed3deedfd55d88e7dcd017b9c2ce523ccb421a) ) // SPA1
+	ROM_LOAD( "jc-102-00.181", 0x0800000, 0x0400000, CRC(72caaa68) SHA1(f6b98aa949768a306ac9bc5f9c05a1c1a3fb6c3f) ) // SPA2
+	ROM_LOAD( "jc-103-00.182", 0x0c00000, 0x0400000, CRC(4e9e9fc9) SHA1(bf799cdee930b7f71aea4d55c3dd6a760f7478bb) ) // SPA3 title logo? + char select
+	ROM_LOAD( "jc-104-00.183", 0x1000000, 0x0200000, CRC(6b2a2e93) SHA1(e34010e39043b67493bcb23a04828ab7cda8ba4d) ) // SPA4
+	ROM_LOAD( "jc-105-00.184", 0x1200000, 0x0200000, CRC(73cad1f0) SHA1(5dbe4e318948e4f74bfc2d0d59455d43ba030c0d) ) // SPA5 11xxxxxxxxxxxxxxxxxxx = 0xFF
+	ROM_LOAD( "jc-108-00.185", 0x1400000, 0x0200000, CRC(67dd1131) SHA1(96f334378ae0267bdb3dc528635d8d03564bd859) ) // SPA6 text
+	#endif
+	ROM_LOAD16_BYTE( "j2g1x1.164", 0x1600000, 0x080000, CRC(66a7ea6a) SHA1(605cbc1eb50fb0decbea790f2a11e999d5fde762) ) // SPA-7A female portraits
+	ROM_LOAD16_BYTE( "j2g1x2.165", 0x1600001, 0x080000, CRC(660e770c) SHA1(1e385a6ee83559b269d2179e6c247238c0f3c850) ) // SPA-7B female portraits
+
+	#if 1 // NOT verified as being the same yet
+	ROM_REGION( 0x1000000, REGION_GFX2, ROMREGION_DISPOSE ) /* SPB GFX (we haven't used yet, not sure where they map, 2nd sprite layer maybe?) */
+	ROM_LOAD( "jc-106-00.171", 0x000000, 0x200000, CRC(bc65661b) SHA1(da28b8fcd7c7a0de427a54be2cf41a1d6a295164) ) // SPB0
+	ROM_LOAD( "jc-107-00.172", 0x200000, 0x200000, CRC(92a86e8b) SHA1(c37eddbc9d84239deb543504e27b5bdaf2528f79) ) // SPB1
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE ) /* BG GFX? */
+	ROM_LOAD( "jc-200.00", 0x000000, 0x100000, CRC(1f30c24e) SHA1(0c413fc67c3ec020e6786e7157d82aa242c8d2ad) )
+
+	ROM_REGION( 0x300000, REGION_SOUND1, 0 ) /* Audio 1? */
+	ROM_LOAD( "jc-300-00.84", 0x000000, 0x200000, CRC(13d5b1eb) SHA1(b047594d0f1a71d89b8f072879ccba480f54a483) )
+	ROM_LOAD( "jc-301-00.85", 0x000000, 0x100000, CRC(9c5b3077) SHA1(db9a31e1c65d9f12d0f2fb316ced48a02aae089d) )
+	#endif
+
+	ROM_REGION( 0x040000, REGION_SOUND2, 0 ) /* Audio 2? */
+	ROM_LOAD( "j2m1x1.u56", 0x000000, 0x040000, CRC(baf6e25e) SHA1(6b02f3eb1eafcd43022a9f60f98573d02277adfe) )
+
+	ROM_REGION( 0x020000, REGION_USER1, 0 ) /* MCU Code? */
+	ROM_LOAD( "j2d1x1.u13", 0x000000, 0x020000, CRC(b2b7fc90) SHA1(1b90c13bb41a313c4ed791a15d56073a7c29928b) )
+ROM_END
+
 DRIVER_INIT( jchan )
 {
 	memset(jchan_mcu_com, 0, 4 * sizeof( data16_t) );
@@ -886,6 +931,7 @@ DRIVER_INIT( jchan )
 
 /* game drivers */
 GAMEX( 1995, jchan, 0, jchan, jchan, jchan, ROT0, "Kaneko", "Jackie Chan - Kung Fu Master", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1995, jchan2, jchan, jchan, jchan, jchan, ROT0, "Kaneko", "Jackie Chan in Fists of Fire", GAME_NOT_WORKING | GAME_NO_SOUND )
 
 /* other jchan copy / paste bits */
 
