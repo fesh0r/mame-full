@@ -508,6 +508,9 @@ struct GameDriver driver_neogeo =
 	0,
 	0,
 	0,
+#ifdef MESS
+	0,
+#endif
 	NOT_A_DRIVER,
 };
 #endif
@@ -525,6 +528,9 @@ struct GameDriver driver_playch10 =
 	0,
 	0,
 	0,
+#ifdef MESS
+	0,
+#endif
 	NOT_A_DRIVER,
 };
 #endif
