@@ -53,7 +53,7 @@ CPUS+=M68010@	#hack
 CPUS+=M68EC020@	#hack
 CPUS+=M68020@	#hack
 #CPUS+=T11@
-#CPUS+=S2650@
+CPUS+=S2650@
 CPUS+=F8@
 CPUS+=CP1600@
 #CPUS+=TMS34010@
@@ -135,6 +135,7 @@ SOUNDS+=BEEP@
 # Archive definitions
 DRVLIBS = \
 	$(OBJ)/advision.a \
+	$(OBJ)/arcadia.a  \
 	$(OBJ)/coleco.a   \
 	$(OBJ)/nec.a	  \
 	$(OBJ)/bally.a	  \
@@ -202,6 +203,11 @@ $(OBJ)/coleco.a:   \
 	  $(OBJ)/mess/machine/coleco.o	 \
 	  $(OBJ)/mess/vidhrdw/coleco.o	 \
 	  $(OBJ)/mess/systems/coleco.o
+
+$(OBJ)/arcadia.a:  \
+	  $(OBJ)/mess/sndhrdw/arcadia.o	 \
+	  $(OBJ)/mess/vidhrdw/arcadia.o	 \
+	  $(OBJ)/mess/systems/arcadia.o
 
 $(OBJ)/sega.a:	   \
 	  $(OBJ)/mess/vidhrdw/smsvdp.o	 \
