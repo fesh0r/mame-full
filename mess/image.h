@@ -13,6 +13,7 @@
 #include "fileio.h"
 #include "utils.h"
 #include "osdepend.h"
+#include "driver.h"
 
 /****************************************************************************
   A mess_image pointer represents one device entry; this could be an instance
