@@ -6,7 +6,7 @@ TARGET = mess
 # TARGET = tiny
 
 # uncomment next line to include the debugger
-# DEBUG = 1
+DEBUG = 1
 
 # uncomment next line to include the symbols for symify
 # SYMBOLS = 1
@@ -56,10 +56,10 @@ EMULATOR = $(NAME)$(EXE)
 DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__
 
 ifdef SYMBOLS
-CFLAGS = -Isrc -Isrc/msdos -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
+CFLAGS = -Isrc -Imess -Isrc/msdos -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
 	-O0 -pedantic -Wall -Werror -Wno-unused -g
 else
-CFLAGS = -Isrc -Isrc/msdos -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
+CFLAGS = -Isrc -Imess -Isrc/msdos -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
 	-DNDEBUG \
 	$(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing \
 	-Werror -Wall -Wno-sign-compare -Wunused \
@@ -142,6 +142,10 @@ $(OBJ)/%.o: src/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
 
+$(OBJ)/mess/%.o: mess/%.c
+	@echo [MESS] Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
+
 # compile generated C files for the 68000 emulator
 $(M68000_GENERATED_OBJS): $(OBJ)/cpu/m68000/m68kmake$(EXE)
 	@echo Compiling $(subst .o,.c,$@)...
@@ -204,6 +208,7 @@ maketree:
 	@md $(OBJ)\cpu\pdp1
 	@md $(OBJ)\cpu\mips
 	@md $(OBJ)\cpu\sc61860
+	@md $(OBJ)\cpu\arm
 	@md $(OBJ)\sound
 	@md $(OBJ)\msdos
 	@md $(OBJ)\drivers
@@ -218,6 +223,7 @@ ifdef MESS
 	@md $(OBJ)\mess\vidhrdw
 	@md $(OBJ)\mess\sndhrdw
 	@md $(OBJ)\mess\tools
+	@md $(OBJ)\mess\formats
 endif
 
 clean:
@@ -253,5 +259,6 @@ cleandebug:
 	@del $(OBJ)\cpu\adsp2100\*.o
 	@del $(OBJ)\cpu\pdp1\*.o
 	@del $(OBJ)\cpu\mips\*.o
+	@del $(OBJ)\cpu\arm\*.o
 	@del $(EMULATOR)
 
