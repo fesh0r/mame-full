@@ -437,21 +437,9 @@ struct snd_interface sndintf[] =
 		YM2203_sh_reset
 	},
 #endif
-#if (HAS_YM2151)
+#if (HAS_YM2151 || HAS_YM2151_ALT)
     {
 		SOUND_YM2151,
-		"YM-2151",
-		YM2151_num,
-		YM2151_clock,
-		YM2151_sh_start,
-		YM2151_sh_stop,
-		0,
-		YM2151_sh_reset
-	},
-#endif
-#if (HAS_YM2151_ALT)
-    {
-		SOUND_YM2151_ALT,
 		"YM-2151",
 		YM2151_num,
 		YM2151_clock,
@@ -941,7 +929,6 @@ struct snd_interface sndintf[] =
 	},
 #endif
 #if (HAS_BEEP)
-/* !!! This entry does not have a build rule in src/rules.mak !!! */
 	{
 		SOUND_BEEP,
 		"Beep",

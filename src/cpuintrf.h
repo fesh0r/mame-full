@@ -38,7 +38,7 @@ enum
 #endif
 #if (HAS_SH2)
 	CPU_SH2,
-#endif 
+#endif
 #if (HAS_Z80GB)
 	CPU_Z80GB,
 #endif
@@ -248,6 +248,9 @@ enum
 #endif
 #if (HAS_SPC700)
 	CPU_SPC700,
+#endif
+#if (HAS_ASAP)
+	CPU_ASAP,
 #endif
 	CPU_COUNT
 };

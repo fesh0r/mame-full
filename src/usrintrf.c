@@ -1762,7 +1762,7 @@ static int setcodesettings(struct osd_bitmap *bitmap,int selected)
 static int calibratejoysticks(struct osd_bitmap *bitmap,int selected)
 {
 	char *msg;
-	char buf[2048];
+	static char buf[2048];
 	int sel;
 	static int calibration_started = 0;
 
