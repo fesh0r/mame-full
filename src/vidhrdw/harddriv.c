@@ -47,11 +47,11 @@ struct gfx_update_entry
 /* externally accessible */
 UINT8 hdgsp_multisync;
 UINT8 *hdgsp_vram;
-UINT8 *hdgsp_vram_2bpp;
-UINT8 *hdgsp_control_lo;
-UINT8 *hdgsp_control_hi;
-UINT8 *hdgsp_paletteram_lo;
-UINT8 *hdgsp_paletteram_hi;
+data16_t *hdgsp_vram_2bpp;
+data16_t *hdgsp_control_lo;
+data16_t *hdgsp_control_hi;
+data16_t *hdgsp_paletteram_lo;
+data16_t *hdgsp_paletteram_hi;
 size_t hdgsp_vram_size;
 
 
@@ -297,18 +297,20 @@ static void update_palette_bank(int newbank)
  *
  *************************************/
 
-READ_HANDLER( hdgsp_control_lo_r )
+READ16_HANDLER( hdgsp_control_lo_r )
 {
-	return READ_WORD(&hdgsp_control_lo[offset]);
+	return hdgsp_control_lo[offset];
 }
 
 
-WRITE_HANDLER( hdgsp_control_lo_w )
+WRITE16_HANDLER( hdgsp_control_lo_w )
 {
-	int oldword = READ_WORD(&hdgsp_control_lo[offset]);
-	int newword = COMBINE_WORD(oldword, data);
-	WRITE_WORD(&hdgsp_control_lo[offset], data);
+	int oldword = hdgsp_control_lo[offset];
+	int newword;
 	
+	COMBINE_DATA(&hdgsp_control_lo[offset]);
+	newword = hdgsp_control_lo[offset];
+
 #if ENABLE_RASTERIZER_OPTS
 	if (offset == 0)
 #else
@@ -329,7 +331,7 @@ WRITE_HANDLER( hdgsp_control_lo_w )
 	}
 	
 	if (oldword != newword && offset != 0)
-		logerror("GSP:hdgsp_control_lo(%X)=%04X\n", offset / 2, newword);
+		logerror("GSP:hdgsp_control_lo(%X)=%04X\n", offset, newword);
 }
 
 
@@ -340,22 +342,24 @@ WRITE_HANDLER( hdgsp_control_lo_w )
  *
  *************************************/
 
-READ_HANDLER( hdgsp_control_hi_r )
+READ16_HANDLER( hdgsp_control_hi_r )
 {
-	return READ_WORD(&hdgsp_control_hi[offset]);
+	return hdgsp_control_hi[offset];
 }
 
 
-WRITE_HANDLER( hdgsp_control_hi_w )
+WRITE16_HANDLER( hdgsp_control_hi_w )
 {
-	int oldword = READ_WORD(&hdgsp_control_hi[offset]);
-	int newword = COMBINE_WORD(oldword, data);
 	struct gfx_update_entry *entry;
-	int val = (offset >> 4) & 1;
+	int val = (offset >> 3) & 1;
 
-	WRITE_WORD(&hdgsp_control_hi[offset], data);
+	int oldword = hdgsp_control_hi[offset];
+	int newword;
 	
-	switch ((offset / 2) & 7)
+	COMBINE_DATA(&hdgsp_control_hi[offset]);
+	newword = hdgsp_control_hi[offset];
+
+	switch (offset & 7)
 	{
 		case 0x00:
 			shiftreg_enable = val;
@@ -398,26 +402,27 @@ WRITE_HANDLER( hdgsp_control_hi_w )
  *
  *************************************/
 
-READ_HANDLER( hdgsp_vram_2bpp_r )
+READ16_HANDLER( hdgsp_vram_2bpp_r )
 {
-	return READ_WORD(&hdgsp_vram_2bpp[offset]);
+	return hdgsp_vram_2bpp[offset];
 }
 
 
-WRITE_HANDLER( hdgsp_vram_1bpp_w )
+WRITE16_HANDLER( hdgsp_vram_1bpp_w )
 {
-	int oldword = READ_WORD(&hdgsp_vram_2bpp[offset]);
-	int newword = COMBINE_WORD(oldword, data);
+	int newword = hdgsp_vram_2bpp[offset];
+	COMBINE_DATA(&newword);
 
 	if (newword)
 	{
-		UINT32 *dest = (UINT32 *)&hdgsp_vram[offset * 8];
+		UINT32 *dest = (UINT32 *)&hdgsp_vram[offset * 16];
 		UINT32 *mask = &mask_table[newword * 4];
-		UINT32 color = hdgsp_control_lo[0] | (hdgsp_control_lo[1] << 8);
+		UINT32 color = hdgsp_control_lo[0] & 0xff;
 		UINT32 curmask;
 		
+		color |= color << 8;
 		color |= color << 16;
-
+		
 		curmask = *mask++;		
 		*dest = (*dest & ~curmask) | (color & curmask);
 		dest++;
@@ -437,20 +442,21 @@ WRITE_HANDLER( hdgsp_vram_1bpp_w )
 }
 
 
-WRITE_HANDLER( hdgsp_vram_2bpp_w )
+WRITE16_HANDLER( hdgsp_vram_2bpp_w )
 {
-	int oldword = READ_WORD(&hdgsp_vram_2bpp[offset]);
-	int newword = COMBINE_WORD(oldword, data);
+	int newword = hdgsp_vram_2bpp[offset];
+	COMBINE_DATA(&newword);
 
 	if (newword)
 	{
-		UINT32 *dest = (UINT32 *)&hdgsp_vram[offset * 4];
+		UINT32 *dest = (UINT32 *)&hdgsp_vram[offset * 8];
 		UINT32 *mask = &mask_table[newword * 2];
-		UINT32 color = hdgsp_control_lo[0] | (hdgsp_control_lo[1] << 8);
+		UINT32 color = hdgsp_control_lo[0] & 0xff;
 		UINT32 curmask;
 		
+		color |= color << 8;
 		color |= color << 16;
-
+		
 		curmask = *mask++;		
 		*dest = (*dest & ~curmask) | (color & curmask);
 		dest++;
@@ -471,30 +477,30 @@ WRITE_HANDLER( hdgsp_vram_2bpp_w )
 
 INLINE void gsp_palette_change(int offset)
 {
-	int red = (READ_WORD(&hdgsp_paletteram_lo[offset]) >> 8) & 0xff;
-	int green = READ_WORD(&hdgsp_paletteram_lo[offset]) & 0xff;
-	int blue = READ_WORD(&hdgsp_paletteram_hi[offset]) & 0xff;
-	palette_change_color(offset / 2, red, green, blue);
+	int red = (hdgsp_paletteram_lo[offset] >> 8) & 0xff;
+	int green = hdgsp_paletteram_lo[offset] & 0xff;
+	int blue = hdgsp_paletteram_hi[offset] & 0xff;
+	palette_change_color(offset, red, green, blue);
 }
 
 
-READ_HANDLER( hdgsp_paletteram_lo_r )
+READ16_HANDLER( hdgsp_paletteram_lo_r )
 {
 	/* note that the palette is only accessed via the first 256 entries */
 	/* others are selected via the palette bank */
-	offset = curr_state.palettebank * 0x200 + (offset & 0x1ff);
+	offset = curr_state.palettebank * 0x100 + (offset & 0xff);
 
-	return READ_WORD(&hdgsp_paletteram_lo[offset]);
+	return hdgsp_paletteram_lo[offset];
 }
 
 
-WRITE_HANDLER( hdgsp_paletteram_lo_w )
+WRITE16_HANDLER( hdgsp_paletteram_lo_w )
 {
 	/* note that the palette is only accessed via the first 256 entries */
 	/* others are selected via the palette bank */
-	offset = curr_state.palettebank * 0x200 + (offset & 0x1ff);
+	offset = curr_state.palettebank * 0x100 + (offset & 0xff);
 
-	COMBINE_WORD_MEM(&hdgsp_paletteram_lo[offset], data);
+	COMBINE_DATA(&hdgsp_paletteram_lo[offset]);
 	gsp_palette_change(offset);
 }
 
@@ -506,23 +512,23 @@ WRITE_HANDLER( hdgsp_paletteram_lo_w )
  *
  *************************************/
 
-READ_HANDLER( hdgsp_paletteram_hi_r )
+READ16_HANDLER( hdgsp_paletteram_hi_r )
 {
 	/* note that the palette is only accessed via the first 256 entries */
 	/* others are selected via the palette bank */
-	offset = curr_state.palettebank * 0x200 + (offset & 0x1ff);
+	offset = curr_state.palettebank * 0x100 + (offset & 0xff);
 
-	return READ_WORD(&hdgsp_paletteram_hi[offset]);
+	return hdgsp_paletteram_hi[offset];
 }
 
 
-WRITE_HANDLER( hdgsp_paletteram_hi_w )
+WRITE16_HANDLER( hdgsp_paletteram_hi_w )
 {
 	/* note that the palette is only accessed via the first 256 entries */
 	/* others are selected via the palette bank */
-	offset = curr_state.palettebank * 0x200 + (offset & 0x1ff);
+	offset = curr_state.palettebank * 0x100 + (offset & 0xff);
 
-	COMBINE_WORD_MEM(&hdgsp_paletteram_hi[offset], data);
+	COMBINE_DATA(&hdgsp_paletteram_hi[offset]);
 	gsp_palette_change(offset);
 }
 

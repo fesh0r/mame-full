@@ -2,7 +2,7 @@
 
 	Video Hardware for Nichibutsu Mahjong series.
 
-	Driver by Takahiro Nogi 2000/01/28 - 
+	Driver by Takahiro Nogi 2000/01/28 -
 
 ***************************************************************************/
 

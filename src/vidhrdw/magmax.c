@@ -9,12 +9,12 @@ Additional tweaking by Jarek Burczynski
 
 #include "driver.h"
 
-unsigned char *magmax_videoram;
-unsigned char *magmax_spriteram;
+data16_t *magmax_videoram;
+data16_t *magmax_spriteram;
 size_t magmax_spriteram_size;
 
-unsigned char magmax_scroll_x[2];
-unsigned char magmax_scroll_y[2];
+data16_t *magmax_scroll_x;
+data16_t *magmax_scroll_y;
 unsigned short magmax_vreg;
 static int flipscreen = 0;
 
@@ -305,8 +305,8 @@ void magmax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		UINT32 h,v;
 		unsigned char * rom18B = memory_region(REGION_USER1);
-		UINT32 scroll_h = READ_WORD(magmax_scroll_x) & 0x3fff;
-		UINT32 scroll_v = READ_WORD(magmax_scroll_y) & 0xff;
+		UINT32 scroll_h = (*magmax_scroll_x) & 0x3fff;
+		UINT32 scroll_v = (*magmax_scroll_y) & 0xff;
 
 		/*clear background-over-sprites bitmap*/
 		fillbitmap(tmpbitmap, 0, &Machine->visible_area);
@@ -447,7 +447,7 @@ void magmax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					rom15F_addr += (prom_data & 0x4000);
 
 					graph_color = (prom_data & 0x0070);
-	
+
 					graph_data = rom18B[0x8000 + rom15F_addr];
 					if ((LS283 & 1))
 						graph_data >>= 4;
@@ -477,20 +477,20 @@ void magmax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	/* draw the sprites */
-	for (offs = 0; offs < magmax_spriteram_size; offs += 8)
+	for (offs = 0; offs < magmax_spriteram_size/2; offs += 4)
 	{
 		int sx, sy;
 
-		sy = READ_WORD(&magmax_spriteram[offs]) & 0xff;
+		sy = magmax_spriteram[offs] & 0xff;
 		if (sy)
 		{
-			int code = READ_WORD(&magmax_spriteram[offs + 2]) & 0xff;
-			int attr = READ_WORD(&magmax_spriteram[offs + 4]) & 0xff;
+			int code = magmax_spriteram[offs + 1] & 0xff;
+			int attr = magmax_spriteram[offs + 2] & 0xff;
 			int color = (attr & 0xf0) >> 4;
 			int flipx = attr & 0x04;
 			int flipy = attr & 0x08;
 
-			sx = (READ_WORD(&magmax_spriteram[offs + 6]) & 0xff) - 0x80 + 0x100 * (attr & 0x01);
+			sx = (magmax_spriteram[offs + 3] & 0xff) - 0x80 + 0x100 * (attr & 0x01);
 			sy = 239 - sy;
 
 			if (flipscreen)
@@ -526,18 +526,18 @@ void magmax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		//int page = (magmax_vreg>>3) & 0x1;
 		int code;
 
-		code = READ_WORD(&magmax_videoram[offs*2 /*+ page*/]) & 0xff;
+		code = magmax_videoram[offs /*+ page*/] & 0xff;
 		if (code)
 		{
 			int sx = (offs % 32);
 			int sy = (offs / 32);
-	
+
 			if (flipscreen)
 			{
 				sx = 31 - sx;
 				sy = 31 - sy;
 			}
-	
+
 			drawgfx(bitmap, Machine->gfx[0],
 					code,
 					0,

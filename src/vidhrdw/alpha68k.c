@@ -70,7 +70,7 @@ int alpha68k_vh_start(void)
 	if (!fix_tilemap)
 		return 1;
 
-	fix_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(fix_tilemap,0);
 
 	return 0;
 }
@@ -164,18 +164,16 @@ void alpha68k_II_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	}
 
 	palette_used_colors[2047] = PALETTE_COLOR_USED;
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 	fillbitmap(bitmap,Machine->pens[2047],&Machine->visible_area);
 
-	tilemap_render(ALL_TILEMAPS);
 	draw_sprites(bitmap,1,0x000);
 	draw_sprites(bitmap,1,0x800);
 	draw_sprites(bitmap,0,0x000);
 	draw_sprites(bitmap,0,0x800);
 	draw_sprites(bitmap,2,0x000);
 	draw_sprites(bitmap,2,0x800);
-	tilemap_draw(bitmap,fix_tilemap,0);
+	tilemap_draw(bitmap,fix_tilemap,0,0);
 }
 
 /******************************************************************************/
@@ -333,10 +331,8 @@ void alpha68k_V_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	}
 
 	palette_used_colors[4095] = PALETTE_COLOR_USED;
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 	fillbitmap(bitmap,Machine->pens[4095],&Machine->visible_area);
-	tilemap_render(ALL_TILEMAPS);
 
 	/* This appears to be correct priority */
 	if (!strcmp(Machine->gamedrv->name,"skyadvnt") || !strcmp(Machine->gamedrv->name,"skyadvnu")) /* Todo */
@@ -354,7 +350,7 @@ void alpha68k_V_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		draw_sprites_V(bitmap,0,0x0000,0x0f80,0x8000,0,0x7fff);
 	}
 
-	tilemap_draw(bitmap,fix_tilemap,0);
+	tilemap_draw(bitmap,fix_tilemap,0,0);
 }
 
 void alpha68k_V_sb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
@@ -394,10 +390,8 @@ void alpha68k_V_sb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	}
 
 	palette_used_colors[4095] = PALETTE_COLOR_USED;
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 	fillbitmap(bitmap,Machine->pens[4095],&Machine->visible_area);
-	tilemap_render(ALL_TILEMAPS);
 
 	/* This appears to be correct priority */
 	draw_sprites_V(bitmap,0,0x0f80,0x1000,0x4000,0x8000,0x3fff);
@@ -405,7 +399,7 @@ void alpha68k_V_sb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	draw_sprites_V(bitmap,2,0x0000,0x1000,0x4000,0x8000,0x3fff);
 	draw_sprites_V(bitmap,0,0x0000,0x0f80,0x4000,0x8000,0x3fff);
 
-	tilemap_draw(bitmap,fix_tilemap,0);
+	tilemap_draw(bitmap,fix_tilemap,0,0);
 }
 
 /******************************************************************************/
@@ -627,7 +621,7 @@ int kouyakyu_vh_start(void)
 	if (!fix_tilemap)
 		return 1;
 
-	fix_tilemap->transparent_pen = 0;
+	tilemap_set_transparent_pen(fix_tilemap,0);
 
 	return 0;
 }
@@ -641,6 +635,5 @@ sstingry_draw_sprites(bitmap,6,0x1800);
 sstingry_draw_sprites(bitmap,2,0x800);
 
 	tilemap_update(ALL_TILEMAPS);
-	tilemap_render(ALL_TILEMAPS);
-	tilemap_draw(bitmap,fix_tilemap,0);
+	tilemap_draw(bitmap,fix_tilemap,0,0);
 }

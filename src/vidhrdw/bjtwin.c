@@ -1,10 +1,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *nmk_bgvideoram,*nmk_fgvideoram,*nmk_txvideoram;
+data16_t *nmk_bgvideoram,*nmk_fgvideoram,*nmk_txvideoram;
 static int redraw_bitmap;
 
-static unsigned char *spriteram_old,*spriteram_old2;
+static data16_t *spriteram_old,*spriteram_old2;
 static int bgbank;
 static int videoshift;
 static int bioship_background_bank;
@@ -27,25 +27,25 @@ static UINT32 bg_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 
 static void macross_get_bg_tile_info(int tile_index)
 {
-	int code = READ_WORD(&nmk_bgvideoram[2*tile_index]);
+	int code = nmk_bgvideoram[tile_index];
 	SET_TILE_INFO(1,(code & 0xfff) + (bgbank << 12),code >> 12)
 }
 
 static void strahl_get_fg_tile_info(int tile_index)
 {
-	int code = READ_WORD(&nmk_fgvideoram[2*tile_index]);
+	int code = nmk_fgvideoram[tile_index];
 	SET_TILE_INFO(3,(code & 0xfff),code >> 12)
 }
 
 static void macross_get_tx_tile_info(int tile_index)
 {
-	int code = READ_WORD(&nmk_txvideoram[2*tile_index]);
+	int code = nmk_txvideoram[tile_index];
 	SET_TILE_INFO(0,code & 0xfff,code >> 12)
 }
 
 static void bjtwin_get_bg_tile_info(int tile_index)
 {
-	int code = READ_WORD(&nmk_bgvideoram[2*tile_index]);
+	int code = nmk_bgvideoram[tile_index];
 	int bank = (code & 0x800) ? 1 : 0;
 	SET_TILE_INFO(bank,(code & 0x7ff) + ((bank) ? (bgbank << 11) : 0),code >> 12)
 }
@@ -66,7 +66,7 @@ void nmk_vh_stop(void)
 	spriteram_old2 = NULL;
 	if (background_bitmap) bitmap_free(background_bitmap);
 }
- 
+
 int bioship_vh_start(void)
 {
 	bg_tilemap = tilemap_create(macross_get_bg_tile_info,bg_scan,TILEMAP_TRANSPARENT,16,16,256,32);
@@ -78,8 +78,8 @@ int bioship_vh_start(void)
 	if (!bg_tilemap || !spriteram_old || !spriteram_old2 || !background_bitmap)
 		return 1;
 
-	bg_tilemap->transparent_pen = 15;
-	tx_tilemap->transparent_pen = 15;
+	tilemap_set_transparent_pen(bg_tilemap, 15);
+	tilemap_set_transparent_pen(tx_tilemap, 15);
 	bioship_background_bank=0;
 
 	memset(spriteram_old,0,spriteram_size);
@@ -101,8 +101,8 @@ int strahl_vh_start(void)
 	if (!bg_tilemap || !fg_tilemap || !spriteram_old || !spriteram_old2)
 		return 1;
 
-	fg_tilemap->transparent_pen = 15;
-	tx_tilemap->transparent_pen = 15;
+	tilemap_set_transparent_pen(fg_tilemap, 15);
+	tilemap_set_transparent_pen(tx_tilemap, 15);
 
 	memset(spriteram_old,0,spriteram_size);
 	memset(spriteram_old2,0,spriteram_size);
@@ -122,7 +122,7 @@ int macross_vh_start(void)
 	if (!bg_tilemap || !spriteram_old || !spriteram_old2)
 		return 1;
 
-	tx_tilemap->transparent_pen = 15;
+	tilemap_set_transparent_pen(tx_tilemap, 15);
 
 	memset(spriteram_old,0,spriteram_size);
 	memset(spriteram_old2,0,spriteram_size);
@@ -143,7 +143,7 @@ int macross2_vh_start(void)
 	if (!bg_tilemap || !spriteram_old || !spriteram_old2)
 		return 1;
 
-	tx_tilemap->transparent_pen = 15;
+	tilemap_set_transparent_pen(tx_tilemap, 15);
 
 	memset(spriteram_old,0,spriteram_size);
 	memset(spriteram_old2,0,spriteram_size);
@@ -180,65 +180,66 @@ int bjtwin_vh_start(void)
 
 ***************************************************************************/
 
-READ_HANDLER( nmk_bgvideoram_r )
+READ16_HANDLER( nmk_bgvideoram_r )
 {
-	return READ_WORD(&nmk_bgvideoram[offset]);
+	return nmk_bgvideoram[offset];
 }
 
-WRITE_HANDLER( nmk_bgvideoram_w )
+WRITE16_HANDLER( nmk_bgvideoram_w )
 {
-	int oldword = READ_WORD(&nmk_bgvideoram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
+	int oldword = nmk_bgvideoram[offset];
+	int newword = oldword;
+	COMBINE_DATA(&newword);
 
 	if (oldword != newword)
 	{
-		WRITE_WORD(&nmk_bgvideoram[offset],newword);
-		tilemap_mark_tile_dirty(bg_tilemap,offset/2);
+		nmk_bgvideoram[offset] = newword;
+		tilemap_mark_tile_dirty(bg_tilemap,offset);
 	}
 }
 
-READ_HANDLER( nmk_fgvideoram_r )
+READ16_HANDLER( nmk_fgvideoram_r )
 {
-	return READ_WORD(&nmk_fgvideoram[offset]);
+	return nmk_fgvideoram[offset];
 }
 
-WRITE_HANDLER( nmk_fgvideoram_w )
+WRITE16_HANDLER( nmk_fgvideoram_w )
 {
-	int oldword = READ_WORD(&nmk_fgvideoram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
+	int oldword = nmk_fgvideoram[offset];
+	int newword = oldword;
+	COMBINE_DATA(&newword);
 
 	if (oldword != newword)
 	{
-		WRITE_WORD(&nmk_fgvideoram[offset],newword);
-		tilemap_mark_tile_dirty(fg_tilemap,offset/2);
+		nmk_fgvideoram[offset] = newword;
+		tilemap_mark_tile_dirty(fg_tilemap,offset);
 	}
 }
 
-READ_HANDLER( nmk_txvideoram_r )
+READ16_HANDLER( nmk_txvideoram_r )
 {
-	return READ_WORD(&nmk_txvideoram[offset]);
+	return nmk_txvideoram[offset];
 }
 
-WRITE_HANDLER( nmk_txvideoram_w )
+WRITE16_HANDLER( nmk_txvideoram_w )
 {
-	int oldword = READ_WORD(&nmk_txvideoram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
+	int oldword = nmk_txvideoram[offset];
+	int newword = oldword;
+	COMBINE_DATA(&newword);
 
 	if (oldword != newword)
 	{
-		WRITE_WORD(&nmk_txvideoram[offset],newword);
-		tilemap_mark_tile_dirty(tx_tilemap,offset/2);
+		nmk_txvideoram[offset] = newword;
+		tilemap_mark_tile_dirty(tx_tilemap,offset);
 	}
 }
 
-WRITE_HANDLER( nmk_paletteram_w )
+WRITE16_HANDLER( nmk_paletteram_w )
 {
-	int r,g,b;
-	int oldword = READ_WORD(&paletteram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
+	int newword, r,g,b;
 
-
-	WRITE_WORD(&paletteram[offset],newword);
+	COMBINE_DATA(&paletteram16[offset]);
+	newword = paletteram16[offset];
 
 	r = ((newword >> 11) & 0x1e) | ((newword >> 3) & 0x01);
 	g = ((newword >>  7) & 0x1e) | ((newword >> 2) & 0x01);
@@ -248,62 +249,66 @@ WRITE_HANDLER( nmk_paletteram_w )
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(offset / 2,r,g,b);
- 
+	palette_change_color(offset,r,g,b);
+
 	/* This is very bad, ensure Bioships tilemap is redrawn if palette changes */
-    if (offset<512) redraw_bitmap=1; 
+    if (offset<256) redraw_bitmap=1;
 }
 
-WRITE_HANDLER( mustang_scroll_w )
+WRITE16_HANDLER( mustang_scroll_w )
 {
 	static UINT8 scroll[4];
 
-	scroll[offset/2] = (data >> 8) & 0xff;
-
-	if (offset & 4)
-		tilemap_set_scrolly(bg_tilemap,0,scroll[2] * 256 + scroll[3]);
-	else
-		tilemap_set_scrollx(bg_tilemap,0,scroll[0] * 256 + scroll[1] - videoshift);
-}
-
-WRITE_HANDLER( nmk_scroll_w )
-{
-	if ((data & 0x00ff0000) == 0)
+	if (ACCESSING_MSB)
 	{
-		static UINT8 scroll[4];
+		scroll[offset] = (data >> 8) & 0xff;
 
-		scroll[offset/2] = data & 0xff;
-
-		if (offset & 4)
+		if (offset & 2)
 			tilemap_set_scrolly(bg_tilemap,0,scroll[2] * 256 + scroll[3]);
 		else
 			tilemap_set_scrollx(bg_tilemap,0,scroll[0] * 256 + scroll[1] - videoshift);
 	}
 }
 
-WRITE_HANDLER( nmk_scroll_2_w )
+WRITE16_HANDLER( nmk_scroll_w )
 {
-	if ((data & 0x00ff0000) == 0)
+	if (ACCESSING_LSB)
 	{
 		static UINT8 scroll[4];
 
-		scroll[offset/2] = data & 0xff;
+		scroll[offset] = data & 0xff;
 
-		if (offset & 4)
+		if (offset & 2)
+			tilemap_set_scrolly(bg_tilemap,0,scroll[2] * 256 + scroll[3]);
+		else
+			tilemap_set_scrollx(bg_tilemap,0,scroll[0] * 256 + scroll[1] - videoshift);
+	}
+}
+
+WRITE16_HANDLER( nmk_scroll_2_w )
+{
+	if (ACCESSING_LSB)
+	{
+		static UINT8 scroll[4];
+
+		scroll[offset] = data & 0xff;
+
+		if (offset & 2)
 			tilemap_set_scrolly(fg_tilemap,0,scroll[2] * 256 + scroll[3]);
 		else
 			tilemap_set_scrollx(fg_tilemap,0,scroll[0] * 256 + scroll[1] - videoshift);
 	}
 }
 
-WRITE_HANDLER( nmk_flipscreen_w )
+WRITE16_HANDLER( nmk_flipscreen_w )
 {
-	flip_screen_w(0,data & 0x01);
+	if (ACCESSING_LSB)
+		flip_screen_set(data & 0x01);
 }
 
-WRITE_HANDLER( nmk_tilebank_w )
+WRITE16_HANDLER( nmk_tilebank_w )
 {
-	if ((data & 0x00ff0000) == 0)
+	if (ACCESSING_LSB)
 	{
 		if (bgbank != (data & 0xff))
 		{
@@ -313,16 +318,20 @@ WRITE_HANDLER( nmk_tilebank_w )
 	}
 }
 
-WRITE_HANDLER( bioship_scroll_w )
+WRITE16_HANDLER( bioship_scroll_w )
 {
-	bioship_scroll[offset/2]=data>>8;
+	if (ACCESSING_MSB)
+		bioship_scroll[offset]=data>>8;
 }
 
-WRITE_HANDLER( bioship_bank_w )
+WRITE16_HANDLER( bioship_bank_w )
 {
-	if (bioship_background_bank!=((data&7)*0x2000))
-		redraw_bitmap=1;
-	bioship_background_bank=(data&7)*0x2000;
+	if (ACCESSING_LSB)
+	{
+		if (bioship_background_bank!=((data&7)*0x1000))
+			redraw_bitmap=1;
+		bioship_background_bank=(data&7)*0x1000;
+	}
 }
 
 /***************************************************************************
@@ -335,21 +344,21 @@ static void draw_sprites(struct osd_bitmap *bitmap, int priority, int pri_mask)
 {
 	int offs;
 
-	for (offs = 0;offs < spriteram_size;offs += 16)
+	for (offs = 0;offs < spriteram_size/2;offs += 8)
 	{
-		if (READ_WORD(&spriteram_old2[offs]))
+		if (spriteram_old2[offs])
 		{
-			int sx = (READ_WORD(&spriteram_old2[offs+8]) & 0x1ff) + videoshift;
-			int sy = (READ_WORD(&spriteram_old2[offs+12]) & 0x1ff);
-			int code = READ_WORD(&spriteram_old2[offs+6]);
-			int color = READ_WORD(&spriteram_old2[offs+14]);
-			int w = (READ_WORD(&spriteram_old2[offs+2]) & 0x0f);
-			int h = ((READ_WORD(&spriteram_old2[offs+2]) & 0xf0) >> 4);
-			int pri = READ_WORD( &spriteram_old2[offs+14] )>>8;
+			int sx = (spriteram_old2[offs+4] & 0x1ff) + videoshift;
+			int sy = (spriteram_old2[offs+6] & 0x1ff);
+			int code = spriteram_old2[offs+3];
+			int color = spriteram_old2[offs+7];
+			int w = (spriteram_old2[offs+1] & 0x0f);
+			int h = ((spriteram_old2[offs+1] & 0xf0) >> 4);
+			int pri = spriteram_old2[offs+7]>>8;
 			int xx,yy,x;
 			int delta = 16;
 
-			if ((priority&pri_mask)!=pri) continue;
+			if ((pri&pri_mask)!=priority) continue;
 
 			if (flip_screen)
 			{
@@ -389,11 +398,11 @@ static void mark_sprites_colors(void)
 	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
 	color_mask = Machine->gfx[2]->total_colors - 1;
 
-	for (offs = 0;offs < spriteram_size;offs += 16)
+	for (offs = 0;offs < spriteram_size/2;offs += 8)
 	{
-		if (READ_WORD(&spriteram_old2[offs]))
+		if (spriteram_old2[offs])
 		{
-			int color = READ_WORD(&spriteram_old2[offs+14]) & color_mask;
+			int color = spriteram_old2[offs+7] & color_mask;
 			memset(&palette_used_colors[pal_base + 16*color],PALETTE_COLOR_USED,16);
 		}
 	}
@@ -402,19 +411,19 @@ static void mark_sprites_colors(void)
 static void mark_user_tilemap_colors(void)
 {
 	int offs,pal_base,colmask[16],color,code,i;
-	unsigned char *tilerom = memory_region(REGION_USER1);
+	data16_t *tilerom = (data16_t *)memory_region(REGION_USER1);
 
 	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
 
 	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0; offs < 0x2000;offs += 2)
+	for (offs = 0; offs < 0x1000;offs++)
 	{
-		code = READ_WORD(&tilerom[offs+bioship_background_bank]);
+		code = tilerom[offs+bioship_background_bank];
 		color = (code & 0xf000) >> 12;
 		code &= 0x0fff;
 		colmask[color] |= Machine->gfx[3]->pen_usage[code];
 	}
-	
+
 	for (color = 0;color < 16;color++)
 	{
 		if (colmask[color] & (1 << 0))
@@ -437,18 +446,18 @@ void macross_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	mark_sprites_colors();
 
 	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 
-	tilemap_render(ALL_TILEMAPS);
+	tilemap_update(ALL_TILEMAPS);
 
-	tilemap_draw(bitmap,bg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap,0,0);
-	tilemap_draw(bitmap,tx_tilemap,0);
+	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
 
 void bioship_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	unsigned char *tilerom = memory_region(REGION_USER1);
+	data16_t *tilerom = (data16_t *)memory_region(REGION_USER1);
 	int scrollx=-((bioship_scroll[1]&0xff) + (bioship_scroll[0]&0xff)*256);
 	int scrolly=-((bioship_scroll[3]&0xff) + (bioship_scroll[2]&0xff)*256);
 
@@ -460,7 +469,7 @@ void bioship_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	mark_user_tilemap_colors();
 
 	if (palette_recalc()) {
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 		redraw_bitmap=1;
 	}
 
@@ -469,22 +478,22 @@ void bioship_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		redraw_bitmap=0;
 
         /* Draw background from tile rom */
-        for (offs = 0;offs <0x2000;offs+=2) {
-                unsigned short data = READ_WORD( &tilerom[offs+bioship_background_bank] );
+        for (offs = 0;offs <0x1000;offs++) {
+                data16_t data = tilerom[offs+bioship_background_bank];
                 int numtile = data&0xfff;
                 int color = (data&0xf000)>>12;
                 sy++;
 				if (sy==16) {sy=0; sx++;}
- 
+
                 drawgfx(background_bitmap,Machine->gfx[3],
                         numtile,
                         color,
                         0,0,   /* no flip */
                         16*sx,16*sy,
                         0,TRANSPARENCY_NONE,0);
-				
-				data = READ_WORD( &tilerom[offs+0x1000+bioship_background_bank] );
-				numtile = data&0xfff; 
+
+				data = tilerom[offs+0x800+bioship_background_bank];
+				numtile = data&0xfff;
 				color = (data&0xf000)>>12;
 		        drawgfx(background_bitmap,Machine->gfx[3],
                       	numtile,
@@ -495,12 +504,12 @@ void bioship_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
         }
 	}
 
-	tilemap_render(ALL_TILEMAPS);
+	tilemap_update(ALL_TILEMAPS);
 	copyscrollbitmap(bitmap,background_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	draw_sprites(bitmap,5,~5); /* Is this right? */
-	tilemap_draw(bitmap,bg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap,5,5);
-	tilemap_draw(bitmap,tx_tilemap,0);
+	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
 
 void strahl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
@@ -513,14 +522,14 @@ void strahl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	mark_sprites_colors();
 
 	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 
-	tilemap_render(ALL_TILEMAPS);
+	tilemap_update(ALL_TILEMAPS);
 
-	tilemap_draw(bitmap,bg_tilemap,0);
-	tilemap_draw(bitmap,fg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 	draw_sprites(bitmap,0,0);
-	tilemap_draw(bitmap,tx_tilemap,0);
+	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
 
 void bjtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
@@ -533,11 +542,11 @@ void bjtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	mark_sprites_colors();
 
 	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 
-	tilemap_render(ALL_TILEMAPS);
+	tilemap_update(ALL_TILEMAPS);
 
-	tilemap_draw(bitmap,bg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap,0,0);
 }
 
@@ -545,5 +554,5 @@ void nmk_eof_callback(void)
 {
 	/* looks like sprites are *two* frames ahead */
 	memcpy(spriteram_old2,spriteram_old,spriteram_size);
-	memcpy(spriteram_old,spriteram,spriteram_size);
+	memcpy(spriteram_old,spriteram16,spriteram_size);
 }

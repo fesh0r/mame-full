@@ -71,34 +71,36 @@ static void get_text_tile_info(int tile_index)
 	SET_TILE_INFO(0,tile,color)
 }
 
+static void get_text_alt_tile_info(int tile_index)
+{
+	int tile=videoram[2*tile_index]+((videoram[2*tile_index+1]&0xc0)<<2);
+	int color=videoram[2*tile_index+1]&0xf;
+
+	SET_TILE_INFO(0,tile,color)
+}
+
 int raiden_vh_start(void)
 {
 	bg_layer = tilemap_create(get_back_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,     16,16,32,32);
 	fg_layer = tilemap_create(get_fore_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,32,32);
-	tx_layer = tilemap_create(get_text_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
-	ALTERNATE=0;
+
+	/* Weird - Raiden (Alternate) has different char format! */
+	if (!strcmp(Machine->gamedrv->name,"raiden"))
+		ALTERNATE=0;
+	else
+		ALTERNATE=1;
+
+	/* Weird - Raiden (Alternate) has different char format! */
+	if (!ALTERNATE)
+		tx_layer = tilemap_create(get_text_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
+	else
+		tx_layer = tilemap_create(get_text_alt_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
 
 	if (!bg_layer || !fg_layer || !tx_layer)
 		return 1;
 
-	fg_layer->transparent_pen = 15;
-	tx_layer->transparent_pen = 15;
-
-	return 0;
-}
-
-int raidena_vh_start(void)
-{
-	bg_layer = tilemap_create(get_back_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,     16,16,32,32);
-	fg_layer = tilemap_create(get_fore_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,32,32);
-	tx_layer = tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
-	ALTERNATE=1;
-
-	if (!bg_layer || !fg_layer || !tx_layer)
-		return 1;
-
-	fg_layer->transparent_pen = 15;
-	tx_layer->transparent_pen = 15;
+	tilemap_set_transparent_pen(fg_layer,15);
+	tilemap_set_transparent_pen(tx_layer,15);
 
 	return 0;
 }
@@ -193,19 +195,19 @@ void raiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-	tilemap_draw(bitmap,bg_layer,0);
+	tilemap_draw(bitmap,bg_layer,0,0);
 
 	/* Draw sprites underneath foreground */
 	draw_sprites(bitmap,0x40);
-	tilemap_draw(bitmap,fg_layer,0);
+	tilemap_draw(bitmap,fg_layer,0,0);
 
 	/* Rest of sprites */
 	draw_sprites(bitmap,0x80);
 
 	/* Text layer */
-	tilemap_draw(bitmap,tx_layer,0);
+	tilemap_draw(bitmap,tx_layer,0,0);
 }
+
+

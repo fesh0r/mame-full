@@ -66,8 +66,8 @@ int m90_vh_start(void)
 	if (!pf1_layer || !pf1_wide_layer || !pf2_layer || !pf2_wide_layer)
 		return 1;
 
-	pf1_layer->transparent_pen=0;
-	pf1_wide_layer->transparent_pen=0;
+	tilemap_set_transparent_pen(pf1_layer,0);
+	tilemap_set_transparent_pen(pf1_wide_layer,0);
 
 	return 0;
 }
@@ -90,10 +90,10 @@ static void mark_sprite_colours(void)
 	    sprite=m90_spriteram[offs+2] | (m90_spriteram[offs+3]<<8);
 		color=(m90_spriteram[offs+1]>>1)&0xf;
 
-		colmask[color] |= pen_usage[(sprite+0)&sprite_mask] | pen_usage[(sprite+1)&sprite_mask];		
-		colmask[color] |= pen_usage[(sprite+2)&sprite_mask] | pen_usage[(sprite+3)&sprite_mask];		
+		colmask[color] |= pen_usage[(sprite+0)&sprite_mask] | pen_usage[(sprite+1)&sprite_mask];
+		colmask[color] |= pen_usage[(sprite+2)&sprite_mask] | pen_usage[(sprite+3)&sprite_mask];
 		colmask[color] |= pen_usage[(sprite+4)&sprite_mask] | pen_usage[(sprite+5)&sprite_mask];
-		colmask[color] |= pen_usage[(sprite+6)&sprite_mask] | pen_usage[(sprite+7)&sprite_mask];		
+		colmask[color] |= pen_usage[(sprite+6)&sprite_mask] | pen_usage[(sprite+7)&sprite_mask];
 	}
 
 	for (color = 0;color < 16;color++)
@@ -111,7 +111,7 @@ static void m90_drawsprites(struct osd_bitmap *bitmap)
 	int offs;
 
 	for (offs = 0x0;offs <0x200-8;offs+= 6) {
-		int i,x,y,sprite,colour,fx,fy,y_multi;
+		int x,y,sprite,colour,fx,fy,y_multi,i;
 
 		y=(m90_spriteram[offs+0] | (m90_spriteram[offs+1]<<8))&0x1ff;
 		x=(m90_spriteram[offs+4] | (m90_spriteram[offs+5]<<8))&0x1ff;
@@ -269,24 +269,21 @@ void m90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_update(ALL_TILEMAPS);
 	palette_init_used_colors();
 	mark_sprite_colours();
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	tilemap_render(ALL_TILEMAPS);
+	palette_recalc();
 
 	if (!pf2_enable) {
 		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	} else {
 		if (m90_video_control_data[0xc]&0x4)
-			tilemap_draw(bitmap,pf2_wide_layer,0);
+			tilemap_draw(bitmap,pf2_wide_layer,0,0);
 		else
-			tilemap_draw(bitmap,pf2_layer,0);
+			tilemap_draw(bitmap,pf2_layer,0,0);
 	}
 
 	m90_drawsprites(bitmap);
 
 	if (m90_video_control_data[0xa]&0x4)
-		tilemap_draw(bitmap,pf1_wide_layer,0);
+		tilemap_draw(bitmap,pf1_wide_layer,0,0);
 	else
-		tilemap_draw(bitmap,pf1_layer,0);
+		tilemap_draw(bitmap,pf1_layer,0,0);
 }

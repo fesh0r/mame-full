@@ -36,40 +36,40 @@ static FILE *errorlog;
 /* avoid wild card expansion on the command line (DJGPP feature) */
 char **__crt0_glob_function(void)
 {
-	return 0;
+    return 0;
 }
 
 static void signal_handler(int num)
 {
-	if (errorlog) fflush(errorlog);
+    if (errorlog) fflush(errorlog);
 
-	osd_exit();
-	allegro_exit();
-	ScreenClear();
-	ScreenSetCursor( 0, 0 );
-	if( num == SIGINT )
-		cpu_dump_states();
+    osd_exit();
+    allegro_exit();
+    ScreenClear();
+    ScreenSetCursor( 0, 0 );
+    if( num == SIGINT )
+        cpu_dump_states();
 
-	signal(num, SIG_DFL);
-	raise(num);
+    signal(num, SIG_DFL);
+    raise(num);
 }
 
 /* put here anything you need to do when the program is started. Return 0 if */
 /* initialization was successful, nonzero otherwise. */
 int osd_init(void)
 {
-	if (msdos_init_sound())
-		return 1;
-	msdos_init_input();
-	return 0;
+    if (msdos_init_sound())
+        return 1;
+    msdos_init_input();
+    return 0;
 }
 
 
 /* put here cleanup routines to be executed when the program is terminated. */
 void osd_exit(void)
 {
-	msdos_shutdown_sound();
-	msdos_shutdown_input();
+    msdos_shutdown_sound();
+    msdos_shutdown_input();
 }
 
 /* fuzzy string compare, compare short string against long string        */
@@ -77,107 +77,107 @@ void osd_exit(void)
 /* we simply count the gaps between maching chars.                       */
 int fuzzycmp (const char *s, const char *l)
 {
-	int gaps = 0;
-	int match = 0;
-	int last = 1;
+    int gaps = 0;
+    int match = 0;
+    int last = 1;
 
-	for (; *s && *l; l++)
-	{
-		if (*s == *l)
-			match = 1;
-		else if (*s >= 'a' && *s <= 'z' && (*s - 'a') == (*l - 'A'))
-			match = 1;
-		else if (*s >= 'A' && *s <= 'Z' && (*s - 'A') == (*l - 'a'))
-			match = 1;
-		else
-			match = 0;
+    for (; *s && *l; l++)
+    {
+        if (*s == *l)
+            match = 1;
+        else if (*s >= 'a' && *s <= 'z' && (*s - 'a') == (*l - 'A'))
+            match = 1;
+        else if (*s >= 'A' && *s <= 'Z' && (*s - 'A') == (*l - 'a'))
+            match = 1;
+        else
+            match = 0;
 
-		if (match)
-			s++;
+        if (match)
+            s++;
 
-		if (match != last)
-		{
-			last = match;
-			if (!match)
-				gaps++;
-		}
-	}
+        if (match != last)
+        {
+            last = match;
+            if (!match)
+                gaps++;
+        }
+    }
 
-	/* penalty if short string does not completely fit in */
-	for (; *s; s++)
-		gaps++;
+    /* penalty if short string does not completely fit in */
+    for (; *s; s++)
+        gaps++;
 
-	return gaps;
+    return gaps;
 }
 
 int main (int argc, char **argv)
 {
-	int res, i, j = 0, game_index;
+    int res, i, j = 0, game_index;
     char *playbackname = NULL;
-	char override_path[256];
+    char override_path[256];
 
 
-	override_path[0] = 0;
+    override_path[0] = 0;
 
-	memset(&options,0,sizeof(options));
+    memset(&options,0,sizeof(options));
 
-	/* these two are not available in mame.cfg */
-	ignorecfg = 0;
-	errorlog = 0;
+    /* these two are not available in mame.cfg */
+    ignorecfg = 0;
+    errorlog = 0;
 
-	game_index = -1;
+    game_index = -1;
 
-	for (i = 1;i < argc;i++) /* V.V_121997 */
-	{
-		if (stricmp(argv[i],"-ignorecfg") == 0) ignorecfg = 1;
-		if (stricmp(argv[i],"-log") == 0)
-			errorlog = fopen("error.log","wa");
+    for (i = 1;i < argc;i++) /* V.V_121997 */
+    {
+        if (stricmp(argv[i],"-ignorecfg") == 0) ignorecfg = 1;
+        if (stricmp(argv[i],"-log") == 0)
+            errorlog = fopen("error.log","wa");
         if (stricmp(argv[i],"-playback") == 0)
-		{
-			i++;
-			if (i < argc)  /* point to inp file name */
-				playbackname = argv[i];
+        {
+            i++;
+            if (i < argc)  /* point to inp file name */
+                playbackname = argv[i];
         }
-	}
+    }
 
     allegro_init();
 
-	/* Allegro changed the signal handlers... change them again to ours, to */
-	/* avoid the "Shutting down Allegro" message which confuses users into */
-	/* thinking crashes are caused by Allegro. */
-	signal(SIGABRT, signal_handler);
-	signal(SIGFPE,  signal_handler);
-	signal(SIGILL,  signal_handler);
-	signal(SIGSEGV, signal_handler);
-	signal(SIGTERM, signal_handler);
-	signal(SIGINT,  signal_handler);
-	signal(SIGKILL, signal_handler);
-	signal(SIGQUIT, signal_handler);
+    /* Allegro changed the signal handlers... change them again to ours, to */
+    /* avoid the "Shutting down Allegro" message which confuses users into */
+    /* thinking crashes are caused by Allegro. */
+    signal(SIGABRT, signal_handler);
+    signal(SIGFPE,  signal_handler);
+    signal(SIGILL,  signal_handler);
+    signal(SIGSEGV, signal_handler);
+    signal(SIGTERM, signal_handler);
+    signal(SIGINT,  signal_handler);
+    signal(SIGKILL, signal_handler);
+    signal(SIGQUIT, signal_handler);
 
-	#ifdef MESS
+    #ifdef MESS
     set_config_file ("mess.cfg");
-	#else
+    #else
     set_config_file ("mame.cfg");
-	#endif
+    #endif
 
-	/* check for frontend options */
-	res = frontend_help (argc, argv);
+    /* check for frontend options */
+    res = frontend_help (argc, argv);
 
-	/* if frontend options were used, return to DOS with the error code */
-	if (res != 1234)
-		exit (res);
+    /* if frontend options were used, return to DOS with the error code */
+    if (res != 1234)
+        exit (res);
 
-	/* Initialize the audio library */
-	if (msdos_init_seal())
-	{
-		printf ("Unable to initialize SEAL\n");
-		return (1);
-	}
+    /* Initialize the audio library */
+    if (msdos_init_seal())
+    {
+        printf ("Unable to initialize SEAL\n");
+        return (1);
+    }
 
-	init_ticker();	/* after Allegro init because we use cpu_cpuid */
+    init_ticker();  /* after Allegro init because we use cpu_cpuid */
 
     /* handle playback which is not available in mame.cfg */
-	init_inpdir(); /* Init input directory for opening .inp for playback */
+    init_inpdir(); /* Init input directory for opening .inp for playback */
 
     if (playbackname != NULL)
         options.playback = osd_fopen(playbackname,0,OSD_FILETYPE_INPUTLOG,0);
@@ -195,7 +195,7 @@ int main (int argc, char **argv)
         else
         {
             for (i = 0; (drivers[i] != 0); i++) /* find game and play it */
-			{
+            {
                 if (strcmp(drivers[i]->name, inp_header.name) == 0)
                 {
                     game_index = i;
@@ -208,7 +208,7 @@ int main (int argc, char **argv)
         }
     }
 
-	/* If not playing back a new .inp file */
+    /* If not playing back a new .inp file */
     if (game_index == -1)
     {
         /* take the first commandline argument without "-" as the game name */
@@ -218,7 +218,7 @@ int main (int argc, char **argv)
         {
             if (argv[j][0] != '-') break;
         }
-		/* do we have a driver for this? */
+        /* do we have a driver for this? */
 #ifdef MAME_DEBUG
         /* pick a random game */
         if (stricmp(argv[j],"random") == 0)
@@ -226,7 +226,7 @@ int main (int argc, char **argv)
             struct timeval t;
 
             i = 0;
-            while (drivers[i]) i++;	/* count available drivers */
+            while (drivers[i]) i++; /* count available drivers */
 
             gettimeofday(&t,0);
             srand(t.tv_sec);
@@ -238,110 +238,110 @@ int main (int argc, char **argv)
         else
 #endif
         {
-			char gamename[256];
-			char *n,*c;
+            char gamename[256];
+            char *n,*c;
 
 
-			/* separate leading path */
-			strcpy(override_path,argv[j]);
-			n = override_path;
-			do
-			{
-				c = strchr(n,'\\');
-				if (c) n = c+1;
-			} while (c);
-			strcpy(gamename,n);
-			if (n == override_path)
-				*n = 0;
-			else
-				*(n-1) = 0;
+            /* separate leading path */
+            strcpy(override_path,argv[j]);
+            n = override_path;
+            do
+            {
+                c = strchr(n,'\\');
+                if (c) n = c+1;
+            } while (c);
+            strcpy(gamename,n);
+            if (n == override_path)
+                *n = 0;
+            else
+                *(n-1) = 0;
 
-			/* strip out trailing extension */
-			c = strchr(gamename,'.');
-			if (c) *c = 0;
+            /* strip out trailing extension */
+            c = strchr(gamename,'.');
+            if (c) *c = 0;
 
-			for (i = 0; drivers[i] && (game_index == -1); i++)
-			{
-				if (stricmp(gamename,drivers[i]->name) == 0)
-				{
-					game_index = i;
-					break;
-				}
-			}
+            for (i = 0; drivers[i] && (game_index == -1); i++)
+            {
+                if (stricmp(gamename,drivers[i]->name) == 0)
+                {
+                    game_index = i;
+                    break;
+                }
+            }
 
-			/* educated guess on what the user wants to play */
-			if (game_index == -1)
-			{
-				int fuzz = 9999; /* best fuzz factor so far */
+            /* educated guess on what the user wants to play */
+            if (game_index == -1)
+            {
+                int fuzz = 9999; /* best fuzz factor so far */
 
-				for (i = 0; (drivers[i] != 0); i++)
-				{
-					int tmp;
-					tmp = fuzzycmp(gamename, drivers[i]->description);
-					/* continue if the fuzz index is worse */
-					if (tmp > fuzz)
-						continue;
+                for (i = 0; (drivers[i] != 0); i++)
+                {
+                    int tmp;
+                    tmp = fuzzycmp(gamename, drivers[i]->description);
+                    /* continue if the fuzz index is worse */
+                    if (tmp > fuzz)
+                        continue;
 
-					/* on equal fuzz index, we prefer working, original games */
-					if (tmp == fuzz)
-					{
-						/* game is a clone */
-						if (drivers[i]->clone_of != 0
-								&& !(drivers[i]->clone_of->flags & NOT_A_DRIVER))
-						{
-							/* if the game we already found works, why bother. */
-							/* and broken clones aren't very helpful either */
-							if ((!drivers[game_index]->flags & GAME_NOT_WORKING) ||
-								(drivers[i]->flags & GAME_NOT_WORKING))
-								continue;
-						}
-						else continue;
-					}
+                    /* on equal fuzz index, we prefer working, original games */
+                    if (tmp == fuzz)
+                    {
+                        /* game is a clone */
+                        if (drivers[i]->clone_of != 0
+                                && !(drivers[i]->clone_of->flags & NOT_A_DRIVER))
+                        {
+                            /* if the game we already found works, why bother. */
+                            /* and broken clones aren't very helpful either */
+                            if ((!drivers[game_index]->flags & GAME_NOT_WORKING) ||
+                                (drivers[i]->flags & GAME_NOT_WORKING))
+                                continue;
+                        }
+                        else continue;
+                    }
 
-					/* we found a better match */
-					game_index = i;
-					fuzz = tmp;
-				}
+                    /* we found a better match */
+                    game_index = i;
+                    fuzz = tmp;
+                }
 
-				if (game_index != -1)
-					printf("fuzzy name compare, running %s\n",drivers[game_index]->name);
-			}
-		}
+                if (game_index != -1)
+                    printf("fuzzy name compare, running %s\n",drivers[game_index]->name);
+            }
+        }
 
-		if (game_index == -1)
-		{
-			printf("Game \"%s\" not supported\n", argv[j]);
-			return 1;
-		}
-	}
+        if (game_index == -1)
+        {
+            printf("Game \"%s\" not supported\n", argv[j]);
+            return 1;
+        }
+    }
 
-	#ifdef MESS
-	/* This function has been added to MESS.C as load_image() */
-	load_image(argc, argv, j, game_index);
-	#endif
+    #ifdef MESS
+    /* This function has been added to MESS.C as load_image() */
+    load_image(argc, argv, j, game_index);
+    #endif
 
-	/* parse generic (os-independent) options */
-	parse_cmdline (argc, argv, game_index, override_path);
+    /* parse generic (os-independent) options */
+    parse_cmdline (argc, argv, game_index, override_path);
 
-{	/* Mish:  I need sample rate initialised _before_ rom loading for optional rom regions */
-	extern int soundcard;
+{   /* Mish:  I need sample rate initialised _before_ rom loading for optional rom regions */
+    extern int soundcard;
 
-	if (soundcard == 0) {    /* silence, this would be -1 if unknown in which case all roms are loaded */
-		Machine->sample_rate = 0; /* update the Machine structure to show that sound is disabled */
-		options.samplerate=0;
-	}
+    if (soundcard == 0) {    /* silence, this would be -1 if unknown in which case all roms are loaded */
+        Machine->sample_rate = 0; /* update the Machine structure to show that sound is disabled */
+        options.samplerate=0;
+    }
 }
 
-	/* handle record which is not available in mame.cfg */
-	for (i = 1; i < argc; i++)
-	{
-		if (stricmp(argv[i],"-record") == 0)
-		{
-			i++;
-			if (i < argc)
-				options.record = osd_fopen(argv[i],0,OSD_FILETYPE_INPUTLOG,1);
-		}
-	}
+    /* handle record which is not available in mame.cfg */
+    for (i = 1; i < argc; i++)
+    {
+        if (stricmp(argv[i],"-record") == 0)
+        {
+            i++;
+            if (i < argc)
+                options.record = osd_fopen(argv[i],0,OSD_FILETYPE_INPUTLOG,1);
+        }
+    }
 
     if (options.record)
     {
@@ -361,34 +361,34 @@ int main (int argc, char **argv)
         osd_fwrite(options.record, &inp_header, sizeof(INP_HEADER));
     }
 
-	#ifdef MESS
-	/* Build the CRC database filename */
-	sprintf(crcfilename, "%s/%s.crc", crcdir, drivers[game_index]->name);
-	if (drivers[game_index]->clone_of->name)
-		sprintf (pcrcfilename, "%s/%s.crc", crcdir, drivers[game_index]->clone_of->name);
-	else
-		pcrcfilename[0] = 0;
+    #ifdef MESS
+    /* Build the CRC database filename */
+    sprintf(crcfilename, "%s/%s.crc", crcdir, drivers[game_index]->name);
+    if (drivers[game_index]->clone_of->name)
+        sprintf (pcrcfilename, "%s/%s.crc", crcdir, drivers[game_index]->clone_of->name);
+    else
+        pcrcfilename[0] = 0;
     #endif
 
     /* go for it */
-	res = run_game (game_index);
+    res = run_game (game_index);
 
-	/* close open files */
-	if (errorlog) fclose (errorlog);
-	if (options.playback) osd_fclose (options.playback);
-	if (options.record)   osd_fclose (options.record);
-	if (options.language_file) osd_fclose (options.language_file);
+    /* close open files */
+    if (errorlog) fclose (errorlog);
+    if (options.playback) osd_fclose (options.playback);
+    if (options.record)   osd_fclose (options.record);
+    if (options.language_file) osd_fclose (options.language_file);
 
-	exit (res);
+    exit (res);
 }
 
 
 
 void CLIB_DECL logerror(const char *text,...)
 {
-	va_list arg;
-	va_start(arg,text);
-	if (errorlog)
-		vfprintf(errorlog,text,arg);
-	va_end(arg);
+    va_list arg;
+    va_start(arg,text);
+    if (errorlog)
+        vfprintf(errorlog,text,arg);
+    va_end(arg);
 }

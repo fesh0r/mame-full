@@ -2,7 +2,7 @@
 
 	Video Hardware for Nichibutsu Mahjong series.
 
-	Driver by Takahiro Nogi 1999/11/05 - 
+	Driver by Takahiro Nogi 1999/11/05 -
 
 ***************************************************************************/
 
@@ -469,7 +469,7 @@ static void secolove_gfxdraw(void)
 				}
 				else
 				{
-					// 
+					//
 					drawcolor1 = mjsikaku_palette[color1];
 					drawcolor2 = mjsikaku_palette[color2];
 
@@ -662,7 +662,7 @@ static void bijokkoy_gfxdraw(void)
 
 				if (mjsikaku_dispflag2 & 0x20)
 				{
-					// 
+					//
 					drawcolor1 = 0;		// dammy
 					drawcolor2 = 0;		// dammy
 
@@ -866,7 +866,7 @@ static void housemnq_gfxdraw(void)
 
 				if (mjsikaku_dispflag2 & 0x20)
 				{
-					// 
+					//
 					drawcolor1 = 0;		// dammy
 					drawcolor2 = 0;		// dammy
 

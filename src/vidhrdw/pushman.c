@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 
 static struct tilemap *bg_tilemap,*tx_tilemap;
-static int control[4];
+static data16_t control[2];
 
 
 /***************************************************************************
@@ -29,7 +29,7 @@ static void get_back_tile_info( int tile_index )
 
 static void get_text_tile_info( int tile_index )
 {
-	int tile=READ_WORD(&videoram[tile_index<<1]);
+	int tile = videoram16[tile_index];
 	SET_TILE_INFO(0,(tile&0xff)|((tile&0x8000)>>6)|((tile&0x4000)>>6)|((tile&0x2000)>>4),(tile>>8)&0xf)
 }
 
@@ -49,7 +49,7 @@ int pushman_vh_start(void)
 	if (!tx_tilemap || !bg_tilemap)
 		return 1;
 
-	tx_tilemap->transparent_pen = 3;
+	tilemap_set_transparent_pen(tx_tilemap,3);
 
 	return 0;
 }
@@ -62,20 +62,18 @@ int pushman_vh_start(void)
 
 ***************************************************************************/
 
-WRITE_HANDLER( pushman_scroll_w )
+WRITE16_HANDLER( pushman_scroll_w )
 {
-	WRITE_WORD(&control[offset],data);
+	COMBINE_DATA(&control[offset]);
 }
 
-READ_HANDLER( pushman_videoram_r )
+WRITE16_HANDLER( pushman_videoram_w )
 {
-	return READ_WORD(&videoram[offset]);
-}
+	int oldword = videoram16[offset];
 
-WRITE_HANDLER( pushman_videoram_w )
-{
-	COMBINE_WORD_MEM(&videoram[offset],data);
-	tilemap_mark_tile_dirty( tx_tilemap, offset/2 );
+	COMBINE_DATA(&videoram16[offset]);
+	if (oldword != videoram16[offset])
+		tilemap_mark_tile_dirty(tx_tilemap,offset);
 }
 
 
@@ -90,15 +88,15 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs,x,y,color,sprite;
 
-	for (offs = 0x1000-8;offs >=0;offs -= 8)
+	for (offs = 0x0800-4;offs >=0;offs -= 4)
 	{
 		/* Don't draw empty sprite table entries */
-		x = READ_WORD(&spriteram[offs+6])&0x1ff;
+		x = spriteram16[offs+3]&0x1ff;
 		if (x==0x180) continue;
 		if (x>0xff) x=0-(0x200-x);
-		y = 240-READ_WORD(&spriteram[offs+4]);
-		color = ((READ_WORD(&spriteram[offs+2])>>2)&0xf);
-		sprite = READ_WORD(&spriteram[offs])&0x7ff;
+		y = 240-spriteram16[offs+2];
+		color = ((spriteram16[offs+1]>>2)&0xf);
+		sprite = spriteram16[offs]&0x7ff;
 
 		drawgfx(bitmap,Machine->gfx[1],
 				sprite,
@@ -115,10 +113,10 @@ static void mark_sprite_colors(void)
 
 	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
 	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0;offs <0x1000;offs += 8)
+	for (offs = 0;offs < 0x0800;offs += 4)
 	{
-		color = ((READ_WORD(&spriteram[offs+2])>>2)&0xf);
-		sprite = READ_WORD(&spriteram[offs])&0x7ff;
+		color = ((spriteram16[offs+1]>>2)&0xf);
+		sprite = spriteram16[offs]&0x7ff;
 		colmask[color] |= Machine->gfx[1]->pen_usage[sprite];
 	}
 	for (color = 0;color < 16;color++)
@@ -134,19 +132,17 @@ static void mark_sprite_colors(void)
 void pushman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* Setup the tilemaps */
-	tilemap_set_scrollx( bg_tilemap,0, READ_WORD(&control[0]) );
-	tilemap_set_scrolly( bg_tilemap,0, 0xf00-READ_WORD(&control[2]) );
+	tilemap_set_scrollx( bg_tilemap,0, control[0] );
+	tilemap_set_scrolly( bg_tilemap,0, 0xf00-control[1] );
 	tilemap_update(ALL_TILEMAPS);
 
 	/* Build the dynamic palette */
 	palette_init_used_colors();
 	mark_sprite_colors();
 
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	palette_recalc();
 
-	tilemap_render(ALL_TILEMAPS);
-	tilemap_draw(bitmap,bg_tilemap,0);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);
-	tilemap_draw(bitmap,tx_tilemap,0);
+	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
