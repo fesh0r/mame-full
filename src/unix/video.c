@@ -384,6 +384,11 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
 
 	current_palette = normal_palette;
 
+	/*
+	 * Mark the palette dirty for Xv when running certain NeoGeo games.
+	 */
+	sysdep_palette_mark_dirty(normal_palette);
+
 	/* fill in the resulting RGB components */
 	if (rgb_components)
 	{
