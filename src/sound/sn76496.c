@@ -10,6 +10,12 @@
   layout is unknown. It can be set for either period or white noise; again,
   the details are unknown.
 
+Update (R. Nabet 2002/03/21):
+	Using white noise samples by John Kortink (found at
+	http://web.inter.nl.net/users/J.Kortink/sn76489.bits), I have been able
+	to reverse engineer the value for FB_WNOISE.
+	I still have no idea what the correct value for NG_PRESET.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -24,10 +30,7 @@
 /* bit0 = output */
 
 /* noise feedback for white noise mode */
-#define FB_WNOISE 0x12000	/* bit15.d(16bits) = bit0(out) ^ bit2 */
-//#define FB_WNOISE 0x14000	/* bit15.d(16bits) = bit0(out) ^ bit1 */
-//#define FB_WNOISE 0x28000	/* bit16.d(17bits) = bit0(out) ^ bit2 (same to AY-3-8910) */
-//#define FB_WNOISE 0x50000	/* bit17.d(18bits) = bit0(out) ^ bit2 */
+#define FB_WNOISE 0x14002	/* this value was reverse-engineered from an actual SN76489 */
 
 /* noise feedback for periodic noise mode */
 /* it is correct maybe (it was in the Megadrive sound manual) */
