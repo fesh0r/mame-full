@@ -287,12 +287,14 @@ BOOL FindRomSet(int game)
     return TRUE;
 }
 
-
 /* Checks if the game uses external samples at all
  * Returns TRUE if this driver expects samples
  */
 BOOL GameUsesSamples(int game)
 {
+
+#if defined(SOUND_SAMPLES)
+
     int i;
     static const struct GameDriver *gamedrv;
 
@@ -309,6 +311,9 @@ BOOL GameUsesSamples(int game)
 		if (samplenames != 0 && samplenames[0] != 0)
             return TRUE;
     }
+
+#endif
+
     return FALSE;
 }
 
@@ -317,6 +322,8 @@ BOOL GameUsesSamples(int game)
  */
 BOOL FindSampleSet (int game)
 {
+#if defined(SOUND_SAMPLES)
+
     static const struct GameDriver *gamedrv;
     const char  *sharedname;
     BOOL bStatus;
@@ -387,6 +394,9 @@ BOOL FindSampleSet (int game)
             }
         }
     }
+
+#endif
+
     return TRUE;
 }
 
@@ -539,10 +549,16 @@ char *GameInfoCPU(UINT nIndex)
     i = 0;
     while (i < MAX_CPU && drivers[nIndex]->drv->cpu[i].cpu_type)
     {
-        sprintf(&buf[strlen(buf)],"%s %d.%06d MHz",
-                cputype_name(drivers[nIndex]->drv->cpu[i].cpu_type),
-                drivers[nIndex]->drv->cpu[i].cpu_clock / 1000000,
-                drivers[nIndex]->drv->cpu[i].cpu_clock % 1000000);
+        if (drivers[nIndex]->drv->cpu[i].cpu_clock >= 1000000)
+            sprintf(&buf[strlen(buf)], "%s %d.%06d MHz",
+                    cputype_name(drivers[nIndex]->drv->cpu[i].cpu_type),
+                    drivers[nIndex]->drv->cpu[i].cpu_clock / 1000000,
+                    drivers[nIndex]->drv->cpu[i].cpu_clock % 1000000);
+        else
+            sprintf(&buf[strlen(buf)], "%s %d.%03d kHz",
+                    cputype_name(drivers[nIndex]->drv->cpu[i].cpu_type),
+                    drivers[nIndex]->drv->cpu[i].cpu_clock / 1000,
+                    drivers[nIndex]->drv->cpu[i].cpu_clock % 1000);
 
         if (drivers[nIndex]->drv->cpu[i].cpu_type & CPU_AUDIO_CPU)
             strcat(buf, " (sound)");
@@ -565,18 +581,22 @@ char *GameInfoSound(UINT nIndex)
     i = 0;
     while (i < MAX_SOUND && drivers[nIndex]->drv->sound[i].sound_type)
     {
-        if (drivers[nIndex]->drv->sound[i].sound_type >= SOUND_AY8910
-        &&  drivers[nIndex]->drv->sound[i].sound_type  <= SOUND_ASTROCADE)
-            sprintf(&buf[strlen(buf)],"%d x ",((struct AY8910interface *)drivers[nIndex]->drv->sound[i].sound_interface)->num);
+        if (1 < sound_num(&drivers[nIndex]->drv->sound[i]))
+            sprintf(&buf[strlen(buf)], "%d x ", sound_num(&drivers[nIndex]->drv->sound[i]));
 
-        sprintf(&buf[strlen(buf)],"%s",
-                sound_name(&drivers[nIndex]->drv->sound[i]));
+        sprintf(&buf[strlen(buf)], "%s", sound_name(&drivers[nIndex]->drv->sound[i]));
 
-        if (drivers[nIndex]->drv->sound[i].sound_type >= SOUND_AY8910
-        &&  drivers[nIndex]->drv->sound[i].sound_type  <= SOUND_ASTROCADE)
-            sprintf(&buf[strlen(buf)]," %d.%06d MHz",
-                    ((struct AY8910interface *)drivers[nIndex]->drv->sound[i].sound_interface)->baseclock / 1000000,
-                    ((struct AY8910interface *)drivers[nIndex]->drv->sound[i].sound_interface)->baseclock % 1000000);
+        if (sound_clock(&drivers[nIndex]->drv->sound[i]))
+        {
+            if (sound_clock(&drivers[nIndex]->drv->sound[i]) >= 1000000)
+                sprintf(&buf[strlen(buf)], " %d.%06d MHz",
+                        sound_clock(&drivers[nIndex]->drv->sound[i]) / 1000000,
+                        sound_clock(&drivers[nIndex]->drv->sound[i]) % 1000000);
+            else
+                sprintf(&buf[strlen(buf)], " %d.%03d kHz",
+                        sound_clock(&drivers[nIndex]->drv->sound[i]) / 1000,
+                        sound_clock(&drivers[nIndex]->drv->sound[i]) % 1000);
+        }
 
         strcat(buf,"\n");
 
@@ -1784,6 +1804,7 @@ static void SetYM3812Enabled(HWND hWnd, int index)
 
 static void SetSamplesEnabled(HWND hWnd, int index)
 {
+#if defined(SOUND_SAMPLES)
     int i;
     BOOL enabled = FALSE;
     HWND hCtrl;
@@ -1803,6 +1824,7 @@ static void SetSamplesEnabled(HWND hWnd, int index)
         if (!enabled)
             Button_SetCheck(hCtrl, FALSE);
     }
+#endif
 }
 
 /* Moved here cause it's called in a few places */

@@ -125,7 +125,7 @@ typedef union {
 #define HAS_I88         1
 #define HAS_I186        1
 #define HAS_I188        1
-#define HAS_I286		1
+#define HAS_I286        1
 #define HAS_I288        1
 #define HAS_V20         1
 #define HAS_V30         0
@@ -198,7 +198,7 @@ typedef union {
 #define HAS_I88         0
 #define HAS_I186        1
 #define HAS_I188        0
-#define HAS_I286		0
+#define HAS_I286        0
 #define HAS_I288        0
 #define HAS_V20         1
 #define HAS_V30         1
@@ -211,7 +211,7 @@ typedef union {
 #define HAS_M6801       1
 #define HAS_M6802       1
 #define HAS_M6803       1
-#define HAS_M6805		1
+#define HAS_M6805       1
 #define HAS_M6808       1
 #define HAS_HD63701     1
 #define HAS_NSC8105     1
@@ -227,8 +227,8 @@ typedef union {
 #define HAS_M68020      1
 #define HAS_T11         1
 #define HAS_S2650       1
-#define HAS_F8			0
-#define HAS_CP1600		0
+#define HAS_F8          0
+#define HAS_CP1600      0
 #define HAS_TMS34010    1
 #define HAS_TMS9900     0
 #define HAS_TMS9940     0
@@ -248,7 +248,8 @@ typedef union {
 #define HAS_SC61860     0
 #define ARM             0
 #define HAS_G65816      0
-#define HAS_SH2			0
+#define HAS_SPC700      0
+#define HAS_SH2         0
 #endif
 
 #endif  /* !NEOMAME */

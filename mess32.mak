@@ -562,7 +562,6 @@ DRV_OBJS = \
 	  $(OBJ)/vidhrdw/cps1.o 	 \
 	  $(OBJ)/mess/systems/cpschngr.o	\
           $(OBJ)/mess/systems/mtx.o	\
-          $(OBJ)/mess/machine/iwm_lisa.o     \
           $(OBJ)/mess/machine/lisa.o     \
           $(OBJ)/mess/systems/lisa.o	\
 	  $(OBJ)/mess/machine/atom.o	 \

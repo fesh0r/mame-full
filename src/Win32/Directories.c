@@ -251,7 +251,7 @@ static void UpdateDirectoryList(HWND hDlg)
 #if HASDIR_SAMPLE
     case SAMPLE:
 #endif
-        Item.pszText = DIRLIST_NEWENTRYTEXT;
+        Item.pszText = "<               >";
         ListView_InsertItem(hList, &Item);
         for (i = DirInfo_NumDir(pDirInfo, nType) - 1; 0 <= i; i--)
         {
