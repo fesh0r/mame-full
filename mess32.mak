@@ -374,45 +374,44 @@ DRV_OBJS = \
           $(OBJ)/mess/vidhrdw/snes.o     \
           $(OBJ)/mess/machine/snes.o     \
           $(OBJ)/mess/systems/snes.o	\
-          $(OBJ)/mess/vidhrdw/crtc6845.o \
-          $(OBJ)/mess/machine/tpi6525.o  \
-          $(OBJ)/mess/machine/cbmieeeb.o \
-          $(OBJ)/mess/vidhrdw/pet.o      \
-          $(OBJ)/mess/systems/pet.o      \
-          $(OBJ)/mess/machine/pet.o      \
-          $(OBJ)/mess/systems/cbmb.o     \
-          $(OBJ)/mess/machine/cbmb.o     \
-          $(OBJ)/mess/vidhrdw/cbmb.o     \
-          $(OBJ)/mess/vidhrdw/vic6560.o  \
-          $(OBJ)/mess/sndhrdw/vic6560.o  \
-          $(OBJ)/mess/machine/vc20.o     \
-          $(OBJ)/mess/machine/vc20tape.o \
-          $(OBJ)/mess/machine/vc1541.o   \
-          $(OBJ)/mess/systems/vc20.o     \
-          $(OBJ)/mess/vidhrdw/ted7360.o  \
-          $(OBJ)/mess/sndhrdw/ted7360.o  \
-          $(OBJ)/mess/machine/c1551.o    \
-          $(OBJ)/mess/machine/c16.o      \
-          $(OBJ)/mess/systems/c16.o      \
-          $(OBJ)/mess/machine/cbm.o      \
-          $(OBJ)/mess/machine/cbmdrive.o \
-          $(OBJ)/mess/systems/c64.o      \
-          $(OBJ)/mess/machine/cia6526.o  \
-          $(OBJ)/mess/machine/c64.o      \
-          $(OBJ)/mess/vidhrdw/vic6567.o  \
-          $(OBJ)/mess/systems/c65.o      \
-          $(OBJ)/mess/machine/c65.o      \
-	  $(OBJ)/mess/systems/c128.o	 \
-	  $(OBJ)/mess/vidhrdw/vdc8563.o  \
-	  $(OBJ)/mess/vidhrdw/praster.o  \
-	  $(OBJ)/mess/machine/c128.o	 \
-	  $(OBJ)/mess/sndhrdw/sid6581.o  \
-	  $(OBJ)/mess/sndhrdw/sid.o  \
-	  $(OBJ)/mess/sndhrdw/sidenvel.o  \
-	  $(OBJ)/mess/sndhrdw/sidvoice.o  \
 	  $(OBJ)/mess/vidhrdw/amiga.o	 \
 	  $(OBJ)/mess/machine/amiga.o	 \
 #	  $(OBJ)/mess/systems/amiga.o	 \
+	  $(OBJ)/mess/machine/tpi6525.o  \
+	  $(OBJ)/mess/machine/cia6526.o  \
+	  $(OBJ)/mess/machine/cbm.o	 \
+	  $(OBJ)/mess/sndhrdw/sid.o  \
+	  $(OBJ)/mess/sndhrdw/sidenvel.o  \
+	  $(OBJ)/mess/sndhrdw/sidvoice.o  \
+	  $(OBJ)/mess/sndhrdw/sid6581.o  \
+	  $(OBJ)/mess/machine/cbmdrive.o \
+	  $(OBJ)/mess/machine/vc1541.o	 \
+	  $(OBJ)/mess/machine/cbmieeeb.o \
+	  $(OBJ)/mess/machine/cbmserb.o	 \
+	  $(OBJ)/mess/machine/vc20tape.o \
+	  $(OBJ)/mess/vidhrdw/vic6567.o  \
+	  $(OBJ)/mess/machine/c64.o	 \
+	  $(OBJ)/mess/vidhrdw/crtc6845.o	\
+	  $(OBJ)/mess/vidhrdw/pet.o	 \
+	  $(OBJ)/mess/systems/pet.o	 \
+	  $(OBJ)/mess/machine/pet.o	 \
+	  $(OBJ)/mess/vidhrdw/vic6560.o  \
+	  $(OBJ)/mess/sndhrdw/vic6560.o  \
+	  $(OBJ)/mess/machine/vc20.o	 \
+	  $(OBJ)/mess/systems/vc20.o	 \
+	  $(OBJ)/mess/vidhrdw/ted7360.o  \
+	  $(OBJ)/mess/sndhrdw/ted7360.o  \
+	  $(OBJ)/mess/machine/c16.o	 \
+	  $(OBJ)/mess/systems/c16.o	 \
+	  $(OBJ)/mess/systems/cbmb.o	 \
+	  $(OBJ)/mess/machine/cbmb.o	 \
+	  $(OBJ)/mess/vidhrdw/cbmb.o	 \
+	  $(OBJ)/mess/systems/c64.o	 \
+	  $(OBJ)/mess/systems/c65.o	 \
+	  $(OBJ)/mess/machine/c65.o	 \
+	  $(OBJ)/mess/vidhrdw/vdc8563.o  \
+	  $(OBJ)/mess/systems/c128.o	 \
+	  $(OBJ)/mess/machine/c128.o	 \
 	  $(OBJ)/mess/machine/counter.o  \
 	  $(OBJ)/mess/formats/cocopak.o  \
 	  $(OBJ)/mess/formats/cococas.o  \
