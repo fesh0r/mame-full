@@ -19,7 +19,6 @@
 #include "ui_text.h"
 #include "strconv.h"
 #include "utils.h"
-#include "sound/wave.h"
 #include "artwork.h"
 
 #ifdef UNDER_CE
@@ -533,7 +532,6 @@ static void prepare_menus(void)
 	HMENU sub_menu;
 	UINT_PTR new_item;
 	UINT flags_for_exists;
-	int status;
 
 	if (!win_menu_bar)
 		return;
@@ -575,8 +573,10 @@ static void prepare_menus(void)
 			append_menu(sub_menu, MF_STRING,		new_item + DEVOPTION_MOUNT,	UI_mount);
 			append_menu(sub_menu, flags_for_exists,	new_item + DEVOPTION_UNMOUNT,	UI_unmount);
 
+#if HAS_WAVE
 			if (dev->type == IO_CASSETTE)
 			{
+				int status;
 				status = device_status(IO_CASSETTE, i, -1);
 				append_menu(sub_menu, MF_SEPARATOR, 0, -1);
 				append_menu(sub_menu, flags_for_exists | (status & WAVE_STATUS_MOTOR_ENABLE) ? 0 : MF_CHECKED,	new_item + DEVOPTION_CASSETTE_STOPPAUSE,	UI_pauseorstop);
@@ -584,6 +584,7 @@ static void prepare_menus(void)
 				append_menu(sub_menu, flags_for_exists,															new_item + DEVOPTION_CASSETTE_REWIND,		UI_rewind);
 				append_menu(sub_menu, flags_for_exists,															new_item + DEVOPTION_CASSETTE_FASTFORWARD,	UI_fastforward);
 			}
+#endif /* HAS_WAVE */
 			s = image_exists(dev->type, i) ? image_filename(dev->type, i) : ui_getstring(UI_emptyslot);
 
 			snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%s: %s", device_typename_id(dev->type, i), s);
@@ -649,8 +650,6 @@ static void toggle_fps(void)
 
 static void device_command(const struct IODevice *dev, int id, int devoption)
 {
-	int status;
-
 	switch(devoption) {
 	case DEVOPTION_MOUNT:
 		change_device(dev, id);
@@ -662,7 +661,10 @@ static void device_command(const struct IODevice *dev, int id, int devoption)
 
 	default:
 		switch(dev->type) {
+#if HAS_WAVE
 		case IO_CASSETTE:
+		{
+			int status;
 			status = device_status(IO_CASSETTE, id, -1);
 			switch(devoption) {
 			case DEVOPTION_CASSETTE_PLAYRECORD:
@@ -683,7 +685,9 @@ static void device_command(const struct IODevice *dev, int id, int devoption)
 				device_seek(IO_CASSETTE, id, +11025, SEEK_CUR);
 				break;
 			}
-
+			break;
+		}
+#endif /* HAS_WAVE */
 		}
 	}
 }

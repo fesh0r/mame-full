@@ -1,7 +1,8 @@
 #include "driver.h"
 #include "image.h"
 #include "ui_text.h"
-#include "sound/wave.h"
+
+#if HAS_WAVE
 
 int tapecontrol(struct mame_bitmap *bitmap, int selected)
 {
@@ -180,4 +181,4 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
     return sel + 1;
 }
 
-
+#endif /* HAS_WAVE */

@@ -1,7 +1,8 @@
 /* */
 #include "cassette.h"
 #include "image.h"
-#include "sound/wave.h"
+
+#if HAS_WAVE
 
 int cassette_init(int id, void *file, int open_mode, const struct cassette_args *args)
 {
@@ -65,4 +66,6 @@ void cassette_exit(int id)
 {
 	device_close(IO_CASSETTE, id);
 }
+
+#endif /* HAS_WAVE */
 

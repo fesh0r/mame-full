@@ -3087,7 +3087,9 @@ static void setup_menu_init(void)
 #else
 	menu_item[menu_total] = ui_getstring (UI_imageinfo); menu_action[menu_total++] = UI_IMAGEINFO;
 	menu_item[menu_total] = ui_getstring (UI_filemanager); menu_action[menu_total++] = UI_FILEMANAGER;
+#if HAS_WAVE
 	menu_item[menu_total] = ui_getstring (UI_tapecontrol); menu_action[menu_total++] = UI_TAPECONTROL;
+#endif
 	menu_item[menu_total] = ui_getstring (UI_history); menu_action[menu_total++] = UI_HISTORY;
 #endif
 
@@ -3161,9 +3163,11 @@ static int setup_menu(struct mame_bitmap *bitmap, int selected)
 			case UI_FILEMANAGER:
 				res = filemanager(bitmap, sel >> SEL_BITS);
 				break;
+#if HAS_WAVE
 			case UI_TAPECONTROL:
 				res = tapecontrol(bitmap, sel >> SEL_BITS);
 				break;
+#endif /* HAS_WAVE */
 #endif
 			case UI_HISTORY:
 				res = displayhistory(bitmap, sel >> SEL_BITS);
