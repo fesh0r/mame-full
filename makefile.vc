@@ -160,7 +160,7 @@ endif
 
 RCDEFS = $(MAME_NET) $(MAME_MMX) -DNDEBUG $(MAME_VERSION)
 
-RCFLAGS = -l 0x409 -I./windowsui $(MAME_DEBUG)
+RCFLAGS = -l 0x409 -Isrc -Imess -I./windowsui $(MAME_DEBUG)
 
 ifdef DEBUG
 RCFLAGS += -DMAME_DEBUG
