@@ -134,6 +134,7 @@ TESTDRIVER( vip )		/* Cosmac VIP						*/
 	/* schmid tvg 2000 */
 	/* eduscho tele fever */
 	/* hanimex fever 1 (hmg 2650) */
+	DRIVER( paladium )/* Palladium different cartridge connector, more keys */
 
 	/* GCE */
 	DRIVER( vectrex )	/* General Consumer Electric Vectrex - 1982-1984  */
@@ -314,6 +315,7 @@ TESTDRIVER( vc20v ) 	/* Commodore Vic-20 PAL, VC1541					  */
 	DRIVER( cbm4064 )	/* Commodore CBM4064							  */
 TESTDRIVER( sx64 )		/* Commodore SX 64 - PAL						  */
 TESTDRIVER( vip64 )		/* Commodore VIP64 (SX64, PAL, Swedish)			  */
+TESTDRIVER( dx64 )		/* Commodore DX 64 - PROTOTPYE, PAL						  */
 	DRIVER( c64gs ) 	/* Commodore 64 Games System					  */
 
 	DRIVER( cbm500 )	/* Commodore 500/P128-40						  */
@@ -342,6 +344,7 @@ TESTDRIVER( plus4v )	/* Commodore +4 								  */
 	DRIVER( c128swe )	/* Commodore 128 - PAL (swedish)				  */
 TESTDRIVER( c128nor )	/* Commodore 128 - PAL (norwegian)				  */
 TESTDRIVER( c128d )		/* Commodore 128D - NTSC 						  */
+TESTDRIVER( c128dita )	/* Commodore 128D - PAL (italian) cost reduced set	  */
 
 /*	DRIVER( lcd )*/		/* Commodore LCD Prototype (m65c102 based)		  */
 
@@ -382,6 +385,7 @@ TESTDRIVER( ibmpcjr )	/*      IBM PC Jr								  */
 	/* at */
 TESTDRIVER( ibmat )		/* 1985	IBM AT									  */
 TESTDRIVER( i8530286 )	/* 1988 IBM PS2 Model 30 286 (VGA)					*/
+//TESTDRIVER( t2500xl )	/* 19?? Tandy 2500XL (VGA)					*/
 	DRIVER( at )		/* 1987 AMI Bios and Diagnostics				  */
 TESTDRIVER( atvga ) 	/*												  */
 TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
