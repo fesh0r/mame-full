@@ -293,6 +293,15 @@ INLINE void get_screen_bounds(RECT *bounds)
 
 INLINE void set_aligned_window_pos(HWND wnd, HWND insert, int x, int y, int cx, int cy, UINT flags)
 {
+	HMENU menu;
+	RECT rect;
+	
+	menu = GetMenu(wnd);
+	if (menu)
+	{
+		GetMenuItemRect(wnd, menu, 0, &rect);
+		cy += rect.bottom - rect.top;
+	}
 	SetWindowPos(wnd, insert, get_aligned_window_pos(x), y, cx, cy, flags);
 }
 
