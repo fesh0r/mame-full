@@ -37,13 +37,18 @@ void a7800_init_machine(void) {
     }
 }
 
-void a7800_stop_machine(void) {
+void a7800_stop_machine(void)
+{
+	return;
+
+	/*
 	if (a7800_bios_f000)
 		free(a7800_bios_f000);
 	a7800_bios_f000 = NULL;
 	if (a7800_cart_f000)
 		free(a7800_cart_f000);
 	a7800_cart_f000 = NULL;
+	*/
 }
 
 /*    Header format
@@ -249,9 +254,9 @@ WRITE_HANDLER( a7800_TIA_w ) {
                 a7800_ctrl_lock = data & 0x01;
                 a7800_ctrl_reg = data;
                 if (data & 0x04)
-                    memcpy(&(ROM[0xF000]),a7800_cart_f000,0x1000);
+               		memcpy(&(ROM[0xF000]),a7800_cart_f000,0x1000);
                 else
-                    memcpy(&(ROM[0xF000]),a7800_bios_f000,0x1000);
+               		memcpy(&(ROM[0xF000]),a7800_bios_f000,0x1000);
             }
         break;
     }
