@@ -47,7 +47,9 @@
 				<A href="#s06">I did everything just like you said, but it still doesn't work!</A>
 			<li>
 				<A href="#s07">It works, but it is way too slow!</A>
-			</li>
+			<LI>
+				<a href="#s08">For some reason, ESC does not quit MESS nor does TAB bring up the 
+					menu!</a></LI>
 		</ul>
 		<h2>How Do I...</h2>
 		<ul>
@@ -287,6 +289,22 @@
 			except buy a faster computer, wait for an update (not likely), or use another 
 			emulator.
 		</p>
+		<h2 id="s08">For some reason, ESC does not quit MESS nor does TAB bring up the 
+			menu!</h2>
+		<p>In MESS for Win32, there are two UIs use at runtime. There is the "Classic UI" 
+			which is derived from MAME's UI, and there is the "New UI" which uses a 
+			standard Windows menubar to operate the emulation.&nbsp; By default, the New UI 
+			is enabled.&nbsp; However, some people prefer to use the older UI.&nbsp; This 
+			can be done in one of two ways.</p>
+		<OL>
+			<LI>
+				When running the MESS GUI (messgui.exe), choose "Options --&gt; Default System 
+				Options --&gt; Miscellaneous Tab" and uncheck the&nbsp;"Use New UI" checkbox.</LI>
+			<LI>
+				If it exists, edit mess.ini and change the "newui" setting to "0".&nbsp; For 
+				more details on mess.ini, consult <a href="windows/win32cmd.htm">Using MESS at the Command Line</a>
+			</LI>
+		</OL>
 		<h2 id="h01">How do I set up the screenshots/snapshots folder for MESS?</h2>
 		<p>The snapshot (aka screenshot) folder is the place to store images to be 
 			displayed in the GUI. It can display in-game/software images and system images, 
@@ -324,9 +342,10 @@
 			project files and port them over to build MESS, but to my knowledge noone has 
 			done this yet.</p>
 		<P>There is also an alternative makefile (makefile.vc) that uses the Visual C 
-			command line compilers but the makefile itself requires <a href="http://www.gnu.org/software/make/">GNU make</a> rather than 
-			nmake.&nbsp; Using the Microsoft compilers allows one to use the Visual C 
-			debugger to debug MESS, but one does not get the full benefits of the IDE.</P>
+			command line compilers but the makefile itself requires <a href="http://www.gnu.org/software/make/">
+				GNU make</a> rather than nmake.&nbsp; Using the Microsoft compilers allows 
+			one to use the Visual C debugger to debug MESS, but one does not get the full 
+			benefits of the IDE.</P>
 		<h2 id="h05">How do I contribute to the MESS project?</h2>
 		<p>If you have programming skills, you can download the source and fix bugs, 
 			improve emulation on existing systems or add a new one! If you fix anything, be 
