@@ -106,6 +106,10 @@
 #define false 0
 #endif
 
+#ifndef BIG_SWITCH
+#define BIG_SWITCH	0
+#endif
+
 void CHECK_IRQ_LINES( void );
 static void IIError(void);
 static void DZError(void);
@@ -788,7 +792,7 @@ int hd6309_execute(int cycles)	/* NS 970908 */
 			hd6309.ireg = ROP(PCD);
 			PC++;
 
-#ifdef BIG_SWITCH
+#if BIG_SWITCH
 			switch( hd6309.ireg )
 			{
 			case 0x00: neg_di();   				break;
