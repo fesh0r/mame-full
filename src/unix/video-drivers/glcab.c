@@ -28,9 +28,6 @@ static int ingeom=0;
 
 static int inbegin=0;
 
-extern GLdouble vx_cscr_p1,vy_cscr_p1,vz_cscr_p1,vx_cscr_p2,vy_cscr_p2,vz_cscr_p2,
-  vx_cscr_p3,vy_cscr_p3,vz_cscr_p3,vx_cscr_p4,vy_cscr_p4,vz_cscr_p4;
-
 
 /* Skip until we hit whitespace */
 
@@ -439,14 +436,14 @@ void InitCabGlobals()
 
 /* Load the cabinet */
 
-int LoadCabinet(char *cabname)
+int LoadCabinet(const char *cabname)
 {
   FILE *cfp;
   char buf[256];
 
   InitCabGlobals();
 
-  sprintf(buf,"%s/cab/%s/%s.cab",XMAMEROOT,cabname,cabname);
+  snprintf(buf,256,"%s/cab/%s/%s.cab",XMAMEROOT,cabname,cabname);
 
   if(!(cfp=fopen(buf,"r")))
 	return 0;

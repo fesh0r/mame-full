@@ -33,6 +33,7 @@
 
 #include "driver.h"
 #include "xmame.h"
+#include "sysdep/sysdep_display.h"
 
 static Cursor        cursor;
 static XVisualInfo   *myvisual;
@@ -59,10 +60,8 @@ int alphablending=0; /* alphablending */
 
 int fullscreen = 0;
 int antialias=0;
-int antialiasvec=1;
 int translucency = 0;
-
-static int drawbitmapvec;
+int force_text_width_height = 0;
 
 XSetWindowAttributes window_attr;
 GLXContext glContext=NULL;
@@ -96,26 +95,9 @@ struct rc_option display_opts[] = {
    { "gltexture_size",	NULL,			rc_int,	&force_text_width_height,
      "0",		0,			0,		NULL,
      "Force the max width and height of one texture segment (default: autosize)" },
-   { "glforceblitmode", "glblit",		rc_bool,	&useColorBlitter,
-     "0",		0,			0,		NULL,
-     "Force blitter for true color modes 15/32bpp (default: true)" },
-#ifndef NOGLEXT78
-   { "glext78",	        "glext",		rc_bool,	&useGLEXT78,
-     "1",		0,			0,		NULL,
-     "Force the usage of the gl extension #78, if available (paletted texture, default: true)" },
-#endif
    { "glbilinear",	"glbilin",		rc_bool,	&bilinear,
      "1",		0,			0,		NULL,
      "Enable/disable bilinear filtering (default: true)" },
-   { "gldrawbitmap",	"glbitmap",		rc_bool,	&drawbitmap,
-     "1",		0,			0,		NULL,
-     "Enable/Disable the drawing of the bitmap - e.g. disable it within vector games for a speedup (default: true)" },
-   { "gldrawbitmapvec",	"glbitmapv",		rc_bool,	&drawbitmapvec,
-     "1",		0,			0,		NULL,
-     "Enable/Disable the drawing of the bitmap only for vector games - speedup (default: true)" },
-   { "glcolormod",	"glcmod",		rc_bool,	&use_mod_ctable,
-     "1",		0,			0,		NULL,
-     "Enable/Disable color modulation (intensity,gamma) (default: true)" },
    { "glbeam",		NULL,			rc_float,	&gl_beam,
      "1.0",		1.0,			16.0,		NULL,
      "Set the beam size for vector games (default: 1.0)" },
@@ -125,9 +107,6 @@ struct rc_option display_opts[] = {
    { "glantialias",	"glaa",			rc_bool,	&antialias,
      "1",		0,			0,		NULL,
      "Enable/disable antialiasing (default: true)" },
-   { "glantialiasvec",	"glaav",		rc_bool,	&antialiasvec,
-     "1",		0,			0,		NULL,
-     "Enable/disable vector antialiasing (default: true)" },
    { "gllibname",	"gllib",		rc_string,	&libGLName,
      "libGL.so",	0,			0,		NULL,
      "Choose the dynamically loaded OpenGL Library (default libGL.so)" },
@@ -150,6 +129,8 @@ struct rc_option display_opts[] = {
      NULL,		0,			0,		NULL,
      NULL }
 };
+
+struct sysdep_display_prop_struct sysdep_display_properties = { glvec_renderer, 1 };
 
 static Cursor create_invisible_cursor (Display * display, Window win)
 {
@@ -348,7 +329,6 @@ int sysdep_create_display(int depth)
 
   alphablending= (glCaps.alphaBits>0)?1:0;
   doublebuffer = (glCaps.buffer==BUFFER_DOUBLE)?1:0;
-  useColorIndex= (Machine->drv->video_attributes & VIDEO_RGB_DIRECT)==0;
 
   /*  Placement hints etc. */
   
@@ -436,16 +416,11 @@ int sysdep_create_display(int depth)
 	XSetWMNormalHints(display,window,&hints);
   }
 
-  if ( (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR) 
-       && drawbitmap ) drawbitmap=drawbitmapvec;
-
   InitVScreen(depth);
 
 #ifndef NDEBUG
   printf("GLINFO: xgl display created !\n");
 #endif
-
-  effect_init2(depth, depth, visual_width*widthscale);
 
   return OSD_OK;
 }

@@ -28,6 +28,7 @@ Todo:
 
 #ifdef xgl
 
+#include <math.h>
 #include "xmame.h"
 #include "glmame.h"
 #include "driver.h"
@@ -35,13 +36,6 @@ Todo:
 #include "vidhrdw/vector.h"
 
 #include "osinline.h"
-
-void CalcCabPointbyViewpoint( 
-		   GLdouble vx_gscr_view, GLdouble vy_gscr_view, 
-                   GLdouble *vx_p, GLdouble *vy_p, GLdouble *vz_p
-		 );
-extern GLdouble  s__cscr_w_view, s__cscr_h_view;
-static int glvec_renderer(point *start, int num_points);
 
 GLuint veclist=0;
 float gl_beam=1.0;
@@ -63,8 +57,6 @@ void glvec_init(void)
         veclist=disp__glGenLists(1);
 
 	set_gl_beam(gl_beam);
-	
-	vector_register_aux_renderer(glvec_renderer);
 }
 
 void glvec_exit(void)
@@ -114,10 +106,15 @@ static void glvec_add_point (int x, int y, rgb_t color, int intensity)
   g1 =  (color >>  8) & 0xff ;
   r1 =  (color >> 16) & 0xff ;
 
-  if(sx==vecoldx&&sy==vecoldy&&intensity>0)
+  if(intensity==0)
+  {
+        GL_END();
+        GL_BEGIN(GL_LINE_STRIP);
+  }
+  else if((fabs(sx-vecoldx) < 0.001) && (fabs(sy-vecoldy) < 0.001))
   {
 	  /**
-	   * Hack to draw points -- zero-length lines don't show up
+	   * Hack to draw points -- very short lines don't show up
 	   *
 	   * But games, e.g. tacscan have zero lines within the LINE_STRIP,
 	   * so we do try to continue the line strip :-)
@@ -126,29 +123,13 @@ static void glvec_add_point (int x, int y, rgb_t color, int intensity)
 	   */
 	  GL_END();
   	  ptHack=1;
-  } else {
-  	  
-	  /**
-	   * the usual "normal" way ..
-	   */
-	  if(intensity==0)
-	  {
-		GL_END();
-		GL_BEGIN(GL_LINE_STRIP);
-	  }
-  	  ptHack=0;
   }
 
-  if(use_mod_ctable)
-  {
-	  red   = (double)intensity/255.0 * pow (r1 / 255.0, 1 / gamma_correction);
-	  green = (double)intensity/255.0 * pow (g1 / 255.0, 1 / gamma_correction);
-	  blue  = (double)intensity/255.0 * pow (b1 / 255.0, 1 / gamma_correction);
-	  disp__glColor3d(red, green, blue);
-  } else {
-	  disp__glColor3ub(r1, g1, b1);
-  }
-
+  red   = (double)intensity/255.0 * pow (r1 / 255.0, 1 / gamma_correction);
+  green = (double)intensity/255.0 * pow (g1 / 255.0, 1 / gamma_correction);
+  blue  = (double)intensity/255.0 * pow (b1 / 255.0, 1 / gamma_correction);
+  disp__glColor3d(red, green, blue);
+  
   if(ptHack)
   {
 	/**
@@ -168,8 +149,6 @@ static void glvec_add_point (int x, int y, rgb_t color, int intensity)
 	GL_END();
 	GL_BEGIN(GL_LINE_STRIP);
   }
-  
-  
 
   if(cabview)
     disp__glVertex3d(sx,sy,sz);
@@ -178,7 +157,7 @@ static void glvec_add_point (int x, int y, rgb_t color, int intensity)
   vecoldx=sx; vecoldy=sy;
 }
 
-static int glvec_renderer(point *pt, int num_points)
+int glvec_renderer(point *pt, int num_points)
 {
   if (num_points)
   {

@@ -42,11 +42,13 @@ Todo:
 #if defined xfx || defined svgafx
 #include <stdio.h>
 #include <math.h>
+#include "driver.h"
+#include "usrintrf.h"
 #include "fxcompat.h"
 #include "xmame.h"
-#include "driver.h"
 #include "vidhrdw/vector.h"
 #include "pixel_convert.h"
+#include "sysdep/sysdep_display.h"
 
 #define PAUSEDCOLOR(p) (UINT16) ((((p) >> 11) << 10) | ((((p) &0x03E0) >> 6)<< 5) | (((p) & 0x001F) >> 1))
 
@@ -115,6 +117,8 @@ struct rc_option fx_opts[] = {
      NULL,		0,			0,		NULL,
      NULL }
 };
+
+struct sysdep_display_prop_struct sysdep_display_properties = { fxvec_renderer, 1 };
 
 int sysdep_display_16bpp_capable(void)
 {
@@ -446,10 +450,7 @@ int InitVScreen(void)
   grGlideGetVersion(version);
 
   if(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
-  {
-        vector_register_aux_renderer(fxvec_renderer);
 	vecgame=1;
-  }
 
   fprintf(stderr_file, "info: using Glide version %s\n", version);
   
@@ -467,7 +468,6 @@ int InitVScreen(void)
   /* clear the buffer */
 
   grBufferClear(0,0,0);
-
   if (blit_swapxy)
   {
      destwidth  = visual_height;
@@ -483,7 +483,27 @@ int InitVScreen(void)
   {
      scrnaspect=(float)destwidth/(float)destheight;
      vscrnaspect=(float)fxwidth/(float)fxheight;
-
+     
+     if ((Machine->drv->video_attributes &
+           VIDEO_PIXEL_ASPECT_RATIO_MASK) ==
+          VIDEO_PIXEL_ASPECT_RATIO_2_1)
+     {
+       if (blit_swapxy)
+          scrnaspect *= 0.5;
+       else
+          scrnaspect *= 2.0;
+     }
+     
+     if ((Machine->drv->video_attributes &
+           VIDEO_PIXEL_ASPECT_RATIO_MASK) ==
+          VIDEO_PIXEL_ASPECT_RATIO_1_2)
+     {
+       if (blit_swapxy)
+          scrnaspect *= 2.0;
+       else
+          scrnaspect *= 0.5;
+     }
+     
      if(scrnaspect<vscrnaspect) {
    	vscrnheight=(float)fxheight;
    	vscrnwidth=vscrnheight*scrnaspect;
@@ -661,6 +681,17 @@ void UpdateTexture(struct mame_bitmap *bitmap)
 		}
 		break;
 	}
+
+        for(ysquare=0;ysquare<texnumy;ysquare++) {
+              for(xsquare=0;xsquare<texnumx;xsquare++) {
+		square=texgrid+(ysquare*texnumx)+xsquare;
+                texinfo.data=(void *)square->texture;
+                grTexDownloadMipMapLevel(GR_TMU0,square->texadd,
+                         GR_LOD_256,GR_LOD_256,GR_ASPECT_1x1,
+                         GR_TEXFMT_ARGB_1555,
+                         GR_MIPMAPLEVELMASK_BOTH,texinfo.data);
+              }
+        }
 }
 
 void DrawFlatBitmap(void)
@@ -671,13 +702,6 @@ void DrawFlatBitmap(void)
   for(y=0;y<texnumy;y++) {
 	for(x=0;x<texnumx;x++) {
 	  square=texgrid+y*texnumx+x;
-
-	  texinfo.data=(void *)square->texture;
-
-	  grTexDownloadMipMapLevel(GR_TMU0,square->texadd,
-		   GR_LOD_256,GR_LOD_256,GR_ASPECT_1x1,
-		   GR_TEXFMT_ARGB_1555,
-		   GR_MIPMAPLEVELMASK_BOTH,texinfo.data);
 
 	  grTexSource(GR_TMU0,square->texadd,
 				  GR_MIPMAPLEVELMASK_BOTH,&texinfo);
@@ -690,12 +714,16 @@ void DrawFlatBitmap(void)
 
 void UpdateFXDisplay(struct mame_bitmap *bitmap)
 {
-  if(bitmap) 
+  static int ui_was_dirty=0;
+  
+  if(bitmap && (!vecgame || ui_dirty || ui_was_dirty))
     UpdateTexture(bitmap);
 
   DrawFlatBitmap();
   grBufferSwap(1);
   grBufferClear(0,0,0);
+
+  ui_was_dirty=ui_dirty;
 }
 
 /* used when expose events received */

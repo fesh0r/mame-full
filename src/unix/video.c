@@ -17,6 +17,7 @@
 /* for uclock */
 #include "sysdep/misc.h"
 #include "effect.h"
+#include "sysdep/sysdep_display.h"
 
 #define FRAMESKIP_DRIVER_COUNT 2
 static const int safety = 16;
@@ -393,6 +394,7 @@ void osd_video_initpre()
 	blit_flipy = ((orientation & ORIENTATION_FLIP_Y) != 0);
 	blit_swapxy = ((orientation & ORIENTATION_SWAP_XY) != 0);
 
+	/* setup vector specific stuff */
 	if (options.vector_width == 0 && options.vector_height == 0)
 	{
 		options.vector_width = 640;
@@ -406,7 +408,24 @@ void osd_video_initpre()
 		options.vector_width = options.vector_height;
 		options.vector_height = temp;
 	}
+	
+	if (sysdep_display_properties.vector_aux_renderer)
+	{
+		/* HACK to find out if this is a vector game before calling
+		   run_game() */
+		struct InternalMachineDriver machine;
 
+		memset(&machine, 0, sizeof(machine));
+		drivers[game_index]->drv(&machine);
+
+		if (machine.video_attributes & VIDEO_TYPE_VECTOR)
+		{
+			vector_register_aux_renderer(sysdep_display_properties.vector_aux_renderer);
+			use_overlays         = 0;
+			use_bezels           = 0;
+			options.artwork_crop = 1;
+		}
+	}
 
 	/* set the artwork options */
 	options.use_artwork = ARTWORK_USE_ALL;

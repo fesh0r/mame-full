@@ -19,6 +19,7 @@
 #include "driver.h"
 #include "artwork.h"
 #include "vidhrdw/vector.h"
+#include <math.h>
 
 extern int fxheight;
 extern float vscrntlx;
@@ -130,8 +131,10 @@ int fxvec_renderer(point *pt, int num_points)
           fxvec_fill_vert(&v2, pt->x, pt->y, pt->col, pt->intensity);
           
 	if((vertexcount >= 2) && (v2.a>0.0)) {
-		if(v1.x==v2.x&&v1.y==v2.y)
+		if((fabs(v1.x-v2.x)<1.0) && (fabs(v1.y-v2.y)<1.0))
+		{
 		  grAADrawPoint(&v2);
+                }
 		else {
 		  v1.r=v2.r; v1.g=v2.g; v1.b=v2.b; v1.a=v2.a;
 		  grAADrawLine(&v1,&v2);

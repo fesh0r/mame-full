@@ -19,6 +19,7 @@
 #import "driver.h"
 #import "devices.h"
 #import "effect.h"
+#import "sysdep/sysdep_display.h"
 
 /*
  * There are two flavours of OpenStep - the original Display PostScript
@@ -46,6 +47,8 @@ struct rc_option display_opts[] = {
 	NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL
 	}
 };
+
+struct sysdep_display_prop_struct sysdep_display_properties = { NULL, 0 };
 
 /*
  * Size of the black border

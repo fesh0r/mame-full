@@ -11,6 +11,7 @@
 #include "xmame.h"
 #include "svgainput.h"
 #include "effect.h"
+#include "sysdep/sysdep_display.h"
 
 static int startx, starty;
 static int scaled_visual_width, scaled_visual_height;
@@ -47,6 +48,7 @@ struct rc_option display_opts[] = {
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 
+struct sysdep_display_prop_struct sysdep_display_properties = { NULL, 0 };
 
 typedef void (*update_func)(struct mame_bitmap *bitmap);
 

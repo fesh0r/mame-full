@@ -300,7 +300,7 @@ static int extended_code_table[512] = {
 /*					0xFF1D  */ KEY_NONE,
 /*					0xFF1E  */ KEY_NONE,
 /*					0xFF1F  */ KEY_NONE,
-/* XK_Multi_key				0xFF20  */ KEY_NONE,
+/* XK_Multi_key				0xFF20  */ KEY_ALTGR,
 /* XK_Kanji				0xFF21	*/ KEY_NONE,
 /* XK_Muhenkan				0xFF22  */ KEY_NONE,
 /* XK_Henkan_Mode			0xFF23  */ KEY_NONE,

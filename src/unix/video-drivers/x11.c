@@ -15,6 +15,7 @@
 #include "x11.h"
 #include "input.h"
 #include "devices.h"
+#include "sysdep/sysdep_display.h"
 
 #ifdef USE_HWSCALE
 long hwscale_redmask;
@@ -37,6 +38,8 @@ struct rc_option display_opts[] = {
 	{ NULL, NULL, rc_link, x11_input_opts, NULL, 0, 0, NULL, NULL },
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
+
+struct sysdep_display_prop_struct sysdep_display_properties = { NULL, 0 };
 
 struct x_func_struct {
 	int  (*init)(void);

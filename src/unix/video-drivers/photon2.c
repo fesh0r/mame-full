@@ -16,6 +16,7 @@
 #include "xmame.h"
 #include "photon2.h"
 #include "input.h"
+#include "sysdep/sysdep_display.h"
 
 struct rc_option display_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -40,6 +41,8 @@ struct rc_option display_opts[] = {
      NULL,		0,			0,		NULL,
      NULL }
 };
+
+struct sysdep_display_prop_struct sysdep_display_properties = { NULL, 0 };
 
 struct ph_func_struct {
    int  (*init)(void);

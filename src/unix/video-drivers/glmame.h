@@ -33,6 +33,7 @@
 #endif
 
 #include "gltool.h"
+#include "vidhrdw/vector.h"
 
 /* Camera panning stuff */
 
@@ -46,13 +47,18 @@ struct CameraPan {
   int frames;        /* Number of frames for transition */
 };
 
+/* glcab.c */
+extern GLubyte **cabimg;
+extern GLuint *cabtex;
+extern struct CameraPan *cpan;
+extern int numpans;
+extern GLuint cablist;
+
 /* xgl.c */
 extern char * libGLName;
 extern char * libGLUName;
-
 extern GLXContext glContext;
 extern int antialias;
-extern int antialiasvec;
 extern int fullscreen_width;
 extern int fullscreen_height;
 extern int winwidth;
@@ -64,50 +70,39 @@ extern int visual_orientated_height;
 extern int bilinear;
 extern int alphablending;
 extern int fullscreen;
+extern int force_text_width_height;
 
 /* glvec.c */
 extern float gl_beam;
-extern float gl_translucency;
+extern GLuint veclist;
 
 /* glgen.c */
-extern int totalcolors;
-extern int use_mod_ctable;
-extern GLubyte *ctable;
-extern GLushort *rcolmap, *gcolmap, *bcolmap, *acolmap;
-extern int ctable_size; /* the true color table size */
-extern GLint  gl_internal_format;
-extern GLenum gl_bitmap_format;
-extern GLenum gl_bitmap_type;
-extern unsigned char gl_alpha_value; /* customize it :-) */
 extern double scrnaspect, vscrnaspect;
-extern GLsizei text_width;
-extern GLsizei text_height;
-extern int force_text_width_height;
-extern int dodepth;
-extern int cabview;
-extern int cabload_err;
-extern int drawbitmap;
-extern int dopersist;
-extern int useGLEXT78; /* paletted texture */
-extern int useColorIndex; 
-extern int isGL12;
-extern int useColorBlitter;
+extern GLdouble  s__cscr_w_view, s__cscr_h_view;
+extern GLdouble vx_cscr_p1, vy_cscr_p1, vz_cscr_p1, 
+        vx_cscr_p2, vy_cscr_p2, vz_cscr_p2,
+        vx_cscr_p3, vy_cscr_p3, vz_cscr_p3, 
+	vx_cscr_p4, vy_cscr_p4, vz_cscr_p4;
+extern int gl_is_initialized;
 
+/* ? */
+extern int cabview;
 extern char *cabname; /* 512 bytes reserved ... */
-extern int cabspecified;
-extern int gl_is_initialized;
-extern GLuint cablist;
-extern int gl_is_initialized;
 
 /* xgl.c */
 void toggleFullscreen();
+void SwapBuffers (void);
 
 /* glvec.c */
-extern void set_gl_beam(float new_value);
-extern float get_gl_beam();
+void set_gl_beam(float new_value);
+float get_gl_beam();
+int glvec_renderer(point *start, int num_points);
+void glvec_init(void);
+void glvec_exit(void);
 
 /* glcab.c */
 void InitCabGlobals();
+int LoadCabinet (const char *fname);
 
 /* glgen.c
  * 
@@ -118,15 +113,11 @@ void InitCabGlobals();
 
 /* start sequence */
 void gl_bootstrap_resources();
-int sysdep_display_16bpp_capable (void);
+int  sysdep_display_16bpp_capable (void);
 void InitVScreen (int depth);
 void gl_reset_resources();
-int sysdep_display_alloc_palette (int writable_colors);
+int  sysdep_display_alloc_palette (int writable_colors);
 void InitTextures (struct mame_bitmap *bitmap);
-
-extern void gl_dirty_init(void);
-extern void gl_dirty_close(void);
-extern void gl_mark_dirty(int x1, int y1, int x2, int y2);
 
 /* quit sequence */
 void CloseVScreen (void);
@@ -141,10 +132,11 @@ void  gl_set_antialias(int new_value);
 int   gl_stream_alphablending (int alpha);
 void  gl_set_alphablending(int new_value);
 void  xgl_fixaspectratio(int *w, int *h);
-void xgl_resize(int w, int h, int now);
-extern int glHasEXT78 (void);
-extern void glSetUseEXT78 (int val);
-extern int glGetUseEXT78 (void);
+void  xgl_resize(int w, int h, int now);
+void  CalcCabPointbyViewpoint( 
+		   GLdouble vx_gscr_view, GLdouble vy_gscr_view, 
+                   GLdouble *vx_p, GLdouble *vy_p, GLdouble *vz_p
+		 );
 
 /* glexport */
 void gl_save_screen_snapshot();

@@ -45,6 +45,7 @@
 #include <Hermes/Hermes.h>
 #endif /* DIRECT_HERMES */
 #include "effect.h"
+#include "sysdep/sysdep_display.h"
 
 static int Vid_width;
 static int Vid_height;
@@ -105,6 +106,8 @@ struct rc_option display_opts[] = {
       NULL,          0,       0,             NULL,
       NULL }
 };
+
+struct sysdep_display_prop_struct sysdep_display_properties = { NULL, 0 };
 
 void sdl_update_16_to_16bpp(struct mame_bitmap *bitmap);
 void sdl_update_16_to_24bpp(struct mame_bitmap *bitmap);
