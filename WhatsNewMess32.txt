@@ -1,0 +1,35 @@
+Whats new:
+
+----------
+0.37 BETA 5
+------------
+
+- New GUI with a software picker (No more Image 0-3 menu!) [Nate Woods]
+
+----------
+0.37 BETA 4
+------------
+- The MESS32 executable and DLL is now UPXed (Ultimate Packer for eXecutables).
+  See http://upx.tsx.org/ for details about UPX. [Nate Woods]
+
+- Fixed a stupid bug that caused opening writable images (like floppies) to
+  fail. [Nate Woods]
+
+- Added new icons and graphics. [Ohso]
+
+- Added standard command line options for images. [Nate Woods]
+
+- Directory category for screenshots is now called Pictures (even if the
+  directory defaults to images). [Nate Woods]
+
+- Fixed a bug that could cause opening non-zipped images to fail [Kev Thacker]
+
+- Removed samples directory and corresponding UI since no MESS drivers use
+  samples. [Nate Woods]
+
+- Switched to using the C 68k CPU core so that the Mac Plus driver works. [Nate
+  Woods]
+
+- Changed references to the word "Game" to "System". [Nate Woods]
+
+- Removed unneccesary sound and CPU cores. [Nate Woods]
