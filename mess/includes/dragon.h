@@ -15,6 +15,10 @@
 #define COCO3_DIP_MONITORTYPE		12
 #define COCO3_DIP_MONITORTYPE_MASK	0x08
 
+/* Port Tags for configuration of DOs enable/diable and cartrage autostart */
+
+#define DRAGON_COCO_CART_AUTOSTART	"Cartridge Autostart"
+
 /* ----------------------------------------------------------------------- *
  * Backdoors into mess/vidhrdw/m6847.c                                     *
  * ----------------------------------------------------------------------- */
@@ -120,6 +124,14 @@ int coco_bitbanger_init (int id);
 READ8_HANDLER( coco_pia_1_r );
 READ8_HANDLER( coco3_pia_1_r );
 void dragon_sound_update(void);
+
+/* Dragon Alpha AY-8912 */
+READ8_HANDLER ( dgnalpha_psg_porta_read );
+WRITE8_HANDLER ( dgnalpha_psg_porta_write );
+
+/* Dragon Alpha WD2797 FDC */
+READ8_HANDLER(wd2797_r);
+WRITE8_HANDLER(wd2797_w);
 
 void coco_set_halt_line(int halt_line);
 

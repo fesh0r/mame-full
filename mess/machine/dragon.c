@@ -48,8 +48,10 @@
 	research that for you if you want an exact number for scanlines before the
 	screen starts and the scanline that the v-interrupt triggers..etc.
 
-Dragon Alpha code added 21-Nov-2004, 
+Dragon Alpha code added 21-Oct-2004, 
 			Phill Harvey-Smith (afra@aurigae.demon.co.uk)
+
+			Added AY-8912 and FDC code 30-Oct-2004.
 
 ***************************************************************************/
 
@@ -69,6 +71,7 @@ Dragon Alpha code added 21-Nov-2004,
 #include "devices/printer.h"
 #include "devices/cassette.h"
 #include "image.h"
+#include "includes/wd179x.h"
 
 static UINT8 *coco_rom;
 static int coco3_enable_64k;
@@ -116,14 +119,26 @@ static void coco3_sam_set_maptype(int val);
 static void coco_setcartline(int data);
 static void coco3_setcartline(int data);
 
-/* Dragon Alpha */
+/* Dragon 64 / Alpha shared */
+static int dragon_map_type;					/* Dragonm 64/Alpha map type, used for rom paging */
+static UINT8 *dragon_rom_bank;					/* Dragon 64 / Alpha rom bank in use */
+static void dragon_page_rom(int	romswitch);
 
-static UINT8 pia2_pa;
-static UINT8 pia2_pb;
+/* Dragon Alpha only */
 
+static UINT8	pia2_pa;
+static UINT8	pia2_pb;
+
+static READ8_HANDLER ( dgnalpha_pia2_pa_r );
+static READ8_HANDLER ( dgnalpha_pia2_pb_r );
 static WRITE8_HANDLER ( dgnalpha_pia2_pa_w );
 static WRITE8_HANDLER ( dgnalpha_pia2_pb_w );
-static UINT8 *dgnalphabank;	/* Dragon Alpha rom bank in use */
+static void d_pia2_firq_a(int state);
+static void d_pia2_firq_b(int state);
+
+static int pia2_firq_a, pia2_firq_b;
+
+static int dgnalpha_just_reset;				/* Reset flag used to ignore first NMI after reset */
 
 /* End Dragon Alpha */
 
@@ -315,9 +330,9 @@ static struct pia6821_interface dgnalpha_pia_intf[] =
 
 	/* PIA 2 */
 	{
-		/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+		/*inputs : A/B,CA/B1,CA/B2 */ dgnalpha_pia2_pa_r,dgnalpha_pia2_pb_r, 0, 0, 0, 0,
 		/*outputs: A/B,CA/B2	   */ dgnalpha_pia2_pa_w,dgnalpha_pia2_pb_w, 0,0,
-		/*irqs	 : A/B	   		   */ /*d_pia2_firq_a, d_pia2_firq_b*/ 0,0
+		/*irqs	 : A/B	   		   */ d_pia2_firq_a, d_pia2_firq_b
 	}
 
 };
@@ -615,6 +630,8 @@ DEVICE_UNLOAD(coco_rom)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
 	memset(&ROM[0x4000], 0, 0x4000);
+	
+	cart_inserted=0;	/* Flag cart no longer inserted */
 }
 
 DEVICE_LOAD(coco3_rom)
@@ -708,7 +725,8 @@ static void d_recalc_irq(void)
 
 static void d_recalc_firq(void)
 {
-	if (((pia1_firq_a == ASSERT_LINE) || (pia1_firq_b == ASSERT_LINE)) && is_cpu_suspended())
+	if (((pia1_firq_a == ASSERT_LINE) || (pia1_firq_b == ASSERT_LINE) ||
+	     (pia2_firq_a == ASSERT_LINE) || (pia2_firq_b == ASSERT_LINE)) && is_cpu_suspended())
 		cpunum_set_input_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 	else
 		cpunum_set_input_line(0, M6809_FIRQ_LINE, CLEAR_LINE);
@@ -756,6 +774,19 @@ static void d_pia1_firq_a(int state)
 static void d_pia1_firq_b(int state)
 {
 	pia1_firq_b = state;
+	d_recalc_firq();
+}
+
+/* Dragon Alpha second PIA IRQ lines also cause FIRQ */
+static void d_pia2_firq_a(int state)
+{
+	pia2_firq_b = state;
+	d_recalc_firq();
+}
+
+static void d_pia2_firq_b(int state)
+{
+	pia2_firq_b = state;
 	d_recalc_firq();
 }
 
@@ -1073,6 +1104,33 @@ static void soundmux_sel2_w(int data)
 	soundmux_update();
 }
 
+READ8_HANDLER ( dgnalpha_psg_porta_read )
+{	
+	return 0;
+}
+
+WRITE8_HANDLER ( dgnalpha_psg_porta_write )
+{
+	/* Bits 0..3 are the drive select lines for the internal floppy interface */
+	/* Bit 4 is the motor on, in the real hardware these are inverted on their way to the drive */
+	/* I do not know if bits 5..7 have any function */ 
+	switch (data & 0xF)
+	{
+		case(0x01) :
+			wd179x_set_drive(0);
+			break;
+		case(0x02) :
+			wd179x_set_drive(1);
+			break;
+		case(0x04) :
+			wd179x_set_drive(2);
+			break;
+		case(0x08) :
+			wd179x_set_drive(3);
+			break;
+	}
+}
+
 /***************************************************************************
   PIA0 ($FF00-$FF1F) (Chip U8)
 
@@ -1264,14 +1322,19 @@ enum
 	DRAGON64_ALL = 3
 };
 
-static void dragon64_sethipage(int type, int val);
-
 static WRITE8_HANDLER( dragon64_pia1_pb_w )
 {
 	d_pia1_pb_w(0, data);
-	dragon64_sethipage(DRAGON64_PIAMAP, data & 0x04);
-}
 
+    /* If bit 2 of the pia1 ddra is 1 then this pin is an output so use it */
+	/* to control the paging of the 32k and 64k basic roms */
+	/* Otherwise it set as an input, with an internal pull-up so it should */
+	/* always be high (enabling 32k basic rom) */
+	if(pia_get_ddr_b(1) & 0x04)
+	{
+		dragon_page_rom(data & 0x04);
+	}	
+}
 
 /***************************************************************************
   PIA2 ($FF24-$FF28) on Daragon Alpha/Professional
@@ -1284,19 +1347,49 @@ static WRITE8_HANDLER( dragon64_pia1_pb_w )
 	CB1				DRQ from WD2797 disk controler.
 ***************************************************************************/
   
-static void dgnalpha_page_rom(int romswitch);
+static READ8_HANDLER( dgnalpha_pia2_pa_r )
+{
+	return 0;
+	/*return pia2_pa;*/
+}
+
+static READ8_HANDLER( dgnalpha_pia2_pb_r )
+{
+	return 0;
+}
 
 static WRITE8_HANDLER( dgnalpha_pia2_pa_w )
 {
+	int	bc_flags;		/* BCDDIR/BC1, as connected to PIA2 port a bits 0 and 1 */
+
 	pia2_pa = data;
 
-	/* If bit 2 of the pia ddr is 1 then this pin is an output so use it */
+	/* If bit 2 of the pia2 ddra is 1 then this pin is an output so use it */
 	/* to control the paging of the boot and basic roms */
 	/* Otherwise it set as an input, with an internal pull-up so it should */
 	/* always be high (enabling boot rom) */
 	if(pia_get_ddr_a(2) & 0x04)
 	{
-		dgnalpha_page_rom(data & 0x04);	/* bit 2 controls boot or basic rom */
+		dragon_page_rom(data & 0x04);	/* bit 2 controls boot or basic rom */
+	}
+	
+	/* Bits 0 and 1 for pia2 port a control the BCDIR and BC1 lines of the */
+	/* AY-8912 */
+	bc_flags = pia2_pa & 0x03;	/* mask out bits */
+	
+	switch (bc_flags)
+	{
+		case 0x00	: 		/* Inactive, do nothing */
+			break;			
+		case 0x01	: 		/* Write to selected port */
+			AY8910_write_port_0_w(0,pia2_pb);
+			break;
+		case 0x02	: 		/* Read from selected port */
+			pia2_pb=AY8910_read_port_0_r(0);
+			break;
+		case 0x03	:		/* Select port to write to */
+			AY8910_control_port_0_w(0,pia2_pb);
+			break;
 	}
 }
 
@@ -1305,19 +1398,101 @@ static WRITE8_HANDLER( dgnalpha_pia2_pb_w )
 	pia2_pb = data;
 }
 
-static void dgnalpha_page_rom(int	romswitch)
+
+
+/* Controls rom paging in Dragon 64, and Dragon Alpha */
+/* On 64, switches between the two versions of the basic rom mapped in at 0x8000 */
+/* on the alpha switches between the Boot/Diagnostic rom and the basic rom */
+static void dragon_page_rom(int	romswitch)
 {
 	UINT8 *bank;
 	
 	if(romswitch) 
-		bank = coco_rom;			/* This is the boot rom */
+		bank = coco_rom;			/* This is the 32k mode basic(64)/boot rom(alpha)  */
 	else
-		bank = coco_rom + 0x8000;	/* This is the basic rom */
+		bank = coco_rom + 0x8000;	/* This is the 64k mode basic(64)/basic rom(alpha) */
 	
-	dgnalphabank = bank;			/* Record which rom we are using so that the irq routine */
-									/* uses the vectors from the correct rom ! */
-	
-	cpu_setbank(2,bank);
+	dragon_rom_bank = bank;			/* Record which rom we are using so that the irq routine */
+									/* uses the vectors from the correct rom ! (alpha) */
+
+	dragon64_sam_set_maptype(dragon_map_type);	/* Call to setup correct mapping */
+}
+
+/********************************************************************************************/
+/* Dragon Alpha onboard FDC */
+/********************************************************************************************/
+
+static void	dgnalpha_fdc_callback(int event)
+{
+	/* As far as I can tell, the NMI just goes straight onto the processor line on the alpha */
+	/* The DRQ line goes through pia2 cb1, in exactly the same way as DRQ from DragonDos does */
+	/* for pia1 cb1 */
+	switch(event) 
+	{
+		case WD179X_IRQ_CLR:
+			cpunum_set_input_line(0, INPUT_LINE_NMI, CLEAR_LINE);
+			break;
+		case WD179X_IRQ_SET:
+		    if(dgnalpha_just_reset)
+				dgnalpha_just_reset=0;
+			else
+				cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE);
+			break;
+		case WD179X_DRQ_CLR:
+			pia_2_cb1_w(0,CARTLINE_CLEAR);
+			break;
+		case WD179X_DRQ_SET:
+			pia_2_cb1_w(0,CARTLINE_ASSERTED);
+			break;
+	}
+}
+
+/* The Dragon Alpha hardware reverses the order of the WD2797 registers */
+ READ8_HANDLER(wd2797_r)
+{
+	int result = 0;
+
+	switch(offset & 0x03) 
+	{
+		case 0:
+			result = wd179x_data_r(0);
+			break;
+		case 1:
+			result = wd179x_sector_r(0);
+			break;
+		case 2:
+			result = wd179x_track_r(0);
+			break;
+		case 3:
+			result = wd179x_status_r(0);
+			break;
+		default:
+			break;
+	}
+		
+	return result;
+}
+
+WRITE8_HANDLER(wd2797_w)
+{
+    switch(offset & 0x3) 
+	{
+		case 0:
+			wd179x_data_w(0, data);
+			break;
+		case 1:
+			wd179x_sector_w(0, data);
+			break;
+		case 2:
+			wd179x_track_w(0, data);
+			break;
+		case 3:
+			wd179x_command_w(0, data);
+
+			/* disk head is encoded in the command byte */
+			wd179x_set_side((data & 0x02) ? 1 : 0);
+			break;
+	};
 }
 
 static WRITE8_HANDLER( coco3_pia1_pb_w )
@@ -1382,7 +1557,7 @@ static  READ8_HANDLER ( d_pia1_pb_r_coco2 )
 
 READ8_HANDLER(dragon_alpha_mapped_irq_r)
 {
-	return dgnalphabank[0x3ff0 + offset];
+	return dragon_rom_bank[0x3ff0 + offset];
 }
 
  READ8_HANDLER(coco3_mapped_irq_r)
@@ -1688,29 +1863,21 @@ static void d_sam_set_maptype(int val)
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xfeff, 0, 0, writebank);
 }
 
-static void dragon64_sethipage(int type, int val)
+/* The hack that was dragon64_set_hipage, is now included in dragon64_set_maptype */
+/* this now correctly selects between roms and ram in the 0x8000-0xFEFF reigon */
+/* these can now be changed by code in *ANY* memory loaction, this more closeley */
+/* resembles what happens on a real Dragon 64/Alpha */
+
+static void dragon64_sam_set_maptype(int val)
 {
-	static int hipage = 0;
-	UINT8 *bank;
 	UINT8 *readbank2;
 	UINT8 *readbank3;
 	write8_handler writebank2;
 	write8_handler writebank3;
 
-	if (type == DRAGON64_ALL)
-	{
-		/* initial value */
-		hipage = DRAGON64_PIAMAP;
-	}
-	else
-	{
-		if (val)
-			hipage |= type;
-		else
-			hipage &= ~type;
-	}
+	dragon_map_type = val;				/* Save in global for later use by rom pager */
 
-	if (hipage & DRAGON64_SAMMAP)
+	if (val && (mess_ram_size > 0x8000))
 	{
 		readbank2 = &mess_ram[0x8000];
 		readbank3 = &mess_ram[0xc000];
@@ -1719,18 +1886,8 @@ static void dragon64_sethipage(int type, int val)
 	}
 	else
 	{
-		/* for some reason, the PIA tries to switch over to the other ROM at
-		 * $BB5D and $BB65, and I don't know how this worked in a real Dragon 64
-		 *
-		 * Perhaps something to do with the PIA original state?
-		 */
-		if ((hipage & DRAGON64_PIAMAP) || ((cpu_getactivecpu() >= 0) && (activecpu_get_pc() >= 0x024D) && (type == DRAGON64_PIAMAP)))
-			bank = coco_rom;
-		else
-			bank = coco_rom + 0x8000;
-
-		readbank2 = bank;
-		readbank3 = coco_rom + 0x4000;
+		readbank2 = dragon_rom_bank;	/* Basic/Boot Rom */
+		readbank3 = coco_rom+0x4000;	/* Cartrage rom */
 		writebank2 = MWA8_ROM;
 		writebank3 = MWA8_ROM;
 	}
@@ -1739,15 +1896,6 @@ static void dragon64_sethipage(int type, int val)
 	cpu_setbank(3, readbank3);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, writebank2);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xfeff, 0, 0, writebank3);
-
-#if LOG_D64MEM
-	logerror("dragon64_sethipage(): hipage=%i\n", hipage);
-#endif
-}
-
-static void dragon64_sam_set_maptype(int val)
-{
-	dragon64_sethipage(DRAGON64_SAMMAP, val);
 }
 
 /*************************************
@@ -2116,13 +2264,23 @@ static void coco_cartridge_enablesound(int enable)
 
 static void coco_setcartline(int data)
 {
-	cart_line = data;
+	/* If cart autostart enabled then start it, else do not autostart */
+	if (readinputportbytag(DRAGON_COCO_CART_AUTOSTART) && cart_inserted)
+		cart_line = data;
+	else
+		cart_line = 0;
+		
 	pia_1_cb1_w(0, data ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static void coco3_setcartline(int data)
 {
-	cart_line = data;
+	/* If cart autostart enabled then start it, else do not autostart */
+	if (!readinputportbytag(DRAGON_COCO_CART_AUTOSTART) && cart_inserted)
+		cart_line = data;
+	else
+		cart_line = 0;
+
 	pia_1_cb1_w(0, data ? ASSERT_LINE : CLEAR_LINE);
 	coco3_raise_interrupt(COCO3_INT_EI0, cart_line ? 1 : 0);
 }
@@ -2221,14 +2379,18 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 
 	coco_rom = memory_region(REGION_CPU1);
 
-	/* Setup Dragon Alpha default bank */
-	dgnalphabank = coco_rom;
+	/* Setup Dragon 64/ Alpha default bank */
+	dragon_rom_bank = coco_rom;
 
 	cart_line = CARTLINE_CLEAR;
 	pia0_irq_a = CLEAR_LINE;
 	pia0_irq_b = CLEAR_LINE;
 	pia1_firq_a = CLEAR_LINE;
 	pia1_firq_b = CLEAR_LINE;
+
+	/* These only exist in Dragon Alpha */
+    pia2_firq_a = CLEAR_LINE;
+	pia2_firq_b = CLEAR_LINE;
 
 	pia0_pb = pia1_pb1 = soundmux_status = 0;
 	joystick_axis = joystick = 0;
@@ -2264,16 +2426,22 @@ MACHINE_INIT( dragon64 )
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
 	generic_init_machine(dragon64_pia_intf, &dragon64_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
 	acia_6551_init();
-	dragon64_sethipage(DRAGON64_ALL, 0);
 }
 
 MACHINE_INIT( dgnalpha )
 {
 	cpu_setbank(1, &mess_ram[0]);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
-	generic_init_machine(dgnalpha_pia_intf, &dragon64_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
+
+	generic_init_machine(dgnalpha_pia_intf, &dragon64_sam_intf, 0 /*&cartridge_fdc_dragon*/, &coco_cartcallbacks, d_recalc_interrupts);
+    	
 	acia_6551_init();
-	dragon64_sethipage(DRAGON64_ALL, 0);
+	
+	/* dgnalpha_just_reset, is here to flag that we should ignore the first irq generated */
+	/* by the WD2797, it is reset to 0 after the first inurrupt */
+	dgnalpha_just_reset=1;
+	
+	wd179x_init(WD_TYPE_179X,dgnalpha_fdc_callback);
 }
 
 MACHINE_INIT( coco )

@@ -10,7 +10,10 @@ System Driver Changes:
 ----------------------
 - [COCO] Fixed a regression that caused printer output to not work properly.
   (bug #612) [Nate Woods]
-  
+
+- [DRAGON ALPHA] Completed emulation of the Dragon Alpha, including support
+  for the sound chip, and the internal disk interface.  [Phill Harvey-Smith]
+
 
 
 User Interface Changes:

@@ -94,8 +94,9 @@ ADDRESS_MAP_END
 
 
 /* 
-	The Dragon Alpha was a prototype in development when Dragon Data went bust, it is basically an
- 	enhanced Dragon 64, with built in modem, disk system, and graphical boot rom.
+	The Dragon Alpha was a prototype in development when Dragon Data went bust, 
+	it is basically an enhanced Dragon 64, with built in modem, disk system, and 
+	graphical boot rom.
 
 	It has the following extra hardware :-
 	A third 6821 PIA mapped between FF24 and FF27
@@ -134,6 +135,10 @@ ADDRESS_MAP_END
 	an inverter to the 6809's NMI.
 	
 	All these are as yet un-emulated.
+
+	29-Oct-2004, AY-8912 is now emulated.
+	30-Oct-2004, Internal disk interface now emulated, Normal DragonDos rom replaced with a re-assembled
+				version, that talks to the alpha hardware (verified on a clone of the real machine). 
 */
 
 
@@ -145,6 +150,7 @@ static ADDRESS_MAP_START( dgnalpha_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xff04, 0xff07)	AM_READWRITE(acia_6551_r,			acia_6551_w)	
 	AM_RANGE(0xff20, 0xff23)	AM_READWRITE(coco_pia_1_r,			pia_1_w)
 	AM_RANGE(0xff24, 0xff27)	AM_READWRITE(pia_2_r,			pia_2_w) 	/* Third PIA on Dragon Alpha */
+	AM_RANGE(0xff2c, 0xff2f)	AM_READWRITE(wd2797_r,				wd2797_w)	/* Alpha onboard disk interface */
 	AM_RANGE(0xff40, 0xff8f)	AM_READWRITE(coco_cartridge_r,		coco_cartridge_w)
 	AM_RANGE(0xff90, 0xffbf)	AM_READWRITE(MRA8_NOP,				MWA8_NOP)
 	AM_RANGE(0xffc0, 0xffdf)	AM_READWRITE(MRA8_NOP,				sam_w)
@@ -251,6 +257,11 @@ INPUT_PORTS_START( dragon32 )
 	PORT_CONFSETTING(    0x00, DEF_STR( Off ) )
 	PORT_CONFSETTING(    0x01, DEF_STR( Standard ) )
 	PORT_CONFSETTING(    0x02, DEF_STR( Reverse ) )
+
+	PORT_START_TAG(DRAGON_COCO_CART_AUTOSTART) 
+	PORT_CONFNAME( 0x03, 0x01, "Cart Auto-Start" )
+	PORT_CONFSETTING(    0x00, DEF_STR( Off ) )
+	PORT_CONFSETTING(    0x01, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /* CoCo keyboard
@@ -357,6 +368,10 @@ INPUT_PORTS_START( coco )
 	PORT_CONFSETTING(    0x00, "Disto" )
 	PORT_CONFSETTING(    0x01, "Cloud-9" )
 
+	PORT_START_TAG(DRAGON_COCO_CART_AUTOSTART) 
+	PORT_CONFNAME( 0x03, 0x01, "Cart Auto-Start" )
+	PORT_CONFSETTING(    0x00, DEF_STR( Off ) )
+	PORT_CONFSETTING(    0x01, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /* CoCo 3 keyboard
@@ -474,6 +489,11 @@ INPUT_PORTS_START( coco3 )
 	PORT_CONFNAME( 0x03, 0x00, "Real Time Clock" )
 	PORT_CONFSETTING(    0x00, "Disto" )
 	PORT_CONFSETTING(    0x01, "Cloud-9" )
+
+	PORT_START_TAG(DRAGON_COCO_CART_AUTOSTART) 
+	PORT_CONFNAME( 0x03, 0x01, "Cart Auto-Start" )
+	PORT_CONFSETTING(    0x00, DEF_STR( Off ) )
+	PORT_CONFSETTING(    0x01, DEF_STR( On ) )
 INPUT_PORTS_END
 
 static struct DACinterface d_dac_interface =
@@ -487,6 +507,20 @@ static struct Wave_interface d_wave_interface =
 	1,
 	{ 25 }		/* mixing levels */
 };
+
+/* AY-8912 for Dragon Alpha, the AY-8912 simply an AY-8910 with only one io port. */
+static struct AY8910interface ay8912_interface =
+{
+	1,		                    /* total number of 8910 in the machine */
+	1000000,                    /* base clock : 1.0 MHz */
+	{ 75 },                     /* mixing_level */
+	{dgnalpha_psg_porta_read},  /* portA read */
+	{NULL},    					/* portB read */
+	{dgnalpha_psg_porta_write},  /* portA write */
+	{ NULL }					/* portB write */
+								/* IRQ handler for the YM2203 ??? */
+};
+
 
 static MACHINE_DRIVER_START( dragon32 )
 	/* basic machine hardware */
@@ -543,6 +577,7 @@ static MACHINE_DRIVER_START( dgnalpha )
 	/* sound hardware */
 	MDRV_SOUND_ADD(DAC, d_dac_interface)
 	MDRV_SOUND_ADD(WAVE, d_wave_interface)
+	MDRV_SOUND_ADD(AY8910, ay8912_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( coco )
@@ -642,23 +677,23 @@ MACHINE_DRIVER_END
 ***************************************************************************/
 
 ROM_START(dragon32)
-	ROM_REGION(0x8000,REGION_CPU1,0)
+	ROM_REGION(0xC000,REGION_CPU1,0)
 	ROM_LOAD(           "d32.rom",      0x0000,  0x4000, CRC(e3879310) SHA1(f2dab125673e653995a83bf6b793e3390ec7f65a))
 	ROM_LOAD_OPTIONAL(  "ddos10.rom",   0x4000,  0x2000, CRC(b44536f6) SHA1(a8918c71d319237c1e3155bb38620acb114a80bc))
 ROM_END
 
 ROM_START(dragon64)
-	ROM_REGION(0xC000,REGION_CPU1,0)
+	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD(           "d64_1.rom",    0x0000,  0x4000, CRC(60a4634c) SHA1(f119506eaa3b4b70b9aa0dd83761e8cbe043d042))
 	ROM_LOAD(           "d64_2.rom",    0x8000,  0x4000, CRC(17893a42) SHA1(e3c8986bb1d44269c4587b04f1ca27a70b0aaa2e))
 	ROM_LOAD_OPTIONAL(  "ddos10.rom",   0x4000,  0x2000, CRC(b44536f6) SHA1(a8918c71d319237c1e3155bb38620acb114a80bc))
 ROM_END
 
 ROM_START(dgnalpha)
-	ROM_REGION(0xC000,REGION_CPU1,0)
+	ROM_REGION(0x10000,REGION_CPU1,1)
 	ROM_LOAD(           "alpha_bt.rom",    0x2000,  0x2000, CRC(c3dab585) SHA1(4a5851aa66eb426e9bb0bba196f1e02d48156068))
 	ROM_LOAD(           "alpha_ba.rom",    0x8000,  0x4000, CRC(84f68bf9) SHA1(1983b4fb398e3dd9668d424c666c5a0b3f1e2b69))
-	ROM_LOAD_OPTIONAL(  "ddos10.rom",   0x4000,  0x2000, CRC(b44536f6) SHA1(a8918c71d319237c1e3155bb38620acb114a80bc))
+	ROM_LOAD_OPTIONAL(  "alpdos10.rom",   0x4000,  0x4000, CRC(bf6d5627) SHA1(e9b771b6c51d51d4ea209298211f2ba4743506b0))
 ROM_END
 
 ROM_START(coco)
