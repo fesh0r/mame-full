@@ -296,7 +296,7 @@ int vtech1_cassette_init(int id)
 			return INIT_FAILED;
         return INIT_OK;
     }
-    return INIT_FAILED;
+    return INIT_OK;
 }
 
 void vtech1_cassette_exit(int id)
@@ -396,7 +396,7 @@ int vtech1_snapshot_init(int id)
 		}
 		osd_fclose(file);
 	}
-	return INIT_FAILED;
+	return INIT_OK;
 }
 
 void vtech1_snapshot_exit(int id)
@@ -443,10 +443,7 @@ int vtech1_floppy_init(int id)
 		vtech1_fdc_wrprot[id] = 0x00;
 		vtech1_fdc_file[id] = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
 	}
-	if( vtech1_fdc_file[id] )
-		return 0;
-	/* failed permanently */
-    return 1;
+	return INIT_OK;
 }
 
 void vtech1_floppy_exit(int id)

@@ -126,7 +126,7 @@ int a800_floppy_init(int id)
 {
 	if( device_filename(IO_FLOPPY,id) )
 		open_floppy(id);
-	return drv[id].image ? INIT_OK : INIT_FAILED;
+	return INIT_OK;
 }
 
 void a800_floppy_exit(int id)

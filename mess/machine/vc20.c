@@ -613,7 +613,7 @@ int vc20_rom_load (int id)
 
 	vc20_memory_init();
 
-	if (device_filename(IO_CARTSLOT,id)==NULL) return 1;
+	if (device_filename(IO_CARTSLOT,id)==NULL) return 0;
 
 	if (!vc20_rom_id (id))
 		return 1;

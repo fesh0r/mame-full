@@ -471,7 +471,7 @@ int microtan_cassette_init(int id)
             return INIT_FAILED;
         return INIT_OK;
     }
-    return INIT_FAILED;
+    return INIT_OK;
 }
 
 void microtan_cassette_exit(int id)

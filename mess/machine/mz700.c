@@ -828,7 +828,7 @@ int mz700_cassette_init(int id)
 
         return INIT_OK;
 	}
-	return INIT_FAILED;
+	return INIT_OK;
 }
 
 void mz700_cassette_exit(int id)

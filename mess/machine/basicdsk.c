@@ -40,7 +40,7 @@ int basicdsk_floppy_init(int id)
 		/* do we have an image name ? */
 		if (!name || !name[0])
 		{
-			return INIT_FAILED;
+			return INIT_OK;
 		}
 		w->mode = 1;
 		w->image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
