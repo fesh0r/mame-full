@@ -517,6 +517,9 @@ static int get_selected_drive(int which, select_mode_t *select_mode, int *disk_u
 				* disk_unit = (* hfdc[which].select_callback)(which, * select_mode, hfdc[which].disk_sel & 0x3, hfdc[which].regs[hfdc_reg_retry_count] & 0xf);
 			else
 				* disk_unit = hfdc[which].disk_sel & 0x3;
+
+		case sm_undefined:
+			break;
 		}
 	}
 
@@ -611,6 +614,7 @@ INLINE int read_id(int which, select_mode_t select_mode, int disk_unit, int head
 				break;
 			default:
 				assert(1);
+				current_cylinder = 0;
 				break;
 			}
 		}

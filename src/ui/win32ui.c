@@ -1163,10 +1163,15 @@ void UpdateScreenShot(void)
 	MoveWindow(GetDlgItem(hMain, IDC_LIST2), 2 + nSplitterOffset[1], rect.top + 2,
 		(nWidth - nSplitterOffset[1]) - 2, (rect.bottom - rect.top) - 4 , TRUE);	
 #else
-	/* List control */
+	// List control
 	MoveWindow(hwndList, 2 + nTreeWidth, rect.top + 2,
 		(nWidth - nTreeWidth) - 2, (rect.bottom - rect.top) - 4 , TRUE);
 #endif
+
+	// not sure why this is needed, but it is necessary in large icon mode
+	// and breaks the other modes, so we're careful.
+	if (current_view_id == ID_VIEW_LARGE_ICON)
+		ListView_Arrange(hwndList,LVA_ALIGNTOP);		
 
 	FreeScreenShot();
 
@@ -2132,13 +2137,33 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 		OnLButtonDown(hWnd, (UINT)wParam, MAKEPOINTS(lParam));
 		break;
 
+		/*
+		  Check to see if the mouse has been moved by the user since
+		  startup. I'd like this checking to be done only in the
+		  main WinProc (here), but somehow the WM_MOUSEDOWN messages
+		  are eaten up before they reach MameWindowProc. That's why
+		  there is one check for each of the subclassed windows too.
+    
+		  POSSIBLE BUGS:
+		  I've included this check in the subclassed windows, but a 
+		  mose move in either the title bar, the menu, or the
+		  toolbar will not generate a WM_MOUSEOVER message. At least
+		  not one that I know how to pick up. A solution could maybe
+		  be to subclass those too, but that's too much work :)
+		*/
+		
 	case WM_MOUSEMOVE:
+	{
+		if (MouseHasBeenMoved())
+			ShowCursor(TRUE);
+		
 	    if (g_listview_dragging)
 		   MouseMoveListViewDrag(MAKEPOINTS(lParam));
 		else
 		   /* for splitters */
 		OnMouseMove(hWnd, (UINT)wParam, MAKEPOINTS(lParam));
 		break;
+	}
 
 	case WM_LBUTTONUP:
 	    if (g_listview_dragging)
@@ -3382,7 +3407,8 @@ static void SetView(int menu_id, int listview_style)
 		ListView_Arrange(hwndList,LVA_ALIGNTOP);
 
 	}
-	if (current_view_id == ID_VIEW_GROUPED || menu_id == ID_VIEW_GROUPED)
+	if (current_view_id == ID_VIEW_GROUPED || menu_id == ID_VIEW_GROUPED ||
+		menu_id == ID_VIEW_LARGE_ICON)
 	{
 		// this changes the sort order, so redo everything
 		force_reset = TRUE;
@@ -4319,6 +4345,24 @@ static DWORD GetShellLargeIconSize(void)
 	return dwSize;
 }
 
+static DWORD GetShellSmallIconSize(void)
+{
+	DWORD dwSize = ICONMAP_WIDTH;
+
+	if (dwSize < 48)
+	{
+		if (dwSize < 32)
+			dwSize = 16;
+		else
+			dwSize = 32;
+	}
+	else
+	{
+		dwSize = 48;
+	}
+	return dwSize;
+}
+
 // create iconlist for Listview control
 static void CreateIcons(void)
 {
@@ -4343,7 +4387,7 @@ static void CreateIcons(void)
 	dwStyle = GetWindowLong(hwndList,GWL_STYLE);
 	SetWindowLong(hwndList,GWL_STYLE,(dwStyle & ~LVS_TYPEMASK) | LVS_ICON);
 
-	hSmall = ImageList_Create(ICONMAP_WIDTH, ICONMAP_HEIGHT,
+	hSmall = ImageList_Create(GetShellSmallIconSize(),GetShellSmallIconSize(),
 							  ILC_COLORDDB | ILC_MASK, icon_count, 500);
 	hLarge = ImageList_Create(dwLargeIconSize, dwLargeIconSize,
 							  ILC_COLORDDB | ILC_MASK, icon_count, 500);

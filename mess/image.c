@@ -12,8 +12,9 @@ static mame_file *image_fopen_new(mess_image *img);
 
 enum
 {
-	IMAGE_STATUS_ISLOADING	= 1,
-	IMAGE_STATUS_ISLOADED	= 2
+	IMAGE_STATUS_ISLOADING		= 1,
+	IMAGE_STATUS_ISLOADED		= 2,
+	IMAGE_STATUS_CRCCALCULATED	= 4
 };
 
 struct _mess_image
@@ -254,37 +255,6 @@ void image_unload_all(int ispreload)
 
 /* ----------------------------------------------------------------------- */
 
-static int read_crc_config(const char *sysname, mess_image *img)
-{
-	int rc = 1;
-	config_file *config;
-	char line[1024];
-	char crc[9+1];
-
-	config = config_open(sysname, sysname, FILETYPE_CRC);
-	if (!config)
-		goto done;
-
-	snprintf(crc, sizeof(crc) / sizeof(crc[0]), "%08x", img->crc);
-	config_load_string(config, sysname, 0, crc, line, sizeof(line));
-
-	if (!line[0])
-		goto done;
-
-	logerror("found CRC %s= %s\n", crc, line);
-	img->longname		= image_strdup(img, stripspace(strtok(line, "|")));
-	img->manufacturer	= image_strdup(img, stripspace(strtok(NULL, "|")));
-	img->year			= image_strdup(img, stripspace(strtok(NULL, "|")));
-	img->playable		= image_strdup(img, stripspace(strtok(NULL, "|")));
-	img->extrainfo		= image_strdup(img, stripspace(strtok(NULL, "|")));
-	rc = 0;
-
-done:
-	if (config)
-		config_close(config);
-	return rc;
-}
-
 static mame_file *image_fopen_new(mess_image *img)
 {
 	mame_file *fref;
@@ -380,6 +350,116 @@ void *image_lookuptag(mess_image *img, const char *tag)
 	return tagpool_lookup(&img->tagpool, tag);
 }
 
+
+/****************************************************************************
+  CRC info loading
+
+  If the CRC is not checked and the relevant info not loaded, force that info
+  to be loaded
+****************************************************************************/
+
+static int read_crc_config(const char *sysname, mess_image *img)
+{
+	int rc = 1;
+	config_file *config;
+	char line[1024];
+	char crc[9+1];
+
+	config = config_open(sysname, sysname, FILETYPE_CRC);
+	if (!config)
+		goto done;
+
+	snprintf(crc, sizeof(crc) / sizeof(crc[0]), "%08x", img->crc);
+	config_load_string(config, sysname, 0, crc, line, sizeof(line));
+
+	if (!line[0])
+		goto done;
+
+	logerror("found CRC %s= %s\n", crc, line);
+	img->longname		= image_strdup(img, stripspace(strtok(line, "|")));
+	img->manufacturer	= image_strdup(img, stripspace(strtok(NULL, "|")));
+	img->year			= image_strdup(img, stripspace(strtok(NULL, "|")));
+	img->playable		= image_strdup(img, stripspace(strtok(NULL, "|")));
+	img->extrainfo		= image_strdup(img, stripspace(strtok(NULL, "|")));
+	rc = 0;
+
+done:
+	if (config)
+		config_close(config);
+	return rc;
+}
+
+static int image_checkcrc(mess_image *img)
+{
+	UINT8 static_buf[2048]; 
+	UINT8 *alloc_buf;
+	UINT8 *buf;
+	UINT32 bufsize;
+	UINT32 imgsize;
+	UINT32 chunksize;
+	const struct IODevice *dev;
+	mame_file *file;
+	UINT32 crc;
+
+	assert(img->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
+
+	/* only calculate CRC if it hasn't been calculated, and the open_mode is read only */
+	if (!(img->status & IMAGE_STATUS_CRCCALCULATED) && (img->effective_mode == OSD_FOPEN_READ))
+	{
+		/* initialize key variables */
+		file = image_fp(img);
+		imgsize = image_length(img);
+		dev = image_device(img);
+		crc = 0;
+
+		/* decide which buffer we need to use */
+		if (dev && dev->partialcrc && (imgsize > sizeof(static_buf)))
+		{
+			alloc_buf = (UINT8 *) malloc(imgsize);
+			if (!alloc_buf)
+				return FALSE;
+			buf = alloc_buf;
+			bufsize = imgsize;
+		}
+		else
+		{
+			alloc_buf = NULL;
+			buf = static_buf;
+			bufsize = sizeof(static_buf);
+		}
+
+		/* reset the file */
+		mame_fseek(file, 0, SEEK_SET);
+
+		/* loop through the file, calculating the CRC */
+		while(imgsize > 0)
+		{
+			chunksize = (imgsize > bufsize) ? bufsize : imgsize;
+
+			mame_fread(file, buf, chunksize);
+
+			if (dev && dev->partialcrc)
+				crc = dev->partialcrc(buf, chunksize);
+			else
+				crc = crc32(crc, buf, chunksize);
+
+			imgsize -= chunksize;
+		}
+
+		/* cleanup */
+		if (alloc_buf)
+			free(alloc_buf);
+		img->crc = crc;
+		mame_fseek(file, 0, SEEK_SET);
+
+		/* now read the CRC file */
+		read_crc_config(Machine->gamedrv->name, img);
+		
+		img->status |= IMAGE_STATUS_CRCCALCULATED;
+	}
+	return TRUE;
+}
+
 /****************************************************************************
   Accessor functions
 
@@ -456,6 +536,7 @@ unsigned int image_length(mess_image *img)
 
 unsigned int image_crc(mess_image *img)
 {
+	image_checkcrc(img);
 	return img->crc;
 }
 
@@ -509,26 +590,31 @@ void image_freeptr(mess_image *img, void *ptr)
 
 const char *image_longname(mess_image *img)
 {
+	image_checkcrc(img);
 	return img->longname;
 }
 
 const char *image_manufacturer(mess_image *img)
 {
+	image_checkcrc(img);
 	return img->manufacturer;
 }
 
 const char *image_year(mess_image *img)
 {
+	image_checkcrc(img);
 	return img->year;
 }
 
 const char *image_playable(mess_image *img)
 {
+	image_checkcrc(img);
 	return img->playable;
 }
 
 const char *image_extrainfo(mess_image *img)
 {
+	image_checkcrc(img);
 	return img->extrainfo;
 }
 
@@ -709,39 +795,8 @@ mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_write)
 
 		logerror("image_fopen: found image %s for system %s\n", img->name, sysname);
 		img->length = mame_fsize(file);
-/* Cowering, partial crcs for NES/A7800/others */
 		img->crc = 0;
-
-		if ((!img->crc) && (image_devtype(img) != IO_HARDDISK))
-		{
-			unsigned char *pc_buf = (unsigned char *)malloc(img->length);
-			const struct IODevice *pc_dev;
-
-			if (pc_buf)
-			{
-				mame_fseek(file,0,SEEK_SET);
-				mame_fread(file,pc_buf,img->length);
-				mame_fseek(file,0,SEEK_SET);
-
-				pc_dev = device_find(Machine->gamedrv, image_devtype(img));
-				if (pc_dev && pc_dev->partialcrc)
-				{
-					logerror("Calling partialcrc()\n");
-					img->crc = (*pc_dev->partialcrc)(pc_buf,img->length);
-				}
-				else
-				{
-					img->crc = crc32(0L, pc_buf, img->length);
-				}
-				free(pc_buf);
-			}
-			else
-			{
-				logerror("failed to malloc(%d)\n", img->length);
-			}
-		}
-
-		read_crc_config(sysname, img);
+		img->status &= ~IMAGE_STATUS_CRCCALCULATED;
 	}
 
 	return file;

@@ -1967,8 +1967,7 @@ static void JoyInfoDecodeString(const char* str, void* data)
 
 static void ColumnDecodeWidths(const char* str, void* data)
 {
-	if (settings.view == VIEW_REPORT || settings.view == VIEW_GROUPED)
-		ColumnDecodeString(str, data);
+	ColumnDecodeString(str, data);
 }
 
 static void SplitterEncodeString(void* data, char* str)
@@ -2635,10 +2634,7 @@ void SaveDefaultOptions(void)
 			fprintf(fptr,"### global-only options ###\n\n");
 		
 			for (i=0;i<NUM_GLOBAL_GAME_OPTIONS;i++)
-			{
-				if (!global_game_options[i].m_bOnlyOnGame)
-					WriteOptionToFile(fptr,&global_game_options[i]);
-			}
+				WriteOptionToFile(fptr,&global_game_options[i]);
 		}
 
 		if (save_default_options)
@@ -2646,10 +2642,7 @@ void SaveDefaultOptions(void)
 			fprintf(fptr,"\n### default game options ###\n\n");
 			gOpts = global;
 			for (i = 0; i < NUM_GAME_OPTIONS; i++)
-			{
-				if (!regGameOpts[i].m_bOnlyOnGame)
-					WriteOptionToFile(fptr, &regGameOpts[i]);
-			}
+				WriteOptionToFile(fptr,&regGameOpts[i]);
 		}
 
 		fclose(fptr);

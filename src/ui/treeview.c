@@ -1718,7 +1718,7 @@ BOOL TryAddExtraFolderAndChildren(int parent_index)
     char*   p;
     char*   name;
     int     id, current_id;
-    LPTREEFOLDER lpTemp = 0;
+    LPTREEFOLDER lpTemp = NULL;
 	LPTREEFOLDER lpFolder = treeFolders[parent_index];
 
     current_id = lpFolder->m_nFolderId;
@@ -1798,6 +1798,13 @@ BOOL TryAddExtraFolderAndChildren(int parent_index)
             /* IMPORTANT: This assumes that all driver names are lowercase! */
             strlwr( name );
 
+			if (lpTemp == NULL)
+			{
+				ErrorMsg("Error parsing %s: missing [folder name] or [ROOT_FOLDER]",
+						 fname);
+				current_id = lpFolder->m_nFolderId;
+				lpTemp = lpFolder;
+			}
 			AddGame(lpTemp,GetGameNameIndex(name));
         }
     }
