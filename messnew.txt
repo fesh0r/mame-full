@@ -18,9 +18,16 @@ Odyssey^2 (preliminary) [PeT and others]
 Interton VC4000 (preliminary) [PeT]
 More Nascom1/2 official releases [JoJo]
 Sharp PC1403/1403H (preliminary) [PeT]
+Texas Instruments TI-86 (preliminary) [Krzysztof Strzecha]
 
 System Driver Changes:
 ----------------------
+- [TI85] Snapshot loading (VTI 2.0 save state files). Sound added (speaker
+  connected to link port). Video engine totaly rewriten so grayscale works now.
+  NVRAM support added. Link port emulation added (variables, memory backups and
+  screen dumps receiving, variables and memory backups sending). Reset fixed.
+  PCR emulation added.
+
 - [APPLE I] Support for the correct chargen ROM. Character grid has now the 
   correct dimensions [JoJo]
 
