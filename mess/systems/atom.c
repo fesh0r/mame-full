@@ -59,8 +59,7 @@ Hardware:	PPIA 8255
 
 /* memory w/r functions */
 
-static struct MemoryReadAddress atom_readmem[] =
-{
+static MEMORY_READ_START (atom_readmem)
 	{ 0x0000, 0x7fff, MRA_RAM },
 	{ 0x8000, 0x97ff, videoram_r },		// VDG 6847
 	{ 0x9800, 0x9fff, MRA_RAM },
@@ -71,11 +70,9 @@ static struct MemoryReadAddress atom_readmem[] =
     { 0xbc04, 0xbfdf,  MWA_NOP },
     { 0xbfe0, 0xbfff, MRA_NOP },		// MOUSE
 	{ 0xc000, 0xffff, MRA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress atom_writemem[] =
-{
+static MEMORY_WRITE_START (atom_writemem)
 	{ 0x0000, 0x7fff, MWA_RAM },
 	{ 0x8000, 0x97ff, videoram_w, &videoram, &videoram_size}, // VDG 6847
 	{ 0x9800, 0x9fff, MWA_RAM },
@@ -87,8 +84,7 @@ static struct MemoryWriteAddress atom_writemem[] =
     { 0xbc04, 0xbfdf,  MWA_NOP },
     { 0xbfe0, 0xbfff, MWA_NOP },		// MOUSE
 	{ 0xc000, 0xffff, MWA_ROM },
-	{ -1 }
-};
+MEMORY_END
 
 /* graphics output */
 

@@ -97,8 +97,7 @@ void a310_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	}
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START (readmem)
 	{ 0x00000000, 0x007fffff, MRA_BANK1 },
 	{ 0x00800000, 0x00ffffff, MRA_BANK2 },
 	{ 0x01000000, 0x017fffff, MRA_BANK3 },
@@ -107,11 +106,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x02800000, 0x02ffffff, MRA_BANK6 },
 	{ 0x03000000, 0x037fffff, MRA_BANK7 },
 	{ 0x03800000, 0x03ffffff, MRA_BANK8 },
-    {-1}
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START (writemem)
 	{ 0x00000000, 0x007fffff, MWA_BANK1 },
     { 0x001ff000, 0x001fffff, videoram_w, &videoram, &videoram_size },
 	{ 0x00800000, 0x00ffffff, MWA_BANK2 },
@@ -121,8 +118,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x02800000, 0x02ffffff, MWA_BANK6 },
 	{ 0x03000000, 0x037fffff, MWA_BANK7 },
 	{ 0x03800000, 0x03ffffff, MWA_BANK8 },
-    {-1}
-};
+MEMORY_END
 
 INPUT_PORTS_START( a310 )
 	PORT_START /* DIP switches */

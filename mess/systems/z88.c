@@ -305,26 +305,21 @@ void z88_shutdown_machine(void)
 }
  
 
-static struct MemoryReadAddress readmem_z88[] =
-{
+static MEMORY_READ_START (readmem_z88)
         {0x00000, 0x01fff, MRA_BANK1},
         {0x02000, 0x03fff, MRA_BANK2},
         {0x04000, 0x07fff, MRA_BANK3},
 		{0x08000, 0x0bfff, MRA_BANK4},
         {0x0c000, 0x0ffff, MRA_BANK5},
-	{-1}							   /* end of table */
-};
+MEMORY_END
 
-
-static struct MemoryWriteAddress writemem_z88[] =
-{
+static MEMORY_WRITE_START (writemem_z88)
         {0x00000, 0x01fff, MWA_BANK6},
 		{0x02000, 0x03fff, MWA_BANK7},
         {0x04000, 0x07fff, MWA_BANK8},
         {0x08000, 0x0bfff, MWA_BANK9},
         {0x0c000, 0x0ffff, MWA_BANK10},
-	{-1}							   /* end of table */
-};
+MEMORY_END
 
 unsigned long blink_pb_offset(int num_bits, unsigned long addr_written, int shift)
 {
@@ -610,18 +605,13 @@ READ_HANDLER(z88_port_r)
 }
 
 
-static struct IOReadPort readport_z88[] =
-{
+static PORT_READ_START (readport_z88)
 	{0x0000, 0x0ffff, z88_port_r},
-	{-1}							   /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport_z88[] =
-{
+static PORT_WRITE_START (writeport_z88)
 	{0x0000, 0x0ffff, z88_port_w},
-	{-1}                                                       /* end of table */
-        
-};
+PORT_END
 
 static struct Speaker_interface z88_speaker_interface=
 {

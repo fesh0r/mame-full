@@ -2432,8 +2432,7 @@ static void amstrad_init_palette(unsigned char *sys_palette, unsigned short *sys
 /* Memory is banked in 16k blocks. However, the multiface
 pages the memory in 8k blocks! The ROM can
 be paged into bank 0 and bank 3. */
-static struct MemoryReadAddress readmem_amstrad[] =
-{
+static MEMORY_READ_START (readmem_amstrad)
 	{0x00000, 0x01fff, MRA_BANK1},
 	{0x02000, 0x03fff, MRA_BANK2},
 	{0x04000, 0x05fff, MRA_BANK3},
@@ -2445,12 +2444,9 @@ static struct MemoryReadAddress readmem_amstrad[] =
 	{0x010000, 0x013fff, MRA_ROM},	   /* OS */
 	{0x014000, 0x017fff, MRA_ROM},	   /* BASIC */
 	{0x018000, 0x01bfff, MRA_ROM},	   /* AMSDOS */
-	{-1}							   /* end of table */
-};
+MEMORY_END
 
-
-static struct MemoryWriteAddress writemem_amstrad[] =
-{
+static MEMORY_WRITE_START (writemem_amstrad)
 	{0x00000, 0x01fff, MWA_BANK9},
 	{0x02000, 0x03fff, MWA_BANK10},
 	{0x04000, 0x05fff, MWA_BANK11},
@@ -2459,23 +2455,18 @@ static struct MemoryWriteAddress writemem_amstrad[] =
 	{0x0a000, 0x0bfff, MWA_BANK14},
 	{0x0c000, 0x0dfff, MWA_BANK15},
 	{0x0e000, 0x0ffff, MWA_BANK16},
-	{-1}							   /* end of table */
-};
+MEMORY_END
 
 /* I've handled the I/O ports in this way, because the ports
 are not fully decoded by the CPC h/w. Doing it this way means
 I can decode it myself and a lot of  software should work */
-static struct IOReadPort readport_amstrad[] =
-{
+static PORT_READ_START (readport_amstrad)
 	{0x0000, 0x0ffff, AmstradCPC_ReadPortHandler},
-	{-1}							   /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport_amstrad[] =
-{
+static PORT_WRITE_START (writeport_amstrad)
 	{0x0000, 0x0ffff, AmstradCPC_WritePortHandler},
-	{-1}							   /* end of table */
-};
+PORT_END
 
 /* read PSG port A */
 READ_HANDLER ( amstrad_psg_porta_read )
