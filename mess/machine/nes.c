@@ -3,6 +3,7 @@
 #include "vidhrdw/generic.h"
 #include "includes/nes.h"
 #include "machine/nes_mmc.h"
+#include <zlib.h>
 
 /* Uncomment this to dump reams of ppu state info to the errorlog */
 //#define LOG_PPU
@@ -419,7 +420,7 @@ int nes_interrupt (void)
 	ret = M6502_INT_NONE;
 
 	/* See if a mapper generated an irq */
-	if (*mmc_irq) ret = (*mmc_irq)(current_scanline);
+    if (*mmc_irq != NULL) ret = (*mmc_irq)(current_scanline);
 
 	if (current_scanline <= BOTTOM_VISIBLE_SCANLINE)
 	{
@@ -556,7 +557,7 @@ data_t nes_ppu_r (int offset)
 		case 7:
 			retVal = PPU_data_latch;
 
-			if (*ppu_latch) (*ppu_latch)(PPU_address & 0x3fff);
+            if (*ppu_latch != NULL) (*ppu_latch)(PPU_address & 0x3fff);
 
 			if ((PPU_address >= 0x2000) && (PPU_address <= 0x3fef))
 				PPU_data_latch = ppu_page[(PPU_address & 0xc00) >> 10][PPU_address & 0x3ff];
@@ -1007,7 +1008,7 @@ static void Write_PPU (int data)
 {
 	int tempAddr = PPU_address & 0x3fff;
 
-	if (*ppu_latch) (*ppu_latch)(tempAddr);
+    if (*ppu_latch != NULL) (*ppu_latch)(tempAddr);
 
 #ifdef LOG_PPU
 	logerror ("   Write_PPU %04x: %02x\n", tempAddr, data);
@@ -1275,7 +1276,7 @@ bad:
 	return 1;
 }
 
-extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
+// extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
 
 UINT32 nes_partialcrc(const unsigned char *buf,unsigned int size)
 {
