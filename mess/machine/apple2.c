@@ -1591,7 +1591,7 @@ DRIVER_INIT( apple2 )
 	else if (!strcmp(Machine->gamedrv->name, "apple2ep"))
 		a2_cfg.keyboard_type = AP2_KEYBOARD_2GS;
 	else
-		a2_cfg.keyboard_type = AP2_KEYBOARD_2;
+		a2_cfg.keyboard_type = AP2_KEYBOARD_2E;
 
 	/* specify slots */
 	if (!strcmp(Machine->gamedrv->name, "apple2c0") ||
