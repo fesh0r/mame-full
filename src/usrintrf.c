@@ -2899,7 +2899,9 @@ static void setup_menu_init(void)
 	menu_item[menu_total] = ui_getstring (UI_history); menu_action[menu_total++] = UI_HISTORY;
 #else
 	menu_item[menu_total] = ui_getstring (UI_imageinfo); menu_action[menu_total++] = UI_IMAGEINFO;
+#ifdef MAME_DEBUG
 	menu_item[menu_total] = ui_getstring (UI_filemanager); menu_action[menu_total++] = UI_FILEMANAGER;
+#endif
 	if (device_count(IO_CASSETTE)!=0)
 	{
 		menu_item[menu_total] = ui_getstring (UI_tapecontrol); menu_action[menu_total++] = UI_TAPECONTROL;
@@ -2925,7 +2927,9 @@ static void setup_menu_init(void)
 #endif
 #endif
 
+#ifndef MESS
 	menu_item[menu_total] = ui_getstring (UI_resetgame); menu_action[menu_total++] = UI_RESET;
+#endif
 	menu_item[menu_total] = ui_getstring (UI_returntogame); menu_action[menu_total++] = UI_EXIT;
 	menu_item[menu_total] = 0; /* terminate array */
 }
