@@ -25,7 +25,6 @@ static void *tape_image = NULL;
 static void *tape_file = NULL;
 static UINT8 tape_data = 0x00;
 static UINT8 tape_mask = 0x00;
-static void *tape_bit_timer = NULL;
 static int tape_header = 0;			   /* silence counter */
 static int tape_trailer = 0;
 static int tape_data_offs = 0;
@@ -92,7 +91,7 @@ static void common_init_machine(void)
 	memory_set_opbase_handler(0, zx_setopbase);
 }
 
-void zx80_init_machine(void)
+MACHINE_INIT( zx80 )
 {
 	if (readinputport(0) & 0x80)
 	{
@@ -107,7 +106,7 @@ void zx80_init_machine(void)
 	common_init_machine();
 }
 
-void zx81_init_machine(void)
+MACHINE_INIT( zx81 )
 {
 	if (readinputport(0) & 0x80)
 	{
@@ -122,18 +121,14 @@ void zx81_init_machine(void)
 	common_init_machine();
 }
 
-void pc8300_init_machine(void)
+MACHINE_INIT( pc8300 )
 {
 	memory_set_opbase_handler(0, pc8300_setopbase);
 }
 
-void pow3000_init_machine(void)
+MACHINE_INIT( pow3000 )
 {
 	memory_set_opbase_handler(0, pow3000_setopbase);
-}
-
-void zx_shutdown_machine(void)
-{
 }
 
 int zx_cassette_init(int id)
@@ -176,11 +171,9 @@ static void tape_bit_shift(int param)
 	int tape_wave = param & 15;
 	int tape_bits = param >> 4;
 
-	tape_bit_timer = NULL;
-
 	if (tape_header > 0)
 	{
-		tape_bit_timer = timer_set(TIME_IN_USEC(TAPE_PULSE), 0, tape_bit_shift);
+		timer_set(TIME_IN_USEC(TAPE_PULSE), 0, tape_bit_shift);
 		tape_header--;
 		zx_frame_time = 15;
 		sprintf(zx_frame_message, "Tape header %5d", tape_header);
@@ -189,7 +182,7 @@ static void tape_bit_shift(int param)
 
 	if (tape_trailer > 0)
 	{
-		tape_bit_timer = timer_set(TIME_IN_USEC(TAPE_PULSE), 0, tape_bit_shift);
+		timer_set(TIME_IN_USEC(TAPE_PULSE), 0, tape_bit_shift);
 		tape_trailer--;
 		zx_frame_time = 15;
 		sprintf(zx_frame_message, "Tape trailer %5d", tape_trailer);
@@ -202,16 +195,16 @@ static void tape_bit_shift(int param)
 		zx_ula_bkgnd(tape_mask ? 1 : 0);
 		if (tape_wave == 1)
 		{
-			logerror("TAPE wave #%d done (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", param, tape_mask, cpu_get_reg
-					(Z80_AF), cpu_get_reg(Z80_BC), cpu_get_reg(Z80_DE), cpu_get_reg(Z80_HL));
-			tape_bit_timer = timer_set(TIME_IN_USEC(TAPE_DELAY),
+			logerror("TAPE wave #%d done (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", param, tape_mask, activecpu_get_reg
+					(Z80_AF), activecpu_get_reg(Z80_BC), activecpu_get_reg(Z80_DE), activecpu_get_reg(Z80_HL));
+			timer_set(TIME_IN_USEC(TAPE_DELAY),
 									   (tape_bits << 4), tape_bit_shift);
 		}
 		else
 		{
-			logerror("TAPE wave #%d      (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", param, tape_mask, cpu_get_reg
-					(Z80_AF), cpu_get_reg(Z80_BC), cpu_get_reg(Z80_DE), cpu_get_reg(Z80_HL));
-			tape_bit_timer = timer_set(TIME_IN_USEC(tape_mask ? TAPE_PULSE : TAPE_PULSE * 6 / 7),
+			logerror("TAPE wave #%d      (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", param, tape_mask, activecpu_get_reg
+					(Z80_AF), activecpu_get_reg(Z80_BC), activecpu_get_reg(Z80_DE), activecpu_get_reg(Z80_HL));
+			timer_set(TIME_IN_USEC(tape_mask ? TAPE_PULSE : TAPE_PULSE * 6 / 7),
 									   (tape_bits << 4) | (tape_wave - 1), tape_bit_shift);
 		}
 		return;
@@ -223,7 +216,7 @@ static void tape_bit_shift(int param)
 		{
 			tape_data = tape_dump[tape_name_offs];
 			logerror("TAPE name @$%04X: $%02X (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", tape_name_offs, tape_data,
-						tape_mask, cpu_get_reg(Z80_AF), cpu_get_reg(Z80_BC), cpu_get_reg(Z80_DE), cpu_get_reg(Z80_HL));
+						tape_mask, activecpu_get_reg(Z80_AF), activecpu_get_reg(Z80_BC), activecpu_get_reg(Z80_DE), activecpu_get_reg(Z80_HL));
 			tape_bits = 8;
 			tape_name_offs++;
 			zx_frame_time = 15;
@@ -232,7 +225,7 @@ static void tape_bit_shift(int param)
 		else if (osd_fread(tape_file, &tape_data, 1) == 1)
 		{
 			logerror("TAPE data @$%04X: $%02X (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", tape_data_offs, tape_data,
-						tape_mask, cpu_get_reg(Z80_AF), cpu_get_reg(Z80_BC), cpu_get_reg(Z80_DE), cpu_get_reg(Z80_HL));
+						tape_mask, activecpu_get_reg(Z80_AF), activecpu_get_reg(Z80_BC), activecpu_get_reg(Z80_DE), activecpu_get_reg(Z80_HL));
 			tape_bits = 8;
 			tape_data_offs++;
 			zx_frame_time = 15;
@@ -243,7 +236,7 @@ static void tape_bit_shift(int param)
 			osd_fclose(tape_file);
 			tape_file = NULL;
 			tape_trailer = 256 * 8;
-			tape_bit_timer = timer_set(TIME_IN_USEC(TAPE_PULSE), 0, tape_bit_shift);
+			timer_set(TIME_IN_USEC(TAPE_PULSE), 0, tape_bit_shift);
 			logerror("TAPE trailer %d\n", tape_trailer);
 		}
 	}
@@ -254,18 +247,18 @@ static void tape_bit_shift(int param)
 		if ((tape_data >> tape_bits) & 1)
 		{
 			logerror("TAPE get bit #%d:1 (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", tape_bits, tape_mask,
-						cpu_get_reg(Z80_AF), cpu_get_reg(Z80_BC), cpu_get_reg(Z80_DE), cpu_get_reg(Z80_HL));
+						activecpu_get_reg(Z80_AF), activecpu_get_reg(Z80_BC), activecpu_get_reg(Z80_DE), activecpu_get_reg(Z80_HL));
 			tape_wave = 9;
 		}
 		else
 		{
 			logerror("TAPE get bit #%d:0 (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", tape_bits, tape_mask,
-						cpu_get_reg(Z80_AF), cpu_get_reg(Z80_BC), cpu_get_reg(Z80_DE), cpu_get_reg(Z80_HL));
+						activecpu_get_reg(Z80_AF), activecpu_get_reg(Z80_BC), activecpu_get_reg(Z80_DE), activecpu_get_reg(Z80_HL));
 			tape_mask ^= 0x80;
 			zx_ula_bkgnd(tape_mask ? 1 : 0);
 			tape_wave = 4;
 		}
-		tape_bit_timer = timer_set(TIME_IN_USEC(TAPE_PULSE),
+		timer_set(TIME_IN_USEC(TAPE_PULSE),
 								   (tape_bits << 4) | (tape_wave - 1), tape_bit_shift);
 	}
 }
@@ -282,7 +275,7 @@ static void extract_name(void)
 		'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
 		'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
 		'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
-	int a, de = cpu_get_reg(Z80_DE), i;
+	int a, de = activecpu_get_reg(Z80_DE), i;
 	UINT8 *ram = memory_region(REGION_CPU1), *name;
 
 	tape_name[0] = '\0';
@@ -314,8 +307,8 @@ static int zx_tape_get_bit(void)
 {
 	if (tape_file || tape_header || tape_trailer)
 	{
-		logerror("      read status (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", tape_mask, cpu_get_reg(Z80_AF),
-				cpu_get_reg(Z80_BC), cpu_get_reg(Z80_DE), cpu_get_reg(Z80_HL));
+		logerror("      read status (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", tape_mask, activecpu_get_reg(Z80_AF),
+				activecpu_get_reg(Z80_BC), activecpu_get_reg(Z80_DE), activecpu_get_reg(Z80_HL));
 	}
 	else
 	{
@@ -354,7 +347,7 @@ static int zx_tape_get_bit(void)
 					}
 					if (tape_file)
 					{
-						tape_bit_timer = timer_set(TIME_IN_USEC(TAPE_PULSE), 0, tape_bit_shift);
+						timer_set(TIME_IN_USEC(TAPE_PULSE), 0, tape_bit_shift);
 						tape_header = 1024 * 8;
 						tape_data_offs = 0;
 						tape_mask = 0x80;
@@ -379,20 +372,17 @@ WRITE_HANDLER ( zx_io_w )
 	if ((offset & 2) == 0)
 	{
 		logerror(" ULA NMIs off\n");
-		if (ula_nmi)
-			timer_remove(ula_nmi);
-		ula_nmi = NULL;
+		timer_reset(ula_nmi, TIME_NEVER);
 	}
 	else if ((offset & 1) == 0)
 	{
 		logerror(" ULA NMIs on\n");
-		ula_nmi = timer_pulse(TIME_IN_CYCLES(207, 0), 0, zx_ula_nmi);
+
+		timer_adjust(ula_nmi, 0, 0, TIME_IN_CYCLES(207, 0));
+
 		/* remove the IRQ */
-		if (ula_irq)
-		{
-			timer_remove(ula_irq);
-			ula_irq = NULL;
-		}
+		timer_reset(ula_irq, TIME_NEVER);
+		ula_irq_active = 0;
 	}
 	else
 	{
@@ -440,12 +430,12 @@ READ_HANDLER ( zx_io_r )
 		if (Machine->drv->frames_per_second > 55)
 			data &= ~0x40;
 
-		if (ula_irq)
+		if (ula_irq_active)
 		{
 			logerror("IOR %3d $%04X data $%02X (ULA IRQs off)\n", cpu_getscanline(), offset, data);
 			zx_ula_bkgnd(0);
-			timer_remove(ula_irq);
-			ula_irq = NULL;
+			timer_reset(ula_irq, TIME_NEVER);
+			ula_irq_active = 0;
 		}
 		else
 		{
@@ -499,12 +489,12 @@ READ_HANDLER ( pow3000_io_r )
 		if (Machine->drv->frames_per_second > 55)
 			data &= ~0x40;
 
-		if (ula_irq)
+		if (ula_irq_active)
 		{
 			logerror("IOR %3d $%04X data $%02X (ULA IRQs off)\n", cpu_getscanline(), offset, data);
 			zx_ula_bkgnd(0);
-			timer_remove(ula_irq);
-			ula_irq = 0;
+			timer_reset(ula_irq, TIME_NEVER);
+			ula_irq_active = 0;
 		}
 		else
 		{

@@ -427,23 +427,22 @@ static unsigned short zx_colortable[] =
 
 
 /* Initialise the palette */
-static void zx80_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+static PALETTE_INIT( zx80 )
 {
-	memcpy(sys_palette, zx80_palette, sizeof (zx80_palette));
-	memcpy(sys_colortable, zx_colortable, sizeof (zx_colortable));
+	palette_set_colors(0, zx80_palette, sizeof(zx80_palette) / 3);
+	memcpy(colortable, zx_colortable, sizeof (zx_colortable));
 }
 
-
-static void zx81_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+static PALETTE_INIT( zx81 )
 {
-	memcpy(sys_palette, zx81_palette, sizeof (zx81_palette));
-	memcpy(sys_colortable, zx_colortable, sizeof (zx_colortable));
+	palette_set_colors(0, zx81_palette, sizeof(zx81_palette) / 3);
+	memcpy(colortable, zx_colortable, sizeof (zx_colortable));
 }
 
-static void ts1000_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+static PALETTE_INIT( ts1000 )
 {
-	memcpy(sys_palette, ts1000_palette, sizeof (ts1000_palette));
-	memcpy(sys_colortable, zx_colortable, sizeof (zx_colortable));
+	palette_set_colors(0, ts1000_palette, sizeof(ts1000_palette) / 3);
+	memcpy(colortable, zx_colortable, sizeof (zx_colortable));
 }
 
 static struct DACinterface dac_interface =
@@ -456,209 +455,75 @@ static struct DACinterface dac_interface =
 #define CYCLES_PER_SCANLINE 207
 
 static MACHINE_DRIVER_START( zx80 )
-{
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80 | CPU_16BIT_PORT,
-			CPU_CLOCK,
-			readmem_zx80, writemem_zx80, readport, writeport,
-			ignore_interrupt, 1
-		},
-	},
-	1.0 * CPU_CLOCK / 310 / CYCLES_PER_SCANLINE,
-	0,								/* vblank handled by vidhrdw */
-	1,
-	zx80_init_machine,
-	zx_shutdown_machine,
+	MDRV_CPU_ADD_TAG("main", Z80, CPU_CLOCK)
+	MDRV_CPU_MEMORY(readmem_zx80, writemem_zx80)
+	MDRV_CPU_PORTS(readport, writeport)
+	MDRV_FRAMES_PER_SECOND(1.0 * CPU_CLOCK / 310 / CYCLES_PER_SCANLINE)
+	MDRV_VBLANK_DURATION(0)
+	MDRV_INTERLEAVE(1)
 
-	/* video hardware */
-	32 * 8, 						/* screen width (inc. blank/sync) */
-	310,							/* screen height (inc. blank/sync) */
-	{0*8, 32*8 - 1, 48, 310-32-1},	/* visible area (inc. some vertical overscan) */
-	zx80_gfxdecodeinfo, 			/* graphics decode info */
-	6, 4,							/* colors used for the characters */
-	zx80_init_palette,				/* init palette */
+	MDRV_MACHINE_INIT( zx80 )
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_bitmapped_vh_start,
-	NULL,
-	zx_vh_screenrefresh,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 310)
+	MDRV_VISIBLE_AREA(0, 32*8-1, 48, 310-32-1)
+	MDRV_GFXDECODE( zx80_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(6)
+	MDRV_COLORTABLE_LENGTH(4)
+	MDRV_PALETTE_INIT( zx80 )
+
+	MDRV_VIDEO_START( zx )
+	MDRV_VIDEO_UPDATE( zx )
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( zx81 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80 | CPU_16BIT_PORT,
-			CPU_CLOCK,
-			readmem_zx81, writemem_zx81, readport, writeport,
-			ignore_interrupt, 1
-		},
-	},
-	1.0 * CPU_CLOCK / 310 / CYCLES_PER_SCANLINE,
-	0,								/* vblank handled by vidhrdw */
-	1,
-	zx81_init_machine,
-	zx_shutdown_machine,
 
-	/* video hardware */
-	32 * 8, 						/* screen width (inc. blank/sync) */
-	310,							/* screen height (inc. blank/sync) */
-	{0*8, 32*8-1, 48, 310-32-1},	/* visible area (inc. some vertical overscan) */
-	zx81_gfxdecodeinfo, 			/* graphics decode info */
-	6, 4,							/* colors used for the characters */
-	zx81_init_palette,				/* init palette */
+static MACHINE_DRIVER_START( zx81 )
+	MDRV_IMPORT_FROM( zx80 )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( readmem_zx81, writemem_zx81 )
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_bitmapped_vh_start,
-	NULL,
-	zx_vh_screenrefresh,
+	MDRV_MACHINE_INIT( zx81 )
+	MDRV_GFXDECODE( zx81_gfxdecodeinfo )
+	MDRV_PALETTE_INIT( zx81 )
+MACHINE_DRIVER_END
 
-	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
 
-static MACHINE_DRIVER_START( ts1000 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80 | CPU_16BIT_PORT,
-			CPU_CLOCK,
-			readmem_zx81, writemem_zx81, readport, writeport,
-			ignore_interrupt, 1
-		},
-	},
-	1.0 * CPU_CLOCK / 262 / CYCLES_PER_SCANLINE,
-	0,								/* vblank handled by vidhrdw */
-	1,
-	zx81_init_machine,
-	zx_shutdown_machine,
+static MACHINE_DRIVER_START( ts1000 )
+	MDRV_IMPORT_FROM( zx81 )
+	MDRV_FRAMES_PER_SECOND(1.0 * CPU_CLOCK / 262 / CYCLES_PER_SCANLINE)
 
-	/* video hardware */
-	32 * 8, 						/* screen width (inc. blank/sync) */
-	262,							/* screen height (inc. blank/sync) */
-	{0*8, 32*8-1, 17, 262-15-1},	/* visible area (inc. some vertical overscan) */
-	zx81_gfxdecodeinfo, 			/* graphics decode info */
-	6, 4,							/* colors used for the characters */
-	ts1000_init_palette,			/* init palette */
+	MDRV_SCREEN_SIZE(32*8, 262)
+	MDRV_VISIBLE_AREA(0, 32*8-1, 17, 262-15-1)
+	MDRV_PALETTE_INIT( ts1000 )
+MACHINE_DRIVER_END
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_bitmapped_vh_start,
-	NULL,
-	zx_vh_screenrefresh,
 
-	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+static MACHINE_DRIVER_START( pc8300 )
+	MDRV_IMPORT_FROM( ts1000 )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( readmem_pc8300, writemem_pc8300 )
 
-static MACHINE_DRIVER_START( pc8300 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80 | CPU_16BIT_PORT,
-			CPU_CLOCK,
-			readmem_pc8300, writemem_pc8300, readport, writeport,
-			ignore_interrupt, 1
-		},
-	},
-	1.0 * CPU_CLOCK / 262 / CYCLES_PER_SCANLINE,
-	0,								/* vblank handled by vidhrdw */
-	1,
-	pc8300_init_machine,
-	zx_shutdown_machine,
+	MDRV_MACHINE_INIT( pc8300 )
+	MDRV_GFXDECODE( pc8300_gfxdecodeinfo )
+	MDRV_PALETTE_INIT( zx81 )
+MACHINE_DRIVER_END
 
-	/* video hardware */
-	32 * 8, 						/* screen width (inc. blank/sync) */
-	262,							/* screen height (inc. blank/sync) */
-	{0*8, 32*8-1, 17, 262-15-1},	/* visible area (inc. some vertical overscan) */
-	pc8300_gfxdecodeinfo,			/* graphics decode info */
-	6, 4,							/* colors used for the characters */
-	zx81_init_palette,				/* init palette */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_bitmapped_vh_start,
-	NULL,
-	zx_vh_screenrefresh,
+static MACHINE_DRIVER_START( pow3000 )
+	MDRV_IMPORT_FROM( ts1000 )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( readmem_pow3000, writemem_pow3000 )
 
-	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_MACHINE_INIT( pow3000 )
+	MDRV_GFXDECODE( pow3000_gfxdecodeinfo )
+	MDRV_PALETTE_INIT( zx81 )
+MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( pow3000 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80 | CPU_16BIT_PORT,
-			CPU_CLOCK,
-			readmem_pow3000, writemem_pow3000, readport_pow3000, writeport_pow3000,
-			ignore_interrupt, 1
-		},
-	},
-	1.0 * CPU_CLOCK / 262 / CYCLES_PER_SCANLINE, 0,
-	/* vblank handled by vidhrdw */
-	1,
-	pow3000_init_machine,
-	zx_shutdown_machine,
-
-	/* video hardware */
-	32 * 8, 						/* screen width (inc. blank/sync) */
-	262,							/* screen height (inc. blank/sync) */
-	{0*8, 32*8-1, 17, 262-15-1},	/* visible area (inc. some vertical overscan) */
-	pow3000_gfxdecodeinfo,			/* graphics decode info */
-	6, 4,							/* colors used for the characters */
-	zx81_init_palette,				/* init palette */
-
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_bitmapped_vh_start,
-	NULL,
-	zx_vh_screenrefresh,
-
-	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
 
 ROM_START(zx80)
 	ROM_REGION(0x10000, REGION_CPU1,0)

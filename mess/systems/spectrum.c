@@ -357,7 +357,7 @@ static unsigned char *spectrum_ram = NULL;
 
 static int spectrum_alloc_ram(int ram_size_in_k)
 {
-	spectrum_ram = (unsigned char *)malloc(ram_size_in_k*1024);
+	spectrum_ram = (unsigned char *)auto_malloc(ram_size_in_k*1024);
 	if (spectrum_ram)
 	{
 		memset(spectrum_ram, 0, ram_size_in_k*1024);
@@ -366,16 +366,6 @@ static int spectrum_alloc_ram(int ram_size_in_k)
 
 	return 0;
 }
-
-static void spectrum_free_ram(void)
-{
-	if (spectrum_ram)
-	{
-		free(spectrum_ram);
-		spectrum_ram = NULL;
-	}
-}
-
 
 
 /****************************************************************************************************/
@@ -548,7 +538,7 @@ static MEMORY_WRITE_START (spectrum_128_writemem)
 	{ 0xc000, 0xffff, MWA_BANK8 },
 MEMORY_END
 
-void spectrum_128_init_machine(void)
+static MACHINE_INIT( spectrum_128 )
 {
 	if (spectrum_alloc_ram(128)!=0)
 	{
@@ -576,18 +566,9 @@ void spectrum_128_init_machine(void)
 		spectrum_128_port_7ffd_data = 0;
 		spectrum_128_update_memory();
 
-		spectrum_init_machine();
+		machine_init_spectrum();
 	}
 }
-
-
-
-void  spectrum_128_exit_machine(void)
-{
-	spectrum_free_ram();
-}
-
-
 
 /****************************************************************************************************/
 /* Spectrum + 3 specific functions */
@@ -888,7 +869,7 @@ static PORT_WRITE_START (spectrum_plus3_writeport)
 PORT_END
 
 
-void spectrum_plus3_init_machine(void)
+static MACHINE_INIT( spectrum_plus3 )
 {
 	if (spectrum_alloc_ram(128))
 	{
@@ -913,14 +894,13 @@ void spectrum_plus3_init_machine(void)
 		spectrum_plus3_port_1ffd_data = 0;
 		spectrum_plus3_update_memory();
 
-		spectrum_init_machine();
+		machine_init_spectrum();
 	}
 }
 
-void	spectrum_plus3_exit_machine(void)
+static MACHINE_STOP( spectrum_plus3 )
 {
 	nec765_stop();
-	spectrum_free_ram();
 }
 
 
@@ -1381,44 +1361,38 @@ MEMORY_END
 
 
 
-void ts2068_init_machine(void)
+static MACHINE_INIT( ts2068 )
 {
-		ts2068_ram = (unsigned char *)malloc(48*1024);
-		if(!ts2068_ram) return;
-		memset(ts2068_ram, 0, 48*1024);
+	ts2068_ram = (unsigned char *)auto_malloc(48*1024);
+	if(!ts2068_ram)
+		return;
+	memset(ts2068_ram, 0, 48*1024);
 
-		memory_set_bankhandler_r(1, 0, MRA_BANK1);
-		memory_set_bankhandler_r(2, 0, MRA_BANK2);
-		memory_set_bankhandler_r(3, 0, MRA_BANK3);
-		memory_set_bankhandler_r(4, 0, MRA_BANK4);
-		memory_set_bankhandler_r(5, 0, MRA_BANK5);
-		memory_set_bankhandler_r(6, 0, MRA_BANK6);
-		memory_set_bankhandler_r(7, 0, MRA_BANK7);
-		memory_set_bankhandler_r(8, 0, MRA_BANK8);
+	memory_set_bankhandler_r(1, 0, MRA_BANK1);
+	memory_set_bankhandler_r(2, 0, MRA_BANK2);
+	memory_set_bankhandler_r(3, 0, MRA_BANK3);
+	memory_set_bankhandler_r(4, 0, MRA_BANK4);
+	memory_set_bankhandler_r(5, 0, MRA_BANK5);
+	memory_set_bankhandler_r(6, 0, MRA_BANK6);
+	memory_set_bankhandler_r(7, 0, MRA_BANK7);
+	memory_set_bankhandler_r(8, 0, MRA_BANK8);
 
-		/* 0x0000-0x3fff always holds ROM */
-		memory_set_bankhandler_w(9, 0, MWA_BANK9);
-		memory_set_bankhandler_w(10, 0, MWA_BANK10);
-		memory_set_bankhandler_w(11, 0, MWA_BANK11);
-		memory_set_bankhandler_w(12, 0, MWA_BANK12);
-		memory_set_bankhandler_w(13, 0, MWA_BANK13);
-		memory_set_bankhandler_w(14, 0, MWA_BANK14);
-		memory_set_bankhandler_w(15, 0, MWA_BANK15);
-		memory_set_bankhandler_w(16, 0, MWA_BANK16);
+	/* 0x0000-0x3fff always holds ROM */
+	memory_set_bankhandler_w(9, 0, MWA_BANK9);
+	memory_set_bankhandler_w(10, 0, MWA_BANK10);
+	memory_set_bankhandler_w(11, 0, MWA_BANK11);
+	memory_set_bankhandler_w(12, 0, MWA_BANK12);
+	memory_set_bankhandler_w(13, 0, MWA_BANK13);
+	memory_set_bankhandler_w(14, 0, MWA_BANK14);
+	memory_set_bankhandler_w(15, 0, MWA_BANK15);
+	memory_set_bankhandler_w(16, 0, MWA_BANK16);
 
-		ts2068_port_ff_data = 0;
-		ts2068_port_f4_data = 0;
-		ts2068_update_memory();
+	ts2068_port_ff_data = 0;
+	ts2068_port_f4_data = 0;
+	ts2068_update_memory();
 
-		spectrum_init_machine();
+	machine_init_spectrum();
 }
-
-void ts2068_exit_machine(void)
-{
-		if (ts2068_ram!=NULL)
-				free(ts2068_ram);
-}
-
 
 
 /****************************************************************************************************/
@@ -1482,20 +1456,20 @@ static MEMORY_WRITE_START (tc2048_writemem)
 	{ 0x4000, 0xffff, MWA_BANK2 },
 MEMORY_END
 
-
-void tc2048_init_machine(void)
+static MACHINE_INIT( tc2048 )
 {
-		ts2068_ram = (unsigned char *)malloc(48*1024);
-		if(!ts2068_ram) return;
-		memset(ts2068_ram, 0, 48*1024);
+	ts2068_ram = (unsigned char *)auto_malloc(48*1024);
+	if(!ts2068_ram)
+		return;
+	memset(ts2068_ram, 0, 48*1024);
 
-		memory_set_bankhandler_r(1, 0, MRA_BANK1);
-		memory_set_bankhandler_w(2, 0, MWA_BANK2);
-		cpu_setbank(1, ts2068_ram);
-		cpu_setbank(2, ts2068_ram);
-		ts2068_port_ff_data = 0;
+	memory_set_bankhandler_r(1, 0, MRA_BANK1);
+	memory_set_bankhandler_w(2, 0, MWA_BANK2);
+	cpu_setbank(1, ts2068_ram);
+	cpu_setbank(2, ts2068_ram);
+	ts2068_port_ff_data = 0;
 
-		spectrum_init_machine();
+	machine_init_spectrum();
 }
 
 
@@ -1605,10 +1579,6 @@ void	 betadisk_init(void)
 	betadisk_active = 0;
 	betadisk_status = 0x03f;
 	wd179x_init(WD_TYPE_179X,&betadisk_wd179x_callback);
-}
-
-void	betadisk_exit(void)
-{
 }
 
 /****************************************************************************************************/
@@ -1904,7 +1874,7 @@ static PORT_WRITE_START (scorpion_writeport)
 PORT_END
 
 
-void scorpion_init_machine(void)
+static MACHINE_INIT( scorpion )
 {
 	if (spectrum_alloc_ram(256))
 	{
@@ -1933,31 +1903,17 @@ void scorpion_init_machine(void)
 	}
 }
 
-void	scorpion_exit_machine(void)
-{
-	betadisk_exit();
-	spectrum_free_ram();
-}
-
-
-
 /****************************************************************************************************/
 /* pentagon */
 
 static READ_HANDLER(pentagon_port_r)
 {
-
-
-
 	return 0x0ff;
-
 }
 
 
 static WRITE_HANDLER(pentagon_port_w)
 {
-
-
 }
 
 
@@ -1975,7 +1931,7 @@ static PORT_WRITE_START (pentagon_writeport)
 PORT_END
 
 
-void pentagon_init_machine(void)
+static MACHINE_INIT( pentagon )
 {
 	if (spectrum_alloc_ram(128))
 	{
@@ -1998,13 +1954,6 @@ void pentagon_init_machine(void)
 		betadisk_init();
 	}
 }
-
-void	pentagon_exit_machine(void)
-{
-	betadisk_exit();
-	spectrum_free_ram();
-}
-
 
 /****************************************************************************************************/
 
@@ -2030,129 +1979,129 @@ static struct GfxDecodeInfo spectrum_gfxdecodeinfo[] = {
 
 INPUT_PORTS_START( spectrum )
 	PORT_START /* 0xFEFE */
-		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "CAPS SHIFT",                       KEYCODE_LSHIFT,  IP_JOY_NONE )
-		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "Z  COPY    :      LN       BEEP",  KEYCODE_Z,  IP_JOY_NONE )
-		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "X  CLEAR   Pound  EXP      INK",   KEYCODE_X,  IP_JOY_NONE )
-		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "C  CONT    ?      LPRINT   PAPER", KEYCODE_C,  IP_JOY_NONE )
-		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "V  CLS     /      LLIST    FLASH", KEYCODE_V,  IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "CAPS SHIFT",                       KEYCODE_LSHIFT,  IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "Z  COPY    :      LN       BEEP",  KEYCODE_Z,  IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "X  CLEAR   Pound  EXP      INK",   KEYCODE_X,  IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "C  CONT    ?      LPRINT   PAPER", KEYCODE_C,  IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "V  CLS     /      LLIST    FLASH", KEYCODE_V,  IP_JOY_NONE )
 
 	PORT_START /* 0xFDFE */
-		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "A  NEW     STOP   READ     ~",  KEYCODE_A,  IP_JOY_NONE )
-		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "S  SAVE    NOT    RESTORE  |",  KEYCODE_S,  IP_JOY_NONE )
-		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "D  DIM     STEP   DATA     \\", KEYCODE_D,  IP_JOY_NONE )
-		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "F  FOR     TO     SGN      {",  KEYCODE_F,  IP_JOY_NONE )
-		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "G  GOTO    THEN   ABS      }",  KEYCODE_G,  IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "A  NEW     STOP   READ     ~",  KEYCODE_A,  IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "S  SAVE    NOT    RESTORE  |",  KEYCODE_S,  IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "D  DIM     STEP   DATA     \\", KEYCODE_D,  IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "F  FOR     TO     SGN      {",  KEYCODE_F,  IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "G  GOTO    THEN   ABS      }",  KEYCODE_G,  IP_JOY_NONE )
 
 	PORT_START /* 0xFBFE */
-		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "Q  PLOT    <=     SIN      ASN",    KEYCODE_Q,  IP_JOY_NONE )
-		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "W  DRAW    <>     COS      ACS",    KEYCODE_W,  IP_JOY_NONE )
-		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "E  REM     >=     TAN      ATN",    KEYCODE_E,  IP_JOY_NONE )
-		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "R  RUN     <      INT      VERIFY", KEYCODE_R,  IP_JOY_NONE )
-		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "T  RAND    >      RND      MERGE",  KEYCODE_T,  IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "Q  PLOT    <=     SIN      ASN",    KEYCODE_Q,  IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "W  DRAW    <>     COS      ACS",    KEYCODE_W,  IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "E  REM     >=     TAN      ATN",    KEYCODE_E,  IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "R  RUN     <      INT      VERIFY", KEYCODE_R,  IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "T  RAND    >      RND      MERGE",  KEYCODE_T,  IP_JOY_NONE )
 
-		/* interface II uses this port for joystick */
+	/* interface II uses this port for joystick */
 	PORT_START /* 0xF7FE */
-		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "1          !      BLUE     DEF FN", KEYCODE_1,  IP_JOY_NONE )
-		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "2          @      RED      FN",     KEYCODE_2,  IP_JOY_NONE )
-		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "3          #      MAGENTA  LINE",   KEYCODE_3,  IP_JOY_NONE )
-		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "4          $      GREEN    OPEN#",  KEYCODE_4,  IP_JOY_NONE )
-		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "5          %      CYAN     CLOSE#", KEYCODE_5,  IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "1          !      BLUE     DEF FN", KEYCODE_1,  IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "2          @      RED      FN",     KEYCODE_2,  IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "3          #      MAGENTA  LINE",   KEYCODE_3,  IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "4          $      GREEN    OPEN#",  KEYCODE_4,  IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "5          %      CYAN     CLOSE#", KEYCODE_5,  IP_JOY_NONE )
 
-		/* protek clashes with interface II! uses 5 = left, 6 = down, 7 = up, 8 = right, 0 = fire */
+	/* protek clashes with interface II! uses 5 = left, 6 = down, 7 = up, 8 = right, 0 = fire */
 	PORT_START /* 0xEFFE */
-		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "0          _      BLACK    FORMAT", KEYCODE_0,  IP_JOY_NONE )
-		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "9          )               POINT",  KEYCODE_9,  IP_JOY_NONE )
-		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "8          (               CAT",    KEYCODE_8,  IP_JOY_NONE )
-		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "7          '      WHITE    ERASE",  KEYCODE_7,  IP_JOY_NONE )
-		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "6          &      YELLOW   MOVE",   KEYCODE_6,  IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "0          _      BLACK    FORMAT", KEYCODE_0,  IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "9          )               POINT",  KEYCODE_9,  IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "8          (               CAT",    KEYCODE_8,  IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "7          '      WHITE    ERASE",  KEYCODE_7,  IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "6          &      YELLOW   MOVE",   KEYCODE_6,  IP_JOY_NONE )
 
 	PORT_START /* 0xDFFE */
-		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "P  PRINT   \"      TAB      (c)", KEYCODE_P,  IP_JOY_NONE )
-		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "O  POKE    ;      PEEK     OUT", KEYCODE_O,  IP_JOY_NONE )
-		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "I  INPUT   AT     CODE     IN",  KEYCODE_I,  IP_JOY_NONE )
-		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "U  IF      OR     CHR$     ]",   KEYCODE_U,  IP_JOY_NONE )
-		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "Y  RETURN  AND    STR$     [",   KEYCODE_Y,  IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "P  PRINT   \"      TAB      (c)", KEYCODE_P,  IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "O  POKE    ;      PEEK     OUT", KEYCODE_O,  IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "I  INPUT   AT     CODE     IN",  KEYCODE_I,  IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "U  IF      OR     CHR$     ]",   KEYCODE_U,  IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "Y  RETURN  AND    STR$     [",   KEYCODE_Y,  IP_JOY_NONE )
 
 	PORT_START /* 0xBFFE */
-		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "ENTER",                              KEYCODE_ENTER,  IP_JOY_NONE )
-		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "L  LET     =      USR      ATTR",    KEYCODE_L,  IP_JOY_NONE )
-		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "K  LIST    +      LEN      SCREEN$", KEYCODE_K,  IP_JOY_NONE )
-		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "J  LOAD    -      VAL      VAL$",    KEYCODE_J,  IP_JOY_NONE )
-		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "H  GOSUB   ^      SQR      CIRCLE",  KEYCODE_H,  IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "ENTER",                              KEYCODE_ENTER,  IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "L  LET     =      USR      ATTR",    KEYCODE_L,  IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "K  LIST    +      LEN      SCREEN$", KEYCODE_K,  IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "J  LOAD    -      VAL      VAL$",    KEYCODE_J,  IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "H  GOSUB   ^      SQR      CIRCLE",  KEYCODE_H,  IP_JOY_NONE )
 
 	PORT_START /* 0x7FFE */
-		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "SPACE",                              KEYCODE_SPACE,   IP_JOY_NONE )
-		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "SYMBOL SHIFT",                       KEYCODE_RSHIFT,  IP_JOY_NONE )
-		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "M  PAUSE   .      PI       INVERSE", KEYCODE_M,  IP_JOY_NONE )
-		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "N  NEXT    ,      INKEY$   OVER",    KEYCODE_N,  IP_JOY_NONE )
-		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "B  BORDER  *      BIN      BRIGHT",  KEYCODE_B,  IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "SPACE",                              KEYCODE_SPACE,   IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "SYMBOL SHIFT",                       KEYCODE_RSHIFT,  IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "M  PAUSE   .      PI       INVERSE", KEYCODE_M,  IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "N  NEXT    ,      INKEY$   OVER",    KEYCODE_N,  IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "B  BORDER  *      BIN      BRIGHT",  KEYCODE_B,  IP_JOY_NONE )
 
-		PORT_START /* Spectrum+ Keys (set CAPS + 1-5) */
-		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "EDIT          (CAPS + 1)",  KEYCODE_INSERT,     IP_JOY_NONE )
-		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "CAPS LOCK     (CAPS + 2)",  KEYCODE_CAPSLOCK,   IP_JOY_NONE )
-		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "TRUE VID      (CAPS + 3)",  KEYCODE_HOME,         IP_JOY_NONE )
-		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "INV VID       (CAPS + 4)",  KEYCODE_END,         IP_JOY_NONE )
-		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "Cursor left   (CAPS + 5)",  KEYCODE_LEFT,       IP_JOY_NONE )
-		PORT_BIT(0xe0, IP_ACTIVE_LOW, IPT_UNUSED)
+	PORT_START /* Spectrum+ Keys (set CAPS + 1-5) */
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "EDIT          (CAPS + 1)",  KEYCODE_INSERT,     IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "CAPS LOCK     (CAPS + 2)",  KEYCODE_CAPSLOCK,   IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "TRUE VID      (CAPS + 3)",  KEYCODE_HOME,         IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "INV VID       (CAPS + 4)",  KEYCODE_END,         IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "Cursor left   (CAPS + 5)",  KEYCODE_LEFT,       IP_JOY_NONE )
+	PORT_BIT(0xe0, IP_ACTIVE_LOW, IPT_UNUSED)
 
-		PORT_START /* Spectrum+ Keys (set CAPS + 6-0) */
-		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "DEL           (CAPS + 0)",  KEYCODE_BACKSPACE,  IP_JOY_NONE )
-		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "GRAPH         (CAPS + 9)",  KEYCODE_LALT,       IP_JOY_NONE )
-		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "Cursor right  (CAPS + 8)",  KEYCODE_RIGHT,      IP_JOY_NONE )
-		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "Cursor up     (CAPS + 7)",  KEYCODE_UP,         IP_JOY_NONE )
-		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "Cursor down   (CAPS + 6)",  KEYCODE_DOWN,       IP_JOY_NONE )
-		PORT_BIT(0xe0, IP_ACTIVE_LOW, IPT_UNUSED)
+	PORT_START /* Spectrum+ Keys (set CAPS + 6-0) */
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "DEL           (CAPS + 0)",  KEYCODE_BACKSPACE,  IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "GRAPH         (CAPS + 9)",  KEYCODE_LALT,       IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "Cursor right  (CAPS + 8)",  KEYCODE_RIGHT,      IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "Cursor up     (CAPS + 7)",  KEYCODE_UP,         IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "Cursor down   (CAPS + 6)",  KEYCODE_DOWN,       IP_JOY_NONE )
+	PORT_BIT(0xe0, IP_ACTIVE_LOW, IPT_UNUSED)
 
-		PORT_START /* Spectrum+ Keys (set CAPS + SPACE and CAPS + SYMBOL */
-		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "BREAK",                     KEYCODE_PAUSE,      IP_JOY_NONE )
-		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "EXT MODE",                  KEYCODE_LCONTROL,   IP_JOY_NONE )
-		PORT_BIT(0xfc, IP_ACTIVE_LOW, IPT_UNUSED)
+	PORT_START /* Spectrum+ Keys (set CAPS + SPACE and CAPS + SYMBOL */
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "BREAK",                     KEYCODE_PAUSE,      IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "EXT MODE",                  KEYCODE_LCONTROL,   IP_JOY_NONE )
+	PORT_BIT(0xfc, IP_ACTIVE_LOW, IPT_UNUSED)
 
-		PORT_START /* Spectrum+ Keys (set SYMBOL SHIFT + O/P */
-		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "\"", KEYCODE_F4,  IP_JOY_NONE )
-/*		  PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "\"", KEYCODE_QUOTE,  IP_JOY_NONE ) */
-		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, ";", KEYCODE_COLON,  IP_JOY_NONE )
-		PORT_BIT(0xfc, IP_ACTIVE_LOW, IPT_UNUSED)
+	PORT_START /* Spectrum+ Keys (set SYMBOL SHIFT + O/P */
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "\"", KEYCODE_F4,  IP_JOY_NONE )
+	/*		  PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "\"", KEYCODE_QUOTE,  IP_JOY_NONE ) */
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, ";", KEYCODE_COLON,  IP_JOY_NONE )
+	PORT_BIT(0xfc, IP_ACTIVE_LOW, IPT_UNUSED)
 
-		PORT_START /* Spectrum+ Keys (set SYMBOL SHIFT + N/M */
-		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, ".", KEYCODE_STOP,   IP_JOY_NONE )
-		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, ",", KEYCODE_COMMA,  IP_JOY_NONE )
-		PORT_BIT(0xf3, IP_ACTIVE_LOW, IPT_UNUSED)
+	PORT_START /* Spectrum+ Keys (set SYMBOL SHIFT + N/M */
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, ".", KEYCODE_STOP,   IP_JOY_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, ",", KEYCODE_COMMA,  IP_JOY_NONE )
+	PORT_BIT(0xf3, IP_ACTIVE_LOW, IPT_UNUSED)
 
-		PORT_START /* Kempston joystick interface */
-		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "KEMPSTON JOYSTICK RIGHT",     IP_KEY_NONE,    JOYCODE_1_RIGHT )
-		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "KEMPSTON JOYSTICK LEFT",      IP_KEY_NONE,   JOYCODE_1_LEFT )
-		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "KEMPSTON JOYSTICK DOWN",         IP_KEY_NONE,        JOYCODE_1_DOWN )
-		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "KEMPSTON JOYSTICK UP",         IP_KEY_NONE,        JOYCODE_1_UP)
-		PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "KEMPSTON JOYSTICK FIRE",         IP_KEY_NONE,        JOYCODE_1_BUTTON1 )
+	PORT_START /* Kempston joystick interface */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "KEMPSTON JOYSTICK RIGHT",     IP_KEY_NONE,    JOYCODE_1_RIGHT )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "KEMPSTON JOYSTICK LEFT",      IP_KEY_NONE,   JOYCODE_1_LEFT )
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "KEMPSTON JOYSTICK DOWN",         IP_KEY_NONE,        JOYCODE_1_DOWN )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "KEMPSTON JOYSTICK UP",         IP_KEY_NONE,        JOYCODE_1_UP)
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "KEMPSTON JOYSTICK FIRE",         IP_KEY_NONE,        JOYCODE_1_BUTTON1 )
 
-		PORT_START /* Fuller joystick interface */
-		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "FULLER JOYSTICK UP",     IP_KEY_NONE,    JOYCODE_1_UP )
-		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "FULLER JOYSTICK DOWN",      IP_KEY_NONE,   JOYCODE_1_DOWN )
-		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "FULLER JOYSTICK LEFT",         IP_KEY_NONE,        JOYCODE_1_LEFT )
-		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "FULLER JOYSTICK RIGHT",         IP_KEY_NONE,        JOYCODE_1_RIGHT)
-		PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "FULLER JOYSTICK FIRE",         IP_KEY_NONE,        JOYCODE_1_BUTTON1)
+	PORT_START /* Fuller joystick interface */
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "FULLER JOYSTICK UP",     IP_KEY_NONE,    JOYCODE_1_UP )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "FULLER JOYSTICK DOWN",      IP_KEY_NONE,   JOYCODE_1_DOWN )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "FULLER JOYSTICK LEFT",         IP_KEY_NONE,        JOYCODE_1_LEFT )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "FULLER JOYSTICK RIGHT",         IP_KEY_NONE,        JOYCODE_1_RIGHT)
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "FULLER JOYSTICK FIRE",         IP_KEY_NONE,        JOYCODE_1_BUTTON1)
 
-		PORT_START /* Mikrogen joystick interface */
-		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "MIKROGEN JOYSTICK UP",     IP_KEY_NONE,    JOYCODE_1_UP )
-		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "MIKROGEN JOYSTICK DOWN",      IP_KEY_NONE,   JOYCODE_1_DOWN )
-		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "MIKROGEN JOYSTICK RIGHT",         IP_KEY_NONE,        JOYCODE_1_RIGHT )
-		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "MIKROGEN JOYSTICK LEFT",         IP_KEY_NONE,        JOYCODE_1_LEFT)
-		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "MIKROGEN JOYSTICK FIRE",         IP_KEY_NONE,        JOYCODE_1_BUTTON1)
+	PORT_START /* Mikrogen joystick interface */
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "MIKROGEN JOYSTICK UP",     IP_KEY_NONE,    JOYCODE_1_UP )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "MIKROGEN JOYSTICK DOWN",      IP_KEY_NONE,   JOYCODE_1_DOWN )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "MIKROGEN JOYSTICK RIGHT",         IP_KEY_NONE,        JOYCODE_1_RIGHT )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "MIKROGEN JOYSTICK LEFT",         IP_KEY_NONE,        JOYCODE_1_LEFT)
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "MIKROGEN JOYSTICK FIRE",         IP_KEY_NONE,        JOYCODE_1_BUTTON1)
 
 
-		PORT_START
-		PORT_BITX(0x8000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Quickload", KEYCODE_F8, IP_JOY_NONE)
-		PORT_DIPNAME(0x80, 0x00, "Hardware Version")
-		PORT_DIPSETTING(0x00, "Issue 2" )
-		PORT_DIPSETTING(0x80, "Issue 3" )
-		PORT_DIPNAME(0x40, 0x00, "End of .TAP action")
-		PORT_DIPSETTING(0x00, "Disable .TAP support" )
-		PORT_DIPSETTING(0x40, "Rewind tape to start (to reload earlier levels)" )
-		PORT_DIPNAME(0x20, 0x00, "+3/+2a etc. Disk Drive")
-		PORT_DIPSETTING(0x00, "Enabled" )
-		PORT_DIPSETTING(0x20, "Disabled" )
-		PORT_BIT(0x1f, IP_ACTIVE_LOW, IPT_UNUSED)
+	PORT_START
+	PORT_BITX(0x8000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Quickload", KEYCODE_F8, IP_JOY_NONE)
+	PORT_DIPNAME(0x80, 0x00, "Hardware Version")
+	PORT_DIPSETTING(0x00, "Issue 2" )
+	PORT_DIPSETTING(0x80, "Issue 3" )
+	PORT_DIPNAME(0x40, 0x00, "End of .TAP action")
+	PORT_DIPSETTING(0x00, "Disable .TAP support" )
+	PORT_DIPSETTING(0x40, "Rewind tape to start (to reload earlier levels)" )
+	PORT_DIPNAME(0x20, 0x00, "+3/+2a etc. Disk Drive")
+	PORT_DIPSETTING(0x00, "Enabled" )
+	PORT_DIPSETTING(0x20, "Disabled" )
+	PORT_BIT(0x1f, IP_ACTIVE_LOW, IPT_UNUSED)
 
 INPUT_PORTS_END
 
@@ -2188,31 +2137,30 @@ static unsigned short spectrum_colortable[128*2] = {
 	15,8, 15,9, 15,10, 15,11, 15,12, 15,13, 15,14, 15,15
 };
 /* Initialise the palette */
-static void spectrum_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( spectrum )
 {
-	memcpy(sys_palette,spectrum_palette,sizeof(spectrum_palette));
-	memcpy(sys_colortable,spectrum_colortable,sizeof(spectrum_colortable));
+	palette_set_colors(0, spectrum_palette, sizeof(spectrum_palette) / 3);
+	memcpy(colortable, spectrum_colortable, sizeof(spectrum_colortable));
 }
 
-int spec_interrupt (void)
+static INTERRUPT_GEN( spec_interrupt )
 {
 	static int quickload = 0;
 
-		if (!quickload && (readinputport(16) & 0x8000))
-		{
-				spec_quick_open (0, 0, NULL);
-				quickload = 1;
-		}
-		else
-				quickload = 0;
-
-		return interrupt ();
+	if (!quickload && (readinputport(16) & 0x8000))
+	{
+		spec_quick_open (0, 0, NULL);
+		quickload = 1;
+	}
+	else
+		quickload = 0;
+	cpu_set_irq_line(0, 0, PULSE_LINE);
 }
 
 static struct Speaker_interface spectrum_speaker_interface=
 {
- 1,
- {50},
+	1,
+	{50},
 };
 
 static struct Wave_interface spectrum_wave_interface=
@@ -2222,413 +2170,129 @@ static struct Wave_interface spectrum_wave_interface=
 
 };
 
-static struct MachineDriver machine_driver_spectrum =
-{
+
+static MACHINE_DRIVER_START( spectrum )
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80|CPU_16BIT_PORT,
-			3500000,		/* 3.5 Mhz */
-			spectrum_readmem,spectrum_writemem,
-			spectrum_readport,spectrum_writeport,
-			spec_interrupt,1,
-		},
-	},
-	50.08, 2500,		/* frames per second, vblank duration */
-	1,
-	spectrum_init_machine,
-	spectrum_shutdown_machine,
+	MDRV_CPU_ADD_TAG("main", Z80, 3500000)        /* 3.5 Mhz */
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
+	MDRV_CPU_MEMORY(spectrum_readmem,spectrum_writemem)
+	MDRV_CPU_PORTS(spectrum_readport,spectrum_writeport)
+	MDRV_CPU_VBLANK_INT(spec_interrupt,1)
+	MDRV_FRAMES_PER_SECOND(50.08)
+	MDRV_VBLANK_DURATION(2500)
+	MDRV_INTERLEAVE(1)
 
-	/* video hardware */
-	SPEC_SCREEN_WIDTH,				/* screen width */
-	SPEC_SCREEN_HEIGHT, 			/* screen height */
-	{ 0, SPEC_SCREEN_WIDTH-1, 0, SPEC_SCREEN_HEIGHT-1},  /* visible_area */
-	spectrum_gfxdecodeinfo, 			 /* graphics decode info */
-	16, 256,							 /* colors used for the characters */
-	spectrum_init_palette,				 /* initialise palette */
+	MDRV_MACHINE_INIT( spectrum )
 
-	VIDEO_TYPE_RASTER,
-	spectrum_eof_callback,
-	spectrum_vh_start,
-	spectrum_vh_stop,
-	spectrum_vh_screenrefresh,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(SPEC_SCREEN_WIDTH, SPEC_SCREEN_HEIGHT)
+	MDRV_VISIBLE_AREA(0, SPEC_SCREEN_WIDTH-1, 0, SPEC_SCREEN_HEIGHT-1)
+	MDRV_GFXDECODE( spectrum_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(16)
+	MDRV_COLORTABLE_LENGTH(256)
+	MDRV_PALETTE_INIT( spectrum )
+
+	MDRV_VIDEO_START( spectrum )
+	MDRV_VIDEO_UPDATE( spectrum )
+	MDRV_VIDEO_EOF( spectrum )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		/* standard spectrum sound */
-		{
-				SOUND_SPEAKER,
-				&spectrum_speaker_interface
-		},
-		/* cassette wave sound */
-		{
-				SOUND_WAVE,
-				&spectrum_wave_interface,
-		}
-	}
-};
+	MDRV_SOUND_ADD(SPEAKER, spectrum_speaker_interface)	/* standard spectrum sound */
+	MDRV_SOUND_ADD(WAVE, spectrum_wave_interface)		/* cassette wave sound */
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_spectrum_128 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80|CPU_16BIT_PORT,
-			3546900,		/* 3.54690 Mhz */
-			spectrum_128_readmem,spectrum_128_writemem,
-			spectrum_128_readport,spectrum_128_writeport,
-			spec_interrupt,1,
-		},
-	},
-	50.021, 2500,		/* frames per second, vblank duration */
-	1,
-	spectrum_128_init_machine,
-	spectrum_128_exit_machine,
 
-	/* video hardware */
-	SPEC_SCREEN_WIDTH,				/* screen width */
-	SPEC_SCREEN_HEIGHT, 			/* screen height */
-	{ 0, SPEC_SCREEN_WIDTH-1, 0, SPEC_SCREEN_HEIGHT-1},  /* visible_area */
-	spectrum_gfxdecodeinfo, 			 /* graphics decode info */
-	16, 256,							 /* colors used for the characters */
-	spectrum_init_palette,				 /* initialise palette */
+static MACHINE_DRIVER_START( spectrum_128 )
+	MDRV_IMPORT_FROM( spectrum )
 
-	VIDEO_TYPE_RASTER,
-	spectrum_eof_callback,
-	spectrum_128_vh_start,
-	spectrum_128_vh_stop,
-	spectrum_128_vh_screenrefresh,
+	MDRV_CPU_REPLACE("main", Z80, 3500000)        /* 3.5 Mhz */
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
+	MDRV_CPU_MEMORY(spectrum_128_readmem,spectrum_128_writemem)
+	MDRV_CPU_PORTS(spectrum_128_readport,spectrum_128_writeport)
+	MDRV_FRAMES_PER_SECOND(50.021)
+
+	MDRV_MACHINE_INIT( spectrum_128 )
+
+    /* video hardware */
+	MDRV_VIDEO_START( spectrum_128 )
+	MDRV_VIDEO_UPDATE( spectrum_128 )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		/* Ay-3-8912 sound */
-		{
-				SOUND_AY8910,
-				&spectrum_ay_interface,
-		},
-		/* standard spectrum buzzer sound */
-		{
-				SOUND_SPEAKER,
-				&spectrum_speaker_interface,
-		},
-		/* cassette wave sound */
-		{
-				SOUND_WAVE,
-				&spectrum_wave_interface,
-		}
-	}
-};
-
-static struct MachineDriver machine_driver_spectrum_plus3 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80|CPU_16BIT_PORT,
-			3546900,		/* 3.54690 Mhz */
-			spectrum_128_readmem,spectrum_128_writemem,
-			spectrum_plus3_readport,spectrum_plus3_writeport,
-			spec_interrupt,1,
-		},
-	},
-	50.01, 2500,		/* frames per second, vblank duration */
-	1,
-	spectrum_plus3_init_machine,
-	spectrum_plus3_exit_machine,
-
-	/* video hardware */
-	SPEC_SCREEN_WIDTH,				/* screen width */
-	SPEC_SCREEN_HEIGHT, 			/* screen height */
-	{ 0, SPEC_SCREEN_WIDTH-1, 0, SPEC_SCREEN_HEIGHT-1},  /* visible_area */
-	spectrum_gfxdecodeinfo, 			 /* graphics decode info */
-	16, 256,							 /* colors used for the characters */
-	spectrum_init_palette,				 /* initialise palette */
-
-	VIDEO_TYPE_RASTER,
-	spectrum_eof_callback,
-	spectrum_128_vh_start,
-	spectrum_128_vh_stop,
-	spectrum_128_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		/*  Ay-3-8912 sound */
-		{
-				SOUND_AY8910,
-				&spectrum_ay_interface,
-		},
-		/* standard spectrum buzzer sound */
-		{
-				SOUND_SPEAKER,
-				&spectrum_speaker_interface,
-		},
-		/* cassette wave sound */
-		{
-				SOUND_WAVE,
-				&spectrum_wave_interface,
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, spectrum_ay_interface)	/* Ay-3-8912 sound */
+MACHINE_DRIVER_END
 
 
-static struct MachineDriver machine_driver_ts2068 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80|CPU_16BIT_PORT,
-			3580000,		/* 3.58 Mhz */
-			ts2068_readmem,ts2068_writemem,
-			ts2068_readport,ts2068_writeport,
-			spec_interrupt,1,
-		},
-	},
-		60, 2500,		/* frames per second, vblank duration */
-	1,
-	ts2068_init_machine,
-	ts2068_exit_machine,
+static MACHINE_DRIVER_START( spectrum_plus3 )
+	MDRV_IMPORT_FROM( spectrum_128 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(spectrum_plus3_readport,spectrum_plus3_writeport)
+	MDRV_FRAMES_PER_SECOND(50.01)
 
-	/* video hardware */
-	TS2068_SCREEN_WIDTH,			/* screen width */
-	TS2068_SCREEN_HEIGHT,			/* screen height */
-	{ 0, TS2068_SCREEN_WIDTH-1, 0, TS2068_SCREEN_HEIGHT-1},  /* visible_area */
-	spectrum_gfxdecodeinfo, 			 /* graphics decode info */
-	16, 256,							 /* colors used for the characters */
-	spectrum_init_palette,				 /* initialise palette */
-
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,
-	ts2068_eof_callback,
-	spectrum_128_vh_start,
-	spectrum_128_vh_stop,
-	ts2068_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		/*  Ay-3-8912 sound */
-		{
-				SOUND_AY8910,
-				&spectrum_ay_interface,
-		},
-		/* standard spectrum sound */
-		{
-				SOUND_SPEAKER,
-				&spectrum_speaker_interface
-		},
-		/* cassette wave sound */
-		{
-				SOUND_WAVE,
-				&spectrum_wave_interface,
-		}
-	}
-};
-
-static struct MachineDriver machine_driver_uk2086 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80|CPU_16BIT_PORT,
-			3580000,		/* 3.58 Mhz */
-			ts2068_readmem,ts2068_writemem,
-			ts2068_readport,ts2068_writeport,
-			spec_interrupt,1,
-		},
-	},
-		50, 2500,		/* frames per second, vblank duration */
-	1,
-	ts2068_init_machine,
-	ts2068_exit_machine,
-
-	/* video hardware */
-	TS2068_SCREEN_WIDTH,			/* screen width */
-	TS2068_SCREEN_HEIGHT,			/* screen height */
-	{ 0, TS2068_SCREEN_WIDTH-1, 0, TS2068_SCREEN_HEIGHT-1},  /* visible_area */
-	spectrum_gfxdecodeinfo, 			 /* graphics decode info */
-	16, 256,							 /* colors used for the characters */
-	spectrum_init_palette,				 /* initialise palette */
-
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,
-	ts2068_eof_callback,
-	spectrum_128_vh_start,
-	spectrum_128_vh_stop,
-	ts2068_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		/*  Ay-3-8912 sound */
-		{
-				SOUND_AY8910,
-				&spectrum_ay_interface,
-		},
-		/* standard spectrum sound */
-		{
-				SOUND_SPEAKER,
-				&spectrum_speaker_interface
-		},
-		/* cassette wave sound */
-		{
-				SOUND_WAVE,
-				&spectrum_wave_interface,
-		}
-	}
-};
-
-static struct MachineDriver machine_driver_tc2048 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80|CPU_16BIT_PORT,
-			3500000,		/* 3.5 Mhz */
-			tc2048_readmem,tc2048_writemem,
-			tc2048_readport,tc2048_writeport,
-			spec_interrupt,1,
-		},
-	},
-	50, 2500,		/* frames per second, vblank duration */
-	1,
-	tc2048_init_machine,
-	ts2068_exit_machine,
-
-	/* video hardware */
-	TS2068_SCREEN_WIDTH,			/* screen width */
-	SPEC_SCREEN_HEIGHT, 			/* screen height */
-	{ 0, TS2068_SCREEN_WIDTH-1, 0, SPEC_SCREEN_HEIGHT-1},  /* visible_area */
-	spectrum_gfxdecodeinfo, 			 /* graphics decode info */
-	16, 256,							 /* colors used for the characters */
-	spectrum_init_palette,				 /* initialise palette */
-
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,
-	spectrum_eof_callback,
-	spectrum_128_vh_start,
-	spectrum_128_vh_stop,
-	tc2048_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		/* standard spectrum sound */
-		{
-				SOUND_SPEAKER,
-				&spectrum_speaker_interface
-		},
-		/* cassette wave sound */
-		{
-				SOUND_WAVE,
-				&spectrum_wave_interface,
-		}
-	}
-};
+	MDRV_MACHINE_INIT( spectrum_plus3 )
+	MDRV_MACHINE_STOP( spectrum_plus3 )
+MACHINE_DRIVER_END
 
 
-static struct MachineDriver machine_driver_scorpion =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80|CPU_16BIT_PORT,
-			3546900,		/* 3.54690 Mhz */
-			spectrum_128_readmem,spectrum_128_writemem,
-			scorpion_readport,scorpion_writeport,
-			spec_interrupt,1,
-		},
-	},
-	50, 2500,		/* frames per second, vblank duration */
-	1,
-	scorpion_init_machine,
-	scorpion_exit_machine,
+static MACHINE_DRIVER_START( ts2068 )
+	MDRV_IMPORT_FROM( spectrum_128 )
+	MDRV_CPU_REPLACE("main", Z80, 3580000)        /* 3.58 Mhz */
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
+	MDRV_CPU_MEMORY(ts2068_readmem,ts2068_writemem)
+	MDRV_CPU_PORTS(ts2068_readport,ts2068_writeport)
+	MDRV_FRAMES_PER_SECOND(60)
 
-	/* video hardware */
-	SPEC_SCREEN_WIDTH,				/* screen width */
-	SPEC_SCREEN_HEIGHT, 			/* screen height */
-	{ 0, SPEC_SCREEN_WIDTH-1, 0, SPEC_SCREEN_HEIGHT-1},  /* visible_area */
-	spectrum_gfxdecodeinfo, 			 /* graphics decode info */
-	16, 256,							 /* colors used for the characters */
-	spectrum_init_palette,				 /* initialise palette */
+	MDRV_MACHINE_INIT( ts2068 )
 
-	VIDEO_TYPE_RASTER,
-	spectrum_eof_callback,
-	spectrum_128_vh_start,
-	spectrum_128_vh_stop,
-	spectrum_128_vh_screenrefresh,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_SCREEN_SIZE(TS2068_SCREEN_WIDTH, TS2068_SCREEN_HEIGHT)
+	MDRV_VISIBLE_AREA(0, TS2068_SCREEN_WIDTH-1, 0, TS2068_SCREEN_HEIGHT-1)
 
-	/* sound hardware */
-	0,0,0,0,
-	{
-		/* Ay-3-8912 sound */
-		{
-				SOUND_AY8910,
-				&spectrum_ay_interface,
-		},
-		/* standard spectrum buzzer sound */
-		{
-				SOUND_SPEAKER,
-				&spectrum_speaker_interface,
-		},
-		/* cassette wave sound */
-		{
-				SOUND_WAVE,
-				&spectrum_wave_interface,
-		}
-	}
-};
+	MDRV_VIDEO_UPDATE( ts2068 )
+	MDRV_VIDEO_EOF( ts2068 )
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_pentagon =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80|CPU_16BIT_PORT,
-			3546900,		/* 3.54690 Mhz */
-			spectrum_128_readmem,spectrum_128_writemem,
-			pentagon_readport,pentagon_writeport,
-			spec_interrupt,1,
-		},
-	},
-	50, 2500,		/* frames per second, vblank duration */
-	1,
-	pentagon_init_machine,
-	pentagon_exit_machine,
 
-	/* video hardware */
-	SPEC_SCREEN_WIDTH,				/* screen width */
-	SPEC_SCREEN_HEIGHT, 			/* screen height */
-	{ 0, SPEC_SCREEN_WIDTH-1, 0, SPEC_SCREEN_HEIGHT-1},  /* visible_area */
-	spectrum_gfxdecodeinfo, 			 /* graphics decode info */
-	16, 256,							 /* colors used for the characters */
-	spectrum_init_palette,				 /* initialise palette */
+static MACHINE_DRIVER_START( uk2086 )
+	MDRV_IMPORT_FROM( ts2068 )
+	MDRV_FRAMES_PER_SECOND(50)
+MACHINE_DRIVER_END
 
-	VIDEO_TYPE_RASTER,
-	spectrum_eof_callback,
-	spectrum_128_vh_start,
-	spectrum_128_vh_stop,
-	spectrum_128_vh_screenrefresh,
 
-	/* sound hardware */
-	0,0,0,0,
-	{
-		/* Ay-3-8912 sound */
-		{
-				SOUND_AY8910,
-				&spectrum_ay_interface,
-		},
-		/* standard spectrum buzzer sound */
-		{
-				SOUND_SPEAKER,
-				&spectrum_speaker_interface,
-		},
-		/* cassette wave sound */
-		{
-				SOUND_WAVE,
-				&spectrum_wave_interface,
-		}
-	}
-};
+static MACHINE_DRIVER_START( tc2048 )
+	MDRV_IMPORT_FROM( spectrum )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(tc2048_readmem,tc2048_writemem)
+	MDRV_CPU_PORTS(tc2048_readport,tc2048_writeport)
+	MDRV_FRAMES_PER_SECOND(50)
+
+	MDRV_MACHINE_INIT( tc2048 )
+
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_SCREEN_SIZE(TS2068_SCREEN_WIDTH, SPEC_SCREEN_HEIGHT)
+	MDRV_VISIBLE_AREA(0, TS2068_SCREEN_WIDTH-1, 0, SPEC_SCREEN_HEIGHT-1)
+
+	MDRV_VIDEO_START( spectrum_128 )
+	MDRV_VIDEO_UPDATE( tc2048 )
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( scorpion )
+	MDRV_IMPORT_FROM( spectrum_128 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(scorpion_readport,scorpion_writeport)
+	MDRV_MACHINE_INIT( scorpion )
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( pentagon )
+	MDRV_IMPORT_FROM( spectrum_128 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(pentagon_readport,pentagon_writeport)
+	MDRV_MACHINE_INIT( pentagon )
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

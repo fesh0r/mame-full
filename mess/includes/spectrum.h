@@ -22,8 +22,7 @@ extern int  timex_cart_load(int id);
 extern void timex_cart_exit(int id);
 extern void ts2068_update_memory(void);
 
-extern void spectrum_init_machine(void);
-extern void spectrum_shutdown_machine(void);
+extern MACHINE_INIT( spectrum );
 
 extern int  spec_quick_init (int id);
 extern void spec_quick_exit (int id);
@@ -46,19 +45,17 @@ extern unsigned char *ts2068_ram;
 extern void spectrum_128_update_memory(void);
 extern void spectrum_plus3_update_memory(void);
 
-extern int  spectrum_vh_start(void);
-extern void spectrum_vh_stop(void);
-extern void spectrum_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-extern void spectrum_eof_callback(void);
+extern VIDEO_START( spectrum );
+extern VIDEO_UPDATE( spectrum );
+extern VIDEO_EOF( spectrum );
 
-extern int spectrum_128_vh_start(void);
-extern void spectrum_128_vh_stop(void);
-extern void spectrum_128_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_START( spectrum_128 );
+extern VIDEO_UPDATE( spectrum_128 );
 
-extern void ts2068_eof_callback(void);
-extern void ts2068_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_EOF( ts2068 );
+extern VIDEO_UPDATE( ts2068 );
 
-extern void tc2048_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_UPDATE( tc2048 );
 
 extern unsigned char *spectrum_characterram;
 extern unsigned char *spectrum_colorram;

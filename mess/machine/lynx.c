@@ -826,8 +826,10 @@ typedef struct {
     bool shot;
     int counter;
     void *timer;
+	int timer_active;
     double settime;
 } LYNX_TIMER;
+
 static LYNX_TIMER lynx_timer[8]= {
     { 0 },
     { 1 },
@@ -839,11 +841,13 @@ static LYNX_TIMER lynx_timer[8]= {
     { 7 }
 };
 
-static void lynx_timer_reset(LYNX_TIMER *This)
+static void lynx_timer_shot(int nr);
+
+static void lynx_timer_init(LYNX_TIMER *This)
 {
-    if (This->timer) timer_remove(This->timer);
-    memset((char*)This+sizeof(This->nr), 0, sizeof(*This)-sizeof(This->nr));
-    This->settime=0.0;
+	memset((char*)This+sizeof(This->nr), 0, sizeof(*This)-sizeof(This->nr));
+	This->timer = timer_alloc(lynx_timer_shot);
+	This->settime=0.0;
 }
 
 static void lynx_timer_signal_irq(LYNX_TIMER *This)
@@ -891,67 +895,77 @@ static void lynx_timer_shot(int nr)
     LYNX_TIMER *This=lynx_timer+nr;
     This->shot=true;
     lynx_timer_signal_irq(This);
-    if (!(This->u.s.cntrl1&0x10)) This->timer=NULL;
+    if (!(This->u.s.cntrl1&0x10))
+		This->timer_active = 0;
 }
 
 static double times[]= { 1e-6, 2e-6, 4e-6, 8e-6, 16e-6, 32e-6, 64e-6 };
 
 static UINT8 lynx_timer_read(LYNX_TIMER *This, int offset)
 {
-    UINT8 data=0;
-    switch (offset) {
-    case 2:
-	if ((This->u.s.cntrl1&7)==7) {
-	    data=This->counter;
-	} else {
-	    if (This->timer) {
-		data=(UINT8)(This->u.s.bakup-timer_timeleft(This->timer)/times[This->u.s.cntrl1&7]);
-	    }
+	UINT8 data=0;
+	switch (offset) {
+		case 2:
+		if ((This->u.s.cntrl1&7)==7)
+		{
+			data=This->counter;
+		}
+		else
+		{
+			if (This->timer_active)
+				data=(UINT8)(This->u.s.bakup-timer_timeleft(This->timer)/times[This->u.s.cntrl1&7]);
+		}
+		break;
+
+	case 3:
+		data=This->u.data[offset];
+		data&=~8;
+		if (This->shot)
+			data|=8;
+		break;
+
+	default:
+		data=This->u.data[offset];
+		break;
 	}
-	break;
-    case 3:
-	data=This->u.data[offset];
-	data&=~8;
-	if (This->shot) data|=8;
-	break;
-    default:
-	data=This->u.data[offset];
-    }
-    logerror("timer %d read %x %.2x\n",This-lynx_timer,offset,data);
-    return data;
+	logerror("timer %d read %x %.2x\n",This-lynx_timer,offset,data);
+	return data;
 }
 
 static void lynx_timer_write(LYNX_TIMER *This, int offset, UINT8 data)
 {
-    int t;
-    logerror("timer %d write %x %.2x\n",This-lynx_timer,offset,data);
-    This->u.data[offset]=data;
+	int t;
+	logerror("timer %d write %x %.2x\n",This-lynx_timer,offset,data);
+	This->u.data[offset]=data;
 
-    if ((offset==1) && (data&0x40)) This->shot=false;
-    
-    switch (offset) {
-    case 0:
-//	This->counter=This->u.s.bakup+1;
-//	break;
-    case 2:
-//	This->counter=data;
-//	break;
-    case 1:
-	if (This->timer) { timer_remove(This->timer); This->timer=NULL; }
-	if ((This->u.s.cntrl1&0x8)) {
-	    if ((This->u.s.cntrl1&7)!=7) {
-		t=This->u.s.bakup+1;
-		if (This->u.s.cntrl1&0x10) {
-		    This->timer=timer_pulse(t*times[This->u.s.cntrl1&7],
-					    This->nr, lynx_timer_shot);
-		} else {
-		    This->timer=timer_set(t*times[This->u.s.cntrl1&7],
-					  This->nr, lynx_timer_shot);
+	if ((offset==1) && (data&0x40)) This->shot=false;
+
+	switch (offset) {
+	case 0:
+//		This->counter=This->u.s.bakup+1;
+//		break;
+
+	case 2:
+//		This->counter=data;
+//		break;
+
+	case 1:
+		timer_reset(This->timer, TIME_NEVER);
+		This->timer_active = 0;
+		if ((This->u.s.cntrl1&0x8))
+		{
+			if ((This->u.s.cntrl1&7)!=7)
+			{
+				t=This->u.s.bakup+1;
+				if (This->u.s.cntrl1&0x10)
+					timer_adjust(This->timer, 0, This->nr, t*times[This->u.s.cntrl1&7]);
+				else
+					timer_adjust(This->timer, t*times[This->u.s.cntrl1&7], This->nr, 0);
+				This->timer_active = 1;
+			}
 		}
-	    }
+		break;
 	}
-	break;
-    }
 }
 
 static struct {
@@ -1162,31 +1176,31 @@ WRITE_HANDLER( lynx_memory_config )
     }
 }
 
-extern void lynx_machine_init(void)
+MACHINE_INIT( lynx )
 {
-    int i;
-    lynx_memory_config(0,0);
-    
-    cpu_set_irq_line(0, M65SC02_IRQ_LINE, CLEAR_LINE);	    
-    
-    memset(&suzy, 0, sizeof(suzy));
-    memset(&mikey, 0, sizeof(mikey));
-    
-    mikey.data[0x80]=0;
-    mikey.data[0x81]=0;
+	int i;
+	lynx_memory_config(0,0);
 
-    lynx_uart_reset();
+	cpu_set_irq_line(0, M65SC02_IRQ_LINE, CLEAR_LINE);	    
 
-    for (i=0; i<ARRAY_LENGTH(lynx_timer); i++) {
-	lynx_timer_reset(lynx_timer+i);
-    }
-    lynx_audio_reset();
+	memset(&suzy, 0, sizeof(suzy));
+	memset(&mikey, 0, sizeof(mikey));
 
-    // hack to allow current object loading to work
+	mikey.data[0x80]=0;
+	mikey.data[0x81]=0;
+
+	lynx_uart_reset();
+
+	for (i=0; i<ARRAY_LENGTH(lynx_timer); i++)
+		lynx_timer_init(lynx_timer+i);
+
+	lynx_audio_reset();
+
+	// hack to allow current object loading to work
 #if 1
-    lynx_timer_write(lynx_timer, 0, 160);
-    lynx_timer_write(lynx_timer, 1, 0x10|0x8|0);
-    lynx_timer_write(lynx_timer+2, 0, 102);
-    lynx_timer_write(lynx_timer+2, 1, 0x10|0x8|7);
+	lynx_timer_write(lynx_timer, 0, 160);
+	lynx_timer_write(lynx_timer, 1, 0x10|0x8|0);
+	lynx_timer_write(lynx_timer+2, 0, 102);
+	lynx_timer_write(lynx_timer+2, 1, 0x10|0x8|7);
 #endif
 }

@@ -4,9 +4,6 @@
 
 extern UINT32 lynx_palette[0x10];
 
-int lynx_vh_start(void);
-void lynx_vh_stop(void);
-void lynx_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 void lynx_draw_lines(int newline);
 
 
@@ -21,7 +18,7 @@ extern char debug_strings[16][30];
 #define PAD_LEFT 0x20
 #define PAD_RIGHT 0x10
 
-extern void lynx_machine_init(void);
+extern MACHINE_INIT( lynx );
 
 extern UINT16 lynx_granularity;
 extern int lynx_rotate;

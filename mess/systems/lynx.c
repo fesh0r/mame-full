@@ -56,20 +56,16 @@ INPUT_PORTS_START( lynx )
 	PORT_DIPSETTING(	3, "crcfile" )
 INPUT_PORTS_END
 
-static int lynx_frame_int(void)
+static INTERRUPT_GEN( lynx_frame_int )
 {
     lynx_rotate=rotate;
-    if ((readinputport(2)&3)!=3) lynx_rotate=readinputport(2)&3;
-    return ignore_interrupt();
+    if ((readinputport(2)&3)!=3)
+		lynx_rotate=readinputport(2)&3;
 }
 
-int lynx_vh_start(void)
+static VIDEO_START( lynx )
 {
     return 0;
-}
-
-void lynx_vh_stop(void)
-{
 }
 
 char debug_strings[16][30];
@@ -85,64 +81,64 @@ DISPCTL EQU $FD92       ; set to $D by INITMIKEY
 */
 void lynx_draw_lines(int newline)
 {
-    static int height=-1, width=-1;
-    int h,w;
-    int x, yend;
-    UINT16 j; // clipping needed!
-    UINT8 *mem=memory_region(REGION_CPU1);
+	static int height=-1, width=-1;
+	int h,w;
+	int x, yend;
+	UINT16 j; // clipping needed!
+	UINT8 *mem=memory_region(REGION_CPU1);
 
-    if (osd_skip_this_frame()) newline=-1;
+	if (osd_skip_this_frame()) newline=-1;
 
-    if (newline==-1) yend=102;
-    else yend=newline;
+	if (newline==-1) yend=102;
+	else yend=newline;
 
-    if (yend>102) yend=102;
-    if (yend==lynx_line_y) {
-	if (newline==-1) lynx_line_y=0;
-	return;
-    }
-
-    j=(mikey.data[0x94]|(mikey.data[0x95]<<8))+lynx_line_y*160/2;
-    if (mikey.data[0x92]&2) {
-	j-=160*102/2-1;
-    }
-
-    if (lynx_rotate&3) { // rotation
-	h=160; w=102;
-	if ( ((lynx_rotate==1)&&(mikey.data[0x92]&2))
-	     ||( (lynx_rotate==2)&&!(mikey.data[0x92]&2)) ) {
-	    for (;lynx_line_y<yend;lynx_line_y++) {
-		for (x=160-2;x>=0;j++,x-=2) {
-		    plot_pixel(Machine->scrbitmap, lynx_line_y, x+1, lynx_palette[mem[j]>>4]);
-		    plot_pixel(Machine->scrbitmap, lynx_line_y, x, lynx_palette[mem[j]&0xf]);
-		}
-	    }
-	} else {
-	    for (;lynx_line_y<yend;lynx_line_y++) {
-		for (x=0;x<160;j++,x+=2) {
-		    plot_pixel(Machine->scrbitmap, 102-1-lynx_line_y, x, lynx_palette[mem[j]>>4]);
-		    plot_pixel(Machine->scrbitmap, 102-1-lynx_line_y, x+1, lynx_palette[mem[j]&0xf]);
-		}
-	    }
+	if (yend>102) yend=102;
+	if (yend==lynx_line_y)
+	{
+		if (newline==-1) lynx_line_y=0;
+		return;
 	}
-    } else {
-	w=160; h=102;
-	if ( mikey.data[0x92]&2) {
-	    for (;lynx_line_y<yend;lynx_line_y++) {
-		for (x=160-2;x>=0;j++,x-=2) {
-		    plot_pixel(Machine->scrbitmap, x+1, 102-1-lynx_line_y, lynx_palette[mem[j]>>4]);
-		    plot_pixel(Machine->scrbitmap, x, 102-1-lynx_line_y, lynx_palette[mem[j]&0xf]);
+
+	j=(mikey.data[0x94]|(mikey.data[0x95]<<8))+lynx_line_y*160/2;
+	if (mikey.data[0x92]&2)
+		j-=160*102/2-1;
+
+	if (lynx_rotate&3) { // rotation
+		h=160; w=102;
+		if ( ((lynx_rotate==1)&&(mikey.data[0x92]&2))
+				||( (lynx_rotate==2)&&!(mikey.data[0x92]&2)) ) {
+			for (;lynx_line_y<yend;lynx_line_y++) {
+				for (x=160-2;x>=0;j++,x-=2) {
+					plot_pixel(Machine->scrbitmap, lynx_line_y, x+1, lynx_palette[mem[j]>>4]);
+					plot_pixel(Machine->scrbitmap, lynx_line_y, x, lynx_palette[mem[j]&0xf]);
+				}
+			}
+		} else {
+			for (;lynx_line_y<yend;lynx_line_y++) {
+				for (x=0;x<160;j++,x+=2) {
+					plot_pixel(Machine->scrbitmap, 102-1-lynx_line_y, x, lynx_palette[mem[j]>>4]);
+					plot_pixel(Machine->scrbitmap, 102-1-lynx_line_y, x+1, lynx_palette[mem[j]&0xf]);
+				}
+			}
 		}
-	    }
 	} else {
-	    for (;lynx_line_y<yend;lynx_line_y++) {
-		for (x=0;x<160;j++,x+=2) {
-		    plot_pixel(Machine->scrbitmap, x, lynx_line_y, lynx_palette[mem[j]>>4]);
-		    plot_pixel(Machine->scrbitmap, x+1, lynx_line_y, lynx_palette[mem[j]&0xf]);
+		w=160; h=102;
+		if ( mikey.data[0x92]&2) {
+			for (;lynx_line_y<yend;lynx_line_y++) {
+				for (x=160-2;x>=0;j++,x-=2) {
+					plot_pixel(Machine->scrbitmap, x+1, 102-1-lynx_line_y, lynx_palette[mem[j]>>4]);
+					plot_pixel(Machine->scrbitmap, x, 102-1-lynx_line_y, lynx_palette[mem[j]&0xf]);
+				}
+			}
+		} else {
+			for (;lynx_line_y<yend;lynx_line_y++) {
+				for (x=0;x<160;j++,x+=2) {
+					plot_pixel(Machine->scrbitmap, x, lynx_line_y, lynx_palette[mem[j]>>4]);
+					plot_pixel(Machine->scrbitmap, x+1, lynx_line_y, lynx_palette[mem[j]&0xf]);
+				}
+			}
 		}
-	    }
 	}
-    }
 	if (newline==-1) {
 		lynx_line_y=0;
 		if ((w!=width)||(h!=height)) {
@@ -153,7 +149,7 @@ void lynx_draw_lines(int newline)
 	}
 }
 
-void lynx_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+static VIDEO_UPDATE( lynx )
 {
     int j;
 
@@ -165,24 +161,14 @@ void lynx_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
     debug_pos=0;
 }
 
-static void lynx_init_colors (unsigned char *sys_palette,
-							  unsigned short *sys_colortable,
-							  const unsigned char *color_prom)
+static PALETTE_INIT( lynx )
 {
     int i;
-    unsigned char palette[0x1000][3]=
-    {
-	{ 0 },
-    };
 
-    for (i=0; i<ARRAY_LENGTH(palette); i++) {
-	palette[i][0]=(i&0xf)*16;
-	palette[i][1]=((i&0xf0)>>4)*16;
-	palette[i][2]=((i&0xf00)>>8)*16;
-    }
+    for (i=0; i< 0x1000; i++)
+		palette_set_color(i, (i&0xf)*16, ((i&0xf0)>>4)*16, ((i&0xf00)>>8)*16);
 
-    memcpy (sys_palette, palette, sizeof (palette));
-//	memcpy(sys_colortable,lynx_colortable,sizeof(lynx_colortable));
+	/*memcpy(colortable, lynx_colortable, sizeof(lynx_colortable));*/
 }
 
 struct CustomSound_interface lynx_sound_interface =
@@ -200,85 +186,42 @@ struct CustomSound_interface lynx2_sound_interface =
 };
 
 
-static struct MachineDriver machine_driver_lynx =
-{
+static MACHINE_DRIVER_START( lynx )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M65SC02, // vti core, integrated in vlsi, stz, but not bbr bbs
-			4000000,
-			lynx_readmem,lynx_writemem,0,0,
-			lynx_frame_int, 1,
-        }
-	},
-	/* frames per second, VBL duration */
-	30, DEFAULT_60HZ_VBLANK_DURATION, // lcd!, varies
-	1,				/* single CPU */
-	lynx_machine_init,
-	0,//pc1401_machine_stop,
+	MDRV_CPU_ADD(M65SC02, 4000000)        /* vti core, integrated in vlsi, stz, but not bbr bbs */
+	MDRV_CPU_MEMORY(lynx_readmem,lynx_writemem)
+	MDRV_CPU_VBLANK_INT(lynx_frame_int, 1)
+	MDRV_FRAMES_PER_SECOND(30)	/* lcd!, varies */
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	// 160 x 102
-//	160, 102, { 0, 160 - 1, 0, 102 - 1},
-	160, 160, { 0, 160 - 1, 0, 102 - 1},
-	0, //lynx_gfxdecodeinfo,			   /* graphics decode info */
-	// 16 out of 4096
-	0x1000,
-	0, //sizeof (lynx_colortable) / sizeof(lynx_colortable[0][0]),
-	lynx_init_colors,		/* convert color prom */
+	MDRV_MACHINE_INIT( lynx )
 
-	VIDEO_TYPE_RASTER,	/* video flags */
-	0,						/* obsolete */
-    lynx_vh_start,
-	lynx_vh_stop,
-	lynx_vh_screenrefresh,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	/*MDRV_SCREEN_SIZE(160, 102)*/
+	MDRV_SCREEN_SIZE(160, 160)
+	MDRV_VISIBLE_AREA(0, 160-1, 0, 102-1)
+	MDRV_PALETTE_LENGTH(0x1000)
+	MDRV_COLORTABLE_LENGTH(0)
+	MDRV_PALETTE_INIT( lynx )
+
+	MDRV_VIDEO_START( lynx )
+	MDRV_VIDEO_UPDATE( lynx )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{SOUND_CUSTOM, &lynx_sound_interface},
-		{ 0 }
-    }
-};
+	MDRV_SOUND_ADD_TAG("main", CUSTOM, lynx_sound_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_lynx2 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M65SC02, // vti core, integrated in vlsi, stz, but not bbr bbs
-			4000000,
-			lynx_readmem,lynx_writemem,0,0,
-			lynx_frame_int, 1,
-        }
-	},
-	/* frames per second, VBL duration */
-	30, DEFAULT_60HZ_VBLANK_DURATION, // lcd!
-	1,				/* single CPU */
-	lynx_machine_init,
-	0,//pc1401_machine_stop,
 
-	// 160 x 102
-//	160, 102, { 0, 160 - 1, 0, 102 - 1},
-	160, 160, { 0, 160 - 1, 0, 102 - 1},
-	0, //lynx_gfxdecodeinfo,			   /* graphics decode info */
-	// 16 out of 4096
-	0x1000,
-	0, //sizeof (lynx_colortable) / sizeof(lynx_colortable[0][0]),
-	lynx_init_colors,		/* convert color prom */
-
-	VIDEO_TYPE_RASTER,	/* video flags */
-	0,						/* obsolete */
-    lynx_vh_start,
-	lynx_vh_stop,
-	lynx_vh_screenrefresh,
+static MACHINE_DRIVER_START( lynx2 )
+	MDRV_IMPORT_FROM( lynx )
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{SOUND_CUSTOM, &lynx2_sound_interface},
-		{ 0 }
-    }
-};
+	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
+	MDRV_SOUND_REPLACE("main", CUSTOM, lynx2_sound_interface)
+MACHINE_DRIVER_END
+
 
 /* these 2 dumps are saved from an running machine,
    and therefor the rom byte at 0xff09 is not readable!
@@ -504,16 +447,3 @@ void init_lynx(void)
 CONSX( 1989, lynx,	  0, 		lynx,  lynx, 	lynx,	  "Atari",  "Lynx", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
 CONSX( 1989, lynxa,	  lynx, 	lynx,  lynx, 	lynx,	  "Atari",  "Lynx (alternate rom save!)", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
 CONSX( 1991, lynx2,	  lynx, 	lynx2,  lynx, 	lynx,	  "Atari",  "Lynx II", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
-
-#ifdef RUNTIME_LOADER
-extern void lynx_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"lynx")==0) drivers[i]=&driver_lynx;
-		if ( strcmp(drivers[i]->name,"lynxa")==0) drivers[i]=&driver_lynxa;
-		if ( strcmp(drivers[i]->name,"lynx2")==0) drivers[i]=&driver_lynx2;
-	}
-}
-#endif
-

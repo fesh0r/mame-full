@@ -182,17 +182,17 @@ DRVLIBS = \
 	$(OBJ)/galaxy.a   \
 	$(OBJ)/vc4000.a   \
 	$(OBJ)/lviv.a   \
+	$(OBJ)/sinclair.a \
+	$(OBJ)/lynx.a     \
 #	$(OBJ)/coleco.a   \
 #	$(OBJ)/bally.a	  \
 #	$(OBJ)/rca.a	  \
 #	$(OBJ)/svision.a  \
 #	$(OBJ)/intv.a     \
 #	$(OBJ)/teamconc.a \
-#	$(OBJ)/lynx.a     \
 #	$(OBJ)/amiga.a    \
 #	$(OBJ)/apf.a      \
 #	$(OBJ)/svi.a      \
-#	$(OBJ)/sinclair.a \
 #	$(OBJ)/gce.a	  \
 #	$(OBJ)/aim65.a    \
 #	$(OBJ)/motorola.a \

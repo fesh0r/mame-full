@@ -28,42 +28,25 @@ static int flash_invert;
 /***************************************************************************
   Start the video hardware emulation.
 ***************************************************************************/
-int spectrum_vh_start(void)
+VIDEO_START( spectrum )
 {
-        frame_number = 0;
-        flash_invert = 0;
-	spectrum_characterram = malloc(0x1800);
-        if (!spectrum_characterram)
+	frame_number = 0;
+	flash_invert = 0;
+	spectrum_characterram = auto_malloc(0x1800);
+	if (!spectrum_characterram)
 		return 1;
 
-	spectrum_colorram = malloc(0x300);
-        if (!spectrum_colorram)
-        {
-		free(spectrum_characterram);
+	spectrum_colorram = auto_malloc(0x300);
+	if (!spectrum_colorram)
 		return 1;
-	}
 
-        charsdirty = malloc(0x300);
-        if (!charsdirty)
-        {
-		free(spectrum_colorram);
-		free(spectrum_characterram);
+	charsdirty = auto_malloc(0x300);
+	if (!charsdirty)
 		return 1;
-	}
+
 	memset(charsdirty,1,0x300);
-
 	EventList_Initialise(30000);
-
 	return 0;
-}
-
-void    spectrum_vh_stop(void)
-{
-	EventList_Finish();
-
-	free(spectrum_characterram);
-	free(spectrum_colorram);
-	free(charsdirty);
 }
 
 /* screen is stored as:
@@ -73,7 +56,7 @@ WRITE_HANDLER (spectrum_characterram_w)
 {
 	spectrum_characterram[offset] = data;
 
-        charsdirty[((offset & 0x0f800)>>3) + (offset & 0x0ff)] = 1;
+	charsdirty[((offset & 0x0f800)>>3) + (offset & 0x0ff)] = 1;
 }
 
 READ_HANDLER (spectrum_characterram_r)
@@ -110,7 +93,7 @@ INLINE unsigned char get_display_color (unsigned char color, int invert)
 
 /* Code to change the FLASH status every 25 frames. Note this must be
    independent of frame skip etc. */
-void spectrum_eof_callback(void)
+VIDEO_EOF( spectrum )
 {
         EVENT_LIST_ITEM *pItem;
         int NumItems;
@@ -137,7 +120,7 @@ void spectrum_eof_callback(void)
 
 
 /* Update FLASH status for ts2068. Assumes flash update every 1/2s. */
-void ts2068_eof_callback(void)
+VIDEO_EOF( ts2068 )
 {
         EVENT_LIST_ITEM *pItem;
         int NumItems;
@@ -185,122 +168,119 @@ void ts2068_eof_callback(void)
 
 ***************************************************************************/
 
-void spectrum_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( spectrum )
 {
 	int count;
-        static int last_invert = 0;
+	int full_refresh = 1;
+    static int last_invert = 0;
 
-        if (full_refresh)
-        {
+	if (full_refresh)
+	{
 		memset(charsdirty,1,0x300);
-                last_invert = flash_invert;
-        }
-        else
-        {
-                /* Update all flashing characters when necessary */
-                if (last_invert != flash_invert) {
-                        for (count=0;count<0x300;count++)
-                                if (spectrum_colorram[count] & 0x80)
-                                        charsdirty[count] = 1;
-                        last_invert = flash_invert;
-                }
-        }
-
-        for (count=0;count<32*8;count++)
-        {
-		if (charsdirty[count]) {
-			decodechar( Machine->gfx[0],count,spectrum_characterram,
-				    Machine->drv->gfxdecodeinfo[0].gfxlayout );
-		}
-
-		if (charsdirty[count+256]) {
-			decodechar( Machine->gfx[1],count,&spectrum_characterram[0x800],
-				    Machine->drv->gfxdecodeinfo[0].gfxlayout );
-		}
-
-		if (charsdirty[count+512]) {
-			decodechar( Machine->gfx[2],count,&spectrum_characterram[0x1000],
-				    Machine->drv->gfxdecodeinfo[0].gfxlayout );
+		last_invert = flash_invert;
+	}
+	else
+	{
+		/* Update all flashing characters when necessary */
+		if (last_invert != flash_invert)
+		{
+			for (count=0;count<0x300;count++)
+				if (spectrum_colorram[count] & 0x80)
+					charsdirty[count] = 1;
+			last_invert = flash_invert;
 		}
 	}
 
-        for (count=0;count<32*8;count++)
-        {
-		int sx=count%32;
-		int sy=count/32;
-		unsigned char color;
-
-                if (charsdirty[count]) {
-                        color=get_display_color(spectrum_colorram[count],
-                                                flash_invert);
-			drawgfx(bitmap,Machine->gfx[0],
-				count,
-				color,
-				0,0,
-                                (sx*8)+SPEC_LEFT_BORDER,(sy*8)+SPEC_TOP_BORDER,
-				0,TRANSPARENCY_NONE,0);
-			charsdirty[count] = 0;
-		}
-
-		if (charsdirty[count+256]) {
-                        color=get_display_color(spectrum_colorram[count+0x100],
-                                                flash_invert);
-			drawgfx(bitmap,Machine->gfx[1],
-				count,
-				color,
-				0,0,
-                                (sx*8)+SPEC_LEFT_BORDER,((sy+8)*8)+SPEC_TOP_BORDER,
-				0,TRANSPARENCY_NONE,0);
-			charsdirty[count+256] = 0;
-		}
-
-		if (charsdirty[count+512]) {
-                        color=get_display_color(spectrum_colorram[count+0x200],
-                                                flash_invert);
-			drawgfx(bitmap,Machine->gfx[2],
-				count,
-				color,
-				0,0,
-                                (sx*8)+SPEC_LEFT_BORDER,((sy+16)*8)+SPEC_TOP_BORDER,
-				0,TRANSPARENCY_NONE,0);
-			charsdirty[count+512] = 0;
-		}
+    for (count=0;count<32*8;count++)
+    {
+	if (charsdirty[count]) {
+		decodechar( Machine->gfx[0],count,spectrum_characterram,
+				Machine->drv->gfxdecodeinfo[0].gfxlayout );
 	}
 
-        /* When screen refresh is called there is only one blank line
-           (synchronised with start of screen data) before the border lines.
-           There should be 16 blank lines after an interrupt is called.
-        */
-        draw_border(bitmap, full_refresh,
-                SPEC_TOP_BORDER, SPEC_DISPLAY_YSIZE, SPEC_BOTTOM_BORDER,
-                SPEC_LEFT_BORDER, SPEC_DISPLAY_XSIZE, SPEC_RIGHT_BORDER,
-                SPEC_LEFT_BORDER_CYCLES, SPEC_DISPLAY_XSIZE_CYCLES,
-                SPEC_RIGHT_BORDER_CYCLES, SPEC_RETRACE_CYCLES, 200, 0xfe);
+	if (charsdirty[count+256]) {
+		decodechar( Machine->gfx[1],count,&spectrum_characterram[0x800],
+				Machine->drv->gfxdecodeinfo[0].gfxlayout );
+	}
+
+	if (charsdirty[count+512]) {
+		decodechar( Machine->gfx[2],count,&spectrum_characterram[0x1000],
+				Machine->drv->gfxdecodeinfo[0].gfxlayout );
+	}
 }
 
+    for (count=0;count<32*8;count++)
+    {
+	int sx=count%32;
+	int sy=count/32;
+	unsigned char color;
 
-int spectrum_128_vh_start(void)
+            if (charsdirty[count]) {
+                    color=get_display_color(spectrum_colorram[count],
+                                            flash_invert);
+		drawgfx(bitmap,Machine->gfx[0],
+			count,
+			color,
+			0,0,
+                            (sx*8)+SPEC_LEFT_BORDER,(sy*8)+SPEC_TOP_BORDER,
+			0,TRANSPARENCY_NONE,0);
+		charsdirty[count] = 0;
+	}
+
+	if (charsdirty[count+256]) {
+                    color=get_display_color(spectrum_colorram[count+0x100],
+                                            flash_invert);
+		drawgfx(bitmap,Machine->gfx[1],
+			count,
+			color,
+			0,0,
+                            (sx*8)+SPEC_LEFT_BORDER,((sy+8)*8)+SPEC_TOP_BORDER,
+			0,TRANSPARENCY_NONE,0);
+		charsdirty[count+256] = 0;
+	}
+
+	if (charsdirty[count+512]) {
+                    color=get_display_color(spectrum_colorram[count+0x200],
+                                            flash_invert);
+		drawgfx(bitmap,Machine->gfx[2],
+			count,
+			color,
+			0,0,
+                            (sx*8)+SPEC_LEFT_BORDER,((sy+16)*8)+SPEC_TOP_BORDER,
+			0,TRANSPARENCY_NONE,0);
+		charsdirty[count+512] = 0;
+	}
+}
+
+    /* When screen refresh is called there is only one blank line
+        (synchronised with start of screen data) before the border lines.
+        There should be 16 blank lines after an interrupt is called.
+    */
+    draw_border(bitmap, full_refresh,
+            SPEC_TOP_BORDER, SPEC_DISPLAY_YSIZE, SPEC_BOTTOM_BORDER,
+            SPEC_LEFT_BORDER, SPEC_DISPLAY_XSIZE, SPEC_RIGHT_BORDER,
+            SPEC_LEFT_BORDER_CYCLES, SPEC_DISPLAY_XSIZE_CYCLES,
+            SPEC_RIGHT_BORDER_CYCLES, SPEC_RETRACE_CYCLES, 200, 0xfe);
+}
+
+VIDEO_START( spectrum_128 )
 {
-        frame_number = 0;
-        flash_invert = 0;
+	frame_number = 0;
+	flash_invert = 0;
 
 	EventList_Initialise(30000);
 
-        return 0;
-}
-
-void    spectrum_128_vh_stop(void)
-{
-        EventList_Finish();
+	return 0;
 }
 
 /* Refresh the spectrum 128 screen (code modified from COUPE.C) */
-void spectrum_128_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( spectrum_128 )
 {
         /* for now do a full-refresh */
         int x, y, b, scrx, scry;
         unsigned short ink, pap;
         unsigned char *attr, *scr;
+		int full_refresh = 1;
 
         scr=spectrum_128_screen_location;
 
@@ -336,11 +316,11 @@ void spectrum_128_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
                 }
 	}
 
-        draw_border(bitmap, full_refresh,
-                SPEC_TOP_BORDER, SPEC_DISPLAY_YSIZE, SPEC_BOTTOM_BORDER,
-                SPEC_LEFT_BORDER, SPEC_DISPLAY_XSIZE, SPEC_RIGHT_BORDER,
-                SPEC_LEFT_BORDER_CYCLES, SPEC_DISPLAY_XSIZE_CYCLES,
-                SPEC_RIGHT_BORDER_CYCLES, SPEC128_RETRACE_CYCLES, 200, 0xfe);
+	draw_border(bitmap, full_refresh,
+		SPEC_TOP_BORDER, SPEC_DISPLAY_YSIZE, SPEC_BOTTOM_BORDER,
+		SPEC_LEFT_BORDER, SPEC_DISPLAY_XSIZE, SPEC_RIGHT_BORDER,
+		SPEC_LEFT_BORDER_CYCLES, SPEC_DISPLAY_XSIZE_CYCLES,
+		SPEC_RIGHT_BORDER_CYCLES, SPEC128_RETRACE_CYCLES, 200, 0xfe);
 }
 
 /*******************************************************************
@@ -489,10 +469,11 @@ void ts2068_lores_scanline(struct mame_bitmap *bitmap, int y, int borderlines, i
 	}
 }
 
-void ts2068_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( ts2068 )
 {
-        /* for now TS2068 will do a full-refresh */
+	/* for now TS2068 will do a full-refresh */
 	int count;
+	int full_refresh = 1;
 
         if ((ts2068_port_ff_data & 7) == 6)
         {
@@ -527,10 +508,11 @@ void ts2068_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
                 SPEC_RIGHT_BORDER_CYCLES, SPEC_RETRACE_CYCLES, 200, 0xfe);
 }
 
-void tc2048_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( tc2048 )
 {
         /* for now TS2068 will do a full-refresh */
 	int count;
+	int full_refresh = 1;
 
         if ((ts2068_port_ff_data & 7) == 6)
         {

@@ -88,15 +88,15 @@ OPBASE_HANDLER(spectrum_opbaseoverride)
 
 	/* Hack for correct handling 0xffff interrupt vector */
 	if (address == 0x0001)
-		if (cpu_get_reg(REG_PREVIOUSPC)==0xffff)
+		if (activecpu_get_reg(REG_PREVIOUSPC)==0xffff)
 		{
-			cpu_set_reg(Z80_PC, 0xfff4);
+			activecpu_set_reg(Z80_PC, 0xfff4);
 			return 0xfff4;
 		}
 	return address;
 }
 
-void spectrum_init_machine(void)
+MACHINE_INIT( spectrum )
 {
 	memory_set_opbase_handler(0, spectrum_opbaseoverride);
 	if (pSnapshotData != NULL)
@@ -109,10 +109,6 @@ void spectrum_init_machine(void)
 		else
 			memory_set_opbase_handler(0, spectrum_snapshot_opbaseoverride);
 	}
-}
-
-void spectrum_shutdown_machine(void)
-{
 }
 
 int spectrum_snap_load(int id)
@@ -227,9 +223,9 @@ static OPBASE_HANDLER(spectrum_snapshot_opbaseoverride)
 			break;
 		}
 	}
-	logerror("Snapshot loaded - new PC = %04x\n", cpu_get_reg(Z80_PC) & 0x0ffff);
+	logerror("Snapshot loaded - new PC = %04x\n", activecpu_get_reg(Z80_PC) & 0x0ffff);
 
-	return (cpu_get_reg(Z80_PC) & 0x0ffff);
+	return (activecpu_get_reg(Z80_PC) & 0x0ffff);
 }
 
 /*******************************************************************
@@ -280,9 +276,9 @@ static OPBASE_HANDLER(spectrum_tape_opbaseoverride)
 		}
 	}
 	if (address == 0x0001)
-		if (cpu_get_reg(REG_PREVIOUSPC)==0xffff)
+		if (activecpu_get_reg(REG_PREVIOUSPC)==0xffff)
 		{
-			cpu_set_reg(Z80_PC, 0xfff4);
+			activecpu_set_reg(Z80_PC, 0xfff4);
 			return 0xfff4;
 		}
 
@@ -319,14 +315,14 @@ static OPBASE_HANDLER(spectrum_tape_opbaseoverride)
 
 	/* By the time that load has been trapped the block type and carry
 	 * flags are in the AF' register. */
-	af_reg = cpu_get_reg(Z80_AF2);
+	af_reg = activecpu_get_reg(Z80_AF2);
 	a_reg = (af_reg & 0xff00) >> 8;
 
 	if ((a_reg == pSnapshotData[TapePosition + 2]) && (af_reg & 0x0001))
 	{
 		/* Correct flag byte and carry flag set so try loading */
-		load_addr = cpu_get_reg(Z80_IX);
-		de_reg = cpu_get_reg(Z80_DE);
+		load_addr = activecpu_get_reg(Z80_IX);
+		de_reg = activecpu_get_reg(Z80_DE);
 
 		load_length = MIN(de_reg, tap_block_length - 2);
 		load_length = MIN(load_length, 65536 - load_addr);
@@ -335,21 +331,21 @@ static OPBASE_HANDLER(spectrum_tape_opbaseoverride)
 
 		for (i = 0; i < load_length; i++)
 			cpu_writemem16(load_addr + i, pSnapshotData[TapePosition + i + 3]);
-		cpu_set_reg(Z80_IX, load_addr + load_length);
-		cpu_set_reg(Z80_DE, de_reg - load_length);
+		activecpu_set_reg(Z80_IX, load_addr + load_length);
+		activecpu_set_reg(Z80_DE, de_reg - load_length);
 		if (de_reg == (tap_block_length - 2))
 		{
 			/* Successful load - Set carry flag and A to 0 */
 			if ((de_reg != 17) || (a_reg))
 				data_loaded = 1;		/* Non-header file loaded */
-			cpu_set_reg(Z80_AF, (af_reg & 0x00ff) | 0x0001);
+			activecpu_set_reg(Z80_AF, (af_reg & 0x00ff) | 0x0001);
 			logerror("Loaded %04x bytes from address %04x onwards (type=%02x) using tape block at offset %ld\n", load_length,
 					 load_addr, a_reg, TapePosition);
 		}
 		else
 		{
 			/* Wrong tape block size - reset carry flag */
-			cpu_set_reg(Z80_AF, af_reg & 0xfffe);
+			activecpu_set_reg(Z80_AF, af_reg & 0xfffe);
 			logerror("Bad block length %04x bytes wanted starting at address %04x (type=%02x) , Data length of tape block at offset %ld is %04x bytes\n",
 					 de_reg, load_addr, a_reg, TapePosition, tap_block_length - 2);
 		}
@@ -357,7 +353,7 @@ static OPBASE_HANDLER(spectrum_tape_opbaseoverride)
 	else
 	{
 		/* Wrong flag byte or verify selected so reset carry flag to indicate failure */
-		cpu_set_reg(Z80_AF, af_reg & 0xfffe);
+		activecpu_set_reg(Z80_AF, af_reg & 0xfffe);
 		if (af_reg & 0x0001)
 			logerror("Failed to load tape block at offset %ld - type wanted %02x, got type %02x\n", TapePosition, a_reg,
 					 pSnapshotData[TapePosition + 2]);
@@ -398,11 +394,11 @@ static OPBASE_HANDLER(spectrum_tape_opbaseoverride)
 	do
 	{
 		return_addr = cpu_geturnpc();
-		cpu_set_reg(Z80_PC, (return_addr & 0x0ffff));
+		activecpu_set_reg(Z80_PC, (return_addr & 0x0ffff));
 
-		sp_reg = cpu_get_reg(Z80_SP);
+		sp_reg = activecpu_get_reg(Z80_SP);
 		sp_reg += 2;
-		cpu_set_reg(Z80_SP, (sp_reg & 0x0ffff));
+		activecpu_set_reg(Z80_SP, (sp_reg & 0x0ffff));
 		activecpu_set_sp((sp_reg & 0x0ffff));
 	}
 	while (((return_addr != 0x053f) && (return_addr < 0x0605) && (ts2068_port_f4_data == -1)) ||
@@ -456,25 +452,25 @@ static void spectrum_page_basicrom(void)
 /* Dump the state of registers after loading a snapshot to the log file for debugging */
 static void dump_registers(void)
 {
-	logerror("PC   = %04x\n", cpu_get_reg(Z80_PC));
-	logerror("SP   = %04x\n", cpu_get_reg(Z80_SP));
-	logerror("AF   = %04x\n", cpu_get_reg(Z80_AF));
-	logerror("BC   = %04x\n", cpu_get_reg(Z80_BC));
-	logerror("DE   = %04x\n", cpu_get_reg(Z80_DE));
-	logerror("HL   = %04x\n", cpu_get_reg(Z80_HL));
-	logerror("IX   = %04x\n", cpu_get_reg(Z80_IX));
-	logerror("IY   = %04x\n", cpu_get_reg(Z80_IY));
-	logerror("AF'  = %04x\n", cpu_get_reg(Z80_AF2));
-	logerror("BC'  = %04x\n", cpu_get_reg(Z80_BC2));
-	logerror("DE'  = %04x\n", cpu_get_reg(Z80_DE2));
-	logerror("HL'  = %04x\n", cpu_get_reg(Z80_HL2));
-	logerror("I    = %02x\n", cpu_get_reg(Z80_I));
-	logerror("R    = %02x\n", cpu_get_reg(Z80_R));
-	logerror("IFF1 = %02x\n", cpu_get_reg(Z80_IFF1));
-	logerror("IFF2 = %02x\n", cpu_get_reg(Z80_IFF2));
-	logerror("IM   = %02x\n", cpu_get_reg(Z80_IM));
-	logerror("NMI  = %02x\n", cpu_get_reg(Z80_NMI_STATE));
-	logerror("IRQ  = %02x\n", cpu_get_reg(Z80_IRQ_STATE));
+	logerror("PC   = %04x\n", activecpu_get_reg(Z80_PC));
+	logerror("SP   = %04x\n", activecpu_get_reg(Z80_SP));
+	logerror("AF   = %04x\n", activecpu_get_reg(Z80_AF));
+	logerror("BC   = %04x\n", activecpu_get_reg(Z80_BC));
+	logerror("DE   = %04x\n", activecpu_get_reg(Z80_DE));
+	logerror("HL   = %04x\n", activecpu_get_reg(Z80_HL));
+	logerror("IX   = %04x\n", activecpu_get_reg(Z80_IX));
+	logerror("IY   = %04x\n", activecpu_get_reg(Z80_IY));
+	logerror("AF'  = %04x\n", activecpu_get_reg(Z80_AF2));
+	logerror("BC'  = %04x\n", activecpu_get_reg(Z80_BC2));
+	logerror("DE'  = %04x\n", activecpu_get_reg(Z80_DE2));
+	logerror("HL'  = %04x\n", activecpu_get_reg(Z80_HL2));
+	logerror("I    = %02x\n", activecpu_get_reg(Z80_I));
+	logerror("R    = %02x\n", activecpu_get_reg(Z80_R));
+	logerror("IFF1 = %02x\n", activecpu_get_reg(Z80_IFF1));
+	logerror("IFF2 = %02x\n", activecpu_get_reg(Z80_IFF2));
+	logerror("IM   = %02x\n", activecpu_get_reg(Z80_IM));
+	logerror("NMI  = %02x\n", activecpu_get_reg(Z80_NMI_STATE));
+	logerror("IRQ  = %02x\n", activecpu_get_reg(Z80_IRQ_STATE));
 }
 
 /*******************************************************************
@@ -529,46 +525,46 @@ void spectrum_setup_sp(unsigned char *pSnapshot, unsigned long SnapshotSize)
 
 	lo = pSnapshot[6] & 0x0ff;
 	hi = pSnapshot[7] & 0x0ff;
-	cpu_set_reg(Z80_BC, (hi << 8) | lo);
+	activecpu_set_reg(Z80_BC, (hi << 8) | lo);
 	lo = pSnapshot[8] & 0x0ff;
 	hi = pSnapshot[9] & 0x0ff;
-	cpu_set_reg(Z80_DE, (hi << 8) | lo);
+	activecpu_set_reg(Z80_DE, (hi << 8) | lo);
 	lo = pSnapshot[10] & 0x0ff;
 	hi = pSnapshot[11] & 0x0ff;
-	cpu_set_reg(Z80_HL, (hi << 8) | lo);
+	activecpu_set_reg(Z80_HL, (hi << 8) | lo);
 	lo = pSnapshot[12] & 0x0ff;
 	hi = pSnapshot[13] & 0x0ff;
-	cpu_set_reg(Z80_AF, (hi << 8) | lo);
+	activecpu_set_reg(Z80_AF, (hi << 8) | lo);
 
 	lo = pSnapshot[14] & 0x0ff;
 	hi = pSnapshot[15] & 0x0ff;
-	cpu_set_reg(Z80_IX, (hi << 8) | lo);
+	activecpu_set_reg(Z80_IX, (hi << 8) | lo);
 	lo = pSnapshot[16] & 0x0ff;
 	hi = pSnapshot[17] & 0x0ff;
-	cpu_set_reg(Z80_IY, (hi << 8) | lo);
+	activecpu_set_reg(Z80_IY, (hi << 8) | lo);
 
 	lo = pSnapshot[18] & 0x0ff;
 	hi = pSnapshot[19] & 0x0ff;
-	cpu_set_reg(Z80_BC2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_BC2, (hi << 8) | lo);
 	lo = pSnapshot[20] & 0x0ff;
 	hi = pSnapshot[21] & 0x0ff;
-	cpu_set_reg(Z80_DE2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_DE2, (hi << 8) | lo);
 	lo = pSnapshot[22] & 0x0ff;
 	hi = pSnapshot[23] & 0x0ff;
-	cpu_set_reg(Z80_HL2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_HL2, (hi << 8) | lo);
 	lo = pSnapshot[24] & 0x0ff;
 	hi = pSnapshot[25] & 0x0ff;
-	cpu_set_reg(Z80_AF2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_AF2, (hi << 8) | lo);
 
-	cpu_set_reg(Z80_R, (pSnapshot[26] & 0x0ff));
-	cpu_set_reg(Z80_I, (pSnapshot[27] & 0x0ff));
+	activecpu_set_reg(Z80_R, (pSnapshot[26] & 0x0ff));
+	activecpu_set_reg(Z80_I, (pSnapshot[27] & 0x0ff));
 
 	lo = pSnapshot[28] & 0x0ff;
 	hi = pSnapshot[29] & 0x0ff;
-	cpu_set_reg(Z80_SP, (hi << 8) | lo);
+	activecpu_set_reg(Z80_SP, (hi << 8) | lo);
 	lo = pSnapshot[30] & 0x0ff;
 	hi = pSnapshot[31] & 0x0ff;
-	cpu_set_reg(Z80_PC, (hi << 8) | lo);
+	activecpu_set_reg(Z80_PC, (hi << 8) | lo);
 
 	lo = pSnapshot[32] & 0x0ff;
 	hi = pSnapshot[33] & 0x0ff;
@@ -589,27 +585,27 @@ void spectrum_setup_sp(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	status = (hi << 8) | lo;
 
 	data = (status & 0x01);
-	cpu_set_reg(Z80_IFF1, data);
+	activecpu_set_reg(Z80_IFF1, data);
 	data = (status & 0x04)>>2;
-	cpu_set_reg(Z80_IFF2, data);
+	activecpu_set_reg(Z80_IFF2, data);
 
 	data = (status & 0x08)>>3;
 	if (data)
-		cpu_set_reg(Z80_IM, 0);
+		activecpu_set_reg(Z80_IM, 0);
 	else
 	{
 		data = (status & 0x02)>>1;
 		if (data)
-			cpu_set_reg(Z80_IM, 2);
+			activecpu_set_reg(Z80_IM, 2);
 		else
-			cpu_set_reg(Z80_IM, 1);
+			activecpu_set_reg(Z80_IM, 1);
 	}
 
 	data = (status & 0x10)>>4;
-	cpu_set_reg(Z80_IRQ_STATE, data);
+	activecpu_set_reg(Z80_IRQ_STATE, data);
 
-	cpu_set_reg(Z80_NMI_STATE, 0);
-	cpu_set_reg(Z80_HALT, 0);
+	activecpu_set_reg(Z80_NMI_STATE, 0);
+	activecpu_set_reg(Z80_HALT, 0);
 
 	spectrum_page_basicrom();
 
@@ -664,48 +660,48 @@ void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)
 		return;
 	}
 
-	cpu_set_reg(Z80_I, (pSnapshot[0] & 0x0ff));
+	activecpu_set_reg(Z80_I, (pSnapshot[0] & 0x0ff));
 	lo = pSnapshot[1] & 0x0ff;
 	hi = pSnapshot[2] & 0x0ff;
-	cpu_set_reg(Z80_HL2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_HL2, (hi << 8) | lo);
 	lo = pSnapshot[3] & 0x0ff;
 	hi = pSnapshot[4] & 0x0ff;
-	cpu_set_reg(Z80_DE2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_DE2, (hi << 8) | lo);
 	lo = pSnapshot[5] & 0x0ff;
 	hi = pSnapshot[6] & 0x0ff;
-	cpu_set_reg(Z80_BC2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_BC2, (hi << 8) | lo);
 	lo = pSnapshot[7] & 0x0ff;
 	hi = pSnapshot[8] & 0x0ff;
-	cpu_set_reg(Z80_AF2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_AF2, (hi << 8) | lo);
 	lo = pSnapshot[9] & 0x0ff;
 	hi = pSnapshot[10] & 0x0ff;
-	cpu_set_reg(Z80_HL, (hi << 8) | lo);
+	activecpu_set_reg(Z80_HL, (hi << 8) | lo);
 	lo = pSnapshot[11] & 0x0ff;
 	hi = pSnapshot[12] & 0x0ff;
-	cpu_set_reg(Z80_DE, (hi << 8) | lo);
+	activecpu_set_reg(Z80_DE, (hi << 8) | lo);
 	lo = pSnapshot[13] & 0x0ff;
 	hi = pSnapshot[14] & 0x0ff;
-	cpu_set_reg(Z80_BC, (hi << 8) | lo);
+	activecpu_set_reg(Z80_BC, (hi << 8) | lo);
 	lo = pSnapshot[15] & 0x0ff;
 	hi = pSnapshot[16] & 0x0ff;
-	cpu_set_reg(Z80_IY, (hi << 8) | lo);
+	activecpu_set_reg(Z80_IY, (hi << 8) | lo);
 	lo = pSnapshot[17] & 0x0ff;
 	hi = pSnapshot[18] & 0x0ff;
-	cpu_set_reg(Z80_IX, (hi << 8) | lo);
+	activecpu_set_reg(Z80_IX, (hi << 8) | lo);
 	data = (pSnapshot[19] & 0x04) >> 2;
-	cpu_set_reg(Z80_IFF2, data);
-	cpu_set_reg(Z80_IFF1, data);
+	activecpu_set_reg(Z80_IFF2, data);
+	activecpu_set_reg(Z80_IFF1, data);
 	data = (pSnapshot[20] & 0x0ff);
-	cpu_set_reg(Z80_R, data);
+	activecpu_set_reg(Z80_R, data);
 	lo = pSnapshot[21] & 0x0ff;
 	hi = pSnapshot[22] & 0x0ff;
-	cpu_set_reg(Z80_AF, (hi << 8) | lo);
+	activecpu_set_reg(Z80_AF, (hi << 8) | lo);
 	lo = pSnapshot[23] & 0x0ff;
 	hi = pSnapshot[24] & 0x0ff;
-	cpu_set_reg(Z80_SP, (hi << 8) | lo);
+	activecpu_set_reg(Z80_SP, (hi << 8) | lo);
 	activecpu_set_sp((hi << 8) | lo);
 	data = (pSnapshot[25] & 0x0ff);
-	cpu_set_reg(Z80_IM, data);
+	activecpu_set_reg(Z80_IM, data);
 
 	/* Set border colour */
 	PreviousFE = (PreviousFE & 0xf8) | (pSnapshot[26] & 0x07);
@@ -713,9 +709,9 @@ void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	set_last_border_color(pSnapshot[26] & 0x07);
 	force_border_redraw();
 
-	cpu_set_reg(Z80_NMI_STATE, 0);
-	cpu_set_reg(Z80_IRQ_STATE, 0);
-	cpu_set_reg(Z80_HALT, 0);
+	activecpu_set_reg(Z80_NMI_STATE, 0);
+	activecpu_set_reg(Z80_IRQ_STATE, 0);
+	activecpu_set_reg(Z80_HALT, 0);
 
 	if (SnapshotDataSize == 49179)
 		/* 48K Snapshot */
@@ -737,11 +733,11 @@ void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	{
 		/* get pc from stack */
 		addr = cpu_geturnpc();
-		cpu_set_reg(Z80_PC, (addr & 0x0ffff));
+		activecpu_set_reg(Z80_PC, (addr & 0x0ffff));
 
-		addr = cpu_get_reg(Z80_SP);
+		addr = activecpu_get_reg(Z80_SP);
 		addr += 2;
-		cpu_set_reg(Z80_SP, (addr & 0x0ffff));
+		activecpu_set_reg(Z80_SP, (addr & 0x0ffff));
 		activecpu_set_sp((addr & 0x0ffff));
 	}
 	else
@@ -776,7 +772,7 @@ void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)
 		/* program counter */
 		lo = pSnapshot[49179] & 0x0ff;
 		hi = pSnapshot[49180] & 0x0ff;
-		cpu_set_reg(Z80_PC, (hi << 8) | lo);
+		activecpu_set_reg(Z80_PC, (hi << 8) | lo);
 	}
 	dump_registers();
 }
@@ -951,28 +947,28 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	/* AF */
 	hi = pSnapshot[0] & 0x0ff;
 	lo = pSnapshot[1] & 0x0ff;
-	cpu_set_reg(Z80_AF, (hi << 8) | lo);
+	activecpu_set_reg(Z80_AF, (hi << 8) | lo);
 	/* BC */
 	lo = pSnapshot[2] & 0x0ff;
 	hi = pSnapshot[3] & 0x0ff;
-	cpu_set_reg(Z80_BC, (hi << 8) | lo);
+	activecpu_set_reg(Z80_BC, (hi << 8) | lo);
 	/* HL */
 	lo = pSnapshot[4] & 0x0ff;
 	hi = pSnapshot[5] & 0x0ff;
-	cpu_set_reg(Z80_HL, (hi << 8) | lo);
+	activecpu_set_reg(Z80_HL, (hi << 8) | lo);
 
 	/* SP */
 	lo = pSnapshot[8] & 0x0ff;
 	hi = pSnapshot[9] & 0x0ff;
-	cpu_set_reg(Z80_SP, (hi << 8) | lo);
+	activecpu_set_reg(Z80_SP, (hi << 8) | lo);
 	activecpu_set_sp((hi << 8) | lo);
 
 	/* I */
-	cpu_set_reg(Z80_I, (pSnapshot[10] & 0x0ff));
+	activecpu_set_reg(Z80_I, (pSnapshot[10] & 0x0ff));
 
 	/* R */
 	data = (pSnapshot[11] & 0x07f) | ((pSnapshot[12] & 0x01) << 7);
-	cpu_set_reg(Z80_R, data);
+	activecpu_set_reg(Z80_R, data);
 
 	/* Set border colour */
 	PreviousFE = (PreviousFE & 0xf8) | ((pSnapshot[12] & 0x0e) >> 1);
@@ -982,47 +978,47 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 
 	lo = pSnapshot[13] & 0x0ff;
 	hi = pSnapshot[14] & 0x0ff;
-	cpu_set_reg(Z80_DE, (hi << 8) | lo);
+	activecpu_set_reg(Z80_DE, (hi << 8) | lo);
 
 	lo = pSnapshot[15] & 0x0ff;
 	hi = pSnapshot[16] & 0x0ff;
-	cpu_set_reg(Z80_BC2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_BC2, (hi << 8) | lo);
 
 	lo = pSnapshot[17] & 0x0ff;
 	hi = pSnapshot[18] & 0x0ff;
-	cpu_set_reg(Z80_DE2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_DE2, (hi << 8) | lo);
 
 	lo = pSnapshot[19] & 0x0ff;
 	hi = pSnapshot[20] & 0x0ff;
-	cpu_set_reg(Z80_HL2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_HL2, (hi << 8) | lo);
 
 	hi = pSnapshot[21] & 0x0ff;
 	lo = pSnapshot[22] & 0x0ff;
-	cpu_set_reg(Z80_AF2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_AF2, (hi << 8) | lo);
 
 	lo = pSnapshot[23] & 0x0ff;
 	hi = pSnapshot[24] & 0x0ff;
-	cpu_set_reg(Z80_IY, (hi << 8) | lo);
+	activecpu_set_reg(Z80_IY, (hi << 8) | lo);
 
 	lo = pSnapshot[25] & 0x0ff;
 	hi = pSnapshot[26] & 0x0ff;
-	cpu_set_reg(Z80_IX, (hi << 8) | lo);
+	activecpu_set_reg(Z80_IX, (hi << 8) | lo);
 
 	/* Interrupt Flip/Flop */
 	if (pSnapshot[27] == 0)
 	{
-		cpu_set_reg(Z80_IFF1, 0);
-		//cpu_set_reg(Z80_IRQ_STATE, 0);
+		activecpu_set_reg(Z80_IFF1, 0);
+		//activecpu_set_reg(Z80_IRQ_STATE, 0);
 	}
 	else
 	{
-		cpu_set_reg(Z80_IFF1, 1);
-		//cpu_set_reg(Z80_IRQ_STATE, 1);
+		activecpu_set_reg(Z80_IFF1, 1);
+		//activecpu_set_reg(Z80_IRQ_STATE, 1);
 	}
 
-	cpu_set_reg(Z80_NMI_STATE, 0);
-	cpu_set_reg(Z80_IRQ_STATE, 0);
-	cpu_set_reg(Z80_HALT, 0);
+	activecpu_set_reg(Z80_NMI_STATE, 0);
+	activecpu_set_reg(Z80_IRQ_STATE, 0);
+	activecpu_set_reg(Z80_HALT, 0);
 
 	/* IFF2 */
 	if (pSnapshot[28] != 0)
@@ -1033,16 +1029,16 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	{
 		data = 0;
 	}
-	cpu_set_reg(Z80_IFF2, data);
+	activecpu_set_reg(Z80_IFF2, data);
 
 	/* Interrupt Mode */
-	cpu_set_reg(Z80_IM, (pSnapshot[29] & 0x03));
+	activecpu_set_reg(Z80_IM, (pSnapshot[29] & 0x03));
 
 	if (z80_type == SPECTRUM_Z80_SNAPSHOT_48K_OLD)
 	{
 		lo = pSnapshot[6] & 0x0ff;
 		hi = pSnapshot[7] & 0x0ff;
-		cpu_set_reg(Z80_PC, (hi << 8) | lo);
+		activecpu_set_reg(Z80_PC, (hi << 8) | lo);
 
 		spectrum_page_basicrom();
                 
@@ -1067,7 +1063,7 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 
 		lo = pSnapshot[32] & 0x0ff;
 		hi = pSnapshot[33] & 0x0ff;
-		cpu_set_reg(Z80_PC, (hi << 8) | lo);
+		activecpu_set_reg(Z80_PC, (hi << 8) | lo);
 
 		if ((z80_type == SPECTRUM_Z80_SNAPSHOT_128K) || ((z80_type == SPECTRUM_Z80_SNAPSHOT_TS2068) && !strcmp(Machine->gamedrv->name,"ts2068")))
 		{
@@ -1231,7 +1227,7 @@ void spectrum_cassette_exit(int id)
 
 void spectrum_nmi_generate(int param)
 {
-	cpu_cause_interrupt(0, Z80_NMI_INT);
+	cpu_set_irq_line(0, 0, IRQ_LINE_NMI);
 }
 
 int spec_quick_init(int id)

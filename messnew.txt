@@ -5,6 +5,13 @@ New System Drivers Supported (in no particular order):
 - Super GameBoy [Anthony Kruize]
 - GameBoy Color (preliminary) [Anthony Kruize]
 
+Regressions:
+----------------------
+- [PCE] Assertion fails on startup
+- [Amstrad] Crashes on startup
+- [MK1] Fails to boot
+- [ZX] Doesn't boot up anymore
+
 System Driver Changes:
 ----------------------
 - [COCO] The virtual printer should now be responsive to bitbanger output of
