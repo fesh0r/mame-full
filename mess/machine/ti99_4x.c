@@ -204,14 +204,14 @@ static slot_type_t slot_type[3] = { SLOT_EMPTY, SLOT_EMPTY, SLOT_EMPTY};
 
 int ti99_floppy_init(int id)
 {
-    if (basicdsk_floppy_init(id)==INIT_OK)
-    {
-        basicdsk_set_geometry(id, 40, 1, 9, 256, 0,0,0);
+	if (basicdsk_floppy_init(id)==INIT_OK)
+	{
+		basicdsk_set_geometry(id, 40, 1, 9, 256,0);
 
-        return INIT_OK;
-    }
+		return INIT_OK;
+	}
 
-    return INIT_FAILED;
+	return INIT_FAILED;
 }
                 
 int ti99_cassette_init(int id)
