@@ -27,6 +27,7 @@ extern UINT8 *microtan_chunky_buffer;
 /* from src/mess/machine/microtan.c */
 extern void init_microtan(void);
 extern void microtan_init_machine(void);
+extern void microtan_exit_machine(void);
 
 extern int microtan_cassette_id(int id);
 extern int microtan_cassette_init(int id);
