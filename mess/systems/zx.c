@@ -447,8 +447,8 @@ static struct GfxDecodeInfo pow3000_gfxdecodeinfo[] =
 
 static unsigned char zx80_palette[] =
 {
-	  0,  0,  0,	/* black */
 	255,255,255,	/* white */
+	  0,  0,  0,	/* black */
 };
 
 static unsigned char zx81_palette[] =
