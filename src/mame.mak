@@ -229,7 +229,7 @@ $(OBJ)/nichibut.a: \
 	$(OBJ)/drivers/bigfghtr.o \
 	$(OBJ)/machine/nb1413m3.o \
 	$(OBJ)/vidhrdw/hyhoo.o $(OBJ)/drivers/hyhoo.o \
-	$(OBJ)/vidhrdw/pastelgl.o $(OBJ)/drivers/pastelgl.o \
+	$(OBJ)/vidhrdw/pastelg.o $(OBJ)/drivers/pastelg.o \
 	$(OBJ)/vidhrdw/nbmj8688.o $(OBJ)/drivers/nbmj8688.o \
 	$(OBJ)/vidhrdw/nbmj8891.o $(OBJ)/drivers/nbmj8891.o \
 	$(OBJ)/vidhrdw/nbmj8991.o $(OBJ)/drivers/nbmj8991.o \

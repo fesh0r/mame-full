@@ -1712,10 +1712,10 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #undef OP_RLA
 #if FLAG_SET_M
 #define OP_RLA(MODE)														\
-	{ int cnt = OPER_8_##MODE(); while (cnt >= 0) { OP_ROL(); cnt--; } }
+	{ int cnt = OPER_8_##MODE(); int tmp; while (cnt > 0) { CLK(6); tmp = REG_A; REG_A<<=1; REG_A |= (tmp>>7); cnt--; } }
 #else
 #define OP_RLA(MODE)														\
-	{ int cnt = OPER_16_##MODE(); while (cnt >= 0) { OP_ROL(); cnt--; } }
+	{ int cnt = OPER_16_##MODE(); int tmp; while (cnt > 0) { CLK(6); tmp = REG_A; REG_A<<=1; REG_A |= (tmp>>15); cnt--; } }
 #endif
 
 /* M37710   Rotate Left an operand */
@@ -2585,6 +2585,7 @@ OP(1a5, OP_LDB   ( D           ) ) /* LDB d       */
 OP(1a8, OP_TBX   ( REG_Y       ) ) /* TBY         */
 OP(1a9, OP_LDB   ( IMM         ) ) /* LDB imm     */
 OP(1aa, OP_TBX   ( REG_X       ) ) /* TBX         */
+OP(1ad, OP_LDB   ( A           ) ) /* LDB a       */
 OP(1b2, OP_LDB   ( DI          ) ) /* LDB di  (C) */
 OP(1b5, OP_LDB   ( DX          ) ) /* LDB dx      */
 OP(1b9, OP_LDB   ( AY          ) ) /* LDB ay      */
@@ -2609,6 +2610,7 @@ OP(203, OP_MPY   ( S           ) ) /* MPY s       */
 OP(205, OP_MPY   ( D           ) ) /* MPY d       */
 OP(209, OP_MPY   ( IMM         ) ) /* MPY imm     */
 OP(215, OP_MPY   ( DX          ) ) /* MPY dx      */
+OP(225, OP_DIV   ( D           ) ) /* DIV d       */
 OP(228, OP_XAB   (             ) ) /* XAB         */
 OP(235, OP_DIV   ( DX          ) ) /* DIV dx      */
 OP(249, OP_RLA   ( IMM         ) ) /* RLA imm     */
@@ -2673,7 +2675,7 @@ TABLE_OPCODES2 =
 	O(200),O(191),O(192),O(193),O(200),O(195),O(200),O(197),	// 90
 	O(200),O(199),O(200),O(200),O(200),O(19d),O(200),O(19f),
 	O(200),O(1a1),O(200),O(200),O(200),O(1a5),O(200),O(200),	// a0
-	O(1a8),O(1a9),O(1aa),O(200),O(200),O(200),O(200),O(200),
+	O(1a8),O(1a9),O(1aa),O(200),O(200),O(1ad),O(200),O(200),
 	O(200),O(200),O(1b2),O(200),O(200),O(1b5),O(200),O(200),	// b0
 	O(200),O(1b9),O(200),O(200),O(200),O(1bd),O(200),O(200),
 	O(200),O(1c1),O(200),O(1c3),O(200),O(1c5),O(200),O(1c7),	// c0
@@ -2692,7 +2694,7 @@ TABLE_OPCODES3 =
 	O(200),O(209),O(200),O(200),O(200),O(200),O(200),O(200),
 	O(200),O(200),O(200),O(200),O(200),O(215),O(200),O(200),	// 10
 	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	     
-	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	// 20
+	O(200),O(200),O(200),O(200),O(200),O(225),O(200),O(200),	// 20
 	O(228),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	     
 	O(200),O(200),O(200),O(200),O(200),O(235),O(200),O(200),	// 30
 	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	     

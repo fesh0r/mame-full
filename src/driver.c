@@ -371,37 +371,56 @@ const struct GameDriver *drivers[] =
 	DRIVER( hyhoo )		/* (c) 1987 */
 	DRIVER( hyhoo2 )	/* (c) 1987 */
 
-	DRIVER( pastelgl )	/* (c) 1985 */
+	DRIVER( pastelg )	/* (c) 1985 */
 
 	DRIVER( crystalg )	/* (c) 1986 */
 	DRIVER( crystal2 )	/* (c) 1986 */
+	DRIVER( nightlov )	/* (c) 1986 */
 	DRIVER( citylove )	/* (c) 1986 */
+	DRIVER( mcitylov )	/* (c) 1986 */
 	DRIVER( apparel )	/* (c) 1986 Central Denshi */
 	DRIVER( secolove )	/* (c) 1986 */
 	DRIVER( housemnq )	/* (c) 1987 */
 	DRIVER( housemn2 )	/* (c) 1987 */
+	DRIVER( livegal )	/* (c) 1987 */
 	DRIVER( seiha )		/* (c) 1987 */
 	DRIVER( seiham )	/* (c) 1987 */
 	DRIVER( bijokkoy )	/* (c) 1987 */
 	DRIVER( iemoto )	/* (c) 1987 */
+	DRIVER( iemotom )	/* (c) 1987 */
+	DRIVER( ryuuha )	/* (c) 1987 */
 	DRIVER( ojousan )	/* (c) 1987 */
+	DRIVER( ojousanm )	/* (c) 1987 */
 	DRIVER( bijokkog )	/* (c) 1988 */
 	DRIVER( orangec )	/* (c) 1988 Daiichi Denshi */
+	DRIVER( orangeci )	/* (c) 1988 Daiichi Denshi */
 	DRIVER( vipclub )	/* (c) 1988 Daiichi Denshi */
 	DRIVER( korinai )	/* (c) 1988 */
+	DRIVER( korinaim )	/* (c) 1988 */
 	DRIVER( kaguya )	/* (c) 1988 MIKI SYOUJI */
+	DRIVER( kaguya2 )	/* (c) 1989 MIKI SYOUJI */
+	DRIVER( kaguya2f )	/* (c) 1989 MIKI SYOUJI */
 	DRIVER( otonano )	/* (c) 1988 Apple */
 	DRIVER( kanatuen )	/* (c) 1988 Panac */
+	DRIVER( kyuhito )	/* (c) 1988 ROLLER TRON */
 	DRIVER( mjsikaku )	/* (c) 1988 */
 	DRIVER( mjsikakb )	/* (c) 1988 */
+	DRIVER( mjsikakc )	/* (c) 1988 */
+	DRIVER( mjsikakd )	/* (c) 1988 */
+	DRIVER( mmsikaku )	/* (c) 1988 */
 	DRIVER( mjcamera )	/* (c) 1988 MIKI SYOUJI */
 	DRIVER( mmcamera )	/* (c) 1988 MIKI SYOUJI */
-	DRIVER( idhimitu )	/* (c) 1989 Digital Soft */
 
 	DRIVER( msjiken )	/* (c) 1988 */
 	DRIVER( hanamomo )	/* (c) 1988 */
 	DRIVER( telmahjn )	/* (c) 1988 */
+	DRIVER( taiwanmb )	/* (c) 1988 */
 	DRIVER( gionbana )	/* (c) 1989 */
+	DRIVER( idhimitu )	/* (c) 1989 Digital Soft */
+	DRIVER( mgion )		/* (c) 1989 */
+	DRIVER( mjcamerb )	/* (c) 1989 MIKI SYOUJI */
+	DRIVER( omotesnd )	/* (c) 1989 */
+	DRIVER( abunai )	/* (c) 1989 */
 	DRIVER( mjfocus )	/* (c) 1989 */
 	DRIVER( mjfocusm )	/* (c) 1989 */
 	DRIVER( peepshow )	/* (c) 1989 AC */
@@ -411,13 +430,16 @@ const struct GameDriver *drivers[] =
 	DRIVER( mjnanpas )	/* (c) 1989 BROOKS */
 	DRIVER( mjnanpaa )	/* (c) 1989 BROOKS */
 	DRIVER( mjnanpau )	/* (c) 1989 BROOKS */
+	DRIVER( pairsnb )	/* (c) 1989 */
 	DRIVER( pairsten )	/* (c) 1989 System Ten */
 	DRIVER( bananadr )	/* (c) 1989 DIGITAL SOFT */
 	DRIVER( mladyhtr )	/* (c) 1990 */
 	DRIVER( chinmoku )	/* (c) 1990 */
 	DRIVER( maiko )		/* (c) 1990 */
+	DRIVER( mmaiko )	/* (c) 1990 */
 	DRIVER( club90s )	/* (c) 1990 */
 	DRIVER( club90sa )	/* (c) 1990 */
+	DRIVER( lovehous )	/* (c) 1990 */
 	DRIVER( hanaoji )	/* (c) 1991 */
 
 	DRIVER( pstadium )	/* (c) 1990 */
@@ -428,6 +450,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( vanilla )	/* (c) 1991 */
 	DRIVER( finalbny )	/* (c) 1991 */
 	DRIVER( qmhayaku )	/* (c) 1991 */
+	DRIVER( mjgottub )	/* (c) 1991 */
 	DRIVER( galkoku )	/* (c) 1989 Nichibutsu/T.R.TEC */
 	DRIVER( hyouban )	/* (c) 1989 Nichibutsu/T.R.TEC */
 	DRIVER( galkaika )	/* (c) 1989 Nichibutsu/T.R.TEC */
@@ -441,6 +464,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( mjuraden )	/* (c) 1992 Nichibutsu/Yubis */
 	DRIVER( koinomp )	/* (c) 1992 */
 	DRIVER( patimono )	/* (c) 1992 */
+	DRIVER( janbari )	/* (c) 1992 Nichibutsu/Yubis/AV JAPAN */
 	DRIVER( mjanbari )	/* (c) 1992 Nichibutsu/Yubis/AV JAPAN */
 	DRIVER( ultramhm )	/* (c) 1993 Apple */
 	DRIVER( gal10ren )	/* (c) 1993 FUJIC */
@@ -449,7 +473,11 @@ const struct GameDriver *drivers[] =
 	DRIVER( mkeibaou )	/* (c) 1993 */
 	DRIVER( pachiten )	/* (c) 1993 Nichibutsu/MIKI SYOUJI/AV JAPAN */
 	DRIVER( sailorws )	/* (c) 1993 */
+	DRIVER( sailorwa )	/* (c) 1993 */
 	DRIVER( sailorwr )	/* (c) 1993 */
+	DRIVER( wcatcher )	/* (c) 1993 */
+	DRIVER( jituroku )	/* (c) 1993 Windom */
+	DRIVER( yosimoto )	/* (c) 1994 Nichibutsu/Yoshimoto Kougyou */
 	DRIVER( psailor1 )	/* (c) 1994 SPHINX */
 	DRIVER( psailor2 )	/* (c) 1994 SPHINX */
 	DRIVER( otatidai )	/* (c) 1995 SPHINX */
@@ -459,10 +487,14 @@ const struct GameDriver *drivers[] =
 	DRIVER( cmehyou )	/* (c) 1992 Nichibutsu/Kawakusu */
 	DRIVER( mmehyou )	/* (c) 1992 Nichibutsu/Kawakusu */
 	DRIVER( mjkoiura )	/* (c) 1992 */
+	DRIVER( mkoiuraa )	/* (c) 1992 */
 	DRIVER( imekura )	/* (c) 1994 SPHINX/AV JAPAN */
 	DRIVER( mscoutm )	/* (c) 1994 SPHINX/AV JAPAN */
 	DRIVER( mjegolf )	/* (c) 1994 FUJIC/AV JAPAN */
 
+	DRIVER( mhhonban )	/* (c) 199? */
+	DRIVER( 4psimasy )	/* (c) 1994 */
+	DRIVER( musobana )	/* (c) 1995 */
 	DRIVER( niyanpai )	/* (c) 1996 */
 
 	/* "Phoenix hardware" (and variations) games */
@@ -2207,7 +2239,8 @@ V-V                           TP-027
 	DRIVER( ddtod )		/* 12/04/1994 (c) 1993 (Euro) */
 	DRIVER( ddtodu )	/* 25/01/1994 (c) 1993 (US) */
 	DRIVER( ddtodur1 )	/* 13/01/1994 (c) 1993 (US) */
-	DRIVER( ddtodj )	/* 13/01/1994 (c) 1993 (Japan) */
+	DRIVER( ddtodj )	/* 25/01/1994 (c) 1993 (Japan) */
+	DRIVER( ddtodjr1 )	/* 13/01/1994 (c) 1993 (Japan) */
 	DRIVER( ddtoda )	/* 13/01/1994 (c) 1993 (Asia) */
 	DRIVER( ddtodh )	/* 25/01/1994 (c) 1993 (Hispanic) */
 	DRIVER( ssf2t )		/* 23/02/1994 (c) 1994 (World) */
@@ -2390,7 +2423,8 @@ V-V                           TP-027
 	DRIVER( tgmj )		/* Tetris The Grand Master (JAPAN 980710) */
 	DRIVER( techromn )	/* Tech Romancer (USA 980914) */
 	DRIVER( kikaioh )	/* Kikaioh (JAPAN 980914) */
-	DRIVER( sfex2p )	/* Street Fighter EX 2 Plus (ASIA 990611) */
+	DRIVER( sfex2p )	/* Street Fighter EX 2 Plus (USA 990611) */
+	DRIVER( sfex2pa )	/* Street Fighter EX 2 Plus (ASIA 990611) */
 	DRIVER( sfex2pj )	/* Street Fighter EX 2 Plus (JAPAN 990611) */
 	DRIVER( strider2 )	/* Strider 2 (ASIA 991213) */
 	DRIVER( shiryu2 )	/* Strider Hiryu 2 (JAPAN 991213) */
@@ -2436,7 +2470,7 @@ V-V                           TP-027
 	DRIVER( mgcldtex )	/* Magical Date EX (JAPAN Ver 2.01J) */
 
 	/* Taito FX1b */
-	DRIVER( raystorm )	/* Ray Storm (Ver 2.06O) */
+	DRIVER( raystorm )	/* Ray Storm (Ver 2.06A) */
 	DRIVER( raystorj )	/* Ray Storm (Ver 2.05J) */
 	DRIVER( ftimpcta )	/* Fighters' Impact A (Ver 2.00J) */
 	DRIVER( gdarius )	/* G-Darius (Ver 2.01J) */
@@ -5952,12 +5986,12 @@ Other Sun games
 
 	/* Hyper NeoGeo 64 uses a 3 digit rom code? */
 
-	/* 001? Roads Edge / Round Trip RV */
+	DRIVER( roadedge ) /* 001? Roads Edge / Round Trip RV */
 	/* 002? Samurai Shodown 64 / Samurai Spirits 64 */
 	/* 003? Xtreme Rally / Off Beat Racer! */
 	/* 004? Beast Busters: Second Nightmare */
-	/* 005? Samurai Shodown: Warrior's Rage / Samurai Spirits: Asura Zanmaden */
-	/* 006? Fatal Fury: Wild Ambition / Garou Densetsu: Wild Ambition */
+	DRIVER( sams64_2 ) /* 005? Samurai Shodown: Warrior's Rage / Samurai Spirits: Asura Zanmaden */
+	DRIVER( fatfurwa ) /* 006? Fatal Fury: Wild Ambition / Garou Densetsu: Wild Ambition */
 	DRIVER( buriki )	/* 007 (c) 1999 SNK */
 
 

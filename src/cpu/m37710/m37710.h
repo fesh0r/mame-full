@@ -45,7 +45,7 @@ enum
 	M37710_LINE_ZERODIV,
 	M37710_LINE_RESET,
 
-	M37710_LINE_MAX
+	M37710_LINE_MAX,
 };
 
 /* Registers - used by m37710_set_reg() and m37710_get_reg() */
@@ -57,6 +57,21 @@ enum
 };
 
 
+/* I/O ports */
+enum
+{
+	M37710_PORT0 = 0, 
+	M37710_PORT1, M37710_PORT2, M37710_PORT3, M37710_PORT4,
+	M37710_PORT5, M37710_PORT6, M37710_PORT7, M37710_PORT8,
+
+	M37710_ADC0_L = 0x10, M37710_ADC0_H,
+	M37710_ADC1_L, M37710_ADC1_H, M37710_ADC2_L, M37710_ADC2_H, M37710_ADC3_L, M37710_ADC3_H,
+	M37710_ADC4_L, M37710_ADC4_H, M37710_ADC5_L, M37710_ADC5_H, M37710_ADC6_L, M37710_ADC6_H,
+	M37710_ADC7_L, M37710_ADC7_H,
+
+	M37710_SER0_REC = 0x20,
+	M37710_SER0_XMIT, M37710_SER1_REC, M37710_SER1_XMIT
+};
 
 /* ======================================================================== */
 /* ============================== PROTOTYPES ============================== */

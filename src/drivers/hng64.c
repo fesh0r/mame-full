@@ -1,21 +1,11 @@
-
-
 /* Hyper NeoGeo 64
-
-
-
-currently constructed from bits of the kinst driver
-
-not sure whats going on .. even seems to have different behavior with dynarec enabled / disabled
-
-
 
 Known games on this system
 
 Beast Busters 2nd Nightmare ( http://emustatus.rainemu.com/games/bbustr2nd.htm )
 Buriki One ( http://emustatus.rainemu.com/games/buriki1.htm )
 Fatal Fury: Wild Ambition ( http://emustatus.rainemu.com/games/ffurywa.htm )
-Roads Edge ( http://emustatus.rainemu.com/games/redge.htm )
+Roads Edge / Round Trip? ( http://emustatus.rainemu.com/games/redge.htm )
 Samurai Shodown 64 ( http://emustatus.rainemu.com/games/sams64.htm )
 Samurai Shodown: Warrior's Rage ( http://emustatus.rainemu.com/games/samswr.htm )
 Xtreme Rally / Offbeat Racer ( http://emustatus.rainemu.com/games/xrally.htm )
@@ -38,9 +28,28 @@ This is a 3D system comprising one large PCB with many custom smt components
 on both sides, one interface PCB with JAMMA connector and sound circuitry, and
 one game cartridge. Only the Main PCB and interface PCB are detailed here.
 
-PCB No: LVS-MAC SNK 1997.06.02
+PCB Layout (Top)
+----------
 
-Top Side
+LVS-MAC SNK 1997.06.02
+|--------------------------------------------------------------|
+|              CONN9                                           |
+|                                                              |
+|   ASIC1           ASIC3            CPU1                      |
+|                                                              |
+|                                               DPRAM1         |
+|                        OSC2        ASIC5                 ROM1|
+|   FSRAM1               OSC2                                  |
+|   FSRAM2                                             FPGA1   |
+|   FSRAM3                           ASIC10       OSC4         |
+|                                                              |
+|                                                 CPU3  IC4    |
+|   PSRAM1  ASIC7   ASIC8            DSP1 OSC3    SRAM5        |
+|   PSRAM2                                              FROM1  |
+|                                                              |
+|                                                              |
+|              CONN10                                          |
+|--------------------------------------------------------------|
 
 No.  PCB Label  IC Markings               IC Package
 ----------------------------------------------------
@@ -70,28 +79,26 @@ No.  PCB Label  IC Markings               IC Package
 24   SRAM5      TC55257DFL-85L            SOP28
 
 
-PCB LAYOUT (TOP)
-----------------
-              CONN9
+PCB Layout (Bottom)
 
-   ASIC1           ASIC3            CPU1
-
-                                               DPRAM1
-                        OSC2        ASIC5                 ROM1
-   FSRAM1               OSC2
-   FSRAM2                                             FPGA1
-   FSRAM3                           ASIC10       OSC4
-
-                                                 CPU3  IC4
-   PSRAM1  ASIC7   ASIC8            DSP1 OSC3    SRAM5
-   PSRAM2                                              FROM1
-
-
-              CONN10
-
-
-
-Bottom Side
+|--------------------------------------------------------------|
+|             CONN10                                           |
+|                                                              |
+|                                                              |
+|   PSRAM4  ASIC9                   SRAM4     CPU1  Y1         |
+|   PSRAM3         SRAM1            SRAM3                      |
+|                  SRAM2                                       |
+|                                                              |
+|   FSRAM6                        DRAM3                        |
+|   FSRAM5                                                     |
+|   FSRAM4                        DRAM1                        |
+|                   BROM1         DRAM2                        |
+|                                                              |
+|                                                              |
+|   ASIC2           ASIC4         ASIC6                        |
+|                                                              |
+|             CONN9                                            |
+|--------------------------------------------------------------|
 
 No.  PCB Label  IC Markings               IC Package
 ----------------------------------------------------
@@ -115,29 +122,23 @@ No.  PCB Label  IC Markings               IC Package
 18   SRAM4      TC551001BFL-70L           SOP32
 19   Y1         D320L7                    XTAL
 
-PCB LAYOUT (BOTTOM, Y-mirrored)
--------------------------------
-             CONN10
-
- PSRAM4  ASIC9                   SRAM4     CPU1  Y1
- PSRAM3         SRAM1            SRAM3
-                SRAM2
-
-   FSRAM1                        DRAM3
-   FSRAM2
-   FSRAM3                        DRAM1
-                   BROM1         DRAM2
-
-   ASIC2           ASIC4         ASIC6
-
-             CONN9
-
-
 
 INTERFACE PCB
 -------------
 
-PCB No: LVS-JAM SNK 1999.1.20
+LVS-JAM SNK 1999.1.20
+|---------------------------------------------|
+|                 J A M M A                   |
+|                                             |
+|                                             |
+|                                             |
+|     SW3             SW1                     |
+|                                             |
+| IC6                       IOCTR1            |
+|                           BACKUP            |
+|                           BKRAM1            |
+|     SW2   BT1  DPRAM1              IC1      |
+|---------------------------------------------|
 
 No.  PCB Label  IC Markings               IC Package
 ----------------------------------------------------
@@ -152,87 +153,43 @@ No.  PCB Label  IC Markings               IC Package
 09   SW2        4 position DIPSW
 10   SW3        2 position DIPSW  OFF = MONO/JAMMA  ON = 2CH MVS
 
-
-PCB LAYOUT
-----------
-
-                     J A M M A
-
-
-
-       SW3              SW1
-
- IC6                          IOCTR1
-                              BACKUP
-                              BKRAM1
-       SW2   BT1  DPRAM1               IC1
-
-
-
 Notes:
        1. The game cart plugs into the main PCB on the TOP side into CONN9 & CONN10
        2. If the game cart is not plugged in, the hardware shows nothing on screen.
 
-*/
 
-/*
 
-Buriki One
-SNK, 1999
 
-This game runs on Neo Geo Hyper 64 hardware. The game cart contains nothing
-except a huge pile of surface mounted ROMs on both sides of the PCB.
-All of them are 32MBits each.
-The cart can accept a maximum of 84 ROMs totalling for a maximun cart size of 2688MBits.
+Hyper Neo Geo game cartridges
+-----------------------------
 
-PCB Layout
-----------
+The game carts contains nothing except a huge pile of surface mounted ROMs
+on both sides of the PCB. All of them are 32MBits each.
+The DG1 cart can accept a maximum of 96 ROMs totalling a maximun cart size of 3072MBits.
+The DG2 cart can accept a maximum of 84 ROMs totalling a maximun cart size of 2688MBits.
+The actual carts are mostly only about 1/3rd to 1/2 populated.
+Some of the IC locations between DG1 and DG2 are different also. See the source code below
+for the exact number of ROMs used per game and ROM placements.
 
+Games that use the LVS-DG1 cart: Road's Edge
+
+Games that use the LVS-DG2 cart: Fatal Fury: Wild Ambition, Buriki One
+
+Other games not dumped yet     : Samurai Spirits 64 / Samurai Shodown 64
+                                 Samurai Spirits II: Asura Zanmaden / Samurai Shodown: Warrior's Rage
+                                 Off Beat Racer / Xtreme Rally
+                                 Beast Busters: Second Nightmare
+                                 Garou Densetsu 64: Wild Ambition (=Fatal Fury Wild Ambition)*
+                                 Round Trip RV (=Road's Edge)*
+
+                               * Different regions might use the same roms, not known yet
+
+                               There might be Rev.A boards for Buriki and Round Trip
 Top
-
-LVS-DG2
-|----------------------------------------------------------------------------|
-|                         |----------------------|                           |
-|                         |----------------------|                           |
-|                                                                            |
-|                                                                            |
-| SC03A.101  SC04A.103      X          X          X          X      SD03A.79 |
-|                                                                            |
-|                                                                            |
-|                                                                            |
-|                                                                            |
-| SC07A.102  SC08A.104  SP05A.106  SP06A.110  SP07A.114  SP08A.118  SD04A.80 |
-|                                                                            |
-|                                                                            |
-|                                X          X          X          X          |
-|                                                                            |
-|                                                                            |
-| TX04A.4    TX04A.12            X          X          X          X          |
-|                                                                            |
-|                                                                            |
-|                                                                            |
-|                                                                            |
-| TX03A.3    TX03A.11            X          X          X      PR06A.86       |
-|                                                                            |
-|                                                                            |
-|                                                                            |
-|                                                                            |
-| TX02A.2    TX02A.10            X          X          X      PR04A.84       |
-|                                                                            |
-|                                                                            |
-|                                                                            |
-|                                                                            |
-| TX01A.1    TX01A.9             X          X          X      PR02B.82       |
-|                                                                            |
-|                                                                            |
-|                         |----------------------|                           |
-|                         |----------------------|                           |
-|----------------------------------------------------------------------------|
-
-
-Bottom
-
-LVS-DG2
+---
+LVS-DG1
+(C) SNK 1997
+1997.5.20
 |----------------------------------------------------------------------------|
 |                                                                            |
 |                                                                            |
@@ -242,110 +199,593 @@ LVS-DG2
 |                                                                            |
 |                                                                            |
 |                                                                            |
-|                                                                            |
-| TX02A.6    TX02A.14            X          X          X      PR03A.83       |
-|                                                                            |
+| TX02A.6    TX02A.14        VT06A.22   VT05A.21   VT04A.20   PR03A.83       |
 |                                                                            |
 |                                                                            |
 |                                                                            |
-| TX03A.7    TX03A.15            X          X          X      PR05A.85       |
+| TX03A.7    TX03A.15        VT09A.25   VT08A.24   VT07A.23   PR05A.85       |
 |                                                                            |
 |                                                                            |
 |                                                                            |
-|                                                                            |
-| TX04A.8    TX04A.16            X          X          X          X          |
-|                                                                            |
-|                                                                            |
-|                                X          X          X          X          |
-|                                                                            |
-|                                                                            |
-| SC05A.98   SC06A.100      X          X          X          X      SD02A.78 |
+| TX04A.8    TX04A.16        VT12A.28   VT11A.27   VT10A.26   PR07A.87       |
 |                                                                            |
 |                                                                            |
 |                                                                            |
+|                            PR15A.95   PR13A.93   PR11A.91   PR09A.89       |
 |                                                                            |
-| SC01A.97   SC02A.99   SP01A.105  SP02A.109  SP03A.113  SP04A.117  SD01A.77 |
+|                                                                            |
+|                                                                            |
+| SC09A.49  SC10A.50   SP09A.61   SP10A.62   SP11A.63   SP12A.64    SD02A.78 |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+| SC05A.45  SC06A.46   SP05A.57   SP06A.58   SP07A.59   SP08A.60             |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+| SC01A.41  SC02A.42   SP01A.53   SP02A.54   SP03A.55   SP04A.56    SD01A.77 |
 |                                                                            |
 |                                                                            |
 |                                                                            |
 |                                                                            |
 |----------------------------------------------------------------------------|
-Notes:
-      X = Unpopulated position
+
+Bottom
+------
+
+LVS-DG1
+|----------------------------------------------------------------------------|
+|                         |----------------------|                           |
+|                         |----------------------|                           |
+|                                                                            |
+|                                                                            |
+| SC03A.43  SC04A.44   SP13A.65   SP14A.66   SP15A.67   SP16A.68    SD03A.79 |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+| SC07A.47  SC08A.48   SP17A.69   SP18A.70   SP19A.71   SP20A.72             |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+| SC11A.51  SC12A.52   SP21A.73   SP22A.74   SP23A.75   SP24A.76    SD04A.80 |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+|                            PR16A.96   PR14A.94   PR12A.92   PR10A.90       |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+| TX04A.4    TX04A.12        VT24A.40   VT23A.39   VT22A.38   PR08A.88       |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+| TX03A.3    TX03A.11        VT21A.37   VT20A.36   VT19A.35   PR06A.86       |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+| TX02A.2    TX02A.10        VT18A.34   VT17A.33   VT16A.32   PR04A.84       |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+| TX01A.1    TX01A.9         VT15A.31   VT14A.30   VT13A.29   PR02B.82       |
+|                                                                            |
+|                                                                            |
+|                         |----------------------|                           |
+|                         |----------------------|                           |
+|----------------------------------------------------------------------------|
+
+
+Top
+---
+LVS-DG2
+(C) SNK 1998
+1998.6.5
+|----------------------------------------------------------------------------|
+|                                                                            |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+| TX01A.5    TX01A.13        VT03A.19   VT02A.18   VT01A.17   PR01B.81       |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+| TX02A.6    TX02A.14        VT06A.22   VT05A.21   VT04A.20   PR03A.83       |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+| TX03A.7    TX03A.15        VT09A.25   VT08A.24   VT07A.23   PR05A.85       |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+| TX04A.8    TX04A.16        VT12A.28   VT11A.27   VT10A.26   PR07A.87       |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+|                            PR15A.95   PR13A.93   PR11A.91   PR09A.89       |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+| SC05A.98  SC06A.100  SP09A.107  SP10A.111  SP11A.115  SP12A.119   SD02A.78 |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+| SC01A.97  SC02A.99   SP01A.105  SP02A.109  SP03A.113  SP04A.117   SD01A.77 |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+|----------------------------------------------------------------------------|
+
+Bottom
+------
+LVS-DG2
+|----------------------------------------------------------------------------|
+|                         |----------------------|                           |
+|                         |----------------------|                           |
+|                                                                            |
+|                                                                            |
+| SC03A.101 SC04A.103  SP13A.108  SP14A.112  SP15A.116  SP16A.120   SD03A.79 |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+| SC07A.102  SC08A.104  SP05A.106  SP06A.110  SP07A.114  SP08A.118  SD04A.80 |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+|                            PR16A.96   PR14A.94   PR12A.92   PR10A.90       |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+| TX04A.4    TX04A.12        VT24A.40   VT23A.39   VT22A.38   PR08A.88       |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+| TX03A.3    TX03A.11        VT21A.37   VT20A.36   VT19A.35   PR06A.86       |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+| TX02A.2    TX02A.10        VT18A.34   VT17A.33   VT16A.32   PR04A.84       |
+|                                                                            |
+|                                                                            |
+|                                                                            |
+| TX01A.1    TX01A.9         VT15A.31   VT14A.30   VT13A.29   PR02B.82       |
+|                                                                            |
+|                                                                            |
+|                         |----------------------|                           |
+|                         |----------------------|                           |
+|----------------------------------------------------------------------------|
+ Notes:
+      Not all ROM positions are populated, check the source for exact ROM usage.
       ROMs are mirrored. i.e. TX/PR/SP/SC etc ROMs line up on both sides of the PCB.
       There are 4 copies of each TX ROM on the PCB.
 
 
+----
+
+info from Daemon
+
+(MACHINE CODE ERROR):
+is given wehn you try to put a "RACING GAME" on a "FIGHTING" board
+
+there are various types of neogeo64 boards
+FIGHTING (revision 1 and 2)
+RACING
+SHOOTING
+and
+SAMURAI SHODOWN ONLY (Korean)
+
+fighting boards will ONLY play fighting games
+
+racing boards will ONLY play racing games (and you need the extra gimmicks
+to connect analog wheel and pedals, otherwise it gives you yet another
+error)
+
+shooter boards will only work with beast busters 2
+
+and the korean board only plays samurai shodown games (wont play buriki one
+or fatal fury for example)
+
 */
 
-
-
-
+#define MASTER_CLOCK	50000000
+#define LOADHNGTEXS 1
 #include "driver.h"
 #include "cpu/mips/mips3.h"
+#include "machine/random.h"
 
-/* no video yet */
+static data32_t *hng_mainram;
+static data32_t *hng_cart;
+static data32_t *hng64_dualport;
+
+WRITE32_HANDLER( hng64_videoram_w );
+
+/* DRIVER NOTE!!
+
+Hyper NeoGeo makes use of the MIPS MMU, supporting this is *very* messy at the
+moment.
+
+If you want something to run you must use the non-drm MIPs core and use the hack
+below...
+
+before the function
+INLINE void logonetlbentry(int which)   (src/cpu/mips/mips3.c)
+put
+extern void	hyperneogeo_mmu_hack(UINT64 vaddr,UINT64 paddr);
+and in the function (at the end) put
+hyperneogeo_mmu_hack(vaddr,paddr);
+
+
+to get buriki to show some tilemaps
+run the code to 800080f4
+patch the code there (nop the beq)
+its a wait loop (timer?)
+
+
+--
+
+why does fatal fury now crash? it used to give machine code error ...
+
+*/
+
+#if 0
+void hyperneogeo_mmu_hack(UINT64 vaddr,UINT64 paddr)
+{
+	printf("MMU %08x%08x %08x%08x\n",(UINT32)(vaddr >> 32), (UINT32)vaddr, (UINT32)(paddr >> 32), (UINT32)paddr );
+
+
+	if ((vaddr==U64(0x0000000000000000)) && (paddr==U64(0x0000004000000000)))
+	{
+		printf("Remapped 0 to vidram!\n");
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000000, 0x07fffff, 0, 0, hng64_videoram_w);
+	//	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000000, 0x07fffff, 0, 0, hng64_videoram_r);
+
+	}
+}
+#endif
 
 static data32_t* hng64_videoram;
 static struct tilemap *hng64_tilemap;
-
+static struct tilemap *hng64_tilemap2;
+static struct tilemap *hng64_tilemap3;
+static struct tilemap *hng64_tilemap4;
 
 WRITE32_HANDLER( hng64_videoram_w )
 {
+	int realoff;
 	COMBINE_DATA(&hng64_videoram[offset]);
-	tilemap_mark_tile_dirty(hng64_tilemap,offset);
+
+	realoff = offset*4;
+
+	if ((realoff>=0) && (realoff<0x10000))
+	{
+		tilemap_mark_tile_dirty(hng64_tilemap,offset&0x3fff);
+	}
+	else if ((realoff>=0x10000) && (realoff<0x20000))
+	{
+		tilemap_mark_tile_dirty(hng64_tilemap2,offset&0x3fff);
+	}
+	else if ((realoff>=0x20000) && (realoff<0x30000))
+	{
+		tilemap_mark_tile_dirty(hng64_tilemap3,offset&0x3fff);
+	}
+	else if ((realoff>=0x30000) && (realoff<0x40000))
+	{
+		tilemap_mark_tile_dirty(hng64_tilemap4,offset&0x3fff);
+	}
+
+	/* 400000 - 7fffff is what? */
 }
 
+/* 8x8 tiles, 4bpp layer */
 static void get_hng64_tile_info(int tile_index)
 {
-	int tileno;
+	int tileno,pal;
 	tileno = hng64_videoram[tile_index];
-	SET_TILE_INFO(0,tileno,0,0)
+	pal = hng64_videoram[tile_index]>>24;
+	SET_TILE_INFO((tileno&1)?0:1,(tileno>>1)&0xffff,pal,0)
 }
+
+/* 16x16 tiles, 8bpp layer */
+static void get_hng64_tile2_info(int tile_index)
+{
+	int tileno,pal;
+	tileno = hng64_videoram[tile_index+(0x10000/4)];
+	pal = hng64_videoram[tile_index+(0x10000/4)]>>24;
+	SET_TILE_INFO(3,(tileno&0xffffff)>>3,pal>>4,0)
+}
+
+/* 16x16 tiles, 8bpp layer */
+static void get_hng64_tile3_info(int tile_index)
+{
+	int tileno,pal;
+	tileno = hng64_videoram[tile_index+(0x20000/4)];
+	pal = hng64_videoram[tile_index+(0x20000/4)]>>24;
+	SET_TILE_INFO(3,(tileno&0xffffff)>>3,pal>>4,0)
+}
+
+/* 16x16 tiles, 8bpp layer */
+static void get_hng64_tile4_info(int tile_index)
+{
+	int tileno,pal;
+	tileno = hng64_videoram[tile_index+(0x30000/4)];
+	pal = hng64_videoram[tile_index+(0x30000/4)]>>24;
+	SET_TILE_INFO(3,(tileno&0xffffff)>>3,pal>>4,0)
+}
+
 
 VIDEO_START( hng64 )
 {
-	hng64_tilemap = tilemap_create(get_hng64_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE, 8, 8, 64,64); /* 64x64x4 = 0x4000 */
-
+	hng64_tilemap = tilemap_create(get_hng64_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8, 128,128);     /* 128x128x4 = 0x10000 */
+	hng64_tilemap2 = tilemap_create(get_hng64_tile2_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16, 128,128); /* 128x128x4 = 0x10000 */
+	hng64_tilemap3 = tilemap_create(get_hng64_tile3_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16, 128,128); /* 128x128x4 = 0x10000 */
+	hng64_tilemap4 = tilemap_create(get_hng64_tile4_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16, 128,128); /* 128x128x4 = 0x10000 */
+	tilemap_set_transparent_pen(hng64_tilemap,0);
+	tilemap_set_transparent_pen(hng64_tilemap2,0);
+	tilemap_set_transparent_pen(hng64_tilemap3,0);
+	tilemap_set_transparent_pen(hng64_tilemap4,0);
 	return 0;
 }
 
 VIDEO_UPDATE( hng64 )
 {
+//	int i;
+
+	fillbitmap(bitmap, get_black_pen(), 0);
+	tilemap_draw(bitmap,cliprect,hng64_tilemap4,0,0);
+	tilemap_draw(bitmap,cliprect,hng64_tilemap3,0,0);
+	tilemap_draw(bitmap,cliprect,hng64_tilemap2,0,0);
 	tilemap_draw(bitmap,cliprect,hng64_tilemap,0,0);
+
+//	for (i=0;i<256;i++)
+//	{
+//		palette_set_color(i^0xff,i,i,i);
+//	}
 }
 
-/* unknown */
-#define MASTER_CLOCK	50000000
+
+/*
+READ32_HANDLER( hng64_random_reader )
+{
+	return mame_rand()&0xffffffff;
+}
+*/
+
+READ32_HANDLER( hng64_comm_r )
+{
+	if(offset==0x1)
+		return 0xffffffff;
+	if(offset==0)
+		return 0xAAAA;
+	return 0x00000000;
+}
 
 
+
+static WRITE32_HANDLER( hng64_pal_w )
+{
+	int r,g,b;
+	COMBINE_DATA(&paletteram32[offset]);
+
+	b = ((paletteram32[offset] & 0x000000ff) >>0);
+	g = ((paletteram32[offset] & 0x0000ff00) >>8);
+	r = ((paletteram32[offset] & 0x00ff0000) >>16);
+
+	palette_set_color(offset,r,g,b);
+}
+
+/*
+
+<ElSemi> static READ32_HANDLER( hng64_ports )
+<ElSemi> {
+<ElSemi> 	if(offset==0x85b)
+<ElSemi> 		return 0x10;
+<ElSemi> 	if(offset==0x421)
+<ElSemi> 		return 2;
+<ElSemi> 	if(offset==0x441)	//interrupt request number
+<ElSemi> 		return 0;
+<ElSemi> 	return 0x00000001;
+<ElSemi> }
+
+*/
+
+static READ32_HANDLER( hng64_ports )
+{
+	static int togg=1;
+
+	if(offset==0x85b)
+		return 0x10;
+	if(offset==0x421)
+		return 2;
+ 	if(offset==0x441)
+ 	{	//interrupt request number
+//		togg^=1;
+ 		return togg;
+	}
+	return 0x00000000;
+}
+
+
+/* preliminary dma code, dma is used to copy program code -> ram */
+int hng_dma_start,hng_dma_dst,hng_dma_len;
+void hng64_do_dma (void)
+{
+
+
+	printf("Performing DMA Start %08x Len %08x Dst %08x\n",hng_dma_start, hng_dma_len, hng_dma_dst);
+
+	while (hng_dma_len>0)
+	{
+		UINT32 dat;
+
+		dat = program_read_dword(hng_dma_start);
+		program_write_dword(hng_dma_dst,dat);
+		hng_dma_start+=4;
+		hng_dma_dst+=4;
+		hng_dma_len--;
+	}
+
+	hng_dma_start+=4;
+	hng_dma_dst+=4;
+}
+
+
+WRITE32_HANDLER( hng_dma_start_w )
+{
+	logerror ("DMA Start Write %08x\n",data);
+	hng_dma_start = data;
+}
+
+WRITE32_HANDLER( hng_dma_dst_w )
+{
+	logerror ("DMA Dst Write %08x\n",data);
+	hng_dma_dst = data;
+}
+
+WRITE32_HANDLER( hng_dma_len_w )
+{
+	logerror ("DMA Len Write %08x\n",data);
+	hng_dma_len = data;
+	hng64_do_dma();
+
+}
+
+READ32_HANDLER( hng64_videoram_r )
+{
+	return hng64_videoram[offset];
+}
+
+WRITE32_HANDLER( hng64_mainram_w )
+{
+	COMBINE_DATA (&hng_mainram[offset]);
+}
+
+READ32_HANDLER( hng64_cart_r )
+{
+	return hng_cart[offset];
+}
+
+READ32_HANDLER( no_machine_error )
+{
+	return 0x01010101;
+}
+
+WRITE32_HANDLER( hng64_dualport_w )
+{
+	COMBINE_DATA (&hng64_dualport[offset]);
+}
+
+READ32_HANDLER( hng64_dualport_r )
+{
+//	printf("dualport read %08x\n",offset);
+	return hng64_dualport[offset];
+}
+
+/*
+
+<ElSemi> 0xE0000000 sound
+<ElSemi> 0xD0100000 3D bank A
+<ElSemi> 0xD0200000 3D bank B
+<ElSemi> 0xC0000000-0xC000C000 Sprite
+<ElSemi> 0xC0200000-0xC0204000 palette
+<ElSemi> 0xC0100000-0xC0180000 Tilemap
+<ElSemi> 0xBF808000-0xBF808800 Dualport ram
+<ElSemi> 0xBF800000-0xBF808000 S-RAM
+<ElSemi> 0x60000000-0x60001000 Comm dualport ram
+
+*/
 
 static ADDRESS_MAP_START( hng_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x0000ffff) AM_RAM
-	AM_RANGE(0x60000000, 0x60000fff) AM_RAM
 
-	AM_RANGE(0x80008000, 0x8000ffff) AM_RAM //? copies code here and runs it if cart present?
+	AM_RANGE(0xc0000000, 0xc000bfff) AM_RAM /* Sprites */
+	AM_RANGE(0xc0100000, 0xc017ffff) AM_READWRITE(MRA32_RAM, hng64_videoram_w) AM_BASE(&hng64_videoram) // tilemap
+	AM_RANGE(0xc0200000, 0xc0203fff) AM_READWRITE(MRA32_RAM,hng64_pal_w) AM_BASE(&paletteram32)// palette
 
-	AM_RANGE(0x9fc00000, 0x9fc7ffff) AM_ROM AM_SHARE(2)	/* bios mirror */
-	AM_RANGE(0xa0000000, 0xa03fffff) AM_RAM
-	AM_RANGE(0xa4000000, 0xa7ffffff) AM_WRITENOP AM_ROM AM_REGION(REGION_USER3,0) // reads HYPER NEOGEO 64 string from 0xa4000060 but does less if its present?
+	AM_RANGE(0xd0100000, 0xd015ffff) AM_RAM /* 3D Bank A */
+	AM_RANGE(0xd0200000, 0xd025ffff) AM_RAM /* 3D Bank B */
 
-	AM_RANGE(0xbf808000, 0xbf8087ff) AM_RAM
-	AM_RANGE(0xbfc00000, 0xbfc7ffff) AM_WRITENOP AM_ROM AM_SHARE(2) AM_REGION(REGION_USER1, 0)
-	AM_RANGE(0xc0000000, 0xc000bfff) AM_RAM
-	AM_RANGE(0xc0100000, 0xc017ffff) AM_RAM
+	AM_RANGE(0xe0200000, 0xe03fffff) AM_RAM /* Sound ?? */
 
-	AM_RANGE(0xc0200000, 0xc0203fff) AM_READWRITE(MRA32_RAM, hng64_videoram_w) AM_BASE(&hng64_videoram) /* "scroll RAM" (printf() is at bfc08228) */
+	AM_RANGE(0x60000000, 0x60000fff) AM_RAM /* Dualp */
+
+	AM_RANGE(0x60001000, 0x6000ffff) AM_READ(hng64_comm_r)
+
+	AM_RANGE(0x00000000, 0x00ffffff) AM_RAM AM_SHARE(3)
+	AM_RANGE(0x20000000, 0x20ffffff) AM_RAM AM_SHARE(3)
+	AM_RANGE(0x40000000, 0x40ffffff) AM_RAM AM_SHARE(3)
+	AM_RANGE(0x80000000, 0x80ffffff) AM_RAM AM_SHARE(3) AM_BASE(&hng_mainram)
+	AM_RANGE(0xa0000000, 0xa0ffffff) AM_RAM AM_SHARE(3)
 
 
-	AM_RANGE(0xd0100000, 0xd015ffff) AM_RAM
-	AM_RANGE(0xd0200000, 0xd025ffff) AM_RAM
-	AM_RANGE(0xe0200000, 0xe03fffff) AM_RAM
+	AM_RANGE(0x04000000, 0x05ffffff) AM_WRITENOP AM_ROM AM_SHARE(1) AM_REGION(REGION_USER3,0)
+	AM_RANGE(0x24000000, 0x25ffffff) AM_WRITENOP AM_ROM AM_SHARE(1)
+	AM_RANGE(0x44000000, 0x45ffffff) AM_WRITENOP AM_ROM AM_SHARE(1)
+	AM_RANGE(0x64000000, 0x65ffffff) AM_WRITENOP AM_ROM AM_SHARE(1)
+	AM_RANGE(0x84000000, 0x85ffffff) AM_WRITENOP AM_ROM AM_SHARE(1)
+	AM_RANGE(0xa4000000, 0xa5ffffff) AM_WRITENOP AM_ROM AM_SHARE(1)  AM_BASE(&hng_cart)// reads HYPER NEOGEO 64 string from 0xa4000060 but does less if its present?
+	AM_RANGE(0xc4000000, 0xc5ffffff) AM_WRITENOP AM_ROM AM_SHARE(1)
+	AM_RANGE(0xe4000000, 0xe5ffffff) AM_WRITENOP AM_ROM AM_SHARE(1)
+
+	AM_RANGE(0xBF700000, 0xBF702fff) AM_READ(hng64_ports)
+
+	/* SRAM? -- reads times etc.?  Shared? System Log? */
+	AM_RANGE(0xBF800000, 0xBF803fff) AM_RAM
+
+	AM_RANGE(0xBF701204, 0xBF701207) AM_WRITE(hng_dma_start_w);
+	AM_RANGE(0xBF701214, 0xBF701217) AM_WRITE(hng_dma_dst_w);
+	AM_RANGE(0xBF701224, 0xBF701227) AM_WRITE(hng_dma_len_w);
+
+	AM_RANGE(0xBF808600, 0xBF808603) AM_READ(no_machine_error) /* HACK .. prevent machine error (02 driving game, 01 fighting game) */
+
+	AM_RANGE(0xBF808000, 0xBF8087ff) AM_RAM AM_READWRITE(hng64_dualport_r, hng64_dualport_w) AM_BASE (&hng64_dualport) /* Dualport RAM */
+
+	AM_RANGE(0x1fc00000, 0x1fc7ffff) AM_WRITENOP AM_ROM AM_SHARE(2) AM_REGION(REGION_USER1, 0)
+	AM_RANGE(0x3fc00000, 0x3fc7ffff) AM_WRITENOP AM_ROM AM_SHARE(2)	/* bios mirror */
+	AM_RANGE(0x5fc00000, 0x5fc7ffff) AM_WRITENOP AM_ROM AM_SHARE(2)	/* bios mirror */
+	AM_RANGE(0x7fc00000, 0x7fc7ffff) AM_WRITENOP AM_ROM AM_SHARE(2)	/* bios mirror */
+	AM_RANGE(0x9fc00000, 0x9fc7ffff) AM_WRITENOP AM_ROM AM_SHARE(2)	/* bios mirror */
+	AM_RANGE(0xbfc00000, 0xbfc7ffff) AM_WRITENOP AM_ROM AM_SHARE(2)	/* bios mirror */
+	AM_RANGE(0xdfc00000, 0xdfc7ffff) AM_WRITENOP AM_ROM AM_SHARE(2)	/* bios mirror */
+	AM_RANGE(0xffc00000, 0xffc7ffff) AM_WRITENOP AM_ROM AM_SHARE(2)	/* bios mirror */
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( hng64 )
 INPUT_PORTS_END
 
+
+
+/* the 4bpp gfx encoding is annoying */
+
+static struct GfxLayout hng64_4_even_layout =
+{
+	8,8,
+	RGN_FRAC(1,1),
+	4,
+	{ 0,1,2,3 },
+	{ 40, 44, 8,12,  32,36,    0,4},
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64 },
+	8*64
+};
+
+static struct GfxLayout hng64_4_odd_layout =
+{
+	8,8,
+	RGN_FRAC(1,1),
+	4,
+	{ 0,1,2,3 },
+	{  56,60, 24, 28,  48,52,   16, 20 },
+
+
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64 },
+	8*64
+};
 
 
 static struct GfxLayout hng64_layout =
@@ -372,6 +812,8 @@ static struct GfxLayout hng64_16_layout =
 	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,8*64,9*64,10*64,11*64,12*64,13*64,14*64,15*64 },
 	32*64
 };
+
+#if LOADHNGTEXS
 
 /* not really much point in this, but it allows us to see the 1024x1024 texture pages */
 static struct GfxLayout hng64_tex_layout =
@@ -514,15 +956,19 @@ static struct GfxLayout hng64_tex_layout =
 	},
 	1024*8192
 };
+#endif
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &hng64_layout,     0x0, 2 }, /* scrolltiles */
-	{ REGION_GFX1, 0, &hng64_16_layout,  0x0, 2 }, /* scroll tiles */
+	{ REGION_GFX1, 0, &hng64_4_even_layout,     0x0, 0x20 }, /* scrolltiles */
+	{ REGION_GFX1, 0, &hng64_4_odd_layout,     0x0, 0x20 }, /* scrolltiles */
+	{ REGION_GFX1, 0, &hng64_layout,     0x0, 0x20 }, /* scrolltiles */
+	{ REGION_GFX1, 0, &hng64_16_layout,  0x0, 0x20 }, /* scroll tiles */
 	{ REGION_GFX2, 0, &hng64_layout,     0x0, 2 }, /* sprite tiles */
 	{ REGION_GFX2, 0, &hng64_16_layout,  0x0, 2 }, /* sprite tiles */
-
+#if LOADHNGTEXS
 	{ REGION_GFX3, 0, &hng64_tex_layout, 0x0, 2 }, /* texture pages */
+#endif
 	{ -1 } /* end of array */
 };
 
@@ -537,50 +983,287 @@ static struct mips3_config config =
 	16384				/* data cache size */
 };
 
+static void irq_stop(int param)
+{
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
+}
+
+static INTERRUPT_GEN( irq_start )
+{
+	cpunum_set_input_line(0, 0, ASSERT_LINE);
+	timer_set(TIME_IN_USEC(50), 0, irq_stop);
+}
+
+
+MACHINE_INIT(hyperneo)
+{
+	/* HACK .. put ram here on reset .. we end up replacing it with the MMU hack later so the game doesn't clear its own ram with thecode in it!!..... */
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000000, 0x0ffffff, 0, 0, hng64_mainram_w);
+}
 
 MACHINE_DRIVER_START( hng64 )
-
 	/* basic machine hardware */
-	MDRV_CPU_ADD(R4600BE, MASTER_CLOCK/2)  /* actually R4300 ? */
+	MDRV_CPU_ADD(R4600BE, MASTER_CLOCK*2)  /* actually R4300 ? */
 	MDRV_CPU_CONFIG(config)
 	MDRV_CPU_PROGRAM_MAP(hng_map, 0)
-//	MDRV_CPU_VBLANK_INT(irq0_start,1)
+	MDRV_CPU_VBLANK_INT(irq_start,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_MACHINE_INIT(hyperneo)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(768, 512)
-	MDRV_VISIBLE_AREA(0, 767, 0, 511)
-	MDRV_PALETTE_LENGTH(0x200)
+	MDRV_SCREEN_SIZE(1024, 1024)
+//	MDRV_VISIBLE_AREA(0, 1023, 0, 1023) // to see the whole textures
+	MDRV_VISIBLE_AREA(0, 511, 0, 447)
+	MDRV_PALETTE_LENGTH(0x1000)
 
 	MDRV_VIDEO_START(hng64)
 	MDRV_VIDEO_UPDATE(hng64)
 MACHINE_DRIVER_END
 
 ROM_START( hng64 )
-	ROM_REGION32_BE( 0x0100000, REGION_USER1, 0 ) /* 512k for R4000 BIOS code */
+	ROM_REGION32_BE( 0x0100000, REGION_USER1, 0 ) /* 512k for R4300 BIOS code */
 	ROM_LOAD ( "brom1.bin", 0x000000, 0x080000,  CRC(a30dd3de) SHA1(3e2fd0a56214e6f5dcb93687e409af13d065ea30) )
 	ROM_REGION( 0x0100000, REGION_USER2, 0 ) /* unknown / unused bios roms */
 	ROM_LOAD ( "from1.bin", 0x000000, 0x080000,  CRC(6b933005) SHA1(e992747f46c48b66e5509fe0adf19c91250b00c7) )
 	ROM_LOAD ( "rom1.bin",  0x000000, 0x01ff32,  CRC(4a6832dc) SHA1(ae504f7733c2f40450157cd1d3b85bc83fac8569) )
 ROM_END
 
-
-ROM_START( buriki )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* dummy region for R4000 */
+/* roads edge might need a different bios (driving board bios?) */
+ROM_START( roadedge )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* dummy region for R4300 */
 
 	/* BIOS */
-	ROM_REGION32_BE( 0x0100000, REGION_USER1, 0 ) /* 512k for R4000 BIOS code */
+	ROM_REGION32_BE( 0x0100000, REGION_USER1, 0 ) /* 512k for R4300 BIOS code */
 	ROM_LOAD ( "brom1.bin", 0x000000, 0x080000,  CRC(a30dd3de) SHA1(3e2fd0a56214e6f5dcb93687e409af13d065ea30) )
 	ROM_REGION( 0x0100000, REGION_USER2, 0 ) /* unknown / unused bios roms */
 	ROM_LOAD ( "from1.bin", 0x000000, 0x080000,  CRC(6b933005) SHA1(e992747f46c48b66e5509fe0adf19c91250b00c7) )
 	ROM_LOAD ( "rom1.bin",  0x000000, 0x01ff32,  CRC(4a6832dc) SHA1(ae504f7733c2f40450157cd1d3b85bc83fac8569) )
 	/* END BIOS */
 
-	ROM_REGION32_LE( 0x1800000, REGION_USER3, 0 ) /* Program Code, mapped at ??? maybe banked?  LE? */
+	ROM_REGION32_LE( 0x2000000, REGION_USER3, 0 ) /* Program Code, mapped at ??? maybe banked?  LE? */
+	ROM_LOAD32_WORD( "001pr01b.81", 0x0000000, 0x400000, CRC(effbac30) SHA1(c1bddf3e511a8950f65ac7e452f81dbc4b7fd977) )
+	ROM_LOAD32_WORD( "001pr02b.82", 0x0000002, 0x400000, CRC(b9aa4ad3) SHA1(9ab3c896dbdc45560b7127486e2db6ca3b15a057) )
+
+	/* Scroll Characters 8x8x8 / 16x16x8 */
+	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
+	ROM_LOAD32_BYTE( "001sc01a.41", 0x0000000, 0x400000, CRC(084395a1) SHA1(8bfea8fd3981fd45dcc04bd74840a5948aaf06a8) )
+	ROM_LOAD32_BYTE( "001sc02a.42", 0x0000001, 0x400000, CRC(51dd19e3) SHA1(eeb3634294a049a357a75ee00aa9fce65b737395) )
+	ROM_LOAD32_BYTE( "001sc03a.43", 0x0000002, 0x400000, CRC(0b6f3e19) SHA1(3b6dfd0f0633b0d8b629815920edfa39d92336bf) )
+	ROM_LOAD32_BYTE( "001sc04a.44", 0x0000003, 0x400000, CRC(256c8c1c) SHA1(85935eea3722ec92f8d922f527c2e049c4185aa3) )
+
+	/* Sprite Characters - 8x8x8 / 16x16x8 */
+	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	ROM_LOAD32_BYTE( "001sp01a.53",0x0000000, 0x400000, CRC(7a469453) SHA1(3738ca76f538243bb23ffd23a42b2a0558882889) )
+	ROM_LOAD32_BYTE( "001sp02a.54",0x0000001, 0x400000, CRC(6b9a3de0) SHA1(464c652f7b193326e3a871dfe751dd83c14284eb) )
+	ROM_LOAD32_BYTE( "001sp03a.55",0x0000002, 0x400000, CRC(efbbd391) SHA1(7447c481ba6f9ba154d48a4b160dd24157891d35) )
+	ROM_LOAD32_BYTE( "001sp04a.56",0x0000003, 0x400000, CRC(1a0eb173) SHA1(a69b786a9957197d1cc950ab046c57c18ca07ea7) )
+
+#if LOADHNGTEXS
+	/* Textures - 1024x1024x8 pages? */
+	ROM_REGION( 0x1000000, REGION_GFX3, 0 )
+	/* note: same roms are at different positions on the board, repeated a total of 4 times*/
+	ROM_LOAD( "001tx01a.1", 0x0000000, 0x400000, CRC(f6539bb9) SHA1(57fc5583d56846be93d6f5784acd20fc149c70a5) )
+	ROM_LOAD( "001tx02a.2", 0x0400000, 0x400000, CRC(f1d139d3) SHA1(f120243f4d55f38b10bf8d1aa861cdc546a24c80) )
+	ROM_LOAD( "001tx03a.3", 0x0800000, 0x400000, CRC(22a375bd) SHA1(d55b62843d952930db110bcf3056a98a04a7adf4) )
+	ROM_LOAD( "001tx04a.4", 0x0c00000, 0x400000, CRC(288a5bd5) SHA1(24e05db681894eb31cdc049cf42c1f9d7347bd0c) )
+	ROM_LOAD( "001tx01a.5", 0x0000000, 0x400000, CRC(f6539bb9) SHA1(57fc5583d56846be93d6f5784acd20fc149c70a5) )
+	ROM_LOAD( "001tx02a.6", 0x0400000, 0x400000, CRC(f1d139d3) SHA1(f120243f4d55f38b10bf8d1aa861cdc546a24c80) )
+	ROM_LOAD( "001tx03a.7", 0x0800000, 0x400000, CRC(22a375bd) SHA1(d55b62843d952930db110bcf3056a98a04a7adf4) )
+	ROM_LOAD( "001tx04a.8", 0x0c00000, 0x400000, CRC(288a5bd5) SHA1(24e05db681894eb31cdc049cf42c1f9d7347bd0c) )
+	ROM_LOAD( "001tx01a.9", 0x0000000, 0x400000, CRC(f6539bb9) SHA1(57fc5583d56846be93d6f5784acd20fc149c70a5) )
+	ROM_LOAD( "001tx02a.10",0x0400000, 0x400000, CRC(f1d139d3) SHA1(f120243f4d55f38b10bf8d1aa861cdc546a24c80) )
+	ROM_LOAD( "001tx03a.11",0x0800000, 0x400000, CRC(22a375bd) SHA1(d55b62843d952930db110bcf3056a98a04a7adf4) )
+	ROM_LOAD( "001tx04a.12",0x0c00000, 0x400000, CRC(288a5bd5) SHA1(24e05db681894eb31cdc049cf42c1f9d7347bd0c) )
+	ROM_LOAD( "001tx01a.13",0x0000000, 0x400000, CRC(f6539bb9) SHA1(57fc5583d56846be93d6f5784acd20fc149c70a5) )
+	ROM_LOAD( "001tx02a.14",0x0400000, 0x400000, CRC(f1d139d3) SHA1(f120243f4d55f38b10bf8d1aa861cdc546a24c80) )
+	ROM_LOAD( "001tx03a.15",0x0800000, 0x400000, CRC(22a375bd) SHA1(d55b62843d952930db110bcf3056a98a04a7adf4) )
+	ROM_LOAD( "001tx04a.16",0x0c00000, 0x400000, CRC(288a5bd5) SHA1(24e05db681894eb31cdc049cf42c1f9d7347bd0c) )
+
+	ROM_REGION( 0x0c00000, REGION_GFX4, 0 ) /* Vertex / 3d roms? */
+	/* they seem to interleave together, but there are only 3, x, y and z maybe? */
+	ROM_LOAD( "001vt01a.17", 0x0000000, 0x400000, CRC(1a748e1b) SHA1(376d40baa3b94890d4740045d053faf208fe43db) )
+	ROM_LOAD( "001vt02a.18", 0x0400000, 0x400000, CRC(449f94d0) SHA1(2228690532d82d2661285aeb4260689b027597cb) )
+	ROM_LOAD( "001vt03a.19", 0x0800000, 0x400000, CRC(50ac8639) SHA1(dd2d3689466990a7c479bb8f11bd930ea45e47b5) )
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* Sound Samples? */
+	ROM_LOAD( "001sd01a.77", 0x0000000, 0x400000, CRC(a851da99) SHA1(2ba24feddafc5fadec155cdb7af305fdffcf6690) )
+	ROM_LOAD( "001sd02a.78", 0x0400000, 0x400000, CRC(ca5cec15) SHA1(05e91a602728a048d61bf86aa8d43bb4186aeac1) )
+#endif
+ROM_END
+
+
+
+ROM_START( fatfurwa )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* dummy region for R4300 */
+
+	/* BIOS */
+	ROM_REGION32_BE( 0x0100000, REGION_USER1, 0 ) /* 512k for R4300 BIOS code */
+	ROM_LOAD ( "brom1.bin", 0x000000, 0x080000,  CRC(a30dd3de) SHA1(3e2fd0a56214e6f5dcb93687e409af13d065ea30) )
+	ROM_REGION( 0x0100000, REGION_USER2, 0 ) /* unknown / unused bios roms */
+	ROM_LOAD ( "from1.bin", 0x000000, 0x080000,  CRC(6b933005) SHA1(e992747f46c48b66e5509fe0adf19c91250b00c7) )
+	ROM_LOAD ( "rom1.bin",  0x000000, 0x01ff32,  CRC(4a6832dc) SHA1(ae504f7733c2f40450157cd1d3b85bc83fac8569) )
+	/* END BIOS */
+
+	ROM_REGION32_LE( 0x2000000, REGION_USER3, 0 ) /* Program Code, mapped at ??? maybe banked?  LE? */
+	ROM_LOAD32_WORD( "006pr01a.81", 0x0000000, 0x400000, CRC(3830efa1) SHA1(9d8c941ccb6cbe8d138499cf9d335db4ac7a9ec0) )
+	ROM_LOAD32_WORD( "006pr02a.82", 0x0000002, 0x400000, CRC(8d5de84e) SHA1(e3ae014263f370c2836f62ab323f1560cb3a9cf0) )
+	ROM_LOAD32_WORD( "006pr03a.83", 0x0800000, 0x400000, CRC(c811b458) SHA1(7d94e0df501fb086b2e5cf08905d7a3adc2c6472) )
+	ROM_LOAD32_WORD( "006pr04a.84", 0x0800002, 0x400000, CRC(de708d6c) SHA1(2c9848e7bbf61c574370f9ecab5f5a6ba63339fd) )
+
+	/* Scroll Characters 8x8x8 / 16x16x8 */
+	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
+	ROM_LOAD32_BYTE( "006sc01a.97", 0x0000000, 0x400000, CRC(acb15ea7) SHA1(13c63dfce883ff7665454d008525299b964a81c1) )
+	ROM_LOAD32_BYTE( "006sc02a.99", 0x0000001, 0x400000, CRC(22e9bb07) SHA1(5a120cc899c6139ddf4e964bdbd361672b8a17b8) )
+	ROM_LOAD32_BYTE( "006sc03a.101",0x0000002, 0x400000, CRC(883b58a5) SHA1(2a080b8c0ec4a0a9fdf2a0e7825cbc9c920b31ec) )
+	ROM_LOAD32_BYTE( "006sc04a.103",0x0000003, 0x400000, CRC(e1836fc5) SHA1(690a9027a83e47bfb34003d902baaff145810f76) )
+	ROM_LOAD32_BYTE( "006sc05a.98", 0x1000000, 0x400000, CRC(2613a88f) SHA1(ec700f748f2e9fd869502f20025b093b1d5285a1) )
+	ROM_LOAD32_BYTE( "006sc06a.100",0x1000001, 0x400000, CRC(81f68058) SHA1(49e7dff8ff5635b4c0620702b776b1056b36e897) )
+	ROM_LOAD32_BYTE( "006sc07a.102",0x1000002, 0x400000, CRC(99f6019a) SHA1(17e77fee85a2dd44d6fe08afb612fe13dcaa2c95) )
+	ROM_LOAD32_BYTE( "006sc08a.104",0x1000003, 0x400000, CRC(99ee68df) SHA1(faf3d4d1977fb47383b09841718694988154d33d) )
+
+	/* Sprite Characters - 8x8x8 / 16x16x8 */
+	ROM_REGION( 0x2000000, REGION_GFX2, 0 )
+	ROM_LOAD32_BYTE( "006sp01a.105",0x0000000, 0x400000, CRC(8cb1adb3) SHA1(f3381bf8b3902f704cd46b9282a454d150817862) )
+	ROM_LOAD32_BYTE( "006sp02a.109",0x0000001, 0x400000, CRC(1ec51219) SHA1(1b2ea63b0e8a8aa954086cb491d269d83274f770) )
+	ROM_LOAD32_BYTE( "006sp03a.113",0x0000002, 0x400000, CRC(06941143) SHA1(35eb6bc42648ddc2338229b97deedfcba92552ae) )
+	ROM_LOAD32_BYTE( "006sp04a.117",0x0000003, 0x400000, CRC(99ac3ba5) SHA1(8017c17b06b1d9e5cccf2d660185f9cc9ca382bb) )
+	ROM_LOAD32_BYTE( "006sp05a.106",0x1000000, 0x400000, CRC(12274339) SHA1(d4774ae81e811cb4d0c266ab1e7c1b91aa927120) )
+	ROM_LOAD32_BYTE( "006sp06a.110",0x1000001, 0x400000, CRC(7f6d3e1c) SHA1(e1ac64fbd40020d261197b9bab4ec9dea2904553) )
+	ROM_LOAD32_BYTE( "006sp07a.114",0x1000002, 0x400000, CRC(b87cfa92) SHA1(49f3df49065ad764c362858213bff327970eb858) )
+	ROM_LOAD32_BYTE( "006sp08a.118",0x1000003, 0x400000, CRC(6e22ca56) SHA1(4a00de27525cd962f64c3a63f64357003a4e28b7) )
+
+#if LOADHNGTEXS
+	/* Textures - 1024x1024x8 pages? */
+	ROM_REGION( 0x1000000, REGION_GFX3, 0 )
+	/* note: same roms are at different positions on the board, repeated a total of 4 times*/
+	ROM_LOAD( "006tx01a.1", 0x0000000, 0x400000, CRC(ab4c1747) SHA1(2c097bd38f1a92c4b6534992f6bf29fd6dc2d265) )
+	ROM_LOAD( "006tx02a.2", 0x0400000, 0x400000, CRC(7854a229) SHA1(dba23c1b793dd0308ac1088c819543fff334a57e) )
+	ROM_LOAD( "006tx03a.3", 0x0800000, 0x400000, CRC(94edfbd1) SHA1(d4004bb1273e6091608856cb4b151e9d81d5ed30) )
+	ROM_LOAD( "006tx04a.4", 0x0c00000, 0x400000, CRC(82d61652) SHA1(28303ae9e2545a4cb0b5843f9e73407754f41e9e) )
+	ROM_LOAD( "006tx01a.5", 0x0000000, 0x400000, CRC(ab4c1747) SHA1(2c097bd38f1a92c4b6534992f6bf29fd6dc2d265) )
+	ROM_LOAD( "006tx02a.6", 0x0400000, 0x400000, CRC(7854a229) SHA1(dba23c1b793dd0308ac1088c819543fff334a57e) )
+	ROM_LOAD( "006tx03a.7", 0x0800000, 0x400000, CRC(94edfbd1) SHA1(d4004bb1273e6091608856cb4b151e9d81d5ed30) )
+	ROM_LOAD( "006tx04a.8", 0x0c00000, 0x400000, CRC(82d61652) SHA1(28303ae9e2545a4cb0b5843f9e73407754f41e9e) )
+	ROM_LOAD( "006tx01a.9", 0x0000000, 0x400000, CRC(ab4c1747) SHA1(2c097bd38f1a92c4b6534992f6bf29fd6dc2d265) )
+	ROM_LOAD( "006tx02a.10",0x0400000, 0x400000, CRC(7854a229) SHA1(dba23c1b793dd0308ac1088c819543fff334a57e) )
+	ROM_LOAD( "006tx03a.11",0x0800000, 0x400000, CRC(94edfbd1) SHA1(d4004bb1273e6091608856cb4b151e9d81d5ed30) )
+	ROM_LOAD( "006tx04a.12",0x0c00000, 0x400000, CRC(82d61652) SHA1(28303ae9e2545a4cb0b5843f9e73407754f41e9e) )
+	ROM_LOAD( "006tx01a.13",0x0000000, 0x400000, CRC(ab4c1747) SHA1(2c097bd38f1a92c4b6534992f6bf29fd6dc2d265) )
+	ROM_LOAD( "006tx02a.14",0x0400000, 0x400000, CRC(7854a229) SHA1(dba23c1b793dd0308ac1088c819543fff334a57e) )
+	ROM_LOAD( "006tx03a.15",0x0800000, 0x400000, CRC(94edfbd1) SHA1(d4004bb1273e6091608856cb4b151e9d81d5ed30) )
+	ROM_LOAD( "006tx04a.16",0x0c00000, 0x400000, CRC(82d61652) SHA1(28303ae9e2545a4cb0b5843f9e73407754f41e9e) )
+
+	ROM_REGION( 0x0c00000, REGION_GFX4, 0 ) /* Vertex / 3d roms? */
+	/* they seem to interleave together, but there are only 3, x, y and z maybe? */
+	ROM_LOAD( "006vt01a.17", 0x0000000, 0x400000, CRC(5c20ed4c) SHA1(df679f518292d70b9f23d2bddabf975d56b96910) )
+	ROM_LOAD( "006vt02a.18", 0x0400000, 0x400000, CRC(150eb717) SHA1(9acb067346eb386256047c0f1d24dc8fcc2118ca) )
+	ROM_LOAD( "006vt03a.19", 0x0800000, 0x400000, CRC(021cfcaf) SHA1(fb8b5f50d3490b31f0a4c3e6d3ae1b98bae41c97) )
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* Sound Samples? */
+	ROM_LOAD( "006sd01a.77", 0x0000000, 0x400000, CRC(790efb6d) SHA1(23ddd3ee8ae808e58cbcaf92a9ef56d3ca6289b5) )
+	ROM_LOAD( "006sd02a.78", 0x0400000, 0x400000, CRC(f7f020c7) SHA1(b72fde4ff6384b80166a3cb67d31bf7afda750bc) )
+	ROM_LOAD( "006sd03a.79", 0x0800000, 0x400000, CRC(1a678084) SHA1(f52efb6145102d289f332d8341d89a5d231ba003) )
+	ROM_LOAD( "006sd04a.80", 0x0800000, 0x400000, CRC(3c280a5c) SHA1(9d3fc78e18de45382878268db47ff9d9716f1505) )
+#endif
+ROM_END
+
+ROM_START( sams64_2 )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* dummy region for R4300 */
+
+	/* BIOS */
+	ROM_REGION32_BE( 0x0100000, REGION_USER1, 0 ) /* 512k for R4300 BIOS code */
+	ROM_LOAD ( "brom1.bin", 0x000000, 0x080000,  CRC(a30dd3de) SHA1(3e2fd0a56214e6f5dcb93687e409af13d065ea30) )
+	ROM_REGION( 0x0100000, REGION_USER2, 0 ) /* unknown / unused bios roms */
+	ROM_LOAD ( "from1.bin", 0x000000, 0x080000,  CRC(6b933005) SHA1(e992747f46c48b66e5509fe0adf19c91250b00c7) )
+	ROM_LOAD ( "rom1.bin",  0x000000, 0x01ff32,  CRC(4a6832dc) SHA1(ae504f7733c2f40450157cd1d3b85bc83fac8569) )
+	/* END BIOS */
+
+	ROM_REGION32_LE( 0x2000000, REGION_USER3, 0 ) /* Program Code, mapped at ??? maybe banked?  LE? */
+	ROM_LOAD32_WORD( "mrom81", 0x0000000, 0x400000, CRC(a69d7700) SHA1(a580783a109bc3e24248d70bcd67f62dd7d8a5dd) )
+	ROM_LOAD32_WORD( "mrom82", 0x0000002, 0x400000, CRC(38b9e6b3) SHA1(d1dad8247d920cc66854a0096e1c7845842d2e1c) )
+	ROM_LOAD32_WORD( "mrom83", 0x0800000, 0x400000, CRC(0bc738a8) SHA1(79893b0e1c4a31e02ab385c4382684245975ae8f) )
+	ROM_LOAD32_WORD( "mrom84", 0x0800002, 0x400000, CRC(6b504852) SHA1(fcdcab432162542d249818a6cd15b8f2e8230f97) )
+	ROM_LOAD32_WORD( "mrom85", 0x1000000, 0x400000, CRC(32a743d3) SHA1(4088b930a1a4d6224a0939ef3942af1bf605cdb5) )
+	ROM_LOAD32_WORD( "mrom86", 0x1000002, 0x400000, CRC(c09fa615) SHA1(697d6769c16b3c8f73a6df4a1e268ec40cb30d51) )
+	ROM_LOAD32_WORD( "mrom87", 0x1800000, 0x400000, CRC(44286ad3) SHA1(1f890c74c0da0d34940a880468e68f7fb1417813) )
+	ROM_LOAD32_WORD( "mrom88", 0x1800002, 0x400000, CRC(d094eb67) SHA1(3edc8d608c631a05223e1d05157cd3daf2d6597a) )
+
+	/* Scroll Characters 8x8x8 / 16x16x8 */
+	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
+	ROM_LOAD32_BYTE( "mrom97", 0x0000000, 0x400000, CRC(ee60d2ae) SHA1(32ba0f22f491b24aa9d4280d8cadc3ea3cf2eb5a) )
+	ROM_LOAD32_BYTE( "mrom99", 0x0000001, 0x400000, CRC(7f9ab937) SHA1(3ef61a96954843bb12982e788f03ff505c8b39bb) )
+	ROM_LOAD32_BYTE( "mrom101",0x0000002, 0x400000, CRC(385df4d9) SHA1(219a12fcd5bf9c1a7a46098b3b17a38b013d6a5b) )
+	ROM_LOAD32_BYTE( "mrom103",0x0000003, 0x400000, CRC(8fb5a467) SHA1(787cebb7f0a458805772ff9d61e7c1a62964bcf6) )
+	ROM_LOAD32_BYTE( "mrom98", 0x1000000, 0x400000, CRC(3e483f3b) SHA1(d6227bb2590d729b3605dfd8b4b702675c130328) )
+	ROM_LOAD32_BYTE( "mrom100",0x1000001, 0x400000, CRC(cf1bf2c3) SHA1(a32271dfb23afd8876ab8b62760f9b729fdaef26) )
+	ROM_LOAD32_BYTE( "mrom102",0x1000002, 0x400000, CRC(38276d56) SHA1(5c604e0224484d8de05db47ee06358a01f72ef04) )
+	ROM_LOAD32_BYTE( "mrom104",0x1000003, 0x400000, CRC(7ee513d0) SHA1(7f18813f70da2a458d6eb3a416a198a76b23440a) )
+
+	/* Sprite Characters - 8x8x8 / 16x16x8 */
+	ROM_REGION( 0x2000000, REGION_GFX2, 0 )
+	ROM_LOAD32_BYTE( "mrom105",0x0000000, 0x400000, CRC(ad65853b) SHA1(852138685fed981cf44fb19cc56a8e74f9095438) )
+	ROM_LOAD32_BYTE( "mrom109",0x0000001, 0x400000, CRC(63da691c) SHA1(adec69c091d22825216a284d02b125245645c831))
+	ROM_LOAD32_BYTE( "mrom113",0x0000002, 0x400000, CRC(da9beaee) SHA1(ade0aba3c673c65a92e73fb5aff42d1e901a113b) )
+	ROM_LOAD32_BYTE( "mrom117",0x0000003, 0x400000, CRC(8757ad8d) SHA1(dacdf52b4cf0aaa1869c2062a24bfe88d60d276d) )
+	ROM_LOAD32_BYTE( "mrom106",0x1000000, 0x400000, CRC(d8b1fb26) SHA1(7da767d8e817c52afc416ccfe8caf30f66c233ef) )
+	ROM_LOAD32_BYTE( "mrom110",0x1000001, 0x400000, CRC(87ed72a0) SHA1(0d7db4dc9f15a0377a83f020ffbe81621ca77cff) )
+	ROM_LOAD32_BYTE( "mrom114",0x1000002, 0x400000, CRC(8eb3c173) SHA1(d5763c19a3e2fd93f7784d957e7401c9152c40de) )
+	ROM_LOAD32_BYTE( "mrom118",0x1000003, 0x400000, CRC(05486fbc) SHA1(747d9ae03ce999be4ab697753e93c90ea85b7d44) )
+
+#if LOADHNGTEXS
+	/* Textures - 1024x1024x8 pages? */
+	ROM_REGION( 0x1000000, REGION_GFX3, 0 )
+	/* note: same roms are at different positions on the board, repeated a total of 4 times*/
+	ROM_LOAD( "mrom1", 0x0000000, 0x400000, CRC(05a4ceb7) SHA1(2dfc46a70c0a957ed0931a4c4df90c341aafff70) )
+	ROM_LOAD( "mrom2", 0x0400000, 0x400000, CRC(b7094c69) SHA1(aed9a624166f6f1a2eb4e746c61f9f46f1929283) )
+	ROM_LOAD( "mrom3", 0x0800000, 0x400000, CRC(34764891) SHA1(cd6ea663ae28b7f6ac1ede2f9922afbb35b915b4) )
+	ROM_LOAD( "mrom4", 0x0c00000, 0x400000, CRC(6be50882) SHA1(1f99717cfa69076b258a0c52d66be007fd820374) )
+	ROM_LOAD( "mrom5", 0x0000000, 0x400000, CRC(05a4ceb7) SHA1(2dfc46a70c0a957ed0931a4c4df90c341aafff70) )
+	ROM_LOAD( "mrom6", 0x0400000, 0x400000, CRC(b7094c69) SHA1(aed9a624166f6f1a2eb4e746c61f9f46f1929283) )
+	ROM_LOAD( "mrom7", 0x0800000, 0x400000, CRC(34764891) SHA1(cd6ea663ae28b7f6ac1ede2f9922afbb35b915b4) )
+	ROM_LOAD( "mrom8", 0x0c00000, 0x400000, CRC(6be50882) SHA1(1f99717cfa69076b258a0c52d66be007fd820374) )
+	ROM_LOAD( "mrom9", 0x0000000, 0x400000, CRC(05a4ceb7) SHA1(2dfc46a70c0a957ed0931a4c4df90c341aafff70) )
+	ROM_LOAD( "mrom10",0x0400000, 0x400000, CRC(b7094c69) SHA1(aed9a624166f6f1a2eb4e746c61f9f46f1929283) )
+	ROM_LOAD( "mrom11",0x0800000, 0x400000, CRC(34764891) SHA1(cd6ea663ae28b7f6ac1ede2f9922afbb35b915b4) )
+	ROM_LOAD( "mrom12",0x0c00000, 0x400000, CRC(6be50882) SHA1(1f99717cfa69076b258a0c52d66be007fd820374) )
+	ROM_LOAD( "mrom13",0x0000000, 0x400000, CRC(05a4ceb7) SHA1(2dfc46a70c0a957ed0931a4c4df90c341aafff70) )
+	ROM_LOAD( "mrom14",0x0400000, 0x400000, CRC(b7094c69) SHA1(aed9a624166f6f1a2eb4e746c61f9f46f1929283) )
+	ROM_LOAD( "mrom15",0x0800000, 0x400000, CRC(34764891) SHA1(cd6ea663ae28b7f6ac1ede2f9922afbb35b915b4) )
+	ROM_LOAD( "mrom16",0x0c00000, 0x400000, CRC(6be50882) SHA1(1f99717cfa69076b258a0c52d66be007fd820374) )
+
+	ROM_REGION( 0x1800000, REGION_GFX4, 0 ) /* Vertex / 3d roms? */
+	/* they seem to interleave together, but there are only 3, x, y and z maybe? */
+	ROM_LOAD( "mrom17", 0x0000000, 0x400000, CRC(48a61479) SHA1(ef982b1ecc6dfca2ad989391afcc1b3d1e7fe652) )
+	ROM_LOAD( "mrom18", 0x0400000, 0x400000, CRC(ba9100c8) SHA1(f7704fb8e5310ea7d0e6ae6b8935717ec9119b6d) )
+	ROM_LOAD( "mrom19", 0x0800000, 0x400000, CRC(f54a28de) SHA1(c445cf7fee71a516065cf37e05b898208f48b17e) )
+	ROM_LOAD( "mrom20", 0x0c00000, 0x400000, CRC(57ad79c7) SHA1(bc382317323c1f8a31b69ae3100d3bba6b5d0838) )
+	ROM_LOAD( "mrom21", 0x1000000, 0x400000, CRC(49c82bec) SHA1(09255279edb9a204bbe1cce8cef58d5c81e86d1f) )
+	ROM_LOAD( "mrom22", 0x1400000, 0x400000, CRC(7ba05b6c) SHA1(729c1d182d74998dd904b587a2405f55af9825e0) )
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* Sound Samples? */
+	ROM_LOAD( "mrom77", 0x0000000, 0x400000, CRC(8f68150f) SHA1(a1e5efdfd1ed29f81e25c8da669851ddb7b0c826) )
+	ROM_LOAD( "mrom78", 0x0400000, 0x400000, CRC(6b4da6a0) SHA1(8606c413c129635bdaaa37254edbfd19b10426bb) )
+	ROM_LOAD( "mrom79", 0x0800000, 0x400000, CRC(a529fab3) SHA1(8559d402c8f66f638590b8b57ec9efa775010c96) )
+	ROM_LOAD( "mrom80", 0x0800000, 0x400000, CRC(dca95ead) SHA1(39afdfba0e5262b524f25706a96be00e5d14548e) )
+#endif
+ROM_END
+
+ROM_START( buriki )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* dummy region for R4300 */
+
+	/* BIOS */
+	ROM_REGION32_BE( 0x0100000, REGION_USER1, 0 ) /* 512k for R4300 BIOS code */
+	ROM_LOAD ( "brom1.bin", 0x000000, 0x080000,  CRC(a30dd3de) SHA1(3e2fd0a56214e6f5dcb93687e409af13d065ea30) )
+	ROM_REGION( 0x0100000, REGION_USER2, 0 ) /* unknown / unused bios roms */
+	ROM_LOAD ( "from1.bin", 0x000000, 0x080000,  CRC(6b933005) SHA1(e992747f46c48b66e5509fe0adf19c91250b00c7) )
+	ROM_LOAD ( "rom1.bin",  0x000000, 0x01ff32,  CRC(4a6832dc) SHA1(ae504f7733c2f40450157cd1d3b85bc83fac8569) )
+	/* END BIOS */
+
+	ROM_REGION32_LE( 0x2000000, REGION_USER3, 0 ) /* Program Code, mapped at ??? maybe banked?  LE? */
 	ROM_LOAD32_WORD( "007pr01b.81", 0x0000000, 0x400000, CRC(a31202f5) SHA1(c657729b292d394ced021a0201a1c5608a7118ba) )
 	ROM_LOAD32_WORD( "007pr02b.82", 0x0000002, 0x400000, CRC(a563fed6) SHA1(9af9a021beb814e35df968abe5a99225a124b5eb) )
 	ROM_LOAD32_WORD( "007pr03a.83", 0x0800000, 0x400000, CRC(da5f6105) SHA1(5424cf5289cef66e301e968b4394e551918fe99b) )
@@ -610,6 +1293,7 @@ ROM_START( buriki )
 	ROM_LOAD32_BYTE( "007sp07a.114",0x1000002, 0x400000, CRC(5caa1cc9) SHA1(3e40b10ea3bcf1239d0015da4be869632b805ddd) )
 	ROM_LOAD32_BYTE( "007sp08a.118",0x1000003, 0x400000, CRC(7a158c67) SHA1(d66f4920a513208d45b908a1934d9afb894debf1) )
 
+#if LOADHNGTEXS
 	/* Textures - 1024x1024x8 pages? */
 	ROM_REGION( 0x1000000, REGION_GFX3, 0 )
 	/* note: same roms are at different positions on the board, repeated a total of 4 times*/
@@ -629,7 +1313,6 @@ ROM_START( buriki )
 	ROM_LOAD( "007tx02a.14",0x0400000, 0x400000, CRC(bc05d5fd) SHA1(84e3fafcebdeb1e2ffae80785949c973a14055d8) )
 	ROM_LOAD( "007tx03a.15",0x0800000, 0x400000, CRC(da9484fb) SHA1(f54b669a66400df00bf25436e5fd5c9bf68dbd55) )
 	ROM_LOAD( "007tx04a.16",0x0c00000, 0x400000, CRC(02aa3f46) SHA1(1fca89c70586f8ebcdf669ecac121afa5cdf623f) )
-
 	ROM_REGION( 0x0c00000, REGION_GFX4, 0 ) /* Vertex / 3d roms? */
 	/* they seem to interleave together, but there are only 3, x, y and z maybe? */
 	ROM_LOAD( "007vt01a.17", 0x0000000, 0x400000, CRC(f78a0376) SHA1(fde4ddd4bf326ae5f1ed10311c237b13b62e060c) )
@@ -641,10 +1324,17 @@ ROM_START( buriki )
 	ROM_LOAD( "007sd02a.78", 0x0400000, 0x400000, CRC(c65f1dd5) SHA1(7f504c585a10c1090dbd1ac31a3a0db920c992a0) )
 	ROM_LOAD( "007sd03a.79", 0x0800000, 0x400000, CRC(356f25c8) SHA1(5250865900894232960686f40c5da35b3868b78c) )
 	ROM_LOAD( "007sd04a.80", 0x0800000, 0x400000, CRC(dabfbbad) SHA1(7d58d5181705618e0e2d69c6fdb81b9b3d2b9e0f) )
+#endif
 ROM_END
 
 /* Bios */
 GAMEX( 1997, hng64,  0,        hng64, hng64, 0,     ROT0, "SNK", "Hyper NeoGeo 64 Bios", GAME_NOT_WORKING|GAME_NO_SOUND|NOT_A_DRIVER )
 
 /* Games */
-GAMEX( 1999, buriki, hng64,    hng64, hng64, hng64, ROT0, "SNK", "Buriki One", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAMEX( 1997, roadedge, hng64,  hng64, hng64, hng64, ROT0, "SNK", "Roads Edge / Round Trip (rev.B)", GAME_NOT_WORKING|GAME_NO_SOUND ) /* 001 */
+/* 002 Samurai Shodown 64 */
+/* 003 Xtreme Rally / Offbeat Racer */
+/* 004 Beast Busters 2nd Nightmare */
+GAMEX( 1998, sams64_2, hng64,  hng64, hng64, hng64, ROT0, "SNK", "Samurai Shodown: Warrior's Rage", GAME_NOT_WORKING|GAME_NO_SOUND ) /* 005 Samurai Shodown: Warrior's Rage */
+GAMEX( 1998, fatfurwa, hng64,  hng64, hng64, hng64, ROT0, "SNK", "Fatal Fury: Wild Ambition (rev.A)", GAME_NOT_WORKING|GAME_NO_SOUND ) /* 006 */
+GAMEX( 1999, buriki,   hng64,  hng64, hng64, hng64, ROT0, "SNK", "Buriki One (rev.B)", GAME_NOT_WORKING|GAME_NO_SOUND ) /* 007 */
