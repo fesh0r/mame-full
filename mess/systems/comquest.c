@@ -243,7 +243,7 @@ static struct MachineDriver machine_driver_comquest =
   not cdp1802
   not tms9900?
   not z80
-  not 6502
+  not 6502, mitsubishi 740
   not i86
   not 6809
   not 68008?
@@ -251,6 +251,10 @@ static struct MachineDriver machine_driver_comquest =
   not t11
   not arm
   not 8039
+  not tms370
+  not lh5801
+  not fujitsu mb89150
+  not epson e0c88
 */
 			4000000, //?
 			comquest_readmem,comquest_writemem,0,0,
