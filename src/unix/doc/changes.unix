@@ -2,6 +2,10 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.79.2
+	- Enabled support for GNU make's -j option, which can especially benefit
+	  SMP and SMT machines.  (Arnaud G. Gibert)
+
 Release 0.79.1, 19 February 2004
 	- Everything from MAME 0.79 (http://x.mame.net/changes-mame.html) and 
 	  MESS 0.79 (http://x.mame.net/changes-mess.html).

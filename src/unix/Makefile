@@ -108,10 +108,15 @@ MY_CFLAGS = -I. -I.. -I../.. -I../../mess $(CFLAGS) $(CFLAGS.$(ARCH))
 ##############################################################################
 # *** begin of the real makefile
 ##############################################################################
-all:	$(OBJDIRS) $(MY_TARGET)
+#all:	$(OBJDIRS) $(MY_TARGET)
+
+all:
+	$(MAKE) $(MY_TARGET)
 
 clean:
 	rm -f $(MY_TARGET) $(OBJS)
+
+objdirs: $(OBJDIRS)
 
 $(MY_TARGET): $(OBJS)
 	$(CC_COMMENT) @echo 'Archiving $@ ...'
@@ -119,7 +124,7 @@ $(MY_TARGET): $(OBJS)
 	$(CC_COMPILE) $(RANLIB) $@
 
 $(OBJDIRS):
-	-mkdir $@
+	-mkdir -p $@
 
 $(OBJDIR)/%.o: %.c xmame.h
 	$(CC_COMMENT) @echo 'Compiling src/unix/$< ...'

@@ -516,7 +516,7 @@ static int alsa_dsp_set_params(struct alsa_dsp_priv_data *priv)
 	if (snd_pcm_hw_params_set_access(priv->pcm_handle, hw_params,
 					 SND_PCM_ACCESS_RW_INTERLEAVED) < 0) {
 		fprintf(stderr_file,
-			"Alsa error: interleaved access mode non available\n");
+			"Alsa error: interleaved access mode not available\n");
 		return 0;
 	}
 

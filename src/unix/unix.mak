@@ -147,7 +147,10 @@ ifdef ZLIB
 ZLIB    = src/unix/contrib/cutzlib-1.2.1/libz.a
 endif
 
-all: $(ZLIB) objdirs osdepend $(NAME).$(DISPLAY_METHOD)
+#all: $(ZLIB) objdirs osdepend $(NAME).$(DISPLAY_METHOD)
+
+all: objdirs osdepend-objdirs
+	$(MAKE) $(MAKEFLAGS) $(NAME).$(DISPLAY_METHOD)
 
 # CPU core include paths
 VPATH=src $(wildcard src/cpu/*)
@@ -210,7 +213,7 @@ endif
 ifdef XMAME_NET
 MY_CFLAGS += -DXMAME_NET
 endif
-   
+
 # CONFIG are the cflags used to build the unix tree, this is where most defines
 # go
 CONFIG = $(MY_CFLAGS) $(CFLAGS.$(DISPLAY_METHOD)) -DNAME='\"x$(TARGET)\"' \
@@ -298,18 +301,21 @@ endif
 
 #we remove $(OBJ)/vidhrdw/vector.o from $(COREOBJS) since we have our own
 #build rules for this object because it is display dependent.
-OBJS  += $(subst $(OBJ)/vidhrdw/vector.o, ,$(COREOBJS)) $(DRVLIBS) \
- $(OBJ)/unix.$(DISPLAY_METHOD)/osdepend.a $(OBJ)/unix.$(DISPLAY_METHOD)/vector.o
+OBJS += $(subst $(OBJ)/vidhrdw/vector.o, ,$(COREOBJS)) $(DRVLIBS)
+
+OSDEPEND = $(OBJ)/unix.$(DISPLAY_METHOD)/osdepend.a
+
+VECTOR = $(OBJ)/unix.$(DISPLAY_METHOD)/vector.o
 
 MY_OBJDIRS = $(CORE_OBJDIRS) $(sort $(OBJDIRS))
 
 
 ##############################################################################
-# Begin of the real makefile.
+# Start of the real makefile.
 ##############################################################################
-$(NAME).$(DISPLAY_METHOD): $(OBJS)
+$(NAME).$(DISPLAY_METHOD): $(ZLIB) $(OBJS) $(OSDEPEND) $(VECTOR)
 	$(CC_COMMENT) @echo 'Linking $@ ...'
-	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $(OBJS) $(MY_LIBS)
+	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $(OBJS) $(OSDEPEND) $(VECTOR) $(MY_LIBS)
 
 tools: tooldir objdirs osdepend $(ZLIB) $(OBJDIRS) $(TOOLS)
 
@@ -333,7 +339,18 @@ chdman: $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o
 	$(CC_COMMENT) @echo Linking $@...
 	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $^ -lz
 
-osdepend:
+osdepend-objdirs:
+	$(CC_COMMENT) @echo 'Creating the unix obj directories...'
+	$(CC_COMPILE) \
+	 ( \
+	 cd src/unix; \
+	  $(MAKE) CC="$(CC)" RANLIB="$(RANLIB)" ARCH="$(ARCH)" \
+	  DISPLAY_METHOD="$(DISPLAY_METHOD)" CFLAGS="$(CONFIG)" \
+	  CC_COMMENT="$(CC_COMMENT)" CC_COMPILE="$(CC_COMPILE)" \
+	  AR_OPTS="$(AR_OPTS)" OBJ="$(OBJ)" objdirs\
+	 )
+
+$(OSDEPEND):
 	$(CC_COMMENT) @echo 'Compiling in the unix directory...'
 	$(CC_COMPILE) \
 	 ( \
@@ -408,7 +425,7 @@ $(OBJ)/cpu/m68000/68020.o:  $(OBJ)/cpu/m68000/68020.asm
 	$(CC_COMPILE) nasm $(NASM_FMT) -o $@ $(subst -D,-d,$(ASMDEFS)) $<
 
 #some tricks, since vector.o these days is display method-dependent:
-$(OBJ)/unix.$(DISPLAY_METHOD)/vector.o: src/vidhrdw/vector.c
+$(VECTOR): src/vidhrdw/vector.c
 	$(CC_COMMENT) @echo 'Compiling $< ...'
 	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
 
@@ -423,12 +440,12 @@ doc/xmame-doc.txt: doc/xmame-doc.sgml
 	sgml2html  -l en -p a4             xmame-doc.sgml; \
 	sgml2latex -l en -p a4 --output=ps xmame-doc.sgml; \
 	rm -f xmame-doc.lyx~
-	
+
 doc/x$(TARGET)rc.dist: all src/unix/xmamerc-keybinding-notes.txt
 	./x$(TARGET).$(DISPLAY_METHOD) -noloadconfig -showconfig | \
 	 grep -v loadconfig | tr "\033" \# > doc/x$(TARGET)rc.dist
 	cat src/unix/xmamerc-keybinding-notes.txt >> doc/x$(TARGET)rc.dist
-	
+
 doc/gamelist.$(TARGET): all
 	./x$(TARGET).$(DISPLAY_METHOD) -listgamelistheader > doc/gamelist.$(TARGET)
 	./x$(TARGET).$(DISPLAY_METHOD) -listgamelist >> doc/gamelist.$(TARGET)
