@@ -9,6 +9,11 @@ Whats new:
 - Worked around a MSFT compiler bug that caused the emulation to stop on the
   disclaimer screens. [Nate Woods]
 
+- This is not a part of the MESS32 release, it is worth talking about:  There
+  is now a MESS32 picture archive being hosted at the following URL:
+
+    http://tkmame.retrogames.com/new/rom_images/mess/
+  
 ----------
 0.37 BETA 4
 ------------

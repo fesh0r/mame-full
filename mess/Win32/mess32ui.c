@@ -229,7 +229,7 @@ static BOOL MessIsImageSelected(int imagenum)
 
 /* List view Column text */
 static char *mess_column_names[MESS_COLUMN_MAX] = {
-    "Image",
+    "Software",
     "Manufacturer",
     "Year",
     "Playable"
