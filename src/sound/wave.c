@@ -22,7 +22,8 @@ struct wave_file {
 	INT16 record_sample;	/* current sample value for playback */
 	int display;			/* display tape status on screen */
 	int offset; 			/* offset set by device_seek function */
-	int playpos;			/* sample position for playback */
+	int play_pos;			/* sample position for playback */
+	int record_pos; 		/* sample position for recording */
 	int counter;			/* sample fraction counter for playback */
 	int smpfreq;			/* sample frequency from the WAV header */
 	int resolution; 		/* sample resolution in bits/sample (8 or 16) */
@@ -271,10 +272,10 @@ static int wave_write(int id)
 	if( !w->file )
         return WAVE_ERR;
 
-    while( w->playpos < w->samples )
+	while( w->play_pos < w->samples )
     {
-		*((INT16 *)w->data + w->playpos) = 0;
-		w->playpos++;
+		*((INT16 *)w->data + w->play_pos) = 0;
+		w->play_pos++;
 	}
 
     filesize =
@@ -402,124 +403,62 @@ static int wave_write(int id)
 
 static void wave_display(int id)
 {
-    static int tapepos = 0;
+	static int tape_pos = 0;
     struct wave_file *w = &wave[id];
 
-    if( abs(w->playpos - tapepos) > w->smpfreq / 4 )
+	if( abs(w->play_pos - tape_pos) > w->smpfreq / 4 )
 	{
         char buf[32];
 		int x, y, n, t0, t1;
 
         x = Machine->uixmin + id * Machine->uifontwidth * 16 + 1;
 		y = Machine->uiymin + Machine->uiheight - 9;
-		n = (w->playpos * 4 / w->smpfreq) & 3;
-        t0 = w->playpos / w->smpfreq;
+		n = (w->play_pos * 4 / w->smpfreq) & 3;
+		t0 = w->play_pos / w->smpfreq;
 		t1 = w->samples / w->smpfreq;
 		sprintf(buf, "%c%c %2d:%02d [%2d:%02d]", n*2+2,n*2+3, t0/60,t0%60, t1/60,t1%60);
 		ui_text(Machine->scrbitmap,buf, x, y);
-		tapepos = w->playpos;
+		tape_pos = w->play_pos;
     }
 }
-
 
 static void wave_sound_update(int id, INT16 *buffer, int length)
 {
 	struct wave_file *w = &wave[id];
-	if( !w->timer )
+	int pos = w->play_pos;
+	int count = w->counter;
+	INT16 sample = w->play_sample;
+
+    if( !w->timer )
 	{
 		while( length-- > 0 )
-            *buffer++ = 0;
+			*buffer++ = sample;
 		return;
 	}
-	/* write mode? */
-	if( w->mode )
+
+    while (length--)
 	{
-        if( w->resolution == 16 )
-        {
-			while( length-- > 0 )
+		count -= w->smpfreq;
+		while (count <= 0)
+		{
+			count += Machine->sample_rate;
+			if (w->resolution == 16)
+				sample = *((INT16 *)w->data + pos);
+			else
+				sample = *((INT8 *)w->data + pos)*256;
+			if (++pos >= w->samples)
 			{
-				w->counter -= w->smpfreq;
-				while( w->counter <= 0 )
-				{
-					w->counter += Machine->sample_rate;
-					*((INT16 *)w->data + w->playpos) = w->record_sample;
-					if( ++w->playpos >= w->samples )
-					{
-						w->samples += w->smpfreq;
-						w->length = w->samples * w->resolution / 8;
-						w->data = realloc(w->data, w->length);
-						if( !w->data )
-						{
-							logerror("WAVE realloc(%d) failed\n", w->length);
-							timer_remove(w->timer);
-							memset(w, 0, sizeof(struct wave_file));
-						}
-					}
-					w->play_sample = w->record_sample;
-				}
-				*buffer++ = w->mute ? 0 : w->play_sample;
+				pos = w->samples - 1;
+				if (pos < 0)
+					pos = 0;
 			}
-		}
-		else
-		{
-			while( length-- > 0 )
-			{
-				w->counter -= w->smpfreq;
-				while( w->counter <= 0 )
-				{
-					w->counter += Machine->sample_rate;
-					*((INT8 *)w->data + w->playpos) = w->record_sample / 256;
-					if( ++w->playpos >= w->samples )
-					{
-						w->samples += w->smpfreq;
-						w->length = w->samples * w->resolution / 8;
-						w->data = realloc(w->data, w->length);
-						if( !w->data )
-						{
-							logerror("WAVE realloc(%d) failed\n", w->length);
-							timer_remove(w->timer);
-							memset(w, 0, sizeof(struct wave_file));
-						}
-					}
-					w->play_sample = w->record_sample;
-				}
-				*buffer++ = w->mute ? 0 : w->play_sample;
-            }
         }
+		*buffer++ = sample;
 	}
-	else
-	{
-		if( w->resolution == 16 )
-		{
-			while( length-- > 0 )
-			{
-				w->counter -= w->smpfreq;
-				while( w->counter <= 0 )
-				{
-					w->counter += Machine->sample_rate;
-					if( ++w->playpos >= w->samples )
-						w->playpos = w->samples - 1;
-					w->play_sample = *((INT16 *)w->data + w->playpos);
-				}
-				*buffer++ = w->mute ? 0 : w->play_sample;
-            }
-        }
-		else
-		{
-			while( length-- > 0 )
-			{
-				w->counter -= w->smpfreq;
-				while( w->counter <= 0 )
-				{
-					w->counter += Machine->sample_rate;
-					if( ++w->playpos >= w->samples )
-						w->playpos = w->samples - 1;
-					w->play_sample = 256 * *((INT8 *)w->data + w->playpos);
-				}
-				*buffer++ = w->mute ? 0 : w->play_sample;
-			}
-		}
-	}
+	w->counter = count;
+	w->play_pos = pos;
+	w->play_sample = sample;
+		
 	if( w->display )
 		wave_display(id);
 }
@@ -639,7 +578,7 @@ int wave_status(int id, int newstatus)
 		if( !newstatus && w->timer )
 		{
 			if( w->timer )
-				w->offset += timer_timeelapsed(w->timer) * w->smpfreq;
+				w->offset += (timer_timeelapsed(w->timer) * w->smpfreq + 0.5);
 			timer_remove(w->timer);
 			w->timer = NULL;
 			bitmap_dirty = 1;
@@ -838,7 +777,7 @@ void wave_close(int id)
 	{
 		if( w->channel != -1 )
 			stream_update(w->channel, 0);
-		w->samples = w->playpos;
+		w->samples = w->play_pos;
 		w->length = w->samples * w->resolution / 8;
 		timer_remove(w->timer);
 		w->timer = NULL;
@@ -860,7 +799,8 @@ void wave_close(int id)
 		w->file = NULL;
 	}
 	w->offset = 0;
-	w->playpos = 0;
+	w->play_pos = 0;
+	w->record_pos = 0;
 	w->counter = 0;
 	w->smpfreq = 0;
 	w->resolution = 0;
@@ -886,14 +826,14 @@ int wave_seek(int id, int offset, int whence)
 		break;
 	case SEEK_CUR:
 		if( w->timer )
-			pos = w->offset + timer_timeelapsed(w->timer) * w->smpfreq;
+			pos = w->offset + (timer_timeelapsed(w->timer) * w->smpfreq + 0.5);
 		w->offset = pos + offset;
 		if( w->offset < 0 )
 			w->offset = 0;
 		if( w->offset >= w->length )
 			w->offset = w->length - 1;
 	}
-	w->playpos = w->offset;
+	w->play_pos = w->record_pos = w->offset;
 
     if( w->timer )
 	{
@@ -909,7 +849,7 @@ int wave_tell(int id)
 	struct wave_file *w = &wave[id];
     UINT32 pos = 0;
 	if( w->timer )
-		pos = w->offset + timer_timeelapsed(w->timer) * w->smpfreq;
+		pos = w->offset + (timer_timeelapsed(w->timer) * w->smpfreq + 0.5);
 	if( pos >= w->samples )
 		pos = w->samples -1;
     return pos;
@@ -929,14 +869,16 @@ int wave_input(int id)
 
     if( w->timer )
 	{
-		pos = w->offset + timer_timeelapsed(w->timer) * w->smpfreq;
+		pos = w->offset + (timer_timeelapsed(w->timer) * w->smpfreq + 0.5);
 		if( pos >= w->samples )
 			pos = w->samples - 1;
-        w->playpos = pos;
-		if( w->resolution == 16 )
-			level = *((INT16 *)w->data + pos);
-		else
-			level = 256 * *((INT8 *)w->data + pos);
+		if( pos >= 0 )
+		{
+			if( w->resolution == 16 )
+				level = *((INT16 *)w->data + pos);
+			else
+				level = 256 * *((INT8 *)w->data + pos);
+		}
     }
 	if( w->display )
 		wave_display(id);
@@ -962,11 +904,14 @@ void wave_output(int id, int data)
 
     if( w->timer )
     {
-		pos = w->offset + timer_timeelapsed(w->timer) * w->smpfreq;
-        while( pos >= w->samples )
+		pos = w->offset + (timer_timeelapsed(w->timer) * w->smpfreq + 0.5);
+		if( pos >= w->samples )
         {
-            /* add one second of data */
-            w->samples += w->smpfreq;
+			/* add at least one second of data */
+			if( pos - w->samples < w->smpfreq )
+				w->samples += w->smpfreq;
+			else
+				w->samples = pos;	/* more than one second */
             w->length = w->samples * w->resolution / 8;
             w->data = realloc(w->data, w->length);
             if( !w->data )
@@ -976,10 +921,13 @@ void wave_output(int id, int data)
                 return;
             }
         }
-        while( w->playpos < pos )
+		while( w->record_pos < pos )
         {
-            *((INT16 *)w->data + w->playpos) = w->record_sample;
-            w->playpos++;
+			if( w->resolution == 16 )
+				*((INT16 *)w->data + w->record_pos) = w->record_sample;
+			else
+				*((INT8 *)w->data + w->record_pos) = w->record_sample / 256;
+			w->record_pos++;
         }
     }
 
@@ -999,7 +947,7 @@ int wave_input_chunk(int id, void *dst, int count)
 
     if( w->timer )
 	{
-        pos = w->offset + timer_timeelapsed(w->timer) * w->smpfreq;
+		pos = w->offset + (timer_timeelapsed(w->timer) * w->smpfreq + 0.5);
 		if( pos >= w->samples )
 			pos = w->samples - 1;
 	}
@@ -1028,7 +976,7 @@ int wave_output_chunk(int id, void *src, int count)
 
     if( w->timer )
 	{
-        pos = w->offset + timer_timeelapsed(w->timer) * w->smpfreq;
+		pos = w->offset + (timer_timeelapsed(w->timer) * w->smpfreq + 0.5);
 		if( pos >= w->length )
 			pos = w->length - 1;
 	}
