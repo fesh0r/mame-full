@@ -72,6 +72,9 @@ int vectrex_init_cart (int id)
 	 */
 	memset (memory_region(REGION_CPU1), 1, 0x8000);
 
+	if (id == 0)
+		artwork_use_device_art(IO_CARTSLOT, id, "mine");
+
 	cartfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
 	if (cartfile)
 	{
@@ -84,7 +87,6 @@ int vectrex_init_cart (int id)
 			logerror("Invalid image!\n");
 			return INIT_FAIL;
 		}
-
 	}
 	else
 	{
@@ -93,7 +95,6 @@ int vectrex_init_cart (int id)
 			logerror("Vectrex - Cart specified but not found!\n");
 			return INIT_FAIL;
 		}
-
 	}
 	vectrex_imager_angles = narrow_escape_angles;
 

@@ -35,9 +35,9 @@ static int rsdos_diskimage_deletefile(IMAGE *img, const char *fname);
 #define RSDOS_OPTION_FTYPE	0
 #define RSDOS_OPTION_ASCII	1
 
-FLOPPYMODULE_BEGIN( coco_rsdos_jv1 )
-	FMOD_HUMANNAME("Tandy CoCo RS-DOS disk image (JV1 image format)")
-	FMOD_FORMAT( coco_jv1 )
+FLOPPYMODULE_BEGIN( coco_rsdos_jvc )
+	FMOD_HUMANNAME("Tandy CoCo RS-DOS disk image (JVC image format)")
+	FMOD_FORMAT( coco_jvc )
 	FMOD_EOLN( EOLN_CR )
 	FMOD_FLAGS( IMGMODULE_FLAG_FILENAMES_PREFERUCASE )
 	FMOD_ENUMERATE( rsdos_diskimage_beginenum, rsdos_diskimage_nextenum, rsdos_diskimage_closeenum)
@@ -62,7 +62,7 @@ FLOPPYMODULE_BEGIN( coco_rsdos_jv1 )
 FLOPPYMODULE_END
 
 FLOPPYMODULE_BEGIN( coco_rsdos_vdk )
-	FMOD_IMPORT_FROM( coco_rsdos_jv1 )
+	FMOD_IMPORT_FROM( coco_rsdos_jvc )
 	FMOD_HUMANNAME("Tandy CoCo RS-DOS disk image (VDK image format)")
 	FMOD_FORMAT( coco_vdk )
 FLOPPYMODULE_END

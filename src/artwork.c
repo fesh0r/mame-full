@@ -2002,6 +2002,26 @@ static void render_ui_overlay(struct mame_bitmap *bitmap, UINT32 *dirty, const r
 	}
 }
 
+#ifdef MESS
+static char *override_artfile;
+
+void artwork_use_device_art(int device_type, int device_id, const char *defaultartfile)
+{
+	const char *fname;
+	fname = device_filename(device_type, device_id);
+	if (fname)
+	{
+		override_artfile = osd_strip_extension(osd_basename(fname));
+	}
+	else
+	{
+		override_artfile = malloc(strlen(defaultartfile)+1);
+		if (override_artfile)
+			strcpy(override_artfile, defaultartfile);
+	}
+}
+#endif
+
 
 
 #if 0
@@ -2042,6 +2062,15 @@ static int artwork_load(const struct GameDriver *driver, int width, int height)
 	{
 		if (driver->name)
 		{
+#ifdef MESS
+			if (override_artfile)
+			{
+				sprintf(filename, "%s.art", override_artfile);
+				free(override_artfile);
+				override_artfile = NULL;
+			}
+			else	/* else do it the MAME way... */
+#endif /* MESS */
 			sprintf(filename, "%s.art", driver->name);
 			artfile = osd_fopen(driver->name, filename, OSD_FILETYPE_ARTWORK, 0);
 			if (artfile)

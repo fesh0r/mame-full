@@ -32,7 +32,7 @@ CARTMODULE(vc20,     "Vc20 Cartridge",					NULL)
 CARTMODULE(vectrex,  "Vectrex Cartridge",				"bin")
 CARTMODULE(vic20,    "Commodore Vic-20 Cartridge",		"a0")
 
-IMAGEMODULE_EXTERN(coco_rsdos_jv1);		/* CoCo RS-DOS disks */
+IMAGEMODULE_EXTERN(coco_rsdos_jvc);		/* CoCo RS-DOS disks */
 IMAGEMODULE_EXTERN(coco_rsdos_vdk);		/* CoCo RS-DOS disks */
 IMAGEMODULE_EXTERN(cococas);			/* CoCo cassettes */
 IMAGEMODULE_EXTERN(msdos);				/* FAT/MSDOS diskett images */
@@ -88,7 +88,7 @@ IMAGEMODULE_EXTERN(ti99);		/* TI99 floppy */
 
 static const ImageModule_ctor module_ctors[] =
 {
-	IMAGEMODULE_DECL(coco_rsdos_jv1),
+	IMAGEMODULE_DECL(coco_rsdos_jvc),
 	IMAGEMODULE_DECL(coco_rsdos_vdk),
 	IMAGEMODULE_DECL(cococas),
 	IMAGEMODULE_DECL(msdos),

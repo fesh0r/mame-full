@@ -108,7 +108,7 @@ static MACHINE_DRIVER_START( vectrex )
 	MDRV_VISIBLE_AREA(0, 500, 0, 600)
 	MDRV_PALETTE_LENGTH(256 + 32768)
 
-	MDRV_VIDEO_START( vectrex )
+	MDRV_VIDEO_START( vectrex )	
 	MDRV_VIDEO_UPDATE( vectrex )
 
 	/* sound hardware */

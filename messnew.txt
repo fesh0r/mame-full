@@ -51,6 +51,10 @@ System Driver Changes:
 - [SNES] Rewrite of the driver.  Still at a preliminary stage though. Some
   games are playable, others run but aren't playable, however most don't work.
   [Anthony Kruize]
+  
+- [VECTREX] Because of the MAME core's new artwork system, new .art files are
+  now needed in conjunction with the normal Vectrex .png files to specify the
+  artwork layout. [Nate Woods]
 
 Source Changes:
 ---------------
@@ -85,6 +89,9 @@ Source Changes:
   with a predefined list of colors. [Nate Woods]
   
 - Readded record/playback support. [Nate Woods]
+
+- Added artwork_use_device_art() to the MAME core to support Vectrex style
+  artwork. [Nate Woods]
 
 - Fixed bugs #192 and #200 - remember that:
 

@@ -108,9 +108,15 @@ static int cocovdk_encode_header(void *h, UINT8 tracks, UINT8 sides, UINT8 sec_p
 	return INIT_PASS;
 }
 
-/* ----------------------------------------------------------------------- */
+/* ----------------------------------------------------------------------- 
+ * JVC (Jeff Vavasour CoCo) format
+ *
+ * Detailed in this bitnet.listserv.coco post
+ *
+ * http://groups.google.com/groups?hl=en&lr=&ie=UTF-8&selm=Y%25TJ7.48312%24Ud.2359177%40news1.rdc1.bc.home.com
+ * ----------------------------------------------------------------------- */
 
-BLOCKDEVICE_FORMATDRIVER_START( coco_jv1 )
+BLOCKDEVICE_FORMATDRIVER_START( coco_jvc )
 	BDFD_EXTENSION( "dsk" )
 	BDFD_TRACKS_OPTION( 35 )
 	BDFD_TRACKS_OPTION( 40 )
@@ -136,7 +142,9 @@ BLOCKDEVICE_FORMATDRIVER_START( coco_vdk )
 	BDFD_FILLER_BYTE( 0xFF )
 BLOCKDEVICE_FORMATDRIVER_END
 
+/* ----------------------------------------------------------------------- */
+
 BLOCKDEVICE_FORMATCHOICES_START( coco )
-	BDFC_CHOICE( coco_jv1 )
+	BDFC_CHOICE( coco_jvc )
 	BDFC_CHOICE( coco_vdk )
 BLOCKDEVICE_FORMATCHOICES_END
