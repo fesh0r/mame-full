@@ -386,7 +386,7 @@ TESTDRIVER( c128d )		/* Commodore 128D - NTSC 						  */
 	DRIVER( pcmda ) 	/* 1987 PC with MDA (MGA aka Hercules)			  */
 	DRIVER( pc )		/* 1987 PC with CGA								  */
 TESTDRIVER( bondwell )	/* 1985	Bondwell (CGA)                         	  */
-TESTDRIVER( europc )	/* 1988	Schneider Euro PC (CGA or Hercules)		  */
+	DRIVER( europc )	/* 1988	Schneider Euro PC (CGA or Hercules)		  */
 
 	/* pc junior */
 TESTDRIVER( ibmpcjr )	/*      IBM PC Jr								  */
@@ -397,7 +397,6 @@ TESTDRIVER( ibmpcjr )	/*      IBM PC Jr								  */
 	DRIVER( pc1512 )	/* 1986 Amstrad PC1512 (CGA compatible)			  */
 	DRIVER( pc1640 )	/* 1987 Amstrad PC1640 (EGA compatible)			  */
 
-TESTDRIVER( xtcga ) 	/* 1983 IBMPC-XT (CGA, MF2 Keyboard)			  */
 	DRIVER( xtvga ) 	/* 198? PC-XT (VGA, MF2 Keyboard)				  */
 
 	/* at */
@@ -589,6 +588,8 @@ TESTDRIVER( comquest )	/* Comquest Plus German							*/
 TESTDRIVER( mk1 )		/* Chess Champion MK I							  */
 	/* Quelle International */
 	DRIVER( mk2 )		/* Chess Champion MK II							  */
+	/* NOVAG Industries Ltd. */
+TESTDRIVER( ssystem3 )	/* Chess Champion Super System III / MK III		  */
 
 	/* tchibo */
 	/* single chip with ram, rom, io without label, how to dump? */
