@@ -41,17 +41,17 @@ static struct MemoryReadAddress coupe_readmem[] = {
 };
 
 static struct MemoryWriteAddress coupe_writemem[] = {
-	{ 0x0000, 0x3FFF, MWA_BANK5 },
-	{ 0x4000, 0x7FFF, MWA_BANK6 },
-	{ 0x8000, 0xBFFF, MWA_BANK7 },
-	{ 0xC000, 0xFFFF, MWA_BANK8 },
+	{ 0x0000, 0x3FFF, MWA_BANK1 },
+	{ 0x4000, 0x7FFF, MWA_BANK2 },
+	{ 0x8000, 0xBFFF, MWA_BANK3 },
+	{ 0xC000, 0xFFFF, MWA_BANK4 },
 	{ -1 }  /* end of table */
 };
 
 int coupe_line_interrupt(void)
 {
 	struct osd_bitmap *bitmap = Machine->scrbitmap;
-	int interrupted=0;				// This is used to allow me to clear the STAT flag (easiest way I can do it!)
+	int interrupted=0;	/* This is used to allow me to clear the STAT flag (easiest way I can do it!) */
 
 	HPEN = CURLINE;
 
@@ -59,26 +59,28 @@ int coupe_line_interrupt(void)
 	{
 		if (CURLINE == LINE_INT)
 		{
-			STAT=0x1E;								// No other interrupts can occur - NOT CORRECT!!!
+			/* No other interrupts can occur - NOT CORRECT!!! */
+            STAT=0x1E;  
 			cpu_cause_interrupt(0, Z80_IRQ_INT);
 			interrupted=1;
 		}
 	}
 
-	if (CURLINE && (CURLINE-1) < 192)               // scan line on screen so draw last scan line (may need to alter this slightly!!)
+	/* scan line on screen so draw last scan line (may need to alter this slightly!!) */
+    if (CURLINE && (CURLINE-1) < 192) 
 	{
 		switch ((VMPR & 0x60)>>5)
 		{
-		case 0:			// mode 1
+		case 0: /* mode 1 */
 			drawMode1_line(bitmap,(CURLINE-1));
 			break;
-		case 1:			// mode 2
+		case 1: /* mode 2 */
 			drawMode2_line(bitmap,(CURLINE-1));
 			break;
-		case 2:			// mode 3
+		case 2: /* mode 3 */
 			drawMode3_line(bitmap,(CURLINE-1));
 			break;
-		case 3:			// mode 4
+		case 3: /* mode 4 */
 			drawMode4_line(bitmap,(CURLINE-1));
 			break;
 		}
@@ -136,7 +138,7 @@ unsigned char getSamKey2(unsigned char hi)
 
 	if (hi==0x00)
 	{
-		// does not map to any keys?
+		/* does not map to any keys? */
 	}
 	else
 	{
@@ -156,7 +158,7 @@ unsigned char getSamKey2(unsigned char hi)
 
 READ_HANDLER( coupe_port_r )
 {
-	if (offset==SSND_ADDR)						// Sound address request
+    if (offset==SSND_ADDR)  /* Sound address request */
 		return SOUND_ADDR;
 
 	if (offset==HPEN_PORT)
@@ -164,25 +166,22 @@ READ_HANDLER( coupe_port_r )
 
 	switch (offset & 0xFF)
 	{
-	case DSK1_PORT+0:							// This covers the total range of ports for 1 floppy controller
+	case DSK1_PORT+0:	/* This covers the total range of ports for 1 floppy controller */
+    case DSK1_PORT+4:
+		wd179x_set_side((offset >> 2) & 1);
+		return wd179x_status_r(0);
 	case DSK1_PORT+1:
+    case DSK1_PORT+5:
+		wd179x_set_side((offset >> 2) & 1);
+        return wd179x_track_r(0);
 	case DSK1_PORT+2:
+    case DSK1_PORT+6:
+		wd179x_set_side((offset >> 2) & 1);
+        return wd179x_sector_r(0);
 	case DSK1_PORT+3:
-	case DSK1_PORT+4:
-	case DSK1_PORT+5:
-	case DSK1_PORT+6:
 	case DSK1_PORT+7:
-		switch (offset & 0x03)
-		{
-			case 0x00:
-				return wd179x_status_r(0);
-			case 0x01:
-				return wd179x_track_r(0);
-			case 0x02:
-				return wd179x_sector_r(0);
-			case 0x03:
-				return wd179x_data_r(0);
-		}
+		wd179x_set_side((offset >> 2) & 1);
+        return wd179x_data_r(0);
 	case LPEN_PORT:
 		return LPEN;
 	case STAT_PORT:
@@ -218,64 +217,62 @@ WRITE_HANDLER( coupe_port_w )
 	switch (offset & 0xFF)
 	{
 	case DSK1_PORT+0:							// This covers the total range of ports for 1 floppy controller
-	case DSK1_PORT+1:
-	case DSK1_PORT+2:
-	case DSK1_PORT+3:
-	case DSK1_PORT+4:
-	case DSK1_PORT+5:
-	case DSK1_PORT+6:
+    case DSK1_PORT+4:
+		wd179x_set_side((offset >> 2) & 1);
+        wd179x_command_w(0, data);
+		break;
+    case DSK1_PORT+1:
+    case DSK1_PORT+5:
+		/* Track byte requested on address line */
+		wd179x_set_side((offset >> 2) & 1);
+        wd179x_track_w(0, data);
+		break;
+    case DSK1_PORT+2:
+    case DSK1_PORT+6:
+		/* Sector byte requested on address line */
+		wd179x_set_side((offset >> 2) & 1);
+        wd179x_sector_w(0, data);
+        break;
+    case DSK1_PORT+3:
 	case DSK1_PORT+7:
-		switch (offset & 0x03)
-		{
-			case 0x00:
-				wd179x_command_w(0, data);
-				break;
-			case 0x01:	/* Track byte requested on address line */
-				wd179x_track_w(0, data);
-				break;
-			case 0x02:	/* Sector byte requested on address line */
-				wd179x_sector_w(0, data);
-				break;
-			case 0x03:	/* Data byte requested on address line */
-				wd179x_data_w(0, data);
-				break;
-
-		}
-		return;
+		/* Data byte requested on address line */
+		wd179x_set_side((offset >> 2) & 1);
+        wd179x_data_w(0, data);
+		break;
 	case CLUT_PORT:
 		CLUT[(offset >> 8)&0x0F]=data&0x7F;		// set CLUT data
-		return;
+		break;
 	case LINE_PORT:
 		LINE_INT=data;						// Line to generate interrupt on
-		return;
-	case LMPR_PORT:
+		break;
+    case LMPR_PORT:
 		LMPR=data;
 		coupe_update_memory();
-		return;
-	case HMPR_PORT:
+		break;
+    case HMPR_PORT:
 		HMPR=data;
 		coupe_update_memory();
-		return;
-	case VMPR_PORT:
+		break;
+    case VMPR_PORT:
 		VMPR=data;
 		coupe_update_memory();
-		return;
-	case BORD_PORT:
+		break;
+    case BORD_PORT:
 		/* DAC output state */
 		speaker_level_w(0,(data>>4) & 0x01);
-		return;
-	case SSND_DATA:
+		break;
+    case SSND_DATA:
 		saa1099_write_port_0_w(0, data);
 		SOUND_REG[SOUND_ADDR] = data;
-		return;
-	default:
+		break;
+    default:
 		logerror("Write Unsupported Port: %04x,%02x\n", offset,data);
 		break;
 	}
 }
 
 static struct IOReadPort coupe_readport[] = {
-	{0, 0x0ffff, coupe_port_r},
+	{0x0000, 0x0ffff, coupe_port_r},
 	{ -1 }
 };
 
@@ -376,10 +373,6 @@ INPUT_PORTS_START( coupe )
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "LEFT", KEYCODE_LEFT,  IP_JOY_NONE )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "RIGHT", KEYCODE_RIGHT,  IP_JOY_NONE )
 
-	PORT_START
-	PORT_DIPNAME(0x80, 0x00, "Sam Ram")
-	PORT_DIPSETTING(0x00, "256K" )						// Not implemented yet!!!
-	PORT_DIPSETTING(0x80, "512K" )
 INPUT_PORTS_END
 
 /* Initialise the palette */
@@ -392,14 +385,14 @@ static void coupe_init_palette(unsigned char *sys_palette, unsigned short *sys_c
 
 	for (a=0;a<128;a++)
 	{
-		// decode colours for palette as follows :
-		// bit number       7		6		5		4		3		2		1		0
-		// 						|		|		|		|		|		|		|
-		//				 nothing   G+4     R+4     B+4    ALL+1    G+2     R+2     B+2
-		//
-		// these values scaled up to 0-255 range would give modifiers of :  +4 = +(4*36), +2 = +(2*36), +1 = *(1*36)
-		// not quite max of 255 but close enough for me!
-
+		/* decode colours for palette as follows :
+		 * bit number		7		6		5		4		3		2		1		0
+		 *						|		|		|		|		|		|		|
+		 *				 nothing   G+4	   R+4	   B+4	  ALL+1    G+2	   R+2	   B+2
+		 *
+		 * these values scaled up to 0-255 range would give modifiers of :	+4 = +(4*36), +2 = +(2*36), +1 = *(1*36)
+		 * not quite max of 255 but close enough for me!
+		 */
 		red=green=blue=0;
 		if (a&0x01)
 			blue+=2*36;
@@ -443,7 +436,7 @@ static struct SAA1099_interface coupe_saa1099_interface=
 	{{50,50}},
 };
 
-static struct MachineDriver machine_driver_coupe =
+static struct MachineDriver machine_driver_coupe256 =
 {
 	/* basic machine hardware */
 	{
@@ -452,13 +445,60 @@ static struct MachineDriver machine_driver_coupe =
 			6000000,        /* 6 Mhz */
 		    coupe_readmem,coupe_writemem,
 			coupe_readport,coupe_writeport,
-			coupe_line_interrupt,192 + 10,			// 192 scanlines + 10 lines of vblank (approx)..
+			coupe_line_interrupt,192 + 10,			/* 192 scanlines + 10 lines of vblank (approx).. */
+		},
+	},
+	50, 0,								/* frames per second, vblank duration */
+	1,
+	coupe_init_machine_256,
+	coupe_shutdown_machine,
+
+	/* video hardware */
+	64*8,                               /* screen width */
+	24*8,                               /* screen height */
+	{ 0, 64*8-1, 0, 24*8-1 },           /* visible_area */
+	coupe_gfxdecodeinfo,				/* graphics decode info */
+	128, 128,							/* colors used for the characters */
+	coupe_init_palette,					/* initialise palette */
+
+	VIDEO_TYPE_RASTER,
+	0,
+	coupe_vh_start,
+	coupe_vh_stop,
+	coupe_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		/* standard spectrum sound */
+		{
+			SOUND_SPEAKER,
+			&coupe_speaker_interface
+		},
+		{
+			SOUND_SAA1099,
+			&coupe_saa1099_interface
+		},
+    }
+
+};
+
+static struct MachineDriver machine_driver_coupe512 =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80|CPU_16BIT_PORT,
+			6000000,        /* 6 Mhz */
+		    coupe_readmem,coupe_writemem,
+			coupe_readport,coupe_writeport,
+			coupe_line_interrupt,192 + 10,	/* 192 scanlines + 10 lines of vblank (approx).. */
 
 		},
 	},
-	50, /*2500*/0,       /* frames per second, vblank duration */
+	50, 0,	/* frames per second, vblank duration */
 	1,
-	coupe_init_machine,
+	coupe_init_machine_512,
 	coupe_shutdown_machine,
 
 	/* video hardware */
@@ -498,9 +538,15 @@ static struct MachineDriver machine_driver_coupe =
 ***************************************************************************/
 
 ROM_START(coupe)
-	ROM_REGION(0x18000,REGION_CPU1)
-	ROM_LOAD("sam_rom0.rom", 0x10000, 0x4000, 0x9954CF1A)
-	ROM_LOAD("sam_rom1.rom", 0x14000, 0x4000, 0xF031AED4)
+	ROM_REGION(0x48000,REGION_CPU1)
+	ROM_LOAD("sam_rom0.rom", 0x40000, 0x4000, 0x9954CF1A)
+	ROM_LOAD("sam_rom1.rom", 0x44000, 0x4000, 0xF031AED4)
+ROM_END
+
+ROM_START(coupe512)
+	ROM_REGION(0x88000,REGION_CPU1)
+	ROM_LOAD("sam_rom0.rom", 0x80000, 0x4000, 0x9954CF1A)
+	ROM_LOAD("sam_rom1.rom", 0x84000, 0x4000, 0xF031AED4)
 ROM_END
 
 static const struct IODevice io_coupe[] =
@@ -527,6 +573,9 @@ static const struct IODevice io_coupe[] =
     },
 	{ IO_END }
 };
+#define io_coupe256 io_coupe
+#define io_coupe512 io_coupe
 
 /*    YEAR  NAME      PARENT    MACHINE         INPUT     INIT          COMPANY                 		  FULLNAME */
-COMP( 1989, coupe,	  0,        coupe,          coupe,    0,            "Miles Gordon Technology plc",    "Sam Coupé" )
+COMP( 1989, coupe,	  0,		coupe256,		coupe,	  0,			"Miles Gordon Technology plc",    "Sam Coupe 256K RAM" )
+COMP( 1989, coupe512, 0,		coupe512,		coupe,	  0,			"Miles Gordon Technology plc",    "Sam Coupe 512K RAM" )

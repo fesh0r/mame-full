@@ -395,7 +395,8 @@ TESTDRIVER( a310 )		/* 1988 Acorn Archimedes 310					  */
 #endif
 
 	/* MILES GORDON TECHNOLOGY */
-	DRIVER( coupe ) 	/* 1989 Sam Coupe								  */
+	DRIVER( coupe ) 	/* 1989 Sam Coupe 256K RAM						  */
+	DRIVER( coupe512 )	/* 1989 Sam Coupe 512K RAM						  */
 
 #ifndef MESS_EXCLUDE_SHARP
 	/* SHARP */

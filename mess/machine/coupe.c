@@ -14,26 +14,18 @@
 #include "includes/basicdsk.h"
 #include "includes/wd179x.h"
 
-#define COUPE_256
+UINT8 LMPR,HMPR,VMPR;	/* Bank Select Registers (Low Page p250, Hi Page p251, Video Page p252) */
+UINT8 CLUT[16]; 		/* 16 entries in a palette (no line affects supported yet!) */
+UINT8 SOUND_ADDR;		/* Current Address in sound registers */
+UINT8 SOUND_REG[32];	/* 32 sound registers */
+UINT8 LINE_INT; 		/* Line interrupt */
+UINT8 LPEN,HPEN;		/* ??? */
+UINT8 CURLINE;			/* Current scanline */
+UINT8 STAT; 			/* returned when port 249 read */
+UINT32 RAM_SIZE;		/* RAM size (256K or 512K) */
+UINT8 PAGE_MASK;		/* 256K = 0x0f, 512K = 0x1f */
 
-#ifdef COUPE_256
-	#define PAGE_MASK	0x0f
-#else
-	#define PAGE_MASK	0x1f
-#endif
-
-unsigned char *coupe_ram=NULL;
-
-unsigned char LMPR,HMPR,VMPR;								// Bank Select Registers (Low Page p250, Hi Page p251, Video Page p252)
-unsigned char CLUT[16];										// 16 entries in a palette (no line affects supported yet!)
-unsigned char SOUND_ADDR;									// Current Address in sound registers
-unsigned char SOUND_REG[32];								// 32 sound registers
-unsigned char LINE_INT;										// Line interrupt
-unsigned char LPEN,HPEN;									// ???
-unsigned char CURLINE;										// Current scanline
-unsigned char STAT;											// returned when port 249 read
-
-extern unsigned char *sam_screen;
+extern UINT8 *sam_screen;
 
 int coupe_floppy_init(int id)
 {
@@ -50,117 +42,125 @@ int coupe_floppy_init(int id)
 
 void coupe_update_memory(void)
 {
-	if (LMPR & LMPR_RAM0)										// Is ram paged in at bank 1
+	UINT8 *mem = memory_region(REGION_CPU1);
+
+    if (LMPR & LMPR_RAM0)   /* Is ram paged in at bank 1 */
 	{
-		if ((LMPR & 0x1F)<=PAGE_MASK)
+		if ((LMPR & 0x1F) <= PAGE_MASK)
 		{
-			cpu_setbank(1,coupe_ram + ((LMPR & PAGE_MASK)*0x4000));
-			cpu_setbank(5,coupe_ram + ((LMPR & PAGE_MASK)*0x4000));
+			cpu_setbank(1,&mem[(LMPR & PAGE_MASK) * 0x4000]);
 			cpu_setbankhandler_r(1, MRA_BANK1);
-			cpu_setbankhandler_w(5, MWA_BANK5);
+			cpu_setbankhandler_w(1, MWA_BANK1);
 		}
 		else
 		{
-			cpu_setbankhandler_r(1, MRA_NOP);					// Attempt to page in non existant ram region
-			cpu_setbankhandler_w(5, MWA_NOP);
+			cpu_setbankhandler_r(1, MRA_NOP);	/* Attempt to page in non existant ram region */
+			cpu_setbankhandler_w(1, MWA_NOP);
 		}
 	}
 	else
 	{
-		cpu_setbank(1,memory_region(REGION_CPU1) + 0x010000);	// Rom0 paged in
-		cpu_setbank(5,memory_region(REGION_CPU1) + 0x010000);
+		cpu_setbank(1,memory_region(REGION_CPU1) + RAM_SIZE);	/* Rom0 paged in */
+		cpu_setbank(1,memory_region(REGION_CPU1) + RAM_SIZE);
 		cpu_setbankhandler_r(1, MRA_BANK1);
-		cpu_setbankhandler_w(5, MWA_NOP);
+		cpu_setbankhandler_w(1, MWA_ROM);
 	}
 
-	if (( (LMPR+1) & 0x1F)<=PAGE_MASK)
+	if (( (LMPR+1) & 0x1F) <= PAGE_MASK)
 	{
-		cpu_setbank(2,coupe_ram + (((LMPR+1) & PAGE_MASK)*0x4000));
-		cpu_setbank(6,coupe_ram + (((LMPR+1) & PAGE_MASK)*0x4000));
+		cpu_setbank(2,&mem[((LMPR+1) & PAGE_MASK) * 0x4000]);
 		cpu_setbankhandler_r(2, MRA_BANK2);
-		cpu_setbankhandler_w(6, MWA_BANK6);
+		cpu_setbankhandler_w(2, MWA_BANK2);
 	}
 	else
 	{
-		cpu_setbankhandler_r(2, MRA_NOP);					// Attempt to page in non existant ram region
-		cpu_setbankhandler_w(6, MWA_NOP);
+		cpu_setbankhandler_r(2, MRA_NOP);	/* Attempt to page in non existant ram region */
+		cpu_setbankhandler_w(2, MWA_NOP);
 	}
 
-	if (( HMPR & 0x1F)<=PAGE_MASK)
+	if ( (HMPR & 0x1F) <= PAGE_MASK )
 	{
-		cpu_setbank(3,coupe_ram + ((HMPR & PAGE_MASK)*0x4000));
-		cpu_setbank(7,coupe_ram + ((HMPR & PAGE_MASK)*0x4000));
+		cpu_setbank(3,&mem[(HMPR & PAGE_MASK)*0x4000]);
 		cpu_setbankhandler_r(3, MRA_BANK3);
-		cpu_setbankhandler_w(7, MWA_BANK7);
+		cpu_setbankhandler_w(3, MWA_BANK3);
 	}
 	else
 	{
-		cpu_setbankhandler_r(3, MRA_NOP);					// Attempt to page in non existant ram region
-		cpu_setbankhandler_w(7, MWA_NOP);
+		cpu_setbankhandler_r(3, MRA_NOP);	/* Attempt to page in non existant ram region */
+		cpu_setbankhandler_w(3, MWA_NOP);
 	}
 
-	if (LMPR & LMPR_ROM1)										// Is Rom1 paged in at bank 4
+	if (LMPR & LMPR_ROM1)	/* Is Rom1 paged in at bank 4 */
 	{
-		cpu_setbank(4,memory_region(REGION_CPU1) + 0x014000);
-		cpu_setbank(8,memory_region(REGION_CPU1) + 0x014000);
+		cpu_setbank(4,mem + RAM_SIZE + 0x4000);
 		cpu_setbankhandler_r(4, MRA_BANK4);
-		cpu_setbankhandler_w(8, MWA_NOP);
+		cpu_setbankhandler_w(4, MWA_ROM);
 	}
 	else
 	{
-		if (( (HMPR+1) & 0x1F)<=PAGE_MASK)
+		if (( (HMPR+1) & 0x1F) <= PAGE_MASK)
 		{
-			cpu_setbank(4,coupe_ram + (((HMPR+1) & PAGE_MASK)*0x4000));
-			cpu_setbank(8,coupe_ram + (((HMPR+1) & PAGE_MASK)*0x4000));
+			cpu_setbank(4,&mem[((HMPR+1) & PAGE_MASK) * 0x4000]);
 			cpu_setbankhandler_r(4, MRA_BANK4);
-			cpu_setbankhandler_w(8, MWA_BANK8);
+			cpu_setbankhandler_w(4, MWA_BANK4);
 		}
 		else
 		{
-			cpu_setbankhandler_r(4, MRA_NOP);					// Attempt to page in non existant ram region
-			cpu_setbankhandler_w(8, MWA_NOP);
+			cpu_setbankhandler_r(4, MRA_NOP);	/* Attempt to page in non existant ram region */
+			cpu_setbankhandler_w(4, MWA_NOP);
 		}
 	}
 
-	if (VMPR & 0x40)											// if bit set in 2 bank screen mode
-		sam_screen=coupe_ram + (((VMPR&0x1E) & PAGE_MASK)*0x4000);
+	if (VMPR & 0x40)	/* if bit set in 2 bank screen mode */
+		sam_screen = &mem[((VMPR&0x1E) & PAGE_MASK) * 0x4000];
 	else
-		sam_screen=coupe_ram + (((VMPR&0x1F) & PAGE_MASK)*0x4000);
+		sam_screen = &mem[((VMPR&0x1F) & PAGE_MASK) * 0x4000];
 }
 
-void coupe_init_machine(void)
+void coupe_init_machine_common(void)
 {
-	coupe_ram = (unsigned char *)malloc((PAGE_MASK+1)*16*1024);
-	memset(coupe_ram, 0, (PAGE_MASK+1)*16*1024);
-
 	cpu_setbankhandler_r(1, MRA_BANK1);
-	cpu_setbankhandler_r(2, MRA_BANK2);
-	cpu_setbankhandler_r(3, MRA_BANK3);
-	cpu_setbankhandler_r(4, MRA_BANK4);
+	cpu_setbankhandler_w(1, MWA_BANK1);
+    cpu_setbankhandler_r(2, MRA_BANK2);
+	cpu_setbankhandler_w(2, MWA_BANK2);
+    cpu_setbankhandler_r(3, MRA_BANK3);
+	cpu_setbankhandler_w(3, MWA_BANK3);
+    cpu_setbankhandler_r(4, MRA_BANK4);
+	cpu_setbankhandler_w(4, MWA_BANK4);
 
-	cpu_setbankhandler_w(5, MWA_BANK5);
-	cpu_setbankhandler_w(6, MWA_BANK6);
-	cpu_setbankhandler_w(7, MWA_BANK7);
-	cpu_setbankhandler_w(8, MWA_BANK8);
 
-	LMPR = 0x0F;			// ROM0 paged in, ROM1 paged out RAM Banks
-	HMPR = 0x01;
-	VMPR = 0x81;
+    LMPR = 0x0F;            /* ROM0 paged in, ROM1 paged out RAM Banks */
+    HMPR = 0x01;
+    VMPR = 0x81;
 
-	LINE_INT = 0xFF;
-	LPEN = 0x00;
-	HPEN = 0x00;
+    LINE_INT = 0xFF;
+    LPEN = 0x00;
+    HPEN = 0x00;
 
-	STAT = 0x1F;
+    STAT = 0x1F;
 
-	CURLINE = 0x00;
+    CURLINE = 0x00;
 
-	coupe_update_memory();
+    coupe_update_memory();
 
-	/* KT */
-	/* how are DRQ and IRQ from WD177X handled by Coupe? */
-	floppy_drives_init();
-	wd179x_init(NULL);
+    /* KT */
+    /* how are DRQ and IRQ from WD177X handled by Coupe? */
+    floppy_drives_init();
+    wd179x_init(NULL);
+}
+
+void coupe_init_machine_256(void)
+{
+	PAGE_MASK = 0x0f;
+	RAM_SIZE = 0x40000;
+	coupe_init_machine_common();
+}
+
+void coupe_init_machine_512(void)
+{
+	PAGE_MASK = 0x1f;
+	RAM_SIZE = 0x80000;
+	coupe_init_machine_common();
 }
 
 void coupe_shutdown_machine(void)
