@@ -172,21 +172,21 @@ MEMORY_END
 
 static PORT_WRITE16_START ( ti990_10_writeport )
 
-	{ 0x80 << 1, 0x8f << 1, vdt911_0_cru_w },
+	{ 0x80 << 1, (0x8f << 1) + 1, vdt911_0_cru_w },
 
-	{ 0xfd0 << 1, 0xfdf << 1, ti990_10_mapper_cru_w },
-	{ 0xfe0 << 1, 0xfef << 1, ti990_10_eir_cru_w },
-	{ 0xff0 << 1, 0xfff << 1, ti990_panel_write },
+	{ 0xfd0 << 1, (0xfdf << 1) + 1, ti990_10_mapper_cru_w },
+	{ 0xfe0 << 1, (0xfef << 1) + 1, ti990_10_eir_cru_w },
+	{ 0xff0 << 1, (0xfff << 1) + 1, ti990_panel_write },
 
 PORT_END
 
 static PORT_READ16_START ( ti990_10_readport )
 
-	{ 0x10 << 1, 0x11 << 1, vdt911_0_cru_r },
+	{ 0x10 << 1, (0x11 << 1) + 1, vdt911_0_cru_r },
 
-	{ 0x1fa << 1, 0x1fb << 1, ti990_10_mapper_cru_r },
-	{ 0x1fc << 1, 0x1fd << 1, ti990_10_eir_cru_r },
-	{ 0x1fe << 1, 0x1ff << 1, ti990_panel_read },
+	{ 0x1fa << 1, (0x1fb << 1) + 1, ti990_10_mapper_cru_r },
+	{ 0x1fc << 1, (0x1fd << 1) + 1, ti990_10_eir_cru_r },
+	{ 0x1fe << 1, (0x1ff << 1) + 1, ti990_panel_read },
 
 PORT_END
 
