@@ -10,6 +10,7 @@
 
 #ifdef MESS
 #include "mess.h"
+#include <stdarg.h>
 #endif
 
 extern char build_version[];
