@@ -292,8 +292,9 @@ void init_pc_common(UINT32 flags)
 	/* PIT */
 	pit8253_config(0, &pc_pit8253_config);
 
-	/* FDC hardware */
+	/* FDC/HDC hardware */
 	pc_fdc_setup();
+	pc_hdc_setup();
 
 	/* com hardware */
 	uart8250_init(0, com_interface);

@@ -24,7 +24,7 @@
 #define USE_STANDARD_FORMAT 1
 
 #include "harddisk.h"
-#include "devices/mess_hd.h"
+#include "devices/harddriv.h"
 
 static void update_interrupt(void);
 
@@ -232,7 +232,7 @@ DEVICE_LOAD( ti990_hd )
 		d->hd_handle = mess_hd_get_hard_disk_file(image);
 		d->fd = NULL;
 		/* tell whether the image is writable */
-		d->wp = ! mess_hd_is_writable(image);
+		d->wp = !image_is_writable(image);
 	}
 	else
 	{

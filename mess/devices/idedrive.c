@@ -5,7 +5,7 @@
 */
 
 #include "machine/idectrl.h"
-#include "mess_hd.h"
+#include "devices/harddriv.h"
 #include "idedrive.h"
 
 /*

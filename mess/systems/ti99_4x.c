@@ -31,9 +31,8 @@ Historical notes: TI made several last minute design changes.
 #include "machine/99_dsk.h"
 #include "machine/99_ide.h"
 #include "machine/99_hsgpl.h"
-/*#include "devices/cartslot.h"*/
 #include "devices/basicdsk.h"
-#include "devices/mess_hd.h"
+#include "devices/harddriv.h"
 #include "devices/cassette.h"
 
 /*

@@ -35,6 +35,7 @@
 #include "includes/pcshare.h"
 
 #include "devices/mflopimg.h"
+#include "devices/harddriv.h"
 #include "formats/pc_dsk.h"
 
 #include "machine/8237dma.h"
@@ -590,7 +591,7 @@ ROM_END
 SYSTEM_CONFIG_START(ibmat)
 	CONFIG_DEVICE_PRINTER(3)
 	CONFIG_DEVICE_FLOPPY(2, pc)
-	CONFIG_DEVICE_PC_HARDDISK(4)
+	CONFIG_DEVICE_HARDDISK(4)
 	CONFIG_QUEUE_CHARS( at_keyboard )
 	CONFIG_ACCEPT_CHAR( at_keyboard )
 SYSTEM_CONFIG_END

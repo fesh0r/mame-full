@@ -272,7 +272,7 @@ static UINT8 floppy_get_disk_status(int which, int disk_unit)
 	return reply;
 }
 
-#include "devices/mess_hd.h"
+#include "devices/harddriv.h"
 #include "harddisk.h"
 
 static struct
@@ -292,7 +292,7 @@ int smc92x4_hd_load(mess_image *image, int disk_unit)
 	if (device_load_mess_hd(image, image_fp(image)) == INIT_PASS)
 	{
 		hd[disk_unit].hd_handle = mess_hd_get_hard_disk_file(image);
-		hd[disk_unit].wp = ! mess_hd_is_writable(image);
+		hd[disk_unit].wp = !image_is_writable(image);
 		hd[disk_unit].current_cylinder = 0;
 		info = hard_disk_get_info(hd[disk_unit].hd_handle);
 		hd[disk_unit].cylinders = info->cylinders;

@@ -19,11 +19,11 @@
 #include <stdio.h>
 #include "snprintf.h"
 
+#include "mscommon.h"
 #include "includes/pic8259.h"
 #include "machine/8237dma.h"
-#include "mscommon.h"
-
 #include "machine/pc_hdc.h"
+#include "devices/harddriv.h"
 
 #define VERBOSE_HDC 0		/* HDC (hard disk controller) */
 
@@ -86,12 +86,13 @@ static int heads[MAX_HARD] = {4,4,};			/* heads */
 static int spt[MAX_HARD] = {17,17,};			/* sectors per track */
 static int ecc[MAX_HARD] = {11,11,};			/* ECC bytes */
 
+/* indexes */
 static int cylinder[MAX_HARD] = {0,};			/* current cylinder */
 static int head[MAX_HARD] = {0,};				/* current head */
 static int sector[MAX_HARD] = {0,}; 			/* current sector */
 static int sector_cnt[MAX_HARD] = {0,};         /* sector count */
 static int control[MAX_HARD] = {0,};            /* control */
-static int offset_[MAX_HARD] = {0,};             /* offset into image file */
+static int lbasector[MAX_HARD] = {0,};          /* offset into image file */
 
 static int csb[MAX_BOARD];				/* command status byte */
 static int status[MAX_BOARD];			/* drive status */
@@ -101,37 +102,43 @@ static mame_timer *timer[MAX_BOARD];
 
 
 static int data_cnt = 0;                /* data count */
-static UINT8 buffer[17*4*512];			/* data buffer */
+static UINT8 *buffer;					/* data buffer */
 static UINT8 *ptr = 0;					/* data pointer */
 
 
 static void pc_hdc_command(int n);
 
-DEVICE_INIT( pc_hdc )
+int pc_hdc_setup(void)
 {
 	int i;
-	if (image_index_in_device(image) == 0)
+
+	buffer = auto_malloc(17*4*512);
+	if (!buffer)
+		return -1;
+
+	/* init for all boards */
+	for (i = 0; i < MAX_BOARD; i++)
 	{
-		/* init for all boards */
-		for (i = 0; i < MAX_BOARD; i++)
-		{
-			csb[i] = 0;
-			status[i] = 0;
-			error[i] = 0;
-			dip[i] = 0xff;
-			timer[i] = timer_alloc(pc_hdc_command);
-			if (!timer[i])
-				return INIT_FAIL;
-		}
+		csb[i] = 0;
+		status[i] = 0;
+		error[i] = 0;
+		dip[i] = 0xff;
+		timer[i] = timer_alloc(pc_hdc_command);
+		if (!timer[i])
+			return -1;
 	}
-	return INIT_PASS;
+	return 0;
 }
 
-static mame_file *pc_hdc_file(int id)
+static struct hard_disk_file *pc_hdc_file(int id)
 {
 	mess_image *img;
+	
 	img = image_from_devtype_and_index(IO_HARDDISK, id);
-	return image_fp(img);
+	if (!image_exists(img))
+		return NULL;
+
+	return mess_hd_get_hard_disk_file(img);
 }
 
 static void pc_hdc_result(int n)
@@ -175,7 +182,6 @@ static int no_dma(void)
 /* the following crap is an abomination; it is a relic of the old crappy DMA
  * implementation that threw the idea of "emulating the hardware" to the wind
  */
-static mame_file *hdcdma_file;
 static data8_t *hdcdma_data;
 static data8_t *hdcdma_src;
 static data8_t *hdcdma_dst;
@@ -186,13 +192,20 @@ static int hdcdma_size;
 int pc_hdc_dack_r(void)
 {
 	data8_t result;
+	struct hard_disk_info *info;
+	struct hard_disk_file *file;
+	
+	file = pc_hdc_file(idx);
+	if (!file)
+		return 0;
+	info = hard_disk_get_info(file);
 
 	if (hdcdma_read == 0)
 	{
-		mame_fseek(hdcdma_file, offset_[idx], SEEK_SET);
-		hdcdma_read = mame_fread(hdcdma_file, hdcdma_data, 512);
+		hard_disk_read(file, lbasector[idx], 1, hdcdma_data);
+		hdcdma_read = 512;
 		hdcdma_size -= 512;
-		offset_[idx] += hdcdma_read;
+		lbasector[idx]++;
 		hdcdma_src = hdcdma_data;
 		sector[idx]++;
 	}
@@ -202,10 +215,10 @@ int pc_hdc_dack_r(void)
 	if( --hdcdma_read == 0 )
 	{
 		/* end of cylinder ? */
-		if (sector[idx] >= spt[idx])
+		if (sector[idx] >= info->sectors)
 		{
 			sector[idx] = 0;
-			if (++head[idx] >= heads[idx])		/* beyond heads? */
+			if (++head[idx] >= info->heads)		/* beyond heads? */
 			{
 				head[idx] = 0;					/* reset head */
 				cylinder[idx]++;				/* next cylinder */
@@ -220,20 +233,28 @@ int pc_hdc_dack_r(void)
 
 void pc_hdc_dack_w(int data)
 {
+	struct hard_disk_info *info;
+	struct hard_disk_file *file;
+	
+	file = pc_hdc_file(idx);
+	if (!file)
+		return;
+	info = hard_disk_get_info(file);	
+
 	*(hdcdma_dst++) = data;
 
 	if( --hdcdma_write == 0 )
 	{
-		mame_fseek(hdcdma_file, offset_[idx], SEEK_SET);
-		hdcdma_write = mame_fwrite(hdcdma_file, hdcdma_data, 512);
+		hard_disk_write(file, lbasector[idx], 1, hdcdma_data);
+		hdcdma_write = 512;
 		hdcdma_size -= 512;
-		offset_[idx] += hdcdma_write;
+		lbasector[idx]++;
 
         /* end of cylinder ? */
-		if( ++sector[idx] >= spt[idx] )
+		if( ++sector[idx] >= info->sectors )
 		{
 			sector[idx] = 0;
-			if (++head[idx] >= heads[idx])		/* beyond heads? */
+			if (++head[idx] >= info->heads)		/* beyond heads? */
 			{
 				head[idx] = 0;					/* reset head */
 				cylinder[idx]++;				/* next cylinder */
@@ -247,61 +268,30 @@ void pc_hdc_dack_w(int data)
 
 static void execute_read(void)
 {
-	mame_file *f = pc_hdc_file(idx);
+	struct hard_disk_file *disk = pc_hdc_file(idx);
 	UINT8 data[512], *src = data;
 	int size = sector_cnt[idx] * 512;
-	int read_ = 0, first = 1;
+	int read_ = 0;
 
-	if (f)
+	disk = pc_hdc_file(idx);
+	if (!disk)
+		return;
+
+	hdcdma_data = data;
+	hdcdma_src = src;
+	hdcdma_read = read_;
+	hdcdma_size = size;
+
+	if (no_dma())
 	{
-		if (no_dma())
+		do
 		{
-			HDC_LOG(1,"hdc_PIO_read",("C:%02d H:%d S:%02d N:%d $%08x, $%04x\n", cylinder[idx], head[idx], sector[idx], sector_cnt[idx], offset_[idx], size));
-			do
-			{
-				if( read_ == 0 )
-				{
-					mame_fseek(f, offset_[idx], SEEK_SET);
-					if( !first )
-					{
-						HDC_LOG(2,"hdc_PIO_read next",("C:%02d H:%d S:%02d N:%d $%08x, $%04x\n",
-							cylinder[idx], head[idx], sector[idx], sector_cnt[idx], offset_[idx], size));
-					}
-					read_ = mame_fread(f, data, 512);
-					size -= 512;
-					offset_[idx] += read_;
-					src = data;
-					first = 0;
-					sector[idx]++;
-				}
-				/* copy data into the result buffer */
-				buffer[data_cnt++] = *src++;
-				if( --read_ == 0 )
-				{
-					/* end of cylinder ? */
-					if( sector[idx] >= spt[idx] )
-					{
-						sector[idx] = 0;
-						if (++head[idx] >= heads[idx])		/* beyond heads? */
-						{
-							head[idx] = 0;					/* reset head */
-							cylinder[idx]++;				/* next cylinder */
-						}
-					}
-				}
-			} while (read_ || size);
-		}
-		else
-		{
-			HDC_LOG(1,"hdc_DMA_read",("C:%02d H:%d S:%02d N:%d $%08x -> $%06x, $%04x\n", cylinder[idx], head[idx], sector[idx], sector_cnt[idx], offset_[idx], pc_DMA_page[HDC_DMA] + pc_DMA_address[HDC_DMA], pc_DMA_count[HDC_DMA]+1));
-
-			hdcdma_file = f;
-			hdcdma_data = data;
-			hdcdma_src = src;
-			hdcdma_read = read_;
-			hdcdma_size = size;
-			dma8237_run_transfer(0, HDC_DMA);
-		}
+			buffer[data_cnt++] = pc_hdc_dack_r();
+		} while (hdcdma_read || hdcdma_size);
+	}
+	else
+	{
+		dma8237_run_transfer(0, HDC_DMA);
 	}
 }
 
@@ -309,54 +299,30 @@ static void execute_read(void)
 
 static void execute_write(void)
 {
-	mame_file *f = pc_hdc_file(idx);
+	struct hard_disk_file *disk = pc_hdc_file(idx);
 	UINT8 data[512], *dst = data;
 	int size = sector_cnt[idx] * 512;
 	int write_ = 512;
 
-	if (f)
+	disk = pc_hdc_file(idx);
+	if (!disk)
+		return;
+
+	hdcdma_data = data;
+	hdcdma_dst = dst;
+	hdcdma_write = write_;
+	hdcdma_size = size;
+
+	if (no_dma())
 	{
-		if (no_dma())
+		do
 		{
-			HDC_LOG(1,"hdc_PIO_write",("C:%02d H:%d S:%02d N:%d $%08x, $%04x\n", cylinder[idx], head[idx], sector[idx], sector_cnt[idx], offset_[idx], size));
-			do
-			{
-				/* copy data into the result buffer */
-				*dst++ = buffer[data_cnt++];
-				if( --write_ == 0 )
-				{
-					mame_fseek(f, offset_[idx], SEEK_SET);
-					write_ = mame_fwrite(f, data, 512);
-					offset_[idx] += write_;
-					size -= write_;
-					if (size <= 0)
-						write_ = 0;
-					dst = data;
-
-					/* end of cylinder ? */
-					if( ++sector[idx] >= spt[idx] )
-					{
-						sector[idx] = 0;
-						if( ++head[idx] >= heads[idx] ) 	/* beyond heads? */
-						{
-							head[idx] = 0;					/* reset head */
-							cylinder[idx]++;				/* next cylinder */
-                        }
-                    }
-				}
-			} while (write_ || size);
-		}
-		else
-		{
-			HDC_LOG(1,"hdc_DMA_write",("C:%02d H:%d S:%02d N:%d $%08x -> $%06x, $%04x\n", cylinder[idx], head[idx], sector[idx], sector_cnt[idx], offset_[idx], pc_DMA_page[HDC_DMA] + pc_DMA_address[HDC_DMA], pc_DMA_count[HDC_DMA]+1));
-
-			hdcdma_file = f;
-			hdcdma_data = data;
-			hdcdma_dst = dst;
-			hdcdma_write = write_;
-			hdcdma_size = size;
-			dma8237_run_transfer(0, HDC_DMA);
-		}
+			pc_hdc_dack_w(buffer[data_cnt++]);
+		} while (hdcdma_write || hdcdma_size);
+	}
+	else
+	{
+		dma8237_run_transfer(0, HDC_DMA);
 	}
 }
 
@@ -366,7 +332,7 @@ static void get_drive(int n)
 {
 	drv = (buffer[1] >> 5) & 1;
 	csb[n] = (drv) ? CSB_LUN : 0x00;
-    idx = n * 2 + drv;
+	idx = n * 2 + drv;
 }
 
 
@@ -374,12 +340,13 @@ static void get_drive(int n)
 static void get_chsn(int n)
 {
 	head[idx] = buffer[1] & 0x1f;
-    sector[idx] = buffer[2] & 0x3f;
-    cylinder[idx] = (buffer[2] & 0xc0) << 2;
-    cylinder[idx] |= buffer[3];
-    sector_cnt[idx] = buffer[4];
-    control[idx] = buffer[5];   /* 7: no retry, 6: no ecc retry, 210: step rate */
-    offset_[idx] = ((cylinder[idx] * heads[idx] + head[idx]) * spt[idx] + sector[idx]) * 512;
+	sector[idx] = buffer[2] & 0x3f;
+	cylinder[idx] = (buffer[2] & 0xc0) << 2;
+	cylinder[idx] |= buffer[3];
+	sector_cnt[idx] = buffer[4];
+	control[idx] = buffer[5];   /* 7: no retry, 6: no ecc retry, 210: step rate */
+
+	lbasector[idx] = ((cylinder[idx] * heads[idx] + head[idx]) * spt[idx] + sector[idx]);
 	error[n] = 0x80;	/* a potential error has C/H/S/N info */
 }
 
@@ -401,8 +368,8 @@ static void pc_hdc_command(int n)
 	csb[n] = 0x00;
 	error[n] = 0;
 
-    ptr = buffer;
-    cmd = buffer[0];
+	ptr = buffer;
+	cmd = buffer[0];
 
 	switch (cmd)
 	{
@@ -458,7 +425,7 @@ static void pc_hdc_command(int n)
 			if (test_ready(n))
 				execute_read();
 /*			{ extern int debug_key_pressed; debug_key_pressed = 1; } */
-            break;
+			break;
 		case CMD_WRITE:
 			get_drive(n);
 			get_chsn(n);
@@ -466,14 +433,14 @@ static void pc_hdc_command(int n)
 				idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]));
 			if (test_ready(n))
 				execute_write();
-            break;
+			break;
 		case CMD_SEEK:
 			get_drive(n);
 			get_chsn(n);
 			HDC_LOG(1,"hdc seek",("INDEX #%d D:%d C:%d H:%d S:%d N:%d CTL:$%02x\n",
 				idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]));
 			test_ready(n);
-            break;
+			break;
 		case CMD_SETPARAM:
 			get_drive(n);
 			get_chsn(n);
@@ -484,72 +451,47 @@ static void pc_hdc_command(int n)
 			ecc[idx] = buffer[13];
 			HDC_LOG(1,"hdc set param",("INDEX #%d D:%d C:%d H:%d RW:%d WP:%d ECC:%d\n",
 				idx, drv, cylinders[idx], heads[idx], rwc[idx], wp[idx], ecc[idx]));
-#if 0
-			if (pc_hdc_file(idx))
-			{
-                /* write the drive geometry to the image */
-				buffer[ 0] = cylinders[idx]&0xff;		/* cylinders lsb */
-				buffer[ 1] = (cylinders[idx]>>8)&3; 	/* cylinders msb */
-				buffer[ 2] = heads[idx];				/* heads */
-				buffer[ 3] = rwc[idx]&0xff; 			/* reduced write current lsb */
-				buffer[ 4] = (rwc[idx]>>8)&3;			/* reduced write current msb */
-				buffer[ 5] = wp[idx]&0xff;				/* write precompensation lsb */
-				buffer[ 6] = (wp[idx]>>8)&3;			/* write precompensation msb */
-				buffer[ 7] = ecc[idx];					/* ECC length */
-				buffer[ 8] = 0x05;						/* control */
-				buffer[11] = spt[idx];					/* no idea what this is, maybe SPT ? */
-                buffer[12] = 0x00;
-                buffer[11] = cylinders[idx]&0xff;       /* parking cylinder lsb */
-				buffer[12] = (cylinders[idx]>>8)&3; 	/* parking cylinder msb */
-				buffer[13] = 0x00;
-				buffer[14] = 0x00;
-				buffer[15] = 0x00;
-				buffer[16] = dip[idx];					/* a non zero value is expected */
-				mame_fseek(pc_hdc_file(idx), 0x1ad, SEEK_SET);
-				mame_fwrite(pc_hdc_file(idx), buffer, 16);
-            }
-#endif
-            break;
+			break;
 		case CMD_GETECC:
 			HDC_LOG(1,"hdc get ECC",("controller #%d\n", n));
 			buffer[data_cnt++] = ecc[idx];
-            break;
+			break;
 		case CMD_READSBUFF:
 			HDC_LOG(1,"hdc read sector buffer",("controller #%d\n", n));
-            break;
+			break;
 		case CMD_WRITESBUFF:
 			HDC_LOG(1,"hdc write sector buffer",("controller #%d\n", n));
-            break;
+			break;
 		case CMD_RAMDIAG:
 			HDC_LOG(1,"hdc RAM diag",("controller #%d", n));
-            break;
-        case CMD_DRIVEDIAG:
+			break;
+		case CMD_DRIVEDIAG:
 			get_drive(n);
 			get_chsn(n);
 			HDC_LOG(1,"hdc drive diag",("INDEX #%d D:%d C:%d H:%d S:%d N:%d CTL:$%02x\n",
 				idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]));
 			test_ready(n);
-            break;
-        case CMD_INTERNDIAG:
+			break;
+		case CMD_INTERNDIAG:
 			HDC_LOG(1,"hdc internal diag",("BOARD #%d\n", n));
-            break;
-        case CMD_READLONG:
+			break;
+		case CMD_READLONG:
 			get_drive(n);
 			get_chsn(n);
 			HDC_LOG(1,"hdc read long",("INDEX #%d D:%d C:%d H:%d S:%d N:%d CTL:$%02x\n",
 				idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]));
 			if (test_ready(n))
 				execute_read();
-            break;
-        case CMD_WRITELONG:
+			break;
+		case CMD_WRITELONG:
 			get_drive(n);
 			get_chsn(n);
 			HDC_LOG(1,"hdc write long",("INDEX #%d D:%d C:%d H:%d S:%d N:%d CTL:$%02x\n",
 				idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]));
 			if (test_ready(n))
 				execute_write();
-            break;
-    }
+			break;
+	}
 	pc_hdc_result(n);
 }
 
@@ -657,7 +599,7 @@ static void pc_hdc_data_w(int n, int data)
 	if (data_cnt)
 	{
 		HDC_LOG(3,"hdc_data_w",("BOARD #%d $%02x\n", n, data));
-        *ptr++ = data;
+		*ptr++ = data;
 		status[n] |= STA_READY;
 		if( --data_cnt == 0 )
 		{
@@ -694,7 +636,7 @@ static void pc_hdc_reset_w(int n, int data)
 	csb[n] = 0;
 	status[n] = STA_COMMAND | STA_READY;
 	memset(buffer, 0, sizeof(buffer));
-    ptr = buffer;
+	ptr = buffer;
 	data_cnt = 0;
 }
 
@@ -747,7 +689,7 @@ static int  pc_hdc_status_r(int n)
 		HDC_LOG(4,"hdc_status_r",("BOARD #%d $%02x: RDY:%d INP:%d CMD:%d SEL:%d REQ:%d INT:%d\n",
 			n, data, data&1, (data>>1)&1, (data>>2)&1, (data>>3)&1, (data>>4)&1, (data>>5)&1));
 	}
-    return data;
+	return data;
 }
 
 
@@ -756,7 +698,7 @@ static int  pc_hdc_dipswitch_r(int n)
 {
 	int data = dip[n];
 	HDC_LOG(4,"hdc_dipswitch_r",("BOARD #%d $%02x\n", n, data));
-    return data;
+	return data;
 }
 
 

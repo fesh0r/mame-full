@@ -48,6 +48,16 @@ struct _option_resolution
 
 
 
+/* syntax errors are generally indicative of some sort of internal error */
+static void syntaxerror(const char *str)
+{
+#ifdef MAME_DEBUG
+	logerror("Option resolution syntax error! str='%s'\n", str);
+#endif
+}
+
+
+
 static optreserr_t resolve_single_param(const char *specification, int *param_value,
 	struct OptionRange *range, size_t range_count)
 {
@@ -67,7 +77,10 @@ static optreserr_t resolve_single_param(const char *specification, int *param_va
 		{
 			/* range specifier */
 			if (flags & (FLAG_IN_RANGE|FLAG_IN_DEFAULT))
+			{
+				syntaxerror(NULL);
 				return OPTIONRESOLUTION_ERROR_SYNTAX;
+			}
 			flags |= FLAG_IN_RANGE;
 			s++;
 
@@ -85,7 +98,10 @@ static optreserr_t resolve_single_param(const char *specification, int *param_va
 		{
 			/* begin default value */
 			if (flags & (FLAG_IN_DEFAULT|FLAG_DEFAULT_SPECIFIED))
+			{
+				syntaxerror(NULL);
 				return OPTIONRESOLUTION_ERROR_SYNTAX;
+			}
 			flags |= FLAG_IN_DEFAULT;
 			s++;
 		}
@@ -93,7 +109,10 @@ static optreserr_t resolve_single_param(const char *specification, int *param_va
 		{
 			/* end default value */
 			if ((flags & FLAG_IN_DEFAULT) == 0)
+			{
+				syntaxerror(NULL);
 				return OPTIONRESOLUTION_ERROR_SYNTAX;
+			}
 			flags &= ~FLAG_IN_DEFAULT;
 			flags |= FLAG_DEFAULT_SPECIFIED;
 			s++;
@@ -105,7 +124,10 @@ static optreserr_t resolve_single_param(const char *specification, int *param_va
 		{
 			/* value separator */
 			if (flags & (FLAG_IN_DEFAULT|FLAG_IN_RANGE))
+			{
+				syntaxerror(NULL);
 				return OPTIONRESOLUTION_ERROR_SYNTAX;
+			}
 			s++;
 
 			/* if we are spitting out ranges, complete the range */
@@ -157,12 +179,18 @@ static optreserr_t resolve_single_param(const char *specification, int *param_va
 			flags &= ~FLAG_IN_RANGE;
 		}
 		else
+		{
+			syntaxerror(NULL);
 			return OPTIONRESOLUTION_ERROR_SYNTAX;
+		}
 	}
 
 	/* we can't have zero length guidelines strings */
 	if (s == specification)
+	{
+		syntaxerror(NULL);
 		return OPTIONRESOLUTION_ERROR_SYNTAX;
+	}
 
 	return OPTIONRESOLUTION_ERROR_SUCCESS;
 }
@@ -180,7 +208,10 @@ static const char *lookup_in_specification(const char *specification, const stru
 static optreserr_t read_string(const char *s, char *buffer, size_t buffer_size)
 {
 	if (*s++ != '\'')
+	{
+		syntaxerror(NULL);
 		return OPTIONRESOLUTION_ERROR_SYNTAX;
+	}
 	
 	/* save space for trailing NUL */
 	buffer_size--;
@@ -343,11 +374,6 @@ optreserr_t option_resolution_add_param(option_resolution *resolution, const cha
 	err = OPTIONRESOLUTION_ERROR_SUCCESS;
 
 done:
-	if (err)
-	{
-		option_resolution_close(resolution);
-		resolution = NULL;
-	}
 	return err;
 }
 
@@ -508,7 +534,10 @@ optreserr_t option_resolution_listranges(const char *specification, int option_c
 
 	specification = strchr(specification, option_char);
 	if (!specification)
+	{
+		syntaxerror(NULL);
 		return OPTIONRESOLUTION_ERROR_SYNTAX;
+	}
 
 	return resolve_single_param(specification + 1, NULL, range, range_count);
 }
@@ -524,7 +553,10 @@ optreserr_t option_resolution_getdefault(const char *specification, int option_c
 
 	specification = strchr(specification, option_char);
 	if (!specification)
+	{
+		syntaxerror(NULL);
 		return OPTIONRESOLUTION_ERROR_SYNTAX;
+	}
 
 	return resolve_single_param(specification + 1, val, NULL, 0);
 }

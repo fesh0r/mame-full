@@ -37,7 +37,11 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-(none)
+- CHD will now be the standard harddrive format for MESS.  As such,
+  enhancements have been made to MESS's CHD support.  Also, the PC driver
+  has been converted over to use the new format and the old raw HD format is
+  no longer supported.  Additionally, the MAME hard disk manager (CHDMAN)
+  is now distributed with MESS.  [Nate Woods]
 
 
 

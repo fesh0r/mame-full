@@ -829,18 +829,18 @@ COREOBJS += \
 	$(OBJ)/mess/formats/pc_dsk.o	\
 	$(OBJ)/mess/devices/mflopimg.o	\
 	$(OBJ)/mess/devices/cassette.o	\
-	$(OBJ)/mess/devices/cartslot.o \
-	$(OBJ)/mess/devices/printer.o  \
-	$(OBJ)/mess/devices/bitbngr.o  \
-	$(OBJ)/mess/devices/snapquik.o \
-	$(OBJ)/mess/devices/basicdsk.o \
-	$(OBJ)/mess/devices/flopdrv.o  \
-	$(OBJ)/mess/devices/mess_hd.o  \
-	$(OBJ)/mess/devices/idedrive.o \
-	$(OBJ)/mess/devices/dsk.o      \
-	$(OBJ)/mess/machine/6551.o     \
-	$(OBJ)/mess/vidhrdw/m6847.o    \
-	$(OBJ)/mess/vidhrdw/m6845.o    \
+	$(OBJ)/mess/devices/cartslot.o	\
+	$(OBJ)/mess/devices/printer.o	\
+	$(OBJ)/mess/devices/bitbngr.o	\
+	$(OBJ)/mess/devices/snapquik.o	\
+	$(OBJ)/mess/devices/basicdsk.o	\
+	$(OBJ)/mess/devices/flopdrv.o	\
+	$(OBJ)/mess/devices/harddriv.o	\
+	$(OBJ)/mess/devices/idedrive.o	\
+	$(OBJ)/mess/devices/dsk.o		\
+	$(OBJ)/mess/machine/6551.o		\
+	$(OBJ)/mess/vidhrdw/m6847.o		\
+	$(OBJ)/mess/vidhrdw/m6845.o		\
 	$(OBJ)/mess/machine/msm8251.o  \
 	$(OBJ)/mess/machine/tc8521.o   \
 	$(OBJ)/mess/vidhrdw/v9938.o    \

@@ -66,7 +66,7 @@ TODO:
 
 #include "sound/tms5220.h"	/* for tms5220_set_variant() */
 
-#include "devices/mess_hd.h"	/* for device_init_mess_hd() */
+#include "devices/harddriv.h"	/* for device_init_mess_hd() */
 #include "smc92x4.h"	/* for smc92x4_hd_load()/smc92x4_hd_unload() */
 
 
