@@ -753,8 +753,12 @@ void build_crc_database_filename(int game_index)
 		pcrcfilename[0] = 0;
 }
 
-int osd_select_file(int sel, char *filename)
+int osd_select_file(int type, int id, char *filename)
 {
 	return 0;
+}
+
+void osd_image_load_status_changed(int type, int id)
+{
 }
 #endif
