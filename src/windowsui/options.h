@@ -203,6 +203,8 @@ typedef struct
 	int      show_pict_type;
 	BOOL     game_check;        /* Startup GameCheck */
 	BOOL     version_check;     /* Version mismatch warings */
+	BOOL     use_joygui;
+	BOOL     broadcast;
 	char     default_game[MAX_GAMEDESC];
 #ifdef MESS
 	char     *default_software;
@@ -265,6 +267,12 @@ BOOL GetGameCheck(void);
 
 void SetVersionCheck(BOOL version_check);
 BOOL GetVersionCheck(void);
+
+void SetJoyGUI(BOOL use_joygui);
+BOOL GetJoyGUI(void);
+
+void SetBroadcast(BOOL broadcast);
+BOOL GetBroadcast(void);
 
 void SetSavedFolderID(UINT val);
 UINT GetSavedFolderID(void);

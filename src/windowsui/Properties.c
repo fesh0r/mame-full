@@ -36,7 +36,6 @@
 #include "options.h"
 #include "file.h"
 #include "resource.h"
-#include "Joystick.h"       /* For joystick avalibility. */
 #include "DIJoystick.h"     /* For DIJoystick avalibility. */
 #include "m32util.h"
 #include "directdraw.h"

@@ -2,15 +2,143 @@
 #include <gx.h>
 #include "mamece.h"
 #include "osdepend.h"
+#include "driver.h"
 
-const short cKeyUp      = VK_UP;
-const short cKeyDown    = VK_DOWN;
-const short cKeyLeft    = VK_LEFT;
-const short cKeyRight   = VK_RIGHT;
-const short cKeyA       = VK_SPACE;
-const short cKeyB       = 'Z';
-const short cKeyC       = 'X';
-const short cKeyStart   = 'C';
+enum {
+	GXSTATE_BLEND	= 1
+};
+
+struct gxstate_params
+{
+	GXDisplayProperties properties;
+	int game_width, game_height;
+	int scaled_width, scaled_height;
+	int skipx_mask, skipy_mask;
+	void **line;
+	UINT32 *palette;
+	long xadjustment;
+	long yadjustment;
+	long skip_adjustment;
+	long base_adjustment;
+	int flags;
+};
+
+inline int reduce_width_mask(int dimension, int skip_mask)
+{
+	int new_dimension = 0;
+
+	while(dimension--) {
+		if (dimension & skip_mask)
+			new_dimension++;
+	}
+	return new_dimension;
+}
+
+static void calc_skip_mask(int dimension, int maximum, int *new_dimension, int *skip_mask)
+{
+	int i;
+
+	if (dimension > maximum) {
+		// Compute the most absurdly large mask
+		i = dimension;
+		*skip_mask = 0;
+		while(i) {
+			*skip_mask <<= 1;
+			*skip_mask |= 1;
+			i >>= 1;
+		}
+
+		do {
+			*new_dimension = reduce_width_mask(dimension, *skip_mask);
+			if (*new_dimension > maximum) {
+				*skip_mask >>= 1;
+				*skip_mask |= 1;
+			}
+		}
+		while(*new_dimension > maximum);
+	}
+	else {
+		// We already fit
+		*skip_mask = 0;
+		*new_dimension = dimension;
+	}
+}
+
+template<class T>
+void swap(T *t1, T *t2)
+{
+	T temp = *t1;
+	*t1 = *t2;
+	*t2 = temp;
+}
+
+static struct gxstate_params *create_gxstate(osd_bitmap *bitmap, int orientation, UINT32 *palette_16bit_lookup, UINT32 *palette_32bit_lookup)
+{
+	struct gxstate_params *params;
+
+	// Allocate the params
+	params = (struct gxstate_params *) malloc(sizeof(struct gxstate_params));
+	if (!params)
+		return NULL;
+
+	// Get display properties from GX
+	params->properties = GXGetDisplayProperties();
+
+	// Modify GXProperties based on the orientation
+	params->base_adjustment = 0;
+	if (orientation & ORIENTATION_FLIP_X) {
+		params->base_adjustment += (params->properties.cxWidth - 1) * params->properties.cbxPitch;
+		params->properties.cbxPitch = -params->properties.cbxPitch;
+	}
+	if (orientation & ORIENTATION_FLIP_Y) {
+		params->base_adjustment += (params->properties.cyHeight - 1) * params->properties.cbyPitch;
+		params->properties.cbyPitch = -params->properties.cbyPitch;
+	}
+	if (orientation & ORIENTATION_SWAP_XY) {
+		swap(&params->properties.cbxPitch, &params->properties.cbyPitch);
+		swap(&params->properties.cxWidth, &params->properties.cyHeight);
+	}
+
+	// Set up instance variables
+	params->game_width = bitmap->width;
+	params->game_height = bitmap->height;
+	params->line = bitmap->line;
+	params->palette = ((bitmap->depth == 15) || (bitmap->depth == 16)) ? palette_16bit_lookup : NULL;
+	params->flags = GXSTATE_BLEND;
+
+	// Figure out how to scale the bitmap, if appropriate
+	calc_skip_mask(params->game_width, params->properties.cxWidth, &params->scaled_width, &params->skipx_mask); 
+	calc_skip_mask(params->game_height, params->properties.cyHeight, &params->scaled_height, &params->skipy_mask); 
+
+	// Tweak the pitches and the bits
+	params->xadjustment = params->properties.cbxPitch;
+	params->yadjustment = params->properties.cbyPitch - (params->xadjustment * params->scaled_width);
+	params->skip_adjustment = params->yadjustment + params->xadjustment * params->scaled_width;
+	params->base_adjustment -= params->xadjustment;
+	params->base_adjustment -= params->yadjustment;
+
+	return params;
+}
+
+// --------------------------------------------------------------------------
+// The main calls
+// --------------------------------------------------------------------------
+
+static struct gxstate_params *gxstate;
+
+int gx_open_display(HWND hWnd)
+{
+	return GXOpenDisplay(hWnd, GX_FULLSCREEN);
+}
+
+int gx_close_display(void)
+{
+	if (gxstate) {
+		free(gxstate);
+		gxstate = NULL;
+	}
+	return GXCloseDisplay();
+}
 
 int gx_open_input(void)
 {
@@ -34,16 +162,6 @@ void gx_get_default_keys(struct gx_keylist *keylist)
 	keylist->vkB = keys.vkB;
 	keylist->vkC = keys.vkC;
 	keylist->vkStart = keys.vkStart;
-}
-
-int gx_open_display(HWND hWnd)
-{
-	return GXOpenDisplay(hWnd, GX_FULLSCREEN);
-}
-
-int gx_close_display(void)
-{
-	return GXCloseDisplay();
 }
 
 void *gx_begin_draw(void)
@@ -125,74 +243,42 @@ public:
 	}
 };
 
-inline int reduce_width_mask(int dimension, int skip_mask)
-{
-	int new_dimension = 0;
-
-	while(dimension--) {
-		if (dimension & skip_mask)
-			new_dimension++;
-	}
-	return new_dimension;
-}
-
-static void calc_skip_mask(int dimension, int maximum, int *new_dimension, int *skip_mask)
-{
-	int i;
-
-	if (dimension > maximum) {
-		// Compute the most absurdly large mask
-		i = dimension;
-		*skip_mask = 0;
-		while(i) {
-			*skip_mask <<= 1;
-			*skip_mask |= 1;
-			i >>= 1;
-		}
-
-		do {
-			*new_dimension = reduce_width_mask(dimension, *skip_mask);
-			if (*new_dimension > maximum) {
-				*skip_mask >>= 1;
-				*skip_mask |= 1;
-			}
-		}
-		while(*new_dimension > maximum);
-	}
-	else {
-		// We already fit
-		*skip_mask = 0;
-		*new_dimension = dimension;
-	}
-}
-
 // The template that does the dirty work --- hyper optimized!!!
 template<class pixtyp, class dummy, int do_skipx, int do_skipy, class blend_functor>
-void __fastcall blit(pixtyp *pixels, long cbxPitch, long cbyPitch, int width, int height, void **linep,
-	UINT32 *palette, int skipx_mask, int skipy_mask, blend_functor blend, dummy *d)
+void __fastcall blit(pixtyp *pixels, struct gxstate_params *params, blend_functor blend, dummy *d)
 {
 	UINT8 *pvBits;
 	UINT16 *line;
 	int x, y;
 	pixtyp ent;
-	long cbySkipPitch = cbyPitch;
+	int height, width;
+	int skipx_mask, skipy_mask;
+	long xadjustment, yadjustment, skip_adjustment;
+	void **linep;
+	UINT32 *palette;
+
+	// Pull stuff out of params
+	height = params->game_height;
+	width = params->game_width;
+	xadjustment = params->xadjustment;
+	yadjustment = params->yadjustment;
+	skip_adjustment = params->skip_adjustment;
+	skipx_mask = params->skipx_mask;
+	skipy_mask = params->skipy_mask;
+	linep = params->line;
+	palette = params->palette;
 
 	pvBits = (UINT8 *) pixels;
-
-	// Calculate skipy pitch
-	if (do_skipy) {
-		cbySkipPitch += cbxPitch * (do_skipx ? reduce_width_mask(width, skipx_mask) : width);
-	}
 
 	// Do the dirty work
 	y = height;
 	while(y--) {
 		if (do_skipy && !(y & skipy_mask)) {
 			// Skipped
-			pvBits += cbySkipPitch;
+			pvBits += skip_adjustment;
 		}
 		else {
-			pvBits += cbyPitch;
+			pvBits += yadjustment;
 			line = (UINT16 *) *(linep++);
 			x = width;
 			while(x--) {
@@ -202,7 +288,7 @@ void __fastcall blit(pixtyp *pixels, long cbxPitch, long cbyPitch, int width, in
 					blend.blend((pixtyp *) pvBits, ent);
 				}
 				else {
-					pvBits += cbxPitch;
+					pvBits += xadjustment;
 					*((pixtyp *) pvBits) = ent;
 				}
 				line++;
@@ -215,8 +301,7 @@ void __fastcall blit(pixtyp *pixels, long cbxPitch, long cbyPitch, int width, in
 }
 
 template<class pixtyp, class blend_functor>
-void __fastcall blit2(pixtyp *pixels, long cbxPitch, long cbyPitch, int width, int height, void **linep,
-	UINT32 *palette, int skipx_mask, int skipy_mask, int do_blend, blend_functor blend)
+void __fastcall blit2(pixtyp *pixels, struct gxstate_params *params, blend_functor blend)
 {
 	union {
 		char c;
@@ -227,98 +312,74 @@ void __fastcall blit2(pixtyp *pixels, long cbxPitch, long cbyPitch, int width, i
 	} u;
 	blendnull_functor nullfunctor;
 
-	if (skipx_mask) {
-		if (skipy_mask) {
-			if (do_blend)
-				blit<pixtyp, char, TRUE, TRUE, blend_functor>(pixels, cbxPitch, cbyPitch, width, height, linep,
-					palette, skipx_mask, skipy_mask, blend, &u.c);
+	if (params->skipx_mask) {
+		if (params->skipy_mask) {
+			if (params->flags & GXSTATE_BLEND)
+				blit<pixtyp, char, TRUE, TRUE, blend_functor>(pixels, params, blend, &u.c);
 			else
-				blit<pixtyp, char, TRUE, TRUE, blendnull_functor>(pixels, cbxPitch, cbyPitch, width, height, linep,
-					palette, skipx_mask, skipy_mask, nullfunctor, &u.c);
+				blit<pixtyp, char, TRUE, TRUE, blendnull_functor>(pixels, params, nullfunctor, &u.c);
 		}
 		else {
-			if (do_blend)
-				blit<pixtyp, short, TRUE, FALSE, blend_functor>(pixels, cbxPitch, cbyPitch, width, height, linep,
-					palette, skipx_mask, skipy_mask, blend, &u.s);
+			if (params->flags & GXSTATE_BLEND)
+				blit<pixtyp, short, TRUE, FALSE, blend_functor>(pixels, params, blend, &u.s);
 			else
-				blit<pixtyp, short, TRUE, FALSE, blendnull_functor>(pixels, cbxPitch, cbyPitch, width, height, linep,
-					palette, skipx_mask, skipy_mask, nullfunctor, &u.s);
+				blit<pixtyp, short, TRUE, FALSE, blendnull_functor>(pixels, params, nullfunctor, &u.s);
 		}
 	}
 	else {
-		if (skipy_mask) {
-			if (do_blend)
-				blit<pixtyp, long, FALSE, TRUE, blend_functor>(pixels, cbxPitch, cbyPitch, width, height, linep,
-					palette, skipx_mask, skipy_mask, blend, &u.l);
+		if (params->skipy_mask) {
+			if (params->flags & GXSTATE_BLEND)
+				blit<pixtyp, long, FALSE, TRUE, blend_functor>(pixels, params, blend, &u.l);
 			else
-				blit<pixtyp, long, FALSE, TRUE, blendnull_functor>(pixels, cbxPitch, cbyPitch, width, height, linep,
-					palette, skipx_mask, skipy_mask, nullfunctor, &u.l);
+				blit<pixtyp, long, FALSE, TRUE, blendnull_functor>(pixels, params, nullfunctor, &u.l);
 		}
 		else {
-			blit<pixtyp, double, FALSE, FALSE, blendnull_functor>(pixels, cbxPitch, cbyPitch, width, height, linep,
-				palette, skipx_mask, skipy_mask, nullfunctor, &u.d);
+			blit<pixtyp, double, FALSE, FALSE, blendnull_functor>(pixels, params, nullfunctor, &u.d);
 		}
 	}
 }
 
 
 // The uber-function that performs blits
-void gx_blit(struct osd_bitmap *bitmap, int update, UINT32 *palette_16bit_lookup, UINT32 *palette_32bit_lookup)
+void gx_blit(struct osd_bitmap *bitmap, int update, int orientation, UINT32 *palette_16bit_lookup, UINT32 *palette_32bit_lookup)
 {
 	BYTE *pvBits;
-	GXDisplayProperties prop;
-	void **linep;
-	int width, height;
-	int scaled_width, scaled_height;
-	long cbxPitch, cbyPitch;
-	int skipx_mask, skipy_mask;
-	int do_blend;
-	UINT32 *palette;
+	DWORD ffFormat;
 
-	// Options
-	do_blend = 1;
+	if (!gxstate) {
+		gxstate = create_gxstate(bitmap, orientation, palette_16bit_lookup, palette_32bit_lookup);
+		if (!gxstate)
+			return;
+	}
 
 	// Get the surface
-	prop = GXGetDisplayProperties();
 	pvBits = (BYTE *) GXBeginDraw();
+	pvBits += gxstate->base_adjustment;
 
-	// Set up instance variables
-	width = bitmap->width;
-	height = bitmap->height;
-	linep = bitmap->line;
-	palette = ((bitmap->depth == 15) || (bitmap->depth == 16)) ? palette_16bit_lookup : NULL;
+	// What kind of surface are we?
+	ffFormat = gxstate->properties.ffFormat;
 
-	// Figure out how to scale the bitmap, if appropriate
-	calc_skip_mask(width, prop.cxWidth, &scaled_width, &skipx_mask); 
-	calc_skip_mask(height, prop.cyHeight, &scaled_height, &skipy_mask); 
-
-	// Tweak the pitches and the bits
-	cbxPitch = prop.cbxPitch;
-	cbyPitch = prop.cbyPitch - (cbxPitch * scaled_width);
-	pvBits -= cbxPitch;
-	pvBits -= cbyPitch;
-
-	if (prop.ffFormat & kfDirect)
+	if (ffFormat & kfDirect)
 	{
-		if (prop.ffFormat & kfDirect565) 
+		if (gxstate->properties.ffFormat & kfDirect565) 
 		{
 			// The most common; so we are putting this first
-			blit2((UINT16 *) pvBits, cbxPitch, cbyPitch, width, height, linep, palette, skipx_mask, skipy_mask, do_blend, blend16_functor<5,6,5>());
+			blit2((UINT16 *) pvBits, gxstate, blend16_functor<5,6,5>());
 		}
-		else if (prop.ffFormat & kfDirect444)
+		else if (ffFormat & kfDirect444)
 		{
-			blit2((UINT16 *) pvBits, cbxPitch, cbyPitch, width, height, linep, palette, skipx_mask, skipy_mask, do_blend, blend16_functor<4,4,4>());
+			blit2((UINT16 *) pvBits, gxstate, blend16_functor<4,4,4>());
 		}
-		else if (prop.ffFormat & kfDirect555)
+		else if (ffFormat & kfDirect555)
 		{
-			blit2((UINT16 *) pvBits, cbxPitch, cbyPitch, width, height, linep, palette, skipx_mask, skipy_mask, do_blend, blend16_functor<5,5,5>());
+			blit2((UINT16 *) pvBits, gxstate, blend16_functor<5,5,5>());
 		}
-		else if (prop.ffFormat & kfDirect888)
+		else if (ffFormat & kfDirect888)
 		{
-			blit2((RGBTRIPLE *) pvBits, cbxPitch, cbyPitch, width, height, linep, palette, skipx_mask, skipy_mask, do_blend, blend888_functor());
+			blit2((RGBTRIPLE *) pvBits, gxstate, blend888_functor());
 		}
 	}
-	else if (prop.ffFormat & kfPalette)
+	else if (ffFormat & kfPalette)
 	{
 		// ???
 	}

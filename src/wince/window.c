@@ -1421,7 +1421,7 @@ UINT32 *win_prepare_palette(struct win_blit_params *params)
 #ifdef UNDER_CE
 static void dib_draw_window(HDC dc, struct osd_bitmap *bitmap, int update)
 {
-	gx_blit(bitmap, update, palette_16bit_lookup, palette_32bit_lookup);
+	gx_blit(bitmap, update, 0, palette_16bit_lookup, palette_32bit_lookup);
 /*
 	HBITMAP hBitmap;
 	HDC hDcBitmap;

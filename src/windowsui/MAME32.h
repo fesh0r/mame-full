@@ -23,8 +23,4 @@
 #define MAMENAME "MAME"
 #endif
 
-#if !defined(MAME32HELP)
-#define MAME32HELP "mame32.chm"
-#endif
-
 #endif

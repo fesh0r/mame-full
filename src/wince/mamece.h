@@ -104,7 +104,7 @@ void *gx_begin_draw(void);
 int gx_end_draw(void);
 void gx_get_default_keys(struct gx_keylist *keylist);
 void gx_get_display_properties(struct gx_display_properties *properties);
-void gx_blit(struct osd_bitmap *bitmap, int update, UINT32 *palette_16bit_lookup, UINT32 *palette_32bit_lookup);
+void gx_blit(struct osd_bitmap *bitmap, int update, int orientation, UINT32 *palette_16bit_lookup, UINT32 *palette_32bit_lookup);
 
 #ifdef __cplusplus
 };

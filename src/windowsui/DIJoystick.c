@@ -18,8 +18,6 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <windowsx.h>
-#include <stdlib.h>
 #include <dinput.h>
 #include <assert.h>
 #include <stdio.h>
@@ -30,68 +28,17 @@
 #include "M32Util.h"
 #include "dxdecode.h"
 
-/*
-  limits:
-  - 7 joysticks
-  - 15 sticks on each joystick (15?)
-  - 63 buttons on each joystick
-
-  - 256 total inputs
-
-
-   1 1 1 1 1 1
-   5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
-  +---+-----------+---------+-----+
-  |Dir|Axis/Button|   Stick | Joy |
-  +---+-----------+---------+-----+
-
-    Stick:  0 for buttons 1 for axis
-    Joy:    1 for Mouse/track buttons
-
-*/
-
-#define JOYCODE(joy, stick, axis_or_button, dir) \
-        ((((dir)            & 0x03) << 14) |     \
-         (((axis_or_button) & 0x3f) <<  8) |     \
-         (((stick)          & 0x1f) <<  3) |     \
-         (((joy)            & 0x07) <<  0))
-
-#define GET_JOYCODE_JOY(code)    (((code) >> 0) & 0x07)
-#define GET_JOYCODE_STICK(code)  (((code) >> 3) & 0x1f)
-#define GET_JOYCODE_AXIS(code)   (((code) >> 8) & 0x3f)
-#define GET_JOYCODE_BUTTON(code) GET_JOYCODE_AXIS(code)
-#define GET_JOYCODE_DIR(code)    (((code) >>14) & 0x03)
-
-#define JOYCODE_STICK_BTN    0
-#define JOYCODE_STICK_AXIS   1
-#define JOYCODE_STICK_POV    2
-
-#define JOYCODE_DIR_BTN      0
-#define JOYCODE_DIR_NEG      1
-#define JOYCODE_DIR_POS      2
-
-/* use otherwise unused joystick codes for the three mouse buttons */
-#define MOUSE_BUTTON(button)    JOYCODE(1, JOYCODE_STICK_BTN, button, 3)
-
-#define MAX_JOY              256
-#define MAX_JOY_NAME_LEN     20
-
 /***************************************************************************
     function prototypes
  ***************************************************************************/
 
-static int              DIJoystick_init(options_type* pOptions);
-static void             DIJoystick_exit(void);
-static void             DIJoystick_poll_joysticks(void);
-static const struct JoystickInfo *DIJoystick_get_joy_list(void);
-static int              DIJoystick_is_joy_pressed(int joycode);
-static void             DIJoystick_analogjoy_read(int player, int *analog_x, int *analog_y);
-static int              DIJoystick_standard_analog_read(int player, int axis);
-static BOOL             DIJoystick_Available(void);
-static BOOL             DIJoystick_OnMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT* pResult);
+static int  DIJoystick_init(void);
+static void DIJoystick_exit(void);
+static void DIJoystick_poll_joysticks(void);
+static int  DIJoystick_is_joy_pressed(int joycode);
+static BOOL DIJoystick_Available(void);
 
 static BOOL CALLBACK DIJoystick_EnumDeviceProc(LPDIDEVICEINSTANCE pdidi, LPVOID pv);
-static void DIJoystick_InitJoyList(void);
 
 /***************************************************************************
     External variables
@@ -101,13 +48,9 @@ struct OSDJoystick  DIJoystick =
 {
 	DIJoystick_init,                /* init              */
 	DIJoystick_exit,                /* exit              */
-	DIJoystick_get_joy_list,        /* get_joy_list      */
 	DIJoystick_is_joy_pressed,      /* joy_pressed       */
 	DIJoystick_poll_joysticks,      /* poll_joysticks    */
-	DIJoystick_analogjoy_read,      /* analogjoy_read    */
-	DIJoystick_standard_analog_read,/* standard_analog_read    */
 	DIJoystick_Available,           /* Available         */
-	DIJoystick_OnMessage,           /* OnMessage         */
 };
 
 /***************************************************************************
@@ -142,7 +85,7 @@ typedef struct
 	DWORD num_pov;
 	DWORD num_buttons;
 
-	DIJOYSTATE  dijs;
+	DIJOYSTATE dijs;
 
 } joystick_type;
 
@@ -172,13 +115,6 @@ static struct tDIJoystick_private   This;
 
 static const GUID guidNULL = {0, 0, 0, {0, 0, 0, 0, 0, 0, 0, 0}};
 
-static struct JoystickInfo joylist[256] =
-{
-	/* will be filled later */
-	{ 0, 0, 0 } /* end of table */
-};
-
-
 /***************************************************************************
     External OSD functions  
  ***************************************************************************/
@@ -186,7 +122,7 @@ static struct JoystickInfo joylist[256] =
     put here anything you need to do when the program is started. Return 0 if 
     initialization was successful, nonzero otherwise.
 */
-static int DIJoystick_init(options_type* pOptions)
+static int DIJoystick_init(void)
 {
 	DWORD	i;
 	HRESULT hr;
@@ -194,9 +130,6 @@ static int DIJoystick_init(options_type* pOptions)
 	This.use_count++;
 
 	This.num_joysticks = 0;
-
-	if (!pOptions->use_joystick)
-		return 0;
 
 	if (di == NULL)
 	{
@@ -219,9 +152,6 @@ static int DIJoystick_init(options_type* pOptions)
 	for (i = 0; i < This.num_joysticks; i++)
 	{
 		InitJoystick(&This.joysticks[i]);
-		/* User turned off joy option or a joy driver is not installed. */
-		if (!pOptions->use_joystick)
-			This.joysticks[i].use_joystick = FALSE;
 	}
 
 	/* Are there any joysticks attached? */
@@ -231,8 +161,6 @@ static int DIJoystick_init(options_type* pOptions)
 		return 0;
 	}
 	
-	DIJoystick_InitJoyList();
-
 	return 0;
 }
 
@@ -252,11 +180,6 @@ static void DIJoystick_exit(void)
 		ExitJoystick(&This.joysticks[i]);
 	
 	This.num_joysticks = 0;
-}
-
-static const struct JoystickInfo *DIJoystick_get_joy_list(void)
-{
-	return joylist;
 }
 
 static void DIJoystick_poll_joysticks(void)
@@ -391,51 +314,6 @@ static int DIJoystick_is_joy_pressed(int joycode)
 		return value >= (128 + 128 * dz / 100);
 }
 
-/* osd_analog_joyread() returns values from -128 to 128 */
-static void DIJoystick_analogjoy_read(int player, int* analog_x, int* analog_y)
-{
-	int i;
-	int light_gun_index = -1;
-
-	assert(player >= 0 && player < 4);
-
-	*analog_x = *analog_y = 0;
-
-	for (i = 0; i < This.num_joysticks; i++)
-	{
-		if (This.joysticks[i].is_light_gun)
-		{
-			light_gun_index = i;
-			break;
-		}
-	}
-
-	if (light_gun_index == -1)
-	{
-		/* standard analog joy reading */
-
-		if (This.num_joysticks <= player || This.joysticks[player].use_joystick == FALSE)
-			return;
-
-		*analog_x = This.joysticks[player].dijs.lX - 128;
-		*analog_y = This.joysticks[player].dijs.lY - 128;
-
-		return;
-	}
-}
-
-static int DIJoystick_standard_analog_read(int player, int axis)
-{
-
-	assert(player >= 0 && player < 4);
-
-	if (This.num_joysticks <= player || This.joysticks[player].use_joystick == FALSE)
-		return 0;
-
-	return 0;
-}
-
-
 static BOOL DIJoystick_Available(void)
 {
 	static BOOL bBeenHere = FALSE;
@@ -495,11 +373,6 @@ static BOOL DIJoystick_Available(void)
 	IDirectInputDevice_Release(didTemp);
 
 	return bAvailable;
-}
-
-static BOOL DIJoystick_OnMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT* pResult)
-{
-	return FALSE;
 }
 
 int DIJoystick_GetNumPhysicalJoysticks()
@@ -764,7 +637,7 @@ static void ExitJoystick(joystick_type *joystick)
 		joystick->did = NULL;
 	}
 	
-	for (i=0;i<joystick->num_axes;i++)
+	for (i = 0; i < joystick->num_axes; i++)
 	{
 		if (joystick->axes[i].name)
 			free(joystick->axes[i].name);
@@ -778,143 +651,3 @@ static void ExitJoystick(joystick_type *joystick)
 	}
 }
 
-static void DIJoystick_InitJoyList(void)
-{
-	static int joyequiv[][2] =
-	{
-		{ JOYCODE(1,JOYCODE_STICK_AXIS,1,JOYCODE_DIR_NEG), JOYCODE_1_LEFT },
-		{ JOYCODE(1,JOYCODE_STICK_AXIS,1,JOYCODE_DIR_POS), JOYCODE_1_RIGHT },
-		{ JOYCODE(1,JOYCODE_STICK_AXIS,2,JOYCODE_DIR_NEG), JOYCODE_1_UP },
-		{ JOYCODE(1,JOYCODE_STICK_AXIS,2,JOYCODE_DIR_POS), JOYCODE_1_DOWN },
-
-		{ JOYCODE(1,JOYCODE_STICK_BTN,1,JOYCODE_DIR_BTN),  JOYCODE_1_BUTTON1 },
-		{ JOYCODE(1,JOYCODE_STICK_BTN,2,JOYCODE_DIR_BTN),  JOYCODE_1_BUTTON2 },
-		{ JOYCODE(1,JOYCODE_STICK_BTN,3,JOYCODE_DIR_BTN),  JOYCODE_1_BUTTON3 },
-		{ JOYCODE(1,JOYCODE_STICK_BTN,4,JOYCODE_DIR_BTN),  JOYCODE_1_BUTTON4 },
-		{ JOYCODE(1,JOYCODE_STICK_BTN,5,JOYCODE_DIR_BTN),  JOYCODE_1_BUTTON5 },
-		{ JOYCODE(1,JOYCODE_STICK_BTN,6,JOYCODE_DIR_BTN),  JOYCODE_1_BUTTON6 },
-
-		{ JOYCODE(2,JOYCODE_STICK_AXIS,1,JOYCODE_DIR_NEG), JOYCODE_2_LEFT },
-		{ JOYCODE(2,JOYCODE_STICK_AXIS,1,JOYCODE_DIR_POS), JOYCODE_2_RIGHT },
-		{ JOYCODE(2,JOYCODE_STICK_AXIS,2,JOYCODE_DIR_NEG), JOYCODE_2_UP },
-		{ JOYCODE(2,JOYCODE_STICK_AXIS,2,JOYCODE_DIR_POS), JOYCODE_2_DOWN },
-
-		{ JOYCODE(2,JOYCODE_STICK_BTN,1,JOYCODE_DIR_BTN),  JOYCODE_2_BUTTON1 },
-		{ JOYCODE(2,JOYCODE_STICK_BTN,2,JOYCODE_DIR_BTN),  JOYCODE_2_BUTTON2 },
-		{ JOYCODE(2,JOYCODE_STICK_BTN,3,JOYCODE_DIR_BTN),  JOYCODE_2_BUTTON3 },
-		{ JOYCODE(2,JOYCODE_STICK_BTN,4,JOYCODE_DIR_BTN),  JOYCODE_2_BUTTON4 },
-		{ JOYCODE(2,JOYCODE_STICK_BTN,5,JOYCODE_DIR_BTN),  JOYCODE_2_BUTTON5 },
-		{ JOYCODE(2,JOYCODE_STICK_BTN,6,JOYCODE_DIR_BTN),  JOYCODE_2_BUTTON6 },
-
-		{ JOYCODE(3,JOYCODE_STICK_AXIS,1,JOYCODE_DIR_NEG), JOYCODE_3_LEFT },
-		{ JOYCODE(3,JOYCODE_STICK_AXIS,1,JOYCODE_DIR_POS), JOYCODE_3_RIGHT },
-		{ JOYCODE(3,JOYCODE_STICK_AXIS,2,JOYCODE_DIR_NEG), JOYCODE_3_UP },
-		{ JOYCODE(3,JOYCODE_STICK_AXIS,2,JOYCODE_DIR_POS), JOYCODE_3_DOWN },
-
-		{ JOYCODE(3,JOYCODE_STICK_BTN,1,JOYCODE_DIR_BTN),  JOYCODE_3_BUTTON1 },
-		{ JOYCODE(3,JOYCODE_STICK_BTN,2,JOYCODE_DIR_BTN),  JOYCODE_3_BUTTON2 },
-		{ JOYCODE(3,JOYCODE_STICK_BTN,3,JOYCODE_DIR_BTN),  JOYCODE_3_BUTTON3 },
-		{ JOYCODE(3,JOYCODE_STICK_BTN,4,JOYCODE_DIR_BTN),  JOYCODE_3_BUTTON4 },
-		{ JOYCODE(3,JOYCODE_STICK_BTN,5,JOYCODE_DIR_BTN),  JOYCODE_3_BUTTON5 },
-		{ JOYCODE(3,JOYCODE_STICK_BTN,6,JOYCODE_DIR_BTN),  JOYCODE_3_BUTTON6 },
-
-		{ JOYCODE(4,JOYCODE_STICK_AXIS,1,JOYCODE_DIR_NEG), JOYCODE_4_LEFT },
-		{ JOYCODE(4,JOYCODE_STICK_AXIS,1,JOYCODE_DIR_POS), JOYCODE_4_RIGHT },
-		{ JOYCODE(4,JOYCODE_STICK_AXIS,2,JOYCODE_DIR_NEG), JOYCODE_4_UP },
-		{ JOYCODE(4,JOYCODE_STICK_AXIS,2,JOYCODE_DIR_POS), JOYCODE_4_DOWN },
-
-		{ JOYCODE(4,JOYCODE_STICK_BTN,1,JOYCODE_DIR_BTN),  JOYCODE_4_BUTTON1 },
-		{ JOYCODE(4,JOYCODE_STICK_BTN,2,JOYCODE_DIR_BTN),  JOYCODE_4_BUTTON2 },
-		{ JOYCODE(4,JOYCODE_STICK_BTN,3,JOYCODE_DIR_BTN),  JOYCODE_4_BUTTON3 },
-		{ JOYCODE(4,JOYCODE_STICK_BTN,4,JOYCODE_DIR_BTN),  JOYCODE_4_BUTTON4 },
-		{ JOYCODE(4,JOYCODE_STICK_BTN,5,JOYCODE_DIR_BTN),  JOYCODE_4_BUTTON5 },
-		{ JOYCODE(4,JOYCODE_STICK_BTN,6,JOYCODE_DIR_BTN),  JOYCODE_4_BUTTON6 },
-		{ 0,0 }
-	};
-	static char joynames[MAX_JOY][MAX_JOY_NAME_LEN + 1]; /* will be used to store names */
-	static const char* JoyPOVName[] = { "Forward", "Backward", "Right", "Left"};
-	int tot, i, j, pov;
-	char buf[256];
-	
-	tot = 0;
-
-	/* first of all, map mouse buttons */
-	for (j = 0; j < 5; j++)
-	{
-		sprintf(buf, "Mouse B%d", j + 1);
-		strncpy(joynames[tot], buf, MAX_JOY_NAME_LEN);
-		joynames[tot][MAX_JOY_NAME_LEN] = 0;
-		joylist[tot].name = joynames[tot];
-		joylist[tot].code = MOUSE_BUTTON(j + 1);
-		tot++;
-	}
-
-	for (i = 0; i < This.num_joysticks; i++)
-	{
-		for (j = 0; j < This.joysticks[i].num_axes; j++)
-		{
-			sprintf(buf, "J%d %.7s %s -",
-					i + 1,
-					This.joysticks[i].name,
-					This.joysticks[i].axes[j].name);
-			strncpy(joynames[tot], buf, MAX_JOY_NAME_LEN);
-			joynames[tot][MAX_JOY_NAME_LEN] = 0;
-			joylist[tot].name = joynames[tot];
-			joylist[tot].code = JOYCODE(i + 1, JOYCODE_STICK_AXIS, j + 1, JOYCODE_DIR_NEG);
-			tot++;
-			
-			sprintf(buf, "J%d %.7s %s +",
-					i + 1,
-					This.joysticks[i].name,
-					This.joysticks[i].axes[j].name);
-			strncpy(joynames[tot], buf, MAX_JOY_NAME_LEN);
-			joynames[tot][MAX_JOY_NAME_LEN] = 0;
-			joylist[tot].name = joynames[tot];
-			joylist[tot].code = JOYCODE(i + 1, JOYCODE_STICK_AXIS, j + 1, JOYCODE_DIR_POS);
-			tot++;
-		}
-		for (j = 0; j < This.joysticks[i].num_buttons; j++)
-		{
-			sprintf(buf, "J%d Button %d", i + 1, j);
-			strncpy(joynames[tot], buf, MAX_JOY_NAME_LEN);
-			joynames[tot][MAX_JOY_NAME_LEN] = 0;
-			joylist[tot].name = joynames[tot];
-			joylist[tot].code = JOYCODE(i + 1, JOYCODE_STICK_BTN, j + 1, JOYCODE_DIR_BTN);
-			tot++;
-		}
-		for (pov=0;pov<This.joysticks[i].num_pov;pov++)
-		{
-			for (j = 0; j < 4; j++)
-			{
-				sprintf(buf, "J%i POV%i %s", i + 1, pov + 1, JoyPOVName[j]);
-				strncpy(joynames[tot], buf, MAX_JOY_NAME_LEN);
-				joynames[tot][MAX_JOY_NAME_LEN] = 0;
-				joylist[tot].name = joynames[tot];
-				joylist[tot].code = JOYCODE(i + 1, JOYCODE_STICK_POV, 4 * pov + j, JOYCODE_DIR_BTN);
-				tot++;
-			}
-		}
-	}
-	
-	/* terminate array */
-	joylist[tot].name = 0;
-	joylist[tot].code = 0;
-	joylist[tot].standardcode = 0;
-	
-	/* fill in equivalences */
-	for (i = 0; i < tot; i++)
-	{
-		joylist[i].standardcode = JOYCODE_OTHER;
-		
-		j = 0;
-		while (joyequiv[j][0] != 0)
-		{
-			if (joyequiv[j][0] == joylist[i].code)
-			{
-				joylist[i].standardcode = joyequiv[j][1];
-				break;
-			}
-			j++;
-		}
-	}
-}

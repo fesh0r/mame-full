@@ -98,7 +98,6 @@
 #define IDC_LOG                         1034
 #define IDC_DDRAW                       1041
 #define IDC_GAMMA                       1044
-#define IDC_DIJOYSTICK                  1048
 #define IDC_USE_DEFAULT                 1051
 #define IDC_VSCANLINES                  1052
 #define IDC_DIRTY                       1053

@@ -135,10 +135,8 @@ static void             SetSelectedPick(int new_index);
 static void             SetSelectedPickItem(int val);
 static void             SetRandomPickItem(void);
 
-static BOOL             ParseCommandLine(char *command_line);
 static INT_PTR CALLBACK AboutDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 static INT_PTR CALLBACK DirectXDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
-static INT_PTR CALLBACK MameHelpDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static INT_PTR CALLBACK LanguageDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 
 static BOOL             SelectLanguageFile(HWND hWnd, TCHAR* filename);
@@ -195,16 +193,6 @@ static HWND             InitStatusBar(HWND hParent);
 static LRESULT          Statusbar_MenuSelect (HWND hwnd, WPARAM wParam, LPARAM lParam);
 
 static void             UpdateHistory(int gameNum);
-
-#ifdef MESS
-/* MESS32 text files */
-#define HELPTEXT_RELEASE    "Mess.txt"
-#define HELPTEXT_WHATS_NEW  "Messnew.txt"
-#else
-/* MAME32 text files */
-#define HELPTEXT_RELEASE    "windows.txt"
-#define HELPTEXT_WHATS_NEW  "whatsnew.txt"
-#endif
 
 /***************************************************************************
     External variables
@@ -297,9 +285,8 @@ static HWND hPicker = NULL;
 static HWND hwndList = NULL;
 static HWND hTreeView = NULL;
 static HWND hProgWnd = NULL;
-static HWND hHelp = NULL;
 
-static BOOL bAbortLoading = FALSE;
+static BOOL g_bAbortLoading = FALSE; /* doesn't work right */
 
 static HINSTANCE hInst = NULL;
 
@@ -332,7 +319,7 @@ static BOOL bProgressShown = FALSE;
 static BOOL bListReady     = FALSE;
 
 /* use a joystick subsystem in the gui? */
-static struct OSDJoystick *joygui;
+static struct OSDJoystick* g_pJoyGUI = NULL;
 
 /* Intellimouse available? (0 = no) */
 #if defined(INTELLIMOUSE)
@@ -464,8 +451,8 @@ static char last_directory[MAX_PATH];
 
 /* system-wide window message sent out with an ATOM of the current game name
    each time it changes */
-static UINT mame32_message;
-static BOOL bDoBroadcast;
+static UINT g_mame32_message = 0;
+static BOOL g_bDoBroadcast   = FALSE;
 
 #ifndef IsValidListControl
 #define IsValidListControl(hwnd) ((hwnd) == hwndList)
@@ -1277,12 +1264,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	HWND hwndSoftware;
 #endif /* MESS */
 
-	mame32_message = RegisterWindowMessage("MAME32");
-	bDoBroadcast = FALSE;
-
 	srand((unsigned)time(NULL));
-
-	joygui = NULL;
 
 	game_count = 0;
 	while (drivers[game_count] != 0)
@@ -1339,6 +1321,9 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 
 		game_data[i].neogeo = bNeoGeo;
 	}
+
+	g_mame32_message = RegisterWindowMessage("MAME32");
+	g_bDoBroadcast = GetBroadcast();
 
 	Help_Init();
 
@@ -1539,11 +1524,6 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 		return FALSE;
 	}
 
-	if (ParseCommandLine(lpCmdLine))
-	{
-		PostMessage(hMain, MM_PLAY_GAME, 0, 0);
-	}
-
 	AdjustMetrics();
 	UpdateScreenShot();
 
@@ -1551,22 +1531,16 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 
 	InitZip(hMain);
 
+	if (GetJoyGUI() == TRUE)
 	{
-	   options_type o;
-	   o.use_joystick = TRUE;
-	   DIJoystick.init(&o);
-	}
-
-	if (joygui != NULL)
-	{
-		/* hack to get joystick to start */
-		options_type o;
-		o.use_joystick = TRUE;
-		if (joygui->init(&o) != 0)
-			joygui = NULL;
+		g_pJoyGUI = &DIJoystick;
+		if (g_pJoyGUI->init() != 0)
+			g_pJoyGUI = NULL;
 		else
-			SetTimer(hMain,0,50,NULL);
+			SetTimer(hMain, 0, 100, NULL);
 	}
+	else
+		g_pJoyGUI = NULL;
 
 	ShowWindow(hMain, nCmdShow);
 
@@ -1577,10 +1551,8 @@ static void Win32UI_exit()
 {
 	ExitZip();
 
-	if (joygui != NULL)
-		joygui->exit();
-
-	DIJoystick.exit();
+	if (g_pJoyGUI != NULL)
+		g_pJoyGUI->exit();
 
 	DestroyAcceleratorTable(hAccel);
 
@@ -2787,10 +2759,10 @@ static BOOL MamePickerNotify(NMHDR *nm)
 			}
 
 			/* printf("entering %s\n",drivers[pnmv->lParam]->name); */
-			if (bDoBroadcast == TRUE)
+			if (g_bDoBroadcast == TRUE)
 			{
 				ATOM a = GlobalAddAtom(drivers[pnmv->lParam]->description);
-				SendMessage(HWND_BROADCAST, mame32_message, a, a);
+				SendMessage(HWND_BROADCAST, g_mame32_message, a, a);
 				GlobalDeleteAtom(a);
 			}
 
@@ -2917,49 +2889,52 @@ static void PollGUIJoystick()
 	if (in_emulation)
 		return;
 
-	joygui->poll_joysticks();
+	if (g_pJoyGUI == NULL)
+		return;
 
-	if (joygui->is_joy_pressed(JOYCODE(1, JOYCODE_STICK_AXIS, 2, JOYCODE_DIR_NEG)))
+	g_pJoyGUI->poll_joysticks();
+
+	if (g_pJoyGUI->is_joy_pressed(JOYCODE(1, JOYCODE_STICK_AXIS, 2, JOYCODE_DIR_NEG)))
 	{
 		SetFocus(hwndList);
 		PressKey(hwndList, VK_UP);
 	}
-	if (joygui->is_joy_pressed(JOYCODE(1, JOYCODE_STICK_AXIS, 2, JOYCODE_DIR_POS)))
+	if (g_pJoyGUI->is_joy_pressed(JOYCODE(1, JOYCODE_STICK_AXIS, 2, JOYCODE_DIR_POS)))
 	{
 		SetFocus(hwndList);
 		PressKey(hwndList, VK_DOWN);
 	}
-	if (joygui->is_joy_pressed(JOYCODE(1, JOYCODE_STICK_AXIS, 1, JOYCODE_DIR_NEG)))
+	if (g_pJoyGUI->is_joy_pressed(JOYCODE(1, JOYCODE_STICK_AXIS, 1, JOYCODE_DIR_NEG)))
 	{
 		SetFocus(hwndList);
 		PressKey(hwndList, VK_LEFT);
 	}
-	if (joygui->is_joy_pressed(JOYCODE(1, JOYCODE_STICK_AXIS, 1, JOYCODE_DIR_POS)))
+	if (g_pJoyGUI->is_joy_pressed(JOYCODE(1, JOYCODE_STICK_AXIS, 1, JOYCODE_DIR_POS)))
 	{
 		SetFocus(hwndList);
 		PressKey(hwndList, VK_RIGHT);
 	}
-	if (joygui->is_joy_pressed(JOYCODE(1, JOYCODE_STICK_BTN, 1, JOYCODE_DIR_BTN)))
+	if (g_pJoyGUI->is_joy_pressed(JOYCODE(1, JOYCODE_STICK_BTN, 1, JOYCODE_DIR_BTN)))
 	{
 		SetFocus(hwndList);
 		MamePlayGame();
 	}
-	if (joygui->is_joy_pressed(JOYCODE(1, JOYCODE_STICK_BTN, 2, JOYCODE_DIR_BTN)))
+	if (g_pJoyGUI->is_joy_pressed(JOYCODE(1, JOYCODE_STICK_BTN, 2, JOYCODE_DIR_BTN)))
 	{
 		SetFocus(hwndList);
 		PressKey(hwndList, VK_NEXT);
 	}
-	if (joygui->is_joy_pressed(JOYCODE(1, JOYCODE_STICK_BTN, 5, JOYCODE_DIR_BTN)))
+	if (g_pJoyGUI->is_joy_pressed(JOYCODE(1, JOYCODE_STICK_BTN, 5, JOYCODE_DIR_BTN)))
 	{
 		SetFocus(hwndList);
 		PressKey(hwndList, VK_PRIOR);
 	}
-	if (joygui->is_joy_pressed(JOYCODE(1, JOYCODE_STICK_BTN, 3, JOYCODE_DIR_BTN)))
+	if (g_pJoyGUI->is_joy_pressed(JOYCODE(1, JOYCODE_STICK_BTN, 3, JOYCODE_DIR_BTN)))
 	{
 		SetFocus(hwndList);
 		PressKey(hwndList, VK_END);
 	}
-	if (joygui->is_joy_pressed(JOYCODE(1, JOYCODE_STICK_BTN, 6, JOYCODE_DIR_BTN)))
+	if (g_pJoyGUI->is_joy_pressed(JOYCODE(1, JOYCODE_STICK_BTN, 6, JOYCODE_DIR_BTN)))
 	{
 		SetFocus(hwndList);
 		PressKey(hwndList, VK_HOME);
@@ -3964,134 +3939,6 @@ static void SetRandomPickItem()
 	}
 }
 
-/* returns if we should immediately start the game */
-static BOOL ParseCommandLine(char *command_line)
-{
-	BOOL   help;
-	BOOL   ignore_badoptions = FALSE;
-	int    i;
-	int    argc;
-	char*  argv[200];
-	int    nGame;
-	options_type *o, origOpts;
-
-	argc = 1;
-	argv[argc] = strtok(command_line, " \t\n");
-
-	if (argv[1] != NULL)
-	{
-		argc++;
-		while ((argv[argc] = strtok(NULL, " \t\n")) != NULL)
-			argc++;
-	}
-
-	help = FALSE;
-
-	for (i = 1; i < argc; i++)
-	{
-		if (argv[i][0] == '-' && argv[i][1] == 'i')
-			if (strcmp(argv[i], "-ignorebadoptions") == 0)
-				ignore_badoptions = TRUE;
-	}
-
-	nGame = GetSelectedPickItem();
-	o	  = GetGameOptions(nGame);
-
-	memcpy(&origOpts, o, sizeof(options_type));
-
-	for (i = 1; i < argc; i++)
-	{
-		if (argv[i][0] != '-')
-			continue;
-
-	   /* Misc */
-
-		if (stricmp(argv[i], "-joygui") == 0)
-		{
-			joygui = &Joystick;
-			continue;
-		}
-
-		if (stricmp(argv[i], "-dijoygui") == 0)
-		{
-			joygui = &DIJoystick;
-			continue;
-		}
-
-		if (stricmp(argv[i], "-broadcast") == 0)
-		{
-			bDoBroadcast = TRUE;
-			continue;
-		}
-
-		if (stricmp(argv[i], "-nobroadcast") == 0)
-		{
-			bDoBroadcast = FALSE;
-			continue;
-		}
-
-		/* Are they asking for help? */
-		if (stricmp(argv[i], "-help") == 0
-		||	stricmp(argv[i], "-?"	) == 0)
-		{
-			help = 1;
-			break;
-		}
-
-		/* Let the user decide if they want to contunue
-		 * if we encounter an Unknown command line option.
-		 *
-		 * This allows people who want to use a different
-		 * front end, to continue to do so.
-		 *
-		 * In addition,there is a -ignorebadoptions command
-		 * line flag.
-		 */
-		if (argv[i][0] == '-' && ignore_badoptions == FALSE)
-		{
-			char cBuf[200];
-
-			sprintf(cBuf, "Unknown option '%s', continue anyway?", argv[i]);
-			if (IDNO == MessageBox(0, cBuf, MAME32NAME " - Unknown Option",
-								   MB_YESNO | MB_ICONQUESTION))
-			{
-				ExitProcess(0);
-			}
-			else
-			{
-				ignore_badoptions = TRUE;
-			}
-			continue;
-		}
-	}
-
-	if (help)
-	{
-		DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_HELP), NULL, MameHelpDialogProc);
-		ExitProcess(0);
-	}
-
-	if (memcmp(&origOpts, o, sizeof(options_type)) != 0)
-		o->use_default = FALSE;
-
-	if (argc >= 2 && argv[1][0] != '-')
-		return TRUE;
-
-	return FALSE;
-}
-
-static void HelpPrintln(char *s)
-{
-	HWND hEdit;
-
-	hEdit = GetDlgItem(hHelp, IDC_HELP_TEXT);
-
-	Edit_SetSel(hEdit, Edit_GetTextLength(hEdit), Edit_GetTextLength(hEdit));
-	Edit_ReplaceSel(hEdit, s);
-	Edit_SetSel(hEdit, Edit_GetTextLength(hEdit), Edit_GetTextLength(hEdit));
-	Edit_ReplaceSel(hEdit, "\r\n");
-}
-
 static INT_PTR CALLBACK AboutDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (Msg)
@@ -4143,43 +3990,6 @@ static INT_PTR CALLBACK DirectXDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LP
 		return 1;
 	}
 	return 0;
-}
-
-static INT_PTR CALLBACK MameHelpDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	switch (uMsg)
-	{
-		case WM_INITDIALOG:
-			hHelp = hwndDlg;
-			HelpPrintln("M.A.M.E. - Multiple Arcade Machine Emulator");
-			HelpPrintln("Copyright (C) 1997-2001  by Nicola Salmoria and the MAME team.");
-			HelpPrintln("");
-			HelpPrintln("MAME32 version created and maintained by Michael Soderstrom and Christopher Kirmse.");
-			HelpPrintln("Please read the readme32.txt or " MAME32HELP " for more information.  Report ONLY Windows "
-			  "specific bugs at http://pluto.beseen.com/boardroom/q/18365, AFTER reading Readme32.txt.");
-			HelpPrintln("");
-			HelpPrintln("Usage:");
-			HelpPrintln("");
-			HelpPrintln("MAME32 [game] [options]");
-			HelpPrintln("");
-			HelpPrintln("See the Readme32.txt or " MAME32HELP " file for options");
-
-			return TRUE;
-
-	case WM_COMMAND:
-		switch (LOWORD(wParam))
-		{
-			case IDOK:
-				EndDialog(hwndDlg, 0);
-				return TRUE;
-
-			case IDCANCEL:
-				EndDialog(hwndDlg, 1);
-				return TRUE;
-		}
-		break;
-	}
-	return FALSE;
 }
 
 static BOOL CommonFileDialog(common_file_dialog_proc cfd, char *filename, BOOL bZip)
@@ -4439,10 +4249,10 @@ static void MamePlayGameWithOptions(int nGame)
 	/* Deal with options that can be disabled. */
 	EnablePlayOptions(nGame, &playing_game_options);
 
-	if (joygui != NULL)
+	if (g_pJoyGUI != NULL)
 		KillTimer(hMain, 0);
 
-	bAbortLoading = FALSE;
+	g_bAbortLoading = FALSE;
 
 	in_emulation = TRUE;
 
@@ -4455,7 +4265,7 @@ static void MamePlayGameWithOptions(int nGame)
 	}
 	else
 	{
-		if (bAbortLoading == FALSE)
+		if (g_bAbortLoading == FALSE)
 		{
 			ChildOutputStream_WaitForThreadExit(&cErrorStream);
 
@@ -4503,7 +4313,7 @@ static void MamePlayGameWithOptions(int nGame)
 	ShowWindow(hMain, SW_SHOW);
 	SetFocus(hwndList);
 
-	if (joygui != NULL)
+	if (g_pJoyGUI != NULL)
 		SetTimer(hMain, 0, 25, NULL);
 }
 
@@ -5459,84 +5269,78 @@ int osd_display_loading_rom_message(const char* name, int current, int total)
 	return retval;
 }
 
+
 static INT_PTR CALLBACK LoadProgressDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (Msg)
 	{
 	case WM_INITDIALOG:
-		bAbortLoading = FALSE;
+		{
+			char buf[256];
+
+			sprintf(buf, "Loading %s", ModifyThe(Machine->gamedrv->description));
+			SetWindowText(hDlg, buf);
+
+			g_bAbortLoading = FALSE;
+		}
+		return 1;
+
+	case WM_CLOSE:
+		EndDialog(hDlg, 0);
 		return 1;
 
 	case WM_COMMAND:
-
 	   if (LOWORD(wParam) == IDCANCEL)
 	   {
-		   bAbortLoading = TRUE;
-		   EndDialog(hDlg, 1);
+		   g_bAbortLoading = TRUE;
+		   EndDialog(hDlg, IDCANCEL);
+		   return 1;
 	   }
-	   return 1;
 	}
 	return 0;
 }
 
 int UpdateLoadProgress(const char* name, int current, int total)
 {
+	static HWND hWndLoad = 0;
 	MSG Msg;
-	static HWND hLoad;
+	int nReturn = 0;
 
-	if (hLoad == NULL)
+	if (hWndLoad == NULL)
 	{
-		hLoad = CreateDialog(GetModuleHandle(NULL),
-							 MAKEINTRESOURCE(IDD_LOAD_PROGRESS), 0,
-							 LoadProgressDialogProc);
-		if (hLoad != NULL)
-		{
-			RECT r;
-			int  xSize, ySize;
-			int  x, y;
-			char buf[256];
+		hWndLoad = CreateDialog(GetModuleHandle(NULL),
+								MAKEINTRESOURCE(IDD_LOAD_PROGRESS),
+								hMain,
+								LoadProgressDialogProc);
+	}
 
-			sprintf(buf, "Loading %s", ModifyThe(Machine->gamedrv->description));
-			SetWindowText(hLoad, buf);
+	if (g_bAbortLoading == TRUE)
+	{
+		nReturn = 1;
+		DestroyWindow(hWndLoad);
+	}
+	else
+	{
+		SendDlgItemMessage(hWndLoad, IDC_LOAD_PROGRESS, PBM_SETRANGE, 0, MAKELPARAM(0, total));
+		SendDlgItemMessage(hWndLoad, IDC_LOAD_PROGRESS, PBM_SETPOS, current, 0);
 
-			/* Center in the middle of the screen */
-			xSize = GetSystemMetrics(SM_CXSCREEN);	   /* Screen Width */
-			ySize = GetSystemMetrics(SM_CYSCREEN);	   /* Screen Height */
-			GetWindowRect(hLoad, &r);
-			x = (xSize - (r.right  - r.left)) / 2;
-			y = (ySize - (r.bottom - r.top))  / 2;
+		SetWindowText(GetDlgItem(hWndLoad, IDC_LOAD_ROMNAME), name);
 
-			SetWindowPos(hLoad, NULL, x, y, -1, -1,
-						 SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-		}
+		if (current == total)
+			DestroyWindow(hWndLoad);
 	}
 
 	while (PeekMessage(&Msg, NULL, 0, 0, PM_REMOVE))
 	{
-		if (!IsDialogMessage(hLoad, &Msg))
+		if (!IsDialogMessage(hWndLoad, &Msg))
 		{
 			TranslateMessage(&Msg);
 			DispatchMessage(&Msg);
 		}
 	}
 
-	if (bAbortLoading == TRUE)
-	{
-		EndDialog(hLoad, 0);
-		return 1;
-	}
-
-	SendDlgItemMessage(hLoad, IDC_LOAD_PROGRESS, PBM_SETRANGE, 0, MAKELPARAM(0, total));
-	SendDlgItemMessage(hLoad, IDC_LOAD_PROGRESS, PBM_SETPOS, current, 0);
-
-	SetWindowText(GetDlgItem(hLoad, IDC_LOAD_ROMNAME), name);
-
-	if (current == total)
-	{
-		EndDialog(hLoad, 0);
-	}
-
-	return 0;
+	return nReturn;
 }
+
 
 /* End of source file */

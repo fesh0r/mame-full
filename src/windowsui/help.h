@@ -21,6 +21,20 @@
 
 #include <htmlhelp.h>
 
+#ifdef MESS
+/* MESS32 text files */
+#define HELPTEXT_RELEASE    "Mess.txt"
+#define HELPTEXT_WHATS_NEW  "Messnew.txt"
+#else
+/* MAME32 text files */
+#define HELPTEXT_RELEASE    "windows.txt"
+#define HELPTEXT_WHATS_NEW  "whatsnew.txt"
+#endif
+
+#if !defined(MAME32HELP)
+#define MAME32HELP "mame32.chm"
+#endif
+
 extern int  Help_Init(void);
 extern void Help_Exit(void);
 extern HWND Help_HtmlHelp(HWND hwndCaller, LPCSTR pszFile, UINT uCommand, DWORD_PTR dwData);

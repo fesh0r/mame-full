@@ -108,6 +108,8 @@ static REG_OPTIONS regSettings[] =
 	{"ShowFolderList",     RO_BOOL,    &settings.show_folderlist,  0, 0},
 	{"GameCheck",          RO_BOOL,    &settings.game_check,       0, 0},
 	{"VersionCheck",       RO_BOOL,    &settings.version_check,    0, 0},
+	{"JoyGUI",             RO_BOOL,    &settings.use_joygui,       0, 0},
+	{"Broadcast",          RO_BOOL,    &settings.broadcast,        0, 0},
 
 	{"SortColumn",         RO_INT,     &settings.sort_column,      0, 0},
 	{"SortReverse",        RO_BOOL,    &settings.sort_reverse,     0, 0},
@@ -262,6 +264,8 @@ void OptionsInit(int total_games)
 	settings.show_screenshot = TRUE;
 	settings.game_check      = TRUE;
 	settings.version_check   = TRUE;
+	settings.use_joygui      = FALSE;
+	settings.broadcast       = FALSE;
 
 	for (i = 0; i < COLUMN_MAX; i++)
 	{
@@ -510,6 +514,26 @@ void SetVersionCheck(BOOL version_check)
 BOOL GetVersionCheck(void)
 {
 	return settings.version_check;
+}
+
+void SetJoyGUI(BOOL use_joygui)
+{
+	settings.use_joygui = use_joygui;
+}
+
+BOOL GetJoyGUI(void)
+{
+	return settings.use_joygui;
+}
+
+void SetBroadcast(BOOL broadcast)
+{
+	settings.broadcast = broadcast;
+}
+
+BOOL GetBroadcast(void)
+{
+	return settings.broadcast;
 }
 
 void SetSavedFolderID(UINT val)
