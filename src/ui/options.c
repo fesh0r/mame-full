@@ -142,6 +142,7 @@ static REG_OPTION regSettings[] =
 	{"ShowStatusBar",      "show_status_bar",    RO_BOOL,    &settings.show_statusbar,   0, 0},
 	{"ShowFolderList",     "show_folder_section",RO_BOOL,    &settings.show_folderlist,  0, 0},
 	{"ShowTabCtrl",        "show_tabs",          RO_BOOL,    &settings.show_tabctrl,     0, 0},
+	{"ShowTabFlags",       "show_tab_flags",     RO_INT,     &settings.show_tab_flags,   0, 0},
 	{"GameCheck",          "check_game",         RO_BOOL,    &settings.game_check,       0, 0},
 	{"VersionCheck",       "check_version",      RO_BOOL,    &settings.version_check,    0, 0},
 	{"JoyGUI",             "joystick_in_interface",RO_BOOL,&settings.use_joygui,     0, 0},
@@ -366,6 +367,18 @@ static REG_OPTION global_game_options[] =
 };
 #define NUM_GLOBAL_GAME_OPTIONS (sizeof(global_game_options) / sizeof(global_game_options[0]))
 
+// Screen shot Page tab control text
+// these must match the order of the options flags in options.h
+// (SHOW_TAB_...)
+const char* tab_texts[MAX_PICT_TYPES] =
+{
+	"Snapshot",
+	"Flyer",
+	"Cabinet",
+	"Marquee",
+	"Title"
+};
+
 
 static int  num_games = 0;
 static BOOL save_gui_settings = TRUE;
@@ -403,6 +416,8 @@ BOOL OptionsInit()
 	settings.show_statusbar  = TRUE;
 	settings.show_screenshot = TRUE;
 	settings.show_tabctrl    = TRUE;
+	settings.show_tab_flags = SHOW_TAB_SNAPSHOT | SHOW_TAB_FLYER | SHOW_TAB_CABINET |
+		SHOW_TAB_MARQUEE | SHOW_TAB_TITLE;
 	settings.game_check      = TRUE;
 	settings.version_check   = TRUE;
 	settings.use_joygui      = FALSE;
@@ -772,6 +787,11 @@ void ResetGUI(void)
 	save_gui_settings = FALSE;
 }
 
+const char * GetTabName(int tab_index)
+{
+	return tab_texts[tab_index];
+}
+
 void SetViewMode(int val)
 {
 	settings.view = val;
@@ -1006,6 +1026,16 @@ COLORREF GetListCloneColor(void)
 
 	return settings.list_clone_color;
 
+}
+
+int GetShowTabFlags(void)
+{
+	return settings.show_tab_flags;
+}
+
+void SetShowTabFlags(int new_flags)
+{
+	settings.show_tab_flags = new_flags;
 }
 
 void SetColumnWidths(int width[])

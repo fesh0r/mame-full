@@ -281,7 +281,7 @@
 #define ID_FILE_AUDIT                   40018
 #define ID_FILE_PLAY_RECORD             40019
 #define ID_FILE_PLAY_BACK               40020
-#define ID_VIEW_SCREEN_SHOT             40023
+#define ID_VIEW_PICTURE_AREA            40023
 #define ID_HELP_CONTENTS                40025
 #define ID_HELP_WHATS_NEW32             40026
 #define ID_HELP_TROUBLE                 40027
@@ -311,12 +311,17 @@
 #define ID_GAME_AUDIT                   40059
 #define ID_CONTEXT_SELECT_RANDOM        40060
 #define ID_OPTIONS_LANGUAGE             40061
-#define ID_VIEW_SCREENSHOT              40062
-#define ID_VIEW_FLYER                   40063
-#define ID_VIEW_CABINET                 40064
-#define ID_VIEW_MARQUEE                 40065
-#define ID_VIEW_TITLE                   40066
+#define ID_VIEW_TAB_SCREENSHOT          40062
+#define ID_VIEW_TAB_FLYER               40063
+#define ID_VIEW_TAB_CABINET             40064
+#define ID_VIEW_TAB_MARQUEE             40065
+#define ID_VIEW_TAB_TITLE               40066
 #define ID_OPTIONS_BG                   40067
+#define ID_TOGGLE_TAB_SCREENSHOT        40068
+#define ID_TOGGLE_TAB_FLYER             40069
+#define ID_TOGGLE_TAB_CABINET           40070
+#define ID_TOGGLE_TAB_MARQUEE           40071
+#define ID_TOGGLE_TAB_TITLE             40072
 #define IDC_STATIC                      -1
 
 // Next default values for new objects

@@ -212,6 +212,18 @@ typedef struct
 #endif
 } game_variables_type;
 
+// show_tab_flags
+// these must match up with the tab_texts strings in options.c
+enum
+{
+	SHOW_TAB_SNAPSHOT = 0x01,
+	SHOW_TAB_FLYER = 0x02,
+	SHOW_TAB_CABINET = 0x04,
+	SHOW_TAB_MARQUEE = 0x08,
+	SHOW_TAB_TITLE = 0x10,
+	NUM_SHOW_TABS = 5
+};
+
 typedef struct
 {
     INT      folder_id;
@@ -221,6 +233,7 @@ typedef struct
     BOOL     show_statusbar;
     BOOL     show_screenshot;
     BOOL     show_tabctrl;
+	int show_tab_flags;
     int      show_pict_type;
     BOOL     game_check;        /* Startup GameCheck */
     BOOL     version_check;     /* Version mismatch warings */
@@ -248,35 +261,35 @@ typedef struct
     BOOL show_gameinfo;
     BOOL high_priority;
 
-	char*    language;
-	char*    flyerdir;
-	char*    cabinetdir;
-	char*    marqueedir;
-	char*	 titlesdir;
+    char*    language;
+    char*    flyerdir;
+    char*    cabinetdir;
+    char*    marqueedir;
+    char*    titlesdir;
 
-	char*    romdirs;
-	char*    sampledirs;
+    char*    romdirs;
+    char*    sampledirs;
 #ifdef MESS
 	char*    softwaredirs;
 	char*    crcdir;	
 #endif
     char*    inidir;
-	char*    cfgdir;
-	char*    nvramdir;
-	char*    memcarddir;
-	char*    inpdir;
-	char*    hidir;
-	char*    statedir;
-	char*    artdir;
-	char*    imgdir;
-	char*    diffdir;
-	char*	 iconsdir;
-	char*    bgdir;
+    char*    cfgdir;
+    char*    nvramdir;
+    char*    memcarddir;
+    char*    inpdir;
+    char*    hidir;
+    char*    statedir;
+    char*    artdir;
+    char*    imgdir;
+    char*    diffdir;
+    char*	 iconsdir;
+    char*    bgdir;
     char*    cheat_filename;
-	char*    history_filename;
-	char*    mameinfo_filename;
-	char*    ctrlrdir;
-	char*	 folderdir;
+    char*    history_filename;
+    char*    mameinfo_filename;
+    char*    ctrlrdir;
+    char*    folderdir;
 
 } settings_type; /* global settings for the UI only */
 
@@ -296,6 +309,8 @@ void SaveOptions(void);
 void ResetGUI(void);
 void ResetGameDefaults(void);
 void ResetAllGameOptions(void);
+
+const char * GetTabName(int tab_index);
 
 void SetViewMode(int val);
 int  GetViewMode(void);
@@ -376,6 +391,9 @@ COLORREF GetListFontColor(void);
 
 void SetListCloneColor(COLORREF uColor);
 COLORREF GetListCloneColor(void);
+
+int GetShowTabFlags(void);
+void SetShowTabFlags(int new_flags);
 
 void SetSortColumn(int column);
 int  GetSortColumn(void);

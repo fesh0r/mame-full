@@ -90,8 +90,17 @@ BEGIN
         MENUITEM "&Toolbar\tAlt+T",             ID_VIEW_TOOLBARS
         MENUITEM "&Status bar\tAlt+S",          ID_VIEW_STATUS
         MENUITEM "Fold&er List\tAlt+D",         ID_VIEW_FOLDERS
-        MENUITEM "Scree&nshot\tAlt+N",          ID_VIEW_SCREEN_SHOT
+        MENUITEM "P&icture Area\tAlt+I",        ID_VIEW_PICTURE_AREA
         MENUITEM "Screenshot Ta&b\tAlt+B",      ID_VIEW_PAGETAB
+        MENUITEM SEPARATOR
+        POPUP "S&how Pictures"
+        BEGIN
+            MENUITEM "&Snapshot",                ID_TOGGLE_TAB_SCREENSHOT
+            MENUITEM "&Flyer",                   ID_TOGGLE_TAB_FLYER
+            MENUITEM "&Cabinet",                 ID_TOGGLE_TAB_CABINET
+            MENUITEM "&Marquee",                 ID_TOGGLE_TAB_MARQUEE
+            MENUITEM "&Title",                   ID_TOGGLE_TAB_TITLE
+        END
         MENUITEM SEPARATOR
         MENUITEM "L&arge Icons",                ID_VIEW_LARGE_ICON
         MENUITEM "S&mall Icons",                ID_VIEW_SMALL_ICON
@@ -195,13 +204,22 @@ IDR_CONTEXT_SCREENSHOT MENU DISCARDABLE
 BEGIN
     POPUP "Context Screen Shot"
     BEGIN
-        MENUITEM "Screenshot Tab",                    ID_VIEW_PAGETAB
+        MENUITEM "Show Tab &Control",            ID_VIEW_PAGETAB
         MENUITEM SEPARATOR
-        MENUITEM "Snapshot",                    ID_VIEW_SCREENSHOT
-        MENUITEM "Flyer",                       ID_VIEW_FLYER
-        MENUITEM "Cabinet",                     ID_VIEW_CABINET
-        MENUITEM "Marquee",                     ID_VIEW_MARQUEE
-        MENUITEM "Title",                       ID_VIEW_TITLE
+        POPUP "S&how Pictures"
+        BEGIN
+            MENUITEM "&Snapshot",                ID_TOGGLE_TAB_SCREENSHOT
+            MENUITEM "&Flyer",                   ID_TOGGLE_TAB_FLYER
+            MENUITEM "&Cabinet",                 ID_TOGGLE_TAB_CABINET
+            MENUITEM "&Marquee",                 ID_TOGGLE_TAB_MARQUEE
+            MENUITEM "&Title",                   ID_TOGGLE_TAB_TITLE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Snapshot",                    ID_VIEW_TAB_SCREENSHOT
+        MENUITEM "&Flyer",                       ID_VIEW_TAB_FLYER
+        MENUITEM "&Cabinet",                     ID_VIEW_TAB_CABINET
+        MENUITEM "&Marquee",                     ID_VIEW_TAB_MARQUEE
+        MENUITEM "&Title",                       ID_VIEW_TAB_TITLE
     END
 END
 
@@ -241,8 +259,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,67,0,0
- PRODUCTVERSION 0,67,0,0
+ FILEVERSION 0,68,0,0
+ PRODUCTVERSION 0,68,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -268,7 +286,7 @@ BEGIN
             VALUE "CompanyName", "MAME Team\0"
             VALUE "FileDescription", "Multiple Arcade Machine Emulator for Win32\0"
 #endif
-            VALUE "FileVersion", "0, 66, 0, 0\0"
+            VALUE "FileVersion", "0, 68, 0, 0\0"
             VALUE "InternalName", "MAME32\0"
             VALUE "LegalCopyright", "Copyright 1997-2003 Nicola Salmoria and the MAME team\0"
             VALUE "LegalTrademarks", "\0"
@@ -279,7 +297,7 @@ BEGIN
             VALUE "OriginalFilename", "MAME32.exe\0"
             VALUE "ProductName", "MAME32\0"
 #endif
-            VALUE "ProductVersion", "0, 66, 0, 0\0"
+            VALUE "ProductVersion", "0, 68, 0, 0\0"
         END
     END
     BLOCK "VarFileInfo"
@@ -1077,17 +1095,17 @@ BEGIN
     "A",            ID_GAME_AUDIT,          VIRTKEY, ALT, NOINVERT
     "D",            ID_VIEW_FOLDERS,        VIRTKEY, ALT, NOINVERT
     "F",            ID_CONTEXT_FILTERS,     VIRTKEY, CONTROL, NOINVERT
-    "N",            ID_VIEW_SCREEN_SHOT,    VIRTKEY, ALT, NOINVERT
+    "I",            ID_VIEW_PICTURE_AREA,   VIRTKEY, ALT, NOINVERT
     "P",            IDC_PLAY_GAME,          VIRTKEY, ALT, NOINVERT
     "R",            ID_CONTEXT_SELECT_RANDOM, VIRTKEY, CONTROL, NOINVERT
     "S",            ID_VIEW_STATUS,         VIRTKEY, ALT, NOINVERT
     "T",            ID_VIEW_TOOLBARS,       VIRTKEY, ALT, NOINVERT
     "B",            ID_VIEW_PAGETAB,        VIRTKEY, ALT, NOINVERT
-    "1",            ID_VIEW_SCREENSHOT,     VIRTKEY, ALT, NOINVERT
-    "2",            ID_VIEW_FLYER,          VIRTKEY, ALT, NOINVERT
-    "3",            ID_VIEW_CABINET,        VIRTKEY, ALT, NOINVERT
-    "4",            ID_VIEW_MARQUEE,        VIRTKEY, ALT, NOINVERT
-    "5",            ID_VIEW_TITLE,          VIRTKEY, ALT, NOINVERT
+    "1",            ID_VIEW_TAB_SCREENSHOT, VIRTKEY, ALT, NOINVERT
+    "2",            ID_VIEW_TAB_FLYER,      VIRTKEY, ALT, NOINVERT
+    "3",            ID_VIEW_TAB_CABINET,    VIRTKEY, ALT, NOINVERT
+    "4",            ID_VIEW_TAB_MARQUEE,    VIRTKEY, ALT, NOINVERT
+    "5",            ID_VIEW_TAB_TITLE,      VIRTKEY, ALT, NOINVERT
     VK_F1,          ID_HELP_CONTENTS,       VIRTKEY, NOINVERT
     VK_F5,          ID_UPDATE_GAMELIST,     VIRTKEY, NOINVERT
     VK_RETURN,      ID_GAME_PROPERTIES,     VIRTKEY, ALT, NOINVERT
@@ -1358,7 +1376,7 @@ BEGIN
     ID_FILE_PLAY_RECORD     "Record a game for later playback"
     ID_FILE_PLAY_BACK       "Playback a recorded game"
 #endif
-    ID_VIEW_SCREEN_SHOT     "Show or hide the screen shot"
+    ID_VIEW_PICTURE_AREA    "Show or hide the picture area"
     ID_HELP_CONTENTS        "Display help contents"
 #ifdef MESS
     ID_HELP_WHATS_NEW32     "What's new in MESS"

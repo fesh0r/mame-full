@@ -141,6 +141,10 @@ static void             UpdateStatusBar(void);
 static BOOL             PickerHitTest(HWND hWnd);
 static BOOL             MamePickerNotify(NMHDR *nm);
 static BOOL             TreeViewNotify(NMHDR *nm);
+static int GetPictTypeFromTabIndex(int tab_index);
+static int GetTabIndexFromPictType(void);
+static void CalculateNextPictType(void);
+
 static BOOL             TabNotify(NMHDR *nm);
 
 static void             ResetBackground(char *szFile);
@@ -149,7 +153,7 @@ static void             LoadBackgroundBitmap(void);
 static void             PaintBackgroundImage(HWND hWnd, HRGN hRgn, int x, int y);
 
 static int DriverDataCompareFunc(const void *arg1,const void *arg2);
-static void             InitTabCtrl(void);
+static void             ResetTabControl(void);
 static int CALLBACK     ListCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem);
 static int              BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem);
 
@@ -198,7 +202,7 @@ static int              GetIconForDriver(int nItem);
 static void             AddDriverIcon(int nItem,int default_icon_index);
 
 /* Context Menu handlers */
-static void             UpdateMenu(HWND hWnd, HMENU hMenu);
+static void             UpdateMenu(HMENU hMenu);
 static BOOL             HandleContextMenu( HWND hWnd, WPARAM wParam, LPARAM lParam);
 static BOOL             HeaderOnContextMenu(HWND hWnd, WPARAM wParam, LPARAM lParam);
 static BOOL             HandleTreeContextMenu( HWND hWnd, WPARAM wParam, LPARAM lParam);
@@ -401,7 +405,7 @@ static int          *icon_index = NULL; /* for custom per-game icons */
 static TBBUTTON tbb[] =
 {
 	{0, ID_VIEW_FOLDERS,    TBSTATE_ENABLED, TBSTYLE_CHECK,      {0, 0}, 0, 0},
-	{1, ID_VIEW_SCREEN_SHOT,TBSTATE_ENABLED, TBSTYLE_CHECK,      {0, 0}, 0, 1},
+	{1, ID_VIEW_PICTURE_AREA,TBSTATE_ENABLED, TBSTYLE_CHECK,      {0, 0}, 0, 1},
 	{0, 0,                  TBSTATE_ENABLED, TBSTYLE_SEP,        {0, 0}, 0, 0},
 	{2, ID_VIEW_LARGE_ICON, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP, {0, 0}, 0, 2},
 	{3, ID_VIEW_SMALL_ICON, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP, {0, 0}, 0, 3},
@@ -433,7 +437,7 @@ static char szTbStrings[NUM_TOOLTIPS + 1][30] =
 static int CommandToString[] =
 {
 	ID_VIEW_FOLDERS,
-	ID_VIEW_SCREEN_SHOT,
+	ID_VIEW_PICTURE_AREA,
 	ID_VIEW_LARGE_ICON,
 	ID_VIEW_SMALL_ICON,
 	ID_VIEW_LIST_MENU,
@@ -526,16 +530,6 @@ const char* column_names[COLUMN_MAX] =
 	"Year",
 	"Clone Of",
 	"Source"
-};
-
-/* Screen shot Page tab control text */
-const char* tab_texts[MAX_PICT_TYPES] =
-{
-	"Snapshot",
-	"Flyer",
-	"Cabinet",
-	"Marquee",
-	"Title"
 };
 
 /* a tiny compile is without Neogeo games */
@@ -1085,14 +1079,14 @@ void UpdateScreenShot(void)
 	if (GetShowScreenShot())
 	{
 		nWidth = nSplitterOffset[GetSplitterCount() - 1];
-		CheckMenuItem(GetMenu(hMain),ID_VIEW_SCREEN_SHOT, MF_CHECKED);
-		ToolBar_CheckButton(hToolBar, ID_VIEW_SCREEN_SHOT, MF_CHECKED);
+		CheckMenuItem(GetMenu(hMain),ID_VIEW_PICTURE_AREA, MF_CHECKED);
+		ToolBar_CheckButton(hToolBar, ID_VIEW_PICTURE_AREA, MF_CHECKED);
 	}
 	else
 	{
 		nWidth = rect.right;
-		CheckMenuItem(GetMenu(hMain),ID_VIEW_SCREEN_SHOT, MF_UNCHECKED);
-		ToolBar_CheckButton(hToolBar, ID_VIEW_SCREEN_SHOT, MF_UNCHECKED);
+		CheckMenuItem(GetMenu(hMain),ID_VIEW_PICTURE_AREA, MF_UNCHECKED);
+		ToolBar_CheckButton(hToolBar, ID_VIEW_PICTURE_AREA, MF_UNCHECKED);
 	}
 
 	/* Tree control */
@@ -1405,10 +1399,12 @@ int DriverDataCompareFunc(const void *arg1,const void *arg2)
     return strcmp( ((driver_data_type *)arg1)->name, ((driver_data_type *)arg2)->name );
 }
 
-static void InitTabCtrl(void)
+static void ResetTabControl(void)
 {
 	TC_ITEM tci;
 	int i;
+
+	TabCtrl_DeleteAllItems(hTabCtrl);
 
 	ZeroMemory(&tci, sizeof(TC_ITEM));
 
@@ -1417,8 +1413,11 @@ static void InitTabCtrl(void)
 
 	for(i=0; i<MAX_PICT_TYPES; i++)
 	{
-		tci.pszText = (char *)tab_texts[i];
-		TabCtrl_InsertItem(hTabCtrl, i, &tci);
+		if ((GetShowTabFlags() & (1 << i)) != 0)
+		{
+			tci.pszText = (char *)GetTabName(i);
+			TabCtrl_InsertItem(hTabCtrl, i, &tci);
+		}
 	}
 }
 
@@ -1570,7 +1569,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	hMain = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_MAIN), 0, NULL);
 	SetMainTitle();
 	hTabCtrl = GetDlgItem(hMain, IDC_SSTAB);
-	InitTabCtrl();
+	ResetTabControl();
 
 	/* subclass history window */
 	g_lpHistoryWndProc = (WNDPROC)(LONG)(int)GetWindowLong(GetDlgItem(hMain, IDC_HISTORY), GWL_WNDPROC);
@@ -1688,7 +1687,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	}
 
 	nPictType = GetShowPictType();
-	TabCtrl_SetCurSel(hTabCtrl, nPictType);
+	TabCtrl_SetCurSel(hTabCtrl, GetTabIndexFromPictType());
 
 	bDoGameCheck = GetGameCheck();
 	idle_work    = TRUE;
@@ -1924,7 +1923,7 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 		return TRUE;
 
 	case WM_INITMENUPOPUP:
-		UpdateMenu(GetDlgItem(hWnd, IDC_LIST), GetMenu(hWnd));
+		UpdateMenu(GetMenu(hWnd));
 		break;
 
 	case WM_CONTEXTMENU:
@@ -2995,12 +2994,65 @@ static BOOL TreeViewNotify(LPNMHDR nm)
 	return FALSE;
 }
 
+static int GetPictTypeFromTabIndex(int tab_index)
+{
+	int shown_tabs = -1;
+	int i;
+
+	for (i=0;i<NUM_SHOW_TABS;i++)
+	{
+		if ((GetShowTabFlags() & (1 << i)) != 0)
+		{
+			shown_tabs++;
+			if (shown_tabs == tab_index)
+				return i;
+		}
+	}
+	dprintf("invalid tab index %i",tab_index);
+	return 0;
+}
+
+static int GetTabIndexFromPictType(void)
+{
+	int shown_tabs = 0;
+	int i;
+
+	for (i=0;i<NUM_SHOW_TABS;i++)
+	{
+		if (nPictType == i)
+			break;
+
+		if ((GetShowTabFlags() & (1 << i)) != 0)
+			shown_tabs++;
+
+	}
+	
+	return shown_tabs;
+}
+
+static void CalculateNextPictType(void)
+{
+	int i;
+
+	// at most loop once through all options
+	for (i=0;i<NUM_SHOW_TABS;i++)
+	{
+		nPictType = (nPictType + 1) % MAX_PICT_TYPES;
+
+		if ((GetShowTabFlags() & (1 << nPictType)) != 0)
+		{
+			// this tab is being shown, so we're all set
+			return;
+		}
+	}
+}
+
 static BOOL TabNotify(NMHDR *nm)
 {
 	switch (nm->code)
 	{
 	case TCN_SELCHANGE:
-		nPictType = TabCtrl_GetCurSel(hTabCtrl);
+		nPictType = GetPictTypeFromTabIndex(TabCtrl_GetCurSel(hTabCtrl));
 		SetShowPictType(nPictType);
 		UpdateScreenShot();
 		return TRUE;
@@ -3494,10 +3546,10 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 	case ID_VIEW_PAGETAB:
 		bShowTabCtrl = !bShowTabCtrl;
 		SetShowTabCtrl(bShowTabCtrl);
-		CheckMenuItem(GetMenu(hMain), ID_VIEW_PAGETAB, (bShowTabCtrl) ? MF_CHECKED : MF_UNCHECKED);
 		ShowWindow(hTabCtrl, (bShowTabCtrl) ? SW_SHOW : SW_HIDE);
 		ResizePickerControls(hMain);
 		UpdateScreenShot();
+		InvalidateRect(hMain,NULL,TRUE);
 		break;
 
 	case ID_GAME_AUDIT:
@@ -3538,17 +3590,48 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		SetFocus(hwndList);
 		return TRUE;
 
-	/* ScreenShot Context Menu */
-	case ID_VIEW_SCREENSHOT:
-	case ID_VIEW_FLYER:
-	case ID_VIEW_CABINET:
-	case ID_VIEW_MARQUEE:
-	case ID_VIEW_TITLE:
-		nPictType = id - ID_VIEW_SCREENSHOT;
+		// ScreenShot Context Menu
+		// select current tab
+	case ID_VIEW_TAB_SCREENSHOT:
+	case ID_VIEW_TAB_FLYER:
+	case ID_VIEW_TAB_CABINET:
+	case ID_VIEW_TAB_MARQUEE:
+	case ID_VIEW_TAB_TITLE:
+		nPictType = id - ID_VIEW_TAB_SCREENSHOT;
 		SetShowPictType(nPictType);
 		UpdateScreenShot();
-		TabCtrl_SetCurSel(hTabCtrl, nPictType);
+		TabCtrl_SetCurSel(hTabCtrl, GetTabIndexFromPictType());
 		break;
+
+		// toggle tab's existence
+	case ID_TOGGLE_TAB_SCREENSHOT :
+	case ID_TOGGLE_TAB_FLYER :
+	case ID_TOGGLE_TAB_CABINET :
+	case ID_TOGGLE_TAB_MARQUEE :
+	case ID_TOGGLE_TAB_TITLE :
+	{
+		int flags = GetShowTabFlags();
+		int toggle_flag = 1 << (id - ID_TOGGLE_TAB_SCREENSHOT);
+		flags = flags ^ toggle_flag;
+		if (flags == 0)
+		{
+			// attempt to hide the last tab
+			// error dialog? hide picture area? or ignore?
+			break;
+		}
+		SetShowTabFlags(flags);
+		ResetTabControl();
+		if (nPictType == (id - ID_TOGGLE_TAB_SCREENSHOT) && (flags & (1 << nPictType)) == 0)
+		{
+			// we're deleting the tab we're on
+			CalculateNextPictType();
+			SetShowPictType(nPictType);
+			UpdateScreenShot();
+
+		}
+		TabCtrl_SetCurSel(hTabCtrl, GetTabIndexFromPictType());
+		break;
+	}
 
 	/* Header Context Menu */
 	case ID_SORT_ASCENDING:
@@ -3594,7 +3677,7 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		UpdateStatusBar();
 		break;
 
-	case ID_VIEW_SCREEN_SHOT:
+	case ID_VIEW_PICTURE_AREA :
 		ToggleScreenShot();
 		if (current_view_id == ID_VIEW_LARGE_ICON)
 			ListView_Arrange(hwndList,LVA_ALIGNTOP);
@@ -3747,11 +3830,11 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 			MamePlayGame();
 		break;
 
-	case IDC_SSPICTURE:
-		nPictType = (nPictType + 1) % MAX_PICT_TYPES;
+	case IDC_SSFRAME:
+		CalculateNextPictType();
 		SetShowPictType(nPictType);
 		UpdateScreenShot();
-		TabCtrl_SetCurSel(hTabCtrl, nPictType);
+		TabCtrl_SetCurSel(hTabCtrl, GetTabIndexFromPictType());
 		break;
 
 	case ID_CONTEXT_SELECT_RANDOM:
@@ -4868,7 +4951,7 @@ static BOOL HandleTreeContextMenu(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	hMenuLoad = LoadMenu(hInst, MAKEINTRESOURCE(IDR_CONTEXT_TREE));
 	hMenu = GetSubMenu(hMenuLoad, 0);
 	
-	UpdateMenu(GetDlgItem(hWnd, IDC_TREE), hMenu);
+	UpdateMenu(hMenu);
 
 	TrackPopupMenu(hMenu,TPM_LEFTALIGN | TPM_RIGHTBUTTON,pt.x,pt.y,0,hWnd,NULL);
 
@@ -4900,7 +4983,7 @@ static BOOL HandleContextMenu(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	hMenuLoad = LoadMenu(hInst, MAKEINTRESOURCE(IDR_CONTEXT_MENU));
 	hMenu = GetSubMenu(hMenuLoad, 0);
 
-	UpdateMenu(GetDlgItem(hWnd, IDC_LIST), hMenu);
+	UpdateMenu(hMenu);
 
 	TrackPopupMenu(hMenu,TPM_LEFTALIGN | TPM_RIGHTBUTTON,pt.x,pt.y,0,hWnd,NULL);
 
@@ -4915,7 +4998,7 @@ static BOOL HandleScreenShotContextMenu(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	HMENU hMenu;
 	POINT pt;
 
-	if ((HWND)wParam != GetDlgItem(hWnd, IDC_SSPICTURE))
+	if ((HWND)wParam != GetDlgItem(hWnd, IDC_SSPICTURE) && (HWND)wParam != GetDlgItem(hWnd, IDC_SSFRAME))
 		return FALSE;
 
 	pt.x = GET_X_LPARAM(lParam);
@@ -4926,8 +5009,7 @@ static BOOL HandleScreenShotContextMenu(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	hMenuLoad = LoadMenu(hInst, MAKEINTRESOURCE(IDR_CONTEXT_SCREENSHOT));
 	hMenu = GetSubMenu(hMenuLoad, 0);
 
-	CheckMenuItem(hMenu, ID_VIEW_PAGETAB, (bShowTabCtrl) ? MF_CHECKED : MF_UNCHECKED);
-	CheckMenuRadioItem(hMenu, ID_VIEW_SCREENSHOT, ID_VIEW_TITLE, ID_VIEW_SCREENSHOT + nPictType, MF_BYCOMMAND);
+	UpdateMenu(hMenu);
 
 	TrackPopupMenu(hMenu,TPM_LEFTALIGN | TPM_RIGHTBUTTON,pt.x,pt.y,0,hWnd,NULL);
 
@@ -4936,13 +5018,13 @@ static BOOL HandleScreenShotContextMenu(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
-static void UpdateMenu(HWND hWnd, HMENU hMenu)
+static void UpdateMenu(HMENU hMenu)
 {
 	char			buf[200];
 	MENUITEMINFO	mItem;
 	int 			nGame = GetSelectedPickItem();
 	LPTREEFOLDER lpFolder = GetCurrentFolder();
-
+	int i;
 
 	if (have_selection)
 	{
@@ -4983,6 +5065,33 @@ static void UpdateMenu(HWND hWnd, HMENU hMenu)
 	    EnableMenuItem(hMenu,ID_CONTEXT_REMOVE_CUSTOM,MF_GRAYED);
 		EnableMenuItem(hMenu,ID_CONTEXT_RENAME_CUSTOM,MF_GRAYED);
 	}
+
+	CheckMenuRadioItem(hMenu, ID_VIEW_TAB_SCREENSHOT, ID_VIEW_TAB_TITLE,
+					   ID_VIEW_TAB_SCREENSHOT + nPictType, MF_BYCOMMAND);
+
+	// set whether we're showing the tab control or not
+	if (bShowTabCtrl)
+		CheckMenuItem(hMenu,ID_VIEW_PAGETAB,MF_BYCOMMAND | MF_CHECKED);
+	else
+		CheckMenuItem(hMenu,ID_VIEW_PAGETAB,MF_BYCOMMAND | MF_UNCHECKED);
+
+
+	for (i=0;i<NUM_SHOW_TABS;i++)
+	{
+		// disable menu items for tabs we're not currently showing
+		if ((GetShowTabFlags() & (1 << i)) == 0)
+			EnableMenuItem(hMenu,ID_VIEW_TAB_SCREENSHOT + i,MF_BYCOMMAND | MF_GRAYED);
+		else
+			EnableMenuItem(hMenu,ID_VIEW_TAB_SCREENSHOT + i,MF_BYCOMMAND | MF_ENABLED);
+
+		// check toggle menu items 
+		if ((GetShowTabFlags() & (1 << i)) == 0)
+			CheckMenuItem(hMenu, ID_TOGGLE_TAB_SCREENSHOT + i,MF_BYCOMMAND | MF_UNCHECKED);
+		else
+			CheckMenuItem(hMenu, ID_TOGGLE_TAB_SCREENSHOT + i,MF_BYCOMMAND | MF_CHECKED);
+
+	}
+
 
 }
 
@@ -5043,6 +5152,29 @@ static LRESULT CALLBACK HistoryWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 
 static LRESULT CALLBACK PictureFrameWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	switch (uMsg)
+	{
+	case WM_NCHITTEST :
+	{
+		POINT pt;
+		RECT  rt;
+		HWND hHistory = GetDlgItem(hMain, IDC_HISTORY);
+
+		pt.x = LOWORD(lParam);
+		pt.y = HIWORD(lParam);
+		GetWindowRect(hHistory, &rt);
+		if (!(have_history && nPictType == PICT_SCREENSHOT) || (pt.y < rt.top))
+			return HTCLIENT;
+		else
+			return HTTRANSPARENT;
+	}
+	break;
+	case WM_CONTEXTMENU:
+		if ( HandleScreenShotContextMenu(hWnd, wParam, lParam))
+			return FALSE;
+		break;
+	}
+
 	if (hBackground)
 	{
 		switch (uMsg)
