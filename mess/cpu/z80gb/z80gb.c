@@ -11,6 +11,7 @@
 /** Orginal cpu code (PlayBoy)	Carsten Sorensen	1998	**/
 /** MESS modifications			Hans de Goede		1998	**/
 /** Adapted to new cpuintrf 	Juergen Buchmueller 2000	**/
+/** Adapted to new cpuintrf		Anthony Kruize		2002	**/
 /**                                                         **/
 /*************************************************************/
 #include <stdio.h>
@@ -142,7 +143,10 @@ static int CyclesCB[256] =
 /**********************************************************/
 void z80gb_reset (void *param)
 {
-	Regs.w.AF = 0x01B0;
+	if( param != NULL )
+		Regs.w.AF = *((INT16 *)param);
+	else
+		Regs.w.AF = 0x01B0;
 	Regs.w.BC = 0x0013;
 	Regs.w.DE = 0x00D8;
 	Regs.w.HL = 0x014D;
@@ -277,35 +281,16 @@ unsigned z80gb_get_context (void *dst)
 	return sizeof(z80gb_regs);
 }
 
-/****************************************************************************/
-/* Return program counter                                                   */
-/****************************************************************************/
-unsigned z80gb_get_pc (void)
-{
-	return Regs.w.PC;
-}
-
-void z80gb_set_pc (unsigned pc)
-{
-	Regs.w.PC = pc;
-	change_pc16(Regs.w.PC);
-}
-
-unsigned z80gb_get_sp (void)
-{
-	return Regs.w.SP;
-}
-
-void z80gb_set_sp (unsigned sp)
-{
-	Regs.w.SP = sp;
-}
-
+/****************************************************************************
+ * Get a specific register
+ ****************************************************************************/
 unsigned z80gb_get_reg (int regnum)
 {
 	switch( regnum )
 	{
+	case REG_PC: return Regs.w.PC;
 	case Z80GB_PC: return Regs.w.PC;
+	case REG_SP: return Regs.w.SP;
 	case Z80GB_SP: return Regs.w.SP;
 	case Z80GB_AF: return Regs.w.AF;
 	case Z80GB_BC: return Regs.w.BC;
@@ -315,11 +300,16 @@ unsigned z80gb_get_reg (int regnum)
 	return 0;
 }
 
+/****************************************************************************
+ * Set a specific register
+ ****************************************************************************/
 void z80gb_set_reg (int regnum, unsigned val)
 {
 	switch( regnum )
 	{
+	case REG_PC: Regs.w.PC = val; change_pc16(Regs.w.PC); break;
 	case Z80GB_PC: Regs.w.PC = val; break;
+	case REG_SP: Regs.w.SP = val; break;
 	case Z80GB_SP: Regs.w.SP = val; break;
 	case Z80GB_AF: Regs.w.AF = val; break;
 	case Z80GB_BC: Regs.w.BC = val; break;
