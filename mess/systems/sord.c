@@ -349,9 +349,6 @@ static ppi8255_interface sord_ppi8255_interface =
 /*********************************************************************************************/
 
 
-void *video_timer = NULL;
-//void *cassette_timer = NULL;
-
 static char cart_data[0x06fff-0x02000];
 
 int		sord_cartslot_init(int id)
@@ -425,10 +422,6 @@ static void sord_m5_ctc_interrupt(int state)
 {
 	//logerror("interrupting ctc %02x\r\n ",state);
     cpu_cause_interrupt(0, Z80_VECTOR(0, state));
-}
-
-static WRITE_HANDLER(sord_video_interrupt)
-{
 }
 
 static z80ctc_interface	sord_m5_ctc_intf =
@@ -514,7 +507,7 @@ static READ_HANDLER(sord_sys_r)
 	data = 0;
 
 	/* cassette read */
-	if (device_input(IO_CASSETTE,0) > 255)
+	if (device_input(IO_CASSETTE,0) >=0)
 		data |=(1<<0);
 
 	printer_handshake = centronics_read_handshake(0);
@@ -602,19 +595,6 @@ PORT_WRITE_START( writeport_srdm5fd5 )
 	{ 0x070, 0x073, ppi8255_0_w},
 PORT_END
 
-static int sord_m5_interrupt(void)
-{
-	TMS9928A_interrupt();
-	return ignore_interrupt();
-}
-
-static void video_timer_callback(int dummy)
-{
-	z80ctc_0_trg3_w(0,1);
-	z80ctc_0_trg3_w(0,0);
-}
-
-
 //static void cassette_timer_callback(int dummy)
 //{
 //	int data;
@@ -635,6 +615,23 @@ static CENTRONICS_CONFIG sordm5_cent_config[1]={
 	},
 };
 
+static void sordm5_video_interrupt_callback(int state)
+{
+	if (state)
+	{
+		z80ctc_0_trg3_w(0,1);
+		z80ctc_0_trg3_w(0,0);
+	}
+}
+
+
+int sordm5_interrupt(void)
+{
+	TMS9928A_interrupt();
+
+	return ignore_interrupt();
+}
+
 void sord_m5_init_machine(void)
 {
 	z80ctc_init(&sord_m5_ctc_intf);
@@ -643,12 +640,13 @@ void sord_m5_init_machine(void)
 	ppi8255_init(&sord_ppi8255_interface);
 	ppi8255_set_mode2_interface(&sord_ppi8255_mode2_interface);
 
-	video_timer = timer_pulse(TIME_IN_MSEC(16.7), 0, video_timer_callback);
-
 //	cassette_timer = timer_pulse(TIME_IN_HZ(11025), 0, cassette_timer_callback);
 
 	TMS9928A_reset ();
 	z80ctc_reset(0);
+
+	TMS9928A_int_callback (sordm5_video_interrupt_callback);
+
 
 	/* should be done in a special callback to work properly! */
 	cpu_setbank(1, cart_data);
@@ -663,7 +661,6 @@ void sord_m5_init_machine(void)
 #ifdef SORD_DUMP_RAM
 void sord_dump_ram(void)
 {
-#if 0
 	void *file;
 
 	file = osd_fopen(Machine->gamedrv->name, "sord.bin", OSD_FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
@@ -676,7 +673,7 @@ void sord_dump_ram(void)
 		{
 			unsigned char data[1];
 
-			data[0] = cpu_readmem16(i);
+			data[0] = cpunum_read_byte(0,i);
 
 			osd_fwrite(file, data, 1);
 		}
@@ -684,7 +681,6 @@ void sord_dump_ram(void)
 		/* close file */
 		osd_fclose(file);
 	}
-#endif
 }
 
 void sordfd5_dump_ram(void)
@@ -715,13 +711,9 @@ void sordfd5_dump_ram(void)
 
 void sord_m5_shutdown_machine(void)
 {
+#ifdef SORD_DUMP_RAM
 	sord_dump_ram();
-
-	if (video_timer)
-	{
-		timer_remove(video_timer);
-		video_timer = NULL;
-	}
+#endif
 
 //	if (cassette_timer)
 //	{
@@ -879,8 +871,8 @@ static struct MachineDriver machine_driver_sord_m5 =
 			writemem_sord_m5,		   /* MemoryWriteAddress */
 			readport_sord_m5,		   /* IOReadPort */
 			writeport_sord_m5,		   /* IOWritePort */
-            sord_m5_interrupt, 1,
-			0, 0,	/* every scanline */
+            sordm5_interrupt, 1,
+			0, 0,	
 			sord_m5_daisy_chain
 		},
 	},
@@ -922,13 +914,13 @@ static struct MachineDriver machine_driver_sord_m5_fd5 =
 			writemem_sord_m5,		   /* MemoryWriteAddress */
 			readport_srdm5fd5,		   /* IOReadPort */
 			writeport_srdm5fd5,		   /* IOWritePort */
-            sord_m5_interrupt, 1,
-			0, 0,	/* every scanline */
+            sordm5_interrupt, 1,
+			0, 0,	
 			sord_m5_daisy_chain
 		},
 		{
 			CPU_Z80_MSX,
-			4000000,
+			3800000,
 			readmem_sord_fd5,
 			writemem_sord_fd5,
 			readport_sord_fd5,
@@ -1047,6 +1039,11 @@ static const struct IODevice io_srdm5fd5[] =
 	{IO_END}
 };
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY		FULLNAME */
-COMP( 1983, sordm5,      0,            sord_m5,          sord_m5,      0,       "Sord", "Sord M5")
-COMPX( 1983, srdm5fd5,	0,	sord_m5_fd5, sord_m5, 0, "Sord", "Sord M5 + PI5 + FD5", GAME_NOT_WORKING)
+
+COMPUTER_CONFIG_START(sordm5)
+	CONFIG_RAM_DEFAULT(64 * 1024)
+COMPUTER_CONFIG_END
+
+/*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */
+COMPC( 1983, sordm5,      0,    sord_m5,   sord_m5,  0,       sordm5, "Sord", "Sord M5")
+COMPCX( 1983, srdm5fd5,	0,	sord_m5_fd5, sord_m5, 0, sordm5, "Sord", "Sord M5 + PI5 + FD5", GAME_NOT_WORKING)

@@ -3113,6 +3113,18 @@ in a basic serial form, with start bits, data bits, parity and stop bits).
 In the future the serial device will support xmodem and xmodem send/receive will then
 work in the emulation.
 
+XMODEM transfer instructions:
+
+NC100:
+
+1. Enter wordprocessor.
+2. Start a new document
+3. Quit wordprocessor
+3. Go to list documents.
+4. Press MENU key
+5. Here you can navigate the menu to find "XMODEM receive document".
+6. Start XMODEM send on PC.
+
 Notes
 =====
 
@@ -3169,6 +3181,14 @@ c. SERIAL
 ---------
 
 Serial is not working properly. It is almost at the same state as the NC100.
+
+XModem transfer instructions:
+
+1. Enter serial/terminal program.
+2. Press MENU
+3. Press R (for XMODEM receive)
+4. Start XMODEM send on PC.
+
 
 d. DISK DRIVE
 -------------
@@ -3889,11 +3909,9 @@ Usage Notes:
 PDP-1 currently supports a perforated tape reader (punchtape unit #1), a perforated tape punch
 (punchtape unit #2), and a typewriter (printer unit #1).
 
-
 The simplest way to load and run software is to insert a read-in mode tape (.rim files) in
 the perforated tape reader and press the read-in switch once (press simulteanously the Control
 Panel key (Left Control) and the Read In key (main keypad Return)).
-
 
 Three dip switches (RAM size, Hardware multiply and Hardware divide) enable or disable computer
 extensions. These switches are only read at reset. Therefore, if you edit them, you must reset
@@ -5021,7 +5039,6 @@ loading:
 old"cmt:" will load the next file on the cassette.
 chan"cmt:" and run"cmt:" can also be used to load and run the next file on the cassette.
 
-
 History and Trivia:
 
 The Sord M5 is similar in design to the MSX but not compatible with it.
@@ -5032,7 +5049,7 @@ In fact some MSX games have been converted to the Sord by enthusiasts.
 
 Known Issues:
 - no memory expansion supported
-
+- loading from cassette does not work
 
 $end
 

@@ -166,7 +166,35 @@ static struct i8271_interface atom_8271_interface=
 	NULL
 };
 
+/*
+                                                                  +--------+
+PC0,  Tape Output ------------------------------------------------|
+                                                                  |
+                                                  +---------|     | NAND   |------CAS OUT
+PC1, Enable 2400 Hz ------------------------------|         |     |        |
+                                  +------+        | NAND    |--B--|        |
+PC4, 2400 Hz ---------------+-----|  INV | ---A---|         |     +--------+
+                            |     +------+        +---------+
+                            |
+                            2400 Hz
 
+
+PC4      PC1 PC0     :   A     B  CAS OUT
+  0      0      0    :    1     1        1
+  0      0      1    :    1     1        0
+  0      1      0    :    1     0        1
+  0      1      1    :    1     0        1
+  1      0      0    :    0     1        1
+  1      0      1    :    0     1        0
+  1      1      0    :    0     1        1
+  1      1      1    :    0     1        0
+
+
+Here is a detail from the Atom circuit diagram about Tape Input:
+
+PC5, Cassette
+Input ----------------------------------------------------------------CAS IN
+*/
 static void atom_timer_callback(int dummy)
 {
 	/* change timer state */

@@ -40,7 +40,7 @@ void floppy_drives_init(void)
 		struct floppy_drive *pDrive = &drives[i];
 
 		/* initialise flags */
-		pDrive->flags = FLOPPY_DRIVE_HEAD_AT_TRACK_0;
+		pDrive->flags = 0;
 		pDrive->index_pulse_callback = NULL;
 		pDrive->ready_state_change_callback = NULL;
 		pDrive->index_timer = NULL;
@@ -407,6 +407,8 @@ void    floppy_drive_seek(int id, signed int signed_tracks)
 		return;
 
 	pDrive = &drives[id];
+
+	logerror("seek from: %d delta: %d\n",pDrive->current_track, signed_tracks);
 
 	/* update position */
 	pDrive->current_track+=signed_tracks;

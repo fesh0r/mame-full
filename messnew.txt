@@ -34,6 +34,9 @@ System Driver Changes:
   tape images support. #FF port emulation added (Arkanoid works now but is still
   not playable due to wrong timings) (Bug #47). [Krzysztof Strzecha]
 
+- [AMSTRAD CPC] Fixed RAM configuration selection, now the original Heroquest 
+  will run [Kev Thacker, Richard Wilson]
+
 - [COCO] Converted CoCo drivers to use configurable RAM sizes, and the CoCo 3
   driver now supports the 2 MB upgrade (if I knew the specs, it would be very
   trivial for me to support the 8 MB upgrade). [Nate Woods]
@@ -44,6 +47,12 @@ System Driver Changes:
 - [PC] Fixed a bug that caused the keyboard buffer to get flooded and the
   emulated system to get paralyzed in beeping under certain situations (bug
   #151). [Nate Woods]
+
+- [EXIDY & KC85/3] These drivers now startup with the MAME 0.56 core. [Kev Thacker]
+
+- [EINSTEIN] Implemented more interrupts and fixed their priorities [Kev Thacker]
+
+- [SORD M5] Cassette writing is working, but loading is not :( [Kev Thacker]
 
 - [TS1000] The main rom file is now called zx81a.rom, instead of zx81.rom in
   order to match the other drivers in the family. [Nate Woods]

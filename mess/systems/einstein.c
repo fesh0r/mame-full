@@ -31,7 +31,7 @@
 	user port is port B of PIO
 	keyboard connected to port A and port B of PSG
 
-	NOTES:
+	TODO:
 	- The ADC is not emulated!
 	- printer emulation needs checking!
 

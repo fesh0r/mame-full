@@ -1,4 +1,4 @@
-/*******************************************************************************
+/***************************************************************************
 		Spectrum/Inves/TK90X etc. memory map:
 
 	CPU:
@@ -31,110 +31,104 @@ Interrupts:
 
 Changes:
 
-29/1/2000	KT -	Implemented initial +3 emulation.
-30/1/2000	KT -	Improved input port decoding for reading and therefore
-			correct keyboard handling for Spectrum and +3.
-31/1/2000	KT -	Implemented buzzer sound for Spectrum and +3.
-			Implementation copied from Paul Daniel's Jupiter driver.
-			Fixed screen display problems with dirty chars.
-			Added support to load .Z80 snapshots. 48k support so far.
-13/2/2000	KT -	Added Interface II, Kempston, Fuller and Mikrogen
-			joystick support.
-17/2/2000	DJR -	Added full key descriptions and Spectrum+ keys.
-			Fixed Spectrum +3 keyboard problems.
-17/2/2000	KT -	Added tape loading from WAV/Changed from DAC to generic
-			speaker code.
-18/2/2000	KT -	Added tape saving to WAV.
-27/2/2000	KT -	Took DJR's changes and added my changes.
-27/2/2000	KT -	Added disk image support to Spectrum +3 driver.
-27/2/2000	KT -	Added joystick I/O code to the Spectrum +3 I/O handler.
-14/3/2000	DJR -	Tape handling dipswitch.
-26/3/2000	DJR -	Snapshot files are now classifed as snapshots not
-			cartridges.
-04/4/2000	DJR -	Spectrum 128 / +2 Support.
-13/4/2000	DJR -	+4 Support (unofficial 48K hack).
-13/4/2000	DJR -	+2a Support (rom also used in +3 models).
-13/4/2000	DJR -	TK90X, TK95 and Inves support (48K clones).
-21/4/2000	DJR -	TS2068 and TC2048 support (TC2048 Supports extra video
-			modes but doesn't have bank switching or sound chip).
-09/5/2000	DJR -	Spectrum +2 (France, Spain), +3 (Spain).
-17/5/2000	DJR -	Dipswitch to enable/disable disk drives on +3 and clones.
-27/6/2000	DJR -	Changed 128K/+3 port decoding (sound now works in Zub 128K).
-06/8/2000	DJR -	Fixed +3 Floppy support
-10/2/2001	KT  -	Re-arranged code and split into each model emulated.
-			Code is split into 48k, 128k, +3, tc2048 and ts2048
-			segments. 128k uses some of the functions in 48k, +3
-			uses some functions in 128, and tc2048/ts2048 use some
-			of the functions in 48k. The code has been arranged so
-			these functions come in some kind of "override" order,
-			read functions changed to use READ_HANDLER and write
-			functions changed to use WRITE_HANDLER.
-			Added Scorpion256 preliminary.
-18/6/2001	DJR -	Added support for Interface 2 cartridges.
-xx/xx/2001	KS -	TS-2068 sound fixed.
-			Added support for DOCK cartridges for TS-2068.
-			Added Spectrum 48k Psycho modified rom driver.
-			Added UK-2086 driver.
-23/12/2001	KS -	48k machines are now able to run code in screen memory.
-				Programs which keep their code in screen memory
-				like monitors, tape copiers, decrunchers, etc.
-				works now.
-		     	Fixed problem with interrupt vector set to 0xffff (much
-			more 128k games works now).
-				A useful used trick on the Spectrum is to set
-				interrupt vector to 0xffff (using the table 
-				which contain 0xff's) and put a byte 0x18 hex,
-				the opcode for JR, at this address. The first
-				byte of the ROM is a 0xf3 (DI), so the JR will
-				jump to 0xfff4, where a long JP to the actual
-				interrupt routine is put. Due to unideal
-				bankswitching in MAME this JP were to 0001 what
-				causes Spectrum to reset. Fixing this problem
-				made much more software runing (i.e. Paperboy).
-			Corrected frames per second value for 48k and 128k
-			Sincalir machines.
-				There are 50.08 frames per second for Spectrum
-				48k what gives 69888 cycles for each frame and
-				50.021 for Spectrum 128/+2/+2A/+3 what gives
-				70908 cycles for each frame. 
-			Remaped some Spectrum+ keys.
-				Presing F3 to reset was seting 0xf7 on keyboard
-				input port. Problem occured for snapshots of
-				some programms where it was readed as pressing
-				key 4 (which is exit in Tapecopy by R. Dannhoefer
-				for example).
-			Added support to load .SP snapshots.
-			Added .BLK tape images support.
-				.BLK files are identical to .TAP ones, extension
-				is an only difference.
-08/03/2002	KS -	#FF port emulation added.
-				Arkanoid works now, but is not playable due to
-				completly messed timings.
+29/1/2000		KT - Implemented initial +3 emulation
+30/1/2000		KT - Improved input port decoding for reading
+					 and therefore correct keyboard handling for Spectrum and +3
+31/1/2000		KT - Implemented buzzer sound for Spectrum and +3.
+					 Implementation copied from Paul Daniel's Jupiter driver.
+					 Fixed screen display problems with dirty chars.
+					 Added support to load .Z80 snapshots. 48k support so far.
+13/2/2000		KT - Added Interface II, Kempston, Fuller and Mikrogen joystick support
+17/2/2000		DJR - Added full key descriptions and Spectrum+ keys.
+				Fixed Spectrum +3 keyboard problems.
+17/2/2000		KT - Added tape loading from WAV/Changed from DAC to generic speaker code
+18/2/2000		KT - Added tape saving to WAV
+27/2/2000		KT - Took DJR's changes and added my changes.
+27/2/2000		KT - Added disk image support to Spectrum +3 driver.
+27/2/2000		KT - Added joystick I/O code to the Spectrum +3 I/O handler.
+14/3/2000		DJR - Tape handling dipswitch.
+26/3/2000		DJR - Snapshot files are now classifed as snapshots not cartridges.
+04/4/2000		DJR - Spectrum 128 / +2 Support.
+13/4/2000		DJR - +4 Support (unofficial 48K hack).
+13/4/2000		DJR - +2a Support (rom also used in +3 models).
+13/4/2000		DJR - TK90X, TK95 and Inves support (48K clones).
+21/4/2000		DJR - TS2068 and TC2048 support (TC2048 Supports extra video
+				modes but doesn't have bank switching or sound chip).
+09/5/2000		DJR - Spectrum +2 (France, Spain), +3 (Spain).
+17/5/2000		DJR - Dipswitch to enable/disable disk drives on +3 and clones.
+27/6/2000		DJR - Changed 128K/+3 port decoding (sound now works in Zub 128K).
+06/8/2000	 	DJR - Fixed +3 Floppy support
+10/2/2001		KT  - re-arranged code and split into each model emulated
+					Code is split into 48k, 128k, +3, tc2048 and ts2048 segments.
+					128k uses some of the functions in 48k, +3 uses some functions in 128,
+					and tc2048/ts2048 use some of the functions in 48k.
+					The code has been arranged so these functions come in some kind
+					of "override" order, read functions changed to use READ_HANDLER
+					and write functions changed to use WRITE_HANDLER
+					Added Scorpion256 preliminary.
+18/6/2001		DJR - Added support for Interface 2 cartridges.
+xx/xx/2001		KS - TS-2068 sound fixed.
+			     Added support for DOCK cartridges for TS-2068.
+			     Added Spectrum 48k Psycho modified rom driver.
+			     Added UK-2086 driver.
+23/12/2001		KS - 48k machines are now able to run code in screen memory.
+					Programs which keep their code in screen memory
+					like monitors, tape copiers, decrunchers, etc.
+					works now.
+			     Fixed problem with interrupt vector set to 0xffff (much more 128k games works now)
+					A useful used trick on the Spectrum is to set
+					interrupt vector to 0xffff (using the table 
+					which contain 0xff's) and put a byte 0x18 hex,
+					the opcode for JR, at this address. The first
+					byte of the ROM is a 0xf3 (DI), so the JR will
+					jump to 0xfff4, where a long JP to the actual
+					interrupt routine is put. Due to unideal
+					bankswitching in MAME this JP were to 0001 what
+					causes Spectrum to reset. Fixing this problem made
+					much more software runing (i.e. Paperboy).
+			     Corrected frames per second value for 48k and 128k Sincalir machines.
+					There are 50.08 frames per second for Spectrum 48k
+					what gives 69888 cycles for each frame and 50.021 for
+					Spectrum 128/+2/+2A/+3 what gives 70908 cycles for
+					each frame. 
+			     Remaped some Spectrum+ keys.
+					Presing F3 to reset was seting 0xf7 on keyboard input
+					port. Problem occured for snapshots of some programms
+					where it was readed as pressing key 4 (which is exit
+					in Tapecopy by R. Dannhoefer for example).
+			     Added support to load .SP snapshots.
+			     Added .BLK tape images support.
+					.BLK files are identical to .TAP ones, extension is
+					an only difference.
+19/01/2002		KT - corrected I/O port decoding for spectrum +3 using
+					information from www.worldofspectrum.org
 
-Initialisation values used when determining which model is being emulated:
- 48K		Spectrum doesn't use either port.
- 128K/+2	Bank switches with port 7ffd only.
- +3/+2a		Bank switches with both ports.
+ Initialisation values used when determining which model is being emulated.
+   48K	   Spectrum doesn't use either port.
+   
+128K/+2 Bank switches with port 7ffd only.
+   +3/+2a  Bank switches with both ports.
 
-Notes:
- 1. No contented memory.
- 2. No hi-res colour effects (need contended memory first for accurate timing).
- 3. Multiface 1 and Interface 1 not supported.
- 4. Horace and the Spiders cartridge doesn't run properly.
- 5. Tape images not supported:
-    .TZX, .SPC, .ITM, .PAN, .TAP(Warajevo), .VOC, .ZXS.
- 6. Snapshot images not supported:
-    .ACH, .PRG, .RAW, .SEM, .SIT, .SNX, .ZX, .ZXS, .ZX82.
- 7. 128K emulation is not perfect - the 128K machines crash and hang while
-    running quite a lot of games.
- 8. Disk errors occur on some +3 games.
- 9. Video hardware of all machines is timed incorrectly.
-10. EXROM and HOME cartridges are not emulated.
-11. The TK90X and TK95 roms output 0 to port #df on start up.
-12. The purpose of this port is unknown (probably display mode as TS2068) and
-    thus is not emulated.
+	Notes:
 
-*******************************************************************************/
+Port #FF Vertical refresh not emulated (Arkanoid doesn't run).
+No contented memory.
+No hi-res colour effects (need contended memory first for accurate timing).
+Multiface 1 and Interface 1 not supported.
+Horace and the Spiders cartridge doesn't run properly.
+Tape images not supported: .TZX, .SPC, .ITM, .PAN, .TAP(Warajevo), .VOC, .ZXS.
+Snapshot images not supported: .ACH, .PRG, .RAW, .SEM, .SIT, .SNX, .ZX, .ZXS, .ZX82.
+128K emulation is not perfect - the 128K machines crash and hang while
+running quite a lot of games.
+Disk errors occur on some +3 games.
+Border of all machines is timed incorrectly.
+EXROM and HOME cartridges are not emulated.
+
+The TK90X and TK95 roms output 0 to port #df on start up.
+The purpose of this port is unknown (probably display mode as TS2068) and
+thus is not emulated.
+
+***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -160,6 +154,7 @@ static struct AY8910interface spectrum_ay_interface =
 	{0},
 	{0}
 };
+
 
 /****************************************************************************************************/
 /* Spectrum 48k functions */
@@ -320,7 +315,9 @@ READ_HANDLER ( spectrum_port_r )
 		if ((offset & 0xff)==0xdf)
 			return spectrum_port_df_r(offset);
 
-		return cpu_getscanline()<193 ? spectrum_colorram[(cpu_getscanline()&0xf8)<<2]:0xff;
+		logerror("Read from port: %04x\n", offset);
+
+		return 0xff;
 }
 
 WRITE_HANDLER ( spectrum_port_w )
@@ -348,7 +345,6 @@ PORT_END
 
 /****************************************************************************************************/
 /* functions and data used by spectrum 128, spectrum +2, spectrum +3 and scorpion */
-
 static unsigned char *spectrum_ram = NULL;
 
 static int spectrum_alloc_ram(int ram_size_in_k)
@@ -452,8 +448,6 @@ static WRITE_HANDLER(spectrum_128_port_fffd_w)
 		AY8910_control_port_0_w(0, data);
 }
 
-/* +3 manual is confused about this */
-
 static READ_HANDLER(spectrum_128_port_fffd_r)
 {
 		return AY8910_read_port_0_r(0);
@@ -466,17 +460,19 @@ READ_HANDLER ( spectrum_128_port_r )
 		 return spectrum_port_fe_r(offset);
 	 }
 
-	 /* KT: the following is not decoded exactly, need to check what
-	 is correct */
 	 if ((offset & 2)==0)
 	 {
-		 switch ((offset>>8) & 0xff)
-		 {
-				case 0xff:
-						return spectrum_128_port_fffd_r(offset);
-		 }
+		switch ((offset>>14) & 0x03)
+		{
+			default:
+				break;
+
+			case 3:
+				return spectrum_128_port_fffd_r(offset);
+		}
 	 }
 
+	 /* don't think these are correct! */
 	 if ((offset & 0xff)==0x1f)
 		 return spectrum_port_1f_r(offset);
 
@@ -488,7 +484,7 @@ READ_HANDLER ( spectrum_128_port_r )
 
 	 logerror("Read from 128 port: %04x\n", offset);
 
-	 return cpu_getscanline()<193 ? spectrum_128_screen_location[0x1800|(cpu_getscanline()&0xf8)<<2]:0xff;
+	 return 0xff;
 }
 
 WRITE_HANDLER ( spectrum_128_port_w )
@@ -764,6 +760,7 @@ static WRITE_HANDLER(spectrum_plus3_port_1ffd_w)
 		}
 }
 
+/* decoding as per spectrum FAQ on www.worldofspectrum.org */
 READ_HANDLER ( spectrum_plus3_port_r )
 {
 	 if ((offset & 1)==0)
@@ -771,20 +768,42 @@ READ_HANDLER ( spectrum_plus3_port_r )
 		 return spectrum_port_fe_r(offset);
 	 }
 
-	 /* KT: the following is not decoded exactly, need to check what
-	 is correct */
 	 if ((offset & 2)==0)
 	 {
-		 switch ((offset>>8) & 0xff)
+		 switch ((offset>>14) & 0x03)
 		 {
-				case 0xff: return spectrum_128_port_fffd_r(offset);
-				case 0x2f: return spectrum_plus3_port_2ffd_r(offset);
-				case 0x3f: return spectrum_plus3_port_3ffd_r(offset);
-				case 0x1f: return spectrum_port_1f_r(offset);
-				case 0x7f: return spectrum_port_7f_r(offset);
-				case 0xdf: return spectrum_port_df_r(offset);
+			/* +3 fdc,memory,centronics */
+			case 0:
+			{
+				switch ((offset>>12) & 0x03)
+				{
+					/* +3 centronics */
+					case 0:
+						break;
+
+					/* +3 fdc status */
+					case 2:
+						return spectrum_plus3_port_2ffd_r(offset);
+					/* +3 fdc data */
+					case 3:
+						return spectrum_plus3_port_3ffd_r(offset);
+
+					default:
+						break;
+				}
+			}
+			break;
+
+			/* 128k AY data */
+			case 3:
+				return spectrum_128_port_fffd_r(offset);
+
+			default:
+				break;
 		 }
 	 }
+
+/*	 logerror("Read from +3 port: %04x\n", offset); */
 
 	 return cpu_getscanline()<193 ? spectrum_128_screen_location[0x1800|(cpu_getscanline()&0xf8)<<2]:0xff;
 }
@@ -796,32 +815,60 @@ WRITE_HANDLER ( spectrum_plus3_port_w )
 
 		/* the following is not decoded exactly, need to check
 		what is correct! */
-		else if ((offset & 2)==0)
+		
+		if ((offset & 2)==0)
 		{
-				switch ((offset>>8) & 0xf0)
+			switch ((offset>>14) & 0x03)
+			{
+				/* +3 fdc,memory,centronics */
+				case 0:
 				{
-						case 0x70:
-								spectrum_plus3_port_7ffd_w(offset, data);
-								break;
-						case 0xb0:
-								spectrum_128_port_bffd_w(offset, data);
-								break;
-						case 0xf0:
-								spectrum_128_port_fffd_w(offset, data);
-								break;
-						case 0x10:
-								spectrum_plus3_port_1ffd_w(offset, data);
-								break;
-						case 0x30:
-								spectrum_plus3_port_3ffd_w(offset, data);
+					switch ((offset>>12) & 0x03)
+					{
+						/* +3 centronics */
+						case 0:
+						{
+
+
+						}
+						break;
+
+						/* +3 memory */
+						case 1:
+							spectrum_plus3_port_1ffd_w(offset, data);
+							break;
+							
+						/* +3 fdc data */
+						case 3:
+							spectrum_plus3_port_3ffd_w(offset,data);
+							break;
+
 						default:
-								logerror("Write %02x to +3 port: %04x\n", data, offset);
+							break;
+					}
 				}
+				break;
+
+				/* 128k memory */
+				case 1:
+					spectrum_plus3_port_7ffd_w(offset, data);
+					break;
+
+				/* 128k AY data */
+				case 2:
+					spectrum_128_port_bffd_w(offset, data);
+					break;
+
+				/* 128K AY register */
+				case 3:
+					spectrum_128_port_fffd_w(offset, data);
+			
+				default:
+					break;
+			}
 		}
-		else
-		{
-			logerror("Write %02x to +3 port: %04x\n", data, offset);
-		}
+
+/*logerror("Write %02x to +3 port: %04x\n", data, offset); */
 }
 
 /* ports are not decoded full.
