@@ -242,55 +242,6 @@ static void i286_set_context(void *src)
 	}
 }
 
-static void i286_set_reg(int regnum, unsigned val)
-{
-	switch( regnum )
-	{
-		case REG_PC:
-			if (PM) {
-			} else {
-				if (val - I.base[CS] >= 0x10000)
-				{
-					I.base[CS] = val & 0xffff0;
-					I.sregs[CS] = I.base[CS] >> 4;
-				}
-				I.pc = val;
-			}
-			break;
-		case I286_IP: I.pc = I.base[CS] + val; break;
-		case REG_SP:
-			if (PM) {
-			} else {
-				if( val - I.base[SS] < 0x10000 )
-				{
-					I.regs.w[SP] = val - I.base[SS];
-				}
-				else
-				{
-					I.base[SS] = val & 0xffff0;
-					I.sregs[SS] = I.base[SS] >> 4;
-					I.regs.w[SP] = val & 0x0000f;
-				}
-			}
-			break;
-		case I286_SP: I.regs.w[SP] = val; break;
-		case I286_FLAGS: I.flags = val; ExpandFlags(val); break;
-		case I286_AX: I.regs.w[AX] = val; break;
-		case I286_CX: I.regs.w[CX] = val; break;
-		case I286_DX: I.regs.w[DX] = val; break;
-		case I286_BX: I.regs.w[BX] = val; break;
-		case I286_BP: I.regs.w[BP] = val; break;
-		case I286_SI: I.regs.w[SI] = val; break;
-		case I286_DI: I.regs.w[DI] = val; break;
-		case I286_ES: I.sregs[ES] = val; break;
-		case I286_CS: I.sregs[CS] = val; break;
-		case I286_SS: I.sregs[SS] = val; break;
-		case I286_DS: I.sregs[DS] = val; break;
-		case I286_VECTOR: I.int_vector = val; break;
-		case I286_PENDING: /* obsolete */ break;
-    }
-}
-
 static void set_irq_line(int irqline, int state)
 {
 	if (irqline == IRQ_LINE_NMI)
@@ -415,26 +366,42 @@ static void i286_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		set_irq_line(IRQ_LINE_NMI, info->i);	break;
 
 		case CPUINFO_INT_PC:
-			if (info->i - I.base[CS] >= 0x10000)
+			if (PM)
 			{
-				I.base[CS] = info->i & 0xffff0;
-				I.sregs[CS] = I.base[CS] >> 4;
-			}
-			I.pc = info->i;
-			break;
-		case CPUINFO_INT_REGISTER + I86_IP:				I.pc = I.base[CS] + info->i;			break;
-		case CPUINFO_INT_SP:
-			if (info->i - I.base[SS] < 0x10000)
-			{
-				I.regs.w[SP] = info->i - I.base[SS];
+				/* protected mode NYI */
 			}
 			else
 			{
-				I.base[SS] = info->i & 0xffff0;
-				I.sregs[SS] = I.base[SS] >> 4;
-				I.regs.w[SP] = info->i & 0x0000f;
+				if (info->i - I.base[CS] >= 0x10000)
+				{
+					I.base[CS] = info->i & 0xffff0;
+					I.sregs[CS] = I.base[CS] >> 4;
+				}
+				I.pc = info->i;
 			}
 			break;
+
+		case CPUINFO_INT_REGISTER + I286_IP:			I.pc = I.base[CS] + info->i;			break;
+		case CPUINFO_INT_SP:
+			if (PM)
+			{
+				/* protected mode NYI */
+			}
+			else
+			{
+				if (info->i - I.base[SS] < 0x10000)
+				{
+					I.regs.w[SP] = info->i - I.base[SS];
+				}
+				else
+				{
+					I.base[SS] = info->i & 0xffff0;
+					I.sregs[SS] = I.base[SS] >> 4;
+					I.regs.w[SP] = info->i & 0x0000f;
+				}
+			}
+			break;
+
 		case CPUINFO_INT_REGISTER + I286_SP:			I.regs.w[SP] = info->i; 				break;
 		case CPUINFO_INT_REGISTER + I286_FLAGS: 		I.flags = info->i;	ExpandFlags(info->i); break;
 		case CPUINFO_INT_REGISTER + I286_AX:			I.regs.w[AX] = info->i; 				break;

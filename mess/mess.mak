@@ -755,7 +755,7 @@ $(OBJ)/intv.a:     \
 	$(OBJ)/mess/vidhrdw/stic.o	\
 	$(OBJ)/mess/machine/intv.o	\
 	$(OBJ)/mess/sndhrdw/intv.o	\
-#	$(OBJ)/mess/systems/intv.o
+	$(OBJ)/mess/systems/intv.o
 
 $(OBJ)/apf.a:      \
 	$(OBJ)/mess/systems/apf.o	\
