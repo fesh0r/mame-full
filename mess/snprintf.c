@@ -54,12 +54,12 @@
 /* #include "config.h" */
 #define HAVE_STDARG_H
 
-#if !defined(HAVE_SNPRINTF) || !defined(HAVE_VSNPRINTF)
-
-#include "snprintf.h"
+/* moved above the #ifdef to avoid warning about empty c-files */
 #include <string.h>
 #include <ctype.h>
-//#include <sys/types.h>
+#include <sys/types.h>
+
+#if !defined(HAVE_SNPRINTF) || !defined(HAVE_VSNPRINTF)
 
 
 /* Define this as a fall through, HAVE_STDARG_H is probably already set */
@@ -94,7 +94,7 @@
 #define LDOUBLE double
 #endif
 
-int CLIB_DECL snprintf (char *str, size_t count, const char *fmt, ...);
+int snprintf (char *str, size_t count, const char *fmt, ...);
 int vsnprintf (char *str, size_t count, const char *fmt, va_list arg);
 
 static void dopr (char *buffer, size_t maxlen, const char *format, 
