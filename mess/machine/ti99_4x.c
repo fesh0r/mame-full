@@ -1159,7 +1159,7 @@ WRITE16_HANDLER ( ti99_ww_wv38 )
 */
 static READ16_HANDLER ( ti99_rw_rspeech )
 {
-	tms9900_ICount -= 4;		/* this is just a minimum, it can be more */
+	tms9900_ICount -= 18+3;		/* this is just a minimum, it can be more */
 
 	return ((int) tms5220_status_r(offset)) << 8;
 }
@@ -1185,7 +1185,7 @@ static void speech_kludge_callback(int dummy)
 */
 static WRITE16_HANDLER ( ti99_ww_wspeech )
 {
-	tms9900_ICount -= 30;		/* this is just an approx. minimum, it can be much more */
+	tms9900_ICount -= 54+3;		/* this is just an approx. minimum, it can be much more */
 
 #if 1
 	/* the stupid design of the tms5220 core means that ready is cleared when
@@ -1215,7 +1215,7 @@ READ16_HANDLER ( ti99_rw_rgpl )
 	int reply;
 
 
-	tms9900_ICount -= 4/*16*/;		/* from 4 to 16? */
+	tms9900_ICount -= 4/*20+3*/;		/* from 4 to 23? */
 
 	if (offset & 1)
 	{	/* read GPL address */
@@ -1256,7 +1256,7 @@ READ16_HANDLER ( ti99_rw_rgpl )
 */
 WRITE16_HANDLER ( ti99_ww_wgpl )
 {
-	tms9900_ICount -= 4/*16*/;		/* from 4 to 16? */
+	tms9900_ICount -= 4/*20+3*/;		/* from 4 to 23? */
 
 	if (offset & 1)
 	{	/* write GPL address */
@@ -1324,33 +1324,6 @@ WRITE16_HANDLER ( ti99_4p_ww_wgpl )
 #pragma mark 99/8 MEMORY HANDLERS
 #endif
 
-/*
-	TMS5200C speech chip write
-*/
-static WRITE_HANDLER ( ti99_8_speech_w )
-{
-	tms9995_ICount -= 30;		/* this is just an approx. minimum, it can be much more */
-
-#if 1
-	/* the stupid design of the tms5220 core means that ready is cleared when
-	there are 15 bytes in FIFO.  It should be 16.  Of course, if it were the
-	case, we would need to store the value on the bus, which would be more
-	complex. */
-	if (! tms5220_ready_r())
-	{
-		double time_to_ready = tms5220_time_to_ready();
-		int cycles_to_ready = ceil(TIME_TO_CYCLES(0, time_to_ready));
-
-		logerror("time to ready: %f -> %d\n", time_to_ready, (int) cycles_to_ready);
-
-		tms9995_ICount -= cycles_to_ready;
-		timer_set(TIME_NOW, 0, /*speech_kludge_callback*/NULL);
-	}
-#endif
-
-	tms5220_data_w(offset, data);
-}
-
 READ_HANDLER ( ti99_8_r )
 {
 	int page = offset >> 12;
@@ -1410,6 +1383,7 @@ READ_HANDLER ( ti99_8_r )
 				/* speech read */
 				if (! (offset & 1))
 				{
+					tms9995_ICount -= 16;		/* this is just a minimum, it can be more */
 					reply = tms5220_status_r(0);
 				}
 				break;
@@ -1577,7 +1551,24 @@ WRITE_HANDLER ( ti99_8_w )
 				/* speech write */
 				if (! (offset & 1))
 				{
-					ti99_8_speech_w(0, data);
+					tms9995_ICount -= 48;		/* this is just an approx. minimum, it can be much more */
+
+					/* the stupid design of the tms5220 core means that ready is cleared when
+					there are 15 bytes in FIFO.  It should be 16.  Of course, if it were the
+					case, we would need to store the value on the bus, which would be more
+					complex. */
+					if (! tms5220_ready_r())
+					{
+						double time_to_ready = tms5220_time_to_ready();
+						int cycles_to_ready = ceil(TIME_TO_CYCLES(0, time_to_ready));
+
+						logerror("time to ready: %f -> %d\n", time_to_ready, (int) cycles_to_ready);
+
+						tms9995_ICount -= cycles_to_ready;
+						timer_set(TIME_NOW, 0, /*speech_kludge_callback*/NULL);
+					}
+
+					tms5220_data_w(offset, data);
 				}
 				break;
 
