@@ -3,7 +3,8 @@
   Monochrom Display Adapter (MDA) section
 
 ***************************************************************************/
-#include "includes/pc.h"
+#include "vidhrdw/generic.h"
+#include "includes/crtc6845.h"
 
 #include "includes/pc_mda.h"
 #include "includes/state.h"
@@ -11,49 +12,35 @@
 #define VERBOSE_MDA 0		/* MDA (Monochrome Display Adapter) */
 
 #if VERBOSE_MDA
-#define MDA_LOG(n,m,a) LOG(VERBOSE_MDA,n,m,a)
+#define MDA_LOG(N,M,A) \
+	if(VERBOSE_MDA>=N){ if( M )logerror("%11.6f: %-24s",timer_get_time(),(char*)M ); logerror A; }
 #else
 #define MDA_LOG(n,m,a)
 #endif
 
-#define MDA_HTOTAL  MDA_crtc[HTOTAL]
-#define MDA_HDISP   MDA_crtc[HDISP]
-#define MDA_HSYNCP  MDA_crtc[HSYNCP]
-#define MDA_HSYNCW  MDA_crtc[HSYNCW]
+unsigned char mda_palette[4][3] = {
+	{ 0x00,0x00,0x00 },
+	{ 0x00,0x55,0x00 }, 
+	{ 0x00,0xaa,0x00 }, 
+	{ 0x00,0xff,0x00 }
+};
 
-#define MDA_VTOTAL  MDA_crtc[VTOTAL]
-#define MDA_VTADJ   MDA_crtc[VTADJ]
-#define MDA_VDISP   MDA_crtc[VDISP]
-#define MDA_VSYNCW  MDA_crtc[VSYNCW]
 
-#define MDA_INTLACE MDA_crtc[INTLACE]
-#define MDA_SCNLINE MDA_crtc[SCNLINE]
+static struct { 
+	struct _CRTC6845 *crtc;
 
-#define MDA_CURTOP  MDA_crtc[CURTOP]
-#define MDA_CURBOT  MDA_crtc[CURBOT]
+	UINT8 status;
 
-#define MDA_VIDH    MDA_crtc[VIDH]
-#define MDA_VIDL    MDA_crtc[VIDL]
+	int full_refresh;
 
-#define MDA_CURH    MDA_crtc[CURH]
-#define MDA_CURL    MDA_crtc[CURL]
+	int pc_blink;
+	int pc_framecnt;
 
-#define MDA_LPENH   MDA_crtc[LPENH]
-#define MDA_LPENL   MDA_crtc[LPENL]
+	UINT8 mode_control, configuration_switch; //hercules
 
-static int MDA_reg = 0;
-static int MDA_index = 0;
-static int MDA_crtc[18+1] = {0, };
-static int MDA_size = 0;		/* HDISP * VDISP					*/
-static int MDA_base = 0;		/* (VIDH*256+VIDL) & VIDMASK		*/
-static int MDA_cursor = 0;		/* ((CURH*256+CURL)*2) & CURMASK	*/
-static int MDA_maxscan = 16;	/* (SCNLINE&0x1f) + 1				*/
-static int MDA_curmode = 0; 	/* CURTOP & 0x60					*/
-static int MDA_curminy = 0; 	/* CURTOP & 0x1f					*/
-static int MDA_curmaxy = 0; 	/* CURBOT & 0x1f					*/
-
-static int pc_blink = 0;
-static int pc_framecnt = 0;
+	struct GfxElement *gfx_char;
+	struct GfxElement *gfx_graphic;
+} mda = { 0 };
 
 /***************************************************************************
 
@@ -68,11 +55,11 @@ void pc_mda_blink_textcolors(int on)
 {
 	int i, offs, size;
 
-	if (pc_blink == on) return;
+	if (mda.pc_blink == on) return;
 
-    pc_blink = on;
-	offs = (MDA_base * 2) % videoram_size;
-	size = MDA_size;
+    mda.pc_blink = on;
+	offs = (crtc6845_get_start(mda.crtc)*2)% videoram_size;
+	size = crtc6845_get_char_lines(mda.crtc)*crtc6845_get_char_columns(mda.crtc);
 
 	for (i = 0; i < size; i++)
 	{
@@ -85,14 +72,23 @@ void pc_mda_blink_textcolors(int on)
 
 extern void pc_mda_timer(void)
 {
-	if( ((++pc_framecnt & 63) == 63) ) {
-		pc_mda_blink_textcolors(pc_framecnt&64);
+	if( ((++mda.pc_framecnt & 63) == 63) ) {
+		pc_mda_blink_textcolors(mda.pc_framecnt&64);
 	}
 }
 
-int pc_mda_vh_start(void)
+void pc_mda_cursor(CRTC6845_CURSOR *cursor)
+{
+	dirtybuffer[cursor->pos*2]=1;
+}
+
+static CRTC6845_CONFIG config= { 14318180 /*?*/, pc_mda_cursor };
+
+extern void pc_mda_init(struct _CRTC6845 *crtc)
 {
 	int i;
+	mda.gfx_char=Machine->gfx[0];
+	mda.gfx_graphic=Machine->gfx[1];
 
     /* remove pixel column 9 for character codes 0 - 175 and 224 - 255 */
 	for( i = 0; i < 256; i++)
@@ -104,7 +100,32 @@ int pc_mda_vh_start(void)
 				Machine->gfx[0]->gfxdata[(i * Machine->gfx[0]->height + y) * Machine->gfx[0]->width + 8] = 0;
 		}
 	}
+	mda.crtc=crtc6845;
+}
 
+extern void pc_mda_europc_init(struct _CRTC6845 *crtc)
+{
+	int i;
+	mda.gfx_char=Machine->gfx[3];
+	mda.gfx_graphic=Machine->gfx[4];
+
+    /* remove pixel column 9 for character codes 0 - 175 and 224 - 255 */
+	for( i = 0; i < 256; i++)
+	{
+		if( i < 176 || i > 223 )
+		{
+			int y;
+			for( y = 0; y < Machine->gfx[3]->height; y++ )
+				Machine->gfx[3]->gfxdata[(i * Machine->gfx[3]->height + y) * Machine->gfx[3]->width + 8] = 0;
+		}
+	}
+	mda.crtc=crtc6845;
+}
+
+int pc_mda_vh_start(void)
+{
+	pc_mda_init(crtc6845);
+	crtc6845_init(mda.crtc, &config);
 
     return generic_vh_start();
 }
@@ -121,277 +142,15 @@ WRITE_HANDLER ( pc_mda_videoram_w )
 	dirtybuffer[offset] = 1;
 }
 
-/*	-W	MDA CRT index register	   (MDA/mono EGA/mono VGA)
- *		selects which register (0-11h) is to be accessed through 03B5h
- *		Note: this port is read/write on some VGAs
- *		bit7-6: (VGA) reserved (0)
- *		bit5  : (VGA) reserved for testing (0)
- *		bit4-0: selects which register is to be accessed through 03B5h
- */
-void pc_mda_index_w(int data)
-{
-	MDA_LOG(3,"MDA_index_w",(errorlog,"$%02x\n",data));
-	MDA_index = data;
-	MDA_reg = (data > 17) ? 18 : data;
-}
-
-int pc_mda_index_r(void)
-{
-	int data = MDA_index;
-	MDA_LOG(3,"MDA_index_r",(errorlog,"$%02x\n",data));
-	return data;
-}
-
-/*	RW	MDA CRT data register  (MDA/mono EGA/mono VGA) (see #P137)
- *		selected by port 3B4. registers 0C-0F may be read
- *		Color adapters are at 3D4/3D5, but are mentioned here for
- *		  better overview.
- *		There are differences in names and some bits functionality
- *		  on EGA, VGA in their native modes, but clones in their
- *		  emulation modes emulate the original 6845 at bit level. The
- *		  default values are for MDA, HGC, CGA only, if not otherwise
- *		  mentioned.
- */
-void pc_mda_port_w(int data)
-{
-	switch (MDA_reg)
-	{
-		case HTOTAL:
-			MDA_LOG(1,"MDA_horz_total_w",(errorlog,"$%02x\n",data));
-			if (MDA_crtc[MDA_reg] == data) break;
-            MDA_HTOTAL = data;
-            break;
-		case HDISP:
-			MDA_LOG(1,"MDA_horz_displayed_w",(errorlog,"$%02x\n",data));
-			if (MDA_crtc[MDA_reg] == data) break;
-            MDA_HDISP = data;
-			MDA_size = (int)MDA_HDISP * (int)MDA_VDISP;
-            break;
-		case HSYNCP:
-			MDA_LOG(1,"MDA_horz_sync_pos_w",(errorlog,"$%02x\n",data));
-			if (MDA_crtc[MDA_reg] == data) break;
-            MDA_HSYNCP = data;
-            break;
-		case HSYNCW:
-			MDA_LOG(1,"MDA_horz_sync_width_w",(errorlog,"$%02x\n",data));
-			if (MDA_crtc[MDA_reg] == data) break;
-            MDA_HSYNCW = data;
-            break;
-
-		case VTOTAL:
-			MDA_LOG(1,"MDA_vert_total_w",(errorlog,"$%02x\n",data));
-			if (MDA_crtc[MDA_reg] == data) break;
-            MDA_VTOTAL = data;
-            break;
-		case VTADJ:
-			MDA_LOG(1,"MDA_vert_total_adj_w",(errorlog,"$%02x\n",data));
-			if (MDA_crtc[MDA_reg] == data) break;
-            MDA_VTADJ = data;
-            break;
-		case VDISP:
-			MDA_LOG(1,"MDA_vert_displayed_w",(errorlog,"$%02x\n",data));
-			if (MDA_crtc[MDA_reg] == data) break;
-            MDA_VDISP = data;
-			MDA_size = (int)MDA_HDISP * (int)MDA_VDISP;
-            break;
-		case VSYNCW:
-			MDA_LOG(1,"MDA_vert_sync_width_w",(errorlog,"$%02x\n",data));
-			if (MDA_crtc[MDA_reg] == data) break;
-            MDA_VSYNCW = data;
-            break;
-
-		case INTLACE:
-			MDA_LOG(1,"MDA_interlace_w",(errorlog,"$%02x\n",data));
-			if (MDA_crtc[MDA_reg] == data) break;
-            MDA_INTLACE = data;
-            break;
-		case SCNLINE:
-			MDA_LOG(1,"MDA_scanline_w",(errorlog,"$%02x\n",data));
-			if (MDA_crtc[MDA_reg] == data) break;
-            MDA_SCNLINE = data;
-			MDA_maxscan = (MDA_SCNLINE & 0x1f) + 1;
-            break;
-
-		case CURTOP:
-			MDA_LOG(1,"MDA_cursor_top_w",(errorlog,"$%02x\n",data));
-			if (MDA_crtc[MDA_reg] == data) break;
-            MDA_CURTOP = data;
-			MDA_curmode = MDA_CURTOP & 0x60;
-			MDA_curminy = MDA_CURTOP & 0x1f;
-			dirtybuffer[MDA_cursor] = 1;
-            break;
-		case CURBOT:
-			MDA_LOG(1,"MDA_cursor_bottom_w",(errorlog,"$%02x\n",data));
-			if (MDA_crtc[MDA_reg] == data) break;
-            MDA_CURBOT = data;
-			MDA_curmaxy = MDA_CURBOT & 0x1f;
-			dirtybuffer[MDA_cursor] = 1;
-            break;
-
-		case VIDH:
-			MDA_LOG(1,"MDA_base_high_w",(errorlog,"$%02x\n",data));
-			if (MDA_crtc[MDA_reg] == data) break;
-            MDA_VIDH = data;
-			MDA_base = (MDA_VIDH*256+MDA_VIDL) % videoram_size;
-            break;
-		case VIDL:
-			MDA_LOG(1,"MDA_base_low_w",(errorlog,"$%02x\n",data));
-			if (MDA_crtc[MDA_reg] == data) break;
-            MDA_VIDL = data;
-			MDA_base = (MDA_VIDH*256+MDA_VIDL) % videoram_size;
-            break;
-
-		case CURH:
-			MDA_LOG(2,"MDA_cursor_high_w",(errorlog,"$%02x\n",data));
-			if (MDA_crtc[MDA_reg] == data) break;
-            MDA_CURH = data;
-			MDA_cursor = ((MDA_CURH*256+MDA_CURL)*2) % videoram_size;
-			dirtybuffer[MDA_cursor] = 1;
-            break;
-		case CURL:
-			MDA_LOG(2,"MDA_cursor_low_w",(errorlog,"$%02x\n",data));
-			if (MDA_crtc[MDA_reg] == data) break;
-            MDA_CURL = data;
-			MDA_cursor = ((MDA_CURH*256+MDA_CURL)*2) % videoram_size;
-			dirtybuffer[MDA_cursor] = 1;
-            break;
-
-		case LPENH: /* this is read only */
-			MDA_LOG(1,"MDA_light_pen_high_w",(errorlog,"$%02x\n",data));
-			if (MDA_crtc[MDA_reg] == data) break;
-            break;
-		case LPENL: /* this is read only */
-			MDA_LOG(1,"MDA_light_pen_low_w",(errorlog,"$%02x\n",data));
-			if (MDA_crtc[MDA_reg] == data) break;
-            break;
-    }
-}
-
-int pc_mda_port_r(void)
-{
-	int data = 0xff;
-	switch (MDA_reg)
-	{
-		case HTOTAL:
-			MDA_LOG(1,"MDA_horz_total_r",(errorlog,"$%02x\n",data));
-            break;
-		case HDISP:
-			MDA_LOG(1,"MDA_horz_displayed_r",(errorlog,"$%02x\n",data));
-            break;
-		case HSYNCP:
-			MDA_LOG(1,"MDA_horz_sync_pos_r",(errorlog,"$%02x\n",data));
-            break;
-		case HSYNCW:
-			MDA_LOG(1,"MDA_horz_sync_width_r",(errorlog,"$%02x\n",data));
-            break;
-
-		case VTOTAL:
-			MDA_LOG(1,"MDA_vert_total_r",(errorlog,"$%02x\n",data));
-            break;
-		case VTADJ:
-			MDA_LOG(1,"MDA_vert_total_adj_r",(errorlog,"$%02x\n",data));
-            break;
-		case VDISP:
-			MDA_LOG(1,"MDA_vert_displayed_r",(errorlog,"$%02x\n",data));
-            break;
-		case VSYNCW:
-			MDA_LOG(1,"MDA_vert_sync_width_r",(errorlog,"$%02x\n",data));
-            break;
-
-		case INTLACE:
-			MDA_LOG(1,"MDA_interlace_r",(errorlog,"$%02x\n",data));
-            break;
-		case SCNLINE:
-			MDA_LOG(1,"MDA_scanline_r",(errorlog,"$%02x\n",data));
-            break;
-
-		case CURTOP:
-			MDA_LOG(1,"MDA_cursor_top_r",(errorlog,"$%02x\n",data));
-            break;
-		case CURBOT:
-			MDA_LOG(1,"MDA_cursor_bottom_r",(errorlog,"$%02x\n",data));
-            break;
-
-
-		case VIDH:
-            data = MDA_VIDH;
-			MDA_LOG(1,"MDA_base_high_r",(errorlog,"$%02x\n",data));
-            break;
-		case VIDL:
-            data = MDA_VIDL;
-			MDA_LOG(1,"MDA_base_low_r",(errorlog,"$%02x\n",data));
-            break;
-
-		case CURH:
-            data = MDA_CURH;
-			MDA_LOG(2,"MDA_cursor_high_r",(errorlog,"$%02x\n",data));
-            break;
-		case CURL:
-            data = MDA_CURL;
-			MDA_LOG(2,"MDA_cursor_low_r",(errorlog,"$%02x\n",data));
-            break;
-
-		case LPENH:
-            data = MDA_LPENH;
-			MDA_LOG(1,"MDA_light_pen_high_r",(errorlog,"$%02x\n",data));
-            break;
-		case LPENL:
-            data = MDA_LPENL;
-			MDA_LOG(1,"MDA_light_pen_low_r",(errorlog,"$%02x\n",data));
-            break;
-    }
-    return data;
-}
-
 /*
  *	rW	MDA mode control register (see #P138)
  */
-void pc_mda_mode_control_w(int data)
+void hercules_mode_control_w(int data)
 {
 	MDA_LOG(1,"MDA_mode_control_w",(errorlog, "$%02x: colums %d, gfx %d, enable %d, blink %d\n",
 		data, (data&1)?80:40, (data>>1)&1, (data>>3)&1, (data>>5)&1));
-	if ((pc_port[0x3b8] ^ data) & 0xaa)
-		memset(dirtybuffer, 1, videoram_size);
-	pc_port[0x3b8] = data;
-}
-
-int pc_mda_mode_control_r(void)
-{
-    int data = pc_port[0x3b8];
-	MDA_LOG(1,"MDA_mode_control_r",(errorlog, "$%02x: colums %d, gfx %d, enable %d, blink %d\n",
-        data, (data&1)?80:40, (data>>1)&1, (data>>3)&1, (data>>5)&1));
-    return data;
-}
-
-void pc_mda_color_select_w(int data)
-{
-	MDA_LOG(1,"MDA_color_select_w",(errorlog, "$%02x\n", data));
-	pc_port[0x3b9] = data;
-}
-
-int pc_mda_color_select_r(void)
-{
-	int data = pc_port[0x3b9];
-    MDA_LOG(1,"MDA_color_select_w",(errorlog, "$%02x\n", data));
-	return data;
-}
-
-/*
- * -W  (mono EGA/mono VGA) feature control register
- *		(see PORT 03DAh-W for details; VGA, see PORT 03CAh-R)
- */
-void pc_mda_feature_control_w(int data)
-{
-	MDA_LOG(1,"MDA_feature_control_w",(errorlog, "$%02x\n", data));
-	pc_port[0x3da] = data;
-}
-
-/*
- * -W  light pen strobe reset (on any value)
- */
-void pc_mda_lightpen_strobe_w(int data)
-{
-	MDA_LOG(1,"MDA_lightpen_strobe_w",(errorlog, "$%02x\n", data));
+	mda.mode_control = data;
+	mda.full_refresh=1;
 }
 
 /*	R-	CRT status register (see #P139)
@@ -407,23 +166,16 @@ void pc_mda_lightpen_strobe_w(int data)
  */
 int pc_mda_status_r(void)
 {
-	static UINT8 mda_hsync = 0;
-    int data = (input_port_0_r(0) & 0x80) | 0x08 | mda_hsync;
-	mda_hsync ^= 0x01;
+    int data = (input_port_0_r(0) & 0x80) | 0x08 | mda.status;
+	mda.status ^= 0x01;
 	return data;
 }
 
-void pc_hgc_config_w(int data)
+void hercules_config_w(int data)
 {
 	MDA_LOG(1,"HGC_config_w",(errorlog, "$%02x\n", data));
-    pc_port[0x03bf] = data;
-}
-
-int pc_hgc_config_r(void)
-{
-	int data = pc_port[0x03bf];
-	MDA_LOG(1,"HGC_config_r",(errorlog, "$%02x\n", data));
-    return data;
+    mda.configuration_switch = data;
+	mda.full_refresh=1;
 }
 
 /*************************************************************************
@@ -437,25 +189,16 @@ WRITE_HANDLER ( pc_MDA_w )
 	switch( offset )
 	{
 		case 0: case 2: case 4: case 6:
-			pc_mda_index_w(data);
+			crtc6845_port_w(mda.crtc, 0, data);
 			break;
 		case 1: case 3: case 5: case 7:
-			pc_mda_port_w(data);
+			crtc6845_port_w(mda.crtc, 1, data);
 			break;
 		case 8:
-			pc_mda_mode_control_w(data);
-			break;
-		case 9:
-			pc_mda_color_select_w(data);
-			break;
-		case 10:
-			pc_mda_feature_control_w(data);
-			break;
-		case 11:
-			pc_mda_lightpen_strobe_w(data);
+			hercules_mode_control_w(data);
 			break;
 		case 15:
-			pc_hgc_config_w(data);
+			hercules_config_w(data);
 			break;
 	}
 }
@@ -466,43 +209,17 @@ READ_HANDLER ( pc_MDA_r )
 	switch( offset )
 	{
 		case 0: case 2: case 4: case 6:
-			data = pc_mda_index_r();
+			data = crtc6845_port_r(mda.crtc,0);
 			break;
 		case 1: case 3: case 5: case 7:
-			data = pc_mda_port_r();
-			break;
-		case 8:
-			data = pc_mda_mode_control_r();
-			break;
-		case 9:
-			/* -W set lightpen flipflop */
+			data = crtc6845_port_r(mda.crtc,1);
 			break;
 		case 10:
 			data = pc_mda_status_r();
 			break;
-		case 11:
-			/* -W lightpen strobe reset */
-			break;
 		/* 12, 13, 14  are the LPT1 ports */
-		case 15:
-			data = pc_hgc_config_r();
-			break;
     }
 	return data;
-}
-
-INLINE int DOCLIP(struct rectangle *r1)
-{
-    const struct rectangle *r2 = &Machine->visible_area;
-    if (r1->min_x > r2->max_x) return 0;
-    if (r1->max_x < r2->min_x) return 0;
-    if (r1->min_y > r2->max_y) return 0;
-    if (r1->max_y < r2->min_y) return 0;
-    if (r1->min_x < r2->min_x) r1->min_x = r2->min_x;
-    if (r1->max_x > r2->max_x) r1->max_x = r2->max_x;
-    if (r1->min_y < r2->min_y) r1->min_y = r2->min_y;
-    if (r1->max_y > r2->max_y) r1->max_y = r2->max_y;
-    return 1;
 }
 
 /***************************************************************************
@@ -510,117 +227,103 @@ INLINE int DOCLIP(struct rectangle *r1)
   The character cell size is 9x15. Column 9 is column 8 repeated for
   character codes 176 to 223.
 ***************************************************************************/
-static void MDA_text_80_inten(struct osd_bitmap *bitmap)
+static void mda_text_inten(struct osd_bitmap *bitmap)
 {
-	int i, sx, sy, offs = (MDA_base * 2) % videoram_size, size = MDA_size;
+	int sx, sy;
+	int	offs = crtc6845_get_start(mda.crtc)*2;
+	int lines = crtc6845_get_char_lines(mda.crtc);
+	int height = crtc6845_get_char_height(mda.crtc);
+	int columns = crtc6845_get_char_columns(mda.crtc);
+	struct rectangle r;
+	CRTC6845_CURSOR cursor;
 
-    /* for every second character in the Video RAM, check if it has
-       been modified since last time and update it accordingly. */
-	for( i = 0, sx = 0, sy = 0; i < size; i++ )
-	{
-		if( dirtybuffer[offs] || dirtybuffer[offs+1] )
-		{
-            struct rectangle r;
-			int code = videoram[offs], attr = videoram[offs+1];
+	crtc6845_time(mda.crtc);
+	crtc6845_get_cursor(mda.crtc, &cursor);
 
-            dirtybuffer[offs] = 0;
-            dirtybuffer[offs+1] = 0;
+	for (sy=0, r.min_y=0, r.max_y=height-1; sy<lines; sy++, r.min_y+=height,r.max_y+=height) {
 
-			r.min_x = sx;
-			r.min_y = sy;
-			r.max_x = sx + 9 - 1;
-			r.max_y = sy + MDA_maxscan - 1;
-			if( DOCLIP(&r) )
-			{
-                /* draw the character */
-				drawgfx(bitmap, Machine->gfx[0], code, attr, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
-				if( offs == MDA_cursor && MDA_curmode != 0x20 )
-				{
-					if( MDA_curmode == 0x60 || (pc_framecnt & 32) )
-                    {
-						if( sy + MDA_curminy < r.max_y )
-                            r.min_y = sy + MDA_curminy;
-						else
-                            r.min_y = r.max_y;
-                        if( sy + MDA_curmaxy < r.max_y )
-							r.max_y = sy + MDA_curmaxy;
-						drawgfx(bitmap,Machine->gfx[0],219,(attr&8)|2,0,0,sx,sy,&r,TRANSPARENCY_NONE, 0);
-                    }
-                    dirtybuffer[offs] = 1;
-                }
-            }
-        }
-		if( (sx += 9) == (MDA_HDISP * 9) )
-		{
-			sx = 0;
-			sy += MDA_maxscan;
+		for (sx=0, r.min_x=0, r.max_x=8; sx<columns; 
+			 sx++, offs=(offs+2)&0x3fff, r.min_x+=9, r.max_x+=9) {
+			if (dirtybuffer[offs] || dirtybuffer[offs+1]) {
+				
+				drawgfx(bitmap, mda.gfx_char, videoram[offs], videoram[offs+1], 
+						0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
+
+//				if ((cursor.on)&&(offs==cursor.pos*2)) {
+				if (cursor.on&&(mda.pc_framecnt&32)&&(offs==cursor.pos*2)) {
+					int k=height-cursor.top;
+					struct rectangle rect2=r;
+					rect2.min_y+=cursor.top; 
+					if (cursor.bottom<height) k=cursor.bottom-cursor.top+1;
+
+					if (k>0)
+						plot_box(Machine->scrbitmap, r.min_x, 
+								 r.min_y+cursor.top, 
+								 9, k, Machine->pens[2/*?*/]);
+				}
+
+				dirtybuffer[offs]=dirtybuffer[offs+1]=0;
+			}
 		}
-		if( (offs += 2) == videoram_size )
-			offs = 0;
-    }
+	}
 }
+
 
 /***************************************************************************
   Draw text mode with 80x25 characters (default) and blinking characters.
   The character cell size is 9x15. Column 9 is column 8 repeated for
   character codes 176 to 223.
 ***************************************************************************/
-static void MDA_text_80_blink(struct osd_bitmap *bitmap)
+static void mda_text_blink(struct osd_bitmap *bitmap)
 {
-	int i, sx, sy, offs = (MDA_base * 2) % videoram_size, size = MDA_size;
+	int sx, sy;
+	int	offs = crtc6845_get_start(mda.crtc)*2;
+	int lines = crtc6845_get_char_lines(mda.crtc);
+	int height = crtc6845_get_char_height(mda.crtc);
+	int columns = crtc6845_get_char_columns(mda.crtc);
+	struct rectangle r;
+	CRTC6845_CURSOR cursor;
 
-    /* for every second character in the Video RAM, check if it has
-       been modified since last time and update it accordingly. */
-	for( i = 0, sx = 0, sy = 0; i < size; i++ )
-	{
-		if (dirtybuffer[offs] || dirtybuffer[offs+1])
-		{
-            struct rectangle r;
-			int code = videoram[offs], attr = videoram[offs+1];
+	crtc6845_time(mda.crtc);
+	crtc6845_get_cursor(mda.crtc, &cursor);
 
-            dirtybuffer[offs] = 0;
-            dirtybuffer[offs+1] = 0;
+	for (sy=0, r.min_y=0, r.max_y=height-1; sy<lines; sy++, r.min_y+=height,r.max_y+=height) {
 
-			if (attr & 0x80)	/* blinking ? */
-			{
-				if (pc_blink)
-					attr = (attr & 0x70) | ((attr & 0x70) >> 4);
-				else
-					attr = attr & 0x7f;
+		for (sx=0, r.min_x=0, r.max_x=8; sx<columns; 
+			 sx++, offs=(offs+2)&0x3fff, r.min_x+=9, r.max_x+=9) {
+
+			if (dirtybuffer[offs] || dirtybuffer[offs+1]) {
+				
+				int attr = videoram[offs+1];
+				
+				if (attr & 0x80)	/* blinking ? */
+				{
+					if (mda.pc_blink)
+						attr = (attr & 0x70) | ((attr & 0x70) >> 4);
+					else
+						attr = attr & 0x7f;
+				}
+
+				drawgfx(bitmap, mda.gfx_char, videoram[offs], attr, 
+						0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
+
+//				if ((cursor.on)&&(offs==cursor.pos*2)) {
+				if (cursor.on&&(mda.pc_framecnt&32)&&(offs==cursor.pos*2)) {
+					int k=height-cursor.top;
+					struct rectangle rect2=r;
+					rect2.min_y+=cursor.top; 
+					if (cursor.bottom<height) k=cursor.bottom-cursor.top+1;
+
+					if (k>0)
+						plot_box(Machine->scrbitmap, r.min_x, 
+								 r.min_y+cursor.top, 
+								 9, k, Machine->pens[2/*?*/]);
+				}
+
+				dirtybuffer[offs]=dirtybuffer[offs+1]=0;
 			}
-
-			r.min_x = sx;
-			r.min_y = sy;
-			r.max_x = sx + 9 - 1;
-			r.max_y = sy + MDA_maxscan - 1;
-			if( DOCLIP(&r) )
-			{
-                /* draw the character */
-				drawgfx(bitmap, Machine->gfx[0], code, attr, 0, 0,r.min_x,r.min_y, &r, TRANSPARENCY_NONE, 0);
-				if( offs == MDA_cursor && MDA_curmode != 0x20 )
-                {
-					if( MDA_curmode == 0x60 || (pc_framecnt & 32) )
-                    {
-						if( sy + MDA_curminy < r.max_y )
-                            r.min_y = sy + MDA_curminy;
-						else
-							r.min_y = r.max_y;
-                        if( sy + MDA_curmaxy < r.max_y )
-							r.max_y = sy + MDA_curmaxy;
-						drawgfx(bitmap,Machine->gfx[0],219,(attr&8)|2,0,0,sx,sy,&r,TRANSPARENCY_NONE,0);
-                    }
-                    dirtybuffer[offs] = 1;
-                }
-            }
-        }
-		if( (sx += 9) == (MDA_HDISP * 9) )
-		{
-			sx = 0;
-			sy += MDA_maxscan;
 		}
-		if( (offs += 2) == videoram_size )
-			offs = 0;
-    }
+	}
 }
 
 /***************************************************************************
@@ -629,133 +332,59 @@ static void MDA_text_80_blink(struct osd_bitmap *bitmap)
   Every bank holds data for every n'th scanline, 8 pixels per byte,
   bit 7 being the leftmost.
 ***************************************************************************/
-static void HGC_gfx_720(struct osd_bitmap *bitmap)
+static void hercules_gfx(struct osd_bitmap *bitmap)
 {
-	int i, sx, sy, page, offs, size = MDA_size * 2;
+	int i, sx, sy, sh;
+	int	offs = crtc6845_get_start(mda.crtc)*2;
+	int lines = crtc6845_get_char_lines(mda.crtc);
+	int height = crtc6845_get_char_height(mda.crtc);
+	int columns = crtc6845_get_char_columns(mda.crtc)*2;
+	UINT8 *vram=videoram, *dbuffer=dirtybuffer;
+	if (mda.mode_control&0x80) { vram+=0x8000, dbuffer+=0x8000; }
 
-	page = 256 * (pc_port[0x3b8] & 0x80);
+	for (sy=0; sy<lines; sy++,offs=(offs+columns)&0x1fff) {
 
-    /* for every code in the Video RAM, check if it has been
-	   modified since last time and update it accordingly. */
-	offs = (MDA_base + page) % videoram_size;
-	for( i = 0, sx = 0, sy = 0; i < size; i++ )
-	{
-		if( dirtybuffer[offs] )
-		{
-            struct rectangle r;
-			int code = videoram[offs];
-
-            dirtybuffer[offs] = 0;
-
-			r.min_x = sx;
-			r.min_y = sy;
-			r.max_x = sx + 8 - 1;
-			r.max_y = sy + MDA_maxscan / 4 - 1;
-			if( DOCLIP(&r) )
-			{
-                /* draw the character */
-				drawgfx(bitmap, Machine->gfx[1], code, 0,
-					0,0, sx,sy, &r, TRANSPARENCY_NONE, 0);
-            }
-        }
-		if( (sx += 8) == (2 * MDA_HDISP * 8) )
-		{
-			sx = 0;
-			sy += MDA_maxscan;
+		for (sh=0; sh<height; sh++) { // char line 0 used as a12 line in graphic mode
+			switch(sh&3) { // char line 0 used as a12 line in graphic mode
+			case 0:
+				for (i=offs, sx=0; sx<columns; sx++, i=(i+1)&0x1fff) {
+					if (dbuffer[i]) {
+						drawgfx(bitmap, mda.gfx_graphic, vram[i], 0, 0,0,sx*8,sy*height+sh,
+								0,TRANSPARENCY_NONE,0);
+						dbuffer[i]=0;
+					}
+				}
+				break;
+			case 1:
+				for (i=offs|0x2000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x2000) {
+					if (dbuffer[i]) {
+						drawgfx(bitmap, mda.gfx_graphic, vram[i], 0, 0,0,sx*8,sy*height+sh,
+								0,TRANSPARENCY_NONE,0);
+						dbuffer[i]=0;
+					}
+				}
+				break;
+			case 2:
+				for (i=offs|0x4000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x4000) {
+					if (dbuffer[i]) {
+						drawgfx(bitmap, mda.gfx_graphic, vram[i], 0, 0,0,sx*8,sy*height+sh,
+								0,TRANSPARENCY_NONE,0);
+						dbuffer[i]=0;
+					}
+				}
+				break;
+			case 3:
+				for (i=offs|0x6000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x6000) {
+					if (dbuffer[i]) {
+						drawgfx(bitmap, mda.gfx_graphic, vram[i], 0, 0,0,sx*8,sy*height+sh,
+								0,TRANSPARENCY_NONE,0);
+						dbuffer[i]=0;
+					}
+				}
+				break;
+			}
 		}
-		if(++offs == videoram_size)
-			offs = 0;
-    }
-
-	offs = ((MDA_base + page) % videoram_size) | 0x2000;
-	for( i = 0, sx = 0, sy = MDA_maxscan / 4; i < size; i++ )
-	{
-		if( dirtybuffer[offs] )
-		{
-            struct rectangle r;
-			int code = videoram[offs];
-
-            dirtybuffer[offs] = 0;
-
-			r.min_x = sx;
-			r.min_y = sy;
-			r.max_x = sx + 8 - 1;
-			r.max_y = sy + MDA_maxscan / 4 - 1;
-			if( DOCLIP(&r) )
-			{
-                /* draw the character */
-				drawgfx(bitmap, Machine->gfx[1], code, 0,
-					0,0, sx,sy, &r, TRANSPARENCY_NONE, 0);
-            }
-        }
-		if( (sx += 8) == (2 * MDA_HDISP * 8) )
-		{
-			sx = 0;
-			sy += MDA_maxscan;
-		}
-		if(++offs == videoram_size)
-			offs = 0;
-    }
-
-	offs = ((MDA_base + page) % videoram_size) | 0x4000;
-	for (i = 0, sx = 0, sy = 2 * MDA_maxscan / 4; i < size; i++)
-	{
-		if( dirtybuffer[offs] )
-		{
-            struct rectangle r;
-			int code = videoram[offs];
-
-            dirtybuffer[offs] = 0;
-
-			r.min_x = sx;
-			r.min_y = sy;
-			r.max_x = sx + 8 - 1;
-			r.max_y = sy + MDA_maxscan / 4 - 1;
-			if( DOCLIP(&r) )
-			{
-                /* draw the character */
-				drawgfx(bitmap, Machine->gfx[1], code, 0,
-					0,0, sx,sy, &r, TRANSPARENCY_NONE, 0);
-            }
-        }
-		if( (sx += 8) == (2 * MDA_HDISP * 8) )
-		{
-			sx = 0;
-			sy += MDA_maxscan;
-		}
-		if( ++offs == videoram_size )
-			offs = 0;
-    }
-
-	offs = ((MDA_base + page) % videoram_size) | 0x6000;
-	for (i = 0, sx = 0, sy = 3 * MDA_maxscan / 4; i < size; i++)
-	{
-		if( dirtybuffer[offs] )
-		{
-            struct rectangle r;
-			int code = videoram[offs];
-
-            dirtybuffer[offs] = 0;
-
-			r.min_x = sx;
-			r.min_y = sy;
-			r.max_x = sx + 8 - 1;
-			r.max_y = sy + MDA_maxscan / 4 - 1;
-			if( DOCLIP(&r) )
-			{
-                /* draw the character */
-				drawgfx(bitmap, Machine->gfx[1], code, 0,
-					0,0, sx,sy, &r, TRANSPARENCY_NONE, 0);
-            }
-        }
-		if( (sx += 8) == (2 * MDA_HDISP * 8) )
-		{
-			sx = 0;
-			sy += MDA_maxscan;
-		}
-		if( ++offs == videoram_size )
-			offs = 0;
-    }
+	}
 }
 
 /***************************************************************************
@@ -766,30 +395,47 @@ static void HGC_gfx_720(struct osd_bitmap *bitmap)
 void pc_mda_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	static int video_active = 0;
+	static int width=0, height=0;
+	int w,h;
 
 	if( palette_recalc() )
 		full_refresh = 1;
 
     /* draw entire scrbitmap because of usrintrf functions
 	   called osd_clearbitmap or attr change / scanline change */
-	if( full_refresh )
+	if( crtc6845_do_full_refresh(mda.crtc)||full_refresh||mda.full_refresh )
 	{
+		mda.full_refresh=0;
 		memset(dirtybuffer, 1, videoram_size);
 		fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
 		video_active = 0;
     }
 
-	switch (pc_port[0x03b8] & 0x2a) /* text and gfx modes */
+	h=crtc6845_get_char_height(mda.crtc)*crtc6845_get_char_lines(mda.crtc);
+	w=crtc6845_get_char_columns(mda.crtc);
+
+	switch (mda.mode_control & 0x2a) /* text and gfx modes */
 	{
-		case 0x08: video_active = 10; MDA_text_80_inten(bitmap); break;
-		case 0x28: video_active = 10; MDA_text_80_blink(bitmap); break;
-		case 0x0a: video_active = 10; HGC_gfx_720(bitmap);		 break;
-		case 0x2a: video_active = 10; HGC_gfx_720(bitmap);		 break;
+		case 0x08: video_active = 10; mda_text_inten(bitmap);w*=9; break;
+		case 0x28: video_active = 10; mda_text_blink(bitmap);w*=9; break;
+		case 0x0a: video_active = 10; hercules_gfx(bitmap);w*=8; break;
+		case 0x2a: video_active = 10; hercules_gfx(bitmap);w*=8; break;
 
         default:
 			if (video_active && --video_active == 0)
 				fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
     }
+
+	if ( (width!=w)||(height!=h) ) 
+	{
+		width=w;
+		height=h;
+		if (width>Machine->visible_area.max_x) width=Machine->visible_area.max_x+1;
+		if (height>Machine->visible_area.max_y) height=Machine->visible_area.max_y+1;
+		if ((width>100)&&(height>100))
+			osd_set_visible_area(0,width-1,0, height-1);
+		else logerror("video %d %d\n",width, height);
+	}
 
 //	state_display(bitmap);
 }
