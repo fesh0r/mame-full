@@ -675,6 +675,9 @@ TESTDRIVER( psxe41 )
 	/* Corvus */
 	DRIVER(concept)		/* 1982 Corvus Concept								*/
 
+	/* DAI */
+TESTDRIVER(dai)			/* DAI												*/
+
 /****************Games*******************************************************/
 	/* Computer Electronic */
 TESTDRIVER( mk1 )		/* Chess Champion MK I								*/

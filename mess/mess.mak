@@ -233,7 +233,8 @@ DRVLIBS = \
 	$(OBJ)/kim1.a     \
 	$(OBJ)/sym1.a     \
 	$(OBJ)/sony.a     \
-	$(OBJ)/concept.a
+	$(OBJ)/concept.a  \
+	$(OBJ)/dai.a      \
 
 
 $(OBJ)/coleco.a:   \
@@ -744,6 +745,12 @@ $(OBJ)/sony.a:     \
 	$(OBJ)/mess/machine/psx.o \
 	$(OBJ)/machine/psx.o	\
 	$(OBJ)/vidhrdw/psx.o
+
+$(OBJ)/dai.a:     \
+	$(OBJ)/mess/systems/dai.o     \
+	$(OBJ)/mess/machine/dai.o     \
+	$(OBJ)/mess/vidhrdw/dai.o     \
+	$(OBJ)/mess/machine/tms5501.o \
 
 $(OBJ)/concept.a:  \
 	$(OBJ)/mess/systems/concept.o   \

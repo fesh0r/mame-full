@@ -104,6 +104,7 @@ void inputx_post_utf8(const char *text);
 void inputx_postn_utf8(const char *text, size_t text_len);
 
 int input_categorize_port(const struct InputPort *in);
+int input_has_input_category(int category);
 int input_player_number(const struct InputPort *in);
 int input_count_players(void);
 

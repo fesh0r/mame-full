@@ -29,9 +29,9 @@
    but call if plus ... therefore: */
 #define Z80_MNEMONICS
 
-#define OP(A)   cpu_readmem16(A)
-#define ARG(A)  cpu_readmem16(A)
-#define ARGW(A) cpu_readmem16(A) + (cpu_readmem16((A+1)&0xffff) << 8)
+#define OP(A)   cpu_readop(A)
+#define ARG(A)  cpu_readop_arg(A)
+#define ARGW(A) cpu_readop_arg(A) + (cpu_readop_arg((A+1)&0xffff) << 8)
 
 unsigned Dasm8085(char *buff, unsigned pc)
 {

@@ -9,9 +9,11 @@
 #ifndef ARTWORKX_H
 #define ARTWORKX_H
 
+#include "driver.h"
 #include "fileio.h"
 #include "palette.h"
 #include "artwork.h"
+#include "png.h"
 
 /***************************************************************************
 

@@ -6,6 +6,8 @@
 
 *********************************************************************/
 
+#include <ctype.h>
+
 #include "artworkx.h"
 #include "image.h"
 #include "png.h"
