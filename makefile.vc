@@ -50,10 +50,10 @@ EXE = .exe
 VPATH=src $(wildcard src/cpu/*)
 
 # compiler, linker and utilities
-AR = lib
+AR = @lib
 CC = @cl
-LD = link
-RC = rc
+LD = @link
+RC = @rc
 ASM = nasmw
 ASMFLAGS = -f win32
 RM = rm
@@ -354,7 +354,6 @@ $(OBJ)/wince/%.o: src/wince/%.cpp
 	$(CC) $(CDEFS) $(CFLAGS) -Fo$@ -c $<
 
 $(OBJ)/mess/%.o: mess/%.c
-	@echo [MESS] Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -Fo$@ -c $<
 
 $(OBJ)/windowsui/%.res: src/windowsui/%.rc
@@ -408,7 +407,6 @@ $(OBJ)/cpu/m68000/68020.o:  $(OBJ)/cpu/m68000/68020.asm
 
 $(OBJ)/%.a:
 	@echo Archiving $@...
-	@-$(RM) $(subst /,\,$@)
 	$(AR) -nologo -out:$@ $^
 
 makedir:
