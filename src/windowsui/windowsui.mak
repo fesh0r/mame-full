@@ -25,7 +25,6 @@ OSOBJS += \
 	$(OBJ)/windowsui/DirectInput.o \
 	$(OBJ)/windowsui/DIJoystick.o \
 	$(OBJ)/windowsui/DirectDraw.o \
-	$(OBJ)/windowsui/file.o \
 	$(OBJ)/windowsui/directories.o \
 	$(OBJ)/windowsui/audit32.o \
 	$(OBJ)/windowsui/ColumnEdit.o \
@@ -35,7 +34,6 @@ OSOBJS += \
 	$(OBJ)/windowsui/Bitmask.o \
 	$(OBJ)/windowsui/DataMap.o \
 	$(OBJ)/windowsui/dxdecode.o \
-	$(OBJ)/windowsui/ChildOutputStream.o \
 	$(OBJ)/windowsui/help.o \
 	$(OBJ)/mess/windowsui/mess32ui.o \
 	$(OBJ)/mess/windowsui/MessOptions.o \

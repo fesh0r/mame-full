@@ -54,20 +54,20 @@ static DWORD        g_dwCookie;
  External functions
 ***************************************************************************/
 
-int Help_Init(void)
+int HelpInit(void)
 {
 	g_pHtmlHelp = NULL;
 	g_hHelpLib  = NULL;
 
 	g_dwCookie = 0;
-	Help_HtmlHelp(NULL, NULL, HH_INITIALIZE, (DWORD)&g_dwCookie);
+	HelpFunction(NULL, NULL, HH_INITIALIZE, (DWORD)&g_dwCookie);
 	return 0;
 }
 
-void Help_Exit(void)
+void HelpExit(void)
 {
-	Help_HtmlHelp(NULL, NULL, HH_CLOSE_ALL, 0);
-	Help_HtmlHelp(NULL, NULL, HH_UNINITIALIZE, (DWORD)g_dwCookie);
+	HelpFunction(NULL, NULL, HH_CLOSE_ALL, 0);
+	HelpFunction(NULL, NULL, HH_UNINITIALIZE, (DWORD)g_dwCookie);
 
 	g_dwCookie  = 0;
 	g_pHtmlHelp = NULL;
@@ -79,7 +79,7 @@ void Help_Exit(void)
 	}
 }
 
-HWND Help_HtmlHelp(HWND hwndCaller, LPCSTR pszFile, UINT uCommand, DWORD_PTR dwData)
+HWND HelpFunction(HWND hwndCaller, LPCSTR pszFile, UINT uCommand, DWORD_PTR dwData)
 {
 	if (g_pHtmlHelp == NULL)
 		Help_Load();

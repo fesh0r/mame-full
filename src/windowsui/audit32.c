@@ -76,10 +76,7 @@ void AuditDialog(HWND hParent)
 	samples_correct   = 0;
 	samples_incorrect = 0;
 
-	DialogBox(GetModuleHandle(NULL),
-			  MAKEINTRESOURCE(IDD_AUDIT),
-			  hParent,
-			  AuditWindowProc);
+	DialogBox(GetModuleHandle(NULL),MAKEINTRESOURCE(IDD_AUDIT),hParent,AuditWindowProc);
 }
 
 void InitGameAudit(int gameIndex)
@@ -151,6 +148,7 @@ static INT_PTR CALLBACK AuditWindowProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 		switch (LOWORD(wParam))
 		{
 		case IDCANCEL:
+            bPaused = FALSE;
 			if (hThread)
 			{
 				bCancel = TRUE;
@@ -202,7 +200,7 @@ INT_PTR CALLBACK GameAuditDialogProc(HWND hDlg,UINT Msg,WPARAM wParam,LPARAM lPa
 	switch (Msg)
 	{
 	case WM_INITDIALOG:
-		unzip_cache_clear();
+		FlushFileCaches();
 		hAudit = hDlg;
 		Static_SetText(GetDlgItem(hDlg, IDC_PROP_TITLE), GameInfoTitle(rom_index));
 		SetTimer(hDlg, 0, 1, NULL);
@@ -221,11 +219,7 @@ INT_PTR CALLBACK GameAuditDialogProc(HWND hDlg,UINT Msg,WPARAM wParam,LPARAM lPa
 #endif
 			SetWindowText(GetDlgItem(hDlg, IDC_PROP_ROMS), StatusString(iStatus));
 
-			/* does the game use samples at all? */
-			if (GameUsesSamples(rom_index) == FALSE)
-				iStatus = -1; /* Game doesn't require samples */
-			else
-				iStatus = VerifySampleSet(rom_index, (verify_printf_proc)DetailsPrintf);
+			iStatus = VerifySampleSet(rom_index, (verify_printf_proc)DetailsPrintf);
 			SetHasSamples(rom_index, (iStatus == CORRECT) ? 1 : 0);
 			SetWindowText(GetDlgItem(hDlg, IDC_PROP_SAMPLES), StatusString(iStatus));
 		}
@@ -284,21 +278,20 @@ static void ProcessNextSample()
 	int  retval;
 	char buffer[200];
 	
-	/* does the game use samples at all? */
-	if (GameUsesSamples(sample_index) == FALSE)
-		retval = NOTFOUND;
-	else
-		retval = VerifySampleSet(sample_index, (verify_printf_proc)DetailsPrintf);
+	retval = VerifySampleSet(sample_index, (verify_printf_proc)DetailsPrintf);
 	
 	switch (retval)
 	{
 	case CORRECT:
-		samples_correct++;
-		sprintf(buffer, "%i", samples_correct);
-		SendDlgItemMessage(hAudit, IDC_SAMPLES_CORRECT, WM_SETTEXT, 0, (LPARAM)buffer);
-		sprintf(buffer, "%i", samples_correct + samples_incorrect);
-		SendDlgItemMessage(hAudit, IDC_SAMPLES_TOTAL, WM_SETTEXT, 0, (LPARAM)buffer);
-		break;
+		if (GameUsesSamples(sample_index))
+		{
+			samples_correct++;
+			sprintf(buffer, "%i", samples_correct);
+			SendDlgItemMessage(hAudit, IDC_SAMPLES_CORRECT, WM_SETTEXT, 0, (LPARAM)buffer);
+			sprintf(buffer, "%i", samples_correct + samples_incorrect);
+			SendDlgItemMessage(hAudit, IDC_SAMPLES_TOTAL, WM_SETTEXT, 0, (LPARAM)buffer);
+			break;
+		}
 		
 	case NOTFOUND:
 		break;
@@ -312,7 +305,9 @@ static void ProcessNextSample()
 		
 		break;
 	}
-	SetHasSamples(sample_index, (retval == CORRECT) ? 1 : 0);
+	
+	SetHasSamples(sample_index, (retval == CORRECT || retval == BEST_AVAILABLE) ? 1 : 0);
+
 	sample_index++;
 	SendDlgItemMessage(hAudit, IDC_SAMPLES_PROGRESS, PBM_SETPOS, sample_index, 0);
 	
@@ -342,24 +337,6 @@ static void CLIB_DECL DetailsPrintf(const char *fmt, ...)
 	
 	s = ConvertToWindowsNewlines(buffer);
 
-	/* convert \n's to \r\n */
-	/*
-	source = 0;
-	dest = 0;
-	while (buffer[source] != 0)
-	{
-		if (buffer[source] == '\n')
-		{
-			buffer2[dest++] = '\r';
-			buffer2[dest++] = '\n';
-		}
-		else
-			buffer2[dest++] = buffer[source];
-		source++;
-	}
-	buffer2[dest] = 0;
-	*/
-	
 	Edit_SetSel(hEdit, Edit_GetTextLength(hEdit), Edit_GetTextLength(hEdit));
 	Edit_ReplaceSel(hEdit, s);
 }

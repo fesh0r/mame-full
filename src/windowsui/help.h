@@ -43,8 +43,8 @@
 #define MAME32CONTEXTHELP "mame32.chm::/cntx_help.txt"
 #endif
 
-extern int  Help_Init(void);
-extern void Help_Exit(void);
-extern HWND Help_HtmlHelp(HWND hwndCaller, LPCSTR pszFile, UINT uCommand, DWORD_PTR dwData);
+extern int  HelpInit(void);
+extern void HelpExit(void);
+extern HWND HelpFunction(HWND hwndCaller, LPCSTR pszFile, UINT uCommand, DWORD_PTR dwData);
 
 #endif

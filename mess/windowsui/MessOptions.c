@@ -131,6 +131,6 @@ BOOL GetUseNewUI(int num_game)
 {
     assert(0 <= num_game && num_game < num_games);
 
-    return game[num_game].use_new_ui;
+    return game_options[num_game].use_new_ui;
 }
 

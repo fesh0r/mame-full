@@ -274,8 +274,7 @@ typedef struct
 	char*    diffdir;
 	char*	 iconsdir;
 	char*    bgdir;
-	char*    cheatdir;
-	char*    cheatfile;
+    char*    cheat_filename;
 	char*    history_filename;
 	char*    mameinfo_filename;
 	char*    ctrlrdir;
@@ -457,9 +456,6 @@ void SetIconsDir(const char* path);
 
 const char *GetBgDir(void);
 void SetBgDir(const char *path);
-
-const char* GetCheatDir(void);
-void SetCheatFileDir(const char* path);
 
 const char* GetCtrlrDir(void);
 void SetCtrlrDir(const char* path);

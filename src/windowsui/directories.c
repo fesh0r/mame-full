@@ -685,17 +685,18 @@ static BOOL Directories_OnEndLabelEdit(HWND hDlg, NMHDR* pNMHDR)
 #ifdef MESS
 			case CRC:
 #endif
-			case CFG:
-			case HI:
-			case IMG:
-			case INP:
-			case STATE:
-			case ART:
-			case MEMCARD:
-			case FLYER:
-			case CABINET:
-			case MARQUEE:
-			case NVRAM:
+		case CFG:
+		case HI:
+		case IMG:
+		case INP:
+		case STATE:
+		case ART:
+		case MEMCARD:
+		case FLYER:
+		case CABINET:
+		case MARQUEE:
+		case TITLES:
+		case NVRAM:
 		case CTRLR:
 		case DIFF:
 		case ICONS:

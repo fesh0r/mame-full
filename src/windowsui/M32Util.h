@@ -39,4 +39,5 @@ BOOL DriverIsHarddisk(int driver_index);
 
 void FlushFileCaches(void);
 
+void FreeIfAllocated(char **s);
 #endif /* MAME32UTIL_H */

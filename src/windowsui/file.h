@@ -16,12 +16,6 @@
 // from windows fileio.c
 extern void set_pathlist(int file_type,const char *new_rawpath);
 
-extern int   File_Init(void);
-extern void  File_Exit(void);
-extern BOOL  File_ExistZip(const char* gamename, int filetype);
-extern BOOL  File_Status(const char* gamename, const char* filename, int filetype);
-extern void  File_UpdatePaths(void);
-
 #define OSD_FILETYPE_ICON 1001
 
 #endif

@@ -318,6 +318,13 @@ void FlushFileCaches(void)
 	unzip_cache_clear();
 }
 
+void FreeIfAllocated(char **s)
+{
+	if (*s)
+		free(*s);
+	*s = NULL;
+}
+
 /***************************************************************************
 	Internal functions
  ***************************************************************************/

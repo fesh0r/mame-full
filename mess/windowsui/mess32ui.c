@@ -20,12 +20,6 @@
 #define alloca _alloca
 #endif
 
-/* #define INPROCESS_MAME */
-
-/* from src/win32/Directories.c */
-const char *GetMessSoftwarePath(int i);
-int GetMessSoftwarePathCount(void);
-
 static int requested_device_type(char *tchar);
 static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const struct GameDriver *gamedrv);
 
@@ -223,10 +217,10 @@ static void MyFillSoftwareList(int nGame)
 
 	drv = drivers[nGame];
 
-	nBasePaths = GetMessSoftwarePathCount();
+	nBasePaths = osd_get_path_count(FILETYPE_IMAGE);
 	plpBasePaths = alloca(sizeof(LPCSTR) * nBasePaths);
 	for (i = 0; i < nBasePaths; i++)
-		plpBasePaths[i] = GetMessSoftwarePath(i);
+		plpBasePaths[i] = ""; //GetMessSoftwarePath(i);
 
 	lpExtraPath = GetGameOptions(nGame)->extra_software_paths;
 

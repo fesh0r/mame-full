@@ -109,7 +109,7 @@ static settings_type settings;
 
 static options_type gOpts;  /* Used when saving/loading from Registry */
 static options_type global; /* Global 'default' options */
-static options_type *game;  /* Array of Game specific options */
+static options_type *game_options;  /* Array of Game specific options */
 
 /* Global UI options */
 static REG_OPTIONS regSettings[] =
@@ -167,8 +167,7 @@ static REG_OPTIONS regSettings[] =
 	{"snapshot_directory", RO_PSTRING, &settings.imgdir,           0, 0},
 	{"diff_directory",     RO_PSTRING, &settings.diffdir,          0, 0},
 	{"icons_directory",    RO_PSTRING, &settings.iconsdir,         0, 0},
-	{"cheat_directory",    RO_PSTRING, &settings.cheatdir,         0, 0},
-	{"cheat_file",         RO_PSTRING, &settings.cheatfile,        0, 0},
+	{"cheat_file",         RO_PSTRING, &settings.cheat_filename,   0, 0},
 	{"history_file",       RO_PSTRING, &settings.history_filename, 0, 0},
 	{"mameinfo_file",      RO_PSTRING, &settings.mameinfo_filename,0, 0},
 	{"ctrlr_directory",    RO_PSTRING, &settings.ctrlrdir,         0, 0},
@@ -393,8 +392,7 @@ void OptionsInit()
 	settings.diffdir           = strdup("diff");
 	settings.iconsdir          = strdup("icons");
 	settings.bgdir             = strdup("bkground");
-	settings.cheatdir          = strdup("cheat");
-	settings.cheatfile         = strdup("cheat.dat");
+	settings.cheat_filename    = strdup("cheat.dat");
 #ifdef MESS
 	settings.history_filename  = strdup("sysinfo.dat");
 	settings.mameinfo_filename = strdup("messinfo.dat");
@@ -515,47 +513,54 @@ void OptionsInit()
 #endif
 
 	/* This allocation should be checked */
-	game = (options_type *)malloc(num_games * sizeof(options_type));
+	game_options = (options_type *)malloc(num_games * sizeof(options_type));
 
 	for (i = 0; i < num_games; i++)
 	{
-		game[i] = global;
-		game[i].use_default = TRUE;
+		game_options[i] = global;
+		game_options[i].use_default = TRUE;
 	}
 
 	SaveGlobalOptions(TRUE);
 	LoadOptions();
+
+	// have our mame core (file code) know about our rom path
+	// this leaks a little, but the win32 file core writes to this string
+	set_pathlist(FILETYPE_ROM,strdup(settings.romdirs));
+	set_pathlist(FILETYPE_SAMPLE,strdup(settings.sampledirs));
+
 }
 
 void OptionsExit(void)
 {
     SaveOptions();
-    free(game);
-    free(settings.language);
-    free(settings.romdirs);
-    free(settings.sampledirs);
-	free(settings.inidirs);
-    free(settings.cfgdir);
-    free(settings.hidir);
-    free(settings.inpdir);
-    free(settings.imgdir);
-    free(settings.statedir);
-    free(settings.artdir);
-    free(settings.memcarddir);
-    free(settings.flyerdir);
-    free(settings.cabinetdir);
-    free(settings.marqueedir);
-    free(settings.titlesdir);
-    free(settings.nvramdir);
-    free(settings.diffdir);
-    free(settings.iconsdir);
-    free(settings.bgdir);
-	free(settings.cheatdir);
-	free(settings.cheatfile);
-	free(settings.history_filename);
-	free(settings.mameinfo_filename);
-    free(settings.ctrlrdir);
-	free(settings.folderdir);
+
+    free(game_options);
+
+    FreeIfAllocated(&settings.language);
+    FreeIfAllocated(&settings.romdirs);
+    FreeIfAllocated(&settings.sampledirs);
+    FreeIfAllocated(&settings.inidirs);
+    FreeIfAllocated(&settings.cfgdir);
+    FreeIfAllocated(&settings.hidir);
+    FreeIfAllocated(&settings.inpdir);
+    FreeIfAllocated(&settings.imgdir);
+    FreeIfAllocated(&settings.statedir);
+    FreeIfAllocated(&settings.artdir);
+    FreeIfAllocated(&settings.memcarddir);
+    FreeIfAllocated(&settings.flyerdir);
+    FreeIfAllocated(&settings.cabinetdir);
+    FreeIfAllocated(&settings.marqueedir);
+    FreeIfAllocated(&settings.titlesdir);
+    FreeIfAllocated(&settings.nvramdir);
+    FreeIfAllocated(&settings.diffdir);
+    FreeIfAllocated(&settings.iconsdir);
+    FreeIfAllocated(&settings.bgdir);
+	FreeIfAllocated(&settings.cheat_filename);
+	FreeIfAllocated(&settings.history_filename);
+	FreeIfAllocated(&settings.mameinfo_filename);
+    FreeIfAllocated(&settings.ctrlrdir);
+	FreeIfAllocated(&settings.folderdir);
 }
 
 options_type * GetDefaultOptions(void)
@@ -571,20 +576,22 @@ options_type * GetGameOptions(int num_game)
 
 	assert(0 <= num_game && num_game < num_games);
 
-	play_count	= game[num_game].play_count;
-	has_roms	= game[num_game].has_roms;
-	has_samples = game[num_game].has_samples;
+	play_count	= game_options[num_game].play_count;
+	has_roms	= game_options[num_game].has_roms;
+	has_samples = game_options[num_game].has_samples;
 
-	if (game[num_game].use_default)
+	if (game_options[num_game].use_default)
 	{
-		game[num_game]				= global;
-		game[num_game].use_default	= TRUE;
-		game[num_game].play_count	= play_count;
-		game[num_game].has_roms 	= has_roms;
-		game[num_game].has_samples	= has_samples;
+		game_options[num_game] = global;
+
+		// use defaults, but override with the values we just save
+		game_options[num_game].use_default	= TRUE;
+		game_options[num_game].play_count	= play_count;
+		game_options[num_game].has_roms 	= has_roms;
+		game_options[num_game].has_samples	= has_samples;
 
 	}
-	return &game[num_game];
+	return &game_options[num_game];
 }
 
 void ResetGUI(void)
@@ -1230,7 +1237,7 @@ const char* GetBgDir (void)
 
 void SetBgDir (const char* path)
 {
-	free(settings.bgdir);
+	FreeIfAllocated(&settings.bgdir);
 
 	if (path != NULL)
 		settings.bgdir = strdup (path);
@@ -1243,48 +1250,23 @@ const char* GetFolderDir(void)
 
 void SetFolderDir(const char* path)
 {
-	if (settings.folderdir != NULL)
-	{
-		free(settings.folderdir);
-		settings.folderdir = NULL;
-	}
+	FreeIfAllocated(&settings.folderdir);
 
 	if (path != NULL)
 		settings.folderdir = strdup(path);
 }
 
-const char* GetCheatDir(void)
-{
-	return settings.cheatdir;
-}
-
-void SetCheatDir(const char* path)
-{
-	if (settings.cheatdir != NULL)
-	{
-		free(settings.cheatdir);
-		settings.cheatdir = NULL;
-	}
-
-	if (path != NULL)
-		settings.cheatdir = strdup(path);
-}
-
 const char* GetCheatFileName(void)
 {
-	return settings.cheatfile;
+	return settings.cheat_filename;
 }
 
 void SetCheatFileName(const char* path)
 {
-	if (settings.cheatfile != NULL)
-	{
-		free(settings.cheatfile);
-		settings.cheatfile = NULL;
-	}
+	FreeIfAllocated(&settings.cheat_filename);
 
 	if (path != NULL)
-		settings.cheatfile = strdup(path);
+		settings.cheat_filename = strdup(path);
 }
 
 const char* GetHistoryFileName(void)
@@ -1294,11 +1276,7 @@ const char* GetHistoryFileName(void)
 
 void SetHistoryFileName(const char* path)
 {
-	if (settings.history_filename != NULL)
-	{
-		free(settings.history_filename);
-		settings.history_filename = NULL;
-	}
+	FreeIfAllocated(&settings.history_filename);
 
 	if (path != NULL)
 		settings.history_filename = strdup(path);
@@ -1312,11 +1290,7 @@ const char* GetMAMEInfoFileName(void)
 
 void SetMAMEInfoFileName(const char* path)
 {
-	if (settings.mameinfo_filename != NULL)
-	{
-		free(settings.mameinfo_filename);
-		settings.mameinfo_filename = NULL;
-	}
+	FreeIfAllocated(&settings.mameinfo_filename);
 
 	if (path != NULL)
 		settings.mameinfo_filename = strdup(path);
@@ -1330,15 +1304,15 @@ void ResetGameOptions(int num_game)
 
 	assert(0 <= num_game && num_game < num_games);
 
-	play_count	= game[num_game].play_count;
-	has_roms	= game[num_game].has_roms;
-	has_samples = game[num_game].has_samples;
+	play_count	= game_options[num_game].play_count;
+	has_roms	= game_options[num_game].has_roms;
+	has_samples = game_options[num_game].has_samples;
 
-	game[num_game]				= global;
-	game[num_game].use_default	= TRUE;
-	game[num_game].play_count	= play_count;
-	game[num_game].has_roms 	= has_roms;
-	game[num_game].has_samples	= has_samples;
+	game_options[num_game] = global;
+	game_options[num_game].use_default	= TRUE;
+	game_options[num_game].play_count	= play_count;
+	game_options[num_game].has_roms 	= has_roms;
+	game_options[num_game].has_samples	= has_samples;
 }
 
 void ResetGameDefaults(void)
@@ -1358,35 +1332,35 @@ int  GetHasRoms(int num_game)
 {
 	assert(0 <= num_game && num_game < num_games);
 
-	return game[num_game].has_roms;
+	return game_options[num_game].has_roms;
 }
 
 void SetHasRoms(int num_game, int has_roms)
 {
 	assert(0 <= num_game && num_game < num_games);
 
-	game[num_game].has_roms = has_roms;
+	game_options[num_game].has_roms = has_roms;
 }
 
 int  GetHasSamples(int num_game)
 {
 	assert(0 <= num_game && num_game < num_games);
 
-	return game[num_game].has_samples;
+	return game_options[num_game].has_samples;
 }
 
 void SetHasSamples(int num_game, int has_samples)
 {
 	assert(0 <= num_game && num_game < num_games);
 
-	game[num_game].has_samples = has_samples;
+	game_options[num_game].has_samples = has_samples;
 }
 
 void IncrementPlayCount(int num_game)
 {
 	assert(0 <= num_game && num_game < num_games);
 
-	game[num_game].play_count++;
+	game_options[num_game].play_count++;
 
 	SavePlayCount(num_game);
 }
@@ -1400,7 +1374,7 @@ int GetPlayCount(int num_game)
 {
 	assert(0 <= num_game && num_game < num_games);
 
-	return game[num_game].play_count;
+	return game_options[num_game].play_count;
 }
 
 /***************************************************************************
@@ -1705,7 +1679,7 @@ static void LoadOptions(void)
         result = RegOpenKeyEx(HKEY_CURRENT_USER, keyString, 0, KEY_QUERY_VALUE, &hKey);
 		if (result == ERROR_SUCCESS)
 		{
-			LoadRegGameOptions(hKey, &game[i]);
+			LoadRegGameOptions(hKey, &game_options[i]);
 			RegCloseKey(hKey);
 		}
 	}
@@ -1791,7 +1765,7 @@ static void SavePlayCount(int game_index)
                                  &dwDisposition );
 		if (result == ERROR_SUCCESS)
 		{
-			PutRegOption(hSubkey, "PlayCount", game[game_index].play_count);
+			PutRegOption(hSubkey, "PlayCount", game_options[game_index].play_count);
 			RegCloseKey(hSubkey);
 		}
 		RegCloseKey(hKey);
@@ -1873,7 +1847,7 @@ void SaveOptions(void)
 
 		if (result == ERROR_SUCCESS)
 		{
-			saved = SaveRegGameOptions(hSubkey, &game[i]);
+			saved = SaveRegGameOptions(hSubkey, &game_options[i]);
 			RegCloseKey(hSubkey);
 			if (saved == FALSE)
 				RegDeleteKey(hKey,drivers[i]->name);
@@ -1905,7 +1879,7 @@ void SaveGameOptions(int game_num)
 
 	if (result == ERROR_SUCCESS)
 	{
-		saved = SaveRegGameOptions(hSubkey, &game[game_num]);
+		saved = SaveRegGameOptions(hSubkey, &game_options[game_num]);
 		RegCloseKey(hSubkey);
 		if (saved == FALSE)
 			RegDeleteKey(hKey,drivers[game_num]->name);

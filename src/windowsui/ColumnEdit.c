@@ -169,6 +169,18 @@ INT_PTR InternalColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 				nAvail++;
 			}
 		}
+		if( nShown > 0)
+		{
+			/*Set to Second, because first is not allowed*/
+			ListView_SetItemState(hShown, 1,
+				LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+		}
+		if( nAvail > 0)
+		{
+			ListView_SetItemState(hAvailable, 0,
+				LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+		}
+		EnableWindow(GetDlgItem(hDlg, IDC_BUTTONADD)  ,    TRUE);
 		return TRUE;
 
 	case WM_NOTIFY:
@@ -179,11 +191,6 @@ INT_PTR InternalColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 			
 			switch (nm->code)
 			{
-			case LVN_KEYDOWN:
-				{
-				}
-				break;
-				
 			case NM_DBLCLK:
 				// Do Data Exchange here, which ListView was double clicked?
 				switch (nm->idFrom)
@@ -223,24 +230,76 @@ INT_PTR InternalColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 					{
 						// Don't allow selecting the first item
 						ListView_SetItemState(hShown, pnmv->iItem,
-							0, LVIS_FOCUSED | LVIS_SELECTED);
+							LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
 						if (showMsg)
 						{
-							MessageBox(0, "Selecting this Item is not permitted", "Select Item", IDOK);
+							MessageBox(0, "Changing this item is not permitted", "Select Item", IDOK);
 							showMsg = FALSE;
 						}
 						EnableWindow(GetDlgItem(hDlg, IDC_BUTTONREMOVE),   FALSE);
 						EnableWindow(GetDlgItem(hDlg, IDC_BUTTONMOVEUP),   FALSE);
 						EnableWindow(GetDlgItem(hDlg, IDC_BUTTONMOVEDOWN), FALSE);
-						SetFocus(GetDlgItem(hDlg,IDOK));
+						/*Leave Focus on Control*/
+						//SetFocus(GetDlgItem(hDlg,IDOK));
 						return TRUE;
 					}
 					else
 						showMsg = TRUE;
 				}
+				if( pnmv->uOldState & LVIS_SELECTED && pnmv->iItem == 0 && pnmv->hdr.idFrom == IDC_LISTSHOWCOLUMNS )
+				{
+					/*we enable the buttons again, if the first Entry looses selection*/
+					EnableWindow(GetDlgItem(hDlg, IDC_BUTTONREMOVE),   TRUE);
+					EnableWindow(GetDlgItem(hDlg, IDC_BUTTONMOVEUP),   TRUE);
+					EnableWindow(GetDlgItem(hDlg, IDC_BUTTONMOVEDOWN), TRUE);
+					//SetFocus(GetDlgItem(hDlg,IDOK));
+				}
 				break;
+			case NM_SETFOCUS:
+				{
+					switch (nm->idFrom)
+					{
+					case IDC_LISTAVAILABLECOLUMNS:
+						if (ListView_GetItemCount(nm->hwndFrom) != 0)
+						{
+							EnableWindow(GetDlgItem(hDlg, IDC_BUTTONADD),	   TRUE);
+							EnableWindow(GetDlgItem(hDlg, IDC_BUTTONREMOVE),   FALSE);
+							EnableWindow(GetDlgItem(hDlg, IDC_BUTTONMOVEDOWN), FALSE);
+							EnableWindow(GetDlgItem(hDlg, IDC_BUTTONMOVEUP),   FALSE);
+						}
+						break;
+					case IDC_LISTSHOWCOLUMNS:
+						if (ListView_GetItemCount(nm->hwndFrom) != 0)
+						{
+							EnableWindow(GetDlgItem(hDlg, IDC_BUTTONADD),	   FALSE);
 
+							if (ListView_GetNextItem(hShown, -1, LVIS_SELECTED | LVIS_FOCUSED) == 0 )
+							{
+								EnableWindow(GetDlgItem(hDlg, IDC_BUTTONREMOVE),   FALSE);
+								EnableWindow(GetDlgItem(hDlg, IDC_BUTTONMOVEDOWN), FALSE);
+								EnableWindow(GetDlgItem(hDlg, IDC_BUTTONMOVEUP),   FALSE);
+							}
+							else
+							{
+								EnableWindow(GetDlgItem(hDlg, IDC_BUTTONREMOVE),   TRUE);
+								EnableWindow(GetDlgItem(hDlg, IDC_BUTTONMOVEDOWN), TRUE);
+								EnableWindow(GetDlgItem(hDlg, IDC_BUTTONMOVEUP),   TRUE);
+							}
+						}
+						break;
+					}
+				}
+				break;
+			case LVN_KEYDOWN:
 			case NM_CLICK:
+				pnmv = (NM_LISTVIEW *)nm;
+				if (//!(pnmv->uOldState & LVIS_SELECTED) &&
+					(pnmv->uNewState  & LVIS_SELECTED))
+				{
+					if (pnmv->iItem == 0 && pnmv->hdr.idFrom == IDC_LISTSHOWCOLUMNS)
+					{
+					}
+				}
 				switch (nm->idFrom)
 				{
 				case IDC_LISTAVAILABLECOLUMNS:
@@ -257,17 +316,26 @@ INT_PTR InternalColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 					if (ListView_GetItemCount(nm->hwndFrom) != 0)
 					{
 						EnableWindow(GetDlgItem(hDlg, IDC_BUTTONADD),	   FALSE);
+						if (ListView_GetNextItem(hShown, -1, LVIS_SELECTED | LVIS_FOCUSED) == 0 )
+						{
+							EnableWindow(GetDlgItem(hDlg, IDC_BUTTONREMOVE),   FALSE);
+							EnableWindow(GetDlgItem(hDlg, IDC_BUTTONMOVEDOWN), FALSE);
+							EnableWindow(GetDlgItem(hDlg, IDC_BUTTONMOVEUP),   FALSE);
+						}
+						else
+						{
 						EnableWindow(GetDlgItem(hDlg, IDC_BUTTONREMOVE),   TRUE);
 						EnableWindow(GetDlgItem(hDlg, IDC_BUTTONMOVEDOWN), TRUE);
 						EnableWindow(GetDlgItem(hDlg, IDC_BUTTONMOVEUP),   TRUE);
 					}
+					}
 					break;
 				}
+				//SetFocus( nm->hwndFrom );
 				return TRUE;
 			}
 		}
 		return FALSE;
-
 	case WM_COMMAND:
 	   {
 			WORD wID	  = GET_WM_COMMAND_ID(wParam, lParam);
@@ -276,6 +344,8 @@ INT_PTR InternalColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 
 			switch (wID)
 			{
+				case IDC_LISTSHOWCOLUMNS:
+					break;
 				case IDC_BUTTONADD:
 					// Move selected Item in Available to Shown
 					nPos = DoExchangeItem(hAvailable, hShown, 0);

@@ -382,7 +382,7 @@ END
 IDD_HELP DIALOG DISCARDABLE  0, 0, 336, 178
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
 CAPTION "MAME32 - overwritten at runtime"
-CLASS MAMECLASSNAME
+CLASS "MAME32"
 FONT 8, "MS Sans Serif"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,143,163,50,14
@@ -677,7 +677,7 @@ END
 IDD_PROP_INPUT DIALOGEX 0, 0, 220, 205
 STYLE WS_CHILD | WS_CAPTION
 CAPTION "Controllers"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     ICON            IDI_JOYSTICK,IDC_STATIC,20,10,20,20
     LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,52,9,161,25,
@@ -686,25 +686,25 @@ BEGIN
     CONTROL         "Enable joystick input",IDC_JOYSTICK,"Button",
                     BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,50,46,120,10,0,
                     HIDC_JOYSTICK
+    GROUPBOX        "Analog joystick deadzone",IDC_A2DTEXT,50,63,120,33
+    CONTROL         "IntensitySlider",IDC_A2D,"msctls_trackbar32",TBS_BOTH | 
+                    TBS_NOTICKS | WS_TABSTOP,60,74,100,11,0,HIDC_A2D
+    CTEXT           "0.3",IDC_A2DDISP,100,84,19,9,NOT WS_GROUP
     CONTROL         "Enable mouse input",IDC_USE_MOUSE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,49,102,121,10,0,
                     HIDC_USE_MOUSE
-    CONTROL         "Enable steadykey support",IDC_STEADYKEY,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,49,132,121,10,0,
-                    HIDC_STEADYKEY
     CONTROL         "Enable lightgun input",IDC_LIGHTGUN,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,49,117,121,10,0,
                     HIDC_LIGHTGUN
+    CONTROL         "Enable steadykey support",IDC_STEADYKEY,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,49,132,121,10,0,
+                    HIDC_STEADYKEY
+    GROUPBOX        "Default input layout",IDC_STATIC,50,150,120,32
     COMBOBOX        IDC_DEFAULT_INPUT,72,161,78,55,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP,0,HIDC_DEFAULT_INPUT
     PUSHBUTTON      "Reset",IDC_PROP_RESET,7,184,97,14,0,0,0x809d0447
     PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,114,184,99,14,
                     0,0,0x809d0401
-    CONTROL         "IntensitySlider",IDC_A2D,"msctls_trackbar32",TBS_BOTH | 
-                    TBS_NOTICKS | WS_TABSTOP,60,74,100,11,0,HIDC_A2D
-    CTEXT           "0.3",IDC_A2DDISP,100,84,19,9,NOT WS_GROUP
-    GROUPBOX        "Analog joystick deadzone",IDC_A2DTEXT,50,63,120,33
-    GROUPBOX        "Default input layout",IDC_STATIC,50,150,120,32
 END
 
 IDD_PROP_MISC DIALOGEX 0, 0, 220, 205
@@ -725,6 +725,10 @@ BEGIN
                     WS_TABSTOP,89,56,51,10,0,HIDC_BEZELS
     CONTROL         "Overlays",IDC_OVERLAYS,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,146,56,58,10,0,HIDC_OVERLAYS
+    GROUPBOX        "Artwork Resolution",IDC_ARTRESTEXT,7,76,97,34
+    COMBOBOX        IDC_ARTRES,25,89,59,60,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP,0,HIDC_ARTRES
+    GROUPBOX        "Artwork Misc",IDC_ARTMISCTEXT,114,76,99,34
     CONTROL         "Crop artwork",IDC_ARTWORK_CROP,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,129,91,75,10,0,HIDC_ARTWORK_CROP
     GROUPBOX        "Other Options",IDC_STATIC,7,113,206,65
@@ -734,24 +738,20 @@ BEGIN
                     WS_TABSTOP,15,135,150,10,0,HIDC_CHEAT
     CONTROL         "Use less CPU time when possible",IDC_SLEEP,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,145,150,10,0,HIDC_SLEEP
+    CONTROL         "Use pre-0.63 timing sytem",IDC_OLD_TIMING,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,155,155,10,0,
+                    HIDC_OLD_TIMING
     CONTROL         "Error log (for developers)",IDC_LOG,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,165,150,10,0,HIDC_LOG
     PUSHBUTTON      "Reset",IDC_PROP_RESET,7,184,97,14,0,0,0x809e0447
     PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,114,184,99,14,
                     0,0,0x809e0401
-    GROUPBOX        "Artwork Resolution",IDC_ARTRESTEXT,7,76,97,34
-    GROUPBOX        "Artwork Misc",IDC_ARTMISCTEXT,114,76,99,34
-    COMBOBOX        IDC_ARTRES,25,89,59,60,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP,0,HIDC_ARTRES
-    CONTROL         "Use pre-0.63 timing sytem",IDC_OLD_TIMING,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,155,155,10,0,
-                    HIDC_OLD_TIMING
 END
 
 IDD_PROP_VECTOR DIALOGEX 0, 0, 220, 205
 STYLE WS_CHILD | WS_CAPTION
 CAPTION "Vector"
-FONT 8, "MS Sans Serif", 0, 0, 0x1
+FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_MAME32_ICON,IDC_STATIC,20,10,20,20
     LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,52,9,161,25,
@@ -771,14 +771,14 @@ BEGIN
     CONTROL         "FlickerSlider",IDC_FLICKER,"msctls_trackbar32",TBS_BOTH | 
                     TBS_NOTICKS | WS_TABSTOP,50,116,89,11,0,HIDC_FLICKER
     LTEXT           "100.00",IDC_FLICKERDISP,142,116,29,9,NOT WS_GROUP
-    PUSHBUTTON      "Reset",IDC_PROP_RESET,7,184,97,14,0,0,HIDC_PROP_RESET
-    PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,114,184,99,14,
-                    0,0,HIDC_USE_DEFAULT
     LTEXT           "Intensity:",IDC_INTENSITYTEXT,50,130,114,8
     CONTROL         "IntensitySlider",IDC_INTENSITY,"msctls_trackbar32",
                     TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,50,143,89,11,0,
                     HIDC_INTENSITY
     LTEXT           "1.5",IDC_INTENSITYDISP,142,143,29,9,NOT WS_GROUP
+    PUSHBUTTON      "Reset",IDC_PROP_RESET,7,184,97,14,0,0,0x809f0447
+    PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,114,184,99,14,
+                    0,0,0x809f0401
 END
 
 #ifdef MESS
@@ -790,7 +790,7 @@ STYLE DS_3DLOOK | DS_NOFAILCREATE | WS_MINIMIZEBOX | WS_MAXIMIZEBOX |
     WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 EXSTYLE WS_EX_CONTROLPARENT
 CAPTION "MAME32 - overwritten at runtime"
-CLASS MAMECLASSNAME
+CLASS "MAME32"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     CONTROL         "",IDC_DIVIDER,"Static",SS_ETCHEDHORZ,0,5,304,1
@@ -829,7 +829,7 @@ IDD_FILTERS DIALOGEX 0, 0, 205, 185
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_CONTEXTHELP
 CAPTION "Game Filters"
-FONT 8, "MS Sans Serif", 0, 0, 0x1
+FONT 8, "MS Sans Serif"
 BEGIN
     CTEXT           "Game filters allow customizing the games that are displayed in each folder by hiding games that match the filters applied.",
                     IDC_STATIC,23,7,159,27
@@ -837,19 +837,11 @@ BEGIN
     CONTROL         "&Vector Graphics",IDC_FILTER_VECTOR,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,23,49,76,10,0,
                     HIDC_FILTER_VECTOR
-    CONTROL         "&Raster Graphics",IDC_FILTER_RASTER,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,107,49,78,10,0,
-                    HIDC_FILTER_RASTER
     CONTROL         "C&lones",IDC_FILTER_CLONES,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,23,63,76,10,0,HIDC_FILTER_CLONES
-    CONTROL         "Ori&ginals",IDC_FILTER_ORIGINALS,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,107,63,78,10,0,
-                    HIDC_FILTER_ORIGINALS
     CONTROL         "Non-Wor&king",IDC_FILTER_NONWORKING,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,23,77,76,10,0,
                     HIDC_FILTER_NONWORKING
-    CONTROL         "&Working",IDC_FILTER_WORKING,"Button",BS_AUTOCHECKBOX |
-                    WS_TABSTOP,107,77,78,10,0,HIDC_FILTER_WORKING
     CONTROL         "&Unavailable",IDC_FILTER_UNAVAILABLE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,23,91,76,10,0,
                     HIDC_FILTER_UNAVAILABLE
@@ -859,6 +851,14 @@ BEGIN
     CONTROL         "C&onsoles",IDC_FILTER_CONSOLE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,104,76,10,0
 #endif
+    CONTROL         "&Raster Graphics",IDC_FILTER_RASTER,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,49,78,10,0,
+                    HIDC_FILTER_RASTER
+    CONTROL         "Ori&ginals",IDC_FILTER_ORIGINALS,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,63,78,10,0,
+                    HIDC_FILTER_ORIGINALS
+    CONTROL         "&Working",IDC_FILTER_WORKING,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,107,77,78,10,0,HIDC_FILTER_WORKING
     GROUPBOX        "&Description filter",IDC_STATIC,13,123,179,33
     EDITTEXT        IDC_FILTER_EDIT,23,136,159,12,ES_AUTOHSCROLL,0,
                     HIDC_FILTER_EDIT
@@ -918,6 +918,7 @@ EXSTYLE WS_EX_CONTEXTHELP
 CAPTION "Interface Options"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
+    GROUPBOX        "Application Start",IDC_STATIC,9,7,190,90
     CONTROL         "&Search for new games",IDC_START_GAME_CHECK,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,17,85,10,0,
                     HIDC_START_GAME_CHECK
@@ -927,22 +928,21 @@ BEGIN
     CONTROL         "&Allow game selection by a joystick (requires restart)",
                     IDC_JOY_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,49,
                     173,10,0,HIDC_JOY_GUI
-    CONTROL         "&Broadcast selected game to all windows",IDC_BROADCAST,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,81,143,10,0,
-                    HIDC_BROADCAST
     CONTROL         "Select &random background image",IDC_RANDOM_BG,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,65,120,10,0,
                     HIDC_RANDOM_BG
-    DEFPUSHBUTTON   "&OK",IDOK,52,147,50,14
-    PUSHBUTTON      "&Cancel",IDCANCEL,107,147,50,14
+    CONTROL         "&Broadcast selected game to all windows",IDC_BROADCAST,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,81,143,10,0,
+                    HIDC_BROADCAST
+    GROUPBOX        "Emulation Start",IDC_STATIC,9,102,190,40
     CONTROL         "Show &disclaimer",IDC_SHOW_DISCLAIMER,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,112,67,10,0,
                     HIDC_SHOW_DISCLAIMER
     CONTROL         "Show &game info",IDC_SHOW_GAME_INFO,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,127,65,10,0,
                     HIDC_SHOW_GAME_INFO
-    GROUPBOX        "Emulation Start",IDC_STATIC,9,102,190,40
-    GROUPBOX        "Application Start",IDC_STATIC,9,7,190,90
+    DEFPUSHBUTTON   "&OK",IDOK,52,147,50,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,107,147,50,14
 END
 
 IDD_LANGUAGE DIALOGEX 0, 0, 186, 66

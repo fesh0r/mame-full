@@ -202,7 +202,7 @@ static BOOL             HandleScreenShotContextMenu( HWND hWnd, WPARAM wParam, L
 
 static void             InitListView(void);
 /* Re/initialize the ListView header columns */
-static void             ResetColumnDisplay(BOOL firstime);
+static void ResetColumnDisplay(BOOL first_time);
 static int GetRealColumnFromViewColumn(int view_column);
 static int GetViewColumnFromRealColumn(int real_column);
 
@@ -914,7 +914,7 @@ void GetRealColumnOrder(int order[])
 
 		for (i = 0; i < nColumnMax; i++)
 		{
-			order[i] = realColumn[tmpOrder[i]];
+			order[i] = GetRealColumnFromViewColumn(tmpOrder[i]);
 		}
 	}
 }
@@ -1605,10 +1605,8 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	g_mame32_message = RegisterWindowMessage("MAME32");
 	g_bDoBroadcast = GetBroadcast();
 
-	Help_Init();
+	HelpInit();
 
-	/* init files after OptionsInit to init paths */
-	File_Init();
 	strcpy(last_directory, GetInpDir());
 
 	hMain = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_MAIN), 0, NULL);
@@ -1898,9 +1896,7 @@ static void Win32UI_exit()
 
 	OptionsExit();
 
-	File_Exit();
-
-	Help_Exit();
+	HelpExit();
 }
 
 static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lParam)
@@ -2015,13 +2011,17 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 			GetColumnShown(shown);
 			GetColumnWidths(widths);
 
+			// switch the list view to LVS_REPORT style so column widths reported correctly
+			SetWindowLong(hwndList,GWL_STYLE,
+						  (GetWindowLong(hwndList, GWL_STYLE) & ~LVS_TYPEMASK) | LVS_REPORT);
+
 			nColumnMax = GetNumColumns(hwndList);
 
 			if (oldControl)
 			{
 				for (i = 0; i < nColumnMax; i++)
 				{
-					widths[realColumn[i]] = ListView_GetColumnWidth(hwndList, i);
+					widths[GetRealColumnFromViewColumn(i)] = ListView_GetColumnWidth(hwndList, i);
 				}
 			}
 			else
@@ -2031,8 +2031,8 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 
 				for (i = 0; i < nColumnMax; i++)
 				{
-					widths[realColumn[i]] = ListView_GetColumnWidth(hwndList, i);
-					order[i] = realColumn[tmpOrder[i]];
+					widths[GetRealColumnFromViewColumn(i)] = ListView_GetColumnWidth(hwndList, i);
+					order[i] = GetRealColumnFromViewColumn(tmpOrder[i]);
 				}
 			}
 
@@ -2123,7 +2123,7 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 			switch (lpDis->CtlID)
 			{
 			case IDC_LIST:
-				DrawItem((LPDRAWITEMSTRUCT)lParam);
+				DrawItem(lpDis);
 				break;
 			}
 		}
@@ -2151,21 +2151,14 @@ static BOOL PumpAndReturnMessage(MSG *pmsg)
 		return FALSE;
     }
 
-    /* I couldn't see any difference without this call here,
-        and it chews up alot of cpu time if it's present,
-        so I removed it as this is critical path code */
-    
-	/* if (!Help_HtmlHelp(NULL, NULL, HH_PRETRANSLATEMESSAGE, (DWORD)pmsg)) */
+	if (IsWindow(hMain))
 	{
-		if (IsWindow(hMain))
+		if (!TranslateAccelerator(hMain, hAccel, pmsg))
 		{
-			if (!TranslateAccelerator(hMain, hAccel, pmsg))
+			if (!IsDialogMessage(hMain, pmsg))
 			{
-				if (!IsDialogMessage(hMain, pmsg))
-				{
-					TranslateMessage(pmsg);
-					DispatchMessage(pmsg);
-				}
+				TranslateMessage(pmsg);
+				DispatchMessage(pmsg);
 			}
 		}
 	}
@@ -2236,7 +2229,8 @@ static BOOL GameCheck(void)
 		else
 		{
 			/* Only check for the ZIP file once */
-			success = File_ExistZip(drivers[game_index]->name, FILETYPE_ROM);
+			//success = File_ExistZip(drivers[game_index]->name, FILETYPE_ROM);
+			success = mame_faccess(drivers[game_index]->name, FILETYPE_ROM);
 		}
 
 		if (!success)
@@ -2859,7 +2853,7 @@ static BOOL MamePickerNotify(NMHDR *nm)
 
 			if (pDispInfo->item.mask & LVIF_TEXT)
 			{
-				switch (realColumn[pDispInfo->item.iSubItem])
+				switch (GetRealColumnFromViewColumn(pDispInfo->item.iSubItem))
 				{
 				case COLUMN_GAMES:
 					/* Driver description */
@@ -2983,6 +2977,7 @@ static BOOL MamePickerNotify(NMHDR *nm)
 		pnmv = (NM_LISTVIEW *)nm;
 		BeginListViewDrag(pnmv);
 		break;
+
 	}
 	return FALSE;
 }
@@ -3257,8 +3252,6 @@ static void ResetListView()
 		return;
     }
 
-	SetWindowRedraw(hwndList, FALSE);
-
 	/* If the last folder was empty, no_selection is TRUE */
 	if (have_selection == FALSE)
     {
@@ -3266,6 +3259,8 @@ static void ResetListView()
     }
 
 	current_game = GetSelectedPickItem();
+
+	SetWindowRedraw(hwndList,FALSE);
 
 	ListView_DeleteAllItems(hwndList);
 
@@ -3334,14 +3329,12 @@ static void UpdateGameList()
 	bDoGameCheck = TRUE;
 	game_index	 = 0;
 
-	/* Let REFRESH also load new background if found */
-	ReloadIcons(hwndList);
+	// Let REFRESH also load new background if found
 	LoadBackgroundBitmap();
 	InvalidateRect(hMain,NULL,TRUE);
-	ResetListView();
 
-	SetDefaultGame(ModifyThe(drivers[GetSelectedPickItem()]->description));
-	/*SetSelectedPick(0);*/ /* To avoid flickering. */
+	ResetListView();
+	ReloadIcons(hwndList);
 }
 
 static void PickFont(void)
@@ -3350,6 +3343,8 @@ static void PickFont(void)
 	CHOOSEFONT cf;
 
 	GetListFont(&font);
+	font.lfQuality = DEFAULT_QUALITY;
+
 	cf.lStructSize = sizeof(CHOOSEFONT);
 	cf.hwndOwner   = hMain;
 	cf.lpLogFont   = &font;
@@ -3421,27 +3416,6 @@ static void PickCloneColor(void)
 
 	SetListCloneColor(cc.rgbResult);
 	InvalidateRect(hwndList,NULL,FALSE);
-}
-
-/* This centers a window on another window */
-static BOOL CenterSubDialog(HWND hParent, HWND hWndCenter, BOOL in_client_coords)
-{
-	RECT rect, wRect;
-	int x, y;
-
-	if (in_client_coords)
-	   GetClientRect(hParent, &rect);
-	else
-	   GetWindowRect(hParent, &rect);
-
-	GetClientRect(hWndCenter, &wRect);
-
-	x = (rect.left + rect.right) / 2 - (wRect.left + wRect.right) / 2;
-	y = (rect.bottom + rect.top) / 2 - (wRect.bottom + wRect.top) / 2;
-
-	/* map parent coordinates to child coordinates */
-	return SetWindowPos(hWndCenter, NULL, x, y, -1, -1,
-						SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
 static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
@@ -3706,9 +3680,6 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 			bUpdateSoftware = ((nResult & DIRDLG_SOFTWARE) == DIRDLG_SOFTWARE) ? TRUE : FALSE;
 #endif
 
-			/* update file code */
-			File_UpdatePaths();
-
 			/* update game list */
 			if (bUpdateRoms == TRUE || bUpdateSamples == TRUE)
 				UpdateGameList();
@@ -3776,35 +3747,35 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 
 	case ID_HELP_CONTENTS:
 #ifdef MESS
-		Help_HtmlHelp(hMain, MAME32HELP "::/html/mess_overview.htm", HH_DISPLAY_TOPIC, 0);
+		HelpFunction(hMain, MAME32HELP "::/html/mess_overview.htm", HH_DISPLAY_TOPIC, 0);
 #else
-		Help_HtmlHelp(hMain, MAME32HELP "::/html/mame32_overview.htm", HH_DISPLAY_TOPIC, 0);
+		HelpFunction(hMain, MAME32HELP "::/html/mame32_overview.htm", HH_DISPLAY_TOPIC, 0);
 #endif
 		break;
 
 #ifndef MESS
 	case ID_HELP_WHATS_NEW32:
-		Help_HtmlHelp(hMain, MAME32HELP "::/html/mame32_changes.htm", HH_DISPLAY_TOPIC, 0);
+		HelpFunction(hMain, MAME32HELP "::/html/mame32_changes.htm", HH_DISPLAY_TOPIC, 0);
 		break;
 #endif
 
 #ifndef MESS
 	case ID_HELP_TROUBLE:
-		Help_HtmlHelp(hMain, MAME32HELP "::/html/mame32_support.htm", HH_DISPLAY_TOPIC, 0);
+		HelpFunction(hMain, MAME32HELP "::/html/mame32_support.htm", HH_DISPLAY_TOPIC, 0);
 		break;
 #endif
 
 	case ID_HELP_RELEASE:
 		DisplayTextFile(hMain, (char *)HELPTEXT_RELEASE);
-/*      Help_HtmlHelp(hMain, MAME32HELP "::/html/mame_windows.htm", HH_DISPLAY_TOPIC, 0); */
+/*      HelpFunction(hMain, MAME32HELP "::/html/mame_windows.htm", HH_DISPLAY_TOPIC, 0); */
 		break;
 
 	case ID_HELP_WHATS_NEW:
 /*		DisplayTextFile(hMain, HELPTEXT_WHATS_NEW); */
 #ifdef MESS
-		Help_HtmlHelp(hMain, MAME32HELP "::/messnew.txt", HH_DISPLAY_TOPIC, 0);
+		HelpFunction(hMain, MAME32HELP "::/messnew.txt", HH_DISPLAY_TOPIC, 0);
 #else
-		Help_HtmlHelp(hMain, MAME32HELP "::/docs/whatsnew.txt", HH_DISPLAY_TOPIC, 0);
+		HelpFunction(hMain, MAME32HELP "::/docs/whatsnew.txt", HH_DISPLAY_TOPIC, 0);
 #endif
 		break;
 
@@ -3944,7 +3915,7 @@ static void InitListView()
 }
 
 /* Re/initialize the ListControl Columns */
-static void ResetColumnDisplay(BOOL firstime)
+static void ResetColumnDisplay(BOOL first_time)
 {
 	LV_FINDINFO lvfi;
 	LV_COLUMN   lvc;
@@ -3959,16 +3930,26 @@ static void ResetColumnDisplay(BOOL firstime)
 	GetColumnOrder(order);
 	GetColumnShown(shown);
 
-	if (!firstime)
+	if (!first_time)
 	{
+		DWORD style = GetWindowLong(hwndList, GWL_STYLE);
+
+		// switch the list view to LVS_REPORT style so column widths reported correctly
+		SetWindowLong(hwndList,GWL_STYLE,
+					  (GetWindowLong(hwndList, GWL_STYLE) & ~LVS_TYPEMASK) | LVS_REPORT);
+
 		nColumn = GetNumColumns(hwndList);
-		/* The first time thru this won't happen, on purpose */
+		// The first time thru this won't happen, on purpose
+		// because the column widths will be in the negative millions,
+		// since it's been created but not setup properly yet
 		for (i = 0; i < nColumn; i++)
 		{
-			widths[realColumn[i]] = ListView_GetColumnWidth(hwndList, i);
+			widths[GetRealColumnFromViewColumn(i)] = ListView_GetColumnWidth(hwndList, i);
 		}
 
 		SetColumnWidths(widths);
+
+		SetWindowLong(hwndList,GWL_STYLE,style);
 
 		for (i = nColumn; i > 0; i--)
 		{
@@ -3979,21 +3960,17 @@ static void ResetColumnDisplay(BOOL firstime)
 	ListView_SetExtendedListViewStyle(hwndList,LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP |
 								  LVS_EX_UNDERLINEHOT | LVS_EX_UNDERLINECOLD);
 
-	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
-
-	lvc.fmt = LVCFMT_LEFT;
 
 	nColumn = 0;
 	for (i = 0; i < COLUMN_MAX; i++)
 	{
 		if (shown[order[i]])
 		{
-			lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_SUBITEM;
-
-			lvc.mask	 |= LVCF_TEXT;
-			lvc.pszText   = (char *)column_names[order[i]];
-			lvc.iSubItem  = nColumn;
-			lvc.cx		  = widths[order[i]];
+			lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_TEXT;
+			lvc.pszText = (char *)column_names[order[i]];
+			lvc.iSubItem = nColumn;
+			lvc.cx = widths[order[i]];
+			lvc.fmt = LVCFMT_LEFT;
 			ListView_InsertColumn(hwndList, nColumn, &lvc);
 			realColumn[nColumn] = order[i];
 			nColumn++;
@@ -4133,7 +4110,7 @@ static DWORD GetShellLargeIconSize(void)
 	return dwSize;
 }
 
-/* create iconlist and Listview control */
+// create iconlist for Listview control
 static void CreateIcons(HWND hWnd)
 {
 	HICON	hIcon;
@@ -4141,11 +4118,13 @@ static void CreateIcons(HWND hWnd)
 	HWND header;
 	DWORD	dwLargeIconSize = GetShellLargeIconSize();
 
+	//cmk 0.64 I don't think this style setting is needed, and it makes us lose
+	// our horizontal scrollbar
 	/* the current window style affects the sizing of the rows, so put
      * it in icon mode temporarily while we associate our image list
      */
-	DWORD dwStyle = GetWindowLong(hWnd,GWL_STYLE);
-	SetWindowLong(hWnd,GWL_STYLE,(dwStyle & ~LVS_TYPEMASK) | LVS_ICON);
+	//DWORD dwStyle = GetWindowLong(hWnd,GWL_STYLE);
+	//SetWindowLong(hWnd,GWL_STYLE,(dwStyle & ~LVS_TYPEMASK) | LVS_ICON);
 
 	hSmall = ImageList_Create(ICONMAP_WIDTH, ICONMAP_HEIGHT,
 		ILC_COLORDDB | ILC_MASK, NUM_ICONS, NUM_ICONS + game_count);
@@ -4181,8 +4160,6 @@ static void CreateIcons(HWND hWnd)
 	ListView_SetImageList(hWnd, hSmall, LVSIL_SMALL);
 	ListView_SetImageList(hWnd, hLarge, LVSIL_NORMAL);
 
-	SetWindowLong(hWnd,GWL_STYLE,dwStyle);
-
 	hHeaderImages = ImageList_Create(8,8,ILC_COLORDDB | ILC_MASK,2,2);
 	hIcon = LoadIcon(hInst,MAKEINTRESOURCE(IDI_HEADER_UP));
 	ImageList_AddIcon(hHeaderImages,hIcon);
@@ -4192,6 +4169,7 @@ static void CreateIcons(HWND hWnd)
 	header = ListView_GetHeader(hwndList);
 	Header_SetImageList(header,hHeaderImages);
 
+	//SetWindowLong(hWnd,GWL_STYLE,dwStyle);
 #ifdef MESS
 	CreateMessIcons();
 #endif
@@ -4275,17 +4253,13 @@ static int BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem)
 		break;
 
 	case COLUMN_SAMPLES:
-		if ((nTemp1 = GetHasSamples(index1)) == TRUE)
-			nTemp1++;
+		nTemp1 = -1;
+		if (GameUsesSamples(index1))
+			nTemp1 = GetHasSamples(index1);
 
-		if ((nTemp2 = GetHasSamples(index2)) == TRUE)
-			nTemp2++;
-
-		if (GameUsesSamples(index1) == FALSE)
-			nTemp1 -= 1;
-
-		if (GameUsesSamples(index2) == FALSE)
-			nTemp2 -= 1;
+		nTemp2 = -1;
+		if (GameUsesSamples(index2))
+			nTemp2 = GetHasSamples(index2);
 
 		if (nTemp1 == nTemp2)
 			return BasicCompareFunc(index1, index2, COLUMN_GAMES);
@@ -4605,11 +4579,11 @@ static INT_PTR CALLBACK LanguageDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, L
 		}
 
 	case WM_HELP:
-		Help_HtmlHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32CONTEXTHELP, HH_TP_HELP_WM_HELP, (DWORD)dwHelpIDs);
+		HelpFunction(((LPHELPINFO)lParam)->hItemHandle, MAME32CONTEXTHELP, HH_TP_HELP_WM_HELP, (DWORD)dwHelpIDs);
 		break;
 
 	case WM_CONTEXTMENU:
-		Help_HtmlHelp((HWND)wParam, MAME32CONTEXTHELP, HH_TP_HELP_CONTEXTMENU, (DWORD)dwHelpIDs);
+		HelpFunction((HWND)wParam, MAME32CONTEXTHELP, HH_TP_HELP_CONTEXTMENU, (DWORD)dwHelpIDs);
 		break;
 
 	case WM_COMMAND:
@@ -5394,6 +5368,10 @@ static void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 		hBrush = CreateSolidBrush(GetSysColor(COLOR_WINDOW));
 		FillRect(hDC, &rcAllLabels, hBrush);
 		DeleteObject(hBrush);
+
+		clrTextSave = SetTextColor(hDC, GetSysColor(COLOR_BTNTEXT));
+		clrBkSave = SetBkColor(hDC,GetSysColor(COLOR_WINDOW));
+
 	}
 
 	if (lvi.state & LVIS_CUT)
@@ -5426,13 +5404,17 @@ static void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 
 	rcIcon.left += indent_space;
 
+	ListView_GetItemRect(hwndList, nItem, &rcItem, LVIR_LABEL);
+
 	hImageList = ListView_GetImageList(hwndList, LVSIL_SMALL);
 	if (hImageList)
 	{
 		UINT nOvlImageMask = lvi.state & LVIS_OVERLAYMASK;
-		if (rcItem.left < rcItem.right - 1)
-			ImageList_DrawEx(hImageList, lvi.iImage, hDC, rcIcon.left, rcIcon.top,
-							 16, 16, GetSysColor(COLOR_WINDOW), clrImage, uiFlags | nOvlImageMask);
+		if (rcIcon.left + 16 + indent_space < rcItem.right)
+		{
+			ImageList_DrawEx(hImageList, lvi.iImage, hDC, rcIcon.left, rcIcon.top, 16, 16,
+							 GetSysColor(COLOR_WINDOW), clrImage, uiFlags | nOvlImageMask);
+		}
 	}
 
 	ListView_GetItemRect(hwndList, nItem, &rcItem, LVIR_LABEL);
@@ -5444,7 +5426,7 @@ static void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	rcLabel.right -= offset;
 
 	DrawText(hDC, pszText, -1, &rcLabel,
-			 DT_LEFT | DT_SINGLELINE | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER);
+			 DT_LEFT | DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER);
 
 	for (nColumn = 1; nColumn < nColumnMax; nColumn++)
 	{
@@ -5496,17 +5478,14 @@ static void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 		rcLabel.left  += offset;
 		rcLabel.right -= offset;
 		DrawText(hDC, pszText, -1, &rcLabel,
-				 nJustify | DT_SINGLELINE | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER);
+				 nJustify | DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER);
 	}
 
 	if (lvi.state & LVIS_FOCUSED && bFocus)
 		DrawFocusRect(hDC, &rcAllLabels);
 
-	if (bSelected)
-	{
-		SetTextColor(hDC, clrTextSave);
-		SetBkColor(hDC, clrBkSave);
-	}
+	SetTextColor(hDC, clrTextSave);
+	SetBkColor(hDC, clrBkSave);
 }
 
 /* Header code - Directional Arrows */

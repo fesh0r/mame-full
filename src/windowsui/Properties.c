@@ -34,6 +34,7 @@
 
 #include <driver.h>
 #include <info.h>
+#include "audit.h"
 #include "audit32.h"
 #include "options.h"
 #include "file.h"
@@ -388,93 +389,18 @@ BOOL GameUsesSamples(int game)
 	return FALSE;
 }
 
+static void CLIB_DECL DetailsPrintf(const char *fmt, ...)
+{
+	// throw it away
+}
+
 /* Checks for all samples in a sample set.
  * Returns TRUE if all samples are found, FALSE if any are missing.
  */
 BOOL FindSampleSet(int game)
 {
-#if (HAS_SAMPLES == 1) || (HAS_VLM5030 == 1)
-
-	static const struct GameDriver *gamedrv;
-
-	const char* sharedname;
-	BOOL bStatus;
-	int  skipfirst;
-	int  j, i;
-    struct InternalMachineDriver drv;
-    expand_machine_driver(drivers[game]->drv,&drv);
-	gamedrv = drivers[game];
-
-	if (GameUsesSamples(game) == FALSE)
-		return TRUE;
-
-	for (i = 0; drv.sound[i].sound_type && i < MAX_SOUND; i++)
-	{
-		const char **samplenames = NULL;
-
-#if (HAS_SAMPLES == 1)
-		if (drv.sound[i].sound_type == SOUND_SAMPLES)
-			samplenames = ((struct Samplesinterface *)drv.sound[i].sound_interface)->samplenames;
-#endif
-        /*
-#if (HAS_VLM5030 == 1)
-		if (drv.sound[i].sound_type == SOUND_VLM5030)
-			samplenames = ((struct VLM5030interface *)drv.sound[i].sound_interface)->samplenames;
-#endif
-        */
-		if (samplenames != 0 && samplenames[0] != 0)
-		{
-			BOOL have_samples = FALSE;
-			BOOL have_shared  = FALSE;
-
-			if (samplenames[0][0]=='*')
-			{
-				sharedname = samplenames[0]+1;
-				skipfirst = 1;
-			}
-			else
-			{
-				sharedname = NULL;
-				skipfirst = 0;
-			}
-
-			/* do we have samples for this game? */
-			have_samples = mame_faccess(gamedrv->name, FILETYPE_SAMPLE);
-
-			/* try shared samples */
-			if (skipfirst)
-				have_shared = mame_faccess(sharedname, FILETYPE_SAMPLE);
-
-			/* if still not found, we're done */
-			if (!have_samples && !have_shared)
-				return FALSE;
-
-			for (j = skipfirst; samplenames[j] != 0; j++)
-			{
-				bStatus = FALSE;
-
-				/* skip empty definitions */
-				if (strlen(samplenames[j]) == 0)
-					continue;
-
-				if (have_samples)
-					bStatus = File_Status(gamedrv->name, samplenames[j], FILETYPE_SAMPLE);
-
-				if (!bStatus && have_shared)
-				{
-					bStatus = File_Status(sharedname, samplenames[j], FILETYPE_SAMPLE);
-					if (!bStatus)
-					{
-						return FALSE;
-					}
-				}
-			}
-		}
-	}
-
-#endif
-
-	return TRUE;
+    int audit = VerifySampleSet(game,(verify_printf_proc)DetailsPrintf);
+	return (audit == CORRECT) || (audit == BEST_AVAILABLE);
 }
 
 void InitDefaultPropertyPage(HINSTANCE hInst, HWND hWnd)
@@ -1077,11 +1003,11 @@ static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 
 	case WM_HELP:
 		/* User clicked the ? from the upper right on a control */
-		Help_HtmlHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32CONTEXTHELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
+		HelpFunction(((LPHELPINFO)lParam)->hItemHandle, MAME32CONTEXTHELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
 		break;
 
 	case WM_CONTEXTMENU:
-		Help_HtmlHelp((HWND)wParam, MAME32CONTEXTHELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
+		HelpFunction((HWND)wParam, MAME32CONTEXTHELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
 		break;
 
 	}

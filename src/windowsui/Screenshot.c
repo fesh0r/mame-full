@@ -153,10 +153,8 @@ BOOL LoadScreenShot(int nGame, int nType)
 
 	/* No need to reload the same one again */
 #ifndef MESS
-	if (nGame == nLastGame && m_hDIB != 0 && use_flyer == nType)
-	{
+	if (nGame == current_image_game && nType == current_image_type)
 		return TRUE;
-	}
 #endif
 
 	/* Delete the last ones */
