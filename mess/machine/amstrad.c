@@ -337,39 +337,14 @@ int amstrad_snapshot_load(int id)
 	if (amstrad_load(IO_SNAPSHOT,id,&snapshot))
 	{
 		snapshot_loaded = 1;
-		return INIT_PASS;
+		if (memcmp(snapshot, "MV - SNA", 8)==0)
+			return INIT_PASS;
+		else
+			return INIT_FAIL;
 	}
 
 	return INIT_FAIL;
 }
-
-#ifdef VERIFY_IMAGE
-/* check if a snapshot file is valid to load */
-int amstrad_snapshot_id(int id)
-{
-	int valid;
-	unsigned char *snapshot_data;
-
-	valid = ID_FAILED;
-
-	/* load snapshot */
-	if (amstrad_load(IO_SNAPSHOT, id, &snapshot_data))
-	{
-		/* snapshot loaded, check it is valid */
-
-		if (memcmp(snapshot_data, "MV - SNA", 8)==0)
-		{
-			valid = ID_OK;
-		}
-
-		/* free the file */
-		free(snapshot_data);
-	}
-
-	return valid;
-
-}
-#endif
 
 void amstrad_snapshot_exit(int id)
 {
