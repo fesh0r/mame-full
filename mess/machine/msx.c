@@ -956,11 +956,13 @@ WRITE_HANDLER (msx_superloadrunner_w)
 	if (msx1.slot[2]->slot_type == SLOT_SUPERLOADRUNNER) {
 		msx1.slot[2]->map (msx1.state[2], 2);
 	}
-	msx_page0_w (0, data);
+	msx_page0_w (-1, data);
 }
 
 WRITE_HANDLER (msx_page0_w)
 {
+	offset++;
+
 	switch (msx1.slot[0]->mem_type) {
 	case MSX_MEM_RAM:
 		msx1.ram_pages[0][offset] = data;
