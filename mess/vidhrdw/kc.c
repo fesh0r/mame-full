@@ -109,7 +109,7 @@ enum
 /* set new blink state - record blink state in event list */
 void	kc85_video_set_blink_state(int data)
 {
-	EventList_AddItemOffset(KC85_VIDEO_EVENT_SET_BLINK_STATE, ((data & 0x01)<<7), cycles_currently_ran());
+	EventList_AddItemOffset(KC85_VIDEO_EVENT_SET_BLINK_STATE, ((data & 0x01)<<7), TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod()));
 }
 
 
@@ -544,7 +544,7 @@ static void kc85_common_process_frame(struct mame_bitmap *bitmap, void (*pixel_g
 	/* process remainder */
 	kc85_common_vh_process_lines(&video_update, cycles_remaining_in_frame);
 	EventList_Reset();
-	EventList_SetOffsetStartTime ( cycles_currently_ran() );
+	EventList_SetOffsetStartTime ( TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod()) );
 }
 
 
@@ -555,6 +555,20 @@ static void kc85_common_process_frame(struct mame_bitmap *bitmap, void (*pixel_g
 
 static void kc85_common_vh_eof_callback(void)
 {
+		EVENT_LIST_ITEM *pItem;
+		int NumItems;
+
+		/* Empty event buffer */
+		NumItems = EventList_NumEvents();
+
+		/* to do: the entries in this buffer are ignored. OK? */
+		if (NumItems)
+		{
+			pItem = EventList_GetFirstItem();
+			EventList_Reset();
+			EventList_SetOffsetStartTime ( TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod()) );
+			logerror ("Event log reset in callback fn.\n");
+		}
 }
 
 

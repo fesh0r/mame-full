@@ -38,7 +38,7 @@ void amstrad_handle_snapshot(unsigned char *);
 static unsigned char *snapshot = NULL;
 
 extern unsigned char *Amstrad_Memory;
-static int snapshot_loaded;
+static int snapshot_loaded = 0;
 
 int amstrad_floppy_init(int id)
 {

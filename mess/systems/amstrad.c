@@ -40,6 +40,8 @@
 #include "eventlst.h"
 #endif
 
+//#define AMSTRAD_DEBUG
+
 /* the hardware allows selection of 256 ROMs. Rom 0 is usually BASIC and Rom 7 is AMSDOS */
 /* With the CPC hardware, if a expansion ROM is not connected, BASIC rom will be selected instead */
 static unsigned char *Amstrad_ROM_Table[256];
@@ -58,18 +60,6 @@ void multiface_reset(void);
 /*-------------------------------------------*/
 static void amstrad_clear_top_bit_of_int_counter(void);
 
-/* machine name is defined in bits 3,2,1.
-Names are: Isp, Triumph, Saisho, Solavox, Awa, Schneider, Orion, Amstrad.
-Name is set by a link on the PCB
-
-Bits for this port:
-7: Cassette read data
-6: Printer busy
-5: /Expansion Port signal
-4: Screen Refresh
-3..1: Machine name
-0: VSYNC state
-*/
 
 /* cycles at end of last frame */
 static unsigned long amstrad_cycles_at_frame_end = 0;
@@ -79,11 +69,11 @@ static unsigned long time_delta_fraction = 0;
 
 static void amstrad_update_video(void)
 {
-   int current_time;
+	int current_time;
 	int time_delta;
 
 	/* current cycles */
-	current_time = cycles_currently_ran() + amstrad_cycles_at_frame_end;
+	current_time = TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod()) + amstrad_cycles_at_frame_end;
 	/* time between last write and this write */
 	time_delta = current_time - amstrad_cycles_last_write + time_delta_fraction;
 	/* The timing used to be spot on, but now it can give odd cycles, hopefully
@@ -91,8 +81,8 @@ static void amstrad_update_video(void)
 	time_delta_fraction = time_delta & 0x03;
 	time_delta = time_delta>>2;
 
-	   /* set new previous write */
-		amstrad_cycles_last_write = current_time;
+	/* set new previous write */
+	amstrad_cycles_last_write = current_time;
 
 	if (time_delta!=0)
 	{
@@ -106,11 +96,10 @@ static void amstrad_eof_callback(void)
 	{
 			multiface_stop();
 	}
-
 #ifndef AMSTRAD_VIDEO_EVENT_LIST
 	amstrad_update_video();
 	// update cycle count
-	amstrad_cycles_at_frame_end += cycles_currently_ran();
+	amstrad_cycles_at_frame_end += TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod());
 #endif
 }
 
@@ -167,19 +156,76 @@ static void update_psg(void)
 READ_HANDLER ( amstrad_ppi_porta_r )
 {
 	update_psg();
-
+	
 	return ppi_port_inputs[0];
 }
 
 
-/* ppi port b read
+/* 
+Amstrad hardware:
+
+
+8255 PPI port A (connected to AY-3-8912 databus).
+
+8255 PPI port B input:
  Bit 7 = Cassette tape input
  bit 6 = printer busy/online
- bit 5 = /exp on expansion port
- bit 4 = 50/60hz
- bit 3,2,1 = PCB links to define computer name.
-In MESS I have used the dipswitch feature.
- Bit 0 = VSYNC from CRTC */
+ bit 5 = /exp signal on expansion port of CPC
+ bit 4 = 50/60hz (link on PCB. For this MESS driver I have used the dipswitch feature)
+ bit 3,2,1 = PCB links to define manufacturer name. For this MESS driver I have used the dipswitch feature.
+ Bit 0 = VSYNC from 6845 CRTC 
+ 
+Manufacturer names are: Isp, Triumph, Saisho, Solavox, Awa, Schneider, Orion, Amstrad.
+On real CPC name is set using a link on the PCB.
+
+8255 PPI port C output:
+ bit 7,6 = AY-3-8912 PSG operation
+ bit 5 = cassette write data
+ bit 4 = Cassette motor control
+ bit 3-0 =	keyboard line
+
+I/O Port decoding:
+
+  Bit 15 = 0, Bit 14 = 1: Gate Array (W)
+  Bit 14 = 0: 6845 CRTC (R/W)
+  Bit 13 = 0: Select upper rom (W)
+  Bit 12 = 0: Printer (W)
+  Bit 11 = 0: 8255 PPI (R/W)
+  Bit 10 = 0: Expansion.
+
+  Bit 10 = 0, Bit 7 = 0: uPD 765A FDC
+
+Gate Array:
+
+bit 7, bit 6 = function 
+	00 = pen select/clut entry index, 
+	01 = set pen colour/clut entry colour, 
+	10 = display mode, upper/lower rom enable/disable, interrupt control
+
+
+function 00:
+	bit 4..0 = pen index/clut entry index
+
+	if bit 4 = 1, border is selected, bits 3..0 is ignored
+	if bit 4 = 0, bit 3..0 define pen index
+
+function 01:
+	bit 4..0 = hardware colour id
+
+function 10:
+	bit 4 = reset top-bit of interrupt counter
+	bit 3 = 0 = upper rom is enabled, visible in &c000-&ffff range
+	bit 2 = 0 = lower rom is enabled, visible in &0000-&3fff range
+	bit 1,0 = display mode
+
+Ram Expansion/PAL in CPC6128 (accessed at same I/O address' as Gate Array)
+
+function 11:
+	(actually part of ram expansion or PAL in CPC6128)
+	bit 3..0 define ram configuration code.
+	bit 6..4 define 64k block to use
+*/
+
 
 READ_HANDLER (amstrad_ppi_portb_r)
 {
@@ -188,10 +234,9 @@ READ_HANDLER (amstrad_ppi_portb_r)
 #ifndef AMSTRAD_VIDEO_EVENT_LIST
 		amstrad_update_video();
 #endif
-
-	/* cassette read */
 	data = 0x0;
 
+	/* cassette read */
 	if (device_input(IO_CASSETTE,0) > 255)
 		data |=0x080;
 
@@ -202,22 +247,18 @@ READ_HANDLER (amstrad_ppi_portb_r)
 	/* vsync state from CRTC */
 	data |= amstrad_vsync;
 
+	/* manufacturer name and 50hz/60hz state, defined by links on PCB */
 	data |= ppi_port_inputs[1] & 0x01e;
+
 	return data;
 }
 
 WRITE_HANDLER ( amstrad_ppi_porta_w )
 {
-		ppi_port_outputs[0] = data;
+	ppi_port_outputs[0] = data;
 
 	update_psg();
 }
-
-/*
- bit 7,6 = PSG operation
- bit 5 = cassette write bit
- bit 4 = Cassette motor control
- bit 3-0 =	Specify keyboard line */
 
 
 /* previous value */
@@ -225,30 +266,30 @@ static int previous_ppi_portc_w;
 
 WRITE_HANDLER ( amstrad_ppi_portc_w )
 {
-		int changed_data;
+	int changed_data;
 
-		previous_ppi_portc_w = ppi_port_outputs[2];
-		ppi_port_outputs[2] = data;
+	previous_ppi_portc_w = ppi_port_outputs[2];
+	ppi_port_outputs[2] = data;
 
-		changed_data = previous_ppi_portc_w^data;
+	changed_data = previous_ppi_portc_w^data;
 
-		/* cassette motor changed state */
-		if ((changed_data & (1<<4))!=0)
-		{
-				/* cassette motor control */
-				device_status(IO_CASSETTE, 0, ((data>>4) & 0x01));
-		}
+	/* cassette motor changed state */
+	if ((changed_data & (1<<4))!=0)
+	{
+			/* cassette motor control */
+			device_status(IO_CASSETTE, 0, ((data>>4) & 0x01));
+	}
 
-		/* cassette write data changed state */
-		if ((changed_data & (1<<5))!=0)
-		{
-				device_output(IO_CASSETTE, 0, (data & (1<<5)) ? -32768 : 32767);
-		}
+	/* cassette write data changed state */
+	if ((changed_data & (1<<5))!=0)
+	{
+			device_output(IO_CASSETTE, 0, (data & (1<<5)) ? -32768 : 32767);
+	}
 
 	/* psg operation */
-		amstrad_psg_operation = (data >> 6) & 0x03;
+	amstrad_psg_operation = (data >> 6) & 0x03;
 	/* keyboard line */
-		amstrad_keyboard_line = (data & 0x0f);
+	amstrad_keyboard_line = (data & 0x0f);
 
 	update_psg();
 }
@@ -366,7 +407,7 @@ void Amstrad_RethinkMemory(void)
 		cpu_setbank(16, AmstradCPC_RamBanks[3]+0x02000);
 
 		/* multiface hardware enabled? */
-				if (multiface_hardware_enabled())
+		if (multiface_hardware_enabled())
 		{
 			multiface_rethink_memory();
 		}
@@ -403,15 +444,13 @@ void AmstradCPC_GA_SetRamConfiguration(void)
 	AmstradCPC_RamBanks[3] = BankAddr;
 }
 
+ 
+
 void AmstradCPC_GA_Write(int Data)
 {
-#ifdef AMSTRAD_DEBUG
-	printf("GA Write: %02x\r\n", Data);
-#endif
-
 	switch ((Data & 0x0c0) >> 6)
 	{
-	case 0:
+		case 0:
 		{
 			/* pen	selection */
 			AmstradCPC_GA_PenSelected = Data;
@@ -444,7 +483,7 @@ void AmstradCPC_GA_Write(int Data)
 			{
 
 #ifdef AMSTRAD_VIDEO_EVENT_LIST
-			   EventList_AddItemOffset((EVENT_LIST_CODE_GA_COLOUR<<6) | PenIndex, AmstradCPC_PenColours[PenIndex], cycles_currently_ran());
+			   EventList_AddItemOffset((EVENT_LIST_CODE_GA_COLOUR<<6) | PenIndex, AmstradCPC_PenColours[PenIndex], TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod()));
 #else
 			   amstrad_update_video();
 			   amstrad_vh_update_colour(PenIndex, AmstradCPC_PenColours[PenIndex]);
@@ -473,7 +512,7 @@ void AmstradCPC_GA_Write(int Data)
 			if (((Data^Previous_GA_RomConfiguration) & 0x03)!=0)
 			{
 #ifdef AMSTRAD_VIDEO_EVENT_LIST
-			EventList_AddItemOffset((EVENT_LIST_CODE_GA_MODE<<6) , Data & 0x03, cycles_currently_ran());
+			EventList_AddItemOffset((EVENT_LIST_CODE_GA_MODE<<6) , Data & 0x03, TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod()));
 #else
 				amstrad_update_video();
 				amstrad_vh_update_mode(Data & 0x03);
@@ -499,21 +538,12 @@ void AmstradCPC_SetUpperRom(int Data)
 {
 	Amstrad_UpperRom = Amstrad_ROM_Table[Data & 0x0ff];
 
+	logerror("upper rom %02x\n",Data);
+
+
 	Amstrad_RethinkMemory();
 }
 
-/*
-Port decoding:
-
-  Bit 15 = 0, Bit 14 = 1: Access Gate Array (W)
-  Bit 14 = 0: Access CRTC (R/W)
-  Bit 13 = 0: Select upper rom (W)
-  Bit 12 = 0: Printer (W)
-  Bit 11 = 0: PPI (8255) (R/W)
-  Bit 10 = 0: Expansion.
-
-  Bit 10 = 0, Bit 7 = 0: uPD 765A FDC
- */
 
 
 /* port handler */
@@ -584,16 +614,11 @@ READ_HANDLER ( AmstradCPC_ReadPortHandler )
 
 }
 
-//static int previous_crtc_write_time = 0;
-
 static unsigned char previous_printer_data_byte;
 
 /* Offset handler for write */
 WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 {
-#ifdef AMSTRAD_DEBUG
-	printf("Write port Offs: %04x Data: %04x\r\n", offset, data);
-#endif
 	if ((offset & 0x0c000) == 0x04000)
 	{
 		/* GA */
@@ -612,7 +637,7 @@ WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 		case 0:
 			{
 #ifdef AMSTRAD_VIDEO_EVENT_LIST
-				EventList_AddItemOffset((EVENT_LIST_CODE_CRTC_INDEX_WRITE<<6), data, cycles_currently_ran());
+				EventList_AddItemOffset((EVENT_LIST_CODE_CRTC_INDEX_WRITE<<6), data, TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod()));
 #endif
 
 				///* register select */
@@ -623,12 +648,12 @@ WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 		case 1:
 			{
 #if 0
-								int current_time;
+				int current_time;
 								int time_delta;
 								int cur_time;
 
 								/* current time */
-								current_time = cycles_currently_ran();
+								current_time = TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod());
 								cur_time = current_time;
 
 								if (previous_crtc_write_time>current_time)
@@ -646,7 +671,7 @@ WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 				/* crtc register write */
 				{
 
-					EventList_AddItemOffset((EVENT_LIST_CODE_CRTC_WRITE<<6), data, cycles_currently_ran());
+					EventList_AddItemOffset((EVENT_LIST_CODE_CRTC_WRITE<<6), data, TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod()));
 				}
 #endif
 								/* recalc time */
@@ -1061,7 +1086,6 @@ void amstrad_interrupt_timer_trigger_reset_by_vsync(void)
 
 void amstrad_interrupt_timer_update(void)
 {
-
 	/* update counter */
 	amstrad_52_divider++;
 
@@ -1077,6 +1101,7 @@ void amstrad_interrupt_timer_update(void)
 			position */
 			if (((amstrad_52_divider & (1<<5))==0) || (amstrad_52_divider==52))
 			{
+
 				cpu_set_irq_line(0,0, HOLD_LINE);
 			}
 
@@ -1115,6 +1140,8 @@ static void amstrad_clear_top_bit_of_int_counter(void)
 int 	amstrad_cpu_acknowledge_int(int cpu)
 {
 	amstrad_clear_top_bit_of_int_counter();
+
+	cpu_set_irq_line(0,0, CLEAR_LINE);
 
 	return 0x0ff;
 }
@@ -1327,7 +1354,7 @@ static UINT8 amstrad_cycle_table_op[256]=
 		US_TO_CPU_CYCLES(2),	/* RET Z 4 taken, 2 not taken */
 	US_TO_CPU_CYCLES(3),	/* RET	*/
 	US_TO_CPU_CYCLES(3),	/* JP NZ, 3 taken, 3 not taken */
-	US_TO_CPU_CYCLES(0),	/* cb prefix */
+	US_TO_CPU_CYCLES(1),	/* cb prefix */
 		US_TO_CPU_CYCLES(3),	/* CALL NZ 5 taken, 3 not taken */
 	US_TO_CPU_CYCLES(5),	/* CALL */
 	US_TO_CPU_CYCLES(2),	/* ADC A,n */
@@ -1345,7 +1372,7 @@ static UINT8 amstrad_cycle_table_op[256]=
 	US_TO_CPU_CYCLES(3),	/* JP C, 3 taken, 3 not taken */
 	US_TO_CPU_CYCLES(3),	/* IN A,(n) */
 		US_TO_CPU_CYCLES(3),	/* CALL C 5 taken, 3 not taken */
-	US_TO_CPU_CYCLES(0),	/* DD prefix */
+	US_TO_CPU_CYCLES(1),	/* DD prefix */
 	US_TO_CPU_CYCLES(2),	/* SBC A,n */
 	US_TO_CPU_CYCLES(4),	/* RST 18 */
 		US_TO_CPU_CYCLES(2),	/* RET PO 4 taken, 2 not taken */
@@ -1361,7 +1388,7 @@ static UINT8 amstrad_cycle_table_op[256]=
 	US_TO_CPU_CYCLES(3),	/* JP PE, 3 taken, 3 not taken */
 	US_TO_CPU_CYCLES(1),	/* EX DE,HL */
 		US_TO_CPU_CYCLES(3),	/* CALL PE 5 taken, 3 not taken */
-	US_TO_CPU_CYCLES(0),	/* ED prefix */
+	US_TO_CPU_CYCLES(1),	/* ED prefix */
 	US_TO_CPU_CYCLES(2),	/* XOR A,n */
 	US_TO_CPU_CYCLES(4),	/* RST 28 */
 		US_TO_CPU_CYCLES(2),	/* RET P 4 taken, 2 not taken */
@@ -1377,7 +1404,7 @@ static UINT8 amstrad_cycle_table_op[256]=
 	US_TO_CPU_CYCLES(3),	/* JP M, 3 taken, 3 not taken */
 	US_TO_CPU_CYCLES(1),	/* EI */
 		US_TO_CPU_CYCLES(3),	/* CALL M 5 taken, 3 not taken */
-	US_TO_CPU_CYCLES(0),	/* FD prefix */
+	US_TO_CPU_CYCLES(1),	/* FD prefix */
 	US_TO_CPU_CYCLES(2),	/* CP A,n */
 	US_TO_CPU_CYCLES(4),	/* RST 38 */
 
@@ -1832,7 +1859,7 @@ static UINT8 amstrad_cycle_table_xy[256]=
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(0),	/* CB prefix */
+	US_TO_CPU_CYCLES(2),	/* CB prefix */
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
@@ -1850,7 +1877,7 @@ static UINT8 amstrad_cycle_table_xy[256]=
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(0),	/* DD prefix */
+	US_TO_CPU_CYCLES(2),	/* DD prefix */
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
@@ -1866,7 +1893,7 @@ static UINT8 amstrad_cycle_table_xy[256]=
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(0),	/* ED prefix */
+	US_TO_CPU_CYCLES(2),	/* ED prefix */
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
@@ -1882,7 +1909,7 @@ static UINT8 amstrad_cycle_table_xy[256]=
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(0),	/* FD prefix */
+	US_TO_CPU_CYCLES(2),	/* FD prefix */
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
 	US_TO_CPU_CYCLES(1) 	/* illegal - time for prefix only */
 };
@@ -2358,22 +2385,6 @@ void amstrad_init_machine(void)
 
 	amstrad_setup_machine();
 
-	/* bits 1,2,3 are connected to links on the PCB, these
-	define the machine name.
-
-	000 = Isp
-	001 = Triumph
-	010 = Saisho
-	011 = Solavox
-	100 = Awa
-	101 = Schneider
-	110 = Orion
-	111 = Amstrad
-
-	bit 4 is connected to a link on the PCB used to define screen
-	refresh rate. 1 = 50Hz, 0 = 60Hz */
-
-
 	machine_name_and_refresh_rate = readinputport(10);
 	ppi_port_inputs[1] = ((machine_name_and_refresh_rate & 0x07)<<1) | (machine_name_and_refresh_rate & 0x010);
 
@@ -2427,12 +2438,6 @@ static MEMORY_READ_START (readmem_amstrad)
 	{0x0a000, 0x0bfff, MRA_BANK6},
 	{0x0c000, 0x0dfff, MRA_BANK7},
 	{0x0e000, 0x0ffff, MRA_BANK8},
-#if 0
-	    // this traps with the new memory system
-	{0x010000, 0x013fff, MRA_ROM},	   /* OS */
-	{0x014000, 0x017fff, MRA_ROM},	   /* BASIC */
-	{0x018000, 0x01bfff, MRA_ROM},	   /* AMSDOS */
-#endif
 MEMORY_END
 
 static MEMORY_WRITE_START (writemem_amstrad)
@@ -2459,7 +2464,7 @@ PORT_END
 
 /* read PSG port A */
 READ_HANDLER ( amstrad_psg_porta_read )
-{
+{	
 	/* read cpc keyboard */
 	return AmstradCPC_ReadKeyboard();
 }
@@ -2669,7 +2674,7 @@ static struct MachineDriver machine_driver_amstrad =
 	{
 		/* MachineCPU */
 		{
-			CPU_Z80 | CPU_16BIT_PORT,  /* type */
+			CPU_Z80_MSX | CPU_16BIT_PORT,  /* type */
 						4000000,	/*((AMSTRAD_US_PER_FRAME*AMSTRAD_FPS)*4)*/ /* clock: See Note Above */
 			readmem_amstrad,		   /* MemoryReadAddress */
 			writemem_amstrad,		   /* MemoryWriteAddress */
@@ -2677,11 +2682,11 @@ static struct MachineDriver machine_driver_amstrad =
 			writeport_amstrad,		   /* IOWritePort */
 			0,						   /*amstrad_frame_interrupt, *//* VBlank
 										* Interrupt */
-			0 /*1 */ ,				   /* vblanks per frame */
+			0,				   /* vblanks per frame */
 						0, 0,	/* every scanline */
 		},
 	},
-	50.08,							   /* frames per second */
+	50,	/*50.08*/							   /* frames per second */
 	DEFAULT_60HZ_VBLANK_DURATION,	   /* vblank duration */
 	1,								   /* cpu slices per frame */
 	amstrad_init_machine,			   /* init machine */
@@ -2697,7 +2702,7 @@ static struct MachineDriver machine_driver_amstrad =
 	amstrad_cpc_init_palette,			   /* init palette */
 
 	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,				   /* video attributes */
-		amstrad_eof_callback,																  /* MachineLayer */
+	amstrad_eof_callback,																  /* MachineLayer */
 	amstrad_vh_start,
 	amstrad_vh_stop,
 	amstrad_vh_screenrefresh,
@@ -2726,8 +2731,8 @@ static struct MachineDriver machine_driver_kccomp =
 	{
 		/* MachineCPU */
 		{
-			CPU_Z80 | CPU_16BIT_PORT,  /* type */
-						4000000,  /* clock: See Note Above */
+			CPU_Z80_MSX | CPU_16BIT_PORT,  /* type */
+			4000000,  /* clock: See Note Above */
 			readmem_amstrad,		   /* MemoryReadAddress */
 			writemem_amstrad,		   /* MemoryWriteAddress */
 			readport_amstrad,		   /* IOReadPort */
@@ -2744,8 +2749,8 @@ static struct MachineDriver machine_driver_kccomp =
 	kccomp_init_machine,			   /* init machine */
 	amstrad_shutdown_machine,
 	/* video hardware */
-		AMSTRAD_SCREEN_WIDTH,					   /* screen width */
-		AMSTRAD_SCREEN_HEIGHT,					   /* screen height */
+	AMSTRAD_SCREEN_WIDTH,					   /* screen width */
+	AMSTRAD_SCREEN_HEIGHT,					   /* screen height */
 	{0, (AMSTRAD_SCREEN_WIDTH - 1), 0, (AMSTRAD_SCREEN_HEIGHT - 1)},	/* rectangle: visible_area */
 	0,								   /*amstrad_gfxdecodeinfo, 			 *//* graphics
 										* decode info */
@@ -2784,7 +2789,7 @@ static struct MachineDriver machine_driver_cpcplus =
 	{
 		/* MachineCPU */
 		{
-			CPU_Z80 | CPU_16BIT_PORT,  /* type */
+			CPU_Z80_MSX | CPU_16BIT_PORT,  /* type */
 			4000000,	/*((AMSTRAD_US_PER_FRAME*AMSTRAD_FPS)*4)*/ /* clock: See Note Above */
 			readmem_amstrad,		   /* MemoryReadAddress */
 			writemem_amstrad,		   /* MemoryWriteAddress */
@@ -2811,7 +2816,7 @@ static struct MachineDriver machine_driver_cpcplus =
 	4096, 							   /* color table len */
 	amstrad_plus_init_palette,			   /* init palette */
 
-	VIDEO_TYPE_RASTER/* | VIDEO_PIXEL_ASPECT_RATIO_1_2*/,				   /* video attributes */
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,				   /* video attributes */
 		amstrad_eof_callback,																  /* MachineLayer */
 	amstrad_vh_start,
 	amstrad_vh_stop,

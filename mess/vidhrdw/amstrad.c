@@ -941,9 +941,9 @@ void amstrad_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 	rect.min_y = 0;
 	rect.max_y = AMSTRAD_SCREEN_HEIGHT-1;
 
-    copybitmap(bitmap, amstrad_bitmap, 0,0,0,0,&rect, TRANSPARENCY_NONE,0);
-	
-	
+
+    copybitmap(bitmap, amstrad_bitmap, 0,0,0,0,&rect, TRANSPARENCY_NONE,0); 
+
 #else
 	int c;
 
