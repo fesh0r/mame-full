@@ -93,8 +93,8 @@ LIBS += -lkernel32 \
         -lshell32 \
         -lcomctl32 \
         -lcomdlg32 \
-        -ladvapi32 \
-        -lhtmlhelp
+        -ladvapi32 
+#        -lhtmlhelp
 endif
 
 #####################################################################
