@@ -17,8 +17,8 @@ System Driver Changes:
   Mode 7 rotation and draw outside screen area. Added x/y flip to Mode 7. Added
   support for the back colour constant. [Anthony Kruize]
 
-- [APPLE2] Fixed keyboard and added color, joystick, and natural keyboard
-  support. [Nate Woods]
+- [APPLE2] Fixed keyboard and aspect ratio, and also added color, joystick, and
+  natural keyboard support. (bug #291) [Nate Woods]
 
 Source Changes:
 ---------------
