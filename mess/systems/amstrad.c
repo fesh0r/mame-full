@@ -1079,7 +1079,7 @@ static UINT8 amstrad_cycle_table_op[256]=
 	US_TO_CPU_CYCLES(1),	/* DEC C */
 	US_TO_CPU_CYCLES(2),	/* LD C,n */
 	US_TO_CPU_CYCLES(1),	/* RRCA */
-	US_TO_CPU_CYCLES(4),	/* 	DJNZ  4 taken, 3 not taken */
+        US_TO_CPU_CYCLES(3),    /*      DJNZ  4 taken, 3 not taken */
 	US_TO_CPU_CYCLES(3),	/* LD DE,nnnn */
 	US_TO_CPU_CYCLES(2),	/* LD (DE),A */
 	US_TO_CPU_CYCLES(2),	/* INC DE */
@@ -1095,7 +1095,7 @@ static UINT8 amstrad_cycle_table_op[256]=
 	US_TO_CPU_CYCLES(1),	/* DEC E */
 	US_TO_CPU_CYCLES(2),	/* LD E,n */
 	US_TO_CPU_CYCLES(1),	/* RRA */
-	US_TO_CPU_CYCLES(3),	/* JR 3 if taken, 2 if not taken */
+        US_TO_CPU_CYCLES(2),    /* JR 3 if taken, 2 if not taken */
 	US_TO_CPU_CYCLES(3),	/* LD HL,nnnn */
 	US_TO_CPU_CYCLES(5),	/* LD (nnnn),HL */
 	US_TO_CPU_CYCLES(2),	/* INC HL */
@@ -1103,7 +1103,7 @@ static UINT8 amstrad_cycle_table_op[256]=
 	US_TO_CPU_CYCLES(1),	/* DEC H */
 	US_TO_CPU_CYCLES(2),	/* LD H,n */
 	US_TO_CPU_CYCLES(1),	/* DAA */
-	US_TO_CPU_CYCLES(3),	/* 	 JR Z,3 if taken, 2 if not taken */
+        US_TO_CPU_CYCLES(2),    /*       JR Z,3 if taken, 2 if not taken */
 	US_TO_CPU_CYCLES(3),	/* ADD HL,HL */
 	US_TO_CPU_CYCLES(5),	/* LD HL,(nnnn) */
 	US_TO_CPU_CYCLES(2),	/* DEC HL */
@@ -1111,7 +1111,7 @@ static UINT8 amstrad_cycle_table_op[256]=
 	US_TO_CPU_CYCLES(1),	/* DEC H */
 	US_TO_CPU_CYCLES(2),	/* LD H,n */
 	US_TO_CPU_CYCLES(1),	/* CPL */
-	US_TO_CPU_CYCLES(3),	/* JR NZ,3 if taken, 2 if not taken */
+        US_TO_CPU_CYCLES(2),    /* JR NZ,3 if taken, 2 if not taken */
 	US_TO_CPU_CYCLES(3),	/* LD SP,nnnn */
 	US_TO_CPU_CYCLES(4),	/* LD (nnnn), A */
 	US_TO_CPU_CYCLES(2),	/* INC SP */
@@ -1119,7 +1119,7 @@ static UINT8 amstrad_cycle_table_op[256]=
 	US_TO_CPU_CYCLES(2),	/* DEC (HL) */
 	US_TO_CPU_CYCLES(2),	/* LD (HL),n */
 	US_TO_CPU_CYCLES(1),	/* SCF */
-	US_TO_CPU_CYCLES(3),		/* JR NC, 3 if taken, 2 if not taken */
+        US_TO_CPU_CYCLES(2),            /* JR NC, 3 if taken, 2 if not taken */
 	US_TO_CPU_CYCLES(3),	/* ADD HL,SP */
 	US_TO_CPU_CYCLES(4),	/* LD A,(nnnn) */
 	US_TO_CPU_CYCLES(2),	/* DEC SP */
@@ -1255,67 +1255,67 @@ static UINT8 amstrad_cycle_table_op[256]=
 	US_TO_CPU_CYCLES(1),	/* CP A,L */
 	US_TO_CPU_CYCLES(2),	/* CP A,(HL) */
 	US_TO_CPU_CYCLES(1),	/* CP A,A */
-	US_TO_CPU_CYCLES(4),	/* RET NZ 4 taken, 2 not taken */
+        US_TO_CPU_CYCLES(2),    /* RET NZ 4 taken, 2 not taken */
 	US_TO_CPU_CYCLES(3),	/* POP BC */	
 	US_TO_CPU_CYCLES(3),	/* JP NZ, 3 taken, 3 not taken */
 	US_TO_CPU_CYCLES(3),	/* JP  */
-	US_TO_CPU_CYCLES(5),	/* CALL NZ 5 taken, 3 not taken */
+        US_TO_CPU_CYCLES(3),    /* CALL NZ 5 taken, 3 not taken */
 	US_TO_CPU_CYCLES(4),	/* PUSH BC */
 	US_TO_CPU_CYCLES(2),	/* ADD A,n */
 	US_TO_CPU_CYCLES(4),	/* RST 0 */
-	US_TO_CPU_CYCLES(4),	/* RET Z 4 taken, 2 not taken */
+        US_TO_CPU_CYCLES(2),    /* RET Z 4 taken, 2 not taken */
 	US_TO_CPU_CYCLES(3),	/* RET  */
 	US_TO_CPU_CYCLES(3),	/* JP NZ, 3 taken, 3 not taken */
 	US_TO_CPU_CYCLES(0),	/* cb prefix */
-	US_TO_CPU_CYCLES(5),	/* CALL NZ 5 taken, 3 not taken */
+        US_TO_CPU_CYCLES(3),    /* CALL NZ 5 taken, 3 not taken */
 	US_TO_CPU_CYCLES(5),	/* CALL */
 	US_TO_CPU_CYCLES(2),	/* ADC A,n */
 	US_TO_CPU_CYCLES(4),	/* RST 8 */
-	US_TO_CPU_CYCLES(4),	/* RET NC 4 taken, 2 not taken */
+        US_TO_CPU_CYCLES(2),    /* RET NC 4 taken, 2 not taken */
 	US_TO_CPU_CYCLES(3),	/* POP DE */	
 	US_TO_CPU_CYCLES(3),	/* JP NC, 3 taken, 3 not taken */
 	US_TO_CPU_CYCLES(3),	/* OUT (n), A */
-	US_TO_CPU_CYCLES(5),	/* CALL NC 5 taken, 3 not taken */
+        US_TO_CPU_CYCLES(3),    /* CALL NC 5 taken, 3 not taken */
 	US_TO_CPU_CYCLES(4),	/* PUSH DE */
 	US_TO_CPU_CYCLES(2),	/* SUB A,n */
 	US_TO_CPU_CYCLES(4),	/* RST 10 */
-	US_TO_CPU_CYCLES(4),	/* RET C 4 taken, 2 not taken */
+        US_TO_CPU_CYCLES(2),    /* RET C 4 taken, 2 not taken */
 	US_TO_CPU_CYCLES(1),	/* EXX */
 	US_TO_CPU_CYCLES(3),	/* JP C, 3 taken, 3 not taken */
 	US_TO_CPU_CYCLES(3),	/* IN A,(n) */
-	US_TO_CPU_CYCLES(5),	/* CALL C 5 taken, 3 not taken */
+        US_TO_CPU_CYCLES(3),    /* CALL C 5 taken, 3 not taken */
 	US_TO_CPU_CYCLES(0),	/* DD prefix */
 	US_TO_CPU_CYCLES(2),	/* SBC A,n */
 	US_TO_CPU_CYCLES(4),	/* RST 18 */
-	US_TO_CPU_CYCLES(4),	/* RET PO 4 taken, 2 not taken */
+        US_TO_CPU_CYCLES(2),    /* RET PO 4 taken, 2 not taken */
 	US_TO_CPU_CYCLES(3),	/* POP HL */
 	US_TO_CPU_CYCLES(3),	/* JP PO, 3 taken, 3 not taken */
 	US_TO_CPU_CYCLES(6),	/* EX SP, HL */
-	US_TO_CPU_CYCLES(5),	/* CALL PO 5 taken, 3 not taken */
+        US_TO_CPU_CYCLES(3),    /* CALL PO 5 taken, 3 not taken */
 	US_TO_CPU_CYCLES(4),	/* PUSH HL */
 	US_TO_CPU_CYCLES(2),	/* AND A,n */
 	US_TO_CPU_CYCLES(4),	/* RST 20 */
-	US_TO_CPU_CYCLES(4),	/* RET PE 4 taken, 2 not taken */
+        US_TO_CPU_CYCLES(2),    /* RET PE 4 taken, 2 not taken */
 	US_TO_CPU_CYCLES(1),	/* JP (HL) */
 	US_TO_CPU_CYCLES(3),	/* JP PE, 3 taken, 3 not taken */
 	US_TO_CPU_CYCLES(1),	/* EX DE,HL */
-	US_TO_CPU_CYCLES(5),	/* CALL PE 5 taken, 3 not taken */
+        US_TO_CPU_CYCLES(3),    /* CALL PE 5 taken, 3 not taken */
 	US_TO_CPU_CYCLES(0),	/* ED prefix */
 	US_TO_CPU_CYCLES(2),	/* XOR A,n */
 	US_TO_CPU_CYCLES(4),	/* RST 28 */
-	US_TO_CPU_CYCLES(4),	/* RET P 4 taken, 2 not taken */
+        US_TO_CPU_CYCLES(2),    /* RET P 4 taken, 2 not taken */
 	US_TO_CPU_CYCLES(3),	/* POP AF */
 	US_TO_CPU_CYCLES(3),	/* JP P, 3 taken, 3 not taken */
 	US_TO_CPU_CYCLES(1),	/* DI */
-	US_TO_CPU_CYCLES(5),	/* CALL P 5 taken, 3 not taken */
+        US_TO_CPU_CYCLES(3),    /* CALL P 5 taken, 3 not taken */
 	US_TO_CPU_CYCLES(4),	/* PUSH AF */
 	US_TO_CPU_CYCLES(2),	/* OR A,n */
 	US_TO_CPU_CYCLES(4),	/* RST 30 */
-	US_TO_CPU_CYCLES(4),	/* RET M 4 taken, 2 not taken */
+        US_TO_CPU_CYCLES(2),    /* RET M 4 taken, 2 not taken */
 	US_TO_CPU_CYCLES(2),	/* LD SP,HL */
 	US_TO_CPU_CYCLES(3),	/* JP M, 3 taken, 3 not taken */
 	US_TO_CPU_CYCLES(1),	/* EI */
-	US_TO_CPU_CYCLES(5),	/* CALL M 5 taken, 3 not taken */
+        US_TO_CPU_CYCLES(3),    /* CALL M 5 taken, 3 not taken */
 	US_TO_CPU_CYCLES(0),	/* FD prefix */
 	US_TO_CPU_CYCLES(2),	/* CP A,n */
 	US_TO_CPU_CYCLES(4),	/* RST 38 */
@@ -1898,7 +1898,276 @@ static UINT8 amstrad_cycle_table_xycb[256]=
         US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
         US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
 };
- 
+
+static UINT8 amstrad_cycle_table_ex[256]=
+{
+
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+	US_TO_CPU_CYCLES(4),	/* 	DJNZ  4 taken, 3 not taken */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+	US_TO_CPU_CYCLES(3),	/* JR 3 if taken, 2 if not taken */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+	US_TO_CPU_CYCLES(3),	/* 	 JR Z,3 if taken, 2 if not taken */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+	US_TO_CPU_CYCLES(3),	/* JR NZ,3 if taken, 2 if not taken */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+	US_TO_CPU_CYCLES(3),		/* JR NC, 3 if taken, 2 if not taken */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        /* a0 */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+
+        US_TO_CPU_CYCLES(5),    /* LDIR */
+        US_TO_CPU_CYCLES(5),    /* CPIR */
+        US_TO_CPU_CYCLES(5),    /* INIR */
+        US_TO_CPU_CYCLES(5),    /* OTIR */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(5),    /* LDDR */
+        US_TO_CPU_CYCLES(5),    /* CPDR */
+        US_TO_CPU_CYCLES(5),    /* INDR */
+        US_TO_CPU_CYCLES(5),    /* OTDR */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+
+	US_TO_CPU_CYCLES(4),	/* RET NZ 4 taken, 2 not taken */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+	US_TO_CPU_CYCLES(5),	/* CALL NZ 5 taken, 3 not taken */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+	US_TO_CPU_CYCLES(4),	/* RST 0 */
+	US_TO_CPU_CYCLES(4),	/* RET Z 4 taken, 2 not taken */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+	US_TO_CPU_CYCLES(5),	/* CALL NZ 5 taken, 3 not taken */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+	US_TO_CPU_CYCLES(4),	/* RST 8 */
+	US_TO_CPU_CYCLES(4),	/* RET NC 4 taken, 2 not taken */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+	US_TO_CPU_CYCLES(5),	/* CALL NC 5 taken, 3 not taken */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+	US_TO_CPU_CYCLES(4),	/* RST 10 */
+	US_TO_CPU_CYCLES(4),	/* RET C 4 taken, 2 not taken */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+	US_TO_CPU_CYCLES(5),	/* CALL C 5 taken, 3 not taken */
+        US_TO_CPU_CYCLES(1),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+	US_TO_CPU_CYCLES(4),	/* RST 18 */
+	US_TO_CPU_CYCLES(4),	/* RET PO 4 taken, 2 not taken */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+	US_TO_CPU_CYCLES(5),	/* CALL PO 5 taken, 3 not taken */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+	US_TO_CPU_CYCLES(4),	/* RST 20 */
+	US_TO_CPU_CYCLES(4),	/* RET PE 4 taken, 2 not taken */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+	US_TO_CPU_CYCLES(5),	/* CALL PE 5 taken, 3 not taken */
+	US_TO_CPU_CYCLES(0),	/* ED prefix */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(4),    /* RST 28 */
+	US_TO_CPU_CYCLES(4),	/* RET P 4 taken, 2 not taken */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+	US_TO_CPU_CYCLES(5),	/* CALL P 5 taken, 3 not taken */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(4),    /* RST 30 */
+	US_TO_CPU_CYCLES(4),	/* RET M 4 taken, 2 not taken */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+	US_TO_CPU_CYCLES(5),	/* CALL M 5 taken, 3 not taken */
+        US_TO_CPU_CYCLES(1),    /* FD prefix */
+        US_TO_CPU_CYCLES(0),    /* not used */
+	US_TO_CPU_CYCLES(4),	/* RST 38 */
+};
+
 void amstrad_common_init(void)
 {
 
@@ -1965,14 +2234,7 @@ void amstrad_common_init(void)
         cpu_set_cycle_tbl(Z80_TABLE_ed, amstrad_cycle_table_ed);
         cpu_set_cycle_tbl(Z80_TABLE_xy, amstrad_cycle_table_xy);
         cpu_set_cycle_tbl(Z80_TABLE_xycb, amstrad_cycle_table_xycb);
-
-
-		{
-			logerror("total cycles in frame: %d\r\n",cpu_gettotalcycles());
-			logerror("cycles per frame: %d\r\n", cpu_getfperiod());
-			logerror("scan line period: %d\r\n", cpu_getscanlineperiod());
-			logerror("scan line in cycles: %d\r\n", cpu_getscanlinecycles());
-		}
+        cpu_set_cycle_tbl(Z80_TABLE_ex, amstrad_cycle_table_ex);
 }
 void amstrad_init_machine(void)
 {
