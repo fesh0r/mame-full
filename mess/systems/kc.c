@@ -55,30 +55,6 @@ PORT_WRITE_START( writeport_kc85_4 )
 
 PORT_END
 
-static READ_HANDLER(kc85_module_r)
-{
-	int port_upper;
-
-	logerror("kc85 module r: %04x\n",offset);
-
-	port_upper = (offset>>8) & 0x0ff;
-
-	switch (port_upper)
-	{
-		default:
-			return 0x00;
-
-
-
-
-	}
-
-	/* module not enabled */
-	return 0x0ff;
-}
-
-
-
 static READ_HANDLER(kc85_4_port_r)
 {
 	int port;
@@ -130,6 +106,10 @@ static WRITE_HANDLER(kc85_4_port_w)
 
 	switch (port)
 	{
+		case 0x080:
+			kc85_module_w(offset,data);
+			return;
+
 		case 0x085:
 		case 0x084:
 			kc85_4_84_w(offset,data);

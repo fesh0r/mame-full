@@ -158,6 +158,13 @@ The keys are converted into codes which are transmitted by the keyboard to the b
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SHIFT", KEYCODE_RSHIFT, IP_JOY_NONE)
 
 
+/*** MODULE SYSTEM ***/
+/* read from xx80 port */
+READ_HANDLER(kc85_module_r);
+/* write to xx80 port */
+WRITE_HANDLER(kc85_module_w);
+
+
 /*** DISC INTERFACE **/
 #include "includes/nec765.h"
 #include "includes/basicdsk.h"
