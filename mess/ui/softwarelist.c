@@ -275,7 +275,7 @@ static BOOL MessSetImage(int nDriver, int imagenum, int entry)
 		free(filename);
 		return FALSE;
 	}
-	assert(nDeviceType > 0);
+	assert(nDeviceType >= 0);
 	assert(nDeviceType < IO_COUNT);
 
 	if (options.image_files[entry].name)

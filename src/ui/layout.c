@@ -60,6 +60,7 @@ FOLDERDATA g_folderData[] =
 	{"Vector",          FOLDER_VECTOR,       IDI_FOLDER,               F_VECTOR,      F_RASTER,     NULL,                       DriverIsVector,    TRUE },
 	{"Trackball",       FOLDER_TRACKBALL,    IDI_FOLDER,               0,             0,            NULL,                       DriverUsesTrackball,	TRUE },
 //	{"Stereo",          FOLDER_STEREO,       IDI_SOUND,                0,             0,            NULL,                       DriverIsStereo,    TRUE },
+	{"Hard Disk",       FOLDER_HARDDISK,     IDI_HARDDISK,             0,             0,            NULL,                       DriverIsHarddisk,  TRUE },
 	{ NULL }
 };
 
@@ -143,6 +144,8 @@ const ICONDATA g_iconData[] =
 };
 
 const char g_szDefaultGame[] = "pacman";
+const char g_szPlayGameString[] = "&Play %s";
+const char g_szGameCountString[] = "%d games";
 
 static BOOL FilterAvailable(int driver_index)
 {

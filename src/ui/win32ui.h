@@ -35,6 +35,8 @@ typedef struct
 extern const char *column_names[COLUMN_MAX];
 
 extern const ICONDATA g_iconData[];
+extern const char g_szPlayGameString[];
+extern const char g_szGameCountString[];
 
 extern HWND GetMainWindow(void);
 extern HWND GetTreeView(void);

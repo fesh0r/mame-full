@@ -432,6 +432,8 @@ static void InitMessPicker(void)
 
 	/* subclass the list view */
 	SetWindowLong(s_pSoftwareListView->hwndListView, GWL_WNDPROC, (LONG)ListViewWndProc);
+
+	s_nCurrentGame = -1;
 }
 
 /*static void MessGetPickerDefaults(void)

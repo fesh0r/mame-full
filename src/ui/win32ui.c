@@ -152,7 +152,7 @@ static void				RandomSelectBackground(void);
 static void             LoadBackgroundBitmap(void);
 static void             PaintBackgroundImage(HWND hWnd, HRGN hRgn, int x, int y);
 
-static int DECL_SPEC DriverDataCompareFunc(const void *arg1,const void *arg2);
+static int CLIB_DECL DriverDataCompareFunc(const void *arg1,const void *arg2);
 static void             ResetTabControl(void);
 static int CALLBACK     ListCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem);
 static int              BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem);
@@ -197,6 +197,7 @@ static void ResetHeaderSortIcon(void);
 
 /* Icon routines */
 static DWORD            GetShellLargeIconSize(void);
+static DWORD            GetShellSmallIconSize(void);
 static void             CreateIcons(void);
 static int              GetIconForDriver(int nItem);
 static void             AddDriverIcon(int nItem,int default_icon_index);
@@ -325,6 +326,9 @@ typedef struct tagPOPUPSTRING
 } POPUPSTRING;
 
 #define MAX_MENUS 3
+
+#define SPLITTER_WIDTH	4
+#define MIN_VIEW_WIDTH	10
 
 /***************************************************************************
     Internal variables
@@ -1090,12 +1094,66 @@ int GetNumGames()
 	return game_count;
 }
 
+/* Sets the treeview and listviews sizes in accordance with their visibility and the splitters */
+static void ResizeTreeAndListViews(BOOL bResizeHidden)
+{
+	int i;
+	int nLastWidth = 0;
+	int nLastWidth2 = 0;
+	int nLeftWindowWidth;
+	RECT rect;
+	BOOL bVisible;
+
+	/* Size the List Control in the Picker */
+	GetClientRect(hMain, &rect);
+
+	if (bShowStatusBar)
+		rect.bottom -= bottomMargin;
+	if (bShowToolBar)
+		rect.top += topMargin;
+
+	/* Tree control */
+	ShowWindow(GetDlgItem(hMain, IDC_TREE), bShowTree ? SW_SHOW : SW_HIDE);
+
+	for (i = 0; g_splitterInfo[i].nSplitterWindow; i++)
+	{
+		bVisible = GetWindowLong(GetDlgItem(hMain, g_splitterInfo[i].nLeftWindow), GWL_STYLE) & WS_VISIBLE ? TRUE : FALSE;
+		if (bResizeHidden || bVisible)
+		{
+			nLeftWindowWidth = nSplitterOffset[i] - SPLITTER_WIDTH/2 - nLastWidth;
+
+			/* special case for the rightmost pane when the screenshot is gone */
+			if (!GetShowScreenShot() && !g_splitterInfo[i+1].nSplitterWindow)
+				nLeftWindowWidth = rect.right - nLastWidth;
+
+			/* woah?  are we overlapping ourselves? */
+			if (nLeftWindowWidth < MIN_VIEW_WIDTH)
+			{
+				nLastWidth = nLastWidth2;
+				nLeftWindowWidth = nSplitterOffset[i] - MIN_VIEW_WIDTH - (SPLITTER_WIDTH*3/2) - nLastWidth;
+				i--;
+			}
+
+			MoveWindow(GetDlgItem(hMain, g_splitterInfo[i].nLeftWindow), nLastWidth, rect.top + 2,
+				nLeftWindowWidth, (rect.bottom - rect.top) - 4 , TRUE);
+
+			MoveWindow(GetDlgItem(hMain, g_splitterInfo[i].nSplitterWindow), nSplitterOffset[i], rect.top + 2,
+				SPLITTER_WIDTH, (rect.bottom - rect.top) - 4, TRUE);
+		}
+
+		if (bVisible)
+		{
+			nLastWidth2 = nLastWidth;
+			nLastWidth += nLeftWindowWidth + SPLITTER_WIDTH; 
+		}
+	}
+}
+
 /* Adjust the list view and screenshot button based on GetShowScreenShot() */
 void UpdateScreenShot(void)
 {
 	RECT rect;
 	int  nWidth;
-	int  nTreeWidth = 0;
 	RECT fRect;
 	POINT p = {0, 0};
 
@@ -1124,49 +1182,7 @@ void UpdateScreenShot(void)
 		ToolBar_CheckButton(hToolBar, ID_VIEW_PICTURE_AREA, MF_UNCHECKED);
 	}
 
-	/* Tree control */
-	if (bShowTree)
-	{
-		nTreeWidth = nSplitterOffset[0];
-		if (nTreeWidth >= nWidth)
-		{
-			nTreeWidth = nWidth - 10;
-		}
-
-		MoveWindow(GetDlgItem(hMain, IDC_TREE), 0, rect.top + 2, nTreeWidth - 2,
-			(rect.bottom - rect.top) - 4 , TRUE);
-
-		MoveWindow(GetDlgItem(hMain, IDC_SPLITTER), nTreeWidth, rect.top + 2,
-			4, (rect.bottom - rect.top) - 4, TRUE);
-
-		ShowWindow(GetDlgItem(hMain, IDC_TREE), SW_SHOW);
-	}
-	else
-	{
-		ShowWindow(GetDlgItem(hMain, IDC_TREE), SW_HIDE);
-	}
-
-	/* Splitter window #2 */
-	MoveWindow(GetDlgItem(hMain, IDC_SPLITTER2), nSplitterOffset[1],
-		rect.top + 2, 4, (rect.bottom - rect.top) - 2, FALSE);
-
-#ifdef MESS
-	/* Splitter window #2 */
-	MoveWindow(GetDlgItem(hMain, IDC_SPLITTER3), nSplitterOffset[2],
-		rect.top + 2, 4, (rect.bottom - rect.top) - 2, FALSE);
-
-	/* List control */
-	MoveWindow(hwndList, 2 + nTreeWidth, rect.top + 2,
-		(nSplitterOffset[1] - nTreeWidth) - 2, (rect.bottom - rect.top) - 4 , TRUE);
-
-	/* List control 2 */
-	MoveWindow(GetDlgItem(hMain, IDC_LIST2), 2 + nSplitterOffset[1], rect.top + 2,
-		(nWidth - nSplitterOffset[1]) - 2, (rect.bottom - rect.top) - 4 , TRUE);	
-#else
-	// List control
-	MoveWindow(hwndList, 2 + nTreeWidth, rect.top + 2,
-		(nWidth - nTreeWidth) - 2, (rect.bottom - rect.top) - 4 , TRUE);
-#endif
+	ResizeTreeAndListViews(FALSE);
 
 	// not sure why this is needed, but it is necessary in large icon mode
 	// and breaks the other modes, so we're careful.
@@ -1240,13 +1256,10 @@ void ResizePickerControls(HWND hWnd)
 {
 	RECT frameRect;
 	RECT rect, sRect;
-	int  nListWidth, nScreenShotWidth, nTreeWidth;
+	int  nListWidth, nScreenShotWidth;
 	static BOOL firstTime = TRUE;
 	int  doSSControls = TRUE;
 	int i, nSplitterCount;
-#ifdef MESS
-	int nListWidth2;
-#endif
 
 	nSplitterCount = GetSplitterCount();
 
@@ -1274,11 +1287,6 @@ void ResizePickerControls(HWND hWnd)
 		doSSControls = GetShowScreenShot();
 	}
 
-	nListWidth = nSplitterOffset[1];
-#ifdef MESS
-	nListWidth2 = nSplitterOffset[2];
-#endif
-
 	if (bShowStatusBar)
 		rect.bottom -= bottomMargin;
 
@@ -1287,36 +1295,10 @@ void ResizePickerControls(HWND hWnd)
 
 	MoveWindow(GetDlgItem(hWnd, IDC_DIVIDER), rect.left, rect.top - 4, rect.right, 2, TRUE);
 
-	nScreenShotWidth = (rect.right - nSplitterOffset[nSplitterCount-1]) - 4;
+	ResizeTreeAndListViews(TRUE);
 
-	/* Tree Control */
-	nTreeWidth = nSplitterOffset[0];
-	MoveWindow(GetDlgItem(hWnd, IDC_TREE), 4, rect.top + 2,
-		nTreeWidth - 4, (rect.bottom - rect.top) - 4, TRUE);
-
-	/* Splitter window #1 */
-	MoveWindow(GetDlgItem(hWnd, IDC_SPLITTER), nTreeWidth, rect.top + 2,
-		4, (rect.bottom - rect.top) - 4, TRUE);
-
-	/* List control */
-	MoveWindow(GetDlgItem(hWnd, IDC_LIST), 4 + nTreeWidth, rect.top + 2,
-		(nListWidth - nTreeWidth) - 4, (rect.bottom - rect.top) - 4, TRUE);
-
-	/* Splitter window #2 */
-	MoveWindow(GetDlgItem(hWnd, IDC_SPLITTER2), nListWidth, rect.top + 2,
-		4, (rect.bottom - rect.top) - 2, doSSControls);
-
-#ifdef MESS
-	/* Image list control */
-	MoveWindow(GetDlgItem(hWnd, IDC_LIST2), 4 + nListWidth, rect.top + 2,
-		(nListWidth2 - nListWidth) - 4, (rect.bottom - rect.top) - 4, TRUE);
-
-	/* Splitter window #3 */
-	MoveWindow(GetDlgItem(hWnd, IDC_SPLITTER3), nListWidth2, rect.top + 2,
-		4, (rect.bottom - rect.top) - 2, doSSControls);
-
-	nListWidth = nListWidth2;
-#endif
+	nListWidth = nSplitterOffset[nSplitterCount-1];
+	nScreenShotWidth = (rect.right - nListWidth) - 4;
 
 	/* Screen shot Page tab control */
 	if (bShowTabCtrl)
@@ -1452,7 +1434,7 @@ int GetIndexFromSortedIndex(int sorted_index)
  ***************************************************************************/
 
 // used for our sorted array of game names
-int DECL_SPEC DriverDataCompareFunc(const void *arg1,const void *arg2)
+int CLIB_DECL DriverDataCompareFunc(const void *arg1,const void *arg2)
 {
     return strcmp( ((driver_data_type *)arg1)->name, ((driver_data_type *)arg2)->name );
 }
@@ -2667,11 +2649,7 @@ static void UpdateStatusBar()
 	}
 
 	/* Show number of games in the current 'View' in the status bar */
-#ifdef MESS
-	sprintf(game_text, "%d systems", games_shown);
-#else
-	sprintf(game_text, "%d games", games_shown);
-#endif
+	snprintf(game_text, sizeof(game_text) / sizeof(game_text[0]), g_szGameCountString, games_shown);
 	SendMessage(hStatusBar, SB_SETTEXT, (WPARAM)2, (LPARAM)game_text);
 
 	i = GetSelectedPickItem();
@@ -2744,7 +2722,7 @@ static void EnableSelection(int nGame)
 	MyFillSoftwareList(nGame, FALSE);
 #endif
 
-	sprintf(buf, "&Play %s", ConvertAmpersandString(ModifyThe(drivers[nGame]->description)));
+	snprintf(buf, sizeof(buf) / sizeof(buf[0]), g_szPlayGameString, ConvertAmpersandString(ModifyThe(drivers[nGame]->description)));
 	mmi.cbSize	   = sizeof(mmi);
 	mmi.fMask	   = MIIM_TYPE;
 	mmi.fType	   = MFT_STRING;
@@ -5240,7 +5218,7 @@ static void UpdateMenu(HMENU hMenu)
 
 	if (have_selection)
 	{
-		sprintf(buf, "&Play %s", ConvertAmpersandString(ModifyThe(drivers[nGame]->description)));
+		snprintf(buf, sizeof(buf) / sizeof(buf[0]), g_szPlayGameString, ConvertAmpersandString(ModifyThe(drivers[nGame]->description)));
 
 		mItem.cbSize	 = sizeof(mItem);
 		mItem.fMask 	 = MIIM_TYPE;

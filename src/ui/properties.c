@@ -603,7 +603,11 @@ const char *GameInfoStatus(int driver_index)
 	switch (GetHasRoms(driver_index))
 	{
 	case 0:
+#ifdef MESS
+		return "BIOS missing";
+#else
 		return "ROMs missing";
+#endif
 
 	case 1:
 		if (DriverIsBroken(driver_index))

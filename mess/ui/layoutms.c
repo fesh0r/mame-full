@@ -148,6 +148,8 @@ const ICONDATA g_iconData[] =
 };
 
 const char g_szDefaultGame[] = "nes";
+const char g_szPlayGameString[] = "&Run %s";
+const char g_szGameCountString[] = "%d systems";
 
 static BOOL FilterAvailable(int driver_index)
 {
