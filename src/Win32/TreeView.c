@@ -508,7 +508,9 @@ void InitGames(UINT nGames)
             {
                 if (drivers[jj]->clone_of == 0
                 ||  drivers[jj]->clone_of == DRIVER_ROOT
+#ifndef MESS
                 ||  drivers[jj]->clone_of == DRIVER_PLAYCH10
+#endif
                 ||  drivers[jj]->clone_of == DRIVER_NEOGEO)
                     AddGame(lpFolder, jj);
             }
@@ -519,7 +521,9 @@ void InitGames(UINT nGames)
             {
                 if (drivers[jj]->clone_of != 0
                 &&  drivers[jj]->clone_of != DRIVER_ROOT
+#ifndef MESS
                 &&  drivers[jj]->clone_of != DRIVER_PLAYCH10
+#endif
                 &&  drivers[jj]->clone_of != DRIVER_NEOGEO)
                     AddGame(lpFolder, jj);
             }
@@ -638,7 +642,9 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
     if (dwMask & F_CLONES
     && (drivers[nGame]->clone_of != 0
     &&  drivers[nGame]->clone_of != DRIVER_ROOT
+#ifndef MESS
     &&  drivers[nGame]->clone_of != DRIVER_PLAYCH10
+#endif
     &&  drivers[nGame]->clone_of != DRIVER_NEOGEO))
         return TRUE;
 
@@ -684,7 +690,9 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
     if (dwMask & F_ORIGINALS
     && (drivers[nGame]->clone_of == 0
     ||  drivers[nGame]->clone_of == DRIVER_ROOT
+#ifndef MESS
     ||  drivers[nGame]->clone_of == DRIVER_PLAYCH10
+#endif
     ||  drivers[nGame]->clone_of == DRIVER_NEOGEO))
         return TRUE;
 

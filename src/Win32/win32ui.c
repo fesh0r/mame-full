@@ -1183,8 +1183,10 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
             }
         }
         if (!found
+#ifndef MESS
         &&  drivers[i]->clone_of != DRIVER_NEOGEO
         &&  drivers[i]->clone_of != DRIVER_PLAYCH10
+#endif
         &&  drivers[i]->clone_of != DRIVER_ROOT)
             found = TRUE;
 
@@ -2440,7 +2442,9 @@ static LPCSTR GetCloneParent(int nItem)
 {
     if (drivers[nItem]->clone_of != 0
     &&  drivers[nItem]->clone_of != DRIVER_ROOT
+#ifndef MESS
     &&  drivers[nItem]->clone_of != DRIVER_PLAYCH10
+#endif
     &&  drivers[nItem]->clone_of != DRIVER_NEOGEO)
         return ModifyThe(drivers[nItem]->clone_of->description);
     return "";

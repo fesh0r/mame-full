@@ -19,11 +19,11 @@
 
 #define GAME_BROKEN (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)
 
-#ifndef MESS
 extern struct GameDriver driver_0;
-#endif
 extern struct GameDriver driver_neogeo;
+#ifndef MESS
 extern struct GameDriver driver_playch10;
+#endif
 
 #define DRIVER_ROOT     &driver_0
 #define DRIVER_NEOGEO   &driver_neogeo
