@@ -325,6 +325,7 @@ WRITE_HANDLER (fdc_density_side_w)
 {
     UINT8 sec_per_track;
     UINT16 sector_size;
+	mess_image *image;
 		
     if (data & 2)
         wd179x_set_side (1);
@@ -344,7 +345,9 @@ WRITE_HANDLER (fdc_density_side_w)
 		sector_size = 256;
     }
     
-    basicdsk_set_geometry(image_from_devtype_and_index(IO_FLOPPY, svi318_fdc_status.seldrive), 40, svi318_dsk_heads[svi318_fdc_status.seldrive], sec_per_track, sector_size, 1, 0, 0);
+	image = image_from_devtype_and_index(IO_FLOPPY, svi318_fdc_status.seldrive);
+	if (image_exists(image))
+	    basicdsk_set_geometry(image, 40, svi318_dsk_heads[svi318_fdc_status.seldrive], sec_per_track, sector_size, 1, 0, 0);
 }
 
 READ_HANDLER (svi318_fdc_status_r)
