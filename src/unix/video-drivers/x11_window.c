@@ -340,7 +340,7 @@ void x11_window_update_display(struct mame_bitmap *bitmap,
   struct sysdep_palette_struct *palette, unsigned int flags)
 {
    x11_window_update_display_func(bitmap, vis_in_dest_out, dirty_area,
-     palette, image->data, image->width);
+     palette, (unsigned char *)image->data, image->width);
    
    switch (x11_window_update_method)
    {
