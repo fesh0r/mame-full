@@ -137,6 +137,46 @@ int pdp1_tape_read_binary(UINT32 *reply)
 }
 
 
+/*
+	Teletyper handling
+*/
+
+typedef struct teletyper
+{
+	void *fd;
+} teletyper;
+
+teletyper pdp1_teletyper;
+
+/*
+	Open a file for teletyper output
+*/
+int pdp1_teletyper_init(int id)
+{
+	/* open file */
+	pdp1_teletyper.fd = image_fopen(IO_PRINTER, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_WRITE);
+
+	return INIT_PASS;
+}
+
+/*
+	Close teletyper output
+*/
+void pdp1_teletyper_exit(int id)
+{
+	if (pdp1_teletyper.fd)
+		osd_fclose(pdp1_teletyper.fd);
+}
+
+/*
+	Write a character to teletyper
+*/
+static void teletyper_write(UINT8 data)
+{
+	logerror("typewriter output %o\n", data);
+	if (pdp1_teletyper.fd)
+		osd_fwrite(pdp1_teletyper.fd, & data, 1);
+}
 
 /* these are the key-bits specified in driver\pdp1.c */
 #define FIRE_PLAYER2              128
@@ -183,7 +223,7 @@ int pdp1_iot(int *io, int md)
 		UINT8 read_byte;
 		logerror("\nWarning, RPA instruction not fully emulated: io=0%06o, mb=0%06o, pc=0%06o", *io, md, cpu_get_reg(PDP1_PC));
 
-		etime=10;	/* probably some more */
+		etime=10;	/* approximately 1/400s (actually, it is 1/400s after last character) */
 		/* somehow read a byte... */
 
 		(void)tape_read(& read_byte);
@@ -242,7 +282,6 @@ int pdp1_iot(int *io, int md)
 		logerror("\nWarning, RPB instruction not fully emulated: io=0%06o, mb=0%06o, pc=0%06o", *io, md, cpu_get_reg(PDP1_PC));
 
 		etime=10;	/* probably some more */
-		/* somehow read a byte... */
 
 		not_ready = pdp1_tape_read_binary(& read_word);
 
@@ -286,7 +325,7 @@ int pdp1_iot(int *io, int md)
 		 * Bit 17 conditions Hole 1. Bit 16 conditions Hole 2, etc. Bit 10 conditions Hole 8
 		 */
 		tape_write(*io & 0377);
-		etime=5;
+		etime=5;	/* 1/63 second, actually */
 		break;
 	}
 	case 06: /* PPB */
@@ -299,14 +338,14 @@ int pdp1_iot(int *io, int md)
 		 * Hole 7 is left blank. Hole 8 is always punched in this mode. 
 		 */
 		tape_write((*io >> 12) | 0200);
-		etime=5;
+		etime=5;	/* 1/63 second, actually */
 		break;
 	}
 
 	/* alphanumeric on-line typewriter */
 	case 03: /* TYO */
 	{
-		logerror("typewriter output %o\n", (*io) & 077);
+		teletyper_write((*io) & 077);
 		etime=5;
 		break;
 	}

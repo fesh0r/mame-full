@@ -17,6 +17,10 @@ void pdp1_tape_exit(int id);
 
 int pdp1_tape_read_binary(UINT32 *reply);
 
+int pdp1_teletyper_init(int id);
+void pdp1_teletyper_exit(int id);
+
+
 int pdp1_iot(int *io, int md);
 
 int pdp1_keyboard(void);

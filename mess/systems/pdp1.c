@@ -379,7 +379,7 @@ static struct MachineDriver machine_driver_pdp1 =
 
 static const struct IODevice io_pdp1[] =
 {
-	{
+	{	/* one perforated tape reader, and one puncher */
 		IO_PUNCHTAPE,			/* type */
 		2,						/* count */
 		"tap\0rim\0",			/* file extensions */
@@ -397,6 +397,25 @@ static const struct IODevice io_pdp1[] =
 		NULL,					/* output */
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
+	},
+	{	/* teletyper out */
+		IO_PRINTER,					/* type */
+		1,							/* count */
+		"typ\0",					/* file extensions */
+		IO_RESET_NONE,				/* reset depth */
+		NULL,						/* id */
+		pdp1_teletyper_init,		/* init */
+		pdp1_teletyper_exit,		/* exit */
+		NULL,						/* info */
+		NULL,						/* open */
+		NULL,						/* close */
+		NULL,						/* status */
+		NULL,						/* seek */
+		NULL,						/* tell */
+		NULL,						/* input */
+		NULL,						/* output */
+		NULL,						/* input chunk */
+		NULL						/* output chunk */
 	},
 	{ IO_END }
 };
