@@ -229,7 +229,7 @@ static const struct MachineDriver machine_driver_znqs =
 	/* basic machine hardware */
 	{
 		{
-			CPU_PSX,
+			CPU_PSXCPU,
 			33000000, /* 33mhz ?? */
 			znqs_readmem, znqs_writemem, 0, 0,
 			ignore_interrupt, 1  /* ??? interrupts per frame */
@@ -869,7 +869,7 @@ static const struct MachineDriver machine_driver_zn =
 	/* basic machine hardware */
 	{
 		{
-			CPU_PSX,
+			CPU_PSXCPU,
 			33868800, /* 33mhz ?? */
 			zn_readmem, zn_writemem, 0, 0,
 			ignore_interrupt,1 /* ??? interrupts per frame */
