@@ -249,6 +249,7 @@ const struct GameDriver *drivers[] =
       DRIVER( coco )        /* Color Computer                                 */
 	  DRIVER( coco3 )       /* Color Computer 3                               */
       DRIVER( cp400 )       /* Prologica CP400                                */
+	DRIVER(trs80l1)
       DRIVER( trs80 )       /* TRS-80 Model I   - Radio Shack/Tandy           */
       DRIVER( trs80alt )
 	  DRIVER( mc10 )		/* MC-10										  */
