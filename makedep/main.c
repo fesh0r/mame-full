@@ -413,7 +413,31 @@ int main(int argc, char **argv)
 			}
 		}
 #else	   /* !__EMX__, does not use INCLUDEDIR at all */
-		if (incp >= includedirs + MAXDIRS)
+		{
+			/* scan a C_INCLUDE_PATH setting, colon separated paths */
+			char *cinc = getenv("C_INCLUDE_PATH");
+
+			/* can have more than one component */
+			if (cinc)
+			{
+				char *beg, *end;
+
+				beg = (char *) strdup(cinc);
+				for (;;)
+				{
+					end = (char *) strchr(beg, ':');
+					if (end)
+						*end = 0;
+					if (incp >= includedirs + MAXDIRS)
+						fatalerr("Too many include dirs\n");
+					*incp++ = beg;
+					if (!end)
+						break;
+					beg = end + 1;
+				}
+			}
+        }
+        if (incp >= includedirs + MAXDIRS)
 			fatalerr("Too many -I flags.\n");
 		*incp++ = INCLUDEDIR;
 #endif
