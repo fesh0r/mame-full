@@ -153,11 +153,13 @@ static struct gxstate_params *gxstate;
 
 int gx_open_display(HWND hWnd)
 {
+	gxstate = NULL;
 	return GXOpenDisplay(hWnd, GX_FULLSCREEN);
 }
 
 int gx_close_display(void)
 {
+	gxstate = NULL;
 	return GXCloseDisplay();
 }
 
@@ -174,8 +176,6 @@ int gx_close_input(void)
 // --------------------------------------------------------------------------
 // Blit code - speed very critical! templates out the wazoo!!
 // --------------------------------------------------------------------------
-
-#pragma optimize("agptb", on)
 
 inline UINT16 rgb_part(UINT16 value, int size, int base)
 {

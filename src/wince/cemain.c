@@ -29,19 +29,81 @@ static HWND CreateRpCommandBar(HWND hwnd);
 
 static int*				pGame_Index;	// Index of available games
 static struct status_of_data *ptGame_Data;	// Game Data Structure - such as hasRoms etc
-static struct ui_options tUI;
 static HBRUSH hBrush2; //Background Checkers
 static HWND				hwndCB;					// The command bar handle
 static SHACTIVATEINFO s_sai;
+static HWND s_hwndMain;
 
 static struct SmartListView *s_pGameListView;
 static struct SmartListView *s_pSoftwareListView;
 
-#ifdef MESS
+struct MainWindowExtra
+{
+	HMENU hMenu;
+};
+
+/* ------------------------------------------------------------------------ *
+ * Menu handling code														*
+ * ------------------------------------------------------------------------ */
+
+static BOOL GetMenuOption(HWND hWnd, int nOptionID)
+{
+	struct MainWindowExtra *pExtra;
+	MENUITEMINFO mii;
+
+	memset(&mii, 0, sizeof(mii));
+	mii.cbSize = sizeof(mii);
+	mii.fMask = MIIM_STATE;
+
+	pExtra = (struct MainWindowExtra *) GetWindowLong(hWnd, GWL_USERDATA);
+	GetMenuItemInfo(pExtra->hMenu, nOptionID, FALSE, &mii);
+
+	return (mii.fState & MFS_CHECKED) ? TRUE : FALSE;
+}
+
+static void ToggleDualMenuOption(HWND hWnd, int nOptionID, int nOtherOptionID)
+{
+	BOOL bIsChecked;
+	struct MainWindowExtra *pExtra;
+
+	bIsChecked = GetMenuOption(hWnd, nOptionID);
+
+	bIsChecked = !bIsChecked;
+
+	pExtra = (struct MainWindowExtra *) GetWindowLong(hWnd, GWL_USERDATA);
+	CheckMenuItem(pExtra->hMenu, nOptionID, MF_BYCOMMAND | (bIsChecked ? MF_CHECKED : MF_UNCHECKED));
+	if (nOtherOptionID != -1)
+		CheckMenuItem(pExtra->hMenu, nOtherOptionID, MF_UNCHECKED);
+}
+
+static void ToggleMenuOption(HWND hWnd, int nOptionID)
+{
+	ToggleDualMenuOption(hWnd, nOptionID, -1);
+}
+
+
+static void SetDefaultOptions(HWND hWnd)
+{
+	struct MainWindowExtra *pExtra;
+	pExtra = (struct MainWindowExtra *) GetWindowLong(hWnd, GWL_USERDATA);
+
+	CheckMenuItem(pExtra->hMenu,	ID_OPTIONS_ENABLESOUND,			MF_CHECKED);
+	CheckMenuItem(pExtra->hMenu,	ID_OPTIONS_SHOWFRAMERATE,		MF_UNCHECKED);
+	CheckMenuItem(pExtra->hMenu,	ID_OPTIONS_SHOWPROFILER,		MF_UNCHECKED);
+	CheckMenuItem(pExtra->hMenu,	ID_OPTIONS_ENABLEFLICKER,		MF_CHECKED);
+	CheckMenuItem(pExtra->hMenu,	ID_OPTIONS_ENABLETRANSLUCENCY,	MF_UNCHECKED);
+	CheckMenuItem(pExtra->hMenu,	ID_OPTIONS_ENABLEANTIALIASING,	MF_UNCHECKED);
+	CheckMenuItem(pExtra->hMenu,	ID_OPTIONS_ENABLEDIRTYLINE,		MF_CHECKED);
+	CheckMenuItem(pExtra->hMenu,	ID_OPTIONS_ENABLETHROTTLE,		MF_CHECKED);
+	CheckMenuItem(pExtra->hMenu,	ID_OPTIONS_ROTATESCREENLEFT,	MF_UNCHECKED);
+	CheckMenuItem(pExtra->hMenu,	ID_OPTIONS_ROTATESCREENRIGHT,	MF_UNCHECKED);
+}
+
 /* ----------------------------------------------------------------------- *
  * Software list view class                                                *
  * ----------------------------------------------------------------------- */
 
+#ifdef MESS
 static void SoftwareList_Run(struct SmartListView *pListView)
 {
 	int nGame;
@@ -51,11 +113,23 @@ static void SoftwareList_Run(struct SmartListView *pListView)
 	LPTSTR lpError;
 	LPTSTR lpMessError = NULL;
 	TCHAR szBuffer[32];
+	struct ui_options opts;
+
+	opts.enable_sound			= GetMenuOption(s_hwndMain, ID_OPTIONS_ENABLESOUND);
+	opts.show_framerate			= GetMenuOption(s_hwndMain, ID_OPTIONS_SHOWFRAMERATE);
+	opts.show_profiler			= GetMenuOption(s_hwndMain, ID_OPTIONS_SHOWPROFILER);
+	opts.enable_flicker			= GetMenuOption(s_hwndMain, ID_OPTIONS_ENABLEFLICKER);
+	opts.enable_translucency	= GetMenuOption(s_hwndMain, ID_OPTIONS_ENABLETRANSLUCENCY);
+	opts.enable_antialias		= GetMenuOption(s_hwndMain, ID_OPTIONS_ENABLEANTIALIASING);
+	opts.enable_dirtyline		= GetMenuOption(s_hwndMain, ID_OPTIONS_ENABLEDIRTYLINE);
+	opts.enable_throttle		= GetMenuOption(s_hwndMain, ID_OPTIONS_ENABLETHROTTLE);
+	opts.rotate_left			= GetMenuOption(s_hwndMain, ID_OPTIONS_ROTATESCREENLEFT);
+	opts.rotate_right			= GetMenuOption(s_hwndMain, ID_OPTIONS_ROTATESCREENRIGHT);
 
 	nItem = SingleItemSmartListView_GetSelectedItem(s_pGameListView);
 	nGame = pGame_Index[nItem];
 
-	nError = play_game(nGame, &tUI);
+	nError = play_game(nGame, &opts);
 	if (nError) {
 		/* an error occured; find out where */
 		nFailedAlloc = outofmemory_occured();
@@ -214,22 +288,6 @@ static void Display_FAQ(HWND hWndParent)
  * Blah                                                                    *
  * ----------------------------------------------------------------------- */
 
-static void SetDefaultOptions(struct ui_options *opts)
-{
-	opts->enable_sound = 1; 
-	opts->show_all_games = 0;
-	opts->show_clones = 0;
-	opts->show_framerate = 0;
-	opts->show_profiler = 0;
-	opts->enable_flicker = 0;
-	opts->enable_translucency = 0;
-	opts->enable_antialias = 0;
-	opts->enable_dirtyline = 0;
-	opts->enable_throttle = 1;
-	opts->rotate_left = 0;
-	opts->rotate_right = 0;
-}
-
 int WINAPI WinMain(	HINSTANCE hInstance,
 					HINSTANCE hPrevInstance,
 					LPTSTR    lpCmdLine,
@@ -237,8 +295,6 @@ int WINAPI WinMain(	HINSTANCE hInstance,
 {
 	MSG msg;
 	HACCEL hAccelTable;
-
-	SetDefaultOptions(&tUI);
 
 	nCmdShow = SW_SHOWNORMAL;
 
@@ -336,11 +392,9 @@ static BOOL InitInstance(int nCmdShow)
 	
 	hWnd = CreateWindow(szWindowClass, szTitle, WS_VISIBLE,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInst, NULL);
-	
 	if (!hWnd)
-	{	
 		return FALSE;
-	}
+
 	//When the main window is created using CW_USEDEFAULT the height of the menubar (if one
 	// is created is not taken into account). So we resize the window after creating it
 	// if a menubar is present
@@ -358,28 +412,6 @@ static BOOL InitInstance(int nCmdShow)
 	return TRUE;
 }
 
-struct MainWindowExtra
-{
-	HMENU hMenu;
-};
-
-static void CheckMenuOption(HWND hWnd, int nOptionID, BOOL *pbOption, BOOL bToggle)
-{
-	struct MainWindowExtra *pExtra;
-
-	pExtra = (struct MainWindowExtra *) GetWindowLong(hWnd, GWL_USERDATA);
-
-	if (bToggle)
-		*pbOption = !(*pbOption);
-	CheckMenuItem(pExtra->hMenu, nOptionID, MF_BYCOMMAND | (*pbOption ? MF_CHECKED : MF_UNCHECKED));
-}
-
-static void CheckMenuOptionEx(HWND hWnd, int nOptionID, BOOL *pbOption, int nCounterOptionID, BOOL *pbCounterOption)
-{
-	if (*pbCounterOption)
-		CheckMenuOption(hWnd, nCounterOptionID, pbCounterOption, TRUE);
-	CheckMenuOption(hWnd, nOptionID, pbOption, TRUE);
-}
 
 //
 //  FUNCTION: WndProc(HWND, unsigned, WORD, LONG)
@@ -424,60 +456,33 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 					SendMessage(hWnd, WM_ACTIVATE, MAKEWPARAM(WA_INACTIVE, 0), (LPARAM)hWnd);
 					SendMessage (hWnd, WM_CLOSE, 0, 0);
 					break;
-				case ID_OPTIONS_ENABLESOUND:
-					CheckMenuOption(hWnd, ID_OPTIONS_ENABLESOUND, &tUI.enable_sound, TRUE);
-					break;
-				case ID_OPTIONS_SHOWCLONES:
-					CheckMenuOption(hWnd, ID_OPTIONS_SHOWCLONES, &tUI.show_clones, TRUE);
-					RefreshGameListBox();
-					break;
+
 				case ID_OPTIONS_SHOWALLGAMES:
-					CheckMenuOption(hWnd, ID_OPTIONS_SHOWALLGAMES, &tUI.show_all_games, TRUE);
+				case ID_OPTIONS_SHOWCLONES:
 					RefreshGameListBox();
-					break;
+					/* fall through */
+
+				case ID_OPTIONS_ENABLESOUND:
 				case ID_OPTIONS_SHOWFRAMERATE:
-					CheckMenuOption(hWnd, ID_OPTIONS_SHOWFRAMERATE, &tUI.show_framerate, TRUE);
-					break;
 				case ID_OPTIONS_SHOWPROFILER:
-					CheckMenuOption(hWnd, ID_OPTIONS_SHOWPROFILER, &tUI.show_profiler, TRUE);
-					break;
 				case ID_OPTIONS_ENABLEANTIALIASING:
-					CheckMenuOption(hWnd, ID_OPTIONS_ENABLEANTIALIASING, &tUI.enable_antialias, TRUE);
-					break;
 				case ID_OPTIONS_ENABLETRANSLUCENCY:
-					CheckMenuOption(hWnd, ID_OPTIONS_ENABLETRANSLUCENCY, &tUI.enable_translucency, TRUE);
-					break;
 				case ID_OPTIONS_ENABLEFLICKER:
-					CheckMenuOption(hWnd, ID_OPTIONS_ENABLEFLICKER, &tUI.enable_flicker, TRUE);
-					break;
 				case ID_OPTIONS_ENABLETHROTTLE:
-					CheckMenuOption(hWnd, ID_OPTIONS_ENABLETHROTTLE, &tUI.enable_throttle, TRUE);
-					break;
 				case ID_OPTIONS_ENABLEDIRTYLINE:
-					CheckMenuOption(hWnd, ID_OPTIONS_ENABLEDIRTYLINE, &tUI.enable_dirtyline, TRUE);
+					ToggleMenuOption(hWnd, wmId);
 					break;
+
 				case ID_OPTIONS_ROTATESCREENLEFT:
-					CheckMenuOptionEx(hWnd, ID_OPTIONS_ROTATESCREENLEFT, &tUI.rotate_left, ID_OPTIONS_ROTATESCREENRIGHT, &tUI.rotate_right);
+					ToggleDualMenuOption(hWnd, ID_OPTIONS_ROTATESCREENLEFT, ID_OPTIONS_ROTATESCREENRIGHT);
 					break;				
+
 				case ID_OPTIONS_ROTATESCREENRIGHT:
-					CheckMenuOptionEx(hWnd, ID_OPTIONS_ROTATESCREENRIGHT, &tUI.rotate_right, ID_OPTIONS_ROTATESCREENLEFT, &tUI.rotate_left);
+					ToggleDualMenuOption(hWnd, ID_OPTIONS_ROTATESCREENRIGHT, ID_OPTIONS_ROTATESCREENLEFT);
 					break;
 
 				case ID_OPTIONS_RESETOPTIONSTODEFAULT:
-					// Set Defualt Variable States back to Defaults
-					SetDefaultOptions(&tUI);
-					CheckMenuOption(hWnd, ID_OPTIONS_ENABLESOUND, &tUI.enable_sound, FALSE);
-					CheckMenuOption(hWnd, ID_OPTIONS_SHOWCLONES, &tUI.show_clones, FALSE);
-					CheckMenuOption(hWnd, ID_OPTIONS_SHOWALLGAMES, &tUI.show_all_games, FALSE);
-					CheckMenuOption(hWnd, ID_OPTIONS_SHOWFRAMERATE, &tUI.show_framerate, FALSE);
-					CheckMenuOption(hWnd, ID_OPTIONS_SHOWPROFILER, &tUI.show_profiler, FALSE);
-					CheckMenuOption(hWnd, ID_OPTIONS_ENABLEANTIALIASING, &tUI.enable_antialias, FALSE);
-					CheckMenuOption(hWnd, ID_OPTIONS_ENABLETRANSLUCENCY, &tUI.enable_translucency, FALSE);
-					CheckMenuOption(hWnd, ID_OPTIONS_ENABLEFLICKER, &tUI.enable_flicker, TRUE);
-					CheckMenuOption(hWnd, ID_OPTIONS_ENABLETHROTTLE, &tUI.enable_throttle, FALSE);
-					CheckMenuOption(hWnd, ID_OPTIONS_ENABLEDIRTYLINE, &tUI.enable_dirtyline, FALSE);
-					CheckMenuOption(hWnd, ID_OPTIONS_ROTATESCREENLEFT, &tUI.rotate_left, FALSE);
-					CheckMenuOption(hWnd, ID_OPTIONS_ROTATESCREENRIGHT, &tUI.rotate_right, FALSE);
+					SetDefaultOptions(hWnd);
 					RefreshGameListBox();
 					break;
 
@@ -562,6 +567,10 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 				height = rBtns.bottom - 125;
 				s_pGameListView = SmartListView_Create(&opts, TRUE, TRUE, x, y, width, height, hInst);
 
+				s_hwndMain = hWnd;
+
+				SetDefaultOptions(hWnd);
+
 				RefreshGameListBox();
 			}
 			break;
@@ -627,16 +636,21 @@ static HWND CreateRpCommandBar(HWND hwnd)
 static void RefreshGameListBox()
 {
 	int i, pos = 0;
+	BOOL bShowAllGames;
+	BOOL bShowClones;
+
+	bShowAllGames = GetMenuOption(s_hwndMain, ID_OPTIONS_SHOWALLGAMES);
+	bShowClones = GetMenuOption(s_hwndMain, ID_OPTIONS_SHOWCLONES);
 
 	/* Clear out the list */
 	SmartListView_ResetColumnDisplay(s_pGameListView);
 
 	/* Add the drivers */
 	for (i = 0; drivers[i]; i++) {
-		if (!tUI.show_all_games && !ptGame_Data[i].bHasRoms)
+		if (!bShowAllGames && !ptGame_Data[i].bHasRoms)
 			continue;
 				
-		if (!tUI.show_all_games && !tUI.show_clones && !(drivers[i]->clone_of->flags & NOT_A_DRIVER))
+		if (!bShowAllGames && !bShowClones && !(drivers[i]->clone_of->flags & NOT_A_DRIVER))
 			continue;
 
 		pGame_Index[pos++] = i;
