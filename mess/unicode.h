@@ -30,10 +30,14 @@ typedef UINT32 unicode_char_t;
 #define UTF8_CHAR_MAX	6
 #define UTF16_CHAR_MAX	2
 
+/* tests to see if a unicode char is a valid code point */
+int uchar_isvalid(unicode_char_t uchar);
+
 /* converting strings to 32-bit Unicode chars */
 int uchar_from_utf8(unicode_char_t *uchar, const char *utf8char, size_t count);
 
 /* converting 32-bit Unicode chars to strings */
+int utf8_from_uchar(char *utf8string, size_t count, unicode_char_t uchar);
 int utf16_from_uchar(utf16_char_t *utf16string, size_t count, unicode_char_t uchar);
 
 #endif /* UNICODE_H */

@@ -12,6 +12,7 @@
 #include "messtest.h"
 #include "osdepend.h"
 #include "pool.h"
+#include "inputx.h"
 
 #include "expat/expat.h"
 
@@ -543,31 +544,54 @@ static int external_entity_handler(XML_Parser parser,
 	const XML_Char *publicId)
 {
 	XML_Parser extparser = NULL;
-	int rc = 0;
-	const char *s;
+	int rc = 0, i;
+	char buf[32];
+	char charbuf[UTF8_CHAR_MAX + 1];
+	static const char *mamekey_prefix = "mamekey_";
+	unicode_char_t c;
+
+	buf[0] = '\0';
 
 	/* only supportr our own schema */
 	if (strcmp(systemId, "http://www.mess.org/messtest/"))
 		goto done;
 
-	extparser = XML_ExternalEntityParserCreate(parser, context, "us-ascii");
+	extparser = XML_ExternalEntityParserCreate(parser, context, "utf8");
 	if (!extparser)
 		goto done;
 
-	s = "<!ENTITY mamekey_esc \"Microsoft Press\">";
-//	s = "<!ENTITY mamekey_esc \"&#63292;\">";
-//	s =	"<!DOCTYPE tests [\r\n"
-//		"<!ENTITY mamekey_esc \"&#63292;\">\r\n"
-//		"]>\r\n";
-	if (XML_Parse(extparser, s, strlen(s), 0))
-		goto done;
-	if (XML_Parse(extparser, NULL, 0, 1))
-		goto done;
+	/* does this use the 'mamekey' prefix? */
+	if ((strlen(context) > strlen(mamekey_prefix)) && !memcmp(context,
+		mamekey_prefix, strlen(mamekey_prefix)))
+	{
+		context += strlen(mamekey_prefix);
+		c = 0;
+
+		/* this is interim until we can come up with a real solution */
+		if (!strcmp(context, "esc"))
+			c = UCHAR_MAMEKEY(ESC);
+
+		if (c)
+		{
+			i = utf8_from_uchar(charbuf, sizeof(charbuf) / sizeof(charbuf[0]), c);
+			if (i < 0)
+				goto done;
+			charbuf[i] = 0;
+
+			snprintf(buf, sizeof(buf) / sizeof(buf[0]), "<%s%s>%s</%s%s>",
+				mamekey_prefix, context,
+				charbuf,
+				mamekey_prefix, context);
+
+			if (XML_Parse(extparser, buf, strlen(buf), 1) == XML_STATUS_ERROR)
+				goto done;
+		}
+	}
 
 	rc = 1;
 done:
-//	if (extparser)
-//		XML_ParserFree(extparser);
+	if (extparser)
+		XML_ParserFree(extparser);
 	return rc;
 }
 

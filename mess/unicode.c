@@ -8,6 +8,13 @@
 
 #include "unicode.h"
 
+int uchar_isvalid(unicode_char_t uchar)
+{
+	return (uchar < 0x110000) && !((uchar >= 0xd800) && (uchar <= 0xdfff));
+}
+
+
+
 int uchar_from_utf8(unicode_char_t *uchar, const char *utf8char, size_t count)
 {
 	unicode_char_t c, minchar;
@@ -96,10 +103,70 @@ int uchar_from_utf8(unicode_char_t *uchar, const char *utf8char, size_t count)
 
 
 
+int utf8_from_uchar(char *utf8string, size_t count, unicode_char_t uchar)
+{
+	int rc = 0;
+	if (!uchar_isvalid(uchar))
+		return -1;
+
+	if (uchar < 0x80)
+	{
+		/* unicode char 0x00000000 - 0x0000007F */
+		utf8string[rc++] = (char) uchar;
+	}
+	else if (uchar < 0x800)
+	{
+		/* unicode char 0x00000080 - 0x000007FF */
+		utf8string[rc++] = ((char) (uchar >> 6)) | 0xC0;
+		utf8string[rc++] = ((char) ((uchar >> 0) & 0x3F)) | 0x80;
+	}
+	else if (uchar < 0x10000)
+	{
+		/* unicode char 0x00000800 - 0x0000FFFF */
+		utf8string[rc++] = ((char) (uchar >> 12)) | 0xE0;
+		utf8string[rc++] = ((char) ((uchar >> 6) & 0x3F)) | 0x80;
+		utf8string[rc++] = ((char) ((uchar >> 0) & 0x3F)) | 0x80;
+	}
+	else if (uchar < 0x00200000)
+	{
+		/* unicode char 0x00010000 - 0x001FFFFF */
+		utf8string[rc++] = ((char) (uchar >> 18)) | 0xF0;
+		utf8string[rc++] = ((char) ((uchar >> 12) & 0x3F)) | 0x80;
+		utf8string[rc++] = ((char) ((uchar >> 6) & 0x3F)) | 0x80;
+		utf8string[rc++] = ((char) ((uchar >> 0) & 0x3F)) | 0x80;
+	}
+	else if (uchar < 0x04000000)
+	{
+		/* unicode char 0x00200000 - 0x03FFFFFF */
+		utf8string[rc++] = ((char) (uchar >> 24)) | 0xF8;
+		utf8string[rc++] = ((char) ((uchar >> 18) & 0x3F)) | 0x80;
+		utf8string[rc++] = ((char) ((uchar >> 12) & 0x3F)) | 0x80;
+		utf8string[rc++] = ((char) ((uchar >> 6) & 0x3F)) | 0x80;
+		utf8string[rc++] = ((char) ((uchar >> 0) & 0x3F)) | 0x80;
+	}
+	else if (uchar < 0x80000000)
+	{
+		/* unicode char 0x04000000 - 0x7FFFFFFF */
+		utf8string[rc++] = ((char) (uchar >> 30)) | 0xFC;
+		utf8string[rc++] = ((char) ((uchar >> 24) & 0x3F)) | 0x80;
+		utf8string[rc++] = ((char) ((uchar >> 18) & 0x3F)) | 0x80;
+		utf8string[rc++] = ((char) ((uchar >> 12) & 0x3F)) | 0x80;
+		utf8string[rc++] = ((char) ((uchar >> 6) & 0x3F)) | 0x80;
+		utf8string[rc++] = ((char) ((uchar >> 0) & 0x3F)) | 0x80;
+	}
+	else
+	{
+		rc = -1;
+	}
+	return rc;
+}
+
+
+
 int utf16_from_uchar(utf16_char_t *utf16string, size_t count, unicode_char_t uchar)
 {
 	int rc;
-	if ((uchar >= 0xd800) && (uchar <= 0xdfff))
+	if (!uchar_isvalid(uchar))
 		return -1;
 
 	if (uchar < 0x10000)
