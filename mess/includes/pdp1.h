@@ -17,7 +17,8 @@ enum
 	pdp1_ta_switches = 3,			/* test address switches */
 	pdp1_tw_switches_MSB = 4,		/* test word switches */
 	pdp1_tw_switches_LSB = 5,
-	pdp1_typewriter = 6				/* typewriter keys */
+	pdp1_typewriter = 6,			/* typewriter keys */
+	pdp1_config = 10				/* pseudo input port with config */
 };
 
 /* defines for each bit and mask in input port pdp1_control_switches */
@@ -55,6 +56,17 @@ enum
 	pdp1_single_inst = (1 << pdp1_single_inst_bit)
 };
 
+/* defines for each bit in input port pdp1_spacewar_controllers*/
+#define ROTATE_LEFT_PLAYER1       0x01
+#define ROTATE_RIGHT_PLAYER1      0x02
+#define THRUST_PLAYER1            0x04
+#define FIRE_PLAYER1              0x08
+#define ROTATE_LEFT_PLAYER2       0x10
+#define ROTATE_RIGHT_PLAYER2      0x20
+#define THRUST_PLAYER2            0x40
+#define FIRE_PLAYER2              0x80
+
+
 /* defines for our font */
 enum
 {
@@ -64,12 +76,11 @@ enum
 	pdp1_fontdata_size = 8 * pdp1_charnum
 };
 
+extern pdp1_reset_param_t pdp1_reset_param;
+
 
 /* From machine/pdp1.c */
 extern int *pdp1_memory;
-
-extern int pdp1_ta;
-extern int pdp1_tw;
 
 void init_pdp1(void);
 void pdp1_init_machine(void);
@@ -86,9 +97,7 @@ void pdp1_teletyper_exit(int id);
 
 int pdp1_iot(int *io, int md);
 
-int pdp1_keyboard(void);
 int pdp1_interrupt(void);
-int pdp1_get_test_word(void);
 
 
 /* From vidhrdw/pdp1.c */
@@ -101,12 +110,16 @@ void pdp1_screen_update(void);
 
 enum
 {
-	/* size of crt view */
+	/* size and position of crt view */
 	crt_window_width = 512,
 	crt_window_height = 512,
-	/* size of programmer panel view */
+	crt_window_offset_x = 0,
+	crt_window_offset_y = 0,
+	/* size and position of programmer panel view */
 	panel_window_width = 384,
-	panel_window_height = 128
+	panel_window_height = 128,
+	panel_window_offset_x = crt_window_width,
+	panel_window_offset_y = 0
 };
 
 enum
@@ -124,18 +137,22 @@ enum
 };
 
 /* Color codes */
-#define VIDEO_MAX_INTENSITY 15
+enum
+{
+	pen_crt_max_intensity = 15,
 
-#define BLACK 0
-#define WHITE 15
-/*#define DK_GRAY 8*/
-#define LT_GRAY 12
-#define GREEN 16
-#define DK_GREEN 17
-#define PANEL_BG BLACK
-#define PANEL_TEXT WHITE
-#define PANEL_TEXT_IX 0
-#define SWITCH_BK LT_GRAY
-#define SWITCH_BUTTON WHITE
-#define LIT_LAMP GREEN
-#define UNLIT_LAMP DK_GREEN
+	pen_black = 0,
+	pen_white = 15,
+	/*pen_dk_gray = 8,*/
+	pen_lt_gray = 12,
+	pen_green = 16,
+	pen_dk_green = 17,
+
+	pen_panel_bg = pen_black,
+	pen_panel_caption = pen_white,
+	color_panel_caption = 0,
+	pen_switch_nut = pen_lt_gray,
+	pen_switch_button = pen_white,
+	pen_lit_lamp = pen_green,
+	pen_unlit_lamp = pen_dk_green
+};

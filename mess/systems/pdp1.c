@@ -8,7 +8,7 @@ Driver for a PDP1 emulator.
 	Chris Salomon (MESS driver)
 	Raphael Nabet (MESS driver)
 
-Preliminary, this is a conversion of a JAVA emulator.
+Initially, this was a conversion of a JAVA emulator.
 I have tried contacting the author, but heard as yet nothing of him,
 so I don't know if it all right with him, but after all -> he did
 release the source, so hopefully everything will be fine (no his
@@ -17,7 +17,7 @@ name is not Marat).
 Note: naturally I have no PDP1, I have never seen one, nor have I any
 programs for it.
 
-The only program I found (in binary form) is
+The first supported program was:
 
 SPACEWAR!
 
@@ -38,7 +38,7 @@ I think the historical value of SPACEWAR! is enormous.
 
 In SPACEWAR!, meaning of the sense switches
 
-Sense switch 1 On = low momentum            Off = high momentum (guess)
+Sense switch 1 On = high momentum           Off = low momentum
 Sense switch 2 On = low gravity             Off = high gravity
 Sense switch 3            something with torpedos?
 Sense switch 4 On = background stars off    Off = background stars on
@@ -71,21 +71,15 @@ and the java source).
 
 #include "driver.h"
 
-#include "includes/pdp1.h"
 #include "cpu/pdp1/pdp1.h"
+#include "includes/pdp1.h"
 
 /*
  * PRECISION CRT DISPLAY (TYPE 30)
  * is the only display - hardware emulated, this is needed for SPACEWAR!
  *
- * Only keys required in SPACEWAR! are emulated.
- *
  * The loading storing OS... is not emulated (I haven't a clue where to
- * get programs for the machine (ROMS!!!))
- *
- * The only supported program is SPACEWAR!
- * For Web addresses regarding PDP1 and SPACEWAR look at the
- * pdp1/pdp1.c file
+ * get programs for the machine)
  *
  */
 
@@ -116,14 +110,14 @@ MEMORY_END
 INPUT_PORTS_START( pdp1 )
 
     PORT_START		/* 0: spacewar controllers */
-	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT, "Spin Left Player 1", KEYCODE_A, JOYCODE_1_LEFT )
-	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT, "Spin Right Player 1", KEYCODE_S, JOYCODE_1_RIGHT )
-	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1, "Thrust Player 1", KEYCODE_D, JOYCODE_1_BUTTON1 )
-	PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2, "Fire Player 1", KEYCODE_F, JOYCODE_1_BUTTON2 )
-	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT|IPF_PLAYER2, "Spin Left Player 2", KEYCODE_LEFT, JOYCODE_2_LEFT )
-	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT|IPF_PLAYER2, "Spin Right Player 2", KEYCODE_RIGHT, JOYCODE_2_RIGHT )
-	PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1|IPF_PLAYER2, "Thrust Player 2", KEYCODE_UP, JOYCODE_2_BUTTON1 )
-	PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2|IPF_PLAYER2, "Fire Player 2", KEYCODE_DOWN, JOYCODE_2_BUTTON2 )
+	PORT_BITX( ROTATE_LEFT_PLAYER1, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT, "Spin Left Player 1", KEYCODE_A, JOYCODE_1_LEFT )
+	PORT_BITX( ROTATE_RIGHT_PLAYER1, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT, "Spin Right Player 1", KEYCODE_S, JOYCODE_1_RIGHT )
+	PORT_BITX( THRUST_PLAYER1, IP_ACTIVE_HIGH, IPT_BUTTON1, "Thrust Player 1", KEYCODE_D, JOYCODE_1_BUTTON1 )
+	PORT_BITX( FIRE_PLAYER1, IP_ACTIVE_HIGH, IPT_BUTTON2, "Fire Player 1", KEYCODE_F, JOYCODE_1_BUTTON2 )
+	PORT_BITX( ROTATE_LEFT_PLAYER2, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT|IPF_PLAYER2, "Spin Left Player 2", KEYCODE_LEFT, JOYCODE_2_LEFT )
+	PORT_BITX( ROTATE_RIGHT_PLAYER2, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT|IPF_PLAYER2, "Spin Right Player 2", KEYCODE_RIGHT, JOYCODE_2_RIGHT )
+	PORT_BITX( THRUST_PLAYER2, IP_ACTIVE_HIGH, IPT_BUTTON1|IPF_PLAYER2, "Thrust Player 2", KEYCODE_UP, JOYCODE_2_BUTTON1 )
+	PORT_BITX( FIRE_PLAYER2, IP_ACTIVE_HIGH, IPT_BUTTON2|IPF_PLAYER2, "Fire Player 2", KEYCODE_DOWN, JOYCODE_2_BUTTON2 )
 
 	PORT_START		/* 1: various pdp1 operator control panel switches */
 	PORT_BITX(pdp1_control, IP_ACTIVE_HIGH, IPT_KEYBOARD, "control panel key", KEYCODE_LCONTROL, IP_JOY_NONE)
@@ -135,10 +129,10 @@ INPUT_PORTS_START( pdp1 )
 	PORT_BITX(pdp1_examine, IP_ACTIVE_HIGH, IPT_KEYBOARD, "examine", KEYCODE_OPENBRACE, IP_JOY_NONE)
 	PORT_BITX(pdp1_deposit, IP_ACTIVE_HIGH, IPT_KEYBOARD, "deposit", KEYCODE_CLOSEBRACE, IP_JOY_NONE)
 	PORT_BITX(pdp1_read_in, IP_ACTIVE_HIGH, IPT_KEYBOARD, "read in", KEYCODE_ENTER, IP_JOY_NONE)
-	PORT_BITX(pdp1_reader, IP_ACTIVE_HIGH, IPT_KEYBOARD, "reader", KEYCODE_MINUS, IP_JOY_NONE)
-	PORT_BITX(pdp1_tape_feed, IP_ACTIVE_HIGH, IPT_KEYBOARD, "tape feed", KEYCODE_EQUALS, IP_JOY_NONE)
-	PORT_BITX(pdp1_single_step, IP_ACTIVE_HIGH, IPT_KEYBOARD, "single step", KEYCODE_QUOTE, IP_JOY_NONE)
-	PORT_BITX(pdp1_single_inst, IP_ACTIVE_HIGH, IPT_KEYBOARD, "single inst", KEYCODE_BACKSLASH, IP_JOY_NONE)
+	PORT_BITX(pdp1_reader, IP_ACTIVE_HIGH, IPT_KEYBOARD, "reader", KEYCODE_NONE, IP_JOY_NONE)
+	PORT_BITX(pdp1_tape_feed, IP_ACTIVE_HIGH, IPT_KEYBOARD, "tape feed", KEYCODE_NONE, IP_JOY_NONE)
+	PORT_BITX(pdp1_single_step, IP_ACTIVE_HIGH, IPT_KEYBOARD, "single step", KEYCODE_STOP, IP_JOY_NONE)
+	PORT_BITX(pdp1_single_inst, IP_ACTIVE_HIGH, IPT_KEYBOARD, "single inst", KEYCODE_SLASH, IP_JOY_NONE)
 
     PORT_START		/* 2: operator control panel sense switches */
 	PORT_BITX(	  040, 000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 1", KEYCODE_1_PAD, IP_JOY_NONE )
@@ -171,12 +165,12 @@ INPUT_PORTS_START( pdp1 )
 	PORT_BITX( 0000400, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Address Switch 10", KEYCODE_8, IP_JOY_NONE )
 	PORT_BITX( 0000200, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Address Switch 11", KEYCODE_9, IP_JOY_NONE )
 	PORT_BITX( 0000100, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Address Switch 12", KEYCODE_0, IP_JOY_NONE )
-	PORT_BITX( 0000040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Address Switch 13", KEYCODE_Q, IP_JOY_NONE )
-	PORT_BITX( 0000020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Address Switch 14", KEYCODE_W, IP_JOY_NONE )
-	PORT_BITX( 0000010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Address Switch 15", KEYCODE_E, IP_JOY_NONE )
-	PORT_BITX( 0000004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Address Switch 16", KEYCODE_R, IP_JOY_NONE )
-   	PORT_BITX( 0000002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Address Switch 17", KEYCODE_T, IP_JOY_NONE )
-   	PORT_BITX( 0000001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Address Switch 18", KEYCODE_Y, IP_JOY_NONE )
+	PORT_BITX( 0000040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Address Switch 13", KEYCODE_MINUS, IP_JOY_NONE )
+	PORT_BITX( 0000020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Address Switch 14", KEYCODE_EQUALS, IP_JOY_NONE )
+	PORT_BITX( 0000010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Address Switch 15", KEYCODE_Q, IP_JOY_NONE )
+	PORT_BITX( 0000004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Address Switch 16", KEYCODE_W, IP_JOY_NONE )
+   	PORT_BITX( 0000002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Address Switch 17", KEYCODE_E, IP_JOY_NONE )
+   	PORT_BITX( 0000001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Address Switch 18", KEYCODE_R, IP_JOY_NONE )
 
     PORT_START		/* 4: operator control panel test word switches MSB */
 	PORT_BITX(    0002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Word Switch 1", KEYCODE_A, IP_JOY_NONE )
@@ -191,14 +185,14 @@ INPUT_PORTS_START( pdp1 )
 	PORT_BITX( 0002000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Word Switch 8", KEYCODE_K, IP_JOY_NONE )
 	PORT_BITX( 0001000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Word Switch 9", KEYCODE_L, IP_JOY_NONE )
 	PORT_BITX( 0000400, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Word Switch 10", KEYCODE_COLON, IP_JOY_NONE )
-	PORT_BITX( 0000200, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Word Switch 11", KEYCODE_Z, IP_JOY_NONE )
-	PORT_BITX( 0000100, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Word Switch 12", KEYCODE_X, IP_JOY_NONE )
-	PORT_BITX( 0000040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Word Switch 13", KEYCODE_C, IP_JOY_NONE )
-	PORT_BITX( 0000020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Word Switch 14", KEYCODE_V, IP_JOY_NONE )
-	PORT_BITX( 0000010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Word Switch 15", KEYCODE_B, IP_JOY_NONE )
-	PORT_BITX( 0000004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Word Switch 16", KEYCODE_N, IP_JOY_NONE )
-   	PORT_BITX( 0000002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Word Switch 17", KEYCODE_M, IP_JOY_NONE )
-   	PORT_BITX( 0000001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Word Switch 18", KEYCODE_COMMA, IP_JOY_NONE )
+	PORT_BITX( 0000200, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Word Switch 11", KEYCODE_QUOTE, IP_JOY_NONE )
+	PORT_BITX( 0000100, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Word Switch 12", KEYCODE_BACKSLASH, IP_JOY_NONE )
+	PORT_BITX( 0000040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Word Switch 13", KEYCODE_Z, IP_JOY_NONE )
+	PORT_BITX( 0000020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Word Switch 14", KEYCODE_X, IP_JOY_NONE )
+	PORT_BITX( 0000010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Word Switch 15", KEYCODE_C, IP_JOY_NONE )
+	PORT_BITX( 0000004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Word Switch 16", KEYCODE_V, IP_JOY_NONE )
+   	PORT_BITX( 0000002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Word Switch 17", KEYCODE_B, IP_JOY_NONE )
+   	PORT_BITX( 0000001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Word Switch 18", KEYCODE_N, IP_JOY_NONE )
 
 	/*
 		Note that I can see 2 additional keys whose purpose is unknown to me (I cannot read the
@@ -230,7 +224,7 @@ INPUT_PORTS_START( pdp1 )
 	PORT_BITX(0x0800, IP_ACTIVE_HIGH, IPT_KEYBOARD, ", =", KEYCODE_COMMA, IP_JOY_NONE)
 	PORT_BITX(0x4000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Tab", KEYCODE_TAB, IP_JOY_NONE)
 
-    PORT_START		/* 7: typewriter codes 40-57 */
+    PORT_START		/* 8: typewriter codes 40-57 */
 	PORT_BITX(0x0001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "(non-spacing middle dot) _", KEYCODE_QUOTE, IP_JOY_NONE)
 	PORT_BITX(0x0002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "J", KEYCODE_J, IP_JOY_NONE)
 	PORT_BITX(0x0004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "K", KEYCODE_K, IP_JOY_NONE)
@@ -246,7 +240,7 @@ INPUT_PORTS_START( pdp1 )
 	PORT_BITX(0x4000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "(non-spacing overstrike) |", KEYCODE_OPENBRACE, IP_JOY_NONE)
 	PORT_BITX(0x8000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "( [", KEYCODE_MINUS, IP_JOY_NONE)
 
-    PORT_START		/* 8: typewriter codes 60-77 */
+    PORT_START		/* 9: typewriter codes 60-77 */
 	PORT_BITX(0x0002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "A", KEYCODE_A, IP_JOY_NONE)
 	PORT_BITX(0x0004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "B", KEYCODE_B, IP_JOY_NONE)
 	PORT_BITX(0x0008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "C", KEYCODE_C, IP_JOY_NONE)
@@ -263,6 +257,13 @@ INPUT_PORTS_START( pdp1 )
 	PORT_BITX(0x1000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Upper case", KEYCODE_CAPSLOCK, IP_JOY_NONE)
 	PORT_BITX(0x2000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Backspace", KEYCODE_BACKSPACE, IP_JOY_NONE)
 	PORT_BITX(0x8000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Return", KEYCODE_ENTER, IP_JOY_NONE)
+
+	PORT_START		/* 10: pseudo-input port with config */
+	PORT_BITX(	  003, 002, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM size", KEYCODE_1_PAD, IP_JOY_NONE )
+    PORT_DIPSETTING(    000, "4kw" )
+    PORT_DIPSETTING(    001, "32kw")
+    PORT_DIPSETTING(    002, "64kw")
+
 
 INPUT_PORTS_END
 
@@ -285,7 +286,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-/* palette: grey levels follow an exponential law, so that decreasing the color index periodically
+/* palette: grey levels follow an exponential law, so that decrementing the color index periodically
 will simulate the remanence of a cathode ray tube */
 static unsigned char palette[] =
 {
@@ -311,7 +312,7 @@ static unsigned char palette[] =
 
 static unsigned short colortable[] =
 {
-	PANEL_BG, PANEL_TEXT
+	pen_panel_bg, pen_panel_caption
 };
 
 /* Initialise the palette */
@@ -322,11 +323,11 @@ static void pdp1_init_palette(unsigned char *sys_palette, unsigned short *sys_co
 }
 
 
-static pdp1_reset_param reset_param =
+pdp1_reset_param_t pdp1_reset_param =
 {
 	pdp1_iot,
 	pdp1_tape_read_binary,
-	pdp1_get_test_word
+	0	/* extend mode support defined in input ports and pdp1_init_machine */
 };
 
 
@@ -341,11 +342,11 @@ static struct MachineDriver machine_driver_pdp1 =
 	{
 		{
 			CPU_PDP1,
-			1000000,	/* should be 200000, but actually the machine is much faster */
+			1000000,	/* should be 200000, but this makes little sense as there is no master clock */
 			pdp1_readmem, pdp1_writemem,0,0,
 			pdp1_interrupt, 1, /* fake interrupt */
 			0, 0,
-			& reset_param
+			& pdp1_reset_param
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
@@ -418,7 +419,7 @@ static const struct IODevice io_pdp1[] =
 
 
 /*
-	only 4096 are used for now, but pdp1 can address 65336 18 bit words when extended.
+	pdp1 can address up to 65336 18 bit words when extended (4096 otherwise).
 */
 ROM_START(pdp1)
 	/*CPU memory space*/
@@ -433,6 +434,13 @@ ROM_START(pdp1)
 	ROM_REGION(pdp1_fontdata_size, REGION_GFX1, 0)
 		/* space filled with our font */
 ROM_END
+
+
+/*COMPUTER_CONFIG_START(pdp1)
+	CONFIG_RAM_DEFAULT(4 * 1024)
+	CONFIG_RAM(32 * 1024)
+	CONFIG_RAM(64 * 1024)
+COMPUTER_CONFIG_END*/
 
 
 /***************************************************************************

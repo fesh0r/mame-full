@@ -2,8 +2,8 @@
 
 #include "driver.h"
 
-#include "includes/pdp1.h"
 #include "cpu/pdp1/pdp1.h"
+#include "includes/pdp1.h"
 
 
 int *pdp1_memory;
@@ -95,6 +95,8 @@ static OPBASE_HANDLER(setOPbasefunc)
 void pdp1_init_machine(void)
 {
 	memory_set_opbase_handler(0,setOPbasefunc);
+
+	pdp1_reset_param.extend_support = readinputport(pdp1_config);
 }
 
 READ18_HANDLER(pdp1_read_mem)
@@ -237,17 +239,15 @@ static void teletyper_write(UINT8 data)
 		osd_fwrite(pdp1_teletyper.fd, & data, 1);
 }
 
-/* these are the key-bits specified in driver\pdp1.c */
-#define FIRE_PLAYER2              128
-#define THRUST_PLAYER2            64
-#define ROTATE_RIGHT_PLAYER2      32
-#define ROTATE_LEFT_PLAYER2       16
-#define FIRE_PLAYER1              8
-#define THRUST_PLAYER1            4
-#define ROTATE_RIGHT_PLAYER1      2
-#define ROTATE_LEFT_PLAYER1       1
 
-/* time in micro seconds, (*io_register) */
+/*
+	handle IOT
+
+	io: pointer on the IO register
+	md: contents of the MB register
+
+	returns execution time in microseconds
+*/
 int pdp1_iot(int *io, int md)
 {
 	int etime /*=0*/;
@@ -289,11 +289,11 @@ int pdp1_iot(int *io, int md)
 		reader_buffer = read_byte;
 		if (read_byte == 0)
 		{
-			cpu_set_reg(PDP1_F1,0);
+			cpu_set_reg(PDP1_PF1,0);
 			break;
 		}
 		else
-			cpu_set_reg(PDP1_F1,1);
+			cpu_set_reg(PDP1_PF1,1);
 
 		if (!((md>>11)&3))
 		{
@@ -346,11 +346,11 @@ int pdp1_iot(int *io, int md)
 		reader_buffer = read_word;
 		if (not_ready)
 		{
-			cpu_set_reg(PDP1_F1,0);
+			cpu_set_reg(PDP1_PF1,0);
 			break;
 		}
 		else
-			cpu_set_reg(PDP1_F1,1);
+			cpu_set_reg(PDP1_PF1,1);
 
 		if (!((md>>11)&3))
 		{
@@ -368,7 +368,7 @@ int pdp1_iot(int *io, int md)
 	{
 		logerror("Warning, RRB instruction not fully emulated: io=0%06o, mb=0%06o, pc=0%06o\n",*io, md, cpu_get_reg(PDP1_PC));
 		etime = 5;
-		cpu_set_reg(PDP1_F1,0);
+		cpu_set_reg(PDP1_PF1,0);
 		*io = reader_buffer;
 		break;
 	}
@@ -496,12 +496,25 @@ int pdp1_iot(int *io, int md)
 		break;
 	}
 
+
 	/* check status */
 	case 033: /* CKS */
 	{
 		logerror("Warning, CKS instruction not fully emulated: io=0%06o, mb=0%06o, pc=0%06o\n", *io, md, cpu_get_reg(PDP1_PC));
 		etime = 0;
 		break;
+	}
+
+	/* MEMORY EXPANSION CONTROL (TYPE 15) */
+	case 074:
+	{
+		if (pdp1_reset_param.extend_support)	/* extend mode supported? */
+		{
+			etime = 0;	/* mere guess */
+			cpunum_set_reg(0, PDP1_EXD, md & 0004000);
+			break;
+		}
+		/* if not, fall back to unsupported IOT */
 	}
 
 	default:
@@ -520,7 +533,7 @@ int pdp1_iot(int *io, int md)
 	keyboard handlers
 */
 
-int pdp1_keyboard(void)
+static int pdp1_keyboard(void)
 {
 	int i;
 	int j;
@@ -544,7 +557,7 @@ int pdp1_keyboard(void)
 				;
 			typewriter_buffer = (i << 4) + j;
 			typewriter_buffer_status = 1;
-			cpu_set_reg(PDP1_F1, 1);
+			cpu_set_reg(PDP1_PF1, 1);
 			break;
 		}
 	}
@@ -554,10 +567,6 @@ int pdp1_keyboard(void)
 
 	return 0;
 }
-
-static int extend_switch;
-int pdp1_ta;
-int pdp1_tw;
 
 /*
 	Not a real interrupt - just handle keyboard input
@@ -581,7 +590,7 @@ int pdp1_interrupt(void)
 	pdp1_screen_update();
 
 
-	cpu_set_reg(PDP1_S, readinputport(pdp1_sense_switches));
+	cpu_set_reg(PDP1_SS, readinputport(pdp1_sense_switches));
 
 	/* read new state of control keys */
 	control_keys = readinputport(pdp1_control_switches);
@@ -593,24 +602,24 @@ int pdp1_interrupt(void)
 
 		if (control_transitions & pdp1_extend)
 		{
-			extend_switch = ! extend_switch;
+			cpunum_set_reg(0, PDP1_EXTEND_SW, ! cpunum_get_reg(0, PDP1_EXTEND_SW));
 		}
 		if (control_transitions & pdp1_start_nobrk)
 		{
-			/*cpunum_reset(0);*/
-			/*cpunum_set_reg(0, PDP1_EXTEND, extend_switch);*/
+			pdp1_pulse_start_clear();	/* pulse Start Clear line */
+			cpunum_set_reg(0, PDP1_EXD, cpunum_get_reg(0, PDP1_EXTEND_SW));
 			/*cpunum_set_reg(0, PDP1_SBM, 0);*/
 			cpunum_set_reg(0, PDP1_OV, 0);
-			cpunum_set_reg(0, PDP1_PC, pdp1_ta);
+			cpunum_set_reg(0, PDP1_PC, cpunum_get_reg(0, PDP1_TA));
 			cpunum_set_reg(0, PDP1_RUN, 1);
 		}
 		if (control_transitions & pdp1_start_brk)
 		{
-			/*cpunum_reset(0);*/
-			/*cpunum_set_reg(0, PDP1_EXTEND, extend_switch);*/
+			pdp1_pulse_start_clear();	/* pulse Start Clear line */
+			cpunum_set_reg(0, PDP1_EXD, cpunum_get_reg(0, PDP1_EXTEND_SW));
 			/*cpunum_set_reg(0, PDP1_SBM, 1);*/
 			cpunum_set_reg(0, PDP1_OV, 0);
-			cpunum_set_reg(0, PDP1_PC, pdp1_ta);
+			cpunum_set_reg(0, PDP1_PC, cpunum_get_reg(0, PDP1_TA));
 			cpunum_set_reg(0, PDP1_RUN, 1);
 		}
 		if (control_transitions & pdp1_stop)
@@ -626,29 +635,34 @@ int pdp1_interrupt(void)
 		}
 		if (control_transitions & pdp1_examine)
 		{
-			int value;
-			/*cpunum_reset(0);*/
-			cpunum_set_reg(0, PDP1_PC, pdp1_ta);
-			cpunum_set_reg(0, PDP1_MA, pdp1_ta);
-			value = READ_PDP_18BIT(pdp1_ta);
-			cpunum_set_reg(0, PDP1_MB, value);
-			cpunum_set_reg(0, PDP1_AC, value);
+			pdp1_pulse_start_clear();	/* pulse Start Clear line */
+			cpunum_set_reg(0, PDP1_PC, cpunum_get_reg(0, PDP1_TA));
+			cpunum_set_reg(0, PDP1_MA, cpunum_get_reg(0, PDP1_PC));
+			cpunum_set_reg(0, PDP1_IR, LAC);	/* this instruction is actually executed */
+
+			cpunum_set_reg(0, PDP1_MB, READ_PDP_18BIT(cpunum_get_reg(0, PDP1_MA)));
+			cpunum_set_reg(0, PDP1_AC, cpunum_get_reg(0, PDP1_MB));
 		}
 		if (control_transitions & pdp1_deposit)
 		{
-			/*cpunum_reset(0);*/
-			cpunum_set_reg(0, PDP1_PC, pdp1_ta);
-			cpunum_set_reg(0, PDP1_MA, pdp1_ta);
-			cpunum_set_reg(0, PDP1_AC, pdp1_tw);
-			cpunum_set_reg(0, PDP1_MB, pdp1_tw);
-			WRITE_PDP_18BIT(pdp1_ta, pdp1_tw);
+			pdp1_pulse_start_clear();	/* pulse Start Clear line */
+			cpunum_set_reg(0, PDP1_PC, cpunum_get_reg(0, PDP1_TA));
+			cpunum_set_reg(0, PDP1_MA, cpunum_get_reg(0, PDP1_PC));
+			cpunum_set_reg(0, PDP1_AC, cpunum_get_reg(0, PDP1_TW));
+			cpunum_set_reg(0, PDP1_IR, DAC);	/* this instruction is actually executed */
+
+			cpunum_set_reg(0, PDP1_MB, cpunum_get_reg(0, PDP1_AC));
+			WRITE_PDP_18BIT(cpunum_get_reg(0, PDP1_MA), cpunum_get_reg(0, PDP1_MB));
 		}
 		if (control_transitions & pdp1_read_in)
-		{	/* set cpu to read instruction from perforated tape */
-			/*cpunum_reset(0);*/
-			/*cpunum_set_reg(0, PDP1_EXTEND, extend_switch);*/
-			/*cpunum_set_reg(0, PDP1_OV, 0);*/		/* right??? */
-			cpunum_set_reg(0, PDP1_RUN, 0);		/* right??? */
+		{	/* set cpu to read instructions from perforated tape */
+			pdp1_pulse_start_clear();	/* pulse Start Clear line */
+			cpunum_set_reg(0, PDP1_PC, (cpunum_get_reg(0, PDP1_TA) & 0170000)
+										|  (cpunum_get_reg(0, PDP1_PC) & 0007777));	/* transfer ETA to EPC */
+			/*cpunum_set_reg(0, PDP1_MA, cpunum_get_reg(0, PDP1_PC));*/
+			cpunum_set_reg(0, PDP1_EXD, cpunum_get_reg(0, PDP1_EXTEND_SW));
+			cpunum_set_reg(0, PDP1_OV, 0);		/* right??? */
+			cpunum_set_reg(0, PDP1_RUN, 0);
 			cpunum_set_reg(0, PDP1_RIM, 1);
 		}
 		if (control_transitions & pdp1_reader)
@@ -659,34 +673,38 @@ int pdp1_interrupt(void)
 		}
 		if (control_transitions & pdp1_single_step)
 		{
-			/*cpunum_set_reg(0, PDP1_SNGLSTEP, ! cpunum_get_reg(0, PDP1_SNGLSTEP));*/
+			cpunum_set_reg(0, PDP1_SNGL_STEP, ! cpunum_get_reg(0, PDP1_SNGL_STEP));
 		}
 		if (control_transitions & pdp1_single_inst)
 		{
-			/*cpunum_set_reg(0, PDP1_SNGLINST, ! cpunum_get_reg(0, PDP1_SNGLINST));*/
+			cpunum_set_reg(0, PDP1_SNGL_INST, ! cpunum_get_reg(0, PDP1_SNGL_INST));
 		}
 
 		/* remember new state of control keys */
 		old_control_keys = control_keys;
 
 
+		/* handle test word keys */
 		tw_keys = (readinputport(pdp1_tw_switches_MSB) << 16) | readinputport(pdp1_tw_switches_LSB);
 
 		/* compute transitions */
 		tw_transitions = tw_keys & (~ old_tw_keys);
 
-		pdp1_tw ^= tw_transitions;
+		if (tw_transitions)
+			cpunum_set_reg(0, PDP1_TW, cpunum_get_reg(0, PDP1_TW) ^ tw_transitions);
 
 		/* remember new state of test word keys */
 		old_tw_keys = tw_keys;
 
 
+		/* handle address keys */
 		ta_keys = readinputport(pdp1_ta_switches);
 
 		/* compute transitions */
 		ta_transitions = ta_keys & (~ old_ta_keys);
 
-		pdp1_ta ^= ta_transitions;
+		if (ta_transitions)
+			cpunum_set_reg(0, PDP1_TA, cpunum_get_reg(0, PDP1_TA) ^ ta_transitions);
 
 		/* remember new state of test word keys */
 		old_ta_keys = ta_keys;
@@ -703,9 +721,3 @@ int pdp1_interrupt(void)
 
 	return ignore_interrupt();
 }
-
-int pdp1_get_test_word(void)
-{
-	return pdp1_tw;
-}
-

@@ -31,15 +31,12 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#include "includes/pdp1.h"
 #include "cpu/pdp1/pdp1.h"
+#include "includes/pdp1.h"
 
 
 static void pdp1_draw_panel(struct mame_bitmap *bitmap, int full_refresh);
 
-
-static int bitmap_width;	/* width of machine bitmap */
-static int bitmap_height;	/* height of machine bitmap */
 
 typedef struct
 {
@@ -49,7 +46,7 @@ typedef struct
 	int next;				/* index of next pixel in list */
 } point;
 
-static point *list;			/* array of (bitmap_width*bitmap_height) point */
+static point *list;			/* array of (crt_window_width*crt_window_height) point */
 static int list_head;		/* head of list in the array */
 
 
@@ -61,16 +58,13 @@ int pdp1_vh_start(void)
 	int i;
 
 
-	bitmap_width = crt_window_width;
-	bitmap_height = crt_window_height;
-
 	/* alloc bitmap for our private fun */
 	tmpbitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
 	if (! tmpbitmap)
 		return 1;
 
 	/* alloc the array */
-	list = malloc(bitmap_width * bitmap_height * sizeof(point));
+	list = malloc(crt_window_width * crt_window_height * sizeof(point));
 	if (! list)
 	{
 		bitmap_free(tmpbitmap);
@@ -79,7 +73,7 @@ int pdp1_vh_start(void)
 		return 1;
 	}
 	/* fill with black and set up list as empty */
-	for (i=0; i<(bitmap_width * bitmap_height); i++)
+	for (i=0; i<(crt_window_width * crt_window_height); i++)
 	{
 		list[i].cur_intensity = 0;
 		list[i].max_intensity = -1;
@@ -111,7 +105,7 @@ void pdp1_vh_stop(void)
 }
 
 /*
-	plot a pixel (this is actually deferred)
+	schedule a pixel to be plotted
 */
 void pdp1_plot(int x, int y)
 {
@@ -119,16 +113,18 @@ void pdp1_plot(int x, int y)
 	int list_index;
 	int intensity;
 
-	x = x*bitmap_width/01777;
-	y = y*bitmap_height/01777;
+	/* compute pixel coordinates */
+	x = x*crt_window_width/01777;
+	y = y*crt_window_height/01777;
 	if (x<0) x=0;
 	if (y<0) y=0;
-	if ((x>(bitmap_width-1))||((y>bitmap_height-1)))
+	if ((x>(crt_window_width-1)) || ((y>crt_window_height-1)))
 		return;
-	y = (bitmap_height-1) - y;
-	intensity = VIDEO_MAX_INTENSITY;
+	y = (crt_window_height-1) - y;
+	intensity = pen_crt_max_intensity;
 
-	list_index = x + y*bitmap_width;
+	/* find entry in list */
+	list_index = x + y*crt_window_width;
 
 	node = & list[list_index];
 
@@ -177,7 +173,8 @@ static void set_points(struct mame_bitmap *bitmap)
 	for (i=list_head; (i != -1); i=list[i].next)
 	{
 		point *node = & list[i];
-		int x = i % bitmap_width, y = i / bitmap_width;
+		int x = (i % crt_window_width) + crt_window_offset_x,
+			y = (i / crt_window_width) + crt_window_offset_y;
 
 		if (node->cur_intensity > node->max_intensity)
 			node->max_intensity = node->cur_intensity;
@@ -189,7 +186,7 @@ static void set_points(struct mame_bitmap *bitmap)
 		{
 			/* reset maximum */
 			node->max_intensity = 0;
-			p_i = i;	/* current node will be the previous node */
+			p_i = i;	/* current node will be next iteration's previous node */
 		}
 		else
 		{	/* delete current node */
@@ -231,18 +228,15 @@ void pdp1_vh_update (struct mame_bitmap *bitmap, int full_refresh)
 
 enum
 {
-	x_panel_offset = 512,
-	y_panel_offset = 0,
-
-	x_panel_col1_offset = x_panel_offset+8,
+	x_panel_col1_offset = panel_window_offset_x+8,
 	x_panel_col2_offset = x_panel_col1_offset+144+8,
 	x_panel_col3_offset = x_panel_col2_offset+96+8
 };
 
 static const struct rectangle panel_window =
 {
-	0+x_panel_offset,	256+x_panel_offset-1,	/* min_x, max_x */
-	0+y_panel_offset,	512+y_panel_offset-1,	/* min_y, max_y */
+	panel_window_offset_x,	panel_window_offset_x+panel_window_width-1,	/* min_x, max_x */
+	panel_window_offset_y,	panel_window_offset_y+panel_window_height-1,/* min_y, max_y */
 };
 
 
@@ -253,7 +247,7 @@ static void pdp1_draw_led(struct mame_bitmap *bitmap, int x, int y, int state)
 
 	for (yy=1; yy<7; yy++)
 		for (xx=1; xx<7; xx++)
-			plot_pixel(bitmap, x+xx, y+yy, Machine->pens[state ? LIT_LAMP : UNLIT_LAMP]);
+			plot_pixel(bitmap, x+xx, y+yy, Machine->pens[state ? pen_lit_lamp : pen_unlit_lamp]);
 }
 
 /* draw nb_bits leds which represent nb_bits bits in value */
@@ -279,34 +273,34 @@ static void pdp1_draw_switch(struct mame_bitmap *bitmap, int x, int y, int state
 	/* erase area */
 	for (yy=0; yy<8; yy++)
 		for (xx=0; xx<8; xx++)
-			plot_pixel(bitmap, x+xx, y+yy, Machine->pens[PANEL_BG]);
+			plot_pixel(bitmap, x+xx, y+yy, Machine->pens[pen_panel_bg]);
 
 
-	/* draw circle */
+	/* draw nut (-> circle) */
 	for (i=0; i<4;i++)
 	{
-		plot_pixel(bitmap, x+2+i, y+1, Machine->pens[SWITCH_BK]);
-		plot_pixel(bitmap, x+2+i, y+6, Machine->pens[SWITCH_BK]);
-		plot_pixel(bitmap, x+1, y+2+i, Machine->pens[SWITCH_BK]);
-		plot_pixel(bitmap, x+6, y+2+i, Machine->pens[SWITCH_BK]);
+		plot_pixel(bitmap, x+2+i, y+1, Machine->pens[pen_switch_nut]);
+		plot_pixel(bitmap, x+2+i, y+6, Machine->pens[pen_switch_nut]);
+		plot_pixel(bitmap, x+1, y+2+i, Machine->pens[pen_switch_nut]);
+		plot_pixel(bitmap, x+6, y+2+i, Machine->pens[pen_switch_nut]);
 	}
-	plot_pixel(bitmap, x+2, y+2, Machine->pens[SWITCH_BK]);
-	plot_pixel(bitmap, x+5, y+2, Machine->pens[SWITCH_BK]);
-	plot_pixel(bitmap, x+2, y+5, Machine->pens[SWITCH_BK]);
-	plot_pixel(bitmap, x+5, y+5, Machine->pens[SWITCH_BK]);
+	plot_pixel(bitmap, x+2, y+2, Machine->pens[pen_switch_nut]);
+	plot_pixel(bitmap, x+5, y+2, Machine->pens[pen_switch_nut]);
+	plot_pixel(bitmap, x+2, y+5, Machine->pens[pen_switch_nut]);
+	plot_pixel(bitmap, x+5, y+5, Machine->pens[pen_switch_nut]);
 
-	/* draw button */
+	/* draw button (->disc) */
 	if (! state)
 		y += 4;
 	for (i=0; i<2;i++)
 	{
-		plot_pixel(bitmap, x+3+i, y, Machine->pens[SWITCH_BUTTON]);
-		plot_pixel(bitmap, x+3+i, y+3, Machine->pens[SWITCH_BUTTON]);
+		plot_pixel(bitmap, x+3+i, y, Machine->pens[pen_switch_button]);
+		plot_pixel(bitmap, x+3+i, y+3, Machine->pens[pen_switch_button]);
 	}
 	for (i=0; i<4;i++)
 	{
-		plot_pixel(bitmap, x+2+i, y+1, Machine->pens[SWITCH_BUTTON]);
-		plot_pixel(bitmap, x+2+i, y+2, Machine->pens[SWITCH_BUTTON]);
+		plot_pixel(bitmap, x+2+i, y+1, Machine->pens[pen_switch_button]);
+		plot_pixel(bitmap, x+2+i, y+2, Machine->pens[pen_switch_button]);
 	}
 }
 
@@ -360,155 +354,158 @@ static void pdp1_draw_hline(struct mame_bitmap *bitmap, int x, int y, int width,
 }
 
 
+/*
+	draw the operator control panel
+*/
 static void pdp1_draw_panel(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int y;
 
 	if (full_refresh)
-		fillbitmap(bitmap, Machine->pens[PANEL_BG], &/*Machine->visible_area*/panel_window);
+		fillbitmap(bitmap, Machine->pens[pen_panel_bg], &/*Machine->visible_area*/panel_window);
 
 	/* column 1: registers, test word, test address */
-	y = y_panel_offset;
+	y = panel_window_offset_y;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "program counter", x_panel_col1_offset, y, PANEL_TEXT_IX);
+		pdp1_draw_string(bitmap, "program counter", x_panel_col1_offset, y, color_panel_caption);
 	y += 8;
 	pdp1_draw_multipleled(bitmap, x_panel_col1_offset+2*8, y, cpunum_get_reg(0, PDP1_PC), 16);
 	y += 8;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "memory address", x_panel_col1_offset, y, PANEL_TEXT_IX);
+		pdp1_draw_string(bitmap, "memory address", x_panel_col1_offset, y, color_panel_caption);
 	y += 8;
 	pdp1_draw_multipleled(bitmap, x_panel_col1_offset+2*8, y, cpunum_get_reg(0, PDP1_MA), 16);
 	y += 8;
 
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "memory buffer", x_panel_col1_offset, y, PANEL_TEXT_IX);
+		pdp1_draw_string(bitmap, "memory buffer", x_panel_col1_offset, y, color_panel_caption);
 	y += 8;
 	pdp1_draw_multipleled(bitmap, x_panel_col1_offset, y, cpunum_get_reg(0, PDP1_MB), 18);
 	y += 8;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "accumulator", x_panel_col1_offset, y, PANEL_TEXT_IX);
+		pdp1_draw_string(bitmap, "accumulator", x_panel_col1_offset, y, color_panel_caption);
 	y += 8;
 	pdp1_draw_multipleled(bitmap, x_panel_col1_offset, y, cpunum_get_reg(0, PDP1_AC), 18);
 	y += 8;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "in-out", x_panel_col1_offset, y, PANEL_TEXT_IX);
+		pdp1_draw_string(bitmap, "in-out", x_panel_col1_offset, y, color_panel_caption);
 	y += 8;
 	pdp1_draw_multipleled(bitmap, x_panel_col1_offset, y, cpunum_get_reg(0, PDP1_IO), 18);
 	y += 8;
 
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "extend  address", x_panel_col1_offset-8, y, PANEL_TEXT_IX);
+		pdp1_draw_string(bitmap, "extend  address", x_panel_col1_offset-8, y, color_panel_caption);
 	y += 8;
-	pdp1_draw_switch(bitmap, x_panel_col1_offset, y, 0);	/* not emulated */
-	pdp1_draw_multipleswitch(bitmap, x_panel_col1_offset+2*8, y, pdp1_ta, 16);
+	pdp1_draw_switch(bitmap, x_panel_col1_offset, y, cpunum_get_reg(0, PDP1_EXTEND_SW));
+	pdp1_draw_multipleswitch(bitmap, x_panel_col1_offset+2*8, y, cpunum_get_reg(0, PDP1_TA), 16);
 	y += 8;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "test word", x_panel_col1_offset, y, PANEL_TEXT_IX);
+		pdp1_draw_string(bitmap, "test word", x_panel_col1_offset, y, color_panel_caption);
 	y += 8;
-	pdp1_draw_multipleswitch(bitmap, x_panel_col1_offset, y, pdp1_tw, 18);
+	pdp1_draw_multipleswitch(bitmap, x_panel_col1_offset, y, cpunum_get_reg(0, PDP1_TW), 18);
 	y += 8;
 
 	if (full_refresh)
 		/* column separator */
-		pdp1_draw_vline(bitmap, x_panel_col2_offset-4, y_panel_offset+8, 96, PANEL_TEXT);
+		pdp1_draw_vline(bitmap, x_panel_col2_offset-4, panel_window_offset_y+8, 96, pen_panel_caption);
 
 	/* column 2: 1-bit indicators */
-	y = y_panel_offset+8;
+	y = panel_window_offset_y+8;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "run", x_panel_col2_offset+8, y, PANEL_TEXT_IX);
+		pdp1_draw_string(bitmap, "run", x_panel_col2_offset+8, y, color_panel_caption);
 	pdp1_draw_led(bitmap, x_panel_col2_offset, y, cpunum_get_reg(0, PDP1_RUN));
 	y += 8;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "cycle", x_panel_col2_offset+8, y, PANEL_TEXT_IX);
-	pdp1_draw_led(bitmap, x_panel_col2_offset, y, cpunum_get_reg(0, PDP1_CYCLE));
+		pdp1_draw_string(bitmap, "cycle", x_panel_col2_offset+8, y, color_panel_caption);
+	pdp1_draw_led(bitmap, x_panel_col2_offset, y, cpunum_get_reg(0, PDP1_CYC));
 	y += 8;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "defer", x_panel_col2_offset+8, y, PANEL_TEXT_IX);
+		pdp1_draw_string(bitmap, "defer", x_panel_col2_offset+8, y, color_panel_caption);
 	pdp1_draw_led(bitmap, x_panel_col2_offset, y, cpunum_get_reg(0, PDP1_DEFER));
 	y += 8;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "h. s. cycle", x_panel_col2_offset+8, y, PANEL_TEXT_IX);
+		pdp1_draw_string(bitmap, "h. s. cycle", x_panel_col2_offset+8, y, color_panel_caption);
 	pdp1_draw_led(bitmap, x_panel_col2_offset, y, 0);	/* not emulated */
 	y += 8;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "brk. ctr. 1", x_panel_col2_offset+8, y, PANEL_TEXT_IX);
+		pdp1_draw_string(bitmap, "brk. ctr. 1", x_panel_col2_offset+8, y, color_panel_caption);
 	pdp1_draw_led(bitmap, x_panel_col2_offset, y, 0);	/* not emulated */
 	y += 8;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "brk. ctr. 2", x_panel_col2_offset+8, y, PANEL_TEXT_IX);
+		pdp1_draw_string(bitmap, "brk. ctr. 2", x_panel_col2_offset+8, y, color_panel_caption);
 	pdp1_draw_led(bitmap, x_panel_col2_offset, y, 0);	/* not emulated */
 	y += 8;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "overflow", x_panel_col2_offset+8, y, PANEL_TEXT_IX);
+		pdp1_draw_string(bitmap, "overflow", x_panel_col2_offset+8, y, color_panel_caption);
 	pdp1_draw_led(bitmap, x_panel_col2_offset, y, cpunum_get_reg(0, PDP1_OV));
 	y += 8;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "read in", x_panel_col2_offset+8, y, PANEL_TEXT_IX);
+		pdp1_draw_string(bitmap, "read in", x_panel_col2_offset+8, y, color_panel_caption);
 	pdp1_draw_led(bitmap, x_panel_col2_offset, y, cpunum_get_reg(0, PDP1_RIM));
 	y += 8;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "seq. break", x_panel_col2_offset+8, y, PANEL_TEXT_IX);
+		pdp1_draw_string(bitmap, "seq. break", x_panel_col2_offset+8, y, color_panel_caption);
 	pdp1_draw_led(bitmap, x_panel_col2_offset, y, 0);	/* not emulated */
 	y += 8;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "extend", x_panel_col2_offset+8, y, PANEL_TEXT_IX);
+		pdp1_draw_string(bitmap, "extend", x_panel_col2_offset+8, y, color_panel_caption);
+	pdp1_draw_led(bitmap, x_panel_col2_offset, y, cpunum_get_reg(0, PDP1_EXD));
+	y += 8;
+	if (full_refresh)
+		pdp1_draw_string(bitmap, "i-o halt", x_panel_col2_offset+8, y, color_panel_caption);
 	pdp1_draw_led(bitmap, x_panel_col2_offset, y, 0);	/* not emulated */
 	y += 8;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "i-o halt", x_panel_col2_offset+8, y, PANEL_TEXT_IX);
+		pdp1_draw_string(bitmap, "i-o com'ds", x_panel_col2_offset+8, y, color_panel_caption);
 	pdp1_draw_led(bitmap, x_panel_col2_offset, y, 0);	/* not emulated */
 	y += 8;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "i-o com'ds", x_panel_col2_offset+8, y, PANEL_TEXT_IX);
-	pdp1_draw_led(bitmap, x_panel_col2_offset, y, 0);	/* not emulated */
-	y += 8;
-	if (full_refresh)
-		pdp1_draw_string(bitmap, "i-o sync", x_panel_col2_offset+8, y, PANEL_TEXT_IX);
+		pdp1_draw_string(bitmap, "i-o sync", x_panel_col2_offset+8, y, color_panel_caption);
 	pdp1_draw_led(bitmap, x_panel_col2_offset, y, 0);	/* not emulated */
 
 	if (full_refresh)
 		/* column separator */
-		pdp1_draw_vline(bitmap, x_panel_col3_offset-4, y_panel_offset+8, 96, PANEL_TEXT);
+		pdp1_draw_vline(bitmap, x_panel_col3_offset-4, panel_window_offset_y+8, 96, pen_panel_caption);
 
 	/* column 3: power, single step, single inst, sense, flags, instr... */
-	y = y_panel_offset+8;
+	y = panel_window_offset_y+8;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "power", x_panel_col3_offset+16, y, PANEL_TEXT_IX);
+		pdp1_draw_string(bitmap, "power", x_panel_col3_offset+16, y, color_panel_caption);
 	pdp1_draw_led(bitmap, x_panel_col3_offset, y, 1);	/* always on */
 	pdp1_draw_switch(bitmap, x_panel_col3_offset+8, y, 1);	/* always on */
 	y += 8;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "single step", x_panel_col3_offset+16, y, PANEL_TEXT_IX);
-	pdp1_draw_led(bitmap, x_panel_col3_offset, y, 0);	/* not emulated */
-	pdp1_draw_switch(bitmap, x_panel_col3_offset+8, y, 0);	/* not emulated */
+		pdp1_draw_string(bitmap, "single step", x_panel_col3_offset+16, y, color_panel_caption);
+	pdp1_draw_led(bitmap, x_panel_col3_offset, y, cpunum_get_reg(0, PDP1_SNGL_STEP));
+	pdp1_draw_switch(bitmap, x_panel_col3_offset+8, y, cpunum_get_reg(0, PDP1_SNGL_STEP));
 	y += 8;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "single inst.", x_panel_col3_offset+16, y, PANEL_TEXT_IX);
-	pdp1_draw_led(bitmap, x_panel_col3_offset, y, 0);	/* not emulated */
-	pdp1_draw_switch(bitmap, x_panel_col3_offset+8, y, 0);	/* not emulated */
-	y += 8;
-	if (full_refresh)
-		/* separator */
-		pdp1_draw_hline(bitmap, x_panel_col3_offset+8, y+4, 96, PANEL_TEXT);
-	y += 8;
-	if (full_refresh)
-		pdp1_draw_string(bitmap, "sense switches", x_panel_col3_offset, y, PANEL_TEXT_IX);
-	y += 8;
-	pdp1_draw_multipleled(bitmap, x_panel_col3_offset, y, cpunum_get_reg(0, PDP1_S), 6);
-	y += 8;
-	pdp1_draw_multipleswitch(bitmap, x_panel_col3_offset, y, cpunum_get_reg(0, PDP1_S), 6);
+		pdp1_draw_string(bitmap, "single inst.", x_panel_col3_offset+16, y, color_panel_caption);
+	pdp1_draw_led(bitmap, x_panel_col3_offset, y, cpunum_get_reg(0, PDP1_SNGL_INST));
+	pdp1_draw_switch(bitmap, x_panel_col3_offset+8, y, cpunum_get_reg(0, PDP1_SNGL_INST));
 	y += 8;
 	if (full_refresh)
 		/* separator */
-		pdp1_draw_hline(bitmap, x_panel_col3_offset+8, y+4, 96, PANEL_TEXT);
+		pdp1_draw_hline(bitmap, x_panel_col3_offset+8, y+4, 96, pen_panel_caption);
 	y += 8;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "program flags", x_panel_col3_offset, y, PANEL_TEXT_IX);
+		pdp1_draw_string(bitmap, "sense switches", x_panel_col3_offset, y, color_panel_caption);
 	y += 8;
-	pdp1_draw_multipleled(bitmap, x_panel_col3_offset, y, cpunum_get_reg(0, PDP1_F), 6);
+	pdp1_draw_multipleled(bitmap, x_panel_col3_offset, y, cpunum_get_reg(0, PDP1_SS), 6);
+	y += 8;
+	pdp1_draw_multipleswitch(bitmap, x_panel_col3_offset, y, cpunum_get_reg(0, PDP1_SS), 6);
 	y += 8;
 	if (full_refresh)
-		pdp1_draw_string(bitmap, "instruction", x_panel_col3_offset, y, PANEL_TEXT_IX);
+		/* separator */
+		pdp1_draw_hline(bitmap, x_panel_col3_offset+8, y+4, 96, pen_panel_caption);
 	y += 8;
-	pdp1_draw_multipleled(bitmap, x_panel_col3_offset, y, cpunum_get_reg(0, PDP1_INSTR), 5);
+	if (full_refresh)
+		pdp1_draw_string(bitmap, "program flags", x_panel_col3_offset, y, color_panel_caption);
+	y += 8;
+	pdp1_draw_multipleled(bitmap, x_panel_col3_offset, y, cpunum_get_reg(0, PDP1_PF), 6);
+	y += 8;
+	if (full_refresh)
+		pdp1_draw_string(bitmap, "instruction", x_panel_col3_offset, y, color_panel_caption);
+	y += 8;
+	pdp1_draw_multipleled(bitmap, x_panel_col3_offset, y, cpunum_get_reg(0, PDP1_IR), 5);
 }

@@ -336,9 +336,9 @@
 /* Layout of the registers in the debugger */
 static UINT8 pdp1_reg_layout[] =
 {
-	PDP1_PC, PDP1_AC, PDP1_IO, PDP1_MA, PDP1_OV, -1,
-	PDP1_F, PDP1_S, -1,
-	PDP1_RUN, PDP1_RIM, 0
+	PDP1_PC, PDP1_IR, PDP1_MB, PDP1_MA, PDP1_AC, PDP1_IO, PDP1_PF, -1,
+	PDP1_TW, PDP1_TA, PDP1_SS, PDP1_SNGL_STEP, PDP1_SNGL_INST, -1,
+	PDP1_RUN, PDP1_CYC, PDP1_DEFER, PDP1_OV, PDP1_RIM, PDP1_EXD, 0
 };
 
 /* Layout of the debugger windows x,y,w,h */
@@ -351,36 +351,46 @@ static UINT8 pdp1_win_layout[] =
 	0,	23, 80,  1, /* command line window (bottom rows) */
 };
 
-static int intern_iot (int *io, int md);
 static void execute_instruction(void);
+static int intern_iot (int *io, int md);
+static void pulse_start_clear(void);
+
 
 /* PDP1 Registers */
 typedef struct
 {
 	/* processor registers */
 	UINT32 pc;		/* program counter (12, 15 or 16 bits) */
-	int instr;		/* basic operation code of current instruction (5 bits) */
+	int ir;			/* basic operation code of current instruction (5 bits) */
 	int mb;			/* memory buffer (used for holding the current instruction only) (18 bits) */
 	int ma;			/* memory address (12, 15 or 16 bits) */
 	int ac;			/* accumulator (18 bits) */
 	int io;			/* i/o register (18 bits) */
-	int flags;		/* program flag register (6 bits) */
+	int pf;			/* program flag register (6 bits) */
 
 	/* operator panel switches */
-	int sense_sw;	/* current state of the 6 sense switches on the operator panel (6 bits) */
+	int ta;			/* current state of the 12 or 16 address switches */
+	int tw;			/* current state of the 18 test word switches */
+	int ss;			/* current state of the 6 sense switches on the operator panel (6 bits) */
+	unsigned int sngl_step : 1;	/* stop every memory cycle */
+	unsigned int sngl_inst : 1;	/* stop every instruction */
+	unsigned int extend_sw : 1;	/* extend switch (loaded into the extend flip-flop on start/read-in) */
 
 	/* processor state flip-flops */
 	unsigned int run : 1;		/* processor is running */
 	unsigned int cycle : 1;		/* processor is in the midst of an instruction */
 	unsigned int defer : 1;		/* processor is handling deferred (i.e. indirect) addressing */
 	unsigned int ov;			/* overflow flip-flop */
-	unsigned int read_in : 1;	/* processor is in read-in mode */
+	unsigned int rim : 1;		/* processor is in read-in mode */
 #if 0
 	unsigned int sbm : 1;		/* processor is in sequence break mode (i.e. interrupts are enabled) */
 	unsigned int irq_state : 1;	/* mirrors the state of the interrupt pin */
 	unsigned int b2: 1;			/* interrupt pending */
 	unsigned int b4: 1;			/* interrupt in progress */
-	unsigned int extend : 1;	/* processor is in extend mode */
+#endif
+	unsigned int exd : 1;		/* extend mode: processor is in extend mode */
+	unsigned int exc : 1;		/* extend-mode cycle: current instruction cycle is done in extend mode */
+#if 0
 	unsigned int i_o_halt : 1;	/* processor is executing an Input-Output Transfer wait */
 #endif
 
@@ -388,8 +398,12 @@ typedef struct
 	int (*extern_iot)(int *, int);
 	/* read a byte from the perforated tape reader */
 	int (*read_binary_word)(UINT32 *reply);
-	/* get current state of the test switches */
-	int (*get_test_word)(void);
+
+	/* 0: no extend support, 1: extend with 15-bit address, 2: extend with 16-bit address */
+	int extend_support;
+
+	int extended_address_mask;	/* 07777 with no extend support, 077777 or 0177777 with extend support */
+	int address_extension_mask;	/* 00000 with no extend support, 070000 or 0170000 with extend support */
 }
 pdp1_Regs;
 
@@ -397,25 +411,32 @@ pdp1_Regs;
 static pdp1_Regs pdp1;
 
 #define PC		pdp1.pc
-#define INSTR	pdp1.instr
+#define IR		pdp1.ir
 #define MB		pdp1.mb
 #define MA		pdp1.ma
 #define AC		pdp1.ac
 #define IO		pdp1.io
 #define OV		pdp1.ov
+#define EXD		pdp1.exd
 /* note that we start counting flags/sense switches at 1, therefore n is in [1,6] */
-#define FLAGS	pdp1.flags
-#define READFLAG(n)	((pdp1.flags >> (6-(n))) & 1)
-#define WRITEFLAG(n, data)	(pdp1.flags = (pdp1.flags & ~(1 << (6-(n)))) | (((data) & 1) << (6-(n))))
-#define SENSE_SW	pdp1.sense_sw
-#define READSENSE(n)	((pdp1.sense_sw >> (6-(n))) & 1)
-#define WRITESENSE(n, data)	(pdp1.sense_sw = (pdp1.sense_sw & ~(1 << (6-(n)))) | (((data) & 1) << (6-(n))))
+#define FLAGS	pdp1.pf
+#define READFLAG(n)	((pdp1.pf >> (6-(n))) & 1)
+#define WRITEFLAG(n, data)	(pdp1.pf = (pdp1.pf & ~(1 << (6-(n)))) | (((data) & 1) << (6-(n))))
+#define SENSE_SW	pdp1.ss
+#define READSENSE(n)	((pdp1.ss >> (6-(n))) & 1)
+#define WRITESENSE(n, data)	(pdp1.ss = (pdp1.ss & ~(1 << (6-(n)))) | (((data) & 1) << (6-(n))))
 
-#define INCREMENT_PC	(PC = (PC+1) & 07777)
-#define INCREMENT_MA	(MA = (MA+1) & 07777)
+#define EXTENDED_ADDRESS_MASK	pdp1.extended_address_mask
+#define ADDRESS_EXTENSION_MASK	pdp1.address_extension_mask
+#define BASE_ADDRESS_MASK		0007777
+
+#define INCREMENT_PC	(PC = (PC & ADDRESS_EXTENSION_MASK) | ((PC+1) & BASE_ADDRESS_MASK))
+#define INCREMENT_MA	(MA = (MA & ADDRESS_EXTENSION_MASK) | ((MA+1) & BASE_ADDRESS_MASK))
 
 /* public globals */
-signed int pdp1_ICount = 50000;
+signed int pdp1_ICount;
+
+
 
 /*
 	interrupts are called "sequence break", and they do exist.
@@ -430,6 +451,7 @@ void pdp1_set_irq_callback (int (*callback) (int irqline))
 {
 }
 
+
 void pdp1_init(void)
 {
 	/* nothing to do */
@@ -437,26 +459,41 @@ void pdp1_init(void)
 
 void pdp1_reset (void *untyped_param)
 {
-	pdp1_reset_param *param = untyped_param;
+	pdp1_reset_param_t *param = untyped_param;
 
 	memset (&pdp1, 0, sizeof (pdp1));
 
 	/* set up params and callbacks */
-	pdp1.read_binary_word = (param && param->read_binary_word)
-									? param->read_binary_word
-									: NULL;
+	pdp1.read_binary_word = (param) ? param->read_binary_word : NULL;
 	pdp1.extern_iot = (param && param->extern_iot)
 									? param->extern_iot
 									: intern_iot;
-	pdp1.get_test_word = (param && param->get_test_word)
-									? param->get_test_word
-									: NULL;
+	pdp1.extend_support = (param) ? param->extend_support : 0;
+
+	switch (pdp1.extend_support)
+	{
+	default:
+		pdp1.extend_support = 0;
+	case 0:		/* no extension */
+		pdp1.extended_address_mask = 07777;
+		pdp1.address_extension_mask = 00000;
+		break;
+	case 1:		/* 15-bit extension */
+		pdp1.extended_address_mask = 077777;
+		pdp1.address_extension_mask = 070000;
+		break;
+	case 2:		/* 16-bit extension */
+		pdp1.extended_address_mask = 0177777;
+		pdp1.address_extension_mask = 0170000;
+		break;
+	}
 }
 
 void pdp1_exit (void)
 {
 	/* nothing to do */
 }
+
 
 unsigned pdp1_get_context (void *dst)
 {
@@ -471,36 +508,43 @@ void pdp1_set_context (void *src)
 		pdp1 = *(pdp1_Regs *) src;
 }
 
+
 unsigned pdp1_get_reg (int regnum)
 {
 	switch (regnum)
 	{
 	case REG_PC:
 	case PDP1_PC: return PC;
-	case PDP1_INSTR: return INSTR;
+	case PDP1_IR: return IR;
 	case PDP1_MB: return MB;
 	case PDP1_MA: return MA;
 	case PDP1_AC: return AC;
 	case PDP1_IO: return IO;
 	case PDP1_OV: return OV;
-	case PDP1_F:  return FLAGS;
-	case PDP1_F1: return READFLAG(1);
-	case PDP1_F2: return READFLAG(2);
-	case PDP1_F3: return READFLAG(3);
-	case PDP1_F4: return READFLAG(4);
-	case PDP1_F5: return READFLAG(5);
-	case PDP1_F6: return READFLAG(6);
-	case PDP1_S:  return SENSE_SW;
-	case PDP1_S1: return READSENSE(1);
-	case PDP1_S2: return READSENSE(2);
-	case PDP1_S3: return READSENSE(3);
-	case PDP1_S4: return READSENSE(4);
-	case PDP1_S5: return READSENSE(5);
-	case PDP1_S6: return READSENSE(6);
+	case PDP1_PF:  return FLAGS;
+	case PDP1_PF1: return READFLAG(1);
+	case PDP1_PF2: return READFLAG(2);
+	case PDP1_PF3: return READFLAG(3);
+	case PDP1_PF4: return READFLAG(4);
+	case PDP1_PF5: return READFLAG(5);
+	case PDP1_PF6: return READFLAG(6);
+	case PDP1_TA: return pdp1.ta;
+	case PDP1_TW: return pdp1.tw;
+	case PDP1_SS:  return SENSE_SW;
+	case PDP1_SS1: return READSENSE(1);
+	case PDP1_SS2: return READSENSE(2);
+	case PDP1_SS3: return READSENSE(3);
+	case PDP1_SS4: return READSENSE(4);
+	case PDP1_SS5: return READSENSE(5);
+	case PDP1_SS6: return READSENSE(6);
+	case PDP1_SNGL_STEP: return pdp1.sngl_step;
+	case PDP1_SNGL_INST: return pdp1.sngl_inst;
+	case PDP1_EXTEND_SW: return pdp1.extend_sw;
 	case PDP1_RUN: return pdp1.run;
-	case PDP1_CYCLE: return pdp1.cycle;
+	case PDP1_CYC: return pdp1.cycle;
 	case PDP1_DEFER: return pdp1.defer;
-	case PDP1_RIM: return pdp1.read_in;
+	case PDP1_RIM: return pdp1.rim;
+	case PDP1_EXD: return EXD;
 	case REG_SP:  return 0;
 	}
 	return 0;
@@ -511,39 +555,47 @@ void pdp1_set_reg (int regnum, unsigned val)
 	switch (regnum)
 	{
 	case REG_PC:
-	case PDP1_PC: PC = val & 07777; break;
-	case PDP1_INSTR: logerror("pdp1_set_reg to instr register ignored\n");/* no way!*/ break;
+	case PDP1_PC: PC = val & EXTENDED_ADDRESS_MASK; break;
+	case PDP1_IR: IR = val & 037; /* weird idea */ break;
 	case PDP1_MB: MB = val & 0777777; break;
-	case PDP1_MA: MA = val & 07777; break;
+	case PDP1_MA: MA = val & EXTENDED_ADDRESS_MASK; break;
 	case PDP1_AC: AC = val & 0777777; break;
 	case PDP1_IO: IO = val & 0777777; break;
 	case PDP1_OV: OV = val ? 1 : 0; break;
-	case PDP1_F:  FLAGS = val & 077; break;
-	case PDP1_F1: WRITEFLAG(1, val ? 1 : 0); break;
-	case PDP1_F2: WRITEFLAG(2, val ? 1 : 0); break;
-	case PDP1_F3: WRITEFLAG(3, val ? 1 : 0); break;
-	case PDP1_F4: WRITEFLAG(4, val ? 1 : 0); break;
-	case PDP1_F5: WRITEFLAG(5, val ? 1 : 0); break;
-	case PDP1_F6: WRITEFLAG(6, val ? 1 : 0); break;
-	case PDP1_S:  SENSE_SW = val & 077; break;
-	case PDP1_S1: WRITESENSE(1, val ? 1 : 0); break;
-	case PDP1_S2: WRITESENSE(2, val ? 1 : 0); break;
-	case PDP1_S3: WRITESENSE(3, val ? 1 : 0); break;
-	case PDP1_S4: WRITESENSE(4, val ? 1 : 0); break;
-	case PDP1_S5: WRITESENSE(5, val ? 1 : 0); break;
-	case PDP1_S6: WRITESENSE(6, val ? 1 : 0); break;
-	case PDP1_CYCLE: logerror("pdp1_set_reg to cycle flip-flop ignored\n");/* no way!*/ break;
-	case PDP1_DEFER: logerror("pdp1_set_reg to defer flip-flop ignored\n");/* no way!*/ break;
+	case PDP1_PF:  FLAGS = val & 077; break;
+	case PDP1_PF1: WRITEFLAG(1, val ? 1 : 0); break;
+	case PDP1_PF2: WRITEFLAG(2, val ? 1 : 0); break;
+	case PDP1_PF3: WRITEFLAG(3, val ? 1 : 0); break;
+	case PDP1_PF4: WRITEFLAG(4, val ? 1 : 0); break;
+	case PDP1_PF5: WRITEFLAG(5, val ? 1 : 0); break;
+	case PDP1_PF6: WRITEFLAG(6, val ? 1 : 0); break;
+	case PDP1_TA: pdp1.ta = val & 0177777 /*07777 with simpler control panel*/; break;
+	case PDP1_TW: pdp1.tw = val & 0777777; break;
+	case PDP1_SS:  SENSE_SW = val & 077; break;
+	case PDP1_SS1: WRITESENSE(1, val ? 1 : 0); break;
+	case PDP1_SS2: WRITESENSE(2, val ? 1 : 0); break;
+	case PDP1_SS3: WRITESENSE(3, val ? 1 : 0); break;
+	case PDP1_SS4: WRITESENSE(4, val ? 1 : 0); break;
+	case PDP1_SS5: WRITESENSE(5, val ? 1 : 0); break;
+	case PDP1_SS6: WRITESENSE(6, val ? 1 : 0); break;
+	case PDP1_SNGL_STEP: pdp1.sngl_step = val ? 1 : 0; break;
+	case PDP1_SNGL_INST: pdp1.sngl_inst = val ? 1 : 0; break;
+	case PDP1_EXTEND_SW: pdp1.extend_sw = val ? 1 : 0; break;
 	case PDP1_RUN: pdp1.run = val ? 1 : 0; break;
-	case PDP1_RIM: pdp1.read_in = val ? 1 : 0; break;
+	case PDP1_CYC: logerror("pdp1_set_reg to cycle flip-flop ignored\n");/* no way!*/ break;
+	case PDP1_DEFER: logerror("pdp1_set_reg to defer flip-flop ignored\n");/* no way!*/ break;
+	case PDP1_RIM: pdp1.rim = val ? 1 : 0; break;
+	case PDP1_EXD: EXD = (pdp1.extend_support && val) ? 1 : 0; break;
 	case REG_SP:  break;
+	case PDP1_START_CLEAR: pulse_start_clear(); break;
 	}
 }
 
+
 /*
 	flags:
-	* 1 for each instruction which supports indirect addressing (memory reference instructions, except
-	  cal and jda, and with the addition of jmp and jsp)
+	* 1 for each instruction which supports indirect addressing (memory reference instructions,
+	  except cal and jda, and with the addition of jmp and jsp)
 	* 2 for memory reference instructions
 */
 static const char instruction_kind[32] =
@@ -568,12 +620,12 @@ int pdp1_execute (int cycles)
 	{
 		CALL_MAME_DEBUG;
 
-		if ((! pdp1.run) && (! pdp1.read_in))
+		if ((! pdp1.run) && (! pdp1.rim))
 			pdp1_ICount = 0;	/* if processor is stopped, just burn cycles */
-		else if (pdp1.read_in)
+		else if (pdp1.rim)
 		{
 			if (! pdp1.read_binary_word)
-				pdp1.read_in = 0;	/* what else can we do ??? */
+				pdp1.rim = 0;	/* what else can we do ??? */
 			else
 			{
 				UINT32 data18;
@@ -582,17 +634,19 @@ int pdp1_execute (int cycles)
 				(void)(*pdp1.read_binary_word)(&data18);
 				IO = data18;						/* data is transferred to IO register */
 				MB = IO;
-				INSTR = MB >> 13;		/* basic opcode */
-				if (INSTR == JMP)		/* jmp instruction ? */
+				IR = MB >> 13;		/* basic opcode */
+				if (IR == JMP)		/* jmp instruction ? */
 				{
-					PC = MB & 07777;
-					pdp1.read_in = 0;	/* exit read-in mode */
+					PC = (MA & ADDRESS_EXTENSION_MASK) | (MB & BASE_ADDRESS_MASK);
+					pdp1.rim = 0;	/* exit read-in mode */
 					pdp1.run = 1;
 				}
-				else if ((INSTR == DIO) || (INSTR == DAC))	/* dio or dac instruction ? */
+				else if ((IR == DIO) || (IR == DAC))	/* dio or dac instruction ? */
 				{	/* there is a discrepancy: the pdp1 handbook tells that only dio should be used,
 					but the lisp tape uses the dac instruction instead */
-					MA = MB & 07777;
+					/* Yet maintainance manual p. 6-25 states clearly that the data is located
+					in IO and transfered to MB, so DAC is likely to be a mistake. */
+					MA = (PC & ADDRESS_EXTENSION_MASK) | (MB & BASE_ADDRESS_MASK);
 
 					/* read second word as data */
 					(void)(*pdp1.read_binary_word)(&data18);
@@ -604,7 +658,7 @@ int pdp1_execute (int cycles)
 				{
 					/* what the heck? */
 					logerror("It seems this tape should not be operated in read-in mode\n");
-					pdp1.read_in = 0;	/* exit read-in mode (right???) */
+					pdp1.rim = 0;		/* exit read-in mode (right???) */
 				}
 
 				pdp1_ICount -= 1000;	/* ***HACK*** */
@@ -615,16 +669,16 @@ int pdp1_execute (int cycles)
 			/* no instruction in progress: time to fetch a new instruction, I guess */
 			if (! pdp1.cycle)
 			{
-				MB = READ_PDP_18BIT(PC);
+				MB = READ_PDP_18BIT(MA = PC);
 				INCREMENT_PC;
-				INSTR = MB >> 13;		/* basic opcode */
+				IR = MB >> 13;		/* basic opcode */
 
-				if ((instruction_kind[INSTR] & 1) && (MB & 010000))
+				if ((instruction_kind[IR] & 1) && (MB & 010000))
 				{
 					pdp1.defer = 1;
 					pdp1.cycle = 1;			/* instruction shall be executed later */
 				}
-				else if (instruction_kind[INSTR] & 2)
+				else if (instruction_kind[IR] & 2)
 					pdp1.cycle = 1;			/* instruction shall be executed later */
 				else
 					execute_instruction();	/* execute instruction at once */
@@ -633,34 +687,46 @@ int pdp1_execute (int cycles)
 			}
 			else if (pdp1.defer)
 			{	/* defer cycle : handle indirect addressing */
-				int new_defer;
-
-				MA = MB & 07777;
+				MA = (PC & ADDRESS_EXTENSION_MASK) | (MB & BASE_ADDRESS_MASK);
 
 				MB = READ_PDP_18BIT(MA);
 
 				/* determinate new value of pdp1.defer */
-				new_defer = (/*(pdp1.extend) &&*/ (MB & 010000)) ? 1 : 0;
+				if (EXD)
+				{
+					pdp1.defer = 0;
+					pdp1.exc = 1;
+				}
+				else
+					pdp1.defer = (MB & 010000) ? 1 : 0;
 
 				/* execute JMP and JSP immediately if applicable */
-				if ((! new_defer) && (! instruction_kind[INSTR] & 2))
+				if ((! pdp1.defer) && (! instruction_kind[IR] & 2))
 				{
 					execute_instruction();	/* execute instruction at once */
 					/*pdp1.cycle = 0;*/
+					pdp1.exc = 0;
 				}
-
-				/* set new value of pdp1.defer */
-				pdp1.defer = new_defer;
 
 				pdp1_ICount -= 5;
 			}
 			else
 			{	/* memory reference instruction in cycle 1 */
-				MA = MB & 07777;
+				if (pdp1.exc)
+				{
+					MA = MB & EXTENDED_ADDRESS_MASK;
+					pdp1.exc = 0;
+				}
+				else
+					MA = (PC & ADDRESS_EXTENSION_MASK) | (MB & BASE_ADDRESS_MASK);
+
 				execute_instruction();	/* execute instruction */
 
 				pdp1_ICount -= 5;
 			}
+
+			if ((pdp1.sngl_step) || ((pdp1.sngl_inst) && (! pdp1.cycle)))
+				pdp1.run = 0;
 		}
 	}
 	while (pdp1_ICount > 0);
@@ -696,53 +762,60 @@ const char *pdp1_info (void *context, int regnum)
 	switch (regnum)
 	{
 	case CPU_INFO_REG + PDP1_PC: sprintf (buffer[which], "PC:0%06o", r->pc); break;
-	case CPU_INFO_REG + PDP1_INSTR: sprintf (buffer[which], "INSTR:0%02o", r->instr); break;
+	case CPU_INFO_REG + PDP1_IR: sprintf (buffer[which], "IR:0%02o", r->ir); break;
 	case CPU_INFO_REG + PDP1_MB: sprintf (buffer[which], "MB:0%06o", r->mb);  break;
 	case CPU_INFO_REG + PDP1_MA: sprintf (buffer[which], "MA:0%06o", r->ma);  break;
 	case CPU_INFO_REG + PDP1_AC: sprintf (buffer[which], "AC:0%06o", r->ac); break;
 	case CPU_INFO_REG + PDP1_IO: sprintf (buffer[which], "IO:0%06o", r->io); break;
 	case CPU_INFO_REG + PDP1_OV: sprintf (buffer[which], "OV:%X", r->ov); break;
-	case CPU_INFO_REG + PDP1_F:  sprintf (buffer[which], "FLAGS :0%02o", r->flags);  break;
-	case CPU_INFO_REG + PDP1_F1: sprintf (buffer[which], "FLAG1:%X", (r->flags >> 5) & 1); break;
-	case CPU_INFO_REG + PDP1_F2: sprintf (buffer[which], "FLAG2:%X", (r->flags >> 4) & 1); break;
-	case CPU_INFO_REG + PDP1_F3: sprintf (buffer[which], "FLAG3:%X", (r->flags >> 3) & 1); break;
-	case CPU_INFO_REG + PDP1_F4: sprintf (buffer[which], "FLAG4:%X", (r->flags >> 2) & 1); break;
-	case CPU_INFO_REG + PDP1_F5: sprintf (buffer[which], "FLAG5:%X", (r->flags >> 1) & 1); break;
-	case CPU_INFO_REG + PDP1_F6: sprintf (buffer[which], "FLAG6:%X", r->flags & 1); break;
-	case CPU_INFO_REG + PDP1_S:  sprintf (buffer[which], "S :0%02o", r->sense_sw);  break;
-	case CPU_INFO_REG + PDP1_S1: sprintf (buffer[which], "SENSE1:%X", (r->sense_sw >> 5) & 1); break;
-	case CPU_INFO_REG + PDP1_S2: sprintf (buffer[which], "SENSE2:%X", (r->sense_sw >> 4) & 1); break;
-	case CPU_INFO_REG + PDP1_S3: sprintf (buffer[which], "SENSE3:%X", (r->sense_sw >> 3) & 1); break;
-	case CPU_INFO_REG + PDP1_S4: sprintf (buffer[which], "SENSE4:%X", (r->sense_sw >> 2) & 1); break;
-	case CPU_INFO_REG + PDP1_S5: sprintf (buffer[which], "SENSE5:%X", (r->sense_sw >> 1) & 1); break;
-	case CPU_INFO_REG + PDP1_S6: sprintf (buffer[which], "SENSE6:%X", r->sense_sw & 1); break;
-	case CPU_INFO_REG + PDP1_RUN: sprintf (buffer[which], "RUN:%X", pdp1.run); break;
-	case CPU_INFO_REG + PDP1_CYCLE: sprintf (buffer[which], "CYCLE:%X", pdp1.cycle); break;
-	case CPU_INFO_REG + PDP1_DEFER: sprintf (buffer[which], "DEFER:%X", pdp1.defer); break;
-	case CPU_INFO_REG + PDP1_RIM: sprintf (buffer[which], "RIM:%X", pdp1.read_in); break;
+	case CPU_INFO_REG + PDP1_PF:  sprintf (buffer[which], "FLAGS:0%02o", r->pf);  break;
+	case CPU_INFO_REG + PDP1_PF1: sprintf (buffer[which], "FLAG1:%X", (r->pf >> 5) & 1); break;
+	case CPU_INFO_REG + PDP1_PF2: sprintf (buffer[which], "FLAG2:%X", (r->pf >> 4) & 1); break;
+	case CPU_INFO_REG + PDP1_PF3: sprintf (buffer[which], "FLAG3:%X", (r->pf >> 3) & 1); break;
+	case CPU_INFO_REG + PDP1_PF4: sprintf (buffer[which], "FLAG4:%X", (r->pf >> 2) & 1); break;
+	case CPU_INFO_REG + PDP1_PF5: sprintf (buffer[which], "FLAG5:%X", (r->pf >> 1) & 1); break;
+	case CPU_INFO_REG + PDP1_TA: sprintf (buffer[which], "TA:0%06o", r->ta);  break;
+	case CPU_INFO_REG + PDP1_TW: sprintf (buffer[which], "TW:0%06o", r->tw); break;
+	case CPU_INFO_REG + PDP1_PF6: sprintf (buffer[which], "FLAG6:%X", r->pf & 1); break;
+	case CPU_INFO_REG + PDP1_SS:  sprintf (buffer[which], "SS:0%02o", r->ss);  break;
+	case CPU_INFO_REG + PDP1_SS1: sprintf (buffer[which], "SENSE1:%X", (r->ss >> 5) & 1); break;
+	case CPU_INFO_REG + PDP1_SS2: sprintf (buffer[which], "SENSE2:%X", (r->ss >> 4) & 1); break;
+	case CPU_INFO_REG + PDP1_SS3: sprintf (buffer[which], "SENSE3:%X", (r->ss >> 3) & 1); break;
+	case CPU_INFO_REG + PDP1_SS4: sprintf (buffer[which], "SENSE4:%X", (r->ss >> 2) & 1); break;
+	case CPU_INFO_REG + PDP1_SS5: sprintf (buffer[which], "SENSE5:%X", (r->ss >> 1) & 1); break;
+	case CPU_INFO_REG + PDP1_SS6: sprintf (buffer[which], "SENSE6:%X", r->ss & 1); break;
+	case CPU_INFO_REG + PDP1_SNGL_STEP: sprintf (buffer[which], "SNGLSTEP:%X", r->sngl_step); break;
+	case CPU_INFO_REG + PDP1_SNGL_INST: sprintf (buffer[which], "SNGLINST:%X", r->sngl_inst); break;
+	case CPU_INFO_REG + PDP1_EXTEND_SW: sprintf (buffer[which], "EXS:%X", r->extend_sw); break;
+	case CPU_INFO_REG + PDP1_RUN: sprintf (buffer[which], "RUN:%X", r->run); break;
+	case CPU_INFO_REG + PDP1_CYC: sprintf (buffer[which], "CYC:%X", r->cycle); break;
+	case CPU_INFO_REG + PDP1_DEFER: sprintf (buffer[which], "DF:%X", r->defer); break;
+	case CPU_INFO_REG + PDP1_RIM: sprintf (buffer[which], "RIM:%X", r->rim); break;
+	case CPU_INFO_REG + PDP1_EXD: sprintf (buffer[which], "EXD:%X", r->exd); break;
     case CPU_INFO_FLAGS:
 		sprintf (buffer[which], "%c%c%c%c%c%c-%c%c%c%c%c%c",
-				 (r->flags & 040) ? '1' : '.',
-				 (r->flags & 020) ? '2' : '.',
-				 (r->flags & 010) ? '3' : '.',
-				 (r->flags & 004) ? '4' : '.',
-				 (r->flags & 002) ? '5' : '.',
-				 (r->flags & 001) ? '6' : '.',
-				 (r->sense_sw & 040) ? '1' : '.',
-				 (r->sense_sw & 020) ? '2' : '.',
-				 (r->sense_sw & 010) ? '3' : '.',
-				 (r->sense_sw & 004) ? '4' : '.',
-				 (r->sense_sw & 002) ? '5' : '.',
-				 (r->sense_sw & 001) ? '6' : '.');
+				 (r->pf & 040) ? '1' : '.',
+				 (r->pf & 020) ? '2' : '.',
+				 (r->pf & 010) ? '3' : '.',
+				 (r->pf & 004) ? '4' : '.',
+				 (r->pf & 002) ? '5' : '.',
+				 (r->pf & 001) ? '6' : '.',
+				 (r->ss & 040) ? '1' : '.',
+				 (r->ss & 020) ? '2' : '.',
+				 (r->ss & 010) ? '3' : '.',
+				 (r->ss & 004) ? '4' : '.',
+				 (r->ss & 002) ? '5' : '.',
+				 (r->ss & 001) ? '6' : '.');
 		break;
 	case CPU_INFO_NAME: return "PDP1";
 	case CPU_INFO_FAMILY: return "DEC PDP-1";
-	case CPU_INFO_VERSION: return "1.1";
+	case CPU_INFO_VERSION: return "2.0";
 	case CPU_INFO_FILE: return __FILE__;
 	case CPU_INFO_CREDITS: return
 			"Brian Silverman (original Java Source)\n"
 			"Vadim Gerasimov (original Java Source)\n"
-			"Chris Salomon (MESS driver)\n";
+			"Chris Salomon (MESS driver)\n"
+			"Raphael Nabet (MESS driver)\n";
 	case CPU_INFO_REG_LAYOUT: return (const char *) pdp1_reg_layout;
 	case CPU_INFO_WIN_LAYOUT: return (const char *) pdp1_win_layout;
 	}
@@ -753,27 +826,27 @@ const char *pdp1_info (void *context, int regnum)
 /* execute one instruction */
 static void execute_instruction(void)
 {
-	switch (INSTR)
+	switch (IR)
 	{
 	case AND:		/* Logical And */
-		AC &= READ_PDP_18BIT(MA);
+		AC &= (MB = READ_PDP_18BIT(MA));
 		break;
 	case IOR:		/* Inclusive Or */
-		AC |= READ_PDP_18BIT(MA);
+		AC |= (MB = READ_PDP_18BIT(MA));
 		break;
 	case XOR:		/* Exclusive Or */
-		AC ^= READ_PDP_18BIT(MA);
+		AC ^= (MB = READ_PDP_18BIT(MA));
 		break;
 	case XCT:		/* Execute */
 		MB = READ_PDP_18BIT(MA);
-		INSTR = MB >> 13;		/* basic opcode */
-		if ((instruction_kind[INSTR] & 1) && (MB & 010000))
+		IR = MB >> 13;		/* basic opcode */
+		if ((instruction_kind[IR] & 1) && (MB & 010000))
 		{
 			pdp1.defer = 1;
 			/*pdp1.cycle = 1;*/			/* instruction shall be executed later */
 			goto no_fetch;			/* fall through to next instruction */
 		}
-		else if (instruction_kind[INSTR] & 2)
+		else if (instruction_kind[IR] & 2)
 		{
 			/*pdp1.cycle = 1;*/			/* instruction shall be executed later */
 			goto no_fetch;			/* fall through to next instruction */
@@ -782,38 +855,43 @@ static void execute_instruction(void)
 			execute_instruction();	/* execute instruction at once */
 		break;
 	case CALJDA:	/* Call subroutine and Jump and Deposit Accumulator instructions */
-		MA = (MB & 010000) ? (MB & 07777) : 0100;	/* CAL is equivalent to JDA 100 */
+		if (MB & 010000)
+			/* JDA */
+			MA = (PC & ADDRESS_EXTENSION_MASK) | (MB & BASE_ADDRESS_MASK);
+		else
+			/* CAL: equivalent to JDA 100 */
+			MA = 0100;	/* or is it "(PC & ADDRESS_EXTENSION_MASK) | 0100" ??? */
 
-		WRITE_PDP_18BIT(MA, AC);
+		WRITE_PDP_18BIT(MA, (MB = AC));
 		INCREMENT_MA;
-		AC = (OV << 17) + PC;
+		AC = (OV << 17) | (EXD << 16) | PC;
 		PC = MA;
 		break;
 	case LAC:		/* Load Accumulator */
-		AC = READ_PDP_18BIT(MA);
+		AC = (MB = READ_PDP_18BIT(MA));
 		break;
 	case LIO:		/* Load i/o register */
-		IO = READ_PDP_18BIT(MA);
+		IO = (MB = READ_PDP_18BIT(MA));
 		break;
 	case DAC:		/* Deposit Accumulator */
-		WRITE_PDP_18BIT(MA, AC);
+		WRITE_PDP_18BIT(MA, (MB = AC));
 		break;
 	case DAP:		/* Deposit Address Part */
-		WRITE_PDP_18BIT(MA, (READ_PDP_18BIT(MA) & 0770000) | (AC & 07777));
+		WRITE_PDP_18BIT(MA, (MB = ((READ_PDP_18BIT(MA) & 0770000) | (AC & 07777))));
 		break;
 	case DIP:		/* Deposit Instruction Part */
-		WRITE_PDP_18BIT(MA, (READ_PDP_18BIT(MA) & 07777) | (AC & 0770000));
+		WRITE_PDP_18BIT(MA, (MB = ((READ_PDP_18BIT(MA) & 07777) | (AC & 0770000))));
 		break;
 	case DIO:		/* Deposit I/O Register */
-		WRITE_PDP_18BIT(MA, IO);
+		WRITE_PDP_18BIT(MA, (MB = IO));
 		break;
 	case DZM:		/* Deposit Zero in Memory */
-		WRITE_PDP_18BIT(MA, 0);
+		WRITE_PDP_18BIT(MA, (MB = 0));
 		break;
 	case ADD:		/* Add */
 	{
 		int new_ov;
-		AC = AC + READ_PDP_18BIT(MA);
+		AC = AC + (MB = READ_PDP_18BIT(MA));
 		OV |= new_ov = AC >> 18;
 		AC = (AC + new_ov) & 0777777;
 		if (AC == 0777777)
@@ -824,12 +902,13 @@ static void execute_instruction(void)
 		{
 			int diffsigns;
 
-			diffsigns = ((AC >> 17) ^ (READ_PDP_18BIT(MA) >> 17)) == 1;
-			AC = AC + (READ_PDP_18BIT(MA) ^ 0777777);
+			MB = READ_PDP_18BIT(MA);
+			diffsigns = ((AC >> 17) ^ (MB >> 17)) == 1;
+			AC = AC + (MB ^ 0777777);
 			AC = (AC + (AC >> 18)) & 0777777;
 			if (AC == 0777777)
 				AC = 0;
-			if (diffsigns && (READ_PDP_18BIT(MA) >> 17 == AC >> 17))
+			if (diffsigns && ((MB >> 17) == (AC >> 17)))
 				OV = 1;
 			break;
 		}
@@ -837,28 +916,28 @@ static void execute_instruction(void)
 		AC = READ_PDP_18BIT(MA) + 1;
 		if (AC == 0777777)
 			AC = 0;
-		WRITE_PDP_18BIT(MA, AC);
+		WRITE_PDP_18BIT(MA, (MB = AC));
 		break;
 	case ISP:		/* Index and Skip if Positive */
 		AC = READ_PDP_18BIT(MA) + 1;
 		if (AC == 0777777)
 			AC = 0;
-		WRITE_PDP_18BIT(MA, AC);
+		WRITE_PDP_18BIT(MA, (MB = AC));
 		if ((AC & 0400000) == 0)
 			INCREMENT_PC;
 		break;
 	case SAD:		/* Skip if Accumulator and Y differ */
-		if (AC != READ_PDP_18BIT(MA))
+		if (AC != (MB = READ_PDP_18BIT(MA)))
 			INCREMENT_PC;
 		break;
 	case SAS:		/* Skip if Accumulator and Y are the same */
-		if (AC == READ_PDP_18BIT(MA))
+		if (AC == (MB = READ_PDP_18BIT(MA)))
 			INCREMENT_PC;
 		break;
 	case MUS:		/* Multiply Step */
 		if ((IO & 1) == 1)
 		{
-			AC = AC + READ_PDP_18BIT(MA);
+			AC = AC + (MB = READ_PDP_18BIT(MA));
 			AC = (AC + (AC >> 18)) & 0777777;
 			if (AC == 0777777)
 				AC = 0;
@@ -873,26 +952,32 @@ static void execute_instruction(void)
 			acl = AC >> 17;
 			AC = (AC << 1 | IO >> 17) & 0777777;
 			IO = ((IO << 1 | acl) & 0777777) ^ 1;
-			if ((IO & 1) == 1)
+			MB = READ_PDP_18BIT(MA);
+			if (IO & 1)
 			{
-				AC = AC + (READ_PDP_18BIT(MA) ^ 0777777);
-				AC = (AC + (AC >> 18)) & 0777777;
+				AC += (MB ^ 0777777);
 			}
 			else
 			{
-				AC = AC + 1 + READ_PDP_18BIT(MA);
-				AC = (AC + (AC >> 18)) & 0777777;
+				AC += MB + 1;
 			}
+			AC = (AC + (AC >> 18)) & 0777777;
 			if (AC == 0777777)
 				AC = 0;
 			break;
 		}
 	case JMP:		/* Jump */
-		PC = MB & 07777;
+		if (pdp1.exc)
+			PC = MB & EXTENDED_ADDRESS_MASK;
+		else
+			PC = (MA & ADDRESS_EXTENSION_MASK) | (MB & BASE_ADDRESS_MASK);
 		break;
 	case JSP:		/* Jump and Save Program Counter */
-		AC = (OV << 17) + PC;
-		PC = MB & 07777;
+		AC = (OV << 17) | (EXD << 16) | PC;
+		if (pdp1.exc)
+			PC = MB & EXTENDED_ADDRESS_MASK;
+		else
+			PC = (MA & ADDRESS_EXTENSION_MASK) | (MB & BASE_ADDRESS_MASK);
 		break;
 	case SKP:		/* Skip Instruction Group */
 		{
@@ -1065,9 +1150,9 @@ static void execute_instruction(void)
 			if (mb & 04000)		/* clear I/O register */
 				IO = 0;
 			if (mb & 02000)		/* load Accumulator from Test Word */
-				AC |= pdp1.get_test_word ? (*pdp1.get_test_word)() : 0;
+				AC |= pdp1.tw;
 			if (mb & 00100)		/* load Accumulator with Program Counter */
-				AC |= (OV << 17) + PC;
+				AC |= (OV << 17) | (EXD << 16) | PC;
 			nflag = mb & 7;
 			if (nflag)
 			{
@@ -1104,3 +1189,32 @@ static int intern_iot (int *io, int mb)
 	return 1;
 }
 
+
+static void pulse_start_clear(void)
+{
+	/* processor registers */
+	PC = 0;			/* according to maintainance manual p. 6-17 */
+	IR = 0;			/* according to maintainance manual p. 6-13 */
+	/*MB = 0;*/		/* ??? */
+	/*MA = 0;*/		/* ??? */
+	/*AC = 0;*/		/* ??? */
+	/*IO = 0;*/		/* ??? */
+	/*PF = 0;*/		/* ??? */
+
+	/* processor state flip-flops */
+	pdp1.run = 0;		/* ??? */
+	pdp1.cycle = 0;		/* mere guess */
+	pdp1.defer = 0;		/* mere guess */
+	/*pdp1.ov = 0;*/	/* ??? */
+	pdp1.rim = 0;		/* ??? */
+#if 0
+	pdp1.sbm = 0;		/* ??? */
+	pdp1.b2 = 0;		/* ??? */
+	pdp1.b4 = 0;		/* ??? */
+#endif
+	EXD = 0;			/* according to maintainance manual p. 8-16 */
+	pdp1.exc = 0;		/* according to maintainance manual p. 8-16 */
+#if 0
+	pdp1.i_o_halt = 0;	/* mere guess */
+#endif
+}
