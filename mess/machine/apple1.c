@@ -17,6 +17,8 @@
 #include "includes/apple1.h"
 #include "image.h"
 
+static void apple1_reset_poll(int dummy);
+
 
 /*****************************************************************************
 **	Structures
@@ -72,6 +74,9 @@ DRIVER_INIT( apple1 )
 	cpu_setbank(1, mess_ram);
 
 	pia_config(0, PIA_8BIT | PIA_AUTOSENSE, &apple1_pia0);
+
+	/* Poll the RESET-switch input port periodically. */
+	timer_pulse(TIME_IN_HZ(60), 0, apple1_reset_poll);
 }
 
 /*****************************************************************************
@@ -139,6 +144,29 @@ SNAPSHOT_LOAD(apple1)
 	return INIT_PASS;
 }
 
+
+/*****************************************************************************
+**	apple1_reset_poll
+*****************************************************************************/
+static void apple1_reset_poll(int dummy)
+{
+	static int reset_flag = 0;
+
+	/* Check for RESET switch--resets the CPU and the 6820 PIA */
+	if (readinputport(4) & 0x0001)
+	{
+		if (!reset_flag) {
+			reset_flag = 1;
+			/* using PULSE_LINE does not allow us to press and hold key */
+			cpunum_set_input_line(0, INPUT_LINE_RESET, ASSERT_LINE);
+			pia_reset();
+		}
+	}
+	else if (reset_flag) {
+		reset_flag = 0;
+		cpunum_set_input_line(0, INPUT_LINE_RESET, CLEAR_LINE);
+	}
+}
 
 /*****************************************************************************
 **	apple1_interrupt

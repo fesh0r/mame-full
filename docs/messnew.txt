@@ -11,6 +11,8 @@ System Driver Changes:
 - [APPLE1] Removed extraneous and obsolete RAM size DIP switches.  (bug #676)
   [Nate Woods]
 
+- [APPLE1] Implemented a proper reset key.  (bug #349) [Colin Howell]
+
 
 
 User Interface Changes:
