@@ -144,7 +144,7 @@ endif
 # "Calculate" the final CFLAGS, unix CONFIG, LIBS and OBJS
 ##############################################################################
 ifdef ZLIB
-ZLIB    = src/unix/contrib/cutzlib-1.1.4/libz.a
+ZLIB    = src/unix/contrib/cutzlib-1.2.1/libz.a
 endif
 
 all: $(ZLIB) objdirs osdepend $(NAME).$(DISPLAY_METHOD)
@@ -194,8 +194,8 @@ MY_LIBS += -lm
 endif
 
 ifdef ZLIB
-MY_CFLAGS += -Isrc/unix/contrib/cutzlib-1.1.4 -I../../contrib/cutzlib-1.1.4
-LDFLAGS   += -Lsrc/unix/contrib/cutzlib-1.1.4
+MY_CFLAGS += -Isrc/unix/contrib/cutzlib-1.2.1 -I../../contrib/cutzlib-1.2.1
+LDFLAGS   += -Lsrc/unix/contrib/cutzlib-1.2.1
 endif
 
 ifdef DEBUG
@@ -343,9 +343,9 @@ osdepend:
 	  AR_OPTS="$(AR_OPTS)" OBJ="$(OBJ)" \
 	 )
 
-src/unix/contrib/cutzlib-1.1.4/libz.a:
+src/unix/contrib/cutzlib-1.2.1/libz.a:
 	( \
-	cd src/unix/contrib/cutzlib-1.1.4; \
+	cd src/unix/contrib/cutzlib-1.2.1; \
 	./configure; \
 	$(MAKE) libz.a \
 	)
@@ -464,7 +464,7 @@ copycab:
 	for j in $$i/*; do $(INSTALL_DATA) $$j $(XMAMEROOT)/$$i; done; done
 
 clean: 
-	rm -fr $(OBJ) $(NAME).* xlistdev src/unix/contrib/cutzlib-1.1.4/libz.a src/unix/contrib/cutzlib-1.1.4/*.o $(TOOLS)
+	rm -fr $(OBJ) $(NAME).* xlistdev src/unix/contrib/cutzlib-1.2.1/libz.a src/unix/contrib/cutzlib-1.2.1/*.o $(TOOLS)
 #	cd makedep; make clean
 
 clean68k:

@@ -4,11 +4,11 @@ don't fit elsewhere.
 Contents of directory contrib
 ==========================================
 
-1)	Name:		cutzlib-1.1.4
+1)	Name:		cutzlib-1.2.1
 	Description:	A cutdown version of zlib for compiling xmame on
 			systems without zlib.
 	Notes:		See doc/readme.unix, makefile.unix and
-			contrib/cutzlib-1.1.4/README.mame
+			contrib/cutzlib-1.2.1/README.mame
 
 2)      Name:		frontends
 	Description:    Various frontends
