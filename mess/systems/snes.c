@@ -259,6 +259,6 @@ ROM_START(snespal)
 	ROM_LOAD("spc700.rom", 0xFFC0, 0x40, CRC(38000B6B))	/* boot rom */
 ROM_END
 
-/*     YEAR  NAME     PARENT  COMPAT	MACHINE  INPUT  INIT  CONFIG  COMPANY     FULLNAME                                      FLAGS */
-CONSX( 1989, snes,    0,      0,		snes,    snes,  0,    snes,   "Nintendo", "Super Nintendo Entertainment System (NTSC)", GAME_NO_SOUND )
-CONSX( 1991, snespal, snes,   0,		snespal, snes,  0,    snes,   "Nintendo", "Super Nintendo Entertainment System (PAL)",  GAME_NOT_WORKING | GAME_NO_SOUND )
+/*     YEAR  NAME     PARENT  COMPAT  MACHINE  INPUT  INIT  CONFIG  COMPANY     FULLNAME                                      FLAGS */
+CONSX( 1989, snes,    0,      0,      snes,    snes,  0,    snes,   "Nintendo", "Super Nintendo Entertainment System (NTSC)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+CONSX( 1991, snespal, snes,   0,      snespal, snes,  0,    snes,   "Nintendo", "Super Nintendo Entertainment System (PAL)",  GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
