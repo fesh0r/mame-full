@@ -16,6 +16,12 @@ void amstrad_floppy_exit(int);
 
 void Amstrad_Reset(void);
 
+void AmstradCPC_GA_Write(int);
+void AmstradCPC_SetUpperRom(int);
+void Amstrad_RethinkMemory(void);
+void Amstrad_Init(void);
+void amstrad_handle_snapshot(unsigned char *);
+void AmstradCPC_PALWrite(int);
 
 extern int amstrad_cassette_init(int id);
 extern void amstrad_cassette_exit(int id);

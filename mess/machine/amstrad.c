@@ -28,11 +28,6 @@ rom/ram selection
 #include "includes/dsk.h"
 #include "cassette.h"
 
-void AmstradCPC_GA_Write(int);
-void AmstradCPC_SetUpperRom(int);
-void Amstrad_RethinkMemory(void);
-void Amstrad_Init(void);
-void amstrad_handle_snapshot(unsigned char *);
 
 
 static unsigned char *snapshot = NULL;
@@ -194,7 +189,7 @@ void amstrad_handle_snapshot(unsigned char *pSnapshot)
 
 	AmstradCPC_GA_Write(((pSnapshot[0x040] & 0x03f) | 0x080));
 
-	AmstradCPC_GA_Write(((pSnapshot[0x041] & 0x03f) | 0x0c0));
+	AmstradCPC_PALWrite(((pSnapshot[0x041] & 0x03f) | 0x0c0));
 
 	/* init CRTC */
 	for (i=0; i<18; i++)

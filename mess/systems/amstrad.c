@@ -187,6 +187,7 @@ On real CPC name is set using a link on the PCB.
 I/O Port decoding:
 
   Bit 15 = 0, Bit 14 = 1: Gate Array (W)
+  Bit 15 = 0, RAM management PAL
   Bit 14 = 0: 6845 CRTC (R/W)
   Bit 13 = 0: Select upper rom (W)
   Bit 12 = 0: Printer (W)
@@ -522,6 +523,8 @@ void AmstradCPC_GA_Write(int Data)
 		break;
 
 	case 3:
+		return;
+
 		{
 			AmstradCPC_GA_RamConfiguration = Data;
 
@@ -532,6 +535,19 @@ void AmstradCPC_GA_Write(int Data)
 
 
 	Amstrad_RethinkMemory();
+}
+
+void AmstradCPC_PALWrite(int data)
+{
+	if ((data & 0x0c0)==0x0c0)
+	{
+
+		AmstradCPC_GA_RamConfiguration = data;
+
+		AmstradCPC_GA_SetRamConfiguration();
+
+		Amstrad_RethinkMemory();
+	}
 }
 
 void AmstradCPC_SetUpperRom(int Data)
@@ -623,6 +639,12 @@ WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 	{
 		/* GA */
 		AmstradCPC_GA_Write(data);
+	}
+
+	if ((offset & 0x0c000) == 0x00000)
+	{
+		/* GA */
+		AmstradCPC_PALWrite(data);
 	}
 
 	if ((offset & 0x04000) == 0)
@@ -3002,11 +3024,20 @@ static const struct IODevice io_cpcplus[] =
 #define io_cpc464p io_cpcplus
 
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY   FULLNAME */
-COMP( 1984, cpc464,   0,		amstrad,  amstrad,	0,	 "Amstrad plc", "Amstrad/Schneider CPC464")
-COMP( 1985, cpc664,   cpc464,	amstrad,  amstrad,	0,	 "Amstrad plc", "Amstrad/Schneider CPC664")
-COMP( 1985, cpc6128,  cpc464,	amstrad,  amstrad,	0,	 "Amstrad plc", "Amstrad/Schneider CPC6128")
-COMP( 1990, cpc464p,  0,		cpcplus,  amstrad,	0,	 "Amstrad plc", "Amstrad 464plus")
-COMP( 1990, cpc6128p,  0,		cpcplus,  amstrad,	0,	 "Amstrad plc", "Amstrad 6128plus")
-COMP( 1989, kccomp,   cpc464,	kccomp,   kccomp,	0,	 "VEB Mikroelektronik", "KC Compact")
+COMPUTER_CONFIG_START(cpc64)
+	CONFIG_RAM_DEFAULT(64 * 1024)
+COMPUTER_CONFIG_END
+
+COMPUTER_CONFIG_START(cpc128)
+	CONFIG_RAM_DEFAULT(128 * 1024)
+COMPUTER_CONFIG_END
+
+
+/*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */
+COMPC( 1984, cpc464,   0,		amstrad,  amstrad,	0,		cpc64,	 "Amstrad plc", "Amstrad/Schneider CPC464")
+COMPC( 1985, cpc664,   cpc464,	amstrad,  amstrad,	0,	 cpc64,	"Amstrad plc", "Amstrad/Schneider CPC664")
+COMPC( 1985, cpc6128,  cpc464,	amstrad,  amstrad,	0,	 cpc128, "Amstrad plc", "Amstrad/Schneider CPC6128")
+COMPC( 1990, cpc464p,  0,		cpcplus,  amstrad,	0,	 cpc64, "Amstrad plc", "Amstrad 464plus")
+COMPC( 1990, cpc6128p,  0,		cpcplus,  amstrad,	0,	 cpc128, "Amstrad plc", "Amstrad 6128plus")
+COMPC( 1989, kccomp,   cpc464,	kccomp,   kccomp,	0,	 cpc64, "VEB Mikroelektronik", "KC Compact")
 
