@@ -1,9 +1,7 @@
 #ifndef ORICCAS_H
 #define ORICCAS_H
 
-
 #include "driver.h"
-
 
 /* frequency of wave */
 /* tapes use 1200hz and 2400hz samples */
@@ -14,8 +12,7 @@
 #define ORIC_BYTE_TO_BITS_ON_CASSETTE 13
 
 
-extern int oric_wave_size;
-
 int oric_cassette_fill_wave(INT16 *buffer, int length, UINT8 *bytes);
+int oric_cassette_calculate_size_in_samples(int length, UINT8 *bytes);
 
 #endif /* ORICCAS_H */
