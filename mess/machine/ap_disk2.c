@@ -23,6 +23,7 @@
 #include "image.h"
 #include "includes/apple2.h"
 #include "devices/basicdsk.h"
+#include "formats/ap2_disk.h"
 
 #ifdef MAME_DEBUG
 #define LOG(x)	logerror x
@@ -31,11 +32,6 @@
 #endif /* MAME_DEBUG */
 
 #define PROFILER_SLOT6	PROFILER_USER1
-
-#define TOTAL_TRACKS		35 /* total number of tracks we support, can be 40 */
-#define TOTAL_SECTORS		16
-#define NIBBLE_SIZE			374
-#define SECTOR_SIZE			256
 
 #define Q6_MASK				0x10
 #define Q7_MASK				0x20
@@ -53,28 +49,11 @@ struct apple2_drive
 	UINT8 state;			/* bits 0-3 are the phase; bits 4-5 is q6-7 */
 	UINT8 transient_state;	/* state that just reflects the dirtiness of the track data */
 	int position;
-	UINT8 track_data[NIBBLE_SIZE * TOTAL_SECTORS];
+	int image_type;
+	UINT8 track_data[APPLE2_NIBBLE_SIZE * APPLE2_SECTOR_COUNT];
 };
 
 static struct apple2_drive *apple2_drives;
-
-static const unsigned char translate6[0x40] =
-{
-	0x96, 0x97, 0x9a, 0x9b, 0x9d, 0x9e, 0x9f, 0xa6,
-	0xa7, 0xab, 0xac, 0xad, 0xae, 0xaf, 0xb2, 0xb3,
-	0xb4, 0xb5, 0xb6, 0xb7, 0xb9, 0xba, 0xbb, 0xbc,
-	0xbd, 0xbe, 0xbf, 0xcb, 0xcd, 0xce, 0xcf, 0xd3,
-	0xd6, 0xd7, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde,
-	0xdf, 0xe5, 0xe6, 0xe7, 0xe9, 0xea, 0xeb, 0xec,
-	0xed, 0xee, 0xef, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6,
-	0xf7, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff,
-};
-
-static const unsigned char r_skewing6[0x10] =
-{
-	0x00, 0x07, 0x0E, 0x06, 0x0D, 0x05, 0x0C, 0x04,
-	0x0B, 0x03, 0x0A, 0x02, 0x09, 0x01, 0x08, 0x0F
-};
 
 /***************************************************************************
   apple2_slot6_init
@@ -89,110 +68,85 @@ void apple2_slot6_init(void)
 
 DEVICE_LOAD(apple2_floppy)
 {
-	if (mame_fsize(file) != TOTAL_TRACKS*TOTAL_SECTORS*SECTOR_SIZE)
+	struct apple2_drive *drive;
+
+	if (mame_fsize(file) != APPLE2_TRACK_COUNT * APPLE2_SECTOR_COUNT * APPLE2_SECTOR_SIZE)
 		return INIT_FAIL;
 
 	if (device_load_basicdsk_floppy(image, file) != INIT_PASS)
 		return INIT_FAIL;
 
-	basicdsk_set_geometry(image, TOTAL_TRACKS, 1, TOTAL_SECTORS, SECTOR_SIZE, 0, 0, FALSE);
+	basicdsk_set_geometry(image, APPLE2_TRACK_COUNT, 1, APPLE2_SECTOR_COUNT, APPLE2_SECTOR_SIZE, 0, 0, FALSE);
 	floppy_drive_seek(image, -999);
-	floppy_drive_seek(image, +TOTAL_TRACKS/2);
-	apple2_drives[image_index_in_device(image)].state = TWEEN_TRACKS;
-	apple2_drives[image_index_in_device(image)].transient_state = 0;
+	floppy_drive_seek(image, +APPLE2_TRACK_COUNT/2);
+
+	/* set up the apple2 disk structure */
+	drive = &apple2_drives[image_index_in_device(image)];
+	memset(drive, 0, sizeof(*drive));
+	drive->state = TWEEN_TRACKS;
+	drive->transient_state = 0;
+	drive->image_type = apple2_choose_image_type(image_filetype(image));
+
 	return INIT_PASS;
 }
+
+
 
 /**************************************************************************/
 
 static void load_current_track(mess_image *image, struct apple2_drive *disk)
 {
-	int track, sector;
-	int volume = 254;
-	char data[SECTOR_SIZE];
-	int checksum;
-	int xorvalue;
-	int oldvalue;
-	int i, pos;
-
+	int track, sector, skewed_sector;
+	UINT8 data[APPLE2_SECTOR_SIZE];
+	
 	memset(data, 0, sizeof(data));
 	memset(disk->track_data, 0xff, sizeof(disk->track_data));
 
 	track = floppy_drive_get_current_track(image);
 
-	for (sector = 0; sector < TOTAL_SECTORS; sector++)
+	for (sector = 0; sector < APPLE2_SECTOR_COUNT; sector++)
 	{
-		floppy_drive_read_sector_data(image, 0, r_skewing6[sector], data, SECTOR_SIZE);
-
-		pos = sector * NIBBLE_SIZE;
-
-		/* Setup header values */
-		checksum = volume ^ track ^ sector;
-
-		disk->track_data[pos+ 7]     = 0xD5;
-		disk->track_data[pos+ 8]     = 0xAA;
-		disk->track_data[pos+ 9]     = 0x96;
-		disk->track_data[pos+10]     = (volume >> 1) | 0xAA;
-		disk->track_data[pos+11]     = volume | 0xAA;
-		disk->track_data[pos+12]     = (track >> 1) | 0xAA;
-		disk->track_data[pos+13]     = track | 0xAA;
-		disk->track_data[pos+14]     = (sector >> 1) | 0xAA;
-		disk->track_data[pos+15]     = sector | 0xAA;
-		disk->track_data[pos+16]     = (checksum >> 1) | 0xAA;
-		disk->track_data[pos+17]     = (checksum) | 0xAA;
-		disk->track_data[pos+18]     = 0xDE;
-		disk->track_data[pos+19]     = 0xAA;
-		disk->track_data[pos+20]     = 0xEB;
-		disk->track_data[pos+25]     = 0xD5;
-		disk->track_data[pos+26]     = 0xAA;
-		disk->track_data[pos+27]     = 0xAD;
-		disk->track_data[pos+27+344] = 0xDE;
-		disk->track_data[pos+27+345] = 0xAA;
-		disk->track_data[pos+27+346] = 0xEB;
-		xorvalue = 0;
-
-		for(i = 0; i < 342; i++)
-		{
-			if (i >= 0x56)
-			{
-				/* 6 bit */
-				oldvalue = data[i - 0x56];
-				oldvalue = oldvalue >> 2;
-				xorvalue ^= oldvalue;
-				disk->track_data[pos+28+i] = translate6[xorvalue & 0x3F];
-				xorvalue = oldvalue;
-			}
-			else
-			{
-				/* 3 * 2 bit */
-				oldvalue = 0;
-				oldvalue |= (data[i] & 0x01) << 1;
-				oldvalue |= (data[i] & 0x02) >> 1;
-				oldvalue |= (data[i+0x56] & 0x01) << 3;
-				oldvalue |= (data[i+0x56] & 0x02) << 1;
-				oldvalue |= (data[i+0xAC] & 0x01) << 5;
-				oldvalue |= (data[i+0xAC] & 0x02) << 3;
-				xorvalue ^= oldvalue;
-				disk->track_data[pos+28+i] = translate6[xorvalue & 0x3F];
-				xorvalue = oldvalue;
-			}
-		}
-
-		disk->track_data[pos+27+343] = translate6[xorvalue & 0x3F];
+		skewed_sector = apple2_skew_sector(sector, disk->image_type);
+		floppy_drive_read_sector_data(image, 0, skewed_sector, (void *) data, APPLE2_SECTOR_SIZE);
+		apple2_disk_encode_nib(&disk->track_data[sector * APPLE2_NIBBLE_SIZE], data, 254, track, sector);
 	}
 	disk->transient_state |= TRSTATE_LOADED;
 }
 
+
+
 /**************************************************************************/
 
-/* For now, make disks read-only!!! */
-static void write_byte(mess_image *img, struct apple2_drive *disk, int theByte)
+static void save_current_track(mess_image *image, struct apple2_drive *disk)
 {
+	int track, sector, skewed_sector;
+	UINT8 data[APPLE2_SECTOR_SIZE];
+
+	if (disk->transient_state & TRSTATE_DIRTY)
+	{
+		track = floppy_drive_get_current_track(image);
+
+		if (image_is_writable(image))
+		{
+			for (sector = 0; sector < APPLE2_SECTOR_COUNT; sector++)
+			{
+				skewed_sector = apple2_skew_sector(sector, disk->image_type);
+				apple2_disk_decode_nib(data, &disk->track_data[sector * APPLE2_NIBBLE_SIZE], NULL, NULL, NULL);
+				floppy_drive_write_sector_data(image, 0, skewed_sector, (void *) data, APPLE2_SECTOR_SIZE, 0);
+			}
+		}
+		disk->transient_state &= ~TRSTATE_DIRTY;
+	}
 }
 
-static int read_byte(mess_image *img, struct apple2_drive *disk)
+
+
+/**************************************************************************/
+
+/* reads/writes a byte; write_value is -1 for read only */
+static UINT8 process_byte(mess_image *img, struct apple2_drive *disk, int write_value)
 {
-	int value;
+	UINT8 read_value;
 
 	/* no image initialized for that drive ? */
 	if (!image_exists(img))
@@ -202,11 +156,16 @@ static int read_byte(mess_image *img, struct apple2_drive *disk)
 	if ((disk->transient_state & TRSTATE_LOADED) == 0)
 		load_current_track(img, disk);
 
-	value = disk->track_data[disk->position];
+	read_value = disk->track_data[disk->position];
+	if (write_value >= 0)
+	{
+		disk->track_data[disk->position] = write_value;
+		disk->transient_state |= TRSTATE_DIRTY;
+	}
 
 	disk->position++;
 	disk->position %= (sizeof(disk->track_data) / sizeof(disk->track_data[0]));
-	return value;
+	return read_value;
 }
 
 static void seek_disk(mess_image *img, struct apple2_drive *disk, signed int step)
@@ -220,8 +179,8 @@ static void seek_disk(mess_image *img, struct apple2_drive *disk, signed int ste
 	pseudo_track += step;
 	if (pseudo_track < 0)
 		pseudo_track = 0;
-	else if (pseudo_track/2 >= TOTAL_TRACKS)
-		pseudo_track = TOTAL_TRACKS*2-1;
+	else if (pseudo_track/2 >= APPLE2_TRACK_COUNT)
+		pseudo_track = APPLE2_TRACK_COUNT*2-1;
 
 	if (pseudo_track/2 != track)
 	{
@@ -299,9 +258,9 @@ READ_HANDLER ( apple2_c0xx_slot6_r )
 	case 0x0C:		/* Q6L - set transistor Q6 low */
 		cur_disk->state &= ~Q6_MASK;
 		if (read_state)
-			result = read_byte(cur_image, cur_disk);
+			result = process_byte(cur_image, cur_disk, -1);
 		else
-			write_byte(cur_image, cur_disk, disk6byte);
+			process_byte(cur_image, cur_disk, disk6byte);
 		break;
 	
 	case 0x0D:		/* Q6H - set transistor Q6 high */

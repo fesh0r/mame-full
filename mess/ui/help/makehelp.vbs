@@ -53,6 +53,7 @@ Sub AddFile(ByVal objTextStream, ByVal strBaseDir, ByVal strRelPath)
 		WScript.Quit
 	End If
 	
+	
 	objFile.Copy(strObjDir & "\" & strRelPath)
 End Sub
 

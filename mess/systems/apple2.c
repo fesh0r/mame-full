@@ -649,7 +649,6 @@ ROM_START(apple2cp)
 ROM_END
 
 SYSTEM_CONFIG_START(apple2_common)
-	/*CONFIG_DEVICE_FLOPPY		(2, apple2, apple2_dsk )	(would work if it wern't for caching problem */
 	CONFIG_DEVICE_FLOPPY_BASICDSK_RO( 2, "dsk\0bin\0do\0", device_load_apple2_floppy )
 	CONFIG_GET_CUSTOM_DEVICENAME( apple2 )
 	CONFIG_QUEUE_CHARS			( AY3600 )
