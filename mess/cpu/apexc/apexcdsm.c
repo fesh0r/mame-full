@@ -17,9 +17,9 @@
 
 	Since the only assembler for the APEXC that I know of uses numerical data
 	(yes, mnemonics are numbers), I do not know if there is an official way of writing
-	APEXC assembly on a text terminal.  The format I chose is closely inspirated by
-	the assembly format found in Booth's book, but was slightly adapted to accomodate
-	the lack of subscripts or 'greater or equal' characters.
+	APEXC assembly on a text terminal.  The format I chose is closely inspired by
+	the assembly format found in Booth, but was slightly adapted to accomodate
+	the lack of subscripts and of a 'greater or equal' character.
 
 		Printed format						Name
 	0         1         2
@@ -45,6 +45,9 @@
 	A ##-32 (##/##)   (##/##)			store
 	A       (##/##)   (##/##)			store
 	S       (##)      (##/##)			swap
+	+------++--------++-----+
+	mnemonic X field  Y field
+	 field
 
 	For vector instructions, replace the first space on the right of the mnemonic
 	with a 'v'.
@@ -69,11 +72,11 @@ static const instr_desc instructions[16] =
 
 unsigned DasmAPEXC(char *buffer, unsigned pc)
 {
-	UINT32 instruction;				/* 32-bit machine instruction */
+	UINT32 instruction;			/* 32-bit machine instruction */
 	int x, y, function, c6, vector;	/* instruction fields */
-	int n;			/* 'friendly', instruction-dependant interpretation of C6 */
-	const instr_desc *the_desc;		/* point to the revelant entry in instructions */
-	char mnemonic[9];
+	int n;						/* 'friendly', instruction-dependant interpretation of C6 */
+	const instr_desc *the_desc;	/* point to the revelant entry in the instructions array */
+	char mnemonic[9];			/* storage for generated mnemonic */
 
 	/* read the instruction to disassemble */
 	instruction = apexc_readop(pc);
@@ -89,7 +92,7 @@ unsigned DasmAPEXC(char *buffer, unsigned pc)
 	the_desc = & instructions[function >> 1];
 
 	/* generate mnemonic : append a 'v' to the basic mnemonic if it is a vector instruction */
-	sprintf/*snprintf*/(mnemonic, /*sizeof(mnemonic),*/ "%s%c", the_desc->mnemonic, vector ? 'v' : ' ');
+	sprintf(mnemonic, "%.*s%c", sizeof(mnemonic)-2, the_desc->mnemonic, vector ? 'v' : ' ');
 
 	/* print mnemonic and n immediate */
 	switch (the_desc->format)
