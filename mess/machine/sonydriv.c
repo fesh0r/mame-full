@@ -6,7 +6,7 @@
 	This floppy drive was present in all variants of Lisa 2 (including Mac XL), and in all
 	Macintosh in production before 1988, when SIWM and superdrive were introduced.
 
-	There was two variants : 
+	There was two variants :
 	- A single-sided 400k unit which was used on Lisa 2/Mac XL, and Macintosh 128k/512k.
 	  This unit needs the computer to send the proper pulses to control the drive motor
 	  rotation.  It can be connected to all early Macintosh (but not Mac Classic ?) as an
@@ -28,6 +28,7 @@
 #include "sonydriv.h"
 #include "mame.h"
 #include "timer.h"
+#include "cpuintrf.h"
 
 #ifdef MAME_DEBUG
 #define LOG_SONY		1
