@@ -443,13 +443,14 @@ INLINE void sc61860_test_special(void)
 INLINE void sc61860_add_bcd_a(void)
 {
 	int i,t, v=sc61860.ram[A];
+	sc61860.zero=true;
 	for (i=0; i<=sc61860.ram[I]; i++) {
 		t=(sc61860.ram[sc61860.p]&0xf)+(v&0xf);
 		if ((t&0xf)>9) t=t+0x10-10;
 		t+=(sc61860.ram[sc61860.p]&0xf0)+(v&0xf0);
 		if ((t&0xf0)>=0xa0) { t=t+0x100-0xa0; }
 		sc61860.ram[sc61860.p--]=t;
-		sc61860.zero=(t&0xff)==0;
+		sc61860.zero=sc61860.zero&&(t&0xff)==0;
 		sc61860.carry=t>=0x100;
 		v=(sc61860.carry)?1:0;
 		sc61860_icount-=3;
@@ -461,13 +462,14 @@ INLINE void sc61860_add_bcd_a(void)
 INLINE void sc61860_add_bcd(void)
 {
 	int i,t,v=0;
+	sc61860.zero=true;
 	for (i=0; i<=sc61860.ram[I]; i++) {
 		t=(sc61860.ram[sc61860.p]&0xf)+(sc61860.ram[sc61860.q]&0xf)+v;
 		if (t>=10) t=t+0x10-10;
 		t+=(sc61860.ram[sc61860.p]&0xf0)+(sc61860.ram[sc61860.q--]&0xf0);
 		if ((t&0xf0)>=0xa0) { t=t+0x100-0xa0; }
 		sc61860.ram[sc61860.p--]=t;
-		sc61860.zero=(t&0xff)==0;
+		sc61860.zero=sc61860.zero&&(t&0xff)==0;
 		sc61860.carry=t>=0x100;
 		v=(sc61860.carry)?1:0;
 		sc61860_icount-=3;
@@ -478,13 +480,14 @@ INLINE void sc61860_add_bcd(void)
 INLINE void sc61860_sub_bcd_a(void)
 {
 	int i,t, v=sc61860.ram[A];
+	sc61860.zero=true;
 	for (i=0; i<=sc61860.ram[I]; i++) {
 		t=(sc61860.ram[sc61860.p]&0xf)-(v&0xf);
 		if (t<0) t=t-0x10+10;
 		t+=(sc61860.ram[sc61860.p]&0xf0)-(v&0xf0);
 		if (t<0) { t=t-0x100+0xa0; }
 		sc61860.ram[sc61860.p--]=t;
-		sc61860.zero=(t&0xff)==0;
+		sc61860.zero=sc61860.zero&&(t&0xff)==0;
 		sc61860.carry=t<0;
 		v=(sc61860.carry)?1:0;
 		sc61860_icount-=3;
@@ -494,17 +497,19 @@ INLINE void sc61860_sub_bcd_a(void)
 INLINE void sc61860_sub_bcd(void)
 {
 	int i,t,v=0;
+	sc61860.zero=true;
 	for (i=0; i<=sc61860.ram[I]; i++) {
 		t=(sc61860.ram[sc61860.p]&0xf)-(sc61860.ram[sc61860.q]&0xf)-v;
 		if (t<0) t=t-0x10+10;
 		t+=(sc61860.ram[sc61860.p]&0xf0)-(sc61860.ram[sc61860.q--]&0xf0);
 		if (t<0) { t=t-0x100+0xa0; }
 		sc61860.ram[sc61860.p--]=t;
-		sc61860.zero=(t&0xff)==0;
+		sc61860.zero=sc61860.zero&&(t&0xff)==0;
 		sc61860.carry=t<0;
 		v=(sc61860.carry)?1:0;
 		sc61860_icount-=3;
 	}
+	sc61860.q--;
 }
 
 /* side effect p-i-1 -> p correct! */
