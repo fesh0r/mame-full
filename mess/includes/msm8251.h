@@ -15,6 +15,9 @@
 #define MSM8251_STATUS_TX_EMPTY		0x04
 #define MSM8251_STATUS_RX_READY	0x02
 
+#define MSM8251_TRANSFER_RECEIVE_WAITING_FOR_START_BIT	0x0001
+#define MSM8251_TRANSFER_RECEIVE_SYNCHRONISED			0x0002
+
 struct msm8251_interface
 {
 	/* state of txrdy output */
@@ -52,6 +55,7 @@ struct msm8251
 
 	unsigned long baud_rate;
 
+	unsigned long receive_flags;
 	/* this data byte includes start, stop and parity bits */
 	unsigned long receive_char;
 	unsigned long receive_char_length;
