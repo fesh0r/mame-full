@@ -28,6 +28,167 @@ static int amstrad_rendering;
   Start the video hardware emulation.
 ***************************************************************************/
 
+
+/*************************************************************************/
+/* Amstrad CPC 
+ 
+The Amstrad CPC has a fixed palette of 27 colours generated from 3 levels of Red, 
+Green and Blue.
+
+The hardware allows selection of 32 colours, but these extra colours are copies
+of existing colours.
+*/ 
+
+static unsigned short amstrad_colour_table[32] =
+{
+	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+	16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
+	29, 30, 31
+};
+
+unsigned char amstrad_palette[32 * 3] =
+{
+	0x080, 0x080, 0x080,			   /* white */
+	0x080, 0x080, 0x080,			   /* white */
+	0x000, 0x0ff, 0x080,			   /* sea green */
+	0x0ff, 0x0ff, 0x080,			   /* pastel yellow */
+	0x000, 0x000, 0x080,			   /* blue */
+	0x0ff, 0x000, 0x080,			   /* purple */
+	0x000, 0x080, 0x080,			   /* cyan */
+	0x0ff, 0x080, 0x080,			   /* pink */
+	0x0ff, 0x000, 0x080,			   /* purple */
+	0x0ff, 0x0ff, 0x080,			   /* pastel yellow */
+	0x0ff, 0x0ff, 0x000,			   /* bright yellow */
+	0x0ff, 0x0ff, 0x0ff,			   /* bright white */
+	0x0ff, 0x000, 0x000,			   /* bright red */
+	0x0ff, 0x000, 0x0ff,			   /* bright magenta */
+	0x0ff, 0x080, 0x000,			   /* orange */
+	0x0ff, 0x080, 0x0ff,			   /* pastel magenta */
+	0x000, 0x000, 0x080,			   /* blue */
+	0x000, 0x0ff, 0x080,			   /* sea green */
+	0x000, 0x0ff, 0x000,			   /* bright green */
+	0x000, 0x0ff, 0x0ff,			   /* bright cyan */
+	0x000, 0x000, 0x000,			   /* black */
+	0x000, 0x000, 0x0ff,			   /* bright blue */
+	0x000, 0x080, 0x000,			   /* green */
+	0x000, 0x080, 0x0ff,			   /* sky blue */
+	0x080, 0x000, 0x080,			   /* magenta */
+	0x080, 0x0ff, 0x080,			   /* pastel green */
+	0x080, 0x0ff, 0x080,			   /* lime */
+	0x080, 0x0ff, 0x0ff,			   /* pastel cyan */
+	0x080, 0x000, 0x000,			   /* Red */
+	0x080, 0x000, 0x0ff,			   /* mauve */
+	0x080, 0x080, 0x000,			   /* yellow */
+	0x080, 0x080, 0x0ff,			   /* pastel blue */
+};
+
+
+/* Initialise the palette */
+void amstrad_cpc_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+{
+	memcpy(sys_palette, amstrad_palette, sizeof (amstrad_palette));
+	memcpy(sys_colortable, amstrad_colour_table, sizeof (amstrad_colour_table));
+}
+
+/*************************************************************************/
+/* KC Compact
+
+The palette is defined by a colour rom. The only rom dump that exists (from the KC-Club webpage)
+is 2K, which seems correct. In this rom the same 32 bytes of data is repeated throughout the rom.
+
+When a I/O write is made to "Gate Array" to select the colour, Bit 7 and 6 are used by the 
+"Gate Array" to define the function, bit 7 = 0, bit 6 = 1. In the  Amstrad CPC, bits 4..0 
+define the hardware colour number, but in the KC Compact, it seems bits 5..0 
+define the hardware colour number allowing 64 colours to be chosen.
+
+It is possible therefore that the colour rom could be reprogrammed, so that other colour
+selections could be chosen allowing 64 different colours to be used. But this has not been tested
+and co
+
+colour rom byte:
+
+Bit Function 
+7 not used 
+6 not used 
+5,4 Green value
+3,2 Red value
+1,0 Blue value
+
+Green value, Red value, Blue value: 0 = 0%, 01/10 = 50%, 11 = 100%.
+The 01 case is not used, it is unknown if this produces a different amount of colour.
+*/ 
+
+unsigned char kccomp_get_colour_element(int colour_value)
+{
+	switch (colour_value)
+	{
+		case 0:
+			return 0x00;
+		case 1:
+			return 0x60;
+		case 2:
+			return 0x60;
+		case 3:
+			return 0x0ff;
+	}
+
+	return 0x0ff;
+}
+
+
+/* the colour rom has the same 32 bytes repeated, but it might be possible to put a new rom in
+with different data and be able to select the other entries - not tested on a real kc compact yet
+and not supported by this driver */
+void kccomp_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+{
+	int i;
+	int rgb_index = 0;
+
+	for (i=0; i<32; i++)
+	{
+		sys_colortable[i] = i;
+		sys_palette[rgb_index] = kccomp_get_colour_element((color_prom[i]>>2) & 0x03);
+		rgb_index++;
+		sys_palette[rgb_index] = kccomp_get_colour_element((color_prom[i]>>4) & 0x03);
+		rgb_index++;
+		sys_palette[rgb_index] = kccomp_get_colour_element((color_prom[i]>>0) & 0x03);
+		rgb_index++;
+	}
+}
+
+
+/********************************************
+Amstrad Plus
+
+The Amstrad Plus has a 4096 colour palette
+*********************************************/
+
+
+void amstrad_plus_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom) 
+{
+	int i;
+
+	for ( i = 0; i < 0x1000; i++ ) 
+	{
+		int r, g, b;
+
+		r = ( i >> 8 ) & 0x0f;
+		g = ( i >> 4 ) & 0x0f;
+		b = i & 0x0f;
+
+		r = ( r << 4 ) | ( r );
+		g = ( g << 4 ) | ( g );
+		b = ( b << 4 ) | ( b );
+
+		*palette++ = r;
+		*palette++ = g;
+		*palette++ = b;
+
+		colortable[i] = i;
+	}
+}
+
+
 /* this contains the colours in Machine->pens form.*/
 /* this is updated from the eventlist and reflects the current state
 of the render colours - these may be different to the current colour palette values */
