@@ -538,6 +538,7 @@ $(OBJ)/ep128.a :   \
 	  $(OBJ)/mess/systems/enterp.o
 
 $(OBJ)/ascii.a :   \
+	  $(OBJ)/mess/vidhrdw/v9938.o	 \
 	  $(OBJ)/mess/machine/msx.o	 \
 	  $(OBJ)/mess/machine/msx_dsk.o	 \
 	  $(OBJ)/mess/formats/fmsx_cas.o \
