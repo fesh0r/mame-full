@@ -6,6 +6,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /******************* Initialization & Functionality *******************/
 
 #define M6847_TOTAL_COLORS 17
@@ -73,6 +77,10 @@ WRITE_HANDLER( m6847_css_w );
 WRITE_HANDLER( m6847_gm2_w );
 WRITE_HANDLER( m6847_gm1_w );
 WRITE_HANDLER( m6847_gm0_w );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _M6847_H */
 
