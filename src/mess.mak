@@ -593,7 +593,8 @@ $(OBJ)/teamconc.a: \
 	  $(OBJ)/mess/systems/comquest.o
 
 $(OBJ)/svision.a:  \
-	  $(OBJ)/mess/systems/svision.o
+	  $(OBJ)/mess/systems/svision.o \
+	  $(OBJ)/mess/sndhrdw/svision.o
 
 $(OBJ)/lynx.a:     \
 	  $(OBJ)/mess/systems/lynx.o     \
