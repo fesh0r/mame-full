@@ -54,14 +54,40 @@ static int is_paused;
 static void dipswitches(void)
 {
 	void *dlg;
+	struct InputPort *in;
+	const char *dipswitch_name = NULL;
 	
-	dlg = win_dialog_init(L"DIP Switches");
-	if (dlg)
+	dlg = win_dialog_init("DIP Switches");
+	if (!dlg)
+		goto done;
+
+	for (in = Machine->input_ports; in->type != IPT_END; in++)
 	{
-		win_dialog_add_label(dlg, L"Foo");
-		win_dialog_runmodal(dlg);
-		win_dialog_exit(dlg);
+		switch(in->type & ~IPF_MASK) {
+		case IPT_DIPSWITCH_NAME:
+			if ((in->type & IPF_UNUSED) == 0 && !(!options.cheat && (in->type & IPF_CHEAT)))
+			{
+				dipswitch_name = input_port_name(in);
+				win_dialog_add_combobox(dlg, dipswitch_name, in->default_value);
+			}
+			else
+			{
+				dipswitch_name = NULL;
+			}
+			break;
+
+		case IPT_DIPSWITCH_SETTING:
+			if (dipswitch_name)
+				win_dialog_add_combobox_item(dlg, input_port_name(in), in->default_value);
+			break;
+		}
 	}
+
+	win_dialog_runmodal(dlg);
+
+done:
+	if (dlg)
+		win_dialog_exit(dlg);
 }
 
 //============================================================

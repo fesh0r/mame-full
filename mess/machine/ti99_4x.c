@@ -2824,12 +2824,14 @@ static int input_latch, output_latch;
 /*
 	Reset ide card, set up handlers
 */
+/* NPW 08-Oct-2002 - Commenting out because it appears to be unused; and GCC whines
 static void ti99_ide_init(void)
 {
 	ti99_ide_RAM = memory_region(region_dsr) + offset_ide_ram;
 
 	ti99_set_expansion_card_handlers(0x1000, & ide_handlers);
 }
+*/
 
 /*
 	Read ide CRU interface
