@@ -9,6 +9,14 @@
 #include "includes/pc.h"
 #include "includes/pc_fdc_h.h"
 
+#define VERBOSE_FDC 0		/* FDC (floppy disk controller) */
+#if VERBOSE_FDC
+#define FDC_LOG(N,M,A)
+	if(VERBOSE_FDC>=N){ if( M )logerror("%11.6f: %-24s",timer_get_time(),(char*)M ); logerror A; }
+#else
+#define FDC_LOG(n,m,a)
+#endif
+
 #define FDC_DMA 	2			   /* DMA channel number for the FDC */
 static int pc_dma_started = 0;
 
