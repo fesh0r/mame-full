@@ -19,6 +19,7 @@
 #define HIDC_DISPLAYS                   0x809a03ec    // IDD_PROP_DISPLAY
 #define HIDC_DOUBLE                     0x809203f5    // IDD_PROP_ADVANCED
 #define HIDC_FILTER_CLONES              0x80a9049a    // IDD_FILTERS
+#define HIDC_FILTER_EDIT                0x80a904d5    // IDD_FILTERS
 #define HIDC_FILTER_NEOGEO              0x80a9049b    // IDD_FILTERS
 #define HIDC_FILTER_NONWORKING          0x80a90499    // IDD_FILTERS
 #define HIDC_FILTER_ORIGINALS           0x80a904a3    // IDD_FILTERS

@@ -46,6 +46,7 @@ enum {
 	MEMCARD,
 	FLYER,
 	CABINET,
+	MARQUEE,
 	NVRAM,
 	LASTDIR
 };
@@ -71,6 +72,7 @@ char *dir_names[LASTDIR] = {
 	"Memory Card",
 	"Flyers",
 	"Cabinets",
+	"Marquees",
 	"NVRAM"
 };
 
@@ -367,6 +369,7 @@ static BOOL Directories_OnInitDialog(HWND hDlg, HWND hwndFocus, LPARAM lParam)
 	strcpy(DirInfo_Dir(pDirInfo, MEMCARD),	GetMemcardDir());
 	strcpy(DirInfo_Dir(pDirInfo, FLYER),	GetFlyerDir());
 	strcpy(DirInfo_Dir(pDirInfo, CABINET),	GetCabinetDir());
+	strcpy(DirInfo_Dir(pDirInfo, MARQUEE),	GetMarqueeDir());
 	strcpy(DirInfo_Dir(pDirInfo, NVRAM),	GetNvramDir());
 
     UpdateDirectoryList(hDlg);
@@ -458,6 +461,7 @@ static void Directories_OnOk(HWND hDlg)
 	SetMemcardDir(FixSlash(DirInfo_Dir(pDirInfo, MEMCARD)));
 	SetFlyerDir(FixSlash(DirInfo_Dir(pDirInfo, FLYER)));
 	SetCabinetDir(FixSlash(DirInfo_Dir(pDirInfo, CABINET)));
+	SetMarqueeDir(FixSlash(DirInfo_Dir(pDirInfo, MARQUEE)));
 	SetNvramDir(FixSlash(DirInfo_Dir(pDirInfo, NVRAM)));
 
     EndDialog(hDlg, nResult);
@@ -725,6 +729,7 @@ static BOOL Directories_OnEndLabelEdit(HWND hDlg, NMHDR* pNMHDR)
 		case MEMCARD:
 		case FLYER:
 		case CABINET:
+		case MARQUEE:
 		case NVRAM:
             DirInfo_SetDir(pDirInfo, nType, pItem->iItem, pItem->pszText);
             break;

@@ -3843,6 +3843,7 @@ static BOOL ParseCommandLine(char *command_line)
 		}
 #endif
         if (argv[i][0] != '-')
+
             continue;
 
 #ifdef MESS

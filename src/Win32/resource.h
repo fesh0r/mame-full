@@ -234,6 +234,7 @@
 #define IDC_LANGUAGECHECK               1233
 #define IDC_LANGUAGEBROWSE              1234
 #define IDC_LANGUAGEEDIT                1236
+#define IDC_FILTER_EDIT                 1237
 #define ID_FILE_EXIT                    40001
 #define ID_ABOUT                        40003
 #define ID_FILE_PLAY                    40004

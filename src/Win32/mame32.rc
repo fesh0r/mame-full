@@ -108,6 +108,7 @@ BEGIN
         MENUITEM "Default &Options...",         ID_OPTIONS_DEFAULTS
         MENUITEM "&Reset to Default...",        ID_OPTIONS_RESET_DEFAULTS
         MENUITEM "&Startup Options...",         ID_OPTIONS_STARTUP
+        MENUITEM "&Language...",                ID_OPTIONS_LANGUAGE
 #if defined(MESS) && !defined(MESS_PICKER)
         MENUITEM SEPARATOR
         MENUITEM "Image 0",                     ID_IMAGE0_CONFIG
@@ -442,7 +443,7 @@ CAPTION "Directories"
 FONT 8, "MS Sans Serif"
 BEGIN
     LTEXT           "Show directories for:",IDC_STATIC,7,7,157,8
-    COMBOBOX        IDC_DIR_COMBO,7,19,157,68,CBS_DROPDOWNLIST | CBS_SORT | 
+    COMBOBOX        IDC_DIR_COMBO,7,19,157,79,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
     LTEXT           "Directories:",IDC_STATIC,7,37,157,8
     CONTROL         "List1",IDC_DIR_LIST,"SysListView32",LVS_REPORT | 
@@ -568,7 +569,7 @@ END
 IDD_PROP_SOUND DIALOGEX 0, 0, 220, 205
 STYLE WS_CHILD | WS_CAPTION
 CAPTION "Sound"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     ICON            IDI_SOUND,IDC_STATIC,20,11,20,20
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,20,38,178,1
@@ -601,7 +602,7 @@ END
 IDD_PROP_ADVANCED DIALOGEX 0, 0, 220, 205
 STYLE WS_CHILD | WS_CAPTION
 CAPTION "Advanced"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     ICON            IDI_DISPLAY,IDC_STATIC,20,10,20,20
     LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,52,9,161,25,
@@ -785,39 +786,40 @@ BEGIN
 #endif
 END
 
-IDD_FILTERS DIALOGEX 0, 0, 205, 180
+IDD_FILTERS DIALOGEX 0, 0, 205, 185
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_CONTEXTHELP
 CAPTION "Game Filters"
-FONT 8, "MS Sans Serif", 0, 0, 0x1
+FONT 8, "MS Sans Serif"
 BEGIN
-    GROUPBOX        "Game Filters",IDC_STATIC,13,39,179,84
+    GROUPBOX        "Game filters",IDC_STATIC,13,36,179,84
     CONTROL         "&Vector Graphics",IDC_FILTER_VECTOR,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,23,52,76,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,23,49,76,10,0,
                     HIDC_FILTER_VECTOR
     CONTROL         "&Raster Graphics",IDC_FILTER_RASTER,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,107,52,78,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,49,78,10,0,
                     HIDC_FILTER_RASTER
     CONTROL         "C&lones",IDC_FILTER_CLONES,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,23,66,76,10,0,HIDC_FILTER_CLONES
+                    WS_TABSTOP,23,63,76,10,0,HIDC_FILTER_CLONES
     CONTROL         "Ori&ginals",IDC_FILTER_ORIGINALS,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,107,66,78,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,63,78,10,0,
                     HIDC_FILTER_ORIGINALS
     CONTROL         "Non-Wor&king",IDC_FILTER_NONWORKING,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,23,80,76,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,23,77,76,10,0,
                     HIDC_FILTER_NONWORKING
     CONTROL         "&Working",IDC_FILTER_WORKING,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,107,80,78,10,0,HIDC_FILTER_WORKING
+                    WS_TABSTOP,107,77,78,10,0,HIDC_FILTER_WORKING
     CONTROL         "&Unavailable",IDC_FILTER_UNAVAILABLE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,23,94,76,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,23,91,76,10,0,
                     HIDC_FILTER_UNAVAILABLE
     CONTROL         "&Neo-Geo Games",IDC_FILTER_NEOGEO,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,23,107,76,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,23,104,76,10,0,
                     HIDC_FILTER_NEOGEO
-    CTEXT           "Select the filters you wish to apply to this folder from the list above and click OK.",
-                    IDC_STATIC,28,131,148,20
-    PUSHBUTTON      "&OK",IDOK,49,159,50,14
-    DEFPUSHBUTTON   "&Cancel",IDCANCEL,105,159,50,14
+    GROUPBOX        "&Description filter",IDC_STATIC,13,123,179,33
+    EDITTEXT        IDC_FILTER_EDIT,23,136,159,12,ES_AUTOHSCROLL,0,
+                    HIDC_FILTER_EDIT
+    DEFPUSHBUTTON   "&OK",IDOK,49,164,50,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,105,164,50,14
     CTEXT           "Game filters allow customizing the games that are displayed in each folder by hiding games that match the filters applied.",
                     IDC_STATIC,23,7,159,27
 END
@@ -981,7 +983,7 @@ IDD_LANGUAGE DIALOGEX 0, 0, 186, 66
 STYLE DS_MODALFRAME | DS_CONTEXTHELP | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_CONTEXTHELP
 CAPTION "Language"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     CONTROL         "Use language file",IDC_LANGUAGECHECK,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,7,79,10,0,
@@ -1143,7 +1145,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 198
         TOPMARGIN, 7
-        BOTTOMMARGIN, 173
+        BOTTOMMARGIN, 178
     END
 
     IDD_RESET, DIALOG

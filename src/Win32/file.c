@@ -431,18 +431,10 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
 
 		switch (imgType)
 		{
-		case PICT_SCREENSHOT:
-			dirname = GetImgDir();
-			break;
-
-		case PICT_FLYER:
-			dirname = GetFlyerDir();
-			break;
-
-		case PICT_CABINET:
-			dirname = GetCabinetDir();
-			break;
-
+		case PICT_SCREENSHOT:   dirname = GetImgDir();      break;
+		case PICT_FLYER:        dirname = GetFlyerDir();    break;
+		case PICT_CABINET:      dirname = GetCabinetDir();  break;
+		case PICT_MARQUEE:      dirname = GetMarqueeDir();  break;
 		default:
 			return 0;
 		}
@@ -491,10 +483,14 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
 
                 if (use_flyers)
 				{
-					if (GetShowPictType() == PICT_FLYER)
-						sprintf(name, "%s/flyers.zip", dirname);
-					else
-						sprintf(name, "%s/cabinets.zip", dirname);
+		            switch (GetShowPictType())
+		            {
+		            case PICT_FLYER:    sprintf(name, "%s/flyers.zip",   dirname); break;
+		            case PICT_CABINET:  sprintf(name, "%s/cabinets.zip", dirname); break;
+		            case PICT_MARQUEE:  sprintf(name, "%s/marquees.zip", dirname); break;
+		            default:
+                        assert(FALSE);
+		            }
 				}
                 else
                     sprintf(name, "%s/snap.zip", dirname);
@@ -517,13 +513,18 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
                 /* Try ZipMagic in subfolder */
                 if (use_flyers)
                 {
-                    if (GetShowPictType() == PICT_FLYER)
-                        sprintf(name, "%s/flyers.zip/%s.%s", dirname, gamename, pic_format[i]);
-                    else
-                        sprintf(name, "%s/cabinets.zip/%s.%s", dirname, gamename, pic_format[i]);
+		            switch (GetShowPictType())
+		            {
+		            case PICT_FLYER:    sprintf(name, "%s/flyers.zip/%s.%s", dirname, gamename, pic_format[i]);   break;
+		            case PICT_CABINET:  sprintf(name, "%s/cabinets.zip/%s.%s", dirname, gamename, pic_format[i]); break;
+		            case PICT_MARQUEE:  sprintf(name, "%s/marquees.zip/%s.%s", dirname, gamename, pic_format[i]); break;
+		            default:
+			            assert(FALSE);
+		            }
                 }
                 else
                     sprintf(name, "%s/snap.zip/%s.%s", dirname, gamename, pic_format[i]);
+
                 mf->fptr = fopen(name, "rb");
                 mf->access_type = ACCESS_FILE;
                 if ((found = mf->fptr != 0) != 0)

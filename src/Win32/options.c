@@ -187,6 +187,7 @@ REG_OPTIONS regSettings[] = {
 	{"MemcardDir",		RO_PSTRING, &settings.memcarddir,		0, 0},
 	{"FlyerDir",	 	RO_PSTRING, &settings.flyerdir,	    	0, 0},
 	{"CabinetDir",	 	RO_PSTRING, &settings.cabinetdir,   	0, 0},
+	{"MarqueeDir",	 	RO_PSTRING, &settings.marqueedir,   	0, 0},
 	{"NVRAMDir",	 	RO_PSTRING, &settings.nvramdir,     	0, 0},
     /* ListMode needs to be before ColumnWidths settings */
     {"ListMode",        RO_ENCODE,  &settings.view,             ListEncodeString,       ListDecodeString},
@@ -374,6 +375,7 @@ void OptionsInit(int total_games)
 	settings.memcarddir  = strdup("memcard");
 	settings.flyerdir	 = strdup("flyers");
 	settings.cabinetdir	 = strdup("cabinets");
+	settings.marqueedir	 = strdup("marquees");
 	settings.nvramdir	 = strdup("nvram");
 
     settings.list_font.lfHeight         = -8;
@@ -490,6 +492,7 @@ void OptionsExit(void)
 	free(settings.memcarddir);
 	free(settings.flyerdir);
 	free(settings.cabinetdir);
+	free(settings.marqueedir);
 	free(settings.nvramdir);
 }
 
@@ -1158,6 +1161,23 @@ void SetCabinetDir(const char* path)
 
     if (path != NULL)
         settings.cabinetdir = strdup(path);
+}
+
+const char* GetMarqueeDir(void)
+{
+    return settings.marqueedir;
+}
+
+void SetMarqueeDir(const char* path)
+{
+    if (settings.marqueedir != NULL)
+    {
+        free(settings.marqueedir);
+        settings.marqueedir = NULL;
+    }
+
+    if (path != NULL)
+        settings.marqueedir = strdup(path);
 }
 
 void ResetGameOptions(int num_game)

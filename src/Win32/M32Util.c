@@ -236,6 +236,28 @@ void DisplayTextFile(HWND hWnd, char *cName)
     MessageBox(NULL, msg, cName, MB_OK); 
 }
 
+char* MyStrStrI(const char* pFirst, const char* pSrch)
+{
+    char* cp = (char*)pFirst;
+    char* s1;
+    char* s2;
+    
+    while (*cp)
+    {
+        s1 = cp;
+        s2 = (char*)pSrch;
+        
+        while (*s1 && *s2 && !_strnicmp(s1, s2, 1))
+            s1++, s2++;
+        
+        if (!*s2)
+            return cp;
+        
+        cp++;
+    }
+    return NULL;
+}
+
 /***************************************************************************
     Internal functions
  ***************************************************************************/

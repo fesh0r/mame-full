@@ -24,6 +24,7 @@
 #include <shellapi.h>
 #include <windowsx.h>
 #include "MAME32.h"
+#include "M32Util.h"
 #include "TreeView.h"
 #include "driver.h"
 #include "resource.h"
@@ -42,6 +43,8 @@
 /* TVINSERTSTRUCT*/
 #define item  DUMMYUNIONNAME.item
 #endif
+
+#define FILTERTEXT_LEN 256
 
 /***************************************************************************
     public structures
@@ -136,6 +139,7 @@ static LPTREEFOLDER lpCurrentFolder = 0;    /* Currently selected folder */
 static UINT         nCurrentFolder = 0;     /* Current folder ID */
 static WNDPROC      g_lpTreeWndProc = 0;    /* for subclassing the TreeView */
 static HIMAGELIST   hTreeSmall = 0;         /* TreeView Image list of icons */
+static char         g_FilterText[FILTERTEXT_LEN];
 
 /***************************************************************************
     private function prototypes
@@ -200,6 +204,8 @@ BOOL InitFolders(UINT nGames)
     int             i = 0;
     DWORD           dwFolderFlags;
     LPFOLDERDATA    fData = 0;
+
+    memset(g_FilterText, 0, FILTERTEXT_LEN * sizeof(char));
 
     if (treeFolders != 0)
     {
@@ -595,11 +601,19 @@ void Tree_Initialize(HWND hWnd)
     SetWindowLong(hWnd, GWL_WNDPROC, (LONG)TreeWndProc);
 }
 
+  
 /* Used to build the GameList */
 BOOL GameFiltered(int nGame, DWORD dwMask)
 {
     BOOL vector;
     game_data_type *gameData = GetGameData();
+
+    /* Filter games */
+    if (g_FilterText[0] != '\0')
+    {
+        if (!MyStrStrI(drivers[nGame]->description, g_FilterText))
+            return TRUE;
+    }
 
     /* Are there filters set on this folder? */
     if ((dwMask & F_MASK) == 0)
@@ -1287,10 +1301,14 @@ INT_PTR CALLBACK FilterDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPa
     {
     case WM_INITDIALOG:
         dwFilters = 0;
+        
         /* Use global lpCurrentFolder */
         if (lpCurrentFolder != NULL)
         {
             char tmp[80];
+
+            Edit_SetText(GetDlgItem(hDlg, IDC_FILTER_EDIT), g_FilterText);
+            Edit_SetSel(GetDlgItem(hDlg, IDC_FILTER_EDIT), 0, -1);
 
             /* Display current folder name in dialog titlebar */
             sprintf(tmp,"Filters for %s Folder", lpCurrentFolder->m_lpTitle);
@@ -1308,7 +1326,8 @@ INT_PTR CALLBACK FilterDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPa
                 DisableFilters(hDlg, lpFilterRecord, &filterList[i], dwFilters);
             }
         }            
-        return TRUE;
+        SetFocus(GetDlgItem(hDlg, IDC_FILTER_EDIT));
+        return FALSE;
 
     case WM_HELP:
         /* User clicked the ? from the upper right on a control */
@@ -1329,6 +1348,8 @@ INT_PTR CALLBACK FilterDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPa
             {
             case IDOK :
                 dwFilters = 0;
+
+                Edit_GetText(GetDlgItem(hDlg, IDC_FILTER_EDIT), g_FilterText, FILTERTEXT_LEN);
 
                 /* see which buttons are checked */
                 for (i = 0; i < F_NUM_FILTERS; i++)

@@ -99,6 +99,7 @@ enum {
 	PICT_SCREENSHOT = 0,
 	PICT_FLYER,
 	PICT_CABINET,
+	PICT_MARQUEE,
 	MAX_PICT_TYPES
 };
 
@@ -228,6 +229,7 @@ typedef struct
 	char*    memcarddir;
 	char*	 flyerdir;
 	char*    cabinetdir;
+	char*    marqueedir;
 	char*    nvramdir;
 } settings_type; /* global settings for the UI only */
 
@@ -376,6 +378,9 @@ void SetFlyerDir(const char* path);
 
 const char* GetCabinetDir(void);
 void SetCabinetDir(const char* path);
+
+const char* GetMarqueeDir(void);
+void SetMarqueeDir(const char* path);
 
 void ResetGameOptions(int num_game);
 

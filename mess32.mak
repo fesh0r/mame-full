@@ -843,6 +843,7 @@ maketree:
 	md $(OBJ)\cpu\sc61860
 	md $(OBJ)\cpu\arm
 	md $(OBJ)\cpu\g65816
+	md $(OBJ)\cpu\f8
 	md $(OBJ)\sound
 	md $(OBJ)\drivers
 	md $(OBJ)\machine
@@ -898,6 +899,7 @@ clean:
 	del $(OBJ)\cpu\sc61860\*.o
 	del $(OBJ)\cpu\arm\*.o
 	del $(OBJ)\cpu\g65816\*.o
+	del $(OBJ)\cpu\f8\*.o
 	del $(OBJ)\sound\*.o
 	del $(OBJ)\drivers\*.o
 	del $(OBJ)\machine\*.o
@@ -929,7 +931,7 @@ cleandebug:
 	del $(OBJ)\cpu\m6502\*.o
 	del $(OBJ)\cpu\h6280\*.o
 	del $(OBJ)\cpu\i86\*.o
-	del	$(OBJ)\cpu\nec\*.0
+	del $(OBJ)\cpu\nec\*.0
 	del $(OBJ)\cpu\i8039\*.o
 	del $(OBJ)\cpu\i8085\*.o
 	del $(OBJ)\cpu\m6800\*.o
@@ -957,6 +959,7 @@ cleandebug:
 	del $(OBJ)\cpu\sc61860\*.o
 	del $(OBJ)\cpu\arm\*.o
 	del $(OBJ)\cpu\g65816\*.o
+	del $(OBJ)\cpu\f8\*.o
 	del $(EXENAME)
 
 cleantiny:
