@@ -3,8 +3,8 @@
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - Dragon 64 [Nate Woods]
-- PK-01 Lviv (preliminary) [Krzysztof Strzecha]
-- PK-01 Lviv rev. 2 (preliminary) [Krzysztof Strzecha]
+- PK-01 Lviv [Krzysztof Strzecha]
+- PK-01 Lviv rev. 2 [Krzysztof Strzecha]
 
 System Driver Changes:
 ----------------------
