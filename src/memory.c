@@ -19,7 +19,7 @@
 #include "driver.h"
 #include "osd_cpu.h"
 
-/* #define MEM_DUMP */
+#define MEM_DUMP
 
 #ifdef MEM_DUMP
 static void mem_dump( void );
@@ -1705,7 +1705,6 @@ static void *install_port_write_handler_common(int cpu, int start, int end,
 #ifdef MEM_DUMP
 static void mem_dump( void )
 {
-	extern int totalcpu;
 	int cpu;
 	int naddr,addr;
 	MHELE nhw,hw;

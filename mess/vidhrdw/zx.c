@@ -126,7 +126,7 @@ int zx_ula_r(int offs, int region)
 	ireg = cpu_get_reg(Z80_I) << 8;
 	rreg = cpu_get_reg(Z80_R);
 	cycles = 4 * (64 - (rreg & 63));
-#if 0
+#if 1
 	y = cpu_getscanline();
 #else
 	y = ula_scanline_count;

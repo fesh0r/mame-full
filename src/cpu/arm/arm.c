@@ -49,6 +49,7 @@ struct ARM {
 	UINT32 reg_firq[7]; /* swapped R8-R14 during FIRQ */
 	UINT32 reg_irq[2];	/* swapped R13-R14 during IRQ */
 	UINT32 reg_svc[2];	/* swapped R13-R14 during SVC */
+	UINT32 queue_count; /* queue filled up to? */
 	UINT32 ppc; 		/* previous PC */
 };
 
@@ -542,15 +543,15 @@ INLINE void fill_queue(void)
 	/* pre-fetch the instruction queue */
 	arm.ppc = PC;
 	arm.queue[1] = ARM_RDMEM_32(PC);
-	PC = (PC + 4) & AMASK;
-	arm.queue[2] = ARM_RDMEM_32(PC);
-	PC = (PC + 4) & AMASK;
+    PC = (PC + 4) & AMASK;
+    arm.queue[2] = ARM_RDMEM_32(PC);
+    PC = (PC + 8) & AMASK;
 }
 
 INLINE void shift_queue(void)
 {
 	/* move the instruction queue */
-	arm.ppc = PC;
+    arm.ppc = PC;
 	arm.queue[0] = arm.queue[1];
 	arm.queue[1] = arm.queue[2];
 	arm.queue[2] = ARM_RDMEM_32(PC);
@@ -2631,6 +2632,7 @@ void (*func[256])(void) =
 void arm_reset(void *param)
 {
 	memset(&arm, 0, sizeof(struct ARM));
+	fill_queue();
 }
 
 void arm_exit(void)
@@ -2729,7 +2731,7 @@ void arm_set_context(void *src)
 
 unsigned arm_get_pc(void)
 {
-	return (PC - 8) & AMASK;
+	return (PC - 4) & AMASK;
 }
 
 void arm_set_pc(unsigned val)
@@ -2926,8 +2928,13 @@ const char *arm_info(void *context, int regnum)
 
 unsigned arm_dasm(char *buffer, unsigned pc)
 {
+#if 0
 #ifdef MAME_DEBUG
 	return DasmARM(buffer,pc);
+#else
+	sprintf(buffer, "$%08x", ARM_RDMEM_32(pc));
+	return 4;
+#endif
 #else
 	sprintf(buffer, "$%08x", ARM_RDMEM_32(pc));
 	return 4;

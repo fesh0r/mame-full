@@ -18,6 +18,7 @@ static unsigned char *current_ram_page;
 static int current_ram_page_index;
 static unsigned char bg_scroll;
 static int palette_bank;
+static int palette_bank_2;
 static int protection_question;
 
 
@@ -78,8 +79,8 @@ void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 		for (j = 0;j < 2;j++)
 		{
-			COLOR(0,4*i + j*4*8) = i + j*64;
-			COLOR(0,4*i + j*4*8 + 1) = 8 + i + j*64;
+			COLOR(0,4*i + j*4*8 + 0) = 0*8 + i + j*64;
+			COLOR(0,4*i + j*4*8 + 1) = 1*8 + i + j*64;
 			COLOR(0,4*i + j*4*8 + 2) = 2*8 + i + j*64;
 			COLOR(0,4*i + j*4*8 + 3) = 3*8 + i + j*64;
 		}
@@ -93,10 +94,88 @@ void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 		for (j = 0;j < 2;j++)
 		{
-			COLOR(1,4*i + j*4*8) = i + 32 + j*64;
-			COLOR(1,4*i + j*4*8 + 1) = 8 + i + 32 + j*64;
+			COLOR(1,4*i + j*4*8 + 0) = 0*8 + i + 32 + j*64;
+			COLOR(1,4*i + j*4*8 + 1) = 1*8 + i + 32 + j*64;
 			COLOR(1,4*i + j*4*8 + 2) = 2*8 + i + 32 + j*64;
 			COLOR(1,4*i + j*4*8 + 3) = 3*8 + i + 32 + j*64;
+		}
+	}
+}
+
+
+/***************************************************************************
+
+  Convert the color PROMs into a more useable format.
+
+  Phoenix has two 256x4 palette PROMs, one containing the high bits and the
+  other the low bits (2x2x2 color space).
+  The palette PROMs are connected to the RGB output this way:
+
+  bit 3 --
+        -- 270 ohm resistor  -- GREEN
+        -- 270 ohm resistor  -- BLUE
+  bit 0 -- 270 ohm resistor  -- RED
+
+  bit 3 --
+        -- GREEN
+        -- BLUE
+  bit 0 -- RED
+
+  plus 270 ohm pullup and pulldown resistors on all lines
+
+***************************************************************************/
+void pleiads_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int bit0,bit1;
+
+
+		bit0 = (color_prom[0] >> 0) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
+		*(palette++) = 0x55 * bit0 + 0xaa * bit1;
+		bit0 = (color_prom[0] >> 2) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
+		*(palette++) = 0x55 * bit0 + 0xaa * bit1;
+		bit0 = (color_prom[0] >> 1) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
+		*(palette++) = 0x55 * bit0 + 0xaa * bit1;
+
+		color_prom++;
+	}
+
+	/* first bank of characters use colors 0x00-0x1f, 0x40-0x5f, 0x80-0x9f and 0xc0-0xdf */
+	for (i = 0;i < 8;i++)
+	{
+		int j;
+
+
+		for (j = 0;j < 4;j++)
+		{
+			COLOR(0,4*i + j*4*8 + 0) = 0*8 + i + (3-j)*64;
+			COLOR(0,4*i + j*4*8 + 1) = 1*8 + i + (3-j)*64;
+			COLOR(0,4*i + j*4*8 + 2) = 2*8 + i + (3-j)*64;
+			COLOR(0,4*i + j*4*8 + 3) = 3*8 + i + (3-j)*64;
+		}
+	}
+
+	/* second bank of characters use colors 0x20-0x3f, 0x60-0x7f, 0xa0-0xbf and 0xe0-0xff */
+	for (i = 0;i < 8;i++)
+	{
+		int j;
+
+
+		for (j = 0;j < 4;j++)
+		{
+			COLOR(1,4*i + j*4*8 + 0) = 0*8 + i + 32 + (3-j)*64;
+			COLOR(1,4*i + j*4*8 + 1) = 1*8 + i + 32 + (3-j)*64;
+			COLOR(1,4*i + j*4*8 + 2) = 2*8 + i + 32 + (3-j)*64;
+			COLOR(1,4*i + j*4*8 + 3) = 3*8 + i + 32 + (3-j)*64;
 		}
 	}
 }
@@ -185,8 +264,46 @@ WRITE_HANDLER( phoenix_videoreg_w )
 
 	protection_question = data & 0xfc;
 
-	/* I think bits 2 and 3 are used for something else in Pleiads as well,
+    /* I think bits 2 and 3 are used for something else in Pleiads as well,
 	   they are set in the routine starting at location 0x06bc */
+
+	/* send two bits to sound control C (not sure if they are there) */
+	pleiads_sound_control_c_w(offset, data);
+}
+
+
+WRITE_HANDLER( pleiads_videoreg_w )
+{
+    if (current_ram_page_index != (data & 1))
+	{
+		/* Set memory bank */
+		current_ram_page_index = data & 1;
+
+		current_ram_page = current_ram_page_index ? ram_page2 : ram_page1;
+
+		memset(dirtybuffer,1,videoram_size);
+	}
+
+	/* I think bits 2 and 3 are used for something else in Pleiads as well,
+	 * they are set in the routine starting at location 0x06bc
+	 * HJB: looks like those are the palette bank select bits
+	 */
+
+    if (palette_bank != ((data >> 2) & 1))
+	{
+		palette_bank = (data >> 2) & 1;
+
+		memset(dirtybuffer,1,videoram_size);
+	}
+
+	if (palette_bank_2 != ((data >> 3) & 1))
+	{
+		palette_bank_2 = (data >> 3) & 1;
+
+		memset(dirtybuffer,1,videoram_size);
+	}
+
+	protection_question = data & 0xfc;
 
 	/* send two bits to sound control C (not sure if they are there) */
 	pleiads_sound_control_c_w(offset, data);
@@ -299,3 +416,75 @@ void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
+
+void pleiads_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+
+
+	/* for every character in the Video RAM, check if it has been modified */
+	/* since last time and update it accordingly. */
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		if (dirtybuffer[offs])
+		{
+			int sx,sy,code;
+
+
+			dirtybuffer[offs] = 0;
+
+			code = current_ram_page[offs + BACKGROUND_VIDEORAM_OFFSET];
+
+			sx = offs % 32;
+			sy = offs / 32;
+
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					code,
+					(code >> 5) + 8 * palette_bank,
+					0,0,
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+	}
+
+
+	/* copy the character mapped graphics */
+	{
+		int scroll;
+
+
+		scroll = -bg_scroll;
+
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	}
+
+
+	/* draw the frontmost playfield. They are characters, but draw them as sprites */
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		int sx,sy,code;
+
+
+		code = current_ram_page[offs];
+
+		sx = offs % 32;
+		sy = offs / 32;
+
+		if (sx >= 1)
+			drawgfx(bitmap,Machine->gfx[1],
+					code,
+					(code >> 5) + 8 * palette_bank_2,
+                    0,0,
+					8*sx,8*sy,
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
+		else
+			drawgfx(bitmap,Machine->gfx[1],
+					code,
+					(code >> 5) + 8 * palette_bank_2,
+                    0,0,
+					8*sx,8*sy,
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
+	}
+}
+
+

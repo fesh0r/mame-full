@@ -196,8 +196,8 @@ constants for each address space type we support.
 #define ABITS2_24BEW	8
 #define ABITS_MIN_24BEW 1			/* minimum memory block is 2 bytes */
 /* 26 bits address (little endian - dword access) */
-#define ABITS1_26LEW	16
-#define ABITS2_26LEW	8
+#define ABITS1_26LEW	14
+#define ABITS2_26LEW	10
 #define ABITS_MIN_26LEW 2			/* minimum memory block is 4 bytes */
 /* 29 bits address (dword access) */
 #define ABITS1_29		19

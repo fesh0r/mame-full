@@ -511,6 +511,14 @@ DBGOBJS += $(OBJ)/cpu/adsp2100/2100dasm.o
 $(OBJ)/cpu/adsp2100/adsp2100.o: adsp2100.c adsp2100.h 2100ops.c
 endif
 
+CPU=$(strip $(findstring ADSP2105@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_ADSP2105=1
+CPUOBJS += $(OBJ)/cpu/adsp2100/adsp2100.o
+DBGOBJS += $(OBJ)/cpu/adsp2100/2100dasm.o
+$(OBJ)/cpu/adsp2105/adsp2100.o: adsp2100.c adsp2100.h 2100ops.c
+endif
+
 CPU=$(strip $(findstring PDP1@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_PDP1=1

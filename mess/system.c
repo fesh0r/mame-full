@@ -353,7 +353,7 @@ const struct GameDriver *drivers[] =
 	  DRIVER( atom ) 	    /* Acorn Atom           						  */
       DRIVER( bbca )       /* BBC Micro                                      */
       DRIVER( bbcb )       /* BBC Micro                                      */
-  TESTDRIVER( a310 )		/* Acorn Archimedes 310 						  */
+	  DRIVER( a310 )	   /* Acorn Archimedes 310							 */
 
 
       /* SAM COUPE */

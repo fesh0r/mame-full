@@ -228,6 +228,9 @@ enum
 #if (HAS_ADSP2100)
 	CPU_ADSP2100,
 #endif
+#if (HAS_ADSP2105)
+	CPU_ADSP2105,
+#endif
 #if (HAS_MIPS)
 	CPU_MIPS,
 #endif

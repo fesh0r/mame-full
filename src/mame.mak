@@ -60,6 +60,7 @@ CPUS+=TMS320C10@
 CPUS+=CCPU@
 #CPUS+=PDP1@
 CPUS+=ADSP2100@
+CPUS+=ADSP2105@
 CPUS+=MIPS@
 #CPUS+=SC61860@
 #CPUS+=ARM@
@@ -119,7 +120,7 @@ DRVLIBS = \
 	$(OBJ)/sega.a $(OBJ)/dataeast.a $(OBJ)/tehkan.a $(OBJ)/konami.a \
 	$(OBJ)/exidy.a $(OBJ)/atari.a $(OBJ)/snk.a $(OBJ)/alpha.a $(OBJ)/technos.a \
 	$(OBJ)/berzerk.a $(OBJ)/gameplan.a $(OBJ)/stratvox.a $(OBJ)/zaccaria.a \
-	$(OBJ)/upl.a $(OBJ)/tms.a $(OBJ)/cinemar.a $(OBJ)/cinemav.a $(OBJ)/thepit.a \
+	$(OBJ)/upl.a $(OBJ)/cinemar.a $(OBJ)/cinemav.a $(OBJ)/thepit.a \
 	$(OBJ)/valadon.a $(OBJ)/seibu.a $(OBJ)/tad.a $(OBJ)/jaleco.a $(OBJ)/vsystem.a \
 	$(OBJ)/orca.a $(OBJ)/gaelco.a $(OBJ)/kaneko.a $(OBJ)/seta.a $(OBJ)/cave.a \
 	$(OBJ)/atlus.a $(OBJ)/other.a $(OBJ)/neogeo.a \
@@ -259,6 +260,10 @@ $(OBJ)/kyugo.a: \
 
 $(OBJ)/williams.a: \
 	$(OBJ)/machine/williams.o $(OBJ)/vidhrdw/williams.o $(OBJ)/sndhrdw/williams.o $(OBJ)/drivers/williams.o \
+	$(OBJ)/machine/wmstunit.o $(OBJ)/vidhrdw/wmstunit.o $(OBJ)/drivers/wmstunit.o \
+	$(OBJ)/machine/wmsyunit.o $(OBJ)/vidhrdw/wmsyunit.o $(OBJ)/drivers/wmsyunit.o \
+	$(OBJ)/machine/wmswolfu.o $(OBJ)/drivers/wmswolfu.o \
+	$(OBJ)/machine/exterm.o $(OBJ)/vidhrdw/exterm.o $(OBJ)/drivers/exterm.o \
 
 $(OBJ)/capcom.a: \
 	$(OBJ)/vidhrdw/vulgus.o $(OBJ)/drivers/vulgus.o \
@@ -526,10 +531,6 @@ $(OBJ)/upl.a: \
 	$(OBJ)/vidhrdw/ninjakd2.o $(OBJ)/drivers/ninjakd2.o \
 	$(OBJ)/vidhrdw/mnight.o $(OBJ)/drivers/mnight.o \
 
-$(OBJ)/tms.a: \
-	$(OBJ)/machine/exterm.o $(OBJ)/vidhrdw/exterm.o $(OBJ)/drivers/exterm.o \
-	$(OBJ)/machine/smashtv.o $(OBJ)/vidhrdw/smashtv.o $(OBJ)/drivers/smashtv.o \
-
 $(OBJ)/cinemar.a: \
 	$(OBJ)/vidhrdw/jack.o $(OBJ)/drivers/jack.o \
 
@@ -647,5 +648,4 @@ gamelist.txt: $(EMULATOR)
 	@$(EMULATOR) -gamelistheader -noclones > gamelist.txt
 	@$(EMULATOR) -gamelist -noclones | sort >> gamelist.txt
 	@$(EMULATOR) -gamelistfooter >> gamelist.txt
-
 
