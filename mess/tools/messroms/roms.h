@@ -381,11 +381,13 @@ static struct {
 	{ 0xdce782fa , 0x2000, "901227.01 C64 kernel r1" },
 	{ 0xa5c687b3 , 0x2000, "901227.02 C64 kernel r2" },
 	{ 0xdbe3e7c7 , 0x2000, "901227.03 C64 kernel r3" },
+	{ 0xf1098d37 , 0x2000, "BAD DUMP, UNUSEABLE PART! C64 901227.03" },
 	{ 0x8f294c51 , 0x2000, "325017-02 C64 swedish kernel r2?" },
 	{ 0xf10c2c25 , 0x2000, "901227-03? C64 swedish kernel r3?" },
 	{ 0x789c8cc5 , 0x2000, "901246.01 C64 pet64 kernel" },
 	{ 0x2c5965d4 , 0x4000, "251104.04 C64 SX64 kernel" },
 	{ 0x7858d3d7 , 0x4000, "251104.04? C64 SX64 swedish kernel" },
+	{ 0x58065128 , 0x4000, "??? C64 DX64 kernel" },
 	{ 0xf80eb87b , 0x2000, "??? C64 kernel few differences to 901227.02" },
 	{ 0x8e5c500d , 0x2000, "??? C64 kernel few differences to 901227.03" },
 	{ 0xc13310c2 , 0x2000, "??? C64 kernel few differences 901227.03" },
@@ -404,6 +406,7 @@ static struct {
 	{ 0x0010ec31 , 0x4000, "251913-01 C64 cost reduced (901225-01 + 901227-03)" },
 	{ 0xb0a9c2da , 0x4000, "390852.01 C64GS a000,c000" },
 	{ 0xec4272ee , 0x1000, "901225.01 C64 8x8 character set d000" },
+	{ 0x2bc73556 , 0x1000, "BAD DUMP, UNUSEABLE PART! C64 901225.01" },
 	{ 0xbee9b3fd , 0x1000, "325018-02 C64 swedish character set d000" },
 
 /* commodore 128 *************************************************************************/
@@ -422,6 +425,7 @@ static struct {
 	{ 0xd3ecea84 , 0x4000, "? C128 Kernel finish1 (0x71002a97 z80bios 0x167b8364)" },
 	{ 0x9526fac4 , 0x4000, "? C128 Kernel finish2 (0xb7ff5efe z80bios 0x5ce42fc8)" },
 	{ 0x74d6b084 , 0x4000, "? C128 Kernel italian (0x8df58148 z80bios 0x7b0d2140)" },
+	{ 0x66673e8b , 0x4000, "318079-01? C128 Kernal italian newer (0x155e9ed6 z80bios 0x922c6c49)" },
 	{ 0xa5406848 , 0x4000, "? C128 Kernel norwegian (0x84c55911 z80bios 0x3ba48012)" },
 	{ 0xeedc120a , 0x8000, "318023-02 C128 c64+kernel (252913-01+318020-05=" },
 	{ 0xcc6bdb69 , 0x8000, "252343-04 C128 c64+kernel (252913-01+0x98f2a2ed maybe 318020-04)" },
@@ -435,13 +439,15 @@ static struct {
 	{ 0x5ce42fc8 , 0x2000, "UNUSEABLE PART! C128 Kernel finish2 e000" },
 	{ 0x8df58148 , 0x1000, "UNUSEABLE PART! C128 Kernel italian c000" },
 	{ 0x7b0d2140 , 0x2000, "UNUSEABLE PART! C128 Kernel italian e000" },
+	{ 0x155e9ed6 , 0x1000, "UNUSEABLE PART! C128 Kernal italian c000 newer" },
+	{ 0x922c6c49 , 0x2000, "UNUSEABLE PART! C128 Kernal italian e000 newer" },
 	{ 0x84c55911 , 0x1000, "UNUSEABLE PART! C128 Kernel norwegian c000" },
 	{ 0x3ba48012 , 0x2000, "UNUSEABLE PART! C128 Kernel norwegian e000" },
 	{ 0xc38d83c6 , 0x1000, "UNUSEABLE PART! C128 Z80 Bios d000" },
-	{ 0x6aaaafe6 , 0x1000, "390059-01 C128 8x8 character set c64, c128" },
-	{ 0xfe5a2db1 , 0x1000, "315079-01 C128 8x8 character set c64, c128 german" },
-	{ 0x7a70d9b8 , 0x1000, "325181-01 C128 8x8 character set c64, c128 swedish" },
-	{ 0xbad36b88 , 0x1000, "325167-01 I/F/B C128 8x8 characters sets" }, //italian and french verified to be the same
+	{ 0x6aaaafe6 , 0x2000, "390059-01 C128 8x8 character set c64, c128" },
+	{ 0xfe5a2db1 , 0x2000, "315079-01 C128 8x8 character set c64, c128 german" },
+	{ 0x7a70d9b8 , 0x2000, "325181-01 C128 8x8 character set c64, c128 swedish" },
+	{ 0xbad36b88 , 0x2000, "325167-01 I/F/B C128 8x8 characters sets" }, //italian and french verified to be the same
 
 /* commodore ieee bus devices ******************************************************/
 	{ 0x0ab338dc, 0x400, "901466-04 CBM2040 dos 2 6530" },
