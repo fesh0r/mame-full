@@ -20,8 +20,7 @@
 	do the job.
 
 	TODO:
-	* write support for HSGPL, as it is actually required.
-	* finish and test support for EVPC
+	* Test the system?
 */
 
 #include "driver.h"
@@ -43,14 +42,14 @@ static MEMORY_READ16_START (readmem)
 	{ 0x2000, 0x2fff, MRA16_BANK3 },		/*lower 8kb of RAM extension: AMS bank 2*/
 	{ 0x3000, 0x3fff, MRA16_BANK4 },		/*lower 8kb of RAM extension: AMS bank 3*/
 	{ 0x4000, 0x5fff, ti99_4p_peb_r },		/*DSR ROM space*/
-	{ 0x6000, 0x7fff, ti99_rw_cartmem },	/*cartridge memory*/
+	{ 0x6000, 0x7fff, ti99_4p_rw_cartmem },	/*cartridge space (internal or hsgpl)*/
 	{ 0x8000, 0x83ff, MRA16_BANK2 },		/*RAM PAD*/
 	{ 0x8400, 0x87ff, ti99_rw_null8bits },	/*soundchip write*/
 	{ 0x8800, 0x8bff, ti99_rw_rv38 },		/*vdp read*/
 	{ 0x8C00, 0x8fff, ti99_rw_null8bits },	/*vdp write*/
 	{ 0x9000, 0x93ff, ti99_rw_null8bits },	/*speech read - installed dynamically*/
 	{ 0x9400, 0x97ff, ti99_rw_null8bits },	/*speech write*/
-	{ 0x9800, 0x9bff, ti99_rw_rgpl },		/*GPL read*/
+	{ 0x9800, 0x9bff, ti99_4p_rw_rgpl },	/*GPL read*/
 	{ 0x9c00, 0x9fff, ti99_rw_null8bits },	/*GPL write*/
 	{ 0xa000, 0xafff, MRA16_BANK5 },		/*upper 24kb of RAM extension: AMS bank 10*/
 	{ 0xb000, 0xbfff, MRA16_BANK6 },		/*upper 24kb of RAM extension: AMS bank 11*/
@@ -67,7 +66,7 @@ static MEMORY_WRITE16_START (writemem)
 	{ 0x2000, 0x2fff, MWA16_BANK3 },		/*lower 8kb of RAM extension: AMS bank 2*/
 	{ 0x3000, 0x3fff, MWA16_BANK4 },		/*lower 8kb of RAM extension: AMS bank 3*/
 	{ 0x4000, 0x5fff, ti99_4p_peb_w },		/*DSR ROM space*/
-	{ 0x6000, 0x7fff, ti99_ww_cartmem },	/*cartridge memory (some carts include RAM or a pager chip)*/
+	{ 0x6000, 0x7fff, ti99_4p_ww_cartmem },	/*cartridge space (internal or hsgpl)*/
 	{ 0x8000, 0x83ff, MWA16_BANK2 },		/*RAM PAD*/
 	{ 0x8400, 0x87ff, ti99_ww_wsnd },		/*soundchip write*/
 	{ 0x8800, 0x8bff, ti99_ww_null8bits },	/*vdp read*/
@@ -75,7 +74,7 @@ static MEMORY_WRITE16_START (writemem)
 	{ 0x9000, 0x93ff, ti99_ww_null8bits },	/*speech read*/
 	{ 0x9400, 0x97ff, ti99_ww_null8bits },	/*speech write - installed dynamically*/
 	{ 0x9800, 0x9bff, ti99_ww_null8bits },	/*GPL read*/
-	{ 0x9c00, 0x9fff, ti99_ww_wgpl },		/*GPL write*/
+	{ 0x9c00, 0x9fff, ti99_4p_ww_wgpl },	/*GPL write*/
 	{ 0xa000, 0xafff, MWA16_BANK5 },		/*upper 24kb of RAM extension: AMS bank 10*/
 	{ 0xb000, 0xbfff, MWA16_BANK6 },		/*upper 24kb of RAM extension: AMS bank 11*/
 	{ 0xc000, 0xcfff, MWA16_BANK7 },		/*upper 24kb of RAM extension: AMS bank 12*/
@@ -113,10 +112,14 @@ INPUT_PORTS_START(ti99_4p)
 		PORT_BITX( config_speech_mask << config_speech_bit, 1 << config_speech_bit, IPT_DIPSWITCH_NAME, "Speech synthesis", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
 			PORT_DIPSETTING( 1 << config_speech_bit, DEF_STR( On ) )
-		PORT_BITX( config_fdc_mask << config_fdc_bit, fdc_kind_BwG << config_fdc_bit, IPT_DIPSWITCH_NAME, "Floppy disk controller", KEYCODE_NONE, IP_JOY_NONE )
+		PORT_BITX( config_fdc_mask << config_fdc_bit, fdc_kind_hfdc << config_fdc_bit, IPT_DIPSWITCH_NAME, "Floppy disk controller", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( fdc_kind_none << config_fdc_bit, "none" )
-			PORT_DIPSETTING( fdc_kind_TI << config_fdc_bit, "Texas Instruments" )
+			PORT_DIPSETTING( fdc_kind_TI << config_fdc_bit, "Texas Instruments SD" )
 			PORT_DIPSETTING( fdc_kind_BwG << config_fdc_bit, "SNUG's BwG" )
+			PORT_DIPSETTING( fdc_kind_hfdc << config_fdc_bit, "Myarc's HFDC" )
+		/*PORT_BITX( config_ide_mask << config_ide_bit, 1 << config_ide_bit, IPT_DIPSWITCH_NAME, "Nouspickel's IDE card", KEYCODE_NONE, IP_JOY_NONE )
+			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
+			PORT_DIPSETTING( 1 << config_ide_bit, DEF_STR( On ) )*/
 		PORT_BITX( config_rs232_mask << config_rs232_bit, /*1 << config_rs232_bit*/0, IPT_DIPSWITCH_NAME, "TI RS232 card", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
 			PORT_DIPSETTING( 1 << config_rs232_bit, DEF_STR( On ) )
@@ -210,7 +213,7 @@ static const struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 /*
-	TMS9919 (SN76489? SN76496?) sound chip parameters.
+	SN76496(?) sound chip parameters.
 */
 static struct SN76496interface tms9919interface =
 {
@@ -311,15 +314,16 @@ ROM_START(ti99_4p)
 	ROM_LOAD16_BYTE("sgcpu_hb.bin", 0x0000, 0x8000, CRC(aa100730)) /* system ROMs */
 	ROM_LOAD16_BYTE("sgcpu_lb.bin", 0x0001, 0x8000, CRC(2a5dc818)) /* system ROMs */
 
-	/*GROM memory space*/
-	ROM_REGION(0x10000, region_grom, 0)
-	ROM_LOAD("grom0.grm", 0x0000, /*0x6000*/0x2000, CRC(c56b86a5)) /* system GROMs */
-
 	/*DSR ROM space*/
 	ROM_REGION(region_dsr_len, region_dsr, 0)
 	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000, CRC(8f7df93f)) /* TI disk DSR ROM */
 	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000, CRC(06f1ec89)) /* BwG disk DSR ROM */
+	ROM_LOAD_OPTIONAL("hfdc.bin", offset_hfdc_dsr, 0x4000, CRC(66fbe0ed)) /* HFDC disk DSR ROM */
 	ROM_LOAD_OPTIONAL("rs232.bin", offset_rs232_dsr, 0x1000, CRC(eab382fb)) /* TI rs232 DSR ROM */
+	ROM_LOAD("evpcdsr.bin", offset_evpc_dsr, 0x10000, CRC(a062b75d)) /* evpc DSR ROM */
+
+	/* HSGPL memory space */
+	ROM_REGION(region_hsgpl_len, region_hsgpl, 0)
 
 	/*TMS5220 ROM space*/
 	ROM_REGION(0x8000, region_speech_rom, 0)
@@ -329,10 +333,11 @@ ROM_END
 SYSTEM_CONFIG_START(ti99_4p)
 	CONFIG_DEVICE_CASSETTE			(2, "",												device_load_ti99_cassette)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",										device_load_ti99_floppy)
-	CONFIG_DEVICE_LEGACY			(IO_HARDDISK, 	1, "hd\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_OR_READ, device_init_ti99_ide, NULL, device_load_ti99_ide, device_unload_ti99_ide, NULL)
+	CONFIG_DEVICE_LEGACY			(IO_HARDDISK, 	4, "hd\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_OR_READ,device_init_ti99_hd, NULL, device_load_ti99_hd, device_unload_ti99_hd, NULL)
 	CONFIG_DEVICE_LEGACY			(IO_PARALLEL,	1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_pio,	device_unload_ti99_4_pio,		NULL)
 	CONFIG_DEVICE_LEGACY			(IO_SERIAL,		1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_rs232,	device_unload_ti99_4_rs232,	NULL)
+	/*CONFIG_DEVICE_LEGACY			(IO_QUICKLOAD,	1, "\0",	DEVICE_LOAD_RESETS_CPU,		OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_hsgpl,		device_unload_ti99_hsgpl,	NULL)*/
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT   COMPAT	MACHINE		ÊINPUT	  INIT	   CONFIG	COMPANY		FULLNAME */
-COMP( 1996, ti99_4p,  0,	   0,		ti99_4p_60hz, ti99_4p, ti99_4p, ti99_4p,	"snug",		"TI99/4P (60 Hz only)" )
+COMP( 1996, ti99_4p,  0,	   0,		ti99_4p_60hz, ti99_4p, ti99_4p, ti99_4p,"snug",		"SNUG SGCPU (a.k.a. 99/4P)" )

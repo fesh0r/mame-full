@@ -150,13 +150,19 @@ WRITE16_HANDLER ( ti99_ww_null8bits );
 
 READ16_HANDLER ( ti99_rw_cartmem );
 WRITE16_HANDLER ( ti99_ww_cartmem );
+READ16_HANDLER ( ti99_4p_rw_cartmem );
+WRITE16_HANDLER ( ti99_4p_ww_cartmem );
 
 WRITE16_HANDLER( ti99_ww_wsnd );
+
 READ16_HANDLER ( ti99_rw_rvdp );
 WRITE16_HANDLER ( ti99_ww_wvdp );
 READ16_HANDLER ( ti99_rw_rv38 );
 WRITE16_HANDLER ( ti99_ww_wv38 );
+
 READ16_HANDLER ( ti99_rw_rgpl );
 WRITE16_HANDLER( ti99_ww_wgpl );
+READ16_HANDLER ( ti99_4p_rw_rgpl );
+WRITE16_HANDLER ( ti99_4p_ww_wgpl );
 
 extern void tms9901_set_int2(int state);

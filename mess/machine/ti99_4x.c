@@ -1,4 +1,4 @@
-/*
+ /*
 	Machine code for TI99/4, TI-99/4A, and SNUG SGCPU (a.k.a. 99/4P).
 	Raphael Nabet, 1999-2002.
 	Some code was originally derived from Ed Swartz's V9T9.
@@ -241,7 +241,8 @@ GPL ports:
 	with data.
 
 	Note, however, that the TI99/4(a) console does not decode the page number, so console GROMs
-	occupy the first 24kb of EVERY port, and cartridge GROMs occupy the next 40kb of EVERY port.
+	occupy the first 24kb of EVERY port, and cartridge GROMs occupy the next 40kb of EVERY port
+	(with the exception of one demonstration from TI that implements several distinct ports).
 	(Note that the TI99/8 console does have the required decoder.)  Fortunately, GROM drivers
 	have a relatively high impedance, and therefore extension cards can use TTL drivers to impose
 	another value on the data bus with no risk of burning the console GROMs.  This hack permits
@@ -293,6 +294,11 @@ static UINT16 *current_page_ptr;
 /* keep track of cart file types - required for cleanup... */
 typedef enum slot_type_t { SLOT_EMPTY = -1, SLOT_GROM = 0, SLOT_CROM = 1, SLOT_DROM = 2, SLOT_MINIMEM = 3, SLOT_MBX = 4 } slot_type_t;
 static slot_type_t slot_type[3] = { SLOT_EMPTY, SLOT_EMPTY, SLOT_EMPTY};
+
+/* true if 99/4p rom6 is enabled */
+static int ti99_4p_internal_rom6_enable;
+/* pointer to the ROM6 data */
+static UINT16 *ti99_4p_internal_ROM6;
 
 
 /* tms9900_ICount: used to implement memory waitstates (hack) */
@@ -364,7 +370,7 @@ void init_ti99_4p(void)
 	/* set up RAM pointers */
 	sRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_sram_4p);
 	xRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_xram_4p);
-	console_GROMs.data_ptr = memory_region(region_grom);
+	/*console_GROMs.data_ptr = memory_region(region_grom);*/
 }
 
 DEVICE_LOAD( ti99_cassette )
@@ -568,7 +574,7 @@ DEVICE_UNLOAD( ti99_hd )
 */
 void machine_init_ti99(void)
 {
-	console_GROMs.data_ptr = memory_region(region_grom);
+	/*console_GROMs.data_ptr = memory_region(region_grom);*/
 	console_GROMs.addr = 0;
 
 	if (ti99_model == model_99_4p)
@@ -775,7 +781,10 @@ WRITE16_HANDLER ( ti99_ww_null8bits )
 }
 
 /*
-	Cartridge read: same as MRA_ROM, but with an additionnal delay.
+	Cartridge read: usually ROMs located on the 8-bit bus.  Bank switching is
+	common, some cartridges include some RAM.
+
+	HSGPL maps here, too.
 */
 READ16_HANDLER ( ti99_rw_cartmem )
 {
@@ -817,7 +826,43 @@ WRITE16_HANDLER ( ti99_ww_cartmem )
 		/* handle pager */
 		current_page_ptr = cartridge_pages[offset & 1];
 }
+/*
+	Cartridge read: usually ROMs located on the 8-bit bus.  Bank switching is
+	common, some cartridges include some RAM.
 
+	HSGPL maps here, too.
+*/
+READ16_HANDLER ( ti99_4p_rw_cartmem )
+{
+	if (ti99_4p_internal_rom6_enable)
+		return ti99_4p_internal_ROM6[offset];
+
+	tms9900_ICount -= 4;
+
+	if (hsgpl_crdena)
+		/* hsgpl is enabled */
+		return ti99_hsgpl_rom6_r(offset, mem_mask);
+
+	return 0;
+}
+
+/*
+	this handler handles ROM switching in cartridges
+*/
+WRITE16_HANDLER ( ti99_4p_ww_cartmem )
+{
+	if (ti99_4p_internal_rom6_enable)
+	{
+		ti99_4p_internal_ROM6 = (UINT16 *) (memory_region(REGION_CPU1) + (offset & 1) ? offset_rom6b_4p : offset_rom6_4p);
+		return;
+	}
+
+	tms9900_ICount -= 4;
+
+	if (hsgpl_crdena)
+		/* hsgpl is enabled */
+		ti99_hsgpl_rom6_w(offset, data, mem_mask);
+}
 
 /*---------------------------------------------------------------------------*/
 /*
@@ -1081,6 +1126,26 @@ WRITE16_HANDLER ( ti99_ww_wgpl )
 		ti99_hsgpl_gpl_w(offset, data, mem_mask);
 }
 
+/*
+	GPL read
+*/
+READ16_HANDLER ( ti99_4p_rw_rgpl )
+{
+	tms9900_ICount -= 4;		/* HSGPL is located on 8-bit bus? */
+
+	return /*hsgpl_crdena ?*/ ti99_hsgpl_gpl_r(offset, mem_mask) /*: 0*/;
+}
+
+/*
+	GPL write
+*/
+WRITE16_HANDLER ( ti99_4p_ww_wgpl )
+{
+	tms9900_ICount -= 4;		/* HSGPL is located on 8-bit bus? */
+
+	/*if (hsgpl_crdena)*/
+		ti99_hsgpl_gpl_w(offset, data, mem_mask);
+}
 
 /*===========================================================================*/
 #if 0
@@ -1656,17 +1721,16 @@ static const ti99_peb_16bit_card_handlers_t ti99_4p_internal_dsr_handlers =
 /* pointer to the internal DSR ROM data */
 static UINT16 *ti99_4p_internal_DSR;
 
-static int internal_rom6_enable;
-
 
 /* set up handlers, and set initial state */
 static void ti99_4p_internal_dsr_init(void)
 {
 	ti99_4p_internal_DSR = (UINT16 *) (memory_region(REGION_CPU1) + offset_rom4_4p);
+	ti99_4p_internal_ROM6 = (UINT16 *) (memory_region(REGION_CPU1) + offset_rom6_4p);
 
 	ti99_peb_set_16bit_card_handlers(0x0f00, & ti99_4p_internal_dsr_handlers);
 
-	internal_rom6_enable = 0;
+	ti99_4p_internal_rom6_enable = 0;
 	ti99_4p_peb_set_senila(0);
 	ti99_4p_peb_set_senilb(0);
 }
@@ -1681,8 +1745,7 @@ static void ti99_4p_internal_dsr_cru_w(int offset, int data)
 	switch (offset)
 	{
 	case 1:
-		internal_rom6_enable = data;
-		/* ... */
+		ti99_4p_internal_rom6_enable = data;
 		break;
 	case 2:
 		ti99_4p_peb_set_senila(data);
