@@ -4,6 +4,7 @@ New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - Dragon 64 [Nate Woods]
 - PK-01 Lviv (three ROM revisions) [Krzysztof Strzecha]
+- Microbee 32 PC [Stefano Priore]
 
 System Driver Changes:
 ----------------------
@@ -20,6 +21,10 @@ System Driver Changes:
   (Bug #95) [Ben Bruscella]
 
 - [UK101/SUPERBOARD] Cassette Initialization fixed [Stefano Priore]
+
+- [MBEE] Renamed mbeepc to mbeepc85. Now mbee emulates the IC model (editor
+  assembler), mbeepc emulates the PC model (terminal emulator) and mbeepc85
+  emulates the PC85 model (WordBee wordprocessor) [Stefano Priore]
 
 - [JUPITER] Cartridge and Cassette Initialization fixed 
   (Bug #126) [Ben Bruscella]
