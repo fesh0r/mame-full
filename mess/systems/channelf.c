@@ -254,7 +254,16 @@ static const struct IODevice io_channelf[] = {
     { IO_END }
 };
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY      FULLNAME */
-CONS( 1976, channelf, 0,		channelf, channelf, channelf, "Fairchild", "Channel F" )
+SYSTEM_CONFIG_START(channelf)
+SYSTEM_CONFIG_END
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT		COMPANY		FULLNAME */
+CONS( 1976, channelf, 0,		channelf, channelf, channelf,	channelf,	"Fairchild", "Channel F" )
 
 

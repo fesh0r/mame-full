@@ -340,7 +340,10 @@ static const struct IODevice io_microtan[] = {
     { IO_END }
 };
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY      FULLNAME */
-COMP( 1979, microtan, 0,        microtan, microtan, microtan, "Tangerine", "Microtan 65" )
+SYSTEM_CONFIG_START(microtan)
+SYSTEM_CONFIG_END
+
+/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG    COMPANY      FULLNAME */
+COMP( 1979, microtan, 0,        microtan, microtan, microtan, microtan, "Tangerine", "Microtan 65" )
 
 

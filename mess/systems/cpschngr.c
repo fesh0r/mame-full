@@ -548,6 +548,15 @@ static const struct IODevice io_sfzch[] = {
     { IO_END }
 };
 
+SYSTEM_CONFIG_START(sfzch)
+SYSTEM_CONFIG_END
 
-CONS( 1995, sfzch,    0,        sfzch,     sfzch,    0,        "Capcom", "CPS Changer (Street Fighter ZERO)" )
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+/*	  YEAR	NAME	  PARENT	MACHINE   INPUT		INIT	CONFIG	COMPANY		FULLNAME */
+CONS( 1995, sfzch,    0,        sfzch,	  sfzch,    0,		sfzch,	"Capcom", "CPS Changer (Street Fighter ZERO)" )
 

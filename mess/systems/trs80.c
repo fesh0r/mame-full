@@ -546,11 +546,14 @@ static const struct IODevice io_trs80l2[] = {
 #define io_lnw80	io_trs80l2
 #define io_trs80m3	io_trs80l2
 
-/*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY	 FULLNAME */
-COMP ( 1977, trs80,    0,		 level1,   trs80,	 trs80,    "Tandy Radio Shack",  "TRS-80 Model I (Level I Basic)" )
-COMP ( 1978, trs80l2,  trs80,	 model1,   trs80,	 trs80,    "Tandy Radio Shack",  "TRS-80 Model I (Radio Shack Level II Basic)" )
-COMP ( 1978, trs80l2a, trs80,	 model1,   trs80,	 trs80,    "Tandy Radio Shack",  "TRS-80 Model I (R/S L2 Basic)" )
-COMP ( 1980, sys80,    trs80,	 model1,   trs80,	 trs80,    "EACA Computers Ltd.","System-80" )
-COMPX( 1981, lnw80,    trs80,	 model1,   trs80,	 trs80,    "LNW Research","LNW-80", GAME_NOT_WORKING )
-COMPX( 19??, trs80m3,  trs80,	 model3,   trs80,	 trs80,    "Tandy Radio Shack",  "TRS-80 Model III", GAME_NOT_WORKING )
+SYSTEM_CONFIG_START(trs80)
+SYSTEM_CONFIG_END
+
+/*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   CONFIG	COMPANY	 FULLNAME */
+COMP ( 1977, trs80,    0,		 level1,   trs80,	 trs80,    trs80,	"Tandy Radio Shack",  "TRS-80 Model I (Level I Basic)" )
+COMP ( 1978, trs80l2,  trs80,	 model1,   trs80,	 trs80,    trs80,	"Tandy Radio Shack",  "TRS-80 Model I (Radio Shack Level II Basic)" )
+COMP ( 1978, trs80l2a, trs80,	 model1,   trs80,	 trs80,    trs80,	"Tandy Radio Shack",  "TRS-80 Model I (R/S L2 Basic)" )
+COMP ( 1980, sys80,    trs80,	 model1,   trs80,	 trs80,    trs80,	"EACA Computers Ltd.","System-80" )
+COMPX( 1981, lnw80,    trs80,	 model1,   trs80,	 trs80,    trs80,	"LNW Research","LNW-80", GAME_NOT_WORKING )
+COMPX( 19??, trs80m3,  trs80,	 model3,   trs80,	 trs80,    trs80,	"Tandy Radio Shack",  "TRS-80 Model III", GAME_NOT_WORKING )
 

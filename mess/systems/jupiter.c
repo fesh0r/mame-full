@@ -277,5 +277,8 @@ static const struct IODevice io_jupiter[] = {
     { IO_END }
 };
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-COMP( 1981, jupiter,  0,		jupiter,  jupiter,	0,		  "Cantab",  "Jupiter Ace" )
+SYSTEM_CONFIG_START(jupiter)
+SYSTEM_CONFIG_END
+
+/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */
+COMP( 1981, jupiter,  0,		jupiter,  jupiter,	0,		  jupiter,	"Cantab",  "Jupiter Ace" )

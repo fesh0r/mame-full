@@ -1409,32 +1409,18 @@ static const struct IODevice io_c128d[] =
 //#define io_c128dita io_c128d
 #define io_c128dita io_c128
 
-/*	  YEAR	NAME		PARENT	MACHINE 	INPUT		INIT		COMPANY   FULLNAME */
-COMP (1985, c128,		0,		c128,		c128,		c128,		"Commodore Business Machines Co.","Commodore 128 NTSC")
-COMP (1985, c128ger,	c128,	c128pal,	c128ger,	c128pal,	"Commodore Business Machines Co.","Commodore 128 German (PAL)")
-COMP (1985, c128fra,	c128,	c128pal,	c128fra,	c128pal,	"Commodore Business Machines Co.","Commodore 128 French (PAL)")
-COMP (1985, c128ita,	c128,	c128pal,	c128ita,	c128pal,	"Commodore Business Machines Co.","Commodore 128 Italian (PAL)")
-COMP (1985, c128swe,	c128,	c128pal,	c128swe,	c128pal,	"Commodore Business Machines Co.","Commodore 128 Swedish (PAL)")
+SYSTEM_CONFIG_START(c128)
+SYSTEM_CONFIG_END
+
+/*	  YEAR	NAME		PARENT	MACHINE 	INPUT		INIT		CONFIG  COMPANY   FULLNAME */
+COMP (1985, c128,		0,		c128,		c128,		c128,		c128,	"Commodore Business Machines Co.","Commodore 128 NTSC")
+COMP (1985, c128ger,	c128,	c128pal,	c128ger,	c128pal,	c128,	"Commodore Business Machines Co.","Commodore 128 German (PAL)")
+COMP (1985, c128fra,	c128,	c128pal,	c128fra,	c128pal,	c128,	"Commodore Business Machines Co.","Commodore 128 French (PAL)")
+COMP (1985, c128ita,	c128,	c128pal,	c128ita,	c128pal,	c128,	"Commodore Business Machines Co.","Commodore 128 Italian (PAL)")
+COMP (1985, c128swe,	c128,	c128pal,	c128swe,	c128pal,	c128,	"Commodore Business Machines Co.","Commodore 128 Swedish (PAL)")
 /* other countries spanish, belgium, norwegian */
 /* please leave the following as testdriver */
-COMPX (1985, c128nor,	c128,	c128pal,	c128ita,	c128pal,	"Commodore Business Machines Co.","Commodore 128 Norwegian (PAL)", GAME_NOT_WORKING)
-COMPX (1985, c128d,	c128,	c128d,		c128,		c128,		"Commodore Business Machines Co.","Commodore 128D NTSC", GAME_NOT_WORKING)
-//COMPX (1985, c128dita,	c128,	c128d,		c128,		c128,		"Commodore Business Machines Co.","Commodore 128D Italian (PAL)", GAME_NOT_WORKING)
-COMPX (1985, c128dita,	c128,	c128pal,	c128ita,	c128pal,	"Commodore Business Machines Co.","Commodore 128D Italian (PAL)", GAME_NOT_WORKING)
-
-#ifdef RUNTIME_LOADER
-extern void c128_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"c128")==0) drivers[i]=&driver_c128;
-		if ( strcmp(drivers[i]->name,"c128ger")==0) drivers[i]=&driver_c128ger;
-		if ( strcmp(drivers[i]->name,"c128fra")==0) drivers[i]=&driver_c128fra;
-		if ( strcmp(drivers[i]->name,"c128ita")==0) drivers[i]=&driver_c128ita;
-		if ( strcmp(drivers[i]->name,"c128swe")==0) drivers[i]=&driver_c128swe;
-		if ( strcmp(drivers[i]->name,"c128nor")==0) drivers[i]=&driver_c128nor;
-		if ( strcmp(drivers[i]->name,"c128d")==0) drivers[i]=&driver_c128d;
-		if ( strcmp(drivers[i]->name,"c128dita")==0) drivers[i]=&driver_c128dita;
-	}
-}
-#endif
+COMPX (1985, c128nor,	c128,	c128pal,	c128ita,	c128pal,	c128,	"Commodore Business Machines Co.","Commodore 128 Norwegian (PAL)", GAME_NOT_WORKING)
+COMPX (1985, c128d,		c128,	c128d,		c128,		c128,		c128,	"Commodore Business Machines Co.","Commodore 128D NTSC", GAME_NOT_WORKING)
+//COMPX(1985,c128dita,	c128,	c128d,		c128,		c128,		c128,	"Commodore Business Machines Co.","Commodore 128D Italian (PAL)", GAME_NOT_WORKING)
+COMPX (1985, c128dita,	c128,	c128pal,	c128ita,	c128pal,	c128,	"Commodore Business Machines Co.","Commodore 128D Italian (PAL)", GAME_NOT_WORKING)

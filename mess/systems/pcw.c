@@ -1264,12 +1264,15 @@ static const struct IODevice io_pcw[] =
 #define io_pcw9512 io_pcw
 #define io_pcw10 io_pcw
 
+SYSTEM_CONFIG_START(pcw)
+SYSTEM_CONFIG_END
+
 /* these are all variants on the pcw design */
 /* major difference is memory configuration and drive type */
-/*     YEAR	NAME	    PARENT	MACHINE   INPUT INIT	COMPANY 	   FULLNAME */
-COMPX( 1985, pcw8256,   0,		pcw,	  pcw,	pcw8256,"Amstrad plc", "PCW8256",		GAME_NOT_WORKING)
-COMPX( 1985, pcw8512,   pcw8256, pcw,	  pcw,	pcw8512,"Amstrad plc", "PCW8512",		GAME_NOT_WORKING)
-COMPX( 1987, pcw9256,   pcw8256, pcw,	  pcw,	pcw9256,"Amstrad plc", "PCW9256",		GAME_NOT_WORKING)
-COMPX( 1987, pcw9512,   pcw8256, pcw9512,  pcw,	pcw9512,"Amstrad plc", "PCW9512 (+)",	GAME_NOT_WORKING)
-COMPX( 1993, pcw10,	    pcw8256, pcw9512,  pcw,	pcw10,	"Amstrad plc", "PCW10",			GAME_NOT_WORKING)
+/*     YEAR	NAME	    PARENT		MACHINE   INPUT INIT		CONFIG	COMPANY 	   FULLNAME */
+COMPX( 1985, pcw8256,   0,			pcw,	  pcw,	pcw8256,	pcw,	"Amstrad plc", "PCW8256",		GAME_NOT_WORKING)
+COMPX( 1985, pcw8512,   pcw8256,	pcw,	  pcw,	pcw8512,	pcw,	"Amstrad plc", "PCW8512",		GAME_NOT_WORKING)
+COMPX( 1987, pcw9256,   pcw8256,	pcw,	  pcw,	pcw9256,	pcw,	"Amstrad plc", "PCW9256",		GAME_NOT_WORKING)
+COMPX( 1987, pcw9512,   pcw8256,	pcw9512,  pcw,	pcw9512,	pcw,	"Amstrad plc", "PCW9512 (+)",	GAME_NOT_WORKING)
+COMPX( 1993, pcw10,	    pcw8256,	pcw9512,  pcw,	pcw10,		pcw,	"Amstrad plc", "PCW10",			GAME_NOT_WORKING)
 

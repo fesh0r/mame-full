@@ -798,16 +798,6 @@ static MACHINE_DRIVER_START( a2600 )
 	MDRV_SOUND_ADD(TIA, tia_interface)
 MACHINE_DRIVER_END
 
-/***************************************************************************
-
-  Game driver
-
-***************************************************************************/
-
-ROM_START(a2600)
-    ROM_REGION(0x20000, REGION_CPU1,0)        /* 6502 memory */
-ROM_END
-
 static const struct IODevice io_a2600[] =
 {
     {
@@ -833,5 +823,19 @@ static const struct IODevice io_a2600[] =
     {IO_END}
 };
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-CONSX(1977, a2600,    0,        a2600,    a2600,    NULL,     "Atari",  "Atari 2600", GAME_NOT_WORKING)
+SYSTEM_CONFIG_START(a2600)
+SYSTEM_CONFIG_END
+
+/***************************************************************************
+
+  Game driver
+
+***************************************************************************/
+
+ROM_START(a2600)
+    ROM_REGION(0x20000, REGION_CPU1,0)        /* 6502 memory */
+ROM_END
+
+
+/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG,	COMPANY   FULLNAME */
+CONSX(1977, a2600,    0,        a2600,    a2600,    NULL,     a2600,	"Atari",  "Atari 2600", GAME_NOT_WORKING)

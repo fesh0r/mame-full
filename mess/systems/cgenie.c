@@ -540,15 +540,8 @@ static const struct IODevice io_cgenie[] = {
 	{ IO_END }
 };
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
-COMP( 1982, cgenie,   0,		cgenie,   cgenie,	cgenie,   "EACA Computers Ltd.",  "Colour Genie EG2000" )
+SYSTEM_CONFIG_START(cgenie)
+SYSTEM_CONFIG_END
 
-#ifdef RUNTIME_LOADER
-extern void cgenie_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"cgenie")==0) drivers[i]=&driver_cgenie;
-	}
-}
-#endif
+/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  CONFIG     COMPANY	FULLNAME */
+COMP( 1982, cgenie,   0,		cgenie,   cgenie,	cgenie,   cgenie,    "EACA Computers Ltd.",  "Colour Genie EG2000" )

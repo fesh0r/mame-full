@@ -493,10 +493,10 @@ static const struct IODevice io_coupe[] =
 #define io_coupe256 io_coupe
 #define io_coupe512 io_coupe
 
-COMPUTER_CONFIG_START(coupe)
+SYSTEM_CONFIG_START(coupe)
 	CONFIG_RAM_DEFAULT(256 * 1024)
 	CONFIG_RAM(512 * 1024)
-COMPUTER_CONFIG_END
+SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE         INPUT     INIT  CONFIG  COMPANY                 		  FULLNAME */
-COMPC( 1989, coupe,	  0,		coupe,			coupe,	  0,	coupe,	"Miles Gordon Technology plc",    "Sam Coupe" )
+COMP( 1989, coupe,	  0,		coupe,			coupe,	  0,	coupe,	"Miles Gordon Technology plc",    "Sam Coupe" )

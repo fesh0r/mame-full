@@ -470,14 +470,17 @@ static const struct IODevice io_nespal[] = {
     { IO_END }
 };
 
+SYSTEM_CONFIG_START(nes)
+SYSTEM_CONFIG_END
+
 /***************************************************************************
 
   Game driver(s)
 
 ***************************************************************************/
 
-/*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-CONS( 1983, famicom,   0,        nes,      famicom,  nes,      "Nintendo", "Famicom" )
-CONS( 1985, nes,       0,        nes,      nes,      nes,      "Nintendo", "Nintendo Entertainment System (NTSC)" )
-CONS( 1987, nespal,    nes,      nespal,   nes,      nespal,   "Nintendo", "Nintendo Entertainment System (PAL)" )
+/*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG,	COMPANY   FULLNAME */
+CONS( 1983, famicom,   0,        nes,      famicom,  nes,      nes,		"Nintendo", "Famicom" )
+CONS( 1985, nes,       0,        nes,      nes,      nes,      nes,		"Nintendo", "Nintendo Entertainment System (NTSC)" )
+CONS( 1987, nespal,    nes,      nespal,   nes,      nespal,   nes,		"Nintendo", "Nintendo Entertainment System (PAL)" )
 

@@ -1582,9 +1582,9 @@ static const struct IODevice io_pcw16[] =
 	{IO_END}
 };
 
-COMPUTER_CONFIG_START(pcw16)
+SYSTEM_CONFIG_START(pcw16)
 	CONFIG_RAM_DEFAULT(2048 * 1024)
-COMPUTER_CONFIG_END
+SYSTEM_CONFIG_END
 
 /*     YEAR  NAME     PARENT    MACHINE    INPUT     INIT   CONFIG,  COMPANY          FULLNAME */
-COMPC( 1995, pcw16,	  0,		pcw16,	   pcw16,    0,	    pcw16,   "Amstrad plc",   "PCW16")
+COMP( 1995, pcw16,	  0,		pcw16,	   pcw16,    0,	    pcw16,   "Amstrad plc",   "PCW16")

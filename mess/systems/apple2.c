@@ -460,11 +460,14 @@ static const struct IODevice io_apple2[] =
 #define io_apple2ee io_apple2
 #define io_apple2ep io_apple2
 
-/*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY            FULLNAME */
-COMP ( 1983, apple2e,  0,        standard, apple2,   0,        "Apple Computer", "Apple //e" )
-COMP ( 1985, apple2ee, apple2e,  enhanced, apple2,   0,        "Apple Computer", "Apple //e (enhanced)" )
-COMP ( 1987, apple2ep, apple2e,  enhanced, apple2,   0,        "Apple Computer", "Apple //e (Platinum)" )
-COMP ( 1984, apple2c,  0,        enhanced, apple2,   0,        "Apple Computer", "Apple //c" )
-COMP ( 1986, apple2c0, apple2c,  enhanced, apple2,   0,        "Apple Computer", "Apple //c (3.5 ROM)" )
-COMP ( 1988, apple2cp, apple2c,  enhanced, apple2,   0,        "Apple Computer", "Apple //c Plus" )
+SYSTEM_CONFIG_START(apple2)
+SYSTEM_CONFIG_END
+
+/*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG	COMPANY            FULLNAME */
+COMP ( 1983, apple2e,  0,        standard, apple2,   0,        apple2,	"Apple Computer", "Apple //e" )
+COMP ( 1985, apple2ee, apple2e,  enhanced, apple2,   0,        apple2,	"Apple Computer", "Apple //e (enhanced)" )
+COMP ( 1987, apple2ep, apple2e,  enhanced, apple2,   0,        apple2,	"Apple Computer", "Apple //e (Platinum)" )
+COMP ( 1984, apple2c,  0,        enhanced, apple2,   0,        apple2,	"Apple Computer", "Apple //c" )
+COMP ( 1986, apple2c0, apple2c,  enhanced, apple2,   0,        apple2,	"Apple Computer", "Apple //c (3.5 ROM)" )
+COMP ( 1988, apple2cp, apple2c,  enhanced, apple2,   0,        apple2,	"Apple Computer", "Apple //c Plus" )
 

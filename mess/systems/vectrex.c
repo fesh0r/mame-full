@@ -141,6 +141,8 @@ static const struct IODevice io_vectrex[] = {
 	{ IO_END }
 };
 
+SYSTEM_CONFIG_START(vectrex)
+SYSTEM_CONFIG_END
 
 ROM_START(vectrex)
     ROM_REGION(0x10000,REGION_CPU1, 0)
@@ -222,6 +224,12 @@ ROM_START(raaspec)
 	ROM_LOAD("system.img", 0xe000, 0x2000, 0xba13fb57)
 ROM_END
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
-CONS( 1982, vectrex,  0, 		vectrex,  vectrex,	0,		  "General Consumer Electronics",   "Vectrex" )
-CONS( 1984, raaspec,  vectrex,	raaspec,  raaspec,	0,		  "Roy Abel & Associates",   "Spectrum I+" )
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	CONFIG		COMPANY	FULLNAME */
+CONS( 1982, vectrex,  0, 		vectrex,  vectrex,	0,		vectrex,	"General Consumer Electronics",   "Vectrex" )
+CONS( 1984, raaspec,  vectrex,	raaspec,  raaspec,	0,		NULL,		"Roy Abel & Associates",   "Spectrum I+" )

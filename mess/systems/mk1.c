@@ -212,7 +212,16 @@ static const struct IODevice io_mk1[] = {
     { IO_END }
 };
 
+SYSTEM_CONFIG_START(mk1)
+SYSTEM_CONFIG_END
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
 // seams to be developed by mostek (MK)
-/*     YEAR   NAME  PARENT  MACHINE INPUT   INIT    COMPANY                 FULLNAME */
-CONSX( 1979,  mk1,  0, 		mk1,	mk1,	mk1,	"Computer Electronic",  "Chess Champion MK I", GAME_NOT_WORKING)
+/*     YEAR   NAME  PARENT  MACHINE INPUT   INIT	CONFIG	COMPANY                 FULLNAME */
+CONSX( 1979,  mk1,  0, 		mk1,	mk1,	mk1,	mk1,	"Computer Electronic",  "Chess Champion MK I", GAME_NOT_WORKING)
 

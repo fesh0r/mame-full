@@ -220,6 +220,9 @@ static const struct IODevice io_odyssey2[] = {
 	{ IO_END }
 };
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
-COMPX( 1982, odyssey2, 0,		odyssey2, odyssey2, odyssey2,		  "Magnavox",  "ODYSSEY 2", GAME_NOT_WORKING|GAME_NO_SOUND )
+SYSTEM_CONFIG_START(odyssey2)
+SYSTEM_CONFIG_END
+
+/*	   YEAR  NAME		PARENT	MACHINE   INPUT 	INIT		CONFIG		COMPANY	FULLNAME */
+COMPX( 1982, odyssey2,	0,		odyssey2, odyssey2, odyssey2,	odyssey2,	"Magnavox",  "ODYSSEY 2", GAME_NOT_WORKING|GAME_NO_SOUND )
 // philips g7000/videopac

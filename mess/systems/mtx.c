@@ -912,9 +912,9 @@ static const struct IODevice io_mtx512[] = {
 	{ IO_END }
 };
 
-COMPUTER_CONFIG_START(mtx512)
+SYSTEM_CONFIG_START(mtx512)
 	CONFIG_RAM_DEFAULT(512 * 1024)
-COMPUTER_CONFIG_END
+SYSTEM_CONFIG_END
 
-/*     YEAR  NAME      PARENT  MACHINE   INPUT     INIT     CONFIG,  COMPANY          FULLNAME */
-COMPC( 1983, mtx512,   0,      mtx512,   mtx512,   0,       mtx512,  "Memotech Ltd.", "MTX 512" )
+/*    YEAR  NAME      PARENT  MACHINE   INPUT     INIT     CONFIG,  COMPANY          FULLNAME */
+COMP( 1983, mtx512,   0,      mtx512,   mtx512,   0,       mtx512,  "Memotech Ltd.", "MTX 512" )

@@ -284,6 +284,15 @@ static const struct IODevice io_snes[] =
 
 #define io_snespal  io_snes
 
+SYSTEM_CONFIG_START(snes)
+SYSTEM_CONFIG_END
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
 ROM_START(snes)
 	ROM_REGION(0x1000000, REGION_CPU1,  0)				/* 65C816 */
 	ROM_REGION(0x20000,   REGION_GFX1,  0)				/* VRAM */
@@ -302,6 +311,6 @@ ROM_START(snespal)
 	ROM_LOAD_OPTIONAL("spc700.rom", 0xFFC0, 0x40, 0x38000B6B)	/* boot rom */
 ROM_END
 
-/*     YEAR  NAME     PARENT  MACHINE  INPUT  INIT  COMPANY     FULLNAME                                      FLAGS */
-CONSX( 1989, snes,    0,      snes,    snes,  0,    "Nintendo", "Super Nintendo Entertainment System (NTSC)", GAME_NOT_WORKING )
-CONSX( 1989, snespal, snes,   snespal, snes,  0,    "Nintendo", "Super Nintendo Entertainment System (PAL)",  GAME_NOT_WORKING )
+/*     YEAR  NAME     PARENT  MACHINE  INPUT  INIT	CONFIG	COMPANY     FULLNAME                                      FLAGS */
+CONSX( 1989, snes,    0,      snes,    snes,  0,	snes,	"Nintendo", "Super Nintendo Entertainment System (NTSC)", GAME_NOT_WORKING )
+CONSX( 1989, snespal, snes,   snespal, snes,  0,	snes,	"Nintendo", "Super Nintendo Entertainment System (PAL)",  GAME_NOT_WORKING )

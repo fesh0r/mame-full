@@ -944,10 +944,10 @@ static const struct IODevice io_srdm5fd5[] =
 };
 
 
-COMPUTER_CONFIG_START(sordm5)
+SYSTEM_CONFIG_START(sordm5)
 	CONFIG_RAM_DEFAULT(64 * 1024)
-COMPUTER_CONFIG_END
+SYSTEM_CONFIG_END
 
-/*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */
-COMPC( 1983, sordm5,      0,    sord_m5,   sord_m5,  0,       sordm5, "Sord", "Sord M5")
-COMPCX( 1983, srdm5fd5,	0,	sord_m5_fd5, sord_m5, 0, sordm5, "Sord", "Sord M5 + PI5 + FD5", GAME_NOT_WORKING)
+/*    YEAR  NAME       PARENT  MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */
+COMP( 1983, sordm5,      0,    sord_m5,   sord_m5,  0,       sordm5, "Sord", "Sord M5")
+COMPX(1983, srdm5fd5,	0,	sord_m5_fd5, sord_m5, 0, sordm5, "Sord", "Sord M5 + PI5 + FD5", GAME_NOT_WORKING)

@@ -1902,16 +1902,16 @@ static const struct IODevice io_nc200[] =
 
 #define io_nc100a io_nc100
 
-COMPUTER_CONFIG_START(nc100)
+SYSTEM_CONFIG_START(nc100)
 	CONFIG_RAM_DEFAULT(64 * 1024)
-COMPUTER_CONFIG_END
+SYSTEM_CONFIG_END
 
 
-COMPUTER_CONFIG_START(nc200)
+SYSTEM_CONFIG_START(nc200)
 	CONFIG_RAM_DEFAULT(128 * 1024)
-COMPUTER_CONFIG_END
+SYSTEM_CONFIG_END
 
-/*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */
-COMPC( 1992, nc100,     0,      nc100,     nc100,    0,       nc100,   "Amstrad plc", "NC100")
-COMPC( 1992, nc100a,    nc100,  nc100,     nc100,    0,       nc100,   "Amstrad plc", "NC100 (Version 1.09)")
-COMPC( 1993, nc200,     0,      nc200,     nc200,    0,       nc200,   "Amstrad plc", "NC200")
+/*    YEAR  NAME       PARENT  MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */
+COMP( 1992, nc100,     0,      nc100,     nc100,    0,       nc100,   "Amstrad plc", "NC100")
+COMP( 1992, nc100a,    nc100,  nc100,     nc100,    0,       nc100,   "Amstrad plc", "NC100 (Version 1.09)")
+COMP( 1993, nc200,     0,      nc200,     nc200,    0,       nc200,   "Amstrad plc", "NC200")

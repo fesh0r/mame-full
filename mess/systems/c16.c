@@ -944,30 +944,16 @@ static const struct IODevice io_c16v[] =
 #define init_plus4v 	c16_driver_init
 #define init_c364		c16_driver_init
 
-/*		YEAR	NAME	PARENT	MACHINE INPUT	INIT	COMPANY 								FULLNAME */
-COMP ( 1984,	c16,	0,		c16,	c16,	c16,	"Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL)")
-COMP ( 1984,	c16hun, c16,	c16,	c16,	c16,	"Commodore Business Machines Co.",      "Commodore 16 Novotrade (PAL, Hungarian Character Set)")
-COMPX ( 1984,	c16c,	c16,	c16c,	c16c,	c16,	"Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL), 1551", GAME_NOT_WORKING)
-COMP ( 1984,	plus4,	c16,	plus4,	plus4,	plus4,	"Commodore Business Machines Co.",      "Commodore +4 (NTSC)")
-COMPX ( 1984,	plus4c, c16,	plus4c, plus4c, plus4,	"Commodore Business Machines Co.",      "Commodore +4 (NTSC), 1551", GAME_NOT_WORKING)
-COMPX ( 1984,	c364,	c16,	c364,	plus4,	plus4,	"Commodore Business Machines Co.",      "Commodore 364 (Prototype)", GAME_IMPERFECT_SOUND)
-// please leave the following as testdriver only
-COMPX ( 1984,	c16v,	c16,	c16v,	c16v,	c16,	"Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL), VC1541", GAME_NOT_WORKING)
-COMPX ( 1984,	plus4v, c16,	plus4v, plus4v, plus4,	"Commodore Business Machines Co.",      "Commodore +4 (NTSC), VC1541", GAME_NOT_WORKING)
+SYSTEM_CONFIG_START(c16)
+SYSTEM_CONFIG_END
 
-#ifdef RUNTIME_LOADER
-extern void c16_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"c16")==0) drivers[i]=&driver_c16;
-		if ( strcmp(drivers[i]->name,"c16hun")==0) drivers[i]=&driver_c16hun;
-		if ( strcmp(drivers[i]->name,"c16c")==0) drivers[i]=&driver_c16c;
-		if ( strcmp(drivers[i]->name,"c16v")==0) drivers[i]=&driver_c16v;
-		if ( strcmp(drivers[i]->name,"plus4")==0) drivers[i]=&driver_plus4;
-		if ( strcmp(drivers[i]->name,"plus4c")==0) drivers[i]=&driver_plus4c;
-		if ( strcmp(drivers[i]->name,"plus4v")==0) drivers[i]=&driver_plus4v;
-		if ( strcmp(drivers[i]->name,"c364")==0) drivers[i]=&driver_c364;
-	}
-}
-#endif
+/*		YEAR	NAME	PARENT	MACHINE INPUT	INIT	CONFIG   COMPANY 								FULLNAME */
+COMP ( 1984,	c16,	0,		c16,	c16,	c16,	c16,     "Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL)")
+COMP ( 1984,	c16hun, c16,	c16,	c16,	c16,	c16,     "Commodore Business Machines Co.",      "Commodore 16 Novotrade (PAL, Hungarian Character Set)")
+COMPX ( 1984,	c16c,	c16,	c16c,	c16c,	c16,	c16,     "Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL), 1551", GAME_NOT_WORKING)
+COMP ( 1984,	plus4,	c16,	plus4,	plus4,	plus4,	c16,     "Commodore Business Machines Co.",      "Commodore +4 (NTSC)")
+COMPX ( 1984,	plus4c, c16,	plus4c, plus4c, plus4,	c16,     "Commodore Business Machines Co.",      "Commodore +4 (NTSC), 1551", GAME_NOT_WORKING)
+COMPX ( 1984,	c364,	c16,	c364,	plus4,	plus4,	c16,     "Commodore Business Machines Co.",      "Commodore 364 (Prototype)", GAME_IMPERFECT_SOUND)
+// please leave the following as testdriver only
+COMPX ( 1984,	c16v,	c16,	c16v,	c16v,	c16,	c16,     "Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL), VC1541", GAME_NOT_WORKING)
+COMPX ( 1984,	plus4v, c16,	plus4v, plus4v, plus4,	c16,     "Commodore Business Machines Co.",      "Commodore +4 (NTSC), VC1541", GAME_NOT_WORKING)

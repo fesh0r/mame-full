@@ -152,5 +152,8 @@ static const struct IODevice io_sym1[] = {
     { IO_END }
 };
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-COMPX( 1978, sym1,	  0, 		sym1,	  sym1, 	sym1,	  "Synertek Systems Corp",  "SYM-1/SY-VIM-1", GAME_NOT_WORKING)
+SYSTEM_CONFIG_START(sym1)
+SYSTEM_CONFIG_END
+
+/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT	CONFIG	COMPANY   FULLNAME */
+COMPX( 1978, sym1,	  0, 		sym1,	  sym1, 	sym1,	sym1,	"Synertek Systems Corp",  "SYM-1/SY-VIM-1", GAME_NOT_WORKING)

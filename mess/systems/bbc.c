@@ -1374,16 +1374,17 @@ static const struct IODevice io_bbcb6502[] = {
 	{ IO_END }
 };
 
+SYSTEM_CONFIG_START(bbca)
+SYSTEM_CONFIG_END
 
-
-/*	   year name	parent	machine  input	init	company */
-COMP (1981,bbca,	0,		bbca,	 bbca,	0,	"Acorn","BBC Micro Model A" )
-COMP (1981,bbcb,	bbca,	bbcb,	 bbca,	0,	"Acorn","BBC Micro Model B" )
-COMP (1981,bbcb1770,bbca,	bbcb1770,bbca,	0,	"Acorn","BBC Micro Model B with WD1770 disc controller" )
-COMP (1985,bbcbp,   bbca,	bbcbp   ,bbca,  0,  "Acorn","BBC Micro Model B+ 64K" )
-COMP (1985,bbcbp128,bbca,   bbcbp128,bbca,  0,  "Acorn","BBC Micro Model B+ 128k" )
+/*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   CONFIG	COMPANY	 FULLNAME */
+COMP ( 1981, bbca,	   0,		 bbca,     bbca,     0,        bbca,    "Acorn","BBC Micro Model A" )
+COMP ( 1981, bbcb,     bbca,	 bbcb,     bbca,     0,	       bbca,    "Acorn","BBC Micro Model B" )
+COMP ( 1981, bbcb1770, bbca, 	 bbcb1770, bbca,     0,	       bbca,    "Acorn","BBC Micro Model B with WD1770 disc controller" )
+COMP ( 1985, bbcbp,    bbca,	 bbcbp,    bbca,     0,        bbca,    "Acorn","BBC Micro Model B+ 64K" )
+COMP ( 1985, bbcbp128, bbca,     bbcbp128, bbca,     0,        bbca,    "Acorn","BBC Micro Model B+ 128k" )
 /*
-COMP (198?,bbcm,    0,      bbcm    ,bbcm,  0,  "Acorn","BBC Master" )
+COMP ( 198?, bbcm,     0,        bbcm,     bbcm,     0,        bbca,    "Acorn","BBC Master" )
 */
 
 
@@ -1394,5 +1395,5 @@ COMP (198?,bbcm,    0,      bbcm    ,bbcm,  0,  "Acorn","BBC Master" )
 // The code for this second processor upgrade is more or less complete here now.
 // It just needs a TUBE driver made to connect it to the BBC
 
-COMP (198?,bbcb6502,bbca,      bbcb6502,bbca,  0,  "Acorn","BBC Micro Model B with a 6502 Second Processor")
+COMP (198?,bbcb6502,    bbca,     bbcb6502, bbca,    0,        bbca,    "Acorn","BBC Micro Model B with a 6502 Second Processor")
 

@@ -893,17 +893,20 @@ static const struct IODevice io_msx[] = {
 #define io_expert10 io_msx
 #define io_expert11 io_msx
 
-/*    YEAR  NAME      PARENT  MACHINE  INPUT     INIT   COMPANY              FULLNAME */
-COMP( 1983, msx,      0,      msx_pal, msx,      msx,   "ASCII & Microsoft", "MSX 1" )
-COMP( 1983, msxj,     msx,    msx,     msxj,     msx,   "ASCII & Microsoft", "MSX 1 (Japan)" )
-COMP( 1983, msxkr,    msx,    msx,     msxkr,    msx,   "ASCII & Microsoft", "MSX 1 (Korea)" )
-/* COMP( 1983, msxkra, msx, msx, msxkr, msx, "ASCII & Microsoft", "MSX 1 (Korea ALT)" ) */
-COMP( 1983, msxuk,    msx,    msx_pal, msxuk,    msx,   "ASCII & Microsoft", "MSX 1 (UK)" )
-COMP( 1985, hotbit11, msx,    msx,     hotbit,   msx,   "Sharp / Epcom",     "HB-8000 Hotbit 1.1" )
-COMP( 1985, hotbit12, msx,    msx,     hotbit,   msx,   "Sharp / Epcom",     "HB-8000 Hotbit 1.2" )
-COMP( 1985, expert10, msx,    msx,     expert10, msx,   "Gradiente",         "XP-800 Expert 1.0" )
-COMP( 1985, expert11, msx,    msx,     expert11, msx,   "Gradiente",         "XP-800 Expert 1.1" )
-COMPX( 1985, msx2,    msx,    msx2,    msx2,      msx2,   "ASCII & Microsoft", "MSX 2", GAME_NOT_WORKING )
-COMPX( 1985, msx2a,   msx,    msx2,    msx2,      msx2,   "ASCII & Microsoft", "MSX 2 (BASIC 2.1)", GAME_NOT_WORKING )
-COMPX( 1985, msx2j,  msx,    msx2,     msx2j,     msx2,   "ASCII & Microsoft", "MSX 2 (Japan)", GAME_NOT_WORKING )
+SYSTEM_CONFIG_START(msx)
+SYSTEM_CONFIG_END
+
+/*    YEAR  NAME      PARENT  MACHINE  INPUT     INIT   CONFIG  COMPANY              FULLNAME */
+COMP( 1983,	msx,      0,      msx_pal, msx,      msx,	msx,	"ASCII & Microsoft", "MSX 1" )
+COMP( 1983, msxj,     msx,    msx,     msxj,     msx,	msx,	"ASCII & Microsoft", "MSX 1 (Japan)" )
+COMP( 1983, msxkr,    msx,    msx,     msxkr,    msx,	msx,	"ASCII & Microsoft", "MSX 1 (Korea)" )
+/*COMP(1983,msxkra, msx, msx, msxkr, msx, "ASCII & Microsoft", "MSX 1 (Korea ALT)" ) */
+COMP( 1983, msxuk,    msx,    msx_pal, msxuk,    msx,	msx,	"ASCII & Microsoft", "MSX 1 (UK)" )
+COMP( 1985, hotbit11, msx,    msx,     hotbit,   msx,	msx,	"Sharp / Epcom",     "HB-8000 Hotbit 1.1" )
+COMP( 1985, hotbit12, msx,    msx,     hotbit,   msx,	msx,	"Sharp / Epcom",     "HB-8000 Hotbit 1.2" )
+COMP( 1985, expert10, msx,    msx,     expert10, msx,	msx,	"Gradiente",         "XP-800 Expert 1.0" )
+COMP( 1985, expert11, msx,    msx,     expert11, msx,	msx,	"Gradiente",         "XP-800 Expert 1.1" )
+COMPX(1985, msx2,     msx,    msx2,    msx2,     msx2,	msx,	"ASCII & Microsoft", "MSX 2", GAME_NOT_WORKING )
+COMPX(1985, msx2a,    msx,    msx2,    msx2,     msx2,	msx,	"ASCII & Microsoft", "MSX 2 (BASIC 2.1)", GAME_NOT_WORKING )
+COMPX(1985, msx2j,    msx,    msx2,     msx2j,   msx2,	msx,	"ASCII & Microsoft", "MSX 2 (Japan)", GAME_NOT_WORKING )
 

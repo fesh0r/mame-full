@@ -430,22 +430,29 @@ static const struct IODevice io_lynx[] = {
     { IO_END }
 };
 
-void init_lynx(void)
-{
-	int i;
-	UINT8 *gfx=memory_region(REGION_GFX1);
-
-	for (i=0; i<256; i++) gfx[i]=i;
-
-	lynx_quickload(0);
-
-
-}
-
 #define io_lynxa io_lynx
 #define io_lynx2 io_lynx
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR	COMPANY   FULLNAME */
-CONSX( 1989, lynx,	  0, 		lynx,  lynx, 	lynx,	  "Atari",  "Lynx", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
-CONSX( 1989, lynxa,	  lynx, 	lynx,  lynx, 	lynx,	  "Atari",  "Lynx (alternate rom save!)", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
-CONSX( 1991, lynx2,	  lynx, 	lynx2,  lynx, 	lynx,	  "Atari",  "Lynx II", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+SYSTEM_CONFIG_START(lynx)
+SYSTEM_CONFIG_END
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+DRIVER_INIT( lynx )
+{
+	int i;
+	UINT8 *gfx = memory_region(REGION_GFX1);
+
+	for (i=0; i<256; i++)
+		gfx[i]=i;
+	lynx_quickload(0);
+}
+
+/*    YEAR  NAME      PARENT    MACHINE	INPUT	INIT	CONFIG	MONITOR	COMPANY   FULLNAME */
+CONSX( 1989, lynx,	  0, 		lynx,	lynx,	lynx,	lynx,	"Atari",  "Lynx", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+CONSX( 1989, lynxa,	  lynx, 	lynx,	lynx,	lynx,	lynx,	"Atari",  "Lynx (alternate rom save!)", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+CONSX( 1991, lynx2,	  lynx, 	lynx2,	lynx,	lynx,	lynx,	"Atari",  "Lynx II", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)

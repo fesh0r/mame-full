@@ -362,12 +362,15 @@ static const struct IODevice io_genesis[] = {
 	{ IO_END }
 };
 
+SYSTEM_CONFIG_START(genesis)
+SYSTEM_CONFIG_END
+
 /***************************************************************************
 
   Game driver(s)
 
 ***************************************************************************/
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
-CONS( 1988, genesis,  0,		genesis,  genesis,	0,		  "Sega",   "Megadrive / Genesis" )
+/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	CONFIG		COMPANY	FULLNAME */
+CONS( 1988, genesis,  0,		genesis,  genesis,	0,		genesis,	"Sega",   "Megadrive / Genesis" )
 

@@ -406,9 +406,14 @@ static	const	struct	IODevice	io_nascom2[] =
 #define io_nascom1a io_nascom1
 #define io_nascom1b io_nascom1
 #define io_nascom2a io_nascom2
-/*	YEAR	NAME		PARENT		MACHINE		INPUT		INIT	COMPANY		FULLNAME */
-COMP(	1978,	nascom1,	0,		nascom1,	nascom1,	0,		"Nascom Microcomputers",	"Nascom 1 (NasBug T1)" )
-COMP(	1978,	nascom1a,	nascom1,	nascom1,	nascom1,	0,		"Nascom Microcomputers",	"Nascom 1 (NasBug T2)" )
-COMP(	1978,	nascom1b,	nascom1,	nascom1,	nascom1,	0,		"Nascom Microcomputers",	"Nascom 1 (NasBug T4)" )
-COMP(	1979,	nascom2,	nascom1,	nascom2,	nascom1,	0,		"Nascom Microcomputers",	"Nascom 2 (NasSys 1)" )
-COMP(	1979,	nascom2a,	nascom1,	nascom2,	nascom1,	0,		"Nascom Microcomputers",	"Nascom 2 (NasSys 3)" )
+
+SYSTEM_CONFIG_START(nascom)
+SYSTEM_CONFIG_END
+
+
+/*	  YEAR	NAME		PARENT		MACHINE		INPUT		INIT	CONFIG		COMPANY		FULLNAME */
+COMP( 1978,	nascom1,	0,			nascom1,	nascom1,	0,		nascom,		"Nascom Microcomputers",	"Nascom 1 (NasBug T1)" )
+COMP( 1978,	nascom1a,	nascom1,	nascom1,	nascom1,	0,		nascom,		"Nascom Microcomputers",	"Nascom 1 (NasBug T2)" )
+COMP( 1978,	nascom1b,	nascom1,	nascom1,	nascom1,	0,		nascom,		"Nascom Microcomputers",	"Nascom 1 (NasBug T4)" )
+COMP( 1979,	nascom2,	nascom1,	nascom2,	nascom1,	0,		nascom,		"Nascom Microcomputers",	"Nascom 2 (NasSys 1)" )
+COMP( 1979,	nascom2a,	nascom1,	nascom2,	nascom1,	0,		nascom,		"Nascom Microcomputers",	"Nascom 2 (NasSys 3)" )

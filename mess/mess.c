@@ -908,14 +908,8 @@ int device_filename_change(int type, int id, const char *name)
 				count[type]++;
 		}
 
-		if( dev->reset_depth == IO_RESET_CPU )
+		if (dev->reset_depth >= IO_RESET_CPU)
 			machine_reset();
-		else
-		if( dev->reset_depth == IO_RESET_ALL )
-		{
-			mess_keep_going = 1;
-
-		}
 
 		result = (*dev->init)(id);
 		if( result != INIT_PASS)
@@ -1153,8 +1147,7 @@ int messvaliditychecks(void)
 	}
 
 	/* MESS specific driver validity checks */
-	i = 0;
-	while(drivers[i])
+	for(i = 0; drivers[i]; i++)
 	{
 		/* check device array */
 		if (drivers[i]->dev)
@@ -1177,48 +1170,8 @@ int messvaliditychecks(void)
 			}
 		}
 
-		/* check computer config, if present */
-		if (drivers[i]->compcfg)
-		{
-			const struct ComputerConfigEntry *entry = drivers[i]->compcfg;
-			UINT32 highest_ram = 0;
-			int found_default_ram = 0;
-
-			while(entry->type != CCE_END)
-			{
-				switch(entry->type) {
-				case CCE_RAM_DEFAULT:
-					if (found_default_ram)
-					{
-						mess_printf("MESS Validiity Error - Multiple default RAMs found in driver %s\n", drivers[i]->name);
-						error = 1;
-					}
-					found_default_ram = 1;
-					/* fall through */
-
-				case CCE_RAM:
-					if (entry->param <= highest_ram)
-					{
-						mess_printf("MESS Validity Error - RAM configuration entry out of order in driver %s\n", drivers[i]->name);
-						error = 1;
-					}
-					highest_ram = entry->param;
-					break;
-
-				default:
-					mess_printf("MESS Validity Error - Unknown config entry type %d in driver %s\n", entry->type, drivers[i]->name);
-					error = 1;
-					break;
-				}
-				entry++;
-			}
-			if (!found_default_ram)
-			{
-				mess_printf("MESS Validiity Error - No default RAMs found in driver %s\n", drivers[i]->name);
-				error = 1;
-			}
-		}
-		i++;
+		/* check system config */
+		ram_option_count(drivers[i]);
 	}
 
 	return error;

@@ -987,14 +987,17 @@ static const struct IODevice io_cbm500[] =
 #define rom_cbm730 rom_cbmb256hp
 #endif
 
-/*     YEAR		NAME	PARENT	MACHINE		INPUT		INIT		COMPANY								FULLNAME */
-COMPX (1983,	cbm500,	0,		cbm500,		cbm500,		cbm500,		"Commodore Business Machines Co.",	"Commodore B128-40/Pet-II/P500 60Hz",		GAME_NOT_WORKING)
-COMPX (1983,	cbm610, 0,		cbm600, 	cbm600, 	cbm600, 	"Commodore Business Machines Co.",  "Commodore B128-80LP/610 60Hz",             GAME_NOT_WORKING)
-COMPX (1983,	cbm620,	cbm610,	cbm600pal,	cbm600pal,	cbm600pal,	"Commodore Business Machines Co.",	"Commodore B256-80LP/620 50Hz",	GAME_NOT_WORKING)
-COMPX (1983,	cbm620hu,	cbm610,	cbm600pal,	cbm600pal,	cbm600hu,	"Commodore Business Machines Co.",	"Commodore B256-80LP/620 Hungarian 50Hz",	GAME_NOT_WORKING)
-COMPX (1983,	cbm710, cbm610, cbm700, 	cbm700, 	cbm700, 	"Commodore Business Machines Co.",  "Commodore B128-80HP/710",                  GAME_NOT_WORKING)
-COMPX (1983,	cbm720,	cbm610,	cbm700,		cbm700,		cbm700,		"Commodore Business Machines Co.",	"Commodore B256-80HP/720",					GAME_NOT_WORKING)
-COMPX (1983,	cbm720se,	cbm610,	cbm700,	cbm700,		cbm700,		"Commodore Business Machines Co.",	"Commodore B256-80HP/720 Swedish/Finnish",	GAME_NOT_WORKING)
+SYSTEM_CONFIG_START(cbm)
+SYSTEM_CONFIG_END
+
+/*     YEAR		NAME	  PARENT	MACHINE		INPUT		INIT		CONFIG  COMPANY								FULLNAME */
+COMPX (1983,	cbm500,	  0,		cbm500,		cbm500,		cbm500,		cbm,	"Commodore Business Machines Co.",	"Commodore B128-40/Pet-II/P500 60Hz",		GAME_NOT_WORKING)
+COMPX (1983,	cbm610,   0,		cbm600, 	cbm600, 	cbm600, 	cbm,	"Commodore Business Machines Co.",  "Commodore B128-80LP/610 60Hz",             GAME_NOT_WORKING)
+COMPX (1983,	cbm620,	  cbm610,	cbm600pal,	cbm600pal,	cbm600pal,	cbm,	"Commodore Business Machines Co.",	"Commodore B256-80LP/620 50Hz",	GAME_NOT_WORKING)
+COMPX (1983,	cbm620hu, cbm610,	cbm600pal,	cbm600pal,	cbm600hu,	cbm,	"Commodore Business Machines Co.",	"Commodore B256-80LP/620 Hungarian 50Hz",	GAME_NOT_WORKING)
+COMPX (1983,	cbm710,   cbm610,   cbm700, 	cbm700, 	cbm700, 	cbm,	"Commodore Business Machines Co.",  "Commodore B128-80HP/710",                  GAME_NOT_WORKING)
+COMPX (1983,	cbm720,	  cbm610,	cbm700,		cbm700,		cbm700,		cbm,	"Commodore Business Machines Co.",	"Commodore B256-80HP/720",					GAME_NOT_WORKING)
+COMPX (1983,	cbm720se, cbm610,	cbm700,     cbm700,		cbm700,		cbm,	"Commodore Business Machines Co.",	"Commodore B256-80HP/720 Swedish/Finnish",	GAME_NOT_WORKING)
 #if 0
-COMPX (1983,	cbm730, cbm610, cbmbx, 		cbmb, 		cbmb, 		"Commodore Business Machines Co.",	"Commodore BX128-80HP/BX256-80HP/730", GAME_NOT_WORKING)
+COMPX (1983,	cbm730,   cbm610,   cbmbx, 		cbmb, 		cbmb, 		cbm,    "Commodore Business Machines Co.",	"Commodore BX128-80HP/BX256-80HP/730", GAME_NOT_WORKING)
 #endif

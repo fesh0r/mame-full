@@ -300,7 +300,10 @@ static	const	struct	IODevice	io_p2000m[] =
 	{ IO_END }
 };
 
-/*		YEAR	NAME		PARENT	MACHINE		INPUT		INIT	COMPANY		FULLNAME */
-COMP (	1980,	p2000t,		0,		p2000t,		p2000t,		0,		"Philips",	"Philips P2000T" )
-COMPX(	1980,	p2000m,		p2000t,	p2000m,		p2000t,		0,		"Philips",	"Philips P2000M", GAME_ALIAS )
+SYSTEM_CONFIG_START(p2000)
+SYSTEM_CONFIG_END
+
+/*		YEAR	NAME		PARENT	MACHINE		INPUT		INIT	CONFIG  COMPANY		FULLNAME */
+COMP (	1980,	p2000t,		0,		p2000t,		p2000t,		0,		p2000,	"Philips",	"Philips P2000T" )
+COMPX(	1980,	p2000m,		p2000t,	p2000m,		p2000t,		0,		p2000,	"Philips",	"Philips P2000M", GAME_ALIAS )
 

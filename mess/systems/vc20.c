@@ -926,30 +926,15 @@ static const struct IODevice io_vc20i[] =
 /*#define io_vic20i 	io_vc20i */
 #define io_vic20i		io_vc20
 
-/*		YEAR	NAME		PARENT	MACHINE INPUT		INIT	COMPANY 							FULLNAME */
+SYSTEM_CONFIG_START(vic20)
+SYSTEM_CONFIG_END
 
-COMPX ( 1981,	vic20,		0,		vic20,	vic20,		vic20,	"Commodore Business Machines Co.",  "VIC20 (NTSC)", GAME_IMPERFECT_SOUND)
-COMPX ( 1981,	vic20i, 	vic20,	vic20i, vic20i, 	vic20i, "Commodore Business Machines Co.",  "VIC20 (NTSC), IEEE488 Interface (SYS45065)",   GAME_IMPERFECT_SOUND)
-COMPX ( 1981,	vic1001,	vic20,	vic20,	vic1001,		vic20,	"Commodore Business Machines Co.",  "VIC1001 (NTSC)", GAME_IMPERFECT_SOUND)
-COMPX ( 1981,	vc20,		vic20,	vc20,	vc20,		vc20,	"Commodore Business Machines Co.",  "VIC20/VC20(German) PAL",       GAME_IMPERFECT_SOUND)
-COMPX ( 1981,	vic20swe,	vic20,	vc20,	vic20swe,		vc20,	"Commodore Business Machines Co.",  "VIC20 PAL, Swedish Expansion Kit", GAME_IMPERFECT_SOUND)
+/*		YEAR	NAME		PARENT	MACHINE INPUT		INIT	CONFIG     COMPANY 							FULLNAME */
+COMPX ( 1981,	vic20,		0,		vic20,	vic20,		vic20,	vic20,     "Commodore Business Machines Co.",  "VIC20 (NTSC)", GAME_IMPERFECT_SOUND)
+COMPX ( 1981,	vic20i, 	vic20,	vic20i, vic20i, 	vic20i, vic20,     "Commodore Business Machines Co.",  "VIC20 (NTSC), IEEE488 Interface (SYS45065)",   GAME_IMPERFECT_SOUND)
+COMPX ( 1981,	vic1001,	vic20,	vic20,	vic1001,	vic20,	vic20,     "Commodore Business Machines Co.",  "VIC1001 (NTSC)", GAME_IMPERFECT_SOUND)
+COMPX ( 1981,	vc20,		vic20,	vc20,	vc20,		vc20,	vic20,     "Commodore Business Machines Co.",  "VIC20/VC20(German) PAL",       GAME_IMPERFECT_SOUND)
+COMPX ( 1981,	vic20swe,	vic20,	vc20,	vic20swe,	vc20,	vic20,     "Commodore Business Machines Co.",  "VIC20 PAL, Swedish Expansion Kit", GAME_IMPERFECT_SOUND)
 // please leave the following as testdriver only
-COMPX ( 1981,	vic20v, 	vic20,	vic20v, vic20,		vic20,	"Commodore Business Machines Co.",  "VIC20 (NTSC), VC1540", GAME_IMPERFECT_SOUND)
-COMPX ( 1981,	vc20v,		vic20,	vc20v,	vic20,		vc20,	"Commodore Business Machines Co.",  "VC20 (PAL), VC1541", GAME_IMPERFECT_SOUND)
-
-
-#ifdef RUNTIME_LOADER
-extern void vc20_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"vic20")==0) drivers[i]=&driver_vic20;
-		if ( strcmp(drivers[i]->name,"vic1001")==0) drivers[i]=&driver_vic1001;
-		if ( strcmp(drivers[i]->name,"vic20i")==0) drivers[i]=&driver_vic20i;
-		if ( strcmp(drivers[i]->name,"vc20")==0) drivers[i]=&driver_vc20;
-		if ( strcmp(drivers[i]->name,"vic20swe")==0) drivers[i]=&driver_vic20swe;
-		if ( strcmp(drivers[i]->name,"vic20v")==0) drivers[i]=&driver_vic20v;
-		if ( strcmp(drivers[i]->name,"vc20v")==0) drivers[i]=&driver_vc20v;
-	}
-}
-#endif
+COMPX ( 1981,	vic20v, 	vic20,	vic20v, vic20,		vic20,	vic20,     "Commodore Business Machines Co.",  "VIC20 (NTSC), VC1540", GAME_IMPERFECT_SOUND)
+COMPX ( 1981,	vc20v,		vic20,	vc20v,	vic20,		vc20,	vic20,     "Commodore Business Machines Co.",  "VC20 (PAL), VC1541", GAME_IMPERFECT_SOUND)

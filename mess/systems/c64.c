@@ -921,19 +921,28 @@ static const struct IODevice io_c64gs[] =
 #define rom_max rom_ultimax
 #define rom_cbm4064 rom_pet64
 
-/*   YEAR  NAME		PARENT	MACHINE 		INPUT	INIT	COMPANY 						   FULLNAME */
-COMP(1982, max,		0,		ultimax,		ultimax,ultimax,"Commodore Business Machines Co.", "Commodore Max (Ultimax/VC10)")
-COMP(1982, c64,		0,		c64,			c64,	c64,	"Commodore Business Machines Co.", "Commodore 64 (NTSC)")
-COMP(1982, cbm4064,	c64,	pet64,			c64,	c64,	"Commodore Business Machines Co.", "CBM4064/PET64/Educator64 (NTSC)")
-COMP(1982, c64pal, 	c64,	c64pal, 		c64,	c64pal, "Commodore Business Machines Co.", "Commodore 64/VC64/VIC64 (PAL)")
-COMP(1982, vic64s, 	c64,	c64pal, 		vic64s,	c64pal, "Commodore Business Machines Co.", "Commodore 64 Swedish (PAL)")
-CONS(1987, c64gs,	c64,	c64gs,			c64gs,	c64gs,	"Commodore Business Machines Co.", "C64GS (PAL)")
+SYSTEM_CONFIG_START(c64)
+SYSTEM_CONFIG_END
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+/*   YEAR  NAME		PARENT	MACHINE 		INPUT	INIT	CONFIG	COMPANY 						   FULLNAME */
+COMP(1982, max,		0,		ultimax,		ultimax,ultimax,c64,	"Commodore Business Machines Co.", "Commodore Max (Ultimax/VC10)")
+COMP(1982, c64,		0,		c64,			c64,	c64,	c64,	"Commodore Business Machines Co.", "Commodore 64 (NTSC)")
+COMP(1982, cbm4064,	c64,	pet64,			c64,	c64,	c64,	"Commodore Business Machines Co.", "CBM4064/PET64/Educator64 (NTSC)")
+COMP(1982, c64pal, 	c64,	c64pal, 		c64,	c64pal, c64,	"Commodore Business Machines Co.", "Commodore 64/VC64/VIC64 (PAL)")
+COMP(1982, vic64s, 	c64,	c64pal, 		vic64s,	c64pal, c64,	"Commodore Business Machines Co.", "Commodore 64 Swedish (PAL)")
+CONS(1987, c64gs,	c64,	c64gs,			c64gs,	c64gs,	c64,	"Commodore Business Machines Co.", "C64GS (PAL)")
 
 /* testdrivers */
-COMPX(1983, sx64,	c64,	sx64,			sx64,	sx64,	"Commodore Business Machines Co.", "SX64 (PAL)",                      GAME_NOT_WORKING)
-COMPX(1983, vip64,	c64,	sx64,			vip64,	sx64,	"Commodore Business Machines Co.", "VIP64 (SX64 PAL), Swedish Expansion Kit", GAME_NOT_WORKING)
+COMPX(1983, sx64,	c64,	sx64,			sx64,	sx64,	c64,	"Commodore Business Machines Co.", "SX64 (PAL)",                      GAME_NOT_WORKING)
+COMPX(1983, vip64,	c64,	sx64,			vip64,	sx64,	c64,	"Commodore Business Machines Co.", "VIP64 (SX64 PAL), Swedish Expansion Kit", GAME_NOT_WORKING)
 // sx64 with second disk drive
-COMPX(198?, dx64,	c64,	sx64,			sx64,	sx64,	"Commodore Business Machines Co.", "DX64 (Prototype, PAL)",                      GAME_NOT_WORKING)
+COMPX(198?, dx64,	c64,	sx64,			sx64,	sx64,	c64,	"Commodore Business Machines Co.", "DX64 (Prototype, PAL)",                      GAME_NOT_WORKING)
 /*c64 II (cbm named it still c64) */
 /*c64c (bios in 1 chip) */
 /*c64g late 8500/8580 based c64, sold at aldi/germany */

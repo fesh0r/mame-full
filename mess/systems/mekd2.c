@@ -204,8 +204,6 @@ ROM_START(mekd2)
 		/* space filled with key icons by mekd2_init_driver */
 ROM_END
 
-
-
 static const struct IODevice io_mekd2[] = {
 	{
 		IO_CARTSLOT,		/* type */
@@ -230,5 +228,14 @@ static const struct IODevice io_mekd2[] = {
 	{ IO_END }
 };
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	  FULLNAME */
-CONS( 1977, mekd2,	   0,		mekd2,	  mekd2,	mekd2,	  "Motorola", "MEK6800D2" )
+SYSTEM_CONFIG_START(mekd2)
+SYSTEM_CONFIG_END
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	CONFIG	COMPANY		FULLNAME */
+CONS( 1977, mekd2,	   0,		mekd2,	  mekd2,	mekd2,	mekd2,	"Motorola",	"MEK6800D2" )

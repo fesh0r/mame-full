@@ -450,25 +450,13 @@ static const struct IODevice io_c65[] =
 #define io_c65c io_c65
 #define io_c65a io_c65
 
-/*		YEAR	NAME	PARENT	MACHINE INPUT	INIT		COMPANY 							FULLNAME */
-COMPX ( 1991,	c65,	0,		c65,	c65,	c65,		"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 911001)",        GAME_NOT_WORKING)
-COMPX ( 1991,	c65e,	c65,	c65,	c65,	c65,		"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910828)",        GAME_NOT_WORKING)
-COMPX ( 1991,	c65d,	c65,	c65,	c65,	c65,		"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910626)",        GAME_NOT_WORKING)
-COMPX ( 1991,	c65c,	c65,	c65,	c65,	c65,		"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910523)",        GAME_NOT_WORKING)
-COMPX ( 1991,	c65ger, c65,	c65pal, c65ger, c65pal, 	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, German PAL, 910429)",  GAME_NOT_WORKING)
-COMPX ( 1991,	c65a,	c65,	c65,	c65,	c65_alpha1, "Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910111)",        GAME_NOT_WORKING)
+SYSTEM_CONFIG_START(c65)
+SYSTEM_CONFIG_END
 
-#ifdef RUNTIME_LOADER
-extern void c65_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"c65")==0) drivers[i]=&driver_c65;
-		if ( strcmp(drivers[i]->name,"c65e")==0) drivers[i]=&driver_c65e;
-		if ( strcmp(drivers[i]->name,"c65d")==0) drivers[i]=&driver_c65d;
-		if ( strcmp(drivers[i]->name,"c65c")==0) drivers[i]=&driver_c65c;
-		if ( strcmp(drivers[i]->name,"c65ger")==0) drivers[i]=&driver_c65ger;
-		if ( strcmp(drivers[i]->name,"c65a")==0) drivers[i]=&driver_c65a;
-	}
-}
-#endif
+/*		YEAR	NAME	PARENT	MACHINE INPUT	INIT		CONFIG  COMPANY 							FULLNAME */
+COMPX ( 1991,	c65,	0,		c65,	c65,	c65,		c65,	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 911001)",        GAME_NOT_WORKING)
+COMPX ( 1991,	c65e,	c65,	c65,	c65,	c65,		c65,	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910828)",        GAME_NOT_WORKING)
+COMPX ( 1991,	c65d,	c65,	c65,	c65,	c65,		c65,	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910626)",        GAME_NOT_WORKING)
+COMPX ( 1991,	c65c,	c65,	c65,	c65,	c65,		c65,	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910523)",        GAME_NOT_WORKING)
+COMPX ( 1991,	c65ger, c65,	c65pal, c65ger, c65pal, 	c65,	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, German PAL, 910429)",  GAME_NOT_WORKING)
+COMPX ( 1991,	c65a,	c65,	c65,	c65,	c65_alpha1, c65,	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910111)",        GAME_NOT_WORKING)

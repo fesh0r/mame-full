@@ -353,6 +353,9 @@ static const struct IODevice io_atom[] =
 
 #define io_atomeb io_atom
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-COMP( 1979, atom,     0,        atom,     atom,     0,        "Acorn",  "Atom" )
-COMP( 1979, atomeb,   atom,     atomeb,     atom,     0,        "Acorn",  "Atom with Eprom Box" )
+SYSTEM_CONFIG_START(atom)
+SYSTEM_CONFIG_END
+
+/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG   COMPANY   FULLNAME */
+COMP( 1979, atom,     0,        atom,     atom,     0,        atom,    "Acorn",  "Atom" )
+COMP( 1979, atomeb,   atom,     atomeb,   atom,     0,        atom,    "Acorn",  "Atom with Eprom Box" )

@@ -1036,11 +1036,12 @@ ROM_END
 
 static const struct IODevice io_avigo[] =
 {
-
 	{IO_END}
 };
 
+SYSTEM_CONFIG_START(avigo)
+SYSTEM_CONFIG_END
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY   FULLNAME */
-COMPX( 1997, avigo,   0,                avigo,  avigo,      0,       "Texas Instruments", "TI Avigo 100 PDA",GAME_NOT_WORKING)
+/*	  YEAR	NAME	PARENT	MACHINE	INPUT	INIT	CONFIG	COMPANY   FULLNAME */
+COMPX(1997,	avigo,	0,		avigo,	avigo,	0,		avigo,	"Texas Instruments", "TI Avigo 100 PDA",GAME_NOT_WORKING)
 

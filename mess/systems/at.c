@@ -738,42 +738,28 @@ static const struct IODevice io_ibmat[] = {
 #define io_at386 io_ibmat
 #define io_at486 io_ibmat
 
+SYSTEM_CONFIG_START(ibmat)
+SYSTEM_CONFIG_END
+
 /***************************************************************************
 
   Game driver(s)
 
 ***************************************************************************/
 
-/*	   YEAR		NAME		PARENT	MACHINE     INPUT	    INIT	    COMPANY	 FULLNAME */
-COMPX ( 1985,	ibmat,		0,		atcga,		atcga,		atcga,	    "International Business Machines",  "IBM PC/AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
-COMPX ( 1988,	i8530286,	ibmat,	ps2m30286,	atvga,		ps2m30286,	"International Business Machines",  "IBM PS2 Model 30 286", GAME_NOT_WORKING )
+/*	   YEAR		NAME		PARENT	MACHINE     INPUT	    INIT	    CONFIG   COMPANY	 FULLNAME */
+COMPX ( 1985,	ibmat,		0,		atcga,		atcga,		atcga,	    ibmat,   "International Business Machines",  "IBM PC/AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMPX ( 1988,	i8530286,	ibmat,	ps2m30286,	atvga,		ps2m30286,	ibmat,   "International Business Machines",  "IBM PS2 Model 30 286", GAME_NOT_WORKING )
 #ifdef MESS_DEBUG
-COMPX ( 1987,	at,			ibmat,	atcga,      atcga,		atcga,	    "",  "PC/AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMPX ( 1987,	at,			ibmat,	atcga,      atcga,		atcga,	    ibmat,   "",  "PC/AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 #else
-COMPX ( 1987,	at,			0,	atcga,      atcga,		atcga,	    "",  "PC/AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMPX ( 1987,	at,			0,	    atcga,      atcga,		atcga,	    ibmat,   "",  "PC/AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 #endif
-COMPX ( 1989,	neat,		ibmat,	atcga,      atcga,		atcga,	    "",  "NEAT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMPX ( 1989,	neat,		ibmat,	atcga,      atcga,		atcga,	    ibmat,   "",  "NEAT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 #ifdef HAS_I386
-COMPX ( 1988,	at386,		ibmat,	at386,      atcga,		at386,	    "MITAC INC",  "PC/AT 386(CGA, MF2 Keyboard)", GAME_NOT_WORKING )
-COMPX ( 1990,	at486,		ibmat,	at386,      atcga,		at386,	    "",  "PC/AT 486(CGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMPX ( 1988,	at386,		ibmat,	at386,      atcga,		at386,	    ibmat,   "MITAC INC",  "PC/AT 386(CGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMPX ( 1990,	at486,		ibmat,	at386,      atcga,		at386,	    ibmat,   "",  "PC/AT 486(CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 #endif
 
 // these drivers will be discarded soon
-COMPX ( 1987,	atvga,		ibmat,	atvga,      atvga,		at_vga,     "",  "PC/AT (VGA, MF2 Keyboard)", GAME_NOT_WORKING )
-
-#ifdef RUNTIME_LOADER
-extern void at_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"ibmat")==0) drivers[i]=&driver_ibmat;
-		if ( strcmp(drivers[i]->name,"i8530286")==0) drivers[i]=&driver_i8530286;
-		if ( strcmp(drivers[i]->name,"at")==0) drivers[i]=&driver_at;
-
-		if ( strcmp(drivers[i]->name,"atvga")==0) drivers[i]=&driver_atvga;
-		if ( strcmp(drivers[i]->name,"neat")==0) drivers[i]=&driver_neat;
-		if ( strcmp(drivers[i]->name,"at386")==0) drivers[i]=&driver_at386;
-		if ( strcmp(drivers[i]->name,"at486")==0) drivers[i]=&driver_at486;
-	}
-}
-#endif
+COMPX ( 1987,	atvga,		ibmat,	atvga,      atvga,		at_vga,     ibmat,   "",  "PC/AT (VGA, MF2 Keyboard)", GAME_NOT_WORKING )

@@ -414,9 +414,12 @@ static const struct IODevice io_mbee[] = {
 #define io_mbeepc85  io_mbee
 #define io_mbee56    io_mbee
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-COMP( 1982, mbee,     0,        mbee,     mbee,     0,        "Applied Technology",  "Microbee 32 IC" )
-COMP( 1982, mbeepc,   mbee,     mbee,     mbee,     0,        "Applied Technology",  "Microbee 32 PC" )
-COMP( 1985?,mbeepc85, mbee,     mbee,     mbee,     0,        "Applied Technology",  "Microbee 32 PC85" )
-COMP( 1983, mbee56,   mbee,     mbee56 ,  mbee,     0,        "Applied Technology",  "Microbee 56" )
+SYSTEM_CONFIG_START(mbee)
+SYSTEM_CONFIG_END
+
+/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */
+COMP( 1982, mbee,     0,        mbee,     mbee,     0,        mbee,		"Applied Technology",  "Microbee 32 IC" )
+COMP( 1982, mbeepc,   mbee,     mbee,     mbee,     0,        mbee,		"Applied Technology",  "Microbee 32 PC" )
+COMP( 1985?,mbeepc85, mbee,     mbee,     mbee,     0,        mbee,		"Applied Technology",  "Microbee 32 PC85" )
+COMP( 1983, mbee56,   mbee,     mbee56 ,  mbee,     0,        mbee,		"Applied Technology",  "Microbee 56" )
 

@@ -181,25 +181,8 @@ static const struct IODevice io_aim65[] = {
     { IO_END }
 };
 
-#if 0
-void init_aim65(void)
-{
-	int i;
-	UINT8 *gfx=memory_region(REGION_GFX1);
-	for (i=0; i<256; i++) gfx[i]=i;
+SYSTEM_CONFIG_START(aim65)
+SYSTEM_CONFIG_END
 
-}
-#endif
-
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR	COMPANY   FULLNAME */
-COMPX( 197?, aim65,	  0, 		aim65,  aim65, 	aim65,	  "Rockwell",  "AIM 65", GAME_NOT_WORKING|GAME_NO_SOUND)
-
-#ifdef RUNTIME_LOADER
-extern void aim65_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"aim65")==0) drivers[i]=&driver_aim65;
-	}
-}
-#endif
+/*    YEAR	NAME	PARENT	MACHINE	INPUT	INIT	CONFIG	COMPANY		FULLNAME */
+COMPX(197?,	aim65,	0,		aim65,	aim65,	aim65,	aim65,	"Rockwell",	"AIM 65",	GAME_NOT_WORKING|GAME_NO_SOUND)

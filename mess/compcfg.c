@@ -4,76 +4,60 @@
 #include "snprintf.h"
 #include "mess.h"
 
+#define MAX_RAM_OPTIONS	16
+
+static int get_ram_options(const struct GameDriver *gamedrv, UINT32 *ram_options, int max_options, int *default_option)
+{
+	struct SystemConfigurationParamBlock params;
+
+	memset(&params, 0, sizeof(params));
+	params.max_ram_options = max_options;
+	params.ram_options = ram_options;
+
+	if (gamedrv->sysconfig_ctor)
+		gamedrv->sysconfig_ctor(&params);
+
+	if (default_option)
+		*default_option = params.default_ram_option;
+	return params.actual_ram_options;
+}
+
 UINT32 ram_option(const struct GameDriver *gamedrv, unsigned int i)
 {
-	const struct ComputerConfigEntry *entry = gamedrv->compcfg;
-	if (entry)
-	{
-		while(entry->type != CCE_END)
-		{
-			if ((entry->type == CCE_RAM) || (entry->type == CCE_RAM_DEFAULT))
-			{
-				/* found a RAM entry */
-				if (i == 0)
-					return entry->param;
-				i--;
-			}
-			entry++;
-		}
-	}
-	return 0;
+	UINT32 ram_options[MAX_RAM_OPTIONS];
+	int ram_optcount;
+
+	ram_optcount = get_ram_options(gamedrv, ram_options, sizeof(ram_options) / sizeof(ram_options[0]), NULL);
+	return i >= ram_optcount ? 0 : ram_options[i];
 }
 
 UINT32 ram_default(const struct GameDriver *gamedrv)
 {
-	const struct ComputerConfigEntry *entry = gamedrv->compcfg;
-	if (entry)
-	{
-		while(entry->type != CCE_END)
-		{
-			if (entry->type == CCE_RAM_DEFAULT)
-				return entry->param;
-			entry++;
-		}
-	}
-	return 0;
+	UINT32 ram_options[MAX_RAM_OPTIONS];
+	int ram_optcount;
+	int default_ram_option;
+
+	ram_optcount = get_ram_options(gamedrv, ram_options, sizeof(ram_options) / sizeof(ram_options[0]), &default_ram_option);
+	return default_ram_option >= ram_optcount ? 0 : ram_options[default_ram_option];
 }
 
 int ram_option_count(const struct GameDriver *gamedrv)
 {
-	const struct ComputerConfigEntry *entry;
-	int count;
-
-	assert(gamedrv);
-
-	entry = gamedrv->compcfg;
-	count = 0;
-
-	if (entry)
-	{
-		while(entry->type != CCE_END)
-		{
-			if ((entry->type == CCE_RAM) || (entry->type == CCE_RAM_DEFAULT))
-				count++;
-			entry++;
-		}
-	}
-	return count;
+	UINT32 ram_options[MAX_RAM_OPTIONS];
+	return get_ram_options(gamedrv, ram_options, sizeof(ram_options) / sizeof(ram_options[0]), NULL);
 }
 
 int ram_is_valid_option(const struct GameDriver *gamedrv, UINT32 ram)
 {
-	const struct ComputerConfigEntry *entry = gamedrv->compcfg;
+	UINT32 ram_options[MAX_RAM_OPTIONS];
+	int ram_optcount;
+	int i;
 
-	if (entry)
-	{
-		while(entry->type != CCE_END)
-		{
-			if (entry->param == ram)
-				return 1;
-			entry++;
-		}
-	}
+	ram_optcount = get_ram_options(gamedrv, ram_options, sizeof(ram_options) / sizeof(ram_options[0]), NULL);
+
+	for(i = 0; i < ram_optcount; i++)
+		if (ram_options[i] == ram)
+			return 1;
 	return 0;
 }
 

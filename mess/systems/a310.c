@@ -273,8 +273,11 @@ static const struct IODevice io_a310[] = {
     { IO_END }
 };
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	   FULLNAME */
-COMP( 1988, a310,	  0,		a310,	  a310, 	NULL,	  "Acorn","Archimedes 310" )
+SYSTEM_CONFIG_START(a310)
+SYSTEM_CONFIG_END
+
+/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  CONFIG  COMPANY    FULLNAME */
+COMP( 1988, a310,	  0,		a310,	  a310, 	NULL,	  a310,	  "Acorn",   "Archimedes 310" )
 
 
 

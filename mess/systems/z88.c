@@ -931,7 +931,9 @@ static const struct IODevice io_z88[] =
 	{IO_END}
 };
 
+SYSTEM_CONFIG_START(z88)
+SYSTEM_CONFIG_END
 
-/*	  YEAR	NAME	PARENT	MACHINE		INPUT		INIT		COMPANY					FULLNAME */
-COMPX( 1987,	z88,	0,		z88,		z88,		0,			"Cambridge Computers",	"Z88",GAME_NOT_WORKING)
+/*	   YEAR	    NAME	PARENT	MACHINE		INPUT		INIT	CONFIG	COMPANY					FULLNAME */
+COMPX( 1987,	z88,	0,		z88,		z88,		0,		z88,	"Cambridge Computers",	"Z88",GAME_NOT_WORKING)
 

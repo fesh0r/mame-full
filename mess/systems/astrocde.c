@@ -235,12 +235,15 @@ static const struct IODevice io_astrocde[] = {
 	{ IO_END }
 };
 
+SYSTEM_CONFIG_START(astrocde)
+SYSTEM_CONFIG_END
+
 /***************************************************************************
 
   Game driver(s)
 
 ***************************************************************************/
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
-CONS( 1978, astrocde, 0,		astrocde, astrocde, 0,		  "Bally Manufacturing", "Bally Pro Arcade/Astrocade")
+/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	CONFIG		COMPANY	FULLNAME */
+CONS( 1978, astrocde, 0,		astrocde, astrocde, 0,		astrocde,	"Bally Manufacturing", "Bally Pro Arcade/Astrocade")
 

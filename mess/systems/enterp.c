@@ -670,11 +670,11 @@ static const struct IODevice io_ep128[] = {
 
 ***************************************************************************/
 
-COMPUTER_CONFIG_START(ep128)
+SYSTEM_CONFIG_START(ep128)
 	CONFIG_RAM_DEFAULT((128*1024)+32768)
-COMPUTER_CONFIG_END
+SYSTEM_CONFIG_END
 
 /*      YEAR  NAME     PARENT   MACHINE   INPUT     INIT  CONFIG, COMPANY                 FULLNAME */
-COMPCX( 1984, ep128,   0,		ep128,	  ep128,	0,	  ep128,  "Intelligent Software", "Enterprise 128", GAME_IMPERFECT_SOUND )
-COMPCX( 1984, ep128a,  ep128,	ep128,	  ep128,	0,	  ep128,  "Intelligent Software", "Enterprise 128 (EXOS 2.1)", GAME_IMPERFECT_SOUND )
+COMPX( 1984, ep128,   0,		ep128,	  ep128,	0,	  ep128,  "Intelligent Software", "Enterprise 128", GAME_IMPERFECT_SOUND )
+COMPX( 1984, ep128a,  ep128,	ep128,	  ep128,	0,	  ep128,  "Intelligent Software", "Enterprise 128 (EXOS 2.1)", GAME_IMPERFECT_SOUND )
 

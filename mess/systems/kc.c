@@ -510,7 +510,10 @@ static const struct IODevice io_kc85_4d[] =
 };
 #define io_kc85_3 io_kc85_4
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-COMPX( 1987, kc85_3,   0,     kc85_3,  kc85,        0,                "VEB Mikroelektronik", "KC 85/3", GAME_NOT_WORKING)
-COMPX( 1989, kc85_4,   kc85_3,     kc85_4,  kc85,        0,                "VEB Mikroelektronik", "KC 85/4", GAME_NOT_WORKING)
-COMPX( 1989, kc85_4d,  kc85_3,     kc85_4d,  kc85,        0,                "VEB Mikroelektronik", "KC 85/4 + Disk Interface Module (D004)", GAME_NOT_WORKING)
+SYSTEM_CONFIG_START(kc85)
+SYSTEM_CONFIG_END
+
+/*     YEAR  NAME      PARENT   MACHINE  INPUT     INIT  CONFIG  COMPANY   FULLNAME */
+COMPX( 1987, kc85_3,   0,		kc85_3,  kc85,     0,    kc85,   "VEB Mikroelektronik", "KC 85/3", GAME_NOT_WORKING)
+COMPX( 1989, kc85_4,   kc85_3,  kc85_4,  kc85,     0,    kc85,   "VEB Mikroelektronik", "KC 85/4", GAME_NOT_WORKING)
+COMPX( 1989, kc85_4d,  kc85_3,  kc85_4d, kc85,     0,    kc85,   "VEB Mikroelektronik", "KC 85/4 + Disk Interface Module (D004)", GAME_NOT_WORKING)

@@ -522,9 +522,12 @@ static const struct IODevice io_mz700[] = {
 #define io_mz700j	io_mz700
 #define io_mz800	io_mz700
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY      FULLNAME */
-COMP( 1982, mz700,	  0,		mz700,	  mz700,	mz700,	  "Sharp",     "MZ-700" )
-COMP( 1982, mz700j,   mz700,	mz700,	  mz700,	mz700,	  "Sharp",     "MZ-700 (Japan)" )
-COMP( 1982, mz800,	  mz700,	mz800,	  mz700,	mz800,	  "Sharp",     "MZ-800" )
+SYSTEM_CONFIG_START(mz700)
+SYSTEM_CONFIG_END
+
+/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT	CONFIG	COMPANY      FULLNAME */
+COMP( 1982, mz700,	  0,		mz700,	  mz700,	mz700,	mz700,	"Sharp",     "MZ-700" )
+COMP( 1982, mz700j,   mz700,	mz700,	  mz700,	mz700,	mz700,	"Sharp",     "MZ-700 (Japan)" )
+COMP( 1982, mz800,	  mz700,	mz800,	  mz700,	mz800,	mz700,	"Sharp",     "MZ-800" )
 
 

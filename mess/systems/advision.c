@@ -115,6 +115,15 @@ static const struct IODevice io_advision[] = {
     { IO_END }
 };
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-CONSX( 1982, advision, 0,		advision, advision,	0,		  "Entex",  "Adventurevision", GAME_NO_SOUND )
+SYSTEM_CONFIG_START(advision)
+SYSTEM_CONFIG_END
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT	CONFIG		COMPANY   FULLNAME */
+CONSX( 1982, advision, 0,		advision, advision,	0,		advision,	"Entex",  "Adventurevision", GAME_NO_SOUND )
 

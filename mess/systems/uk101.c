@@ -318,7 +318,10 @@ static	const	struct	IODevice io_superbrd[] =
 	{ IO_END }
 };
 
-/*    YEAR	NAME		PARENT	MACHINE		INPUT	INIT	COMPANY				FULLNAME */
-COMP( 1979,	uk101,		0,		uk101,		uk101,	0,		"Compukit",			"UK101" )
-COMP( 1979, superbrd,	uk101,	superbrd,	uk101,	0,		"Ohio Scientific",	"Superboard II" )
+SYSTEM_CONFIG_START(uk101)
+SYSTEM_CONFIG_END
+
+/*    YEAR	NAME		PARENT	MACHINE		INPUT	INIT	CONFIG  COMPANY				FULLNAME */
+COMP( 1979,	uk101,		0,		uk101,		uk101,	0,		uk101,	"Compukit",			"UK101" )
+COMP( 1979, superbrd,	uk101,	superbrd,	uk101,	0,		uk101,	"Ohio Scientific",	"Superboard II" )
 

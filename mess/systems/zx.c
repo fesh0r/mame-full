@@ -653,18 +653,24 @@ static const struct IODevice io_zx81[] =
 #define io_pow3000	io_zx81
 #define io_lambda	io_zx81
 
+SYSTEM_CONFIG_START(zx80)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(zx81)
+SYSTEM_CONFIG_END
+
 /***************************************************************************
 
   Game driver(s)
 
 ***************************************************************************/
-/*	YEAR 	NAME	 PARENT	 MACHINE   INPUT	 INIT	   COMPANY		FULLNAME */
-COMPX (1980,   zx80,    0,	 zx80,	   zx80,	zx,	"Sinclair Research", "ZX-80",		GAME_NOT_WORKING)
-COMPX (1981,   aszmic,  zx80,	 zx80,	   zx80,	zx,	"Sinclair Research", "ZX.Aszmic",	GAME_NOT_WORKING)
-COMPX (1981,   zx81,    0,       zx81,     zx81,        zx,     "Sinclair Research", "ZX-81",           GAME_NOT_WORKING)
-COMPX (198?,   zx81a,   zx81,	 zx81,	   zx81,	zx,	"Sinclair Research", "ZX-81 (2nd rev)",	GAME_NOT_WORKING)
-COMPX (198?,   zx81b,   zx81,    zx81,     zx81,        zx,     "Sinclair Research", "ZX-81 (3rd rev)", GAME_NOT_WORKING)
-COMPX (1982,   ts1000,  zx81,	 ts1000,   zx81,	zx,	"Timex Sinclair",    "Timex Sinclair 1000",		GAME_NOT_WORKING | GAME_ALIAS)
-COMPX (1984,   pc8300,  zx81,	 pc8300,   pow3000,	zx,	"Your Computer",     "PC8300",		GAME_NOT_WORKING)
-COMPX (1983,   pow3000, zx81,	 pow3000,  pow3000,  	zx,	"Creon Enterprises", "Power 3000",	GAME_NOT_WORKING)
-COMPX (1982,   lambda,  zx81,    pc8300,   pow3000,    	zx,	"Lambda Electronics Ltd","Lambda 8300",	GAME_NOT_WORKING)
+/*	  YEAR 	NAME	 PARENT	MACHINE		INPUT		INIT	CONFIG	COMPANY		FULLNAME */
+COMPX(1980,	zx80,    0,		zx80,		zx80,		zx,		zx80,	"Sinclair Research", "ZX-80",		GAME_NOT_WORKING)
+COMPX(1981,	aszmic,  zx80,	zx80,		zx80,		zx,		zx80,	"Sinclair Research", "ZX.Aszmic",	GAME_NOT_WORKING)
+COMPX(1981,	zx81,    0,		zx81,		zx81,       zx,		zx81,	"Sinclair Research", "ZX-81",           GAME_NOT_WORKING)
+COMPX(198?,	zx81a,   zx81,	zx81,		zx81,		zx,		zx81,	"Sinclair Research", "ZX-81 (2nd rev)",	GAME_NOT_WORKING)
+COMPX(198?,	zx81b,   zx81,	zx81,		zx81,		zx,		zx81,	"Sinclair Research", "ZX-81 (3rd rev)", GAME_NOT_WORKING)
+COMPX(1982,	ts1000,  zx81,	ts1000,		zx81,		zx,		zx81,	"Timex Sinclair",    "Timex Sinclair 1000",		GAME_NOT_WORKING | GAME_ALIAS)
+COMPX(1984,	pc8300,  zx81,	pc8300,		pow3000,	zx,		zx81,	"Your Computer",     "PC8300",		GAME_NOT_WORKING)
+COMPX(1983,	pow3000, zx81,	pow3000,	pow3000,  	zx,		zx81,	"Creon Enterprises", "Power 3000",	GAME_NOT_WORKING)
+COMPX(1982,	lambda,  zx81,	pc8300,		pow3000,	zx,		zx81,	"Lambda Electronics Ltd","Lambda 8300",	GAME_NOT_WORKING)

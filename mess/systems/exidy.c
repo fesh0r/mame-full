@@ -847,6 +847,8 @@ static const struct IODevice io_exidy[] =
 	{IO_END}
 };
 
+SYSTEM_CONFIG_START(exidy)
+SYSTEM_CONFIG_END
 
-/*	  YEAR	NAME	 PARENT	MACHINE INPUT 	INIT COMPANY        FULLNAME */
-COMPX( 1979, exidy,   0,     exidy,  exidy,  0,   "Exidy Inc", "Sorcerer", GAME_NOT_WORKING | GAME_NO_SOUND)
+/*	  YEAR	NAME	PARENT	MACHINE	INPUT	INIT	CONFIG	COMPANY        FULLNAME */
+COMPX(1979,	exidy,	0,		exidy,	exidy,	0,		exidy,	"Exidy Inc", "Sorcerer", GAME_NOT_WORKING | GAME_NO_SOUND)

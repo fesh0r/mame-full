@@ -425,6 +425,15 @@ static const struct IODevice io_a7800p[] = {
     { IO_END }
 };
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-CONS( 1986, a7800,    0,        a7800,    a7800,    0,        "Atari",  "Atari 7800" )
-CONS( 1986, a7800p,   0,        a7800p,   a7800,    0,        "Atari",  "Atari 7800 PAL" )
+SYSTEM_CONFIG_START(a7800)
+SYSTEM_CONFIG_END
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT	CONFIG	COMPANY   FULLNAME */
+CONS( 1986, a7800,    0,        a7800,    a7800,    0,		a7800,	"Atari",  "Atari 7800" )
+CONS( 1986, a7800p,   0,        a7800p,   a7800,    0,		a7800,	"Atari",  "Atari 7800 PAL" )

@@ -1919,6 +1919,15 @@ static const struct IODevice io_saturn[] = {
   { IO_END }
 };
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-CONSX(1994, saturn, 0, saturn, saturn, saturn, "Sega", "Saturn", GAME_NOT_WORKING)
+SYSTEM_CONFIG_START(saturn)
+SYSTEM_CONFIG_END
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+/*    YEAR  NAME	PARENT	MACHINE	INPUT	INIT	CONFIG	COMPANY	FULLNAME */
+CONSX(1994, saturn,	0,		saturn,	saturn,	saturn,	saturn,	"Sega",	"Saturn", GAME_NOT_WORKING)
 

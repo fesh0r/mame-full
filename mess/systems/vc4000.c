@@ -272,6 +272,15 @@ static const struct IODevice io_vc4000[] = {
     { IO_END }
 };
 
+SYSTEM_CONFIG_START(vc4000)
+SYSTEM_CONFIG_END
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
 static DRIVER_INIT( vc4000 )
 {
 	int i;
@@ -279,5 +288,5 @@ static DRIVER_INIT( vc4000 )
 	for (i=0; i<256; i++) gfx[i]=i;
 }
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-CONSX( 1978, vc4000,	0,	vc4000,  vc4000,  vc4000,		"Interton",		"VC4000", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND )
+/*    YEAR	NAME	PARENT	MACHINE	INPUT	INIT	CONFIG	COMPANY		FULLNAME */
+CONSX(1978,	vc4000,	0,		vc4000,	vc4000,	vc4000,	vc4000,	"Interton",	"VC4000", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND )

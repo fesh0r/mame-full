@@ -1781,11 +1781,11 @@ static const struct IODevice io_einstein[] =
 
 #define io_einstei2 io_einstein
 
-COMPUTER_CONFIG_START(einstein)
+SYSTEM_CONFIG_START(einstein)
 	CONFIG_RAM_DEFAULT(65536)
-COMPUTER_CONFIG_END
+SYSTEM_CONFIG_END
 
 /*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT  CONFIG,   COMPANY   FULLNAME */
-COMPC( 1984, einstein,  0,      einstein,  einstein, 0,    einstein, "Tatung", "Tatung Einstein TC-01")
-COMPC( 1984, einstei2,  0,      einstei2,  einstein, 0,    einstein, "Tatung", "Tatung Einstein TC-01 + 80 column device")
+COMP( 1984, einstein,  0,      einstein,  einstein, 0,    einstein, "Tatung", "Tatung Einstein TC-01")
+COMP( 1984, einstei2,  0,      einstei2,  einstein, 0,    einstein, "Tatung", "Tatung Einstein TC-01 + 80 column device")
 

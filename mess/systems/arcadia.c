@@ -354,6 +354,15 @@ static const struct IODevice io_arcadia[] = {
 
 #define io_vcg io_arcadia
 
+SYSTEM_CONFIG_START(arcadia)
+SYSTEM_CONFIG_END
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
 void init_arcadia(void)
 {
 	int i;
@@ -491,7 +500,7 @@ void init_arcadia(void)
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
 // marketed from several firms/names
 
-CONSX( 1982, arcadia,	0,	arcadia,  arcadia,  arcadia,		"Emerson",		"Arcadia 2001", GAME_IMPERFECT_SOUND )
+CONSX( 1982, arcadia,	0,	arcadia,  arcadia,  arcadia,	arcadia,		"Emerson",		"Arcadia 2001", GAME_IMPERFECT_SOUND )
 // schmid tvg 2000 (developer? PAL)
 
 // different cartridge connector
@@ -499,4 +508,4 @@ CONSX( 1982, arcadia,	0,	arcadia,  arcadia,  arcadia,		"Emerson",		"Arcadia 2001
 
 // different cartridge connector (same size as mpt03, but different pinout!)
 // 16 keys instead of 12
-CONSX( 198?, vcg,	arcadia,arcadia,  vcg,  arcadia,		"Palladium",		"VIDEO - COMPUTER - GAME", GAME_IMPERFECT_SOUND )
+CONSX( 198?, vcg,	arcadia,arcadia,  vcg,  arcadia,	arcadia,		"Palladium",		"VIDEO - COMPUTER - GAME", GAME_IMPERFECT_SOUND )

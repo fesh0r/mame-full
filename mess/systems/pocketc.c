@@ -771,6 +771,9 @@ static const struct IODevice io_pc1401[] = {
 #define io_pc1403 io_pc1401
 #define io_pc1403h io_pc1403
 
+SYSTEM_CONFIG_START(pocketc)
+SYSTEM_CONFIG_END
+
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR	COMPANY   FULLNAME */
 
 /* cpu sc43177, sc43178 (4bit!)
@@ -786,27 +789,14 @@ static const struct IODevice io_pc1401[] = {
 */
 
 /* cpu sc61860 */
-COMPX( 1982, pc1251,	  0, 		pc1251,  pc1251, 	pc1251,	  "Sharp",  "Pocket Computer 1251", GAME_NOT_WORKING)
-COMPX( 198?, trs80pc3,	  pc1251, 	pc1251,  pc1251, 	pc1251,	  "Tandy",  "TRS80 PC-3", GAME_ALIAS|GAME_NOT_WORKING)
+COMPX( 1982, pc1251,	0, 		pc1251,	pc1251,	pc1251,	pocketc,	"Sharp",  "Pocket Computer 1251", GAME_NOT_WORKING)
+COMPX( 198?, trs80pc3,	pc1251,	pc1251,	pc1251,	pc1251,	pocketc,	"Tandy",  "TRS80 PC-3", GAME_ALIAS|GAME_NOT_WORKING)
 
-// pc1261/pc1262
+/* pc1261/pc1262 */
+COMPX( 1984, pc1350,	0, 		pc1350,	pc1350,	pc1350,	pocketc,	"Sharp",  "Pocket Computer 1350", GAME_NOT_WORKING)
+COMPX( 1983, pc1401,	0, 		pc1401,	pc1401,	pc1401,	pocketc,	"Sharp",  "Pocket Computer 1401", GAME_NOT_WORKING)
+COMPX( 1984, pc1402,	pc1401,	pc1401,	pc1401,	pc1401,	pocketc,	"Sharp",  "Pocket Computer 1402", GAME_ALIAS|GAME_NOT_WORKING)
 
-COMPX( 1984, pc1350,	  0, 		pc1350,  pc1350, 	pc1350,	  "Sharp",  "Pocket Computer 1350", GAME_NOT_WORKING)
-
-COMPX( 1983, pc1401,	  0, 		pc1401,  pc1401, 	pc1401,	  "Sharp",  "Pocket Computer 1401", GAME_NOT_WORKING)
-COMPX( 1984, pc1402,	  pc1401, 	pc1401,  pc1401, 	pc1401,	  "Sharp",  "Pocket Computer 1402", GAME_ALIAS|GAME_NOT_WORKING)
-
-/* 72kb rom, 32kb ram, cpu? 
-   pc1360
-*/
-COMPX( 198?, pc1403,	0,	pc1403,		pc1403,		pc1403,	"Sharp", "Pocket Computer 1403", GAME_NOT_WORKING)
-COMPX( 198?, pc1403h,	pc1403,	pc1403,		pc1403,		pc1403,	"Sharp", "Pocket Computer 1403H", GAME_ALIAS|GAME_NOT_WORKING)
-
-/* cpu sc62015 esr-l
-   pc-e500
- */
-
-/* cpu hd61747 ???
-   tandy pocket scientific computer pc-6
-   clone of ? sharp pb1000
-*/
+/* 72kb rom, 32kb ram, cpu? pc1360 */
+COMPX( 198?, pc1403,	0,		pc1403,	pc1403,	pc1403,	pocketc,	"Sharp", "Pocket Computer 1403", GAME_NOT_WORKING)
+COMPX( 198?, pc1403h,	pc1403,	pc1403,	pc1403,	pc1403,	pocketc,	"Sharp", "Pocket Computer 1403H", GAME_ALIAS|GAME_NOT_WORKING)

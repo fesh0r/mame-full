@@ -1067,11 +1067,19 @@ static const struct IODevice io_a5200[] = {
     { IO_END }
 };
 
-/*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-COMP ( 1979, a400,	   0,		 a400,	   a800,	 0, 	   "Atari",  "Atari 400 (NTSC)" )
-COMP ( 1979, a400pal,  a400,	 a400pal,  a800,	 0, 	   "Atari",  "Atari 400 (PAL)" )
-COMP ( 1979, a800,	   0,		 a800,	   a800,	 0, 	   "Atari",  "Atari 800 (NTSC)" )
-COMP ( 1979, a800pal,  a800,	 a800pal,  a800,	 0, 	   "Atari",  "Atari 800 (PAL)" )
-COMPX( 1983, a800xl,   a800,	 a800xl,   a800xl,	 0, 	   "Atari",  "Atari 800XL", GAME_NOT_WORKING )
-CONS ( 1982, a5200,    0,		 a5200,    a5200,	 0, 	   "Atari",  "Atari 5200")
+SYSTEM_CONFIG_START(a800)
+SYSTEM_CONFIG_END
 
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+/*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT	CONFIG	COMPANY   FULLNAME */
+COMP ( 1979, a400,	   0,		 a400,	   a800,	 0, 	a800,	"Atari",  "Atari 400 (NTSC)" )
+COMP ( 1979, a400pal,  a400,	 a400pal,  a800,	 0, 	a800,	"Atari",  "Atari 400 (PAL)" )
+COMP ( 1979, a800,	   0,		 a800,	   a800,	 0, 	a800,	"Atari",  "Atari 800 (NTSC)" )
+COMP ( 1979, a800pal,  a800,	 a800pal,  a800,	 0,		a800,	"Atari",  "Atari 800 (PAL)" )
+COMPX( 1983, a800xl,   a800,	 a800xl,   a800xl,	 0, 	a800,	"Atari",  "Atari 800XL", GAME_NOT_WORKING )
+CONS ( 1982, a5200,    0,		 a5200,    a5200,	 0, 	a800,	"Atari",  "Atari 5200")

@@ -809,6 +809,15 @@ static const struct IODevice io_apfimag[] =
 	{ IO_END }
 };
 
-/*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT     COMPANY               FULLNAME */
-COMPX(  1977, apfimag,      0,		apf_imagination,      apf_imagination,     0,		  "APF Electronics Inc",  "APF Imagination Machine" ,GAME_NOT_WORKING)
-COMPX(  1978, apfm1000,      0,		apf_m1000,      apf_m1000,     0,		  "APF Electronics inc",  "APF M-1000" ,GAME_NOT_WORKING)
+SYSTEM_CONFIG_START(apf)
+SYSTEM_CONFIG_END
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+/*    YEAR	NAME		PARENT	MACHINE				INPUT				INIT    CONFIG	COMPANY               FULLNAME */
+COMPX(1977, apfimag,	0,		apf_imagination,	apf_imagination,	0,		apf,	"APF Electronics Inc",  "APF Imagination Machine" ,GAME_NOT_WORKING)
+COMPX(1978,	apfm1000,	0,		apf_m1000,			apf_m1000,			0,		apf,	"APF Electronics inc",  "APF M-1000" ,GAME_NOT_WORKING)

@@ -464,12 +464,11 @@ ROM_START(pdp1)
 		/* space filled with our font */
 ROM_END
 
-
-/*COMPUTER_CONFIG_START(pdp1)
-	CONFIG_RAM_DEFAULT(4 * 1024)
+SYSTEM_CONFIG_START(pdp1)
+	/*CONFIG_RAM_DEFAULT(4 * 1024)
 	CONFIG_RAM(32 * 1024)
-	CONFIG_RAM(64 * 1024)
-COMPUTER_CONFIG_END*/
+	CONFIG_RAM(64 * 1024)*/
+SYSTEM_CONFIG_END
 
 
 /***************************************************************************
@@ -478,5 +477,5 @@ COMPUTER_CONFIG_END*/
 
 ***************************************************************************/
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
-COMP( 1961, pdp1,	  0, 		pdp1,	  pdp1, 	pdp1,	  "Digital Equipment Corporation",  "PDP-1" )
+/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	CONFIG	COMPANY	FULLNAME */
+COMP( 1961, pdp1,	  0, 		pdp1,	  pdp1, 	pdp1,	pdp1,	"Digital Equipment Corporation",  "PDP-1" )

@@ -388,11 +388,14 @@ static const struct IODevice io_macplus[] = {
 	{ IO_END }
 };
 
-/*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY	 FULLNAME */
-/*COMPX( 1984, mac128k,  0, 	   mac128k,  macplus,	 mac128k,  "Apple Computer",  "Macintosh 128k",  0 )
-COMPX( 1984, mac512k,  mac128k,  mac128k,  macplus,  mac512k,  "Apple Computer",  "Macintosh 512k",  0 )*/
-COMPX( 1986, mac512ke, macplus,  mac512ke, macplus,  mac512ke, "Apple Computer",  "Macintosh 512ke", 0 )
-COMPX( 1986, macplus,  0,		 macplus,  macplus,  macplus,  "Apple Computer",  "Macintosh Plus",  0 )
+SYSTEM_CONFIG_START(macplus)
+SYSTEM_CONFIG_END
+
+/*	   YEAR		NAME	  PARENT	MACHINE   INPUT		INIT		CONFIG		COMPANY				FULLNAME */
+/*COMPX( 1984,	mac128k,  0, 		mac128k,  macplus,	mac128k,	macplus,	"Apple Computer",	"Macintosh 128k",  0 )
+COMPX( 1984,	mac512k,  mac128k,	mac128k,  macplus,  mac512k,	macplus,	"Apple Computer",	"Macintosh 512k",  0 )*/
+COMPX( 1986,	mac512ke, macplus,  mac512ke, macplus,  mac512ke,	macplus,	"Apple Computer",	"Macintosh 512ke", 0 )
+COMPX( 1986,	macplus,  0,		macplus,  macplus,  macplus,	macplus,	"Apple Computer",	"Macintosh Plus",  0 )
 
 #if 0
 

@@ -345,6 +345,15 @@ static const struct IODevice io_comquest[] = {
     { IO_END }
 };
 
+SYSTEM_CONFIG_START(comquest)
+SYSTEM_CONFIG_END
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
 DRIVER_INIT( comquest )
 {
 //	int i;
@@ -352,5 +361,5 @@ DRIVER_INIT( comquest )
 //	for (i=0; i<256; i++) gfx[i]=i;
 }
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR	COMPANY   FULLNAME */
-CONS( 19??, comquest, 0, 		comquest, comquest, comquest, "Data Concepts",  "Comquest Plus German")
+/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT		CONFIG		MONITOR	COMPANY   FULLNAME */
+CONS( 19??, comquest, 0, 		comquest, comquest, comquest,	comquest,	"Data Concepts",  "Comquest Plus German")

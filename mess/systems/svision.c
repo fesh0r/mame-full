@@ -439,17 +439,16 @@ static const struct IODevice io_svision[] = {
     { IO_END }
 };
 
-/*    YEAR      NAME            PARENT  MACHINE   INPUT     INIT
-	  COMPANY                 FULLNAME */
-CONSX( 1992, svision,       0,          svision,  svision,    svision,   "Watara", "Super Vision", GAME_IMPERFECT_SOUND)
+SYSTEM_CONFIG_START(svision)
+SYSTEM_CONFIG_END
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+/*    YEAR  NAME		PARENT	MACHINE		INPUT		INIT		CONFIG		COMPANY		FULLNAME */
+CONSX(1992,	svision,	0,		svision,	svision,	svision,	svision,	"Watara",	"Super Vision", GAME_IMPERFECT_SOUND)
 // marketed under a ton of firms and names
 
-#ifdef RUNTIME_LOADER
-extern void svision_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"svision")==0) drivers[i]=&driver_svision;
-	}
-}
-#endif

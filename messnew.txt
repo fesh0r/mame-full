@@ -12,6 +12,10 @@ Source Changes:
   drivers directory anymore, under the belief that this functionality belongs
   in the OSD code. [Nate Woods]
 
+- All MESS drivers need a SYSTEM_CONFIG (formerly COMPUTER_CONFIG) parameter
+  specified.  Also changed the implementation of the SYSTEM_CONFIG_* macros to
+  provide a more flexible system for representing the data. [Nate Woods]
+
 0.61
 
 New System Drivers Supported (in no particular order):

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.11 2002/09/07 07:59:51 rnabet Exp $
+  $Id: pc8801.c,v 1.12 2002/09/08 19:12:01 npwoods Exp $
 
 ***************************************************************************/
 
@@ -665,6 +665,10 @@ static MACHINE_DRIVER_START( pc88srh )
 MACHINE_DRIVER_END
 
 
-/*	  YEAR	NAME	  PARENT		MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
-COMPX( 1985, pc88srl, 0,			pc88srl, pc88sr, 0,		  "Nippon Electronic Company",  "PC-8801 MKIISR (Lores display, VSYNC 15KHz)", 0 )
-COMPX( 1985, pc88srh, pc88srl,		pc88srh, pc88sr, 0,		  "Nippon Electronic Company",  "PC-8801 MKIISR (Hires display, VSYNC 24KHz)", 0 )
+SYSTEM_CONFIG_START(pc88)
+SYSTEM_CONFIG_END
+
+
+/*	  YEAR	NAME	  PARENT		MACHINE   INPUT		INIT	CONFIG	COMPANY	FULLNAME */
+COMPX( 1985, pc88srl, 0,			pc88srl,  pc88sr,	0,		pc88,	"Nippon Electronic Company",  "PC-8801 MKIISR (Lores display, VSYNC 15KHz)", 0 )
+COMPX( 1985, pc88srh, pc88srl,		pc88srh,  pc88sr,	0,		pc88,	"Nippon Electronic Company",  "PC-8801 MKIISR (Hires display, VSYNC 24KHz)", 0 )

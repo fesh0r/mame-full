@@ -235,7 +235,8 @@ static const struct IODevice io_pce[] = {
 	{ IO_END }
 };
 
-#define rom_pce NULL
+SYSTEM_CONFIG_START(pce)
+SYSTEM_CONFIG_END
 
 /***************************************************************************
 
@@ -243,6 +244,8 @@ static const struct IODevice io_pce[] = {
 
 ***************************************************************************/
 
-/*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY	 FULLNAME */
-CONSX( 1987, pce,	   0,		 pce,	   pce, 	 0,		   "Nippon Electronic Company", "PC Engine/TurboGrafx 16", GAME_NOT_WORKING | GAME_NO_SOUND )
+#define rom_pce NULL
+
+/*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	CONFIG  COMPANY	 FULLNAME */
+CONSX( 1987, pce,	   0,		 pce,	   pce, 	 0,		pce,	"Nippon Electronic Company", "PC Engine/TurboGrafx 16", GAME_NOT_WORKING | GAME_NO_SOUND )
 

@@ -164,5 +164,9 @@ static const struct IODevice io_mc10[] = {
     { IO_END }
 };
 
-COMP( 1983, mc10,     0,        mc10,     mc10,     0,        "Tandy Radio Shack",  "MC-10" )
+SYSTEM_CONFIG_START(mc10)
+SYSTEM_CONFIG_END
+
+/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  CONFIG   COMPANY               FULLNAME */
+COMP( 1983, mc10,     0,        mc10,     mc10,     0,        mc10,    "Tandy Radio Shack",  "MC-10" )
 

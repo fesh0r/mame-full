@@ -720,40 +720,40 @@ static const struct IODevice io_coco3[] = {
 #define io_coco3h io_coco3
 #define io_dragon64 io_dragon32
 
-COMPUTER_CONFIG_START(coco)
+SYSTEM_CONFIG_START(coco)
 	CONFIG_RAM(4 * 1024)
 	CONFIG_RAM(16 * 1024)
 	CONFIG_RAM(32 * 1024)
 	CONFIG_RAM_DEFAULT(64 * 1024)
-COMPUTER_CONFIG_END
+SYSTEM_CONFIG_END
 
-COMPUTER_CONFIG_START(coco2)
+SYSTEM_CONFIG_START(coco2)
 	CONFIG_RAM(16 * 1024)
 	CONFIG_RAM_DEFAULT(64 * 1024)
-COMPUTER_CONFIG_END
+SYSTEM_CONFIG_END
 
-COMPUTER_CONFIG_START(coco3)
+SYSTEM_CONFIG_START(coco3)
 	CONFIG_RAM(128 * 1024)
 	CONFIG_RAM_DEFAULT(512 * 1024)
 	CONFIG_RAM(2048 * 1024)
-COMPUTER_CONFIG_END
+SYSTEM_CONFIG_END
 
-COMPUTER_CONFIG_START(dragon32)
+SYSTEM_CONFIG_START(dragon32)
 	CONFIG_RAM_DEFAULT(32 * 1024)
-COMPUTER_CONFIG_END
+SYSTEM_CONFIG_END
 
-COMPUTER_CONFIG_START(dragon64)
+SYSTEM_CONFIG_START(dragon64)
 	CONFIG_RAM_DEFAULT(64 * 1024)
-COMPUTER_CONFIG_END
+SYSTEM_CONFIG_END
 
 /*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */
-COMPC(  1980, coco,      0,		coco,      coco,     0,		  coco,    "Tandy Radio Shack",  "Color Computer" )
-COMPC(  1981, cocoe,     coco,	coco,      coco,     0,		  coco,    "Tandy Radio Shack",  "Color Computer (Extended BASIC 1.0)" )
-COMPC(  1983, coco2,     coco,	coco2,     coco,     0,		  coco2,   "Tandy Radio Shack",  "Color Computer 2" )
-COMPC(  1985?, coco2b,    coco,	coco2b,    coco,     0,		  coco2,   "Tandy Radio Shack",  "Color Computer 2B" )
-COMPC(  1986, coco3,     coco, 	coco3,	   coco3,    0,		  coco3,   "Tandy Radio Shack",  "Color Computer 3 (NTSC)" )
-COMPC(  1986, coco3p,    coco, 	coco3,	   coco3,    0,		  coco3,   "Tandy Radio Shack",  "Color Computer 3 (PAL)" )
-COMPCX( 19??, coco3h,	 coco,	coco3h,    coco3,	 0, 	  coco3,   "Tandy Radio Shack",  "Color Computer 3 (NTSC; HD6309)", GAME_COMPUTER_MODIFIED|GAME_ALIAS)
-COMPC(  1982, dragon32,  coco, 	dragon32,  dragon32, 0,		  dragon32,"Dragon Data Ltd",    "Dragon 32" )
-COMPC(  1983, dragon64,  coco, 	dragon64,  dragon32, 0,		  dragon64,"Dragon Data Ltd",    "Dragon 64" )
-COMPC(  1984, cp400,     coco, 	coco,      coco,     0,		  coco,    "Prologica",          "CP400" )
+COMP(  1980, coco,      0,		coco,      coco,     0,		  coco,    "Tandy Radio Shack",  "Color Computer" )
+COMP(  1981, cocoe,     coco,	coco,      coco,     0,		  coco,    "Tandy Radio Shack",  "Color Computer (Extended BASIC 1.0)" )
+COMP(  1983, coco2,     coco,	coco2,     coco,     0,		  coco2,   "Tandy Radio Shack",  "Color Computer 2" )
+COMP(  1985?, coco2b,    coco,	coco2b,    coco,     0,		  coco2,   "Tandy Radio Shack",  "Color Computer 2B" )
+COMP(  1986, coco3,     coco, 	coco3,	   coco3,    0,		  coco3,   "Tandy Radio Shack",  "Color Computer 3 (NTSC)" )
+COMP(  1986, coco3p,    coco, 	coco3,	   coco3,    0,		  coco3,   "Tandy Radio Shack",  "Color Computer 3 (PAL)" )
+COMPX( 19??, coco3h,	 coco,	coco3h,    coco3,	 0, 	  coco3,   "Tandy Radio Shack",  "Color Computer 3 (NTSC; HD6309)", GAME_COMPUTER_MODIFIED|GAME_ALIAS)
+COMP(  1982, dragon32,  coco, 	dragon32,  dragon32, 0,		  dragon32,"Dragon Data Ltd",    "Dragon 32" )
+COMP(  1983, dragon64,  coco, 	dragon64,  dragon32, 0,		  dragon64,"Dragon Data Ltd",    "Dragon 64" )
+COMP(  1984, cp400,     coco, 	coco,      coco,     0,		  coco,    "Prologica",          "CP400" )
