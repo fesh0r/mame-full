@@ -5,30 +5,48 @@
 UINT16 lynx_granularity=1;
 
 typedef struct {
+    union {
 	UINT8 data[0x100];
-	UINT8 high;
-	int low;
+	struct {
+	    UINT8 misc[0x52];
+	    UINT8 D,C,B,A,P,N;
+	    UINT8 res[8];
+	    UINT8 H,G,F,E;
+	    UINT8 res2[8];
+	    UINT8 M,L,K,J;
+	    UINT8 res3[0x21];
+	    UINT8 SPRG0;
+	    UINT8 SPRSYS;
+	} s;
+    } u;
+    bool accumulate_overflow;    
+    UINT8 high;
+    int low;
 } SUZY;
 
-static SUZY suzy={ { 0 } };
+static SUZY suzy={ { { 0 } } };
 
 static struct {
-	UINT8 *mem;
-	// global
-	UINT16 screen;
-	UINT16 colbuf;
-	UINT16 colpos; // byte where value of collision is written
-	UINT16 xoff, yoff;
-	// in command
-	int mode;
-	UINT16 cmd;
-	UINT8 spritenr;
-	int x,y;
-	UINT16 width, height;
-	int stretch, tilt;
-	UINT8 color[16]; // or stored
-	void (*line_function)(const int y, const int xdir);
-	UINT16 bitmap;
+    UINT8 *mem;
+    // global
+    UINT16 screen;
+    UINT16 colbuf;
+    UINT16 colpos; // byte where value of collision is written
+    UINT16 xoff, yoff;
+    // in command
+    int mode;
+    UINT16 cmd;
+    UINT8 spritenr;
+    int x,y;
+    UINT16 width, height; // uint16 important for blue lightning
+    UINT16 stretch, tilt; // uint16 important
+    UINT8 color[16]; // or stored
+    void (*line_function)(const int y, const int xdir);
+    UINT16 bitmap;
+
+    bool everon;
+    int memory_accesses;
+    double time;
 } blitter;
 
 #define GET_WORD(mem, index) ((mem)[(index)]|((mem)[(index)+1]<<8))
@@ -49,76 +67,190 @@ mode | 0x10 means without DONTCOLLIDE
 
 INLINE void lynx_plot_pixel(const int mode, const int x, const int y, const int color)
 {
-	int back;
-	UINT8 *screen;
-	UINT8 *colbuf;
-
-	screen=blitter.mem+blitter.screen+y*80+x/2;
-	colbuf=blitter.mem+blitter.colbuf+y*80+x/2;
-	switch (mode) {
-	case 0x00:
-	case 0x01:
-		if (!(x&1)) {
-			*screen=(*screen&0x0f)|(blitter.color[color]<<4);
-		} else {
-			*screen=(*screen&0xf0)|blitter.color[color];
-		}
-		break;
-	case 0x02:
-	case 0x03:
-	case 0x04:
-	case 0x05:
-	case 0x06:
-	case 0x07:
-	case 0x15: // prevents robotron from overwriting code
-		if (blitter.color[color]!=0) { // for sprdemo5
-//		if (color!=0) {
-			if (!(x&1)) {
-				*screen=(*screen&0x0f)|(blitter.color[color]<<4);
-			} else {
-				*screen=(*screen&0xf0)|blitter.color[color];
-			}
-		}
-		break;
-	case 0x10:
-	case 0x11: // lemmings
-		if (!(x&1)) {
-			*screen=(*screen&0x0f)|(blitter.color[color]<<4);
-			*colbuf=(*colbuf&0x0f)|(blitter.spritenr<<4);
-		} else {
-			*screen=(*screen&0xf0)|blitter.color[color];
-			*colbuf=(*colbuf&~0xf)|(blitter.spritenr);
-		}
-		break;
-	case 0x12:
-	case 0x13:
-	case 0x14:
-	case 0x16:
-	case 0x17:
-		if (blitter.color[color]!=0) {
-//		if (color!=0) {
-			if (!(x&1)) {
-//				if (blitter.spritenr) {
-					back=*colbuf;
-					if (back&0xf0) {
-						blitter.mem[blitter.colpos]=back>>4;
-					}
-					*colbuf=(back&~0xf0)|(blitter.spritenr<<4);
-//				}
-				*screen=(*screen&0x0f)|(blitter.color[color]<<4);
-			} else {
-//				if (blitter.spritenr) {
-					back=*colbuf;
-					if (back&0xf) {
-						blitter.mem[blitter.colpos]=back&0xf;
-					}
-					*colbuf=(back&~0xf)|(blitter.spritenr);
-//				}
-				*screen=(*screen&0xf0)|blitter.color[color];
-			}
-		}
-		break;
+    int back;
+    UINT8 *screen;
+    UINT8 *colbuf;
+    
+    blitter.everon=true;
+    screen=blitter.mem+blitter.screen+y*80+x/2;
+    colbuf=blitter.mem+blitter.colbuf+y*80+x/2;
+    switch (mode) {
+    case 0x00: // background (shadow bug!)
+	if (!(x&1)) {
+	    *screen=(*screen&0x0f)|(color<<4);
+	} else {
+	    *screen=(*screen&0xf0)|color;
 	}
+	blitter.memory_accesses++;
+	break;
+    case 0x10:
+	if (!(x&1)) {
+	    if (color!=0xe) {
+		*colbuf=(*colbuf&~0xf0)|(blitter.spritenr<<4);
+		blitter.memory_accesses++;
+	    }
+	    *screen=(*screen&0x0f)|(color<<4);
+	} else {
+	    if (color!=0xe) {
+		*colbuf=(*colbuf&~0xf)|(blitter.spritenr);
+		blitter.memory_accesses++;
+	    }
+	    *screen=(*screen&0xf0)|color;
+	}
+	blitter.memory_accesses++;
+	break;
+    case 0x01: // background, no colliding
+    case 0x11:
+	if (!(x&1)) {
+	    *screen=(*screen&0x0f)|(color<<4);
+	} else {
+	    *screen=(*screen&0xf0)|color;
+	}
+	blitter.memory_accesses++;
+	break;
+    case 0x03: // boundary: pen P? transparent, but collides
+    case 0x02: // boundary, shadow
+	if ((color==0)||(color==0xf)) break;
+	if (!(x&1)) {
+	    *screen=(*screen&0x0f)|(color<<4);
+	} else {
+	    *screen=(*screen&0xf0)|color;
+	}
+	blitter.memory_accesses++;
+	break;
+    case 0x13:
+	if (color==0) break;
+	if (!(x&1)) {
+	    back=*colbuf;
+	    if (back>>4>blitter.mem[blitter.colpos])
+		blitter.mem[blitter.colpos]=back>>4;
+	    *colbuf=(back&~0xf0)|(blitter.spritenr<<4);
+	    if (color!=0xf) {
+		*screen=(*screen&0x0f)|(color<<4);
+		blitter.memory_accesses++;
+	    }
+	} else {
+	    back=*colbuf;
+	    if ((back&0xf)>blitter.mem[blitter.colpos])
+		blitter.mem[blitter.colpos]=back&0xf;
+	    *colbuf=(back&~0xf)|(blitter.spritenr);
+	    if (color!=0xf) {
+		*screen=(*screen&0xf0)|color;
+		blitter.memory_accesses++;
+	    }
+	}
+	blitter.memory_accesses+=2;
+	break;
+    case 0x12:
+	if (color==0) break;
+	if (!(x&1)) {
+	    if (color!=0xe) {
+		back=*colbuf;
+		if (back>>4>blitter.mem[blitter.colpos])
+		    blitter.mem[blitter.colpos]=back>>4;
+		*colbuf=(back&~0xf0)|(blitter.spritenr<<4);
+	    }
+	    if (color!=0xf) {
+		*screen=(*screen&0x0f)|(color<<4);
+		blitter.memory_accesses++;
+	    }
+	} else {
+	    if (color!=0xe) {
+		back=*colbuf;
+		if ((back&0xf)>blitter.mem[blitter.colpos])
+		    blitter.mem[blitter.colpos]=back&0xf;
+		*colbuf=(back&~0xf)|(blitter.spritenr);
+	    }
+	    if (color!=0xf) {
+		*screen=(*screen&0xf0)|color;
+		blitter.memory_accesses++;
+	    }
+	}
+	blitter.memory_accesses+=2;
+	break;
+    case 0x04: // pen 0 transparent, 
+    case 0x07: // shadow: pen e doesn't collide
+    case 0x05: // non collidable sprite
+    case 0x15:
+	if (color==0) break;
+	if (!(x&1)) {
+	    *screen=(*screen&0x0f)|(color<<4);
+	} else {
+	    *screen=(*screen&0xf0)|color;
+	}
+	blitter.memory_accesses++;
+	break;
+    case 0x14:
+	if (color==0) break;
+	if (!(x&1)) {
+	    back=*colbuf;
+	    *colbuf=(back&~0xf0)|(blitter.spritenr<<4);
+	    if (back>>4>blitter.mem[blitter.colpos])
+		blitter.mem[blitter.colpos]=back>>4;
+	    *screen=(*screen&0x0f)|(color<<4);
+	} else {
+	    back=*colbuf;
+	    *colbuf=(back&~0xf)|(blitter.spritenr);
+	    if ((back&0xf)>blitter.mem[blitter.colpos])
+		blitter.mem[blitter.colpos]=back&0xf;
+	    *screen=(*screen&0xf0)|color;
+	}
+	blitter.memory_accesses+=3;
+	break;
+    case 0x17:
+	if (color==0) break;
+	if (!(x&1)) {
+	    if (color!=0xe) {
+		back=*colbuf;
+		if (back>>4>blitter.mem[blitter.colpos])
+		    blitter.mem[blitter.colpos]=back>>4;
+		*colbuf=(back&~0xf0)|(blitter.spritenr<<4);
+		blitter.memory_accesses+=2;
+	    }
+	    *screen=(*screen&0x0f)|(color<<4);
+	} else {
+	    if (color!=0xe) {
+		back=*colbuf;
+		if ((back&0xf)>blitter.mem[blitter.colpos])
+		    blitter.mem[blitter.colpos]=back&0xf;
+		*colbuf=(back&~0xf)|(blitter.spritenr);
+		blitter.memory_accesses+=2;
+	    }
+	    *screen=(*screen&0xf0)|color;
+	}
+	blitter.memory_accesses++;
+	break;
+    case 0x06: // xor sprite (shadow bug!)
+	if (!(x&1)) {
+	    *screen=(*screen&0x0f)^(color<<4);
+	} else {
+	    *screen=(*screen&0xf0)^color;
+	}
+	blitter.memory_accesses++;
+	break;
+    case 0x16:
+	if (!(x&1)) {
+	    if (color!=0xe) {
+		back=*colbuf;
+		if (back>>4>blitter.mem[blitter.colpos])
+		    blitter.mem[blitter.colpos]=back>>4;
+		*colbuf=(back&~0xf0)|(blitter.spritenr<<4);
+		blitter.memory_accesses+=2;
+	    }
+	    *screen=(*screen&0x0f)^(color<<4);
+	} else {
+	    if (color!=0xe) {
+		back=*colbuf;
+		if ((back&0xf)>blitter.mem[blitter.colpos])
+		    blitter.mem[blitter.colpos]=back&0xf;
+		*colbuf=(back&~0xf)|(blitter.spritenr);
+		blitter.memory_accesses+=2;
+	    }
+	    *screen=(*screen&0xf0)^color;
+	}
+	blitter.memory_accesses++;
+	break;
+    }
 }
 
 #define INCLUDE_LYNX_LINE_FUNCTION
@@ -205,28 +337,24 @@ static void lynx_blit_lines(void)
 	int ydir=0, xdir=0;
 	int flip=blitter.mem[blitter.cmd+1]&3;
 
-	switch (blitter.mem[blitter.cmd]&0x30) {
-	case 0x0000:
-		xdir=ydir=1;break;
-	case 0x0010:
-		xdir=1;ydir=-1;
-		blitter.y--;break;
-	case 0x0020:
-		xdir=-1;blitter.x--;ydir=1;break;
-	case 0x0030:
-		xdir=ydir=-1;
-		blitter.y--; blitter.x--;
-		break;
-	}
+	blitter.everon=false;
+
+	// flipping sprdemo3
+	// fat bobby 0x10
+	// mirror the sprite in gameplay?
+	xdir=1;
+	if (blitter.mem[blitter.cmd]&0x20) { xdir=-1;blitter.x--;/*?*/ }
+	ydir=1;
+	if (blitter.mem[blitter.cmd]&0x10) { ydir=-1;blitter.y--;/*?*/ }
 	switch (blitter.mem[blitter.cmd+1]&3) {
 	case 0: 
 		flip =0;
 		break;
-	case 1:
+	case 1: // blockout
 		xdir*=-1;
-		flip=2;
+		flip=1;
 		break;
-	case 2:
+	case 2: // fat bobby horicontal
 		ydir*=-1;
 		flip=1;
 		break;
@@ -236,43 +364,46 @@ static void lynx_blit_lines(void)
 		flip=3;
 		break;
 	}
-	// examples sprdemo3, fat bobby for rotation
 
-	for ( y=blitter.y, hi=0; (i=blitter.mem[blitter.bitmap]); blitter.bitmap+=i ) {
+	for ( y=blitter.y, hi=0; (blitter.memory_accesses++,i=blitter.mem[blitter.bitmap]); blitter.bitmap+=i ) {
 		if (i==1) {
-			hi=0;
-			switch (flip&3) {
-			case 0:
-				ydir*=-1;
-				y=blitter.y;
-				break;
-			case 1:
-				xdir*=-1;
-				blitter.x+=xdir;
-				y=blitter.y;
-				break;
-			case 2:
-				ydir*=-1;
-				y=blitter.y;
-				break;
-			case 3:
-				xdir*=-1;
-				blitter.x+=xdir;
-				y=blitter.y;
-				break;
-			}
-			flip++;
-			if (ydir<0) y--;
-			continue;
+		    // centered sprites sprdemo3, fat bobby, blockout
+		    hi=0;
+		    switch (flip&3) {
+		    case 0:
+		    case 2:
+			ydir*=-1;
+			blitter.y+=ydir;
+			break;
+		    case 1:
+		    case 3:
+			xdir*=-1;
+			blitter.x+=xdir;
+			break;
+		    }
+		    y=blitter.y;
+		    flip++;
+		    continue;
 		}
 		for (;(hi<blitter.height); hi+=0x100, y+=ydir) {
-			if ((y>=0)&&(y<102))
-				blitter.line_function(y,xdir);
-			blitter.width+=blitter.stretch;
-			blitter.x+=blitter.tilt;
+		    if ( y>=0 && y<102 )
+			blitter.line_function(y,xdir);
+		    blitter.width+=blitter.stretch;
+		    blitter.x+=blitter.tilt;
 		}
 		hi-=blitter.height;
 	}
+	switch (blitter.mode) {
+	case 0x12: case 0x13: case 0x14: case 0x16: case 0x17:
+	    if (suzy.u.s.SPRG0&0x20 && blitter.everon) {
+		blitter.mem[blitter.colpos]|=0x80;
+	    }
+	}
+}
+
+void lynx_blitter_timer(int param)
+{
+    suzy.u.s.SPRSYS&=~1; //blitter finished
 }
 
 /*
@@ -350,101 +481,128 @@ static void lynx_blit_lines(void)
 
 static void lynx_blitter(void)
 {
-	static const int lynx_colors[4]={2,4,8,16};
-
-	static void (* const blit_line[4])(const int y, const int xdir)= {
-		lynx_blit_2color_line,
-		lynx_blit_4color_line,
-		lynx_blit_8color_line,
-		lynx_blit_16color_line
-	};
-
-	static void (* const blit_rle_line[4])(const int y, const int xdir)= {
-		lynx_blit_2color_rle_line,
-		lynx_blit_4color_rle_line,
-		lynx_blit_8color_rle_line,
-		lynx_blit_16color_rle_line
-	};
-	int i; int o;int colors;
-
-	blitter.mem=memory_region(REGION_CPU1);
-	blitter.colbuf=GET_WORD(suzy.data, 0xa);
-//	blitter.colpos=GET_WORD(suzy.data, 0x24);
-	blitter.screen=GET_WORD(suzy.data, 8);
-	blitter.xoff=GET_WORD(suzy.data,4);
-	blitter.yoff=GET_WORD(suzy.data,6);
-
-	for (blitter.cmd=GET_WORD(suzy.data, 0x10); blitter.cmd; 
-		 blitter.cmd=GET_WORD(blitter.mem, blitter.cmd+3) ) {
-
-		if (blitter.mem[blitter.cmd+1]&4) continue;
-
-		blitter.colpos=GET_WORD(suzy.data, 0x24)+blitter.cmd;
-
-		blitter.bitmap=GET_WORD(blitter.mem,blitter.cmd+5);
-		blitter.x=(INT16)GET_WORD(blitter.mem, blitter.cmd+7)-blitter.xoff;
-		blitter.y=(INT16)GET_WORD(blitter.mem, blitter.cmd+9)-blitter.yoff;
-
-		blitter.mode=blitter.mem[blitter.cmd]&07;
-		if (blitter.mem[blitter.cmd+1]&0x80) {
-			blitter.line_function=blit_line[blitter.mem[blitter.cmd]>>6];
-		} else {
-			blitter.line_function=blit_rle_line[blitter.mem[blitter.cmd]>>6];
-		}
-		if (!(blitter.mem[blitter.cmd+2]&0x20)&&!(suzy.data[0x92]&0x20)) {
-			blitter.mem[blitter.colpos]=0;
-			blitter.spritenr=blitter.mem[blitter.cmd+2]&0xf;
-			blitter.mode|=0x10;
-		}
-			
-		o=0xb;
-		blitter.width=0x100;
-		blitter.height=0x100;
-		if (blitter.mem[blitter.cmd+1]&0x30) {
-			blitter.width=GET_WORD(blitter.mem, blitter.cmd+11);
-			blitter.height=GET_WORD(blitter.mem, blitter.cmd+13);
-			o+=4;
-		}
-
-		blitter.stretch=0;
-		blitter.tilt=0;
-		if (blitter.mem[blitter.cmd+1]&0x20) {
-			blitter.stretch=GET_WORD(blitter.mem, blitter.cmd+o);
-			o+=2;
-			if (blitter.mem[blitter.cmd+1]&0x10) {
-				blitter.tilt=GET_WORD(blitter.mem, blitter.cmd+o);
-				o+=2;
-			}
-		}
-		colors=lynx_colors[blitter.mem[blitter.cmd]>>6];
-
-		if (!(blitter.mem[blitter.cmd+1]&8)) {
-			for (i=0; i<colors/2; i++) {
-				blitter.color[i*2]=blitter.mem[blitter.cmd+o+i]>>4;
-				blitter.color[i*2+1]=blitter.mem[blitter.cmd+o+i]&0xf;
-			}
-		}
-#if 0
-		logerror("%04x %.2x %.2x %.2x x:%.4x y:%.4x",
-				 blitter.cmd,
-				 blitter.mem[blitter.cmd],blitter.mem[blitter.cmd+1],blitter.mem[blitter.cmd+2],
-				 blitter.x,blitter.y);
-		if (blitter.mem[blitter.cmd+1]&0x30) {
-			logerror(" w:%.4x h:%.4x", blitter.width,blitter.height);
-		}
-		if (blitter.mem[blitter.cmd+1]&0x20) {
-			logerror(" s:%.4x t:%.4x", blitter.stretch, blitter.tilt);
-		}
-		if (!(blitter.mem[blitter.cmd]&0x8)) {
-			logerror(" c:");
-			for (i=0; i<colors/2; i++) {
-				logerror("%.2x", blitter.mem[blitter.cmd+o+i]);
-			}
-		}
-		logerror(" %.4x\n", blitter.bitmap);
-#endif
-		lynx_blit_lines();
+    static const int lynx_colors[4]={2,4,8,16};
+    
+    static void (* const blit_line[4])(const int y, const int xdir)= {
+	lynx_blit_2color_line,
+	lynx_blit_4color_line,
+	lynx_blit_8color_line,
+	lynx_blit_16color_line
+    };
+    
+    static void (* const blit_rle_line[4])(const int y, const int xdir)= {
+	lynx_blit_2color_rle_line,
+	lynx_blit_4color_rle_line,
+	lynx_blit_8color_rle_line,
+	lynx_blit_16color_rle_line
+    };
+    int i; int o;int colors;
+    
+    blitter.memory_accesses=0;
+    blitter.mem=memory_region(REGION_CPU1);
+    blitter.colbuf=GET_WORD(suzy.u.data, 0xa);
+//	blitter.colpos=GET_WORD(suzy.data.u, 0x24);
+    blitter.screen=GET_WORD(suzy.u.data, 8);
+    blitter.xoff=GET_WORD(suzy.u.data,4);
+    blitter.yoff=GET_WORD(suzy.u.data,6);
+    
+    for (blitter.cmd=GET_WORD(suzy.u.data, 0x10); blitter.cmd; 
+	 blitter.cmd=GET_WORD(blitter.mem, blitter.cmd+3),blitter.memory_accesses+=2 ) {
+	
+	blitter.memory_accesses+=3;
+	if (blitter.mem[blitter.cmd+1]&4) continue;
+	
+	blitter.colpos=GET_WORD(suzy.u.data, 0x24)+blitter.cmd;
+	
+	blitter.bitmap=GET_WORD(blitter.mem,blitter.cmd+5);
+	blitter.x=(INT16)GET_WORD(blitter.mem, blitter.cmd+7)-blitter.xoff;
+	blitter.y=(INT16)GET_WORD(blitter.mem, blitter.cmd+9)-blitter.yoff;
+	blitter.memory_accesses+=6;
+	
+	blitter.mode=blitter.mem[blitter.cmd]&07;
+	if (blitter.mem[blitter.cmd+1]&0x80) {
+	    blitter.line_function=blit_line[blitter.mem[blitter.cmd]>>6];
+	} else {
+	    blitter.line_function=blit_rle_line[blitter.mem[blitter.cmd]>>6];
 	}
+	
+	if (!(blitter.mem[blitter.cmd+2]&0x20) && !( suzy.u.s.SPRSYS&0x20) ) {
+	    switch (blitter.mode) {
+	    case 0: case 2: case 3: case 4: case 6: case 7:
+		blitter.mode|=0x10;
+		blitter.mem[blitter.colpos]=0;
+		blitter.spritenr=blitter.mem[blitter.cmd+2]&0xf;
+	    }
+	}
+	
+	o=0xb;
+	blitter.width=0x100;
+	blitter.height=0x100;
+	if (blitter.mem[blitter.cmd+1]&0x30) {
+	    blitter.width=GET_WORD(blitter.mem, blitter.cmd+11);
+	    blitter.height=GET_WORD(blitter.mem, blitter.cmd+13);
+	    blitter.memory_accesses+=4;
+	    o+=4;
+	}
+	
+	blitter.stretch=0;
+	blitter.tilt=0;
+	if (blitter.mem[blitter.cmd+1]&0x20) {
+	    blitter.stretch=GET_WORD(blitter.mem, blitter.cmd+o);
+	    blitter.memory_accesses+=2;
+	    o+=2;
+	    if (blitter.mem[blitter.cmd+1]&0x10) {
+		blitter.tilt=GET_WORD(blitter.mem, blitter.cmd+o);
+		blitter.memory_accesses+=2;
+		o+=2;
+	    }
+	}
+	colors=lynx_colors[blitter.mem[blitter.cmd]>>6];
+	
+	if (!(blitter.mem[blitter.cmd+1]&8)) {
+	    for (i=0; i<colors/2; i++) {
+		blitter.color[i*2]=blitter.mem[blitter.cmd+o+i]>>4;
+		blitter.color[i*2+1]=blitter.mem[blitter.cmd+o+i]&0xf;
+		blitter.memory_accesses++;
+	    }
+	}
+
+#if 0
+	if (debug_pos<ARRAY_LENGTH(debug_strings)) {
+	    snprintf(debug_strings[debug_pos],sizeof(debug_strings[0]),
+		     "%.2x%.2x%.2x %.4x %.4x %.4x %.4x",
+		     blitter.mem[blitter.cmd],
+		     blitter.mem[blitter.cmd+1],
+		     blitter.mem[blitter.cmd+2],
+		     blitter.x, blitter.y,
+		     blitter.width, blitter.height
+		);
+	    debug_pos++;
+	}
+#endif	
+
+#if 1
+	logerror("%04x %.2x %.2x %.2x x:%.4x y:%.4x",
+		 blitter.cmd,
+		 blitter.mem[blitter.cmd],blitter.mem[blitter.cmd+1],blitter.mem[blitter.cmd+2],
+		 blitter.x,blitter.y);
+	if (blitter.mem[blitter.cmd+1]&0x30) {
+	    logerror(" w:%.4x h:%.4x", blitter.width,blitter.height);
+	}
+	if (blitter.mem[blitter.cmd+1]&0x20) {
+	    logerror(" s:%.4x t:%.4x", blitter.stretch, blitter.tilt);
+	}
+	if (!(blitter.mem[blitter.cmd+1]&0x8)) {
+	    logerror(" c:");
+	    for (i=0; i<colors/2; i++) {
+		logerror("%.2x", blitter.mem[blitter.cmd+o+i]);
+	    }
+	}
+	logerror(" %.4x\n", blitter.bitmap);
+#endif
+	lynx_blit_lines();
+    }
+//    timer_set(TIME_IN_CYCLES(blitter.memory_accesses*20,0), 0, lynx_blitter_timer);
 }
 
 /*
@@ -454,30 +612,53 @@ static void lynx_blitter(void)
 
 void lynx_divide(void)
 {
-	UINT32 left=suzy.data[0x60]|(suzy.data[0x61]<<8)|(suzy.data[0x62]<<16)|(suzy.data[0x63]<<24);
-	UINT16 right=suzy.data[0x56]|(suzy.data[0x57]<<8);
-	UINT16 res;
-	if (left==0) {
-		res=0;
-	} else if (right==0) {
-		res=0xffff; //estimated
+	UINT32 left=suzy.u.s.H|(suzy.u.s.G<<8)|(suzy.u.s.F<<16)|(suzy.u.s.E<<24);
+	UINT16 right=suzy.u.s.P|(suzy.u.s.N<<8);
+	UINT32 res, mod;
+	suzy.accumulate_overflow=false;
+	if (right==0) {
+	    suzy.accumulate_overflow=true;
+	    res=0xffffffff;
+	    mod=0; //?
 	} else {
-		res=left/right;
+	    res=left/right;
+	    mod=left%right;
 	}
-//	logerror("coprocessor %8x / %4x = %4x\n", left, right, res);
-	suzy.data[0x52]=res&0xff;
-	suzy.data[0x53]=res>>8;
+//	logerror("coprocessor %8x / %8x = %4x\n", left, right, res);
+	suzy.u.s.D=res&0xff;
+	suzy.u.s.C=res>>8;
+	suzy.u.s.B=res>>16;
+	suzy.u.s.A=res>>24;
+	suzy.u.s.M=mod&0xff;
+	suzy.u.s.L=mod>>8;
+	suzy.u.s.K=mod>>16;
+	suzy.u.s.J=mod>>24;
 }
 
 void lynx_multiply(void)
 {
-	UINT16 left, right, res;
-	left=suzy.data[0x52]|(suzy.data[0x53]<<8);
-	right=suzy.data[0x54]|(suzy.data[0x55]<<8);
-	res=left*right;
+	UINT16 left, right;
+	UINT32 res, accu;
+	left=suzy.u.s.B|(suzy.u.s.A<<8);
+	right=suzy.u.s.D|(suzy.u.s.C<<8);
+	if (suzy.u.s.SPRSYS&0x80) {
+	    // to do
+	    res=(INT16)left*(INT16)right;
+	} else res=left*right;
 //	logerror("coprocessor %4x * %4x = %4x\n", left, right, res);
-	suzy.data[0x60]=res&0xff;
-	suzy.data[0x61]=res>>8;
+	suzy.u.s.H=res&0xff;
+	suzy.u.s.G=res>>8;
+	suzy.u.s.F=res>>16;
+	suzy.u.s.E=res>>24;
+	if (suzy.u.s.SPRSYS&0x40) {
+	    accu=suzy.u.s.M|suzy.u.s.L<<8|suzy.u.s.K<<16|suzy.u.s.J<<24;
+	    accu+=res;
+	    if (accu<res) suzy.accumulate_overflow=true;
+	    suzy.u.s.M=accu;
+	    suzy.u.s.L=accu>>8;
+	    suzy.u.s.K=accu>>16;
+	    suzy.u.s.J=accu>>24;
+	}
 }
 
 READ_HANDLER(suzy_read)
@@ -488,9 +669,16 @@ READ_HANDLER(suzy_read)
 		data=1; // must not be 0 for correct power up
 		break;
 	case 0x92:
-		data=suzy.data[offset];
+		if (blitter.time!=0.0) {
+		    if ( TIME_TO_CYCLES(0,timer_get_time()-blitter.time) > blitter.memory_accesses*20) {
+			suzy.u.data[offset]&=~1; //blitter finished
+			blitter.time=0;
+		    }
+		}
+		data=suzy.u.data[offset];
 		data&=~0x80; // math finished
-		data&=~1; //blitter finished
+		data&=~0x40;
+		if (suzy.accumulate_overflow) data|=0x40;
 		break;
 	case 0xb0:
 		input=readinputport(0);
@@ -512,7 +700,7 @@ READ_HANDLER(suzy_read)
 			if (data&PAD_LEFT) input|=PAD_UP;
 			break;
 		}
-		if (suzy.data[0x92]&8) {
+		if (suzy.u.s.SPRSYS&8) {
 			data=input&0xf;
 			if (input&PAD_UP) data|=PAD_DOWN;
 			if (input&PAD_DOWN) data|=PAD_UP;
@@ -528,7 +716,7 @@ READ_HANDLER(suzy_read)
 		suzy.low=(suzy.low+1)&(lynx_granularity-1);
 		break;
 	default:
-		data=suzy.data[offset];
+		data=suzy.u.data[offset];
 	}
 //	logerror("suzy read %.2x %.2x\n",offset,data);
 	return data;
@@ -536,16 +724,26 @@ READ_HANDLER(suzy_read)
 
 WRITE_HANDLER(suzy_write)
 {
-	suzy.data[offset]=data;
+	suzy.u.data[offset]=data;
 //	logerror("suzy write %.2x %.2x\n",offset,data);
 	switch(offset) {
+	case 0x52: case 0x54:
+	case 0x60: case 0x62:
+	case 0x6e:
+	    suzy.u.data[offset+1]=0;
+	    break;
+	case 0x6c:
+	    suzy.u.data[offset+1]=0;
+	    suzy.accumulate_overflow=false;
+	    break;
 	case 0x55: lynx_multiply();break;
 	case 0x63: lynx_divide();break;
 	case 0x91:
-		if (data&1) {
-			lynx_blitter();
-		}
-		break;
+	    if (data&1) {
+		blitter.time=timer_get_time();
+		lynx_blitter();
+	    }
+	    break;
 	}
 }
 
