@@ -220,7 +220,7 @@ static int studio2_load_rom(int id)
 		return 0;
 	}
 	
-	if (!(cartfile = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(cartfile = (FILE*)image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		return 1;
 	}	
@@ -263,6 +263,7 @@ void init_studio2(void)
 	beep_set_frequency(0, 300);
 }
 
+extern const struct GameDriver driver_studio2;
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR	COMPANY   FULLNAME */
 // rca cosmac elf development board (2 7segment leds, some switches/keys)
 // rca cosmac vip ditto
