@@ -580,8 +580,8 @@ int init_devices(const void *game)
 	while( dev->count )
 	{
 
-		/* try and check for valid image and compute 'partial' CRC
-		   for imageinfo if possible */
+		/* try and check for valid image */
+		/* compute 'partial' CRC for imageinfo if possible */
 		if( dev->id )
 		{
 			for( id = 0; id < dev->count; id++ )
@@ -589,18 +589,10 @@ int init_devices(const void *game)
 				int result;
 
 				/* initialize */
-				logerror("%s id (%s)\n", device_typename_id(dev->type,id), device_filename(dev->type,id) ? device_filename(dev->type,id) : "NULL");
 				result = (*dev->id)(id);
-				logerror("%s id returns %d\n", device_typename_id(dev->type,id), result);
-
-				if( result != ID_OK && device_filename(dev->type,id) )
+				if( result != ID_OK)
 				{
-					mess_printf("%s id failed (%s)\n", device_typename_id(dev->type,id), device_filename(dev->type,id) );
-/* HJB: I think we can't abort if a device->id function fails _yet_, because
- * we first would have to clean up every driver to use the correct return values.
- * device->init will fail if a file really can't be loaded.
- */
-/*					return 1; */
+					mess_printf("Driver Reports Invalid Image\n");
 				}
 			}
 		}
@@ -618,13 +610,11 @@ int init_devices(const void *game)
 				int result;
 
 				/* initialize */
-				logerror("%s init (%s)\n", device_typename_id(dev->type,id), device_filename(dev->type,id) ? device_filename(dev->type,id) : "NULL");
 				result = (*dev->init)(id);
-				logerror("%s init returns %d\n", device_typename_id(dev->type,id), result);
 
-				if( result != INIT_OK && device_filename(dev->type,id) )
+				if( result != INIT_OK)
 				{
-					mess_printf("%s init failed (%s)\n", device_typename_id(dev->type,id), device_filename(dev->type,id) );
+					mess_printf("Driver Reports Initialisation [for %s device] failed\n",device_typename(dev->type));
 					return 1;
 				}
 
