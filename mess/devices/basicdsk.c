@@ -144,7 +144,7 @@ static int basicdsk_get_ddam(UINT8 id, UINT8 physical_track, UINT8 physical_side
 
 /* dir_sector is a relative offset from the start of the disc,
 dir_length is a relative offset from the start of the disc */
-void basicdsk_set_geometry(UINT8 drive, UINT16 tracks, UINT8 heads, UINT8 sec_per_track, UINT16 sector_length, UINT8 first_sector_id, UINT16 offset_track_zero)
+void basicdsk_set_geometry(UINT8 drive, UINT16 tracks, UINT8 heads, UINT8 sec_per_track, UINT16 sector_length, UINT8 first_sector_id, UINT16 offset_track_zero, int track_skipping)
 {
 	basicdsk *pDisk;
 	unsigned long N;
@@ -171,8 +171,10 @@ void basicdsk_set_geometry(UINT8 drive, UINT16 tracks, UINT8 heads, UINT8 sec_pe
 	pDisk->sec_per_track = sec_per_track;
 	pDisk->sector_length = sector_length;
 	pDisk->offset = offset_track_zero;
-	
-	floppy_drive_set_geometry_absolute( drive, tracks, heads );
+
+	pDisk->track_divider = track_skipping ? 2 : 1;
+
+	floppy_drive_set_geometry_absolute( drive, tracks * pDisk->track_divider, heads );
 	
 	pDisk->image_size = pDisk->tracks * pDisk->heads * pDisk->sec_per_track * pDisk->sector_length;
 
@@ -331,10 +333,10 @@ unsigned long offset;
 
 
 
-void    basicdsk_step_callback(basicdsk *w, int drive, int direction)
+/*void    basicdsk_step_callback(basicdsk *w, int drive, int direction)
 {
 			w->track += direction;
-}
+}*/
 
 #if 0
 /* write a sector */
@@ -493,7 +495,7 @@ void    basicdsk_get_id_callback(int drive, chrn_id *id, int id_index, int side)
 	basicdsk *w = &basicdsk_drives[drive];
 
 	/* construct a id value */
-	id->C = w->track;
+	id->C = w->track / w->track_divider;
 	id->H = side;
 	id->R = w->first_sector_id + id_index;
     id->N = w->N;
@@ -533,7 +535,7 @@ void basicdsk_write_sector_data_from_buffer(int drive, int side, int index1, cha
 {
 	basicdsk *w = &basicdsk_drives[drive];
 
-	if (basicdsk_seek(w, w->track, side, index1)&&w->mode)
+	if (basicdsk_seek(w, w->track / w->track_divider, side, index1)&&w->mode)
 	{
 		mame_fwrite(w->image_file, ptr, length);
 	}
@@ -545,7 +547,7 @@ void basicdsk_read_sector_data_into_buffer(int drive, int side, int index1, char
 {
 	basicdsk *w = &basicdsk_drives[drive];
 
-	if (basicdsk_seek(w, w->track, side, index1))
+	if (basicdsk_seek(w, w->track / w->track_divider, side, index1))
 	{
 		mame_fread(w->image_file, ptr, length);
 	}

@@ -39,6 +39,8 @@ typedef struct
     UINT8   N;
 	UINT16	sector_length;			/* sector length (byte) */
 
+	int		track_divider;			/* 2 if using a 40-track image in a 80-track drive, 1 otherwise */
+
 	/* a bit for each sector in the image. If the bit is set, this sector
 	has a deleted data address mark. If the bit is not set, this sector
 	has a data address mark */
@@ -71,9 +73,11 @@ void basicdsk_floppy_unload(int id);
   the sector id's will be:
 
 	1,2,3,4,5,6,7,8,9,10
+
+  track_skipping = set to TRUE if a 40-track image has been inserted in a 80-track drive, FALSE otherwise
 */
 
-void basicdsk_set_geometry(UINT8 drive, UINT16 tracks, UINT8 sides, UINT8 sec_per_track, UINT16 sector_length/*, UINT16 dir_sector, UINT16 dir_length*/, UINT8 first_sector_id, UINT16 offset_track_zero);
+void basicdsk_set_geometry(UINT8 drive, UINT16 tracks, UINT8 sides, UINT8 sec_per_track, UINT16 sector_length/*, UINT16 dir_sector, UINT16 dir_length*/, UINT8 first_sector_id, UINT16 offset_track_zero, int track_skipping);
 
 /* set data mark/deleted data mark for the sector specified. If ddam!=0, the sector will
 have a deleted data mark, if ddam==0, the sector will have a data mark */
