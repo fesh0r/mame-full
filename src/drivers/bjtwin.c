@@ -72,21 +72,31 @@ remaps button 2 and 3 to button 1, so you can't enter the above sequence.
 #include "vidhrdw/generic.h"
 
 
-extern unsigned char *nmk_bgvideoram,*nmk_txvideoram;
+extern unsigned char *nmk_bgvideoram,*nmk_fgvideoram,*nmk_txvideoram;
 
 READ_HANDLER( nmk_bgvideoram_r );
 WRITE_HANDLER( nmk_bgvideoram_w );
+READ_HANDLER( nmk_fgvideoram_r );
+WRITE_HANDLER( nmk_fgvideoram_w );
 READ_HANDLER( nmk_txvideoram_r );
 WRITE_HANDLER( nmk_txvideoram_w );
 WRITE_HANDLER( nmk_paletteram_w );
 WRITE_HANDLER( nmk_scroll_w );
+WRITE_HANDLER( nmk_scroll_2_w );
 WRITE_HANDLER( nmk_flipscreen_w );
 WRITE_HANDLER( nmk_tilebank_w );
+WRITE_HANDLER( bioship_scroll_w );
+WRITE_HANDLER( bioship_bank_w );
+WRITE_HANDLER( mustang_scroll_w );
 
 int macross_vh_start(void);
 int macross2_vh_start(void);
 int bjtwin_vh_start(void);
+int bioship_vh_start(void);
+int strahl_vh_start(void);
 void nmk_vh_stop(void);
+void bioship_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void strahl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void macross_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void bjtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void nmk_eof_callback(void);
@@ -171,6 +181,62 @@ static READ_HANDLER( hachamf_protection_hack_r )
 	return pap[offset/2];
 }
 
+/***************************************************************************/
+
+static struct MemoryReadAddress mustang_readmem[] =
+{
+	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0x080000, 0x080001, input_port_0_r },
+	{ 0x080002, 0x080003, input_port_1_r },
+	{ 0x080008, 0x080009, input_port_2_r },
+	{ 0x088000, 0x0887ff, paletteram_word_r },
+	{ 0x090000, 0x093fff, nmk_bgvideoram_r },
+	{ 0x09c000, 0x09c7ff, nmk_txvideoram_r },
+	{ 0x0f0000, 0x0f7fff, MRA_BANK1 },
+	{ 0x0f8000, 0x0f8fff, MRA_BANK2 },
+	{ 0x0f9000, 0x0fffff, MRA_BANK3 },
+	{ -1 }
+};
+
+static struct MemoryWriteAddress mustang_writemem[] =
+{
+	{ 0x000000, 0x03ffff, MWA_ROM },
+//	{ 0x080014, 0x080015, nmk_flipscreen_w },
+	{ 0x088000, 0x0887ff, nmk_paletteram_w, &paletteram },
+//	{ 0x08c000, 0x08c007, mustang_scroll_w },
+	{ 0x090000, 0x093fff, nmk_bgvideoram_w, &nmk_bgvideoram },
+	{ 0x09c000, 0x09c7ff, nmk_txvideoram_w, &nmk_txvideoram },
+	{ 0x0f0000, 0x0f7fff, MWA_BANK1 },	/* Work RAM */
+	{ 0x0f8000, 0x0f8fff, MWA_BANK2, &spriteram, &spriteram_size },
+	{ 0x0f9000, 0x0fffff, MWA_BANK3 },	/* Work RAM */
+	{ -1 }
+};
+
+static struct MemoryReadAddress acrobatm_readmem[] = 
+{
+	{ 0x00000, 0x3ffff, MRA_ROM },
+	{ 0x80000, 0x80fff, MRA_BANK3 },
+	{ 0x81000, 0x8ffff, MRA_BANK1 },
+	{ 0xc0000, 0xc0001, input_port_0_r },
+	{ 0xc0002, 0xc0003, input_port_1_r },
+	{ 0xc0004, 0xc0005, input_port_2_r },
+	{ 0xc4000, 0xc45ff, paletteram_word_r },
+	{ 0xc8000, 0xcbfff, nmk_bgvideoram_r },
+	{ 0xd4000, 0xd47ff, nmk_txvideoram_r },
+	{ -1 }
+};
+
+static struct MemoryWriteAddress acrobatm_writemem[] = 
+{
+	{ 0x00000, 0x3ffff, MWA_ROM },
+	{ 0x80000, 0x80fff, MWA_BANK3, &spriteram, &spriteram_size },
+	{ 0x81000, 0x8ffff, MWA_BANK1 },
+	{ 0xc4000, 0xc45ff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
+	{ 0xc8000, 0xcbfff, nmk_bgvideoram_w, &nmk_bgvideoram },
+	{ 0xd4000, 0xd47ff, nmk_txvideoram_w, &nmk_txvideoram },
+	{ -1 }
+};
+
 static struct MemoryReadAddress hachamf_readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
@@ -199,6 +265,71 @@ static struct MemoryWriteAddress hachamf_writemem[] =
 	{ 0x0f0000, 0x0f7fff, MWA_BANK1 },	/* Work RAM */
 	{ 0x0f8000, 0x0f8fff, MWA_BANK2, &spriteram, &spriteram_size },
 	{ 0x0f9000, 0x0fffff, MWA_BANK3 },	/* Work RAM again (fe000-fefff is shared with the sound CPU) */
+	{ -1 }
+};
+
+static struct MemoryReadAddress bioship_readmem[] =
+{
+	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0x080000, 0x080001, input_port_0_r },
+	{ 0x080002, 0x080003, input_port_1_r },
+	{ 0x080004, 0x080005, input_port_2_r },
+	{ 0x088000, 0x0887ff, paletteram_word_r },
+	{ 0x090000, 0x093fff, nmk_bgvideoram_r },
+	{ 0x09c000, 0x09c7ff, nmk_txvideoram_r },
+	{ 0x0f0000, 0x0f7fff, MRA_BANK1 },
+	{ 0x0f8000, 0x0f8fff, MRA_BANK2 },
+	{ 0x0f9000, 0x0fffff, MRA_BANK3 },
+	{ -1 }
+};
+
+static struct MemoryWriteAddress bioship_writemem[] =
+{
+	{ 0x000000, 0x03ffff, MWA_ROM },
+//	{ 0x080014, 0x080015, nmk_flipscreen_w },
+	{ 0x084000, 0x084001, bioship_bank_w }, 
+	{ 0x088000, 0x0887ff, nmk_paletteram_w, &paletteram },
+	{ 0x08c000, 0x08c007, mustang_scroll_w },
+	{ 0x08c010, 0x08c017, bioship_scroll_w },
+	{ 0x090000, 0x093fff, nmk_bgvideoram_w, &nmk_bgvideoram },
+	{ 0x09c000, 0x09c7ff, nmk_txvideoram_w, &nmk_txvideoram },
+	{ 0x0f0000, 0x0f7fff, MWA_BANK1 },	/* Work RAM */
+	{ 0x0f8000, 0x0f8fff, MWA_BANK2, &spriteram, &spriteram_size },
+	{ 0x0f9000, 0x0fffff, MWA_BANK3 },	/* Work RAM again (fe000-fefff is shared with the sound CPU) */
+	{ -1 }
+};
+
+static struct MemoryReadAddress strahl_readmem[] = 
+{
+	{ 0x00000, 0x3ffff, MRA_ROM },
+	{ 0x80000, 0x80001, input_port_0_r },
+	{ 0x80002, 0x80003, input_port_1_r },
+	{ 0x80008, 0x80009, input_port_2_r },
+	{ 0x8000a, 0x8000b, input_port_3_r },
+	{ 0x8c000, 0x8c7ff, paletteram_word_r },
+	{ 0x90000, 0x93fff, nmk_bgvideoram_r },
+	{ 0x94000, 0x97fff, nmk_fgvideoram_r },
+	{ 0x9c000, 0x9c7ff, nmk_txvideoram_r },
+	{ 0xf0000, 0xf7fff, MRA_BANK1 },
+	{ 0xf8000, 0xfefff, MRA_BANK3 },
+	{ 0xff000, 0xfffff, MRA_BANK2 },
+	{ -1 }
+};
+ 
+static struct MemoryWriteAddress strahl_writemem[] = 
+{
+	{ 0x00000, 0x3ffff, MWA_ROM },
+	{ 0x80014, 0x80015, nmk_flipscreen_w },
+	{ 0x8001e, 0x8001f, MWA_NOP }, /* -> Sound cpu */
+	{ 0x84000, 0x84007, nmk_scroll_w },
+	{ 0x88000, 0x88007, nmk_scroll_2_w },
+	{ 0x8c000, 0x8c7ff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
+	{ 0x90000, 0x93fff, nmk_bgvideoram_w, &nmk_bgvideoram },
+	{ 0x94000, 0x97fff, nmk_fgvideoram_w, &nmk_fgvideoram },
+	{ 0x9c000, 0x9c7ff, nmk_txvideoram_w, &nmk_txvideoram },
+	{ 0xf0000, 0xf7fff, MWA_BANK1 },	/* Work RAM */
+	{ 0xf8000, 0xfefff, MWA_BANK3, &ram },	/* Work RAM again */
+	{ 0xff000, 0xfffff, MWA_BANK2, &spriteram, &spriteram_size },
 	{ -1 }
 };
 
@@ -351,14 +482,14 @@ static struct MemoryWriteAddress bjtwin_writemem[] =
 
 INPUT_PORTS_START( hachamf )
 	PORT_START		/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* I think coin inputs come from */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* the second cpu */
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) //bryan:  test mode in some games?
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
@@ -727,7 +858,23 @@ static struct GfxDecodeInfo bjtwin_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo bioship_gfxdecodeinfo[] = 
+{
+	{ REGION_GFX1, 0, &charlayout, 0x300, 16 },	/* color 0x300-0x3ff */
+	{ REGION_GFX2, 0, &tilelayout, 0x100, 16 },	/* color 0x100-0x1ff */
+	{ REGION_GFX3, 0, &tilelayout, 0x200, 16 },	/* color 0x200-0x2ff */
+	{ REGION_GFX4, 0, &tilelayout, 0x000, 16 },	/* color 0x000-0x0ff */
+	{ -1 }
+};
 
+static struct GfxDecodeInfo strahl_gfxdecodeinfo[] = 
+{
+	{ REGION_GFX1, 0, &charlayout, 0x000, 16 },	/* color 0x000-0x0ff */
+	{ REGION_GFX2, 0, &tilelayout, 0x300, 16 },	/* color 0x300-0x3ff */
+	{ REGION_GFX3, 0, &tilelayout, 0x100, 16 },	/* color 0x100-0x1ff */
+	{ REGION_GFX4, 0, &tilelayout, 0x200, 16 },	/* color 0x200-0x2ff */
+	{ -1 }
+};
 
 static struct OKIM6295interface okim6295_interface =
 {
@@ -754,7 +901,163 @@ static struct YM2203interface ym2203_interface =
 	{ irqhandler }
 };
 
+static int nmk_interrupt(void) 
+{
+	if (cpu_getiloops() == 0) return 4;
+	return 2;
+}
 
+static const struct MachineDriver machine_driver_mustang =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			10000000, /* 10 MHz ? */
+			mustang_readmem,mustang_writemem,0,0,
+			nmk_interrupt,2,
+			m68_level1_irq,112	/* ???????? */
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	macross_gfxdecodeinfo,
+	1024, 1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	nmk_eof_callback,
+	macross_vh_start,
+	nmk_vh_stop,
+	macross_vh_screenrefresh,
+
+	0,0,0,0,
+	{
+		/* there's also a YM3812 */
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
+		}
+	}
+};
+
+static const struct MachineDriver machine_driver_acrobatm =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			10000000, /* 10 MHz ? */
+			acrobatm_readmem,acrobatm_writemem,0,0,
+			nmk_interrupt,2,
+			m68_level1_irq,112	/* ???????? */
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	macross_gfxdecodeinfo,
+	1024, 1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	nmk_eof_callback,
+	macross_vh_start,
+	nmk_vh_stop,
+	macross_vh_screenrefresh,
+
+	0,0,0,0,
+	{
+		/* there's also a YM2203? */
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
+		}
+	}
+};
+
+static const struct MachineDriver machine_driver_bioship =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			12000000, /* 12 MHz ? */
+			bioship_readmem,bioship_writemem,0,0,
+			nmk_interrupt,2,
+			m68_level1_irq,112	/* ???????? */
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	bioship_gfxdecodeinfo,
+	1024, 1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	nmk_eof_callback,
+	bioship_vh_start,
+	nmk_vh_stop,
+	bioship_vh_screenrefresh,
+
+	0,0,0,0,
+	{
+		/* there's also a YM2203 */
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
+		}
+	}
+};
+
+static const struct MachineDriver machine_driver_strahl =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			12000000, /* 12 MHz ? */
+			strahl_readmem,strahl_writemem,0,0,
+			nmk_interrupt,2,
+			m68_level1_irq,112	/* ???????? */
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	strahl_gfxdecodeinfo,
+	1024, 1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	nmk_eof_callback,
+	strahl_vh_start,
+	nmk_vh_stop,
+	strahl_vh_screenrefresh,
+
+	0,0,0,0,
+	{
+		/* there's also a YM2203 */
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
+		}
+	}
+};
 
 static const struct MachineDriver machine_driver_hachamf =
 {
@@ -917,6 +1220,117 @@ static const struct MachineDriver machine_driver_bjtwin =
 };
 
 
+ROM_START( mustang )
+	ROM_REGION( 0x40000, REGION_CPU1 )
+	ROM_LOAD_ODD ( "mustang.13" ,   0x00000, 0x20000, 0xd8ccce31 )
+	ROM_LOAD_EVEN( "mustang.14" ,   0x00000, 0x20000, 0x13c6363b )
+
+	ROM_REGION(0x10000, REGION_CPU2 )	/* 64k for sound cpu code */
+	ROM_LOAD( "mustang.16" ,   0x00000, 0x10000, 0x99ee7505 )
+
+	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mustang.15" ,   0x00000, 0x20000, 0x81ccfcad )
+
+	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mustang.09" ,   0x000000, 0x20000, 0x5f8fdfb1 )  //these are bootleg graphics roms
+	ROM_LOAD( "mustang.12" ,   0x020000, 0x20000, 0x39757d6a )  //real ones are 0x80000 mask roms
+	ROM_LOAD( "mustang.10" ,   0x040000, 0x20000, 0xb3dd5243 )
+	ROM_LOAD( "mustang.11" ,   0x060000, 0x20000, 0xc6c9752f )
+
+	ROM_REGION( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_GFX_EVEN( "mustang.01" ,   0x000000, 0x20000, 0xd13f0722 )
+	ROM_LOAD_GFX_ODD ( "mustang.06" ,   0x000000, 0x20000, 0x54773f95 )
+	ROM_LOAD_GFX_EVEN( "mustang.02" ,   0x040000, 0x20000, 0x87c1fb43 )
+	ROM_LOAD_GFX_ODD ( "mustang.05" ,   0x040000, 0x20000, 0x932d3e33 )
+	ROM_LOAD_GFX_EVEN( "mustang.03" ,   0x080000, 0x20000, 0x23d03ad5 )
+	ROM_LOAD_GFX_ODD ( "mustang.04" ,   0x080000, 0x20000, 0xa62b2f87 )
+	ROM_LOAD_GFX_EVEN( "mustang.07" ,   0x0c0000, 0x20000, 0x42a6cfc2 )
+	ROM_LOAD_GFX_ODD ( "mustang.08" ,   0x0c0000, 0x20000, 0x9d3bee66 )
+
+	ROM_REGION( 0x080000, REGION_SOUND1 )	/* OKIM6295 samples */
+	ROM_LOAD( "mustang.17" ,   0x00000, 0x10000, 0xf6f6c4bf )
+ROM_END
+
+ROM_START( acrobatm )
+	ROM_REGION( 0x40000, REGION_CPU1 )
+	ROM_LOAD_EVEN( "2.bin" ,   0x00000, 0x20000, 0x3fe487f4 )
+	ROM_LOAD_ODD ( "1.bin" ,   0x00000, 0x20000, 0x17175753 )
+
+	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "3.bin" ,  0x000000, 0x10000, 0xd86c186e ) /* Characters */ 
+
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gfx.01" , 0x000000, 0x80000, 0x00000000 ) /* Foreground */
+
+	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gfx.02" , 0x000000, 0x80000, 0x00000000 ) /* Sprites */
+
+	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_LOAD( "4.bin" ,   0x00000, 0x10000, 0x176905fb )
+
+	ROM_REGION( 0x080000, REGION_SOUND1 )	/* OKIM6295 samples */
+	ROM_LOAD( "snd" ,   0x00000, 0x10000, 0x00000000 )
+ROM_END
+
+ROM_START( bioship )
+	ROM_REGION( 0x40000, REGION_CPU1 )
+	ROM_LOAD_EVEN( "2" ,   0x00000, 0x20000, 0xacf56afb )
+	ROM_LOAD_ODD ( "1" ,   0x00000, 0x20000, 0x820ef303 )
+
+	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "7" ,        0x000000, 0x10000, 0x2f3f5a10 ) /* Characters */ 
+
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sbs-g.01" , 0x000000, 0x80000, 0x21302e78 ) /* Foreground */
+
+	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sbs-g.03" , 0x000000, 0x80000, 0x60e00d7b ) /* Sprites */
+
+	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sbs-g.02" , 0x000000, 0x80000, 0xf31eb668 ) /* Background */
+
+	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_LOAD( "6" ,   0x00000, 0x10000, 0x5f39a980 )
+
+	ROM_REGION(0x80000, REGION_SOUND1 )	/* Oki sample data */
+	ROM_LOAD( "sbs-g.04" ,   0x00000, 0x80000, 0x7c74cc4e )
+
+	ROM_REGION(0x80000, REGION_SOUND2 )	/* Oki sample data */
+	ROM_LOAD( "sbs-g.05" ,   0x00000, 0x80000, 0xf0a782e3 )
+
+	ROM_REGION(0x20000, REGION_USER1 )	/* Background tilemap */
+	ROM_LOAD_EVEN( "8" ,   0x00000, 0x10000, 0x75a46fea )
+	ROM_LOAD_ODD ( "9" ,   0x00000, 0x10000, 0xd91448ee )
+ROM_END
+
+ROM_START( strahl )
+	ROM_REGION( 0x40000, REGION_CPU1 )
+	ROM_LOAD_EVEN( "strahl-2.82", 0x00000, 0x20000, 0xc9d008ae )
+	ROM_LOAD_ODD ( "strahl-1.83", 0x00000, 0x20000, 0xafc3c4d6 )
+
+	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "strahl-3.73",  0x000000, 0x10000, 0x2273b33e ) /* Characters */ 
+
+	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "str7b2r0.275", 0x000000, 0x40000, 0x5769e3e1 ) /* Tiles */
+
+	ROM_REGION( 0x180000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "strl3-01.32",  0x000000, 0x80000, 0xd8337f15 ) /* Sprites */
+	ROM_LOAD( "strl4-02.57",  0x080000, 0x80000, 0x2a38552b ) 
+	ROM_LOAD( "strl5-03.58",  0x100000, 0x80000, 0xa0e7d210 ) 
+
+	ROM_REGION( 0x80000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "str6b1w1.776", 0x000000, 0x80000, 0xbb1bb155 ) /* Tiles */
+
+	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_LOAD( "strahl-4.66" ,   0x00000, 0x10000, 0x60a799c4 )
+
+	ROM_REGION( 0x80000, REGION_SOUND1 )	/* Oki sample data */
+	ROM_LOAD( "str8pmw1.540" ,   0x00000, 0x80000, 0x01d6bb6a )
+
+	ROM_REGION( 0x80000, REGION_SOUND2 )	/* Oki sample data */
+	ROM_LOAD( "str9pew1.639" ,   0x00000, 0x80000, 0x6bb3eb9f )
+ROM_END
 
 ROM_START( hachamf )
 	ROM_REGION( 0x40000, REGION_CPU1 )		/* 68000 code */
@@ -1141,6 +1555,40 @@ static void init_hachamf(void)
 	WRITE_WORD(&rom[0x0006], 0x7dc2);	/* replace reset vector with the "real" one */
 }
 
+static void init_acrobatm(void)
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
+	WRITE_WORD (&RAM[0x724], 0x4e71); /* Protection */
+	WRITE_WORD (&RAM[0x726], 0x4e71); 
+	WRITE_WORD (&RAM[0x728], 0x4e71); 
+}
+
+static void init_strahl(void)
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
+	WRITE_WORD (&RAM[0x79e], 0x4e71); /* Protection */
+	WRITE_WORD (&RAM[0x7a0], 0x4e71); 
+	WRITE_WORD (&RAM[0x7a2], 0x4e71); 
+
+	WRITE_WORD (&RAM[0x968], 0x4e71); /* Checksum error */
+	WRITE_WORD (&RAM[0x96a], 0x4e71); 
+	WRITE_WORD (&RAM[0x8e0], 0x4e71); /* Checksum error */
+	WRITE_WORD (&RAM[0x8e2], 0x4e71); 
+}
+
+static void init_bioship(void)
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
+	WRITE_WORD (&RAM[0xe78a], 0x4e71); /* Protection */
+	WRITE_WORD (&RAM[0xe78c], 0x4e71); 
+
+	WRITE_WORD (&RAM[0xe798], 0x4e71); /* Checksum */
+	WRITE_WORD (&RAM[0xe79a], 0x4e71);
+}
+
 static void init_bjtwin(void)
 {
 	init_nmk();
@@ -1167,8 +1615,11 @@ static void init_bjtwin(void)
 }
 
 
-
+GAMEX( 1991, mustang,  0, mustang,  hachamf,  0,        ROT0,   "UPL", "USAAF Mustang", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAMEX( 1991, acrobatm, 0, acrobatm, hachamf,  acrobatm, ROT270, "UPL (Taito license)", "Acrobat Mission", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1991, bioship,  0, bioship,  hachamf,  bioship,  ROT0,   "UPL (American Sammy License)", "Bio-ship Paladin", GAME_NO_SOUND )
 GAMEX( 1991, hachamf,  0, hachamf,  hachamf,  hachamf,  ROT0,   "NMK", "Hacha Mecha Fighter", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAMEX( 1992, strahl,   0, strahl,   hachamf,  strahl,   ROT0,   "UPL", "Strahl", GAME_NO_SOUND )
 GAMEX( 1992, macross,  0, macross,  macross,  nmk,      ROT270, "Banpresto", "Macross", GAME_NO_SOUND )
 GAMEX( 1993, macross2, 0, macross2, macross,  0,        ROT0,   "Banpresto", "Macross II", GAME_NO_COCKTAIL )
 GAMEX( 1993, bjtwin,   0, bjtwin,   bjtwin,   bjtwin,   ROT270, "NMK", "Bombjack Twin", GAME_NO_COCKTAIL )

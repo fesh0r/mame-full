@@ -59,7 +59,7 @@ const struct GameDriver *drivers[] =
 #undef DRIVER
 #undef TESTDRIVER
 #define DRIVER(NAME) &driver_##NAME,
-#define TESTDRIVER(NAME)
+#define TESTDRIVER(NAME) &driver_##NAME,
 const struct GameDriver *drivers[] =
 {
 #include "driver.c"
@@ -578,7 +578,7 @@ TESTDRIVER( herocast )
 	DRIVER( vsskykid )	/* (c) ???? Nintendo */
 	DRIVER( vstennis )	/* (c) ???? Nintendo */
 
-    /* Midway 8080 b/w games */
+	/* Midway 8080 b/w games */
 	DRIVER( seawolf )	/* 596 [1976] */
 	DRIVER( gunfight )	/* 597 [1975] */
 	/* 603 - Top Gun [1976] */
@@ -2943,7 +2943,11 @@ TESTDRIVER( msgundam )
 	DRIVER( rshark )	/* (c) 1995 Dooyong */
 
 	/* NMK games */
+	DRIVER( mustang )	/* (c) 1991 NMK */
+	DRIVER( acrobatm )	/* (c) 1991 NMK */
+	DRIVER( bioship )	/* (c) 1991 NMK */
 	DRIVER( hachamf )	/* (c) 1991 NMK */
+	DRIVER( strahl )	/* (c) 1992 NMK */
 TESTDRIVER( macross )	/* (c) 1992 Banpresto */
 	DRIVER( macross2 )	/* (c) 1993 Banpresto */
 	DRIVER( bjtwin )	/* (c) 1993 NMK */
