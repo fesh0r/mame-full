@@ -67,30 +67,6 @@ LPTSTR get_mess_output(void);
 #define WINCE_EMULATION
 #endif
 
-// --------------------------------------------------------------------------
-// GAPI stuff
-//
-// Because the morons who wrote GAPI did not understand that not everybody
-// uses C++
-
-struct gx_display_properties
-{
-	DWORD cxWidth;
-	DWORD cyHeight;
-	long cbxPitch;
-	long cbyPitch;
-	long cBPP;
-	DWORD ffFormat;
-};
-
-int gx_open_input(void);
-int gx_close_input(void);
-int gx_open_display(HWND hWnd, int *rsrc_shift, int *gsrc_shift, int *bsrc_shift, int *rdest_shift, int *gdest_shift, int *bdest_shift);
-int gx_close_display(void);
-void gx_blit(struct mame_bitmap *bitmap, int update, int orientation, UINT32 *palette_16bit_lookup, UINT32 *palette_32bit_lookup);
-void gx_suspend(void);
-void gx_resume(void);
-
 #ifdef __cplusplus
 };
 #endif

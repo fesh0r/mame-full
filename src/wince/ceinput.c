@@ -12,6 +12,7 @@
 #include "rc.h"
 #include "mamece.h"
 #include "..\windows\window.h"
+#include "invokegx.h"
 
 #define NUMKEYSTATES    256
 

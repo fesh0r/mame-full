@@ -232,8 +232,7 @@ LIBS = \
 	corelibc.lib \
 	aygshell.lib \
 	commctrl.lib \
-	uuid.lib \
-	gx.lib
+	uuid.lib
 
 ifdef DX_LIBPATH
 LDFLAGS += -LIBPATH:$(subst \,\\,$(DX_LIBPATH))

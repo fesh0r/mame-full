@@ -14,6 +14,10 @@
 #include "utils.h"
 #include "strconv.h"
 
+#ifdef UNDER_CE
+#include "invokegx.h"
+#endif
+
 //============================================================
 //	These defines are necessary because the MinGW headers do
 //	not have the latest definitions

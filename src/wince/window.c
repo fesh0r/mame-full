@@ -26,6 +26,10 @@
 #include "mamedbg.h"
 #include "../window.h"
 
+#ifdef UNDER_CE
+#include "invokegx.h"
+#endif
+
 #ifdef MESS
 #include "menu.h"
 #endif
@@ -494,8 +498,43 @@ int win_init_window(void)
 	update_system_menu();
 
 #ifdef UNDER_CE
-	gx_open_display(win_video_window, &win_color16_rsrc_shift, &win_color16_gsrc_shift, &win_color16_bsrc_shift,
-		&win_color16_rdst_shift, &win_color16_gdst_shift, &win_color16_bdst_shift);
+	{
+		struct GXDisplayProperties properties;
+		int r = 0, g = 0, b = 0;
+
+		gx_open_display(win_video_window, GX_FULLSCREEN);
+		gx_get_display_properties(&properties);
+
+		if (properties.ffFormat & kfDirect444)
+		{
+			r = 4;
+			g = 4;
+			b = 4;
+		}
+		else if (properties.ffFormat & kfDirect555)
+		{
+			r = 5;
+			g = 5;
+			b = 5;
+			
+		}
+		else if (properties.ffFormat & kfDirect565)
+		{
+			r = 5;
+			g = 6;
+			b = 5;
+		}
+		else {
+			/* ??? */
+		}
+
+		win_color16_rsrc_shift = 8 - r;
+		win_color16_gsrc_shift = 8 - g;
+		win_color16_bsrc_shift = 8 - b;
+		win_color16_rdst_shift = g + b;
+		win_color16_gdst_shift = b;
+		win_color16_bdst_shift = 0;
+	}
 #endif
 
 	return 0;

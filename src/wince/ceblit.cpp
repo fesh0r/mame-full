@@ -7,7 +7,6 @@
 // standard windows headers
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <gx.h>
 #include <math.h>
 #include <assert.h>
 
@@ -17,6 +16,7 @@
 #include "video.h"
 #include "window.h"
 #include "emitblit.h"
+#include "invokegx.h"
 
 
 //============================================================
@@ -286,7 +286,7 @@ extern "C" void ce_blit(struct mame_bitmap *bitmap, int orientation, const UINT3
 	int source_pitch, source_width, source_height;
 
 	if (display_properties.cxWidth == 0)
-		display_properties = GXGetDisplayProperties();
+		gx_get_display_properties(&display_properties);
 
 	source_bits = bitmap->base;
 	source_pitch = bitmap->rowbytes;
@@ -307,7 +307,7 @@ extern "C" void ce_blit(struct mame_bitmap *bitmap, int orientation, const UINT3
 		}
 	}
 
-	dest_bits = GXBeginDraw();
+	dest_bits = gx_begin_draw();
 	((blitter_func) (void *) current_blitter)(dest_bits, source_bits);
-	GXEndDraw();
+	gx_end_draw();
 }

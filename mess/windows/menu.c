@@ -21,6 +21,10 @@
 #include "utils.h"
 #include "sound/wave.h"
 
+#ifdef UNDER_CE
+#include "invokegx.h"
+#endif
+
 //============================================================
 //	IMPORTS
 //============================================================
