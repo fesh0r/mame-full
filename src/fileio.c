@@ -966,7 +966,7 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 #ifdef MESS
 			if (flags & FILEFLAG_ZIP_PATHS)
 			{
-				int path_info;
+				int path_info = PATH_NOT_FOUND;
 				const char *oldname = name;
 				const char *zipentryname;
 				char *newname = NULL;
