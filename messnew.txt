@@ -13,7 +13,8 @@ System Driver Changes:
 ----------------------
 - [DRAGON/COCO1-2-3] Fixed ROM loading so that ROMs are properly mirrored, and
   worked on improving the way that the CART signal is handled.  These changes
-  make many more cartridges work properly.  [Nate Woods]
+  make many more cartridges work properly.  Also, properly NOP'd invalid memory
+  areas, which prevented Arkanoid from running.  [Nate Woods]
 
 Other Changes:
 --------------

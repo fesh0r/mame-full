@@ -26,7 +26,7 @@ static MEMORY_READ_START( dragon32_readmem )
 	{ 0xff00, 0xff1f, pia_0_r },
 	{ 0xff20, 0xff3f, coco_pia_1_r },
 	{ 0xff40, 0xff5f, coco_cartridge_r },
-	{ 0xffc0, 0xffdf, MRA_NOP },
+	{ 0xff60, 0xffef, MRA_NOP },
 	{ 0xfff0, 0xffff, dragon_mapped_irq_r },
 MEMORY_END
 
@@ -37,7 +37,9 @@ static MEMORY_WRITE_START( dragon32_writemem )
 	{ 0xff00, 0xff1f, pia_0_w },
 	{ 0xff20, 0xff3f, pia_1_w },
 	{ 0xff40, 0xff5f, coco_cartridge_w },
+	{ 0xff60, 0xffbf, MWA_NOP },
 	{ 0xffc0, 0xffdf, sam_w },
+	{ 0xffe0, 0xffff, MWA_NOP },
 MEMORY_END
 
 static MEMORY_READ_START( d64_readmem )
@@ -46,7 +48,7 @@ static MEMORY_READ_START( d64_readmem )
 	{ 0xff00, 0xff1f, pia_0_r },
 	{ 0xff20, 0xff3f, coco_pia_1_r },
 	{ 0xff40, 0xff5f, coco_cartridge_r },
-	{ 0xffc0, 0xffdf, MRA_NOP },
+	{ 0xff60, 0xffef, MRA_NOP },
 	{ 0xfff0, 0xffff, dragon_mapped_irq_r },
 MEMORY_END
 
@@ -56,7 +58,9 @@ static MEMORY_WRITE_START( d64_writemem )
 	{ 0xff00, 0xff1f, pia_0_w },
 	{ 0xff20, 0xff3f, pia_1_w },
 	{ 0xff40, 0xff5f, coco_cartridge_w },
+	{ 0xff60, 0xffbf, MWA_NOP },
 	{ 0xffc0, 0xffdf, sam_w },
+	{ 0xffe0, 0xffff, MWA_NOP},
 MEMORY_END
 
 static MEMORY_READ_START( coco3_readmem )
@@ -72,11 +76,12 @@ static MEMORY_READ_START( coco3_readmem )
 	{ 0xff00, 0xff1f, pia_0_r },
 	{ 0xff20, 0xff3f, coco3_pia_1_r },
 	{ 0xff40, 0xff5f, coco_cartridge_r },
+	{ 0xff60, 0xff8f, MRA_NOP },
 	{ 0xff90, 0xff97, coco3_gime_r },
 	{ 0xff98, 0xff9f, coco3_gimevh_r },
 	{ 0xffa0, 0xffaf, coco3_mmu_r },
 	{ 0xffb0, 0xffbf, paletteram_r },
-	{ 0xffc0, 0xffdf, MRA_NOP },
+	{ 0xffc0, 0xffef, MRA_NOP },
 	{ 0xfff0, 0xffff, coco3_mapped_irq_r },
 MEMORY_END
 
@@ -101,11 +106,13 @@ static MEMORY_WRITE_START( coco3_writemem )
 	{ 0xff00, 0xff1f, pia_0_w },
 	{ 0xff20, 0xff3f, pia_1_w },
 	{ 0xff40, 0xff5f, coco_cartridge_w },
+	{ 0xff60, 0xff8f, MWA_NOP },
 	{ 0xff90, 0xff97, coco3_gime_w },
 	{ 0xff98, 0xff9f, coco3_gimevh_w },
 	{ 0xffa0, 0xffaf, coco3_mmu_w },
 	{ 0xffb0, 0xffbf, coco3_palette_w },
 	{ 0xffc0, 0xffdf, sam_w },
+	{ 0xffe0, 0xffff, MWA_NOP },
 MEMORY_END
 
 /* Dragon keyboard
