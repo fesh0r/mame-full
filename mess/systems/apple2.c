@@ -622,7 +622,7 @@ SYSTEM_CONFIG_START(apple2_common)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(apple2)
-//	CONFIG_IMPORT_FROM( apple2_common )
+	CONFIG_IMPORT_FROM( apple2_common )
 //	CONFIG_RAM				(4 * 1024)	/* Still unsupported? */
 //	CONFIG_RAM				(8 * 1024)	/* Still unsupported? */
 //	CONFIG_RAM				(12 * 1024)	/* Still unsupported? */
