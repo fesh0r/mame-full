@@ -146,7 +146,7 @@ extern READ_HANDLER ( apple2_slot7_r );
 /* machine/ap_disk2.c */
 extern void apple2_slot6_init(void);
 extern void apple2_slot6_stop(void);
-extern int	apple2_floppy_init(int id);
+extern int	apple2_floppy_init(int id, void *fp, int open_mode);
 extern void apple2_floppy_exit(int id);
 
 extern READ_HANDLER ( apple2_c0xx_slot6_r );

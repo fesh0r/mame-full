@@ -34,17 +34,13 @@ static void init_channelf(void)
 		mem[i] = i;
 }
 
-static int channelf_load_rom(int id)
+static int channelf_load_rom(int id, void *file, int open_mode)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
-    void *file;
 	int size;
 
-    if (!image_exists(IO_CARTSLOT, id))
+    if (file == NULL)
 		return INIT_PASS;
-	file = image_fopen_new(IO_CARTSLOT, id, NULL);
-	if (!file)
-		return INIT_FAIL;
 	size = osd_fread(file, &mem[0x0800], 0x0800);
 	osd_fclose(file);
 

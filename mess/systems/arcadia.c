@@ -269,24 +269,18 @@ ROM_START(vcg)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
-static int arcadia_init_cart(int id)
+static int arcadia_init_cart(int id, void *cartfile, int open_mode)
 {
-	void *cartfile;
 	UINT8 *rom = memory_region(REGION_CPU1);
 	int size;
 
-	if (!image_exists(IO_CARTSLOT, id))
+	if (cartfile == NULL)
 	{
 		printf("%s requires Cartridge!\n", Machine->gamedrv->name);
 		return INIT_FAIL;
 	}
 
 	memset(rom, 0, 0x8000);
-	if (!(cartfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
-	{
-		logerror("%s not found\n",image_filename(IO_CARTSLOT,id));
-		return INIT_FAIL;
-	}
 	size=osd_fsize(cartfile);
 
 	if (osd_fread(cartfile, rom, size)!=size) {

@@ -567,15 +567,11 @@ DRIVER_INIT( mekd2 )
 	}
 }
 
-int mekd2_rom_load(int id)
+int mekd2_rom_load(int id, void *file, int open_mode)
 {
 	const char magic[] = "MEK6800D2";
 	char buff[9];
-	void *file;
 
-	//if (name && name[0])
-	//{
-		file = image_fopen_new(IO_CARTSLOT, id, NULL);
 		if (file)
 		{
 			UINT16 addr, size;
@@ -595,7 +591,6 @@ int mekd2_rom_load(int id)
 				osd_fread(file, &RAM[addr++], 1);
 			osd_fclose(file);
 		}
-	//}
 
 	return 0;
 }

@@ -6,6 +6,8 @@
 
 /* ----------------------------------------------------------------------- */
 
+static void *image_fopen_new(int type, int id, int *effective_mode);
+
 #ifdef DEBUG
 #define GUARD_BYTES
 #endif
@@ -136,7 +138,7 @@ static void floppy_device_common_exit(int id)
 int image_load(int type, int id, const char *name)
 {
 	const struct IODevice *dev;
-	char *dupname;
+	char *newname;
 	struct image_info *img;
 	int err;
 
@@ -150,20 +152,39 @@ int image_load(int type, int id, const char *name)
 
 	if (name && *name)
 	{
-		dupname = image_strdup(type, id, name);
-		if (!dupname)
+		newname = image_strdup(type, id, name);
+		if (!newname)
 			return INIT_FAIL;
-
-		img->name = dupname;
 	}
+	else
+		newname = NULL;
+
+	img->name = newname;
 
 	if (images_is_running && (dev->reset_depth >= IO_RESET_CPU))
 		machine_reset();
 
 	if (dev->init)
 	{
-		err = dev->init(id);
-		if (err != INIT_PASS)
+		void *fp;
+		int effective_mode;
+		int err0 = INIT_PASS;
+
+		if ((dev->open_mode == OSD_FOPEN_NONE) || !image_exists(type, id))
+			fp = NULL;
+		else
+		{
+			fp = image_fopen_new(type, id, &effective_mode);
+			if (fp == NULL)
+			{
+				printf("Unable to open imge file %s\n", image_filename(type, id));
+				err0 = INIT_FAIL;
+			}
+		}
+		err = dev->init(id, fp, effective_mode);
+		if (err0 != INIT_PASS)
+			return err0;
+		else if (err != INIT_PASS)
 			return err;
 	}
 
@@ -323,7 +344,7 @@ void *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 	return file;
 }
 
-void *image_fopen_new(int type, int id, int *effective_mode)
+static void *image_fopen_new(int type, int id, int *effective_mode)
 {
 	void *fref;
 	int effective_mode_local;

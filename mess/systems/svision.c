@@ -380,23 +380,17 @@ ROM_END
  dd6a clear 0x2000 at ($57/58) (0x4000)
  */
 
-static int svision_load_rom(int id)
+static int svision_load_rom(int id, void *cartfile, int open_mode)
 {
-	void *cartfile;
 	UINT8 *rom = memory_region(REGION_CPU1);
 	int size;
 
-	if (!image_exists(IO_CARTSLOT, id))
+	if (cartfile == NULL)
 	{
 		printf("%s requires Cartridge!\n", Machine->gamedrv->name);
 		return 0;
 	}
 
-	if (!(cartfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
-	{
-		logerror("%s not found\n",image_filename(IO_CARTSLOT,id));
-		return 1;
-	}
 	size=osd_fsize(cartfile);
 	if (size>0x10000) {
 	    logerror("%s: size %d not yet supported\n",image_filename(IO_CARTSLOT,id), size);

@@ -334,7 +334,7 @@ WRITE16_HANDLER( intv_ram16_w )
 	intv_ram16[offset] = data&0xffff;
 }
 
-static int intv_load_rom_file(int id, int required)
+static int intv_load_rom_file(int id, void *romfile, int required)
 {
     int i;
 
@@ -350,9 +350,8 @@ static int intv_load_rom_file(int id, int required)
 	UINT8 low_byte;
 
 	UINT8 *memory = memory_region(REGION_CPU1);
-	void *romfile;
 
-	if (!image_exists(IO_CARTSLOT, id))
+	if (romfile == NULL)
 	{
 		if (required)
 		{
@@ -361,11 +360,6 @@ static int intv_load_rom_file(int id, int required)
 		}
 		else
 			printf("intvkbd legacy cartridge slot empty - ok\n");
-	}
-
-	if (!(romfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
-	{
-		return INIT_FAIL;
 	}
 
 	osd_fread(romfile,&temp,1);			/* header */
@@ -413,7 +407,7 @@ static int intv_load_rom_file(int id, int required)
 	return INIT_PASS;
 }
 
-int intv_load_rom(int id)
+int intv_load_rom(int id, void *fp, int open_mode)
 {
 	/* First, initialize these as empty so that the intellivision
 	 * will think that the playcable and keyboard are not attached */
@@ -427,7 +421,7 @@ int intv_load_rom(int id)
 	memory[0x7000<<1] = 0xff;
 	memory[(0x7000<<1)+1] = 0xff;
 
-	return intv_load_rom_file(id, 1);
+	return intv_load_rom_file(id, fp, 1);
 }
 
 /* Set Reset and INTR/INTRM Vector */
@@ -510,7 +504,7 @@ void init_intvkbd(void)
 {
 }
 
-int intvkbd_load_rom (int id)
+int intvkbd_load_rom (int id, void *romfile, int open_mode)
 {
 	if (id == 0) /* Legacy cartridge slot */
 	{
@@ -522,24 +516,17 @@ int intvkbd_load_rom (int id)
 		memory[0x4800<<1] = 0xff;
 		memory[(0x4800<<1)+1] = 0xff;
 
-		intv_load_rom_file(id, 0);
+		intv_load_rom_file(id, romfile, 0);
 	}
 
 	if (id == 1) /* Keyboard component cartridge slot */
 	{
-    	void *romfile;
-
 		UINT8 *memory = memory_region(REGION_CPU2);
 
-		if(!image_exists(IO_CARTSLOT, id))
+		if (romfile == NULL)
 		{
 			printf("intvkbd cartridge slot empty - ok\n");
 			return INIT_PASS;
-		}
-
-		if (!(romfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
-		{
-			return INIT_FAIL;
 		}
 
 		/* Assume an 8K cart, like BASIC */

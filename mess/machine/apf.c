@@ -15,7 +15,7 @@
 #include "image.h"
 
 #if 0
-int apf_cassette_init(int id)
+int apf_cassette_init(int id, void *fp, int open_mode)
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));
@@ -24,18 +24,15 @@ int apf_cassette_init(int id)
 }
 #endif
 
-int apf_cassette_init(int id)
+int apf_cassette_init(int id, void *file, int effective_mode)
 {
-	void *file;
 	struct wave_args wa;
-	int effective_mode;
 
 
-	if (!image_exists(IO_CASSETTE, id))
+	if (file == NULL)
 		return INIT_PASS;
 
 
-	file = image_fopen_new(IO_CASSETTE, id, & effective_mode);
 	if( file )
 	{
 		if (! is_effective_mode_create(effective_mode))
@@ -120,12 +117,12 @@ int apf_cassette_init(int id)
 }
 
 /* 256 bytes per sector, single sided, single density, 40 track  */
-int apfimag_floppy_init(int id)
+int apfimag_floppy_init(int id, void *fp, int open_mode)
 {
-	if (!image_exists(IO_FLOPPY, id))
+	if (fp == NULL)
 		return INIT_PASS;
 
-	if (basicdsk_floppy_init(id)==INIT_PASS)
+	if (basicdsk_floppy_init(id, fp, open_mode)==INIT_PASS)
 	{
 		basicdsk_set_geometry(id, 40, 1, 8, 256, 1, 0);
 		return INIT_PASS;

@@ -14,22 +14,17 @@ static struct
 }
 quick;
 
-int cbm_quick_init (int id)
+int cbm_quick_init (int id, void *fp, int open_mode)
 {
-	void *fp;
 	int read;
 	const char *cp;
 
 	memset (&quick, 0, sizeof (quick));
 
-	if (!image_exists(IO_QUICKLOAD, id))
+	if (fp == NULL)
 		return INIT_PASS;
 
 	quick.specified = 1;
-
-	fp = image_fopen_new(IO_QUICKLOAD, id, NULL);
-	if (!fp)
-		return INIT_FAIL;
 
 	quick.length = osd_fsize (fp);
 
@@ -199,9 +194,8 @@ static const struct IODevice *cbm_rom_find_device(void)
 	return device_find(Machine->gamedrv, IO_CARTSLOT);
 }
 
-int cbm_rom_init(int id)
+int cbm_rom_init(int id, void *fp, int open_mode)
 {
-	void *fp;
 	int i;
 	int size, j, read;
 	const char *cp;
@@ -213,7 +207,7 @@ int cbm_rom_init(int id)
 	    cbm_c64_exrom=-1;
 	}
 
-	if (!image_exists(IO_CARTSLOT, id))
+	if (fp == NULL)
 		return INIT_PASS;
 
 	for (i=0;(i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))&&(cbm_rom[i].size!=0);i++)
@@ -221,13 +215,6 @@ int cbm_rom_init(int id)
 	if (i>=sizeof(cbm_rom)/sizeof(cbm_rom[0])) return INIT_FAIL;
 
 	dev=cbm_rom_find_device();
-
-	fp = image_fopen_new(IO_CARTSLOT, id, NULL);
-	if (!fp)
-	{
-		logerror("%s file not found\n", image_filename(IO_CARTSLOT,id));
-		return INIT_FAIL;
-	}
 
 	size = osd_fsize (fp);
 

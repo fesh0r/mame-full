@@ -118,33 +118,25 @@ int cocovdk_encode_header(void *h, UINT8 tracks, UINT8 sides, UINT8 sec_per_trac
 }
 
 /* attempt to insert a disk into the drive specified with id */
-int cocovdk_floppy_init(int id)
+int cocovdk_floppy_init(int id, void *image_file, int open_mode)
 {
-	const char			*name = image_filename(IO_FLOPPY, id);
 	int					result = INIT_FAIL, read = 0;
-	void				*image_file;
 	struct vdk_header	hdr;
 
-	/* do we have an image name ? */
-	if (!name || !name[0])
+	/* do we have an image? */
+	if (image_file == NULL)
 	{
 		return INIT_FAIL;
 	}
-	image_file = image_fopen_custom(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
-	if( !image_file )
+	if (is_effective_mode_create(open_mode))
 	{
-		image_file = image_fopen_custom(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
-		if( !image_file )
-		{
-			/* VDK creation not supported */
-			logerror("VDK disk creation not supported");
-			return INIT_FAIL;
-		}
+		/* VDK creation not supported */
+		logerror("VDK disk creation not supported");
+		return INIT_FAIL;
 	}
 
 	osd_fseek(image_file, 0, SEEK_SET);
 	read = osd_fread(image_file, &hdr, sizeof( struct vdk_header ) );
-	osd_fclose( image_file );
 	
 	if( read != 0 )
 	{
@@ -158,7 +150,7 @@ int cocovdk_floppy_init(int id)
 
 		if( result == INIT_PASS )
 		{
-			result = basicdsk_floppy_init(id);
+			result = basicdsk_floppy_init(id, image_file, open_mode);
 			if( result == INIT_PASS )
 				basicdsk_set_geometry(id, tracks, sides, sec_per_track, sector_length, 1, offset);			
 		}

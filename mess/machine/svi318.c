@@ -41,20 +41,18 @@ static int svi318_verify_cart (UINT8 magic[2])
 
 
 
-int svi318_load_rom (int id)
+int svi318_load_rom (int id, void *f, int open_mode)
 {
-	void *f;
 	UINT8 *p;
 	int size;
 
 	/* A cartridge isn't strictly mandatory */
-	if (!image_exists(IO_CARTSLOT, id))
+	if (f == NULL)
 	{
 		logerror("SVI318 - warning: no cartridge specified!\n");
 		return INIT_PASS;
 	}
 
-	f = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if (f)
 	{
 		p = malloc (0x8000);
@@ -600,24 +598,21 @@ static int check_svi_cas (void *f)
     return ret;
 	}
 
-int svi318_cassette_init(int id)
+int svi318_cassette_init(int id, void *file, int open_mode)
 	{
-    void *file;
 	int ret;
-	int effective_mode;
 
 
    	/* A cassette isn't mandatory */
-	if (!image_exists(IO_CASSETTE, id))
+	if (file == NULL)
 	{
 		logerror("SVI318 - warning: no cassette specified!\n");
 		return INIT_PASS;
 	}
 
-	file = image_fopen_new(IO_CASSETTE, id, & effective_mode);
 	if( file )
 	{
-		if (! is_effective_mode_create(effective_mode))
+		if (! is_effective_mode_create(open_mode))
 		{
 			struct wave_args wa = {0,};
 			wa.file = file;

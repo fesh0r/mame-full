@@ -83,15 +83,14 @@ void apple2_slot6_stop (void)
 	apple2_floppy_exit(1);
 }
 
-int apple2_floppy_init(int id)
+int apple2_floppy_init(int id, void *f, int open_mode)
 {
-    void *f;
 	int t, s;
 	int pos;
 	int volume;
 	int i;
 
-	if (!image_exists(IO_FLOPPY, id))
+	if (f == NULL)
 		return INIT_PASS;
 
     a2_drives[id].data = malloc (NIBBLE_SIZE*16*TOTAL_TRACKS);
@@ -107,13 +106,6 @@ int apple2_floppy_init(int id)
 	a2_drives[id].volume = volume = 254;
 	a2_drives[id].bytepos = 0;
 	a2_drives[id].trackpos = 0;
-
-	f = image_fopen_new(IO_FLOPPY, id, NULL);
-	if (f==NULL)
-	{
-		logerror("Couldn't open image.\n");
-		return INIT_FAIL;
-	}
 
 	for (t = 0; t < TOTAL_TRACKS; t ++)
 	{

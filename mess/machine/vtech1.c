@@ -256,16 +256,11 @@ static int fill_wave(INT16 *buffer, int length, UINT8 *code)
     return BYTESAMPLES;
 }
 
-int vtech1_cassette_init(int id)
+int vtech1_cassette_init(int id, void *file, int open_mode)
 {
-	void *file;
-	int effective_mode;
-
-
-	file = image_fopen_new(IO_CASSETTE, id, & effective_mode);
 	if( file )
 	{
-		if (! is_effective_mode_create(effective_mode))
+		if (! is_effective_mode_create(open_mode))
 		{
 			struct wave_args wa = {0,};
 			wa.file = file;
@@ -369,12 +364,9 @@ int vtech1_snapshot_id(int id)
 }
 */
 
-int vtech1_snapshot_init(int id)
+int vtech1_snapshot_init(int id, void *file, int open_mode)
 {
-	void *file;
-
 	logerror("VTECH snapshot_init\n");
-    file = image_fopen_new(IO_SNAPSHOT, id, NULL);
     if( file )
 	{
 		vtech1_snapshot_size = osd_fsize(file);
@@ -419,12 +411,10 @@ int vtech1_floppy_id(int id)
 }
 */
 
-int vtech1_floppy_init(int id)
+int vtech1_floppy_init(int id, void *fp, int open_mode)
 {
-	int effective_mode;
-
-	vtech1_fdc_file[id] = image_fopen_new(IO_FLOPPY, id, &effective_mode);
-	if ((vtech1_fdc_file[id]) && is_effective_mode_writable(effective_mode))
+	vtech1_fdc_file[id] = fp;
+	if ((vtech1_fdc_file[id]) && is_effective_mode_writable(open_mode))
 		vtech1_fdc_wrprot[id] = 0x00;
 	else
 		vtech1_fdc_wrprot[id] = 0x80;

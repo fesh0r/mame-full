@@ -77,18 +77,15 @@ READ_HANDLER (uk101_acia0_statin )
 
 /* || */
 
-int	uk101_init_cassette(int id)
+int	uk101_init_cassette(int id, void *file, int open_mode)
 {
-	void	*file;
-
 	/* a cassette for the uk101 isnt needed */
-	if (!image_exists(IO_CASSETTE,id))
+	if (file == NULL)
 	{
 			logerror("UK101/Superboard - warning: no cassette specified!\n");
 			return INIT_PASS;
 	}                                                                                                                                     
 
-	file = image_fopen_new(IO_CASSETTE, id, NULL);
 	if (file)
 	{
 		uk101_tape_size = osd_fsize(file);

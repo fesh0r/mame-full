@@ -286,9 +286,8 @@ static void lynx_crc_keyword(int io_device, int id)
 }
 
 
-static int lynx_init_cart(int id)
+static int lynx_init_cart(int id, void *cartfile, int open_mode)
 {
-	void *cartfile;
 	UINT8 *rom = memory_region(REGION_USER1);
 	int size;
 	UINT8 header[0x40];
@@ -300,14 +299,9 @@ static int lynx_init_cart(int id)
    22 chars manufacturer
 */
 
-	if (!image_exists(IO_CARTSLOT, id))
+	if (cartfile == NULL)
 		return 0;
 
-	if (!(cartfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
-	{
-		logerror("%s not found\n",image_filename(IO_CARTSLOT,id));
-		return 1;
-	}
 	size=osd_fsize(cartfile);
 	if (osd_fread(cartfile, header, 0x40)!=0x40) {
 		logerror("%s load error\n",image_filename(IO_CARTSLOT,id));
@@ -340,23 +334,17 @@ static int lynx_init_cart(int id)
 	return 0;
 }
 
-static int lynx_quickload(int id)
+static int lynx_quickload(int id, void *cartfile, int open_mode)
 {
-	void *cartfile;
 	UINT8 *rom = memory_region(REGION_CPU1);
 	int size;
 	UINT8 header[10]; // 80 08 dw Start dw Len B S 9 3
 	// maybe the first 2 bytes must be used to identify the endianess of the file
 	UINT16 start;
 
-	if (!image_exists(IO_QUICKLOAD, id))
+	if (cartfile == NULL)
 		return 0;
 
-	if (!(cartfile = image_fopen_new(IO_QUICKLOAD, id, NULL)))
-	{
-		logerror("%s not found\n",image_filename(IO_QUICKLOAD,id));
-		return 1;
-	}
 	size=osd_fsize(cartfile);
 
 	if (osd_fread(cartfile, header, sizeof(header))!=sizeof(header)) {
@@ -404,7 +392,8 @@ static DRIVER_INIT( lynx )
 
 	for (i=0; i<256; i++)
 		gfx[i]=i;
-	lynx_quickload(0);
+	// R. Nabet: what on earth is the purpose of this???
+	lynx_quickload(0, NULL, OSD_FOPEN_NONE);
 }
 
 /*    YEAR  NAME      PARENT    MACHINE	INPUT	INIT	CONFIG	MONITOR	COMPANY   FULLNAME */

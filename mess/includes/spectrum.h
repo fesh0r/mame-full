@@ -1,4 +1,4 @@
-extern int  spectrum_snap_load(int id);
+extern int  spectrum_snap_load(int id, void *fp, int open_mode);
 extern void spectrum_snap_exit(int id);
 
 extern int  load_snap(void);
@@ -15,23 +15,23 @@ TIMEX_CART_TYPE;
 extern TIMEX_CART_TYPE timex_cart_type;
 extern UINT8 timex_cart_chunks;
 extern UINT8 * timex_cart_data;
-extern int  spectrum_cart_load(int id);
+extern int  spectrum_cart_load(int id, void *fp, int open_mode);
 extern void spectrum_cart_exit(int id);
 
-extern int  timex_cart_load(int id);
+extern int  timex_cart_load(int id, void *fp, int open_mode);
 extern void timex_cart_exit(int id);
 extern void ts2068_update_memory(void);
 
 extern MACHINE_INIT( spectrum );
 
-extern int  spec_quick_init (int id);
+extern int  spec_quick_init (int id, void *fp, int open_mode);
 extern void spec_quick_exit (int id);
 extern int  spec_quick_open (int id, int mode, void *arg);
 
 /*-----------------27/02/00 10:49-------------------
  code for WAV reading writing
 --------------------------------------------------*/
-extern int spectrum_cassette_init(int);
+extern int spectrum_cassette_init(int, void *fp, int open_mode);
 extern void spectrum_cassette_exit(int);
 
 extern int spectrum_128_port_7ffd_data;

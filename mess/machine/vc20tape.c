@@ -1118,7 +1118,7 @@ void c16_tape_open (void)
 	prg.c16 = 1;
 }
 
-int vc20_tape_attach_image (int id)
+int vc20_tape_attach_image (int id, void *fp, int open_mode)
 {
 	const char *cp;
 

@@ -810,9 +810,9 @@ static struct cassette_args mz700_cassette_args =
 	0												/* create_smpfreq */
 };
 
-int mz700_cassette_init(int id)
+int mz700_cassette_init(int id, void *fp, int open_mode)
 {
-	return cassette_init(id, &mz700_cassette_args);
+	return cassette_init(id, fp, open_mode, &mz700_cassette_args);
 }
 
 /******************************************************************************

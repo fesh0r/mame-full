@@ -116,20 +116,14 @@ int cbm_drive_attach_fs (int id)
 	return 0;
 }
 
-static int d64_open (int id)
+static int d64_open (int id, void *in)
 {
-	void *in;
 	int size;
 
 	memset (&(cbm_drive[id].d.d64), 0, sizeof (cbm_drive[id].d.d64));
 
 	cbm_drive[id].d.d64.image_type = IO_FLOPPY;
 	cbm_drive[id].d.d64.image_id = id;
-	if (!(in = image_fopen_new(IO_FLOPPY, id, NULL)))
-	{
-		logerror(" image %s not found\n", image_filename(IO_FLOPPY,id));
-		return 1;
-	}
 	size = osd_fsize (in);
 	if (!(cbm_drive[id].d.d64.image = (UINT8*)malloc (size)))
 	{
@@ -152,7 +146,7 @@ static int d64_open (int id)
 }
 
 /* open an d64 image */
-int cbm_drive_attach_image (int id)
+int cbm_drive_attach_image (int id, void *fp, int open_mode)
 {
 #if 1
 	if (!image_exists(IO_FLOPPY, id))
@@ -163,7 +157,7 @@ int cbm_drive_attach_image (int id)
 
 	}
 #endif
-	return d64_open (id);
+	return d64_open (id, fp);
 }
 
 

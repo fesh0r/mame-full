@@ -46,14 +46,12 @@ cylinder apexc_cylinder;
 /*
 	Open cylinder image and read RAM
 */
-static int apexc_cylinder_init(int id)
+static int apexc_cylinder_init(int id, void *fp, int open_mode)
 {
-	int effective_mode;
-
 	/* open file */
-	apexc_cylinder.fd = image_fopen_new(IO_CYLINDER, id, & effective_mode);
+	apexc_cylinder.fd = fp;
 	/* tell whether the image is writable */
-	apexc_cylinder.writable = (apexc_cylinder.fd) && is_effective_mode_writable(effective_mode);
+	apexc_cylinder.writable = (apexc_cylinder.fd) && is_effective_mode_writable(open_mode);
 
 	if (apexc_cylinder.fd)
 	{	/* load RAM contents */
@@ -160,7 +158,7 @@ tape apexc_tapes[2];
 /*
 	Open a tape image
 */
-static int apexc_tape_init(int id)
+static int apexc_tape_init(int id, void *fp, int open_mode)
 {
 	tape *t = &apexc_tapes[id];
 

@@ -116,18 +116,15 @@ WRITE_HANDLER (	nascom1_port_01_w )
 {
 }
 
-int	nascom1_init_cassette(int id)
+int	nascom1_init_cassette(int id, void *file, int open_mode)
 {
-	void	*file;
-
 	/* a cassette for the nascom1 isnt needed */
-	if (!image_exists(IO_CASSETTE, id))
+	if (file == NULL)
 	{
 		logerror("Namcom - warning: no cassette specified!\n");
 		return INIT_PASS;
 	}
 
-	file = image_fopen_custom(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if (file)
 	{
 		nascom1_tape_size = osd_fsize(file);
@@ -172,9 +169,8 @@ int	nascom1_read_cassette(void)
    Note <addr> and <byte> are in hex.
 */
 
-int	nascom1_init_cartridge(int id)
+int	nascom1_init_cartridge(int id, void *file)
 {
-	void	*file;
 	int		done;
 	char	fileaddr[5];
 	/* int	filebyt1, filebyt2, filebyt3, filebyt4;
@@ -183,7 +179,6 @@ int	nascom1_init_cartridge(int id)
 
 	return (1);
 
-	file = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if (file)
 	{
 		done = 0;

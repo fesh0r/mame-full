@@ -66,7 +66,7 @@ typedef int bool;
 #endif
 #endif
 
-int cbm_quick_init (int id);
+int cbm_quick_init (int id, void *fp, int open_mode);
 /* pet with basic 1 */
 int cbm_pet1_quick_open (int id, int mode, void *arg);
 int cbm_pet_quick_open (int id, int mode, void *arg);
@@ -203,7 +203,7 @@ int cbm_c65_quick_open (int id, int mode, void *arg);
 
 /* use to functions to parse, load the rom images into memory
    and then use the cbm_rom var */
-int cbm_rom_init(int id);
+int cbm_rom_init(int id, void *fp, int open_mode);
 void cbm_rom_exit(int id);
 
 typedef struct {

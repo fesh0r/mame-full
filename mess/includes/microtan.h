@@ -28,12 +28,12 @@ extern UINT8 *microtan_chunky_buffer;
 extern void init_microtan(void);
 extern MACHINE_INIT( microtan );
 
-extern int microtan_cassette_init(int id);
+extern int microtan_cassette_init(int id, void *fp, int open_mode);
 
-extern int microtan_snapshot_init(int id);
+extern int microtan_snapshot_init(int id, void *fp, int open_mode);
 extern void microtan_snapshot_exit(int id);
 
-extern int microtan_hexfile_init(int id);
+extern int microtan_hexfile_init(int id, void *fp, int open_mode);
 extern void microtan_hexfile_exit(int id);
 
 extern INTERRUPT_GEN( microtan_interrupt );

@@ -348,15 +348,13 @@ static void mwa_bank(int bank, int offs, int data)
     }
 }
 
-int laser_rom_init(int id)
+int laser_rom_init(int id, void *file, int open_mode)
 {
 	int size = 0;
-    void *file;
 
-	if (!image_exists(IO_CARTSLOT,id))
+	if (file == NULL)
 		return INIT_PASS;
 
-	file = image_fopen_new(IO_CARTSLOT, id, NULL);
     if( file )
     {
 		size = osd_fread(file, &mem[0x30000], 0x10000);
@@ -514,19 +512,14 @@ int laser_cassette_verify (UINT8 buff[])
 }
 */
 
-int laser_cassette_init(int id)
+int laser_cassette_init(int id, void *file, int open_mode)
 {
-	void *file;
-	int effective_mode;
-
-
-	if (!image_exists(IO_CASSETTE, id))
+	if (file == NULL)
 		return INIT_PASS;
 
-	file = image_fopen_new(IO_CASSETTE, id, & effective_mode);
 	if( file )
 	{
-		if (! is_effective_mode_create(effective_mode))
+		if (! is_effective_mode_create(open_mode))
 		{
 			struct wave_args wa = {0,};
 			wa.file = file;
@@ -556,12 +549,11 @@ int laser_cassette_init(int id)
     return INIT_FAIL;
 }
 
-int laser_floppy_init(int id)
+int laser_floppy_init(int id, void *file, int open_mode)
 {
-	void *file;
 	UINT8 buff[32];
 
-	if (!image_exists(IO_FLOPPY, id))
+	if (file == NULL)
 	{
 		flop_specified[id] = 0;
 		return INIT_PASS;
@@ -569,7 +561,6 @@ int laser_floppy_init(int id)
 	else
 		flop_specified[id] = 1;
 
-	file = image_fopen_new(IO_FLOPPY, id, NULL);
     if( file )
     {
         osd_fread(file, buff, sizeof(buff));

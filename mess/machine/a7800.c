@@ -148,9 +148,8 @@ static int a7800_verify_cart(char header[128])
 	return IMAGE_VERIFY_PASS;
 }
 
-static int a7800_init_cart_cmn(int id)
+static int a7800_init_cart_cmn(int id, void *cartfile)
 {
-	void *cartfile = NULL;
 	long len,start;
 	unsigned char header[128];
 
@@ -166,19 +165,11 @@ static int a7800_init_cart_cmn(int id)
 	cpu_setbank( 4, ROM + 0xC000 );
 
 	/* A cartridge is mandatory, since it doesnt do much without one */
-	if (!image_exists(IO_CARTSLOT, id))
+	if (cartfile == NULL)
 	{
 		if( !a7800_ispal )
 		{
 			logerror("A7800 - no cartridge specified!\n");
-			return INIT_FAIL;
-		}
-	}
-	else
-	{
-		if(!(cartfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
-		{
-			logerror("A7800 - Unable to locate cartridge: %s\n", image_filename(IO_CARTSLOT,id));
 			return INIT_FAIL;
 		}
 	}
@@ -319,16 +310,16 @@ static int a7800_init_cart_cmn(int id)
 	return 0;
 }
 
-int a7800_init_cart( int id )
+int a7800_init_cart(int id, void *cartfile, int open_mode)
 {
 	a7800_ispal = 0;
-	return a7800_init_cart_cmn( id );
+	return a7800_init_cart_cmn(id, cartfile);
 }
 
-int a7800p_init_cart( int id )
+int a7800p_init_cart(int id, void *cartfile, int open_mode)
 {
 	a7800_ispal = 1;
-	return a7800_init_cart_cmn( id );
+	return a7800_init_cart_cmn(id, cartfile);
 }
 
 

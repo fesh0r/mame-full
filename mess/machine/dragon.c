@@ -366,11 +366,8 @@ static void pak_load_trailer_callback(int param)
 	pak_load_trailer(&trailer);
 }
 
-static int generic_pak_load(int id, UINT8 *rambase, UINT8 *rombase, UINT8 *pakbase)
+static int generic_pak_load(int id, void *fp, UINT8 *rambase, UINT8 *rombase, UINT8 *pakbase)
 {
-	void *fp;
-
-	fp = image_fopen_new(IO_SNAPSHOT, id, NULL);
 	if (fp)
 	{
 		int paklength;
@@ -458,16 +455,16 @@ static int generic_pak_load(int id, UINT8 *rambase, UINT8 *rombase, UINT8 *pakba
 	return INIT_PASS;
 }
 
-int coco_pak_load(int id)
+int coco_pak_load(int id, void *fp, int open_mode)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
-	return generic_pak_load(id, mess_ram, &ROM[0], &ROM[0x4000]);
+	return generic_pak_load(id, fp, mess_ram, &ROM[0], &ROM[0x4000]);
 }
 
-int coco3_pak_load(int id)
+int coco3_pak_load(int id, void *fp, int open_mode)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
-	return generic_pak_load(id, mess_ram + (0x70000 % mess_ram_size), &ROM[0x0000], &ROM[0xc000]);
+	return generic_pak_load(id, fp, mess_ram + (0x70000 % mess_ram_size), &ROM[0x0000], &ROM[0xc000]);
 }
 
 /***************************************************************************
@@ -477,15 +474,13 @@ int coco3_pak_load(int id)
   be used in place of PAK files, when possible
 ***************************************************************************/
 
-static int generic_rom_load(int id, UINT8 *dest, UINT16 destlength)
+static int generic_rom_load(int id, void *fp, UINT8 *dest, UINT16 destlength)
 {
 	UINT8 *rombase;
 	int   romsize;
-	void *fp;
 
 	cart_inserted = 0;
 
-	fp = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if (fp) {
 
 		romsize = osd_fsize(fp);
@@ -529,31 +524,29 @@ static int generic_rom_load(int id, UINT8 *dest, UINT16 destlength)
 	return INIT_PASS;
 }
 
-int coco_rom_load(int id)
+int coco_rom_load(int id, void *fp, int open_mode)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
-	return generic_rom_load(id, &ROM[0x4000], 0x4000);
+	return generic_rom_load(id, fp, &ROM[0x4000], 0x4000);
 }
 
-int coco3_rom_load(int id)
+int coco3_rom_load(int id, void *fp, int open_mode)
 {
 	UINT8 	*ROM = memory_region(REGION_CPU1);
 	int		count;
-	void	*fp;
 
-	fp = image_fopen_new(IO_CARTSLOT, 0, NULL);
 	count = count_bank();
 	if (fp)
-		osd_fclose(fp);
+		osd_fseek(fp, 0, SEEK_SET);
 
 	if( count == 0 )
 		/* Load roms starting at 0x8000 and mirror upwards. */
 		/* ROM size is 32K max */
-		return generic_rom_load(id, &ROM[0x8000], 0x8000);
+		return generic_rom_load(id, fp, &ROM[0x8000], 0x8000);
 	else
 		/* Load roms starting at 0x8000 and mirror upwards. */
 		/* ROM bank is 16K max */
-		return generic_rom_load(id, &ROM[0x8000], 0x4000);
+		return generic_rom_load(id, fp, &ROM[0x8000], 0x4000);
 }
 
 /***************************************************************************
@@ -1942,9 +1935,9 @@ static struct cassette_args coco_cassette_args =
 	19200											/* create_smpfreq */
 };
 
-int coco_cassette_init(int id)
+int coco_cassette_init(int id, void *fp, int open_mode)
 {
-	return cassette_init(id, &coco_cassette_args);
+	return cassette_init(id, fp, open_mode, &coco_cassette_args);
 }
 
 /***************************************************************************
@@ -2051,7 +2044,7 @@ static void generic_setcartbank(int bank, UINT8 *cartpos)
 	if (count_bank() > 0) {
 		/* Pin variable to proper bit width */
 		bank &= count_bank();
-		fp = image_fopen_new(IO_CARTSLOT, 0, NULL);
+		fp = image_fopen_custom(IO_CARTSLOT, 0, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 		if (fp) {
 			if (bank)
 				osd_fseek(fp, 0x4000 * bank, SEEK_SET);

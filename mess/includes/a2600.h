@@ -11,5 +11,5 @@ extern READ_HANDLER  ( a2600_bs_r );
 
 extern MACHINE_INIT( a2600 );
 extern MACHINE_STOP( a2600 );
-extern int  a2600_load_rom(int id);
+extern int  a2600_load_rom(int id, void *cartfile, int open_mode);
 extern READ_HANDLER ( a2600_ROM_r );

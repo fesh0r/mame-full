@@ -485,9 +485,8 @@ static int sms_verify_cart(char * magic, int size) {
 	return retval;
 }
 
-int sms_init_cart(int id) {
+int sms_init_cart(int id, void *handle, int open_mode) {
 	int size;
-	void *handle;
 	UINT8 *USER_RAM, *RAM;
 
 	if (!strcmp(Machine->gamedrv->name, "sms")) {
@@ -542,7 +541,7 @@ int sms_init_cart(int id) {
 	}
 
 	/* Ensure filename was specified */
-	if (!image_exists(IO_CARTSLOT, id)) {
+	if (handle == NULL) {
 		switch (systemType) {
 			case CONSOLE_SMS_U_V13:
 			case CONSOLE_SMS_E_V13:
@@ -574,13 +573,6 @@ int sms_init_cart(int id) {
 				return (INIT_FAIL);
 		}
 	} else {
-		/* Get handle to the rom */
-		handle = image_fopen_new(IO_CARTSLOT, id, NULL);
-		if (handle == NULL) {
-			logerror("Cannot open cartridge for read operation!\n");
-			return (INIT_FAIL);
-		}
-
 		/* Get file size */
 		size = osd_fsize(handle);
 

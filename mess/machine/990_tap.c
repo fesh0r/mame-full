@@ -109,10 +109,9 @@ static tpc_t tpc;
 /*
 	Open a tape image
 */
-int ti990_tape_init(int id)
+int ti990_tape_init(int id, void *fp, int open_mode)
 {
 	tape_unit_t *t;
-	int effective_mode;
 
 
 	if ((id < 0) || (id >= MAX_TAPE_UNIT))
@@ -121,15 +120,13 @@ int ti990_tape_init(int id)
 	t = &tpc.t[id];
 	memset(t, 0, sizeof(*t));
 
-	if (!image_exists(IO_CASSETTE, id))
+	if (fp == NULL)
 		return INIT_PASS;
 
 	/* open file */
-	t->fd = image_fopen_new(IO_CASSETTE, id, & effective_mode);
-	if (! t->fd)
-		goto error;
+	t->fd = fp;
 	/* tell whether the image is writable */
-	t->wp = ! ((t->fd) && is_effective_mode_writable(effective_mode));
+	t->wp = ! ((t->fd) && is_effective_mode_writable(open_mode));
 
 	t->bot = 1;
 

@@ -1323,23 +1323,17 @@ MACHINE_INIT( a2600 )
   Cartridge Loading
 
 ***************************************************************************/
-int a2600_load_rom(int id)
+int a2600_load_rom(int id, void *cartfile, int open_mode)
 {
-	void *cartfile;
 	UINT8 *ROM = memory_region(REGION_CPU1);
 
-	if (!image_exists(IO_CARTSLOT, id))
+	if (cartfile == NULL)
 	{
 		printf("a2600 Requires Cartridge!\n");
 		return INIT_FAIL;
 	}
 
 	/* A cartridge isn't strictly mandatory, but it's recommended */
-	cartfile = NULL;
-	if (!(cartfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
-	{
-		return 1;
-	}
 
 	a2600_cartridge_rom = &(ROM[0x10000]);	/* Load the cart outside the cpuspace for b/s purposes */
 

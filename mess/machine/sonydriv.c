@@ -1313,11 +1313,10 @@ static void sony_doaction(void)
 	the allowablesizes tells which formats should be supported
 	(single-sided and double-sided 3.5'' GCR)
 */
-int sony_floppy_init(int id, int allowablesizes)
+int sony_floppy_init(int id, void *fp, int open_mode, int allowablesizes)
 {
 	floppy *f;
 	long image_len=0;
-	int effective_mode;
 
 
 	f = &sony_floppy[id];
@@ -1327,15 +1326,13 @@ int sony_floppy_init(int id, int allowablesizes)
 	f->ext_speed_control = (allowablesizes & SONY_FLOPPY_EXT_SPEED_CONTROL) ? 1 : 0;
 	f->drive_sides = (allowablesizes & SONY_FLOPPY_ALLOW800K) ? 1 : 0;
 
-	if (!image_exists(IO_FLOPPY, id))
+	if (fp == NULL)
 		return INIT_PASS;
 
 	/* open file */
-	f->fd = image_fopen_new(IO_FLOPPY, id, & effective_mode);
-	if (! f->fd)
-		goto error;
+	f->fd = fp;
 	/* tell whether the image is writable */
-	f->wp = ! ((f->fd) && is_effective_mode_writable(effective_mode));
+	f->wp = ! (is_effective_mode_writable(open_mode));
 
 
 	/* R. Nabet : added support for the diskcopy format to allow exchanges with real-world macs */

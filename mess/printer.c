@@ -9,18 +9,9 @@
 
 static void *prn_ports[MAX_PRINTER]= { 0 };
 
-int printer_init (int id)
+int printer_init(int id, void *fp, int open_mode)
 {
-	void *f;
-
-	if (!image_exists(IO_PRINTER, id))
-		return 0;
-
-	f = image_fopen_new(IO_PRINTER, id, NULL);
-	if (!f)
-		return INIT_FAIL;
-
-	prn_ports[id] = f;
+	prn_ports[id] = fp;
 	return INIT_PASS;
 }
 

@@ -28,25 +28,19 @@ static int coleco_verify_cart (UINT8 *cartdata)
 	return retval;
 }
 
-int coleco_init_cart (int id)
+int coleco_init_cart (int id, void *cartfile, int open_mode)
 {
-    void *cartfile = NULL;
 	UINT8 *cartdata;
 	int init_result = INIT_FAIL;
 
 	/* A cartridge isn't strictly mandatory for the coleco */
-	if (!image_exists(IO_CARTSLOT, id))
+	if (cartfile == NULL)
 	{
 		logerror("Coleco - warning: no cartridge specified!\n");
 		return INIT_PASS;
 	}
 
 	/* Load the specified Cartridge File */
-	if (!(cartfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
-	{
-		logerror("Coleco - Unable to locate cartridge: %s\n",image_filename(IO_CARTSLOT,id) );
-		return INIT_FAIL;
-	}
 
 	/* All seems OK */
 	cartdata = memory_region(REGION_CPU1) + 0x8000;

@@ -91,7 +91,7 @@ typedef struct
 #define DMKSIDECOUNT( x )  ((x.diskOptions & 0x10) == 0) ? 1 : 0
 
 /* init */
-int     dmkdsk_floppy_init(int id);
+int     dmkdsk_floppy_init(int id, void *fp, int open_mode);
 /* exit and free up data */
 void    dmkdsk_floppy_exit(int id);
 

@@ -145,12 +145,12 @@ INLINE UINT32 get_bigendian_uint32(UINT8 *base)
 /*
 	Initialize hard disk unit and open a hard disk image
 */
-int ti990_hd_init(int id)
+int ti990_hd_init(int id, void *fp, int open_mode)
 {
 	hd_unit_t *d;
 	disk_image_header header;
 	int bytes_read;
-	int effective_mode;
+	//int effective_mode;
 
 
 	if ((id < 0) || (id >= MAX_DISK_UNIT))
@@ -159,15 +159,13 @@ int ti990_hd_init(int id)
 	d = &hdc.d[id];
 	memset(d, 0, sizeof(*d));
 
-	if (!image_exists(IO_HARDDISK, id))
+	if (fp == NULL)
 		return INIT_PASS;
 
 	/* open file */
-	d->fd = image_fopen_new(IO_HARDDISK, id, & effective_mode);
-	if (! d->fd)
-		goto error;
+	d->fd = fp;
 	/* tell whether the image is writable */
-	d->wp = ! ((d->fd) && is_effective_mode_writable(effective_mode));
+	d->wp = ! ((d->fd) && is_effective_mode_writable(open_mode));
 
 	d->unsafe = 1;
 	/* set attention line */

@@ -28,23 +28,15 @@ MACHINE_INIT( advision )
     advision_videoenable = 0;
 }
 
-int advision_load_rom (int id)
+int advision_load_rom(int id, void *cartfile, int open_mode)
 {
-	void *cartfile;
-
-	if (!image_exists(IO_CARTSLOT, id))
+	if (cartfile == NULL)
 	{
 		printf("%s requires Cartridge!\n", Machine->gamedrv->name);
 		return INIT_FAIL;
     }
 
     ROM = memory_region(REGION_CPU1);
-    cartfile = NULL;
-	if (!(cartfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
-	{
-		logerror("Advision - Unable to locate cartridge: %s\n",image_filename(IO_CARTSLOT,id) );
-		return 1;
-	}
 	osd_fread (cartfile, &ROM[0x0000], 4096);
     osd_fclose (cartfile);
 

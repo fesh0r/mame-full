@@ -20,27 +20,22 @@ static int common_length_spt_heads[][3] = {
     {36*2*80*512, 36, 2}};  /* 3 1/2 inch enhanced density */
 
 
-int pc_floppy_init(int id)
+int pc_floppy_init(int id, void *fp, int open_mode)
 {
-	if (basicdsk_floppy_init(id)==INIT_PASS)
+	if (basicdsk_floppy_init(id, fp, open_mode)==INIT_PASS)
 	{
 		int i;
 		int scl, spt,heads;
 
-		void *file;
-
-		file = image_fopen_custom(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
-		if (!file) return INIT_PASS;
-
 		/* find the sectors/track and bytes/sector values in the boot sector */
-		if( file )
+		if (fp)
 		{
 			int length;
 
 			/* tracks pre sector recognition with image size
 			works only 512 byte sectors! and 40 or 80 tracks*/
 			scl = heads = 2;
-			length=osd_fsize(file);
+			length=osd_fsize(fp);
 			if (length==0) { // new image created
 #if 0
 			    logerror("image with heads per track:%d, heads:%d, tracks:%d created\n", 9, 2, 40);
@@ -71,12 +66,12 @@ int pc_floppy_init(int id)
 				 * get info from boot sector.
 				 * not correct on all disks
 				 */
-				osd_fseek(file, 0x0c, SEEK_SET);
-				osd_fread(file, &scl, 1);
-				osd_fseek(file, 0x018, SEEK_SET);
-				osd_fread(file, &spt, 1);
-				osd_fseek(file, 0x01a, SEEK_SET);
-				osd_fread(file, &heads, 1);
+				osd_fseek(fp, 0x0c, SEEK_SET);
+				osd_fread(fp, &scl, 1);
+				osd_fseek(fp, 0x018, SEEK_SET);
+				osd_fread(fp, &spt, 1);
+				osd_fseek(fp, 0x01a, SEEK_SET);
+				osd_fread(fp, &heads, 1);
 				
 				if (scl*spt*heads*0x200!=length) { // seems neccessary for plain disk images
 				    logerror("image doesn't match boot sector param. length %d, sectors:%d, heads:%d, tracks:%d\n",

@@ -1560,15 +1560,15 @@ WRITE16_HANDLER ( mac_iwm_w )
 		iwm_w(offset >> 8, data & 0xff);
 }
 
-int mac_floppy_init(int id)
+int mac_floppy_init(int id, void *fp, int open_mode)
 {
 #if 0
 	if ((mac_model == model_Mac128k512k) && (id == 0))
 		/* on Mac 128k/512k, internal floppy is single sided */
-		return sony_floppy_init(id, SONY_FLOPPY_ALLOW400K);
+		return sony_floppy_init(id, fp, open_mode, SONY_FLOPPY_ALLOW400K);
 	else
 #endif
-		return sony_floppy_init(id, SONY_FLOPPY_ALLOW400K | SONY_FLOPPY_ALLOW800K);
+		return sony_floppy_init(id, fp, open_mode, SONY_FLOPPY_ALLOW400K | SONY_FLOPPY_ALLOW800K);
 }
 
 void mac_floppy_exit(int id)

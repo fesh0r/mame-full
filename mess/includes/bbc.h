@@ -32,7 +32,7 @@ WRITE_HANDLER ( memorybp3_w );
 WRITE_HANDLER ( memorybp3_128_w );
 WRITE_HANDLER ( memorybp4_128_w );
 
-int bbcb_load_rom(int id);
+int bbcb_load_rom(int id, void *fp, int open_mode);
 
 extern MACHINE_INIT( bbca );
 extern MACHINE_INIT( bbcb );
@@ -40,7 +40,7 @@ extern MACHINE_INIT( bbcb1770 );
 extern MACHINE_INIT( bbcbp );
 extern MACHINE_INIT( bbcb6502 );
 
-int bbc_floppy_init(int);
+int bbc_floppy_init(int, void *fp, int open_mode);
 
 void bbc_floppy_exit(int);
 void check_disc_status(void);

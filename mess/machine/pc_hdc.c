@@ -769,9 +769,9 @@ READ_HANDLER ( pc_HDC2_r ) { return pc_HDC_r(1, offset); }
  *		Port handlers.
  *
  *************************************/
-int pc_harddisk_init(int id)
+int pc_harddisk_init(int id, void *fp, int open_mode)
 {
-	pc_hdc_file[id] = image_fopen_new(IO_HARDDISK, id, NULL);
+	pc_hdc_file[id] = fp;
 
 	return INIT_PASS;
 }

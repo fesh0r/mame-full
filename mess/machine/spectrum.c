@@ -113,12 +113,8 @@ MACHINE_INIT( spectrum )
 	}
 }
 
-int spectrum_snap_load(int id)
+int spectrum_snap_load(int id, void *file, int open_mode)
 {
-	void *file;
-
-	file = image_fopen_new(IO_SNAPSHOT, id, NULL);
-
 	if (file)
 	{
 		int datasize;
@@ -1168,21 +1164,19 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
  SPECTRUM WAVE CASSETTE SUPPORT
 --------------------------------------------------*/
 
-int spectrum_cassette_init(int id)
+int spectrum_cassette_init(int id, void *fp, int open_mode)
 {
-	void *file;
 	struct cassette_args args;
 
-	if ((image_exists(IO_CASSETTE, id)) &&
-		!stricmp(image_filetype(IO_CASSETTE, id), "tap"))
+	if (fp && (! is_effective_mode_create(open_mode))
+			&& ! stricmp(image_filetype(IO_CASSETTE, id), "tap"))
 	{
 		int datasize;
 		unsigned char *data;
 
-		file = image_fopen_custom(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 		logerror(".TAP file found\n");
-		if (file)
-			datasize = osd_fsize(file);
+		if (fp)
+			datasize = osd_fsize(fp);
 		else
 			datasize = 0;
 		if (datasize != 0)
@@ -1194,8 +1188,8 @@ int spectrum_cassette_init(int id)
 				pSnapshotData = data;
 				SnapshotDataSize = datasize;
 
-				osd_fread(file, data, datasize);
-				osd_fclose(file);
+				osd_fread(fp, data, datasize);
+				osd_fclose(fp);
 
 				/* Always reset tape position when loading new tapes */
 				TapePosition = 0;
@@ -1205,13 +1199,13 @@ int spectrum_cassette_init(int id)
 				return INIT_PASS;
 			}
 		}
-		osd_fclose(file);
+		osd_fclose(fp);
 		return INIT_FAIL;
 	}
 
 	memset(&args, 0, sizeof(args));
 	args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
-	return cassette_init(id, &args);
+	return cassette_init(id, fp, open_mode, &args);
 }
 
 void spectrum_cassette_exit(int id)
@@ -1231,21 +1225,16 @@ static void spectrum_nmi_generate(int param)
 	cpu_set_irq_line(0, 0, IRQ_LINE_NMI);
 }
 
-int spec_quick_init(int id)
+int spec_quick_init(int id, void *fp, int open_mode)
 {
-	void *fp;
 	int read_;
 
 	memset(&quick, 0, sizeof (quick));
 
-	if (!image_exists(IO_QUICKLOAD, id))
+	if (fp == NULL)
 		return INIT_PASS;
 
 /*	quick.name = name; */
-
-	fp = image_fopen_new(IO_QUICKLOAD, id, NULL);
-	if (!fp)
-		return INIT_FAIL;
 
 	quick.length = osd_fsize(fp);
 	quick.addr = 0x4000;
@@ -1283,12 +1272,9 @@ int spec_quick_open(int id, int mode, void *arg)
 	return 0;
 }
 
-int spectrum_cart_load(int id)
+int spectrum_cart_load(int id, void *file, int open_mode)
 {
-	void *file;
-
 	logerror("Trying to load cartridge!\n");
-	file = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if (file)
 	{
 		int datasize;
@@ -1316,9 +1302,8 @@ int spectrum_cart_load(int id)
 	return 0;
 }
 
-int timex_cart_load(int id)
+int timex_cart_load(int id, void *file, int open_mode)
 {
-	void *file;
 	int file_size;
 	UINT8 * file_data;
 
@@ -1326,17 +1311,10 @@ int timex_cart_load(int id)
 
 	int i;
 
-	if (!image_exists(IO_CARTSLOT, id))
+	if (file==NULL)
 		return INIT_PASS;
 
 	logerror ("Trying to load cart\n");
-
-	file = image_fopen_new(IO_CARTSLOT, id, NULL);
-	if (file==NULL)
-	{
-		logerror ("Error opening cart file\n");
-		return INIT_FAIL;
-	}
 
 	file_size = osd_fsize(file);
 

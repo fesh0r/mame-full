@@ -10,7 +10,7 @@
 #define KC85_SCREEN_WIDTH 320
 #define KC85_SCREEN_HEIGHT 256
 
-int	kc_quickload_load(int id);
+int	kc_quickload_load(int id, void *fp, int open_mode);
 
 extern PALETTE_INIT( kc85 );
 
@@ -26,7 +26,7 @@ extern MACHINE_INIT( kc85_4d );
 extern MACHINE_STOP( kc85_4d );
 
 /* cassette */
-int kc_cassette_device_init(int id);
+int kc_cassette_device_init(int id, void *fp, int open_mode);
 
 READ_HANDLER(kc85_4_84_r);
 WRITE_HANDLER(kc85_4_84_w);
@@ -164,7 +164,7 @@ WRITE_HANDLER(kc85_module_w);
 /* IO_FLOPPY device */
 
 /* for IO_ device init */
-int kc85_floppy_init(int id);
+int kc85_floppy_init(int id, void *fp, int open_mode);
 
 /* used to setup machine */
 

@@ -29,7 +29,7 @@ static UINT8 keyline[10] =
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 };
 
-static int rom_specified[2] = {0};
+static void *rom_fp[2] = {0};
 
 /*
  * tia6523
@@ -690,32 +690,25 @@ MACHINE_INIT( c16 )
 
 	cbm_serial_reset_write (0);
 
-	for (i = 0; rom_specified[i] && (i < sizeof (rom_specified) / sizeof (rom_specified[0])); i++)
-		c16_rom_load (i);
+	for (i = 0;  (i < sizeof (rom_fp) / sizeof (rom_fp[0])) && rom_fp[i]; i++)
+		c16_rom_load(i);
 
 }
 
-static int c16_rom_id (int id)
+static int c16_rom_id (int id, void *romfile)
 {
     /* magic lowrom at offset 7: $43 $42 $4d */
 	/* if at offset 6 stands 1 it will immediatly jumped to offset 0 (0x8000) */
 	int retval = 0;
 	char magic[] = {0x43, 0x42, 0x4d}, buffer[sizeof (magic)];
 	const char *name = image_filename(IO_CARTSLOT,id);
-	void *romfile;
 	char *cp;
 
 	logerror("c16_rom_id %s\n", name);
 	retval = 0;
-	if (!(romfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
-	{
-		logerror("rom %s not found\n", name);
-		return 0;
-	}
 
 	osd_fseek (romfile, 7, SEEK_SET);
 	osd_fread (romfile, buffer, sizeof (magic));
-	osd_fclose (romfile);
 
 	if (memcmp (magic, buffer, sizeof (magic)) == 0)
 	{
@@ -736,32 +729,34 @@ static int c16_rom_id (int id)
 	return retval;
 }
 
-int c16_rom_init (int id)
+int c16_rom_init (int id, void *fp, int open_mode)
 {
-	rom_specified[id] = image_exists(IO_CARTSLOT, id);
-	return (rom_specified[id] && !c16_rom_id(id)) ? INIT_FAIL : INIT_PASS;
+	rom_fp[id] = fp;
+	return (rom_fp[id] && !c16_rom_id(id, rom_fp[id])) ? INIT_FAIL : INIT_PASS;
 }
 
+void c16_rom_exit (int id)
+{
+	if (rom_fp[id])
+	{
+		osd_fclose(rom_fp[id]);
+		rom_fp[id] = NULL;
+	}
+}
 
 int c16_rom_load (int id)
 {
 	const char *name = image_filename(IO_CARTSLOT,id);
     UINT8 *mem = memory_region (REGION_CPU1);
-	void *fp;
+	void *fp = rom_fp[id];
 	int size, read;
 	char *cp;
 	static unsigned int addr = 0;
 
-	if (!image_exists(IO_CARTSLOT, id))
+	if (rom_fp[id] == NULL)
 		return INIT_FAIL;
-	if (!c16_rom_id (id))
+	if (!c16_rom_id (id, fp))
 		return 1;
-	fp = image_fopen_new(IO_CARTSLOT, id, NULL);
-	if (!fp)
-	{
-		logerror("%s file not found\n", name);
-		return 1;
-	}
 
 	size = osd_fsize (fp);
 
@@ -784,7 +779,6 @@ int c16_rom_load (int id)
 	logerror("loading rom %s at %.5x size:%.4x\n", name, addr, size);
 	read = osd_fread (fp, mem + addr, size);
 	addr += size;
-	osd_fclose (fp);
 	if (read != size)
 		return 1;
 	return 0;

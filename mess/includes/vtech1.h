@@ -12,12 +12,12 @@ extern MACHINE_INIT( laser210 );
 extern MACHINE_INIT( laser310 );
 extern MACHINE_STOP( vtech1 );
 
-extern int vtech1_cassette_init(int id);
+extern int vtech1_cassette_init(int id, void *fp, int open_mode);
 
-extern int vtech1_snapshot_init(int id);
+extern int vtech1_snapshot_init(int id, void *fp, int open_mode);
 extern void vtech1_snapshot_exit(int id);
 
-extern int vtech1_floppy_init(int id);
+extern int vtech1_floppy_init(int id, void *fp, int open_mode);
 extern void vtech1_floppy_exit(int id);
 
 extern READ_HANDLER ( vtech1_fdc_r );

@@ -10,13 +10,13 @@ extern MACHINE_INIT( laser500 );
 extern MACHINE_INIT( laser700 );
 extern MACHINE_STOP( laser );
 
-extern int laser_rom_init(int id);
+extern int laser_rom_init(int id, void *fp, int open_mode);
 extern void laser_rom_exit(int id);
 
-extern int laser_floppy_init(int id);
+extern int laser_floppy_init(int id, void *fp, int open_mode);
 extern void laser_floppy_exit(int id);
 
-extern int laser_cassette_init(int id);
+extern int laser_cassette_init(int id, void *fp, int open_mode);
 
 extern READ_HANDLER ( laser_fdc_r );
 extern WRITE_HANDLER ( laser_fdc_w );

@@ -31,20 +31,18 @@ floppy_interface basicdsk_floppy_interface=
 };
 
 /* attempt to insert a disk into the drive specified with id */
-int basicdsk_floppy_init(int id)
+int basicdsk_floppy_init(int id, void *fp, int open_mode)
 {
-	int effective_mode;
-
 	if (id < basicdsk_MAX_DRIVES)
 	{
 		basicdsk *w = &basicdsk_drives[id];
 
 		/* do we have an image name ? */
-		if (!image_exists(IO_FLOPPY, id))
+		if (fp == NULL)
 			return INIT_PASS;
 
-		w->image_file = image_fopen_new(IO_FLOPPY, id, & effective_mode);
-		w->mode = (w->image_file) && is_effective_mode_writable(effective_mode);
+		w->image_file = fp;
+		w->mode = (w->image_file) && is_effective_mode_writable(open_mode);
 
 		/* this will be setup in the set_geometry function */
 		w->ddam_map = NULL;

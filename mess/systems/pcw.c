@@ -1226,12 +1226,12 @@ ROM_PCW(pcw9512)
 ROM_PCW(pcw10)
 
 
-static int pcw_floppy_init(int id)
+static int pcw_floppy_init(int id, void *fp, int open_mode)
 {
 	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
 
-	return dsk_floppy_load(id);
+	return dsk_floppy_load(id, fp, open_mode);
 }
 
 static const struct IODevice io_pcw[] =

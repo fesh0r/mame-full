@@ -145,15 +145,13 @@ MACHINE_STOP( jupiter )
    <byt>		: <byt>
 */
 
-int jupiter_load_ace(int id)
+int jupiter_load_ace(int id, void *file, int open_mode)
 {
-
-	void *file;
 	unsigned char jupiter_repeat, jupiter_byte, loop;
 	int done, jupiter_index;
 
 	/* A cartridge isn't strictly mandatory, so warn */
-	if (!image_exists(IO_CARTSLOT, id))
+	if (file == NULL)
 	{
 		logerror("Jupiter - warning: no cartridge specified!\n");
 		return INIT_PASS;
@@ -164,7 +162,6 @@ int jupiter_load_ace(int id)
 
 	done = 0;
 	jupiter_index = 0;
-	file = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if (file)
 	{
 		if ((jupiter_data = malloc(0x6000)))
@@ -226,16 +223,14 @@ void	jupiter_exit_tap(int id)
 	}
 }
 
-int jupiter_load_tap(int id)
+int jupiter_load_tap(int id, void *file, int open_mode)
 {
-
-	void *file;
 	UINT8 inpbyt;
 	int loop;
 	UINT16 hdr_len;
 
 	/* Remember, a cassette isn't strictly mandatory, so warn only! */
-	if (!image_exists(IO_CASSETTE, id))
+	if (file == NULL)
 	{
 		logerror("Jupiter - warning: no cassette specified!\n");
 		return INIT_PASS;
@@ -244,7 +239,6 @@ int jupiter_load_tap(int id)
 	if (jupiter_data_type != JUPITER_NONE)
 		return (0);
 	jupiter_exit_tap(id);
-	file = image_fopen_custom(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, 0);
 	if (file)
 	{
 		logerror("Loading file %s.\r\n", image_filename(IO_CASSETTE,id));

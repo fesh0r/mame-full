@@ -601,12 +601,8 @@ void	serial_device_connect(int id, struct serial_connection *connection)
 
 
 /* load image */
-static int serial_device_load(int type, int id, unsigned char **ptr, int *pDataSize)
+static int serial_device_load(int type, int id, void *file, unsigned char **ptr, int *pDataSize)
 {
-	void *file;
-
-	file = image_fopen_new(type, id, NULL);
-
 	if (file)
 	{
 		int datasize;
@@ -673,7 +669,7 @@ static void data_stream_init(struct data_stream *stream, unsigned char *pData, u
 }
 
 
-int		serial_device_init(int id)
+int		serial_device_init(int id, void *fp)
 {
 	int data_length;
 	unsigned char *data;
@@ -683,7 +679,7 @@ int		serial_device_init(int id)
 		return INIT_FAIL;
 
 	/* load file and setup transmit data */
-	if (serial_device_load(IO_SERIAL, id, &data,&data_length))
+	if (serial_device_load(IO_SERIAL, id, fp, &data, &data_length))
 	{
 		data_stream_init(&serial_devices[id].transmit, data, data_length);
 		return INIT_PASS;

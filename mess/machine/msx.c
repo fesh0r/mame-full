@@ -96,9 +96,8 @@ static int msx_probe_type (UINT8* pmem, int size)
         return (asc8 > asc16) ? 4 : 5;
 }
 
-int msx_load_rom (int id)
+int msx_load_rom (int id, void *F, int open_mode)
 {
-    void *F;
     UINT8 *pmem,*m;
     int size,size_aligned,n,p,type,i;
     const char *pext;
@@ -112,12 +111,10 @@ int msx_load_rom (int id)
         "Konami Synthesizer", "Cross Blaim", "Disk ROM",
 		"Korean 80-in-1", "Korean 126-in-1" };
 
-	if (!image_exists(IO_CARTSLOT, id))
+	if (F == NULL)
 		return INIT_PASS;
 
     /* try to load it */
-    F = image_fopen_new(IO_CARTSLOT, id, NULL);
-    if (!F) return 1;
     size = osd_fsize (F);
     if (size < 0x2000)
     {
@@ -920,19 +917,16 @@ static WRITE_HANDLER (msx_disk_w)
 		}
 	}
 
-int msx_floppy_init (int id)
+int msx_floppy_init (int id, void *fp, int open_mode)
 	{
-	void *f;
 	int size, heads = 2;
 
-	if (!image_exists(IO_FLOPPY, id))
+	if (fp == NULL)
 		return INIT_PASS;
 
-	f = image_fopen_custom(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
-	if (f)
+	if (fp && ! is_effective_mode_create(open_mode))
 		{
-		size = osd_fsize (f);
-		osd_fclose (f);
+		size = osd_fsize (fp);
 
 		switch (size)
 			{
@@ -947,7 +941,7 @@ int msx_floppy_init (int id)
 	else
 		return INIT_FAIL;
 
-	if (basicdsk_floppy_init (id) != INIT_PASS)
+	if (basicdsk_floppy_init (id, fp, open_mode) != INIT_PASS)
 		return INIT_FAIL;
 
 	basicdsk_set_geometry (id, 80, heads, 9, 512, 1, 0);
@@ -1577,20 +1571,17 @@ static int check_fmsx_cas (void *f)
     return ret;
 }
 
-int msx_cassette_init(int id)
+int msx_cassette_init(int id, void *file, int open_mode)
 {
-    void *file;
 	int ret;
-	int effective_mode;
 
 
-	if (!image_exists(IO_CASSETTE, id))
+	if (file == NULL)
 		return INIT_PASS;
 
-	file = image_fopen_new(IO_CASSETTE, id, & effective_mode);
 	if( file )
 	{
-		if (! is_effective_mode_create(effective_mode))
+		if (! is_effective_mode_create(open_mode))
 		{
 			struct wave_args wa = {0,};
 			wa.file = file;

@@ -34,7 +34,7 @@ struct IODevice {
 	int reset_depth;
 	int open_mode;
 	char *dummy;
-	int (*init)(int id);
+	int (*init)(int id, void *fp, int open_mode);
 	void (*exit)(int id);
 	const void *(*info)(int id, int whatinfo);
 	int (*open)(int id, int mode, void *args);

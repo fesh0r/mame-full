@@ -748,9 +748,8 @@ WRITE_HANDLER( snes_w_io )
 	snes_ram[offset] = data;
 }
 
-int snes_load_rom(int id)
+int snes_load_rom(int id, void *file, int open_mode)
 {
-	void *file;
 	int i;
 	UINT16 totalblocks, readblocks;
 
@@ -794,7 +793,7 @@ int snes_load_rom(int id)
 	};
 #endif	/* V_GENERAL */
 
-	if (!image_exists(IO_CARTSLOT, id))
+	if (file == NULL)
 	{
 		printf("Cartridge name required!\n");
 		return INIT_FAIL;
@@ -808,12 +807,6 @@ int snes_load_rom(int id)
 
 	snes_ram = memory_region( REGION_CPU1 );
 	memset( snes_ram, 0, 0x1000000 );
-
-	if( !(file = image_fopen_new(IO_CARTSLOT, id, NULL)))
-	{
-		logerror( "image_fopen failed in snes_load_rom.\n" );
-		return INIT_FAIL;
-	}
 
 	/* Skip overheader */
 	osd_fread( file, &snes_ram[0x8000], 512 );

@@ -657,9 +657,8 @@ static void ti8x_sav_load_trailer_callback(int param)
 	}	
 }
 
-int ti8x_snapshot_load (int id)
+int ti8x_snapshot_load (int id, void *file, int open_mode)
 {
-	void *file;
 	int snapshot_size = 0;
 
 	switch (ti_calculator_model)
@@ -669,8 +668,6 @@ int ti8x_snapshot_load (int id)
 	}	
 
 	logerror("Snapshot loading\n");
-	file = image_fopen_new(IO_SNAPSHOT, id, NULL);
-
 	if (file)
 	{
 		if (osd_fsize(file) != snapshot_size)
@@ -702,9 +699,8 @@ int ti8x_snapshot_load (int id)
   TI calculators serial link transmission
 ***************************************************************************/
 
-int ti85_serial_init (int id)
+int ti85_serial_init (int id, void *file, int open_mode)
 {
-	void* file;
 	UINT8* file_data;
 	unsigned long file_size;
 
@@ -712,8 +708,6 @@ int ti85_serial_init (int id)
 
 	ti85_free_serial_data_memory();
 	ti85_receive_serial (NULL,0);
-
-	file = image_fopen_new(IO_SERIAL, id, NULL);
 
 	if (file)
 	{

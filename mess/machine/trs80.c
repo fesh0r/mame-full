@@ -151,9 +151,8 @@ static void cas_copy_callback(int param)
 	activecpu_set_reg(Z80_PC, entry);
 }
 
-int trs80_cas_init(int id)
+int trs80_cas_init(int id, void *file, int open_mode)
 {
-	void *file = image_fopen_custom(IO_CASSETTE,id,OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if (file)
 	{
 		cas_size = osd_fsize(file);
@@ -250,9 +249,8 @@ static void cmd_copy_callback(int param)
 	activecpu_set_reg(Z80_PC, entry);
 }
 
-int trs80_cmd_init(int id)
+int trs80_cmd_init(int id, void *file, int open_mode)
 {
-	void *file = image_fopen_new(IO_QUICKLOAD, id, NULL);
 	if (file)
 	{
 		cmd_size = osd_fsize(file);
@@ -279,7 +277,7 @@ void trs80_cmd_exit(int id)
 	cmd_size = 0;
 }
 
-int trs80_floppy_init(int id)
+int trs80_floppy_init(int id, void *fp, int open_mode)
 {
 	static UINT8 pdrive[4*16];
 	int i;
@@ -288,19 +286,17 @@ int trs80_floppy_init(int id)
 	int spt;		/* sector per track count per drive */
 	int dir_sector; /* first directory sector (aka DDSL) */
 	int dir_length; /* length of directory in sectors (aka DDGA) */
-    void *file;
 
-    if (basicdsk_floppy_init(id) != INIT_PASS)
+    if (basicdsk_floppy_init(id, fp, open_mode) != INIT_PASS)
 		return INIT_FAIL;
 
     if (id == 0)        /* first floppy? */
 	{
-		file = image_fopen_custom(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
-		if (file)
+		if (fp)
 		{
 
-            osd_fseek(file, 0, SEEK_SET);
-			osd_fread(file, pdrive, 2);
+            osd_fseek(fp, 0, SEEK_SET);
+			osd_fread(fp, pdrive, 2);
 #if 0
 			if (pdrive[0] != 0x00 || pdrive[1] != 0xfe)
 			{
@@ -309,9 +305,8 @@ int trs80_floppy_init(int id)
 			else
 #endif
 
-			osd_fseek(file, 2 * 256, SEEK_SET);
-			osd_fread(file, pdrive, 4*16);
-			osd_fclose(file);
+			osd_fseek(fp, 2 * 256, SEEK_SET);
+			osd_fread(fp, pdrive, 4*16);
 		}
 	}
 

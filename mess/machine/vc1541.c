@@ -639,13 +639,11 @@ static struct via6522_interface via2 =
 	vc1541_via1_irq
 };
 
-int vc1541_init (int id)
+int vc1541_init (int id, void *in, int open_mode)
 {
-	void *in;
 	int size;
 
 	/*memset (&(drive->d64), 0, sizeof (drive->d64)); */
-	in = image_fopen_custom(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, 0);
 	if (!in)
 		return INIT_FAIL;
 

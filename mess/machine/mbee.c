@@ -143,12 +143,12 @@ void mbee_interrupt(void)
     z80pio_p_w(0, 1, 0x00);
 }
 
-int mbee_cassette_init(int id)
+int mbee_cassette_init(int id, void *fp, int open_mode)
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));
 	args.create_smpfreq = 11025;
-	return cassette_init(id, &args);
+	return cassette_init(id, fp, open_mode, &args);
 }
 
 #if 0
@@ -159,11 +159,8 @@ int mbee_floppy_init(int id)
 }
 #endif
 
-int mbee_rom_load(int id)
+int mbee_rom_load(int id, void *file, int open_mode)
 {
-    void *file;
-
-	file = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if( file )
 	{
 		int size = osd_fsize(file);

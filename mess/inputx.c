@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <assert.h>
+#include <wctype.h>
 
 #include "inputx.h"
 #include "inptport.h"
@@ -96,6 +97,13 @@ static unicode_char_t find_code(const char *name, int modifiers)
 	{
 		if (modifiers & MODIFIER_SHIFT)
 			code = isspace(name[3]) ? 0 : name[3];
+		else
+			code = name[0];
+	}
+	else if ((len >= 3) && isspace(name[1]) && ((len == 3) || isspace(name[3])))
+	{
+		if (modifiers & MODIFIER_SHIFT)
+			code = isspace(name[2]) ? 0 : name[2];
 		else
 			code = name[0];
 	}

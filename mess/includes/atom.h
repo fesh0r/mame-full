@@ -1,6 +1,6 @@
 /* machine/atom.c */
 extern MACHINE_INIT( atom );
-extern int atom_init_atm (int id);
+extern int atom_init_atm(int id, void *fp, int open_mode);
 extern READ_HANDLER (atom_8255_porta_r);
 extern READ_HANDLER (atom_8255_portb_r);
 extern READ_HANDLER (atom_8255_portc_r);
@@ -15,13 +15,13 @@ extern VIDEO_START( atom );
 extern READ_HANDLER (atom_8271_r);
 extern WRITE_HANDLER (atom_8271_w);
 
-extern int atom_floppy_init(int id);
+extern int atom_floppy_init(int id, void *fp, int open_mode);
 
 extern READ_HANDLER(atom_via_r);
 extern WRITE_HANDLER(atom_via_w);
 
 /* for .WAV */
-extern int atom_cassette_init(int);
+extern int atom_cassette_init(int, void *fp, int open_mode);
 
 extern READ_HANDLER(atom_eprom_box_r);
 extern WRITE_HANDLER(atom_eprom_box_w);

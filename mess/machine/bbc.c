@@ -781,9 +781,9 @@ BBC_uPD7002= {
    load floppy disc
 ***************************************/
 
-int bbc_floppy_init(int id)
+int bbc_floppy_init(int id, void *fp, int open_mode)
 {
-	if (basicdsk_floppy_init(id)==INIT_PASS)
+	if (basicdsk_floppy_init(id, fp, open_mode)==INIT_PASS)
 	{
 		/* sector id's 0-9 */
 		/* drive, tracks, heads, sectors per track, sector length, dir_sector, dir_length, first sector id */
@@ -1070,23 +1070,14 @@ WRITE_HANDLER ( bbc_wd1770_write )
    BBC B Rom loading functions
 ***************************************/
 
-int bbcb_load_rom(int id)
+int bbcb_load_rom(int id, void *fp, int open_mode)
 {
 	UINT8 *mem = memory_region (REGION_USER1);
-	void *fp;
 	int size, read;
 	int addr = 0;
 
-	if (!image_exists(IO_CARTSLOT, id))
+	if (fp == NULL)
 		return INIT_PASS;
-
-	fp = image_fopen_new(IO_CARTSLOT, id, NULL);
-
-	if (!fp)
-	{
-		logerror("%s file not found\n", image_filename(IO_CARTSLOT,id));
-		return 1;
-	}
 
 	size = osd_fsize (fp);
 

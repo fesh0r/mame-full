@@ -27,7 +27,7 @@ floppy_interface d88image_floppy_interface=
 };
 
 /* attempt to insert a disk into the drive specified with id */
-int d88image_floppy_init(int id)
+int d88image_floppy_init(int id, void *fp, int open_mode)
 {
 	UINT8 tmp8;
 	UINT16 tmp16;
@@ -36,16 +36,15 @@ int d88image_floppy_init(int id)
 	unsigned long toffset;
 
 	/* do we have an image name ? */
-	if (!image_exists(IO_FLOPPY, id))
+	if (fp == NULL)
 		return INIT_PASS;
 
 	if (id < d88image_MAX_DRIVES)
 	{
 		d88image *w = &d88image_drives[id];
-		int effective_mode;
 
-		w->image_file = image_fopen_new(IO_FLOPPY, id, &effective_mode);
-		w->mode = (w->image_file) && is_effective_mode_writable(effective_mode);
+		w->image_file = fp;
+		w->mode = (w->image_file) && is_effective_mode_writable(open_mode);
 
 		/* the following line is unsafe, but floppy_drives_init assumes we start on track 0,
 		so we need to reflect this */

@@ -3,7 +3,7 @@ extern int odyssey2_framestart;
 extern int odyssey2_videobank;
 
 extern MACHINE_INIT( odyssey2 );
-extern int odyssey2_load_rom (int id);
+extern int odyssey2_load_rom (int id, void *fp, int open_mode);
 
 
 /* vidhrdw/odyssey2.c */

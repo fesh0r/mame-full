@@ -56,7 +56,7 @@ static void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu);
 static void pokey_reset(void);
 static void atari_pia_reset(void);
 
-static void open_floppy(int drive);
+static void open_floppy(int drive, void *file, int effective_mode);
 static void make_chksum(UINT8 * chksum, UINT8 data);
 static void clr_serout(int expect_data);
 static void clr_serin(int ser_delay);
@@ -118,10 +118,10 @@ MACHINE_INIT( a800 )
 	machine_init_atari_generic(ATARI_800, TRUE, TRUE);
 }
 
-int a800_floppy_init(int id)
+int a800_floppy_init(int id, void *fp, int open_mode)
 {
-	if (image_exists(IO_FLOPPY, id))
-		open_floppy(id);
+	if (fp)
+		open_floppy(id, fp, open_mode);
 	return INIT_PASS;
 }
 
@@ -132,11 +132,10 @@ void a800_floppy_exit(int id)
 	drv[id].image = NULL;
 }
 
-int a800_rom_init(int id)
+int a800_rom_init(int id, void *file, int open_mode)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
 	const char *filename;
-    void *file;
 	int size;
 
 	/* load an optional monitor.rom */
@@ -154,10 +153,8 @@ int a800_rom_init(int id)
 	}
 
 	/* load an optional (dual) cartridge (e.g. basic.rom) */
-	if (!image_exists(IO_CARTSLOT, id))
+	if (file)
 	{
-		file = image_fopen_new(IO_CARTSLOT, id, NULL);
-		if( file )
 		{
 			if( id > 0 )
 			{
@@ -177,10 +174,6 @@ int a800_rom_init(int id)
 			}
 			if( a800_cart_loaded )
 				a800_setbank(1);
-		}
-		else
-		{
-			logerror("%s cartridge '%s' not found\n", Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) );
 		}
 	}
 	return INIT_PASS;
@@ -213,11 +206,10 @@ MACHINE_INIT( a800xl)
 }
 
 
-int a800xl_load_rom(int id)
+int a800xl_load_rom(int id, void *file, int open_mode)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
 	const char *filename;
-	void *file;
 	unsigned size;
 
 	filename = "basic.rom";
@@ -234,10 +226,8 @@ int a800xl_load_rom(int id)
 	}
 
 	/* load an optional (dual) cartidge (e.g. basic.rom) */
-	if (image_exists(IO_CARTSLOT,id))
+	if (file)
 	{
-		file = image_fopen_new(IO_CARTSLOT, id, NULL);
-		if( file )
 		{
 			size = osd_fread(file, &mem[0x14000], 0x2000);
 			a800_cart_loaded = size / 0x2000;
@@ -246,10 +236,6 @@ int a800xl_load_rom(int id)
 			osd_fclose(file);
 			logerror("%s loaded cartridge '%s' size %s\n",
 					Machine->gamedrv->name, image_filename(IO_CARTSLOT,id), (a800_cart_is_16k) ? "16K":"8K");
-		}
-		else
-		{
-			logerror("%s cartridge '%s' not found\n", Machine->gamedrv->name, image_filename(IO_CARTSLOT,id));
 		}
 	}
 
@@ -272,17 +258,14 @@ MACHINE_INIT( a5200 )
 	machine_init_atari_generic(ATARI_5200, FALSE, FALSE);
 }
 
-int a5200_rom_init(int id)
+int a5200_rom_init(int id, void *file, int open_mode)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
-	void *file;
 	int size;
 
 	/* load an optional (dual) cartidge */
-	if (image_exists(IO_CARTSLOT, id))
+	if (file)
 	{
-		file = image_fopen_new(IO_CARTSLOT, id, NULL);
-		if (file)
 		{
 			size = osd_fread(file, &mem[0x4000], 0x8000);
 			osd_fclose(file);
@@ -302,10 +285,6 @@ int a5200_rom_init(int id)
 			}
 			logerror("%s loaded cartridge '%s' size %dK\n",
 				Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) , size/1024);
-		}
-		else
-		{
-			logerror("%s %s not found\n", Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) );
 		}
 	}
 	return INIT_PASS;
@@ -392,25 +371,21 @@ static	xfd_format xfd_formats[] = {
  * type of image and store the results into the global drv[] structure
  *
  *****************************************************************************/
-static void open_floppy(int id)
+static void open_floppy(int id, void *file, int effective_mode)
 {
 #define MAXSIZE 5760 * 256 + 80
-	void *file;
 	int size, i;
 
-	if (!image_exists(IO_FLOPPY, id))
+	if (!file)
 		return;
 	if (!drv[id].image)
 	{
 		const char *ext;
-		int effective_mode;
 
 		drv[id].image = malloc(MAXSIZE);
 		if (!drv[id].image)
 			return;
 
-		/* open image */
-		file = image_fopen_new(IO_FLOPPY, id, &effective_mode);
 		/* tell whether the image is writable */
 		drv[id].mode = (file) && is_effective_mode_writable(effective_mode);
 		/* set up image if it has been created */

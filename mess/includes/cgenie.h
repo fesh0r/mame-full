@@ -1,8 +1,8 @@
 extern UINT8 *cgenie_fontram;
 
-extern int cgenie_cassette_init(int id);
-extern int cgenie_floppy_init(int id);
-extern int cgenie_rom_load(int id);
+extern int cgenie_cassette_init(int id, void *fp, int open_mode);
+extern int cgenie_floppy_init(int id, void *fp, int open_mode);
+extern int cgenie_rom_load(int id, void *fp, int open_mode);
 
 extern VIDEO_START( cgenie );
 extern VIDEO_UPDATE( cgenie );

@@ -318,7 +318,7 @@ static	const	struct	IODevice	io_nascom1[] =
 		1,						/* count */
 		"nas\0bin\0",			/* file extn */
 		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_NONE,			/* open mode */
+		OSD_FOPEN_READ,			/* open mode */
         NULL,                   /* id */
 		nascom1_init_cassette,	/* init */
 		nascom1_exit_cassette,	/* exit */
@@ -343,7 +343,7 @@ static	const	struct	IODevice	io_nascom2[] =
 		1,						/* count */
 		"cas\0nas\0bin\0",		/* file extn */
 		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_NONE,			/* open mode */
+		OSD_FOPEN_READ,			/* open mode */
         NULL,                   /* id */
 		nascom1_init_cassette,	/* init */
 		nascom1_exit_cassette,	/* exit */

@@ -114,13 +114,9 @@ static void gal_load_trailer_callback(int param)
 	galaxy_setup_snapshot(galaxy_snapshot_data);
 }
 
-int galaxy_snapshot_load(int id)
+int galaxy_snapshot_load(int id, void *file, int open_mode)
 {
-	void *file;
-
 	logerror("Snapshot loading\n");
-	file = image_fopen_new(IO_SNAPSHOT, id, NULL);
-
 	if (file)
 	{
 		if (osd_fsize(file) != GALAXY_SNAPSHOT_SIZE)

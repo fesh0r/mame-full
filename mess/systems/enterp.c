@@ -554,11 +554,11 @@ INPUT_PORTS_START( ep128 )
 
 INPUT_PORTS_END
 
-static int	enterprise_dsk_floppy_init(int id)
+static int	enterprise_dsk_floppy_init(int id, void *fp, int open_mode)
 {
 	 if (!image_exists(IO_FLOPPY, id))
 		 return INIT_PASS;
-	 return dsk_floppy_load(id);
+	 return dsk_floppy_load(id, fp, open_mode);
 }
 
 static struct CustomSound_interface dave_custom_sound=

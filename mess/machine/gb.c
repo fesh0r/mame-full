@@ -1225,7 +1225,7 @@ READ_HANDLER ( gb_r_io )
 	}
 }
 
-int gb_load_rom (int id)
+int gb_load_rom (int id, void *F, int open_mode)
 {
 	static char *CartTypes[] =
 	{
@@ -1355,13 +1355,12 @@ int gb_load_rom (int id)
 
 	int Checksum, I, J;
 	char *P, S[50];
-	void *F;
 	int rambanks[5] = {0, 1, 1, 4, 16};
 
 	for (I = 0; I < 256; I++)
 		RAMMap[I] = ROMMap[I] = NULL;
 
-	if (!image_exists(IO_CARTSLOT, id))
+	if (F == NULL)
 	{
 		printf("Cartridge name required!\n");
 		return INIT_FAIL;
@@ -1377,7 +1376,7 @@ int gb_load_rom (int id)
 	memset (gb_ram, 0, 0x10000);
 
 	/* FIXME should check first if a file is given, should give a more clear error */
-	if (!(F = image_fopen_new(IO_CARTSLOT, id, NULL)))
+	if (!F)
 	{
 		logerror("image_fopen failed in gb_load_rom.\n");
 		return INIT_FAIL;

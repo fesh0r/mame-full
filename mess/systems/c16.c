@@ -888,15 +888,15 @@ static const struct IODevice io_c16v[] =
 #define init_c364		c16_driver_init
 
 SYSTEM_CONFIG_START(c16)
-	CONFIG_DEVICE_CARTSLOT(2, "bin\0rom\0", c16_rom_init, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT(2, "bin\0rom\0", c16_rom_init, c16_rom_exit, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(c16c)
-	CONFIG_DEVICE_CARTSLOT(2, "bin\0rom\0", c16_rom_init, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT(2, "bin\0rom\0", c16_rom_init, c16_rom_exit, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(c16v)
-	CONFIG_DEVICE_CARTSLOT(2, "bin\0rom\0", c16_rom_init, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT(2, "bin\0rom\0", c16_rom_init, c16_rom_exit, NULL)
 SYSTEM_CONFIG_END
 
 /*		YEAR	NAME	PARENT	MACHINE INPUT	INIT	CONFIG   COMPANY 								FULLNAME */

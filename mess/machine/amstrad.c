@@ -32,12 +32,12 @@ rom/ram selection
 static unsigned char *snapshot = NULL;
 static int snapshot_loaded = 0;
 
-int amstrad_floppy_init(int id)
+int amstrad_floppy_init(int id, void *fp, int open_mode)
 {
 	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
 
-	return dsk_floppy_load(id);
+	return dsk_floppy_load(id, fp, open_mode);
 }
 
 
@@ -81,12 +81,12 @@ void amstrad_setup_machine(void)
 
 
 
-int amstrad_cassette_init(int id)
+int amstrad_cassette_init(int id, void *fp, int open_mode)
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));
 	args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
-	return cassette_init(id, &args);
+	return cassette_init(id, fp, open_mode, &args);
 }
 
 /* load CPCEMU style snapshots */
@@ -227,12 +227,8 @@ void amstrad_handle_snapshot(unsigned char *pSnapshot)
 }
 
 /* load image (i.e. open image, allocate buffer, load the entire image in buffer, close image) */
-static int amstrad_load(int type, int id, unsigned char **ptr)
+static int amstrad_load(int type, int id, void *file, unsigned char **ptr)
 {
-	void *file;
-
-	file = image_fopen_new(type, id, NULL);
-
 	if (file)
 	{
 		int datasize;
@@ -270,18 +266,18 @@ static int amstrad_load(int type, int id, unsigned char **ptr)
 }
 
 /* load snapshot */
-int amstrad_snapshot_load(int id)
+int amstrad_snapshot_load(int id, void *fp, int open_mode)
 {
 	/* machine can be started without a snapshot */
 	/* if filename not specified, then init is ok */
-	if (!image_exists(IO_SNAPSHOT, id))
+	if (fp == NULL)
 		return INIT_PASS;
 
 	/* filename specified */
 	snapshot_loaded = 0;
 
 	/* load and verify image */
-	if (amstrad_load(IO_SNAPSHOT,id,&snapshot))
+	if (amstrad_load(IO_SNAPSHOT, id, fp, &snapshot))
 	{
 		snapshot_loaded = 1;
 		if (memcmp(snapshot, "MV - SNA", 8)==0)
@@ -301,7 +297,7 @@ void amstrad_snapshot_exit(int id)
 	snapshot_loaded = 0;
 }
 
-int	amstrad_plus_cartridge_init(int id)
+int	amstrad_plus_cartridge_init(int id, void *fp, int open_mode)
 {
 	/* cpc+ requires a cartridge to be inserted to run */
 	if (!image_exists(IO_CARTSLOT, id))

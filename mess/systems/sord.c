@@ -336,14 +336,10 @@ static ppi8255_interface sord_ppi8255_interface =
 
 static char cart_data[0x06fff-0x02000];
 
-static int sord_cartslot_init(int id)
+static int sord_cartslot_init(int id, void *file, int open_mode)
 {
-	void *file;
-
-	if (!image_exists(IO_CARTSLOT, id))
+	if (file == NULL)
 		return INIT_FAIL;
-
-	file = image_fopen_new(IO_CARTSLOT, id, NULL);
 
 	if (file)
 	{
@@ -365,12 +361,12 @@ static int sord_cartslot_init(int id)
 	return INIT_FAIL;
 }
 
-static int sord_floppy_init(int id)
+static int sord_floppy_init(int id, void *fp, int open_mode)
 {
 	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
 
-	if (basicdsk_floppy_init(id)==INIT_PASS)
+	if (basicdsk_floppy_init(id, fp, open_mode)==INIT_PASS)
 	{
 		/* 40 tracks, single sided, 256 bytes per sector, 18 sectors */
 		basicdsk_set_geometry(id, 40, 1, 18, 256, 1,0);
@@ -382,12 +378,12 @@ static int sord_floppy_init(int id)
 
 
 
-static int sord_cassette_init(int id)
+static int sord_cassette_init(int id, void *fp, int open_mode)
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));
 	args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
-	return cassette_init(id, &args);
+	return cassette_init(id, fp, open_mode, &args);
 }
 
 static void sord_m5_ctc_interrupt(int state)

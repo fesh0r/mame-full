@@ -65,12 +65,8 @@ static void kc_dump_ram(void)
 }
 
 /* load image */
-static int kc_load(int type, int id, unsigned char **ptr)
+static int kc_load(int type, int id, void *file, unsigned char **ptr)
 {
-	void *file;
-
-	file = image_fopen_new(type, id, NULL);
-
 	if (file)
 	{
 		int datasize;
@@ -125,14 +121,14 @@ struct kcc_header
 /* now type name that has appeared! */
 
 /* load snapshot */
-int kc_quickload_load(int id)
+int kc_quickload_load(int id, void *fp, int open_mode)
 {
 	unsigned char *data;
 
-	if (!image_exists(IO_QUICKLOAD, id))
+	if (fp == NULL)
 		return INIT_PASS;
 
-	if (kc_load(IO_QUICKLOAD,id,&data))
+	if (kc_load(IO_QUICKLOAD, id, fp, &data))
 	{
 		struct kcc_header *header = (struct kcc_header *)data;
 		int addr;
@@ -172,12 +168,12 @@ int kc_quickload_load(int id)
 /* bit 4: Index pulse from disc */
 static unsigned char kc85_disc_hw_input_gate;
 
-int kc85_floppy_init(int id)
+int kc85_floppy_init(int id, void *fp, int open_mode)
 {
-	if (!image_exists(IO_FLOPPY, id))
+	if (fp == NULL)
 		return INIT_PASS;
 
-	if (basicdsk_floppy_init(id)==INIT_PASS)
+	if (basicdsk_floppy_init(id, fp, open_mode)==INIT_PASS)
 	{
 		basicdsk_set_geometry(id, 80, 2, 9, 512, 1, 0);
 		return INIT_PASS;
@@ -442,19 +438,14 @@ static void kc85_module_system_init(void)
 
 #define KC_CASSETTE_TIMER_FREQUENCY TIME_IN_HZ(4800)
 
-int kc_cassette_device_init(int id)
+int kc_cassette_device_init(int id, void *file, int open_mode)
 {
-	void *file;
-	int effective_mode;
-
-
-	if (!image_exists(IO_CASSETTE, id))
+	if (file == NULL)
 		return INIT_PASS;
 
-	file = image_fopen_new(IO_CASSETTE, id, & effective_mode);
 	if( file )
 	{
-		if (! is_effective_mode_create(effective_mode))
+		if (! is_effective_mode_create(open_mode))
 		{
 			struct wave_args wa = {0,};
 			wa.file = file;

@@ -5,10 +5,10 @@
 void amstrad_setup_machine(void);
 void amstrad_shutdown_machine(void);
 
-int amstrad_floppy_init(int);
+int amstrad_floppy_init(int, void *fp, int open_mode);
 
 
-int amstrad_snapshot_load(int);
+int amstrad_snapshot_load(int, void *fp, int open_mode);
 void amstrad_snapshot_exit(int);
 
 int amstrad_floppy_load(int);
@@ -23,9 +23,7 @@ void Amstrad_Init(void);
 void amstrad_handle_snapshot(unsigned char *);
 void AmstradCPC_PALWrite(int);
 
-extern int amstrad_cassette_init(int id);
-
-extern int amstrad_floppy_init(int id);
+extern int amstrad_cassette_init(int id, void *fp, int open_mode);
 
 
 /* On the Amstrad, any part of the 64k memory can be access by the video
@@ -100,7 +98,7 @@ extern PALETTE_INIT( kccomp );
 /* initialise palette for 464plus, 6128plus */
 extern PALETTE_INIT( amstrad_plus );
 
-int amstrad_plus_cartridge_init(int id);
+int amstrad_plus_cartridge_init(int id, void *fp, int open_mode);
 void amstrad_plus_cartridge_exit(int id);
 
 

@@ -1,7 +1,7 @@
 
 extern unsigned char *astrocade_videoram;
 
-int astrocade_load_rom(int id);
+int astrocade_load_rom(int id, void *fp, int open_mode);
 
 extern PALETTE_INIT( astrocade );
 extern READ_HANDLER( astrocade_intercept_r );

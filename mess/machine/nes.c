@@ -1081,11 +1081,10 @@ end:
 	PPU_address += PPU_add;
 }
 
-int nes_init_cart (int id)
+int nes_init_cart (int id, void *romfile, int open_mode)
 {
 	const char *mapinfo;
 	int mapint1=0,mapint2=0,mapint3=0,mapint4=0,goodcrcinfo = 0;
-	void *romfile;
 	char magic[4];
 	char skank[8];
 	int local_options = 0;
@@ -1095,18 +1094,12 @@ int nes_init_cart (int id)
 	const char *sysname;
 	sysname = Machine->gamedrv->name;
 
-	if (!image_exists(IO_CARTSLOT, id) && (id == 0))
+	if ((romfile == NULL) && (id == 0))
 	{
 		if(!strcmp(sysname, "famicom")) /* If its a famicom, then pass! */
 			return INIT_PASS;
 		else
 			return INIT_FAIL;
-	}
-
-	if (!(romfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
-	{
-		logerror("image_fopen failed in nes_init_cart.\n");
-		return INIT_FAIL;
 	}
 
 	/* Verify the file is in iNES format */
@@ -1290,12 +1283,11 @@ logerror("NES Partial CRC: %08lx %d\n",crc,size);
 return crc;
 }
 
-int nes_load_disk (int id)
+int nes_load_disk (int id, void *diskfile, int open_mode)
 {
- 	void *diskfile;
 	unsigned char magic[4];
 
-	if (!image_exists(IO_FLOPPY, id))
+	if (diskfile == NULL)
 	{
 		/* The cart has passed, so this must fail if no image inserted */
 		if(!famicom_image_registered)
@@ -1305,12 +1297,6 @@ int nes_load_disk (int id)
 		}
 		else
 			return INIT_PASS;
-	}
-
-	if (!(diskfile = image_fopen_new(IO_FLOPPY, id, NULL)))
-	{
-		logerror("image_fopen failed in nes_load_disk for [%s].\n",image_filename(IO_FLOPPY,id));
-			return INIT_FAIL;
 	}
 
 	/* See if it has a fucking redundant header on it */

@@ -369,11 +369,11 @@ static void	einstein_keyboard_timer_callback(int dummy)
 
 
 
-static int einstein_floppy_init(int id)
+static int einstein_floppy_init(int id, void *fp, int open_mode)
 {
 	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
-	return dsk_floppy_load(id);
+	return dsk_floppy_load(id, fp, open_mode);
 }
 
 /* interrupt state callback for ctc */

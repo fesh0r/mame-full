@@ -438,7 +438,7 @@ static const struct IODevice io_trs80[] = {
 		1,						/* count */
 		"cas\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_NONE,			/* open mode */
+		OSD_FOPEN_READ,			/* open mode */
 		0,
 		trs80_cas_init, 		/* init */
 		trs80_cas_exit, 		/* exit */
@@ -463,7 +463,7 @@ static const struct IODevice io_trs80l2[] = {
 		1,						/* count */
 		"cas\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_NONE,			/* open mode */
+		OSD_FOPEN_READ,			/* open mode */
 		0,
 		trs80_cas_init, 		/* init */
 		trs80_cas_exit, 		/* exit */

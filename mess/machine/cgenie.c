@@ -340,7 +340,7 @@ MACHINE_STOP( cgenie )
 	tape_put_close();
 }
 
-int cgenie_cassette_init(int id)
+int cgenie_cassette_init(int id, void *fp, int open_mode)
 {
 	return INIT_PASS;
 }
@@ -370,24 +370,20 @@ int cgenie_cassette_init(int id)
  * of tracks, number of sides, number of sectors etc, so we need to
  * set that up here
  */
-int cgenie_floppy_init(int id)
+int cgenie_floppy_init(int id, void *fp, int open_mode)
 {
-		void *file;
-
 	/* A Floppy Isnt manditory, so return if none */
-	if (!image_exists(IO_FLOPPY, id))
+	if (fp == NULL)
 	{
 		logerror("CGENIE - warning: no floppy specified!\n");
 		return INIT_PASS;
 	}
 
-	if (basicdsk_floppy_init(id) != INIT_PASS)
+	if (basicdsk_floppy_init(id, fp, open_mode) != INIT_PASS)
 		return INIT_FAIL;
 
-	/* open file and determine image geometry */
-	file = image_fopen_custom(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
-
-	if (file)
+	/* determine image geometry */
+	if (fp)
 	{
 		int i, j, dir_offset;
 		UINT8 buff[16];
@@ -396,11 +392,14 @@ int cgenie_floppy_init(int id)
 		UINT8 spt = 0;
 		short dir_sector = 0;
 		short dir_length = 0;
+
+		osd_fseek(fp, 0, SEEK_SET);
+
 		/* determine geometry from disk contents */
 		for( i = 0; i < 12; i++ )
 		{
-			osd_fseek(file, pd_list[i].SPT * 256, SEEK_SET);
-			osd_fread(file, buff, 16);
+			osd_fseek(fp, pd_list[i].SPT * 256, SEEK_SET);
+			osd_fread(fp, buff, 16);
 			/* find an entry with matching DDSL */
 			if (buff[0] != 0x00 || buff[1] != 0xfe || buff[2] != pd_list[i].DDSL)
 				continue;
@@ -414,9 +413,9 @@ int cgenie_floppy_init(int id)
 			for( j = 16; j < 32; j += 8 )
 			{
 				dir_offset = dir_sector * 256 + j * 32;
-				if( osd_fseek(file, dir_offset, SEEK_SET) < 0 )
+				if( osd_fseek(fp, dir_offset, SEEK_SET) < 0 )
 					break;
-				if( osd_fread(file, buff, 16) != 16 )
+				if( osd_fread(fp, buff, 16) != 16 )
 					break;
 				if( !strncmp((char*)buff + 5, "DIR     SYS", 11) ||
 					!strncmp((char*)buff + 5, "NCW1983 JHL", 11) )
@@ -467,14 +466,13 @@ int cgenie_floppy_init(int id)
 
 		}
 
-		osd_fclose(file);
 		return INIT_PASS;
 	}
 
 	return INIT_FAIL;
 }
 
-int cgenie_rom_load(int id)
+int cgenie_rom_load(int id, void *fp, int open_mode)
 {
 	int result = 0;
 	UINT8 *ROM = memory_region(REGION_CPU1);

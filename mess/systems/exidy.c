@@ -71,12 +71,12 @@
 #include "includes/basicdsk.h"
 #include "image.h"
 
-static int exidy_floppy_init(int id)
+static int exidy_floppy_init(int id, void *fp, int open_mode)
 {
 	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
 
-	if (basicdsk_floppy_init(id)==INIT_PASS)
+	if (basicdsk_floppy_init(id, fp, open_mode)==INIT_PASS)
 	{
 		/* not correct */
 		basicdsk_set_geometry(id, 80, 2, 9, 512, 1, 0);

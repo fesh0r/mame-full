@@ -261,12 +261,8 @@ MACHINE_INIT( atom )
 }
 
 /* load image */
-static int atom_load(int type, int id, unsigned char **ptr)
+static int atom_load(int type, int id, void *file, unsigned char **ptr)
 {
-	void *file;
-
-	file = image_fopen_new(type, id, NULL);
-
 	if (file)
 	{
 		int datasize;
@@ -318,11 +314,11 @@ struct atm
 /* this only works if loaded using file-manager. This should work
 for binary files, but will not work with basic files. This also does not support
 .tap files which contain multiple .atm files joined together! */
-int atom_init_atm (int id)
+int atom_init_atm (int id, void *fp, int open_mode)
 {
 	unsigned char *quickload_data;
 
-	if (atom_load(IO_QUICKLOAD, id, &quickload_data))
+	if (atom_load(IO_QUICKLOAD, id, fp, &quickload_data))
 	{
 		if (quickload_data!=NULL)
 		{
@@ -378,9 +374,9 @@ int atom_init_atm (int id)
 
 
 /* load floppy */
-int atom_floppy_init(int id)
+int atom_floppy_init(int id, void *fp, int open_mode)
 {
-	if (basicdsk_floppy_init(id)==INIT_PASS)
+	if (basicdsk_floppy_init(id, fp, open_mode)==INIT_PASS)
 	{
 		/* sector id's 0-9 */
 		/* drive, tracks, heads, sectors per track, sector length, dir_sector, dir_length, first sector id */
@@ -517,12 +513,12 @@ WRITE_HANDLER(atom_8271_w)
 }
 
 
-int atom_cassette_init(int id)
+int atom_cassette_init(int id, void *fp, int open_mode)
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));
 	args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
-	return cassette_init(id, &args);
+	return cassette_init(id, fp, open_mode, &args);
 }
 
 

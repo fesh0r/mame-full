@@ -234,20 +234,16 @@ MACHINE_INIT( lviv )
 	/*memset(mess_ram, 0, sizeof(unsigned char)*0xffff);*/
 }
 
-int lviv_tape_init(int id)
+int lviv_tape_init(int id, void *file, int open_mode)
 {
-	void *file;
 	struct wave_args wa;
-	int effective_mode;
 
-
-	if (!image_exists(IO_CASSETTE, id))
+	if (file == NULL)
 		return INIT_PASS;
 
-	file = image_fopen_new(IO_CASSETTE, id, & effective_mode);
 	if( file )
 	{
-		if (! is_effective_mode_create(effective_mode))
+		if (! is_effective_mode_create(open_mode))
 		{
 			int lviv_lvt_size;
 

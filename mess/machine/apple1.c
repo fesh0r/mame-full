@@ -113,26 +113,20 @@ static int apple1_verify_header (UINT8 *data)
 **	Where xxyy is the hex value to load the Data zzzzzzz to
 **
 *****************************************************************************/
-int apple1_load_snap (int id)
+int apple1_load_snap(int id, void *snapfile, int open_mode)
 {
-	void *snapfile = NULL;
 	UINT8 *memptr;
 	UINT8 snapdata[0x1000];
 	UINT16 starting_offset = 0x0000;
 
 	/* A snapshot isn't mandatory for the apple1 */
-	if (!image_exists(IO_SNAPSHOT, id))
+	if (snapfile == NULL)
 	{
 		logerror("Apple1 - warning: no snapshot specified - OK\n");
 		return INIT_PASS;
 	}
 
 	/* Load the specified Snapshot */
-	if (!(snapfile = image_fopen_new(IO_SNAPSHOT, id, NULL)))
-	{
-		logerror("Apple1 - Unable to locate snapshot: %s\n",image_filename(IO_SNAPSHOT,id) );
-		return INIT_FAIL;
-	}
 
 	/* Read the snapshot data into a temporary array */
 	osd_fread (snapfile, snapdata, 0x1000);

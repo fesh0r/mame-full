@@ -1210,15 +1210,15 @@ static void oric_wd179x_callback(int State)
 	}
 }
 
-int oric_floppy_init(int id)
+int oric_floppy_init(int id, void *fp, int open_mode)
 {
 	int result;
 
-	if (!image_exists(IO_FLOPPY, id))
+	if (fp == NULL)
 		return INIT_PASS;
 
 	/* attempt to open mfm disk */
-	result = mfm_disk_floppy_init(id);
+	result = mfm_disk_floppy_init(id, fp);
 
 	if (result==INIT_PASS)
 	{
@@ -1227,7 +1227,7 @@ int oric_floppy_init(int id)
 		return INIT_PASS;
 	}
 
-	if (basicdsk_floppy_init(id))
+	if (basicdsk_floppy_init(id, fp, open_mode))
 	{
 		/* I don't know what the geometry of the disc image should be, so the
 		default is 80 tracks, 2 sides, 9 sectors per track */
@@ -1454,20 +1454,17 @@ WRITE_HANDLER ( oric_IO_w )
 }
 
 
-int oric_cassette_init(int id)
+int oric_cassette_init(int id, void *file, int open_mode)
 {
-	void *file;
 	struct wave_args wa;
-	int effective_mode;
 
 
-	if (!image_exists(IO_CASSETTE, id))
+	if (file == NULL)
 		return INIT_PASS;
 
-	file = image_fopen_new(IO_CASSETTE, id, & effective_mode);
 	if( file )
 	{
-		if (! is_effective_mode_create(effective_mode))
+		if (! is_effective_mode_create(open_mode))
 		{
 			int oric_tap_size;
 

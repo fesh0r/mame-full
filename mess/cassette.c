@@ -2,13 +2,11 @@
 #include "cassette.h"
 #include "image.h"
 
-int cassette_init(int id, const struct cassette_args *args)
+int cassette_init(int id, void *file, int open_mode, const struct cassette_args *args)
 {
-	int effective_mode;
-	void *file;
 	struct wave_args wa;
 
-	if (!image_exists(IO_CASSETTE, id))
+	if (file == NULL)
 	{	/* no cassette */
 		memset(&wa, 0, sizeof(&wa));
 
@@ -19,11 +17,9 @@ int cassette_init(int id, const struct cassette_args *args)
 		return INIT_PASS;
 	}
 
-	/* Try to open existing file, or create it if needed */
-	file = image_fopen_new(IO_CASSETTE, id, &effective_mode);
 	if (file)
 	{
-		if (! is_effective_mode_create(effective_mode))
+		if (! is_effective_mode_create(open_mode))
 		{	/* existing file */
 			memset(&wa, 0, sizeof(&wa));
 
@@ -68,7 +64,6 @@ int cassette_init(int id, const struct cassette_args *args)
 
 void cassette_exit(int id)
 {
-	if (image_exists(IO_CASSETTE, id))
-		device_close(IO_CASSETTE, id);
+	device_close(IO_CASSETTE, id);
 }
 

@@ -16,9 +16,9 @@ extern PALETTE_INIT( nc );
 
 void nc_set_card_present_state(int);
 
-int  nc_pcmcia_card_load(int);
+int  nc_pcmcia_card_load(int, void *fp, int open_mode);
 void nc_pcmcia_card_exit(int);
-int  nc_serial_init(int);
+int  nc_serial_init(int, void *fp, int open_mode);
 enum
 {
         NC_TYPE_1xx, /* nc100/nc150 */

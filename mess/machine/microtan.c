@@ -442,7 +442,7 @@ WRITE_HANDLER ( microtan_bffx_w )
     }
 }
 
-int microtan_cassette_init(int id)
+int microtan_cassette_init(int id, void *fp, int open_mode)
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));
@@ -450,7 +450,7 @@ int microtan_cassette_init(int id)
 	args.chunk_samples = 8;
 	args.input_smpfreq = Machine->sample_rate;
 	args.create_smpfreq = Machine->sample_rate;
-	return cassette_init(id, &args);
+	return cassette_init(id, fp, open_mode, &args);
 }
 
 static int microtan_varify_snapshot(UINT8 *data, int size)
@@ -472,18 +472,15 @@ static int microtan_varify_snapshot(UINT8 *data, int size)
     return IMAGE_VERIFY_FAIL;
 }
 
-int microtan_snapshot_init(int id)
+int microtan_snapshot_init(int id, void *file, int open_mode)
 {
-    void *file;
-
 	/* If no image specified, I guess we should start! */
-	if (!image_exists(IO_SNAPSHOT, id))
+	if (file == NULL)
 	{
 		logerror("warning: no sanpshot specified!\n");
 		return INIT_PASS;
 	}
 
-    file = image_fopen_new(IO_SNAPSHOT, id, NULL);
     if (file)
     {
         snapshot_size = osd_fsize(file);
@@ -676,18 +673,15 @@ static int parse_zillion_hex(char *src)
     return INIT_PASS;
 }
 
-int microtan_hexfile_init(int id)
+int microtan_hexfile_init(int id, void *file, int open_mode)
 {
-    void *file;
-
 	/* If no image specified, I guess we should start! */
-	if (!image_exists(IO_QUICKLOAD, id))
+	if (file == NULL)
 	{
 		logerror("warning: no quikload specified!\n");
 		return INIT_PASS;
 	}
 
-    file = image_fopen_new(IO_QUICKLOAD, id, NULL);
     if (file)
     {
         int size = osd_fsize(file);

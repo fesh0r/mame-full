@@ -84,7 +84,7 @@ extern WRITE_HANDLER ( gb_mem_mode_select );
 extern WRITE_HANDLER ( gb_w_io );
 extern WRITE_HANDLER ( gb_w_ie );
 extern READ_HANDLER  ( gb_r_io );
-extern int gb_load_rom (int id);
+extern int gb_load_rom (int id, void *fp, int open_mode);
 extern void gb_scanline_interrupt(void);
 extern void gb_scanline_interrupt_set_mode0(int param);
 extern void gb_scanline_interrupt_set_mode3(int param);

@@ -24,12 +24,12 @@ MACHINE_INIT( enterprise )
 	Enterprise_Initialise();
 }
 
-int enterprise_floppy_init(int id)
+int enterprise_floppy_init(int id, void *fp, int open_mode)
 {
-	if (!image_exists(IO_FLOPPY, id))
+	if (fp == NULL)
 		return INIT_PASS;
 
-	if (basicdsk_floppy_init(id)==INIT_PASS)
+	if (basicdsk_floppy_init(id, fp, open_mode)==INIT_PASS)
 	{
 		basicdsk_set_geometry(id, 80, 2, 9, 512, 1, 0);
 		return INIT_PASS;

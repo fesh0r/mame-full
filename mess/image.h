@@ -13,7 +13,6 @@ extern void *image_malloc(int type, int id, size_t size);
 extern char *image_strdup(int type, int id, const char *src);
 
 extern void *image_fopen_custom(int type, int id, int filetype, int read_or_write);
-extern void *image_fopen_new(int type, int id, int *effective_mode);
 
 extern const char *image_typename_id(int type, int id);
 extern const char *image_filename(int type, int id);

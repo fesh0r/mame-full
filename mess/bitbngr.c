@@ -22,7 +22,7 @@ struct bitbanger_info
 
 static struct bitbanger_info *bitbangers[MAX_PRINTER];
 
-static int bitbanger_init(int id)
+static int bitbanger_init(int id, void *fp, int open_mode)
 {
 	struct bitbanger_info *bi;
 	const struct bitbanger_config *config;
@@ -49,7 +49,7 @@ static int bitbanger_init(int id)
 	bi->over_threshhold = 1;
 
 	bitbangers[id] = bi;
-	return printer_init(id);
+	return printer_init(id, fp, open_mode);
 }
 
 static void bitbanger_analyze(int id, struct bitbanger_info *bi)
