@@ -1,11 +1,11 @@
 /***************************************************************************
 
-  snes.c
+snes.c
 
-  Machine file to handle emulation of the Nintendo Super NES
+Machine file to handle emulation of the Nintendo Super NES
 
-  Anthony Kruize
-  Based on the original code by Lee Hammerton (aka Savoury Snax)
+Anthony Kruize
+Based on the original code by Lee Hammerton (aka Savoury Snax)
 
 ***************************************************************************/
 #define __MACHINE_SNES_C
@@ -18,7 +18,7 @@
 /* -- Macros -- */
 /* Handles double-write(16bit) registers */
 #define DOUBLE_WRITE( addr, data )				\
-	addr = ((addr >> 8) & 0xff) + (data << 8);
+addr = ((addr >> 8) & 0xff) + (data << 8);
 
 /* -- Useful Defines -- */
 #define DMA_BASE 0x4300
@@ -53,301 +53,300 @@ static UINT8 rom_mode = MODE_20;	/* Rom Mode */
 
 MACHINE_INIT( snes )
 {
-	/* Init VRAM */
-	snes_vram = (UINT8 *)memory_region( REGION_GFX1 );
-	memset( snes_vram, 0, 0x20000 );
+/* Init VRAM */
+snes_vram = (UINT8 *)memory_region( REGION_GFX1 );
+memset( snes_vram, 0, 0x20000 );
 
-	/* Init Colour RAM */
-	snes_cgram = (UINT16 *)memory_region( REGION_USER1 );
-	memset( snes_cgram, 0, 0x202 );
+/* Init Colour RAM */
+snes_cgram = (UINT16 *)memory_region( REGION_USER1 );
+memset( snes_cgram, 0, 0x202 );
 
-	/* Init oam RAM */
-	snes_oam = (UINT16 *)memory_region( REGION_USER2 );
-	memset( snes_oam, 0xff, 0x440 );
+/* Init oam RAM */
+snes_oam = (UINT16 *)memory_region( REGION_USER2 );
+memset( snes_oam, 0xff, 0x440 );
 
-	/* Get SPC700 ram */
-	spc_ram = (UINT8 *)memory_region( REGION_CPU2 );
+/* Get SPC700 ram */
+spc_ram = (UINT8 *)memory_region( REGION_CPU2 );
 }
 
 MACHINE_STOP( snes )
 {
-	/* Save RAM */
-	battery_save( image_filename(IO_CARTSLOT,0), &snes_ram[0x700000], sram_size );
+/* Save RAM */
+battery_save( image_filename(IO_CARTSLOT,0), &snes_ram[0x700000], sram_size );
 
 #ifdef MAME_DEBUG
-	battery_save( "snesvram", snes_vram, 0x20000 );
-	battery_save( "snescgram", snes_cgram, 0x202 );
-	battery_save( "snesoam", snes_oam, 0x440 );
+battery_save( "snesvram", snes_vram, 0x20000 );
+battery_save( "snescgram", snes_cgram, 0x202 );
+battery_save( "snesoam", snes_oam, 0x440 );
 #endif
 }
 
 /* 0x000000 - 0x2fffff */
 READ_HANDLER( snes_r_bank1 )
 {
-	UINT16 address = offset & 0xffff;
+UINT16 address = offset & 0xffff;
 
-	if( address <= 0x1fff )								/* Mirror of Low RAM */
-		return cpu_readmem24( 0x7e0000 + address );
-	else if( address >= 0x2000 && address <= 0x5fff )	/* I/O */
-		return snes_r_io( address );
-	else if( address >= 0x6000 && address <= 0x7fff )	/* Reserved */
-		return 0xff;
-	else
-	{
-		if( rom_mode == MODE_20 )
-			return snes_ram[offset];
-		else	/* MODE_21 */
-			return snes_ram[0xc00000 + offset];
-	}
-
+if( address <= 0x1fff )								/* Mirror of Low RAM */
+	return cpu_readmem24( 0x7e0000 + address );
+else if( address >= 0x2000 && address <= 0x5fff )	/* I/O */
+	return snes_r_io( address );
+else if( address >= 0x6000 && address <= 0x7fff )	/* Reserved */
 	return 0xff;
+else
+{
+	if( rom_mode == MODE_20 )
+		return snes_ram[offset];
+	else	/* MODE_21 */
+		return snes_ram[0xc00000 + offset];
+}
+
+return 0xff;
 }
 
 /* 0x300000 - 0x3fffff */
 READ_HANDLER( snes_r_bank2 )
 {
-	UINT16 address = offset & 0xffff;
+UINT16 address = offset & 0xffff;
 
-	if( address <= 0x1fff )								/* Mirror of Low RAM */
-		return cpu_readmem24( 0x7e0000 + address );
-	else if( address >= 0x2000 && address <= 0x5fff )	/* I/O */
-		return snes_r_io( address );
-	else if( address >= 0x6000 && address <= 0x7fff )	/* Reserved */
-	{
-		if( rom_mode == MODE_20 )
-			return 0xff;
-		else	/* MODE_21 */
-			return 0xff;	/* FIXME: this should be sram */
-	}
-	else
-	{
-		if( rom_mode == MODE_20 )
-			return snes_ram[0x300000 + offset];
-		else	/* MODE_21 */
-			return snes_ram[0xf00000 + offset];
-	}
+if( address <= 0x1fff )								/* Mirror of Low RAM */
+	return cpu_readmem24( 0x7e0000 + address );
+else if( address >= 0x2000 && address <= 0x5fff )	/* I/O */
+	return snes_r_io( address );
+else if( address >= 0x6000 && address <= 0x7fff )	/* Reserved */
+{
+	if( rom_mode == MODE_20 )
+		return 0xff;
+	else	/* MODE_21 */
+		return 0xff;	/* FIXME: this should be sram */
+}
+else
+{
+	if( rom_mode == MODE_20 )
+		return snes_ram[0x300000 + offset];
+	else	/* MODE_21 */
+		return snes_ram[0xf00000 + offset];
+}
 
-	return 0xff;
+return 0xff;
 }
 
 /* 0x400000 - 0x5fffff */
 READ_HANDLER( snes_r_bank3 )
 {
-	UINT16 address = offset & 0xffff;
+UINT16 address = offset & 0xffff;
 
-	if( rom_mode == MODE_20 )
-	{
-		if( address <= 0x7fff )
-			return 0xff;
-		else
-			return snes_ram[0x400000 + offset];
-	}
-	else	/* MODE_21 */
-	{
+if( rom_mode == MODE_20 )
+{
+	if( address <= 0x7fff )
+		return 0xff;
+	else
 		return snes_ram[0x400000 + offset];
-	}
+}
+else	/* MODE_21 */
+{
+	return snes_ram[0x400000 + offset];
+}
 
-	return 0xff;
+return 0xff;
 }
 
 /* 0x800000 - 0xffffff */
 READ_HANDLER( snes_r_bank4 )
 {
-	if( rom_mode == MODE_20 )
-	{
-		if( offset <= 0x5fffff )
-			return cpu_readmem24( offset );
-		else
-			return 0xff;
-	}
-	else	/* MODE_21 */
-	{
-		if( offset <= 0x3fffff )
-			return cpu_readmem24( offset );
-		else
-			return snes_ram[offset + 0x800000];
-	}
+if( rom_mode == MODE_20 )
+{
+	if( offset <= 0x5fffff )
+		return cpu_readmem24( offset );
+	else
+		return 0xff;
+}
+else	/* MODE_21 */
+{
+	if( offset <= 0x3fffff )
+		return cpu_readmem24( offset );
+	else
+		return snes_ram[offset + 0x800000];
+}
 
-	return 0xff;
+return 0xff;
 }
 
 /* 0x000000 - 0x2fffff */
 WRITE_HANDLER( snes_w_bank1 )
 {
-	UINT16 address = offset & 0xffff;
+UINT16 address = offset & 0xffff;
 
-	if( address <= 0x1fff )								/* Mirror of Low RAM */
-		cpu_writemem24( 0x7e0000 + address, data );
-	else if( address >= 0x2000 && address <= 0x5fff )	/* I/O */
-		snes_w_io( address, data );
-	else if( address >= 0x6000 && address <= 0x7fff )	/* Reserved */
-		logerror( "Attempt to write to reserved address: %X\n", offset );
-	else
-		logerror( "Attempt to write to ROM address: %X\n", offset );
+if( address <= 0x1fff )								/* Mirror of Low RAM */
+	cpu_writemem24( 0x7e0000 + address, data );
+else if( address >= 0x2000 && address <= 0x5fff )	/* I/O */
+	snes_w_io( address, data );
+else if( address >= 0x6000 && address <= 0x7fff )	/* Reserved */
+	logerror( "Attempt to write to reserved address: %X\n", offset );
+else
+	logerror( "Attempt to write to ROM address: %X\n", offset );
 }
 
 /* 0x300000 - 0x3fffff */
 WRITE_HANDLER( snes_w_bank2 )
 {
-	UINT16 address = offset & 0xffff;
+UINT16 address = offset & 0xffff;
 
-	if( address <= 0x1fff )								/* Mirror of Low RAM */
-		cpu_writemem24( 0x7e0000 + address, data );
-	else if( address >= 0x2000 && address <= 0x5fff )	/* I/O */
-		snes_w_io( address, data );
-	else if( address >= 0x6000 && address <= 0x7fff )	/* Reserved */
-	{
-		if( rom_mode == MODE_20 )
-			logerror( "Attempt to write to reserved address: %X\n", offset );
-		else
-			snes_ram[0x300000 + offset] = data;  /* FIXME: this should be sram */
-	}
+if( address <= 0x1fff )								/* Mirror of Low RAM */
+	cpu_writemem24( 0x7e0000 + address, data );
+else if( address >= 0x2000 && address <= 0x5fff )	/* I/O */
+	snes_w_io( address, data );
+else if( address >= 0x6000 && address <= 0x7fff )	/* Reserved */
+{
+	if( rom_mode == MODE_20 )
+		logerror( "Attempt to write to reserved address: %X\n", offset );
 	else
-		logerror( "Attempt to write to ROM address: %X\n", offset );
+		snes_ram[0x300000 + offset] = data;  /* FIXME: this should be sram */
+}
+else
+	logerror( "Attempt to write to ROM address: %X\n", offset );
 }
 
 /* 0x800000 - 0xffffff */
 WRITE_HANDLER( snes_w_bank4 )
 {
-	if( rom_mode == MODE_20 )
-	{
-		if( offset <= 0x2fffff )
-			snes_w_bank1( offset, data );
-		else if( offset >= 0x300000 && offset <= 0x3fffff )
-			snes_w_bank2( offset - 0x300000, data );
-	}
-	else /* MODE_21 */
-	{
-		if( offset <= 0x2fffff )
-			snes_w_bank1( offset, data );
-		else if( offset >= 0x300000 && offset <= 0x3fffff )
-			snes_w_bank2( offset - 0x300000, data );
-		else
-			logerror( "Attempt to write to ROM address: %X\n", offset );
-	}
+if( rom_mode == MODE_20 )
+{
+	if( offset <= 0x2fffff )
+		snes_w_bank1( offset, data );
+	else if( offset >= 0x300000 && offset <= 0x3fffff )
+		snes_w_bank2( offset - 0x300000, data );
+}
+else /* MODE_21 */
+{
+	if( offset <= 0x2fffff )
+		snes_w_bank1( offset, data );
+	else if( offset >= 0x300000 && offset <= 0x3fffff )
+		snes_w_bank2( offset - 0x300000, data );
+	else
+		logerror( "Attempt to write to ROM address: %X\n", offset );
+}
 }
 
 READ_HANDLER( snes_r_io )
 {
-	UINT8 value;
-	static UINT8 joypad1_l, joypad2_l, joypad3_l, joypad4_l;
-	static UINT8 joypad1_h, joypad2_h, joypad3_h, joypad4_h;
+UINT8 value;
+static UINT8 joypad1_l, joypad2_l, joypad3_l, joypad4_l;
+static UINT8 joypad1_h, joypad2_h, joypad3_h, joypad4_h;
 
-	/* offset is from 0x000000 */
-	switch( offset )
-	{
-		case MPYL:		/* Multiplication result (low) */
-		case MPYM:		/* Multiplication result (mid) */
-		case MPYH:		/* Multiplication result (high) */
-			return snes_ram[offset];
-		case SLHV:		/* Software latch for H/V counter */
-			/* FIXME: horizontal latch is a major fudge!!! */
-			ppu_vlatch = cur_vline;
-			ppu_hlatch = cur_hline++;
-			if( cur_hline > 339 )
-				cur_hline = 0;
-			break;
-		case ROAMDATA:	/* Read data from OAM (DR) */
+/* offset is from 0x000000 */
+switch( offset )
+{
+	case MPYL:		/* Multiplication result (low) */
+	case MPYM:		/* Multiplication result (mid) */
+	case MPYH:		/* Multiplication result (high) */
+		return snes_ram[offset];
+	case SLHV:		/* Software latch for H/V counter */
+		/* FIXME: horizontal latch is a major fudge!!! */
+		ppu_vlatch = cur_vline;
+		ppu_hlatch = cur_hline++;
+		if( cur_hline > 339 )
+			cur_hline = 0;
+		break;
+	case ROAMDATA:	/* Read data from OAM (DR) */
+		{
+			UINT16 oam_address = ((snes_ram[OAMADDH] & 0x1) << 8) + snes_ram[OAMADDL];
+			value = snes_oam[oam_address] & (0xff << (snes_ram[OAMDATA] << 3));
+			snes_ram[OAMDATA]++;
+			if( snes_ram[OAMDATA] == 2 )
 			{
-				UINT16 oam_address = ((snes_ram[OAMADDH] & 0x1) << 8) + snes_ram[OAMADDL];
-				value = snes_oam[oam_address] & (0xff << (snes_ram[OAMDATA] << 3));
-				snes_ram[OAMDATA]++;
-				if( snes_ram[OAMDATA] == 2 )
+				snes_ram[OAMDATA] = 0;
+				oam_address++;
+				snes_ram[OAMADDL] = oam_address & 0xff;
+				snes_ram[OAMADDH] = (oam_address >> 8) & 0x1;	/* FIXME: we are splatting the priority bit here */
+			}
+		}
+		return value;
+	case RVMDATAL:	/* Read data from VRAM (low) */
+		{
+			UINT16 addr = (snes_ram[VMADDH] << 8) | snes_ram[VMADDL];
+
+			value = snes_vram[addr << 1];
+			if( !(snes_ram[VMAIN] & 0x80) )
+			{
+				switch( snes_ram[VMAIN] & 0x03 )
 				{
-					snes_ram[OAMDATA] = 0;
-					oam_address++;
-					snes_ram[OAMADDL] = oam_address & 0xff;
-					snes_ram[OAMADDH] = (oam_address >> 8) & 0x1;	/* FIXME: we are splatting the priority bit here */
+					case 0: addr++;      break;
+					case 1: addr += 32;  break;
+					case 2: addr += 128; break; /* Should be 64, but a bug in the snes means it's 128 */
+					case 3: addr += 128; break;
 				}
+				snes_ram[VMADDL] = addr & 0xff;
+				snes_ram[VMADDH] = (addr >> 8) & 0xff;
 			}
 			return value;
-		case RVMDATAL:	/* Read data from VRAM (low) */
-			{
-				UINT16 addr = (snes_ram[VMADDH] << 8) | snes_ram[VMADDL];
+		}
+	case RVMDATAH:	/* Read data from VRAM (high) */
+		{
+			UINT16 addr = (snes_ram[VMADDH] << 8) | snes_ram[VMADDL];
 
-				value = snes_vram[addr << 1];
-				if( !(snes_ram[VMAIN] & 0x80) )
-				{
-					switch( snes_ram[VMAIN] & 0x03 )
-					{
-						case 0: addr++;      break;
-						case 1: addr += 32;  break;
-						case 2: addr += 128; break; /* Should be 64, but a bug in the snes means it's 128 */
-						case 3: addr += 128; break;
-					}
-					snes_ram[VMADDL] = addr & 0xff;
-					snes_ram[VMADDH] = (addr >> 8) & 0xff;
-				}
-				return value;
-			}
-		case RVMDATAH:	/* Read data from VRAM (high) */
+			value = snes_vram[(addr << 1) + 1];
+			if( snes_ram[VMAIN] & 0x80 )
 			{
-				UINT16 addr = (snes_ram[VMADDH] << 8) | snes_ram[VMADDL];
-
-				value = snes_vram[(addr << 1) + 1];
-				if( snes_ram[VMAIN] & 0x80 )
+				/* Increase the address */
+				switch( snes_ram[VMAIN] & 0x03 )
 				{
-					/* Increase the address */
-					switch( snes_ram[VMAIN] & 0x03 )
-					{
-						case 0: addr++;      break;
-						case 1: addr += 32;  break;
-						case 2: addr += 128; break; /* Should be 64, but a bug in the snes means it's 128 */
-						case 3: addr += 128; break;
-					}
-					snes_ram[VMADDL] = addr & 0xff;
-					snes_ram[VMADDH] = (addr >> 8) & 0xff;
+					case 0: addr++;      break;
+					case 1: addr += 32;  break;
+					case 2: addr += 128; break; /* Should be 64, but a bug in the snes means it's 128 */
+					case 3: addr += 128; break;
 				}
-				return value;
+				snes_ram[VMADDL] = addr & 0xff;
+				snes_ram[VMADDH] = (addr >> 8) & 0xff;
 			}
-		case RCGDATA:	/* Read data from CGRAM */
-				value = ((UINT8 *)snes_cgram)[cgram_address++];
-				if( cgram_address >= 0x202 )
-					cgram_address = 0;
-				return value;
-		case OPHCT:		/* Horizontal counter data by ext/soft latch */
+			return value;
+		}
+	case RCGDATA:	/* Read data from CGRAM */
+			value = ((UINT8 *)snes_cgram)[cgram_address++];
+			if( cgram_address >= 0x202 )
+				cgram_address = 0;
+			return value;
+	case OPHCT:		/* Horizontal counter data by ext/soft latch */
+		{
+			/* FIXME: need to handle STAT78 reset */
+			static UINT8 read_ophct = 0;
+			if( read_ophct )
 			{
-				/* FIXME: need to handle STAT78 reset */
-				static UINT8 read_ophct = 0;
-				if( read_ophct )
-				{
-					value = (ppu_hlatch >> 8) & 0x1;
-					read_ophct = 0;
-				}
-				else
-				{
-					value = ppu_hlatch & 0xff;
-					read_ophct = 1;
-				}
-				return value;
+				value = (ppu_hlatch >> 8) & 0x1;
+				read_ophct = 0;
 			}
-		case OPVCT:		/* Vertical counter data by ext/soft latch */
+			else
 			{
-				/* FIXME: need to handle STAT78 reset */
-				static UINT8 read_opvct = 0;
-				if( read_opvct )
-				{
-					value = (ppu_vlatch >> 8) & 0x1;
-					read_opvct = 0;
-				}
-				else
-				{
-					value = ppu_vlatch & 0xff;
-					read_opvct = 1;
-				}
-				return value;
+				value = ppu_hlatch & 0xff;
+				read_ophct = 1;
 			}
-		case STAT77:	/* PPU status flag and version number */
-		case STAT78:	/* PPU status flag and version number */
+			return value;
+		}
+	case OPVCT:		/* Vertical counter data by ext/soft latch */
+		{
+			/* FIXME: need to handle STAT78 reset */
+			static UINT8 read_opvct = 0;
+			if( read_opvct )
+			{
+				value = (ppu_vlatch >> 8) & 0x1;
+				read_opvct = 0;
+			}
+			else
+			{
+				value = ppu_vlatch & 0xff;
+				read_opvct = 1;
+			}
+			return value;
+		}
+	case STAT77:	/* PPU status flag and version number */
+	case STAT78:	/* PPU status flag and version number */
 			/* FIXME: need to reset OPHCT and OPVCT */
 			return snes_ram[offset];
 		case APU00:		/* Audio port register */
 		case APU01:		/* Audio port register */
 		case APU02:		/* Audio port register */
 		case APU03:		/* Audio port register */
-/*			printf( "SNES reading port %d: %X\n", offset & 0x3, spc_port_out[offset & 0x3] );
-			return spc_port_out[offset & 0x3]; */
-			return SPCSkipper();	/* FIXME: until sound is emulated */
+			/* return spc_port_out[offset & 0x3]; */
+			return snes_fakeapu_r_port( offset & 0x3 );
 		case WMDATA:	/* Data to read from WRAM */
 			{
 				UINT32 addr = ((snes_ram[WMADDH] & 0x1) << 16) | (snes_ram[WMADDM] << 8) | snes_ram[WMADDL];
@@ -674,8 +673,8 @@ WRITE_HANDLER( snes_w_io )
 		case APU01:
 		case APU02:
 		case APU03:
-/*			printf( "SNES writing port %d: %X\n", offset & 0x3, data ); */
 			spc_port_in[offset & 0x3] = data;
+			snes_fakeapu_w_port( offset & 0x3, data );
 			return;
 		case WMDATA:	/* Data to write to WRAM */
 			{
@@ -1438,67 +1437,4 @@ void snes_gdma( UINT8 channels )
 		dma += 0x10;
 		mask <<= 1;
 	}
-}
-
-
-
-
-/* --- */
-UINT8 SPCSkipper(void)
-{
-	static INT16 retType = 0;
-	UINT8 retVal = 0x11;
-
-/*  G65816_PC=1, G65816_S, G65816_P, G65816_A, G65816_X, G65816_Y,
- *  G65816_PB, G65816_DB, G65816_D, G65816_E,
- *  G65816_NMI_STATE, G65816_IRQ_STATE
- */
-
-	switch (retType)
-	{
-		case 0:
-			retVal = activecpu_get_reg(4) & 0xFF;
-			break;
-		case 1:
-			retVal = (activecpu_get_reg(4) >> 8) & 0xFF;
-			break;
-		case 2:
-			retVal = activecpu_get_reg(5) & 0xFF;
-			break;
-		case 3:
-			retVal = (activecpu_get_reg(5) >> 8) & 0xFF;
-			break;
-		case 4:
-			retVal = activecpu_get_reg(6) & 0xFF;
-			break;
-		case 5:
-			retVal = (activecpu_get_reg(6) >> 8) & 0xFF;
-			break;
-		case 6:
-			retVal = 0xAA;
-			break;
-		case 7:
-			retVal = 0xBB;
-			break;
-		case 8:
-			retVal = 0x55;
-			break;
-		case 9:
-			retVal = 0x00;
-			break;
-		case 10:
-			retVal = 0xFF;
-			break;
-		case 11:
-			retVal = 0x01;	/* A couple of roms are waiting for specific values */
-			break;
-		case 12:
-			retVal = 0x07;
-			break;
-	}
-
-	retType++;
-	if (retType > 12)
-		retType = 0;
-	return retVal;
 }
