@@ -1,6 +1,6 @@
 /* from machine/vtech1.c */
 
-//#define OLD_VIDEO
+#define OLD_VIDEO
 
 extern char vtech1_frame_message[64+1];
 extern int vtech1_frame_time;
