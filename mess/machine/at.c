@@ -6,7 +6,6 @@
 #include "includes/pic8259.h"
 #include "includes/pit8253.h"
 #include "includes/mc146818.h"
-#include "includes/dma8237.h"
 #include "includes/pc_vga.h"
 #include "includes/pc_cga.h"
 #include "includes/pcshare.h"
@@ -14,6 +13,8 @@
 #include "includes/at.h"
 #include "includes/pckeybrd.h"
 #include "includes/sblaster.h"
+
+#include "8237dma.h"
 
 static SOUNDBLASTER_CONFIG soundblaster = { 1,5, {1,0} };
 
@@ -92,15 +93,13 @@ void init_ps2m30286(void)
 
 MACHINE_INIT( at )
 {
-	dma8237_reset(dma8237);
-	dma8237_reset(dma8237+1);
+	dma8237_reset();
 }
 
 MACHINE_INIT( at_vga )
 {
 	vga_reset();
-	dma8237_reset(dma8237);
-	dma8237_reset(dma8237+1);
+	dma8237_reset();
 }
 
 void at_cga_frame_interrupt (void)

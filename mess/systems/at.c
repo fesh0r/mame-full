@@ -12,7 +12,6 @@
 
 #include "includes/uart8250.h"
 #include "includes/pic8259.h"
-#include "includes/dma8237.h"
 #include "includes/pit8253.h"
 #include "includes/mc146818.h"
 #include "includes/pc_vga.h"
@@ -37,6 +36,8 @@
 
 #include "devices/mflopimg.h"
 #include "formats/pc_dsk.h"
+
+#include "machine/8237dma.h"
 
 /* window resizing with dirtybuffering traping in xmess window */
 
@@ -81,6 +82,17 @@ ADDRESS_MAP_END
 
 
 
+static READ_HANDLER(at_dma8237_1_r)
+{
+	return dma8237_1_r(offset / 2);
+}
+
+static WRITE_HANDLER(at_dma8237_1_w)
+{
+	dma8237_1_w(offset / 2, data);
+}
+
+
 static ADDRESS_MAP_START(at_io, ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0x0000, 0x001f) AM_READWRITE(dma8237_0_r,				dma8237_0_w)
 	AM_RANGE(0x0020, 0x003f) AM_READWRITE(pic8259_0_r,				pic8259_0_w)
@@ -89,7 +101,7 @@ static ADDRESS_MAP_START(at_io, ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0x0070, 0x007f) AM_READWRITE(mc146818_port_r,			mc146818_port_w)
 	AM_RANGE(0x0080, 0x009f) AM_READWRITE(at_page_r,				at_page_w)
 	AM_RANGE(0x00a0, 0x00bf) AM_READWRITE(pic8259_1_r,				pic8259_1_w)
-	AM_RANGE(0x00c0, 0x00df) AM_READWRITE(dma8237_at_1_r,			dma8237_at_1_w)
+	AM_RANGE(0x00c0, 0x00df) AM_READWRITE(at_dma8237_1_r,			at_dma8237_1_w)
 	AM_RANGE(0x01f0, 0x01f7) AM_READWRITE(at_mfm_0_r,				at_mfm_0_w)
 	AM_RANGE(0x0200, 0x0207) AM_READWRITE(pc_JOY_r,					pc_JOY_w)
 	AM_RANGE(0x0220, 0x022f) AM_READWRITE(soundblaster_r,			soundblaster_w)
@@ -128,7 +140,7 @@ static ADDRESS_MAP_START(ps2m30286_io, ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0x0070, 0x007f) AM_READWRITE(mc146818_port_r,			mc146818_port_w)
 	AM_RANGE(0x0080, 0x009f) AM_READWRITE(at_page_r,				at_page_w)
 	AM_RANGE(0x00a0, 0x00bf) AM_READWRITE(pic8259_1_r,				pic8259_1_w)
-	AM_RANGE(0x00c0, 0x00df) AM_READWRITE(dma8237_at_1_r,			dma8237_at_1_w)
+	AM_RANGE(0x00c0, 0x00df) AM_READWRITE(at_dma8237_1_r,			at_dma8237_1_w)
 	AM_RANGE(0x0100, 0x0107) AM_READWRITE(ps2_pos_r,				ps2_pos_w)
 	AM_RANGE(0x01f0, 0x01f7) AM_READWRITE(at_mfm_0_r,				at_mfm_0_w)
 	AM_RANGE(0x0200, 0x0207) AM_READWRITE(pc_JOY_r,					pc_JOY_w)

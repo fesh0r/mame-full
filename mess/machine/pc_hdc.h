@@ -13,6 +13,7 @@ READ_HANDLER (	pc_HDC1_r );
 WRITE_HANDLER ( pc_HDC2_w );
 READ_HANDLER ( pc_HDC2_r );
 
-void pc_harddisk_state(void);
+int pc_hdc_dack_r(void);
+void pc_hdc_dack_w(int data);
 
 #endif /* PC_HDC_H */

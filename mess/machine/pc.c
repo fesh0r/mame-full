@@ -18,7 +18,6 @@
 #include "includes/pic8259.h"
 #include "includes/pit8253.h"
 #include "includes/mc146818.h"
-#include "includes/dma8237.h"
 #include "includes/uart8250.h"
 #include "includes/pc_vga.h"
 #include "includes/pc_cga.h"
@@ -41,6 +40,8 @@
 
 #include "includes/pc.h"
 #include "mscommon.h"
+
+#include "machine/8237dma.h"
 
 DRIVER_INIT( pccga )
 {
@@ -186,29 +187,29 @@ DRIVER_INIT( pc_vga )
 
 MACHINE_INIT( pc_mda )
 {
-	dma8237_reset(dma8237);
+	dma8237_reset();
 }
 
 MACHINE_INIT( pc_cga )
 {
-	dma8237_reset(dma8237);
+	dma8237_reset();
 }
 
 MACHINE_INIT( pc_t1t )
 {
 	pc_t1t_reset();
-	dma8237_reset(dma8237);
+	dma8237_reset();
 }
 
 MACHINE_INIT( pc_aga )
 {
-	dma8237_reset(dma8237);
+	dma8237_reset();
 }
 
 MACHINE_INIT( pc_vga )
 {
 	vga_reset();
-	dma8237_reset(dma8237);
+	dma8237_reset();
 }
 
 /**************************************************************************

@@ -188,8 +188,8 @@ DRVLIBS = \
 	$(OBJ)/pdp1.a	  \
 	$(OBJ)/sony.a     \
 	$(OBJ)/nintendo.a \
-	$(OBJ)/at.a       \
 	$(OBJ)/pc.a       \
+	$(OBJ)/at.a       \
 	$(OBJ)/pcshare.a  \
 	$(OBJ)/ti99.a     \
 	$(OBJ)/amstrad.a  \
@@ -497,12 +497,12 @@ $(OBJ)/bally.a:    \
 	$(OBJ)/mess/systems/astrocde.o
 
 $(OBJ)/pcshare.a:					\
-	$(OBJ)/mess/machine/dma8237.o	\
+	$(OBJ)/mess/machine/8237dma.o	\
 	$(OBJ)/mess/machine/pic8259.o	\
 	$(OBJ)/mess/sndhrdw/pc.o		\
 	$(OBJ)/mess/sndhrdw/sblaster.o	\
 	$(OBJ)/mess/machine/pc_fdc.o	\
-	$(OBJ)/mess/devices/pc_hdc.o	\
+	$(OBJ)/mess/machine/pc_hdc.o	\
 	$(OBJ)/mess/machine/pcshare.o	\
 	$(OBJ)/mess/vidhrdw/pc_video.o	\
 	$(OBJ)/mess/vidhrdw/pc_mda.o	\

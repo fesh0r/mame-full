@@ -27,7 +27,6 @@
 #include "includes/pic8259.h"
 #include "includes/pit8253.h"
 #include "includes/mc146818.h"
-#include "includes/dma8237.h"
 #include "includes/uart8250.h"
 #include "includes/pc_vga.h"
 #include "includes/pc_cga.h"
@@ -41,11 +40,13 @@
 #include "includes/pclpt.h"
 #include "includes/centroni.h"
 
-#include "devices/pc_hdc.h"
+#include "machine/pc_hdc.h"
 #include "includes/nec765.h"
 
 #include "includes/pcshare.h"
 #include "mscommon.h"
+
+#include "machine/8237dma.h"
 
 #define VERBOSE_DBG 0       /* general debug messages */
 #if VERBOSE_DBG
@@ -178,6 +179,110 @@ static CENTRONICS_CONFIG cent_config[3]={
 	}
 };
 
+
+
+/*************************************************************************
+ *
+ *		PC DMA stuff
+ *
+ *************************************************************************/
+
+static data8_t dma_offset[2][4];
+static data8_t at_pages[0x10];
+static offs_t pc_page_offset_mask;
+
+READ_HANDLER(pc_page_r)
+{
+	return 0xFF;
+}
+
+WRITE_HANDLER(pc_page_w)
+{
+	switch(offset % 4) {
+	case 1:
+		dma_offset[0][2] = data;
+		break;
+	case 2:
+		dma_offset[0][3] = data;
+		break;
+	case 3:
+		dma_offset[0][0] = dma_offset[0][1] = data;
+		break;
+	}
+}
+
+READ_HANDLER(at_page_r)
+{
+	data8_t data = at_pages[offset % 0x10];
+
+	switch(offset % 8) {
+	case 1:
+		data = dma_offset[(offset / 8) & 1][2];
+		break;
+	case 2:
+		data = dma_offset[(offset / 8) & 1][3];
+		break;
+	case 3:
+		data = dma_offset[(offset / 8) & 1][1];
+		break;
+	case 7:
+		data = dma_offset[(offset / 8) & 1][0];
+		break;
+	}
+	return data;
+}
+
+WRITE_HANDLER(at_page_w)
+{
+	at_pages[offset % 0x10] = data;
+
+	switch(offset % 8) {
+	case 1:
+		dma_offset[(offset / 8) & 1][2] = data;
+		break;
+	case 2:
+		dma_offset[(offset / 8) & 1][3] = data;
+		break;
+	case 3:
+		dma_offset[(offset / 8) & 1][1] = data;
+		break;
+	case 7:
+		dma_offset[(offset / 8) & 1][0] = data;
+		break;
+	}
+}
+
+static data8_t pc_dma_read_byte(int channel, offs_t offset)
+{
+	offs_t page_offset = (((offs_t) dma_offset[0][channel]) << 16)
+		& pc_page_offset_mask;
+	return program_read_byte(page_offset + offset);
+}
+
+static void pc_dma_write_byte(int channel, offs_t offset, data8_t data)
+{
+	offs_t page_offset = (((offs_t) dma_offset[0][channel]) << 16)
+		& pc_page_offset_mask;
+	program_write_byte(page_offset + offset, data);
+}
+
+static struct dma8237_interface pc_dma =
+{
+	0,
+	TIME_IN_USEC(1),
+
+	pc_dma_read_byte,
+	pc_dma_write_byte,
+
+	{ 0, 0, pc_fdc_dack_r, pc_hdc_dack_r },
+	{ 0, 0, pc_fdc_dack_w, pc_hdc_dack_w },
+	pc_fdc_set_tc_state
+};
+
+
+
+/* ----------------------------------------------------------------------- */
+
 void init_pc_common(UINT32 flags)
 {
 	/* MESS managed RAM */
@@ -228,16 +333,16 @@ void init_pc_common(UINT32 flags)
 	/* DMA */
 	if (flags & PCCOMMON_DMA8237_AT)
 	{
-		static DMA8237_CONFIG at_dma = { DMA8237_AT };
-		dma8237_config(dma8237 + 0, &at_dma);
-		dma8237_config(dma8237 + 1, &at_dma);
+		dma8237_init(2);
+		dma8237_config(0, &pc_dma);
+		pc_page_offset_mask = 0xFF0000;
 	}
 	else
 	{
-		static DMA8237_CONFIG pc_dma = { DMA8237_PC };
-		dma8237_config(dma8237 + 0, &pc_dma);
+		dma8237_init(1);
+		dma8237_config(0, &pc_dma);
+		pc_page_offset_mask = 0x0F0000;
 	}
-	dma8237_reset(dma8237);
 }
 
 void pc_mda_init(void)
@@ -398,6 +503,8 @@ void pc_keyboard(void)
 		}
 	}
 }
+
+
 
 /*************************************************************************
  *

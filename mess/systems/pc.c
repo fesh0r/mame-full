@@ -24,7 +24,6 @@
 
 #include "includes/uart8250.h"
 #include "includes/pic8259.h"
-#include "includes/dma8237.h"
 #include "includes/pit8253.h"
 #include "includes/mc146818.h"
 #include "includes/pc_vga.h"
@@ -54,6 +53,8 @@
 #include "devices/mflopimg.h"
 #include "formats/pc_dsk.h"
 
+#include "machine/8237dma.h"
+
 #define ym3812_StdClock 3579545
 
 /*
@@ -77,6 +78,8 @@
   jumperable? normally 0x220
 */
 #define GAMEBLASTER
+
+
 
 // IO Expansion, only a little bit for ibm bios self tests
 //#define EXP_ON
