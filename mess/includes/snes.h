@@ -27,11 +27,11 @@
 #define BG3VOFS			0x2112
 #define BG4HOFS			0x2113
 #define BG4VOFS			0x2114
-#define VMAIN			0x2115	/* i---abcd = i: Increment timing | ab: Full graphic | cd: SC increment */
+#define VMAIN			0x2115	/* i---ffrr = i: Increment timing | f: Full graphic | r: increment rate */
 #define VMADDL			0x2116	/* aaaaaaaa = a: LSB of vram address */
 #define VMADDH			0x2117	/* aaaaaaaa = a: MSB of vram address */
-#define VMDATAL			0x2118
-#define VMDATAH			0x2119
+#define VMDATAL			0x2118	/* dddddddd = d: data to be written */
+#define VMDATAH			0x2119	/* dddddddd = d: data to be written */
 #define M7SEL			0x211A	/* ab----yx = a: screen over | y: vertical flip | x: horizontal flip */
 #define M7A				0x211B
 #define M7B				0x211C
@@ -320,13 +320,14 @@ extern void snes_hdma(void);
 extern void snes_refresh_scanline( UINT16 curline );
 
 /* Video related */
-extern UINT8  *snes_vram;		/* Video RAM */
+extern UINT8  *snes_vram;		/* Video RAM (Should be 16-bit, but it's easier this way) */
 extern UINT16 *snes_cgram;		/* Colour RAM */
-extern UINT8  *snes_oam;		/* Object Attribute Memory */
+extern UINT8  *snes_oam;		/* Object Attribute Memory (Should be 16-bit, but it's easier this way) */
 extern UINT8  *snes_ram;		/* Main memory */
 extern UINT16 bg_hoffset[4];	/* Background horizontal scroll offsets */
 extern UINT16 bg_voffset[4];	/* Background vertical scroll offsets */
 extern UINT16 mode7_data[6];	/* Data for mode7 matrix calculation */
+extern UINT8  obj_size[2];		/* Objects sizes */
 
 /* Sound related */
 extern UINT8 *spc_ram;			/* SPC main memory */
@@ -337,7 +338,7 @@ extern WRITE_HANDLER ( spc_w_io );
 extern int snes_sh_start( const struct MachineSound *driver );
 extern void snes_sh_update( int param, INT16 **buffer, int length );
 
-/* Just for debugging */
+/* Just until we get sound working */
 extern UINT8 SPCSkipper(void);
 
 #endif /* _SNES_H_ */
