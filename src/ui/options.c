@@ -181,7 +181,13 @@ static REG_OPTION regSettings[] =
 	{"TitlesDir",          "",                   RO_STRING,  &settings.titlesdir,        0, 0},
 	{"BkgroundDir",        "",                   RO_STRING,  &settings.bgdir,            0, 0},
 
+#ifdef MESS
+	{"biospath",           "",                   RO_STRING,  &settings.romdirs,	         0, 0},
+	{"softwarepath",       "",                   RO_STRING,  &settings.softwaredirs,     0, 0},
+	{"CRC_directory",      "",                   RO_STRING,  &settings.crcdir,           0, 0},
+#else
 	{"rompath",            "",                   RO_STRING,  &settings.romdirs,          0, 0},
+#endif
 	{"samplepath",         "",                   RO_STRING,  &settings.sampledirs,       0, 0},
 	{"inipath",			   "",                   RO_STRING,  &settings.inidir,           0, 0},
 	{"cfg_directory",      "",                   RO_STRING,  &settings.cfgdir,           0, 0},
@@ -310,7 +316,13 @@ static REG_OPTION global_game_options[] =
 	{"TitlesDir",          "title_directory",    RO_STRING,  &settings.titlesdir,        0, 0},
 	{"BkgroundDir",        "background_directory",RO_STRING, &settings.bgdir,            0, 0},
 
+#ifdef MESS
+	{"biospath",           "biospath",           RO_STRING,  &settings.romdirs,          0, 0},
+	{"softwarepath",       "softwarepath",       RO_STRING,  &settings.softwaredirs,     0, 0},
+	{"CRC_directory",      "CRC_directory",      RO_STRING,  &settings.crcdir,           0, 0},
+#else
 	{"rompath",            "rompath",            RO_STRING,  &settings.romdirs,          0, 0},
+#endif
 	{"samplepath",         "samplepath",         RO_STRING,  &settings.sampledirs,       0, 0},
 	{"inipath",			   "ini_directory",		 RO_STRING,  &settings.inidir,           0, 0},
 	{"cfg_directory",      "cfg_directory",      RO_STRING,  &settings.cfgdir,           0, 0},
