@@ -553,6 +553,16 @@ static void prepare_menus(void)
 void win_toggle_menubar(void)
 {
 	SetMenu(win_video_window, GetMenu(win_video_window) ? NULL : win_menu_bar);
+	
+	if (win_window_mode)
+	{
+		RECT window;
+		GetWindowRect(win_video_window, &window);
+		win_constrain_to_aspect_ratio(&window, WMSZ_BOTTOM);
+		SetWindowPos(win_video_window, HWND_TOP, window.left, window.top,
+			window.right - window.left, window.bottom - window.top, SWP_NOZORDER);
+	}
+
 	win_adjust_window();
 }
 
