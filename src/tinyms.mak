@@ -15,7 +15,7 @@ SOUNDS+=SN76496@
 OBJS =    $(OBJ)/mess/machine/coleco.o \
 	  $(OBJ)/mess/vidhrdw/coleco.o \
 	  $(OBJ)/mess/systems/coleco.o \
-	  $(OBJ)/mess/vidhrdw/tms9928a.o
+
 
 
 
