@@ -13,20 +13,33 @@ Release 0.85.1
 	  when the display settings changed.
 	- XInput was probably limited to two controllers in 0.85, but should 
 	  again support up to four.
-	- Overhauled the 3Dfx targets: Fixed a crash when using 16bbpp 
-	  palettized modes; added support for rotated/flipped games; corrected 
-	  the paused emulation test; added support for compiling and linking 
-	  against GLIDE3; fixed and cleaned up vector support; added support 
-	  for vector clipping, which fixes mhavoc.  (Hans de Goede)
-	- Fixed OpenGL vector support.  Clipping support still needs to be 
-	  added; for an example of the problem, see mhavoc.  (Hans de Goede)
+	- Overhauled the 3Dfx targets (Hans de Goede):
+	  * Fixed a crash when 16bbpp palettized modes are used.
+	  * Added support for rotated/flipped games.
+	  * Corrected the paused emulation test.
+	  * Added support for compiling and linking against GLIDE3.
+	  * Fixed and cleaned up vector support.
+	  * Added support for vector clipping, which fixes mhavoc.
+	  * Fixed 32bpp game support.
+	  * Boosted the speed of 15bpp direct RGB games by avoiding a table 
+	    lookup.
+	  * Modified 15bpp direct RGB support to use memcpy for a small 
+	    speedup. 
+	- Fixed OpenGL vector support, with the exception of clipping support;
+	  for an example of the problem, see mhavoc.  (Hans de Goede)
 	- The SVGAlib targets now detect the signals used for console 
 	  switching.  (Hans de Goede)
 	- When "-norotate(-nr)" is specified, the UI is no longer rotated 
 	  relative to the game.  (Hans de Goede)
-	- Cleaned up the blit core.  Rotation should also be a bit faster.  
-	  Note that targets that don't define DEST will need to be fixed.  
-	  (Hans de Goede)
+	- Did major cleanup of the blit core (Hans de Goede):
+	  * Rotation should be a bit faster.  
+	  * Defining DEST is no longer optional; targets that don't define it 
+	    will need to be fixed.  
+	  * Removed a bunch of obsolete #defines and special cases.
+	  * Removed fixed Y scaling, since the arbitrary Y scaling is not 
+	    noticeably slower.
+	  * Removed LOW_MEM from the makefile; blit.h is now so small, it 
+	    should no longer be needed.
 	- The C version of the 6-tap filter rotates pointers now instead of 
 	  using memcpy, which should give a small speed boost.  It also no 
 	  longer reallocates a rotation buffer.  (Hans de Goede)
@@ -35,6 +48,34 @@ Release 0.85.1
 	- Re-applied a fix for an infrequent spurious error reported by the 
 	  included zlib.  (Mark Adler, courtesy of smf)
 	- The SDL joystick driver works again.  It should also be a bit faster. 
+	- Adjusted a few tests to make sure that every combination of compiling 
+	  in XIL, MITSHM, and Xv will work and that the fallback order is Xv -> 
+	  MITSHM -> normal X11.  (Hans de Goede)
+	- The Xv driver no longer uses "-geometry", since this requires users 
+	  to know the aspect ratio of a game.  It instead uses "-widthscale" 
+	  and "-heightscale".  (Hans de Goede)
+	- Added "-perfect-yv12", which uses perfect Xv YV12 scaling instead of 
+	  the widthscale == 2 && heightscale == 2 hack.  (Hans de Goede)
+	- Added support for displaying 32bpp bitmaps on a 16bpp X11 or 3Dfx 
+	  display by down-sampling.  This doesn't yet support effects.  (Hans 
+	  de Goede)
+	- Added rotation for Xv YV12 displays.  (Hans de Goede)
+	- Sometimes Xv Image creation succeeds, but the first XvShmPutImage to 
+	  a mapped window fails with a BadAlloc error; also, sometimes it can 
+	  create an Image smaller than the requested size.  In such cases, the 
+	  code now falls back to another Image type instead of crashing later.  
+	  (Hans de Goede)
+	- Fixed problems in the X11 display target (Hans de Goede):
+	  * Free cursors on close.
+	  * Call close when display creation fails to clean up after us.
+	  * Comment out sleep calls, which shouldn't be necessary since XSync 
+	    should only exit after everything has been processed.
+	  * Removed x11_window_put_image in favor of x11_window_refresh_screen 
+	    since dirty rectangles are no longer supported.
+	- The display should no longer open twice for artwork games: The setup 
+	  code wasn't rounding the display bounds as it should have.  The 
+	  rounding is now also to sizeof(long) instead of a hard-coded 8, which 
+	  was needed for the old dirty rectangles code.
 
 Release 0.85, 12 August 2004
 	- Everything from MAME 0.85 (http://x.mame.net/changes-mame.html) and
