@@ -294,28 +294,6 @@ enum { IPT_UNUSED=0, IPT_END=1,IPT_PORT,
  
 #define IPF_RESETCPU	0	/* need to get rid of this */
 
-#define PORT_CODELEGACY(code1,code2)								\
-	{ if ((code1) != CODE_NONE)	PORT_CODE(code1); }					\
-	{ if ((code2) != CODE_NONE)	PORT_CODE(code2); }					\
-
-#define PORT_BITX(mask,default,type,name,key,joy) \
-	PORT_BIT(mask, default, type)					\
-	PORT_NAME(name)									\
-	PORT_CODELEGACY(key, joy)						\
-
-#define PORT_ANALOG(mask,default,type,sensitivity,delta,min,max) \
-	PORT_BIT(mask, default, type)	\
-	PORT_MINMAX(min, max)			\
-	PORT_SENSITIVITY(sensitivity)	\
-	PORT_KEYDELTA(delta)			\
-
-#define PORT_ANALOGX(mask,default,type,sensitivity,delta,min,max,keydec,keyinc,joydec,joyinc) \
-	PORT_ANALOG(mask,default,type,sensitivity,delta,min,max)	\
-	PORT_CODE_DEC(keydec)		\
-	PORT_CODE_INC(keyinc)		\
-	PORT_CODE_DEC(joydec)		\
-	PORT_CODE_INC(joyinc)		\
-
 #endif /* MESS */
 
 /* dip switch definition */

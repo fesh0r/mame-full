@@ -44,6 +44,11 @@ enum
 #define UCHAR_SHIFT_BEGIN	(UCHAR_SHIFT_1)
 #define UCHAR_SHIFT_END		(UCHAR_SHIFT_2)
 
+/* crappy legacy macro that I wish to phase out */
+#define PORT_CODELEGACY(code1,code2)								\
+	{ if ((code1) != CODE_NONE)	PORT_CODE(code1); }					\
+	{ if ((code2) != CODE_NONE)	PORT_CODE(code2); }					\
+	
 #define PORT_CHAR(ch)												\
 	port->u.keyboard.chars[key++] = (ch);							\
 
