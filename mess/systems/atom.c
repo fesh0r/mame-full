@@ -128,7 +128,7 @@ static MEMORY_WRITE_START (atomeb_writemem)
 	{ 0x0a05, 0x07fff, MWA_RAM},
 	{ 0x8000, 0x97ff, videoram_w, &videoram, &videoram_size}, // VDG 6847
 	{ 0x9800, 0x9fff, MWA_RAM },
-    { 0xa000, 0xafff, MWA_NOP },
+ /*   { 0xa000, 0xafff, MWA_NOP }, */
     { 0xb000, 0xb003, ppi8255_0_w },    // PIA 8255
 	{ 0xb800, 0xbbff, atom_via_w},		// VIA 6522
     { 0xbfff, 0xbfff, atom_eprom_box_w},
@@ -292,6 +292,48 @@ static struct MachineDriver machine_driver_atom =
 	}
 };
 
+
+static struct MachineDriver machine_driver_atomeb =
+{
+	/* basic machine hardware */
+	{
+		{
+            CPU_M65C02,
+			1000000,
+			atomeb_readmem, atomeb_writemem,
+			0, 0,
+			0, 0,
+		},
+	},
+	50, 128, /* frames/sec, vblank duration */
+	0,
+	atomeb_init_machine,
+	atom_stop_machine,
+
+	/* video hardware */
+	320,					/* screen width */
+	240,					/* screen height (pixels doubled) */
+	{ 0, 319, 0, 239 },		/* visible_area */
+	0,							/* graphics decode info */
+	M6847_TOTAL_COLORS,
+	0,
+	m6847_vh_init_palette,						/* initialise palette */
+
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	0,
+	atom_vh_start,
+	m6847_vh_stop,
+	m6847_vh_update,
+	/* sound hardware */
+	0, 0, 0, 0,
+	{
+		{
+			SOUND_SPEAKER,
+			&atom_sh_interface
+		}
+	}
+};
+
 ROM_START (atom)
 	ROM_REGION (0x10000, REGION_CPU1,0)
 	ROM_LOAD ("akernel.rom", 0xf000, 0x1000, 0xc604db3d)
@@ -368,4 +410,4 @@ static const struct IODevice io_atom[] =
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
 COMP( 1979, atom,     0,        atom,     atom,     0,        "Acorn",  "Atom" )
-COMP( 1979, atomeb,   atom,     atom,     atom,     0,        "Acorn",  "Atom with Eprom Box" )
+COMP( 1979, atomeb,   atom,     atomeb,     atom,     0,        "Acorn",  "Atom with Eprom Box" )
