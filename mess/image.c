@@ -96,13 +96,18 @@ int image_load(mess_image *img, const char *name)
 	mame_file *fp = NULL;
 	UINT8 *buffer = NULL;
 	UINT64 size;
-	int type = image_devtype(img);
 
-	dev = device_find(Machine->gamedrv, type);
-	assert(dev);
-
+	/* unload if we are loaded */
 	if (img->status & IMAGE_STATUS_ISLOADED)
 		image_unload(img);
+	
+	/* if we are attempting to "load" NULL, then exit at this point */
+	if (!name)
+		return INIT_PASS;
+
+	dev = image_device(img);
+	assert(dev);
+
 	img->status |= IMAGE_STATUS_ISLOADING;
 
 	if (name && *name)

@@ -107,7 +107,6 @@ void init_europc(void)
 
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
 	europc_rtc_init();
-	pc_aga_set_mode(AGA_COLOR);
 //	europc_rtc_set_time();
 }
 
@@ -152,7 +151,6 @@ void init_pc200(void)
 	init_pc_common();
 	dma8237_config(dma8237,&dma);
 	dma8237_reset(dma8237);
-	pc_aga_set_mode(AGA_COLOR);
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC); //?
 }
 

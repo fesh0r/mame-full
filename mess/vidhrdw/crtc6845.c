@@ -89,7 +89,8 @@ static int crtc6845_clocks_in_frame(struct crtc6845 *crtc)
 
 void crtc6845_set_clock(struct crtc6845 *crtc, int freq)
 {
-	crtc->config.freq=freq;
+	assert(crtc);
+	crtc->config.freq = freq;
 	schedule_full_refresh();
 }
 

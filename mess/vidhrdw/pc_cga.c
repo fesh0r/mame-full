@@ -25,6 +25,30 @@
 			xxx0 1010  320x200 graph color
 			xxx1 1110  640x200 graph B/W
 
+
+	PC1512 display notes
+
+	The PC1512 built-in display adaptor is an emulation of IBM's CGA.  Unlike a
+	real CGA, it is not built around a real MC6845 controller, and so attempts
+	to get custom video modes out of it may not work as expected. Its 640x200
+	CGA mode can be set up to be a 16-color mode rather than mono.
+
+	If you program it with BIOS calls, the PC1512 behaves just like a real CGA,
+	except:
+
+	- The 'greyscale' text modes (0 and 2) behave just like the 'color'
+	  ones (1 and 3). On a color monitor both are in color; on a mono
+	  monitor both are in greyscale. 
+	- Mode 5 (the 'greyscale' graphics mode) displays in color, using
+	  an alternative color palette: Cyan, Red and White. 
+	- The undocumented 160x100x16 "graphics" mode works correctly.
+
+	(source John Elliot http://www.seasip.info/AmstradXT/pc1512disp.html)
+
+	TODO
+	- Implement black/white versions of the video modes
+	- Implement PC1512 black/cyan/red/white mode
+
 ***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -524,6 +548,12 @@ static void cga_gfx_1bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 #define cga_text_blink_bw		cga_text_blink
 #define cga_gfx_2bpp_bw			cga_gfx_2bpp
 
+/***************************************************************************
+  Alternate colorset used in PC1512 not yet implemented
+***************************************************************************/
+#define cga_gfx_2bpp_alt		cga_gfx_2bpp
+/**************************************************************************/
+
 // amstrad pc1512 video hardware
 // mapping of the 4 planes into videoram
 // (text data should be readable at videoram+0)
@@ -641,7 +671,7 @@ pc_video_update_proc pc_cga_choosevideomode(int *width, int *height)
 	{
 		/* 0x08 - 0x0f */
 		cga_text_inten,		cga_text_inten,		cga_gfx_2bpp,		cga_gfx_2bpp,
-		cga_text_inten_bw,	cga_text_inten_bw,	cga_gfx_2bpp_bw,	cga_gfx_2bpp_bw,
+		cga_text_inten,		cga_text_inten,		cga_gfx_2bpp_alt,	cga_gfx_2bpp_alt,
 
 		/* 0x10 - 0x1f */
 		pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp,
@@ -649,7 +679,7 @@ pc_video_update_proc pc_cga_choosevideomode(int *width, int *height)
 
 		/* 0x20 - 0x2f */
 		cga_text_blink,		cga_text_blink,		cga_gfx_2bpp,		cga_gfx_2bpp,
-		cga_text_blink_bw,	cga_text_blink_bw,	cga_gfx_2bpp_bw,	cga_gfx_2bpp_bw,
+		cga_text_blink,		cga_text_blink,		cga_gfx_2bpp_alt,	cga_gfx_2bpp_alt,
 
 		/* 0x30 - 0x3f */
 		pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp,

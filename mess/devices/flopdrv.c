@@ -403,30 +403,42 @@ int	floppy_drive_get_current_track(mess_image *img)
 
 void floppy_drive_read_track_data_info_buffer(mess_image *img, int side, char *ptr, int *length )
 {
-	struct floppy_drive *drv = get_drive(img);
-	if (drv->interface.read_track_data_info_buffer)
-		drv->interface.read_track_data_info_buffer(img, side, ptr, length);
+	if (image_exists(img))
+	{
+		struct floppy_drive *drv = get_drive(img);
+		if (drv->interface.read_track_data_info_buffer)
+			drv->interface.read_track_data_info_buffer(img, side, ptr, length);
+	}
 }
 
 void floppy_drive_format_sector(mess_image *img, int side, int sector_index,int c,int h, int r, int n, int filler)
 {
-	struct floppy_drive *drv = get_drive(img);
-	if (drv->interface.format_sector)
-		drv->interface.format_sector(img, side, sector_index,c, h, r, n, filler);
+	if (image_exists(img))
+	{
+		struct floppy_drive *drv = get_drive(img);
+		if (drv->interface.format_sector)
+			drv->interface.format_sector(img, side, sector_index,c, h, r, n, filler);
+	}
 }
 
 void floppy_drive_read_sector_data(mess_image *img, int side, int index1, char *pBuffer, int length)
 {
-	struct floppy_drive *drv = get_drive(img);
-	if (drv->interface.read_sector_data_into_buffer)
-		drv->interface.read_sector_data_into_buffer(img, side, index1, pBuffer,length);
+	if (image_exists(img))
+	{
+		struct floppy_drive *drv = get_drive(img);
+		if (drv->interface.read_sector_data_into_buffer)
+			drv->interface.read_sector_data_into_buffer(img, side, index1, pBuffer,length);
+	}
 }
 
 void floppy_drive_write_sector_data(mess_image *img, int side, int index1, char *pBuffer,int length, int ddam)
 {
-	struct floppy_drive *drv = get_drive(img);
-	if (drv->interface.write_sector_data_from_buffer)
-		drv->interface.write_sector_data_from_buffer(img, side, index1, pBuffer,length,ddam);
+	if (image_exists(img))
+	{
+		struct floppy_drive *drv = get_drive(img);
+		if (drv->interface.write_sector_data_from_buffer)
+			drv->interface.write_sector_data_from_buffer(img, side, index1, pBuffer,length,ddam);
+	}
 }
 
 int floppy_drive_get_datarate_in_us(DENSITY density)

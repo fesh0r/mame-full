@@ -157,7 +157,7 @@ static int basicdsk_get_ddam(mess_image *img, UINT8 physical_track, UINT8 physic
 	unsigned long ddam_bit_offset, ddam_bit_index, ddam_byte_offset;
 	basicdsk *pDisk = get_basicdsk(img);
 
-	if (!pDisk->ddam_map)
+	if (!pDisk->ddam_map || !image_exists(img))
 		return 0;
 
 	/* calculate bit-offset into map */

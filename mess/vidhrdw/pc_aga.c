@@ -109,11 +109,12 @@ PALETTE_INIT( pc_aga )
 
 static struct {
 	AGA_MODE mode;
-} aga= { AGA_OFF };
+} aga;
 
 void pc_aga_set_mode(AGA_MODE mode)
 {
-	aga.mode=mode;
+	aga.mode = mode;
+
 	switch (aga.mode) {
 	case AGA_COLOR:
 		crtc6845_set_clock(crtc6845, 10000000/*?*/);
@@ -121,7 +122,8 @@ void pc_aga_set_mode(AGA_MODE mode)
 	case AGA_MONO:
 		crtc6845_set_clock(crtc6845, 10000000/*?*/);
 		break;
-	case AGA_OFF: break;
+	case AGA_OFF:
+		break;
 	}
 }
 
@@ -156,7 +158,10 @@ static struct crtc6845_config config= { 14318180 /*?*/, pc_aga_cursor };
 VIDEO_START( pc_aga )
 {
 	pc_mda_europc_init();
-	return pc_video_start(&config, pc_aga_choosevideomode, 0) ? INIT_PASS : INIT_FAIL;
+	if (!pc_video_start(&config, pc_aga_choosevideomode, 0))
+		return 1;
+	pc_aga_set_mode(AGA_COLOR);
+	return 0;
 }
 
 /***************************************************************************
@@ -179,7 +184,7 @@ static pc_video_update_proc pc_aga_choosevideomode(int *width, int *height)
 	return proc;
 }
 
-extern WRITE_HANDLER ( pc_aga_videoram_w )
+WRITE_HANDLER ( pc_aga_videoram_w )
 {
 	switch (aga.mode) {
 	case AGA_COLOR:
@@ -206,7 +211,7 @@ READ_HANDLER( pc_aga_videoram_r )
 	return 0;
 }
 
-extern WRITE_HANDLER ( pc200_videoram_w )
+WRITE_HANDLER ( pc200_videoram_w )
 {
 	switch (aga.mode) {
 	default:
@@ -238,20 +243,20 @@ extern WRITE_HANDLER ( pc_aga_mda_w )
 		pc_MDA_w(offset, data);
 }
 
-extern WRITE_HANDLER ( pc_aga_cga_w )
+WRITE_HANDLER ( pc_aga_cga_w )
 {
 	if (aga.mode==AGA_COLOR)
 		pc_CGA_w(offset, data);
 }
 
-extern READ_HANDLER ( pc_aga_mda_r )
+READ_HANDLER ( pc_aga_mda_r )
 {
 	if (aga.mode==AGA_MONO)
 		return pc_MDA_r(offset);
 	return 0xff;
 }
 
-extern READ_HANDLER ( pc_aga_cga_r )
+READ_HANDLER ( pc_aga_cga_r )
 {
 	if (aga.mode==AGA_COLOR)
 		return pc_CGA_r(offset);
@@ -264,21 +269,23 @@ static struct {
 
 // in reality it is of course only 1 graphics adapter,
 // but now cga and mda are splitted in mess
-extern WRITE_HANDLER( pc200_cga_w )
+WRITE_HANDLER( pc200_cga_w )
 {
 	switch(offset) {
 	case 4:
-		pc200.portd|=0x20;
+		pc200.portd |= 0x20;
 		pc_CGA_w(offset,data);
 		break;
 	case 8:
-		pc200.port8=data;
-		pc200.portd|=0x80;
+		pc200.port8 = data;
+		pc200.portd |= 0x80;
 		pc_CGA_w(offset,data);
 		break;
 	case 0xe:
-		pc200.portd=0x1f;
-		if (data&0x80) pc200.portd|=0x40;
+		pc200.portd = 0x1f;
+		if (data & 0x80)
+			pc200.portd |= 0x40;
+
 /* The bottom 3 bits of this port are:
  * Bit 2: Disable AGA
  * Bit 1: Select MDA 
@@ -286,9 +293,12 @@ extern WRITE_HANDLER( pc200_cga_w )
  *       (TV for PC200; LCD for PPC512) */
 		if ((pc200.porte & 7) != (data & 7))
 		{
-			if      (data & 4) pc_aga_set_mode(AGA_OFF);
-			else if (data & 2) pc_aga_set_mode(AGA_MONO);
-			else		   pc_aga_set_mode(AGA_COLOR);
+			if (data & 4)
+				pc_aga_set_mode(AGA_OFF);
+			else if (data & 2)
+				pc_aga_set_mode(AGA_MONO);
+			else
+				pc_aga_set_mode(AGA_COLOR);
 		}
 		pc200.porte = data;
 		break;
@@ -297,7 +307,7 @@ extern WRITE_HANDLER( pc200_cga_w )
 	}
 }
 
-extern READ_HANDLER ( pc200_cga_r )
+READ_HANDLER ( pc200_cga_r )
 {
 	UINT8 data=0;
 	switch(offset) {
