@@ -59,6 +59,7 @@
 			- what is read from uart when it is off?
 			- check if uart ints are generated when it is off?
 			- are ints cancelled if uart is turned off after int has been caused?
+			- check keyboard ints - are these regular or what??
 
 		PCMCIA memory cards are stored as a direct dump of the contents. There is no header
 		information. No distinction is made between RAM and ROM cards.
@@ -246,21 +247,13 @@ int nc_membank_card_ram_mask;
 static UINT8 nc_poweroff_control;
 
 /* this is not a real register, it is used to record card status */
-/* bit 1: card is present */
-/* bit 0: card is write protected */
+/* ==0, card not inserted, !=0 card is inserted */
 static int nc_card_status = 0;
 
 /* set pcmcia card present state */
 void nc_set_card_present_state(int state)
 {
-	if (state)
-	{
-		nc_card_status |= (1<<1);
-	}
-	else
-	{
-		nc_card_status &= ~(1<<1);
-	}
+	nc_card_status = state;
 }
 
 /* internal ram */
@@ -381,7 +374,7 @@ static void nc_refresh_memory_bank_config(int bank)
                 case 2:
                 {
 					/* card connected? */
-					if (((nc_card_status & (1<<1))!=0) && (nc_card_ram!=NULL))
+					if ((nc_card_status) && (nc_card_ram!=NULL))
 					{
 						unsigned char *addr;
 
@@ -707,7 +700,7 @@ WRITE_HANDLER(nc_irq_status_w)
 
 READ_HANDLER(nc_irq_status_r)
 {
-        return ~nc_irq_status;
+        return ~((nc_irq_status & (~nc_irq_latch_mask)) | nc_irq_latch);
 }
 
 WRITE_HANDLER(nc_display_memory_start_w)
@@ -880,6 +873,10 @@ static void	nc_printer_update(int port0x030)
 	centronics_write_handshake(0, handshake, CENTRONICS_STROBE);
 }
 
+static READ_HANDLER(nc_unmapped_io_r)
+{
+	return 0x0ff;
+}
 
 
 /********************************************************************************************************/
@@ -1063,7 +1060,7 @@ READ_HANDLER(nc100_card_battery_status_r)
 
 	int printer_handshake;
 
-	if (nc_card_status & (1<<1))
+	if (nc_card_status)
 	{
 		/* card present */
 		nc_card_battery_status &=~(1<<7);
@@ -1078,9 +1075,7 @@ READ_HANDLER(nc100_card_battery_status_r)
 
     /* enough power - see bit assignments where
     nc card battery status is defined */
-    /* keep card status bits in case card has been inserted and
-    the machine is then reset! */
-	nc_card_battery_status |= (1<<5);
+ 	nc_card_battery_status |= (1<<5);
 	nc_card_battery_status &= ~((1<<2) | (1<<3));
 
 	
@@ -1114,13 +1109,21 @@ WRITE_HANDLER(nc100_memory_card_wait_state_w)
 }
 
 PORT_READ_START( readport_nc100 )
+
+	{0x000, 0x00f, nc_unmapped_io_r},
     {0x010, 0x013, nc_memory_management_r},
-    {0x0a0, 0x0a0, nc100_card_battery_status_r},
-    {0x0b0, 0x0b9, nc_key_data_in_r},
+	{0x014, 0x08f, nc_unmapped_io_r},
     {0x090, 0x090, nc_irq_status_r},
+	{0x091, 0x09f, nc_unmapped_io_r},
+	{0x0a0, 0x0a0, nc100_card_battery_status_r},
+	{0x0a1, 0x0af, nc_unmapped_io_r},   
+	{0x0b0, 0x0b9, nc_key_data_in_r},
+	{0x0ba, 0x0bf, nc_unmapped_io_r},
 	{0x0c0, 0x0c0, msm8251_data_r},
 	{0x0c1, 0x0c1, msm8251_status_r},
+	{0x0c2, 0x0cf, nc_unmapped_io_r},
     {0x0d0, 0x0df, tc8521_r},
+	{0x0e0, 0x0ff, nc_unmapped_io_r},
 PORT_END
 
 PORT_WRITE_START( writeport_nc100 )
@@ -1354,11 +1357,19 @@ static struct msm8251_interface nc200_uart_interface=
 
 static void nc200_fdc_interrupt(int state)
 {
+#if 0
     nc_irq_latch &=~(1<<5);
 
     if (state)
     {
             nc_irq_latch |=(1<<5);
+    }
+#endif
+    nc_irq_status &=~(1<<5);
+
+    if (state)
+    {
+            nc_irq_status |=(1<<5);
     }
 
     nc_update_interrupts();
@@ -1375,9 +1386,9 @@ static void nc200_floppy_drive_index_callback(int drive_id)
 #ifdef NC200_DEBUG
 	logerror("nc200 index pulse\n");
 #endif
-	nc_irq_status |= (1<<4);
+//	nc_irq_status |= (1<<4);
 
-	nc_update_interrupts();
+//	nc_update_interrupts();
 }
 
 void nc200_init_machine(void)
@@ -1419,7 +1430,7 @@ void nc200_init_machine(void)
 	nc_common_close_stream();
 
 	/* fdc, serial */
-	nc_irq_latch_mask = (1<<5) | (1<<2);
+	nc_irq_latch_mask = /*(1<<5) |*/ (1<<2);
 }
 
 
@@ -1464,7 +1475,7 @@ READ_HANDLER(nc200_card_battery_status_r)
 	and there is enough power for disk usage */
 	nc_card_battery_status &=~((1<<5) | (1<<2) | (1<<0));
 
-	if (nc_card_status & (1<<1))
+	if (nc_card_status)
 	{
 		/* card present */
 		nc_card_battery_status&=~(1<<7);
