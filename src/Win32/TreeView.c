@@ -489,7 +489,7 @@ void InitGames(UINT nGames)
             SetAllBits( lpFolder->m_lpGameBits, FALSE);
             for (jj = 0; jj < nGames; jj++)
             {
-                if (!(drivers[jj]->flags & GAME_NOT_WORKING))
+                if (!(drivers[jj]->flags & GAME_BROKEN))
                     AddGame(lpFolder, jj);
             }
             break;
@@ -498,7 +498,7 @@ void InitGames(UINT nGames)
             for (jj = 0; jj < nGames; jj++)
             {
                 /* Mark wrong colors as non-working */
-                if (drivers[jj]->flags & GAME_NOT_WORKING)
+                if (drivers[jj]->flags & GAME_BROKEN)
                     AddGame(lpFolder, jj);
             }
             break;
@@ -639,7 +639,7 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
         return TRUE;
 
     /* Filter non working games */
-    if (dwMask & F_NONWORKING && drivers[nGame]->flags & GAME_NOT_WORKING)
+    if (dwMask & F_NONWORKING && drivers[nGame]->flags & GAME_BROKEN)
         return TRUE;
 
 #ifdef MESS
@@ -683,7 +683,7 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
         return TRUE;
 
     /* Filter working games */
-    if (dwMask & F_WORKING && !(drivers[nGame]->flags & GAME_NOT_WORKING))
+    if (dwMask & F_WORKING && !(drivers[nGame]->flags & GAME_BROKEN))
         return TRUE;
 
 #if defined(LMR)

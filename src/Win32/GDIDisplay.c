@@ -286,6 +286,16 @@ static int GDI_create_display(int width, int height, int depth, int fps, int att
         This.m_bDouble = FALSE;
     }
 
+    if ((attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK) == VIDEO_PIXEL_ASPECT_RATIO_2_1)
+    {
+        if (orientation & ORIENTATION_SWAP_XY)
+            This.m_nClientHeight *= 2;
+        else
+            This.m_nClientWidth  *= 2;
+
+        This.m_bDouble = FALSE;
+    }
+
     if (This.m_bDouble == TRUE)
     {
         This.m_nClientWidth  *= 2;

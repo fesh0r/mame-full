@@ -5484,7 +5484,7 @@ static int WhichIcon(int nItem)
     iconRoms = GetHasRoms(nItem);
     
     /* Show Red-X if the ROMs are present and flaged as NOT WORKING */
-    if (iconRoms == 1 && drivers[nItem]->flags & GAME_NOT_WORKING)
+    if (iconRoms == 1 && drivers[nItem]->flags & GAME_BROKEN)
         iconRoms = 3;
     
     /* Use custom icon if found */

@@ -66,6 +66,7 @@ struct tDisplay_private
     BOOL                m_bPanScreen;
     BOOL                m_bUseBackBuffer;
     BOOL                m_bVDouble;         /* for 1:2 aspect ratio */
+    BOOL                m_bHDouble;         /* for 2:1 aspect ratio */
     enum DirtyMode      m_eDirtyMode;
 
     /* Options/Parameters */
@@ -225,6 +226,7 @@ static int DDraw_init(options_type *options)
     This.m_nSkipColumnsMin   = 0;
     This.m_bUseBackBuffer    = FALSE;
     This.m_bVDouble          = FALSE;
+    This.m_bHDouble          = FALSE;
     This.m_eDirtyMode        = NO_DIRTY;
 
     This.m_nDisplayIndex     = options->display_monitor;
@@ -375,9 +377,38 @@ static int DDraw_create_display(int width, int height, int depth, int fps, int a
 
     if ((attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK) == VIDEO_PIXEL_ASPECT_RATIO_1_2)
     {
-        This.m_bVDouble    = TRUE;
-        This.m_bDouble     = FALSE;
-        This.m_bVScanLines = FALSE;
+        if (orientation & ORIENTATION_SWAP_XY)
+        {
+            This.m_bHDouble    = TRUE;
+            This.m_bVDouble    = FALSE;
+            This.m_bDouble     = FALSE;
+            This.m_bHScanLines = FALSE;
+        }
+        else
+        {
+            This.m_bHDouble    = FALSE;
+            This.m_bVDouble    = TRUE;
+            This.m_bDouble     = FALSE;
+            This.m_bVScanLines = FALSE;
+        }
+    }
+
+    if ((attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK) == VIDEO_PIXEL_ASPECT_RATIO_2_1)
+    {
+        if (orientation & ORIENTATION_SWAP_XY)
+        {
+            This.m_bHDouble    = FALSE;
+            This.m_bVDouble    = TRUE;
+            This.m_bDouble     = FALSE;
+            This.m_bVScanLines = FALSE;
+        }
+        else
+        {
+            This.m_bHDouble    = TRUE;
+            This.m_bVDouble    = FALSE;
+            This.m_bDouble     = FALSE;
+            This.m_bHScanLines = FALSE;
+        }
     }
 
     if (This.m_bBestFit == TRUE)
@@ -882,6 +913,7 @@ static int DDraw_allocate_colors(unsigned int totalcolors,
                                          FALSE,
                                          FALSE,
                                          FALSE,
+                                         FALSE,
                                          This.m_eDirtyMode,
                                          This.m_nDepth == 16 ? TRUE : FALSE,
                                          bPalette16,
@@ -891,6 +923,7 @@ static int DDraw_allocate_colors(unsigned int totalcolors,
     else
     {
         This.Render = SelectRenderMethod(This.m_bDouble,
+                                         This.m_bHDouble,
                                          This.m_bVDouble,
                                          This.m_bHScanLines,
                                          This.m_bVScanLines,
@@ -1576,10 +1609,15 @@ static void SelectDisplayMode(int width, int height, int depth)
         {
             BOOL    bResult;
 
+            if (This.m_bHDouble == TRUE)
+            {
+                width *= 2;
+            }
             if (This.m_bVDouble == TRUE)
             {
                 height *= 2;
             }
+
             if (This.m_bDouble == TRUE)
             {
                 width  *= 2;
@@ -1656,7 +1694,14 @@ static void AdjustDisplay(int xmin, int ymin, int xmax, int ymax)
 
     This.m_nDisplayLines   = visheight;
     This.m_nDisplayColumns = viswidth;
-    if (This.m_bDouble == TRUE)
+    if (This.m_bDouble == TRUE && This.m_bHDouble == TRUE)
+    {
+        gfx_xoffset = (int)(This.m_nScreenWidth - viswidth * 4) / 2;
+        if (This.m_nDisplayColumns > This.m_nScreenWidth / 4)
+            This.m_nDisplayColumns = This.m_nScreenWidth / 4;
+    }
+    else
+    if (This.m_bDouble == TRUE || This.m_bHDouble == TRUE)
     {
         gfx_xoffset = (int)(This.m_nScreenWidth - viswidth * 2) / 2;
         if (This.m_nDisplayColumns > This.m_nScreenWidth / 2)
@@ -1727,10 +1772,15 @@ static void AdjustDisplay(int xmin, int ymin, int xmax, int ymax)
     This.m_GameRect.m_Width  = This.m_nDisplayColumns;
     This.m_GameRect.m_Height = This.m_nDisplayLines;
 
+    if (This.m_bHDouble == TRUE)
+    {
+        This.m_GameRect.m_Width *= 2;
+    }
     if (This.m_bVDouble == TRUE)
     {
         This.m_GameRect.m_Height *= 2;
     }
+
     if (This.m_bDouble == TRUE)
     {
         This.m_GameRect.m_Width  *= 2;

@@ -639,7 +639,7 @@ char *GameInfoStatus(UINT nIndex)
         return "ROMs missing";
 
     case 1:
-        if (drivers[nIndex]->flags & GAME_NOT_WORKING)
+        if (drivers[nIndex]->flags & GAME_BROKEN)
             return "Not working";
         if (drivers[nIndex]->flags & GAME_WRONG_COLORS)
             return "Colors are wrong";

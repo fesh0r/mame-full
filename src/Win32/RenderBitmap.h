@@ -18,7 +18,7 @@ typedef void (*RenderMethod)(struct osd_bitmap* pSrcBitmap,
                              UINT nNumLines, UINT nNumColumns,
                              BYTE* pDst, UINT nDstWidth);
 
-extern RenderMethod SelectRenderMethod(BOOL bDouble, BOOL bVDouble, BOOL bHScanlines, BOOL bVScanlines,
+extern RenderMethod SelectRenderMethod(BOOL bDouble, BOOL bHDouble, BOOL bVDouble, BOOL bHScanlines, BOOL bVScanlines,
                                        enum DirtyMode eDirtyMode, BOOL b16bit, BOOL bPalette16,
                                        const UINT32* p16BitLookup, BOOL bMMX);
 extern RenderMethod SelectRenderMethodMMX(BOOL bDouble, BOOL bHScanlines, BOOL bVScanlines,
