@@ -1,6 +1,16 @@
 #ifndef _SNES_H_
 #define _SNES_H_
 
+/* Debug defines */
+#ifdef MAME_DEBUG
+/* #define SNES_DBG_GENERAL*/		/* Display general debug info */
+/* #define SNES_DBG_VIDHRDW*/		/* Display video debug info */
+/* #define SNES_DBG_GDMA*/			/* Display GDMA debug info */
+/* #define SNES_DBG_HDMA*/			/* Display HDMA debug info */
+/* #define SNES_DBG_REG_R*/			/* Display register read info */
+/* #define SNES_DBG_REG_W*/			/* Display register write info */
+#endif /* MAME_DEBUG */
+
 /* Useful defines */
 #define SNES_SCR_WIDTH		256	/* 32 characters 8 pixels wide */
 #define SNES_SCR_HEIGHT		240	/* Can be either 224 of 240 height, so specify greatest value (maybe we'll have switching later on) */
@@ -335,8 +345,43 @@ extern UINT16 bg_hoffset[4];		/* Background horizontal scroll offsets */
 extern UINT16 bg_voffset[4];		/* Background vertical scroll offsets */
 extern UINT16 mode7_data[6];		/* Data for mode7 matrix calculation */
 extern UINT8  ppu_obj_size[2];		/* Objects sizes */
-extern UINT8  ppu_update_palette;	/* Palette needs updating */
 extern VIDEO_UPDATE( snes );
+struct SNES_PPU_STRUCT
+{
+	struct
+	{
+		UINT8 blend;
+		UINT32 data;
+		UINT32 map;
+		UINT8 map_size;
+		UINT8 tile_size;
+	} layer[5];
+	struct
+	{
+		UINT8 address_low;
+		UINT8 address_high;
+		UINT16 address;
+		UINT16 high_priority;
+		UINT8 size[2];
+	} oam;
+	struct
+	{
+		UINT16 horizontal[4];
+		UINT16 vertical[4];
+	} bgd_offset;
+	struct
+	{
+		UINT16 latch_horz;
+		UINT16 latch_vert;
+		UINT16 current_horz;
+		UINT16 current_vert;
+	} beam;
+	UINT8 clipmasks[6][SNES_SCR_WIDTH + 8];
+	UINT16 cgram_address;
+	UINT8 update_windows;
+	UINT8 update_palette;
+};
+extern struct SNES_PPU_STRUCT snes_ppu;
 
 /* (APU) Sound related */
 extern UINT8 *spc_ram;			/* SPC main memory */
