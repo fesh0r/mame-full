@@ -2,7 +2,13 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-(none)
+[MSX] National CF-2000 (Jirou Kaneda)
+[MSX] National CF-1200 (Jirou Kaneda)
+[MSX] National CF-2700 (Jirou Kaneda)
+[MSX] National CF-3000 (Jirou Kaneda)
+[MSX] National FS-1300 (Jirou Kaneda)
+[MSX2] Panasonic FS-A1 (Jirou Kaneda)
+[MSX2] Panasonic FS-A1MK2 (Jirou Kaneda)
 
 
 

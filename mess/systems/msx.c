@@ -814,6 +814,62 @@ MSX_LAYOUT_INIT (msxj)
 	MSX_LAYOUT_SLOT (3, 0, 0, 4, RAM, 0x10000, 0x0000)	/* 64KB RAM */
 MSX_LAYOUT_END
 
+ROM_START (cf2000)
+	ROM_REGION (0x20000, REGION_CPU1, 0)
+	ROM_LOAD ("2000bios.rom", 0x0000, 0x8000, CRC(ee229390))
+	ROM_FILL (0x8000, 0x8000, 0)
+	ROM_LOAD_OPTIONAL ("fmpac.rom", 0x10000, 0x10000, CRC(0e84505d))
+ROM_END
+
+MSX_LAYOUT_INIT (cf2000)
+	MSX_LAYOUT_SLOT (0, 0, 0, 2, ROM, 0x8000, 0x0000)
+	MSX_LAYOUT_SLOT (0, 0, 3, 1, RAM, 0x4000, 0xC000)   /* 16KB RAM */
+	MSX_LAYOUT_SLOT (1, 0, 0, 4, CARTRIDGE1, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (2, 0, 0, 4, CARTRIDGE2, 0x0000, 0x0000) 
+MSX_LAYOUT_END
+
+ROM_START (cf1200)
+	ROM_REGION (0x20000, REGION_CPU1, 0)
+	ROM_LOAD ("1200bios.rom", 0x0000, 0x8000, CRC(5ad03407))
+	ROM_FILL (0x8000, 0x8000, 0)
+	ROM_LOAD_OPTIONAL ("fmpac.rom", 0x10000, 0x10000, CRC(0e84505d))
+ROM_END
+
+MSX_LAYOUT_INIT (cf1200)
+	MSX_LAYOUT_SLOT (0, 0, 0, 2, ROM, 0x8000, 0x0000)
+	MSX_LAYOUT_SLOT (0, 0, 3, 1, RAM, 0x4000, 0xC000)   /* 16KB RAM */
+	MSX_LAYOUT_SLOT (1, 0, 0, 4, CARTRIDGE1, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (2, 0, 0, 4, CARTRIDGE2, 0x0000, 0x0000) 
+MSX_LAYOUT_END
+
+ROM_START (cf2700)
+	ROM_REGION (0x20000, REGION_CPU1, 0)
+	ROM_LOAD ("2700bios.rom", 0x0000, 0x8000, CRC(5ad03407))
+	ROM_FILL (0x8000, 0x8000, 0)
+	ROM_LOAD_OPTIONAL ("fmpac.rom", 0x10000, 0x10000, CRC(0e84505d))
+ROM_END
+
+MSX_LAYOUT_INIT (cf2700)
+	MSX_LAYOUT_SLOT (0, 0, 0, 2, ROM, 0x8000, 0x0000)
+	MSX_LAYOUT_SLOT (0, 0, 2, 2, RAM, 0x8000, 0x8000)   /* 32KB RAM */
+	MSX_LAYOUT_SLOT (1, 0, 0, 4, CARTRIDGE1, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (2, 0, 0, 4, CARTRIDGE2, 0x0000, 0x0000) 
+MSX_LAYOUT_END
+
+ROM_START (cf3000)
+	ROM_REGION (0x20000, REGION_CPU1, 0)
+	ROM_LOAD ("3000bios.rom", 0x0000, 0x8000, CRC(5ad03407))
+	ROM_FILL (0x8000, 0x8000, 0)
+	ROM_LOAD_OPTIONAL ("fmpac.rom", 0x10000, 0x10000, CRC(0e84505d))
+ROM_END
+
+MSX_LAYOUT_INIT (cf3000)
+	MSX_LAYOUT_SLOT (0, 0, 0, 2, ROM, 0x8000, 0x0000)
+	MSX_LAYOUT_SLOT (1, 0, 0, 4, RAM, 0x10000, 0x0000)  /* 64KB RAM */
+	MSX_LAYOUT_SLOT (2, 0, 0, 4, CARTRIDGE1, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (3, 0, 0, 4, CARTRIDGE2, 0x0000, 0x0000) 
+MSX_LAYOUT_END
+
 ROM_START (fs4000)
 	ROM_REGION (0x48000 ,REGION_CPU1, 0)
 	ROM_LOAD ("4000bios.rom", 0, 0x8000, CRC(071135e0))
@@ -831,6 +887,20 @@ MSX_LAYOUT_INIT (fs4000)
 	MSX_LAYOUT_SLOT (3, 1, 1, 2, ROM, 0x8000, 0x20000) 
 	MSX_LAYOUT_SLOT (3, 2, 0, 4, RAM, 0x10000, 0x0000)	/* 64KB RAM */
 	MSX_LAYOUT_KANJI (0x28000)
+MSX_LAYOUT_END
+
+ROM_START (fs1300)
+	ROM_REGION (0x20000, REGION_CPU1, 0)
+	ROM_LOAD ("1300bios.rom", 0x0000, 0x8000, CRC(5ad03407))
+	ROM_FILL (0x8000, 0x8000, 0)
+	ROM_LOAD_OPTIONAL ("fmpac.rom", 0x10000, 0x10000, CRC(0e84505d))
+ROM_END
+
+MSX_LAYOUT_INIT (fs1300)
+	MSX_LAYOUT_SLOT (0, 0, 0, 2, ROM, 0x8000, 0x0000)
+	MSX_LAYOUT_SLOT (1, 0, 0, 4, CARTRIDGE1, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (2, 0, 0, 4, CARTRIDGE2, 0x0000, 0x0000) 
+	MSX_LAYOUT_SLOT (3, 0, 0, 4, RAM, 0x10000, 0x0000)  /* 64KB RAM */
 MSX_LAYOUT_END
 
 ROM_START (hb75p)
@@ -922,7 +992,7 @@ ROM_START (msx2)
 	ROM_REGION (0x20000, REGION_CPU1,0)
 	ROM_LOAD ("msx20.rom", 0x0000, 0x8000, CRC(f05ed518))
 	ROM_LOAD ("msx20ext.rom", 0x8000, 0x4000, CRC(95db2959))
-	ROM_LOAD ("disk.rom", 0xc000, 0x4000, CRC(09796824))
+	ROM_LOAD ("disk.rom", 0xc000, 0x4000, CRC(1d9cc7f6))
 	ROM_LOAD_OPTIONAL ("fmpac.rom", 0x10000, 0x10000, CRC(0e84505d))
 ROM_END
 
@@ -975,7 +1045,7 @@ ROM_START (msx2j)
 	ROM_REGION (0x20000, REGION_CPU1,0)
 	ROM_LOAD ("msx20j.rom", 0x0000, 0x8000, CRC(9b3e7b97))
 	ROM_LOAD ("msx20xtj.rom", 0x8000, 0x4000, CRC(43e7a7fc))
-	ROM_LOAD ("disk.rom", 0xc000, 0x4000, CRC(09796824))
+	ROM_LOAD ("disk.rom", 0xc000, 0x4000, CRC(1d9cc7f6))
 	ROM_LOAD_OPTIONAL ("fmpac.rom", 0x10000, 0x10000, CRC(0e84505d))
 ROM_END
 
@@ -988,19 +1058,54 @@ MSX_LAYOUT_INIT (msx2j)
 	MSX_LAYOUT_SLOT (3, 3, 0, 4, RAM_MM, 0x20000, 0x0000)	/* 128 KB RAM */
 MSX_LAYOUT_END
 
-/*
-ROM_START (msxkra)
-	ROM_REGION (0x10000, REGION_CPU1,0)
-	ROM_LOAD ("msxkra.rom", 0x0000, 0x8000, CRC(a781f7ca))
-	ROM_LOAD_OPTIONAL ("msxhan.rom", 0x8000, 0x4000, CRC(97478efb))
+ROM_START (fsa1)
+	ROM_REGION (0x30000, REGION_CPU1,0)
+	ROM_LOAD ("a1bios.rom", 0x0000, 0x8000, CRC(9b3e7b97))
+	ROM_LOAD ("a1ext.rom", 0x8000, 0x4000, CRC(43e7a7fc))
+	ROM_LOAD ("disk.rom", 0xc000, 0x4000, CRC(1d9cc7f6))
+	ROM_LOAD_OPTIONAL ("fmpac.rom", 0x10000, 0x10000, CRC(0e84505d))
+	ROM_LOAD ("deskpac1.rom", 0x20000, 0x8000, CRC(99c48147))
+	ROM_LOAD ("deskpac2.rom", 0x28000, 0x8000, CRC(7f6f4aa1))
 ROM_END
-*/
+
+MSX_LAYOUT_INIT (fsa1)
+	MSX_LAYOUT_SLOT (0, 0, 0, 2, ROM, 0x8000, 0x0000)
+	MSX_LAYOUT_SLOT (1, 0, 0, 4, CARTRIDGE1, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (2, 0, 0, 4, CARTRIDGE2, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (3, 0, 0, 4, RAM, 0x10000, 0x0000)  /* 64 KB RAM */
+	MSX_LAYOUT_SLOT (3, 1, 0, 1, ROM, 0x4000, 0x8000)
+	MSX_LAYOUT_SLOT (3, 2, 1, 2, ROM, 0x8000, 0x20000)
+	MSX_LAYOUT_SLOT (3, 3, 1, 2, ROM, 0x8000, 0x28000)
+MSX_LAYOUT_END
+
+ROM_START (fsa1mk2)
+	ROM_REGION (0x34000, REGION_CPU1,0)
+	ROM_LOAD ("a1mkbios.rom", 0x0000, 0x8000, CRC(9b3e7b97))
+	ROM_LOAD ("a1mk2ext.rom", 0x8000, 0x4000, CRC(43e7a7fc))
+	ROM_LOAD ("disk.rom", 0xc000, 0x4000, CRC(1d9cc7f6))
+	ROM_LOAD_OPTIONAL ("fmpac.rom", 0x10000, 0x10000, CRC(0e84505d))
+	ROM_LOAD ("cockpit1.rom", 0x20000, 0x8000, CRC(0eda3f57))
+	ROM_LOAD ("cockpit2.rom", 0x28000, 0x4000, CRC(756d7128))
+	ROM_LOAD ("cockpit3.rom", 0x2c000, 0x8000, CRC(c1945676))
+ROM_END
+
+MSX_LAYOUT_INIT (fsa1mk2)
+	MSX_LAYOUT_SLOT (0, 0, 0, 2, ROM, 0x8000, 0x0000)
+	MSX_LAYOUT_SLOT (1, 0, 0, 4, CARTRIDGE1, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (2, 0, 0, 4, CARTRIDGE2, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (3, 0, 0, 4, RAM_MM, 0x10000, 0x0000)   /* 64 KB Mapper RAM */
+	MSX_LAYOUT_SLOT (3, 1, 0, 1, ROM, 0x4000, 0x8000)
+	MSX_LAYOUT_SLOT (3, 1, 1, 2, ROM, 0x8000, 0x20000)
+	MSX_LAYOUT_SLOT (3, 2, 1, 1, ROM, 0x4000, 0x28000)
+	MSX_LAYOUT_SLOT (3, 3, 1, 2, ROM, 0x8000, 0x2c000)
+	MSX_LAYOUT_RAMIO_SET_BITS (0x80)
+MSX_LAYOUT_END
 
 ROM_START (hbf700p)
 	ROM_REGION (0x20000, REGION_CPU1, 0)
 	ROM_LOAD ("msx2.rom", 0x0000, 0x8000, CRC(b31c851d))
 	ROM_LOAD ("msx2ext.rom", 0x8000, 0x4000, CRC(8f84f783))
-	ROM_LOAD ("disk.rom", 0xc000, 0x4000, CRC(09796824))
+	ROM_LOAD ("disk.rom", 0xc000, 0x4000, CRC(1d9cc7f6))
 	ROM_LOAD_OPTIONAL ("fmpac.rom", 0x10000, 0x10000, CRC(0e84505d))
 ROM_END
 
@@ -1025,7 +1130,12 @@ SYSTEM_CONFIG_END
 MSX_DRIVER_LIST
 	MSX_DRIVER (msx) 
 	MSX_DRIVER (msxj) 
+	MSX_DRIVER (cf2000)
+	MSX_DRIVER (cf1200)
+	MSX_DRIVER (cf2700)
+	MSX_DRIVER (cf3000)
 	MSX_DRIVER (fs4000)
+	MSX_DRIVER (fs1300)
 	MSX_DRIVER (hb75p) 
 	MSX_DRIVER (msxkr) 
 	MSX_DRIVER (hotbit11) 
@@ -1037,14 +1147,20 @@ MSX_DRIVER_LIST
 	MSX_DRIVER (nms8255)
 	MSX_DRIVER (msx2j) 
 	MSX_DRIVER (hbf700p) 
+	MSX_DRIVER (fsa1)
+	MSX_DRIVER (fsa1mk2)
 MSX_DRIVER_END
 
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE  INPUT	   INIT   CONFIG  COMPANY			   FULLNAME */
 COMP( 1983,	msx,	  0,		0,		msx_pal, msx,	   msx,		msx,	"ASCII & Microsoft", "MSX 1" )
 COMP( 1983, msxj,	  msx,		0,		msx,	 msxj,	   msx,		msx,	"ASCII & Microsoft", "MSX 1 (Japan)" )
-COMP( 1985, fs4000,	  msx,		0,		msx,	 msxj,	   msx,		msx,	"Matsushita", "National FS-4000 (MSX1 Japan)" )
+COMP( 1983, cf2000,   msx,      0,      msx,     msxj,     msx,     msx,    "Matsushita", "National CF-2000 (MSX1 Japan)" )
+COMP( 1984, cf1200,   msx,      0,      msx,     msxj,     msx,     msx,    "Matsushita", "National CF-1200 (MSX1 Japan)" )
+COMP( 1984, cf2700,   msx,      0,      msx,     msxj,     msx,     msx,    "Matsushita", "National CF-2700 (MSX1 Japan)" )
+COMP( 1984, cf3000,   msx,      0,      msx,     msxj,     msx,     msx,    "Matsushita", "National CF-3000 (MSX1 Japan)" )
+COMP( 1985, fs4000,   msx,      0,      msx,     msxj,     msx,     msx,    "Matsushita", "National FS-4000 (MSX1 Japan)" )
+COMP( 1985, fs1300,   msx,      0,      msx,     msxj,     msx,     msx,    "Matsushita", "National FS-1300 (MSX1 Japan)" )
 COMP( 1983, msxkr,	  msx,		0,		msx,	 msxkr,    msx,		msx,	"ASCII & Microsoft", "MSX 1 (Korea)" )
-/*COMP(1983,msxkra, msx, msx, msxkr, msx, "ASCII & Microsoft", "MSX 1 (Korea ALT)" ) */
 COMP( 1983, hb75p,	  msx,		0,		msx_pal, msxuk,    msx,		msx,	"Sony", "HB-75P" )
 COMP( 1985, hotbit11, msx,		0,		msx,	 hotbit,   msx,		msx,	"Sharp / Epcom",	 "HB-8000 Hotbit 1.1" )
 COMP( 1985, hotbit12, msx,		0,		msx,	 hotbit,   msx,		msx,	"Sharp / Epcom",	 "HB-8000 Hotbit 1.2" )
@@ -1055,4 +1171,6 @@ COMPX(1985, nms8245,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "NMS-8245
 COMPX(1985, nms8255,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "NMS-8255", GAME_NOT_WORKING)
 COMPX(1985, hbf700p,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Sony", "HB-F700P", 0 )
 COMPX(1985, msx2j,    msx2,		0,		msx2,    msx2j,    msx2,	msx,	"ASCII & Microsoft", "MSX 2 (Japan)", GAME_NOT_WORKING )
+COMPX(1986, fsa1,     msx2,     0,      msx2,    msx2j,    msx2,    msx,    "Matsushita", "Panasonic FS-A1 (MSX2 Japan)", 0)
+COMPX(1987, fsa1mk2,  msx2,     0,      msx2,    msx2j,    msx2,    msx,    "Matsushita", "Panasonic FS-A1MK2 (MSX2 Japan)", 0)
 
