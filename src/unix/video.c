@@ -925,7 +925,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 	else
 	{
 #ifdef MESS
-		if (mess_ui_active())
+		if (((Machine->gamedrv->flags & GAME_COMPUTER) == 0) || mess_ui_active())
 #endif
 		{
 			if (code_pressed(KEYCODE_LALT) &&
