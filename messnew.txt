@@ -10,7 +10,8 @@ System Driver Changes:
   SRAM support. [Anthony Kruize]
 
 - [GAMEBOY] Finally fixed sound channel 3 so it produces correct frequencies!
-  Flagged sound as being stereo. Improved input ports. [Anthony Kruize]
+  Flagged sound as being stereo. Improved input ports. Fixed loud buzz caused
+  by the new sound code when digital audio is used. (bug #275) [Anthony Kruize]
 
 - [SUPERGB] Fixed certain areas of the border image being left blank instead of
   being filled in. (bug #264) [Anthony Kruize]
