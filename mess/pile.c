@@ -7,6 +7,9 @@
 
 ****************************************************************************/
 
+#include <string.h>
+#include <stdio.h>
+
 #include "pile.h"
 
 void pile_init(mess_pile *pile)

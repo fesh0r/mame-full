@@ -197,7 +197,8 @@ OBJDIRS += 	$(OBJ)/mess         $(OBJ)/mess/$(MAMEOS)			\
 		$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw					\
 		$(OBJ)/mess/formats $(OBJ)/mess/tools					\
 		$(OBJ)/mess/tools/dat2html $(OBJ)/mess/tools/mkhdimg	\
-		$(OBJ)/mess/tools/messroms $(OBJ)/mess/tools/imgtool	\
+		$(OBJ)/mess/tools/messroms \
+		$(OBJ)/mess/tools/imgtool $(OBJ)/mess/tools/imgtool/windows	\
 		$(OBJ)/mess/tools/messdocs $(OBJ)/mess/tools/messtest	\
 		$(OBJ)/mess/tools/mkimage  $(OBJ)/mess/sound			\
 		$(OBJ)/ui $(OBJ)/mess/ui
@@ -307,6 +308,16 @@ messdocs$(EXE): $(MESSDOCS_OBJS) $(OBJ)/mess/windows/dirutils.o
 imgtool$(EXE): $(IMGTOOL_OBJS) $(PLATFORM_TOOL_OBJS)
 	@echo Compiling $@...
 	$(LD) $(LDFLAGS) $^ -lz -o $@
+
+wimgtool$(EXE): \
+		$(IMGTOOL_LIB_OBJS)								\
+		$(PLATFORM_TOOL_OBJS)							\
+		$(OBJ)/mess/pile.o								\
+		$(OBJ)/mess/tools/imgtool/windows/wmain.o		\
+		$(OBJ)/mess/tools/imgtool/windows/wimgtool.o	\
+		$(OBJ)/mess/tools/imgtool/windows/wimgtool.res
+	@echo Compiling $@...
+	$(LD) $(LDFLAGS) $(LIBS) $(WINDOWS_PROGRAM) $^ -lz -lcomctl32 -o $@
 
 messtest$(EXE):	$(OBJS) $(COREOBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 		$(OBJ)/windows/asmtile.o				\

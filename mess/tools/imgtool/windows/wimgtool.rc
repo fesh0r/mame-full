@@ -1,0 +1,91 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "wimgres.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include <windows.h>
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "wimgres.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_WIMGTOOL_MENU MENU 
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&New\tCtrl+N",                ID_IMAGE_DELETE
+        MENUITEM "&Open\tCtrl+O",               ID_FILE_OPEN
+        MENUITEM "&Close",                      ID_IMAGE_EXTRACT
+    END
+    POPUP "&Image"
+    BEGIN
+        MENUITEM "&Insert File...",             ID_IMAGE_INSERT
+        MENUITEM "&Extract File...",            ID_IMAGE_EXTRACT
+        MENUITEM "&Delete",                     ID_IMAGE_DELETE
+    END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "Icons",                       ID_VIEW_ICONS
+        MENUITEM "List",                        ID_VIEW_LIST
+        MENUITEM "Details",                     ID_VIEW_DETAILS
+    END
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

@@ -99,7 +99,7 @@ $(OBJ)/mess/windows/%.res: mess/windows/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -o $@ -i $<
 
-$(OBJ)/mess/ui/%.res: mess/ui/%.rc
+$(OBJ)/mess/%.res: mess/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -o $@ -i $<
 endif
