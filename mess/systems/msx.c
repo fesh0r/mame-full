@@ -10,7 +10,6 @@
 #include "machine/8255ppi.h"
 #include "vidhrdw/tms9928a.h"
 #include "includes/msx.h"
-#include "sndhrdw/scc.h"
 #include "printer.h"
 
 extern MSX msx1;
@@ -240,7 +239,7 @@ INPUT_PORTS_START( msxuk )
 
  PORT_START /* 2 */
   PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "' \"", KEYCODE_QUOTE, IP_JOY_NONE)
-  PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "POUND STERLING ~", KEYCODE_TILDE, IP_JOY_NONE)
+  PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "\xa3 ~", KEYCODE_TILDE, IP_JOY_NONE)
   PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, ", <", KEYCODE_COMMA, IP_JOY_NONE)
   PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, ". >", KEYCODE_STOP, IP_JOY_NONE)
   PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "/ ?", KEYCODE_SLASH, IP_JOY_NONE)
@@ -328,7 +327,7 @@ INPUT_PORTS_START( msxj )
   PORT_BITX (0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "9 )", KEYCODE_9, IP_JOY_NONE)
   PORT_BITX (0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "- =", KEYCODE_MINUS, IP_JOY_NONE)
   PORT_BITX (0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "^ ~", KEYCODE_EQUALS, IP_JOY_NONE)
-  PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "Yen |", KEYCODE_BACKSLASH, IP_JOY_NONE)
+  PORT_BITX (0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "\xa5 |", KEYCODE_BACKSLASH, IP_JOY_NONE)
   PORT_BITX (0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "@ `", KEYCODE_OPENBRACE, IP_JOY_NONE)
   PORT_BITX (0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "[ }", KEYCODE_CLOSEBRACE, IP_JOY_NONE)
   PORT_BITX (0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "; +", KEYCODE_COLON, IP_JOY_NONE)
@@ -424,10 +423,10 @@ static struct AY8910interface ay8910_interface =
     { msx_psg_port_b_w }
 };
 
-static struct CustomSound_interface scc_custom_interface =
+static struct k051649_interface k051649_interface =
 {
-     SCC_sh_start,
-     0, 0
+    1789773,  /* Clock */
+    25,         /* Volume */
 };
 
 static struct DACinterface dac_interface =
@@ -490,16 +489,16 @@ static struct MachineDriver machine_driver_msx =
             &ay8910_interface
         },
         {
-            SOUND_CUSTOM,
-            &scc_custom_interface
-        },
-        {
-            SOUND_DAC,
-            &dac_interface
+            SOUND_K051649,
+            &k051649_interface
         },
         {
             SOUND_YM2413,
             &ym2413_interface
+        },
+        {
+            SOUND_DAC,
+            &dac_interface
         },
         {
             SOUND_WAVE,
@@ -544,16 +543,16 @@ static struct MachineDriver machine_driver_msx_pal =
             &ay8910_interface
         },
         {
-            SOUND_CUSTOM,
-            &scc_custom_interface
-        },
-        {
-            SOUND_DAC,
-            &dac_interface
+            SOUND_K051649,
+            &k051649_interface
         },
         {
             SOUND_YM2413,
             &ym2413_interface
+        },
+        {
+            SOUND_DAC,
+            &dac_interface
         },
         {
             SOUND_WAVE,

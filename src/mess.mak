@@ -132,7 +132,7 @@ SOUNDS+=OKIM6295@
 #SOUNDS+=HC55516@
 #SOUNDS+=K005289@
 #SOUNDS+=K007232@
-#SOUNDS+=K051649@
+SOUNDS+=K051649@
 #SOUNDS+=K053260@
 #SOUNDS+=SEGAPCM@
 #SOUNDS+=RF5C68@
@@ -521,7 +521,6 @@ $(OBJ)/ep128.a :   \
 	  $(OBJ)/mess/systems/enterp.o
 
 $(OBJ)/ascii.a :   \
-	  $(OBJ)/mess/sndhrdw/scc.o	 	 \
 	  $(OBJ)/mess/machine/msx.o	 	 \
 	  $(OBJ)/mess/machine/msx_dsk.o	 	 \
 	  $(OBJ)/mess/formats/fmsx_cas.o \

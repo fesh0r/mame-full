@@ -18,7 +18,6 @@
 #include "cpu/z80/z80.h"
 #include "machine/8255ppi.h"
 #include "vidhrdw/tms9928a.h"
-#include "sndhrdw/scc.h"
 #include "formats/fmsx_cas.h"
 #include "printer.h"
 #include "utils.h"
@@ -526,7 +525,6 @@ static void msx_vdp_interrupt(int i) {
 
 void msx_ch_reset(void) {
     TMS9928A_reset ();
-    SCCResetChip (0);
     /* set interrupt stuff */
     cpu_irq_line_vector_w(0,0,0xff);
     /* setup PPI */
@@ -816,6 +814,8 @@ WRITE_HANDLER (msx_dsk_w)
 
 			sects = (ret & ~MSX_DSK_ERR_MASK) / 512;
 			z80_set_reg (Z80_BC, sects * 256);
+			z80_set_reg (Z80_IFF1, 0);
+
 
 			break;
 
@@ -833,7 +833,7 @@ WRITE_HANDLER (msx_dsk_w)
 				break;
 				}
 
-			z80_set_reg (Z80_AF, z80_get_reg (Z80_AF) & 0xff00);
+			z80_set_reg (Z80_AF, z80_get_reg (Z80_AF) & 0xfffe);
 			z80_set_reg (Z80_BC, z80_get_reg (Z80_BC) & 0x00ff);
 		case 0x4018:
             {
@@ -906,6 +906,7 @@ WRITE_HANDLER (msx_dsk_w)
             msx1.ram[wAddress++] = J / 256;
 
 			z80_set_reg (Z80_AF, 0);
+			z80_set_reg (Z80_IFF1, 0);
 
 			break;
 			}
@@ -1092,13 +1093,17 @@ static void msx_cart_write (int cart, int offset, int data)
         else if ( (msx1.cart[cart].banks[2] > msx1.cart[cart].bank_mask) &&
                 (offset >= 0x5800) && (offset < 0x6000) )
         {
-            SCCWriteReg (0, offset & 0xff, data, SCC_MEGAROM);
-            if (! (offset & 0x80) )
-            {
+            offset &= 0xff;
+            if (offset < 0x80)
+				{ 
+				K051649_waveform_w (offset, data);
                 p = msx1.cart[cart].mem +
                     (msx1.cart[cart].bank_mask + 1) * 0x2000;
                 for (n=0;n<8;n++) p[n*0x100+0x1800+(offset&0x7f)] = data;
-            }
+				}
+            else if (offset < 0x8a) K051649_frequency_w (offset - 0x80 , data);
+            else if (offset < 0x8f) K051649_volume_w (offset - 0x8a, data);
+            else if (offset == 0x8f) K051649_keyonoff_w (0, data);
         }
         break;
     case 3: /* Konami4 without SCC */
