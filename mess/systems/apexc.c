@@ -428,8 +428,8 @@ static void apexc_draw_led(struct osd_bitmap *bitmap, int x, int y, int state)
 {
 	int xx, yy;
 
-	for (yy=1; yy<7; yy++)
-		for (xx=1; xx<7; xx++)
+	for (yy=2; yy<7; yy++)
+		for (xx=1; xx<6; xx++)
 			plot_pixel (bitmap, x+xx, y+yy, Machine->pens[state ? 1 : 2]);
 }
 
@@ -446,10 +446,10 @@ static void apexc_vh_refresh(struct osd_bitmap *bitmap, int full_refresh)
 	apexc_draw_led(bitmap, 0, 8, cpunum_get_reg(0, APEXC_STATE));
 	ui_text(bitmap, "running", 8, 8);
 
-	ui_text(bitmap, "data :", 0, 24);
+	ui_text(bitmap, "data:", 0, 24);
 	for (i=0; i<32; i++)
 	{
-		apexc_draw_led(bitmap, i*8, 32, (panel_data_reg << i) & 0x80000000UL);
+		apexc_draw_led(bitmap, (i*8)-1, 32, (panel_data_reg << i) & 0x80000000UL);
 		buffer[0] = '0' + ((i + 1) % 10);
 		ui_text(bitmap, buffer, i*8, 40);
 		if (((i + 1) % 10) == 0)
@@ -522,7 +522,7 @@ static struct MachineDriver machine_driver_apexc =
 	0,
 	0,0,0,
 	{
-		{NULL,},
+		{(int)NULL,},
 	},
 
 	/* NVRAM handler */
