@@ -26,6 +26,7 @@ void init_nespal (void);
 void nes_init_machine (void);
 void nes_stop_machine (void);
 int nes_interrupt (void);
+UINT32 nes_partialcrc(const unsigned char *,unsigned int);
 READ_HANDLER  ( nes_ppu_r );
 READ_HANDLER  ( nes_IN0_r );
 READ_HANDLER  ( nes_IN1_r );
@@ -464,7 +465,8 @@ static const struct IODevice io_famicom[] = {
         NULL,               /* input */
 		NULL,               /* output */
 		NULL,               /* input_chunk */
-		NULL                /* output_chunk */
+		NULL,                /* output_chunk */
+		nes_partialcrc      /* correct CRC */
 	},
 	{ IO_END }
 };
@@ -487,7 +489,8 @@ static const struct IODevice io_nes[] = {
         NULL,               /* input */
 		NULL,               /* output */
 		NULL,               /* input_chunk */
-		NULL                /* output_chunk */
+		NULL,                /* output_chunk */
+		nes_partialcrc      /* correct CRC */
 	},
 	{ IO_END }
 };
@@ -510,7 +513,8 @@ static const struct IODevice io_nespal[] = {
         NULL,               /* input */
 		NULL,               /* output */
 		NULL,               /* input_chunk */
-		NULL                /* output_chunk */
+		NULL,                /* output_chunk */
+		nes_partialcrc      /* correct CRC */
 	},
 	{ IO_END }
 };
