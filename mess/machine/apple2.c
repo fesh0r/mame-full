@@ -525,7 +525,7 @@ READ_HANDLER ( apple2_c01x_r )
 	}
 
 	profiler_mark(PROFILER_END);
-	return 0;
+	return result;
 }
 
 /***************************************************************************
