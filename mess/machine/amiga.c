@@ -415,7 +415,7 @@ static void blitter_proc( int param ) {
 			int height = ( ( custom_regs.BLTSIZE >> 6 ) & 0x3ff );
 			unsigned short old_data[3];
 			unsigned short new_data[3];
-			int fc;
+			int fc = 0;
 
 			if ( custom_regs.BLTCON0 & 0x800 )
 				ptr[0] = ( custom_regs.BLTxPTH[0] << 16 ) | custom_regs.BLTxPTL[0];

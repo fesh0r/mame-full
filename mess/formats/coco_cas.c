@@ -140,7 +140,7 @@ static casserr_t coco_cas_load(cassette_image *cassette)
 	UINT64 offset;
 	UINT64 image_size;
 	UINT8 block[258];	/* 255 bytes per block + 3 (type, length, checksum) */
-	int block_length;
+	int block_length = 0;
 	UINT8 last_blocktype;
 	double time_index = 0.0;
 	double time_displacement;

@@ -11,6 +11,10 @@ System Driver Changes:
 - [COCO] Fixed a bug in DMK disk loading; games encoded with certain forms of
   copy protection now run.  (bug #606) [Tim Lindner]
   
+- [MICROBEE] Added natural language support.  [Nate Woods]
+
+- [MICROBEE] Added multi screen support.  [Kelby Murie]
+  
 
 
 User Interface Changes:
