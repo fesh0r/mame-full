@@ -22,10 +22,10 @@
 #include <math.h>
 
 extern int fxheight;
-extern float vscrntlx;
-extern float vscrntly;
-extern float vscrnwidth;
-extern float vscrnheight;
+extern int vscrntlx;
+extern int vscrntly;
+extern int vscrnwidth;
+extern int vscrnheight;
 static int vecwidth, vecheight;
 
 
