@@ -49,8 +49,7 @@ struct ARM {
 	UINT32 reg_firq[7]; /* swapped R8-R14 during FIRQ */
 	UINT32 reg_irq[2];	/* swapped R13-R14 during IRQ */
 	UINT32 reg_svc[2];	/* swapped R13-R14 during SVC */
-	UINT32 queue_count; /* queue filled up to? */
-	UINT32 ppc; 		/* previous PC */
+    UINT32 ppc;         /* previous PC */
 };
 
 static struct ARM arm;
@@ -545,19 +544,19 @@ INLINE void fill_queue(void)
 	arm.queue[1] = ARM_RDMEM_32(PC);
     PC = (PC + 4) & AMASK;
     arm.queue[2] = ARM_RDMEM_32(PC);
-    PC = (PC + 8) & AMASK;
+	PC = (PC + 4) & AMASK;
 }
 
 INLINE void shift_queue(void)
 {
 	/* move the instruction queue */
-    arm.ppc = PC;
 	arm.queue[0] = arm.queue[1];
 	arm.queue[1] = arm.queue[2];
 	arm.queue[2] = ARM_RDMEM_32(PC);
 	/* PC is now 8 ahead of the current instruction in queue[0] */
-	PC = (PC + 4) & AMASK;
     CALL_MAME_DEBUG;
+    PC = (PC + 4) & AMASK;
+    arm.ppc = (arm.ppc + 4) & AMASK;
 }
 
 INLINE void PUT_PC(UINT32 val, int link)
@@ -2525,7 +2524,7 @@ static void b(void)
 {
 	UINT32 offs = OP & 0x00ffffff;
 
-	PC = (arm.ppc + 4 * offs) & AMASK;
+	PC = (arm.ppc - 4 + 4 * offs) & AMASK;
 	fill_queue();
 }
 
@@ -2538,9 +2537,9 @@ static void bl(void)
 	UINT32 offs = OP & 0x00ffffff;
 
 	/* save PC and the status flags */
-	arm.reg[14] = PC | PSW;
+	arm.reg[14] = arm.ppc | PSW;
 
-	PC = (arm.ppc + 4 * offs) & AMASK;
+	PC = (arm.ppc - 4 + 4 * offs) & AMASK;
 	fill_queue();
 }
 
@@ -2633,7 +2632,7 @@ void (*func[256])(void) =
 void arm_reset(void *param)
 {
 	memset(&arm, 0, sizeof(struct ARM));
-	PUT_PC(0,0);
+	PUT_PC(0, 0);
 }
 
 void arm_exit(void)
@@ -2730,12 +2729,11 @@ void arm_set_context(void *src)
 
 unsigned arm_get_pc(void)
 {
-	return (PC - 8) & AMASK;
+	return arm.ppc;
 }
 
 void arm_set_pc(unsigned val)
 {
-	val = (val - 8) & AMASK;
     PUT_PC(val, 0);
 }
 
