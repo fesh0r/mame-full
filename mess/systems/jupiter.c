@@ -246,7 +246,8 @@ static	struct MachineDriver machine_driver_jupiter =
 
 ROM_START (jupiter)
 ROM_REGION (0x10000, REGION_CPU1)
-ROM_LOAD ("jupiter.rom", 0x0000, 0x2000, 0xe5b1f5f6)
+ROM_LOAD ("jupiter.lo", 0x0000, 0x1000, 0xdc8438a5)
+ROM_LOAD ("jupiter.hi", 0x1000, 0x1000, 0x4009f636)
 ROM_END
 
 static const struct IODevice io_jupiter[] = {
