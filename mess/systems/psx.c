@@ -704,7 +704,7 @@ ROM_START( psxa45 )
 ROM_END
 
 SYSTEM_CONFIG_START( psx )
-	CONFIG_DEVICE_QUICKLOAD( "exe\0", psxexe_load )
+	CONFIG_DEVICE_QUICKLOAD( "exe\0psx\0", psxexe_load )
 SYSTEM_CONFIG_END
 
 /*
