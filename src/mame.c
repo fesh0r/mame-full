@@ -464,15 +464,6 @@ int run_game(int game)
 	if (osd_init() == 0)
 	{
 #ifdef MESS
-		if (init_devices(gamedrv))
-        {
-			if (!bailing)
-			{
-				bailing = 1;
-				printf("Unable to start device emulation\n");
-			}
-        }
-		else
 		do
 		{
 			mess_keep_going = 0;
@@ -563,7 +554,9 @@ int init_machine(void)
 
 	#ifdef MESS
 	load_next:
-	#endif
+		if (init_devices(gamedrv))
+			goto out_free;
+    #endif
 
 	/* Mish:  Multi-session safety - set spriteram size to zero before memory map is set up */
 	spriteram_size=spriteram_2_size=0;
