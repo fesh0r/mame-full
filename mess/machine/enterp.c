@@ -44,11 +44,11 @@ void enterprise_shutdown_machine(void)
 
 int enterprise_floppy_init(int id)
 {
-        if (basicdsk_floppy_init(id)==INIT_OK)
-        {
-                basicdsk_set_geometry(id, 80, 2, 9, 512, 10, 3, 1);
-                return INIT_OK;
-        }
+	if (basicdsk_floppy_init(id)==INIT_OK)
+	{
+		basicdsk_set_geometry(id, 80, 2, 9, 512, 1);
+		return INIT_OK;
+	}
 
-    return INIT_FAILED;
+	return INIT_FAILED;
 }

@@ -1497,29 +1497,27 @@ static void coco_fdc_callback(int event)
 
 int dragon_floppy_init(int id)
 {
-        if (basicdsk_floppy_init(id)==INIT_OK)
-        {
-                void *file;
+	if (basicdsk_floppy_init(id)==INIT_OK)
+	{
+		void *file;
 
-                file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
+		file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
 
-                if (file)
-                {
-                        int tracks;
+		if (file)
+		{
+			int tracks;
 
 			/* For now, assume that real floppies are always 35 tracks */
-                        tracks = (file == REAL_FDD) ? 35 : (osd_fsize(file) / (18*256));
+			tracks = (floppy_drive_get_flag_state(id, FLOPPY_DRIVE_REAL_FDD)) ? 35 : (osd_fsize(file) / (18*256));
 
-                        basicdsk_set_geometry(id, tracks, 1, 18, 256, 0, 0, 1);
+			basicdsk_set_geometry(id, tracks, 1, 18, 256, 1);
 
-                        osd_fclose(file);
+			osd_fclose(file);
 
-                        return INIT_OK;
-                }
-        }
-
-        return INIT_FAILED;
-
+			return INIT_OK;
+		}
+	}
+	return INIT_FAILED;
 }
 
 
