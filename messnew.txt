@@ -2,17 +2,18 @@
 
 Known Issues:
 -------------
-- Amiga removed due to problems with the MAME memory handling changes.
-
 - .inp record/playback does still not work currently.
 
 - alias handling temporarily removed.
+
+- Built-in File Manager broken - do not use for Image loading
 
      
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 NEC PC8801SR [Shouhei Nishi]
 Emerson Arcadia 2001 (preliminary) [PeT]
+Amiga [re-enabled]
 
 
 System Driver Changes:

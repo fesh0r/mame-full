@@ -195,7 +195,7 @@ DRVLIBS = \
 	$(OBJ)/ti99.a     \
 	$(OBJ)/ti85.a     \
 	$(OBJ)/avigo.a    \
-#       $(OBJ)/amiga.a    \
+        $(OBJ)/amiga.a    \
 #	$(OBJ)/hp48.a     \
 
 

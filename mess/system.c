@@ -346,7 +346,7 @@ TESTDRIVER( c128d )		/* Commodore 128D - NTSC 						  */
 
 /*	DRIVER( cbm900 )*/	/* Commodore 900 Prototype (z8000)				  */
 
-//!!	DRIVER( amiga ) 	/* Commodore Amiga								  */
+	DRIVER( amiga ) 	/* Commodore Amiga								  */
 
 	DRIVER( c65 )		/* C65 / C64DX (Prototype, NTSC, 911001)		  */
 	DRIVER( c65e )		/* C65 / C64DX (Prototype, NTSC, 910828)		  */
