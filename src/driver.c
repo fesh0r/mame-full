@@ -68,9 +68,6 @@ const struct GameDriver *drivers[] =
 
 #else	/* DRIVER_RECURSIVE */
 
-#undef TESTDRIVER
-#define TESTDRIVER DRIVER
-
 #ifndef NEOMAME
 
 	/* "Pacman hardware" games */
