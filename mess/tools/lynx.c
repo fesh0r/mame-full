@@ -97,12 +97,12 @@ static int lynx_read_image(lynx_image *image)
 	i+=n;
 
 	n=lynx_read_line(image, i);
-	j=atoi(image->data+i); // begin of data
+	j=atoi((char *)image->data+i); /* begin of data */
 	if ((n==0)) return IMGTOOLERR_CORRUPTIMAGE;
 	i+=n;
 
 	n=lynx_read_line(image, i);
-	image->count=atoi(image->data+i);
+	image->count=atoi((char *)image->data+i);
 	if ((n==0)||(image->count==0)) return IMGTOOLERR_CORRUPTIMAGE;
 	i+=n;
 
@@ -116,11 +116,11 @@ static int lynx_read_image(lynx_image *image)
 
 		n=lynx_read_line(image, i);
 		if ((n==0)) return IMGTOOLERR_CORRUPTIMAGE;
-		strncpy(image->entries[j].name,image->data+i, n-1);
+		strncpy(image->entries[j].name,(char *)image->data+i, n-1);
 		i+=n;
 
 		n=lynx_read_line(image, i);
-		a=atoi(image->data+i);
+		a=atoi((char *)image->data+i);
 		if ((n==0)) return IMGTOOLERR_CORRUPTIMAGE;
 		i+=n;
 
@@ -130,7 +130,7 @@ static int lynx_read_image(lynx_image *image)
 		i+=n;
 
 		n=lynx_read_line(image, i);
-		b=atoi(image->data+i);
+		b=atoi((char *)image->data+i);
 		if ((n==0)) return IMGTOOLERR_CORRUPTIMAGE;
 		i+=n;
 

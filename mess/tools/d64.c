@@ -348,16 +348,11 @@ static void d81_alloc_sector(struct _d64_image *image, int *track, int *sector)
 {
 	static int tracks[80];
 	int i, j;
-	D81_BAM *bam[2]={ (D81_BAM*)
-					  (image->data
-					   +image->get_offset(image->directory.track,
-										  image->directory.sector+1)),
-					  (D81_BAM*)
-					  (image->data
-					   +image->get_offset(image->directory.track,
-										  image->directory.sector+1)) };
+	D81_BAM *bam[2];
+	bam[0] = (D81_BAM*) (image->data + image->get_offset(image->directory.track, image->directory.sector+1)),
+	bam[1] = (D81_BAM*) (image->data + image->get_offset(image->directory.track, image->directory.sector+1));
 	
-	// this contains the tracks for the search strategy for free sectors
+	/* this contains the tracks for the search strategy for free sectors */
 	for (i=0,j=image->directory.track-1; j>0; i++,j--) tracks[i]=j;
 	for (j=image->directory.track+1;j<80;i++,j++) tracks[i]=j;
 	tracks[i]=image->directory.track;
@@ -974,7 +969,7 @@ static int d64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, c
 	D64_ENTRY *entry;
 
 	fsize=stream_size(sourcef)+1;
-	if ((entry=d64_image_findfile(image, fname))!=NULL ) {
+	if ((entry=d64_image_findfile(image, (const unsigned char *)fname))!=NULL ) {
 		/* overriding */
 		if ((img->module->freespace(img)+GET_UWORD(entry->blocks))*254<fsize) 
 			return IMGTOOLERR_NOSPACE;
