@@ -149,23 +149,25 @@ static void galpanic_draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-static void missw96_draw_sprites(struct osd_bitmap *bitmap)
+static void comad_draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 
 	for (offs = 0;offs < spriteram_size;offs += 8)
 	{
-		int sx,sy,code,color;
+		int sx,sy,code,color,flipx,flipy;
 
 		sx = READ_WORD(&spriteram[offs + 4]) >> 6;
 		sy = READ_WORD(&spriteram[offs + 6]) >> 6;
 		code = READ_WORD(&spriteram[offs + 2]);
 		color = (READ_WORD(&spriteram[offs]) & 0x003c) >> 2;
+		flipx = READ_WORD(&spriteram[offs]) & 0x0002;
+		flipy = READ_WORD(&spriteram[offs]) & 0x0001;
 
 		drawgfx(bitmap,Machine->gfx[0],
 				code,
 				color,
-				0,0,
+				flipx,flipy,
 				sx,sy,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
@@ -203,7 +205,7 @@ void galpanic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	galpanic_draw_sprites(bitmap);
 }
 
-void missw96_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void comad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	palette_recalc();
 
@@ -214,5 +216,5 @@ void missw96_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	draw_fgbitmap(bitmap);
 
-	missw96_draw_sprites(bitmap);
+	comad_draw_sprites(bitmap);
 }
