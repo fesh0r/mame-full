@@ -202,7 +202,7 @@ static void lynx_blit_16color_rle_line(const int y, const int xdir)
 static void lynx_blit_lines(void)
 {
 	int i, hi, y;
-	int ydir, xdir;
+	int ydir=0, xdir=0;
 	int flip=blitter.mem[blitter.cmd+1]&3;
 
 	switch (blitter.mem[blitter.cmd]&0x30) {
