@@ -53,8 +53,9 @@ d2u makefile.mame 2> /dev/null
 # Copy makefile.unix from the old xmame directory.
 cp $1/makefile.unix .
 
-# Copy README from the old xmame directory.
+# Copy README and todo from the old xmame directory.
 cp $1/README .
+cp $1/todo .
 
 # Clean up the files left over from d2u and fix-comments.
 rm -f `find . -name "*~" -print`
