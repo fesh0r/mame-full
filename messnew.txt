@@ -9,6 +9,11 @@ System Driver Changes:
 ----------------------
 - [SNES] Various mode 7 fixes. [Anthony Kruize]
 
+- [TI99] Added support for Thierry Nouspickel's IDE card prototype. Added
+  preliminary (i.e. buggy and incomplete) support for the HFDC disk controller
+  card and 80-track drives. Fixed AMS memory card emulation. Enabled support
+  for ti99 disk images larger than 1600 sectors in imgtool. [Raphael Nabet]
+
 Source Changes:
 ---------------
 (none)
