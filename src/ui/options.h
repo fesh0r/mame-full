@@ -74,6 +74,9 @@ enum
 	MAX_CLEAN_STRETCH = 5,
 };
 
+#define FOLDER_OPTIONS	-2
+#define GLOBAL_OPTIONS	-1
+
 // d3d effect types
 enum
 {
@@ -286,6 +289,7 @@ typedef struct
 	BOOL     stretch_screenshot_larger;
 	BOOL     inherit_filter;
 	BOOL     offset_clones;
+	BOOL	 game_caption;
 
     char     *default_game;
     int      column_width[COLUMN_MAX];
@@ -460,8 +464,11 @@ BOOL GetStretchScreenShotLarger(void);
 void SetFilterInherit(BOOL inherit);
 BOOL GetFilterInherit(void);
 
-void SetOffsetClones(BOOL inherit);
+void SetOffsetClones(BOOL offset);
 BOOL GetOffsetClones(void);
+
+void SetGameCaption(BOOL caption);
+BOOL GetGameCaption(void);
 
 void SetBroadcast(BOOL broadcast);
 BOOL GetBroadcast(void);

@@ -48,6 +48,7 @@
 #include <osdepend.h>
 #include <unzip.h>
 
+
 #include "resource.h"
 #include "resource.hm"
 
@@ -72,10 +73,6 @@
 #include "DirectDraw.h"
 #include "DirectInput.h"
 #include "DIJoystick.h"     /* For DIJoystick avalibility. */
-
-#ifdef _MSC_VER
-#define snprintf _snprintf
-#endif
 
 #ifdef _MSC_VER
 #define snprintf _snprintf
@@ -137,6 +134,7 @@ int MIN_HEIGHT = DBU_MIN_HEIGHT;
 #define LVS_EX_LABELTIP         0x00004000 // listview unfolds partly hidden labels if it does not have infotip text
 #endif
 
+#define NO_FOLDER -1
 #define STATESAVE_VERSION 1
 
 typedef BOOL (WINAPI *common_file_dialog_proc)(LPOPENFILENAME lpofn);
@@ -277,7 +275,7 @@ void SendMessageToProcess(LPPROCESS_INFORMATION lpProcessInformation,
 						  UINT Msg, WPARAM wParam, LPARAM lParam);
 static BOOL CALLBACK EnumWindowCallBack(HWND hwnd, LPARAM lParam);
 void SendIconToProcess(LPPROCESS_INFORMATION lpProcessInformation, int nGameIndex);
-
+HWND GetGameWindow(LPPROCESS_INFORMATION lpProcessInformation);
 /***************************************************************************
     External variables
  ***************************************************************************/
@@ -594,6 +592,8 @@ static WNDPROC g_lpPictureWndProc = NULL;
 
 static POPUPSTRING popstr[MAX_MENUS + 1];
 
+static int *parent_index = NULL;
+
 /* Tool and Status bar variables */
 static HWND hStatusBar = 0;
 static HWND hToolBar   = 0;
@@ -793,7 +793,7 @@ extern struct GameDriver driver_neogeo;
     External functions
  ***************************************************************************/
 
-static void CreateCommandLine(int nGameIndex, char* pCmdLine)
+static void CreateCommandLine(int nGameIndex, char* pCmdLine, BOOL *pbIsWindowed)
 {
 	char pModule[_MAX_PATH];
 	options_type* pOpts;
@@ -811,7 +811,7 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	}
 	else
 	{
-		pOpts = GetGameOptions(nGameIndex, -1);
+		pOpts = GetGameOptions(nGameIndex, NO_FOLDER);
 	}
 
 	sprintf(pCmdLine, "%s %s", pModule, drivers[nGameIndex]->name);
@@ -879,6 +879,10 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -cs %s",                     GetCleanStretchShortName(pOpts->clean_stretch));
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -zoom %i", pOpts->zoom);
+	if( pOpts->maximize )
+		*pbIsWindowed = FALSE;
+	else
+		*pbIsWindowed = TRUE;
 
 	// d3d
 	if (pOpts->use_d3d)
@@ -1028,8 +1032,11 @@ static int RunMAME(int nGameIndex)
 	char pCmdLine[2048];
 	time_t start, end;
 	double elapsedtime;
+	BOOL bIsWindowed = FALSE;
+	HWND hGameWnd = NULL;
+	long lGameWndStyle = 0;
 	
-	CreateCommandLine(nGameIndex, pCmdLine);
+	CreateCommandLine(nGameIndex, pCmdLine, &bIsWindowed);
 
 	ZeroMemory(&si, sizeof(si));
 	ZeroMemory(&pi, sizeof(pi));
@@ -1054,7 +1061,17 @@ static int RunMAME(int nGameIndex)
 
 		ShowWindow(hMain, SW_HIDE);
 		SendIconToProcess(&pi, nGameIndex);
-
+		if( ! GetGameCaption() && bIsWindowed )
+		{
+			hGameWnd = GetGameWindow(&pi);
+			if( hGameWnd )
+			{
+				lGameWndStyle = GetWindowLong(hGameWnd, GWL_STYLE);
+				lGameWndStyle = lGameWndStyle & (WS_BORDER ^ 0xffffffff);
+				SetWindowLong(hGameWnd, GWL_STYLE, lGameWndStyle);
+				SetWindowPos(hGameWnd,0,0,0,0,0,SWP_DRAWFRAME | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
+			}
+		}
 		time(&start);
 
 		// Wait until child process exits.
@@ -1072,7 +1089,6 @@ static int RunMAME(int nGameIndex)
 		}
 
 		ShowWindow(hMain, SW_SHOW);
-
 		// Close process and thread handles.
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
@@ -1733,7 +1749,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	WNDCLASS	wndclass;
 	RECT		rect;
-	int i, nSplitterCount;
+	int i, j = 0, nSplitterCount;
 	extern FOLDERDATA g_folderData[];
 	extern FILTER_ITEM g_filterList[];
 	extern const char g_szHistoryFileName[];
@@ -1746,9 +1762,38 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 
 	begin_resource_tracking();
 
+	// Count the number of games
 	game_count = 0;
 	while (drivers[game_count] != 0)
 		game_count++;
+
+	// Create parent index
+	parent_index = auto_malloc(sizeof(*parent_index) * game_count);
+	if (!parent_index)
+		return FALSE;
+	for (i = 0; i < game_count; i++)
+	{
+		parent_index[i] = -1;
+		if (drivers[i]->clone_of && !(drivers[i]->clone_of->flags & NOT_A_DRIVER))
+		{
+			if (drivers[i]->clone_of == drivers[j])
+			{
+				parent_index[i] = j;
+			}
+			else
+			{
+				for (j = 0; j < game_count; j++)
+				{
+					if (drivers[i]->clone_of == drivers[j])
+					{
+						parent_index[i] = j;
+						break;
+					}
+				}
+				j = 0;
+			}
+		}
+	}
 
 	/* custom per-game icons */
 	icon_index = auto_malloc(sizeof(int) * game_count);
@@ -4599,15 +4644,7 @@ void GamePicker_EnteringItem(int nItem)
 
 static int GamePicker_FindItemParent(int nItem)
 {
-	int i;
-	const struct GameDriver *drv = drivers[nItem]->clone_of;
-
-	for (i = 0; drivers[i]; i++)
-	{
-		if (drivers[i] == drv)
-			return i;
-	}
-	return -1;
+	return parent_index[nItem];
 }
 
 /* Initialize the Picker and List controls */
@@ -6650,7 +6687,6 @@ BOOL MouseHasBeenMoved(void)
 	return (p.x != mouse_x || p.y != mouse_y);       
 }
 
-
 void SendIconToProcess(LPPROCESS_INFORMATION pi, int nGameIndex)
 {
 	HICON hIcon;
@@ -6693,7 +6729,7 @@ void SendMessageToProcess(LPPROCESS_INFORMATION lpProcessInformation,
 	SendMessage(fwhs.hwndFound, WM_KILLFOCUS,(WPARAM) hMain, (LPARAM) NULL);
 }
 
-BOOL CALLBACK EnumWindowCallBack(HWND hwnd, LPARAM lParam) 
+static BOOL CALLBACK EnumWindowCallBack(HWND hwnd, LPARAM lParam) 
 { 
 	FINDWINDOWHANDLE * pfwhs = (FINDWINDOWHANDLE * )lParam; 
 	DWORD ProcessId; 
@@ -6720,4 +6756,13 @@ BOOL CALLBACK EnumWindowCallBack(HWND hwnd, LPARAM lParam)
 	} 
 }
 
+HWND GetGameWindow(LPPROCESS_INFORMATION lpProcessInformation)
+{
+	FINDWINDOWHANDLE fwhs;
+	fwhs.ProcessInfo = lpProcessInformation;
+	fwhs.hwndFound  = NULL;
+
+	EnumWindows(EnumWindowCallBack, (LPARAM)&fwhs);
+	return fwhs.hwndFound;
+}
 /* End of source file */

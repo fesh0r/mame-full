@@ -251,6 +251,7 @@ static REG_OPTION regSettings[] =
 	{ "stretch_screenshot_larger",  RO_BOOL,    &settings.stretch_screenshot_larger,  "1" },
 	{ "inherit_filter",             RO_BOOL,    &settings.inherit_filter,             "0" },
 	{ "offset_clones",              RO_BOOL,    &settings.offset_clones,              "0" },
+	{ "game_caption",               RO_BOOL,    &settings.game_caption,               "1" },
 
 	{ "language",                   RO_STRING,  &settings.language,         "english" },
 	{ "flyer_directory",            RO_STRING,  &settings.flyerdir,         "flyers" },
@@ -710,8 +711,8 @@ BOOL OptionsInit()
 	{
 		game_variables[i].play_count = 0;
 		game_variables[i].play_time = 0;
-		game_variables[i].rom_audit_results = DriverUsesRoms(i) ? UNKNOWN : CORRECT;
-		game_variables[i].samples_audit_results = DriverUsesSamples(i) ? UNKNOWN : CORRECT;
+		game_variables[i].rom_audit_results = UNKNOWN;
+		game_variables[i].samples_audit_results = UNKNOWN;
 		
 		game_variables[i].options_loaded = FALSE;
 		game_variables[i].use_default = TRUE;
@@ -879,9 +880,9 @@ void SyncInFolderOptions(options_type *opts, int folder_index)
 
 options_type * GetDefaultOptions(int iProperty, BOOL bVectorFolder )
 {
-	if( iProperty == -1)
+	if( iProperty == GLOBAL_OPTIONS)
 		return &global;
-	else if( iProperty == -2)
+	else if( iProperty == FOLDER_OPTIONS)
 	{
 		if (bVectorFolder)
 			return &global;
@@ -1141,6 +1142,16 @@ BOOL GetOffsetClones(void)
 {
 	return settings.offset_clones;
  }
+
+void SetGameCaption(BOOL caption)
+{
+	settings.game_caption = caption;
+}
+
+BOOL GetGameCaption(void)
+{
+	return settings.game_caption;
+}
 
 void SetBroadcast(BOOL broadcast)
 {
@@ -1815,7 +1826,7 @@ void ResetGameOptions(int driver_index)
 	assert(0 <= driver_index && driver_index < num_games);
 
 	// make sure it's all loaded up.
-	GetGameOptions(driver_index, -1);
+	GetGameOptions(driver_index, GLOBAL_OPTIONS);
 
 	if (game_variables[driver_index].use_default == FALSE)
 	{
@@ -1848,7 +1859,7 @@ void ResetAllGameOptions(void)
 	{
 		if( i == FOLDER_VECTOR)
  		{
- 			CopyGameOptions(GetDefaultOptions(-1, FALSE),&folder_options[i]);
+ 			CopyGameOptions(GetDefaultOptions(GLOBAL_OPTIONS, FALSE),&folder_options[i]);
  			SaveFolderOptions(i, 0);
  		}
 
@@ -1856,7 +1867,7 @@ void ResetAllGameOptions(void)
 		{
 			if( ExtraFolderData[i-MAX_FOLDERS] && (ExtraFolderData[i-MAX_FOLDERS]->m_nParent == FOLDER_SOURCE) )
 			{
-				CopyGameOptions(GetDefaultOptions(-1, FALSE),&folder_options[i]);
+				CopyGameOptions(GetDefaultOptions(GLOBAL_OPTIONS, FALSE),&folder_options[i]);
 				SaveFolderOptions(i, 0);
 			}
 		}
