@@ -33,6 +33,9 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
+- [Windows] Fixed a bug when creating disk images in which default extensions
+  were not spcified.  (bug #576)  [Nate Woods]
+
 - [Windows GUI] Fixed some miscellaneous bugs having to do with the software
   picker settings.  (bug #568, bug #571)  [Nate Woods]
 

@@ -481,6 +481,11 @@ static void format_combo_changed(dialog_box *dialog, HWND dlgwnd, NMHDR *notific
 	guide = dev->createimage_optguide;	
 	optspec = dev->createimage_options[format_combo_val].optspec;
 
+	// set the default extension
+	CommDlg_OpenSave_SetDefExt(GetParent(dlgwnd),
+		dev->createimage_options[format_combo_val].extensions);
+
+	// enumerate through all of the child windows
 	wnd = NULL;
 	while((wnd = FindWindowEx(dlgwnd, wnd, NULL, NULL)) != NULL)
 	{
