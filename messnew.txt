@@ -1,3 +1,16 @@
+0.37??
+
+Several drivers may be broken due to the MAME memory handling changes.
+And as a result, the Amiga has been temporarily removed.
+
+Note: .inp record/playback does still not work currently.
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- Atari Lynx (preliminary) [PeT]
+
+
+-------------------------------------------------------------------------------  
 0.37b10
 
 Several drivers may be broken due to the MAME memory handling changes.
