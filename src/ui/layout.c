@@ -59,8 +59,7 @@ FOLDERDATA g_folderData[] =
 	{"Raster",          FOLDER_RASTER,       IDI_FOLDER,               F_RASTER,      F_VECTOR,     NULL,                       DriverIsVector,    FALSE },
 	{"Vector",          FOLDER_VECTOR,       IDI_FOLDER,               F_VECTOR,      F_RASTER,     NULL,                       DriverIsVector,    TRUE },
 	{"Trackball",       FOLDER_TRACKBALL,    IDI_FOLDER,               0,             0,            NULL,                       DriverUsesTrackball,	TRUE },
-	{"Stereo",          FOLDER_STEREO,       IDI_SOUND,                0,             0,            NULL,                       DriverIsStereo,    TRUE },
-	{"Hard Disk",       FOLDER_HARDDISK,     IDI_HARDDISK,             0,             0,            NULL,                       DriverIsHarddisk,  TRUE },
+//	{"Stereo",          FOLDER_STEREO,       IDI_SOUND,                0,             0,            NULL,                       DriverIsStereo,    TRUE },
 	{ NULL }
 };
 
@@ -125,6 +124,7 @@ const PROPERTYSHEETINFO g_propSheets[] =
 	{ FALSE,	NULL,					IDD_PROP_AUDIT,			GameAuditDialogProc },
 	{ TRUE,		NULL,					IDD_PROP_DISPLAY,		GameOptionsProc },
 	{ TRUE,		NULL,					IDD_PROP_ADVANCED,		GameOptionsProc },
+	{ TRUE,		NULL,					IDD_PROP_DIRECT3D,		GameOptionsProc },
 	{ TRUE,		NULL,					IDD_PROP_SOUND,			GameOptionsProc },
 	{ TRUE,		NULL,					IDD_PROP_INPUT,			GameOptionsProc },
 	{ TRUE,		NULL,					IDD_PROP_MISC,			GameOptionsProc },

@@ -84,6 +84,7 @@
 #define IDR_CONTEXT_SCREENSHOT          181
 #define IDI_HEADER_UP                   182
 #define IDI_HEADER_DOWN                 183
+#define IDD_PROP_DIRECT3D               184
 #define IDC_LIST                        1000
 #define IDC_PLAY                        1001
 #define IDC_DISPLAYS                    1002
@@ -198,7 +199,6 @@
 #define IDC_CONFIGURETEXT               1113
 #define IDC_JOYMAPTEXT                  1114
 #define IDC_START_GAME_CHECK            1115
-#define IDC_START_VERSION_WARN          1116
 #define IDC_VOLUME                      1117
 #define IDC_VOLUMEDISP                  1118
 #define IDC_PROP_HISTORY                1119
@@ -256,13 +256,35 @@
 #define IDC_LOAD_STATUS                 1173
 #define IDC_ERROR_TEXT                  1174
 #define IDC_ARTMISCTEXT                 1175
-#define IDC_SHOW_DISCLAIMER             1176
-#define IDC_SHOW_GAME_INFO              1177
+#define IDC_SKIP_DISCLAIMER             1176
+#define IDC_SKIP_GAME_INFO              1177
 #define IDC_PROP_SOURCE                 1177
 #define IDC_OLD_TIMING                  1178
 #define IDC_PAUSEBRIGHT                 1180
 #define IDC_PAUSEBRIGHTDISP             1181
 #define IDC_HIGH_PRIORITY               1182
+#define IDC_D3D                         1183
+#define IDC_D3D_FILTER                  1184
+#define IDC_D3D_TEXTURE_MANAGEMENT      1185
+#define IDC_AUDIO_LATENCY               1186
+#define IDC_D3D_EFFECT                  1187
+#define IDC_D3D_PRESCALE                1189
+#define IDC_D3D_ROTATE_EFFECTS          1190
+#define IDC_CLEAN_STRETCH               1191
+#define IDC_AUDIO_LATENCY_DISP          1192
+#define IDC_D3D_SCANLINES               1193
+#define IDC_D3D_SCANLINES_ENABLE        1194
+#define IDC_D3D_SCANLINES_DISP          1195
+#define IDC_D3D_SATURATION_ENABLE       1196
+#define IDC_D3D_SATURATION              1197
+#define IDC_D3D_SATURATION_DISP         1198
+#define IDC_D3D_FEEDBACK_ENABLE         1199
+#define IDC_D3D_FEEDBACK                1200
+#define IDC_D3D_FEEDBACK_DISP           1201
+#define IDC_ZOOM                        1202
+#define IDC_ZOOMDIST                    1203
+#define IDC_BIOS                        1204
+#define IDC_HIDE_MOUSE                  1205
 #define ID_FILE_EXIT                    40001
 #define ID_ABOUT                        40003
 #define ID_FILE_PLAY                    40004
@@ -316,12 +338,15 @@
 #define ID_VIEW_TAB_CABINET             40064
 #define ID_VIEW_TAB_MARQUEE             40065
 #define ID_VIEW_TAB_TITLE               40066
-#define ID_OPTIONS_BG                   40067
-#define ID_TOGGLE_TAB_SCREENSHOT        40068
-#define ID_TOGGLE_TAB_FLYER             40069
-#define ID_TOGGLE_TAB_CABINET           40070
-#define ID_TOGGLE_TAB_MARQUEE           40071
-#define ID_TOGGLE_TAB_TITLE             40072
+#define ID_VIEW_TAB_HISTORY             40067
+#define ID_OPTIONS_BG                   40068
+#define ID_TOGGLE_TAB_SCREENSHOT        40069
+#define ID_TOGGLE_TAB_FLYER             40070
+#define ID_TOGGLE_TAB_CABINET           40071
+#define ID_TOGGLE_TAB_MARQUEE           40072
+#define ID_TOGGLE_TAB_TITLE             40073
+#define ID_TOGGLE_TAB_HISTORY           40074
+#define ID_VIEW_FULLSCREEN              40075
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -330,9 +355,9 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        184
-#define _APS_NEXT_COMMAND_VALUE         40068
-#define _APS_NEXT_CONTROL_VALUE         1183
+#define _APS_NEXT_RESOURCE_VALUE        185
+#define _APS_NEXT_COMMAND_VALUE         40076
+#define _APS_NEXT_CONTROL_VALUE         1208
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

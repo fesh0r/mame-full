@@ -64,8 +64,8 @@ enum
 	UNKNOWN = 2
 };
 
-/* Reg helpers types */
-enum RegTypes
+// config helpers types
+enum
 {
 	RO_BOOL = 0, // BOOL value
 	RO_INT,      // int value
@@ -83,6 +83,8 @@ enum
 	PICT_CABINET,
 	PICT_MARQUEE,
 	PICT_TITLES,
+	PICT_HISTORY,
+
 	MAX_PICT_TYPES
 };
 
@@ -94,10 +96,35 @@ enum
 	INPUT_LAYOUT_HRSE
 };
 
-/* Reg data list */
+// clean stretch types
+enum
+{
+	// these must match array of strings clean_stretch_long_name in options.c
+	CLEAN_STRETCH_NONE = 0,
+	CLEAN_STRETCH_AUTO = 1,
+
+	MAX_CLEAN_STRETCH = 5,
+};
+
+// d3d effect types
+enum
+{
+	// these must match array of strings d3d_effects_long_name in options.c
+	D3D_EFFECT_NONE = 0,
+	D3D_EFFECT_AUTO = 1,
+
+	MAX_D3D_EFFECTS = 17,
+};
+
+// d3d filter types
+enum
+{
+	MAX_D3D_FILTERS = 5,
+};
+
+// used to be "registry option", now is just for a game/global option
 typedef struct
 {
-	char m_cName[40];                             /* reg key name     */
 	char ini_name[40]; // ini name
 	int  m_iType;                                 /* reg key type     */
 	void *m_vpData;                               /* reg key data     */
@@ -135,6 +162,22 @@ typedef struct
 	int    frames_to_display;
 	char   *effect;
 	char   *aspect;
+	int clean_stretch;
+	int zoom;
+
+	// d3d
+	BOOL use_d3d;
+	int d3d_filter;
+	BOOL d3d_texture_management;
+	int d3d_effect;
+	BOOL d3d_prescale;
+	BOOL d3d_rotate_effects;
+	BOOL d3d_scanlines_enable;
+	int d3d_scanlines;
+	BOOL d3d_feedback_enable;
+	int d3d_feedback;
+	BOOL d3d_saturation_enable;
+	int d3d_saturation;
 
 	/* sound */
 
@@ -172,6 +215,7 @@ typedef struct
 	BOOL   use_filter;
 	BOOL   enable_sound;
 	int    attenuation;
+	int audio_latency;
 
 	/* Misc artwork options */
 	BOOL   use_artwork;
@@ -188,6 +232,7 @@ typedef struct
 	BOOL   sleep;
         BOOL   old_timing;
 	BOOL   leds;
+	int bios;
 
 #ifdef MESS
 	BOOL   use_new_ui;
@@ -221,7 +266,9 @@ enum
 	SHOW_TAB_CABINET = 0x04,
 	SHOW_TAB_MARQUEE = 0x08,
 	SHOW_TAB_TITLE = 0x10,
-	NUM_SHOW_TABS = 5
+	SHOW_TAB_HISTORY = 0x20,
+
+	NUM_SHOW_TABS = 6
 };
 
 typedef struct
@@ -236,7 +283,6 @@ typedef struct
 	int show_tab_flags;
     int      show_pict_type;
     BOOL     game_check;        /* Startup GameCheck */
-    BOOL     version_check;     /* Version mismatch warings */
     BOOL     use_joygui;
     BOOL     broadcast;
     BOOL     random_bg;
@@ -257,9 +303,29 @@ typedef struct
     LOGFONT  list_font;
     COLORREF list_font_color;
     COLORREF list_clone_color;
-    BOOL show_disclaimer;
-    BOOL show_gameinfo;
+    BOOL skip_disclaimer;
+    BOOL skip_gameinfo;
     BOOL high_priority;
+
+    // Joystick control of ui
+    int      ui_joy_up[4];
+    int      ui_joy_down[4];
+    int      ui_joy_left[4];
+    int      ui_joy_right[4];
+    int      ui_joy_start[4];
+    int      ui_joy_pgup[4];
+    int      ui_joy_pgdwn[4];
+    int      ui_joy_home[4];
+    int      ui_joy_end[4];
+    int      ui_joy_ss_change[4];
+    int      ui_joy_history_up[4];
+    int      ui_joy_history_down[4];
+    int      ui_joy_exec[4];
+
+    char*    exec_command;  // Command line to execute on ui_joy_exec   
+    int      exec_wait;     // How long to wait before executing
+    BOOL     hide_mouse;    // Should mouse cursor be hidden on startup?
+    BOOL     full_screen;   // Should we fake fullscreen?
 
     char*    language;
     char*    flyerdir;
@@ -312,6 +378,14 @@ void ResetAllGameOptions(void);
 
 const char * GetTabName(int tab_index);
 
+const char * GetD3DEffectLongName(int d3d_effect);
+const char * GetD3DEffectShortName(int d3d_effect);
+
+const char * GetD3DFilterLongName(int d3d_filter);
+
+const char * GetCleanStretchLongName(int clean_stretch);
+const char * GetCleanStretchShortName(int clean_stretch);
+
 void SetViewMode(int val);
 int  GetViewMode(void);
 
@@ -327,11 +401,11 @@ BOOL GetJoyGUI(void);
 void SetBroadcast(BOOL broadcast);
 BOOL GetBroadcast(void);
 
-void SetShowDisclaimer(BOOL show_disclaimer);
-BOOL GetShowDisclaimer(void);
+void SetSkipDisclaimer(BOOL skip_disclaimer);
+BOOL GetSkipDisclaimer(void);
 
-void SetShowGameInfo(BOOL show_gameinfo);
-BOOL GetShowGameInfo(void);
+void SetSkipGameInfo(BOOL show_gameinfo);
+BOOL GetSkipGameInfo(void);
 
 void SetHighPriority(BOOL high_priority);
 BOOL GetHighPriority(void);
@@ -488,5 +562,56 @@ char * GetVersionString(void);
 
 void SaveGameOptions(int driver_index);
 void SaveDefaultOptions(void);
+
+int GetUIJoyUp(int joycodeIndex);
+void SetUIJoyUp(int joycodeIndex, int val);
+
+int GetUIJoyDown(int joycodeIndex);
+void SetUIJoyDown(int joycodeIndex, int val);
+
+int GetUIJoyLeft(int joycodeIndex);
+void SetUIJoyLeft(int joycodeIndex, int val);
+
+int GetUIJoyRight(int joycodeIndex);
+void SetUIJoyRight(int joycodeIndex, int val);
+
+int GetUIJoyStart(int joycodeIndex);
+void SetUIJoyStart(int joycodeIndex, int val);
+
+int GetUIJoyPageUp(int joycodeIndex);
+void SetUIJoyPageUp(int joycodeIndex, int val);
+
+int GetUIJoyPageDown(int joycodeIndex);
+void SetUIJoyPageDown(int joycodeIndex, int val);
+
+int GetUIJoyHome(int joycodeIndex);
+void SetUIJoyHome(int joycodeIndex, int val);
+
+int GetUIJoyEnd(int joycodeIndex);
+void SetUIJoyEnd(int joycodeIndex, int val);
+
+int GetUIJoySSChange(int joycodeIndex);
+void SetUIJoySSChange(int joycodeIndex, int val);
+
+int GetUIJoyHistoryUp(int joycodeIndex);
+void SetUIJoyHistoryUp(int joycodeIndex, int val);
+
+int GetUIJoyHistoryDown(int joycodeIndex);
+void SetUIJoyHistoryDown(int joycodeIndex, int val);
+
+int GetUIJoyExec(int joycodeIndex);
+void SetUIJoyExec(int joycodeIndex, int val);
+
+char* GetExecCommand(void);
+void SetExecCommand(char* cmd);
+
+int GetExecWait(void);
+void SetExecWait(int wait);
+
+BOOL GetHideMouseOnStartup(void);
+void SetHideMouseOnStartup(BOOL hide);
+
+BOOL GetRunFullScreen(void);
+void SetRunFullScreen(BOOL fullScreen);
 
 #endif

@@ -263,17 +263,17 @@ char * ConvertToWindowsNewlines(const char *source)
  */
 const char * GetDriverFilename(int nIndex)
 {
-	static char tmp[40];
-	char *ptmp;
+    static char tmp[40];
+    char *ptmp;
 
 	const char *s = drivers[nIndex]->source_file;
 
-	tmp[0] = '\0';
+    tmp[0] = '\0';
 
 	ptmp = strrchr(s, '\\');
 	if (ptmp == NULL)
 		ptmp = strrchr(s, '/');
-	if (ptmp == NULL)
+    if (ptmp == NULL)
 		return s;
 
 	ptmp++;
@@ -300,6 +300,26 @@ BOOL DriverIsHarddisk(int driver_index)
 	for (region = rom_first_region(gamedrv); region; region = rom_next_region(region))
 		if (ROMREGION_ISDISKDATA(region))
 			return TRUE;
+
+	return FALSE;	
+}
+
+BOOL DriverHasOptionalBIOS(int driver_index)
+{
+	const struct RomModule *region, *rom;
+
+	const struct GameDriver *gamedrv = drivers[driver_index];
+
+	for (region = rom_first_region(gamedrv); region; region = rom_next_region(region))
+		if (ROMREGION_ISROMDATA(region))
+		{
+			for (rom=rom_first_file(region);rom;rom=rom_next_file(rom))
+			{
+				//dprintf("%s %i %i",ROM_GETNAME(rom),ROM_GETFLAGS(rom),ROM_BIOSFLAGS(rom));
+				if (ROM_BIOSFLAGS(rom) != 0)
+					return TRUE;
+			}
+		}
 
 	return FALSE;	
 }

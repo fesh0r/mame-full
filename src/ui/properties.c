@@ -95,6 +95,11 @@ static void A2DSelectionChange(HWND hwnd);
 static void ResDepthSelectionChange(HWND hWnd, HWND hWndCtrl);
 static void RefreshSelectionChange(HWND hWnd, HWND hWndCtrl);
 static void VolumeSelectionChange(HWND hwnd);
+static void AudioLatencySelectionChange(HWND hwnd);
+static void D3DScanlinesSelectionChange(HWND hwnd);
+static void D3DFeedbackSelectionChange(HWND hwnd);
+static void D3DSaturationSelectionChange(HWND hwnd);
+static void ZoomSelectionChange(HWND hwnd);
 static void UpdateDisplayModeUI(HWND hwnd, DWORD dwDepth, DWORD dwRefresh);
 static void InitializeDisplayModeUI(HWND hwnd);
 static void InitializeSoundUI(HWND hwnd);
@@ -105,6 +110,10 @@ static void InitializeRefreshUI(HWND hwnd);
 static void InitializeDefaultInputUI(HWND hWnd);
 static void InitializeEffectUI(HWND hWnd);
 static void InitializeArtresUI(HWND hWnd);
+static void InitializeD3DFilterUI(HWND hwnd);
+static void InitializeD3DEffectUI(HWND hwnd);
+static void InitializeBIOSUI(HWND hwnd);
+static void InitializeCleanStretchUI(HWND hwnd);
 static void PropToOptions(HWND hWnd, options_type *o);
 static void OptionsToProp(HWND hWnd, options_type *o);
 static void SetPropEnabledControls(HWND hWnd);
@@ -215,7 +224,6 @@ static DWORD dwHelpIDs[] =
 	IDC_SCANLINES,          HIDC_SCANLINES,
 	IDC_SIZES,              HIDC_SIZES,
 	IDC_START_GAME_CHECK,   HIDC_START_GAME_CHECK,
-	IDC_START_VERSION_WARN, HIDC_START_VERSION_WARN,
 	IDC_SWITCHBPP,          HIDC_SWITCHBPP,
 	IDC_SWITCHRES,          HIDC_SWITCHRES,
 	IDC_SYNCREFRESH,        HIDC_SYNCREFRESH,
@@ -235,10 +243,25 @@ static DWORD dwHelpIDs[] =
 	IDC_OLD_TIMING,         HIDC_OLD_TIMING,
 	IDC_JOY_GUI,            HIDC_JOY_GUI,
 	IDC_RANDOM_BG,          HIDC_RANDOM_BG,
-	IDC_SHOW_DISCLAIMER,    HIDC_SHOW_DISCLAIMER,
-	IDC_SHOW_GAME_INFO,     HIDC_SHOW_GAME_INFO,
+	IDC_SKIP_DISCLAIMER,    HIDC_SKIP_DISCLAIMER,
+	IDC_SKIP_GAME_INFO,     HIDC_SKIP_GAME_INFO,
 	IDC_HIGH_PRIORITY,      HIDC_HIGH_PRIORITY,
-
+	IDC_D3D,                HIDC_D3D,
+	IDC_D3D_FILTER,         HIDC_D3D_FILTER,
+	IDC_D3D_EFFECT,         HIDC_D3D_EFFECT,
+	IDC_D3D_TEXTURE_MANAGEMENT, HIDC_D3D_TEXTURE_MANAGEMENT,
+	IDC_AUDIO_LATENCY,      HIDC_AUDIO_LATENCY,
+	IDC_D3D_PRESCALE,       HIDC_D3D_PRESCALE,
+	IDC_D3D_SCANLINES_ENABLE, HIDC_D3D_SCANLINES,
+	IDC_D3D_SCANLINES,      HIDC_D3D_SCANLINES,
+	IDC_D3D_FEEDBACK_ENABLE, HIDC_D3D_FEEDBACK,
+	IDC_D3D_FEEDBACK,       HIDC_D3D_FEEDBACK,
+	IDC_D3D_SATURATION_ENABLE, HIDC_D3D_SATURATION,
+	IDC_D3D_SATURATION,     HIDC_D3D_SATURATION,
+	IDC_ZOOM,               HIDC_ZOOM,
+	IDC_BIOS,               HIDC_BIOS,
+	IDC_CLEAN_STRETCH,      HIDC_CLEAN_STRETCH,
+	IDC_D3D_ROTATE_EFFECTS, HIDC_D3D_ROTATE_EFFECTS,
 	0,                      0
 };
 
@@ -263,6 +286,19 @@ static struct ComboBoxEffect
 };
 
 #define NUMEFFECTS (sizeof(g_ComboBoxEffect) / sizeof(g_ComboBoxEffect[0]))
+
+static const char *bios_names[] =
+{
+	"Europe, 1 slot",
+	"Europe, 4 slot",
+	"US, 2 slot",
+	"US, 6 slot",
+	"Asia S3, Ver 6",
+	"Japan, Ver 6 VS",
+	"Japan, older",
+};
+
+#define NUMBIOSES (sizeof(bios_names) / sizeof(bios_names[0]))
 
 /***************************************************************
  * Public functions
@@ -786,6 +822,16 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 				changed = ReadControl(hDlg, wID);
 				break;
 
+			case IDC_D3D_FILTER :
+				if (wNotifyCode == LBN_SELCHANGE)
+					changed = TRUE;
+				break;
+
+			case IDC_D3D_EFFECT :
+				if (wNotifyCode == LBN_SELCHANGE)
+					changed = TRUE;
+				break;
+
 			case IDC_PROP_RESET:
 				if (wNotifyCode != BN_CLICKED)
 					break;
@@ -1215,7 +1261,7 @@ static void OptionsToProp(HWND hWnd, options_type* o)
 	hCtrl = GetDlgItem(hWnd, IDC_BRIGHTNESSDISP);
 	if (hCtrl)
 	{
-		sprintf(buf, "%03.02f", o->gfx_brightness);
+		snprintf(buf,sizeof(buf), "%03.2f", o->gfx_brightness);
 		Static_SetText(hCtrl, buf);
 	}
 	
@@ -1241,25 +1287,27 @@ static void OptionsToProp(HWND hWnd, options_type* o)
 		}
 	}
 
+	ZoomSelectionChange(hWnd);
+
 	/* core video */
 	hCtrl = GetDlgItem(hWnd, IDC_GAMMADISP);
 	if (hCtrl)
 	{
-		sprintf(buf, "%03.02f", o->f_gamma_correct);
+		sprintf(buf, "%03.2f", o->f_gamma_correct);
 		Static_SetText(hCtrl, buf);
 	}
 
 	hCtrl = GetDlgItem(hWnd, IDC_BRIGHTCORRECTDISP);
 	if (hCtrl)
 	{
-		sprintf(buf, "%03.02f", o->f_bright_correct);
+		sprintf(buf, "%03.2f", o->f_bright_correct);
 		Static_SetText(hCtrl, buf);
 	}
 
 	hCtrl = GetDlgItem(hWnd, IDC_PAUSEBRIGHTDISP);
 	if (hCtrl)
 	{
-		sprintf(buf, "%03.02f", o->f_pause_bright);
+		sprintf(buf, "%03.2f", o->f_pause_bright);
 		Static_SetText(hCtrl, buf);
 	}
 
@@ -1267,7 +1315,7 @@ static void OptionsToProp(HWND hWnd, options_type* o)
 	hCtrl = GetDlgItem(hWnd, IDC_A2DDISP);
 	if (hCtrl)
 	{
-		sprintf(buf, "%03.02f", o->f_a2d);
+		sprintf(buf, "%03.2f", o->f_a2d);
 		Static_SetText(hCtrl, buf);
 	}
 
@@ -1275,21 +1323,21 @@ static void OptionsToProp(HWND hWnd, options_type* o)
 	hCtrl = GetDlgItem(hWnd, IDC_BEAMDISP);
 	if (hCtrl)
 	{
-		sprintf(buf, "%03.02f", o->f_beam);
+		sprintf(buf, "%03.2f", o->f_beam);
 		Static_SetText(hCtrl, buf);
 	}
 
 	hCtrl = GetDlgItem(hWnd, IDC_FLICKERDISP);
 	if (hCtrl)
 	{
-		sprintf(buf, "%03.02f", o->f_flicker);
+		sprintf(buf, "%03.2f", o->f_flicker);
 		Static_SetText(hCtrl, buf);
 	}
 
 	hCtrl = GetDlgItem(hWnd, IDC_INTENSITYDISP);
 	if (hCtrl)
 	{
-		sprintf(buf, "%03.02f", o->f_intensity);
+		sprintf(buf, "%03.2f", o->f_intensity);
 		Static_SetText(hCtrl, buf);
 	}
 
@@ -1300,6 +1348,12 @@ static void OptionsToProp(HWND hWnd, options_type* o)
 		sprintf(buf, "%ddB", o->attenuation);
 		Static_SetText(hCtrl, buf);
 	}
+	AudioLatencySelectionChange(hWnd);
+
+	// d3d
+	D3DScanlinesSelectionChange(hWnd);
+	D3DFeedbackSelectionChange(hWnd);
+	D3DSaturationSelectionChange(hWnd);
 
 	g_bInternalSet = FALSE;
 
@@ -1336,8 +1390,9 @@ static void SetPropEnabledControls(HWND hWnd)
 	HWND hCtrl;
 	int  nIndex;
 	int  sound;
-	int  ddraw = 0;
-	int  useart = 0;
+	BOOL ddraw = FALSE;
+	BOOL d3d = FALSE;
+	BOOL useart = FALSE;
 	int joystick_attached = 9;
 	int in_window = 0;
 
@@ -1367,8 +1422,48 @@ static void SetPropEnabledControls(HWND hWnd)
 	EnableWindow(GetDlgItem(hWnd, IDC_ASPECTRATION),    ddraw && DirectDraw_HasHWStretch() && Button_GetCheck(GetDlgItem(hWnd, IDC_HWSTRETCH)));
 	EnableWindow(GetDlgItem(hWnd, IDC_ASPECTRATIOD),    ddraw && DirectDraw_HasHWStretch() && Button_GetCheck(GetDlgItem(hWnd, IDC_HWSTRETCH)));
 
+	// d3d
+	hCtrl = GetDlgItem(hWnd,IDC_D3D);
+	d3d = Button_GetCheck(hCtrl);
+
+	EnableWindow(GetDlgItem(hWnd,IDC_D3D_FILTER),d3d);
+	EnableWindow(GetDlgItem(hWnd,IDC_D3D_TEXTURE_MANAGEMENT),d3d);
+	EnableWindow(GetDlgItem(hWnd,IDC_D3D_EFFECT),d3d);
+	EnableWindow(GetDlgItem(hWnd,IDC_D3D_PRESCALE),d3d);
+	EnableWindow(GetDlgItem(hWnd,IDC_D3D_ROTATE_EFFECTS),d3d);
+	EnableWindow(GetDlgItem(hWnd,IDC_D3D_SCANLINES_ENABLE),d3d);
+	EnableWindow(GetDlgItem(hWnd,IDC_D3D_FEEDBACK_ENABLE),d3d);
+	EnableWindow(GetDlgItem(hWnd,IDC_D3D_SATURATION_ENABLE),d3d);
+
+	hCtrl = GetDlgItem(hWnd,IDC_D3D_SCANLINES_ENABLE);
+	if (hCtrl)
+	{
+		BOOL enable = d3d && Button_GetCheck(hCtrl);
+		EnableWindow(GetDlgItem(hWnd,IDC_D3D_SCANLINES),enable);
+		EnableWindow(GetDlgItem(hWnd,IDC_D3D_SCANLINES_DISP),enable);
+	}
+	
+	hCtrl = GetDlgItem(hWnd,IDC_D3D_FEEDBACK_ENABLE);
+	if (hCtrl)
+	{
+		BOOL enable = d3d && Button_GetCheck(hCtrl);
+		EnableWindow(GetDlgItem(hWnd,IDC_D3D_FEEDBACK),enable);
+		EnableWindow(GetDlgItem(hWnd,IDC_D3D_FEEDBACK_DISP),enable);
+	}
+	
+	hCtrl = GetDlgItem(hWnd,IDC_D3D_SATURATION_ENABLE);
+	if (hCtrl)
+	{
+		BOOL enable = d3d && Button_GetCheck(hCtrl);
+		EnableWindow(GetDlgItem(hWnd,IDC_D3D_SATURATION),enable);
+		EnableWindow(GetDlgItem(hWnd,IDC_D3D_SATURATION_DISP),enable);
+	}
+	
+
+
 	/* Artwork options */
 	hCtrl = GetDlgItem(hWnd, IDC_ARTWORK);
+		
 	useart = Button_GetCheck(hCtrl);
 
 	EnableWindow(GetDlgItem(hWnd, IDC_ARTWORK_CROP),	useart);
@@ -1406,11 +1501,13 @@ static void SetPropEnabledControls(HWND hWnd)
 		sound = Button_GetCheck(hCtrl);
 		ComboBox_Enable(GetDlgItem(hWnd, IDC_SAMPLERATE), (sound != 0));
 
-		EnableWindow(GetDlgItem(hWnd, IDC_VOLUME),     (sound != 0));
-		EnableWindow(GetDlgItem(hWnd, IDC_RATETEXT),   (sound != 0));
-		EnableWindow(GetDlgItem(hWnd, IDC_USE_FILTER), (sound != 0));
-		EnableWindow(GetDlgItem(hWnd, IDC_VOLUMEDISP), (sound != 0));
-		EnableWindow(GetDlgItem(hWnd, IDC_VOLUMETEXT), (sound != 0));
+		EnableWindow(GetDlgItem(hWnd,IDC_VOLUME),sound);
+		EnableWindow(GetDlgItem(hWnd,IDC_RATETEXT),sound);
+		EnableWindow(GetDlgItem(hWnd,IDC_USE_FILTER),sound);
+		EnableWindow(GetDlgItem(hWnd,IDC_VOLUMEDISP),sound);
+		EnableWindow(GetDlgItem(hWnd,IDC_VOLUMETEXT),sound);
+		EnableWindow(GetDlgItem(hWnd,IDC_AUDIO_LATENCY),sound);
+		EnableWindow(GetDlgItem(hWnd,IDC_AUDIO_LATENCY_DISP),sound);
 		SetSamplesEnabled(hWnd, nIndex, sound);
 		SetStereoEnabled(hWnd, nIndex);
 		SetYM3812Enabled(hWnd, nIndex);
@@ -1420,6 +1517,13 @@ static void SetPropEnabledControls(HWND hWnd)
 		EnableWindow(GetDlgItem(hWnd, IDC_FRAMESKIP), FALSE);
 	else
 		EnableWindow(GetDlgItem(hWnd, IDC_FRAMESKIP), TRUE);
+
+
+	// misc
+	if (nIndex == -1 || DriverHasOptionalBIOS(nIndex))
+		EnableWindow(GetDlgItem(hWnd,IDC_BIOS),TRUE);
+	else
+		EnableWindow(GetDlgItem(hWnd,IDC_BIOS),FALSE);
 
 }
 
@@ -1585,6 +1689,7 @@ static void ResetDataMap(void)
 		if (!stricmp(pGameOpts->effect, g_ComboBoxEffect[i].m_pData))
 			g_nEffectIndex = i;
 	}
+
 }
 
 /* Build the control mapping by adding all needed information to the DataMap */
@@ -1620,6 +1725,22 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_ASPECTRATION,  DM_NONE, CT_NONE, &pGameOpts->aspect,    DM_STRING, &pGameOpts->aspect, 0, 0, 0);
 	DataMapAdd(IDC_SIZES,         DM_NONE, CT_NONE, &pGameOpts->resolution,    DM_STRING, &pGameOpts->resolution, 0, 0, 0);
 	DataMapAdd(IDC_RESDEPTH,      DM_NONE, CT_NONE, &pGameOpts->resolution,    DM_STRING, &pGameOpts->resolution, 0, 0, 0);
+	DataMapAdd(IDC_CLEAN_STRETCH, DM_INT,  CT_COMBOBOX, &pGameOpts->clean_stretch, DM_INT, &pGameOpts->clean_stretch, 0, 0, 0);
+	DataMapAdd(IDC_ZOOM,          DM_INT,  CT_SLIDER,   &pGameOpts->zoom,          DM_INT, &pGameOpts->zoom,      0, 0, 0);
+
+	// direct3d
+	DataMapAdd(IDC_D3D,           DM_BOOL, CT_BUTTON,   &pGameOpts->use_d3d,       DM_BOOL, &pGameOpts->use_d3d,       0, 0, 0);
+	DataMapAdd(IDC_D3D_FILTER,    DM_INT,  CT_COMBOBOX, &pGameOpts->d3d_filter,    DM_INT, &pGameOpts->d3d_filter, 0, 0, 0);
+	DataMapAdd(IDC_D3D_TEXTURE_MANAGEMENT,DM_BOOL,CT_BUTTON,&pGameOpts->d3d_texture_management,DM_BOOL,&pGameOpts->d3d_texture_management, 0, 0, 0);
+	DataMapAdd(IDC_D3D_EFFECT,    DM_INT,  CT_COMBOBOX, &pGameOpts->d3d_effect,    DM_INT, &pGameOpts->d3d_effect, 0, 0, 0);
+	DataMapAdd(IDC_D3D_PRESCALE,  DM_BOOL, CT_BUTTON,   &pGameOpts->d3d_prescale,  DM_BOOL, &pGameOpts->d3d_prescale,  0, 0, 0);
+	DataMapAdd(IDC_D3D_ROTATE_EFFECTS,DM_BOOL,CT_BUTTON,&pGameOpts->d3d_rotate_effects,DM_BOOL,&pGameOpts->d3d_rotate_effects, 0, 0, 0);
+	DataMapAdd(IDC_D3D_SCANLINES_ENABLE,DM_BOOL, CT_BUTTON, &pGameOpts->d3d_scanlines_enable, DM_BOOL, &pGameOpts->d3d_scanlines_enable, 0, 0, 0);
+	DataMapAdd(IDC_D3D_SCANLINES, DM_INT,  CT_SLIDER,   &pGameOpts->d3d_scanlines, DM_INT, &pGameOpts->d3d_scanlines, 0, 0, 0);
+	DataMapAdd(IDC_D3D_FEEDBACK_ENABLE,DM_BOOL, CT_BUTTON, &pGameOpts->d3d_feedback_enable, DM_BOOL, &pGameOpts->d3d_feedback_enable, 0, 0, 0);
+	DataMapAdd(IDC_D3D_FEEDBACK,  DM_INT,  CT_SLIDER,   &pGameOpts->d3d_feedback,  DM_INT, &pGameOpts->d3d_feedback, 0, 0, 0);
+	DataMapAdd(IDC_D3D_SATURATION_ENABLE,DM_BOOL, CT_BUTTON, &pGameOpts->d3d_saturation_enable, DM_BOOL, &pGameOpts->d3d_saturation_enable, 0, 0, 0);
+	DataMapAdd(IDC_D3D_SATURATION, DM_INT,  CT_SLIDER,   &pGameOpts->d3d_saturation, DM_INT, &pGameOpts->d3d_saturation, 0, 0, 0);
 
 	/* input */
 	DataMapAdd(IDC_DEFAULT_INPUT, DM_INT,  CT_COMBOBOX, &g_nInputIndex,            DM_STRING, &pGameOpts->ctrlr, 0, 0, AssignInput);
@@ -1659,6 +1780,7 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_USE_SOUND,     DM_BOOL, CT_BUTTON,   &pGameOpts->enable_sound,  DM_BOOL, &pGameOpts->enable_sound,  0, 0, 0);
 	DataMapAdd(IDC_VOLUME,        DM_INT,  CT_SLIDER,   &g_nVolumeIndex,           DM_INT, &pGameOpts->attenuation, 0, 0, AssignVolume);
 	DataMapAdd(IDC_VOLUMEDISP,    DM_NONE, CT_NONE,  NULL,  DM_INT, &pGameOpts->attenuation, 0, 0, 0);
+	DataMapAdd(IDC_AUDIO_LATENCY, DM_INT,  CT_SLIDER,   &pGameOpts->audio_latency, DM_INT, &pGameOpts->audio_latency, 0, 0, 0);
 
 	/* misc artwork options */
 	DataMapAdd(IDC_ARTWORK,       DM_BOOL, CT_BUTTON,   &pGameOpts->use_artwork,   DM_BOOL, &pGameOpts->use_artwork,   0, 0, 0);
@@ -1675,6 +1797,7 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_SLEEP,         DM_BOOL, CT_BUTTON,   &pGameOpts->sleep,         DM_BOOL, &pGameOpts->sleep,         0, 0, 0);
 	DataMapAdd(IDC_OLD_TIMING,    DM_BOOL, CT_BUTTON,   &pGameOpts->old_timing,    DM_BOOL, &pGameOpts->old_timing,    0, 0, 0);
 	DataMapAdd(IDC_LEDS,          DM_BOOL, CT_BUTTON,   &pGameOpts->leds,          DM_BOOL, &pGameOpts->leds,          0, 0, 0);
+	DataMapAdd(IDC_BIOS,          DM_INT,  CT_COMBOBOX, &pGameOpts->bios,          DM_INT, &pGameOpts->bios,        0, 0, 0);
 #ifdef MESS
 	DataMapAdd(IDC_USE_NEW_UI,    DM_BOOL, CT_BUTTON,   &pGameOpts->use_new_ui,    DM_BOOL, &pGameOpts->use_new_ui, 0, 0, 0);
 #endif
@@ -1846,6 +1969,10 @@ static void InitializeOptions(HWND hDlg)
 	InitializeDefaultInputUI(hDlg);
 	InitializeEffectUI(hDlg);
 	InitializeArtresUI(hDlg);
+	InitializeD3DFilterUI(hDlg);
+	InitializeD3DEffectUI(hDlg);
+	InitializeBIOSUI(hDlg);
+	InitializeCleanStretchUI(hDlg);
 }
 
 /* Moved here because it is called in several places */
@@ -1888,6 +2015,21 @@ static void InitializeMisc(HWND hDlg)
 	SendMessage(GetDlgItem(hDlg, IDC_VOLUME), TBM_SETRANGE,
 				(WPARAM)FALSE,
 				(LPARAM)MAKELONG(0, 32)); /* [-32, 0] */
+	SendMessage(GetDlgItem(hDlg, IDC_AUDIO_LATENCY), TBM_SETRANGE,
+				(WPARAM)FALSE,
+				(LPARAM)MAKELONG(1, 4)); // [1, 4]
+	SendMessage(GetDlgItem(hDlg, IDC_D3D_SCANLINES), TBM_SETRANGE,
+				(WPARAM)FALSE,
+				(LPARAM)MAKELONG(0, 100)); // [0, 100]
+	SendMessage(GetDlgItem(hDlg, IDC_D3D_FEEDBACK), TBM_SETRANGE,
+				(WPARAM)FALSE,
+				(LPARAM)MAKELONG(0, 100)); // [0, 100]
+	SendMessage(GetDlgItem(hDlg, IDC_D3D_SATURATION), TBM_SETRANGE,
+				(WPARAM)FALSE,
+				(LPARAM)MAKELONG(0, 100)); // [0, 100]
+	SendMessage(GetDlgItem(hDlg, IDC_ZOOM), TBM_SETRANGE,
+				(WPARAM)FALSE,
+				(LPARAM)MAKELONG(1, 8)); // [1, 8]
 }
 
 static void OptOnHScroll(HWND hwnd, HWND hwndCtl, UINT code, int pos)
@@ -1940,6 +2082,32 @@ static void OptOnHScroll(HWND hwnd, HWND hwndCtl, UINT code, int pos)
 	{
 		A2DSelectionChange(hwnd);
 	}
+	else
+	if (hwndCtl == GetDlgItem(hwnd, IDC_AUDIO_LATENCY))
+	{
+		AudioLatencySelectionChange(hwnd);
+	}
+	else
+	if (hwndCtl == GetDlgItem(hwnd, IDC_D3D_SCANLINES))
+	{
+		D3DScanlinesSelectionChange(hwnd);
+	}
+	else
+	if (hwndCtl == GetDlgItem(hwnd, IDC_D3D_FEEDBACK))
+	{
+		D3DFeedbackSelectionChange(hwnd);
+	}
+	else
+	if (hwndCtl == GetDlgItem(hwnd, IDC_D3D_SATURATION))
+	{
+		D3DSaturationSelectionChange(hwnd);
+	}
+	else
+	if (hwndCtl == GetDlgItem(hwnd, IDC_ZOOM))
+	{
+		ZoomSelectionChange(hwnd);
+	}
+
 }
 
 /* Handle changes to the Beam slider */
@@ -1955,7 +2123,7 @@ static void BeamSelectionChange(HWND hwnd)
 	dBeam = nValue / 20.0 + 1.0;
 
 	/* Set the static display to the new value */
-	sprintf(buf, "%03.02f", dBeam);
+	snprintf(buf,sizeof(buf), "%03.2f", dBeam);
 	Static_SetText(GetDlgItem(hwnd, IDC_BEAMDISP), buf);
 }
 
@@ -1972,7 +2140,7 @@ static void FlickerSelectionChange(HWND hwnd)
 	dFlicker = nValue;
 
 	/* Set the static display to the new value */
-	sprintf(buf, "%03.02f", dFlicker);
+	snprintf(buf,sizeof(buf), "%03.2f", dFlicker);
 	Static_SetText(GetDlgItem(hwnd, IDC_FLICKERDISP), buf);
 }
 
@@ -1989,7 +2157,7 @@ static void GammaSelectionChange(HWND hwnd)
 	dGamma = nValue / 20.0 + 0.5;
 
 	/* Set the static display to the new value */
-	sprintf(buf, "%03.02f", dGamma);
+	snprintf(buf,sizeof(buf), "%03.2f", dGamma);
 	Static_SetText(GetDlgItem(hwnd, IDC_GAMMADISP), buf);
 }
 
@@ -2006,7 +2174,7 @@ static void BrightCorrectSelectionChange(HWND hwnd)
 	dValue = nValue / 20.0 + 0.5;
 
 	/* Set the static display to the new value */
-	sprintf(buf, "%03.02f", dValue);
+	snprintf(buf, sizeof(buf), "%03.2f", dValue);
 	Static_SetText(GetDlgItem(hwnd, IDC_BRIGHTCORRECTDISP), buf);
 }
 
@@ -2023,7 +2191,7 @@ static void PauseBrightSelectionChange(HWND hwnd)
 	dValue = nValue / 20.0 + 0.5;
 
 	/* Set the static display to the new value */
-	sprintf(buf, "%03.02f", dValue);
+	snprintf(buf, sizeof(buf), "%03.2f", dValue);
 	Static_SetText(GetDlgItem(hwnd, IDC_PAUSEBRIGHTDISP), buf);
 }
 
@@ -2040,7 +2208,7 @@ static void BrightnessSelectionChange(HWND hwnd)
 	dBrightness = nValue / 20.0 + 0.1;
 
 	/* Set the static display to the new value */
-	sprintf(buf, "%03.02f", dBrightness);
+	snprintf(buf,sizeof(buf),"%03.2f", dBrightness);
 	Static_SetText(GetDlgItem(hwnd, IDC_BRIGHTNESSDISP), buf);
 }
 
@@ -2057,7 +2225,7 @@ static void IntensitySelectionChange(HWND hwnd)
 	dIntensity = nValue / 20.0 + 0.5;
 
 	/* Set the static display to the new value */
-	sprintf(buf, "%03.02f", dIntensity);
+	snprintf(buf,sizeof(buf), "%03.2f", dIntensity);
 	Static_SetText(GetDlgItem(hwnd, IDC_INTENSITYDISP), buf);
 }
 
@@ -2074,7 +2242,7 @@ static void A2DSelectionChange(HWND hwnd)
 	dA2D = nValue / 20.0;
 
 	/* Set the static display to the new value */
-	sprintf(buf, "%03.02f", dA2D);
+	snprintf(buf,sizeof(buf), "%03.2f", dA2D);
 	Static_SetText(GetDlgItem(hwnd, IDC_A2DDISP), buf);
 }
 
@@ -2140,9 +2308,80 @@ static void VolumeSelectionChange(HWND hwnd)
 	nValue = SendMessage(GetDlgItem(hwnd, IDC_VOLUME), TBM_GETPOS, 0, 0);
 
 	/* Set the static display to the new value */
-	sprintf(buf, "%ddB", nValue - 32);
+	snprintf(buf,sizeof(buf), "%ddB", nValue - 32);
 	Static_SetText(GetDlgItem(hwnd, IDC_VOLUMEDISP), buf);
 }
+
+static void AudioLatencySelectionChange(HWND hwnd)
+{
+	char buffer[100];
+	int value;
+
+	// Get the current value of the control
+	value = SendMessage(GetDlgItem(hwnd,IDC_AUDIO_LATENCY), TBM_GETPOS, 0, 0);
+
+	/* Set the static display to the new value */
+	snprintf(buffer,sizeof(buffer),"%i/5",value);
+	Static_SetText(GetDlgItem(hwnd,IDC_AUDIO_LATENCY_DISP),buffer);
+
+}
+
+static void D3DScanlinesSelectionChange(HWND hwnd)
+{
+	char buffer[100];
+	int value;
+
+	// Get the current value of the control
+	value = SendMessage(GetDlgItem(hwnd,IDC_D3D_SCANLINES), TBM_GETPOS, 0, 0);
+
+	/* Set the static display to the new value */
+	snprintf(buffer,sizeof(buffer),"%i",value);
+	Static_SetText(GetDlgItem(hwnd,IDC_D3D_SCANLINES_DISP),buffer);
+
+}
+
+static void D3DFeedbackSelectionChange(HWND hwnd)
+{
+	char buffer[100];
+	int value;
+
+	// Get the current value of the control
+	value = SendMessage(GetDlgItem(hwnd,IDC_D3D_FEEDBACK), TBM_GETPOS, 0, 0);
+
+	/* Set the static display to the new value */
+	snprintf(buffer,sizeof(buffer),"%i",value);
+	Static_SetText(GetDlgItem(hwnd,IDC_D3D_FEEDBACK_DISP),buffer);
+
+}
+
+static void D3DSaturationSelectionChange(HWND hwnd)
+{
+	char buffer[100];
+	int value;
+
+	// Get the current value of the control
+	value = SendMessage(GetDlgItem(hwnd,IDC_D3D_SATURATION), TBM_GETPOS, 0, 0);
+
+	/* Set the static display to the new value */
+	snprintf(buffer,sizeof(buffer),"%i",value);
+	Static_SetText(GetDlgItem(hwnd,IDC_D3D_SATURATION_DISP),buffer);
+
+}
+
+static void ZoomSelectionChange(HWND hwnd)
+{
+	char buffer[100];
+	int value;
+
+	// Get the current value of the control
+	value = SendMessage(GetDlgItem(hwnd,IDC_ZOOM), TBM_GETPOS, 0, 0);
+
+	/* Set the static display to the new value */
+	snprintf(buffer,sizeof(buffer),"%i",value);
+	Static_SetText(GetDlgItem(hwnd,IDC_ZOOMDIST),buffer);
+
+}
+
 
 /* Adjust possible choices in the Screen Size drop down */
 static void UpdateDisplayModeUI(HWND hwnd, DWORD dwDepth, DWORD dwRefresh)
@@ -2421,6 +2660,65 @@ static void InitializeArtresUI(HWND hwnd)
 		ComboBox_AddString(hCtrl, "Auto");		/* 0 */
 		ComboBox_AddString(hCtrl, "Standard");  /* 1 */
 		ComboBox_AddString(hCtrl, "High");		/* 2 */
+	}
+}
+
+static void InitializeD3DFilterUI(HWND hwnd)
+{
+	HWND hCtrl = GetDlgItem(hwnd,IDC_D3D_FILTER);
+
+	if (hCtrl)
+	{
+		int i;
+
+		for (i=0;i<MAX_D3D_FILTERS;i++)
+			ComboBox_AddString(hCtrl,GetD3DFilterLongName(i));
+	}
+}
+
+static void InitializeD3DEffectUI(HWND hwnd)
+{
+	HWND hCtrl = GetDlgItem(hwnd,IDC_D3D_EFFECT);
+
+	if (hCtrl)
+	{
+		int i;
+
+		for (i=0;i<MAX_D3D_EFFECTS;i++)
+			ComboBox_AddString(hCtrl,GetD3DEffectLongName(i));
+	}
+}
+
+static void InitializeBIOSUI(HWND hwnd)
+{
+	HWND hCtrl = GetDlgItem(hwnd,IDC_BIOS);
+
+	if (hCtrl)
+	{
+		int i;
+		
+		if (g_nGame == -1 || DriverHasOptionalBIOS(g_nGame))
+		{
+			for (i=0;i<NUMBIOSES;i++)
+				ComboBox_AddString(hCtrl,bios_names[i]);
+		}
+		else
+		{
+			ComboBox_AddString(hCtrl,"None");
+		}
+	}
+}
+
+static void InitializeCleanStretchUI(HWND hwnd)
+{
+	HWND hCtrl = GetDlgItem(hwnd,IDC_CLEAN_STRETCH);
+
+	if (hCtrl)
+	{
+		int i;
+
+		for (i=0;i<MAX_CLEAN_STRETCH;i++)
+			ComboBox_AddString(hCtrl,GetCleanStretchLongName(i));
 	}
 }
 

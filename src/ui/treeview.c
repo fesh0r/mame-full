@@ -408,13 +408,15 @@ INT_PTR CALLBACK InterfaceDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM 
 	{
 	case WM_INITDIALOG:
 		Button_SetCheck(GetDlgItem(hDlg,IDC_START_GAME_CHECK),GetGameCheck());
-		Button_SetCheck(GetDlgItem(hDlg,IDC_START_VERSION_WARN),GetVersionCheck());
 		Button_SetCheck(GetDlgItem(hDlg,IDC_JOY_GUI),GetJoyGUI());
 		Button_SetCheck(GetDlgItem(hDlg,IDC_BROADCAST),GetBroadcast());
 		Button_SetCheck(GetDlgItem(hDlg,IDC_RANDOM_BG),GetRandomBackground());
-		Button_SetCheck(GetDlgItem(hDlg,IDC_SHOW_DISCLAIMER),GetShowDisclaimer());
-		Button_SetCheck(GetDlgItem(hDlg,IDC_SHOW_GAME_INFO),GetShowGameInfo());
+		Button_SetCheck(GetDlgItem(hDlg,IDC_SKIP_DISCLAIMER),GetSkipDisclaimer());
+		Button_SetCheck(GetDlgItem(hDlg,IDC_SKIP_GAME_INFO),GetSkipGameInfo());
 		Button_SetCheck(GetDlgItem(hDlg,IDC_HIGH_PRIORITY),GetHighPriority());
+		
+		Button_SetCheck(GetDlgItem(hDlg,IDC_HIDE_MOUSE),GetHideMouseOnStartup());
+
 		return TRUE;
 
 	case WM_HELP:
@@ -431,13 +433,15 @@ INT_PTR CALLBACK InterfaceDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM 
 		{
 		case IDOK :
 			SetGameCheck(Button_GetCheck(GetDlgItem(hDlg, IDC_START_GAME_CHECK)));
-			SetVersionCheck(Button_GetCheck(GetDlgItem(hDlg, IDC_START_VERSION_WARN)));
 			SetJoyGUI(Button_GetCheck(GetDlgItem(hDlg, IDC_JOY_GUI)));
 			SetBroadcast(Button_GetCheck(GetDlgItem(hDlg, IDC_BROADCAST)));
 			SetRandomBackground(Button_GetCheck(GetDlgItem(hDlg, IDC_RANDOM_BG)));
-			SetShowDisclaimer(Button_GetCheck(GetDlgItem(hDlg, IDC_SHOW_DISCLAIMER)));
-			SetShowGameInfo(Button_GetCheck(GetDlgItem(hDlg, IDC_SHOW_GAME_INFO)));
+			SetSkipDisclaimer(Button_GetCheck(GetDlgItem(hDlg, IDC_SKIP_DISCLAIMER)));
+			SetSkipGameInfo(Button_GetCheck(GetDlgItem(hDlg, IDC_SKIP_GAME_INFO)));
 			SetHighPriority(Button_GetCheck(GetDlgItem(hDlg, IDC_HIGH_PRIORITY)));
+			
+			SetHideMouseOnStartup(Button_GetCheck(GetDlgItem(hDlg,IDC_HIDE_MOUSE)));
+
 			EndDialog(hDlg, 0);
 			return TRUE;
 
@@ -1292,7 +1296,14 @@ static LRESULT CALLBACK TreeWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	if (GetBackgroundBitmap() != NULL)
 	{
 		switch (uMsg)
+		{	
+	    case WM_MOUSEMOVE:
 		{
+			if (MouseHasBeenMoved())
+				ShowCursor(TRUE);
+			break;
+		}
+
 		case WM_KEYDOWN :
 			if (wParam == VK_F2)
 			{

@@ -183,4 +183,6 @@ extern void RemoveFromCustomFolder(LPTREEFOLDER lpFolder,int driver_index);
 extern HIMAGELIST GetTreeViewIconList(void);
 extern int GetTreeViewIconIndex(int icon_id);
 
+extern BOOL MouseHasBeenMoved(void);
+
 #endif /* TREEVIEW_H */

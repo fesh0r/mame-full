@@ -40,7 +40,6 @@ static struct hard_disk_interface hdcomp_interface =
 };
 
 static void *inputdisk;
-static UINT32 inputdisk_seclen;
 
 #define SPECIAL_DISK_NAME "??INPUTDISK??"
 
@@ -142,12 +141,12 @@ static void guess_chs(const char *file, int offset, struct hard_disk_header *hea
 	}
 
 	/* validate the size */
-	if (filesize % header->seclen != 0)
+	if (filesize % 512 != 0)
 	{
 		fprintf(stderr, "Can't guess CHS values because data size is not divisible by 512\n");
 		exit(1);
 	}
-	totalsecs = filesize / header->seclen;
+	totalsecs = filesize / 512;
 
 	/* now find a valid value */
 	for (secs = 63; secs > 1; secs--)
@@ -183,20 +182,16 @@ static void do_create(int argc, char *argv[])
 	int offset, err;
 
 	/* require 4, 5, or 8 args total */
-	if (argc != 4 && argc != 5 && argc != 8 && argc != 9)
+	if (argc != 4 && argc != 5 && argc != 8)
 		error();
 
 	/* extract the data */
 	inputfile = argv[2];
 	outputfile = argv[3];
-	if (argc >= 9)
-		header.seclen = atoi(argv[8]);
-	else
-		header.seclen = 512;
 	if (argc >= 5)
 		offset = atoi(argv[4]);
 	else
-		offset = get_file_size(inputfile) % header.seclen;
+		offset = get_file_size(inputfile) % 512;
 	if (argc >= 8)
 	{
 		header.cylinders = atoi(argv[5]);
@@ -210,7 +205,6 @@ static void do_create(int argc, char *argv[])
 	header.flags = 0;
 	header.compression = HDCOMPRESSION_ZLIB;
 	header.blocksize = 8;
-	header.version = (header.seclen == 512) ? 1 : 2;
 
 	/* print some info */
 	printf("Input file:   %s\n", inputfile);
@@ -219,7 +213,6 @@ static void do_create(int argc, char *argv[])
 	printf("Cylinders:    %d\n", header.cylinders);
 	printf("Heads:        %d\n", header.heads);
 	printf("Sectors:      %d\n", header.sectors);
-	printf("Sector lenght:%d\n", header.seclen);
 
 	/* compress the hard drive */
 	hard_disk_set_interface(&hdcomp_interface);
@@ -271,7 +264,7 @@ static void do_extract(int argc, char *argv[])
 	totalsectors = header.cylinders * header.heads * header.sectors;
 
 	/* allocate memory to hold a block */
-	block = malloc(header.blocksize * header.seclen);
+	block = malloc(header.blocksize * HARD_DISK_SECTOR_SIZE);
 	if (!block)
 	{
 		printf("Out of memory allocating block buffer!\n");
@@ -309,10 +302,10 @@ static void do_extract(int argc, char *argv[])
 
 		/* determine how much to write */
 		bytestowrite = (sectornum + header.blocksize > totalsectors) ? (totalsectors - sectornum) : header.blocksize;
-		bytestowrite *= header.seclen;
+		bytestowrite *= HARD_DISK_SECTOR_SIZE;
 
 		/* write the block to the file */
-		byteswritten = (*hdcomp_interface.write)(outfile, (UINT64)sectornum * (UINT64)header.seclen, bytestowrite, block);
+		byteswritten = (*hdcomp_interface.write)(outfile, (UINT64)sectornum * (UINT64)HARD_DISK_SECTOR_SIZE, bytestowrite, block);
 		if (byteswritten != bytestowrite)
 		{
 			printf("Error writing sectors %d-%d to output file: %s\n", sectornum, sectornum + header.blocksize - 1, error_string(hard_disk_get_last_error()));
@@ -470,7 +463,6 @@ static void do_info(int argc, char *argv[])
 	printf("Cylinders:    %d\n", header.cylinders);
 	printf("Heads:        %d\n", header.heads);
 	printf("Sectors:      %d\n", header.sectors);
-	printf("Sector Length:%d\n", header.seclen);
 	if (!(header.flags & HDFLAGS_IS_WRITEABLE))
 		printf("MD5:          %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
 				header.md5[0], header.md5[1], header.md5[2], header.md5[3],
@@ -528,7 +520,6 @@ static void do_merge(int argc, char *argv[])
 		printf("Error opening disk image '%s': %s\n", difffile, error_string(hard_disk_get_last_error()));
 		goto error;
 	}
-	inputdisk_seclen = hard_disk_get_header(inputdisk)->seclen;
 
 	/* do the compression; our interface will route reads for us */
 	err = hard_disk_compress(SPECIAL_DISK_NAME, 0, outputfile, hard_disk_get_header(parentdisk), NULL, progress);
@@ -711,17 +702,17 @@ static UINT32 hdcomp_read(void *file, UINT64 offset, UINT32 count, void *buffer)
 	/* if it's the special disk handle, read from it */
 	if (file == inputdisk)
 	{
-		if (offset % inputdisk_seclen != 0)
+		if (offset % HARD_DISK_SECTOR_SIZE != 0)
 		{
 			printf("Error: hdcomp read from non-aligned offset %08X%08X\n", (UINT32)(offset >> 32), (UINT32)offset);
 			return 0;
 		}
-		if (count % inputdisk_seclen != 0)
+		if (count % HARD_DISK_SECTOR_SIZE != 0)
 		{
 			printf("Error: hdcomp read non-aligned amount %08X\n", count);
 			return 0;
 		}
-		return inputdisk_seclen * hard_disk_read(inputdisk, offset / inputdisk_seclen, count / inputdisk_seclen, buffer);
+		return HARD_DISK_SECTOR_SIZE * hard_disk_read(inputdisk, offset / HARD_DISK_SECTOR_SIZE, count / HARD_DISK_SECTOR_SIZE, buffer);
 	}
 
 	/* otherwise, do it normally */

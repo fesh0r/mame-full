@@ -986,6 +986,8 @@ static int read_block_into_cache(struct hard_disk_info *info, UINT32 block)
 	return HDERR_NONE;
 }
 
+
+
 /*************************************
  *
  *	Block write/compress
@@ -1057,6 +1059,8 @@ static int write_block_from_cache(struct hard_disk_info *info, UINT32 block)
 
 	return HDERR_NONE;
 }
+
+
 
 /*************************************
  *
@@ -1231,6 +1235,8 @@ cleanup:
 	info->map = NULL;
 	return err;
 }
+
+
 
 /*************************************
  *
