@@ -1,4 +1,17 @@
 #define WIN32_LEAN_AND_MEAN
+#include <assert.h>
+#include <string.h>
+#include <windows.h>
+#include <shellapi.h>
+#include <commctrl.h>
+#include <commdlg.h>
+#include <wingdi.h>
+#include <winuser.h>
+#include <tchar.h>
+
+#include "ui/m32util.h"
+
+#define LOG_SOFTWARE	0
 
 static void MessColumnEncodeString(void* data, char *str);
 static void MessColumnDecodeString(const char* str, void* data);
@@ -124,6 +137,11 @@ void SetSelectedSoftware(int driver_index, iodevice_t devtype, const char *softw
 {
 	char *newsoftware;
 	options_type *o;
+
+	if (LOG_SOFTWARE)
+	{
+		dprintf("SetSelectedSoftware(): driver_index=%d devtype=%d software='%s'\n", driver_index, devtype, software);
+	}
 
 	newsoftware = strdup(software ? software : "");
 	if (!newsoftware)

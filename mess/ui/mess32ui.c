@@ -32,9 +32,7 @@
 #include "ui_text.h"
 #include "strconv.h"
 
-#ifdef _MSC_VER
-#define alloca _alloca
-#endif
+#define LOG_SOFTWARE	0
 
 static int requested_device_type(char *tchar);
 static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const struct GameDriver *gamedrv);
@@ -540,6 +538,12 @@ static void MessSpecifyImage(int nGame, const struct IODevice *dev, int nID, LPC
 		s += strlen(s);
 	}
 
+	if (LOG_SOFTWARE)
+	{
+		dprintf("MessSpecifyImage(): nID=%d pszFilename='%s'\n\t   pszSelection='%s'\n\tpszNewSelection='%s'\n",
+			nID, pszFilename, pszSelection, pszNewSelection);
+	}
+
 	InternalSetSelectedSoftware(nGame, dev->type, pszNewSelection);
 }
 
@@ -561,6 +565,7 @@ static void MessRemoveImage(int nGame, const struct IODevice *dev, LPCTSTR pszFi
 	pszMySelection = (LPTSTR) alloca((_tcslen(pszSelection) + 1) * sizeof(TCHAR));
 	_tcscpy(pszMySelection, pszSelection);
 
+	// find the selection in question and remove it
 	i = 0;
 	while(*pszMySelection)
 	{
@@ -573,6 +578,7 @@ static void MessRemoveImage(int nGame, const struct IODevice *dev, LPCTSTR pszFi
 			break;
 		}
 		pszMySelection = s ? s + 1 : szNull;
+		i++;
 	}
 }
 

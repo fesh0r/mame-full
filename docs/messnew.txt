@@ -28,6 +28,9 @@ User Interface Changes:
 - [Windows GUI] Fixed a bug that could cause trailing '|' characters in the
   device view.  [Nate Woods]
 
+- [Windows GUI] Fixed a bug that could cause the GUI to internally lose track
+  of which images are selected.  (bug #675) [Nate Woods]
+
 
 
 Imgtool Changes:
