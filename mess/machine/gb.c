@@ -12,6 +12,7 @@
 						 own palette. Tidied init code.
 	15/3/2002		AK - More init code tidying with a slight hack to stop
 						 sound when the machine starts.
+	19/3/2002		AK - Changed NVRAM code to the new way of using fopen.
 
 ***************************************************************************/
 #define __MACHINE_GB_C
@@ -32,6 +33,7 @@ static UINT8 RAMBank;				   /* Number of RAM bank currently used           */
 static UINT8 RAMMask;				   /* Mask for the RAM bank number                */
 static int RAMBanks;				   /* Total number of RAM banks                   */
 static UINT32 SIOCount;				   /* Serial I/O counter                     */
+char nvram_name[1024];
 
 #define Verbose 0x00
 #define SGB 0
@@ -90,9 +92,7 @@ void gb_init_machine (void)
 void gb_shutdown_machine(void)
 {
 	int I;
-	void *f;
-	char filename[19];
-	char cartname[16];
+	UINT8 *battery_ram, *ptr;
 
 	/* Don't save if there was no battery */
 	if( !(CartType & BATTERY) )
@@ -100,22 +100,17 @@ void gb_shutdown_machine(void)
 
 	/* NOTE: The reason we save the carts RAM this way instead of using MAME's
 	   built in macros is because they force the filename to be the name of
-	   the machine.  We need to have a separate name for each game.
-	   We'll put "gb_" in front to signify it's a Gameboy NVRAM file. */
-
-	/* Build the filename */
-	strncpy(cartname, (char *)&gb_ram[0x0134], 16);
-	cartname[16] = '\0';
-	sprintf( filename, "gb_%s", cartname );
-
-	/* Save the RAM */
-	if((f = osd_fopen(filename, 0, OSD_FILETYPE_NVRAM, 1)) != 0 )
+	   the machine.  We need to have a separate name for each game. */
+	battery_ram = (UINT8 *)malloc( RAMBanks * 0x2000 );
+	if( battery_ram )
 	{
+		ptr = battery_ram;
 		for( I = 0; I < RAMBanks; I++ )
 		{
-			osd_fwrite( f, RAMMap[I], 0x2000 );
+			memcpy( ptr, RAMMap[I], 0x2000 );
+			ptr += 0x2000;
 		}
-		osd_fclose(f);
+		battery_save( nvram_name, battery_ram, RAMBanks * 0x2000 );
 	}
 }
 
@@ -586,14 +581,28 @@ int gb_load_rom (int id)
 
 	if(device_filename(IO_CARTSLOT,id)==NULL)
 	{
-		printf("Cartridge name not specified!\n");
+		printf("Cartridge name required!\n");
 		return INIT_FAIL;
 	}
+
+	/* Grabbed this from the NES driver */
+	strcpy (nvram_name, device_filename(IO_CARTSLOT,id));
+	/* Strip off file extension if it exists */
+	for (I = strlen(nvram_name) - 1; I > 0; I--)
+	{
+		/* If we found a period, terminate the string here and jump out */
+		if (nvram_name[I] == '.')
+		{
+			nvram_name[I] = 0x00;
+			break;
+		}
+	}
+
 	if( new_memory_region(REGION_CPU1, 0x10000,0) )
 	{
 		logerror("Memory allocation failed reading roms!\n");
-        return 1;
-    }
+		return 1;
+	}
 
 	ROM = gb_ram = memory_region(REGION_CPU1);
 	memset (ROM, 0, 0x10000);
@@ -619,7 +628,7 @@ int gb_load_rom (int id)
 	if (!(F = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ)))
 	{
 		logerror("image_fopen failed in gb_load_rom.\n");
-        return 1;
+		return 1;
 	}
 
 	if (J == 512)
@@ -825,23 +834,17 @@ int gb_load_rom (int id)
 	/* Load the saved RAM if this cart has a battery */
 	if( CartType & BATTERY )
 	{
-		void * f;
-		char filename[19];
-		char cartname[16];
-
-		/* Build the filename */
-		strncpy(cartname, (char *)&gb_ram[0x0134], 16);
-		cartname[16] = '\0';
-		sprintf( filename, "gb_%s", cartname );
-
-		f = osd_fopen(filename, 0, OSD_FILETYPE_NVRAM, 0);
-		if( f )
+		UINT8 *battery_ram, *ptr;
+		battery_ram = (UINT8 *)malloc( RAMBanks * 0x2000 );
+		if( battery_ram )
 		{
+			battery_load( nvram_name, battery_ram, RAMBanks * 0x2000 );
+			ptr = battery_ram;
 			for( I = 0; I < RAMBanks; I++ )
 			{
-				osd_fread( f, RAMMap[I], 0x2000 );
+				memcpy( RAMMap[I], ptr, 0x2000 );
+				ptr += 0x2000;
 			}
-			osd_fclose(f);
 		}
 	}
 
