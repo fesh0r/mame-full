@@ -30,7 +30,7 @@ LIBS.aix           = -lUMSobj
 LIBS.next	   = -framework SoundKit
 LIBS.macosx	   = -framework CoreAudio
 #LIBS.openbsd       = -lossaudio
-LIBS.nto	   = -lsocket
+LIBS.nto	   = -lsocket -lasound
 
 ##############################################################################
 # **** Display dependent settings.
@@ -54,7 +54,7 @@ LIBS.SDL	= -ldl -lSDL -lpthread -D_REENTRANT
 LIBS.photon2	= -L/usr/lib -lph -lphrender
 
 CFLAGS.x11      = $(X11INC) $(JOY_X11_CFLAGS)
-CFLAGS.xgl      = $(X11INC) $(JOY_X11_CFLAGS)
+CFLAGS.xgl      = $(X11INC) $(JOY_X11_CFLAGS) $(GLCFLAGS)
 CFLAGS.xfx      = $(X11INC) $(JOY_X11_CFLAGS) -I/usr/include/glide
 CFLAGS.svgafx   = -I/usr/include/glide
 CFLAGS.SDL      = -D_REENTRANT
@@ -275,7 +275,7 @@ $(OBJ)/cpu/m68000/m68kcpu.o: $(OBJ)/cpu/m68000/m68kmake
 # generate C source files for the 68000 emulator
 $(OBJ)/cpu/m68000/m68kmake: src/cpu/m68000/m68kmake.c
 	$(CC_COMMENT) @echo M68K make $<...
-	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $(OBJ)/cpu/m68000/m68kmake $<
+	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -DDOS -o $(OBJ)/cpu/m68000/m68kmake $<
 	$(CC_COMMENT) @echo Generating M68K source files...
 	$(CC_COMPILE) $(OBJ)/cpu/m68000/m68kmake $(OBJ)/cpu/m68000 src/cpu/m68000/m68k_in.c
 
