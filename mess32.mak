@@ -404,6 +404,7 @@ DRV_OBJS = \
           $(OBJ)/mess/systems/mc10.o     \
           $(OBJ)/mess/formats/cocopak.o  \
 		  $(OBJ)/mess/formats/cococas.o \
+          $(OBJ)/mess/machine/counter.o   \
           $(OBJ)/mess/vidhrdw/dragon.o   \
           $(OBJ)/mess/machine/dragon.o   \
           $(OBJ)/mess/systems/dragon.o	\

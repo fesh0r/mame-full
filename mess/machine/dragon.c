@@ -58,6 +58,8 @@
 	screen starts and the scanline that the v-interrupt triggers..etc.
 ***************************************************************************/
 
+#include <math.h>
+
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
 #include "machine/6821pia.h"
@@ -67,6 +69,7 @@
 #include "formats/cocopak.h"
 #include "formats/cococas.h"
 #include "includes/basicdsk.h"
+#include "machine/counter.h"
 
 static UINT8 *coco_rom;
 static int coco3_enable_64k;
@@ -117,7 +120,7 @@ static void coco3_pia1_firq_b(int state);
 #define COCO_TIMER_VSYNC		(COCO_CPU_SPEED * 14934.0)
 #define COCO_TIMER_CMPCARRIER	(COCO_CPU_SPEED * 0.25)
 
-static void coco3_timer_recalculate(int newcounterval, int allowreset);
+static void coco3_timer_reset(void);
 
 static struct pia6821_interface dragon_pia_intf[] =
 {
@@ -837,34 +840,15 @@ WRITE_HANDLER(dragon_sam_memory_size)
   lin)
 ***************************************************************************/
 
-static void *coco3_timer;
+static void *coco3_timer_counter;
 static int coco3_timer_interval;	/* interval: 1=280 nsec, 0=63.5 usec */
 static int coco3_timer_base;
-static int coco3_timer_counter;
 
 static void coco3_timer_init(void)
 {
-	coco3_timer = 0;
+	coco3_timer_counter = NULL;
 	coco3_timer_interval = 0;
-}
-
-static void coco3_timer_uncallback(int dummy)
-{
-	/* This "uncallback" is used to unassert the line */
-}
-
-static void coco3_timer_reset(void)
-{
-	/* This resets the timer back to the original value
-	 *
-	 * JK tells me that when the timer resets, it gets reset to a value that
-	 * is 1 (with the 1986 GIME) above or 2 (with the 1987 GIME) above the
-	 * value written into the timer.  coco3_timer_base keeps track of the value
-	 * placed into the variable, so we increment that here
-	 *
-	 * For now, we are emulating the 1986 GIME
-	 */
-	coco3_timer_recalculate(coco3_timer_base ? coco3_timer_base + 1 : coco3_timer_base, 1);
+	coco3_timer_base = 0;
 }
 
 static void coco3_timer_callback(int dummy)
@@ -872,7 +856,7 @@ static void coco3_timer_callback(int dummy)
 #if LOG_INT_TMR
 	logerror("CoCo3 GIME: Triggering TMR interrupt\n");
 #endif
-	coco3_timer = 0;
+	coco3_timer_counter = NULL;
 	coco3_raise_interrupt(COCO3_INT_TMR, 1);
 
 	/* HACKHACK - This should not happen until the next timer tick */
@@ -880,7 +864,6 @@ static void coco3_timer_callback(int dummy)
 
 	coco3_timer_reset();
 	coco3_vh_blink();
-
 }
 
 static double coco3_timer_interval_time(void)
@@ -894,81 +877,62 @@ static double coco3_timer_interval_time(void)
 	return coco3_timer_interval ? COCO_TIMER_CMPCARRIER : COCO_TIMER_HSYNC;
 }
 
-/* This function takes the value in coco3_timer_counter, and sets up the timer
- * and the coco3_time_counter_time for it
- */
-static void coco3_timer_recalculate(int newcounterval, int allowreset)
+static void coco3_timer_reset(void)
 {
-	if (coco3_timer)
-		timer_remove(coco3_timer);
+	/* This resets the timer back to the original value
+	 *
+	 * JK tells me that when the timer resets, it gets reset to a value that
+	 * is 1 (with the 1986 GIME) above or 2 (with the 1987 GIME) above the
+	 * value written into the timer.  coco3_timer_base keeps track of the value
+	 * placed into the variable, so we increment that here
+	 *
+	 * For now, we are emulating the 1986 GIME
+	 */
 
-	if (newcounterval || !allowreset) {
-		coco3_timer = timer_set(newcounterval * coco3_timer_interval_time(),
-			0, coco3_timer_callback);
-#if LOG_INT_TMR
-		logerror("CoCo3 GIME: Timer will elapse in %f\n", newcounterval * coco3_timer_interval_time());
-		if (!coco3_timer)
-			logerror("CoCo3 GIME: Timer allocation failed!\n");
-#endif
-	}
-	else {
-		coco3_timer = 0;
-#if LOG_INT_TMR
-		logerror("CoCo3 GIME: Turning timer off\n");
-#endif
-	}
+	if (coco3_timer_counter)
+		counter_remove(coco3_timer_counter);
 
-	coco3_timer_counter = newcounterval;
+	if (coco3_timer_base)
+		coco3_timer_counter = counter_set(coco3_timer_base + 1, coco3_timer_interval_time(), 0, coco3_timer_callback);
+	else
+		coco3_timer_counter = NULL;
 }
 
 static int coco3_timer_r(void)
 {
 	int result = 0;
 
-	if (coco3_timer) {
-		result = coco3_timer_counter -
-			(timer_timeleft(coco3_timer) / coco3_timer_interval_time());
+	if (coco3_timer_counter) {
+		result = counter_get_value(coco3_timer_counter);
 
-		/* This shouldn't happen, but I'm prepared anyways */
-		if (result < 0)
-			result = 0;
-		else if (result > 4095)
+		/* TODO - Verify that this applies.  This could happen because of the
+		 * +1/+2 reset adjustments
+		 */
+		if (result > 4095)
 			result = 4095;
 	}
 	return result;	/* result = 0..4095 */
 }
 
-static void coco3_timer_w(int data)	/* data = 0..4095 */
-{
-	coco3_timer_base = (data & 4095);
-	coco3_timer_reset();
-}
-
 static void coco3_timer_msb_w(int data)
 {
-	coco3_timer_w(((data & 0x0f) << 8) | (coco3_timer_base & 0xff));
+	coco3_timer_base &= 0xff;
+	coco3_timer_base |= (data & 0x0f) << 8;
+	coco3_timer_reset();
 }
 
 static void coco3_timer_lsb_w(int data)
 {
-	coco3_timer_w((coco3_timer_base & 0xf00) | (data & 0xff));
+	coco3_timer_base &= 0xff00;
+	coco3_timer_base |= (data & 0xff);
+	coco3_timer_reset();
 }
 
 static void coco3_timer_set_interval(int interval)
 {
-	int oldtimerval;
-
-	if (interval != coco3_timer_interval) {
-		if (coco3_timer) {
-			oldtimerval = coco3_timer_r();
-
-			coco3_timer_interval = interval;
-			coco3_timer_recalculate(oldtimerval, 0);
-		}
-		else {
-			coco3_timer_interval = interval;
-		}
-	}
+	coco3_timer_interval = interval;
+	if (coco3_timer_counter)
+		counter_set_period(coco3_timer_counter, coco3_timer_interval_time());
 }
 
 /***************************************************************************
@@ -1526,8 +1490,6 @@ static void set_dskreg(int data, int hardware)
 	UINT8 head = 0;
 	int motor_mask = 0;
 	int haltenable_mask = 0;
-        /*int tracks;*/
-        /*void *fd;*/
 
 	switch(hardware) {
 	case HW_COCO:
@@ -1571,7 +1533,7 @@ static void set_dskreg(int data, int hardware)
 
 	if (data & motor_mask) {
 		wd179x_set_drive(drive);
-                wd179x_set_side(head);
+		wd179x_set_side(head);
 	}
 //	else {
 //		wd179x_stop_drive();

@@ -300,6 +300,7 @@ $(OBJ)/cbm.a:	   \
 	  $(OBJ)/mess/sndhrdw/6581_.o
 
 $(OBJ)/dragon.a:   \
+	  $(OBJ)/mess/machine/counter.o  \
 	  $(OBJ)/mess/formats/cocopak.o  \
 	  $(OBJ)/mess/formats/cococas.o  \
 	  $(OBJ)/mess/vidhrdw/m6847.o	 \
