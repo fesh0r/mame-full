@@ -15,7 +15,10 @@ New System Drivers Supported (in no particular order):
 System Driver Changes:
 ----------------------
 
-- [COCO 3] Fixed the GIME Timer so that it isn't resetting on writes to $FF95 [Nate Woods]
+- [COCO 3] Fixed the GIME Timer so that it isn't resetting on writes to
+  $FF95 [Nate Woods]
+- [COCO 3h] 6309 core completed; so NitrOS9 now runs.  GAME_NOT_WORKING flag
+  removed [Tim Linder]
 
 Other Changes:
 --------------

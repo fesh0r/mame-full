@@ -790,6 +790,6 @@ COMP(  1981, cocoe,     coco,	coco,      coco,     0,		  "Tandy Radio Shack",  "
 COMP(  198?, coco2,     coco,	coco,      coco,     0,		  "Tandy Radio Shack",  "Color Computer 2" )
 COMP(  198?, coco2b,    coco,	coco2b,    coco,     0,		  "Tandy Radio Shack",  "Color Computer 2B" )
 COMP(  1986, coco3,     coco, 	coco3,	   coco3,    0,		  "Tandy Radio Shack",  "Color Computer 3" )
-COMPX( 19??, coco3h,	coco,	coco3h,    coco3,	 0, 	  "Tandy Radio Shack",  "Color Computer 3 (HD6309)", GAME_NOT_WORKING|GAME_COMPUTER_MODIFIED|GAME_ALIAS)
+COMPX( 19??, coco3h,	coco,	coco3h,    coco3,	 0, 	  "Tandy Radio Shack",  "Color Computer 3 (HD6309)", GAME_COMPUTER_MODIFIED|GAME_ALIAS)
 COMP(  1982, dragon32,  coco, 	dragon32,  dragon32, 0,		  "Dragon Data Ltd",    "Dragon 32" )
 COMP(  1984, cp400,     coco, 	coco,      coco,     0,		  "Prologica",          "CP400" )
