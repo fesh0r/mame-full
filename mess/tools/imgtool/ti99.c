@@ -6,8 +6,8 @@
 	Raphael Nabet, 2002-2003
 
 	TODO:
-	- support subdirectories
-	- test support for V9T9 image format
+	- test subdirectory support
+	- add hd support
 */
 
 #include <limits.h>
@@ -38,13 +38,22 @@
 	multiple physical records.
 
 	Sector 0: Volume Information Block (VIB): see below
-	Sector 1: File Descriptor Index Record (FDIR):
-		array of 0 through 128 words, sector (physical record?) address of the
-		fdr sector for each file.  Sorted by ascending file name.
+	Sector 1: File Descriptor Index Record (FDIR): array of 0 through 128
+		words, sector (physical record?) address of the fdr record for each
+		file.  Sorted by ascending file name.  Note that, while we should be
+		prepared to read images images with 128 entries, we should write write
+		no more than 127 for compatibility with existing FDRs.
 	Remaining physical records are used for fdr and data.  Each file has one
 	FDR (File Descriptor Record) descriptor which provides the file information
 	(name, format, lenght, pointers to data sectors/AUs, etc).
 */
+
+/* Since string length is encoded with a byte, the maximum length of a string
+is 255.  Since we need to add a device name (1 char minimum, typically 4 chars)
+and a '.' separator, we chose a practical value of 250 (though few applications
+will accept paths of such lenght). */
+#define MAX_PATH_LEN /*253*/250
+
 
 #if 0
 #pragma mark -
@@ -142,6 +151,78 @@ static void fname_to_str(char *dst, const char src[10], int n)
 	dst[last_nonspace+1] = '\0';
 }
 
+/*
+	Check a 10-character file name.  Return non-zero if the file name is invalid.
+*/
+static int check_fname(const char fname[10])
+{
+	int i;
+	int space_found_flag;
+
+
+	/* check and copy file name */
+	space_found_flag = FALSE;
+	for (i=0; i<10; i++)
+	{
+		switch (fname[i])
+		{
+		case '.':
+		case '\0':
+			/* illegal characters */
+			return 1;
+		case ' ':
+			/* illegal in a file name, but file names shorter than 10
+			characters are padded with spaces */
+			space_found_flag = TRUE;
+			break;
+		default:
+			/* all other characters are legal (though non-ASCII characters,
+			control characters and even lower-case characters are not
+			recommended) */
+			if (space_found_flag)
+				return 1;
+			break;
+		}
+	}
+
+	return 0;
+}
+
+/*
+	Check a file path.  Return non-zero if the file path is invalid.
+*/
+static int check_fpath(const char *fpath)
+{
+	const char *element_start, *element_end;
+	int element_len;
+
+
+	/* first check that the path is not too long and that there is no space
+	character */
+	if ((strlen(fpath) > MAX_PATH_LEN) || strchr(fpath, ' '))
+		return 1;
+
+	/* check that each path element has an acceptable lenght */
+	element_start = fpath;
+	do
+	{
+		/* find next path element */
+		element_end = strchr(element_start, '.');
+		element_len = element_end ? (element_end - element_start) : strlen(element_start);
+		if ((element_len > 10) || (element_len == 0))
+			return 1;
+
+		/* iterate */
+		if (element_end)
+			element_start = element_end+1;
+		else
+			element_start = NULL;
+	}
+	while (element_start);
+
+	return 0;
+}
+
 #if 0
 #pragma mark -
 #pragma mark LEVEL 1 DISK ROUTINES
@@ -189,8 +270,8 @@ typedef struct ti99_subdir
 /*
 	VIB record
 
-	Most fields this record are only revelant to level 2 routines, but level 1
-	routines need the disk geometry information extracted from the VIB.
+	Most fields in this record are only revelant to level 2 routines, but level
+	1 routines need the disk geometry information extracted from the VIB.
 */
 typedef struct ti99_vib
 {
@@ -801,13 +882,33 @@ typedef struct ti99_AUformat
 } ti99_AUformat;
 
 /*
+	directory reference: 0 for root, 1 for 1st subdir, 2 for 2nd subdir, 3 for
+	3rd subdir
+*/
+//typedef int dir_ref;
+
+/*
 	catalog entry (used for in-memory catalog)
 */
-typedef struct catalog_entry
+typedef struct dir_entry
 {
-	UINT16 fdr_physrec;
-	char fname[10];
-} catalog_entry;
+	UINT16 fdir_physrec;	/* sector (physrec?) address of the fdir for this directory */
+	char dirname[10];		/* name of this file (copied from the VIB) */
+} dir_entry;
+
+typedef struct file_entry
+{
+	UINT16 fdr_physrec;		/* sector (physrec?) address of the fdr for this file */
+	char fname[10];			/* name of this file (copied from fdr) */
+} file_entry;
+
+typedef struct ti99_catalog
+{
+	int num_subdirs;		/* number of subdirectories */
+	int num_files;			/* number of files */
+	dir_entry subdirs[3];	/* description of each subdir */
+	file_entry files[128];	/* description of each file */
+} ti99_catalog;
 
 /*
 	ti99 disk image descriptor
@@ -818,7 +919,8 @@ typedef struct ti99_image
 	ti99_lvl1_ref lvl1_ref;		/* image format, imgtool image handle, image geometry */
 	ti99_vib vib;				/* cached copy of volume information block record in sector 0 */
 	ti99_AUformat AUformat;		/* AU format */
-	catalog_entry catalog[128];	/* catalog (fdr AU address from sector 1, and file names from fdrs) */
+	ti99_catalog catalog;		/* main catalog (fdr physrec address from sector 1, and file names from fdrs) */
+	ti99_catalog subdir_catalog[3];	/* catalog of each subdirectory */
 	int data_offset;	/* fdr records are preferentially allocated in sectors 2 to data_offset (34)
 						whereas data records are preferentially allocated in sectors starting at data_offset. */
 } ti99_image;
@@ -943,13 +1045,121 @@ typedef struct tifile_header
 	UINT8 reclen;			/* bytes per record ([1,255] 0->256) */
 	UINT16BE fixrecs;		/* file length in records */
 	UINT8 res[128-16];		/* reserved */
-								/* often filled by 0xCA53 repeated 56 times */
-								/* 10 chars: original TI file name */
-								/* 4 bytes: unknown */
-								/* 4 bytes: time & date of creation */
-								/* 4 bytes: time & date of last update */
+								/* * variant a: */
+									/* 112 chars: 0xCA53 repeated 56 times */
+								/* * variant b: */
+									/* 4 chars: unknown */
+									/* 108 chars: 0xCA53 repeated 54 times */
+								/* * variant c: */
+									/* 10 chars: original TI file name filed with spaces */
+									/* 102 chars: spaces */
+								/* * variant d: */
+									/* 10 chars: original TI file name filed with spaces */
+									/* 2 chars: CR+LF */
+									/* 98 chars: spaces */
+									/* 2 chars: CR+LF */
+								/* * variant e: */
+									/* 10 chars: original TI file name */
+									/* 4 bytes: unknown */
+									/* 4 bytes: time & date of creation */
+									/* 4 bytes: time & date of last update */
+								/* * variant f: */
+									/* 6 bytes: 'MYTERM' */
+									/* 4 bytes: time & date of creation */
+									/* 4 bytes: time & date of last update */
+									/* 2 bytes: unknown (always >0000) */
+									/* 96 chars: 0xCA53 repeated 56 times */
 } tifile_header;
 
+
+/*
+	Compare two (possibly empty) catalog entry for qsort
+*/
+static int qsort_catalog_compare(const void *p1, const void *p2)
+{
+	const file_entry *entry1 = p1;
+	const file_entry *entry2 = p2;
+
+	if ((entry1->fdr_physrec == 0) && (entry2->fdr_physrec == 0))
+		return 0;
+	else if (entry1->fdr_physrec == 0)
+		return +1;
+	else if (entry2->fdr_physrec == 0)
+		return -1;
+	else
+		return memcmp(entry1->fname, entry2->fname, 10);
+}
+
+/*
+	Read a directory catalog from disk image
+
+	image: ti99_image image record
+	physrec: physical record address of the FDIR
+	dest: pointer to the destination buffer where the catalog should be written
+
+	Returns an error code if there was an error, 0 otherwise.
+*/
+static int read_catalog(ti99_image *image, int physrec, ti99_catalog *dest)
+{
+	int totphysrecs = get_UINT16BE(image->vib.totphysrecs);
+	UINT8 buf[256];
+	ti99_fdr fdr;
+	int i;
+	int reply;
+
+
+	/* Read FDIR record */
+	reply = read_absolute_physrec(& image->lvl1_ref, physrec, buf);
+	if (reply)
+		return IMGTOOLERR_READERROR;
+
+	/* Copy FDIR info to catalog structure */
+	for (i=0; i<128; i++)
+		dest->files[i].fdr_physrec = (buf[i*2] << 8) | buf[i*2+1];
+
+	/* Check FDIR pointers and check and extract file names from FDRs */
+	for (i=0; i<128; i++)
+	{
+		if (dest->files[i].fdr_physrec >= totphysrecs)
+		{
+			return IMGTOOLERR_CORRUPTIMAGE;
+		}
+		else if (dest->files[i].fdr_physrec)
+		{
+			reply = read_absolute_physrec(& image->lvl1_ref, dest->files[i].fdr_physrec, &fdr);
+			if (reply)
+				return IMGTOOLERR_READERROR;
+
+			/* check and copy file name */
+			if (check_fname(fdr.name))
+				return IMGTOOLERR_CORRUPTIMAGE;
+			memcpy(dest->files[i].fname, fdr.name, 10);
+		}
+	}
+
+	/* Check catalog */
+	for (i=0; i<127; i++)
+	{
+		if (((! dest->files[i].fdr_physrec) && dest->files[i+1].fdr_physrec)
+			|| ((dest->files[i].fdr_physrec && dest->files[i+1].fdr_physrec) && (memcmp(dest->files[i].fname, dest->files[i+1].fname, 10) >= 0)))
+		{
+			/* if the catalog is not sorted, we repair it */
+			qsort(dest, sizeof(dest->files)/sizeof(dest->files[0]), sizeof(dest->files[0]),
+					qsort_catalog_compare);
+			break;
+		}
+	}
+
+	/* Set file count */
+	for (i=0; (i<128) && (dest->files[i].fdr_physrec != 0); i++)
+		;
+	dest->num_files = i;
+
+	/* Set subdir count to 0 (subdirs are loaded elsewhere) */
+	dest->num_subdirs = 0;
+
+	return 0;
+}
 
 /*
 	Find the catalog entry and fdr record associated with a file name
@@ -959,21 +1169,133 @@ typedef struct tifile_header
 	fdr: pointer to buffer where the fdr record should be stored (may be NULL)
 	catalog_index: on output, index of file catalog entry (may be NULL)
 */
-static int find_fdr(ti99_image *image, char fname[10], ti99_fdr *fdr, int *catalog_index)
+static int find_catalog_entry(ti99_image *image, const char *fpath, int *parent_ref_valid, int *parent_ref, int *out_is_dir, int *catalog_index)
 {
-	int fdr_physrec;
 	int i;
+	const ti99_catalog *cur_catalog;
+	const char *element_start, *element_end;
+	int element_len;
+	char element[10];
+	int is_dir;
 
 
-	for (i=0; (i<128) && ((fdr_physrec = image->catalog[i].fdr_physrec) != 0); i++)
+#if 0
+	str_to_fname(element, fpath);
+
+	if (parent_ref)
+		*parent_ref = 0;
+
+	if (out_is_dir)
+		*out_is_dir = 0;
+
+	for (i=0; i<image->catalog.num_files; i++)
 	{
-		if (memcmp(image->catalog[i].fname, fname, 10) == 0)
+		if (memcmp(image->catalog.files[i].fname, element, 10) == 0)
 		{	/* file found */
 			if (catalog_index)
 				*catalog_index = i;
 
+			return 0;
+		}
+	}
+
+	return IMGTOOLERR_FILENOTFOUND;
+
+#else
+
+	cur_catalog = & image->catalog;
+	if (parent_ref_valid)
+		(* parent_ref_valid) = FALSE;
+	if (parent_ref)
+		*parent_ref = 0;
+
+	element_start = fpath;
+	do
+	{
+		/* find next path element */
+		element_end = strchr(element_start, '.');
+		element_len = element_end ? (element_end - element_start) : strlen(element_start);
+		if ((element_len > 10) || (element_len == 0))
+			return IMGTOOLERR_BADFILENAME;
+		/* last path element */
+		if ((!element_end) && parent_ref_valid)
+			(* parent_ref_valid) = TRUE;
+
+		/* generate file name */
+		memcpy(element, element_start, element_len);
+		memset(element+element_len, ' ', 10-element_len);
+
+		/* search entry in subdirectories */
+		for (i = 0; i<cur_catalog->num_subdirs; i++)
+		{
+			if (! memcmp(element, cur_catalog->subdirs[i].dirname, 10))
+			{
+				is_dir = TRUE;
+				break;
+			}
+		}
+
+		/* if it failed, search entry in files */
+		if (i == cur_catalog->num_subdirs)
+		{
+			for (i = 0; i<cur_catalog->num_files; i++)
+			{
+				if (! memcmp(element, cur_catalog->files[i].fname, 10))
+				{
+					is_dir = FALSE;
+					break;
+				}
+			}
+			/* exit if not found */
+			if (i == cur_catalog->num_files)
+			{
+				return IMGTOOLERR_FILENOTFOUND;
+			}
+		}
+
+		/* iterate */
+		if (element_end)
+		{
+			element_start = element_end+1;
+
+			if (! is_dir)
+				/* this is not a directory */
+				return IMGTOOLERR_BADFILENAME;
+
+			/* initialize cur_catalog */
+			cur_catalog = & image->subdir_catalog[i];
+			if (parent_ref)
+				*parent_ref = i+1;
+		}
+		else
+			element_start = NULL;
+	}
+	while (element_start);
+
+	if (out_is_dir)
+		*out_is_dir = is_dir;
+
+	if (catalog_index)
+		*catalog_index = i;
+
+	return 0;
+#endif
+}
+
+static int find_fdr(ti99_image *image, const char *fpath, ti99_fdr *fdr)
+{
+#if 0
+	int i;
+	char ti_fname[10];
+
+	str_to_fname(ti_fname, fpath);
+
+	for (i=0; i<image->catalog.num_files; i++)
+	{
+		if (memcmp(image->catalog.files[i].fname, ti_fname, 10) == 0)
+		{	/* file found */
 			if (fdr)
-				if (read_absolute_physrec(& image->lvl1_ref, fdr_physrec, fdr))
+				if (read_absolute_physrec(& image->lvl1_ref, image->catalog.files[i].fdr_physrec, fdr))
 					return IMGTOOLERR_READERROR;
 
 			return 0;
@@ -981,6 +1303,25 @@ static int find_fdr(ti99_image *image, char fname[10], ti99_fdr *fdr, int *catal
 	}
 
 	return IMGTOOLERR_FILENOTFOUND;
+#else
+	int parent_ref, is_dir, catalog_index;
+	int reply;
+
+
+	reply = find_catalog_entry(image, fpath, NULL, &parent_ref, &is_dir, &catalog_index);
+	if (reply)
+		return reply;
+
+	if (is_dir)
+		/* this is not a file */
+		return IMGTOOLERR_BADFILENAME;
+
+	if (fdr)
+		if (read_absolute_physrec(& image->lvl1_ref, (parent_ref ? image->subdir_catalog[parent_ref-1] : image->catalog).files[catalog_index].fdr_physrec, fdr))
+			return IMGTOOLERR_READERROR;
+
+	return 0;
+#endif
 }
 
 /*
@@ -1201,22 +1542,28 @@ static int alloc_file_sectors(ti99_image *image, ti99_fdr *fdr, int nb_alloc_sec
 /*
 	Allocate a new (empty) file
 */
-static int new_file(ti99_image *image, char fname[10], int *out_fdr_physrec/*, ti99_fdr *fdr,*/)
+static int new_file(ti99_image *image, int parent_ref, char fname[10], int *out_fdr_physrec/*, ti99_fdr *fdr,*/)
 {
+	ti99_catalog *catalog = & (parent_ref ? image->subdir_catalog[parent_ref-1] : image->catalog);
 	int fdr_physrec;
 	int catalog_index, i;
 	int reply = 0;
 	int errorcode;
 
 
+	if (catalog->num_files >= 127)
+		/* if num_files == 128, catalog is full */
+		/* if num_files == 127, catalog is not full, but we don't want to write
+		a 128th entry for compatibility with some existing DSRs that detect the
+		end of the FDIR array with a 0 entry (and do not check that the index
+		has not reached 128) */
+		return IMGTOOLERR_NOSPACE;
+
 	/* find insertion point in catalog */
-	for (i=0; (i<128) && ((fdr_physrec = image->catalog[i].fdr_physrec) != 0) && ((reply = memcmp(image->catalog[i].fname, fname, 10)) < 0); i++)
+	for (i=0; (i < catalog->num_files) && ((reply = memcmp(catalog->files[i].fname, fname, 10)) < 0); i++)
 		;
 
-	if (i == 128)
-		/* catalog is full */
-		return IMGTOOLERR_NOSPACE;
-	else if (fdr_physrec && (reply == 0))
+	if ((i<catalog->num_files) && (reply == 0))
 		/* file already exists */
 		return IMGTOOLERR_BADFILENAME;
 	else
@@ -1227,23 +1574,18 @@ static int new_file(ti99_image *image, char fname[10], int *out_fdr_physrec/*, t
 		if (errorcode)
 			return errorcode;
 
-		/* look for first free entry in catalog */
-		for (i=catalog_index; image->catalog[i].fdr_physrec != 0; i++)
-			;
-
-		if (i == 128)
-			/* catalog is full */
-				return IMGTOOLERR_NOSPACE;
-
 		/* shift catalog entries until the insertion point */
-		for (/*i=127*/; i>catalog_index; i--)
-			image->catalog[i] = image->catalog[i-1];
+		for (i=catalog->num_files; i>catalog_index; i--)
+			catalog->files[i] = catalog->files[i-1];
 
 		/* write new catalog entry */
-		image->catalog[catalog_index].fdr_physrec = fdr_physrec;
-		memcpy(image->catalog[catalog_index].fname, fname, 10);
+		catalog->files[catalog_index].fdr_physrec = fdr_physrec;
+		memcpy(catalog->files[catalog_index].fname, fname, 10);
 		if (out_fdr_physrec)
 			*out_fdr_physrec = fdr_physrec;
+
+		/* update catalog len */
+		catalog->num_files++;
 	}
 
 	return 0;
@@ -1456,7 +1798,13 @@ typedef struct ti99_iterator
 {
 	IMAGEENUM base;
 	ti99_image *image;
+#if 1
+	int level;
+	int listing_subdirs;	/* true if we are listing subdirectories at level 0 */
+	int index[2];			/* current index in the disk catalog */
+#else
 	int index;			/* current index in the disk catalog */
+#endif
 } ti99_iterator;
 
 
@@ -1601,33 +1949,14 @@ IMAGEMODULE(
 )
 
 /*
-	Compare two (possibly empty) catalog entry for qsort
-*/
-static int qsort_catalog_compare(const void *p1, const void *p2)
-{
-	const catalog_entry *entry1 = p1;
-	const catalog_entry *entry2 = p2;
-
-	if ((entry1->fdr_physrec == 0) && (entry2->fdr_physrec == 0))
-		return 0;
-	else if (entry1->fdr_physrec == 0)
-		return +1;
-	else if (entry2->fdr_physrec == 0)
-		return -1;
-	else
-		return memcmp(entry1->fname, entry2->fname, 10);
-}
-
-/*
 	Open a file as a ti99_image (common code).
 */
 static int ti99_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg, ti99_img_format img_format)
 {
 	ti99_image *image;
 	int reply;
-	UINT8 buf[256];
-	ti99_fdr fdr;
 	int totphysrecs;
+	int fdir_physrec;
 	int i;
 
 
@@ -1659,52 +1988,64 @@ static int ti99_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **out
 	image->AUformat.physrecsperAU = i;
 	image->AUformat.totAUs = totphysrecs / image->AUformat.physrecsperAU;
 
-	/* read catalog */
-	reply = read_absolute_physrec(& image->lvl1_ref, 1, buf);
+	/* read and check main volume catalog */
+	reply = read_catalog(image, 1, &image->catalog);
 	if (reply)
 	{
 		free(image);
 		*outimg = NULL;
-		return IMGTOOLERR_READERROR;
+		return reply;
 	}
 
-	for (i=0; i<128; i++)
-		image->catalog[i].fdr_physrec = (buf[i*2] << 8) | buf[i*2+1];
-
-	for (i=0; i<128; i++)
+	/* read and check subdirectory catalogs */
+	/* Note that the reserved areas used for HFDC subdirs may be used for other
+	purposes by other FDRs, so, if we get any error, we will assume there is no
+	subdir after all... */
+	image->catalog.num_subdirs = 0;
+	for (i=0; i<3; i++)
 	{
-		if (image->catalog[i].fdr_physrec >= totphysrecs)
+		fdir_physrec = get_UINT16BE(image->vib.subdir[i].fdir_physrec);
+		if ((! memcmp(image->vib.subdir[i].name, "\0\0\0\0\0\0\0\0\0\0", 10))
+				|| (! memcmp(image->vib.subdir[i].name, "          ", 10)))
 		{
-			free(image);
-			*outimg = NULL;
-			return IMGTOOLERR_CORRUPTIMAGE;
-		}
-		else if (image->catalog[i].fdr_physrec)
-		{
-			reply = read_absolute_physrec(& image->lvl1_ref, image->catalog[i].fdr_physrec, &fdr);
-			if (reply)
+			/* name is empty: fine with us unless there is a fdir pointer */
+			if (fdir_physrec != 0)
 			{
-				free(image);
-				*outimg = NULL;
-				return IMGTOOLERR_READERROR;
+				image->catalog.num_subdirs = 0;
+				break;
 			}
-			memcpy(image->catalog[i].fname, fdr.name, 10);
 		}
-	}
-
-	/* check catalog */
-	for (i=0; i<127; i++)
-	{
-		if (((! image->catalog[i].fdr_physrec) && image->catalog[i+1].fdr_physrec)
-			|| ((image->catalog[i].fdr_physrec && image->catalog[i+1].fdr_physrec) && (memcmp(image->catalog[i].fname, image->catalog[i+1].fname, 10) >= 0)))
+		else if (check_fname(image->vib.subdir[i].name))
 		{
-			/* if the catalog is not sorted, we repair it */
-			qsort(image->catalog, sizeof(image->catalog)/sizeof(image->catalog[0]),
-					sizeof(image->catalog[0]), qsort_catalog_compare);
+			/* name is invalid: this is not an HFDC format floppy */
+			image->catalog.num_subdirs = 0;
 			break;
 		}
+		else
+		{
+			/* there is a non-empty name */
+			if ((fdir_physrec == 0) || (fdir_physrec >= totphysrecs))
+			{
+				/* error: fdir pointer is invalid or NULL */
+				image->catalog.num_subdirs = 0;
+				break;
+			}
+			/* fill in descriptor fields */
+			image->catalog.subdirs[image->catalog.num_subdirs].fdir_physrec = fdir_physrec;
+			memcpy(image->catalog.subdirs[image->catalog.num_subdirs].dirname, image->vib.subdir[i].name, 10);
+			reply = read_catalog(image, fdir_physrec, &image->subdir_catalog[image->catalog.num_subdirs]);
+			if (reply)
+			{
+				/* error: invalid fdir */
+				image->catalog.num_subdirs = 0;
+				break;
+			}
+			/* found valid subdirectory: increment subdir count */
+			image->catalog.num_subdirs++;
+		}
 	}
 
+	/* initialize default data_offset */
 	image->data_offset = 32+2;
 
 	return 0;
@@ -1778,6 +2119,7 @@ static int ti99_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	ti99_image *image = (ti99_image*) img;
 	ti99_iterator *iter;
 
+
 	iter = malloc(sizeof(ti99_iterator));
 	*((ti99_iterator **) outenum) = iter;
 	if (iter == NULL)
@@ -1785,7 +2127,9 @@ static int ti99_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 
 	iter->base.module = img->module;
 	iter->image = image;
-	iter->index = 0;
+	iter->level = 0;
+	iter->listing_subdirs = 1;
+	iter->index[0] = 0;
 
 	return 0;
 }
@@ -1799,28 +2143,73 @@ static int ti99_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	ti99_fdr fdr;
 	int reply;
 	int fdr_physrec;
-	int totphysrecs = get_UINT16BE(iter->image->vib.totphysrecs);
+
 
 	ent->corrupt = 0;
 	ent->eof = 0;
 
-	if ((iter->index == 128) || ((fdr_physrec = iter->image->catalog[iter->index].fdr_physrec) == 0))
+	/* iterate through catalogs to next file or dir entry */
+	while ((iter->level >= 0)
+			&& (((iter->level == 0) && (iter->listing_subdirs))
+				? (iter->index[0] >= iter->image->catalog.num_subdirs)
+				: (iter->index[iter->level] >= (iter->level ? iter->image->subdir_catalog[iter->index[0]-1].num_files : iter->image->catalog.num_files))))
+	{
+		if ((iter->level == 0) && (iter->listing_subdirs))
+		{
+			iter->listing_subdirs = 0;
+			iter->index[0] = 0;
+		}
+		else
+			iter->level--;
+	}
+
+	if (iter->level < 0)
 	{
 		ent->eof = 1;
 	}
 	else
 	{
-		if (fdr_physrec >= totphysrecs)
+		if ((iter->level == 0) && (iter->listing_subdirs))
 		{
-			ent->corrupt = 1;
+			fname_to_str(ent->fname, iter->image->catalog.subdirs[iter->index[0]].dirname, ent->fname_len);
+
+			/* set type of DIR */
+			snprintf(ent->attr, ent->attr_len, "DIR");
+
+			/* len in sectors */
+			ent->filesize = 1;
+
+			iter->index[iter->level]++;
+
+			/* recurse subdirectory */
+			iter->level++;
+			iter->index[iter->level] = 0;
 		}
 		else
 		{
+			fdr_physrec = (iter->level ? iter->image->subdir_catalog[iter->index[0]-1].files : iter->image->catalog.files)[iter->index[iter->level]].fdr_physrec;
 			reply = read_absolute_physrec(& iter->image->lvl1_ref, fdr_physrec, & fdr);
 			if (reply)
 				return IMGTOOLERR_READERROR;
+#if 0
 			fname_to_str(ent->fname, fdr.name, ent->fname_len);
+#else
+			{
+				char buf[11];
 
+				if (ent->fname_len)
+				{
+					ent->fname[0] = '\0';
+					if (iter->level)
+					{
+						fname_to_str(ent->fname, iter->image->catalog.subdirs[iter->index[0]-1].dirname, ent->fname_len);
+						strncat(ent->fname, ".", ent->fname_len);
+					}
+					fname_to_str(buf, fdr.name, 11);
+					strncat(ent->fname, buf, ent->fname_len);
+				}
+			}
+#endif
 			/* parse flags */
 			if (fdr.flags & fdr99_f_program)
 				snprintf(ent->attr, ent->attr_len, "PGM%s",
@@ -1833,9 +2222,9 @@ static int ti99_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 							(fdr.flags & fdr99_f_wp) ? " R/O" : "");
 			/* len in sectors */
 			ent->filesize = get_UINT16BE(fdr.secsused);
-		}
 
-		iter->index++;
+			iter->index[iter->level]++;
+		}
 	}
 
 	return 0;
@@ -1874,8 +2263,6 @@ static size_t ti99_image_freespace(IMAGE *img)
 static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 {
 	ti99_image *image = (ti99_image*) img;
-	int totphysrecs;
-	char ti_fname[10];
 	ti99_fdr fdr;
 	tifile_header dst_header;
 	int i;
@@ -1883,12 +2270,12 @@ static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	UINT8 buf[256];
 	int errorcode;
 
-	totphysrecs = get_UINT16BE(image->vib.totphysrecs);
 
-	str_to_fname(ti_fname, fname);
+	if (check_fpath(fname))
+		return IMGTOOLERR_BADFILENAME;
 
 	/* open file on TI image */
-	errorcode = find_fdr(image, ti_fname, &fdr, NULL);
+	errorcode = find_fdr(image, fname, &fdr);
 	if (errorcode)
 		return errorcode;
 
@@ -1953,10 +2340,10 @@ static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 /*
 	Add a file to a ti99_image.  The file must be in tifile format.
 */
-static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *in_options)
+static int ti99_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, const ResolvedOption *in_options)
 {
 	ti99_image *image = (ti99_image*) img;
-	int totphysrecs;
+	const char *fname;
 	char ti_fname[10];
 	ti99_fdr fdr;
 	tifile_header src_header;
@@ -1965,19 +2352,19 @@ static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, 
 	UINT8 buf[256];
 	int errorcode;
 	int fdr_physrec;
+	int parent_ref_valid, parent_ref;
+	ti99_catalog *catalog;
 
-	totphysrecs = get_UINT16BE(image->vib.totphysrecs);
 
-	if (strchr(fname, '.') || strchr(fname, ' ') || (strlen(fname) > 10))
+	if (check_fpath(fpath))
 		return IMGTOOLERR_BADFILENAME;
-	str_to_fname(ti_fname, fname);
 
-	errorcode = find_fdr(image, ti_fname, &fdr, NULL);
+	errorcode = find_catalog_entry(image, fpath, &parent_ref_valid, &parent_ref, NULL, NULL);
 	if (errorcode == 0)
 	{	/* file already exists: causes an error for now */
 		return IMGTOOLERR_UNEXPECTED;
 	}
-	else if (errorcode != IMGTOOLERR_FILENOTFOUND)
+	else if ((! parent_ref_valid) || (errorcode != IMGTOOLERR_FILENOTFOUND))
 	{
 		return errorcode;
 	}
@@ -1986,7 +2373,13 @@ static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, 
 		return IMGTOOLERR_READERROR;
 
 	/* create new file */
-	errorcode = new_file(image, ti_fname, &fdr_physrec);
+	fname = strrchr(fpath, '.');
+	if (fname)
+		fname++;
+	else
+		fname = fpath;
+	str_to_fname(ti_fname, fname);
+	errorcode = new_file(image, parent_ref, ti_fname, &fdr_physrec);
 	if (errorcode)
 		return errorcode;
 
@@ -2035,12 +2428,13 @@ static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, 
 		return IMGTOOLERR_WRITEERROR;
 
 	/* update catalog */
+	catalog = & (parent_ref ? image->subdir_catalog[parent_ref-1] : image->catalog);
 	for (i=0; i<128; i++)
 	{
-		buf[2*i] = image->catalog[i].fdr_physrec >> 8;
-		buf[2*i+1] = image->catalog[i].fdr_physrec & 0xff;
+		buf[2*i] = catalog->files[i].fdr_physrec >> 8;
+		buf[2*i+1] = catalog->files[i].fdr_physrec & 0xff;
 	}
-	if (write_absolute_physrec(& image->lvl1_ref, 1, buf))
+	if (write_absolute_physrec(& image->lvl1_ref, parent_ref ? image->catalog.subdirs[parent_ref-1].fdir_physrec : 1, buf))
 		return IMGTOOLERR_WRITEERROR;
 
 	/* update bitmap */
@@ -2057,70 +2451,112 @@ static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, 
 static int ti99_image_deletefile(IMAGE *img, const char *fname)
 {
 	ti99_image *image = (ti99_image*) img;
-	char ti_fname[10];
 	ti99_fdr fdr;
 	int i, cluster_index;
 	int cur_AU, cluster_lastphysrec;
 	int secsused;
-	int catalog_index;
+	int parent_ref, is_dir, catalog_index;
 	int errorcode;
 	UINT8 buf[256];
+	ti99_catalog *catalog;
 
-	str_to_fname(ti_fname, fname);
 
-	errorcode = find_fdr(image, ti_fname, &fdr, &catalog_index);
+	if (check_fpath(fname))
+		return IMGTOOLERR_BADFILENAME;
+
+	errorcode = find_catalog_entry(image, fname, NULL, &parent_ref, &is_dir, &catalog_index);
 	if (errorcode)
 		return errorcode;
 
-	/* free data sectors */
-	secsused = get_UINT16BE(fdr.secsused);
-
-	i = 0;
-	cluster_index = 0;
-	while (i<secsused)
+	if (is_dir)
 	{
-		if (cluster_index == 76)
-			return IMGTOOLERR_CORRUPTIMAGE;
+		catalog = & image->subdir_catalog[catalog_index];
 
-		cur_AU = get_fdr_cluster_baseAU(image, & fdr, cluster_index);
-		cluster_lastphysrec = get_fdr_cluster_lastphysrec(& fdr, cluster_index);
+		if ((catalog->num_files != 0) || (catalog->num_subdirs != 0))
+			return IMGTOOLERR_UNIMPLEMENTED;
 
-		while ((i<secsused) && (i<=cluster_lastphysrec))
+		catalog = & image->catalog;
+
+		/* free fdir sector */
+		cur_AU = catalog->subdirs[catalog_index].fdir_physrec / image->AUformat.physrecsperAU;
+		image->vib.abm[cur_AU >> 3] &= ~ (1 << (cur_AU & 7));
+
+		/* delete catalog entry */
+		for (i=catalog_index; i<2; i++)
+			catalog->subdirs[i] = catalog->subdirs[i+1];
+		catalog->subdirs[2].fdir_physrec = 0;
+		catalog->num_subdirs--;
+
+		/* update directory in vib */
+		for (i=0; i<3; i++)
 		{
-			if (cur_AU >= image->AUformat.totAUs)
-				return IMGTOOLERR_CORRUPTIMAGE;
-
-			image->vib.abm[cur_AU >> 3] &= ~ (1 << (cur_AU & 7));
-
-			i += image->AUformat.physrecsperAU;
-			cur_AU++;
+			memcpy(image->vib.subdir[i].name, catalog->subdirs[i].dirname, 10);
+			set_UINT16BE(&image->vib.subdir[i].fdir_physrec, catalog->subdirs[i].fdir_physrec);
 		}
 
-		cluster_index++;
+		/* write vib (bitmap+directory) */
+		if (write_absolute_physrec(& image->lvl1_ref, 0, &image->vib))
+			return IMGTOOLERR_WRITEERROR;
+
+		return IMGTOOLERR_UNIMPLEMENTED;
 	}
-
-	/* free fdr sector */
-	cur_AU = image->catalog[catalog_index].fdr_physrec / image->AUformat.physrecsperAU;
-	image->vib.abm[cur_AU >> 3] &= ~ (1 << (cur_AU & 7));
-
-	/* delete catalog entry */
-	for (i=catalog_index; i<127; i++)
-		image->catalog[i] = image->catalog[i+1];
-	image->catalog[127].fdr_physrec = 0;
-
-	/* update catalog */
-	for (i=0; i<128; i++)
+	else
 	{
-		buf[2*i] = image->catalog[i].fdr_physrec >> 8;
-		buf[2*i+1] = image->catalog[i].fdr_physrec & 0xff;
+		catalog = & (parent_ref ? image->subdir_catalog[parent_ref-1] : image->catalog);
+
+		if (read_absolute_physrec(& image->lvl1_ref, catalog->files[catalog_index].fdr_physrec, &fdr))
+			return IMGTOOLERR_READERROR;
+
+		/* free data sectors */
+		secsused = get_UINT16BE(fdr.secsused);
+
+		i = 0;
+		cluster_index = 0;
+		while (i<secsused)
+		{
+			if (cluster_index == 76)
+				return IMGTOOLERR_CORRUPTIMAGE;
+
+			cur_AU = get_fdr_cluster_baseAU(image, & fdr, cluster_index);
+			cluster_lastphysrec = get_fdr_cluster_lastphysrec(& fdr, cluster_index);
+
+			while ((i<secsused) && (i<=cluster_lastphysrec))
+			{
+				if (cur_AU >= image->AUformat.totAUs)
+					return IMGTOOLERR_CORRUPTIMAGE;
+
+				image->vib.abm[cur_AU >> 3] &= ~ (1 << (cur_AU & 7));
+
+				i += image->AUformat.physrecsperAU;
+				cur_AU++;
+			}
+
+			cluster_index++;
+		}
+
+		/* free fdr sector */
+		cur_AU = catalog->files[catalog_index].fdr_physrec / image->AUformat.physrecsperAU;
+		image->vib.abm[cur_AU >> 3] &= ~ (1 << (cur_AU & 7));
+
+		/* delete catalog entry */
+		for (i=catalog_index; i<127; i++)
+			catalog->files[i] = catalog->files[i+1];
+		catalog->files[127].fdr_physrec = 0;
+		catalog->num_files--;
+
+		/* update parent fdir */
+		for (i=0; i<128; i++)
+		{
+			buf[2*i] = catalog->files[i].fdr_physrec >> 8;
+			buf[2*i+1] = catalog->files[i].fdr_physrec & 0xff;
+		}
+		if (write_absolute_physrec(& image->lvl1_ref, parent_ref ? image->catalog.subdirs[parent_ref-1].fdir_physrec : 1, buf))
+			return IMGTOOLERR_WRITEERROR;
+
+		/* update bitmap */
+		if (write_absolute_physrec(& image->lvl1_ref, 0, &image->vib))
+			return IMGTOOLERR_WRITEERROR;
 	}
-	if (write_absolute_physrec(& image->lvl1_ref, 1, buf))
-		return IMGTOOLERR_WRITEERROR;
-
-	/* update bitmap */
-	if (write_absolute_physrec(& image->lvl1_ref, 0, &image->vib))
-		return IMGTOOLERR_WRITEERROR;
-
 
 	return 0;
 }
@@ -2174,6 +2610,10 @@ static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const Res
 		else
 			density = 3;
 	}
+
+	/* check volume name */
+	if (strchr(volname, '.') || strchr(volname, ' ') || (strlen(volname) > 10))
+		return /*IMGTOOLERR_BADFILENAME*/IMGTOOLERR_PARAMCORRUPT;
 
 	/* check number of tracks if 40-track image */
 	if ((density < 3) && (lvl1_ref.geometry.tracksperside > 40))
@@ -2233,7 +2673,7 @@ static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const Res
 		return IMGTOOLERR_WRITEERROR;
 
 
-	/* now clear every other sector, including catalog */
+	/* now clear every other sector, including the FDIR record */
 	memset(empty_sec, 0, 256);
 
 	for (i=1; i<totphysrecs; i++)
