@@ -792,7 +792,7 @@ void change_debugger_focus(int new_debugger_focus)
 /* Update the display. */
 void osd_update_video_and_audio(struct mame_display *display)
 {
-//	static int showfps = 0, showfpstemp = 0; 
+/*	static int showfps = 0, showfpstemp = 0; */
 	int skip_this_frame;
 	cycles_t curr;
 

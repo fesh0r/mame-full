@@ -18,7 +18,7 @@
    debug code, which should not be found in distributions, like testdrivers,...
    contrary to MAME_DEBUG, NDEBUG it should not be found in the makefiles of distributions
    use it in your private root makefile */
-//#define MESS_DEBUG
+/* #define MESS_DEBUG */
 
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
 	#include <stdbool.h>
