@@ -156,3 +156,29 @@ void osd_copyfile(const char *destfile, const char *srcfile)
 	CopyFile(A2T(srcfile), A2T(destfile), TRUE);
 }
 
+
+
+
+//============================================================
+//	osd_getcurdir
+//============================================================
+
+void osd_getcurdir(char *buffer, size_t buffer_len)
+{
+	GetCurrentDirectory(buffer_len, buffer);
+}
+
+
+
+//============================================================
+//	osd_setcurdir
+//============================================================
+
+void osd_setcurdir(const char *dir)
+{
+	SetCurrentDirectory(A2T(dir));
+}
+
+
+
+

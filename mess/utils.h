@@ -115,6 +115,8 @@ char *osd_basename (char *name);
  * osd_rmdir
  * osd_rmfile
  * osd_copyfile
+ * osd_getcurdir
+ * osd_setcurdir
  *
  * Misc platform independent dir/file functions.
  * ----------------------------------------------------------------------- */
@@ -134,6 +136,15 @@ void osd_rmfile(const char *filepath);
 #ifndef osd_copyfile
 void osd_copyfile(const char *destfile, const char *srcfile);
 #endif /* osd_copyfile */
+
+#ifndef osd_getcurdir
+void osd_getcurdir(char *buffer, size_t buffer_len);
+#endif /* osd_getcurdir */
+
+#ifndef osd_getcurdir
+void osd_setcurdir(const char *dir);
+#endif /* osd_getcurdir */
+
 
 
 /* -----------------------------------------------------------------------
