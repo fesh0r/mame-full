@@ -29,4 +29,5 @@ extern READ_HANDLER( v9938_vram_r );
 extern WRITE_HANDLER( v9938_command_w );
 extern READ_HANDLER( v9938_status_r );
 extern WRITE_HANDLER( v9938_register_w );
- 
+
+void v9938_update_mouse_state(int mx_delta, int my_delta, int button_state);

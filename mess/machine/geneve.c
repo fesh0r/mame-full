@@ -26,6 +26,7 @@ static WRITE16_HANDLER ( geneve_ww_wspeech );*/
 
 static void read_key_if_possible(void);
 static void poll_keyboard(void);
+static void poll_mouse(void);
 
 static void tms9901_interrupt_callback(int intreq, int ic);
 static int R9901_0(int offset);
@@ -285,6 +286,7 @@ void geneve_hblank_interrupt(void)
 	{
 		line_count = 0;
 		poll_keyboard();
+		poll_mouse();
 	}
 }
 
@@ -885,7 +887,7 @@ static void read_key_if_possible(void)
 	}
 }
 
-/*INLINE*/static void post_in_KeyQueue(int keycode)
+INLINE void post_in_KeyQueue(int keycode)
 {
 	KeyQueue[(KeyQueueHead+KeyQueueLen) % KeyQueueSize] = keycode;
 	KeyQueueLen++;
@@ -1001,6 +1003,41 @@ static void poll_keyboard(void)
 			}
 		}
 	}
+}
+
+static void poll_mouse(void)
+{
+	static int last_mx = 0, last_my = 0;
+	int new_mx, new_my;
+	int delta_x, delta_y, buttons;
+
+	buttons = readinputport(input_port_mouse_buttons_geneve);
+	new_mx = readinputport(input_port_mouse_deltax_geneve);
+	new_my = readinputport(input_port_mouse_deltay_geneve);
+
+	/* compute x delta */
+	delta_x = new_mx - last_mx;
+
+	/* check for wrap */
+	if (delta_x > 0x80)
+		delta_x = 0x100-delta_x;
+	if  (delta_x < -0x80)
+		delta_x = -0x100-delta_x;
+
+	last_mx = new_mx;
+
+	/* compute y delta */
+	delta_y = new_my - last_my;
+
+	/* check for wrap */
+	if (delta_y > 0x80)
+		delta_y = 0x100-delta_y;
+	if  (delta_y < -0x80)
+		delta_y = -0x100-delta_y;
+
+	last_my = new_my;
+
+	v9938_update_mouse_state(delta_x, delta_y, buttons & 3);
 }
 
 

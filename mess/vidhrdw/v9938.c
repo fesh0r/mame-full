@@ -40,6 +40,10 @@ typedef struct {
     int sprite_limit;
 	/* size */
 	int size, size_old, size_auto, size_now;
+	/* mouse */
+	UINT8 mx_delta, my_delta;
+	/* mouse & lightpen */
+	UINT8 button_state;
 } V9938;
 
 static V9938 vdp;
@@ -630,6 +634,9 @@ READ_HANDLER (v9938_status_r)
 		case 1:
 			ret = vdp.statReg[1];
 			vdp.statReg[1] &= 0xfe;
+			if ((vdp.contReg[8] & 0xc0) == 0x80)
+				/* mouse mode: add button state */
+				ret |= vdp.button_state & 0xc0;
 			break;
 		case 2:
 			/*v9938_update_command ();*/
@@ -637,6 +644,24 @@ READ_HANDLER (v9938_status_r)
 			if ( (n < 28) || (n > 199) ) vdp.statReg[2] |= 0x20;
 			else vdp.statReg[2] &= ~0x20;
 			ret = vdp.statReg[2];
+			break;
+		case 3:
+			if ((vdp.contReg[8] & 0xc0) == 0x80)
+			{	/* mouse mode: return x mouse delta */
+				ret = vdp.mx_delta;
+				vdp.mx_delta = 0;
+			}
+			else
+				ret = vdp.statReg[3];
+			break;
+		case 5:
+			if ((vdp.contReg[8] & 0xc0) == 0x80)
+			{	/* mouse mode: return y mouse delta */
+				ret = vdp.my_delta;
+				vdp.my_delta = 0;
+			}
+			else
+				ret = vdp.statReg[5];
 			break;
 		case 7:
 			ret = vdp.statReg[7];
@@ -1360,6 +1385,21 @@ int v9938_interrupt (void)
 
 	return vdp.INT;
 	}
+
+/*
+	Driver-specific function: update the vdp mouse state
+*/
+void v9938_update_mouse_state(int mx_delta, int my_delta, int button_state)
+{
+	/* save button state */
+	vdp.button_state = (button_state << 6) & 0xc0;
+
+	if ((vdp.contReg[8] & 0xc0) == 0x80)
+	{	/* vdp will process mouse deltas only if it is in mouse mode */
+		vdp.mx_delta += mx_delta;
+		vdp.my_delta += my_delta;
+	}
+}
 
 /***************************************************************************
 
