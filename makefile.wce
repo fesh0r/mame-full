@@ -106,21 +106,21 @@ EMULATOR = $(NAME)$(EXE)
 #
 
 DEFS = \
-        -DWIN32 \
-        -D_WINDOWS \
-        -DM_PI=3.1415926534 \
-        -DPI=3.1415926534 \
-        -DINLINE='static __inline' \
-        -Dinline=__inline \
-        -D__inline__=__inline \
+	-DWIN32 \
+	-D_WINDOWS \
+	-DM_PI=3.1415926534 \
+	-DPI=3.1415926534 \
+	-DINLINE='static __inline' \
+	-Dinline=__inline \
+	-D__inline__=__inline \
 	-Dalloca=_alloca \
-        -DPNG_SAVE_SUPPORT \
-        -DMAME_AVI \
-        -DHAS_CPUS \
-        -DHAS_SOUND \
-        -DLSB_FIRST=1 \
-        $(MAME_VERSION) \
-        $(MAME_NET) \
+	-DPNG_SAVE_SUPPORT \
+	-DMAME_AVI \
+	-DHAS_CPUS \
+	-DHAS_SOUND \
+	-DLSB_FIRST=1 \
+	$(MAME_VERSION) \
+	$(MAME_NET) \
 
 ifeq "$(MAMEOS)" "wince"
 DEFS += \
@@ -160,7 +160,7 @@ INCLUDES = \
 	-Isrc \
 	-Isrc/wince/crt \
 	-Isrc/wince \
-        -Isrc/includes \
+	-Isrc/includes \
 	-Isrc/windows \
 	-Isrc/windowsui \
 	-Isrc/cpu/m68000 \

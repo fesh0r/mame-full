@@ -1,6 +1,7 @@
 /* */
 #include "cassette.h"
 #include "image.h"
+#include "sound/wave.h"
 
 int cassette_init(int id, void *file, int open_mode, const struct cassette_args *args)
 {

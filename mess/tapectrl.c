@@ -1,6 +1,7 @@
 #include "driver.h"
 #include "image.h"
 #include "ui_text.h"
+#include "sound/wave.h"
 
 int tapecontrol(struct mame_bitmap *bitmap, int selected)
 {

@@ -183,7 +183,7 @@ TESTDRIVER( coleconb )	/* ColecoVision (No BIOS load)						*/
 	DRIVER( advision )	/* Adventurevision									*/
 
 	/* CAPCOM */
-TESTDRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)				*/
+	DRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)				*/
 
 	/* MAGNAVOX */
 TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983					*/

@@ -9,6 +9,7 @@
 #include <windows.h>
 #include <gx.h>
 #include <math.h>
+#include <assert.h>
 
 // MAME headers
 #include "driver.h"
@@ -16,6 +17,12 @@
 #include "video.h"
 #include "window.h"
 #include "emitblit.h"
+
+#ifdef assert
+#undef assert
+#endif
+
+#define assert(a)
 
 //============================================================
 //	TYPE DEFINITIONS

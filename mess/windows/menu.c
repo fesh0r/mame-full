@@ -19,6 +19,7 @@
 #include "ui_text.h"
 #include "strconv.h"
 #include "utils.h"
+#include "sound/wave.h"
 
 //============================================================
 //	IMPORTS

@@ -14,305 +14,34 @@ merged Street Fighter Zero for MESS
 
 ***************************************************************************/
 
-
 #include "driver.h"
-#include "vidhrdw/generic.h"
-#include "machine/eeprom.h"
 
-#include "includes/cps1.h"       /* External CPS1 definitions */
-
-
-WRITE16_HANDLER( qsound_sharedram1_w );
-READ16_HANDLER( qsound_sharedram1_r );
-
-static READ16_HANDLER( cps1_input2_r )
-{
-	int buttons=readinputport(7);
-	return buttons << 8 | buttons;
-}
-
-static READ16_HANDLER( cps1_input3_r )
-{
-    int buttons=readinputport(6);
-	return buttons << 8 | buttons;
-}
-
-
-static int cps1_sound_fade_timer;
-
-static WRITE_HANDLER( cps1_snd_bankswitch_w )
-{
-	unsigned char *RAM = memory_region(REGION_CPU2);
-	int length = memory_region_length(REGION_CPU2) - 0x10000;
-	int bankaddr;
-
-	bankaddr = (data * 0x4000) & (length-1);
-	cpu_setbank(1,&RAM[0x10000 + bankaddr]);
-
-	if (data & 0xfe) logerror("%04x: write %02x to f004\n",activecpu_get_pc(),data);
-}
-
-static WRITE16_HANDLER( cps1_sound_fade_w )
-{
-	if (ACCESSING_LSB)
-		cps1_sound_fade_timer = data & 0xff;
-}
-
-static READ_HANDLER( cps1_snd_fade_timer_r )
-{
-	return cps1_sound_fade_timer;
-}
-
-static WRITE16_HANDLER( cps1_sound_command_w )
-{
-	if (ACCESSING_LSB)
-		soundlatch_w(0,data & 0xff);
-}
-
-static READ16_HANDLER( cps1_input_r )
-{
-	int control=readinputport(offset/2);
-	return (control<<8) | control;
-}
-
-static int dial[2];
-
-static READ16_HANDLER( forgottn_dial_0_r )
-{
-	return ((readinputport(5) - dial[0]) >> (8*offset)) & 0xff;
-}
-
-static READ16_HANDLER( forgottn_dial_1_r )
-{
-	return ((readinputport(6) - dial[1]) >> (8*offset)) & 0xff;
-}
-
-static WRITE16_HANDLER( forgottn_dial_0_reset_w )
-{
-	dial[0] = readinputport(5);
-}
-
-static WRITE16_HANDLER( forgottn_dial_1_reset_w )
-{
-	dial[1] = readinputport(6);
-}
-
-static WRITE16_HANDLER( cps1_coinctrl_w )
-{
-//	usrintf_showmessage("coinctrl %04x",data);
-
-	if (ACCESSING_MSB)
-	{
-		coin_counter_w(0,data & 0x0100);
-		coin_counter_w(1,data & 0x0200);
-		coin_lockout_w(0,~data & 0x0400);
-		coin_lockout_w(1,~data & 0x0800);
-	}
-
-	if (ACCESSING_LSB)
-	{
-		/* mercs sets bit 0 */
-		set_led_status(0,data & 0x02);
-		set_led_status(1,data & 0x04);
-		set_led_status(2,data & 0x08);
-	}
-}
-
-static WRITE16_HANDLER( cpsq_coinctrl2_w )
-{
-	if (ACCESSING_LSB)
-	{
-		coin_counter_w(2,data & 0x01);
-		coin_lockout_w(2,~data & 0x02);
-		coin_counter_w(3,data & 0x04);
-		coin_lockout_w(3,~data & 0x08);
-/*
-  	{
-       char baf[40];
-       sprintf(baf,"0xf1c004=%04x", data);
-       usrintf_showmessage(baf);
-       }
-*/
-    }
-}
-
-static INTERRUPT_GEN( cps1_interrupt )
-{
-	/* Strider also has a IRQ4 handler. It is input port related, but the game */
-	/* works without it (maybe it's used to multiplex controls). It is the */
-	/* *only* game to have that. */
-	cpu_set_irq_line(0, 2, HOLD_LINE);
-}
-
-/********************************************************************
-*
-*  Q Sound
-*  =======
-*
-********************************************************************/
-
-static unsigned char *qsound_sharedram1,*qsound_sharedram2;
-
-INTERRUPT_GEN( cps1_qsound_interrupt )
-{
-#if 0
-I have removed CPU_AUDIO_CPU from the Z(0 so this is no longer necessary
-	/* kludge to pass the sound board test with sound disabled */
-	if (Machine->sample_rate == 0)
-		qsound_sharedram1[0xfff] = 0x77;
+#ifdef GAME
+#undef GAME
 #endif
 
-	cpu_set_irq_line(cpu_getactivecpu(), 2, HOLD_LINE);
-}
+#ifdef GAMEX
+#undef GAMEX
+#endif
 
+#define GAME(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME)
+#define GAMEX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME,FLAGS)
 
-static READ16_HANDLER( qsound_rom_r )
+#include "drivers/cps1.c"
+
+/* this is to keep GCC from whining about unused statics */
+int dummy_function(void)
 {
-	unsigned char *rom = memory_region(REGION_USER1);
-
-	if (rom) return rom[offset] | 0xff00;
-	else
-	{
-		usrintf_showmessage("%06x: read sound ROM byte %04x",activecpu_get_pc(),offset);
-		return 0;
-	}
+	return ((int) construct_forgottn) | ((int) construct_sf2) | ((int) construct_qsound);
 }
 
+/***************************************************************************
 
-static READ16_HANDLER( qsound_sharedram2_r )
-{
-	return qsound_sharedram2[offset] | 0xff00;
-}
+  Game driver(s)
 
-static WRITE16_HANDLER( qsound_sharedram2_w )
-{
-	if (ACCESSING_LSB)
-		qsound_sharedram2[offset] = data;
-}
+***************************************************************************/
 
-static WRITE_HANDLER( qsound_banksw_w )
-{
-	/*
-	Z80 bank register for music note data. It's odd that it isn't encrypted
-	though.
-	*/
-	unsigned char *RAM = memory_region(REGION_CPU2);
-	int bankaddress=0x10000+((data&0x0f)*0x4000);
-	if (bankaddress >= memory_region_length(REGION_CPU2))
-	{
-		logerror("WARNING: Q sound bank overflow (%02x)\n", data);
-		bankaddress=0x10000;
-	}
-	cpu_setbank(1, &RAM[bankaddress]);
-}
-
-
-/********************************************************************
-*
-*  EEPROM
-*  ======
-*
-*   The EEPROM is accessed by a serial protocol using the register
-*   0xf1c006
-*
-********************************************************************/
-
-READ16_HANDLER( cps1_eeprom_port_r )
-{
-	return EEPROM_read_bit();
-}
-
-WRITE16_HANDLER( cps1_eeprom_port_w )
-{
-	if (ACCESSING_LSB)
-	{
-		/*
-		bit 0 = data
-		bit 6 = clock
-		bit 7 = cs
-		*/
-		EEPROM_write_bit(data & 0x01);
-		EEPROM_set_cs_line((data & 0x80) ? CLEAR_LINE : ASSERT_LINE);
-		EEPROM_set_clock_line((data & 0x40) ? ASSERT_LINE : CLEAR_LINE);
-	}
-}
-
-
-MEMORY_READ16_START( cps1_readmem )
-	{ 0x000000, 0x1fffff, MRA16_ROM }, /* 68000 ROM */
-	{ 0x800000, 0x800001, input_port_4_word_r }, /* Player input ports */
-	{ 0x800010, 0x800011, input_port_4_word_r }, /* ?? */
-	{ 0x800018, 0x80001f, cps1_input_r }, /* Input ports */
-	{ 0x800020, 0x800021, MRA16_NOP }, /* ? Used by Rockman ? */
-	{ 0x800052, 0x800055, forgottn_dial_0_r }, /* forgotten worlds */
-	{ 0x80005a, 0x80005d, forgottn_dial_1_r }, /* forgotten worlds */
-	{ 0x800176, 0x800177, cps1_input2_r }, /* Extra input ports */
-	{ 0x8001fc, 0x8001fd, cps1_input2_r }, /* Input ports (SF Rev E) */
-	{ 0x800100, 0x8001ff, cps1_output_r },   /* Output ports */
-	{ 0x900000, 0x92ffff, MRA16_RAM },	/* SF2CE executes code from here */
-	{ 0xf00000, 0xf0ffff, qsound_rom_r },		/* Slammasters protection */
-	{ 0xf18000, 0xf19fff, qsound_sharedram1_r },	/* Q RAM */
-	{ 0xf1c000, 0xf1c001, cps1_input2_r },   /* Player 3 controls (later games) */
-	{ 0xf1c002, 0xf1c003, cps1_input3_r },   /* Player 4 controls (later games - muscle bombers) */
-	{ 0xf1c006, 0xf1c007, cps1_eeprom_port_r },
-	{ 0xf1e000, 0xf1ffff, qsound_sharedram2_r },	/* Q RAM */
-	{ 0xff0000, 0xffffff, MRA16_RAM },   /* RAM */
-MEMORY_END
-
-MEMORY_WRITE16_START( cps1_writemem )
-	{ 0x000000, 0x1fffff, MWA16_ROM },      /* ROM */
-	{ 0x800030, 0x800031, cps1_coinctrl_w },
-	{ 0x800040, 0x800041, forgottn_dial_0_reset_w },
-	{ 0x800048, 0x800049, forgottn_dial_1_reset_w },
-	{ 0x800180, 0x800181, cps1_sound_command_w },  /* Sound command */
-	{ 0x800188, 0x800189, cps1_sound_fade_w },
-	{ 0x800100, 0x8001ff, cps1_output_w, &cps1_output, &cps1_output_size },  /* Output ports */
-	{ 0x900000, 0x92ffff, cps1_gfxram_w, &cps1_gfxram, &cps1_gfxram_size },
-	{ 0xf18000, 0xf19fff, qsound_sharedram1_w }, /* Q RAM */
-	{ 0xf1c004, 0xf1c005, cpsq_coinctrl2_w },   /* Coin control2 (later games) */
-	{ 0xf1c006, 0xf1c007, cps1_eeprom_port_w },
-	{ 0xf1e000, 0xf1ffff, qsound_sharedram2_w }, /* Q RAM */
-	{ 0xff0000, 0xffffff, MWA16_RAM },        /* RAM */
-MEMORY_END
-
-
-MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xd000, 0xd7ff, MRA_RAM },
-	{ 0xf001, 0xf001, YM2151_status_port_0_r },
-	{ 0xf002, 0xf002, OKIM6295_status_0_r },
-	{ 0xf008, 0xf008, soundlatch_r },
-	{ 0xf00a, 0xf00a, cps1_snd_fade_timer_r }, /* Sound timer fade */
-MEMORY_END
-
-MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xd000, 0xd7ff, MWA_RAM },
-	{ 0xf000, 0xf000, YM2151_register_port_0_w },
-	{ 0xf001, 0xf001, YM2151_data_port_0_w },
-	{ 0xf002, 0xf002, OKIM6295_data_0_w },
-	{ 0xf004, 0xf004, cps1_snd_bankswitch_w },
-//	{ 0xf006, 0xf006, MWA_NOP }, /* ???? Unknown ???? */
-MEMORY_END
-
-MEMORY_READ_START( qsound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },  /* banked (contains music data) */
-	{ 0xc000, 0xcfff, MRA_RAM },
-	{ 0xd007, 0xd007, qsound_status_r },
-	{ 0xf000, 0xffff, MRA_RAM },
-MEMORY_END
-
-MEMORY_WRITE_START( qsound_writemem )
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAM, &qsound_sharedram1 },
-	{ 0xd000, 0xd000, qsound_data_h_w },
-	{ 0xd001, 0xd001, qsound_data_l_w },
-	{ 0xd002, 0xd002, qsound_cmd_w },
-	{ 0xd003, 0xd003, qsound_banksw_w },
-	{ 0xf000, 0xffff, MWA_RAM, &qsound_sharedram2 },
-MEMORY_END
+#define CODE_SIZE 0x200000
 
 INPUT_PORTS_START( sfzch )
 	PORT_START      /* IN0 */
@@ -361,149 +90,6 @@ INPUT_PORTS_START( sfzch )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
 INPUT_PORTS_END
 
-
-
-/********************************************************************
-
-			Graphics Layout macros
-
-  These are not really needed, and are used for documentation only.
-
-********************************************************************/
-
-static struct GfxLayout layout8x8 =
-{
-	8,8,
-	RGN_FRAC(1,1),
-	4,
-	{ GFX_RAW },
-	{ 4*8 },	/* org displacement - 8x8 tiles are taken from the RIGHT side of the 16x16 tile
-				   (fixes cawing which uses character 0x0002 as space, typo instead of 0x20?) */
-	{ 8*8 },	/* line modulo */
-	64*8		/* char modulo */
-};
-
-static struct GfxLayout layout16x16 =
-{
-	16,16,
-	RGN_FRAC(1,1),
-	4,
-	{ GFX_RAW },
-	{ 0 },		/* org displacement */
-	{ 8*8 },	/* line modulo */
-	128*8		/* char modulo */
-};
-
-static struct GfxLayout layout32x32 =
-{
-	32,32,
-	RGN_FRAC(1,1),
-	4,
-	{ GFX_RAW },
-	{ 0 },		/* org displacement */
-	{ 16*8 },	/* line modulo */
-	512*8		/* char modulo */
-};
-
-struct GfxDecodeInfo cps1_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &layout8x8,   0, 0x100 },
-	{ REGION_GFX1, 0, &layout16x16, 0, 0x100 },
-	{ REGION_GFX1, 0, &layout32x32, 0, 0x100 },
-	{ -1 } /* end of array */
-};
-
-static void cps1_irq_handler_mus(int irq)
-{
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
-}
-
-static struct YM2151interface ym2151_interface =
-{
-	1,  /* 1 chip */
-	3579580,    /* 3.579580 MHz ? */
-	{ YM3012_VOL(35,MIXER_PAN_LEFT,35,MIXER_PAN_RIGHT) },
-	{ cps1_irq_handler_mus }
-};
-
-static struct OKIM6295interface okim6295_interface_7576 =
-{
-	1,  /* 1 chip */
-	{ 7576 },
-	{ REGION_SOUND1 },
-	{ 30 }
-};
-
-
-static MACHINE_DRIVER_START( sfzch )
-	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 10000000)
-	MDRV_CPU_MEMORY(cps1_readmem,cps1_writemem)
-	MDRV_CPU_VBLANK_INT(cps1_interrupt, 1)
-
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4 Mhz ??? TODO: find real FRQ */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(1)
-
-    /* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
-	MDRV_SCREEN_SIZE(64*8, 32*8)
-	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE( cps1_gfxdecodeinfo )
-	MDRV_PALETTE_LENGTH(4096)
-
-	MDRV_VIDEO_EOF( cps1 )
-	MDRV_VIDEO_START( cps1 )
-	MDRV_VIDEO_UPDATE( cps1 )
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_7576)
-MACHINE_DRIVER_END
-
-
-struct QSound_interface qsound_interface =
-{
-	QSOUND_CLOCK,
-	REGION_SOUND1,
-	{ 100,100 }
-};
-
-/*
-Export this function so that the vidhrdw routine can drive the
-Q-Sound hardware
-*/
-
-WRITE16_HANDLER( qsound_sharedram1_w )
-{
-	if (ACCESSING_LSB)
-		qsound_sharedram1[offset] = data;
-}
-
-static WRITE16_HANDLER( cps2_qsound_sharedram_w )
-{
-    qsound_sharedram1_w(offset/2, data, 0xff00);
-}
-
-READ16_HANDLER( qsound_sharedram1_r )
-{
-	return qsound_sharedram1[offset] | 0xff00;
-}
-
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-#define CODE_SIZE 0x200000
-
-
 ROM_START( sfzch )
 	ROM_REGION( CODE_SIZE, REGION_CPU1,0 )      /* 68000 code */
 	ROM_LOAD16_WORD_SWAP( "sfzch23",        0x000000, 0x80000, 0x1140743f )
@@ -548,5 +134,5 @@ ROM_END
 ***************************************************************************/
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT		INIT	CONFIG	COMPANY		FULLNAME */
-CONS( 1995, sfzch,    0,        sfzch,	  sfzch,    0,		NULL,	"Capcom", "CPS Changer (Street Fighter ZERO)" )
+CONS( 1995, sfzch,    0,        cps1,	  sfzch,    0,		NULL,	"Capcom", "CPS Changer (Street Fighter ZERO)" )
 
