@@ -799,6 +799,7 @@ static void nec765_get_next_id(chrn_id *id)
 static int nec765_get_matching_sector(void)
 {
 	mess_image *img = current_image();
+	chrn_id id;
 
 	/* number of times we have seen index hole */
 	int index_count = 0;
@@ -806,8 +807,6 @@ static int nec765_get_matching_sector(void)
 	/* get sector id's */
 	do
     {
-		chrn_id id;
-
 		nec765_get_next_id(&id);
 
 		/* tested on Amstrad CPC - All bytes must match, otherwise
@@ -1893,7 +1892,7 @@ static void nec765_setup_command(void)
 		}
 		break;
 
-		case 0x06:  /* read data */
+	case 0x06:  /* read data */
 		nec765_setup_drive_and_side();
 
 		fdc.nec765_status[0] = fdc.drive | (fdc.side<<2);
