@@ -20,11 +20,11 @@
   new update routines: 8->32bpp & 16->32bpp
 
  TODO: Test the HERMES code.
-       Add more updates routines (available only 8->16bpp, 16->16bpp, 8->32bpp, 16->32bpp)
-       Test the 16bpp->16bpp update routine (tested only in mk2r91)
+       Test the 16bpp->24bpp update routine
        Test the 16bpp->32bpp update routine
        Improve performance.
-   
+       Test mouse buttons (which games use them?)
+
 ***************************************************************************/
 #define __SDL_C
 
@@ -86,9 +86,12 @@ struct rc_option display_opts[] = {
 };
 
 void list_sdl_modes(void);
+void sdl_update_8_to_8bpp(struct osd_bitmap *bitmap);
 void sdl_update_8_to_16bpp(struct osd_bitmap *bitmap);
+void sdl_update_8_to_24bpp(struct osd_bitmap *bitmap);
 void sdl_update_8_to_32bpp(struct osd_bitmap *bitmap);
 void sdl_update_16_to_16bpp(struct osd_bitmap *bitmap);
+void sdl_update_16_to_24bpp(struct osd_bitmap *bitmap);
 void sdl_update_16_to_32bpp(struct osd_bitmap *bitmap);
 
 int sysdep_init(void)
@@ -153,21 +156,6 @@ int sysdep_create_display(int depth)
 #endif
       Vid_height = visual_height*heightscale;
       Vid_width = visual_width*widthscale;
-      if( depth == 8 )
-	if (Vid_depth == 32)
-	  update_function = &sdl_update_8_to_32bpp;
-	else
-	  update_function = &sdl_update_8_to_16bpp;
-      else if( depth == 16 )
-	if (Vid_depth == 32)
-	  update_function = &sdl_update_16_to_32bpp;
-	else
-	  update_function = &sdl_update_16_to_16bpp;
-      else {
-         fprintf (stderr, "SDL: Unsupported depth=%d\n", depth);
-         SDL_Quit();
-         exit (OSD_NOT_OK);
-      }
    } else {
       int best_vid_mode; /* Best video mode found */
       int best_width,best_height;
@@ -176,22 +164,6 @@ int sysdep_create_display(int depth)
 #ifdef SDL_DEBUG
       fprintf (stderr, "SDL: visual w:%d visual h:%d\n", visual_width, visual_height);
 #endif
-      if( depth == 8 )
-	if (Vid_depth == 32)
-	  update_function = &sdl_update_8_to_32bpp;
-	else
-	  update_function = &sdl_update_8_to_16bpp;
-      else if( depth == 16 )
-	if (Vid_depth == 32)
-	  update_function = &sdl_update_16_to_32bpp;
-	else
-	  update_function = &sdl_update_16_to_16bpp;
-      else {
-         fprintf (stderr, "SDL: Unsupported depth=%d\n", Vid_depth);
-         SDL_Quit();
-         exit (OSD_NOT_OK);
-      }
-
       best_vid_mode = 0;
       best_width = vid_modes[best_vid_mode]->w;
       best_height = vid_modes[best_vid_mode]->h;
@@ -247,6 +219,54 @@ int sysdep_create_display(int depth)
       }
    }
 
+   if( depth == 8 ) {
+      switch( Vid_depth ) {
+      case 32:
+         update_function = &sdl_update_8_to_32bpp;
+         break;
+      case 24:
+         update_function = &sdl_update_8_to_24bpp;
+         break;
+      case 16:
+         update_function = &sdl_update_8_to_16bpp;
+         break;
+      case 8:
+         update_function = &sdl_update_8_to_8bpp;
+         break;
+      default:
+         fprintf (stderr, "SDL: Unsupported Vid_depth=%d in depth=%d\n", Vid_depth,depth);
+         SDL_Quit();
+         exit (OSD_NOT_OK);
+         break;
+      }
+   }
+   else if( depth == 16 )
+   {
+      switch( Vid_depth ) {
+      case 32:
+         update_function = &sdl_update_16_to_32bpp;
+         break;
+      case 24:
+         update_function = &sdl_update_16_to_24bpp;
+         break;
+      case 16:
+         update_function = &sdl_update_16_to_16bpp;
+         break;
+      default:
+         fprintf (stderr, "SDL: Unsupported Vid_depth=%d in depth=%d\n", Vid_depth,depth);
+         SDL_Quit();
+         exit (OSD_NOT_OK);
+         break;
+      }
+   }
+   else
+   {
+      fprintf (stderr, "SDL: Unsupported depth=%d\n", depth);
+      SDL_Quit();
+      exit (OSD_NOT_OK);
+   }
+
+
    /* Set video mode according to flags */
    vid_mode_flag = SDL_HWSURFACE;
    if (start_fullscreen) {
@@ -274,7 +294,7 @@ int sysdep_create_display(int depth)
    /* TODO: More general destination choosing - uptil
        now only 16 bit */
    H_dst_format = Hermes_FormatNew (16,Surface->format->Rmask,Surface->format->Gmask,Surface->format->Bmask,0,0);
-   //  H_dst_format = Hermes_FormatNew (16,5,5,5,0,0);
+   /*  H_dst_format = Hermes_FormatNew (16,5,5,5,0,0); */
    if ( ! (Hermes_ConverterRequest(H_ConverterHandle,H_src_format , H_dst_format)) ) {
       fprintf (stderr_file, "Hermes: Info: Converter request failed\n");
       exit (OSD_NOT_OK);
@@ -313,7 +333,23 @@ int sysdep_create_display(int depth)
 }
 
 
-/* Update the display. */
+/* Update routines */
+/* Update routines */
+void sdl_update_8_to_8bpp (struct osd_bitmap *bitmap)
+{
+#define DEST_WIDTH Vid_width
+#define DEST Offscreen_surface->pixels
+#define SRC_PIXEL unsigned char
+#define DEST_PIXEL unsigned char
+
+#include "blit.h"
+
+#undef DEST_PIXEL
+#undef SRC_PIXEL
+#undef DEST
+#undef DEST_WIDTH
+}
+
 void sdl_update_8_to_16bpp(struct osd_bitmap *bitmap)
 {
 #define BLIT_16BPP_HACK
@@ -331,6 +367,30 @@ void sdl_update_8_to_16bpp(struct osd_bitmap *bitmap)
 #undef SRC_PIXEL
 #undef INDIRECT
 #undef BLIT_16BPP_HACK
+}
+
+void sdl_update_8_to_24bpp (struct osd_bitmap *bitmap)
+{
+#define SRC_PIXEL  unsigned char
+#define DEST_PIXEL unsigned int
+#define PACK_BITS
+#define DEST Offscreen_surface->pixels
+#define DEST_WIDTH Vid_width
+   if(current_palette->lookup)
+   {
+#define INDIRECT current_palette->lookup
+#include "blit.h"
+#undef INDIRECT
+   }
+   else
+   {
+#include "blit.h"
+   }
+#undef DEST_WIDTH
+#undef DEST
+#undef PACK_BITS
+#undef DEST_PIXEL
+#undef SRC_PIXEL
 }
 
 void sdl_update_8_to_32bpp (struct osd_bitmap *bitmap)
@@ -368,6 +428,30 @@ void sdl_update_16_to_16bpp (struct osd_bitmap *bitmap)
 #undef DEST_WIDTH
 #undef SRC_PIXEL
 #undef DEST_PIXEL
+}
+
+void sdl_update_16_to_24bpp (struct osd_bitmap *bitmap)
+{
+#define SRC_PIXEL  unsigned short
+#define DEST_PIXEL unsigned int
+#define PACK_BITS
+#define DEST Offscreen_surface->pixels
+#define DEST_WIDTH Vid_width
+   if(current_palette->lookup)
+   {
+#define INDIRECT current_palette->lookup
+#include "blit.h"
+#undef INDIRECT
+   }
+   else
+   {
+#include "blit.h"
+   }
+#undef DEST_WIDTH
+#undef DEST
+#undef PACK_BITS
+#undef DEST_PIXEL
+#undef SRC_PIXEL
 }
 
 void sdl_update_16_to_32bpp (struct osd_bitmap *bitmap)
@@ -512,14 +596,14 @@ void sysdep_update_display(struct osd_bitmap *bitmap)
       
 #endif /* PARANOIC */
 
-      // #define dirty_lines old_dirty_lines    
-      // #define dirty_blocks old_dirty_blocks
+      /* #define dirty_lines old_dirty_lines     */
+      /* #define dirty_blocks old_dirty_blocks */
       
       for (y=0;y<h;y++) {
          if (dirty_lines[y]) {
             line_min = y<<3;
             line_max = line_min + 8;
-            // old_dirty_lines[y]=1;
+            /* old_dirty_lines[y]=1; */
             for (x=0;x<w;x++) {
                if (dirty_blocks[y][x]) {
                   col_min = x<<3;
@@ -616,7 +700,9 @@ int sysdep_display_alloc_palette(int totalcolors)
 int sysdep_display_set_pen(int pen,unsigned char red, unsigned char green, unsigned char blue)
 {
    static int warned = 0;
+#ifdef SDL_DEBUG
    fprintf(stderr,"sysdep_display_set_pen(%d,%d,%d,%d)\n",pen,red,green,blue);
+#endif
 
 #ifndef DIRECT_HERMES
    if( Colors ) {
@@ -639,11 +725,18 @@ int sysdep_display_set_pen(int pen,unsigned char red, unsigned char green, unsig
    return 0;
 }
 
-
-
 void sysdep_mouse_poll (void)
 {
-/*   fprintf(stderr,"sysdep_mouse_poll()\n"); */
+   int i;
+   int x,y;
+   Uint8 buttons;
+
+   buttons = SDL_GetRelativeMouseState( &x, &y);
+   mouse_data[0].deltas[0] = x;
+   mouse_data[0].deltas[1] = y;
+   for(i=0;i<MOUSE_BUTTONS;i++) {
+      mouse_data[0].buttons[i] = buttons & (0x01 << i);
+   }
 }
 
 /* Keyboard procs */

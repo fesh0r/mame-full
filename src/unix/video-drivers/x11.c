@@ -202,9 +202,13 @@ void sysdep_update_display (struct osd_bitmap *bitmap)
       else
          x11_video_mode = new_video_mode;
 
-      if(sysdep_display_alloc_palette(video_colors_used))
-         goto barf;
-      
+      if(sysdep_palette_change_display(&current_palette))
+	      goto barf;
+
+      if (display_palette_info.depth == 8)
+	      if(sysdep_display_alloc_palette(video_colors_used))
+		      goto barf;
+
       keyboard_clear();
       osd_mark_dirty (0, 0, bitmap->width - 1, bitmap->height - 1);
       sysdep_palette_mark_dirty(current_palette);

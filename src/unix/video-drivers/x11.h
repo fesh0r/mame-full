@@ -69,6 +69,20 @@ int  xf86_dga_modify_pen(int pen, unsigned char red,unsigned char green,unsigned
 void xf86_dga_update_display(struct osd_bitmap *bitmap);
 int  xf86_dga_alloc_palette(int writable_colors);
 int  xf86_dga_16bpp_capable(void);
+int  xf86_dga1_init(void);
+int  xf86_dga1_create_display(int depth);
+void xf86_dga1_close_display(void);
+int  xf86_dga1_modify_pen(int pen, unsigned char red,unsigned char green,unsigned char blue);
+void xf86_dga1_update_display(struct osd_bitmap *bitmap);
+int  xf86_dga1_alloc_palette(int writable_colors);
+int  xf86_dga1_16bpp_capable(void);
+int  xf86_dga2_init(void);
+int  xf86_dga2_create_display(int depth);
+void xf86_dga2_close_display(void);
+int  xf86_dga2_modify_pen(int pen, unsigned char red,unsigned char green,unsigned char blue);
+void xf86_dga2_update_display(struct osd_bitmap *bitmap);
+int  xf86_dga2_alloc_palette(int writable_colors);
+int  xf86_dga2_16bpp_capable(void);
 
 /* XIL functions */
 #ifdef USE_XIL
