@@ -15,5 +15,5 @@ plug for external power supply
 
 Mess Emulation State
 --------------------
-not working
-Low priority for me, because it uses the Fairchild F8 cpu.
+not working?
+operating intructions needed!
