@@ -1,4 +1,4 @@
-#include "mess/includes/psx.h"
+#include "includes/psx.h"
 
 /* -----------------------------------------------------------------------
  * cd_stat values

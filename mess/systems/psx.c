@@ -16,7 +16,7 @@ psxe30
 
 #include "driver.h"
 #include "cpu/mips/mips.h"
-#include "mess/includes/psx.h"
+#include "includes/psx.h"
 
 static MEMORY_WRITE32_START( psx_writemem )
 	{ 0x00000000, 0x001fffff, MWA32_RAM },	/* ram */
