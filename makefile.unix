@@ -298,6 +298,7 @@ ARCH  = linux
 # SOUND_ARTS_TEIRA = 1
 # SOUND_ARTS_SMOTEK = 1
 # SOUND_SDL= 1
+# SOUND_WAVEOUT = 1
 
 
 ##############################################################################
@@ -333,6 +334,8 @@ DISPLAY_METHOD = x11
 # *** uncomment any extensions you wish to use.
 # MIT-Shared Memory X Extensions, comment the
 X11_MITSHM = 1
+# Use Xv extension for hardware scaling
+# X11_XV = 1
 # XFree86 DGA
 # X11_DGA = 1
 # Work around a bug in the XFree86 tdfx driver that prevents the original mode 
@@ -389,9 +392,9 @@ GLCFLAGS= -D_X11_
 # *** Special features
 ##############################################################################
 
-# *** Uncommenty the next lines to build xmame with build in debugger, only
-# supported for x11 and svgalib. Only enable this if you need it, if you
-# want to develop drivers that is, since it slows down xmame considerably.
+# *** Uncomment the next lines to build xmame with a built-in debugger (only
+# supported for x11 and svgalib). Only enable this if you need it -- if you
+# want to develop drivers, that is, since it slows down xmame considerably.
 # MAME_DEBUG = 1
 
 # *** Uncomment the next lines to use x86-asm cpu cores. This is only
