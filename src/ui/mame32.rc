@@ -102,6 +102,8 @@ BEGIN
             MENUITEM "&Cabinet",                 ID_TOGGLE_TAB_CABINET
             MENUITEM "&Marquee",                 ID_TOGGLE_TAB_MARQUEE
             MENUITEM "&Title",                   ID_TOGGLE_TAB_TITLE
+            MENUITEM "Control &Panel",              ID_TOGGLE_TAB_CONTROL_PANEL
+
             MENUITEM "&History",                    ID_TOGGLE_TAB_HISTORY
         END
         MENUITEM SEPARATOR
@@ -206,6 +208,8 @@ BEGIN
             MENUITEM "overridden by code",          ID_CONTEXT_SHOW_FOLDER_START
 
         END
+        MENUITEM SEPARATOR
+        MENUITEM "&Properties",                 ID_FOLDER_PROPERTIES
     END
 END
 
@@ -273,8 +277,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,75,0,0
- PRODUCTVERSION 0,75,1,0
+ FILEVERSION 0,76,1,0
+ PRODUCTVERSION 0,76,1,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -300,7 +304,7 @@ BEGIN
             VALUE "CompanyName", "MAME Team\0"
             VALUE "FileDescription", "Multiple Arcade Machine Emulator for Win32\0"
 #endif
-            VALUE "FileVersion", "0, 75, 0, 0\0"
+            VALUE "FileVersion", "0, 76, 0, 0\0"
             VALUE "InternalName", "MAME32\0"
             VALUE "LegalCopyright", "Copyright 1997-2003 Nicola Salmoria and the MAME team\0"
             VALUE "LegalTrademarks", "\0"
@@ -311,7 +315,7 @@ BEGIN
             VALUE "OriginalFilename", "MAME32.exe\0"
             VALUE "ProductName", "MAME32\0"
 #endif
-            VALUE "ProductVersion", "0, 75, 0, 0\0"
+            VALUE "ProductVersion", "0, 76, 0, 0\0"
         END
     END
     BLOCK "VarFileInfo"
@@ -523,36 +527,36 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,257,37,44,14
 END
 
-IDD_PROP_GAME DIALOG DISCARDABLE  0, 0, 220, 205
+IDD_PROP_GAME DIALOG DISCARDABLE  0, 0, 220, 239
 STYLE WS_CHILD | WS_CAPTION
 CAPTION "General"
 FONT 8, "MS Sans Serif"
 BEGIN
-	ICON            IDI_MAME32_ICON,IDC_GAME_ICON,20,10,20,20
+    ICON            IDI_MAME32_ICON,IDC_GAME_ICON,20,10,21,20
     LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,52,9,161,25,
                     SS_NOPREFIX
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,20,38,178,1
     LTEXT           "Manufactured:",IDC_STATIC,20,45,47,8
     LTEXT           "Static",IDC_PROP_MANUFACTURED,75,45,139,9,SS_NOPREFIX
     LTEXT           "Status:",IDC_STATIC,20,55,47,8
-    LTEXT           "Static",IDC_PROP_STATUS,75,55,139,9
-    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,20,68,177,1
-    LTEXT           "CPU:",IDC_STATIC,20,75,47,8
-    LTEXT           "Static\nStatic\nStatic\nStatic",IDC_PROP_CPU,74,73,139,
+    LTEXT           "Static",IDC_PROP_STATUS,75,55,139,38
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,18,101,174,1
+    LTEXT           "CPU:",IDC_STATIC,18,108,47,8
+    LTEXT           "Static\nStatic\nStatic\nStatic",IDC_PROP_CPU,72,106,139,
                     33
-    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,20,108,177,1
-    LTEXT           "Sound:",IDC_STATIC,20,115,47,8
-    LTEXT           "Static\nStatic\nStatic\nStatic",IDC_PROP_SOUND,74,113,
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,18,141,174,1
+    LTEXT           "Sound:",IDC_STATIC,18,148,47,8
+    LTEXT           "Static\nStatic\nStatic\nStatic",IDC_PROP_SOUND,72,146,
                     139,32
-    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,20,148,177,1
-    LTEXT           "Screen:",IDC_STATIC,20,155,47,8
-    LTEXT           "Static",IDC_PROP_SCREEN,75,155,139,8
-    LTEXT           "Colors:",IDC_STATIC,20,165,47,8
-    LTEXT           "Static",IDC_PROP_COLORS,75,165,139,8
-    LTEXT           "Clone of:",IDC_PROP_CLONEOF_TEXT,20,185,50,8
-    LTEXT           "Static",IDC_PROP_CLONEOF,75,185,130,8
-    LTEXT           "Source:",IDC_STATIC,20,175,47,8
-    LTEXT           "Static",IDC_PROP_SOURCE,75,175,139,8
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,18,181,174,1
+    LTEXT           "Screen:",IDC_STATIC,18,188,47,8
+    LTEXT           "Static",IDC_PROP_SCREEN,74,188,139,8
+    LTEXT           "Colors:",IDC_STATIC,18,198,47,8
+    LTEXT           "Static",IDC_PROP_COLORS,74,198,139,8
+    LTEXT           "Clone of:",IDC_PROP_CLONEOF_TEXT,18,218,50,8
+    LTEXT           "Static",IDC_PROP_CLONEOF,74,218,130,8
+    LTEXT           "Source:",IDC_STATIC,18,208,47,8
+    LTEXT           "Static",IDC_PROP_SOURCE,74,208,139,8
 END
 
 IDD_PROP_AUDIT DIALOG DISCARDABLE  0, 0, 220, 205
@@ -689,7 +693,7 @@ END
 IDD_PROP_SOUND DIALOGEX 0, 0, 220, 205
 STYLE WS_CHILD | WS_CAPTION
 CAPTION "Sound"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     ICON            IDI_SOUND,IDC_STATIC,20,11,20,20
     LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,52,9,161,25,
@@ -867,8 +871,8 @@ BEGIN
 #endif
     CONTROL         "Use less CPU time when possible",IDC_SLEEP,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,145,120,10,0,HIDC_SLEEP
-    CONTROL         "Use pre-0.63 timing sytem",IDC_OLD_TIMING,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,155,95,10,0,
+    CONTROL         "Use RDTSC timing system (for desktops)",IDC_OLD_TIMING,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,155,95,10,0,
                     HIDC_OLD_TIMING
 #ifdef MESS
     CONTROL         "Error log (for developers)",IDC_LOG,"Button",
@@ -1015,6 +1019,8 @@ BEGIN
                     HIDC_FILTER_EDIT
     DEFPUSHBUTTON   "&OK",IDOK,49,164,50,14
     PUSHBUTTON      "&Cancel",IDCANCEL,105,164,50,14
+    LTEXT           "(*) = inherited from parent folder",IDC_INHERITED,23,
+                    106,99,8
 END
 
 IDD_RESET DIALOGEX 0, 0, 182, 154
@@ -1071,28 +1077,24 @@ BEGIN
     PUSHBUTTON      "&Cancel",IDCANCEL,145,175,50,14
 END
 
-#ifdef MESS
-IDD_INTERFACE_OPTIONS DIALOGEX 0, 0, 212, 201
-#else
-IDD_INTERFACE_OPTIONS DIALOGEX 0, 0, 202, 201
-#endif
+IDD_INTERFACE_OPTIONS DIALOGEX 0, 0, 328, 177
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_CONTEXTHELP
 CAPTION "Interface Options"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
 #ifdef MESS
-    GROUPBOX        "Application Start",IDC_STATIC,5,5,200,115
-    CONTROL         "&Search for new systems",IDC_START_GAME_CHECK,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,15,95,10,0,
+    GROUPBOX        "System Selection",IDC_STATIC,5,5,190,143
+    CONTROL         "&Search for new systems on start",IDC_START_GAME_CHECK,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,15,110,10,0,
                     HIDC_START_GAME_CHECK
     CONTROL         "&Allow system selection by a joystick (requires restart)",
                     IDC_JOY_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,30,
-                    183,10,0,HIDC_JOY_GUI
+                    173,10,0,HIDC_JOY_GUI
 #else
-    GROUPBOX        "Application Start",IDC_STATIC,5,5,190,115
-    CONTROL         "&Search for new games",IDC_START_GAME_CHECK,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,15,85,10,0,
+    GROUPBOX        "Game Selection",IDC_STATIC,5,5,190,143
+    CONTROL         "&Search for new games on start",IDC_START_GAME_CHECK,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,15,110,10,0,
                     HIDC_START_GAME_CHECK
     CONTROL         "&Allow game selection by a joystick (requires restart)",
                     IDC_JOY_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,30,
@@ -1118,27 +1120,35 @@ BEGIN
                     SS_CENTERIMAGE
     EDITTEXT        IDC_CYCLETIMESEC,105,100,25,12,ES_NUMBER,0,
                     HIDC_CYCLETIMESEC
-#ifdef MESS
-    GROUPBOX        "Emulation",IDC_STATIC,5,120,200,55
-#else
-    GROUPBOX        "Emulation",IDC_STATIC,5,120,190,55
-#endif
+    CONTROL         "Inheritable Filters",IDC_FILTER_INHERIT,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,131,69,10
+    GROUPBOX        "Emulation",IDC_STATIC,202,4,120,55
     CONTROL         "Skip &disclaimer",IDC_SKIP_DISCLAIMER,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,130,60,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,209,14,60,10,0,
                     HIDC_SKIP_DISCLAIMER
 #ifdef MESS
     CONTROL         "Skip &system info",IDC_SKIP_GAME_INFO,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,144,70,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,209,28,60,10,0,
+                    HIDC_SKIP_GAME_INFO
 #else
     CONTROL         "Skip &game info",IDC_SKIP_GAME_INFO,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,144,60,10,0,
-#endif
+                    BS_AUTOCHECKBOX | WS_TABSTOP,209,28,60,10,0,
                     HIDC_SKIP_GAME_INFO
+#endif
     CONTROL         "&High thread priority",IDC_HIGH_PRIORITY,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,160,75,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,209,44,75,10,0,
                     HIDC_HIGH_PRIORITY
-    DEFPUSHBUTTON   "&OK",IDOK,45,180,50,14
-    PUSHBUTTON      "&Cancel",IDCANCEL,101,180,50,14
+    CONTROL         "S&tretch screenshot larger than natural size",
+                    IDC_STRETCH_SCREENSHOT_LARGER,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,15,117,148,10,0,
+                    HIDC_STRETCH_SCREENSHOT_LARGER
+    GROUPBOX        "Bookkeeping",IDC_STATIC,201,65,120,39
+    CONTROL         "Reset all Play Times",IDC_RESET_PLAYTIME,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,208,89,79,10
+    CONTROL         "Reset all Playcounts",IDC_RESET_PLAYCOUNT,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,208,74,80,10
+    DEFPUSHBUTTON   "&OK",IDOK,50,155,50,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,226,155,50,14
 END
 
 IDD_LANGUAGE DIALOGEX 0, 0, 186, 66
@@ -1263,7 +1273,7 @@ BEGIN
         VERTGUIDE, 66
         VERTGUIDE, 74
         VERTGUIDE, 201
-        BOTTOMMARGIN, 198
+        BOTTOMMARGIN, 232
     END
 
     IDD_PROP_AUDIT, DIALOG

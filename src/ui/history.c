@@ -36,7 +36,7 @@ extern int load_driver_history(const struct GameDriver *drv, char *buffer, int b
 // Load indexes from history.dat if found
 char * GetGameHistory(int driver_index)
 {
-	static char buffer[8192];
+	static char buffer[32768];
 	buffer[0] = '\0';
 
 	if (load_driver_history(drivers[driver_index],buffer,sizeof(buffer)) != 0)

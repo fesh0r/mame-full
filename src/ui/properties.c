@@ -45,12 +45,21 @@
 #include "m32util.h"
 #include "directdraw.h"
 #include "properties.h"
+#include "treeview.h"
 
 #include "screenshot.h"
 #include "Mame32.h"
 #include "DataMap.h"
 #include "help.h"
 #include "resource.hm"
+
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#endif
+
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#endif
 
 #ifdef MESS
 // done like this until I figure out a better idea
@@ -131,6 +140,7 @@ static BOOL orig_uses_defaults;
 static options_type* pGameOpts = NULL;
 
 static int  g_nGame            = 0;
+static int  g_nFolder          = 0;
 static BOOL g_bInternalSet     = FALSE;
 static BOOL g_bUseDefaults     = FALSE;
 static BOOL g_bReset           = FALSE;
@@ -259,6 +269,8 @@ static DWORD dwHelpIDs[] =
 	IDC_BIOS,               HIDC_BIOS,
 	IDC_CLEAN_STRETCH,      HIDC_CLEAN_STRETCH,
 	IDC_D3D_ROTATE_EFFECTS, HIDC_D3D_ROTATE_EFFECTS,
+	IDC_CYCLE_SCREENSHOT,   HIDC_CYCLE_SCREENSHOT,
+	IDC_STRETCH_SCREENSHOT_LARGER, HIDC_STRETCH_SCREENSHOT_LARGER,
 	0,                      0
 };
 
@@ -299,7 +311,7 @@ static void CLIB_DECL DetailsPrintf(const char *fmt, ...)
 }
 
 static PROPSHEETPAGE *CreatePropSheetPages(HINSTANCE hInst, BOOL bOnlyDefault,
-	const struct GameDriver *gamedrv, UINT *pnMaxPropSheets)
+	const struct GameDriver *gamedrv, UINT *pnMaxPropSheets, PROP_SOURCE source )
 {
 	PROPSHEETPAGE *pspages;
 	int maxPropSheets;
@@ -310,10 +322,25 @@ static PROPSHEETPAGE *CreatePropSheetPages(HINSTANCE hInst, BOOL bOnlyDefault,
 	if (gamedrv)
 	    expand_machine_driver(gamedrv->drv, &drv);
 
-	for (i = 0; g_propSheets[i].pfnDlgProc; i++)
+	if( source != SRC_GAME )
+	{
+		i = 2;
+	}
+	else
+	{
+		i = 0;
+	}
+	for (; g_propSheets[i].pfnDlgProc; i++)
 		;
 
-	possiblePropSheets = i + 1;
+	if( source != SRC_GAME )
+	{
+		possiblePropSheets = i - 1;
+	}
+	else
+	{
+		possiblePropSheets = i + 1;
+	}
 
 	pspages = malloc(sizeof(PROPSHEETPAGE) * possiblePropSheets);
 	if (!pspages)
@@ -321,7 +348,15 @@ static PROPSHEETPAGE *CreatePropSheetPages(HINSTANCE hInst, BOOL bOnlyDefault,
 	memset(pspages, 0, sizeof(PROPSHEETPAGE) * possiblePropSheets);
 
 	maxPropSheets = 0;
-	for (i = 0; g_propSheets[i].pfnDlgProc; i++)
+	if( source != SRC_GAME )
+	{
+		i = 2;
+	}
+	else
+	{
+		i = 0;
+	}
+	for (; g_propSheets[i].pfnDlgProc; i++)
 	{
 		if (!bOnlyDefault || g_propSheets[i].bOnDefaultPage)
 		{
@@ -363,7 +398,7 @@ void InitDefaultPropertyPage(HINSTANCE hInst, HWND hWnd)
 
 	ZeroMemory(&pshead, sizeof(pshead));
 
-	pspage = CreatePropSheetPages(hInst, TRUE, NULL, &pshead.nPages);
+	pspage = CreatePropSheetPages(hInst, TRUE, NULL, &pshead.nPages, SRC_GAME);
 	if (!pspage)
 		return;
 
@@ -389,12 +424,12 @@ void InitDefaultPropertyPage(HINSTANCE hInst, HWND hWnd)
 	free(pspage);
 }
 
-void InitPropertyPage(HINSTANCE hInst, HWND hWnd, int game_num, HICON hIcon)
+void InitPropertyPage(HINSTANCE hInst, HWND hWnd, int game_num, HICON hIcon, int folder_index, PROP_SOURCE source)
 {
-	InitPropertyPageToPage(hInst, hWnd, game_num, hIcon, PROPERTIES_PAGE);
+	InitPropertyPageToPage(hInst, hWnd, game_num, hIcon, PROPERTIES_PAGE, folder_index, source);
 }
 
-void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, HICON hIcon, int start_page)
+void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, HICON hIcon, int start_page, int folder_index, PROP_SOURCE source )
 {
 	PROPSHEETHEADER pshead;
 	PROPSHEETPAGE   *pspage;
@@ -408,19 +443,35 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, HICON hIco
 	g_hIcon = CopyIcon(hIcon);
 	InitGameAudit(game_num);
 	g_nGame = game_num;
-
-	/* Get Game options to populate property sheets */
-	pGameOpts = GetGameOptions(game_num);
-	g_bUseDefaults = GetGameUsesDefaults(game_num);
-	/* Stash the result for comparing later */
-	CopyGameOptions(pGameOpts,&origGameOpts);
+	g_nFolder = game_num;
+	if( source == SRC_GAME )
+	{
+		pGameOpts = GetGameOptions(game_num, folder_index);
+		g_bUseDefaults = GetGameUsesDefaults(game_num);
+		/* Stash the result for comparing later */
+		CopyGameOptions(pGameOpts,&origGameOpts);
+	}
+	else
+	{
+		pGameOpts = GetFolderOptions( game_num );
+		/* Stash the result for comparing later */
+		CopyGameOptions(pGameOpts,&origGameOpts);
+		g_nGame = -2;
+	}
 	orig_uses_defaults = g_bUseDefaults;
 	g_bReset = FALSE;
 	BuildDataMap();
 
 	ZeroMemory(&pshead, sizeof(PROPSHEETHEADER));
 
-	pspage = CreatePropSheetPages(hInst, FALSE, drivers[game_num], &pshead.nPages);
+	if( source == SRC_GAME )
+	{
+		pspage = CreatePropSheetPages(hInst, FALSE, drivers[game_num], &pshead.nPages, source);
+	}
+	else
+	{
+		pspage = CreatePropSheetPages(hInst, FALSE, NULL, &pshead.nPages, source);
+	}
 	if (!pspage)
 		return;
 
@@ -429,7 +480,14 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, HICON hIco
 	pshead.dwSize                     = sizeof(PROPSHEETHEADER);
 	pshead.dwFlags                    = PSH_PROPSHEETPAGE | PSH_USEICONID | PSH_PROPTITLE;
 	pshead.hInstance                  = hInst;
-	pshead.pszCaption                 = ModifyThe(drivers[g_nGame]->description);
+	if( source == SRC_GAME )
+	{
+		pshead.pszCaption                 = ModifyThe(drivers[g_nGame]->description);
+	}
+	else
+	{
+		pshead.pszCaption  = "folder";
+	}
 	pshead.DUMMYUNIONNAME2.nStartPage = start_page;
 	pshead.DUMMYUNIONNAME.pszIcon     = MAKEINTRESOURCE(IDI_MAME32_ICON);
 	pshead.DUMMYUNIONNAME3.ppsp       = pspage;
@@ -566,7 +624,9 @@ static char *GameInfoColors(UINT nIndex)
 /* Build game status string */
 const char *GameInfoStatus(int driver_index)
 {
+	static char buffer[1024];
 	int audit_result = GetRomAuditResults(driver_index);
+	memset(buffer,0,sizeof(char)*1024);
 
 	if (IsAuditResultKnown(audit_result) == FALSE)
 	{
@@ -577,12 +637,33 @@ const char *GameInfoStatus(int driver_index)
 	{
 		if (DriverIsBroken(driver_index))
 			return "Not working";
+		//the Flags are checked in the order of "noticability"
+		//1) visible deficiencies
+		//2) audible deficiencies
+		//3) other deficiencies
 		if (drivers[driver_index]->flags & GAME_WRONG_COLORS)
-			return "Colors are totally wrong";
+			strcat(buffer,"Colors are totally wrong\r\n");
+//			return "Colors are totally wrong";
 		if (drivers[driver_index]->flags & GAME_IMPERFECT_COLORS)
-			return "Imperfect Colors";
+			strcat(buffer,"Imperfect Colors\r\n");
+//			return "Imperfect Colors";
+		if (drivers[driver_index]->flags & GAME_IMPERFECT_GRAPHICS)
+			strcat(buffer,"Imperfect Graphics\r\n");
+//			return "Imperfect Colors";
+		if (drivers[driver_index]->flags & GAME_NO_SOUND)
+			strcat(buffer,"Sound is missing\r\n");
+//			return "Sound is missing";
+		if (drivers[driver_index]->flags & GAME_IMPERFECT_SOUND)
+			strcat(buffer,"Imperfect Sound\r\n");
+//			return "Imperfect Sound";
+		if (drivers[driver_index]->flags & GAME_NO_COCKTAIL)
+			strcat(buffer,"Screen flip support is missing\r\n");
+//			return "Screen flip support is missing";
 		else
 			return "Working";
+		//remove the last "\r\n" pair
+		buffer[strlen(buffer)-2] = '\0';
+		return buffer;
 	}
 
 	// audit result is no
@@ -610,6 +691,8 @@ char *GameInfoTitle(UINT nIndex)
 
 	if (nIndex == -1)
 		strcpy(buf, "Global game options\nDefault options used by all games");
+	else if (nIndex == -2)
+		strcpy(buf, "Global folder options\nDefault options used by all games in the folder");
 	else
 		sprintf(buf, "%s\n\"%s\"", ModifyThe(drivers[nIndex]->description), drivers[nIndex]->name); 
 	return buf;
@@ -814,7 +897,7 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 
 				FreeGameOptions(pGameOpts);
 				CopyGameOptions(&origGameOpts,pGameOpts);
-				if (g_nGame != -1)
+				if (g_nGame > -1)
 					SetGameUsesDefaults(g_nGame,orig_uses_defaults);
 
 				BuildDataMap();
@@ -830,10 +913,17 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 			case IDC_USE_DEFAULT:
 				if (g_nGame != -1)
 				{
-					SetGameUsesDefaults(g_nGame,TRUE);
-
-					pGameOpts = GetGameOptions(g_nGame);
-					g_bUseDefaults = GetGameUsesDefaults(g_nGame);
+					if( g_nGame != -2 )
+					{
+						pGameOpts = GetGameOptions(g_nGame, -1);
+						g_bUseDefaults = GetGameUsesDefaults(g_nGame);
+					}
+					else
+					{
+						SetGameUsesDefaults(g_nGame,TRUE);
+						CopyGameOptions(GetDefaultOptions(), pGameOpts);
+						g_bUseDefaults = TRUE;
+					}
 					BuildDataMap();
 					PopulateControls(hDlg);
 					OptionsToProp(hDlg, pGameOpts);
@@ -884,7 +974,7 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 			if (changed == TRUE)
 			{
 				// enable the apply button
-				if (g_nGame != -1)
+				if (g_nGame > -1)
 					SetGameUsesDefaults(g_nGame,FALSE);
 				g_bUseDefaults = FALSE;
 				PropSheet_Changed(GetParent(hDlg), hDlg);
@@ -921,11 +1011,14 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 			ReadControls(hDlg);
 			if (g_nGame == -1)
 				pGameOpts = GetDefaultOptions();
+			else if (g_nGame == -2)
+				pGameOpts = pGameOpts;
+				//origGameOpts = GetFolderOptions(g_nFolder);
 			else
 			{
 				SetGameUsesDefaults(g_nGame,g_bUseDefaults);
 				orig_uses_defaults = g_bUseDefaults;
-				pGameOpts = GetGameOptions(g_nGame);
+				pGameOpts = GetGameOptions(g_nGame, -1);
 			}
 
 			FreeGameOptions(&origGameOpts);
@@ -946,7 +1039,7 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 			PropToOptions(hDlg, pGameOpts);
 			ReadControls(hDlg);
 			ResetDataMap();
-			if (g_nGame != -1)
+			if (g_nGame > -1)
 				SetGameUsesDefaults(g_nGame,g_bUseDefaults);
 			SetWindowLong(hDlg, DWL_MSGRESULT, FALSE);
 			return 1;  
@@ -955,7 +1048,7 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 			// Reset to the original values. Disregard changes
 			FreeGameOptions(pGameOpts);
 			CopyGameOptions(&origGameOpts,pGameOpts);
-			if (g_nGame != -1)
+			if (g_nGame > -1)
 				SetGameUsesDefaults(g_nGame,orig_uses_defaults);
 			SetWindowLong(hDlg, DWL_MSGRESULT, FALSE);
 			break;
@@ -999,7 +1092,7 @@ static void PropToOptions(HWND hWnd, options_type *o)
 	HWND hCtrl2;
 	int  nIndex;
 
-	if (g_nGame != -1)
+	if (g_nGame > -1)
 		SetGameUsesDefaults(g_nGame,g_bUseDefaults);
 
 	/* resolution size */
@@ -1451,12 +1544,12 @@ static void SetPropEnabledControls(HWND hWnd)
 	EnableWindow(GetDlgItem(hWnd, IDC_A2D),				joystick_attached);
 
 	/* Trackball / Mouse options */
-	if (nIndex == -1 || DriverUsesTrackball(nIndex) || DriverUsesLightGun(nIndex))
+	if (nIndex <= -1 || DriverUsesTrackball(nIndex) || DriverUsesLightGun(nIndex))
 		Button_Enable(GetDlgItem(hWnd,IDC_USE_MOUSE),TRUE);
 	else
 		Button_Enable(GetDlgItem(hWnd,IDC_USE_MOUSE),FALSE);
 
-	if (nIndex == -1 || DriverUsesLightGun(nIndex))
+	if (nIndex <= -1 || DriverUsesLightGun(nIndex))
 		Button_Enable(GetDlgItem(hWnd,IDC_LIGHTGUN),TRUE);
 	else
 		Button_Enable(GetDlgItem(hWnd,IDC_LIGHTGUN),FALSE);
@@ -1489,7 +1582,7 @@ static void SetPropEnabledControls(HWND hWnd)
 
 
 	// misc
-	if (nIndex == -1 || DriverHasOptionalBIOS(nIndex))
+	if (nIndex <= -1 || DriverHasOptionalBIOS(nIndex))
 		EnableWindow(GetDlgItem(hWnd,IDC_BIOS),TRUE);
 	else
 		EnableWindow(GetDlgItem(hWnd,IDC_BIOS),FALSE);
@@ -1846,13 +1939,13 @@ static void SetStereoEnabled(HWND hWnd, int nIndex)
 	HWND hCtrl;
     struct InternalMachineDriver drv;
 
-	if (-1 != nIndex)
+	if ( nIndex > -1)
 		expand_machine_driver(drivers[nIndex]->drv,&drv);
 
 	hCtrl = GetDlgItem(hWnd, IDC_STEREO);
 	if (hCtrl)
 	{
-		if (nIndex == -1 || drv.sound_attributes & SOUND_SUPPORTS_STEREO)
+		if (nIndex <= -1 || drv.sound_attributes & SOUND_SUPPORTS_STEREO)
 			enabled = TRUE;
 
 		EnableWindow(hCtrl, enabled);
@@ -1866,7 +1959,7 @@ static void SetYM3812Enabled(HWND hWnd, int nIndex)
 	HWND hCtrl;
     struct InternalMachineDriver drv;
 
-	if (-1 != nIndex)
+	if (nIndex > -1)
 		expand_machine_driver(drivers[nIndex]->drv,&drv);
 
 	hCtrl = GetDlgItem(hWnd, IDC_USE_FM_YM3812);
@@ -1875,7 +1968,7 @@ static void SetYM3812Enabled(HWND hWnd, int nIndex)
 		enabled = FALSE;
 		for (i = 0; i < MAX_SOUND; i++)
 		{
-			if (nIndex == -1
+			if (nIndex <= -1
 #if HAS_YM3812
 			||  drv.sound[i].sound_type == SOUND_YM3812
 #endif
@@ -1903,14 +1996,14 @@ static void SetSamplesEnabled(HWND hWnd, int nIndex, BOOL bSoundEnabled)
 
 	hCtrl = GetDlgItem(hWnd, IDC_SAMPLES);
 
-	if (-1 != nIndex)
+	if ( nIndex > -1 )
 		expand_machine_driver(drivers[nIndex]->drv,&drv);
 	
 	if (hCtrl)
 	{
 		for (i = 0; i < MAX_SOUND; i++)
 		{
-			if (nIndex == -1
+			if (nIndex <= -1
 			||  drv.sound[i].sound_type == SOUND_SAMPLES
 #if HAS_VLM5030
 			||  drv.sound[i].sound_type == SOUND_VLM5030
@@ -2657,7 +2750,7 @@ static void InitializeBIOSUI(HWND hwnd)
 		const struct GameDriver *gamedrv = drivers[g_nGame];
 		const struct SystemBios *thisbios;
 
-		if (g_nGame == -1)
+		if (g_nGame <= -1)
 		{
 			ComboBox_AddString(hCtrl,"0");
 			ComboBox_AddString(hCtrl,"1");

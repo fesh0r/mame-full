@@ -54,10 +54,11 @@ int floppy_drive_init(mess_image *img, const floppy_interface *iface)
 	/* initialise track */
 	pDrive->current_track = 1;
 
-	if (iface)
-		memcpy(&pDrive->interface, iface, sizeof(floppy_interface));
+	floppy_drive_set_disk_image_interface(img, iface);
 	return INIT_PASS;
 }
+
+
 
 /* this callback is executed every 300 times a second to emulate the index
 pulse. What is the length of the index pulse?? */
@@ -112,9 +113,13 @@ int	floppy_status(mess_image *img, int new_status)
 }
 
 /* set interface for image interface */
-void floppy_drive_set_disk_image_interface(mess_image *img, floppy_interface *iface)
+void floppy_drive_set_disk_image_interface(mess_image *img, const floppy_interface *iface)
 {
-	memcpy(&get_drive(img)->interface, iface, sizeof(floppy_interface));
+	struct floppy_drive *pDrive = get_drive(img);
+	if (iface)
+		memcpy(&pDrive->interface, iface, sizeof(floppy_interface));
+	else
+		memset(&pDrive->interface, 0, sizeof(floppy_interface));
 }
 
 /* set flag state */

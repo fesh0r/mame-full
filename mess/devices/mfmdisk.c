@@ -17,7 +17,7 @@ static void mfm_disk_get_id_callback(mess_image *image, chrn_id *, int, int);
 static void mfm_disk_read_sector_data_into_buffer(mess_image *image, int side, int index1, char *ptr, int length);
 static void mfm_disk_write_sector_data_from_buffer(mess_image *image, int side, int index1, const char *ptr, int length,int ddam);
 
-static floppy_interface mfm_disk_floppy_interface=
+const floppy_interface mfm_disk_floppy_interface =
 {
 	mfm_disk_seek_callback,
 	mfm_disk_get_sectors_per_track,             /* done */

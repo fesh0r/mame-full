@@ -185,13 +185,16 @@ static void wd179x_restore(WD179X *w)
 	/* reset busy count */
 	w->busy_count = 0;
 
-	/* keep stepping until track 0 is received or 255 steps have been done */
-	while (!(floppy_drive_get_flag_state(wd179x_current_image(), FLOPPY_DRIVE_HEAD_AT_TRACK_0)) && (step_counter!=0))
+	if (image_slotexists(wd179x_current_image()))
 	{
-		/* update time to simulate seek time busy signal */
-		w->busy_count++;
-		floppy_drive_seek(wd179x_current_image(), w->direction);
-		step_counter--;
+		/* keep stepping until track 0 is received or 255 steps have been done */
+		while (!(floppy_drive_get_flag_state(wd179x_current_image(), FLOPPY_DRIVE_HEAD_AT_TRACK_0)) && (step_counter!=0))
+		{
+			/* update time to simulate seek time busy signal */
+			w->busy_count++;
+			floppy_drive_seek(wd179x_current_image(), w->direction);
+			step_counter--;
+		}
 	}
 
 	/* update track reg */

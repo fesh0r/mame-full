@@ -36,6 +36,7 @@ BOOL DriverIsBroken(int driver_index);
 BOOL DriverIsHarddisk(int driver_index);
 BOOL DriverHasOptionalBIOS(int driver_index);
 BOOL DriverIsStereo(int driver_index);
+BOOL DriverIsMultiMon(int driver_index);
 BOOL DriverIsVector(int driver_index);
 BOOL DriverUsesRoms(int driver_index);
 BOOL DriverUsesSamples(int driver_index);

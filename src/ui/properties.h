@@ -18,13 +18,19 @@
  */
 char * GameInfoTitle(UINT nIndex);
 
+typedef enum
+{
+	SRC_GAME = 0,
+	SRC_FOLDER,
+} PROP_SOURCE;
+
 /* Called in win32ui.c to create the property page */
-void    InitPropertyPage(HINSTANCE hInst, HWND hwnd, int game_num, HICON hIcon);
+void    InitPropertyPage(HINSTANCE hInst, HWND hwnd, int game_num, HICON hIcon, int folder_index, PROP_SOURCE source);
 
 #define PROPERTIES_PAGE 0
 #define AUDIT_PAGE      1   
 
-void    InitPropertyPageToPage(HINSTANCE hInst, HWND hwnd, int game_num, HICON hIcon, int start_page);
+void    InitPropertyPageToPage(HINSTANCE hInst, HWND hwnd, int game_num, HICON hIcon, int start_page, int folder_index, PROP_SOURCE source);
 void    InitDefaultPropertyPage(HINSTANCE hInst, HWND hWnd);
 
 /* Get Help ID array for WM_HELP and WM_CONTEXTMENU */

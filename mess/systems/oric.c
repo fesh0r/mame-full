@@ -547,7 +547,7 @@ SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(oric1)
 	CONFIG_IMPORT_FROM(oric_common)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 4, "dsk\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_CREATE_OR_READ, NULL, NULL, device_load_oric_floppy, device_unload_oric_floppy, floppy_status)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 4, "dsk\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_CREATE_OR_READ, device_init_oric_floppy, NULL, device_load_oric_floppy, NULL, floppy_status)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(prav8)

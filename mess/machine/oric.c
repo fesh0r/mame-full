@@ -87,8 +87,6 @@ static void oric_refresh_ints(void)
 	}
 }
 
-static int oric_floppy_type[4] = {ORIC_FLOPPY_NONE, ORIC_FLOPPY_NONE, ORIC_FLOPPY_NONE, ORIC_FLOPPY_NONE};
-
 static	char *oric_ram_0x0c000 = NULL;
 
 
@@ -1200,14 +1198,20 @@ static void oric_wd179x_callback(int State)
 	}
 }
 
+DEVICE_INIT( oric_floppy )
+{
+	/* TODO - THIS DOES NOT MULTITASK BETWEEN ORIC BASICDSKs AND MFM DISKS */
+	return floppy_drive_init(image, NULL);
+}
+
+
+
 DEVICE_LOAD( oric_floppy )
 {
-	int id = image_index_in_device(image);
-
 	/* attempt to open mfm disk */
 	if (device_load_mfm_disk(image, file) == INIT_PASS)
 	{
-		oric_floppy_type[id] = ORIC_FLOPPY_MFM_DISK;
+		floppy_drive_set_disk_image_interface(image, &mfm_disk_floppy_interface);
 		return INIT_PASS;
 	}
 
@@ -1216,16 +1220,10 @@ DEVICE_LOAD( oric_floppy )
 		/* I don't know what the geometry of the disc image should be, so the
 		default is 80 tracks, 2 sides, 9 sectors per track */
 		basicdsk_set_geometry(image, 80, 2, 9, 512, 1, 0, FALSE);
-		oric_floppy_type[id] = ORIC_FLOPPY_BASIC_DISK;
+		floppy_drive_set_disk_image_interface(image, &basicdsk_floppy_interface);
 		return INIT_PASS;
 	}
 	return INIT_FAIL;
-}
-
-DEVICE_UNLOAD( oric_floppy )
-{
-	int id = image_index_in_device(image);
-	oric_floppy_type[id] = ORIC_FLOPPY_NONE;
 }
 
 static void oric_common_init_machine(void)

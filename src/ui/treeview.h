@@ -78,6 +78,8 @@ void CreateOrientationFolders(int parent_index);
 
 /***************************************************************************/
 
+#define MAX_EXTRA_FOLDERS 256
+#define MAX_EXTRA_SUBFOLDERS 256
 
 /* TreeView structures */
 enum
@@ -85,7 +87,9 @@ enum
 	FOLDER_NONE = 0,
 	FOLDER_ALLGAMES,
 	FOLDER_AVAILABLE,
+#ifdef SHOW_UNAVAILABLE_FOLDER
 	FOLDER_UNAVAILABLE,
+#endif
 #ifdef MESS
 	FOLDER_CONSOLE,
 	FOLDER_COMPUTER,
@@ -106,6 +110,8 @@ enum
 	FOLDER_STEREO,
 	FOLDER_HARDDISK,
 	FOLDER_ORIENTATION,
+ 	FOLDER_MULTIMON,
+	FOLDER_LIGHTGUN,
 	MAX_FOLDERS,
 };
 
@@ -158,6 +164,7 @@ LPTREEFOLDER GetCurrentFolder(void);
 int GetNumFolders(void);
 LPTREEFOLDER GetFolder(UINT nFolder);
 LPTREEFOLDER GetFolderByID(UINT nID);
+LPTREEFOLDER GetFolderByName(int iParentIndex, char *cFolderName);
 
 void AddGame(LPTREEFOLDER lpFolder, UINT nGame);
 void RemoveGame(LPTREEFOLDER lpFolder, UINT nGame);

@@ -287,6 +287,11 @@
 #define IDC_CYCLETIME                   1210
 #define IDC_CYCLETIMESEC                1211
 #define IDC_AUDIO_LATENCY_TEXT          1212
+#define IDC_STRETCH_SCREENSHOT_LARGER   1213
+#define IDC_FILTER_INHERIT              1214
+#define IDC_RESET_PLAYTIME              1215
+#define IDC_RESET_PLAYCOUNT             1216
+#define IDC_INHERITED                   1217
 #define ID_CONTEXT_SHOW_FOLDER_START    39000
 #define ID_CONTEXT_SHOW_FOLDER_END      39200
 #define ID_FILE_EXIT                    40001
@@ -353,6 +358,9 @@
 #define ID_TOGGLE_TAB_CONTROL_PANEL     40076
 #define ID_TOGGLE_TAB_HISTORY           40077
 #define ID_VIEW_FULLSCREEN              40079
+#define ID_CONTEXT_RESET_PLAYTIME       40080
+#define ID_CONTEXT_RESET_PLAYCOUNT      40081
+#define ID_FOLDER_PROPERTIES            40082
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -362,8 +370,8 @@
 #define _APS_NO_MFC                     1
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        185
-#define _APS_NEXT_COMMAND_VALUE         40080
-#define _APS_NEXT_CONTROL_VALUE         1213
+#define _APS_NEXT_COMMAND_VALUE         40083
+#define _APS_NEXT_CONTROL_VALUE         1218
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

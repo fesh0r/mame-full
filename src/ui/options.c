@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include <malloc.h>
 #include <math.h>
+#include <direct.h>
 #include <driver.h>
 
 #include "screenshot.h"
@@ -44,6 +45,9 @@
 #include "options.h"
 #include "windows/config.h"
 
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#endif
 /***************************************************************************
     Internal function prototypes
  ***************************************************************************/
@@ -100,6 +104,10 @@ static void FolderFlagsDecodeString(const char *str,void *data);
 static void TabFlagsEncodeString(void *data,char *str);
 static void TabFlagsDecodeString(const char *str,void *data);
 
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#endif
+
 /***************************************************************************
     Internal defines
  ***************************************************************************/
@@ -127,6 +135,7 @@ static options_type gOpts;  // Used in conjunction with regGameOpts
 
 static options_type global; // Global 'default' options
 static options_type *game_options;  // Array of Game specific options
+static options_type *folder_options;  // Array of Folder specific options
 static game_variables_type *game_variables;  // Array of game specific extra data
 
 // UI options in mame32ui.ini
@@ -187,6 +196,8 @@ static REG_OPTION regSettings[] =
 	{"hide_mouse",         RO_BOOL,    &settings.hide_mouse,  0, 0},
 	{"full_screen",        RO_BOOL,    &settings.full_screen,  0, 0},
 	{"cycle_screenshot",   RO_INT,     &settings.cycle_screenshot,  0, 0},
+	{"stretch_screenshot_larger", RO_BOOL, &settings.stretch_screenshot_larger,  0, 0},
+	{"inherit_filter",     RO_BOOL,    &settings.inherit_filter,   0, 0},
 
 	{"language",           RO_STRING,  &settings.language,         0, 0},
 	{"flyer_directory",    RO_STRING,  &settings.flyerdir,         0, 0},
@@ -711,6 +722,8 @@ BOOL OptionsInit()
 	settings.exec_wait                = 0;
 	settings.hide_mouse               = FALSE;
 	settings.full_screen              = FALSE;
+	settings.cycle_screenshot = 0;
+	settings.stretch_screenshot_larger = TRUE;
 
 	settings.language          = strdup("english");
 	settings.flyerdir          = strdup("flyers");
@@ -878,12 +891,13 @@ BOOL OptionsInit()
 	game_options = (options_type *)malloc(num_games * sizeof(options_type));
 	game_variables = (game_variables_type *)malloc(num_games * sizeof(game_variables_type));
 
+	folder_options = (options_type *)malloc( (MAX_FOLDERS + (MAX_EXTRA_FOLDERS * MAX_EXTRA_SUBFOLDERS) ) * sizeof(options_type));
 	if (!game_options || !game_variables)
 		return FALSE;
 
 	memset(game_options, 0, num_games * sizeof(options_type));
 	memset(game_variables, 0, num_games * sizeof(game_variables_type));
-
+	memset(folder_options, 0, (MAX_FOLDERS + (MAX_EXTRA_FOLDERS * MAX_EXTRA_SUBFOLDERS) ) * sizeof(options_type));
 	for (i = 0; i < num_games; i++)
 	{
 		game_variables[i].play_count = 0;
@@ -924,6 +938,12 @@ void OptionsExit(void)
 	}
 
     free(game_options);
+
+	for (i=0;i<(MAX_FOLDERS + (MAX_EXTRA_FOLDERS *MAX_EXTRA_SUBFOLDERS) );i++)
+	{
+		FreeGameOptions(&folder_options[i]);
+	}
+	free(folder_options);
 
 	FreeGameOptions(&global);
 
@@ -1007,13 +1027,39 @@ options_type * GetDefaultOptions(void)
 	return &global;
 }
 
-options_type * GetGameOptions(int driver_index)
+options_type * GetFolderOptions(int folder_index)
 {
-	assert(0 <= driver_index && driver_index < num_games);
+	if( folder_index >= (MAX_FOLDERS + (MAX_EXTRA_FOLDERS * MAX_EXTRA_SUBFOLDERS) ) )
+	{
+		dprintf("Folder Index out of bounds");
+		return NULL;
+	}
+	CopyGameOptions(&global,&folder_options[folder_index]);
+	LoadFolderOptions(folder_index);
+	return &folder_options[folder_index];
+}
 
+options_type * GetGameOptions(int driver_index, int folder_index )
+{
+	options_type *opts;
+	assert(0 <= driver_index && driver_index < num_games);
+	if( DriverIsVector(driver_index) )
+	{
+		//if there is a special Vector.ini load settings, else the globals are loaded
+		opts = GetFolderOptions( FOLDER_VECTOR );
+		CopyGameOptions(opts,&game_options[driver_index]);
+	}
 	if (game_variables[driver_index].use_default)
 	{
-		CopyGameOptions(&global,&game_options[driver_index]);
+		if( folder_index >= 0 )
+		{
+			opts = GetFolderOptions( folder_index );
+			CopyGameOptions(opts,&game_options[driver_index]);
+		}
+		else
+		{
+			CopyGameOptions(&global,&game_options[driver_index]);
+		}
 	}
 
 	if (game_variables[driver_index].options_loaded == FALSE)
@@ -1150,6 +1196,25 @@ int GetCycleScreenshot(void)
 {
 	return settings.cycle_screenshot;
 }
+
+void SetStretchScreenShotLarger(BOOL stretch)
+{
+	settings.stretch_screenshot_larger = stretch;
+}
+
+BOOL GetStretchScreenShotLarger(void)
+{
+	return settings.stretch_screenshot_larger;
+}
+void SetFilterInherit(BOOL inherit)
+{
+	settings.inherit_filter = inherit;
+}
+
+BOOL GetFilterInherit(void)
+{
+	return settings.inherit_filter;
+ }
 
 void SetBroadcast(BOOL broadcast)
 {
@@ -1810,7 +1875,7 @@ void ResetGameOptions(int driver_index)
 	assert(0 <= driver_index && driver_index < num_games);
 
 	// make sure it's all loaded up.
-	GetGameOptions(driver_index);
+	GetGameOptions(driver_index, -1);
 
 	if (game_variables[driver_index].use_default == FALSE)
 	{
@@ -1880,6 +1945,42 @@ int GetPlayCount(int driver_index)
 	assert(0 <= driver_index && driver_index < num_games);
 
 	return game_variables[driver_index].play_count;
+}
+
+void ResetPlayCount(int driver_index)
+{
+	int i = 0;
+	assert(driver_index < num_games);
+	if( driver_index < 0 )
+	{
+		//All games
+		for( i= 0; i< num_games; i++ )
+		{
+			game_variables[i].play_count = 0;
+		}
+	}
+	else
+	{
+		game_variables[driver_index].play_count = 0;
+	}
+}
+
+void ResetPlayTime(int driver_index)
+{
+	int i = 0;
+	assert(driver_index < num_games);
+	if( driver_index < 0 )
+	{
+		//All games
+		for( i= 0; i< num_games; i++ )
+		{
+			game_variables[i].play_time = 0;
+		}
+	}
+	else
+	{
+		game_variables[driver_index].play_time = 0;
+	}
 }
 
 int GetPlayTime(int driver_index)
@@ -2788,6 +2889,104 @@ void LoadGameOptions(int driver_index)
 	}
 }
 
+const char * GetFolderNameByID(UINT nID)
+{
+	UINT i;
+	extern FOLDERDATA g_folderData[];
+	extern LPEXFOLDERDATA ExtraFolderData[];
+
+	for (i = 0; i < MAX_EXTRA_FOLDERS * MAX_EXTRA_SUBFOLDERS; i++)
+	{
+		if( ExtraFolderData[i] )
+		{
+			if (ExtraFolderData[i]->m_nFolderId == nID)
+			{
+				return ExtraFolderData[i]->m_szTitle;
+			}
+		}
+	}
+	for( i = 0; i < MAX_FOLDERS; i++)
+	{
+		if (g_folderData[i].m_nFolderId == nID)
+		{
+			
+			return g_folderData[i].m_lpTitle;
+		}
+	}
+	return NULL;
+}
+
+void LoadFolderOptions(int folder_index )
+{
+	char buffer[512];
+	int i;
+	extern FOLDERDATA g_folderData[];
+	extern LPEXFOLDERDATA ExtraFolderData[];
+	extern int numExtraFolders;
+	const char *pParent;
+
+
+	for( i = 0; i<=folder_index; i++ )
+	{
+		if( folder_index < MAX_FOLDERS)
+		{
+			if( g_folderData[i].m_nFolderId == folder_index )
+			{
+				snprintf(buffer,sizeof(buffer),"%s\\%s.ini",GetIniDir(),g_folderData[i].m_lpTitle );
+				break;
+			}
+		}
+		else if( folder_index < MAX_FOLDERS + numExtraFolders)
+		{
+			
+			if( ExtraFolderData[i] )
+			{
+				if( ExtraFolderData[i]->m_nFolderId == folder_index )
+				{
+					snprintf(buffer,sizeof(buffer),"%s\\%s.ini",GetIniDir(),ExtraFolderData[i]->m_szTitle );
+					break;
+				}
+			}
+		}
+		else
+		{
+			//we jump to the corrsponding folderData
+			if( ExtraFolderData[folder_index] )
+			{
+				//SubDirName is ParentFolderName
+				pParent = GetFolderNameByID(ExtraFolderData[folder_index]->m_nParent);
+				if( pParent )
+				{
+					snprintf(buffer,sizeof(buffer),"%s\\%s\\%s.ini",GetIniDir(),pParent, ExtraFolderData[folder_index]->m_szTitle );
+					break;
+				}
+			}
+		}
+	}
+	
+/*	if( folder_index <= MAX_FOLDERS )
+		//Subtract 1 because FOLDER_NONE is 0
+		snprintf(buffer,sizeof(buffer),"%s\\%s.ini",GetIniDir(),g_folderData[folder_index-1].m_lpTitle );
+	else if( folder_index < MAX_FOLDERS + numExtraFolders)
+		snprintf(buffer,sizeof(buffer),"%s\\%s.ini",GetIniDir(),ExtraFolderData[numExtraFolders]->m_szTitle );
+	else
+	{
+		//SubDirName is ParentFolderName
+		pParent = GetFolderNameByID(ExtraFolderData[folder_index]->m_nParent);
+		if( pParent )
+			snprintf(buffer,sizeof(buffer),"%s\\%s\\%s.ini",GetIniDir(),pParent, ExtraFolderData[folder_index]->m_szTitle );
+		else
+			return;
+	}	
+*/	CopyGameOptions(&global,&gOpts);
+	if (LoadOptions(buffer,&folder_options[folder_index],FALSE))
+	{
+		// successfully loaded
+		folder_options[folder_index] = gOpts;
+	}
+}
+
+
 static BOOL LoadOptions(const char *filename,options_type *o,BOOL load_global_game_options)
 {
 	FILE *fptr;
@@ -2997,6 +3196,121 @@ void SaveGameOptions(int driver_index)
 	}
 }
 
+void SaveFolderOptions(int folder_index)
+{
+	int i;
+	FILE *fptr;
+	char buffer[512];
+	char subdir[512];
+	extern FOLDERDATA g_folderData[];
+	extern LPEXFOLDERDATA ExtraFolderData[];
+	extern int numExtraFolders;
+	BOOL options_different = FALSE;
+	const char *pParent;
+	struct stat file_stat;
+	*buffer = 0;
+	*subdir = 0;
+	for (i=0;i<NUM_GAME_OPTIONS;i++)
+	{
+		if (IsOptionEqual(i,&folder_options[folder_index],&global) == FALSE)
+		{
+			options_different = TRUE;
+		}
+
+	}
+	//Find the Title
+	for( i = 0; i<=folder_index; i++ )
+	{
+		if( folder_index < MAX_FOLDERS)
+		{
+			if( g_folderData[i].m_nFolderId == folder_index )
+			{
+				snprintf(buffer,sizeof(buffer),"%s\\%s.ini",GetIniDir(),g_folderData[i].m_lpTitle );
+				break;
+			}
+		}
+		else if( folder_index < MAX_FOLDERS + numExtraFolders)
+		{
+			
+			if( ExtraFolderData[i] )
+			{
+				if( ExtraFolderData[i]->m_nFolderId == folder_index )
+				{
+					snprintf(buffer,sizeof(buffer),"%s\\%s.ini",GetIniDir(),ExtraFolderData[i]->m_szTitle );
+					break;
+				}
+			}
+		}
+		else
+		{
+			//we jump to the corrsponding folderData
+			if( ExtraFolderData[folder_index] )
+			{
+				//SubDirName is ParentFolderName
+				pParent = GetFolderNameByID(ExtraFolderData[folder_index]->m_nParent);
+				if( pParent )
+				{
+					snprintf(buffer,sizeof(buffer),"%s\\%s\\%s.ini",GetIniDir(),pParent, ExtraFolderData[folder_index]->m_szTitle );
+					snprintf(subdir,sizeof(subdir),"%s\\%s",GetIniDir(),pParent );
+					//need to check if Subdirectory Exists
+					/* Don't allow empty entries. */
+					if (strcmp(subdir, ""))
+					{
+						/* Check validity of edited directory. */
+						if (! (stat(subdir, &file_stat) == 0
+						&&	(file_stat.st_mode & S_IFDIR)) )
+						{
+							//Create it
+							CreateDirectory( subdir, NULL );
+						}
+					}
+					break;
+				}
+			}
+		}
+	}
+	if (options_different)
+	{
+		fptr = fopen(buffer,"wt");
+		if (fptr != NULL)
+		{
+			fprintf(fptr,"### ");
+			if( folder_index < MAX_FOLDERS )
+				fprintf(fptr,"%s",g_folderData[i].m_lpTitle);
+			else
+				fprintf(fptr,"%s",ExtraFolderData[i]->m_szTitle);
+			fprintf(fptr," ###\n\n");
+
+			for (i=0;i<NUM_GAME_OPTIONS;i++)
+			{
+				if (IsOptionEqual(i,&folder_options[folder_index],&global) == FALSE)
+				{
+					gOpts = folder_options[folder_index];
+					WriteOptionToFile(fptr,&regGameOpts[i]);
+				}
+			}
+
+			fclose(fptr);
+		}
+	}
+	else
+	{
+		/*No Differences between Standard Options and Folder Options*/
+		if (DeleteFile(buffer) == 0)
+		{
+			dprintf("error deleting %s; error %d\n",buffer, GetLastError());
+		}
+		//Check if SubDir
+		if( subdir )
+		{
+			//we just acll rmdir on the subdir, if it is empty, it gets deleted, 
+			//otherwise it just stays as is
+			_rmdir( subdir );
+ 		}
+ 	}
+ }
+
+
 void SaveDefaultOptions(void)
 {
 	int i;
@@ -3111,7 +3425,7 @@ static BOOL IsOptionEqual(int option_index,options_type *o1,options_type *o2)
 	}
 	case RO_ENCODE:
 	{
-		char a[500],b[500];
+		char a[1000],b[1000];
 		gOpts = *o1;
 		regGameOpts[option_index].encode(regGameOpts[option_index].m_vpData,a);
 		gOpts = *o2;
@@ -3134,7 +3448,7 @@ static void WriteOptionToFile(FILE *fptr,REG_OPTION *regOpt)
 	char*	pString;
 	double* pDouble;
 	const char *key = regOpt->ini_name;
-	char	cTemp[80];
+	char	cTemp[1000];
 	
 	switch (regOpt->m_iType)
 	{

@@ -10,6 +10,8 @@
 extern "C" {
 #endif
 
+extern const floppy_interface basicdsk_floppy_interface;
+
 /* init */
 DEVICE_INIT(basicdsk_floppy);
 DEVICE_LOAD(basicdsk_floppy);

@@ -71,6 +71,18 @@
 #include "DirectInput.h"
 #include "DIJoystick.h"     /* For DIJoystick avalibility. */
 
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#endif
+
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#endif
+
+#ifndef LVS_EX_LABELTIP
+#define LVS_EX_LABELTIP         0x00004000 // listview unfolds partly hidden labels if it does not have infotip text
+#endif
+
 #if defined(__GNUC__)
 
 /* fix warning: cast does not match function type */
@@ -118,6 +130,10 @@ int MIN_HEIGHT = DBU_MIN_HEIGHT;
 
 /* Max number of bkground picture files */
 #define MAX_BGFILES 100
+
+#ifndef LVS_EX_LABELTIP
+#define LVS_EX_LABELTIP         0x00004000 // listview unfolds partly hidden labels if it does not have infotip text
+#endif
 
 typedef BOOL (WINAPI *common_file_dialog_proc)(LPOPENFILENAME lpofn);
 
@@ -181,6 +197,9 @@ static HICON			GetSelectedPickItemIcon(void);
 static void             SetSelectedPick(int new_index);
 static void             SetSelectedPickItem(int val);
 static void             SetRandomPickItem(void);
+
+static LPTREEFOLDER     GetSelectedFolder(void);
+static HICON			GetSelectedFolderIcon(void);
 
 static LRESULT CALLBACK HistoryWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static LRESULT CALLBACK PictureFrameWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -615,13 +634,22 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 {
 	char pModule[_MAX_PATH];
 	options_type* pOpts;
+	LPTREEFOLDER folder;
 
 	// this command line can grow too long for win9x, so we try to not send
 	// some default values
 
 	GetModuleFileName(GetModuleHandle(NULL), pModule, _MAX_PATH);
 
-	pOpts = GetGameOptions(nGameIndex);
+	folder = GetFolderByName(FOLDER_SOURCE-1, (char*)GetDriverFilename(nGameIndex) );
+	if( folder )
+	{
+		pOpts = GetGameOptions(nGameIndex, folder->m_nFolderId);
+	}
+	else
+	{
+		pOpts = GetGameOptions(nGameIndex, -1);
+	}
 
 	sprintf(pCmdLine, "%s %s", pModule, drivers[nGameIndex]->name);
 
@@ -853,9 +881,8 @@ static int RunMAME(int nGameIndex)
 	}
 	else
 	{
-		SendIconToProcess(&pi, nGameIndex);
-
 		ShowWindow(hMain, SW_HIDE);
+		SendIconToProcess(&pi, nGameIndex);
 
 		time(&start);
 
@@ -866,12 +893,14 @@ static int RunMAME(int nGameIndex)
 
 		time(&end);
 		elapsedtime = end - start;
-		IncrementPlayTime(nGameIndex, elapsedtime);
-		ListView_RedrawItems(hwndList, GetSelectedPickItem(), GetSelectedPickItem());
+		if( dwExitCode == 0 )
+		{
+			/*Check the exitcode before incrementing Playtime*/
+			IncrementPlayTime(nGameIndex, elapsedtime);
+			ListView_RedrawItems(hwndList, GetSelectedPick(), GetSelectedPick());
+		}
 
 		ShowWindow(hMain, SW_SHOW);
-
-		SetForegroundWindow(hMain);
 
 		// Close process and thread handles.
 		CloseHandle(pi.hProcess);
@@ -903,7 +932,6 @@ int Mame32Main(HINSTANCE    hInstance,
 		extern int DECL_SPEC main_(int, char**);
 		exit(main_(__argc, __argv));
 	}
-
 	if (!Win32UI_init(hInstance, lpCmdLine, nCmdShow))
 		return 1;
 
@@ -912,10 +940,10 @@ int Mame32Main(HINSTANCE    hInstance,
 	*/
 	for (;;)
 	{
-		/* phase1: check to see if we can do idle work */
+		// phase1: check to see if we can do idle work
 		while (idle_work && !PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
 		{
-			/* call OnIdle while idle_work */
+			// call OnIdle while idle_work
 			OnIdle();
         }
 
@@ -931,10 +959,10 @@ int Mame32Main(HINSTANCE    hInstance,
 		}
 #endif /* MESS */
 
-		/* phase2: pump messages while available */
+		// phase2: pump messages while available
 		do
 		{
-			/* pump message, but quit on WM_QUIT */
+			// pump message, but quit on WM_QUIT
 			if (!PumpMessage())
 			{
 				Win32UI_exit();
@@ -1656,7 +1684,6 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	HelpInit();
 
 	strcpy(last_directory, GetInpDir());
-
 	hMain = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_MAIN), 0, NULL);
 	SetMainTitle();
 	hTabCtrl = GetDlgItem(hMain, IDC_SSTAB);
@@ -2100,14 +2127,20 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 			state = wndpl.showCmd;
 
 			/* Restore the window before we attempt to save parameters,
-			 * This fixed the lost window on startup problem.
+			 * This fixed the lost window on startup problem, among other problems
 			 */
-			ShowWindow(hWnd, SW_RESTORE);
-
-			if (state == SW_MINIMIZE || state == SW_SHOWMINIMIZED)
+			if (state == SW_MINIMIZE || state == SW_SHOWMINIMIZED || state == SW_MAXIMIZE)
 			{
-				state = SW_RESTORE;
+				if( wndpl.flags & WPF_RESTORETOMAXIMIZED || state == SW_MAXIMIZE)
+					state = SW_MAXIMIZE;
+				else
+				{
+					state = SW_RESTORE;
+					ShowWindow(hWnd, SW_RESTORE);
+				}
 			}
+			for (i = 0; i < GetSplitterCount(); i++)
+				SetSplitterPos(i, nSplitterOffset[i]);
 			SetWindowState(state);
 
 			GetColumnOrder(order);
@@ -2414,15 +2447,18 @@ static void OnSize(HWND hWnd, UINT nState, int nWidth, int nHeight)
 	ResizeProgressBar();
 	if (firstTime == FALSE)
 		OnSizeSplitter(hMain);
-	firstTime = FALSE;
+	//firstTime = FALSE;
 	/* Update the splitters structures as appropriate */
 	RecalcSplitters();
+	if (firstTime == FALSE)
+		ResizePickerControls(hMain);
+	firstTime = FALSE;
 	UpdateScreenShot();
 }
 
 static void ResizeWindow(HWND hParent, Resize *r)
 {
-	int cmkindex = 0, dx, dy;
+	int cmkindex = 0, dx, dy, dx1, dtempx;
 	HWND hControl;
 	RECT parent_rect, rect;
 	ResizeItem *ri;
@@ -2433,8 +2469,11 @@ static void ResizeWindow(HWND hParent, Resize *r)
 
 	/* Calculate change in width and height of parent window */
 	GetClientRect(hParent, &parent_rect);
-	dx = parent_rect.right	- r->rect.right;
+	//dx = parent_rect.right - r->rect.right;
+	dtempx = parent_rect.right - r->rect.right;
 	dy = parent_rect.bottom - r->rect.bottom;
+	dx = dtempx/2;
+	dx1 = dtempx - dx;
 	ClientToScreen(hParent, &p);
 
 	while (r->items[cmkindex].type != RA_END)
@@ -2527,7 +2566,8 @@ static void ProgressBarHide()
 	widths[3] = size.cx;
 	GetTextExtentPoint32(hDC, "XXXX games", 10, &size);
 	widths[2] = size.cx;
-	GetTextExtentPoint32(hDC, "Imperfect Colors", 16, &size);
+	//Just specify 24 instead of 30, gives us sufficient space to display the message, and saves some space
+	GetTextExtentPoint32(hDC, "Screen flip support is missing", 24, &size);
 	widths[1] = size.cx;
 
 	ReleaseDC(hProgWnd, hDC);
@@ -2603,23 +2643,45 @@ static void CopyToolTipText(LPTOOLTIPTEXT lpttt)
 {
 	int   i;
 	int   iButton = lpttt->hdr.idFrom;
-	const char *pString;
-	LPSTR pDest = lpttt->lpszText;
-
+	static char String[1024];
+	BOOL bConverted = FALSE;
+	//LPSTR pDest = lpttt->lpszText;
 	/* Map command ID to string index */
 	for (i = 0; CommandToString[i] != -1; i++)
 	{
 		if (CommandToString[i] == iButton)
 		{
 			iButton = i;
+			bConverted = TRUE;
 			break;
 		}
 	}
-
-	/* Check for valid parameter */
-	pString = (iButton > NUM_TOOLTIPS) ? "Invalid Button Index" : szTbStrings[iButton];
-
-	lstrcpy(pDest, pString);
+	if( bConverted )
+	{
+		/* Check for valid parameter */
+		if(iButton > NUM_TOOLTIPS)
+		{
+			strcpy(String,"Invalid Button Index");
+		}
+		else
+		{
+			strcpy(String,szTbStrings[iButton]);
+		}
+	}
+	else if ( iButton <= 2 )
+	{
+		//Statusbar
+	    SendMessage(lpttt->hdr.hwndFrom, TTM_SETMAXTIPWIDTH, 0, 140);
+		if( iButton != 1)
+			SendMessage(hStatusBar, SB_GETTEXT, (WPARAM)iButton, (LPARAM)(LPSTR) &String );
+		else
+			//for first pane we get the Status directly, to get the line breaks
+			strcpy(String, GameInfoStatus(GetSelectedPickItem()) );
+	}
+	else
+		strcpy(String,"Invalid Button Index");
+	//strcpy(pDest, (LPCTSTR)&String);
+	lpttt->lpszText = String;
 }
 
 static HWND InitToolbar(HWND hParent)
@@ -2654,7 +2716,7 @@ static HWND InitStatusBar(HWND hParent)
 	popstr[3].uiString = 0;
 
 	return CreateStatusWindow(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
-							  CCS_BOTTOM | SBARS_SIZEGRIP,
+							  CCS_BOTTOM | SBARS_SIZEGRIP | SBT_TOOLTIPS,
 							  "Ready",
 							  hParent,
 							  2);
@@ -2734,6 +2796,12 @@ static void UpdateStatusBar()
 
 static void UpdateHistory(void)
 {
+	LOGFONT font;
+	HDC hDC;
+	RECT rect;
+	TEXTMETRIC     tm ;
+	int nLines, nLineHeight;
+	//DWORD dwStyle = GetWindowLong(GetDlgItem(hMain, IDC_HISTORY), GWL_STYLE);
 	have_history = FALSE;
 
 	if (GetSelectedPick() >= 0)
@@ -2747,7 +2815,26 @@ static void UpdateHistory(void)
 	if (have_history && GetShowScreenShot()
 		&& ((GetCurrentTab() == TAB_HISTORY) || 
 			(GetCurrentTab() == TAB_SCREENSHOT && GetShowTab(TAB_HISTORY) == FALSE)))
-		ShowWindow(GetDlgItem(hMain, IDC_HISTORY), SW_SHOW);
+	{
+		Edit_GetRect(GetDlgItem(hMain, IDC_HISTORY),&rect);
+		nLines = Edit_GetLineCount(GetDlgItem(hMain, IDC_HISTORY) );
+		GetListFont( &font);
+		hDC = GetDC(GetDlgItem(hMain, IDC_HISTORY));
+		GetTextMetrics (hDC, &tm);
+		nLineHeight = tm.tmHeight - tm.tmInternalLeading;
+		if( ( (rect.bottom - rect.top) / nLineHeight) < (nLines) )
+		{
+			//more than one Page, so show Scrollbar
+			SetScrollRange(GetDlgItem(hMain, IDC_HISTORY), SB_VERT, 0, nLines, TRUE); 
+		}
+		else
+		{
+			//hide Scrollbar
+			SetScrollRange(GetDlgItem(hMain, IDC_HISTORY),SB_VERT, 0, 0, TRUE);
+
+		}
+ 		ShowWindow(GetDlgItem(hMain, IDC_HISTORY), SW_SHOW);
+	}
 	else
 		ShowWindow(GetDlgItem(hMain, IDC_HISTORY), SW_HIDE);
 
@@ -3540,7 +3627,6 @@ static void UpdateGameList()
 	// Let REFRESH also load new background if found
 	LoadBackgroundBitmap();
 	InvalidateRect(hMain,NULL,TRUE);
-
 	ResetListView();
 }
 
@@ -3628,6 +3714,7 @@ static void PickCloneColor(void)
 static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 {
 	int i;
+	LPTREEFOLDER folder;
 	switch (id)
 	{
 	case ID_FILE_PLAY:
@@ -3761,7 +3848,7 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		InitGameAudit(0);
 		if (!oldControl)
 		{
-			InitPropertyPageToPage(hInst, hwnd, GetSelectedPickItem(), GetSelectedPickItemIcon(), AUDIT_PAGE);
+			InitPropertyPageToPage(hInst, hwnd, GetSelectedPickItem(), GetSelectedPickItemIcon(), AUDIT_PAGE, -1, SRC_GAME);
 			SaveGameOptions(GetSelectedPickItem());
 		}
 		/* Just in case the toggle MMX on/off */
@@ -3878,7 +3965,8 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 	case ID_GAME_PROPERTIES:
 		if (!oldControl)
 		{
-			InitPropertyPage(hInst, hwnd, GetSelectedPickItem(), GetSelectedPickItemIcon());
+			folder = GetSelectedFolder();
+			InitPropertyPage(hInst, hwnd, GetSelectedPickItem(), GetSelectedPickItemIcon(), folder->m_nFolderId, SRC_GAME);
 			SaveGameOptions(GetSelectedPickItem());
 #ifdef MESS
 			{
@@ -3889,6 +3977,17 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 				}
 			}
 #endif
+		}
+		/* Just in case the toggle MMX on/off */
+		UpdateStatusBar();
+		break;
+
+	case ID_FOLDER_PROPERTIES:
+		if (!oldControl)
+		{
+			folder = GetSelectedFolder();
+			InitPropertyPage(hInst, hwnd, folder->m_nFolderId, GetSelectedFolderIcon(), -1, SRC_FOLDER);
+			SaveFolderOptions(folder->m_nFolderId);
 		}
 		/* Just in case the toggle MMX on/off */
 		UpdateStatusBar();
@@ -4060,6 +4159,14 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 
 	case ID_CONTEXT_SELECT_RANDOM:
 		SetRandomPickItem();
+		break;
+	case ID_CONTEXT_RESET_PLAYTIME:
+		ResetPlayTime( GetSelectedPickItem() );
+		ListView_RedrawItems(hwndList, GetSelectedPick(), GetSelectedPick());
+		break;
+	case ID_CONTEXT_RESET_PLAYCOUNT:
+		ResetPlayCount( GetSelectedPickItem() );
+		ListView_RedrawItems(hwndList, GetSelectedPick(), GetSelectedPick());
 		break;
 
 	case ID_CONTEXT_RENAME_CUSTOM :
@@ -4370,7 +4477,6 @@ static DWORD GetShellLargeIconSize(void)
 	/* Save the last size */
 	RegQueryValueEx(hKey, "Shell Icon Size", NULL, &dwType, (LPBYTE)szBuffer, &dwLength);
 	dwSize = atol(szBuffer);
-
 	if (dwSize < 32)
 		dwSize = 32;
 
@@ -5032,7 +5138,7 @@ static void MamePlayGameWithOptions(int nGame)
 		return;
 #endif
 
-	memcpy(&playing_game_options, GetGameOptions(nGame), sizeof(options_type));
+	memcpy(&playing_game_options, GetGameOptions(nGame, -1), sizeof(options_type));
 
 	/* Deal with options that can be disabled. */
 	EnablePlayOptions(nGame, &playing_game_options);
@@ -5049,7 +5155,7 @@ static void MamePlayGameWithOptions(int nGame)
 	if (RunMAME(nGame) == 0)
 	{
 	   IncrementPlayCount(nGame);
-	   ListView_RedrawItems(hwndList, GetSelectedPickItem(), GetSelectedPickItem());
+	   ListView_RedrawItems(hwndList, GetSelectedPick(), GetSelectedPick());
 	}
 	else
 	{
@@ -5113,7 +5219,6 @@ static void AdjustMetrics(void)
 	ReleaseDC(hMain, hDC);
 
 	ListView_SetBkColor(hwndList, GetSysColor(COLOR_WINDOW));
-
 	if ((textColor = GetListFontColor()) == RGB(255, 255, 255))
 		textColor = RGB(240, 240, 240);
 
@@ -5308,6 +5413,7 @@ static void UpdateMenu(HMENU hMenu)
 	int 			nGame = GetSelectedPickItem();
 	LPTREEFOLDER lpFolder = GetCurrentFolder();
 	int i;
+	const char *pParent;
 
 	if (have_selection)
 	{
@@ -5349,6 +5455,15 @@ static void UpdateMenu(HMENU hMenu)
 	    EnableMenuItem(hMenu,ID_CONTEXT_REMOVE_CUSTOM,MF_GRAYED);
 		EnableMenuItem(hMenu,ID_CONTEXT_RENAME_CUSTOM,MF_GRAYED);
 	}
+	pParent = GetFolderNameByID(lpFolder->m_nParent+1);
+
+#if 0
+	if( (strcmp(lpFolder->m_lpTitle, "Vector" ) == 0) ||
+		(pParent && (strcmp(pParent, "Source" ) == 0) ) )
+		EnableMenuItem(hMenu,ID_FOLDER_PROPERTIES,MF_ENABLED);
+	else
+#endif
+		EnableMenuItem(hMenu,ID_FOLDER_PROPERTIES,MF_GRAYED);
 
 	CheckMenuRadioItem(hMenu, ID_VIEW_TAB_SCREENSHOT, ID_VIEW_TAB_HISTORY,
 					   ID_VIEW_TAB_SCREENSHOT + GetCurrentTab(), MF_BYCOMMAND);
@@ -5531,11 +5646,14 @@ static LRESULT CALLBACK PictureFrameWndProc(HWND hWnd, UINT uMsg, WPARAM wParam,
 		GetWindowRect(hHistory, &rect);
 		// check if they clicked on the picture area (leave 6 pixel no man's land
 		// by the history window to reduce mistaken clicks)
+		// no more no man's land, the Cursor changes when Edit control is left, should be enough feedback
 
 		if (have_history &&        
-			((GetCurrentTab() == TAB_HISTORY) || 
-			 ((GetCurrentTab() == TAB_SCREENSHOT && GetShowTab(TAB_HISTORY) == FALSE) &&
-			  (rect.top - 6) < pt.y && pt.y < (rect.bottom + 6) )))
+			( ( (GetCurrentTab() == TAB_HISTORY) || 
+			 (GetCurrentTab() == TAB_SCREENSHOT && GetShowTab(TAB_HISTORY) == FALSE) ) &&
+//			  (rect.top - 6) < pt.y && pt.y < (rect.bottom + 6) ) )
+			  		PtInRect( &rect, pt ) ) )
+
 		{
 			return HTTRANSPARENT;
 		}
@@ -6095,8 +6213,8 @@ static BOOL ListCtrlOnPaint(HWND hWnd, UINT uMsg)
 
 	/* First let the control do its default drawing. */
 	CallWindowProc(g_lpListViewWndProc, hWnd, uMsg, (WPARAM)memDC, 0);
-
 	/* Draw bitmap in the background */
+	if( hBackground )
 	{
 		HPALETTE	hPAL;
 		HDC maskDC;
@@ -6201,7 +6319,6 @@ static BOOL ListCtrlOnPaint(HWND hWnd, UINT uMsg)
 			DeleteObject(hPAL);
 		}
 	}
-
 	SelectObject(memDC, hOldBitmap);
 	DeleteObject(bitmap);
 	DeleteDC(memDC);
@@ -6575,6 +6692,51 @@ void ButtonUpListViewDrag(POINTS p)
 
 }
 
+static LPTREEFOLDER GetSelectedFolder(void)
+{
+	HTREEITEM htree;
+	TVITEM tvi;
+	htree = TreeView_GetSelection(hTreeView);
+	if(htree != NULL)
+	{
+		tvi.hItem = htree;
+		tvi.mask = TVIF_PARAM;
+		TreeView_GetItem(hTreeView,&tvi);
+		return (LPTREEFOLDER)tvi.lParam;
+	}
+	return NULL;
+}
+
+static HICON GetSelectedFolderIcon(void)
+{
+	HTREEITEM htree;
+	TVITEM tvi;
+	HIMAGELIST hSmall_icon;
+	LPTREEFOLDER folder;
+	htree = TreeView_GetSelection(hTreeView);
+
+	if (htree != NULL)
+	{
+		tvi.hItem = htree;
+		tvi.mask = TVIF_PARAM;
+		TreeView_GetItem(hTreeView,&tvi);
+		
+		folder = (LPTREEFOLDER)tvi.lParam;
+		//hSmall_icon = TreeView_GetImageList(hTreeView,(int)tvi.iImage);
+		hSmall_icon = NULL;
+		return ImageList_GetIcon(hSmall_icon, tvi.iImage, ILD_TRANSPARENT);
+	}
+	return NULL;
+}
+
+/* Updates all currently displayed Items in the List with the latest Data*/
+void UpdateListView(void)
+{
+	if( (GetViewMode() == VIEW_GROUPED) || (GetViewMode() == VIEW_DETAILS ) )
+		ListView_RedrawItems(hwndList,ListView_GetTopIndex(hwndList),
+							 ListView_GetTopIndex(hwndList)+ ListView_GetCountPerPage(hwndList) );
+}
+
 void CalculateBestScreenShotRect(HWND hWnd, RECT *pRect, BOOL restrict_height)
 {
 	int 	destX, destY;
@@ -6645,9 +6807,42 @@ void CalculateBestScreenShotRect(HWND hWnd, RECT *pRect, BOOL restrict_height)
 	}
 	else
 	{
-		/* Use the bitmaps size if it fits */
-		destW = x;
-		destH = y;
+		if (GetStretchScreenShotLarger())
+		{
+			rect.right	-= 10;
+			rect.bottom -= 10;
+			rWidth	-= 10;
+			rHeight -= 10;
+			bReduce = TRUE;
+			// Try to scale it properly
+			// assumes square pixels, doesn't consider aspect ratio
+			if (x < y)
+				scale = (double)rWidth / x;
+			else
+				scale = (double)rHeight / y;
+			
+			destW = (int)(x * scale);
+			destH = (int)(y * scale);
+			
+			// If it's too big, scale again
+			if (destW > rWidth || destH > rHeight)
+			{
+				if (destW > rWidth)
+					scale = (double)rWidth	/ destW;
+				else
+					scale = (double)rHeight / destH;
+				
+				destW = (int)(destW * scale);
+				destH = (int)(destH * scale);
+			}
+		}
+		else
+		{
+			// Use the bitmaps size if it fits
+			destW = x;
+			destH = y;
+		}
+
 	}
 
 
@@ -6700,7 +6895,13 @@ void SwitchFullScreenMode(void)
 		SetWindowLong(hMain, GWL_STYLE, lMainStyle);
 		
 		// Show the window maximized
-		ShowWindow(hMain, SW_RESTORE);
+		if( GetWindowState() == SW_MAXIMIZE )
+		{
+			ShowWindow(hMain, SW_NORMAL);
+			ShowWindow(hMain, SW_MAXIMIZE);
+		}
+		else
+			ShowWindow(hMain, SW_RESTORE);
 
 		SetRunFullScreen(FALSE);
 	}
@@ -6715,7 +6916,11 @@ void SwitchFullScreenMode(void)
 		lMainStyle = GetWindowLong(hMain, GWL_STYLE);
 		lMainStyle = lMainStyle & (WS_BORDER ^ 0xffffffff);
 		SetWindowLong(hMain, GWL_STYLE, lMainStyle);
-    
+		if( IsMaximized(hMain) )
+		{
+			ShowWindow(hMain, SW_NORMAL);
+			SetWindowState( SW_MAXIMIZE );
+		}
 		ShowWindow(hMain, SW_MAXIMIZE);
 		
 		SetRunFullScreen(TRUE);
@@ -6761,8 +6966,20 @@ void SendIconToProcess(LPPROCESS_INFORMATION pi, int nGameIndex)
 	hIcon = LoadIconFromFile(drivers[nGameIndex]->name);
 	if( hIcon == NULL )
 	{
-		hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_MAME32_ICON));
-	}
+		//Check if clone, if so try parent icon first 
+		if( DriverIsClone(nGameIndex) ) 
+		{ 
+			hIcon = LoadIconFromFile(drivers[nGameIndex]->clone_of->name); 
+			if( hIcon == NULL) 
+			{ 
+				hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_MAME32_ICON)); 
+			} 
+		} 
+		else 
+		{ 
+			hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_MAME32_ICON)); 
+		} 
+	} 
 	WaitForInputIdle( pi->hProcess, INFINITE );
 	SendMessageToProcess( pi, WM_SETICON, ICON_SMALL, (LPARAM)hIcon );
 	SendMessageToProcess( pi, WM_SETICON, ICON_BIG, (LPARAM)hIcon );
@@ -6781,6 +6998,8 @@ void SendMessageToProcess(LPPROCESS_INFORMATION lpProcessInformation,
 	EnumWindows(EnumWindowCallBack, (LPARAM)&fwhs);
 
 	SendMessage(fwhs.hwndFound, Msg, wParam, lParam);
+	//Fix for loosing Focus, we reset the Focus on our own Main window
+	SendMessage(fwhs.hwndFound, WM_KILLFOCUS,(WPARAM) hMain, (LPARAM) NULL);
 }
 
 BOOL CALLBACK EnumWindowCallBack(HWND hwnd, LPARAM lParam) 

@@ -11,8 +11,8 @@ extern VIDEO_UPDATE( oric );
 
 extern WRITE_HANDLER(oric_psg_porta_write);
 
+DEVICE_INIT( oric_floppy );
 DEVICE_LOAD( oric_floppy );
-DEVICE_UNLOAD( oric_floppy );
 
 DEVICE_LOAD( oric_cassette );
 

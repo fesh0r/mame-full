@@ -105,7 +105,7 @@ void SetCrcDir(const char *crcdir)
 BOOL GetUseNewUI(int driver_index)
 {
     assert(0 <= driver_index && driver_index < driver_index);
-    return GetGameOptions(driver_index)->use_new_ui;
+    return GetGameOptions(driver_index, -1)->use_new_ui;
 }
 
 void SetSelectedSoftware(int driver_index, int devtype, const char *software)
@@ -117,7 +117,7 @@ void SetSelectedSoftware(int driver_index, int devtype, const char *software)
 	if (!newsoftware)
 		return;
 
-	o = GetGameOptions(driver_index);
+	o = GetGameOptions(driver_index, -1);
 	FreeIfAllocated(&o->software[devtype]);
 	o->software[devtype] = newsoftware;
 }
@@ -125,7 +125,7 @@ void SetSelectedSoftware(int driver_index, int devtype, const char *software)
 const char *GetSelectedSoftware(int driver_index, int devtype)
 {
 	const char *software;
-	software = GetGameOptions(driver_index)->software[devtype];
+	software = GetGameOptions(driver_index, -1)->software[devtype];
 	return software ? software : "";
 }
 

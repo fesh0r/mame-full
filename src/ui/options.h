@@ -283,6 +283,9 @@ typedef struct
     BOOL     broadcast;
     BOOL     random_bg;
     int      cycle_screenshot;
+	BOOL stretch_screenshot_larger;
+	BOOL inherit_filter;
+
     char     *default_game;
 	int      column_width[COLUMN_MAX];
 	int      column_order[COLUMN_MAX];
@@ -364,12 +367,17 @@ void OptionsExit(void);
 void FreeGameOptions(options_type *o);
 void CopyGameOptions(options_type *source,options_type *dest);
 options_type* GetDefaultOptions(void);
-options_type * GetGameOptions(int driver_index);
+options_type * GetFolderOptions(int folder_index);
+options_type * GetGameOptions(int driver_index, int folder_index );
 BOOL GetGameUsesDefaults(int driver_index);
 void SetGameUsesDefaults(int driver_index,BOOL use_defaults);
 void LoadGameOptions(int driver_index);
+void LoadFolderOptions(int folder_index);
+
+const char* GetFolderNameByID(UINT nID);
 
 void SaveOptions(void);
+ void SaveFolderOptions(int folder_index);
 
 void ResetGUI(void);
 void ResetGameDefaults(void);
@@ -403,6 +411,12 @@ BOOL GetJoyGUI(void);
 
 void SetCycleScreenshot(int cycle_screenshot);
 int GetCycleScreenshot(void);
+
+void SetStretchScreenShotLarger(BOOL stretch);
+BOOL GetStretchScreenShotLarger(void);
+
+void SetFilterInherit(BOOL inherit);
+BOOL GetFilterInherit(void);
 
 void SetBroadcast(BOOL broadcast);
 BOOL GetBroadcast(void);
@@ -571,10 +585,12 @@ void SetSampleAuditResults(int driver_index, int audit_results);
 
 void IncrementPlayCount(int driver_index);
 int GetPlayCount(int driver_index);
+void ResetPlayCount(int driver_index);
 
 void IncrementPlayTime(int driver_index,int playtime);
 int GetPlayTime(int driver_index);
 void GetTextPlayTime(int driver_index,char *buf);
+void ResetPlayTime(int driver_index);
 
 char * GetVersionString(void);
 

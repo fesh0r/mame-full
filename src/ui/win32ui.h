@@ -37,6 +37,8 @@ HICON LoadIconFromFile(const char *iconname);
 void UpdateScreenShot(void);
 void ResizePickerControls(HWND hWnd);
 
+void UpdateListView(void);
+
 // Move The in "The Title (notes)" to "Title, The (notes)"
 char * ModifyThe(const char *str);
 

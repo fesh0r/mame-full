@@ -137,8 +137,8 @@ void floppy_drive_set_ready_state(mess_image *img, int state, int flag);
 
 void floppy_drive_set_motor_state(mess_image *img, int state);
 
-/* set interface for disk image functions */
-void floppy_drive_set_disk_image_interface(mess_image *img, floppy_interface *);
+/* deprecated; set interface for disk image functions */
+void floppy_drive_set_disk_image_interface(mess_image *img, const floppy_interface *iface);
 
 /* seek up or down */
 void floppy_drive_seek(mess_image *img, signed int signed_tracks);

@@ -240,7 +240,7 @@ char* MyStrStrI(const char* pFirst, const char* pSrch)
 
 char * ConvertToWindowsNewlines(const char *source)
 {
-	static char buf[9000];
+	static char buf[40000];
 	char *dest;
 
 	dest = buf;
@@ -319,6 +319,13 @@ BOOL DriverIsStereo(int driver_index)
     expand_machine_driver(drivers[driver_index]->drv, &drv);
 	return (drv.sound_attributes & SOUND_SUPPORTS_STEREO) != 0;
 }
+BOOL DriverIsMultiMon(int driver_index)
+{
+    struct InternalMachineDriver drv;
+    expand_machine_driver(drivers[driver_index]->drv, &drv);
+	return (drv.video_attributes & VIDEO_DUAL_MONITOR) != 0;
+}
+
 
 BOOL DriverIsVector(int driver_index)
 {
@@ -432,6 +439,7 @@ BOOL DriverUsesLightGun(int driver_index)
 
     return FALSE;
 }
+
 
 void FlushFileCaches(void)
 {
