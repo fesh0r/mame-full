@@ -24,7 +24,8 @@ System Driver Changes:
 - [COCO 3] More work on improving video timing for mid frame video register
   modification. Now supports mid frame palette modification, and altered the
   way video RAM is scanned so that John Kowalski's Boink demo now runs (albeit
-  with many glitches) [Nate Woods]
+  with many glitches).  Also fixed a bug that would cause the "Speed Up Poke"
+  to still be in effect after a reset. [Nate Woods]
 
 Other Changes:
 --------------

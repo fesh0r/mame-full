@@ -2259,6 +2259,9 @@ void coco3_init_machine(void)
 void dragon_stop_machine(void)
 {
 	wd179x_exit();
+
+	/* Turn off overclock (i.e. - reverse the speed up poke) */
+    timer_set_overclock(0, 1);
 }
 
 /***************************************************************************
