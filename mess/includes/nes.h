@@ -14,10 +14,10 @@
 //#define COLOR_INTENSITY
 extern unsigned char nes_palette[3*64];
 extern int dirtychar[0x200];
-extern unsigned short colortable_mono[4*16];
+extern UINT32 colortable_mono[4*16];
 
 #define BOTTOM_VISIBLE_SCANLINE   239		/* The bottommost visible scanline */
-#define NMI_SCANLINE     		  244		/* 244 times Bayou Billy perfectly */
+#define NMI_SCANLINE			  244		/* 244 times Bayou Billy perfectly */
 #define NTSC_SCANLINES_PER_FRAME  262
 #define PAL_SCANLINES_PER_FRAME   305		/* verify - times Elite perfectly */
 
@@ -48,7 +48,7 @@ extern int PPU_Sprite_Addr; /* $2003 */
 
 extern UINT8 PPU_X_fine;
 
-extern UINT16 PPU_refresh_data;	/* $2006 */
+extern UINT16 PPU_refresh_data; /* $2006 */
 extern int PPU_tile_page;
 extern int PPU_sprite_page;
 extern int PPU_add;
@@ -82,7 +82,7 @@ struct ppu_struct {
 	UINT16 refresh_latch;
 	UINT8 x_fine;
 
-	UINT16 address;			/* $2006 */
+	UINT16 address; 		/* $2006 */
 	UINT8 address_latch;
 
 	UINT8 data_latch;		/* $2007 - read */

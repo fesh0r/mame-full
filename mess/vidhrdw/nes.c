@@ -41,7 +41,7 @@ unsigned char *dirtybuffer4;
 unsigned char line_priority[0x108];
 
 /* Changed at runtime */
-static unsigned short nes_colortable[] =
+static UINT32 nes_colortable[] =
 {
 	0,1,2,3,
 	0,1,2,3,
@@ -53,7 +53,7 @@ static unsigned short nes_colortable[] =
 	0,1,2,3,
 };
 
-unsigned short colortable_mono[] =
+UINT32 colortable_mono[] =
 {
 	0,1,2,3,
 	0,1,2,3,
@@ -75,15 +75,15 @@ FILE *colorlog;
 void nes_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 #ifndef M_PI
-#define M_PI 			(3.14159265358979323846L)
+#define M_PI			(3.14159265358979323846L)
 #endif
 
 	/* This routine builds a palette using a transformation from */
 	/* the YUV (Y, B-Y, R-Y) to the RGB color space */
 
-	/* The NES has a 64 color palette                        */
-	/* 16 colors, with 4 luminance levels for each color     */
-	/* The 16 colors circle around the YUV color space,      */
+	/* The NES has a 64 color palette						 */
+	/* 16 colors, with 4 luminance levels for each color	 */
+	/* The 16 colors circle around the YUV color space, 	 */
 
 	/* It also returns a fake colortable, for the menus */
 
@@ -315,7 +315,7 @@ void nes_vh_renderscanline (int scanline)
 	UINT8 scroll_y_fine;
 	UINT8 color_mask;
 	int total_elements;
-	const unsigned short *paldata_1;
+	const UINT32 *paldata_1;
 //	const unsigned char *sd_1;
 
 #ifdef BIG_SCREEN
@@ -435,7 +435,7 @@ if (videolog) fprintf (videolog, "%02x ", ppu_page[page][address]);
 #endif
 
 		{
-			const unsigned short *paldata;
+			const UINT32 *paldata;
 			const unsigned char *sd;
 			unsigned char *bm;
 			int start;
@@ -542,7 +542,7 @@ draw_nothing:
 		{
 			PPU_refresh_data |= (tmp & 0x03e0);
 		}
-    }
+	}
 
 	profiler_mark(PROFILER_END);
 }
@@ -570,7 +570,7 @@ static void render_sprites (int scanline)
 		/* If the sprite isn't visible, skip it */
 		if ((y + size <= scanline) || (y > scanline)) continue;
 
-		x    = spriteram[i+3];
+		x	 = spriteram[i+3];
 		tile = spriteram[i+1];
 		color = (spriteram[i+2] & 0x03) + 4;
 		pri = spriteram[i+2] & 0x20;
@@ -608,7 +608,7 @@ static void render_sprites (int scanline)
 		{
 			int sprite_line;
 			int drawn = 0;
-			const unsigned short *paldata;
+			const UINT32 *paldata;
 			const unsigned char *sd;
 			unsigned char *bm;
 			int start;
@@ -770,11 +770,11 @@ static void draw_sight(int playerNum, int x_center, int y_center)
 	else
 		color = Machine->pens[0x30]; /* white */
 
-    if (x_center<2)   x_center=2;
-    if (x_center>253) x_center=253;
+	if (x_center<2)   x_center=2;
+	if (x_center>253) x_center=253;
 
-    if (y_center<2)   y_center=2;
-    if (y_center>253) y_center=253;
+	if (y_center<2)   y_center=2;
+	if (y_center>253) y_center=253;
 
 	for(y = y_center-5; y < y_center+6; y++)
 		if((y >= 0) && (y < 256))
@@ -1110,3 +1110,4 @@ void nes_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	}
 #endif
 }
+
