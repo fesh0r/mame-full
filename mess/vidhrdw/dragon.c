@@ -46,7 +46,6 @@ static int coco3_hires;
 static int coco3_gimevhreg[8];
 static int coco3_borderred, coco3_bordergreen, coco3_borderblue;
 static int sam_videomode;
-static int coco3_somethingdirty;
 static int coco3_blinkstatus;
 
 #define MAX_HIRES_VRAM	57600
@@ -228,7 +227,7 @@ int coco3_vh_start(void)
 	for (i = 0; i < (sizeof(coco3_gimevhreg) / sizeof(coco3_gimevhreg[0])); i++)
 		coco3_gimevhreg[i] = 0;
 
-	coco3_hires = coco3_somethingdirty = coco3_blinkstatus = 0;
+	coco3_hires = coco3_blinkstatus = 0;
 	coco3_borderred = coco3_bordergreen = coco3_borderblue = -1;
 	return 0;
 }
@@ -381,7 +380,6 @@ static int coco3_vh_setborder(int red, int green, int blue)
 void coco3_vh_blink(void)
 {
 	coco3_blinkstatus = !coco3_blinkstatus;
-	coco3_somethingdirty = 1;
 }
 
 WRITE_HANDLER(coco3_palette_w)
@@ -578,6 +576,9 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		coco3_artifact_blue
 	};
 	static int old_cmprgb;
+	struct rasterbits_source rs;
+	struct rasterbits_videomode rvm;
+	struct rasterbits_frame rf;
 	int cmprgb, i;
 
 	/* Did the user change between CMP and RGB? */
@@ -599,9 +600,6 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		int linesperrow, rows = 0;
 		int borderred, bordergreen, borderblue;
 		int visualbytesperrow;
-		struct rasterbits_source rs;
-		struct rasterbits_videomode rvm;
-		struct rasterbits_frame rf;
 
 		rows = coco3_calculate_rows();
 		linesperrow = coco3_hires_linesperrow();
@@ -613,7 +611,6 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		/* check palette recalc */
 		if (palette_recalc() || full_refresh) {
 			full_refresh = 1;
-			coco3_somethingdirty = 1;
 
 #if LOG_VIDEO
 			log_video();
@@ -692,8 +689,6 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		rvm.width = visualbytesperrow * 8 / rvm.depth;
 		rvm.bytesperrow = (coco3_gimevhreg[7] & 0x80) ? 256 : visualbytesperrow;
 
-		raster_bits(bitmap, &rs, &rvm, &rf, NULL);
-
 		if (full_refresh)
 			memset(dirtybuffer, 0, ((rows + linesperrow - 1) / linesperrow) * rvm.bytesperrow);
 	}
@@ -705,11 +700,13 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		if (palette_recalc())
 			full_refresh = 1;
 
-		internal_m6847_vh_screenrefresh(bitmap, full_refresh, coco3_metapalette,
+		internal_m6847_vh_screenrefresh(&rs, &rvm, &rf,
+			full_refresh, coco3_metapalette,
 			&RAM[coco3_lores_vidbase()], &the_state,
 			TRUE, (full_refresh ? 16 : -1), 2,
 			artifacts[readinputport(12) & 3]);
 	}
+	raster_bits(bitmap, &rs, &rvm, &rf, NULL);
 }
 
 static void coco3_ram_w(int offset, int data, int block)
@@ -726,7 +723,6 @@ static void coco3_ram_w(int offset, int data, int block)
 			vidbasediff = (unsigned int) (offset - vidbase) & 0x7ffff;
 			if (vidbasediff < MAX_HIRES_VRAM) {
 				dirtybuffer[vidbasediff] = 1;
-				coco3_somethingdirty = 1;
 			}
 		}
 		else {

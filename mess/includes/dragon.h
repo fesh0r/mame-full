@@ -2,13 +2,14 @@
 #define DRAGON_H
 
 #include "vidhrdw/m6847.h"
-
+#include "includes/rstrbits.h"
 /* ----------------------------------------------------------------------- *
  * Backdoors into mess/vidhrdw/m6847.c                                     *
  * ----------------------------------------------------------------------- */
 
 int internal_m6847_vh_start(int maxvram);
-void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh,
+void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
+	struct rasterbits_videomode *rvm, struct rasterbits_frame *rf, int full_refresh,
 	const int *metapalette, UINT8 *vrambase, struct m6847_state *currentstate,
 	int has_lowercase, int border_color, int wf, artifactproc artifact);
 

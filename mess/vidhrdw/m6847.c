@@ -370,27 +370,24 @@ static UINT8 *mapper_text(UINT8 *mem, int param, int *fg, int *bg, int *attr)
  *     bit 1    1=b/w graphics, 0=color graphics
  *     bit 0	color set
  */
-void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh,
+void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
+	struct rasterbits_videomode *rvm, struct rasterbits_frame *rf, int full_refresh,
 	const int *metapalette, UINT8 *vrambase, struct m6847_state *currentstate,
 	int has_lowercase, int border_color, int wf, artifactproc artifact)
 {
-	struct rasterbits_source rs;
-	struct rasterbits_videomode rvm;
-	struct rasterbits_frame rf;
-
 	static int rowheights[] = {
 		12,		12,		12,		12,		12,		12,		12,		12,
 		3,		3,		3,		2,		2,		1,		1,		1
 	};
 
-	rs.videoram = vrambase;
-	rs.size = currentstate->vram_mask + 1;
-	rs.position = currentstate->video_offset;
-	rs.db = full_refresh ? NULL : dirtybuffer;
-	rvm.height = 192 / rowheights[currentstate->video_vmode >> 1];
-	rf.width = 256 * wf;
-	rf.height = 192;
-	rf.border_pen = (border_color == -1) ? -1 : Machine->pens[border_color];
+	rs->videoram = vrambase;
+	rs->size = currentstate->vram_mask + 1;
+	rs->position = currentstate->video_offset;
+	rs->db = full_refresh ? NULL : dirtybuffer;
+	rvm->height = 192 / rowheights[currentstate->video_vmode >> 1];
+	rf->width = 256 * wf;
+	rf->height = 192;
+	rf->border_pen = (border_color == -1) ? -1 : Machine->pens[border_color];
 
 	if (full_refresh) {
 		/* Since we are not passing the dirty buffer to raster_bits(), we should clear it here */
@@ -399,52 +396,51 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 
 	if (currentstate->video_gmode & 0x10)
 	{
-		rvm.flags = RASTERBITS_FLAG_GRAPHICS;
+		rvm->flags = RASTERBITS_FLAG_GRAPHICS;
 
 		if (currentstate->video_gmode & 0x02)
 		{
 			/* Resolution modes */
-			rvm.bytesperrow = ((currentstate->video_gmode & 0x1e) == M6847_MODE_G4R) ? 32 : 16;
-			rvm.width = rvm.bytesperrow * 8;
-			rvm.depth = 1;
-			rvm.metapalette = &metapalette[currentstate->video_gmode & 0x1 ? 10 : 8];
+			rvm->bytesperrow = ((currentstate->video_gmode & 0x1e) == M6847_MODE_G4R) ? 32 : 16;
+			rvm->width = rvm->bytesperrow * 8;
+			rvm->depth = 1;
+			rvm->metapalette = &metapalette[currentstate->video_gmode & 0x1 ? 10 : 8];
 
 			if (artifact && ((currentstate->video_gmode & 0x1e) == M6847_MODE_G4R)) {
 				/* I am here because we are doing PMODE 4 artifact colors */
-				rvm.flags |= RASTERBITS_FLAG_ARTIFACT;
-				rvm.u.artifact = artifact;
+				rvm->flags |= RASTERBITS_FLAG_ARTIFACT;
+				rvm->u.artifact = artifact;
 			}
 		}
 		else
 		{
 			/* Color modes */
-			rvm.bytesperrow = ((currentstate->video_gmode & 0x1e) != M6847_MODE_G1C) ? 32 : 16;
-			rvm.width = rvm.bytesperrow * 4;
-			rvm.depth = 2;
-			rvm.metapalette = &metapalette[currentstate->video_gmode & 0x1 ? 4: 0];
+			rvm->bytesperrow = ((currentstate->video_gmode & 0x1e) != M6847_MODE_G1C) ? 32 : 16;
+			rvm->width = rvm->bytesperrow * 4;
+			rvm->depth = 2;
+			rvm->metapalette = &metapalette[currentstate->video_gmode & 0x1 ? 4: 0];
 		}
 	}
 	else
 	{
-		rvm.flags = RASTERBITS_FLAG_TEXT;
-		rvm.bytesperrow = 32;
-		rvm.width = 32;
-		rvm.depth = 8;
-		rvm.metapalette = metapalette;
+		rvm->flags = RASTERBITS_FLAG_TEXT;
+		rvm->bytesperrow = 32;
+		rvm->width = 32;
+		rvm->depth = 8;
+		rvm->metapalette = metapalette;
 
 		if (!has_lowercase && (currentstate->video_gmode & 0x02)) {
 			/* Semigraphics 6 */
-			rvm.u.text.mapper = mapper_semigraphics6;
-			rvm.u.text.mapper_param = (currentstate->video_gmode & 0x1) ? 4 : 0;
+			rvm->u.text.mapper = mapper_semigraphics6;
+			rvm->u.text.mapper_param = (currentstate->video_gmode & 0x1) ? 4 : 0;
 		}
 		else {
 			/* Text (or Semigraphics 4) */
-			rvm.u.text.mapper = mapper_text;
-			rvm.u.text.mapper_param = currentstate->video_gmode & 0x7;
+			rvm->u.text.mapper = mapper_text;
+			rvm->u.text.mapper_param = currentstate->video_gmode & 0x7;
 		}
-		rvm.u.text.modulo = 12;
+		rvm->u.text.modulo = 12;
 	}
-	raster_bits(bitmap, &rs, &rvm, &rf, NULL);
 }
 
 
@@ -507,6 +503,9 @@ void m6847_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 		m6847_artifact_red,
 		m6847_artifact_blue
 	};
+	struct rasterbits_source rs;
+	struct rasterbits_videomode rvm;
+	struct rasterbits_frame rf;
 	int artifact_value;
 
 	if (vblankproc)
@@ -514,9 +513,12 @@ void m6847_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 
 	artifact_value = (artifact_dipswitch == -1) ? 0 : readinputport(artifact_dipswitch);
 
-	internal_m6847_vh_screenrefresh(bitmap, full_refresh, m6847_metapalette, videoram,
+	internal_m6847_vh_screenrefresh(&rs, &rvm, &rf,
+		full_refresh, m6847_metapalette, videoram,
 		&the_state, FALSE, (full_refresh ? m6847_bordercolor() : -1),
 		1, artifacts[artifact_value & 3]);
+
+	raster_bits(bitmap, &rs, &rvm, &rf, NULL);
 }
 
 /* --------------------------------------------------
