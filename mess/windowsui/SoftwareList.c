@@ -879,7 +879,7 @@ void SoftwareList_Idle(struct SmartListView *pListView)
 #endif /* HAS_IDLING */
 
 /* ------------------------------------------------------------------------ *
- * Mess32 Diagnostics                                                       *
+ * MESS GUI Diagnostics                                                     *
  * ------------------------------------------------------------------------ */
 
 #ifdef MAME_DEBUG
@@ -887,6 +887,15 @@ void SoftwareList_Idle(struct SmartListView *pListView)
 #ifndef T2A
 #define T2A(str)	str
 #endif
+
+static const char *MessGui_getfodderimage(unsigned int index, int *foddertype)
+{
+	if (index < mess_images_count) {
+		*foddertype = mess_images_index[index]->type;
+		return mess_images_index[index]->name;
+	}
+	return NULL;
+}
 
 void MessTestsFlex(struct SmartListView *pListView, const struct GameDriver *gamedrv)
 {
@@ -921,7 +930,7 @@ void MessTestsFlex(struct SmartListView *pListView, const struct GameDriver *gam
 	/* Now lets try to see if we can load everything */
 	for (i = 0; i < mess_images_count; i++) {
 		SmartListView_SelectItem(pListView, i, FALSE);
-		messtestdriver(gamedrv);
+		messtestdriver(gamedrv, MessGui_getfodderimage);
 	}
 }
 

@@ -4,6 +4,7 @@ This file is a set of function calls and defs required for MESS.
 
 #include <ctype.h>
 #include <stdarg.h>
+#include <assert.h>
 #include "driver.h"
 #include "config.h"
 #include "includes/flopdrv.h"
@@ -891,17 +892,71 @@ int messvaliditychecks(void)
 	return error;
 }
 
-void messtestdriver(const void *game)
+enum
 {
-	const struct GameDriver *gamedrv = game;
+	TESTERROR_SUCCESS			= 0,
+
+	/* benign errors */
+	TESTERROR_NOROMS			= 1,
+
+	/* failures */
+	TESTERROR_INITDEVICESFAILED	= -1
+};
+
+static int try_driver(const struct GameDriver *gamedrv)
+{
+	int i;
+	int error;
+	void *mem[128];
+
 	Machine->gamedrv = gamedrv;
 	Machine->drv = gamedrv->drv;
 	memset(&Machine->memory_region, 0, sizeof(Machine->memory_region));
 	if (readroms() != 0)
-		return;
-	if (init_devices(gamedrv) != 0)
-		return;
-	exit_devices();
+	{
+		error = TESTERROR_NOROMS;
+	}
+	else
+	{
+		if (init_devices(gamedrv) != 0)
+			error = TESTERROR_INITDEVICESFAILED;
+		else
+			exit_devices();
+		for (i = 0;i < MAX_MEMORY_REGIONS;i++)
+			free_memory_region(i);
+	}
+
+	/* hammer away on malloc, to detect any memory errors */
+	for (i = 0; i < sizeof(mem) / sizeof(mem[0]); i++)
+		mem[i] = malloc((i * 131 % 51) + 64);
+	for (i = 0; i < sizeof(mem) / sizeof(mem[0]); i++)
+		free(mem[i]);
+
+	return 0;
+}
+
+void messtestdriver(const void *game, const char *(*getfodderimage)(unsigned int index, int *foddertype))
+{
+	int error;
+	struct GameOptions saved_options;
+	const struct GameDriver *gamedrv = game;
+
+	/* preserve old options; the MESS GUI needs this */
+	memcpy(&saved_options, &options, sizeof(saved_options));
+
+	/* clear out images in options */
+	memset(&options.image_files, 0, sizeof(options.image_files));
+	options.image_count = 0;
+
+	/* try running with no attached devices */
+	error = try_driver(gamedrv);
+	if (gamedrv->flags & GAME_COMPUTER)
+		assert(error >= 0);	/* computers should succeed when ran with no attached devices */
+	else
+		assert(error <= 0);	/* consoles can fail; but should never fail due to a no roms error */
+
+	/* restore old options */
+	memcpy(&options, &saved_options, sizeof(options));
 }
 
 #endif /* MAME_DEBUG */

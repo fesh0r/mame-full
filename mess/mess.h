@@ -168,13 +168,17 @@ struct IODevice {
 	UINT32 (*partialcrc)(const unsigned char *buf, unsigned int size);
 };
 
-
-/* these are called from mame.c*/
 #ifdef MAME_DEBUG
+/* runs checks to see if device code is proper */
 int messvaliditychecks(void);
-void messtestdriver(const void *game);
+
+/* runs a set of test cases on the driver; can pass in an optional callback
+ * to provide a way to identify images to test with
+ */
+void messtestdriver(const void *game, const char *(*getfodderimage)(unsigned int index, int *foddertype));
 #endif
 
+/* these are called from mame.c*/
 extern int get_filenames(void);
 extern int init_devices(const void *game);
 extern void exit_devices(void);
