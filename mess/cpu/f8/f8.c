@@ -215,7 +215,6 @@ static void ROMC_08(void)
     f8.pc1 = f8.pc0;
     f8.dbus = 0;
     f8.pc0 = 0;
-    f8.w&=~I;
     f8_icount -= cL;
 }
 
@@ -762,7 +761,6 @@ static void f8_lnk(void)
     else
     {
 	CLR_OZCS;
-	SET_OC(f8.a,0);
     }
     SET_SZ(f8.a);
 }
@@ -1552,6 +1550,7 @@ void f8_reset(void *param)
 	int i;
 
 	memset(&f8, 0, sizeof(F8));
+    f8.w&=~I;
 
 	/* save PC0 to PC1 and reset PC0 */
 	ROMC_08();
@@ -1614,7 +1613,7 @@ int f8_execute(int cycles)
 	case 0x0d: /* 0000 1101 */	f8_lr_p0_q();		break;
 	case 0x0e: /* 0000 1110 */	f8_lr_q_dc();		break;
 	case 0x0f: /* 0000 1111 */	f8_lr_dc_q();		break;
-	    
+
         case 0x10: /* 0001 0000 */  f8_lr_dc_h();       break;
 	case 0x11: /* 0001 0001 */	f8_lr_h_dc();		break;
 	case 0x12: /* 0001 0010 */	f8_sr_1();			break;
@@ -1631,7 +1630,7 @@ int f8_execute(int cycles)
 	case 0x1d: /* 0001 1101 */	f8_lr_w_j();		break;
 	case 0x1e: /* 0001 1110 */	f8_lr_j_w();		break;
 	case 0x1f: /* 0001 1111 */	f8_inc();			break;
-	    
+
         case 0x20: /* 0010 0000 */  f8_li();            break;
 	case 0x21: /* 0010 0001 */	f8_ni();			break;
 	case 0x22: /* 0010 0010 */	f8_oi();			break;
@@ -1648,7 +1647,7 @@ int f8_execute(int cycles)
 	case 0x2d: /* 0010 1101 */	illegal();			break;
 	case 0x2e: /* 0010 1110 */	illegal();			break;
 	case 0x2f: /* 0010 1111 */	illegal();			break;
-	    
+
         case 0x30: /* 0011 0000 */  f8_ds_r( 0);        break;
 	case 0x31: /* 0011 0001 */	f8_ds_r( 1);		break;
 	case 0x32: /* 0011 0010 */	f8_ds_r( 2);		break;
@@ -1665,7 +1664,7 @@ int f8_execute(int cycles)
 	case 0x3d: /* 0011 1101 */	f8_ds_isar_i(); 	break;
 	case 0x3e: /* 0011 1110 */	f8_ds_isar_d(); 	break;
 	case 0x3f: /* 0011 1111 */	illegal();			break;
-	    
+
         case 0x40: /* 0100 0000 */  f8_lr_a_r( 0);      break;
 	case 0x41: /* 0100 0001 */	f8_lr_a_r( 1);		break;
 	case 0x42: /* 0100 0010 */	f8_lr_a_r( 2);		break;
@@ -1682,7 +1681,7 @@ int f8_execute(int cycles)
 	case 0x4d: /* 0100 1101 */	f8_lr_a_isar_i();	break;
 	case 0x4e: /* 0100 1110 */	f8_lr_a_isar_d();	break;
 	case 0x4f: /* 0100 1111 */	illegal();			break;
-	    
+
 	case 0x50: /* 0101 0000 */	f8_lr_r_a( 0);		break;
 	case 0x51: /* 0101 0001 */	f8_lr_r_a( 1);		break;
 	case 0x52: /* 0101 0010 */	f8_lr_r_a( 2);		break;
@@ -1699,7 +1698,7 @@ int f8_execute(int cycles)
 	case 0x5d: /* 0101 1101 */	f8_lr_isar_i_a();	break;
 	case 0x5e: /* 0101 1110 */	f8_lr_isar_d_a();	break;
 	case 0x5f: /* 0101 1111 */	illegal();			break;
-	    
+
 	case 0x60: /* 0110 0000 */	f8_lisu(0x00);		break;
 	case 0x61: /* 0110 0001 */	f8_lisu(0x08);		break;
 	case 0x62: /* 0110 0010 */	f8_lisu(0x10);		break;
@@ -1716,7 +1715,7 @@ int f8_execute(int cycles)
 	case 0x6d: /* 0110 1101 */	f8_lisl(0x05);		break;
 	case 0x6e: /* 0110 1110 */	f8_lisl(0x06);		break;
 	case 0x6f: /* 0110 1111 */	f8_lisl(0x07);		break;
-	    
+
 	case 0x70: /* 0111 0000 */	f8_lis(0x0);		break;
 	case 0x71: /* 0111 0001 */	f8_lis(0x1);		break;
 	case 0x72: /* 0111 0010 */	f8_lis(0x2);		break;
@@ -1733,7 +1732,7 @@ int f8_execute(int cycles)
 	case 0x7d: /* 0111 1101 */	f8_lis(0xd);		break;
 	case 0x7e: /* 0111 1110 */	f8_lis(0xe);		break;
 	case 0x7f: /* 0111 1111 */	f8_lis(0xf);		break;
-	    
+
 	case 0x80: /* 1000 0000 */	f8_bt(0);			break;
 	case 0x81: /* 1000 0001 */	f8_bt(1);			break;
 	case 0x82: /* 1000 0010 */	f8_bt(2);			break;
@@ -1750,7 +1749,7 @@ int f8_execute(int cycles)
 	case 0x8d: /* 1000 1101 */	f8_cm();			break;
 	case 0x8e: /* 1000 1110 */	f8_adc();			break;
 	case 0x8f: /* 1000 1111 */	f8_br7();			break;
-	    
+
 	case 0x90: /* 1001 0000 */	f8_bf(0x0); 		break;
 	case 0x91: /* 1001 0001 */	f8_bf(0x1); 		break;
 	case 0x92: /* 1001 0010 */	f8_bf(0x2); 		break;
@@ -1767,7 +1766,7 @@ int f8_execute(int cycles)
 	case 0x9d: /* 1001 1101 */	f8_bf(0xd); 		break;
 	case 0x9e: /* 1001 1110 */	f8_bf(0xe); 		break;
 	case 0x9f: /* 1001 1111 */	f8_bf(0xf); 		break;
-	    
+
 	case 0xa0: /* 1010 0000 */	f8_ins_0(0x0);		break;
 	case 0xa1: /* 1010 0001 */	f8_ins_0(0x1);		break;
 	case 0xa2: /* 1010 0010 */	illegal();			break;
@@ -1784,7 +1783,7 @@ int f8_execute(int cycles)
 	case 0xad: /* 1010 1101 */	f8_ins_1(0xd);		break;
 	case 0xae: /* 1010 1110 */	f8_ins_1(0xe);		break;
 	case 0xaf: /* 1010 1111 */	f8_ins_1(0xf);		break;
-	    
+
 	case 0xb0: /* 1011 0000 */	f8_outs_0(0x0); 	break;
 	case 0xb1: /* 1011 0001 */	f8_outs_0(0x1); 	break;
 	case 0xb2: /* 1011 0010 */	illegal();			break;
@@ -1801,7 +1800,7 @@ int f8_execute(int cycles)
 	case 0xbd: /* 1011 1101 */	f8_outs_1(0xd); 	break;
 	case 0xbe: /* 1011 1110 */	f8_outs_1(0xe); 	break;
 	case 0xbf: /* 1011 1111 */	f8_outs_1(0xf); 	break;
-	    
+
 	case 0xc0: /* 1100 0000 */	f8_as(0x0); 		break;
 	case 0xc1: /* 1100 0001 */	f8_as(0x1); 		break;
 	case 0xc2: /* 1100 0010 */	f8_as(0x2); 		break;
@@ -1818,7 +1817,7 @@ int f8_execute(int cycles)
 	case 0xcd: /* 1100 1101 */	f8_as_isar_i(); 	break;
 	case 0xce: /* 1100 1110 */	f8_as_isar_d(); 	break;
 	case 0xcf: /* 1100 1111 */	illegal(); 			break;
-	    
+
 	case 0xd0: /* 1101 0000 */	f8_asd(0x0);		break;
 	case 0xd1: /* 1101 0001 */	f8_asd(0x1);		break;
 	case 0xd2: /* 1101 0010 */	f8_asd(0x2);		break;
@@ -1835,7 +1834,7 @@ int f8_execute(int cycles)
 	case 0xdd: /* 1101 1101 */	f8_asd_isar_i();	break;
 	case 0xde: /* 1101 1110 */	f8_asd_isar_d();	break;
 	case 0xdf: /* 1101 1111 */	illegal();			break;
-	    
+
 	case 0xe0: /* 1110 0000 */	f8_xs(0x0); 		break;
 	case 0xe1: /* 1110 0001 */	f8_xs(0x1); 		break;
 	case 0xe2: /* 1110 0010 */	f8_xs(0x2); 		break;
@@ -1852,7 +1851,7 @@ int f8_execute(int cycles)
 	case 0xed: /* 1110 1101 */	f8_xs_isar_i();		break;
 	case 0xee: /* 1110 1110 */	f8_xs_isar_d();		break;
 	case 0xef: /* 1110 1111 */	illegal();			break;
-	    
+
 	case 0xf0: /* 1111 0000 */	f8_ns(0x0); 		break;
 	case 0xf1: /* 1111 0001 */	f8_ns(0x1); 		break;
 	case 0xf2: /* 1111 0010 */	f8_ns(0x2); 		break;
@@ -1908,32 +1907,6 @@ void f8_set_context(void *src)
 		memcpy(&f8, src, sizeof(F8));
 }
 
-/* Get program counter */
-unsigned f8_get_pc(void)
-{
-	return (f8.pc0 - 1) & 0xffff;
-}
-
-/* Set program counter */
-void f8_set_pc(unsigned val)
-{
-	f8.pc0 = val;
-	ROMC_00();
-}
-
-/* Get stack pointer */
-unsigned f8_get_sp(void)
-{
-	return f8.pc1;
-}
-
-/* Set stack pointer */
-void f8_set_sp(unsigned val)
-{
-	f8.pc1 = val;
-}
-
-
 WRITE_HANDLER( f8_internal_w )
 {
     f8.r[ offset & 0x3f ] = data;
@@ -1948,7 +1921,9 @@ unsigned f8_get_reg(int regnum)
 {
 	switch( regnum )
 	{
-	case F8_PC0: return f8.pc0;
+	case REG_PC:
+	case F8_PC0: return (f8.pc0 - 1) & 0xffff;
+	case REG_SP:
 	case F8_PC1: return f8.pc1;
 	case F8_DC0: return f8.dc0;
 	case F8_DC1: return f8.dc1;
@@ -1970,7 +1945,12 @@ void f8_set_reg (int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-	case F8_PC0: f8.pc0 = val; break;
+	case REG_PC:
+	case F8_PC0: f8.pc0 = val;
+		f8.dbus = cpu_readop(f8.pc0);
+    	f8.pc0 += 1;
+		break;
+	case REG_SP:
 	case F8_PC1: f8.pc1 = val; break;
 	case F8_DC0: f8.dc0 = val; break;
 	case F8_DC1: f8.dc1 = val; break;
@@ -2027,7 +2007,7 @@ const char *f8_info(void *context, int regnum)
 
     switch( regnum )
 	{
-		case CPU_INFO_REG+F8_PC0:sprintf(buffer[which], "PC0:%04X", r->pc0); break;
+		case CPU_INFO_REG+F8_PC0:sprintf(buffer[which], "PC0:%04X", ((r->pc0) - 1) & 0xffff); break;
 		case CPU_INFO_REG+F8_PC1:sprintf(buffer[which], "PC1:%04X", r->pc1); break;
 		case CPU_INFO_REG+F8_DC0:sprintf(buffer[which], "DC0:%04X", r->dc0); break;
 		case CPU_INFO_REG+F8_DC1:sprintf(buffer[which], "DC1:%04X", r->dc1); break;

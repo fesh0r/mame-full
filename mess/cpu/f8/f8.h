@@ -45,10 +45,6 @@ extern void f8_exit  (void);				 /* Shut down CPU core */
 extern int	f8_execute(int cycles); 		 /* Execute cycles - returns number of cycles actually run */
 extern unsigned f8_get_context (void *dst);  /* Get registers, return context size */
 extern void f8_set_context (void *src); 	 /* Set registers */
-extern unsigned f8_get_pc (void);			 /* Get program counter */
-extern void f8_set_pc (unsigned val);		 /* Set program counter */
-extern unsigned f8_get_sp (void);			 /* Get stack pointer */
-extern void f8_set_sp (unsigned val);		 /* Set stack pointer */
 extern unsigned f8_get_reg (int regnum);
 extern void f8_set_reg (int regnum, unsigned val);
 extern void f8_set_nmi_line(int state);
