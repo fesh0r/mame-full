@@ -4,6 +4,7 @@
 #include "mame.h"
 #include "bitbngr.h"
 #include "printer.h"
+#include "mess.h"
 
 static void bitbanger_overthreshhold(int id);
 
@@ -21,19 +22,22 @@ struct bitbanger_info
 
 static struct bitbanger_info *bitbangers[MAX_PRINTER];
 
-int bitbanger_init(int id, const struct bitbanger_config *config)
+static int bitbanger_init(int id)
 {
 	struct bitbanger_info *bi;
+	const struct bitbanger_config *config;
 
-	bi = (struct bitbanger_info *) auto_malloc(sizeof(struct bitbanger_info));
+	config = (const struct bitbanger_config *) device_find(Machine->gamedrv, IO_BITBANGER)->dummy;
+
+	bi = (struct bitbanger_info *) image_malloc(IO_BITBANGER, id, sizeof(struct bitbanger_info));
 	if (!bi)
 		return INIT_FAIL;
 
-	bi->pulses = (double *) auto_malloc(config->maximum_pulses * sizeof(double));
+	bi->pulses = (double *) image_malloc(IO_BITBANGER, id, config->maximum_pulses * sizeof(double));
 	if (!bi->pulses)
 		return INIT_FAIL;
 
-	bi->factored_pulses = (int *) auto_malloc(config->maximum_pulses * sizeof(int));
+	bi->factored_pulses = (int *) image_malloc(IO_BITBANGER, id, config->maximum_pulses * sizeof(int));
 	if (!bi->factored_pulses)
 		return INIT_FAIL;
 
@@ -110,7 +114,7 @@ static void bitbanger_overthreshhold(int id)
 	bi->recorded_pulses = 0;
 }
 
-void bitbanger_output(int id, int value)
+static void bitbanger_output(int id, int value)
 {
 	struct bitbanger_info *bi = bitbangers[id];
 	double current_time;
@@ -139,6 +143,21 @@ void bitbanger_output(int id, int value)
 		/* remove timeout timer, if need be */
 		timer_reset(bi->timeout_timer, bi->config->pulse_threshhold);
 	}
+}
+
+void bitbanger_specify(struct IODevice *iodev, int count, const struct bitbanger_config *config)
+{
+	memset(iodev, 0, sizeof(*iodev));
+	iodev->type = IO_BITBANGER;
+	iodev->count = count;
+	iodev->file_extensions = "prn\0";
+	iodev->reset_depth = IO_RESET_NONE;
+	iodev->open_mode = OSD_FOPEN_WRITE;
+	iodev->init = bitbanger_init;
+	iodev->exit = printer_exit;
+	iodev->status = printer_status;
+	iodev->output = bitbanger_output;
+	iodev->dummy = (char *) config;
 }
 
 

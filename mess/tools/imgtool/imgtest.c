@@ -72,6 +72,54 @@ done:
 	return err;
 }
 
+
+static int verify_file_in_image(const struct ImageModule *module, const char *imagename, const char *fname, void *testbuf, size_t filesize)
+{
+	int err;
+	IMAGE *img = NULL;
+	STREAM *s = NULL;
+	void *readbuf;
+	int results;
+
+	readbuf = malloc(filesize);
+	if (!readbuf)
+	{
+		err = IMGTOOLERR_OUTOFMEMORY;
+		goto done;
+	}
+
+	/* Create a test stream */
+	s = stream_open_mem(readbuf, filesize);
+	if (!s) {
+		err = IMGTOOLERR_OUTOFMEMORY;
+		goto done;
+	}
+
+	err = img_open(module, imagename, OSD_FOPEN_READ, &img);
+	if (err)
+		goto done;
+
+	err = img_readfile(img, fname, s, NULL);
+	if (err)
+		goto done;
+
+	results = memcmp(readbuf, testbuf, filesize);
+	assert(!results);
+	if (results)
+	{
+		err = -1;
+		goto done;
+	}
+
+done:
+	if (img)
+		img_close(img);
+	if (s)
+		stream_close(s);
+	return err;
+}
+
+
 static int delete_file_in_image(const struct ImageModule *module, const char *imagename, const char *fname)
 {
 	int err;
@@ -157,7 +205,7 @@ static int internal_test(const struct ImageModule *module)
 	int err, i;
 	const struct OptionTemplate *createopts;
 	char *s;
-	int freespace, freespace2, filesize;
+	int freespace, freespace2, filesize, pos;
 	void *testbuf;
 	struct NamedOption nopts[32];
 	char buf[2048];
@@ -218,6 +266,16 @@ static int internal_test(const struct ImageModule *module)
 
 		/* Verify the file size */
 		err = assert_file_size(module, testimage, buf, filesize);
+		if (err)
+			goto done;
+	}
+
+	/* Verify that the files are intact */
+	for (i = 0; i < NUM_FILES; i++)
+	{
+		sprintf(buf, "test%i.txt", i);
+		filesize = calculate_filesize(i);
+		err = verify_file_in_image(module, testimage, buf, testbuf, filesize);
 		if (err)
 			goto done;
 	}

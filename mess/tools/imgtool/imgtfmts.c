@@ -188,7 +188,7 @@ int imgtool_bdf_write_sector_from_stream(IMAGE *img, UINT8 track, UINT8 head, UI
 	}
 
 	stream_read(s, buffer, length);
-	imgtool_bdf_read_sector(img, track, head, sector, offset, buffer, length);
+	imgtool_bdf_write_sector(img, track, head, sector, offset, buffer, length);
 
 done:
 	if (buffer)

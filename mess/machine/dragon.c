@@ -1991,56 +1991,6 @@ static void coco_cartridge_enablesound(int enable)
 }
 
 /***************************************************************************
-  Bitbanger port
-***************************************************************************/
-
-static int coco_bitbanger_filter(int id, const int *pulses, int total_pulses, int total_duration)
-{
-	int i;
-	int result = 0;
-	int word;
-	int pos;
-	int pulse_type;
-	int c;
-
-	if (total_duration >= 11)
-	{
-		word = 0;
-		pos = 0;
-		pulse_type = 0;
-		result = 1;
-
-		for (i = 0; i < total_pulses; i++)
-		{
-			if (pulse_type)
-				word |= ((1 << pulses[i]) - 1) << pos;
-			pulse_type ^= 1;
-			pos += pulses[i];
-		}
-
-		c = (word >> 1) & 0xff;
-		printer_output(id, c);
-	}
-	return result;
-}
-
-int coco_bitbanger_init (int id)
-{
-	static const struct bitbanger_config cfg =
-	{
-		coco_bitbanger_filter,
-		1.0 / 10.0,
-		0.2,
-		2,
-		10,
-		0,
-		0
-	};
-
-	return bitbanger_init(id, &cfg);
-}
-
-/***************************************************************************
   Machine Initialization
 ***************************************************************************/
 

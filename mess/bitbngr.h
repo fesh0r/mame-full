@@ -1,3 +1,8 @@
+#ifndef BITBNGR_H
+#define BITBNGR_H
+
+#include "printer.h"
+
 struct bitbanger_config
 {
 	/* filter function; returns non-zero if input accepted */
@@ -10,5 +15,16 @@ struct bitbanger_config
 	int initial_value;					/* the initial value of the bitbanger line */
 };
 
-int bitbanger_init(int id, const struct bitbanger_config *config);
-void bitbanger_output(int id, int value);
+#define IO_BITBANGER IO_PRINTER
+
+extern void bitbanger_specify(struct IODevice *iodev, int count, const struct bitbanger_config *config);
+
+#define CONFIG_DEVICE_BITBANGER(count, config)			\
+	if (cfg->device_num-- == 0)							\
+	{													\
+		static struct IODevice iodev;					\
+		bitbanger_specify(&iodev, (count), (config));	\
+		cfg->dev = &iodev;								\
+	}													\
+
+#endif /* BITBNGR_H */

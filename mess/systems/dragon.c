@@ -697,11 +697,56 @@ static const struct IODevice io_coco3[] = {
 #define io_dragon32 io_coco
 #define io_dragon64 io_coco
 
+/***************************************************************************
+  Bitbanger port
+***************************************************************************/
+
+static int coco_bitbanger_filter(int id, const int *pulses, int total_pulses, int total_duration)
+{
+	int i;
+	int result = 0;
+	int word;
+	int pos;
+	int pulse_type;
+	int c;
+
+	if (total_duration >= 11)
+	{
+		word = 0;
+		pos = 0;
+		pulse_type = 0;
+		result = 1;
+
+		for (i = 0; i < total_pulses; i++)
+		{
+			if (pulse_type)
+				word |= ((1 << pulses[i]) - 1) << pos;
+			pulse_type ^= 1;
+			pos += pulses[i];
+		}
+
+		c = (word >> 1) & 0xff;
+		printer_output(id, c);
+	}
+	return result;
+}
+
+static const struct bitbanger_config coco_bitbanger_config =
+{
+	coco_bitbanger_filter,
+	1.0 / 10.0,
+	0.2,
+	2,
+	10,
+	0,
+	0
+};
+
 /* ----------------------------------------------------------------------- */
 
 SYSTEM_CONFIG_START( generic_coco )
 	/* bitbanger port */
-	CONFIG_DEVICE_PRINTER_EX(1, coco_bitbanger_init, bitbanger_output )
+	CONFIG_DEVICE_BITBANGER (1, &coco_bitbanger_config )
 
 	/* cassette */
 	CONFIG_DEVICE_CASSETTE	(1, "cas\0", coco_cassette_init)

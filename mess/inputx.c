@@ -134,8 +134,6 @@ static void scan_keys(const struct GameDriver *gamedrv, struct InputCode *codes,
 			break;
 
 		case IPT_KEYBOARD:
-			if (gamedrv == Machine->gamedrv)
-				logerror("blah: codes[44].port[0]=%i\n", (int) codes[44].port[0]);
 			if (!strcmp(ipt->name, "SHIFT") || !strcmp(ipt->name, "R-SHIFT") || !strcmp(ipt->name, "L-SHIFT"))
 			{
 				/* we've found a shift key */

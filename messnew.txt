@@ -85,6 +85,9 @@ Source Changes:
   particular file system format can point at a structure that lists allowable
   disk image formats.  This allows for the addition of new disk image format
   drivers without touching the imgtool drivers. [Nate Woods]
+  
+- [Imgtool] Fixed a bug in the FormatDriver handling that caused some file puts
+  to not be properly written.  [Nate Woods]
 
 0.61
 
