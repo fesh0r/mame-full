@@ -586,7 +586,7 @@ int frontend_list(char *gamename)
                         skipped++;
                         continue;
                      }
-
+/*
                      while (ROM_GETNAME (romp) || ROM_GETOFFSET (romp) || ROM_GETLENGTH (romp))
                      {
                         if (ROM_GETNAME (romp) && ROM_GETNAME (romp) != (char *)-1)
@@ -596,6 +596,16 @@ int frontend_list(char *gamename)
                         }
                         romp++;
                      }
+*/
+for (i = 0; drivers[i]; i++)
+{
+    const struct RomModule *region, *rom;
+
+    for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
+          for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+                printf("%08x %-12s %s\n",ROM_GETCRC(rom),ROM_GETNAME(rom),drivers[i]->description);
+}
+return 0;
                   }
                   break;
 #if (HAS_SAMPLES || HAS_VLM5030)
