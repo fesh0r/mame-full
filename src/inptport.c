@@ -117,7 +117,7 @@ const char ipdn_defaultstrings[][MAX_DEFSTR_LEN] =
 	"Cocktail",
 	"Flip Screen",
 	"Service Mode",
-	/*"Pause",
+	"Pause",
 	"Test",
 	"Tilt",
 	"Version",
@@ -165,7 +165,7 @@ const char ipdn_defaultstrings[][MAX_DEFSTR_LEN] =
 	"Level Select",
 	"Infinite",
 	"Stereo",
-	"Mono",*/
+	"Mono",
 	"Unused",
 	"Unknown"
 };

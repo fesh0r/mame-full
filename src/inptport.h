@@ -319,9 +319,10 @@ enum { IPT_UNUSED=0, IPT_END=1,IPT_PORT,
 #define MAX_DEFSTR_LEN 20
 extern const char ipdn_defaultstrings[][MAX_DEFSTR_LEN];
 
-/* this must match the ipdn_defaultstrings list in inptport.c */
-enum {
-	STR_Off,
+/* default strings used in port definitions */
+enum
+{
+	STR_Off = 0,
 	STR_On,
 	STR_No,
 	STR_Yes,
@@ -372,7 +373,7 @@ enum {
 	STR_Cocktail,
 	STR_Flip_Screen,
 	STR_Service_Mode,
-	/*STR_Pause,
+	STR_Pause,
 	STR_Test,
 	STR_Tilt,
 	STR_Version,
@@ -420,7 +421,7 @@ enum {
 	STR_Level_Select,
 	STR_Infinite,
 	STR_Stereo,
-	STR_Mono,*/
+	STR_Mono,
 	STR_Unused,
 	STR_Unknown,
 	STR_TOTAL
