@@ -198,14 +198,14 @@ static int wave_read(int id)
 
 		UINT8 ch;
 		/*intmax_t*/long sample_buf;
-		/*intmax_t*/long buf;
+		/*intmax_t*/long this_buf;
 
 		UINT16 *dst = w->data;
 
 		for (i=0; i<w->samples; i++)
 		{
 
-			buf = 0;
+			this_buf = 0;
 			for (channel=0; channel<channels; channel++)
 			{
 				sample_buf = 0;
@@ -237,15 +237,15 @@ static int wave_read(int id)
 				}
 
 				/* mix with previous channels */
-				buf += sample_buf;
+				this_buf += sample_buf;
 			}
 			/* normalize and save reply */
 			if (bitsPerSample < 16)
-				buf <<= 16-bitsPerSample;
+				this_buf <<= 16-bitsPerSample;
 			else if (bitsPerSample >16)
-				buf >>= bitsPerSample-16;
-			buf /= channels;
-			*dst++ = buf;
+				this_buf >>= bitsPerSample-16;
+			this_buf /= channels;
+			*dst++ = this_buf;
 		}
 	}
 
@@ -985,7 +985,6 @@ static void wave_update_output_buffer(int id)
 void wave_output(int id, int data)
 {
 	struct wave_file *w = &wave[id];
-	UINT32 pos = 0;
 
 	if( !w->file )
 	{
