@@ -39,7 +39,7 @@ void zx_ula_bkgnd(int color)
 
 		new_y = cpu_getscanline();
 		new_x = cpu_gethorzbeampos();
-		logerror("zx_ula_bkgnd: %3d,%3d - %3d,%3d\n", old_x, old_y, new_x, new_y);
+/*		logerror("zx_ula_bkgnd: %3d,%3d - %3d,%3d\n", old_x, old_y, new_x, new_y);*/
 		y = old_y;
 		for (;;)
 		{
@@ -90,7 +90,7 @@ static void zx_ula_nmi(int param)
 
 	r.min_y = r.max_y = cpu_getscanline();
 	fillbitmap(Machine->scrbitmap, Machine->pens[1], &r);
-//	logerror("ULA %3d[%d] NMI, R:$%02X, $%04x\n", cpu_getscanline(), ula_scancode_count, (unsigned) cpunum_get_reg(0, Z80_R), (unsigned) cpunum_get_reg(0, Z80_PC));
+	logerror("ULA %3d[%d] NMI, R:$%02X, $%04x\n", cpu_getscanline(), ula_scancode_count, (unsigned) cpunum_get_reg(0, Z80_R), (unsigned) cpunum_get_reg(0, Z80_PC));
 	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	if (++ula_scanline_count == Machine->drv->screen_height)
 		ula_scanline_count = 0;
@@ -105,7 +105,8 @@ static void zx_ula_irq(int param)
 	 */
 	if (ula_irq_active)
 	{
-//		logerror("ULA %3d[%d] IRQ, R:$%02X, $%04x\n", cpu_getscanline(), ula_scancode_count, (unsigned) cpunum_get_reg(0, Z80_R), (unsigned) cpunum_get_reg(0, Z80_PC));
+		logerror("ULA %3d[%d] IRQ, R:$%02X, $%04x\n", cpu_getscanline(), ula_scancode_count, (unsigned) cpunum_get_reg(0, Z80_R), (unsigned) cpunum_get_reg(0, Z80_PC));
+
 		ula_irq_active = 0;
 		if (++ula_scancode_count == 8)
 			ula_scancode_count = 0;
@@ -121,40 +122,40 @@ int zx_ula_r(int offs, int region)
 	int x, y, chr, data, ireg, rreg, cycles, offs0 = offs, halted = 0;
 	UINT8 *chrgen, *rom = memory_region(REGION_CPU1);
 
-	ula_frame_vsync = 3;
-
-	chrgen = memory_region(region);
-	ireg = cpunum_get_reg(0, Z80_I) << 8;
-	rreg = cpunum_get_reg(0, Z80_R);
-	y = cpu_getscanline();
-
 	if (!ula_irq_active)
 	{
+		ula_frame_vsync = 3;
+
+		chrgen = memory_region(region);
+		ireg = cpunum_get_reg(0, Z80_I) << 8;
+		rreg = cpunum_get_reg(0, Z80_R);
+		y = cpu_getscanline();
+
 		cycles = 4 * (64 - (rreg & 63));
 		timer_set(TIME_IN_CYCLES(cycles, 0), 0, zx_ula_irq);
 		ula_irq_active = 1;
-	}
 
-	for (x = 0; x < 256; x += 8)
-	{
-		chr = rom[offs & 0x7fff];
-//		if (!halted)
-//			logerror("ULA %3d[%d] VID, R:$%02X, PC:$%04x, CHR:%02x\n", y, ula_scancode_count, rreg, offs & 0x7fff, chr);
-		if (chr & 0x40)
+		for (x = 0; x < 256; x += 8)
 		{
-			halted = 1;
-			rom[offs] = chr;
+			chr = rom[offs & 0x7fff];
+/*			if (!halted)
+				logerror("ULA %3d[%d] VID, R:$%02X, PC:$%04x, CHR:%02x\n", y, ula_scancode_count, rreg, offs & 0x7fff, chr);*/
+			if (chr & 0x40)
+			{
+				halted = 1;
+				rom[offs] = chr;
 			data = 0x00;
+			}
+			else
+			{
+				data = chrgen[ireg | ((chr & 0x3f) << 3) | ula_scancode_count];
+				rom[offs] = 0x00;
+				if (chr & 0x80)
+					data ^= 0xff;
+				offs++;
+			}
+			drawgfx(bitmap, Machine->gfx[0], data, 0, 0, 0, x, y, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 		}
-		else
-		{
-			data = chrgen[ireg | ((chr & 0x3f) << 3) | ula_scancode_count];
-			rom[offs] = 0x00;
-			if (chr & 0x80)
-				data ^= 0xff;
-			offs++;
-		}
-		drawgfx(bitmap, Machine->gfx[0], data, 0, 0, 0, x, y, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 	}
 
 	return rom[offs0];

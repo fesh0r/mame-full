@@ -5,19 +5,15 @@ extern MACHINE_INIT( zx81 );
 extern MACHINE_INIT( pc8300 );
 extern MACHINE_INIT( pow3000 );
 
-extern  READ8_HANDLER ( zx_io_r );
+extern READ8_HANDLER ( zx_io_r );
 extern WRITE8_HANDLER ( zx_io_w );
 
-extern  READ8_HANDLER ( pow3000_io_r );
-extern WRITE8_HANDLER ( pow3000_io_w );
+extern READ8_HANDLER ( pow3000_io_r );
 
 /* from vidhrdw/zx80.c */
 extern int zx_ula_scanline(void);
 extern VIDEO_START( zx );
 extern VIDEO_UPDATE( zx );
-
-extern char zx_frame_message[128];
-extern int zx_frame_time;
 
 /* from vidhrdw/zx.c */
 extern void zx_ula_bkgnd(int color);

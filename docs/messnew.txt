@@ -26,6 +26,7 @@ System Driver Changes:
 - [TELMAC] Improved the accuracy of the cpu emulation and added some tmc2000t
   code.  [Curt Coder]
 
+- [ZX81] Tape loading added [Krzysztof Strzecha]
 
 
 User Interface Changes:

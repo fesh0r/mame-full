@@ -4,18 +4,34 @@
     machine driver
 	Juergen Buchmueller <pullmoll@t-online.de>, Dec 1999
 
-	TODO:
-	Find a clean solution for putting the tape image into memory.
-	Right now only loading through the IO emulation works (and takes time :)
-
 ****************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "includes/zx.h"
+#include "devices/cassette.h"
 
-DRIVER_INIT(zx)
+#define	DEBUG_ZX81_PORTS	1
+#define DEBUG_ZX81_VSYNC	1
+
+#if DEBUG_ZX81_PORTS
+	#define LOG_ZX81_IOR(_comment) logerror ("ZX81 IOR: %04x, Data: %02x, Scanline: %d (%s)\n", offset, data, cpu_getscanline(), _comment)
+	#define LOG_ZX81_IOW(_comment) logerror ("ZX81 IOW: %04x, Data: %02x, Scanline: %d (%s)\n", offset, data, cpu_getscanline(), _comment)
+#else
+	#define LOG_ZX81_IOR(_comment)
+	#define LOG_ZX81_IOW(_comment)
+#endif
+
+#if DEBUG_ZX81_VSYNC
+	#define LOG_ZX81_VSYNC logerror ("VSYNC starts in scanline: %d\n", cpu_getscanline())
+#else
+	#define LOG_ZX81_VSYNC
+#endif
+
+static UINT8 zx_tape_bit = 0x80;
+
+DRIVER_INIT ( zx )
 {
 	UINT8 *gfx = memory_region(REGION_GFX1);
 	int i;
@@ -24,26 +40,27 @@ DRIVER_INIT(zx)
 		gfx[i] = i;
 }
 
-static OPBASE_HANDLER(zx_setopbase)
+static OPBASE_HANDLER ( zx_setopbase )
 {
 	if (address & 0x8000)
 		return zx_ula_r(address, REGION_CPU1);
 	return address;
 }
 
-static OPBASE_HANDLER( pc8300_setopbase )
+static OPBASE_HANDLER ( pc8300_setopbase )
 {
 	if (address & 0x8000)
 		return zx_ula_r(address, REGION_GFX2);
 	return address;
 }
 
-static void common_init_machine(void)
+static void common_init_machine ( void )
 {
 	memory_set_opbase_handler(0, zx_setopbase);
+	zx_tape_bit = 0x80;
 }
 
-MACHINE_INIT( zx80 )
+MACHINE_INIT ( zx80 )
 {
 	if (readinputport(0) & 0x80)
 	{
@@ -58,7 +75,7 @@ MACHINE_INIT( zx80 )
 	common_init_machine();
 }
 
-MACHINE_INIT( zx81 )
+MACHINE_INIT ( zx81 )
 {
 	if (readinputport(0) & 0x80)
 	{
@@ -73,41 +90,49 @@ MACHINE_INIT( zx81 )
 	common_init_machine();
 }
 
-MACHINE_INIT( pc8300 )
+MACHINE_INIT ( pc8300 )
 {
 	memory_set_opbase_handler(0, pc8300_setopbase);
+	zx_tape_bit = 0x00;
+}
+
+static void zx_tape_pulse (int param)
+{
+	zx_tape_bit = 0x80;
 }
 
 WRITE8_HANDLER ( zx_io_w )
 {
-	logerror("IOW %3d $%04X", cpu_getscanline(), offset);
 	if ((offset & 2) == 0)
 	{
-		logerror(" ULA NMIs off\n");
 		timer_reset(ula_nmi, TIME_NEVER);
+
+		LOG_ZX81_IOW("ULA NMIs off");
 	}
 	else if ((offset & 1) == 0)
 	{
-		logerror(" ULA NMIs on\n");
-
 		timer_adjust(ula_nmi, 0, 0, TIME_IN_CYCLES(207, 0));
+
+		LOG_ZX81_IOW("ULA NMIs on");
 
 		/* remove the IRQ */
 		ula_irq_active = 0;
 	}
 	else
 	{
-		logerror(" ULA IRQs on\n");
 		zx_ula_bkgnd(1);
 		if (ula_frame_vsync == 2)
 		{
 			cpu_spinuntil_time(cpu_getscanlinetime(Machine->drv->screen_height - 1));
 			ula_scanline_count = Machine->drv->screen_height - 1;
+			logerror ("S: %d B: %d\n", cpu_getscanline(), cpu_gethorzbeampos());
 		}
+
+		LOG_ZX81_IOW("ULA IRQs on");
 	}
 }
 
- READ8_HANDLER ( zx_io_r )
+READ8_HANDLER ( zx_io_r )
 {
 	int data = 0xff;
 
@@ -143,29 +168,36 @@ WRITE8_HANDLER ( zx_io_w )
 
 		if (ula_irq_active)
 		{
-			logerror("IOR %3d $%04X data $%02X (ULA IRQs off)\n", cpu_getscanline(), offset, data);
 			zx_ula_bkgnd(0);
 			ula_irq_active = 0;
+
+			LOG_ZX81_IOR("ULA IRQs off");
 		}
 		else
 		{
-			/*data &= ~zx_tape_get_bit();*/
-			logerror("IOR %3d $%04X data $%02X (tape)\n", cpu_getscanline(), offset, data);
+			if ((cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) < -0.75) && zx_tape_bit)
+			{
+				zx_tape_bit = 0x00;
+				timer_set(TIME_IN_USEC(362.0), 0, zx_tape_pulse);
+			}
+
+			data &= ~zx_tape_bit;
+
+			LOG_ZX81_IOR("Tape");
 		}
 		if (ula_frame_vsync == 3)
 		{
 			ula_frame_vsync = 2;
-			logerror("vsync starts in scanline %3d\n", cpu_getscanline());
+			LOG_ZX81_VSYNC;
 		}
 	}
 	else
-	{
-		logerror("IOR %3d $%04X data $%02X\n", cpu_getscanline(), offset, data);
-	}
+		LOG_ZX81_IOR("Unmapped port");
+
 	return data;
 }
 
- READ8_HANDLER ( pow3000_io_r )
+READ8_HANDLER ( pow3000_io_r )
 {
 	int data = 0xff;
 
@@ -201,24 +233,30 @@ WRITE8_HANDLER ( zx_io_w )
 
 		if (ula_irq_active)
 		{
-			logerror("IOR %3d $%04X data $%02X (ULA IRQs off)\n", cpu_getscanline(), offset, data);
 			zx_ula_bkgnd(0);
 			ula_irq_active = 0;
+			LOG_ZX81_IOR("ULA IRQs off");
 		}
 		else
 		{
-			/*data &= ~zx_tape_get_bit();*/
-			logerror("IOR %3d $%04X data $%02X (tape)\n", cpu_getscanline(), offset, data);
+			if ((cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) < -0.75) && zx_tape_bit)
+			{
+				zx_tape_bit = 0x00;
+				timer_set(TIME_IN_USEC(362.0), 0, zx_tape_pulse);
+			}
+
+			data &= ~zx_tape_bit;
+
+			LOG_ZX81_IOR("Tape");
 		}
 		if (ula_frame_vsync == 3)
 		{
 			ula_frame_vsync = 2;
-			logerror("vsync starts in scanline %3d\n", cpu_getscanline());
+			LOG_ZX81_VSYNC;
 		}
 	}
 	else
-	{
-		logerror("IOR %3d $%04X data $%02X\n", cpu_getscanline(), offset, data);
-	}
+		LOG_ZX81_IOR("Unknown port");
+
 	return data;
 }

@@ -5,16 +5,18 @@
 	Juergen Buchmueller <pullmoll@t-online.de>, Dec 1999
 
     Fixes and additions by Krzysztof Strzecha:
+	07.06.2004 Tape loading added. Some cleanups of debug code.
+		   Fixed stupid bug in timings (vblank duration).
+		   GAME_NOT_WORKING flag removed.
     	29.05.2004 CPU clock, number of scanlines, vblank duration corrected.
 		   Some cleanups. Two non-working TESTDRIVERS added.
     	14.05.2004 Finally fixed and readded.
 
     To do:
-	Tape emulation is broken and needs rewrite.
+	Tape saving (needs changes in video hardware emulation).
 	Some memory areas are not mirrored as they should.
 	Video hardware is not fully emulated, so it does not support pseudo
 	hi-res and hi-res modes.
-	NTSC video emulation is not fully correct.
 	Some memory packs are unemulated.
 
 ****************************************************************************/
@@ -37,7 +39,6 @@ ADDRESS_MAP_START( writemem_zx80 , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x4000, 0x43ff) AM_WRITE( MWA8_RAM)
 	AM_RANGE(0x8000, 0xffff) AM_WRITE( MWA8_NOP)
 ADDRESS_MAP_END
-
 
 ADDRESS_MAP_START( readmem_zx81 , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x0000, 0x1fff) AM_READ( MRA8_ROM)
@@ -447,17 +448,22 @@ static PALETTE_INIT( ts1000 )
 	memcpy(colortable, zx_colortable, sizeof (zx_colortable));
 }
 
-static struct DACinterface dac_interface =
+static struct Wave_interface zx81_wave_interface = {
+	1,		/* 1 cassette recorder */
+	{50}		/* mixing levels in percent */
+};
+
+static struct DACinterface zx81_dac_interface =
 {
-	1,								   /* number of DACs */
-	{100}							   /* volume */
+	1,		/* number of DACs */
+	{50}		/* volume */
 };
 
 #define ZX81_CPU_CLOCK			3250000
 #define ZX81_CYCLES_PER_SCANLINE	207
 #define ZX81_PIXELS_PER_SCANLINE	256
 #define ZX81_CYCLES_PER_VBLANK		1235
-#define ZX81_VBLANK_DURATION		(1.0*ZX81_CYCLES_PER_VBLANK/ZX81_CPU_CLOCK)
+#define ZX81_VBLANK_DURATION		(1.0*ZX81_CYCLES_PER_VBLANK/ZX81_CPU_CLOCK*1000*1000)
 
 #define ZX81_PAL_SCANLINES		304
 #define ZX81_PAL_FRAMES_PER_SECOND	(1.0*ZX81_CPU_CLOCK/(ZX81_PAL_SCANLINES*ZX81_CYCLES_PER_SCANLINE+ZX81_CYCLES_PER_VBLANK))
@@ -491,7 +497,8 @@ static MACHINE_DRIVER_START( zx80 )
 	MDRV_VIDEO_UPDATE( zx )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SOUND_ADD(WAVE, zx81_wave_interface)
+	MDRV_SOUND_ADD(DAC, zx81_dac_interface)
 MACHINE_DRIVER_END
 
 
@@ -629,7 +636,7 @@ static struct CassetteOptions zx81_cassette_options = {
 };
 
 SYSTEM_CONFIG_START(zx80)
-	CONFIG_DEVICE_CASSETTEX(1, zx81_p_format, &zx81_cassette_options, CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED)
+	CONFIG_DEVICE_CASSETTEX(1, zx80_o_format, &zx81_cassette_options, CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(zx81)
@@ -642,14 +649,14 @@ SYSTEM_CONFIG_END
 
 ***************************************************************************/
 /*	YEAR	NAME	 PARENT	COMPAT	MACHINE	INPUT	INIT	CONFIG	COMPANY				FULLNAME */
-COMPX(	1980,	zx80,    0,	0,	zx80,	zx80,	zx,	zx80,	"Sinclair Research",		"ZX-80",		GAME_NOT_WORKING)
-COMPX(	1981,	aszmic,  zx80,	0,	zx80,	zx80,	zx,	zx80,	"Sinclair Research",		"ZX.Aszmic",		GAME_NOT_WORKING)
-COMPX(	1981,	zx81,    0,	0,	zx81,	zx81,   zx,	zx81,	"Sinclair Research",		"ZX-81",		GAME_NOT_WORKING)
-COMPX(	198?,	zx81a,   zx81,	0,	zx81,	zx81,	zx,	zx81,	"Sinclair Research",		"ZX-81 (2nd rev)",	GAME_NOT_WORKING)
-COMPX(	198?,	zx81b,   zx81,	0,	zx81,	zx81,	zx,	zx81,	"Sinclair Research",		"ZX-81 (3rd rev)",	GAME_NOT_WORKING)
+COMP (	1980,	zx80,    0,	0,	zx80,	zx80,	zx,	zx80,	"Sinclair Research",		"ZX-80" )
+COMP (	1981,	aszmic,  zx80,	0,	zx80,	zx80,	zx,	zx80,	"Sinclair Research",		"ZX.Aszmic" )
+COMP (	1981,	zx81,    0,	0,	zx81,	zx81,   zx,	zx81,	"Sinclair Research",		"ZX-81" )
+COMP (	198?,	zx81a,   zx81,	0,	zx81,	zx81,	zx,	zx81,	"Sinclair Research",		"ZX-81 (2nd rev)" )
+COMP (	198?,	zx81b,   zx81,	0,	zx81,	zx81,	zx,	zx81,	"Sinclair Research",		"ZX-81 (3rd rev)" )
 COMPX(	198?,	h4th,	zx81,	0,	zx81,	zx81,	zx,	zx81,	"Sinclair Research",		"Sinclair ZX-81 Forth by David Husband",	GAME_NOT_WORKING)
 COMPX(	198?,	tree4th,zx81,	0,	zx81,	zx81,	zx,	zx81,	"Sinclair Research",		"Sinclair ZX-81 Tree-Forth by Tree Systems",	GAME_NOT_WORKING)
-COMPX(	1982,	ts1000,  zx81,	0,	ts1000,	zx81,	zx,	zx81,	"Timex Sinclair",		"Timex Sinclair 1000",	GAME_NOT_WORKING)
-COMPX(	1984,	pc8300,  zx81,	0,	pc8300,	pow3000,zx,	zx81,	"Your Computer",		"PC8300",		GAME_NOT_WORKING)
-COMPX(	1983,	pow3000, zx81,	0,	pow3000,pow3000,zx,	zx81,	"Creon Enterprises",		"Power 3000",		GAME_NOT_WORKING)
-COMPX(	1982,	lambda,  zx81,	0,	pc8300,	pow3000,zx,	zx81,	"Lambda Electronics Ltd",	"Lambda 8300",		GAME_NOT_WORKING)
+COMP (	1982,	ts1000,  zx81,	0,	ts1000,	zx81,	zx,	zx81,	"Timex Sinclair",		"Timex Sinclair 1000" )
+COMP (	1984,	pc8300,  zx81,	0,	pc8300,	pow3000,zx,	zx81,	"Your Computer",		"PC8300" )
+COMP (	1983,	pow3000, zx81,	0,	pow3000,pow3000,zx,	zx81,	"Creon Enterprises",		"Power 3000" )
+COMP (	1982,	lambda,  zx81,	0,	pc8300,	pow3000,zx,	zx81,	"Lambda Electronics Ltd",	"Lambda 8300" )
