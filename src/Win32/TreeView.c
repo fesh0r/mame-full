@@ -364,6 +364,8 @@ void InitGames(UINT nGames)
                     AddGame(lpFolder, jj);
             }
             break;
+
+#ifndef NEOFREE
         case FOLDER_NEOGEO:
             SetAllBits( lpFolder->m_lpGameBits, FALSE);
             for (jj = 0; jj < nGames; jj++)
@@ -372,6 +374,7 @@ void InitGames(UINT nGames)
                     AddGame(lpFolder, jj);
             }
             break;
+#endif
 
         case FOLDER_YEAR:
             if (!firstTime)
@@ -637,7 +640,9 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
     /* Filter console games */
     if (dwMask & F_CONSOLE && !(drivers[nGame]->flags & GAME_COMPUTER))
         return TRUE;
-#else
+#endif
+
+#ifndef NEOFREE
     /* Filter neo-geo games */
     if (dwMask & F_NEOGEO && gameData[nGame].neogeo)
         return TRUE;
