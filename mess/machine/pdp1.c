@@ -327,14 +327,13 @@ WRITE18_HANDLER(pdp1_write_mem)
 */
 int pdp1_tape_init(int id, void *fp, int open_mode  )
 {
-	void **fd = (id==0) ? & tape_reader.fd : & tape_puncher.fd;
+	switch (id)
+	{
+	case 0:
+		/* reader unit */
+		/* open file */
+		tape_reader.fd = image_fopen_custom(IO_PUNCHTAPE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 
-	/* open file */
-	*fd = image_fopen_custom(IO_PUNCHTAPE, id, OSD_FILETYPE_IMAGE,
-								(id==0) ? OSD_FOPEN_READ : OSD_FOPEN_WRITE);
-
-	if (id == 0)
-	{	/* reader unit */
 		/* start motor if image actually inserted */
 		tape_reader.motor_on = tape_reader.fd ? 1 : 0;
 
@@ -354,6 +353,12 @@ int pdp1_tape_init(int id, void *fp, int open_mode  )
 				timer_enable(tape_reader.timer, 0);
 			}
 		}
+		break;
+
+	case 1:
+		/* punch unit */
+		tape_puncher.fd = image_fopen_custom(IO_PUNCHTAPE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_WRITE);
+		break;
 	}
 
 	return INIT_PASS;
@@ -471,7 +476,7 @@ static void reader_callback(int dummy)
 }
 
 /*
-	timer callback to generate puncher completion pulse
+	timer callback to generate punch completion pulse
 */
 static void puncher_callback(int nac)
 {
@@ -490,9 +495,153 @@ void pdp1_tape_read_binary(void)
 	begin_tape_read(1, 1);
 }
 
+/*
+	perforated tape reader iot callbacks
+*/
 
 /*
-	Typewiter handling
+	rpa iot callback
+
+	op2: iot command operation (equivalent to mb & 077)
+	nac: nead a completion pulse
+	mb: contents of the MB register
+	io: pointer on the IO register
+	ac: contents of the AC register
+*/
+/*
+ * Read Perforated Tape, Alphanumeric
+ * rpa Address 0001
+ *
+ * This instruction reads one line of tape (all eight Channels) and transfers the resulting 8-bit code to
+ * the Reader Buffer. If bits 5 and 6 of the rpa function are both zero (720001), the contents of the
+ * Reader Buffer must be transferred to the IO Register by executing the rrb instruction. When the Reader
+ * Buffer has information ready to be transferred to the IO Register, Status Register Bit 1 is set to
+ * one. If bits 5 and 6 are different (730001 or 724001) the 8-bit code read from tape is automatically
+ * transferred to the IO Register via the Reader Buffer and appears as follows:
+ *
+ * IO Bits        10 11 12 13 14 15 16 17
+ * TAPE CHANNELS  8  7  6  5  4  3  2  1
+ */
+void iot_rpa(int op2, int nac, int mb, int *io, int ac)
+{
+	#if LOG_IOT_EXTRA
+		logerror("Warning, RPA instruction not fully emulated: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
+	#endif
+
+	begin_tape_read(0, nac);
+}
+
+/*
+	rpb iot callback
+*/
+/*
+ * Read Perforated Tape, Binary rpb
+ * Address 0002
+ *
+ * The instruction reads three lines of tape (six Channels per line) and assembles
+ * the resulting 18-bit word in the Reader Buffer.  For a line to be recognized by
+ * this instruction Channel 8 must be punched (lines with Channel 8 not punched will
+ * be skipped over).  Channel 7 is ignored.  The instruction sub 5137, for example,
+ * appears on tape and is assembled by rpb as follows:
+ *
+ * Channel 8 7 6 5 4 | 3 2 1
+ * Line 1  X   X     |   X
+ * Line 2  X   X   X |     X
+ * Line 3  X     X X | X X X
+ * Reader Buffer 100 010 101 001 011 111
+ *
+ * (Vertical dashed line indicates sprocket holes and the symbols "X" indicate holes
+ * punched in tape). 
+ *
+ * If bits 5 and 6 of the rpb instruction are both zero (720002), the contents of
+ * the Reader Buffer must be transferred to the IO Register by executing
+ * a rrb instruction.  When the Reader Buffer has information ready to be transferred
+ * to the IO Register, Status Register Bit 1 is set to one.  If bits 5 and 6 are
+ * different (730002 or 724002) the 18-bit word read from tape is automatically
+ * transferred to the IO Register via the Reader Buffer. 
+ */
+void iot_rpb(int op2, int nac, int mb, int *io, int ac)
+{
+	#if LOG_IOT_EXTRA
+		logerror("Warning, RPB instruction not fully emulated: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
+	#endif
+
+	begin_tape_read(1, nac);
+}
+
+/*
+	rrb iot callback
+*/
+void iot_rrb(int op2, int nac, int mb, int *io, int ac)
+{
+	#if LOG_IOT_EXTRA
+		logerror("RRB instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
+	#endif
+	*io = tape_reader.rb;
+	io_status &= ~io_st_ptr;
+}
+
+/*
+	perforated tape punch iot callbacks
+*/
+
+/*
+	ppa iot callback
+*/
+/*
+ * Punch Perforated Tape, Alphanumeric
+ * ppa Address 0005
+ *
+ * For each In-Out Transfer instruction one line of tape is punched. In-Out Register
+ * Bit 17 conditions Hole 1. Bit 16 conditions Hole 2, etc. Bit 10 conditions Hole 8
+ */
+void iot_ppa(int op2, int nac, int mb, int *io, int ac)
+{
+	#if LOG_IOT_EXTRA
+		logerror("PPA instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
+	#endif
+	tape_write(*io & 0377);
+	io_status &= ~io_st_ptp;
+	/* delay is approximately 1/63.3 second */
+	#if LOG_IOT_OVERLAP
+		if (timer_enable(tape_puncher.timer, 0))
+			logerror("Error: overlapped PPA/PPB instructions: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
+	#endif
+	timer_adjust(tape_puncher.timer, TIME_IN_MSEC(15.8), nac, 0.);
+}
+
+/*
+	ppb iot callback
+*/
+/*
+ * Punch Perforated Tape, Binary
+ * ppb Addres 0006 
+ *
+ * For each In-Out Transfer instruction one line of tape is punched. In-Out Register
+ * Bit 5 conditions Hole 1. Bit 4 conditions Hole 2, etc. Bit 0 conditions Hole 6.
+ * Hole 7 is left blank. Hole 8 is always punched in this mode. 
+ */
+void iot_ppb(int op2, int nac, int mb, int *io, int ac)
+{
+	#if LOG_IOT_EXTRA
+		logerror("PPB instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
+	#endif
+	tape_write((*io >> 12) | 0200);
+	io_status &= ~io_st_ptp;
+	/* delay is approximately 1/63.3 second */
+	#if LOG_IOT_OVERLAP
+		if (timer_enable(tape_puncher.timer, 0))
+			logerror("Error: overlapped PPA/PPB instructions: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
+	#endif
+	timer_adjust(tape_puncher.timer, TIME_IN_MSEC(15.8), nac, 0.);
+}
+
+
+/*
+	Typewriter handling
+
+	The alphanumeric on-line typewriter is a standard device on pdp-1: it
+	can both handle keyboard input and print output text.
 */
 
 /*
@@ -625,7 +774,6 @@ static void typewriter_out(UINT8 data)
 #endif
 }
 
-
 /*
 	timer callback to generate typewriter completion pulse
 */
@@ -638,6 +786,113 @@ static void tyo_callback(int nac)
 	}
 }
 
+/*
+	tyo iot callback
+*/
+void iot_tyo(int op2, int nac, int mb, int *io, int ac)
+{
+	int ch, delay;
+
+	#if LOG_IOT_EXTRA
+		logerror("Warning, TYO instruction not fully emulated: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
+	#endif
+
+	ch = (*io) & 077;
+
+	typewriter_out(ch);
+	io_status &= ~io_st_tyo;
+
+	/* compute completion delay (source: maintainance manual 9-12, 9-13 and 9-14) */
+	switch (ch)
+	{
+	case 072:	/* lower-case */
+	case 074:	/* upper-case */
+	case 034:	/* black */
+	case 035:	/* red */
+		delay = 175;	/* approximately 175ms (?) */
+		break;
+
+	case 077:	/* carriage return */
+		delay = 205;	/* approximately 205ms (?) */
+		break;
+
+	default:
+		delay = 105;	/* approximately 105ms */
+		break;
+	}
+	#if LOG_IOT_OVERLAP
+		if (timer_enable(typewriter.tyo_timer, 0))
+			logerror("Error: overlapped TYO instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
+	#endif
+	timer_adjust(typewriter.tyo_timer, TIME_IN_MSEC(delay), nac, 0.);
+}
+
+/*
+	tyi iot callback
+*/
+/* When a typewriter key is struck, the code for the struck key is placed in the
+ * typewriter buffer, Program Flag 1 is set, and the type-in status bit is set to
+ * one. A program designed to accept typed-in data would periodically check
+ * Program Flag 1, and if found to be set, an In-Out Transfer Instruction with
+ * address 4 could be executed for the information to be transferred to the
+ * In-Out Register. This In-Out Transfer should not use the optional in-out wait.
+ * The information contained in the typewriter buffer is then transferred to the
+ * right six bits of the In-Out Register. The tyi instruction automatically
+ * clears the In-Out Register before transferring the information and also clears
+ * the type-in status bit.
+ */
+void iot_tyi(int op2, int nac, int mb, int *io, int ac)
+{
+	#if LOG_IOT_EXTRA
+		logerror("Warning, TYI instruction not fully emulated: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
+	#endif
+
+	*io = typewriter.tb;
+	if (! (io_status & io_st_tyi))
+		*io |= 0100;
+	else
+	{
+		io_status &= ~io_st_tyi;
+		#if USE_SBS
+			cpu_set_irq_line_and_vector(0, 0, CLEAR_LINE, 0);	/* interrupt it, baby */
+		#endif
+	}
+}
+
+
+/*
+ * PRECISION CRT DISPLAY (TYPE 30)
+ *
+ * This sixteen-inch cathode ray tube display is intended to be used as an on-line output device for the
+ * PDP-1. It is useful for high speed presentation of graphs, diagrams, drawings, and alphanumerical
+ * information. The unit is solid state, self-powered and completely buffered. It has magnetic focus and
+ * deflection.
+ *
+ * Display characteristics are as follows:
+ *
+ *     Random point plotting
+ *     Accuracy of points +/-3 per cent of raster size
+ *     Raster size 9.25 by 9.25 inches
+ *     1024 by 1024 addressable locations
+ *     Fixed origin at center of CRT
+ *     Ones complement binary arithmetic
+ *     Plots 20,000 points per second
+ *
+ * Resolution is such that 512 points along each axis are discernable on the face of the tube.
+ *
+ * One instruction is added to the PDP-1 with the installation of this display:
+ *
+ * Display One Point On CRT
+ * dpy Address 0007
+ *
+ * This instruction clears the light pen status bit and displays one point using bits 0 through 9 of the
+ * AC to represent the (signed) X coordinate of the point and bits 0 through 9 of the IO as the (signed)
+ * Y coordinate.
+ *
+ * Many variations of the Type 30 Display are available. Some of these include hardware for line and
+ * curve generation.
+ */
+
 
 /*
 	timer callback to generate crt completion pulse
@@ -648,6 +903,94 @@ static void dpy_callback(int dummy)
 	pdp1_pulse_iot_done();
 }
 
+
+/*
+	dpy iot callback
+
+	Light on one pixel on CRT
+*/
+void iot_dpy(int op2, int nac, int mb, int *io, int ac)
+{
+	int x;
+	int y;
+
+
+	x = ((ac+0400000) & 0777777) >> 8;
+	y = (((*io)+0400000) & 0777777) >> 8;
+	pdp1_plot(x, y);
+
+	if (nac)
+	{
+		/* 50us delay */
+		#if LOG_IOT_OVERLAP
+			/* note that overlap detection is incomplete: it will only work if both DPY
+			instructions require a completion pulse */
+			if (timer_enable(dpy_timer, 0))
+				logerror("Error: overlapped DPY instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
+		#endif
+		timer_adjust(dpy_timer, TIME_IN_USEC(50), 0, 0.);
+	}
+}
+
+
+/*
+	iot 11 callback
+
+	Read state of Spacewar! controllers
+
+	Not documented, except a few comments in the Spacewar! source code:
+		it should leave the control word in the io as follows.
+		high order 4 bits, rotate ccw, rotate cw, (both mean hyperspace)
+		fire rocket, and fire torpedo. low order 4 bits, same for
+		other ship. routine is entered by jsp cwg.
+*/
+void iot_011(int op2, int nac, int mb, int *io, int ac)
+{
+	int key_state = readinputport(pdp1_spacewar_controllers);
+	int reply;
+
+
+	reply = 0;
+
+	if (key_state & ROTATE_RIGHT_PLAYER2)
+		reply |= 0400000;
+	if (key_state & ROTATE_LEFT_PLAYER2)
+		reply |= 0200000;
+	if (key_state & THRUST_PLAYER2)
+		reply |= 0100000;
+	if (key_state & FIRE_PLAYER2)
+		reply |= 0040000;
+	if (key_state & HSPACE_PLAYER2)
+		reply |= 0600000;
+
+	if (key_state & ROTATE_RIGHT_PLAYER1)
+		reply |= 010;
+	if (key_state & ROTATE_LEFT_PLAYER1)
+		reply |= 004;
+	if (key_state & THRUST_PLAYER1)
+		reply |= 002;
+	if (key_state & FIRE_PLAYER1)
+		reply |= 001;
+	if (key_state & HSPACE_PLAYER1)
+		reply |= 014;
+
+	*io = reply;
+}
+
+
+/*
+	cks iot callback
+
+	check IO status
+*/
+void iot_cks(int op2, int nac, int mb, int *io, int ac)
+{
+	#if LOG_IOT_EXTRA
+		logerror("CKS instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
+	#endif
+
+	*io = io_status;
+}
 
 
 /*
@@ -671,293 +1014,6 @@ void pdp1_io_sc_callback(void)
 		timer_enable(dpy_timer, 0);
 
 	io_status = io_st_tyo | io_st_ptp;
-}
-
-
-/*
-	handle IOT
-
-	op2: iot command operation (equivalent to mb & 077)
-	nac: nead a completion pulse
-	mb: contents of the MB register
-	io: pointer on the IO register
-	ac: contents of the AC register
-*/
-void pdp1_iot(int op2, int nac, int mb, int *io, int ac)
-{
-	switch (op2)
-	{
-	/* perforated tape reader */
-	case 001: /* RPA */
-		/*
-		 * Read Perforated Tape, Alphanumeric
-		 * rpa Address 0001
-		 *
-		 * This instruction reads one line of tape (all eight Channels) and transfers the resulting 8-bit code to
-		 * the Reader Buffer. If bits 5 and 6 of the rpa function are both zero (720001), the contents of the
-		 * Reader Buffer must be transferred to the IO Register by executing the rrb instruction. When the Reader
-		 * Buffer has information ready to be transferred to the IO Register, Status Register Bit 1 is set to
-		 * one. If bits 5 and 6 are different (730001 or 724001) the 8-bit code read from tape is automatically
-		 * transferred to the IO Register via the Reader Buffer and appears as follows:
-		 *
-		 * IO Bits        10 11 12 13 14 15 16 17
-		 * TAPE CHANNELS  8  7  6  5  4  3  2  1
-		 */
-		#if LOG_IOT_EXTRA
-			logerror("Warning, RPA instruction not fully emulated: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-		#endif
-
-		begin_tape_read(0, nac);
-		break;
-
-	case 002: /* RPB */
-		/*
-		 * Read Perforated Tape, Binary rpb
-		 * Address 0002
-		 *
-		 * The instruction reads three lines of tape (six Channels per line) and assembles
-		 * the resulting 18-bit word in the Reader Buffer.  For a line to be recognized by
-		 * this instruction Channel 8 must be punched (lines with Channel 8 not punched will
-		 * be skipped over).  Channel 7 is ignored.  The instruction sub 5137, for example,
-		 * appears on tape and is assembled by rpb as follows:
-		 *
-		 * Channel 8 7 6 5 4 | 3 2 1
-		 * Line 1  X   X     |   X
-		 * Line 2  X   X   X |     X
-		 * Line 3  X     X X | X X X
-		 * Reader Buffer 100 010 101 001 011 111
-		 *
-		 * (Vertical dashed line indicates sprocket holes and the symbols "X" indicate holes
-		 * punched in tape). 
-		 *
-		 * If bits 5 and 6 of the rpb instruction are both zero (720002), the contents of
-		 * the Reader Buffer must be transferred to the IO Register by executing
-		 * a rrb instruction.  When the Reader Buffer has information ready to be transferred
-		 * to the IO Register, Status Register Bit 1 is set to one.  If bits 5 and 6 are
-		 * different (730002 or 724002) the 18-bit word read from tape is automatically
-		 * transferred to the IO Register via the Reader Buffer. 
-		 */
-		#if LOG_IOT_EXTRA
-			logerror("Warning, RPB instruction not fully emulated: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-		#endif
-
-		begin_tape_read(1, nac);
-		break;
-
-	case 030: /* RRB */
-		#if LOG_IOT_EXTRA
-			logerror("RRB instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-		#endif
-		*io = tape_reader.rb;
-		io_status &= ~io_st_ptr;
-		break;
-
-
-	/* perforated tape punch */
-	case 005: /* PPA */
-		/*
-		 * Punch Perforated Tape, Alphanumeric
-		 * ppa Address 0005
-		 *
-		 * For each In-Out Transfer instruction one line of tape is punched. In-Out Register
-		 * Bit 17 conditions Hole 1. Bit 16 conditions Hole 2, etc. Bit 10 conditions Hole 8
-		 */
-		#if LOG_IOT_EXTRA
-			logerror("PPA instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-		#endif
-		tape_write(*io & 0377);
-		io_status &= ~io_st_ptp;
-		/* delay is approximately 1/63.3 second */
-		#if LOG_IOT_OVERLAP
-			if (timer_enable(tape_puncher.timer, 0))
-				logerror("Error: overlapped PPA/PPB instructions: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-		#endif
-		timer_adjust(tape_puncher.timer, TIME_IN_MSEC(15.8), nac, 0.);
-		break;
-
-	case 006: /* PPB */
-		/*
-		 * Punch Perforated Tape, Binary
-		 * ppb Addres 0006 
-		 *
-		 * For each In-Out Transfer instruction one line of tape is punched. In-Out Register
-		 * Bit 5 conditions Hole 1. Bit 4 conditions Hole 2, etc. Bit 0 conditions Hole 6.
-		 * Hole 7 is left blank. Hole 8 is always punched in this mode. 
-		 */
-		#if LOG_IOT_EXTRA
-			logerror("PPB instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-		#endif
-		tape_write((*io >> 12) | 0200);
-		io_status &= ~io_st_ptp;
-		/* delay is approximately 1/63.3 second */
-		#if LOG_IOT_OVERLAP
-			if (timer_enable(tape_puncher.timer, 0))
-				logerror("Error: overlapped PPA/PPB instructions: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-		#endif
-		timer_adjust(tape_puncher.timer, TIME_IN_MSEC(15.8), nac, 0.);
-		break;
-
-
-	/* alphanumeric on-line typewriter */
-	case 003: /* TYO */
-	{
-		int ch, delay;
-
-		#if LOG_IOT_EXTRA
-			logerror("Warning, TYO instruction not fully emulated: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-		#endif
-
-		ch = (*io) & 077;
-
-		typewriter_out(ch);
-		io_status &= ~io_st_tyo;
-
-		/* compute completion delay (source: maintainance manual 9-12, 9-13 and 9-14) */
-		switch (ch)
-		{
-		case 072:	/* lower-case */
-		case 074:	/* upper-case */
-		case 034:	/* black */
-		case 035:	/* red */
-			delay = 175;	/* approximately 175ms (?) */
-			break;
-
-		case 077:	/* carriage return */
-			delay = 205;	/* approximately 205ms (?) */
-			break;
-
-		default:
-			delay = 105;	/* approximately 105ms */
-			break;
-		}
-		#if LOG_IOT_OVERLAP
-			if (timer_enable(typewriter.tyo_timer, 0))
-				logerror("Error: overlapped TYO instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-		#endif
-		timer_adjust(typewriter.tyo_timer, TIME_IN_MSEC(delay), nac, 0.);
-		break;
-	}
-	case 004: /* TYI */
-		/* When a typewriter key is struck, the code for the struck key is placed in the
-		 * typewriter buffer, Program Flag 1 is set, and the type-in status bit is set to
-		 * one. A program designed to accept typed-in data would periodically check
-		 * Program Flag 1, and if found to be set, an In-Out Transfer Instruction with
-		 * address 4 could be executed for the information to be transferred to the
-		 * In-Out Register. This In-Out Transfer should not use the optional in-out wait.
-		 * The information contained in the typewriter buffer is then transferred to the
-		 * right six bits of the In-Out Register. The tyi instruction automatically
-		 * clears the In-Out Register before transferring the information and also clears
-		 * the type-in status bit.
-		 */
-		#if LOG_IOT_EXTRA
-			logerror("Warning, TYI instruction not fully emulated: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-		#endif
-
-		*io = typewriter.tb;
-		if (! (io_status & io_st_tyi))
-			*io |= 0100;
-		else
-		{
-			io_status &= ~io_st_tyi;
-#ifdef USE_SBS
-			cpu_set_irq_line_and_vector(0, 0, CLEAR_LINE, 0);	/* interrupt it, baby */
-#endif
-		}
-		break;
-
-
-	/* CRT display */
-	case 007: /* DPY */
-	{
-		/*
-		 * PRECISION CRT DISPLAY (TYPE 30)
-		 *
-		 * This sixteen-inch cathode ray tube display is intended to be used as an on-line output device for the
-		 * PDP-1. It is useful for high speed presentation of graphs, diagrams, drawings, and alphanumerical
-		 * information. The unit is solid state, self-powered and completely buffered. It has magnetic focus and
-		 * deflection.
-		 *
-		 * Display characteristics are as follows:
-		 *
-		 *     Random point plotting
-		 *     Accuracy of points +/-3 per cent of raster size
-		 *     Raster size 9.25 by 9.25 inches
-		 *     1024 by 1024 addressable locations
-		 *     Fixed origin at center of CRT
-		 *     Ones complement binary arithmetic
-		 *     Plots 20,000 points per second
-		 *
-		 * Resolution is such that 512 points along each axis are discernable on the face of the tube.
-		 *
-		 * One instruction is added to the PDP-1 with the installation of this display:
-		 *
-		 * Display One Point On CRT
-		 * dpy Address 0007
-		 *
-		 * This instruction clears the light pen status bit and displays one point using bits 0 through 9 of the
-		 * AC to represent the (signed) X coordinate of the point and bits 0 through 9 of the IO as the (signed)
-		 * Y coordinate.
-		 *
-		 * Many variations of the Type 30 Display are available. Some of these include hardware for line and
-		 * curve generation.
-		 */
-		int x;
-		int y;
-
-		x = ((ac+0400000)&0777777) >> 8;
-		y = (((*io)+0400000)&0777777) >> 8;
-		pdp1_plot(x,y);
-
-		if (nac)
-		{
-			/* 50us delay */
-			#if LOG_IOT_OVERLAP
-				/* note that overlap detection is incomplete: it will only work if both DPY
-				instructions require a completion pulse */
-				if (timer_enable(dpy_timer, 0))
-					logerror("Error: overlapped DPY instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-			#endif
-			timer_adjust(dpy_timer, TIME_IN_USEC(50), 0, 0.);
-		}
-		break;
-	}
-
-	/* Spacewar! controllers */
-	case 011: /* IOT 011 (undocumented?), Input... */
-	{
-		int key_state = readinputport(pdp1_spacewar_controllers);
-
-		*io = 0;
-		if (key_state&FIRE_PLAYER2)         *io |= 040000;
-		if (key_state&THRUST_PLAYER2)       *io |= 0100000;
-		if (key_state&ROTATE_LEFT_PLAYER2)  *io |= 0200000;
-		if (key_state&ROTATE_RIGHT_PLAYER2) *io |= 0400000;
-		if (key_state&FIRE_PLAYER1)         *io |= 01;
-		if (key_state&THRUST_PLAYER1)       *io |= 02;
-		if (key_state&ROTATE_LEFT_PLAYER1)  *io |= 04;
-		if (key_state&ROTATE_RIGHT_PLAYER1) *io |= 010;
-
-		if (key_state&HSPACE_PLAYER1)       *io |= 014;
-		if (key_state&HSPACE_PLAYER2)       *io |= 0600000;
-
-		break;
-	}
-
-	/* check IO status */
-	case 033: /* CKS */
-		#if LOG_IOT_EXTRA
-			logerror("CKS instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-		#endif
-		*io = io_status;
-		break;
-
-
-	default:
-		#if LOG_IOT
-			logerror("Ignoring internal error in file " __FILE__ " line %d.\n", __LINE__);
-		#endif
-		break;
-	}
 }
 
 
@@ -987,9 +1043,9 @@ static void pdp1_keyboard(void)
 				;
 			typewriter.tb = (i << 4) + j;
 			io_status |= io_st_tyi;
-#ifdef USE_SBS
-			cpu_set_irq_line_and_vector(0, 0, ASSERT_LINE, 0);	/* interrupt it, baby */
-#endif
+			#if USE_SBS
+				cpu_set_irq_line_and_vector(0, 0, ASSERT_LINE, 0);	/* interrupt it, baby */
+			#endif
 			cpunum_set_reg(0, PDP1_PF1, 1);
 			/*pdp1_typewriter_drawchar(typewriter.tb);*/	/* right??? */
 			break;

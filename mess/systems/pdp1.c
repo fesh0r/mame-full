@@ -298,29 +298,39 @@ static unsigned short colortable[] =
 /* Initialise the palette */
 static void palette_init_pdp1(unsigned short *sys_colortable, const unsigned char *dummy)
 {
-	int i;
+	/* rgb components for the two color emissions */
+	const double r1 = .1, g1 = .1, b1 = .924, r2 = .7, g2 = .7, b2 = .076;
+	/* half period in seconds for the two color emissions */
 	const double half_period_1 = .05, half_period_2 = .20;
+	/* refresh period in seconds */
 	const double update_period = 1./refresh_rate;
-	double decay_1, decay_2;	/* decay factor for the CRT */
+	double decay_1, decay_2;
 	double cur_level_1, cur_level_2;
 #ifdef MAME_DEBUG
-	double cut_level = .03;		/* level at which we stop the decay and say the pixel is black */
+	/* level at which we stop emulating the decay and say the pixel is black */
+	double cut_level = .02;
 #endif
+	int i;
 	int r, g, b;
 
 
 	/* initialize CRT palette */
+
+	/* compute the decay factor per refresh frame */
 	decay_1 = pow(.5, update_period / half_period_1);
 	decay_2 = pow(.5, update_period / half_period_2);
 
-	cur_level_1 = cur_level_2 = 255.;	/* start with maximum */
+	cur_level_1 = cur_level_2 = 255.;	/* start with maximum level */
 
 	for (i=pen_crt_max_intensity; i>0; i--)
 	{
-		r = (int) ((cur_level_1*/*.2*/0.+cur_level_2*.8)+.5);
-		g = (int) ((cur_level_1*/*.2*/0.+cur_level_2*.8)+.5);
-		b = (int) ((cur_level_1*.8+cur_level_2*.2)+.5);
+		/* compute the current color */
+		r = (int) ((r1*cur_level_1 + r2*cur_level_2) + .5);
+		g = (int) ((g1*cur_level_1 + g2*cur_level_2) + .5);
+		b = (int) ((b1*cur_level_1 + b2*cur_level_2) + .5);
+		/* write color in palette */
 		palette_set_color(i, r, g, b);
+		/* apply decay for next iteration */
 		cur_level_1 *= decay_1;
 		cur_level_2 *= decay_2;
 	}
@@ -356,13 +366,13 @@ pdp1_reset_param_t pdp1_reset_param =
 		as the primary source (as it goes more into details) b) the handbook and the maintainance
 		manual occasionnally contradict each other. */
 	/*	(iot)		rpa			rpb			tyo			tyi			ppa			ppb			dpy */
-		NULL,		pdp1_iot,	pdp1_iot,	pdp1_iot,	pdp1_iot,	pdp1_iot,	pdp1_iot,	pdp1_iot,
+		NULL,		iot_rpa,	iot_rpb,	iot_tyo,	iot_tyi,	iot_ppa,	iot_ppb,	iot_dpy,
 	/*				spacewar																 */
-		NULL,		pdp1_iot,	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,
+		NULL,		iot_011,	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,
 	/*							lag												glf?/jsp?	gpl?/gpr?/gcf? */
 		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,
 	/*	rrb			rcb?		rcc?		cks			mcs			mes			mel			 */
-		pdp1_iot,	NULL,		NULL,		pdp1_iot,	NULL,		NULL,		NULL,		NULL,
+		iot_rrb,	NULL,		NULL,		iot_cks,	NULL,		NULL,		NULL,		NULL,
 	/*	cad?		rac?		rbc?		pac						lpr/lfb/lsp swc/sci/sdf?/shr?	scv? */
 		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,
 	/*	(dsc)		(asc)		(isb)		(cac)		(lsm)		(esm)		(cbs)		 */

@@ -104,14 +104,24 @@ WRITE18_HANDLER ( pdp1_write_mem );
 
 int pdp1_tape_init(int id, void *fp, int open_mode);
 void pdp1_tape_exit(int id);
-
 void pdp1_tape_read_binary(void);
+void iot_rpa(int op2, int nac, int mb, int *io, int ac);
+void iot_rpb(int op2, int nac, int mb, int *io, int ac);
+void iot_rrb(int op2, int nac, int mb, int *io, int ac);
+void iot_ppa(int op2, int nac, int mb, int *io, int ac);
+void iot_ppb(int op2, int nac, int mb, int *io, int ac);
 
 int pdp1_typewriter_init(int id, void *fp, int open_mode);
 void pdp1_typewriter_exit(int id);
+void iot_tyo(int op2, int nac, int mb, int *io, int ac);
+void iot_tyi(int op2, int nac, int mb, int *io, int ac);
 
+void iot_dpy(int op2, int nac, int mb, int *io, int ac);
+
+void iot_011(int op2, int nac, int mb, int *io, int ac);
+
+void iot_cks(int op2, int nac, int mb, int *io, int ac);
 void pdp1_io_sc_callback(void);
-void pdp1_iot(int op2, int nac, int mb, int *io, int ac);
 
 INTERRUPT_GEN( pdp1_interrupt );
 
@@ -168,7 +178,7 @@ enum
 enum
 {
 	/* first pen_crt_num_levels colors used for CRT (with remanence) */
-	pen_crt_num_levels = 62,
+	pen_crt_num_levels = 69,
 	pen_crt_max_intensity = pen_crt_num_levels-1,
 
 	/* next colors used for control panel and typewriter */
