@@ -261,7 +261,7 @@ static void beep_callback(int unit)
 */
 int vdt911_cru_r(int offset, int unit)
 {
-	int reply;
+	int reply=0;
 
 	offset &= 0x1;
 
@@ -604,7 +604,7 @@ void vdt911_keyboard(int unit)
 						last_key_pressed = (i << 4) | j;
 						last_modifier_state = modifier_state;
 
-						vdt[unit].keyboard_data = US_key_translate[modifier_state][last_key_pressed];
+						vdt[unit].keyboard_data = (int)US_key_translate[modifier_state][last_key_pressed];
 						vdt[unit].keyboard_data_ready = 1;
 						if (vdt[unit].keyboard_interrupt_enable)
 							(*vdt[unit].int_callback)(1);
