@@ -172,17 +172,16 @@ WRITE_HANDLER( gng_bankswitch_w );
 READ_HANDLER( gng_bankedrom_r );
 void gng_init_machine(void);
 
-extern unsigned char *gng_fgvideoram,*gng_fgcolorram;
-extern unsigned char *gng_bgvideoram,*gng_bgcolorram;
+extern unsigned char *gng_fgvideoram;
+extern unsigned char *gng_bgvideoram;
 WRITE_HANDLER( gng_fgvideoram_w );
-WRITE_HANDLER( gng_fgcolorram_w );
 WRITE_HANDLER( gng_bgvideoram_w );
-WRITE_HANDLER( gng_bgcolorram_w );
 WRITE_HANDLER( gng_bgscrollx_w );
 WRITE_HANDLER( gng_bgscrolly_w );
 WRITE_HANDLER( gng_flipscreen_w );
 int gng_vh_start(void);
 void gng_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void gng_eof_callback(void);
 
 
 
@@ -215,10 +214,8 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x1dff, MWA_RAM },
 	{ 0x1e00, 0x1fff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x2000, 0x23ff, gng_fgvideoram_w, &gng_fgvideoram },
-	{ 0x2400, 0x27ff, gng_fgcolorram_w, &gng_fgcolorram },
-	{ 0x2800, 0x2bff, gng_bgvideoram_w, &gng_bgvideoram },
-	{ 0x2c00, 0x2fff, gng_bgcolorram_w, &gng_bgcolorram },
+	{ 0x2000, 0x27ff, gng_fgvideoram_w, &gng_fgvideoram },
+	{ 0x2800, 0x2fff, gng_bgvideoram_w, &gng_bgvideoram },
 	{ 0x3800, 0x38ff, paletteram_RRRRGGGGBBBBxxxx_split2_w, &paletteram_2 },
 	{ 0x3900, 0x39ff, paletteram_RRRRGGGGBBBBxxxx_split1_w, &paletteram },
 	{ 0x3a00, 0x3a00, soundlatch_w },
@@ -581,8 +578,7 @@ static struct MachineDriver machine_driver_gng =
 			interrupt,4
 		}
 	},
-	60, 2500,	/* frames per second, vblank duration */
-				/* hand tuned to get rid of sprite lag */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -592,8 +588,8 @@ static struct MachineDriver machine_driver_gng =
 	192, 192,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	gng_eof_callback,
 	gng_vh_start,
 	0,
 	gng_vh_screenrefresh,
