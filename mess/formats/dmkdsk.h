@@ -88,7 +88,7 @@ typedef struct
 	UINT8		trackData[1];
 } dmkTrack, *dmkTrack_p;
 
-#define DMKSIDECOUNT( x )  ((x.diskOptions & 0x10) == 0) ? 0 : 1
+#define DMKSIDECOUNT( x )  ((x.diskOptions & 0x10) == 0) ? 1 : 0
 
 /* init */
 int     dmkdsk_floppy_init(int id);
@@ -96,6 +96,7 @@ int     dmkdsk_floppy_init(int id);
 void    dmkdsk_floppy_exit(int id);
 
 UINT16 dmkdsk_GetTrackLength( dmkHeader_p header );
+UINT8 dmkdsk_GetSideCount( dmkHeader_p header );
 UINT16 dmkdsk_GetIDAMCRC( packedIDData_P IDAM );
 UINT32 dmkdsk_GetRealDiskCode( dmkHeader_p header );
 
