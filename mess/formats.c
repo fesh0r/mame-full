@@ -15,7 +15,7 @@ struct bdf_file
 	int offset;
 };
 
-static int find_geometry_options(const struct InternalBdFormatDriver *drv, int filesize,
+static int find_geometry_options(const struct InternalBdFormatDriver *drv, UINT32 file_size, UINT32 header_size,
 	 UINT8 *tracks, UINT8 *heads, UINT8 *sectors)
 {
 	int expected_size;
@@ -31,12 +31,12 @@ static int find_geometry_options(const struct InternalBdFormatDriver *drv, int f
 			{
 				*sectors = drv->sectors_options[sectors_opt];
 
-				expected_size = *heads * *tracks * *sectors * drv->bytes_per_sector + drv->header_size;
-				if (expected_size == filesize)
+				expected_size = *heads * *tracks * *sectors * drv->bytes_per_sector + header_size;
+				if (expected_size == file_size)
 					return 0;
 
-				if ((drv->flags & BDFD_ROUNDUP_TRACKS) && (expected_size > filesize)
-						&& (((expected_size - filesize) % (*heads * *sectors * drv->bytes_per_sector)) == 0))
+				if ((drv->flags & BDFD_ROUNDUP_TRACKS) && (expected_size > file_size)
+						&& (((expected_size - file_size) % (*heads * *sectors * drv->bytes_per_sector)) == 0))
 					return 0;
 			}
 		}
@@ -44,11 +44,12 @@ static int find_geometry_options(const struct InternalBdFormatDriver *drv, int f
 	return 1;	/* failure */
 }
 
-int try_format_driver(const struct InternalBdFormatDriver *drv, const struct bdf_procs *procs,
-	const char *extension, void *file, int filesize,
+static int try_format_driver(const struct InternalBdFormatDriver *drv, const struct bdf_procs *procs,
+	const char *extension, void *file, UINT32 file_size,
 	int *success, UINT8 *tracks, UINT8 *heads, UINT8 *sectors, UINT16 *bytes_per_sector, int *offset)
 {
 	void *header;
+	UINT32 header_size;
 
 	/* match the extension; if either the formatdriver or the caller do not
 	 * specify the extension, count that as a match
@@ -57,21 +58,26 @@ int try_format_driver(const struct InternalBdFormatDriver *drv, const struct bdf
 		return 0;
 
 	/* if there is a header, try to read it */
-	if (drv->header_size > 0)
+	header_size = drv->header_size & ~HEADERSIZE_FLAGS;
+	if (drv->header_size & HEADERSIZE_FLAG_MODULO)
+		header_size = file_size % header_size;
+
+	if (header_size > 0)
 	{
-		if (drv->header_size > filesize)
+		if (header_size > file_size)
 			return 0;
 
-		header = malloc(drv->header_size);
+		header = malloc(header_size);
 		if (!header)
 			return BLOCKDEVICE_ERROR_OUTOFMEMORY;
 
 		/* read the header */
 		procs->seekproc(file, 0, SEEK_SET);
-		procs->readproc(file, header, drv->header_size);
+		procs->readproc(file, header, header_size);
 
 		/* try to decode the header */
-		if (!drv->header_decode(header, tracks, heads, sectors, bytes_per_sector, offset))			
+		*offset = header_size;	/* the default offset is the header size */
+		if (!drv->header_decode(header, file_size, header_size, tracks, heads, sectors, bytes_per_sector, offset))			
 			*success = 1;	/* success!!! */
 
 		free(header);
@@ -81,7 +87,7 @@ int try_format_driver(const struct InternalBdFormatDriver *drv, const struct bdf
 		*bytes_per_sector = 0;
 		*offset = 0;
 
-		if (!find_geometry_options(drv, filesize, tracks, heads, sectors))
+		if (!find_geometry_options(drv, file_size, header_size, tracks, heads, sectors))
 			*success = 1;	/* success!!! */
 	}
 	return 0;
@@ -94,21 +100,29 @@ int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,
 	void *header = NULL;
 	struct InternalBdFormatDriver drv;
 	int bytes_to_write, len, err;
+	UINT32 header_size;
 	formatdriver_ctor formats[2];
 
 	format(&drv);
 
-	if (drv.header_size)
+	/* do we have a header size specified? */
+	header_size = drv.header_size & ~HEADERSIZE_FLAGS;
+	if (drv.header_size & HEADERSIZE_FLAG_MODULO)
+		header_size--;	/* allow a maximum header size of the modulus minus one */
+
+	if (header_size > 0)
 	{
-		header = malloc(drv.header_size);
+		header = malloc(header_size);
 		if (!header)
 			goto outofmemory;
 
-		err = drv.header_encode(header, tracks, heads, sectors, drv.bytes_per_sector);
+		err = drv.header_encode(header, &header_size, tracks, heads, sectors, drv.bytes_per_sector);
 		if (err)
 			goto error;
 
-		procs->writeproc(file, header, drv.header_size);
+		if (header_size)
+			procs->writeproc(file, header, header_size);
+
 		free(header);
 		header = NULL;
 	}

@@ -29,6 +29,12 @@ enum
 	BDFD_ROUNDUP_TRACKS	= 1
 };
 
+enum
+{
+	HEADERSIZE_FLAG_MODULO	= 0x80000000,	/* for when headers are the file size modulo something */
+	HEADERSIZE_FLAGS		= 0x80000000
+};
+
 struct InternalBdFormatDriver
 {
 	const char *extension;
@@ -39,10 +45,10 @@ struct InternalBdFormatDriver
 	UINT8 sectors_base;
 	UINT8 sectors_options[2];
 	UINT16 bytes_per_sector;
-	int header_size;
+	UINT32 header_size;
 	UINT8 filler_byte;
-	int (*header_decode)(const void *header, UINT8 *tracks, UINT8 *heads, UINT8 *sectors, UINT16 *bytes_per_sector, int *offset);
-	int (*header_encode)(void *buffer, UINT8 tracks, UINT8 heads, UINT8 sectors, UINT16 bytes_per_sector);
+	int (*header_decode)(const void *header, UINT32 file_size, UINT32 header_size, UINT8 *tracks, UINT8 *heads, UINT8 *sectors, UINT16 *bytes_per_sector, int *offset);
+	int (*header_encode)(void *buffer, UINT32 *header_size, UINT8 tracks, UINT8 heads, UINT8 sectors, UINT16 bytes_per_sector);
 	int flags;
 };
 
@@ -84,7 +90,8 @@ void validate_construct_formatdriver(struct InternalBdFormatDriver *drv, int tra
 #define BDFD_SECTORS_OPTION(sectors_option)			drv->sectors_options[sectors_optnum++] = sectors_option;
 #define BDFD_BYTES_PER_SECTOR(bytes_per_sector_)	drv->bytes_per_sector = bytes_per_sector_;
 #define BDFD_FLAGS(flags_)							drv->flags = flags_;
-#define BDFD_HEADER_SIZE(header_size_)				drv->header_size = header_size_;
+#define BDFD_HEADER_SIZE(header_size_)				drv->header_size = (header_size_);
+#define BDFD_HEADER_SIZE_MODULO(header_size_)		drv->header_size = (header_size_) | HEADERSIZE_FLAG_MODULO;
 #define BDFD_HEADER_ENCODE(header_encode_)			drv->header_encode = header_encode_;
 #define BDFD_HEADER_DECODE(header_decode_)			drv->header_decode = header_decode_;
 #define BDFD_FILLER_BYTE(filler_byte_)				drv->filler_byte = filler_byte_;
