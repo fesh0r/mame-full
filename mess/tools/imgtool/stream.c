@@ -110,7 +110,7 @@ STREAM *stream_open(const char *fname, int read_or_write)
 {
 	const char *ext;
 	struct stream_internal *imgfile = NULL;
-	static const char *write_modes[] = {"rb","wb","r+b","r+b","w+b"};
+	static const char *write_modes[] = {"rb", "wb", "r+b", "w+b"};
 	FILE *f = NULL;
 	char *buf = NULL;
 	int len, i;

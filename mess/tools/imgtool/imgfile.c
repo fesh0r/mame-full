@@ -403,7 +403,7 @@ imgtoolerr_t img_create(const struct ImageModule *module, const char *fname, opt
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 
 	/* The mess_hd imgtool module needs to read back the file it creates */
-	f = stream_open(fname, /*OSD_FOPEN_WRITE*/OSD_FOPEN_RW);
+	f = stream_open(fname, OSD_FOPEN_RW_CREATE);
 	if (!f)
 		return IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_NATIVEFILE;
 
