@@ -195,15 +195,6 @@ extern int          device_filename_change(int type, int id, const char *name);
 /* access functions from the struct IODevice arrays of a driver */
 
 extern const void *device_info(int type, int id);
-extern int device_open(int type, int id, int mode, void *args);
-extern void device_close(int type, int id);
-extern int device_seek(int type, int id, int offset, int whence);
-extern int device_tell(int type, int id);
-extern int device_status(int type, int id, int newstatus);
-extern int device_input(int type, int id);
-extern void device_output(int type, int id, int data);
-extern int device_input_chunk(int type, int id, void *dst, int chunks);
-extern void device_output_chunk(int type, int id, void *src, int chunks);
 
 /* This is the dummy GameDriver with flag NOT_A_DRIVER set
    It allows us to use an empty PARENT field in the macros. */

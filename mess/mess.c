@@ -760,120 +760,9 @@ int device_filename_change(int type, int id, const char *name)
 	return 0;
 }
 
-int device_open(int type, int id, int mode, void *args)
-{
-	const struct IODevice *dev = Machine->gamedrv->dev;
-	while( dev && dev->count )
-	{
-		if( type == dev->type && dev->open )
-			return (*dev->open)(id,mode,args);
 
-		dev++;
-	}
-	return 1;
-}
 
-void device_close(int type, int id)
-{
-	const struct IODevice *dev = Machine->gamedrv->dev;
-	while( dev && dev->count )
-	{
-		if( type == dev->type && dev->close )
-		{
-			(*dev->close)(id);
-			return;
-		}
-		dev++;
-	}
-}
 
-int device_seek(int type, int id, int offset, int whence)
-{
-	const struct IODevice *dev = Machine->gamedrv->dev;
-	while( dev && dev->count )
-	{
-		if( type == dev->type && dev->seek )
-			return (*dev->seek)(id,offset,whence);
-		dev++;
-	}
-	return 0;
-}
-
-int device_tell(int type, int id)
-{
-	const struct IODevice *dev = Machine->gamedrv->dev;
-	while( dev && dev->count )
-	{
-		if( type == dev->type && dev->tell )
-			return (*dev->tell)(id);
-		dev++;
-	}
-	return 0;
-}
-
-int device_status(int type, int id, int newstatus)
-{
-	const struct IODevice *dev = Machine->gamedrv->dev;
-	while( dev && dev->count )
-	{
-		if( type == dev->type && dev->status )
-			return (*dev->status)(id,newstatus);
-		dev++;
-	}
-	return 0;
-}
-
-int device_input(int type, int id)
-{
-	const struct IODevice *dev = Machine->gamedrv->dev;
-	while( dev && dev->count )
-	{
-		if( type == dev->type && dev->input )
-			return (*dev->input)(id);
-		dev++;
-	}
-	return 0;
-}
-
-void device_output(int type, int id, int data)
-{
-	const struct IODevice *dev = Machine->gamedrv->dev;
-	while( dev && dev->count )
-	{
-		if( type == dev->type && dev->output )
-		{
-			(*dev->output)(id,data);
-			return;
-		}
-		dev++;
-	}
-}
-
-int device_input_chunk(int type, int id, void *dst, int chunks)
-{
-	const struct IODevice *dev = Machine->gamedrv->dev;
-	while( dev && dev->count )
-	{
-		if( type == dev->type && dev->input_chunk )
-			return (*dev->input_chunk)(id,dst,chunks);
-		dev++;
-	}
-	return 1;
-}
-
-void device_output_chunk(int type, int id, void *src, int chunks)
-{
-	const struct IODevice *dev = Machine->gamedrv->dev;
-	while( dev && dev->count )
-	{
-		if( type == dev->type && dev->output )
-		{
-			(*dev->output_chunk)(id,src,chunks);
-			return;
-		}
-		dev++;
-	}
-}
 
 
 
@@ -994,7 +883,7 @@ void showmessdisclaimer(void)
 	mess_printf(
 		"MESS is an emulator: it reproduces, more or less faithfully, the behaviour of\n"
 		"several computer and console systems. But hardware is useless without software\n"
-		"so a file dump of the ROMs, cartridges, discs, and cassettes which run on that\n"
+		"so a file dump of the BIOS, cartridges, discs, and cassettes which run on that\n"
 		"hardware is required. Such files, like any other commercial software, are\n"
 		"copyrighted material and it is therefore illegal to use them if you don't own\n"
 		"the original media from which the files are derived. Needless to say, these\n"
@@ -1015,8 +904,8 @@ void showmessinfo(void)
 	mess_printf(
 		"Usage:  MESS <system> <device> <software> <options>\n\n"
 		"        MESS -list        for a brief list of supported systems\n"
-		"        MESS -listfull    for a full list of supported systems\n"
 		"        MESS -listdevices for a full list of supported devices\n"
+		"        MESS -showusage   to see usage instructions\n"
 		"See mess.txt for help, readme.txt for options.\n");
 
 }

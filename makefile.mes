@@ -1,12 +1,9 @@
 # set this to mame, mess or the destination you want to build
-# TARGET = mame
  TARGET = mess
-# TARGET = neomame
-# TARGET = cpmame
 # example for a tiny compile
-# TARGET = tiny
+# TARGET = tinyms
 ifeq ($(TARGET),)
-TARGET = mame
+TARGET = mess
 endif
 
 # uncomment next line to use Dr Mingw for exception handling
@@ -254,3 +251,8 @@ clean68k:
 	$(RM) -r $(OBJ)/cpuintrf.o
 	$(RM) -r $(OBJ)/drivers/cps2.o
 	$(RM) -r $(OBJ)/cpu/m68000
+
+cleantools:
+	@echo Cleaning Tools
+	$(RM) $(TOOLS)
+	

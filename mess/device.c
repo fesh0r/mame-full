@@ -62,3 +62,119 @@ int register_device (const int type, const char *arg)
 	return 0;
 
 }
+
+
+int device_open(int type, int id, int mode, void *args)
+{
+	const struct IODevice *dev = Machine->gamedrv->dev;
+	while( dev && dev->count )
+	{
+		if( type == dev->type && dev->open )
+			return (*dev->open)(id,mode,args);
+
+		dev++;
+	}
+	return 1;
+}
+
+void device_close(int type, int id)
+{
+	const struct IODevice *dev = Machine->gamedrv->dev;
+	while( dev && dev->count )
+	{
+		if( type == dev->type && dev->close )
+		{
+			(*dev->close)(id);
+			return;
+		}
+		dev++;
+	}
+}
+
+int device_seek(int type, int id, int offset, int whence)
+{
+	const struct IODevice *dev = Machine->gamedrv->dev;
+	while( dev && dev->count )
+	{
+		if( type == dev->type && dev->seek )
+			return (*dev->seek)(id,offset,whence);
+		dev++;
+	}
+	return 0;
+}
+
+int device_tell(int type, int id)
+{
+	const struct IODevice *dev = Machine->gamedrv->dev;
+	while( dev && dev->count )
+	{
+		if( type == dev->type && dev->tell )
+			return (*dev->tell)(id);
+		dev++;
+	}
+	return 0;
+}
+
+int device_status(int type, int id, int newstatus)
+{
+	const struct IODevice *dev = Machine->gamedrv->dev;
+	while( dev && dev->count )
+	{
+		if( type == dev->type && dev->status )
+			return (*dev->status)(id,newstatus);
+		dev++;
+	}
+	return 0;
+}
+
+int device_input(int type, int id)
+{
+	const struct IODevice *dev = Machine->gamedrv->dev;
+	while( dev && dev->count )
+	{
+		if( type == dev->type && dev->input )
+			return (*dev->input)(id);
+		dev++;
+	}
+	return 0;
+}
+
+void device_output(int type, int id, int data)
+{
+	const struct IODevice *dev = Machine->gamedrv->dev;
+	while( dev && dev->count )
+	{
+		if( type == dev->type && dev->output )
+		{
+			(*dev->output)(id,data);
+			return;
+		}
+		dev++;
+	}
+}
+
+int device_input_chunk(int type, int id, void *dst, int chunks)
+{
+	const struct IODevice *dev = Machine->gamedrv->dev;
+	while( dev && dev->count )
+	{
+		if( type == dev->type && dev->input_chunk )
+			return (*dev->input_chunk)(id,dst,chunks);
+		dev++;
+	}
+	return 1;
+}
+
+void device_output_chunk(int type, int id, void *src, int chunks)
+{
+	const struct IODevice *dev = Machine->gamedrv->dev;
+	while( dev && dev->count )
+	{
+		if( type == dev->type && dev->output )
+		{
+			(*dev->output_chunk)(id,src,chunks);
+			return;
+		}
+		dev++;
+	}
+}

@@ -28,4 +28,16 @@ struct Devices {
 /* Call this from the CLI to add a DEVICE (with its arg) to the options struct */
 int register_device (const int type, const char *arg);
 
+/* Device handlers */
+extern int device_open(int type, int id, int mode, void *args);
+extern void device_close(int type, int id);
+extern int device_seek(int type, int id, int offset, int whence);
+extern int device_tell(int type, int id);
+extern int device_status(int type, int id, int newstatus);
+extern int device_input(int type, int id);
+extern void device_output(int type, int id, int data);
+extern int device_input_chunk(int type, int id, void *dst, int chunks);
+extern void device_output_chunk(int type, int id, void *src, int chunks);
+
+
 #endif
