@@ -1339,7 +1339,7 @@ static int R9901_3(int offset)
 {
 	int answer = 0;
 
-	if (readinputport(input_port_mouse_buttons_geneve) & 4)
+	if (! (readinputport(input_port_mouse_buttons_geneve) & 4))
 		answer |= 0x10;
 
 	return answer;
