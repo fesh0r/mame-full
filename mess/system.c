@@ -111,6 +111,7 @@ const struct GameDriver *drivers[] =
 
       /* Other */
 	  DRIVER( advision )
+      DRIVER( sfzch )       /* CPS Changer (Street Fighter ZERO)              */
 
 
 
@@ -205,11 +206,11 @@ const struct GameDriver *drivers[] =
 	  DRIVER( cbm80swe )
 	  DRIVER( superpet )
 
-      DRIVER( cbm710 )
-      DRIVER( cbm720 )
+      DRIVER( cbm500 )
       DRIVER( cbm610 )
       DRIVER( cbm620 )
-      DRIVER( cbm500 )
+      DRIVER( cbm710 )
+      DRIVER( cbm720 )
 
       DRIVER( amiga )       /* Commodore Amiga                                */
 
@@ -217,6 +218,8 @@ const struct GameDriver *drivers[] =
       DRIVER( cpc464 )      /* Amstrad (Schneider in Germany) 1984            */
       DRIVER( cpc664 )      /* Amstrad (Schneider in Germany) 1985            */
       DRIVER( cpc6128 )     /* Amstrad (Schneider in Germany) 1985                                    */
+  TESTDRIVER( cpc464p )     /* Amstrad CPC464  Plus - 1987                    */
+  TESTDRIVER( cpc6128p )    /* Amstrad CPC6128 Plus - 1987                    */
       DRIVER( pcw8256 )     /*                                                */
       DRIVER( pcw8512 )     /*                                                */
       DRIVER( pcw9256 )     /*                                                */
@@ -225,8 +228,6 @@ const struct GameDriver *drivers[] =
       DRIVER( pcw16 )       /*                                                */
 
 
-  TESTDRIVER( cpc464p )     /* Amstrad CPC464  Plus - 1987                    */
-  TESTDRIVER( cpc6128p )    /* Amstrad CPC6128 Plus - 1987                    */
 
       /* VEB MIKROELEKTRONIK */
       DRIVER( kccomp )      /* KC compact                                     */
@@ -245,18 +246,19 @@ const struct GameDriver *drivers[] =
 	  DRIVER( mbee )		/* Microbee 									  */
 	  DRIVER( mbee56k ) 	/* Microbee 56K (CP/M)							  */
 
-	  /* TANDY */
-      DRIVER( coco )        /* Color Computer                                 */
-	  DRIVER( coco3 )       /* Color Computer 3                               */
-      DRIVER( cp400 )       /* Prologica CP400                                */
-	DRIVER(trs80l1)
+	DRIVER( trs80l1 )
       DRIVER( trs80 )       /* TRS-80 Model I   - Radio Shack/Tandy           */
       DRIVER( trs80alt )
-	  DRIVER( mc10 )		/* MC-10										  */
   TESTDRIVER( trs80m3 )     /* TRS-80 Model III - Radio Shack/Tandy           */
 
 	  /* DRAGON DATA LTD */
       DRIVER( dragon32 )    /* Dragon32                                       */
+
+	  /* TANDY */
+      DRIVER( coco )        /* Color Computer                                 */
+	  DRIVER( coco3 )       /* Color Computer 3                               */
+      DRIVER( cp400 )       /* Prologica CP400                                */
+	  DRIVER( mc10 )		/* MC-10										  */
 
 	  /* EACA */
 	  DRIVER( cgenie )		/* Colour Genie 								  */
@@ -266,19 +268,19 @@ const struct GameDriver *drivers[] =
 	  DRIVER( laser110 )	/* Laser 110									  */
 	  DRIVER( laser200 )	/* Laser 200									  */
 	  DRIVER( laser210 )	/* Laser 210 (indentical to Laser 200 ?)		  */
+	  DRIVER( laser310 )	/* Laser 310 (210 with diff. keyboard and RAM)	  */
 	  DRIVER( vz200 )		/* Dick Smith Electronics / Sanyo VZ200 		  */
+	  DRIVER( vz300 )		/* Dick Smith Electronics / Sanyo VZ300 		  */
 	  DRIVER( fellow )		/* Salora Fellow (Finland)						  */
 	  DRIVER( tx8000 )		/* Texet TX-8000 (U.K.) 						  */
-	  DRIVER( laser310 )	/* Laser 310 (210 with diff. keyboard and RAM)	  */
-	  DRIVER( vz300 )		/* Dick Smith Electronics / Sanyo VZ300 		  */
 	  DRIVER( laser350 )	/* Laser 350									  */
 	  DRIVER( laser500 )	/* Laser 500									  */
 	  DRIVER( laser700 )	/* Laser 700									  */
 
       /* Tangerine */
+	  DRIVER( microtan )
       DRIVER( oric1 )       /* Oric 1                                         */
 	  DRIVER( orica )		/* Oric Atmos									  */
-	  DRIVER( microtan )
 
       /* Texas Instruments */
   TESTDRIVER( ti99_2_24 )	/* Texas Instruments TI 99/2					  */
@@ -349,6 +351,8 @@ const struct GameDriver *drivers[] =
 
       /* ACORN */
 	  DRIVER( atom ) 	    /* Acorn Atom           						  */
+      DRIVER( bbca )       /* BBC Micro                                      */
+      DRIVER( bbcb )       /* BBC Micro                                      */
   TESTDRIVER( a310 )		/* Acorn Archimedes 310 						  */
 
 
@@ -371,11 +375,8 @@ const struct GameDriver *drivers[] =
       DRIVER( aquarius )    /*                                                */
 
 
-      DRIVER( sfzch )       /* CPS Changer (Street Fighter ZERO)              */
 
 
-      DRIVER( bbca  )       /* BBC Micro                                      */
-      DRIVER( bbcb  )       /* BBC Micro                                      */
 
 
     //DRIVER( arcadia )     /* Arcadia 2001                                   */
