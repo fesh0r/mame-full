@@ -335,8 +335,8 @@ ROM_END
 ROM_START(kc85_3)
 	ROM_REGION(0x014000, REGION_CPU1,0)
 
-    ROM_LOAD("basic_c0.853", 0x10000, 0x2000, 0)
-	ROM_LOAD("caos__e0.853", 0x12000, 0x2000, 0)
+    ROM_LOAD("basic_c0.854", 0x10000, 0x2000, 0xdfe34b08)
+	ROM_LOAD("caos__e0.853", 0x12000, 0x2000, 0x52bc2199)
 ROM_END
 
 
@@ -397,5 +397,5 @@ static const struct IODevice io_kc85_4d[] =
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
 COMPX( 19??, kc85_3,   0,     kc85_3,  kc85,        0,                "VEB Mikroelektronik", "KC 85/3", GAME_NOT_WORKING)
-COMPX( 19??, kc85_4,   0,     kc85_4,  kc85,        0,                "VEB Mikroelektronik", "KC 85/4", GAME_NOT_WORKING)
-COMPX( 19??, kc85_4d,   kc85_4,     kc85_4d,  kc85,        0,                "VEB Mikroelektronik", "KC 85/4 + Disk Interface Module (D004)", GAME_NOT_WORKING)
+COMPX( 19??, kc85_4,   kc85_3,     kc85_4,  kc85,        0,                "VEB Mikroelektronik", "KC 85/4", GAME_NOT_WORKING)
+COMPX( 19??, kc85_4d,  kc85_3,     kc85_4d,  kc85,        0,                "VEB Mikroelektronik", "KC 85/4 + Disk Interface Module (D004)", GAME_NOT_WORKING)
