@@ -3,6 +3,8 @@
 	Krzysztof Strzecha, Nathan Woods, 2003
 	Based on TMS9901 emulator by Raphael Nabet
 
+	21-May-2004 -	Fixed interrupt queue overflow bug (not really fixed
+			previously).
 	06-Mar-2004 -   Fixed bug in sensor input.
 	01-Mar-2004 -	Interrupt queue overrun problem fixed.
 	19-Oct-2003 -	Status register added. Reset fixed. Some cleanups.
@@ -269,12 +271,18 @@ void tms5501_cleanup (int which)
 
 void tms5501_set_pio_bit_7 (int which, UINT8 data)
 {
-	if (!(tms5501[which].pio_input_buffer & TMS5501_PIO_INT_7) && data && (tms5501[which].command & TMS5501_INT_7_SELECT))
-		tms5501[which].pending_interrupts |= TMS5501_INT_7_INT;
+	if (tms5501[which].command & TMS5501_INT_7_SELECT)
+	{
+		if (!(tms5501[which].pio_input_buffer & TMS5501_PIO_INT_7) && data)
+			tms5501[which].pending_interrupts |= TMS5501_INT_7_INT;
+		else
+			tms5501[which].pending_interrupts &= ~TMS5501_INT_7_INT;
+	}
 
 	tms5501[which].pio_input_buffer &= ~TMS5501_PIO_INT_7;
 	if (data)
 		tms5501[which].pio_input_buffer |= TMS5501_PIO_INT_7;
+
 	if (tms5501[which].pending_interrupts & TMS5501_INT_7_INT)
 		tms5501_field_interrupts(which);
 }
@@ -283,6 +291,8 @@ void tms5501_sensor (int which, UINT8 data)
 {
 	if (!(tms5501[which].sensor) && data)
 		tms5501[which].pending_interrupts |= TMS5501_SENSOR_INT;
+	else
+		tms5501[which].pending_interrupts &= ~TMS5501_SENSOR_INT;
 
 	tms5501[which].sensor = data;
 
