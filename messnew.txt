@@ -25,6 +25,8 @@ System Driver Changes:
   Implemented extra VDP ports in ti99 mode.  Implemented third mouse button.
   [Raphael Nabet]
 
+- [PC200] Fixed bug #398 and a bug affecting floppies at startup. [John Elliott]
+
 - [SNES] Fixed negative increment in GDMA. [Anthony Kruize]
 
 - [TI99] Fixed some bugs that had been introduced in IDE emulation. [Raphael

@@ -196,7 +196,7 @@ READ_HANDLER( pc200_port378_r )
 {
 	int data=pc_parallelport1_r(offset);
 	if (offset==1) data=(data&~7)|(input_port_1_r(0)&7);
-	if (offset==2) data=(data&~0xe0)|(input_port_1_r(0)&0xe0);
+	if (offset==2) data=(data&~0xe0)|(input_port_1_r(0)&0xc0);
 	return data;
 }
 
