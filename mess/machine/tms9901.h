@@ -1,3 +1,8 @@
+/*
+	tms9901.h: header file for tms9901.c
+
+	Raphael Nabet
+*/
 
 
 /* Masks for the interrupts levels available on TMS9901 */
@@ -28,12 +33,17 @@ typedef struct tms9901reset_param
 } tms9901reset_param;
 
 
-void tms9901_init(const tms9901reset_param *param);
-void tms9901_cleanup(void);
+void tms9901_init(int which, const tms9901reset_param *param);
+void tms9901_cleanup(int which);
 
-void tms9901_reset(void);
+void tms9901_reset(int which);
 
-void tms9901_set_single_int(int pin_number, int state);
+void tms9901_set_single_int(int which, int pin_number, int state);
 
-READ16_HANDLER ( tms9901_CRU_read );
-WRITE16_HANDLER ( tms9901_CRU_write );
+int tms9901_CRU_read(int which, int offset);
+void tms9901_CRU_write(int which, int offset, int data);
+
+/*********************** Standard 16-bit CPU interfaces *********************/
+
+READ16_HANDLER ( tms9901_0_CRU_read16 );
+WRITE16_HANDLER ( tms9901_0_CRU_write16 );
