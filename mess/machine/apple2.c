@@ -13,6 +13,7 @@
 
 /* common.h included for the RomModule definition */
 #include "driver.h"
+#include "state.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 #include "includes/apple2.h"

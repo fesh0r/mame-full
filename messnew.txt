@@ -10,6 +10,8 @@ System Driver Changes:
   now boots.  *.vid files no longer needed in BIOS set.  80-character text
   mode fixed (bug #311). [Nate Woods]
 
+- [APPLE2] Now uses the Robert Munafo palette. [Steve Nickolas]
+
 - [AQUARIUS] The palette now corresponds to the one described in the User's
   Manual. [Stefano Priore]
 
