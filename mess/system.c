@@ -574,6 +574,10 @@ TESTDRIVER( comquest )	/* Comquest Plus German							*/
 	/* Hewlett Packard */
 /*	DRIVER( hp48s )*/ 	/* HP48 S/SX 							  		  */
 /*	DRIVER( hp48g )*/ 	/* HP48 G/GX 							  		  */
+
+	/* SpectraVideo */
+	DRIVER( svi318 ) 	/* SVI-318										  */
+	DRIVER( svi328 ) 	/* SVI-328										  */
 #endif
 
 /****************Games*******************************************************/

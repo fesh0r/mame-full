@@ -46,6 +46,7 @@ extern struct ImageModule imgmod_c64crt;	/* c64 cartridge */
 extern struct ImageModule imgmod_vmsx_tap;	/* vMSX .tap archiv */
 extern struct ImageModule imgmod_vmsx_gm2;	/* vMSX gmaster2.ram file */
 extern struct ImageModule imgmod_fmsx_cas;	/* fMSX style .cas file */
+/* extern struct ImageModule imgmod_svi_cas; */	/* SVI .cas file */
 extern struct ImageModule imgmod_msx_dsk;	/* bogus MSX images */
 extern struct ImageModule imgmod_rom16;
 
@@ -84,6 +85,7 @@ static const struct ImageModule *images[] = {
 	&imgmod_vmsx_gm2,
 	&imgmod_fmsx_cas,
 	&imgmod_msx_dsk,
+/*	&imgmod_svi_cas,  -- doesn't work yet! */
 	&imgmod_rom16
 };
 

@@ -186,7 +186,8 @@ DRVLIBS += \
 		$(OBJ)/samcoupe.a \
 		$(OBJ)/aquarius.a \
 		$(OBJ)/teamconc.a \
-		$(OBJ)/motorola.a
+		$(OBJ)/motorola.a \
+		$(OBJ)/svi.a
 endif
 
 ifdef MESS_EXCLUDE_MISC_GAMES
@@ -655,6 +656,11 @@ $(OBJ)/motorola.a: \
 	  $(OBJ)/mess/machine/mekd2.o	 \
 	  $(OBJ)/mess/systems/mekd2.o
 
+$(OBJ)/svi.a: \
+	  $(OBJ)/mess/machine/svi318.o \
+	  $(OBJ)/mess/systems/svi318.o \
+	  $(OBJ)/mess/formats/svi_cas.o 
+
 $(OBJ)/intv.a:	\
 	$(OBJ)/mess/systems/intv.o
 
@@ -731,6 +737,8 @@ imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/vmsx_gm2.o   \
 	  $(OBJ)/mess/formats/fmsx_cas.o  \
 	  $(OBJ)/mess/tools/fmsx_cas.o  \
+	  $(OBJ)/mess/formats/svi_cas.o  \
+	  $(OBJ)/mess/tools/svi_cas.o  \
 	  $(OBJ)/mess/formats/cococas.o  \
 	  $(OBJ)/mess/tools/msx_dsk.o  \
 	  $(OBJ)/mess/tools/rsdos.o   \
