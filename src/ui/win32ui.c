@@ -66,6 +66,7 @@
 #include "history.h"
 #include "options.h"
 #include "dialogs.h"
+#include "state.h"
 
 #include "DirectDraw.h"
 #include "DirectInput.h"
@@ -5600,6 +5601,17 @@ static INT_PTR CALLBACK LanguageDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, L
 	return 0;
 }
 
+static void MameMessageBox(const char *fmt, ...)
+{
+	char buf[2048];
+	va_list va;
+
+	va_start(va, fmt);
+	vsprintf(buf, fmt, va);
+	MessageBox(GetMainWindow(), buf, MAME32NAME, MB_OK | MB_ICONERROR);
+	va_end(va);
+}
+
 static void MamePlayBackGame()
 {
 	int nGame;
@@ -5633,9 +5645,7 @@ static void MamePlayBackGame()
 		pPlayBack = mame_fopen(fname,NULL,FILETYPE_INPUTLOG,0);
 		if (pPlayBack == NULL)
 		{
-			char buf[MAX_PATH + 64];
-			sprintf(buf, "Could not open '%s' as a valid input file.", filename);
-			MessageBox(NULL, buf, MAME32NAME, MB_OK | MB_ICONERROR);
+			MameMessageBox("Could not open '%s' as a valid input file.", filename);
 			return;
 		}
 
@@ -5689,66 +5699,63 @@ static void MameLoadState()
 	if (CommonFileDialog(GetOpenFileName, filename, FALSE, FALSE))
 	{
 		mame_file* pSaveState;
-		char *cPos=0;
-		int  iPos=0;
 		char drive[_MAX_DRIVE];
 		char dir[_MAX_DIR];
-		char bare_fname[_MAX_FNAME];
 		char ext[_MAX_EXT];
 
 		char path[MAX_PATH];
 		char fname[MAX_PATH];
-		char romname[MAX_PATH];
+		char bare_fname[_MAX_FNAME];
+		char *state_fname;
+		int rc;
 
 		_splitpath(filename, drive, dir, bare_fname, ext);
 
+		// parse path
 		sprintf(path,"%s%s",drive,dir);
 		sprintf(fname,"%s%s",bare_fname,ext);
 		if (path[strlen(path)-1] == '\\')
 			path[strlen(path)-1] = 0; // take off trailing back slash
-		cPos = strchr(bare_fname, '-' );
-		iPos = cPos ? cPos - bare_fname : strlen(bare_fname);
-		strncpy(romname, bare_fname, iPos );
-		romname[iPos] = '\0';
-		if( strcmp(selected_filename,romname) != 0 )
+
+#ifdef MESS
 		{
-			char buf[2*MAX_PATH + 64];
-			sprintf(buf, "'%s' is not a valid savestate file for game '%s'.", filename, selected_filename);
-			MessageBox(NULL, buf, MAME32NAME, MB_OK | MB_ICONERROR);
-			return;
+			state_fname = filename;
 		}
-		set_pathlist(FILETYPE_STATE,path);
-		pSaveState = mame_fopen(NULL,fname,FILETYPE_STATE,0);
+#else // !MESS
+		{
+			char *cPos=0;
+			int  iPos=0;
+
+			cPos = strchr(bare_fname, '-' );
+			iPos = cPos ? cPos - bare_fname : strlen(bare_fname);
+			strncpy(romname, bare_fname, iPos );
+			romname[iPos] = '\0';
+			if( strcmp(selected_filename,romname) != 0 )
+			{
+				MameMessageBox("'%s' is not a valid savestate file for game '%s'.", filename, selected_filename);
+				return;
+			}
+			set_pathlist(FILETYPE_STATE,path);
+			state_fname = fname;
+		}
+#endif // MESS
+
+		pSaveState = mame_fopen(NULL,state_fname,FILETYPE_STATE,0);
 		if (pSaveState == NULL)
 		{
-			char buf[MAX_PATH + 64];
-			sprintf(buf, "Could not open '%s' as a valid savestate file.", filename);
-			MessageBox(NULL, buf, MAME32NAME, MB_OK | MB_ICONERROR);
+			MameMessageBox("Could not open '%s' as a valid savestate file.", filename);
 			return;
 		}
 
-		// check for "MAMESAVE" and VersionNo embedded in .sta header
-		if (pSaveState)
-		{
-			unsigned char state[10];
-
-			mame_fread(pSaveState, state, 10);
-
-			if(memcmp(state, "MAMESAVE", 8)) {
-				char buf[MAX_PATH + 64];
-				sprintf(buf, "Could not open '%s' as a valid savestate file.", filename);
-				MessageBox(NULL, buf, MAME32NAME, MB_OK | MB_ICONERROR);
-				return;
-			}
-
-			if(state[8] != STATESAVE_VERSION) {
-				char buf[MAX_PATH + 64];
-				sprintf(buf, "Wrong version in save file (%d, %d expected)", state[8], STATESAVE_VERSION);
-				MessageBox(NULL, buf, MAME32NAME, MB_OK | MB_ICONERROR);
-				return;
-			}
-		}
+		// call the MAME core function to check the save state file
+		rc = state_save_check_file(pSaveState, selected_filename, MameMessageBox);
 		mame_fclose(pSaveState);
+		if (rc)
+			return;
+
+#ifdef MESS
+		g_pSaveStateName = state_fname;
+#else
 		cPos = strrchr(bare_fname, '-' );
 		cPos = cPos+1;
 		if( strlen(cPos) >0)
@@ -5756,6 +5763,8 @@ static void MameLoadState()
 			g_pSaveStateName = cPos;
 			override_savestate_directory = path;
 		}
+#endif
+
 		MamePlayGameWithOptions(nGame);
 		g_pSaveStateName = NULL;
 		override_savestate_directory = NULL;

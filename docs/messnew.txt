@@ -2,7 +2,7 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-- Multitech MPF-1 (Mooglyguy)
+- Multitech MPF-1 [Mooglyguy]
 - [MSX] Daewoo IQ-1000 / DPC-200 - Korean [Jirou Kaneda]
 - [MSX2] Daewoo IQ-2000 / CPC-300 - Korean [Jirou Kaneda]
 
@@ -22,6 +22,9 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
+- [Windows GUI] Fixed save state loading from the GUI.  (bug #524) [Nate
+  Woods]
+
 - [Windows GUI] Fixed a stupid error in which one of the help menu items
   failed. (bug #529) [Nate Woods]
 
