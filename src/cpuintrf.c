@@ -423,9 +423,6 @@ struct cpu_interface cpuintf[] =
 #if (HAS_Z80)
 	CPU1(Z80,	   z80, 	 1,255,1.00,Z80_IGNORE_INT,    Z80_IRQ_INT,    Z80_NMI_INT,    8, 16,	  0,16,LE,1, 4	),
 #endif
-#if (HAS_SH2)
-	CPU4(SH2,	   sh2, 	16,  0,1.00,SH2_INT_NONE ,				 0, 			-1,   32,32bedw,   0,32,BE,2, 2  ),
-#endif
 #if (HAS_Z80GB)
 	CPU0(Z80GB,    z80gb,	 5,255,1.00,Z80GB_IGNORE_INT,  0,			   1,			   8, 16,	  0,16,LE,1, 4	),
 #endif

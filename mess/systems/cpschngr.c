@@ -22,10 +22,6 @@ merged Street Fighter Zero for MESS
 #include "drivers/cps1.h"       /* External CPS1 definitions */
 
 
-READ16_HANDLER( qsound_sharedram1_r );
-WRITE16_HANDLER( qsound_sharedram1_w );
-READ16_HANDLER( qsound_rom_r );
-
 static READ16_HANDLER( cps1_input2_r )
 {
 	int buttons=readinputport(7);
@@ -154,6 +150,32 @@ static int cps1_interrupt(void)
 
 static unsigned char *qsound_sharedram1,*qsound_sharedram2;
 
+int cps1_qsound_interrupt(void)
+{
+#if 0
+I have removed CPU_AUDIO_CPU from the Z(0 so this is no longer necessary
+	/* kludge to pass the sound board test with sound disabled */
+	if (Machine->sample_rate == 0)
+		qsound_sharedram1[0xfff] = 0x77;
+#endif
+
+	return 2;
+}
+
+
+READ16_HANDLER( qsound_rom_r )
+{
+	unsigned char *rom = memory_region(REGION_USER1);
+
+	if (rom) return rom[offset] | 0xff00;
+	else
+	{
+		usrintf_showmessage("%06x: read sound ROM byte %04x",cpu_get_pc(),offset);
+		return 0;
+	}
+}
+
+
 static READ16_HANDLER( qsound_sharedram2_r )
 {
 	return qsound_sharedram2[offset] | 0xff00;
@@ -257,7 +279,8 @@ WRITE16_HANDLER( cps1_eeprom_port_w )
 }
 
 
-static MEMORY_READ16_START( cps1_readmem )
+
+MEMORY_READ16_START( cps1_readmem )
 	{ 0x000000, 0x1fffff, MRA16_ROM }, /* 68000 ROM */
 	{ 0x800000, 0x800001, input_port_4_word_r }, /* Player input ports */
 	{ 0x800010, 0x800011, input_port_4_word_r }, /* ?? */
@@ -278,7 +301,7 @@ static MEMORY_READ16_START( cps1_readmem )
 	{ 0xff0000, 0xffffff, MRA16_RAM },   /* RAM */
 MEMORY_END
 
-static MEMORY_WRITE16_START( cps1_writemem )
+MEMORY_WRITE16_START( cps1_writemem )
 	{ 0x000000, 0x1fffff, MWA16_ROM },      /* ROM */
 	{ 0x800030, 0x800031, cps1_coinctrl_w },
 	{ 0x800040, 0x800041, forgottn_dial_0_reset_w },
@@ -295,7 +318,7 @@ static MEMORY_WRITE16_START( cps1_writemem )
 MEMORY_END
 
 
-static MEMORY_READ_START( sound_readmem )
+MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xd000, 0xd7ff, MRA_RAM },
@@ -305,7 +328,7 @@ static MEMORY_READ_START( sound_readmem )
 	{ 0xf00a, 0xf00a, cps1_snd_fade_timer_r }, /* Sound timer fade */
 MEMORY_END
 
-static MEMORY_WRITE_START( sound_writemem )
+MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xd000, 0xd7ff, MWA_RAM },
 	{ 0xf000, 0xf000, YM2151_register_port_0_w },
@@ -313,6 +336,24 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0xf002, 0xf002, OKIM6295_data_0_w },
 	{ 0xf004, 0xf004, cps1_snd_bankswitch_w },
 //	{ 0xf006, 0xf006, MWA_NOP }, /* ???? Unknown ???? */
+MEMORY_END
+
+MEMORY_READ_START( qsound_readmem )
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xbfff, MRA_BANK1 },  /* banked (contains music data) */
+	{ 0xc000, 0xcfff, MRA_RAM },
+	{ 0xd007, 0xd007, qsound_status_r },
+	{ 0xf000, 0xffff, MRA_RAM },
+MEMORY_END
+
+MEMORY_WRITE_START( qsound_writemem )
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xcfff, MWA_RAM, &qsound_sharedram1 },
+	{ 0xd000, 0xd000, qsound_data_h_w },
+	{ 0xd001, 0xd001, qsound_data_l_w },
+	{ 0xd002, 0xd002, qsound_cmd_w },
+	{ 0xd003, 0xd003, qsound_banksw_w },
+	{ 0xf000, 0xffff, MWA_RAM, &qsound_sharedram2 },
 MEMORY_END
 
 INPUT_PORTS_START( sfzch )
@@ -456,44 +497,7 @@ static struct OKIM6295interface okim6295_interface_7576 =
 	{ 30 }
 };
 
-
-
-READ16_HANDLER( qsound_sharedram1_r )
-{
-	return qsound_sharedram1[offset] | 0xff00;
-}
-
-
-WRITE16_HANDLER( qsound_sharedram1_w )
-{
-	if (ACCESSING_LSB)
-		qsound_sharedram1[offset] = data;
-}
-
-READ16_HANDLER( qsound_rom_r )
-{
-	unsigned char *rom = memory_region(REGION_USER1);
-
-	if (rom) return rom[offset] | 0xff00;
-	else
-	{
-		usrintf_showmessage("%06x: read sound ROM byte %04x",cpu_get_pc(),offset);
-		return 0;
-	}
-}
-
-struct GfxDecodeInfo cps1_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &tilelayout16, 0x000, 32 },	/* sprites */
-	{ REGION_GFX1, 0, &tilelayout8,  0x200, 32 },	/* tiles 8x8 */
-	{ REGION_GFX1, 0, &tilelayout16, 0x400, 32 },	/* tiles 16x16 */
-	{ REGION_GFX1, 0, &tilelayout32, 0x600, 32 },	/* tiles 32x32 */
-	/* stars use colors 0x800-087ff and 0xa00-0a7ff */
-	{ -1 } /* end of array */
-};
-
-
-struct MachineDriver machine_driver_sfzch =
+static struct MachineDriver machine_driver_sfzch =
 {
 	/* basic machine hardware */
 	{
@@ -535,6 +539,43 @@ struct MachineDriver machine_driver_sfzch =
 	},
 	0
 };
+
+struct QSound_interface qsound_interface =
+{
+	QSOUND_CLOCK,
+	REGION_SOUND1,
+	{ 100,100 }
+};
+
+struct GfxDecodeInfo cps1_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &tilelayout16, 0x000, 32 },	/* sprites */
+	{ REGION_GFX1, 0, &tilelayout8,  0x200, 32 },	/* tiles 8x8 */
+	{ REGION_GFX1, 0, &tilelayout16, 0x400, 32 },	/* tiles 16x16 */
+	{ REGION_GFX1, 0, &tilelayout32, 0x600, 32 },	/* tiles 32x32 */
+	/* stars use colors 0x800-087ff and 0xa00-0a7ff */
+	{ -1 } /* end of array */
+};
+
+/*
+Export this function so that the vidhrdw routine can drive the
+Q-Sound hardware
+*/
+WRITE16_HANDLER( cps2_qsound_sharedram_w )
+{
+    qsound_sharedram1_w(offset/2, data, 0xff00);
+}
+
+READ16_HANDLER( qsound_sharedram1_r )
+{
+	return qsound_sharedram1[offset] | 0xff00;
+}
+
+WRITE16_HANDLER( qsound_sharedram1_w )
+{
+	if (ACCESSING_LSB)
+		qsound_sharedram1[offset] = data;
+}
 
 
 /***************************************************************************
@@ -590,4 +631,3 @@ static const struct IODevice io_sfzch[] = {
 
 CONS( 1995, sfzch,    0,        sfzch,     sfzch,    0,        "Capcom", "CPS Changer (Street Fighter ZERO)" )
 
-#include "drivers/cps2.c"

@@ -18,9 +18,9 @@ Other Changes:
 - The core is based on MAME 0.37b13. This incorporates all features of the update to this 
   core.  [MAME team] 
 
-- [IMGTOOL] Added special support in imgtool to separate floppy image formats
-  from the file system.  Also added a test command that only gets built in
-  debug builds that runs a set of test cases on an imgtool driver.  [Nate Woods]
+- [IMGTOOL] Added special support in imgtool to separate floppy image formats from the 
+  file system.  Also added a test command that only gets built in debug builds that runs 
+  a set of test cases on an imgtool driver.  [Nate Woods]
 
 
 -------------------------------------------------------------------------------  
