@@ -60,7 +60,7 @@ static int filter_writetostream_sendproc(struct filter_info *fi, void *buf, int 
 	return stream_write((STREAM *) fi->internalparam, buf, buflen);
 }
 
-int filter_writetostream(FILTER *f, STREAM *s, void *buf, int buflen)
+int filter_writetostream(FILTER *f, STREAM *s, /*const*/ void *buf, int buflen)
 {
 	struct filter_instance *instance = (struct filter_instance *) f;
 	struct filter_info fi;
@@ -76,9 +76,9 @@ int filter_writetostream(FILTER *f, STREAM *s, void *buf, int buflen)
 /* ----------------------------------------------------------------------- */
 
 struct filter_readfromstream_param {
-	char *buf;
+	/*char **/UINT8 *buf;
 	int buflen;
-	char *extrabuf;
+	/*char **/UINT8 *extrabuf;
 	int extrabuflen;
 };
 
@@ -86,7 +86,7 @@ static int filter_readfromstream_sendproc(struct filter_info *fi, void *buf, int
 {
 	int sz;
 	int result = 0;
-	char *p;
+	/*char **/UINT8 *p;
 	struct filter_readfromstream_param *param = (struct filter_readfromstream_param *) fi->internalparam;
 
 	sz = MIN(param->buflen, buflen);
