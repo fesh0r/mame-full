@@ -1155,7 +1155,8 @@ INPUT_PORTS_END
 
 static struct beep_interface pcw_beep_interface =
 {
-        1
+	1,
+	{100}
 };
 
 /* PCW8256, PCW8512, PCW9256 */
