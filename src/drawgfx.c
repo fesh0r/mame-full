@@ -4255,7 +4255,7 @@ DECLARE_SWAP_RAW_PRI(blockmove_8toN_transmask,(COMMON_ARGS,
 
 		while (dstheight)
 		{
-			end = dstdata + dstwidth*HMODULO;
+			end = dstdata - dstwidth*HMODULO;
 			while (((long)srcdata & 3) && dstdata > end)	/* longword align */
 			{
 				int col;
