@@ -14,6 +14,8 @@ System Driver Changes:
 - [APPLE2] Fixed a regression that prevented certain Apple II models from
   booting introduced in MESS 0.91.  (bug #635) [Nate Woods]
 
+- [APPLE2] Complete rewrite of Apple II banking.  [Nate Woods]
+
 
 
 User Interface Changes:

@@ -95,11 +95,8 @@ int  apple2_slot6_r(int offset);*/
 READ8_HANDLER ( apple2_slot7_r );
 
 void apple2_setvar(UINT32 val, UINT32 mask);
-void apple2_setforceslotrom(UINT8 val);
-UINT8 apple2_getforceslotrom(void);
 
 /* machine/ap_disk2.c */
-extern UINT8 *apple_rom;
 void apple2_slot6_init(void);
 DEVICE_LOAD ( apple2_floppy );
 READ8_HANDLER ( apple2_c0xx_slot6_r );
@@ -129,63 +126,40 @@ int apple2_get_bgcolor(void);
 #define SPECIALKEY_BUTTON2		0x40
 #define SPECIALKEY_RESET		0x80
 
-/* bank constants; just because Apple II banking is so ridiculously complicated */
-#define A2BANK_0000				1
-#define A2BANK_0200_R			2
-#define A2BANK_0200_W			3
-#define A2BANK_0400_R			4
-#define A2BANK_0400_W			5
-#define A2BANK_0800_R			6
-#define A2BANK_0800_W			7
-#define A2BANK_2000_R			8
-#define A2BANK_2000_W			9
-#define A2BANK_4000_R			10
-#define A2BANK_4000_W			11
-#define A2BANK_C100				12
-#define A2BANK_C200				13
-#define A2BANK_C300				14
-#define A2BANK_C400				15
-#define A2BANK_C500				16
-#define A2BANK_C600				17
-#define A2BANK_C700				18
-#define A2BANK_C800				19
-#define A2BANK_D000_R			20
-#define A2BANK_D000_W			21
-#define A2BANK_E000_R			22
-#define A2BANK_E000_W			23
+/* -----------------------------------------------------------------------
+ * New Apple II memory manager
+ * ----------------------------------------------------------------------- */
 
-#define MRA8_A2BANK_0000	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_0000))
-#define MRA8_A2BANK_0200	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_0200_R))
-#define MRA8_A2BANK_0400	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_0400_R))
-#define MRA8_A2BANK_0800	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_0800_R))
-#define MRA8_A2BANK_2000	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_2000_R))
-#define MRA8_A2BANK_4000	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_4000_R))
-#define MRA8_A2BANK_C100	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_C100))
-#define MRA8_A2BANK_C200	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_C200))
-#define MRA8_A2BANK_C300	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_C300))
-#define MRA8_A2BANK_C400	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_C400))
-#define MRA8_A2BANK_C500	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_C500))
-#define MRA8_A2BANK_C600	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_C600))
-#define MRA8_A2BANK_C700	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_C700))
-#define MRA8_A2BANK_C800	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_C800))
-#define MRA8_A2BANK_D000	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_D000_R))
-#define MRA8_A2BANK_E000	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_E000_R))
+#define APPLE2_MEM_SLOT		0x80000000
+#define APPLE2_MEM_ROM		0xC0000000
+#define APPLE2_MEM_FLOATING	0xFFFFFFFF
+#define APPLE2_MEM_MASK		0x00FFFFFF
 
-#define MWA8_A2BANK_0000	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_0000))
-#define MWA8_A2BANK_0200	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_0200_W))
-#define MWA8_A2BANK_0400	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_0400_W))
-#define MWA8_A2BANK_0800	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_0800_W))
-#define MWA8_A2BANK_2000	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_2000_W))
-#define MWA8_A2BANK_4000	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_4000_W))
-#define MWA8_A2BANK_C100	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_C100))
-#define MWA8_A2BANK_C200	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_C200))
-#define MWA8_A2BANK_C300	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_C300))
-#define MWA8_A2BANK_C400	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_C400))
-#define MWA8_A2BANK_C500	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_C500))
-#define MWA8_A2BANK_C600	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_C600))
-#define MWA8_A2BANK_C700	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_C700))
-#define MWA8_A2BANK_C800	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_C800))
-#define MWA8_A2BANK_D000	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_D000_W))
-#define MWA8_A2BANK_E000	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_E000_W))
+typedef enum
+{
+	A2MEM_NORMAL = 2,	/* this is a bank where read and write can go different places */
+	A2MEM_UNISON = 1,	/* this is a bank where read and write are always in unison */
+	A2MEM_IO = 0		/* this is always handlers; never banked memory */
+} bank_disposition_t;
+
+struct apple2_meminfo
+{
+	UINT32 read_mem;
+	read8_handler read_handler;
+	UINT32 write_mem;
+	write8_handler write_handler;
+};
+
+struct apple2_memmap_entry
+{
+	offs_t begin;
+	offs_t end;
+	void (*get_meminfo)(offs_t begin, offs_t end, struct apple2_meminfo *meminfo);
+	bank_disposition_t bank_disposition;
+};
+
+void apple2_setup_memory(const struct apple2_memmap_entry *memmap);
+void apple2_update_memory(void);
+
 
 #endif /* APPLE2_H */
