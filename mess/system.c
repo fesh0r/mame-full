@@ -120,7 +120,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( advision )	/* Adventurevision								  */
 
 	/* Magnavox */
-	DRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
+TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
 
 
 	/* CAPCOM */
