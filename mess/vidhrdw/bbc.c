@@ -236,7 +236,7 @@ void SAA5050_clock(int code)
 
 		case 0x11: case 0x12: case 0x13: case 0x14:
 		case 0x15: case 0x16: case 0x17:
-			tt_lookup=teletext_graphics;
+			tt_lookup=tt_graphics;
 			tt_colour=code&0x07;
 			break;
 
@@ -302,13 +302,16 @@ static int videoULA_characters_per_line;
 static int videoULA_teletext_normal_select;
 static int videoULA_flash_colour_select;
 
-static unsigned int width_of_cursor_set[4]={ 1,0,2,4 };
-static unsigned int pixels_per_byte_set[8]={ 2,4,8,16,1,2,4,8 };
-static unsigned int pixels_per_clock_set[4]={ 8,4,2,1 };
+static unsigned int width_of_cursor_set[8]={ 0,0,1,2,1,0,2,4 };
 
-static int emulation_pixels_per_character;
+static unsigned int emulation_cursor_size=1;
+
+static unsigned int pixels_per_byte_set[8]={ 2,4,8,16,1,2,4,8 };
+static unsigned int emulation_pixels_per_real_pixel_set[4]={ 8,4,2,1 };
+
+static int emulation_pixels_per_byte;
 static int pixels_per_byte;
-static int pixels_per_clock;
+static int emulation_pixels_per_real_pixel;
 
 void videoULA_select_pallet(void)
 {
@@ -344,18 +347,20 @@ WRITE_HANDLER ( videoULA_w )
 		videoULA_flash_colour_select=    videoULA_Reg    &0x01;
 		videoULA_select_pallet();
 
+		emulation_cursor_size=width_of_cursor_set[videoULA_width_of_cursor|(videoULA_master_cursor_size<<2)];
+
 		if (videoULA_teletext_normal_select)
 		{
-			emulation_pixels_per_character=18;
+			emulation_pixels_per_byte=18;
 			x_screen_offset=-154;
 			y_screen_offset=0;
 		} else {
-			// this is the number of pixels per 6845 character on the emulated screen display
-			emulation_pixels_per_character=videoULA_6845_clock_rate?8:16;
-
-			// this is the number of pixels per videoULA clock tick
+			// this is the number of BBC pixels heald in each byte
 			pixels_per_byte=pixels_per_byte_set[videoULA_characters_per_line|(videoULA_6845_clock_rate<<2)];
-			pixels_per_clock=pixels_per_clock_set[videoULA_characters_per_line];
+
+			// this is the number of emulation display pixels
+			emulation_pixels_per_byte=videoULA_6845_clock_rate?8:16;
+			emulation_pixels_per_real_pixel=emulation_pixels_per_real_pixel_set[videoULA_characters_per_line];
 			x_screen_offset=-96;
 			y_screen_offset=-8;
 		}
@@ -430,6 +435,7 @@ void BBC_draw_hi_res_enabled(void)
 	// the logic for the memory location address is very complicated so it
 	// is stored in a number of look up arrays (and is calculated once at the start of the emulator).
 	meml=video_ram_lookup[crtc6845_memory_address_r(0)]|(BBC_Character_Row&0x7);
+
 	if (vidmem_RAM[meml] || video_refresh )
 	{
 		vidmem_RAM[meml]=0;
@@ -439,11 +445,10 @@ void BBC_draw_hi_res_enabled(void)
 		{
 			pixel_temp=videoULA_pallet_lookup[pixel_bits[i]];
 			i=(i<<1)|1;
-			for(sc2=0;sc2<pixels_per_clock;sc2++)
+			for(sc2=0;sc2<emulation_pixels_per_real_pixel;sc2++)
 				BBC_display[c++]=pixel_temp;
 		}
 	}
-
 }
 
 
@@ -485,7 +490,7 @@ void BBC_draw_screen_disabled(void)
 	if (video_refresh)
 	{
 		// if the display is not enable, just draw a blank area.
-		for(sc1=0;sc1<emulation_pixels_per_character;sc1++)
+		for(sc1=0;sc1<emulation_pixels_per_byte;sc1++)
 		{
 			BBC_display[sc1]=VideoULA_border_colour;
 		}
@@ -568,7 +573,7 @@ void BBC_Set_DE(int offset, int data)
 void BBC_Set_CR(int offset, int data)
 {
 	if (data) {
-		VideoULA_CR_counter=width_of_cursor_set[videoULA_width_of_cursor];
+		VideoULA_CR_counter=emulation_cursor_size;
 		VideoULA_CR=1;
 		// turn on the video refresh for the cursor area
 		video_refresh=video_refresh|4;
@@ -691,8 +696,8 @@ void bbc_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			}
 
 			// Move the CRT Beam on one 6845 character distance
-			x_screen_pos=x_screen_pos+emulation_pixels_per_character;
-			BBC_display=BBC_display+emulation_pixels_per_character;
+			x_screen_pos=x_screen_pos+emulation_pixels_per_byte;
+			BBC_display=BBC_display+emulation_pixels_per_byte;
 
 			// and check the cursor
 			if (VideoULA_CR) BBC_Clock_CR();
@@ -776,4 +781,3 @@ void bbc_vh_stop(void)
 {
 
 }
-
