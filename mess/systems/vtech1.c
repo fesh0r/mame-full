@@ -98,8 +98,8 @@ MEMORY_WRITE_START( writemem_laser110 )
     { 0x4000, 0x5fff, MWA_ROM },
     { 0x6000, 0x67ff, MWA_ROM },
     { 0x6800, 0x6fff, vtech1_latch_w },
-//    { 0x7000, 0x77ff, videoram_w, &videoram, &videoram_size },
-	{ 0x8000, 0x97ff, videoram_w, &videoram, &videoram_size}, // VDG 6847
+    { 0x7000, 0x77ff, videoram_w, &videoram, &videoram_size },
+//	{ 0x8000, 0x97ff, videoram_w, &videoram, &videoram_size}, // VDG 6847
  
    { 0x7800, 0x7fff, MWA_RAM },
 //  { 0x8000, 0xbfff, MWA_RAM },    /* opt. installed */
@@ -317,7 +317,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
     { 1, 0x0c00, &gfxlayout, 2*10, 2 },
 MEMORY_END   /* end of array */
 
-
 static unsigned char palette[] =
 {
       0,  0,  0,    /* black (block graphics) */
@@ -353,13 +352,35 @@ static unsigned short colortable[] =
     1,2,3,4,    /* green, yellow, blue, red */
     5,6,8,7     /* buff, cyan, orange, magenta */
 };
+#else
 
+static unsigned char palette[] = {
+	0x00,0x00,0x00, /* BLACK */
+	0x00,224,0x00, /* GREEN */
+	208,0xff,0x00, /* YELLOW */
+	0x00,0x00,0xff, /* BLUE */
+	0xff,0x00,0x00, /* RED */
+	224,224,144, /* BUFF */
+	0x00,255,160, /* CYAN */
+	0xff,0x00,0xff, /* MAGENTA */
+	240,112,0x00, /* ORANGE */
+	0x00,0x80,0x00, /* ARTIFACT GREEN/RED */
+	0x00,0x80,0x00, /* ARTIFACT GREEN/BLUE */
+	0xff,0x80,0x00, /* ARTIFACT BUFF/RED */
+	0x00,0x80,0xff, /* ARTIFACT BUFF/BLUE */
+	0x00,0x40,0x00,	/* ALPHANUMERIC DARK GREEN */
+	0x00,0xff,0x00,	/* ALPHANUMERIC BRIGHT GREEN */
+	0x40,0x10,0x00,	/* ALPHANUMERIC DARK ORANGE */
+	0xff,0xc4,0x18,	/* ALPHANUMERIC BRIGHT ORANGE */
+};
+
+#endif
 
 /* Initialise the palette */
 static void init_palette_monochrome(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
 {
     int i;
-    for (i = 0; i < sizeof(palette)/sizeof(palette[0])/3; i++)
+    for (i = 0; i < sizeof(palette)/(sizeof(unsigned char)*3); i++)
     {
         int mono;
         mono = (int)(palette[i*3+0] * 0.299 + palette[i*3+1] * 0.587 + palette[i*3+2] * 0.114);
@@ -367,16 +388,19 @@ static void init_palette_monochrome(unsigned char *sys_palette, unsigned short *
         sys_palette[i*3+1] = mono;
         sys_palette[i*3+2] = mono;
     }
+#ifdef OLD_VIDEO
     memcpy(sys_colortable,colortable,sizeof(colortable));
+#endif
 }
 
 /* Initialise the palette */
 static void init_palette_color(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
 {
     memcpy(sys_palette,palette,sizeof(palette));
+#ifdef OLD_VIDEO
     memcpy(sys_colortable,colortable,sizeof(colortable));
-}
 #endif
+}
 
 static INT16 speaker_levels[] = {-32768,0,32767,0};
 
@@ -423,9 +447,9 @@ static struct MachineDriver machine_driver_laser110 =
 	240,					/* screen height (pixels doubled) */
 	{ 0, 319, 0, 239 },		/* visible_area */
 	0,
-    M6847_TOTAL_COLORS,
+    sizeof(palette)/(sizeof(unsigned char)*3),
 	0,
-	m6847_vh_init_palette,
+	init_palette_monochrome,
 #endif
 
     VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
@@ -479,15 +503,15 @@ static struct MachineDriver machine_driver_laser210 =
     gfxdecodeinfo,                          /* graphics decode info */
     sizeof(palette)/sizeof(palette[0])/3,   /* colors used for the characters */
     sizeof(colortable)/sizeof(colortable[0]) ,
-    init_palette_monochrome,                /* init palette */
+    init_palette_color,                /* init palette */
 #else
 	320,					/* screen width */
 	240,					/* screen height (pixels doubled) */
 	{ 0, 319, 0, 239 },		/* visible_area */
 	0,
-    M6847_TOTAL_COLORS,
+    sizeof(palette)/(sizeof(unsigned char)*3),
 	0,
-	m6847_vh_init_palette,
+	init_palette_color,
 #endif
 
     VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
@@ -540,15 +564,15 @@ static struct MachineDriver machine_driver_laser310 =
     gfxdecodeinfo,                          /* graphics decode info */
     sizeof(palette)/sizeof(palette[0])/3,   /* colors used for the characters */
     sizeof(colortable)/sizeof(colortable[0]) ,
-    init_palette_monochrome,                /* init palette */
+    init_palette_color,                /* init palette */
 #else
 	320,					/* screen width */
 	240,					/* screen height (pixels doubled) */
 	{ 0, 319, 0, 239 },		/* visible_area */
 	0,
-    M6847_TOTAL_COLORS,
+    sizeof(palette)/(sizeof(unsigned char)*3),
 	0,
-	m6847_vh_init_palette,
+	init_palette_color,
 #endif
     VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
     0,

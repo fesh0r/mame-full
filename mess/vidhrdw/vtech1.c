@@ -113,12 +113,18 @@ void vtech1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 #include "vidhrdw/m6847.h"
 
+/* bit 3 of cassette/speaker/vdp control latch defines if the mode is text or
+graphics */
+
 static void vtech1_charproc(UINT8 c)
 {
-	/* 0x080 is used. Not sure what for yet */
-//	m6847_inv_w(0,		(c & 0x80));
-//	m6847_as_w(0,		(c & 0x40));
-//	m6847_intext_w(0,	(c & 0x40));
+	/* bit 7 defines if semigraphics/text used */
+	/* bit 6 defines if chars should be inverted */
+
+	m6847_inv_w(0,      (c & 0x40));
+	m6847_as_w(0,		(c & 0x80));
+	/* it appears this is fixed */
+	m6847_intext_w(0,	0);
 }
 
 int vtech1_vh_start(void)
