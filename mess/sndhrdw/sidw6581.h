@@ -1,7 +1,7 @@
 #ifndef WAVE6581_h
 #define WAVE6581_h
 
-#include "mytypes.h"
+#include "sidtypes.h"
 
 /*
  * MOS-6581 R1, R3, R4

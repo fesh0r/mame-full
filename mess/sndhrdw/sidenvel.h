@@ -6,7 +6,7 @@
 #define ENVELOPE_H
 
 
-#include "mytypes.h"
+#include "sidtypes.h"
 
 extern void enveEmuInit(udword updateFreq, bool measuredValues);
 void enveEmuResetOperator(sidOperator* pVoice);

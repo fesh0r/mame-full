@@ -1,6 +1,3 @@
-/* */
-/* /home/ms/source/sidplay/libsidplay/emu/RCS/envelope.cpp,v */
-/* */
 /*========================================================================= */
 /* This source implements the ADSR volume envelope of the SID-chip. */
 /* Two different envelope shapes are implemented, an exponential */
@@ -38,13 +35,12 @@
 #define VERBOSE_DBG 0
 #include "includes/cbm.h"
 
-/*#include "compconf.h" */
-#include "mytypes.h"
-/*#include "myendian.h" */
-#include "opstruct.h"
+#include "sidtypes.h"
+#include "sidvoice.h"
+#include "sid.h"
 
-#include "enve_dl.h"
-#include "envelope.h"
+#include "side6581.h"
+#include "sidenvel.h"
 
 const ubyte masterVolumeLevels[16] =
 {
@@ -52,8 +48,6 @@ const ubyte masterVolumeLevels[16] =
   136, 153, 170, 187, 204, 221, 238, 255
 };
 
-ubyte masterVolume;
-uword masterVolumeAmplIndex;
 static uword masterAmplModTable[16*256];
 
 static float attackTimes[16] =
@@ -288,7 +282,7 @@ INLINE uword enveEmuRelease(sidOperator* pVoice)
 #endif
 	{
 		pVoice->enveVol = releaseTab[releaseTabLen -1];
-		return masterAmplModTable[ masterVolumeAmplIndex + pVoice->enveVol ];
+		return masterAmplModTable[ pVoice->sid->masterVolumeAmplIndex + pVoice->enveVol ];
 	}
 	else
 	{
@@ -298,7 +292,7 @@ INLINE uword enveEmuRelease(sidOperator* pVoice)
 		pVoice->enveVol = releaseTab[pVoice->enveStep];
 #endif
 		enveEmuEnveAdvance(pVoice);
-		return masterAmplModTable[ masterVolumeAmplIndex + pVoice->enveVol ];
+		return masterAmplModTable[ pVoice->sid->masterVolumeAmplIndex + pVoice->enveVol ];
 	}
 }
 
@@ -338,7 +332,7 @@ INLINE uword enveEmuStartRelease(sidOperator* pVoice)
 
 INLINE uword enveEmuSustain(sidOperator* pVoice)
 {
-	return masterAmplModTable[masterVolumeAmplIndex+pVoice->enveVol];
+	return masterAmplModTable[pVoice->sid->masterVolumeAmplIndex+pVoice->enveVol];
 }
 
 INLINE uword enveEmuSustainDecay(sidOperator* pVoice)
@@ -371,7 +365,7 @@ INLINE uword enveEmuSustainDecay(sidOperator* pVoice)
 		else
 		{
 			enveEmuEnveAdvance(pVoice);
-			return masterAmplModTable[ masterVolumeAmplIndex + pVoice->enveVol ];
+			return masterAmplModTable[ pVoice->sid->masterVolumeAmplIndex + pVoice->enveVol ];
 		}
 	}
 }
@@ -443,7 +437,7 @@ INLINE uword enveEmuDecay(sidOperator* pVoice)
 		else
 		{
 			enveEmuEnveAdvance(pVoice);
-			return masterAmplModTable[ masterVolumeAmplIndex + pVoice->enveVol ];
+			return masterAmplModTable[ pVoice->sid->masterVolumeAmplIndex + pVoice->enveVol ];
 		}
 	}
 }
@@ -499,7 +493,7 @@ INLINE uword enveEmuAttack(sidOperator* pVoice)
 		pVoice->enveVol = pVoice->enveStep;
 #endif
 		enveEmuEnveAdvance(pVoice);
-		return masterAmplModTable[ masterVolumeAmplIndex + pVoice->enveVol ];
+		return masterAmplModTable[ pVoice->sid->masterVolumeAmplIndex + pVoice->enveVol ];
 	}
 }
 
@@ -564,7 +558,7 @@ INLINE uword enveEmuShortAttack(sidOperator* pVoice)
 	    pVoice->enveShortAttackCount--;
 /*		cout << hex << pVoice->enveShortAttackCount << " / " << pVoice->enveVol << endl; */
 		enveEmuEnveAdvance(pVoice);
-		return masterAmplModTable[ masterVolumeAmplIndex + pVoice->enveVol ];
+		return masterAmplModTable[ pVoice->sid->masterVolumeAmplIndex + pVoice->enveVol ];
 	}
 }
 

@@ -6,7 +6,7 @@
 #define ENVE_DL_H
 
 
-#include "mytypes.h"
+#include "sidtypes.h"
 
 //
 // Hardware:
