@@ -19,6 +19,7 @@ extern char debug_strings[16][30];
 extern void lynx_machine_init(void);
 
 extern UINT16 lynx_granularity;
+extern int lynx_rotate;
 
 typedef struct {
 	UINT8 data[0x100];
@@ -42,6 +43,7 @@ void lynx_audio_debug(struct osd_bitmap *bitmap);
 void lynx_audio_write(int offset, UINT8 data);
 UINT8 lynx_audio_read(int offset);
 extern int lynx_custom_start (const struct MachineSound *driver);
+extern int lynx2_custom_start (const struct MachineSound *driver);
 extern void lynx_custom_stop (void);
 extern void lynx_custom_update (void);
 #endif
