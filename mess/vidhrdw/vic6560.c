@@ -108,7 +108,7 @@ static UINT16 backgroundcolor, framecolor, helpercolor, white, black;
 static UINT16 mono[2], monoinverted[2], multi[4], multiinverted[4];
 
 /* transparent, white, black */
-static unsigned short pointercolortable[3] =
+static UINT32 pointercolortable[3] =
 {0};
 static struct GfxLayout pointerlayout =
 {
