@@ -303,7 +303,12 @@ static int t64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, c
 		if (!(image->data=realloc(image->data, image->size+fsize-2)) )
 			return IMGTOOLERR_OUTOFMEMORY;
 		image->size+=fsize-2;
+#ifdef LSB_FIRST
 		HEADER(image)->used_entries++;
+#else
+		if (++HEADER(image)->used_entries.low == 0)
+			HEADER(image)->used_entries.high++;
+#endif
 	} else {
 		pos=GET_ULONG(ENTRY(image,ind)->offset);
 		// find the size of the data in this area
@@ -376,7 +381,12 @@ static int t64_image_deletefile(IMAGE *img, const char *fname)
 	image->size-=size;
 	ENTRY(image,ind)->type=0; // normal file
 	image->modified=1;
+#ifdef LSB_FIRST
 	HEADER(image)->used_entries--;
+#else
+		if (HEADER(image)->used_entries.low-- == 0)
+			HEADER(image)->used_entries.high--;
+#endif
 
 	return 0;
 }
