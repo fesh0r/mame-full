@@ -127,7 +127,8 @@ static uart8250_interface com_interface[4]=
  * timer1	DRAM refresh (ignored)
  * timer2	PIO port C pin 4 and speaker polling
  */
-static PIT8253_CONFIG pc_pit8253_config={
+static struct pit8253_config pc_pit8253_config =
+{
 	TYPE8253,
 	{
 		{

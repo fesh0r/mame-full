@@ -54,7 +54,8 @@ static void pit_clk_0(double clock);
 static void pit_clk_1(double clock);
 static void pit_irq_2(int which);
 
-PIT8253_CONFIG pit8253 = {
+struct pit8253_config pit8253 =
+{
 	TYPE8253,
 	{
 		/* clockin	  irq callback	 clock change callback */

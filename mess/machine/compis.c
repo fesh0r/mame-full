@@ -454,7 +454,8 @@ WRITE_HANDLER ( compis_ppi_w )
 /*-------------------------------------------------------------------------*/
 /*  PIT 8253                                                               */
 /*-------------------------------------------------------------------------*/
-static PIT8253_CONFIG compis_pit_config =
+
+static struct pit8253_config compis_pit_config =
 {
 	TYPE8253,
 	{
@@ -480,7 +481,8 @@ WRITE_HANDLER ( compis_pit_w )
 /*-------------------------------------------------------------------------*/
 /*  OSP PIT 8254                                                           */
 /*-------------------------------------------------------------------------*/
-static PIT8253_CONFIG compis_osp_pit_config =
+
+static struct pit8253_config compis_osp_pit_config =
 {
 	TYPE8254,
 	{

@@ -15,16 +15,18 @@ extern "C" {
 
 typedef enum { TYPE8253, TYPE8254 } PIT8253_TYPE;
 
-typedef struct {
+struct pit8253_config
+{
     PIT8253_TYPE type;
-	struct {
+	struct
+	{
 		double clockin;
 		void (*irq_callback)(int state);
 		void (*clk_callback)(double clockout);
 	} timer[3];
-} PIT8253_CONFIG;
+};
 
-void pit8253_config(int which, PIT8253_CONFIG *config);
+void pit8253_config(int which, struct pit8253_config *config);
 void pit8253_reset(int which);
 
 READ_HANDLER ( pit8253_0_r );

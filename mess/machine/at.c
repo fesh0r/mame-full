@@ -18,7 +18,7 @@
 
 static SOUNDBLASTER_CONFIG soundblaster = { 1,5, {1,0} };
 
-static PIT8253_CONFIG at_pit8253_config=
+static struct pit8253_config at_pit8253_config =
 {
 	TYPE8254,
 	{

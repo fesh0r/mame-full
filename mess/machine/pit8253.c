@@ -25,7 +25,7 @@
 #define MAX_TIMER	3
 
 typedef struct {
-    PIT8253_CONFIG *config;
+    struct pit8253_config *config;
 
 	struct
 	{
@@ -89,7 +89,7 @@ void pit8253_reset(int which)
 
 static void pit8253_timer_callback(int which);
 
-void pit8253_config(int which, PIT8253_CONFIG *config)
+void pit8253_config(int which, struct pit8253_config *config)
 {
 	int timer;
 

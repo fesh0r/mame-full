@@ -105,7 +105,7 @@ static ppi8255_interface dai_ppi82555_intf =
 	{ NULL, NULL },		/* Port C read */
 };
 
-static PIT8253_CONFIG dai_pit8253_intf =
+static struct pit8253_config dai_pit8253_intf =
 {
 	TYPE8253,
 	{
