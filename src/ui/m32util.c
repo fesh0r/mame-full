@@ -290,7 +290,7 @@ BOOL DriverIsClone(int driver_index)
 
 BOOL DriverIsBroken(int driver_index)
 {
-	return (drivers[driver_index]->flags & (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)) != 0;
+	return (drivers[driver_index]->flags & GAME_NOT_WORKING) != 0;
 }
 
 BOOL DriverIsHarddisk(int driver_index)

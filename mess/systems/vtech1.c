@@ -79,90 +79,53 @@
 #define VERBOSE 0
 
 #if VERBOSE
-#define LOG(x)  if( errorlog ) fprintf x
+#define LOG(x)  logerror x
 #else
 #define LOG(x)  /* x */
 #endif
 
-MEMORY_READ_START( readmem_laser110 )
-    { 0x0000, 0x3fff, MRA8_ROM },
-    { 0x4000, 0x5fff, MRA8_ROM },
-    { 0x6000, 0x67ff, MRA8_ROM },
-    { 0x6800, 0x6fff, vtech1_keyboard_r },
-//    { 0x7000, 0x77ff, MRA8_RAM },
-	{ 0x7000, 0x77ff, videoram_r}, // VDG 6847
-    { 0x7800, 0x7fff, MRA8_RAM },
-//  { 0x8000, 0xbfff, MRA8_RAM },    /* opt. installed */
-    { 0xc000, 0xffff, MRA8_NOP },
-MEMORY_END
 
-MEMORY_WRITE_START( writemem_laser110 )
-    { 0x0000, 0x3fff, MWA8_ROM },
-    { 0x4000, 0x5fff, MWA8_ROM },
-    { 0x6000, 0x67ff, MWA8_ROM },
-    { 0x6800, 0x6fff, vtech1_latch_w },
-    { 0x7000, 0x77ff, videoram_w, &videoram, &videoram_size },
-//	{ 0x8000, 0x97ff, videoram_w, &videoram, &videoram_size}, // VDG 6847
+static ADDRESS_MAP_START(laser110_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
+	AM_RANGE(0x4000, 0x5fff) AM_ROM
+	AM_RANGE(0x6000, 0x67ff) AM_ROM
+	AM_RANGE(0x6800, 0x6fff) AM_READWRITE(vtech1_keyboard_r, vtech1_latch_w)
+	AM_RANGE(0x7000, 0x77ff) AM_READWRITE(videoram_r, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size) /* VDG 6847 */
+	AM_RANGE(0x7800, 0x7fff) AM_RAM
+//	AM_RANGE(0x8000, 0xbfff) AM_RAM    /* opt. installed */
+	AM_RANGE(0xc000, 0xffff) AM_NOP
+ADDRESS_MAP_END
 
-   { 0x7800, 0x7fff, MWA8_RAM },
-//  { 0x8000, 0xbfff, MWA8_RAM },    /* opt. installed */
-    { 0xc000, 0xffff, MWA8_NOP },
-MEMORY_END
 
-MEMORY_READ_START( readmem_laser210 )
-    { 0x0000, 0x3fff, MRA8_ROM },
-    { 0x4000, 0x5fff, MRA8_ROM },
-    { 0x6000, 0x67ff, MRA8_ROM },
-    { 0x6800, 0x6fff, vtech1_keyboard_r },
-//   { 0x7000, 0x77ff, MRA8_RAM },
-	{ 0x7000, 0x77ff, videoram_r}, // VDG 6847
-    { 0x7800, 0x8fff, MRA8_RAM },
-//  { 0x9000, 0xcfff, MRA8_RAM },    /* opt. installed */
-    { 0xd000, 0xffff, MRA8_NOP },
-MEMORY_END
+static ADDRESS_MAP_START(laser210_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
+	AM_RANGE(0x4000, 0x5fff) AM_ROM
+	AM_RANGE(0x6000, 0x67ff) AM_ROM
+	AM_RANGE(0x6800, 0x6fff) AM_READWRITE(vtech1_keyboard_r, vtech1_latch_w)
+	AM_RANGE(0x7000, 0x77ff) AM_READWRITE(videoram_r, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size) /* VDG 6847 */
+	AM_RANGE(0x7800, 0x8fff) AM_RAM
+//	AM_RANGE(0x9000, 0xcfff) AM_RAM    /* opt. installed */
+	AM_RANGE(0xd000, 0xffff) AM_NOP
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( writemem_laser210 )
-    { 0x0000, 0x3fff, MWA8_ROM },
-    { 0x4000, 0x5fff, MWA8_ROM },
-    { 0x6000, 0x67ff, MWA8_ROM },
-    { 0x6800, 0x6fff, vtech1_latch_w },
-    { 0x7000, 0x77ff, videoram_w, &videoram, &videoram_size },
-    { 0x7800, 0x8fff, MWA8_RAM },
-//  { 0x9000, 0xcfff, MWA8_RAM },    /* opt. installed */
-    { 0xd000, 0xffff, MWA8_NOP },
-MEMORY_END
 
-MEMORY_READ_START( readmem_laser310 )
-    { 0x0000, 0x3fff, MRA8_ROM },
-    { 0x4000, 0x5fff, MRA8_ROM },
-    { 0x6000, 0x67ff, MRA8_ROM },
-    { 0x6800, 0x6fff, vtech1_keyboard_r },
-//    { 0x7000, 0x77ff, MRA8_RAM },
-	{ 0x7000, 0x77ff, videoram_r}, // VDG 6847
-     { 0x7800, 0xb7ff, MRA8_RAM },
-//  { 0xb800, 0xf7ff, MRA8_RAM },    /* opt. installed */
-    { 0xf800, 0xffff, MRA8_NOP },
-MEMORY_END
+static ADDRESS_MAP_START(laser310_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
+	AM_RANGE(0x4000, 0x5fff) AM_ROM
+	AM_RANGE(0x6000, 0x67ff) AM_ROM
+	AM_RANGE(0x6800, 0x6fff) AM_READWRITE(vtech1_keyboard_r, vtech1_latch_w)
+	AM_RANGE(0x7000, 0x77ff) AM_READWRITE(videoram_r, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size) /* VDG 6847 */
+	AM_RANGE(0x7800, 0xb7ff) AM_RAM
+//	AM_RANGE(0xb800, 0xf7ff) AM_RAM    /* opt. installed */
+	AM_RANGE(0xf800, 0xffff) AM_NOP
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( writemem_laser310 )
-    { 0x0000, 0x3fff, MWA8_ROM },
-    { 0x4000, 0x5fff, MWA8_ROM },
-    { 0x6000, 0x67ff, MWA8_ROM },
-    { 0x6800, 0x6fff, vtech1_latch_w },
-    { 0x7000, 0x77ff, videoram_w, &videoram, &videoram_size },
-    { 0x7800, 0xb7ff, MWA8_RAM },
-//  { 0xb800, 0xf7ff, MWA8_RAM },    /* opt. installed */
-    { 0xf800, 0xffff, MWA8_NOP },
-MEMORY_END
 
-PORT_READ_START( readport_vtech1 )
-    { 0x10, 0x1f, vtech1_fdc_r },
-    { 0x20, 0x2f, vtech1_joystick_r },
-PORT_END
+static ADDRESS_MAP_START(vtech1_io, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x10, 0x1f) AM_READWRITE(vtech1_fdc_r, vtech1_fdc_w)
+	AM_RANGE(0x20, 0x2f) AM_READ(vtech1_joystick_r)
+ADDRESS_MAP_END
 
-PORT_WRITE_START( writeport_vtech1 )
-    { 0x10, 0x1f, vtech1_fdc_w },
-PORT_END
 
 INPUT_PORTS_START( vtech1 )
     PORT_START /* IN0 */
@@ -339,8 +302,8 @@ static struct Wave_interface wave_interface = {
 static MACHINE_DRIVER_START( laser110 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 3579500)        /* 3.57950 Mhz */
-	MDRV_CPU_MEMORY(readmem_laser110,writemem_laser110)
-	MDRV_CPU_PORTS(readport_vtech1,writeport_vtech1)
+	MDRV_CPU_PROGRAM_MAP(laser110_mem, 0)
+	MDRV_CPU_IO_MAP(vtech1_io, 0)
 	MDRV_CPU_VBLANK_INT(vtech1_interrupt,1)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(0)
@@ -361,7 +324,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( laser210 )
 	MDRV_IMPORT_FROM( laser110 )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_MEMORY( readmem_laser210,writemem_laser210 )
+	MDRV_CPU_PROGRAM_MAP(laser210_mem, 0)
 
 	MDRV_MACHINE_INIT( laser210 )
 	MDRV_PALETTE_INIT( color )
@@ -371,7 +334,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( laser310 )
 	MDRV_IMPORT_FROM( laser110 )
 	MDRV_CPU_REPLACE( "main", Z80, 17734000/5 )	/* 17.734MHz / 5 = 3.54690 Mhz */
-	MDRV_CPU_MEMORY( readmem_laser310,writemem_laser310 )
+	MDRV_CPU_PROGRAM_MAP(laser310_mem, 0)
 
 	MDRV_MACHINE_INIT( laser310 )
 	MDRV_PALETTE_INIT( color )

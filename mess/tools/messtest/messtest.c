@@ -125,6 +125,7 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 	struct messtest_command cmd;
 	int region;
 	int device_type;
+	int preload;
 
 	switch(state->phase) {
 	case STATE_ROOT:
@@ -221,6 +222,12 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 				state->current_command.command_type = MESSTEST_COMMAND_IMAGE_CREATE;
 			else
 				state->current_command.command_type = MESSTEST_COMMAND_IMAGE_LOAD;
+
+			/* 'preload' attribute */
+			s = find_attribute(attributes, "preload");
+			preload = s ? atoi(s) : 0;
+			if (preload)
+				state->current_command.command_type += 2;
 
 			/* 'filename' attribute */
 			s1 = find_attribute(attributes, "filename");

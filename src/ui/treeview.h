@@ -75,6 +75,7 @@ void CreateSourceFolders(int parent_index);
 void CreateCPUFolders(int parent_index);
 void CreateSoundFolders(int parent_index);
 void CreateOrientationFolders(int parent_index);
+void CreateDeficiencyFolders(int parent_index);
 
 /***************************************************************************/
 
@@ -100,6 +101,8 @@ enum
 	FOLDER_SOURCE,
 	FOLDER_CPU,
 	FOLDER_SND,
+	FOLDER_ORIENTATION,
+	FOLDER_DEFICIENCY,
 	FOLDER_WORKING,
 	FOLDER_NONWORKING,
 	FOLDER_ORIGINAL,
@@ -107,11 +110,10 @@ enum
 	FOLDER_RASTER,
 	FOLDER_VECTOR,
 	FOLDER_TRACKBALL,
-	FOLDER_STEREO,
-	FOLDER_HARDDISK,
-	FOLDER_ORIENTATION,
- 	FOLDER_MULTIMON,
 	FOLDER_LIGHTGUN,
+	FOLDER_STEREO,
+ 	FOLDER_MULTIMON,
+	FOLDER_HARDDISK,
 	MAX_FOLDERS,
 };
 

@@ -87,7 +87,7 @@ WRITE_HANDLER( nes_low_mapper_w )
 #ifdef MAME_DEBUG
 		if (! mapper_warning)
 		{
-			printf ("This game is writing to the low mapper area but no mapper is set. You may get better results by switching to a valid mapper.\n");
+			logerror ("This game is writing to the low mapper area but no mapper is set. You may get better results by switching to a valid mapper.\n");
 			mapper_warning = 1;
 		}
 #endif
@@ -116,7 +116,7 @@ WRITE_HANDLER ( nes_mid_mapper_w )
 #ifdef MAME_DEBUG
 		if (! mapper_warning)
 		{
-			printf ("This game is writing to the MID mapper area but no mapper is set. You may get better results by switching to a valid mapper or changing the battery flag for this ROM.\n");
+			logerror ("This game is writing to the MID mapper area but no mapper is set. You may get better results by switching to a valid mapper or changing the battery flag for this ROM.\n");
 			mapper_warning = 1;
 		}
 #endif
@@ -140,7 +140,7 @@ WRITE_HANDLER ( nes_mapper_w )
 #if 1
 		if (! mapper_warning)
 		{
-			printf ("This game is writing to the mapper area but no mapper is set. You may get better results by switching to a valid mapper.\n");
+			logerror("This game is writing to the mapper area but no mapper is set. You may get better results by switching to a valid mapper.\n");
 			mapper_warning = 1;
 		}
 

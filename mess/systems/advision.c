@@ -26,30 +26,21 @@ T1	Mirror sync pulse
 #include "includes/advision.h"
 #include "devices/cartslot.h"
 
-static MEMORY_READ_START( readmem )
-    { 0x0000, 0x03FF,  MRA8_BANK1 },
-    { 0x0400, 0x0fff,  MRA8_ROM },
-	{ 0x2000, 0x23ff,  MRA8_RAM },	/* MAINRAM four banks */
-MEMORY_END
+static ADDRESS_MAP_START(advision_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x03FF) AM_READWRITE(MRA8_BANK1, MWA8_ROM)
+	AM_RANGE(0x0400, 0x0fff) AM_ROM
+	AM_RANGE(0x2000, 0x23ff) AM_RAM	/* MAINRAM four banks */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-    { 0x0000, 0x0fff, MWA8_ROM },
-	{ 0x2000, 0x23ff, MWA8_RAM },	/* MAINRAM four banks */
-MEMORY_END
 
-static PORT_READ_START( readport )
-    { 0x00,     0xff,     advision_MAINRAM_r},
-    { I8039_p1, I8039_p1, advision_getp1 },
-    { I8039_p2, I8039_p2, advision_getp2 },
-    { I8039_t0, I8039_t0, advision_gett0 },
-    { I8039_t1, I8039_t1, advision_gett1 },
-PORT_END
+static ADDRESS_MAP_START(advision_ports, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x00,     0xff)		AM_READWRITE(advision_MAINRAM_r, advision_MAINRAM_w)
+	AM_RANGE(I8039_p1, I8039_p1)	AM_READWRITE(advision_getp1, advision_putp1)
+	AM_RANGE(I8039_p2, I8039_p2)	AM_READWRITE(advision_getp2, advision_putp2)
+	AM_RANGE(I8039_t0, I8039_t0)	AM_READ(advision_gett0)
+	AM_RANGE(I8039_t1, I8039_t1)	AM_READ(advision_gett1)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( writeport )
-    { 0x00,     0xff,     advision_MAINRAM_w },
-    { I8039_p1, I8039_p1, advision_putp1 },
-    { I8039_p2, I8039_p2, advision_putp2 },
-PORT_END
 
 INPUT_PORTS_START( advision )
 	PORT_START      /* IN0 */
@@ -66,8 +57,8 @@ INPUT_PORTS_END
 static MACHINE_DRIVER_START( advision )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", I8048, 14000000/15)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(advision_mem, 0)
+	MDRV_CPU_IO_MAP(advision_ports, 0)
 
 	MDRV_FRAMES_PER_SECOND(8*15)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

@@ -175,7 +175,7 @@ TESTDRIVER( saturn )	/* Sega Saturn										*/
 //	DRIVER( intvsrs )   /* Intellivision (Sears License) - 19??				*/
 
 	/* ENTEX */
-//	DRIVER( advision )	/* Adventurevision									*/
+	DRIVER( advision )	/* Adventurevision									*/
 
 	/* CAPCOM */
 //	DRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)				*/
@@ -532,10 +532,10 @@ TESTDRIVER( ti99_4p )	/* 1996 SNUG 99/4P (a.k.a. SGCPU)					*/
 //TESTDRIVER( kc85_4d )   /* VEB KC 85/4 with disk interface					*/
 
 	/* MICROBEE SYSTEMS */
-//	DRIVER( mbee )		/* Microbee 32 IC									*/
-//	DRIVER( mbeepc )	/* Microbee 32 PC									*/
-//	DRIVER( mbeepc85 )	/* Microbee 32 PC85									*/
-//	DRIVER( mbee56 )	/* Microbee 56K (CP/M)								*/
+	DRIVER( mbee )		/* Microbee 32 IC									*/
+	DRIVER( mbeepc )	/* Microbee 32 PC									*/
+	DRIVER( mbeepc85 )	/* Microbee 32 PC85									*/
+	DRIVER( mbee56 )	/* Microbee 56K (CP/M)								*/
 
 	/* TANDY RADIO SHACK */
 	DRIVER( trs80 )		/* TRS-80 Model I	- Radio Shack Level I BASIC		*/
@@ -562,17 +562,17 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	/* system 80 trs80 compatible */
 
 	/* VIDEO TECHNOLOGY */
-//	DRIVER( laser110 )	/* 1983 Laser 110									*/
-//	DRIVER( laser200 )	/* 1983 Laser 200									*/
-//	DRIVER( laser210 )	/* 1983 Laser 210 (indentical to Laser 200 ?)		*/
-//	DRIVER( laser310 )	/* 1983 Laser 310 (210 with diff. keyboard and RAM)	*/
-//	DRIVER( vz200 ) 	/* 1983 Dick Smith Electronics / Sanyo VZ200		*/
-//	DRIVER( vz300 ) 	/* 1983 Dick Smith Electronics / Sanyo VZ300		*/
-//	DRIVER( fellow )	/* 1983 Salora Fellow (Finland) 					*/
-//	DRIVER( tx8000 )	/* 1983 Texet TX-8000 (U.K.)						*/
-//	DRIVER( laser350 )	/* 1984? Laser 350									*/
-//	DRIVER( laser500 )	/* 1984? Laser 500									*/
-//	DRIVER( laser700 )	/* 1984? Laser 700									*/
+	DRIVER( laser110 )	/* 1983 Laser 110									*/
+	DRIVER( laser200 )	/* 1983 Laser 200									*/
+	DRIVER( laser210 )	/* 1983 Laser 210 (indentical to Laser 200 ?)		*/
+	DRIVER( laser310 )	/* 1983 Laser 310 (210 with diff. keyboard and RAM)	*/
+	DRIVER( vz200 ) 	/* 1983 Dick Smith Electronics / Sanyo VZ200		*/
+	DRIVER( vz300 ) 	/* 1983 Dick Smith Electronics / Sanyo VZ300		*/
+	DRIVER( fellow )	/* 1983 Salora Fellow (Finland) 					*/
+	DRIVER( tx8000 )	/* 1983 Texet TX-8000 (U.K.)						*/
+	DRIVER( laser350 )	/* 1984? Laser 350									*/
+	DRIVER( laser500 )	/* 1984? Laser 500									*/
+	DRIVER( laser700 )	/* 1984? Laser 700									*/
 
 	/* Creativision console */
 

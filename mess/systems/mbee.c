@@ -46,72 +46,43 @@
 #define VERBOSE 1
 
 #if VERBOSE
-#define LOG(x)  if( errorlog ) fprintf x
+#define LOG(x)  logerror x
 #else
 #define LOG(x)  /* x */
 #endif
 
-static MEMORY_READ_START( readmem_mbee )
-    { 0x0000, 0x7fff, MRA8_RAM },
-    { 0x8000, 0xbfff, MRA8_ROM },
-    { 0xc000, 0xdfff, MRA8_ROM },
-    { 0xe000, 0xefff, MRA8_ROM },
-    { 0xf000, 0xf7ff, mbee_videoram_r },
-    { 0xf800, 0xffff, mbee_pcg_color_r },
-MEMORY_END
-
-static MEMORY_WRITE_START( writemem_mbee )
-    { 0x0000, 0x7fff, MWA8_RAM },
-    { 0x8000, 0xbfff, MWA8_ROM },
-    { 0xc000, 0xdfff, MWA8_ROM },
-    { 0xe000, 0xefff, MWA8_ROM },
-    { 0xf000, 0xf7ff, mbee_videoram_w, &pcgram, &videoram_size },
-    { 0xf800, 0xffff, mbee_pcg_color_w },
-MEMORY_END
+static ADDRESS_MAP_START(mbee_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x7fff) AM_RAM
+	AM_RANGE(0x8000, 0xbfff) AM_ROM
+	AM_RANGE(0xc000, 0xdfff) AM_ROM
+	AM_RANGE(0xe000, 0xefff) AM_ROM
+	AM_RANGE(0xf000, 0xf7ff) AM_READWRITE(mbee_videoram_r, mbee_videoram_w) AM_BASE(&pcgram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xf800, 0xffff) AM_READWRITE(mbee_pcg_color_r, mbee_pcg_color_w)
+ADDRESS_MAP_END
 
 
-MEMORY_READ_START( readmem_56k )
-    { 0x0000, 0xdfff, MRA8_RAM },
-    { 0xe000, 0xefff, MRA8_ROM },
-    { 0xf000, 0xf7ff, mbee_videoram_r },
-    { 0xf800, 0xffff, mbee_pcg_color_r },
-MEMORY_END
-
-MEMORY_WRITE_START( writemem_56k )
-    { 0x0000, 0xdfff, MWA8_RAM },
-    { 0xe000, 0xefff, MWA8_ROM },
-    { 0xf000, 0xf7ff, mbee_videoram_w, &pcgram, &videoram_size },
-    { 0xf800, 0xffff, mbee_pcg_color_w },
-MEMORY_END
+static ADDRESS_MAP_START(mbee56_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0xdfff) AM_RAM
+	AM_RANGE(0xe000, 0xefff) AM_ROM
+	AM_RANGE(0xf000, 0xf7ff) AM_READWRITE(mbee_videoram_r, mbee_videoram_w) AM_BASE(&pcgram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xf800, 0xffff) AM_READWRITE(mbee_pcg_color_r, mbee_pcg_color_w)
+ADDRESS_MAP_END
 
 
-PORT_READ_START( readport_mbee )
-    { 0x00, 0x03, mbee_pio_r },
-    { 0x08, 0x08, mbee_pcg_color_latch_r },
-    { 0x0a, 0x0a, mbee_color_bank_r },
-    { 0x0b, 0x0b, mbee_video_bank_r },
-    { 0x0c, 0x0c, m6545_status_r },
-    { 0x0d, 0x0d, m6545_data_r },
-    { 0x44, 0x44, wd179x_status_r },
-    { 0x45, 0x45, wd179x_track_r },
-    { 0x46, 0x46, wd179x_sector_r },
-    { 0x47, 0x47, wd179x_data_r },
-    { 0x48, 0x48, mbee_fdc_status_r },
-PORT_END
+static ADDRESS_MAP_START(mbee_ports, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x00, 0x03) AM_READWRITE(mbee_pio_r, mbee_pio_w)
+	AM_RANGE(0x08, 0x08) AM_READWRITE(mbee_pcg_color_latch_r, mbee_pcg_color_latch_w)
+	AM_RANGE(0x0a, 0x0a) AM_READWRITE(mbee_color_bank_r, mbee_color_bank_w)
+	AM_RANGE(0x0b, 0x0b) AM_READWRITE(mbee_video_bank_r, mbee_video_bank_w)
+	AM_RANGE(0x0c, 0x0c) AM_READWRITE(m6545_status_r, m6545_index_w)
+	AM_RANGE(0x0d, 0x0d) AM_READWRITE(m6545_data_r, m6545_data_w)
+	AM_RANGE(0x44, 0x44) AM_READWRITE(wd179x_status_r, wd179x_command_w)
+	AM_RANGE(0x45, 0x45) AM_READWRITE(wd179x_track_r, wd179x_track_w)
+	AM_RANGE(0x46, 0x46) AM_READWRITE(wd179x_sector_r, wd179x_sector_w)
+	AM_RANGE(0x47, 0x47) AM_READWRITE(wd179x_data_r, wd179x_data_w)
+	AM_RANGE(0x48, 0x48) AM_READWRITE(mbee_fdc_status_r, mbee_fdc_motor_w)
+ADDRESS_MAP_END
 
-PORT_WRITE_START( writeport_mbee )
-    { 0x00, 0x03, mbee_pio_w },
-    { 0x08, 0x08, mbee_pcg_color_latch_w },
-    { 0x0a, 0x0a, mbee_color_bank_w },
-    { 0x0b, 0x0b, mbee_video_bank_w },
-    { 0x0c, 0x0c, m6545_index_w },
-    { 0x0d, 0x0d, m6545_data_w },
-    { 0x44, 0x44, wd179x_command_w },
-    { 0x45, 0x45, wd179x_track_w },
-    { 0x46, 0x46, wd179x_sector_w },
-    { 0x47, 0x47, wd179x_data_w },
-    { 0x48, 0x48, mbee_fdc_motor_w },
-PORT_END
 
 INPUT_PORTS_START( mbee )
     PORT_START /* IN0 KEY ROW 0 [000] */
@@ -214,9 +185,11 @@ struct GfxLayout mbee_charlayout =
 static struct GfxDecodeInfo mbee_gfxdecodeinfo[] =
 {
     { REGION_CPU1, 0xf000, &mbee_charlayout, 0, 256},
-MEMORY_END   /* end of array */
+	{ -1 }   /* end of array */
+};
 
-static UINT8 palette[] = {
+static UINT8 palette[] =
+{
     0x00,0x00,0x00, /* black    */
     0xf0,0x00,0x00, /* red      */
     0x00,0xf0,0x00, /* green    */
@@ -268,12 +241,14 @@ Z80_DaisyChain mbee_daisy_chain[] =
     { 0, 0, 0, -1}      /* end mark */
 };
 
-static struct Speaker_interface speaker_interface = {
+static struct Speaker_interface speaker_interface =
+{
     1,          /* number of speakers */
     { 75 },     /* mixing levels */
 };
 
-static struct Wave_interface wave_interface = {
+static struct Wave_interface wave_interface =
+{
     1,          /* number of waves */
     { 25 }      /* mixing levels */
 };
@@ -281,8 +256,8 @@ static struct Wave_interface wave_interface = {
 static MACHINE_DRIVER_START( mbee )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 3375000)         /* 3.37500 Mhz */
-	MDRV_CPU_MEMORY(readmem_mbee,writemem_mbee)
-	MDRV_CPU_PORTS(readport_mbee,writeport_mbee)
+	MDRV_CPU_PROGRAM_MAP(mbee_mem, 0)
+	MDRV_CPU_IO_MAP(mbee_ports, 0)
 	/* MDRV_CPU_CONFIG(mbee_daisy_chain) */
 	MDRV_CPU_VBLANK_INT(mbee_interrupt,1)
 	MDRV_FRAMES_PER_SECOND(50)
@@ -311,7 +286,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( mbee56 )
 	MDRV_IMPORT_FROM( mbee )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_MEMORY( readmem_56k,writemem_56k )
+	MDRV_CPU_PROGRAM_MAP(mbee56_mem, 0)
 MACHINE_DRIVER_END
 
 

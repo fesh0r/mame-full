@@ -83,6 +83,7 @@ enum messtest_result run_test(const struct messtest_testcase *testcase, int flag
 	enum messtest_result result;
 	clock_t begin_time;
 	double real_run_time;
+	int done;
 
 	current_testcase = testcase;
 
@@ -114,6 +115,15 @@ enum messtest_result run_test(const struct messtest_testcase *testcase, int flag
 	options.disable_normal_ui = 1;
 	options.ram = testcase->ram;
 
+	/* preload any needed images */
+	while(current_command->command_type == MESSTEST_COMMAND_IMAGE_PRELOAD)
+	{
+		options.image_files[options.image_count].name = current_command->u.image_args.filename;
+		options.image_files[options.image_count].type = current_command->u.image_args.device_type;
+		options.image_count++;
+		current_command++;
+	}
+
 	/* perform the test */
 	message(MSG_INFO, "Beginning test (driver '%s')", testcase->driver);
 	begin_time = clock();
@@ -134,6 +144,7 @@ enum messtest_result run_test(const struct messtest_testcase *testcase, int flag
 		break;
 
 	default:
+		state = STATE_ABORTED;
 		message(MSG_FAILURE, "Abnormal termination");
 		result = MESSTEST_RESULT_STARTFAILURE;
 		break;
@@ -279,6 +290,10 @@ void osd_update_video_and_audio(struct mame_display *display)
 		}
 
 		switch_name->default_value = switch_setting->default_value;
+		break;
+
+	case MESSTEST_COMMAND_IMAGE_PRELOAD:
+		message(MSG_FAILURE, "Image preloads must be at the beginning");
 		break;
 
 	case MESSTEST_COMMAND_IMAGE_CREATE:

@@ -33,6 +33,7 @@
 #define HIDC_D3D_TEXTURE_MANAGEMENT     0x80b804a1    // IDD_PROP_DIRECT3D
 #define HIDC_DDRAW                      0x809c0411    // IDD_PROP_ADVANCED
 #define HIDC_DEFAULT_INPUT              0x809d0465    // IDD_PROP_INPUT
+#define HIDC_DUAL_LIGHTGUN              0x809d04c4    // IDD_PROP_INPUT
 #define HIDC_EFFECT                     0x809a047e    // IDD_PROP_DISPLAY
 #define HIDC_FILTER_CLONES              0x80a9049a    // IDD_FILTERS
 #define HIDC_FILTER_EDIT                0x80a904d5    // IDD_FILTERS
@@ -57,6 +58,7 @@
 #define HIDC_KEEPASPECT                 0x809a0473    // IDD_PROP_DISPLAY
 #define HIDC_LANGUAGECHECK              0x80b204d1    // IDD_LANGUAGE
 #define HIDC_LANGUAGEEDIT               0x80b204d4    // IDD_LANGUAGE
+#define HIDC_LEDMODE                    0x809e04c6    // IDD_PROP_MISC
 #define HIDC_LEDS                       0x809e03fc    // IDD_PROP_MISC
 #define HIDC_LIGHTGUN                   0x809d048d    // IDD_PROP_INPUT
 #define HIDC_LOG                        0x809e03f7    // IDD_PROP_MISC
@@ -68,6 +70,7 @@
 #define HIDC_PROP_RESET                 0x809c0486    // IDD_PROP_ADVANCED
 #define HIDC_RANDOM_BG                  0x80ad0491    // IDD_INTERFACE_OPTIONS
 #define HIDC_REFRESH                    0x809c04ec    // IDD_PROP_ADVANCED
+#define HIDC_RELOAD                     0x809d04c3    // IDD_PROP_INPUT
 #define HIDC_RESDEPTH                   0x809c04e8    // IDD_PROP_ADVANCED
 #define HIDC_RESET_DEFAULT              0x80aa04a2    // IDD_RESET
 #define HIDC_RESET_FILTERS              0x80aa049f    // IDD_RESET

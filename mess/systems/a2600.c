@@ -29,11 +29,13 @@ DEVICE_LOAD( a2600_cart );
 DEVICE_LOAD( a2600_cart )
 {
 	UINT8* ROM = memory_region(REGION_CPU1);
+	UINT64 size;
 
-	if (mame_fsize(file) != 0x800 && mame_fsize(file) != 0x1000)
+	size = mame_fsize(file);
+	if (size != 0x800 && size != 0x1000)
 		return INIT_FAIL;
 
-	mame_fread(file, ROM + 0x1000, mame_fsize(file));
+	mame_fread(file, ROM + 0x1000, size);
 
 	if (mame_fsize(file) == 0x800)
 		memcpy(ROM + 0x1800, ROM + 0x1000, 0x800);

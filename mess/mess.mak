@@ -196,9 +196,9 @@ DRVLIBS = \
 	$(OBJ)/trs80.a	  \
 	$(OBJ)/fairch.a   \
 	$(OBJ)/bally.a	  \
-#	$(OBJ)/advision.a \
-#	$(OBJ)/mbee.a	  \
-#	$(OBJ)/vtech.a	  \
+	$(OBJ)/advision.a \
+	$(OBJ)/mbee.a	  \
+	$(OBJ)/vtech.a	  \
 #	$(OBJ)/jupiter.a  \
 #	$(OBJ)/gce.a	  \
 #	$(OBJ)/arcadia.a  \

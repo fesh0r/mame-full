@@ -33,7 +33,7 @@ static z80pio_interface pio_intf =
 
 static void pio_interrupt(int state)
 {
-	cpu_set_irq_line(0, Z80_IRQ_STATE, state ? ASSERT_LINE : CLEAR_LINE);
+	cpu_set_irq_line(0, 0, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 MACHINE_INIT( mbee )

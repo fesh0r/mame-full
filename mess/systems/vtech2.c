@@ -78,30 +78,19 @@
 #define LOG(x)	/* x */
 #endif
 
-static MEMORY_READ_START( readmem )
-	{ 0x00000, 0x03fff, MRA8_BANK1 },
-	{ 0x04000, 0x07fff, MRA8_BANK2 },
-	{ 0x08000, 0x0bfff, MRA8_BANK3 },
-	{ 0x0c000, 0x0ffff, MRA8_BANK4 },
-MEMORY_END
+static ADDRESS_MAP_START(vtech2_mem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READWRITE(MRA8_BANK1, MWA8_BANK1)
+	AM_RANGE(0x4000, 0x7fff) AM_READWRITE(MRA8_BANK2, MWA8_BANK2)
+	AM_RANGE(0x8000, 0xbfff) AM_READWRITE(MRA8_BANK3, MWA8_BANK3)
+	AM_RANGE(0xc000, 0xffff) AM_READWRITE(MRA8_BANK4, MWA8_BANK4)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x00000, 0x03fff, MWA8_BANK1 },
-	{ 0x04000, 0x07fff, MWA8_BANK2 },
-	{ 0x08000, 0x0bfff, MWA8_BANK3 },
-	{ 0x0c000, 0x0ffff, MWA_BANK4 },
-MEMORY_END
-
-static PORT_READ_START( readport )
-	{ 0x10, 0x1f, laser_fdc_r },
-PORT_END
-
-static PORT_WRITE_START( writeport )
-	{ 0x10, 0x1f, laser_fdc_w },
-	{ 0x40, 0x43, laser_bank_select_w },
-	{ 0x44, 0x44, laser_bg_mode_w },
-	{ 0x45, 0x45, laser_two_color_w },
-PORT_END
+static ADDRESS_MAP_START(vtech2_io, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x10, 0x1f) AM_READWRITE(laser_fdc_r, laser_fdc_w)
+	AM_RANGE(0x40, 0x43) AM_WRITE(laser_bank_select_w)
+	AM_RANGE(0x44, 0x44) AM_WRITE(laser_bg_mode_w)
+	AM_RANGE(0x45, 0x45) AM_WRITE(laser_two_color_w)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( laser350 )
 	PORT_START /* IN0 KEY ROW 0 */
@@ -486,8 +475,8 @@ static INTERRUPT_GEN( vtech2_interrupt )
 static MACHINE_DRIVER_START( laser350 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 3694700)        /* 3.694700 Mhz */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(vtech2_mem, 0)
+	MDRV_CPU_IO_MAP(vtech2_io, 0)
 	MDRV_CPU_VBLANK_INT(vtech2_interrupt, 1)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(0)

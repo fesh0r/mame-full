@@ -499,7 +499,8 @@ static const char* ParseManufacturer(const char *s, int *pParsedChars )
 		if ( 
             ( (*s == ' ') && ( s[1] == '(' || s[1] == '/' || s[1] == '+' ) ) ||
             ( *s == ']' ) ||
-            ( *s == '/' )
+            ( *s == '/' ) ||
+            ( *s == '?' )
             )
         {
 		(*pParsedChars)++;
@@ -507,7 +508,9 @@ static const char* ParseManufacturer(const char *s, int *pParsedChars )
 				(*pParsedChars)++;
 			break;
         }
-		
+		if( s[0] == ' ' && s[1] == '?' )
+			s+=2;
+
         /* skip over opening braces*/
 
 		if ( *s != '[' )
@@ -609,6 +612,8 @@ void CreateCPUFolders(int parent_index)
 	LPTREEFOLDER lpFolder = treeFolders[parent_index];
 	LPTREEFOLDER map[CPU_COUNT];
 
+	cpuintrf_init();
+
 	// no games in top level folder
 	SetAllBits(lpFolder->m_lpGameBits,FALSE);
 
@@ -625,7 +630,8 @@ void CreateCPUFolders(int parent_index)
 			map[i] = map[jj];
 			continue;
 		}
-
+		if( strlen( cputype_name(i) ) <=0 )
+			continue;
 		lpTemp = NewFolder(cputype_name(i), next_folder_id, parent_index, IDI_CPU,
  						   GetFolderFlags(numFolders));
 		ExtraFolderData[next_folder_id] = malloc(sizeof(EXFOLDERDATA) );
@@ -771,6 +777,141 @@ void CreateOrientationFolders(int parent_index)
 		}
 	}
 }
+
+void CreateDeficiencyFolders(int parent_index)
+{
+	int jj;
+	int nGames = GetNumGames();
+	LPTREEFOLDER lpFolder = treeFolders[parent_index];
+
+	// create our two subfolders
+	LPTREEFOLDER lpProt, lpWrongCol, lpImpCol, lpImpGraph, lpMissSnd, lpImpSnd, lpFlip;
+	lpProt = NewFolder("Unemulated Protection", next_folder_id, parent_index, IDI_FOLDER,
+ 					   GetFolderFlags(numFolders));
+	ExtraFolderData[next_folder_id] = malloc(sizeof(EXFOLDERDATA) );
+	memset(ExtraFolderData[next_folder_id], 0, sizeof(EXFOLDERDATA));
+
+	ExtraFolderData[next_folder_id]->m_nFolderId = next_folder_id;
+	ExtraFolderData[next_folder_id]->m_nIconId = IDI_FOLDER;
+	ExtraFolderData[next_folder_id]->m_nParent = lpFolder->m_nFolderId;
+	ExtraFolderData[next_folder_id]->m_nSubIconId = -1;
+	strcpy( ExtraFolderData[next_folder_id]->m_szTitle, "Unemulated Protection" );
+	ExtraFolderData[next_folder_id++]->m_dwFlags = 0;
+	AddFolder(lpProt);
+	lpWrongCol = NewFolder("Wrong Colors", next_folder_id, parent_index, IDI_FOLDER,
+ 					   GetFolderFlags(numFolders));
+	ExtraFolderData[next_folder_id] = malloc(sizeof(EXFOLDERDATA) );
+	memset(ExtraFolderData[next_folder_id], 0, sizeof(EXFOLDERDATA));
+
+	ExtraFolderData[next_folder_id]->m_nFolderId = next_folder_id;
+	ExtraFolderData[next_folder_id]->m_nIconId = IDI_FOLDER;
+	ExtraFolderData[next_folder_id]->m_nParent = lpFolder->m_nFolderId;
+	ExtraFolderData[next_folder_id]->m_nSubIconId = -1;
+	strcpy( ExtraFolderData[next_folder_id]->m_szTitle, "Wrong Colors" );
+	ExtraFolderData[next_folder_id++]->m_dwFlags = 0;
+	AddFolder(lpWrongCol);
+
+	lpImpCol = NewFolder("Imperfect Colors", next_folder_id, parent_index, IDI_FOLDER,
+ 					   GetFolderFlags(numFolders));
+	ExtraFolderData[next_folder_id] = malloc(sizeof(EXFOLDERDATA) );
+	memset(ExtraFolderData[next_folder_id], 0, sizeof(EXFOLDERDATA));
+
+	ExtraFolderData[next_folder_id]->m_nFolderId = next_folder_id;
+	ExtraFolderData[next_folder_id]->m_nIconId = IDI_FOLDER;
+	ExtraFolderData[next_folder_id]->m_nParent = lpFolder->m_nFolderId;
+	ExtraFolderData[next_folder_id]->m_nSubIconId = -1;
+	strcpy( ExtraFolderData[next_folder_id]->m_szTitle, "Imperfect Colors" );
+	ExtraFolderData[next_folder_id++]->m_dwFlags = 0;
+	AddFolder(lpImpCol);
+
+	lpImpGraph = NewFolder("Imperfect Graphics", next_folder_id, parent_index, IDI_FOLDER,
+ 					   GetFolderFlags(numFolders));
+	ExtraFolderData[next_folder_id] = malloc(sizeof(EXFOLDERDATA) );
+	memset(ExtraFolderData[next_folder_id], 0, sizeof(EXFOLDERDATA));
+
+	ExtraFolderData[next_folder_id]->m_nFolderId = next_folder_id;
+	ExtraFolderData[next_folder_id]->m_nIconId = IDI_FOLDER;
+	ExtraFolderData[next_folder_id]->m_nParent = lpFolder->m_nFolderId;
+	ExtraFolderData[next_folder_id]->m_nSubIconId = -1;
+	strcpy( ExtraFolderData[next_folder_id]->m_szTitle, "Imperfect Graphics" );
+	ExtraFolderData[next_folder_id++]->m_dwFlags = 0;
+	AddFolder(lpImpGraph);
+
+	lpMissSnd = NewFolder("Missing Sound", next_folder_id, parent_index, IDI_FOLDER,
+ 					   GetFolderFlags(numFolders));
+	ExtraFolderData[next_folder_id] = malloc(sizeof(EXFOLDERDATA) );
+	memset(ExtraFolderData[next_folder_id], 0, sizeof(EXFOLDERDATA));
+
+	ExtraFolderData[next_folder_id]->m_nFolderId = next_folder_id;
+	ExtraFolderData[next_folder_id]->m_nIconId = IDI_FOLDER;
+	ExtraFolderData[next_folder_id]->m_nParent = lpFolder->m_nFolderId;
+	ExtraFolderData[next_folder_id]->m_nSubIconId = -1;
+	strcpy( ExtraFolderData[next_folder_id]->m_szTitle, "Missing Sound" );
+	ExtraFolderData[next_folder_id++]->m_dwFlags = 0;
+	AddFolder(lpMissSnd);
+
+	lpImpSnd = NewFolder("Imperfect Sound", next_folder_id, parent_index, IDI_FOLDER,
+ 					   GetFolderFlags(numFolders));
+	ExtraFolderData[next_folder_id] = malloc(sizeof(EXFOLDERDATA) );
+	memset(ExtraFolderData[next_folder_id], 0, sizeof(EXFOLDERDATA));
+
+	ExtraFolderData[next_folder_id]->m_nFolderId = next_folder_id;
+	ExtraFolderData[next_folder_id]->m_nIconId = IDI_FOLDER;
+	ExtraFolderData[next_folder_id]->m_nParent = lpFolder->m_nFolderId;
+	ExtraFolderData[next_folder_id]->m_nSubIconId = -1;
+	strcpy( ExtraFolderData[next_folder_id]->m_szTitle, "Imperfect Sound" );
+	ExtraFolderData[next_folder_id++]->m_dwFlags = 0;
+	AddFolder(lpImpSnd);
+
+	lpFlip = NewFolder("No Cocktail", next_folder_id, parent_index, IDI_FOLDER,
+ 					   GetFolderFlags(numFolders));
+	ExtraFolderData[next_folder_id] = malloc(sizeof(EXFOLDERDATA) );
+	memset(ExtraFolderData[next_folder_id], 0, sizeof(EXFOLDERDATA));
+
+	ExtraFolderData[next_folder_id]->m_nFolderId = next_folder_id;
+	ExtraFolderData[next_folder_id]->m_nIconId = IDI_FOLDER;
+	ExtraFolderData[next_folder_id]->m_nParent = lpFolder->m_nFolderId;
+	ExtraFolderData[next_folder_id]->m_nSubIconId = -1;
+	strcpy( ExtraFolderData[next_folder_id]->m_szTitle, "No Cocktail" );
+	ExtraFolderData[next_folder_id++]->m_dwFlags = 0;
+	AddFolder(lpFlip);
+
+	// no games in top level folder
+	SetAllBits(lpFolder->m_lpGameBits,FALSE);
+
+	for (jj = 0; jj < nGames; jj++)
+	{
+		if (drivers[jj]->flags & GAME_WRONG_COLORS)
+		{
+			AddGame(lpWrongCol,jj);
+		}
+		else if (drivers[jj]->flags & GAME_UNEMULATED_PROTECTION)
+		{
+			AddGame(lpProt,jj);
+		}
+		else if (drivers[jj]->flags & GAME_IMPERFECT_COLORS)
+		{
+			AddGame(lpImpCol,jj);
+		}
+		else if (drivers[jj]->flags & GAME_IMPERFECT_GRAPHICS)
+		{
+			AddGame(lpImpGraph,jj);
+		}
+		else if (drivers[jj]->flags & GAME_NO_SOUND)
+		{
+			AddGame(lpMissSnd,jj);
+		}
+		else if (drivers[jj]->flags & GAME_IMPERFECT_SOUND)
+		{
+			AddGame(lpImpSnd,jj);
+		}
+		else if (drivers[jj]->flags & GAME_NO_COCKTAIL)
+		{
+			AddGame(lpFlip,jj);
+		}
+	}
+}
+
 
 void CreateYearFolders(int parent_index)
 {
@@ -1335,6 +1476,7 @@ static void TreeCtrlOnPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	CallWindowProc(g_lpTreeWndProc, hWnd, uMsg, (WPARAM)memDC, 0);
 
 	// Draw bitmap in the background
+
 	{
 		HPALETTE hPAL;		 
 		HDC maskDC;
@@ -1474,6 +1616,7 @@ static LRESULT CALLBACK TreeWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
 		case WM_PAINT:
 			TreeCtrlOnPaint(hWnd, uMsg, wParam, lParam);
+			UpdateWindow(hWnd);
 			break;
 		}
 	}

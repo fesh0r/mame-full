@@ -149,6 +149,7 @@ INT_PTR CALLBACK InterfaceDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM 
 	case WM_INITDIALOG:
 		Button_SetCheck(GetDlgItem(hDlg,IDC_START_GAME_CHECK),GetGameCheck());
 		Button_SetCheck(GetDlgItem(hDlg,IDC_JOY_GUI),GetJoyGUI());
+		Button_SetCheck(GetDlgItem(hDlg,IDC_KEY_GUI),GetKeyGUI());
 		Button_SetCheck(GetDlgItem(hDlg,IDC_BROADCAST),GetBroadcast());
 		Button_SetCheck(GetDlgItem(hDlg,IDC_RANDOM_BG),GetRandomBackground());
 		Button_SetCheck(GetDlgItem(hDlg,IDC_SKIP_DISCLAIMER),GetSkipDisclaimer());
@@ -176,6 +177,8 @@ INT_PTR CALLBACK InterfaceDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM 
 						GetStretchScreenShotLarger());
 		Button_SetCheck(GetDlgItem(hDlg,IDC_FILTER_INHERIT),
 						GetFilterInherit());
+		Button_SetCheck(GetDlgItem(hDlg,IDC_NOOFFSET_CLONES),
+						GetOffsetClones());
 
 		return TRUE;
 
@@ -204,6 +207,7 @@ INT_PTR CALLBACK InterfaceDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM 
 
 			SetGameCheck(Button_GetCheck(GetDlgItem(hDlg, IDC_START_GAME_CHECK)));
 			SetJoyGUI(Button_GetCheck(GetDlgItem(hDlg, IDC_JOY_GUI)));
+			SetKeyGUI(Button_GetCheck(GetDlgItem(hDlg, IDC_KEY_GUI)));
 			SetBroadcast(Button_GetCheck(GetDlgItem(hDlg, IDC_BROADCAST)));
 			SetRandomBackground(Button_GetCheck(GetDlgItem(hDlg, IDC_RANDOM_BG)));
 			SetSkipDisclaimer(Button_GetCheck(GetDlgItem(hDlg, IDC_SKIP_DISCLAIMER)));
@@ -242,6 +246,13 @@ INT_PTR CALLBACK InterfaceDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM 
 			if (checked != GetFilterInherit())
 			{
 				SetFilterInherit(checked);
+				// LineUpIcons does just a ResetListView(), which is what we want here
+				PostMessage(GetMainWindow(),WM_COMMAND, (WPARAM)ID_VIEW_LINEUPICONS,(LPARAM)NULL);
+ 			}
+			checked = Button_GetCheck(GetDlgItem(hDlg,IDC_NOOFFSET_CLONES));
+			if (checked != GetOffsetClones())
+			{
+				SetOffsetClones(checked);
 				// LineUpIcons does just a ResetListView(), which is what we want here
 				PostMessage(GetMainWindow(),WM_COMMAND, (WPARAM)ID_VIEW_LINEUPICONS,(LPARAM)NULL);
  			}

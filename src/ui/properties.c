@@ -19,11 +19,15 @@
     Created 8/29/98 by Mike Haaland (mhaaland@hypertech.com)
 
 ***************************************************************************/
-// #define RED_TEST
 
 #define WIN32_LEAN_AND_MEAN
 #define NONAMELESSUNION 1
 #include <windows.h>
+#if 0
+#include "uxtheme.h"
+#include "schemadef.h"
+#include "tmschema.h"
+#endif
 #include <windowsx.h>
 #include <commctrl.h>
 #include <commdlg.h>
@@ -52,10 +56,6 @@
 #include "DataMap.h"
 #include "help.h"
 #include "resource.hm"
-
-#ifdef _MSC_VER
-#define snprintf _snprintf
-#endif
 
 #ifdef _MSC_VER
 #define snprintf _snprintf
@@ -121,6 +121,7 @@ static void InitializeD3DFilterUI(HWND hwnd);
 static void InitializeD3DEffectUI(HWND hwnd);
 static void InitializeD3DPrescaleUI(HWND hwnd);
 static void InitializeBIOSUI(HWND hwnd);
+static void InitializeLEDModeUI(HWND hwnd);
 static void InitializeCleanStretchUI(HWND hwnd);
 static void PropToOptions(HWND hWnd, options_type *o);
 static void OptionsToProp(HWND hWnd, options_type *o);
@@ -130,7 +131,11 @@ static void BuildDataMap(void);
 static void ResetDataMap(void);
 
 static BOOL IsControlDefaultValue(HWND hDlg,HWND hwnd_ctrl);
+static BOOL IsControlOptionValue(HWND hDlg,HWND hwnd_ctrl, options_type *opts );
 
+#if 0
+static void BkColorHandling(HWND hWnd, HDC hDC);
+#endif
 /**************************************************************
  * Local private variables
  **************************************************************/
@@ -141,6 +146,8 @@ static options_type* pGameOpts = NULL;
 
 static int  g_nGame            = 0;
 static int  g_nFolder          = 0;
+static int  g_nFolderGame      = 0;
+static int  g_nPropertyMode    = 0;
 static BOOL g_bInternalSet     = FALSE;
 static BOOL g_bUseDefaults     = FALSE;
 static BOOL g_bReset           = FALSE;
@@ -156,6 +163,7 @@ static int  g_nRotateIndex     = 0;
 static int  g_nInputIndex      = 0;
 static int  g_nBrightnessIndex = 0;
 static int  g_nEffectIndex     = 0;
+static int  g_nLedmodeIndex     = 0;
 static int  g_nA2DIndex		   = 0;
 
 static HICON g_hIcon = NULL;
@@ -165,6 +173,9 @@ static HICON g_hIcon = NULL;
 #define HIGHLIGHT_COLOR RGB(0,196,0)
 HBRUSH highlight_brush = NULL;
 HBRUSH background_brush = NULL;
+#define VECTOR_COLOR RGB( 190, 0, 0) //DARK RED
+#define FOLDER_COLOR RGB( 0, 128, 0 ) // DARK GREEN
+#define GAME_COLOR RGB( 0, 128, 192 ) // DARK BLUE
 
 BOOL PropSheetFilter_Vector(const struct InternalMachineDriver *drv, const struct GameDriver *gamedrv)
 {
@@ -271,6 +282,7 @@ static DWORD dwHelpIDs[] =
 	IDC_D3D_ROTATE_EFFECTS, HIDC_D3D_ROTATE_EFFECTS,
 	IDC_CYCLE_SCREENSHOT,   HIDC_CYCLE_SCREENSHOT,
 	IDC_STRETCH_SCREENSHOT_LARGER, HIDC_STRETCH_SCREENSHOT_LARGER,
+	IDC_LEDMODE,			HIDC_LEDMODE,
 	0,                      0
 };
 
@@ -296,9 +308,55 @@ static struct ComboBoxEffect
 
 #define NUMEFFECTS (sizeof(g_ComboBoxEffect) / sizeof(g_ComboBoxEffect[0]))
 
+
+static struct ComboBoxLedmode
+{
+	const char*	m_pText;
+	const char* m_pData;
+} g_ComboBoxLedmode[] = 
+{
+	{ "PS/2 Keyboard",                  "ps/2"    },
+	{ "USB Keyboard",                   "usb"     },
+};
+
+#define NUMLEDMODES (sizeof(g_ComboBoxLedmode) / sizeof(g_ComboBoxLedmode[0]))
+
 /***************************************************************
  * Public functions
  ***************************************************************/
+
+#if 0
+typedef HTHEME (WINAPI *OpenThemeProc)(HWND hwnd, LPCWSTR pszClassList);
+
+HMODULE hThemes;
+OpenThemeProc fnOpenTheme;
+FARPROC fnCloseTheme;
+FARPROC fnGetThemeSysColor;
+FARPROC fnGetThemeColor;
+FARPROC fnIsThemed;
+FARPROC fnDrawThemeBkgrnd;
+FARPROC fnDrawThemeText;
+FARPROC fnGetThemeBkgrndContRect;
+#endif
+
+void PropertiesInit(void)
+{
+#if 0
+	hThemes = LoadLibrary("uxtheme.dll");
+
+	if (hThemes)
+	{
+		fnIsThemed = GetProcAddress(hThemes,"IsAppThemed");
+		fnOpenTheme = (OpenThemeProc)GetProcAddress(hThemes,"OpenThemeData");
+		fnCloseTheme = GetProcAddress(hThemes,"CloseThemeData");
+		fnGetThemeSysColor = GetProcAddress(hThemes,"GetThemeSysColor");
+		fnGetThemeColor = GetProcAddress(hThemes,"GetThemeColor");
+		fnDrawThemeBkgrnd = GetProcAddress(hThemes,"DrawThemeBackground");
+		fnDrawThemeText = GetProcAddress(hThemes,"DrawThemeText");
+		fnGetThemeBkgrndContRect = GetProcAddress(hThemes,"GetThemeBackgroundContentRect");
+	}
+#endif
+}
 
 DWORD GetHelpIDs(void)
 {
@@ -388,7 +446,7 @@ void InitDefaultPropertyPage(HINSTANCE hInst, HWND hWnd)
 	g_nGame = -1;
 
 	/* Get default options to populate property sheets */
-	pGameOpts = GetDefaultOptions();
+	pGameOpts = GetDefaultOptions(-1, FALSE);
 	g_bUseDefaults = FALSE;
 	/* Stash the result for comparing later */
 	CopyGameOptions(pGameOpts,&origGameOpts);
@@ -446,17 +504,67 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, HICON hIco
 	g_nFolder = game_num;
 	if( source == SRC_GAME )
 	{
-		pGameOpts = GetGameOptions(game_num, folder_index);
-		g_bUseDefaults = GetGameUsesDefaults(game_num);
-		/* Stash the result for comparing later */
-		CopyGameOptions(pGameOpts,&origGameOpts);
+            pGameOpts = GetGameOptions(game_num, folder_index);
+            g_bUseDefaults = GetGameUsesDefaults(game_num);
+            SetGameUsesDefaults(game_num, g_bUseDefaults);
+            /* Stash the result for comparing later */
+            CopyGameOptions(pGameOpts,&origGameOpts);
+            g_nFolderGame = game_num;
+            g_nPropertyMode = SOURCE_GAME;
 	}
 	else
 	{
-		pGameOpts = GetFolderOptions( game_num );
+		g_nFolderGame = folder_index;
+		//For our new scheme to work, we need the possibility to determine whether a sourcefolder contains vector games
+		//so we take the selected game in the listview of a source file to check if it is a Vector game
+		//this implies that vector games are not mixed up in the source with non-vector games
+		//which I think is the case
+		if( DriverIsVector( folder_index ) && (game_num != FOLDER_VECTOR ) )
+		{
+			GetFolderOptions(game_num, TRUE);
+			pGameOpts = GetSourceOptions( folder_index );
+		}
+		else
+		{
+			pGameOpts = GetFolderOptions( game_num, FALSE );
+		}
+		if( g_nFolder == FOLDER_VECTOR )
+		{
+			g_nPropertyMode = SOURCE_VECTOR;
+			if( GetVectorUsesDefaultsMem() )
+			{
+				g_bUseDefaults = FALSE;
+			}
+			else
+			{
+				g_bUseDefaults = TRUE;
+			}
+		}
+		else
+		{
+			g_nPropertyMode = SOURCE_FOLDER;
+			if( GetFolderUsesDefaultsMem(g_nFolder, g_nFolderGame) )
+			{
+				g_bUseDefaults = FALSE;
+			}
+			else
+			{
+				g_bUseDefaults = TRUE;
+			}
+		}
+		if( DriverIsVector( folder_index ) && (game_num != FOLDER_VECTOR ) )
+		{
+			pGameOpts =GetFolderOptions(game_num, TRUE);
+			//CopyGameOptions(GetSourceOptions( folder_index ), &folder_options[folder_index] );
+			//pGameOpts = &folder_options[folder_index];
+		}
+		else
+		{
+			pGameOpts = GetFolderOptions( game_num, FALSE );
+		}
 		/* Stash the result for comparing later */
-		CopyGameOptions(pGameOpts,&origGameOpts);
 		g_nGame = -2;
+		CopyGameOptions(pGameOpts,&origGameOpts);
 	}
 	orig_uses_defaults = g_bUseDefaults;
 	g_bReset = FALSE;
@@ -482,11 +590,11 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, HICON hIco
 	pshead.hInstance                  = hInst;
 	if( source == SRC_GAME )
 	{
-		pshead.pszCaption                 = ModifyThe(drivers[g_nGame]->description);
+		pshead.pszCaption = ModifyThe(drivers[g_nGame]->description);
 	}
 	else
 	{
-		pshead.pszCaption  = "folder";
+		pshead.pszCaption = GetFolderNameByID(g_nFolder);
 	}
 	pshead.DUMMYUNIONNAME2.nStartPage = start_page;
 	pshead.DUMMYUNIONNAME.pszIcon     = MAKEINTRESOURCE(IDI_MAME32_ICON);
@@ -517,6 +625,9 @@ static char *GameInfoCPU(UINT nIndex)
     expand_machine_driver(drivers[nIndex]->drv,&drv);
 
 	ZeroMemory(buf, sizeof(buf));
+
+	cpuintrf_init();
+
 	i = 0;
 	while (i < MAX_CPU && drv.cpu[i].cpu_type)
 	{
@@ -611,12 +722,7 @@ static char *GameInfoColors(UINT nIndex)
     expand_machine_driver(drivers[nIndex]->drv,&drv);
 
 	ZeroMemory(buf, sizeof(buf));
-	if (drv.video_attributes & VIDEO_TYPE_VECTOR)
-		strcpy(buf, "Vector Game");
-	else
-	{
-		sprintf(buf, "%d colors ", drv.total_colors);
-	}
+	sprintf(buf, "%d colors ", drv.total_colors);
 
 	return buf;
 }
@@ -630,49 +736,116 @@ const char *GameInfoStatus(int driver_index)
 
 	if (IsAuditResultKnown(audit_result) == FALSE)
 	{
-		return "Unknown";
+		strcpy(buffer, "Unknown");
 	}
-
-	if (IsAuditResultYes(audit_result))
+	else if (IsAuditResultYes(audit_result))
 	{
 		if (DriverIsBroken(driver_index))
-			return "Not working";
-		//the Flags are checked in the order of "noticability"
-		//1) visible deficiencies
-		//2) audible deficiencies
-		//3) other deficiencies
-		if (drivers[driver_index]->flags & GAME_WRONG_COLORS)
-			strcat(buffer,"Colors are totally wrong\r\n");
-//			return "Colors are totally wrong";
-		if (drivers[driver_index]->flags & GAME_IMPERFECT_COLORS)
-			strcat(buffer,"Imperfect Colors\r\n");
-//			return "Imperfect Colors";
-		if (drivers[driver_index]->flags & GAME_IMPERFECT_GRAPHICS)
-			strcat(buffer,"Imperfect Graphics\r\n");
-//			return "Imperfect Colors";
-		if (drivers[driver_index]->flags & GAME_NO_SOUND)
-			strcat(buffer,"Sound is missing\r\n");
-//			return "Sound is missing";
-		if (drivers[driver_index]->flags & GAME_IMPERFECT_SOUND)
-			strcat(buffer,"Imperfect Sound\r\n");
-//			return "Imperfect Sound";
-		if (drivers[driver_index]->flags & GAME_NO_COCKTAIL)
-			strcat(buffer,"Screen flip support is missing\r\n");
-//			return "Screen flip support is missing";
+		{
+			strcpy(buffer, "Not working");
+			
+			if (drivers[driver_index]->flags & GAME_UNEMULATED_PROTECTION)
+			{
+				if (*buffer != '\0')
+					strcat(buffer, "\r\n");
+				strcat(buffer, "Unemulated Protection");
+			}
+			if (drivers[driver_index]->flags & GAME_WRONG_COLORS)
+			{
+				if (*buffer != '\0')
+					strcat(buffer, "\r\n");
+				strcat(buffer, "Colors are totally wrong");
+			}
+			if (drivers[driver_index]->flags & GAME_IMPERFECT_COLORS)
+			{
+				if (*buffer != '\0')
+					strcat(buffer, "\r\n");
+				strcat(buffer, "Imperfect Colors");
+			}
+			if (drivers[driver_index]->flags & GAME_IMPERFECT_GRAPHICS)
+			{
+				if (*buffer != '\0')
+					strcat(buffer, "\r\n");
+				strcat(buffer, "Imperfect Graphics");
+			}
+			if (drivers[driver_index]->flags & GAME_NO_SOUND)
+			{
+				if (*buffer != '\0')
+					strcat(buffer, "\r\n");
+				strcat(buffer, "Sound is missing");
+			}
+			if (drivers[driver_index]->flags & GAME_IMPERFECT_SOUND)
+			{
+				if (*buffer != '\0')
+					strcat(buffer, "\r\n");
+				strcat(buffer, "Imperfect Sound");
+			}
+			if (drivers[driver_index]->flags & GAME_NO_COCKTAIL)
+			{
+				if (*buffer != '\0')
+					strcat(buffer, "\r\n");
+				strcat(buffer, "Screen flip support is missing");
+			}
+		}
 		else
-			return "Working";
-		//remove the last "\r\n" pair
-		buffer[strlen(buffer)-2] = '\0';
-		return buffer;
+		{
+			strcpy(buffer, "Working");
+			
+			if (drivers[driver_index]->flags & GAME_UNEMULATED_PROTECTION)
+			{
+				if (*buffer != '\0')
+					strcat(buffer, "\r\n");
+				strcat(buffer, "Unemulated Protection");
+			}
+			if (drivers[driver_index]->flags & GAME_WRONG_COLORS)
+			{
+				if (*buffer != '\0')
+					strcat(buffer, "\r\n");
+				strcat(buffer, "Colors are totally wrong");
+			}
+			if (drivers[driver_index]->flags & GAME_IMPERFECT_COLORS)
+			{
+				if (*buffer != '\0')
+					strcat(buffer, "\r\n");
+				strcat(buffer, "Imperfect Colors");
+			}
+			if (drivers[driver_index]->flags & GAME_IMPERFECT_GRAPHICS)
+			{
+				if (*buffer != '\0')
+					strcat(buffer, "\r\n");
+				strcat(buffer, "Imperfect Graphics");
+			}
+			if (drivers[driver_index]->flags & GAME_NO_SOUND)
+			{
+				if (*buffer != '\0')
+					strcat(buffer, "\r\n");
+				strcat(buffer, "Sound is missing");
+			}
+			if (drivers[driver_index]->flags & GAME_IMPERFECT_SOUND)
+			{
+				if (*buffer != '\0')
+					strcat(buffer, "\r\n");
+				strcat(buffer, "Imperfect Sound");
+			}
+			if (drivers[driver_index]->flags & GAME_NO_COCKTAIL)
+			{
+				if (*buffer != '\0')
+					strcat(buffer, "\r\n");
+				strcat(buffer, "Screen flip support is missing");
+			}
+		}
+	}
+	else
+	{
+		// audit result is no
+#ifdef MESS
+		strcpy(buffer, "BIOS missing");
+#else
+		strcpy(buffer, "ROMs missing");
+#endif
 	}
 
-	// audit result is no
-
-#ifdef MESS
-		return "BIOS missing";
-#else
-		return "ROMs missing";
-#endif
+	return buffer;
 }
 
 /* Build game manufacturer string */
@@ -793,6 +966,45 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 
 		PopulateControls(hDlg);
 		OptionsToProp(hDlg, pGameOpts);
+		//RS The Information if a game uses defaults is *not* saved, Why ?
+		//Well we need to check for that info here then
+		if( g_nGame >= 0)
+		{
+			if( GetGameUsesDefaultsMem(g_nGame) )
+			{
+				SetGameUsesDefaults( g_nGame, FALSE);
+				g_bUseDefaults = FALSE;
+			}
+			else
+			{
+				g_bUseDefaults = TRUE;
+			}
+		}
+		if( g_nGame == -2)
+		{
+			if( g_nFolder == FOLDER_VECTOR )
+			{
+				if( GetVectorUsesDefaultsMem() )
+				{
+					g_bUseDefaults = FALSE;
+				}
+				else
+				{
+					g_bUseDefaults = TRUE;
+				}
+			}
+			else
+			{
+				if( GetFolderUsesDefaultsMem(g_nFolder, g_nFolderGame) )
+				{
+					g_bUseDefaults = FALSE;
+				}
+				else
+				{
+					g_bUseDefaults = TRUE;
+				}
+			}
+		}
 		SetPropEnabledControls(hDlg);
 		if (g_nGame == -1)
 			ShowWindow(GetDlgItem(hDlg, IDC_USE_DEFAULT), SW_HIDE);
@@ -858,6 +1070,13 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 				}
 				break;
 
+			case IDC_LEDMODE:
+				if (wNotifyCode == CBN_SELCHANGE)
+				{
+					changed = TRUE;
+				}
+				break;
+
 			case IDC_REFRESH:
 				if (wNotifyCode == LBN_SELCHANGE)
 				{
@@ -915,13 +1134,21 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 				{
 					if( g_nGame != -2 )
 					{
-						pGameOpts = GetGameOptions(g_nGame, -1);
-						g_bUseDefaults = GetGameUsesDefaults(g_nGame);
+						SetGameUsesDefaults(g_nGame,TRUE);
+						CopyGameOptions(GetSourceOptions(g_nGame), pGameOpts);
+						g_bUseDefaults = TRUE;
 					}
 					else
 					{
 						SetGameUsesDefaults(g_nGame,TRUE);
-						CopyGameOptions(GetDefaultOptions(), pGameOpts);
+						if( g_nFolder == FOLDER_VECTOR)
+							CopyGameOptions(GetDefaultOptions(-1, TRUE), pGameOpts);
+						//Not Vector Folder, but Source Folder of Vector Games
+						else if ( DriverIsVector(g_nFolderGame) )
+							CopyGameOptions(GetVectorOptions(), pGameOpts);
+						// every other folder
+						else
+							CopyGameOptions(GetDefaultOptions(-1, FALSE), pGameOpts);
 						g_bUseDefaults = TRUE;
 					}
 					BuildDataMap();
@@ -1010,7 +1237,7 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 			PropToOptions(hDlg, pGameOpts);
 			ReadControls(hDlg);
 			if (g_nGame == -1)
-				pGameOpts = GetDefaultOptions();
+				pGameOpts = GetDefaultOptions(g_nGame, FALSE);
 			else if (g_nGame == -2)
 				pGameOpts = pGameOpts;
 				//origGameOpts = GetFolderOptions(g_nFolder);
@@ -1018,7 +1245,8 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 			{
 				SetGameUsesDefaults(g_nGame,g_bUseDefaults);
 				orig_uses_defaults = g_bUseDefaults;
-				pGameOpts = GetGameOptions(g_nGame, -1);
+				//WIP RS Problem is Data is synced in from disk, and changed gamea properties are not yet saved
+				//pGameOpts = GetGameOptions(g_nGame, -1);
 			}
 
 			FreeGameOptions(&origGameOpts);
@@ -1058,18 +1286,58 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 			break;
 		}
 		break;
-
-#ifdef RED_TEST
 	case WM_CTLCOLORSTATIC :
 	case WM_CTLCOLOREDIT :
-		if (IsControlDefaultValue(hDlg,(HWND)lParam) == FALSE)
+		//Set the Coloring of the elements
+		if( GetControlID(hDlg,(HWND)lParam) < 0)
+			break;
+		if (IsControlOptionValue(hDlg,(HWND)lParam, GetDefaultOptions( -1, FALSE) ) )
 		{
-			SetTextColor((HDC)wParam,HIGHLIGHT_COLOR);
-			return (INT_PTR)background_brush;
+			//Normal Black case
+			SetTextColor((HDC)wParam,COLOR_WINDOWTEXT);
 		}
-		break;
+		else if (IsControlOptionValue(hDlg,(HWND)lParam, GetVectorOptions() )  && DriverIsVector(g_nFolderGame) )
+		{
+			SetTextColor((HDC)wParam,VECTOR_COLOR);
+		}
+		else if (IsControlOptionValue(hDlg,(HWND)lParam, GetSourceOptions(g_nFolderGame ) ) )
+		{
+			SetTextColor((HDC)wParam,FOLDER_COLOR);
+		}
+//		else if ( (g_nGame >= 0) && (IsControlOptionValue(hDlg,(HWND)lParam, GetGameOptions(g_nGame, g_nFolder) ) ) )
+		else if ( (g_nGame >= 0) && (IsControlOptionValue(hDlg,(HWND)lParam, &origGameOpts ) ) )
+		{
+			SetTextColor((HDC)wParam,GAME_COLOR);
+		}
+		else
+		{
+			switch ( g_nPropertyMode )
+			{
+				case SOURCE_GAME:
+					SetTextColor((HDC)wParam,GAME_COLOR);
+					break;
+				case SOURCE_FOLDER:
+					SetTextColor((HDC)wParam,FOLDER_COLOR);
+					break;
+				case SOURCE_VECTOR:
+					SetTextColor((HDC)wParam,VECTOR_COLOR);
+					break;
+				default:
+				case SOURCE_GLOBAL:
+					SetTextColor((HDC)wParam,COLOR_WINDOWTEXT);
+					break;
+			}
+		}
+		if( Msg == WM_CTLCOLORSTATIC )
+			SetBkColor((HDC)wParam,GetSysColor(COLOR_3DFACE) );
+#if 0
+		    BkColorHandling((HWND)lParam, (HDC) wParam );
 #endif
-
+		else
+			SetBkColor((HDC)wParam,RGB(255,255,255) );
+		UnrealizeObject(background_brush);
+		return (DWORD)background_brush;
+		break;
 	case WM_HELP:
 		/* User clicked the ? from the upper right on a control */
 		HelpFunction(((LPHELPINFO)lParam)->hItemHandle, MAME32CONTEXTHELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
@@ -1549,10 +1817,20 @@ static void SetPropEnabledControls(HWND hWnd)
 	else
 		Button_Enable(GetDlgItem(hWnd,IDC_USE_MOUSE),FALSE);
 
-	if (nIndex <= -1 || DriverUsesLightGun(nIndex))
+	if (!in_window && (nIndex <= -1 || DriverUsesLightGun(nIndex)))
+	{
+		BOOL use_lightgun;
 		Button_Enable(GetDlgItem(hWnd,IDC_LIGHTGUN),TRUE);
+		use_lightgun = Button_GetCheck(GetDlgItem(hWnd,IDC_LIGHTGUN));
+		Button_Enable(GetDlgItem(hWnd,IDC_DUAL_LIGHTGUN),use_lightgun);
+		Button_Enable(GetDlgItem(hWnd,IDC_RELOAD),use_lightgun);
+	}
 	else
+	{
 		Button_Enable(GetDlgItem(hWnd,IDC_LIGHTGUN),FALSE);
+		Button_Enable(GetDlgItem(hWnd,IDC_DUAL_LIGHTGUN),FALSE);
+		Button_Enable(GetDlgItem(hWnd,IDC_RELOAD),FALSE);
+	}
 
 
 	/* Sound options */
@@ -1582,6 +1860,11 @@ static void SetPropEnabledControls(HWND hWnd)
 
 
 	// misc
+	if (Button_GetCheck(GetDlgItem(hWnd, IDC_LEDS)))
+		EnableWindow(GetDlgItem(hWnd, IDC_LEDMODE), TRUE);
+	else
+		EnableWindow(GetDlgItem(hWnd, IDC_LEDMODE), FALSE);
+
 	if (nIndex <= -1 || DriverHasOptionalBIOS(nIndex))
 		EnableWindow(GetDlgItem(hWnd,IDC_BIOS),TRUE);
 	else
@@ -1600,6 +1883,7 @@ static void AssignSampleRate(HWND hWnd)
 		case 0:  pGameOpts->samplerate = 11025; break;
 		case 1:  pGameOpts->samplerate = 22050; break;
 		case 2:  pGameOpts->samplerate = 44100; break;
+		case 3:  pGameOpts->samplerate = 48000; break;
 		default: pGameOpts->samplerate = 44100; break;
 	}
 }
@@ -1697,6 +1981,15 @@ static void AssignEffect(HWND hWnd)
 		pGameOpts->effect = strdup(ptr);
 }
 
+static void AssignLedmode(HWND hWnd)
+{
+	const char* ptr = (const char*)ComboBox_GetItemData(hWnd, g_nLedmodeIndex);
+
+	FreeIfAllocated(&pGameOpts->ledmode);
+	if (ptr != NULL)
+		pGameOpts->ledmode = strdup(ptr);
+}
+
 /************************************************************
  * DataMap initializers
  ************************************************************/
@@ -1741,6 +2034,7 @@ static void ResetDataMap(void)
 	{
 		case 11025:  g_nSampleRateIndex = 0; break;
 		case 22050:  g_nSampleRateIndex = 1; break;
+		case 48000:  g_nSampleRateIndex = 3; break;
 		default:
 		case 44100:  g_nSampleRateIndex = 2; break;
 	}
@@ -1750,6 +2044,12 @@ static void ResetDataMap(void)
 	{
 		if (!stricmp(pGameOpts->effect, g_ComboBoxEffect[i].m_pData))
 			g_nEffectIndex = i;
+	}
+	g_nLedmodeIndex = 0;
+	for (i = 0; i < NUMLEDMODES; i++)
+	{
+		if (!stricmp(pGameOpts->ledmode, g_ComboBoxLedmode[i].m_pData))
+			g_nLedmodeIndex = i;
 	}
 
 }
@@ -1789,6 +2089,7 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_RESDEPTH,      DM_NONE, CT_NONE, &pGameOpts->resolution,    DM_STRING, &pGameOpts->resolution, 0, 0, 0);
 	DataMapAdd(IDC_CLEAN_STRETCH, DM_INT,  CT_COMBOBOX, &pGameOpts->clean_stretch, DM_INT, &pGameOpts->clean_stretch, 0, 0, 0);
 	DataMapAdd(IDC_ZOOM,          DM_INT,  CT_SLIDER,   &pGameOpts->zoom,          DM_INT, &pGameOpts->zoom,      0, 0, 0);
+	DataMapAdd(IDC_ZOOMDIST,      DM_NONE, CT_NONE,   NULL,          DM_INT, &pGameOpts->zoom,      0, 0, 0);
 
 	// direct3d
 	DataMapAdd(IDC_D3D,           DM_BOOL, CT_BUTTON,   &pGameOpts->use_d3d,       DM_BOOL, &pGameOpts->use_d3d,       0, 0, 0);
@@ -1799,8 +2100,10 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_D3D_ROTATE_EFFECTS,DM_BOOL,CT_BUTTON,&pGameOpts->d3d_rotate_effects,DM_BOOL,&pGameOpts->d3d_rotate_effects, 0, 0, 0);
 	DataMapAdd(IDC_D3D_SCANLINES_ENABLE,DM_BOOL, CT_BUTTON, &pGameOpts->d3d_scanlines_enable, DM_BOOL, &pGameOpts->d3d_scanlines_enable, 0, 0, 0);
 	DataMapAdd(IDC_D3D_SCANLINES, DM_INT,  CT_SLIDER,   &pGameOpts->d3d_scanlines, DM_INT, &pGameOpts->d3d_scanlines, 0, 0, 0);
+	DataMapAdd(IDC_D3D_SCANLINES_DISP, DM_NONE,  CT_NONE,   NULL, DM_INT, &pGameOpts->d3d_scanlines, 0, 0, 0);
 	DataMapAdd(IDC_D3D_FEEDBACK_ENABLE,DM_BOOL, CT_BUTTON, &pGameOpts->d3d_feedback_enable, DM_BOOL, &pGameOpts->d3d_feedback_enable, 0, 0, 0);
 	DataMapAdd(IDC_D3D_FEEDBACK,  DM_INT,  CT_SLIDER,   &pGameOpts->d3d_feedback,  DM_INT, &pGameOpts->d3d_feedback, 0, 0, 0);
+	DataMapAdd(IDC_D3D_FEEDBACK_DISP,  DM_NONE,  CT_NONE,   NULL,  DM_INT, &pGameOpts->d3d_feedback, 0, 0, 0);
 
 	/* input */
 	DataMapAdd(IDC_DEFAULT_INPUT, DM_INT,  CT_COMBOBOX, &g_nInputIndex,            DM_STRING, &pGameOpts->ctrlr, 0, 0, AssignInput);
@@ -1809,7 +2112,9 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_A2D,           DM_INT,  CT_SLIDER,   &g_nA2DIndex,              DM_DOUBLE, &pGameOpts->f_a2d, 0, 0, AssignA2D);
 	DataMapAdd(IDC_A2DDISP,       DM_NONE, CT_NONE,     NULL,  DM_DOUBLE, &pGameOpts->f_a2d, 0, 0, 0);
 	DataMapAdd(IDC_STEADYKEY,     DM_BOOL, CT_BUTTON,   &pGameOpts->steadykey,     DM_BOOL, &pGameOpts->steadykey,     0, 0, 0);   
-	DataMapAdd(IDC_LIGHTGUN,      DM_BOOL, CT_BUTTON,   &pGameOpts->lightgun,      DM_BOOL, &pGameOpts->lightgun,      0, 0, 0);   
+	DataMapAdd(IDC_LIGHTGUN,      DM_BOOL, CT_BUTTON,   &pGameOpts->lightgun,      DM_BOOL, &pGameOpts->lightgun,      0, 0, 0);
+	DataMapAdd(IDC_DUAL_LIGHTGUN, DM_BOOL, CT_BUTTON,   &pGameOpts->dual_lightgun, DM_BOOL, &pGameOpts->dual_lightgun,      0, 0, 0);
+	DataMapAdd(IDC_RELOAD,        DM_BOOL, CT_BUTTON,   &pGameOpts->offscreen_reload,DM_BOOL,&pGameOpts->offscreen_reload, 0, 0, 0);
 
 	/* core video */
 	DataMapAdd(IDC_BRIGHTCORRECT, DM_INT,  CT_SLIDER,   &g_nBrightCorrectIndex,    DM_DOUBLE, &pGameOpts->f_bright_correct, 0, 0, AssignBrightCorrect);
@@ -1841,6 +2146,7 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_VOLUME,        DM_INT,  CT_SLIDER,   &g_nVolumeIndex,           DM_INT, &pGameOpts->attenuation, 0, 0, AssignVolume);
 	DataMapAdd(IDC_VOLUMEDISP,    DM_NONE, CT_NONE,  NULL,  DM_INT, &pGameOpts->attenuation, 0, 0, 0);
 	DataMapAdd(IDC_AUDIO_LATENCY, DM_INT,  CT_SLIDER,   &pGameOpts->audio_latency, DM_INT, &pGameOpts->audio_latency, 0, 0, 0);
+	DataMapAdd(IDC_AUDIO_LATENCY_DISP, DM_NONE,  CT_NONE,   NULL, DM_INT, &pGameOpts->audio_latency, 0, 0, 0);
 
 	/* misc artwork options */
 	DataMapAdd(IDC_ARTWORK,       DM_BOOL, CT_BUTTON,   &pGameOpts->use_artwork,   DM_BOOL, &pGameOpts->use_artwork,   0, 0, 0);
@@ -1857,6 +2163,7 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_SLEEP,         DM_BOOL, CT_BUTTON,   &pGameOpts->sleep,         DM_BOOL, &pGameOpts->sleep,         0, 0, 0);
 	DataMapAdd(IDC_OLD_TIMING,    DM_BOOL, CT_BUTTON,   &pGameOpts->old_timing,    DM_BOOL, &pGameOpts->old_timing,    0, 0, 0);
 	DataMapAdd(IDC_LEDS,          DM_BOOL, CT_BUTTON,   &pGameOpts->leds,          DM_BOOL, &pGameOpts->leds,          0, 0, 0);
+	DataMapAdd(IDC_LEDMODE,       DM_INT,  CT_COMBOBOX, &g_nLedmodeIndex,		   DM_STRING, &pGameOpts->ledmode,  0, 0, AssignLedmode);
 	DataMapAdd(IDC_BIOS,          DM_INT,  CT_COMBOBOX, &pGameOpts->bios,          DM_INT, &pGameOpts->bios,        0, 0, 0);
 #ifdef MESS
 	DataMapAdd(IDC_USE_NEW_UI,    DM_BOOL, CT_BUTTON,   &pGameOpts->use_new_ui,    DM_BOOL, &pGameOpts->use_new_ui, 0, 0, 0);
@@ -1868,7 +2175,12 @@ BOOL IsControlDefaultValue(HWND hDlg,HWND hwnd_ctrl)
 {
 	int control_id = GetControlID(hDlg,hwnd_ctrl);
 
-	options_type *default_options = GetDefaultOptions();
+	options_type *default_options;
+	
+	if( g_nFolder == FOLDER_VECTOR)
+		default_options = GetDefaultOptions(g_nGame, TRUE);
+	else
+		default_options = GetDefaultOptions(g_nGame, FALSE);
 
 	// certain controls we need to handle specially
 	switch (control_id)
@@ -1902,7 +2214,7 @@ BOOL IsControlDefaultValue(HWND hDlg,HWND hwnd_ctrl)
 		sscanf(pGameOpts->resolution,"%d x %d",&x1,&y1);
 		sscanf(default_options->resolution,"%d x %d",&x2,&y2);
 
-		return x1 == y1 && x2 == y2;		
+		return x1 == x2 && y1 == y2;		
 	}
 	case IDC_RESDEPTH :
 	{
@@ -1932,6 +2244,74 @@ BOOL IsControlDefaultValue(HWND hDlg,HWND hwnd_ctrl)
 
 	return TRUE;
 }
+
+BOOL IsControlOptionValue(HWND hDlg,HWND hwnd_ctrl, options_type *opts )
+{
+	int control_id = GetControlID(hDlg,hwnd_ctrl);
+
+	// certain controls we need to handle specially
+	switch (control_id)
+	{
+	case IDC_ASPECTRATION :
+	{
+		int n1=0, n2=0;
+
+		sscanf(pGameOpts->aspect,"%i",&n1);
+		sscanf(opts->aspect,"%i",&n2);
+
+		return n1 == n2;
+	}
+	case IDC_ASPECTRATIOD :
+	{
+		int temp, d1=0, d2=0;
+
+		sscanf(pGameOpts->aspect,"%i:%i",&temp,&d1);
+		sscanf(opts->aspect,"%i:%i",&temp,&d2);
+
+		return d1 == d2;
+	}
+	case IDC_SIZES :
+	{
+		int x1=0,y1=0,x2=0,y2=0;
+
+		if (strcmp(pGameOpts->resolution,"auto") == 0 &&
+			strcmp(opts->resolution,"auto") == 0)
+			return TRUE;
+		
+		sscanf(pGameOpts->resolution,"%d x %d",&x1,&y1);
+		sscanf(opts->resolution,"%d x %d",&x2,&y2);
+
+		return x1 == x2 && y1 == y2;		
+	}
+	case IDC_RESDEPTH :
+	{
+		int temp,d1=0,d2=0;
+
+		if (strcmp(pGameOpts->resolution,"auto") == 0 &&
+			strcmp(opts->resolution,"auto") == 0)
+			return TRUE;
+		
+		sscanf(pGameOpts->resolution,"%d x %d x %d",&temp,&temp,&d1);
+		sscanf(opts->resolution,"%d x %d x %d",&temp,&temp,&d2);
+
+		return d1 == d2;
+	}
+	case IDC_ROTATE :
+	{
+		ReadControl(hDlg,control_id);
+	
+		return pGameOpts->ror == opts->ror &&
+			pGameOpts->rol == opts->rol;
+
+	}
+	}
+	// most options we can compare using data in the data map
+	if (IsControlDifferent(hDlg,hwnd_ctrl,pGameOpts,opts))
+		return FALSE;
+
+	return TRUE;
+}
+
 
 static void SetStereoEnabled(HWND hWnd, int nIndex)
 {
@@ -2033,6 +2413,7 @@ static void InitializeOptions(HWND hDlg)
 	InitializeD3DEffectUI(hDlg);
 	InitializeD3DPrescaleUI(hDlg);
 	InitializeBIOSUI(hDlg);
+	InitializeLEDModeUI(hDlg);
 	InitializeCleanStretchUI(hDlg);
 }
 
@@ -2186,7 +2567,6 @@ static void FlickerSelectionChange(HWND hwnd)
 	char   buf[100];
 	UINT   nValue;
 	double dFlicker;
-
 	/* Get the current value of the control */
 	nValue = SendMessage(GetDlgItem(hwnd, IDC_FLICKER), TBM_GETPOS, 0, 0);
 
@@ -2496,6 +2876,7 @@ static void InitializeSoundUI(HWND hwnd)
 		ComboBox_AddString(hCtrl, "11025");
 		ComboBox_AddString(hCtrl, "22050");
 		ComboBox_AddString(hCtrl, "44100");
+		ComboBox_AddString(hCtrl, "48000");
 		ComboBox_SetCurSel(hCtrl, 1);
 	}
 }
@@ -2741,6 +3122,23 @@ static void InitializeD3DPrescaleUI(HWND hwnd)
 	}
 }
 
+/* Populate the LED mode drop down */
+static void InitializeLEDModeUI(HWND hwnd)
+{
+	HWND hCtrl = GetDlgItem(hwnd, IDC_LEDMODE);
+
+	if (hCtrl)
+	{
+		int i;
+		for (i = 0; i < NUMLEDMODES; i++)
+		{
+			ComboBox_InsertString(hCtrl, i, g_ComboBoxLedmode[i].m_pText);
+			ComboBox_SetItemData( hCtrl, i, g_ComboBoxLedmode[i].m_pData);
+		}
+	}
+}
+
+
 static void InitializeBIOSUI(HWND hwnd)
 {
 	HWND hCtrl = GetDlgItem(hwnd,IDC_BIOS);
@@ -2750,16 +3148,51 @@ static void InitializeBIOSUI(HWND hwnd)
 		const struct GameDriver *gamedrv = drivers[g_nGame];
 		const struct SystemBios *thisbios;
 
-		if (g_nGame <= -1)
+		if (g_nGame == -1)
 		{
-			ComboBox_AddString(hCtrl,"0");
+/*			ComboBox_AddString(hCtrl,"0");
 			ComboBox_AddString(hCtrl,"1");
 			ComboBox_AddString(hCtrl,"2");
 			ComboBox_AddString(hCtrl,"3");
 			ComboBox_AddString(hCtrl,"4");
 			ComboBox_AddString(hCtrl,"5");
 			ComboBox_AddString(hCtrl,"6");
+*/			ComboBox_AddString(hCtrl,"None");
 
+			return;
+		}
+		if (g_nGame == -2) //Folder Options
+		{
+			LPTREEFOLDER lpFolder;
+			gamedrv = drivers[g_nFolderGame];
+#define C2HACK
+#ifdef C2HACK			
+			/*	FIXME RS 12/01/03
+				Special Handling for segac2.c source file, because it has MegaPlay, MegaTech and "no Bios" games
+				For now this should be OK, as only Megaplay supports (multiple) BIOSes
+				(For Megatech the BIOS is just defined as roms atm)
+			*/
+			lpFolder = GetFolderByID(g_nFolder);
+			if( lpFolder && (strcmp(lpFolder->m_lpTitle, "segac2.c") == 0) )
+			{
+				ComboBox_AddString(hCtrl,"Megaplay Bios (Ver. 1)");
+				ComboBox_AddString(hCtrl,"Megaplay Bios (Ver. 2)");
+				return;
+			}
+#endif
+			if (DriverHasOptionalBIOS(g_nFolderGame) == FALSE)
+			{
+				ComboBox_AddString(hCtrl,"None");
+				return;
+			}
+
+			thisbios = gamedrv->bios;
+
+			while (!BIOSENTRY_ISEND(thisbios))
+			{
+				ComboBox_AddString(hCtrl,thisbios->_description);
+				thisbios++;
+			}
 			return;
 		}
 
@@ -2793,4 +3226,87 @@ static void InitializeCleanStretchUI(HWND hwnd)
 	}
 }
 
+#if 0
+static void BkColorHandling(HWND hWnd, HDC hDC)
+{
+	//For XP we will need the uxtheme.dll, because the Background colour is done via the themes API
+	//we will need to load it dynamically to be able to still run on other OSes
+
+	RECT rc, rcContent;
+	COLORREF clr;
+	char szButtonText[255];
+	HRESULT hr;
+	size_t cch;
+	HTHEME hTheme;
+	GetWindowRect(hWnd, &rc);
+	GetWindowText(hWnd, szButtonText,
+				  (sizeof(szButtonText)/sizeof(szButtonText[0])+1));
+	cch = strlen(szButtonText);
+	dprintf("have themes %p\n",hThemes);
+	if( hThemes )
+	{
+		if( fnIsThemed && fnIsThemed() && cch>0)
+		{
+			dprintf("have themed function, is themed, cch %i\n",cch);
+			if( fnOpenTheme && fnCloseTheme && fnGetThemeSysColor )
+			{
+				// this fundamentally DOES NOT WORK. Tab pages are not done as solid colors
+				// in a theme necessarily.
+
+				dprintf("about to open theme\n");
+				hTheme = fnOpenTheme( hWnd, L"tab" );
+				dprintf("opened theme %08x\n",hTheme);
+				clr = 0;
+				hr = fnGetThemeColor(hTheme,TABP_PANE,0,TMT_FILLCOLOR,
+									 &clr);
+				if (hr != S_OK)
+				{
+					static char msg[300];
+
+					dprintf("error on get theme color %08x\n",hr);
+					FormatMessage(
+						FORMAT_MESSAGE_FROM_SYSTEM,
+						NULL,
+						hr,
+						MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), //The user default language
+						msg,
+						sizeof(msg),
+						NULL );
+					dprintf("error msg: %s\n",msg);
+					
+				}
+				else
+				{
+					dprintf("got theme color I guess %08x\n",clr);
+					dprintf("(3dface is %08x)\n",GetSysColor(COLOR_3DFACE));
+				}
+				//hr = fnDrawThemeBkgrnd(hTheme, (HDC) wParam, EP_CARET, ETS_NORMAL,&rc,0 );
+				/*	hr = fnDrawThemeBkgrnd(hTheme, (HDC) wParam, SPP_USERPANE, 0,&rc,NULL );
+					hr = fnGetThemeBkgrndContRect(hTheme, EP_CARET, ETS_NORMAL, &rc, &rcContent);
+					hr = fnDrawThemeText(hTheme, (HDC) wParam, EP_CARET, ETS_NORMAL,
+					szButtonText, cch,
+					DT_CENTER | DT_VCENTER | DT_SINGLELINE,
+					0, &rcContent);
+				*/	//SetBkColor on XP with Themes is a BIG nono...
+				//clr = fnGetThemeSysColor(hTheme,COLOR_3DFACE);
+				//dprintf("got theme system color %08x\n",clr);
+				SetBkColor(hDC,clr);
+				//SetBkColor(hDC,GetSysColor(COLOR_BTNSHADOW) );
+				dprintf("set background color\n");
+				fnCloseTheme(hTheme);
+				dprintf("closed theme\n");
+			}
+			else
+				SetBkColor(hDC,GetSysColor(COLOR_3DFACE) );
+		}
+		else
+		{
+			SetBkColor(hDC,GetSysColor(COLOR_3DFACE) );
+		}
+	}
+	else
+		SetBkColor(hDC,GetSysColor(COLOR_3DFACE) );
+	
+}
+#endif
 /* End of source file */

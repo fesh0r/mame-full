@@ -56,7 +56,6 @@ static int vtech1_fdc_latch = 0;
 
 static void common_init_machine(void)
 {
-
 	/* install DOS ROM ? */
     if( readinputport(0) & 0x40 )
     {

@@ -59,7 +59,7 @@ static int mra_bank(int bank, int offs);
 static READ_HANDLER ( mra_bank1) { return mra_bank(0,offset); }
 static READ_HANDLER ( mra_bank2) { return mra_bank(1,offset); }
 static READ_HANDLER ( mra_bank3) { return mra_bank(2,offset); }
-static READ_HANDLER ( MRA8_BANK4) { return mra_bank(3,offset); }
+static READ_HANDLER ( mra_bank4) { return mra_bank(3,offset); }
 
 /* read banked memory (handle memory mapped i/o) */
 static read8_handler mra_bank_soft[4] =
@@ -67,7 +67,7 @@ static read8_handler mra_bank_soft[4] =
     mra_bank1,  /* mapped in 0000-3fff */
     mra_bank2,  /* mapped in 4000-7fff */
     mra_bank3,  /* mapped in 8000-bfff */
-    MRA8_BANK4   /* mapped in c000-ffff */
+    mra_bank4   /* mapped in c000-ffff */
 };
 
 /* write banked memory (handle memory mapped i/o and videoram) */
@@ -94,7 +94,7 @@ static write8_handler mwa_bank_hard[4] =
     MWA8_BANK1,  /* mapped in 0000-3fff */
     MWA8_BANK2,  /* mapped in 4000-7fff */
     MWA8_BANK3,  /* mapped in 8000-bfff */
-    MWA_BANK4   /* mapped in c000-ffff */
+    MWA8_BANK4   /* mapped in c000-ffff */
 };
 
 void init_laser(void)
@@ -135,15 +135,6 @@ MACHINE_INIT( laser700 )
 	logerror("laser700 init machine: bank mask $%04X, video %d [$%05X]\n", laser_bank_mask, laser_video_bank, laser_video_bank * 0x04000);
 }
 
-static WRITE_HANDLER ( mwa_empty )
-{
-	/* empty */
-}
-
-static READ_HANDLER ( mra_empty )
-{
-	return 0xff;
-}
 
 WRITE_HANDLER( laser_bank_select_w )
 {
@@ -152,7 +143,10 @@ WRITE_HANDLER( laser_bank_select_w )
         "RAM #0","RAM #1","RAM #2","RAM #3",
         "RAM #4","RAM #5","RAM #6","RAM #7/Video RAM hi",
         "ext ROM #0","ext ROM #1","ext ROM #2","ext ROM #3"};
+	read8_handler read_handler;
+	write8_handler write_handler;
 
+	offset %= 4;
     data &= 15;
 
 	if( data != laser_bank[offset] )
@@ -163,33 +157,32 @@ WRITE_HANDLER( laser_bank_select_w )
         /* memory mapped I/O bank selected? */
 		if (data == 2)
 		{
-			memory_set_bankhandler_r(1+offset,0,mra_bank_soft[offset]);
-			memory_set_bankhandler_w(1+offset,0,mwa_bank_soft[offset]);
+			read_handler = mra_bank_soft[offset];
+			write_handler = mwa_bank_soft[offset];
 		}
 		else
 		{
 			cpu_setbank(offset+1, &mem[0x4000*laser_bank[offset]]);
 			if( laser_bank_mask & (1 << data) )
 			{
-				memory_set_bankhandler_r(1+offset,0,mra_bank_hard[offset]);
+				read_handler = mra_bank_hard[offset];
+				write_handler = mwa_bank_hard[offset];
+
 				/* video RAM bank selected? */
 				if( data == laser_video_bank )
 				{
 					logerror("select bank #%d VIDEO!\n", offset+1);
-                    memory_set_bankhandler_w(1+offset,0,mwa_bank_soft[offset]);
-				}
-				else
-				{
-					memory_set_bankhandler_w(1+offset,0,mwa_bank_hard[offset]);
 				}
 			}
 			else
 			{
 				logerror("select bank #%d MASKED!\n", offset+1);
-				memory_set_bankhandler_r(1+offset,0,mra_empty);
-				memory_set_bankhandler_w(1+offset,0,mwa_empty);
+				read_handler = return8_FF;
+				write_handler = MWA8_NOP;
 			}
 		}
+		memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, offset * 0x4000, offset * 0x4000 + 0x3fff, 0, read_handler);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, offset * 0x4000, offset * 0x4000 + 0x3fff, 0, write_handler);
     }
 }
 
