@@ -236,7 +236,9 @@ DRVLIBS = \
 	$(OBJ)/sony.a     \
 	$(OBJ)/concept.a  \
 	$(OBJ)/dai.a      \
-	$(OBJ)/bandai.a   \
+
+#	Anthony - commit mess/sndhrdw/wswan.c to CVS
+#	$(OBJ)/bandai.a   \
 
 
 $(OBJ)/neocd.a:		\

@@ -765,7 +765,7 @@ static PORT_WRITE_START ( tm990_189_writeport )
 
 	{ 0x000, 0x1ff, tms9901_0_CRU_write },	/* user I/O tms9901 */
 	{ 0x200, 0x3ff, tms9901_1_CRU_write },	/* system I/O tms9901 */
-	{ 0x400, 0x5ff, tms9902_0_CRU_write },	/* optional tms9902 */
+//	{ 0x400, 0x5ff, tms9902_0_CRU_write },	/* optional tms9902 */
 
 	{0x0800,0x1fff, ext_instr_decode },		/* external instruction decoding (IDLE, RSET, CKON, CKOF, LREX) */
 
@@ -775,7 +775,7 @@ static PORT_READ_START ( tm990_189_readport )
 
 	{ 0x00, 0x3f, tms9901_0_CRU_read },		/* user I/O tms9901 */
 	{ 0x40, 0x6f, tms9901_1_CRU_read },		/* system I/O tms9901 */
-	{ 0x80, 0xcf, tms9902_0_CRU_read },		/* optional tms9902 */
+//	{ 0x80, 0xcf, tms9902_0_CRU_read },		/* optional tms9902 */
 
 PORT_END
 

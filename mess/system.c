@@ -193,8 +193,8 @@ TESTDRIVER( vcg )		/* Palladium Video-Computer-Game					*/
 TESTDRIVER( vc4000 )	/* Interton vc4000									*/
 
 	/* BANDAI */
-TESTDRIVER( wswan )		/* Bandai WonderSwan Handheld						*/
-TESTDRIVER( wscolor )	/* Bandai WonderSwan Color Handheld					*/
+//TESTDRIVER( wswan )		/* Bandai WonderSwan Handheld						*/
+//TESTDRIVER( wscolor )	/* Bandai WonderSwan Color Handheld					*/
 
 
 /****************COMPUTERS***************************************************/
