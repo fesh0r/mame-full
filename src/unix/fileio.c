@@ -387,7 +387,7 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype,
 	switch (filetype)
 	{
 #ifdef MESS
-		case OSD_FILETYPE_IMAGE_RW:
+		case OSD_FILETYPE_IMAGE:
 		    /* writable images are only supported as normal files */
 		    if (write)
 		    {
@@ -411,12 +411,7 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype,
 		        break;
 		    }
 		    /* fall through for non writable images */
-		case OSD_FILETYPE_IMAGE_R:
-		    if (write)
-		    {
-			logerror("Error trying to open ro image %s in write mode\n", filename);
-			break;
-		    }
+
 		    /* try relative and absolute filenames */
 		    
 		    /* try filename.ext */
