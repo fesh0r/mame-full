@@ -130,6 +130,7 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 	const char *sysname;
 	void *file;
 	int extnum;
+	int original_len;
 
 	if( type >= IO_COUNT )
 	{
@@ -148,7 +149,11 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 
 	/* try the supported extensions */
 	extnum = 0;
-	for( ;; )
+
+	/* remember original file name */
+	original_len = strlen(img->name);
+
+	while (1)
 	{
 		extern struct GameDriver driver_0;
 		const char *ext;
@@ -161,15 +166,28 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 		/* file found, break out */
 		if( file )
 			break;
+
 		if( Machine->gamedrv->clone_of &&
 			Machine->gamedrv->clone_of != &driver_0 )
-		{
+		{	/* R Nabet : Shouldn't this be moved to osd code ??? Mac osd code does such a retry
+			whenever it makes sense, and I think this is the correct way. */
 			sysname = Machine->gamedrv->clone_of->name;
 			logerror("image_fopen: now trying %s for system %s\n", img->name, sysname);
 			file = osd_fopen(sysname, img->name, filetype, read_or_write);
 		}
 		if( file )
 			break;
+
+		if (options.append_no_file_extension)
+		{	/* do not try file extension substitutions */
+			break;
+		}
+
+		if (! ((read_or_write == 0) || (read_or_write == 2) /*|| (read_or_write == 3)*/))
+		{	/* Other modes do not require that the file exists, so we must not triffle with extensions */
+			/* If fopen ever failed, it was for a completely different reason... */
+			break;
+		}
 
 		ext = device_file_extension(type,extnum);
 		extnum++;
@@ -179,8 +197,8 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 			break;
 
 		l = strlen(img->name);
-		p = strrchr(img->name, '.');
-		/* does the current name already have an extension? */
+		p = img->name + original_len;	/* overwrite any extension we may have appended so far */
+		/* does the file name already have an extension appended ? */
 		if( p )
 		{
 			++p; /* skip the dot */
@@ -206,6 +224,12 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 			}
 			sprintf(img->name + l, ".%s", ext);
 		}
+	}
+
+	if ((! file) && (strlen(img->name) != original_len))
+	{	/* restore original file name, so that we do not mess everything up. (Ha !) */
+		if (img->name)	/* safety check */
+			img->name = realloc(img->name, original_len);
 	}
 
 	if( file )
