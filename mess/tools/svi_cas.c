@@ -58,6 +58,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	NULL,								/* eoln */
+	0,
 	svi_cas_image_init,				/* init function */
 	svi_cas_image_exit,				/* exit function */
 	NULL,								/* info function */
