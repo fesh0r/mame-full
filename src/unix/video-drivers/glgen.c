@@ -544,7 +544,7 @@ int sysdep_display_16bpp_capable (void)
 
 void InitVScreen (int depth)
 {
-  const char * glVersion;
+  const unsigned char * glVersion;
 
   #ifndef NDEBUG
     printf("GLINFO: InitVScreen (glContext=%p)\n", glContext);
@@ -822,7 +822,7 @@ int sysdep_display_alloc_palette (int writable_colors)
       }
   }
 
-  fprintf (stderr, "GLINFO: totalcolors = %d / colortable size= %d,\n\tdeepth = %d alphablending=%d,\n\tuse_mod_ctable=%d\n\tuseColorIndex=%d\n",
+  fprintf (stderr, "GLINFO: totalcolors = %d / colortable size= %d,\n\tdepth = %d alphablending=%d,\n\tuse_mod_ctable=%d\n\tuseColorIndex=%d\n",
 	   totalcolors, ctable_size,
 	   Machine->scrbitmap->depth, alphablending, 
 	   use_mod_ctable,
