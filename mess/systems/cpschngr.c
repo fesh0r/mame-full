@@ -200,7 +200,7 @@ static READ_HANDLER ( qsound_sharedram_r )
 	return qsound_sharedram[offset / 2] | 0xff00;
 }
 
-static WRITE_HANDLER ( qsound_sharedram_w )
+static WRITE_HANDLER ( qsound_sharedram1_w )
 {
 	qsound_sharedram[offset / 2] = data;
 }
@@ -330,7 +330,7 @@ static struct MemoryWriteAddress cps1_writemem[] =
 	{ 0x800188, 0x800189, cps1_sound_fade_w },
 	{ 0x800100, 0x8001ff, cps1_output_w, &cps1_output, &cps1_output_size },  /* Output ports */
 	{ 0x900000, 0x92ffff, MWA_BANK3, &cps1_gfxram, &cps1_gfxram_size },
-	{ 0xf18000, 0xf19fff, qsound_sharedram_w }, /* Q RAM */
+	{ 0xf18000, 0xf19fff, qsound_sharedram1_w },/* Q RAM */
 	{ 0xf1c004, 0xf1c005, cpsq_coinctrl2_w },   /* Coin control2 (later games) */
 	{ 0xf1c006, 0xf1c007, cps1_eeprom_port_w },
 	{ 0xff0000, 0xffffff, MWA_BANK2 },        /* RAM */
