@@ -761,6 +761,8 @@ INTERRUPT_GEN( apple2gs_interrupt )
 	int current_frame;
 	static int last_scanline = -1;
 
+	/* TODO: This handler should be called every scanline; that crappyness on
+	 * the VBL handler is a consequence of not doing so */
 	scanline = cpu_getscanline();
 	if (last_scanline != scanline)
 	{
@@ -782,7 +784,7 @@ INTERRUPT_GEN( apple2gs_interrupt )
 				apple2gs_add_irq(IRQ_VGC_SECOND);
 			}
 		}
-		else if (scanline == 192)
+		else if ((scanline >= 192) && (last_scanline < 192))
 		{
 			/* VBL interrupt */
 			if ((apple2gs_inten & 0x08) && !(apple2gs_intflag & 0x08))
