@@ -133,4 +133,21 @@ int coco3_mmu_translatelogicaladdr(int logicaladdr);
 #define IO_BITBANGER IO_PRINTER
 #define IO_VHD IO_HARDDISK
 
+/* CoCo 3 video vars; controlling key aspects of the emulation */
+struct coco3_video_vars
+{
+	UINT8 bordertop_192;
+	UINT8 bordertop_199;
+	UINT8 bordertop_0;
+	UINT8 bordertop_225;
+	unsigned int hs_gime_flip : 1;
+	unsigned int fs_gime_flip : 1;
+	unsigned int hs_pia_flip : 1;
+	unsigned int fs_pia_flip : 1;
+	UINT16 rise_scanline;
+	UINT16 fall_scanline;
+};
+
+extern const struct coco3_video_vars coco3_vidvars;
+
 #endif /* DRAGON_H */

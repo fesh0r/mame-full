@@ -47,6 +47,9 @@ static UINT16 *border_scanline;
 static int border_position;
 static UINT16 border_color;
 
+/* timer */
+static mame_timer *videomap_timer;
+
 enum
 {
 	FLAG_INVAL_FRAMEINFO	= 1,
@@ -396,6 +399,8 @@ static void get_line_info(void)
 	assert(line_info.scanlines_per_row);
 }
 
+
+
 /* ----------------------------------------------------------------------- *
  * video mode invalidation                                                 *
  * ----------------------------------------------------------------------- */
@@ -406,22 +411,19 @@ static void calc_videoram_pos(void)
 	videoram_dirtybuffer_pos = videoram_dirtybuffer;
 }
 
-static void new_frame(int scanline)
-{
-	force_partial_update(scanline - 1);
-	get_frame_info();
-	flags &= ~FLAG_INVAL_FRAMEINFO;
-	calc_videoram_pos();
-}
 
-static void new_line(int scanline)
+
+static void videomap_timerproc(int dummy)
 {
 	int i;
+	int scanline = cpu_getscanline();
+
 	if (flags & FLAG_BORDER_MODIFIED)
 	{
 		for (i = border_position; i < Machine->drv->screen_width; i++)
 			border_scanline[i] = border_color;
 		border_position = 0;
+		flags &= ~FLAG_BORDER_MODIFIED;
 	}
 
 	/* only force an update if there are scanlines before this new scanline */
@@ -429,40 +431,62 @@ static void new_line(int scanline)
 		force_partial_update(scanline - 1);
 
 	if (flags & FLAG_INVAL_LINEINFO)
+	{
+		flags &= ~FLAG_INVAL_LINEINFO;
 		get_line_info();
+	}
 
-	flags &= (~FLAG_INVAL_LINEINFO & ~FLAG_BORDER_MODIFIED);
+	if (flags & FLAG_INVAL_FRAMEINFO && (scanline == Machine->drv->screen_height))
+	{
+		flags &= ~FLAG_INVAL_FRAMEINFO;
+		get_frame_info();
+		calc_videoram_pos();
+	}
+
+	/* since we do not always invalidate the frame info, we do that here */
+	if (flags & FLAG_INVAL_FRAMEINFO)
+		videomap_invalidate_frameinfo();
 }
 
-static void general_invalidate(UINT8 inval_flags_mask, void (*callback)(int), int scanline)
-{
-	double delay;
 
+
+static void general_invalidate(UINT8 inval_flags_mask, int scanline)
+{
+	mame_time delay;
+	mame_time current_delay;
+	double delay_d;
+
+	/* sanity check the scanline */
 	assert(scanline >= 0);
 	if (Machine->scrbitmap)
-	{
 		assert(scanline <= Machine->scrbitmap->height);
+
+	/* figure out how soon our timer needs to go off */
+	if (scanline <= cpu_getscanline())
+		delay = time_zero;
+	else
+	{
+		delay_d = cpu_getscanlinetime(scanline);
+		delay = double_to_mame_time(delay_d);
 	}
 
-	if (scanline <= cpu_getscanline())
-	{
-		flags |= inval_flags_mask;
-		callback(scanline);
-	}
-	else if (!(flags & inval_flags_mask))
-	{
-		delay = cpu_getscanlinetime(scanline);
-		timer_set(delay, scanline, callback);
-		flags |= inval_flags_mask;
-	}
-	flags |= FLAG_FULL_REFRESH;
+	/* if the timer is not set to wake in that time, set it to wake */
+	current_delay = mame_timer_timeleft(videomap_timer);
+	if ((compare_mame_times(time_zero, current_delay) >= 0) || (compare_mame_times(delay, current_delay) < 0))
+		mame_timer_adjust(videomap_timer, delay, scanline, time_zero);
+
+	flags |= inval_flags_mask | FLAG_FULL_REFRESH;
 	schedule_full_refresh();
 }
 
+
+
 void videomap_invalidate_frameinfo()
 {
-	general_invalidate(FLAG_INVAL_FRAMEINFO, new_frame, Machine->drv->screen_height);
+	general_invalidate(FLAG_INVAL_FRAMEINFO, Machine->drv->screen_height);
 }
+
+
 
 void videomap_invalidate_lineinfo()
 {
@@ -479,8 +503,10 @@ void videomap_invalidate_lineinfo()
 
 	/* am I in the left side? adjustment is 0 if so; 1 otherwise*/
 	adjustment = (horzbeampos < (Machine->drv->screen_width / 2)) ? 0 : 1;
-	general_invalidate(FLAG_INVAL_LINEINFO, new_line, scanline + adjustment);
+	general_invalidate(FLAG_INVAL_LINEINFO, scanline + adjustment);
 }
+
+
 
 void videomap_invalidate_border()
 {
@@ -498,7 +524,7 @@ void videomap_invalidate_border()
 			force_partial_update(scanline - 1);
 
 		/* the next scanline should be treated as new */
-		general_invalidate(FLAG_BORDER_MODIFIED, new_line, scanline + 1);
+		general_invalidate(FLAG_BORDER_MODIFIED, scanline + 1);
 	}
 
 	new_border_position = cpu_gethorzbeampos();
@@ -842,6 +868,8 @@ int videomap_init(const struct videomap_config *config)
 {
 	int memory_flags;
 
+	videomap_timer = mame_timer_alloc(videomap_timerproc);
+
 	/* check parameters for obvious problems */
 	assert(config);
 	assert(config->intf);
@@ -885,6 +913,8 @@ int videomap_init(const struct videomap_config *config)
 	videomap_reset();
 	return 0;
 }
+
+
 
 void videomap_reset(void)
 {

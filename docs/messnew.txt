@@ -11,6 +11,11 @@ System Driver Changes:
 - [ATARI] Miscellaneous cleanups, and implemented Atari 5200 joystick top
   triggers. (bug #328) [Nate Woods]
 
+- [COCO3] Video timing fixes and cleanupts; certain SockMaster demos run
+  better now.  Also, fixed a bug that caused problems if a cartridge was ran
+  and then the emulation was restarted without a cartridge in the same session.
+  [Nate Woods]
+
 - [PC] Complete 8237 DMA and 8253 PIT rewrites, and associated changes in the
   NEC765, 8259 PIC, FDC and HDC implementations.  The new 8237 and 8253
   implementations are cleaner and purer hardware emulations and should be

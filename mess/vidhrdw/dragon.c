@@ -449,7 +449,7 @@ VIDEO_START( coco3 )
 	p.ramsize = mess_ram_size;
 	p.charproc = coco2b_charproc;
 	p.hs_func = coco3_m6847_hs_w;
-	p.fs_func = coco_m6847_fs_w;
+	p.fs_func = coco3_m6847_fs_w;
 
 	/* initialize palette RAM */
 	paletteram = auto_malloc(16 * sizeof(int));
@@ -651,57 +651,27 @@ int coco3_calculate_rows(int *bordertop, int *borderbottom)
 	int t = 0;
 	int b = 0;
 
-	/* The bordertop and borderbottom return values are used for calculating
-	 * field sync timing.  Unfortunately, I cannot seem to find an agreement
-	 * about how exactly field sync works..
-	 *
-	 * What I do know is that FS goes high at the top of the screen, and goes
-	 * low (forcing an VBORD interrupt) at the bottom of the visual area.
-	 *
-	 * Unfortunately, I cannot get a straight answer about how many rows each
-	 * of the three regions (leading edge --> visible top; visible top -->
-	 * visible bottom/trailing edge; visible bottom/trailing edge --> leading
-	 * edge) takes up.  Adding the fact that each of the different LPR
-	 * settings most likely has a different set of values.  Here is a summary
-	 * of what I know from different sources:
-	 *
-	 * In the January 1987 issue of Rainbow Magazine, there is a program called
-	 * COLOR3 that uses midframe palette rotation to show all 64 colors on the
-	 * screen at once.  The first box is at line 32, but it waits for 70 HSYNC
-	 * transitions before changing
-	 *
-	 * SockMaster email: 43/192/28, 41/199/23, 132/0/131, 26/225/12
-	 * m6847 reference:  38/192/32
-	 * COLOR3            38/192/32
-	 */
 
 	switch((coco3_gimevhreg[1] & 0x60) >> 5) {
 	case 0:
 		rows = 192;
-		t = 43;
-		b = 28;
+		t = coco3_vidvars.bordertop_192;
 		break;
 	case 1:
 		rows = 199;
-		t = 41;
-		b = 23;
+		t = coco3_vidvars.bordertop_199;
 		break;
 	case 2:
 		rows = 0;	/* NYI - This is "zero/infinite" lines, according to Sock Master */
-		t = 132;
-		b = 131;
+		t = coco3_vidvars.bordertop_0;
 		break;
 	case 3:
 		rows = 225;
-		t = 26;
-		b = 12;
+		t = coco3_vidvars.bordertop_225;
 		break;
 	}
 
-#ifdef REORDERED_VBLANK
-	t -= 4;
-	b -= 4;
-#endif
+	b = 263 - rows - b;
 
 	if (bordertop)
 		*bordertop = t;

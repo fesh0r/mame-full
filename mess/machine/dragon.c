@@ -83,8 +83,6 @@ static WRITE_HANDLER ( d_pia1_pb_w );
 static WRITE_HANDLER ( coco3_pia1_pb_w );
 static WRITE_HANDLER ( d_pia1_pa_w );
 static READ_HANDLER (  d_pia1_cb1_r );
-static READ_HANDLER (  d_pia0_ca1_r );
-static READ_HANDLER (  d_pia0_cb1_r );
 static READ_HANDLER (  d_pia0_pa_r );
 static READ_HANDLER (  d_pia1_pa_r );
 static READ_HANDLER (  d_pia1_pb_r_coco );
@@ -165,11 +163,61 @@ static unsigned coco_dasm_override(int cpunum, char *buffer, unsigned pc);
 #endif /* MAME_DEBUG */
 
 
+/* ----------------------------------------------------------------------- */
+/* The bordertop and borderbottom return values are used for calculating
+ * field sync timing.  Unfortunately, I cannot seem to find an agreement
+ * about how exactly field sync works..
+ *
+ * What I do know is that FS goes high at the top of the screen, and goes
+ * low (forcing an VBORD interrupt) at the bottom of the visual area.
+ *
+ * Unfortunately, I cannot get a straight answer about how many rows each
+ * of the three regions (leading edge --> visible top; visible top -->
+ * visible bottom/trailing edge; visible bottom/trailing edge --> leading
+ * edge) takes up.  Adding the fact that each of the different LPR
+ * settings most likely has a different set of values.  Here is a summary
+ * of what I know from different sources:
+ *
+ * In the January 1987 issue of Rainbow Magazine, there is a program called
+ * COLOR3 that uses midframe palette rotation to show all 64 colors on the
+ * screen at once.  The first box is at line 32, but it waits for 70 HSYNC
+ * transitions before changing
+ *
+ * SockMaster email: 43/192/28, 41/199/23, 132/0/131, 26/225/12
+ * m6847 reference:  38/192/32
+ * COLOR3            38/192/32
+ *
+ * Notes of interest:  Below are some observations of key programs and what
+ * they rely on:
+ *
+ *		COLOR3:
+ *			 (fs_pia_flip ? fall_scanline : rise_scanline) = border_top - 32
+ */
+
+const struct coco3_video_vars coco3_vidvars =
+{
+	/* border tops */
+	38,	36, 132, 25,
+
+	/* gime flip (hs/fs) */
+	0, 0,
+
+	/* pia flip (hs/fs) */
+	1, 1,
+
+	/* rise scanline & fall scanline */
+	258, 6
+};
+
+
+
+/* ----------------------------------------------------------------------- */
+
 static struct pia6821_interface coco_pia_intf[] =
 {
 	/* PIA 0 */
 	{
-		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, d_pia0_ca1_r, d_pia0_cb1_r, 0, 0,
+		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, 0, 0, 0, 0,
 		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
 		/*irqs	 : A/B			   */ d_pia0_irq_a, d_pia0_irq_b
 	},
@@ -186,7 +234,7 @@ static struct pia6821_interface coco2_pia_intf[] =
 {
 	/* PIA 0 */
 	{
-		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, d_pia0_ca1_r, d_pia0_cb1_r, 0, 0,
+		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, 0, 0, 0, 0,
 		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
 		/*irqs	 : A/B			   */ d_pia0_irq_a, d_pia0_irq_b
 	},
@@ -203,7 +251,7 @@ static struct pia6821_interface coco3_pia_intf[] =
 {
 	/* PIA 0 */
 	{
-		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, d_pia1_pb_r_coco2, d_pia0_ca1_r, d_pia0_cb1_r, 0, 0,
+		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, d_pia1_pb_r_coco2, 0, 0, 0, 0,
 		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
 		/*irqs	 : A/B			   */ coco3_pia0_irq_a, coco3_pia0_irq_b
 	},
@@ -220,14 +268,14 @@ static struct pia6821_interface dragon64_pia_intf[] =
 {
 	/* PIA 0 */
 	{
-		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, d_pia0_ca1_r, d_pia0_cb1_r, 0, 0,
+		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, 0, 0, 0, 0,
 		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
 		/*irqs	 : A/B			   */ d_pia0_irq_a, d_pia0_irq_b
 	},
 
 	/* PIA 1 */
 	{
-		/*inputs : A/B,CA/B1,CA/B2 */ d_pia1_pa_r, d_pia1_pb_r_coco, 0, d_pia1_cb1_r, 0, 0,
+		/*inputs : A/B,CA/B1,CA/B2 */ d_pia1_pa_r, d_pia1_pb_r_coco, 0, 0, 0, 0,
 		/*outputs: A/B,CA/B2	   */ d_pia1_pa_w, dragon64_pia1_pb_w, d_pia1_ca2_w, d_pia1_cb2_w,
 		/*irqs	 : A/B			   */ d_pia1_firq_a, d_pia1_firq_b
 	}
@@ -476,47 +524,42 @@ static int generic_rom_load(mess_image *img, mame_file *fp, UINT8 *dest, UINT16 
 	UINT8 *rombase;
 	int   romsize;
 
-	cart_inserted = 0;
+	romsize = mame_fsize(fp);
 
-	if (fp) {
+	/* The following hack is for Arkanoid running on the CoCo2.
+		The issuse is the CoCo2 hardware only allows the cartridge
+		interface to access 0xC000-0xFEFF (16K). The Arkanoid ROM is
+		32K starting at 0x8000. The first 16K is totally inaccessable
+		from a CoCo2. Thus we need to skip ahead in the ROM file. On
+		the CoCo3 the entire 32K ROM is accessable. */
 
-		romsize = mame_fsize(fp);
-
-		/* The following hack is for Arkanoid running on the CoCo2.
-		   The issuse is the CoCo2 hardware only allows the cartridge
-		   interface to access 0xC000-0xFEFF (16K). The Arkanoid ROM is
-		   32K starting at 0x8000. The first 16K is totally inaccessable
-		   from a CoCo2. Thus we need to skip ahead in the ROM file. On
-		   the CoCo3 the entire 32K ROM is accessable. */
-
-		if (image_crc(img) == 0x25C3AA70)     /* Test for Arkanoid  */
+	if (image_crc(img) == 0x25C3AA70)     /* Test for Arkanoid  */
+	{
+		if ( destlength == 0x4000 )						/* Test if CoCo2      */
 		{
-			if ( destlength == 0x4000 )						/* Test if CoCo2      */
-			{
-				mame_fseek( fp, 0x4000, SEEK_SET );			/* Move ahead in file */
-				romsize -= 0x4000;							/* Adjust ROM size    */
-			}
+			mame_fseek( fp, 0x4000, SEEK_SET );			/* Move ahead in file */
+			romsize -= 0x4000;							/* Adjust ROM size    */
 		}
+	}
 
+	if (romsize > destlength)
+		romsize = destlength;
+
+	mame_fread(fp, dest, romsize);
+
+	cart_inserted = 1;
+
+	/* Now we need to repeat the mirror the ROM throughout the ROM memory */
+	rombase = dest;
+	dest += romsize;
+	destlength -= romsize;
+	while(destlength > 0)
+	{
 		if (romsize > destlength)
 			romsize = destlength;
-
-		mame_fread(fp, dest, romsize);
-
-		cart_inserted = 1;
-
-		/* Now we need to repeat the mirror the ROM throughout the ROM memory */
-		rombase = dest;
+		memcpy(dest, rombase, romsize);
 		dest += romsize;
 		destlength -= romsize;
-		while(destlength > 0)
-		{
-			if (romsize > destlength)
-				romsize = destlength;
-			memcpy(dest, rombase, romsize);
-			dest += romsize;
-			destlength -= romsize;
-		}
 	}
 	return INIT_PASS;
 }
@@ -739,8 +782,8 @@ WRITE_HANDLER( coco3_m6847_hs_w )
 {
 	if (data)
 		coco3_timer_hblank();
-	pia_0_ca1_w(0, !data);
-	coco3_raise_interrupt(COCO3_INT_HBORD, data);
+	pia_0_ca1_w(0, coco3_vidvars.hs_pia_flip ? !data : data);
+	coco3_raise_interrupt(COCO3_INT_HBORD, coco3_vidvars.hs_gime_flip ? !data : data);
 }
 
 INTERRUPT_GEN( coco3_vh_interrupt )
@@ -757,12 +800,9 @@ INTERRUPT_GEN( coco3_vh_interrupt )
 	else if (scanline >= border_top+body_scanlines)
 		coco3_raise_interrupt(COCO3_INT_VBORD, ASSERT_LINE);
 
-#ifdef REORDERED_VBLANK
-	internal_m6847_vh_interrupt(scanline, 0, 263-4);
-#else
-	internal_m6847_vh_interrupt(scanline, 4, 0);
-#endif
+	internal_m6847_vh_interrupt(scanline, coco3_vidvars.rise_scanline, coco3_vidvars.fall_scanline);
 }
+
 
 
 WRITE_HANDLER( coco3_m6847_fs_w )
@@ -770,8 +810,8 @@ WRITE_HANDLER( coco3_m6847_fs_w )
 #if LOG_VBORD
 	logerror("coco3_m6847_fs_w(): data=%i scanline=%i\n", data, cpu_getscanline());
 #endif
-	pia_0_cb1_w(0, data);
-	coco3_raise_interrupt(COCO3_INT_VBORD, !data);
+	pia_0_cb1_w(0, coco3_vidvars.fs_pia_flip ? !data : data);
+	coco3_raise_interrupt(COCO3_INT_VBORD, coco3_vidvars.fs_gime_flip ? !data : data);
 }
 
 /***************************************************************************
@@ -997,16 +1037,6 @@ static void soundmux_sel2_w(int data)
   PIA0 CB1		- M6847 FS (Field Sync)
   PIA0 CB2		- SEL2 (Used by sound mux and joystick)
 ***************************************************************************/
-
-static READ_HANDLER ( d_pia0_ca1_r )
-{
-	return m6847_hs_r(0);
-}
-
-static READ_HANDLER ( d_pia0_cb1_r )
-{
-	return m6847_fs_r(0);
-}
 
 static WRITE_HANDLER ( d_pia0_ca2_w )
 {
@@ -2236,6 +2266,14 @@ MACHINE_STOP( coco )
 
 DRIVER_INIT( coco )
 {
+	/* this is an ugly trick to take into account that we cannot count on
+	 * cart_inserted being zero when we start up.  If a previous session
+	 * set cart_inserted then this will clear it out */
+	if (cart_inserted == 1)
+		cart_inserted++;
+	else if (cart_inserted == 2)
+		cart_inserted = 0;
+
 	pia_init(2);
 	sam_init();
 
