@@ -7,7 +7,8 @@ Note: .inp record/playback does still not work currently.
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-...
+NEC PC8801SR [Shouhei Nishi]
+Emerson Arcadia 2001 (preliminary) [PeT]
 
 System Driver Changes:
 ----------------------
