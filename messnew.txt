@@ -9,7 +9,7 @@ System Driver Changes:
 - [SNES] SRAM is now saved/restored correctly. Allow DMA registers to be read.
   More colour addition/subtraction improvements. Fixed the palette not updating
   in some situations. Improved fixed-colour support. Fixed object drawing at
-  the left and top edges. [Anthony Kruize]
+  the left and top edges. Added support for clip windows. [Anthony Kruize]
 
 - [SNESPAL] Now informs carts that it's a PAL system. Corrected maximum line
   count. [Anthony Kruize]
