@@ -836,10 +836,11 @@ static WRITE16_HANDLER ( ti99_ww_wspeech )
 	if (! tms5220_ready_r())
 	{
 		double time_to_ready = tms5220_time_to_ready();
-		double time_to_ready_i = ceil(3000000*time_to_ready);
-		logerror("time to ready: %f -> %d\n", time_to_ready, (int) time_to_ready_i);
+		int cycles_to_ready = ceil(TIME_TO_CYCLES(0, time_to_ready));
 
-		tms9900_ICount -= time_to_ready_i;
+		logerror("time to ready: %f -> %d\n", time_to_ready, (int) cycles_to_ready);
+
+		tms9900_ICount -= cycles_to_ready;
 		timer_set(TIME_NOW, 0, /*speech_kludge_callback*/NULL);
 	}
 #endif
