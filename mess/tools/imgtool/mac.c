@@ -1793,7 +1793,7 @@ IMAGEMODULE(
 )
 
 /*
-	Open a file as a ti99_image (common code).
+	Open a file as a mfs image (common code).
 */
 static int mfs_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 {
@@ -1818,7 +1818,7 @@ static int mfs_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outi
 }
 
 /*
-	close a ti99_image
+	close a mfs image
 */
 static void mfs_image_exit(IMAGE *img)
 {
@@ -1828,7 +1828,7 @@ static void mfs_image_exit(IMAGE *img)
 }
 
 /*
-	get basic information on a ti99_image
+	get basic information on a mfs image
 
 	Currently returns the volume name
 */

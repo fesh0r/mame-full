@@ -121,7 +121,7 @@
 	Cartridge emulator:
 
 	The cartridge interface is in the >6000->7fff area.
-	
+
 	If CRU bit @>F7C is set, the cartridge area is always mapped to virtual
 	page >36.  Writes in the >6000->6fff area are ignored if the CRU bit @>F7D
 	is 0, whereas writes in the >7000->7fff area are ignored if the CRU bit
@@ -129,7 +129,7 @@
 
 	If CRU bit @>F7C is clear, the cartridge area is mapped either to virtual
 	page >36 or to page >37 according to which page is currently selected.
-	Writing data to address >6000->6fff will select page >36 if A14 is 0,
+	Writing data to address >6000->7fff will select page >36 if A14 is 0,
 	>37 if A14 is 1.
 
 
@@ -162,9 +162,11 @@
 	Bits 2-4: tms9995 interrupt state register
 	Bits 5-15: tms9995 user flags - overlaps geneve mode, but hopefully the
 	  geneve registers are write-only, so no real conflict happens
+	TMS9995 user flags:
 	Bit 5: 0 if NTSC, 1 if PAL video
 	Bit 6: unused???
 	Bit 7: some keyboard flag, set to 1 if caps is on
+	Geneve gate array + TMS9995 user flags:
 	Bit 8: 1 = allow keyboard clock
 	Bit 9: 0 = clear keyboard input buffer, 1 = allow keyboard buffer to be
 	  loaded
