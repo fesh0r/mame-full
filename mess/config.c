@@ -30,6 +30,7 @@ struct config_hdl {
 	const char *section;
 	int instance;
 	struct config_var *list;
+    struct config_var *end_of_list; // to avoid n*(n/2) runtime complexity when appending
 };
 
 INLINE unsigned xtoul(char **p, int *size)
@@ -512,16 +513,19 @@ void config_load_section(void *config, const char *section, int instance)
                 if (cfg->list)
 				{
 					/* next config_var */
-					v = cfg->list;
-					while (v->next)
-						v = v->next;
-					v->next = malloc(sizeof (struct config_var));
-					v = v->next;
+
+					/* avoids walking through linear list
+					   nes.crc has over 8000 entrys
+					   for nes 8000*(8000/2)=32000000 operations saved*/
+					v=malloc(sizeof(struct config_var));
+					cfg->end_of_list->next=v;
+					cfg->end_of_list=v;
 				}
 				else
 				{
 					/* first config_var */
 					cfg->list = malloc(sizeof (struct config_var));
+					cfg->end_of_list=cfg->list;
 					v = cfg->list;
 				}
 				if (!v)
@@ -552,10 +556,7 @@ void config_load_section(void *config, const char *section, int instance)
 						if (v->size * element_size >= v->chunk)
 						{
 							v->chunk += CHUNK_SIZE;
-							if (v->data)
-								v->data = realloc(v->data, v->chunk);
-							else
-								v->data = malloc(v->chunk);
+							v->data = realloc(v->data, v->chunk);
 						}
 						/* check if the (re-)allocation failed */
 						if (!v->data)
@@ -567,11 +568,14 @@ void config_load_section(void *config, const char *section, int instance)
 						switch (element_size)
 						{
 						case 1:
-							*((UINT8 *)v->data + v->size) = data;
-						case 2:
-							*((UINT16 *)v->data + v->size) = data;
-						case 4:
-							*((UINT32 *)v->data + v->size) = data;
+						    *((UINT8 *)v->data + v->size) = data; // v->size incremented before data stored???
+						    break;
+						case 2: // this is a fault for all cpus which force aligned memory accesses
+						    *((UINT16 *)v->data + v->size) = data;
+						    break;
+						case 4: // this is a fault for all cpus which force aligned memory accesses
+						    *((UINT32 *)v->data + v->size) = data;
+						    break;
 						}
 						data = xtoul(&p, NULL);
 					} while (*p);
@@ -586,10 +590,7 @@ void config_load_section(void *config, const char *section, int instance)
 						if (v->size * element_size >= v->chunk)
 						{
 							v->chunk += CHUNK_SIZE;
-							if (v->data)
-								v->data = realloc(v->data, v->chunk);
-							else
-								v->data = malloc(v->chunk);
+							v->data = realloc(v->data, v->chunk);
 						}
 						/* check if the (re-)allocation failed */
 						if (!v->data)
