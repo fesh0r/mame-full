@@ -53,6 +53,10 @@ Source Changes:
 - Introduced automated messtest testing facility, in order to prevent
   regressions in the future.  [Nate Woods]
 
+- Internal error reporting enhancements for image loading; still some work to
+  do.  [Nate Woods]
+  
+
 
 0.78
 

@@ -1,4 +1,5 @@
 #include <time.h>
+#include <ctype.h>
 
 #include "inputx.h"
 #include "messtest.h"
@@ -18,6 +19,8 @@ enum messtest_messagetype
 	MSG_PREFAILURE
 };
 
+static struct KeyboardInfo *ki;
+static struct JoystickInfo *ji;
 static const struct messtest_testcase *current_testcase;
 static enum messtest_state state;
 static double wait_target;
@@ -27,6 +30,7 @@ static int abort_test;
 static int test_flags;
 static int screenshot_num;
 static UINT64 runtime_hash;
+static const struct ik *current_fake_input;
 
 static void message(enum messtest_messagetype msgtype, const char *fmt, ...);
 
@@ -131,6 +135,8 @@ enum messtest_result run_test(const struct messtest_testcase *testcase, int flag
 	begin_time = clock();
 	run_game(driver_num);
 	real_run_time = ((double) (clock() - begin_time)) / CLOCKS_PER_SEC;
+	ki = NULL;
+	ji = NULL;
 
 	/* what happened? */
 	switch(state) {
@@ -205,25 +211,284 @@ static void find_switch(const char *switch_name, const char *switch_setting,
 }
 
 
+/* ----------------------------------------------------------------------- */
 
-void osd_update_video_and_audio(struct mame_display *display)
+static void command_wait(void)
 {
-	int i;
+	double current_time = timer_get_time();
+
+	if (state == STATE_READY)
+	{
+		/* beginning a wait command */
+		wait_target = current_time + current_command->u.wait_time;
+		state = STATE_INCOMMAND;
+	}
+	else
+	{
+		/* during a wait command */
+		state = (current_time >= wait_target) ? STATE_READY : STATE_INCOMMAND;
+	}
+}
+
+
+
+static void command_input(void)
+{
+	/* post a set of characters to the emulation */
+	if (state == STATE_READY)
+	{
+		if (!inputx_can_post())
+		{
+			message(MSG_FAILURE, "Natural keyboard input not supported for this driver");
+			return;
+		}
+
+		inputx_post_utf8(current_command->u.input_chars);
+	}
+	state = inputx_is_posting() ? STATE_INCOMMAND : STATE_READY;
+}
+
+
+
+static void command_rawinput(void)
+{
+	int i, parts;
+	double rate = TIME_IN_SEC(1);
+	const char *s;
+	double current_time = timer_get_time();
+	char buf[256];
+	static const char *position;
+
+	if (state == STATE_READY)
+	{
+		/* beginning of a raw input command */
+		parts = 1;
+		position = current_command->u.input_chars;
+		wait_target = current_time;
+		state = STATE_INCOMMAND;
+	}
+	else if (current_time > wait_target)
+	{
+		do
+		{
+			/* process the next command */
+			while(!isspace(*position))
+				position++;
+
+			/* look up the input to trigger */
+			for (i = 0; input_keywords[i].name; i++)
+			{
+				if (!strncmp(position, input_keywords[i].name, strlen(input_keywords[i].name)))
+					break;
+			}
+
+			/* go to next command */
+			position = strchr(position, ',');
+			if (position)
+				position++;
+		}
+		while(position && !input_keywords[i].name);
+
+		current_fake_input = input_keywords[i].name ? &input_keywords[i] : NULL;
+		if (position)
+			wait_target = current_time + rate;
+		else
+			state = STATE_READY;
+	}
+}
+
+
+
+static void command_screenshot(void)
+{
+	dump_screenshot();
+}
+
+
+
+static void command_switch(void)
+{
+	struct InputPort *switch_name;
+	struct InputPort *switch_setting;
+
+	find_switch(current_command->u.switch_args.name, current_command->u.switch_args.value,
+		IPT_DIPSWITCH_NAME, IPT_DIPSWITCH_SETTING, &switch_name, &switch_setting);
+
+	if (!switch_name || !switch_setting)
+	{
+		find_switch(current_command->u.switch_args.name, current_command->u.switch_args.value,
+			IPT_CONFIG_NAME, IPT_CONFIG_SETTING, &switch_name, &switch_setting);
+	}
+
+	if (!switch_name)
+	{
+		message(MSG_FAILURE, "Cannot find switch named '%s'", current_command->u.switch_args.name);
+		return;
+	}
+
+	if (!switch_setting)
+	{
+		message(MSG_FAILURE, "Cannot find setting '%s' on switch '%s'",
+			current_command->u.switch_args.value, current_command->u.switch_args.name);
+		return;
+	}
+
+	switch_name->default_value = switch_setting->default_value;
+}
+
+
+static void command_image_preload(void)
+{
+	message(MSG_FAILURE, "Image preloads must be at the beginning");
+}
+
+
+static void command_image_loadcreate(void)
+{
+	mess_image *image;
 	int device_type;
 	int device_slot;
+	const char *filename;
+	char buf[128];
+
+	device_slot = current_command->u.image_args.device_slot;
+	device_type = current_command->u.image_args.device_type;
+
+	image = image_from_devtype_and_index(device_type, device_slot);
+	if (!image)
+	{
+		message(MSG_FAILURE, "Image slot '%s %i' does not exist",
+			device_typename(device_type), device_slot);
+		return;
+	}
+
+	filename = current_command->u.image_args.filename;
+	if (!filename)
+	{
+		snprintf(buf, sizeof(buf) / sizeof(buf[0]),	"%s.%s",
+			current_testcase->name,
+			device_find(Machine->gamedrv, device_type)->file_extensions);
+		filename = buf;
+	}
+
+	/* actually create or load the image */
+	switch(current_command->command_type) {
+	case MESSTEST_COMMAND_IMAGE_CREATE:
+		if (image_create(image, filename, 0, NULL))
+		{
+			message(MSG_FAILURE, "Failed to create image '%s': %s", filename, image_error(image));
+			return;
+		}
+		break;
+	
+	case MESSTEST_COMMAND_IMAGE_LOAD:
+		if (image_load(image, filename))
+		{
+			message(MSG_FAILURE, "Failed to load image '%s': %s", filename, image_error(image));
+			return;
+		}
+		break;
+	}
+}
+
+
+
+static void command_image_verify_memory(void)
+{
+	int i = 0;
 	offs_t offset, offset_start, offset_end;
 	const UINT8 *verify_data;
 	size_t verify_data_size;
 	const UINT8 *target_data;
 	size_t target_data_size;
+	int region;
+
+	offset_start = current_command->u.verify_args.start;
+	offset_end = current_command->u.verify_args.end;
+	verify_data = (const UINT8 *) current_command->u.verify_args.verify_data;
+	verify_data_size = current_command->u.verify_args.verify_data_size;
+
+	region = current_command->u.verify_args.mem_region;
+	if (region)
+	{
+		target_data = memory_region(region);
+		target_data_size = memory_region_length(region);
+	}
+	else
+	{
+		target_data = mess_ram;
+		target_data_size = mess_ram_size;
+	}
+
+	/* sanity check the ranges */
+	if (!verify_data || (verify_data_size <= 0))
+	{
+		message(MSG_FAILURE, "Invalid memory region during verify");
+		return;
+	}
+	if (offset_start > offset_end)
+	{
+		message(MSG_FAILURE, "Invalid verify offset range (0x%x-0x%x)", offset_start, offset_end);
+		return;
+	}
+	if (offset_end >= target_data_size)
+	{
+		message(MSG_FAILURE, "Verify memory range out of bounds");
+		return;
+	}
+
+	for (offset = offset_start; offset <= offset_end; offset++)
+	{
+		if (verify_data[i] != target_data[offset])
+		{
+			message(MSG_FAILURE, "Failed verification step (REGION_%s; 0x%x-0x%x)",
+				memory_region_to_string(region), offset_start, offset_end);
+			break;
+		}
+		i = (i + 1) % verify_data_size;
+	}
+}
+
+
+
+static void command_end(void)
+{
+	/* at the end of our test */
+	state = STATE_DONE;
+	final_time = timer_get_time();
+}
+
+
+
+/* ----------------------------------------------------------------------- */
+
+struct command_procmap_entry
+{
+	enum messtest_command_type command_type;
+	void (*proc)(void);
+};
+
+static struct command_procmap_entry commands[] =
+{
+	{ MESSTEST_COMMAND_WAIT,			command_wait },
+	{ MESSTEST_COMMAND_INPUT,			command_input },
+	{ MESSTEST_COMMAND_RAWINPUT,		command_rawinput },
+	{ MESSTEST_COMMAND_SCREENSHOT,		command_screenshot },
+	{ MESSTEST_COMMAND_SWITCH,			command_switch },
+	{ MESSTEST_COMMAND_IMAGE_PRELOAD,	command_image_preload },
+	{ MESSTEST_COMMAND_IMAGE_LOAD,		command_image_loadcreate },
+	{ MESSTEST_COMMAND_IMAGE_CREATE,	command_image_loadcreate },
+	{ MESSTEST_COMMAND_VERIFY_MEMORY,	command_image_verify_memory },
+	{ MESSTEST_COMMAND_END,				command_end }
+};
+
+void osd_update_video_and_audio(struct mame_display *display)
+{
+	int i;
 	double time_limit;
 	double current_time;
 	int region;
 	const char *filename;
-	char buf[128];
-	mess_image *image;
-	struct InputPort *switch_name;
-	struct InputPort *switch_setting;
 	int cpunum;
 
 	/* if we have already aborted or completed, our work is done */
@@ -247,165 +512,13 @@ void osd_update_video_and_audio(struct mame_display *display)
 		runtime_hash ^= cpunum_get_reg(cpunum, REG_PC);	/* TODO - Add more registers? */
 	}
 
-	switch(current_command->command_type) {
-	case MESSTEST_COMMAND_WAIT:
-		if (state == STATE_READY)
+	for (i = 0; i < sizeof(commands) / sizeof(commands[i]); i++)
+	{
+		if (current_command->command_type == commands[i].command_type)
 		{
-			/* beginning a wait command */
-			wait_target = current_time + current_command->u.wait_time;
-			state = STATE_INCOMMAND;
-		}
-		else
-		{
-			/* during a wait command */
-			state = (current_time >= wait_target) ? STATE_READY : STATE_INCOMMAND;
-		}
-		break;
-
-	case MESSTEST_COMMAND_INPUT:
-		/* post a set of characters to the emulation */
-		if (state == STATE_READY)
-		{
-			if (!inputx_can_post())
-			{
-				message(MSG_FAILURE, "Natural keyboard input not supported for this driver");
-				break;
-			}
-
-			inputx_post_utf8(current_command->u.input_chars);
-		}
-		state = inputx_is_posting() ? STATE_INCOMMAND : STATE_READY;
-		break;
-
-	case MESSTEST_COMMAND_SCREENSHOT:
-		dump_screenshot();
-		break;
-
-	case MESSTEST_COMMAND_SWITCH:
-		find_switch(current_command->u.switch_args.name, current_command->u.switch_args.value,
-			IPT_DIPSWITCH_NAME, IPT_DIPSWITCH_SETTING, &switch_name, &switch_setting);
-
-		if (!switch_name || !switch_setting)
-		{
-			find_switch(current_command->u.switch_args.name, current_command->u.switch_args.value,
-				IPT_CONFIG_NAME, IPT_CONFIG_SETTING, &switch_name, &switch_setting);
-		}
-
-		if (!switch_name)
-		{
-			message(MSG_FAILURE, "Cannot find switch named '%s'", current_command->u.switch_args.name);
+			commands[i].proc();
 			break;
 		}
-
-		if (!switch_setting)
-		{
-			message(MSG_FAILURE, "Cannot find setting '%s' on switch '%s'",
-				current_command->u.switch_args.value, current_command->u.switch_args.name);
-			break;
-		}
-
-		switch_name->default_value = switch_setting->default_value;
-		break;
-
-	case MESSTEST_COMMAND_IMAGE_PRELOAD:
-		message(MSG_FAILURE, "Image preloads must be at the beginning");
-		break;
-
-	case MESSTEST_COMMAND_IMAGE_CREATE:
-	case MESSTEST_COMMAND_IMAGE_LOAD:
-		device_slot = current_command->u.image_args.device_slot;
-		device_type = current_command->u.image_args.device_type;
-
-		image = image_from_devtype_and_index(device_type, device_slot);
-		if (!image)
-		{
-			message(MSG_FAILURE, "Image slot '%s %i' does not exist",
-				device_typename(device_type), device_slot);
-			break;
-		}
-
-		filename = current_command->u.image_args.filename;
-		if (!filename)
-		{
-			snprintf(buf, sizeof(buf) / sizeof(buf[0]),	"%s.%s",
-				current_testcase->name,
-				device_find(Machine->gamedrv, device_type)->file_extensions);
-			filename = buf;
-		}
-
-		/* actually create or load the image */
-		switch(current_command->command_type) {
-		case MESSTEST_COMMAND_IMAGE_CREATE:
-			if (image_create(image, filename, 0, NULL))
-			{
-				message(MSG_FAILURE, "Failed to create image '%s'", filename);
-				break;
-			}
-			break;
-		
-		case MESSTEST_COMMAND_IMAGE_LOAD:
-			if (image_load(image, filename))
-			{
-				message(MSG_FAILURE, "Failed to load image '%s'", filename);
-				break;
-			}
-			break;
-		}
-		break;
-
-	case MESSTEST_COMMAND_VERIFY_MEMORY:
-		i = 0;
-		offset_start = current_command->u.verify_args.start;
-		offset_end = current_command->u.verify_args.end;
-		verify_data = (const UINT8 *) current_command->u.verify_args.verify_data;
-		verify_data_size = current_command->u.verify_args.verify_data_size;
-
-		region = current_command->u.verify_args.mem_region;
-		if (region)
-		{
-			target_data = memory_region(region);
-			target_data_size = memory_region_length(region);
-		}
-		else
-		{
-			target_data = mess_ram;
-			target_data_size = mess_ram_size;
-		}
-
-		/* sanity check the ranges */
-		if (!verify_data || (verify_data_size <= 0))
-		{
-			message(MSG_FAILURE, "Invalid memory region during verify");
-			break;
-		}
-		if (offset_start > offset_end)
-		{
-			message(MSG_FAILURE, "Invalid verify offset range (0x%x-0x%x)", offset_start, offset_end);
-			break;
-		}
-		if (offset_end >= target_data_size)
-		{
-			message(MSG_FAILURE, "Verify memory range out of bounds");
-			break;
-		}
-
-		for (offset = offset_start; offset <= offset_end; offset++)
-		{
-			if (verify_data[i] != target_data[offset])
-			{
-				message(MSG_FAILURE, "Failed verification step (REGION_%s; 0x%x-0x%x)",
-					memory_region_to_string(region), offset_start, offset_end);
-				break;
-			}
-			i = (i + 1) % verify_data_size;
-		}
-		break;
-
-	case MESSTEST_COMMAND_END:
-		/* at the end of our test */
-		state = STATE_DONE;
-		final_time = current_time;
-		break;
 	}
 
 	/* if we are ready for the next command, advance to it */
@@ -425,6 +538,65 @@ void osd_update_video_and_audio(struct mame_display *display)
 	}
 }
 
+
+
+#if 0
+/* still need to work out some kinks here */
+const struct KeyboardInfo *osd_get_key_list(void)
+{
+	int i;
+
+	if (!ki)
+	{
+		ki = auto_malloc((__code_key_last - __code_key_first + 1) * sizeof(struct KeyboardInfo));
+		if (!ki)
+			return NULL;
+
+		for (i = __code_key_first; i <= __code_key_last; i++)
+		{
+			ki[i - __code_key_first].name = "Dummy";
+			ki[i - __code_key_first].code = i;
+			ki[i - __code_key_first].standardcode = i;
+		}
+	}
+	return ki;
+}
+
+const struct JoystickInfo *osd_get_joy_list(void)
+{
+	int i;
+
+	if (!ji)
+	{
+		ji = auto_malloc((__code_joy_last - __code_joy_first + 1) * sizeof(struct JoystickInfo));
+		if (!ji)
+			return NULL;
+
+		for (i = __code_joy_first; i <= __code_joy_last; i++)
+		{
+			ji[i - __code_joy_first].name = "Dummy";
+			ji[i - __code_joy_first].code = i;
+			ji[i - __code_joy_first].standardcode = i;
+		}
+	}
+	return ji;
+}
+
+static int is_input_pressed(int inputcode)
+{
+	return 0;
+}
+
+int osd_is_joy_pressed(int joycode)
+{
+	return is_input_pressed(joycode);
+}
+
+int osd_is_key_pressed(int keycode)
+{
+	return is_input_pressed(keycode);
+}
+#endif
 
 
 char *rompath_extra;

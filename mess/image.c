@@ -21,6 +21,10 @@ struct _mess_image
 	tag_pool tagpool;
 	int (*get_open_mode)(mess_image *);
 
+	/* error related info */
+	image_error_t err;
+	char *err_message;
+
 	/* variables that are only non-zero when an image is mounted */
 	mame_file *fp;
 	UINT32 status;
@@ -91,6 +95,16 @@ void image_exit(mess_image *img)
   Mac floppy drives) may call this from within a driver.
 ****************************************************************************/
 
+static void image_clear_error(mess_image *img)
+{
+	img->err = IMAGE_ERROR_SUCCESS;
+	if (img->err_message)
+	{
+		free(img->err_message);
+		img->err_message = NULL;
+	}
+}
+
 static int image_load_internal(mess_image *img, const char *name, int is_create, int create_format, option_resolution *create_args)
 {
 	const struct IODevice *dev;
@@ -129,6 +143,9 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 	/* unload if we are loaded */
 	if (img->status & IMAGE_STATUS_ISLOADED)
 		image_unload(img);
+
+	/* clear out the error */
+	image_clear_error(img);
 	
 	/* if we are attempting to "load" NULL, then exit at this point */
 	if (!name)
@@ -143,7 +160,10 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 	{
 		newname = image_strdup(img, name);
 		if (!newname)
+		{
+			err = IMAGE_ERROR_OUTOFMEMORY;
 			goto error;
+		}
 	}
 	else
 		newname = NULL;
@@ -153,6 +173,7 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 
 	osd_image_load_status_changed(img, 0);
 
+	/* do we need to reset the CPU? */
 	if ((timer_get_time() > 0) && (dev->flags & DEVICE_LOAD_RESETS_CPU))
 		machine_reset();
 
@@ -167,7 +188,10 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 			file = image_fopen_custom(img, FILETYPE_IMAGE, img->effective_mode);
 		}
 		if (!file)
+		{
+			img->err = IMAGE_ERROR_FILENOTFOUND;
 			goto error;
+		}
 
 		/* if applicable, call device verify */
 		if (dev->imgverify && !image_has_been_created(img))
@@ -175,14 +199,23 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 			size = mame_fsize(file);
 			buffer = malloc(size);
 			if (!buffer)
+			{
+				img->err = IMAGE_ERROR_OUTOFMEMORY;
 				goto error;
+			}
 
 			if (mame_fread(file, buffer, (UINT32) size) != size)
+			{
+				img->err = IMAGE_ERROR_INVALIDIMAGE;
 				goto error;
+			}
 
 			err = dev->imgverify(buffer, size);
 			if (err)
+			{
+				img->err = IMAGE_ERROR_INVALIDIMAGE;
 				goto error;
+			}
 
 			mame_fseek(file, 0, SEEK_SET);
 
@@ -194,17 +227,24 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 	/* call device load or create */
 	if (image_has_been_created(img) && dev->create)
 	{
-		/* using device create */
 		err = dev->create(img, file, create_format, create_args);
 		if (err)
+		{
+			if (!img->err)
+				img->err = IMAGE_ERROR_UNSPECIFIED;
 			goto error;
+		}
 	}
 	else if (dev->load)
 	{
 		/* using device load */
 		err = dev->load(img, file);
 		if (err)
+		{
+			if (!img->err)
+				img->err = IMAGE_ERROR_UNSPECIFIED;
 			goto error;
+		}
 	}
 
 	img->status &= ~IMAGE_STATUS_ISLOADING;
@@ -265,6 +305,7 @@ static void image_unload_internal(mess_image *img, int is_final_unload)
 	}
 	pool_exit(&img->mempool);
 
+	image_clear_error(img);
 	img->status = 0;
 	img->name = NULL;
 	img->dir = NULL;
@@ -311,6 +352,42 @@ void image_unload_all(int ispreload)
 				image_unload_internal(img, TRUE);
 			}
 		}
+	}
+}
+
+
+
+/****************************************************************************
+  Error handling calls
+****************************************************************************/
+
+const char *image_error(mess_image *img)
+{
+	const char *messages[] =
+	{
+		NULL,
+		"Internal error",
+		"Unsupported",
+		"Out of memory",
+		"File not found",
+		"Invalid image",
+		"Unspecified error"
+	};
+
+	return img->err_message ? img->err_message : messages[img->err];
+}
+
+
+
+void image_seterror(mess_image *img, image_error_t err, const char *message)
+{
+	image_clear_error(img);
+	img->err = err;
+	if (message)
+	{
+		img->err_message = malloc(strlen(message) + 1);
+		if (img->err_message)
+			strcpy(img->err_message, message);
 	}
 }
 

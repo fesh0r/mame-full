@@ -66,16 +66,6 @@ const struct KeyboardInfo *osd_get_key_list(void)
 	return ki;
 }
 
-int osd_is_key_pressed(int keycode)
-{
-	return 0;
-}
-
-int osd_readkey_unicode(int flush)
-{
-	return 0;
-}
-
 const struct JoystickInfo *osd_get_joy_list(void)
 {
 	static const struct JoystickInfo ji[1];
@@ -83,6 +73,16 @@ const struct JoystickInfo *osd_get_joy_list(void)
 }
 
 int osd_is_joy_pressed(int joycode)
+{
+	return 0;
+}
+
+int osd_is_key_pressed(int keycode)
+{
+	return 0;
+}
+
+int osd_readkey_unicode(int flush)
 {
 	return 0;
 }

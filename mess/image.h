@@ -16,6 +16,17 @@
 #include "opresolv.h"
 #include "driver.h"
 
+typedef enum
+{
+	IMAGE_ERROR_SUCCESS,
+	IMAGE_ERROR_INTERNAL,
+	IMAGE_ERROR_UNSUPPORTED,
+	IMAGE_ERROR_OUTOFMEMORY,
+	IMAGE_ERROR_FILENOTFOUND,
+	IMAGE_ERROR_INVALIDIMAGE,
+	IMAGE_ERROR_UNSPECIFIED
+} image_error_t;
+
 /****************************************************************************
   A mess_image pointer represents one device entry; this could be an instance
   of a floppy drive or a printer.  The defining property is that either at
@@ -63,9 +74,15 @@ int image_load(mess_image *img, const char *name);
 int image_create(mess_image *img, const char *name, int create_format, option_resolution *create_args);
 void image_unload(mess_image *img);
 
+/* used to retrieve error information during image loading */
+const char *image_error(mess_image *img);
+
 /* used for driver init and machine init */
 int image_load_all(const struct GameDriver *gamedrv, int ispreload);
 void image_unload_all(int ispreload);
+
+/* used to set the error that occured during image loading */
+void image_seterror(mess_image *img, image_error_t err, const char *message);
 
 
 

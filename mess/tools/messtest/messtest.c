@@ -187,6 +187,11 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 			/* <input> - inputs natural keyboard data into a system */
 			state->current_command.command_type = MESSTEST_COMMAND_INPUT;
 		}
+		else if (!strcmp(tagname, "rawinput"))
+		{
+			/* <rawinput> - inputs raw data into a system */
+			state->current_command.command_type = MESSTEST_COMMAND_RAWINPUT;
+		}
 		else if (!strcmp(tagname, "switch"))
 		{
 			/* <switch> - switches a DIP switch/config setting */
@@ -494,6 +499,7 @@ static void data_handler(void *data, const XML_Char *s, int len)
 	case STATE_COMMAND:
 		switch(command->command_type) {
 		case MESSTEST_COMMAND_INPUT:
+		case MESSTEST_COMMAND_RAWINPUT:
 			str = (char *) command->u.input_chars;
 			old_len = str ? strlen(str) : 0;
 			str = pool_realloc(&state->pool, str, old_len + len + 1);
