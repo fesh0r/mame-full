@@ -82,6 +82,7 @@ typedef struct {
 
 STREAM *stream_open(const char *fname, int read_or_write);	/* similar params to osd_fopen */
 STREAM *stream_open_write_stream(int filesize);
+STREAM *stream_open_mem(void *buf, size_t sz);
 void stream_close(STREAM *f);
 size_t stream_read(STREAM *f, void *buf, size_t sz);
 size_t stream_write(STREAM *f, const void *buf, size_t sz);
@@ -534,6 +535,7 @@ enum {
 struct WaveExtra
 {
 	int (*nextfile)(IMAGE *img, imgtool_dirent *ent);
+	int (*readfile)(IMAGE *img, STREAM *destf);
 	int zeropulse;
 	int threshpulse;
 	int onepulse;
@@ -544,11 +546,12 @@ struct WaveExtra
 };
 
 #define WAVEMODULE(name,humanname,ext,zeropulse,onepulse,threshpulse,waveflags,blockheader,blockheadersize,\
-		nextfile,readfile,writefile,deletefile)	\
+		nextfile,readfilechunk)	\
 static int imgmodinit_##name(STREAM *f, IMAGE **outimg); \
 static struct WaveExtra waveextra_##name = \
 {						\
 	(nextfile),			\
+	(readfilechunk),	\
 	(zeropulse),		\
 	(onepulse),			\
 	(threshpulse),		\
@@ -573,9 +576,9 @@ struct ImageModule imgmod_##name = \
 	imgwave_nextenum,	\
 	imgwave_closeenum,	\
 	NULL,				\
-	(readfile),			\
-	(writefile),		\
-	(deletefile),		\
+	imgwave_readfile,	\
+	NULL,				\
+	NULL,				\
 	NULL,				\
 	NULL,				\
 	NULL,				\
@@ -592,6 +595,8 @@ void imgwave_exit(IMAGE *img);
 int imgwave_beginenum(IMAGE *img, IMAGEENUM **outenum);
 int imgwave_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 void imgwave_closeenum(IMAGEENUM *enumeration);
+int imgwave_readfile(IMAGE *img, const char *fname, STREAM *destf);
+
 int imgwave_seek(IMAGE *img, int pos);
 int imgwave_forward(IMAGE *img);
 int imgwave_read(IMAGE *img, UINT8 *buf, int bufsize);

@@ -315,6 +315,8 @@ int imgwave_read(IMAGE *img, UINT8 *buf, int bufsize)
 
 int imgwave_beginenum(IMAGE *img, IMAGEENUM **outenum)
 {
+	/* TODO - Enumerating wave images should be cached */
+
 	waveimage *wimg = (waveimage *) img;
 	waveimageenum *wenum;
 
@@ -354,5 +356,52 @@ void imgwave_closeenum(IMAGEENUM *enumeration)
 	free(wenum);
 }
 
+int imgwave_readfile(IMAGE *img, const char *fname, STREAM *destf)
+{
+	int err, pos;
+	imgtool_dirent ent;
+	IMAGEENUM *enumeration;
+	waveimageenum *wenum;
+	waveimage *wimg;
+	struct WaveExtra *extra;
+	char fnamebuf[256];
+
+	wimg = (waveimage *) img;
+	extra = (struct WaveExtra *) wimg->base.module->extra;
+
+	err = imgwave_beginenum(img, &enumeration);
+	if (err)
+		return err;
+	wenum = (waveimageenum *) enumeration;
+
+	memset(&ent, 0, sizeof(ent));
+	ent.fname = fnamebuf;
+	ent.fname_len = sizeof(fnamebuf);
+
+	do {
+		pos = wenum->pos;
+		err = imgwave_nextenum(enumeration, &ent);
+		if (ent.eof)
+			err = IMGTOOLERR_FILENOTFOUND;
+		if (err) {
+			imgwave_closeenum(enumeration);
+			return err;
+		}
+	}
+	while(strcmp(ent.fname, fname));
+	
+	imgwave_closeenum(enumeration);
+	enumeration = NULL;
+
+	err = imgwave_seek(img, pos);
+	if (err)
+		return err;
+
+	err = extra->readfile(img, destf);
+	if (err)
+		return err;
+
+	return 0;
+}
 
 

@@ -5,9 +5,7 @@
 #include "imgtool.h"
 
 static int cococas_nextfile(IMAGE *img, imgtool_dirent *ent);
-static int cococas_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int cococas_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *options);
-static int cococas_deletefile(IMAGE *img, const char *fname);
+static int cococas_readfile(IMAGE *img, STREAM *destf);
 
 static UINT8 blockheader[] = { 0x55, 0x3C };
 
@@ -19,9 +17,7 @@ WAVEMODULE(
 	WAVEIMAGE_LSB_FIRST,
 	blockheader, sizeof(blockheader) / sizeof(blockheader[0]),
 	cococas_nextfile,				/* enumerate next */
-	cococas_readfile,				/* read file */
-	cococas_writefile,				/* write file */
-	cococas_deletefile				/* delete file */
+	cococas_readfile				/* read file */
 )
 
 typedef struct {
@@ -132,18 +128,33 @@ static int cococas_nextfile(IMAGE *img, imgtool_dirent *ent)
 	return 0;
 }
 
-static int cococas_readfile(IMAGE *img, const char *fname, STREAM *destf)
+static int cococas_readfile(IMAGE *img, STREAM *destf)
 {
-	return IMGTOOLERR_UNIMPLEMENTED;
-}
+	int err;
+	casblock blk;
 
-static int cococas_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *options)
-{
-	return IMGTOOLERR_UNIMPLEMENTED;
-}
+	/* Read directory block */
+	err = readblock(img, &blk);
+	if (err)
+		return err;
+	
+	/* If block is not a filename block, fail */
+	if (blk.type != COCOCAS_BLOCKTYPE_FILENAME)
+		return IMGTOOLERR_CORRUPTIMAGE;
 
-static int cococas_deletefile(IMAGE *img, const char *fname)
-{
-	return IMGTOOLERR_UNIMPLEMENTED;
+	do {
+		err = readblock(img, &blk);
+		if (err)
+			return err;
+
+		if (blk.type == COCOCAS_BLOCKTYPE_DATA)
+			stream_write(destf, blk.data, blk.length);
+	}
+	while(blk.type == COCOCAS_BLOCKTYPE_DATA);
+
+	if (blk.type != COCOCAS_BLOCKTYPE_EOF)
+		return IMGTOOLERR_CORRUPTIMAGE;
+	
+	return 0;
 }
 

@@ -97,6 +97,22 @@ STREAM *stream_open_write_stream(int size)
 	return imgfile;
 }
 
+STREAM *stream_open_mem(void *buf, size_t sz)
+{
+	STREAM *imgfile;
+
+	imgfile = malloc(sizeof(STREAM));
+	if (!imgfile) return NULL;
+
+	imgfile->imgtype = IMG_MEM;
+	imgfile->write_protect = 0;
+	imgfile->u.m.pos = 0;
+
+	imgfile->u.m.bufsz = sz;
+	imgfile->u.m.buf = buf;
+	return imgfile;
+}
+
 void stream_close(STREAM *f)
 {
 	switch(f->imgtype) {
