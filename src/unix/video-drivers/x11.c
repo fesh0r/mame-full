@@ -140,7 +140,7 @@ static struct x_func_struct x_func[X11_MODE_COUNT] = {
 
 static const char *x11_mode_names[] = {
   "Normal",
-  "Xvideo",
+  "XVideo",
   "OpenGL",
   "Glide",
   "XIL"
