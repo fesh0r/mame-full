@@ -8,7 +8,7 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [PC] Cleanups; code simplified and CGA video slightly faster now [Nate Woods]
 
 
 

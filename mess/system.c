@@ -400,8 +400,9 @@ TESTDRIVER( ppc640 )	/* 1987 Amstrad PPC640								*/
 	DRIVER( ibmat )		/* 1985	IBM AT										*/
 TESTDRIVER( i8530286 )	/* 1988 IBM PS2 Model 30 286 (VGA)					*/
 	DRIVER( at )		/* 1987 AMI Bios and Diagnostics					*/
-	DRIVER( atvga ) 	/*													*/
+	DRIVER( atvga ) 	/* 19?? AT VGA										*/
 TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS			*/
+	DRIVER( at386 )		/* 19?? IBM AT 386									*/
 
 	/* SINCLAIR */
 TESTDRIVER( zx80 )		/* Sinclair ZX-80									*/

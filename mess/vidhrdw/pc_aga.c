@@ -143,7 +143,7 @@ void pc_aga_set_mode(AGA_MODE mode)
 extern void pc_aga_timer(void)
 {
 	switch (aga.mode) {
-	case AGA_COLOR: pc_cga_timer();break;
+	case AGA_COLOR: ;break;
 	case AGA_MONO: pc_mda_timer();break;
 	case AGA_OFF: break;
 	}
@@ -259,7 +259,7 @@ extern WRITE_HANDLER ( pc_aga_mda_w )
 WRITE_HANDLER ( pc_aga_cga_w )
 {
 	if (aga.mode==AGA_COLOR)
-		pc_CGA_w(offset, data);
+		pc_cga8_w(offset, data);
 }
 
 READ_HANDLER ( pc_aga_mda_r )
@@ -272,7 +272,7 @@ READ_HANDLER ( pc_aga_mda_r )
 READ_HANDLER ( pc_aga_cga_r )
 {
 	if (aga.mode==AGA_COLOR)
-		return pc_CGA_r(offset);
+		return pc_cga8_r(offset);
 	return 0xff;
 }
 
@@ -287,12 +287,12 @@ WRITE_HANDLER( pc200_cga_w )
 	switch(offset) {
 	case 4:
 		pc200.portd |= 0x20;
-		pc_CGA_w(offset,data);
+		pc_cga8_w(offset,data);
 		break;
 	case 8:
 		pc200.port8 = data;
 		pc200.portd |= 0x80;
-		pc_CGA_w(offset,data);
+		pc_cga8_w(offset,data);
 		break;
 	case 0xe:
 		pc200.portd = 0x1f;
@@ -315,27 +315,37 @@ WRITE_HANDLER( pc200_cga_w )
 		}
 		pc200.porte = data;
 		break;
+
 	default:
-		pc_CGA_w(offset,data);
+		pc_cga8_w(offset,data);
+		break;
 	}
 }
 
 READ_HANDLER ( pc200_cga_r )
 {
-	UINT8 data=0;
+	data8_t result = 0;
+
 	switch(offset) {
 	case 8:
-		return pc200.port8;
+		result = pc200.port8;
+		break;
+
 	case 0xd:
 		// after writing 0x80 to 0x3de, bits 7..5 of 0x3dd from the 2nd read must be 0
-		data=pc200.portd;
+		result=pc200.portd;
 		pc200.portd&=0x1f;
-		return data;
+		break;
+
 	case 0xe:
 		// 0x20 low cga
 		// 0x10 low special
-		return input_port_1_r(0)&0x38;
+		result = input_port_1_r(0)&0x38;
+		break;
+
 	default:
-		return pc_CGA_r(offset);
+		result = pc_cga8_r(offset);
+		break;
 	}
+	return result;
 }

@@ -210,12 +210,21 @@ static struct {
 	int offset1;
 } at_8042;
 
+
+
+static void dummy_set_address_mask(unsigned mask)
+{
+}
+
+
+
 void at_8042_init(AT8042_CONFIG *config)
 {
-	at_8042.type=config->type;
-	at_8042.set_address_mask=config->set_address_mask;
-	at_8042.inport=0xa0; // ibmat bios wants 0x20 set! (keyboard locked when not set)
-						//	0x80
+	at_8042.type = config->type;
+	at_8042.set_address_mask = config->set_address_mask ? config->set_address_mask : dummy_set_address_mask;
+
+	/* ibmat bios wants 0x20 set! (keyboard locked when not set) 0x80 */
+	at_8042.inport = 0xa0;	
 
 }
 
@@ -265,8 +274,7 @@ void at_8042_time(void)
   0: keyboard data in
 */
 
-
-READ_HANDLER(at_8042_r)
+READ8_HANDLER(at_8042_8_r)
 {
 	static int poll_delay=10;
 	int data=0;
@@ -336,7 +344,9 @@ READ_HANDLER(at_8042_r)
 	return data;
 }
 
-WRITE_HANDLER(at_8042_w)
+
+
+WRITE_HANDLER(at_8042_8_w)
 {
 	logerror("at_8042 write %.2x %.2x\n",offset,data);
 	switch (offset) {
@@ -350,35 +360,37 @@ WRITE_HANDLER(at_8042_w)
 			at_8042.sending=1;
 			at_keyboard_write(data);
 			break;
+
 		case 1:
 			at_8042.operation_write_state=0;
 			at_8042.outport=data;
-			//if (data&1) cpu_set_reset_line(0, PULSE_LINE);
-#if 0
-			logerror("addressmask %.6x\n",data&2?0xffffff:0xfffff);
-#endif
 			at_8042.set_address_mask(data&2?0xffffff:0xfffff);
 			break;
+
 		case 2:
 			at_8042.operation_write_state=0;
 			at_8042.data=data;
 			at_8042.sending=1;
 			at_keyboard_write(data);
 			break;
+
 		case 3:
 			at_8042.operation_write_state=0;
 			at_8042.data=data;
 			break;
+
 		case 4:
 			at_8042.operation_write_state=0;
 			at_8042.data=data;
 			break;
 		}
 		break;
+
 	case 1:
 		at_8042.speaker=data;
 		pc_sh_speaker(data&3);
 		break;
+
 	case 4:
 		DBG_LOG(1,"AT 8042 write",("%.2x %02x\n",offset, data) );
 		at_8042.last_write_to_control=0;
@@ -444,3 +456,26 @@ WRITE_HANDLER(at_8042_w)
 	}
 }
 
+
+
+READ32_HANDLER(at_8042_32_r)
+{
+	return (((data32_t) at_8042_8_r(offset * 4 + 0)) << 0)
+		|  (((data32_t) at_8042_8_r(offset * 4 + 0)) << 8)
+		|  (((data32_t) at_8042_8_r(offset * 4 + 0)) << 16)
+		|  (((data32_t) at_8042_8_r(offset * 4 + 0)) << 24);
+}
+
+
+
+WRITE32_HANDLER( at_8042_32_w )
+{
+	if ((mem_mask & 0x000000FF) == 0)
+		at_8042_8_w(offset * 4 + 0, data >> 0);
+	if ((mem_mask & 0x0000FF00) == 0)
+		at_8042_8_w(offset * 4 + 1, data >> 8);
+	if ((mem_mask & 0x00FF0000) == 0)
+		at_8042_8_w(offset * 4 + 2, data >> 16);
+	if ((mem_mask & 0xFF000000) == 0)
+		at_8042_8_w(offset * 4 + 3, data >> 24);
+}

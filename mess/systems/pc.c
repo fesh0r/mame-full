@@ -159,8 +159,6 @@ static ADDRESS_MAP_START(europc_io, ADDRESS_SPACE_IO, 8)
 #endif
 	AM_RANGE(0x03b0, 0x03bf) AM_READWRITE(pc_aga_mda_r,				pc_aga_mda_w)
 //	AM_RANGE(0x03bc, 0x03be) AM_READWRITE(pc_parallelport0_r,		pc_parallelport0_w)
-	AM_RANGE(0x03d0, 0x03df) AM_READWRITE(pc_aga_cga_r,				pc_aga_cga_w)
-	AM_RANGE(0x03d0, 0x03df) AM_READWRITE(pc_CGA_r,					pc_CGA_w)
 	AM_RANGE(0x03e8, 0x03ef) AM_READWRITE(pc_COM3_r,				pc_COM3_w)
 	AM_RANGE(0x03f0, 0x03f7) AM_READWRITE(pc_fdc_r,					pc_fdc_w)
 	AM_RANGE(0x03f8, 0x03ff) AM_READWRITE(pc_COM1_r,				pc_COM1_w)

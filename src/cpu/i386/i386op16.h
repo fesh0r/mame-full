@@ -105,7 +105,7 @@ static void (*i386_opcode_table1_16[256])(void) =
 	I386OP(operand_size),		/* 0x66 */
 	I386OP(address_size),		/* 0x67 */
 	I386OP(push_i16),			/* 0x68 */
-	I386OP(invalid),			/* 0x69 */		/* TODO: IMUL */
+	I386OP(imul_r16_rm16_i16),	/* 0x69 */
 	I386OP(push_i8),			/* 0x6a */
 	I386OP(imul_r16_rm16_i8),	/* 0x6b */
 	I386OP(invalid),			/* 0x6c */		/* TODO: INSB */

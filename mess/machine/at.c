@@ -48,7 +48,6 @@ void init_atcga(void)
 
 	pit8253_config(0, &at_pit8253_config);
 
-	pc_cga_init();
 	mc146818_init(MC146818_STANDARD);
 
 	soundblaster_config(&soundblaster);
@@ -106,8 +105,6 @@ MACHINE_INIT( at_vga )
 
 void at_cga_frame_interrupt (void)
 {
-	pc_cga_timer();
-
 	at_keyboard_polling();
 	at_8042_time();
 }

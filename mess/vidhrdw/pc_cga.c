@@ -243,8 +243,8 @@ MACHINE_DRIVER_START( pcvideo_cga )
 	MDRV_GFXDECODE(CGA_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(sizeof(cga_palette) / (CGA_PALETTE_SETS * sizeof(cga_palette[0])))
 	MDRV_COLORTABLE_LENGTH(sizeof(cga_colortable) / sizeof(cga_colortable[0]))
-	MDRV_PALETTE_INIT(pc_cga)
 
+	MDRV_PALETTE_INIT(pc_cga)
 	MDRV_VIDEO_START(pc_cga)
 	MDRV_VIDEO_UPDATE(pc_video)
 MACHINE_DRIVER_END
@@ -254,20 +254,35 @@ MACHINE_DRIVER_START( pcvideo_pc1512 )
 	MDRV_VIDEO_START( pc1512 )
 MACHINE_DRIVER_END
 
+
+
 /***************************************************************************
 
-	Methods
+	Local variables and declarations
 
 ***************************************************************************/
 
-/* Initialise the cga palette */
-PALETTE_INIT( pc_cga )
-{
-	int i;
-	for(i = 0; i < (sizeof(cga_palette) / (3 * CGA_PALETTE_SETS)); i++)
-		palette_set_color(i, cga_palette[i][0], cga_palette[i][1], cga_palette[i][2]);
-	memcpy(colortable,cga_colortable,sizeof(cga_colortable));
-}
+/* CGA dipswitch settings. These have to be kept consistent over all systems
+ * that use CGA. */
+
+#define CGA_FONT_0				0
+#define CGA_FONT_1				1
+#define CGA_FONT_2				2
+#define CGA_FONT_3				3
+
+#define CGA_MONITOR		(input_port_20_r(0)&0x1C)
+#define CGA_MONITOR_RGB			0x00	/* Colour RGB */
+#define CGA_MONITOR_MONO		0x04	/* Greyscale RGB */
+#define CGA_MONITOR_COMPOSITE	0x08	/* Colour composite */
+#define CGA_MONITOR_TELEVISION	0x0C	/* Television */
+#define CGA_MONITOR_LCD			0x10	/* LCD, eg PPC512 */
+
+#define CGA_CHIPSET		(input_port_20_r(0)&0xE0)
+#define CGA_CHIPSET_IBM			0x00	/* Original IBM CGA */
+#define CGA_CHIPSET_PC1512		0x20	/* PC1512 CGA subset */
+#define CGA_CHIPSET_PC200		0x40	/* PC200 in CGA mode */
+#define CGA_CHIPSET_ATI			0x60	/* ATI (supports Plantronics) */
+#define CGA_CHIPSET_PARADISE	0x80	/* Paradise (used in PC1640) */ 
 
 static struct
 { 
@@ -277,9 +292,28 @@ static struct
 	UINT8 plantronics;	/* wo 0x3dd, ATI chipset only */
 	
 	int pc_blink;
-	int pc_framecnt;
+	int frame;
 	int palette;
 } cga;
+
+static void cga_timerproc(int dummy);
+static int cga_blinkthisframe(void);
+
+
+
+/***************************************************************************
+
+	Methods
+
+***************************************************************************/
+
+/* Initialise the cga palette */
+static PALETTE_INIT( pc_cga )
+{
+	memcpy(colortable, cga_colortable, sizeof(cga_colortable));
+}
+
+
 
 void pc_cga_cursor(struct crtc6845_cursor *cursor)
 {
@@ -287,13 +321,14 @@ void pc_cga_cursor(struct crtc6845_cursor *cursor)
 		dirtybuffer[cursor->pos*2]=1;
 }
 
+
+
 static struct crtc6845_config config= { 14318180 /*?*/, pc_cga_cursor };
-
-
 
 static int internal_pc_cga_video_start(int personality)
 {
 	memset(&cga, 0, sizeof(cga));
+	cga.palette = -1;
 
 	config.personality = personality;
 	if (!pc_video_start(&config, pc_cga_choosevideomode, 0x8000))
@@ -303,6 +338,8 @@ static int internal_pc_cga_video_start(int personality)
 	state_save_register_UINT8("pccga", 0, "color_select",	&cga.color_select, 1);
 	state_save_register_UINT8("pccga", 0, "status",			&cga.status, 1);
 	state_save_register_UINT8("pccga", 0, "plantronics",	&cga.plantronics, 1);
+
+	timer_pulse(TIME_IN_SEC(32.0/240.0), 0, cga_timerproc);
 	return 0;
 }
 
@@ -310,6 +347,33 @@ static int internal_pc_cga_video_start(int personality)
 
 static VIDEO_START( pc_cga )
 {
+	int buswidth;
+
+	/* Changed video RAM size to full 32k, for cards which support the
+	 * Plantronics chipset */
+	buswidth = cputype_databus_width(Machine->drv->cpu[0].cpu_type, ADDRESS_SPACE_PROGRAM);
+	switch(buswidth) {
+	case 8:
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, MRA8_RAM );
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, pc_video_videoram_w );
+		memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, pc_cga8_r );
+		memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, pc_cga8_w );
+		break;
+
+	case 32:
+		memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, MRA32_RAM );
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xb8000, 0xbffff, 0, pc_video_videoram32_w );
+		memory_install_read32_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, pc_cga32_r );
+		memory_install_write32_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, pc_cga32_w );
+		break;
+
+	default:
+		osd_die("CGA:  Bus width %d not supported\n", buswidth);
+		break;
+	}
+
+	videoram = memory_region(REGION_CPU1)+0xb8000;
+	videoram_size = 0x4000;
 	return internal_pc_cga_video_start(M6845_PERSONALITY_GENUINE);
 }
 
@@ -342,6 +406,8 @@ static void pc_cga_check_palette(void)
 	}
 }
 
+
+
 /*
  *	rW	CGA mode control register (see #P138)
  */
@@ -358,6 +424,8 @@ static void pc_cga_mode_control_w(int data)
 	cga.mode_control = data;
 }
 
+
+
 /*
  *	?W	reserved for color select register on color adapter
  */
@@ -370,6 +438,8 @@ static void pc_cga_color_select_w(int data)
 	schedule_full_refresh();
 	if (dirtybuffer) memset(dirtybuffer, 1, videoram_size);
 }
+
+
 
 /* 
  * Select Plantronics modes 
@@ -411,13 +481,36 @@ static int pc_cga_status_r(void)
 	return data;
 }
 
+
+
 /*************************************************************************
  *
  *		CGA
  *		color graphics adapter
  *
  *************************************************************************/
-WRITE_HANDLER ( pc_CGA_w )
+
+READ8_HANDLER( pc_cga8_r )
+{
+	int data = 0xff;
+	switch( offset )
+	{
+		case 0: case 2: case 4: case 6:
+			data = crtc6845_port_r(crtc6845, 0);
+			break;
+		case 1: case 3: case 5: case 7:
+			data = crtc6845_port_r(crtc6845, 1);
+			break;
+		case 10:
+			data = pc_cga_status_r();
+			break;
+    }
+	return data;
+}
+
+
+
+WRITE8_HANDLER( pc_cga8_w )
 {
 	switch(offset) {
 	case 0: case 2: case 4: case 6:
@@ -436,28 +529,37 @@ WRITE_HANDLER ( pc_CGA_w )
 	}
 }
 
-READ_HANDLER ( pc_CGA_r )
+
+
+READ32_HANDLER( pc_cga32_r )
 {
-	int data = 0xff;
-	switch( offset )
-	{
-		case 0: case 2: case 4: case 6:
-			data = crtc6845_port_r(crtc6845, 0);
-			break;
-		case 1: case 3: case 5: case 7:
-			data = crtc6845_port_r(crtc6845, 1);
-			break;
-		case 10:
-			data = pc_cga_status_r();
-			break;
-    }
-	return data;
+	return (((data32_t) pc_cga8_r(offset * 4 + 0)) << 0)
+		|  (((data32_t) pc_cga8_r(offset * 4 + 0)) << 8)
+		|  (((data32_t) pc_cga8_r(offset * 4 + 0)) << 16)
+		|  (((data32_t) pc_cga8_r(offset * 4 + 0)) << 24);
 }
+
+
+
+WRITE32_HANDLER( pc_cga32_w )
+{
+	if ((mem_mask & 0x000000FF) == 0)
+		pc_cga8_w(offset * 4 + 0, data >> 0);
+	if ((mem_mask & 0x0000FF00) == 0)
+		pc_cga8_w(offset * 4 + 1, data >> 8);
+	if ((mem_mask & 0x00FF0000) == 0)
+		pc_cga8_w(offset * 4 + 2, data >> 16);
+	if ((mem_mask & 0xFF000000) == 0)
+		pc_cga8_w(offset * 4 + 3, data >> 24);
+}
+
+
 
 /***************************************************************************
   Draw text mode with 40x25 characters (default) with high intensity bg.
   The character cell size is 16x8
 ***************************************************************************/
+
 static void cga_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int sx, sy;
@@ -481,7 +583,7 @@ static void cga_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 			{
 				drawgfx(bitmap, Machine->gfx[CGA_FONT], videoram[offs], videoram[offs+1], 
 						0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
-				if (cursor.on&&(cga.pc_framecnt&32)&&(offs==cursor.pos*2))
+				if (cursor.on && cga_blinkthisframe() && (offs==cursor.pos*2))
 				{
 					int k=height-cursor.top;
 					if (cursor.bottom<height) k=cursor.bottom-cursor.top+1;
@@ -501,10 +603,13 @@ static void cga_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 	}
 }
 
+
+
 /***************************************************************************
   Draw text mode with 40x25 characters (default) with high intensity bg.
   The character cell size is 16x8
 ***************************************************************************/
+
 static void cga_text_inten_alt(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int sx, sy;
@@ -534,7 +639,7 @@ static void cga_text_inten_alt(struct mame_bitmap *bitmap, struct crtc6845 *crtc
 			{
 				drawgfx(bitmap, Machine->gfx[CGA_FONT], videoram[offs], (videoram[offs+1] & 15), 
 						0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
-				if (cursor.on&&(cga.pc_framecnt&32)&&(offs==cursor.pos*2))
+				if (cursor.on && cga_blinkthisframe() && (offs==cursor.pos*2))
 				{
 					int k=height-cursor.top;
 					if (cursor.bottom<height) k=cursor.bottom-cursor.top+1;
@@ -553,6 +658,7 @@ static void cga_text_inten_alt(struct mame_bitmap *bitmap, struct crtc6845 *crtc
 		}
 	}
 }
+
 
 
 /***************************************************************************
@@ -597,7 +703,7 @@ static void cga_text_blink(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 				drawgfx(bitmap, Machine->gfx[CGA_FONT], videoram[offs], attr, 
 						0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
 
-				if (cursor.on&&(cga.pc_framecnt&32)&&(offs==cursor.pos*2))
+				if (cursor.on && cga_blinkthisframe() && (offs==cursor.pos*2))
 				{
 					int k=height-cursor.top;
 					if (cursor.bottom<height) k=cursor.bottom-cursor.top+1;
@@ -617,10 +723,13 @@ static void cga_text_blink(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 	}
 }
 
+
+
 /***************************************************************************
   Draw text mode with 40x25 characters (default) and blinking colors.
   The character cell size is 16x8
 ***************************************************************************/
+
 static void cga_text_blink_alt(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int sx, sy;
@@ -662,7 +771,7 @@ static void cga_text_blink_alt(struct mame_bitmap *bitmap, struct crtc6845 *crtc
 				drawgfx(bitmap, Machine->gfx[CGA_FONT], videoram[offs], attr, 
 						0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
 
-				if (cursor.on&&(cga.pc_framecnt&32)&&(offs==cursor.pos*2))
+				if (cga_blinkthisframe() && (offs==cursor.pos*2))
 				{
 					int k=height-cursor.top;
 					if (cursor.bottom<height) k=cursor.bottom-cursor.top+1;
@@ -689,14 +798,16 @@ static void cga_text_blink_alt(struct mame_bitmap *bitmap, struct crtc6845 *crtc
   Even scanlines are from CGA_base + 0x0000, odd from CGA_base + 0x2000
   cga fetches 2 byte per crtc6845 access (not modeled here)!
 ***************************************************************************/
+
 static void cga_gfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
-	int i, sx, sy, sh;
+	int sx, sy, sh;
 	int	offs = crtc6845_get_start(crtc)*2;
 	int lines = crtc6845_get_char_lines(crtc);
 	int height = crtc6845_get_char_height(crtc);
 	int columns = crtc6845_get_char_columns(crtc)*2;
 	int colorset = cga.color_select & 0x3F;
+	const UINT16 *palette;
 
 	/* Many clone chipsets use bit 2 of the mode control register to 
 	 * access a third palette */
@@ -714,85 +825,78 @@ static void cga_gfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 		break;
 	}	
 
-	for (sy=0; sy<lines; sy++,offs=(offs+columns)&0x1fff) {
+	/* The fact that our palette is located in cga_colortable is a vestigial
+	 * aspect from when we were doing that ugly trick where drawgfx() would
+	 * handle graphics drawing.  Truthfully, we should probably be using
+	 * palette_set_color() here and not doing the palette lookup in the loop
+	 */
+	palette = &cga_colortable[256*2 + 16*2] + colorset * 4;
 
-		for (sh=0; sh<height; sh++)
+	for (sy = 0; sy < lines; sy++)
+	{
+		for (sh = 0; sh < height; sh++)
 		{
-			if (!(sh&1)) { // char line 0 used as a12 line in graphic mode
-				for (i=offs, sx=0; sx<columns; sx++, i=(i+1)&0x1fff)
-				{
-					if (!dirtybuffer || dirtybuffer[i])
-					{
-						drawgfx(bitmap, Machine->gfx[5], videoram[i], colorset,
-								0,0,sx*4,sy*height+sh, 0,TRANSPARENCY_NONE,0);
-						if (dirtybuffer)
-							dirtybuffer[i]=0;
-					}
-				}
-			}
-			else
+			UINT16 *dest = (UINT16 *) bitmap->line[sy * height + sh];
+			const UINT8 *src = &videoram[offs | ((sh & 1) ? 0x2000 : 0x0000)];
+
+			for (sx = 0; sx < columns; sx++)
 			{
-				for (i=offs|0x2000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x2000)
-				{
-					if (!dirtybuffer || dirtybuffer[i])
-					{
-						drawgfx(bitmap, Machine->gfx[5], videoram[i], colorset,
-								0,0,sx*4,sy*height+sh, 0,TRANSPARENCY_NONE,0);
-						if (dirtybuffer)
-							dirtybuffer[i]=0;
-					}
-				}
+				UINT8 b = *(src++);
+				*(dest++) = palette[(b >> 6) & 0x03];
+				*(dest++) = palette[(b >> 4) & 0x03];
+				*(dest++) = palette[(b >> 2) & 0x03];
+				*(dest++) = palette[(b >> 0) & 0x03];
 			}
 		}
+		offs = (offs + columns) & 0x1fff;
 	}
 }
+
+
 
 /***************************************************************************
   Draw graphics mode with 640x200 pixels (default).
   The cell size is 1x1 (1 scanline is the real default)
   Even scanlines are from CGA_base + 0x0000, odd from CGA_base + 0x2000
 ***************************************************************************/
+
 static void cga_gfx_1bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
-	int i, sx, sy, sh;
+	int sx, sy, sh;
 	int	offs = crtc6845_get_start(crtc)*2;
 	int lines = crtc6845_get_char_lines(crtc);
 	int height = crtc6845_get_char_height(crtc);
 	int columns = crtc6845_get_char_columns(crtc)*2;
+	const UINT16 *palette;
 
-	for (sy=0; sy<lines; sy++,offs=(offs+columns)&0x1fff)
+	/* The fact that our palette is located in cga_colortable is a vestigial
+	 * aspect from when we were doing that silly trick where drawgfx() would
+	 * handle graphics drawing.  Truthfully, we should probably be using
+	 * palette_set_color() here and not doing the palette lookup in the loop
+	 */
+	palette = &cga_colortable[256*2] + (cga.color_select & 0xf) * 2;
+
+	for (sy = 0; sy < lines; sy++)
 	{
-		for (sh=0; sh<height; sh++, offs|=0x2000)
+		for (sh = 0; sh < height; sh++)
 		{
-			// char line 0 used as a12 line in graphic mode
-			if (!(sh&1))
+			UINT16 *dest = (UINT16 *) bitmap->line[sy * height + sh];
+			const UINT8 *src = &videoram[offs | ((sh & 1) ? 0x2000 : 0x0000)];
+
+			for (sx = 0; sx < columns; sx++)
 			{
-				// char line 0 used as a12 line in graphic mode
-				for (i=offs, sx=0; sx<columns; sx++, i=(i+1)&0x1fff)
-				{
-					if (!dirtybuffer || dirtybuffer[i])
-					{
-						drawgfx(bitmap, Machine->gfx[4], videoram[i], cga.color_select&0xf, 0,0,sx*8,sy*height+sh,
-								0,TRANSPARENCY_NONE,0);
-						if (dirtybuffer)
-							dirtybuffer[i] = 0;
-					}
-				}
-			}
-			else
-			{
-				for (i=offs|0x2000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x2000)
-				{
-					if (!dirtybuffer || dirtybuffer[i])
-					{
-						drawgfx(bitmap, Machine->gfx[4], videoram[i], cga.color_select&0xf, 0,0,sx*8,sy*height+sh,
-								0,TRANSPARENCY_NONE,0);
-						if (dirtybuffer)
-							dirtybuffer[i] = 0;
-					}
-				}
+				UINT8 b = *(src++);
+				*(dest++) = palette[(b >> 7) & 0x01];
+				*(dest++) = palette[(b >> 6) & 0x01];
+				*(dest++) = palette[(b >> 5) & 0x01];
+				*(dest++) = palette[(b >> 4) & 0x01];
+				*(dest++) = palette[(b >> 3) & 0x01];
+				*(dest++) = palette[(b >> 2) & 0x01];
+				*(dest++) = palette[(b >> 1) & 0x01];
+				*(dest++) = palette[(b >> 0) & 0x01];
 			}
 		}
+		offs = (offs + columns) & 0x1fff;
 	}
 }
 
@@ -819,10 +923,6 @@ INLINE void pgfx_plot_unit_4bpp(struct mame_bitmap *bitmap,
 		color = ((values[0] & 0x3) << 1) | 
 			((values[1] & 2)   >> 1) |
 			((values[1] & 1)   << 3);
-//		fprintf(stderr, "%02x,%02x -> %02x\n",
-//			values[0] & 3,
-//			values[1] & 3,
-//			color);
 		plot_pixel(bitmap, x+i, y, Machine->pens[color]);
 		values[0]>>=2;
 		values[1]>>=2;
@@ -830,11 +930,13 @@ INLINE void pgfx_plot_unit_4bpp(struct mame_bitmap *bitmap,
 }
 
 
+
 /***************************************************************************
   Draw graphics mode with 640x200 pixels (default) with 2 bits/pixel.
   Even scanlines are from CGA_base + 0x0000, odd from CGA_base + 0x2000
   Second plane at CGA_base + 0x4000 / 0x6000 
 ***************************************************************************/
+
 static void cga_pgfx_4bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int i, sx, sy, sh;
@@ -879,10 +981,11 @@ static void cga_pgfx_4bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 
 INLINE void pgfx_plot_unit_2bpp(struct mame_bitmap *bitmap, 
-					 int x, int y, int colorset, int offs)
+					 int x, int y, const UINT16 *palette, int offs)
 {
 	int i;
 	UINT8 bmap[2], values[2];
+	UINT16 *dest;
 
 	if (cga.plantronics & 0x40) 
 	{
@@ -895,7 +998,6 @@ INLINE void pgfx_plot_unit_2bpp(struct mame_bitmap *bitmap,
 		values[1] = videoram[offs];
 	}
 	bmap[0] = bmap[1] = 0;
-//	fprintf(stderr, "%02x %02x -> ", values[0], values[1]);
 	for (i=3; i>=0; i--)
 	{
 		bmap[0] = bmap[0] << 1; if (values[0] & 0x80) bmap[0] |= 1; 
@@ -905,18 +1007,26 @@ INLINE void pgfx_plot_unit_2bpp(struct mame_bitmap *bitmap,
 		values[0] = values[0] << 1;	
 		values[1] = values[1] << 1;	
 	}
-//	fprintf(stderr, "%02x %02x\n", bmap[0], bmap[1]);
-	drawgfx(bitmap, Machine->gfx[5], bmap[0], colorset,
-		0,0, x, y, 0,TRANSPARENCY_NONE,0);
-	drawgfx(bitmap, Machine->gfx[5], bmap[1], colorset,
-		0,0, x+4, y, 0,TRANSPARENCY_NONE,0);
+
+	dest = ((UINT16 *) bitmap->line[y]) + x;
+	*(dest++) = palette[(bmap[0] >> 6) & 0x03];
+	*(dest++) = palette[(bmap[0] >> 4) & 0x03];
+	*(dest++) = palette[(bmap[0] >> 2) & 0x03];
+	*(dest++) = palette[(bmap[0] >> 0) & 0x03];
+	*(dest++) = palette[(bmap[1] >> 6) & 0x03];
+	*(dest++) = palette[(bmap[1] >> 4) & 0x03];
+	*(dest++) = palette[(bmap[1] >> 2) & 0x03];
+	*(dest++) = palette[(bmap[1] >> 0) & 0x03];
 }
+
+
 
 /***************************************************************************
   Draw graphics mode with 320x200 pixels (default) with 2 bits/pixel.
   Even scanlines are from CGA_base + 0x0000, odd from CGA_base + 0x2000
   cga fetches 2 byte per crtc6845 access (not modeled here)!
 ***************************************************************************/
+
 static void cga_pgfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int i, sx, sy, sh;
@@ -925,6 +1035,7 @@ static void cga_pgfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 	int height = crtc6845_get_char_height(crtc);
 	int columns = crtc6845_get_char_columns(crtc)*2;
 	int colorset = cga.color_select & 0x3F;
+	const UINT16 *palette;
 
 	/* Many clone chipsets use bit 2 of the mode control register to 
 	 * access a third palette */
@@ -942,6 +1053,14 @@ static void cga_pgfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 		break;
 	}	
 
+
+	/* The fact that our palette is located in cga_colortable is a vestigial
+	 * aspect from when we were doing that ugly trick where drawgfx() would
+	 * handle graphics drawing.  Truthfully, we should probably be using
+	 * palette_set_color() here and not doing the palette lookup in the loop
+	 */
+	palette = &cga_colortable[256*2 + 16*2] + colorset * 4;
+
 	for (sy=0; sy<lines; sy++,offs=(offs+columns)&0x1fff) {
 
 		for (sh=0; sh<height; sh++)
@@ -951,7 +1070,7 @@ static void cga_pgfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 				{
 					if (!dirtybuffer || dirtybuffer[i])
 					{
-						pgfx_plot_unit_2bpp(bitmap, sx*8, sy*height+sh, colorset, i);
+						pgfx_plot_unit_2bpp(bitmap, sx*8, sy*height+sh, palette, i);
 						if (dirtybuffer)
 							dirtybuffer[i]=0;
 					}
@@ -963,7 +1082,7 @@ static void cga_pgfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 				{
 					if (!dirtybuffer || dirtybuffer[i])
 					{
-						pgfx_plot_unit_2bpp(bitmap, sx*8, sy*height+sh, colorset, i);
+						pgfx_plot_unit_2bpp(bitmap, sx*8, sy*height+sh, palette, i);
 						if (dirtybuffer)
 							dirtybuffer[i]=0;
 					}
@@ -972,6 +1091,8 @@ static void cga_pgfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 		}
 	}
 }
+
+
 
 // amstrad pc1512 video hardware
 // mapping of the 4 planes into videoram
@@ -1001,11 +1122,14 @@ INLINE void pc1512_plot_unit(struct mame_bitmap *bitmap,
 	}
 }
 
+
+
 /***************************************************************************
   Draw graphics mode with 640x200 pixels (default).
   The cell size is 1x1 (1 scanline is the real default)
   Even scanlines are from CGA_base + 0x0000, odd from CGA_base + 0x2000
 ***************************************************************************/
+
 static void pc1512_gfx_4bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int i, sx, sy, sh;
@@ -1047,9 +1171,12 @@ static void pc1512_gfx_4bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 	}
 }
 
+
+
 /***************************************************************************
   Mark all text positions with attribute bit 7 set dirty
  ***************************************************************************/
+
 static void pc_cga_blink_textcolors(int on)
 {
 	int i, offs, size;
@@ -1070,17 +1197,28 @@ static void pc_cga_blink_textcolors(int on)
 	}
 }
 
-extern void pc_cga_timer(void)
+
+
+static void cga_timerproc(int dummy)
 {
-	if( ((++cga.pc_framecnt & 63) == 63) ) {
-		pc_cga_blink_textcolors(cga.pc_framecnt&64);
-	}
+	cga.frame++;
+	if ((cga.frame & 1) == 0)
+		pc_cga_blink_textcolors(cga.frame & 2);
+}
+
+
+
+static int cga_blinkthisframe(void)
+{
+	return cga.frame & 1;
 }
 	
+
 
 /***************************************************************************
   Choose the appropriate video mode
 ***************************************************************************/
+
 pc_video_update_proc pc_cga_choosevideomode(int *width, int *height, struct crtc6845 *crtc)
 {
 	pc_video_update_proc proc = NULL;
@@ -1197,11 +1335,11 @@ WRITE_HANDLER ( pc1512_w )
 			}
 		}
 		crtc6845_set_char_lines(crtc6845, 200 / char_height);
-		pc_CGA_w(offset, data);
+		pc_cga8_w(offset, data);
 		break;
 
 	default:
-		pc_CGA_w(offset,data);
+		pc_cga8_w(offset,data);
 		break;
 	}
 }
@@ -1209,6 +1347,7 @@ WRITE_HANDLER ( pc1512_w )
 READ_HANDLER ( pc1512_r )
 {
 	data8_t data;
+
 	switch (offset) {
 	case 0xd:
 		data = pc1512.write;
@@ -1219,7 +1358,7 @@ READ_HANDLER ( pc1512_r )
 		break;
 
 	default:
-		data = pc_CGA_r(offset);
+		data = pc_cga8_r(offset);
 		break;
 	}
 	return data;

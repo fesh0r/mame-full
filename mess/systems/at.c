@@ -81,6 +81,21 @@ static ADDRESS_MAP_START( at_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xff0000, 0xffffff) AM_ROM
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( at386_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x07ffff) AM_MIRROR(0xff000000) AM_RAM
+	AM_RANGE(0x080000, 0x09ffff) AM_MIRROR(0xff000000) AM_RAM
+	AM_RANGE(0x0a0000, 0x0affff) AM_MIRROR(0xff000000) AM_NOP
+	AM_RANGE(0x0b0000, 0x0b7fff) AM_MIRROR(0xff000000) AM_NOP
+	AM_RANGE(0x0b8000, 0x0bffff) AM_MIRROR(0xff000000) AM_READWRITE(MRA32_RAM, pc_video_videoram32_w) AM_BASE((data32_t **) &videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x0c0000, 0x0c7fff) AM_MIRROR(0xff000000) AM_ROM
+	AM_RANGE(0x0c8000, 0x0cffff) AM_MIRROR(0xff000000) AM_ROM
+	AM_RANGE(0x0d0000, 0x0effff) AM_MIRROR(0xff000000) AM_ROM
+	AM_RANGE(0x0f0000, 0x0fffff) AM_MIRROR(0xff000000) AM_ROM
+	AM_RANGE(0x100000, 0x1fffff) AM_MIRROR(0xff000000) AM_RAM
+	AM_RANGE(0x200000, 0xfeffff) AM_MIRROR(0xff000000) AM_NOP
+	AM_RANGE(0xff0000, 0xffffff) AM_MIRROR(0xff000000) AM_ROM
+ADDRESS_MAP_END
+
 
 
 static READ_HANDLER(at_dma8237_1_r)
@@ -98,7 +113,7 @@ static ADDRESS_MAP_START(at_io, ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0x0000, 0x001f) AM_READWRITE(dma8237_0_r,				dma8237_0_w)
 	AM_RANGE(0x0020, 0x003f) AM_READWRITE(pic8259_0_r,				pic8259_0_w)
 	AM_RANGE(0x0040, 0x005f) AM_READWRITE(pit8253_0_r,				pit8253_0_w)
-	AM_RANGE(0x0060, 0x006f) AM_READWRITE(at_8042_r,				at_8042_w)
+	AM_RANGE(0x0060, 0x006f) AM_READWRITE(at_8042_8_r,				at_8042_8_w)
 	AM_RANGE(0x0070, 0x007f) AM_READWRITE(mc146818_port_r,			mc146818_port_w)
 	AM_RANGE(0x0080, 0x009f) AM_READWRITE(at_page_r,				at_page_w)
 	AM_RANGE(0x00a0, 0x00bf) AM_READWRITE(pic8259_1_r,				pic8259_1_w)
@@ -124,20 +139,17 @@ ADDRESS_MAP_END
 
 
 
-/* IBM ps2m30
-	port accesses
-	0x0094 
-	0x0190 postcode
-	0x0103
-	0x03bc
-	0x3bd/3dd
-*/
+static ADDRESS_MAP_START(at386_io, ADDRESS_SPACE_IO, 32)
+	AM_RANGE(0x0060, 0x006f) AM_READWRITE(at_8042_32_r,				at_8042_32_w)
+ADDRESS_MAP_END
+
+
 
 static ADDRESS_MAP_START(ps2m30286_io, ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0x0000, 0x001f) AM_READWRITE(dma8237_0_r,				dma8237_0_w)
 	AM_RANGE(0x0020, 0x003f) AM_READWRITE(pic8259_0_r,				pic8259_0_w)
 	AM_RANGE(0x0040, 0x005f) AM_READWRITE(pit8253_0_r,				pit8253_0_w)
-	AM_RANGE(0x0060, 0x006f) AM_READWRITE(at_8042_r,				at_8042_w)
+	AM_RANGE(0x0060, 0x006f) AM_READWRITE(at_8042_8_r,				at_8042_8_w)
 	AM_RANGE(0x0070, 0x007f) AM_READWRITE(mc146818_port_r,			mc146818_port_w)
 	AM_RANGE(0x0080, 0x009f) AM_READWRITE(at_page_r,				at_page_w)
 	AM_RANGE(0x00a0, 0x00bf) AM_READWRITE(pic8259_1_r,				pic8259_1_w)
@@ -435,58 +447,31 @@ static MACHINE_DRIVER_START( atvga )
 MACHINE_DRIVER_END
 
 
-#ifdef HAS_I386
-#if 0
-static struct MachineDriver machine_driver_at386 =
-{
+static MACHINE_DRIVER_START( at386 )
     /* basic machine hardware */
-    {
-        {
-            CPU_I386,
-			12000000, /* original at 6 mhz, at03 8 megahertz */
-			at_readmem,at_writemem,
-			at_readport,at_writeport,
-			at_cga_frame_interrupt,4,
-			0,0,
-			&i286_address_mask
-        },
-    },
-    60, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	0,
-	at_machine_init,
-	0,
+	/* original at 6 mhz, at03 8 megahertz */
+	MDRV_CPU_ATPC(at386, at386, I386, 12000000, at_cga_frame_interrupt)
 
-    /* video hardware */
-    80*8,                                       /* screen width */
-	25*8, 									/* screen height (pixels doubled) */
-	{ 0,80*8-1, 0,25*8-1},					/* visible_area */
-	CGA_gfxdecodeinfo,							/* graphics decode info */
-	sizeof(cga_palette) / sizeof(cga_palette[0]),
-	sizeof(cga_colortable) / sizeof(cga_colortable[0]),
-	pc_cga_init_palette,							/* init palette */
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	pc_cga_vh_start,
-	pc_cga_vh_stop,
-	pc_cga_vh_screenrefresh,
+	MDRV_MACHINE_INIT( at )
 
-    /* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_CUSTOM, &pc_sound_interface },
-#if defined(ADLIB)
-		{ SOUND_YM3812, &ym3812_interface },
+	MDRV_IMPORT_FROM( pcvideo_cga )
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
+#ifdef ADLIB
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
 #endif
-#if defined(GAMEBLASTER)
-		{ SOUND_SAA1099, &cms_interface },
+#ifdef GAMEBLASTER
+	MDRV_SOUND_ADD(SAA1099, cms_interface)
 #endif
-		{ SOUND_DAC, &dac_interface },
-	},
-	mc146818_nvram_handler
-};
-#endif
-#endif
+	MDRV_SOUND_ADD(DAC, dac_interface)
+
+	MDRV_NVRAM_HANDLER( mc146818 )
+MACHINE_DRIVER_END
+
 
 #if 0
 	// ibm at
@@ -570,7 +555,6 @@ ROM_START( neat )
     ROM_LOAD("cga.chr",     0x00000, 0x01000, CRC(42009069))
 ROM_END
 
-#ifdef HAS_I386
 ROM_START( at386 )
     ROM_REGION(0x1000000,REGION_CPU1, 0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, CRC(8e9e2bd4))
@@ -588,7 +572,6 @@ ROM_START( at486 )
 	ROM_REGION(0x08100, REGION_GFX1, 0)
     ROM_LOAD("cga.chr",     0x00000, 0x01000, CRC(42009069))
 ROM_END
-#endif
 
 SYSTEM_CONFIG_START(ibmat)
 	CONFIG_DEVICE_PRINTER(3)
@@ -609,11 +592,6 @@ COMPX ( 1985,	ibmat,		0,		0,		atcga,		atcga,		atcga,	    ibmat,   "International
 COMPX ( 1988,	i8530286,	ibmat,	0,		ps2m30286,	atvga,		ps2m30286,	ibmat,   "International Business Machines",  "IBM PS2 Model 30 286", GAME_NOT_WORKING )
 COMPX ( 1987,	at,			ibmat,	0,		atcga,      atcga,		atcga,	    ibmat,   "",  "PC/AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 COMPX ( 1989,	neat,		ibmat,	0,		atcga,      atcga,		atcga,	    ibmat,   "",  "NEAT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
-#ifdef HAS_I386
-#if 0
 COMPX ( 1988,	at386,		ibmat,	0,		at386,      atcga,		at386,	    ibmat,   "MITAC INC",  "PC/AT 386(CGA, MF2 Keyboard)", GAME_NOT_WORKING )
-COMPX ( 1990,	at486,		ibmat,	0,		at386,      atcga,		at386,	    ibmat,   "",  "PC/AT 486(CGA, MF2 Keyboard)", GAME_NOT_WORKING )
-#endif
-#endif
-
+//COMPX ( 1990,	at486,		ibmat,	0,		at386,      atcga,		at386,	    ibmat,   "",  "PC/AT 486(CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 COMP  ( 1987,	atvga,		0,		0,		atvga,      atvga,		at_vga,     ibmat,   "",  "PC/AT (VGA, MF2 Keyboard)" )

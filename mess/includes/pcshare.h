@@ -9,7 +9,6 @@
 void init_pc_common(UINT32 flags);
 
 
-void pc_cga_init(void);
 void pc_mda_init(void);
 
 void pc_keyboard(void);

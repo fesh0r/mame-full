@@ -45,7 +45,6 @@
 
 DRIVER_INIT( pccga )
 {
-	pc_cga_init();
 	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
 	ppi8255_init(&pc_ppi8255_interface);
 	pc_rtc_init();
@@ -54,7 +53,6 @@ DRIVER_INIT( pccga )
 
 DRIVER_INIT( bondwell )
 {
-	pc_cga_init();
 	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
 	ppi8255_init(&pc_ppi8255_interface);
 	pc_turbo_setup(0, 3, 0x02, 4.77/12, 1);
@@ -236,7 +234,7 @@ void pc_mda_frame_interrupt (void)
 
 void pc_cga_frame_interrupt (void)
 {
-	pc_generic_frame_interrupt(pc_cga_timer);
+	pc_generic_frame_interrupt(NULL);
 }
 
 void tandy1000_frame_interrupt (void)

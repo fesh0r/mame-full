@@ -17,41 +17,21 @@ MACHINE_DRIVER_EXTERN( pcvideo_pc1512 );
 
 pc_video_update_proc pc_cga_choosevideomode(int *width, int *height, struct crtc6845 *crtc);
 
-/* call this 240 times per second */
-void pc_cga_timer(void);
-
-WRITE_HANDLER ( pc_CGA_w );
-READ_HANDLER ( pc_CGA_r );
+READ8_HANDLER( pc_cga8_r );
+WRITE8_HANDLER( pc_cga8_w );
+READ32_HANDLER( pc_cga32_r );
+WRITE32_HANDLER( pc_cga32_w );
 
 VIDEO_START( pc1512 );
 
-WRITE_HANDLER ( pc1512_w );
 READ_HANDLER ( pc1512_r );
+WRITE_HANDLER ( pc1512_w );
 WRITE_HANDLER ( pc1512_videoram_w );
+
+#define CGA_FONT		(input_port_20_r(0)&3)
 
 //internal use
 void pc_cga_cursor(struct crtc6845_cursor *cursor);
 
-/* CGA dipswitch settings. These have to be kept consistent over all systems
- * that use CGA. */
 
-#define CGA_FONT		(input_port_20_r(0)&3)
-#define CGA_FONT_0		0
-#define CGA_FONT_1		1
-#define CGA_FONT_2		2
-#define CGA_FONT_3		3
-
-#define CGA_MONITOR		(input_port_20_r(0)&0x1C)
-#define CGA_MONITOR_RGB		0x00	/* Colour RGB */
-#define CGA_MONITOR_MONO	0x04	/* Greyscale RGB */
-#define CGA_MONITOR_COMPOSITE	0x08	/* Colour composite */
-#define CGA_MONITOR_TELEVISION	0x0C	/* Television */
-#define CGA_MONITOR_LCD		0x10	/* LCD, eg PPC512 */
-
-#define CGA_CHIPSET		(input_port_20_r(0)&0xE0)
-#define CGA_CHIPSET_IBM		0x00	/* Original IBM CGA */
-#define CGA_CHIPSET_PC1512	0x20	/* PC1512 CGA subset */
-#define CGA_CHIPSET_PC200	0x40	/* PC200 in CGA mode */
-#define CGA_CHIPSET_ATI		0x60	/* ATI (supports Plantronics) */
-#define CGA_CHIPSET_PARADISE	0x80	/* Paradise (used in PC1640) */ 
 
