@@ -691,11 +691,6 @@ static MACHINE_INIT( mtx512 )
 	mtx_saveindex = 0;
 }
 
-static VIDEO_START( mtx )
-{
-	return TMS9928A_start(TMS99x8A, 0x4000);
-}
-
 static INTERRUPT_GEN( mtx_interrupt )
 {
 	TMS9928A_interrupt();
@@ -859,6 +854,13 @@ static Z80_DaisyChain mtx_daisy_chain[] =
         {0,0,0,-1}
 };
 
+static const TMS9928a_interface tms9928a_interface =
+{
+	TMS9929A,
+	0x4000,
+	NULL
+};
+
 static MACHINE_DRIVER_START( mtx512 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, MTX_SYSTEM_CLOCK)
@@ -873,7 +875,7 @@ static MACHINE_DRIVER_START( mtx512 )
 	MDRV_MACHINE_INIT( mtx512 )
 
     /* video hardware */
-	MDRV_TMS9928A( mtx )
+	MDRV_TMS9928A( &tms9928a_interface )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(SN76496, mtx_psg_interface)

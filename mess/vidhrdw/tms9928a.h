@@ -6,29 +6,30 @@
 
 
 #define TMS9928A_PALETTE_SIZE           16
-#define TMS9928A_COLORTABLE_SIZE        16
 
 /*
 ** The different models
 */
-
-#define TMS99x8A	(1)
-#define TMS99x8		(2)
+typedef enum
+{
+	TMS99x8,		
+	TMS9929,
+	TMS99x8A,
+	TMS9929A
+} tms9928a_model;
 
 /*
-** The init, reset and shutdown functions
+** reset function
 */
-int TMS9928A_start (int model, unsigned int vram);
-void TMS9928A_reset (void);
-extern PALETTE_INIT( tms9928a );
+extern void TMS9928A_reset (void);
 
 /*
 ** The I/O functions
 */
-READ_HANDLER (TMS9928A_vram_r);
-WRITE_HANDLER (TMS9928A_vram_w);
-READ_HANDLER (TMS9928A_register_r);
-WRITE_HANDLER (TMS9928A_register_w);
+extern READ_HANDLER (TMS9928A_vram_r);
+extern WRITE_HANDLER (TMS9928A_vram_w);
+extern READ_HANDLER (TMS9928A_register_r);
+extern WRITE_HANDLER (TMS9928A_register_w);
 
 /*
 ** Call this function to render the screen.
@@ -36,7 +37,7 @@ WRITE_HANDLER (TMS9928A_register_w);
 extern VIDEO_UPDATE( tms9928a );
 
 /*
-** This next function must be called 50 or 60 times per second,
+** This next function must be called 50 (tms9929a) or 60 (tms99x8a) times per second,
 ** to generate the necessary interrupts
 */
 int TMS9928A_interrupt (void);
@@ -45,7 +46,7 @@ int TMS9928A_interrupt (void);
 ** The parameter is a function pointer. This function is called whenever
 ** the state of the INT output of the TMS9918A changes.
 */
-void TMS9928A_int_callback (void (*callback)(int));
+/*void TMS9928A_int_callback (void (*callback)(int));*/
 
 /*
 ** Set display of illegal sprites on or off
@@ -60,7 +61,14 @@ void TMS9928A_post_load (void);
 /*
 ** MachineDriver video declarations for the TMS9928A chip
 */
-extern void mdrv_tms9928a(struct InternalMachineDriver *machine, int (*video_start_proc)(void));
+typedef struct TMS9928a_interface
+{
+	tms9928a_model model;		/* model: tms9929(a) runs at 50Hz instead of 60Hz */
+	int vram;					/* VRAM size in bytes (4k, 8k or 16k) */
+	void (*int_callback)(int);	/* callback which is called whenever the state
+								** of the INT output of the TMS9918A changes (may be NULL)*/
+} TMS9928a_interface;
 
-#define MDRV_TMS9928A(video_start_proc)		mdrv_tms9928a(machine, (video_start_##video_start_proc));
+extern void mdrv_tms9928a(struct InternalMachineDriver *machine, const TMS9928a_interface *intf);
 
+#define MDRV_TMS9928A(intf)		mdrv_tms9928a(machine, (intf));

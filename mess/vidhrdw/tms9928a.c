@@ -33,7 +33,7 @@
 ** - Changed TMS9928A_vram_[rw] and  TMS9928A_register_[rw] to READ_HANDLER
 **   and WRITE_HANDLER.
 ** - Got rid of the color table, unused. Also got rid of the old colors,
-**   which where commented out anyways.
+**   which were commented out anyway.
 **
 **
 ** Todo:
@@ -49,6 +49,7 @@
 #include "state.h"
 #include "vidhrdw/generic.h"
 #include "tms9928a.h"
+
 
 /*
 	New palette (R. Nabet).
@@ -98,27 +99,6 @@ static unsigned char TMS9928A_palette[16*3] =
 	255, 255, 255
 };
 
-#if 0
-unsigned short TMS9928A_colortable[] =
-{
-        0,1,
-        0,2,
-        0,3,
-        0,4,
-        0,5,
-        0,6,
-        0,7,
-        0,8,
-        0,9,
-        0,10,
-        0,11,
-        0,12,
-        0,13,
-        0,14,
-        0,15,
-};
-#endif
-
 /*
 ** Defines for `dirty' optimization
 */
@@ -148,8 +128,19 @@ static void (*ModeHandlers[])(struct mame_bitmap*) = {
 
 #define IMAGE_SIZE (256*192)        /* size of rendered image        */
 
+#define LEFT_BORDER			15		/* a bit less for 9918a??? */
+#define RIGHT_BORDER		15		/* 13 for 9929a */
+#define TOP_BORDER_60HZ		27
+#define BOTTOM_BORDER_60HZ	24
+#define TOP_BORDER_50HZ		51		/* unknown (102 for top+bottom?) */
+#define BOTTOM_BORDER_50HZ	51		/* unknown (102 for top+bottom?) */
+#define TOP_BORDER			tms.top_border
+#define BOTTOM_BORDER		tms.bottom_border
+
 #define TMS_SPRITES_ENABLED ((tms.Regs[1] & 0x50) == 0x40)
-#define TMS_MODE ( (tms.model == TMS99x8A ? (tms.Regs[0] & 2) : 0) | \
+#define TMS_50HZ ((tms.model == TMS9929) || (tms.model == TMS9929A))
+#define TMS_REVA ((tms.model == TMS99x8A) || (tms.model == TMS9929A))
+#define TMS_MODE ( (TMS_REVA ? (tms.Regs[0] & 2) : 0) | \
 	((tms.Regs[1] & 0x10)>>4) | ((tms.Regs[1] & 8)>>1))
 
 typedef struct {
@@ -165,6 +156,7 @@ typedef struct {
     int vramsize, model;
     /* emulation settings */
     int LimitSprites; /* max 4 sprites on a row, like original TMS9918A */
+    int top_border, bottom_border;
     /* dirty tables */
     char anyDirtyColour, anyDirtyName, anyDirtyPattern;
     char *DirtyColour, *DirtyName, *DirtyPattern;
@@ -175,7 +167,7 @@ static TMS9928A tms;
 /*
 ** initialize the palette
 */
-PALETTE_INIT( tms9928a )
+static PALETTE_INIT( tms9928a )
 {
 	palette_set_colors(0, TMS9928A_palette, TMS9928A_PALETTE_SIZE);
 }
@@ -200,19 +192,24 @@ void TMS9928A_reset () {
     _TMS9928A_set_dirty (1);
 }
 
-int TMS9928A_start (int model, unsigned int vram) {
-    /* 4 or 16 kB vram please */
-    if (! ((vram == 0x1000) || (vram == 0x4000) || (vram == 0x2000)) )
+static int TMS9928A_start (const TMS9928a_interface *intf) {
+    /* 4, 8 or 16 kB vram please */
+    if (! ((intf->vram == 0x1000) || (intf->vram == 0x2000) || (intf->vram == 0x4000)) )
         return 1;
 
-    tms.model = model;
+    tms.model = intf->model;
+
+	tms.top_border = TMS_50HZ ? TOP_BORDER_50HZ : TOP_BORDER_60HZ;
+	tms.bottom_border = TMS_50HZ ? BOTTOM_BORDER_50HZ : BOTTOM_BORDER_60HZ;
+
+	tms.INTCallback = intf->int_callback;
 
     /* Video RAM */
-    tms.vramsize = vram;
-    tms.vMem = (UINT8*) auto_malloc (vram);
+    tms.vramsize = intf->vram;
+    tms.vMem = (UINT8*) auto_malloc (intf->vram);
     if (!tms.vMem)
 		return 1;
-    memset (tms.vMem, 0, vram);
+    memset (tms.vMem, 0, intf->vram);
 
     /* Sprite back buffer */
     tms.dBackMem = (UINT8*)auto_malloc (IMAGE_SIZE);
@@ -254,7 +251,7 @@ int TMS9928A_start (int model, unsigned int vram) {
 	state_save_register_UINT8 ("tms9928a", 0, "latch", &tms.latch, 1);
 	state_save_register_UINT16 ("tms9928a", 0, "vram_latch", (UINT16*)&tms.Addr, 1);
 	state_save_register_UINT8 ("tms9928a", 0, "interrupt_line", &tms.INT, 1);
-	state_save_register_UINT8 ("tms9928a", 0, "VRAM", tms.vMem, vram);
+	state_save_register_UINT8 ("tms9928a", 0, "VRAM", tms.vMem, intf->vram);
 
     return 0;
 }
@@ -456,9 +453,9 @@ static void _TMS9928A_change_register (int reg, UINT8 val) {
 ** Interface functions
 */
 
-void TMS9928A_int_callback (void (*callback)(int)) {
+/*void TMS9928A_int_callback (void (*callback)(int)) {
     tms.INTCallback = callback;
-}
+}*/
 
 void TMS9928A_set_spriteslimit (int limit) {
     tms.LimitSprites = limit;
@@ -492,9 +489,27 @@ VIDEO_UPDATE( tms9928a )
 	if (! (tms.Regs[1] & 0x40))
 		fillbitmap(bitmap, Machine->pens[tms.BackColour], &Machine->visible_area);
 	else
-		copybitmap(bitmap, tms.tmpbmp, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+	{
+		copybitmap(bitmap, tms.tmpbmp, 0, 0, LEFT_BORDER, TOP_BORDER, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+		{
+			struct rectangle rt;
+
+			/* set borders */
+			rt.min_x = 0; rt.max_x = LEFT_BORDER+256+RIGHT_BORDER-1;
+			rt.min_y = 0; rt.max_y = TOP_BORDER-1;
+			fillbitmap (bitmap, tms.BackColour, &rt);
+			rt.min_y = TOP_BORDER+192; rt.max_y = TOP_BORDER+192+BOTTOM_BORDER-1;
+			fillbitmap (bitmap, tms.BackColour, &rt);
+
+			rt.min_y = TOP_BORDER; rt.max_y = TOP_BORDER+192-1;
+			rt.min_x = 0; rt.max_x = LEFT_BORDER-1;
+			fillbitmap (bitmap, tms.BackColour, &rt);
+			rt.min_x = LEFT_BORDER+256; rt.max_x = LEFT_BORDER+256+RIGHT_BORDER-1;
+			fillbitmap (bitmap, tms.BackColour, &rt);
+	    }
 		if (TMS_SPRITES_ENABLED)
 			_TMS9928A_sprites(bitmap);
+	}
 
     /* store Status register, so it can be restored at the next frame
        if there are no changes (sprite collision bit is lost) */
@@ -836,7 +851,7 @@ static void _TMS9928A_sprites (struct mame_bitmap *bmp) {
                             {
                             	tms.dBackMem[yy*256+xx] |= 0x02;
                             	if (bmp)
-									plot_pixel (bmp, xx, yy, Machine->pens[c]);
+									plot_pixel (bmp, LEFT_BORDER+xx, TOP_BORDER+yy, Machine->pens[c]);
 							}
                         }
                     }
@@ -875,7 +890,7 @@ static void _TMS9928A_sprites (struct mame_bitmap *bmp) {
         		                    {
                 		            	tms.dBackMem[yy*256+xx] |= 0x02;
                                         if (bmp)
-                                        	plot_pixel (bmp, xx, yy, Machine->pens[c]);
+                                        	plot_pixel (bmp, LEFT_BORDER+xx, TOP_BORDER+yy, Machine->pens[c]);
                 		            }
                                 }
                                 if (((xx+1) >=0) && ((xx+1) < 256)) {
@@ -888,7 +903,7 @@ static void _TMS9928A_sprites (struct mame_bitmap *bmp) {
         		                    {
                 		            	tms.dBackMem[yy*256+xx+1] |= 0x02;
                                         if (bmp)
-                                        	plot_pixel (bmp, xx+1, yy, Machine->pens[c]);
+                                        	plot_pixel (bmp, LEFT_BORDER+xx+1, TOP_BORDER+yy, Machine->pens[c]);
 									}
                                 }
                             }
@@ -907,16 +922,29 @@ static void _TMS9928A_sprites (struct mame_bitmap *bmp) {
     }
 }
 
-void mdrv_tms9928a(struct InternalMachineDriver *machine, int (*video_start_proc)(void))
+static TMS9928a_interface sIntf;
+
+static VIDEO_START ( TMS9928A_hack )
 {
+	return TMS9928A_start(&sIntf);
+}
+
+void mdrv_tms9928a(struct InternalMachineDriver *machine, const TMS9928a_interface *intf)
+{
+	int top_border = ((intf->model == TMS9929) || (intf->model == TMS9929A)) ? TOP_BORDER_50HZ : TOP_BORDER_60HZ;
+	int bottom_border = ((intf->model == TMS9929) || (intf->model == TMS9929A)) ? BOTTOM_BORDER_50HZ : BOTTOM_BORDER_60HZ;
+
+	sIntf = *intf;
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 24*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 24*8-1)
+	MDRV_SCREEN_SIZE(LEFT_BORDER+32*8+RIGHT_BORDER, top_border+24*8+bottom_border)
+	/*MDRV_VISIBLE_AREA(LEFT_BORDER+0*8, LEFT_BORDER+32*8-1, top_border+0*8, top_border+24*8-1)*/
+	MDRV_VISIBLE_AREA(0, LEFT_BORDER+32*8+RIGHT_BORDER-1, 0, top_border+24*8+bottom_border-1)
 	MDRV_PALETTE_LENGTH(TMS9928A_PALETTE_SIZE)
-	MDRV_COLORTABLE_LENGTH(TMS9928A_COLORTABLE_SIZE)
+	MDRV_COLORTABLE_LENGTH(0)
 	MDRV_PALETTE_INIT(tms9928a)
 
-	MDRV_VIDEO_START(proc)
+	MDRV_VIDEO_START(TMS9928A_hack)
 	MDRV_VIDEO_UPDATE(tms9928a)
 }

@@ -419,11 +419,6 @@ static z80ctc_interface	sord_m5_ctc_intf =
     {0}
 };
 
-VIDEO_START( sord_m5 )
-{
-	return TMS9928A_start(TMS99x8A, 0x4000);
-}
-
 static READ_HANDLER ( sord_keyboard_r )
 {
 	return readinputport(offset);
@@ -621,7 +616,6 @@ static MACHINE_INIT( sord_m5 )
 	TMS9928A_reset ();
 	z80ctc_reset(0);
 
-	TMS9928A_int_callback (sordm5_video_interrupt_callback);
 
 
 	/* should be done in a special callback to work properly! */
@@ -823,6 +817,13 @@ static INTERRUPT_GEN( sord_interrupt )
 		cpu_set_irq_line(0, 0, PULSE_LINE);
 }
 
+static const TMS9928a_interface tms9928a_interface =
+{
+	TMS9929A,
+	0x4000,
+	sordm5_video_interrupt_callback
+};
+
 static MACHINE_DRIVER_START( sord_m5 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 3800000)
@@ -837,7 +838,7 @@ static MACHINE_DRIVER_START( sord_m5 )
 	MDRV_MACHINE_INIT( sord_m5 )
 
 	/* video hardware */
-	MDRV_TMS9928A( sord_m5 )
+	MDRV_TMS9928A( &tms9928a_interface )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(SN76496, sn76496_interface)

@@ -21,6 +21,7 @@ extern MACHINE_STOP( svi318 );
 int svi318_load_rom (int id);
 void svi318_exit_rom (int id);
 extern INTERRUPT_GEN( svi318_interrupt );
+extern void svi318_vdp_interrupt (int i);
 
 WRITE_HANDLER (svi318_writemem0);
 WRITE_HANDLER (svi318_writemem1);

@@ -685,20 +685,17 @@ static struct Wave_interface wave_interface = {
     { 25 }          /* mixing levels */
 };
 
-static VIDEO_START( msx )
-{
-	int i;
-
-	i = TMS9928A_start(TMS99x8A, 0x4000);
-	if (!i)
-		TMS9928A_int_callback(msx_vdp_interrupt);
-	return i;
-}
-
 static VIDEO_START( msx2 )
 {
     return v9938_init (MODEL_V9938, 0x20000, msx_vdp_interrupt);
 }
+
+static const TMS9928a_interface tms9928a_interface =
+{
+	TMS99x8A,
+	0x4000,
+	msx_vdp_interrupt
+};
 
 static MACHINE_DRIVER_START( msx )
 	/* basic machine hardware */
@@ -714,7 +711,7 @@ static MACHINE_DRIVER_START( msx )
 	MDRV_MACHINE_STOP( msx )
 
     /* video hardware */
-	MDRV_TMS9928A( msx )
+	MDRV_TMS9928A( &tms9928a_interface )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)

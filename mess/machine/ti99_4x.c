@@ -83,7 +83,6 @@ New (020327):
 static READ16_HANDLER ( ti99_rw_rspeech );
 static WRITE16_HANDLER ( ti99_ww_wspeech );
 
-static void tms9901_set_int2(int state);
 static void tms9901_interrupt_callback(int intreq, int ic);
 static int ti99_R9901_0(int offset);
 static int ti99_R9901_1(int offset);
@@ -541,12 +540,8 @@ void machine_init_ti99(void)
 	/* init tms9901 */
 	tms9901_init(& tms9901reset_param_ti99);
 
-	/* set up callback for the TMS9901 to be notified of changes to the
-	 * TMS9928A INT* line (connected to the TMS9901 INT2* line)
-	 */
 	if (! has_evpc)
-		TMS9928A_int_callback(tms9901_set_int2);
-
+		TMS9928A_reset();
 	if (has_evpc)
 		v9938_reset();
 
@@ -630,16 +625,6 @@ void machine_stop_ti99(void)
 /*
 	video initialization.
 */
-int video_start_ti99_4(void)
-{
-	return TMS9928A_start(TMS99x8, 0x4000);		/* tms9918/28/29 with 16 kb of video RAM */
-}
-
-int video_start_ti99_4a(void)
-{
-	return TMS9928A_start(TMS99x8A, 0x4000);	/* tms9918a/28a/29a with 16 kb of video RAM */
-}
-
 int video_start_ti99_4ev(void)
 {
 	return v9938_init(MODEL_V9938, 0x20000, tms9901_set_int2);	/* v38 with 128 kb of video RAM */
@@ -1044,7 +1029,7 @@ nota:
 /*
 	set the state of int2 (called by tms9928 core)
 */
-static void tms9901_set_int2(int state)
+void tms9901_set_int2(int state)
 {
 	tms9901_set_single_int(2, state);
 }

@@ -114,6 +114,8 @@ WRITE16_HANDLER ( ti99_ww_wv38 );
 READ16_HANDLER ( ti99_rw_rgpl );
 WRITE16_HANDLER( ti99_ww_wgpl );
 
+extern void tms9901_set_int2(int state);
+
 READ16_HANDLER ( ti99_expansion_CRU_r );
 WRITE16_HANDLER ( ti99_expansion_CRU_w );
 

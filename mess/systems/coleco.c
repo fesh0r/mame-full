@@ -159,14 +159,12 @@ static void coleco_vdp_interrupt (int state)
 	last_state = state;
 }
 
-static VIDEO_START( coleco )
+static const TMS9928a_interface tms9928a_interface =
 {
-	if (TMS9928A_start(TMS99x8A, 0x4000)) return 1;
-
-	TMS9928A_int_callback(coleco_vdp_interrupt);
-	return 0;
-}
-
+	TMS99x8A,
+	0x4000,
+	coleco_vdp_interrupt
+};
 
 static MACHINE_DRIVER_START( coleco )
 	/* basic machine hardware */
@@ -179,7 +177,7 @@ static MACHINE_DRIVER_START( coleco )
 	MDRV_INTERLEAVE(1)
 
     /* video hardware */
-	MDRV_TMS9928A( coleco )
+	MDRV_TMS9928A( &tms9928a_interface )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(SN76496, sn76496_interface)

@@ -505,11 +505,6 @@ static Z80_DaisyChain einstein_daisy_chain[] =
     {0,0,0,-1}
 };
 
-VIDEO_START( einstein )
-{
-	return TMS9928A_start(TMS99x8A, 0x4000);
-}
-
 static READ_HANDLER(einstein_vdp_r)
 {
 	/*logerror("vdp r: %04x\n",offset); */
@@ -1700,6 +1695,13 @@ VIDEO_UPDATE( einstein2 )
 	video_update_einstein_80col(bitmap, cliprect);
 }
 
+static const TMS9928a_interface tms9928a_interface =
+{
+	TMS9929A,
+	0x4000,
+	NULL
+};
+
 static MACHINE_DRIVER_START( einstein )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, EINSTEIN_SYSTEM_CLOCK)
@@ -1713,7 +1715,7 @@ static MACHINE_DRIVER_START( einstein )
 	MDRV_MACHINE_INIT( einstein )
 
     /* video hardware */
-	MDRV_TMS9928A( einstein )
+	MDRV_TMS9928A( &tms9928a_interface )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, einstein_ay_interface)

@@ -411,6 +411,34 @@ static struct Wave_interface tape_input_intf =
 };
 
 
+static const TMS9928a_interface tms9918_interface =
+{
+	TMS99x8,
+	0x4000,
+	tms9901_set_int2
+};
+
+static const TMS9928a_interface tms9929_interface =
+{
+	TMS9929,
+	0x4000,
+	tms9901_set_int2
+};
+
+static const TMS9928a_interface tms9918a_interface =
+{
+	TMS99x8A,
+	0x4000,
+	tms9901_set_int2
+};
+
+static const TMS9928a_interface tms9929a_interface =
+{
+	TMS9929A,
+	0x4000,
+	tms9901_set_int2
+};
+
 static MACHINE_DRIVER_START(ti99_4_60hz)
 
 	/* basic machine hardware */
@@ -432,7 +460,7 @@ static MACHINE_DRIVER_START(ti99_4_60hz)
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	/* video hardware */
-	MDRV_TMS9928A( ti99_4 )
+	MDRV_TMS9928A( &tms9918_interface )
 
 	MDRV_SOUND_ATTRIBUTES(0)
 	MDRV_SOUND_ADD(SN76496, tms9919interface)
@@ -463,7 +491,7 @@ static MACHINE_DRIVER_START(ti99_4_50hz)
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	/* video hardware */
-	MDRV_TMS9928A( ti99_4 )
+	MDRV_TMS9928A( &tms9929_interface )
 
 	MDRV_SOUND_ATTRIBUTES(0)
 	MDRV_SOUND_ADD(SN76496, tms9919interface)
@@ -494,7 +522,7 @@ static MACHINE_DRIVER_START(ti99_4a_60hz)
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	/* video hardware */
-	MDRV_TMS9928A( ti99_4a )
+	MDRV_TMS9928A( &tms9918a_interface )
 
 	MDRV_SOUND_ATTRIBUTES(0)
 	MDRV_SOUND_ADD(SN76496, tms9919interface)
@@ -525,7 +553,7 @@ static MACHINE_DRIVER_START(ti99_4a_50hz)
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	/* video hardware */
-	MDRV_TMS9928A( ti99_4a )
+	MDRV_TMS9928A( &tms9929a_interface )
 
 	MDRV_SOUND_ATTRIBUTES(0)
 	MDRV_SOUND_ADD(SN76496, tms9919interface)

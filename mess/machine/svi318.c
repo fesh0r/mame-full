@@ -349,7 +349,7 @@ static int z80_table_num[5] = { Z80_TABLE_op, Z80_TABLE_xy,
     Z80_TABLE_ed, Z80_TABLE_cb, Z80_TABLE_xycb };
 static UINT8 *old_z80_tables[5], *z80_table;
 
-static void svi318_vdp_interrupt (int i)
+void svi318_vdp_interrupt (int i)
 	{
     cpu_set_irq_line (0, 0, (i ? HOLD_LINE : CLEAR_LINE));
 	}
@@ -359,7 +359,6 @@ DRIVER_INIT( svi318 )
 	int i,n;
 
     memset (&svi, 0, sizeof (svi) );
-    TMS9928A_int_callback (svi318_vdp_interrupt);
 
     svi.svi318 = !strcmp (Machine->gamedrv->name, "svi318");
 
