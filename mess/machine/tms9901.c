@@ -1,5 +1,5 @@
 /*
-	TMS9901 Programmable system interface
+	TMS9901 Programmable System Interface
 
 	Raphael Nabet, 2000-2002
 */
@@ -12,9 +12,9 @@
 /*
 	TMS9901 emulation.
 
-Overview :
+Overview:
 	TMS9901 is a support chip for TMS9900.  It handles interrupts, provides several I/O pins, and
-	a timer (a.k.a. clock : it is merely a register which decrements regularily and can generate
+	a timer (a.k.a. clock: it is merely a register which decrements regularily and can generate
 	an interrupt when it reaches 0).
 
 	It communicates with the TMS9900 with the CRU bus, and with the rest of the world with
@@ -25,36 +25,37 @@ Overview :
 	systems.
 
 
-TODO :
+TODO:
 	* support reset
 	* support multiple 9901s
 
-Pins :
+Pins:
 	Reset
-	INT1-INT7 : used as interrupt/input pins.
-	P0-P7 : used as input/output pins.
-	INT8/P15-INT15/P8 : used as both interrupt/input or input/output pins.  Note you can
+	INT1-INT7: used as interrupt/input pins.
+	P0-P7: used as input/output pins.
+	INT8/P15-INT15/P8: used as both interrupt/input or input/output pins.  Note you can
 	simulteanously use a pin as output and interrupt.  (Mostly obvious - but it implies you cannot
 	raise an interrupt with a write, which is not SO obvious.)
 
-Interrupt handling :
-	After each clock cycle, TMS9901 reads the state of INT1*-INT15* (except pins which are set as
-	output pins).  If the clock is enabled, it replaces INT3* with an internal timer int pending
-	register.  Then it inverts the value and performs a bit-wise AND with the interrupt mask.
+Interrupt handling:
+	After each clock cycle, TMS9901 latches the state of INT1*-INT15* (except pins which are set
+	as output pins).  If the clock is enabled, it replaces INT3* with an internal timer int
+	pending register.  Then it inverts the value and performs a bit-wise AND with the interrupt
+	mask.
 
 	If some bits are set, TMS9901 set the INTREQ* pin and present the number of the first bit set
 	on the IC0-IC3 pins.  If the tms9900 is connected to these pins, the result is that asserting
 	an INTn* on tms9901 causes a level-n interrupt request on the tms9900, provided the interrupt
 	pin is enabled in tms9901 and no higher priority pin is set.
 
-	This interrupt request lasts as long as the interrupt pin and the revelant bit in the interrupt
-	mask are set (level-triggered interrupts).
+	This interrupt request lasts for as long as the interrupt pin and the revelant bit in
+	the interrupt mask are set (level-triggered interrupts).
 
 	TIMER interrupts are kind of an exception, since they are not associated with an external
 	interrupt pin.  I think the request is set by the decrementer reaching 0, and is cleared by a
 	write to the 9901 int3 enable bit ("SBO 3") (or am I wrong once again ?).
 
-nota :
+nota:
 	On TI99/4a, interrupt routines notify (by software) the TMS9901 of interrupt recognition
 	("SBO n").  However, AFAIK, this has strictly no consequence in the TMS9901, and interrupt
 	routines would work fine without this (except probably TIMER interrupt).  All this is quite
@@ -67,72 +68,52 @@ nota :
 	Interrupt variables
 */
 
-/* mask :  bit #n is set if pin #n is supported as an interrupt pin,
-i.e. the driver sends a notification every time the pin state changes */
-static int supported_int_mask;
+typedef struct tms9901_t
+{
+	/* interrupt registers */
 
-static int int_state;				/* state of the int1-int15 lines */
-static int timer_int_pending = 0;	/* timer int pending (overrides int3 pin if timer enabled) */
-static int enabled_ints = 0;		/* interrupt enable mask */
+	int supported_int_mask;	/* mask:  bit #n is set if pin #n is supported as an interrupt pin,
+							  i.e. the driver sends a notification whenever the pin state changes */
+	int int_state;			/* state of the int1-int15 lines */
+	int timer_int_pending;	/* timer int pending (overrides int3 pin if timer enabled) */
+	int enabled_ints;		/* interrupt enable mask */
+	int int_pending;		/* status of the int* pin (connected to TMS9900) */
 
-static int int_pending = 0;			/* status of int* pin (connected to TMS9900) */
+	/* PIO registers */
+	int pio_direction;		/* direction register for PIO */
+	int pio_output;			/* current PIO output (to be masked with pio_direction) */
+	/* mirrors used for INT7*-INT15* */
+	int pio_direction_mirror;
+	int pio_output_mirror;
 
-/* direction register for PIO */
-static int pio_direction;
-/* current PIO output (to be masked with pio_direction) */
-static int pio_output;
-/* mirrors used for INT7*-INT15* */
-static int pio_direction_mirror;
-static int pio_output_mirror;
+	/* clock registers */
+	void *timer;			/* MESS timer, used to emulate the decrementer register */
 
-/*
-	clock registers
+	int clockinvl;			/* clock interval, loaded in decrementer when it reaches 0.
+							  0 means decrementer off */
+	int latchedtimer;		/* when we go into timer mode, the decrementer is copied there to allow to read it reliably */
 
-	frequency : CPUCLK/64 (e.g. 46875Hz for a 3MHz clock)
+	int clockinvlchanged;	/* set to true when clockinvl has been written to, which means the
+							  decrementer must be reloaded when we quit timer mode (??) */
+	int mode9901;			/* TMS9901 current mode
+							  0 = I/O mode (allow interrupts ???),
+							  1 = Timer mode (we're programming the clock). */
 
-	(warning : 3MHz on a tms9900 is equivalent to 12MHz on a tms9995 or tms99000)
-*/
+	/* driver-dependent read and write handlers */
+	int (*read_handlers[4])(int offset);
+	void (*write_handlers[16])(int offset, int data);
 
-/* MESS timer, used to emulate the decrementer register */
-static void *tms9901_timer = NULL;
+	/* interrupt callback to notify driver of changes in intreq and ic0-3 pins */
+	void (*interrupt_callback)(int intreq, int ic);
 
-/* clock interval, loaded in decrementer when it reaches 0.  0 means decrementer off */
-static int clockinvl = 0;
+	/* tms9901 clock rate (PHI* pin, normally connected to TMS9900 Phi3*) */
+	/* decrementer rate equates PHI* rate/64 (e.g. 46875Hz for a 3MHz clock)
+	(warning: 3MHz on a tms9900 is equivalent to 12MHz on a tms9995 or tms99000) */
+	double clock_rate;
+} tms9901_t;
 
-/* when we go to timer mode, the decrementer is copied there to allow to read it reliably */
-static int latchedtimer;
+static tms9901_t tms9901;
 
-/* set to true when clockinvl has been written to, which means the decrementer must be reloaded
-when we quit timer mode (??) */
-static int clockinvlchanged;
-
-/*
-	TMS9901 current mode
-
-	0 = I/O mode (allow interrupts ???),
-	1 = Timer mode (we're programming the clock).
-*/
-static int mode9901 = 0;
-
-/*
-	driver-dependent read and write handlers
-*/
-
-static int (*read_handlers[4])(int offset) =
-{	/* defaults to all NULL */
-	NULL,
-};
-
-static void (*write_handlers[16])(int offset, int data) =
-{	/* defaults to all NULL */
-	NULL,
-};
-
-/* interrupt callcback to notify driver of changes in intreq and ic0-3 pins */
-static void (*interrupt_callback)(int intreq, int ic);
-
-/* tms9901 clock rate */
-static double clock_rate;
 
 /*
 	prototypes
@@ -140,7 +121,7 @@ static double clock_rate;
 
 static void tms9901_field_interrupts(void);
 static void decrementer_callback(int ignored);
-static void reset_tms9901_timer(void);
+static void tms9901_timer_reload(void);
 
 
 
@@ -154,7 +135,7 @@ static void reset_tms9901_timer(void);
 	Reverse the bit order of bits 15-7 (i.e. 9 MSB in a 16-bit word) of an operand.
 	Other bits are masked out.
 
-Why :
+Why:
 
 	Since not enough pins were available, pins P7-P15 are the same as INT15*-INT7*, i.e.
 	the same pins can be used both as input/interrupt pins and as normal I/O pins.
@@ -221,44 +202,52 @@ void tms9901_init(const tms9901reset_param *param)
 {
 	int i;
 
-	supported_int_mask = param->supported_int_mask;
+	tms9901.timer = timer_alloc(decrementer_callback);
+
+	tms9901.supported_int_mask = param->supported_int_mask;
 
 	for (i=0; i<4; i++)
-		read_handlers[i] = param->read_handlers[i];
+		tms9901.read_handlers[i] = param->read_handlers[i];
 
 	for (i=0; i<16; i++)
-		write_handlers[i] = param->write_handlers[i];
+		tms9901.write_handlers[i] = param->write_handlers[i];
 
-	interrupt_callback = param->interrupt_callback;
+	tms9901.interrupt_callback = param->interrupt_callback;
 
-	clock_rate = param->clock_rate;
-
-	int_state = 0;
-	timer_int_pending = 0;
-	enabled_ints = 0;
-
-	pio_direction = 0;
-	pio_direction_mirror = 0;
-
-	tms9901_field_interrupts();
-
-	mode9901 = 0;
+	tms9901.clock_rate = param->clock_rate;
 
 
-	tms9901_timer = timer_alloc(decrementer_callback);
+	tms9901.int_state = 0;
 
-	clockinvl = 0;
-	reset_tms9901_timer();
+
+	tms9901_reset();
 }
 
 
 void tms9901_cleanup(void)
 {
-	if (tms9901_timer)
+	if (tms9901.timer)
 	{
-		timer_remove(tms9901_timer);
-		tms9901_timer = NULL;
+		timer_remove(tms9901.timer);
+		tms9901.timer = NULL;
 	}
+}
+
+void tms9901_reset(void)
+{
+	tms9901.timer_int_pending = 0;
+	tms9901.enabled_ints = 0;
+
+	tms9901.pio_direction = 0;
+	tms9901.pio_direction_mirror = 0;
+	tms9901.pio_output = tms9901.pio_output_mirror = 0;
+
+	tms9901_field_interrupts();
+
+	tms9901.mode9901 = 0;
+
+	tms9901.clockinvl = 0;
+	tms9901_timer_reload();
 }
 
 /*
@@ -268,37 +257,37 @@ static void tms9901_field_interrupts(void)
 {
 	int current_ints;
 
-	/* int_state : state of lines int1-int15 */
-	/* enabled_ints : enabled interrupts */
-	current_ints = int_state;
-	if (clockinvl != 0)
+	/* int_state: state of lines int1-int15 */
+	current_ints = tms9901.int_state;
+	if (tms9901.clockinvl != 0)
 	{	/* if timer is enabled, INT3 pin is overriden by timer */
-		if (timer_int_pending)
+		if (tms9901.timer_int_pending)
 			current_ints |= TMS9901_INT3;
 		else
 			current_ints &= ~ TMS9901_INT3;
 	}
 
+	/* enabled_ints: enabled interrupts */
 	/* mask out all int pins currently set as output */
-	current_ints &= enabled_ints & (~ pio_direction_mirror);
+	current_ints &= tms9901.enabled_ints & (~ tms9901.pio_direction_mirror);
 
 	if (current_ints)
 	{
-		/* find which interrupt tripped us :
-		 * we simply look for the first bit set to 1 in current_ints... */
+		/* find which interrupt tripped us:
+		  we simply look for the first bit set to 1 in current_ints... */
 		int level = find_first_bit(current_ints);
 
-		int_pending = TRUE;
+		tms9901.int_pending = TRUE;
 
-		if (interrupt_callback)
-			interrupt_callback(1, level);
+		if (tms9901.interrupt_callback)
+			(*tms9901.interrupt_callback)(1, level);
 	}
 	else
 	{
-		int_pending = FALSE;
+		tms9901.int_pending = FALSE;
 
-		if (interrupt_callback)
-			interrupt_callback(0, 0);
+		if (tms9901.interrupt_callback)
+			(*tms9901.interrupt_callback)(0, 0);
 	}
 }
 
@@ -306,17 +295,17 @@ static void tms9901_field_interrupts(void)
 /*
 	callback function which is called when the state of INTn* change
 
-	state == 0 : INTn* is inactive (high)
-	state != 0 : INTn* is active (low)
+	state == 0: INTn* is inactive (high)
+	state != 0: INTn* is active (low)
 
 	0<=pin_number<=15
 */
 void tms9901_set_single_int(int pin_number, int state)
 {
 	if (state)
-		int_state |= 1 << pin_number;		/* raise INTn* pin state mirror */
+		tms9901.int_state |= 1 << pin_number;		/* raise INTn* pin state mirror */
 	else
-		int_state &= ~ (1 << pin_number);
+		tms9901.int_state &= ~ (1 << pin_number);
 
 	/* we do not need to always call this function - time for an optimization */
 	tms9901_field_interrupts();
@@ -328,7 +317,7 @@ void tms9901_set_single_int(int pin_number, int state)
 */
 static void decrementer_callback(int ignored)
 {
-	timer_int_pending = TRUE;			/* decrementer interrupt requested */
+	tms9901.timer_int_pending = TRUE;			/* decrementer interrupt requested */
 
 	tms9901_field_interrupts();
 }
@@ -336,19 +325,15 @@ static void decrementer_callback(int ignored)
 /*
 	load the content of clockinvl into the decrementer
 */
-static void reset_tms9901_timer(void)
+static void tms9901_timer_reload(void)
 {
-	/*if (tms9901_timer)
-	{
-		timer_remove(tms9901_timer);
-		tms9901_timer = NULL;
-	}*/
-
-	/* clock interval == 0 -> no timer */
-	if (clockinvl)
-	{
-		//tms9901_timer = timer_pulse((double) clockinvl / (clock_rate / 64.), 0, decrementer_callback);
-		timer_adjust(tms9901_timer, (double) clockinvl / (clock_rate / 64.), 0, (double) clockinvl / (clock_rate / 64.));
+	if (tms9901.clockinvl)
+	{	/* reset clock interval */
+		timer_adjust(tms9901.timer, (double) tms9901.clockinvl / (tms9901.clock_rate / 64.), 0, (double) tms9901.clockinvl / (tms9901.clock_rate / 64.));
+	}
+	else
+	{	/* clock interval == 0 -> no timer */
+		timer_enable(tms9901.timer, 0);
 	}
 }
 
@@ -361,15 +346,15 @@ static void reset_tms9901_timer(void)
 /*
 	Read a 8 bit chunk from tms9901.
 
-	signification :
-	bit 0 : mode9901
+	signification:
+	bit 0: mode9901
 	if (mode9901 == 0)
-	 bit 1-15 : current status of the INT1*-INT15* pins
+	 bit 1-15: current status of the INT1*-INT15* pins
 	else
-	 bit 1-14 : current timer value
-	 bit 15 : value of the INTREQ* (interrupt request to TMS9900) pin.
+	 bit 1-14: current timer value
+	 bit 15: value of the INTREQ* (interrupt request to TMS9900) pin.
 
-	bit 16-31 : current status of the P0-P15 pins (quits timer mode, too...)
+	bit 16-31: current status of the P0-P15 pins (quits timer mode, too...)
 */
 READ16_HANDLER ( tms9901_CRU_read )
 {
@@ -380,68 +365,68 @@ READ16_HANDLER ( tms9901_CRU_read )
 	switch (offset)
 	{
 	case 0:
-		if (mode9901)
+		if (tms9901.mode9901)
 		{	/* timer mode */
-			return ((latchedtimer & 0x7F) << 1) | 0x01;
+			return ((tms9901.latchedtimer & 0x7F) << 1) | 0x01;
 		}
 		else
 		{	/* I/O mode */
-			answer = ((~ int_state) & supported_int_mask) & 0xFF;
+			answer = ((~ tms9901.int_state) & tms9901.supported_int_mask) & 0xFF;
 
-			if (read_handlers[0])
-				answer |= (* read_handlers[0])(0);
+			if (tms9901.read_handlers[0])
+				answer |= (* tms9901.read_handlers[0])(0);
 
-			answer &= ~ pio_direction_mirror;
-			answer |= (pio_output_mirror & pio_direction_mirror) & 0xFF;
+			answer &= ~ tms9901.pio_direction_mirror;
+			answer |= (tms9901.pio_output_mirror & tms9901.pio_direction_mirror) & 0xFF;
 		}
 		break;
 	case 1:
-		if (mode9901)
+		if (tms9901.mode9901)
 		{	/* timer mode */
 
-			answer = (latchedtimer & 0x3F80) >> 7;
-			if (! int_pending)
+			answer = (tms9901.latchedtimer & 0x3F80) >> 7;
+			if (! tms9901.int_pending)
 				answer |= 0x80;
 		}
 		else
 		{	/* I/O mode */
-			answer = ((~ int_state) & supported_int_mask) >> 8;
+			answer = ((~ tms9901.int_state) & tms9901.supported_int_mask) >> 8;
 
-			if (read_handlers[1])
-				answer |= (* read_handlers[1])(1);
+			if (tms9901.read_handlers[1])
+				answer |= (* tms9901.read_handlers[1])(1);
 
-			answer &= ~ (pio_direction_mirror >> 8);
-			answer |= (pio_output_mirror & pio_direction_mirror) >> 8;
+			answer &= ~ (tms9901.pio_direction_mirror >> 8);
+			answer |= (tms9901.pio_output_mirror & tms9901.pio_direction_mirror) >> 8;
 		}
 		break;
 	case 2:
-		if (mode9901)
+		if (tms9901.mode9901)
 		{	/* exit timer mode */
-			mode9901 = 0;
+			tms9901.mode9901 = 0;
 
-			if (clockinvlchanged)
-				reset_tms9901_timer();
+			if (tms9901.clockinvlchanged)
+				tms9901_timer_reload();
 		}
 
-		answer = (read_handlers[2]) ? (* read_handlers[2])(2) : 0;
+		answer = (tms9901.read_handlers[2]) ? (* tms9901.read_handlers[2])(2) : 0;
 
-		answer &= ~ pio_direction;
-		answer |= (pio_output & pio_direction) & 0xFF;
+		answer &= ~ tms9901.pio_direction;
+		answer |= (tms9901.pio_output & tms9901.pio_direction) & 0xFF;
 
 		break;
 	default:
-		if (mode9901)
+		if (tms9901.mode9901)
 		{	/* exit timer mode */
-			mode9901 = 0;
+			tms9901.mode9901 = 0;
 
-			if (clockinvlchanged)
-				reset_tms9901_timer();
+			if (tms9901.clockinvlchanged)
+				tms9901_timer_reload();
 		}
 
-		answer = (read_handlers[3]) ? (* read_handlers[3])(3) : 0;
+		answer = (tms9901.read_handlers[3]) ? (* tms9901.read_handlers[3])(3) : 0;
 
-		answer &= ~ (pio_direction >> 8);
-		answer |= (pio_output & pio_direction) >> 8;
+		answer &= ~ (tms9901.pio_direction >> 8);
+		answer |= (tms9901.pio_output & tms9901.pio_direction) >> 8;
 
 		break;
 	}
@@ -452,15 +437,15 @@ READ16_HANDLER ( tms9901_CRU_read )
 /*
 	Write 1 bit to tms9901.
 
-	signification :
-	bit 0 : write mode9901
+	signification:
+	bit 0: write mode9901
 	if (mode9901 == 0)
-	 bit 1-15 : write interrupt mask register
+	 bit 1-15: write interrupt mask register
 	else
-	 bit 1-14 : write timer period
-	 bit 15 : if written value == 0, soft reset (just resets all I/O pins as input)
+	 bit 1-14: write timer period
+	 bit 15: if written value == 0, soft reset (just resets all I/O pins as input)
 
-	bit 16-31 : set output state of P0-P15 (and set them as output pin) (quit timer mode, too...)
+	bit 16-31: set output state of P0-P15 (and set them as output pin) (quit timer mode, too...)
 */
 WRITE16_HANDLER ( tms9901_CRU_write )
 {
@@ -470,22 +455,22 @@ WRITE16_HANDLER ( tms9901_CRU_write )
 	switch (offset)
 	{
 	case 0x00:	/* write to mode bit */
-		if (mode9901 != data)
+		if (tms9901.mode9901 != data)
 		{
-			mode9901 = data;
+			tms9901.mode9901 = data;
 
-			if (mode9901)
+			if (tms9901.mode9901)
 			{
-				if (/*tms9901_timer*/clockinvl)
-					latchedtimer = ceil(timer_timeleft(tms9901_timer) * 46875.);
+				if (tms9901.clockinvl)
+					tms9901.latchedtimer = ceil(timer_timeleft(tms9901.timer) * (tms9901.clock_rate / 64.));
 				else
-					latchedtimer = 0;		/* timer inactive... */
-				clockinvlchanged = FALSE;
+					tms9901.latchedtimer = 0;		/* timer inactive... */
+				tms9901.clockinvlchanged = FALSE;
 			}
 			else
 			{
-				if (clockinvlchanged)
-					reset_tms9901_timer();
+				if (tms9901.clockinvlchanged)
+					tms9901_timer_reload();
 			}
 		}
 		break;
@@ -510,48 +495,50 @@ WRITE16_HANDLER ( tms9901_CRU_write )
 			            :  Bit in clock interval
 		*/
 		/* offset is the index of the modified bit of register (-> interrupt number -1) */
-		if (mode9901)
+		if (tms9901.mode9901)
 		{	/* modify clock interval */
 			int mask = 1 << ((offset & 0x0F) - 1);	/* corresponding mask */
 
 			if (data)
-				clockinvl |= mask;			/* set bit */
+				tms9901.clockinvl |= mask;			/* set bit */
 			else
-				clockinvl &= ~ mask;		/* unset bit */
+				tms9901.clockinvl &= ~ mask;		/* clear bit */
 
-			clockinvlchanged = TRUE;
+			tms9901.clockinvlchanged = TRUE;
 		}
 		else
 		{	/* modify interrupt mask */
 			int mask = 1 << (offset & 0x0F);	/* corresponding mask */
 
 			if (data)
-				enabled_ints |= mask;		/* set bit */
+				tms9901.enabled_ints |= mask;		/* set bit */
 			else
-				enabled_ints &= ~ mask;		/* unset bit */
+				tms9901.enabled_ints &= ~ mask;		/* unset bit */
 
 			if (offset == 3)
-				timer_int_pending = FALSE;	/* SBO 3 clears pending timer interrupt (??) */
+				tms9901.timer_int_pending = FALSE;	/* SBO 3 clears pending timer interrupt (??) */
 
 			tms9901_field_interrupts();		/* changed interrupt state */
 		}
 		break;
 	case 0x0F:
-		if (mode9901)
-		{	/* clock mode */
+		if (tms9901.mode9901)
+		{	/* in clock mode, this is the soft reset bit */
 			if (! data)
 			{	/* TMS9901 soft reset */
 				/* all output pins are input pins again */
-				pio_direction = 0;
-				pio_direction_mirror = 0;
+				tms9901.pio_direction = 0;
+				tms9901.pio_direction_mirror = 0;
+
+				tms9901.enabled_ints = 0;	/* right??? */
 			}
 		}
 		else
 		{	/* modify interrupt mask */
 			if (data)
-				enabled_ints |= 0x4000;		/* set bit */
+				tms9901.enabled_ints |= 0x4000;		/* set bit */
 			else
-				enabled_ints &= ~0x4000;	/* unset bit */
+				tms9901.enabled_ints &= ~0x4000;	/* unset bit */
 
 			tms9901_field_interrupts();		/* changed interrupt state */
 		}
@@ -577,39 +564,38 @@ WRITE16_HANDLER ( tms9901_CRU_write )
 			int mask = (1 << pin);
 
 
-			if (mode9901)
+			if (tms9901.mode9901)
 			{	/* exit timer mode */
-				mode9901 = 0;
+				tms9901.mode9901 = 0;
 
-				if (clockinvlchanged)
-					reset_tms9901_timer();
+				if (tms9901.clockinvlchanged)
+					tms9901_timer_reload();
 			}
 
-			pio_direction |= mask;			/* set up as output pin */
+			tms9901.pio_direction |= mask;			/* set up as output pin */
 
 			if (data)
-				pio_output |= mask;
+				tms9901.pio_output |= mask;
 			else
-				pio_output &= ~ mask;
+				tms9901.pio_output &= ~ mask;
 
 			if (pin >= 7)
 			{	/* pins P7-P15 are mirrored as INT15*-INT7* */
 				int pin2 = 22 - pin;
 				int mask2 = (1 << pin2);
 
-				pio_direction_mirror |= mask2;	/* set up as output pin */
+				tms9901.pio_direction_mirror |= mask2;	/* set up as output pin */
 
 				if (data)
-					pio_output_mirror |= mask2;
+					tms9901.pio_output_mirror |= mask2;
 				else
-					pio_output_mirror &= ~ mask2;
+					tms9901.pio_output_mirror &= ~ mask2;
 			}
 
-			if (write_handlers[pin] != NULL)
-				(* write_handlers[pin])(pin, data);
+			if (tms9901.write_handlers[pin] != NULL)
+				(* tms9901.write_handlers[pin])(pin, data);
 		}
 
 		break;
 	}
 }
-
