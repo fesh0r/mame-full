@@ -1959,5 +1959,5 @@ static const struct IODevice io_saturn[] = {
 };
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-CONSX(1992, saturn, 0, saturn, saturn, saturn, "Sega", "Saturn", GAME_NOT_WORKING | GAME_REQUIRES_16BIT )
+CONSX(1992, saturn, 0, saturn, saturn, saturn, "Sega", "Saturn", GAME_NOT_WORKING)
 
