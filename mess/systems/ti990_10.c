@@ -132,7 +132,7 @@ static int video_start_ti990_10(void)
 	return vdt911_init_term(0, & params);
 }
 
-VIDEO_UPDATE( ti990_10 )
+static VIDEO_UPDATE( ti990_10 )
 {
 	vdt911_refresh(bitmap, 0, 0, 0);
 }
