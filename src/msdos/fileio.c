@@ -6,7 +6,7 @@
 #include <signal.h>
 
 #ifdef MESS
-#include "mess/msdos.h"
+#include "../mess/msdos.h"
 #endif
 
 /* Verbose outputs to error.log ? */
