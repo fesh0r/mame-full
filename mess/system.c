@@ -77,45 +77,7 @@ const struct GameDriver *drivers[] =
 
 /****************CONSOLES****************************************************/
 
-/*
-  pong games
-  first done in discret logic
-  later pong in a chip by several firms (atari, ge, ...)
-
-  ay-3-8500-7 6(7) games in this chip
-   pelota
-   squash
-   fussball
-   tennis
-   schiessen-1
-   schiessen-2
-   undocumented (when all switches are off)
-  nothing known about its internal design
-
-  ay-3-8610
-   Zielschiessen
-   Tennis
-   Hockey
-   Squash
-   Squash-Training
-   Schiess-Training
-   Gridball
-   Fussball
-   Basketball
-   Basketball-Training
-
-  ay-3-8765
-   artisten rennen
-   gelaende fahren
-   motorrad rennen
-   geschicklichkeitsspringen
-
-  universum multispiel 2006: ay-3-8500-7, the six official selectable
-
-  shg black point (type fs 1003)
-  cartridge with ay-3-8610 (fs 1201)
-  cartridge with ay-3-8765 (fs 1215)
- */
+/* for pong style games look into docs/pong.txt */
 
 #ifndef MESS_EXCLUDE_ATARI
 	/* ATARI */
@@ -209,6 +171,7 @@ TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
 	/* tiger game.com handheld*/
 
 	/* interton vc4000 */
+	/* grundig super play computer 4000 */
 
 	/* bandai wonderswan handheld*/
 
@@ -247,6 +210,10 @@ TESTDRIVER( z88 )		/*												  */
 	DRIVER( pcw10 ) 	/* 198? PCW10									  */
 
 	DRIVER( pcw16 )     /* 1995 PCW16                                     */
+	
+	/* pc20 clone of sinclair pc200 */
+	/* pc1512 ibm xt compatible */
+	/* pc1640/pc6400 ibm xt compatible */
 
 	DRIVER( nc100 ) 	/* 19?? NC100									  */
 	DRIVER( nc100a ) 	/* 19?? NC100									  */
@@ -396,6 +363,8 @@ TESTDRIVER( plus4v )	/* Commodore +4 								  */
 TESTDRIVER( c128nor )	/* Commodore 128 - PAL (norwegian)				  */
 TESTDRIVER( c128d )		/* Commodore 128D - NTSC 						  */
 
+/*	DRIVER( lcd )*/		/* Commodore LCD Prototype (m65c102 based)		  */
+
 /*	DRIVER( cbm900 )*/	/* Commodore 900 Prototype (z8000)				  */
 
 //!!	DRIVER( amiga ) 	/* Commodore Amiga								  */
@@ -423,6 +392,7 @@ TESTDRIVER( ibmpcjr )	/*      IBM PC Jr								  */
 
 	/* xt */
 	DRIVER( ibmxt )		/* 1986	IBM XT									  */
+/*	DRIVER( ibm8530 )*/	/* 1987 IBM PS2 Model 30 (MCGA)						*/
 	DRIVER( pc200 )     /* 1988 Sinclair PC200                            */
 	DRIVER( pc20 )      /* 1988 Amstrad PC20                              */   	
 	DRIVER( pc1512 )	/* 1986 Amstrad PC1512 (CGA compatible)			  */
@@ -432,11 +402,18 @@ TESTDRIVER( ibmpcjr )	/*      IBM PC Jr								  */
 
 	/* at */
 TESTDRIVER( ibmat )		/* 1985	IBM AT									  */
+TESTDRIVER( i8530286 )	/* 1988 IBM PS2 Model 30 286 (VGA)					*/
 	DRIVER( at )		/* 1987 AMI Bios and Diagnostics				  */
 TESTDRIVER( atvga ) 	/*												  */
 TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 
+/*	DRIVER( ibm8535 )*/	/* 1991 IBM PS2 Model 35 (80386sx)					*/
 /*	DRIVER( at386)*/	/*												  */
+
+	/* microchannel */
+/*	DRIVER( ibm8550 )*/	/* 1987 IBM PS2 Model 50 (80826)					*/
+
+/*	DRIVER( ibm8580 )*/	/* 1987 IBM PS2 Model 80 (80386)					*/
 #endif
 
 #ifndef MESS_EXCLUDE_SINCLAIR
@@ -470,13 +447,25 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 	DRIVER( specp2sp )	/* 1986 ZX Spectrum +2 (Spain)					  */
 	DRIVER( specp3sp )	/* 1987 ZX Spectrum +3 (Spain)					  */
 	DRIVER( specpl3e )	/* 2000 ZX Spectrum +3e 						  */
+
+	/* sinclair pc200 professional series ibmxt compatible*/
 #endif
 
 #ifndef MESS_EXCLUDE_SHARP
 	/* SHARP */
+#if 0
+TESTDRIVER( pc1500 )	/* 1982 Pocket Computer 1500						*/
+TESTDRIVER( trs80pc2 )	/* 1982 Tandy TRS80 PC 2							*/
+TESTDRIVER( pc1500a )	/* 1984 Pocket Computer 1500A						*/
+/*	DRIVER( pc1600 )*/	/* 1986 Pocket Computer 1600						*/
+#endif
+
 	DRIVER( pc1251 )	/* Pocket Computer 1251 						  */
+TESTDRIVER( trs80pc3 )	/* Tandy TRS80 PC-3									*/
+
 	DRIVER( pc1401 )	/* Pocket Computer 1401 						  */
 	DRIVER( pc1402 )	/* Pocket Computer 1402 						  */
+
 	DRIVER( pc1350 )	/* Pocket Computer 1350 						  */
 
 	DRIVER( mz700 ) 	/* 1982 Sharp MZ700 							  */
@@ -626,14 +615,16 @@ TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit                   */
 	
 	/* GALAKSIJA */
 	DRIVER( galaxy )
-	
+
 	/* Team Concepts */
 	/* CPU not known, else should be easy, look into systems/comquest.c */
 TESTDRIVER( comquest )	/* Comquest Plus German							*/
 
 	/* Hewlett Packard */
-/*DRIVER( hp48s )*/ 	/* HP48 S/SX 							  		  */
-/*DRIVER( hp48g )*/ 	/* HP48 G/GX 							  		  */
+#if 0
+TESTDRIVER( hp48s ) 	/* HP48 S/SX										*/
+TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
+#endif
 
 	/* SpectraVideo */
 	DRIVER( svi318 ) 	/* SVI-318										  */
