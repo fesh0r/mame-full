@@ -1803,6 +1803,12 @@ ROM_START(specp3sp)
         ROM_LOAD("plus3sp3.rom",0x1c000,0x4000, 0xf6d25389)
 ROM_END
 
+ROM_START(specpl3e)
+        ROM_REGION(0x20000,REGION_CPU1)
+        ROM_LOAD("roma.bin",0x10000,0x8000, 0x7c20e2c9)
+        ROM_LOAD("romb.bin",0x18000,0x8000, 0x4a700c7e)
+ROM_END
+
 #define IODEVICE_SPEC_QUICK \
 {\
    IO_QUICKLOAD,       /* type */\
@@ -1901,6 +1907,7 @@ static const struct IODevice io_specpls3[] = {
 #define io_specp2fr io_spectrum
 #define io_specp2sp io_spectrum
 #define io_specp3sp io_specpls3
+#define io_specpl3e io_specpls3
 
 /*     YEAR  NAME      PARENT    MACHINE         INPUT     INIT          COMPANY                 FULLNAME */
 COMP ( 1982, spectrum, 0,        spectrum,       spectrum, 0,            "Sinclair Research",    "ZX-Spectrum 48k" )
@@ -1919,3 +1926,4 @@ COMPX( 1987, specpls3, spec128,  spectrum_plus3, spectrum, 0,            "Amstra
 COMPX( 1986, specp2fr, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "Spectrum +2 (France)" ,GAME_NOT_WORKING)
 COMPX( 1986, specp2sp, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "Spectrum +2 (Spain)" ,GAME_NOT_WORKING)
 COMPX( 1987, specp3sp, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "Spectrum +3 (Spain)" ,GAME_NOT_WORKING)
+COMPX( 2000, specpl3e, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "Spectrum +3e" , GAME_COMPUTER_MODIFIED )
