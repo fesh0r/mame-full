@@ -193,70 +193,35 @@ VIDEO_START( genesis )
 
 	/* create scrollA and scrollB playfields */
 
-  /*	if ((scroll_a = osd_create_bitmap(1024,1024)) == 0)
-	{
+	/*
+	if ((scroll_a = auto_bitmap_alloc(1024,1024)) == 0)
 		return 1;
-	}
-	if ((scroll_b = osd_create_bitmap(1024,1024)) == 0)
-	{
+
+	if ((scroll_b = auto_bitmap_alloc(1024,1024)) == 0)
 		bitmap_free(scroll_a);
+	*/
+
+	if ((spritelayer = auto_bitmap_alloc(2500,2500)) == 0)
 		return 1;
-	}*/
 
-   	if ((spritelayer = bitmap_alloc(2500,2500)) == 0)
-	{
-   //		bitmap_free(scroll_a);
-   //		bitmap_free(scroll_b);
+	if ((bitmap2 = auto_bitmap_alloc(320,224)) == 0)
 		return 1;
-	}
-	if ((bitmap2 = bitmap_alloc(320,224)) == 0)
-	{
-   //		bitmap_free(scroll_a);
-   //		bitmap_free(scroll_b);
+
+	/*
+	if ((bitmap_vram = auto_bitmap_alloc(8,18000)) == 0)
 		return 1;
-	}
+	*/
 
-
-
-   /*	if ((bitmap_vram = osd_create_bitmap(8,18000)) == 0)
-	{
-	//	bitmap_free(scroll_a);
-	//	bitmap_free(scroll_b);
-    	bitmap_free(spritelayer);
-
-
-	   	return 1;
-	}*/
-
-   /*	if ((bitmap_sprite = osd_create_bitmap(64,64)) == 0)
-	{
-	//	bitmap_free(scroll_a);
-	//	bitmap_free(scroll_b);
-		bitmap_free(spritelayer);
-	//   	bitmap_free(bitmap_vram);
+	/*
+	if ((bitmap_sprite = auto_bitmap_alloc(64,64)) == 0)
 		return 1;
-	}*/
-
+	*/
 
 	if ((tile_changed_1 = auto_malloc(0x1000)) == 0)
-	{
-	//	bitmap_free(scroll_a);
-	//	bitmap_free(scroll_b);
-		bitmap_free(spritelayer);
-	//	bitmap_free(bitmap_vram);
-	//	bitmap_free(bitmap_sprite);
 		return 1;
-	}
 
 	if ((tile_changed_2 = auto_malloc(0x1000)) == 0)
-	{
-	//	bitmap_free(scroll_a);
-	//	bitmap_free(scroll_b);
-		bitmap_free(spritelayer);
-	//	bitmap_free(bitmap_vram);
-	//	bitmap_free(bitmap_sprite);
 		return 1;
-	}
 
 
 	/* mark all layers and colours as pure filth */
@@ -277,8 +242,8 @@ VIDEO_START( genesis )
 
 	/* some standard startup values */
 
-  //	scroll_a->width = scroll_b->width = 512;
-  //	scroll_a->height = scroll_b->height =	512;
+	//	scroll_a->width = scroll_b->width = 512;
+	//	scroll_a->height = scroll_b->height =	512;
 
 
 	vdp_ctrl_status			=	2;
@@ -323,16 +288,6 @@ VIDEO_START( genesis )
 	return 0;
 }
 
-
-VIDEO_STOP( genesis )
-{
-	/* Free everything */
- //	bitmap_free(scroll_a);
- //	bitmap_free(scroll_b);
-	bitmap_free(spritelayer);
- //	bitmap_free(bitmap_vram);
- //	bitmap_free(bitmap_sprite);
-}
 
 static unsigned char *get_dma_dest_address(int id)
 {

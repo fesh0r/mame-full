@@ -327,7 +327,6 @@ static MACHINE_DRIVER_START( genesis )
 
 	MDRV_PALETTE_INIT(genesis)
 	MDRV_VIDEO_START(genesis)
-	MDRV_VIDEO_STOP(genesis)
 	MDRV_VIDEO_UPDATE(genesis)
 
 	/* sound hardware */

@@ -36,7 +36,6 @@ void genesis_initialise_dma (unsigned char *src, int dest, int length, int id, i
 
 WRITE16_HANDLER ( genesis_videoram1_w );
 
-extern PALETTE_INIT( genesis );
-extern VIDEO_START( genesis );
-extern VIDEO_STOP( genesis );
-extern VIDEO_UPDATE( genesis );
+PALETTE_INIT( genesis );
+VIDEO_START( genesis );
+VIDEO_UPDATE( genesis );

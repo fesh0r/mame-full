@@ -611,7 +611,6 @@ static MACHINE_DRIVER_START(sms)
 	/*MDRV_PALETTE_INIT(sms)*/
 
 	MDRV_VIDEO_START(sms)
-	MDRV_VIDEO_STOP(sms)
 	MDRV_VIDEO_UPDATE(sms)
 
 	/* sound hardware */
@@ -662,7 +661,6 @@ static MACHINE_DRIVER_START(gamegear)
 	/*MDRV_PALETTE_INIT(advision)*/
 
 	MDRV_VIDEO_START(sms)
-	MDRV_VIDEO_STOP(sms)
 	MDRV_VIDEO_UPDATE(sms)
 
 	/* sound hardware */

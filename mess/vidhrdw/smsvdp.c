@@ -254,11 +254,6 @@ VIDEO_START(sms) {
 	return (0);
 }
 
-VIDEO_STOP(sms) {
-	//if (tmpbitmap) bitmap_free(tmpbitmap);
-	//if (prevBitMap) bitmap_free(prevBitMap);
-}
-
 INTERRUPT_GEN(sms) {
 	static UINT8 irqAtLines[3] = { 0xC1, 0xE1, 0xF1 };
 	int irqAt;

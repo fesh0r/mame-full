@@ -139,9 +139,8 @@ NVRAM_HANDLER(sms);
 
 extern int currentLine;
 
-extern VIDEO_START(sms);
-extern VIDEO_STOP(sms);
-extern VIDEO_UPDATE(sms);
+VIDEO_START(sms);
+VIDEO_UPDATE(sms);
 READ_HANDLER(sms_vdp_curline_r);
 READ_HANDLER(sms_vdp_data_r);
 WRITE_HANDLER(sms_vdp_data_w);
