@@ -1,3 +1,42 @@
+0.91
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+(none)
+
+
+
+System Driver Changes:
+----------------------
+- [A7800] Fixed memory reads from the POKEY sound system.  (bug #258) [Ken
+  Siders]
+
+- [MAC/LISA] Refactored floppy disk emulation to use MESS's floppy disk format
+  abstraction code.  Also factored out Zilog 8530 code into a separate module.
+  [Nate Woods]
+
+
+
+User Interface Changes:
+-----------------------
+(none)
+
+
+
+Imgtool Changes:
+----------------
+- [OS9] Fixed a bug that caused problems when dealing with double sided disk
+  images.  (bug #633) [Nate Woods]
+
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.91.  This incorporates all features of the
+  update to this core.  [MAME team]
+
+
+
 0.90
 
 New System Drivers Supported (in no particular order):
