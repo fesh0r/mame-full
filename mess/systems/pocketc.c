@@ -863,15 +863,15 @@ static const struct IODevice io_pc1401[] = {
 */
 
 /* cpu sc61860 */
-COMPX( 198?, pc1251,	  0, 		pc1251,  pc1251, 	pc1251,	  "Sharp",  "Pocket Computer 1251", GAME_NOT_WORKING)
+COMPX( 1982, pc1251,	  0, 		pc1251,  pc1251, 	pc1251,	  "Sharp",  "Pocket Computer 1251", GAME_NOT_WORKING)
 COMPX( 198?, trs80pc3,	  pc1251, 	pc1251,  pc1251, 	pc1251,	  "Tandy",  "TRS80 PC-3", GAME_ALIAS|GAME_NOT_WORKING)
 
 // pc1261/pc1262
 
-COMPX( 198?, pc1350,	  0, 		pc1350,  pc1350, 	pc1350,	  "Sharp",  "Pocket Computer 1350", GAME_NOT_WORKING)
+COMPX( 1984, pc1350,	  0, 		pc1350,  pc1350, 	pc1350,	  "Sharp",  "Pocket Computer 1350", GAME_NOT_WORKING)
 
 COMPX( 1983, pc1401,	  0, 		pc1401,  pc1401, 	pc1401,	  "Sharp",  "Pocket Computer 1401", GAME_NOT_WORKING)
-COMPX( 198?, pc1402,	  pc1401, 	pc1401,  pc1401, 	pc1401,	  "Sharp",  "Pocket Computer 1402", GAME_ALIAS|GAME_NOT_WORKING)
+COMPX( 1984, pc1402,	  pc1401, 	pc1401,  pc1401, 	pc1401,	  "Sharp",  "Pocket Computer 1402", GAME_ALIAS|GAME_NOT_WORKING)
 
 /* 72kb rom, 32kb ram, cpu? 
    pc1360

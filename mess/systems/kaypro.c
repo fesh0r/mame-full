@@ -309,4 +309,4 @@ static const struct IODevice io_kaypro[] = {
 };
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-COMP( 19??, kaypro,   0,        kaypro,   kaypro,   kaypro,   "Non Linear Systems",  "Kaypro 2x" )
+COMP( 1984, kaypro,   0,        kaypro,   kaypro,   kaypro,   "Non Linear Systems",  "Kaypro 2x" )

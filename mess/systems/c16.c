@@ -1164,7 +1164,7 @@ COMP ( 1984,	c16hun, c16,	c16,	c16,	c16,	"Commodore Business Machines Co.",     
 COMPX ( 1984,	c16c,	c16,	c16c,	c16c,	c16,	"Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL), 1551", GAME_NOT_WORKING)
 COMP ( 1984,	plus4,	c16,	plus4,	plus4,	plus4,	"Commodore Business Machines Co.",      "Commodore +4 (NTSC)")
 COMPX ( 1984,	plus4c, c16,	plus4c, plus4c, plus4,	"Commodore Business Machines Co.",      "Commodore +4 (NTSC), 1551", GAME_NOT_WORKING)
-COMPX ( 198?,	c364,	c16,	c364,	plus4,	plus4,	"Commodore Business Machines Co.",      "Commodore 364 (Prototype)", GAME_IMPERFECT_SOUND)
+COMPX ( 1984,	c364,	c16,	c364,	plus4,	plus4,	"Commodore Business Machines Co.",      "Commodore 364 (Prototype)", GAME_IMPERFECT_SOUND)
 // please leave the following as testdriver only
 COMPX ( 1984,	c16v,	c16,	c16v,	c16v,	c16,	"Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL), VC1541", GAME_NOT_WORKING)
 COMPX ( 1984,	plus4v, c16,	plus4v, plus4v, plus4,	"Commodore Business Machines Co.",      "Commodore +4 (NTSC), VC1541", GAME_NOT_WORKING)

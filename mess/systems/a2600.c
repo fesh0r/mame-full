@@ -837,7 +837,7 @@ static const struct IODevice io_a2600[] =
 };
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-CONSX(19??, a2600,    0,        a2600,    a2600,    a2600,    "Atari",  "Atari 2600", GAME_NOT_WORKING)
+CONSX(1977, a2600,    0,        a2600,    a2600,    a2600,    "Atari",  "Atari 2600", GAME_NOT_WORKING)
 
 #ifdef RUNTIME_LOADER
 extern void vcs_runtime_loader_init(void)
