@@ -15,6 +15,8 @@
 #define LOG_INPUTX	0
 #endif
 
+#define KEYPRESS_TIME	TIME_IN_SEC(0.05)
+
 struct InputCode
 {
 	UINT16 port[NUM_SIMUL_KEYS];
@@ -412,62 +414,66 @@ int inputx_can_post_key(unicode_char_t ch)
 static void internal_post_key(unicode_char_t ch)
 {
 	struct KeyBuffer *keybuf;
-	keybuf = get_buffer();
-	keybuf->buffer[keybuf->end_pos++] = ch;
-	keybuf->end_pos %= sizeof(keybuf->buffer) / sizeof(keybuf->buffer[0]);
-}
-
-void inputx_postn(const unicode_char_t *text, size_t text_len)
-{
-	struct KeyBuffer *keybuf;
-	int last_cr = 0;
-	unicode_char_t ch;
-	const char *s;
-
-	if ((text_len == 0) || !inputx_can_post())
-		return;
 
 	keybuf = get_buffer();
 
 	/* need to start up the timer? */
 	if (keybuf->begin_pos == keybuf->end_pos)
 	{
-		timer_adjust(inputx_timer, 0, 0, TIME_IN_SEC(0.1));
-		keybuf->status |= STATUS_KEYDOWN;
+		timer_adjust(inputx_timer, 0, 0, KEYPRESS_TIME);
+		keybuf->status &= ~STATUS_KEYDOWN;
 	}
 
-	while((text_len > 0) && (keybuf->end_pos+1 != keybuf->begin_pos))
+	keybuf->buffer[keybuf->end_pos++] = ch;
+	keybuf->end_pos %= sizeof(keybuf->buffer) / sizeof(keybuf->buffer[0]);
+}
+
+static int buffer_full(void)
+{
+	struct KeyBuffer *keybuf;
+	keybuf = get_buffer();
+	return ((keybuf->end_pos + 1) % (sizeof(keybuf->buffer) / sizeof(keybuf->buffer[0]))) == keybuf->begin_pos;
+}
+
+void inputx_postn(const unicode_char_t *text, size_t text_len)
+{
+	int last_cr = 0;
+	unicode_char_t ch;
+	const char *s;
+
+	if (inputx_can_post())
 	{
-		ch = *(text++);
-		text_len--;
-
-		/* change all eolns to '\r' */
-		if ((ch != '\n') || !last_cr)
+		while((text_len > 0) && !buffer_full())
 		{
-			if (ch == '\n')
-				ch = '\r';
-			else
-				last_cr = (ch == '\r');
+			ch = *(text++);
+			text_len--;
 
+			/* change all eolns to '\r' */
+			if ((ch != '\n') || !last_cr)
+			{
+				if (ch == '\n')
+					ch = '\r';
+				else
+					last_cr = (ch == '\r');
 #if LOG_INPUTX
-			logerror("inputx_postn(): code=%i (%s) port=%i ipt->name='%s'\n", (int) ch, charstr(ch), codes[ch].port[0], codes[ch].ipt[0] ? codes[ch].ipt[0]->name : "<null>");
+				logerror("inputx_postn(): code=%i (%s) port=%i ipt->name='%s'\n", (int) ch, charstr(ch), codes[ch].port[0], codes[ch].ipt[0] ? codes[ch].ipt[0]->name : "<null>");
 #endif
-
-			if (can_post_key_directly(ch))
-			{
-				internal_post_key(ch);
+				if (can_post_key_directly(ch))
+				{
+					internal_post_key(ch);
+				}
+				else if (can_post_key_alternate(ch))
+				{
+					s = find_alternate(ch);
+					assert(s);
+					while(*s)
+						internal_post_key(*(s++));
+				}
 			}
-			else if (can_post_key_alternate(ch))
+			else
 			{
-				s = find_alternate(ch);
-				assert(s);
-				while(*s)
-					internal_post_key(*(s++));
+				last_cr = 0;
 			}
-		}
-		else
-		{
-			last_cr = 0;
 		}
 	}
 }
@@ -480,14 +486,14 @@ static void inputx_timerproc(int dummy)
 	if (keybuf->status & STATUS_KEYDOWN)
 	{
 		keybuf->status &= ~STATUS_KEYDOWN;
-	}
-	else
-	{
-		keybuf->status |= STATUS_KEYDOWN;
 		keybuf->begin_pos++;
 		keybuf->begin_pos %= sizeof(keybuf->buffer) / sizeof(keybuf->buffer[0]);
 		if (keybuf->begin_pos == keybuf->end_pos)
 			timer_reset(inputx_timer, TIME_NEVER);
+	}
+	else
+	{
+		keybuf->status |= STATUS_KEYDOWN;
 	}
 }
 
