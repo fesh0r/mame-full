@@ -124,7 +124,8 @@ static const FIGURE	 line={ /* simple line */
 	"11111",
 	"11111",
 	"11111e" 
-}, busy={ 
+};
+static const FIGURE busy={ 
 	"11  1 1  11 1 1",
 	"1 1 1 1 1   1 1",
 	"11  1 1  1  1 1",
