@@ -363,8 +363,8 @@ MACHINE_DRIVER_END
 
 static struct Speaker_interface kc_speaker_interface=
 {
- 1,
- {50},
+	1,
+	{50},
 };
 
 static struct Wave_interface kc_wave_interface=
@@ -461,6 +461,7 @@ SYSTEM_CONFIG_END
 SYSTEM_CONFIG_START(kc85d)
 	CONFIG_IMPORT_FROM(kc85)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	device_load_kc85_floppy)
+	CONFIG_RAM_DEFAULT				(64 * 1024)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT	COMPAT	MACHINE  INPUT     INIT  CONFIG  COMPANY   FULLNAME */

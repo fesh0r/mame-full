@@ -477,7 +477,7 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 (32kb ROMs) 					*/
 TESTDRIVER( genmod )	/* 199?? Myarc Geneve 9640							*/
 TESTDRIVER( ti99_4p )	/* 1996 SNUG 99/4P (a.k.a. SGCPU)					*/
 
-//	DRIVER( avigo )     /*													*/
+	DRIVER( avigo )     /*													*/
 
 /* TEXAS INSTRUMENTS CALCULATORS */
 /* TI-81 (Z80 2 MHz) */

@@ -65,8 +65,6 @@ static UINT8 avigo_key_line;
 */
 
 static UINT8 avigo_irq;
-/* 128k ram */
-unsigned char *avigo_memory;
 
 /* bit 3 = speaker state */
 static UINT8 avigo_speaker_data;
@@ -78,15 +76,34 @@ static unsigned long avigo_ram_bank_h;
 static unsigned long avigo_rom_bank_l;
 static unsigned long avigo_rom_bank_h;
 static unsigned long avigo_ad_control_status;
-static  int avigo_flash_at_0x4000;
-static  int avigo_flash_at_0x8000;
+static int avigo_flash_at_0x4000;
+static int avigo_flash_at_0x8000;
+static void *avigo_banked_opbase[4];
+
+static void avigo_setbank(int bank, void *address, read8_handler rh, write8_handler wh)
+{
+	if (address)
+	{
+		cpu_setbank(1+bank, address);
+		cpu_setbank(5+bank, address);
+		avigo_banked_opbase[bank] = ((data8_t *) address) - (bank * 0x4000);
+	}
+	if (rh)
+	{
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, (bank * 0x4000),
+			(bank * 0x4000) + 0x3FFF, 0, rh);
+	}
+	if (wh)
+	{
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, (bank * 0x4000),
+			(bank * 0x4000) + 0x3FFF, 0, wh);
+	}
+}
 
 /* memory 0x0000-0x03fff */
 static READ_HANDLER(avigo_flash_0x0000_read_handler)
 {
-
-        int flash_offset = offset;
-
+	int flash_offset = offset;
 	return amd_flash_bank_handler_r(0, flash_offset);
 }
 
@@ -145,27 +162,12 @@ static WRITE_HANDLER(avigo_flash_0x8000_write_handler)
 }
 
 
-static READ_HANDLER(avigo_ram_0xc000_read_handler)
-{
-	return avigo_memory[offset];
-}
-
-static WRITE_HANDLER(avigo_ram_0xc000_write_handler)
-{
-	avigo_memory[offset] = data;
-}
-
-
 static void avigo_refresh_ints(void)
 {
 	if (avigo_irq!=0)
-	{
 		cpu_set_irq_line(0,0, HOLD_LINE);
-	}
 	else
-	{
 		cpu_set_irq_line(0,0, CLEAR_LINE);
-	}
 }
 
 
@@ -300,103 +302,68 @@ static struct tc8521_interface avigo_tc8521_interface =
 
 static void avigo_refresh_memory(void)
 {
-        unsigned char *addr;
+	unsigned char *addr;
 
-        switch (avigo_rom_bank_h)
-        {
-			/* 011 */
-		  case 0x03:
-          {
-              avigo_flash_at_0x4000 = 1;
-          }
-          break;
+	switch (avigo_rom_bank_h)
+	{
+		/* 011 */
+		case 0x03:
+		{
+			avigo_flash_at_0x4000 = 1;
+		}
+		break;
 
-			/* 101 */
-          case 0x05:
-          {
-              avigo_flash_at_0x4000 = 2;
-          }
-          break;
+		/* 101 */
+		case 0x05:
+		{
+			avigo_flash_at_0x4000 = 2;
+		}
+		break;
 
-          default:
-              avigo_flash_at_0x4000 = 0;
-              break;
-        }
+		default:
+			avigo_flash_at_0x4000 = 0;
+			break;
+	}
 
-        addr = (unsigned char *)amd_flash_get_base(avigo_flash_at_0x4000);
-        addr = addr + (avigo_rom_bank_l<<14);
-        cpu_setbank(2, addr);
-        cpu_setbank(6, addr);
+	addr = (unsigned char *)amd_flash_get_base(avigo_flash_at_0x4000);
+	addr = addr + (avigo_rom_bank_l<<14);
+	avigo_setbank(1, addr, avigo_flash_0x4000_read_handler, avigo_flash_0x4000_write_handler);
 
-        memory_set_bankhandler_r(2, 0, avigo_flash_0x4000_read_handler);
-        memory_set_bankhandler_w(6, 0, avigo_flash_0x4000_write_handler);
+	switch (avigo_ram_bank_h)
+	{
+		/* %101 */
+		/* screen */
+		case 0x06:
+			avigo_setbank(2, NULL, avigo_vid_memory_r, avigo_vid_memory_w);
+			break;
 
-        switch (avigo_ram_bank_h)
-        {
-				/* %101 */
-                /* screen */
-               case 0x06:
-                {
-                        memory_set_bankhandler_w(7, 0, avigo_vid_memory_w);
-                        memory_set_bankhandler_r(3, 0, avigo_vid_memory_r);
-                }
-                break;
+		/* %001 */
+		/* ram */
+		case 0x01:
+			addr = mess_ram + ((avigo_ram_bank_l & 0x07)<<14);
+			avigo_setbank(2, addr, MRA8_BANK3, MWA8_BANK7);
+			break;
 
-				/* %001 */
-                /* ram */
-                case 0x01:
-                {
-                        addr = avigo_memory + ((avigo_ram_bank_l & 0x07)<<14);
-
-                        cpu_setbank(3, addr);
-                        cpu_setbank(7, addr);
-
-                        memory_set_bankhandler_w(7, 0, MWA8_BANK7);
-                        memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-                }
-                break;
-
-				/* %111 */
-                case 0x03:
-                {
-                        avigo_flash_at_0x8000 = 1;
+		/* %111 */
+		case 0x03:
+			avigo_flash_at_0x8000 = 1;
 
 
-                        addr = (unsigned char *)amd_flash_get_base(avigo_flash_at_0x8000);
-                        addr = addr + (avigo_ram_bank_l<<14);
-                        cpu_setbank(3, addr);
-                        cpu_setbank(7, addr);
+			addr = (unsigned char *)amd_flash_get_base(avigo_flash_at_0x8000);
+			addr = addr + (avigo_ram_bank_l<<14);
+			avigo_setbank(2, addr, avigo_flash_0x8000_read_handler,
+				MWA8_NOP /* avigo_flash_0x8000_write_handler */);
+			break;
 
-                        memory_set_bankhandler_r(3, 0, avigo_flash_0x8000_read_handler);
-						memory_set_bankhandler_w(7,0, MWA8_NOP);
-						//   memory_set_bankhandler_w(7, 0, avigo_flash_0x8000_write_handler);
+		case 0x07:
+			avigo_flash_at_0x8000 = 0;
 
-
-
-                }
-                break;
-
-                case 0x07:
-                {
-                        avigo_flash_at_0x8000 = 0;
-
-
-                        addr = (unsigned char *)amd_flash_get_base(avigo_flash_at_0x8000);
-                        addr = addr + (avigo_ram_bank_l<<14);
-                        cpu_setbank(3, addr);
-                        cpu_setbank(7, addr);
-
-                        memory_set_bankhandler_r(3, 0, avigo_flash_0x8000_read_handler);
-//                        memory_set_bankhandler_w(7, 0, avigo_flash_0x8000_write_handler);
-						memory_set_bankhandler_w(7, 0, MWA8_NOP);
-
-                }
-                break;
-
-                default:
-                  break;
-        }
-
+			addr = (unsigned char *)amd_flash_get_base(avigo_flash_at_0x8000);
+			addr = addr + (avigo_ram_bank_l<<14);
+			avigo_setbank(2, addr, avigo_flash_0x8000_read_handler,
+				MWA8_NOP /* avigo_flash_0x8000_write_handler */);
+			break;
+	}
 }
 
 
@@ -428,16 +395,30 @@ static uart8250_interface avigo_com_interface[1]=
 	},
 };
 
+/* this is needed because this driver uses handlers in memory that gets executed */
+static OPBASE_HANDLER( avigo_opbase_handler )
+{
+	void *opbase;
+	
+	opbase = avigo_banked_opbase[address / 0x4000];
+	if (opbase)
+	{
+		opcode_base = opcode_arg_base = opbase;
+		address = ~0;
+	}
+	return address;
+}
+
 static MACHINE_INIT( avigo )
 {
 	int i;
 	unsigned char *addr;
 
+	memset(avigo_banked_opbase, 0, sizeof(avigo_banked_opbase));
+
 	/* initialise flash memory */
 	amd_flash_init(0);
-
 	amd_flash_init(1);
-	
 	amd_flash_init(2);
 
     /* install os into flash from rom image data */
@@ -450,19 +431,13 @@ static MACHINE_INIT( avigo )
 		{
 			/* copy first 1mb into first flash */
 			flash = (char *)amd_flash_get_base(0);
-
-			if (flash!=NULL)
-			{
+			if (flash)
 				memcpy(flash, rom, 0x0100000);
-			}
 
 			/* copy second 1mb into second flash */
 			flash = (char *)amd_flash_get_base(1);
-
-			if (flash!=NULL)
-			{
+			if (flash)
 				memcpy(flash, rom+0x0100000, 0x0150000-0x0100000);
-			}
 		}
 	}
 
@@ -500,16 +475,6 @@ static MACHINE_INIT( avigo )
 	/* an interrupt is generated when the pen is pressed to the screen */
 	timer_pulse(TIME_IN_HZ(50), 0, avigo_dummy_timer_callback);
 
-    memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-    memory_set_bankhandler_r(2, 0, MRA8_BANK2);
-    memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-    memory_set_bankhandler_r(4, 0, MRA8_BANK4);
-
-    memory_set_bankhandler_w(5, 0, MWA8_BANK5);
-    memory_set_bankhandler_w(6, 0, MWA8_BANK6);
-    memory_set_bankhandler_w(7, 0, MWA8_BANK7);
-    memory_set_bankhandler_w(8, 0, MWA8_BANK8);
-
 	avigo_irq = 0;
 	avigo_rom_bank_l = 0;
 	avigo_rom_bank_h = 0;
@@ -525,29 +490,15 @@ static MACHINE_INIT( avigo )
 	uart8250_init(0, avigo_com_interface);
 	uart8250_reset(0);
 
-	/* allocate memory */
-	avigo_memory = (unsigned char *)auto_malloc(128*1024);
+	/* clear */
+	memset(mess_ram, 0, 128*1024);
 
-	if (avigo_memory!=NULL)
-	{
-		memset(avigo_memory, 0, 128*1024);
-	}
+	memory_set_opbase_handler(0, avigo_opbase_handler);
 
 	addr = (unsigned char *)amd_flash_get_base(0);
-	cpu_setbank(1, addr);
-	cpu_setbank(5, addr);
+	avigo_setbank(0, addr, avigo_flash_0x0000_read_handler, avigo_flash_0x0000_write_handler);
 
-        /* initialise fixed settings */
-	memory_set_bankhandler_r(1, 0, avigo_flash_0x0000_read_handler);
-	memory_set_bankhandler_w(5, 0, avigo_flash_0x0000_write_handler);
-
-	addr = avigo_memory;
-	cpu_setbank(4, addr);
-	cpu_setbank(8, addr);
-
-	memory_set_bankhandler_r(4, 0, avigo_ram_0xc000_read_handler);
-	memory_set_bankhandler_w(8, 0, avigo_ram_0xc000_write_handler);
-
+	avigo_setbank(3, mess_ram, NULL, NULL);
 
 	/* 0x08000 is specially banked! */
 	avigo_refresh_memory();
@@ -559,30 +510,21 @@ static MACHINE_STOP( avigo )
 	amd_flash_store(0, "avigof1.nv");
 	amd_flash_finish(0);
 
-    amd_flash_store(1, "avigof2.nv");
-    amd_flash_finish(1);
+	amd_flash_store(1, "avigof2.nv");
+	amd_flash_finish(1);
 
-    amd_flash_store(2, "avigof3.nv");
-    amd_flash_finish(2);
-
-	avigo_memory = NULL;
+	amd_flash_store(2, "avigof3.nv");
+	amd_flash_finish(2);
 }
 
 
-ADDRESS_MAP_START( readmem_avigo , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x00000, 0x03fff) AM_READ( MRA8_BANK1)
-	AM_RANGE(0x04000, 0x07fff) AM_READ( MRA8_BANK2)
-	AM_RANGE(0x08000, 0x0bfff) AM_READ( MRA8_BANK3)
-	AM_RANGE(0x0c000, 0x0ffff) AM_READ( MRA8_BANK4)
+ADDRESS_MAP_START( avigo_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x3fff) AM_READWRITE( MRA8_BANK1, MWA8_BANK5 )
+	AM_RANGE(0x4000, 0x7fff) AM_READWRITE( MRA8_BANK2, MWA8_BANK6 )
+	AM_RANGE(0x8000, 0xbfff) AM_READWRITE( MRA8_BANK3, MWA8_BANK7 )
+	AM_RANGE(0xc000, 0xffff) AM_READWRITE( MRA8_BANK4, MWA8_BANK8 )
 ADDRESS_MAP_END
 
-
-ADDRESS_MAP_START( writemem_avigo , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x00000, 0x03fff) AM_WRITE( MWA8_BANK5)
-	AM_RANGE(0x04000, 0x07fff) AM_WRITE( MWA8_BANK6)
-	AM_RANGE(0x08000, 0x0bfff) AM_WRITE( MWA8_BANK7)
-	AM_RANGE(0x0c000, 0x0ffff) AM_WRITE( MWA8_BANK8)
-ADDRESS_MAP_END
 
 static READ_HANDLER(avigo_key_data_read_r)
 {
@@ -986,15 +928,15 @@ INPUT_PORTS_END
 
 static struct Speaker_interface avigo_speaker_interface=
 {
- 1,
- {50},
+	1,
+	{50},
 };
 
 
 static MACHINE_DRIVER_START( avigo )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_PROGRAM_MAP(readmem_avigo,writemem_avigo)
+	MDRV_CPU_PROGRAM_MAP(avigo_mem, 0)
 	MDRV_CPU_IO_MAP(readport_avigo,writeport_avigo)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -1027,10 +969,15 @@ MACHINE_DRIVER_END
 
 
 ROM_START(avigo)
-        ROM_REGION((64*1024)+0x0150000, REGION_CPU1,0)
-        ROM_LOAD("avigo.rom", 0x010000, 0x0150000, CRC(160ee4a6))
+	ROM_REGION((64*1024)+0x0150000, REGION_CPU1,0)
+	ROM_LOAD("avigo.rom", 0x010000, 0x0150000, CRC(160ee4a6))
 ROM_END
 
+SYSTEM_CONFIG_START( avigo )
+	CONFIG_RAM_DEFAULT		(128*1024)
+SYSTEM_CONFIG_END
+
+
 /*	  YEAR	NAME	PARENT	COMPAT	MACHINE	INPUT	INIT	CONFIG	COMPANY   FULLNAME */
-COMPX(1997,	avigo,	0,		0,		avigo,	avigo,	0,		NULL,	"Texas Instruments", "TI Avigo 100 PDA",GAME_NOT_WORKING)
+COMPX(1997,	avigo,	0,		0,		avigo,	avigo,	0,		avigo,	"Texas Instruments", "TI Avigo 100 PDA",GAME_NOT_WORKING)
 

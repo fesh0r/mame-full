@@ -436,7 +436,7 @@ $(OBJ)/apple.a:   \
 
 $(OBJ)/avigo.a: \
 	$(OBJ)/mess/vidhrdw/avigo.o		\
-#	$(OBJ)/mess/systems/avigo.o		\
+	$(OBJ)/mess/systems/avigo.o		\
 
 $(OBJ)/ti85.a: \
 	$(OBJ)/mess/systems/ti85.o		\
@@ -546,9 +546,9 @@ $(OBJ)/amstrad.a:  \
 	$(OBJ)/mess/machine/nc.o	 \
 
 $(OBJ)/veb.a:      \
-	$(OBJ)/mess/vidhrdw/kc.o	 \
+	$(OBJ)/mess/vidhrdw/kc.o	\
 	$(OBJ)/mess/systems/kc.o	\
-#	$(OBJ)/mess/machine/kc.o	 \
+#	$(OBJ)/mess/machine/kc.o	\
 
 $(OBJ)/nec.a:	   \
 	$(OBJ)/mess/vidhrdw/vdc.o	 \
