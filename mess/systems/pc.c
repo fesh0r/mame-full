@@ -2653,21 +2653,20 @@ ROM_END
 ROM_START( at386 )
     ROM_REGION(0x1000000,REGION_CPU1, 0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-#if 1
     ROM_LOAD("at386.bin", 0xf0000, 0x10000, 0x3df9732a)
 	ROM_RELOAD(0xff0000,0x10000)
-#else
-	// currently testing of 80286 features working in this core
-	// no 80386 opcodes emulated yet
-    ROM_LOAD16_BYTE("at110387.1", 0xf0001, 0x8000, 0x679296a7)
-	ROM_RELOAD(0xff0001,0x8000)
-    ROM_LOAD16_BYTE("at110387.0", 0xf0000, 0x8000, 0x65ae1f97)
-	ROM_RELOAD(0xff0000,0x8000)
-#endif
 	ROM_REGION(0x01100,REGION_GFX1, 0)
     ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
 ROM_END
 
+ROM_START( at486 )
+    ROM_REGION(0x1000000,REGION_CPU1, 0)
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
+    ROM_LOAD("at486.bin", 0xf0000, 0x10000, 0x31214616)
+	ROM_RELOAD(0xff0000,0x10000)
+	ROM_REGION(0x01100,REGION_GFX1, 0)
+    ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
+ROM_END
 #endif
 
 static const struct IODevice io_ibmpc[] = {
@@ -2734,6 +2733,7 @@ static const struct IODevice io_ibmpc[] = {
 #define io_atvga io_ibmpc
 #define io_neat io_ibmpc
 #define io_at386 io_ibmpc
+#define io_at486 io_ibmpc
 
 /***************************************************************************
 
@@ -2767,6 +2767,7 @@ COMPX ( 1987,	at,			ibmat,	atcga,      atcga,		atcga,	   "",  "PC/AT (CGA, MF2 K
 COMPX ( 1989,	neat,		ibmat,	atcga,      atcga,		atcga,	   "",  "NEAT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 #ifdef HAS_I386
 COMPX ( 1988,	at386,		ibmat,	at386,      atcga,		at386,	   "MITAC INC",  "PC/AT 386(CGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMPX ( 1990,	at486,		ibmat,	at386,      atcga,		at386,	   "",  "PC/AT 486(CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 #endif
 
 // these drivers will be discarded soon
@@ -2789,6 +2790,7 @@ extern void pc_runtime_loader_init(void)
 		if ( strcmp(drivers[i]->name,"t1000hx")==0) drivers[i]=&driver_t1000hx;
 		if ( strcmp(drivers[i]->name,"ibmxt")==0) drivers[i]=&driver_ibmxt;
 		if ( strcmp(drivers[i]->name,"pc200")==0) drivers[i]=&driver_pc200;
+		if ( strcmp(drivers[i]->name,"pc20")==0) drivers[i]=&driver_pc20;
 		if ( strcmp(drivers[i]->name,"pc1512")==0) drivers[i]=&driver_pc1512;
 		if ( strcmp(drivers[i]->name,"pc1640")==0) drivers[i]=&driver_pc1640;
 		if ( strcmp(drivers[i]->name,"xtvga")==0) drivers[i]=&driver_xtvga;
@@ -2798,6 +2800,7 @@ extern void pc_runtime_loader_init(void)
 		if ( strcmp(drivers[i]->name,"atvga")==0) drivers[i]=&driver_atvga;
 		if ( strcmp(drivers[i]->name,"neat")==0) drivers[i]=&driver_neat;
 		if ( strcmp(drivers[i]->name,"at386")==0) drivers[i]=&driver_at386;
+		if ( strcmp(drivers[i]->name,"at486")==0) drivers[i]=&driver_at486;
 	}
 }
 #endif
