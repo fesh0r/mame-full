@@ -101,13 +101,14 @@ void setup_paths()
 	mameinfo_filename = my_mameinfo_filename;
 }
 
-void play_game(int game_index, struct ui_options *opts)
+int play_game(int game_index, struct ui_options *opts)
 {
 	extern int use_dirty;
 	extern int throttle;
 	extern float gamma_correct;
 	extern int attenuation;
 	int original_leds;
+	int err;
 
 	options.antialias = opts->enable_antialias;
 	options.translucency = opts->enable_translucency;
@@ -146,10 +147,12 @@ void play_game(int game_index, struct ui_options *opts)
 		pcrcfilename[0] = 0;
     #endif
 
-	run_game(game_index);
+	err = run_game(game_index);
 
 	/* restore the original LED state */
 	osd_set_leds(original_leds);
+
+	return err;
 }
 
 //============================================================
@@ -178,6 +181,8 @@ void osd_exit(void)
 	extern void win32_shutdown_input(void);
 	win32_shutdown_input();
 	osd_set_leds(0);
+
+	UnregisterClass(TEXT("MAME"), NULL);
 }
 
 

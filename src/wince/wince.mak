@@ -12,6 +12,7 @@ OSOBJS = \
 		$(OBJ)/wince/dirent.o \
 		$(OBJ)/wince/playgame.o \
 		$(OBJ)/mess/Win32/SmartListView.o \
+		$(OBJ)/mess/Win32/SoftwareList.o \
 		$(OBJ)/zlib/crc32.o \
 		$(OBJ)/zlib/adler32.o \
 		$(OBJ)/zlib/compress.o \

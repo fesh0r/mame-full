@@ -49,6 +49,6 @@ struct ui_options
 };
 
 void setup_paths();
-void play_game(int game_index, struct ui_options *opts);
+int play_game(int game_index, struct ui_options *opts);
 
 #endif // MAMECE_H

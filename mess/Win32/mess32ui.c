@@ -1134,38 +1134,24 @@ static void SoftwareListClass_Idle(struct SmartListView *pListView)
 
 static const char *s_pInitialFileName;
 static BOOL s_bChosen;
-static long s_lSelectedItem;
 static struct SmartListView *s_pFileMgrListView;
+static long s_lSelectedItem;
 
 static void FileMgrListClass_Run(struct SmartListView *pListView)
 {
 	s_bChosen = TRUE;
 }
 
-static BOOL FileMgrListClass_ItemChanged(struct SmartListView *pListView, BOOL bWasSelected, BOOL bNowSelected, int nRow)
-{
-	if (!bWasSelected && bNowSelected) {
-		/* entering item */
-		s_lSelectedItem = nRow;
-	}
-	return TRUE;
-}
-
-static BOOL FileMgrListClass_IsItemSelected(struct SmartListView *pListView, int nItem)
-{
-	return nItem == s_lSelectedItem;
-}
-
 static struct SmartListViewClass s_filemgrListClass = 
 {
-	0,
+	sizeof(struct SingleItemSmartListView),
 	FileMgrListClass_Run,
-	FileMgrListClass_ItemChanged,
+	SingleItemSmartListViewClass_ItemChanged,
 	SoftwareListClass_WhichIcon,
 	SoftwareListClass_GetText,
 	SoftwareListClass_GetColumnInfo,
 	SoftwareListClass_SetColumnInfo,
-	FileMgrListClass_IsItemSelected,
+	SingleItemSmartListViewClass_IsItemSelected,
 	Compare_TextCaseInsensitive,
 	SoftwareListClass_CanIdle,
 	SoftwareListClass_Idle,
@@ -1237,7 +1223,7 @@ static INT_PTR CALLBACK FileManagerProc(HWND hDlg, UINT message, WPARAM wParam, 
     case WM_COMMAND:
 		switch(wParam) {
 		case IDOK:
-			EndFileManager(hDlg, s_lSelectedItem);
+			EndFileManager(hDlg, SingleItemSmartListView_GetSelectedItem(s_pFileMgrListView));
 			break;
 
 		case IDCANCEL:

@@ -6,6 +6,10 @@
 #include "osdepend.h"
 #include "utils.h"
 
+#ifdef UNDER_CE
+#include "mamece.h"
+#endif
+
 /* ************************************************************************ */
 /* Directories                                                              */
 /* ************************************************************************ */
@@ -42,6 +46,15 @@ void resetdir(void)
 	szCurrentDirectory[0] = '\0';
 }
 
+static int preserve_current_drive_letter(const char *path)
+{
+#ifdef UNDER_CE
+	return 0;
+#else
+	return (path[1] != ':') && (path[1] != '\\');
+#endif
+}
+
 /* This function takes in a pathname, and resolves it according to our
  * current directory
  */
@@ -57,15 +70,15 @@ const char *resolve_path(const char *path, char *buf, size_t buflen)
 
 	/* Absolute pathname? */
 	if ((path[0] == '\\') || (path[1] == ':')) {
-		if ((path[1] == ':') || (path[1] == '\\')) {
-			/* Absolute pathname with drive letter or UNC pathname */
-			buf[0] = '\0';
-		}
-		else {
+		if (preserve_current_drive_letter(path)) {
 			/* Absolute pathname without drive letter */
 			buf[0] = szCurrentDirectory[0];
 			buf[1] = szCurrentDirectory[1];
 			buf[2] = '\0';
+		}
+		else {
+			/* Absolute pathname with drive letter or UNC pathname */
+			buf[0] = '\0';
 		}
 		strncatz(buf, path, buflen);
 		return buf;
@@ -164,7 +177,11 @@ void *osd_dir_open(const char *dirname, const char *filemask)
 	s[0] = '\\';
 	strcpy(s + 1, filemask);
 
+#ifdef UNICODE
+	pfd->hDir = FindFirstFile(A2W(tmpbuf), &pfd->finddata);
+#else
 	pfd->hDir = FindFirstFile(tmpbuf, &pfd->finddata);
+#endif
 	if (pfd->hDir == INVALID_HANDLE_VALUE)
 		goto error;
 

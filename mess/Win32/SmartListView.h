@@ -1,3 +1,6 @@
+#ifndef SMARTLISTVIEW_H
+#define SMARTLISTVIEW_H
+
 #include <windows.h>
 #include <commctrl.h>
 
@@ -79,8 +82,12 @@ struct SmartListView
 	int nSortCondition;
 };
 
+struct SmartListView *SmartListView_Create(struct SmartListViewOptions *pOptions,
+	BOOL bVisible, BOOL bSingleSel, int x, int y, int nWidth, int nHeight, HINSTANCE hInstance); 
+
 struct SmartListView *SmartListView_Init(struct SmartListViewOptions *pOptions);
 void SmartListView_Free(struct SmartListView *pListView);
+
 BOOL SmartListView_IsEvent(struct SmartListView *pListView, UINT message, UINT wParam, LONG lParam);
 BOOL SmartListView_HandleEvent(struct SmartListView *pListView, UINT message, UINT wParam, LONG lParam);
 void SmartListView_ResetColumnDisplay(struct SmartListView *pListView);
@@ -99,6 +106,8 @@ void SmartListView_GetRealColumnOrder(struct SmartListView *pListView, int *pnOr
 void SmartListView_SaveColumnSettings(struct SmartListView *pListView);
 void SmartListView_AssociateImageLists(struct SmartListView *pListView, HIMAGELIST hSmall, HIMAGELIST hLarge);
 void SmartListView_SetTextColor(struct SmartListView *pListView, COLORREF clrText);
+void SmartListView_SetVisible(struct SmartListView *pListView, BOOL bVisible);
+void SmartListView_ScrollTo(struct SmartListView *pListView, int nItem);
 
 int Compare_TextCaseInsensitive(struct SmartListView *pListView, int nRow1, int nRow2, int nColumn);
 
@@ -115,5 +124,6 @@ BOOL SingleItemSmartListViewClass_ItemChanged(struct SmartListView *pListView, B
 BOOL SingleItemSmartListViewClass_IsItemSelected(struct SmartListView *pListView, int nItem);
 
 /* Callable functions */
-/* int SingleItemSmartListView_GetSelectedItem(struct SmartListView *pListView) */
-#define SingleItemSmartListView_GetSelectedItem(pListView)	(((struct SingleItemSmartListView *) (pListView))->nSelectedItem)
+int SingleItemSmartListView_GetSelectedItem(struct SmartListView *pListView);
+
+#endif /* SMARTLISTVIEW_H */

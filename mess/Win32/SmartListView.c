@@ -150,6 +150,26 @@ struct SmartListView *SmartListView_Init(struct SmartListViewOptions *pOptions)
 	return pListView;
 }
 
+struct SmartListView *SmartListView_Create(struct SmartListViewOptions *pOptions,
+	BOOL bVisible, BOOL bSingleSel, int x, int y, int nWidth, int nHeight, HINSTANCE hInstance)
+{
+	DWORD dwStyle;
+	DWORD dwStyleEx;
+
+	dwStyle = WS_CHILD | WS_TABSTOP | LVS_REPORT | LVS_SHOWSELALWAYS | LVS_OWNERDRAWFIXED;
+	if (bVisible)
+		dwStyle |= WS_VISIBLE;
+	if (bSingleSel)
+		dwStyle |= LVS_SINGLESEL;
+
+	dwStyleEx = 0;
+
+	CreateWindowEx(dwStyleEx, TEXT("SysListView32"), TEXT(""), dwStyle,
+		x, y, nWidth, nHeight, pOptions->hwndParent, (HMENU) pOptions->nIDDlgItem,
+		hInstance, NULL);
+	return SmartListView_Init(pOptions);
+}
+
 void SmartListView_Free(struct SmartListView *pListView)
 {
 	if (pListView->rowMapping)
@@ -426,8 +446,8 @@ static BOOL SmartListView_HandleNotify(struct SmartListView *pListView, LPNMHDR 
 			pLvDispinfo->item.state = 0;
 
 		if (pLvDispinfo->item.mask & LVIF_TEXT) {
-			char *pszText;
-			pszText = (char *) SmartListView_GetText(pListView, nItem, pLvDispinfo->item.iSubItem);
+			TCHAR *pszText;
+			pszText = (TCHAR *) SmartListView_GetText(pListView, nItem, pLvDispinfo->item.iSubItem);
 			pLvDispinfo->item.pszText = pszText;
 		}
 		bReturn = TRUE;
@@ -995,6 +1015,37 @@ void SmartListView_SetTextColor(struct SmartListView *pListView, COLORREF clrTex
 	ListView_SetTextColor(pListView->hwndListView, clrText);
 }
 
+void SmartListView_SetVisible(struct SmartListView *pListView, BOOL bVisible)
+{
+	LONG lStyle;
+	LONG lNewStyle;
+	HWND hWnd;
+
+	hWnd = pListView->hwndListView;
+
+	lStyle = GetWindowLong(hWnd, GWL_STYLE);
+	if (bVisible)
+		lNewStyle = lStyle | WS_VISIBLE;
+	else
+		lNewStyle = lStyle & ~WS_VISIBLE;
+
+	if (lNewStyle != lStyle) {
+		SetWindowLong(hWnd, GWL_STYLE, lNewStyle);
+		if (bVisible)
+			UpdateWindow(hWnd);
+	}
+}
+
+void SmartListView_ScrollTo(struct SmartListView *pListView, int nItem)
+{
+	int nVisualRow;
+	POINT p;
+
+	nVisualRow = SmartListView_LogicalRowToVisual(pListView, nItem);
+	ListView_GetItemPosition(pListView->hwndListView, nVisualRow, &p);
+	ListView_Scroll(pListView->hwndListView, 0, p.y - 20);
+}
+
 /* ------------------------------------------------------------------------ *
  * Sorting                                                                  *
  * ------------------------------------------------------------------------ */
@@ -1136,15 +1187,20 @@ BOOL SingleItemSmartListViewClass_ItemChanged(struct SmartListView *pListView, B
 
 	if (!bWasSelected && bNowSelected) {
 		/* entering item */
-		pSiListView->nSelectedItem = nRow;
+		pSiListView->nSelectedItem = nRow + 1;
 	}
 	return TRUE;
 }
 
-BOOL SingleItemSmartListViewClass_IsItemSelected(struct SmartListView *pListView, int nItem)
+int SingleItemSmartListView_GetSelectedItem(struct SmartListView *pListView)
 {
 	struct SingleItemSmartListView *pSiListView;
 	pSiListView = (struct SingleItemSmartListView *) pListView;
-	return nItem == pSiListView->nSelectedItem;
+	return pSiListView->nSelectedItem - 1;
+}
+
+BOOL SingleItemSmartListViewClass_IsItemSelected(struct SmartListView *pListView, int nItem)
+{
+	return SingleItemSmartListView_GetSelectedItem(pListView) == nItem;
 }
 
