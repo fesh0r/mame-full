@@ -10,9 +10,396 @@
   1k x 8 ram available; only first 0x300 bytes mapped to cpu
  */
 
-static UINT8 rectangle[0x40][8]={
-    { 0 }
-};
+/*
+0x18fe bit 4 set means sound off?
+
+Sound is implemented on the latest code version, but I lost the
+source to it. I *think* it's a straightforward value to frequency
+calculation, might be 7874/(n+1) (from the Acetronic system),
+but it is almost certainly something like
+
+Clock Freq / (2^Something) / (Byte Data + 1)
+
+It is more or less right on the release version, so a bit of 
+experimenting should come up with the right code.
+
+I also believe (and this isn't clear from the tech I think) that
+the CPU is frozen during display time.
+
+PSR
+
+
+             Technical Information about the Emerson Arcadia 2001
+
+Written by Paul Robson (autismuk@aol.com)
+
+Created on 25th June 1998.
+Last updated on 22nd July 1998.
+
+Introduction
+------------
+
+This document is an attempt to exactly describe the internal workings of
+the Emerson Arcadia 2001 Videogame Console.
+
+1. General
+----------
+
+- Signetics 2650 CPU at 3.58 Mhz
+- 1k x 8 of RAM (physically present but mostly unavailable :-( )
+- 128 x 208 pixel resolution (alternate 128 x 104 mode available)
+- 16 x 26 background display (2 colour 8 x 8 pixel characters) (can be 16x13=
+)
+- 4 x 8 x 8 Sprites (2 colour 8 x 8 pixels)
+- total of 8 user defined characters available... jaw drops in amazement.
+- 2 x 2 axis Analogue Joysticks
+- 2 x 12 button Controllers
+- 3 buttons on system unit and CPU Reset
+- Single channel beeper
+
+2. Memory map
+-------------
+
+The memory map of the 2001 is below.
+
+0000..0FFF      4k ROM Block 1 (first 4k of a cartridge)
+1000..17FF      (Unmapped)
+1800..18CF      Screen display , upper 13 lines, characters/palette high bit=
+s
+18D0..18EF      Free for user programs.
+18F0..18F7      Sprite coordinates y0x0y1x1y2x2y3x3 (Section 10).
+                The sprite uses a UDG 0 =3D $1980,1 =3D $1988,2 =3D $1990 3=20=
+=3D $1998
+18F8..18FB      User memory.
+18FC            A control byte, function unknown [is almost always EE ED or=20=
+EF]
+18FD..18FE      Sound Hardware Pitch & Volume. The 3 high bits of 18FE contr=
+ol
+                the horizontal scanline scrolling.
+18FF            Current Character Line
+1900..1902      Keypad Player 1
+1903            Unmapped
+1904..1906      Keypad Player 2
+1907            Unmapped
+1908            Controller Buttons
+1909..197F      Unmapped
+1980..19BF      User defined characters (8 possible, 8 bytes per character)
+19C0..19F7      Unknown usage - not used for anything, apparently.
+19F8            Screen resolution (bit 6)
+19F9            Background Colour / Colour #0 (bits 0..5)
+19FA            Sprite Colour 2 & 3 (bits 0..5)
+19FB            Sprite Colour 0 & 1 (bits 0..5)
+19FC..19FD      Sprite-Sprite & Sprite-Background Collision bits (see later)
+19FE..19FF      Paddles (read only) 19FE is Player 2 , 19FF is Player 1
+1A00..1ACF      Screen display , lower 13 lines, characters/palette high bit=
+s
+1AD0..1AFF      User memory
+1B00..1FFF      Unmapped
+2000..2FFF      4k ROM Block 2 (for 8k carts such as Jungler)
+3000..7FFF      Unknown. The flyers talk about the ability to have 28k
+                carts. This would only be feasible if 0000-7FFF was all ROM
+                except for the '1111' page.
+
+3. Video Memory
+---------------
+
+The screen table is at 1800-CF and 1A00-CF. Each page has 13 lines of the
+screen (16 bytes per line,26 lines in total, 208 scan lines). The 2 most
+significant bits of each byte are colour data, the 6 least significant
+are character data. The resolution of the Arcadia is 128 x 208 pixels.
+
+It is possible to halve the screen resolution so 1A00..1ACF can
+be used for code. This is controlled by bit 6 of $19F8.
+
+The byte at location $18FF is the current Character Line address, lower
+4 bits only. The start line goes from 1800 to 18C0 then from 1900 to 19C0.
+The 4 least significant bits of this count 0123456789ABC0123456789ABC,
+going to D when in vertical blank. The 4 most significant bits are always
+'1'. Some games do use this for scrolling effects - a good example of this
+is the routine at $010F in Alien Invaders which scrolls the various bits of
+the screen about using the memory locations $18FF and $18FE.
+
+The screen can be scrolled upto 7 pixels to the left using the high 3 bits
+of $18FE. This is used in Alien Invaders.
+
+A line beginning with $C0 contains block graphics. Each square contains
+3 wide x 2 high pixels, coloured as normal. The 3 least significant bits
+are the top, the next 3 bits are the bottom. Alien Invaders uses this for
+shields. The graphics are returned to normal for the next line.
+
+The VBlank signal (maybe VSYNC) is connected to the SENSE input. This is
+logic '1' when the system is in VBLANK.
+
+The Flag line does.... something graphical - it might make the sprites
+half width/double height perhaps. Breakaway sets this when the bats are
+double size in vertical mode.
+
+4. Character codes
+------------------
+
+Character codes 00..37 to be in a ROM somewhere in the Emerson. These
+are known, others may be discovered by comparing the screen snapshots
+against the character tables. If the emulator displays an exclamation
+mark you've found one. Get a snapshot to see what it looks like
+normally and let me know. Codes 38..3F are taken from RAM.
+
+00      (space)
+01..0F  Graphic Characters
+10..19  0..9
+1A..33  A..Z
+34      Decimal Point
+35..37  Unknown - Control Characters ?
+38..3F  User Defined Characters (8 off, from 1980..19FF)
+
+Character data is stored 8 bits per character , as a single plane graphic
+The 2nd and 3rd bits of palette data come from the screen tables, so there
+are two colours per character and 4 possible palette selections for the
+background.
+
+A character set is available from Paul Robson (autismuk@aol.com) on
+request.
+
+5. ROM Images
+-------------
+
+ROM Images are loaded into 0000-0FFF. If the ROM is an 8k ROM it is
+also loaded into 2000-2FFF. I do not know how 12k images or greater
+are mapped but I doubt that many exist (there is very little RAM
+available for user programs).
+
+6. Controls
+-----------
+
+All key controls are indicated by a bit going to '1'. Unused bits at
+the memory location are set to zero.
+
+Keypads
+-------
+
+1900-1902 (Player 1) 1904-1906 (Player 2)
+
+The keypads are arranged as follows :-
+
+        1       2       3
+        4       5       6
+        7       8       9
+      Enter     0     Clear
+
+Row 1/4/7 is 1900/4, Row 2/5/8/0 is 1901/5 and Row 3/6/9 is 1902/6
+The topmost key is bit 3, the lowermost key is bit 0.
+
+Location $1908 contains bit 0 Start,bit 1 Option,bit 2 Difficulty.
+These keys are "latched" i.e. a press causes a logic 1 to appear
+on the current frame.
+
+The paddles are mapped onto 19FE (player 2) and 19FF (player 1). The
+currently selected direction seems to toggle every frame, and the
+only way it seems to be possible to work out which axis is being
+accessed is to count the number of frames. Each game I have tried
+is doing this. "Cat Tracks" swaps the paddles every game ; the reason
+is as yet unknown.
+
+The fire buttons are equivalent to Keypad #2 e.g. they are 1901 and
+1905 bit 3.
+
+7. Sound
+--------
+
+Single channel buzz. Need to do more with this !
+
+18FC control byte ?
+18FD pitch
+18FE volume ? (lower 4 bits)
+
+8. Sprites
+----------
+
+Sprite pointers are at 18F0..18F7 (there are four of them). The graphics
+used are the ones in the 1980..19BF UDG table (the first four).
+
+Sprite addresses (x,y) are converted to offsets in the 128 x 208 as follows=20=
+:-
+
+1) 1's complement the y coordinate
+2) subtract 16 from the y coordinate
+3) subtract 44 from the x coordinate
+
+9. Palette
+----------
+
+The Palette is encoded between 19F8-19FB. This section describes the method
+by which colours are allocated. There are 8 colours, information is coded 3=20
+bits per colour (usually 2 colours per byte)
+
+ Colour Code    Name    Colour Elements
+ ------ ----    ----    ---------------
+  7     111     Black   (GRB =3D 000)
+  6     110     Blue    (GRB =3D 001)
+  5     101     Red     (GRB =3D 010)
+  4     100     Magenta (GRB =3D 011)
+  3     011     Green   (GRB =3D 100)
+  2     010     Cyan    (GRB =3D 101)
+  1     001     Yellow  (GRB =3D 110)
+  0     000     White   (GRB =3D 111)
+
+Bits 0..2 of $19F9 are the background colour
+Bits 3..5 of $19F9 are the colours of tile set 0
+                tiles 1,2 and 3 are generated by adding 2,4,6 to the colour.
+                this is probably what the xor gates are for !
+Bits 0..5 of $19FB are the colours of Sprites 0 & 1 (sprite 1 is low bits)
+Bits 0..5 of $19FA are the colours of Sprites 2 & 3 (sprite 3 is low bits)
+
+Bits 6..7 of $19F9..B and all of $19F8 (except bit 6) currently has
+no known function. Brightness ???
+
+10. Collision Detection
+-----------------------
+
+Bits are set to zero on a collision - I think they are reset at the
+frame start. There are two locations : one is for sprite/background
+collisions, one is for sprite/sprite collisions.
+
+19FC    bits 0..3 are collision between sprites 0..3 and the background.
+
+19FD    bit 0 is sprite 0 / 1 collision
+        bit 1 is sprite 0 / 2 collision
+        bit 2 is sprite 0 / 3 collision
+        bit 3 is sprite 1 / 2 collision
+        bit 4 is sprite 1 / 3 collision (guess)
+        bit 5 is sprite 2 / 3 collision (guess)
+
+11. Other information
+---------------------
+
+Interrupts are not supported.. maybe. All cartridges have a RETC UN
+at 0003 (presumably the interrupt vector). This may be called on VSYNC
+or VBLANK, but until I find a cart which uses it, who cares !
+
+The Read/Write 2650 CPU Commands do not appear to be connected to
+anything in hardware. No cartridge has been found which uses them.
+The emulator crashes to the debugger with these commands, as it does
+with any illegal commands.
+
+12. Frame Description
+---------------------
+
+This describes the frame rendition (for NTSC). The description Starts at
+the end of a display frame, e.g. scanline 216 on the diagram. For a PAL
+machine these will be slightly different - however I don't think that
+this would affect anything because of the way timing is usually done on
+games, and the fact that scanline level operations are virtually
+impossible.
+
+1.   Set the VBLANK (SENSE) line to logic 1, indicating entry of vblank
+2.   Set the current character address to $FD (off screen)
+3.   Wait for 46+8 Scanlines. (see frame diagram)
+4.   Set the VBLANK (SENSE) line to logic 0.
+5.   Reset the Collision Bytes to $FF
+6.   For 1800..18C0, then for 1A00..1AC0 (if not low resolution)
+6a.    Set the current character address to $Fx
+6b.    wait for 8 (standard) or 16 (low resolution) Scanlines
+6c.    Render the line using the current character & vertical scroll data
+6d.    Draw all sprites which terminate in the area just drawn.
+7.   Restart the frame (from Stage 1).
+
+Stage 5 can be replaced by execute 208 Scanlines if this is not a 'redraw'
+frame.
+
+0       ---------------------------
+        ! Initial Vertical Blank  !
+8       ---------------------------
+        ! Display (208 scanlines) !
+216     ---------------------------
+        !     Frame Retrace       !
+262     ---------------------------
+
+---------------------------------------------------------------
+
+pet additions:
+Golf has a 4kbyte block at 0x0000 and a 2kbyte block at 0x4000.
+
+19f9 bit 6 
+switches between the axes of the analog stick
+of both? players
+(must not affect ad converter immediately)
+
+Sprites are used around the playfield a lot
+(space vultures, grand slam tennis, space attack, ...)
+some cartridges think the left 16? pixels are not displayed
+so I display a 32 pixel frame left and right,
+a 8 pixel frame at the top and a bottom frame of 24 pixel
+
+character color ((ch&0xc0)>>5) | ((mem[0x19f9]&8)>>3)
+
+1903 palladium player 1 4 additional keys
+1907 palladium player 2 4 additional keys
+
+19f8 bit 6
+ off 13 charlines
+ on  26 charlines
+19f9 
+ bit 7
+  off doublescan
+  on no doublescan
+
+19f8 bit 7 graphics mode on (lower 6 bits descripe rectangles)
+0xc0 in line switches to graphics mode in this line
+0x40 in line switches to char mode in this line
+ 22111000
+ 22111000
+ 22111000
+ 22111000
+ 55444333
+ 55444333
+ 55444333
+ 55444333
+
+sprite doublescanned (vertical enlarged)
+sprite 0 0x19fb bit 7
+sprite 1 0x19fb bit 6
+sprite 2 0x19fa bit 7
+sprite 3 0x19fa bit 6
+ 
+18fc crtc vertical position register
+in PAL palladium
+ 0xff 16*16+6 visible
+  about 8 lines above and below
+ 0x00 in PAL palladium
+  7 lines visible
+
+18fd
+ bit 7 on
+  alternate character mode color2x2
+  (2 backgrounds, 2 foreground colors)
+
+color2x2
+ character bit 7 -> background select 
+  0 19f8 bits 2..0
+  1 19f9 bits 2..0
+ character bit 6 -> foreground select
+  0 19f8 bits 5..3
+  1 19f9 bits 5..3
+
+normal mode:
+ character bit 7..6 foreground colors bits 2..1
+ 19f9 bits 0..2 ->background color
+ 19f9 bit3 foreground color bit 0
+ 
+19f8, 19f9 readback alway 0xff
+1900 readback 0x5y
+17bf readback 0x54
+1b00 holds value for a moment, gets 0x50
+
+sprite y position 
+ basically the same as crtc vertical psoition register, but 1 line later
+
+sprite x position
+ not 44 but 43
+
+*/
+
+
+static UINT8 rectangle[0x40][8];
 static UINT8 chars[0x40][8]={
     // read from the screen generated from a palladium
     { 0,0,0,0,0,0,0,0 },			// 00 (space)
@@ -67,7 +454,7 @@ static UINT8 chars[0x40][8]={
     { 0x00,0x22,0x22,0x14,0x08,0x14,0x22,0x22 },// 10 X
     { 0x00,0x22,0x22,0x14,0x08,0x08,0x08,0x08 },// 10 Y
     { 0x00,0x3e,0x02,0x04,0x08,0x10,0x20,0x3e },// 10 Z
-    { 0,0,0,0,0,0,0,8 },			// 34  .
+    { 0,0,0,0,0,0,0,8 },			// 34 .
     { 0,0,0,0,0,8,8,0x10 },			// 35 ,
     { 0,0,8,8,0x3e,8,8,0 },			// 36 +
     { 0,8,0x1e,0x28,0x1c,0xa,0x3c,8 },		// 37 $
@@ -80,8 +467,14 @@ static struct {
     int shift;
     int ad_delay;
     int ad_select;
+    int ypos;
+    bool graphics;
+    bool doublescan;
+    bool lines26;
+    bool multicolor;
     struct { int x, y; } pos[4];
-    UINT8 bg[208+YPOS+YBOTTOM_SIZE][16+2*XPOS/8];
+    UINT8 bg[262][16+2*XPOS/8];
+    int breaker;
     union {
 	UINT8 data[0x400];
 	struct {
@@ -92,7 +485,7 @@ static struct {
 		UINT8 y,x;
 	    } pos[4];
 	    UINT8 ram2[4];
-	    UINT8 control;
+	    UINT8 vpos;
 	    UINT8 sound1, sound2;
 	    UINT8 char_line;
 	    // 0x1900
@@ -101,8 +494,7 @@ static struct {
 	    UINT8 keys, unmapped3[0x80-9];
 	    UINT8 chars[8][8];
 	    UINT8 unknown[0x38];
-	    UINT8 resolution, // bit 6 set means 208 lines, cleared 104 lines doublescanned
-		pal1, pal2, pal3;
+	    UINT8 pal[4];
 	    UINT8 collision_bg, 
 		collision_sprite;
 	    UINT8 ad[2];
@@ -119,12 +511,12 @@ int arcadia_vh_start(void)
     for (i=0; i<0x40; i++) {
 	rectangle[i][0]=0;
 	rectangle[i][4]=0;
-	if (i&1) rectangle[i][0]|=7;
-	if (i&2) rectangle[i][0]|=0x38;
-	if (i&4) rectangle[i][0]|=0xc0;
-	if (i&8) rectangle[i][4]|=7;
-	if (i&0x10) rectangle[i][4]|=0x38;
-	if (i&0x20) rectangle[i][4]|=0xc0;
+	if (i&1) rectangle[i][0]|=3;
+	if (i&2) rectangle[i][0]|=0x1c;
+	if (i&4) rectangle[i][0]|=0xe0;
+	if (i&8) rectangle[i][4]|=3;
+	if (i&0x10) rectangle[i][4]|=0x1c;
+	if (i&0x20) rectangle[i][4]|=0xe0;
 	rectangle[i][1]=rectangle[i][2]=rectangle[i][3]=rectangle[i][0];
 	rectangle[i][5]=rectangle[i][6]=rectangle[i][7]=rectangle[i][4];
     }
@@ -197,15 +589,23 @@ WRITE_HANDLER(arcadia_video_w)
     char str[40];
 #endif
     switch (offset) {
-    case 0xfc: case 0xfd: case 0xfe:
+    case 0xfc: 
+	arcadia_video.reg.data[offset]=data;
+	arcadia_video.ypos=255-data+YPOS;
+	break;
+    case 0xfd: 
 	arcadia_video.reg.data[offset]=data;
 	arcadia_soundport_w(offset&3, data);
-	if (offset==0xfe)
-	    arcadia_video.shift=(data>>5);
+	arcadia_video.multicolor=data&0x80;
+	break;
+    case 0xfe:
+	arcadia_video.reg.data[offset]=data;
+	arcadia_soundport_w(offset&3, data);
+	arcadia_video.shift=(data>>5);
 	break;
     case 0xf0: case 0xf2: case 0xf4: case 0xf6:
 	arcadia_video.reg.data[offset]=data;
-	arcadia_video.pos[(offset>>1)&3].y=(data^0xff)-16;
+	arcadia_video.pos[(offset>>1)&3].y=(data^0xff)+1;
 #if DEBUG
 	snprintf(str, sizeof(str), "y %d %d",(offset>>1)&3,
 		 arcadia_video.reg.d.pos[(offset>>1)&3].y );
@@ -215,7 +615,7 @@ WRITE_HANDLER(arcadia_video_w)
 	break;
     case 0xf1: case 0xf3: case 0xf5: case 0xf7:
 	arcadia_video.reg.data[offset]=data;
-	arcadia_video.pos[(offset>>1)&3].x=data-44;
+	arcadia_video.pos[(offset>>1)&3].x=data-43;
 #if DEBUG
 	snprintf(str, sizeof(str), "x %d %d",(offset>>1)&3,
 		 arcadia_video.reg.d.pos[(offset>>1)&3].x );
@@ -234,8 +634,14 @@ WRITE_HANDLER(arcadia_video_w)
 	arcadia_video.reg.data[offset]=data;
 	chars[0x38|((offset>>3)&7)][offset&7]=data;
 	break;
+    case 0x1f8:
+	arcadia_video.reg.data[offset]=data;
+	arcadia_video.lines26=data&0x40;
+	arcadia_video.graphics=data&0x80;
+	break;
     case 0x1f9:
 	arcadia_video.reg.data[offset]=data;
+	arcadia_video.doublescan=!(data&0x80);
 	arcadia_video.ad_delay=10;
 	break;
     default:
@@ -247,33 +653,42 @@ INLINE void arcadia_draw_char(struct osd_bitmap *bitmap, UINT8 *ch, int color,
 			      int y, int x)
 {
     int k,b;
-#if DEBUG
-    Machine->gfx[0]->colortable[1]=Machine->pens[4];
-#else
-    Machine->gfx[0]->colortable[1]=
-	Machine->pens[((arcadia_video.reg.d.pal1>>3)&1)|((color>>5)&6)];
-#endif
-    if (!(arcadia_video.reg.d.resolution&0x40)) {
-	for (k=0; k<8; k++) {
+    if (arcadia_video.multicolor) {
+	int c;
+	if (color&0x40) c=arcadia_video.reg.d.pal[1];
+	else c=arcadia_video.reg.d.pal[0];
+	Machine->gfx[0]->colortable[1]=Machine->pens[(c>>3)&7];
+
+	if (color&0x80) c=arcadia_video.reg.d.pal[1];
+	else c=arcadia_video.reg.d.pal[0];
+	Machine->gfx[0]->colortable[0]=Machine->pens[c&7];
+
+    } else {
+	Machine->gfx[0]->colortable[1]=
+	    Machine->pens[((arcadia_video.reg.d.pal[1]>>3)&1)|((color>>5)&6)];
+    }
+
+    if (arcadia_video.doublescan) {
+	for (k=0; (k<8)&&(y<bitmap->height); k++, y+=2) {
 	    b=ch[k];
-	    arcadia_video.bg[y+k*2][x>>3]|=b>>(x&7);
-	    arcadia_video.bg[y+k*2][(x>>3)+1]|=b<<(8-(x&7));
-	    arcadia_video.bg[y+k*2+1][x>>3]|=b>>(x&7);
-	    arcadia_video.bg[y+k*2+1][(x>>3)+1]|=b<<(8-(x&7));
+	    arcadia_video.bg[y][x>>3]|=b>>(x&7);
+	    arcadia_video.bg[y][(x>>3)+1]|=b<<(8-(x&7));
+	    arcadia_video.bg[y+1][x>>3]|=b>>(x&7);
+	    arcadia_video.bg[y+1][(x>>3)+1]|=b<<(8-(x&7));
 	    drawgfx(bitmap, Machine->gfx[0], b,0,
-		    0,0,x,y+k*2,
+		    0,0,x,y,
 		    0, TRANSPARENCY_NONE,0);
 	    drawgfx(bitmap, Machine->gfx[0], b,0,
-		    0,0,x,y+k*2+1,
+		    0,0,x,y+1,
 		    0, TRANSPARENCY_NONE,0);
 	}
     } else {
-	for (k=0; k<8; k++) {
+	for (k=0; (k<8)&&(y<bitmap->height); k++, y++) {
 	    b=ch[k];
-	    arcadia_video.bg[y+k][x>>3]|=b>>(x&7);
-	    arcadia_video.bg[y+k][(x>>3)+1]|=b<<(8-(x&7));
+	    arcadia_video.bg[y][x>>3]|=b>>(x&7);
+	    arcadia_video.bg[y][(x>>3)+1]|=b<<(8-(x&7));
 	    drawgfx(bitmap, Machine->gfx[0], b,0,
-		    0,0,x,y+k,
+		    0,0,x,y,
 		    0, TRANSPARENCY_NONE,0);
 	}
     }
@@ -283,81 +698,33 @@ INLINE void arcadia_vh_draw_line(struct osd_bitmap *bitmap,
 				 int y, UINT8 chars1[16])
 {
     int x, ch, j, h;
-    h=arcadia_video.reg.d.resolution&0x40?8:16;
-    plot_box(bitmap, 0, y, XPOS+arcadia_video.shift, h, Machine->gfx[0]->colortable[0]);
-    if (chars1[0]==0xc0) {
-	for (x=XPOS+arcadia_video.shift, j=0; j<16;j++,x+=8) {
-	    ch=chars1[j];
+    bool graphics=arcadia_video.graphics;
+    h=arcadia_video.doublescan?16:8;
+
+    if (bitmap->height-arcadia_video.line<h) h=bitmap->height-arcadia_video.line;
+    plot_box(bitmap, 0, y, bitmap->width, h, Machine->gfx[0]->colortable[0]);
+    memset(arcadia_video.bg[y], 0, sizeof(arcadia_video.bg[0])*h);
+    for (x=XPOS+arcadia_video.shift, j=0; j<16;j++,x+=8) {
+	ch=chars1[j];
+	// hangman switches with 0x40
+	// alien invaders shield lines start with 0xc0
+	if ((ch&0x3f)==0) {
+	    switch (ch) {
+		case 0xc0: graphics=true;break;
+		case 0x40: graphics=false;break;
+//		case 0x80: 
+//			alien invaders shields are empty 0x80
+//		    usrintf_showmessage_secs(5, "graphics code 0x80 used");
+	    }
+	}
+	if (graphics)
 	    arcadia_draw_char(bitmap, rectangle[ch&0x3f], ch, y, x);
-	}
-    } else {
-	for (x=XPOS+arcadia_video.shift, j=0; j<16;j++,x+=8) {
-	    ch=chars1[j];	    
+	else
 	    arcadia_draw_char(bitmap, chars[ch&0x3f], ch, y, x);
-	}
     }
-#if !DEBUG
-    plot_box(bitmap, x, y, bitmap->width-x, h, Machine->gfx[0]->colortable[0]);
-#endif
 }
 
-int arcadia_video_line(void)
-{
-    if (arcadia_video.ad_delay<=0)
-	arcadia_video.ad_select=arcadia_video.reg.d.pal1&0x40;
-    else arcadia_video.ad_delay--;
-
-    arcadia_video.line++;
-    arcadia_video.line%=262;
-#if DEBUG
-    if (arcadia_video.line==0) _y=0;
-#endif
-    // unbelievable, reflects only charline, but alien invaders uses it for 
-    // alien scrolling
-    if (!(arcadia_video.reg.d.resolution&0x40)) {
-	if ( (arcadia_video.line>=8)&&
-	     (((arcadia_video.line-8)&0xf)==0)&&(arcadia_video.line<=8+208)) {
-	    arcadia_video.charline=(arcadia_video.line-8)>>4;
-	    if (arcadia_video.charline<13) {
-		Machine->gfx[0]->colortable[0]=Machine->pens[arcadia_video.reg.d.pal1&7];
-		memset(arcadia_video.bg[YPOS+arcadia_video.charline*16], 0, 
-		       sizeof(arcadia_video.bg[0])*16);
-		arcadia_vh_draw_line(Machine->scrbitmap, arcadia_video.charline*16+YPOS,
-				     arcadia_video.reg.d.chars1[arcadia_video.charline]);
-	    }
-	}
-    } else {
-	if ( (arcadia_video.line>=8)&&
-	     (((arcadia_video.line-8)&0x7)==0)&&(arcadia_video.line<=8+208)) {
-	    arcadia_video.charline=(arcadia_video.line-8)>>3;
-	    if (arcadia_video.charline<13) {
-		Machine->gfx[0]->colortable[0]=Machine->pens[arcadia_video.reg.d.pal1&7];
-		memset(arcadia_video.bg[YPOS+arcadia_video.charline*8], 0, 
-		       sizeof(arcadia_video.bg[0])*8);
-		arcadia_vh_draw_line(Machine->scrbitmap, arcadia_video.charline*8+YPOS,
-				     arcadia_video.reg.d.chars1[arcadia_video.charline]);
-	    } else {
-		arcadia_video.charline-=13;
-		if (arcadia_video.charline<13) {
-		    Machine->gfx[0]->colortable[0]=Machine->pens[arcadia_video.reg.d.pal1&7];
-		    memset(arcadia_video.bg[YPOS+arcadia_video.charline*8+13*8], 0, 
-			   sizeof(arcadia_video.bg[0])*8);
-		    arcadia_vh_draw_line(Machine->scrbitmap, arcadia_video.charline*8+13*8+YPOS,
-					 arcadia_video.reg.d.chars2[arcadia_video.charline]);
-		}
-	    }
-	}
-    }
-    return 0;
-}
-
-READ_HANDLER(arcadia_vsync_r)
-{
-    return arcadia_video.line>=216?0x80:0;
-}
-
-//bool arcadia_sprite_collision(int n1, int n2)
-int arcadia_sprite_collision(int n1, int n2)
+bool arcadia_sprite_collision(int n1, int n2)
 {
     int k, b1, b2, x;
     if (arcadia_video.pos[n1].x+8<=arcadia_video.pos[n2].x) return FALSE;
@@ -374,17 +741,16 @@ int arcadia_sprite_collision(int n1, int n2)
     }
     return FALSE;
 }
-
-void arcadia_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+    
+static void arcadia_draw_sprites(struct osd_bitmap *bitmap)
 {
     int i, k, x, y;
     UINT8 b;
-    
+
     arcadia_video.reg.d.collision_bg|=0xf;
     arcadia_video.reg.d.collision_sprite|=0x3f;
-    plot_box(bitmap, 0, 0, bitmap->width, YPOS, Machine->gfx[0]->colortable[0]);
-    plot_box(bitmap, 0, YPOS+208, bitmap->width, bitmap->height-YPOS-208, Machine->gfx[0]->colortable[0]);
     for (i=0; i<4; i++) {
+	bool doublescan;
 	if (arcadia_video.pos[i].y<=-YPOS) continue;
 	if (arcadia_video.pos[i].y>=bitmap->height-YPOS-8) continue;
 	if (arcadia_video.pos[i].x<=-XPOS) continue;
@@ -392,25 +758,39 @@ void arcadia_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 
 	switch (i) {
 	case 0:
-	    Machine->gfx[0]->colortable[1]=Machine->pens[(arcadia_video.reg.d.pal3>>3)&7];
+	    Machine->gfx[0]->colortable[1]=Machine->pens[(arcadia_video.reg.d.pal[3]>>3)&7];
+	    doublescan=arcadia_video.reg.d.pal[3]&0x80?false:true;
 	    break;
 	case 1:
-	    Machine->gfx[0]->colortable[1]=Machine->pens[arcadia_video.reg.d.pal3&7];
+	    Machine->gfx[0]->colortable[1]=Machine->pens[arcadia_video.reg.d.pal[3]&7];
+	    doublescan=arcadia_video.reg.d.pal[3]&0x40?false:true;
 	    break;
 	case 2:
-	    Machine->gfx[0]->colortable[1]=Machine->pens[(arcadia_video.reg.d.pal2>>3)&7];
+	    Machine->gfx[0]->colortable[1]=Machine->pens[(arcadia_video.reg.d.pal[2]>>3)&7];
+	    doublescan=arcadia_video.reg.d.pal[2]&0x80?false:true;
 	    break;
 	case 3:
-	    Machine->gfx[0]->colortable[1]=Machine->pens[arcadia_video.reg.d.pal2&7];
+	    Machine->gfx[0]->colortable[1]=Machine->pens[arcadia_video.reg.d.pal[2]&7];
+	    doublescan=arcadia_video.reg.d.pal[2]&0x40?false:true;
 	    break;
 	}
 	for (k=0; k<8; k++) {
 	    b=arcadia_video.reg.d.chars[i][k];
 	    x=arcadia_video.pos[i].x+XPOS;
-	    y=arcadia_video.pos[i].y+YPOS+k;
-	    drawgfx(bitmap, Machine->gfx[0], b,0,
-		    0,0,x,y,
-		    0, TRANSPARENCY_PEN,0);
+	    if (!doublescan) {
+		y=arcadia_video.pos[i].y+YPOS+k;
+		drawgfx(bitmap, Machine->gfx[0], b,0,
+			0,0,x,y,
+			0, TRANSPARENCY_PEN,0);
+	    } else {
+		y=arcadia_video.pos[i].y+YPOS+k*2;
+		drawgfx(bitmap, Machine->gfx[0], b,0,
+			0,0,x,y,
+			0, TRANSPARENCY_PEN,0);
+		drawgfx(bitmap, Machine->gfx[0], b,0,
+			0,0,x,y+1,
+			0, TRANSPARENCY_PEN,0);
+	    }
 	    if (arcadia_video.reg.d.collision_bg&(1<<i)) {
 		if ( (b<<(8-(x&7))) & ((arcadia_video.bg[y][x>>3]<<8)
 				       |arcadia_video.bg[y][(x>>3)+1]) )
@@ -424,7 +804,61 @@ void arcadia_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
     if (arcadia_sprite_collision(1,2)) arcadia_video.reg.d.collision_sprite&=~8;
     if (arcadia_sprite_collision(1,3)) arcadia_video.reg.d.collision_sprite&=~0x10; //guess
     if (arcadia_sprite_collision(2,3)) arcadia_video.reg.d.collision_sprite&=~0x20; //guess
+}
 
+int arcadia_video_line(void)
+{
+    if (arcadia_video.ad_delay<=0)
+	arcadia_video.ad_select=arcadia_video.reg.d.pal[1]&0x40;
+    else arcadia_video.ad_delay--;
+
+    arcadia_video.line++;
+    arcadia_video.line%=262;
+#if DEBUG
+    if (arcadia_video.line==0) _y=0;
+#endif
+    // unbelievable, reflects only charline, but alien invaders uses it for 
+    // alien scrolling
+    
+    Machine->gfx[0]->colortable[0]=Machine->pens[arcadia_video.reg.d.pal[1]&7];
+
+    if (arcadia_video.line<arcadia_video.ypos) {
+	plot_box(Machine->scrbitmap, 0, arcadia_video.line, Machine->scrbitmap->width, 1, Machine->gfx[0]->colortable[0]);
+	memset(arcadia_video.bg[arcadia_video.line], 0, sizeof(arcadia_video.bg[0]));
+    } else {
+	int h=arcadia_video.doublescan?16:8;
+
+	arcadia_video.charline=(arcadia_video.line-arcadia_video.ypos)/h;
+	
+	if (arcadia_video.charline<13) {
+	    if (((arcadia_video.line-arcadia_video.ypos)&(h-1))==0) {
+		arcadia_vh_draw_line(Machine->scrbitmap, arcadia_video.charline*h+arcadia_video.ypos,
+				     arcadia_video.reg.d.chars1[arcadia_video.charline]);
+	    }
+	} else if (arcadia_video.lines26 && (arcadia_video.charline<26)) {
+	    if (((arcadia_video.line-arcadia_video.ypos)&(h-1))==0) {
+		arcadia_vh_draw_line(Machine->scrbitmap, arcadia_video.charline*h+arcadia_video.ypos,
+				     arcadia_video.reg.d.chars2[arcadia_video.charline-13]);
+	    }
+	    arcadia_video.charline-=13;
+	} else {
+	    arcadia_video.charline=0xd;
+	    plot_box(Machine->scrbitmap, 0, arcadia_video.line, Machine->scrbitmap->width, 1, Machine->gfx[0]->colortable[0]);
+	    memset(arcadia_video.bg[arcadia_video.line], 0, sizeof(arcadia_video.bg[0]));
+	}
+    }
+
+    if (arcadia_video.line==261) arcadia_draw_sprites(Machine->scrbitmap);
+    return 0;
+}
+
+READ_HANDLER(arcadia_vsync_r)
+{
+    return arcadia_video.line>=216?0x80:0;
+}
+
+void arcadia_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+{
 #if DEBUG
 {
     char str[0x40];
@@ -455,10 +889,10 @@ void arcadia_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	     arcadia_video.pos[3].y );
     ui_text(bitmap, str, 0, 8);
     snprintf(str, sizeof(str), "%.2x %.2x %.2x %.2x",
-	     arcadia_video.reg.d.resolution,
-	     arcadia_video.reg.d.pal1,
-	     arcadia_video.reg.d.pal2,
-	     arcadia_video.reg.d.pal3 );
+	     arcadia_video.reg.d.pal[0],
+	     arcadia_video.reg.d.pal[1],
+	     arcadia_video.reg.d.pal[2],
+	     arcadia_video.reg.d.pal[3] );
     ui_text(bitmap, str, 0, 16);
 }
 #endif
