@@ -271,7 +271,7 @@ static void print_game_input(FILE* out, const struct GameDriver* game) {
 
 static void print_game_rom(FILE* out, const struct GameDriver* game) {
 	const struct RomModule *rom = game->rom, *p_rom = NULL;
-	extern struct GameDriver driver_0;
+	extern const struct GameDriver driver_0;
 
 	if (!rom) return;
 
