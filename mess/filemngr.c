@@ -202,6 +202,7 @@ static int *fs_types;
 static int *fs_order;
 static int fs_chunk;
 static int fs_total;
+static int fs_insession;
 
 enum {
 	FILESELECT_NONE,
@@ -479,18 +480,10 @@ static int fileselect(struct mame_bitmap *bitmap, int selected, const char *defa
 
 	sel = selected - 1;
 
-	/* generate menu? */
-	if (fs_total == 0)
+	/* beginning a file manager session */
+	if (fs_insession == 0)
 	{
-		static char *mess_path = NULL;
-		if (!mess_path)
-		{
-			const char *s;
-			s = osd_get_cwd();
-			mess_path = malloc(strlen(s) + 1);
-			strcpy(mess_path, s);
-		}
-
+		fs_insession = 1;
 		if (default_selection)
 		{
 			char *dirname;
@@ -504,6 +497,11 @@ static int fileselect(struct mame_bitmap *bitmap, int selected, const char *defa
 			osd_change_directory("software");
 			osd_change_directory(Machine->gamedrv->name);
 		}
+	}
+
+	/* generate menu? */
+	if (fs_total == 0)
+	{
 		fs_generate_filelist();
 	}
 
@@ -683,7 +681,10 @@ static int fileselect(struct mame_bitmap *bitmap, int selected, const char *defa
 		fs_free();
 
 	if (sel == -1 || sel == -2 || sel == -3)
+	{
 		schedule_full_refresh();
+		fs_insession = 0;
+	}
 
 	return sel + 1;
 }

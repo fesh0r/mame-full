@@ -19,6 +19,7 @@ extern const char *crcfile;
 extern const char *pcrcfile;
 
 /* Globals */
+const char *mess_path;
 int mess_keep_going;
 char *renamed_image;
 UINT32 mess_ram_size;
@@ -612,10 +613,18 @@ static int ram_init(const struct GameDriver *gamedrv)
  *  Call the init() functions for all devices of a driver
  *  ith all user specified image names.
  ****************************************************************************/
-extern int init_devices(const struct GameDriver *gamedrv)
+int init_devices(const struct GameDriver *gamedrv)
 {
+	const char *cwd;
 	const struct IODevice *dev = gamedrv->dev;
 	int i,id;
+
+	/* convienient place to call this */
+	cwd = osd_get_cwd();
+	mess_path = auto_malloc(strlen(cwd) + 1);
+	if (!mess_path)
+		return 1;
+	strcpy(mess_path, cwd);
 
 	logerror("Initialising Devices...\n");
 
