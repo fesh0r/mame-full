@@ -17,6 +17,7 @@
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "machine/8255ppi.h"
+#include "includes/tc8521.h"
 #include "vidhrdw/tms9928a.h"
 #include "vidhrdw/v9938.h"
 #include "formats/fmsx_cas.h"
@@ -563,12 +564,6 @@ void msx2_ch_reset (void)
 	{
 	v9938_reset ();
 	msx_ch_reset_core ();
-	memset (&msx1.rtc, 0, sizeof (msx1.rtc) );
-	msx1.rtc[2][5] = 40;
-	msx1.rtc[2][6] = 80;
-	msx1.rtc[2][7] = 4;
-	msx1.rtc[2][7] = 5;
-	msx1.rtc_mode = msx1.rtc_reg = 0;
 	}
 
 /* z80 stuff */
@@ -598,6 +593,15 @@ void init_msx (void)
 		}
     }
 
+static struct tc8521_interface tc = { NULL };
+
+void init_msx2 (void)
+	{
+	init_msx ();
+
+	tc8521_init (&tc);
+	}
+
 void msx_ch_stop (void)
 	{
 	int i;
@@ -612,6 +616,12 @@ void msx_ch_stop (void)
 		free (z80_table);
 		}
     msx1.run = 0;
+	}
+
+void msx2_ch_stop (void)
+	{
+	msx_ch_stop ();
+	tc8521_stop ();
 	}
 
 int msx2_interrupt ()
@@ -786,33 +796,27 @@ WRITE_HANDLER ( msx_fmpac_w )
 
 WRITE_HANDLER (msx_rtc_latch_w)
 	{
-	msx1.rtc_reg = data & 15;
+	msx1.rtc_latch = data & 15;
 	}
 
 WRITE_HANDLER (msx_rtc_reg_w)
 	{
-	if (msx1.rtc_reg < 13)
-		{
-		msx1.rtc[msx1.rtc_mode & 3][msx1.rtc_reg] = data;
-		}
-	else
-		{
-		if (msx1.rtc_reg == 13)
-			msx1.rtc_mode = data;
-		}
+	tc8521_w (msx1.rtc_latch, data);
 	}
 
 READ_HANDLER (msx_rtc_reg_r)
 	{
-	switch (msx1.rtc_reg)
+	return tc8521_r (msx1.rtc_latch);
+	}
+
+void msx2_nvram (void *file, int write)
+	{
+	if (file)
 		{
-		case 13: 
-			return msx1.rtc_mode | 0xf0;
-		case 14:
-		case 15: 
-			return 0xff;
-		default:
-			return msx1.rtc[msx1.rtc_mode & 3][msx1.rtc_reg] | 0xf0;
+		if (write)
+			tc8521_save_stream (file);
+		else
+			tc8521_load_stream (file);
 		}
 	}
 
@@ -860,8 +864,7 @@ WRITE_HANDLER (msx_dsk_w)
 				}
 
 			sects = (ret & ~MSX_DSK_ERR_MASK) / 512;
-			/* z80_set_reg (Z80_BC, sects * 256); */
-			z80_set_reg (Z80_BC, 0);
+			z80_set_reg (Z80_BC, sects * 256);
 			z80_set_reg (Z80_IFF1, 0);
 
 

@@ -27,21 +27,23 @@ typedef struct {
 	UINT16 mouse[2];
     int mouse_stat[2];
 	/* rtc */
-	UINT8 rtc[4][13];
-	int rtc_reg, rtc_mode;
+	int rtc_latch;
 } MSX;
 
 /* start/stop functions */
 void init_msx(void);
+void init_msx2(void);
 void msx_ch_reset (void);
 void msx2_ch_reset (void);
 void msx_ch_stop (void);
+void msx2_ch_stop (void);
 int msx_load_rom (int id);
 int msx_id_rom (int id);
 void msx_exit_rom (int id);
 int msx_interrupt (void);
 int msx2_interrupt (void);
 void msx_vdp_interrupt (int);
+void msx2_nvram (void *file, int write);
 
 /* I/O functions */
 WRITE_HANDLER ( msx_printer_w );

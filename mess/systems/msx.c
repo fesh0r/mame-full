@@ -759,7 +759,7 @@ static struct MachineDriver machine_driver_msx2 =
     60, 0,
     1,
     msx2_ch_reset, /* init_machine */
-    msx_ch_stop, /* stop_machine */
+    msx2_ch_stop, /* stop_machine */
 
     /* video hardware */
     512 + 32, (212 + 16) * 2, { 0, 512 + 32 - 1, 0, (212 + 16) * 2 - 1 },
@@ -797,7 +797,8 @@ static struct MachineDriver machine_driver_msx2 =
             SOUND_WAVE,
             &wave_interface
         }
-    }
+    },
+	msx2_nvram
 };
 
 /***************************************************************************
@@ -938,9 +939,9 @@ COMP( 1985, hotbit11, msx,    msx,     hotbit,   msx,   "Sharp / Epcom",     "HB
 COMP( 1985, hotbit12, msx,    msx,     hotbit,   msx,   "Sharp / Epcom",     "HB-8000 Hotbit 1.2" )
 COMP( 1985, expert10, msx,    msx,     expert10, msx,   "Gradiente",         "XP-800 Expert 1.0" )
 COMP( 1985, expert11, msx,    msx,     expert11, msx,   "Gradiente",         "XP-800 Expert 1.1" )
-COMPX( 1985, msx2,    msx,    msx2,    msx,      msx,   "ASCII & Microsoft", "MSX 2", GAME_NOT_WORKING )
-COMPX( 1985, msx2a,   msx,    msx2,    msx,      msx,   "ASCII & Microsoft", "MSX 2 (BASIC 2.1)", GAME_NOT_WORKING )
-COMPX( 1985, msx2j,  msx,    msx2,     msxj,     msx,   "ASCII & Microsoft", "MSX 2 (Japan)", GAME_NOT_WORKING )
+COMPX( 1985, msx2,    msx,    msx2,    msx,      msx2,   "ASCII & Microsoft", "MSX 2", GAME_NOT_WORKING )
+COMPX( 1985, msx2a,   msx,    msx2,    msx,      msx2,   "ASCII & Microsoft", "MSX 2 (BASIC 2.1)", GAME_NOT_WORKING )
+COMPX( 1985, msx2j,  msx,    msx2,     msxj,     msx2,   "ASCII & Microsoft", "MSX 2 (Japan)", GAME_NOT_WORKING )
 
 
 
