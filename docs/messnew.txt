@@ -2,14 +2,26 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-(none)
+- [MSX2] Sony HB-F700P (Sean Young)
 
 
 
 System Driver Changes:
 ----------------------
-(none)
+- [MSX] Rewrote memory emulation.
+  * Adds support for subslots
+  * Proper memory layout for the MSX2 drivers, with the diskrom
+    in a subslot of slot 3.
+  * Adds support for Konami's Sound Cartridge (64kb)
+  * Adds support for Korean 90-in-1 
 
+  If no cartridges are supplied, it sets the Sound Cartridge in slot 1
+  and the FM-PAC in slot 2. The Snatcher, SD-Snatcher and the Konami
+  Game Collections now work. Note that Sound Cartridge also behaves as a 
+  normal SCC.
+
+  With one cartridge supplied the FM-PAC is still set in slot 2 so 
+  R-Type and other ROM cartridges can still use it. [Sean Young]
 
 
 User Interface Changes:
