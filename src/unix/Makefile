@@ -12,7 +12,8 @@ COMMON_OBJS  =  \
 	$(OBJDIR)/video.o $(OBJDIR)/dirty.o $(OBJDIR)/mode.o \
 	$(OBJDIR)/fileio.o $(OBJDIR)/dirio.o $(OBJDIR)/config.o \
 	$(OBJDIR)/fronthlp.o $(OBJDIR)/ident.o $(OBJDIR)/network.o \
-	$(OBJDIR)/snprintf.o $(OBJDIR)/nec765_dummy.o $(OBJDIR)/effect.o
+	$(OBJDIR)/snprintf.o $(OBJDIR)/nec765_dummy.o $(OBJDIR)/effect.o \
+	$(OBJDIR)/ticker.o
 
 # sysdep objs
 SYSDEP_DIR  = $(OBJDIR)/sysdep
