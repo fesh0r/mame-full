@@ -1,3 +1,22 @@
+/*****************************************************************************
+ *
+ *	 tms70tb.c (function table)
+ *	 Portable TMS7000 emulator (Texas Instruments 7000)
+ *
+ *	 Copyright (c) 2001 tim lindner, all rights reserved.
+ *
+ *	 - This source code is released as freeware for non-commercial purposes.
+ *	 - You are free to use and redistribute this code in modified or
+ *	   unmodified form, provided you list me in the credits.
+ *	 - If you modify this source code, you must add a notice to each modified
+ *	   source file that it has been changed.  If you're a nice person, you
+ *	   will clearly mark each change too.  :)
+ *	 - If you wish to use this for commercial purposes, please contact me at
+ *	   tlindner@ix.netcom.com
+ *   - This entire notice must remain in the source code.
+ *
+ *****************************************************************************/
+
 static void (*opfn[0x100])(void) = {
 /*	        0xX0,   0xX1,     0xX2,    0xX3,    0xX4,    0xX5,    0xX6,    0xX7,
 			0xX8,   0xX9,     0xXA,    0xXB,    0xXC,    0xXD,    0xXE,    0xXF   */

@@ -1,6 +1,26 @@
+/*****************************************************************************
+ *
+ *	 tms70op.c (Op code functions)
+ *	 Portable TMS7000 emulator (Texas Instruments 7000)
+ *
+ *	 Copyright (c) 2001 tim lindner, all rights reserved.
+ *
+ *	 - This source code is released as freeware for non-commercial purposes.
+ *	 - You are free to use and redistribute this code in modified or
+ *	   unmodified form, provided you list me in the credits.
+ *	 - If you modify this source code, you must add a notice to each modified
+ *	   source file that it has been changed.  If you're a nice person, you
+ *	   will clearly mark each change too.  :)
+ *	 - If you wish to use this for commercial purposes, please contact me at
+ *	   tlindner@ix.netcom.com
+ *   - This entire notice must remain in the source code.
+ *
+ *****************************************************************************/
+
 void illegal( void );
 void illegal( void )
 {
+	/* This is a guess */
 	tms7000_icount -= 4;
 }
 
@@ -9,7 +29,7 @@ void adc_imp( void )
 {
 	UINT16	t;
 	
-	t = RDA + RDB + (pST & ST_C ? 0 : 1);
+	t = RDA + RDB + GET_C;
 	WRA(t);
 	
 	CLR_NZC;
@@ -28,7 +48,7 @@ void adc_r2a( void )
 	
 	IMMBYTE(v);
 	
-	t = RM(v) + RDA + (pST & ST_C ? 0 : 1);
+	t = RM(v) + RDA + GET_C;
 	WRA(t);
 	
 	CLR_NZC;
@@ -47,7 +67,7 @@ void adc_r2b( void )
 	
 	IMMBYTE(v);
 	
-	t = RM(v) + RDB + (pST & ST_C ? 0 : 1);
+	t = RM(v) + RDB + GET_C;
 	WRB(t);
 	
 	CLR_NZC;
@@ -67,7 +87,7 @@ void adc_r2r( void )
 	IMMBYTE(i);
 	IMMBYTE(j);
 	
-	t = RM(i)+RM(j) + (pST & ST_C ? 0 : 1);
+	t = RM(i)+RM(j) + GET_C;
 	WM(j,t);
 	
 	CLR_NZC;
@@ -86,7 +106,7 @@ void adc_i2a( void )
 	
 	IMMBYTE(v);
 	
-	t = v + RDA + (pST & ST_C ? 0 : 1);
+	t = v + RDA + GET_C;
 	WRA(t);
 	
 	CLR_NZC;
@@ -105,7 +125,7 @@ void adc_i2b( void )
 	
 	IMMBYTE(v);
 	
-	t = v + RDB + (pST & ST_C ? 0 : 1);
+	t = v + RDB + GET_C;
 	WRB(t);
 	
 	CLR_NZC;
@@ -125,7 +145,7 @@ void adc_i2r( void )
 	IMMBYTE(i);
 	IMMBYTE(j);
 	
-	t = i+RM(j) + (pST & ST_C ? 0 : 1);
+	t = i+RM(j) + GET_C;
 	WM(j,t);
 	
 	CLR_NZC;
@@ -3372,7 +3392,7 @@ void sta_inx( void )
 void stsp( void );
 void stsp( void )
 {
-	WRF16( 1, SP );
+	WRB(pSP);
 
 	tms7000_icount -= 6;
 }	

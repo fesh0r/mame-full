@@ -1,3 +1,22 @@
+/*****************************************************************************
+ *
+ *	 tms7000.c
+ *	 Portable TMS7000 emulator (Texas Instruments 7000)
+ *
+ *	 Copyright (c) 2001 tim lindner, all rights reserved.
+ *
+ *	 - This source code is released as freeware for non-commercial purposes.
+ *	 - You are free to use and redistribute this code in modified or
+ *	   unmodified form, provided you list me in the credits.
+ *	 - If you modify this source code, you must add a notice to each modified
+ *	   source file that it has been changed.  If you're a nice person, you
+ *	   will clearly mark each change too.  :)
+ *	 - If you wish to use this for commercial purposes, please contact me at
+ *	   tlindner@ix.netcom.com
+ *   - This entire notice must remain in the source code.
+ *
+ *****************************************************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "cpuintrf.h"
@@ -110,7 +129,7 @@ UINT16 bcd_sub( UINT16 a, UINT16 b)
 typedef struct
 {
 	PAIR		pc; 		/* Program counter */
-	PAIR		sp;			/* Stack Pointer */
+	UINT8		sp;			/* Stack Pointer */
 	UINT8		st;			/* Status Register */
 } tms7000_Regs;
 
@@ -118,8 +137,7 @@ static tms7000_Regs tms7000;
 
 #define pPC		tms7000.pc.w.l
 #define PC		tms7000.pc
-#define pSP		tms7000.sp.w.l
-#define SP		tms7000.sp
+#define pSP		tms7000.sp
 #define pST		tms7000.st
 
 #define RDA		RM(0x0000)
@@ -139,6 +157,7 @@ static tms7000_Regs tms7000;
 #define SET_Z(a)	if(!a)pST|=ST_Z
 #define SET_Z8(a)	SET_Z((UINT8)a)
 #define SET_Z16(a)	SET_Z((UINT8)a>>8)
+#define GET_C		(pST >> 7)
 
 /* Not working */
 #define SET_C16(a)	pST|=((a&0x010000)>>9)
@@ -226,7 +245,7 @@ void tms7000_init(void)
 {
 	int cpu = cpu_getactivecpu();
 	state_save_register_UINT16("tms7000", cpu, "PC", &pPC, 1);
-	state_save_register_UINT16("tms7000", cpu, "SP", &pSP, 1);
+	state_save_register_UINT8("tms7000", cpu, "SP", &pSP, 1);
 	state_save_register_UINT8("tms7000", cpu, "SR", &pST, 1);
 }
 
@@ -275,7 +294,7 @@ const char *tms7000_info(void *context, int regnum)
 				r->st & 0x01 ? '?':'.' );
 			break;
 		case CPU_INFO_REG+TMS7000_PC: sprintf(buffer[which], "PC:%04X", r->pc); break;
-		case CPU_INFO_REG+TMS7000_SP: sprintf(buffer[which], "SP:%04X", r->sp); break;
+		case CPU_INFO_REG+TMS7000_SP: sprintf(buffer[which], "SP:%02X", r->sp); break;
 		case CPU_INFO_REG+TMS7000_ST: sprintf(buffer[which], "ST:%02X", r->st); break;
 	}
 	return buffer[which];

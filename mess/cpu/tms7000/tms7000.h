@@ -1,4 +1,21 @@
-/*** tms7000: Portable tms7000 emulator ******************************************/
+/*****************************************************************************
+ *
+ *	 tms7000.h (c header file)
+ *	 Portable TMS7000 emulator (Texas Instruments 7000)
+ *
+ *	 Copyright (c) 2001 tim lindner, all rights reserved.
+ *
+ *	 - This source code is released as freeware for non-commercial purposes.
+ *	 - You are free to use and redistribute this code in modified or
+ *	   unmodified form, provided you list me in the credits.
+ *	 - If you modify this source code, you must add a notice to each modified
+ *	   source file that it has been changed.  If you're a nice person, you
+ *	   will clearly mark each change too.  :)
+ *	 - If you wish to use this for commercial purposes, please contact me at
+ *	   tlindner@ix.netcom.com
+ *   - This entire notice must remain in the source code.
+ *
+ *****************************************************************************/
 
 #ifndef _TMS7000_H
 #define _TMS7000_H
