@@ -42,7 +42,7 @@ const char *osd_get_fps_text(const struct performance_info *performance)
 
 int osd_start_audio_stream(int stereo)
 {
-	return 0;
+	return (int) ((double)Machine->sample_rate / (double)Machine->refresh_rate);
 }
 
 int osd_update_audio_stream(INT16 *buffer)

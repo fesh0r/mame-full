@@ -13,6 +13,7 @@
 #include "devices/cassette.h"
 
 #define ALWAYS_PLAY_SOUND	0
+#define WAVE_TOKEN_MASK		0xFFFF0000
 
 
 
@@ -23,7 +24,7 @@ static void wave_sound_update(void *param,stream_sample_t **inputs, stream_sampl
 	cassette_state state;
 	double time_index;
 	double duration;
-	int num = (int) param;
+	int num = ((int) param) & ~WAVE_TOKEN_MASK;
 	stream_sample_t *buffer = _buffer[0];
 
 	image = image_from_devtype_and_index(IO_CASSETTE, num);
@@ -49,7 +50,7 @@ static void wave_sound_update(void *param,stream_sample_t **inputs, stream_sampl
 static void *wave_start(int sndindex, int clock, const void *config)
 {
 	stream_create(0, 1, Machine->sample_rate, (void *) sndindex, wave_sound_update);
-    return (void *) sndindex;
+    return (void *) (sndindex | WAVE_TOKEN_MASK);
 }
 
 
