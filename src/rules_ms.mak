@@ -178,6 +178,16 @@ else
 CPUDEFS += -DHAS_Z80GB=0
 endif
 
+CPU=$(strip $(findstring Z80_MSX@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/z80
+CPUDEFS += -DHAS_Z80_MSX=1
+CPUOBJS += $(OBJ)/cpu/z80/z80_msx.o
+$(OBJ)/cpu/z80/z80_msx.o: z80_msx.c z80_msx.h z80daa.h z80.h z80.c
+else
+CPUDEFS += -DHAS_Z80_MSX=0
+endif
+
 
 
 
