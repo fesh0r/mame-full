@@ -190,8 +190,8 @@ TESTDRIVER( vcg )		/* Palladium Video-Computer-Game					*/
 //TESTDRIVER( vc4000 )	/* Interton vc4000									*/
 
 	/* BANDAI */
-//TESTDRIVER( wswan )		/* Bandai WonderSwan Handheld						*/
-//TESTDRIVER( wscolor )	/* Bandai WonderSwan Color Handheld					*/
+TESTDRIVER( wswan )		/* Bandai WonderSwan Handheld						*/
+TESTDRIVER( wscolor )	/* Bandai WonderSwan Color Handheld					*/
 
 
 /****************COMPUTERS***************************************************/
@@ -300,9 +300,9 @@ XL/XE 16kB OS roms
 	DRIVER( a800xl )	/* 1983 Atari 800 XL								*/
 
 	/* COMMODORE */
-//	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975						*/
+	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975						*/
 //TESTDRIVER( sym1 )		/* Synertek SYM1									*/
-//TESTDRIVER( aim65 )		/* Rockwell AIM65									*/
+TESTDRIVER( aim65 )		/* Rockwell AIM65									*/
 
 //	DRIVER( pet )		/* PET2001/CBM20xx Series (Basic 1) 				*/
 //	DRIVER( cbm30 ) 	/* Commodore 30xx (Basic 2) 						*/
@@ -624,13 +624,13 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 //	DRIVER( coupe ) 	/* 1989 Sam Coupe									*/
 
 	/* MOTOROLA */
-//TESTDRIVER( mekd2 )		/* 1977 Motorola Evaluation Kit						*/
+TESTDRIVER( mekd2 )		/* 1977 Motorola Evaluation Kit						*/
 
 	/* DEC */
 	DRIVER( pdp1 )      /* 1961 DEC PDP1									*/
 
 	/* MEMOTECH */
-//	DRIVER( mtx512 )    /* 1983 Memotech MTX512								*/
+	DRIVER( mtx512 )    /* 1983 Memotech MTX512								*/
 
 	/* MATTEL */
 //	DRIVER( intvkbd )	/* 1981 - Mattel Intellivision Keyboard Component	*/
@@ -656,8 +656,8 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 TESTDRIVER( comquest )	/* Comquest Plus German								*/
 
 	/* Hewlett Packard */
-//TESTDRIVER( hp48s ) 	/* HP48 S/SX										*/
-//TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
+TESTDRIVER( hp48s ) 	/* HP48 S/SX										*/
+TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 
 	/* SpectraVideo */
 	DRIVER( svi318 ) 	/* SVI-318											*/
@@ -688,7 +688,7 @@ TESTDRIVER( comquest )	/* Comquest Plus German								*/
 //	DRIVER(dai)			/* DAI												*/
 
 	/* Telenova */
-//	DRIVER(compis)		/* 1985 Telenova Compis								*/
+	DRIVER(compis)		/* 1985 Telenova Compis								*/
 
 /****************Games*******************************************************/
 	/* Computer Electronic */
@@ -696,7 +696,7 @@ TESTDRIVER( mk1 )		/* Chess Champion MK I								*/
 	/* Quelle International */
 	DRIVER( mk2 )		/* Chess Champion MK II								*/
 	/* NOVAG Industries Ltd. */
-//TESTDRIVER( ssystem3 )	/* Chess Champion Super System III / MK III			*/
+TESTDRIVER( ssystem3 )	/* Chess Champion Super System III / MK III			*/
 
 #endif /* DRIVER_RECURSIVE */
 

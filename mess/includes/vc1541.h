@@ -12,14 +12,6 @@
 /*#define CPU_SYNC */
 #endif
 
-extern const struct Memory_ReadAddress vc1541_readmem[];
-extern const struct Memory_WriteAddress vc1541_writemem[];
-
-extern const struct Memory_ReadAddress dolphin_readmem[];
-extern const struct Memory_WriteAddress dolphin_writemem[];
-
-extern const struct Memory_ReadAddress c1551_readmem[];
-extern const struct Memory_WriteAddress c1551_writemem[];
 
 typedef struct {
 	int cpunr;

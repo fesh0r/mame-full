@@ -67,38 +67,38 @@ Timings:
 #include "devices/cassette.h"
 
 /* I/O ports */
-PORT_READ_START( dai_readport )
-PORT_END
+ADDRESS_MAP_START( dai_readport , ADDRESS_SPACE_IO, 8)
+ADDRESS_MAP_END
 
-PORT_WRITE_START( dai_writeport )
-PORT_END
+ADDRESS_MAP_START( dai_writeport , ADDRESS_SPACE_IO, 8)
+ADDRESS_MAP_END
 
 /* memory w/r functions */
-MEMORY_READ_START( dai_readmem )
-	{ 0x0000, 0xbfff, MRA8_BANK1 },
-	{ 0xc000, 0xdfff, MRA8_ROM },
-	{ 0xe000, 0xefff, MRA8_BANK2 },
-	{ 0xf000, 0xf7ff, MRA8_NOP },
-	{ 0xf800, 0xf8ff, MRA8_RAM },
-	{ 0xfb00, 0xfbff, amd9511_r },
-	{ 0xfc00, 0xfcff, pit8253_0_r },
-	{ 0xfd00, 0xfdff, dai_io_discrete_devices_r },
-	{ 0xfe00, 0xfeff, ppi8255_0_r },
-	{ 0xff00, 0xffff, tms5501_0_r },
-MEMORY_END
+ADDRESS_MAP_START( dai_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0xbfff) AM_READ( MRA8_BANK1 )
+	AM_RANGE( 0xc000, 0xdfff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0xe000, 0xefff) AM_READ( MRA8_BANK2 )
+	AM_RANGE( 0xf000, 0xf7ff) AM_READ( MRA8_NOP )
+	AM_RANGE( 0xf800, 0xf8ff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0xfb00, 0xfbff) AM_READ( amd9511_r )
+	AM_RANGE( 0xfc00, 0xfcff) AM_READ( pit8253_0_r )
+	AM_RANGE( 0xfd00, 0xfdff) AM_READ( dai_io_discrete_devices_r )
+	AM_RANGE( 0xfe00, 0xfeff) AM_READ( ppi8255_0_r )
+	AM_RANGE( 0xff00, 0xffff) AM_READ( tms5501_0_r )
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( dai_writemem )
-	{ 0x0000, 0xbfff, MWA8_BANK1},
-	{ 0xc000, 0xdfff, MWA8_ROM},
-	{ 0xe000, 0xefff, MWA8_BANK2},
-	{ 0xf000, 0xf7ff, MWA8_NOP},
-	{ 0xf800, 0xf8ff, MWA8_RAM},
-	{ 0xfb00, 0xfbff, amd9511_w },
-	{ 0xfc00, 0xfcff, pit8253_0_w },
-	{ 0xfd00, 0xfdff, dai_io_discrete_devices_w },
-	{ 0xfe00, 0xfeff, ppi8255_0_w },
-	{ 0xff00, 0xffff, tms5501_0_w },
-MEMORY_END
+ADDRESS_MAP_START( dai_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0xbfff) AM_WRITE( MWA8_BANK1)
+	AM_RANGE( 0xc000, 0xdfff) AM_WRITE( MWA8_ROM)
+	AM_RANGE( 0xe000, 0xefff) AM_WRITE( MWA8_BANK2)
+	AM_RANGE( 0xf000, 0xf7ff) AM_WRITE( MWA8_NOP)
+	AM_RANGE( 0xf800, 0xf8ff) AM_WRITE( MWA8_RAM)
+	AM_RANGE( 0xfb00, 0xfbff) AM_WRITE( amd9511_w )
+	AM_RANGE( 0xfc00, 0xfcff) AM_WRITE( pit8253_0_w )
+	AM_RANGE( 0xfd00, 0xfdff) AM_WRITE( dai_io_discrete_devices_w )
+	AM_RANGE( 0xfe00, 0xfeff) AM_WRITE( ppi8255_0_w )
+	AM_RANGE( 0xff00, 0xffff) AM_WRITE( tms5501_0_w )
+ADDRESS_MAP_END
 
 
 /* keyboard input */
@@ -192,8 +192,8 @@ static struct Wave_interface dai_wave_interface = {
 static MACHINE_DRIVER_START( dai )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(8080, 2000000)
-	MDRV_CPU_MEMORY(dai_readmem, dai_writemem)
-	MDRV_CPU_PORTS(dai_readport, dai_writeport)
+	MDRV_CPU_PROGRAM_MAP(dai_readmem, dai_writemem)
+	MDRV_CPU_IO_MAP(dai_readport, dai_writeport)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(2500)
 	MDRV_INTERLEAVE(1)

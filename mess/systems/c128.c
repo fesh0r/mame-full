@@ -320,123 +320,123 @@ U102 23256 (read compatible 27256?) 32kB 1571 system rom
  * 0x0000-0xedff ram (dram bank 1?)
  * 0xe000-0xffff ram as bank 0
  */
-static MEMORY_READ_START( c128_z80_readmem )
+static ADDRESS_MAP_START( c128_z80_readmem , ADDRESS_SPACE_PROGRAM, 8)
 #if 1
-	{0x0000, 0x0fff, MRA_BANK10},
-	{0x1000, 0xbfff, MRA_BANK11},
-	{0xc000, 0xffff, MRA8_RAM},
+	AM_RANGE(0x0000, 0x0fff) AM_READ( MRA8_BANK10)
+	AM_RANGE(0x1000, 0xbfff) AM_READ( MRA8_BANK11)
+	AM_RANGE(0xc000, 0xffff) AM_READ( MRA8_RAM)
 #else
 	/* best to do reuse bankswitching numbers */
-	{0x0000, 0x03ff, MRA_BANK10},
-	{0x0400, 0x0fff, MRA_BANK11},
-	{0x1000, 0x1fff, MRA8_BANK3},
-	{0x2000, 0x3fff, MRA8_BANK4},
+	AM_RANGE(0x0000, 0x03ff) AM_READ( MRA8_BANK10)
+	AM_RANGE(0x0400, 0x0fff) AM_READ( MRA8_BANK11)
+	AM_RANGE(0x1000, 0x1fff) AM_READ( MRA8_BANK3)
+	AM_RANGE(0x2000, 0x3fff) AM_READ( MRA8_BANK4)
 
-	{0x4000, 0xbfff, MRA8_BANK5},
-	{0xc000, 0xdfff, MRA8_BANK6},
-	{0xe000, 0xefff, MRA8_BANK7},
-	{0xf000, 0xfeff, MRA8_BANK8},
-	{0xff00, 0xff04, c128_mmu8722_ff00_r},
-	{0xff05, 0xffff, MRA8_BANK9},
+	AM_RANGE(0x4000, 0xbfff) AM_READ( MRA8_BANK5)
+	AM_RANGE(0xc000, 0xdfff) AM_READ( MRA8_BANK6)
+	AM_RANGE(0xe000, 0xefff) AM_READ( MRA8_BANK7)
+	AM_RANGE(0xf000, 0xfeff) AM_READ( MRA8_BANK8)
+	AM_RANGE(0xff00, 0xff04) AM_READ( c128_mmu8722_ff00_r)
+	AM_RANGE(0xff05, 0xffff) AM_READ( MRA8_BANK9)
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( c128_z80_writemem )
+static ADDRESS_MAP_START( c128_z80_writemem , ADDRESS_SPACE_PROGRAM, 8)
 #if 1
-	{0x0000, 0x0fff, c128_write_0000, &c64_memory},
-	{0x1000, 0xbfff, c128_write_1000 },
-	{0xc000, 0xffff, MWA8_RAM },
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE( c128_write_0000) AM_BASE( &c64_memory)
+	AM_RANGE(0x1000, 0xbfff) AM_WRITE( c128_write_1000 )
+	AM_RANGE(0xc000, 0xffff) AM_WRITE( MWA8_RAM )
 #else
-	{0x0000, 0x03ff, MWA8_BANK1, &c64_memory},
-	{0x0400, 0x0fff, MWA8_BANK2},
-	{0x1000, 0x1fff, MWA8_BANK3},
-	{0x2000, 0x3fff, MWA8_BANK4},
-	{0x4000, 0xbfff, MWA8_BANK5},
-	{0xc000, 0xdfff, MWA8_BANK6},
-	{0xe000, 0xefff, MWA8_BANK7},
-	{0xf000, 0xfeff, MWA8_BANK8},
-	{0xff00, 0xff04, c128_mmu8722_ff00_w},
-	{0xff05, 0xffff, MWA8_BANK9},
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE( MWA8_BANK1) AM_BASE( &c64_memory)
+	AM_RANGE(0x0400, 0x0fff) AM_WRITE( MWA8_BANK2)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE( MWA8_BANK3)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE( MWA8_BANK4)
+	AM_RANGE(0x4000, 0xbfff) AM_WRITE( MWA8_BANK5)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE( MWA8_BANK6)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE( MWA8_BANK7)
+	AM_RANGE(0xf000, 0xfeff) AM_WRITE( MWA8_BANK8)
+	AM_RANGE(0xff00, 0xff04) AM_WRITE( c128_mmu8722_ff00_w)
+	AM_RANGE(0xff05, 0xffff) AM_WRITE( MWA8_BANK9)
 #endif
 
 #if 0
-	{0x10000, 0x1ffff, MWA8_RAM},
-	{0x20000, 0xfffff, MWA8_RAM},	   /* or nothing */
-	{0x100000, 0x107fff, MWA8_ROM, &c128_basic},	/* maps to 0x4000 */
-	{0x108000, 0x109fff, MWA8_ROM, &c64_basic},	/* maps to 0xa000 */
-	{0x10a000, 0x10bfff, MWA8_ROM, &c64_kernal},	/* maps to 0xe000 */
-	{0x10c000, 0x10cfff, MWA8_ROM, &c128_editor},
-	{0x10d000, 0x10dfff, MWA8_ROM, &c128_z80},		/* maps to z80 0 */
-	{0x10e000, 0x10ffff, MWA8_ROM, &c128_kernal},
-	{0x110000, 0x117fff, MWA8_ROM, &c128_internal_function},
-	{0x118000, 0x11ffff, MWA8_ROM, &c128_external_function},
-	{0x120000, 0x120fff, MWA8_ROM, &c64_chargen},
-	{0x121000, 0x121fff, MWA8_ROM, &c128_chargen},
-	{0x122000, 0x1227ff, MWA8_RAM, &c64_colorram},
-	{0x122800, 0x1327ff, MWA8_RAM, &c128_vdcram},
+	AM_RANGE(0x10000, 0x1ffff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0x20000, 0xfffff) AM_WRITE( MWA8_RAM)	   /* or nothing */
+	AM_RANGE(0x100000, 0x107fff) AM_WRITE( MWA8_ROM) AM_BASE( &c128_basic)	/* maps to 0x4000 */
+	AM_RANGE(0x108000, 0x109fff) AM_WRITE( MWA8_ROM) AM_BASE( &c64_basic)	/* maps to 0xa000 */
+	AM_RANGE(0x10a000, 0x10bfff) AM_WRITE( MWA8_ROM) AM_BASE( &c64_kernal)	/* maps to 0xe000 */
+	AM_RANGE(0x10c000, 0x10cfff) AM_WRITE( MWA8_ROM) AM_BASE( &c128_editor)
+	AM_RANGE(0x10d000, 0x10dfff) AM_WRITE( MWA8_ROM) AM_BASE( &c128_z80)		/* maps to z80 0 */
+	AM_RANGE(0x10e000, 0x10ffff) AM_WRITE( MWA8_ROM) AM_BASE( &c128_kernal)
+	AM_RANGE(0x110000, 0x117fff) AM_WRITE( MWA8_ROM) AM_BASE( &c128_internal_function)
+	AM_RANGE(0x118000, 0x11ffff) AM_WRITE( MWA8_ROM) AM_BASE( &c128_external_function)
+	AM_RANGE(0x120000, 0x120fff) AM_WRITE( MWA8_ROM) AM_BASE( &c64_chargen)
+	AM_RANGE(0x121000, 0x121fff) AM_WRITE( MWA8_ROM) AM_BASE( &c128_chargen)
+	AM_RANGE(0x122000, 0x1227ff) AM_WRITE( MWA8_RAM) AM_BASE( &c64_colorram)
+	AM_RANGE(0x122800, 0x1327ff) AM_WRITE( MWA8_RAM) AM_BASE( &c128_vdcram)
 	/* 2 kbyte by 8 bits, only 1 kbyte by 4 bits used) */
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
-static PORT_READ_START( c128_z80_readio )
-	{0x1000, 0x13ff, c64_colorram_read},
-	{0xd000, 0xd3ff, vic2_port_r},
-	{0xd400, 0xd4ff, sid6581_0_port_r},
-	{0xd500, 0xd5ff, c128_mmu8722_port_r},
-	{0xd600, 0xd7ff, vdc8563_port_r},
-	{0xdc00, 0xdcff, cia6526_0_port_r},
-	{0xdd00, 0xddff, cia6526_1_port_r},
+static ADDRESS_MAP_START( c128_z80_readio , ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x1000, 0x13ff) AM_READ( c64_colorram_read)
+	AM_RANGE(0xd000, 0xd3ff) AM_READ( vic2_port_r)
+	AM_RANGE(0xd400, 0xd4ff) AM_READ( sid6581_0_port_r)
+	AM_RANGE(0xd500, 0xd5ff) AM_READ( c128_mmu8722_port_r)
+	AM_RANGE(0xd600, 0xd7ff) AM_READ( vdc8563_port_r)
+	AM_RANGE(0xdc00, 0xdcff) AM_READ( cia6526_0_port_r)
+	AM_RANGE(0xdd00, 0xddff) AM_READ( cia6526_1_port_r)
 	/*{ 0xdf00, 0xdfff, dma_port_r }, */
-PORT_END
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( c128_z80_writeio )
-	{0x1000, 0x13ff, c64_colorram_write},
-	{0xd000, 0xd3ff, vic2_port_w},
-	{0xd400, 0xd4ff, sid6581_0_port_w},
-	{0xd500, 0xd5ff, c128_mmu8722_port_w},
-	{0xd600, 0xd7ff, vdc8563_port_w},
-	{0xdc00, 0xdcff, cia6526_0_port_w},
-	{0xdd00, 0xddff, cia6526_1_port_w},
+static ADDRESS_MAP_START( c128_z80_writeio , ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x1000, 0x13ff) AM_WRITE( c64_colorram_write)
+	AM_RANGE(0xd000, 0xd3ff) AM_WRITE( vic2_port_w)
+	AM_RANGE(0xd400, 0xd4ff) AM_WRITE( sid6581_0_port_w)
+	AM_RANGE(0xd500, 0xd5ff) AM_WRITE( c128_mmu8722_port_w)
+	AM_RANGE(0xd600, 0xd7ff) AM_WRITE( vdc8563_port_w)
+	AM_RANGE(0xdc00, 0xdcff) AM_WRITE( cia6526_0_port_w)
+	AM_RANGE(0xdd00, 0xddff) AM_WRITE( cia6526_1_port_w)
 	/*{ 0xdf00, 0xdfff, dma_port_w }, */
-PORT_END
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( c128_readmem )
-	{0x0000, 0x0001, c64_m6510_port_r},
-	{0x0002, 0x00ff, MRA8_BANK1},
-	{0x0100, 0x01ff, MRA8_BANK2},
-	{0x0200, 0x03ff, MRA8_BANK3},
-	{0x0400, 0x0fff, MRA8_BANK4},
-	{0x1000, 0x1fff, MRA8_BANK5},
-	{0x2000, 0x3fff, MRA8_BANK6},
+static ADDRESS_MAP_START( c128_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0001) AM_READ( c64_m6510_port_r)
+	AM_RANGE(0x0002, 0x00ff) AM_READ( MRA8_BANK1)
+	AM_RANGE(0x0100, 0x01ff) AM_READ( MRA8_BANK2)
+	AM_RANGE(0x0200, 0x03ff) AM_READ( MRA8_BANK3)
+	AM_RANGE(0x0400, 0x0fff) AM_READ( MRA8_BANK4)
+	AM_RANGE(0x1000, 0x1fff) AM_READ( MRA8_BANK5)
+	AM_RANGE(0x2000, 0x3fff) AM_READ( MRA8_BANK6)
 
-	{0x4000, 0x7fff, MRA8_BANK7},
-	{0x8000, 0x9fff, MRA8_BANK8},
-	{0xa000, 0xbfff, MRA8_BANK9},
+	AM_RANGE(0x4000, 0x7fff) AM_READ( MRA8_BANK7)
+	AM_RANGE(0x8000, 0x9fff) AM_READ( MRA8_BANK8)
+	AM_RANGE(0xa000, 0xbfff) AM_READ( MRA8_BANK9)
 
-	{0xc000, 0xcfff, MRA_BANK12},
-	{0xd000, 0xdfff, MRA_BANK13},
-	{0xe000, 0xfeff, MRA_BANK14},
-	{0xff00, 0xff04, MRA_BANK15},	   /* mmu c128 modus */
-	{0xff05, 0xffff, MRA_BANK16},
-MEMORY_END
+	AM_RANGE(0xc000, 0xcfff) AM_READ( MRA8_BANK12)
+	AM_RANGE(0xd000, 0xdfff) AM_READ( MRA8_BANK13)
+	AM_RANGE(0xe000, 0xfeff) AM_READ( MRA8_BANK14)
+	AM_RANGE(0xff00, 0xff04) AM_READ( MRA8_BANK15)	   /* mmu c128 modus */
+	AM_RANGE(0xff05, 0xffff) AM_READ( MRA8_BANK16)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( c128_writemem )
-	{0x0000, 0x0001, c64_m6510_port_w},
-	{0x0002, 0x00ff, MWA8_BANK1},
-	{0x0100, 0x01ff, MWA8_BANK2},
-	{0x0200, 0x03ff, MWA8_BANK3},
-	{0x0400, 0x0fff, MWA8_BANK4},
-	{0x1000, 0x1fff, MWA8_BANK5},
-	{0x2000, 0x3fff, MWA8_BANK6},
+static ADDRESS_MAP_START( c128_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0001) AM_WRITE( c64_m6510_port_w)
+	AM_RANGE(0x0002, 0x00ff) AM_WRITE( MWA8_BANK1)
+	AM_RANGE(0x0100, 0x01ff) AM_WRITE( MWA8_BANK2)
+	AM_RANGE(0x0200, 0x03ff) AM_WRITE( MWA8_BANK3)
+	AM_RANGE(0x0400, 0x0fff) AM_WRITE( MWA8_BANK4)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE( MWA8_BANK5)
+	AM_RANGE(0x2000, 0x3fff) AM_WRITE( MWA8_BANK6)
 
-	{0x4000, 0x7fff, c128_write_4000},
-	{0x8000, 0x9fff, c128_write_8000},
-	{0xa000, 0xcfff, c128_write_a000},
-	{0xd000, 0xdfff, c128_write_d000},
-	{0xe000, 0xfeff, c128_write_e000},
-	{0xff00, 0xff04, c128_write_ff00},
-	{0xff05, 0xffff, c128_write_ff05},
-MEMORY_END
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE( c128_write_4000)
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE( c128_write_8000)
+	AM_RANGE(0xa000, 0xcfff) AM_WRITE( c128_write_a000)
+	AM_RANGE(0xd000, 0xdfff) AM_WRITE( c128_write_d000)
+	AM_RANGE(0xe000, 0xfeff) AM_WRITE( c128_write_e000)
+	AM_RANGE(0xff00, 0xff04) AM_WRITE( c128_write_ff00)
+	AM_RANGE(0xff05, 0xffff) AM_WRITE( c128_write_ff05)
+ADDRESS_MAP_END
 
 #define DIPS_HELPER(bit, name, keycode) \
     PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, CODE_NONE)
@@ -1323,13 +1323,13 @@ static MACHINE_DRIVER_START( c128 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, VIC6567_CLOCK)
 	MDRV_CPU_FLAGS( CPU_16BIT_PORT )
-	MDRV_CPU_MEMORY( c128_z80_readmem, c128_z80_writemem )
-	MDRV_CPU_PORTS( c128_z80_readio, c128_z80_writeio )
+	MDRV_CPU_PROGRAM_MAP( c128_z80_readmem, c128_z80_writemem )
+	MDRV_CPU_IO_MAP( c128_z80_readio, c128_z80_writeio )
 	MDRV_CPU_VBLANK_INT(c64_frame_interrupt, 1)
 	MDRV_CPU_PERIODIC_INT(vic2_raster_irq, VIC2_HRETRACERATE)
 
 	MDRV_CPU_ADD_TAG("m8502", M8502, VIC6567_CLOCK)
-	MDRV_CPU_MEMORY( c128_readmem, c128_writemem )
+	MDRV_CPU_PROGRAM_MAP( c128_readmem, c128_writemem )
 	MDRV_CPU_VBLANK_INT(c64_frame_interrupt, 1)
 	MDRV_CPU_PERIODIC_INT(vic2_raster_irq, VIC2_HRETRACERATE)
 

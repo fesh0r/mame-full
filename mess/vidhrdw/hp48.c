@@ -175,7 +175,7 @@ VIDEO_UPDATE( hp48 )
 	for (y=0,i=LCD_BASE_ADDRESS; y<64; y+=8, i+=LCD_LINE_OFFSET) {
 		for (x=0; x<131; x++) {
 			drawgfx(bitmap, Machine->gfx[0], 
-					cpu_readmem20(i+x),
+					program_read_byte(i+x),
 					contrast,0,0,
 					x*2+RIGHT,y*2+DOWN,
 					0, TRANSPARENCY_NONE,0);

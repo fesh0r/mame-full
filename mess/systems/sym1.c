@@ -13,27 +13,27 @@
 
 #include "includes/sym1.h"
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x03ff, MRA8_RAM },
-	{ 0x8000, 0x8fff, MRA8_ROM },
-	{ 0xa000, 0xa00f, via_0_r },
-	{ 0xa400, 0xa40f, riot_0_r },
-	{ 0xa600, 0xa67f, MRA8_RAM },
+static ADDRESS_MAP_START( readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x03ff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x8000, 0x8fff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0xa000, 0xa00f) AM_READ( via_0_r )
+	AM_RANGE( 0xa400, 0xa40f) AM_READ( riot_0_r )
+	AM_RANGE( 0xa600, 0xa67f) AM_READ( MRA8_RAM )
 //	{ 0xab00, 0xab0f, via_1_r },
 //	{ 0xac00, 0xac0f, via_2_r },
-	{ 0xf000, 0xffff, MRA8_ROM },
-MEMORY_END
+	AM_RANGE( 0xf000, 0xffff) AM_READ( MRA8_ROM )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x03ff, MWA8_RAM },
-	{ 0x8000, 0x8fff, MWA8_ROM },
-	{ 0xa000, 0xa00f, via_0_w },
-	{ 0xa400, 0xa40f, riot_0_w },
-	{ 0xa600, 0xa67f, MWA8_RAM },
+static ADDRESS_MAP_START( writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x03ff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x8000, 0x8fff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0xa000, 0xa00f) AM_WRITE( via_0_w )
+	AM_RANGE( 0xa400, 0xa40f) AM_WRITE( riot_0_w )
+	AM_RANGE( 0xa600, 0xa67f) AM_WRITE( MWA8_RAM )
 //	{ 0xab00, 0xab0f, via_1_w },
 //	{ 0xac00, 0xac0f, via_2_w },
-	{ 0xf000, 0xffff, MWA8_ROM },
-MEMORY_END
+	AM_RANGE( 0xf000, 0xffff) AM_WRITE( MWA8_ROM )
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( sym1 )
 	PORT_START			/* IN0 */
@@ -94,7 +94,7 @@ static struct DACinterface dac_interface =
 static MACHINE_DRIVER_START( sym1 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 1000000)        /* 1 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(sym1_interrupt, 1)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

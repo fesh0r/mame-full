@@ -42,7 +42,7 @@ static READ_HANDLER ( mtx_psg_r )
 
 static WRITE_HANDLER ( mtx_psg_w )
 {
-        SN76496_0_w(offset,data);
+	SN76496_0_w(offset,data);
 }
 
 static READ_HANDLER ( mtx_vdp_r )
@@ -631,25 +631,6 @@ static MACHINE_INIT( mtx512 )
 
 	z80ctc_init(&mtx_ctc_intf);
 
-	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-	memory_set_bankhandler_r(2, 0, MRA8_BANK2);
-	memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-	memory_set_bankhandler_r(4, 0, MRA8_BANK4);
-	memory_set_bankhandler_r(5, 0, MRA8_BANK5);
-	memory_set_bankhandler_r(6, 0, MRA8_BANK6);
-	memory_set_bankhandler_r(7, 0, MRA8_BANK7);
-	memory_set_bankhandler_r(8, 0, MRA8_BANK8);
-
-
-	memory_set_bankhandler_w(9, 0, mtx_trap_write);
-	memory_set_bankhandler_w(10, 0, MWA8_NOP);
-	memory_set_bankhandler_w(11, 0, MWA8_BANK11);
-	memory_set_bankhandler_w(12, 0, MWA8_BANK12);
-	memory_set_bankhandler_w(13, 0, MWA8_BANK13);
-	memory_set_bankhandler_w(14, 0, MWA8_BANK14);
-	memory_set_bankhandler_w(15, 0, MWA8_BANK15);
-	memory_set_bankhandler_w(16, 0, MWA8_BANK16);
-
 	// set up memory configuration
 
 	romoffset = memory_region(REGION_CPU1) + 0x10000;
@@ -702,14 +683,14 @@ ADDRESS_MAP_START( mtx_readmem , ADDRESS_SPACE_PROGRAM, 8)
 ADDRESS_MAP_END
 
 ADDRESS_MAP_START( mtx_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x1fff) AM_WRITE( MWA8_BANK9 )
-	AM_RANGE( 0x2000, 0x3fff) AM_WRITE( MWA8_BANK10 )
-        AM_RANGE( 0x4000, 0x5fff) AM_WRITE( MWA8_BANK11 )
-        AM_RANGE( 0x6000, 0x7fff) AM_WRITE( MWA8_BANK12 )
-        AM_RANGE( 0x8000, 0x9fff) AM_WRITE( MWA8_BANK13 )
-        AM_RANGE( 0xa000, 0xbfff) AM_WRITE( MWA8_BANK14 )
-        AM_RANGE( 0xc000, 0xdfff) AM_WRITE( MWA8_BANK15 )
-        AM_RANGE( 0xe000, 0xffff) AM_WRITE( MWA8_BANK16 )
+	AM_RANGE( 0x0000, 0x1fff) AM_WRITE( mtx_trap_write )
+	AM_RANGE( 0x2000, 0x3fff) AM_WRITE( MWA8_NOP )
+	AM_RANGE( 0x4000, 0x5fff) AM_WRITE( MWA8_BANK11 )
+	AM_RANGE( 0x6000, 0x7fff) AM_WRITE( MWA8_BANK12 )
+	AM_RANGE( 0x8000, 0x9fff) AM_WRITE( MWA8_BANK13 )
+	AM_RANGE( 0xa000, 0xbfff) AM_WRITE( MWA8_BANK14 )
+	AM_RANGE( 0xc000, 0xdfff) AM_WRITE( MWA8_BANK15 )
+	AM_RANGE( 0xe000, 0xffff) AM_WRITE( MWA8_BANK16 )
 ADDRESS_MAP_END
 
 ADDRESS_MAP_START( mtx_readport , ADDRESS_SPACE_IO, 8)

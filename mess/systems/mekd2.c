@@ -92,30 +92,30 @@ static WRITE_HANDLER(mekd2_kbd_w)
 }
 
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x00ff, MRA8_RAM },
+static ADDRESS_MAP_START( readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x00ff) AM_READ( MRA8_RAM )
 //	{ 0x0100, 0x01ff, MRA8_RAM },	/* optional, set up in mekd2_init_machine */
 //	{ 0x6000, 0x67ff, MRA8_ROM },	/* -"- */
 //	  { 0x8004, 0x8007, mekd2_pia_r },
 //	  { 0x8008, 0x8008, mekd2_cas_r },
 //	  { 0x8020, 0x8023, mekd2_kbd_r },
-	{ 0xa000, 0xa07f, MRA8_RAM },
+	AM_RANGE( 0xa000, 0xa07f) AM_READ( MRA8_RAM )
 //	{ 0xc000, 0xc7ff, MRA8_RAM },	/* optional, set up in mekd2_init_machine */
-	{ 0xe000, 0xe3ff, MRA8_ROM },	/* JBUG ROM */
-	{ 0xe400, 0xffff, mekd2_mirror_r },
-MEMORY_END
+	AM_RANGE( 0xe000, 0xe3ff) AM_READ( MRA8_ROM )	/* JBUG ROM */
+	AM_RANGE( 0xe400, 0xffff) AM_READ( mekd2_mirror_r )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x00ff, MWA8_RAM },
+static ADDRESS_MAP_START( writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x00ff) AM_WRITE( MWA8_RAM )
 //	{ 0x0100, 0x01ff, MWA8_RAM },	/* optional, set up in mekd2_init_machine */
 //	{ 0x6000, 0x67ff, MWA8_ROM },	/* -"- */
 //	  { 0x8004, 0x8007, mekd2_pia_w },
 //	  { 0x8008, 0x8008, mekd2_cas_w },
-	{ 0x8020, 0x8023, mekd2_kbd_w },
-	{ 0xa000, 0xa07f, MWA8_RAM },
+	AM_RANGE( 0x8020, 0x8023) AM_WRITE( mekd2_kbd_w )
+	AM_RANGE( 0xa000, 0xa07f) AM_WRITE( MWA8_RAM )
 //	{ 0xc000, 0xc7ff, MWA8_RAM },	/* optional, set up in mekd2_init_machine */
-	{ 0xe000, 0xe3ff, MWA8_ROM },	/* JBUG ROM */
-MEMORY_END
+	AM_RANGE( 0xe000, 0xe3ff) AM_WRITE( MWA8_ROM )	/* JBUG ROM */
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( mekd2 )
 	PORT_START			/* IN0 keys row 0 */
@@ -173,7 +173,7 @@ static struct DACinterface dac_interface =
 static MACHINE_DRIVER_START( mekd2 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6800, 614400)        /* 614.4 kHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)

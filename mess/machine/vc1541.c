@@ -316,37 +316,37 @@ static void vc1541_sector_to_gcr(int track, int sector)
 	gcr_double_2_gcr(0, 0, 0, 0, vc1541->head.data+i);i+=5;
 }
 
-MEMORY_READ_START( vc1541_readmem )
-	{0x0000, 0x07ff, MRA8_RAM},
-	{0x1800, 0x180f, via_2_r},		   /* 0 and 1 used in vc20 */
-	{0x1810, 0x189f, MRA8_NOP}, /* for debugger */
-	{0x1c00, 0x1c0f, via_3_r},
-	{0x1c10, 0x1c9f, MRA8_NOP}, /* for debugger */
-	{0xc000, 0xffff, MRA8_ROM},
-MEMORY_END
+ADDRESS_MAP_START( vc1541_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x07ff) AM_READ( MRA8_RAM)
+	AM_RANGE(0x1800, 0x180f) AM_READ( via_2_r)		   /* 0 and 1 used in vc20 */
+	AM_RANGE(0x1810, 0x189f) AM_READ( MRA8_NOP) /* for debugger */
+	AM_RANGE(0x1c00, 0x1c0f) AM_READ( via_3_r)
+	AM_RANGE(0x1c10, 0x1c9f) AM_READ( MRA8_NOP) /* for debugger */
+	AM_RANGE(0xc000, 0xffff) AM_READ( MRA8_ROM)
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( vc1541_writemem )
-	{0x0000, 0x07ff, MWA8_RAM},
-	{0x1800, 0x180f, via_2_w},
-	{0x1c00, 0x1c0f, via_3_w},
-	{0xc000, 0xffff, MWA8_ROM},
-MEMORY_END
+ADDRESS_MAP_START( vc1541_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0x1800, 0x180f) AM_WRITE( via_2_w)
+	AM_RANGE(0x1c00, 0x1c0f) AM_WRITE( via_3_w)
+	AM_RANGE(0xc000, 0xffff) AM_WRITE( MWA8_ROM)
+ADDRESS_MAP_END
 
-MEMORY_READ_START( dolphin_readmem )
-	{0x0000, 0x07ff, MRA8_RAM},
-	{0x1800, 0x180f, via_2_r},		   /* 0 and 1 used in vc20 */
-	{0x1c00, 0x1c0f, via_3_r},
-	{0x8000, 0x9fff, MRA8_RAM},
-	{0xa000, 0xffff, MRA8_ROM},
-MEMORY_END
+ADDRESS_MAP_START( dolphin_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x07ff) AM_READ( MRA8_RAM)
+	AM_RANGE(0x1800, 0x180f) AM_READ( via_2_r)		   /* 0 and 1 used in vc20 */
+	AM_RANGE(0x1c00, 0x1c0f) AM_READ( via_3_r)
+	AM_RANGE(0x8000, 0x9fff) AM_READ( MRA8_RAM)
+	AM_RANGE(0xa000, 0xffff) AM_READ( MRA8_ROM)
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( dolphin_writemem )
-	{0x0000, 0x07ff, MWA8_RAM},
-	{0x1800, 0x180f, via_2_w},
-	{0x1c00, 0x1c0f, via_3_w},
-	{0x8000, 0x9fff, MWA8_RAM},
-	{0xa000, 0xffff, MWA8_ROM},
-MEMORY_END
+ADDRESS_MAP_START( dolphin_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0x1800, 0x180f) AM_WRITE( via_2_w)
+	AM_RANGE(0x1c00, 0x1c0f) AM_WRITE( via_3_w)
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0xa000, 0xffff) AM_WRITE( MWA8_ROM)
+ADDRESS_MAP_END
 
 #if 0
 INPUT_PORTS_START (vc1541)
@@ -963,19 +963,19 @@ int c1551_config (int id, int mode, C1551_CONFIG *config)
 	return 0;
 }
 
-MEMORY_READ_START( c1551_readmem )
-    {0x0000, 0x0001, c1551_port_r},
-	{0x0002, 0x07ff, MRA8_RAM},
-    {0x4000, 0x4007, tpi6525_0_port_r},
-	{0xc000, 0xffff, MRA8_ROM},
-MEMORY_END
+ADDRESS_MAP_START( c1551_readmem , ADDRESS_SPACE_PROGRAM, 8)
+    AM_RANGE(0x0000, 0x0001) AM_READ( c1551_port_r)
+	AM_RANGE(0x0002, 0x07ff) AM_READ( MRA8_RAM)
+    AM_RANGE(0x4000, 0x4007) AM_READ( tpi6525_0_port_r)
+	AM_RANGE(0xc000, 0xffff) AM_READ( MRA8_ROM)
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( c1551_writemem )
-    {0x0000, 0x0001, c1551_port_w},
-	{0x0002, 0x07ff, MWA8_RAM},
-    {0x4000, 0x4007, tpi6525_0_port_w},
-	{0xc000, 0xffff, MWA8_ROM},
-MEMORY_END
+ADDRESS_MAP_START( c1551_writemem , ADDRESS_SPACE_PROGRAM, 8)
+    AM_RANGE(0x0000, 0x0001) AM_WRITE( c1551_port_w)
+	AM_RANGE(0x0002, 0x07ff) AM_WRITE( MWA8_RAM)
+    AM_RANGE(0x4000, 0x4007) AM_WRITE( tpi6525_0_port_w)
+	AM_RANGE(0xc000, 0xffff) AM_WRITE( MWA8_ROM)
+ADDRESS_MAP_END
 
 static void c1551x_write_data (TPI6525 *This, int data)
 {
@@ -1060,7 +1060,7 @@ int c1551x_0_read_status (void)
 
 MACHINE_DRIVER_START( cpu_vc1540 )
 	MDRV_CPU_ADD_TAG("cpu_vc1540", M6502, 1000000)
-	MDRV_CPU_MEMORY(vc1541_readmem,vc1541_writemem)
+	MDRV_CPU_PROGRAM_MAP(vc1541_readmem,vc1541_writemem)
 MACHINE_DRIVER_END
 
 MACHINE_DRIVER_START( cpu_vc1541 )
@@ -1073,12 +1073,12 @@ MACHINE_DRIVER_END
 
 MACHINE_DRIVER_START( cpu_dolphin )
 	MDRV_CPU_ADD_TAG("cpu_dolphin", M6502, 1000000)
-	MDRV_CPU_MEMORY(dolphin_readmem,dolphin_writemem)
+	MDRV_CPU_PROGRAM_MAP(dolphin_readmem,dolphin_writemem)
 MACHINE_DRIVER_END
 
 MACHINE_DRIVER_START( cpu_c1551 )
 	MDRV_CPU_ADD_TAG("cpu_c1551", M6510T, 2000000)
-	MDRV_CPU_MEMORY(c1551_readmem,c1551_writemem)
+	MDRV_CPU_PROGRAM_MAP(c1551_readmem,c1551_writemem)
 MACHINE_DRIVER_END
 
 MACHINE_DRIVER_START( cpu_c1571 )

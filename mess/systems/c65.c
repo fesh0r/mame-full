@@ -20,50 +20,50 @@
 
 #include "includes/c65.h"
 
-static MEMORY_READ_START( c65_readmem )
-	{0x00000, 0x00001, c64_m6510_port_r},
-	{0x00002, 0x07fff, MRA8_RAM},
-	{0x08000, 0x09fff, MRA8_BANK1},
-	{0x0a000, 0x0bfff, MRA8_BANK2},
-	{0x0c000, 0x0cfff, MRA8_BANK3},
-	{0x0d000, 0x0d7ff, MRA8_BANK4},
-	{0x0d800, 0x0dbff, MRA8_BANK6},
-	{0x0dc00, 0x0dfff, MRA8_BANK8},
-	{0x0e000, 0x0ffff, MRA_BANK10},
-	{0x10000, 0x1ffff, MRA8_RAM},
-	{0x20000, 0x3ffff, MRA8_ROM},
-	{0x40000, 0x7ffff, MRA8_NOP},
-	{0x80000, 0xfffff, MRA8_RAM},
+static ADDRESS_MAP_START( c65_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x00000, 0x00001) AM_READ( c64_m6510_port_r)
+	AM_RANGE(0x00002, 0x07fff) AM_READ( MRA8_RAM)
+	AM_RANGE(0x08000, 0x09fff) AM_READ( MRA8_BANK1)
+	AM_RANGE(0x0a000, 0x0bfff) AM_READ( MRA8_BANK2)
+	AM_RANGE(0x0c000, 0x0cfff) AM_READ( MRA8_BANK3)
+	AM_RANGE(0x0d000, 0x0d7ff) AM_READ( MRA8_BANK4)
+	AM_RANGE(0x0d800, 0x0dbff) AM_READ( MRA8_BANK6)
+	AM_RANGE(0x0dc00, 0x0dfff) AM_READ( MRA8_BANK8)
+	AM_RANGE(0x0e000, 0x0ffff) AM_READ( MRA8_BANK10)
+	AM_RANGE(0x10000, 0x1ffff) AM_READ( MRA8_RAM)
+	AM_RANGE(0x20000, 0x3ffff) AM_READ( MRA8_ROM)
+	AM_RANGE(0x40000, 0x7ffff) AM_READ( MRA8_NOP)
+	AM_RANGE(0x80000, 0xfffff) AM_READ( MRA8_RAM)
 	/* 8 megabyte full address space! */
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( c65_writemem )
-	{0x00000, 0x00001, c64_m6510_port_w, &c64_memory},
-	{0x00002, 0x07fff, MWA8_RAM},
-	{0x08000, 0x09fff, MWA8_RAM},
-	{0x0a000, 0x0cfff, MWA8_RAM},
-	{0x0d000, 0x0d7ff, MWA8_BANK5},
-	{0x0d800, 0x0dbff, MWA8_BANK7},
-	{0x0dc00, 0x0dfff, MWA8_BANK9},
-	{0x0e000, 0x0ffff, MWA8_RAM},
-	{0x10000, 0x1f7ff, MWA8_RAM},
-	{0x1f800, 0x1ffff, MWA8_RAM, &c64_colorram},
-	{0x20000, 0x23fff, MWA8_ROM}, /* &c65_dos},	   maps to 0x8000    */
-	{0x24000, 0x28fff, MWA8_ROM}, /* reserved */
-	{0x29000, 0x29fff, MWA8_ROM, &c65_chargen},
-	{0x2a000, 0x2bfff, MWA8_ROM, &c64_basic},
-	{0x2c000, 0x2cfff, MWA8_ROM, &c65_interface},
-	{0x2d000, 0x2dfff, MWA8_ROM, &c64_chargen},
-	{0x2e000, 0x2ffff, MWA8_ROM, &c64_kernal},
-	{0x30000, 0x31fff, MWA8_ROM}, /*&c65_monitor},	  monitor maps to 0x6000    */
-	{0x32000, 0x37fff, MWA8_ROM}, /*&c65_basic}, */
-	{0x38000, 0x3bfff, MWA8_ROM}, /*&c65_graphics}, */
-	{0x3c000, 0x3dfff, MWA8_ROM}, /* reserved */
-	{0x3e000, 0x3ffff, MWA8_ROM}, /* &c65_kernal}, */
-	{0x40000, 0x7ffff, MWA8_NOP},
-	{0x80000, 0xfffff, MWA8_RAM},
+static ADDRESS_MAP_START( c65_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x00000, 0x00001) AM_WRITE( c64_m6510_port_w) AM_BASE( &c64_memory)
+	AM_RANGE(0x00002, 0x07fff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0x08000, 0x09fff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0x0a000, 0x0cfff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0x0d000, 0x0d7ff) AM_WRITE( MWA8_BANK5)
+	AM_RANGE(0x0d800, 0x0dbff) AM_WRITE( MWA8_BANK7)
+	AM_RANGE(0x0dc00, 0x0dfff) AM_WRITE( MWA8_BANK9)
+	AM_RANGE(0x0e000, 0x0ffff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0x10000, 0x1f7ff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0x1f800, 0x1ffff) AM_WRITE( MWA8_RAM) AM_BASE( &c64_colorram)
+	AM_RANGE(0x20000, 0x23fff) AM_WRITE( MWA8_ROM) /* &c65_dos,	   maps to 0x8000    */
+	AM_RANGE(0x24000, 0x28fff) AM_WRITE( MWA8_ROM) /* reserved */
+	AM_RANGE(0x29000, 0x29fff) AM_WRITE( MWA8_ROM) AM_BASE( &c65_chargen)
+	AM_RANGE(0x2a000, 0x2bfff) AM_WRITE( MWA8_ROM) AM_BASE( &c64_basic)
+	AM_RANGE(0x2c000, 0x2cfff) AM_WRITE( MWA8_ROM) AM_BASE( &c65_interface)
+	AM_RANGE(0x2d000, 0x2dfff) AM_WRITE( MWA8_ROM) AM_BASE( &c64_chargen)
+	AM_RANGE(0x2e000, 0x2ffff) AM_WRITE( MWA8_ROM) AM_BASE( &c64_kernal)
+	AM_RANGE(0x30000, 0x31fff) AM_WRITE( MWA8_ROM) /*&c65_monitor,	  monitor maps to 0x6000    */
+	AM_RANGE(0x32000, 0x37fff) AM_WRITE( MWA8_ROM) /*&c65_basic, */
+	AM_RANGE(0x38000, 0x3bfff) AM_WRITE( MWA8_ROM) /*&c65_graphics, */
+	AM_RANGE(0x3c000, 0x3dfff) AM_WRITE( MWA8_ROM) /* reserved */
+	AM_RANGE(0x3e000, 0x3ffff) AM_WRITE( MWA8_ROM) /* &c65_kernal, */
+	AM_RANGE(0x40000, 0x7ffff) AM_WRITE( MWA8_NOP)
+	AM_RANGE(0x80000, 0xfffff) AM_WRITE( MWA8_RAM)
 /*	{0x80000, 0xfffff, MWA8_BANK16}, */
-MEMORY_END
+ADDRESS_MAP_END
 
 #define DIPS_HELPER(bit, name, keycode) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, IP_JOY_NONE)
@@ -405,7 +405,7 @@ static SID6581_interface pal_sound_interface =
 static MACHINE_DRIVER_START( c65 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M4510, 3500000)  /* or VIC6567_CLOCK, */
-	MDRV_CPU_MEMORY(c65_readmem, c65_writemem)
+	MDRV_CPU_PROGRAM_MAP(c65_readmem, c65_writemem)
 	MDRV_CPU_VBLANK_INT(c64_frame_interrupt, 1)
 	MDRV_CPU_PERIODIC_INT(vic3_raster_irq, VIC2_HRETRACERATE)
 	MDRV_FRAMES_PER_SECOND(VIC6567_VRETRACERATE)

@@ -163,82 +163,82 @@ when problems start with -log and look into error.log file
 #include "includes/vic6560.h"
 #include "devices/cartslot.h"
 
-static MEMORY_READ_START( vc20_readmem )
-	{0x0000, 0x03ff, MRA8_RAM},
+static ADDRESS_MAP_START( vc20_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x03ff) AM_READ( MRA8_RAM)
 #if 0
-	{0x0400, 0x0fff, MRA8_RAM},		   /* ram, rom or nothing; I think read 0xff! */
+	AM_RANGE(0x0400, 0x0fff) AM_READ( MRA8_RAM)		   /* ram, rom or nothing; I think read 0xff! */
 #endif
-	{0x1000, 0x1fff, MRA8_RAM},
+	AM_RANGE(0x1000, 0x1fff) AM_READ( MRA8_RAM)
 #if 0
-	{0x2000, 0x3fff, MRA8_RAM},		   /* ram, rom or nothing */
-	{0x4000, 0x5fff, MRA8_RAM},		   /* ram, rom or nothing */
-	{0x6000, 0x7fff, MRA8_RAM},		   /* ram, rom or nothing */
+	AM_RANGE(0x2000, 0x3fff) AM_READ( MRA8_RAM)		   /* ram, rom or nothing */
+	AM_RANGE(0x4000, 0x5fff) AM_READ( MRA8_RAM)		   /* ram, rom or nothing */
+	AM_RANGE(0x6000, 0x7fff) AM_READ( MRA8_RAM)		   /* ram, rom or nothing */
 #endif
-	{0x8000, 0x8fff, MRA8_ROM},
-	{0x9000, 0x900f, vic6560_port_r},
-	{0x9010, 0x910f, MRA8_NOP},
-	{0x9110, 0x911f, via_0_r},
-	{0x9120, 0x912f, via_1_r},
-	{0x9130, 0x93ff, MRA8_NOP},
-	{0x9400, 0x97ff, MRA8_RAM},		   /*color ram 4 bit */
-	{0x9800, 0x9fff, MRA8_NOP},
+	AM_RANGE(0x8000, 0x8fff) AM_READ( MRA8_ROM)
+	AM_RANGE(0x9000, 0x900f) AM_READ( vic6560_port_r)
+	AM_RANGE(0x9010, 0x910f) AM_READ( MRA8_NOP)
+	AM_RANGE(0x9110, 0x911f) AM_READ( via_0_r)
+	AM_RANGE(0x9120, 0x912f) AM_READ( via_1_r)
+	AM_RANGE(0x9130, 0x93ff) AM_READ( MRA8_NOP)
+	AM_RANGE(0x9400, 0x97ff) AM_READ( MRA8_RAM)		   /*color ram 4 bit */
+	AM_RANGE(0x9800, 0x9fff) AM_READ( MRA8_NOP)
 #if 0
-	{0xa000, 0xbfff, MRA8_RAM},		   /* or nothing */
+	AM_RANGE(0xa000, 0xbfff) AM_READ( MRA8_RAM)		   /* or nothing */
 #endif
-	{0xc000, 0xffff, MRA8_ROM},
-MEMORY_END
+	AM_RANGE(0xc000, 0xffff) AM_READ( MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( vc20_writemem )
-	{0x0000, 0x03ff, MWA8_RAM, &vc20_memory},
-	{0x1000, 0x1fff, MWA8_RAM},
-	{0x8000, 0x8fff, MWA8_ROM},
-	{0x9000, 0x900f, vic6560_port_w},
-	{0x9010, 0x910f, MWA8_NOP},
-	{0x9110, 0x911f, via_0_w},
-	{0x9120, 0x912f, via_1_w},
-	{0x9130, 0x93ff, MWA8_NOP},
-	{0x9400, 0x97ff, vc20_write_9400, &vc20_memory_9400},
-	{0x9800, 0x9fff, MWA8_NOP},
-	{0xc000, 0xffff, MWA8_NOP},		   /* MWA8_ROM }, but logfile */
-MEMORY_END
+static ADDRESS_MAP_START( vc20_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE( MWA8_RAM) AM_BASE( &vc20_memory)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE( MWA8_ROM)
+	AM_RANGE(0x9000, 0x900f) AM_WRITE( vic6560_port_w)
+	AM_RANGE(0x9010, 0x910f) AM_WRITE( MWA8_NOP)
+	AM_RANGE(0x9110, 0x911f) AM_WRITE( via_0_w)
+	AM_RANGE(0x9120, 0x912f) AM_WRITE( via_1_w)
+	AM_RANGE(0x9130, 0x93ff) AM_WRITE( MWA8_NOP)
+	AM_RANGE(0x9400, 0x97ff) AM_WRITE( vc20_write_9400) AM_BASE( &vc20_memory_9400)
+	AM_RANGE(0x9800, 0x9fff) AM_WRITE( MWA8_NOP)
+	AM_RANGE(0xc000, 0xffff) AM_WRITE( MWA8_NOP)		   /* MWA8_ROM , but logfile */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( vc20i_readmem )
-	{0x0000, 0x03ff, MRA8_RAM},
+static ADDRESS_MAP_START( vc20i_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x03ff) AM_READ( MRA8_RAM)
 #if 0
-	{0x0400, 0x0fff, MRA8_RAM},		   /* ram, rom or nothing; I think read 0xff! */
+	AM_RANGE(0x0400, 0x0fff) AM_READ( MRA8_RAM)		   /* ram, rom or nothing; I think read 0xff! */
 #endif
-	{0x1000, 0x1fff, MRA8_RAM},
+	AM_RANGE(0x1000, 0x1fff) AM_READ( MRA8_RAM)
 #if 0
-	{0x2000, 0x3fff, MRA8_RAM},		   /* ram, rom or nothing */
-	{0x4000, 0x5fff, MRA8_RAM},		   /* ram, rom or nothing */
-	{0x6000, 0x7fff, MRA8_RAM},		   /* ram, rom or nothing */
+	AM_RANGE(0x2000, 0x3fff) AM_READ( MRA8_RAM)		   /* ram, rom or nothing */
+	AM_RANGE(0x4000, 0x5fff) AM_READ( MRA8_RAM)		   /* ram, rom or nothing */
+	AM_RANGE(0x6000, 0x7fff) AM_READ( MRA8_RAM)		   /* ram, rom or nothing */
 #endif
-	{0x8000, 0x8fff, MRA8_ROM},
-	{0x9000, 0x900f, vic6560_port_r},
-	{0x9010, 0x910f, MRA8_NOP},
-	{0x9110, 0x911f, via_0_r},
-	{0x9120, 0x912f, via_1_r},
-	{0x9400, 0x97ff, MRA8_RAM},		   /*color ram 4 bit */
-	{0x9800, 0x980f, via_4_r},
-	{0x9810, 0x981f, via_5_r},
-	{0xa000, 0xbfff, MRA8_ROM},
-	{0xc000, 0xffff, MRA8_ROM},
-MEMORY_END
+	AM_RANGE(0x8000, 0x8fff) AM_READ( MRA8_ROM)
+	AM_RANGE(0x9000, 0x900f) AM_READ( vic6560_port_r)
+	AM_RANGE(0x9010, 0x910f) AM_READ( MRA8_NOP)
+	AM_RANGE(0x9110, 0x911f) AM_READ( via_0_r)
+	AM_RANGE(0x9120, 0x912f) AM_READ( via_1_r)
+	AM_RANGE(0x9400, 0x97ff) AM_READ( MRA8_RAM)		   /*color ram 4 bit */
+	AM_RANGE(0x9800, 0x980f) AM_READ( via_4_r)
+	AM_RANGE(0x9810, 0x981f) AM_READ( via_5_r)
+	AM_RANGE(0xa000, 0xbfff) AM_READ( MRA8_ROM)
+	AM_RANGE(0xc000, 0xffff) AM_READ( MRA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( vc20i_writemem )
-	{0x0000, 0x03ff, MWA8_RAM, &vc20_memory},
-	{0x1000, 0x1fff, MWA8_RAM},
-	{0x8000, 0x8fff, MWA8_ROM},
-	{0x9000, 0x900f, vic6560_port_w},
-	{0x9010, 0x910f, MWA8_NOP},
-	{0x9110, 0x911f, via_0_w},
-	{0x9120, 0x912f, via_1_w},
-	{0x9400, 0x97ff, vc20_write_9400, &vc20_memory_9400},
-	{0x9800, 0x980f, via_4_w},
-	{0x9810, 0x981f, via_5_w},
-	{0xa000, 0xbfff, MWA8_ROM},
-	{0xc000, 0xffff, MWA8_NOP},		   /* MWA8_ROM }, but logfile */
-MEMORY_END
+static ADDRESS_MAP_START( vc20i_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE( MWA8_RAM) AM_BASE( &vc20_memory)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE( MWA8_ROM)
+	AM_RANGE(0x9000, 0x900f) AM_WRITE( vic6560_port_w)
+	AM_RANGE(0x9010, 0x910f) AM_WRITE( MWA8_NOP)
+	AM_RANGE(0x9110, 0x911f) AM_WRITE( via_0_w)
+	AM_RANGE(0x9120, 0x912f) AM_WRITE( via_1_w)
+	AM_RANGE(0x9400, 0x97ff) AM_WRITE( vc20_write_9400) AM_BASE( &vc20_memory_9400)
+	AM_RANGE(0x9800, 0x980f) AM_WRITE( via_4_w)
+	AM_RANGE(0x9810, 0x981f) AM_WRITE( via_5_w)
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE( MWA8_ROM)
+	AM_RANGE(0xc000, 0xffff) AM_WRITE( MWA8_NOP)		   /* MWA8_ROM, but logfile */
+ADDRESS_MAP_END
 
 #define DIPS_HELPER(bit, name, keycode) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, IP_JOY_NONE)
@@ -761,7 +761,7 @@ ROM_END
 static MACHINE_DRIVER_START( vic20 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, VIC6560_CLOCK)        /* 7.8336 Mhz */
-	MDRV_CPU_MEMORY(vc20_readmem, vc20_writemem)
+	MDRV_CPU_PROGRAM_MAP(vc20_readmem, vc20_writemem)
 	MDRV_CPU_VBLANK_INT(vc20_frame_interrupt, 1)
 	MDRV_CPU_PERIODIC_INT(vic656x_raster_interrupt, VIC656X_HRETRACERATE)
 	MDRV_FRAMES_PER_SECOND(VIC6560_VRETRACERATE)
@@ -808,7 +808,7 @@ static MACHINE_DRIVER_START( vic20i )
 #endif
 
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_MEMORY( vc20i_readmem, vc20i_writemem )
+	MDRV_CPU_PROGRAM_MAP( vc20i_readmem, vc20i_writemem )
 MACHINE_DRIVER_END
 
 
@@ -816,7 +816,7 @@ static MACHINE_DRIVER_START( vc20 )
 	MDRV_IMPORT_FROM( vic20 )
 
 	MDRV_CPU_REPLACE( "main", M6502, VIC6561_CLOCK )
-	MDRV_CPU_MEMORY( vc20i_readmem, vc20i_writemem )
+	MDRV_CPU_PROGRAM_MAP( vc20i_readmem, vc20i_writemem )
 
 	MDRV_FRAMES_PER_SECOND(VIC6561_VRETRACERATE)
 	MDRV_SCREEN_SIZE((VIC6561_XSIZE + 7) & ~7, VIC6561_YSIZE)

@@ -76,27 +76,27 @@
 #define LOG(x)	/* x */
 #endif
 
-static MEMORY_READ_START ( readmem )
-	{ 0x0000, 0x03ff, MRA8_RAM },
-	{ 0x1700, 0x173f, m6530_003_r },
-	{ 0x1740, 0x177f, m6530_002_r },
-	{ 0x1780, 0x17bf, MRA8_RAM },
-	{ 0x17c0, 0x17ff, MRA8_RAM },
-	{ 0x1800, 0x1bff, MRA8_ROM },
-	{ 0x1c00, 0x1fff, MRA8_ROM },
-	{ 0x2000, 0xffff, kim1_mirror_r },
-MEMORY_END
+static ADDRESS_MAP_START ( readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x03ff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x1700, 0x173f) AM_READ( m6530_003_r )
+	AM_RANGE( 0x1740, 0x177f) AM_READ( m6530_002_r )
+	AM_RANGE( 0x1780, 0x17bf) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x17c0, 0x17ff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x1800, 0x1bff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0x1c00, 0x1fff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0x2000, 0xffff) AM_READ( kim1_mirror_r )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x03ff, MWA8_RAM },
-	{ 0x1700, 0x173f, m6530_003_w },
-	{ 0x1740, 0x177f, m6530_002_w },
-	{ 0x1780, 0x17bf, MWA8_RAM },
-	{ 0x17c0, 0x17ff, MWA8_RAM },
-	{ 0x1800, 0x1bff, MWA8_ROM },
-	{ 0x1c00, 0x1fff, MWA8_ROM },
-	{ 0x2000, 0xffff, kim1_mirror_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x03ff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x1700, 0x173f) AM_WRITE( m6530_003_w )
+	AM_RANGE( 0x1740, 0x177f) AM_WRITE( m6530_002_w )
+	AM_RANGE( 0x1780, 0x17bf) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x17c0, 0x17ff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x1800, 0x1bff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0x1c00, 0x1fff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0x2000, 0xffff) AM_WRITE( kim1_mirror_w )
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( kim1 )
 	PORT_START			/* IN0 keys row 0 */
@@ -191,7 +191,7 @@ static struct DACinterface dac_interface =
 static MACHINE_DRIVER_START( kim1 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 1000000)        /* 1 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(kim1_interrupt, 1)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

@@ -199,142 +199,142 @@ when problems start with -log and look into error.log file
  * at 0xfc00 till 0xfcff is ram or rom kernal readable
  */
 
-static MEMORY_READ_START( c16_readmem )
-	{0x0000, 0x0001, c16_m7501_port_r},
-	{0x0002, 0x3fff, MRA8_RAM},
-	{0x4000, 0x7fff, MRA8_BANK1},	   /* only ram memory configuration */
-	{0x8000, 0xbfff, MRA8_BANK2},
-	{0xc000, 0xfbff, MRA8_BANK3},
-	{0xfc00, 0xfcff, MRA8_BANK4},
-	{0xfd10, 0xfd1f, c16_fd1x_r},
-	{0xfd30, 0xfd3f, c16_6529_port_r}, /* 6529 keyboard matrix */
+static ADDRESS_MAP_START( c16_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0001) AM_READ( c16_m7501_port_r)
+	AM_RANGE(0x0002, 0x3fff) AM_READ( MRA8_RAM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ( MRA8_BANK1)	   /* only ram memory configuration */
+	AM_RANGE(0x8000, 0xbfff) AM_READ( MRA8_BANK2)
+	AM_RANGE(0xc000, 0xfbff) AM_READ( MRA8_BANK3)
+	AM_RANGE(0xfc00, 0xfcff) AM_READ( MRA8_BANK4)
+	AM_RANGE(0xfd10, 0xfd1f) AM_READ( c16_fd1x_r)
+	AM_RANGE(0xfd30, 0xfd3f) AM_READ( c16_6529_port_r) /* 6529 keyboard matrix */
 #if 0
-	{ 0xfd40, 0xfd5f, sid6581_0_port_r }, /* sidcard, eoroidpro ... */
-	{0xfec0, 0xfedf, c16_iec9_port_r}, /* configured in c16_common_init */
-	{0xfee0, 0xfeff, c16_iec8_port_r}, /* configured in c16_common_init */
+	AM_RANGE( 0xfd40, 0xfd5f) AM_READ( sid6581_0_port_r ) /* sidcard, eoroidpro ... */
+	AM_RANGE(0xfec0, 0xfedf) AM_READ( c16_iec9_port_r) /* configured in c16_common_init */
+	AM_RANGE(0xfee0, 0xfeff) AM_READ( c16_iec8_port_r) /* configured in c16_common_init */
 #endif
-	{0xff00, 0xff1f, ted7360_port_r},
-	{0xff20, 0xffff, MRA8_BANK8},
+	AM_RANGE(0xff00, 0xff1f) AM_READ( ted7360_port_r)
+	AM_RANGE(0xff20, 0xffff) AM_READ( MRA8_BANK8)
 /*	{ 0x10000, 0x3ffff, MRA8_ROM }, */
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( c16_writemem )
-	{0x0000, 0x0001, c16_m7501_port_w, &c16_memory},
-	{0x0002, 0x3fff, MWA8_RAM},
+static ADDRESS_MAP_START( c16_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0001) AM_WRITE( c16_m7501_port_w) AM_BASE( &c16_memory)
+	AM_RANGE(0x0002, 0x3fff) AM_WRITE( MWA8_RAM)
 #ifndef NEW_BANKHANDLER
-	{0x4000, 0x7fff, MWA8_BANK5},
-	{0x8000, 0xbfff, MWA8_BANK6},
-	{0xc000, 0xfcff, MWA8_BANK7},
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE( MWA8_BANK5)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE( MWA8_BANK6)
+	AM_RANGE(0xc000, 0xfcff) AM_WRITE( MWA8_BANK7)
 #endif
 #if 0
-	{0x4000, 0x7fff, c16_write_4000},  /*configured in c16_common_init */
-	{0x8000, 0xbfff, c16_write_8000},  /*configured in c16_common_init */
-	{0xc000, 0xfcff, c16_write_c000},  /*configured in c16_common_init */
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE( c16_write_4000)  /*configured in c16_common_init */
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE( c16_write_8000)  /*configured in c16_common_init */
+	AM_RANGE(0xc000, 0xfcff) AM_WRITE( c16_write_c000)  /*configured in c16_common_init */
 #endif
-	{0xfd30, 0xfd3f, c16_6529_port_w}, /* 6529 keyboard matrix */
+	AM_RANGE(0xfd30, 0xfd3f) AM_WRITE( c16_6529_port_w) /* 6529 keyboard matrix */
 #if 0
-	{0xfd40, 0xfd5f, sid6581_0_port_w},
+	AM_RANGE(0xfd40, 0xfd5f) AM_WRITE( sid6581_0_port_w)
 #endif
-	{0xfdd0, 0xfddf, c16_select_roms}, /* rom chips selection */
+	AM_RANGE(0xfdd0, 0xfddf) AM_WRITE( c16_select_roms) /* rom chips selection */
 #if 0
-	{0xfec0, 0xfedf, c16_iec9_port_w}, /*configured in c16_common_init */
-	{0xfee0, 0xfeff, c16_iec8_port_w}, /*configured in c16_common_init */
+	AM_RANGE(0xfec0, 0xfedf) AM_WRITE( c16_iec9_port_w) /*configured in c16_common_init */
+	AM_RANGE(0xfee0, 0xfeff) AM_WRITE( c16_iec8_port_w) /*configured in c16_common_init */
 #endif
-	{0xff00, 0xff1f, ted7360_port_w},
+	AM_RANGE(0xff00, 0xff1f) AM_WRITE( ted7360_port_w)
 #if 0
-	{0xff20, 0xff3d, c16_write_ff20},  /*configure in c16_common_init */
+	AM_RANGE(0xff20, 0xff3d) AM_WRITE( c16_write_ff20)  /*configure in c16_common_init */
 #endif
-	{0xff3e, 0xff3e, c16_switch_to_rom},
-	{0xff3f, 0xff3f, c16_switch_to_ram},
+	AM_RANGE(0xff3e, 0xff3e) AM_WRITE( c16_switch_to_rom)
+	AM_RANGE(0xff3f, 0xff3f) AM_WRITE( c16_switch_to_ram)
 #if 0
-	{0xff40, 0xffff, c16_write_ff40},  /*configure in c16_common_init */
+	AM_RANGE(0xff40, 0xffff) AM_WRITE( c16_write_ff40)  /*configure in c16_common_init */
 //	{0x10000, 0x3ffff, MWA8_ROM},
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( plus4_readmem )
-	{0x0000, 0x0001, c16_m7501_port_r},
-	{0x0002, 0x7fff, MRA8_RAM},
-	{0x8000, 0xbfff, MRA8_BANK2},
-	{0xc000, 0xfbff, MRA8_BANK3},
-	{0xfc00, 0xfcff, MRA8_BANK4},
-	{0xfd00, 0xfd0f, c16_6551_port_r},
-	{0xfd10, 0xfd1f, plus4_6529_port_r},
-	{0xfd30, 0xfd3f, c16_6529_port_r}, /* 6529 keyboard matrix */
+static ADDRESS_MAP_START( plus4_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0001) AM_READ( c16_m7501_port_r)
+	AM_RANGE(0x0002, 0x7fff) AM_READ( MRA8_RAM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ( MRA8_BANK2)
+	AM_RANGE(0xc000, 0xfbff) AM_READ( MRA8_BANK3)
+	AM_RANGE(0xfc00, 0xfcff) AM_READ( MRA8_BANK4)
+	AM_RANGE(0xfd00, 0xfd0f) AM_READ( c16_6551_port_r)
+	AM_RANGE(0xfd10, 0xfd1f) AM_READ( plus4_6529_port_r)
+	AM_RANGE(0xfd30, 0xfd3f) AM_READ( c16_6529_port_r) /* 6529 keyboard matrix */
 #if 0
-	{ 0xfd40, 0xfd5f, sid6581_0_port_r }, /* sidcard, eoroidpro ... */
-	{0xfec0, 0xfedf, c16_iec9_port_r}, /* configured in c16_common_init */
-	{0xfee0, 0xfeff, c16_iec8_port_r}, /* configured in c16_common_init */
+	AM_RANGE( 0xfd40, 0xfd5f) AM_READ( sid6581_0_port_r ) /* sidcard, eoroidpro ... */
+	AM_RANGE(0xfec0, 0xfedf) AM_READ( c16_iec9_port_r) /* configured in c16_common_init */
+	AM_RANGE(0xfee0, 0xfeff) AM_READ( c16_iec8_port_r) /* configured in c16_common_init */
 #endif
-	{0xff00, 0xff1f, ted7360_port_r},
-	{0xff20, 0xffff, MRA8_BANK8},
+	AM_RANGE(0xff00, 0xff1f) AM_READ( ted7360_port_r)
+	AM_RANGE(0xff20, 0xffff) AM_READ( MRA8_BANK8)
 /*	{ 0x10000, 0x3ffff, MRA8_ROM }, */
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( plus4_writemem )
-	{0x0000, 0x0001, c16_m7501_port_w, &c16_memory},
-	{0x0002, 0xfcff, MWA8_RAM},
-	{0xfd00, 0xfd0f, c16_6551_port_w},
-	{0xfd10, 0xfd1f, plus4_6529_port_w},
-	{0xfd30, 0xfd3f, c16_6529_port_w}, /* 6529 keyboard matrix */
+static ADDRESS_MAP_START( plus4_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0001) AM_WRITE( c16_m7501_port_w) AM_BASE( &c16_memory)
+	AM_RANGE(0x0002, 0xfcff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0xfd00, 0xfd0f) AM_WRITE( c16_6551_port_w)
+	AM_RANGE(0xfd10, 0xfd1f) AM_WRITE( plus4_6529_port_w)
+	AM_RANGE(0xfd30, 0xfd3f) AM_WRITE( c16_6529_port_w) /* 6529 keyboard matrix */
 #if 0
-	{0xfd40, 0xfd5f, sid6581_0_port_w},
+	AM_RANGE(0xfd40, 0xfd5f) AM_WRITE( sid6581_0_port_w)
 #endif
-	{0xfdd0, 0xfddf, c16_select_roms}, /* rom chips selection */
+	AM_RANGE(0xfdd0, 0xfddf) AM_WRITE( c16_select_roms) /* rom chips selection */
 #if 0
-	{0xfec0, 0xfedf, c16_iec9_port_w}, /*configured in c16_common_init */
-	{0xfee0, 0xfeff, c16_iec8_port_w}, /*configured in c16_common_init */
+	AM_RANGE(0xfec0, 0xfedf) AM_WRITE( c16_iec9_port_w) /*configured in c16_common_init */
+	AM_RANGE(0xfee0, 0xfeff) AM_WRITE( c16_iec8_port_w) /*configured in c16_common_init */
 #endif
-	{0xff00, 0xff1f, ted7360_port_w},
-	{0xff20, 0xff3d, MWA8_RAM},
-	{0xff3e, 0xff3e, c16_switch_to_rom},
-	{0xff3f, 0xff3f, plus4_switch_to_ram},
-	{0xff40, 0xffff, MWA8_RAM},
+	AM_RANGE(0xff00, 0xff1f) AM_WRITE( ted7360_port_w)
+	AM_RANGE(0xff20, 0xff3d) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0xff3e, 0xff3e) AM_WRITE( c16_switch_to_rom)
+	AM_RANGE(0xff3f, 0xff3f) AM_WRITE( plus4_switch_to_ram)
+	AM_RANGE(0xff40, 0xffff) AM_WRITE( MWA8_RAM)
 //	{0x10000, 0x3ffff, MWA8_ROM},
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( c364_readmem )
-	{0x0000, 0x0001, c16_m7501_port_r},
-	{0x0002, 0x7fff, MRA8_RAM},
-	{0x8000, 0xbfff, MRA8_BANK2},
-	{0xc000, 0xfbff, MRA8_BANK3},
-	{0xfc00, 0xfcff, MRA8_BANK4},
-	{0xfd00, 0xfd0f, c16_6551_port_r},
-	{0xfd10, 0xfd1f, plus4_6529_port_r},
-	{0xfd20, 0xfd2f, c364_speech_r },
-	{0xfd30, 0xfd3f, c16_6529_port_r}, /* 6529 keyboard matrix */
+static ADDRESS_MAP_START( c364_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0001) AM_READ( c16_m7501_port_r)
+	AM_RANGE(0x0002, 0x7fff) AM_READ( MRA8_RAM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ( MRA8_BANK2)
+	AM_RANGE(0xc000, 0xfbff) AM_READ( MRA8_BANK3)
+	AM_RANGE(0xfc00, 0xfcff) AM_READ( MRA8_BANK4)
+	AM_RANGE(0xfd00, 0xfd0f) AM_READ( c16_6551_port_r)
+	AM_RANGE(0xfd10, 0xfd1f) AM_READ( plus4_6529_port_r)
+	AM_RANGE(0xfd20, 0xfd2f) AM_READ( c364_speech_r )
+	AM_RANGE(0xfd30, 0xfd3f) AM_READ( c16_6529_port_r) /* 6529 keyboard matrix */
 #if 0
-	{ 0xfd40, 0xfd5f, sid6581_0_port_r }, /* sidcard, eoroidpro ... */
-	{0xfec0, 0xfedf, c16_iec9_port_r}, /* configured in c16_common_init */
-	{0xfee0, 0xfeff, c16_iec8_port_r}, /* configured in c16_common_init */
+	AM_RANGE( 0xfd40, 0xfd5f) AM_READ( sid6581_0_port_r ) /* sidcard, eoroidpro ... */
+	AM_RANGE(0xfec0, 0xfedf) AM_READ( c16_iec9_port_r) /* configured in c16_common_init */
+	AM_RANGE(0xfee0, 0xfeff) AM_READ( c16_iec8_port_r) /* configured in c16_common_init */
 #endif
-	{0xff00, 0xff1f, ted7360_port_r},
-	{0xff20, 0xffff, MRA8_BANK8},
+	AM_RANGE(0xff00, 0xff1f) AM_READ( ted7360_port_r)
+	AM_RANGE(0xff20, 0xffff) AM_READ( MRA8_BANK8)
 /*	{ 0x10000, 0x3ffff, MRA8_ROM }, */
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( c364_writemem )
-	{0x0000, 0x0001, c16_m7501_port_w, &c16_memory},
-	{0x0002, 0xfcff, MWA8_RAM},
-	{0xfd00, 0xfd0f, c16_6551_port_w},
-	{0xfd10, 0xfd1f, plus4_6529_port_w},
-	{0xfd20, 0xfd2f, c364_speech_w },
-	{0xfd30, 0xfd3f, c16_6529_port_w}, /* 6529 keyboard matrix */
+static ADDRESS_MAP_START( c364_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0001) AM_WRITE( c16_m7501_port_w) AM_BASE( &c16_memory)
+	AM_RANGE(0x0002, 0xfcff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0xfd00, 0xfd0f) AM_WRITE( c16_6551_port_w)
+	AM_RANGE(0xfd10, 0xfd1f) AM_WRITE( plus4_6529_port_w)
+	AM_RANGE(0xfd20, 0xfd2f) AM_WRITE( c364_speech_w )
+	AM_RANGE(0xfd30, 0xfd3f) AM_WRITE( c16_6529_port_w) /* 6529 keyboard matrix */
 #if 0
-	{0xfd40, 0xfd5f, sid6581_0_port_w},
+	AM_RANGE(0xfd40, 0xfd5f) AM_WRITE( sid6581_0_port_w)
 #endif
-	{0xfdd0, 0xfddf, c16_select_roms}, /* rom chips selection */
+	AM_RANGE(0xfdd0, 0xfddf) AM_WRITE( c16_select_roms) /* rom chips selection */
 #if 0
-	{0xfec0, 0xfedf, c16_iec9_port_w}, /*configured in c16_common_init */
-	{0xfee0, 0xfeff, c16_iec8_port_w}, /*configured in c16_common_init */
+	AM_RANGE(0xfec0, 0xfedf) AM_WRITE( c16_iec9_port_w) /*configured in c16_common_init */
+	AM_RANGE(0xfee0, 0xfeff) AM_WRITE( c16_iec8_port_w) /*configured in c16_common_init */
 #endif
-	{0xff00, 0xff1f, ted7360_port_w},
-	{0xff20, 0xff3d, MWA8_RAM},
-	{0xff3e, 0xff3e, c16_switch_to_rom},
-	{0xff3f, 0xff3f, plus4_switch_to_ram},
-	{0xff40, 0xffff, MWA8_RAM},
+	AM_RANGE(0xff00, 0xff1f) AM_WRITE( ted7360_port_w)
+	AM_RANGE(0xff20, 0xff3d) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0xff3e, 0xff3e) AM_WRITE( c16_switch_to_rom)
+	AM_RANGE(0xff3f, 0xff3f) AM_WRITE( plus4_switch_to_ram)
+	AM_RANGE(0xff40, 0xffff) AM_WRITE( MWA8_RAM)
 //	{0x10000, 0x3ffff, MWA8_ROM},
-MEMORY_END
+ADDRESS_MAP_END
 
 #define DIPS_HELPER(bit, name, keycode) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, IP_JOY_NONE)
@@ -760,7 +760,7 @@ static SID6581_interface sidplus4_sound_interface =
 static MACHINE_DRIVER_START( c16 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M7501, 1400000)        /* 7.8336 Mhz */
-	MDRV_CPU_MEMORY(c16_readmem, c16_writemem)
+	MDRV_CPU_PROGRAM_MAP(c16_readmem, c16_writemem)
 	MDRV_CPU_VBLANK_INT(c16_frame_interrupt, 1)
 	MDRV_CPU_PERIODIC_INT(ted7360_raster_interrupt, TED7360_HRETRACERATE)
 	MDRV_FRAMES_PER_SECOND(TED7360PAL_VRETRACERATE)
@@ -812,7 +812,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( plus4 )
 	MDRV_IMPORT_FROM( c16 )
 	MDRV_CPU_REPLACE( "main", M7501, 1200000)
-	MDRV_CPU_MEMORY( plus4_readmem, plus4_writemem )
+	MDRV_CPU_PROGRAM_MAP( plus4_readmem, plus4_writemem )
 	MDRV_FRAMES_PER_SECOND(TED7360NTSC_VRETRACERATE)
 	MDRV_SOUND_REPLACE("sid", CUSTOM, sidplus4_sound_interface)
 MACHINE_DRIVER_END
@@ -846,7 +846,7 @@ static MACHINE_DRIVER_START( c364 )
 	MDRV_IMPORT_FROM( plus4 )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_MEMORY(c364_readmem, c364_writemem)
+	MDRV_CPU_PROGRAM_MAP(c364_readmem, c364_writemem)
 MACHINE_DRIVER_END
 
 #define init_c16		c16_driver_init

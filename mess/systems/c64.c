@@ -201,70 +201,70 @@ when problems start with -log and look into error.log file
 
 #include "includes/c64.h"
 
-static MEMORY_READ_START( ultimax_readmem )
-	{0x0000, 0x0001, c64_m6510_port_r},
-	{0x0002, 0x0fff, MRA8_RAM},
-	{0x8000, 0x9fff, MRA8_ROM},
-	{0xd000, 0xd3ff, vic2_port_r},
-	{0xd400, 0xd7ff, sid6581_0_port_r},
-	{0xd800, 0xdbff, MRA8_RAM},		   /* colorram  */
-	{0xdc00, 0xdcff, cia6526_0_port_r},
-	{0xe000, 0xffff, MRA8_ROM},		   /* ram or kernel rom */
-MEMORY_END
+static ADDRESS_MAP_START( ultimax_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0001) AM_READ( c64_m6510_port_r)
+	AM_RANGE(0x0002, 0x0fff) AM_READ( MRA8_RAM)
+	AM_RANGE(0x8000, 0x9fff) AM_READ( MRA8_ROM)
+	AM_RANGE(0xd000, 0xd3ff) AM_READ( vic2_port_r)
+	AM_RANGE(0xd400, 0xd7ff) AM_READ( sid6581_0_port_r)
+	AM_RANGE(0xd800, 0xdbff) AM_READ( MRA8_RAM)		   /* colorram  */
+	AM_RANGE(0xdc00, 0xdcff) AM_READ( cia6526_0_port_r)
+	AM_RANGE(0xe000, 0xffff) AM_READ( MRA8_ROM)		   /* ram or kernel rom */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( ultimax_writemem )
-	{0x0000, 0x0001, c64_m6510_port_w, &c64_memory},
-	{0x0002, 0x0fff, MWA8_RAM},
-	{0x8000, 0x9fff, MWA8_ROM, &c64_roml},
-	{0xd000, 0xd3ff, vic2_port_w},
-	{0xd400, 0xd7ff, sid6581_0_port_w},
-	{0xd800, 0xdbff, c64_colorram_write, &c64_colorram},
-	{0xdc00, 0xdcff, cia6526_0_port_w},
-	{0xe000, 0xffff, MWA8_ROM, &c64_romh},
-MEMORY_END
+static ADDRESS_MAP_START( ultimax_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0001) AM_WRITE( c64_m6510_port_w) AM_BASE( &c64_memory)
+	AM_RANGE(0x0002, 0x0fff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE( MWA8_ROM) AM_BASE( &c64_roml)
+	AM_RANGE(0xd000, 0xd3ff) AM_WRITE( vic2_port_w)
+	AM_RANGE(0xd400, 0xd7ff) AM_WRITE( sid6581_0_port_w)
+	AM_RANGE(0xd800, 0xdbff) AM_WRITE( c64_colorram_write) AM_BASE( &c64_colorram)
+	AM_RANGE(0xdc00, 0xdcff) AM_WRITE( cia6526_0_port_w)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE( MWA8_ROM) AM_BASE( &c64_romh)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( c64_readmem )
-	{0x0000, 0x0001, c64_m6510_port_r},
-	{0x0002, 0x7fff, MRA8_RAM},
-	{0x8000, 0x9fff, MRA8_BANK1},	   /* ram or external roml */
-	{0xa000, 0xbfff, MRA8_BANK3},	   /* ram or basic rom or external romh */
-	{0xc000, 0xcfff, MRA8_RAM},
+static ADDRESS_MAP_START( c64_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0001) AM_READ( c64_m6510_port_r)
+	AM_RANGE(0x0002, 0x7fff) AM_READ( MRA8_RAM)
+	AM_RANGE(0x8000, 0x9fff) AM_READ( MRA8_BANK1)	   /* ram or external roml */
+	AM_RANGE(0xa000, 0xbfff) AM_READ( MRA8_BANK3)	   /* ram or basic rom or external romh */
+	AM_RANGE(0xc000, 0xcfff) AM_READ( MRA8_RAM)
 #if 1
-	{0xd000, 0xdfff, MRA8_BANK5},
+	AM_RANGE(0xd000, 0xdfff) AM_READ( MRA8_BANK5)
 #else
 /* dram */
 /* or character rom */
-	{0xd000, 0xd3ff, MRA8_BANK9},
-	{0xd400, 0xd7ff, MRA_BANK10},
-	{0xd800, 0xdbff, MRA_BANK11},		   /* colorram  */
-	{0xdc00, 0xdcff, MRA_BANK12},
-	{0xdd00, 0xddff, MRA_BANK13},
-	{0xde00, 0xdeff, MRA_BANK14},		   /* csline expansion port */
-	{0xdf00, 0xdfff, MRA_BANK15},		   /* csline expansion port */
+	AM_RANGE(0xd000, 0xd3ff) AM_READ( MRA8_BANK9)
+	AM_RANGE(0xd400, 0xd7ff) AM_READ( MRA8_BANK10)
+	AM_RANGE(0xd800, 0xdbff) AM_READ( MRA8_BANK11)		   /* colorram  */
+	AM_RANGE(0xdc00, 0xdcff) AM_READ( MRA8_BANK12)
+	AM_RANGE(0xdd00, 0xddff) AM_READ( MRA8_BANK13)
+	AM_RANGE(0xde00, 0xdeff) AM_READ( MRA8_BANK14)		   /* csline expansion port */
+	AM_RANGE(0xdf00, 0xdfff) AM_READ( MRA8_BANK15)		   /* csline expansion port */
 #endif
-	{0xe000, 0xffff, MRA8_BANK7},	   /* ram or kernel rom or external romh */
-MEMORY_END
+	AM_RANGE(0xe000, 0xffff) AM_READ( MRA8_BANK7)	   /* ram or kernel rom or external romh */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( c64_writemem )
-	{0x0000, 0x0001, c64_m6510_port_w, &c64_memory},
-	{0x0002, 0x7fff, MWA8_RAM},
-	{0x8000, 0x9fff, MWA8_BANK2},
-	{0xa000, 0xcfff, MWA8_RAM},
+static ADDRESS_MAP_START( c64_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0001) AM_WRITE( c64_m6510_port_w) AM_BASE( &c64_memory)
+	AM_RANGE(0x0002, 0x7fff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE( MWA8_BANK2)
+	AM_RANGE(0xa000, 0xcfff) AM_WRITE( MWA8_RAM)
 //	{0xa000, 0xcfff, MWA8_BANK16},
 #if 1
-	{0xd000, 0xdfff, MWA8_BANK6},
+	AM_RANGE(0xd000, 0xdfff) AM_WRITE( MWA8_BANK6)
 #else
 	/* or dram memory */
-	{0xd000, 0xd3ff, vic2_port_w},
-	{0xd400, 0xd7ff, sid6581_0_port_w},
-	{0xd800, 0xdbff, c64_colorram_write},
-	{0xdc00, 0xdcff, cia6526_0_port_w},
-	{0xdd00, 0xddff, cia6526_1_port_w},
-	{0xde00, 0xdeff, MWA8_NOP},		   /* csline expansion port */
-	{0xdf00, 0xdfff, MWA8_NOP},		   /* csline expansion port */
+	AM_RANGE(0xd000, 0xd3ff) AM_WRITE( vic2_port_w)
+	AM_RANGE(0xd400, 0xd7ff) AM_WRITE( sid6581_0_port_w)
+	AM_RANGE(0xd800, 0xdbff) AM_WRITE( c64_colorram_write)
+	AM_RANGE(0xdc00, 0xdcff) AM_WRITE( cia6526_0_port_w)
+	AM_RANGE(0xdd00, 0xddff) AM_WRITE( cia6526_1_port_w)
+	AM_RANGE(0xde00, 0xdeff) AM_WRITE( MWA8_NOP)		   /* csline expansion port */
+	AM_RANGE(0xdf00, 0xdfff) AM_WRITE( MWA8_NOP)		   /* csline expansion port */
 #endif
-	{0xe000, 0xffff, MWA8_BANK8},
-MEMORY_END
+	AM_RANGE(0xe000, 0xffff) AM_WRITE( MWA8_BANK8)
+ADDRESS_MAP_END
 
 #define DIPS_HELPER(bit, name, keycode) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, IP_JOY_NONE)
@@ -816,7 +816,7 @@ static SID6581_interface ntsc_sound_interface =
 static MACHINE_DRIVER_START( c64 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6510, VIC6567_CLOCK)
-	MDRV_CPU_MEMORY(c64_readmem, c64_writemem)
+	MDRV_CPU_PROGRAM_MAP(c64_readmem, c64_writemem)
 	MDRV_CPU_VBLANK_INT(c64_frame_interrupt, 1)
 	MDRV_CPU_PERIODIC_INT(vic2_raster_irq, VIC2_HRETRACERATE)
 	MDRV_FRAMES_PER_SECOND(VIC6567_VRETRACERATE)
@@ -837,7 +837,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( ultimax )
 	MDRV_IMPORT_FROM( c64 )
 	MDRV_CPU_REPLACE( "main", M6510, 1000000)
-	MDRV_CPU_MEMORY( ultimax_readmem, ultimax_writemem )
+	MDRV_CPU_PROGRAM_MAP( ultimax_readmem, ultimax_writemem )
 	MDRV_SOUND_REPLACE( "custom", CUSTOM, ultimax_sound_interface)
 MACHINE_DRIVER_END
 

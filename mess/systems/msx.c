@@ -18,74 +18,74 @@
 #include "devices/cassette.h"
 #include "formats/fmsx_cas.h"
 
-static MEMORY_READ_START (readmem)
-	{ 0x0000, 0x1fff, MRA8_BANK1 },
-	{ 0x2000, 0x3fff, MRA8_BANK2 },
-	{ 0x4000, 0x5fff, MRA8_BANK3 },
-	{ 0x6000, 0x7fff, MRA8_BANK4 },
-	{ 0x8000, 0x9fff, MRA8_BANK5 },
-	{ 0xa000, 0xbfff, MRA8_BANK6 },
-	{ 0xc000, 0xdfff, MRA8_BANK7 },
-	{ 0xe000, 0xfffe, MRA8_BANK8 },
-	{ 0xffff, 0xffff, msx_sec_slot_r },
-MEMORY_END
+static ADDRESS_MAP_START (readmem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_READ( MRA8_BANK1 )
+	AM_RANGE( 0x2000, 0x3fff) AM_READ( MRA8_BANK2 )
+	AM_RANGE( 0x4000, 0x5fff) AM_READ( MRA8_BANK3 )
+	AM_RANGE( 0x6000, 0x7fff) AM_READ( MRA8_BANK4 )
+	AM_RANGE( 0x8000, 0x9fff) AM_READ( MRA8_BANK5 )
+	AM_RANGE( 0xa000, 0xbfff) AM_READ( MRA8_BANK6 )
+	AM_RANGE( 0xc000, 0xdfff) AM_READ( MRA8_BANK7 )
+	AM_RANGE( 0xe000, 0xfffe) AM_READ( MRA8_BANK8 )
+	AM_RANGE( 0xffff, 0xffff) AM_READ( msx_sec_slot_r )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x0000, msx_superloadrunner_w },
-	{ 0x0000, 0x3fff, msx_page0_w },
-	{ 0x4000, 0x7fff, msx_page1_w },
-	{ 0x8000, 0xbfff, msx_page2_w },
-	{ 0xc000, 0xfffe, msx_page3_w },
-	{ 0xffff, 0xffff, msx_sec_slot_w },
-MEMORY_END
+static ADDRESS_MAP_START( writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x0000) AM_WRITE( msx_superloadrunner_w )
+	AM_RANGE( 0x0000, 0x3fff) AM_WRITE( msx_page0_w )
+	AM_RANGE( 0x4000, 0x7fff) AM_WRITE( msx_page1_w )
+	AM_RANGE( 0x8000, 0xbfff) AM_WRITE( msx_page2_w )
+	AM_RANGE( 0xc000, 0xfffe) AM_WRITE( msx_page3_w )
+	AM_RANGE( 0xffff, 0xffff) AM_WRITE( msx_sec_slot_w )
+ADDRESS_MAP_END
 
 
-static PORT_READ_START (readport)
-	{ 0x90, 0x91, msx_printer_r },
-	{ 0xa0, 0xa7, msx_psg_r },
-	{ 0xa8, 0xab, ppi8255_0_r },
-	{ 0x98, 0x98, TMS9928A_vram_r },
-	{ 0x99, 0x99, TMS9928A_register_r },
-	{ 0xd9, 0xd9, msx_kanji_r },
-PORT_END
+static ADDRESS_MAP_START (readport, ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x90, 0x91) AM_READ( msx_printer_r )
+	AM_RANGE( 0xa0, 0xa7) AM_READ( msx_psg_r )
+	AM_RANGE( 0xa8, 0xab) AM_READ( ppi8255_0_r )
+	AM_RANGE( 0x98, 0x98) AM_READ( TMS9928A_vram_r )
+	AM_RANGE( 0x99, 0x99) AM_READ( TMS9928A_register_r )
+	AM_RANGE( 0xd9, 0xd9) AM_READ( msx_kanji_r )
+ADDRESS_MAP_END
 
-static PORT_WRITE_START (writeport)
-	{ 0x77, 0x77, msx_90in1_w },
-	{ 0x7c, 0x7d, msx_fmpac_w },
-	{ 0x90, 0x91, msx_printer_w },
-	{ 0xa0, 0xa7, msx_psg_w },
-	{ 0xa8, 0xab, ppi8255_0_w },
-	{ 0x98, 0x98, TMS9928A_vram_w },
-	{ 0x99, 0x99, TMS9928A_register_w },
-	{ 0xd8, 0xd9, msx_kanji_w },
-PORT_END
+static ADDRESS_MAP_START (writeport, ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x77, 0x77) AM_WRITE( msx_90in1_w )
+	AM_RANGE( 0x7c, 0x7d) AM_WRITE( msx_fmpac_w )
+	AM_RANGE( 0x90, 0x91) AM_WRITE( msx_printer_w )
+	AM_RANGE( 0xa0, 0xa7) AM_WRITE( msx_psg_w )
+	AM_RANGE( 0xa8, 0xab) AM_WRITE( ppi8255_0_w )
+	AM_RANGE( 0x98, 0x98) AM_WRITE( TMS9928A_vram_w )
+	AM_RANGE( 0x99, 0x99) AM_WRITE( TMS9928A_register_w )
+	AM_RANGE( 0xd8, 0xd9) AM_WRITE( msx_kanji_w )
+ADDRESS_MAP_END
 
-static PORT_READ_START (readport2)
-	{ 0x90, 0x91, msx_printer_r },
-	{ 0xa0, 0xa7, msx_psg_r },
-	{ 0xa8, 0xab, ppi8255_0_r },
-	{ 0x98, 0x98, v9938_vram_r },
-	{ 0x99, 0x99, v9938_status_r },
-	{ 0xb5, 0xb5, msx_rtc_reg_r },
-	{ 0xd9, 0xd9, msx_kanji_r },
-	{ 0xfc, 0xff, msx_ram_mapper_r },
-PORT_END
+static ADDRESS_MAP_START (readport2, ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x90, 0x91) AM_READ( msx_printer_r )
+	AM_RANGE( 0xa0, 0xa7) AM_READ( msx_psg_r )
+	AM_RANGE( 0xa8, 0xab) AM_READ( ppi8255_0_r )
+	AM_RANGE( 0x98, 0x98) AM_READ( v9938_vram_r )
+	AM_RANGE( 0x99, 0x99) AM_READ( v9938_status_r )
+	AM_RANGE( 0xb5, 0xb5) AM_READ( msx_rtc_reg_r )
+	AM_RANGE( 0xd9, 0xd9) AM_READ( msx_kanji_r )
+	AM_RANGE( 0xfc, 0xff) AM_READ( msx_ram_mapper_r )
+ADDRESS_MAP_END
 
-static PORT_WRITE_START (writeport2)
-	{ 0x77, 0x77, msx_90in1_w },
-	{ 0x7c, 0x7d, msx_fmpac_w },
-	{ 0x90, 0x91, msx_printer_w },
-	{ 0xa0, 0xa7, msx_psg_w },
-	{ 0xa8, 0xab, ppi8255_0_w },
-	{ 0x98, 0x98, v9938_vram_w },
-	{ 0x99, 0x99, v9938_command_w },
-	{ 0x9a, 0x9a, v9938_palette_w },
-	{ 0x9b, 0x9b, v9938_register_w },
-	{ 0xb4, 0xb4, msx_rtc_latch_w },
-	{ 0xb5, 0xb5, msx_rtc_reg_w },
-	{ 0xd8, 0xd9, msx_kanji_w },
-	{ 0xfc, 0xff, msx_ram_mapper_w },
-PORT_END
+static ADDRESS_MAP_START (writeport2, ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x77, 0x77) AM_WRITE( msx_90in1_w )
+	AM_RANGE( 0x7c, 0x7d) AM_WRITE( msx_fmpac_w )
+	AM_RANGE( 0x90, 0x91) AM_WRITE( msx_printer_w )
+	AM_RANGE( 0xa0, 0xa7) AM_WRITE( msx_psg_w )
+	AM_RANGE( 0xa8, 0xab) AM_WRITE( ppi8255_0_w )
+	AM_RANGE( 0x98, 0x98) AM_WRITE( v9938_vram_w )
+	AM_RANGE( 0x99, 0x99) AM_WRITE( v9938_command_w )
+	AM_RANGE( 0x9a, 0x9a) AM_WRITE( v9938_palette_w )
+	AM_RANGE( 0x9b, 0x9b) AM_WRITE( v9938_register_w )
+	AM_RANGE( 0xb4, 0xb4) AM_WRITE( msx_rtc_latch_w )
+	AM_RANGE( 0xb5, 0xb5) AM_WRITE( msx_rtc_reg_w )
+	AM_RANGE( 0xd8, 0xd9) AM_WRITE( msx_kanji_w )
+	AM_RANGE( 0xfc, 0xff) AM_WRITE( msx_ram_mapper_w )
+ADDRESS_MAP_END
 
 /* start define for the special ports (DIPS, joystick, mouse) */
 #define MSX_DIPS \
@@ -714,8 +714,8 @@ static const TMS9928a_interface tms9928a_interface =
 static MACHINE_DRIVER_START( msx )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3579545)		  /* 3.579545 Mhz */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(msx_interrupt,1)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -745,8 +745,8 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( msx2 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3579545)		  /* 3.579545 Mhz */
-	MDRV_CPU_MEMORY(readmem, writemem)
-	MDRV_CPU_PORTS(readport2,writeport2)
+	MDRV_CPU_PROGRAM_MAP(readmem, writemem)
+	MDRV_CPU_IO_MAP(readport2,writeport2)
 	MDRV_CPU_VBLANK_INT(msx2_interrupt,262)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

@@ -1591,20 +1591,20 @@ static WRITE16_HANDLER( atarist_mmu_w )
 
 /***************************************************************************/
 
-static MEMORY_READ16_START (atarist_readmem)
-	{ 0x000000, 0x000007, MRA16_ROM },
-	{ 0x000008, 0x3fffff, MRA16_RAM },	/* User RAM */
-	{ 0xfa0000, 0xfbffff, MRA16_BANK1 },	/* User ROM */
-	{ 0xfc0000, 0xfeffff, MRA16_BANK2 },	/* System ROM */
-	{ 0xef0000, 0xef01ff, atarist_fakehdc_r },
-	{ 0xff8000, 0xff8007, atarist_mmu_r },
-	{ 0xff8200, 0xff82ff, atarist_shifter_r },
-	{ 0xff8600, 0xff860f, atarist_fdc_r },
-	{ 0xff8800, 0xff88ff, atarist_psg_r },
-	{ 0xff8a00, 0xff8a3f, atarist_blitter_r },
-	{ 0xfffa00, 0xfffa2f, atarist_mfp_r },
-	{ 0xfffc00, 0xfffc07, atarist_acia_r },
-MEMORY_END
+static ADDRESS_MAP_START (atarist_readmem, ADDRESS_SPACE_PROGRAM, 16)
+	AM_RANGE( 0x000000, 0x000007) AM_READ( MRA16_ROM )
+	AM_RANGE( 0x000008, 0x3fffff) AM_READ( MRA16_RAM )	/* User RAM */
+	AM_RANGE( 0xfa0000, 0xfbffff) AM_READ( MRA16_BANK1 )	/* User ROM */
+	AM_RANGE( 0xfc0000, 0xfeffff) AM_READ( MRA16_BANK2 )	/* System ROM */
+	AM_RANGE( 0xef0000, 0xef01ff) AM_READ( atarist_fakehdc_r )
+	AM_RANGE( 0xff8000, 0xff8007) AM_READ( atarist_mmu_r )
+	AM_RANGE( 0xff8200, 0xff82ff) AM_READ( atarist_shifter_r )
+	AM_RANGE( 0xff8600, 0xff860f) AM_READ( atarist_fdc_r )
+	AM_RANGE( 0xff8800, 0xff88ff) AM_READ( atarist_psg_r )
+	AM_RANGE( 0xff8a00, 0xff8a3f) AM_READ( atarist_blitter_r )
+	AM_RANGE( 0xfffa00, 0xfffa2f) AM_READ( atarist_mfp_r )
+	AM_RANGE( 0xfffc00, 0xfffc07) AM_READ( atarist_acia_r )
+ADDRESS_MAP_END
 
 static WRITE16_HANDLER(log_mem)
 {
@@ -1612,22 +1612,22 @@ static WRITE16_HANDLER(log_mem)
 	logerror("%06x: Write LOGMEM %04x (line %d)\n",activecpu_get_pc(),data,current_line);
 }
 
-static MEMORY_WRITE16_START (atarist_writemem)
-	{ 0x000000, 0x000007, MWA16_ROM, &atarist_ram },	/* Mirror of first 8 bytes of ROM */
+static ADDRESS_MAP_START (atarist_writemem, ADDRESS_SPACE_PROGRAM, 16)
+	AM_RANGE( 0x000000, 0x000007) AM_WRITE( MWA16_ROM) AM_BASE( &atarist_ram )	/* Mirror of first 8 bytes of ROM */
 //	{ 0x000122, 0x000123, log_mem },
-	{ 0x000008, 0x3fffff, MWA16_RAM },	/* User RAM */
-	{ 0xfa0000, 0xfbffff, MWA16_BANK1 },	/* User ROM */ //todo!
-	{ 0xfc0000, 0xfeffff, MWA16_ROM },	/* System ROM */
+	AM_RANGE( 0x000008, 0x3fffff) AM_WRITE( MWA16_RAM )	/* User RAM */
+	AM_RANGE( 0xfa0000, 0xfbffff) AM_WRITE( MWA16_BANK1 )	/* User ROM */ //todo!
+	AM_RANGE( 0xfc0000, 0xfeffff) AM_WRITE( MWA16_ROM )	/* System ROM */
 
-	{ 0xef0000, 0xef01ff, atarist_fakehdc_w, &atarist_fakehdc_ram },
-	{ 0xff8000, 0xff8001, atarist_mmu_w },
-	{ 0xff8200, 0xff82ff, atarist_shifter_w, &paletteram },
-	{ 0xff8600, 0xff860f, atarist_fdc_w },
-	{ 0xff8800, 0xff88ff, atarist_psg_w },
-	{ 0xff8a00, 0xff8a3f, atarist_blitter_w, &atarist_blitter_ram },
-	{ 0xfffa00, 0xfffa2f, atarist_mfp_w },
-	{ 0xfffc00, 0xfffc07, atarist_acia_w },
-MEMORY_END
+	AM_RANGE( 0xef0000, 0xef01ff) AM_WRITE( atarist_fakehdc_w) AM_BASE( &atarist_fakehdc_ram )
+	AM_RANGE( 0xff8000, 0xff8001) AM_WRITE( atarist_mmu_w )
+	AM_RANGE( 0xff8200, 0xff82ff) AM_WRITE( atarist_shifter_w) AM_BASE( &paletteram )
+	AM_RANGE( 0xff8600, 0xff860f) AM_WRITE( atarist_fdc_w )
+	AM_RANGE( 0xff8800, 0xff88ff) AM_WRITE( atarist_psg_w )
+	AM_RANGE( 0xff8a00, 0xff8a3f) AM_WRITE( atarist_blitter_w) AM_BASE( &atarist_blitter_ram )
+	AM_RANGE( 0xfffa00, 0xfffa2f) AM_WRITE( atarist_mfp_w )
+	AM_RANGE( 0xfffc00, 0xfffc07) AM_WRITE( atarist_acia_w )
+ADDRESS_MAP_END
 
 /***************************************************************************/
 
@@ -2073,7 +2073,7 @@ static struct AY8910interface ay8910_interface =
 static MACHINE_DRIVER_START( ataris )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, MASTER_CLOCK)        /* 8 MHz */
-	MDRV_CPU_MEMORY(atarist_readmem,atarist_writemem)
+	MDRV_CPU_PROGRAM_MAP(atarist_readmem,atarist_writemem)
 	MDRV_CPU_VBLANK_INT(atarist_interrupt,312)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(0)

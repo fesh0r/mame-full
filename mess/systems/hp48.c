@@ -13,13 +13,13 @@
  0-0x3ffff rom
  0xc0000- 0xcffff ram also mapped at 0xd0000-0xdffff */
 
-static MEMORY_READ_START( readmem )
-	{ 0x00000, 0xfffff, MRA8_ROM }, // configured at runtime, complexe mmu
-MEMORY_END
+static ADDRESS_MAP_START( readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x00000, 0xfffff) AM_READ( MRA8_ROM ) // configured at runtime, complexe mmu
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x00000, 0xfffff, MWA8_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x00000, 0xfffff) AM_WRITE( MWA8_ROM )
+ADDRESS_MAP_END
 
 #define DIPS_HELPER(bit, name, keycode, r) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, r)
@@ -189,7 +189,7 @@ static SATURN_CONFIG config={
 static MACHINE_DRIVER_START( hp48s )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", SATURN, 4000000)        /* 2 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_CONFIG(config)
 	MDRV_FRAMES_PER_SECOND(64)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -215,7 +215,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( hp48g )
 	MDRV_IMPORT_FROM( hp48s )
 	MDRV_CPU_REPLACE( "main", SATURN, 8000000 )		/* 4 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_CONFIG(config)
 MACHINE_DRIVER_END
 

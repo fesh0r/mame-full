@@ -603,7 +603,7 @@ static int int_callback(int line)
       		logerror("(%f) **** Acknowledged interrupt vector %02X\n", timer_get_time(), i186.intr.poll_status & 0x1f);
 
 	/* clear the interrupt */
-	i86_set_irq_line(0, CLEAR_LINE);
+	activecpu_set_irq_line(0, CLEAR_LINE);
 	i186.intr.pending = 0;
 
 	/* clear the request and set the in-service bit */
@@ -1474,7 +1474,7 @@ WRITE_HANDLER( i186_internal_port_w )
 			/* we need to do this at a time when the I86 context is swapped in */
 			/* this register is generally set once at startup and never again, so it's a good */
 			/* time to set it up */
-			i86_set_irq_callback(int_callback);
+			activecpu_set_irq_callback(int_callback);
 			break;
 
 		case 0xc0:

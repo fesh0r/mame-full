@@ -16,93 +16,93 @@
 #include "includes/wswan.h"
 #include "devices/cartslot.h"
 
-static MEMORY_READ_START (wswan_readmem)
-	{ 0x00000, 0x03fff, MRA8_RAM },		/* 16kb RAM + 16kb 4 colour tiles */
-	{ 0x04000, 0x0ffff, MRA8_NOP },		/* Not used */
-	{ 0x10000, 0x1ffff, MRA8_BANK1 },	/* SRAM bank */
-	{ 0x20000, 0x2ffff, MRA8_BANK2 },	/* ROM bank 1 */
-	{ 0x30000, 0x3ffff, MRA8_BANK3 },	/* ROM bank 2 */
-	{ 0x40000, 0x4ffff, MRA8_BANK4 },	/* ROM bank 3 */
-	{ 0x50000, 0x5ffff, MRA8_BANK5 },	/* ROM bank 4 */
-	{ 0x60000, 0x6ffff, MRA8_BANK6 },	/* ROM bank 5 */
-	{ 0x70000, 0x7ffff, MRA8_BANK7 },	/* ROM bank 6 */
-	{ 0x80000, 0x8ffff, MRA8_BANK8 },	/* ROM bank 7 */
-	{ 0x90000, 0x9ffff, MRA8_BANK9 },	/* ROM bank 8 */
-	{ 0xA0000, 0xAffff, MRA_BANK10 },	/* ROM bank 9 */
-	{ 0xB0000, 0xBffff, MRA_BANK11 },	/* ROM bank 10 */
-	{ 0xC0000, 0xCffff, MRA_BANK12 },	/* ROM bank 11 */
-	{ 0xD0000, 0xDffff, MRA_BANK13 },	/* ROM bank 12 */
-	{ 0xE0000, 0xEffff, MRA_BANK14 },	/* ROM bank 13 */
-	{ 0xF0000, 0xFffff, MRA_BANK15 },	/* ROM bank 14 */
-MEMORY_END
+static ADDRESS_MAP_START (wswan_readmem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x00000, 0x03fff) AM_READ( MRA8_RAM )		/* 16kb RAM + 16kb 4 colour tiles */
+	AM_RANGE( 0x04000, 0x0ffff) AM_READ( MRA8_NOP )		/* Not used */
+	AM_RANGE( 0x10000, 0x1ffff) AM_READ( MRA8_BANK1 )	/* SRAM bank */
+	AM_RANGE( 0x20000, 0x2ffff) AM_READ( MRA8_BANK2 )	/* ROM bank 1 */
+	AM_RANGE( 0x30000, 0x3ffff) AM_READ( MRA8_BANK3 )	/* ROM bank 2 */
+	AM_RANGE( 0x40000, 0x4ffff) AM_READ( MRA8_BANK4 )	/* ROM bank 3 */
+	AM_RANGE( 0x50000, 0x5ffff) AM_READ( MRA8_BANK5 )	/* ROM bank 4 */
+	AM_RANGE( 0x60000, 0x6ffff) AM_READ( MRA8_BANK6 )	/* ROM bank 5 */
+	AM_RANGE( 0x70000, 0x7ffff) AM_READ( MRA8_BANK7 )	/* ROM bank 6 */
+	AM_RANGE( 0x80000, 0x8ffff) AM_READ( MRA8_BANK8 )	/* ROM bank 7 */
+	AM_RANGE( 0x90000, 0x9ffff) AM_READ( MRA8_BANK9 )	/* ROM bank 8 */
+	AM_RANGE( 0xA0000, 0xAffff) AM_READ( MRA8_BANK10 )	/* ROM bank 9 */
+	AM_RANGE( 0xB0000, 0xBffff) AM_READ( MRA8_BANK11 )	/* ROM bank 10 */
+	AM_RANGE( 0xC0000, 0xCffff) AM_READ( MRA8_BANK12 )	/* ROM bank 11 */
+	AM_RANGE( 0xD0000, 0xDffff) AM_READ( MRA8_BANK13 )	/* ROM bank 12 */
+	AM_RANGE( 0xE0000, 0xEffff) AM_READ( MRA8_BANK14 )	/* ROM bank 13 */
+	AM_RANGE( 0xF0000, 0xFffff) AM_READ( MRA8_BANK15 )	/* ROM bank 14 */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START (wswan_writemem)
-	{ 0x00000, 0x03fff, MWA8_RAM },		/* 16kb RAM + 16kb 4 colour tiles */
-	{ 0x04000, 0x0ffff, MWA8_NOP },		/* Not used */
-	{ 0x10000, 0x1ffff, MWA8_BANK1 },	/* SRAM bank */
-	{ 0x20000, 0x2ffff, MWA8_BANK2 },	/* ROM bank 1 */
-	{ 0x30000, 0x3ffff, MWA8_BANK3 },	/* ROM bank 2 */
-	{ 0x40000, 0x4ffff, MWA8_BANK4 },	/* ROM bank 3 */
-	{ 0x50000, 0x5ffff, MWA8_BANK5 },	/* ROM bank 4 */
-	{ 0x60000, 0x6ffff, MWA8_BANK6 },	/* ROM bank 5 */
-	{ 0x70000, 0x7ffff, MWA8_BANK7 },	/* ROM bank 6 */
-	{ 0x80000, 0x8ffff, MWA8_BANK8 },	/* ROM bank 7 */
-	{ 0x90000, 0x9ffff, MWA8_BANK9 },	/* ROM bank 8 */
-	{ 0xA0000, 0xAffff, MWA8_BANK10 },	/* ROM bank 9 */
-	{ 0xB0000, 0xBffff, MWA8_BANK11 },	/* ROM bank 10 */
-	{ 0xC0000, 0xCffff, MWA8_BANK12 },	/* ROM bank 11 */
-	{ 0xD0000, 0xDffff, MWA8_BANK13 },	/* ROM bank 12 */
-	{ 0xE0000, 0xEffff, MWA8_BANK14 },	/* ROM bank 13 */
-	{ 0xF0000, 0xFffff, MWA8_BANK15 },	/* ROM bank 14 */
-MEMORY_END
+static ADDRESS_MAP_START (wswan_writemem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x00000, 0x03fff) AM_WRITE( MWA8_RAM )		/* 16kb RAM + 16kb 4 colour tiles */
+	AM_RANGE( 0x04000, 0x0ffff) AM_WRITE( MWA8_NOP )		/* Not used */
+	AM_RANGE( 0x10000, 0x1ffff) AM_WRITE( MWA8_BANK1 )	/* SRAM bank */
+	AM_RANGE( 0x20000, 0x2ffff) AM_WRITE( MWA8_BANK2 )	/* ROM bank 1 */
+	AM_RANGE( 0x30000, 0x3ffff) AM_WRITE( MWA8_BANK3 )	/* ROM bank 2 */
+	AM_RANGE( 0x40000, 0x4ffff) AM_WRITE( MWA8_BANK4 )	/* ROM bank 3 */
+	AM_RANGE( 0x50000, 0x5ffff) AM_WRITE( MWA8_BANK5 )	/* ROM bank 4 */
+	AM_RANGE( 0x60000, 0x6ffff) AM_WRITE( MWA8_BANK6 )	/* ROM bank 5 */
+	AM_RANGE( 0x70000, 0x7ffff) AM_WRITE( MWA8_BANK7 )	/* ROM bank 6 */
+	AM_RANGE( 0x80000, 0x8ffff) AM_WRITE( MWA8_BANK8 )	/* ROM bank 7 */
+	AM_RANGE( 0x90000, 0x9ffff) AM_WRITE( MWA8_BANK9 )	/* ROM bank 8 */
+	AM_RANGE( 0xA0000, 0xAffff) AM_WRITE( MWA8_BANK10 )	/* ROM bank 9 */
+	AM_RANGE( 0xB0000, 0xBffff) AM_WRITE( MWA8_BANK11 )	/* ROM bank 10 */
+	AM_RANGE( 0xC0000, 0xCffff) AM_WRITE( MWA8_BANK12 )	/* ROM bank 11 */
+	AM_RANGE( 0xD0000, 0xDffff) AM_WRITE( MWA8_BANK13 )	/* ROM bank 12 */
+	AM_RANGE( 0xE0000, 0xEffff) AM_WRITE( MWA8_BANK14 )	/* ROM bank 13 */
+	AM_RANGE( 0xF0000, 0xFffff) AM_WRITE( MWA8_BANK15 )	/* ROM bank 14 */
+ADDRESS_MAP_END
 
-static MEMORY_READ_START (wsc_readmem)
-	{ 0x00000, 0x03fff, MRA8_RAM },		/* 16kb RAM + 16kb 4 colour tiles */
-	{ 0x04000, 0x0ffff, MRA8_RAM },		/* 16 colour tiles + palettes */
-	{ 0x10000, 0x1ffff, MRA8_BANK1 },	/* SRAM bank */
-	{ 0x20000, 0x2ffff, MRA8_BANK2 },	/* ROM bank 1 */
-	{ 0x30000, 0x3ffff, MRA8_BANK3 },	/* ROM bank 2 */
-	{ 0x40000, 0x4ffff, MRA8_BANK4 },	/* ROM bank 3 */
-	{ 0x50000, 0x5ffff, MRA8_BANK5 },	/* ROM bank 4 */
-	{ 0x60000, 0x6ffff, MRA8_BANK6 },	/* ROM bank 5 */
-	{ 0x70000, 0x7ffff, MRA8_BANK7 },	/* ROM bank 6 */
-	{ 0x80000, 0x8ffff, MRA8_BANK8 },	/* ROM bank 7 */
-	{ 0x90000, 0x9ffff, MRA8_BANK9 },	/* ROM bank 8 */
-	{ 0xA0000, 0xAffff, MRA_BANK10 },	/* ROM bank 9 */
-	{ 0xB0000, 0xBffff, MRA_BANK11 },	/* ROM bank 10 */
-	{ 0xC0000, 0xCffff, MRA_BANK12 },	/* ROM bank 11 */
-	{ 0xD0000, 0xDffff, MRA_BANK13 },	/* ROM bank 12 */
-	{ 0xE0000, 0xEffff, MRA_BANK14 },	/* ROM bank 13 */
-	{ 0xF0000, 0xFffff, MRA_BANK15 },	/* ROM bank 14 */
-MEMORY_END
+static ADDRESS_MAP_START (wsc_readmem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x00000, 0x03fff) AM_READ( MRA8_RAM )		/* 16kb RAM + 16kb 4 colour tiles */
+	AM_RANGE( 0x04000, 0x0ffff) AM_READ( MRA8_RAM )		/* 16 colour tiles + palettes */
+	AM_RANGE( 0x10000, 0x1ffff) AM_READ( MRA8_BANK1 )	/* SRAM bank */
+	AM_RANGE( 0x20000, 0x2ffff) AM_READ( MRA8_BANK2 )	/* ROM bank 1 */
+	AM_RANGE( 0x30000, 0x3ffff) AM_READ( MRA8_BANK3 )	/* ROM bank 2 */
+	AM_RANGE( 0x40000, 0x4ffff) AM_READ( MRA8_BANK4 )	/* ROM bank 3 */
+	AM_RANGE( 0x50000, 0x5ffff) AM_READ( MRA8_BANK5 )	/* ROM bank 4 */
+	AM_RANGE( 0x60000, 0x6ffff) AM_READ( MRA8_BANK6 )	/* ROM bank 5 */
+	AM_RANGE( 0x70000, 0x7ffff) AM_READ( MRA8_BANK7 )	/* ROM bank 6 */
+	AM_RANGE( 0x80000, 0x8ffff) AM_READ( MRA8_BANK8 )	/* ROM bank 7 */
+	AM_RANGE( 0x90000, 0x9ffff) AM_READ( MRA8_BANK9 )	/* ROM bank 8 */
+	AM_RANGE( 0xA0000, 0xAffff) AM_READ( MRA8_BANK10 )	/* ROM bank 9 */
+	AM_RANGE( 0xB0000, 0xBffff) AM_READ( MRA8_BANK11 )	/* ROM bank 10 */
+	AM_RANGE( 0xC0000, 0xCffff) AM_READ( MRA8_BANK12 )	/* ROM bank 11 */
+	AM_RANGE( 0xD0000, 0xDffff) AM_READ( MRA8_BANK13 )	/* ROM bank 12 */
+	AM_RANGE( 0xE0000, 0xEffff) AM_READ( MRA8_BANK14 )	/* ROM bank 13 */
+	AM_RANGE( 0xF0000, 0xFffff) AM_READ( MRA8_BANK15 )	/* ROM bank 14 */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START (wsc_writemem)
-	{ 0x00000, 0x03fff, MWA8_RAM },		/* 16kb RAM + 16kb 4 colour tiles */
-	{ 0x04000, 0x0ffff, MWA8_RAM },		/* 16 colour tiles + palettes */
-	{ 0x10000, 0x1ffff, MWA8_BANK1 },	/* SRAM bank */
-	{ 0x20000, 0x2ffff, MWA8_BANK2 },	/* ROM bank 1 */
-	{ 0x30000, 0x3ffff, MWA8_BANK3 },	/* ROM bank 2 */
-	{ 0x40000, 0x4ffff, MWA8_BANK4 },	/* ROM bank 3 */
-	{ 0x50000, 0x5ffff, MWA8_BANK5 },	/* ROM bank 4 */
-	{ 0x60000, 0x6ffff, MWA8_BANK6 },	/* ROM bank 5 */
-	{ 0x70000, 0x7ffff, MWA8_BANK7 },	/* ROM bank 6 */
-	{ 0x80000, 0x8ffff, MWA8_BANK8 },	/* ROM bank 7 */
-	{ 0x90000, 0x9ffff, MWA8_BANK9 },	/* ROM bank 8 */
-	{ 0xA0000, 0xAffff, MWA8_BANK10 },	/* ROM bank 9 */
-	{ 0xB0000, 0xBffff, MWA8_BANK11 },	/* ROM bank 10 */
-	{ 0xC0000, 0xCffff, MWA8_BANK12 },	/* ROM bank 11 */
-	{ 0xD0000, 0xDffff, MWA8_BANK13 },	/* ROM bank 12 */
-	{ 0xE0000, 0xEffff, MWA8_BANK14 },	/* ROM bank 13 */
-	{ 0xF0000, 0xFffff, MWA8_BANK15 },	/* ROM bank 14 */
-MEMORY_END
+static ADDRESS_MAP_START (wsc_writemem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x00000, 0x03fff) AM_WRITE( MWA8_RAM )		/* 16kb RAM + 16kb 4 colour tiles */
+	AM_RANGE( 0x04000, 0x0ffff) AM_WRITE( MWA8_RAM )		/* 16 colour tiles + palettes */
+	AM_RANGE( 0x10000, 0x1ffff) AM_WRITE( MWA8_BANK1 )	/* SRAM bank */
+	AM_RANGE( 0x20000, 0x2ffff) AM_WRITE( MWA8_BANK2 )	/* ROM bank 1 */
+	AM_RANGE( 0x30000, 0x3ffff) AM_WRITE( MWA8_BANK3 )	/* ROM bank 2 */
+	AM_RANGE( 0x40000, 0x4ffff) AM_WRITE( MWA8_BANK4 )	/* ROM bank 3 */
+	AM_RANGE( 0x50000, 0x5ffff) AM_WRITE( MWA8_BANK5 )	/* ROM bank 4 */
+	AM_RANGE( 0x60000, 0x6ffff) AM_WRITE( MWA8_BANK6 )	/* ROM bank 5 */
+	AM_RANGE( 0x70000, 0x7ffff) AM_WRITE( MWA8_BANK7 )	/* ROM bank 6 */
+	AM_RANGE( 0x80000, 0x8ffff) AM_WRITE( MWA8_BANK8 )	/* ROM bank 7 */
+	AM_RANGE( 0x90000, 0x9ffff) AM_WRITE( MWA8_BANK9 )	/* ROM bank 8 */
+	AM_RANGE( 0xA0000, 0xAffff) AM_WRITE( MWA8_BANK10 )	/* ROM bank 9 */
+	AM_RANGE( 0xB0000, 0xBffff) AM_WRITE( MWA8_BANK11 )	/* ROM bank 10 */
+	AM_RANGE( 0xC0000, 0xCffff) AM_WRITE( MWA8_BANK12 )	/* ROM bank 11 */
+	AM_RANGE( 0xD0000, 0xDffff) AM_WRITE( MWA8_BANK13 )	/* ROM bank 12 */
+	AM_RANGE( 0xE0000, 0xEffff) AM_WRITE( MWA8_BANK14 )	/* ROM bank 13 */
+	AM_RANGE( 0xF0000, 0xFffff) AM_WRITE( MWA8_BANK15 )	/* ROM bank 14 */
+ADDRESS_MAP_END
 
-static PORT_READ_START (wswan_readport)
-	{ 0x00, 0xff, wswan_port_r },		/* I/O ports */
-PORT_END
+static ADDRESS_MAP_START (wswan_readport, ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x00, 0xff) AM_READ( wswan_port_r )		/* I/O ports */
+ADDRESS_MAP_END
 
-static PORT_WRITE_START (wswan_writeport)
-	{ 0x00, 0xff, wswan_port_w },		/* I/O ports */
-PORT_END
+static ADDRESS_MAP_START (wswan_writeport, ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x00, 0xff) AM_WRITE( wswan_port_w )		/* I/O ports */
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( wswan )
 	PORT_START /* IN 0 : cursors */
@@ -137,8 +137,8 @@ static MACHINE_DRIVER_START( wswan )
 	/* Basic machine hardware */
 	/* FIXME: CPU should be a V30MZ not a V30! */
 	MDRV_CPU_ADD_TAG("main", V30, 3072000)		/* 3.072 Mhz */
-	MDRV_CPU_MEMORY(wswan_readmem, wswan_writemem)
-	MDRV_CPU_PORTS(wswan_readport, wswan_writeport)
+	MDRV_CPU_PROGRAM_MAP(wswan_readmem, wswan_writemem)
+	MDRV_CPU_IO_MAP(wswan_readport, wswan_writeport)
 	MDRV_CPU_VBLANK_INT(wswan_scanline_interrupt, 158/*159?*/)	/* 1 int each scanline */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -166,7 +166,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( wscolor )
 	MDRV_IMPORT_FROM(wswan)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(wsc_readmem, wsc_writemem)
+	MDRV_CPU_PROGRAM_MAP(wsc_readmem, wsc_writemem)
 	MDRV_PALETTE_LENGTH(4096)
 MACHINE_DRIVER_END
 

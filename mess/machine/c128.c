@@ -404,7 +404,7 @@ static int mmu_page0, mmu_page1;
 		else
 			{
 				c128_write_io = 0;
-				memory_set_bankhandler_r (13, 0, MRA_BANK13);
+				memory_set_bankhandler_r (13, 0, MRA8_BANK13);
 			}
 
 		if (MMU_RAM_HI)

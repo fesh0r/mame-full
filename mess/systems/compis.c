@@ -40,37 +40,37 @@
 #include "formats/cpis_dsk.h"
 #include "cpuintrf.h"
 
-static MEMORY_READ_START( compis_readmem )
-	{ 0x00000, 0x3ffff, MRA8_RAM },
-	{ 0x40000, 0x4ffff, MRA8_RAM },
-	{ 0x50000, 0x5ffff, MRA8_RAM },
-	{ 0x60000, 0x6ffff, MRA8_RAM },
-	{ 0x70000, 0x7ffff, MRA8_RAM },
-	{ 0x80000, 0xeffff, MRA8_NOP },
-	{ 0xf0000, 0xfffff, MRA8_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( compis_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x00000, 0x3ffff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x40000, 0x4ffff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x50000, 0x5ffff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x60000, 0x6ffff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x70000, 0x7ffff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x80000, 0xeffff) AM_READ( MRA8_NOP )
+	AM_RANGE( 0xf0000, 0xfffff) AM_READ( MRA8_ROM )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( compis_writemem )
-	{ 0x00000, 0x3ffff, MWA8_RAM },
-	{ 0x40000, 0x4ffff, MWA8_RAM },
-	{ 0x50000, 0x5ffff, MWA8_RAM },
-	{ 0x60000, 0x6ffff, MWA8_RAM },
-	{ 0x70000, 0x7ffff, MWA8_RAM },
-	{ 0x80000, 0xeffff, MWA8_NOP },
-	{ 0xf0000, 0xfffff, MWA8_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( compis_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x00000, 0x3ffff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x40000, 0x4ffff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x50000, 0x5ffff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x60000, 0x6ffff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x70000, 0x7ffff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x80000, 0xeffff) AM_WRITE( MWA8_NOP )
+	AM_RANGE( 0xf0000, 0xfffff) AM_WRITE( MWA8_ROM )
+ADDRESS_MAP_END
 
-static PORT_READ_START( compis_readport )
-	{ 0x0001, 0x0008, compis_ppi_r },	/* PPI 8255			*/
-	{ 0x0080, 0x0087, compis_pit_r },	/* PIT 8253			*/
-	{ 0x0100, 0x011a, compis_rtc_r }, 	/* RTC 58174			*/
-	{ 0x0280, 0x0282, compis_osp_pic_r }, /* PIC 8259 (80150/80130)	*/
+static ADDRESS_MAP_START( compis_readport , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x0001, 0x0008) AM_READ( compis_ppi_r )	/* PPI 8255			*/
+	AM_RANGE( 0x0080, 0x0087) AM_READ( compis_pit_r )	/* PIT 8253			*/
+	AM_RANGE( 0x0100, 0x011a) AM_READ( compis_rtc_r ) 	/* RTC 58174			*/
+	AM_RANGE( 0x0280, 0x0282) AM_READ( compis_osp_pic_r ) /* PIC 8259 (80150/80130)	*/
 //  { 0x0288, 0x028e, compis_osp_pit_r },	/* PIT 8254 (80150/80130)	*/
-	{ 0x0311, 0x031f, compis_usart_r },	/* USART 8251 Keyboard		*/
-	{ 0x0330, 0x033e, compis_gdc_r },	/* GDC 82720 PCS6:6		*/
-	{ 0x0340, 0x0342, compis_fdc_r },	/* iSBX0 (J8) FDC 8272		*/
-	{ 0x0351, 0x0351, compis_fdc_dack_r},	/* iSBX0 (J8) DMA ACK		*/
-	{ 0xff00, 0xffff, i186_internal_port_r},/* CPU 80186			*/
+	AM_RANGE( 0x0311, 0x031f) AM_READ( compis_usart_r )	/* USART 8251 Keyboard		*/
+	AM_RANGE( 0x0330, 0x033e) AM_READ( compis_gdc_r )	/* GDC 82720 PCS6:6		*/
+	AM_RANGE( 0x0340, 0x0342) AM_READ( compis_fdc_r )	/* iSBX0 (J8) FDC 8272		*/
+	AM_RANGE( 0x0351, 0x0351) AM_READ( compis_fdc_dack_r)	/* iSBX0 (J8) DMA ACK		*/
+	AM_RANGE( 0xff00, 0xffff) AM_READ( i186_internal_port_r)/* CPU 80186			*/
 //{ 0x0100, 0x017e, compis_null_r },	/* RTC				*/
 //{ 0x0180, 0x01ff, compis_null_r },	/* PCS3?			*/
 //{ 0x0200, 0x027f, compis_null_r },	/* Reserved			*/
@@ -88,19 +88,19 @@ static PORT_READ_START( compis_readport )
 //{ 0x0370, 0x037e, compis_null_r },	/* J9 CS1 (8-bit)		*/
 //{ 0x0371, 0x037f, compis_null_r },	/* J9 CS1 (8-bit)		*/
 //{ 0xff20, 0xffff, compis_null_r },	/* CPU 80186			*/
-PORT_END
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( compis_writeport )
-	{ 0x0001, 0x0008, compis_ppi_w },	/* PPI 8255			*/
-	{ 0x0080, 0x0087, compis_pit_w },	/* PIT 8253			*/
-	{ 0x0108, 0x011c, compis_rtc_w },	/* RTC 58174			*/
-	{ 0x0280, 0x0282, compis_osp_pic_w },	/* PIC 8259 (80150/80130)	*/
+static ADDRESS_MAP_START( compis_writeport , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x0001, 0x0008) AM_WRITE( compis_ppi_w )	/* PPI 8255			*/
+	AM_RANGE( 0x0080, 0x0087) AM_WRITE( compis_pit_w )	/* PIT 8253			*/
+	AM_RANGE( 0x0108, 0x011c) AM_WRITE( compis_rtc_w )	/* RTC 58174			*/
+	AM_RANGE( 0x0280, 0x0282) AM_WRITE( compis_osp_pic_w )	/* PIC 8259 (80150/80130)	*/
 // { 0x0288, 0x028e, compis_osp_pit_w },	/* PIT 8254 (80150/80130)	*/
-	{ 0x0311, 0x031f, compis_usart_w },	/* USART 8251 Keyboard		*/
-	{ 0x0330, 0x033e, compis_gdc_w },	/* GDC 82720 PCS6:6		*/
-	{ 0x0340, 0x0342, compis_fdc_w },	/* FDC 8272			*/
-	{ 0xff00, 0xffff, i186_internal_port_w},/* CPU 80186			*/
-PORT_END
+	AM_RANGE( 0x0311, 0x031f) AM_WRITE( compis_usart_w )	/* USART 8251 Keyboard		*/
+	AM_RANGE( 0x0330, 0x033e) AM_WRITE( compis_gdc_w )	/* GDC 82720 PCS6:6		*/
+	AM_RANGE( 0x0340, 0x0342) AM_WRITE( compis_fdc_w )	/* FDC 8272			*/
+	AM_RANGE( 0xff00, 0xffff) AM_WRITE( i186_internal_port_w)/* CPU 80186			*/
+ADDRESS_MAP_END
 
 /* COMPIS Keyboard */
 INPUT_PORTS_START (compis)
@@ -233,8 +233,8 @@ static const compis_gdc_interface i82720_interface =
 static MACHINE_DRIVER_START( compis )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", I186, 8000000)	/* 8 MHz */
-	MDRV_CPU_MEMORY(compis_readmem, compis_writemem)
-	MDRV_CPU_PORTS(compis_readport, compis_writeport)
+	MDRV_CPU_PROGRAM_MAP(compis_readmem, compis_writemem)
+	MDRV_CPU_IO_MAP(compis_readport, compis_writeport)
 	MDRV_CPU_VBLANK_INT(compis_vblank_int, 1)
 	MDRV_CPU_CONFIG(i86_address_mask)
 
