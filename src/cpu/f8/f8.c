@@ -741,9 +741,9 @@ static void f8_lm(void)
 
 /***************************************************
  *	O Z C S 0001 0111
- *	- - - - SM
+ *	- - - - ST
  ***************************************************/
-static void f8_sm(void)
+static void f8_st(void)
 {
 	f8.dbus = f8.a;
 	ROMC_05();
@@ -1696,7 +1696,7 @@ int f8_execute(int cycles)
 		case 0x14: /* 0001 0100 */	f8_sr_4();			break;
 		case 0x15: /* 0001 0101 */	f8_sl_4();			break;
 		case 0x16: /* 0001 0110 */	f8_lm();			break;
-		case 0x17: /* 0001 0111 */	f8_sm();			break;
+		case 0x17: /* 0001 0111 */	f8_st();			break;
 		case 0x18: /* 0001 1000 */	f8_com();			break;
 		case 0x19: /* 0001 1001 */	f8_lnk();			break;
 		case 0x1a: /* 0001 1010 */	f8_di();			break;
