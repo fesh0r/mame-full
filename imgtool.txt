@@ -178,11 +178,8 @@ imgtool getall fmsx_cas file.cas
 imgtool get fmsx_cas file.cas file.wav newfile.wav
 
 
-Various bogus MSX disk images (xsa/img/ddi/msx)
------------------------------------------------
-
 XelaSoft Archive (.xsa)
-----------------------
+-----------------------
 
 The XelaSoft Archive is a compressed file. It can only contain one
 file. Although it can contain any file, it's always used for MSX disk 
