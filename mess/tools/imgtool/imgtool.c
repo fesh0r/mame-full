@@ -259,7 +259,8 @@ int imgtool_validitychecks(void)
 				printf("imgtool module %s has creation options without supporting create\n", module->name);
 				error = 1;
 			}
-			if (!module->createimage_optguide || !module->createimage_optspec)
+			if ((!module->createimage_optguide && module->createimage_optspec)
+				|| (module->createimage_optguide && !module->createimage_optspec))
 			{
 				printf("imgtool module %s does has partially incomplete creation options\n", module->name);
 				error = 1;

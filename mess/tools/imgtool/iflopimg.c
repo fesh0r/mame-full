@@ -279,7 +279,7 @@ imgtoolerr_t imgtool_floppy_createmodule(imgtool_library *library, const char *f
 		module->close					= imgtool_floppy_close;
 		module->extensions				= format[format_index].extensions;
 		module->extra					= extra;
-		module->createimage_optguide	= floppy_option_guide;
+		module->createimage_optguide	= format[format_index].param_guidelines ? floppy_option_guide : NULL;
 		module->createimage_optspec		= format[format_index].param_guidelines;
 		module->get_sector_size			= imgtool_floppy_get_sector_size;
 		module->read_sector				= imgtool_floppy_read_sector;
