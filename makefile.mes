@@ -387,8 +387,8 @@ $(OBJ)/%.a:
 	$(RM) $@
 	$(AR) cr $@ $^
 
-mess.chm:	tools/messdocs.exe
-	tools/messdocs.exe docs/wintoc.xml obj/help
+mess.chm:	messdocs.exe
+	messdocs.exe docs/wintoc.xml obj/help
 	$(HHC) obj\\help\\mess.hhp
 	@cp obj/help/mess.chm $@
 	
