@@ -653,8 +653,6 @@ static struct MachineDriver machine_driver_coco3h =
 
   Game driver(s)
 
-  Note - These should probably be split up into different ROM files to more
-  correctly match the chip layout in the repsective machines.
 ***************************************************************************/
 
 ROM_START(dragon32)
@@ -689,9 +687,9 @@ ROM_END
 		4,\
 		"dsk\0",\
 		IO_RESET_NONE,\
-        basicdsk_floppy_id,\
-                dragon_floppy_init,\
-                basicdsk_floppy_exit,\
+		basicdsk_floppy_id,\
+		dragon_floppy_init,\
+		basicdsk_floppy_exit,\
         NULL,\
         NULL,\
         NULL,\
