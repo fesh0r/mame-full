@@ -17,8 +17,7 @@
 
 /* for xscreensaver support */
 /* Commented out for now since it causes problems with some 
- * versions of KDE.
- */
+ * versions of KDE. */
 /* #include "vroot.h" */
 
 #include "sysdep/sysdep_display_priv.h"
