@@ -260,6 +260,8 @@ ARCH  = linux
 # sound driver for your system
 # SOUND_ESOUND = 1
 # SOUND_ALSA = 1
+# SOUND_ARTS_TEIRA = 1
+# SOUND_ARTS_SMOTEK = 1
 
 
 ##############################################################################
