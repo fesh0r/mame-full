@@ -13,7 +13,73 @@ unsigned char *slapfight_videoram;
 unsigned char *slapfight_colorram;
 size_t slapfight_videoram_size;
 unsigned char *slapfight_scrollx_lo,*slapfight_scrollx_hi,*slapfight_scrolly;
+static int flipscreen;
 
+static struct tilemap *pf1_tilemap,*fix_tilemap;
+
+
+WRITE_HANDLER( slapfight_flipscreen_w )
+{
+	if (offset==0) flipscreen=1; /* Port 0x2 is flipscreen */
+	else flipscreen=0; /* Port 0x3 is normal */
+}
+
+WRITE_HANDLER( slapfight_fixram_w )
+{
+	slapfight_videoram[offset]=data;
+	tilemap_mark_tile_dirty(fix_tilemap,offset);
+}
+
+WRITE_HANDLER( slapfight_fixcol_w )
+{
+	slapfight_colorram[offset]=data;	
+	tilemap_mark_tile_dirty(fix_tilemap,offset);
+}
+
+WRITE_HANDLER( slapfight_videoram_w )
+{
+	videoram[offset]=data;
+	tilemap_mark_tile_dirty(pf1_tilemap,offset);
+}
+
+WRITE_HANDLER( slapfight_colorram_w )
+{
+	colorram[offset]=data;
+	tilemap_mark_tile_dirty(pf1_tilemap,offset);
+}
+
+static void get_pf1_tile_info(int tile_index)
+{
+	int tile,color;
+
+	tile=videoram[tile_index] + ((colorram[tile_index] & 0x0f) << 8);
+	color=(colorram[tile_index] & 0xf0) >> 4;
+
+	SET_TILE_INFO(1,tile,color)
+}
+
+static void get_fix_tile_info(int tile_index)
+{
+	int tile,color;
+
+	tile=slapfight_videoram[tile_index] + ((slapfight_colorram[tile_index] & 0x03) << 8);
+	color=(slapfight_colorram[tile_index] & 0xfc) >> 2;
+
+	SET_TILE_INFO(0,tile,color)
+}
+
+int slapfight_vh_start (void)
+{
+	pf1_tilemap = tilemap_create(get_pf1_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
+	fix_tilemap = tilemap_create(get_fix_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+
+	if (!pf1_tilemap || !fix_tilemap)
+		return 1;
+
+	fix_tilemap->transparent_pen=0;
+
+	return 0;
+}
 
 /***************************************************************************
 
@@ -74,69 +140,42 @@ void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 64;
-			sy = offs / 64;
-
-			drawgfx(tmpbitmap,Machine->gfx[1],
-					videoram[offs] + ((colorram[offs] & 0x0f) << 8),
-					(colorram[offs] & 0xf0) >> 4,
-					0,0,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	if (flipscreen) {
+		tilemap_set_scrollx( fix_tilemap,0,296);
+		tilemap_set_scrollx( pf1_tilemap,0,(*slapfight_scrollx_lo + 256 * *slapfight_scrollx_hi)+296 );
+		tilemap_set_scrolly( pf1_tilemap,0, (*slapfight_scrolly)+15 );
+		tilemap_set_scrolly( fix_tilemap,0, -1 ); /* Glitch in Tiger Heli otherwise */
+	}
+	else {
+		tilemap_set_scrollx( fix_tilemap,0,0);
+		tilemap_set_scrollx( pf1_tilemap,0,(*slapfight_scrollx_lo + 256 * *slapfight_scrollx_hi) );
+		tilemap_set_scrolly( pf1_tilemap,0, (*slapfight_scrolly)-1 );
+		tilemap_set_scrolly( fix_tilemap,0, -1 ); /* Glitch in Tiger Heli otherwise */
 	}
 
-
-	/* copy the temporary bitmap to the screen */
-	{
-		int scrollx,scrolly;
-
-
-		scrollx = -(*slapfight_scrollx_lo + 256 * *slapfight_scrollx_hi);
-		scrolly = -*slapfight_scrolly+1;
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
+	tilemap_update(ALL_TILEMAPS);
+	tilemap_render(ALL_TILEMAPS);
+	tilemap_draw(bitmap,pf1_tilemap,0);
 
 	/* Draw the sprites */
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
-		drawgfx(bitmap,Machine->gfx[2],
-			spriteram[offs] + ((spriteram[offs+2] & 0xc0) << 2),
-			(spriteram[offs+2] & 0x1e) >>1,
-			0,0,
-		/* Mysterious fudge factor sprite offset */
-			(spriteram[offs+1] + ((spriteram[offs+2] & 0x01) << 8)) - 13,spriteram[offs+3],
-			&Machine->visible_area,TRANSPARENCY_PEN,0);
+		if (flipscreen)
+			drawgfx(bitmap,Machine->gfx[2],
+				buffered_spriteram[offs] + ((buffered_spriteram[offs+2] & 0xc0) << 2),
+				(buffered_spriteram[offs+2] & 0x1e) >>1,
+				1,1,
+				288-(buffered_spriteram[offs+1] + ((buffered_spriteram[offs+2] & 0x01) << 8)) +18,240-buffered_spriteram[offs+3],
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
+		else
+			drawgfx(bitmap,Machine->gfx[2],
+				buffered_spriteram[offs] + ((buffered_spriteram[offs+2] & 0xc0) << 2),
+				(buffered_spriteram[offs+2] & 0x1e) >>1,
+				0,0,
+				(buffered_spriteram[offs+1] + ((buffered_spriteram[offs+2] & 0x01) << 8)) - 13,buffered_spriteram[offs+3],
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
-
-	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = slapfight_videoram_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy;
-
-
-		sx = offs % 64;
-		sy = offs / 64;
-
-		drawgfx(bitmap,Machine->gfx[0],
-			slapfight_videoram[offs] + ((slapfight_colorram[offs] & 0x03) << 8),
-			(slapfight_colorram[offs] & 0xfc) >> 2,
-			0,0,
-			8*sx,8*sy,
-			&Machine->visible_area,TRANSPARENCY_PEN,0);
-	}
+	tilemap_draw(bitmap,fix_tilemap,0);
 }

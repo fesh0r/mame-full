@@ -190,6 +190,12 @@ extern size_t slapfight_videoram_size;
 extern unsigned char *slapfight_scrollx_lo,*slapfight_scrollx_hi,*slapfight_scrolly;
 void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void slapfight_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+int slapfight_vh_start (void);
+WRITE_HANDLER( slapfight_flipscreen_w );
+WRITE_HANDLER( slapfight_fixram_w );
+WRITE_HANDLER( slapfight_fixcol_w );
+WRITE_HANDLER( slapfight_videoram_w );
+WRITE_HANDLER( slapfight_colorram_w );
 
 /* MACHINE */
 
@@ -209,7 +215,6 @@ WRITE_HANDLER( slapfight_port_06_w );
 WRITE_HANDLER( slapfight_port_07_w );
 WRITE_HANDLER( slapfight_port_08_w );
 WRITE_HANDLER( slapfight_port_09_w );
-
 
 READ_HANDLER( getstar_e803_r );
 WRITE_HANDLER( getstar_sh_intenable_w );
@@ -254,14 +259,14 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xc80f, slapfight_dpram_w, &slapfight_dpram, &slapfight_dpram_size },
 	{ 0xc810, 0xcfff, MWA_RAM },
-	{ 0xd000, 0xd7ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd800, 0xdfff, colorram_w, &colorram },
+	{ 0xd000, 0xd7ff, slapfight_videoram_w, &videoram, &videoram_size },
+	{ 0xd800, 0xdfff, slapfight_colorram_w, &colorram },
 	{ 0xe000, 0xe7ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe800, 0xe800, MWA_RAM, &slapfight_scrollx_lo },
 	{ 0xe801, 0xe801, MWA_RAM, &slapfight_scrollx_hi },
 	{ 0xe802, 0xe802, MWA_RAM, &slapfight_scrolly },
-	{ 0xf000, 0xf7ff, MWA_RAM, &slapfight_videoram, &slapfight_videoram_size },
-	{ 0xf800, 0xffff, MWA_RAM, &slapfight_colorram },
+	{ 0xf000, 0xf7ff, slapfight_fixram_w, &slapfight_videoram, &slapfight_videoram_size },
+	{ 0xf800, 0xffff, slapfight_fixcol_w, &slapfight_colorram },
 	{ -1 } /* end of table */
 };
 
@@ -271,14 +276,14 @@ static struct MemoryWriteAddress slapbtuk_writemem[] =
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xc80f, slapfight_dpram_w, &slapfight_dpram, &slapfight_dpram_size },
 	{ 0xc810, 0xcfff, MWA_RAM },
-	{ 0xd000, 0xd7ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd800, 0xdfff, colorram_w, &colorram },
+	{ 0xd000, 0xd7ff, slapfight_videoram_w, &videoram, &videoram_size },
+	{ 0xd800, 0xdfff, slapfight_colorram_w, &colorram },
 	{ 0xe000, 0xe7ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe800, 0xe800, MWA_RAM, &slapfight_scrollx_hi },
 	{ 0xe802, 0xe802, MWA_RAM, &slapfight_scrolly },
 	{ 0xe803, 0xe803, MWA_RAM, &slapfight_scrollx_lo },
-	{ 0xf000, 0xf7ff, MWA_RAM, &slapfight_videoram, &slapfight_videoram_size },
-	{ 0xf800, 0xffff, MWA_RAM, &slapfight_colorram },
+	{ 0xf000, 0xf7ff, slapfight_fixram_w, &slapfight_videoram, &slapfight_videoram_size },
+	{ 0xf800, 0xffff, slapfight_fixcol_w, &slapfight_colorram },
 	{ -1 } /* end of table */
 };
 
@@ -292,6 +297,7 @@ static struct IOWritePort tigerh_writeport[] =
 {
 	{ 0x00, 0x00, slapfight_port_00_w },
 	{ 0x01, 0x01, slapfight_port_01_w },
+	{ 0x02, 0x03, slapfight_flipscreen_w },
 	{ 0x06, 0x06, slapfight_port_06_w },
 	{ 0x07, 0x07, slapfight_port_07_w },
 	{ -1 } /* end of table */
@@ -301,6 +307,7 @@ static struct IOWritePort writeport[] =
 {
 	{ 0x00, 0x00, slapfight_port_00_w },
 	{ 0x01, 0x01, slapfight_port_01_w },
+	{ 0x02, 0x03, slapfight_flipscreen_w },
 //	{ 0x04, 0x04, getstar_port_04_w   },
 	{ 0x06, 0x06, slapfight_port_06_w },
 	{ 0x07, 0x07, slapfight_port_07_w },
@@ -627,7 +634,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-
+static void eof_callback(void)
+{
+	buffer_spriteram_w(0,0);
+}
 
 static struct AY8910interface ay8910_interface =
 {
@@ -658,9 +668,7 @@ static const struct MachineDriver machine_driver_tigerh =
 			nmi_interrupt,6,    /* ??? */
 		}
 	},
-	60,				/* fps - frames per second */
-//	DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	5000,	/* wrong, but fixes graphics glitches */
+	60,	DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	slapfight_init_machine,
 
@@ -670,10 +678,10 @@ static const struct MachineDriver machine_driver_tigerh =
 	256, 256,
 	slapfight_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
+	eof_callback,
+	slapfight_vh_start,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
 	slapfight_vh_screenrefresh,
 
 	/* sound hardware */
@@ -706,9 +714,7 @@ static const struct MachineDriver machine_driver_slapfigh =
 			slapfight_sound_interrupt, 27306667 */
 		}
 	},
-	60,				/* fps - frames per second */
-//	DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	5000,	/* wrong, but fixes graphics glitches */
+	60,	DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	slapfight_init_machine,
 
@@ -718,10 +724,10 @@ static const struct MachineDriver machine_driver_slapfigh =
 	256, 256,
 	slapfight_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
+	eof_callback,
+	slapfight_vh_start,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
 	slapfight_vh_screenrefresh,
 
 	/* sound hardware */
@@ -755,9 +761,7 @@ static const struct MachineDriver machine_driver_slapbtuk =
 			slapfight_sound_interrupt, 27306667 */
 		}
 	},
-	60,				/* fps - frames per second */
-//	DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	5000,	/* wrong, but fixes graphics glitches */
+	60,	DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	slapfight_init_machine,
 
@@ -767,10 +771,10 @@ static const struct MachineDriver machine_driver_slapbtuk =
 	256, 256,
 	slapfight_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
+	eof_callback,
+	slapfight_vh_start,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
 	slapfight_vh_screenrefresh,
 
 	/* sound hardware */
