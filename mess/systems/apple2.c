@@ -4,6 +4,164 @@ Apple II
 
 This family of computers bank-switches everything up the wazoo.
 
+Remarkable features
+-------------------
+
+Apple II (original model)
+-------------------------
+
+RAM: 4/8/12/16/20/24/32/36/48 KB
+
+ROM: 8 KB mapped to $E000-$FFFF
+Empty ROM sockets mapped at $D000-$D7FF (usually occupied by Programmer's
+Aid #1 chip) and $D800-$DFFF (usually empty, but a couple of 3rd party
+chips were produced)
+
+HI-RES Palette has only 4 colors: 0 - black, 1 - green, 2 - purple,
+3 - white
+
+Due to an hardware bug, green/purple artifacts are present in text mode
+too!
+
+No 80 columns
+No Open/Solid Apple keys
+No Up/Down arrows key
+
+Users often connected the SHIFT key to the paddle #2 button (mapped to
+$C063) in order to inform properly written software that characters were
+to be intended upper/lower case
+
+*** TODO: Should MESS emulate this via a dipswitch?
+
+Integer BASIC in ROM, AppleSoft must be loaded from disk or tape
+
+No AutoStart ROM: once the machine was switched on, the user had to manually
+perform the reset cycle pressing, guess what, RESET ;)
+
+Apple II+
+---------
+
+RAM: 16/32/48 KB
+ROM: 12 KB mapped to $D000-$DFFF
+
+HI-RES Palette has four more entries: 4 - black (again), 5 - orange,
+6 - blue, 7 - white (again)
+
+Fixed artifact bug in text mode
+
+No 80 columns
+No Open/Solid Apple keys
+NO Up/Down arrows keys
+
+Users still did the SHIFT key mod
+
+AppleSoft BASIC in ROM: users of previous models can now use "Apple Firmware
+Card" (mapped to slot 0)
+
+AutoStart ROM - no more need to press RESET after switching the machine on
+
+Apple IIe
+---------
+
+RAM: 48 KB + optional bank of 64 KB (see 80 columns card)
+ROM: 16 KB
+
+80 columns card: this card was available in two versions - one equipped
+with 1 KB of memory to provide the extra RAM for the display, the other
+equipped with full 64 KB of RAM
+
+Open/Solid Apple keys mapped to buttons 0 and 1 of the paddle #1
+Up/Down arrows keys
+Connector for an optional numeric keypad
+
+Apple begins manifacturing its machines with the SHIFT key mod
+
+Revision A motherboards cannot handle double-hires graphics, Revision B can
+
+Apple IIe (enhanced)
+--------------------
+
+The enhancement consists in bugfix of the ROM code, a 65c02 instead of the
+6502 and a change in the character generator ROM which now includes the
+so called "MouseText" characters (thus, no flashing characters in 80
+columns mode)
+
+Apple IIe (Platinum)
+--------------------
+
+Identical to IIe enhanced except for:
+
+The numerical keypad is integrated into the main keyboard (although the
+internal connector is still present)
+
+The CLEAR key on the keypad generates the same character of the ESC key,
+but some users did an hardware modification so that it generates CTRL-X
+
+*** TODO: Should MESS emulate this via a dipswitch?
+
+The 64 KB 80 columns card is built in
+
+Due to the SHIFT key mod, if the user press both SHIFT and the paddle
+button (where the shift key was connected), a short circuit is caused
+and the power supply is shut down!
+
+Apple IIc
+---------
+
+Same as IIe enhanced (Rev B) except for:
+
+There are no slots in hardware. The machine however sees (for compatibility
+reasons):
+
+Two Super Serial Cards in slots 1-2
+80 columns card (64 KB version) in slot 3
+Mouse in slot 4
+Easter Egg in slot 5 (!)
+Disk II in slot 6
+External 5.25 drive in slot 7
+
+MouseText characters
+
+No numerical keypad
+
+Switchables keyboard layouts (the user, via an external switch, can choose
+between two layouts, i.e. UK and German, and in the USA QWERTY and Dvorak)
+
+*** TODO: Should MESS emulate this?
+
+Apple IIc (UniDisk 3.5)
+-----------------------
+
+Identical to IIc except for:
+
+ROM: 32 KB
+
+The disk firmware can handle up to four 3.5 disk drives or three 3.5 drives
+and a 5.25 drive
+
+Preliminary support (but not working and never completed) for AppleTalk
+network in slot 7
+
+Apple IIc (Original Memory Expansion)
+-------------------------------------
+
+Apple IIc (Revised Memory Expansion)
+------------------------------------
+
+Apple IIc Plus
+--------------
+
+Identical to IIc except for:
+
+The 65c02 works at 4MHz
+
+The machine has an internal "Apple 3.5" drive (which is DIFFERENT from the
+UniDisk 3.5 drive!)
+
+The external drive port supports not only 5.25 drives but also UniDisk and
+Apple 3.5 drives, allowing via daisy-chaining any combination of UniDisk,
+Apple 3.5 and Apple 5.25 drives - up to three devices
+
 ***************************************************************************/
 
 #include "driver.h"
