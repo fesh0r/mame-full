@@ -482,8 +482,8 @@ void tia_sound_init(int clock, int sample_rate, int gain)
     poly_init(Bit9, 9, 2, 7, 0x00080);
 
     /* calculate the sample 'divide by N' value based on the playback freq. */
-//    Samp_n_max = ((UINT16)(UINT32)clock << 8) / sample_rate;
-//    Samp_n_cnt = Samp_n_max;                     /* initialize all bits of the sample counter */
+    Samp_n_max = ((UINT16)(UINT32)clock << 8) / sample_rate;
+    Samp_n_cnt = Samp_n_max;                     /* initialize all bits of the sample counter */
 
 	/* FIXME */
 	if (Samp_n_max < 256) /* Sample rate is > TIA Clock, just generate samples */
