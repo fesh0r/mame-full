@@ -21,11 +21,6 @@ typedef struct mess_hd
 	void *hard_disk_handle;
 } mess_hd;
 
-static mess_hd *get_drive(mess_image *img)
-{
-	return image_lookuptag(img, MESSHDTAG);
-}
-
 /* Encoded mess_image: in order to have hard_disk_open handle mess_image
 pointers, we encode the reference as an ASCII string and pass it as a file
 name.  mess_hard_disk_open then decodes the file name to get the original
@@ -319,32 +314,6 @@ const struct hard_disk_header *imghd_get_header(void *disk)
 
 	return reply;
 }
-
-
-/*
-	imghd_get_hard_disk_handle()
-
-	Get the MAME hard drive handle after an image has been opened with the
-	mess_hd core
-*/
-/*void *imghd_get_hard_disk_handle(mess_image *image)
-{
-	mess_hd *hd = get_drive(image);
-
-	return hd->hard_disk_handle;
-}*/
-
-/*
-	imghd_is_writable()
-
-	Tells if a hard disk image is writable (the image must be open)
-*/
-/*int imghd_is_writable(mess_image *image)
-{
-	mess_hd *hd = get_drive(image);
-
-	return image_is_writable(image) && (hard_disk_get_header(hd->hard_disk_handle)->flags & HDFLAGS_IS_WRITEABLE);
-}*/
 
 
 #if 0

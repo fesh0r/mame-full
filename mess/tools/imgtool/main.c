@@ -451,8 +451,12 @@ static void listoptions(const struct OptionGuide *opt_guide, const char *opt_spe
 		snprintf(opt_name, sizeof(opt_name) / sizeof(opt_name[0]), "--%s", opt_guide->identifier);
 		opt_desc = opt_guide->display_name;
 
+		/* is this option relevant? */
 		if (!strchr(opt_spec, opt_guide->parameter))
+		{
+			opt_guide++;
 			continue;
+		}
 
 		switch(opt_guide->option_type) {
 		case OPTIONTYPE_INT:
