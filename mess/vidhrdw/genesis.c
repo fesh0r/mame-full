@@ -136,7 +136,7 @@ char dirty_colour[64];
 short dirty_attribute_a[16384];
 short dirty_attribute_b[16384];
 
-char *tile_changed_1, *tile_changed_2;
+char *tile_changed_1 = NULL, *tile_changed_2 = NULL;
 
 struct GfxElement scroll_element =
 	{
@@ -246,7 +246,7 @@ int genesis_vh_start (void)
 	}*/
 
 
-	if ((tile_changed_1 = malloc(0x800)) == 0)
+	if ((tile_changed_1 = malloc(0x1000)) == 0)
 	{
 		generic_vh_stop();
 	//	osd_free_bitmap(scroll_a);
@@ -257,7 +257,7 @@ int genesis_vh_start (void)
 		return 1;
 	}
 
-	if ((tile_changed_2 = malloc(0x800)) == 0)
+	if ((tile_changed_2 = malloc(0x1000)) == 0)
 	{
 		generic_vh_stop();
 	//	osd_free_bitmap(scroll_a);
@@ -276,8 +276,8 @@ int genesis_vh_start (void)
 	memset(dirty_attribute_b, -1, (128*128)*sizeof(short));
 
 
-	memset(tile_changed_1, 1, 0x800);
-	memset(tile_changed_2, 1, 0x800);
+	memset(tile_changed_1, 1, 0x1000);
+	memset(tile_changed_2, 1, 0x1000);
 
 	memset(dirty_colour, 1, 64);
 
@@ -492,7 +492,8 @@ WRITE16_HANDLER ( genesis_vdp_data_w )
 	 		//bitmap_vram->line[sy][sx + 1] = (data >>  8) & 0x0f;
 			//bitmap_vram->line[sy][sx + 2] = (data >>  4) & 0x0f;
 	 		//bitmap_vram->line[sy][sx + 3] = (data      ) & 0x0f;
-			tile_changed_1[sy >> BLOCK_SHIFT] = tile_changed_2[sy >> BLOCK_SHIFT] = 1;
+	 		printf("SY:%d\n",sy);
+			if (sy < 16384) tile_changed_1[sy >> BLOCK_SHIFT] = tile_changed_2[sy >> BLOCK_SHIFT] = 1;
 
 			}
 			break;
@@ -826,7 +827,7 @@ void genesis_dma_poll (int amount)
 
 				#endif
 
-			 	if ((sy >> 3) < 0x7ff) tile_changed_1[sy >> BLOCK_SHIFT] = tile_changed_2[sy >> BLOCK_SHIFT] = 1;
+			 	if ((sy >> 3) < 0xfff) tile_changed_1[sy >> BLOCK_SHIFT] = tile_changed_2[sy >> BLOCK_SHIFT] = 1;
 
 
 
@@ -1073,9 +1074,9 @@ static void combinelayers(struct osd_bitmap *dest, int startline, int endline)
 
 							skip:
 
-							/*if (tile_changed_1[attribute & 0x7ff])
+							/*if (tile_changed_1[attribute & 0xfff])
 							{
-							tile_changed_2[attribute & 0x7ff]=0;
+							tile_changed_2[attribute & 0xfff]=0;
 							*/
 							scroll_pixel_addr = &vdp_vram[(attribute & 0x7ff)<<5];
 
@@ -1499,8 +1500,8 @@ void genesis_modify_display(int inter)
 		}
 
 
-		num_a = attribute_a & 0x7ff;
-		num_b = attribute_b & 0x7ff;
+		num_a = attribute_a & 0xfff;
+		num_b = attribute_b & 0xfff;
 
 		if ((dirty_attribute_a[offs] !=attribute_a) || tile_changed_1[num_a])
 		{
@@ -1548,8 +1549,8 @@ void genesis_modify_display(int inter)
 	combinelayers(bitmap2,0,vdp_display_height);
 
  /* mark all tiles as unchanged */
-   //	memset(tile_changed_1, 0, 0x800);
-   //	memset(tile_changed_2, 0, 0x800);
+   //	memset(tile_changed_1, 0, 0x1000);
+   //	memset(tile_changed_2, 0, 0x1000);
 
 
 }
