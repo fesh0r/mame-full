@@ -23,7 +23,8 @@ extern void svision_runtime_loader_init(void);
 
 typedef struct {
     UINT8 reg[3];
-    int pos;
+    int l_pos;
+    int r_pos;
     int size;
 } SVISION_CHANNEL;
 extern SVISION_CHANNEL svision_channel[2];

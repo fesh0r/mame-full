@@ -27,9 +27,13 @@ void svision_soundport_w (SVISION_CHANNEL *channel, int offset, int data)
     case 0:
     case 1:
 	if (channel->reg[0]) {
-	    channel->size=(int)((options.samplerate*channel->reg[0]<<6)/4e6);
+	    if (channel==svision_channel) 
+		channel->size=(int)((options.samplerate*channel->reg[0]<<6)/4e6);
+	    else
+		channel->size=(int)((options.samplerate*channel->reg[0]<<6)/4e6);
 	} else channel->size=0;
-	channel->pos=0;
+	channel->l_pos=0;
+	channel->r_pos=0;
     }
     
 }
@@ -48,15 +52,15 @@ void svision_update (int param, INT16 *buffer, int length)
 	for (channel=svision_channel, j=0; j<ARRAY_LENGTH(svision_channel); j++, channel++) {
 	    if (!param) { //left
 		if (channel->reg[2]&0x40) {
-		    if (channel->pos<=channel->size/2)
+		    if (channel->l_pos<=channel->size/2)
 			*buffer+=(channel->reg[2]&0xf)<<8;
-		    if (++channel->pos>=channel->size) channel->pos=0;
+		    if (++channel->l_pos>=channel->size) channel->l_pos=0;
 		}
 	    } else { 
 		if (channel->reg[2]&0x20) {
-		    if (channel->pos<=channel->size/2)
+		    if (channel->r_pos<=channel->size/2)
 			*buffer+=(channel->reg[2]&0xf)<<8;
-		    if (++channel->pos>=channel->size) channel->pos=0;
+		    if (++channel->r_pos>=channel->size) channel->r_pos=0;
 		}
 	    }
 	}
