@@ -187,6 +187,7 @@ LIBS = \
         dinput.lib \
 		dsound.lib \
 		ddraw.lib \
+		htmlhelp.lib \
         zlib.lib
 
 ifdef DX_LIBPATH

@@ -69,6 +69,7 @@ DEFS += -DDIRECTSOUND_VERSION=0x0300 \
         -DCLIB_DECL=__cdecl \
         -DDECL_SPEC=__cdecl \
         -DZEXTERN=extern \
+        -DMAME32HELP=\"mess.chm\" \
 
 #####################################################################
 # Resources

@@ -13,10 +13,15 @@
 #ifndef HELP_H
 #define HELP_H
 
-#ifdef _MSC_VER
-#if _MSC_VER <= 1200
-#define DWORD_PTR	DWORD
-#endif
+#if defined(__GNUC__)
+#define HH_DISPLAY_TOPIC		0
+#define HH_TP_HELP_CONTEXTMENU	16
+#define HH_TP_HELP_WM_HELP		17
+#define HH_CLOSE_ALL			18
+#define HH_INITIALIZE			28
+#define HH_UNINITIALIZE			29
+#else
+#include <htmlhelp.h>
 #endif
 
 #ifdef MESS
@@ -25,28 +30,21 @@
 #define HELPTEXT_WHATS_NEW  "Messnew.txt"
 #else
 /* MAME32 text files */
+#define HELPTEXT_SUPPORT    "support.htm"
 #define HELPTEXT_RELEASE    "windows.txt"
 #define HELPTEXT_WHATS_NEW  "whatsnew.txt"
 #endif
 
-#ifndef MESS
-#define HAS_HELP 1
-#else
-#define HAS_HELP 0
-#endif
-
-#if HAS_HELP
-
-#include <htmlhelp.h>
-
 #if !defined(MAME32HELP)
 #define MAME32HELP "mame32.chm"
+#endif
+
+#if !defined(MAME32CONTEXTHELP)
+#define MAME32CONTEXTHELP "mame32.chm::/cntx_help.txt"
 #endif
 
 extern int  Help_Init(void);
 extern void Help_Exit(void);
 extern HWND Help_HtmlHelp(HWND hwndCaller, LPCSTR pszFile, UINT uCommand, DWORD_PTR dwData);
 
-#endif /* HAS_HELP */
-
-#endif /* HELP_H */
+#endif

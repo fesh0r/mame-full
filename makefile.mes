@@ -276,6 +276,9 @@ $(OBJ)/%.a:
 	$(RM) $@
 	$(AR) cr $@ $^
 
+mess.chm::
+	cscript mess\\windowsui\\help\\makehelp.vbs
+
 makedir:
 	@echo make makedir is no longer necessary, just type make
 

@@ -916,7 +916,6 @@ INT_PTR CALLBACK ResetDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 	case WM_INITDIALOG:
 		return TRUE;
 
-#if HAS_HELP
 	case WM_HELP:
 		/* User clicked the ? from the upper right on a control */
 		Help_HtmlHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32CONTEXTHELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
@@ -926,7 +925,6 @@ INT_PTR CALLBACK ResetDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 		Help_HtmlHelp((HWND)wParam, MAME32CONTEXTHELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
 
 		break;
-#endif /* HAS_HELP */
 
 	case WM_COMMAND :
 		switch (GET_WM_COMMAND_ID(wParam, lParam))
@@ -987,7 +985,6 @@ INT_PTR CALLBACK StartupDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 		Button_SetCheck(GetDlgItem(hDlg, IDC_RANDOM_BG),	GetRandomBg());
 		return TRUE;
 
-#if HAS_HELP
 	case WM_HELP:
 		/* User clicked the ? from the upper right on a control */
 		Help_HtmlHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32CONTEXTHELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
@@ -996,7 +993,6 @@ INT_PTR CALLBACK StartupDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 	case WM_CONTEXTMENU:
 		Help_HtmlHelp((HWND)wParam, MAME32CONTEXTHELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
 		break;
-#endif /* HAS_HELP */
 
 	case WM_COMMAND :
 		switch (GET_WM_COMMAND_ID(wParam, lParam))
@@ -1626,7 +1622,6 @@ INT_PTR CALLBACK FilterDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPa
 		SetFocus(GetDlgItem(hDlg, IDC_FILTER_EDIT));
 		return FALSE;
 
-#if HAS_HELP
 	case WM_HELP:
 		/* User clicked the ? from the upper right on a control */
 		Help_HtmlHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32CONTEXTHELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
@@ -1635,7 +1630,6 @@ INT_PTR CALLBACK FilterDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPa
 	case WM_CONTEXTMENU:
 		Help_HtmlHelp((HWND)wParam, MAME32CONTEXTHELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
 		break;
-#endif /* HAS_HELP */
 
 	case WM_COMMAND:
 		{

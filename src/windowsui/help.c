@@ -22,8 +22,6 @@
 #include <windows.h>
 #include "help.h"
 
-#if HAS_HELP
-
 typedef HWND (WINAPI *HtmlHelpProc)(HWND hwndCaller, LPCSTR pszFile, UINT uCommand, DWORD_PTR dwData);
 
 /***************************************************************************
@@ -98,7 +96,7 @@ HWND Help_HtmlHelp(HWND hwndCaller, LPCSTR pszFile, UINT uCommand, DWORD_PTR dwD
 
 static void Help_Load(void)
 {
-#if defined(__GNUC__) || (_MSC_VER <= 1200)
+#if defined(__GNUC__)
 	g_hHelpLib = LoadLibrary("hhctrl.ocx");
 	if (g_hHelpLib)
 	{
@@ -119,4 +117,3 @@ static void Help_Load(void)
 #endif
 }
 
-#endif /* HAS_HELP */

@@ -32,6 +32,7 @@ End Function
 
 Sub AddFile(ByVal objTextStream, ByVal strBaseDir, ByVal strRelPath, ByVal strTitle)
 	Dim objFile
+	WScript.Echo "Adding File " & strBaseDir & "\" & strRelPath & " ..."
 	Set objFile = objFSO.GetFile(strBaseDir & "\" & strRelPath)
 	objFile.Copy(strObjDir & "\" & strRelPath)
 	objTextStream.WriteLine("		<LI> <OBJECT type=""text/sitemap"">")
@@ -142,10 +143,13 @@ objTextStream.WriteLine("</OBJECT>")
 objTextStream.WriteLine("<UL>")
 
 'Help files
-AddFile objTextStream,	"mess\windowsui\help",	"html\overview.html",	"Overview"
-AddFile objTextStream,	".",					"messnew.txt",			"Whats new"
-AddFile objTextStream,	"mess\windowsui\help",	"html\compilewin.html",	"Compiling"
+AddFile objTextStream,	"mess\windowsui\help",	"html\mess_overview.htm",	"Overview"
+AddFile objTextStream,	".",					"messnew.txt",				"Whats new"
+AddFile objTextStream,	"mess\windowsui\help",	"html\mess_compile.htm",	"Compiling"
+AddFile objTextStream,	"mess\windowsui\help",	"html\mess_faq.htm",		"FAQ"
+AddFile objTextStream,	"docs",					"imgtool.txt",				"Imgtool"
 AddImage objTextStream,	"mess\windowsui\help",	"images\messlogo.gif"
+AddImage objTextStream,	"mess\windowsui\help",	"html\style.css"
 
 ' Emulated systems
 objTextStream.WriteLine("	<LI> <OBJECT type=""text/sitemap"">")
@@ -168,4 +172,5 @@ objTextStream.Close
 ' Invoke help compiler
 ' ---------------------------------------------------------------------------
 WScript.CreateObject("WScript.Shell").Run strHHC & " " & strObjDir & "mess.hhp",, True
+objFSO.GetFile(strObjDir & "mess.chm").Copy("mess.chm")
 
