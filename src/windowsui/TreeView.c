@@ -210,10 +210,9 @@ static void         BuildTreeFolders(HWND hWnd);
 static LRESULT CALLBACK TreeWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 #ifdef EXTRA_FOLDER
-static int InitExtraFolders(void);
+static int InitExtraFolders( UINT nGames );
 static void FreeExtraFolder(void);
 static void SetExtraIcons(char *name, int *id);
-INLINE int GetIndexByName(const char *name);
 BOOL AddExtraFolders( LPTREEFOLDER lpFolder, UINT nGames, UINT* pnFolderId );
 int ExtraGameDataCompareFunc( const void* arg1, const void* arg2 );
 #endif /* EXTRA_FOLDER */
@@ -311,7 +310,7 @@ BOOL InitFolders(UINT nGames)
 	}
 
 #ifdef EXTRA_FOLDER
-	numExtraFolders = InitExtraFolders();
+	numExtraFolders = InitExtraFolders( nGames );
 	for (i = 0; i < numExtraFolders; i++)
 	{
 		LPEXFOLDERDATA  fExData = ExtraFolderData[i];
@@ -406,159 +405,6 @@ int FindGame(LPTREEFOLDER lpFolder, int nGame)
 
 /* #define BUILD_LIST */
 
-#ifdef EXTRA_FOLDER
-
-typedef struct
-{
-    const char* name;
-    BOOL        fAdded;
-    int         GameIndex;
-} EXTRAGAMEDATA;
-
-/* Called to add "extra" folders */
-BOOL AddExtraFolders( LPTREEFOLDER lpFolder, UINT nGames, UINT* pnFolderId )
-{
-    EXTRAGAMEDATA*  pData = NULL;
-    EXTRAGAMEDATA*  pCurrData;
-    FILE*   fp = NULL;
-    char    fname[MAX_PATH];
-    char    readbuf[256];
-    char*   p;
-    char*   name;
-    int     nIndex, id, current_id;
-    LPTREEFOLDER lpTemp = 0;
-    
-    current_id = lpFolder->m_nFolderId;
-    
-    id = lpFolder->m_nFolderId - FOLDER_END - 1;
-
-    /* "folder\title.ini" */
-
-    sprintf( fname, "%s\\%s.ini", 
-        GetFolderDir(), 
-        ExtraFolderData[id]->m_szTitle);
-    
-    fp = fopen(fname, "r");
-    if (fp == NULL)
-    {
-        return FALSE;
-    }
-    
-    /* create a sorted list of all games and their indices */
-
-    pData = (EXTRAGAMEDATA*)malloc( sizeof(EXTRAGAMEDATA) * nGames );
-
-    for ( nIndex = 0, pCurrData = pData; 
-          nIndex < nGames; 
-          ++nIndex )
-    {
-        pCurrData->name = drivers[nIndex]->name;
-        pCurrData->fAdded = FALSE;
-        pCurrData->GameIndex = nIndex;
-
-        ++pCurrData;
-    }
-
-    qsort( pData, nGames, sizeof(EXTRAGAMEDATA), ExtraGameDataCompareFunc );
-    
-    while ( fgets(readbuf, 256, fp) )
-    {
-        /* do we have [...] ? */
-
-        if (readbuf[0] == '[')
-        {
-            p = strchr(readbuf, ']');
-            if (p == NULL)
-            {
-                continue;
-            }
-            
-            *p = '\0';
-            name = &readbuf[1];
-     
-            /* is it [FOLDER_SETTINGS]? */
-
-            if (!strcmp(name, "FOLDER_SETTINGS"))
-            {
-                current_id = -1;
-                continue;
-            }
-            else
-            {
-                /* it it [ROOT_FOLDER]? */
-
-                if (!strcmp(name, "ROOT_FOLDER"))
-                {
-                    current_id = lpFolder->m_nFolderId;
-                    lpTemp = lpFolder;
-                }
-                else
-                {
-                    /* must be [folder name] */
-
-                    current_id = (*pnFolderId)++;
-
-                    /* create a new folder with this name,
-                       and the flags for this folder as read from the registry */
-
-                    lpTemp = NewFolder( name, 
-                                        IS_FOLDER, 
-                                        (*pnFolderId)++,
-                                        lpFolder->m_nFolderId, 
-                                        ExtraFolderData[id]->m_nSubIconId,
-                                        GetFolderFlags( name ), 
-                                        nGames );
-                    AddFolder( lpTemp );
-                }
-            }
-        }
-        else if (current_id != -1)
-        {
-            /* string on a line by itself -- game name */
-
-            name = strtok(readbuf, " \t\r\n");
-            if (name == NULL)
-            {
-                current_id = -1;
-                continue;
-            }
-
-            /* IMPORTANT: This assumes that all driver names are lowercase! */
-            _strlwr( name );
-
-            /* add this game to the folder if we haven't already */
-
-            pCurrData = bsearch( &name, 
-                pData, nGames, sizeof(EXTRAGAMEDATA), ExtraGameDataCompareFunc );
-            if ( pCurrData && ! pCurrData->fAdded )
-            {
-                AddGame( lpTemp, pCurrData->GameIndex );
-                pCurrData->fAdded = TRUE;
-            }
-        }
-    }
-
-    if ( pData )
-    {
-        free( pData );
-    }
-
-    if ( fp )
-    {
-        fclose( fp );
-    }
-
-    return TRUE;
-}
-
-/* used for qsort, bsearch */
-int ExtraGameDataCompareFunc( const void* arg1, const void* arg2 )
-{
-    return strcmp( ((EXTRAGAMEDATA*)arg1)->name, 
-                   ((EXTRAGAMEDATA*)arg2)->name );
-}
-
-#endif // #ifdef EXTRA_FOLDER
 
 /* Called to re-associate games with folders */
 void InitGames(UINT nGames)
@@ -1931,7 +1777,18 @@ static DWORD ValidateFilters(LPFILTER_RECORD lpFilterRecord, DWORD dwFlags)
 /**************************************************************************/
 
 #ifdef EXTRA_FOLDER
-static int InitExtraFolders(void)
+
+typedef struct
+{
+    const char* name;
+    BOOL        fAdded;
+    int         GameIndex;
+} EXTRAGAMEDATA;
+
+EXTRAGAMEDATA*  pExtraFolderData = NULL;
+
+
+static int InitExtraFolders( UINT nGames )
 {
 	struct stat stat_buffer;
 	struct _finddata_t files;
@@ -1941,11 +1798,14 @@ static int InitExtraFolders(void)
 	char buf[256];
 	char curdir[MAX_PATH];
 	const char *dir = GetFolderDir();
+    EXTRAGAMEDATA*  pCurrData;
 
 	memset(ExtraFolderData, 0, MAX_EXTRA_FOLDERS * sizeof(LPEXFOLDERDATA));
 
 	if (stat(dir, &stat_buffer) != 0)
+    {
 		_mkdir(dir);
+    }
 
 	_getcwd(curdir, MAX_PATH);
 
@@ -1954,7 +1814,10 @@ static int InitExtraFolders(void)
 	hLong = _findfirst("*", &files);
 
 	for (i = 0; i < MAX_EXTRA_FOLDERS; i++)
+    {
 		ExtraFolderIcons[i] = NULL;
+    }
+
 	numExtraIcons = 0;
 
 	while (!_findnext(hLong, &files))
@@ -2032,6 +1895,21 @@ static int InitExtraFolders(void)
 		}
 	}
 
+    /* create a sorted list of all games and their indices */
+
+    pExtraFolderData = (EXTRAGAMEDATA*)malloc( sizeof(EXTRAGAMEDATA) * nGames );
+
+    for ( i = 0, pCurrData = pExtraFolderData; 
+          i < nGames; 
+          ++i, ++pCurrData )
+    {
+        pCurrData->name = drivers[i]->name;
+        pCurrData->fAdded = FALSE;
+        pCurrData->GameIndex = i;
+    }
+
+    qsort( pExtraFolderData, nGames, sizeof(EXTRAGAMEDATA), ExtraGameDataCompareFunc );
+
 	_chdir(curdir);
 	return count;
 }
@@ -2050,8 +1928,17 @@ void FreeExtraFolder(void)
 	}
 
 	for (i = 0; i < numExtraIcons; i++)
+    {
 		free(ExtraFolderIcons[i]);
+    }
+
 	numExtraIcons = 0;
+
+    if ( pExtraFolderData )
+    {
+        free( pExtraFolderData );
+        pExtraFolderData = NULL;
+    }
 }
 
 
@@ -2072,17 +1959,134 @@ static void SetExtraIcons(char *name, int *id)
 }
 
 
-INLINE int GetIndexByName(const char *name)
+/* Called to add "extra" folders */
+BOOL AddExtraFolders( LPTREEFOLDER lpFolder, UINT nGames, UINT* pnFolderId )
 {
-	int i;
+    EXTRAGAMEDATA*  pCurrData;
+    FILE*   fp = NULL;
+    char    fname[MAX_PATH];
+    char    readbuf[256];
+    char*   p;
+    char*   name;
+    int     id, current_id, i;
+    LPTREEFOLDER lpTemp = 0;
+    
+    current_id = lpFolder->m_nFolderId;
+    
+    id = lpFolder->m_nFolderId - FOLDER_END - 1;
 
-	for (i = 0; drivers[i]; i++)
-	{
-		if (strcmp(name, drivers[i]->name) == 0)
-			return i;
-	}
-	return -1;
+    /* "folder\title.ini" */
+
+    sprintf( fname, "%s\\%s.ini", 
+        GetFolderDir(), 
+        ExtraFolderData[id]->m_szTitle);
+    
+    fp = fopen(fname, "r");
+    if (fp == NULL)
+    {
+        return FALSE;
+    }
+    
+
+    for ( i = 0, pCurrData = pExtraFolderData; 
+          i < nGames; 
+          ++i, ++pCurrData )
+    {
+        pCurrData->fAdded = FALSE;
+    }
+
+    while ( fgets(readbuf, 256, fp) )
+    {
+        /* do we have [...] ? */
+
+        if (readbuf[0] == '[')
+        {
+            p = strchr(readbuf, ']');
+            if (p == NULL)
+            {
+                continue;
+            }
+            
+            *p = '\0';
+            name = &readbuf[1];
+     
+            /* is it [FOLDER_SETTINGS]? */
+
+            if (!strcmp(name, "FOLDER_SETTINGS"))
+            {
+                current_id = -1;
+                continue;
+            }
+            else
+            {
+                /* it it [ROOT_FOLDER]? */
+
+                if (!strcmp(name, "ROOT_FOLDER"))
+                {
+                    current_id = lpFolder->m_nFolderId;
+                    lpTemp = lpFolder;
+                }
+                else
+                {
+                    /* must be [folder name] */
+
+                    current_id = (*pnFolderId)++;
+
+                    /* create a new folder with this name,
+                       and the flags for this folder as read from the registry */
+
+                    lpTemp = NewFolder( name, 
+                                        IS_FOLDER, 
+                                        (*pnFolderId)++,
+                                        lpFolder->m_nFolderId, 
+                                        ExtraFolderData[id]->m_nSubIconId,
+                                        GetFolderFlags( name ), 
+                                        nGames );
+                    AddFolder( lpTemp );
+                }
+            }
+        }
+        else if (current_id != -1)
+        {
+            /* string on a line by itself -- game name */
+
+            name = strtok(readbuf, " \t\r\n");
+            if (name == NULL)
+            {
+                current_id = -1;
+                continue;
+            }
+
+            /* IMPORTANT: This assumes that all driver names are lowercase! */
+            _strlwr( name );
+
+            /* add this game to the folder if we haven't already */
+
+            pCurrData = bsearch( &name, 
+                pExtraFolderData, nGames, sizeof(EXTRAGAMEDATA), ExtraGameDataCompareFunc );
+            if ( pCurrData && ! pCurrData->fAdded )
+            {
+                AddGame( lpTemp, pCurrData->GameIndex );
+                pCurrData->fAdded = TRUE;
+            }
+        }
+    }
+
+    if ( fp )
+    {
+        fclose( fp );
+    }
+
+    return TRUE;
 }
-#endif /* EXTRA_FOLDER */
+
+/* used for qsort, bsearch */
+int ExtraGameDataCompareFunc( const void* arg1, const void* arg2 )
+{
+    return strcmp( ((EXTRAGAMEDATA*)arg1)->name, 
+                   ((EXTRAGAMEDATA*)arg2)->name );
+}
+
+#endif // #ifdef EXTRA_FOLDER
 
 /* End of source file */
