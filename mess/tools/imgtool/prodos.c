@@ -435,10 +435,90 @@ static imgtoolerr_t prodos_diskimage_open_35(imgtool_image *image)
 
 /* ----------------------------------------------------------------------- */
 
+#if 0
+static imgtoolerr_t prodos_load_volume_bitmap(imgtool_image *image, UINT8 **bitmap)
+{
+	imgtoolerr_t err;
+	struct prodos_diskinfo *di;
+	UINT8 *alloc_bitmap;
+	UINT32 bitmap_blocks, i;
+
+	di = get_prodos_info(image);
+
+	bitmap_blocks = (di->total_blocks + (BLOCK_SIZE * 8) - 1) / (BLOCK_SIZE * 8);
+	alloc_bitmap = malloc(bitmap_blocks * BLOCK_SIZE);
+	if (!alloc_bitmap)
+	{
+		err = IMGTOOLERR_OUTOFMEMORY;
+		goto done;
+	}
+
+	for (i = 0; i < bitmap_blocks; i++)
+	{
+		err = prodos_load_block(image, di->volume_bitmap_block + i,
+			&alloc_bitmap[i * BLOCK_SIZE]);
+		if (err)
+			goto done;
+	}
+
+	err = IMGTOOLERR_SUCCESS;
+
+done:
+	if (err && alloc_bitmap)
+	{
+		free(alloc_bitmap);
+		alloc_bitmap = NULL;
+	}
+	*bitmap = alloc_bitmap;
+	return err;
+}
+
+
+
+static imgtoolerr_t prodos_save_volume_bitmap(imgtool_image *image, const UINT8 *bitmap)
+{
+	imgtoolerr_t err;
+	struct prodos_diskinfo *di;
+	UINT32 bitmap_blocks, i;
+
+	di = get_prodos_info(image);
+
+	bitmap_blocks = (di->total_blocks + (BLOCK_SIZE * 8) - 1) / (BLOCK_SIZE * 8);
+
+	for (i = 0; i < bitmap_blocks; i++)
+	{
+		err = prodos_save_block(image, di->volume_bitmap_block + i,
+			&bitmap[i * BLOCK_SIZE]);
+		if (err)
+			return err;
+	}
+	return IMGTOOLERR_SUCCESS;
+}
+#endif
+
+
+
+static void prodos_set_volume_bitmap_bit(UINT8 *buffer, UINT32 block, int value)
+{
+	UINT8 mask;
+	buffer += block / 8;
+	mask = 1 << (7 - (block % 8));
+	if (value)
+		*buffer &= ~mask;
+	else
+		*buffer |= mask;
+}
+
+
+
+/* ----------------------------------------------------------------------- */
+
 static imgtoolerr_t prodos_diskimage_create(imgtool_image *image, option_resolution *opts)
 {
 	imgtoolerr_t err;
 	UINT32 heads, tracks, sectors, sector_bytes;
+	UINT32 dirent_size, volume_bitmap_block, i;
+	UINT32 volume_bitmap_block_count, total_blocks;
 	UINT8 buffer[BLOCK_SIZE];
 
 	heads = option_resolution_lookup_int(opts, 'H');
@@ -446,18 +526,30 @@ static imgtoolerr_t prodos_diskimage_create(imgtool_image *image, option_resolut
 	sectors = option_resolution_lookup_int(opts, 'S');
 	sector_bytes = option_resolution_lookup_int(opts, 'L');
 
+	dirent_size = 39;
+	volume_bitmap_block = 6;
+	total_blocks = tracks * heads * sectors * sector_bytes / BLOCK_SIZE;
+	volume_bitmap_block_count = (total_blocks + (BLOCK_SIZE * 8) - 1) / (BLOCK_SIZE * 8);
+
 	/* prepare initial dir block */
 	memset(buffer, 0, sizeof(buffer));
 	place_integer(buffer, 4 +  0, 1, 0xF0);
-	place_integer(buffer, 4 + 31, 1, 39);
-	place_integer(buffer, 4 + 32, 1, BLOCK_SIZE / 39);
-	place_integer(buffer, 4 + 35, 2, 6);
-	place_integer(buffer, 4 + 37, 2, tracks * heads * sectors * sector_bytes / BLOCK_SIZE);
+	place_integer(buffer, 4 + 31, 1, dirent_size);
+	place_integer(buffer, 4 + 32, 1, BLOCK_SIZE / dirent_size);
+	place_integer(buffer, 4 + 35, 2, volume_bitmap_block);
+	place_integer(buffer, 4 + 37, 2, total_blocks);
 
 	err = prodos_save_block(image, ROOTDIR_BLOCK, buffer);
 	if (err)
 		return err;
 
+	/* setup volume bitmap */
+	memset(buffer, 0, sizeof(buffer));
+	for (i = 0; i < (volume_bitmap_block + volume_bitmap_block_count); i++)
+		prodos_set_volume_bitmap_bit(buffer, i, 1);
+	prodos_save_block(image, volume_bitmap_block, buffer);
+
+	/* and finally open the image */
 	return prodos_diskimage_open(image);
 }
 
