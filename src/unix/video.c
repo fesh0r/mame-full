@@ -1035,7 +1035,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 	skip_this_frame = skip_next_frame;
 	skip_next_frame = (*skip_next_frame_functions[frameskipper])();
 
-	if (sound_stream && sound_enabled)
+	if (sound_stream)
 		sound_stream_update(sound_stream);
 
 	/* if the visible area has changed, update it */

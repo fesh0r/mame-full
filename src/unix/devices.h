@@ -19,7 +19,7 @@
 #	define MOUSE_MAX	1
 #else
 /* now we have 4 */
-#	define MOUSE_MAX	4
+#	define MOUSE_MAX	5
 #endif
 #define MOUSE_BUTTONS		8
 #define MOUSE_AXES		8
@@ -95,10 +95,6 @@ extern struct rc_option joy_pad_opts[];
 extern struct rc_option joy_x11_opts[];
 extern struct rc_option joy_usb_opts[];
 extern struct rc_option joy_ps2_opts[];
-
-#ifdef USE_XINPUT_DEVICES
-#include "joystick-drivers/XInputDevices.h"
-#endif
 
 #ifdef USE_LIGHTGUN_ABS_EVENT
 #include "joystick-drivers/lightgun_abs_event.h"

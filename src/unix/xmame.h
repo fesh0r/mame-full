@@ -86,7 +86,6 @@ EXTERN double		aspect_ratio;
 
 /* global variables and miscellaneous flags */
 
-EXTERN int		sound_enabled;
 EXTERN int	 	widthscale;        /* X scale */
 EXTERN int	 	heightscale;       /* Y scale */
 EXTERN int		yarbsize;          /* arbitrary height */
@@ -98,7 +97,6 @@ EXTERN int		video_depth;
 EXTERN int		video_real_depth;
 EXTERN char		*home_dir;
 EXTERN char		title[50];
-EXTERN int		use_mouse;
 EXTERN int		throttle;
 EXTERN int		autoframeskip;
 EXTERN int		frameskip;
@@ -156,6 +154,7 @@ void osd_dirty_close(void);
 /* Directory functions that used to be in the rc files. */
 int check_and_create_dir(const char *name);
 char *get_home_dir(void);
+char *osd_dirname(const char *filename);
 
 /* network funtions */
 int  osd_net_init(void);

@@ -114,10 +114,6 @@ struct rc_option input_opts[] =
 #ifdef PS2_JOYSTICK
 	{ NULL, NULL, rc_link, joy_ps2_opts, NULL, 0, 0, NULL, NULL },
 #endif
-#ifdef USE_XINPUT_DEVICES
-	{ NULL, NULL, rc_link, XInputDevices_opts, NULL, 0, 0, NULL, NULL },
-#endif
-	{ "mouse", NULL, rc_bool, &use_mouse, "0", 0, 0, NULL, "Enable mouse input" },
 	{ "ugcicoin", NULL, rc_bool, &ugcicoin, "0", 0, 0, NULL, "Enable/disable UGCI(tm) Coin/Play support" },
 #ifdef USE_LIGHTGUN_ABS_EVENT
 	{ NULL, NULL, rc_link, lightgun_abs_event_opts, NULL, 0, 0, NULL, NULL },
@@ -570,9 +566,6 @@ int osd_input_initpre(void)
 		}
 	}
 
-	if (use_mouse)
-		fprintf (stderr_file, "Mouse/Trakball selected.\n");
-
 #ifdef UGCICOIN
 	if (ugcicoin)
 	{
@@ -615,10 +608,6 @@ int osd_input_initpre(void)
 
 int osd_input_initpost(void)
 {
-#ifdef USE_XINPUT_DEVICES
-	XInputDevices_init();
-#endif
-
 	/* init the keyboard */
 	if (xmame_keyboard_init())
 		return OSD_NOT_OK;
@@ -948,22 +937,19 @@ static void init_joycodes(void)
 	char tempname[JOY_NAME_LEN + 1];
 
 	/* map mice first */
-	if (use_mouse)
+	for (mouse = 0; mouse < MOUSE_MAX; mouse++)
 	{
-		for (mouse = 0; mouse < MOUSE_MAX; mouse++)
-		{
-			/* add analog axes (fix me -- should enumerate these) */
-			snprintf(tempname, JOY_NAME_LEN, "Mouse %d X", mouse + 1);
-			add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 0), CODE_OTHER_ANALOG_RELATIVE);
-			snprintf(tempname, JOY_NAME_LEN, "Mouse %d Y", mouse + 1);
-			add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 1), CODE_OTHER_ANALOG_RELATIVE);
+		/* add analog axes (fix me -- should enumerate these) */
+		snprintf(tempname, JOY_NAME_LEN, "Mouse %d X", mouse + 1);
+		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 0), CODE_OTHER_ANALOG_RELATIVE);
+		snprintf(tempname, JOY_NAME_LEN, "Mouse %d Y", mouse + 1);
+		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 1), CODE_OTHER_ANALOG_RELATIVE);
 
-			/* add mouse buttons */
-			for (button = 0; button < MOUSE_BUTTONS; button++)
-			{
-				snprintf(tempname, JOY_NAME_LEN, "Mouse %d button %d", mouse + 1, button + 1);
-				add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEBUTTON, button), CODE_OTHER_DIGITAL);
-			}
+		/* add mouse buttons */
+		for (button = 0; button < MOUSE_BUTTONS; button++)
+		{
+			snprintf(tempname, JOY_NAME_LEN, "Mouse %d button %d", mouse + 1, button + 1);
+			add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEBUTTON, button), CODE_OTHER_DIGITAL);
 		}
 	}
 
@@ -1112,13 +1098,10 @@ static INT32 get_joycode_value(os_code_t joycode)
 		case CODETYPE_MOUSEAXIS:
 		{
 			int delta = 0;
-#ifdef USE_XINPUT_DEVICES
-			if (joynum < XINPUT_JOYSTICK_1)
-				XInputPollDevices(joynum, joyindex, &delta);
-#else
+
 			if (joynum < MOUSE_MAX && joyindex < 2)
 				delta = mouse_data[joynum].deltas[joyindex];
-#endif
+
 			/* return the latest mouse info */
 			return delta * 512;
 		}
@@ -1481,8 +1464,7 @@ void restore_button_state(void)
 
 void osd_poll_joysticks(void)
 {
-	if (use_mouse)
-		sysdep_mouse_poll();
+	sysdep_mouse_poll();
 
 	if (joy_poll_func)
 	{

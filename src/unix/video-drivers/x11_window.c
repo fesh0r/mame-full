@@ -651,7 +651,6 @@ int x11_window_create_display (int bitmap_depth)
 		window        = RootWindowOfScreen (screen);
 		window_width  = width;
 		window_height = height;
-		use_mouse     = FALSE;
 	}
 	else
 	{

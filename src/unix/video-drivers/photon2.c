@@ -234,11 +234,8 @@ void sysdep_update_display (struct mame_bitmap *bitmap)
       
       memset((void *)&phkey[0], FALSE, 128*sizeof(unsigned char) );
       /* poll mouse twice to clear internal vars */
-      if (use_mouse)
-      {
-         sysdep_mouse_poll ();
-         sysdep_mouse_poll ();
-      }
+      sysdep_mouse_poll ();
+      sysdep_mouse_poll ();
    }
 
    (*ph_func[ph_video_mode].update_display) (bitmap);

@@ -232,11 +232,6 @@ int config_init (int argc, char *argv[])
 
 	memset(&options,0,sizeof(options));
 
-	/* reset trackball devices */
-#ifdef USE_XINPUT_DEVICES
-	XInput_trackballs_reset();
-#endif
-
 	/* Let's see if the endianess of this arch is correct; otherwise,
 	   YELL about it and bail out. */
 #ifdef LSB_FIRST

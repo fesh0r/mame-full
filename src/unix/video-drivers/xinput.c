@@ -11,6 +11,40 @@
 #include "x11.h"
 #include "xkeyboard.h"
 
+#ifdef USE_XINPUT_DEVICES
+#include <X11/extensions/XInput.h>
+
+enum { XMAME_NULLDEVICE, XMAME_TRACKBALL, XMAME_JOYSTICK };
+enum { XINPUT_MOUSE_0, XINPUT_MOUSE_1, XINPUT_MOUSE_2, XINPUT_MOUSE_3,
+       XINPUT_JOYSTICK_0, XINPUT_JOYSTICK_1, XINPUT_JOYSTICK_2, XINPUT_JOYSTICK_3,
+       XINPUT_MAX_NUM_DEVICES };
+
+/* struct which keeps all info for a XInput-devices */
+typedef struct {
+  char *deviceName;
+  XDeviceInfo *info;
+  int mameDevice;
+  int previousValue[JOY_AXES];
+  int neverMoved;
+} XInputDeviceData;
+
+static XInputDeviceData XIdevices[XINPUT_MAX_NUM_DEVICES] = {
+   { NULL, NULL, XMAME_NULLDEVICE, {}, 1 },
+   { NULL, NULL, XMAME_NULLDEVICE, {}, 1 },
+   { NULL, NULL, XMAME_NULLDEVICE, {}, 1 },
+   { NULL, NULL, XMAME_NULLDEVICE, {}, 1 },
+   { NULL, NULL, XMAME_NULLDEVICE, {}, 1 },
+   { NULL, NULL, XMAME_NULLDEVICE, {}, 1 },
+   { NULL, NULL, XMAME_NULLDEVICE, {}, 1 },
+   { NULL, NULL, XMAME_NULLDEVICE, {}, 1 }
+} ;
+
+/* prototypes */
+static void XInputDevices_init(void);
+static void XInputClearDeltas(void);
+static int XInputProcessEvent(XEvent *);
+#endif
+
 /* options */
 static int xinput_use_winkeys = 0;
 static int xinput_grab_mouse = 0;
@@ -40,11 +74,29 @@ struct rc_option x11_input_opts[] = {
 	{ "cursor", "cu", rc_bool, &xinput_show_cursor, "1", 0, 0, NULL, "Show/don't show the cursor" },
 	{ "winkeys", "wk", rc_bool, &xinput_use_winkeys, "0", 0, 0, NULL, "Enable/disable mapping of windowskeys under X" },
 	{ "mapkey", "mk", rc_use_function, NULL, NULL, 0, 0, xinput_mapkey, "Set a specific key mapping, see xmamerc.dist" },
+#ifdef USE_XINPUT_DEVICES
+   { "XInput-trackball1",	"XItb1",	rc_string,
+     &XIdevices[XINPUT_MOUSE_0].deviceName,
+     NULL,	1,		0,	NULL,
+     "Device name for trackball of player 1 (see XInput)" },
+   { "XInput-trackball2",	"XItb2",	rc_string,
+     &XIdevices[XINPUT_MOUSE_1].deviceName,
+     NULL,	1,		0,	NULL,
+     "Device name for trackball of player 2 (see XInput)" },
+   { "XInput-trackball3",	"XItb3",	rc_string,
+     &XIdevices[XINPUT_MOUSE_2].deviceName,
+     NULL,	1,		0,	NULL,
+     "Device name for trackball of player 3 (see XInput)" },
+   { "XInput-trackball4",	"XItb4",	rc_string,
+     &XIdevices[XINPUT_MOUSE_3].deviceName,
+     NULL,	1,		0,	NULL,
+     "Device name for trackball of player 4 (see XInput)" },
+#endif
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 
 /*
- * Parse keyboard events
+ * Parse keyboard (and other) events
  */
 void sysdep_update_keyboard (void)
 {
@@ -53,6 +105,10 @@ void sysdep_update_keyboard (void)
 	char				keyname[16+1];
 	int				mask;
 	struct xmame_keyboard_event	event;
+	
+#ifdef USE_XINPUT_DEVICES
+	XInputClearDeltas();
+#endif
 
 #ifdef NOT_DEFINED /* x11 */
 	if(run_in_root_window && x11_video_mode == X11_WINDOW)
@@ -316,8 +372,12 @@ int xinput_open(int force_grab, int event_mask)
   	extended_code_table[XK_Meta_R&0x1FF] = KEY_RWIN; 
   }
 
+#ifdef USE_XINPUT_DEVICES
+  XInputDevices_init();
+#endif
+
   /* mouse grab failing is not really a problem */
-  if (use_mouse && (xinput_force_grab || xinput_grab_mouse))
+  if (xinput_force_grab || xinput_grab_mouse)
   {
     if(XGrabPointer (display, window, True,
          PointerMotionMask|ButtonPressMask|ButtonReleaseMask,
@@ -345,11 +405,8 @@ int xinput_open(int force_grab, int event_mask)
     	XDefineCursor (display, window, xinput_normal_cursor);
 
     /* Select event mask */
-    event_mask |= FocusChangeMask | KeyPressMask | KeyReleaseMask;
-    if (use_mouse)
-    {
-       event_mask |= ButtonPressMask | ButtonReleaseMask;
-    }
+    event_mask |= FocusChangeMask | KeyPressMask | KeyReleaseMask |
+                  ButtonPressMask | ButtonReleaseMask;
     XSelectInput (display, window, event_mask);
   }
 
@@ -390,7 +447,7 @@ void xinput_close(void)
 
 void xinput_check_hotkeys(void)
 {
-  if (use_mouse && !xinput_force_grab &&
+  if (!xinput_force_grab &&
       code_pressed (KEYCODE_LALT) &&
       code_pressed_memory (KEYCODE_PGDN))
   {
@@ -426,3 +483,236 @@ void xinput_check_hotkeys(void)
     }
   }
 }
+
+/*
+ * X-Mame XInput trackball code
+ *
+ */
+
+#ifdef USE_XINPUT_DEVICES
+
+/* XInput-Event types */
+static int           motion_type         = -1;
+static int           button_press_type   = -1;
+static int           button_release_type = -1;
+static int           key_press_type      = -1;
+static int           key_release_type    = -1;
+
+/* prototypes */
+/* these two functions were taken from the source of the program 'xinput',
+   available at ftp://xxx.xxx.xxx */
+static XDeviceInfo*
+find_device_info(Display *display, char *name, Bool only_extended);
+static int
+register_events(int player_id, Display *dpy, XDeviceInfo *info, char *dev_name);
+
+
+/* initializes XInput devices */
+static void
+XInputDevices_init(void)
+{
+	int i,j,k;
+
+	fprintf(stderr_file, "XInput: Initialization...\n");
+
+	if (!XQueryExtension(display,"XInputExtension",&i,&j,&k)) {
+		fprintf(stderr_file,"XInput: Your Xserver doesn't support XInput Extensions\n");
+		return;
+	}
+
+	/* parse all devicenames */
+	for(i=0;i<XINPUT_MAX_NUM_DEVICES;++i) {
+		if (XIdevices[i].deviceName) {
+			/* if not NULL, check for an existing device */
+			XIdevices[i].info=find_device_info(display,XIdevices[i].deviceName,True);
+			if (! XIdevices[i].info) {
+				fprintf(stderr_file,"XInput: Unable to find device `%s'. Ignoring it!\n",
+						XIdevices[i].deviceName);
+				XIdevices[i].deviceName=NULL;
+			} else {
+				/* ok, found a device, now register device for motion events */
+				if (i < XINPUT_JOYSTICK_1) {
+					XIdevices[i].mameDevice=XMAME_TRACKBALL;
+				} else {
+					/* prepared for XInput-Joysticks
+					   XIdevices[i].mameDevice=XMAME_JOYSTICK;
+					   */
+				}
+				if (! register_events(i, display,XIdevices[i].info,XIdevices[i].deviceName)) {
+					fprintf(stderr_file,"XInput: Couldn't register device `%s' for events. Ignoring it\n",
+							XIdevices[i].deviceName);
+					XIdevices[i].deviceName=NULL;
+				}
+			}
+		}
+	}
+}
+
+static void XInputClearDeltas(void)
+{
+   int i;
+   for(i = 1; i < MOUSE_MAX; i++)
+   {
+      mouse_data[i].deltas[0] = 0;
+      mouse_data[i].deltas[1] = 0;
+   }
+}
+
+/* Process events generated by XInput-devices. For now, just trackballs are supported */
+static int
+XInputProcessEvent(XEvent *ev)
+{
+	int i;
+
+	if (ev->type == motion_type) {
+		XDeviceMotionEvent *motion=(XDeviceMotionEvent *) ev;
+
+		for(i = 1; i < MOUSE_MAX; i++)
+			if (XIdevices[i-1].deviceName && motion->deviceid == XIdevices[i-1].info->id)
+				break;
+
+		if (i == MOUSE_MAX)
+			return 0;
+
+		if (XIdevices[i-1].neverMoved) {
+			XIdevices[i-1].neverMoved=0;
+			XIdevices[i-1].previousValue[0] = motion->axis_data[0];
+			XIdevices[i-1].previousValue[1] = motion->axis_data[1];
+		}
+
+		mouse_data[i].deltas[0] += motion->axis_data[0] - XIdevices[i-1].previousValue[0];
+		mouse_data[i].deltas[1] += motion->axis_data[1] - XIdevices[i-1].previousValue[1];
+
+		XIdevices[i-1].previousValue[0] = motion->axis_data[0];
+		XIdevices[i-1].previousValue[1] = motion->axis_data[1];
+
+		return 1;
+	} else if (ev->type == button_press_type || ev->type == button_release_type) {
+		XDeviceButtonEvent *button = (XDeviceButtonEvent *)ev;
+
+		for(i = 1; i < MOUSE_MAX; i++)
+			if (XIdevices[i-1].deviceName && button->deviceid == XIdevices[i-1].info->id)
+				break;
+
+		if (i == MOUSE_MAX)
+			return 0;
+
+		/* fprintf(stderr_file, "XInput: Player %d: Button %d %s\n",
+		   i + 1, button->button, button->state ? "released" : "pressed"); */
+
+		mouse_data[i].buttons[button->button - 1] = (ev->type == button_press_type) ? 1 : 0;
+
+		return 1;
+	}
+
+	return 0;
+}
+
+/* this piece of code was taken from package xinput-1.12 */
+static XDeviceInfo*
+find_device_info(Display	*display,
+		 char		*name,
+		 Bool		only_extended)
+{
+	XDeviceInfo	*devices;
+	int		loop;
+	int		num_devices;
+	int		len = strlen(name);
+	Bool		is_id = True;
+	XID		id = 0;
+
+	for(loop=0; loop<len; loop++) {
+		if (!isdigit(name[loop])) {
+			is_id = False;
+			break;
+		}
+	}
+
+	if (is_id) {
+		id = atoi(name);
+	}
+
+	devices = XListInputDevices(display, &num_devices);
+
+	for(loop=0; loop<num_devices; loop++) {
+		if ((!only_extended || (devices[loop].use == IsXExtensionDevice)) &&
+				((!is_id && strcmp(devices[loop].name, name) == 0) ||
+				 (is_id && devices[loop].id == id))) {
+			return &devices[loop];
+		}
+	}
+	return NULL;
+}
+
+/* this piece of code was taken from package xinput-1.12 */
+static int
+register_events(int		player_id,
+		Display		*dpy,
+		XDeviceInfo	*info,
+		char		*dev_name)
+{
+	int			number = 0;	/* number of events registered */
+	XEventClass		event_list[7];
+	int			i;
+	XAnyClassPtr	any;
+	XDevice		*device;
+	Window		root_win;
+	unsigned long	screen;
+	XInputClassInfo	*ip;
+	XButtonInfoPtr      binfo;
+	XValuatorInfoPtr    vinfo;
+
+	screen = DefaultScreen(dpy);
+	root_win = RootWindow(dpy, screen);
+
+	device = XOpenDevice(dpy, info->id);
+
+	if (!device) {
+		fprintf(stderr_file, "XInput: Unable to open XInput device `%s'\n", dev_name);
+		return 0;
+	}
+
+	fprintf(stderr_file, "XInput: Player %d using Device `%s'", player_id + 1, dev_name);
+
+	if (device->num_classes > 0) {
+		any = (XAnyClassPtr)(info->inputclassinfo);
+
+		for (ip = device->classes, i=0; i<info->num_classes; ip++, i++) {
+			switch (ip->input_class) {
+				case KeyClass:
+					DeviceKeyPress(device, key_press_type, event_list[number]); number++;
+					DeviceKeyRelease(device, key_release_type, event_list[number]); number++;
+					break;
+
+				case ButtonClass:
+					binfo = (XButtonInfoPtr) any;
+					DeviceButtonPress(device, button_press_type, event_list[number]); number++;
+					DeviceButtonRelease(device, button_release_type, event_list[number]); number++;
+					fprintf(stderr_file, ", %d buttons", binfo->num_buttons);
+					break;
+
+				case ValuatorClass:
+					vinfo=(XValuatorInfoPtr) any;
+					DeviceMotionNotify(device, motion_type, event_list[number]); number++;
+					fprintf(stderr_file, ", %d axis", vinfo->num_axes);
+					break;
+
+				default:
+					break;
+			}
+			any = (XAnyClassPtr) ((char *) any+any->length);
+		}
+
+		if (XSelectExtensionEvent(dpy, root_win, event_list, number)) {
+			fprintf(stderr_file, ": Could not select extended events, not using");
+			number = 0;
+		}
+	} else
+		fprintf(stderr_file, " contains no classes, not using");
+
+	fprintf(stderr_file, "\n");
+
+	return number;
+}
+
+#endif /* USE_XINPUT_DEVICES */

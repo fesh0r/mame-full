@@ -188,6 +188,8 @@ const char *osd_get_cwd(void)
 	return cwd;
 }
 
+#endif
+
 /*============================================================ */
 /*	osd_dirname */
 /*============================================================ */
@@ -225,6 +227,8 @@ char *osd_dirname(const char *filename)
 	dirname[0] = 0;
 	return dirname;
 }
+
+#ifdef MESS
 
 /*============================================================ */
 /*	osd_basename */

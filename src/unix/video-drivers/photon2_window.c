@@ -623,8 +623,7 @@ void ph_window_update_display (struct mame_bitmap *bitmap)
 //	  toss it.   
    (*ph_window_update_display_func) (bitmap);
 
-   if (use_mouse &&
-       code_pressed (KEYCODE_LALT) &&
+   if (code_pressed (KEYCODE_LALT) &&
        code_pressed_memory (KEYCODE_PGDN))
    {
       if (ph_grab_mouse)

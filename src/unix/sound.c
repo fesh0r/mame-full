@@ -20,25 +20,11 @@ static struct sysdep_mixer_struct *sound_mixer = NULL;
 static int sound_samples_per_frame = 0;
 static int type;
 
-static int sound_set_options(struct rc_option *option, const char *arg,
-		int priority)
-{
-	if(sound_enabled)
-		options.samplerate = sound_samplerate;
-	else
-		options.samplerate = 8000;
-
-	option->priority = priority;
-
-	return 0;
-}
-
 struct rc_option sound_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ "Sound Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "sound", "snd", rc_bool, &sound_enabled, "1", 0, 0, sound_set_options, "Enable/disable sound (if available)" },
 	{ "samples", "sam", rc_bool, &options.use_samples, "1", 0, 0, NULL, "Use/don't use samples (if available)" },
-	{ "samplefreq", "sf", rc_int, &sound_samplerate, "44100", 8000, 48000, sound_set_options, "Set the playback sample-frequency/rate" },
+	{ "samplefreq", "sf", rc_int, &sound_samplerate, "44100", 8000, 48000, NULL, "Set the playback sample-frequency/rate" },
 	{ "bufsize",  "bs", rc_float, &sound_bufsize, "3.0", 1.0, 30.0, NULL, "Number of frames of sound to buffer" },
 	{ "volume", "v", rc_int, &sound_attenuation, "-3", -32, 0, NULL, "Set volume to <int> db, (-32 (soft) - 0(loud) )" },
 	{ "audiodevice", "ad", rc_string, &sound_dsp_device, NULL, 0, 0, NULL, "Use an alternative audiodevice" },
@@ -94,9 +80,6 @@ int osd_get_mastervolume(void)
 
 void osd_sound_enable(int enable_it)
 {
-	if (!sound_enabled)
-		return;
-		
 	if (enable_it)
 	{
 		/* in case we get called twice with enable_it true */

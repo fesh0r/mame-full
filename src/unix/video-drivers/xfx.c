@@ -177,7 +177,6 @@ int sysdep_create_display(int depth)
   
   /* Map and expose the window. */
 
-  if(use_mouse) {
 	/* grab the pointer and query MotionNotify events */
 
 	XSelectInput(display, 
@@ -197,14 +196,6 @@ int sysdep_create_display(int depth)
 				 EnterWindowMask   | LeaveWindowMask ,
 				 GrabModeAsync, GrabModeAsync,
 				 None, cursor, CurrentTime );
-  }
-  else {
-	XSelectInput(display, 
-				 window, 
-				 FocusChangeMask | ExposureMask | 
-				 KeyPressMask | KeyReleaseMask
-				 );
-  }
   
   XMapRaised(display,window);
   XClearWindow(display,window);
@@ -228,7 +219,7 @@ void sysdep_display_close (void)
    if(window) {
      /* ungrab the pointer */
 
-     if(use_mouse) XUngrabPointer(display,CurrentTime);
+     XUngrabPointer(display,CurrentTime);
 
      CloseVScreen();  /* Shut down glide stuff */
    }

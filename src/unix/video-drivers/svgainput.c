@@ -268,15 +268,13 @@ int svga_input_open(void (*release_func)(void), void (*acquire_func)(void))
 	ioctl(console_fd, KDSETLED, leds);
 
 	/* init the mouse */
-	if((mouse_fd >= 0) && use_mouse)
+	if(mouse_fd >= 0)
 	{
 		/* fix ranges and initial position of mouse */
 		mouse_setrange_6d(-500,500, -500,500, -500,500, -500,500,
 				-500,500, -500,500, MOUSE_6DIM);
 		mouse_setposition_6d(0, 0, 0, 0, 0, 0, MOUSE_6DIM);
 	}
-	else
-		use_mouse = 0;
 
 	return 0;
 }

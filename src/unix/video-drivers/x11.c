@@ -278,12 +278,6 @@ void sysdep_update_display (struct mame_bitmap *bitmap)
 		force_dirty_palette = 1;  
 
 		xmame_keyboard_clear();
-		/* poll mouse twice to clear internal vars */
-		if (use_mouse)
-		{
-			sysdep_mouse_poll ();
-			sysdep_mouse_poll ();
-		}
 
 		/* Re-enable sound */
 		osd_sound_enable( 1 );

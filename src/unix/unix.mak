@@ -374,10 +374,6 @@ ifdef JOY_SDL
 JOY_OBJS += $(JOY_DIR)/joy_SDL.o
 endif
 
-ifdef XINPUT_DEVICES
-JOY_OBJS += $(JOY_DIR)/XInputDevices.o
-endif
-
 ifdef LIGHTGUN_ABS_EVENT
 JOY_OBJS += $(JOY_DIR)/lightgun_abs_event.o
 endif
