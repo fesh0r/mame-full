@@ -21,6 +21,9 @@ System Driver Changes:
 - [MSX] Fixed a sound regression introduced in the 0.93 MAME core update.
   (bug #683) [Nate Woods]
 
+- [TELMAC] Fixed a crash regression introduced in the 0.93 MAME core update.
+  (bug #671) [Nate Woods]
+
 
 
 User Interface Changes:

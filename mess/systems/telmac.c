@@ -179,6 +179,7 @@
 #include "devices/basicdsk.h"
 #include "devices/cassette.h"
 #include "devices/snapquik.h"
+#include "sound/beep.h"
 
 static int keylatch, vismac_latch;
 
@@ -976,13 +977,26 @@ SYSTEM_CONFIG_START( tmc600 )
 	CONFIG_DEVICE(tmc600_quickload_getinfo)
 SYSTEM_CONFIG_END
 
+static void setup_beep(int dummy)
+{
+	beep_set_volume(0, 0);
+	beep_set_state(0, 1);
+}
+
+static DRIVER_INIT( telmac )
+{
+	timer_set(0.0, 0, setup_beep);
+}
+
+
+
 /* System Drivers */
 
-//     YEAR  NAME 	   PARENT   COMPAT   MACHINE   INPUT   INIT	CONFIG    COMPANY 	     FULLNAME
-COMPX( 1977, tmc1800,  0,       0,	     tmc1800,  tmc1800,  0, tmc1800,  "Telercas Oy", "Telmac 1800", GAME_NOT_WORKING )
-COMPX( 1980, tmc2000,  0,       tmc1800, tmc2000,  tmc1800,  0, tmc2000,  "Telercas Oy", "Telmac 2000", GAME_NOT_WORKING )
-COMPX( 1980, tmc2000t, tmc2000, tmc1800, tmc2000t, tmc1800,  0, tmc2000,  "Telercas Oy", "Telmac 2000 (TOOL-2000)", GAME_NOT_WORKING )
-COMPX( 1980, tmc2000e, 0,       0,	     tmc2000e, tmc2000e, 0, tmc2000e, "Telercas Oy", "Telmac 2000E", GAME_NOT_WORKING )
-COMPX( 1982, tmc600,   0,       0,	     tmc600,   tmc600,   0, tmc600,   "Telercas Oy", "Telmac TMC-600 (Series I)", GAME_NOT_WORKING )
-COMPX( 1982, tmc600a,  tmc600,  0,	     tmc600,   tmc600,   0, tmc600,   "Telercas Oy", "Telmac TMC-600 (Series II)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-COMPX( 1982, tmc600as, tmc600,  0,	     tmc600,   tmc600,   0, tmc600,   "Telercas Oy", "Telmac TMC-600 AS", GAME_NOT_WORKING )
+//     YEAR  NAME 	   PARENT   COMPAT   MACHINE   INPUT     INIT	 CONFIG    COMPANY 	      FULLNAME
+COMPX( 1977, tmc1800,  0,       0,	     tmc1800,  tmc1800,  telmac, tmc1800,  "Telercas Oy", "Telmac 1800", GAME_NOT_WORKING )
+COMPX( 1980, tmc2000,  0,       tmc1800, tmc2000,  tmc1800,  telmac, tmc2000,  "Telercas Oy", "Telmac 2000", GAME_NOT_WORKING )
+COMPX( 1980, tmc2000t, tmc2000, tmc1800, tmc2000t, tmc1800,  telmac, tmc2000,  "Telercas Oy", "Telmac 2000 (TOOL-2000)", GAME_NOT_WORKING )
+COMPX( 1980, tmc2000e, 0,       0,	     tmc2000e, tmc2000e, telmac, tmc2000e, "Telercas Oy", "Telmac 2000E", GAME_NOT_WORKING )
+COMPX( 1982, tmc600,   0,       0,	     tmc600,   tmc600,   telmac, tmc600,   "Telercas Oy", "Telmac TMC-600 (Series I)", GAME_NOT_WORKING )
+COMPX( 1982, tmc600a,  tmc600,  0,	     tmc600,   tmc600,   telmac, tmc600,   "Telercas Oy", "Telmac TMC-600 (Series II)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+COMPX( 1982, tmc600as, tmc600,  0,	     tmc600,   tmc600,   telmac, tmc600,   "Telercas Oy", "Telmac TMC-600 AS", GAME_NOT_WORKING )

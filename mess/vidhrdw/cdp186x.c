@@ -220,9 +220,6 @@ VIDEO_START( cdp1869 )
 
 	cdp1869.ntsc_pal = 1;
 
-	beep_set_volume(0, 0);
-	beep_set_state(0, 1);
-
 	return 0;
 }
 
