@@ -174,7 +174,8 @@ void apple2_update_memory(void)
 				if (end_r >= mess_ram_size)
 					end_r = mess_ram_size - 1;
 				offset = meminfo.read_mem & APPLE2_MEM_MASK;
-				rbase = &mess_ram[offset];
+				if (end_r >= begin)
+					rbase = &mess_ram[offset];
 			}
 
 			/* install the actual handlers */
@@ -247,7 +248,8 @@ void apple2_update_memory(void)
 				if (end_w >= mess_ram_size)
 					end_w = mess_ram_size - 1;
 				offset = meminfo.write_mem & APPLE2_MEM_MASK;
-				wbase = &mess_ram[offset];
+				if (end_w >= begin)
+					wbase = &mess_ram[offset];
 			}
 
 
