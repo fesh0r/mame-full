@@ -142,6 +142,19 @@ else
 CPUDEFS += -DHAS_TMS7000_EXL=0
 endif
 
+CPU=$(strip $(findstring TX0@,$(CPUS)))
+ifneq ($(CPU),)
+TX0D = mess/cpu/pdp1
+OBJDIRS += $(OBJ)/$(TX0D)
+CPUDEFS += -DHAS_TX0_64KW=1 -DHAS_TX0_8KW=1
+CPUOBJS += $(OBJ)/$(TX0D)/tx0.o
+DBGOBJS += $(OBJ)/$(TX0D)/tx0dasm.o
+$(OBJ)/$(TX0D)/tx0.o:		$(TX0D)/tx0.h $(TX0D)/tx0.c
+$(OBJ)/$(TX0D)/tx0dasm.o:	$(TX0D)/tx0.h $(TX0D)/tx0dasm.c
+else
+CPUDEFS += -DHAS_TX0_64KW=0 -DHAS_TX0_64KW=0
+endif
+
 
 
 

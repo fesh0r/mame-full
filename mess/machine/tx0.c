@@ -6,7 +6,7 @@
 
 #include "driver.h"
 
-#include "cpu/tx0/tx0.h"
+#include "cpu/pdp1/tx0.h"
 #include "includes/tx0.h"
 #include "vidhrdw/crt.h"
 

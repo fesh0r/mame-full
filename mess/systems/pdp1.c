@@ -50,6 +50,7 @@ and the java source).
 
 #include "cpu/pdp1/pdp1.h"
 #include "includes/pdp1.h"
+#include "vidhrdw/crt.h"
 
 /*
  *
@@ -444,7 +445,7 @@ static MACHINE_DRIVER_START(pdp1)
 
 	MDRV_PALETTE_INIT(pdp1)
 	MDRV_VIDEO_START(pdp1)
-	MDRV_VIDEO_EOF(pdp1)
+	MDRV_VIDEO_EOF(crt)
 	MDRV_VIDEO_UPDATE(pdp1)
 
 	/* no sound */
