@@ -666,6 +666,61 @@ static BOOL WaitWithMessageLoop(HANDLE hEvent)
 	return FALSE;
 }
 
+#ifdef INPROCESS_MAME
+
+static int RunMAME(int nGameIndex, HANDLE hErrorWrite)
+{
+	extern int DECL_SPEC main_(int _argc, char **_argv);
+	char pCmdLine[2048];
+	int argc;
+	int in_quotes;
+	char *argv[200];
+	char *s;
+	
+	CreateCommandLine(nGameIndex, pCmdLine);
+
+	s = pCmdLine;
+	argc = 0;
+	in_quotes = 0;
+
+	do
+	{
+		while(*s && isspace(*s))
+			s++;
+
+		if (*s)
+		{
+			/* get this arg */
+			argv[argc] = s;
+			while(*s && (!isspace(*s) || in_quotes))
+			{
+				if (*s == '\"')
+					in_quotes = !in_quotes;
+				s++;
+			}
+
+			if (*s)
+				*(s++) = '\0';
+
+			/* did we pass in a quoted string? */
+			if ((argv[argc][0] == '\"') && (s[-2] == '\"'))
+			{
+				argv[argc]++;
+				s[-2] = '\0';
+			}
+
+			/* next arg */
+			argc++;
+		}
+	}
+	while(*s);
+
+	argv[argc] = NULL;
+	return main_(argc, argv);
+}
+
+#else /* !INPROCESS_MAME */
+
 static int RunMAME(int nGameIndex, HANDLE hErrorWrite)
 {
 	DWORD               dwExitCode = 0;
@@ -718,6 +773,8 @@ static int RunMAME(int nGameIndex, HANDLE hErrorWrite)
 
 	return dwExitCode;
 }
+
+#endif /* INPROCESS_MAME */
 
 int WINAPI WinMain(HINSTANCE    hInstance,
                    HINSTANCE    hPrevInstance,

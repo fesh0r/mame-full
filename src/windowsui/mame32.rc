@@ -47,7 +47,7 @@ BEGIN
     POPUP "&Help"
     BEGIN
 #ifdef MESS
-        MENUITEM "&About MESS32",               ID_ABOUT
+        MENUITEM "&About MESS",               ID_ABOUT
 #else
         MENUITEM "&About MAME32",               ID_ABOUT
 #endif
@@ -248,8 +248,8 @@ BEGIN
 #endif
             VALUE "LegalTrademarks", "\0"
 #ifdef MESS
-            VALUE "OriginalFilename", "MESS32.exe\0"
-            VALUE "ProductName", "MESS32\0"
+            VALUE "OriginalFilename", "MESS.exe\0"
+            VALUE "ProductName", "MESS\0"
 #else
             VALUE "OriginalFilename", "MAME32.exe\0"
             VALUE "ProductName", "MAME32\0"
@@ -310,7 +310,7 @@ IDI_CHECKMARK           ICON    DISCARDABLE     "Res\\checkmark.ico"
 IDD_ABOUT DIALOG DISCARDABLE  0, 0, 296, 129
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 #ifdef MESS
-CAPTION "About MESS32"
+CAPTION "About MESS"
 #else
 CAPTION "About MAME32"
 #endif
@@ -362,7 +362,7 @@ END
 IDD_HELP DIALOG DISCARDABLE  0, 0, 336, 178
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
 #ifdef MESS
-CAPTION "MESS32"
+CAPTION "MESS"
 #else
 CAPTION "MAME32"
 #endif
@@ -375,7 +375,7 @@ END
 IDD_DIRECTX DIALOG DISCARDABLE  0, 0, 236, 69
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 #ifdef MESS
-CAPTION "MESS32"
+CAPTION "MESS"
 #else
 CAPTION "MAME32"
 #endif
@@ -727,7 +727,7 @@ STYLE DS_3DLOOK | DS_NOFAILCREATE | WS_MINIMIZEBOX | WS_MAXIMIZEBOX |
     WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 EXSTYLE WS_EX_CONTROLPARENT
 #ifdef MESS
-CAPTION "MESS32"
+CAPTION "MESS"
 #else
 CAPTION "MAME32"
 #endif
@@ -832,7 +832,7 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,18,62,146,10,0,
                     HIDC_RESET_FILTERS
 #ifdef MESS
-    CTEXT           "Select the options to be restored to the default settings.  The options will be restored when MESS32 is run next.",
+    CTEXT           "Select the options to be restored to the default settings.  The options will be restored when MESS is run next.",
 #else
     CTEXT           "Select the options to be restored to the default settings.  The options will be restored when MAME32 is run next.",
 #endif
@@ -1152,7 +1152,7 @@ BEGIN
     ID_VIEW_SCREEN_SHOT     "Show or hide the screen shot"
     ID_HELP_CONTENTS        "Display help contents"
 #ifdef MESS
-    ID_HELP_WHATS_NEW32     "What's new in MESS32"
+    ID_HELP_WHATS_NEW32     "What's new in MESS"
 #else
     ID_HELP_WHATS_NEW32     "What's new in MAME32"
 #endif

@@ -301,6 +301,9 @@ void OptionsInit(int total_games)
 	settings.area.height = 400;
 	settings.splitter[0] = 150;
 	settings.splitter[1] = 300;
+#ifdef MESS
+    settings.splitter[2] = 450;
+#endif
 
 	settings.language          = strdup("english");
 	settings.flyerdir          = strdup("flyers");

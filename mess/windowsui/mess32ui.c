@@ -19,6 +19,8 @@
 #define alloca _alloca
 #endif
 
+/* #define INPROCESS_MAME */
+
 /* from src/mess/win32.c */
 /*
 char *strncatz(char *dest, const char *source, size_t len);
