@@ -630,7 +630,7 @@ static void bdf_write_repeat( void *bdf, UINT8 value, int count, int *track_leng
 	for( i=0; i<count; i++ )
 		bdf_write( bdf, &value, 1 );
 		
-	track_length += count;
+	*track_length += count;
 }
 
 static int cocodmk_format_track(struct InternalBdFormatDriver *drv, void *bdf, const struct disk_geometry *geometry, UINT8 track, UINT8 head)
@@ -645,18 +645,24 @@ static int cocodmk_format_track(struct InternalBdFormatDriver *drv, void *bdf, c
 		
 	/* Set up track table of contents */
 	
-	for( i = 0, j = 36; i < DMK_TOC_LEN; i++ )
+	for( i = 0, j = ( DMK_TOC_LEN * sizeof( UINT16 ) ) + 32 + 8 + 3; i < DMK_TOC_LEN; i++ )
 	{
 		if( i >= geometry->sectors )
 			offset = 0;
 		else
-			offset = LITTLE_ENDIANIZE_INT16(j);
-			
+		{
+			if( j > DMK_TRACK_LEN )
+				return BLOCKDEVICE_ERROR_CANTENCODEFORMAT;
+				
+			offset = j | 0x8000;
+			offset = LITTLE_ENDIANIZE_INT16(offset);
+		}
+		
 		bdf_write( bdf, &offset, sizeof( UINT16 ) );
-		j += 72 + geometry->sector_size;
-	}
+		track_length += sizeof( UINT16 );
 
-	track_length += 80 * sizeof( UINT16 ); /* Keep track of the number of bytes we have written */
+		j += 5 + 2 + 22 + 12 + 3 + 1 + geometry->sector_size + 2 + 24 + 8 + 3;
+	}
 	
 	/* Write track lead in */
 	bdf_write_repeat( bdf, 0x4e, 32, &track_length );
@@ -669,14 +675,18 @@ static int cocodmk_format_track(struct InternalBdFormatDriver *drv, void *bdf, c
 	/* Now write each sector */
 	for(i=0; i<geometry->sectors; i++ )
 	{
+		bdf_write_repeat( bdf, 0x00, 8, &track_length );
 		bdf_write_repeat( bdf, 0xa1, 3, &track_length );
 		dmk_set_idam_type( idam, 0xfe );
 		dmk_set_idam_trackNumber( idam, track );
-		dmk_set_iaam_sideNumber( idam, head-1 );
+		dmk_set_iaam_sideNumber( idam, head );
 		dmk_set_idam_sectorNumber( idam, sector_array[i] );
 		
 		switch( geometry->sector_size )
 		{
+			case 128 << 0:
+				dmk_set_idam_sectorLength( idam, 0 );
+				break;
 			case 128 << 1:
 				dmk_set_idam_sectorLength( idam, 1 );
 				break;
@@ -727,8 +737,9 @@ static int cocodmk_format_track(struct InternalBdFormatDriver *drv, void *bdf, c
 		/* Write sector body */
 		bdf_write_repeat( bdf, 0xa1, 3, &track_length );
 		bdf_write( bdf, sector_body, geometry->sector_size + 1 );
-		free( sector_body );
 		track_length += geometry->sector_size + 1;
+		free( sector_body );
+		sector_body = NULL;
 		bdf_write( bdf, &calculated_crc, 2 );
 		track_length += 2;
 		
