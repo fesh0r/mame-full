@@ -359,7 +359,7 @@ $(OBJ)/apple2.a:   \
 	  $(OBJ)/mess/systems/apple2.o
 
 $(OBJ)/mac.a: \
-#	  $(OBJ)/mess/sndhrdw/mac.o	 \
+	  $(OBJ)/mess/sndhrdw/mac.o	 \
 	  $(OBJ)/mess/machine/iwm.o	 \
 	  $(OBJ)/mess/vidhrdw/mac.o	 \
 	  $(OBJ)/mess/machine/mac.o	 \
@@ -515,7 +515,7 @@ $(OBJ)/mtx.a:	   \
 	  $(OBJ)/mess/systems/mtx.o
 
 $(OBJ)/lisa.a:	   \
-#	  $(OBJ)/mess/machine/iwm_lisa.o \
+	  $(OBJ)/mess/machine/iwm_lisa.o \
 	  $(OBJ)/mess/machine/lisa.o	 \
 	  $(OBJ)/mess/systems/lisa.o
 
