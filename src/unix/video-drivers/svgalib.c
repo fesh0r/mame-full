@@ -3,9 +3,8 @@
  Linux SVGALib adaptation by Phillip Ezolt pe28+@andrew.cmu.edu
   
 ***************************************************************************/
-#define __SVGALIB_C
-
-#include <math.h>
+#include <stdlib.h>
+#include <string.h>
 #include <vga.h>
 #include <vgagl.h>
 #include "svgainput.h"
@@ -13,14 +12,14 @@
 
 static int startx, starty;
 static int scaled_width, scaled_height;
-static int update_type;
+static int video_update_type;
 static blit_func_p blit_func;
 static unsigned char *video_mem;
 static unsigned char *doublebuffer_buffer = NULL;
 static int use_linear = 1;
 static vga_modeinfo video_modeinfo;
 
-struct rc_option display_opts[] = {
+struct rc_option sysdep_display_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ NULL, NULL, rc_link, aspect_opts, NULL, 0, 0, NULL, NULL },
 	{ "Svgalib Related", NULL, rc_seperator, NULL, NULL, 0,	0, NULL, NULL },
@@ -31,9 +30,9 @@ struct rc_option display_opts[] = {
 
 int sysdep_display_init(void)
 {
-	memset(sysdep_display_properties.mode, 0,
+	memset(sysdep_display_properties.mode_info, 0,
 	  SYSDEP_DISPLAY_VIDEO_MODES * sizeof(int));
-        sysdep_display_properties.mode[0] =
+        sysdep_display_properties.mode_info[0] =
           SYSDEP_DISPLAY_FULLSCREEN | SYSDEP_DISPLAY_EFFECTS;
         memset(sysdep_display_properties.mode_name, 0,
           SYSDEP_DISPLAY_VIDEO_MODES * sizeof(const char *));
@@ -48,15 +47,12 @@ int sysdep_display_init(void)
 void sysdep_display_exit(void)
 {
 	svga_input_exit();
-
-	/* close svgalib (again) just to be sure */
-	vga_setmode(TEXT);
 }
 
 /* This name doesn't really cover this function, since it also sets up mouse
    and keyboard. This is done over here, since on most display targets the
    mouse and keyboard can't be setup before the display has. */
-int sysdep_display_open(int reopen)
+int sysdep_display_driver_open(int reopen)
 {
 	int i;
 	int video_mode = -1;
@@ -64,6 +60,16 @@ int sysdep_display_open(int reopen)
 	int depth, bpp;
 	vga_modeinfo *my_modeinfo;
 	static int firsttime = 1;
+	
+	if (reopen)
+	{
+	  sysdep_display_effect_close();
+          if (doublebuffer_buffer)
+          {
+                  free(doublebuffer_buffer);
+                  doublebuffer_buffer = NULL;
+          }
+	}
 
 	/* Find a suitable mode, also determine the max size of the display */
 	sysdep_display_properties.max_width  = 0;
@@ -101,9 +107,9 @@ int sysdep_display_open(int reopen)
 		}
 		/* also determine the max size of the display */
 		if (my_modeinfo->width  > sysdep_display_properties.max_width)
-		  sysdep_display_properties.max_width = my_modeinfo->width;
+		  sysdep_display_properties.max_width  = my_modeinfo->width;
 		if (my_modeinfo->height > sysdep_display_properties.max_height)
-		  sysdep_display_properties.max_width = my_modeinfo->height;
+		  sysdep_display_properties.max_height = my_modeinfo->height;
 
                 if (firsttime)
 		  fprintf(stderr, "Svgalib: Info: Found videomode %dx%dx%d\n",
@@ -130,33 +136,34 @@ int sysdep_display_open(int reopen)
 	    sysdep_display_properties.palette_info.red_mask   = 0x001F;
             sysdep_display_properties.palette_info.green_mask = 0x03E0;
             sysdep_display_properties.palette_info.blue_mask  = 0xEC00;
-            sysdep_display_properties.depth = 15;
-            sysdep_display_properties.bpp   = 16;
+            sysdep_display_properties.palette_info.depth      = 15;
+            sysdep_display_properties.palette_info.bpp        = 16;
             break;
           case 65536:
             sysdep_display_properties.palette_info.red_mask   = 0xF800;
             sysdep_display_properties.palette_info.green_mask = 0x07E0;
             sysdep_display_properties.palette_info.blue_mask  = 0x001F;
-            sysdep_display_properties.depth = 16;
-            sysdep_display_properties.bpp   = 16;
+            sysdep_display_properties.palette_info.depth      = 16;
+            sysdep_display_properties.palette_info.bpp        = 16;
             break;
           case 16777216:
             sysdep_display_properties.palette_info.red_mask   = 0xFF0000;
             sysdep_display_properties.palette_info.green_mask = 0x00FF00;
             sysdep_display_properties.palette_info.blue_mask  = 0x0000FF;
-            sysdep_display_properties.depth = 24;
-            sysdep_display_properties.bpp   = video_modeinfo.bytesperpixel*8;
+            sysdep_display_properties.palette_info.depth      = 24;
+            sysdep_display_properties.palette_info.bpp        = 
+              video_modeinfo.bytesperpixel*8;
             break;
 	}
 	sysdep_display_properties.vector_renderer = NULL;
 
 	/* get a blit func */
-	blit_func = sysdep_display_get_blitfunc_doublebuffer();
+	blit_func = sysdep_display_get_blitfunc_dfb();
 	if (blit_func == NULL)
 	{
 		fprintf(stderr, "Error: unsupported dept/bpp: %d/%dbpp\n",
-		  sysdep_display_properties.depth,
-		  sysdep_display_properties.bpp);
+		  sysdep_display_properties.palette_info.depth,
+		  sysdep_display_properties.palette_info.bpp);
 		return 1;
 	}
 
@@ -171,51 +178,52 @@ int sysdep_display_open(int reopen)
 
 	/* do we have a linear framebuffer ? */
 	i = video_modeinfo.width * video_modeinfo.height *
-		video_modeinfo.bytesperpixel;
-	if (i <= 65536 || 
-		(video_modeinfo.flags & IS_LINEAR) ||
-		(use_linear && (video_modeinfo.flags && CAPABLE_LINEAR) &&
-		 vga_setlinearaddressing() >=  i))
+          video_modeinfo.bytesperpixel;
+	if ((video_modeinfo.flags & IS_LINEAR) ||
+	    (use_linear && (video_modeinfo.flags && CAPABLE_LINEAR) &&
+             vga_setlinearaddressing() >= i))
 	{
-		video_mem  = vga_getgraphmem();
-		video_mem += startx * video_modeinfo.bytesperpixel;
-		video_mem += starty * video_modeinfo.width *
-			video_modeinfo.bytesperpixel;
-		update_type=0;
-		fprintf(stderr, "Svgalib: Info: Using a linear framebuffer to speed up\n");
+          video_mem  = vga_getgraphmem();
+          video_mem += startx * video_modeinfo.bytesperpixel;
+          video_mem += starty * video_modeinfo.width *
+                  video_modeinfo.bytesperpixel;
+          video_update_type=0;
+          fprintf(stderr, "Svgalib: Info: Using a linear framebuffer to speed up\n");
 	}
 	else /* use gl funcs todo the updating */
 	{
+	  gl_setcontextvga(video_mode);
+          /* do we need to blit to a doublebuffer buffer because using
+             effects, scaling etc. */
 	  if (!sysdep_display_blit_dest_bitmap_equals_src_bitmap())
-		gl_setcontextvga(video_mode);
-
-			scaled_height*video_modeinfo.bytesperpixel);
-		if (!doublebuffer_buffer)
-		{
-			fprintf(stderr, "Svgalib: Error: Couldn't allocate doublebuffer buffer\n");
-			return 1;
-		}
-		
-		/* do we need to blit to a doublebuffer buffer when using
-		   effects or scaling */
-		if(effect || (sysdep_display_params.widthscale > 1) ||
-		   (sysdep_display_params.yarbsize!=sysdep_display_params.height))
-			update_type=2;
-		else
-			update_type=1;
+	  {
+	    doublebuffer_buffer = malloc(scaled_width*scaled_height*
+	      video_modeinfo.bytesperpixel);
+            if (!doublebuffer_buffer)
+            {
+                    fprintf(stderr, "Svgalib: Error: Couldn't allocate doublebuffer buffer\n");
+                    return 1;
+            }
+	    video_update_type=2;
+          }
+	  else
+	    video_update_type=1;
 	}
 
 	/* init input */
-	if(svga_input_open(NULL, NULL))
-		return 1;
+	if (!reopen)
+	{
+	  if(svga_input_open(NULL, NULL))
+	    return 1;
+        }
 
-	return effect_open();
+	return sysdep_display_effect_open();
 }
 
 /* shut up the display */
 void sysdep_display_close(void)
 {
-    	effect_close();
+    	sysdep_display_effect_close();
 
 	/* close input */
 	svga_input_close();
@@ -232,83 +240,63 @@ void sysdep_display_close(void)
 }
 
 /* Update the display. */
-int sysdep_display_update(struct mame_bitmap *bitmap,
-  struct rectangle *vis_area, struct rectangle *dirty_area,
-  struct sysdep_palette_struct *palette, unsigned int flags)
+const char *sysdep_display_update(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, int keyb_leds, int flags)
 {
+  svga_input_set_keybleds(keyb_leds);
   switch(video_update_type)
   {
     case 0: /* linear */
+      blit_func(bitmap, vis_in_dest_out, dirty_area, palette, video_mem,
+        video_modeinfo.linewidth/video_modeinfo.bytesperpixel);
       break;
-    case 1: /* gl no scaling/effect/palette lookup/depthconversion */
+    case 1: /* gl bitmap equals framebuffer */
+      /* Note: we calculate the real bitmap->width, as used in
+         osd_create_bitmap, this fixes the skewing bug in tempest
+         & others */
+      sysdep_display_check_bounds(bitmap, vis_in_dest_out, dirty_area, 3);
+      gl_putboxpart(
+        startx + vis_in_dest_out->min_x,
+        starty + vis_in_dest_out->min_y,
+        (vis_in_dest_out->max_x + 1) - vis_in_dest_out->min_x,
+        (vis_in_dest_out->max_y + 1) - vis_in_dest_out->min_y,
+        ((unsigned char *)bitmap->line[1] - (unsigned char *)bitmap->line[0]) / 
+          video_modeinfo.bytesperpixel,
+        bitmap->height, bitmap->line[0], dirty_area->min_x, dirty_area->min_y);
       break;
-    case 2: /* gl scaling/effect/palette lookup/depthconversion */
+    case 2: /* gl bitmap needs conversion before it can be blitted */
+      blit_func(bitmap, vis_in_dest_out, dirty_area, palette,
+        doublebuffer_buffer, scaled_width);
+      gl_putboxpart(
+        startx + vis_in_dest_out->min_x,
+        starty + vis_in_dest_out->min_y,
+        (vis_in_dest_out->max_x + 1) - vis_in_dest_out->min_x,
+        (vis_in_dest_out->max_y + 1) - vis_in_dest_out->min_y,
+        scaled_width, scaled_height, doublebuffer_buffer,
+        dirty_area->min_x, dirty_area->min_y);
       break;
   }
+  return NULL;
 }
 
-static void svgalib_update_linear_16bpp(struct mame_bitmap *bitmap)
+void sysdep_display_driver_clear_buffer(void)
 {
-	int linewidth = video_modeinfo.linewidth/2;
-#define SRC_PIXEL  unsigned short
-#define DEST_PIXEL unsigned short
-#define DEST video_mem
-#define DEST_WIDTH linewidth
-#define DOUBLEBUFFER
-	if(current_palette->lookup)
-	{
-#define INDIRECT current_palette->lookup
-#include "blit.h"
-#undef INDIRECT
-	}
-	else
-	{
-#include "blit.h"
-	}
-#undef SRC_PIXEL
-#undef DEST_PIXEL
-#undef DEST
-#undef DEST_WIDTH
-#undef DOUBLEBUFFER
-}
-
-static void svgalib_update_gl_16bpp(struct mame_bitmap *bitmap)
-{
-	/* Note: we calculate the real bitmap->width, as used in
-	   osd_create_bitmap, this fixes the skewing bug in tempest
-	   & others */
-	int bitmap_linewidth = ((unsigned char *)bitmap->line[1] - (unsigned char *)bitmap->line[0]) / video_modeinfo.bytesperpixel;
-	gl_putboxpart(	startx, starty,
-			scaled_width, scaled_height,
-			bitmap_linewidth, bitmap->height,
-			bitmap->line[0], visual.min_x, visual.min_y);
-}
-
-static void svgalib_update_gl_doublebuf_16bpp(struct mame_bitmap *bitmap)
-{
-#define SRC_PIXEL  unsigned short
-#define DEST_PIXEL unsigned short
-#define DEST doublebuffer_buffer
-#define DEST_WIDTH scaled_width
-#define PUT_IMAGE(X, Y, WIDTH, HEIGHT) \
-	gl_putboxpart( \
-			startx + X, starty + Y, \
-			WIDTH, HEIGHT, \
-			scaled_width, scaled_height, \
-			doublebuffer_buffer, X, Y );
-	if(current_palette->lookup)
-	{
-#define INDIRECT current_palette->lookup
-#include "blit.h"
-#undef INDIRECT
-	}
-	else
-	{
-#include "blit.h"
-	}
-#undef SRC_PIXEL
-#undef DEST_PIXEL
-#undef DEST
-#undef DEST_WIDTH
-#undef PUT_IMAGE
+  int line;
+  switch(video_update_type)
+  {
+    case 0: /* linear */
+      for (line=0; line<scaled_height; line++)
+        memset(video_mem +
+          line*video_modeinfo.linewidth/video_modeinfo.bytesperpixel, 0,
+          video_modeinfo.linewidth/video_modeinfo.bytesperpixel);
+      break;
+    case 1: /* gl bitmap equals framebuffer */
+      gl_fillbox(startx, starty, scaled_width, scaled_height, 0);
+      break;
+    case 2: /* gl bitmap needs conversion before it can be blitted */
+      memset(doublebuffer_buffer, 0,
+        scaled_width * scaled_height * video_modeinfo.bytesperpixel);
+      break;
+  }
 }
