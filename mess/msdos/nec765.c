@@ -4,6 +4,8 @@
  *
  *	allow direct access to a PCs NEC 765 floppy disc controller
  *
+ *  KT - uses logerror now.
+ *     - removed references to wd179x and wd179x error codes
  *	!!!! this is ALPHA - be careful !!!!
  *
  *****************************************************************************/
@@ -13,19 +15,31 @@
 #include <dpmi.h>
 #include <time.h>
 #include "driver.h"
-#include "machine/wd179x.h"
+#include "includes/flopdrv.h"
+
+#define NEC765_NOT_READY	0x001
+
+#define PC_DOR_DMA_ENABLED (1<<3)
+#define PC_DOR_FDC_ENABLED (1<<2)
+
 
 #define RE_INTERLEAVE	0
-#define VERBOSE 		1
+//#define VERBOSE                 1
 /* since most PC floppy disc controllers don't really support FM, */
 /* set this to 0x40 to always format/read/write in MFM mode */
 #define MFM_OVERRIDE	0x40
 
 #if VERBOSE
-#define LOG(msg) if (log) fprintf msg
+#define LOG(msg) logerror(msg)
 #else
 #define LOG(msg)
 #endif
+
+
+static void delay_time_usec(unsigned long usecs);
+static void delay_time_msec(unsigned long msecs);
+static int out_nec(UINT8 b);
+static void sense_interrupt_status(void);
 
 typedef struct
 {
@@ -84,7 +98,7 @@ typedef struct
 	unsigned fault:1;				/* fault */
 }   ST3;
 
-
+#if 0
 typedef struct
 {
 	ST0 st0;			/* status 0 */
@@ -97,6 +111,7 @@ typedef struct
 	ST3 st3;			/* status 3 (after sense drive status cmd) */
 	UINT8 pcn;
 }   STA;
+#endif
 
 typedef struct
 {
@@ -113,7 +128,10 @@ typedef struct
 	UINT8 wcmd; 		 /* write command (0x05 normal, 0x09 deleted data address mark) */
 	UINT8 dstep;		 /* double step shift factor (1 for 40 track disk in 80 track drive) */
 	STM stm;			/* main status */
-	STA sta;			/* status file */
+//        STA sta;                        /* status file */
+        unsigned long result_count;
+        UINT8 results[16];
+    int cur_track[4];
 }   NEC;
 
 typedef struct {
@@ -181,7 +199,6 @@ static GAPS gaps[] = {
 	{0,0,0,0,0}
 };
 
-static FILE *log = NULL;
 static NEC nec;
 static UINT8 unit_type[4] = {0xff, 0xff, 0xff, 0xff};
 
@@ -190,8 +207,11 @@ static __dpmi_paddr new_irq_E;	/* new interrupt vector 0E */
 static _go32_dpmi_seginfo nec_dma; /* for allocation of a sector DMA buffer */
 static UINT8 irq_flag = 0;		 /* set by IRQ 6 (INT 0E) */
 static UINT8 initialized = 0;
-static void *timer_motors = NULL;
+//static void *timer_motors = NULL;
 
+static void recalibrate(UINT8);
+
+#if 0
 /*****************************************************************************
  * convert NEC 765 status to WD179X status 1 (restore, seek, step)
  *****************************************************************************/
@@ -234,13 +254,14 @@ static UINT8 FDC_STA2(int read_mode)
 	if (nec.sta.st1.not_writeable)	/* not writeable ? */
 		sta |= STA_2_WRITE_PRO;
 	if (nec.sta.st0.int_code == 3)	/* interrupt code == ready change ? */
-		sta |= STA_2_NOT_READY;
+		sta |= NEC765_NOT_READY;
 
 	if (read_mode && !(sta & ~STA_2_REC_TYPE))
 		sta |= STA_2_DRQ | STA_2_BUSY;
 
 	return sta;
 }
+#endif
 
 /*****************************************************************************
  * initialize dma controller to read count bytes to ofs
@@ -249,7 +270,7 @@ static void dma_read(int count)
 {
 	int ofs = nec_dma.rm_segment * 16 + nec_dma.rm_offset;
 
-	LOG((log,"NEC765  dma_read %08X %04X\n", ofs, count));
+	LOG(("NEC765  dma_read %08X %04X\n", ofs, count));
 	outportb(0x0a, 0x04 | 0x02);		/* mask DMA channel 2 */
 	outportb(0x0b, 0x46);				/* DMA read command */
 	outportb(0x0c, 0);					/* reset first/last flipflop */
@@ -268,7 +289,7 @@ static void dma_write(int count)
 {
 	int ofs = nec_dma.rm_segment * 16 + nec_dma.rm_offset;
 
-	LOG((log,"NEC765  dma_write %08X %04X\n", ofs, count));
+	LOG(("NEC765  dma_write %08X %04X\n", ofs, count));
 	outportb(0x0a, 0x04 | 0x02);		/* mask DMA channel 2 */
 	outportb(0x0b, 0x4a);				/* DMA write command */
 	outportb(0x0c, 0);					/* reset first/last flipflop */
@@ -301,8 +322,9 @@ static int main_status(void)
 
 	if (timeout <= 0)
 	{
-		LOG((log,"NEC765  STM: %02X RDY%c DIR%c IO%c NDMA%c %c%c%c%c\n",
-			*(UINT8 *) &nec.stm,
+                
+         /*       LOG(("NEC765  STM: %02X RDY%c DIR%c IO%c NDMA%c %c%c%c%c\n",
+                        nec.stm,
 			(nec.stm.ready) ? '*' : '-',
 			(nec.stm.read_from_fdc) ? '-' : '+',
 			(nec.stm.io_active) ? '*' : '-',
@@ -311,23 +333,45 @@ static int main_status(void)
 			(nec.stm.drive_1) ? 'B' : '*',
 			(nec.stm.drive_2) ? 'C' : '*',
 			(nec.stm.drive_3) ? 'D' : '*'));
-	}
+        */}
 	return (timeout > 0);
 }
 
 /*****************************************************************************
  * NECs results phase: read everything into the status registers
  *****************************************************************************/
-static void results(int sense_interrupt)
+static void results(void)
 {
+        nec.result_count = 0;
 
+        do
+        {       /* get main status register */
+                if (main_status())
+                {
+                        /* didn't time out if got to here */
+                        if (nec.stm.read_from_fdc)
+                        {
+                                /* transfer to cpu */
+
+
+                                /* store byte in result buffer */
+                                nec.results[nec.result_count] = inportb(0x03f5);
+
+                                logerror("REAL NEC765: byte from fdc: %02x\r\n",nec.results[nec.result_count]);
+
+                                nec.result_count++;
+                        }
+                }
+        }
+        while (nec.stm.io_active);
+#if 0
 	if (sense_interrupt)
 	{
 		if (main_status() && nec.stm.read_from_fdc)
 		{
 			*(UINT8*)&nec.sta.st3 = inportb(0x3F5);
-			LOG((log,"NEC765  ST3: 0x%02X US%d HD%d TS%c T0%c RY%c WP%c FT%c\n",
-				*(UINT8*)&nec.sta.st3,
+                     /*   LOG(("NEC765  ST3: 0x%02X US%d HD%d TS%c T0%c RY%c WP%c FT%c\n",
+                                nec.sta.st3,
 				nec.sta.st3.unit_select,
 				nec.sta.st3.head,
 				(nec.sta.st3.two_side) ? '*' : '-',
@@ -335,11 +379,12 @@ static void results(int sense_interrupt)
 				(nec.sta.st3.ready) ? '*' : '-',
 				(nec.sta.st3.write_protect) ? '*' : '-',
 				(nec.sta.st3.fault) ? '*' : '-'));
-		}
+                        */
+                }
 		if (main_status() && nec.stm.read_from_fdc)
 		{
 			*(UINT8*)&nec.sta.pcn = inportb(0x3F5);
-			LOG((log,"NEC765  PCN: %02d\n", nec.sta.pcn));
+			LOG(("NEC765  PCN: %02d\n", nec.sta.pcn));
 		}
 	}
 	else
@@ -347,32 +392,34 @@ static void results(int sense_interrupt)
 		if (main_status() && nec.stm.read_from_fdc)
 		{
 			*(UINT8*)&nec.sta.st0 = inportb(0x3F5);
-			LOG((log,"NEC765  ST0: 0x%02X US%d HD%d NR%c EC%c SE%c IC%d\n",
-				*(UINT8*)&nec.sta.st0,
+                        /*LOG(("NEC765  ST0: 0x%02X US%d HD%d NR%c EC%c SE%c IC%d\n",
+                                nec.sta.st0,
 				nec.sta.st0.unit_select,
 				nec.sta.st0.head,
 				(nec.sta.st0.not_ready) ? '*' : '-',
 				(nec.sta.st0.equip_check) ? '*' : '-',
 				(nec.sta.st0.seek_end) ? '*' : '-',
 				nec.sta.st0.int_code));
-		}
+                        */
+                }
 		if (main_status() && nec.stm.read_from_fdc)
 		{
 			*(UINT8*)&nec.sta.st1 = inportb(0x3F5);
-			LOG((log,"NEC765  ST1: 0x%02X MA%c NW%c ND%c OR%c DE%c EC%c\n",
-				*(UINT8*)&nec.sta.st1,
+                        /*LOG(("NEC765  ST1: 0x%02X MA%c NW%c ND%c OR%c DE%c EC%c\n",
+                                nec.sta.st1,
 				(nec.sta.st1.missing_AM) ? '*' : '-',
 				(nec.sta.st1.not_writeable) ? '*' : '-',
 				(nec.sta.st1.no_data) ? '*' : '-',
 				(nec.sta.st1.overrun) ? '*' : '-',
 				(nec.sta.st1.data_error) ? '*' : '-',
 				(nec.sta.st1.end_of_cylinder) ? '*' : '-'));
-		}
+                        */
+                }
 		if (main_status() && nec.stm.read_from_fdc)
 		{
 			*(UINT8*)&nec.sta.st2 = inportb(0x3F5);
-			LOG((log,"NEC765  ST2: 0x%02X MD%c BC%c SN%c SH%c WC%c DD%c CM%c\n",
-				*(UINT8*)&nec.sta.st2,
+                        /*LOG(("NEC765  ST2: 0x%02X MD%c BC%c SN%c SH%c WC%c DD%c CM%c\n",
+                                nec.sta.st2,
 				(nec.sta.st2.missing_DAM) ? '*' : '-',
 				(nec.sta.st2.bad_cylinder) ? '*' : '-',
 				(nec.sta.st2.scan_not_satisfied) ? '*' : '-',
@@ -380,39 +427,108 @@ static void results(int sense_interrupt)
 				(nec.sta.st2.wrong_cylinder) ? '*' : '-',
 				(nec.sta.st2.data_error) ? '*' : '-',
 				(nec.sta.st2.control_mark) ? '*' : '-'));
-		}
+                        */
+                }
 
 		if (main_status() && nec.stm.read_from_fdc)
 		{
 			*(UINT8*)&nec.sta.c = inportb(0x3F5);
-			LOG((log,"NEC765       C:%02d", nec.sta.c));
+			LOG(("NEC765       C:%02d", nec.sta.c));
 		}
 		if (main_status() && nec.stm.read_from_fdc)
 		{
 			*(UINT8*)&nec.sta.h = inportb(0x3F5);
-			LOG((log," H:%d", nec.sta.h));
+			LOG((" H:%d", nec.sta.h));
 		}
 		if (main_status() && nec.stm.read_from_fdc)
 		{
 			*(UINT8*)&nec.sta.s = inportb(0x3F5);
-			LOG((log," S:%02d", nec.sta.s));
+			LOG((" S:%02d", nec.sta.s));
 		}
 		if (main_status() && nec.stm.read_from_fdc)
 		{
 			*(UINT8*)&nec.sta.n = inportb(0x3F5);
-			LOG((log," N:%2d", nec.sta.n));
+			LOG((" N:%2d", nec.sta.n));
 		}
-		LOG((log,"\n"));
+		LOG(("\n"));
 	}
 
 /* more data? shouldn't happen, but read it away */
 	while (main_status() && nec.stm.read_from_fdc)
 	{
-		UINT8 data = inportb(0x3F5);
-
-		LOG((log,"NEC765  read unexpected %02X\n", data));
+#ifdef VERBOSE
+                UINT8 data = inportb(0x3F5);
+#else
+                inportb(0x03f5);
+#endif
+		LOG(("NEC765  read unexpected %02X\n", data));
 	}
+#endif
 }
+static void sense_interrupt_status(void)
+{
+    if (out_nec(0x08))      /* sense interrupt status */
+		return;
+
+    results();
+}
+
+static void select_drive(UINT8 drive_index, UINT8 motor_on)
+{
+   UINT8 data;
+
+   /* fdc enabled and dma enabled */
+   data = PC_DOR_FDC_ENABLED | PC_DOR_DMA_ENABLED;
+   data |= (drive_index & 0x03);
+
+   if (motor_on)
+   {
+        data |= (1<<(4+drive_index));
+   }
+   /* digital output register */
+   outportb(0x3f2, data);
+
+   delay_time_msec(1000);
+
+}
+
+
+static void delay_time_usec(unsigned long usecs)
+{
+    unsigned long start_time;
+    unsigned long current_time;
+
+    start_time = uclock();
+    current_time = start_time;
+
+    while ((current_time - start_time)<usecs)
+    {
+        current_time = uclock();
+    }
+}
+
+static void delay_time_msec(unsigned long msecs)
+{
+    delay_time_usec(msecs*1000);
+}
+
+
+
+static void reset_fdc(UINT8 drive_index, UINT8 motor_on)
+{
+    UINT8 data;
+
+    data = PC_DOR_DMA_ENABLED;
+    data |= (drive_index & 0x03);
+
+    if (motor_on)
+    {
+        data |= (1<<(4+drive_index));
+    }
+    outportb(0x03f2, data);
+}
+
+
 
 /*****************************************************************************
  * out_nec: send a UINT8 to the NEC
@@ -425,12 +541,12 @@ static int out_nec(UINT8 b)
 	{
 		if (nec.stm.read_from_fdc)
 		{
-			LOG((log,"NEC765   read_from_fdc!\n"));
-			results(0);
+            logerror("REAL NEC765:   read_from_fdc!\n");
+                        results();
 		}
 		else
 		{
-			LOG((log,"0x%02X ", b));
+            logerror("REAL NEC765: to fdc 0x%02X\r\n", b);
 			outportb(0x3f5, b);
 			result = 0;
 		}
@@ -441,7 +557,7 @@ static int out_nec(UINT8 b)
 /*****************************************************************************
  * seek_exec: wait until seek is executed and sense interrupt status
  *****************************************************************************/
-static void seek_exec(UINT8 * track)
+static void seek_exec(void)
 {
 	uclock_t timeout;
 	uclock_t utime = uclock();
@@ -459,17 +575,26 @@ static void seek_exec(UINT8 * track)
 	timeout -= uclock();
 
 	if (nec.stm.read_from_fdc)
-		results(0);
+                results();
 
-	LOG((log,"NEC765  command "));
-    if (out_nec(0x08))      /* sense interrupt status */
-		return;
-	LOG((log,"\n"));
+    sense_interrupt_status();
+}
 
-    results(1);
+static void wait_int(void)
+{
+	uclock_t timeout;
+	uclock_t utime = uclock();
+    uclock_t start_time;
 
-	if (track)
-		*track = nec.sta.pcn;
+    start_time = utime;
+    timeout = UCLOCKS_PER_SEC;
+    while ((utime-start_time) < timeout)
+	{
+		if (irq_flag)
+            return;
+		utime = uclock();
+    }
+    logerror("timeout\r\n");
 }
 
 /*****************************************************************************
@@ -481,27 +606,21 @@ static void specify(void)
 	uclock_t timeout;
 	uclock_t utime = uclock();
 
-	LOG((log,"NEC765 specify\n"));
+	LOG(("NEC765 specify\n"));
 
 	timeout = utime + UCLOCKS_PER_SEC;
 	irq_flag = 0;
     outportb(0x3f2, 0x08);      /* reset fdc */
-    while (utime < timeout)
-	{
-		if (irq_flag)
-			break;
-		utime = uclock();
-    }
-    osd_fdc_motors(nec.unit);   /* take away reset */
+    select_drive(0,0);
+    wait_int();
+    sense_interrupt_status();
 
-	LOG((log,"NEC765  command "));
     if (out_nec(0x03))          /* specify command */
 		return;
 	if (out_nec(0xdf))			/* steprate, head unload timing */
 		return;
 	if (out_nec(0x04))			/* head load timing, DMA mode */
 		return;
-	LOG((log,"\n"));
 
 }
 
@@ -511,40 +630,50 @@ static void specify(void)
  * number 'head' of the floppy disk. if the first try fails, change the
  * DDAM mode and try again
  *****************************************************************************/
-static UINT8 read_sector(UINT8 track, UINT8 side, UINT8 head, UINT8 sector)
+static void read_sector(UINT8 unit,UINT8 side, UINT8 C, UINT8 H, UINT8 R, UINT8 N)
 {
-	int try;
+        //int try;
 
-	LOG((log,"NEC765 read    unit:%d track:%02d side:%d head:%d sector:%d\n",
-		nec.unit, track, side, head, sector));
+    logerror("REAL NEC765 read    unit:%d track:%02d side:%d head:%d sector:%d\n",
+                unit, C, H, R, N);
 
-	/* three tries to detect normal / deleted data address mark */
-	for (try = 0; try < 3; try++)
-	{
-		dma_read((nec.secl) ? nec.secl << 8 : nec.dtl);
+    select_drive(unit, 1);
+    delay_time_msec(1000);
+
+//	/* three tries to detect normal / deleted data address mark */
+//	for (try = 0; try < 3; try++)
+//	{
+        nec.dtl = 0x0ff;
+        nec.secl = (1<<(N+7));
+        nec.gap_a = 0x02a;
+        dma_read((nec.secl) ? nec.secl << 8 : nec.dtl);
 
 		irq_flag = 0;
 
-        LOG((log,"NEC765  command "));
-		if (out_nec(nec.mfm | nec.rcmd))		/* read sector */
-			return STA_2_NOT_READY;
-		if (out_nec((side << 2) + nec.unit))	/* side * 4 + unit */
-			return STA_2_NOT_READY;
-		if (out_nec(track)) 					/* track */
-			return STA_2_NOT_READY;
-		if (out_nec(head))						/* head (can be 0 for side 1!) */
-			return STA_2_NOT_READY;
-		if (out_nec(sector))					/* sector */
-			return STA_2_NOT_READY;
-		if (out_nec(nec.secl))					/* bytes per sector */
-			return STA_2_NOT_READY;
-		if (out_nec(nec.eot))					/* end of track */
-			return STA_2_NOT_READY;
+		/* do standard read operation - if a deleted data sector is found, it will
+		be read, but the control mark bit will be set! */
+        if (out_nec(nec.mfm | 0x06))        /* read sector */
+                        return;
+        if (out_nec((side << 2) + unit))    /* side * 4 + unit */
+                        return;
+                if (out_nec(C))                                     /* track */
+                        return;
+                if (out_nec(H))                                              /* head (can be 0 for side 1!) */
+                        return;
+                if (out_nec(R))                                    /* sector */
+                        return;
+                if (out_nec(N))                                  /* bytes per sector */
+                        return;
+                if (out_nec(R))
+                        return;
+// eot is not important.
+//		if (out_nec(nec.eot))					/* end of track */
+//                      return;
+// gap is not important for reading.
 		if (out_nec(nec.gap_a)) 				/* gap A */
-			return STA_2_NOT_READY;
+                        return;
 		if (out_nec(nec.dtl))					/* data length */
-			return STA_2_NOT_READY;
-		LOG((log,"\n"));
+                        return;
 
 		for ( ; ; )
         {
@@ -555,25 +684,23 @@ static UINT8 read_sector(UINT8 track, UINT8 side, UINT8 head, UINT8 sector)
 //				break;
         }
 
-		results(0);
+                results();
 
-		if (!nec.sta.st2.control_mark)
-			break;
+//		if (!nec.sta.st2.control_mark)
+//			break;
+//
+//		/* if control mark is set, toggle DDAM mode and try again */
+//		nec.rcmd ^= 0x0A;	   /* toggle between 0x26 and 0x2C */
+//	}
 
-		/* if control mark is set, toggle DDAM mode and try again */
-		nec.rcmd ^= 0x0A;	   /* toggle between 0x26 and 0x2C */
-	}
-
-	nec.sta.st2.control_mark = 0;
-	/* set status 2 control_mark if read deleted was successful */
-    if (nec.rcmd & 0x08)
-	{
-		LOG((log,"NEC765 read    *DDAM*\n"));
-		nec.sta.st2.control_mark = 1;
-		nec.rcmd ^= 0x0A;	   /* toggle back */
-    }
-
-	return FDC_STA2(1);
+//	nec.sta.st2.control_mark = 0;
+//	/* set status 2 control_mark if read deleted was successful */
+//  if (nec.rcmd & 0x08)
+//	{
+//		LOG(("NEC765 read    *DDAM*\n"));
+//		nec.sta.st2.control_mark = 1;
+//		nec.rcmd ^= 0x0A;	   /* toggle back */
+//  }
 }
 
 /*****************************************************************************
@@ -582,38 +709,38 @@ static UINT8 read_sector(UINT8 track, UINT8 side, UINT8 head, UINT8 sector)
  * the floppy disk using head number 'head'. if ddam in non zero,
  * write the sector with deleted data address mark (DDAM)
  *****************************************************************************/
-static UINT8 write_sector(UINT8 track, UINT8 side, UINT8 head, UINT8 sector, UINT8 ddam)
+static void write_sector(UINT8 unit, UINT8 side, UINT8 C, UINT8 H, UINT8 R, UINT8 N,UINT8 ddam)
 {
 	int i;
 
-	LOG((log,"NEC765 write   unit:%d track:%02d side:%d head:%d sector:%d%s\n",
-		nec.unit, track, side, head, sector, (ddam) ? " *DDAM*" : ""));
+	LOG(("NEC765 write   unit:%d track:%02d side:%d head:%d sector:%d%s\n",
+                unit,C, H, R, N, (ddam) ? " *DDAM*" : ""));
 
 	irq_flag = 0;
 
 	dma_write((nec.secl) ? nec.secl << 8 : nec.dtl);
 	nec.wcmd = (ddam) ? 0x09 : 0x05;
 
-	LOG((log,"NEC765  command "));
+	LOG(("NEC765  command "));
 	if (out_nec(nec.mfm | nec.wcmd))		/* write sector */
-		return STA_2_NOT_READY;
-	if (out_nec((side << 2) + nec.unit))	/* side * 4 + unit */
-		return STA_2_NOT_READY;
-	if (out_nec(track)) 					/* track */
-		return STA_2_NOT_READY;
-	if (out_nec(head))						/* head (can be 0 for side 1!) */
-		return STA_2_NOT_READY;
-	if (out_nec(sector))					/* sector */
-		return STA_2_NOT_READY;
-	if (out_nec(nec.secl))					/* bytes per sector */
-		return STA_2_NOT_READY;
-	if (out_nec(nec.eot))					/* end of track */
-		return STA_2_NOT_READY;
+                return;
+    if (out_nec((side << 2) + unit))    /* side * 4 + unit */
+                return;
+        if (out_nec(C))                                     /* track */
+                return;
+        if (out_nec(H))                                              /* head (can be 0 for side 1!) */
+                return;
+        if (out_nec(R))                                    /* sector */
+                return;
+        if (out_nec(N))                                  /* bytes per sector */
+                return;
+        if (out_nec(N))                                   /* end of track */
+                return;
 	if (out_nec(nec.gap_a)) 				/* gap_a */
-		return STA_2_NOT_READY;
+                return;
 	if (out_nec(nec.dtl))					/* data length */
-		return STA_2_NOT_READY;
-	LOG((log,"\n"));
+                return;
+	LOG(("\n"));
 
 	for (i = 0; i < 3; i++)
 	{
@@ -624,9 +751,7 @@ static UINT8 write_sector(UINT8 track, UINT8 side, UINT8 head, UINT8 sector, UIN
 			break;
 	}
 
-	results(0);
-
-	return FDC_STA2(0);
+        results();
 }
 
 /*****************************************************************************
@@ -654,11 +779,12 @@ int osd_fdc_init(void)
 	unsigned long _my_cs_base;
 	unsigned long _my_ds_base;
 	UINT8 *p;
+    int i;
 
 	if (initialized)
 		return 1;
 
-    log = fopen("nec.log", "w");
+    //log = fopen("nec.log", "w");
 
 	for (p = (UINT8 *) & irq_E; p; p++)
 	{
@@ -683,7 +809,7 @@ int osd_fdc_init(void)
 	meminfo.address = _my_cs_base + (unsigned long) &irq_E;
 	if (__dpmi_lock_linear_region(&meminfo))
 	{
-		LOG((log,"NEC765 init: could not lock code %lx addr:%08lx size:%ld\n",
+		LOG(("NEC765 init: could not lock code %lx addr:%08lx size:%ld\n",
 					meminfo.handle, meminfo.address, meminfo.size));
 		return 0;
 	}
@@ -693,29 +819,38 @@ int osd_fdc_init(void)
 	meminfo.address = _my_ds_base + (unsigned long) &old_irq_E;
 	if (__dpmi_lock_linear_region(&meminfo))
 	{
-		LOG((log,"NEC765 init: could not lock data\n"));
+		LOG(("NEC765 init: could not lock data\n"));
 		return 0;
 	}
 
 	nec_dma.size = 4096;		/* request a 4K buffer for NEC DMA */
 	if (_go32_dpmi_allocate_dos_memory(&nec_dma))
 	{
-		LOG((log,"NEC765 init: could not alloc DOS memory size:%ld\n", nec_dma.size));
+		LOG(("NEC765 init: could not alloc DOS memory size:%ld\n", nec_dma.size));
 		return 0;
 	}
 
     new_irq_E.selector = _my_cs();
 	if (__dpmi_set_protected_mode_interrupt_vector(0x0E, &new_irq_E))
 	{
-		LOG((log,"NEC765 init: could not set vector 0x0E"));
+		LOG(("NEC765 init: could not set vector 0x0E"));
 		return 0;
 	}
 
     initialized = 1;
 
 	atexit(osd_fdc_exit);
-
+        nec.unit = 0;
 	specify();
+
+    /* recalibrate all drives, so that we know where the disc head is
+    for signed seeks */
+    for (i=0; i<2; i++)
+    {
+        recalibrate(i);
+        nec.cur_track[i] = 0;
+    }
+    nec.mfm = 0x040;
 
     return 1;
 }
@@ -731,8 +866,8 @@ void osd_fdc_exit(void)
 
 	outportb(0x3f2, 0x0c);
 
-	if (log)
-		fclose(log);
+//	if (log)
+//		fclose(log);
 
 	__dpmi_get_segment_base_address(_my_cs(), &_my_cs_base);
 	__dpmi_get_segment_base_address(_my_ds(), &_my_ds_base);
@@ -751,33 +886,38 @@ void osd_fdc_exit(void)
 	if (nec_dma.rm_segment)
 	   _go32_dpmi_free_dos_memory(&nec_dma);
 
-    if (log)
-		fclose(log);
-	log = NULL;
+//    if (log)
+//		fclose(log);
+//	log = NULL;
 
 	initialized = 0;
 }
 
-void osd_fdc_motors(UINT8 unit)
+void osd_fdc_motors(UINT8 unit, UINT8 motor_status)
 {
+        nec.unit = unit;
+
+        //select_drive(unit, motor_status);
+#if 0
 	nec.unit = unit;
 
 	switch (nec.unit)
 	{
 		case 0: /* drive 0 */
 			if (!timer_motors)
-				LOG((log, "FDD A: start\n"));
+				LOG(( "FDD A: start\n"));
 			outportb(0x3f2, 0x1c);
 			break;
 		case 1: /* drive 1 */
 			if (!timer_motors)
-				LOG((log, "FDD B: start\n"));
+				LOG(( "FDD B: start\n"));
             outportb(0x3f2, 0x2d);
 			break;
 	}
 	if (timer_motors)
 		timer_remove(timer_motors);
 	timer_motors = timer_set(10.0, nec.unit, osd_fdc_interrupt);
+#endif
 }
 
 /*****************************************************************************
@@ -804,33 +944,33 @@ int i;
 		switch (nec.type)
 		{
 			case 1: /* 5.25" 360K */
-				LOG((log,"NEC765 FDD %c: type 5.25\" 360K, sides %d, DOS spt %d%s\n",
+				LOG(("NEC765 FDD %c: type 5.25\" 360K, sides %d, DOS spt %d%s\n",
 						'A' + nec.unit, r.h.dh + 1, r.h.cl & 0x1f, (nec.dstep) ? " (double steps)":""));
 				r.x.ax = 0x1701;
 				break;
 			case 2: /* 5.25" 1.2M */
 				if (tracks < 50)
                     nec.dstep = 1;
-				LOG((log,"NEC765 FDD %c: type 5.25\" 1.2M, sides %d, DOS spt %d%s\n",
+				LOG(("NEC765 FDD %c: type 5.25\" 1.2M, sides %d, DOS spt %d%s\n",
 						'A' + nec.unit, r.h.dh + 1, r.h.cl & 0x1f, (nec.dstep) ? " (double steps)":""));
 				r.x.ax = 0x1703;
 				break;
 			case 3: /* 3.5"  720K */
 				if (tracks < 50)
                     nec.dstep = 1;
-				LOG((log,"NEC765 FDD %c: type 3.5\" 720K, sides %d, DOS spt %d%s\n",
+				LOG(("NEC765 FDD %c: type 3.5\" 720K, sides %d, DOS spt %d%s\n",
 						'A' + nec.unit, r.h.dh + 1, r.h.cl & 0x1f, (nec.dstep) ? " (double steps)":""));
 				r.x.ax = 0x1704;
 				break;
 			case 4: /* 3.5"  1.44M */
 				if (tracks < 50)
                     nec.dstep = 1;
-				LOG((log,"NEC765 FDD %c: type 3.5\" 1.44M, sides %d, DOS spt %d%s\n",
+				LOG(("NEC765 FDD %c: type 3.5\" 1.44M, sides %d, DOS spt %d%s\n",
 						'A' + nec.unit, r.h.dh + 1, r.h.cl & 0x1f, (nec.dstep) ? " (double steps)":""));
 				r.x.ax = 0x1703;
 				break;
 			default: /* unknown */
-				LOG((log,"NEC765 FDD %c: unknown type! sides %d, DOS spt %d\n",
+				LOG(("NEC765 FDD %c: unknown type! sides %d, DOS spt %d\n",
 						'A' + nec.unit, r.h.dh + 1, r.h.cl & 0x1f));
 				r.x.ax = 0x1703;
                 break;
@@ -850,19 +990,19 @@ int i;
 		}
 		if (gaps[i].spt)
 		{
-			LOG((log,"NEC765  using gaps entry #%d {%d,%d,%d,%d,%d} for %d,%d,%d\n",
+			LOG(("NEC765  using gaps entry #%d {%d,%d,%d,%d,%d} for %d,%d,%d\n",
                 i,gaps[i].density,gaps[i].spt,gaps[i].secl,gaps[i].gap_a,gaps[i].gap_b,density,spt,secl));
         }
 		else
 		{
-			LOG((log,"NEC765  ERR den:%d spt:%d secl:%d not found!\n",density,spt,secl));
+			LOG(("NEC765  ERR den:%d spt:%d secl:%d not found!\n",density,spt,secl));
             nec.gap_a = 10;
 			nec.gap_b = 12;
 		}
 		nec.dtl = (secl)?0xff:0x80; /* data length */
 		nec.filler = 0xe5;			/* format filler UINT8 */
 
-		LOG((log,"NEC765  FDD %c: den:%d trks:%d spt:%d eot:%d secl:%d gap_a:%d gap_b:%d\n",
+		LOG(("NEC765  FDD %c: den:%d trks:%d spt:%d eot:%d secl:%d gap_a:%d gap_b:%d\n",
 			'A' + nec.unit, density, tracks, spt, eot, secl, nec.gap_a, nec.gap_b));
 
         nec.rcmd = 0x26;    /* read command (0x26 normal, 0x2C deleted data address mark) */
@@ -890,106 +1030,123 @@ int i;
     }
 }
 
-void osd_fdc_interrupt(int param)
-{
-    timer_motors = NULL;
-	/* stop the motor(s) */
-	LOG((log,"NEC765 FDD %c: stop", 'A' + param));
-    outportb(0x3f2, 0x0c);
-}
+//void osd_fdc_interrupt(int param)
+//{
+//    timer_motors = NULL;
+  //      /* stop the motor(s) */
+ //       LOG(("NEC765 FDD %c: stop", 'A' + param));
+ //   outportb(0x3f2, 0x0c);
+//}
 
-UINT8 osd_fdc_recal(UINT8 * track)
+static void recalibrate(UINT8 unit)
 {
-	LOG((log,"NEC765 recal\n"));
+	LOG(("NEC765 recal\n"));
+
+    select_drive(unit,1);
 
     irq_flag = 0;
-	LOG((log,"NEC765  command "));
+	LOG(("NEC765  command "));
     if (out_nec(0x07))                  /* 1st recal command */
-		return STA_1_NOT_READY;
-	if (out_nec(nec.unit))
-		return STA_1_NOT_READY;
-	LOG((log,"\n"));
+                return;
+    if (out_nec(unit))
+                return;
+	LOG(("\n"));
 
-	seek_exec(track);
-	if (nec.sta.pcn)					/* not yet on track 0 ? */
+        seek_exec();
+        if (nec.results[1])                                        /* not yet on track 0 ? */
 	{
 		irq_flag = 0;
-		LOG((log,"NEC765  command "));
+		LOG(("NEC765  command "));
 		if (out_nec(0x07))				/* 2nd recal command */
-			return STA_1_NOT_READY;
-		if (out_nec(nec.unit))
-			return STA_1_NOT_READY;
-		LOG((log,"\n"));
-		seek_exec(track);
+                        return;
+        if (out_nec(unit))
+                        return;
+		LOG(("\n"));
+                seek_exec();
 	}
 
 	/* reset unit type */
 	unit_type[nec.unit] = 0xff;
-
-	return FDC_STA1();
 }
 
-UINT8 osd_fdc_seek(UINT8 t, UINT8 * track)
+/* assumes drive is actually present for now */
+UINT8 osd_fdc_get_status(unsigned char unit)
 {
-	if (nec.sta.pcn == (t << nec.dstep))
-	{
-		*track = nec.sta.pcn;
-		return FDC_STA1();
-	}
+        UINT8 status;
+        ST3 *st3;
 
-	LOG((log,"NEC765 seek    unit:%d track:%02d\n", nec.unit, t));
-	irq_flag = 0;
+        select_drive(unit,0);
 
-	LOG((log,"NEC765  command "));
-    if (out_nec(0x0f))                  /* seek command */
-		return STA_1_NOT_READY;
-	if (out_nec(nec.unit))				/* unit number */
-		return STA_1_NOT_READY;
-	if (out_nec(t << nec.dstep))		/* track number */
-		return STA_1_NOT_READY;
-	LOG((log,"\n"));
+        status = FLOPPY_DRIVE_DISK_PRESENT;
 
-	seek_exec(track);
+        if (out_nec(0x04))                  /* sense drive status */
+                return status;
+        if (out_nec(unit))
+                return status;
 
-	return FDC_STA1();
+        results();
+
+        st3 = (ST3 *)&nec.results[0];
+
+
+        //if (st3->write_protect)
+        //   status |= FLOPPY_DRIVE_DISK_WRITE_PROTECTED;
+        //if (st3->track_0)
+        //   status |= FLOPPY_DRIVE_HEAD_AT_TRACK_0;
+        //if (st3->ready)
+        //   status |= FLOPPY_DRIVE_READY;
+        
+        logerror("get drive status: %02x\r\n", nec.results[0]);
+
+        if (nec.results[0] & 0x040)
+            status |= FLOPPY_DRIVE_DISK_WRITE_PROTECTED;
+        if (nec.results[0] & 0x010)
+            status |= FLOPPY_DRIVE_HEAD_AT_TRACK_0;
+        status |= FLOPPY_DRIVE_READY;
+
+        return status;
 }
 
-UINT8 osd_fdc_step(int dir, UINT8 * track)
+
+/* seek signed tracks from current position */
+void osd_fdc_seek(unsigned char unit, signed int signed_tracks)
 {
-int new_track;
-	LOG((log,"NEC765 step    unit:%d direction:%+d (PCN:%02d)\n", nec.unit, dir, nec.sta.pcn));
-	irq_flag = 0;
+    if (signed_tracks==0)
+        return;
 
-	LOG((log,"NEC765  command "));
+    select_drive(unit, 1);
+    delay_time_msec(1000);
+
+    /* calc dest track */
+    nec.cur_track[unit] = nec.cur_track[unit] + signed_tracks;
+
+    /* ensure track is valid. we do not want to break the drive! */
+    if (nec.cur_track[unit]<0)
+        nec.cur_track[unit] = 0;
+    if (nec.cur_track[unit]>82)
+        nec.cur_track[unit] = 82;
+
+    logerror("NEC765 seek    unit:%d track:%02d\n", unit, nec.cur_track[unit]);
+
+    irq_flag = 0;
+
     if (out_nec(0x0f))                  /* seek command */
-		return STA_1_NOT_READY;
-	if (out_nec(nec.unit))
-		return STA_1_NOT_READY;
-	new_track = nec.sta.pcn + (dir << nec.dstep);
-	if (new_track < 0)
-		new_track = 0;
-	if (new_track > 82)
-		new_track = 82;
-	if (out_nec(new_track))
-			return STA_1_NOT_READY;
-	LOG((log,"\n"));
-
-	seek_exec(track);
-
-	if (track)
-		*track = nec.sta.pcn;
-
-	return FDC_STA1();
+                return;
+    if (out_nec(unit))              /* unit number */
+                return;
+    if (out_nec(nec.cur_track[unit] << nec.dstep))        /* track number */
+                return;
+    seek_exec();
 }
 
-UINT8 osd_fdc_format(UINT8 t, UINT8 h, UINT8 spt, UINT8 * fmt)
+void osd_fdc_format(UINT8 t, UINT8 h, UINT8 spt, UINT8 * fmt)
 {
 int i;
 
 	/* let the motors run */
-    osd_fdc_motors(nec.unit);
+    //osd_fdc_motors(nec.unit);
 
-	LOG((log,"NEC765 format  unit:%d track:%02d head:%d sec/track:%d\n", nec.unit, t, h, spt));
+        LOG(("NEC765 format  unit:%d track:%02d head:%d sec/track:%d\n", nec.unit, t, h, spt));
 
 #if RE_INTERLEAVE
 	/* reorder the sector sequence for PC optimized reading (interleave) */
@@ -1008,17 +1165,17 @@ UINT8 sec_max = 0;
 		/* only reorder if all sectors from min to max are in the track! */
 		if (sec_max - sec_min + 1 == spt)
 		{
-			LOG((log,"NEC765 reordered sectors:"));
+			LOG(("NEC765 reordered sectors:"));
             sec = sec_min;
 			for (i = 0; i < spt; i++)
 			{
-				LOG((log," %3d", sec));
+				LOG((" %3d", sec));
                 fmt[i * 4 + 2] = sec;
 				sec += spt / RE_INTERLEAVE;
 				if (sec > sec_max)
 					sec = sec - spt + 1 - spt % RE_INTERLEAVE;
 			}
-			LOG((log,"\n"));
+			LOG(("\n"));
         }
 	}
 #endif
@@ -1036,20 +1193,20 @@ UINT8 sec_max = 0;
 
 	dma_write(spt * 4);
 
-	LOG((log,"NEC765  command "));
+	LOG(("NEC765  command "));
 	if (out_nec(nec.mfm | 0x0d))	   /* format track */
-		return STA_2_NOT_READY;
+                return;
 	if (out_nec((h << 2) + nec.unit))	/* head * 4 + unit select */
-		return STA_2_NOT_READY;
+                return;
 	if (out_nec(nec.secl))				/* bytes per sector */
-		return STA_2_NOT_READY;
+                return;
 	if (out_nec(spt))					/* sectors / track */
-		return STA_2_NOT_READY;
+                return;
 	if (out_nec(nec.gap_b)) 			 /* gap_b */
-		return STA_2_NOT_READY;
+                return;
 	if (out_nec(nec.filler))			/* format filler UINT8 */
-		return STA_2_NOT_READY;
-	LOG((log,"\n"));
+                return;
+	LOG(("\n"));
 
 	for (i = 0; i < 3; i++)
 	{
@@ -1060,33 +1217,68 @@ UINT8 sec_max = 0;
 			break;
 	}
 
-	results(0);
-
-	return FDC_STA2(0);
+        results();
 }
 
-UINT8 osd_fdc_put_sector(UINT8 track, UINT8 side, UINT8 head, UINT8 sector, UINT8 *buff, UINT8 ddam)
+void osd_fdc_put_sector(UINT8 unit, UINT8 side, UINT8 C, UINT8 H, UINT8 R, UINT8 N, UINT8 *buff, UINT8 ddam)
 {
-UINT8 result;
-
 	movedata(
 		_my_ds(), (unsigned) buff,
 		nec_dma.pm_selector, nec_dma.pm_offset,
 		((nec.secl) ? nec.secl << 8 : nec.dtl));
-	result = write_sector(track, side, head, sector, ddam);
-
-	return result;
+        write_sector(unit, side, C, H, R, N, ddam);
 }
 
-UINT8 osd_fdc_get_sector(UINT8 track, UINT8 side, UINT8 head, UINT8 sector, UINT8 *buff)
+void osd_fdc_get_sector(UINT8 unit, UINT8 side, UINT8 C, UINT8 H, UINT8 R, UINT8 N,UINT8 *buff)
 {
-UINT8 result;
+        printf("read sector %02x %02x %02x %02x", C, H, R, N);
 
-	result = read_sector(track, side, head, sector);
+        read_sector(unit, side, C, H, R, N);
 	movedata(
 		nec_dma.pm_selector, nec_dma.pm_offset,
 		_my_ds(), (unsigned) buff,
 		((nec.secl) ? nec.secl << 8 : nec.dtl));
-
-	return result;
 }
+
+void    osd_fdc_read_id(UINT8 physical_unit, UINT8 physical_side)
+{
+    irq_flag = 0;
+
+    if (out_nec(nec.mfm | 0x0a))       /* read id */
+       return;
+    if (out_nec(physical_unit | (physical_side<<2)))
+       return;
+
+    wait_int();
+
+    results();
+
+
+}
+#if 0
+int main(int argc, char *argv[])
+{
+    osd_fdc_init();
+
+    select_drive(0,1);
+    delay_time_msec(1000);
+
+    while (1==1)
+    {
+//        osd_fdc_read_id(0,0);
+
+  //      fprintf(stdout,"C: %02x H: %02x R: %02x N: %02x\r\n", nec.results[3], nec.results[4], nec.results[5],nec.results[6]);
+
+        fprintf(stdout,"%02x\r\n", inportb(0x03f7) & 0x080);
+
+//        irq_flag = 0;
+  //      outportb(0x3f2, 0x18);      /* reset fdc */
+    //    delay_time_msec(1000);
+  //      outportb(0x03f2, 0x01c);
+  //      osd_fdc_get_drive_status(0);
+    }
+
+    exit(-1);
+
+}
+#endif
