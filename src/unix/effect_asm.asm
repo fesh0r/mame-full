@@ -31,12 +31,12 @@ section .text
 align 64
 
 ; functions exported for use from the C code
-global effect_6tap_addline_15
-global effect_6tap_addline_16
-global effect_6tap_addline_32
-global effect_6tap_render_15
-global effect_6tap_render_16
-global effect_6tap_render_32
+global blit_6tap_mmx_addline_15
+global blit_6tap_mmx_addline_16
+global blit_6tap_mmx_addline_32
+global blit_6tap_mmx_render_line_15
+global blit_6tap_mmx_render_line_16
+global blit_6tap_mmx_render_line_32
 global effect_scan2_15_15_direct
 global effect_scan2_16_15
 global effect_scan2_16_16
@@ -64,9 +64,9 @@ extern _6tap2x_buf5
 ;**************************************************************************
 
 ;--------------------------------------------------------
-;extern void effect_6tap_addline_15(const void *src0, unsigned count
+;extern void blit_6tap_mmx_addline_15(const void *src0, unsigned count
 ;                                   unsigned int *u32lookup);
-effect_6tap_addline_15:
+blit_6tap_mmx_addline_15:
   push ebp
   mov ebp, esp
   pushad
@@ -194,9 +194,9 @@ input15_6tap_done:
   ret
 
 ;--------------------------------------------------------
-;extern void effect_6tap_addline_16(const void *src0, unsigned count
+;extern void blit_6tap_mmx_addline_16(const void *src0, unsigned count
 ;                                   unsigned int *u32lookup);
-effect_6tap_addline_16:
+blit_6tap_mmx_addline_16:
   push ebp
   mov ebp, esp
   pushad
@@ -322,9 +322,9 @@ indirect_6tap_done:
   ret
 
 ;--------------------------------------------------------
-;extern void effect_6tap_addline_32(const void *src0, unsigned count,
+;extern void blit_6tap_mmx_addline_32(const void *src0, unsigned count,
 ;                                   unsigned int *u32lookup);
-effect_6tap_addline_32:
+blit_6tap_mmx_addline_32:
   push ebp
   mov ebp, esp
   pushad
@@ -423,7 +423,7 @@ direct_6tap_done:
 
 ;--------------------------------------------------------
 ;extern void effect_6tap_15(void *dst0, void *dst1, unsigned count);
-effect_6tap_render_15:
+blit_6tap_mmx_render_line_15:
   push ebp
   mov ebp, esp
   pushad
@@ -505,7 +505,7 @@ VFilter_6tap_15_loop1:
 
 ;--------------------------------------------------------
 ;extern void effect_6tap_16(void *dst0, void *dst1, unsigned count);
-effect_6tap_render_16:
+blit_6tap_mmx_render_line_16:
   push ebp
   mov ebp, esp
   pushad
@@ -587,7 +587,7 @@ VFilter_6tap_16_loop1:
 
 ;--------------------------------------------------------
 ;extern void effect_6tap_32(void *dst0, void *dst1, unsigned count);
-effect_6tap_render_32:
+blit_6tap_mmx_render_line_32:
   push ebp
   mov ebp, esp
   pushad

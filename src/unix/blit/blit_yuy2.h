@@ -1,3 +1,4 @@
+/* yuy2 versions of the blit functions */
 INLINE void FUNC_NAME(blit_normal_line_1)(SRC_PIXEL *src, SRC_PIXEL *end,
   unsigned int *dst, int dest_width, unsigned int *lookup)
 {
@@ -214,15 +215,110 @@ BLIT_BEGIN(blit_scale2x)
 BLIT_END
 
 
-/* lq2x yuy2 version */
-#include "advance/xq2x_yuy2.h"
+/* 6tap2x yuy2 render line function, we only need this once! */
+#if SRC_DEPTH == 16
+#define _6TAP_CLIP(a) (((a) < 0) ? 0 : (((a) > 0xff) ? 0xff : (a)))
 
+void blit_6tap_render_line_yuy2(unsigned int *dst0, unsigned int *dst1,
+  unsigned int count)
+{
+  unsigned char *src0 = (unsigned char *) _6tap2x_buf0;
+  unsigned char *src1 = (unsigned char *) _6tap2x_buf1;
+  unsigned char *src2 = (unsigned char *) _6tap2x_buf2;
+  unsigned char *src3 = (unsigned char *) _6tap2x_buf3;
+  unsigned char *src4 = (unsigned char *) _6tap2x_buf4;
+  unsigned char *src5 = (unsigned char *) _6tap2x_buf5;
+  unsigned int *src32 = (unsigned int *) _6tap2x_buf2;
+  unsigned int i,p1,p2,uv;
+  int r,g,b;
 
-/* hq2x yuy2 version */
-#define HQ2X
-#define HQ2X_USE_YUV_LOOKUP 1
-#define HQ2X_YUVLOOKUP(p) (p)
-#include "advance/xq2x_yuy2.h"
+  dst1 = dst0 + ((dst1 - dst0) >> 1);
+
+  /* first we need to just copy the 3rd line into the first destination line */
+  for (i = 0; i < count; i++)
+  {
+    p1 = effect_rgb2yuv[_32TO16_RGB_565(*src32)];
+    src32++;
+    p2 = effect_rgb2yuv[_32TO16_RGB_565(*src32)];
+    src32++;
+
+    uv = (p1&UVMASK)>>1;
+    uv += (p2&UVMASK)>>1;
+    uv &= UVMASK;
+    p1 &= Y1MASK;
+    p2 &= Y2MASK;
+    *dst0++ = p1|p2|uv;
+  }
+
+  /* then we need to vertically filter for the second line */
+  for (i = 0; i < count; i++)
+  {
+    /* first, do the blue part */
+    b = (((int) *src2++ + (int) *src3++) << 2) -
+            ((int) *src1++ + (int) *src4++);
+    b += b << 2;
+    b += ((int) *src0++ + (int) *src5++);
+    b = (b + 0x10) >> 5;
+    b = _6TAP_CLIP(b);
+    b = b - (b >> 2);
+    /* next, do the green part */
+    g = (((int) *src2++ + (int) *src3++) << 2) -
+             ((int) *src1++ + (int) *src4++);
+    g += g << 2;
+    g += ((int) *src0++ + (int) *src5++);
+    g = (g + 0x10) >> 5;
+    g = _6TAP_CLIP(g);
+    g = g - (g >> 2);
+    /* last, do the red part */
+    r = (((int) *src2++ + (int) *src3++) << 2) -
+           ((int) *src1++ + (int) *src4++);
+    r += r << 2;
+    r += ((int) *src0++ + (int) *src5++);
+    r = (r + 0x10) >> 5;
+    r = _6TAP_CLIP(r);
+    r = r - (r >> 2);
+    src0++; src1++; src2++; src3++; src4++; src5++;
+    p1 = effect_rgb2yuv[((r&0xF8)<<8)|((g&0xFC)<<3)|((b&0xF8)>>3)];
+
+    /* first, do the blue part */
+    b = (((int) *src2++ + (int) *src3++) << 2) -
+            ((int) *src1++ + (int) *src4++);
+    b += b << 2;
+    b += ((int) *src0++ + (int) *src5++);
+    b = (b + 0x10) >> 5;
+    b = _6TAP_CLIP(b);
+    b = b - (b >> 2);
+    /* next, do the green part */
+    g = (((int) *src2++ + (int) *src3++) << 2) -
+             ((int) *src1++ + (int) *src4++);
+    g += g << 2;
+    g += ((int) *src0++ + (int) *src5++);
+    g = (g + 0x10) >> 5;
+    g = _6TAP_CLIP(g);
+    g = g - (g >> 2);
+    /* last, do the red part */
+    r = (((int) *src2++ + (int) *src3++) << 2) -
+           ((int) *src1++ + (int) *src4++);
+    r += r << 2;
+    r += ((int) *src0++ + (int) *src5++);
+    r = (r + 0x10) >> 5;
+    r = _6TAP_CLIP(r);
+    r = r - (r >> 2);
+    src0++; src1++; src2++; src3++; src4++; src5++;
+    p2 = effect_rgb2yuv[((r&0xF8)<<8)|((g&0xFC)<<3)|((b&0xF8)>>3)];
+
+    /* write the pixel */
+    uv = (p1&UVMASK)>>1;
+    uv += (p2&UVMASK)>>1;
+    uv &= UVMASK;
+    p1 &= Y1MASK;
+    p2 &= Y2MASK;
+    *dst1++ = p1|p2|uv;
+  }
+}
+
+#undef _6TAP_CLIP
+#endif
 
 
 /**********************************
@@ -477,7 +573,6 @@ INLINE void FUNC_NAME(blit_scan3_v_line)(SRC_PIXEL *src, SRC_PIXEL *end,
 BLIT_BEGIN(blit_scan3_v)
 BLIT_LOOP(blit_scan3_v_line, 1)
 BLIT_END
-
 
 
 #if 0

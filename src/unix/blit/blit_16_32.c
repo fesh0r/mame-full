@@ -6,6 +6,7 @@
 #include "blit_defs.h"
 #include "blit_normal.h"
 #include "blit_effect.h"
+#include "blit_6tap.h"
 #include "advance/scale2x.h"
 #include "advance/xq2x.h"
 #define HQ2X

@@ -456,7 +456,6 @@ int gl_open_display (int reopen)
   switch(sysdep_display_params.depth)
   {
     case 15:
-    case 16:
       /* ARGB1555 */
       sysdep_display_properties.palette_info.red_mask   = 0x00007C00;
       sysdep_display_properties.palette_info.green_mask = 0x000003E0;
@@ -465,6 +464,16 @@ int gl_open_display (int reopen)
       sysdep_display_properties.palette_info.bpp        = 16;
       gl_bitmap_format = GL_BGRA;       /* A R G B */
       gl_bitmap_type   = GL_UNSIGNED_SHORT_1_5_5_5_REV;
+      break;
+    case 16:
+      /* RGB565 */
+      sysdep_display_properties.palette_info.red_mask   = 0x0000F800;
+      sysdep_display_properties.palette_info.green_mask = 0x000007E0;
+      sysdep_display_properties.palette_info.blue_mask  = 0x0000001F;
+      sysdep_display_properties.palette_info.depth      = 16;
+      sysdep_display_properties.palette_info.bpp        = 16;
+      gl_bitmap_format = GL_RGB;        /* R G B */
+      gl_bitmap_type   = GL_UNSIGNED_SHORT_5_6_5;
       break;
     case 32:
       /* ARGB8888 */

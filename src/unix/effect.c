@@ -44,6 +44,7 @@ const struct sysdep_display_effect_properties_struct sysdep_display_effect_prope
   { 2, 3, 2, 6, 0,                                  "smooth scaling" },
   { 2, 2, 2, 2, 0,                                  "low quality filter" },
   { 2, 2, 2, 2, 0,                                  "high quality filter" },
+  { 2, 2, 2, 2, 0,                                  "6-tap filter & scanlines (h)" },
   { 1, 4, 2, 2, SYSDEP_DISPLAY_Y_SCALE_LOCKED,      "light scanlines (h)" },
   { 1, 6, 3, 3, SYSDEP_DISPLAY_Y_SCALE_LOCKED,      "rgb scanlines (h)" }, 
   { 2, 6, 3, 3, SYSDEP_DISPLAY_Y_SCALE_LOCKED,      "deluxe scanlines (h)" },
@@ -53,7 +54,6 @@ const struct sysdep_display_effect_properties_struct sysdep_display_effect_prope
 };
 
 #if 0  
-  { 2, 2, 2, 2, 0, "6-tap filter & scanlines" }, /* 6tap2x */
   { 1, 8, 2, 8, 0, "black scanlines" }       /* fakescan */
 #endif
  
@@ -148,6 +148,25 @@ static blit_func_p effect_funcs[] = {
    blit_hq2x_32_24_direct,
    blit_hq2x_32_32_direct,
    blit_hq2x_32_YUY2_direct,
+   NULL, /* reserved for 32_YV12_direct */
+   /* 6tap */
+   blit_6tap_15_15_direct,
+   blit_6tap_16_16, /* Just use the 16 bpp src versions, since we need */
+   blit_6tap_16_24, /* to go through the lookup anyways. */
+   blit_6tap_16_32,
+   blit_6tap_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   blit_6tap_16_15,
+   blit_6tap_16_16,
+   blit_6tap_16_24,
+   blit_6tap_16_32,
+   blit_6tap_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   blit_6tap_32_15_direct,
+   blit_6tap_32_16_direct,
+   blit_6tap_32_24_direct,
+   blit_6tap_32_32_direct,
+   blit_6tap_32_YUY2_direct,
    NULL, /* reserved for 32_YV12_direct */
    /* scan2 */
    blit_scan2_h_15_15_direct,
@@ -266,54 +285,6 @@ static blit_func_p effect_funcs[] = {
 };
 
 #if 0
-   /* lq2x */
-   effect_lq2x_15_15_direct,
-   effect_lq2x_16_16, /* just use the 16 bpp src versions, since we need */
-   effect_lq2x_16_32, /* to go through the lookup anyways */
-   effect_lq2x_16_YUY2,
-   NULL, /* reserved for 16_YV12 */
-   effect_lq2x_16_15,
-   effect_lq2x_16_16,
-   effect_lq2x_16_32,
-   effect_lq2x_16_YUY2,
-   NULL, /* reserved for 16_YV12 */
-   effect_lq2x_32_15_direct,
-   effect_lq2x_32_16_direct,
-   effect_lq2x_32_32_direct,
-   effect_lq2x_32_YUY2_direct,
-   NULL, /* reserved for 32_YV12_direct */
-   /* hq2x */
-   effect_hq2x_15_15_direct,
-   effect_hq2x_16_16, /* just use the 16 bpp src versions, since we need */
-   effect_hq2x_16_32, /* to go through the lookup anyways */
-   effect_hq2x_16_YUY2,
-   NULL, /* reserved for 16_YV12 */
-   effect_hq2x_16_15,
-   effect_hq2x_16_16,
-   effect_hq2x_16_32,
-   effect_hq2x_16_YUY2,
-   NULL, /* reserved for 16_YV12 */
-   effect_hq2x_32_15_direct,
-   effect_hq2x_32_16_direct,
-   effect_hq2x_32_32_direct,
-   effect_hq2x_32_YUY2_direct,
-   NULL /* reserved for 32_YV12_direct */
-   /* 6tap */
-   effect_6tap_15_15_direct,
-   effect_6tap_16_16, /* just use the 16 bpp src versions, since we need */
-   effect_6tap_16_32, /* to go through the lookup anyways */
-   effect_6tap_16_YUY2,
-   NULL, /* reserved for 16_YV12 */
-   effect_6tap_16_15,
-   effect_6tap_16_16,
-   effect_6tap_16_32,
-   effect_6tap_16_YUY2,
-   NULL, /* reserved for 16_YV12 */
-   effect_6tap_32_15_direct,
-   effect_6tap_32_16_direct,
-   effect_6tap_32_32_direct,
-   effect_6tap_32_YUY2_direct,
-   NULL, /* reserved for 32_YV12_direct */
    /* fakescan */
    blit_fakescan_15_15_direct,
    blit_fakescan_16_16, /* just use the 16 bpp src versions, since we need */
@@ -405,6 +376,45 @@ blit_func_p sysdep_display_effect_open(void)
   };
   int effect_index = EFFECT_UNKNOWN;
   int need_rgb888_lookup = 0;
+  
+#ifdef EFFECT_MMX_ASM
+  /* patch mmx asm blit functions into the table */
+  if (1)
+  {
+    effect_funcs[SYSDEP_DISPLAY_EFFECT_MODES*SYSDEP_DISPLAY_EFFECT_6TAP2X+0] =
+      blit_6tap_mmx_15_15_direct;
+    effect_funcs[SYSDEP_DISPLAY_EFFECT_MODES*SYSDEP_DISPLAY_EFFECT_6TAP2X+1] =
+      blit_6tap_mmx_16_16;
+    effect_funcs[SYSDEP_DISPLAY_EFFECT_MODES*SYSDEP_DISPLAY_EFFECT_6TAP2X+2] =
+      blit_6tap_mmx_16_24;
+    effect_funcs[SYSDEP_DISPLAY_EFFECT_MODES*SYSDEP_DISPLAY_EFFECT_6TAP2X+3] =
+      blit_6tap_mmx_16_32;
+    effect_funcs[SYSDEP_DISPLAY_EFFECT_MODES*SYSDEP_DISPLAY_EFFECT_6TAP2X+4] =
+      blit_6tap_mmx_16_YUY2;
+
+    effect_funcs[SYSDEP_DISPLAY_EFFECT_MODES*SYSDEP_DISPLAY_EFFECT_6TAP2X+6] =
+      blit_6tap_mmx_16_15;
+    effect_funcs[SYSDEP_DISPLAY_EFFECT_MODES*SYSDEP_DISPLAY_EFFECT_6TAP2X+7] =
+      blit_6tap_mmx_16_16;
+    effect_funcs[SYSDEP_DISPLAY_EFFECT_MODES*SYSDEP_DISPLAY_EFFECT_6TAP2X+8] =
+      blit_6tap_mmx_16_24;
+    effect_funcs[SYSDEP_DISPLAY_EFFECT_MODES*SYSDEP_DISPLAY_EFFECT_6TAP2X+9] =
+      blit_6tap_mmx_16_32;
+    effect_funcs[SYSDEP_DISPLAY_EFFECT_MODES*SYSDEP_DISPLAY_EFFECT_6TAP2X+10] =
+      blit_6tap_mmx_16_YUY2;
+      
+    effect_funcs[SYSDEP_DISPLAY_EFFECT_MODES*SYSDEP_DISPLAY_EFFECT_6TAP2X+12] =
+      blit_6tap_mmx_32_15_direct;
+    effect_funcs[SYSDEP_DISPLAY_EFFECT_MODES*SYSDEP_DISPLAY_EFFECT_6TAP2X+13] =
+      blit_6tap_mmx_32_16_direct;
+    effect_funcs[SYSDEP_DISPLAY_EFFECT_MODES*SYSDEP_DISPLAY_EFFECT_6TAP2X+14] =
+      blit_6tap_mmx_32_24_direct;
+    effect_funcs[SYSDEP_DISPLAY_EFFECT_MODES*SYSDEP_DISPLAY_EFFECT_6TAP2X+15] =
+      blit_6tap_mmx_32_32_direct;
+    effect_funcs[SYSDEP_DISPLAY_EFFECT_MODES*SYSDEP_DISPLAY_EFFECT_6TAP2X+16] =
+      blit_6tap_mmx_32_YUY2_direct;
+  }
+#endif
 
   /* FIXME only allocate if needed and of the right size */
   if (!(effect_dbbuf = malloc(sysdep_display_params.max_width*sysdep_display_params.widthscale*sysdep_display_params.heightscale*4)))
@@ -537,9 +547,9 @@ blit_func_p sysdep_display_effect_open(void)
               for(g=0; g<32; g++)
                 for(b=0; b<32; b++)
                 {
-                   RGB2YUV(r*8,g*8,b*8,y,u,v);
-                   effect_rgb2yuv[(r<<10)|(g<<5)|b] = YUV_TO_XQ2X_YUV(
-                     (y<<Y1SHIFT)|(u<<USHIFT)|(y<<Y2SHIFT)|(v<<VSHIFT));
+                  RGB2YUV(r*8,g*8,b*8,y,u,v);
+                  effect_rgb2yuv[(r<<10)|(g<<5)|b] = YUV_TO_XQ2X_YUV(
+                    (y<<Y1SHIFT)|(u<<USHIFT)|(y<<Y2SHIFT)|(v<<VSHIFT));
                 }
             break;
           case EFFECT_16:
@@ -547,9 +557,9 @@ blit_func_p sysdep_display_effect_open(void)
               for(g=0; g<64; g++)
                 for(b=0; b<32; b++)
                 {
-                   RGB2YUV(r*8,g*4,b*8,y,u,v);
-                   effect_rgb2yuv[(r<<11)|(g<<5)|b] = YUV_TO_XQ2X_YUV(
-                     (y<<Y1SHIFT)|(u<<USHIFT)|(y<<Y2SHIFT)|(v<<VSHIFT));
+                  RGB2YUV(r*8,g*4,b*8,y,u,v);
+                  effect_rgb2yuv[(r<<11)|(g<<5)|b] = YUV_TO_XQ2X_YUV(
+                    (y<<Y1SHIFT)|(u<<USHIFT)|(y<<Y2SHIFT)|(v<<VSHIFT));
                 }
             break;
         }
@@ -568,8 +578,20 @@ blit_func_p sysdep_display_effect_open(void)
         fprintf(stderr, "Error: couldnot allocate memory\n");
         return NULL;
       }
-      if(sysdep_display_params.depth == 16)
-        need_rgb888_lookup = 1;
+      if((effect_index%EFFECT_COLOR_FORMATS) == EFFECT_YUY2)
+      {
+        int r,g,b,y,u,v; 
+        
+        for(r=0; r<32; r++)
+          for(g=0; g<64; g++)
+            for(b=0; b<32; b++)
+            {
+              RGB2YUV(r*8,g*4,b*8,y,u,v);
+              effect_rgb2yuv[(r<<11)|(g<<5)|b] =
+                (y<<Y1SHIFT)|(u<<USHIFT)|(y<<Y2SHIFT)|(v<<VSHIFT);
+            }
+      }
+      need_rgb888_lookup = 1;
       break;
     case SYSDEP_DISPLAY_EFFECT_RGBSCAN_H:
     case SYSDEP_DISPLAY_EFFECT_RGBSCAN_V:
@@ -724,4 +746,14 @@ static void rotate_32_32(void *dst, struct mame_bitmap *bitmap, int y, struct re
        else if ((sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPY))
          for (x = bounds->min_x; x < bounds->max_x; x++)
            u32dst[x-bounds->min_x] = ((unsigned int *)bitmap->line[bitmap->height - y -1])[x];
+}
+
+void blit_6tap_clear(int count)
+{
+  memset(_6tap2x_buf0, 0, 2 * count * sizeof(unsigned int));
+  memset(_6tap2x_buf1, 0, 2 * count * sizeof(unsigned int));
+  memset(_6tap2x_buf2, 0, 2 * count * sizeof(unsigned int));
+  memset(_6tap2x_buf3, 0, 2 * count * sizeof(unsigned int));
+  memset(_6tap2x_buf4, 0, 2 * count * sizeof(unsigned int));
+  memset(_6tap2x_buf5, 0, 2 * count * sizeof(unsigned int));
 }

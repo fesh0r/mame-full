@@ -17,4 +17,6 @@ extern char *_6tap2x_buf5;
 extern void (*rotate_func)(void *dst, struct mame_bitmap *bitmap, int y, struct rectangle *bounds);
 extern unsigned int effect_rgb2yuv[];
 
+void blit_6tap_clear(int count);
+
 #endif /* __EFFECT_H */

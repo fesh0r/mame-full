@@ -28,6 +28,7 @@ INLINE void blit_line_32_24(unsigned int *src, unsigned int *end, unsigned int *
 #define BLIT_LINE_FUNC blit_line_32_24
 #include "blit_defs.h"
 #include "blit_effect.h"
+#include "blit_6tap.h"
 #include "advance/scale2x.h"
 #include "advance/xq2x.h"
 #define HQ2X

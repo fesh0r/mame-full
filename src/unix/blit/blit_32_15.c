@@ -1,12 +1,13 @@
 #include "pixel_defs.h"
 #include "blit.h"
 
-/* normal blitting converts the pixels while blitting */
+/* normal blitting and 6tap converts the pixels while blitting */
 #define FUNC_NAME(name) name##_32_15_direct
 #define SRC_DEPTH    32
 #define DEST_DEPTH   15
 #include "blit_defs.h"
 #include "blit_normal.h"
+#include "blit_6tap.h"
 #include "blit_undefs.h"
 
 /* Effects can also convert the pixels at the fly (through the GETPIXEL macro)

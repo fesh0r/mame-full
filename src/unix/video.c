@@ -109,13 +109,14 @@ struct rc_option video_opts[] = {
    { "effect",		"ef",			rc_int,		&user_effect,
      "0",		SYSDEP_DISPLAY_EFFECT_NONE, SYSDEP_DISPLAY_EFFECT_SCAN_V-1,	NULL,
      "Video effect:\n"
-	     "0 = none (default)\n"
+	     "0 = none    (default)\n"
 	     "1 = scale2x (smooth scaling effect)\n"
-	     "2 = lq2x (low quality filter)\n"
-	     "3 = hq2x (high quality filter)\n"
-	     "4 = scan2 (light scanlines)\n"
-	     "5 = rgbscan (rgb scanlines)\n"
-	     "6 = scan3 (deluxe scanlines)\n"
+	     "2 = lq2x    (low quality filter)\n"
+	     "3 = hq2x    (high quality filter)\n"
+	     "4 = 6tap2x  (6-tap filter with h-scanlines)\n"
+	     "5 = scan2   (light scanlines)\n"
+	     "6 = rgbscan (rgb scanlines)\n"
+	     "7 = scan3   (deluxe scanlines)\n"
              "(increase: left-ctrl + page-up, decrease: left-ctrl + page-down)" },
    { "autodouble",	"adb",			rc_bool,	&use_auto_double,
      "1",		0,			0,		NULL,

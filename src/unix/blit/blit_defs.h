@@ -19,9 +19,9 @@
 #  elif RENDER_DEPTH == 16
 #    define GETPIXEL(p) _32TO16_RGB_565(p)
 #  elif DEST_DEPTH == 24
-     /* When blitting from a 32 bpp src to a 24 bpp dest the bitmap might have
-        cruft the msb of the sparse 32 bpp pixels (artwork), so in this case
-        we need to mask out the msb */
+     /* When blitting from a 32 bpp src to a 24 bpp dest the source bitmap
+        might have cruft the msb of the sparse 32 bpp pixels (artwork), so in
+        this case we need to mask out the msb */
 #    define GETPIXEL(p) ((p)&0x00FFFFFF)
 #  else
 #    define GETPIXEL(p) p
@@ -40,6 +40,8 @@
 #  define SHADE_HALF(P)   (((P)>>1) & 0x3def)
 #  define SHADE_FOURTH(P) (((P)>>2) & 0x1ce7)
 #  define RENDER_PIXEL unsigned short
+#  define RGB_TO_RENDER_PIXEL(r,g,b) ((((r)&0xf8)<<7)|(((g)&0xf8)<<2)|(((b)&0xf8)>>3))
+#  define RGB32_TO_RENDER_PIXEL(rgb) ((((rgb)&0xf80000)>>9)|(((rgb)&0xf800)>>6)|(((rgb)&0xf8)>>3))
 #elif RENDER_DEPTH == 16
 #  define RMASK(P) ((P) & 0xf800)
 #  define GMASK(P) ((P) & 0x07e0)
@@ -50,6 +52,8 @@
 #  define SHADE_HALF(P)   (((P)>>1) & 0x7bef)
 #  define SHADE_FOURTH(P) (((P)>>2) & 0x39e7)
 #  define RENDER_PIXEL unsigned short
+#  define RGB_TO_RENDER_PIXEL(r,g,b) ((((r)&0xf8)<<8)|(((g)&0xfc)<<3)|(((b)&0xf8)>>3))
+#  define RGB32_TO_RENDER_PIXEL(rgb) ((((rgb)&0xf80000)>>8)|(((rgb)&0x00fc00)>>5)|(((rgb)&0x0000f8)>>3))
 #elif RENDER_DEPTH == 32
 #  define RMASK(P) ((P) & 0x00ff0000)
 #  define GMASK(P) ((P) & 0x0000ff00)
@@ -60,6 +64,8 @@
 #  define SHADE_HALF(P)   (((P)>>1) & 0x007f7f7f)
 #  define SHADE_FOURTH(P) (((P)>>2) & 0x003f3f3f)
 #  define RENDER_PIXEL unsigned int
+#  define RGB_TO_RENDER_PIXEL(r,g,b) (((r)<<16)|((g)<<8)|(b))
+#  define RGB32_TO_RENDER_PIXEL(rgb) (rgb)
 #else
 #  error Unknown RENDER_DEPTH
 #endif
@@ -188,7 +194,6 @@ void FUNC_NAME(NAME)(struct mame_bitmap *bitmap, \
         BLIT_LINE(1) \
         while (--reps) { \
           memcpy(line_dest, line_dest-DEST_WIDTH, \
-            /* (dirty_area->max_x-dirty_area->min_x)*DEST_PIXEL_SIZE*sysdep_display_params.widthscale); */ \
             (vis_in_dest_out->max_x - vis_in_dest_out->min_x) * \
             DEST_PIXEL_SIZE); \
           line_dest += DEST_WIDTH; \

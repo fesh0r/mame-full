@@ -1,6 +1,8 @@
 /* Configuration defines and includes */
 #define XQ2X_GETPIXEL(p) YUV_TO_XQ2X_YUV(GET_YUV_PIXEL(p))
 #ifdef HQ2X
+#  define HQ2X_USE_YUV_LOOKUP 1
+#  define HQ2X_YUVLOOKUP(p) (p)
 #  include "hq2x_defs.h"
 #else
 #  include "lq2x_defs.h"
