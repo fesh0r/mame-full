@@ -5,7 +5,8 @@ Note: .inp record/playback does still not work currently.
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - Amstrad NC200 (preliminary) [Kev Thacker]
-
+- RCA Studio II [Peter Trauner]
+- Sharp Pocket Computer PC1251 [Peter Trauner]
 
 System Driver Changes:
 ----------------------
@@ -27,6 +28,8 @@ chips in the system.  coco.rom split into bas12.rom, extbas11.rom and
 disk11.rom, and coco3.rom now must be of length 32768.  This requires a dump
 from an EPROM reader.  Fixed a bug in cassette writing.  Cassette tape controls
 and CoCo motor signal now operate independently.  [Nate Woods]
+
+- [C16] added SIDCARD support at address $d400 [Peter Trauner]
 
 Other Changes:
 --------------
@@ -61,6 +64,11 @@ Other Changes:
   http://mess.emuverse.com
   Please send all CRC/sysinfo file contributions to Chris Henry. 
   (battlepriest@hotmail.com).
+
+- M6510 cpu core added first write cycle for NMOS memory modifying instructions
+  [Peter Trauner]
+
+- CDP1802 cpu core [Peter Trauner]
 
 ------------------------
 
