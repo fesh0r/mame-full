@@ -7325,7 +7325,22 @@ Texas Instruments TI-99/4 Home Computer
 
 Known Issues:
 
-This TI99/4 driver is preliminary and could not be tested.
+Requires full keyboard emulation.  At startup, full keyboard emulation mode is
+enabled by default.  Whilst in full keyboard emulation mode, some key
+associated functionality may be disabled (like the ESC key for EXIT).
+The keyboard emulation mode is toggled using the scroll_lock key.
+
+A TI99/4 is not a TI99/4a.  Most programs are compatible with both /4 and /4a,
+but some programs require a /4a.
+
+The BwG disk controller has display bug which causes it to change the character
+definitions for no appearent reason, but, out of this, it seems to work fine.
+If this is an issue, you may revert to the TI disk controller.
+
+
+Usage:
+
+See sysinfo for the ti99/4a driver.
 
 
 History and Trivia:
@@ -7366,11 +7381,6 @@ software-compatible, high-end (in 1979) tms9900 with tons of glue logic.
 Note that the processor software design was remarkably weird (no stack, no
 on-chip data register).
 
-
-Wanted:
-
-If you have a TI99/4 ROM image, please mail me at pytheas@club-internet.fr
-
 $end
 
 #---------------------------------------------------------------------------------------------#
@@ -7390,19 +7400,24 @@ The keyboard emulation mode is toggled using the scroll_lock key.
 
 Usage:
 
-This TI99/4a driver offers a high level of compatibility. It currently
+This TI99/4a driver offers a high level of compatibility.  It currently
 supports V9t9-format cartridge images, sampled tapes in wave format
-(CS1 and CS2), and up to 3 SSSD disk images. Speech synthesis is emulated,
-although speech ROM emulation is still in the works. TI, Super AMS and
-Foundation memory expansion cards are supported.
+(CS1 and CS2), and up to 3 SSSD or DSDD disk images.  Speech synthesis should
+now emulated completely.  Both TI and BwG disk controllers are supported.
+TI, Super AMS and Foundation memory expansion cards are supported.  Serial port
+and PIO emulation is incomplete, but it enables you to redirect PIO output to a
+file and save listings to this file by "printing" them to PIO.
 
 Loading a cartridge:
 
 You do not need a cartridge image to run the computer, since TI99/4a has
 a small built-in basic interpreter.
 
-V9t9-format cart images are typically split into up to 3 files. These can be
-loaded in any order, so long as all necessary portions are loaded.
+V9t9-format cart images are typically split into up to 3 files.  You MUST load
+all individual files.  Loading a single zip archive containing all the
+cartridge files will NOT work, you must uncompress the archive and select every
+file instead.  These files can be loaded in any order, as long as all necessary
+files are loaded.
 
 Setting up the system configuration:
 
