@@ -210,6 +210,7 @@ maketree:
 	@md $(OBJ)\cpu\m68000
 	@md $(OBJ)\cpu\s2650
 	@md $(OBJ)\cpu\f8
+	@md $(OBJ)\cpu\cp1600
 	@md $(OBJ)\cpu\t11
 	@md $(OBJ)\cpu\tms34010
 	@md $(OBJ)\cpu\tms9900

@@ -203,6 +203,9 @@ enum {
 #ifndef HAS_F8
 #define HAS_F8			0
 #endif
+#ifndef HAS_CP1600
+#define HAS_CP1600		0
+#endif
 #ifndef HAS_TMS34010
 #define HAS_TMS34010	0
 #endif
