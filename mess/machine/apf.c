@@ -122,7 +122,7 @@ int apfimag_floppy_init(int id, mame_file *fp, int open_mode)
 
 	if (basicdsk_floppy_load(id, fp, open_mode)==INIT_PASS)
 	{
-		basicdsk_set_geometry(id, 40, 1, 8, 256, 1, 0);
+		basicdsk_set_geometry(id, 40, 1, 8, 256, 1, 0, FALSE);
 		return INIT_PASS;
 	}
 

@@ -787,7 +787,7 @@ int bbc_floppy_init(int id, mame_file *fp, int open_mode)
 	{
 		/* sector id's 0-9 */
 		/* drive, tracks, heads, sectors per track, sector length, dir_sector, dir_length, first sector id */
-		basicdsk_set_geometry(id,80,1,10,256,0,0);
+		basicdsk_set_geometry(id, 80, 1, 10, 256, 0, 0, FALSE);
 
 		return INIT_PASS;
 	}

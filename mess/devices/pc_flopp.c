@@ -80,7 +80,7 @@ int pc_floppy_load(int id, mame_file *fp, int open_mode)
 				}
 			}
 
-			basicdsk_set_geometry(id, 80, heads, spt, 512, 01, 0);
+			basicdsk_set_geometry(id, 80, heads, spt, 512, 01, 0, FALSE);
 
 			return INIT_PASS;
 		}

@@ -1223,7 +1223,7 @@ int oric_floppy_load(int id, mame_file *fp, int open_mode)
 	{
 		/* I don't know what the geometry of the disc image should be, so the
 		default is 80 tracks, 2 sides, 9 sectors per track */
-		basicdsk_set_geometry(id, 80, 2, 9, 512, 1, 0);
+		basicdsk_set_geometry(id, 80, 2, 9, 512, 1, 0, FALSE);
 		oric_floppy_type[id] = ORIC_FLOPPY_BASIC_DISK;
 		return INIT_PASS;
 	}

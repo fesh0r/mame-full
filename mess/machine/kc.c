@@ -162,7 +162,7 @@ int kc85_floppy_init(int id, mame_file *fp, int open_mode)
 
 	if (basicdsk_floppy_load(id, fp, open_mode)==INIT_PASS)
 	{
-		basicdsk_set_geometry(id, 80, 2, 9, 512, 1, 0);
+		basicdsk_set_geometry(id, 80, 2, 9, 512, 1, 0, FALSE);
 		return INIT_PASS;
 	}
 
