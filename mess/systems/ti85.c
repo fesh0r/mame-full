@@ -21,6 +21,9 @@ Needed:
 4. Artworks.
 
 New:
+17/09/2002 TI-85 snapshots loading fixed. Few code cleanups.
+	   TI-86 SNAPSHOT LOADING DOESNT WORK.
+	   TI-85, TI-86 SERIAL LINK DOESNT WORK.
 08/09/2001 TI-81, TI-85, TI-86 modified to new core.
 	   TI-81, TI-85, TI-86 reset corrected.
 21/08/2001 TI-81, TI-85, TI-86 NVRAM corrected.
@@ -507,26 +510,6 @@ static const struct IODevice io_ti81[] = {
 
 static const struct IODevice io_ti85[] = {
     {
-	IO_SNAPSHOT,		/* type */
-	1,			/* count */
-	"sav\0",        	/* file extensions */
-	IO_RESET_CPU,		/* reset if file changed */
-	OSD_FOPEN_READ,		/* open mode */
-        0,               	/* id */
-	ti85_load_snap,		/* load */
-	ti85_exit_snap,		/* exit */
-        NULL,		        /* info */
-        NULL,           	/* open */
-        NULL,               	/* close */
-        NULL,               	/* status */
-        NULL,               	/* seek */
-	NULL,			/* tell */
-        NULL,           	/* input */
-        NULL,               	/* output */
-        NULL,               	/* input_chunk */
-        NULL                	/* output_chunk */
-    },
-    {
 	IO_SERIAL,		/* type */
 	1,			/* count */
 	"85p\085s\085i\085n\085c\085l\085k\085m\085v\085d\085e\085r\085g\085b\0",
@@ -551,26 +534,6 @@ static const struct IODevice io_ti85[] = {
 };
 
 static const struct IODevice io_ti86[] = {
-    {
-	IO_SNAPSHOT,		/* type */
-	1,			/* count */
-	"sav\0",        	/* file extensions */
-	IO_RESET_CPU,		/* reset if file changed */
-	OSD_FOPEN_READ,		/* open mode */
-        0,               	/* id */
-	ti85_load_snap,		/* init */
-	ti85_exit_snap,		/* exit */
-        NULL,		        /* info */
-        NULL,           	/* open */
-        NULL,               	/* close */
-        NULL,               	/* status */
-        NULL,               	/* seek */
-	NULL,			/* tell */
-        NULL,           	/* input */
-        NULL,               	/* output */
-        NULL,               	/* input_chunk */
-        NULL                	/* output_chunk */
-    },
     {
 	IO_SERIAL,		/* type */
 	1,			/* count */
@@ -612,9 +575,11 @@ SYSTEM_CONFIG_START(ti81)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(ti85)
+	CONFIG_DEVICE_SNAPSHOT	( "sav\0", 1, ti8x_snapshot_load, NULL )
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(ti86)
+	CONFIG_DEVICE_SNAPSHOT	( "sav\0", 1, ti8x_snapshot_load, NULL )
 SYSTEM_CONFIG_END
                             
 /*    YEAR  NAME		PARENT	MACHINE INPUT	INIT	CONFIG	COMPANY        FULLNAME */

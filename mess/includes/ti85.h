@@ -15,8 +15,7 @@ extern NVRAM_HANDLER( ti81 );
 extern NVRAM_HANDLER( ti85 );
 extern NVRAM_HANDLER( ti86 );
 
-extern int ti85_load_snap (int);
-extern void ti85_exit_snap (int);
+extern int ti8x_snapshot_load (int);
 extern int ti85_serial_init (int);
 extern void ti85_serial_exit (int);
 

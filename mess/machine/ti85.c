@@ -12,6 +12,13 @@
 #include "includes/ti85.h"
 #include "formats/ti85_ser.h"
 
+#define TI85_SNAPSHOT_SIZE	 32976
+#define TI86_SNAPSHOT_SIZE	131284
+
+static int ti8x_snapshot_loaded = 0;
+static UINT8 *ti8x_snapshot_data = NULL;
+static void ti8x_sav_load_trailer_callback(int);
+
 enum
 {
 	TI_NOT_INITIALIZED,
@@ -48,22 +55,7 @@ static UINT8 ti81_port_7_data;
 
 static UINT8 *ti86_ram = NULL;
 
-enum
-{
-	TI85_NONE,
-	TI85_SAV,
-	TI86_SAV
-};
-
-static UINT8 *ti85_snap_data = NULL;
-static unsigned long ti85_snap_data_size = 0;
-static UINT8 ti85_snap_data_type = TI85_NONE;
-
 static ti85_serial_data ti85_serial_stream;
-
-static void ti85_setup_sav(UINT8*, unsigned long);
-static void ti86_setup_sav(UINT8*, unsigned long);
-static OPBASE_HANDLER(ti85_opbaseoverride);
 
 static UINT8 ti85_PCR = 0xc0;
 
@@ -172,6 +164,10 @@ static void update_ti86_memory (void)
 	}
 }
 
+/***************************************************************************
+  Machine Initialization
+***************************************************************************/
+
 MACHINE_INIT( ti81 )
 {
 	ti85_timer_interrupt_mask = 0;
@@ -238,12 +234,9 @@ MACHINE_INIT( ti85 )
 	cpu_setbank(1,memory_region(REGION_CPU1) + 0x010000);
 	cpu_setbank(2,memory_region(REGION_CPU1) + 0x014000);
 
-	logerror ("Reset\n");
-
-	if (ti85_snap_data)
-	{
-		memory_set_opbase_handler(0, ti85_opbaseoverride);
-		return;
+	if (ti8x_snapshot_loaded) {
+		ti8x_snapshot_loaded = 0;
+		timer_set(0, 0, ti8x_sav_load_trailer_callback);
 	}
 }
 
@@ -296,10 +289,9 @@ MACHINE_INIT( ti86 )
 
 		timer_pulse(TIME_IN_HZ(200), 0, ti85_timer_callback);
 
-		if (ti85_snap_data)
-		{
-			memory_set_opbase_handler(0, ti85_opbaseoverride);
-			return;
+		if (ti8x_snapshot_loaded) {
+			ti8x_snapshot_loaded = 0;
+			timer_set(0, 0, ti8x_sav_load_trailer_callback);
 		}
 	}
 }
@@ -468,7 +460,7 @@ NVRAM_HANDLER( ti81 )
 		if (file)
 		{
 			osd_fread(file, memory_region(REGION_CPU1)+0x8000, sizeof(unsigned char)*0x8000);
-			activecpu_set_reg(Z80_PC,0x0239);
+			cpunum_set_reg(0, Z80_PC,0x0239);
 		}
 		else
 			memset(memory_region(REGION_CPU1)+0x8000, 0, sizeof(unsigned char)*0x8000);
@@ -484,7 +476,7 @@ NVRAM_HANDLER( ti85 )
 		if (file)
 		{
 			osd_fread(file, memory_region(REGION_CPU1)+0x8000, sizeof(unsigned char)*0x8000);
-			activecpu_set_reg(Z80_PC,0x0b5f);
+			cpunum_set_reg(0, Z80_PC,0x0b5f);
 		}
 		else
 			memset(memory_region(REGION_CPU1)+0x8000, 0, sizeof(unsigned char)*0x8000);
@@ -510,7 +502,7 @@ NVRAM_HANDLER( ti86 )
 			if (file)
 			{
 				osd_fread(file, ti86_ram, sizeof(unsigned char)*128*1024);
-				activecpu_set_reg(Z80_PC,0x0c59);
+				cpunum_set_reg(0, Z80_PC,0x0c59);
 			}
 			else
 				memset(ti86_ram, 0, sizeof(unsigned char)*128*1024);
@@ -518,126 +510,72 @@ NVRAM_HANDLER( ti86 )
 	}
 }
 
-/* Snapshot loading functions */
+/***************************************************************************
+  TI calculators snapshot files (SAV)
+***************************************************************************/
 
-int ti85_load_snap(int id)
+static void ti8x_snapshot_setup_registers (UINT8 * data)
 {
-	void *file;
-
-	file = image_fopen_new(IO_SNAPSHOT, id, NULL);
-
-	if (file)
-	{
-
-		ti85_snap_data_size = osd_fsize(file);
-
-		if (ti85_snap_data_size != 0)
-		{
-			ti85_snap_data = malloc(ti85_snap_data_size);
-
-			if (ti85_snap_data != NULL)
-			{
-				osd_fread(file, ti85_snap_data, ti85_snap_data_size);
-				osd_fclose(file);
-
-				if ( !strncmp((char *)ti85_snap_data+8, "TI-85", 5))
-					ti85_snap_data_type = TI85_SAV;
-				if ( !strncmp((char *)ti85_snap_data+8, "TI-86", 5))
-					ti85_snap_data_type = TI86_SAV;
-
-				return 0;
-			}
-			osd_fclose(file);
-		}
-		return 1;
-	}
-	return 0;
-}
-
-void	ti85_exit_snap(int id)
-{
-	if (ti85_snap_data)
-	{
-		free(ti85_snap_data);
-		ti85_snap_data = NULL;
-		ti85_snap_data_size = 0;
-		memory_set_opbase_handler(0, 0);
-	}
-	ti85_snap_data_type = TI85_NONE;
-}
-
-static OPBASE_HANDLER( ti85_opbaseoverride )
-{
-	/* clear op base override */
-	memory_set_opbase_handler(0, 0);
-
-	switch ( ti85_snap_data_type ){
-		case TI85_SAV :	ti85_setup_sav(ti85_snap_data,ti85_snap_data_size);
-				break;
-		case TI86_SAV :	ti86_setup_sav(ti85_snap_data,ti85_snap_data_size);
-				break;
-	}
-
-	return (activecpu_get_reg(Z80_PC) & 0x0ffff);
-}
-
-static void ti85_setup_sav(unsigned char *data, unsigned long data_size)
-{
-	int i;
 	unsigned char lo,hi;
 	unsigned char * reg = data + 0x40;
-	unsigned char * hdw = data + 0x8000 + 0x94;
 
-	logerror ("Snapshot setup\n");
-	
 	/* Set registers */
 	lo = reg[0x00] & 0x0ff;
 	hi = reg[0x01] & 0x0ff;
-	activecpu_set_reg(Z80_AF, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_AF, (hi << 8) | lo);
 	lo = reg[0x04] & 0x0ff;
 	hi = reg[0x05] & 0x0ff;
-	activecpu_set_reg(Z80_BC, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_BC, (hi << 8) | lo);
 	lo = reg[0x08] & 0x0ff;
 	hi = reg[0x09] & 0x0ff;
-	activecpu_set_reg(Z80_DE, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_DE, (hi << 8) | lo);
 	lo = reg[0x0c] & 0x0ff;
 	hi = reg[0x0d] & 0x0ff;
-	activecpu_set_reg(Z80_HL, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_HL, (hi << 8) | lo);
 	lo = reg[0x10] & 0x0ff;
 	hi = reg[0x11] & 0x0ff;
-	activecpu_set_reg(Z80_IX, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_IX, (hi << 8) | lo);
 	lo = reg[0x14] & 0x0ff;
 	hi = reg[0x15] & 0x0ff;
-	activecpu_set_reg(Z80_IY, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_IY, (hi << 8) | lo);
 	lo = reg[0x18] & 0x0ff;
 	hi = reg[0x19] & 0x0ff;
-	activecpu_set_reg(Z80_PC, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_PC, (hi << 8) | lo);
 	lo = reg[0x1c] & 0x0ff;
 	hi = reg[0x1d] & 0x0ff;
-	activecpu_set_reg(Z80_SP, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_SP, (hi << 8) | lo);
 	lo = reg[0x20] & 0x0ff;
 	hi = reg[0x21] & 0x0ff;
-	activecpu_set_reg(Z80_AF2, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_AF2, (hi << 8) | lo);
 	lo = reg[0x24] & 0x0ff;
 	hi = reg[0x25] & 0x0ff;
-	activecpu_set_reg(Z80_BC2, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_BC2, (hi << 8) | lo);
 	lo = reg[0x28] & 0x0ff;
 	hi = reg[0x29] & 0x0ff;
-	activecpu_set_reg(Z80_DE2, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_DE2, (hi << 8) | lo);
 	lo = reg[0x2c] & 0x0ff;
 	hi = reg[0x2d] & 0x0ff;
-	activecpu_set_reg(Z80_HL2, (hi << 8) | lo);
-	activecpu_set_reg(Z80_IFF1, reg[0x30]&0x0ff);
-	activecpu_set_reg(Z80_IFF2, reg[0x34]&0x0ff);
-	activecpu_set_reg(Z80_HALT, reg[0x38]&0x0ff);
-	activecpu_set_reg(Z80_IM, reg[0x3c]&0x0ff);
-	activecpu_set_reg(Z80_I, reg[0x40]&0x0ff);
+	cpunum_set_reg(0, Z80_HL2, (hi << 8) | lo);
+	cpunum_set_reg(0, Z80_IFF1, reg[0x30]&0x0ff);
+	cpunum_set_reg(0, Z80_IFF2, reg[0x34]&0x0ff);
+	cpunum_set_reg(0, Z80_HALT, reg[0x38]&0x0ff);
+	cpunum_set_reg(0, Z80_IM, reg[0x3c]&0x0ff);
+	cpunum_set_reg(0, Z80_I, reg[0x40]&0x0ff);
 
-	activecpu_set_reg(Z80_R, (reg[0x44]&0x7f) | (reg[0x48]&0x80));
+	cpunum_set_reg(0, Z80_R, (reg[0x44]&0x7f) | (reg[0x48]&0x80));
 
-	activecpu_set_reg(Z80_NMI_STATE, 0);
-	activecpu_set_reg(Z80_IRQ_STATE, 0);
-	activecpu_set_reg(Z80_HALT, 0);
+	cpunum_set_reg(0, Z80_NMI_STATE, 0);
+	cpunum_set_reg(0, Z80_IRQ_STATE, 0);
+	cpunum_set_reg(0, Z80_HALT, 0);
+}
+
+static void ti85_setup_snapshot (UINT8 * data)
+{
+	int i;
+	unsigned char lo,hi;
+	unsigned char * hdw = data + 0x8000 + 0x94;
+
+	ti8x_snapshot_setup_registers (data);
 
 	/* Memory dump */
 	for (i = 0; i < 0x8000; i++)
@@ -670,60 +608,12 @@ static void ti85_setup_sav(unsigned char *data, unsigned long data_size)
 	ti85_interrupt_speed = 0x03;
 }
 
-static void ti86_setup_sav(unsigned char *data, unsigned long data_size)
+static void ti86_setup_snapshot (UINT8 * data)
 {
 	unsigned char lo,hi;
-	unsigned char * reg = data + 0x40;
 	unsigned char * hdw = data + 0x20000 + 0x94;
 
-	/* Set registers */
-	lo = reg[0x00] & 0x0ff;
-	hi = reg[0x01] & 0x0ff;
-	activecpu_set_reg(Z80_AF, (hi << 8) | lo);
-	lo = reg[0x04] & 0x0ff;
-	hi = reg[0x05] & 0x0ff;
-	activecpu_set_reg(Z80_BC, (hi << 8) | lo);
-	lo = reg[0x08] & 0x0ff;
-	hi = reg[0x09] & 0x0ff;
-	activecpu_set_reg(Z80_DE, (hi << 8) | lo);
-	lo = reg[0x0c] & 0x0ff;
-	hi = reg[0x0d] & 0x0ff;
-	activecpu_set_reg(Z80_HL, (hi << 8) | lo);
-	lo = reg[0x10] & 0x0ff;
-	hi = reg[0x11] & 0x0ff;
-	activecpu_set_reg(Z80_IX, (hi << 8) | lo);
-	lo = reg[0x14] & 0x0ff;
-	hi = reg[0x15] & 0x0ff;
-	activecpu_set_reg(Z80_IY, (hi << 8) | lo);
-	lo = reg[0x18] & 0x0ff;
-	hi = reg[0x19] & 0x0ff;
-	activecpu_set_reg(Z80_PC, (hi << 8) | lo);
-	lo = reg[0x1c] & 0x0ff;
-	hi = reg[0x1d] & 0x0ff;
-	activecpu_set_reg(Z80_SP, (hi << 8) | lo);
-	lo = reg[0x20] & 0x0ff;
-	hi = reg[0x21] & 0x0ff;
-	activecpu_set_reg(Z80_AF2, (hi << 8) | lo);
-	lo = reg[0x24] & 0x0ff;
-	hi = reg[0x25] & 0x0ff;
-	activecpu_set_reg(Z80_BC2, (hi << 8) | lo);
-	lo = reg[0x28] & 0x0ff;
-	hi = reg[0x29] & 0x0ff;
-	activecpu_set_reg(Z80_DE2, (hi << 8) | lo);
-	lo = reg[0x2c] & 0x0ff;
-	hi = reg[0x2d] & 0x0ff;
-	activecpu_set_reg(Z80_HL2, (hi << 8) | lo);
-	activecpu_set_reg(Z80_IFF1, reg[0x30]&0x0ff);
-	activecpu_set_reg(Z80_IFF2, reg[0x34]&0x0ff);
-	activecpu_set_reg(Z80_HALT, reg[0x38]&0x0ff);
-	activecpu_set_reg(Z80_IM, reg[0x3c]&0x0ff);
-	activecpu_set_reg(Z80_I, reg[0x40]&0x0ff);
-
-	activecpu_set_reg(Z80_R, (reg[0x44]&0x7f) | (reg[0x48]&0x80));
-
-	activecpu_set_reg(Z80_NMI_STATE, 0);
-	activecpu_set_reg(Z80_IRQ_STATE, 0);
-	activecpu_set_reg(Z80_HALT, 0);
+	ti8x_snapshot_setup_registers (data);
 
 	/* Memory dump */
 	memcpy(ti86_ram, data+0x94, 0x20000);
@@ -736,7 +626,7 @@ static void ti86_setup_sav(unsigned char *data, unsigned long data_size)
 	ti86_memory_page_0x8000 = hdw[0x0c]&0xff ? 0x40 : 0x00;
 	ti86_memory_page_0x8000 |= hdw[0x10]&0x0f;
 
-	update_ti85_memory ();
+	update_ti86_memory ();
 
 	lo = hdw[0x2c] & 0x0ff;
 	hi = hdw[0x2d] & 0x0ff;
@@ -758,7 +648,59 @@ static void ti86_setup_sav(unsigned char *data, unsigned long data_size)
 	ti85_interrupt_speed = 0x03;
 }
 
-/* TI calculator serial link transmission functions */
+static void ti8x_sav_load_trailer_callback(int param)
+{
+	switch (ti_calculator_model)
+	{
+		case TI_85: ti85_setup_snapshot(ti8x_snapshot_data); break;
+		case TI_86: ti86_setup_snapshot(ti8x_snapshot_data); break;
+	}	
+}
+
+int ti8x_snapshot_load (int id)
+{
+	void *file;
+	int snapshot_size = 0;
+
+	switch (ti_calculator_model)
+	{
+		case TI_85: snapshot_size = TI85_SNAPSHOT_SIZE; break;
+		case TI_86: snapshot_size = TI86_SNAPSHOT_SIZE; break;
+	}	
+
+	logerror("Snapshot loading\n");
+	file = image_fopen_new(IO_SNAPSHOT, id, NULL);
+
+	if (file)
+	{
+		if (osd_fsize(file) != snapshot_size)
+		{
+			logerror ("Incomplete snapshot file\n");
+			osd_fclose(file);
+			return INIT_FAIL;
+		}
+
+		if (!(ti8x_snapshot_data = image_malloc(IO_SNAPSHOT, id, snapshot_size)))
+		{
+			logerror ("Unable to load snapshot file\n");
+			osd_fclose(file);
+			return INIT_FAIL;
+		}
+
+		osd_fread(file, ti8x_snapshot_data, snapshot_size);
+		osd_fclose(file);
+
+		ti8x_snapshot_loaded = 1;
+
+		logerror("Snapshot file loaded\n");
+
+	}
+	return INIT_PASS;
+}
+
+/***************************************************************************
+  TI calculators serial link transmission
+***************************************************************************/
 
 int ti85_serial_init (int id)
 {
