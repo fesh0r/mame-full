@@ -73,7 +73,7 @@ VIDEO_START( hp48 )
 	}
 #endif
 
-	return generic_vh_start();
+	return video_start_generic();
 }
 
 static void hp48_draw_special(struct mame_bitmap *bitmap,int x, int y, const char *figure, int color)
@@ -83,7 +83,6 @@ static void hp48_draw_special(struct mame_bitmap *bitmap,int x, int y, const cha
 		switch (figure[j]) {
 		case '1': 
 			plot_pixel(bitmap, x+xi, y, color);
-			osd_mark_dirty(x+xi,y,x+xi,y);
 			xi++;
 			break;
 		case ' ': 
@@ -161,7 +160,7 @@ static const char *orange={
 #define LCD_LINE_OFFSET (hp48_hardware.data[0x25]|(hp48_hardware.data[0x26]<<4)\
 		|(hp48_hardware.data[0x27]<<8))
 
-void hp48_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( hp48 )
 {
 	int x, y, i;
 	int color[2];
@@ -172,10 +171,6 @@ void hp48_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 //    color[0] = Machine->pens[1];
 	color[1] = Machine->pens[1];
 
-    if (full_refresh)
-    {
-		osd_mark_dirty (0, 0, bitmap->width, bitmap->height);
-    }
 
 	for (y=0,i=LCD_BASE_ADDRESS; y<64; y+=8, i+=LCD_LINE_OFFSET) {
 		for (x=0; x<131; x++) {
