@@ -1,5 +1,3 @@
-/* This file is not part of the standard ZVG distribution */
-/* It is strictly a MAME-specific interface */
 /* Frank Palazzolo - 20-July-03 */
 
 #include <math.h>

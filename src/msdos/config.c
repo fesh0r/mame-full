@@ -168,7 +168,8 @@ struct { const char *name; int id; } joy_table[] =
 	{ "8button",        JOY_TYPE_8BUTTON },
 	{ "fspro",          JOY_TYPE_FSPRO },
 	{ "wingex",         JOY_TYPE_WINGEX },
-	{ "sidewinder",     JOY_TYPE_SIDEWINDER_AG },
+	{ "sidewinder",     JOY_TYPE_SIDEWINDER },
+	{ "sidewinderag",   JOY_TYPE_SIDEWINDER_AG },
 	{ "gamepadpro",     JOY_TYPE_GAMEPAD_PRO },
 	{ "grip",           JOY_TYPE_GRIP },
 	{ "grip4",          JOY_TYPE_GRIP4 },
@@ -181,15 +182,16 @@ struct { const char *name; int id; } joy_table[] =
 	{ "n64lpt1",        JOY_TYPE_N64PAD_LPT1 },
 	{ "n64lpt2",        JOY_TYPE_N64PAD_LPT2 },
 	{ "n64lpt3",        JOY_TYPE_N64PAD_LPT3 },
-	{ "wingwarrior",    JOY_TYPE_WINGWARRIOR },
-	{ "segaisa",        JOY_TYPE_IFSEGA_ISA },
-	{ "segapci",        JOY_TYPE_IFSEGA_PCI },
 	{ "db9lpt1",        JOY_TYPE_DB9_LPT1 },
 	{ "db9lpt2",        JOY_TYPE_DB9_LPT2 },
 	{ "db9lpt3",        JOY_TYPE_DB9_LPT3 },
 	{ "tgxlpt1",        JOY_TYPE_TURBOGRAFX_LPT1 },
 	{ "tgxlpt2",        JOY_TYPE_TURBOGRAFX_LPT2 },
 	{ "tgxlpt3",        JOY_TYPE_TURBOGRAFX_LPT3 },
+	{ "segaisa",        JOY_TYPE_IFSEGA_ISA },
+	{ "segapci",        JOY_TYPE_IFSEGA_PCI },
+	{ "segapcifast",    JOY_TYPE_IFSEGA_PCI_FAST },
+	{ "wingwarrior",    JOY_TYPE_WINGWARRIOR },
 	{ 0, 0 }
 } ;
 
@@ -482,15 +484,6 @@ static const char *get_string( const char *section, const char *option, const ch
 		}
 	}
 	return res;
-}
-
-static void set_game_index( int game_index )
-{
-	game = game_index;
-
-	if( game >= 0 )
-	{
-	}
 }
 
 static void extract_resolution( const char *_resolution )
