@@ -238,7 +238,7 @@ static void iwm_denibblize35(UINT8 *out, const UINT8 *nib_ptr/*, UINT8 *csum*/)
 	int	i, j;
 	UINT32 c1,c2,c3,c4;
 	UINT8 val;
-	UINT8 w1,w2,w3,w4;
+	UINT8 w1,w2,w3=0,w4;
 	UINT8 b1[175],b2[175],b3[175];
 
 	j = 0;
@@ -700,7 +700,7 @@ static int iwm_put_track(void)
 	/*unsigned char csum[4];*/
 	floppy *f;
 	unsigned int len;
-	unsigned int sector;
+	unsigned int sector = 0;
 	unsigned int oldpos, oldbitpos;
 	int i, j, sum, side;
 	int imgpos;
