@@ -8,6 +8,12 @@
 #define NUM_CODES		128
 #define NUM_SIMUL_KEYS	2
 
+#ifdef MAME_DEBUG
+#define LOG_INPUTX	0
+#else
+#define LOG_INPUTX	0
+#endif
+
 struct InputCode
 {
 	UINT16 port[NUM_SIMUL_KEYS];
@@ -38,6 +44,12 @@ struct InputMapEntry
 	int code;
 };
 
+/***************************************************************************
+
+	Code assembling
+
+***************************************************************************/
+
 static struct InputMapEntry input_map[] =
 {
 	{ "UP",			'^' },
@@ -53,22 +65,40 @@ static struct InputMapEntry input_map[] =
 	{ "R-SHIFT",		0 }
 };
 
-static struct InputCode *codes;
-static void *inputx_timer;
+#if LOG_INPUTX
+static const char *charstr(wchar_t ch)
+{
+	static char buf[3];
 
-static void inputx_timerproc(int dummy);
+	switch(ch) {
+	case '\0':	strcpy(buf, "\\0");		break;
+	case '\r':	strcpy(buf, "\\r");		break;
+	case '\n':	strcpy(buf, "\\n");		break;
+	case '\t':	strcpy(buf, "\\t");		break;
+	default:
+		buf[0] = (char) ch;
+		buf[1] = '\0';
+		break;
+	}
+	return buf;
+}
+#endif
 
-
-static int find_code(const char *name, int modifiers)
+static wchar_t find_code(const char *name, int modifiers)
 {
 	int i;
-	int code;
+	wchar_t code;
 	int len = strlen(name);
 
 	if (len == 1)
 		code = (modifiers == 0) ? name[0] : 0;
 	else if ((len == 4) && isspace(name[1]) && isspace(name[2]))
-		code = isspace(name[3]) ? 0 : name[(modifiers & MODIFIER_SHIFT) ? 3 : 0];
+	{
+		if (modifiers & MODIFIER_SHIFT)
+			code = isspace(name[3]) ? 0 : name[3];
+		else
+			code = name[0];
+	}
 	else
 	{
 		code = 0;
@@ -81,18 +111,21 @@ static int find_code(const char *name, int modifiers)
 			}
 		}
 	}
+
+	if (code >= NUM_CODES)
+		code = 0;
 	return code;
 }
 
-static void scan_keys(UINT16 *ports, const struct InputPortTiny **ipts, int keys, int modifiers, int *used_modifiers)
+static void scan_keys(const struct GameDriver *gamedrv, struct InputCode *codes, UINT16 *ports, const struct InputPortTiny **ipts, int keys, int modifiers, int *used_modifiers)
 {
 	const struct InputPortTiny *ipt;
 	UINT16 port = (UINT16) -1;
-	int code;
+	wchar_t code;
 
 	assert(keys < NUM_SIMUL_KEYS);
 
-	ipt = Machine->gamedrv->input_ports;
+	ipt = gamedrv->input_ports;
 	while(ipt->type != IPT_END)
 	{
 		switch(ipt->type) {
@@ -101,6 +134,8 @@ static void scan_keys(UINT16 *ports, const struct InputPortTiny **ipts, int keys
 			break;
 
 		case IPT_KEYBOARD:
+			if (gamedrv == Machine->gamedrv)
+				logerror("blah: codes[44].port[0]=%i\n", (int) codes[44].port[0]);
 			if (!strcmp(ipt->name, "SHIFT") || !strcmp(ipt->name, "R-SHIFT") || !strcmp(ipt->name, "L-SHIFT"))
 			{
 				/* we've found a shift key */
@@ -109,25 +144,23 @@ static void scan_keys(UINT16 *ports, const struct InputPortTiny **ipts, int keys
 					ports[keys] = port;
 					ipts[keys] = ipt;				
 					*used_modifiers |= MODIFIER_SHIFT;
-					scan_keys(ports, ipts, keys+1, modifiers | MODIFIER_SHIFT, used_modifiers);
+					scan_keys(gamedrv, codes, ports, ipts, keys+1, modifiers | MODIFIER_SHIFT, used_modifiers);
 				}
 			}
 			else
 			{
 				code = find_code(ipt->name, modifiers);
-				if (code < 0)
-				{
-					/* we've failed to translate this system's codes */
-					codes = NULL;
-					return;
-				}
 				if (code > 0)
 				{
 					memcpy(codes[code].port, ports, sizeof(ports[0]) * keys);
-					memcpy(codes[code].ipt, ipts, sizeof(ipt[0]) * keys);
+					memcpy(codes[code].ipt, ipts, sizeof(ipts[0]) * keys);
 					codes[code].port[keys] = port;
 					codes[code].ipt[keys] = ipt;
 				}
+#if LOG_INPUTX
+				if (gamedrv == Machine->gamedrv)
+					logerror("inputx: code=%i (%s) port=%i ipt->name='%s'\n", (int) code, charstr(code), port, ipt->name);
+#endif
 			}
 			break;
 		}
@@ -135,41 +168,94 @@ static void scan_keys(UINT16 *ports, const struct InputPortTiny **ipts, int keys
 	}
 }
 
-void inputx_init(void)
+#define CODE_BUFFER_SIZE	(sizeof(struct InputCode) * NUM_CODES + sizeof(struct KeyBuffer))
+
+static void build_codes(const struct GameDriver *gamedrv, struct InputCode *codes)
 {
 	UINT16 ports[NUM_SIMUL_KEYS];
 	const struct InputPortTiny *ipts[NUM_SIMUL_KEYS];
-	size_t buffer_size;
 	int used_modifiers;
-	wchar_t c;
 	int switch_upper;
+	wchar_t c;
 
+	memset(codes, 0, CODE_BUFFER_SIZE);
+
+	scan_keys(gamedrv, codes, ports, ipts, 0, 0, &used_modifiers);
+
+	/* special case; scan to see if upper case characters are specified, but not lower case */
+	switch_upper = 1;
+	for (c = 'A'; c <= 'Z'; c++)
+	{
+		if (!inputx_can_post_key(c) || inputx_can_post_key(towlower(c)))
+		{
+			switch_upper = 0;
+			break;
+		}
+	}
+	if (switch_upper)
+		memcpy(&codes['a'], &codes['A'], sizeof(codes[0]) * 26);
+}
+
+/***************************************************************************
+
+	Validity checks
+
+***************************************************************************/
+
+#ifdef MAME_DEBUG
+void inputx_validitycheck(struct GameDriver *gamedrv)
+{
+	char buf[CODE_BUFFER_SIZE];
+	struct InputCode *codes;
+	const struct InputPortTiny *ipt;
+	int port_count, i, j;
+
+	if (gamedrv->flags & GAME_COMPUTER)
+	{
+		codes = (struct InputCode *) buf;
+		build_codes(gamedrv, codes);
+
+		port_count = 0;
+		for (ipt = gamedrv->input_ports; ipt->type != IPT_END; ipt++)
+		{
+			if (ipt->type == IPT_PORT)
+				port_count++;
+		}
+
+		for (i = 0; i < NUM_CODES; i++)
+		{
+			for (j = 0; j < NUM_SIMUL_KEYS; j++)
+			{
+				assert(codes[i].port[j] >= 0);
+				assert(codes[i].port[j] < port_count);
+			}
+		}
+	}
+}
+#endif
+
+/***************************************************************************
+
+	Core
+
+***************************************************************************/
+
+static struct InputCode *codes;
+static void *inputx_timer;
+
+static void inputx_timerproc(int dummy);
+
+void inputx_init(void)
+{
 	codes = NULL;
 	inputx_timer = NULL;
 
 	if (Machine->gamedrv->flags & GAME_COMPUTER)
 	{
-		buffer_size = sizeof(struct InputCode) * NUM_CODES + sizeof(struct KeyBuffer);
-
-		codes = (struct InputCode *) auto_malloc(buffer_size);
+		codes = (struct InputCode *) auto_malloc(CODE_BUFFER_SIZE);
 		if (!codes)
 			return;
-		memset(codes, 0, buffer_size);
-
-		scan_keys(ports, ipts, 0, 0, &used_modifiers);
-
-		/* special case; scan to see if upper case characters are specified, but not lower case */
-		switch_upper = 1;
-		for (c = 'A'; c <= 'Z'; c++)
-		{
-			if (!inputx_can_post_key(c) || inputx_can_post_key(towlower(c)))
-			{
-				switch_upper = 0;
-				break;
-			}
-		}
-		if (switch_upper)
-			memcpy(&codes['a'], &codes['A'], sizeof(codes[0]) * 26);
+		build_codes(Machine->gamedrv, codes);
 
 		inputx_timer = timer_alloc(inputx_timerproc);
 	}
@@ -199,6 +285,7 @@ void inputx_wpost(const wchar_t *text)
 {
 	struct KeyBuffer *keybuf;
 	int last_cr = 0;
+	int can_post;
 	wchar_t ch;
 
 	if (!text[0] || !inputx_can_post())
@@ -225,7 +312,13 @@ void inputx_wpost(const wchar_t *text)
 			else
 				last_cr = (ch == '\r');
 
-			if (inputx_can_post_key(ch))
+			can_post = inputx_can_post_key(ch);
+
+#if LOG_INPUTX
+			logerror("inputx_wpost(): code=%i (%s) port=%i ipt->name='%s'\n", (int) ch, charstr(ch), codes[ch].port[0], codes[ch].ipt[0] ? codes[ch].ipt[0]->name : "<null>");
+#endif
+
+			if (can_post)
 			{
 				keybuf->buffer[keybuf->end_pos++] = ch;
 				keybuf->end_pos %= sizeof(keybuf->buffer) / sizeof(keybuf->buffer[0]);
