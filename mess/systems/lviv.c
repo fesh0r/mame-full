@@ -2,10 +2,16 @@
 
 PK-01 Lviv driver by Krzysztof Strzecha
 
-Big thanks to Anton V. Ignatichev for informations about Lviv hardware.
+Big thanks go to:
+Anton V. Ignatichev for informations about Lviv hardware.
+Volodimir Mosorov for two Lviv machines.
 
 What's new:
 -----------
+20.07.2002	"Reset" key fixed. 8080 core fixed (all BASIC commands works
+		now). Unsupported .lvt files versions aren't now loaded.
+xx.07.2002	Improved port and memory mapping (Raphael Nabet).
+		Hardware description updated (Raphael Nabet).
 27.03.2002	CPU clock changed to 2.5MHz.
 		New Lviv driver added for different ROM revision.
 24.03.2002	Palette emulation.
@@ -17,11 +23,10 @@ What's new:
 
 Notes on emulation status and to do list:
 -----------------------------------------
-1. Some BASIC commands dont work (ie. LIST).
-2. Printer is not emulated. 
-3. Only simple video hardware emulation (timings are not known).
-4. .RSS and .SAV files are not supported.
-5. Some usage notes and trivia are needed in sysinfo.dat.
+1. Printer is not emulated. 
+2. Only simple video hardware emulation (timings are not known).
+3. .RSS and .SAV files are not supported.
+4. Some usage notes and trivia are needed in sysinfo.dat.
 
 
 Lviv technical information
@@ -396,7 +401,7 @@ INPUT_PORTS_START (lviv)
 		PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "Left",	KEYCODE_LEFT,		IP_JOY_NONE )
 		PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "Down",	KEYCODE_DOWN,		IP_JOY_NONE )
 	PORT_START /* CPU */
-		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD | IPF_RESETCPU, "Reset", KEYCODE_PGUP, IP_JOY_NONE )
+		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Reset",	KEYCODE_PGUP,		IP_JOY_NONE )
 INPUT_PORTS_END
 
 static struct Speaker_interface lviv_speaker_interface=
