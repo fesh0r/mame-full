@@ -23,11 +23,26 @@ header. Load the file then type MENU and it should appear in the list, now you
 can type the name of the program to run it.
 [Kev Thacker]
 
+- [ORIC1/ORICA/TELSTRAT] .tap tape images can now be used. These are converted
+at run-time into .wav files, and can be used in the same way as .wav. Code based
+heavily on tap2wav by Fabrice Frances [Kev Thacker, Fabrice Frances]
+
+
 - [COCO 1/2/3] Reworked m6847 synchronization and sound mux signals to make
 them much more accurate.  Fixed a bug that caused the joystick to max out all
 the time. Added a new abstraction layer for cartridge IO interfaces.  Optimized
 graphics emulation a bit.  [Nate Woods]
+
 - [DRAGON] Fixed DragonDOS cartrdige, so now DragonDOS works fine.  [Nate Woods]
+
+- [NC100/NC200] Fixed PCMCIA Memory card emulation: Read/Write state can be changed using
+a dipswitch in the UI, memory card changes are saved back to memory card file. 
+Discovered more about the NC200 hardware and updated the code. Cleaned up more
+of the source, added better description about the I/O ports and seperated it into 
+common code, nc100 only and nc200 only code. Serial baud rate was not setup correct,
+now fixed.
+[Kev Thacker]
+
 
 Other Changes:
 --------------
