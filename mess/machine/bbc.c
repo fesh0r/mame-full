@@ -123,13 +123,12 @@ B7 - Operates the SHIFT lock LED (Pin 16 keyboard connector)
 
 ******************************************************************************/
 
-#include <ctype.h>
+#include "ctype.h"
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "machine/6522via.h"
 #include "includes/wd179x.h"
 #include "includes/bbc.h"
-#include "vidhrdw/bbc.h"
 #include "includes/i8271.h"
 #include "includes/basicdsk.h"
 
@@ -458,14 +457,27 @@ bbcb_user_via= {
   bbc_via1_irq,//via1_irq
 };
 
+/**************************************
+   load floppy disc
+***************************************/
 
-static UINT8 motor_drive = 0;
-static short motor_count = 0;
-static UINT8 head=0;
+int bbc_floppy_init(int id)
+{
+	if (basicdsk_floppy_init(id)==INIT_OK)
+	{
+		/* sector id's 0-9 */
+		/* drive, tracks, heads, sectors per track, sector length, dir_sector, dir_length, first sector id */
+		basicdsk_set_geometry(id,80,1,10,256,0);
 
+		return INIT_OK;
+	}
 
-static void bbc_fdc_callback(int);
+	return INIT_FAILED;
+}
 
+/**************************************
+   i8271 disc control function
+***************************************/
 
 static int previous_i8271_int_state;
 
@@ -476,7 +488,7 @@ void	bbc_i8271_interrupt(int state)
 	the nmi will be triggered, but when the state changes because the int
 	is cleared this will not cause another nmi */
 	/* I'll emulate it like this to be sure */
-	
+
 	if (state!=previous_i8271_int_state)
 	{
 		if (state)
@@ -496,137 +508,6 @@ static i8271_interface bbc_i8271_interface=
 	bbc_i8271_interrupt,
     NULL
 };
-
-
-void bbc_fdc_callback(int event)
-{
-	if (event==WD179X_IRQ_SET)
-		cpu_set_irq_line(0,M6502_INT_NMI,1);
-	//if (event==WD179X_IRQ_CLEAR)
-		//cpu_set_irq_line(0,M6502_INT_NMI,0);
-}
-
-void init_machine_bbca(void)
-{
-	cpu_setbankhandler_r(1, MRA_BANK1);
-	cpu_setbankhandler_r(2, MRA_BANK2);
-
-	cpu_setbank(1,memory_region(REGION_CPU1));
-
-	via_config(0, &bbcb_system_via);
-	via_set_clock(0,1000000);
-
-	via_reset();
-	bbcb_IC32_initialise();
-
-}
-
-void init_machine_bbcb(void)
-{
-	cpu_setbankhandler_r(1, MRA_BANK1);
-	cpu_setbankhandler_r(2, MRA_BANK2);
-
-	via_config(0, &bbcb_system_via);
-	via_set_clock(0,1000000);
-
-	via_config(1, &bbcb_user_via);
-	via_set_clock(1,1000000);
-
-	via_reset();
-	bbcb_IC32_initialise();
-
-    wd179x_init(bbc_fdc_callback);
-
-	i8271_init(&bbc_i8271_interface);
-	i8271_reset();
-}
-
-
-void stop_machine_bbcb(void)
-{
-	wd179x_exit();
-    i8271_stop();
-}
-
-/* load floppy */
-int bbc_floppy_init(int id)
-{
-	if (basicdsk_floppy_init(id)==INIT_OK)
-	{
-		/* sector id's 0-9 */
-		/* drive, tracks, heads, sectors per track, sector length, dir_sector, dir_length, first sector id */
-		basicdsk_set_geometry(id,80,1,10,256,0);
-
-		return INIT_OK;
-	}
-
-	return INIT_FAILED;
-}
-
-void bbc_wd179x_status_w(int offset,int data)
-{
-	UINT8 drive = 255;
-
-	drive = 0;
-        head=0;
-
-	motor_drive=drive;
-	motor_count=5*60;
-
-	wd179x_set_drive(drive);
-        wd179x_set_side(head);
-
-}
-
-READ_HANDLER ( bbc_wd1770_read)
-{
-	int retval=0xff;
-	logerror("wd177x read: $%02X\n", offset);
-	switch (offset)
-	{
-	case 4:
-		retval=wd179x_status_r(offset);
-		break;
-	case 5:
-		retval=wd179x_track_r(offset);
-		break;
-	case 6:
-		retval=wd179x_sector_r(offset);
-		break;
-	case 7:
-		retval=wd179x_data_r(offset);
-		break;
-	default:
-		break;
-	}
-
-	return retval;
-}
-
-WRITE_HANDLER ( bbc_wd1770_write )
-{
-	logerror("wd177x write: $%02X  $%02X\n", offset,data);
-	switch (offset)
-	{
-	case 0:
-		bbc_wd179x_status_w(offset, data);
-		break;
-	case 4:
-		wd179x_command_w(offset, data);
-		break;
-	case 5:
-		wd179x_track_w(offset, data);
-		break;
-	case 6:
-		wd179x_sector_w(offset, data);
-		break;
-	case 7:
-		wd179x_data_w(offset, data);
-		break;
-	default:
-		break;
-	}
-}
 
 
 READ_HANDLER(bbc_i8271_read)
@@ -665,4 +546,173 @@ WRITE_HANDLER(bbc_i8271_write)
 		default:
 			break;
 	}
+}
+
+
+
+/**************************************
+   WD1770 disc control function
+***************************************/
+
+static int	drive0_select;
+static int  drive1_select;
+static int  drive_side_select;
+static int  density_select;
+static int  nmi_enable;
+
+
+
+/*
+   B/ B+ drive control:
+
+        Bit       Meaning
+        -----------------
+        7,6       Not used.
+         5        Reset drive controller chip.
+         4        Interrupt Enable
+         3        Double density select (0 = double, 1 = single).
+         2        Side select (0 = side 0, 1 = side 1).
+         1        Drive select 1.
+         0        Drive select 0.
+*/
+
+/*
+density select
+single density is as the 8271 disc format
+double density is as the 8271 disc format but with 16 sectors per track
+
+At some point we need to check the size of the disc image to work out if it is a single or double
+density disc image
+*/
+
+
+void bbc_wd179x_callback(int event)
+{
+
+	/* WD179X_IRQ_SET and latch bit 4 (nmi_enable) are NAND'ED together
+	   WD179X_DRQ_SET and latch bit 4 (nmi_enable) are NAND'ED together
+	   the output of the above two NAND gates are then OR'ED together and sent to the 6502 NMI line.
+    */
+}
+
+
+void bbc_wd179x_status_w(int offset,int data)
+{
+
+		drive0_select     = (data>>0) & 0x01;
+        drive1_select     = (data>>1) & 0x01;
+		drive_side_select = (data>>2) & 0x01;  // 0=side 0 , 1= side 1
+		density_select    = (data>>3) & 0x01;  // 0=double , 1= single
+		nmi_enable        = (data>>4) & 0x01;
+
+		/* setting bit 5 will reset the WD1770 */
+
+		/* bits 6 and 7 are not used */
+
+		/* need to set the drive,side and density now
+		wd179x_set_drive(drive);
+        wd179x_set_side(head);
+		*/
+}
+
+
+
+READ_HANDLER ( bbc_wd1770_read)
+{
+	int retval=0xff;
+	switch (offset)
+	{
+	case 4:
+		retval=wd179x_status_r(offset);
+		break;
+	case 5:
+		retval=wd179x_track_r(offset);
+		break;
+	case 6:
+		retval=wd179x_sector_r(offset);
+		break;
+	case 7:
+		retval=wd179x_data_r(offset);
+		break;
+	default:
+		break;
+	}
+	logerror("wd177x read: $%02X  $%02X\n", offset,retval);
+
+	return retval;
+}
+
+WRITE_HANDLER ( bbc_wd1770_write )
+{
+	logerror("wd177x write: $%02X  $%02X\n", offset,data);
+	switch (offset)
+	{
+	case 0:
+		bbc_wd179x_status_w(offset, data);
+		break;
+	case 4:
+		wd179x_command_w(offset, data);
+		break;
+	case 5:
+		wd179x_track_w(offset, data);
+		break;
+	case 6:
+		wd179x_sector_w(offset, data);
+		break;
+	case 7:
+		wd179x_data_w(offset, data);
+		break;
+	default:
+		break;
+	}
+}
+
+
+/**************************************
+   Machine Initialisation functions
+***************************************/
+
+
+void init_machine_bbca(void)
+{
+	cpu_setbankhandler_r(1, MRA_BANK1);
+	cpu_setbankhandler_r(2, MRA_BANK2);
+
+	cpu_setbank(1,memory_region(REGION_CPU1));
+
+	via_config(0, &bbcb_system_via);
+	via_set_clock(0,1000000);
+
+	via_reset();
+
+	bbcb_IC32_initialise();
+
+}
+
+void init_machine_bbcb(void)
+{
+	cpu_setbankhandler_r(1, MRA_BANK1);
+	cpu_setbankhandler_r(2, MRA_BANK2);
+
+	via_config(0, &bbcb_system_via);
+	via_set_clock(0,1000000);
+
+	via_config(1, &bbcb_user_via);
+	via_set_clock(1,1000000);
+
+	via_reset();
+
+	bbcb_IC32_initialise();
+
+    wd179x_init(bbc_wd179x_callback);
+
+	i8271_init(&bbc_i8271_interface);
+	i8271_reset();
+}
+
+
+void stop_machine_bbcb(void)
+{
+	wd179x_exit();
+    i8271_stop();
 }

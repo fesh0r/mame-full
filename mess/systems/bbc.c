@@ -11,9 +11,13 @@
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "includes/bbc.h"
-#include "vidhrdw/bbc.h"
 #include "machine/6522via.h"
 #include "includes/basicdsk.h"
+
+
+/* set i8271 to 1 to use 8271 disc controller set to 0 to use wd1770 disc controller */
+#define i8271 1
+
 
 /******************************************************************************
 FRED
@@ -132,8 +136,11 @@ static struct MemoryReadAddress readmem_bbcb[] =
 	{ 0xfe30, 0xfe3f, BBC_NOP_FE_r	   },  /* &30-&3f  84LS161		 Paged ROM selector 		   */
 	{ 0xfe40, 0xfe5f, via_0_r		   },  /* &40-&5f  6522 VIA 	 SYSTEM VIA 				   */
 	{ 0xfe60, 0xfe7f, via_1_r		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
-//	{ 0xfe80, 0xfe9f, bbc_wd1770_read  },  /* &80-&9f  8271/1770 FDC Floppy disc controller 	   */
-	{ 0xfe80, 0xfe9f, bbc_i8271_read   },
+#if i8271
+	{ 0xfe80, 0xfe9f, bbc_i8271_read   },  /* &80-&9f  8271/1770 FDC Floppy disc controller 	   */
+#else
+	{ 0xfe80, 0xfe9f, bbc_wd1770_read  },
+#endif
 	{ 0xfea0, 0xfebf, BBC_NOP_FE_r	   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
 	{ 0xfec0, 0xfedf, BBC_NOP_00_r	   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, BBC_NOP_FE_r	   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
@@ -155,8 +162,11 @@ static struct MemoryWriteAddress writemem_bbcb[] =
 	{ 0xfe30, 0xfe3f, page_selectb_w   },  /* &30-&3f  84LS161		 Paged ROM selector 		   */
 	{ 0xfe40, 0xfe5f, via_0_w		   },  /* &40-&5f  6522 VIA 	 SYSTEM VIA 				   */
 	{ 0xfe60, 0xfe7f, via_1_w		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
-//	{ 0xfe80, 0xfe9f, bbc_wd1770_write },  /* &80-&9f  8271/1770 FDC Floppy disc controller 	   */
-	{ 0xfe80, 0xfe9f, bbc_i8271_write  },
+#if i8271
+	{ 0xfe80, 0xfe9f, bbc_i8271_write  },  /* &80-&9f  8271/1770 FDC Floppy disc controller 	   */
+#else
+	{ 0xfe80, 0xfe9f, bbc_wd1770_write },
+#endif
 	{ 0xfea0, 0xfebf, MWA_NOP		   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
 	{ 0xfec0, 0xfedf, MWA_NOP		   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, MWA_NOP		   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
@@ -363,18 +373,26 @@ ROM_START(bbcb)
 														  /* rom page 12 40000 */
 														  /* rom page 13 44000 */
 #endif
+
+#if i8271
+
 	/* just use one of the following DFS roms */
-	/* only dnfs.rom works right now */
 
 	/* dnfs is acorns disc and network fileing system rom it replaced dfs 0.9  */
-	ROM_LOAD("dnfs.rom",    0x48000, 0x4000, 0x8ccd2157 ) /* rom page 14 48000 */
+//	ROM_LOAD("dnfs.rom",    0x48000, 0x4000, 0x8ccd2157 ) /* rom page 14 48000 */
 
 	/* dfs 0.9 was the standard acorn dfs rom before it was replaced with the dnfs rom */
 //	ROM_LOAD("dfs09.rom",   0x48000, 0x2000, 0x3ce609cf ) /* rom page 14 48000 */
 //	ROM_RELOAD(             0x4a000, 0x2000             )
 
 	/* dfs 1.44 from watford electronics, this is the best of the non-acorn dfs roms */
-//	ROM_LOAD("dfs144.rom",  0x48000, 0x4000, 0x9fb8d13f ) /* rom page 14 48000 */
+	ROM_LOAD("dfs144.rom",  0x48000, 0x4000, 0x9fb8d13f ) /* rom page 14 48000 */
+
+#else
+
+    /* ddfs 2.23 this is acorns 1770 disc controller Double density disc filing system */
+    ROM_LOAD("ddfs223.rom", 0x48000, 0x4000, 0x7891f9b7 ) /* rom page 14 48000 */
+#endif
 
 
 	ROM_LOAD("basic2.rom",  0x4c000, 0x4000, 0x79434781 ) /* rom page 15 4c000 */
