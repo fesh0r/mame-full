@@ -29,18 +29,22 @@ static const UINT8 translate6[0x40] =
 
 int apple2_choose_image_type(const char *filetype)
 {
-	int image_type;
 	switch(filetype[0]) {
 	case 'p':
 	case 'P':
-		image_type = APPLE2_IMAGE_PO;
+		if (!strcmpi(filetype, "po"))
+			return APPLE2_IMAGE_PO;
 		break;
 
-	default:
-		image_type = APPLE2_IMAGE_DO;
+	case 'd':
+	case 'D':
+		if (!strcmpi(filetype, "do"))
+			return APPLE2_IMAGE_DO;
+		if (!strcmpi(filetype, "dsk"))
+			return APPLE2_IMAGE_DO;
 		break;
 	}
-	return image_type;
+	return APPLE2_IMAGE_UNKNOWN;
 }
 
 

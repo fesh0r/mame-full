@@ -18,13 +18,14 @@
 
 ***************************************************************************/
 
-#define APPLE2_NIBBLE_SIZE	374
-#define APPLE2_TRACK_COUNT	35
-#define APPLE2_SECTOR_COUNT	16
-#define APPLE2_SECTOR_SIZE	256
+#define APPLE2_NIBBLE_SIZE		374
+#define APPLE2_TRACK_COUNT		35
+#define APPLE2_SECTOR_COUNT		16
+#define APPLE2_SECTOR_SIZE		256
 
-#define APPLE2_IMAGE_DO		0
-#define APPLE2_IMAGE_PO		1
+#define APPLE2_IMAGE_UNKNOWN	0
+#define APPLE2_IMAGE_DO			1
+#define APPLE2_IMAGE_PO			2
 
 
 

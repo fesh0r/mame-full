@@ -4,9 +4,11 @@ New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 (none)
 
+
 System Driver Changes:
 ----------------------
-(none)
+- [APPLE2] Writing to disk images is now supported.  [Nate Woods]
+
 
 User Interface Changes:
 -----------------------
@@ -18,6 +20,7 @@ User Interface Changes:
 Imgtool Changes:
 ----------------
 (none)
+
 
 Source Changes:
 ---------------

@@ -68,9 +68,14 @@ void apple2_slot6_init(void)
 
 DEVICE_LOAD(apple2_floppy)
 {
+	int image_type;
 	struct apple2_drive *drive;
 
 	if (mame_fsize(file) != APPLE2_TRACK_COUNT * APPLE2_SECTOR_COUNT * APPLE2_SECTOR_SIZE)
+		return INIT_FAIL;
+
+	image_type = apple2_choose_image_type(image_filetype(image));
+	if (image_type == APPLE2_IMAGE_UNKNOWN)
 		return INIT_FAIL;
 
 	if (device_load_basicdsk_floppy(image, file) != INIT_PASS)
@@ -85,7 +90,7 @@ DEVICE_LOAD(apple2_floppy)
 	memset(drive, 0, sizeof(*drive));
 	drive->state = TWEEN_TRACKS;
 	drive->transient_state = 0;
-	drive->image_type = apple2_choose_image_type(image_filetype(image));
+	drive->image_type = image_type;
 
 	return INIT_PASS;
 }
@@ -156,7 +161,10 @@ static UINT8 process_byte(mess_image *img, struct apple2_drive *disk, int write_
 	if ((disk->transient_state & TRSTATE_LOADED) == 0)
 		load_current_track(img, disk);
 
+	/* perform the read */
 	read_value = disk->track_data[disk->position];
+
+	/* perform the write, if applicable */
 	if (write_value >= 0)
 	{
 		disk->track_data[disk->position] = write_value;
@@ -165,6 +173,11 @@ static UINT8 process_byte(mess_image *img, struct apple2_drive *disk, int write_
 
 	disk->position++;
 	disk->position %= (sizeof(disk->track_data) / sizeof(disk->track_data[0]));
+
+	/* when writing; save the current track after every full sector write */
+	if ((write_value >= 0) && ((disk->position % APPLE2_NIBBLE_SIZE) == 0))
+		save_current_track(img, disk);
+
 	return read_value;
 }
 
@@ -172,6 +185,8 @@ static void seek_disk(mess_image *img, struct apple2_drive *disk, signed int ste
 {
 	int track;
 	int pseudo_track;
+
+	save_current_track(img, disk);
 	
 	track = floppy_drive_get_current_track(img);
 	pseudo_track = (track * 2) + (disk->state & TWEEN_TRACKS ? 1 : 0);
