@@ -20,6 +20,7 @@ More Nascom1/2 official releases [JoJo]
 Sharp PC1403/1403H (preliminary) [PeT]
 Texas Instruments TI-86 (preliminary) [Krzysztof Strzecha]
 CoCo 3 PAL [Cowering and Nate Woods]
+Intellivision & Intellivision Kbd Component (preliminary) [Frank Palazzolo]
 
 System Driver Changes:
 ----------------------
@@ -40,7 +41,7 @@ System Driver Changes:
   attack and tutankham). Small fix to input handling which means Defender and 
   Centipede now work. Accurate NMI handling added which fixes remaining carts 
   like Buck Rogers, DragonFire, Zenji, Bump and Jump, etc. Also, keys are 
-  configurable from the OSD for both controllers. [Ben, Sean Young]
+  configurable from the OSD for both controllers. Code cleanup.[Ben, Sean Young]
 
 - [DRAGON/COCO1-2-3] Completely rewritten midframe video mode rendering, which
   now applies not just to the CoCo 3, but to all systems that use the m6847 and
@@ -106,12 +107,16 @@ System Driver Changes:
 - [EP128] Some graphics problem fixed [Kev Thacker]
 
 - [LYNX] Preliminary sound support & fix of the stereo allocation. Stereo enabled.
-  Added enhanced blitter modes and multiplier. [PeT]
+  Added enhanced blitter modes and multiplier. Added rasterline rendering,
+  screen flipping, fixed reset and added audio/timer connection. [PeT]
 
 - [ODYSSEY2] added collision support. [PeT]
 
 - [MK1] Added basic video/keyboard/interrupt functionality. The driver is now
   functional. [PeT]
+
+- [VZ200] Video code has been temporarily reverted to Jurgen's code, and doesn't
+  make use of the new M6847 features. [Nate Woods]
 
 Source:
 -------
@@ -133,6 +138,10 @@ Source:
   recognized. At the moment "-parallel" is not used by any driver, but has been
   reserved for future expansions. [JoJo]
 
+- Beginning of a huge rewriting of the device handling/image loading code. [Ben]
+
+- Logging routines have been fixed. [Ben]
+
 - Added Jurgen's tool to create generic CP/M disk images to the tools/ directory
   [JoJo]
 
@@ -152,10 +161,12 @@ Source:
 
 - Added save sate support to TMS34010 CPU. [Nate Woods]
 
-- Many fixes to the SC61860 CPU. [PeT]
+- Many fixes to the SC61860 CPU. H is treated now as an internal register. [PeT]
 
 - Added a static memory interface, interrupt functionality and runtime loader 
   support to the F8 CPU core. [PeT]
+
+- Fixed the DIV1 instruction Q bit generation for the SH2 CPU. [James Forshaw]
 
 -------------------------------------------------------------------------------  
 0.37b14
