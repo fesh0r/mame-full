@@ -603,7 +603,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit						*/
 
 	/* DEC */
-//	DRIVER( pdp1 )      /* 1961 DEC PDP1									*/
+	DRIVER( pdp1 )      /* 1961 DEC PDP1									*/
 
 	/* MEMOTECH */
 	DRIVER( mtx512 )    /* 1983 Memotech MTX512								*/
