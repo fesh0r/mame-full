@@ -115,8 +115,6 @@ void init_ti99_4p(void);
 void machine_init_ti99(void);
 void machine_stop_ti99(void);
 
-int ti99_floppy_load(int id, mame_file *fp, int open_mode);
-
 int ti99_cassette_load(int id, mame_file *fp, int open_mode);
 
 int ti99_rom_load(int id, mame_file *fp, int open_mode);

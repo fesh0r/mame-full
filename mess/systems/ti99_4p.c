@@ -31,6 +31,7 @@
 #include "machine/tms9901.h"
 #include "sndhrdw/spchroms.h"
 #include "machine/994x_ser.h"
+#include "machine/99_dsk.h"
 #include "devices/basicdsk.h"
 
 static MEMORY_READ16_START (readmem)

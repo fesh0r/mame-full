@@ -42,6 +42,7 @@ Historical notes: TI made several last minute design changes.
 #include "machine/tms9901.h"
 #include "sndhrdw/spchroms.h"
 #include "machine/994x_ser.h"
+#include "machine/99_dsk.h"
 #include "machine/99_ide.h"
 #include "devices/cartslot.h"
 #include "devices/basicdsk.h"
@@ -824,9 +825,9 @@ SYSTEM_CONFIG_START(ti99_4)
 	CONFIG_DEVICE_CASSETTE			(2, "",												ti99_cassette_load)
 	CONFIG_DEVICE_LEGACY			(IO_CARTSLOT,	3,	"bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_READ,	NULL,	NULL,	ti99_rom_load,	ti99_rom_unload,	NULL)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(3,	"dsk\0",										ti99_floppy_load)
+	CONFIG_DEVICE_LEGACY			(IO_HARDDISK, 	1, "hd\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_OR_READ, NULL, NULL, ti99_ide_load, ti99_ide_unload, NULL)
 	CONFIG_DEVICE_LEGACY			(IO_PARALLEL,	1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	ti99_4_pio_load,	ti99_4_pio_unload,		NULL)
 	CONFIG_DEVICE_LEGACY			(IO_SERIAL,		1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	ti99_4_rs232_load,	ti99_4_rs232_unload,	NULL)
-	CONFIG_DEVICE_LEGACY			(IO_HARDDISK, 	1, "hd\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_OR_READ, NULL, NULL, ti99_ide_load, ti99_ide_unload, NULL)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT   MACHINE		 INPUT	  INIT		CONFIG	COMPANY				FULLNAME */
