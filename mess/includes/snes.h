@@ -2,9 +2,11 @@
 #define _SNES_H_
 
 /* Useful defines */
-#define SNES_SCR_WIDTH	256		/* 32 characters 8 pixels wide */
-#define SNES_SCR_HEIGHT	240		/* Can be either 224 of 240 height, so specify greatest value (maybe we'll have switching later on) */
-#define FIXED_COLOUR	256		/* Position in cgram for the fixed colour */
+#define SNES_SCR_WIDTH		256	/* 32 characters 8 pixels wide */
+#define SNES_SCR_HEIGHT		240	/* Can be either 224 of 240 height, so specify greatest value (maybe we'll have switching later on) */
+#define SNES_MAX_LINES_NTSC	262	/* Maximum number of lines for NTSC systems */
+#define SNES_MAX_LINES_PAL	312	/* Maximum number of lines for PAL systems */
+#define FIXED_COLOUR		256	/* Position in cgram for the fixed colour */
 /* Defines for Memory-Mapped registers */
 #define INIDISP			0x2100
 #define OBSEL			0x2101
