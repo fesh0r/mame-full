@@ -10,13 +10,15 @@ OSOBJS = $(OBJ)/windows/winmain.o $(OBJ)/windows/fileio.o $(OBJ)/windows/config.
 	 $(OBJ)/windows/asmtile.o
 
 ifdef MESS
-CFLAGS += -DWINUI
+CFLAGS += -DWINUI -DEMULATORDLL=\"$(EMULATORDLL)\"
 OSOBJS += $(OBJ)/mess/windows/dirio.o	\
 	$(OBJ)/mess/windows/messwin.o		\
 	$(OBJ)/mess/windows/messopts.o		\
-	$(OBJ)/mess/windows/messcmds.o		\
+	$(OBJ)/mess/windows/menu.o			\
 	$(OBJ)/mess/windows/parallel.o
 endif 
+
+RESFILE=$(OBJ)/mess/windows/mess.res
 
 # uncomment this line to enable guard pages on all memory allocations
 ifdef DEBUG

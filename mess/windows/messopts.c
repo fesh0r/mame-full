@@ -1,7 +1,17 @@
+//============================================================
+//
+//	messopts.c - Win32 MESS specific options
+//
+//============================================================
+
+// standard windows headers
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
 #include "driver.h"
 #include "rc.h"
 #include "parallel.h"
-#include "messcmds.h"
+#include "menu.h"
 
 /* add_device() is called when the MESS CLI option has been identified 		*/
 /* This searches throught the devices{} struct array to grab the ID of the 	*/

@@ -49,7 +49,7 @@ OSOBJS += \
         #$(OBJ)/windowsui/options.o \		<<--- included from MESS' version
 
 # add resource file
-RESFILE = $(OBJ)/mess/windowsui/mess32.res
+GUIRESFILE = $(OBJ)/mess/windowsui/mess32.res
 
 #####################################################################
 # compiler
@@ -84,6 +84,10 @@ RCFLAGS = -O coff --include-dir src --include-dir mess/windowsui --include-dir s
 ifdef DEBUG
 RCFLAGS += -DMAME_DEBUG
 endif
+
+$(OBJ)/mess/windows/%.res: mess/windows/%.rc
+	@echo Compiling resources $<...
+	$(RC) $(RCDEFS) $(RCFLAGS) -o $@ -i $<
 
 $(OBJ)/mess/windowsui/%.res: mess/windowsui/%.rc
 	@echo Compiling resources $<...

@@ -1,0 +1,113 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "messres.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include <windows.h>
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_RUNTIME_MENU MENU 
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&Load State...",              ID_Menu112, GRAYED
+        MENUITEM "&Save State...",              ID_FILE_SAVESTATE, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Exit",                       ID_FILE_EXIT
+    END
+    POPUP "&Edit"
+    BEGIN
+        MENUITEM "Paste",                       ID_EDIT_PASTE
+    END
+    POPUP "&Options"
+    BEGIN
+        MENUITEM "Pause",                       ID_OPTIONS_PAUSE, GRAYED
+        MENUITEM "Reset",                       ID_Menu119, GRAYED
+        MENUITEM SEPARATOR
+        POPUP "Keyboard"
+        BEGIN
+            MENUITEM "Emulated",                    ID_KEYBOARD_EMULATED
+            MENUITEM "Natural",                     ID_KEYBOARD_NATURAL
+        END
+        MENUITEM "Joysticks",                   ID_Menu, GRAYED
+        MENUITEM "DIP Switches...",             ID_OPTIONS_DIPSWITCHES
+        , GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Increase Frameskip",          ID_OPTIONS_INCREASEFRAMESKIP
+        , GRAYED
+        MENUITEM "Decrease Frameskip",          ID_OPTIONS_DECREASEFRAMESKIP
+        , GRAYED
+        MENUITEM "Throttle",                    ID_Menu116, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Show Profiler",               ID_OPTIONS_SHOWPROFILER
+        , GRAYED
+        MENUITEM "Show Internal Graphics",      ID_OPTIONS_SHOWINTERNALGRAPHICS
+        , GRAYED
+    END
+    MENUITEM "&Devices",                    ID_DEVICES, GRAYED
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "About This System...",        ID_HELP_ABOUTMACHINE, GRAYED
+        MENUITEM "&About MESS...",              ID_HELP_ABOUT
+    END
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "messres.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include <windows.h>\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

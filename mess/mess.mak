@@ -699,7 +699,6 @@ COREOBJS += \
 	$(OBJ)/mess/filemngr.o	       \
 	$(OBJ)/mess/compcfg.o	       \
 	$(OBJ)/mess/tapectrl.o	       \
-	$(OBJ)/mess/menu.o	       \
 	$(OBJ)/mess/printer.o	       \
 	$(OBJ)/mess/cassette.o	       \
 	$(OBJ)/mess/menuentr.o	       \

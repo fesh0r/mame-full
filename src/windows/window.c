@@ -27,9 +27,9 @@
 #include "../window.h"
 
 #ifdef MESS
-#include "messcmds.h"
-#include "inputx.h"
+#include "menu.h"
 #endif
+
 
 //============================================================
 //	IMPORTS
@@ -64,12 +64,7 @@ extern UINT8 win_trying_to_quit;
 // minimum window dimension
 #define MIN_WINDOW_DIM			200
 
-#ifdef MESS
-#define MENU_EXIT				1001
-#define MENU_PASTE				1002
-#define MENU_INPUT_NATURAL		1003
-#define MENU_INPUT_EMULATED		1004			
-#endif
+
 
 //============================================================
 //	GLOBAL VARIABLES
@@ -175,17 +170,7 @@ static struct win_effect_data effect_table[] =
 	{ "sharp",   EFFECT_SHARP,       2, 2, 2, 2 },
 };
 
-struct win_menu
-{
-	UINT_PTR item_id;
-	LPCTSTR text;
-	int (*enable)(void);
-	void (*command)(void);
-};
 
-#ifdef MESS
-static HMENU menu_bar;
-#endif
 
 //============================================================
 //	PROTOTYPES
@@ -201,35 +186,7 @@ static int create_debug_window(void);
 static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap, const rgb_t *palette);
 static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
 
-static void cmd_exit(void);
 
-// system menus
-static struct win_menu sys_menu_layout[] =
-{
-	{ MENU_FULLSCREEN,		"Full Screen\tAlt+Enter",	NULL,				win_toggle_full_screen },
-	{ 0,					NULL,						NULL,				NULL }
-};
-
-#ifdef MESS
-static struct win_menu menu_bar_layout[] =
-{
-	{ 0,					"File",						NULL,				NULL },
-	{ MENU_EXIT,			"Exit",						NULL,				cmd_exit },
-	{ 0,					NULL,						NULL,				NULL },
-	{ 0,					"Edit",						NULL,				NULL },
-	{ MENU_PASTE,			"Paste",					inputx_can_post,	win_paste },
-	{ 0,					NULL,						NULL,				NULL },
-	{ 0,					"Options",					NULL,				NULL },
-	{ 0,					"Input Mode",				inputx_can_post,	NULL },
-	{ MENU_INPUT_NATURAL,	"Natural",					NULL,				win_input_natural },
-	{ MENU_INPUT_EMULATED,	"Emulated",					NULL,				win_input_emulated },
-	{ 0,					NULL,						NULL,				NULL },
-	{ 0,					NULL,						NULL,				NULL },
-	{ 0,					"Help",						NULL,				NULL },
-	{ 0,					NULL,						NULL,				NULL },
-	{ 0,					NULL,						NULL,				NULL },
-};
-#endif
 
 //============================================================
 //	wnd_extra_width
@@ -427,68 +384,6 @@ INLINE void get_work_area(RECT *maximum)
 
 
 //============================================================
-//	setup_menu
-//============================================================
-
-static int setup_menu(HMENU menu, const struct win_menu *layout)
-{
-	int menu_count = 0;
-	int sub_menu_count;
-	MENUITEMINFO mii;
-
-	while(layout->text)
-	{
-		memset(&mii, 0, sizeof(mii));
-		mii.cbSize = sizeof(mii);
-		mii.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE | MIIM_DATA;
-		mii.wID = layout->item_id;
-		mii.fType = MFT_STRING;
-		mii.fState = MF_STRING;
-		mii.dwTypeData = layout->text;
-		mii.dwItemData = (ULONG_PTR) layout->enable;
-
-		layout++;
-		menu_count++;
-
-		if (mii.wID == 0)
-		{
-			mii.hSubMenu = CreateMenu();
-			sub_menu_count = setup_menu(mii.hSubMenu, layout);
-			layout += sub_menu_count + 1;
-			menu_count += sub_menu_count + 1;
-			mii.fMask |= MIIM_SUBMENU;
-		}
-
-		InsertMenuItem(menu, GetMenuItemCount(menu), TRUE, &mii);
-	}
-	return menu_count;
-}
-
-//============================================================
-//	invoke_menu
-//============================================================
-
-static int invoke_menu(UINT_PTR command, const struct win_menu *layout)
-{
-	int depth = 1;
-
-	while(depth)
-	{
-		if (layout->text == NULL)
-			depth--;
-		else if (layout->item_id == 0)
-			depth++;
-		else if (layout->item_id == command)
-		{
-			layout->command();
-			return 1;			
-		}
-		layout++;
-	}
-	return FALSE;
-}
-
-//============================================================
 //	win_init_window
 //============================================================
 
@@ -540,19 +435,15 @@ int win_init_window(void)
 	sprintf(title, "MAME: %s [%s]", Machine->gamedrv->description, Machine->gamedrv->name);
 #else
 	sprintf(title, "MESS: %s [%s]", Machine->gamedrv->description, Machine->gamedrv->name);
-	{
-		menu = CreateMenu();
-		if (!menu)
-			return 1;
-		setup_menu(menu, menu_bar_layout);
-		menu_bar = menu;
-	}
+	menu = win_create_menus();
+	if (!menu)
+		return 1;
 #endif
 
 	// create the window, but don't show it yet
 	win_video_window = CreateWindowEx(win_window_mode ? WINDOW_STYLE_EX : FULLSCREEN_STYLE_EX,
 			"MAME", title, win_window_mode ? WINDOW_STYLE : FULLSCREEN_STYLE,
-			20, 20, 100, 100, NULL, menu_bar, GetModuleHandle(NULL), NULL);
+			20, 20, 100, 100, NULL, menu, GetModuleHandle(NULL), NULL);
 	if (!win_video_window)
 		return 1;
 
@@ -694,9 +585,8 @@ static void update_system_menu(void)
 
 	// add to the system menu
 	menu = GetSystemMenu(win_video_window, FALSE);
-
 	if (menu)
-		setup_menu(menu, sys_menu_layout);
+		AppendMenu(menu, MF_ENABLED | MF_STRING, MENU_FULLSCREEN, "Full Screen\tAlt+Enter");
 }
 
 
@@ -767,28 +657,6 @@ static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct
 
 
 //============================================================
-//	cmd_exit
-//============================================================
-
-static void cmd_exit(void)
-{
-	win_ddraw_kill();
-#ifdef MESS
-	/* NPW 11-Jan-2002 - The MAME way of quiting the emulation doesn't work	in MESS,
-	 * because ScrLk can be used to block UI keys.  Therefore, we should use the
-	 * input_ui_post() function that I originally made for MESSCE.
-	 *
-	 * Personally, I think that input_ui_post() should be integrated into the MAME
-	 * core and thus the need for the 'win_trying_to_quit' hack would be eliminated
-	 */
-	input_ui_post(IPT_UI_CANCEL);
-#else
-	win_trying_to_quit = 1;
-#endif
-	win_video_window = 0;
-}
-
-//============================================================
 //	video_window_proc
 //============================================================
 
@@ -836,54 +704,30 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 				win_toggle_maximize();
 				break;
 			}
-			else if (invoke_menu(wparam, sys_menu_layout))
-				break;
-			return DefWindowProc(wnd, message, wparam, lparam);
-		}
-
-		case WM_INITMENU:
-		{
-			int i;
-			HMENU menu = (HMENU) wparam;
-			MENUITEMINFO mii;
-
-			for (i = 0; i < GetMenuItemCount(menu); i++)
+			else if (wparam == MENU_FULLSCREEN)
 			{
-				memset(&mii, 0, sizeof(mii));
-				mii.cbSize = sizeof(mii);
-				mii.fMask = MIIM_DATA | MIIM_ID;
-				GetMenuItemInfo(menu, i, TRUE, &mii);
-				if (mii.dwItemData)
-				{
-					int (*enabled)(void);
-					enabled = (void *) mii.dwItemData;
-					mii.fMask = MIIM_STATE;
-					mii.fState = enabled() ? MFS_ENABLED : MFS_GRAYED;
-					SetMenuItemInfo(menu, i, TRUE, &mii);
-				}
-			}
-			break;
-		}
-
-#ifdef MESS
-		case WM_CHAR:
-		{
-			if (win_use_natural_keyboard)
-				inputx_postc(wparam);
-			break;
-		}
-
-		case WM_COMMAND:
-		{
-			if (invoke_menu(wparam, menu_bar_layout))
+				win_toggle_full_screen();
 				break;
+			}
 			return DefWindowProc(wnd, message, wparam, lparam);
 		}
-#endif
 
 		// destroy: close down the app
 		case WM_DESTROY:
-			cmd_exit();
+			win_ddraw_kill();
+#ifdef MESS
+			/* NPW 11-Jan-2002 - The MAME way of quiting the emulation doesn't work	in MESS,
+			 * because ScrLk can be used to block UI keys.  Therefore, we should use the
+			 * input_ui_post() function that I originally made for MESSCE.
+			 *
+			 * Personally, I think that input_ui_post() should be integrated into the MAME
+			 * core and thus the need for the 'win_trying_to_quit' hack would be eliminated
+			 */
+			input_ui_post(IPT_UI_CANCEL);
+#else
+			win_trying_to_quit = 1;
+#endif
+			win_video_window = 0;
 			break;
 
 		// track whether we are in the foreground
@@ -893,7 +737,11 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 
 		// everything else: defaults
 		default:
+#ifdef MESS
+			return win_mess_window_proc(wnd, message, wparam, lparam);
+#else
 			return DefWindowProc(wnd, message, wparam, lparam);
+#endif
 	}
 
 	return 0;
