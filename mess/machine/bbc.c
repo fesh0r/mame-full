@@ -856,8 +856,8 @@ WRITE_HANDLER ( bbc_wd1770_write )
 void init_machine_bbca(void)
 {
 	cpu_setbank(1,memory_region(REGION_CPU1));         /* bank 1 repeat of the 16K ram from 4000 to 7fff */
-	cpu_setbank(2,memory_region(REGION_CPU2)+0x10000); /* bank 2 points at the OS rom  from c000 to ffff */
-	cpu_setbank(3,memory_region(REGION_CPU2));         /* bank 3 is the paged ROMs     from 8000 to bfff */
+	cpu_setbank(2,memory_region(REGION_USER1)+0x10000); /* bank 2 points at the OS rom  from c000 to ffff */
+	cpu_setbank(3,memory_region(REGION_USER1));         /* bank 3 is the paged ROMs     from 8000 to bfff */
 
 	via_config(0, &bbcb_system_via);
 	via_set_clock(0,1000000);
@@ -870,8 +870,8 @@ void init_machine_bbca(void)
 
 void init_machine_bbcb(void)
 {
-	cpu_setbank(2,memory_region(REGION_CPU2)+0x40000);/* bank 2 points at the OS rom  from c000 to ffff */
-	cpu_setbank(3,memory_region(REGION_CPU2));        /* bank 3 is the paged ROMs     from 8000 to bfff */
+	cpu_setbank(2,memory_region(REGION_USER1)+0x40000);/* bank 2 points at the OS rom  from c000 to ffff */
+	cpu_setbank(3,memory_region(REGION_USER1));        /* bank 3 is the paged ROMs     from 8000 to bfff */
 
 	via_config(0, &bbcb_system_via);
 	via_set_clock(0,1000000);
@@ -900,8 +900,8 @@ void stop_machine_bbcb(void)
 
 void init_machine_bbcb1770(void)
 {
-	cpu_setbank(2,memory_region(REGION_CPU2)+0x40000);  /* bank 2 points at the OS rom  from c000 to ffff */
-	cpu_setbank(3,memory_region(REGION_CPU2));          /* bank 3 is the paged ROMs     from 8000 to bfff */
+	cpu_setbank(2,memory_region(REGION_USER1)+0x40000);  /* bank 2 points at the OS rom  from c000 to ffff */
+	cpu_setbank(3,memory_region(REGION_USER1));          /* bank 3 is the paged ROMs     from 8000 to bfff */
 
 	via_config(0, &bbcb_system_via);
 	via_set_clock(0,1000000);
@@ -933,9 +933,9 @@ void init_machine_bbcbp(void)
 	memory_set_bankhandler_r(1, 0, memorybp1_r);
 
 	cpu_setbank(1,memory_region(REGION_CPU1)+0x03000); /* BANK 1 points at the screen  from 3000 to 7fff */
-	cpu_setbank(2,memory_region(REGION_CPU2)+0x40000); /* bank 2 points at the OS rom  from c000 to ffff */
-	cpu_setbank(3,memory_region(REGION_CPU2));         /* bank 3 is paged ROM or RAM   from 8000 to afff */
-	cpu_setbank(4,memory_region(REGION_CPU2)+0x03000); /* bank 4 is the paged ROMs     from b000 to bfff */
+	cpu_setbank(2,memory_region(REGION_USER1)+0x40000); /* bank 2 points at the OS rom  from c000 to ffff */
+	cpu_setbank(3,memory_region(REGION_USER1));         /* bank 3 is paged ROM or RAM   from 8000 to afff */
+	cpu_setbank(4,memory_region(REGION_USER1)+0x03000); /* bank 4 is the paged ROMs     from b000 to bfff */
 
 
 	via_config(0, &bbcb_system_via);
