@@ -5,10 +5,12 @@
 	Functions to emulate general aspects of the machine (RAM, ROM,
 	interrupts, I/O ports)
 
-  TODO:
-	- Complete printer emulation
-	- Test cassette emulation
-	- 2.4khz timer correct?
+	Many thanks to Kees van Oss for:
+	1.	Tape input/output curcuit diagram. It describes in great detail how the 2.4khz
+		tone, 2.4khz tone enable, tape output and tape input are connected.
+	2.	The DOS rom for the Atom so I could complete the floppy disc emulation.
+	3.	Details of the eprom expansion board for the Atom.
+	4.	His demo programs which I used to test the driver.
 
 ***********************************************************************/
 
@@ -20,6 +22,10 @@
 #include "includes/basicdsk.h"
 #include "includes/flopdrv.h"
 #include "machine/6522via.h"
+
+static UINT8	atom_8255_porta;
+static UINT8	atom_8255_portb;
+static UINT8	atom_8255_portc;
 
 /* printer data written */
 static char atom_printer_data = 0x07f;
@@ -130,15 +136,6 @@ static	ppi8255_interface	atom_8255_int =
 	atom_8255_portc_w,
 };
 
-static	struct
-{
-	UINT8	atom_8255_porta;
-	UINT8	atom_8255_portb;
-	UINT8	atom_8255_portc;
-} atom_8255;
-
-
-
 static int previous_i8271_int_state = 0;
 
 static void atom_8271_interrupt_callback(int state)
@@ -174,20 +171,33 @@ static void atom_timer_callback(int dummy)
 	/* change timer state */
 	timer_state^=1;
 
-	/* Enable 2.4 kHz to cassette output */
-	if (atom_8255.atom_8255_portc & (1<<1))
-	{
-		device_output(IO_CASSETTE, 0, (timer_state) ? -32768 : 32767);
-	}
+	/* the 2.4khz signal is notted (A), and nand'ed with the 2.4kz enable, resulting
+	in B. The final cassette output is the result of tape output nand'ed with B */
+	
 
+	{
+		unsigned char A;
+		unsigned char B;
+		unsigned char result;
+		
+		/* 2.4khz signal - notted */
+		A = (~timer_state);
+		/* 2.4khz signal notted, and anded with 2.4khz enable */
+		B = (~(A & (atom_8255_portc>>1))) & 0x01;
+
+		result = (~(B & atom_8255_portc)) & 0x01;
+		
+		/* tape output */
+		device_output(IO_CASSETTE, 0, (result & 0x01) ? -32768 : 32767);
+	}
 }
 
 void atom_init_machine(void)
 {
 	ppi8255_init (&atom_8255_int);
-	atom_8255.atom_8255_porta = 0xff;
-	atom_8255.atom_8255_portb = 0xff;
-	atom_8255.atom_8255_portc = 0xff;
+	atom_8255_porta = 0xff;
+	atom_8255_portb = 0xff;
+	atom_8255_portc = 0xff;
 
 	i8271_init(&atom_8271_interface);
 
@@ -197,6 +207,9 @@ void atom_init_machine(void)
 
 	timer_state = 0;
 	atom_timer = timer_pulse(TIME_IN_HZ(2400*2), 0, atom_timer_callback);
+
+	/* cassette motor control */
+	device_status(IO_CASSETTE, 0, 1);
 }
 
 void atom_stop_machine(void)
@@ -205,6 +218,9 @@ void atom_stop_machine(void)
 		timer_remove(atom_timer);
 
 	i8271_stop();
+
+	/* cassette motor control */
+	device_status(IO_CASSETTE, 0, 0);
 }
 
 
@@ -345,7 +361,7 @@ int atom_floppy_init(int id)
 int atom_8255_porta_r (int offset)
 {
 	/* logerror("8255: Read port a\n"); */
-	return (atom_8255.atom_8255_porta);
+	return (atom_8255_porta);
 }
 
 int atom_8255_portb_r (int offset)
@@ -353,7 +369,7 @@ int atom_8255_portb_r (int offset)
 	/* ilogerror("8255: Read port b: %02X %02X\n",
 			readinputport ((atom_8255.atom_8255_porta & 0x0f) + 1),
 			readinputport (11) & 0xc0); */
-	return ((readinputport ((atom_8255.atom_8255_porta & 0x0f) + 1) & 0x3f) |
+	return ((readinputport ((atom_8255_porta & 0x0f) + 1) & 0x3f) |
 											(readinputport (11) & 0xc0));
 }
 
@@ -361,24 +377,24 @@ int atom_8255_portc_r (int offset )
 {
 
 /* | */
-	atom_8255.atom_8255_portc &= 0x0f;
+	atom_8255_portc &= 0x0f;
 
 	/* cassette input */
 	if (device_input(IO_CASSETTE,0)>255)
 	{
-		atom_8255.atom_8255_portc |= (1<<5);
+		atom_8255_portc |= (1<<5);
 	}
 
 	/* 2.4khz input */
 	if (timer_state)
 	{
-		atom_8255.atom_8255_portc |= (1<<4);
+		atom_8255_portc |= (1<<4);
 	}
 
-	atom_8255.atom_8255_portc |= (readinputport (0) & 0x80);
-	atom_8255.atom_8255_portc |= (readinputport (12) & 0x40);
+	atom_8255_portc |= (readinputport (0) & 0x80);
+	atom_8255_portc |= (readinputport (12) & 0x40);
 	/* logerror("8255: Read port c (%02X)\n",atom_8255.atom_8255_portc); */
-	return (atom_8255.atom_8255_portc);
+	return (atom_8255_portc);
 }
 
 /* Atom 6847 modes:
@@ -409,7 +425,7 @@ static int atom_mode_trans[] =
 
 void atom_8255_porta_w (int offset, int data)
 {
-	if ((data & 0xf0) != (atom_8255.atom_8255_porta & 0xf0))
+	if ((data & 0xf0) != (atom_8255_porta & 0xf0))
 	{
 		if (!(data & 0x10))
 		{
@@ -420,23 +436,21 @@ void atom_8255_porta_w (int offset, int data)
 			m6847_set_mode (atom_mode_trans[data >> 5]);
 		}
 	}
-	atom_8255.atom_8255_porta = data;
+	atom_8255_porta = data;
 /*	logerror("8255: Write port a, %02x\n", data); */
 }
 
 void atom_8255_portb_w (int offset, int data)
 {
-	atom_8255.atom_8255_portb = data;
+	atom_8255_portb = data;
 /*	logerror("8255: Write port b, %02x\n", data); */
 }
 
 void atom_8255_portc_w (int offset, int data)
 {
-	atom_8255.atom_8255_portc = data;
+	atom_8255_portc = data;
 	speaker_level_w(0, (data & 0x04) >> 2);
 
-	/* tape output */
-	device_output(IO_CASSETTE, 0, (data & 0x01) ? -32768 : 32767);
 /*	logerror("8255: Write port c, %02x\n", data); */
 }
 
