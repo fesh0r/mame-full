@@ -152,11 +152,12 @@ int osd_start_audio_stream(int stereo)
 	int i; // count the WAVEHDRS
     int buflen;
 
-	if (Machine->sample_rate == 0)
-		return 0;
-
-	if (CESound_init())
-		return 1;
+	// skip if sound disabled
+	if (Machine->sample_rate != 0)
+	{
+		if (CESound_init())
+			return 1;
+	}
 
     if (stereo)
         stereo = 1;	/* make sure it's either 0 or 1 */
@@ -173,19 +174,22 @@ int osd_start_audio_stream(int stereo)
 	buflen = This.m_nBytesPerFrame;
 
     // set up the buffer on each wave header
-	for (i = 0; i < NUM_WAVEHDRS; i++)
+	if (Machine->sample_rate != 0)
 	{
+		for (i = 0; i < NUM_WAVEHDRS; i++)
+		{
 
-		This.m_WaveHdrs[i].lpData			= (LPSTR) auto_malloc(buflen);
-		This.m_WaveHdrs[i].dwBufferLength	= buflen;
-		This.m_WaveHdrs[i].dwBytesRecorded	= 0;
-		This.m_WaveHdrs[i].dwUser			= 0;
-		This.m_WaveHdrs[i].dwFlags			= 0;
-		This.m_WaveHdrs[i].dwLoops			= 0;
-		This.m_WaveHdrs[i].lpNext			= NULL;
-		This.m_WaveHdrs[i].reserved			= 0;
-		
-		waveOutPrepareHeader(This.m_hWaveOut, &This.m_WaveHdrs[i], sizeof(WAVEHDR));
+			This.m_WaveHdrs[i].lpData			= (LPSTR) auto_malloc(buflen);
+			This.m_WaveHdrs[i].dwBufferLength	= buflen;
+			This.m_WaveHdrs[i].dwBytesRecorded	= 0;
+			This.m_WaveHdrs[i].dwUser			= 0;
+			This.m_WaveHdrs[i].dwFlags			= 0;
+			This.m_WaveHdrs[i].dwLoops			= 0;
+			This.m_WaveHdrs[i].lpNext			= NULL;
+			This.m_WaveHdrs[i].reserved			= 0;
+			
+			waveOutPrepareHeader(This.m_hWaveOut, &This.m_WaveHdrs[i], sizeof(WAVEHDR));
+		}
 	}
 	return samples_this_frame;
 }
@@ -197,12 +201,15 @@ int osd_update_audio_stream(INT16* buffer)
 	short *s;
 	short *d;
 	
-	s = (short *)buffer;
-	for (i = 0; i < NUM_WAVEHDRS; i++)
-	{		
-		d = (short *)This.m_WaveHdrs[i].lpData;
-		memcpy(d,s,This.m_nBytesPerFrame);
-		waveOutWrite(This.m_hWaveOut, &This.m_WaveHdrs[i], sizeof(WAVEHDR));
+	if (Machine->sample_rate != 0)
+	{
+		s = (short *)buffer;
+		for (i = 0; i < NUM_WAVEHDRS; i++)
+		{		
+			d = (short *)This.m_WaveHdrs[i].lpData;
+			memcpy(d,s,This.m_nBytesPerFrame);
+			waveOutWrite(This.m_hWaveOut, &This.m_WaveHdrs[i], sizeof(WAVEHDR));
+		}
 	}
 
 	samples_left_over += This.m_nSamplesPerFrame;

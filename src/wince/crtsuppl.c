@@ -68,7 +68,7 @@ int stat( const char *path, struct stat *buffer )
 
 clock_t clock(void)
 {
-	return (clock_t) NULL;
+	return (clock_t) GetTickCount();
 }
 
 time_t time(time_t *t)
