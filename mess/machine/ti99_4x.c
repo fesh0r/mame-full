@@ -610,6 +610,8 @@ void machine_init_ti99(void)
 	case fdc_kind_BwG:
 		ti99_bwg_init();
 		break;
+	case fdc_kind_none:
+		break;
 	}
 
 	if (has_evpc)

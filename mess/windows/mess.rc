@@ -41,7 +41,7 @@ BEGIN
     POPUP "&Options"
     BEGIN
         MENUITEM "Pause",                       ID_OPTIONS_PAUSE, GRAYED
-        MENUITEM "Reset",                       ID_Menu119, GRAYED
+        MENUITEM "Reset",                       114
         MENUITEM SEPARATOR
         POPUP "Keyboard"
         BEGIN
@@ -52,18 +52,20 @@ BEGIN
         MENUITEM "DIP Switches...",             ID_OPTIONS_DIPSWITCHES
         , GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "Increase Frameskip",          ID_OPTIONS_INCREASEFRAMESKIP
-        , GRAYED
-        MENUITEM "Decrease Frameskip",          ID_OPTIONS_DECREASEFRAMESKIP
-        , GRAYED
-        MENUITEM "Throttle",                    ID_Menu116, GRAYED
+        POPUP "&Frameskip"
+        BEGIN
+            MENUITEM "Auto",                        ID_FRAMESKIP_AUTO
+        END
+        MENUITEM "Throttle",                    115
         MENUITEM SEPARATOR
-        MENUITEM "Show Profiler",               ID_OPTIONS_SHOWPROFILER
-        , GRAYED
+        MENUITEM "Show Profiler",               ID_OPTIONS_FRAMESKIP, GRAYED
         MENUITEM "Show Internal Graphics",      ID_OPTIONS_SHOWINTERNALGRAPHICS
         , GRAYED
     END
-    MENUITEM "&Devices",                    ID_DEVICES, GRAYED
+    POPUP "&Devices", GRAYED
+    BEGIN
+        MENUITEM SEPARATOR
+    END
     POPUP "&Help"
     BEGIN
         MENUITEM "About This System...",        ID_HELP_ABOUTMACHINE, GRAYED
