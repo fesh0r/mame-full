@@ -1687,8 +1687,7 @@ int coco_cassette_init(int id)
         device_status(IO_CASSETTE,id, WAVE_STATUS_MOTOR_ENABLE|WAVE_STATUS_MUTED|WAVE_STATUS_MOTOR_INHIBIT);
 		return INIT_OK;
     }
-
-	return INIT_FAILED;
+	return INIT_OK;
 }
 
 void coco_cassette_exit(int id)

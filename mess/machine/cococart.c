@@ -138,29 +138,24 @@ static void dragon_fdc_callback(int event)
 
 int dragon_floppy_init(int id)
 {
-	if (basicdsk_floppy_init(id)==INIT_OK)
-	{
-		void *file;
+	void *file;
+	int tracks;
+	int heads;
 
+	if (basicdsk_floppy_init(id)==INIT_OK) {
 		file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
+		if (!file)
+			return INIT_FAILED;
 
-		if (file)
-		{
-			int tracks;
-			int heads;
+		tracks = osd_fsize(file) / (18*256);
+		heads = (tracks > 80) ? 2 : 1;
+		tracks /= heads;
 
-			tracks = osd_fsize(file) / (18*256);
-			heads = (tracks > 80) ? 2 : 1;
-			tracks /= heads;
+		basicdsk_set_geometry(id, tracks, heads, 18, 256, 1);
 
-			basicdsk_set_geometry(id, tracks, heads, 18, 256, 1);
-
-			osd_fclose(file);
-
-			return INIT_OK;
-		}
+		osd_fclose(file);
 	}
-	return INIT_FAILED;
+	return INIT_OK;
 }
 
 
