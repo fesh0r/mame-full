@@ -566,6 +566,7 @@ static void coco3_rastertrack_getvideomode(struct rastertrack_hvars *hvars)
 		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 	};
 	int i;
+	UINT8 *temp;
 
 	/* Initialize the pens array */
 	for (i = 0; i < (sizeof(hvars->mode.pens) / sizeof(hvars->mode.pens[0])); i++)
@@ -634,7 +635,8 @@ static void coco3_rastertrack_getvideomode(struct rastertrack_hvars *hvars)
 				hvars->mode.depth = 8;
 				hvars->mode.u.text.mapper = coco3_textmapper_noattr;
 			}
-			hvars->mode.u.text.mapper_param = (int) memory_region(REGION_CPU1);
+			temp = memory_region(REGION_CPU1);
+			hvars->mode.u.text.mapper_param = (int)temp;
 			hvars->mode.u.text.fontheight = 8;
 
 			/* To quote SockMaster:
