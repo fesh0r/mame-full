@@ -27,6 +27,8 @@ void mc146818_save_stream(void *file);
 // end
 void mc146818_close(void);
 
+void mc146818_nvram_handler(void* file, int write);
+
 READ_HANDLER(mc146818_port_r);
 WRITE_HANDLER(mc146818_port_w);
 

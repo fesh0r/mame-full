@@ -245,3 +245,16 @@ WRITE_HANDLER(mc146818_port_w)
 		break;
 	}
 }
+
+void mc146818_nvram_handler(void* file, int write)
+{
+	if (file==NULL) {
+		mc146818_set_time();
+		// init only 
+	} else if (write) {
+		mc146818_save_stream(file);
+	} else {
+		mc146818_load_stream(file);
+	}
+}
+
