@@ -942,6 +942,15 @@ static imgtoolerr_t prodos_set_file_block_count(imgtool_image *image, struct pro
 	else
 		new_depth = 3;
 
+	/* are we zero length, and do we have to create a block? */
+	if ((new_blockcount >= 1) && (ent->key_pointer == 0))
+	{
+		err = prodos_alloc_block(image, bitmap, &new_block);
+		if (err)
+			return err;
+		ent->key_pointer = new_block;
+	}
+
 	/* do we have to grow the tree? */
 	while(new_depth > depth)
 	{

@@ -10,6 +10,8 @@
 #include "../imgtool/imgtool.h"
 #include "../imgtool/modules.h"
 
+#define VERBOSE_FILECHAIN	0
+
 struct expected_dirent
 {
 	char filename[256];
@@ -159,6 +161,14 @@ static void putfile_end_handler(const void *buffer, size_t size)
 	{
 		report_imgtoolerr(err);
 		return;
+	}
+
+	if (VERBOSE_FILECHAIN)
+	{
+		char buf[1024];
+		err = img_getchain_string(image, filename_buffer, buf, sizeof(buf) / sizeof(buf[0]));
+		if (err == IMGTOOLERR_SUCCESS)
+			report_message(MSG_INFO, "Filechain '%s': %s", filename_buffer, buf);
 	}
 }
 

@@ -428,6 +428,7 @@ imgtoolerr_t img_getchain(imgtool_image *img, const char *path, imgtool_chainent
 	if (!img->module->get_chain)
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 
+	/* initialize the chain array, so the module's get_chain function can be lazy */
 	for (i = 0; i < chain_size; i++)
 	{
 		chain[i].level = 0;
