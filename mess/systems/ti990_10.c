@@ -5,6 +5,7 @@
 	for step 3 of build process to complete successfully.
 
 TODO :
+* programmer panel
 * emulate TILINE fully: timings, tiline timeout, possibly memory error
 * finish tape emulation (write support)
 * add additionnal devices as need appears (931 VDT, FD800, card reader, ASR/KSR, printer)
@@ -66,85 +67,26 @@ TODO :
 
 #include "driver.h"
 #include "cpu/tms9900/tms9900.h"
+#include "machine/ti990.h"
 #include "machine/990_hd.h"
 #include "machine/990_tap.h"
 #include "vidhrdw/911_vdt.h"
 
-/* ckon_state: 1 if line clock active (RTCLR flip-flop on schematics - SMI sheet 4) */
-static char ckon_state;
-
-static UINT16 intlines;
-
-/*
-	Interrupt priority encoder.  Actually part of the CPU board.
-*/
-static void set_int_line(int line, int state)
-{
-	int level;
-
-
-	if (state)
-		intlines |= (1 << line);
-	else
-		intlines &= ~ (1 << line);
-
-	if (intlines)
-	{
-		for (level = 0; ! (intlines & (1 << level)); level++)
-			;
-		cpu_set_irq_line_and_vector(0, 0, ASSERT_LINE, level);	/* interrupt it, baby */
-	}
-	else
-		cpu_set_irq_line(0, 0, CLEAR_LINE);
-}
-
-static void set_int2(int state)
-{
-	set_int_line(2, state);
-}
-
-static void set_int9(int state)
-{
-	set_int_line(9, state);
-}
-
-static void set_int10(int state)
-{
-	set_int_line(10, state);
-}
-
-static void set_int13(int state)
-{
-	set_int_line(13, state);
-}
-
-static void clear_load(int dummy)
-{
-	cpu_set_nmi_line(0, CLEAR_LINE);
-}
-
 static void machine_init_ti990_10(void)
 {
-	cpu_set_nmi_line(0, ASSERT_LINE);
-	timer_set(TIME_IN_MSEC(100), 0, clear_load);
+	ti990_hold_load();
 
-	intlines = 0;
+	ti990_reset_int();
 
-	ti990_tpc_init(set_int9);
-	ti990_hdc_init(set_int13);
-}
-
-static void machine_stop_ti990_10(void)
-{
-
+	ti990_tpc_init(ti990_set_int9);
+	ti990_hdc_init(ti990_set_int13);
 }
 
 static void ti990_10_line_interrupt(void)
 {
 	vdt911_keyboard(0);
 
-	if (ckon_state)
-		set_int_line(5, 1);
+	ti990_line_interrupt();
 }
 
 /*static void idle_callback(int state)
@@ -153,7 +95,7 @@ static void ti990_10_line_interrupt(void)
 
 static void rset_callback(void)
 {
-	ckon_state = 0;
+	ti990_cpuboard_reset();
 
 	vdt911_reset();
 	/* ... */
@@ -164,75 +106,13 @@ static void rset_callback(void)
 static void lrex_callback(void)
 {
 	/* right??? */
-	cpu_set_nmi_line(0, ASSERT_LINE);
-	timer_set(TIME_IN_MSEC(100), 0, clear_load);
-}
-
-static void ckon_ckof_callback(int state)
-{
-	ckon_state = state;
-	if (! ckon_state)
-		set_int_line(5, 0);
+	ti990_hold_load();
 }
 
 /*
-three panel types
-* operator panel
-* programmer panel
-* MDU
+	TI990/10 video emulation.
 
-Operator panel :
-* Power led
-* Fault led
-* Off/On/Load switch
-
-Programmer panel :
-* 16 status light, 32 switches, IDLE, RUN led
-* interface to a low-level debugger in ROMs
-
-* MDU :
-* includes a tape unit, possibly other stuff
-
-output :
-0-7 : lights 0-7
-8 : increment scan
-9 : clear scan (according to 990 handbook)
-A : run light (additionally sets all data LEDs to 1s, the scan count to 0b10 and enables the HALT/SIE switch)
-B : fault light
-C : Memory Error Interrupt clear
-D : Start panel timer
-E : Set SIE function (interrupt after 2 instructions are executed)
-F : flag (according to 990 handbook)
-
-input :
-0-7 : switches 0-7 (or data from MDU tape)
-8 : scan count bit 1
-9 : scan count bit 0
-A : timer active
-B : programmer panel not present or locked
-C : char in MDU tape unit buffer?
-D : unused?
-E : if 0, MDU unit present
-F : flag (according to 990 handbook)
-
-*/
-
-static READ16_HANDLER ( ti990_10_panel_read )
-{
-	if (offset == 1)
-		return 0x48;
-
-	return 0;
-}
-
-static WRITE16_HANDLER ( ti990_10_panel_write )
-{
-}
-
-/*
-  TI990/10 video emulation.
-
-  Emulate a single VDT911 terminal
+	We emulate a single VDT911 CRT terminal.
 */
 
 
@@ -241,16 +121,13 @@ static int video_start_ti990_10(void)
 	const vdt911_init_params_t params =
 	{
 		char_1920,
-		vdt911_model_US,
-		set_int10
+		vdt911_model_US/*vdt911_model_UK*//*vdt911_model_French*//*vdt911_model_French*/
+		/*vdt911_model_German*//*vdt911_model_Swedish*//*vdt911_model_Norwegian*/
+		/*vdt911_model_Japanese*//*vdt911_model_Arabic*//*vdt911_model_FrenchWP*/,
+		ti990_set_int10
 	};
 
 	return vdt911_init_term(0, & params);
-}
-
-static void video_stop_ti990_10(void)
-{
-	/* ... */
 }
 
 static void video_update_ti990_10(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
@@ -297,7 +174,7 @@ static PORT_WRITE16_START ( ti990_10_writeport )
 
 	{ 0xfd0 << 1, 0xfdf << 1, ti990_10_mapper_cru_w },
 	{ 0xfe0 << 1, 0xfef << 1, ti990_10_eir_cru_w },
-	{ 0xff0 << 1, 0xfff << 1, ti990_10_panel_write },
+	{ 0xff0 << 1, 0xfff << 1, ti990_panel_write },
 
 PORT_END
 
@@ -307,18 +184,18 @@ static PORT_READ16_START ( ti990_10_readport )
 
 	{ 0x1fa << 1, 0x1fb << 1, ti990_10_mapper_cru_r },
 	{ 0x1fc << 1, 0x1fd << 1, ti990_10_eir_cru_r },
-	{ 0x1fe << 1, 0x1ff << 1, ti990_10_panel_read },
+	{ 0x1fe << 1, 0x1ff << 1, ti990_panel_read },
 
 PORT_END
 
-ti990_10reset_param reset_params =
+static ti990_10reset_param reset_params =
 {
 	/*idle_callback*/NULL,
 	rset_callback,
 	lrex_callback,
-	ckon_ckof_callback,
+	ti990_ckon_ckof_callback,
 
-	set_int2
+	ti990_set_int2
 };
 
 static struct beep_interface vdt_911_beep_interface =
@@ -346,7 +223,7 @@ static MACHINE_DRIVER_START(ti990_10)
 	/*MDRV_INTERLEAVE(interleave)*/
 
 	MDRV_MACHINE_INIT( ti990_10 )
-	MDRV_MACHINE_STOP( ti990_10 )
+	/*MDRV_MACHINE_STOP( ti990_10 )*/
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -360,7 +237,7 @@ static MACHINE_DRIVER_START(ti990_10)
 
 	MDRV_PALETTE_INIT(vdt911)
 	MDRV_VIDEO_START(ti990_10)
-	MDRV_VIDEO_STOP(ti990_10)
+	/*MDRV_VIDEO_STOP(ti990_10)*/
 	/*MDRV_VIDEO_EOF(name)*/
 	MDRV_VIDEO_UPDATE(ti990_10)
 
@@ -375,8 +252,8 @@ MACHINE_DRIVER_END
   ROM loading
 */
 ROM_START(ti990_10)
-	/*CPU memory space*/
 
+	/*CPU memory space*/
 #if 0
 
 	ROM_REGION16_BE(0x200000, REGION_CPU1,0)
@@ -409,6 +286,8 @@ ROM_START(ti990_10)
 
 #endif
 
+
+	/* VDT911 character definitions */
 	ROM_REGION(vdt911_chr_region_len, vdt911_chr_region, 0)
 
 ROM_END
@@ -432,6 +311,7 @@ static const struct IODevice io_ti990_10[] =
 		4,						/* count */
 		"hd\0",					/* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
+		/*OSD_FOPEN_DUMMY,*/		/* open mode */
 		0,
 		ti990_hd_init,			/* init */
 		ti990_hd_exit,			/* exit */
@@ -452,6 +332,7 @@ static const struct IODevice io_ti990_10[] =
 		4,						/* count */
 		"tap\0",				/* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
+		/*OSD_FOPEN_DUMMY,*/		/* open mode */
 		0,
 		ti990_tape_init,		/* init */
 		ti990_tape_exit,		/* exit */
