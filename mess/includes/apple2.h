@@ -140,16 +140,17 @@ int apple2_get_bgcolor(void);
 #define A2BANK_4000_R			10
 #define A2BANK_4000_W			11
 #define A2BANK_C100				12
-#define A2BANK_C300				13
-#define A2BANK_C400				14
-#define A2BANK_C500				15
-#define A2BANK_C600				16
-#define A2BANK_C700				17
-#define A2BANK_C800				18
-#define A2BANK_D000_R			19
-#define A2BANK_D000_W			20
-#define A2BANK_E000_R			21
-#define A2BANK_E000_W			22
+#define A2BANK_C200				13
+#define A2BANK_C300				14
+#define A2BANK_C400				15
+#define A2BANK_C500				16
+#define A2BANK_C600				17
+#define A2BANK_C700				18
+#define A2BANK_C800				19
+#define A2BANK_D000_R			20
+#define A2BANK_D000_W			21
+#define A2BANK_E000_R			22
+#define A2BANK_E000_W			23
 
 #define MRA8_A2BANK_0000	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_0000))
 #define MRA8_A2BANK_0200	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_0200_R))
@@ -158,6 +159,7 @@ int apple2_get_bgcolor(void);
 #define MRA8_A2BANK_2000	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_2000_R))
 #define MRA8_A2BANK_4000	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_4000_R))
 #define MRA8_A2BANK_C100	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_C100))
+#define MRA8_A2BANK_C200	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_C200))
 #define MRA8_A2BANK_C300	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_C300))
 #define MRA8_A2BANK_C400	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_C400))
 #define MRA8_A2BANK_C500	((read8_handler) (STATIC_BANK1 - 1 + A2BANK_C500))
@@ -174,6 +176,7 @@ int apple2_get_bgcolor(void);
 #define MWA8_A2BANK_2000	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_2000_W))
 #define MWA8_A2BANK_4000	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_4000_W))
 #define MWA8_A2BANK_C100	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_C100))
+#define MWA8_A2BANK_C200	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_C200))
 #define MWA8_A2BANK_C300	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_C300))
 #define MWA8_A2BANK_C400	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_C400))
 #define MWA8_A2BANK_C500	((write8_handler) (STATIC_BANK1 - 1 + A2BANK_C500))

@@ -185,6 +185,7 @@ static void apple2_install_slot_memory(int slot, void *memory)
 	switch(slot)
 	{
 		case 1:	start = 0xc100; end = 0xc2ff; bank = A2BANK_C100; rh = MRA8_A2BANK_C100; wh = MWA8_A2BANK_C100; break;
+		case 2:	start = 0xc200; end = 0xc2ff; bank = A2BANK_C200; rh = MRA8_A2BANK_C300; wh = MWA8_A2BANK_C200; break;
 		case 3:	start = 0xc300; end = 0xc3ff; bank = A2BANK_C300; rh = MRA8_A2BANK_C300; wh = MWA8_A2BANK_C300; break;
 		case 4:	start = 0xc400; end = 0xc4ff; bank = A2BANK_C400; rh = MRA8_A2BANK_C400; wh = MWA8_A2BANK_C400; break;
 		case 5:	start = 0xc500; end = 0xc5ff; bank = A2BANK_C500; rh = MRA8_A2BANK_C500; wh = MWA8_A2BANK_C500; break;
@@ -296,7 +297,7 @@ void apple2_setvar(UINT32 val, UINT32 mask)
 	if (mask & (VAR_INTCXROM|VAR_ROMSWITCH))
 	{
 		apple2_install_slot_memory(1, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 1))) ? &apple_rom[0x100] : apple2_slotrom(1));
-		apple2_install_slot_memory(2, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 1))) ? &apple_rom[0x200] : apple2_slotrom(2));
+		apple2_install_slot_memory(2, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 2))) ? &apple_rom[0x200] : apple2_slotrom(2));
 		apple2_install_slot_memory(4, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 4))) ? &apple_rom[0x400] : apple2_slotrom(4));
 		apple2_install_slot_memory(5, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 5))) ? &apple_rom[0x500] : apple2_slotrom(5));
 		apple2_install_slot_memory(6, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 6))) ? &apple_rom[0x600] : apple2_slotrom(6));

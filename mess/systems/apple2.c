@@ -333,7 +333,7 @@ INPUT_PORTS_END
  * have been more appropriate for an Apple IIgs.  So we've substituted in the
  * Robert Munafo palette instead, which is more accurate on 8-bit Apples
  */
-static unsigned char apple2_palette[] =
+static const unsigned char apple2_palette[] =
 {
 	0x00, 0x00, 0x00,	/* Black */
 	0xE3, 0x1E, 0x60,	/* Dark Red */
@@ -351,26 +351,6 @@ static unsigned char apple2_palette[] =
 	0xD0, 0xDD, 0x8D,	/* Yellow */
 	0x72, 0xFF, 0xD0,	/* Aquamarine */
 	0xFF, 0xFF, 0xFF	/* White */
-};
-
-static unsigned char apple2gs_palette[] =
-{
-	0x00, 0x00, 0x00,	/* Black */
-	0xD0, 0x00, 0x30,	/* Dark Red */
-	0x00, 0x00, 0x90,	/* Dark Blue */
-	0xD0, 0x20, 0xD0,	/* Purple */
-	0x00, 0x70, 0x20,	/* Dark Green */
-	0x50, 0x50, 0x50,	/* Dark Grey */
-	0x20, 0x20, 0xF0,	/* Medium Blue */
-	0x60, 0xA0, 0xF0,	/* Light Blue */
-	0x80, 0x50, 0x00,	/* Brown */
-	0xF0, 0x60, 0x00,	/* Orange */
-	0xA0, 0xA0, 0xA0,	/* Light Grey */
-	0xF0, 0x90, 0x80,	/* Pink */
-	0x10, 0xD0, 0x00,	/* Light Green */
-	0xF0, 0xF0, 0x00,	/* Yellow */
-	0x40, 0xF0, 0x90,	/* Aquamarine */
-	0xF0, 0xF0, 0xF0	/* White */
 };
 
 static struct GfxLayout apple2_text_layout =
@@ -468,17 +448,10 @@ static const unsigned short apple2_colortable[] =
 };
 
 
-/* Initialise the palette */
-static PALETTE_INIT( apple2 )
+/* Initialize the palette */
+PALETTE_INIT( apple2 )
 {
 	palette_set_colors(0, apple2_palette, sizeof(apple2_palette) / 3);
-	memcpy(colortable, apple2_colortable, sizeof(apple2_colortable));
-}
-
-/* Initialise the palette */
-static PALETTE_INIT( apple2gs )
-{
-	palette_set_colors(0, apple2gs_palette, sizeof(apple2gs_palette) / 3);
 	memcpy(colortable, apple2_colortable, sizeof(apple2_colortable));
 }
 
@@ -542,7 +515,7 @@ static MACHINE_DRIVER_START( apple2p )
 	MDRV_GFXDECODE(apple2_gfxdecodeinfo)
 MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( apple2e )
+MACHINE_DRIVER_START( apple2e )
 	MDRV_IMPORT_FROM( apple2_common )
 	MDRV_VIDEO_START(apple2e)
 	MDRV_GFXDECODE(apple2e_gfxdecodeinfo)
@@ -556,6 +529,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( apple2c )
 	MDRV_IMPORT_FROM( apple2ee )
 MACHINE_DRIVER_END
+
 
 
 /***************************************************************************
@@ -654,6 +628,7 @@ ROM_START(apple2cp)
 	ROM_LOAD("a2cplus.mon", 0x0000, 0x8000, CRC(0b996420) SHA1(1a27ae26966bbafd825d08ad1a24742d3e33557c))
 ROM_END
 
+
 static void apple2_floppy_getinfo(struct IODevice *dev)
 {
 	/* floppy */
@@ -700,6 +675,8 @@ SYSTEM_CONFIG_START(apple2e)
 	CONFIG_IMPORT_FROM( apple2_common )
 	CONFIG_RAM_DEFAULT			(128 * 1024)
 SYSTEM_CONFIG_END
+
+
 
 /*     YEAR  NAME      PARENT    COMPAT		MACHINE   INPUT     INIT      CONFIG	COMPANY            FULLNAME */
 COMPX( 1977, apple2,   0,        0,			apple2,   apple2,   apple2,   apple2,	"Apple Computer", "Apple ][", GAME_IMPERFECT_COLORS )

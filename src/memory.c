@@ -2819,7 +2819,9 @@ static void dump_map(FILE *file, const struct addrspace_data_t *space, const str
 		"bank 44",		"bank 45",		"bank 46",		"bank 47",
 		"bank 48",		"bank 49",		"bank 50",		"bank 51",
 		"bank 52",		"bank 53",		"bank 54",		"bank 55",
-		"bank 56",		"bank 57",		"bank 58",		"RAM",
+		"bank 56",		"bank 57",		"bank 58",		"bank 59",
+		"bank 60",		"bank 61",		"bank 62",		"bank 63",
+		"bank 64",		"bank 65",		"bank 66",		"RAM",
 		"ROM",			"RAMROM",		"nop",			"unmapped"
 	};
 
