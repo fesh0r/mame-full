@@ -261,10 +261,19 @@ static struct GfxDecodeInfo svision_gfxdecodeinfo[] = {
 /* palette in red, green, blue tribles */
 static unsigned char svision_palette[4][3] =
 {
+#if 0
+    // greens grabbed from a scan of a handheld
+    // in its best adjustment for contrast
 	{ 53, 73, 42 },
 	{ 42, 64, 47 },
 	{ 22, 42, 51 },
 	{ 22, 25, 32 }
+#else
+	{ 0xff, 0xff, 0xff },
+	{ 0xa8, 0xa8, 0xa8 },
+	{ 0x60, 0x60, 0x60 },
+	{ 0, 0, 0 }
+#endif
 };
 
 /* color table for 1 2 color objects */
