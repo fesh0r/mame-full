@@ -30,64 +30,49 @@ floppy_interface svi318dsk_floppy_interface=
 	NULL
 };
 
-/* attempt to insert a disk into the drive specified with id */
-int svi318dsk_floppy_init(int id, mame_file *fp, int open_mode)
+int svi318dsk_floppy_init(int id)
 {
-	if (id < svi318dsk_MAX_DRIVES)
-	{
-		svi318dsk *w = &svi318dsk_drives[id];
+	return floppy_drive_init(id, &svi318dsk_floppy_interface);
+}
 
-		/* do we have an image name ? */
-		if (fp == NULL)
-			return INIT_PASS;
+/* attempt to insert a disk into the drive specified with id */
+int svi318dsk_floppy_load(int id, mame_file *fp, int open_mode)
+{
+	svi318dsk *w = &svi318dsk_drives[id];
 
-		w->image_file = fp;
-		w->mode = (w->image_file) && is_effective_mode_writable(open_mode);
+	/* sanity check */
+	assert((id >= 0) && (id < svi318dsk_MAX_DRIVES));
 
-		/* this will be setup in the set_geometry function */
-		w->ddam_map = NULL;
+	w->image_file = fp;
+	w->mode = (w->image_file) && is_effective_mode_writable(open_mode);
 
-		/* the following line is unsafe, but floppy_drives_init assumes we start on track 0,
-		so we need to reflect this */
-		w->track = 0;
+	/* this will be setup in the set_geometry function */
+	w->ddam_map = NULL;
 
-		floppy_drive_set_disk_image_interface(id,&svi318dsk_floppy_interface);
-
-		return  INIT_PASS;
-	}
-
-	return INIT_FAIL;
+	/* the following line is unsafe, but floppy_drives_init assumes we start on track 0,
+	so we need to reflect this */
+	w->track = 0;
+	return  INIT_PASS;
 }
 
 /* remove a disk from the drive specified by id */
-void svi318dsk_floppy_exit(int id)
+void svi318dsk_floppy_unload(int id)
 {
 	svi318dsk *pDisk;
 
 	/* sanity check */
-	if ((id<0) || (id>=svi318dsk_MAX_DRIVES))
-		return;
+	assert((id >= 0) && (id < svi318dsk_MAX_DRIVES));
 
 	pDisk = &svi318dsk_drives[id];
 
 	/* if file was opened, close it */
-	if (pDisk->image_file!=NULL)
-	{
-		mame_fclose(pDisk->image_file);
-		pDisk->image_file = NULL;
-	}
-
-	/* free ddam map */
-	if (pDisk->ddam_map!=NULL)
-	{
-		free(pDisk->ddam_map);
-		pDisk->ddam_map = NULL;
-	}
+	pDisk->image_file = NULL;
+	pDisk->ddam_map = NULL;
 }
 
 /* set data mark/deleted data mark for the sector specified. If ddam!=0, the sector will
 have a deleted data mark, if ddam==0, the sector will have a data mark */
-void	svi318dsk_set_ddam(UINT8 id, UINT8 physical_track, UINT8 physical_side, UINT8 sector_id,UINT8 ddam)
+void svi318dsk_set_ddam(UINT8 id, UINT8 physical_track, UINT8 physical_side, UINT8 sector_id,UINT8 ddam)
 {
 	unsigned long ddam_bit_offset, ddam_bit_index, ddam_byte_offset;
 	svi318dsk *pDisk;
@@ -194,15 +179,9 @@ void svi318dsk_set_geometry(UINT8 drive, UINT16 tracks, UINT8 heads, UINT8 sec_p
 	
 	pDisk->image_size = pDisk->tracks * pDisk->heads * pDisk->sec_per_track * pDisk->sector_length;
 
-	/* if a ddam map was already set up clear it */
-	if (pDisk->ddam_map!=NULL)
-	{
-		free(pDisk->ddam_map);
-		pDisk->ddam_map = NULL;
-	}
 	/* setup a new ddam map */
 	pDisk->ddam_map_size = ((pDisk->tracks * pDisk->heads * pDisk->sec_per_track)+7)>>3;
-	pDisk->ddam_map = (UINT8 *)malloc(pDisk->ddam_map_size);
+	pDisk->ddam_map = (UINT8 *) image_realloc(IO_FLOPPY, drive, pDisk->ddam_map, pDisk->ddam_map_size);
 
 	if (pDisk->ddam_map!=NULL)
 	{

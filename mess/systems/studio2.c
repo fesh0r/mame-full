@@ -271,31 +271,16 @@ ROM_START(vip)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
-static int studio2_load_rom(int id, mame_file *cartfile, int open_mode)
+static int studio2_cart_load(int id, mame_file *cartfile, int open_mode)
 {
-	UINT8 *rom = memory_region(REGION_CPU1);
-	int size;
-
-	if (cartfile == NULL)
-	{
-		/* A cartridge isn't strictly mandatory, but it's recommended */
-		return 0;
-	}
-
-	size = mame_fsize(cartfile);
-
-	if (mame_fread(cartfile, rom+0x400, size)!=size) {
-		logerror("%s load error\n",image_filename(IO_CARTSLOT,id));
-		return 1;
-	}
-	return 0;
+	return cartslot_load_generic(cartfile, REGION_CPU1, 0x0400, 0x0001, 0xfc00, 0);
 }
 
 SYSTEM_CONFIG_START(studio2)
 	/* maybe quickloader */
 	/* tape */
 	/* cartridges at 0x400-0x7ff ? */
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "bin\0", studio2_load_rom, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "bin\0", NULL, NULL, studio2_cart_load, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

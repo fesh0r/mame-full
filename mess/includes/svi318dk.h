@@ -44,11 +44,6 @@ typedef struct
 	unsigned long ddam_map_size;
 } svi318dsk;
 
-/* init */
-int     svi318dsk_floppy_init(int id, mame_file *fp, int open_mode);
-/* exit and free up data */
-void svi318dsk_floppy_exit(int id);
-
 /* set the disk image geometry for the specified drive */
 /* this is required to read the disc image correct */
 
@@ -77,11 +72,15 @@ void svi318dsk_set_geometry(UINT8 drive, UINT16 tracks, UINT8 sides, UINT8 sec_p
 have a deleted data mark, if ddam==0, the sector will have a data mark */
 void	svi318dsk_set_ddam(UINT8 physical_drive, UINT8 physical_track, UINT8 physical_side, UINT8 sector_id,UINT8 ddam);
 
+/* floppy disk */
+int svi318dsk_floppy_init(int id);
+int svi318dsk_floppy_load(int id, mame_file *fp, int open_mode);
+void svi318dsk_floppy_unload(int id);
 
-#define CONFIG_DEVICE_FLOPPY_SVI318DSK(count, file_extensions, init)		\
+#define CONFIG_DEVICE_FLOPPY_SVI318DSK(count, file_extensions)		\
 	CONFIG_DEVICE_BASE(IO_FLOPPY, (count), (file_extensions), DEVICE_LOAD_RESETS_NONE,	\
-		OSD_FOPEN_RW_CREATE_OR_READ, (init), svi318dsk_floppy_exit, NULL,\
-		NULL, NULL, floppy_status, NULL, NULL, NULL, NULL, NULL, NULL)	\
+		OSD_FOPEN_RW_CREATE_OR_READ, svi318dsk_floppy_init, NULL, svi318dsk_floppy_load, svi318dsk_floppy_unload,\
+		NULL, NULL, NULL, NULL, floppy_status, NULL, NULL, NULL, NULL, NULL, NULL)	\
 
 #ifdef __cplusplus
 }

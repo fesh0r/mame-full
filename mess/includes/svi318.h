@@ -14,14 +14,15 @@ typedef struct {
 	UINT8 prn_data, prn_strobe;
 } SVI_318;
 
-extern DRIVER_INIT( svi318 );
-extern MACHINE_INIT( svi318 );
-extern MACHINE_STOP( svi318 );
+DRIVER_INIT( svi318 );
+MACHINE_INIT( svi318 );
+MACHINE_STOP( svi318 );
 
-int svi318_load_rom (int id, mame_file *fp, int open_mode);
-void svi318_exit_rom (int id);
-extern INTERRUPT_GEN( svi318_interrupt );
-extern void svi318_vdp_interrupt (int i);
+int svi318_cart_load(int id, mame_file *fp, int open_mode);
+void svi318_cart_unload(int id);
+
+INTERRUPT_GEN( svi318_interrupt );
+void svi318_vdp_interrupt (int i);
 
 WRITE_HANDLER (svi318_writemem0);
 WRITE_HANDLER (svi318_writemem1);

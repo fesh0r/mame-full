@@ -1,8 +1,13 @@
+#ifndef MEKD2_H
+#define MEKD2_H
+
 /* from mess/machine/mekd2.c */
-extern DRIVER_INIT( mekd2 );
-extern int mekd2_rom_load (int id, mame_file *fp, int open_mode);
+DRIVER_INIT( mekd2 );
+int mekd2_cart_load (int id, mame_file *fp, int open_mode);
 
 /* from mess/vidhrdw/mekd2.c */
-extern PALETTE_INIT( mekd2 );
-extern VIDEO_START( mekd2 );
-extern VIDEO_UPDATE( mekd2 );
+PALETTE_INIT( mekd2 );
+VIDEO_START( mekd2 );
+VIDEO_UPDATE( mekd2 );
+
+#endif /* MEKD2_H */

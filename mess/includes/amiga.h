@@ -78,9 +78,9 @@ typedef struct {
 #define BPLCON0_HIRES	0x8000
 
 /* prototypes */
-extern void copper_setpc( unsigned long pc );
-/*extern void amiga_custom_w( int offs, int data );*/
-extern void amiga_reload_sprite_info( int spritenum );
+void copper_setpc( unsigned long pc );
+/*void amiga_custom_w( int offs, int data );*/
+void amiga_reload_sprite_info( int spritenum );
 
 
 /**************************************************************************
@@ -90,22 +90,24 @@ extern void amiga_reload_sprite_info( int spritenum );
 ***************************************************************************/
 
 /* from machine/amiga.c */
-extern READ16_HANDLER  ( amiga_cia_r );
-extern WRITE16_HANDLER ( amiga_cia_w );
-extern READ16_HANDLER  ( amiga_custom_r );
-extern WRITE16_HANDLER ( amiga_custom_w );
-extern MACHINE_INIT( amiga );
-extern INTERRUPT_GEN( amiga_vblank_irq );
-extern int amiga_fdc_init(int id, mame_file *fp, int open_mode);
+READ16_HANDLER  ( amiga_cia_r );
+WRITE16_HANDLER ( amiga_cia_w );
+READ16_HANDLER  ( amiga_custom_r );
+WRITE16_HANDLER ( amiga_custom_w );
+MACHINE_INIT( amiga );
+INTERRUPT_GEN( amiga_vblank_irq );
+
+int amiga_fdc_init(int id);
+int amiga_fdc_load(int id, mame_file *fp, int open_mode);
 
 /* from vidhrdw/amiga.c */
-extern VIDEO_START( amiga );
-extern VIDEO_UPDATE( amiga );
-extern PALETTE_INIT( amiga );
+VIDEO_START( amiga );
+VIDEO_UPDATE( amiga );
+PALETTE_INIT( amiga );
 
 /* from vidhrdw */
-extern void copper_setpc( unsigned long pc );
-extern void copper_enable( void );
+void copper_setpc( unsigned long pc );
+void copper_enable( void );
 
 /* required prototype */
 /*void amiga_custom_w( int offs, int data );*/

@@ -147,8 +147,8 @@ TESTDRIVER( saturn )	/* Sega Saturn										*/
 	DRIVER( astrocde )	/* Bally Astrocade									*/
 
 	/* RCA */
-//TESTDRIVER( vip )		/* Cosmac VIP										*/
-//TESTDRIVER( studio2 )	/* Studio II										*/
+TESTDRIVER( vip )		/* Cosmac VIP										*/
+TESTDRIVER( studio2 )	/* Studio II										*/
 
 	/* FAIRCHILD */
 	DRIVER( channelf )	/* Fairchild Channel F VES - 1976					*/
@@ -200,7 +200,7 @@ TESTDRIVER( bbcb6502 )  /* 198? BBC B WD1770 with a 6502 second processor	*/
 TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310						*/
 
 	/* CAMBRIDGE COMPUTERS */
-//	DRIVER( z88 )		/*													*/
+	DRIVER( z88 )		/*													*/
 
 	/* AMSTRAD */
 	DRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984				*/
@@ -264,7 +264,6 @@ TESTDRIVER( nc200 )     /* 19?? NC200										*/
  * Macintosh SE			 March				 1987
  * Macintosh II 		 March				 1987
  */
-//TESTDRIVER( mac512k )	/* 1984 Apple Macintosh 512k						*/
 	DRIVER( mac512ke )  /* 1986 Apple Macintosh 512ke						*/
 	DRIVER( macplus )	/* 1986 Apple Macintosh Plus						*/
 
@@ -291,12 +290,10 @@ XL/XE 16kB OS roms
 	DRIVER( a800pal )	/* 1979 Atari 800 PAL								*/
 	DRIVER( a800xl )	/* 1983 Atari 800 XL								*/
 
-//TESTDRIVER( atarist )	/* Atari ST 										*/
-
 	/* COMMODORE */
 	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975						*/
 TESTDRIVER( sym1 )		/* Synertek SYM1									*/
-//TESTDRIVER( aim65 )		/* Rockwell AIM65									*/
+TESTDRIVER( aim65 )		/* Rockwell AIM65									*/
 
 	DRIVER( pet )		/* PET2001/CBM20xx Series (Basic 1) 				*/
 	DRIVER( cbm30 ) 	/* Commodore 30xx (Basic 2) 						*/
@@ -355,8 +352,8 @@ TESTDRIVER( c128nor )	/* Commodore 128 - PAL (norwegian)					*/
 TESTDRIVER( c128d )		/* Commodore 128D - NTSC 							*/
 TESTDRIVER( c128dita )	/* Commodore 128D - PAL (italian) cost reduced set	*/
 
-//TESTDRIVER( amiga ) 	/* Commodore Amiga									*/
-//TESTDRIVER( cdtv )
+TESTDRIVER( amiga ) 	/* Commodore Amiga									*/
+TESTDRIVER( cdtv )
 
 	DRIVER( c65 )		/* C65 / C64DX (Prototype, NTSC, 911001)			*/
 	DRIVER( c65e )		/* C65 / C64DX (Prototype, NTSC, 910828)			*/
@@ -432,23 +429,20 @@ TESTDRIVER( lambda )	/* Lambda 8300										*/
 	DRIVER( specp3es )	/* 2000 ZX Spectrum +3e (Spain)						*/
 
 	/* SHARP */
-//TESTDRIVER( pc1500 )	/* 1982 Pocket Computer 1500						*/
-//TESTDRIVER( trs80pc2 )	/* 1982 Tandy TRS80 PC 2							*/
-//TESTDRIVER( pc1500a )	/* 1984 Pocket Computer 1500A						*/
-//	DRIVER( pc1251 )	/* Pocket Computer 1251 							*/
-//TESTDRIVER( trs80pc3 )	/* Tandy TRS80 PC-3									*/
+	DRIVER( pc1251 )	/* Pocket Computer 1251 							*/
+TESTDRIVER( trs80pc3 )	/* Tandy TRS80 PC-3									*/
 
-//	DRIVER( pc1401 )	/* Pocket Computer 1401 							*/
-//	DRIVER( pc1402 )	/* Pocket Computer 1402 							*/
+	DRIVER( pc1401 )	/* Pocket Computer 1401 							*/
+	DRIVER( pc1402 )	/* Pocket Computer 1402 							*/
 
-//	DRIVER( pc1350 )	/* Pocket Computer 1350 							*/
+	DRIVER( pc1350 )	/* Pocket Computer 1350 							*/
 
-//	DRIVER( pc1403 )	/* Pocket Computer 1403 							*/
-//	DRIVER( pc1403h )	/* Pocket Computer 1403H 							*/
+	DRIVER( pc1403 )	/* Pocket Computer 1403 							*/
+	DRIVER( pc1403h )	/* Pocket Computer 1403H 							*/
 
-//	DRIVER( mz700 ) 	/* 1982 Sharp MZ700 								*/
-//	DRIVER( mz700j )	/* 1982 Sharp MZ700 Japan							*/
-//TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 								*/
+	DRIVER( mz700 ) 	/* 1982 Sharp MZ700 								*/
+	DRIVER( mz700j )	/* 1982 Sharp MZ700 Japan							*/
+TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 								*/
 
 	/* TEXAS INSTRUMENTS */
 	DRIVER( ti990_10 )	/* 1975 TI 990/10									*/
@@ -464,11 +458,11 @@ TESTDRIVER( lambda )	/* Lambda 8300										*/
 	DRIVER( ti99_4ev)	/* 1994 TI 99/4A with EVPC video card				*/
 //TESTDRIVER( ti99_4p )	/* 1996 SNUG 99/4P (a.k.a. SGCPU)					*/
 
-//	DRIVER( avigo )     /*												    */
+	DRIVER( avigo )     /*												    */
 
 /* TEXAS INSTRUMENTS CALCULATORS */
 /* TI-81 (Z80 2 MHz) */
-//	DRIVER( ti81 )		/* TI 81 rom ver. 1.8								*/
+	DRIVER( ti81 )		/* TI 81 rom ver. 1.8								*/
 
 /* TI-85 (Z80 6MHz) */
 	DRIVER( ti85 )  	/* TI 85 rom ver. 3.0a								*/
@@ -609,7 +603,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( coupe ) 	/* 1989 Sam Coupe									*/
 
 	/* MOTOROLA */
-//TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit						*/
+TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit						*/
 
 	/* DEC */
 	DRIVER( pdp1 )      /* 1961 DEC PDP1									*/
@@ -638,16 +632,16 @@ TESTDRIVER( pmd85 )	/* PMD-85.1											*/
 
 	/* Team Concepts */
 	/* CPU not known, else should be easy, look into systems/comquest.c */
-//TESTDRIVER( comquest )	/* Comquest Plus German								*/
+TESTDRIVER( comquest )	/* Comquest Plus German								*/
 
 	/* Hewlett Packard */
-//TESTDRIVER( hp48s ) 	/* HP48 S/SX										*/
-//TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
+TESTDRIVER( hp48s ) 	/* HP48 S/SX										*/
+TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 
 	/* SpectraVideo */
-//	DRIVER( svi318 ) 	/* SVI-318											*/
-//	DRIVER( svi328 ) 	/* SVI-328											*/
-//	DRIVER( svi328a ) 	/* SVI-328	(BASIC 1.11)							*/
+	DRIVER( svi318 ) 	/* SVI-318											*/
+	DRIVER( svi328 ) 	/* SVI-328											*/
+	DRIVER( svi328a ) 	/* SVI-328	(BASIC 1.11)							*/
 
 	/* Booth (this is the builder, not a company) */
 	DRIVER( apexc )		/* 1951(?) APEXC : All-Purpose Electronic X-ray Computer */
@@ -658,7 +652,7 @@ TESTDRIVER( mk1 )		/* Chess Champion MK I								*/
 	/* Quelle International */
 	DRIVER( mk2 )		/* Chess Champion MK II								*/
 	/* NOVAG Industries Ltd. */
-//TESTDRIVER( ssystem3 )	/* Chess Champion Super System III / MK III			*/
+TESTDRIVER( ssystem3 )	/* Chess Champion Super System III / MK III			*/
 
 #endif /* NEOMAME */
 

@@ -207,16 +207,16 @@ DRVLIBS = \
 	$(OBJ)/svision.a  \
 	$(OBJ)/coleco.a   \
 	$(OBJ)/apf.a      \
-#	$(OBJ)/rca.a	  \
-#	$(OBJ)/teamconc.a \
-#	$(OBJ)/amiga.a    \
-#	$(OBJ)/svi.a      \
-#	$(OBJ)/sharp.a    \
-#	$(OBJ)/aim65.a    \
-#	$(OBJ)/avigo.a    \
-#	$(OBJ)/motorola.a \
-#	$(OBJ)/ssystem3.a \
-#	$(OBJ)/hp48.a     \
+	$(OBJ)/rca.a	  \
+	$(OBJ)/teamconc.a \
+	$(OBJ)/amiga.a    \
+	$(OBJ)/svi.a      \
+	$(OBJ)/sharp.a    \
+	$(OBJ)/aim65.a    \
+	$(OBJ)/avigo.a    \
+	$(OBJ)/motorola.a \
+	$(OBJ)/ssystem3.a \
+	$(OBJ)/hp48.a     \
 
 
 
@@ -762,10 +762,11 @@ COREOBJS += \
 
 
 # additional tools
-TOOLS =  dat2html$(EXE)       \
-	  tools/mkhdimg$(EXE)  \
-	  tools/imgtool$(EXE)  \
-	  tools/mkimage$(EXE)
+TOOLS =  dat2html$(EXE)		\
+	tools/mkhdimg$(EXE)	\
+	tools/imgtool$(EXE)	\
+	tools/mkimage$(EXE)	\
+	tools/messtest$(EXE)	
 
 
 ifdef MSVC

@@ -640,8 +640,8 @@ static int fdc_rdy = 1;
 
 static void fdc_rev_proc( int drive );
 
-int amiga_fdc_init(int id, mame_file *fp, int open_mode) {
-
+int amiga_fdc_init(int id)
+{
 	fdc_status[id].motor_on = 0;
 	fdc_status[id].side = 0;
 	fdc_status[id].dir = 0;
@@ -653,13 +653,13 @@ int amiga_fdc_init(int id, mame_file *fp, int open_mode) {
 	fdc_status[id].pos = 0;
 
 	memset( fdc_status[id].mfm, 0xaa, 544*2*11 );
+	return INIT_PASS;
+}
 
+int amiga_fdc_load(int id, mame_file *fp, int open_mode)
+{
 	fdc_status[id].disk_changed = 1;
 	fdc_status[id].f = fp;
-	if ( fdc_status[id].f == NULL ) {
-		logerror("Could not open image %s\n", image_filename(IO_FLOPPY,id) );
-		return INIT_FAIL;
-	}
 	fdc_status[id].disk_changed = 0;
 
 	fdc_sel = 0x0f;
