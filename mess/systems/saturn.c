@@ -206,15 +206,23 @@ WRITE32_HANDLER( saturn_workh_ram_w )
 READ32_HANDLER( saturn_sound_ram_r )
 {
   offs_t ea;
-
-#if DISP_MEM
-  logerror("soundram_r offset=%08lX mem_mask=%08lX PC=%08lX\n",offset,mem_mask,cpu_get_reg(SH2_PC));
-#endif
+  static UINT32 oldmask= 0xa5a5a5a5;
+/* #if DISP_MEM */
+  if (1 ||(oldmask != mem_mask)) {
+	  oldmask = mem_mask;
+	  printf("soundram_r offset=%08X mem_mask=%08X PC=%08X\n",offset,mem_mask,cpu_get_reg(SH2_PC));
+  /*logerror("soundram_r offset=%08lX mem_mask=%08lX PC=%08lX\n",offset,mem_mask,cpu_get_reg(SH2_PC));*/
+	}
+/* #endif */
 
   if(offset == 0x1c0)
     {
       return 0;
     }
+/*  if(offset == 0x1e8)
+    {
+      return 0xffffffff;
+    }*/
 
   ea = (SATURN_SOUND_RAM_BASE / 4) + offset;
   return mem[ea] & (~mem_mask);
@@ -223,9 +231,13 @@ READ32_HANDLER( saturn_sound_ram_r )
 WRITE32_HANDLER( saturn_sound_ram_w )
 {
   offs_t ea;
-
+static UINT32 oldmask= 0xa5a5a5a5;
 #if DISP_MEM
-  logerror("soundram_w offset=%08lX data=%08lX mem_mask=%08lX PC=%08lX\n",offset,data,mem_mask,cpu_get_reg(SH2_PC));
+  if (1 || (oldmask != mem_mask)) {
+   oldmask = mem_mask;
+  printf("soundram_w offset=%08X data=%08X mem_mask=%08X PC=%08X\n",offset,data,mem_mask,cpu_get_reg(SH2_PC));
+}
+  /*logerror("soundram_w offset=%08lX data=%08lX mem_mask=%08lX PC=%08lX\n",offset,data,mem_mask,cpu_get_reg(SH2_PC));  */
 #endif
 
   ea = (SATURN_SOUND_RAM_BASE / 4) + offset;
@@ -1429,7 +1441,7 @@ void draw_nbg3(void)
 
 	  pat_no = *pattern++;
 		if (patlo > pat_no) { patlo = pat_no; printf("new Pattern Low bound: [%d] PlaneA,C=%08x %08x Regs %x %x\n",pat_no,planea_addr,planec_addr,(UINT32)regs[0x4c>>1],(UINT32)regs[0x3c>>1]);}
-		if (pathi < pat_no) { pathi = pat_no; printf("new Pattern  Hi bound: [%d] PlaneA,C=%08x %08x Regs %x %x\n",pat_no,planea_addr,planec_addr,(UINT32)regs[0x4c>>1],(UINT32)regs[0x3c>>1]);}
+		if (pathi < pat_no) { pathi = pat_no; /*printf("new Pattern  Hi bound: [%d] PlaneA,C=%08x %08x Regs %x %x\n",pat_no,planea_addr,planec_addr,(UINT32)regs[0x4c>>1],(UINT32)regs[0x3c>>1]);*/}
 
 	  if (pat_no+1 < 4000) {
 		  draw_1s8(&mem[(SATURN_VDP2_RAM_BASE/4) + (pat_no*8)],&frame[loopy*4096 + loopx*8],512);
