@@ -20,8 +20,8 @@ extern READ_HANDLER(pc1350_lcd_read);
 extern WRITE_HANDLER(pc1350_lcd_write);
 
 int pc1350_keyboard_line_r(void);
-unsigned char pc1401_palette[248][3];
-unsigned short pc1401_colortable[8][2];
+extern unsigned char pc1401_palette[248][3];
+extern unsigned short pc1401_colortable[8][2];
 void pocketc_init_colors (unsigned char *sys_palette,
 						  unsigned short *sys_colortable,
 						  const unsigned char *color_prom);
