@@ -430,12 +430,14 @@ static int8 apu_dpcm(dpcm_t *chan)
             chan->length--;
          }
 
+
          if (chan->cur_byte & (1 << bit_pos))
 //            chan->regs[1]++;
-            chan->vol++;
+            chan->vol+= 4; // LBO - change this line
          else
 //            chan->regs[1]--;
-            chan->vol--;
+            chan->vol-= 4; // LBO - change this line
+
       }
    }
 
@@ -444,7 +446,7 @@ static int8 apu_dpcm(dpcm_t *chan)
    else if (chan->vol < -64)
       chan->vol = -64;
 
-   return (int8) (chan->vol >> 1);
+   return (int8) (chan->vol);
 }
 
 /* WRITE REGISTER VALUE */
