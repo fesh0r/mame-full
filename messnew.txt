@@ -21,8 +21,11 @@ Other Changes:
 - The core is based on MAME 0.37b8. This incorporates all 
   features of the update to this core.  [MAME team] 
 
+- SID6581 Approximation [PeT]
+  Interface changed,
+  partitioned, unused parts removed, cleaned up 
+  support for multiple chips finished
 
-------------------------
 
 0.37b7 
 

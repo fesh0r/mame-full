@@ -288,17 +288,16 @@ $(OBJ)/cbm.a:	   \
 	  $(OBJ)/mess/machine/cia6526.o  \
 	  $(OBJ)/mess/machine/c64.o	 \
 	  $(OBJ)/mess/vidhrdw/vic6567.o  \
-	  $(OBJ)/mess/sndhrdw/sid6581.o  \
 	  $(OBJ)/mess/systems/c65.o	 \
 	  $(OBJ)/mess/machine/c65.o	 \
 	  $(OBJ)/mess/systems/c128.o	 \
 	  $(OBJ)/mess/vidhrdw/vdc8563.o  \
 	  $(OBJ)/mess/vidhrdw/praster.o  \
 	  $(OBJ)/mess/machine/c128.o	 \
-	  $(OBJ)/mess/sndhrdw/mixing.o	 \
-	  $(OBJ)/mess/sndhrdw/envelope.o \
-	  $(OBJ)/mess/sndhrdw/samples.o  \
-	  $(OBJ)/mess/sndhrdw/6581_.o
+	  $(OBJ)/mess/sndhrdw/sid6581.o  \
+	  $(OBJ)/mess/sndhrdw/sid.o  \
+	  $(OBJ)/mess/sndhrdw/sidenvel.o  \
+	  $(OBJ)/mess/sndhrdw/sidvoice.o  \
 
 $(OBJ)/dragon.a:   \
 	  $(OBJ)/mess/machine/counter.o  \
