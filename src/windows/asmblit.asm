@@ -114,8 +114,9 @@ row_index:		dd	0
 %define FIXUPVAL_SRCBYTES1		5
 %define FIXUPVAL_SRCBYTES16		6
 %define FIXUPVAL_SRCADVANCE		7
-%define FIXUPVAL_PIXOFFSET0		8
-%define FIXUPVAL_PIXOFFSET15	23
+%define FIXUPVAL_SRCPREFETCH16	8
+%define FIXUPVAL_PIXOFFSET0		9
+%define FIXUPVAL_PIXOFFSET15	24
 
 %define TAG_COMMON(t,x)			(0x00cccccc | ((t)<<29) | ((x)<<24))
 
@@ -352,6 +353,48 @@ SNIPPET_BEGIN asmblit16_16_to_16_x1_mmx
 		store_multiple2 mm0,16*iter,mm1,16*iter+8
 		%assign iter iter+1
 	%endrep
+SNIPPET_END
+
+SNIPPET_BEGIN asmblit16_16_to_16_x1_sse
+	movzx	eax,word [esi+FIXUPPIXEL(0)]
+	movzx	ebx,word [esi+FIXUPPIXEL(4)]
+	movzx	edx,word [esi+FIXUPPIXEL(8)]
+	movd	mm0,[ecx+eax*4]
+	movd	mm1,[ecx+ebx*4]
+	movd	mm2,[ecx+edx*4]
+
+	movzx	eax,word [esi+FIXUPPIXEL(12)]
+	movzx	ebx,word [esi+FIXUPPIXEL(1)]
+	movzx	edx,word [esi+FIXUPPIXEL(5)]
+	movd	mm3,[ecx+eax*4]
+	pinsrw	mm0,[ecx+ebx*4],1
+	pinsrw	mm1,[ecx+edx*4],1
+
+	movzx	eax,word [esi+FIXUPPIXEL(9)]
+	movzx	ebx,word [esi+FIXUPPIXEL(13)]
+	movzx	edx,word [esi+FIXUPPIXEL(2)]
+	pinsrw	mm2,[ecx+eax*4],1
+	pinsrw	mm3,[ecx+ebx*4],1
+	pinsrw	mm0,[ecx+edx*4],2
+
+	movzx	eax,word [esi+FIXUPPIXEL(6)]
+	movzx	ebx,word [esi+FIXUPPIXEL(10)]
+	movzx	edx,word [esi+FIXUPPIXEL(14)]
+	pinsrw	mm1,[ecx+eax*4],2
+	pinsrw	mm2,[ecx+ebx*4],2
+	pinsrw	mm3,[ecx+edx*4],2
+
+	movzx	eax,word [esi+FIXUPPIXEL(3)]
+	movzx	ebx,word [esi+FIXUPPIXEL(7)]
+	movzx	edx,word [esi+FIXUPPIXEL(11)]
+	pinsrw	mm0,[ecx+eax*4],3
+	pinsrw	mm1,[ecx+ebx*4],3
+	pinsrw	mm2,[ecx+edx*4],3
+
+	movzx	eax,word [esi+FIXUPPIXEL(15)]
+	pinsrw	mm3,[ecx+eax*4],3
+	
+	store_multiple4 mm0,0,mm1,8,mm2,16,mm3,24
 SNIPPET_END
 
 
@@ -694,6 +737,41 @@ SNIPPET_BEGIN asmblit16_16_to_32_x1_mmx
 
 		store_multiple2 mm0,32*iter,mm2,32*iter+8
 		store_multiple2 mm4,32*iter+16,mm6,32*iter+24
+
+		%assign iter iter+1
+	%endrep
+SNIPPET_END
+
+SNIPPET_BEGIN asmblit16_16_to_32_x1_sse
+	%assign iter 0
+	%rep 2
+		movzx	eax,word [esi+FIXUPPIXEL(0+8*iter)]
+		movzx	ebx,word [esi+FIXUPPIXEL(1+8*iter)]
+		movzx	edx,word [esi+FIXUPPIXEL(2+8*iter)]
+		movdqu	xmm0,[ecx+eax*4]
+		movdqu	xmm1,[ecx+ebx*4]
+		movdqu	xmm2,[ecx+edx*4]
+		
+		movzx	eax,word [esi+FIXUPPIXEL(3+8*iter)]
+		movzx	ebx,word [esi+FIXUPPIXEL(4+8*iter)]
+		movzx	edx,word [esi+FIXUPPIXEL(5+8*iter)]
+		movdqu	xmm3,[ecx+eax*4]
+		movdqu	xmm4,[ecx+ebx*4]
+		movdqu	xmm5,[ecx+edx*4]
+
+		movzx	eax,word [esi+FIXUPPIXEL(6+8*iter)]
+		movzx	ebx,word [esi+FIXUPPIXEL(7+8*iter)]
+		movdqu	xmm6,[ecx+eax*4]
+		movdqu	xmm7,[ecx+ebx*4]
+
+		shufps	xmm0,xmm1,0x00
+		shufps	xmm2,xmm3,0x00
+		shufps	xmm4,xmm5,0x00
+		shufps	xmm6,xmm7,0x00
+		shufps	xmm0,xmm2,0x88
+		shufps	xmm4,xmm6,0x88
+
+		store_multiple2 xmm0,32*iter,xmm4,32*iter+16
 
 		%assign iter iter+1
 	%endrep
@@ -1259,80 +1337,47 @@ SNIPPET_END
 
 
 
+;//---------------------------------------------------------------
+
+SNIPPET_BEGIN asmblit_prefetch_sse
+	prefetchnta	[esi+FIXUPVALUE(FIXUPVAL_SRCPREFETCH16)]
+SNIPPET_END
+
+
+
 ;//============================================================
-;//	MMX detection
+;//	MMX/SSE/SSE2 detection
 ;//============================================================
 
-CGLOBAL asmblit_has_mmx
-asmblit_has_mmx:
-	pushad
+CGLOBAL asmblit_cpuid_features
+asmblit_cpuid_features:
+	push	ebx
+	push	ecx
+	push	edx
 
+	mov		eax,0
+	
 	;// attempt to change the ID flag
 	pushfd
-	pop		eax
-	xor		eax,1<<21
-	push	eax
+	pop		edx
+	xor		edx,1<<21
+	push	edx
 	popfd
 
-	;// if we can't, they definitely don't have it
+	;// if we can't, they definitely don't have any of these things
 	pushfd
 	pop		ebx
-	xor		eax,ebx
-	test	eax,1<<21
-	jnz		.DoesntHaveMMX
+	xor		edx,ebx
+	test	edx,1<<21
+	jnz		.Return
 
 	;// use CPUID
 	mov		eax,1
 	cpuid
-	test	edx,1<<23
-	jz		.DoesntHaveMMX
+	mov		eax, edx
 
-	;// okay, we have it
-	popad
-	mov		eax,1
-	ret
-
-.DoesntHaveMMX:
-	popad
-	mov		eax,0
-	ret
-
-
-
-;//============================================================
-;//	SSE2 detection
-;//============================================================
-
-CGLOBAL asmblit_has_xmm
-asmblit_has_xmm:
-	pushad
-
-	;// attempt to change the ID flag
-	pushfd
-	pop		eax
-	xor		eax,1<<21
-	push	eax
-	popfd
-
-	;// if we can't, they definitely don't have it
-	pushfd
+.Return:
+	pop		edx
+	pop		ecx
 	pop		ebx
-	xor		eax,ebx
-	test	eax,1<<21
-	jnz		.DoesntHaveXMM
-
-	;// use CPUID
-	mov		eax,1
-	cpuid
-	test	edx,1<<26
-	jz		.DoesntHaveXMM
-
-	;// okay, we have it
-	popad
-	mov		eax,1
-	ret
-
-.DoesntHaveXMM:
-	popad
-	mov		eax,0
 	ret
