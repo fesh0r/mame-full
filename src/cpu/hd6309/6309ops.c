@@ -2723,10 +2723,10 @@ INLINE void muld_im( void )
 	PAIR t, q;
 
 	IMMWORD( t );
-	q.d = (signed short) D * (signed short)t.w.l;
+	q.d = (INT16) D * (INT16)t.w.l;
 	D = q.w.h;
 	W = q.w.l;
-	CLR_NZV;
+	CLR_NZVC;
 	SET_NZ16(D);
 }
 
@@ -2746,8 +2746,9 @@ INLINE void divd_im( void )
 		
 		CLR_NZVC;
 		SET_NZ8(B);
-		/* Warning still need to set the C flag */
-		/* But I don't know what to set it to */
+		
+		if( B & 0x01 )
+			SEC;
 		
 		if ( (v > 127) || (v < -128) )
 			SEV;
@@ -2763,7 +2764,7 @@ INLINE void divd_im( void )
 INLINE void divq_im( void )
 {
 	PAIR	t,q;
-	INT16	v;
+	INT32	v;
 
 	IMMWORD( t );
 	q.w.h = D;
@@ -2772,13 +2773,20 @@ INLINE void divq_im( void )
 	if( t.w.l != 0 )
 	{
 		v = (INT32) q.d / (INT16) t.w.l;
-		W = (INT32) q.d % (INT16) t.w.l;
-		D = v;
+		D = (INT32) q.d % (INT16) t.w.l;
+		W = v;
+
+		CLR_NZVC;
+		SET_NZ16(W);
+		
+		if( W & 0x0001 )
+			SEC;
+
+		if ( (v > 65534) || (v < -65535) )
+			SEV;
 	}
 	else
 		DZError();
-		
-	/* Warning: Set CC */
 }
 
 #if macintosh
@@ -3026,11 +3034,11 @@ INLINE void muld_di( void )
 	PAIR	t,q;
 
 	DIRWORD(t);
-	q.d = (signed short) D * (signed short)t.w.l;
+	q.d = (INT16) D * (INT16)t.w.l;
 
 	D = q.w.h;
 	W = q.w.l;
-	CLR_NZV;
+	CLR_NZVC;
 	SET_NZ16(D);
 }
 
@@ -3050,8 +3058,9 @@ INLINE void divd_di( void )
 		
 		CLR_NZVC;
 		SET_NZ8(B);
-		/* Warning still need to set the C flag */
-		/* But I don't know what to set it to */
+		
+		if( B & 0x01 )
+			SEC;
 		
 		if ( (v > 127) || (v < -128) )
 			SEV;
@@ -3067,7 +3076,7 @@ INLINE void divd_di( void )
 INLINE void divq_di( void )
 {
 	PAIR	t, q;
-	INT16	v;
+	INT32	v;
 
 	q.w.h = D;
 	q.w.l = W;
@@ -3077,13 +3086,20 @@ INLINE void divq_di( void )
 	if( t.w.l != 0 )
 	{
 		v = (INT32) q.d / (INT16) t.w.l;
-		W = (INT32) q.d % (INT16) t.w.l;
-		D = v;
+		D = (INT32) q.d % (INT16) t.w.l;
+		W = v;
+
+		CLR_NZVC;
+		SET_NZ16(W);
+		
+		if( W & 0x0001 )
+			SEC;
+
+		if ( (v > 65534) || (v < -65535) )
+			SEV;
 	}
 	else
 		DZError();
-
-	/* Warning: Set CC */
 }
 
 /* $10dc LDQ direct -**0- */
@@ -3391,11 +3407,11 @@ INLINE void muld_ix( void )
 
 	fetch_effective_address();
 	t=RM16(EAD);
-	q.d = (signed short) D * (signed short)t;
+	q.d = (INT16) D * (INT16)t;
 
 	D = q.w.h;
 	W = q.w.l;
-	CLR_NZV;
+	CLR_NZVC;
 	SET_NZ16(D);
 }
 
@@ -3416,8 +3432,9 @@ INLINE void divd_ix( void )
 		
 		CLR_NZVC;
 		SET_NZ8(B);
-		/* Warning still need to set the C flag */
-		/* But I don't know what to set it to */
+		
+		if( B & 0x01 )
+			SEC;
 		
 		if ( (v > 127) || (v < -128) )
 			SEV;
@@ -3432,7 +3449,8 @@ INLINE void divd_ix( void )
 /* $11ae DIVQ indexed -**0- */
 INLINE void divq_ix( void )
 {
-	UINT16	t, v;
+	UINT16	t;
+	INT16	v;
 	PAIR	q;
 
 	q.w.h = D;
@@ -3444,13 +3462,20 @@ INLINE void divq_ix( void )
 	if( t != 0 )
 	{
 		v = (INT32) q.d / (INT16) t;
-		W = (INT32) q.d % (INT16) t;
-		D = v;
+		D = (INT32) q.d % (INT16) t;
+		W = v;
+
+		CLR_NZVC;
+		SET_NZ16(W);
+		
+		if( W & 0x0001 )
+			SEC;
+
+		if ( (v > 65534) || (v < -65535) )
+			SEV;
 	}
 	else
 		DZError();
-
-	/* Warning: Set CC */
 }
 
 /* $10ec LDQ indexed -**0- */
@@ -3745,11 +3770,11 @@ INLINE void muld_ex( void )
 	PAIR	t, q;
 
 	EXTWORD(t);
-	q.d = (signed short) D * (signed short)t.w.l;
+	q.d = (INT16) D * (INT16)t.w.l;
 
 	D = q.w.h;
 	W = q.w.l;
-	CLR_NZV;
+	CLR_NZVC;
 	SET_NZ16(D);
 }
 
@@ -3769,8 +3794,9 @@ INLINE void divd_ex( void )
 		
 		CLR_NZVC;
 		SET_NZ8(B);
-		/* Warning still need to set the C flag */
-		/* But I don't know what to set it to */
+		
+		if( B & 0x01 )
+			SEC;
 		
 		if ( (v > 127) || (v < -128) )
 			SEV;
@@ -3786,7 +3812,7 @@ INLINE void divd_ex( void )
 INLINE void divq_ex( void )
 {
 	PAIR	t, q;
-	INT16	v;
+	INT32	v;
 	
 	q.w.h = D;
 	q.w.l = W;
@@ -3796,13 +3822,20 @@ INLINE void divq_ex( void )
 	if( t.w.l != 0 )
 	{
 		v = (INT32) q.d / (INT16) t.w.l;
-		W = (INT32) q.d % (INT16) t.w.l;
-		D = v;
+		D = (INT32) q.d % (INT16) t.w.l;
+		W = v;
+
+		CLR_NZVC;
+		SET_NZ16(W);
+		
+		if( W & 0x0001 )
+			SEC;
+
+		if ( (v > 65534) || (v < -65535) )
+			SEV;
 	}
 	else
 		DZError();
-
-	/* Warning: Set CC */
 }
 
 /* $10fc LDQ extended -**0- */
