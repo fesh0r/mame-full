@@ -43,6 +43,12 @@ int apple2_choose_image_type(const char *filetype)
 		if (!strcmpi(filetype, "dsk"))
 			return APPLE2_IMAGE_DO;
 		break;
+
+	case 'b':
+	case 'B':
+		if (!strcmpi(filetype, "bin"))
+			return APPLE2_IMAGE_DO;
+		break;
 	}
 	return APPLE2_IMAGE_UNKNOWN;
 }
@@ -56,25 +62,27 @@ int apple2_choose_image_type(const char *filetype)
 
 int apple2_skew_sector(int sector, int image_type)
 {
-	static const unsigned char r_skewing6[APPLE2_SECTOR_COUNT] =
+	static const unsigned char skewing[2][APPLE2_SECTOR_COUNT] =
 	{
-		0x00, 0x07, 0x0E, 0x06, 0x0D, 0x05, 0x0C, 0x04,
-		0x0B, 0x03, 0x0A, 0x02, 0x09, 0x01, 0x08, 0x0F
+		{
+			/* DOS order (*.do) */
+			0x00, 0x07, 0x0E, 0x06, 0x0D, 0x05, 0x0C, 0x04,
+			0x0B, 0x03, 0x0A, 0x02, 0x09, 0x01, 0x08, 0x0F
+		},
+		{
+			/* ProDOS order (*.po) */
+			0x00, 0x08, 0x01, 0x09, 0x02, 0x0A, 0x03, 0x0B,
+			0x04, 0x0C, 0x05, 0x0D, 0x06, 0x0E, 0x07, 0x0F
+		}
 	};
+
+	image_type--;
 
 	assert(sector >= 0);
 	assert(sector < APPLE2_SECTOR_COUNT);
-
-	switch(image_type) {
-	case APPLE2_IMAGE_DO:
-		sector = r_skewing6[sector];
-		break;
-
-	case APPLE2_IMAGE_PO:
-		/* do nothing */
-		break;
-	}
-	return sector;
+	assert(image_type >= 0);
+	assert(image_type < sizeof(skewing) / sizeof(skewing[0]));
+	return skewing[image_type][sector];
 }
 
 

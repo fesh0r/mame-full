@@ -7,7 +7,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-- [APPLE2] Writing to disk images is now supported.  [Nate Woods]
+- [APPLE2] Writing to disk images and ProDOS order (*.po) disk images are now
+  supported.  [Nate Woods]
 
 
 User Interface Changes:
