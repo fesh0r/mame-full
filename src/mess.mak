@@ -800,6 +800,7 @@ imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/svi_cas.o  \
 	  $(OBJ)/mess/formats/cococas.o  \
 	  $(OBJ)/mess/tools/msx_dsk.o  \
+	  $(OBJ)/mess/tools/xsa.o  \
 	  $(OBJ)/mess/tools/rsdos.o   \
 	  $(OBJ)/mess/tools/stream.o  \
 	  $(OBJ)/mess/tools/t64.o     \

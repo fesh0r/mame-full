@@ -148,9 +148,8 @@ to generate standard blank 20mb pc xt harddisk image
 
 Virtual MSX tape archive
 ------------------------
-not heavily tested
-not fault-tolerant
-dir/get/getall implemented, converts to .cas 
+Converts .tap files from Virtual MSX 1.x to .cas files. It is not
+fault-tolerant. 
 
 
 Virtual MSX Game Master 2 SRAM file
@@ -159,7 +158,11 @@ Very simple, not overly useful but some might want it. Virtual MSX stored the
 SRAM of Konami's Game Master 2 in "gmaster2.ram". To convert this to something
 useful with MESS and other MSX emulators, go:
 
-imgtool extract vmsx_gm2 gmaster2.ram gmaster2.mem
+imgtool getall vmsx_gm2 gmaster2.ram 
+
+You'll get a file called gmaster2.mem, which must place in the correct directory
+of mess to use  (MESS\MEMCARD\GameMaster2 if your Game Master 2 .rom file is
+called GameMaster2.rom). It's ~/.xmess/memcard/GameMaster2.mem for xmess.
 
 
 fMSX style .cas file
@@ -170,27 +173,17 @@ MSX. Connect the MSX to the line out of your computer. Give the apropriate
 command on the MSX (BLOAD "CAS:",R for example) and then play the .wav file
 on your computer. 
 
-Not tested at all, but it should work fine.
-
 imgtool dir fmsx_cas file.cas
-imgtool extract fmsx_cas file.cas file.wav
 imgtool getall fmsx_cas file.cas
 imgtool get fmsx_cas file.cas file.wav newfile.wav
 
 
-Various bogus MSX disk images (xsa/img/ddi/msx)
------------------------------------------------
+XelaSoft Archive (.xsa)
+----------------------
 
-These are formats you might come across, which have no actual added value
-whatsoever. The only format MESS will support (not yet!), like other MSX
-emulators, is .dsk (a plain dump without any header information). This
-filetype converts them all to .dsk format.
-
-img and ddi formats have a useless header, .msx has a weird sector order
-(which is faster to save on a real MSX). .xsa is special format, not
-nearly as useless as the others. It's basically a compressed format, it
-doesn't matter what you use it for. However it's always been used for
-disk images. The were programs written by XelaSoft which made a dump
+The XelaSoft Archive is a compressed file. It can only contain one
+file. Although it can contain any file, it's always used for MSX disk 
+images. The were programs written by XelaSoft which made a dump
 of a disk, and compressing them at the same time. Very useful to store
 a disk dump on another disk. zip/gzip offer much better compression and
 are mainstream, so let's stick with that.
@@ -198,6 +191,31 @@ are mainstream, so let's stick with that.
 imgtool uses XSA code developed by Alex Wulms/XelaSoft.
 
 http://web.inter.nl.net/users/A.P.Wulms/
+
+
+Various bogus MSX disk images (img/ddi/msx/multidisks)
+------------------------------------------------------
+
+These are formats you might come across, which have no actual added value
+whatsoever. The only format MESS will support, like most other MSX
+emulators, is .dsk (a plain dump without any header information). This
+filetype converts them all to .dsk format.
+
+msx_img are disk images with an extra byte at the beginning. It' 1 (0x01)
+for single-sided images and 2 (0x02) for double-side images. These 
+files are at: ftp://ftp.funet.fi/pub/msx/. The extension is .img
+
+msx_ddi are DiskDupe 5.12 disk images. There is a 0x1800 bytes header
+at the beginning. The CompuJunkS MSX emulator used these files. The header
+often contain garbage so it's simply stripped. The extension is .ddi
+
+msx_msx are disk images with a weird sector order. You can find them
+at: ftp://jazz.snu.ac.kr/pub/msx/. The extension is .msx
+
+msx_mul are "multi disk" images, used by fmsx-dos 1.6. It is simply 
+more than one .dsk image appended to one another. The extension is
+still .dsk, but the file is larger than 720kB (actually always a 
+multiple of 720kB.
 
 
 rom16 16 bit wide rom image

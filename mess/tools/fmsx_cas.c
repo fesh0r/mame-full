@@ -207,7 +207,6 @@ static int fmsx_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	if (wavlen != image->count)
 		{
 		free (wavdata);
-		printf ("%d - %d\n", wavlen, image->count);
 		return IMGTOOLERR_UNEXPECTED;
 		}
 
