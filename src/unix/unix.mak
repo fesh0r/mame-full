@@ -698,7 +698,7 @@ $(OBJ)/unix.$(DISPLAY_METHOD)/effect_asm.o: src/unix/effect_asm.asm
 doc: src/unix/doc/xmame-doc.txt src/unix/doc/x$(TARGET)rc.dist doc/gamelist.$(TARGET) src/unix/doc/x$(TARGET).6
 
 src/unix/doc/xmame-doc.txt: src/unix/doc/xmame-doc.sgml
-	cd doc; \
+	cd src/unix/doc; \
 	sgml2txt   -l en -p a4 -f          xmame-doc.sgml; \
 	sgml2html  -l en -p a4             xmame-doc.sgml; \
 	sgml2latex -l en -p a4 --output=ps xmame-doc.sgml; \
@@ -739,7 +739,8 @@ doinstallsuid:
 
 copycab:
 	@echo installing cabinet files under $(XMAMEROOT)...
-	@for i in src/unix/cab/*; do \
+	@cd src/unix
+	@for i in cab/*; do \
 	if test ! -d $(XMAMEROOT)/$$i; then \
 	$(INSTALL_DATA_DIR) $(XMAMEROOT)/$$i; fi; \
 	for j in $$i/*; do $(INSTALL_DATA) $$j $(XMAMEROOT)/$$i; done; done
