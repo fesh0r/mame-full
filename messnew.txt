@@ -19,6 +19,14 @@ Other Changes:
 - The core is based on MAME 0.37b6. This incorporates all 
   features of the update to this core.  [MAME team] 
 
+- Many fixes to cheat engine [Cowering/]
+
+- MESS CRC files now use 'Good' database CRCs where applicable [Cowering]
+
+- NES now gets correct mapper info from nes.crc (if present) [Cowering]
+
+- Genesis/Megadrive now gets correct CRC info for .smd and .md files [Cowering]
+
 - CRC and sysinfo updates will now be appearing at the official MESS homepage:
   http://mess.emuverse.com
   Please send all CRC/sysinfo file contributions to Chris Henry. 
