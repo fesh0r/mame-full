@@ -92,8 +92,8 @@ CFLAGS.solaris    = -DSYSDEP_DSP_SOLARIS -DSYSDEP_MIXER_SOLARIS
 CFLAGS.next       = -DSYSDEP_DSP_SOUNDKIT -DBSD43
 CFLAGS.macosx     = -DSYSDEP_DSP_COREAUDIO
 CFLAGS.nto        = -DSYSDEP_DSP_ALSA -DSYSDEP_MIXER_ALSA
-CFLAGS.irix       = -DSYSDEP_DSP_IRIX
-CFLAGS.irix_al    = -DSYSDEP_DSP_IRIX
+CFLAGS.irix       = -DSYSDEP_DSP_IRIX -DHAVE_SNPRINTF
+CFLAGS.irix_al    = -DSYSDEP_DSP_IRIX -DHAVE_SNPRINTF
 CFLAGS.beos       = `sdl-config --cflags` -DSYSDEP_DSP_SDL
 CFLAGS.generic    =
 #these need to be converted to plugins first
