@@ -236,10 +236,6 @@ MY_CFLAGS += -DMAME_DEBUG
 MY_LIBS   += -lcurses
 endif
 
-ifdef LOW_MEM
-MY_CFLAGS += -DLOW_MEM
-endif
-
 ifdef XMAME_NET
 MY_CFLAGS += -DXMAME_NET
 endif
