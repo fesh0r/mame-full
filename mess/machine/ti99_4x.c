@@ -1234,7 +1234,7 @@ typedef struct ti99_4p_expansion_port_t
 			mem_read16_handler mem_read;		/* card mem read handler (8 bits) */
 			mem_write16_handler mem_write;	/* card mem write handler (8 bits) */
 		} width_16bit;
-	};
+	} w;
 } ti99_4p_expansion_port_t;
 
 typedef struct ti99_4p_16bit_expansion_port_t
@@ -1315,8 +1315,8 @@ static void ti99_set_expansion_card_handlers(int cru_base, const expansion_port_
 			ti99_4p_expansion_ports[port].cru_read = handler->cru_read;
 			ti99_4p_expansion_ports[port].cru_write = handler->cru_write;
 			ti99_4p_expansion_ports[port].width = width_8bit;
-			ti99_4p_expansion_ports[port].width_8bit.mem_read = handler->mem_read;
-			ti99_4p_expansion_ports[port].width_8bit.mem_write = handler->mem_write;
+			ti99_4p_expansion_ports[port].w.width_8bit.mem_read = handler->mem_read;
+			ti99_4p_expansion_ports[port].w.width_8bit.mem_write = handler->mem_write;
 		}
 	}
 	else
@@ -1351,8 +1351,8 @@ static void ti99_4p_set_16bit_expansion_card_handlers(int cru_base, const ti99_4
 			ti99_4p_expansion_ports[port].cru_read = handler->cru_read;
 			ti99_4p_expansion_ports[port].cru_write = handler->cru_write;
 			ti99_4p_expansion_ports[port].width = width_16bit;
-			ti99_4p_expansion_ports[port].width_16bit.mem_read = handler->mem_read;
-			ti99_4p_expansion_ports[port].width_16bit.mem_write = handler->mem_write;
+			ti99_4p_expansion_ports[port].w.width_16bit.mem_read = handler->mem_read;
+			ti99_4p_expansion_ports[port].w.width_16bit.mem_write = handler->mem_write;
 		}
 	}
 }
@@ -1557,7 +1557,7 @@ READ16_HANDLER ( ti99_4p_rw_expansion )
 		{
 			tms9900_ICount -= 4;
 
-			handler = ti99_4p_expansion_ports[active_card].width_8bit.mem_read;
+			handler = ti99_4p_expansion_ports[active_card].w.width_8bit.mem_read;
 			if (handler)
 			{
 				reply = (*handler)((offset << 1) + 1);
@@ -1568,7 +1568,7 @@ READ16_HANDLER ( ti99_4p_rw_expansion )
 		{
 			tms9900_ICount -= 1;	/* ??? */
 
-			handler16 = ti99_4p_expansion_ports[active_card].width_16bit.mem_read;
+			handler16 = ti99_4p_expansion_ports[active_card].w.width_16bit.mem_read;
 			if (handler16)
 				reply = (*handler16)(offset, /*mem_mask*/0);
 		}
@@ -1608,7 +1608,7 @@ WRITE16_HANDLER ( ti99_4p_ww_expansion )
 		{
 			tms9900_ICount -= 4;
 
-			handler = ti99_4p_expansion_ports[active_card].width_8bit.mem_write;
+			handler = ti99_4p_expansion_ports[active_card].w.width_8bit.mem_write;
 			if (handler)
 			{
 				(*handler)((offset << 1) + 1, data & 0xff);
@@ -1619,7 +1619,7 @@ WRITE16_HANDLER ( ti99_4p_ww_expansion )
 		{
 			tms9900_ICount -= 1;	/* ??? */
 
-			handler16 = ti99_4p_expansion_ports[active_card].width_16bit.mem_write;
+			handler16 = ti99_4p_expansion_ports[active_card].w.width_16bit.mem_write;
 			if (handler16)
 				(*handler16)(offset, data, /*mem_mask*/0);
 		}
