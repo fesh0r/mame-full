@@ -106,6 +106,7 @@ void wd179x_set_density(DENSITY density)
 	w->density = density;
 }
 
+
 /* BUSY COUNT DOESN'T WORK PROPERLY! */
 
 static void wd179x_restore(WD179X *w)
@@ -433,8 +434,8 @@ static void wd179x_read_id(WD179X * w)
 	else
 	{
 		/* record not found */
-		w->status |= STA_2_CRC_ERR | STA_2_REC_N_FND;
-
+		w->status |= STA_2_REC_N_FND;
+		//w->sector = w->track_reg;
 		logerror("read id failed\n");
 
 		wd179x_complete_command(w);
@@ -619,7 +620,7 @@ static void wd179x_clear_data_request(void)
 {
 	WD179X *w = &wd;
 
-	w->status_drq = 0;
+//	w->status_drq = 0;
 	if (w->callback)
 		(*w->callback) (WD179X_DRQ_CLR);
 	w->status &= ~STA_2_DRQ;
@@ -637,7 +638,7 @@ static void wd179x_set_data_request(void)
 	}
 
 	/* set drq */
-	w->status_drq = STA_2_DRQ;
+//	w->status_drq = STA_2_DRQ;
 	if (w->callback)
 		(*w->callback) (WD179X_DRQ_SET);
 	w->status |= STA_2_DRQ;
@@ -714,7 +715,7 @@ READ_HANDLER ( wd179x_status_r )
 	
 	
 	/* eventually set data request bit */
-	w->status |= w->status_drq;
+//	w->status |= w->status_drq;
 
 #if VERBOSE
 	if (w->data_count < 4)
@@ -1105,14 +1106,14 @@ WRITE_HANDLER ( wd179x_command_w )
 		wd179x_set_irq(w);
 	}
 
-	if (w->busy_count==0)
-		w->status &= ~STA_1_BUSY;
+//	if (w->busy_count==0)
+//		w->status &= ~STA_1_BUSY;
 
 //	/* toggle index pulse at read */
 //	w->status_ipl = STA_1_IPL;
 
-
-	if (data & FDC_STEP_HDLOAD)
+	/* 0 is enable spin up sequence, 1 is disable spin up sequence */
+	if ((data & FDC_STEP_HDLOAD)==0)
 		w->status |= STA_1_HD_LOADED;
 
 	if (data & FDC_STEP_VERIFY)
